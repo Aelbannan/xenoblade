@@ -41,19 +41,31 @@ int SFMEM_Pause(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c374c
 
 // LLM-HARNESS-BEGIN: us-803c3754
-void SFMEM_GetWrite() {}
+void* SFBUF_RingGetWrite(void* self, u32 field, u32 param);
+void* SFMEM_GetWrite(void* self, u32 param) {
+    return SFBUF_RingGetWrite(self, *(u32*)((u8*)self + 0x1fec), param);
+}
 // LLM-HARNESS-END: us-803c3754
 
 // LLM-HARNESS-BEGIN: us-803c3760
-void SFMEM_AddWrite() {}
+void SFBUF_RingAddWrite(void* self, u32 a, u32 b, u32 c);
+void SFMEM_AddWrite(void* self, u32* a, u32* b) {
+    SFBUF_RingAddWrite(self, *(u32*)((u8*)self + 0x1fec), *a, *b);
+}
 // LLM-HARNESS-END: us-803c3760
 
 // LLM-HARNESS-BEGIN: us-803c3778
-void SFMEM_GetRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFMEM_GetRead(void) {
+    SFLIB_SetErr(0xff000501);
+}
 // LLM-HARNESS-END: us-803c3778
 
 // LLM-HARNESS-BEGIN: us-803c3784
-void SFMEM_AddRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFMEM_AddRead(void) {
+    SFLIB_SetErr(0xff000501);
+}
 // LLM-HARNESS-END: us-803c3784
 
 // LLM-HARNESS-BEGIN: us-803c3790

@@ -53,6 +53,31 @@ bool WaveFileReader::ReadWaveParam(WaveData* pWaveData,
     return true;
 }
 
+void* WaveFileReader::GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
+                                           const void* addr) const {
+    const void* dataAddr = addr;
+    if (dataAddr == NULL) {
+        dataAddr = mWaveInfo;
+    }
+    
+    const WaveFile::WaveInfo* wi = mWaveInfo;
+    u32 dtype = wi->dataType;
+    const u8* result;
+    
+    if (dtype == 0) {
+        result = reinterpret_cast<const u8*>(dataAddr) + wi->dataOffset;
+        if (addr == NULL) {
+            result += 8;
+        }
+    } else if (dtype == 1) {
+        result = reinterpret_cast<const u8*>(dataAddr) + wi->dataOffset;
+    } else {
+        return NULL;
+    }
+    
+    return const_cast<u8*>(result + info->channelDataOffset);
+}
+
 AxVoice::Format WaveFileReader::GetAxVoiceFormatFromWaveFileFormat(u32 format) {
     if (format == WaveFile::FORMAT_PCM16) {
         return AxVoice::FORMAT_PCM16;
@@ -65,16 +90,29 @@ AxVoice::Format WaveFileReader::GetAxVoiceFormatFromWaveFileFormat(u32 format) {
     return AxVoice::FORMAT_ADPCM;
 }
 
+WaveArchiveReader::WaveArchiveReader(const void* pData) {
+    mFileStart = NULL;
+    mWaveData = NULL;
+    
+    const u8* bytes = reinterpret_cast<const u8*>(pData);
+    
+    u32 magic = reinterpret_cast<const u32*>(bytes)[0];
+    if (magic != 0x52574152) { // 'RWAR'
+        return;
+    }
+    
+    u16 version = reinterpret_cast<const u16*>(bytes + 6)[0];
+    if (version < 0x100) {
+        return;
+    }
+    
+    u32 offset1 = reinterpret_cast<const u32*>(bytes + 0x10)[0];
+    u32 offset2 = reinterpret_cast<const u32*>(bytes + 0x18)[0];
+    
+    mFileStart = bytes + offset1;
+    mWaveData = bytes + offset2;
+}
+
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-// LLM-HARNESS-BEGIN: us-8042bc24
-extern "C" void GetWaveFile__Q44nw4r3snd6detail17WaveArchiveReaderCFi(int) {}
-// LLM-HARNESS-END: us-8042bc24
-// LLM-HARNESS-BEGIN: us-8042bcd4
-extern "C" void ReadWaveInfo__Q44nw4r3snd6detail14WaveFileReaderCFPQ44nw4r3snd6detail8WaveInfoPCv() {}
-// LLM-HARNESS-END: us-8042bcd4
-// LLM-HARNESS-BEGIN: us-8042bed4
-extern "C" void GetWaveDataAddress__Q44nw4r3snd6detail14WaveFileReaderCFPCQ54nw4r3snd6detail8WaveFile15WaveChannelInfoPCv() {}
-// LLM-HARNESS-END: us-8042bed4

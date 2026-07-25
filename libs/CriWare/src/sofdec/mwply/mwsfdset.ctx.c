@@ -720,11 +720,17 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-803a54ac
-void MWSFD_SetAudioSw() {}
+void SFD_SetCond(void* a, u32 b, u32 c);
+void MWSFD_SetAudioSw(void* self, u32 sw) {
+    SFD_SetCond(*(void**)((u8*)self + 0x58), 6, sw);
+}
 // LLM-HARNESS-END: us-803a54ac
 
 // LLM-HARNESS-BEGIN: us-803a54bc
-void MWSFD_SetVideoSw() {}
+void SFD_SetCond(void* a, u32 b, u32 c);
+void MWSFD_SetVideoSw(void* self, u32 sw) {
+    SFD_SetCond(*(void**)((u8*)self + 0x58), 5, sw);
+}
 // LLM-HARNESS-END: us-803a54bc
 
 // LLM-HARNESS-BEGIN: us-803a54cc
@@ -732,11 +738,18 @@ void mwPlyGetSfdHn() {}
 // LLM-HARNESS-END: us-803a54cc
 
 // LLM-HARNESS-BEGIN: us-803a5524
-void MWSFD_SetCond() {}
+void SFD_SetCond();
+void MWSFD_SetCond(void* self, u32 sw) {
+    void* obj = (self != NULL) ? *(void**)((u8*)self + 0x58) : NULL;
+    SFD_SetCond(obj, sw);
+}
 // LLM-HARNESS-END: us-803a5524
 
 // LLM-HARNESS-BEGIN: us-803a553c
-void MWSFD_GetCond() {}
+u32 SFD_GetCond(void* a);
+u32 MWSFD_GetCond(void* self) {
+    return SFD_GetCond(self ? *(void**)((u8*)self + 0x58) : NULL);
+}
 // LLM-HARNESS-END: us-803a553c
 
 // LLM-HARNESS-BEGIN: us-803a5554
@@ -748,7 +761,10 @@ void MWSFD_SetFlowLimit() {}
 // LLM-HARNESS-END: us-803a555c
 
 // LLM-HARNESS-BEGIN: us-803a55a4
-void MWSFD_IsEnableHndl() {}
+u32 MWSFD_IsEnableHndl(void* self) {
+    if (self == NULL) return 0;
+    return *(u32*)self;
+}
 // LLM-HARNESS-END: us-803a55a4
 
 // LLM-HARNESS-BEGIN: us-803a55bc

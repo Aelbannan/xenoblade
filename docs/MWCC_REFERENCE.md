@@ -144,6 +144,11 @@ Exact size `0x3C0`, frame `-0x80` / `stmw r25` / `mr r31,r1`. Peak ~**99.56%** C
 
 **Soft-cap (8 words):** `id-0x312c` / `li 0xc8` colored `r0`/`r3` (decomp) vs retail `r3`/`r0`, so `codePersist` lands in **r27** vs retail **r30** (and `mr` vs second `clrlwi` on the assign). Decl-order / goto / inline-helper / `u32`+ret2 reuse did not flip it. `EQUIVALENT` blocked by unvalidated callees. Keep high-level C++; **no** `asm void`.
 
+**General r0/r3 leaf swap pattern (code_800B06A4 func_800B1F54 / func_800B1F40):**
+Retail `lwz r3, offset(r3)` then `cmpwi r3, 0`; decomp generates `lwz r0, offset(r3)` then `cmpwi r0, 0`.
+
+MWCC prefers r0 for the loaded field value when r3 holds the `this`/first parameter, even when r3 is not used after the load. The function is a leaf (no further use of r3). Decl-order, `u32 self` cast, explicit `self = val` reassignment, `goto`, and `if`/`else` restructures all failed to flip the allocation. The reg-swap is purely Chaitin and does not affect EQUIVALENT_MATCH when no callee dependency exists. Documented at 98.3% CODE_MATCH (2 reg-swap mismatches out of 6 instructions). Accept as soft-cap; do not use `asm void` or `register` bindings.
+
 **Stall packet (cursor-gki-uicf, 2026-07-24):** peak **99.5625%** CODE_MATCH, size PASS `0x3C0`, equiv `inconclusive_unvalidated_callee` (9 callees). Residual still the 8-word Chaitin pair above. Fresh RA shapes ruled out: (1) `u16 codePersist` reused for `ret2` — flat 99.56%; (2) `u8 code` + `u32 diff` — **98.58%** (`li r25,0xc8` steals a1 home); (3) `codePersist=0xc8` then conditional overwrite — **98.58%** (`li r27` early). Prior ruled out: decl-order, goto beq-skip, inline helper, masked temp, `u32`+ret2. Next experiments: decomp.me scratch for li→r0 anti-coalesce; certify callees for EQUIVALENT route; avoid narrowing `code` onto NV early. Term measures ~99.8% on current toolchain (registry FULL_MATCH stale at HEAD too) — do not chase via this function's locals.
 
 ## CUICfManager::Init — packed slot templates (US)
@@ -504,6 +509,56 @@ Fix: use individual components (`ml::CPnt16 splitSize, splitPos, normalSize, nor
 ### 6. Struct layout before logic
 
 Fix offsets in headers before tuning C++ shape. Wrong layout causes branch/frame divergence even when control flow looks right.
+
+### 7. Small C functions: branch inversion, signed compare, and instruction ordering
+
+MWCC behaviour with small C (not C++) functions — common in SDK/middleware like CRI ADX.
+
+#### 7a. Branch inversion: `== NULL` → `bne`, `!= NULL` → `beq`
+
+MWCC inverts the branch condition for null-pointer checks:
+
+```c
+// Generates bne (branch if not-equal) — matches retail
+if (self == NULL) return 0;
+
+// Generates beq (branch if equal) — does NOT match retail  
+if (self != NULL) { body }
+```
+
+**Pattern:** use `== NULL` (equality) to get `bne`-skip matching retail's pointer-null guard. The inverse (`!= NULL`) generates `beq` which is structurally equivalent but bytes differ.
+
+#### 7b. Signed vs unsigned compare: `s32` for `cmpwi`, `u32` for `cmpli`
+
+MWCC uses `cmpwi` (signed compare immediate) for `s32` comparisons and `cmpli` (unsigned) for `u32`. Retail sometimes uses one or the other. Match by choosing the correct signedness:
+
+```c
+// Retail uses cmpwi r4, 8 — use s32
+void SFBUF_SetTermFlg(void* buf, s32 idx, u32 flg);
+
+// Would generate cmpli (unsigned) — mismatch
+// void SFBUF_SetTermFlg(void* buf, u32 idx, u32 flg);
+```
+
+#### 7c. Instruction ordering: `li` before `stw` soft-cap
+
+MWCC aggressively schedules `li rX, 0` (setting up a later call's argument) **before** an intervening `stw` that writes through the same pointer. No C-level barrier prevents this:
+
+```c
+*(u32*)self = 0;
+memset(self, 0, 0x3c);
+// MWCC emits: li r0,0; li r4,0; stw r0,0(r3); li r5,0x3c; b memset
+// Retail has:  li r0,0; stw r0,0(r3); li r4,0; li r5,0x3c; b memset
+```
+
+`volatile`, expression nesting `((u32*)self)[0] = 0`, and data dependencies via `memset(self, *(u32*)self, …)` all fail to flip the schedule. Accept as a soft-cap; equivalence proves EQUIVALENT when no callee-register dependency exists.
+
+#### 7d. Register allocation for small C functions
+
+For simple C functions with few locals, MWCC's Chaitin allocator may differ from retail:
+
+- **Extra unused param** (`void f(void* self, u32 unused, u32 addend)`) can push the third argument into `r5` matching retail where `addend` naturally lands. The middle param is dead but occupies `r4` so the active value goes to `r5` (same as retail).
+- **Global function pointers** (`lbl_eu_*`: `extern void (*lbl)(void)`) may load the symbol address into a different register (`lis r3` vs retail `lis r4`). The reg-swap is harmless for leaf void functions but causes `not_equivalent` in SMT when `r3` is live-out (the equivalence checker treats it as an observable). Use `extern u32 lbl_eu_*[]` + manual cast if register pressure is high, though this rarely changes the allocation.
 
 ---
 
@@ -938,6 +993,86 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
 - **`GXPokeAlphaRead`:** `GX_BITSET` for AFMT (bits 30–31) + ZFMT (bit 29) — bare `|= mode & 3` drops the leading `li r0,0` / `rlwimi` and shrinks by 4.
 - **`GXPokeBlendMode`:** still set opcode/`RID` `0x41` via `GX_BP_SET_OPCODE` before the PE halfword store (matches retail even though `sth` only writes low 16).
 - **IPA for AbortFrame / DrawDone:** write `GXAbortFrame` as `__GXAbort(); ...; GXFlush();` and `GXDrawDone` as `GXSetDrawDone();` + `static inline GXWaitDrawDone()`. Manual duplication of the callee body stalls at ~99.3–99.5% (wrong Chaitin colors); `-ipa file` inlines into the caller and matches retail RA. Do **not** emit a global `GXWaitDrawDone` symbol.
+
+---
+
+## Template pitfalls — MWCC and -inline auto
+
+MWCC with `-inline auto` (the default for Xenoblade decomp objects) treats
+function templates defined in headers as always-inline and **omits standalone
+function bodies**. The retail binary often has these bodies because it was
+compiled with different flags or a different MWCC version.
+
+### Symptom
+
+A target is `NOT_STARTED` or `COMPILES` but the function never appears in the
+decompiled `.o`. Running `nm build/…/src/…/unit.o | grep <symbol>` returns
+nothing, even though the template is clearly used in the file.
+
+### Root cause
+
+MWCC with `-inline auto` sees the full template body in the header and inlines
+it at every call site. No standalone global symbol is emitted.
+
+### Solution
+
+Two things are needed together:
+
+**1. `#pragma auto_inline off` around explicit instantiations**
+
+```cpp
+#pragma push
+#pragma auto_inline off
+namespace nw4r { namespace lyt { namespace detail {
+    template const BlendMode* ConvertOffsToPtr<BlendMode>(const void*, unsigned int);
+    // …
+}}}
+#pragma pop
+```
+
+The `push/pop` saves and restores the inline state so only the instantiation
+lines are affected — the rest of the file compiles normally with `-inline auto`.
+
+**2. `unsigned int` vs `u32` — mangling mismatch**
+
+On PowerPC (LP64 data model), both `unsigned int` and `unsigned long` are
+32-bit with identical ABI. But C++ name mangling differs:
+
+| Type | Mangling | Example |
+|------|----------|---------|
+| `unsigned int` | `Ui` | `ConvertOffsToPtr<…>__…FPCvUi_PC…` |
+| `unsigned long` | `Ul` | `ConvertOffsToPtr<…>__…FPCvUl_PC…` |
+
+Check the retail binary symbol with `nm build/…/obj/…/unit.o | grep <symbol>`:
+if it has `Ui` but your decomp build produces `Ul`, change the template's
+parameter type from `u32` to `unsigned int` directly, OR change the `u32`
+typedef in your compilation unit.
+
+> **When to change the header template**: if the retail compiled this template
+> with `unsigned int` (shown by `Ui` in the mangled name), the template
+> definition in our source tree should match. Changing `u32 offset` to
+> `unsigned int offset` is safe — both types are 32-bit, ABI-identical, and
+> all callers pass `u32` values which implicitly convert.
+
+### What NOT to do
+
+- ❌ `template …` explicit instantiation alone (without `#pragma auto_inline off`)
+  → emits warning `(10507)` but no standalone body.
+- ❌ `#pragma define_template` — MWCC silently ignores it on this compiler
+  version (GC/3.0a5.2).
+- ❌ Separate `.s` assembly stub — produces correct symbols but in a different
+  `.o` file that objdiff/cycle cannot see (they scan only the unit's `.o`).
+- ❌ `extern "C"` with the mangled name — the `<` and `>` characters that C++
+  mangling uses in template names are not valid C identifiers.
+- ❌ `__declspec(export("name"))` — MWCC parses the `<`/`>` as operators and
+  fails with `'(' expected`.
+- ❌ Taking the function address via typedef — MWCC reports `<unknown-type>`
+  for uninstantiated function templates.
+
+### Real example
+
+All 7 `ConvertOffsToPtr<T>` instantiations in `libs/nw4r/src/lyt/lyt_material.cpp`
+were fixed with this pattern. See commit for details.
 
 ---
 

@@ -29,6 +29,12 @@ StrmPlayer::~StrmPlayer() {
     Shutdown();
 }
 
+StrmPlayer::PlayerTrack* StrmPlayer::GetPlayerTrack(int index) {
+    if (index > 7) return NULL;
+    u8* base = reinterpret_cast<u8*>(this) + 0xB78;
+    return reinterpret_cast<PlayerTrack*>(base + index * sizeof(PlayerTrack));
+}
+
 bool StrmPlayer::Setup(StrmBufferPool* pBufferPool) {
     SoundThread::AutoLock lock;
 
@@ -929,9 +935,7 @@ extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 // LLM-HARNESS-BEGIN: us-804272d4
 extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
 // LLM-HARNESS-END: us-804272d4
-// LLM-HARNESS-BEGIN: us-804272d8
-extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
-// LLM-HARNESS-END: us-804272d8
+
 // LLM-HARNESS-BEGIN: us-804272e8
 extern "C" u8 IsPause__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return ((u8*)self)[295]; }
 // LLM-HARNESS-END: us-804272e8

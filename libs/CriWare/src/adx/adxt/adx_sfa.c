@@ -5,9 +5,15 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80382798
-void SFA_Init() {}
+extern u32 lbl_eu_805E3338;
+void SFA_Init(void) {
+    lbl_eu_805E3338++;
+}
 // LLM-HARNESS-END: us-80382798
 
 // LLM-HARNESS-BEGIN: us-803827ac
-void SFA_Finish() {}
+extern u32 lbl_eu_805E3338;
+void SFA_Finish(void) {
+    lbl_eu_805E3338--;
+}
 // LLM-HARNESS-END: us-803827ac

@@ -5,7 +5,10 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803cb938
-void SFPLY_Init() {}
+extern u32 lbl_eu_80619BA0;
+void SFPLY_Init(void) {
+    lbl_eu_80619BA0 = 0;
+}
 // LLM-HARNESS-END: us-803cb938
 
 // LLM-HARNESS-BEGIN: us-803cb948
@@ -97,7 +100,10 @@ void SFD_Stop() {}
 // LLM-HARNESS-END: us-803cd4c8
 
 // LLM-HARNESS-BEGIN: us-803cd62c
-void SFPLY_GetResetFlg() {}
+extern char lbl_eu_80606E38[];
+u32 SFPLY_GetResetFlg(void) {
+    return *(u32*)(lbl_eu_80606E38 + 0x1f0);
+}
 // LLM-HARNESS-END: us-803cd62c
 
 // LLM-HARNESS-BEGIN: us-803cd63c

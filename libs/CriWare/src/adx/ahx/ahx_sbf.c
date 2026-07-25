@@ -21,7 +21,10 @@ void ahxsbf_init_filter() {}
 // LLM-HARNESS-END: us-8038f724
 
 // LLM-HARNESS-BEGIN: us-8038f97c
-void AHXSBF_Finish() {}
+extern u32 lbl_eu_805E64B0;
+void AHXSBF_Finish(void) {
+    lbl_eu_805E64B0--;
+}
 // LLM-HARNESS-END: us-8038f97c
 
 // LLM-HARNESS-BEGIN: us-8038f990

@@ -60,7 +60,13 @@ void mwPlyFxSetOutBufPitchHeight() {}
 // LLM-HARNESS-END: us-803a18e0
 
 // LLM-HARNESS-BEGIN: us-803a1964
-void MWSFTAG_IsUseAinfSj() {}
+int MWSFTAG_IsUseAinfSj(void* self) {
+    int v = *(s32*)((u8*)self + 0x20);
+    if (v == 0 || v == 0x101) {
+        return 1;
+    }
+    return 0;
+}
 // LLM-HARNESS-END: us-803a1964
 
 // LLM-HARNESS-BEGIN: us-803a1988
@@ -68,7 +74,12 @@ void MWSFTAG_CreateAinfSj() {}
 // LLM-HARNESS-END: us-803a1988
 
 // LLM-HARNESS-BEGIN: us-803a1a18
-void MWSFTAG_DestroyAinfSj() {}
+void MWSFTAG_DestroyAinfSj(void* self) {
+    void* p = *(void**)((u8*)self + 0x4c0);
+    if (p == NULL) return;
+    void** vtable = *(void***)p;
+    ((void (*)(void*))vtable[3])(p);
+}
 // LLM-HARNESS-END: us-803a1a18
 
 // LLM-HARNESS-BEGIN: us-803a1a38
@@ -76,11 +87,21 @@ void MWSFTAG_SetAinfSj() {}
 // LLM-HARNESS-END: us-803a1a38
 
 // LLM-HARNESS-BEGIN: us-803a1ac4
-void MWSFTAG_InitTagInf() {}
+void MWSFTAG_InitTagInf(void* self) {
+    *(u32*)((u8*)self + 0x4d8) = 0;
+    *(u32*)((u8*)self + 0x4dc) = 0;
+    *(u32*)((u8*)self + 0x4e0) = 0;
+    *(u32*)((u8*)self + 0x4d4) = -1;
+}
 // LLM-HARNESS-END: us-803a1ac4
 
 // LLM-HARNESS-BEGIN: us-803a1ae0
-void MWSFTAG_ResetAinfSj() {}
+void MWSFTAG_ResetAinfSj(void* self) {
+    void* p = *(void**)((u8*)self + 0x4c0);
+    if (p == NULL) return;
+    void** vtable = *(void***)p;
+    ((void (*)(void*))vtable[5])(p);
+}
 // LLM-HARNESS-END: us-803a1ae0
 
 // LLM-HARNESS-BEGIN: us-803a1b00

@@ -5,7 +5,15 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803d29e0
-void SFSEEKI_InitHn() {}
+void SFSEEKI_InitHn(void* self) {
+    *(u32*)((u8*)self + 0x00) = 0;
+    *(u32*)((u8*)self + 0x18) = 0;
+    *(u32*)((u8*)self + 0x04) = 0;
+    *(u32*)((u8*)self + 0x08) = 0;
+    *(u32*)((u8*)self + 0x0C) = 0;
+    *(u32*)((u8*)self + 0x10) = 0;
+    *(u32*)((u8*)self + 0x14) = 0;
+}
 // LLM-HARNESS-END: us-803d29e0
 
 // LLM-HARNESS-BEGIN: us-803d2a04

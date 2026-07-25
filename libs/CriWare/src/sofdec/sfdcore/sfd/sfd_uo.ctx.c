@@ -760,19 +760,31 @@ int SFUO_Pause(void) { return 0x0; }
 // LLM-HARNESS-END: us-803d1608
 
 // LLM-HARNESS-BEGIN: us-803d1610
-void SFUO_GetWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFUO_GetWrite(void) {
+    SFLIB_SetErr(0xff000601);
+}
 // LLM-HARNESS-END: us-803d1610
 
 // LLM-HARNESS-BEGIN: us-803d161c
-void SFUO_AddWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFUO_AddWrite(void) {
+    SFLIB_SetErr(0xff000601);
+}
 // LLM-HARNESS-END: us-803d161c
 
 // LLM-HARNESS-BEGIN: us-803d1628
-void SFUO_GetRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFUO_GetRead(void) {
+    SFLIB_SetErr(0xff000601);
+}
 // LLM-HARNESS-END: us-803d1628
 
 // LLM-HARNESS-BEGIN: us-803d1634
-void SFUO_AddRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFUO_AddRead(void) {
+    SFLIB_SetErr(0xff000601);
+}
 // LLM-HARNESS-END: us-803d1634
 
 // LLM-HARNESS-BEGIN: us-803d1640

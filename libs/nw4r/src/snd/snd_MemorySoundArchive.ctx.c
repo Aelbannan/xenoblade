@@ -16385,7 +16385,8 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
@@ -241775,7 +241776,7 @@ public:
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
-        return mPreparedFlag;
+        return *(bool*)((u8*)this + 677);
     } // at 0x2C
 
     virtual void SetPlayerPriority(int priority); // at 0x4C
@@ -243977,13 +243978,13 @@ public:
     virtual void Pause(bool flag); // at 0x14
 
     virtual bool IsActive() const {
-        return mActiveFlag;
+        return *(bool*)((u8*)this + 289);
     } // at 0x18
     virtual bool IsStarted() const {
-        return mStartedFlag;
+        return *(bool*)((u8*)this + 290);
     } // at 0x1C
     virtual bool IsPause() const {
-        return mPauseFlag;
+        return *(bool*)((u8*)this + 295);
     }; // at 0x20
 
     virtual void OnUpdateFrameSoundThread() {
@@ -247321,7 +247322,7 @@ void MemorySoundArchive::MemoryFileStream::Seek(s32 offset, u32 origin) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-80419880
-extern "C" int GetRuntimeTypeInfo__Q34nw4r2ut10FileStreamCFv(void) { return lbl_eu_80665548@sda21; }
+extern "C" int GetRuntimeTypeInfo__Q34nw4r2ut10FileStreamCFv(void) { return 0; }
 // LLM-HARNESS-END: us-80419880
 // LLM-HARNESS-BEGIN: us-80419888
 extern "C" u32 GetSize__Q44nw4r3snd18MemorySoundArchive16MemoryFileStreamCFv(void* self) { return *(u32*)((u8*)self + 0x18); }

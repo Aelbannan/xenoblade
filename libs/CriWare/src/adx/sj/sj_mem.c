@@ -5,7 +5,10 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8039669c
-void SJMEM_Error() {}
+extern char lbl_eu_80518A68[];
+void SJMEM_Error(void) {
+    SJERR_CallErr(lbl_eu_80518A68);
+}
 // LLM-HARNESS-END: us-8039669c
 
 // LLM-HARNESS-BEGIN: us-803966a8

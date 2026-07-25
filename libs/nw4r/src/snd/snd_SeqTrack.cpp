@@ -495,5 +495,9 @@ Channel* SeqTrack::NoteOn(int key, int velocity, s32 length, bool tie) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-8041ead8
-extern "C" bool detail_ConvertLabelStringToSoundId__Q34nw4r3snd18SoundArchivePlayerFPCc() { return false; }
+extern "C" u32 ConvertLabelStringToSoundId__Q34nw4r3snd12SoundArchiveCFPCc(void*, const char*);
+
+extern "C" u32 detail_ConvertLabelStringToSoundId__Q34nw4r3snd18SoundArchivePlayerFPCc(void* self, const char* str) {
+    return ConvertLabelStringToSoundId__Q34nw4r3snd12SoundArchiveCFPCc(*(void**)((u8*)self + 0x10), str);
+}
 // LLM-HARNESS-END: us-8041ead8

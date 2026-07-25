@@ -11901,16 +11901,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -16390,6 +16388,7 @@ public:
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -237537,7 +237536,7 @@ public:
 
 public:
     BasicSound(int priority, int arg);
-    virtual ~BasicSound() {}
+    virtual ~BasicSound();
 
     // US Xenoblade vtable (after RTTI @+0x8, dtor @+0xC):
     // +0x10 Shutdown, +0x14 IsPrepared, +0x18 IsAttachedTempSpecialHandle,
@@ -244574,14 +244573,14 @@ public:
     NW4R_UT_RTTI_DECL(WaveSound);
 
 public:
-    explicit WaveSound(SoundInstanceManager<WaveSound>* pManager);
+    WaveSound(SoundInstanceManager<WaveSound>* pManager, int priority, int arg);
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
         return mPreparedFlag;
     } // at 0x2C
 
-    virtual void SetPlayerPriority(int priority); // at 0x4C
+    virtual void OnUpdatePlayerPriority(); // at 0x4C
     virtual bool IsAttachedTempSpecialHandle();   // at 0x5C
     virtual void DetachTempSpecialHandle();       // at 0x60
 
@@ -247441,18 +247440,6 @@ void WsdPlayer::ChannelCallbackFunc(Channel* pDropChannel,
 // LLM-HARNESS-BEGIN: us-8042d664
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9WsdPlayerFv() {}
 // LLM-HARNESS-END: us-8042d664
-// LLM-HARNESS-BEGIN: us-8042d668
-extern "C" void OnShutdownSoundThread__Q44nw4r3snd6detail9WsdPlayerFv() {}
-// LLM-HARNESS-END: us-8042d668
 // LLM-HARNESS-BEGIN: us-8042d678
 extern "C" void InvalidateWaveData__Q44nw4r3snd6detail9WsdPlayerFPCvPCv() {}
 // LLM-HARNESS-END: us-8042d678
-// LLM-HARNESS-BEGIN: us-8042d67c
-extern "C" void IsPause__Q44nw4r3snd6detail9WsdPlayerCFv() {}
-// LLM-HARNESS-END: us-8042d67c
-// LLM-HARNESS-BEGIN: us-8042d690
-extern "C" void IsStarted__Q44nw4r3snd6detail9WsdPlayerCFv() {}
-// LLM-HARNESS-END: us-8042d690
-// LLM-HARNESS-BEGIN: us-8042d6a4
-extern "C" void IsActive__Q44nw4r3snd6detail9WsdPlayerCFv() {}
-// LLM-HARNESS-END: us-8042d6a4

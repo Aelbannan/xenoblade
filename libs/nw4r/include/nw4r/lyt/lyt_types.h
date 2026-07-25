@@ -24,10 +24,12 @@ namespace detail {
  * Pointer operations
  *
  ******************************************************************************/
-template <typename T> T* ConvertOffsToPtr(void* pBase, u32 offset) {
+// Use unsigned int (not u32) to match retail name mangling (Ui vs Ul).
+// On PowerPC both are 32-bit with identical ABI.
+template <typename T> T* ConvertOffsToPtr(void* pBase, unsigned int offset) {
     return reinterpret_cast<T*>(reinterpret_cast<u8*>(pBase) + offset);
 }
-template <typename T> const T* ConvertOffsToPtr(const void* pBase, u32 offset) {
+template <typename T> const T* ConvertOffsToPtr(const void* pBase, unsigned int offset) {
     return reinterpret_cast<const T*>(reinterpret_cast<const u8*>(pBase) +
                                       offset);
 }

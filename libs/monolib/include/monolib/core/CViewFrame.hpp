@@ -19,6 +19,9 @@ class CViewFrame {
 public:
     bool render();
     void detachRenderWork(CWorkThread* pThread);
+    void CView_UnkVirtualFunc1();
+    void CView_UnkVirtualFunc8();
+    void CView_UnkVirtualFunc9();
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4

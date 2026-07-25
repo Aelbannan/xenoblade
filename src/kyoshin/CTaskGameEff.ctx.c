@@ -1375,7 +1375,16 @@ extern "C" void Term__12CTaskGameEffFv() {}
 // LLM-HARNESS-END: us-80045498
 
 // LLM-HARNESS-BEGIN: us-8004552c
-extern "C" void Move__12CTaskGameEffFv() {}
+extern "C" void Move__12CTaskGameEffFv(void* self) {
+    extern void func_804CBB14(void*, float);
+    extern u8 lbl_eu_8065FC18[];
+    extern float lbl_eu_80665D94;
+    if (*(int*)((char*)self + 104) & 2) {
+        func_804CBB14(lbl_eu_8065FC18, lbl_eu_80665D94);
+    } else {
+        func_804CBB14(lbl_eu_8065FC18, *(float*)((char*)self + 108));
+    }
+}
 // LLM-HARNESS-END: us-8004552c
 
 // LLM-HARNESS-BEGIN: us-8004555c

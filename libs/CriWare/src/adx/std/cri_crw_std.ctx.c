@@ -720,7 +720,11 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-8039e76c
-void criCrw_GetVersion() {}
+extern char lbl_eu_80519750[];
+extern void* lbl_eu_805FDDA0;
+void criCrw_GetVersion(void) {
+    lbl_eu_805FDDA0 = lbl_eu_80519750;
+}
 // LLM-HARNESS-END: us-8039e76c
 
 // LLM-HARNESS-BEGIN: us-8039e780
@@ -740,7 +744,10 @@ char* CRICRW_Strcat(char* dst, const char* src1, const char* src2) {
 // LLM-HARNESS-END: us-8039e794
 
 // LLM-HARNESS-BEGIN: us-8039e79c
-void CRICRW_Strncat(void) {}
+char* strncat(char* dest, const char* src, size_t n);
+char* CRICRW_Strncat(char* dest, void* ignored, const char* src, size_t n) {
+    return strncat(dest, src, n);
+}
 // LLM-HARNESS-END: us-8039e79c
 
 // LLM-HARNESS-BEGIN: us-8039e7a8
@@ -748,7 +755,10 @@ void CRICRW_Sprintf() {}
 // LLM-HARNESS-END: us-8039e7a8
 
 // LLM-HARNESS-BEGIN: us-8039e838
-void CRICRW_Vsprintf(void) {}
+int vsprintf(char* s, const char* fmt, va_list ap);
+int CRICRW_Vsprintf(char* s, void* ignored, const char* fmt, va_list ap) {
+    return vsprintf(s, fmt, ap);
+}
 // LLM-HARNESS-END: us-8039e838
 
 // LLM-HARNESS-BEGIN: us-8039e844

@@ -21,15 +21,26 @@ void mwsflib_InitLibWork() {}
 // LLM-HARNESS-END: us-803a4440
 
 // LLM-HARNESS-BEGIN: us-803a44f4
-void MWSFD_GetUsePicUsr() {}
+extern char lbl_eu_805FF3A8[];
+u32 MWSFD_GetUsePicUsr(void) {
+    return *(u32*)(lbl_eu_805FF3A8 + 0x38);
+}
 // LLM-HARNESS-END: us-803a44f4
 
 // LLM-HARNESS-BEGIN: us-803a4504
-void MWSFD_GetPauseBdr() {}
+extern char lbl_eu_805FF3A8[];
+u32 MWSFD_GetPauseBdr(void) {
+    return *(u32*)(lbl_eu_805FF3A8 + 0x3c);
+}
 // LLM-HARNESS-END: us-803a4504
 
 // LLM-HARNESS-BEGIN: us-803a4514
-void MWSFLIB_SetErrCode() {}
+u32 MWSFLIB_SetErrCode(u32 code) {
+    u32 lz = __cntlzw(code);
+    u32 bit = (lz >> 5) & 1;
+    *(u32*)(lbl_eu_805FF3A8 + 0x68) = code;
+    return code & ~(0 - bit);
+}
 // LLM-HARNESS-END: us-803a4514
 
 // LLM-HARNESS-BEGIN: us-803a4534

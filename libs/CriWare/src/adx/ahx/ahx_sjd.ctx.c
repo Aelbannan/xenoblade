@@ -764,11 +764,16 @@ u32 AHXSJD_GetDecDtLen(void* self) { return *(u32*)((u8*)self + 0x24); }
 // LLM-HARNESS-END: us-80390164
 
 // LLM-HARNESS-BEGIN: us-8039016c
-void AHXSJD_GetDecNumSmpl() {}
+u32 AHXSJD_GetDecNumSmpl(void* self) {
+    return *(u32*)((u8*)self + 0x2c) + *(u32*)((u8*)self + 0x28);
+}
 // LLM-HARNESS-END: us-8039016c
 
 // LLM-HARNESS-BEGIN: us-8039017c
-void AHXSJD_EntryFltFunc(void* self, u32 a, u32 b) {}
+void AHXSJD_EntryFltFunc(void* self, void* func, void* ctx) {
+    *(void**)((u8*)self + 0x54) = func;
+    *(void**)((u8*)self + 0x58) = ctx;
+}
 // LLM-HARNESS-END: us-8039017c
 
 // LLM-HARNESS-BEGIN: us-80390188
@@ -789,5 +794,11 @@ void func_8006BEE4(void* p) {
 // LLM-HARNESS-END: us-80390198
 
 // LLM-HARNESS-BEGIN: us-803901a4
-void AHXSJD_SetLnkSw() {}
+void AHXSJD_SetLnkSw(void* self, int val) {
+    if (val == 0) {
+        *(u32*)((u8*)self + 0x38) = 0;
+    } else {
+        *(u32*)((u8*)self + 0x38) = 1;
+    }
+}
 // LLM-HARNESS-END: us-803901a4

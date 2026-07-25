@@ -271,6 +271,8 @@ class XenobladeAdapter:
         certified_funcs: bool = False,
         high_match_callees: bool = False,
         tu: Optional[str] = None,
+        max_func_size: Optional[int] = None,
+        all_funcs: bool = False,
     ) -> List[str]:
         """Return placeholder/empty functions from the call-graph-safe catalog frontier."""
         attempted = {
@@ -282,24 +284,38 @@ class XenobladeAdapter:
                 or _history_row_symbol_accepted(row)
             )
         }
-        selection = "pending" if ignore_called_functions else "ready"
         raw_targets = load_targets(self.config)
-        candidates = [
-            target
-            for target in harness_targets(
-                raw_targets, selection=selection, include_catalog=True
-            )
-            if target.status == "NOT_STARTED"
-            and target.symbol
-            and target.source is not None
-            and target.source.is_file()
-            and target.id not in attempted
-            and (tu is None or _unit_matches(target.unit, tu))
-        ]
-        if certified_funcs:
-            candidates = self._filter_certified_funcs(raw_targets, candidates)
-        if high_match_callees:
-            candidates = self._filter_high_match_callees(raw_targets, candidates)
+        if all_funcs:
+            # Bypass all frontier restrictions: grab every NOT_STARTED target.
+            candidates = [
+                target
+                for target in raw_targets
+                if target.status == "NOT_STARTED"
+                and target.buildable
+                and target.symbol
+                and target.source is not None
+                and target.source.is_file()
+                and target.id not in attempted
+                and (tu is None or _unit_matches(target.unit, tu))
+            ]
+        else:
+            selection = "pending" if ignore_called_functions else "ready"
+            candidates = [
+                target
+                for target in harness_targets(
+                    raw_targets, selection=selection, include_catalog=True
+                )
+                if target.status == "NOT_STARTED"
+                and target.symbol
+                and target.source is not None
+                and target.source.is_file()
+                and target.id not in attempted
+                and (tu is None or _unit_matches(target.unit, tu))
+            ]
+            if certified_funcs:
+                candidates = self._filter_certified_funcs(raw_targets, candidates)
+            if high_match_callees:
+                candidates = self._filter_high_match_callees(raw_targets, candidates)
         from .promotion import PlaceholderDetector
 
         detector = PlaceholderDetector()
@@ -327,6 +343,8 @@ class XenobladeAdapter:
                 if unit.target_path is None or not unit.target_path.is_file():
                     continue
                 retail = extract_function(unit.target_path, target.symbol)
+                if max_func_size is not None and retail.size > max_func_size:
+                    continue
                 # Skip stubs that already byte-match the built decomp object.
                 if unit.base_path is not None and unit.base_path.is_file():
                     try:
@@ -357,8 +375,9 @@ class XenobladeAdapter:
             selected.append(target.id)
             if len(selected) == number:
                 return selected
+        label = "unrestricted" if all_funcs else "ready"
         raise ValueError(
-            f"Only {len(selected)} unattempted, ready placeholder functions are available; "
+            f"Only {len(selected)} unattempted, {label} placeholder functions are available; "
             f"requested {number}"
         )
 
@@ -593,17 +612,27 @@ class XenobladeAdapter:
         tu: Optional[str] = None,
         selection: Optional[str] = None,
         min_fuzzy: Optional[float] = None,
+        max_func_size: Optional[int] = None,
+        all_funcs: bool = False,
     ) -> List[str]:
         if workflow in {"improve", "solve"}:
-            # solve defaults to the ready call-graph frontier; improve keeps all non-accepted.
-            if selection is None:
-                selection = "ready" if workflow == "solve" else "pending"
-            candidates = self._non_accepted_candidates(
-                certified_funcs=certified_funcs,
-                high_match_callees=high_match_callees,
-                tu=tu,
-                selection=selection,
-            )
+            if all_funcs:
+                candidates = self._non_accepted_candidates(
+                    tu=tu,
+                    max_func_size=max_func_size,
+                    all_funcs=True,
+                )
+            else:
+                # solve defaults to the ready call-graph frontier; improve keeps all non-accepted.
+                if selection is None:
+                    selection = "ready" if workflow == "solve" else "pending"
+                candidates = self._non_accepted_candidates(
+                    certified_funcs=certified_funcs,
+                    high_match_callees=high_match_callees,
+                    tu=tu,
+                    selection=selection,
+                    max_func_size=max_func_size,
+                )
         elif workflow == "tu-complete":
             candidates = self._tu_completion_candidates()
         elif workflow == "probe":
@@ -616,6 +645,8 @@ class XenobladeAdapter:
                 tu=tu,
                 selection=selection,
                 min_fuzzy=min_fuzzy,
+                max_func_size=max_func_size,
+                all_funcs=all_funcs,
             )
         else:
             raise ValueError(f"Unsupported automatic workflow selection: {workflow}")
@@ -635,6 +666,8 @@ class XenobladeAdapter:
         tu: Optional[str] = None,
         selection: str = "ready",
         min_fuzzy: float = EQUIVALENT_MATCH_MIN_PERCENT,
+        max_func_size: Optional[int] = None,
+        all_funcs: bool = False,
     ) -> List[str]:
         """Compiling targets that lack FULL_MATCH / current EQUIVALENT_MATCH cert.
 
@@ -646,19 +679,28 @@ class XenobladeAdapter:
         rows_by_id = {
             target.id: {"id": target.id, **target.extra} for target in raw_targets
         }
-        frontier = harness_targets(
-            raw_targets, selection=selection, include_catalog=True
-        )
-        # Stale EQUIVALENT_MATCH is excluded from harness_targets; append those.
-        stale_equiv: List[Target] = []
-        for target in raw_targets:
-            if target.status != "EQUIVALENT_MATCH" or not target.buildable:
-                continue
-            if equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None:
-                continue
-            if tu is not None and not _unit_matches(target.unit, tu):
-                continue
-            stale_equiv.append(target)
+        if all_funcs:
+            frontier = [
+                t for t in raw_targets
+                if t.buildable
+                and t.status not in ACCEPTED_MATCH_STATUSES
+                and t.workflow_status not in {"ACCEPTED", "NOT_REQUIRED", "BLOCKED"}
+            ]
+            stale_equiv: List[Target] = []
+        else:
+            frontier = harness_targets(
+                raw_targets, selection=selection, include_catalog=True
+            )
+            # Stale EQUIVALENT_MATCH is excluded from harness_targets; append those.
+            stale_equiv: List[Target] = []
+            for target in raw_targets:
+                if target.status != "EQUIVALENT_MATCH" or not target.buildable:
+                    continue
+                if equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None:
+                    continue
+                if tu is not None and not _unit_matches(target.unit, tu):
+                    continue
+                stale_equiv.append(target)
 
         units = self.project.load_objdiff_units()
         unit_by_hint = {
@@ -720,6 +762,8 @@ class XenobladeAdapter:
                 pass
             try:
                 retail = extract_function(unit.target_path, target.symbol)
+                if max_func_size is not None and retail.size > max_func_size:
+                    return
                 retail_sizes[target.id] = int(getattr(retail, "size", 0) or 0)
             except (OSError, ValueError):
                 retail_sizes[target.id] = 0
@@ -732,7 +776,7 @@ class XenobladeAdapter:
             if target.id not in seen:
                 consider(target)
 
-        if certified_funcs:
+        if not all_funcs and certified_funcs:
             filtered = self._filter_certified_funcs(
                 raw_targets, [target for _, target in scored]
             )
@@ -995,6 +1039,8 @@ class XenobladeAdapter:
         high_match_callees: bool = False,
         tu: Optional[str] = None,
         selection: str = "pending",
+        max_func_size: Optional[int] = None,
+        all_funcs: bool = False,
     ) -> List[str]:
         """Mismatching buildable targets from a call-graph frontier selection.
 
@@ -1013,11 +1059,20 @@ class XenobladeAdapter:
         retail_symbols: Dict[Path, set[str]] = {}
         retail_sizes: Dict[str, int] = {}
         raw_targets = load_targets(self.config)
-        frontier = harness_targets(
-            raw_targets, selection=selection, include_catalog=True
-        )
+        if all_funcs:
+            # Bypass frontier: select every non-accepted buildable target.
+            candidates_iter = [
+                t for t in raw_targets
+                if t.buildable
+                and t.status not in ACCEPTED_MATCH_STATUSES
+                and t.workflow_status not in {"ACCEPTED", "NOT_REQUIRED", "BLOCKED"}
+            ]
+        else:
+            candidates_iter = harness_targets(
+                raw_targets, selection=selection, include_catalog=True
+            )
         candidates: List[Target] = []
-        for target in frontier:
+        for target in candidates_iter:
             if (
                 not target.buildable
                 or not target.symbol
@@ -1050,6 +1105,8 @@ class XenobladeAdapter:
                     continue
                 retail = extract_function(unit.target_path, target.symbol)
                 retail_sizes[target.id] = int(getattr(retail, "size", 0) or 0)
+                if max_func_size is not None and retail.size > max_func_size:
+                    continue
                 try:
                     decomp = extract_function(unit.base_path, target.symbol)
                 except ValueError:
@@ -1060,10 +1117,11 @@ class XenobladeAdapter:
             except (OSError, ValueError):
                 continue
             candidates.append(target)
-        if certified_funcs:
-            candidates = self._filter_certified_funcs(raw_targets, candidates)
-        if high_match_callees:
-            candidates = self._filter_high_match_callees(raw_targets, candidates)
+        if not all_funcs:
+            if certified_funcs:
+                candidates = self._filter_certified_funcs(raw_targets, candidates)
+            if high_match_callees:
+                candidates = self._filter_high_match_callees(raw_targets, candidates)
         tier_order = {"P0": 0, "P1": 1, "P2": 2, "P3": 3, "P9": 9}
 
         def sort_key(target: Target) -> tuple:

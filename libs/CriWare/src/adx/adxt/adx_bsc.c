@@ -17,11 +17,18 @@ void ADXB_Init() {}
 // LLM-HARNESS-END: us-8038a2a4
 
 // LLM-HARNESS-BEGIN: us-8038a2f8
-void adxb_DefGetWr() {}
+void adxb_DefGetWr(void* self, u32* out) {
+    u32 val = *(u32*)((u8*)self + 0x8c);
+    *out = val;
+    *(u32*)((u8*)self + 0x90) = val;
+}
 // LLM-HARNESS-END: us-8038a2f8
 
 // LLM-HARNESS-BEGIN: us-8038a328
-void adxb_DefAddWr() {}
+void adxb_DefAddWr(void* self, u32 unused, u32 addend) {
+    *(u32*)((u8*)self + 0x8c) += addend;
+    *(u32*)((u8*)self + 0x88) += addend;
+}
 // LLM-HARNESS-END: us-8038a328
 
 // LLM-HARNESS-BEGIN: us-8038a344
@@ -37,7 +44,9 @@ void ADXB_DecodeHeaderAdx() {}
 // LLM-HARNESS-END: us-8038a544
 
 // LLM-HARNESS-BEGIN: us-8038a858
-void ADXB_SetDefFmt() {}
+void ADXB_SetDefFmt(void* self) {
+    *(s16*)((u8*)self + 0x98) = 0;
+}
 // LLM-HARNESS-END: us-8038a858
 
 // LLM-HARNESS-BEGIN: us-8038a864
@@ -53,7 +62,10 @@ void ADXB_DecodeHeader() {}
 // LLM-HARNESS-END: us-8038a91c
 
 // LLM-HARNESS-BEGIN: us-8038aa40
-void ADXB_EntryGetWrFunc(void* self, u32 a, u32 b) {}
+void ADXB_EntryGetWrFunc(void* self, void* func, void* ctx) {
+    *(void**)((u8*)self + 0x78) = func;
+    *(void**)((u8*)self + 0x7c) = ctx;
+}
 // LLM-HARNESS-END: us-8038aa40
 
 // LLM-HARNESS-BEGIN: us-8038aa4c
@@ -73,7 +85,7 @@ void ADXB_GetNumChan() {}
 // LLM-HARNESS-END: us-8038aa64
 
 // LLM-HARNESS-BEGIN: us-8038aac4
-int ADXB_GetFmtBps(void* self) { return (signed char)((u8*)self)[0]; }
+s16 ADXB_GetFmtBps(void* self) { return (signed char)((u8*)self)[0x0d]; }
 // LLM-HARNESS-END: us-8038aac4
 
 // LLM-HARNESS-BEGIN: us-8038aad0
@@ -97,7 +109,10 @@ u32 ADXB_GetLpStartPos(void* self) { return *(u32*)((u8*)self + 0x28); }
 // LLM-HARNESS-END: us-8038ab54
 
 // LLM-HARNESS-BEGIN: us-8038ab5c
-void ADXB_GetLpStartOfst() {}
+u32 ADXB_GetLpStartOfst(void* self) {
+    if (self == NULL) return 0;
+    return *(u32*)((u8*)self + 0x2c);
+}
 // LLM-HARNESS-END: us-8038ab5c
 
 // LLM-HARNESS-BEGIN: us-8038ab74
@@ -117,7 +132,9 @@ s16 ADXB_GetDefOutVol(void* self) { return *(s16*)((u8*)self + 0xd8); }
 // LLM-HARNESS-END: us-8038ab8c
 
 // LLM-HARNESS-BEGIN: us-8038ab94
-void ADXB_GetDefPan() {}
+s16 ADXB_GetDefPan(void* self, u32 idx) {
+    return *(s16*)((u8*)self + 0xda + idx * 2);
+}
 // LLM-HARNESS-END: us-8038ab94
 
 // LLM-HARNESS-BEGIN: us-8038aba4
@@ -133,7 +150,13 @@ void adxb_get_key() {}
 // LLM-HARNESS-END: us-8038ac3c
 
 // LLM-HARNESS-BEGIN: us-8038ae64
-void ADXB_SetLnkSw() {}
+void ADXB_SetLnkSw(void* self, int val) {
+    if (val == 0) {
+        *(u32*)((u8*)self + 0xAC) = 0;
+    } else {
+        *(u32*)((u8*)self + 0xAC) = 1;
+    }
+}
 // LLM-HARNESS-END: us-8038ae64
 
 // LLM-HARNESS-BEGIN: us-8038ae84
@@ -145,7 +168,10 @@ void ADXB_EntryData() {}
 // LLM-HARNESS-END: us-8038ae8c
 
 // LLM-HARNESS-BEGIN: us-8038af00
-void ADXB_Start() {}
+void ADXB_Start(void* self) {
+    if (*(u32*)((u8*)self + 0x04) != 0) return;
+    *(u32*)((u8*)self + 0x04) = 1;
+}
 // LLM-HARNESS-END: us-8038af00
 
 // LLM-HARNESS-BEGIN: us-8038af18

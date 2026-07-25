@@ -768,19 +768,31 @@ void SFAOAP_Pause() {}
 // LLM-HARNESS-END: us-803c1450
 
 // LLM-HARNESS-BEGIN: us-803c14c8
-void SFAOAP_GetWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFAOAP_GetWrite(void) {
+    SFLIB_SetErr(0xff000a01);
+}
 // LLM-HARNESS-END: us-803c14c8
 
 // LLM-HARNESS-BEGIN: us-803c14d4
-void SFAOAP_AddWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFAOAP_AddWrite(void) {
+    SFLIB_SetErr(0xff000a01);
+}
 // LLM-HARNESS-END: us-803c14d4
 
 // LLM-HARNESS-BEGIN: us-803c14e0
-void SFAOAP_GetRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFAOAP_GetRead(void) {
+    SFLIB_SetErr(0xff000a01);
+}
 // LLM-HARNESS-END: us-803c14e0
 
 // LLM-HARNESS-BEGIN: us-803c14ec
-void SFAOAP_AddRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFAOAP_AddRead(void) {
+    SFLIB_SetErr(0xff000a01);
+}
 // LLM-HARNESS-END: us-803c14ec
 
 // LLM-HARNESS-BEGIN: us-803c14f8

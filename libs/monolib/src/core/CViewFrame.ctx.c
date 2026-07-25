@@ -6717,18 +6717,18 @@ public:
     ml::CCol4 mFrameColor; // 0x8
     ml::CCol4 mColor18; // 0x18
     ml::CCol4 mColor28; // 0x28
-    u32 unk38; // 0x38
-    float unk3C; // 0x3C
-    float unk40; // 0x40
-    float unk44; // 0x44
-    float unk48; // 0x48
-    float unk4C; // 0x4C
-    s16 unk50; // 0x50
-    s16 unk52; // 0x52
-    s16 unk54; // 0x54 position / client origin x
-    s16 unk56; // 0x56 position / client origin y
-    s16 unk58; // 0x58 border thickness
-    s16 unk5A; // 0x5A
+    u32 unk38; // 0x38 - render flags / mode bits (1=border expand, 2=split)
+    float unk3C; // 0x3C - possibly padding or unused alignment filler
+    float unk40; // 0x40 - unused alignment padding to align mBorder siblings
+    float unk44; // 0x44 - unused alignment padding
+    float unk48; // 0x48 - unused alignment padding
+    float unk4C; // 0x4C - unused alignment padding
+    s16 unk50; // 0x50 - unused padding
+    s16 unk52; // 0x52 - unused padding
+    s16 mContentX; // 0x54 - client-area origin X (pixels from frame left edge to content)
+    s16 mContentY; // 0x56 - client-area origin Y (pixels from frame top edge to content)
+    s16 mBorder; // 0x58 - frame border thickness in pixels (used for expand/split sizing)
+    s16 unk5A; // 0x5A - unused trailing padding; satisfies 0x5C sizeof
 };
 
 extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
@@ -13927,13 +13927,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -15999,6 +16008,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */
@@ -16305,32 +16315,46 @@ public:
 /* "libs/monolib/include/monolib/core/CViewRectData.hpp" line 3 "monolib/math.hpp" */
 /* end "monolib/math.hpp" */
 
-// CViewRectDataCore: viewport rectangle state at CView::unk1C8 (size 0x14).
+// CViewRectDataCore: viewport rectangle state at CView::mRectData (size 0x14).
 class CViewRectDataCore {
 public:
     CViewRectDataCore* func_80459270();
     void func_804592F0(const ml::CPnt16& size);
     void func_80459384(const ml::CPnt16& maxSize);
 
-    s16 unk0;
-    s16 unk2;
-    s16 unk4;
-    s16 unk6;
-    s16 unk8;
-    s16 unkA;
-    s16 unkC;
-    s16 unkE;
-    s16 unk10;
-    s16 unk12;
+    // Viewport rect data: first two pairs are CPnt16 structs for lwz/stw copies.
+    ml::CPnt16 mViewSize;      // offset 0x00 - current viewport size (x=width, y=height)
+    ml::CPnt16 mBoundsSize;    // offset 0x04 - maximum bounding size
+    s16 mScrollX;              // offset 0x08 - horizontal scroll/offset
+    s16 mScrollY;              // offset 0x0A - vertical scroll/offset
+    s16 mInsetLeft;            // offset 0x0C - left inset
+    s16 mInsetTop;             // offset 0x0E - top inset
+    s16 mInsetRight;           // offset 0x10 - right inset
+    s16 mInsetBottom;          // offset 0x12 - bottom inset
 };
 /* end "monolib/core/CViewRectData.hpp" */
+/* "libs/monolib/include/monolib/core/CView.hpp" line 8 "monolib/core/CFontLayer.hpp" */
+#pragma once
 
-//size: 0x4
+/* "libs/monolib/include/monolib/core/CFontLayer.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Forward declaration for tail-call target
+class CDeviceFont;
+
+/// Font layer base class (size 0x4: vtable pointer only).
+/// CView inherits from this via multiple inheritance.
 class CFontLayer {
 public:
     CFontLayer();
     virtual ~CFontLayer();
+
+    /// Flush pending font rendering state.
+    /// Delegates to CDeviceFont internally; the int parameter is passed
+    /// through to the device layer but may be unused depending on context.
+    void fontFlush(int channel);
 };
+/* end "monolib/core/CFontLayer.hpp" */
 
 // Context ring slot written by setCurrent (0x24 bytes).
 struct CViewContextRingEntry {
@@ -16399,6 +16423,7 @@ public:
     s16 getSplitLine();
     void setSplitLine(s16 line);
     void setCurrent();
+    bool hasCurrent() const;
     void updateMsg();
     void renderView();
 
@@ -16420,19 +16445,19 @@ public:
     
     void getRect(ml::CRect16& rect){
         ml::CRect16 tempRect;
-        getFrame2ViewOffset(tempRect, &unk1DC);
+        getFrame2ViewOffset(tempRect, &mFrame);
 
-        rect.mPos.x = tempRect.mPos.x + unk1DC.unk54;
-        rect.mPos.y = tempRect.mPos.y + unk1DC.unk56;
-        rect.mSize.x = unk1C8.unk0;
-        rect.mSize.y = unk1C8.unk2;
+        rect.mPos.x = tempRect.mPos.x + mFrame.mContentX;
+        rect.mPos.y = tempRect.mPos.y + mFrame.mContentY;
+        rect.mSize.x = mRectData.mViewSize.x;
+        rect.mSize.y = mRectData.mViewSize.y;
     }
 
     //0x0: vtable 1
     //0x4-1C4: CWorkThread
     //0x1C4: vtable 2
-    CViewRectDataCore unk1C8; //0x1C8
-    CViewFrame unk1DC; //0x1DC
+    CViewRectDataCore mRectData; //0x1C8
+    CViewFrame mFrame; //0x1DC
     CViewResList unk238; //0x238 reslist<WORK_ID>
     CViewResList unk258; //0x258 reslist<IWorkEvent*>
     u32 unk278; //0x278
@@ -16446,7 +16471,8 @@ public:
     u32 unk3FC; //0x3FC
     ml::FixStr<64> mName; //0x400
     ml::CVec4 unk444; //0x444
-    u8 unk454[0x45C - 0x454]; //0x454
+    u32 mGXCacheId; //0x454
+    float mAlpha; //0x458
     void* unk45C; //0x45C
     u32 unk460; //0x460
     s16 unk464;
@@ -16865,19 +16891,27 @@ private:
     static const int LINE_WIDTH = 6;
 };
 /* end "monolib/core/CDrawGX.hpp" */
+/* "libs/monolib/src/core/CViewFrame.cpp" line 3 "monolib/core/CViewRectData.hpp" */
+/* end "monolib/core/CViewRectData.hpp" */
 
 extern "C" {
 void func_8043E58C__5CViewFRQ22ml5CRectP5CView(ml::CRect* rect, CView* view);
 void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c);
 int func_8043CAFC__5CViewFv(CView* view);
 void func_80442C68__9CViewRootFv();
+float lbl_eu_8066A318;
+float lbl_eu_8066A2F4;
 
 // Undefined here so MWCC cannot DCE same-TU empty stubs.
-void func_804406D8__10CViewFrameFPv(CViewFrame* self, void* draw);
-void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* rect);
-void func_80440D78__10CViewFrameFPvPv(CViewFrame* self, void* draw, void* pos);
+void func_804406D8__10CViewFrameFPv(CViewFrame* self, CDrawGX* draw);
+void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw, ml::CRect16* rect);
+void func_80440D78__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw, ml::CPnt16* pos);
 }
 
+// Render the view frame: compute the visible rectangle (with optional
+// border expansion for menu/target frames), clip to parent, and draw
+// border quads via CDrawGX. Returns false if the frame has no owner or
+// the computed content rect is degenerate (zero width/height).
 bool CViewFrame::render() {
     // Decl order first = higher addr. Target: col@0x30 view@0x28 frame@0x20
     // early rect@0x18 clip@0x10 scratch@0x08; CDrawGX nested late @0x40.
@@ -16899,13 +16933,13 @@ bool CViewFrame::render() {
     {
         int expand = 0;
         CView* owner = mOwner;
-        CView* view = owner->unk1DC.mOwner;
+        CView* view = owner->mFrame.mOwner;
         u32 flags = view->unk27C;
         // Volatile loads pin 0x230/232/1c8/1ca order; expand already live → retail r6/r5/r3/r0.
-        s16 px = *(volatile s16*)&view->unk1DC.unk54;
-        s16 py = *(volatile s16*)&view->unk1DC.unk56;
-        s16 sx = *(volatile s16*)&view->unk1C8.unk0;
-        s16 sy = *(volatile s16*)&view->unk1C8.unk2;
+        s16 px = *(volatile s16*)&view->mFrame.mContentX;
+        s16 py = *(volatile s16*)&view->mFrame.mContentY;
+        s16 sx = *(volatile s16*)&view->mRectData.mViewSize.x;
+        s16 sy = *(volatile s16*)&view->mRectData.mViewSize.y;
         ml::CRect16* r = (ml::CRect16*)&rect;
         r->mPos.x = px;
         r->mPos.y = py;
@@ -16920,11 +16954,11 @@ bool CViewFrame::render() {
         }
 
         if (expand != 0) {
-            view = *(CView* volatile*)&owner->unk1DC.mOwner;
+            view = *(CView* volatile*)&owner->mFrame.mOwner;
             expand = 0;
 
             {
-                s16 border = owner->unk1DC.unk58;
+                s16 border = owner->mFrame.mBorder;
                 rect.mSize.x = (s16)(rect.mSize.x + (s16)(border * 2));
             }
 
@@ -16937,11 +16971,11 @@ bool CViewFrame::render() {
 
             // Separate scopes so width-path border is dead before these lha 0x234.
             if (expand != 0) {
-                s16 b1 = owner->unk1DC.unk58;
+                s16 b1 = owner->mFrame.mBorder;
                 rect.mSize.y =
                     (s16)(rect.mSize.y + (s16)(b1 * 3 + 0x16));
             } else {
-                s16 b2 = owner->unk1DC.unk58;
+                s16 b2 = owner->mFrame.mBorder;
                 rect.mSize.y = (s16)(rect.mSize.y + (s16)(b2 * 2));
             }
         }
@@ -16985,9 +17019,9 @@ bool CViewFrame::render() {
         CView* own = mOwner;
         flagExpand = 0;
         flagInner = 0;
-        CView* vw = own->unk1DC.mOwner;
-        width = vw->unk1C8.unk0;
-        height = vw->unk1C8.unk2;
+        CView* vw = own->mFrame.mOwner;
+        width = vw->mRectData.mViewSize.x;
+        height = vw->mRectData.mViewSize.y;
 
         if ((vw->unk27C & 1) != 0) {
             if ((vw->unk278 & 1) == 0) {
@@ -17001,7 +17035,7 @@ bool CViewFrame::render() {
         }
 
         if (flagExpand != 0) {
-            border = own->unk1DC.unk58;
+            border = own->mFrame.mBorder;
             flagExpand = 0;
             // No outer (s16) on the sum: retail does add r31,r31,r0 without final extsh.
             width += (s16)(border * 2);
@@ -17029,7 +17063,7 @@ bool CViewFrame::render() {
 
             col = mFrameColor;
             {
-                float opacity = *(float*)((u8*)mOwner + 0x458);
+                float opacity = mOwner->mAlpha;
                 col.a = col.a * opacity;
             }
             draw.setCol(col);
@@ -17064,7 +17098,7 @@ bool CViewFrame::render() {
 
                 if (drawSplit != 0) {
                     func_804406D8__10CViewFrameFPv(this, &draw);
-                    s16 adj = (s16)(unk58 + 0x16);
+                    s16 adj = (s16)(mBorder + 0x16);
                     frameRect.mPos.y = (s16)(frameRect.mPos.y + adj);
                     frameRect.mSize.y = (s16)(frameRect.mSize.y - adj);
                 }
@@ -17079,10 +17113,110 @@ bool CViewFrame::render() {
     return true;
 }
 
+// Draw the 8-segment frame border into the CDrawGX batch: 4 outer
+// edge rectangles (left, bottom, right, top) with the frame colour,
+// then 4 inner 1px highlight/outline lines (right+bottom outer
+// outline, top+left inner highlight) at the scaled-down colour.
+// @param self  CViewFrame with mBorder thickness and mFrameColor.
+// @param draw  Target CDrawGX draw context.
+// @param rect  Bounding rectangle of the frame area to draw.
+extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw,
+                                                 ml::CRect16* rect) {
+    ml::CCol4 col;
+    ml::CRect16 piece;
+    s16 border = self->mBorder;
+    float scale = lbl_eu_8066A318;
+    float opacity = self->mOwner->mAlpha;
+
+    col.r = self->mFrameColor.r * scale;
+    col.g = self->mFrameColor.g * scale;
+    col.b = self->mFrameColor.b * scale;
+    col.a = self->mFrameColor.a * opacity;
+    draw->setCol(col);
+
+    draw->begin(9, 1);
+    piece.mPos.x = rect->mPos.x;
+    piece.mPos.y = rect->mPos.y;
+    piece.mSize.x = border;
+    piece.mSize.y = rect->mSize.y;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = rect->mPos.x;
+    piece.mPos.y = (s16)((s16)(rect->mPos.y + rect->mSize.y) - border);
+    piece.mSize.x = rect->mSize.x;
+    piece.mSize.y = border;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)((s16)(rect->mPos.x + rect->mSize.x) - border);
+    piece.mPos.y = rect->mPos.y;
+    piece.mSize.x = border;
+    piece.mSize.y = rect->mSize.y;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = rect->mPos.x;
+    piece.mPos.y = rect->mPos.y;
+    piece.mSize.x = rect->mSize.x;
+    piece.mSize.y = border;
+    draw->add(piece);
+    draw->end();
+
+    scale = lbl_eu_8066A2F4;
+    col.r = self->mFrameColor.r * scale;
+    col.g = self->mFrameColor.g * scale;
+    col.b = self->mFrameColor.b * scale;
+    col.a = self->mFrameColor.a * opacity;
+    draw->setCol(col);
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)((s16)(border + rect->mPos.x) - 1);
+    piece.mPos.y = (s16)(rect->mPos.y + border);
+    piece.mSize.x = 1;
+    piece.mSize.y = (s16)(rect->mSize.y - (s16)(border * 2));
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)(rect->mPos.x + border);
+    piece.mPos.y = (s16)((s16)(border + rect->mPos.y) - 1);
+    piece.mSize.x = (s16)(rect->mSize.x - (s16)(border * 2));
+    piece.mSize.y = 1;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)(rect->mPos.x - 1);
+    piece.mPos.y = (s16)((s16)(rect->mPos.y + rect->mSize.y) - 1);
+    piece.mSize.x = rect->mSize.x;
+    piece.mSize.y = 1;
+    draw->add(piece);
+    draw->end();
+
+    draw->begin(9, 1);
+    piece.mPos.x = (s16)((s16)(rect->mPos.x + rect->mSize.x) - 1);
+    piece.mPos.y = rect->mPos.y;
+    piece.mSize.x = 1;
+    piece.mSize.y = rect->mSize.y;
+    draw->add(piece);
+    draw->end();
+}
+
 // LLM-HARNESS-BEGIN: us-80442564
+// CViewFrame default constructor — empty; initialisation is done by the
+// placement-new caller or caller-side inline init.
 extern "C" void __ct__CViewFrame() {}
 // LLM-HARNESS-END: us-80442564
 // LLM-HARNESS-BEGIN: us-80442600
+// Compute the offset from the frame's outer rect to its viewport content
+// area (i.e. how much the content region is inset by border + split gap).
+// Only applies when the owner view has border-expand/split flags enabled.
+// @param out    Receives the offset as a position vector.
+// @param frame  The frame whose border inset to compute.
 extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame) {
     out->mPos.x = 0;
@@ -17100,8 +17234,8 @@ extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
         return;
     }
 
-    out->mPos.x = (s16)(out->mPos.x + frame->unk58);
-    out->mPos.y = (s16)(out->mPos.y + frame->unk58);
+    out->mPos.x = (s16)(out->mPos.x + frame->mBorder);
+    out->mPos.y = (s16)(out->mPos.y + frame->mBorder);
 
     apply = 0;
     owner = frame->mOwner;
@@ -17115,20 +17249,24 @@ extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
         return;
     }
 
-    out->mPos.y = (s16)(out->mPos.y + (s16)(frame->unk58 + 0x16));
+    out->mPos.y = (s16)(out->mPos.y + (s16)(frame->mBorder + 0x16));
 }
 // LLM-HARNESS-END: us-80442600
 
-// Owner client rect into out; optional border expand (same gates as render()).
+// Get the client rect of the frame's owner view, optionally expanded
+// by the border thickness (same gate logic as render()). The result
+// is the visible content area in the owner's coordinate space.
+// @param out    Receives the client rectangle.
+// @param frame  The frame whose owner's client rect to query.
 extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame) {
     CView* view = frame->mOwner;
     int expand = 0;
 
-    out->mPos.x = view->unk1DC.unk54;
-    out->mPos.y = view->unk1DC.unk56;
-    out->mSize.x = view->unk1C8.unk0;
-    out->mSize.y = view->unk1C8.unk2;
+    out->mPos.x = view->mFrame.mContentX;
+    out->mPos.y = view->mFrame.mContentY;
+    out->mSize.x = view->mRectData.mViewSize.x;
+    out->mSize.y = view->mRectData.mViewSize.y;
 
     if ((view->unk27C & 1) != 0) {
         u32 mode = view->unk278;
@@ -17141,7 +17279,7 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
     }
 
     {
-        s16 border = frame->unk58;
+        s16 border = frame->mBorder;
         out->mSize.x = (s16)(out->mSize.x + (s16)(border * 2));
     }
 
@@ -17154,14 +17292,22 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
         }
     }
     if (expand != 0) {
-        s16 border = frame->unk58;
+        s16 border = frame->mBorder;
         out->mSize.y = (s16)(out->mSize.y + (s16)(border * 3 + 0x16));
     } else {
-        s16 border = frame->unk58;
+        s16 border = frame->mBorder;
         out->mSize.y = (s16)(out->mSize.y + (s16)(border * 2));
     }
 }
 
 // LLM-HARNESS-BEGIN: us-80444550
+// Detach the frame from a CWorkThread's render list. Currently a stub;
+// the retail function unlinks from a linked-list render-work chain.
 extern "C" void detachRenderWork__10CViewFrameFP11CWorkThread() {}
 // LLM-HARNESS-END: us-80444550
+
+// LLM-HARNESS-BEGIN: us-804425f8
+extern "C" void func_8043FC60__10CViewFrameFUl(void* self, u32 val) {
+    *(u32*)((u8*)self + 4) = val;
+}
+// LLM-HARNESS-END: us-804425f8

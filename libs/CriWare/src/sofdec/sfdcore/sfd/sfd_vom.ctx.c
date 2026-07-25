@@ -756,11 +756,17 @@ int SFVOM_Pause(void) { return 0x0; }
 // LLM-HARNESS-END: us-803d176c
 
 // LLM-HARNESS-BEGIN: us-803d1774
-void SFVOM_GetWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFVOM_GetWrite(void) {
+    SFLIB_SetErr(0xff000701);
+}
 // LLM-HARNESS-END: us-803d1774
 
 // LLM-HARNESS-BEGIN: us-803d1780
-void SFVOM_AddWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFVOM_AddWrite(void) {
+    SFLIB_SetErr(0xff000701);
+}
 // LLM-HARNESS-END: us-803d1780
 
 // LLM-HARNESS-BEGIN: us-803d178c
@@ -768,7 +774,10 @@ void SFVOM_GetRead() {}
 // LLM-HARNESS-END: us-803d178c
 
 // LLM-HARNESS-BEGIN: us-803d17f0
-void SFVOM_AddRead() {}
+void SFBUF_VfrmAddRead(void* self, u32 a, u32 b, u32 c);
+void SFVOM_AddRead(void* self, u32 a, u32 b) {
+    SFBUF_VfrmAddRead(self, *(u32*)((u8*)self + 0x2180), a, b);
+}
 // LLM-HARNESS-END: us-803d17f0
 
 // LLM-HARNESS-BEGIN: us-803d1804

@@ -28,6 +28,7 @@ public:
 
 public:
     explicit StrmSound(SoundInstanceManager<StrmSound>* pManager);
+    virtual ~StrmSound();
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
@@ -45,8 +46,11 @@ public:
         return mStrmPlayer;
     } // at 0x6C
 
-    bool Prepare(StrmBufferPool* pPool, StrmPlayer::StartOffsetType offsetType,
-                 s32 offset, int voices, ut::FileStream* pStream);
+    bool Setup(StrmBufferPool* pPool, int voices, u16 unk);
+    bool Prepare(StrmPlayer::StartOffsetType offsetType, s32 offset,
+                 ut::FileStream* pStream);
+    void InitParam();
+    void UpdateMoveValue();
 
     void* GetFileStreamBuffer() {
         return mFileStreamBuffer;

@@ -141,11 +141,17 @@ void adxt_Pause() {}
 // LLM-HARNESS-END: us-803870e4
 
 // LLM-HARNESS-BEGIN: us-80387398
-void ADXT_SetTranspose() {}
+void ADXT_SetTranspose(void* self) {
+    ADXCRS_Enter();
+    ADXCRS_Leave();
+}
 // LLM-HARNESS-END: us-80387398
 
 // LLM-HARNESS-BEGIN: us-803873bc
-void ADXT_GetTranspose() {}
+void ADXT_GetTranspose(void* self) {
+    ADXCRS_Enter();
+    ADXCRS_Leave();
+}
 // LLM-HARNESS-END: us-803873bc
 
 // LLM-HARNESS-BEGIN: us-803873e0
@@ -173,7 +179,10 @@ void ADXT_IsHeader() {}
 // LLM-HARNESS-END: us-8038761c
 
 // LLM-HARNESS-BEGIN: us-803876b0
-void ADXT_IsEndcode() {}
+s32 ADXT_IsEndcode(void* self, s32 idx) {
+    if (idx >= 2) return 0;
+    return 1;
+}
 // LLM-HARNESS-END: us-803876b0
 
 // LLM-HARNESS-BEGIN: us-803876e0

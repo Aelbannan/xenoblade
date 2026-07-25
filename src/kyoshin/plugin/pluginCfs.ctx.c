@@ -1356,7 +1356,14 @@ extern "C" void setMapJumpArea() {}
 // LLM-HARNESS-END: us-8004785c
 
 // LLM-HARNESS-BEGIN: us-80047dfc
-extern "C" void func_80047814__Q22cf13CfObjectPointFv() {}
+extern "C" void func_80047814__Q22cf13CfObjectPointFv(void* self, void* src) {
+    u32 a = *(u32*)((u8*)src + 0);
+    u32 b = *(u32*)((u8*)src + 4);
+    u32 c = *(u32*)((u8*)src + 8);
+    *(u32*)((u8*)self + 0x3C) = a;
+    *(u32*)((u8*)self + 0x40) = b;
+    *(u32*)((u8*)self + 0x44) = c;
+}
 // LLM-HARNESS-END: us-80047dfc
 
 // LLM-HARNESS-BEGIN: us-80047e18
@@ -1576,7 +1583,13 @@ extern "C" void partyWarp() {}
 // LLM-HARNESS-END: us-8004b154
 
 // LLM-HARNESS-BEGIN: us-8004b1c0
-extern "C" void CfObject_UnkVirtualFunc48__Q22cf12CfObjectMoveFv() {}
+extern "C" void* CfObject_UnkVirtualFunc48__Q22cf12CfObjectMoveFv(void* self) {
+    void* ptr = *(void**)((u8*)self + 0xC4);
+    if (ptr == NULL) {
+        return *(void**)((u8*)self + 0x6C0);
+    }
+    return *(void**)((u8*)ptr + 8);
+}
 // LLM-HARNESS-END: us-8004b1c0
 
 // LLM-HARNESS-BEGIN: us-8004b1dc
@@ -1600,15 +1613,33 @@ extern "C" void getWeaponID() {}
 // LLM-HARNESS-END: us-8004b338
 
 // LLM-HARNESS-BEGIN: us-8004b39c
-extern "C" void clearTbox() {}
+extern "C" int clearTbox() {
+    extern void* func_800B07E8__Fv();
+    extern void func_800B1AF4(void*);
+    void* ptr = func_800B07E8__Fv();
+    if (ptr) func_800B1AF4(ptr);
+    return 0;
+}
 // LLM-HARNESS-END: us-8004b39c
 
+// Forward declarations for functions called from this unit
+extern "C" void func_80043628();
+extern "C" void func_801579A4();
+extern "C" void func_800A3304();
+
 // LLM-HARNESS-BEGIN: us-8004b3cc
-extern "C" void returnTitle() {}
+extern "C" int returnTitle() {
+    func_80043628();
+    return 0;
+}
 // LLM-HARNESS-END: us-8004b3cc
 
 // LLM-HARNESS-BEGIN: us-8004b3f0
-extern "C" void dispLoading() {}
+extern "C" int dispLoading() {
+    extern void func_8004302C(int, int);
+    func_8004302C(1, 0);
+    return 0;
+}
 // LLM-HARNESS-END: us-8004b3f0
 
 // LLM-HARNESS-BEGIN: us-8004b41c
@@ -1616,11 +1647,17 @@ extern "C" void addItemLimit() {}
 // LLM-HARNESS-END: us-8004b41c
 
 // LLM-HARNESS-BEGIN: us-8004b454
-extern "C" void clearItemLimit() {}
+extern "C" int clearItemLimit() {
+    func_801579A4();
+    return 0;
+}
 // LLM-HARNESS-END: us-8004b454
 
 // LLM-HARNESS-BEGIN: us-8004b478
-extern "C" void clearEquipGem() {}
+extern "C" int clearEquipGem() {
+    func_800A3304();
+    return 0;
+}
 // LLM-HARNESS-END: us-8004b478
 
 // LLM-HARNESS-BEGIN: us-8004b49c
@@ -1652,5 +1689,8 @@ extern "C" void isVoiceJP() {}
 // LLM-HARNESS-END: us-8004b5f4
 
 // LLM-HARNESS-BEGIN: us-8004b64c
-extern "C" void pluginCfsRegist() {}
+extern "C" void pluginCfsRegist() {
+    extern void vmPluginRegist(void*, void*);
+    vmPluginRegist((void*)0x804FB046, (void*)0x80525F98);
+}
 // LLM-HARNESS-END: us-8004b64c

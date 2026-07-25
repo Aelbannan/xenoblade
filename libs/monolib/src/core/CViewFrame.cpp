@@ -414,3 +414,13 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
 // the retail function unlinks from a linked-list render-work chain.
 extern "C" void detachRenderWork__10CViewFrameFP11CWorkThread() {}
 // LLM-HARNESS-END: us-80444550
+
+// LLM-HARNESS-BEGIN: us-804425f8
+extern "C" void func_8043FC60__10CViewFrameFUl(void* self, u32 val) {
+    *(u32*)((u8*)self + 4) = val;
+}
+// LLM-HARNESS-END: us-804425f8
+
+void CViewFrame::CView_UnkVirtualFunc1() {}
+void CViewFrame::CView_UnkVirtualFunc8() {}
+void CViewFrame::CView_UnkVirtualFunc9() {}

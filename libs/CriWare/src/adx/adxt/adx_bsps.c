@@ -17,5 +17,9 @@ void ADXB_ExecOneSpsd() {}
 // LLM-HARNESS-END: us-8039af94
 
 // LLM-HARNESS-BEGIN: us-8039b2b4
-void ADXB_CheckSpsd() {}
+s32 memcmp(const void* s1, const void* s2, size_t n);
+extern const u8 lbl_eu_80519108[4];
+s32 ADXB_CheckSpsd(const void* buf) {
+    return memcmp(buf, lbl_eu_80519108, 4) == 0 ? 1 : 0;
+}
 // LLM-HARNESS-END: us-8039b2b4

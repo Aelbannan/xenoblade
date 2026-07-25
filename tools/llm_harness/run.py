@@ -106,6 +106,16 @@ def main(argv: list[str] | None = None) -> int:
                 "--tu",
                 help="Filter to functions in a specific translation unit (e.g. kyoshin/cf/CfPadTask)",
             )
+            command.add_argument(
+                "--max-func-size",
+                type=int,
+                help="Only select functions with retail size <= this many bytes (e.g. 8 for 8-byte or less)",
+            )
+            command.add_argument(
+                "--all",
+                action="store_true",
+                help="Bypass all call-graph frontier, certified-callee, and high-match-callees restrictions",
+            )
         if name in {"improve", "solve", "solve-local", "tu-solve"}:
             command.add_argument(
                 "--selection",
@@ -162,6 +172,11 @@ def main(argv: list[str] | None = None) -> int:
         "--number",
         type=int,
         help="Automatically select this many probe-eligible compiling targets",
+    )
+    probe.add_argument(
+        "--max-func-size",
+        type=int,
+        help="Only select functions with retail size <= this many bytes (e.g. 8 for 8-byte or less)",
     )
     probe.add_argument(
         "--tu",
@@ -495,6 +510,8 @@ def main(argv: list[str] | None = None) -> int:
                     tu=args.tu,
                     selection=args.selection,
                     min_fuzzy=float(args.min_fuzzy),
+                    max_func_size=args.max_func_size,
+                    all_funcs=getattr(args, "all", False),
                 )
             except ValueError as exc:
                 parser.error(str(exc))
@@ -701,6 +718,8 @@ def main(argv: list[str] | None = None) -> int:
                     high_match_callees=getattr(args, "high_match_callees", False),
                     tu=getattr(args, "tu", None),
                     selection=selection,
+                    max_func_size=args.max_func_size,
+                    all_funcs=getattr(args, "all", False),
                 )
             except (TypeError, ValueError) as exc:
                 parser.error(str(exc))
@@ -759,6 +778,8 @@ def main(argv: list[str] | None = None) -> int:
                     high_match_callees=getattr(args, "high_match_callees", False),
                     tu=getattr(args, "tu", None),
                     selection=selection,
+                    max_func_size=args.max_func_size,
+                    all_funcs=getattr(args, "all", False),
                 )
             except (TypeError, ValueError) as exc:
                 parser.error(str(exc))
@@ -818,6 +839,8 @@ def main(argv: list[str] | None = None) -> int:
                     certified_funcs=getattr(args, "certified_funcs", False),
                     high_match_callees=getattr(args, "high_match_callees", False),
                     tu=getattr(args, "tu", None),
+                    max_func_size=args.max_func_size,
+                    all_funcs=getattr(args, "all", False),
                 )
                 if args.dry_run:
                     _print_selected_frontier(harness, target_ids, "ready")
@@ -831,6 +854,8 @@ def main(argv: list[str] | None = None) -> int:
                 }
                 if args.command == "improve":
                     select_kwargs["selection"] = selection
+                select_kwargs["max_func_size"] = getattr(args, "max_func_size", None)
+                select_kwargs["all_funcs"] = getattr(args, "all", False)
                 target_ids = harness.select_targets(
                     args.command, args.number, **select_kwargs
                 )

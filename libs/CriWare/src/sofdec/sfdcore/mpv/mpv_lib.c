@@ -33,7 +33,10 @@ void mpvlib_InitHn() {}
 // LLM-HARNESS-END: us-803abd7c
 
 // LLM-HARNESS-BEGIN: us-803abf34
-void MPV_GetDctCnt() {}
+void MPV_GetDctCnt(void* self, u32* out1, u32* out2) {
+    *out1 = *(u32*)((u8*)self + 0xa10);
+    *out2 = *(u32*)((u8*)self + 0xa14);
+}
 // LLM-HARNESS-END: us-803abf34
 
 // LLM-HARNESS-BEGIN: us-803abf48
@@ -49,7 +52,13 @@ void MPV_GetCond() {}
 // LLM-HARNESS-END: us-803ac0d0
 
 // LLM-HARNESS-BEGIN: us-803ac140
-void MPV_SetMbCb() {}
+void MPVM2V_SetMbCb(void* self, void* a, void* b, void* c);
+void MPV_SetMbCb(void* self, void* a, void* b, void* c) {
+    *(void**)((u8*)self + 0xb50) = a;
+    *(void**)((u8*)self + 0xb54) = b;
+    *(void**)((u8*)self + 0xb58) = c;
+    MPVM2V_SetMbCb(self, a, b, c);
+}
 // LLM-HARNESS-END: us-803ac140
 
 // LLM-HARNESS-BEGIN: us-803ac150

@@ -16385,7 +16385,8 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
@@ -241775,7 +241776,7 @@ public:
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
-        return mPreparedFlag;
+        return *(bool*)((u8*)this + 677);
     } // at 0x2C
 
     virtual void SetPlayerPriority(int priority); // at 0x4C
@@ -243977,13 +243978,13 @@ public:
     virtual void Pause(bool flag); // at 0x14
 
     virtual bool IsActive() const {
-        return mActiveFlag;
+        return *(bool*)((u8*)this + 289);
     } // at 0x18
     virtual bool IsStarted() const {
-        return mStartedFlag;
+        return *(bool*)((u8*)this + 290);
     } // at 0x1C
     virtual bool IsPause() const {
-        return mPauseFlag;
+        return *(bool*)((u8*)this + 295);
     }; // at 0x20
 
     virtual void OnUpdateFrameSoundThread() {
@@ -247352,8 +247353,12 @@ void SoundArchive::SetExternalFileRoot(const char* pExtFileRoot) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-8041eb78
-extern "C" u32 GetSoundCount__Q34nw4r3snd12SoundArchiveCFv(void* self) { return ((u32(*)(void*))GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)((char*)self + 0x4); }
+extern "C" u32 GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(void*);
+extern "C" u32 GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv(void*);
+extern "C" bool ReadFilePos__Q44nw4r3snd6detail22SoundArchiveFileReaderCFUlUlPQ44nw4r3snd12SoundArchive7FilePos(void*, u32, u32, void*);
+
+extern "C" u32 GetSoundCount__Q34nw4r3snd12SoundArchiveCFv(void* self) { return ((u32(*)(void*))GetSoundCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)(*(void**)((u8*)self + 4)); }
 // LLM-HARNESS-END: us-8041eb78
 // LLM-HARNESS-BEGIN: us-8041ebf8
-extern "C" void detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(void) {}
+extern "C" u32 detail_GetFileCount__Q34nw4r3snd12SoundArchiveCFv(void* self) { return ((u32(*)(void*))GetFileCount__Q44nw4r3snd6detail22SoundArchiveFileReaderCFv)(*(void**)((u8*)self + 4)); }
 // LLM-HARNESS-END: us-8041ebf8

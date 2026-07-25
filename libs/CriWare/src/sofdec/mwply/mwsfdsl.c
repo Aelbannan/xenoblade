@@ -29,11 +29,23 @@ void MWSFLSC_IsFsStatErr() {}
 // LLM-HARNESS-END: us-803a0938
 
 // LLM-HARNESS-BEGIN: us-803a0964
-void MWSFLSC_SetFlowLimit() {}
+void LSC_SetFlowLimit(void* a);
+void MWSFLSC_SetFlowLimit(void* self) {
+    void* obj = *(void**)((u8*)self + 0x64);
+    if (obj != NULL) {
+        LSC_SetFlowLimit(obj);
+    }
+}
 // LLM-HARNESS-END: us-803a0964
 
 // LLM-HARNESS-BEGIN: us-803a0978
-void MWSFLSC_Pause() {}
+void LSC_Pause(void* a);
+void MWSFLSC_Pause(void* self) {
+    void* obj = *(void**)((u8*)self + 0x64);
+    if (obj != NULL) {
+        LSC_Pause(obj);
+    }
+}
 // LLM-HARNESS-END: us-803a0978
 
 // LLM-HARNESS-BEGIN: us-803a098c

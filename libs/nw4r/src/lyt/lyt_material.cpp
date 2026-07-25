@@ -2,6 +2,28 @@
 
 #include <cstring>
 
+// Force MWCC to emit standalone ConvertOffsToPtr template instantiations.
+// MWCC with -inline auto treats templates as inline; we temporarily disable
+// auto-inlining so the explicit template instantiations below produce bodies.
+#pragma push
+#pragma auto_inline off
+namespace nw4r { namespace lyt { namespace detail {
+    template const BlendMode* ConvertOffsToPtr<BlendMode>(const void*, unsigned int);
+    template const AlphaCompare* ConvertOffsToPtr<AlphaCompare>(const void*, unsigned int);
+    template const TevStage* ConvertOffsToPtr<TevStage>(const void*, unsigned int);
+    template const IndirectStage* ConvertOffsToPtr<IndirectStage>(const void*, unsigned int);
+    template const TevSwapMode* ConvertOffsToPtr<TevSwapMode>(const void*, unsigned int);
+    template const ut::Color* ConvertOffsToPtr<ut::Color>(const void*, unsigned int);
+    template const ChanCtrl* ConvertOffsToPtr<ChanCtrl>(const void*, unsigned int);
+    template const res::Texture* ConvertOffsToPtr<res::Texture>(const void*, unsigned int);
+    template const TexCoordGen* ConvertOffsToPtr<TexCoordGen>(const void*, unsigned int);
+    template const TexSRT* ConvertOffsToPtr<TexSRT>(const void*, unsigned int);
+    template const res::TexMap* ConvertOffsToPtr<res::TexMap>(const void*, unsigned int);
+    // const overload returning const char*
+    template const char* ConvertOffsToPtr<char>(const void*, unsigned int);
+}}}
+#pragma pop
+
 /******************************************************************************
  *
  * Utility functions

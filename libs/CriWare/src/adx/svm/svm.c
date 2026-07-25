@@ -5,11 +5,34 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80399b0c
-void SVM_Lock() {}
+extern u32 lbl_eu_805F26F0[];
+void SVM_Lock(void) {
+    u32* b = lbl_eu_805F26F0;
+    u32* cb = (u32*)((u8*)b + 0x10);
+    void (*fn)(u32) = (void (*)(u32))*cb;
+    if (!fn) return;
+    fn(*(volatile u32*)(cb + 1));
+    if (b[1] == 0) b[2] = 1;
+    b[1]++;
+}
 // LLM-HARNESS-END: us-80399b0c
 
 // LLM-HARNESS-BEGIN: us-80399b74
-void SVM_Unlock() {}
+extern u32 lbl_eu_805F26F0[];
+extern const char lbl_eu_80518F50[];
+void SVM_CallErr();
+void SVM_Unlock(void) {
+    u32* b = lbl_eu_805F26F0;
+    void (*fn)(u32) = (void (*)(u32))b[0x18/4];
+    if (!fn) return;
+    b[0x04/4]--;
+    if (b[0x04/4] == 0) {
+        if (b[0x08/4] != 1)
+            SVM_CallErr(lbl_eu_80518F50, b[0x08/4], 1);
+        b[0x08/4] = 0;
+    }
+    fn(b[0x1c/4]);
+}
 // LLM-HARNESS-END: us-80399b74
 
 // LLM-HARNESS-BEGIN: us-80399c04
@@ -45,7 +68,11 @@ void SVM_SetCbBdr() {}
 // LLM-HARNESS-END: us-8039a438
 
 // LLM-HARNESS-BEGIN: us-8039a53c
-void SVM_GotoSvrBorder() {}
+extern u32 lbl_eu_805F2A58[];
+extern void (*lbl_eu_805F2A68)(s32);
+void SVM_GotoSvrBorder(s32 idx) {
+    lbl_eu_805F2A68(idx);
+}
 // LLM-HARNESS-END: us-8039a53c
 
 // LLM-HARNESS-BEGIN: us-8039a568
@@ -53,11 +80,19 @@ void SVM_SetCbErr() {}
 // LLM-HARNESS-END: us-8039a568
 
 // LLM-HARNESS-BEGIN: us-8039a658
-void SVM_SetCbLock() {}
+extern u32 lbl_eu_805F2700;
+void SVM_SetCbLock(void* cb, void* ctx) {
+    lbl_eu_805F2700 = (u32)cb;
+    *(u32*)((u8*)&lbl_eu_805F2700 + 4) = (u32)ctx;
+}
 // LLM-HARNESS-END: us-8039a658
 
 // LLM-HARNESS-BEGIN: us-8039a66c
-void SVM_SetCbUnlock() {}
+extern u32 lbl_eu_805F2708;
+void SVM_SetCbUnlock(void* cb, void* ctx) {
+    lbl_eu_805F2708 = (u32)cb;
+    *(u32*)((u8*)&lbl_eu_805F2708 + 4) = (u32)ctx;
+}
 // LLM-HARNESS-END: us-8039a66c
 
 // LLM-HARNESS-BEGIN: us-8039a680

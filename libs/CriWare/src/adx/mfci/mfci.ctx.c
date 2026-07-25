@@ -720,7 +720,13 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-80395a1c
-void mfCiGetInterface() {}
+extern u32 lbl_eu_80518840;
+extern char lbl_eu_80565B98[];
+void* mfCiGetInterface(void) {
+    u32 val = lbl_eu_80518840;
+    (void)val;
+    return lbl_eu_80565B98;
+}
 // LLM-HARNESS-END: us-80395a1c
 
 // LLM-HARNESS-BEGIN: us-80395a30
@@ -732,7 +738,12 @@ void mfCiExecServer() {}
 // LLM-HARNESS-END: us-80395aa4
 
 // LLM-HARNESS-BEGIN: us-80395aa8
-void mfCiEntryErrFunc() {}
+extern u32 lbl_eu_805EC450;
+extern u32 lbl_eu_805EC454;
+void mfCiEntryErrFunc(u32 a, u32 b) {
+    lbl_eu_805EC450 = a;
+    lbl_eu_805EC454 = b;
+}
 // LLM-HARNESS-END: us-80395aa8
 
 // LLM-HARNESS-BEGIN: us-80395abc

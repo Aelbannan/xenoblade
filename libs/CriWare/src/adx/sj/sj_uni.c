@@ -5,7 +5,10 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80398810
-void SJUNI_Error() {}
+extern char lbl_eu_80518E00[];
+void SJUNI_Error(void) {
+    SJERR_CallErr(lbl_eu_80518E00);
+}
 // LLM-HARNESS-END: us-80398810
 
 // LLM-HARNESS-BEGIN: us-8039881c

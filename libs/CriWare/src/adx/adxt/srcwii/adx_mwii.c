@@ -61,7 +61,10 @@ void ADXM_SetupThrd() {}
 // LLM-HARNESS-END: us-8039e2a8
 
 // LLM-HARNESS-BEGIN: us-8039e3f4
-void ADXM_IsSetupThrd() {}
+extern u32 lbl_eu_805F3A54;
+u32 ADXM_IsSetupThrd(void) {
+    return (lbl_eu_805F3A54 != 0) ? 1 : 0;
+}
 // LLM-HARNESS-END: us-8039e3f4
 
 // LLM-HARNESS-BEGIN: us-8039e40c

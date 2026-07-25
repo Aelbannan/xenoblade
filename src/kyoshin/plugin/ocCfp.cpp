@@ -21,11 +21,23 @@ extern "C" void func_80045634() {}
 // LLM-HARNESS-END: us-80045bd4
 
 // LLM-HARNESS-BEGIN: us-80045c34
-extern "C" void func_80045694() {}
+extern "C" int func_80045694(void* self) {
+    extern void* vmOCPropertyGet(void*);
+    extern void func_80086D90__Q22cf13CfGameManagerFv(unsigned short);
+    void* prop = vmOCPropertyGet(self);
+    func_80086D90__Q22cf13CfGameManagerFv(*(unsigned short*)((char*)prop + 4));
+    return 0;
+}
 // LLM-HARNESS-END: us-80045c34
 
 // LLM-HARNESS-BEGIN: us-80045c64
-extern "C" void func_800456C4() {}
+extern "C" int func_800456C4(void* self) {
+    extern void* vmOCPropertyGet(void*);
+    extern void func_80086D94__Q22cf13CfGameManagerFv(unsigned short);
+    void* prop = vmOCPropertyGet(self);
+    func_80086D94__Q22cf13CfGameManagerFv(*(unsigned short*)((char*)prop + 4));
+    return 0;
+}
 // LLM-HARNESS-END: us-80045c64
 
 // LLM-HARNESS-BEGIN: us-80045c94

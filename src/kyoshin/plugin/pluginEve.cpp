@@ -33,7 +33,12 @@ extern "C" void realtimeEventPlay() {}
 // LLM-HARNESS-END: us-800472c0
 
 // LLM-HARNESS-BEGIN: us-8004731c
-extern "C" void realtimeEventEnd() {}
+extern "C" void func_80086490__Q22cf13CfGameManagerFv();
+
+extern "C" int realtimeEventEnd(VMThread* pThread) {
+    func_80086490__Q22cf13CfGameManagerFv();
+    return 0;
+}
 // LLM-HARNESS-END: us-8004731c
 
 // LLM-HARNESS-BEGIN: us-80047340

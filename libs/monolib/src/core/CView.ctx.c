@@ -1,10 +1,5 @@
-/* "libs/monolib/src/core/CView.cpp" line 0 "monolib/core.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 2 "types.h" */
+// LLM-HARNESS-BEGIN: us-8044255c
+/* "libs/monolib/src/core/CView.cpp" line 1 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -711,6 +706,20 @@ enum { FALSE, TRUE };
 typedef int BOOL;
 
 #endif
+/* end "types.h" */
+extern "C" void __dt__5CViewFv(void*);
+extern "C" void func_8043FBC4(void* self) {
+    __dt__5CViewFv((char*)self - 0x1C4);
+}
+// LLM-HARNESS-END: us-8044255c
+
+/* "libs/monolib/src/core/CView.cpp" line 8 "monolib/core.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/core/CArcItem.hpp" line 2 "types.h" */
 /* end "types.h" */
 /* "libs/monolib/include/monolib/core/CArcItem.hpp" line 3 "monolib/monolib_types.hpp" */
 #pragma once
@@ -10868,13 +10877,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -12940,6 +12958,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */
@@ -16448,6 +16467,9 @@ class CViewFrame {
 public:
     bool render();
     void detachRenderWork(CWorkThread* pThread);
+    void CView_UnkVirtualFunc1();
+    void CView_UnkVirtualFunc8();
+    void CView_UnkVirtualFunc9();
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
@@ -16496,13 +16518,28 @@ public:
     s16 mInsetBottom;          // offset 0x12 - bottom inset
 };
 /* end "monolib/core/CViewRectData.hpp" */
+/* "libs/monolib/include/monolib/core/CView.hpp" line 8 "monolib/core/CFontLayer.hpp" */
+#pragma once
 
-//size: 0x4
+/* "libs/monolib/include/monolib/core/CFontLayer.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Forward declaration for tail-call target
+class CDeviceFont;
+
+/// Font layer base class (size 0x4: vtable pointer only).
+/// CView inherits from this via multiple inheritance.
 class CFontLayer {
 public:
     CFontLayer();
     virtual ~CFontLayer();
+
+    /// Flush pending font rendering state.
+    /// Delegates to CDeviceFont internally; the int parameter is passed
+    /// through to the device layer but may be unused depending on context.
+    void fontFlush(int channel);
 };
+/* end "monolib/core/CFontLayer.hpp" */
 
 // Context ring slot written by setCurrent (0x24 bytes).
 struct CViewContextRingEntry {
@@ -17192,31 +17229,32 @@ public:
 /* end "monolib/util.hpp" */
 
 struct PackHeader {
-    u32 unk0; //always 00FE1200
-    u32 unk4; //always 00000002
-    u32 mFileHashTableOffset; //0x8
-    u32 mPkhFilesize; //0xC
-    u32 mFiles; //0x10
-    char mFilename[32]; //0x14
-    u32 mHashValTableLength; //0x34
-    u8 mHashValTable[0x40]; //0x38
-    //might be a struct?
-    u64 mFileHashTable[]; //0x78
+    u32 mMagic;                   // 0x00 - always 0x00FE1200
+    u32 mVersion;                 // 0x04 - always 0x00000002
+    u32 mFileHashTableOffset;     // 0x08
+    u32 mPkhFilesize;             // 0x0C - total pkh file size
+    u32 mFiles;                   // 0x10 - number of files in pack
+    char mFilename[32];           // 0x14 - pack filename
+    u32 mHashValTableLength;      // 0x34 - length of hash value table
+    u8 mHashValTable[0x40];       // 0x38 - bit-position table for hash calculation
+    // Hash table: array of u64 pairs (lower, upper) at 0x78
+    // Followed by u16 file IDs, then optionally u32 file data offsets
+    u64 mFileHashTable[];         // 0x78
 };
 
 //size: 0x88
 class CPackItem : public IWorkEvent {
 public:
-    CPackItem(const char* name, UNKWORD r5);
+    CPackItem(const char* name, int partitionId);
     virtual ~CPackItem();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
     void update();
-    bool func_804DE78C(const char* filename, char** r5, u32* r6, u32* r7, u32* r8);
+    bool lookupFile(const char* filename, char** outPkbPath, u32* outEntryId, u32* outIndex, u32* outFileId);
     int findHashIndex(int startIndex, int endIndex);
     bool isNotLoaded();
     bool calculatePackFileHash(const char* filename);
-    void func_804DE948();
+    void setupHashTable();
 
     enum LoadState {
         LOAD_STATE_NOT_LOADED,
@@ -17229,26 +17267,26 @@ public:
     //0x0: vtable
     //0x0-4: IWorkEvent
 
-    ml::FixStr<32> unk4;
-    ml::FixStr<32> mPkbFilename; //0x28
-    CFileHandle* mFileHandle; //0x4C
-    PackHeader* mPackHeader; //0x50
-    const char* unk54;
-    u64* mFileHashTable; //0x58
-    u16* unk5C; //0x5C
-    u32* unk60; //0x60
-    int mAdxPartitionId; //0x64
-    void* mAhxAdxDataPtr; //0x68
-    u32 mHashLowerHalf; //0x6C
-    u32 mHashUpperHalf; //0x70
-    LoadState mLoadState; //0x74
-    u8 unk78;
-    u8 unk79;
-    bool mIsAhxAdxFile; //0x7A
-    u8 unk7B; //filler?
-    u32 unk7C;
-    u32 unk80;
-    const char* unk84;
+    ml::FixStr<32> mBaseName;       // 0x04 - filename without path or extension
+    ml::FixStr<32> mPkbFilename;     // 0x28 - pkb archive path
+    CFileHandle* mFileHandle;        // 0x4C
+    PackHeader* mPackHeader;         // 0x50
+    const char* mArchiveName;        // 0x54 - archive name from constructor
+    u64* mFileHashTable;             // 0x58
+    u16* mFileIds;                   // 0x5C - per-file ID table (indexed by hash entry)
+    u32* mFileDataOffsets;           // 0x60 - per-file data offset or partition ID table
+    int mAdxPartitionId;             // 0x64
+    u8* mAhxAdxBuffer;               // 0x68 - work buffer for ADX/AHX load
+    u32 mHashLowerHalf;              // 0x6C
+    u32 mHashUpperHalf;              // 0x70
+    LoadState mLoadState;            // 0x74
+    u8 mFileReadFailed;              // 0x78 - set when async file read errors
+    u8 mPackHeaderExternal;          // 0x79 - set when pack header owned by work system
+    bool mIsAhxAdxFile;              // 0x7A
+    u8 unk7B;                        // 0x7B - padding
+    u32 mWorkPackDataPtr;            // 0x7C - pack data pointer from work system
+    u32 mWorkPackDataSize;           // 0x80 - pack data size from work system
+    const char* mFilePath;           // 0x84 - full path to the pack file
 };
 /* end "monolib/core/CPackItem.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 7 "monolib/core/CPadManager.hpp" */
@@ -17322,7 +17360,7 @@ public:
     virtual ~CDeviceVICb();
     virtual void viBeforeDrawDone(){}
     virtual void viAfterDrawDone(){}
-    virtual void viBeginFrame(){}
+    virtual void viBeginFrame();
 };
 /* end "monolib/device/CDeviceVICb.hpp" */
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 5 "monolib/util.hpp" */
@@ -233764,9 +233802,9 @@ public:
 };
 /* end "monolib/core/CViewRoot.hpp" */
 /* end "monolib/core.hpp" */
-/* "libs/monolib/src/core/CView.cpp" line 1 "monolib/core/CViewRectData.hpp" */
+/* "libs/monolib/src/core/CView.cpp" line 9 "monolib/core/CViewRectData.hpp" */
 /* end "monolib/core/CViewRectData.hpp" */
-/* "libs/monolib/src/core/CView.cpp" line 2 "monolib/device.hpp" */
+/* "libs/monolib/src/core/CView.cpp" line 10 "monolib/device.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device.hpp" line 2 "monolib/device/CDevice.hpp" */
@@ -236170,16 +236208,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -240070,10 +240106,12 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -241679,10 +241717,12 @@ namespace detail {
  * Pointer operations
  *
  ******************************************************************************/
-template <typename T> T* ConvertOffsToPtr(void* pBase, u32 offset) {
+// Use unsigned int (not u32) to match retail name mangling (Ui vs Ul).
+// On PowerPC both are 32-bit with identical ABI.
+template <typename T> T* ConvertOffsToPtr(void* pBase, unsigned int offset) {
     return reinterpret_cast<T*>(reinterpret_cast<u8*>(pBase) + offset);
 }
-template <typename T> const T* ConvertOffsToPtr(const void* pBase, u32 offset) {
+template <typename T> const T* ConvertOffsToPtr(const void* pBase, unsigned int offset) {
     return reinterpret_cast<const T*>(reinterpret_cast<const u8*>(pBase) +
                                       offset);
 }
@@ -243676,6 +243716,9 @@ public:
     // CTitleAHelp::OnFileEvent
     static void* func_80452C10(u32, nw4r::lyt::Layout*);
 
+    /// Flush font rendering state.
+    void func_80452CF8();
+
     DECL_WORKTHREAD_CREATE(CDeviceFont);
 
     //0x0: vtable
@@ -244537,7 +244580,7 @@ private:
 /* "libs/monolib/include/monolib/device.hpp" line 14 "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device.hpp" */
-/* "libs/monolib/src/core/CView.cpp" line 3 "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/src/core/CView.cpp" line 11 "monolib/work/CWorkThread.hpp" */
 /* end "monolib/work/CWorkThread.hpp" */
 
 //Not yet decompiled (monolib/src/core/CSplitFrame.cpp); only its virtual destructor is
@@ -246145,10 +246188,14 @@ extern "C" void CView_UnkVirtualFunc3__5CViewFv() {}
 extern "C" void CView_UnkVirtualFunc4__5CViewFv() {}
 // LLM-HARNESS-END: us-804406b8
 // LLM-HARNESS-BEGIN: us-80441460
-extern "C" void CView_UnkVirtualFunc9__5CViewFv() {}
+extern "C" void CView_UnkVirtualFunc9__5CViewFv(void* self) {
+    ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc9();
+}
 // LLM-HARNESS-END: us-80441460
 // LLM-HARNESS-BEGIN: us-80441468
-extern "C" void CView_UnkVirtualFunc8__5CViewFv() {}
+extern "C" void CView_UnkVirtualFunc8__5CViewFv(void* self) {
+    ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc8();
+}
 // LLM-HARNESS-END: us-80441468
 // LLM-HARNESS-BEGIN: us-804424f0
 extern "C" int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
@@ -246157,15 +246204,10 @@ extern "C" int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
 extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
 // LLM-HARNESS-END: us-804424f8
 // LLM-HARNESS-BEGIN: us-80442500
-extern "C" void CView_UnkVirtualFunc1__5CViewFv() {}
+extern "C" void CView_UnkVirtualFunc1__5CViewFv(void* self) {
+    ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc1();
+}
 // LLM-HARNESS-END: us-80442500
 // LLM-HARNESS-BEGIN: us-80442508
 extern "C" void sinit_8043FB70() {}
 // LLM-HARNESS-END: us-80442508
-// LLM-HARNESS-BEGIN: us-8044255c
-extern "C" bool func_8043FBC4() { return false; }
-// LLM-HARNESS-END: us-8044255c
-
-// LLM-HARNESS-BEGIN: us-8043f178
-extern "C" void __dt__5CViewFv() {}
-// LLM-HARNESS-END: us-8043f178

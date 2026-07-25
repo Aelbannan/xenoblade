@@ -21,11 +21,16 @@ void SFD_GetCond() {}
 // LLM-HARNESS-END: us-803ceef8
 
 // LLM-HARNESS-BEGIN: us-803cef8c
-void SFSET_GetCond() {}
+u32 SFSET_GetCond(void* self, u32 idx) {
+    return *(u32*)((u8*)self + 0xa1c + idx * 4);
+}
 // LLM-HARNESS-END: us-803cef8c
 
 // LLM-HARNESS-BEGIN: us-803cef9c
-void SFD_SetSfdHeaderFn(void* self, u32 a, u32 b) {}
+void SFD_SetSfdHeaderFn(void* self, void* fn, void* ctx) {
+    *(void**)((u8*)self + 0xd3c) = fn;
+    *(void**)((u8*)self + 0xd40) = ctx;
+}
 // LLM-HARNESS-END: us-803cef9c
 
 // LLM-HARNESS-BEGIN: us-803cefa8

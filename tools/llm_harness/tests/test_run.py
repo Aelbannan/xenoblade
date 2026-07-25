@@ -31,7 +31,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
         self.assertEqual(result, 0)
         harness.select_new_targets.assert_called_once_with(
             2, ignore_called_functions=True, certified_funcs=False,
-            high_match_callees=False, tu=None
+            high_match_callees=False, tu=None, max_func_size=None, all_funcs=False
         )
         harness.run_batch.assert_called_once_with(
             "new",
@@ -72,6 +72,8 @@ class AutomaticNewTargetTests(unittest.TestCase):
             high_match_callees=False,
             tu=None,
             selection="pending",
+            max_func_size=None,
+            all_funcs=False,
         )
         harness.run_batch.assert_called_once_with(
             "improve", ["one", "two"], runs=None, dry_run=True,
@@ -100,6 +102,8 @@ class AutomaticNewTargetTests(unittest.TestCase):
             high_match_callees=False,
             tu=None,
             selection="ready",
+            max_func_size=None,
+            all_funcs=False,
         )
         harness.select_new_targets.assert_not_called()
         printed = out.getvalue()
@@ -133,6 +137,8 @@ class AutomaticNewTargetTests(unittest.TestCase):
             high_match_callees=False,
             tu=None,
             selection="ready",
+            max_func_size=None,
+            all_funcs=False,
         )
         harness.run_batch.assert_called_once_with(
             "solve",
@@ -163,6 +169,8 @@ class AutomaticNewTargetTests(unittest.TestCase):
             high_match_callees=False,
             tu=None,
             selection="leaf",
+            max_func_size=None,
+            all_funcs=False,
         )
         self.assertIn("selected frontier selection=leaf count=1", out.getvalue())
         harness.run_batch.assert_called_once()
@@ -190,6 +198,8 @@ class AutomaticNewTargetTests(unittest.TestCase):
             high_match_callees=True,
             tu=None,
             selection="ready",
+            max_func_size=None,
+            all_funcs=False,
         )
 
     def test_new_high_match_callees_flag(self) -> None:
@@ -211,6 +221,8 @@ class AutomaticNewTargetTests(unittest.TestCase):
             certified_funcs=False,
             high_match_callees=True,
             tu=None,
+            max_func_size=None,
+            all_funcs=False,
         )
 
     def test_batch_solve_uses_run_batch(self) -> None:
@@ -253,6 +265,8 @@ class AutomaticNewTargetTests(unittest.TestCase):
             high_match_callees=False,
             tu=None,
             selection="ready",
+            max_func_size=None,
+            all_funcs=False,
         )
 
     def test_tu_number_preserves_full_context_option(self) -> None:
@@ -270,7 +284,7 @@ class AutomaticNewTargetTests(unittest.TestCase):
         self.assertEqual(result, 0)
         harness.select_targets.assert_called_once_with(
             "tu-complete", 2, randomize=True, certified_funcs=False,
-            high_match_callees=False, tu=None
+            high_match_callees=False, tu=None, max_func_size=None, all_funcs=False
         )
         harness.run_batch.assert_called_once_with(
             "tu-complete", ["unit-a", "unit-b"], runs=None, dry_run=True,

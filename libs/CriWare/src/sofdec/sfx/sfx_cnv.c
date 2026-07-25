@@ -25,15 +25,21 @@ void SFX_SetCopyAlphaCbFunc(void* self, u32 val) { *(u32*)((u8*)self + 0x6c) = v
 // LLM-HARNESS-END: us-803d7608
 
 // LLM-HARNESS-BEGIN: us-803d7610
-void SFX_SetMakeLumiTableCbFunc() {}
+void SFX_SetMakeLumiTableCbFunc(void* self, void* cb) {
+    *(void**)((u8*)*(void**)((u8*)self + 0x30) + 0x18) = cb;
+}
 // LLM-HARNESS-END: us-803d7610
 
 // LLM-HARNESS-BEGIN: us-803d761c
-void SFX_SetMakeAlp3TableCbFunc() {}
+void SFX_SetMakeAlp3TableCbFunc(void* self, void* cb) {
+    *(void**)((u8*)*(void**)((u8*)self + 0x30) + 0x20) = cb;
+}
 // LLM-HARNESS-END: us-803d761c
 
 // LLM-HARNESS-BEGIN: us-803d7628
-void SFX_SetMakeAlp3110TableCbFunc() {}
+void SFX_SetMakeAlp3110TableCbFunc(void* self, void* cb) {
+    *(void**)((u8*)*(void**)((u8*)self + 0x30) + 0x1c) = cb;
+}
 // LLM-HARNESS-END: us-803d7628
 
 // LLM-HARNESS-BEGIN: us-803d7634

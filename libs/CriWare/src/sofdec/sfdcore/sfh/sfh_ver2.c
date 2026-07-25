@@ -37,11 +37,17 @@ void VER2_AnlyHdrSiz() {}
 // LLM-HARNESS-END: us-803d5bf0
 
 // LLM-HARNESS-BEGIN: us-803d5c50
-void VER2_AnlyPackType() {}
+u32 VER2_AnlyPackType(void* self, u32* out) {
+    *out = 0;
+    return 1;
+}
 // LLM-HARNESS-END: us-803d5c50
 
 // LLM-HARNESS-BEGIN: us-803d5c60
-void VER2_AnlyPketSizLen() {}
+u32 VER2_AnlyPketSizLen(void* self, u32* out) {
+    *out = 2;
+    return 1;
+}
 // LLM-HARNESS-END: us-803d5c60
 
 // LLM-HARNESS-BEGIN: us-803d5c70

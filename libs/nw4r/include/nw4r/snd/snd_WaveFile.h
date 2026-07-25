@@ -26,7 +26,8 @@ struct WaveInfo {
     u8 numChannels;             // at 0x2
     u8 sampleRate24;            // at 0x3
     u16 sampleRate;             // at 0x4
-    u16 PADDING_0x6;            // at 0x6
+    u8 dataType;                // at 0x6 (used by GetWaveDataAddress)
+    u8 PADDING_0x7;            // at 0x7
     u32 loopStart;              // at 0x8
     u32 loopEnd;                // at 0xC
     u32 channelInfoTableOffset; // at 0x10
@@ -75,11 +76,23 @@ public:
     explicit WaveFileReader(const WaveFile::WaveInfo* pWaveInfo);
 
     bool ReadWaveParam(WaveData* pWaveData, const void* pWaveAddr) const;
+    void* GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
+                              const void* addr) const;
 
     static AxVoice::Format GetAxVoiceFormatFromWaveFileFormat(u32 format);
 
 private:
     const WaveFile::WaveInfo* mWaveInfo; // at 0x0
+};
+
+class WaveArchiveReader {
+public:
+    explicit WaveArchiveReader(const void* pData);
+    const void* GetWaveFile(int index) const;
+
+private:
+    const void* mFileStart; // at 0x0
+    const void* mWaveData;  // at 0x4
 };
 
 inline AxVoice::Format WaveFormatToAxFormat(u32 format) {

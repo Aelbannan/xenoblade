@@ -5,6 +5,7 @@
 // pointer tables registered with the VM plugin system.
 
 #include <types.h>
+#include "monolib/vm/yvm2.h"
 
 extern "C" {
 
@@ -18,13 +19,13 @@ void winTalkNoName();
 void fadeIn_1();
 void fadeOut_1();
 void fadeWait_1();
-void createCol6Sys();
-void createCol6Hint();
+int createCol6Sys(VMThread* pThread);
+int createCol6Hint(VMThread* pThread);
 void createCol6Invite();
-void createCol6Init();
-void checkCol6Bat();
-void simpleEventStart();
-void simpleEventEnd();
+int createCol6Init(VMThread* pThread);
+int checkCol6Bat(VMThread* pThread);
+int simpleEventStart(VMThread* pThread);
+int simpleEventEnd(VMThread* pThread);
 void setTrust();
 void setItemMulti();
 void setKizunaTalk();
@@ -37,15 +38,15 @@ void mesVisionON();
 void mesVisionOFF();
 void mesMonadoON();
 void mesMonadoOFF();
-void ptChangeNotice();
-void save();
-void kizunaTalkStart();
-void kizunaTalkEnd();
+int ptChangeNotice();
+int save();
+int kizunaTalkStart();
+int kizunaTalkEnd();
 void isPrioReq();
-void gameClear();
+int gameClear(VMThread* pThread);
 void setLastTalkNpc();
 void isSETalkVoiceWait();
-void func_eu_80046DA0();
-void func_eu_80046DC4();
+int func_eu_80046DA0(VMThread* pThread);
+int func_eu_80046DC4(VMThread* pThread);
 
 }

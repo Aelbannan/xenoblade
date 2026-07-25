@@ -740,11 +740,19 @@ int ADXSJD_GetStat(void* self) { return (signed char)((u8*)self)[0]; }
 // LLM-HARNESS-END: us-80382b44
 
 // LLM-HARNESS-BEGIN: us-80382b50
-void ADXSJD_SetInSj() {}
+void ADXB_SetAhxInSj(void* base);
+void ADXSJD_SetInSj(void* self, void* sj) {
+    *(void**)((u8*)self + 0x08) = sj;
+    ADXB_SetAhxInSj(*(void**)((u8*)self + 0x04));
+}
 // LLM-HARNESS-END: us-80382b50
 
 // LLM-HARNESS-BEGIN: us-80382b5c
-void ADXSJD_SetMaxDecSmpl() {}
+void ADXB_SetAhxDecSmpl(void* base, u32 val);
+void ADXSJD_SetMaxDecSmpl(void* self, u32 val) {
+    *(u32*)((u8*)self + 0x38) = val;
+    ADXB_SetAhxDecSmpl(*(void**)((u8*)self + 0x04), val);
+}
 // LLM-HARNESS-END: us-80382b5c
 
 // LLM-HARNESS-BEGIN: us-80382b68
@@ -804,7 +812,11 @@ void ADXSJD_SetDecPos(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
 // LLM-HARNESS-END: us-80383b30
 
 // LLM-HARNESS-BEGIN: us-80383b38
-void ADXSJD_SetLnkSw() {}
+void ADXB_SetLnkSw(void* base, u32 val);
+void ADXSJD_SetLnkSw(void* self, u32 val) {
+    *(u32*)((u8*)self + 0xa4) = val;
+    ADXB_SetLnkSw(*(void**)((u8*)self + 0x04), val);
+}
 // LLM-HARNESS-END: us-80383b38
 
 // LLM-HARNESS-BEGIN: us-80383b44
@@ -815,11 +827,17 @@ void ADXSJD_SetDefFmt(void* self) {
 // LLM-HARNESS-END: us-80383b44
 
 // LLM-HARNESS-BEGIN: us-80383b4c
-void ADXSJD_EntryFltFunc(void* self, u32 a, u32 b) {}
+void ADXSJD_EntryFltFunc(void* self, void* func, void* ctx) {
+    *(void**)((u8*)self + 0x50) = func;
+    *(void**)((u8*)self + 0x54) = ctx;
+}
 // LLM-HARNESS-END: us-80383b4c
 
 // LLM-HARNESS-BEGIN: us-80383b58
-void ADXSJD_EntryTrapFunc(void* self, u32 a, u32 b) {}
+void ADXSJD_EntryTrapFunc(void* self, void* func, void* ctx) {
+    *(void**)((u8*)self + 0x48) = func;
+    *(void**)((u8*)self + 0x4c) = ctx;
+}
 // LLM-HARNESS-END: us-80383b58
 
 // LLM-HARNESS-BEGIN: us-80383b64
@@ -891,7 +909,11 @@ u32 ADXSJD_GetLpStartPos(void* self) {
 // LLM-HARNESS-END: us-80383bb4
 
 // LLM-HARNESS-BEGIN: us-80383bbc
-void ADXSJD_GetLpStartOfst() {}
+u32 ADXB_GetLpStartOfst(u32 a);
+u32 ADXSJD_GetLpStartOfst(void* self) {
+    if (self == NULL) return 0;
+    return ADXB_GetLpStartOfst(*(u32*)((u8*)self + 4));
+}
 // LLM-HARNESS-END: us-80383bbc
 
 // LLM-HARNESS-BEGIN: us-80383bd8

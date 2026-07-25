@@ -5,7 +5,13 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803927fc
-void cvFsCallUsrErrFn() {}
+extern void (*lbl_eu_805E66E8)(void*);
+extern void* lbl_eu_805E66EC;
+void cvFsCallUsrErrFn(void) {
+    void (*fn)(void*) = lbl_eu_805E66E8;
+    if (fn == NULL) return;
+    fn(lbl_eu_805E66EC);
+}
 // LLM-HARNESS-END: us-803927fc
 
 // LLM-HARNESS-BEGIN: us-80392820

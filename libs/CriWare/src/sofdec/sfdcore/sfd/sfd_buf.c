@@ -82,11 +82,15 @@ void SFBUF_RingSetDlm() {}
 // LLM-HARNESS-END: us-803c21fc
 
 // LLM-HARNESS-BEGIN: us-803c2258
-void SFBUF_GetRingBufSiz() {}
+u32 SFBUF_GetRingBufSiz(void* self, u32 idx) {
+    return *(u32*)((u8*)self + 0x13d4 + idx * 0x74);
+}
 // LLM-HARNESS-END: us-803c2258
 
 // LLM-HARNESS-BEGIN: us-803c2268
-void SFBUF_GetRTot() {}
+u32 SFBUF_GetRTot(void* self, u32 idx) {
+    return *(u32*)((u8*)self + 0x13ec + idx * 0x74);
+}
 // LLM-HARNESS-END: us-803c2268
 
 // LLM-HARNESS-BEGIN: us-803c2278
@@ -98,7 +102,11 @@ void SFBUF_RingGetSj() {}
 // LLM-HARNESS-END: us-803c230c
 
 // LLM-HARNESS-BEGIN: us-803c2344
-void SFBUF_AddRtotSj() {}
+void SFBUF_AddRtotSj(void* self, int idx, int addend) {
+    u32* ptr = (u32*)((u8*)self + idx * 0x74 + 0x13ec);
+    if ((s32)*ptr < 0) return;
+    *ptr += addend;
+}
 // LLM-HARNESS-END: us-803c2344
 
 // LLM-HARNESS-BEGIN: us-803c2364
@@ -110,19 +118,32 @@ void SFBUF_VfrmAddRead() {}
 // LLM-HARNESS-END: us-803c2394
 
 // LLM-HARNESS-BEGIN: us-803c23f8
-void SFBUF_SetPrepFlg() {}
+void SFBUF_SetPrepFlg(void* self, u32 idx, u32 val) {
+    if (idx != 8) {
+        *(u32*)((u8*)self + 0x13c0 + idx * 0x74) = val;
+    }
+}
 // LLM-HARNESS-END: us-803c23f8
 
 // LLM-HARNESS-BEGIN: us-803c2410
-void SFBUF_GetPrepFlg() {}
+int SFBUF_GetPrepFlg(void* self, int idx) {
+    if (idx == 8) return 0;
+    return *(u32*)((u8*)self + idx * 0x74 + 0x13c0);
+}
 // LLM-HARNESS-END: us-803c2410
 
 // LLM-HARNESS-BEGIN: us-803c2430
-void SFBUF_SetTermFlg() {}
+void SFBUF_SetTermFlg(void* buf, s32 idx, u32 flg) {
+    if (idx == 8) return;
+    *(u32*)((u8*)buf + idx * 0x74 + 0x13c4) = flg;
+}
 // LLM-HARNESS-END: us-803c2430
 
 // LLM-HARNESS-BEGIN: us-803c2448
-void SFBUF_GetTermFlg() {}
+int SFBUF_GetTermFlg(void* self, int idx) {
+    if (idx == 8) return 1;
+    return *(u32*)((u8*)self + idx * 0x74 + 0x13c4);
+}
 // LLM-HARNESS-END: us-803c2448
 
 // LLM-HARNESS-BEGIN: us-803c2468
@@ -134,5 +155,11 @@ void SFBUF_GetFlowCnt() {}
 // LLM-HARNESS-END: us-803c249c
 
 // LLM-HARNESS-BEGIN: us-803c259c
-void SFBUF_UpdateFlowCnt() {}
+int SFBUF_UpdateFlowCnt(int count, int new_val, int old_val) {
+    u32 diff = new_val ^ old_val;
+    u32 leading = __cntlzw(diff);
+    u32 shifted = new_val << leading;
+    int bit = shifted >> 31;
+    return count + bit;
+}
 // LLM-HARNESS-END: us-803c259c

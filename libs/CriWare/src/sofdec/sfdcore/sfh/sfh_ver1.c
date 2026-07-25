@@ -21,11 +21,21 @@ void VER1_AnlyHdrToolVer() {}
 // LLM-HARNESS-END: us-803d3888
 
 // LLM-HARNESS-BEGIN: us-803d3a48
-void VER1_AnlyHdrSfhVer() {}
+u32 VER1_AnlyHdrSfhVer(void* buf, u32* out1, u32* out2) {
+    u32 r;
+    *out1 = 1;
+    r = 0;
+    *out2 = r;
+    return 1;
+}
 // LLM-HARNESS-END: us-803d3a48
 
 // LLM-HARNESS-BEGIN: us-803d3a60
-void VER1_AnlyHdrModuleVer() {}
+u32 VER1_AnlyHdrModuleVer(void* self, u32* out1, u32* out2) {
+    *out1 = 0;
+    *out2 = 0;
+    return 0;
+}
 // LLM-HARNESS-END: us-803d3a60
 
 // LLM-HARNESS-BEGIN: us-803d3a74

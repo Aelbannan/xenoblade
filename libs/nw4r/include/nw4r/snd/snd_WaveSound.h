@@ -26,14 +26,14 @@ public:
     NW4R_UT_RTTI_DECL(WaveSound);
 
 public:
-    explicit WaveSound(SoundInstanceManager<WaveSound>* pManager);
+    WaveSound(SoundInstanceManager<WaveSound>* pManager, int priority, int arg);
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
         return mPreparedFlag;
     } // at 0x2C
 
-    virtual void SetPlayerPriority(int priority); // at 0x4C
+    virtual void OnUpdatePlayerPriority(); // at 0x4C
     virtual bool IsAttachedTempSpecialHandle();   // at 0x5C
     virtual void DetachTempSpecialHandle();       // at 0x60
 

@@ -2364,7 +2364,14 @@ extern "C" void func_8003C480() {}
 // LLM-HARNESS-END: us-8003c9fc
 
 // LLM-HARNESS-BEGIN: us-8003cac0
-extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, void* src) {
+    u32 a = *(u32*)((u8*)src + 0);
+    u32 b = *(u32*)((u8*)src + 4);
+    u32 c = *(u32*)((u8*)src + 8);
+    *(u32*)((u8*)self + 0x3C) = a;
+    *(u32*)((u8*)self + 0x40) = b;
+    *(u32*)((u8*)self + 0x44) = c;
+}
 // LLM-HARNESS-END: us-8003cac0
 
 // LLM-HARNESS-BEGIN: us-8003cadc
@@ -2412,7 +2419,14 @@ extern "C" void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv() {}
 // LLM-HARNESS-END: us-8003ce90
 
 // LLM-HARNESS-BEGIN: us-8003ced4
-extern "C" void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv(void* self, void* src) {
+    u32 a = *(u32*)((u8*)src + 0);
+    u32 b = *(u32*)((u8*)src + 4);
+    u32 c = *(u32*)((u8*)src + 8);
+    *(u32*)((u8*)self + 0x3C) = a;
+    *(u32*)((u8*)self + 0x40) = b;
+    *(u32*)((u8*)self + 0x44) = c;
+}
 // LLM-HARNESS-END: us-8003ced4
 
 // LLM-HARNESS-BEGIN: us-8003cef0
@@ -2428,7 +2442,9 @@ extern "C" void CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv() {}
 // LLM-HARNESS-END: us-8003d09c
 
 // LLM-HARNESS-BEGIN: us-8003d0d4
-extern "C" void CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv() {}
+extern "C" int CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv(void* self, int mask) {
+    return (*(int*)((char*)self + 4) & mask) != 0 ? 1 : 0;
+}
 // LLM-HARNESS-END: us-8003d0d4
 
 // LLM-HARNESS-BEGIN: us-8003d0ec
@@ -2656,7 +2672,14 @@ extern "C" void setRot() {}
 // LLM-HARNESS-END: us-8003f5b0
 
 // LLM-HARNESS-BEGIN: us-8003f6d8
-extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv(void* self, void* src) {
+    u32 a = *(u32*)((u8*)src + 0);
+    u32 b = *(u32*)((u8*)src + 4);
+    u32 c = *(u32*)((u8*)src + 8);
+    *(u32*)((u8*)self + 0x48) = a;
+    *(u32*)((u8*)self + 0x4C) = b;
+    *(u32*)((u8*)self + 0x50) = c;
+}
 // LLM-HARNESS-END: us-8003f6d8
 
 // LLM-HARNESS-BEGIN: us-8003f6f4
@@ -2664,7 +2687,14 @@ extern "C" void gravity() {}
 // LLM-HARNESS-END: us-8003f6f4
 
 // LLM-HARNESS-BEGIN: us-8003f764
-extern "C" void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv() {}
+extern "C" void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv(void* self, int flag) {
+    u32* field = (u32*)((char*)self + 0x68);
+    if (flag) {
+        *field |= 0x01000000;
+    } else {
+        *field &= ~0x01000000;
+    }
+}
 // LLM-HARNESS-END: us-8003f764
 
 // LLM-HARNESS-BEGIN: us-8003f78c

@@ -5,7 +5,12 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803ce5a0
-void SFSEE_InitHn() {}
+void SFSEE_InitHn(void* self) {
+    *(u32*)((u8*)self + 0x00) = 0;
+    *(u32*)((u8*)self + 0x04) = 0;
+    *(u32*)((u8*)self + 0x08) = -3;
+    *(u32*)((u8*)self + 0x0C) = 1;
+}
 // LLM-HARNESS-END: us-803ce5a0
 
 // LLM-HARNESS-BEGIN: us-803ce5c0

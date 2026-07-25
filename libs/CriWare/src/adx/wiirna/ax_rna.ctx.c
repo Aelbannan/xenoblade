@@ -780,7 +780,11 @@ void AXRNA_ExecServer() {}
 // LLM-HARNESS-END: us-8039d7f8
 
 // LLM-HARNESS-BEGIN: us-8039d8fc
-void AXRNA_SetNumChan() {}
+void AXRNA_SetNumChan(void* self, u8 numChan) {
+    if (self != NULL) {
+        *(u8*)((u8*)self + 0x03) = numChan;
+    }
+}
 // LLM-HARNESS-END: us-8039d8fc
 
 // LLM-HARNESS-BEGIN: us-8039d90c
@@ -796,7 +800,11 @@ void AXRNA_SetOutPan() {}
 // LLM-HARNESS-END: us-8039daa8
 
 // LLM-HARNESS-BEGIN: us-8039db60
-void AXRNA_SetBitPerSmpl() {}
+void AXRNA_SetBitPerSmpl(void* self, u32 val) {
+    if (self != NULL) {
+        *(u32*)((u8*)self + 0x78) = val;
+    }
+}
 // LLM-HARNESS-END: us-8039db60
 
 // LLM-HARNESS-BEGIN: us-8039db70

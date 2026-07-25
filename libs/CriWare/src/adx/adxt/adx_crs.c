@@ -5,11 +5,17 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-8038c628
-void ADXCRS_Init() {}
+static s32 lbl_eu_805E637C;
+void ADXCRS_Init(void) {
+    ++lbl_eu_805E637C;
+}
 // LLM-HARNESS-END: us-8038c628
 
 // LLM-HARNESS-BEGIN: us-8038c654
-void ADXCRS_Finish() {}
+static s32 lbl_eu_805E637C;
+void ADXCRS_Finish(void) {
+    --lbl_eu_805E637C;
+}
 // LLM-HARNESS-END: us-8038c654
 
 // LLM-HARNESS-BEGIN: us-8038c680

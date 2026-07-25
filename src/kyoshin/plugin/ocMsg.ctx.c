@@ -1188,19 +1188,43 @@ extern "C" void func_8003A53C() {}
 // LLM-HARNESS-END: us-8003a91c
 
 // LLM-HARNESS-BEGIN: us-8003a968
-extern "C" void func_8003A588() {}
+extern "C" int func_8003A588(void* thread) {
+    extern void vmRetValSet(void*, void*);
+    int args[2];
+    args[0] = 3;
+    args[1] = *(int*)((char*)thread + 100);
+    vmRetValSet(thread, args);
+    return 1;
+}
 // LLM-HARNESS-END: us-8003a968
 
 // LLM-HARNESS-BEGIN: us-8003a9a0
-extern "C" void func_8003A5C0() {}
+extern "C" int func_8003A5C0(void* thread) {
+    extern void vmRetValSet(void*, void*);
+    int args[2];
+    args[0] = 3;
+    args[1] = *(int*)((char*)thread + 104);
+    vmRetValSet(thread, args);
+    return 1;
+}
 // LLM-HARNESS-END: us-8003a9a0
 
 // LLM-HARNESS-BEGIN: us-8003a9d8
-extern "C" void func_8003A5F8() {}
+extern "C" int func_8003A5F8(void* thread) {
+    extern void* vmOCPropertyGet(void*);
+    void* prop = vmOCPropertyGet(thread);
+    *(int*)((char*)thread + 100) = *(int*)((char*)prop + 4);
+    return 0;
+}
 // LLM-HARNESS-END: us-8003a9d8
 
 // LLM-HARNESS-BEGIN: us-8003aa10
-extern "C" void func_8003A630() {}
+extern "C" int func_8003A630(void* thread) {
+    extern void* vmOCPropertyGet(void*);
+    void* prop = vmOCPropertyGet(thread);
+    *(int*)((char*)thread + 104) = *(int*)((char*)prop + 4);
+    return 0;
+}
 // LLM-HARNESS-END: us-8003aa10
 
 // LLM-HARNESS-BEGIN: us-8003aa48
@@ -1269,19 +1293,45 @@ extern "C" void func_8003A7B4() {}
 // LLM-HARNESS-END: us-8003ab94
 
 // LLM-HARNESS-BEGIN: us-8003abe0
-extern "C" void func_8003A800() {}
+extern "C" int func_8003A800(void* thread) {
+    extern void vmRetValSet(void*, void*);
+    int args[2];
+    args[0] = 3;
+    args[1] = *(int*)((char*)thread + 140);
+    vmRetValSet(thread, args);
+    return 1;
+}
 // LLM-HARNESS-END: us-8003abe0
 
 // LLM-HARNESS-BEGIN: us-8003ac18
-extern "C" void func_8003A838() {}
+extern "C" int func_8003A838(void* thread) {
+    extern void vmRetValSet(void*, void*);
+    int args[2];
+    args[0] = 3;
+    args[1] = *(int*)((char*)thread + 144);
+    vmRetValSet(thread, args);
+    return 1;
+}
 // LLM-HARNESS-END: us-8003ac18
 
 // LLM-HARNESS-BEGIN: us-8003ac50
-extern "C" void func_8003A870() {}
+extern "C" int func_8003A870(void* thread) {
+    extern void vmRetValSet(void*, void*);
+    int args[2];
+    args[0] = 3;
+    args[1] = *(int*)((char*)thread + 148);
+    vmRetValSet(thread, args);
+    return 1;
+}
 // LLM-HARNESS-END: us-8003ac50
 
 // LLM-HARNESS-BEGIN: us-8003ac88
-extern "C" void func_8003A8A8() {}
+extern "C" int func_8003A8A8(void* thread) {
+    extern void* vmOCPropertyGet(void*);
+    void* prop = vmOCPropertyGet(thread);
+    *(int*)((char*)thread + 140) = *(int*)((char*)prop + 4);
+    return 0;
+}
 // LLM-HARNESS-END: us-8003ac88
 
 // LLM-HARNESS-BEGIN: us-8003acc0

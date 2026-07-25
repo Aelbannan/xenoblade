@@ -33,7 +33,11 @@ void SFD_SetPicUsrBuf() {}
 // LLM-HARNESS-END: us-803ca8e8
 
 // LLM-HARNESS-BEGIN: us-803ca968
-void SFMPVF_ResetPicUsrBuf() {}
+extern u32 lbl_eu_80619B20[];
+void sfmpvf_SetPicUsrBuf();
+void SFMPVF_ResetPicUsrBuf(void) {
+    sfmpvf_SetPicUsrBuf(lbl_eu_80619B20[0x1c], lbl_eu_80619B20[0x1d], lbl_eu_80619B20[0x1e]);
+}
 // LLM-HARNESS-END: us-803ca968
 
 // LLM-HARNESS-BEGIN: us-803ca980
@@ -73,19 +77,35 @@ void SFMPVF_AllocFrm() {}
 // LLM-HARNESS-END: us-803cb004
 
 // LLM-HARNESS-BEGIN: us-803cb094
-void SFMPVF_FreeFrm() {}
+void SFMPVF_FreeFrm(void* self) {
+    if (self != NULL) {
+        *(u32*)((u8*)self + 0x00) = 0;
+    }
+}
 // LLM-HARNESS-END: us-803cb094
 
 // LLM-HARNESS-BEGIN: us-803cb0a8
-void SFMPVF_StbyFrm() {}
+void SFMPVF_StbyFrm(void* self) {
+    if (self != NULL) {
+        *(u32*)((u8*)self + 0x00) = 2;
+    }
+}
 // LLM-HARNESS-END: us-803cb0a8
 
 // LLM-HARNESS-BEGIN: us-803cb0bc
-void SFMPVF_RefStbyFrm() {}
+void SFMPVF_RefStbyFrm(void* self) {
+    if (self != NULL) {
+        *(u32*)((u8*)self + 0x00) = 4;
+    }
+}
 // LLM-HARNESS-END: us-803cb0bc
 
 // LLM-HARNESS-BEGIN: us-803cb0d0
-void SFMPVF_EndRefFrm() {}
+void SFMPVF_EndRefFrm(void* self) {
+    if (self == NULL) return;
+    *(u32*)self = 0;
+    memset((u8*)self + 4, 0, 0x24);
+}
 // LLM-HARNESS-END: us-803cb0d0
 
 // LLM-HARNESS-BEGIN: us-803cb0fc

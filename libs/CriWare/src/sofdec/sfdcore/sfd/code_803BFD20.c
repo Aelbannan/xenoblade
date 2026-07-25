@@ -5,5 +5,8 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803c25c0
-void criware_803BFD20() {}
+extern u32 lbl_eu_80606E18;
+u32 criware_803BFD20(void) {
+    return lbl_eu_80606E18++;
+}
 // LLM-HARNESS-END: us-803c25c0

@@ -13,7 +13,10 @@ void SFMPS_Init() {}
 // LLM-HARNESS-END: us-803c3820
 
 // LLM-HARNESS-BEGIN: us-803c3878
-void SFMPS_Finish() {}
+int SFMPS_Finish(void) {
+    MPS_Finish();
+    return 0;
+}
 // LLM-HARNESS-END: us-803c3878
 
 // LLM-HARNESS-BEGIN: us-803c389c
@@ -29,7 +32,12 @@ void criware_803C1490() {}
 // LLM-HARNESS-END: us-803c3d2c
 
 // LLM-HARNESS-BEGIN: us-803c3e0c
-void criware_803C1570() {}
+void criware_803C1570(void* self, u32 a, u32 b) {
+    if (self != NULL) {
+        *(u32*)((u8*)self + 0x39a0) = a;
+        *(u32*)((u8*)self + 0x39a4) = b;
+    }
+}
 // LLM-HARNESS-END: us-803c3e0c
 
 // LLM-HARNESS-BEGIN: us-803c3e20
@@ -125,19 +133,31 @@ int SFMPS_Pause(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c559c
 
 // LLM-HARNESS-BEGIN: us-803c55a4
-void SFMPS_GetWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFMPS_GetWrite(void) {
+    SFLIB_SetErr(0xff000d0b);
+}
 // LLM-HARNESS-END: us-803c55a4
 
 // LLM-HARNESS-BEGIN: us-803c55b0
-void SFMPS_AddWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFMPS_AddWrite(void) {
+    SFLIB_SetErr(0xff000d0b);
+}
 // LLM-HARNESS-END: us-803c55b0
 
 // LLM-HARNESS-BEGIN: us-803c55bc
-void SFMPS_GetRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFMPS_GetRead(void) {
+    SFLIB_SetErr(0xff000d0b);
+}
 // LLM-HARNESS-END: us-803c55bc
 
 // LLM-HARNESS-BEGIN: us-803c55c8
-void SFMPS_AddRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFMPS_AddRead(void) {
+    SFLIB_SetErr(0xff000d0b);
+}
 // LLM-HARNESS-END: us-803c55c8
 
 // LLM-HARNESS-BEGIN: us-803c55d4
@@ -145,5 +165,8 @@ void SFMPS_Seek() {}
 // LLM-HARNESS-END: us-803c55d4
 
 // LLM-HARNESS-BEGIN: us-803c5700
-void SFMPS_GetConcatCnt(void) {}
+u32 SFMPS_GetConcatCnt(void* self) {
+    void* ptr = *(void**)((u8*)self + 0x2024);
+    return *(u32*)((u8*)ptr + 0x20);
+}
 // LLM-HARNESS-END: us-803c5700

@@ -719,6 +719,10 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
+// Forward declarations for functions called by AssignWorkBuffer/ReleaseWorkBuffer
+extern "C" void CreateHeap__Q44nw4r3snd6detail8AxfxImplFPvUl(void*, u32);
+extern "C" void DestroyHeap__Q44nw4r3snd6detail8AxfxImplFv(void*);
+
 // LLM-HARNESS-BEGIN: us-80417d70
 extern "C" void __ct__Q34nw4r3snd12FxChorusDpl2Fv() {}
 // LLM-HARNESS-END: us-80417d70
@@ -728,7 +732,7 @@ extern "C" void GetRequiredMemSize__Q34nw4r3snd12FxChorusDpl2Fv() {}
 // LLM-HARNESS-END: us-80417e00
 
 // LLM-HARNESS-BEGIN: us-80417e54
-extern "C" void AssignWorkBuffer__Q34nw4r3snd12FxChorusDpl2FPvUl(void* self) { ((void(*)(void*))CreateHeap__Q44nw4r3snd6detail8AxfxImplFPvUl)((char*)self + 0x14); }
+extern "C" void AssignWorkBuffer__Q34nw4r3snd12FxChorusDpl2FPvUl(void* self, u32 size) { ((void(*)(void*, u32))CreateHeap__Q44nw4r3snd6detail8AxfxImplFPvUl)((char*)self + 0x14, size); }
 // LLM-HARNESS-END: us-80417e54
 
 // LLM-HARNESS-BEGIN: us-80417e5c

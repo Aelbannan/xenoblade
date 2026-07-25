@@ -732,7 +732,10 @@ void SFADXT_SetOutVol(void) {}
 // LLM-HARNESS-END: us-803bfac8
 
 // LLM-HARNESS-BEGIN: us-803bfad4
-void SFADXT_GetOutVol(void) {}
+void ADXT_GetOutVol(void* a);
+void SFADXT_GetOutVol(void* self) {
+    ADXT_GetOutVol(*(void**)(*(void**)((u8*)self + 0x20ac)));
+}
 // LLM-HARNESS-END: us-803bfad4
 
 // LLM-HARNESS-BEGIN: us-803bfae0
@@ -752,7 +755,10 @@ void SFADXT_Finish() {}
 // LLM-HARNESS-END: us-803bfcf8
 
 // LLM-HARNESS-BEGIN: us-803bfd20
-void criware_803BD518(void) {}
+void SFCON_WriteTotSmplQue(void* a, u32 b, u32 c);
+void criware_803BD518(void* a, void* b, void* c, u32 d, u32 e) {
+    SFCON_WriteTotSmplQue(a, e, d);
+}
 // LLM-HARNESS-END: us-803bfd20
 
 // LLM-HARNESS-BEGIN: us-803bfd2c
@@ -820,19 +826,31 @@ void SFADXT_Pause() {}
 // LLM-HARNESS-END: us-803c0e94
 
 // LLM-HARNESS-BEGIN: us-803c0fbc
-void SFADXT_GetWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFADXT_GetWrite(void) {
+    SFLIB_SetErr(0xff000c03);
+}
 // LLM-HARNESS-END: us-803c0fbc
 
 // LLM-HARNESS-BEGIN: us-803c0fc8
-void SFADXT_AddWrite() {}
+void SFLIB_SetErr(u32 err_code);
+void SFADXT_AddWrite(void) {
+    SFLIB_SetErr(0xff000c03);
+}
 // LLM-HARNESS-END: us-803c0fc8
 
 // LLM-HARNESS-BEGIN: us-803c0fd4
-void SFADXT_GetRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFADXT_GetRead(void) {
+    SFLIB_SetErr(0xff000c03);
+}
 // LLM-HARNESS-END: us-803c0fd4
 
 // LLM-HARNESS-BEGIN: us-803c0fe0
-void SFADXT_AddRead() {}
+void SFLIB_SetErr(u32 err_code);
+void SFADXT_AddRead(void) {
+    SFLIB_SetErr(0xff000c03);
+}
 // LLM-HARNESS-END: us-803c0fe0
 
 // LLM-HARNESS-BEGIN: us-803c0fec

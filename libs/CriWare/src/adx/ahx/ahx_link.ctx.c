@@ -724,7 +724,11 @@ void ADXT_AttachAhx() {}
 // LLM-HARNESS-END: us-8038d918
 
 // LLM-HARNESS-BEGIN: us-8038da7c
-void ADXT_DetachAhx() {}
+extern void (*lbl_eu_805E4F20)(void);
+void ADXT_DetachAhx(void) {
+    if (lbl_eu_805E4F20 != NULL)
+        (*lbl_eu_805E4F20)();
+}
 // LLM-HARNESS-END: us-8038da7c
 
 // LLM-HARNESS-BEGIN: us-8038da98

@@ -16294,7 +16294,8 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
@@ -18302,10 +18303,12 @@ namespace detail {
  * Pointer operations
  *
  ******************************************************************************/
-template <typename T> T* ConvertOffsToPtr(void* pBase, u32 offset) {
+// Use unsigned int (not u32) to match retail name mangling (Ui vs Ul).
+// On PowerPC both are 32-bit with identical ABI.
+template <typename T> T* ConvertOffsToPtr(void* pBase, unsigned int offset) {
     return reinterpret_cast<T*>(reinterpret_cast<u8*>(pBase) + offset);
 }
-template <typename T> const T* ConvertOffsToPtr(const void* pBase, u32 offset) {
+template <typename T> const T* ConvertOffsToPtr(const void* pBase, unsigned int offset) {
     return reinterpret_cast<const T*>(reinterpret_cast<const u8*>(pBase) +
                                       offset);
 }
@@ -23208,5 +23211,7 @@ void Picture::DrawSelf(const DrawInfo& rInfo) {
 } // namespace nw4r
 
 // LLM-HARNESS-BEGIN: us-8040360c
-extern "C" int GetRuntimeTypeInfo__Q34nw4r3lyt7PictureCFv(void) { return lbl_eu_80665480@sda21; }
+extern "C" const nw4r::ut::detail::RuntimeTypeInfo* GetRuntimeTypeInfo__Q34nw4r3lyt7PictureCFv() {
+    return &nw4r::lyt::Picture::typeInfo;
+}
 // LLM-HARNESS-END: us-8040360c

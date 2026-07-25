@@ -11901,16 +11901,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -16385,10 +16383,12 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -237536,7 +237536,7 @@ public:
 
 public:
     BasicSound(int priority, int arg);
-    virtual ~BasicSound() {}
+    virtual ~BasicSound();
 
     // US Xenoblade vtable (after RTTI @+0x8, dtor @+0xC):
     // +0x10 Shutdown, +0x14 IsPrepared, +0x18 IsAttachedTempSpecialHandle,
@@ -241775,7 +241775,7 @@ public:
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
-        return mPreparedFlag;
+        return *(bool*)((u8*)this + 677);
     } // at 0x2C
 
     virtual void SetPlayerPriority(int priority); // at 0x4C
@@ -243977,13 +243977,13 @@ public:
     virtual void Pause(bool flag); // at 0x14
 
     virtual bool IsActive() const {
-        return mActiveFlag;
+        return *(bool*)((u8*)this + 289);
     } // at 0x18
     virtual bool IsStarted() const {
-        return mStartedFlag;
+        return *(bool*)((u8*)this + 290);
     } // at 0x1C
     virtual bool IsPause() const {
-        return mPauseFlag;
+        return *(bool*)((u8*)this + 295);
     }; // at 0x20
 
     virtual void OnUpdateFrameSoundThread() {
@@ -244573,14 +244573,14 @@ public:
     NW4R_UT_RTTI_DECL(WaveSound);
 
 public:
-    explicit WaveSound(SoundInstanceManager<WaveSound>* pManager);
+    WaveSound(SoundInstanceManager<WaveSound>* pManager, int priority, int arg);
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
         return mPreparedFlag;
     } // at 0x2C
 
-    virtual void SetPlayerPriority(int priority); // at 0x4C
+    virtual void OnUpdatePlayerPriority(); // at 0x4C
     virtual bool IsAttachedTempSpecialHandle();   // at 0x5C
     virtual void DetachTempSpecialHandle();       // at 0x60
 

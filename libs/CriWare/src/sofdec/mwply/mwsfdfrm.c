@@ -37,7 +37,11 @@ void MWSFFRM_InitSfhInfTable() {}
 // LLM-HARNESS-END: us-8039f910
 
 // LLM-HARNESS-BEGIN: us-8039fafc
-void MWSFFRM_SetShfCbFn() {}
+void SFD_SetSfdHeaderFn(void* a, void* cb, void* ctx);
+void mwsffrm_CallbackAnalyzeSofdecHeader();
+void MWSFFRM_SetShfCbFn(void* self) {
+    SFD_SetSfdHeaderFn(*(void**)((u8*)self + 0x58), mwsffrm_CallbackAnalyzeSofdecHeader, self);
+}
 // LLM-HARNESS-END: us-8039fafc
 
 // LLM-HARNESS-BEGIN: us-8039fb10

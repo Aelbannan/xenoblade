@@ -5,9 +5,18 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803bdf28
-void DCT_GetVerStr() {}
+extern char lbl_eu_8051C430[];
+extern void* lbl_eu_80606DD0;
+void DCT_GetVerStr(void) {
+    lbl_eu_80606DD0 = lbl_eu_8051C430;
+}
 // LLM-HARNESS-END: us-803bdf28
 
 // LLM-HARNESS-BEGIN: us-803bdf3c
-void fn_803BDF3C() {}
+extern u32 lbl_eu_80606DC8;
+extern u32 lbl_eu_80606DCC;
+void fn_803BDF3C(u32 a, u32 b) {
+    lbl_eu_80606DC8 = a;
+    lbl_eu_80606DCC = b;
+}
 // LLM-HARNESS-END: us-803bdf3c

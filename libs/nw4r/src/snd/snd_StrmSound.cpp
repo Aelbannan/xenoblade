@@ -10,25 +10,37 @@ NW4R_UT_RTTI_DEF_DERIVED(StrmSound, BasicSound);
 StrmSound::StrmSound(SoundInstanceManager<StrmSound>* pManager)
     : BasicSound(0, 0), mManager(pManager), mTempSpecialHandle(NULL) {}
 
-bool StrmSound::Prepare(StrmBufferPool* pPool,
-                        StrmPlayer::StartOffsetType offsetType, s32 offset,
-                        int voices, ut::FileStream* pStream) {
-    if (pPool == NULL) {
-        return false;
-    }
+StrmSound::~StrmSound() {}
 
+void StrmSound::InitParam() {
+    BasicSound::InitParam();
+}
+
+bool StrmSound::Setup(StrmBufferPool* pPool, int voices, u16 unk) {
     InitParam();
+    return mStrmPlayer.Setup(pPool, GetVoiceOutCount(), unk, 0);
+}
 
-    if (!mStrmPlayer.Setup(pPool)) {
-        return false;
-    }
-
-    if (!mStrmPlayer.Prepare(pStream, voices, offsetType, offset)) {
+bool StrmSound::Prepare(StrmPlayer::StartOffsetType offsetType, s32 offset,
+                        ut::FileStream* pStream) {
+    if (!mStrmPlayer.Prepare(pStream, offsetType, offset)) {
         mStrmPlayer.Shutdown();
         return false;
     }
-
     return true;
+}
+
+void StrmSound::UpdateMoveValue() {
+    BasicSound::UpdateMoveValue();
+    
+    for (int i = 0; i < 8; i++) {
+        if (!mStrmPlayer.GetPlayerTrack(i)) continue;
+        
+        u8* base = reinterpret_cast<u8*>(this) + 0xE54 + i * 0x10;
+        u32* limit = reinterpret_cast<u32*>(base);
+        u32* count = reinterpret_cast<u32*>(base + 4);
+        if (*count < *limit) (*count)++;
+    }
 }
 
 void StrmSound::Shutdown() {
@@ -53,30 +65,10 @@ void StrmSound::DetachTempSpecialHandle() {
 } // namespace snd
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-8042751c
-extern "C" void InitParam__Q44nw4r3snd6detail9StrmSoundFv() {}
-// LLM-HARNESS-END: us-8042751c
-// LLM-HARNESS-BEGIN: us-80427650
-extern "C" void Setup__Q44nw4r3snd6detail9StrmSoundFPQ44nw4r3snd6detail14StrmBufferPooliUs() {}
-// LLM-HARNESS-END: us-80427650
-// LLM-HARNESS-BEGIN: us-8042772c
-extern "C" void UpdateMoveValue__Q44nw4r3snd6detail9StrmSoundFv() {}
-// LLM-HARNESS-END: us-8042772c
 // LLM-HARNESS-BEGIN: us-804277ac
 extern "C" void UpdateParam__Q44nw4r3snd6detail9StrmSoundFv() {}
 // LLM-HARNESS-END: us-804277ac
 // LLM-HARNESS-BEGIN: us-80427984
 extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail9StrmSoundFv() {}
 // LLM-HARNESS-END: us-80427984
-// LLM-HARNESS-BEGIN: us-80427a84
-extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail9StrmSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
-// LLM-HARNESS-END: us-80427a84
-// LLM-HARNESS-BEGIN: us-80427a8c
-extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail9StrmSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
-// LLM-HARNESS-END: us-80427a8c
-// LLM-HARNESS-BEGIN: us-80427a94
-extern "C" u8 IsPrepared__Q44nw4r3snd6detail9StrmSoundCFv(void* self) { return ((u8*)self)[559]; }
-// LLM-HARNESS-END: us-80427a94
-// LLM-HARNESS-BEGIN: us-80427a9c
-extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail9StrmSoundCFv(void) { return 0; }
-// LLM-HARNESS-END: us-80427a9c
+

@@ -60,9 +60,9 @@
   "models": {
     "default": [
       {
-		"id": "or-mimo-2.5",
-		"provider": "openrouter",
-		"model": "xiaomi/mimo-v2.5",
+		"id": "oc-deepseek-4-flash",
+		"provider": "opencode",
+		"model": "opencode/deepseek-v4-flash-free",
 		"runs": 1
 	  }
     ]

@@ -713,6 +713,456 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
+/* "src/kyoshin/plugin/pluginUi.hpp" line 7 "monolib/vm/yvm2.h" */
+#pragma once
+
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 3 "monolib/vm/yvm_types.h" */
+#pragma once
+
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 3 "monolib/vm/sb_types.h" */
+#pragma once
+
+//Types/defines for SB script files.
+
+/* "libs/monolib/include/monolib/vm/sb_types.h" line 4 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Minimum supported SB version
+#define SB_MIN_VERSION 2
+
+enum SBFlags{
+    SB_FLAG_LOADED    = 1 << 0, //Stored in the runtime flag byte (offset 0x7)
+    SB_FLAG_ENCRYPTED = 1 << 1  //Stored in the normal flag byte (offset 0x6)
+};
+
+typedef struct SBSectionHeader{
+    int entriesOffset;  //0x0
+    int entries; //0x4
+    int offsetSize;  //0x8
+} SBSectionHeader;
+
+typedef struct SBHeader{
+    char magic[4];                      //0x0
+    u8 version;                         //0x4
+    u8 unk5; //unused?
+    u8 flags;                           //0x6
+    /* Reserved by the VM as a place to store various flags during runtime. Only the first bit
+    (for the loaded flag) gets used, however. */
+    u8 vmFlags;                         //0x7
+    SBSectionHeader* codeOfs;            //0x8
+    SBSectionHeader* idPoolOfs;          //0xC
+    SBSectionHeader* intPoolOfs;         //0x10
+    SBSectionHeader* fixedPoolOfs;       //0x14
+    SBSectionHeader* stringPoolOfs;      //0x18
+    SBSectionHeader* functionPoolOfs;    //0x1C
+    SBSectionHeader* pluginImportsOfs;   //0x20
+    SBSectionHeader* ocImportsOfs;       //0x24
+    SBSectionHeader* functionImportsOfs; //0x28
+    SBSectionHeader* staticVarsOfs;      //0x2C
+    SBSectionHeader* localPoolOfs;       //0x30
+    SBSectionHeader* sysAtrPoolOfs;      //0x34
+    SBSectionHeader* usrAtrPoolOfs;      //0x38
+    SBSectionHeader* debugSymbolsOfs;    //0x3C
+} SBHeader;
+
+//Section specific structs
+
+//Function pool
+
+typedef struct FunctionPoolEntry{
+    u16 unk0;
+    s16 unk2;
+    u16 unk4;
+    u8 unk8[0xC - 0x8];
+    u32 unkC;
+    u8 unk10[0x14 - 0x10];
+} FunctionPoolEntry;
+
+//Plugin imports
+
+typedef struct PluginImportEntry{
+    u16 unk0;
+    u16 unk2;
+} PluginImportEntry;
+
+//OC imports
+
+typedef struct OCImportEntry{
+    u16 unk0;
+} OCImportEntry;
+
+//Function imports
+
+typedef struct FunctionImportEntry{
+    u16 unk0;
+    u16 unk2;
+} FunctionImportEntry;
+
+//Static vars
+
+typedef struct StaticVarsEntry{
+    u32 unk0;
+    u32 unk4;
+} StaticVarsEntry;
+
+//Local pool
+
+typedef struct LocalPoolEntry{
+    u32 unk0;
+    u32 unk4;
+} LocalPoolEntry;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/sb_types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Misc constants
+
+#define MAX_PACKAGES 8 //Max number of packages (scripts) at once
+#define MAX_PLUGINS 48
+#define MAX_OCS 48
+#define MAX_THREADS 16
+#define MAX_BREAKPOINTS 4
+#define MAX_STACK_ENTRIES 128
+
+#define VMC_MAX 96 //Max number of opcodes
+
+typedef struct VMArg{
+    u8 type; //0x0
+    u16 unk2;
+    union {
+        void* pointerVal;
+        u32 uintVal;
+        int intVal;   
+    } value; //0x4
+} VMArg;
+
+typedef struct VMReg{
+    int pc; //0x0
+    int sp; //0x4
+    int unk8; //0x8
+    int exception; //0xC
+    int unk10; //0x10
+} VMReg;
+
+typedef struct _sVMThread{
+    VMReg reg; //0x0
+    VMArg unk14[2];
+    s16 unk24;
+    u8 unk26[2];
+    u32 unk28;
+    s16 unk2C;
+    u8 unk2E[2];
+    SBHeader* scriptData; //0x30
+    u8* codeData; //0x34
+    StaticVarsEntry* staticVarsEntries; //0x38
+    VMArg* stack; //0x3C
+    u32 unk40;
+    u32 id; //0x44
+    int unk48;
+    BOOL waitMode; //0x4C
+    u32 wkIdx; //0x50
+    u32 unk54;
+    u8 unk58[0x60 - 0x58];
+} VMThread;
+
+//Forward declaration
+struct OCData;
+
+typedef int (*PluginFunc)(VMThread* pThread);
+typedef int (*OCCtorFunc)(VMThread* pThread, void* r4, int r5);
+typedef int (*OCSelectorFunc)(VMThread* pThread, int r4);
+typedef void (*OCGetSetFunc)(VMThread* pThread, int r4, struct OCData* data);
+
+typedef struct PluginFuncData{
+    const char* name; //0x0
+    PluginFunc func; //0x4
+} PluginFuncData;
+
+typedef struct OCProperty{
+    const char* name; //0x0
+    OCGetSetFunc getFunc; //0x4
+    OCGetSetFunc setFunc; //0x8
+    int nameLength; //0xC
+} OCProperty;
+
+typedef struct OCSelector{
+    const char* name; //0x0
+    OCSelectorFunc func; //0x4
+    int nameLength; //0x8
+} OCSelector;
+
+typedef struct OCData{
+    const char* name; //0x0
+    OCCtorFunc ctor; //0x4
+    OCProperty* properties; //0x8
+    OCSelector* selectors; //0xC
+} OCData;
+
+typedef struct VMPackage{
+    SBHeader* scriptDataPtr; //0x0
+    u32 unk4;
+} VMPackage;
+
+typedef struct VMPlugin{
+    char* unk0;
+    PluginFuncData* unk4;
+} VMPlugin;
+
+typedef struct VMOC{
+    OCData* unk0;
+} VMOC;
+
+typedef struct VMBreakpoint{
+    u8 unk0[0xC];
+} VMBreakpoint;
+
+typedef struct VMState{
+    VMPackage packages[MAX_PACKAGES]; //0x0
+    VMThread* activeThread; //0x40
+    u32 nextThreadId; //0x44
+    VMThread* unk48[MAX_THREADS]; //0x48
+    VMThread threads[MAX_THREADS]; //0x88
+    VMArg threadStacks[MAX_THREADS][MAX_STACK_ENTRIES]; //0x688
+    VMPlugin plugins[MAX_PLUGINS]; //0x4688
+    VMOC ocs[MAX_OCS]; //0x4808
+    OCData* builtinOC; //0x48C8
+    //Unused debug data (based on info from XCX)
+    BOOL debMode; //0x48CC
+    u8 unk48D0[0xC];
+    VMBreakpoint bps[MAX_BREAKPOINTS]; //0x48DC
+} VMState;
+
+//Enums
+
+typedef enum VMCResult{
+    VMC_RESULT_0,
+    VMC_RESULT_1,
+    VMC_RESULT_2,
+    VMC_RESULT_3
+} VMCResult;
+
+typedef enum VMCOpcodeType{
+    VMC_OP_NOP,
+    VMC_OP_CONST_0,
+    VMC_OP_CONST_1,
+    VMC_OP_CONST_2,
+    VMC_OP_CONST_3,
+    VMC_OP_CONST_4,
+    VMC_OP_CONST_I,
+    VMC_OP_CONST_I_W,
+    VMC_OP_POOL_INT,
+    VMC_OP_POOL_INT_W,
+    VMC_OP_POOL_FIXED,
+    VMC_OP_POOL_FIXED_W,
+    VMC_OP_POOL_STR,
+    VMC_OP_POOL_STR_W,
+    VMC_OP_LD,
+    VMC_OP_ST,
+    VMC_OP_LD_ARG,
+    VMC_OP_ST_ARG,
+    VMC_OP_ST_ARG_OMIT,
+    VMC_OP_LD_0,
+    VMC_OP_LD_1,
+    VMC_OP_LD_2,
+    VMC_OP_LD_3,
+    VMC_OP_ST_0,
+    VMC_OP_ST_1,
+    VMC_OP_ST_2,
+    VMC_OP_ST_3,
+    VMC_OP_LD_ARG_0,
+    VMC_OP_LD_ARG_1,
+    VMC_OP_LD_ARG_2,
+    VMC_OP_LD_ARG_3,
+    VMC_OP_ST_ARG_0,
+    VMC_OP_ST_ARG_1,
+    VMC_OP_ST_ARG_2,
+    VMC_OP_ST_ARG_3,
+    VMC_OP_LD_STATIC,
+    VMC_OP_LD_STATIC_W,
+    VMC_OP_ST_STATIC,
+    VMC_OP_ST_STATIC_W,
+    VMC_OP_LD_AR,
+    VMC_OP_ST_AR,
+    VMC_OP_LD_NIL,
+    VMC_OP_LD_TRUE,
+    VMC_OP_LD_FALSE,
+    VMC_OP_LD_FUNC,
+    VMC_OP_LD_FUNC_W,
+    VMC_OP_LD_PLUGIN,
+    VMC_OP_LD_PLUGIN_W,
+    VMC_OP_LD_FUNC_FAR,
+    VMC_OP_LD_FUNC_FAR_W,
+    VMC_OP_MINUS,
+    VMC_OP_NOT,
+    VMC_OP_L_NOT,
+    VMC_OP_ADD,
+    VMC_OP_SUB,
+    VMC_OP_MUL,
+    VMC_OP_DIV,
+    VMC_OP_MOD,
+    VMC_OP_OR,
+    VMC_OP_AND,
+    VMC_OP_R_SHIFT,
+    VMC_OP_L_SHIFT,
+    VMC_OP_EQ,
+    VMC_OP_NE,
+    VMC_OP_GT,
+    VMC_OP_LT,
+    VMC_OP_GE,
+    VMC_OP_LE,
+    VMC_OP_L_OR,
+    VMC_OP_L_AND,
+    VMC_OP_JMP,
+    VMC_OP_JPF,
+    VMC_OP_CALL,
+    VMC_OP_CALL_W,
+    VMC_OP_CALL_IND,
+    VMC_OP_RET,
+    VMC_OP_NEXT,
+    VMC_OP_PLUGIN,
+    VMC_OP_PLUGIN_W,
+    VMC_OP_CALL_FAR,
+    VMC_OP_CALL_FAR_W,
+    VMC_OP_GET_OC,
+    VMC_OP_GET_OC_W,
+    VMC_OP_GETTER,
+    VMC_OP_GETTER_W,
+    VMC_OP_SETTER,
+    VMC_OP_SETTER_W,
+    VMC_OP_SEND,
+    VMC_OP_SEND_W,
+    VMC_OP_TYPEOF,
+    VMC_OP_SIZEOF,
+    VMC_OP_SWITCH,
+    VMC_OP_INC,
+    VMC_OP_DEC,
+    VMC_OP_EXIT,
+    VMC_OP_BP //Breakpoint
+} VMCOpcodeType;
+
+typedef enum _VMTypes {
+    VM_TYPE_NIL,
+    VM_TYPE_TRUE,
+    VM_TYPE_FALSE,
+    VM_TYPE_INT,
+    VM_TYPE_FIXED,
+    VM_TYPE_STRING,
+    VM_TYPE_ARRAY,
+    VM_TYPE_FUNCTION,
+    VM_TYPE_PLUGIN,
+    VM_TYPE_OC,
+    VM_TYPE_SYS,
+
+    VM_MAX_TYPE = 11
+} VMTypes;
+
+typedef enum VMException {
+    VM_EXCEPTION_NONE,
+    VM_EXCEPTION_PLUGIN,
+    VM_EXCEPTION_OC,
+    VM_EXCEPTION_DIV_BY_ZERO,
+    VM_EXCEPTION_INVALID_ARRAY,
+    VM_EXCEPTION_INDEX_OOB,
+    VM_EXCEPTION_MATH_INVALID_ARG,
+    VM_EXCEPTION_CALC_INVALID_ARG,
+    VM_EXCEPTION_8,
+    VM_EXCEPTION_JPF_INVALID_ARG,
+    VM_EXCEPTION_CALLIND_INVALID_ARG,
+    VM_EXCEPTION_INVALID_OC,
+    VM_EXCEPTION_SEND_ERROR,
+    VM_EXCEPTION_INVALID_PROPERTY,
+    VM_EXCEPTION_INVALID_GETSET_FUNC
+} VMException;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm_types.h" */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void vmInit();
+BOOL vmLink(u8* pData);
+BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
+void vmStart(u8* pData);
+
+VMThread* vmThreadCreate(SBHeader* pData, u32 r4);
+void vmThreadStart(VMThread* pThread, u32 r4);
+BOOL vmThreadEnd(u32 r3);
+BOOL vmThreadIsAlive(u32 r3);
+BOOL vmThreadSleep(u32 r3);
+BOOL vmThreadWakeup(u32 r3);
+void vmThreadSleepAll(u8* pScriptData);
+void vmThreadWakeupAll(u8* pScriptData);
+BOOL vmThreadIsFinish(u8* pScriptData);
+BOOL vmThreadGetOC(VMThread* pThread, int r4, u32* outId);
+
+VMArg* vmArgPtrGet(VMThread* pThread, int r4);
+BOOL vmArgOmitChk(VMThread* pThread, int r4);
+BOOL vmArgBoolGet(u32 r3, VMArg* r4);
+int vmArgIntGet(u32 r3, VMArg* r4);
+int vmArgFixedGet(u32 r3, VMArg* r4);
+const char* vmArgStringGet(u32 r3, VMArg* r4);
+u32 vmArgFunctionGet(u32 r3, VMArg* r4);
+void* vmArgArrayGet(u32 r3, VMArg* r4);
+void* vmArgOCGet(u32 r3, VMArg* r4);
+u32 vmDataGet(VMThread* pThread, int startIndex, int length);
+
+void vmRetValSet(VMThread* pThread, VMArg* pArg);
+void* vmOCPropertyGet(VMThread* pThread);
+void vmWaitModeSet(VMThread* pThread);
+u32 vmWkIdxGet(VMThread* pThread);
+void vmWkIdxSet(VMThread* pThread, u32 r4);
+u32* vmWkGet(VMThread* pThread, u32 r4);
+
+void vmPluginExceptionThrow(VMThread* pThread);
+void vmOCExceptionThrow(VMThread* pThread);
+DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
+void vmExceptionThrow(VMThread* pThread, u32 exception);
+
+const char* vmIdPoolGet(SBHeader* data, u32 no);
+int vmIntPoolGet(SBHeader* data, u32 no);
+int vmFixedPoolGet(SBHeader* data, u32 no);
+void* vmStringPoolGet(SBHeader* data, u32 no);
+void* vmLocalPoolGet(SBHeader* data, u32 no);
+void* vmFunctionPoolGet(SBHeader* data, u32 no);
+u16* vmSysAtrPoolGet(SBHeader* data, u32 no);
+u16* vmUsrAtrPoolGet(SBHeader* data, u32 no);
+
+u32 vmSysAtrSearch(SBHeader* data, u32 no);
+u32 vmPluginSearch(const char* param1, const char* param2);
+u32 vmOCSearch(const char* pName);
+u32 vmPropertySearch(OCData* pOC, const char* pName);
+u32 vmSelectorSearch(OCData* pOC, const char* pName);
+u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName);
+
+void encodeScramble(u8* data);
+int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6);
+
+void vmArgErr();
+void vmHalt();
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm2.h" */
 
 extern "C" {
 
@@ -726,13 +1176,13 @@ void winTalkNoName();
 void fadeIn_1();
 void fadeOut_1();
 void fadeWait_1();
-void createCol6Sys();
-void createCol6Hint();
+int createCol6Sys(VMThread* pThread);
+int createCol6Hint(VMThread* pThread);
 void createCol6Invite();
-void createCol6Init();
-void checkCol6Bat();
-void simpleEventStart();
-void simpleEventEnd();
+int createCol6Init(VMThread* pThread);
+int checkCol6Bat(VMThread* pThread);
+int simpleEventStart(VMThread* pThread);
+int simpleEventEnd(VMThread* pThread);
 void setTrust();
 void setItemMulti();
 void setKizunaTalk();
@@ -745,16 +1195,16 @@ void mesVisionON();
 void mesVisionOFF();
 void mesMonadoON();
 void mesMonadoOFF();
-void ptChangeNotice();
-void save();
-void kizunaTalkStart();
-void kizunaTalkEnd();
+int ptChangeNotice();
+int save();
+int kizunaTalkStart();
+int kizunaTalkEnd();
 void isPrioReq();
-void gameClear();
+int gameClear(VMThread* pThread);
 void setLastTalkNpc();
 void isSETalkVoiceWait();
-void func_eu_80046DA0();
-void func_eu_80046DC4();
+int func_eu_80046DA0(VMThread* pThread);
+int func_eu_80046DC4(VMThread* pThread);
 
 }
 /* end "kyoshin/plugin/pluginUi.hpp" */
@@ -12320,454 +12770,6 @@ namespace ml{
 /* end "monolib/util/TPLUtils.hpp" */
 /* end "monolib/util.hpp" */
 /* "src/kyoshin/plugin/pluginUi.cpp" line 2 "monolib/vm/yvm2.h" */
-#pragma once
-
-/* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/vm/yvm2.h" line 3 "monolib/vm/yvm_types.h" */
-#pragma once
-
-/* "libs/monolib/include/monolib/vm/yvm_types.h" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/vm/yvm_types.h" line 3 "monolib/vm/sb_types.h" */
-#pragma once
-
-//Types/defines for SB script files.
-
-/* "libs/monolib/include/monolib/vm/sb_types.h" line 4 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//Minimum supported SB version
-#define SB_MIN_VERSION 2
-
-enum SBFlags{
-    SB_FLAG_LOADED    = 1 << 0, //Stored in the runtime flag byte (offset 0x7)
-    SB_FLAG_ENCRYPTED = 1 << 1  //Stored in the normal flag byte (offset 0x6)
-};
-
-typedef struct SBSectionHeader{
-    int entriesOffset;  //0x0
-    int entries; //0x4
-    int offsetSize;  //0x8
-} SBSectionHeader;
-
-typedef struct SBHeader{
-    char magic[4];                      //0x0
-    u8 version;                         //0x4
-    u8 unk5; //unused?
-    u8 flags;                           //0x6
-    /* Reserved by the VM as a place to store various flags during runtime. Only the first bit
-    (for the loaded flag) gets used, however. */
-    u8 vmFlags;                         //0x7
-    SBSectionHeader* codeOfs;            //0x8
-    SBSectionHeader* idPoolOfs;          //0xC
-    SBSectionHeader* intPoolOfs;         //0x10
-    SBSectionHeader* fixedPoolOfs;       //0x14
-    SBSectionHeader* stringPoolOfs;      //0x18
-    SBSectionHeader* functionPoolOfs;    //0x1C
-    SBSectionHeader* pluginImportsOfs;   //0x20
-    SBSectionHeader* ocImportsOfs;       //0x24
-    SBSectionHeader* functionImportsOfs; //0x28
-    SBSectionHeader* staticVarsOfs;      //0x2C
-    SBSectionHeader* localPoolOfs;       //0x30
-    SBSectionHeader* sysAtrPoolOfs;      //0x34
-    SBSectionHeader* usrAtrPoolOfs;      //0x38
-    SBSectionHeader* debugSymbolsOfs;    //0x3C
-} SBHeader;
-
-//Section specific structs
-
-//Function pool
-
-typedef struct FunctionPoolEntry{
-    u16 unk0;
-    s16 unk2;
-    u16 unk4;
-    u8 unk8[0xC - 0x8];
-    u32 unkC;
-    u8 unk10[0x14 - 0x10];
-} FunctionPoolEntry;
-
-//Plugin imports
-
-typedef struct PluginImportEntry{
-    u16 unk0;
-    u16 unk2;
-} PluginImportEntry;
-
-//OC imports
-
-typedef struct OCImportEntry{
-    u16 unk0;
-} OCImportEntry;
-
-//Function imports
-
-typedef struct FunctionImportEntry{
-    u16 unk0;
-    u16 unk2;
-} FunctionImportEntry;
-
-//Static vars
-
-typedef struct StaticVarsEntry{
-    u32 unk0;
-    u32 unk4;
-} StaticVarsEntry;
-
-//Local pool
-
-typedef struct LocalPoolEntry{
-    u32 unk0;
-    u32 unk4;
-} LocalPoolEntry;
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/sb_types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//Misc constants
-
-#define MAX_PACKAGES 8 //Max number of packages (scripts) at once
-#define MAX_PLUGINS 48
-#define MAX_OCS 48
-#define MAX_THREADS 16
-#define MAX_BREAKPOINTS 4
-#define MAX_STACK_ENTRIES 128
-
-#define VMC_MAX 96 //Max number of opcodes
-
-typedef struct VMArg{
-    u8 type; //0x0
-    u16 unk2;
-    union {
-        void* pointerVal;
-        u32 uintVal;
-        int intVal;   
-    } value; //0x4
-} VMArg;
-
-typedef struct VMReg{
-    int pc; //0x0
-    int sp; //0x4
-    int unk8; //0x8
-    int exception; //0xC
-    int unk10; //0x10
-} VMReg;
-
-typedef struct _sVMThread{
-    VMReg reg; //0x0
-    VMArg unk14[2];
-    s16 unk24;
-    u8 unk26[2];
-    u32 unk28;
-    s16 unk2C;
-    u8 unk2E[2];
-    SBHeader* scriptData; //0x30
-    u8* codeData; //0x34
-    StaticVarsEntry* staticVarsEntries; //0x38
-    VMArg* stack; //0x3C
-    u32 unk40;
-    u32 id; //0x44
-    int unk48;
-    BOOL waitMode; //0x4C
-    u32 wkIdx; //0x50
-    u32 unk54;
-    u8 unk58[0x60 - 0x58];
-} VMThread;
-
-//Forward declaration
-struct OCData;
-
-typedef int (*PluginFunc)(VMThread* pThread);
-typedef int (*OCCtorFunc)(VMThread* pThread, void* r4, int r5);
-typedef int (*OCSelectorFunc)(VMThread* pThread, int r4);
-typedef void (*OCGetSetFunc)(VMThread* pThread, int r4, struct OCData* data);
-
-typedef struct PluginFuncData{
-    const char* name; //0x0
-    PluginFunc func; //0x4
-} PluginFuncData;
-
-typedef struct OCProperty{
-    const char* name; //0x0
-    OCGetSetFunc getFunc; //0x4
-    OCGetSetFunc setFunc; //0x8
-    int nameLength; //0xC
-} OCProperty;
-
-typedef struct OCSelector{
-    const char* name; //0x0
-    OCSelectorFunc func; //0x4
-    int nameLength; //0x8
-} OCSelector;
-
-typedef struct OCData{
-    const char* name; //0x0
-    OCCtorFunc ctor; //0x4
-    OCProperty* properties; //0x8
-    OCSelector* selectors; //0xC
-} OCData;
-
-typedef struct VMPackage{
-    SBHeader* scriptDataPtr; //0x0
-    u32 unk4;
-} VMPackage;
-
-typedef struct VMPlugin{
-    char* unk0;
-    PluginFuncData* unk4;
-} VMPlugin;
-
-typedef struct VMOC{
-    OCData* unk0;
-} VMOC;
-
-typedef struct VMBreakpoint{
-    u8 unk0[0xC];
-} VMBreakpoint;
-
-typedef struct VMState{
-    VMPackage packages[MAX_PACKAGES]; //0x0
-    VMThread* activeThread; //0x40
-    u32 nextThreadId; //0x44
-    VMThread* unk48[MAX_THREADS]; //0x48
-    VMThread threads[MAX_THREADS]; //0x88
-    VMArg threadStacks[MAX_THREADS][MAX_STACK_ENTRIES]; //0x688
-    VMPlugin plugins[MAX_PLUGINS]; //0x4688
-    VMOC ocs[MAX_OCS]; //0x4808
-    OCData* builtinOC; //0x48C8
-    //Unused debug data (based on info from XCX)
-    BOOL debMode; //0x48CC
-    u8 unk48D0[0xC];
-    VMBreakpoint bps[MAX_BREAKPOINTS]; //0x48DC
-} VMState;
-
-//Enums
-
-typedef enum VMCResult{
-    VMC_RESULT_0,
-    VMC_RESULT_1,
-    VMC_RESULT_2,
-    VMC_RESULT_3
-} VMCResult;
-
-typedef enum VMCOpcodeType{
-    VMC_OP_NOP,
-    VMC_OP_CONST_0,
-    VMC_OP_CONST_1,
-    VMC_OP_CONST_2,
-    VMC_OP_CONST_3,
-    VMC_OP_CONST_4,
-    VMC_OP_CONST_I,
-    VMC_OP_CONST_I_W,
-    VMC_OP_POOL_INT,
-    VMC_OP_POOL_INT_W,
-    VMC_OP_POOL_FIXED,
-    VMC_OP_POOL_FIXED_W,
-    VMC_OP_POOL_STR,
-    VMC_OP_POOL_STR_W,
-    VMC_OP_LD,
-    VMC_OP_ST,
-    VMC_OP_LD_ARG,
-    VMC_OP_ST_ARG,
-    VMC_OP_ST_ARG_OMIT,
-    VMC_OP_LD_0,
-    VMC_OP_LD_1,
-    VMC_OP_LD_2,
-    VMC_OP_LD_3,
-    VMC_OP_ST_0,
-    VMC_OP_ST_1,
-    VMC_OP_ST_2,
-    VMC_OP_ST_3,
-    VMC_OP_LD_ARG_0,
-    VMC_OP_LD_ARG_1,
-    VMC_OP_LD_ARG_2,
-    VMC_OP_LD_ARG_3,
-    VMC_OP_ST_ARG_0,
-    VMC_OP_ST_ARG_1,
-    VMC_OP_ST_ARG_2,
-    VMC_OP_ST_ARG_3,
-    VMC_OP_LD_STATIC,
-    VMC_OP_LD_STATIC_W,
-    VMC_OP_ST_STATIC,
-    VMC_OP_ST_STATIC_W,
-    VMC_OP_LD_AR,
-    VMC_OP_ST_AR,
-    VMC_OP_LD_NIL,
-    VMC_OP_LD_TRUE,
-    VMC_OP_LD_FALSE,
-    VMC_OP_LD_FUNC,
-    VMC_OP_LD_FUNC_W,
-    VMC_OP_LD_PLUGIN,
-    VMC_OP_LD_PLUGIN_W,
-    VMC_OP_LD_FUNC_FAR,
-    VMC_OP_LD_FUNC_FAR_W,
-    VMC_OP_MINUS,
-    VMC_OP_NOT,
-    VMC_OP_L_NOT,
-    VMC_OP_ADD,
-    VMC_OP_SUB,
-    VMC_OP_MUL,
-    VMC_OP_DIV,
-    VMC_OP_MOD,
-    VMC_OP_OR,
-    VMC_OP_AND,
-    VMC_OP_R_SHIFT,
-    VMC_OP_L_SHIFT,
-    VMC_OP_EQ,
-    VMC_OP_NE,
-    VMC_OP_GT,
-    VMC_OP_LT,
-    VMC_OP_GE,
-    VMC_OP_LE,
-    VMC_OP_L_OR,
-    VMC_OP_L_AND,
-    VMC_OP_JMP,
-    VMC_OP_JPF,
-    VMC_OP_CALL,
-    VMC_OP_CALL_W,
-    VMC_OP_CALL_IND,
-    VMC_OP_RET,
-    VMC_OP_NEXT,
-    VMC_OP_PLUGIN,
-    VMC_OP_PLUGIN_W,
-    VMC_OP_CALL_FAR,
-    VMC_OP_CALL_FAR_W,
-    VMC_OP_GET_OC,
-    VMC_OP_GET_OC_W,
-    VMC_OP_GETTER,
-    VMC_OP_GETTER_W,
-    VMC_OP_SETTER,
-    VMC_OP_SETTER_W,
-    VMC_OP_SEND,
-    VMC_OP_SEND_W,
-    VMC_OP_TYPEOF,
-    VMC_OP_SIZEOF,
-    VMC_OP_SWITCH,
-    VMC_OP_INC,
-    VMC_OP_DEC,
-    VMC_OP_EXIT,
-    VMC_OP_BP //Breakpoint
-} VMCOpcodeType;
-
-typedef enum _VMTypes {
-    VM_TYPE_NIL,
-    VM_TYPE_TRUE,
-    VM_TYPE_FALSE,
-    VM_TYPE_INT,
-    VM_TYPE_FIXED,
-    VM_TYPE_STRING,
-    VM_TYPE_ARRAY,
-    VM_TYPE_FUNCTION,
-    VM_TYPE_PLUGIN,
-    VM_TYPE_OC,
-    VM_TYPE_SYS,
-
-    VM_MAX_TYPE = 11
-} VMTypes;
-
-typedef enum VMException {
-    VM_EXCEPTION_NONE,
-    VM_EXCEPTION_PLUGIN,
-    VM_EXCEPTION_OC,
-    VM_EXCEPTION_DIV_BY_ZERO,
-    VM_EXCEPTION_INVALID_ARRAY,
-    VM_EXCEPTION_INDEX_OOB,
-    VM_EXCEPTION_MATH_INVALID_ARG,
-    VM_EXCEPTION_CALC_INVALID_ARG,
-    VM_EXCEPTION_8,
-    VM_EXCEPTION_JPF_INVALID_ARG,
-    VM_EXCEPTION_CALLIND_INVALID_ARG,
-    VM_EXCEPTION_INVALID_OC,
-    VM_EXCEPTION_SEND_ERROR,
-    VM_EXCEPTION_INVALID_PROPERTY,
-    VM_EXCEPTION_INVALID_GETSET_FUNC
-} VMException;
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/yvm_types.h" */
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void vmInit();
-BOOL vmLink(u8* pData);
-BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
-void vmStart(u8* pData);
-
-VMThread* vmThreadCreate(SBHeader* pData, u32 r4);
-void vmThreadStart(VMThread* pThread, u32 r4);
-BOOL vmThreadEnd(u32 r3);
-BOOL vmThreadIsAlive(u32 r3);
-BOOL vmThreadSleep(u32 r3);
-BOOL vmThreadWakeup(u32 r3);
-void vmThreadSleepAll(u8* pScriptData);
-void vmThreadWakeupAll(u8* pScriptData);
-BOOL vmThreadIsFinish(u8* pScriptData);
-BOOL vmThreadGetOC(VMThread* pThread, int r4, u32* outId);
-
-VMArg* vmArgPtrGet(VMThread* pThread, int r4);
-BOOL vmArgOmitChk(VMThread* pThread, int r4);
-BOOL vmArgBoolGet(u32 r3, VMArg* r4);
-int vmArgIntGet(u32 r3, VMArg* r4);
-int vmArgFixedGet(u32 r3, VMArg* r4);
-const char* vmArgStringGet(u32 r3, VMArg* r4);
-u32 vmArgFunctionGet(u32 r3, VMArg* r4);
-void* vmArgArrayGet(u32 r3, VMArg* r4);
-void* vmArgOCGet(u32 r3, VMArg* r4);
-u32 vmDataGet(VMThread* pThread, int startIndex, int length);
-
-void vmRetValSet(VMThread* pThread, VMArg* pArg);
-void* vmOCPropertyGet(VMThread* pThread);
-void vmWaitModeSet(VMThread* pThread);
-u32 vmWkIdxGet(VMThread* pThread);
-void vmWkIdxSet(VMThread* pThread, u32 r4);
-u32* vmWkGet(VMThread* pThread, u32 r4);
-
-void vmPluginExceptionThrow(VMThread* pThread);
-void vmOCExceptionThrow(VMThread* pThread);
-DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
-void vmExceptionThrow(VMThread* pThread, u32 exception);
-
-const char* vmIdPoolGet(SBHeader* data, u32 no);
-int vmIntPoolGet(SBHeader* data, u32 no);
-int vmFixedPoolGet(SBHeader* data, u32 no);
-void* vmStringPoolGet(SBHeader* data, u32 no);
-void* vmLocalPoolGet(SBHeader* data, u32 no);
-void* vmFunctionPoolGet(SBHeader* data, u32 no);
-u16* vmSysAtrPoolGet(SBHeader* data, u32 no);
-u16* vmUsrAtrPoolGet(SBHeader* data, u32 no);
-
-u32 vmSysAtrSearch(SBHeader* data, u32 no);
-u32 vmPluginSearch(const char* param1, const char* param2);
-u32 vmOCSearch(const char* pName);
-u32 vmPropertySearch(OCData* pOC, const char* pName);
-u32 vmSelectorSearch(OCData* pOC, const char* pName);
-u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName);
-
-void encodeScramble(u8* data);
-int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6);
-
-void vmArgErr();
-void vmHalt();
-
-#ifdef __cplusplus
-}
-#endif
 /* end "monolib/vm/yvm2.h" */
 
 using namespace ml;
@@ -12811,25 +12813,49 @@ extern "C" void fadeOut_1() {}
 extern "C" void fadeWait_1() {}
 // LLM-HARNESS-END: us-80046154
 // LLM-HARNESS-BEGIN: us-800461a0
-extern "C" void createCol6Sys() {}
+extern "C" int createCol6Sys(VMThread* pThread) {
+    extern void func_8013DD94();
+    func_8013DD94();
+    return 0;
+}
 // LLM-HARNESS-END: us-800461a0
 // LLM-HARNESS-BEGIN: us-800461c4
-extern "C" void createCol6Hint() {}
+extern "C" int createCol6Hint(VMThread* pThread) {
+    extern void func_8013DE6C();
+    func_8013DE6C();
+    return 0;
+}
 // LLM-HARNESS-END: us-800461c4
 // LLM-HARNESS-BEGIN: us-800461e8
 extern "C" void createCol6Invite() {}
 // LLM-HARNESS-END: us-800461e8
 // LLM-HARNESS-BEGIN: us-80046284
-extern "C" void createCol6Init() {}
+extern "C" int createCol6Init(VMThread* pThread) {
+    extern void func_80139CEC();
+    func_80139CEC();
+    return 0;
+}
 // LLM-HARNESS-END: us-80046284
 // LLM-HARNESS-BEGIN: us-800462a8
-extern "C" void checkCol6Bat() {}
+extern "C" int checkCol6Bat(VMThread* pThread) {
+    extern void func_8013E030();
+    func_8013E030();
+    return 0;
+}
 // LLM-HARNESS-END: us-800462a8
 // LLM-HARNESS-BEGIN: us-800462cc
-extern "C" void simpleEventStart() {}
+extern "C" int simpleEventStart(VMThread* pThread) {
+    extern void func_8013BD9C();
+    func_8013BD9C();
+    return 0;
+}
 // LLM-HARNESS-END: us-800462cc
 // LLM-HARNESS-BEGIN: us-800462f0
-extern "C" void simpleEventEnd() {}
+extern "C" int simpleEventEnd(VMThread* pThread) {
+    extern void func_8013BDA8();
+    func_8013BDA8();
+    return 0;
+}
 // LLM-HARNESS-END: us-800462f0
 // LLM-HARNESS-BEGIN: us-80046314
 extern "C" void setTrust() {}
@@ -12868,22 +12894,51 @@ extern "C" void mesMonadoON() {}
 extern "C" void mesMonadoOFF() {}
 // LLM-HARNESS-END: us-80046b30
 // LLM-HARNESS-BEGIN: us-80046b70
-extern "C" void ptChangeNotice() {}
+extern "C" int ptChangeNotice() {
+    extern void enablePadFlags__Q22cf13CfGameManagerFUlb(int, int);
+    extern void func_8013E8E0();
+    enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 1);
+    func_8013E8E0();
+    return 0;
+}
 // LLM-HARNESS-END: us-80046b70
 // LLM-HARNESS-BEGIN: us-80046ba4
-extern "C" void save() {}
+extern "C" int save() {
+    extern u32 lbl_eu_80663E28;
+    extern void func_8013E9D8();
+    if (!(lbl_eu_80663E28 & 0x40000000)) func_8013E9D8();
+    return 0;
+}
 // LLM-HARNESS-END: us-80046ba4
 // LLM-HARNESS-BEGIN: us-80046bd4
-extern "C" void kizunaTalkStart() {}
+extern "C" int kizunaTalkStart() {
+    extern void func_8013BDBC();
+    extern u32 lbl_eu_80663E28;
+    extern void func_8007D7A4__Q22cf13CfGameManagerFv();
+    func_8013BDBC();
+    lbl_eu_80663E28 |= 0x1000;
+    func_8007D7A4__Q22cf13CfGameManagerFv();
+    return 0;
+}
 // LLM-HARNESS-END: us-80046bd4
 // LLM-HARNESS-BEGIN: us-80046c08
-extern "C" void kizunaTalkEnd() {}
+extern "C" int kizunaTalkEnd() {
+    extern u32 lbl_eu_80663E28;
+    extern void func_8013BDD0();
+    lbl_eu_80663E28 &= ~0x1800;
+    func_8013BDD0();
+    return 0;
+}
 // LLM-HARNESS-END: us-80046c08
 // LLM-HARNESS-BEGIN: us-80046c38
 extern "C" void isPrioReq() {}
 // LLM-HARNESS-END: us-80046c38
 // LLM-HARNESS-BEGIN: us-80046c84
-extern "C" void gameClear() {}
+extern "C" int gameClear(VMThread* pThread) {
+    extern void func_8013500C();
+    func_8013500C();
+    return 0;
+}
 // LLM-HARNESS-END: us-80046c84
 // LLM-HARNESS-BEGIN: us-80046ca8
 extern "C" void setLastTalkNpc() {}
@@ -12892,8 +12947,16 @@ extern "C" void setLastTalkNpc() {}
 extern "C" void isSETalkVoiceWait() {}
 // LLM-HARNESS-END: us-80046d54
 // LLM-HARNESS-BEGIN: us-80046da0
-extern "C" void func_eu_80046DA0() {}
+extern "C" int func_eu_80046DA0(VMThread* pThread) {
+    extern void func_eu_8013C8DC();
+    func_eu_8013C8DC();
+    return 0;
+}
 // LLM-HARNESS-END: us-80046da0
 // LLM-HARNESS-BEGIN: us-80046dc4
-extern "C" void func_eu_80046DC4() {}
+extern "C" int func_eu_80046DC4(VMThread* pThread) {
+    extern void func_eu_8013C8E8();
+    func_eu_8013C8E8();
+    return 0;
+}
 // LLM-HARNESS-END: us-80046dc4

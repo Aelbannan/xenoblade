@@ -768,7 +768,11 @@ void SFTIM_GetTimeSub() {}
 // LLM-HARNESS-END: us-803cfa38
 
 // LLM-HARNESS-BEGIN: us-803cfad0
-void SFTIM_GetTime() {}
+u32 SFTIM_GetTime(void* self, u32* out1, u32* out2) {
+    *out1 = *(u32*)((u8*)self + 0x1028);
+    *out2 = *(u32*)((u8*)self + 0x102c);
+    return 0;
+}
 // LLM-HARNESS-END: us-803cfad0
 
 // LLM-HARNESS-BEGIN: us-803cfae8
@@ -808,7 +812,9 @@ void SFD_SetExtClockFn() {}
 // LLM-HARNESS-END: us-803cfee4
 
 // LLM-HARNESS-BEGIN: us-803cff7c
-void SFTIM_SetTimeFn() {}
+void SFTIM_SetTimeFn(void* self, void* fn, u32 idx) {
+    *(void**)((u8*)self + 0xd98 + idx * 4) = fn;
+}
 // LLM-HARNESS-END: us-803cff7c
 
 // LLM-HARNESS-BEGIN: us-803cff8c
@@ -880,7 +886,10 @@ void SFTIM_SetSpeed(void* self, u32 a, u32 b) {}
 // LLM-HARNESS-END: us-803d0a54
 
 // LLM-HARNESS-BEGIN: us-803d0a60
-void SFTIM_GetSpeed() {}
+void SFTIM_GetSpeed(void* self, u32* out1, u32* out2) {
+    *out1 = *(u32*)((u8*)self + 0x1048);
+    *out2 = *(u32*)((u8*)self + 0x104c);
+}
 // LLM-HARNESS-END: us-803d0a60
 
 // LLM-HARNESS-BEGIN: us-803d0a74

@@ -34,6 +34,7 @@ void MmlSeqTrackAllocator::Destroy(void* pBuffer, u32 size) {
 } // namespace snd
 } // namespace nw4r
 
+extern "C" u32 CountImpl__Q44nw4r3snd6detail8PoolImplCFv(void*);
 // LLM-HARNESS-BEGIN: us-8041ac84
-extern "C" void GetAllocatableTrackCount__Q44nw4r3snd6detail20MmlSeqTrackAllocatorCFv(void* self) { ((void(*)(void*))CountImpl__Q44nw4r3snd6detail8PoolImplCFv)((char*)self + 0x8); }
+extern "C" void GetAllocatableTrackCount__Q44nw4r3snd6detail20MmlSeqTrackAllocatorCFv(void* self) { CountImpl__Q44nw4r3snd6detail8PoolImplCFv((char*)self + 0x8); }
 // LLM-HARNESS-END: us-8041ac84

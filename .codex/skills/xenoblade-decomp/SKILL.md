@@ -398,6 +398,13 @@ Prefer fixing semantics and types first; only then tune expression order with no
 - incorrect virtual or adjusted-this call
 - relocation target wrong — declare globals with retail linker names via `extern "C"` where needed; access them as normal C++ objects/fields
 - ABI quirks — prefer proper C++ parameters and struct layout; split into helpers rather than fake `Fv`/`u32* r4` register parameters
+- template functions in headers — MWCC `-inline auto` omits standalone
+  bodies. Use `#pragma push` / `#pragma auto_inline off` + explicit
+  `template …` instantiation + `#pragma pop` to force emission. Check
+  retail symbol mangling (`Ui` vs `Ul`) — if the template uses `u32` but
+  retail shows `Ui` (`unsigned int`), change the header definition to
+  `unsigned int` (ABI-identical on PPC32). See `docs/MWCC_REFERENCE.md`
+  §Template pitfalls for full protocol.
 
 ## Approved policy exceptions (`PLAN.md` §17.6)
 

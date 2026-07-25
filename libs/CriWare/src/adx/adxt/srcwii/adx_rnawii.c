@@ -91,5 +91,8 @@ void ADXRNA_SetTotalNumSmpl() {}
 // LLM-HARNESS-END: us-8039e744
 
 // LLM-HARNESS-BEGIN: us-8039e748
-void ADXRNA_SetStmHdInfo() {}
+int ADXRNA_SetStmHdInfo(void) {
+    AXRNA_SetStmHdInfo();
+    return 0;
+}
 // LLM-HARNESS-END: us-8039e748

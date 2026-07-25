@@ -41,6 +41,7 @@ public:
         virtual void detail_Update(SoundParam* pParam, u32 id,
                                    BasicSound* pSound, const void* pArg,
                                    u32 flags) = 0; // at 0xC
+        virtual u32 GetPriority(void* arg, u32 param) = 0; // at 0x10
     };
 
     struct AmbientArgUpdateCallback {
@@ -63,6 +64,16 @@ public:
         void* arg;                                         // at 0xC
         u32 argSize;                                       // at 0x10
     };
+
+    struct AmbientInfo {
+        AmbientParamUpdateCallback* paramUpdateCallback;   // at 0x0
+        AmbientArgUpdateCallback* argUpdateCallback;       // at 0x4
+        AmbientArgAllocaterCallback* argAllocaterCallback; // at 0x8
+        void* arg;                                         // at 0xC
+        u32 argSize;                                       // at 0x10
+    };
+
+    static u32 GetAmbientPriority(const AmbientInfo& info, u32 param);
 
     static const u32 INVALID_ID = 0xFFFFFFFF;
     static const int PRIORITY_MAX = 127;
@@ -196,6 +207,7 @@ public:
 
     void SetFxSend(AuxBus bus, f32 send);
 
+    u8 GetVoiceOutCount() const;
     int CalcCurrentPlayerPriority() const {
         // US SortPriorityList adds mUnk0x50 (not SoundParam::priority @0x4C).
         return ut::Clamp(static_cast<int>(mPriority) + static_cast<int>(mUnk0x50),

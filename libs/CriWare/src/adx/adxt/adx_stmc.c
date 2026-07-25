@@ -9,7 +9,11 @@ void ADXSTM_Init() {}
 // LLM-HARNESS-END: us-80383cc8
 
 // LLM-HARNESS-BEGIN: us-80383d14
-void ADXSTM_Finish() {}
+extern s32 lbl_eu_805E3E98;
+void ADXSTM_Finish(void) {
+    if (--lbl_eu_805E3E98 != 0) return;
+    // would call ADXSTM_DestroyAll() here but that's in another TU
+}
 // LLM-HARNESS-END: us-80383d14
 
 // LLM-HARNESS-BEGIN: us-80383d40
@@ -41,7 +45,9 @@ void ADXSTM_IsOpened() {}
 // LLM-HARNESS-END: us-803844a8
 
 // LLM-HARNESS-BEGIN: us-803844e8
-void ADXSTM_IsOpenReq() {}
+s32 ADXSTM_IsOpenReq(void* self) {
+    return ((signed char*)((u8*)self + 0x49))[0] ? 1 : 0;
+}
 // LLM-HARNESS-END: us-803844e8
 
 // LLM-HARNESS-BEGIN: us-80384510

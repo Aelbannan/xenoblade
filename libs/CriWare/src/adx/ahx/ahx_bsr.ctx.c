@@ -724,7 +724,11 @@ void AHXBSR_Create() {}
 // LLM-HARNESS-END: us-803905a0
 
 // LLM-HARNESS-BEGIN: us-80390678
-void AHXBSR_Destroy() {}
+void* memset(void* s, int c, size_t n);
+void AHXBSR_Destroy(void* self) {
+    if (self == NULL) return;
+    memset(self, 0, 0x2c);
+}
 // LLM-HARNESS-END: us-80390678
 
 // LLM-HARNESS-BEGIN: us-80390690

@@ -29,7 +29,12 @@ void ADXB_CheckWav() {}
 // LLM-HARNESS-END: us-8038c4e8
 
 // LLM-HARNESS-BEGIN: us-8038c558
-void ADXB_ExecOneWav() {}
+void ADXB_ExecOneWav(void* self) {
+    s32 codec = *(s16*)((u8*)self + 0x9c);
+    if (codec == 2) { ADXB_ExecOneWav16(); return; }
+    if (codec == 1) { ADXB_ExecOneWav8(); return; }
+    ADXB_ExecOneWav4();
+}
 // LLM-HARNESS-END: us-8038c558
 
 // LLM-HARNESS-BEGIN: us-8038c584

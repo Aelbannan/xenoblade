@@ -29,5 +29,11 @@ void ADXB_ExecOneAiff8() {}
 // LLM-HARNESS-END: us-80389774
 
 // LLM-HARNESS-BEGIN: us-80389af4
-void ADXB_ExecOneAiff() {}
+void ADXB_ExecOneAiff(void* self) {
+    if ((int)*(s16*)((u8*)self + 0x9c) == 1) {
+        ((void(*)(void*))ADXB_ExecOneAiff8)(self);
+    } else {
+        ((void(*)(void*))ADXB_ExecOneAiff16)(self);
+    }
+}
 // LLM-HARNESS-END: us-80389af4

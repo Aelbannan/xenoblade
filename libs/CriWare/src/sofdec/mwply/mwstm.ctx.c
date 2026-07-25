@@ -728,7 +728,12 @@ void MWSTM_IsFsStatErr() {}
 // LLM-HARNESS-END: us-803a1234
 
 // LLM-HARNESS-BEGIN: us-803a1260
-void MWSTM_SetFlowLimit() {}
+void ADXSTM_SetBufSize(void* a);
+void MWSTM_SetFlowLimit(void* a) {
+    if (a != NULL) {
+        ADXSTM_SetBufSize(a);
+    }
+}
 // LLM-HARNESS-END: us-803a1260
 
 // LLM-HARNESS-BEGIN: us-803a1270

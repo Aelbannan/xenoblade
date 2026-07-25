@@ -13,7 +13,9 @@ void criware_803A326C() {}
 // LLM-HARNESS-END: us-803a69e8
 
 // LLM-HARNESS-BEGIN: us-803a6a44
-void mwPlyGetSstCoreHnByIdx() {}
+void* mwPlyGetSstCoreHnByIdx(void* self, u32 idx) {
+    return *(void**)((u8*)self + 0x5fc + idx * 0x28);
+}
 // LLM-HARNESS-END: us-803a6a44
 
 // LLM-HARNESS-BEGIN: us-803a6a54

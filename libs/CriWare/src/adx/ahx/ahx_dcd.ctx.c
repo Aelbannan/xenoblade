@@ -744,7 +744,12 @@ void AHXDCD_Init() {}
 // LLM-HARNESS-END: us-80391444
 
 // LLM-HARNESS-BEGIN: us-80391484
-void AHXDCD_Finish() {}
+extern s32 lbl_eu_805E64D8;
+void AHXSBF_Finish(void);
+void AHXDCD_Finish(void) {
+    if (--lbl_eu_805E64D8 != 0) return;
+    AHXSBF_Finish();
+}
 // LLM-HARNESS-END: us-80391484
 
 // LLM-HARNESS-BEGIN: us-803914a0
@@ -772,7 +777,9 @@ void AHXDCD_DecodeFrmHdr() {}
 // LLM-HARNESS-END: us-8039188c
 
 // LLM-HARNESS-BEGIN: us-80391970
-void AHXDCD_IsEof() {}
+u32 AHXDCD_IsEof(void* self) {
+    return (*(u32*)((u8*)self + 0x34c) == 0xc) ? 1 : 0;
+}
 // LLM-HARNESS-END: us-80391970
 
 // LLM-HARNESS-BEGIN: us-80391984
@@ -780,7 +787,7 @@ void AHXDCD_DecodeData() {}
 // LLM-HARNESS-END: us-80391984
 
 // LLM-HARNESS-BEGIN: us-80391a40
-int AHXDCD_GetOutBps(void* self) { return (signed char)((u8*)self)[0]; }
+s16 AHXDCD_GetOutBps(void* self) { return (signed char)((u8*)self)[0x34b]; }
 // LLM-HARNESS-END: us-80391a40
 
 // LLM-HARNESS-BEGIN: us-80391a4c
@@ -788,11 +795,17 @@ int AHXDCD_GetOutSmpl(void) { return 0x60; }
 // LLM-HARNESS-END: us-80391a4c
 
 // LLM-HARNESS-BEGIN: us-80391a54
-void AHXDCD_GetTotalNumSmpl() {}
+u32 AHXDCD_GetTotalNumSmpl(void* self) {
+    if ((signed char)((u8*)self)[0x349] == 0) return 0;
+    return *(u32*)((u8*)self + 0x394);
+}
 // LLM-HARNESS-END: us-80391a54
 
 // LLM-HARNESS-BEGIN: us-80391a70
-void AHXDCD_SetExtPrm(void) {}
+void* memcpy(void* dest, const void* src, size_t n);
+void AHXDCD_SetExtPrm(void* self, void* prm) {
+    memcpy((u8*)self + 0xbc4, prm, 8);
+}
 // LLM-HARNESS-END: us-80391a70
 
 // LLM-HARNESS-BEGIN: us-80391a7c

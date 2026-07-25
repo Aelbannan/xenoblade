@@ -989,6 +989,8 @@ class Harness:
         self, number: int, *, ignore_called_functions: bool = False, certified_funcs: bool = False,
         high_match_callees: bool = False,
         tu: Optional[str] = None,
+        max_func_size: Optional[int] = None,
+        all_funcs: bool = False,
     ) -> List[str]:
         """Ask the project adapter for fresh function targets, optionally filtered to a TU."""
         if number < 1:
@@ -1006,6 +1008,8 @@ class Harness:
                         certified_funcs=certified_funcs,
                         high_match_callees=high_match_callees,
                         tu=tu,
+                        max_func_size=max_func_size,
+                        all_funcs=all_funcs,
                     )
                 )
             except TypeError:
@@ -1016,6 +1020,8 @@ class Harness:
                         ignore_called_functions=ignore_called_functions,
                         certified_funcs=certified_funcs,
                         tu=tu,
+                        max_func_size=max_func_size,
+                        all_funcs=all_funcs,
                     )
                 )
         if len(target_ids) != number:
@@ -1035,6 +1041,8 @@ class Harness:
         tu: Optional[str] = None,
         selection: Optional[str] = None,
         min_fuzzy: Optional[float] = None,
+        max_func_size: Optional[int] = None,
+        all_funcs: bool = False,
     ) -> List[str]:
         """Ask the project adapter for an automatic workflow target selection, optionally filtered to a TU."""
         if workflow not in {"improve", "solve", "tu-complete", "probe"}:
@@ -1054,6 +1062,10 @@ class Harness:
             kwargs["selection"] = selection
         if min_fuzzy is not None:
             kwargs["min_fuzzy"] = min_fuzzy
+        if max_func_size is not None:
+            kwargs["max_func_size"] = max_func_size
+        if all_funcs:
+            kwargs["all_funcs"] = all_funcs
         with self._adapter_lock:
             try:
                 target_ids = list(select(workflow, number, **kwargs))
@@ -1062,6 +1074,8 @@ class Harness:
                 kwargs.pop("selection", None)
                 kwargs.pop("min_fuzzy", None)
                 kwargs.pop("high_match_callees", None)
+                kwargs.pop("max_func_size", None)
+                kwargs.pop("all_funcs", None)
                 target_ids = list(select(workflow, number, **kwargs))
         if len(target_ids) != number:
             raise ValueError(

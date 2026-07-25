@@ -732,7 +732,12 @@ void gcCiExecServer() {}
 // LLM-HARNESS-END: us-80393d50
 
 // LLM-HARNESS-BEGIN: us-80393dac
-void gcCiEntryErrFunc() {}
+extern u32 lbl_eu_805E6B74;
+extern u32 lbl_eu_805E6B78;
+void gcCiEntryErrFunc(u32 a, u32 b) {
+    lbl_eu_805E6B74 = a;
+    lbl_eu_805E6B78 = b;
+}
 // LLM-HARNESS-END: us-80393dac
 
 // LLM-HARNESS-BEGIN: us-80393dc0
@@ -780,7 +785,9 @@ void gcCiGetNumTr() {}
 // LLM-HARNESS-END: us-80394920
 
 // LLM-HARNESS-BEGIN: us-80394980
-void gcCiIsExistFile() {}
+s32 gcCiIsExistFile(s32 a, s32 b) {
+    return 0;
+}
 // LLM-HARNESS-END: us-80394980
 
 // LLM-HARNESS-BEGIN: us-803949a8

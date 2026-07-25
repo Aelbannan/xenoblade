@@ -11901,16 +11901,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -16385,10 +16383,12 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -237663,6 +237663,7 @@ public:
 
     void SetFxSend(AuxBus bus, f32 send);
 
+    u8 GetVoiceOutCount() const;
     int CalcCurrentPlayerPriority() const {
         // US SortPriorityList adds mUnk0x50 (not SoundParam::priority @0x4C).
         return ut::Clamp(static_cast<int>(mPriority) + static_cast<int>(mUnk0x50),
@@ -241775,7 +241776,7 @@ public:
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
-        return mPreparedFlag;
+        return *(bool*)((u8*)this + 677);
     } // at 0x2C
 
     virtual void SetPlayerPriority(int priority); // at 0x4C
@@ -243977,13 +243978,13 @@ public:
     virtual void Pause(bool flag); // at 0x14
 
     virtual bool IsActive() const {
-        return mActiveFlag;
+        return *(bool*)((u8*)this + 289);
     } // at 0x18
     virtual bool IsStarted() const {
-        return mStartedFlag;
+        return *(bool*)((u8*)this + 290);
     } // at 0x1C
     virtual bool IsPause() const {
-        return mPauseFlag;
+        return *(bool*)((u8*)this + 295);
     }; // at 0x20
 
     virtual void OnUpdateFrameSoundThread() {
@@ -244190,6 +244191,7 @@ public:
 
 public:
     explicit StrmSound(SoundInstanceManager<StrmSound>* pManager);
+    virtual ~StrmSound();
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
@@ -244207,8 +244209,11 @@ public:
         return mStrmPlayer;
     } // at 0x6C
 
-    bool Prepare(StrmBufferPool* pPool, StrmPlayer::StartOffsetType offsetType,
-                 s32 offset, int voices, ut::FileStream* pStream);
+    bool Setup(StrmBufferPool* pPool, int voices, u16 unk);
+    bool Prepare(StrmPlayer::StartOffsetType offsetType, s32 offset,
+                 ut::FileStream* pStream);
+    void InitParam();
+    void UpdateMoveValue();
 
     void* GetFileStreamBuffer() {
         return mFileStreamBuffer;
@@ -244573,14 +244578,14 @@ public:
     NW4R_UT_RTTI_DECL(WaveSound);
 
 public:
-    explicit WaveSound(SoundInstanceManager<WaveSound>* pManager);
+    WaveSound(SoundInstanceManager<WaveSound>* pManager, int priority, int arg);
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
         return mPreparedFlag;
     } // at 0x2C
 
-    virtual void SetPlayerPriority(int priority); // at 0x4C
+    virtual void OnUpdatePlayerPriority(); // at 0x4C
     virtual bool IsAttachedTempSpecialHandle();   // at 0x5C
     virtual void DetachTempSpecialHandle();       // at 0x60
 
@@ -247102,8 +247107,8 @@ namespace detail {
 
 NW4R_UT_RTTI_DEF_DERIVED(WaveSound, BasicSound);
 
-WaveSound::WaveSound(SoundInstanceManager<WaveSound>* pManager)
-    : BasicSound(0, 0),
+WaveSound::WaveSound(SoundInstanceManager<WaveSound>* pManager, int priority, int arg)
+    : BasicSound(priority, arg),
       mManager(pManager),
       mTempSpecialHandle(NULL),
       mPreparedFlag(false) {}
@@ -247136,9 +247141,8 @@ void WaveSound::SetReleasePriorityFix(bool flag) {
     mWsdPlayer.SetReleasePriorityFix(flag);
 }
 
-void WaveSound::SetPlayerPriority(int priority) {
-    BasicSound::SetPlayerPriority(priority);
-    mManager->UpdatePriority(this, CalcCurrentPlayerPriority());
+void WaveSound::OnUpdatePlayerPriority() {
+    BasicSound::OnUpdatePlayerPriority();
 }
 
 bool WaveSound::IsAttachedTempSpecialHandle() {
@@ -247152,19 +247156,3 @@ void WaveSound::DetachTempSpecialHandle() {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-// LLM-HARNESS-BEGIN: us-8042c170
-extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail9WaveSoundFv() {}
-// LLM-HARNESS-END: us-8042c170
-// LLM-HARNESS-BEGIN: us-8042c270
-extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail9WaveSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
-// LLM-HARNESS-END: us-8042c270
-// LLM-HARNESS-BEGIN: us-8042c278
-extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail9WaveSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
-// LLM-HARNESS-END: us-8042c278
-// LLM-HARNESS-BEGIN: us-8042c280
-extern "C" u8 IsPrepared__Q44nw4r3snd6detail9WaveSoundCFv(void* self) { return ((u8*)self)[0x24c]; }
-// LLM-HARNESS-END: us-8042c280
-// LLM-HARNESS-BEGIN: us-8042c288
-extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail9WaveSoundCFv(void) { return lbl_eu_80665538@sda21; }
-// LLM-HARNESS-END: us-8042c288

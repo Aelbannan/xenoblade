@@ -13,11 +13,20 @@ void SFXZ_Create() {}
 // LLM-HARNESS-END: us-803d8454
 
 // LLM-HARNESS-BEGIN: us-803d84d0
-void SFXZ_Destroy() {}
+void SFXZ_Destroy(void* self) {
+    if (self == NULL) return;
+    *(u32*)self = 0;
+}
 // LLM-HARNESS-END: us-803d84d0
 
 // LLM-HARNESS-BEGIN: us-803d84f4
-void SFXZ_SetTagInf() {}
+void sfxzmv_SetTagGrp();
+void SFXZ_SetTagInf(void* self, u32 a, u32 b) {
+    *(u32*)((u8*)self + 0x08) = 1;
+    *(u32*)((u8*)self + 0x0c) = a;
+    *(u32*)((u8*)self + 0x10) = b;
+    sfxzmv_SetTagGrp();
+}
 // LLM-HARNESS-END: us-803d84f4
 
 // LLM-HARNESS-BEGIN: us-803d8508

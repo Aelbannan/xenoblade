@@ -58,6 +58,15 @@ BasicSound::BasicSound(int priority, int arg)
     mUnk0x50 = arg;
 }
 
+u8 BasicSound::GetVoiceOutCount() const {
+    return mUnk0x95;
+}
+
+u32 BasicSound::GetAmbientPriority(const AmbientInfo& info, u32 param) {
+    if (info.paramUpdateCallback == NULL) return 0;
+    return info.paramUpdateCallback->GetPriority(info.arg, param);
+}
+
 void BasicSound::UpdateMoveValue() {
     mFadeVolume.Update();
     mExtMoveVolume.Update();

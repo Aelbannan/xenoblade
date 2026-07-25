@@ -205,7 +205,15 @@ extern "C" void func_80043628() {
 }
 // LLM-HARNESS-END: us-80043ba0
 // LLM-HARNESS-BEGIN: us-80043c08
-extern "C" void func_8004368C__9CTaskGameFv() {}
+extern "C" s32 func_800436A8();
+
+extern "C" s32 func_8004368C__9CTaskGameFv() {
+    extern void* lbl_eu_80663D18;
+    if (lbl_eu_80663D18 == NULL) {
+        return 0;
+    }
+    return func_800436A8();
+}
 // LLM-HARNESS-END: us-80043c08
 // LLM-HARNESS-BEGIN: us-80043c70
 extern "C" void func_800436F4(void* self, int value) { unsigned int& flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x68); if ((flags & 0x2000) != 0 && value == 1) return; void* object = *reinterpret_cast<void**>(reinterpret_cast<unsigned char*>(self) + 0xf0); *reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(self) + 0xf4) = value; flags |= 0x1000; if (object != 0) *reinterpret_cast<unsigned char*>(reinterpret_cast<unsigned char*>(object) + 0xea) = 1; }
@@ -400,7 +408,9 @@ extern "C" void func_8004312C();
 extern "C" void func_8004362C() {}
 // LLM-HARNESS-END: us-80043ba4
 // LLM-HARNESS-BEGIN: us-80043c24
-extern "C" void func_800436A8() {}
+#pragma dont_inline on
+extern "C" s32 func_800436A8() { return 0; }
+#pragma dont_inline reset
 // LLM-HARNESS-END: us-80043c24
 // LLM-HARNESS-BEGIN: us-80043cb4
 extern "C" void func_80043738() {}

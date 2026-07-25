@@ -232,12 +232,15 @@ u16 RomFont::HandleUndefinedChar(u16 ch) const {
     return valid ? ch : mAlternateChar;
 }
 
+void* RomFont::Unload() {
+    void* pPrev = mFontHeader;
+    mFontHeader = NULL;
+    return pPrev;
+}
+
 } // namespace ut
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-8042e540
-extern "C" void Unload__Q34nw4r2ut7RomFontFv() {}
-// LLM-HARNESS-END: us-8042e540
 // LLM-HARNESS-BEGIN: us-8042e914
 extern "C" bool HasGlyph__Q34nw4r2ut7RomFontCFUs(unsigned short) { return false; }
 // LLM-HARNESS-END: us-8042e914

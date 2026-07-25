@@ -9,7 +9,18 @@ extern "C" void __ct__Q44nw4r2ut6detail15ArchiveFontBaseFv() {}
 // LLM-HARNESS-END: us-8042f5c4
 
 // LLM-HARNESS-BEGIN: us-8042f608
-extern "C" void __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv() {}
+extern "C" void* __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(void* self, int deleting)
+{
+    extern void __dt__Q44nw4r2ut6detail11ResFontBaseFv(void*, int);
+    extern void __dl__FPv(void*);
+
+    if (self != 0) {
+        __dt__Q44nw4r2ut6detail11ResFontBaseFv(self, 0);
+        if (deleting > 0)
+            __dl__FPv(self);
+    }
+    return self;
+}
 // LLM-HARNESS-END: us-8042f608
 
 // LLM-HARNESS-BEGIN: us-8042f660

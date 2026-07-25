@@ -10,7 +10,15 @@ extern "C" void __ct__10CLibLayoutFPCcP11CWorkThread() {}
 // LLM-HARNESS-END: us-80462f54
 
 // LLM-HARNESS-BEGIN: us-80462fd0
-extern "C" void __dt__8045F000() {}
+extern "C" void* __dt__8045F000(void* self, int flags) {
+    if (self != 0) {
+        *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x48) = 0;
+        *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x44) = 0;
+        if (flags > 0)
+            operator delete(self);
+    }
+    return self;
+}
 // LLM-HARNESS-END: us-80462fd0
 
 // LLM-HARNESS-BEGIN: us-8046301c

@@ -11688,7 +11688,17 @@ extern "C" void __ct__80449548(void) {}
 // LLM-HARNESS-END: us-8044bebc
 
 // LLM-HARNESS-BEGIN: us-8044bef0
-// (mapped to __ct__80449548 above)
+extern "C" void* __dt__CMsgParam_32(void* self, int shouldDelete) {
+    if (self != 0) {
+        if (reinterpret_cast<unsigned char*>(self) + 4 != 0) {
+            *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x48c) = 0;
+            *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x488) = 0;
+        }
+        if (shouldDelete > 0)
+            ::operator delete(self);
+    }
+    return self;
+}
 // LLM-HARNESS-END: us-8044bef0
 
 // LLM-HARNESS-BEGIN: us-8044bf48

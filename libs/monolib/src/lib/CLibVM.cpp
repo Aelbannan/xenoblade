@@ -5,7 +5,20 @@ extern "C" void __ct__6CLibVMFPCcP11CWorkThread() {}
 // LLM-HARNESS-END: us-804640b0
 
 // LLM-HARNESS-BEGIN: us-804640fc
-extern "C" void __dt__6CLibVMFv() {}
+extern "C" void* lbl_eu_80665720;
+extern "C" void __dt__11CWorkThreadFv(void*, int);
+extern "C" void __dl__FPv(void*);
+
+extern "C" CLibVM* __dt__6CLibVMFv(CLibVM* self, int deleting) {
+    if (self != 0) {
+        lbl_eu_80665720 = 0;
+        __dt__11CWorkThreadFv(self, 0);
+        if (deleting > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
 // LLM-HARNESS-END: us-804640fc
 
 CLibVM* CLibVM::spInstance;

@@ -5,7 +5,20 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803fb86c
-extern "C" void GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb() {}
+extern "C" void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable)
+{
+    unsigned char* object = static_cast<unsigned char*>(self);
+    void* resource = *reinterpret_cast<void**>(object);
+    if (resource == 0 || *reinterpret_cast<void**>(object + 0x10) == 0)
+        return 0;
+    if (enable)
+    {
+        unsigned int index = *reinterpret_cast<unsigned int*>(object + 0x4);
+        unsigned int* flags = *reinterpret_cast<unsigned int**>(static_cast<unsigned char*>(resource) + 0x140);
+        flags[index] |= 0x4;
+    }
+    return *reinterpret_cast<void**>(object + 0x10);
+}
 // LLM-HARNESS-END: us-803fb86c
 
 // LLM-HARNESS-BEGIN: us-803fb8b4
@@ -13,7 +26,24 @@ extern "C" void GetResMatChan__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb() {}
 // LLM-HARNESS-END: us-803fb8b4
 
 // LLM-HARNESS-BEGIN: us-803fb8fc
-extern "C" void GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb() {}
+extern "C" void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable) {
+    struct Model {
+        unsigned char pad[0x140];
+        unsigned* flags;
+    };
+    struct Access {
+        Model* model;
+        unsigned index;
+        unsigned char pad[0x10];
+        void* resGenMode;
+    };
+    Access* access = static_cast<Access*>(self);
+    if (access->model == 0 || access->resGenMode == 0)
+        return 0;
+    if (enable)
+        access->model->flags[access->index] |= 0x10;
+    return access->resGenMode;
+}
 // LLM-HARNESS-END: us-803fb8fc
 
 // LLM-HARNESS-BEGIN: us-803fb944

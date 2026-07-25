@@ -11901,16 +11901,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -16390,6 +16388,7 @@ public:
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -21123,7 +21122,8 @@ struct WaveInfo {
     u8 numChannels;             // at 0x2
     u8 sampleRate24;            // at 0x3
     u16 sampleRate;             // at 0x4
-    u16 PADDING_0x6;            // at 0x6
+    u8 dataType;                // at 0x6 (used by GetWaveDataAddress)
+    u8 PADDING_0x7;            // at 0x7
     u32 loopStart;              // at 0x8
     u32 loopEnd;                // at 0xC
     u32 channelInfoTableOffset; // at 0x10
@@ -21172,11 +21172,23 @@ public:
     explicit WaveFileReader(const WaveFile::WaveInfo* pWaveInfo);
 
     bool ReadWaveParam(WaveData* pWaveData, const void* pWaveAddr) const;
+    void* GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
+                              const void* addr) const;
 
     static AxVoice::Format GetAxVoiceFormatFromWaveFileFormat(u32 format);
 
 private:
     const WaveFile::WaveInfo* mWaveInfo; // at 0x0
+};
+
+class WaveArchiveReader {
+public:
+    explicit WaveArchiveReader(const void* pData);
+    const void* GetWaveFile(int index) const;
+
+private:
+    const void* mFileStart; // at 0x0
+    const void* mWaveData;  // at 0x4
 };
 
 inline AxVoice::Format WaveFormatToAxFormat(u32 format) {
@@ -237509,6 +237521,7 @@ public:
         virtual void detail_Update(SoundParam* pParam, u32 id,
                                    BasicSound* pSound, const void* pArg,
                                    u32 flags) = 0; // at 0xC
+        virtual u32 GetPriority(void* arg, u32 param) = 0; // at 0x10
     };
 
     struct AmbientArgUpdateCallback {
@@ -237531,6 +237544,16 @@ public:
         void* arg;                                         // at 0xC
         u32 argSize;                                       // at 0x10
     };
+
+    struct AmbientInfo {
+        AmbientParamUpdateCallback* paramUpdateCallback;   // at 0x0
+        AmbientArgUpdateCallback* argUpdateCallback;       // at 0x4
+        AmbientArgAllocaterCallback* argAllocaterCallback; // at 0x8
+        void* arg;                                         // at 0xC
+        u32 argSize;                                       // at 0x10
+    };
+
+    static u32 GetAmbientPriority(const AmbientInfo& info, u32 param);
 
     static const u32 INVALID_ID = 0xFFFFFFFF;
     static const int PRIORITY_MAX = 127;
@@ -237664,6 +237687,7 @@ public:
 
     void SetFxSend(AuxBus bus, f32 send);
 
+    u8 GetVoiceOutCount() const;
     int CalcCurrentPlayerPriority() const {
         // US SortPriorityList adds mUnk0x50 (not SoundParam::priority @0x4C).
         return ut::Clamp(static_cast<int>(mPriority) + static_cast<int>(mUnk0x50),
@@ -244009,11 +244033,20 @@ public:
     }
 
     bool Setup(StrmBufferPool* pBufferPool);
+    bool Setup(StrmBufferPool* pBufferPool, int voices, u16 param, int zero);
     void Shutdown();
 
     bool Prepare(ut::FileStream* pFileStream, int voices,
                  StartOffsetType offsetType, int offset);
+    bool Prepare(ut::FileStream* pFileStream, StartOffsetType offsetType,
+                 s32 offset);
     void InitParam();
+
+    struct PlayerTrack {
+        u8 data[0x38];
+    };
+
+    PlayerTrack* GetPlayerTrack(int index);
 
     void Update();
 
@@ -244154,6 +244187,14 @@ private:
     u16 mAdpcmLoopYn1[CHANNEL_MAX];       // at 0x8A8
     u16 mAdpcmLoopYn2[CHANNEL_MAX];       // at 0x8AC
 
+    PlayerTrack mPlayerTracks[8]; // at 0xB78
+    
+    struct MoveBlock {
+        u32 limit; // at 0x0
+        u32 count; // at 0x4
+    };
+    MoveBlock mMoveBlocks[8]; // at 0xD7C
+
     static u8 sLoadBuffer[LOAD_BUFFER_SIZE] ALIGN(32);
     static OSMutex sLoadBufferMutex;
 
@@ -244191,6 +244232,7 @@ public:
 
 public:
     explicit StrmSound(SoundInstanceManager<StrmSound>* pManager);
+    virtual ~StrmSound();
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
@@ -244208,8 +244250,11 @@ public:
         return mStrmPlayer;
     } // at 0x6C
 
-    bool Prepare(StrmBufferPool* pPool, StrmPlayer::StartOffsetType offsetType,
-                 s32 offset, int voices, ut::FileStream* pStream);
+    bool Setup(StrmBufferPool* pPool, int voices, u16 unk);
+    bool Prepare(StrmPlayer::StartOffsetType offsetType, s32 offset,
+                 ut::FileStream* pStream);
+    void InitParam();
+    void UpdateMoveValue();
 
     void* GetFileStreamBuffer() {
         return mFileStreamBuffer;
@@ -244574,14 +244619,14 @@ public:
     NW4R_UT_RTTI_DECL(WaveSound);
 
 public:
-    explicit WaveSound(SoundInstanceManager<WaveSound>* pManager);
+    WaveSound(SoundInstanceManager<WaveSound>* pManager, int priority, int arg);
 
     virtual void Shutdown(); // at 0x28
     virtual bool IsPrepared() const {
         return mPreparedFlag;
     } // at 0x2C
 
-    virtual void SetPlayerPriority(int priority); // at 0x4C
+    virtual void OnUpdatePlayerPriority(); // at 0x4C
     virtual bool IsAttachedTempSpecialHandle();   // at 0x5C
     virtual void DetachTempSpecialHandle();       // at 0x60
 
@@ -248269,7 +248314,16 @@ void Voice::InvalidateWaveData(const void* pStart, const void* pEnd) {
 extern "C" void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(int, float) {}
 // LLM-HARNESS-END: us-804296a0
 // LLM-HARNESS-BEGIN: us-80429920
-extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam() {}
+extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(unsigned char* self, int index, const float* param) {
+    float* dst = reinterpret_cast<float*>(self + index * 0x18 + 0x2c);
+    dst[0] = param[0];
+    dst[1] = param[1];
+    dst[2] = param[2];
+    dst[3] = param[3];
+    dst[4] = param[4];
+    dst[5] = param[5];
+    *reinterpret_cast<unsigned short*>(self + 0xa2) |= 0x003c;
+}
 // LLM-HARNESS-END: us-80429920
 // LLM-HARNESS-BEGIN: us-8042afb8
 extern "C" void InvalidateData__Q44nw4r3snd6detail5VoiceFPCvPCv() {}

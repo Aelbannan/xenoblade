@@ -28,7 +28,9 @@ extern "C" CView* getView2__11CSplitFrameFv(CSplitFrame* self) {
 
 // LLM-HARNESS-BEGIN: us-8043e070
 extern "C" bool isActive__11CSplitFrameFv(CSplitFrame* self) {
-    return getView1__11CSplitFrameFv(self) != nullptr || getView2__11CSplitFrameFv(self) != nullptr;
+    CView* view1 = CViewRoot::getView(self->mView1);
+    CView* view2 = CViewRoot::getView(self->mView2);
+    return view1 != nullptr || view2 != nullptr;
 }
 // LLM-HARNESS-END: us-8043e070
 

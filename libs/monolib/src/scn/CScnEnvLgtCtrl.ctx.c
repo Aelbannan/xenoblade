@@ -997,7 +997,24 @@ extern "C" void func_804C5FB0() {}
 // LLM-HARNESS-END: us-804ca10c
 
 // LLM-HARNESS-BEGIN: us-804ca16c
-extern "C" void func_804C6010() {}
+extern "C" void func_804C6010(void* _this, int r4, int r5) {
+    void* r3 = *(void**)((char*)_this + 0x24);
+    if (r3 == nullptr) {
+        return;
+    }
+    if (r5 > 1) {
+        r5 = 0;
+    }
+    int r0 = -r4;
+    r0 |= r4;
+    r0 >>= 31;
+    r0 &= 2;
+    r5 += r0;
+    char* ptr = (char*)r3 + r5 * 0x30;
+    unsigned short val = *(unsigned short*)(ptr + 0x28);
+    val &= 0xFFFB;
+    *(unsigned short*)(ptr + 0x28) = val;
+}
 // LLM-HARNESS-END: us-804ca16c
 
 // LLM-HARNESS-BEGIN: us-804ca1b0

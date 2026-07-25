@@ -75,7 +75,26 @@ extern "C" void func_804DF690() {}
 // LLM-HARNESS-END: us-804e3b2c
 
 // LLM-HARNESS-BEGIN: us-804e3be0
-extern "C" void __dt__804DF744() {}
+extern "C" void __dla__FPv(void*);
+extern "C" void* lbl_eu_80665A30;
+extern "C" void* lbl_eu_80665A34;
+extern "C" void* lbl_eu_80665A38;
+extern "C" void* lbl_eu_80665A3C;
+
+extern "C" void __dt__804DF744() {
+    void* p1 = lbl_eu_80665A34;
+    lbl_eu_80665A30 = 0;
+    if (p1) {
+        __dla__FPv(p1);
+        lbl_eu_80665A34 = 0;
+    }
+    void* p2 = lbl_eu_80665A38;
+    if (p2) {
+        __dla__FPv(p2);
+        lbl_eu_80665A38 = 0;
+    }
+    lbl_eu_80665A3C = 0;
+}
 // LLM-HARNESS-END: us-804e3be0
 
 // LLM-HARNESS-BEGIN: us-804e3c40

@@ -720,7 +720,16 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-804e3244
-extern "C" void func_804DEDA8() {}
+extern "C" void func_804DEDA8(void* r3) {
+    char* base = (char*)r3;
+    base[0] = 0;
+    base[2] = 0;
+    base[3] = 0;
+    *(int*)(base + 4) = 0;
+    *(int*)(base + 8) = 0;
+    *(int*)(base + 0x10) = 0;
+    *(int*)(base + 0xc) = 0;
+}
 // LLM-HARNESS-END: us-804e3244
 
 // LLM-HARNESS-BEGIN: us-804e3268
@@ -744,7 +753,12 @@ extern "C" void func_804DF164() {}
 // LLM-HARNESS-END: us-804e3600
 
 // LLM-HARNESS-BEGIN: us-804e3744
-extern "C" void func_804DF2A8() {}
+extern "C" void* func_804DF2A8(void* self, int index) {
+    uint8_t* base = *(uint8_t**)((uint8_t*)self + 0x10);
+    uint8_t* arrayBase = base + *(uint32_t*)(base + 0x8);
+    uint32_t offset = *(uint32_t*)(arrayBase + (index << 3));
+    return base + offset;
+}
 // LLM-HARNESS-END: us-804e3744
 
 // LLM-HARNESS-BEGIN: us-804e3760
@@ -776,7 +790,26 @@ extern "C" void func_804DF690() {}
 // LLM-HARNESS-END: us-804e3b2c
 
 // LLM-HARNESS-BEGIN: us-804e3be0
-extern "C" void __dt__804DF744() {}
+extern "C" void __dla__FPv(void*);
+extern "C" void* lbl_eu_80665A30;
+extern "C" void* lbl_eu_80665A34;
+extern "C" void* lbl_eu_80665A38;
+extern "C" void* lbl_eu_80665A3C;
+
+extern "C" void __dt__804DF744() {
+    void* p1 = lbl_eu_80665A34;
+    lbl_eu_80665A30 = 0;
+    if (p1) {
+        __dla__FPv(p1);
+        lbl_eu_80665A34 = 0;
+    }
+    void* p2 = lbl_eu_80665A38;
+    if (p2) {
+        __dla__FPv(p2);
+        lbl_eu_80665A38 = 0;
+    }
+    lbl_eu_80665A3C = 0;
+}
 // LLM-HARNESS-END: us-804e3be0
 
 // LLM-HARNESS-BEGIN: us-804e3c40

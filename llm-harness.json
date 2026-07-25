@@ -61,9 +61,9 @@
   "models": {
     "default": [
       {
-		"id": "or-minimax-m3",
+		"id": "or-deepseek-4-pro",
 		"provider": "openrouter",
-		"model": "minimax/minimax-m3",
+		"model": "deepseek/deepseek-v4-pro",
 		"runs": 1,
 		"max_tokens": 16384,
 		"thinking_budget": "unlimited"

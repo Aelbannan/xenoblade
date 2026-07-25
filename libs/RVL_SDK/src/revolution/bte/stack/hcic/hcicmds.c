@@ -33,7 +33,22 @@ void btsnd_hcic_accept_conn() {}
 // LLM-HARNESS-END: us-802f3bc8
 
 // LLM-HARNESS-BEGIN: us-802f3c28
-void btsnd_hcic_reject_conn() {}
+void btsnd_hcic_reject_conn(unsigned char* p, unsigned char* bd_addr, unsigned char reason)
+{
+    *(unsigned short*)(p + 2) = 0xa;
+    *(unsigned short*)(p + 4) = 0;
+    p[8] = 0xa;
+    p[9] = 4;
+    p[10] = 7;
+    p[11] = bd_addr[5];
+    p[12] = bd_addr[4];
+    p[13] = bd_addr[3];
+    p[14] = bd_addr[2];
+    p[15] = bd_addr[1];
+    p[16] = bd_addr[0];
+    p[17] = reason;
+    btu_hcif_send_cmd(p);
+}
 // LLM-HARNESS-END: us-802f3c28
 
 // LLM-HARNESS-BEGIN: us-802f3c84
@@ -93,7 +108,23 @@ void btsnd_hcic_accept_esco_conn() {}
 // LLM-HARNESS-END: us-802f46c8
 
 // LLM-HARNESS-BEGIN: us-802f47b0
-void btsnd_hcic_reject_esco_conn() {}
+void btsnd_hcic_reject_esco_conn(void *p_cmd, unsigned char *bd_addr, unsigned char reason)
+{
+    unsigned char *p = (unsigned char *)p_cmd;
+    *(unsigned short *)(p + 2) = 0xa;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 0x2a;
+    p[9] = 4;
+    p[10] = 7;
+    p[11] = bd_addr[5];
+    p[12] = bd_addr[4];
+    p[13] = bd_addr[3];
+    p[14] = bd_addr[2];
+    p[15] = bd_addr[1];
+    p[16] = bd_addr[0];
+    p[17] = reason;
+    btu_hcif_send_cmd(p_cmd);
+}
 // LLM-HARNESS-END: us-802f47b0
 
 // LLM-HARNESS-BEGIN: us-802f4810
@@ -137,7 +168,22 @@ void btsnd_hcic_write_pin_type() {}
 // LLM-HARNESS-END: us-802f4ea8
 
 // LLM-HARNESS-BEGIN: us-802f4f1c
-void btsnd_hcic_read_stored_key() {}
+void btsnd_hcic_read_stored_key(unsigned char *p, unsigned char *bd_addr, unsigned char read_all)
+{
+    *(unsigned short *)(p + 2) = 0xa;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 0xd;
+    p[9] = 0xc;
+    p[10] = 7;
+    p[11] = bd_addr[5];
+    p[12] = bd_addr[4];
+    p[13] = bd_addr[3];
+    p[14] = bd_addr[2];
+    p[15] = bd_addr[1];
+    p[16] = bd_addr[0];
+    p[17] = read_all;
+    btu_hcif_send_cmd(p);
+}
 // LLM-HARNESS-END: us-802f4f1c
 
 // LLM-HARNESS-BEGIN: us-802f4f7c
@@ -165,7 +211,20 @@ void btsnd_hcic_write_pagescan_cfg() {}
 // LLM-HARNESS-END: us-802f5394
 
 // LLM-HARNESS-BEGIN: us-802f53d8
-void btsnd_hcic_write_inqscan_cfg() {}
+void btsnd_hcic_write_inqscan_cfg(void* p, unsigned short interval, unsigned short window)
+{
+    unsigned char* b = (unsigned char*)p;
+    *(unsigned short*)(b + 2) = 7;
+    *(unsigned short*)(b + 4) = 0;
+    b[8] = 0x1e;
+    b[9] = 0x0c;
+    b[10] = 4;
+    b[11] = (unsigned char)interval;
+    b[12] = (unsigned char)(interval >> 8);
+    b[13] = (unsigned char)window;
+    b[14] = (unsigned char)(window >> 8);
+    btu_hcif_send_cmd(p);
+}
 // LLM-HARNESS-END: us-802f53d8
 
 // LLM-HARNESS-BEGIN: us-802f541c

@@ -720,7 +720,20 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-802ed4a4
-void btm_sco_init() {}
+void btm_sco_init(void)
+{
+    extern unsigned long btm_esco_defaults[];
+    extern unsigned char btm_cb[];
+    unsigned long* src = btm_esco_defaults;
+    unsigned char* cb = btm_cb;
+
+    *(unsigned short*)(cb + 0x18f6) = 0xffff;
+    *(unsigned long*)(cb + 0x18f8) = src[0];
+    *(unsigned long*)(cb + 0x18fc) = src[1];
+    *(unsigned long*)(cb + 0x1900) = src[2];
+    *(unsigned long*)(cb + 0x1904) = src[3];
+    cb[0x1909] = 2;
+}
 // LLM-HARNESS-END: us-802ed4a4
 
 // LLM-HARNESS-BEGIN: us-802ed4e8

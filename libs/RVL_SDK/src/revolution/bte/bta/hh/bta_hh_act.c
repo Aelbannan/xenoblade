@@ -41,7 +41,23 @@ void bta_hh_open_act() {}
 // LLM-HARNESS-END: us-802e5314
 
 // LLM-HARNESS-BEGIN: us-802e53cc
-void bta_hh_data_act() {}
+void bta_hh_data_act(void *p_cb, void *p_data)
+{
+    void *p_buf;
+    unsigned short off;
+    unsigned short len;
+    unsigned char rpt;
+
+    p_buf = *(void **)((char *)p_data + 0xc);
+    off = *(unsigned short *)((char *)p_buf + 4);
+    rpt = (unsigned char)(*(unsigned short *)((char *)p_data + 6));
+    len = *(unsigned short *)((char *)p_buf + 2);
+    bta_hh_co_data(rpt, (char *)p_buf + off + 8, len,
+                   *((unsigned char *)p_cb + 0x1b),
+                   *((unsigned char *)p_cb + 0x13),
+                   *((unsigned char *)p_cb + 0x15));
+    utl_freebuf(&p_buf);
+}
 // LLM-HARNESS-END: us-802e53cc
 
 // LLM-HARNESS-BEGIN: us-802e5424

@@ -61,9 +61,9 @@
   "models": {
     "default": [
       {
-		"id": "or-qwen-37max",
+		"id": "or-grok-45",
 		"provider": "openrouter",
-		"model": "qwen/qwen3.7-max",
+		"model": "x-ai/grok-4.5",
 		"runs": 1,
 		"max_tokens": 16384,
 		"thinking_budget": "unlimited"

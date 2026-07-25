@@ -5,7 +5,12 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-802e14f0
-void ptim_init() {}
+void ptim_init(void* p_cb, unsigned long p1, unsigned char p2)
+{
+    GKI_init_timer_list(p_cb);
+    *(unsigned long*)((char*)p_cb + 0xc) = p1;
+    *((unsigned char*)p_cb + 0x10) = p2;
+}
 // LLM-HARNESS-END: us-802e14f0
 
 // LLM-HARNESS-BEGIN: us-802e153c

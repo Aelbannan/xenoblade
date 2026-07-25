@@ -5,5 +5,11 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-802e16d0
-void utl_freebuf() {}
+void utl_freebuf(void** p)
+{
+    if (*p != NULL) {
+        GKI_freebuf(*p);
+        *p = NULL;
+    }
+}
 // LLM-HARNESS-END: us-802e16d0

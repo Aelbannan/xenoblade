@@ -65,7 +65,21 @@ void BTM_IsAclConnectionUp() {}
 // LLM-HARNESS-END: us-802e7c84
 
 // LLM-HARNESS-BEGIN: us-802e7d5c
-void BTM_GetNumAclLinks() {}
+u16 BTM_GetNumAclLinks(void)
+{
+    u16 num_links = 0;
+
+    if (btm_cb[0x14d] != 0)
+        num_links = 1;
+    if (btm_cb[0x269] != 0)
+        num_links = (u16)(num_links + 1);
+    if (btm_cb[0x385] != 0)
+        num_links = (u16)(num_links + 1);
+    if (btm_cb[0x4a1] != 0)
+        num_links = (u16)(num_links + 1);
+
+    return num_links;
+}
 // LLM-HARNESS-END: us-802e7d5c
 
 // LLM-HARNESS-BEGIN: us-802e7db8
@@ -85,7 +99,21 @@ void btm_acl_role_changed() {}
 // LLM-HARNESS-END: us-802e7f00
 
 // LLM-HARNESS-BEGIN: us-802e80f4
-void btm_acl_timeout() {}
+void btm_acl_timeout(void *p_acl_cb)
+{
+    void (*cback)(void *);
+    unsigned char evt[0x10];
+
+    if (*(unsigned int *)((char *)p_acl_cb + 0x10) == 4) {
+        cback = *(void (**)(void *))(btm_cb + 0x5c4);
+        evt[0] = 0xa;
+        *(unsigned short *)(evt + 8) = 0;
+        *(void (**)(void *))(btm_cb + 0x5c4) = 0;
+        if (cback != 0) {
+            cback(evt);
+        }
+    }
+}
 // LLM-HARNESS-END: us-802e80f4
 
 // LLM-HARNESS-BEGIN: us-802e8150
@@ -93,7 +121,18 @@ void btm_get_max_packet_size() {}
 // LLM-HARNESS-END: us-802e8150
 
 // LLM-HARNESS-BEGIN: us-802e82f0
-void BTM_AclRegisterForChanges() {}
+int BTM_AclRegisterForChanges(void* p_change_callback)
+{
+    if (p_change_callback == 0) {
+        *(void**)((char*)&btm_cb + 0x4c8) = 0;
+        return 0;
+    }
+    if (*(void**)((char*)&btm_cb + 0x4c8) != 0) {
+        return 2;
+    }
+    *(void**)((char*)&btm_cb + 0x4c8) = p_change_callback;
+    return 0;
+}
 // LLM-HARNESS-END: us-802e82f0
 
 // LLM-HARNESS-BEGIN: us-802e8334

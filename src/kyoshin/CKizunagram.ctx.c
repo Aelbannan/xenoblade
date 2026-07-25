@@ -1556,7 +1556,16 @@ extern "C" unsigned char func_8025C770(void* this_ptr) {
 // LLM-HARNESS-END: us-8025e8bc
 
 // LLM-HARNESS-BEGIN: us-8025e8d8
-extern "C" void func_8025C78C() {}
+extern "C" unsigned char func_8025C78C(void* arg1)
+{
+    if (*(unsigned char*)((char*)arg1 + 0x61) == 0)
+        return 0;
+    if (*(unsigned char*)((char*)arg1 + 0x7d) == 0)
+        return 0;
+    if (*(unsigned char*)((char*)arg1 + 0xbd) != 0)
+        return *(unsigned char*)((char*)arg1 + 0x3c);
+    return 0;
+}
 // LLM-HARNESS-END: us-8025e8d8
 
 // LLM-HARNESS-BEGIN: us-8025e91c

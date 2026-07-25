@@ -1454,7 +1454,14 @@ extern "C" void func_80270E64() {}
 // LLM-HARNESS-END: us-802732e8
 
 // LLM-HARNESS-BEGIN: us-802733ac
-extern "C" void func_80270F28() {}
+extern "C" bool CScrollBar_isVisible(void*);
+
+extern "C" unsigned char func_80270F28(void* this_) {
+    if (CScrollBar_isVisible((void*)((char*)this_ + 0x48))) {
+        return *((unsigned char*)this_ + 0x8a);
+    }
+    return 0;
+}
 // LLM-HARNESS-END: us-802733ac
 
 // LLM-HARNESS-BEGIN: us-802733f0

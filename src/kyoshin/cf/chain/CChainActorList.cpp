@@ -62,7 +62,19 @@ extern "C" void func_8027BE84() {}
 extern "C" void func_8027BF58() {}
 // LLM-HARNESS-END: us-8027e3dc
 // LLM-HARNESS-BEGIN: us-8027e464
-extern "C" void func_8027BFE0() {}
+extern "C" void func_8027EEF4(int);
+
+extern "C" void func_8027BFE0(unsigned int param) {
+    if (param >= 0xBB8) {
+        func_8027EEF4(0x33);
+    }
+    if (param >= 0x7530) {
+        func_8027EEF4(0x34);
+    }
+    if (param >= 0x186A0) {
+        func_8027EEF4(0x35);
+    }
+}
 // LLM-HARNESS-END: us-8027e464
 // LLM-HARNESS-BEGIN: us-8027e4c4
 extern "C" void func_8027C040() {}

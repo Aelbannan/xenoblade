@@ -42,7 +42,16 @@ extern "C" void func_8028E450() {}
 // LLM-HARNESS-END: us-802908cc
 
 // LLM-HARNESS-BEGIN: us-8029095c
-extern "C" void func_8028E4E0() {}
+extern "C" int func_8028F664(void*);
+
+extern "C" int isIdle__11CTitleAHelpFv(void*);
+
+extern "C" void func_8028E4E0(void* this_) {
+    if (isIdle__11CTitleAHelpFv((void*)((char*)this_ + 0x80)) != 0 &&
+        func_8028F664((void*)((char*)this_ + 0xb8)) != 0) {
+        *(unsigned char*)((char*)this_ + 0x20b) = 2;
+    }
+}
 // LLM-HARNESS-END: us-8029095c
 
 // LLM-HARNESS-BEGIN: us-802909ac

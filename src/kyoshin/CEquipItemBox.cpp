@@ -239,7 +239,15 @@ extern "C" void func_802865B0() {}
 // LLM-HARNESS-END: us-80288a34
 
 // LLM-HARNESS-BEGIN: us-80288ad4
-extern "C" void func_80286650() {}
+extern "C" int CSysWin_getUnk34(void*);
+extern "C" int func_801D3320(void*);
+
+extern "C" int func_80286650(void* arg1) {
+    if (CSysWin_getUnk34((char*)arg1 + 0x17c) != 0) {
+        return 1;
+    }
+    return func_801D3320((char*)arg1 + 0x8c);
+}
 // LLM-HARNESS-END: us-80288ad4
 
 // LLM-HARNESS-BEGIN: us-80288b1c
@@ -403,7 +411,12 @@ extern "C" void func_80289E70() {}
 // LLM-HARNESS-END: us-8028c2ec
 
 // LLM-HARNESS-BEGIN: us-8028c4f8
-extern "C" void func_8028A07C() {}
+extern "C" void func_8028A07C(void* this_) {
+    char* self = (char*)this_;
+    memset(self + 0x36c, 0, 6);
+    self[0x372] = 0;
+    self[0x373] = 0;
+}
 // LLM-HARNESS-END: us-8028c4f8
 
 // LLM-HARNESS-BEGIN: us-8028c53c

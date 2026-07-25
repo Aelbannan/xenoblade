@@ -922,9 +922,19 @@ namespace cf {
 
 namespace cf {
     class CChainActorEne : public CChainActor {
-
+    public:
+        // No additional members beyond CChainActor
+        // Class methods use extern "C" linkage to match retail symbol names
     };
 }
+
+// Forwarding: passes &self->mChainEffect to func_802A0AA0
+// Returns whether the effect matches the given parameter
+extern "C" void func_802818D4(cf::CChainActorEne* self);
+
+// Returns whether this enemy chain actor is active
+extern "C" s32 func_802818DC(cf::CChainActorEne* self);
+
 /* end "kyoshin/cf/chain/CChainActorEne.hpp" */
 
 namespace cf {
@@ -10928,13 +10938,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -12480,15 +12499,19 @@ namespace cf {
 namespace cf {
     class CChainChance {
     public:
-        u16 unk0;
-        u8 unk2[2];
-        u32 unk4;
-        u8 unk8[0x10 - 0x8];
+        // Fields initialized to 0 by func_8027C098 (partial init function)
+        u16 mChainCount;      //0x0 - Number of successful chain links/extensions
+        u8 unk2[2];           //0x2
+        u32 unk4;             //0x4 - Possibly a pointer or timer
+        u16 mField08;         //0x8 - Partially initialized by func_8027C098
+        u16 mField0A;         //0xA - Partially initialized by func_8027C098
+        u8 mField0C;          //0xC - Partially initialized by func_8027C098
+        u8 mPadding0D[3];     //0xD
         //0x10: vtable
 
         virtual ~CChainChance(){}
 
-        u8 unk14[4];
+        u8 unk14[4];          //0x14
     };
 }
 /* end "kyoshin/cf/chain/CChainChance.hpp" */
@@ -12498,32 +12521,41 @@ namespace cf {
 /* "src/kyoshin/cf/chain/CChainCombo.hpp" line 2 "types.h" */
 /* end "types.h" */
 
-// Gauge pair helpers (CSysWinSave.cpp) - C++ linkage -> func_80294824__FPv.
-void func_80294824(void* gauge);
-void func_80294834(void* gauge);
-void func_802AA338();
-
 namespace cf {
 
 // Two-float chain gauge at CChainCombo+0xC (written by func_80294824/34/44).
 struct CChainGauge {
-    float mVal0; // 0x0
-    float mVal1; // 0x4
+    float mVal0; // 0x0 first gauge value (initialized by func_80294824)
+    float mVal1; // 0x4 second gauge value (written by func_80294834/44)
 };
+
+} // namespace cf
+
+// Gauge pair helpers (CSysWinSave.cpp).
+// Declared as extern "C" with explicit mangled names so callers in this TU
+// reference the correct retail symbols without re-mangling when the parameter
+// type is not void*.  The gauges these operate on live at CChainCombo+0xC.
+extern "C" void func_80294824__FPv(cf::CChainGauge* gauge);
+extern "C" void func_80294834__FPv(cf::CChainGauge* gauge);
+
+// Resets/respawns chain combo state (CMenuBattleChain.cpp).
+extern "C" void func_802AA338__Fv();
 
 // Retail vtable lbl_eu_80538994 lives in split1 (dtor only); not emitted here.
 extern "C" void* lbl_eu_80538994[];
+
+namespace cf {
 
 /* Chain arts combo tracker. Size 0x18.
    Manual vptr @0x14 (not a normal C++ vptr-at-0 class) to match retail and
    avoid a weak local dtor / __vt__ reloc name mismatch. */
 struct CChainCombo {
-    int mArtsType; // 0x0 - last arts category byte (0..8)
+    int mArtsType;   // 0x0 - last arts category byte (0..8)
     int mComboCount; // 0x4 - steps 0..5
-    bool mPending; // 0x8 - set externally; consumed by func_80293EEC
+    bool mPending;   // 0x8 - set externally; consumed by func_80293EEC
     u8 pad9[3];
-    CChainGauge mGauge; // 0xC
-    void* mVtbl; // 0x14 - lbl_eu_80538994
+    CChainGauge mGauge; // 0xC - chain gauge pair
+    void* mVtbl;        // 0x14 - lbl_eu_80538994
 
     CChainCombo();
     void func1();
@@ -12565,7 +12597,7 @@ namespace cf {
 }
 
 // LLM-HARNESS-BEGIN: us-802795d8
-extern "C" void func_80278E00() {}
+extern "C" void func_80277154() {}
 // LLM-HARNESS-END: us-802795d8
 // LLM-HARNESS-BEGIN: us-80279f00
 extern "C" void func_80277A7C() {}
@@ -12604,7 +12636,15 @@ extern "C" u16 func_8027976C(void** arg0) {
 }
 // LLM-HARNESS-END: us-8027bbf0
 // LLM-HARNESS-BEGIN: us-8027bd34
-extern "C" void func_802798B0() {}
+extern "C" bool func_802798B0(unsigned char* a1, unsigned char* a2, int a3) {
+    unsigned char v = a1[2];
+    if (v < 1 || v > 0x18) return false;
+    if (v == 5) {
+        if (*(unsigned short*)(a2 + 0x3f28) != 5) return false;
+        if (a3 == 0) return false;
+    }
+    return true;
+}
 // LLM-HARNESS-END: us-8027bd34
 // LLM-HARNESS-BEGIN: us-8027bfa8
 extern "C" void func_80279B24(void* _this, int val) {
@@ -12647,28 +12687,28 @@ extern "C" void func_8027AA0C() {}
 // LLM-HARNESS-END: us-8027ce90
 
 // LLM-HARNESS-BEGIN: us-802790b4
-extern "C" void func_80278E00() {}
+extern "C" void func_80276C30() {}
 // LLM-HARNESS-END: us-802790b4
 // LLM-HARNESS-BEGIN: us-802790dc
-extern "C" void func_80278E00() {}
+extern "C" void func_80276C58() {}
 // LLM-HARNESS-END: us-802790dc
 // LLM-HARNESS-BEGIN: us-80279130
-extern "C" void func_80278E00() {}
+extern "C" void func_80276CAC() {}
 // LLM-HARNESS-END: us-80279130
 // LLM-HARNESS-BEGIN: us-802791b4
-extern "C" void func_80278E00() {}
+extern "C" void func_80276D30() {}
 // LLM-HARNESS-END: us-802791b4
 // LLM-HARNESS-BEGIN: us-802795a0
-extern "C" void func_80278E00() {}
+extern "C" void func_8027711C() {}
 // LLM-HARNESS-END: us-802795a0
 // LLM-HARNESS-BEGIN: us-80279710
-extern "C" void func_80278E00() {}
+extern "C" void func_8027728C() {}
 // LLM-HARNESS-END: us-80279710
 // LLM-HARNESS-BEGIN: us-802797b0
-extern "C" void func_80278E00() {}
+extern "C" void func_8027732C() {}
 // LLM-HARNESS-END: us-802797b0
 // LLM-HARNESS-BEGIN: us-80279870
-extern "C" void func_80278E00() {}
+extern "C" void func_802773EC() {}
 // LLM-HARNESS-END: us-80279870
 // LLM-HARNESS-BEGIN: us-80279990
 extern "C" void func_8027750C() {}

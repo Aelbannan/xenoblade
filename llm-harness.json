@@ -61,9 +61,9 @@
   "models": {
     "default": [
       {
-		"id": "or-glm-52",
+		"id": "or-qwen-37max",
 		"provider": "openrouter",
-		"model": "z-ai/glm-5.2",
+		"model": "qwen/qwen3.7-max",
 		"runs": 1,
 		"max_tokens": 16384,
 		"thinking_budget": "unlimited"

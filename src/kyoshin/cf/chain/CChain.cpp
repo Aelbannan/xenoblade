@@ -46,7 +46,15 @@ extern "C" u16 func_8027976C(void** arg0) {
 }
 // LLM-HARNESS-END: us-8027bbf0
 // LLM-HARNESS-BEGIN: us-8027bd34
-extern "C" void func_802798B0() {}
+extern "C" bool func_802798B0(unsigned char* a1, unsigned char* a2, int a3) {
+    unsigned char v = a1[2];
+    if (v < 1 || v > 0x18) return false;
+    if (v == 5) {
+        if (*(unsigned short*)(a2 + 0x3f28) != 5) return false;
+        if (a3 == 0) return false;
+    }
+    return true;
+}
 // LLM-HARNESS-END: us-8027bd34
 // LLM-HARNESS-BEGIN: us-8027bfa8
 extern "C" void func_80279B24(void* _this, int val) {

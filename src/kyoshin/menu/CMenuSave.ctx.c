@@ -1337,45 +1337,61 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/menu/CMenuSave.cpp" line 5 "kyoshin/menu/CMenuSave.hpp" */
+#pragma once
+
+/// Menu save/load screen process.
+/// Full class layout TBD - forward declaration sufficient for adjusting thunks.
+class CMenuSave;
+/* end "kyoshin/menu/CMenuSave.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80290128
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" void __ct__CMenuSave() {}
 // LLM-HARNESS-END: us-80290128
 
 // LLM-HARNESS-BEGIN: us-80290218
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" void __dt__9CMenuSaveFv(CMenuSave* self, int dtorFlag) {}
 // LLM-HARNESS-END: us-80290218
 
 // LLM-HARNESS-BEGIN: us-80290290
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" void Init__9CMenuSaveFv() {}
 // LLM-HARNESS-END: us-80290290
 
 // LLM-HARNESS-BEGIN: us-80290650
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" void Term__9CMenuSaveFv() {}
 // LLM-HARNESS-END: us-80290650
 
 // LLM-HARNESS-BEGIN: us-802906d8
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" void Move__9CMenuSaveFv() {}
 // LLM-HARNESS-END: us-802906d8
 
 // LLM-HARNESS-BEGIN: us-8029078c
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" void cbRenderBefore__9CMenuSaveFv(CMenuSave* self) {}
 // LLM-HARNESS-END: us-8029078c
 
 // LLM-HARNESS-BEGIN: us-80290830
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" void func_8028E3B4() {}
 // LLM-HARNESS-END: us-80290830
 
 // LLM-HARNESS-BEGIN: us-802908bc
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" void stub_us_802908bc() {}
 // LLM-HARNESS-END: us-802908bc
 
 // LLM-HARNESS-BEGIN: us-802908cc
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" void func_8028E450() {}
 // LLM-HARNESS-END: us-802908cc
 
 // LLM-HARNESS-BEGIN: us-8029095c
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+extern "C" int func_8028F664(void*);
+
+extern "C" int isIdle__11CTitleAHelpFv(void*);
+
+extern "C" void func_8028E4E0(void* this_) {
+    if (isIdle__11CTitleAHelpFv((void*)((char*)this_ + 0x80)) != 0 &&
+        func_8028F664((void*)((char*)this_ + 0xb8)) != 0) {
+        *(unsigned char*)((char*)this_ + 0x20b) = 2;
+    }
+}
 // LLM-HARNESS-END: us-8029095c
 
 // LLM-HARNESS-BEGIN: us-802909ac
@@ -1387,9 +1403,20 @@ extern "C" void func_8028E768() {}
 // LLM-HARNESS-END: us-80290be4
 
 // LLM-HARNESS-BEGIN: us-80290c34
-extern "C" void func_8028E7B8(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuSaveFv)((char*)self - 0x58); }
+/// Adjusting thunk: called when IScnRender subobject (at CMenuSave+0x58)
+/// receives cbRenderBefore. Adjusts this back to full CMenuSave*.
+extern "C" void func_8028E7B8(CMenuSave* self) {
+    ((void(*)(CMenuSave*))cbRenderBefore__9CMenuSaveFv)(
+        reinterpret_cast<CMenuSave*>(reinterpret_cast<char*>(self) - 0x58));
+}
 // LLM-HARNESS-END: us-80290c34
 
 // LLM-HARNESS-BEGIN: us-80290c3c
-extern "C" void func_8028E7C0(void* self) { ((void(*)(void*))__dt__9CMenuSaveFv)((char*)self - 0x58); }
+/// Adjusting destructor thunk: called when IScnRender subobject (at CMenuSave+0x58)
+/// receives ~CMenuSave. The delete flag is passed through unchanged.
+extern "C" void func_8028E7C0(CMenuSave* self, int dtorFlag) {
+    ((void(*)(CMenuSave*, int))__dt__9CMenuSaveFv)(
+        reinterpret_cast<CMenuSave*>(reinterpret_cast<char*>(self) - 0x58),
+        dtorFlag);
+}
 // LLM-HARNESS-END: us-80290c3c

@@ -109,8 +109,13 @@ extern "C" void func_80253B3C() {}
 // LLM-HARNESS-END: us-80255d78
 
 // LLM-HARNESS-BEGIN: us-80256124
-// Forward declaration - body in separate TU to prevent inlining
-extern "C" void func_80253EE8(void*, u8, u8);
+extern "C" bool func_80253EE8(u8* this_, u32 arg1, u32 arg2) {
+    if (arg1 >= 6) return false;
+    if (arg2 >= 5) return false;
+    s8 idx = (s8)this_[1];
+    u8 val = *(this_ + idx * 0x140 + arg1 * 0x34 + arg2 * 0xA + 0x16);
+    return val == 2;
+}
 // LLM-HARNESS-END: us-80256124
 
 // LLM-HARNESS-BEGIN: us-80256178
@@ -166,7 +171,13 @@ extern "C" void func_802541BC() {}
 // LLM-HARNESS-END: us-802563f8
 
 // LLM-HARNESS-BEGIN: us-80256440
-extern "C" void func_80254204() {}
+extern "C" u16 func_80254204(u8* p1, u32 arg2, u32 arg3) {
+    if (arg2 >= 6) return 0;
+    if (arg3 >= 5) return 0;
+    s8 idx = (s8)p1[1];
+    u8* ptr = p1 + idx * 0x140 + arg2 * 0x34 + arg3 * 0xa;
+    return *(u16*)(ptr + 0x12);
+}
 // LLM-HARNESS-END: us-80256440
 
 // LLM-HARNESS-BEGIN: us-80256488

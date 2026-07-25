@@ -17,11 +17,32 @@ void ADX_DecodeInfo() {}
 // LLM-HARNESS-END: us-8038cee4
 
 // LLM-HARNESS-BEGIN: us-8038cfcc
-void ADX_DecodeInfoExADPCM2() {}
+int ADX_DecodeInfoExADPCM2(void* info, int version, short* outScale)
+{
+    if (version < 0x12)
+        return -1;
+    if ((*(unsigned short*)info) != 0x8000)
+        return -2;
+    if ((*(short*)((char*)info + 2)) < 0xE)
+        return -1;
+    *outScale = *(short*)((char*)info + 0x10);
+    return 0;
+}
 // LLM-HARNESS-END: us-8038cfcc
 
 // LLM-HARNESS-BEGIN: us-8038d014
-void ADX_DecodeInfoExVer() {}
+int ADX_DecodeInfoExVer(void *info, int size, unsigned char *outBits, unsigned char *outCh)
+{
+    if (size < 0x14)
+        return -1;
+    if (*(unsigned short *)info != 0x8000)
+        return -2;
+    if (((short *)info)[1] < 0x10)
+        return -1;
+    *outBits = ((unsigned char *)info)[0x12];
+    *outCh   = ((unsigned char *)info)[0x13];
+    return 0;
+}
 // LLM-HARNESS-END: us-8038d014
 
 // LLM-HARNESS-BEGIN: us-8038d064

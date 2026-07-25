@@ -757,7 +757,16 @@ void AHXDCD_Create() {}
 // LLM-HARNESS-END: us-803914a0
 
 // LLM-HARNESS-BEGIN: us-80391568
-void AHXDCD_Destroy() {}
+void AHXDCD_Destroy(void* p)
+{
+    void** sbf = (void**)((char*)p + 0x354);
+    if (*sbf) {
+        void* tmp = *sbf;
+        *sbf = 0;
+        AHXSBF_Destroy(tmp);
+    }
+    memset(p, 0, 0xbcc);
+}
 // LLM-HARNESS-END: us-80391568
 
 // LLM-HARNESS-BEGIN: us-803915bc

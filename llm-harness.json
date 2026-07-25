@@ -61,9 +61,9 @@
   "models": {
     "default": [
       {
-		"id": "or-grok-45",
+		"id": "or-kimi-2.6",
 		"provider": "openrouter",
-		"model": "x-ai/grok-4.5",
+		"model": "moonshotai/kimi-k2.6",
 		"runs": 1,
 		"max_tokens": 16384,
 		"thinking_budget": "unlimited"

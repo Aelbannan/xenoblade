@@ -13,11 +13,25 @@ void __VIRetraceHandler() {}
 // LLM-HARNESS-END: us-80366e40
 
 // LLM-HARNESS-BEGIN: us-80367650
-void VISetPreRetraceCallback() {}
+void* VISetPreRetraceCallback(void* callback) {
+    extern void* PreCB;
+    void* prev = PreCB;
+    int enabled = OSDisableInterrupts();
+    PreCB = callback;
+    OSRestoreInterrupts(enabled);
+    return prev;
+}
 // LLM-HARNESS-END: us-80367650
 
 // LLM-HARNESS-BEGIN: us-803676a0
-void VISetPostRetraceCallback() {}
+void* VISetPostRetraceCallback(void* callback) {
+    extern void* PostCB;
+    void* old = PostCB;
+    unsigned int level = OSDisableInterrupts();
+    PostCB = callback;
+    OSRestoreInterrupts(level);
+    return old;
+}
 // LLM-HARNESS-END: us-803676a0
 
 // LLM-HARNESS-BEGIN: us-803676f0

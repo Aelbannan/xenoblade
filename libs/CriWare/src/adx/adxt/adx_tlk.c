@@ -171,7 +171,11 @@ void ADXT_SetLnkSw() {}
 // LLM-HARNESS-END: us-80387570
 
 // LLM-HARNESS-BEGIN: us-803875c4
-void ADXT_EntryFltFunc() {}
+void ADXT_EntryFltFunc(void* this_, void* arg1, void* arg2) {
+    ADXCRS_Enter();
+    ADXSJD_EntryFltFunc(*(void**)((char*)this_ + 4), arg1, arg2);
+    ADXCRS_Leave();
+}
 // LLM-HARNESS-END: us-803875c4
 
 // LLM-HARNESS-BEGIN: us-8038761c

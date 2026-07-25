@@ -752,7 +752,12 @@ extern "C" void HBMSetAdjustFlag() {}
 // LLM-HARNESS-END: us-80325620
 
 // LLM-HARNESS-BEGIN: us-80325660
-extern "C" void HBMCreateSound() {}
+extern "C" void HBMCreateSound(const void* data, void* ptr, unsigned long size) {
+    extern void getInstance__Q210homebutton10HomeButtonFv(void);
+    extern void InitAxSound__10homebuttonFPCvPvUl(const void*, void*, unsigned long);
+    getInstance__Q210homebutton10HomeButtonFv();
+    InitAxSound__10homebuttonFPCvPvUl(data, ptr, size);
+}
 // LLM-HARNESS-END: us-80325660
 
 // LLM-HARNESS-BEGIN: us-803256c0

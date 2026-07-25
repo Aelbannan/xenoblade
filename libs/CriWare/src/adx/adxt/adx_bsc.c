@@ -138,7 +138,11 @@ s16 ADXB_GetDefPan(void* self, u32 idx) {
 // LLM-HARNESS-END: us-8038ab94
 
 // LLM-HARNESS-BEGIN: us-8038aba4
-void ADXB_TakeSnapshot() {}
+void ADXB_TakeSnapshot(void* this_) {
+    void* r31 = this_;
+    ADXPD_GetDly(*(void**)((char*)r31 + 8), (char*)r31 + 0xb0, (char*)r31 + 0xb4);
+    ADXPD_GetExtPrm(*(void**)((char*)r31 + 8), (char*)r31 + 0xa6, (char*)r31 + 0xa8, (char*)r31 + 0xaa);
+}
 // LLM-HARNESS-END: us-8038aba4
 
 // LLM-HARNESS-BEGIN: us-8038abf0

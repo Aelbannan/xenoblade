@@ -720,7 +720,12 @@ typedef int BOOL;
 /* end "harness_catalog.h" */
 
 // LLM-HARNESS-BEGIN: us-80388c90
-void ADXAMP_Destroy() {}
+void ADXAMP_Destroy(void* p) {
+    if (!p) return;
+    ADXCRS_Lock();
+    memset(p, 0, 0x30);
+    ADXCRS_Unlock();
+}
 // LLM-HARNESS-END: us-80388c90
 
 // LLM-HARNESS-BEGIN: us-80388cd8

@@ -775,7 +775,18 @@ void ADXSTM_GetStat() {}
 // LLM-HARNESS-END: us-80384510
 
 // LLM-HARNESS-BEGIN: us-8038454c
-void ADXSTM_Seek() {}
+int ADXSTM_Seek(void* this_, int pos)
+{
+    int* pThis = (int*)this_;
+    ADXCRS_Enter();
+    int max = pThis[6];
+    pThis[23] = pos;
+    if (pos > max)
+        pThis[23] = max;
+    int result = pThis[23];
+    ADXCRS_Leave();
+    return result;
+}
 // LLM-HARNESS-END: us-8038454c
 
 // LLM-HARNESS-BEGIN: us-803845a4
@@ -831,7 +842,13 @@ void ADXSTM_ExecFsIdle() {}
 // LLM-HARNESS-END: us-80385158
 
 // LLM-HARNESS-BEGIN: us-8038515c
-void ADXSTM_SetBufSize() {}
+int ADXSTM_SetBufSize(void *obj, int a, int b) {
+    ADXCRS_Enter();
+    ((int*)obj)[8] = a;
+    ((int*)obj)[7] = b;
+    ADXCRS_Leave();
+    return 1;
+}
 // LLM-HARNESS-END: us-8038515c
 
 // LLM-HARNESS-BEGIN: us-803851b0

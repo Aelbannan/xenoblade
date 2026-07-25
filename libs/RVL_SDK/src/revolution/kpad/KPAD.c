@@ -98,7 +98,19 @@ void KPADiConnectCallback() {}
 // LLM-HARNESS-END: us-8034acc0
 
 // LLM-HARNESS-BEGIN: us-8034ae30
-void KPADSetConnectCallback() {}
+void* KPADSetConnectCallback(int chan, void* callback) {
+    extern unsigned char inside_kpads[];
+    unsigned int enabled;
+    unsigned char* base;
+    void* old;
+
+    enabled = OSDisableInterrupts();
+    base = inside_kpads + chan * 0x578;
+    old = *(void**)(base + 0x550);
+    *(void**)(base + 0x550) = callback;
+    OSRestoreInterrupts(enabled);
+    return old;
+}
 // LLM-HARNESS-END: us-8034ae30
 
 // LLM-HARNESS-BEGIN: us-8034ae90

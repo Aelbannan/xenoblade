@@ -18,7 +18,17 @@ extern "C" void Init__16CMenuMapSelectSCFv() {}
 // LLM-HARNESS-END: us-802530a0
 
 // LLM-HARNESS-BEGIN: us-802534cc
-extern "C" void func_80251294() {}
+extern "C" void func_80251294(void* r3, const void* r4) {
+    struct S { int dummy; int a; int b; int c; int d; unsigned char e; unsigned char f; };
+    S* dst = (S*)r3;
+    const S* src = (const S*)r4;
+    dst->a = src->a;
+    dst->b = src->b;
+    dst->c = src->c;
+    dst->d = src->d;
+    dst->e = src->e;
+    dst->f = src->f;
+}
 // LLM-HARNESS-END: us-802534cc
 
 // LLM-HARNESS-BEGIN: us-80253500

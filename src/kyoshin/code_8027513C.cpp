@@ -26,7 +26,12 @@ extern "C" void func_802756F0() {}
 // LLM-HARNESS-END: us-80277b74
 
 // LLM-HARNESS-BEGIN: us-80277c8c
-extern "C" void func_80275808() {}
+extern "C" void func_80275808(void *ptr) {
+    *(int*)((char*)ptr + 0x20) = -1;
+    *(int*)((char*)ptr + 0x1c) = 0;
+    *(int*)((char*)ptr + 0x74) = 0;
+    *(short*)((char*)ptr + 0x78) = 0;
+}
 // LLM-HARNESS-END: us-80277c8c
 
 // LLM-HARNESS-BEGIN: us-80277ca8

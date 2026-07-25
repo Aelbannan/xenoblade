@@ -9,7 +9,11 @@ int MWSTM_SetTrSct(void) { return 0x0; }
 // LLM-HARNESS-END: us-803a122c
 
 // LLM-HARNESS-BEGIN: us-803a1234
-void MWSTM_IsFsStatErr() {}
+int MWSTM_IsFsStatErr(void) {
+    extern int ADXSTM_GetStat(void);
+    int stat = ADXSTM_GetStat();
+    return (stat == 4) ? 1 : 0;
+}
 // LLM-HARNESS-END: us-803a1234
 
 // LLM-HARNESS-BEGIN: us-803a1260

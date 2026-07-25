@@ -1638,7 +1638,14 @@ extern "C" void func_8005DA44__Q22cf17CActParamAnimGame() {}
 // LLM-HARNESS-END: us-8005e08c
 
 // LLM-HARNESS-BEGIN: us-8005e12c
-extern "C" void func_8005DAE4__Q22cf17CActParamAnimGame() {}
+extern "C" void func_8004BC94(void*);
+extern "C" bool func_8005DAE4__Q22cf17CActParamAnimGame(void* self) {
+    if (*(unsigned int*)((unsigned char*)self + 0x4ec) & 0x00040000) {
+        func_8004BC94(self);
+        return true;
+    }
+    return false;
+}
 // LLM-HARNESS-END: us-8005e12c
 
 // LLM-HARNESS-BEGIN: us-8005e164
@@ -1696,5 +1703,17 @@ extern "C" void func_80060268__Q22cf17CActParamAnimGame() {}
 // LLM-HARNESS-END: us-80060968
 
 // LLM-HARNESS-BEGIN: us-80060990
-extern "C" void func_80060290() {}
+extern "C" bool func_80060290(void* r3) {
+    int r0 = *(int*)((char*)r3 + 0x270);
+    int r4 = 0;
+    if ((r0 & 0x800000) != 0) {
+        r4 = 1;
+    } else {
+        r0 = *(int*)((char*)r3 + 0x2f0);
+        if ((r0 & 0x800000) != 0) {
+            r4 = 1;
+        }
+    }
+    return r4 != 0;
+}
 // LLM-HARNESS-END: us-80060990

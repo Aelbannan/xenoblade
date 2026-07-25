@@ -23,20 +23,20 @@ namespace cf {
         virtual void Move();
         virtual void Term();
         
-        virtual bool gameExceptionCB(u32 r4);
+        virtual bool gameExceptionCB(u32 unusedArg);
         virtual void onInitHbm();
         virtual void onDeleteHbm();
 
         static CfPadTask* create(CProcess* pParent);
 
         bool update();
-        int checkForControllerError(bool r4);
+        int checkForControllerError(bool noError);
 
-        void copyInputFlag(CPad* pPad, u32 r5, u32 r6);
+        void copyInputFlag(CPad* pPad, u32 srcFlag, u32 dstFlag);
         static void func_801C1B94(float f1);
         static bool func_801C1BC0();
         static void func_801C1BD8(float f1);
-        void updateCfPadData(CfPadData* r4, const CPad* r5);
+        void updateCfPadData(CfPadData* padData, const CPad* pad);
         static u32 getWiimoteBattery();
         static void wpadGetInfoCallback(s32 chan, s32 result);
 

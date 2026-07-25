@@ -24,7 +24,19 @@ extern "C" void __ct__IWorkEvent(void* self) {
 // LLM-HARNESS-END: us-80143140
 
 // LLM-HARNESS-BEGIN: us-80143150
-extern "C" void __ct__8014274C() {}
+struct CMenuUpdate_8014274C {
+    unsigned int field_0;
+    unsigned int field_4;
+    unsigned int field_8;
+    unsigned int field_C;
+};
+
+extern "C" void __ct__8014274C(CMenuUpdate_8014274C* self) {
+    self->field_0 = 0;
+    self->field_4 = 0;
+    self->field_8 = 0;
+    self->field_C = 0;
+}
 // LLM-HARNESS-END: us-80143150
 
 // LLM-HARNESS-BEGIN: us-80143168
@@ -129,7 +141,14 @@ extern "C" u8 func_80143F4C(void* self) { return ((u8*)self)[0x64]; }
 // LLM-HARNESS-END: us-80144950
 
 // LLM-HARNESS-BEGIN: us-80144958
-extern "C" void func_80143F54() {}
+extern "C" void func_80143F54(void* dest, const void* src) {
+    unsigned int* d = (unsigned int*)dest;
+    const unsigned int* s = (const unsigned int*)src;
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+    d[3] = s[3];
+}
 // LLM-HARNESS-END: us-80144958
 
 // LLM-HARNESS-BEGIN: us-8014497c

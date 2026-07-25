@@ -205,7 +205,14 @@ void btsnd_hcic_read_local_features() {}
 // LLM-HARNESS-END: us-802f57ac
 
 // LLM-HARNESS-BEGIN: us-802f5808
-void btsnd_hcic_read_buffer_size() {}
+void btsnd_hcic_read_buffer_size(void *p_buf) {
+    ((unsigned short *)p_buf)[1] = 3;
+    ((unsigned short *)p_buf)[2] = 0;
+    ((unsigned char *)p_buf)[8] = 5;
+    ((unsigned char *)p_buf)[9] = 0x10;
+    ((unsigned char *)p_buf)[10] = 0;
+    btu_hcif_send_cmd(p_buf);
+}
 // LLM-HARNESS-END: us-802f5808
 
 // LLM-HARNESS-BEGIN: us-802f5830
@@ -229,11 +236,36 @@ void btsnd_hcic_write_inqscan_type() {}
 // LLM-HARNESS-END: us-802f5da4
 
 // LLM-HARNESS-BEGIN: us-802f5dd4
-void btsnd_hcic_write_inquiry_mode() {}
+void btsnd_hcic_write_inquiry_mode(void *buf, unsigned char mode)
+{
+    unsigned short *ps;
+    unsigned char *pb;
+    ps = (unsigned short *)((unsigned char *)buf + 2);
+    *ps = 4;
+    ps = (unsigned short *)((unsigned char *)buf + 4);
+    *ps = 0;
+    pb = (unsigned char *)buf + 8;
+    *pb = 0x45;
+    pb = (unsigned char *)buf + 9;
+    *pb = 0x0c;
+    pb = (unsigned char *)buf + 10;
+    *pb = 1;
+    pb = (unsigned char *)buf + 11;
+    *pb = mode;
+    btu_hcif_send_cmd(buf);
+}
 // LLM-HARNESS-END: us-802f5dd4
 
 // LLM-HARNESS-BEGIN: us-802f5e04
-void btsnd_hcic_write_pagescan_type() {}
+void btsnd_hcic_write_pagescan_type(void *pBuf, unsigned char type) {
+    *(unsigned short*)((unsigned char*)pBuf + 2) = 4;
+    *(unsigned short*)((unsigned char*)pBuf + 4) = 0;
+    *((unsigned char*)pBuf + 8) = 0x47;
+    *((unsigned char*)pBuf + 9) = 0x0C;
+    *((unsigned char*)pBuf + 10) = 0x01;
+    *((unsigned char*)pBuf + 11) = type;
+    btu_hcif_send_cmd(pBuf);
+}
 // LLM-HARNESS-END: us-802f5e04
 
 // LLM-HARNESS-BEGIN: us-802f5e34

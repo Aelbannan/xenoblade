@@ -1339,43 +1339,43 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-8027212c
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void __ct__CMenuPlayAward() {}
 // LLM-HARNESS-END: us-8027212c
 
 // LLM-HARNESS-BEGIN: us-80272200
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void __dt__14CMenuPlayAwardFv(void* self) {}
 // LLM-HARNESS-END: us-80272200
 
 // LLM-HARNESS-BEGIN: us-80272278
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void Init__14CMenuPlayAwardFv() {}
 // LLM-HARNESS-END: us-80272278
 
 // LLM-HARNESS-BEGIN: us-8027256c
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void Term__14CMenuPlayAwardFv() {}
 // LLM-HARNESS-END: us-8027256c
 
 // LLM-HARNESS-BEGIN: us-802725d8
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void Move__14CMenuPlayAwardFv() {}
 // LLM-HARNESS-END: us-802725d8
 
 // LLM-HARNESS-BEGIN: us-802726e8
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void cbRenderBefore__14CMenuPlayAwardFv(void* self) {}
 // LLM-HARNESS-END: us-802726e8
 
 // LLM-HARNESS-BEGIN: us-8027278c
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void func_80270308() {}
 // LLM-HARNESS-END: us-8027278c
 
 // LLM-HARNESS-BEGIN: us-80272800
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void stub_us_80272800() {}
 // LLM-HARNESS-END: us-80272800
 
 // LLM-HARNESS-BEGIN: us-80272810
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void func_8027038C() {}
 // LLM-HARNESS-END: us-80272810
 
 // LLM-HARNESS-BEGIN: us-80272888
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+extern "C" void func_80270404() {}
 // LLM-HARNESS-END: us-80272888
 
 // LLM-HARNESS-BEGIN: us-802728d8
@@ -1399,7 +1399,10 @@ extern "C" void func_80270654() {}
 // LLM-HARNESS-END: us-80272ad8
 
 // LLM-HARNESS-BEGIN: us-80272b48
-extern "C" void func_802706C4() {}
+extern "C" void func_802706C4(void* self) {
+    *(unsigned long*)((char*)self + 0) = 0;
+    *(unsigned long*)((char*)self + 4) = 0;
+}
 // LLM-HARNESS-END: us-80272b48
 
 // LLM-HARNESS-BEGIN: us-80272b58
@@ -1419,7 +1422,11 @@ extern "C" void func_80270AD8() {}
 // LLM-HARNESS-END: us-80272f5c
 
 // LLM-HARNESS-BEGIN: us-80272f70
-extern "C" void func_80270AEC() {}
+extern "C" void* func_80270AEC(void* self, int param) {
+    if (param >= 256) return 0;
+    unsigned char byte = ((unsigned char*)self)[0x100a];
+    return (void*)((unsigned char*)self + (byte << 11) + ((param & 0xFF) << 3));
+}
 // LLM-HARNESS-END: us-80272f70
 
 // LLM-HARNESS-BEGIN: us-80272f98

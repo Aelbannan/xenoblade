@@ -1392,7 +1392,15 @@ extern "C" void func_8028345C() {}
 // LLM-HARNESS-END: us-802858e0
 
 // LLM-HARNESS-BEGIN: us-80285fa8
-extern "C" void func_80283B24() {}
+extern "C" void func_80283B24(void *r3, const void *r4) {
+    *(short*)((char*)r3 + 0) = *(short*)((char*)r4 + 0);
+    *(unsigned char*)((char*)r3 + 2) = *(unsigned char*)((char*)r4 + 2);
+    *(unsigned char*)((char*)r3 + 3) = *(unsigned char*)((char*)r4 + 3);
+    *(unsigned char*)((char*)r3 + 4) = *(unsigned char*)((char*)r4 + 4);
+    *(unsigned char*)((char*)r3 + 5) = *(unsigned char*)((char*)r4 + 5);
+    *(unsigned char*)((char*)r3 + 6) = *(unsigned char*)((char*)r4 + 6);
+    *(unsigned char*)((char*)r3 + 7) = *(unsigned char*)((char*)r4 + 7);
+}
 // LLM-HARNESS-END: us-80285fa8
 
 // LLM-HARNESS-BEGIN: us-80285fe4

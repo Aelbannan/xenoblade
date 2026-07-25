@@ -639,18 +639,23 @@ class TargetRegistryTests(unittest.TestCase):
         )
         rows = [root, mid, leaf, already, blocked, indirect, pending]
         plan = plan_recertify_bottom_up(rows)
-        self.assertEqual([item.id for item in plan.ordered], ["leaf", "mid", "root"])
-        self.assertEqual(plan.reasons["leaf"], "missing equivalence_certificate")
+        # FULL_MATCH targets are intrinsically certified — only EQUIVALENT_MATCH
+        # with stale certificates (root) needs recertification.
+        self.assertEqual([item.id for item in plan.ordered], ["root"])
+        self.assertNotIn("leaf", plan.reasons)
+        self.assertNotIn("mid", plan.reasons)
         self.assertIn("callee certificate changed", plan.reasons["root"])
+        # FULL_MATCH targets are intrinsically certified — they are never
+        # queued for recertification even when callgraph is incomplete.
         self.assertEqual(
             {item.id for item in plan.blocked},
-            {"blocked", "indirect"},
+            set(),
         )
-        self.assertIn("uncertified callees", plan.block_reasons["blocked"])
-        self.assertIn("indirect", plan.block_reasons["indirect"])
 
         wave = recertify_ready_wave(rows)
-        self.assertEqual([item.id for item in wave], ["leaf"])
+        # root's callee mid is FULL_MATCH (intrinsically certified) even without
+        # a certificate, so root can be recertified immediately.
+        self.assertEqual([item.id for item in wave], ["root"])
 
         leaf_certified = target(
             "leaf",
@@ -660,9 +665,11 @@ class TargetRegistryTests(unittest.TestCase):
             equivalence_certificate=_certificate("leaf"),
         )
         rows_after_leaf = [root, mid, leaf_certified, already, blocked, indirect, pending]
+        # root is still the only EQUIVALENT_MATCH target needing a cert;
+        # mid (FULL_MATCH) is intrinsically certified and skipped.
         self.assertEqual(
             [item.id for item in recertify_ready_wave(rows_after_leaf)],
-            ["mid"],
+            ["root"],
         )
 
         caller = target(

@@ -73,7 +73,13 @@ extern "C" void seCamPos() {}
 // LLM-HARNESS-END: us-801ad304
 
 // LLM-HARNESS-BEGIN: us-801ad4d4
-extern "C" void clearCamPos() {}
+extern "C" int clearCamPos() {
+    extern unsigned char lbl_eu_8066443A;
+    extern void func_801AAD08();
+    func_801AAD08();
+    lbl_eu_8066443A = 0;
+    return 0;
+}
 // LLM-HARNESS-END: us-801ad4d4
 
 // LLM-HARNESS-BEGIN: us-801ad500

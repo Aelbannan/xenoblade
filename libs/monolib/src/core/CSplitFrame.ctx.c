@@ -1,50 +1,7 @@
-/* "libs/monolib/src/core/CSplitFrame.cpp" line 0 "monolib/core/CViewRoot.hpp" */
+/* "libs/monolib/src/core/CSplitFrame.cpp" line 0 "monolib/core/CSplitFrame.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/core/CViewRoot.hpp" line 2 "monolib/monolib_types.hpp" */
-#pragma once
-
-//List of forward declarations for commonly used classes.
-
-//Core
-class CView;
-class CException;
-
-//Device
-class CFileHandle;
-class CDeviceFileJob;
-
-//Math
-namespace ml {
-    struct CPnt16;
-    struct CRect16;
-    struct CVec3;
-    struct CVec4;
-    struct CCol3;
-    struct CCol4;
-    struct CMat34;
-    struct CFrustum;
-} //namespace ml
-
-//Scene
-class CScn;
-class CScnNw4r;
-class IScnRender;
-class ICulling;
-
-//Util
-class CChildListNode;
-
-//Work
-class CEventFile;
-class CProcess;
-class CProc;
-class CWorkThread;
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/core/CViewRoot.hpp" line 3 "monolib/util/reslist.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/reslist.hpp" line 2 "types.h" */
+/* "libs/monolib/include/monolib/core/CSplitFrame.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -752,1125 +709,50 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-/* "libs/monolib/include/monolib/util/reslist.hpp" line 3 "monolib/util/MemManager.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 2 "decomp.h" */
-/**
- * Codewarrior tricks for matching decomp
- * (Macros generate prototypes to satisfy -requireprotos)
- */
-
-#ifndef DECOMP_H
-#define DECOMP_H
-
-/* "include/decomp.h" line 8 "macros.h" */
-/**
- * Common macros
- */
-
-#ifndef MACROS_H
-#define MACROS_H
-
-/******************************************************************************
- *
- * Strings
- *
- ******************************************************************************/
-
-// Stringify expression
-#define __STR(x) #x
-#define STR(x) __STR(x)
-
-// Concatenate strings
-#define __CONCAT(x, y) x##y
-#define CONCAT(x, y) __CONCAT(x, y)
-
-// Multi-character character constants
-// clang-format off
-#define TWOCC(c0, c1)                                                          \
-    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
-#define THREECC(c0, c1, c2)                                                    \
-    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
-#define FOURCC(c0, c1, c2, c3)                                                 \
-    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
-// clang-format on
-
-/******************************************************************************
- *
- * Arithmetic
- *
- ******************************************************************************/
-
-// Min/max expression
-#define MAX(x, y) ((x) > (y) ? (x) : (y))
-#define MIN(x, y) ((x) < (y) ? (x) : (y))
-
-// Clamp to a range
-#define CLAMP(low, high, x)                                                    \
-    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
-
-// Round up value
-#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
-#define ROUND_UP_PTR(x, align)                                                 \
-    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
-
-// Round down value
-#define ROUND_DOWN(x, align) ((x) & (-(align)))
-#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
-
-// Distance between pointers
-#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
-
-/******************************************************************************
- *
- * Arrays
- *
- ******************************************************************************/
-
-// Size of compile-time arrays
-#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
-#define LENGTHOF(x) ARRAY_SIZE(x)
-
-// Declare an array of hardware registers
-#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
-
-/******************************************************************************
- *
- * Intrinsics
- *
- ******************************************************************************/
-
-// Memory clear intrinsic
-#define MEMCLR(x) __memclr((x), sizeof(*(x)))
-
-/******************************************************************************
- *
- * Attributes
- *
- ******************************************************************************/
-
-// Alignment attribute
-#define ALIGN(x) __attribute__((aligned(x)))
-
-// Place a symbol in a specific ELF section
-#define DECL_SECTION(x) __declspec(section x)
-
-// Give a symbol weak linkage
-#define DECL_WEAK __declspec(weak)
-
-#endif
-/* end "macros.h" */
-
-// Compile without matching hacks.
-#if defined(NONMATCHING) || defined(COMPAT_ANY)
-#define DECOMP_FORCEACTIVE(module, ...)
-#define DECOMP_FORCELITERAL(module, ...)
-#define DECOMP_FORCEACTIVE_DTOR(module, cls)
-#define DECOMP_INLINE
-#define DECOMP_DONT_INLINE
-#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
-#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
-#define DECOMP_ASM_INSN_BEGIN
-#define DECOMP_ASM_INSN_END
-// Compile with matching hacks.
-// (This version of CW does not support pragmas inside macros.)
-#else
-// Force reference specific data
-#define DECOMP_FORCEACTIVE(module, ...)                                        \
-    void fake_function(...);                                                   \
-    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
-    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
-        fake_function(__VA_ARGS__);                                            \
-    }
-
-// Force literal ordering, such as floats in sdata2
-#define DECOMP_FORCELITERAL(module, ...)                                       \
-    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
-    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
-        (__VA_ARGS__);                                                         \
-    }
-
-// Force reference destructor
-#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
-    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
-    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
-        cls dummy;                                                             \
-        dummy.~cls();                                                          \
-    }
-
-#define DECOMP_INLINE inline
-#define DECOMP_DONT_INLINE __attribute__((never_inline))
-
-/**
- * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
- * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
- */
-#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
-/** slwi expansion: rlwinm rD,rA,1,0,30 */
-#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
-
-/**
- * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
- * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
- */
-#define DECOMP_ASM_INSN_BEGIN
-#define DECOMP_ASM_INSN_END
-
-#endif
-
-#endif
-/* end "decomp.h" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 4 "monolib/util/FixStr.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/FixStr.hpp" line 2 "cstring" */
-#ifndef MSL_CPP_CSTRING_H
-#define MSL_CPP_CSTRING_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
-#ifndef MSL_STRING_H
-#define MSL_STRING_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-#ifndef _MSL_STRING_API_H
-#define _MSL_STRING_API_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* __memrchr(const void* src, int val, size_t n);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-#ifndef _EXTRAS_H
-#define _EXTRAS_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int stricmp(const char*, const char*);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
-
-char* strcat(char*, const char*);
-char* strncat(char*, const char*, size_t);
-
-int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, size_t);
-
-char* strchr(const char*, int);
-char* strstr(const char*, const char*);
-
-size_t strlen(const char*);
-
-void* memmove(void*, const void*, size_t);
-int memcmp(const void*, const void*, size_t);
-void* memchr(const void*, int, size_t);
-
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* dest, int val, size_t count);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "string.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::__memrchr;
-using ::memchr;
-using ::memcmp;
-using ::memcpy;
-using ::memmove;
-using ::memset;
-using ::strcat;
-using ::strchr;
-using ::strcmp;
-using ::strcpy;
-using ::stricmp;
-using ::strlen;
-using ::strncat;
-using ::strncmp;
-using ::strncpy;
-using ::strstr;
-} // namespace std
-
-#endif
-#endif
-/* end "cstring" */
-/* "libs/monolib/include/monolib/util/FixStr.hpp" line 3 "cstdio" */
-#ifndef MSL_CPP_CSTDIO_H
-#define MSL_CPP_CSTDIO_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstdio" line 2 "stdio.h" */
-#ifndef MSL_STDIO_H
-#define MSL_STDIO_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 3 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 8 "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
-#ifndef STDIO_API_H
-#define STDIO_API_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 4 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
-#ifndef _MSL_COMMON_FILE_STRUC_H
-#define _MSL_COMMON_FILE_STRUC_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" line 2 "types.h" */
-/* end "types.h" */
-
-typedef unsigned long __file_handle;
-typedef unsigned long fpos_t;
-typedef struct _FILE _FILE, *P_FILE;
-
-#define __ungetc_buffer_size 2
-
-enum __file_kinds {
-    __closed_file,
-    __disk_file,
-    __console_file,
-    __unavailable_file
-};
-
-enum __open_modes {
-    __must_exist,
-    __create_if_necessary,
-    __create_or_truncate
-};
-
-enum __file_orientation {
-    __unoriented,
-    __char_oriented,
-    __wide_oriented
-};
-
-enum __io_modes {
-    __read = 1,
-    __write = 2,
-    __read_write = 3,
-    __append = 4
-};
-
-typedef struct __file_modes {
-    u32 open_mode : 2;
-    u32 io_mode : 3;
-    u32 buffer_mode : 2;
-    u32 file_kind : 3;
-
-#ifdef _MSL_WIDE_CHAR
-    u32 file_orientation : 2;
-#endif /* _MSL_WIDE_CHAR */
-
-    u32 binary_io : 1;
-} __file_modes;
-
-enum __io_states {
-    __neutral,
-    __writing,
-    __reading,
-    __rereading
-};
-
-typedef struct __file_state {
-    u32 io_state : 3;
-    u32 free_buffer : 1;
-    u8 eof;
-    u8 error;
-} __file_state;
-
-typedef void* __ref_con;
-typedef void (*__idle_proc)(void);
-typedef int (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __ref_con ref_con);
-typedef int (*__io_proc)(__file_handle file, u8* buff, size_t* count, __ref_con ref_con);
-typedef int (*__close_proc)(__file_handle file);
-
-struct _FILE {
-    __file_handle handle;                           // _00
-    __file_modes mode;                              // _04
-    __file_state state;                              // _08
-    u8 is_dynamically_allowed;                      // _0C
-    u8 char_buffer;                                 // _0D
-    u8 char_buffer_overflow;                        // _0E
-    u8 ungetc_buffer[__ungetc_buffer_size];         // _0F
-    wchar_t ungetwc_buffer[__ungetc_buffer_size];   // _12
-    u32 position;                                   // _18
-    u8* buffer;                                   // _1C
-    u32 buffer_size;                                // _20
-    u8* buffer_ptr;                               // _24
-    u32 buffer_len;                                 // _28
-    u32 buffer_alignment;                           // _2C
-    u32 saved_buffer_len;                           // _30
-    u32 buffer_pos;                                 // _34
-    __pos_proc position_proc;                       // _38
-    __io_proc read_proc;                            // _3C
-    __io_proc write_proc;                           // _40
-    __close_proc close_proc;                        // _44
-    __ref_con ref_con;                              // _48
-    _FILE* next_file_struct;                        // _4C
-};
-
-typedef struct _FILE FILE;
-
-
-#define _IONBF 0
-#define _IOLBF 1
-#define _IOFBF 2
-
-// define standard C file pointer location names
-#define SEEK_SET (0)
-#define SEEK_CUR (1)
-#define SEEK_END (2)
-
-#define stdin &(__files[0])
-#define stdout &(__files[1])
-#define stderr &(__files[2])
-
-#define _STATIC_FILES 4
-
-extern FILE __files[];
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 5 "wchar.h" */
-#ifndef MSL_WCHAR_H
-#define MSL_WCHAR_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
-#ifndef _WCHAR_IO_H
-#define _WCHAR_IO_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-int fwide(FILE* stream, int mode);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
-#ifndef MSL_WCSTOUL_H
-#define MSL_WCSTOUL_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" line 3 "types.h" */
-/* end "types.h" */
-
-
-unsigned long __wcstoul(int, int, wint_t (*wReadProc)(void*, wint_t, int), void*, int*, int*, int*);
-//__wcstoull
-//wcstoul
-//wcstoull
-long wcstol(const wchar_t*, wchar_t**, int);
-//wcstoll
-//watoi
-//watol
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
-#ifndef MSL_WMEM_H
-#define MSL_WMEM_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" line 3 "types.h" */
-/* end "types.h" */
-
-wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n);
-wchar_t* wmemchr(wchar_t* s, wchar_t c, int n);
-void* memmove(void*, const void*, size_t);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
-#ifndef MSL_WPRINTF_H
-#define MSL_WPRINTF_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 4 "stdarg.h" */
-/* end "stdarg.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 5 "stdio.h" */
-/* end "stdio.h" */
-
-//wprintf
-//wprintf_s
-//fwprintf
-//fwprintf_s
-//vwprintf
-//vwprintf_s
-//vfwprintf
-//vfwprintf_s
-int swprintf(wchar_t*, size_t, const wchar_t*, ...);
-//swprintf_s
-//snwprintf_s
-int vswprintf(wchar_t*, size_t, const wchar_t*, va_list);
-//vswprintf_s
-//vsnwprintf_s
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 13 "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
-#ifndef MSL_WSTRING_H
-#define MSL_WSTRING_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" line 3 "types.h" */
-/* end "types.h" */
-
-size_t wcslen(const wchar_t*);
-wchar_t* wcscpy(wchar_t*, const wchar_t*);
-wchar_t* wcsncpy(wchar_t*, const wchar_t*, size_t);
-wchar_t* wcscat(wchar_t*, const wchar_t*);
-int wcscmp(const wchar_t*, const wchar_t*);
-wchar_t* wcschr(const wchar_t*, wchar_t);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "wchar.h" */
-
-enum __ReadProcActions {
-    __GetAChar,
-    __UngetAChar,
-    __TestForError
-};
-
-enum __WReadProcActions
-{
-    __GetAwChar,
-    __UngetAwChar,
-    __TestForwcsError
-};
-
-typedef struct {
-    char* CharStr;
-    size_t MaxCharCount;
-    size_t CharsWritten;
-} __OutStrCtrl;
-
-typedef struct{
-    char* NextChar;
-    int NullCharDetected;
-} __InStrCtrl;
-
-typedef struct {
-    wchar_t * wCharStr;
-    size_t MaxCharCount;
-    size_t CharsWritten;
-} __wOutStrCtrl;
-
-typedef struct {
-    wchar_t * wNextChar;
-    int    wNullCharDetected;
-} __wInStrCtrl;
-
-//__fread
-size_t __fwrite(const void *pPtr, size_t memb_size, size_t num_memb, FILE *file);
-int __StringRead(void *, int, int);
-wint_t __wStringRead(void*, wint_t, int);
-
-#endif // STDIO_API_H
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
-#ifndef MSL_FILE_POS_H
-#define MSL_FILE_POS_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-int fseek(FILE* stream, u32 offset, int whence);
-int _fseek(FILE* stream, u32 offset, int whence);
-int ftell(FILE* stream);
-int _ftell(FILE* stream);
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
-#ifndef MSL_FILE_IO_H
-#define MSL_FILE_IO_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 3 "types.h" */
-/* end "types.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-int fclose(FILE* file);
-int fflush(FILE* file);
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
-#ifndef MSL_PRINTF_H
-#define MSL_PRINTF_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 3 "stdarg.h" */
-/* end "stdarg.h" */
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 4 "stdio.h" */
-/* end "stdio.h" */
-
-
-//printf
-//printf_s
-int fprintf(FILE*, const char* format, ...);
-//fprintf_s
-int vprintf(const char*, va_list);
-//vprintf_s
-//vfprintf
-//vfprintf_s
-int vsnprintf(char*, size_t, const char*, va_list);
-//vsnprintf_s
-int vsprintf(char*, const char*, va_list);
-//vsprintf_s
-int snprintf(char*, size_t, const char*, ...);
-//snprintf_s
-int sprintf(char*, const char*, ...);
-//sprintf_s
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
-#ifndef MSL_SCANF_H
-#define MSL_SCANF_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" line 3 "stdarg.h" */
-/* end "stdarg.h" */
-
-//fscanf
-//fscanf_s
-//vscanf
-//scanf
-//scanf_s
-//vfscanf
-//vfscanf_s
-int vsscanf(const char*, const char*, va_list);
-//vsscanf_s
-int sscanf(const char*, const char*, ...);
-//sscanf_s
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "stdio.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::fclose;
-using ::fflush;
-using ::FILE;
-using ::ftell;
-using ::fwide;
-using ::snprintf;
-using ::sprintf;
-using ::sscanf;
-using ::vprintf;
-using ::vsnprintf;
-using ::vsprintf;
-} // namespace std
-
-#endif
-#endif
-/* end "cstdio" */
-
-namespace ml{
-
-    template <size_t N>
-    struct FixStr{
-        FixStr(){
-            clear();
-        }
-
-        //probably fake
-        FixStr(bool initialize){
-            if(initialize){
-                clear();
-            }
-        }
-
-        FixStr(const FixStr<N>& str){
-            *this = str;
-        }
-
-        FixStr(const char* str){
-            *this = str;
-        }
-
-        FixStr(const FixStr<N>& str, int pos, int length){
-            copy(str, pos, length);
-        }
-
-        void copy(const FixStr<N>& str, int pos, int length){
-            clear();
-            if (str.empty()) return;
-
-            //Copy entire string if length is -1
-            if (length == npos) length = str.size();
-            std::strncpy(mString, str.mString + pos, length);
-            //Stop the string after the copied characters, and recalculate the length
-            mString[length] = 0;
-            mLength = std::strlen(mString);
-        }
-
-        void clear(){
-            mString[0] = 0;
-            mLength = 0;
-        }
-
-        void operator=(const FixStr<N>& str){
-            mLength = std::strlen(str.mString);
-            std::strcpy(mString, str.mString);
-        }
-
-        void operator=(const char* str){
-            mLength = std::strlen(str);
-            std::strcpy(mString, str);
-        }
-
-        void operator+=(const FixStr<N>& str){
-            int strLength = std::strlen(str.mString);
-            std::strcat(mString, str.mString);
-            mLength += strLength;
-        }
-
-        void operator+=(const char* str){
-            int strLength = std::strlen(str);
-            std::strcat(mString, str);
-            mLength += strLength;
-        }
-
-        bool operator==(const char* str) const {
-            return std::strcmp(c_str(), str) == 0;
-        }
-
-        bool operator!=(const char* str) const {
-            return std::strcmp(c_str(), str) != 0;
-        }
-
-        FixStr<N> operator+(const FixStr<N>& str) const {
-            FixStr<N> result = *this;
-            result += str;
-            return result;
-        }
-
-        char operator[](int index) {
-            return mString[index];
-        }
-
-        const char* c_str() const {
-            return mString;
-        }
-
-        int size() const {
-            return mLength;
-        }
-
-        bool empty() const {
-            return size() == 0;
-        }
-        
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
-
-        //Sets the given string to the first characters of this string, up to the specified length.
-        //TODO: This might just be substr, but when the start index is 0?
-        const char* substr(int pos = 0, int length = npos) const {
-            FixStr<N> str = FixStr(*this, pos, length);
-            return str.c_str();
-        }
-
-        //void erase(int, int){}
-        //void erase(const char*){}
-        //append_int(const int&){}
-        //void insert(int r4, char const* str, int r6){}
-        //slice(int){}
-
-        //also has version with const char& and const FixStr<64>&
-        int append_back(const char* str){
-
-        }
-
-        int append_front(const char* str){
-
-        }
-
-        int find(const char* str, int pos) const {
-
-        }
-
-        int rfind(const char* str, int pos = npos) const {
-            int length = mLength;
-            
-            if (length == 0) {
-                //Return -1 if the string is empty
-                return npos;
-            }
-            
-            int strLength = std::strlen(str);
-
-            char* string = (char*)mString + pos;
-
-            for (char* p = string + length; p != string; p--) {
-                if (!std::strncmp(p, str, strLength)) {
-                    return (int)(p - mString);
-                }
-            }
-
-            //Reached start of string without finding the string, return -1
-            return npos;
-        }
-
-        int find_last_of(char c, int pos) const {
-
-        }
-
-        //TODO: this might be a CPathUtil inline?
-        void unkInline1(const char* str){
-            int index = rfind(str, -1);
-
-            if(index != -1 && index + 1 < mLength){
-                mString[index + 1] = 0;
-                mLength = index;
-            }
-        }
-
-    private:
-        char mString[N];
-        int mLength;
-
-    public:
-        static const int npos = -1;
-    };
-
-}
-/* end "monolib/util/FixStr.hpp" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 5 "monolib/util/RawArray.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/util/RawArray.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace mtl{
-
-template <typename T>
-struct RawArrayEntry {
-    u8 data[sizeof(T)];
-
-    void initialize(){
-        T* element = getValue();
-        new (element) T();
-    }
-
-    T* getValue(){
-        return reinterpret_cast<T*>(data);
-    }
-};
-
-template <typename T, size_t N>
-class RawArray {
-public:
-    static const int MAX_ELEMENTS = N;
-
-    void initialize(){
-        for(int i = 0; i < MAX_ELEMENTS; i++){
-            values[i].initialize();
-        }
-    }
-
-    T* operator[](u32 index){
-        return values[index].getValue();
-    }
-
-private:
-    RawArrayEntry<T> values[N];
-};
-
-} //namespace mtl
-/* end "monolib/util/RawArray.hpp" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 6 "cstring" */
-/* end "cstring" */
-/* "libs/monolib/include/monolib/util/MemManager.hpp" line 7 "cstddef" */
-/* end "cstddef" */
-
-namespace mtl {
-    
-    /*
-    Handle to an allocation region (MemRegion).
-    Bits 16-23: Region UID
-    Bits 24-31: Region index
-    */
-    typedef u32 ALLOC_HANDLE;
-    static const ALLOC_HANDLE INVALID_HANDLE = 0xFFFFFFFF;
-
-    #define ALLOC_HANDLE_UID(handle) ((handle) >> 8 & 0xFF)
-    #define ALLOC_HANDLE_REGION(handle) ((handle) & 0xFF)
-
-    static const int MAX_ALLOC_REGION = 80;
-
-    /*
-    Allocatable block inside of a memory region.
-    */
-    struct MemBlock {
-        //Minimum size of allocated data
-        static const int MIN_SIZE = 64;
-        //Maximum size of allocated data
-        static const int MAX_SIZE = 0x7FFFFFF;
-
-        MemBlock* prev; //0x0
-        MemBlock* next; //0x4
-        MemBlock* aligned; //0x8
-        u32 size; //0xC
-        u16 region; //0x10
-        u8 padding[32 - 0x12]; //0x12
-
-        u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
-        }
-        u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
-        }
-
-        u32 getDataSize() const {
-            return size - sizeof(MemBlock);            
-        }
-
-        static MemBlock* getBlockAddr(void* p) {
-            return reinterpret_cast<MemBlock*>(
-                static_cast<u8*>(p) - sizeof(MemBlock));
-        }
-    };
-
-    class MemManager {
-    public:
-        /*
-        Region or section of the memory heap.
-        */
-        class MemRegion {
-            friend class MemManager;
-
-        public:
-            MemRegion();
-            ~MemRegion();
-
-            static void setRegionMaxSize(u32 maxMEM1, u32 maxMEM2);
-            static u32 getMEM1MaxSize();
-            static u32 getMEM2MaxSize();
-
-            void* allocate(void* buffer, u32 size, int align);
-
-            MemBlock* reallocate(MemBlock* block);
-            MemBlock* coalesceRecursive(MemBlock* block);
-
-            MemBlock* getTailBuffer(u32 size, int align, void** buffer);
-
-            static inline void initialize(){
-                setRegionMaxSize(MEM1_MAX_SIZE, MEM2_MAX_SIZE);
-            }
-
-        private:
-            void* allocateImpl(MemBlock* block, void* buffer, u32 size, int align);
-
-            MemBlock* mHead; //0x0
-            MemBlock* mTail; //0x4
-            MemBlock* mOldest; //0x8
-            MemBlock* mYoungest; //0xC
-            void* mStartAddress; //0x10
-            void* mEndAddress; //0x14
-            u32 mNumAlloc; //0x18
-            u32 mSize; //0x1C
-            u32 mFreeBytes; //0x20
-            ml::FixStr<64> mName; //0x24
-            ALLOC_HANDLE mHandle; //0x68
-            u8 unk6C;
-
-            static u32 sMaxSizeMEM1;
-            static u32 sMaxSizeMEM2;
-
-            static const int MEM1_MAX_SIZE = 0x680000;
-            static const int MEM2_MAX_SIZE = 0;
-        };
-
-        static void initialize();
-        static void finalize();
-
-        static DECOMP_INLINE ALLOC_HANDLE create(void* head, u32 size, const char* name);
-        static ALLOC_HANDLE create(ALLOC_HANDLE handle, u32 size, const char* name);
-        static ALLOC_HANDLE create_tail(ALLOC_HANDLE handle, u32 size, const char* name);
-
-        static ALLOC_HANDLE getHandleMEM1();
-        static void setHandleMEM1(ALLOC_HANDLE handle);
-
-        static ALLOC_HANDLE getHandleMEM2();
-        static void setHandleMEM2(ALLOC_HANDLE handle);
-        
-        static ALLOC_HANDLE getHandleStatic();
-        static void setHandleStatic(ALLOC_HANDLE handle);
-
-        static bool erase(ALLOC_HANDLE handle);
-        static bool empty(ALLOC_HANDLE handle);
-
-        static void* allocate_head(ALLOC_HANDLE handle, u32 size, int align);
-        static void* allocate_tail(ALLOC_HANDLE handle, u32 size, int align);
-        static bool deallocate(void* p);
-        static bool deallocateImpl(void* p);
-
-        static MemRegion* getRegion(ALLOC_HANDLE handle);
-        static u32 getRegionSize(ALLOC_HANDLE handle);
-        static u32 getBlockSize(ALLOC_HANDLE handle);
-        static MemBlock* getTailBuffer(MemRegion* region, u32 size, int align, void** buffer);
-        static MemBlock* getMaxBlock(ALLOC_HANDLE handle);
-        static u32 getMaxAllocSize(ALLOC_HANDLE handle);
-        static void* getMaxAllocData(ALLOC_HANDLE handle);
-        static f32 getPercentAlloc(ALLOC_HANDLE handle);
-        static void func_804348A4(ALLOC_HANDLE handle, u8 val);
-
-        static u16 calculateCrc(const void* data, u32 len);
-        static void func_80434A4C(bool value);
-
-        static bool isOptimalAlloc();
-        static void setOptimalAlloc(bool enable);
-
-        static void* allocate(u32 size, ALLOC_HANDLE handle);
-        static void* allocate_array(u32 size, ALLOC_HANDLE handle);
-
-        static void* allocate_ex(u32 size, ALLOC_HANDLE handle, int align);
-        static void* allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align);
-
-        /* Commented out log function, which would have printed debug messages. It seems like
-        monolithsoft had log functions for many classes in addition to this one. */
-        //static void log(int something);
-
-    private:
-        static const char* scRegionNameMEM1;
-        static const char* scRegionNameMEM2;
-
-        static ALLOC_HANDLE sHandleMEM1;
-        static ALLOC_HANDLE sHandleMEM2;
-
-        static RawArray<MemRegion, MAX_ALLOC_REGION> sRegionArray;
-        static u32 sRegionUniqueId;
-
-        static bool lbl_80667E54;
-        static bool lbl_80665E38;
-        static bool lbl_80665E39;        
-        static bool sIsOptimalAlloc;
-    };
-
-}
-
-/*
-Allocates object memory from the specified region.
-*/
-inline void* operator new(size_t size, mtl::ALLOC_HANDLE handle) {
-    return mtl::MemManager::allocate(size, handle);
-}
-
-/*
-Allocates aligned object memory from the specified region.
-Specify negative alignment to perform a tail allocation.
-*/
-inline void* operator new(size_t size, int align, mtl::ALLOC_HANDLE handle) {
-    return mtl::MemManager::allocate_ex(size, handle, align);
-}
-
-/*
-Allocates array memory from the specified region.
-*/
-inline void* operator new[](size_t size, mtl::ALLOC_HANDLE handle) {
-    return mtl::MemManager::allocate_array(size, handle);
-}
-
-/*
-Allocates aligned array memory from the specified region.
-Specify negative alignment to perform a tail allocation.
-*/
-inline void* operator new[](size_t size, mtl::ALLOC_HANDLE handle, int align) {
-    return mtl::MemManager::allocate_array_ex(size, handle, align);
-}
-
-//Utility macros
-
-#define DELETE_OBJ(p)                   \
-    {                                   \
-    if (p != nullptr){                  \
-        mtl::MemManager::deallocate(p); \
-        p = nullptr;                    \
-    }                                   \
-    }                                   \
-
-
-#define DELETE_ARRAY(p)                   \
-    {                                     \
-    if (p != nullptr){                    \
-        delete[] p;                       \
-        p = nullptr;                      \
-    }                                     \
-    }                                     \
-/* end "monolib/util/MemManager.hpp" */
-/* "libs/monolib/include/monolib/util/reslist.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+/* "libs/monolib/include/monolib/core/CSplitFrame.hpp" line 3 "monolib/work/CWorkThreadSystem.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
 /* end "types.h" */
 /* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
+#pragma once
+
+//List of forward declarations for commonly used classes.
+
+//Core
+class CView;
+class CException;
+
+//Device
+class CFileHandle;
+class CDeviceFileJob;
+
+//Math
+namespace ml {
+    struct CPnt16;
+    struct CRect16;
+    struct CVec3;
+    struct CVec4;
+    struct CCol3;
+    struct CCol4;
+    struct CMat34;
+    struct CFrustum;
+} //namespace ml
+
+//Scene
+class CScn;
+class CScnNw4r;
+class IScnRender;
+class ICulling;
+
+//Util
+class CChildListNode;
+
+//Work
+class CEventFile;
+class CProcess;
+class CProc;
+class CWorkThread;
 /* end "monolib/monolib_types.hpp" */
 /* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
 #pragma once
@@ -11275,17 +10157,703 @@ private:
 /* "libs/monolib/include/monolib/util/CPathUtil.hpp" line 2 "types.h" */
 /* end "types.h" */
 /* "libs/monolib/include/monolib/util/CPathUtil.hpp" line 3 "monolib/util/FixStr.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/FixStr.hpp" line 2 "cstring" */
+#ifndef MSL_CPP_CSTRING_H
+#define MSL_CPP_CSTRING_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "string.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::__memrchr;
+using ::memchr;
+using ::memcmp;
+using ::memcpy;
+using ::memmove;
+using ::memset;
+using ::strcat;
+using ::strchr;
+using ::strcmp;
+using ::strcpy;
+using ::stricmp;
+using ::strlen;
+using ::strncat;
+using ::strncmp;
+using ::strncpy;
+using ::strstr;
+} // namespace std
+
+#endif
+#endif
+/* end "cstring" */
+/* "libs/monolib/include/monolib/util/FixStr.hpp" line 3 "cstdio" */
+#ifndef MSL_CPP_CSTDIO_H
+#define MSL_CPP_CSTDIO_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstdio" line 2 "stdio.h" */
+#ifndef MSL_STDIO_H
+#define MSL_STDIO_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 3 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 8 "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+#ifndef STDIO_API_H
+#define STDIO_API_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 4 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+#ifndef _MSL_COMMON_FILE_STRUC_H
+#define _MSL_COMMON_FILE_STRUC_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" line 2 "types.h" */
+/* end "types.h" */
+
+typedef unsigned long __file_handle;
+typedef unsigned long fpos_t;
+typedef struct _FILE _FILE, *P_FILE;
+
+#define __ungetc_buffer_size 2
+
+enum __file_kinds {
+    __closed_file,
+    __disk_file,
+    __console_file,
+    __unavailable_file
+};
+
+enum __open_modes {
+    __must_exist,
+    __create_if_necessary,
+    __create_or_truncate
+};
+
+enum __file_orientation {
+    __unoriented,
+    __char_oriented,
+    __wide_oriented
+};
+
+enum __io_modes {
+    __read = 1,
+    __write = 2,
+    __read_write = 3,
+    __append = 4
+};
+
+typedef struct __file_modes {
+    u32 open_mode : 2;
+    u32 io_mode : 3;
+    u32 buffer_mode : 2;
+    u32 file_kind : 3;
+
+#ifdef _MSL_WIDE_CHAR
+    u32 file_orientation : 2;
+#endif /* _MSL_WIDE_CHAR */
+
+    u32 binary_io : 1;
+} __file_modes;
+
+enum __io_states {
+    __neutral,
+    __writing,
+    __reading,
+    __rereading
+};
+
+typedef struct __file_state {
+    u32 io_state : 3;
+    u32 free_buffer : 1;
+    u8 eof;
+    u8 error;
+} __file_state;
+
+typedef void* __ref_con;
+typedef void (*__idle_proc)(void);
+typedef int (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __ref_con ref_con);
+typedef int (*__io_proc)(__file_handle file, u8* buff, size_t* count, __ref_con ref_con);
+typedef int (*__close_proc)(__file_handle file);
+
+struct _FILE {
+    __file_handle handle;                           // _00
+    __file_modes mode;                              // _04
+    __file_state state;                              // _08
+    u8 is_dynamically_allowed;                      // _0C
+    u8 char_buffer;                                 // _0D
+    u8 char_buffer_overflow;                        // _0E
+    u8 ungetc_buffer[__ungetc_buffer_size];         // _0F
+    wchar_t ungetwc_buffer[__ungetc_buffer_size];   // _12
+    u32 position;                                   // _18
+    u8* buffer;                                   // _1C
+    u32 buffer_size;                                // _20
+    u8* buffer_ptr;                               // _24
+    u32 buffer_len;                                 // _28
+    u32 buffer_alignment;                           // _2C
+    u32 saved_buffer_len;                           // _30
+    u32 buffer_pos;                                 // _34
+    __pos_proc position_proc;                       // _38
+    __io_proc read_proc;                            // _3C
+    __io_proc write_proc;                           // _40
+    __close_proc close_proc;                        // _44
+    __ref_con ref_con;                              // _48
+    _FILE* next_file_struct;                        // _4C
+};
+
+typedef struct _FILE FILE;
+
+
+#define _IONBF 0
+#define _IOLBF 1
+#define _IOFBF 2
+
+// define standard C file pointer location names
+#define SEEK_SET (0)
+#define SEEK_CUR (1)
+#define SEEK_END (2)
+
+#define stdin &(__files[0])
+#define stdout &(__files[1])
+#define stderr &(__files[2])
+
+#define _STATIC_FILES 4
+
+extern FILE __files[];
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 5 "wchar.h" */
+#ifndef MSL_WCHAR_H
+#define MSL_WCHAR_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+#ifndef _WCHAR_IO_H
+#define _WCHAR_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fwide(FILE* stream, int mode);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+#ifndef MSL_WCSTOUL_H
+#define MSL_WCSTOUL_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" line 3 "types.h" */
+/* end "types.h" */
+
+
+unsigned long __wcstoul(int, int, wint_t (*wReadProc)(void*, wint_t, int), void*, int*, int*, int*);
+//__wcstoull
+//wcstoul
+//wcstoull
+long wcstol(const wchar_t*, wchar_t**, int);
+//wcstoll
+//watoi
+//watol
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+#ifndef MSL_WMEM_H
+#define MSL_WMEM_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" line 3 "types.h" */
+/* end "types.h" */
+
+wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n);
+wchar_t* wmemchr(wchar_t* s, wchar_t c, int n);
+void* memmove(void*, const void*, size_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+#ifndef MSL_WPRINTF_H
+#define MSL_WPRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 4 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 5 "stdio.h" */
+/* end "stdio.h" */
+
+//wprintf
+//wprintf_s
+//fwprintf
+//fwprintf_s
+//vwprintf
+//vwprintf_s
+//vfwprintf
+//vfwprintf_s
+int swprintf(wchar_t*, size_t, const wchar_t*, ...);
+//swprintf_s
+//snwprintf_s
+int vswprintf(wchar_t*, size_t, const wchar_t*, va_list);
+//vswprintf_s
+//vsnwprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 13 "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+#ifndef MSL_WSTRING_H
+#define MSL_WSTRING_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" line 3 "types.h" */
+/* end "types.h" */
+
+size_t wcslen(const wchar_t*);
+wchar_t* wcscpy(wchar_t*, const wchar_t*);
+wchar_t* wcsncpy(wchar_t*, const wchar_t*, size_t);
+wchar_t* wcscat(wchar_t*, const wchar_t*);
+int wcscmp(const wchar_t*, const wchar_t*);
+wchar_t* wcschr(const wchar_t*, wchar_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "wchar.h" */
+
+enum __ReadProcActions {
+    __GetAChar,
+    __UngetAChar,
+    __TestForError
+};
+
+enum __WReadProcActions
+{
+    __GetAwChar,
+    __UngetAwChar,
+    __TestForwcsError
+};
+
+typedef struct {
+    char* CharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __OutStrCtrl;
+
+typedef struct{
+    char* NextChar;
+    int NullCharDetected;
+} __InStrCtrl;
+
+typedef struct {
+    wchar_t * wCharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __wOutStrCtrl;
+
+typedef struct {
+    wchar_t * wNextChar;
+    int    wNullCharDetected;
+} __wInStrCtrl;
+
+//__fread
+size_t __fwrite(const void *pPtr, size_t memb_size, size_t num_memb, FILE *file);
+int __StringRead(void *, int, int);
+wint_t __wStringRead(void*, wint_t, int);
+
+#endif // STDIO_API_H
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+#ifndef MSL_FILE_POS_H
+#define MSL_FILE_POS_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+int fseek(FILE* stream, u32 offset, int whence);
+int _fseek(FILE* stream, u32 offset, int whence);
+int ftell(FILE* stream);
+int _ftell(FILE* stream);
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+#ifndef MSL_FILE_IO_H
+#define MSL_FILE_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fclose(FILE* file);
+int fflush(FILE* file);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+#ifndef MSL_PRINTF_H
+#define MSL_PRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+
+//printf
+//printf_s
+int fprintf(FILE*, const char* format, ...);
+//fprintf_s
+int vprintf(const char*, va_list);
+//vprintf_s
+//vfprintf
+//vfprintf_s
+int vsnprintf(char*, size_t, const char*, va_list);
+//vsnprintf_s
+int vsprintf(char*, const char*, va_list);
+//vsprintf_s
+int snprintf(char*, size_t, const char*, ...);
+//snprintf_s
+int sprintf(char*, const char*, ...);
+//sprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+#ifndef MSL_SCANF_H
+#define MSL_SCANF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+
+//fscanf
+//fscanf_s
+//vscanf
+//scanf
+//scanf_s
+//vfscanf
+//vfscanf_s
+int vsscanf(const char*, const char*, va_list);
+//vsscanf_s
+int sscanf(const char*, const char*, ...);
+//sscanf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "stdio.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::fclose;
+using ::fflush;
+using ::FILE;
+using ::ftell;
+using ::fwide;
+using ::snprintf;
+using ::sprintf;
+using ::sscanf;
+using ::vprintf;
+using ::vsnprintf;
+using ::vsprintf;
+} // namespace std
+
+#endif
+#endif
+/* end "cstdio" */
+
+namespace ml{
+
+    template <size_t N>
+    struct FixStr{
+        FixStr(){
+            clear();
+        }
+
+        //probably fake
+        FixStr(bool initialize){
+            if(initialize){
+                clear();
+            }
+        }
+
+        FixStr(const FixStr<N>& str){
+            *this = str;
+        }
+
+        FixStr(const char* str){
+            *this = str;
+        }
+
+        FixStr(const FixStr<N>& str, int pos, int length){
+            copy(str, pos, length);
+        }
+
+        void copy(const FixStr<N>& str, int pos, int length){
+            clear();
+            if (str.empty()) return;
+
+            //Copy entire string if length is -1
+            if (length == npos) length = str.size();
+            std::strncpy(mString, str.mString + pos, length);
+            //Stop the string after the copied characters, and recalculate the length
+            mString[length] = 0;
+            mLength = std::strlen(mString);
+        }
+
+        void clear(){
+            mString[0] = 0;
+            mLength = 0;
+        }
+
+        void operator=(const FixStr<N>& str){
+            mLength = std::strlen(str.mString);
+            std::strcpy(mString, str.mString);
+        }
+
+        void operator=(const char* str){
+            mLength = std::strlen(str);
+            std::strcpy(mString, str);
+        }
+
+        void operator+=(const FixStr<N>& str){
+            int strLength = std::strlen(str.mString);
+            std::strcat(mString, str.mString);
+            mLength += strLength;
+        }
+
+        void operator+=(const char* str){
+            int strLength = std::strlen(str);
+            std::strcat(mString, str);
+            mLength += strLength;
+        }
+
+        bool operator==(const char* str) const {
+            return std::strcmp(c_str(), str) == 0;
+        }
+
+        bool operator!=(const char* str) const {
+            return std::strcmp(c_str(), str) != 0;
+        }
+
+        FixStr<N> operator+(const FixStr<N>& str) const {
+            FixStr<N> result = *this;
+            result += str;
+            return result;
+        }
+
+        char operator[](int index) {
+            return mString[index];
+        }
+
+        const char* c_str() const {
+            return mString;
+        }
+
+        int size() const {
+            return mLength;
+        }
+
+        bool empty() const {
+            return size() == 0;
+        }
+        
+        void format(const char* format, ...){
+            //Why hardcode the buffer size to 256??
+            char buffer[256];
+            va_list args;
+            va_start(args, format);
+            std::vsnprintf(buffer, sizeof(buffer), format, args);
+            *this = buffer;
+        }
+
+        //Sets the given string to the first characters of this string, up to the specified length.
+        //TODO: This might just be substr, but when the start index is 0?
+        const char* substr(int pos = 0, int length = npos) const {
+            FixStr<N> str = FixStr(*this, pos, length);
+            return str.c_str();
+        }
+
+        //void erase(int, int){}
+        //void erase(const char*){}
+        //append_int(const int&){}
+        //void insert(int r4, char const* str, int r6){}
+        //slice(int){}
+
+        //also has version with const char& and const FixStr<64>&
+        int append_back(const char* str){
+
+        }
+
+        int append_front(const char* str){
+
+        }
+
+        int find(const char* str, int pos) const {
+
+        }
+
+        int rfind(const char* str, int pos = npos) const {
+            int length = mLength;
+            
+            if (length == 0) {
+                //Return -1 if the string is empty
+                return npos;
+            }
+            
+            int strLength = std::strlen(str);
+
+            char* string = (char*)mString + pos;
+
+            for (char* p = string + length; p != string; p--) {
+                if (!std::strncmp(p, str, strLength)) {
+                    return (int)(p - mString);
+                }
+            }
+
+            //Reached start of string without finding the string, return -1
+            return npos;
+        }
+
+        int find_last_of(char c, int pos) const {
+
+        }
+
+        //TODO: this might be a CPathUtil inline?
+        void unkInline1(const char* str){
+            int index = rfind(str, -1);
+
+            if(index != -1 && index + 1 < mLength){
+                mString[index + 1] = 0;
+                mLength = index;
+            }
+        }
+
+    private:
+        char mString[N];
+        int mLength;
+
+    public:
+        static const int npos = -1;
+    };
+
+}
 /* end "monolib/util/FixStr.hpp" */
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -11337,6 +10905,440 @@ private:
 /* "libs/monolib/include/monolib/util.hpp" line 9 "monolib/util/FixStr.hpp" */
 /* end "monolib/util/FixStr.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 10 "monolib/util/MemManager.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 2 "decomp.h" */
+/**
+ * Codewarrior tricks for matching decomp
+ * (Macros generate prototypes to satisfy -requireprotos)
+ */
+
+#ifndef DECOMP_H
+#define DECOMP_H
+
+/* "include/decomp.h" line 8 "macros.h" */
+/**
+ * Common macros
+ */
+
+#ifndef MACROS_H
+#define MACROS_H
+
+/******************************************************************************
+ *
+ * Strings
+ *
+ ******************************************************************************/
+
+// Stringify expression
+#define __STR(x) #x
+#define STR(x) __STR(x)
+
+// Concatenate strings
+#define __CONCAT(x, y) x##y
+#define CONCAT(x, y) __CONCAT(x, y)
+
+// Multi-character character constants
+// clang-format off
+#define TWOCC(c0, c1)                                                          \
+    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
+#define THREECC(c0, c1, c2)                                                    \
+    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
+#define FOURCC(c0, c1, c2, c3)                                                 \
+    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
+// clang-format on
+
+/******************************************************************************
+ *
+ * Arithmetic
+ *
+ ******************************************************************************/
+
+// Min/max expression
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+
+// Clamp to a range
+#define CLAMP(low, high, x)                                                    \
+    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
+
+// Round up value
+#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
+#define ROUND_UP_PTR(x, align)                                                 \
+    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
+
+// Round down value
+#define ROUND_DOWN(x, align) ((x) & (-(align)))
+#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
+
+// Distance between pointers
+#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
+
+/******************************************************************************
+ *
+ * Arrays
+ *
+ ******************************************************************************/
+
+// Size of compile-time arrays
+#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#define LENGTHOF(x) ARRAY_SIZE(x)
+
+// Declare an array of hardware registers
+#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
+
+/******************************************************************************
+ *
+ * Intrinsics
+ *
+ ******************************************************************************/
+
+// Memory clear intrinsic
+#define MEMCLR(x) __memclr((x), sizeof(*(x)))
+
+/******************************************************************************
+ *
+ * Attributes
+ *
+ ******************************************************************************/
+
+// Alignment attribute
+#define ALIGN(x) __attribute__((aligned(x)))
+
+// Place a symbol in a specific ELF section
+#define DECL_SECTION(x) __declspec(section x)
+
+// Give a symbol weak linkage
+#define DECL_WEAK __declspec(weak)
+
+#endif
+/* end "macros.h" */
+
+// Compile without matching hacks.
+#if defined(NONMATCHING) || defined(COMPAT_ANY)
+#define DECOMP_FORCEACTIVE(module, ...)
+#define DECOMP_FORCELITERAL(module, ...)
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)
+#define DECOMP_INLINE
+#define DECOMP_DONT_INLINE
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
+#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+// Compile with matching hacks.
+// (This version of CW does not support pragmas inside macros.)
+#else
+// Force reference specific data
+#define DECOMP_FORCEACTIVE(module, ...)                                        \
+    void fake_function(...);                                                   \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
+        fake_function(__VA_ARGS__);                                            \
+    }
+
+// Force literal ordering, such as floats in sdata2
+#define DECOMP_FORCELITERAL(module, ...)                                       \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
+        (__VA_ARGS__);                                                         \
+    }
+
+// Force reference destructor
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
+        cls dummy;                                                             \
+        dummy.~cls();                                                          \
+    }
+
+#define DECOMP_INLINE inline
+#define DECOMP_DONT_INLINE __attribute__((never_inline))
+
+/**
+ * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
+ * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
+ */
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
+/** slwi expansion: rlwinm rD,rA,1,0,30 */
+#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
+
+/**
+ * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
+ * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
+ */
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+
+#endif
+
+#endif
+/* end "decomp.h" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 4 "monolib/util/FixStr.hpp" */
+/* end "monolib/util/FixStr.hpp" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 5 "monolib/util/RawArray.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/RawArray.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace mtl{
+
+template <typename T>
+struct RawArrayEntry {
+    u8 data[sizeof(T)];
+
+    void initialize(){
+        T* element = getValue();
+        new (element) T();
+    }
+
+    T* getValue(){
+        return reinterpret_cast<T*>(data);
+    }
+};
+
+template <typename T, size_t N>
+class RawArray {
+public:
+    static const int MAX_ELEMENTS = N;
+
+    void initialize(){
+        for(int i = 0; i < MAX_ELEMENTS; i++){
+            values[i].initialize();
+        }
+    }
+
+    T* operator[](u32 index){
+        return values[index].getValue();
+    }
+
+private:
+    RawArrayEntry<T> values[N];
+};
+
+} //namespace mtl
+/* end "monolib/util/RawArray.hpp" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 6 "cstring" */
+/* end "cstring" */
+/* "libs/monolib/include/monolib/util/MemManager.hpp" line 7 "cstddef" */
+/* end "cstddef" */
+
+namespace mtl {
+    
+    /*
+    Handle to an allocation region (MemRegion).
+    Bits 16-23: Region UID
+    Bits 24-31: Region index
+    */
+    typedef u32 ALLOC_HANDLE;
+    static const ALLOC_HANDLE INVALID_HANDLE = 0xFFFFFFFF;
+
+    #define ALLOC_HANDLE_UID(handle) ((handle) >> 8 & 0xFF)
+    #define ALLOC_HANDLE_REGION(handle) ((handle) & 0xFF)
+
+    static const int MAX_ALLOC_REGION = 80;
+
+    /*
+    Allocatable block inside of a memory region.
+    */
+    struct MemBlock {
+        //Minimum size of allocated data
+        static const int MIN_SIZE = 64;
+        //Maximum size of allocated data
+        static const int MAX_SIZE = 0x7FFFFFF;
+
+        MemBlock* prev; //0x0
+        MemBlock* next; //0x4
+        MemBlock* aligned; //0x8
+        u32 size; //0xC
+        u16 region; //0x10
+        u8 padding[32 - 0x12]; //0x12
+
+        u8* getStartAddr() {
+            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+        }
+        u8* getEndAddr() {
+            return reinterpret_cast<u8*>(this) + size;
+        }
+
+        u32 getDataSize() const {
+            return size - sizeof(MemBlock);            
+        }
+
+        static MemBlock* getBlockAddr(void* p) {
+            return reinterpret_cast<MemBlock*>(
+                static_cast<u8*>(p) - sizeof(MemBlock));
+        }
+    };
+
+    class MemManager {
+    public:
+        /*
+        Region or section of the memory heap.
+        */
+        class MemRegion {
+            friend class MemManager;
+
+        public:
+            MemRegion();
+            ~MemRegion();
+
+            static void setRegionMaxSize(u32 maxMEM1, u32 maxMEM2);
+            static u32 getMEM1MaxSize();
+            static u32 getMEM2MaxSize();
+
+            void* allocate(void* buffer, u32 size, int align);
+
+            MemBlock* reallocate(MemBlock* block);
+            MemBlock* coalesceRecursive(MemBlock* block);
+
+            MemBlock* getTailBuffer(u32 size, int align, void** buffer);
+
+            static inline void initialize(){
+                setRegionMaxSize(MEM1_MAX_SIZE, MEM2_MAX_SIZE);
+            }
+
+        private:
+            void* allocateImpl(MemBlock* block, void* buffer, u32 size, int align);
+
+            MemBlock* mHead; //0x0
+            MemBlock* mTail; //0x4
+            MemBlock* mOldest; //0x8
+            MemBlock* mYoungest; //0xC
+            void* mStartAddress; //0x10
+            void* mEndAddress; //0x14
+            u32 mNumAlloc; //0x18
+            u32 mSize; //0x1C
+            u32 mFreeBytes; //0x20
+            ml::FixStr<64> mName; //0x24
+            ALLOC_HANDLE mHandle; //0x68
+            u8 unk6C;
+
+            static u32 sMaxSizeMEM1;
+            static u32 sMaxSizeMEM2;
+
+            static const int MEM1_MAX_SIZE = 0x680000;
+            static const int MEM2_MAX_SIZE = 0;
+        };
+
+        static void initialize();
+        static void finalize();
+
+        static DECOMP_INLINE ALLOC_HANDLE create(void* head, u32 size, const char* name);
+        static ALLOC_HANDLE create(ALLOC_HANDLE handle, u32 size, const char* name);
+        static ALLOC_HANDLE create_tail(ALLOC_HANDLE handle, u32 size, const char* name);
+
+        static ALLOC_HANDLE getHandleMEM1();
+        static void setHandleMEM1(ALLOC_HANDLE handle);
+
+        static ALLOC_HANDLE getHandleMEM2();
+        static void setHandleMEM2(ALLOC_HANDLE handle);
+        
+        static ALLOC_HANDLE getHandleStatic();
+        static void setHandleStatic(ALLOC_HANDLE handle);
+
+        static bool erase(ALLOC_HANDLE handle);
+        static bool empty(ALLOC_HANDLE handle);
+
+        static void* allocate_head(ALLOC_HANDLE handle, u32 size, int align);
+        static void* allocate_tail(ALLOC_HANDLE handle, u32 size, int align);
+        static bool deallocate(void* p);
+        static bool deallocateImpl(void* p);
+
+        static MemRegion* getRegion(ALLOC_HANDLE handle);
+        static u32 getRegionSize(ALLOC_HANDLE handle);
+        static u32 getBlockSize(ALLOC_HANDLE handle);
+        static MemBlock* getTailBuffer(MemRegion* region, u32 size, int align, void** buffer);
+        static MemBlock* getMaxBlock(ALLOC_HANDLE handle);
+        static u32 getMaxAllocSize(ALLOC_HANDLE handle);
+        static void* getMaxAllocData(ALLOC_HANDLE handle);
+        static f32 getPercentAlloc(ALLOC_HANDLE handle);
+        static void func_804348A4(ALLOC_HANDLE handle, u8 val);
+
+        static u16 calculateCrc(const void* data, u32 len);
+        static void func_80434A4C(bool value);
+
+        static bool isOptimalAlloc();
+        static void setOptimalAlloc(bool enable);
+
+        static void* allocate(u32 size, ALLOC_HANDLE handle);
+        static void* allocate_array(u32 size, ALLOC_HANDLE handle);
+
+        static void* allocate_ex(u32 size, ALLOC_HANDLE handle, int align);
+        static void* allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align);
+
+        /* Commented out log function, which would have printed debug messages. It seems like
+        monolithsoft had log functions for many classes in addition to this one. */
+        //static void log(int something);
+
+    private:
+        static const char* scRegionNameMEM1;
+        static const char* scRegionNameMEM2;
+
+        static ALLOC_HANDLE sHandleMEM1;
+        static ALLOC_HANDLE sHandleMEM2;
+
+        static RawArray<MemRegion, MAX_ALLOC_REGION> sRegionArray;
+        static u32 sRegionUniqueId;
+
+        static bool lbl_80667E54;
+        static bool lbl_80665E38;
+        static bool lbl_80665E39;        
+        static bool sIsOptimalAlloc;
+    };
+
+}
+
+/*
+Allocates object memory from the specified region.
+*/
+inline void* operator new(size_t size, mtl::ALLOC_HANDLE handle) {
+    return mtl::MemManager::allocate(size, handle);
+}
+
+/*
+Allocates aligned object memory from the specified region.
+Specify negative alignment to perform a tail allocation.
+*/
+inline void* operator new(size_t size, int align, mtl::ALLOC_HANDLE handle) {
+    return mtl::MemManager::allocate_ex(size, handle, align);
+}
+
+/*
+Allocates array memory from the specified region.
+*/
+inline void* operator new[](size_t size, mtl::ALLOC_HANDLE handle) {
+    return mtl::MemManager::allocate_array(size, handle);
+}
+
+/*
+Allocates aligned array memory from the specified region.
+Specify negative alignment to perform a tail allocation.
+*/
+inline void* operator new[](size_t size, mtl::ALLOC_HANDLE handle, int align) {
+    return mtl::MemManager::allocate_array_ex(size, handle, align);
+}
+
+//Utility macros
+
+#define DELETE_OBJ(p)                   \
+    {                                   \
+    if (p != nullptr){                  \
+        mtl::MemManager::deallocate(p); \
+        p = nullptr;                    \
+    }                                   \
+    }                                   \
+
+
+#define DELETE_ARRAY(p)                   \
+    {                                     \
+    if (p != nullptr){                    \
+        delete[] p;                       \
+        p = nullptr;                      \
+    }                                     \
+    }                                     \
 /* end "monolib/util/MemManager.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 11 "monolib/util/PtrSingleton.hpp" */
 #pragma once
@@ -11372,6 +11374,379 @@ template <typename T> T* PtrSingleton<T>::spInstance;
 /* "libs/monolib/include/monolib/util.hpp" line 12 "monolib/util/RawArray.hpp" */
 /* end "monolib/util/RawArray.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 13 "monolib/util/reslist.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/util/reslist.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/util/reslist.hpp" line 3 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+/* "libs/monolib/include/monolib/util/reslist.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+/* "libs/monolib/include/monolib/util/reslist.hpp" line 5 "algorithm" */
+#ifndef MSL_CPP_ALGORITHM_H
+#define MSL_CPP_ALGORITHM_H
+/* "libs/PowerPC_EABI_Support/include/stl/algorithm" line 2 "iterator" */
+#ifndef MSL_CPP_ITERATOR_H
+#define MSL_CPP_ITERATOR_H
+
+namespace std {
+
+    struct random_access_iterator_tag {};
+
+} // namespace std
+
+#endif
+/* end "iterator" */
+
+namespace std {
+
+template <typename T> inline const T& max(const T& a, const T& b) {
+    return (a < b) ? b : a;
+}
+
+template <typename T> inline const T& min(const T& a, const T& b) {
+    return (b < a) ? b : a;
+}
+
+template <typename TPtr, typename T>
+inline TPtr find(TPtr first, TPtr last, const T& value) {
+    while (first != last && *first != value) {
+        ++first;
+    }
+
+    return first;
+}
+
+template <typename TPtr> inline long distance(TPtr first, TPtr last) {
+    random_access_iterator_tag tag;
+    return __distance(first, last, tag);
+}
+
+template <typename TPtr>
+inline long __distance(TPtr first, TPtr last, random_access_iterator_tag tag) {
+    long dist = reinterpret_cast<long>(last) - reinterpret_cast<long>(first);
+    return dist / static_cast<long>(sizeof(TPtr));
+}
+
+template <typename T> inline T& move(T& x) { return x; }
+
+template <typename T> inline void swap(T& a, T& b) {
+    T tmp = move(a);
+    a = move(b);
+    b = move(tmp);
+}
+
+} // namespace std
+
+#endif
+/* end "algorithm" */
+
+/* TODO: This breaks ctors/dtors, but it looks alot nicer than the method below. Maybe there's a way to get
+this to work */
+template <typename T>
+struct _reslist_node_item {
+    _reslist_node_item(){}
+    _reslist_node_item(const T& value) try :
+    item(value) {} catch(...){}
+    T item;
+};
+
+template <typename T>
+struct _reslist_node{
+    void setItem(const T& value){
+        //This doesn't work
+        //new (&mItem) _reslist_node_item<T>(value);
+        //Possibly fake?
+        T* ptr = &mItem;
+        if(ptr != nullptr) {
+            try{
+                *ptr = value;
+            }catch(...){
+                throw;
+            }
+        }
+    }
+
+    _reslist_node<T>* mNext; //0x0
+    _reslist_node<T>* mPrev; //0x4
+    T mItem; //0x8
+
+};
+
+template <typename T>
+class _reslist_base{
+public:
+    _reslist_base(){
+        mList = nullptr;
+        mCapacity = 0;
+        unk1C = false;
+        mStartNodePtr = &mStartNode;
+        mStartNodePtr->mNext = &mStartNode;
+        mStartNodePtr->mPrev = mStartNode.mNext;
+    }
+
+    virtual ~_reslist_base(){
+        clearList();
+
+        if (unk1C == false) DELETE_ARRAY(mList);
+    }
+
+    void func_8049CB6C(T* item){
+
+    }
+
+    void func_8049CB70(_reslist_node<T>* r4){
+        r4->mNext = nullptr;
+    }
+
+    int findFirstEmptySlotIndex(){
+        int i = 0;
+        
+        //Go through the list until we find an empty slot
+        while(i < mCapacity){
+            if(mList[i].mNext == nullptr) break;
+
+            //BUG: There's no handling for if no empty slot is found. As is,
+            //the last element index will get returned if that happens.
+            //if(i == mCapacity - 1) return -1;
+
+            i++;
+        }
+
+        return i;
+    }
+
+    //func_8049CAF4
+    void clearList(){
+        _reslist_node<T>* r5 = mStartNodePtr->mNext;
+        
+        while (r5 != mStartNodePtr) {
+            _reslist_node<T>* r4 = r5;
+            r5 = r5->mNext;
+            func_8049CB6C(&r4->mItem);
+            func_8049CB70(r4);
+        }
+    
+        mStartNodePtr->mNext = mStartNodePtr;
+        mStartNodePtr->mPrev = mStartNodePtr;
+    }
+
+    //0x0: vtable
+    _reslist_node<T>* mStartNodePtr; //0x4
+    _reslist_node<T> mStartNode; //0x8
+    _reslist_node<T>* mList; //0x14
+    int mCapacity; //0x18
+    bool unk1C; //0x1C
+};
+
+template <typename T>
+class reslist;
+
+//Unofficial name
+template <typename T, typename Ref, typename Ptr>
+class _reslist_iterator {
+    friend class reslist<T>;
+public:
+    _reslist_iterator() : mNode(nullptr){}
+    explicit _reslist_iterator(_reslist_node<T>* node) : mNode(node){}
+
+    _reslist_iterator& operator++(){
+        mNode = mNode->mNext;
+        return *this;
+    }
+
+    _reslist_iterator operator++(int){
+
+        _reslist_iterator temp = *this;
+        mNode = mNode->mNext;
+        return temp;
+    }
+
+    _reslist_iterator& operator--(){
+        mNode = mNode->mPrev;
+        return *this;
+    }
+
+    _reslist_iterator operator--(int){
+        _reslist_iterator temp = *this;
+        mNode = mNode->mPrev;
+        return temp;
+    }
+
+    Ref operator*() const {
+        return mNode->mItem;
+    }
+
+    Ptr operator->() const {
+        return &operator*();
+    }
+
+    bool operator==(_reslist_iterator const& rhs) const {
+        return mNode == rhs.mNode;
+    }
+
+    bool operator!=(_reslist_iterator const& rhs) const {
+        return mNode != rhs.mNode;
+    }
+
+private:
+    _reslist_node<T>* mNode; //0x0
+};
+
+//size: 0x20
+template <typename T>
+class reslist : public _reslist_base<T> {
+public:
+    typedef _reslist_iterator<T, T&, T*> iterator;
+
+    reslist() : _reslist_base<T>() {
+    }
+    virtual ~reslist(){
+    }
+
+    iterator begin() const {
+        return iterator(mStartNodePtr->mNext);
+    }
+    iterator end() const {
+        return iterator(mStartNodePtr);
+    }
+
+    T& front() {
+        return *begin();
+    }
+    T& back() {
+        return *begin();
+    }
+
+    const T& front() const {
+        return *begin();
+    }
+    const T& back() const {
+        return *begin();
+    }
+
+    u32 size() const {
+        _reslist_node<T>* curNode;
+        _reslist_node<T>* endNode;
+        
+        u32 length = 0;
+        endNode = mStartNodePtr;
+        curNode = mStartNodePtr->mNext;
+
+        while(curNode != endNode){
+            length++;
+            curNode = curNode->mNext;
+        }
+        
+        return length;
+    }
+
+    bool empty() const {
+        return mStartNodePtr->mNext == mStartNodePtr;
+    }
+
+    inline void reserve(mtl::ALLOC_HANDLE handle, int capacity) {
+        mList = new (handle) _reslist_node<T>[capacity];
+
+        for(int i = 0; i < capacity; i++){
+            mList[i].mNext = nullptr;
+        }
+
+        mCapacity = capacity;
+    }
+
+    iterator find(const T& item){
+        return std::find(begin(), end(), item);
+    }
+
+    void push_front(const T& item){
+        _reslist_node<T>* startNode = mStartNodePtr->mNext;
+        int i = findFirstEmptySlotIndex();
+
+        _reslist_node<T>* temp = &mList[i];
+        temp->setItem(item);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+    }
+
+    void push_back(const T& item){
+        _reslist_node<T>* startNode = mStartNodePtr;
+        int i = findFirstEmptySlotIndex();
+
+        _reslist_node<T>* temp = &mList[i];
+
+        temp->setItem(item);
+        temp->mNext = startNode;
+        temp->mPrev = startNode->mPrev;
+        startNode->mPrev->mNext = temp;
+        startNode->mPrev = temp;
+    }
+
+    void remove(const T& item){
+        _reslist_node<T>* curr;
+        _reslist_node<T>* next;
+        _reslist_node<T>* head;
+
+        head = mStartNodePtr;
+        curr = head->mNext;
+        
+        //Walk through the list
+        while(curr != head){
+            //Save next node in case we invalidate the curr iterator
+            next = curr->mNext;
+
+            //If we find an entry containing the item, remove the entry
+            if(curr->mItem == item){
+                _reslist_node<T>* prev = curr->mPrev;
+                prev->mNext = next;
+                next->mPrev = prev;
+                curr->mNext = nullptr;
+            }
+
+            curr = next;
+        }
+    }
+
+    void pop_front(){
+        _reslist_node<T>* prevNode;
+        _reslist_node<T>* nextNode;
+        _reslist_node<T>* frontNode;
+
+        frontNode = mStartNodePtr->mNext;
+        nextNode = frontNode->mNext;
+        prevNode = frontNode->mPrev;
+        prevNode->mNext = nextNode;
+        nextNode->mPrev = prevNode;
+        frontNode->mNext = nullptr;
+    }
+
+    void erase(iterator& it){
+        _reslist_node<T>* r5;
+        _reslist_node<T>* r4;
+        _reslist_node<T>* node = it.mNode;
+        
+        r4 = node->mPrev;
+        r5 = node->mNext;
+        r4->mNext = r5;
+        r5->mPrev = r4;
+        node->mNext = nullptr;
+    }
+
+    void clear(){
+        clearList();
+    }
+
+    void destroyList(){
+        clearList();
+        if (unk1C == false && mList != nullptr) {
+            delete[](this->mList);
+            mList = nullptr;
+        }
+        mCapacity = 0;
+    }
+};
 /* end "monolib/util/reslist.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 14 "monolib/util/resvector.hpp" */
 #pragma once
@@ -11895,371 +12270,52 @@ private:
     static CWorkThread** sWorkThreads;
 };
 /* end "monolib/work/CWorkThreadSystem.hpp" */
-/* "libs/monolib/include/monolib/util/reslist.hpp" line 5 "algorithm" */
-#ifndef MSL_CPP_ALGORITHM_H
-#define MSL_CPP_ALGORITHM_H
-/* "libs/PowerPC_EABI_Support/include/stl/algorithm" line 2 "iterator" */
-#ifndef MSL_CPP_ITERATOR_H
-#define MSL_CPP_ITERATOR_H
 
-namespace std {
+class CView;
 
-    struct random_access_iterator_tag {};
+// CSplitFrame: manages a two-pane split-screen layout for CView children.
+//
+// Layout offsets (size: 0x18):
+//   0x00  void*    mVtable      - vtable pointer
+//   0x04  CView*   mParent      - owning parent view
+//   0x08  u8       mVertical    - nonzero = vertical split (top/bottom)
+//   0x09  u8       mPadding9    - alignment padding
+//   0x0A  s16      mSplitX      - horizontal split position (pixels from left)
+//   0x0C  s16      mSplitY      - vertical split position (pixels from top)
+//   0x0E  u16      mPaddingE    - alignment padding
+//   0x10  WORK_ID  mView1       - first child view work ID
+//   0x14  WORK_ID  mView2       - second child view work ID
+struct CSplitFrame {
+    void* mVtable; // 0x0
+    CView* mParent; // 0x4
+    u8 mVertical; // 0x8  nonzero = vertical split
+    u8 mPadding9;
+    s16 mSplitX; // 0xa
+    s16 mSplitY; // 0xc
+    u16 mPaddingE;
+    WORK_ID mView1; // 0x10
+    WORK_ID mView2; // 0x14
 
-} // namespace std
-
-#endif
-/* end "iterator" */
-
-namespace std {
-
-template <typename T> inline const T& max(const T& a, const T& b) {
-    return (a < b) ? b : a;
-}
-
-template <typename T> inline const T& min(const T& a, const T& b) {
-    return (b < a) ? b : a;
-}
-
-template <typename TPtr, typename T>
-inline TPtr find(TPtr first, TPtr last, const T& value) {
-    while (first != last && *first != value) {
-        ++first;
-    }
-
-    return first;
-}
-
-template <typename TPtr> inline long distance(TPtr first, TPtr last) {
-    random_access_iterator_tag tag;
-    return __distance(first, last, tag);
-}
-
-template <typename TPtr>
-inline long __distance(TPtr first, TPtr last, random_access_iterator_tag tag) {
-    long dist = reinterpret_cast<long>(last) - reinterpret_cast<long>(first);
-    return dist / static_cast<long>(sizeof(TPtr));
-}
-
-template <typename T> inline T& move(T& x) { return x; }
-
-template <typename T> inline void swap(T& a, T& b) {
-    T tmp = move(a);
-    a = move(b);
-    b = move(tmp);
-}
-
-} // namespace std
-
-#endif
-/* end "algorithm" */
-
-/* TODO: This breaks ctors/dtors, but it looks alot nicer than the method below. Maybe there's a way to get
-this to work */
-template <typename T>
-struct _reslist_node_item {
-    _reslist_node_item(){}
-    _reslist_node_item(const T& value) try :
-    item(value) {} catch(...){}
-    T item;
-};
-
-template <typename T>
-struct _reslist_node{
-    void setItem(const T& value){
-        //This doesn't work
-        //new (&mItem) _reslist_node_item<T>(value);
-        //Possibly fake?
-        T* ptr = &mItem;
-        if(ptr != nullptr) {
-            try{
-                *ptr = value;
-            }catch(...){
-                throw;
-            }
-        }
-    }
-
-    _reslist_node<T>* mNext; //0x0
-    _reslist_node<T>* mPrev; //0x4
-    T mItem; //0x8
+    // Member functions use extern "C" linkage to match retail mangled names.
 
 };
 
-template <typename T>
-class _reslist_base{
-public:
-    _reslist_base(){
-        mList = nullptr;
-        mCapacity = 0;
-        unk1C = false;
-        mStartNodePtr = &mStartNode;
-        mStartNodePtr->mNext = &mStartNode;
-        mStartNodePtr->mPrev = mStartNode.mNext;
-    }
+namespace ml {
+struct CRect16;
+} // namespace ml
 
-    virtual ~_reslist_base(){
-        clearList();
+// Compute the scissor rectangle for the first pane.
+void getScissorRect1(ml::CRect16* out, const CSplitFrame* self);
 
-        if (unk1C == false) DELETE_ARRAY(mList);
-    }
+// Compute the scissor rectangle for the second pane.
+void getScissorRect2(ml::CRect16* out, const CSplitFrame* self);
+/* end "monolib/core/CSplitFrame.hpp" */
+/* "libs/monolib/src/core/CSplitFrame.cpp" line 1 "monolib/core/CViewRoot.hpp" */
+#pragma once
 
-    void func_8049CB6C(T* item){
-
-    }
-
-    void func_8049CB70(_reslist_node<T>* r4){
-        r4->mNext = nullptr;
-    }
-
-    int findFirstEmptySlotIndex(){
-        int i = 0;
-        
-        //Go through the list until we find an empty slot
-        while(i < mCapacity){
-            if(mList[i].mNext == nullptr) break;
-
-            //BUG: There's no handling for if no empty slot is found. As is,
-            //the last element index will get returned if that happens.
-            //if(i == mCapacity - 1) return -1;
-
-            i++;
-        }
-
-        return i;
-    }
-
-    //func_8049CAF4
-    void clearList(){
-        _reslist_node<T>* r5 = mStartNodePtr->mNext;
-        
-        while (r5 != mStartNodePtr) {
-            _reslist_node<T>* r4 = r5;
-            r5 = r5->mNext;
-            func_8049CB6C(&r4->mItem);
-            func_8049CB70(r4);
-        }
-    
-        mStartNodePtr->mNext = mStartNodePtr;
-        mStartNodePtr->mPrev = mStartNodePtr;
-    }
-
-    //0x0: vtable
-    _reslist_node<T>* mStartNodePtr; //0x4
-    _reslist_node<T> mStartNode; //0x8
-    _reslist_node<T>* mList; //0x14
-    int mCapacity; //0x18
-    bool unk1C; //0x1C
-};
-
-template <typename T>
-class reslist;
-
-//Unofficial name
-template <typename T, typename Ref, typename Ptr>
-class _reslist_iterator {
-    friend class reslist<T>;
-public:
-    _reslist_iterator() : mNode(nullptr){}
-    explicit _reslist_iterator(_reslist_node<T>* node) : mNode(node){}
-
-    _reslist_iterator& operator++(){
-        mNode = mNode->mNext;
-        return *this;
-    }
-
-    _reslist_iterator operator++(int){
-
-        _reslist_iterator temp = *this;
-        mNode = mNode->mNext;
-        return temp;
-    }
-
-    _reslist_iterator& operator--(){
-        mNode = mNode->mPrev;
-        return *this;
-    }
-
-    _reslist_iterator operator--(int){
-        _reslist_iterator temp = *this;
-        mNode = mNode->mPrev;
-        return temp;
-    }
-
-    Ref operator*() const {
-        return mNode->mItem;
-    }
-
-    Ptr operator->() const {
-        return &operator*();
-    }
-
-    bool operator==(_reslist_iterator const& rhs) const {
-        return mNode == rhs.mNode;
-    }
-
-    bool operator!=(_reslist_iterator const& rhs) const {
-        return mNode != rhs.mNode;
-    }
-
-private:
-    _reslist_node<T>* mNode; //0x0
-};
-
-//size: 0x20
-template <typename T>
-class reslist : public _reslist_base<T> {
-public:
-    typedef _reslist_iterator<T, T&, T*> iterator;
-
-    reslist() : _reslist_base<T>() {
-    }
-    virtual ~reslist(){
-    }
-
-    iterator begin() const {
-        return iterator(mStartNodePtr->mNext);
-    }
-    iterator end() const {
-        return iterator(mStartNodePtr);
-    }
-
-    T& front() {
-        return *begin();
-    }
-    T& back() {
-        return *begin();
-    }
-
-    const T& front() const {
-        return *begin();
-    }
-    const T& back() const {
-        return *begin();
-    }
-
-    u32 size() const {
-        _reslist_node<T>* curNode;
-        _reslist_node<T>* endNode;
-        
-        u32 length = 0;
-        endNode = mStartNodePtr;
-        curNode = mStartNodePtr->mNext;
-
-        while(curNode != endNode){
-            length++;
-            curNode = curNode->mNext;
-        }
-        
-        return length;
-    }
-
-    bool empty() const {
-        return mStartNodePtr->mNext == mStartNodePtr;
-    }
-
-    inline void reserve(mtl::ALLOC_HANDLE handle, int capacity) {
-        mList = new (handle) _reslist_node<T>[capacity];
-
-        for(int i = 0; i < capacity; i++){
-            mList[i].mNext = nullptr;
-        }
-
-        mCapacity = capacity;
-    }
-
-    iterator find(const T& item){
-        return std::find(begin(), end(), item);
-    }
-
-    void push_front(const T& item){
-        _reslist_node<T>* startNode = mStartNodePtr->mNext;
-        int i = findFirstEmptySlotIndex();
-
-        _reslist_node<T>* temp = &mList[i];
-        temp->setItem(item);
-        temp->mNext = startNode;
-        temp->mPrev = startNode->mPrev;
-        startNode->mPrev->mNext = temp;
-        startNode->mPrev = temp;
-    }
-
-    void push_back(const T& item){
-        _reslist_node<T>* startNode = mStartNodePtr;
-        int i = findFirstEmptySlotIndex();
-
-        _reslist_node<T>* temp = &mList[i];
-
-        temp->setItem(item);
-        temp->mNext = startNode;
-        temp->mPrev = startNode->mPrev;
-        startNode->mPrev->mNext = temp;
-        startNode->mPrev = temp;
-    }
-
-    void remove(const T& item){
-        _reslist_node<T>* curr;
-        _reslist_node<T>* next;
-        _reslist_node<T>* head;
-
-        head = mStartNodePtr;
-        curr = head->mNext;
-        
-        //Walk through the list
-        while(curr != head){
-            //Save next node in case we invalidate the curr iterator
-            next = curr->mNext;
-
-            //If we find an entry containing the item, remove the entry
-            if(curr->mItem == item){
-                _reslist_node<T>* prev = curr->mPrev;
-                prev->mNext = next;
-                next->mPrev = prev;
-                curr->mNext = nullptr;
-            }
-
-            curr = next;
-        }
-    }
-
-    void pop_front(){
-        _reslist_node<T>* prevNode;
-        _reslist_node<T>* nextNode;
-        _reslist_node<T>* frontNode;
-
-        frontNode = mStartNodePtr->mNext;
-        nextNode = frontNode->mNext;
-        prevNode = frontNode->mPrev;
-        prevNode->mNext = nextNode;
-        nextNode->mPrev = prevNode;
-        frontNode->mNext = nullptr;
-    }
-
-    void erase(iterator& it){
-        _reslist_node<T>* r5;
-        _reslist_node<T>* r4;
-        _reslist_node<T>* node = it.mNode;
-        
-        r4 = node->mPrev;
-        r5 = node->mNext;
-        r4->mNext = r5;
-        r5->mPrev = r4;
-        node->mNext = nullptr;
-    }
-
-    void clear(){
-        clearList();
-    }
-
-    void destroyList(){
-        clearList();
-        if (unk1C == false && mList != nullptr) {
-            delete[](this->mList);
-            mList = nullptr;
-        }
-        mCapacity = 0;
-    }
-};
+/* "libs/monolib/include/monolib/core/CViewRoot.hpp" line 2 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/core/CViewRoot.hpp" line 3 "monolib/util/reslist.hpp" */
 /* end "monolib/util/reslist.hpp" */
 /* "libs/monolib/include/monolib/core/CViewRoot.hpp" line 4 "monolib/work/CWorkThread.hpp" */
 #pragma once
@@ -12718,6 +12774,8 @@ public:
     static CViewRoot* create(CWorkThread* pParent);
     static CViewRoot* getInstance();
     static CView* getCurrent();
+    static bool isCurrent(const CView* view);
+    static bool isCurrentChild(const CView* view, const CView* current);
     static bool isInitialized();
     static void destroyProc(CProc* pProc);
     static void setCurrent(CView* view);
@@ -12739,7 +12797,7 @@ public:
     CProc* mAttachedProc1; //0x51C
 };
 /* end "monolib/core/CViewRoot.hpp" */
-/* "libs/monolib/src/core/CSplitFrame.cpp" line 1 "monolib/core/CView.hpp" */
+/* "libs/monolib/src/core/CSplitFrame.cpp" line 2 "monolib/core/CView.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CView.hpp" line 2 "types.h" */
@@ -12986,6 +13044,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */
@@ -16324,24 +16383,27 @@ class CViewFrame {
 public:
     bool render();
     void detachRenderWork(CWorkThread* pThread);
+    void CView_UnkVirtualFunc1();
+    void CView_UnkVirtualFunc8();
+    void CView_UnkVirtualFunc9();
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
     ml::CCol4 mFrameColor; // 0x8
     ml::CCol4 mColor18; // 0x18
     ml::CCol4 mColor28; // 0x28
-    u32 unk38; // 0x38
-    float unk3C; // 0x3C
-    float unk40; // 0x40
-    float unk44; // 0x44
-    float unk48; // 0x48
-    float unk4C; // 0x4C
-    s16 unk50; // 0x50
-    s16 unk52; // 0x52
-    s16 unk54; // 0x54 position / client origin x
-    s16 unk56; // 0x56 position / client origin y
-    s16 unk58; // 0x58 border thickness
-    s16 unk5A; // 0x5A
+    u32 unk38; // 0x38 - render flags / mode bits (1=border expand, 2=split)
+    float unk3C; // 0x3C - possibly padding or unused alignment filler
+    float unk40; // 0x40 - unused alignment padding to align mBorder siblings
+    float unk44; // 0x44 - unused alignment padding
+    float unk48; // 0x48 - unused alignment padding
+    float unk4C; // 0x4C - unused alignment padding
+    s16 unk50; // 0x50 - unused padding
+    s16 unk52; // 0x52 - unused padding
+    s16 mContentX; // 0x54 - client-area origin X (pixels from frame left edge to content)
+    s16 mContentY; // 0x56 - client-area origin Y (pixels from frame top edge to content)
+    s16 mBorder; // 0x58 - frame border thickness in pixels (used for expand/split sizing)
+    s16 unk5A; // 0x5A - unused trailing padding; satisfies 0x5C sizeof
 };
 
 extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
@@ -16354,32 +16416,46 @@ extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
 /* "libs/monolib/include/monolib/core/CViewRectData.hpp" line 3 "monolib/math.hpp" */
 /* end "monolib/math.hpp" */
 
-// CViewRectDataCore: viewport rectangle state at CView::unk1C8 (size 0x14).
+// CViewRectDataCore: viewport rectangle state at CView::mRectData (size 0x14).
 class CViewRectDataCore {
 public:
     CViewRectDataCore* func_80459270();
     void func_804592F0(const ml::CPnt16& size);
     void func_80459384(const ml::CPnt16& maxSize);
 
-    s16 unk0;
-    s16 unk2;
-    s16 unk4;
-    s16 unk6;
-    s16 unk8;
-    s16 unkA;
-    s16 unkC;
-    s16 unkE;
-    s16 unk10;
-    s16 unk12;
+    // Viewport rect data: first two pairs are CPnt16 structs for lwz/stw copies.
+    ml::CPnt16 mViewSize;      // offset 0x00 - current viewport size (x=width, y=height)
+    ml::CPnt16 mBoundsSize;    // offset 0x04 - maximum bounding size
+    s16 mScrollX;              // offset 0x08 - horizontal scroll/offset
+    s16 mScrollY;              // offset 0x0A - vertical scroll/offset
+    s16 mInsetLeft;            // offset 0x0C - left inset
+    s16 mInsetTop;             // offset 0x0E - top inset
+    s16 mInsetRight;           // offset 0x10 - right inset
+    s16 mInsetBottom;          // offset 0x12 - bottom inset
 };
 /* end "monolib/core/CViewRectData.hpp" */
+/* "libs/monolib/include/monolib/core/CView.hpp" line 8 "monolib/core/CFontLayer.hpp" */
+#pragma once
 
-//size: 0x4
+/* "libs/monolib/include/monolib/core/CFontLayer.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Forward declaration for tail-call target
+class CDeviceFont;
+
+/// Font layer base class (size 0x4: vtable pointer only).
+/// CView inherits from this via multiple inheritance.
 class CFontLayer {
 public:
     CFontLayer();
     virtual ~CFontLayer();
+
+    /// Flush pending font rendering state.
+    /// Delegates to CDeviceFont internally; the int parameter is passed
+    /// through to the device layer but may be unused depending on context.
+    void fontFlush(int channel);
 };
+/* end "monolib/core/CFontLayer.hpp" */
 
 // Context ring slot written by setCurrent (0x24 bytes).
 struct CViewContextRingEntry {
@@ -16448,6 +16524,7 @@ public:
     s16 getSplitLine();
     void setSplitLine(s16 line);
     void setCurrent();
+    bool hasCurrent() const;
     void updateMsg();
     void renderView();
 
@@ -16469,19 +16546,19 @@ public:
     
     void getRect(ml::CRect16& rect){
         ml::CRect16 tempRect;
-        getFrame2ViewOffset(tempRect, &unk1DC);
+        getFrame2ViewOffset(tempRect, &mFrame);
 
-        rect.mPos.x = tempRect.mPos.x + unk1DC.unk54;
-        rect.mPos.y = tempRect.mPos.y + unk1DC.unk56;
-        rect.mSize.x = unk1C8.unk0;
-        rect.mSize.y = unk1C8.unk2;
+        rect.mPos.x = tempRect.mPos.x + mFrame.mContentX;
+        rect.mPos.y = tempRect.mPos.y + mFrame.mContentY;
+        rect.mSize.x = mRectData.mViewSize.x;
+        rect.mSize.y = mRectData.mViewSize.y;
     }
 
     //0x0: vtable 1
     //0x4-1C4: CWorkThread
     //0x1C4: vtable 2
-    CViewRectDataCore unk1C8; //0x1C8
-    CViewFrame unk1DC; //0x1DC
+    CViewRectDataCore mRectData; //0x1C8
+    CViewFrame mFrame; //0x1DC
     CViewResList unk238; //0x238 reslist<WORK_ID>
     CViewResList unk258; //0x258 reslist<IWorkEvent*>
     u32 unk278; //0x278
@@ -16495,7 +16572,8 @@ public:
     u32 unk3FC; //0x3FC
     ml::FixStr<64> mName; //0x400
     ml::CVec4 unk444; //0x444
-    u8 unk454[0x45C - 0x454]; //0x454
+    u32 mGXCacheId; //0x454
+    float mAlpha; //0x458
     void* unk45C; //0x45C
     u32 unk460; //0x460
     s16 unk464;
@@ -16505,31 +16583,20 @@ public:
     u8 unk46C[0x470 - 0x46C];
 };
 /* end "monolib/core/CView.hpp" */
-/* "libs/monolib/src/core/CSplitFrame.cpp" line 2 "monolib/core/CViewFrame.hpp" */
+/* "libs/monolib/src/core/CSplitFrame.cpp" line 3 "monolib/core/CViewFrame.hpp" */
 /* end "monolib/core/CViewFrame.hpp" */
-/* "libs/monolib/src/core/CSplitFrame.cpp" line 3 "monolib/math.hpp" */
+/* "libs/monolib/src/core/CSplitFrame.cpp" line 4 "monolib/math.hpp" */
 /* end "monolib/math.hpp" */
-/* "libs/monolib/src/core/CSplitFrame.cpp" line 4 "types.h" */
+/* "libs/monolib/src/core/CSplitFrame.cpp" line 5 "types.h" */
 /* end "types.h" */
-
-// Layout recovered from retail getView1/getView2 / getScissorRect* / apply.
-struct CSplitFrame {
-    void* mVtable; // 0x0
-    CView* mParent; // 0x4
-    u8 mVertical; // 0x8  nonzero = vertical split
-    u8 pad9;
-    s16 mSplitX; // 0xa
-    s16 mSplitY; // 0xc
-    u16 padE;
-    WORK_ID mView1; // 0x10
-    WORK_ID mView2; // 0x14
-};
 
 extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame);
 
 // LLM-HARNESS-BEGIN: us-8043df30
-extern "C" void apply__11CSplitFrameFv() {}
+extern "C" void apply__11CSplitFrameFv(CSplitFrame* self) {
+    // Implementation pending - currently NonMatching
+}
 // LLM-HARNESS-END: us-8043df30
 
 // LLM-HARNESS-BEGIN: us-8043e060
@@ -16545,34 +16612,31 @@ extern "C" CView* getView2__11CSplitFrameFv(CSplitFrame* self) {
 // LLM-HARNESS-END: us-8043e068
 
 // LLM-HARNESS-BEGIN: us-8043e070
-extern "C" void isActive__11CSplitFrameFv() {}
+extern "C" bool isActive__11CSplitFrameFv(CSplitFrame* self) {
+    return getView1__11CSplitFrameFv(self) != nullptr || getView2__11CSplitFrameFv(self) != nullptr;
+}
 // LLM-HARNESS-END: us-8043e070
 
-// LLM-HARNESS-BEGIN: us-8043e0d0
-extern "C" void getSplitLine__11CSplitFrameFv() {}
-// LLM-HARNESS-END: us-8043e0d0
-
-// LLM-HARNESS-BEGIN: us-8043e0ec
-extern "C" void setSplitLine__11CSplitFrameFs() {}
-// LLM-HARNESS-END: us-8043e0ec
-
 // LLM-HARNESS-BEGIN: us-8043e288
-extern "C" void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
-    ml::CRect16* out, const CSplitFrame* self) {
-    // Volatile stack homes: retail keeps offset@sp+8 (dead) and split@sp+0x10.
-    volatile ml::CRect16 offset;
+void getScissorRect1(ml::CRect16* out, const CSplitFrame* self) {
+    // MWCC: first local = higher addr. Retail wants split@sp+0x10, offset@sp+0x8.
     volatile ml::CRect16 split;
+    volatile ml::CRect16 offset;
     CView* view = self->mParent;
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-        (ml::CRect16*)&offset, &view->unk1DC);
+        (ml::CRect16*)&offset, &view->mFrame);
 
-    s16 boundW = view->unk1C8.unk0;
-    s16 boundH = view->unk1C8.unk2;
-    split.mPos.x = 0;
-    split.mPos.y = 0;
-    split.mSize.x = view->unk1C8.unk4;
-    split.mSize.y = view->unk1C8.unk6;
-    if (self->mVertical != 0) {
+    // Retail post-bl schedule: lbz/li, lha size@1cc/1ce, cmp, sth zeros,
+    // lha bound@1c8/1ca interleaved with sth size.
+    s16 zero = 0;
+    u8 vert = self->mVertical;
+    s16 sizeX = view->mRectData.mBoundsSize.x;
+    s16 sizeY = view->mRectData.mBoundsSize.y;
+    s16 boundW;
+    s16 boundH;
+    if ((vert != 0, split.mPos.x = zero, boundW = view->mRectData.mViewSize.x,
+         split.mPos.y = zero, boundH = view->mRectData.mViewSize.y,
+         split.mSize.x = sizeX, split.mSize.y = sizeY, vert != 0)) {
         split.mSize.y = self->mSplitY;
     } else {
         split.mSize.x = self->mSplitX;
@@ -16642,22 +16706,24 @@ extern "C" void getScissorRect1__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
 // LLM-HARNESS-END: us-8043e288
 
 // LLM-HARNESS-BEGIN: us-8043e43c
-extern "C" void getScissorRect2__11CSplitFrameFRQ22ml7CRect16PC11CSplitFrame(
-    ml::CRect16* out, const CSplitFrame* self) {
-    volatile ml::CRect16 offset;
+void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
     volatile ml::CRect16 split;
+    volatile ml::CRect16 offset;
     CView* view = self->mParent;
     getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-        (ml::CRect16*)&offset, &view->unk1DC);
+        (ml::CRect16*)&offset, &view->mFrame);
 
-    s16 boundW = view->unk1C8.unk0;
-    s16 boundH = view->unk1C8.unk2;
-    split.mPos.x = 0;
-    split.mPos.y = 0;
-    split.mSize.x = view->unk1C8.unk4;
-    split.mSize.y = view->unk1C8.unk6;
-    s16 border = view->unk1DC.unk58;
-    if (self->mVertical != 0) {
+    s16 zero = 0;
+    u8 vert = self->mVertical;
+    s16 sizeX = view->mRectData.mBoundsSize.x;
+    s16 sizeY = view->mRectData.mBoundsSize.y;
+    s16 boundW;
+    s16 boundH;
+    s16 border;
+    if ((vert != 0, split.mPos.x = zero, boundW = view->mRectData.mViewSize.x,
+         split.mPos.y = zero, boundH = view->mRectData.mViewSize.y,
+         split.mSize.x = sizeX, split.mSize.y = sizeY,
+         border = view->mFrame.mBorder, vert != 0)) {
         s16 y = (s16)(self->mSplitY + border);
         split.mPos.y = y;
         split.mSize.y = (s16)(split.mSize.y - y);

@@ -6,8 +6,10 @@
 #include "monolib/util/reslist.hpp"
 
 extern "C" {
-s16 lbl_eu_806655A8;
-CRsrcData* sRsrcPointerList__5CRsrc[16];
+// Provided by the retail data object (monolibdata1d) until this unit's
+// .sbss/.bss is data-matched.
+extern s16 lbl_eu_806655A8;
+extern CRsrcData* sRsrcPointerList__5CRsrc[16];
 
 CRsrcData* convertToRsrcData__5CRsrcFP11CWorkThread(CWorkThread* pThread);
 void build__9CRsrcDataFPvPCcPvPvUlb(void* parent, const char* name, void* arg2, void* data, u32 length,

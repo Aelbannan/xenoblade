@@ -29,11 +29,36 @@ extern "C" void func_80213D74() {}
 // LLM-HARNESS-END: us-80215bcc
 
 // LLM-HARNESS-BEGIN: us-80215c5c
-extern "C" void func_80213E04() {}
+struct func_80213E04_Data {
+    s16 m0;
+    s16 m2;
+    s16 m4;
+    u8 m6;
+    u8 m7;
+};
+
+extern "C" void func_80213E04(func_80213E04_Data* self, s16 a, s16 b)
+{
+    self->m0 = a;
+    self->m2 = b;
+    self->m4 = 0;
+    self->m6 = 0;
+    self->m7 = 0;
+}
 // LLM-HARNESS-END: us-80215c5c
 
 // LLM-HARNESS-BEGIN: us-80215c78
-extern "C" void func_80213E20() {}
+extern "C" void func_80213E20(void *dst, const void *src) {
+    unsigned short *d16 = (unsigned short*)dst;
+    const unsigned short *s16 = (const unsigned short*)src;
+    d16[0] = s16[0];
+    d16[1] = s16[1];
+    d16[2] = s16[2];
+    unsigned char *d8 = (unsigned char*)dst;
+    const unsigned char *s8 = (const unsigned char*)src;
+    d8[6] = s8[6];
+    d8[7] = s8[7];
+}
 // LLM-HARNESS-END: us-80215c78
 
 // LLM-HARNESS-BEGIN: us-80215ca4
@@ -138,7 +163,14 @@ extern "C" void func_802156C0() {}
 // LLM-HARNESS-END: us-80217518
 
 // LLM-HARNESS-BEGIN: us-80217940
-extern "C" void func_80215AE8() {}
+extern "C" int func_80215AE8(void* self) {
+    unsigned char* base = (unsigned char*)self;
+    if (base[0x20] == 0) return 0;
+    unsigned char idx = base[0x29];
+    unsigned char* ptr = base + idx;
+    int off = (signed char)ptr[0x20] * 4;
+    return *(int*)(base + off);
+}
 // LLM-HARNESS-END: us-80217940
 
 // LLM-HARNESS-BEGIN: us-80217970
@@ -166,11 +198,26 @@ extern "C" void func_8021625C() {}
 // LLM-HARNESS-END: us-802180b4
 
 // LLM-HARNESS-BEGIN: us-80218424
-extern "C" void func_802165CC() {}
+extern "C" unsigned long func_802165CC(unsigned long* table, unsigned int idx) {
+    if (idx >= 8) {
+        return 0;
+    }
+    return table[(unsigned char)idx];
+}
 // LLM-HARNESS-END: us-80218424
 
 // LLM-HARNESS-BEGIN: us-80218440
-extern "C" void func_802165E8() {}
+extern "C" void func_802165E8(void *dest, const void *src) {
+    unsigned short *d = (unsigned short *)dest;
+    const unsigned short *s = (const unsigned short *)src;
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+    unsigned char *db = (unsigned char *)dest;
+    const unsigned char *sb = (const unsigned char *)src;
+    db[6] = sb[6];
+    db[7] = sb[7];
+}
 // LLM-HARNESS-END: us-80218440
 
 // LLM-HARNESS-BEGIN: us-8021846c
@@ -298,11 +345,27 @@ extern "C" void func_80218B10() {}
 // LLM-HARNESS-END: us-8021a968
 
 // LLM-HARNESS-BEGIN: us-8021ae2c
-extern "C" void func_80218FD4() {}
+struct func_80218FD4_S { unsigned short m0; unsigned short m2; unsigned char m4; };
+extern "C" void func_80218FD4(func_80218FD4_S* dst, const func_80218FD4_S* src) {
+    *dst = *src;
+}
 // LLM-HARNESS-END: us-8021ae2c
 
 // LLM-HARNESS-BEGIN: us-8021ae48
-extern "C" void func_80218FF0() {}
+struct func_80218FF0_Rec {
+    unsigned short a;
+    unsigned short b;
+    unsigned char c;
+};
+
+extern "C" void func_80218FF0(func_80218FF0_Rec* dst, func_80218FF0_Rec* src) {
+    unsigned short a = src->a;
+    unsigned short b = src->b;
+    unsigned char c = src->c;
+    dst->a = a;
+    dst->b = b;
+    dst->c = c;
+}
 // LLM-HARNESS-END: us-8021ae48
 
 // LLM-HARNESS-BEGIN: us-8021ae64

@@ -1407,7 +1407,7 @@ extern "C" void func_8019397C() {}
 // LLM-HARNESS-END: us-80195098
 
 // LLM-HARNESS-BEGIN: us-801951a4
-extern "C" void func_80193A88() {}
+extern "C" void func_80193A88(void* obj, int enable) { unsigned short* flag = (unsigned short*)((unsigned char*)obj + 0x1e); if (enable) *flag |= 0x400; else *flag &= ~0x400; }
 // LLM-HARNESS-END: us-801951a4
 
 // LLM-HARNESS-BEGIN: us-801951cc
@@ -1531,7 +1531,9 @@ extern "C" void func_80195E5C() {}
 // LLM-HARNESS-END: us-80197578
 
 // LLM-HARNESS-BEGIN: us-80197b38
-extern "C" void func_8019641C() {}
+extern "C" bool func_8019641C(const void* a, const void* b) {
+    return *(const float*)((const char*)a + 4) < *(const float*)((const char*)b + 4);
+}
 // LLM-HARNESS-END: us-80197b38
 
 // LLM-HARNESS-BEGIN: us-80197b50
@@ -1587,7 +1589,15 @@ extern "C" void func_80197DE8() {}
 // LLM-HARNESS-END: us-80199504
 
 // LLM-HARNESS-BEGIN: us-80199824
-extern "C" void func_80198108() {}
+extern "C" u32 lbl_eu_8066430C;
+extern "C" void func_80198108(int arg) {
+    if (lbl_eu_8066430C == 0) return;
+    unsigned char* p = (unsigned char*)lbl_eu_8066430C + 0x10000;
+    *(unsigned short*)(p - 0x4d88) = (unsigned short)arg;
+    if (arg == 0) return;
+    unsigned char* p2 = (unsigned char*)lbl_eu_8066430C + 0x10000;
+    *(unsigned short*)(p2 - 0x4d8a) = 0;
+}
 // LLM-HARNESS-END: us-80199824
 
 // LLM-HARNESS-BEGIN: us-80199854

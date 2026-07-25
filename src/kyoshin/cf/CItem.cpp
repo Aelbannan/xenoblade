@@ -48,6 +48,8 @@ extern "C" char* func_80155D28() {
     extern char lbl_eu_80501C58[];
     return lbl_eu_80501C58 + 0x63;
 }
+
+extern "C" char lbl_eu_806641B8[];
 // LLM-HARNESS-END: us-801567f4
 
 // LLM-HARNESS-BEGIN: us-80156804
@@ -219,11 +221,15 @@ extern "C" void func_801576C8() {}
 // LLM-HARNESS-END: us-80158194
 
 // LLM-HARNESS-BEGIN: us-801582d8
-extern "C" void func_8015780C() {}
+extern "C" unsigned short func_8015780C(int index) {
+    return ((unsigned short*)(lbl_eu_806641B8 + 0x120EC))[index];
+}
 // LLM-HARNESS-END: us-801582d8
 
 // LLM-HARNESS-BEGIN: us-801582f0
-extern "C" void func_80157824() {}
+extern "C" void func_80157824(int index, short value) {
+    ((short*)((char*)lbl_eu_806641B8 + 0x120EC))[index] = value;
+}
 // LLM-HARNESS-END: us-801582f0
 
 // LLM-HARNESS-BEGIN: us-80158308

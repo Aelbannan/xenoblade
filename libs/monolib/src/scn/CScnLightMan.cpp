@@ -13,7 +13,12 @@ extern "C" void __dt__12CScnLightManFv() {}
 // LLM-HARNESS-END: us-80491158
 
 // LLM-HARNESS-BEGIN: us-80491198
-extern "C" void func_8048D124() {}
+extern "C" void func_8048D124(void* arg1, void* arg2) {
+    extern void func_804BF944(void*);
+    func_804BF944(arg2);
+    char* ptr = *(char**)((char*)arg1 + 8);
+    ptr[0x121c] = 1;
+}
 // LLM-HARNESS-END: us-80491198
 
 // LLM-HARNESS-BEGIN: us-804911d4

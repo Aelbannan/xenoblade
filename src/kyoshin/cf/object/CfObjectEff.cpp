@@ -85,7 +85,16 @@ extern "C" void func_800ACC50() {}
 // LLM-HARNESS-END: us-800ad51c
 
 // LLM-HARNESS-BEGIN: us-800ad530
-extern "C" void func_800ACC64() {}
+extern "C" void func_800ACC64(void* obj, const void* src) {
+    void* dest = *(void**)((unsigned char*)obj + 0x94);
+    if (dest == 0) return;
+    unsigned int* d = (unsigned int*)((unsigned char*)dest + 0x40);
+    const unsigned int* s = (const unsigned int*)src;
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+    d[3] = s[3];
+}
 // LLM-HARNESS-END: us-800ad530
 
 // LLM-HARNESS-BEGIN: us-800ad560
@@ -151,7 +160,19 @@ extern "C" void func_800ACEAC__Q22cf11CfObjectEffFv() {}
 // LLM-HARNESS-END: us-800ad778
 
 // LLM-HARNESS-BEGIN: us-800ad7c4
-extern "C" void func_800ACEF8() {}
+extern "C" void func_800ACEF8(void* obj, const void* src) {
+    if (*(unsigned short*)((unsigned int)obj + 0xa4) & 0x4) return;
+    void* ptr = *(void**)((unsigned int)obj + 0x94);
+    if (ptr != 0) {
+        unsigned int* dst = (unsigned int*)((unsigned int)ptr + 0x34);
+        const unsigned int* s = (const unsigned int*)src;
+        dst[0] = s[0];
+        dst[1] = s[1];
+        dst[2] = s[2];
+    }
+    float f = *(const float*)src;
+    *(float*)((unsigned int)obj + 0x60) = f;
+}
 // LLM-HARNESS-END: us-800ad7c4
 
 // LLM-HARNESS-BEGIN: us-800ad800
@@ -191,7 +212,16 @@ extern "C" void func_800AD060() {}
 // LLM-HARNESS-END: us-800ad92c
 
 // LLM-HARNESS-BEGIN: us-800adc44
-extern "C" void func_800AD378() {}
+extern "C" void func_800AD378(void* obj) {
+    unsigned short count = *(unsigned short*)((char*)obj + 0xA6);
+    if (count == 0) return;
+    count--;
+    *(unsigned short*)((char*)obj + 0xA6) = count;
+    if (count != 0) return;
+    unsigned int flags = *(unsigned int*)((char*)obj + 0x68);
+    flags |= 0x40;
+    *(unsigned int*)((char*)obj + 0x68) = flags;
+}
 // LLM-HARNESS-END: us-800adc44
 
 // LLM-HARNESS-BEGIN: us-800adc70

@@ -49,7 +49,14 @@ extern "C" void func_804E4B24() {}
 // LLM-HARNESS-END: us-804e8fc0
 
 // LLM-HARNESS-BEGIN: us-804e8fe4
-extern "C" void func_804E4B48() {}
+extern "C" void* func_804E4B48(void* self) {
+    void* head = *(void**)((char*)self + 8);
+    void* cur = *(void**)head;
+    while (cur != head) {
+        cur = *(void**)cur;
+    }
+    return head;
+}
 // LLM-HARNESS-END: us-804e8fe4
 
 // LLM-HARNESS-BEGIN: us-804e9000

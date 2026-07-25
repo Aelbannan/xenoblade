@@ -69,7 +69,13 @@ extern "C" void func_800BA66C__Q22cf11CfObjectMapFv() {}
 // LLM-HARNESS-END: us-800baf8c
 
 // LLM-HARNESS-BEGIN: us-800bb02c
-extern "C" void CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv() {}
+extern "C" void CfObjectModel_UnkVirtualFunc19__Q22cf13CfObjectModelFv(void* self, int arg) {
+    unsigned int* field = (unsigned int*)((char*)self + 0x68);
+    if (arg != 0)
+        *field |= 0x200000;
+    else
+        *field &= ~0x200000;
+}
 // LLM-HARNESS-END: us-800bb02c
 
 // LLM-HARNESS-BEGIN: us-800bb054

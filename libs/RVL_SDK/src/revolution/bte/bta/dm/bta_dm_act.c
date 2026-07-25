@@ -170,7 +170,20 @@ void bta_dm_authentication_complete_cback() {}
 // LLM-HARNESS-END: us-802e2f78
 
 // LLM-HARNESS-BEGIN: us-802e2ffc
-void bta_dm_local_addr_cback() {}
+typedef void (*bta_dm_cback_t)(int, void *);
+
+struct bta_dm_cb_t {
+    unsigned char _pad0[0x50];
+    bta_dm_cback_t cback;
+};
+
+extern struct bta_dm_cb_t bta_dm_cb;
+
+void bta_dm_local_addr_cback(void *addr) {
+    if (bta_dm_cb.cback != NULL) {
+        bta_dm_cb.cback(0, addr);
+    }
+}
 // LLM-HARNESS-END: us-802e2ffc
 
 // LLM-HARNESS-BEGIN: us-802e3024
@@ -190,7 +203,11 @@ void bta_dm_acl_change() {}
 // LLM-HARNESS-END: us-802e31c4
 
 // LLM-HARNESS-BEGIN: us-802e3444
-void bta_dm_disable_conn_down_timer_cback() {}
+void bta_dm_disable_conn_down_timer_cback() {
+    typedef void (*bta_dm_cb_func_t)(int, int);
+    extern struct { char reserved[0x50]; bta_dm_cb_func_t func; } bta_dm_cb;
+    bta_dm_cb.func(1, 0);
+}
 // LLM-HARNESS-END: us-802e3444
 
 // LLM-HARNESS-BEGIN: us-802e3460

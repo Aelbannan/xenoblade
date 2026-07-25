@@ -105,7 +105,20 @@ extern "C" void func_8021D6B4() {}
 // LLM-HARNESS-END: us-8021f50c
 
 // LLM-HARNESS-BEGIN: us-8021f7f4
-extern "C" void func_8021D99C() {}
+extern "C" void func_8021D99C(void* self, unsigned short index, short a, short b)
+{
+    struct Entry {
+        char _pad0[4];
+        short x;
+        short y;
+        char _pad8;
+        unsigned char flag;
+    };
+    Entry* entry = (Entry*)((char*)self + ((unsigned int)index << 3));
+    entry->x = a;
+    entry->y = b;
+    entry->flag = 1;
+}
 // LLM-HARNESS-END: us-8021f7f4
 
 // LLM-HARNESS-BEGIN: us-8021f810
@@ -309,7 +322,13 @@ extern "C" void func_80221D58(void* self) {}
 // LLM-HARNESS-END: us-80223b98
 
 // LLM-HARNESS-BEGIN: us-80223c78
-extern "C" void func_80221E38() {}
+extern "C" void func_80221E38(unsigned char* p) {
+    p[0] = 0;
+    p[1] = 0;
+    p[2] = 0;
+    p[3] = 0;
+    p[5] = 0;
+}
 // LLM-HARNESS-END: us-80223c78
 
 // LLM-HARNESS-BEGIN: us-80223c94

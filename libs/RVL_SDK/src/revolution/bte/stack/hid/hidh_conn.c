@@ -65,5 +65,9 @@ void hidh_conn_initiate() {}
 // LLM-HARNESS-END: us-802f912c
 
 // LLM-HARNESS-BEGIN: us-802f9228
-void hidh_conn_dereg() {}
+void hidh_conn_dereg(void)
+{
+    L2CA_Deregister(0x11);
+    L2CA_Deregister(0x13);
+}
 // LLM-HARNESS-END: us-802f9228

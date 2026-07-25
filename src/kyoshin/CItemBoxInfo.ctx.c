@@ -1357,7 +1357,19 @@ extern "C" u8 func_801D4214(void* self) {
 
 
 // LLM-HARNESS-BEGIN: us-801d5d1c
-extern "C" void func_801D4240() {}
+extern "C" void func_801D4240(void* self) {
+    struct Layout {
+        unsigned char _pad[0x94];
+        int field_94;
+        unsigned char _pad98[1];
+        unsigned char field_99;
+    };
+    Layout* p = (Layout*)self;
+    if (p->field_94 == 3) {
+        p->field_94 = 4;
+        p->field_99 = 0;
+    }
+}
 // LLM-HARNESS-END: us-801d5d1c
 
 
@@ -1447,7 +1459,10 @@ extern "C" void func_801D69FC() {}
 // LLM-HARNESS-END: us-801d8568
 
 // LLM-HARNESS-BEGIN: us-801d9310
-extern "C" void func_801D77A4() {}
+extern "C" void func_801D77A4(void* self, unsigned char index, short value) {
+    if (index >= 12) return;
+    *(short*)((char*)self + index * 2 + 0xC0) = value;
+}
 // LLM-HARNESS-END: us-801d9310
 
 // LLM-HARNESS-BEGIN: us-801d9328
@@ -1499,7 +1514,12 @@ extern "C" void func_801D8C0C() {}
 // LLM-HARNESS-END: us-801da778
 
 // LLM-HARNESS-BEGIN: us-801da974
-extern "C" void func_801D8E08() {}
+extern "C" void func_801D8E08(void* arg) {
+    if (*(unsigned int*)((char*)arg + 0x34) == 0) return;
+    if (*(unsigned int*)((char*)arg + 0x30) == 0) return;
+    *((char*)arg + 0x98) = 1;
+    *((char*)arg + 0x90) = 1;
+}
 // LLM-HARNESS-END: us-801da974
 
 // LLM-HARNESS-BEGIN: us-801da9a0
@@ -1507,7 +1527,17 @@ extern "C" void func_801D8E34() {}
 // LLM-HARNESS-END: us-801da9a0
 
 // LLM-HARNESS-BEGIN: us-801e1020
-extern "C" void func_801DF4B4() {}
+struct CItemBoxInfoEntry {
+    unsigned short unk0;
+    unsigned int unk4;
+    unsigned char unk8;
+};
+
+extern "C" void func_801DF4B4(CItemBoxInfoEntry* dst, const CItemBoxInfoEntry* src) {
+    dst->unk0 = src->unk0;
+    dst->unk4 = src->unk4;
+    dst->unk8 = src->unk8;
+}
 // LLM-HARNESS-END: us-801e1020
 
 // LLM-HARNESS-BEGIN: us-801e103c
@@ -1571,7 +1601,14 @@ extern "C" void func_801E1348() {}
 // LLM-HARNESS-END: us-801e2eb4
 
 // LLM-HARNESS-BEGIN: us-801e2f44
-extern "C" void func_801E13D8() {}
+namespace nw4r { namespace lyt { class Layout; class DrawInfo; } }
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+
+extern "C" void func_801E13D8(void* self, nw4r::lyt::DrawInfo* drawInfo) {
+    if (*(unsigned char*)((char*)self + 0x90) != 0) {
+        func_80137038(*(nw4r::lyt::Layout**)((char*)self + 0x34), drawInfo, 0, 1);
+    }
+}
 // LLM-HARNESS-END: us-801e2f44
 
 // LLM-HARNESS-BEGIN: us-801e2f64
@@ -1589,7 +1626,19 @@ extern "C" void func_801E1498() {}
 // LLM-HARNESS-END: us-801e3004
 
 // LLM-HARNESS-BEGIN: us-801e3028
-extern "C" void func_801E14BC() {}
+extern "C" void func_801E14BC(void* param_1) {
+    struct Fields {
+        char unk_0x00[0x94];
+        int field_0x94;
+        char unk_0x98;
+        unsigned char field_0x99;
+    };
+    Fields* p = reinterpret_cast<Fields*>(param_1);
+    if (p->field_0x94 == 3) {
+        p->field_0x94 = 4;
+        p->field_0x99 = 0;
+    }
+}
 // LLM-HARNESS-END: us-801e3028
 
 // LLM-HARNESS-BEGIN: us-801e3048
@@ -1709,7 +1758,15 @@ extern "C" void func_801E43BC() {}
 // LLM-HARNESS-END: us-801e5fb8
 
 // LLM-HARNESS-BEGIN: us-801ead60
-extern "C" void func_801E9164() {}
+struct ItemBoxInfoCopy {
+    unsigned short unk0;
+    unsigned int unk4;
+    unsigned char unk8;
+};
+
+extern "C" void func_801E9164(ItemBoxInfoCopy* dst, const ItemBoxInfoCopy* src) {
+    *dst = *src;
+}
 // LLM-HARNESS-END: us-801ead60
 
 // LLM-HARNESS-BEGIN: us-801ead7c

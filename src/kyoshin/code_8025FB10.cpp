@@ -53,7 +53,12 @@ extern "C" void func_8026187C() {}
 // LLM-HARNESS-END: us-802639c8
 
 // LLM-HARNESS-BEGIN: us-802639f8
-extern "C" void func_802618AC() {}
+extern "C" void func_802618AC(void* obj, int value) {
+    int* field = (int*)((char*)obj + 0x884);
+    *field = value;
+    if (value < 0) *field = 0;
+    else if (value > 0x3e7) *field = 0x3e7;
+}
 // LLM-HARNESS-END: us-802639f8
 
 // LLM-HARNESS-BEGIN: us-80263a24
@@ -65,7 +70,17 @@ extern "C" void func_802618D8() {}
 // LLM-HARNESS-END: us-80263b68
 
 // LLM-HARNESS-BEGIN: us-80263bd4
-extern "C" void func_80261944() {}
+extern "C" int lbl_eu_80664864;
+extern "C" int lbl_eu_80664868;
+extern "C" int lbl_eu_80662980;
+extern "C" int lbl_eu_80664874;
+
+extern "C" void func_80261944(int arg) {
+    lbl_eu_80664864 = arg;
+    lbl_eu_80664868 = arg;
+    lbl_eu_80662980 = -1;
+    lbl_eu_80664874 = 0;
+}
 // LLM-HARNESS-END: us-80263bd4
 
 // LLM-HARNESS-BEGIN: us-80263bf0

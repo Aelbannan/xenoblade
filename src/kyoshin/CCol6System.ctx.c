@@ -12940,7 +12940,17 @@ void ocBdatRegist();
 CCol6CheckBat* gCol6CheckBat;
 
 // LLM-HARNESS-BEGIN: us-8015e188
-extern "C" void func_8015D0B8() {}
+extern "C" int lbl_eu_80664230;
+extern "C" int lbl_eu_80664234;
+extern "C" int lbl_eu_80664238;
+extern "C" int lbl_eu_8066235C;
+
+extern "C" void func_8015D0B8() {
+    lbl_eu_80664230 = 0;
+    lbl_eu_80664234 = 0;
+    lbl_eu_80664238 = 0;
+    lbl_eu_8066235C = -1;
+}
 // LLM-HARNESS-END: us-8015e188
 
 // CCol6CheckBat::~CCol6CheckBat()

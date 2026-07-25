@@ -1666,7 +1666,7 @@ extern "C" void func_800BE8B4() {}
 // LLM-HARNESS-END: us-800bf220
 
 // LLM-HARNESS-BEGIN: us-800bf260
-extern "C" void func_800BE8F4() {}
+extern "C" int func_800BE8F4(void* this_ptr) { struct SubObj { int dummy0[11]; int field_2c; int field_30; }; SubObj* sub = *(SubObj**)((char*)this_ptr + 0x38); if (!sub) return -1; if (sub->field_2c < 0) return -1; return sub->field_30; }
 // LLM-HARNESS-END: us-800bf260
 
 // LLM-HARNESS-BEGIN: us-800bf290

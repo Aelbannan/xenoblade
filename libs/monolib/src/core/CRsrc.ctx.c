@@ -1,8 +1,7 @@
-/* "libs/monolib/src/core/CRsrc.cpp" line 0 "string.h" */
-#ifndef MSL_STRING_H
-#define MSL_STRING_H
+/* "libs/monolib/src/core/CRsrc.cpp" line 0 "monolib/core/CRsrc.hpp" */
+#pragma once
 
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* "libs/monolib/include/monolib/core/CRsrc.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -709,76 +708,6 @@ enum { FALSE, TRUE };
 typedef int BOOL;
 
 #endif
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-#ifndef _MSL_STRING_API_H
-#define _MSL_STRING_API_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* __memrchr(const void* src, int val, size_t n);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-#ifndef _EXTRAS_H
-#define _EXTRAS_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int stricmp(const char*, const char*);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
-
-char* strcat(char*, const char*);
-char* strncat(char*, const char*, size_t);
-
-int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, size_t);
-
-char* strchr(const char*, int);
-char* strstr(const char*, const char*);
-
-size_t strlen(const char*);
-
-void* memmove(void*, const void*, size_t);
-int memcmp(const void*, const void*, size_t);
-void* memchr(const void*, int, size_t);
-
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* dest, int val, size_t count);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "string.h" */
-
-/* "libs/monolib/src/core/CRsrc.cpp" line 2 "monolib/core/CRsrc.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/core/CRsrc.hpp" line 2 "types.h" */
 /* end "types.h" */
 
 /* "libs/monolib/include/monolib/core/CRsrc.hpp" line 4 "monolib/work/CWorkThread.hpp" */
@@ -10247,6 +10176,74 @@ private:
 #ifndef MSL_CPP_CSTRING_H
 #define MSL_CPP_CSTRING_H
 /* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
 /* end "string.h" */
 #ifdef __cplusplus
 
@@ -10854,13 +10851,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -12417,10 +12423,11 @@ In XC3D, all instances of the unused event functions (including events 1, 3, and
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
 events being unused as well.
 
-Default bodies for unused slots: WorkEvent24–31 live in kyoshin/CGame.cpp (retail
-weak placement). Earlier defaults stay in IWorkEvent.cpp. Do not make these inline
-in the header — that pulls weak stubs into every overriding TU and blows split
-budgets (see MWCC_REFERENCE CBattery/CBgTex note). */
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
 class IWorkEvent {
 public:
     virtual ~IWorkEvent();
@@ -12706,61 +12713,80 @@ public:
     static CRsrcData* convertToRsrcData(CWorkThread* pThread);
     static bool entry(void* parent, const char* name, void* arg2, void* data, u32 length, bool flag);
     static CRsrcData* getRsrc(u32 id);
-    static bool releaseCache(const void* data);
-    static bool isExistData(const void* data);
 };
 
 extern "C" {
 bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* data);
 bool isExistFile__5CRsrcFPCcPPvPUi(CWorkThread* parent, const char* name, void** outData, u32* outLength);
 bool isExistDataLocal__5CRsrcFPCv(CWorkThread* parent, const void* data);
+bool releaseCache__5CRsrcFPCv(const void* data);
+bool isExistData__5CRsrcFPCv(const void* data);
 }
 /* end "monolib/core/CRsrc.hpp" */
-/* "libs/monolib/src/core/CRsrc.cpp" line 3 "monolib/core/CRsrcData.hpp" */
+/* "libs/monolib/src/core/CRsrc.cpp" line 1 "monolib/core/CRsrcData.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core/CRsrcData.hpp" line 2 "monolib/work/CWorkThread.hpp" */
 /* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/core/CRsrcData.hpp" line 3 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
 
 // size: 0x4E8
 class CRsrcData : public CWorkThread {
 public:
-    static CRsrcData* build(void* parent, const char* name, void* arg2, void* data, u32 length, bool flag);
-    bool releaseCache(const void* data);
-    bool isSameName(const char* name) const;
+    CRsrcData(const char* pName, CWorkThread* pParent);
+    virtual ~CRsrcData();
 
-    u32 mRsrcId;                     // 0x1C4
-    u8 mName[0x100];                 // 0x1C8
-    u32 mNameLength;                 // 0x2C8
-    u8 pad2CC[0x3CC - 0x2CC];
-    u8 mPath[0x100];                 // 0x3CC
-    u32 mPathLength;                 // 0x4CC
-    void* mCacheData;                // 0x4D0
-    u32 mCacheLength;                // 0x4D4
-    u32 mRefCount;                   // 0x4D8
-    u32 mFlags4DC;                   // 0x4DC
-    u8 unk4E0;                       // 0x4E0
-    s16 unk4E2;                      // 0x4E2
-    s16 unk4E4;                      // 0x4E4
+    virtual void wkUpdate();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    void destruct(int arg);
+    bool releaseCache(const void* data);
+    void setRsrcFile(const char* name, void* path, void* data, u32 length, bool flag);
+    int isSameName(const char* name) const;
+
+    // Layout matches retail stores (CWorkThread ends at 0x1C4).
+    char mName[0x100];     // 0x1C4
+    u32 mNameLength;       // 0x2C4
+    char mAltPath[0x100];  // 0x2C8
+    u32 mAltPathLength;    // 0x3C8
+    char mPath[0x100];     // 0x3CC
+    u32 mPathLength;       // 0x4CC
+    void* mCacheData;      // 0x4D0
+    u32 mCacheLength;      // 0x4D4
+    u32 mRefCount;         // 0x4D8
+    u32 mFlags4DC;         // 0x4DC
+    u8 unk4E0;             // 0x4E0
+    s16 unk4E2;            // 0x4E2
+    s16 unk4E4;            // 0x4E4
 };
 /* end "monolib/core/CRsrcData.hpp" */
-/* "libs/monolib/src/core/CRsrc.cpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/src/core/CRsrc.cpp" line 2 "monolib/work/CWorkThread.hpp" */
 /* end "monolib/work/CWorkThread.hpp" */
-/* "libs/monolib/src/core/CRsrc.cpp" line 5 "monolib/work/CWorkUtil.hpp" */
+/* "libs/monolib/src/core/CRsrc.cpp" line 3 "monolib/work/CWorkUtil.hpp" */
 /* end "monolib/work/CWorkUtil.hpp" */
-/* "libs/monolib/src/core/CRsrc.cpp" line 6 "monolib/work/UnkStruct_80438AF0.hpp" */
+/* "libs/monolib/src/core/CRsrc.cpp" line 4 "monolib/work/UnkStruct_80438AF0.hpp" */
 /* end "monolib/work/UnkStruct_80438AF0.hpp" */
-/* "libs/monolib/src/core/CRsrc.cpp" line 7 "monolib/util/reslist.hpp" */
+/* "libs/monolib/src/core/CRsrc.cpp" line 5 "monolib/util/reslist.hpp" */
 /* end "monolib/util/reslist.hpp" */
 
 extern "C" {
-s16 lbl_eu_806655A8;
-CRsrcData* sRsrcPointerList__5CRsrc[16];
+// Provided by the retail data object (monolibdata1d) until this unit's
+// .sbss/.bss is data-matched.
+extern s16 lbl_eu_806655A8;
+extern CRsrcData* sRsrcPointerList__5CRsrc[16];
 
+CRsrcData* convertToRsrcData__5CRsrcFP11CWorkThread(CWorkThread* pThread);
 void build__9CRsrcDataFPvPCcPvPvUlb(void* parent, const char* name, void* arg2, void* data, u32 length,
                                     bool flag);
 bool releaseCache__9CRsrcDataFPCv(CRsrcData* ths, const void* data);
-bool isSameName__9CRsrcDataCFPCc(CRsrcData* ths, const char* name);
+int isSameName__9CRsrcDataCFPCc(CRsrcData* ths, const char* name);
+bool isExistData__5CRsrcFPCv(const void* data);
+bool releaseCache__5CRsrcFPCv(const void* data);
+size_t strlen(const char* str);
+char* strcpy(char* dst, const char* src);
+UnkStruct_80438AF0* func_80438AF0__9CWorkUtilFP18UnkStruct_80438AF0(UnkStruct_80438AF0* p);
 }
 
 CRsrcData* CRsrc::convertToRsrcData(CWorkThread* pThread) {
@@ -12775,42 +12801,43 @@ CRsrcData* CRsrc::convertToRsrcData(CWorkThread* pThread) {
     return nullptr;
 }
 
+#pragma optimize_for_size on
+#pragma dont_inline on
 extern "C" bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* data) {
     _reslist_node<CWorkThread*>* node;
-    CRsrcData* rsrcData;
 
-    node = parent->mChildren.mStartNodePtr->mNext;
-
-    while (node != parent->mChildren.mStartNodePtr) {
-        rsrcData = CRsrc::convertToRsrcData(node->mItem);
-
-        if (releaseCache__9CRsrcDataFPCv(rsrcData, data)) {
-            return true;
-        }
-
-        node = node->mNext;
+    // Retail: seed next from head->mNext, bottom-tested with per-iter lwz 0x60(parent).
+    node = (*(_reslist_node<CWorkThread*>**)((u8*)parent + 0x60))->mNext;
+    goto check;
+loop:
+    if (releaseCache__9CRsrcDataFPCv(convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem),
+                                      data)) {
+        return true;
+    }
+    node = node->mNext;
+check:
+    if (node != *(_reslist_node<CWorkThread*>**)((u8*)parent + 0x60)) {
+        goto loop;
     }
 
     return false;
 }
+#pragma dont_inline off
+#pragma optimize_for_size reset
 
+#pragma dont_inline on
 bool CRsrc::entry(void* parent, const char* name, void* arg2, void* data, u32 length, bool flag) {
-    CRsrcData* parentData;
-    u32 nameLength;
-
-    if (isExistData(arg2)) {
+    if (isExistData__5CRsrcFPCv(data)) {
         return true;
     }
 
     build__9CRsrcDataFPvPCcPvPvUlb(parent, name, arg2, data, length, flag);
-
-    parentData = static_cast<CRsrcData*>(parent);
-    nameLength = strlen(name);
-    parentData->mNameLength = nameLength;
-    strcpy((char*)parentData->mName, name);
+    *(u32*)((u8*)parent + 0x2C8) = strlen(name);
+    strcpy((char*)((u8*)parent + 0x1C8), name);
 
     return true;
 }
+#pragma dont_inline off
 
 extern "C" bool isExistFile__5CRsrcFPCcPPvPUi(CWorkThread* parent, const char* name, void** outData,
                                               u32* outLength) {
@@ -12820,7 +12847,7 @@ extern "C" bool isExistFile__5CRsrcFPCcPPvPUi(CWorkThread* parent, const char* n
     node = parent->mChildren.mStartNodePtr->mNext;
 
     while (node != parent->mChildren.mStartNodePtr) {
-        rsrcData = CRsrc::convertToRsrcData(node->mItem);
+        rsrcData = convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem);
 
         if ((rsrcData->mFlags & CWorkThread::THREAD_FLAG_NO_EVENT) == 0) {
             if (isSameName__9CRsrcDataCFPCc(rsrcData, name)) {
@@ -12842,98 +12869,119 @@ extern "C" bool isExistFile__5CRsrcFPCcPPvPUi(CWorkThread* parent, const char* n
     return false;
 }
 
-bool hasChild(CWorkThread* pThread) {
-    _reslist_node<CWorkThread*>* sentinel;
+bool hasChild__FP11CWorkThread(CWorkThread* pThread) {
+    _reslist_node<CWorkThread*>* head;
     _reslist_node<CWorkThread*>* first;
+    u32 diff;
+    u32 diff2;
 
-    sentinel = pThread->mChildren.mStartNodePtr;
-    first = sentinel->mNext;
+    head = *(_reslist_node<CWorkThread*>**)((u8*)pThread + 0x60);
+    first = head->mNext;
+    diff = (u32)head - (u32)first;
+    diff2 = (u32)first - (u32)head;
 
-    return sentinel != first;
+    return (diff | diff2) >> 31;
 }
 
 CRsrcData* CRsrc::getRsrc(u32 id) {
-    s16 index;
-    s16 count;
     CRsrcData* entry;
+    s16 index;
+    u32 off;
 
-    count = lbl_eu_806655A8;
+    // Decl order: entry before index -> retail r6/r7 coloring.
     index = 0;
-
-    while (index < count) {
-        entry = sRsrcPointerList__5CRsrc[index];
-
-        if (entry->mRsrcId == id) {
-            return entry;
-        }
-
-        index++;
+    goto check;
+loop:
+    off = (u32)index;
+    entry = *(CRsrcData**)((u8*)sRsrcPointerList__5CRsrc + (off << 2));
+    if (id == *(u32*)((u8*)entry + 0x1C4)) {
+        return entry;
+    }
+    index++;
+check:
+    if (index < lbl_eu_806655A8) {
+        goto loop;
     }
 
     return nullptr;
 }
 
-bool CRsrc::releaseCache(const void* data) {
+#pragma optimize_for_size on
+#pragma dont_inline on
+extern "C" bool releaseCache__5CRsrcFPCv(const void* data) {
+    CRsrcData** listBase;
     s16 index;
-    s16 count;
 
-    count = lbl_eu_806655A8;
+    listBase = sRsrcPointerList__5CRsrc;
     index = 0;
-
-    while (index < count) {
-        if (releaseCacheLocal__5CRsrcFPCv(sRsrcPointerList__5CRsrc[index], data)) {
-            return true;
-        }
-
-        index++;
+    goto check;
+loop:
+    if (releaseCacheLocal__5CRsrcFPCv((CWorkThread*)listBase[index], data)) {
+        return true;
+    }
+    index++;
+check:
+    if (index < lbl_eu_806655A8) {
+        goto loop;
     }
 
     return false;
 }
 
-bool CRsrc::isExistData(const void* data) {
+extern "C" bool isExistData__5CRsrcFPCv(const void* data) {
+    CRsrcData** listBase;
     s16 index;
-    s16 count;
 
-    count = lbl_eu_806655A8;
+    listBase = sRsrcPointerList__5CRsrc;
     index = 0;
-
-    while (index < count) {
-        if (isExistDataLocal__5CRsrcFPCv(sRsrcPointerList__5CRsrc[index], data)) {
-            return true;
-        }
-
-        index++;
+    goto check;
+loop:
+    if (isExistDataLocal__5CRsrcFPCv((CWorkThread*)listBase[index], data)) {
+        return true;
+    }
+    index++;
+check:
+    if (index < lbl_eu_806655A8) {
+        goto loop;
     }
 
     return false;
 }
+#pragma dont_inline off
+#pragma optimize_for_size reset
 
+#pragma optimize_for_size on
+#pragma dont_inline on
 extern "C" bool isExistDataLocal__5CRsrcFPCv(CWorkThread* parent, const void* data) {
     _reslist_node<CWorkThread*>* node;
     CRsrcData* rsrcData;
-    bool skipMatch;
+    int flag;
 
     node = reinterpret_cast<_reslist_node<CWorkThread*>*>(
-        CWorkUtil::func_80438AF0(reinterpret_cast<UnkStruct_80438AF0*>(&parent->mChildren)));
-
-    while (node != parent->mChildren.mStartNodePtr) {
-        rsrcData = CRsrc::convertToRsrcData(node->mItem);
-
-        if (rsrcData->mCacheData == data) {
-            skipMatch = false;
-
-            if (data != nullptr && rsrcData->mRefCount != 0) {
-                skipMatch = true;
-            }
-
-            if (!skipMatch) {
-                return true;
+        func_80438AF0__9CWorkUtilFP18UnkStruct_80438AF0(
+            reinterpret_cast<UnkStruct_80438AF0*>((u8*)parent + 0x5C)));
+    goto check;
+loop:
+    rsrcData = convertToRsrcData__5CRsrcFP11CWorkThread(node->mItem);
+    if (rsrcData->mCacheData == data) {
+        // Retail: match when cache==data and NOT (non-null && refCount==0).
+        flag = 0;
+        if (rsrcData->mCacheData != nullptr) {
+            if (rsrcData->mRefCount == 0) {
+                flag = 1;
             }
         }
-
-        node = node->mNext;
+        if (flag == 0) {
+            return true;
+        }
+    }
+    node = node->mNext;
+check:
+    if (node != *(_reslist_node<CWorkThread*>**)((u8*)parent + 0x60)) {
+        goto loop;
     }
 
     return false;
 }
+#pragma dont_inline off
+#pragma optimize_for_size reset

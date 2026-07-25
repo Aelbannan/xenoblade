@@ -41,7 +41,12 @@ extern "C" void OnFileEvent__7CfTFileFP10CEventFile() {}
 // LLM-HARNESS-END: us-8006a7ec
 
 // LLM-HARNESS-BEGIN: us-8006a878
-extern "C" void __dt__Q22cf7CfTFileFv() {}
+extern "C" cf::CfTFile* __dt__Q22cf7CfTFileFv(cf::CfTFile* obj, int flag) {
+    if (obj != nullptr && flag > 0) {
+        operator delete(obj);
+    }
+    return obj;
+}
 // LLM-HARNESS-END: us-8006a878
 
 // LLM-HARNESS-BEGIN: us-8006a8b8
@@ -50,7 +55,21 @@ extern "C" float func_80069EA0() { return lbl_eu_80661AF0; }
 // LLM-HARNESS-END: us-8006a8b8
 
 // LLM-HARNESS-BEGIN: us-8006a8c0
-extern "C" void func_80069EA8() {}
+extern "C" void func_80069EA8(int param) {
+    extern unsigned char lbl_eu_80663DA0;
+    extern float lbl_eu_80666214;
+    extern float lbl_eu_80666218;
+    unsigned char val = lbl_eu_80663DA0;
+    if (param != 0) {
+        val |= 0x02;
+        lbl_eu_80663DA0 = val;
+        lbl_eu_80661AF0 = lbl_eu_80666214;
+    } else {
+        val &= 0x02;
+        lbl_eu_80663DA0 = val;
+        lbl_eu_80661AF0 = lbl_eu_80666218;
+    }
+}
 // LLM-HARNESS-END: us-8006a8c0
 
 // LLM-HARNESS-BEGIN: us-8006a8f8

@@ -7,24 +7,28 @@
 #include "monolib/math/CCol4.hpp"
 #include "monolib/math/CMat34.hpp"
 
-// LLM-HARNESS-BEGIN: us-8044bbd4
+// __ct__80449548 (constructor at 0x80449548) defined once — all harness stubs
+// that map to this same symbol reference it rather than redefining.
 extern "C" void __ct__80449548(void) {}
+
+// LLM-HARNESS-BEGIN: us-8044bbd4
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bbd4
 
 // LLM-HARNESS-BEGIN: us-8044be7c
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044be7c
 
 // LLM-HARNESS-BEGIN: us-8044bebc
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bebc
 
 // LLM-HARNESS-BEGIN: us-8044bef0
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bef0
 
 // LLM-HARNESS-BEGIN: us-8044bf48
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bf48
 
 // LLM-HARNESS-BEGIN: us-8044bfa4
@@ -32,7 +36,7 @@ extern "C" void __ct__80449534() {}
 // LLM-HARNESS-END: us-8044bfa4
 
 // LLM-HARNESS-BEGIN: us-8044bfb8
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bfb8
 
 // LLM-HARNESS-BEGIN: us-8044bfbc
@@ -40,7 +44,7 @@ extern "C" void func_8044954C(void) {}
 // LLM-HARNESS-END: us-8044bfbc
 
 // LLM-HARNESS-BEGIN: us-8044bfc0
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bfc0
 
 // LLM-HARNESS-BEGIN: us-8044c764
@@ -745,16 +749,16 @@ public:
     void func_80449B94(unsigned long);
 };
 // LLM-HARNESS-BEGIN: us-8044c034
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044c034
 // LLM-HARNESS-BEGIN: us-8044c19c
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044c19c
 // LLM-HARNESS-BEGIN: us-8044c314
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044c314
 // LLM-HARNESS-BEGIN: us-8044c48c
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044c48c
 // LLM-HARNESS-BEGIN: us-8044c604
 template <> void CMsgParam<32>::func_80449B94(unsigned long) {}

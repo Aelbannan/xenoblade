@@ -1401,7 +1401,10 @@ extern "C" void func_80184A24(void* self) {}
 // LLM-HARNESS-END: us-80185e64
 
 // LLM-HARNESS-BEGIN: us-80185f24
-extern "C" void func_80184AE4() {}
+extern "C" bool func_80184AE4(const void* self) {
+    unsigned int flags = *reinterpret_cast<const unsigned int*>(static_cast<const char*>(self) + 0x18);
+    return (flags & 0x1u) && (flags & 0x40u);
+}
 // LLM-HARNESS-END: us-80185f24
 
 // LLM-HARNESS-BEGIN: us-80185f44

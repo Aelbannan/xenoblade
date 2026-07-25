@@ -235,7 +235,11 @@ extern "C" void func_8024F5C4() {}
 // LLM-HARNESS-END: us-802517fc
 
 // LLM-HARNESS-BEGIN: us-80251868
-extern "C" void func_8024F630() {}
+extern "C" unsigned char func_8024F630(void) {
+    extern unsigned int lbl_eu_8066479C;
+    extern int func_8003B1EC(unsigned int);
+    return (unsigned char)func_8003B1EC(lbl_eu_8066479C);
+}
 // LLM-HARNESS-END: us-80251868
 
 // LLM-HARNESS-BEGIN: us-80251890

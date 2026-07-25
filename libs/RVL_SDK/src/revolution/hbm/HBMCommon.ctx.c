@@ -760,5 +760,15 @@ extern "C" void HBMDeleteSound(void) {}
 // LLM-HARNESS-END: us-803256c0
 
 // LLM-HARNESS-BEGIN: us-803256d0
-extern "C" void HBMUpdateSound() {}
+namespace homebutton {
+class HomeButton {
+public:
+    static HomeButton* getInstance();
+    void update_sound();
+};
+}
+
+extern "C" void HBMUpdateSound() {
+    homebutton::HomeButton::getInstance()->update_sound();
+}
 // LLM-HARNESS-END: us-803256d0

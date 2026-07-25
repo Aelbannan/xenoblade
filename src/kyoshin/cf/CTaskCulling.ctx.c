@@ -18182,16 +18182,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -22671,6 +22669,7 @@ public:
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -28103,7 +28102,7 @@ namespace cf{
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
-        static CfObjectMove* func_80082D54(int playerIndex);
+        static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
         static bool func_80086F9C(s16);
         static void setCurrentPadPtr(const CPad* pPad, u32 r4);

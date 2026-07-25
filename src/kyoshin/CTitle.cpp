@@ -233,7 +233,13 @@ extern "C" void func_802B7838() {}
 // LLM-HARNESS-END: us-802ba2a8
 
 // LLM-HARNESS-BEGIN: us-802ba2ac
-extern "C" void func_802B783C() {}
+extern "C" void func_802B783C(void* thisPtr) {
+    uint8_t* bytes = static_cast<uint8_t*>(thisPtr);
+    if (bytes[0x6d] == 0) {
+        return;
+    }
+    bytes[0x24] = 2;
+}
 // LLM-HARNESS-END: us-802ba2ac
 
 // LLM-HARNESS-BEGIN: us-802ba2c4

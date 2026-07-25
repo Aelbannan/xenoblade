@@ -2263,7 +2263,7 @@ extern "C" void func_800B7854() {}
 // LLM-HARNESS-END: us-800b8170
 
 // LLM-HARNESS-BEGIN: us-800b81a8
-extern "C" void func_800B788C() {}
+extern "C" void func_800B788C(void* param_1) { extern void* func_800B07E8(); extern void func_800B6DD0(void*, void*); void* ptr = func_800B07E8(); func_800B6DD0((char*)ptr + 0xb88, param_1); }
 // LLM-HARNESS-END: us-800b81a8
 
 // LLM-HARNESS-BEGIN: us-800b81e0

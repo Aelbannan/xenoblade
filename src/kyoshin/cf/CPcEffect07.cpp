@@ -21,7 +21,14 @@ extern "C" void func_801B1C5C() {}
 // LLM-HARNESS-END: us-801b3520
 
 // LLM-HARNESS-BEGIN: us-801b3574
-extern "C" void func_801B1CB0() {}
+extern "C" unsigned char* lbl_eu_80664398;
+
+extern "C" int func_801B1CB0() {
+    if (lbl_eu_80664398 == 0) {
+        return 0;
+    }
+    return lbl_eu_80664398[0x58];
+}
 // LLM-HARNESS-END: us-801b3574
 
 // LLM-HARNESS-BEGIN: us-801b3590
@@ -45,7 +52,17 @@ extern "C" void func_801B1FA4() {}
 // LLM-HARNESS-END: us-801b3868
 
 // LLM-HARNESS-BEGIN: us-801b38c0
-extern "C" void func_801B1FFC() {}
+extern "C" int func_801B1FFC(int index) {
+    if (lbl_eu_80664398 == 0) return 0;
+    struct Struct {
+        char pad[20];
+        short field14;
+        char pad2[2];
+    };
+    Struct* arr = (Struct*)lbl_eu_80664398;
+    short val = arr[index].field14;
+    return (val == 1) ? 1 : 0;
+}
 // LLM-HARNESS-END: us-801b38c0
 
 // LLM-HARNESS-BEGIN: us-801b38f0

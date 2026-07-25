@@ -1347,7 +1347,12 @@ extern "C" void __dt__Q22cf9CfGimmickFv() {}
 // LLM-HARNESS-END: us-8020a70c
 
 // LLM-HARNESS-BEGIN: us-8020a74c
-extern "C" void func_8020896C() {}
+extern "C" void func_8020896C(void* self, void* other) {
+    void* cur = *(void**)((char*)self + 0x78);
+    if (cur != other) return;
+    *(void**)((char*)cur + 0xB0) = 0;
+    *(void**)((char*)self + 0x78) = 0;
+}
 // LLM-HARNESS-END: us-8020a74c
 
 // LLM-HARNESS-BEGIN: us-8020a768
@@ -1447,11 +1452,19 @@ extern "C" void func_80209F2C() {}
 // LLM-HARNESS-END: us-8020bd0c
 
 // LLM-HARNESS-BEGIN: us-8020bd3c
-extern "C" void func_80209F5C() {}
+extern "C" void func_80209F5C() {
+    extern void* getUnk80664658();
+    void* p = getUnk80664658();
+    *(volatile unsigned int*)((unsigned char*)p + 0x214) |= 0x000C0002;
+}
 // LLM-HARNESS-END: us-8020bd3c
 
 // LLM-HARNESS-BEGIN: us-8020bd6c
-extern "C" void func_80209F8C() {}
+extern "C" void* getUnk80664658();
+extern "C" void func_80209F8C() {
+    void* p = getUnk80664658();
+    *(unsigned int*)((char*)p + 0x214) |= 0x8008;
+}
 // LLM-HARNESS-END: us-8020bd6c
 
 // LLM-HARNESS-BEGIN: us-8020bd98

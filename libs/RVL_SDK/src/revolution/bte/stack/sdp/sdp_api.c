@@ -37,5 +37,12 @@ void SDP_GetLocalDiRecord() {}
 // LLM-HARNESS-END: us-803061a0
 
 // LLM-HARNESS-BEGIN: us-80306650
-void SDP_SetTraceLevel() {}
+extern unsigned char sdp_cb[];
+
+unsigned char SDP_SetTraceLevel(unsigned int level) {
+    if (level != 0xff) {
+        sdp_cb[0x4630] = (unsigned char)level;
+    }
+    return sdp_cb[0x4630];
+}
 // LLM-HARNESS-END: us-80306650

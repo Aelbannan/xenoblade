@@ -41,11 +41,23 @@ extern "C" void func_80144FF0() {}
 // LLM-HARNESS-END: us-801459f4
 
 // LLM-HARNESS-BEGIN: us-80145a1c
-extern "C" void func_80145018() {}
+extern "C" extern int lbl_eu_806641A0;
+
+extern "C" void func_80145018() {
+    void* p = (void*)lbl_eu_806641A0;
+    if (p != 0) {
+        *(unsigned char*)((char*)p + 0x64) = 1;
+    }
+}
 // LLM-HARNESS-END: us-80145a1c
 
 // LLM-HARNESS-BEGIN: us-80145a34
-extern "C" void func_80145030() {}
+extern "C" unsigned char func_80145030(void) {
+    if (lbl_eu_806641A0 != 0) {
+        return *((unsigned char*)lbl_eu_806641A0 + 0xe0);
+    }
+    return 0;
+}
 // LLM-HARNESS-END: us-80145a34
 
 // LLM-HARNESS-BEGIN: us-80145a50

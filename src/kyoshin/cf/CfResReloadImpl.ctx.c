@@ -1343,7 +1343,10 @@ extern "C" void __ct__cf_CfResReloadImpl() {}
 // LLM-HARNESS-END: us-8016e11c
 
 // LLM-HARNESS-BEGIN: us-8016e198
-extern "C" void func_8016CE3C() {}
+extern "C" int func_8016CE3C(void* arg) {
+    unsigned int v = *(unsigned short*)((char*)arg + 8);
+    return (int)(((v | 0xFFFFFFFCu) - ((v - 3u) >> 1)) >> 31);
+}
 // LLM-HARNESS-END: us-8016e198
 
 // LLM-HARNESS-BEGIN: us-8016e1b8
@@ -1429,11 +1432,15 @@ extern "C" int func_8016DECC() { return 1; }
 // LLM-HARNESS-END: us-8016f280
 
 // LLM-HARNESS-BEGIN: us-8016f288
-extern "C" void func_8016DED4() {}
+extern "C" void func_8016DED4(void* thisPtr, int index, unsigned int value) {
+    if (index < 2) {
+        ((unsigned int*)((char*)thisPtr + 0x14))[index] = value;
+    }
+}
 // LLM-HARNESS-END: us-8016f288
 
 // LLM-HARNESS-BEGIN: us-8016f2a0
-extern "C" void __dt__Q22cf15CfResReloadImplFv() {}
+extern "C" void* __dt__Q22cf15CfResReloadImplFv(void* this_, int deletingFlag) { if (this_ && deletingFlag > 0) ::operator delete(this_); return this_; }
 // LLM-HARNESS-END: us-8016f2a0
 
 // LLM-HARNESS-BEGIN: us-8016f2e0
@@ -1442,7 +1449,15 @@ extern "C" u16 func_8016DF2C() { return lbl_eu_80664278; }
 // LLM-HARNESS-END: us-8016f2e0
 
 // LLM-HARNESS-BEGIN: us-8016f2e8
-extern "C" void func_8016DF34() {}
+extern "C" float lbl_eu_806676B0;
+extern "C" float lbl_eu_80666210;
+extern "C" float lbl_eu_80664284;
+
+extern "C" void func_8016DF34(short param_1)
+{
+    lbl_eu_80664278 = param_1;
+    lbl_eu_80664284 = lbl_eu_806676B0 * lbl_eu_80666210;
+}
 // LLM-HARNESS-END: us-8016f2e8
 
 // LLM-HARNESS-BEGIN: us-8016f300

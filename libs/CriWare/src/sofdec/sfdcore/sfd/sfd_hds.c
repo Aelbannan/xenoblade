@@ -43,11 +43,40 @@ void sfhds_AnlyVideo() {}
 // LLM-HARNESS-END: us-803c3070
 
 // LLM-HARNESS-BEGIN: us-803c32a4
-void SFHDS_GetMuxVerNum() {}
+typedef struct {
+    unsigned char pad0[0x88];
+    int field_0x88;
+    int field_0x8c;
+    int field_0x90;
+} SfdHdsStruct;
+
+int SFHDS_GetMuxVerNum(SfdHdsStruct* this) {
+    if (this->field_0x88 == 0) {
+        return 0;
+    }
+    return this->field_0x8c * 100 + this->field_0x90;
+}
 // LLM-HARNESS-END: us-803c32a4
 
 // LLM-HARNESS-BEGIN: us-803c32cc
-void SFHDS_GetColType() {}
+int SFHDS_GetColType(void* obj) {
+    struct SubStruct {
+        unsigned char pad[0x14];
+        int field_14;
+        int field_18;
+    };
+    struct MainStruct {
+        unsigned char pad0[0x88];
+        int flag;
+        unsigned char pad1[0x58];
+        struct SubStruct sub;
+    };
+    struct MainStruct* p = (struct MainStruct*)obj;
+    if (p->flag == 0) return -1;
+    struct SubStruct* s = &p->sub;
+    if (s->field_14 == 0) return -1;
+    return s->field_18;
+}
 // LLM-HARNESS-END: us-803c32cc
 
 // LLM-HARNESS-BEGIN: us-803c3300

@@ -756,7 +756,12 @@ void ADXSTM_ReleaseFile() {}
 // LLM-HARNESS-END: us-80384324
 
 // LLM-HARNESS-BEGIN: us-803844a8
-void ADXSTM_IsOpened() {}
+int ADXSTM_IsOpened(const void* self) {
+    const signed char* b = (const signed char*)self;
+    if (b[0x4a] != 0) return 1;
+    if (b[0x49] != 0) return 0;
+    return b[0x4d] != 0 ? 1 : 0;
+}
 // LLM-HARNESS-END: us-803844a8
 
 // LLM-HARNESS-BEGIN: us-803844e8
@@ -814,7 +819,11 @@ void ADXSTM_ExecServer() {}
 // LLM-HARNESS-END: us-803850ac
 
 // LLM-HARNESS-BEGIN: us-80385130
-void ADXSTM_ExecFsSvr() {}
+void ADXSTM_ExecFsSvr(void) {
+    ADXCRS_Enter();
+    cvFsExecServer();
+    ADXCRS_Leave();
+}
 // LLM-HARNESS-END: us-80385130
 
 // LLM-HARNESS-BEGIN: us-80385158

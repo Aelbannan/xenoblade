@@ -1384,7 +1384,12 @@ void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(void* self, cons
 extern "C" void __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT() {}
 // LLM-HARNESS-END: us-804083c8
 // LLM-HARNESS-BEGIN: us-804083f4
-extern "C" void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage() {}
+extern "C" void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(void *dst, const void *src) {
+    ((unsigned char*)dst)[0] = ((const unsigned char*)src)[0];
+    ((unsigned char*)dst)[1] = ((const unsigned char*)src)[1];
+    ((unsigned char*)dst)[2] = ((const unsigned char*)src)[2];
+    ((unsigned char*)dst)[3] = ((const unsigned char*)src)[3];
+}
 // LLM-HARNESS-END: us-804083f4
 // LLM-HARNESS-BEGIN: us-80408418
 extern "C" void __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage() {}

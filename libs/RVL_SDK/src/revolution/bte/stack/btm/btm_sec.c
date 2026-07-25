@@ -53,7 +53,13 @@ void btm_sec_init() {}
 // LLM-HARNESS-END: us-802ef568
 
 // LLM-HARNESS-BEGIN: us-802ef584
-void btm_sec_dev_reset() {}
+void btm_sec_dev_reset() {
+    extern unsigned char btm_cb[];
+    if (btm_cb[0x1978] == 3) {
+        btsnd_hcic_write_auth_enable(1);
+        btsnd_hcic_write_encr_mode(1);
+    }
+}
 // LLM-HARNESS-END: us-802ef584
 
 // LLM-HARNESS-BEGIN: us-802ef5c4

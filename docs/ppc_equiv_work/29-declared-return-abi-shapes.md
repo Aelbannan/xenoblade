@@ -1,6 +1,7 @@
 # 29 — Declared-return ABI shapes for EQUIVALENT_MATCH
 
-Status: plan v2 (adversarially reviewed; findings folded in). Motivating case:
+Status: **implemented + remediated** (two adversarial reviews; see §7).
+Motivating case:
 `__prep_buffer` (`us-802c06ec`, MSL `buffer_io.c`) — pure Chaitin register-swap
 vs retail, proven memory-equivalent, but the auto contract keeps `r4` as a
 live-out (i64-return-half assumption) so the proof fails on a dead volatile.
@@ -298,6 +299,41 @@ T1∥T2∥T3∥T4 in parallel against the frozen API in §2.4, the
 `declared-return:<type>` source convention, and the §2.6 enum. Coordinator
 integrates, runs the full suite plus live verification, then an adversary
 agent re-reviews the merged diff.
+
+## 7. Implementation record
+
+Implemented by flash-agent tasks T1–T4 against §2–§5, then remediated after a
+second adversarial review of the merged diff. Remediation highlights:
+
+- forced narrowing now always records `declared_return_forced` in the
+  certificate (was unreachable code);
+- CLI `check-unit` resolves the registry target by symbol so the §2.8 gate
+  runs on the CLI path too; `--declared-return` without a registry target is
+  an error unless `--force-declared-return`;
+- gate refusals appear in the probe detail (were silent);
+- `proof_request_identity`/`source_hash` bind the declaration;
+- staleness check normalizes non-narrowing declarations (aggregate/f128) so
+  they no longer poison certificates;
+- symbol-mismatch INVALID_INPUT scoped to actual declaration application;
+- gate is fail-closed on missing call-graph fields; unsupported CLI flag
+  combinations hard-error; dict-path tier computation also capped at C;
+- declaration resolution uses `project.config` (not a disk reload);
+- audit fields (`declared_return`, `declared_return_forced`) are merged into
+  `result.contract_resolution.abi_shape` so certificates and the tier cap
+  see them;
+- vacuous tests (C1 third, C3, C8, C4, C6) rewritten to execute the real
+  code paths; mutation checks confirm the gate-refusal and forced-marker
+  tests fail when the implementation is reverted.
+
+Verification: 82 declared-return tests green; coop suite 171 (3 pre-existing
+failures, unchanged with tools/ stashed); ppc_equivalence suite green except
+pre-existing `test_mmio_distinct_attestations_from_memory_bus` (fails at
+baseline too) and two load-dependent flakes; differential 362/362; fixture
+blob + docs_sync clean. Live: `us-802c06ec` ACCEPTED at EQUIVALENT_MATCH
+(tier C, certificate carries `declared_return: void`); engine pin updated in
+coop.json (`allowed_engine_sha256`). Note: the engine change invalidates
+older certificates (`targets validate` reports engine_hash staleness) —
+recovery is the standard `targets recertify --bottom-up` flow.
 
 ## 6. Explicit non-goals (v1)
 

@@ -728,7 +728,11 @@ int SFMEM_Finish(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c36f0
 
 // LLM-HARNESS-BEGIN: us-803c36f8
-void SFMEM_ExecServer() {}
+int SFMEM_ExecServer(void* p) {
+    unsigned int val = *(unsigned int*)((char*)p + 0x1fec);
+    SFBUF_SetPrepFlg(p, val, 1);
+    return 0;
+}
 // LLM-HARNESS-END: us-803c36f8
 
 // LLM-HARNESS-BEGIN: us-803c3724

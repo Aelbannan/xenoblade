@@ -1339,7 +1339,12 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-80125dec
-extern "C" int func_80125B00(void* self) { return 0; }
+extern "C" void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCL(void* self, int deleting) {
+    if (self && deleting > 0) {
+        ::operator delete(self);
+    }
+    return self;
+}
 // LLM-HARNESS-END: us-80125dec
 
 // LLM-HARNESS-BEGIN: us-8012606c
@@ -1399,7 +1404,16 @@ extern "C" void func_801258D0() {}
 // LLM-HARNESS-END: us-801263ac
 
 // LLM-HARNESS-BEGIN: us-801263d4
-extern "C" void func_801258F8() {}
+extern "C" void func_801258F8(void* obj, unsigned char a, unsigned char b, float c) {
+    unsigned char* base = (unsigned char*)obj;
+    base[0] = a;
+    base[1] = 0;
+    base[2] = 0;
+    base[3] = 0;
+    *(unsigned short*)(base + 4) = 0;
+    base[6] = b;
+    *(float*)(base + 8) = c;
+}
 // LLM-HARNESS-END: us-801263d4
 
 // LLM-HARNESS-BEGIN: us-801263f8
@@ -1419,7 +1433,17 @@ extern "C" void __ct__CTagProcessorBase() {}
 // LLM-HARNESS-END: us-80126488
 
 // LLM-HARNESS-BEGIN: us-80126508
-extern "C" void func_80125A2C() {}
+extern "C" void func_80125A2C(void* r3, const void* r4) {
+    unsigned char* dst = (unsigned char*)r3;
+    const unsigned char* src = (const unsigned char*)r4;
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
+    *(unsigned short*)(dst + 4) = *(const unsigned short*)(src + 4);
+    dst[6] = src[6];
+    *(float*)(dst + 8) = *(const float*)(src + 8);
+}
 // LLM-HARNESS-END: us-80126508
 
 // LLM-HARNESS-BEGIN: us-80126544
@@ -1504,7 +1528,11 @@ extern "C" void func_80127BC4() {}
 // LLM-HARNESS-END: us-8012869c
 
 // LLM-HARNESS-BEGIN: us-801286b0
-extern "C" void func_80127BD8() {}
+extern "C" void func_80127BD8(float* dst, const float* src) {
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+}
 // LLM-HARNESS-END: us-801286b0
 
 // LLM-HARNESS-BEGIN: us-801286cc
@@ -1564,7 +1592,11 @@ extern "C" void func_80128B0C() {}
 // LLM-HARNESS-END: us-801295d8
 
 // LLM-HARNESS-BEGIN: us-8012964c
-extern "C" void func_80128B80() {}
+extern "C" void* func_80128B80(void* arg1, void* arg2) {
+    extern void func_8013BDE4(void*);
+    func_8013BDE4(arg1);
+    return arg2;
+}
 // LLM-HARNESS-END: us-8012964c
 
 // LLM-HARNESS-BEGIN: us-8012967c

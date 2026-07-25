@@ -49,7 +49,9 @@ extern "C" void func_8015C214() {}
 // LLM-HARNESS-END: us-8015d2e4
 
 // LLM-HARNESS-BEGIN: us-8015d364
-extern "C" void func_8015C294() {}
+extern "C" bool func_8015C294(unsigned int* param1, int param2) {
+    return param1[param2 + 1] != 0;
+}
 // LLM-HARNESS-END: us-8015d364
 
 // LLM-HARNESS-BEGIN: us-8015d380

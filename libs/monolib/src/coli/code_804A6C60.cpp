@@ -418,7 +418,14 @@ extern "C" void func_804B1C9C() {}
 // LLM-HARNESS-END: us-804b5df8
 
 // LLM-HARNESS-BEGIN: us-804b5f1c
-extern "C" void func_804B1DC0() {}
+extern "C" void func_804B1DC0(void* self, int arg) {
+    int* flags = (int*)((char*)self + 0xa8);
+    if (arg != 0) {
+        *flags &= ~0x100;
+    } else {
+        *flags = (*flags | 0x100) & ~0x0E;
+    }
+}
 // LLM-HARNESS-END: us-804b5f1c
 
 // LLM-HARNESS-BEGIN: us-804b5f48

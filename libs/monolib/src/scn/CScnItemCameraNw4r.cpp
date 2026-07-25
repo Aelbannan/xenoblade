@@ -5,7 +5,8 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-80485e3c
-extern "C" void func_80482038(void* self) { ((void(*)(void*))IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE)((char*)self + 0x2b8); }
+extern "C" u32 lbl_eu_8056DC90;
+void func_80482038(void* self) { ((void(*)(void*))IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE)((char*)self + 0x2b8); }
 // LLM-HARNESS-END: us-80485e3c
 
 // LLM-HARNESS-BEGIN: us-80485e78

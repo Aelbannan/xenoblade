@@ -25,7 +25,7 @@ void mwPlyStartFnameRangeLp() {}
 // LLM-HARNESS-END: us-803a07a0
 
 // LLM-HARNESS-BEGIN: us-803a0938
-void MWSFLSC_IsFsStatErr() {}
+int MWSFLSC_IsFsStatErr(void) { extern int LSC_GetStat(void); return (LSC_GetStat() == 3) ? 1 : 0; }
 // LLM-HARNESS-END: us-803a0938
 
 // LLM-HARNESS-BEGIN: us-803a0964

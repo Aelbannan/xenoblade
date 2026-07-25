@@ -88,7 +88,11 @@ extern "C" void func_80270AD8() {}
 // LLM-HARNESS-END: us-80272f5c
 
 // LLM-HARNESS-BEGIN: us-80272f70
-extern "C" void func_80270AEC() {}
+extern "C" void* func_80270AEC(void* self, int param) {
+    if (param >= 256) return 0;
+    unsigned char byte = ((unsigned char*)self)[0x100a];
+    return (void*)((unsigned char*)self + (byte << 11) + ((param & 0xFF) << 3));
+}
 // LLM-HARNESS-END: us-80272f70
 
 // LLM-HARNESS-BEGIN: us-80272f98

@@ -165,20 +165,108 @@ class C3RegistryLookupTest(unittest.TestCase):
     """C3: registry → _prove_bytes lookup."""
 
     def test_key_error_treated_as_no_declaration(self) -> None:
-        """KeyError on get_target → no narrowing."""
+        """Registry lookup KeyError (unknown target id) → proof proceeds un-narrowed."""
         from tools.ppc_equivalence.abi_infer import abi_shape_from_declared_return
-        # Just verify that no declaration resolves to None
         self.assertIsNone(abi_shape_from_declared_return(None))
         self.assertIsNone(abi_shape_from_declared_return(""))
 
-    def test_symbol_mismatch_invalid_input(self) -> None:
-        """If registry target symbol differs from proved symbol → INVALID_INPUT."""
-        # This verifies the _prove_bytes logic would reject symbol mismatch.
-        # The actual check is in _prove_bytes; we verify the parameter exists.
+        # Execute the real lookup path: a target_id absent from the registry
+        # is refused by the certified-callee loader (fail closed, no crash,
+        # no narrowing) before the declaration resolution is ever reached.
+        if not _HAS_Z3:
+            self.skipTest("z3 required for engine proofs")
+        probe = self._probe_missing_target()
+        self.assertEqual(
+            probe.status, ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE, probe.detail,
+        )
+        self.assertNotIn("declared-return:void", probe.detail)
+
+    def _probe_missing_target(self):
+        from tools.coop.lib.project import ObjdiffUnit, Project
         from tools.coop.lib.equivalence_check import prove_unit_symbol
-        import inspect
-        sig = inspect.signature(prove_unit_symbol)
-        self.assertIn("declared_return", sig.parameters)
+        from tools.ppc_equivalence.tests.test_elf_symbols import build_reloc_elf
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tools/coop").mkdir(parents=True)
+            (root / "build/us").mkdir(parents=True)
+            config = CoopConfig(project_root=root, region="us")
+            symbol = "func_gate"
+            retail = root / "build/us/retail.o"
+            decomp = root / "build/us/decomp.o"
+            retail.write_bytes(build_reloc_elf({symbol: _GATE_RETAIL}))
+            decomp.write_bytes(build_reloc_elf({symbol: _GATE_CANDIDATE}))
+            (root / "build/us/objdiff.json").write_text(
+                json.dumps({"units": [{
+                    "name": "demo/Gate",
+                    "target_path": "build/us/retail.o",
+                    "base_path": "build/us/decomp.o",
+                }]}),
+                encoding="utf-8",
+            )
+            (root / "tools/coop/targets.json").write_text(
+                json.dumps({"schema_version": 2, "targets": []}),
+                encoding="utf-8",
+            )
+            project = Project(config)
+            unit = ObjdiffUnit(
+                name="demo/Gate", target_path=retail, base_path=decomp,
+                source_path=None,
+            )
+            return prove_unit_symbol(project, unit, symbol, target_id="test-missing-target")
+
+    def test_symbol_mismatch_invalid_input(self) -> None:
+        """Registry target symbol != proved symbol → INVALID_INPUT (fail closed)."""
+        if not _HAS_Z3:
+            self.skipTest("z3 required for engine proofs")
+        from tools.coop.lib.project import ObjdiffUnit, Project
+        from tools.coop.lib.equivalence_check import prove_unit_symbol
+        from tools.ppc_equivalence.tests.test_elf_symbols import build_reloc_elf
+
+        symbol = "func_gate"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tools/coop").mkdir(parents=True)
+            (root / "build/us").mkdir(parents=True)
+            config = CoopConfig(project_root=root, region="us")
+            retail = root / "build/us/retail.o"
+            decomp = root / "build/us/decomp.o"
+            retail.write_bytes(build_reloc_elf({symbol: _GATE_RETAIL}))
+            decomp.write_bytes(build_reloc_elf({symbol: _GATE_CANDIDATE}))
+            (root / "build/us/objdiff.json").write_text(
+                json.dumps({"units": [{
+                    "name": "demo/Gate",
+                    "target_path": "build/us/retail.o",
+                    "base_path": "build/us/decomp.o",
+                }]}),
+                encoding="utf-8",
+            )
+            # Registry row for the SAME id declares a DIFFERENT symbol.
+            (root / "tools/coop/targets.json").write_text(
+                json.dumps({
+                    "schema_version": 2,
+                    "targets": [{
+                        "id": "test-mismatch-target",
+                        "symbol": "other_func",
+                        "address": "0x80001000",
+                        "function": "other_func",
+                        "unit": "demo/Gate",
+                        "region": "us",
+                        "declared_return": "void",
+                    }],
+                }),
+                encoding="utf-8",
+            )
+            project = Project(config)
+            unit = ObjdiffUnit(
+                name="demo/Gate", target_path=retail, base_path=decomp,
+                source_path=None,
+            )
+            probe = prove_unit_symbol(
+                project, unit, symbol, target_id="test-mismatch-target",
+            )
+            self.assertEqual(probe.status, ProofStatus.INVALID_INPUT, probe.detail)
+            self.assertIn("differs from proved symbol", probe.detail)
 
     def test_registry_declared_return_loaded_via_extra(self) -> None:
         """declared_return lives in Target.extra and round-trips."""
@@ -440,39 +528,243 @@ class C6ByteIdenticalCertifyTest(unittest.TestCase):
                                   "Byte-identical certify with no declared_return "
                                   "should not contain declared_return in certificate")
 
+    def test_certify_byte_identical_summary_semantics(self) -> None:
+        """C6: byte-identical certify semantics are explicit and un-narrowed.
 
+        The byte-identical path issues an empty summary by design (no SMT
+        prove, no body-analysis summary); the r4-in-writes invariant for
+        PROVEN certificates is asserted in C8's forced-marker test instead.
+        """
+        from tools.coop.lib.project import ObjdiffUnit, Project
+        from tools.coop.lib.equivalence_check import certify_unit_symbol
+        from tools.ppc_equivalence.tests.test_elf_symbols import build_reloc_elf
+
+        _SYMBOL = "func__3LeafFv"
+        # li r4,1 ; addi r3,r3,5 ; blr — writes r4 and r3.
+        body = bytes.fromhex("38800001 38630004 4e800020")
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tools/coop").mkdir(parents=True)
+            (root / "build/us").mkdir(parents=True)
+            config = CoopConfig(project_root=root, region="us")
+
+            elf_bytes = build_reloc_elf({_SYMBOL: body})
+            retail = root / "build/us/retail.o"
+            decomp = root / "build/us/decomp.o"
+            retail.write_bytes(elf_bytes)
+            decomp.write_bytes(elf_bytes)
+
+            (root / "build/us/objdiff.json").write_text(
+                json.dumps({
+                    "units": [{
+                        "name": "demo/CertifyLeaf",
+                        "target_path": "build/us/retail.o",
+                        "base_path": "build/us/decomp.o",
+                    }]
+                }),
+                encoding="utf-8",
+            )
+            (root / "tools/coop/targets.json").write_text(
+                json.dumps({
+                    "schema_version": 2,
+                    "default_required_level": "EQUIVALENT_MATCH",
+                    "targets": [{
+                        "id": "test-certify-r4-writes",
+                        "symbol": _SYMBOL,
+                        "address": "0x80001000",
+                        "function": _SYMBOL,
+                        "unit": "demo/CertifyLeaf",
+                        "region": "us",
+                        "status": "FULL_MATCH",
+                        "called_functions": [],
+                        "abi_helper_calls": [],
+                    }]
+                }),
+                encoding="utf-8",
+            )
+
+            project = Project(config)
+            unit = ObjdiffUnit(
+                name="demo/CertifyLeaf",
+                target_path=retail,
+                base_path=decomp,
+                source_path=None,
+            )
+
+            probe = certify_unit_symbol(project, unit, _SYMBOL, "test-certify-r4-writes")
+            self.assertEqual(probe.status, ProofStatus.EQUIVALENT, probe.detail)
+            certificate = probe.certificate
+            self.assertIsNotNone(certificate)
+            assert certificate is not None
+            # Byte-identical path: empty summary, no narrowing, no declaration.
+            summary = certificate.get("summary") or {}
+            self.assertEqual(summary.get("writes"), [])
+            cert_abi = certificate.get("abi_shape")
+            if isinstance(cert_abi, dict):
+                self.assertNotIn("declared_return", cert_abi)
+
+
+# Reg-swapped pair (same shape as __prep_buffer P1): identical memory
+# effects, r4 used as scratch in the candidate only. Proves EQUIVALENT only
+# when declared-return narrowing is applied.
+_GATE_RETAIL = bytes.fromhex(
+    "80830000 80C30004 80A30008 "
+    "90830018 90C30024 90A30028 90C30034 "
+    "38600000 4E800020"
+)
+_GATE_CANDIDATE = bytes.fromhex(
+    "80A30000 80830004 80C30008 "
+    "90A30018 90830024 90C30028 90830034 "
+    "38600000 4E800020"
+)
+
+
+@unittest.skipUnless(_HAS_Z3, "z3 required for engine proofs")
 class C8CallerCorroborationGateTest(unittest.TestCase):
-    """C8: §2.8 gate — narrowing is refused unless conditions met."""
+    """C8: §2.8 gate — narrowing is refused unless conditions met.
 
-    def test_abi_shape_from_declared_returns_none_for_aggregate(self) -> None:
-        """aggregate and f128 return None from abi_shape_from_declared_return."""
-        self.assertIsNone(abi_shape_from_declared_return("aggregate"))
-        self.assertIsNone(abi_shape_from_declared_return("f128"))
+    These tests execute the real gate inside ``_prove_bytes`` via
+    ``prove_unit_symbol`` against a synthetic registry; they fail if the
+    gate, the refusal detail, or the forced-marker recording is removed.
+    """
 
-    def test_declared_void_abi_shape_not_none(self) -> None:
-        """Known declarations return a non-None shape."""
-        self.assertIsNotNone(abi_shape_from_declared_return("void"))
-        self.assertIsNotNone(abi_shape_from_declared_return("i32"))
-        self.assertIsNotNone(abi_shape_from_declared_return("i64"))
+    _SYMBOL = "func_gate"
 
-    def test_force_declared_return_parameter_exists(self) -> None:
-        """Verify force_declared_return parameter is accepted by prove_unit_symbol."""
+    def _run_probe(
+        self,
+        target_row: dict[str, Any],
+        extra_rows: list[dict[str, Any]] | None = None,
+        *,
+        force: bool = False,
+    ):
+        from tools.coop.lib.project import ObjdiffUnit, Project
         from tools.coop.lib.equivalence_check import prove_unit_symbol
-        import inspect
-        sig = inspect.signature(prove_unit_symbol)
-        self.assertIn("force_declared_return", sig.parameters)
-        self.assertIn("declared_return", sig.parameters)
+        from tools.ppc_equivalence.tests.test_elf_symbols import build_reloc_elf
 
-    def test_gate_logic_conditions(self) -> None:
-        """Test that gate refusal conditions are properly checked."""
-        # The gate refusal is implemented inside _prove_bytes and tests
-        # indirectly via the CLI. We verify the conceptual logic here.
-        # With no registry (no target_id), gate_refused defaults to False
-        # since force_declared_return is not set and there's no registry
-        # target to check.
-        from tools.coop.lib.equivalence_check import prove_unit_symbol
-        self.assertTrue(hasattr(prove_unit_symbol, "__call__"))
-        self.assertTrue(callable(prove_unit_symbol))
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "tools/coop").mkdir(parents=True)
+            (root / "build/us").mkdir(parents=True)
+            config = CoopConfig(project_root=root, region="us")
+
+            retail = root / "build/us/retail.o"
+            decomp = root / "build/us/decomp.o"
+            retail.write_bytes(build_reloc_elf({self._SYMBOL: _GATE_RETAIL}))
+            decomp.write_bytes(build_reloc_elf({self._SYMBOL: _GATE_CANDIDATE}))
+
+            (root / "build/us/objdiff.json").write_text(
+                json.dumps({
+                    "units": [{
+                        "name": "demo/Gate",
+                        "target_path": "build/us/retail.o",
+                        "base_path": "build/us/decomp.o",
+                    }]
+                }),
+                encoding="utf-8",
+            )
+            rows = [target_row] + list(extra_rows or [])
+            (root / "tools/coop/targets.json").write_text(
+                json.dumps({
+                    "schema_version": 2,
+                    "default_required_level": "EQUIVALENT_MATCH",
+                    "targets": rows,
+                }),
+                encoding="utf-8",
+            )
+
+            project = Project(config)
+            unit = ObjdiffUnit(
+                name="demo/Gate",
+                target_path=retail,
+                base_path=decomp,
+                source_path=None,
+            )
+            return prove_unit_symbol(
+                project, unit, self._SYMBOL,
+                target_id=target_row["id"],
+                declared_return="void",
+                force_declared_return=force,
+            )
+
+    @staticmethod
+    def _row(**overrides: Any) -> dict[str, Any]:
+        row: dict[str, Any] = {
+            "id": "test-gate-target",
+            "symbol": "func_gate",
+            "address": "0x80001000",
+            "function": "func_gate",
+            "unit": "demo/Gate",
+            "region": "us",
+            "declared_return": "void",
+            "has_indirect_calls": False,
+            "unresolved_called_functions": [],
+            "called_functions": [],
+            "callgraph_status": "complete",
+        }
+        row.update(overrides)
+        return row
+
+    _CALLER_ROW: dict[str, Any] = {
+        "id": "test-gate-caller",
+        "symbol": "func_caller",
+        "address": "0x80002000",
+        "function": "func_caller",
+        "unit": "demo/Gate",
+        "region": "us",
+        "called_functions": ["test-gate-target"],
+    }
+
+    def test_gate_allows_with_direct_caller(self) -> None:
+        probe = self._run_probe(self._row(), [self._CALLER_ROW])
+        self.assertEqual(probe.status, ProofStatus.EQUIVALENT, probe.detail)
+        self.assertIn("declared-return:void", probe.detail)
+
+    def test_indirect_calls_blocked_before_gate(self) -> None:
+        # Targets with unresolved indirect calls are refused by the earlier
+        # callgraph-certification block (_callgraph_blocks_certification),
+        # which pre-empts the §2.8 gate entirely — an even stronger refusal.
+        probe = self._run_probe(
+            self._row(has_indirect_calls=True), [self._CALLER_ROW],
+        )
+        self.assertEqual(
+            probe.status, ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE, probe.detail,
+        )
+
+    def test_gate_refuses_no_direct_caller(self) -> None:
+        probe = self._run_probe(self._row())
+        self.assertEqual(probe.status, ProofStatus.NOT_EQUIVALENT, probe.detail)
+        self.assertIn("declared-return narrowing refused", probe.detail)
+        self.assertIn("no direct caller", probe.detail)
+
+    def test_gate_refuses_incomplete_callgraph(self) -> None:
+        probe = self._run_probe(
+            self._row(callgraph_status="partial"), [self._CALLER_ROW],
+        )
+        self.assertEqual(probe.status, ProofStatus.NOT_EQUIVALENT, probe.detail)
+        self.assertIn("declared-return narrowing refused", probe.detail)
+
+    def test_force_overrides_gate_and_records_marker(self) -> None:
+        probe = self._run_probe(self._row(), force=True)
+        self.assertEqual(probe.status, ProofStatus.EQUIVALENT, probe.detail)
+        certificate = probe.certificate
+        self.assertIsNotNone(certificate)
+        assert certificate is not None
+        cert_abi = certificate.get("abi_shape")
+        self.assertIsInstance(cert_abi, dict)
+        self.assertEqual(cert_abi.get("declared_return"), "void")
+        self.assertTrue(
+            cert_abi.get("declared_return_forced"),
+            "forced narrowing must record declared_return_forced in the certificate",
+        )
+        # Load-bearing invariant (plan §3.2): even for a narrowed callee, the
+        # certified summary derives writes from body analysis, so r4 stays
+        # visible to any parent proof.
+        summary = certificate.get("summary") or {}
+        writes = summary.get("writes") or []
+        self.assertIn(
+            "r4", writes,
+            "narrowed callee summary must keep r4 in writes for parent proofs",
+        )
 
 
 if __name__ == "__main__":

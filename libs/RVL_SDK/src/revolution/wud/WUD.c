@@ -3062,7 +3062,13 @@ void __wudInitDevInfo() {}
 void __wudNandResultCallback() {}
 // LLM-HARNESS-END: us-8037b020
 // LLM-HARNESS-BEGIN: us-8037b0a0
-void __wudNandFlushCallback() {}
+extern int _wudNandPhase;
+extern unsigned char _wudNandLocked;
+
+void __wudNandFlushCallback(void) {
+    _wudNandLocked = 0;
+    _wudNandPhase = _wudNandPhase + 1;
+}
 // LLM-HARNESS-END: us-8037b0a0
 // LLM-HARNESS-BEGIN: us-8037b0c0
 void __wudGetDevInfoFromWiiFit() {}

@@ -268,7 +268,14 @@ extern "C" void func_8048BD04() {}
 // LLM-HARNESS-END: us-8048fd78
 
 // LLM-HARNESS-BEGIN: us-8048fd90
-extern "C" void func_8048BD1C() {}
+extern "C" void* func_8048BD1C(void* self, unsigned int size) {
+    void* buffer = *(void**)((char*)self + 8);
+    unsigned int current = *(unsigned int*)((char*)buffer + 0x860);
+    if (size >= 0xC00 - current) return 0;
+    unsigned int newOffset = current + size;
+    *(unsigned int*)((char*)buffer + 0x860) = newOffset;
+    return (char*)buffer + current + 0x864;
+}
 // LLM-HARNESS-END: us-8048fd90
 
 // LLM-HARNESS-BEGIN: us-8048fdc4

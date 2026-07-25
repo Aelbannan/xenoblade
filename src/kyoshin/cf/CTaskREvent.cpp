@@ -97,7 +97,14 @@ extern "C" void func_80164FB4() {}
 // LLM-HARNESS-END: us-80166150
 
 // LLM-HARNESS-BEGIN: us-80166184
-extern "C" void func_80164FE8() {}
+extern "C" void* lbl_eu_80664240;
+
+extern "C" int func_80164FE8(void) {
+    int* ptr = (int*)lbl_eu_80664240;
+    if (!ptr) return 0;
+    int val = *(int*)((char*)ptr + 0x1e0);
+    return (unsigned)((-1 - val) | (val + 1)) >> 31;
+}
 // LLM-HARNESS-END: us-80166184
 
 // LLM-HARNESS-BEGIN: us-801661b0

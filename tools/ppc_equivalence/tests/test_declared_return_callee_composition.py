@@ -93,15 +93,14 @@ class CertifiedNarrowedCalleeCompositionTest(unittest.TestCase):
             "Direct r4 divergence must be NOT_EQUIVALENT",
         )
 
-    def test_r3_only_contract_with_r4_divergence_still_fails(self) -> None:
-        """Even with r4 NOT in the observables, a function that diverges on
-        r4 will still fail because the callee summary still lists r4."""
-        # Actually, if we narrow the contract to r3-only, the proof would
-        # succeed because it doesn't observe r4 at exit. The key invariant
-        # is that the CALLEE SUMMARY (used by the parent's body analysis)
-        # still reports r4 in its writes, so the parent's opaque-eabi
-        # validation catches the divergence.
-        # This is tested by test_body_analysis_detects_r4_write_in_callee.
+    # NOTE: the plan's full C1 scenario — parent calls a certified
+    # void-declared (r4-narrowed) callee via ``bl``, parent reads r4 and
+    # diverges, parent must be NOT_EQUIVALENT — is not constructible as a
+    # unit test here: the engine returns INCONCLUSIVE_ABSTRACTION for
+    # callee-involved proofs outside the certified registry context. The
+    # load-bearing half of the invariant (callee summaries derive ``writes``
+    # from body analysis, NOT from narrowed observables, so r4 stays visible
+    # to parents) is covered by test_body_analysis_detects_r4_write_in_callee.
 
 
 if __name__ == "__main__":

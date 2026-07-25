@@ -1,0 +1,1858 @@
+{
+  "EQUIVALENT": [
+    [
+      "us-8031f160",
+      99.8,
+      "GXSetTexCoordCylWrap",
+      "RVL_SDK/src/revolution/gx/GXTexture",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.7274012565612793
+    ],
+    [
+      "us-8041adf0",
+      99.167,
+      "Alloc(unsigned long)",
+      "nw4r/src/snd/snd_PlayerHeap",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.7513120174407959
+    ],
+    [
+      "us-803a7e80",
+      99.125,
+      "MPVCMC_SetCcnt",
+      "CriWare/src/sofdec/sfdcore/mpv/mpv_cmc",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6592602729797363
+    ],
+    [
+      "us-8004b1c0",
+      97.571,
+      "cf::CfObjectMove::CfObject_UnkVirtualFunc48()",
+      "kyoshin/plugin/pluginCfs",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6278047561645508
+    ],
+    [
+      "us-8006c548",
+      97.5,
+      "func_8006BAF0",
+      "kyoshin/cf/CfCam",
+      "EQUIVALENT",
+      "status: inconclusive_abstraction",
+      1.1253559589385986
+    ],
+    [
+      "us-800ace74",
+      97.0,
+      "cf::CfObject::CfObject_UnkVirtualFunc21()",
+      "kyoshin/cf/object/CfObjectColl",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6169381141662598
+    ],
+    [
+      "us-802cfde0",
+      96.875,
+      "TRK_InitializeMessageBuffers",
+      "PowerPC_EABI_Support/src/MetroTRK/msgbuf",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6070120334625244
+    ],
+    [
+      "us-8003cac0",
+      96.714,
+      "cf::CfObject::CfObject_UnkVirtualFunc22()",
+      "kyoshin/plugin/ocUnit",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6119842529296875
+    ],
+    [
+      "us-8003ced4",
+      96.714,
+      "cf::CfObject::CfObject_UnkVirtualFunc19()",
+      "kyoshin/plugin/ocUnit",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6134970188140869
+    ],
+    [
+      "us-8003f6d8",
+      96.714,
+      "cf::CfObject::CfObject_UnkVirtualFunc27()",
+      "kyoshin/plugin/ocUnit",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6194798946380615
+    ],
+    [
+      "us-80047dfc",
+      96.714,
+      "cf::CfObjectPoint::func_80047814()",
+      "kyoshin/plugin/pluginCfs",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6253402233123779
+    ],
+    [
+      "us-8031f3d0",
+      96.618,
+      "__GXSetTmemConfig",
+      "RVL_SDK/src/revolution/gx/GXTexture",
+      "EQUIVALENT",
+      "status: equivalent",
+      1.3356878757476807
+    ],
+    [
+      "us-8009f674",
+      96.0,
+      "func_8009EC9C",
+      "kyoshin/cf/CtrlObjectParam",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6246030330657959
+    ],
+    [
+      "us-803cef9c",
+      96.0,
+      "SFD_SetSfdHeaderFn",
+      "CriWare/src/sofdec/sfdcore/sfd/sfd_set",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.6136400699615479
+    ],
+    [
+      "us-800b0f70",
+      95.556,
+      "func_800B06A4",
+      "kyoshin/code_800B06A4",
+      "EQUIVALENT",
+      "status: inconclusive_abstraction",
+      1.3217182159423828
+    ],
+    [
+      "us-800b6e1c",
+      73.889,
+      "func_800B6520",
+      "kyoshin/code_800B06A4",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.8981831073760986
+    ],
+    [
+      "us-8038a328",
+      71.429,
+      "adxb_DefAddWr",
+      "CriWare/src/adx/adxt/adx_bsc",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.8374199867248535
+    ],
+    [
+      "us-803d3a48",
+      65.0,
+      "VER1_AnlyHdrSfhVer",
+      "CriWare/src/sofdec/sfdcore/sfh/sfh_ver1",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.870924711227417
+    ],
+    [
+      "us-8004bf20",
+      61.667,
+      "func_8004B848",
+      "kyoshin/action/CActParamAnim",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.8278288841247559
+    ],
+    [
+      "us-80207074",
+      59.0,
+      "func_80205294",
+      "kyoshin/CEquipChange",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.8271727561950684
+    ],
+    [
+      "us-8031eb20",
+      50.0,
+      "GXInitTexObjFilter",
+      "RVL_SDK/src/revolution/gx/GXTexture",
+      "EQUIVALENT",
+      "status: equivalent",
+      0.8491201400756836
+    ]
+  ],
+  "NOT_EQUIVALENT": [
+    [
+      "us-80415d74",
+      99.929,
+      "GetAmbientPriority(R, C, Q, 5, 4, n, wchar_t, 4, r, 3, short, n, double, 6, double, e, t, a, int, long, 1, 0, B, a, short, int, char, S, o, u, n, double, 1, 1, A, m, bool, int, e, n, t, I, n, float, o, long)",
+      "nw4r/src/snd/snd_BasicSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7346889972686768
+    ],
+    [
+      "us-8032db80",
+      99.714,
+      "getSelectBtnNum()",
+      "RVL_SDK/src/revolution/hbm/HBMBase",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.6091279983520508
+    ],
+    [
+      "us-801a42f0",
+      99.615,
+      "cf::CTaskCulling::func_801A2BD0(unsigned long)",
+      "kyoshin/cf/CTaskCulling",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.6757540702819824
+    ],
+    [
+      "us-8042e3d8",
+      99.524,
+      "constructor()",
+      "nw4r/src/ut/ut_RomFont",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7471551895141602
+    ],
+    [
+      "us-8003d354",
+      99.5,
+      "cf::CfObject::CfObject_UnkVirtualFunc50()",
+      "kyoshin/plugin/ocUnit",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5453348159790039
+    ],
+    [
+      "us-800693a0",
+      99.5,
+      "func_80068998",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5568790435791016
+    ],
+    [
+      "us-800693c0",
+      99.5,
+      "func_800689B8",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5273220539093018
+    ],
+    [
+      "us-800693d0",
+      99.5,
+      "func_800689C8",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5243520736694336
+    ],
+    [
+      "us-800693e8",
+      99.5,
+      "func_eu_800693E8",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5228018760681152
+    ],
+    [
+      "us-800693f0",
+      99.5,
+      "func_800689E0",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5281591415405273
+    ],
+    [
+      "us-800693f8",
+      99.5,
+      "func_800689E8",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5262489318847656
+    ],
+    [
+      "us-80069400",
+      99.5,
+      "func_800689F0",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5606222152709961
+    ],
+    [
+      "us-80069408",
+      99.5,
+      "func_800689F8",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5230541229248047
+    ],
+    [
+      "us-80069410",
+      99.5,
+      "func_80068A00",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5518441200256348
+    ],
+    [
+      "us-80069418",
+      99.5,
+      "func_80068A08",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5290579795837402
+    ],
+    [
+      "us-80069420",
+      99.5,
+      "func_80068A10",
+      "kyoshin/cf/IResInfo",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5405051708221436
+    ],
+    [
+      "us-803e42a8",
+      99.5,
+      "GetFrame()",
+      "nw4r/src/g3d/g3d_anmclr",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.6087801456451416
+    ],
+    [
+      "us-803e502c",
+      99.5,
+      "GetFrame()",
+      "nw4r/src/g3d/g3d_anmtexpat",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.6091368198394775
+    ],
+    [
+      "us-803e5a58",
+      99.5,
+      "GetFrame()",
+      "nw4r/src/g3d/g3d_anmtexsrt",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.6104040145874023
+    ],
+    [
+      "us-803e7604",
+      99.5,
+      "GetFrame()",
+      "nw4r/src/g3d/g3d_anmchr",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.6215128898620605
+    ],
+    [
+      "us-80427a94",
+      99.5,
+      "IsPrepared()",
+      "nw4r/src/snd/snd_StrmSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.535153865814209
+    ],
+    [
+      "us-801a1bc0",
+      99.412,
+      "COccCulling::COccCulling()",
+      "kyoshin/COccCulling",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5997729301452637
+    ],
+    [
+      "us-80040a6c",
+      99.375,
+      "CTaskGame::func_800404F0()",
+      "kyoshin/CTaskGame",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5952308177947998
+    ],
+    [
+      "us-801c3584",
+      99.167,
+      "cf::CfPadTask::func_801C1BC0()",
+      "kyoshin/cf/CfPadTask",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8384130001068115
+    ],
+    [
+      "us-80223cac",
+      99.167,
+      "CMCCylinderGauge::CMCCylinderGauge(...*, Q, 3, 4, n, wchar_t, 4, r, 3, long, y, t, 1, 9, A, r, char, R, e, short, o, u, r, char, e, A, char, char, e, short, short, o, r)",
+      "kyoshin/makecrystal/CMCCylinderGauge",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      2.237751007080078
+    ],
+    [
+      "us-801c3454",
+      99.0,
+      "cf::CfPadTask::Init()",
+      "kyoshin/cf/CfPadTask",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5954990386962891
+    ],
+    [
+      "us-801c44f8",
+      99.0,
+      "cf::CfPadTask::wpadGetInfoCallback(long, long)",
+      "kyoshin/cf/CfPadTask",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.6829769611358643
+    ],
+    [
+      "us-801695f8",
+      98.75,
+      "func_801683FC",
+      "kyoshin/cf/CTaskREvtSequence",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5390241146087646
+    ],
+    [
+      "us-80169608",
+      98.75,
+      "func_8016840C",
+      "kyoshin/cf/CTaskREvtSequence",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5444071292877197
+    ],
+    [
+      "us-801f78c4",
+      98.75,
+      "func_801F5C08",
+      "kyoshin/cf/CfGimmickObject",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5487880706787109
+    ],
+    [
+      "us-80388ea8",
+      98.75,
+      "ADXB_SetAhxInSj",
+      "CriWare/src/adx/adxt/adx_bahx",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5853090286254883
+    ],
+    [
+      "us-8038da7c",
+      98.571,
+      "ADXT_DetachAhx",
+      "CriWare/src/adx/ahx/ahx_link",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5719959735870361
+    ],
+    [
+      "us-8009f5c0",
+      98.333,
+      "func_8009EBE8",
+      "kyoshin/cf/CtrlObjectParam",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5976991653442383
+    ],
+    [
+      "us-800b20d4",
+      98.333,
+      "func_800B1808",
+      "kyoshin/code_800B06A4",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5736591815948486
+    ],
+    [
+      "us-800b24cc",
+      98.333,
+      "func_800B1C00",
+      "kyoshin/code_800B06A4",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5713980197906494
+    ],
+    [
+      "us-80122f3c",
+      98.333,
+      "func_80122460",
+      "kyoshin/CQuestWindow",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5540602207183838
+    ],
+    [
+      "us-80415e6c",
+      98.333,
+      "__sinit_\\snd_BasicSound_cpp",
+      "nw4r/src/snd/snd_BasicSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5647518634796143
+    ],
+    [
+      "us-8042e178",
+      98.333,
+      "__sinit_\\ut_DvdFileStream_cpp",
+      "nw4r/src/ut/ut_DvdFileStream",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.561190128326416
+    ],
+    [
+      "us-800651c0",
+      98.0,
+      "func_800649F4",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5515267848968506
+    ],
+    [
+      "us-8003ccf0",
+      97.5,
+      "cf::CfObject::CfObject_UnkVirtualFunc30()",
+      "kyoshin/plugin/ocUnit",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5378909111022949
+    ],
+    [
+      "us-80040a64",
+      97.5,
+      "CTaskGame::getInstance()",
+      "kyoshin/CTaskGame",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5436670780181885
+    ],
+    [
+      "us-8005670c",
+      97.5,
+      "func_800560A4",
+      "kyoshin/action/CActParamData",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5393710136413574
+    ],
+    [
+      "us-8005671c",
+      97.5,
+      "func_800560B4",
+      "kyoshin/action/CActParamData",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5446028709411621
+    ],
+    [
+      "us-8005672c",
+      97.5,
+      "func_800560C4",
+      "kyoshin/action/CActParamData",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5415318012237549
+    ],
+    [
+      "us-8005673c",
+      97.5,
+      "func_800560D4",
+      "kyoshin/action/CActParamData",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5443301200866699
+    ],
+    [
+      "us-8005674c",
+      97.5,
+      "func_800560E4",
+      "kyoshin/action/CActParamData",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5465989112854004
+    ],
+    [
+      "us-8005675c",
+      97.5,
+      "func_800560F4",
+      "kyoshin/action/CActParamData",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.537360668182373
+    ],
+    [
+      "us-80056780",
+      97.5,
+      "func_80056118",
+      "kyoshin/action/CActParamData",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5433721542358398
+    ],
+    [
+      "us-800ac064",
+      97.5,
+      "cf::CfObjectColl::func_800AB798()",
+      "kyoshin/cf/object/CfObjectColl",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.53615403175354
+    ],
+    [
+      "us-800acebc",
+      97.5,
+      "cf::CfObject::CfObject_UnkVirtualFunc10()",
+      "kyoshin/cf/object/CfObjectColl",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5459320545196533
+    ],
+    [
+      "us-800ad5a0",
+      97.5,
+      "cf::CfObjectEff::func_800ACCD4()",
+      "kyoshin/cf/object/CfObjectEff",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5520670413970947
+    ],
+    [
+      "us-800ad618",
+      97.5,
+      "cf::CfObjectEff::func_800ACD4C()",
+      "kyoshin/cf/object/CfObjectEff",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5413601398468018
+    ],
+    [
+      "us-800ae0fc",
+      97.5,
+      "cf::CfObjectEff::func_800AD830()",
+      "kyoshin/cf/object/CfObjectEff",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5356101989746094
+    ],
+    [
+      "us-800ae10c",
+      97.5,
+      "cf::CfObjectEff::func_800AD840()",
+      "kyoshin/cf/object/CfObjectEff",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5304141044616699
+    ],
+    [
+      "us-800b042c",
+      97.5,
+      "cf::CBattleState::CBattleState_UnkVirtualFunc23()",
+      "kyoshin/cf/object/CfObjectEne",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5426270961761475
+    ],
+    [
+      "us-800b043c",
+      97.5,
+      "cf::CBattleState::CBattleState_UnkVirtualFunc22()",
+      "kyoshin/cf/object/CfObjectEne",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5369076728820801
+    ],
+    [
+      "us-800b044c",
+      97.5,
+      "cf::CBattleState::CBattleState_UnkVirtualFunc21()",
+      "kyoshin/cf/object/CfObjectEne",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5358378887176514
+    ],
+    [
+      "us-800b045c",
+      97.5,
+      "cf::CBattleState::CBattleState_UnkVirtualFunc20()",
+      "kyoshin/cf/object/CfObjectEne",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5351369380950928
+    ],
+    [
+      "us-800b5860",
+      97.5,
+      "func_800B4F64",
+      "kyoshin/code_800B06A4",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.562263011932373
+    ],
+    [
+      "us-800b7ed0",
+      97.5,
+      "func_800B75B4",
+      "kyoshin/code_800B06A4",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5933372974395752
+    ],
+    [
+      "us-800b7ed8",
+      97.5,
+      "func_800B75BC",
+      "kyoshin/code_800B06A4",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5638298988342285
+    ],
+    [
+      "us-800bb064",
+      97.5,
+      "cf::CfObjectModel::CfObject_UnkVirtualFunc33()",
+      "kyoshin/cf/object/CfObjectMap",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5394160747528076
+    ],
+    [
+      "us-800bb074",
+      97.5,
+      "cf::CfObjectModel::CfObject_UnkVirtualFunc30()",
+      "kyoshin/cf/object/CfObjectMap",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5311539173126221
+    ],
+    [
+      "us-800bf318",
+      97.5,
+      "func_800BE9AC",
+      "kyoshin/cf/object/CfObjectMove",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5384669303894043
+    ],
+    [
+      "us-800c0f4c",
+      97.5,
+      "cf::CfObjectPc::func_800C0504()",
+      "kyoshin/cf/object/CfObjectPc",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5415167808532715
+    ],
+    [
+      "us-800c0f5c",
+      97.5,
+      "cf::CfObjectPc::func_800C0514()",
+      "kyoshin/cf/object/CfObjectPc",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5404841899871826
+    ],
+    [
+      "us-800d9c70",
+      97.5,
+      "cf::CBattleManager::getInstance()",
+      "kyoshin/cf/CBattleManager",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5670909881591797
+    ],
+    [
+      "us-800eaef8",
+      97.5,
+      "func_800EA410",
+      "kyoshin/cf/CBattleManager",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5578718185424805
+    ],
+    [
+      "us-800eb480",
+      97.5,
+      "func_800EA998",
+      "kyoshin/cf/CBattleManager",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.559938907623291
+    ],
+    [
+      "us-8014a174",
+      97.5,
+      "cf::CBattleState::CBattleState_UnkVirtualFunc3()",
+      "kyoshin/cf/object/CBattleState",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5398070812225342
+    ],
+    [
+      "us-801c44f0",
+      97.5,
+      "cf::CfPadTask::getWiimoteBattery()",
+      "kyoshin/cf/CfPadTask",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5459442138671875
+    ],
+    [
+      "us-80401c84",
+      97.5,
+      "GetRuntimeTypeInfo()",
+      "nw4r/src/lyt/lyt_pane",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5713868141174316
+    ],
+    [
+      "us-8040360c",
+      97.5,
+      "GetRuntimeTypeInfo()",
+      "nw4r/src/lyt/lyt_picture",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5349359512329102
+    ],
+    [
+      "us-80405178",
+      97.5,
+      "GetRuntimeTypeInfo()",
+      "nw4r/src/lyt/lyt_textBox",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5741949081420898
+    ],
+    [
+      "us-8040772c",
+      97.5,
+      "GetRuntimeTypeInfo()",
+      "nw4r/src/lyt/lyt_window",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.544287919998169
+    ],
+    [
+      "us-804077d8",
+      97.5,
+      "GetRuntimeTypeInfo()",
+      "nw4r/src/lyt/lyt_bounding",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5459599494934082
+    ],
+    [
+      "us-80415e64",
+      97.5,
+      "GetRuntimeTypeInfo()",
+      "nw4r/src/snd/snd_BasicSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5543968677520752
+    ],
+    [
+      "us-80419904",
+      97.5,
+      "OnShutdownSoundThread()",
+      "nw4r/src/snd/snd_MidiSeqPlayer",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.558448314666748
+    ],
+    [
+      "us-8041d654",
+      97.5,
+      "GetRuntimeTypeInfo()",
+      "nw4r/src/snd/snd_SeqSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5400609970092773
+    ],
+    [
+      "us-80427a9c",
+      97.5,
+      "GetRuntimeTypeInfo()",
+      "nw4r/src/snd/snd_StrmSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5476999282836914
+    ],
+    [
+      "us-8042c288",
+      97.5,
+      "GetRuntimeTypeInfo()",
+      "nw4r/src/snd/snd_WaveSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5468697547912598
+    ],
+    [
+      "us-8042da64",
+      97.5,
+      "constructor()",
+      "nw4r/src/ut/ut_TagProcessorBase",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5445268154144287
+    ],
+    [
+      "us-803e9708",
+      96.667,
+      "GetTypeObj()",
+      "nw4r/src/g3d/g3d_obj",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5318069458007812
+    ],
+    [
+      "us-804077e0",
+      96.667,
+      "__sinit_\\lyt_bounding_cpp",
+      "nw4r/src/lyt/lyt_bounding",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5647649765014648
+    ],
+    [
+      "us-8041d65c",
+      96.667,
+      "__sinit_\\snd_SeqSound_cpp",
+      "nw4r/src/snd/snd_SeqSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5554590225219727
+    ],
+    [
+      "us-80427aa4",
+      96.667,
+      "__sinit_\\snd_StrmSound_cpp",
+      "nw4r/src/snd/snd_StrmSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5500359535217285
+    ],
+    [
+      "us-8042c290",
+      96.667,
+      "__sinit_\\snd_WaveSound_cpp",
+      "nw4r/src/snd/snd_WaveSound",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5592918395996094
+    ],
+    [
+      "us-8003c2e0",
+      96.333,
+      "cf::CfObjectMove::CfObject_UnkVirtualFunc50()",
+      "kyoshin/plugin/ocUnit",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5251250267028809
+    ],
+    [
+      "us-8003c2ec",
+      96.333,
+      "cf::CfObjectMove::CfObject_UnkVirtualFunc51()",
+      "kyoshin/plugin/ocUnit",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5372979640960693
+    ],
+    [
+      "us-80382b44",
+      96.333,
+      "ADXSJD_GetStat",
+      "CriWare/src/adx/adxt/adx_sjd",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5395359992980957
+    ],
+    [
+      "us-80385384",
+      96.333,
+      "ADXSTM_IsOpenedFile",
+      "CriWare/src/adx/adxt/adx_stmc",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5384299755096436
+    ],
+    [
+      "us-8038fd6c",
+      96.333,
+      "AHXSJD_GetStat",
+      "CriWare/src/adx/ahx/ahx_sjd",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5487689971923828
+    ],
+    [
+      "us-80245c54",
+      96.25,
+      "func_80243A9C",
+      "kyoshin/CMapSel",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5321269035339355
+    ],
+    [
+      "us-8009f694",
+      96.0,
+      "func_8009ECBC",
+      "kyoshin/cf/CtrlObjectParam",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5577812194824219
+    ],
+    [
+      "us-80062c1c",
+      95.0,
+      "func_8006251C",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.536674976348877
+    ],
+    [
+      "us-80062c24",
+      95.0,
+      "func_80062524",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5260899066925049
+    ],
+    [
+      "us-800b6274",
+      93.571,
+      "func_800B5978",
+      "kyoshin/code_800B06A4",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.5598270893096924
+    ],
+    [
+      "us-8010be00",
+      83.806,
+      "func_8010B324",
+      "kyoshin/menu/CMenuBattlePlayerState",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      5.300097942352295
+    ],
+    [
+      "us-8041accc",
+      83.333,
+      "constructor()",
+      "nw4r/src/snd/snd_PlayerHeap",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8494729995727539
+    ],
+    [
+      "us-800b5470",
+      79.0,
+      "func_800B4B74",
+      "kyoshin/code_800B06A4",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8110411167144775
+    ],
+    [
+      "us-8031e6c0",
+      77.604,
+      "__GetImageTileCount",
+      "RVL_SDK/src/revolution/gx/GXTexture",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      3.36929988861084
+    ],
+    [
+      "us-8031f1d0",
+      70.306,
+      "__SetSURegs",
+      "RVL_SDK/src/revolution/gx/GXTexture",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      1.2147951126098633
+    ],
+    [
+      "us-8003c644",
+      70.0,
+      "cf::CfObject::CfObject_UnkVirtualFunc23()",
+      "kyoshin/plugin/ocUnit",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7772500514984131
+    ],
+    [
+      "us-8003c868",
+      70.0,
+      "cf::CObjectParam::CObjectParam_UnkVirtualFunc2()",
+      "kyoshin/plugin/ocUnit",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7395799160003662
+    ],
+    [
+      "us-8003c9f4",
+      70.0,
+      "cf::CActorParam::CActorParam_UnkVirtualFunc37()",
+      "kyoshin/plugin/ocUnit",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7502222061157227
+    ],
+    [
+      "us-8003cd00",
+      70.0,
+      "cf::CfObject::CfObject_UnkVirtualFunc29()",
+      "kyoshin/plugin/ocUnit",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7753419876098633
+    ],
+    [
+      "us-8003dd2c",
+      70.0,
+      "cf::CObjectState::CObjectState_UnkVirtualFunc11()",
+      "kyoshin/plugin/ocUnit",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7505860328674316
+    ],
+    [
+      "us-80049f7c",
+      70.0,
+      "cf::CfObject::CfObject_UnkVirtualFunc31()",
+      "kyoshin/plugin/pluginCfs",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.768402099609375
+    ],
+    [
+      "us-80058d74",
+      70.0,
+      "func_8005870C",
+      "kyoshin/cf/CTaskEnvironment",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7510120868682861
+    ],
+    [
+      "us-80058d84",
+      70.0,
+      "func_8005871C",
+      "kyoshin/cf/CTaskEnvironment",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7503318786621094
+    ],
+    [
+      "us-80058d8c",
+      70.0,
+      "func_80058724",
+      "kyoshin/cf/CTaskEnvironment",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7417547702789307
+    ],
+    [
+      "us-8005e270",
+      70.0,
+      "cf::CActorParam::CActorParam_UnkVirtualFunc38()",
+      "kyoshin/cf/CActParamAnimGame",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7537388801574707
+    ],
+    [
+      "us-80063718",
+      70.0,
+      "func_80062F50",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7691900730133057
+    ],
+    [
+      "us-80063720",
+      70.0,
+      "func_80062F58",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7477931976318359
+    ],
+    [
+      "us-80063760",
+      70.0,
+      "func_80062F98",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7487611770629883
+    ],
+    [
+      "us-80063768",
+      70.0,
+      "func_80062FA0",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7462801933288574
+    ],
+    [
+      "us-800637a8",
+      70.0,
+      "func_80062FE0",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7689778804779053
+    ],
+    [
+      "us-800637b0",
+      70.0,
+      "func_80062FE8",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.745441198348999
+    ],
+    [
+      "us-800637f0",
+      70.0,
+      "func_80063028",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7394528388977051
+    ],
+    [
+      "us-800637f8",
+      70.0,
+      "func_80063030",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7404320240020752
+    ],
+    [
+      "us-80063838",
+      70.0,
+      "func_80063070",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7431020736694336
+    ],
+    [
+      "us-80063840",
+      70.0,
+      "func_80063078",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8536520004272461
+    ],
+    [
+      "us-80063880",
+      70.0,
+      "func_800630B8",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7531909942626953
+    ],
+    [
+      "us-80063888",
+      70.0,
+      "func_800630C0",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7421431541442871
+    ],
+    [
+      "us-800638c8",
+      70.0,
+      "func_80063100",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7453880310058594
+    ],
+    [
+      "us-800638d0",
+      70.0,
+      "func_80063108",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7444579601287842
+    ],
+    [
+      "us-800638d8",
+      70.0,
+      "func_80063110",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7379059791564941
+    ],
+    [
+      "us-800638e0",
+      70.0,
+      "func_80063118",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7475719451904297
+    ],
+    [
+      "us-80065d60",
+      70.0,
+      "func_eu_80065D60",
+      "kyoshin/cf/CfRes",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7503211498260498
+    ],
+    [
+      "us-800a9670",
+      70.0,
+      "func_800A8DA4",
+      "kyoshin/code_800A75FC",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7329940795898438
+    ],
+    [
+      "us-80458f68",
+      70.0,
+      "CDeviceFontLayer::func_80454E78()",
+      "monolib/src/device/CDeviceFontLayer",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7656130790710449
+    ],
+    [
+      "us-8049a384",
+      70.0,
+      "func_804962A8",
+      "monolib/src/scn/CScn",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8181929588317871
+    ],
+    [
+      "us-80043a84",
+      67.273,
+      "func_8004350C",
+      "kyoshin/CTaskGame",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8261749744415283
+    ],
+    [
+      "us-80173bcc",
+      66.333,
+      "func_801727D0",
+      "kyoshin/realtimeevt/CREvtModel",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7470219135284424
+    ],
+    [
+      "us-8042bed4",
+      64.962,
+      "nw4r3snd6detail14WaveFileReaderCFPCQ54nw4r3s::GetWaveDataAddress(int, long, e, 1, 5, W, a, v, e, C, unsigned char, a, n, n, e, long, I, n, float, o, const ...*, v)",
+      "nw4r/src/snd/snd_WaveFile",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      1.7459828853607178
+    ],
+    [
+      "us-800978c0",
+      63.333,
+      "func_80096EE8",
+      "kyoshin/cf/CtrlPc",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7409391403198242
+    ],
+    [
+      "us-800aceb0",
+      63.333,
+      "cf::CfObject::CfObject_UnkVirtualFunc11()",
+      "kyoshin/cf/object/CfObjectColl",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7749030590057373
+    ],
+    [
+      "us-80174590",
+      63.333,
+      "func_80173194",
+      "kyoshin/realtimeevt/CREvtModel",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7564280033111572
+    ],
+    [
+      "us-80201690",
+      63.333,
+      "func_801FF9A0",
+      "kyoshin/menu/parts/CModelDispEquip",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7391901016235352
+    ],
+    [
+      "us-8022a1cc",
+      63.333,
+      "func_80228394",
+      "kyoshin/CQstLogList",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7471637725830078
+    ],
+    [
+      "us-800978cc",
+      61.667,
+      "func_80096EF4",
+      "kyoshin/cf/CtrlPc",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8000302314758301
+    ],
+    [
+      "us-800978d8",
+      61.667,
+      "func_80096F00",
+      "kyoshin/cf/CtrlPc",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7603721618652344
+    ],
+    [
+      "us-800aced0",
+      61.667,
+      "cf::CfObjectPoint::func_800AC604()",
+      "kyoshin/cf/object/CfObjectColl",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7384259700775146
+    ],
+    [
+      "us-800add70",
+      61.667,
+      "cf::CfObjectEff::func_800AD4A4()",
+      "kyoshin/cf/object/CfObjectEff",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7872829437255859
+    ],
+    [
+      "us-800bdfa4",
+      61.667,
+      "func_800BD638",
+      "kyoshin/cf/object/CfObjectMove",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.759943962097168
+    ],
+    [
+      "us-804b7104",
+      61.667,
+      "func_804B2FA8",
+      "monolib/src/coli/CColiProc",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7487919330596924
+    ],
+    [
+      "us-804cac38",
+      61.667,
+      "func_804C6ADC",
+      "monolib/src/scn/CScnEnvLgtCtrl",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7530407905578613
+    ],
+    [
+      "us-803c259c",
+      59.444,
+      "SFBUF_UpdateFlowCnt",
+      "CriWare/src/sofdec/sfdcore/sfd/sfd_buf",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7573659420013428
+    ],
+    [
+      "us-80124d64",
+      59.0,
+      "func_80124288",
+      "kyoshin/CQuestWindow",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      3.0364670753479004
+    ],
+    [
+      "us-80422820",
+      59.0,
+      "nw4r2ut44LinkList<Q44nw4r3snd6deta::constructor()",
+      "nw4r/src/snd/snd_SoundPlayer",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7619462013244629
+    ],
+    [
+      "us-803d832c",
+      55.556,
+      "SFXA_Destroy",
+      "CriWare/src/sofdec/sfx/sfx_alp",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8144519329071045
+    ],
+    [
+      "us-803d84d0",
+      55.556,
+      "SFXZ_Destroy",
+      "CriWare/src/sofdec/sfx/sfx_zmv",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7980868816375732
+    ],
+    [
+      "us-8042bbb0",
+      54.31,
+      "constructor(const ...*, v)",
+      "nw4r/src/snd/snd_WaveFile",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      1.1069209575653076
+    ],
+    [
+      "us-8031eeb0",
+      53.5,
+      "GXInitTlutObj",
+      "RVL_SDK/src/revolution/gx/GXTexture",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.7843928337097168
+    ],
+    [
+      "us-803d1c74",
+      53.0,
+      "SFTST_SetTolerance",
+      "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      1.2230169773101807
+    ],
+    [
+      "us-803d1c98",
+      53.0,
+      "SFTST_SetExcessErr",
+      "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      1.1158342361450195
+    ],
+    [
+      "us-803d1cbc",
+      53.0,
+      "SFTST_SetAdjStart",
+      "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8602073192596436
+    ],
+    [
+      "us-803d1ce0",
+      53.0,
+      "SFTST_SetAdjPoff",
+      "CriWare/src/sofdec/sfdcore/sfd/sfd_tst",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      0.8630669116973877
+    ],
+    [
+      "us-8025ce40",
+      50.0,
+      "func_8025AC04",
+      "kyoshin/CKizunagram",
+      "NOT_EQUIVALENT",
+      "status: not_equivalent",
+      3.06349515914917
+    ]
+  ],
+  "INCONCLUSIVE": [
+    [
+      "us-8032dba0",
+      99.822,
+      "setAdjustFlag(int)",
+      "RVL_SDK/src/revolution/hbm/HBMBase",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.624392747879028
+    ],
+    [
+      "us-80224098",
+      99.737,
+      "CMCCylinderGauge::func_80222258()",
+      "kyoshin/makecrystal/CMCCylinderGauge",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.628070116043091
+    ],
+    [
+      "us-80414c34",
+      98.693,
+      "Pause(bool, int)",
+      "nw4r/src/snd/snd_BasicSound",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.3308680057525635
+    ],
+    [
+      "us-802c129c",
+      97.447,
+      "__copy_longs_aligned",
+      "PowerPC_EABI_Support/src/MSL_C/MSL_Common/mem_funcs",
+      "INCONCLUSIVE",
+      "status: inconclusive_unsupported",
+      4.420674085617065
+    ],
+    [
+      "us-8003c7cc",
+      96.25,
+      "cf::CfObject::CfObject_UnkVirtualFunc34()",
+      "kyoshin/plugin/ocUnit",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      6.006923198699951
+    ],
+    [
+      "us-800b7f9c",
+      96.111,
+      "func_800B7680",
+      "kyoshin/code_800B06A4",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.351967096328735
+    ],
+    [
+      "aiaction-vfunc2",
+      96.029,
+      "CAIAction::CAIAction_UnkVirtualFunc2",
+      "kyoshin/cf/object/CAIAction",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.318118095397949
+    ],
+    [
+      "us-8014215c",
+      95.417,
+      "cf::CfBdat::resetMapBdatFileDataPointers()",
+      "kyoshin/cf/CfBdat",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.578366994857788
+    ],
+    [
+      "us-802cddc8",
+      95.0,
+      "stricmp",
+      "PowerPC_EABI_Support/src/MSL_C/MSL_Common/extras",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.317178964614868
+    ],
+    [
+      "battlestate-vfunc6",
+      92.471,
+      "CBattleState::CBattleState_UnkVirtualFunc6",
+      "kyoshin/cf/object/CBattleState",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      117.18763518333435
+    ],
+    [
+      "aiaction-vfunc1",
+      92.235,
+      "CAIAction::CAIAction_UnkVirtualFunc1",
+      "kyoshin/cf/object/CAIAction",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.344270706176758
+    ],
+    [
+      "us-8031e590",
+      85.274,
+      "GXGetTexBufferSize",
+      "RVL_SDK/src/revolution/gx/GXTexture",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.311670780181885
+    ],
+    [
+      "view-attach-render-work",
+      85.017,
+      "CView::attachRenderWork",
+      "monolib/src/core/CView",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.878467798233032
+    ],
+    [
+      "window-mgr-move",
+      84.965,
+      "CUIWindowManager::Move",
+      "kyoshin/CUIWindowManager",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      6.894322156906128
+    ],
+    [
+      "us-80319bd0",
+      77.039,
+      "__GXInitRevisionBits",
+      "RVL_SDK/src/revolution/gx/GXInit",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.773672103881836
+    ],
+    [
+      "us-8031e9e0",
+      66.0,
+      "GXInitTexObjLOD",
+      "RVL_SDK/src/revolution/gx/GXTexture",
+      "INCONCLUSIVE",
+      "status: inconclusive_timeout",
+      5.327075719833374
+    ]
+  ],
+  "UNRESOLVED_RELOCS": [],
+  "BUILD_FAILED": [
+    [
+      "us-80335c10",
+      99.833,
+      "GetVtxColorElement(unsigned long)",
+      "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox",
+      "BUILD_FAILED",
+      "",
+      0.41414761543273926
+    ],
+    [
+      "us-8044f968",
+      93.71,
+      "CGXCache::func_8044CEF8()",
+      "monolib/src/device/CGXCache",
+      "BUILD_FAILED",
+      "",
+      0.39755797386169434
+    ],
+    [
+      "us-8044f8d8",
+      88.194,
+      "CGXCache::func_8044CE68()",
+      "monolib/src/device/CGXCache",
+      "BUILD_FAILED",
+      "",
+      0.3713569641113281
+    ],
+    [
+      "us-80490a68",
+      66.667,
+      "func_8048C9F4",
+      "monolib/src/scn/CScnItemPool",
+      "BUILD_FAILED",
+      "",
+      0.2930748462677002
+    ],
+    [
+      "us-8015c458",
+      63.333,
+      "func_8015B414",
+      "kyoshin/cf/CItem",
+      "BUILD_FAILED",
+      "",
+      0.2772409915924072
+    ],
+    [
+      "us-80156780",
+      61.667,
+      "func_80155CB4",
+      "kyoshin/cf/CItem",
+      "BUILD_FAILED",
+      "",
+      0.25324320793151855
+    ],
+    [
+      "us-804f07e8",
+      61.667,
+      "func_804EC32C",
+      "monolib/src/scn/CMdlDynamics",
+      "BUILD_FAILED",
+      "",
+      0.26629185676574707
+    ],
+    [
+      "us-804f07f4",
+      61.667,
+      "func_804EC338",
+      "monolib/src/scn/CMdlDynamics",
+      "BUILD_FAILED",
+      "",
+      0.26257896423339844
+    ]
+  ],
+  "UNKNOWN": [
+    [
+      "us-8003b720",
+      84.039,
+      "func_eu_8003B720",
+      "kyoshin/plugin/ocBdat",
+      "UNKNOWN",
+      "",
+      0.28813624382019043
+    ]
+  ]
+}

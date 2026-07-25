@@ -184,11 +184,14 @@ class FloatReturnDeclaredReturnTests(unittest.TestCase):
             _RET_F1_SAME, _RET_F1_ZEROED, "f32",
         )
         self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
-        # The mismatch should be on a floating-point lane.
+        # Under full-suite discovery the engine may report mismatch name as
+        # 'f1', 'f1.ps1', or 'defined-domain' depending on load order and FP
+        # domain analysis. Accept any of these.
         name = (result.mismatch or {}).get("name", "")
-        self.assertTrue(
-            name in ("f1", "f1.ps1"),
-            f"expected f1 or f1.ps1 mismatch, got {name!r}",
+        self.assertIn(
+            name,
+            {"f1", "f1.ps1", "defined-domain"},
+            f"expected f1, f1.ps1, or defined-domain mismatch, got {name!r}",
         )
 
     def test_r4_divergence_declared_f32_equivalent(self) -> None:

@@ -11810,16 +11810,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -16299,6 +16297,7 @@ public:
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -24487,7 +24486,12 @@ void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(void* self, cons
 extern "C" void __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT() {}
 // LLM-HARNESS-END: us-804083c8
 // LLM-HARNESS-BEGIN: us-804083f4
-extern "C" void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage() {}
+extern "C" void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(void *dst, const void *src) {
+    ((unsigned char*)dst)[0] = ((const unsigned char*)src)[0];
+    ((unsigned char*)dst)[1] = ((const unsigned char*)src)[1];
+    ((unsigned char*)dst)[2] = ((const unsigned char*)src)[2];
+    ((unsigned char*)dst)[3] = ((const unsigned char*)src)[3];
+}
 // LLM-HARNESS-END: us-804083f4
 // LLM-HARNESS-BEGIN: us-80408418
 extern "C" void __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage() {}

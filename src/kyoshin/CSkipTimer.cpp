@@ -89,7 +89,12 @@ extern "C" void func_8029FF98() {}
 // LLM-HARNESS-END: us-802a26cc
 
 // LLM-HARNESS-BEGIN: us-802a273c
-extern "C" void func_802A0008() {}
+extern "C" void func_802A0008(void* obj) {
+    unsigned char* bytes = (unsigned char*)obj;
+    if (bytes[0x29] != 0) return;
+    bytes[0x29] = 1;
+    bytes[0x2b] = 0;
+}
 // LLM-HARNESS-END: us-802a273c
 
 // LLM-HARNESS-BEGIN: us-802a275c

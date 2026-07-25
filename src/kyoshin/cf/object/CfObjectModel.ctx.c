@@ -1427,7 +1427,16 @@ extern "C" void CfObject_UnkVirtualFunc27__Q22cf13CfObjectModelFv() {}
 // LLM-HARNESS-END: us-800bbaa4
 
 // LLM-HARNESS-BEGIN: us-800bbb20
-extern "C" void CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv() {}
+extern "C" void* func_8048315C(void*);
+
+extern "C" void* CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv(void* self) {
+    void* ptr = *(void**)((char*)self + 0x98);
+    if (ptr) {
+        return (char*)func_8048315C(ptr) + 0xC4;
+    } else {
+        return (char*)self + 0x48;
+    }
+}
 // LLM-HARNESS-END: us-800bbb20
 
 // LLM-HARNESS-BEGIN: us-800bbb5c
@@ -1435,7 +1444,15 @@ extern "C" void CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv() {}
 // LLM-HARNESS-END: us-800bbb5c
 
 // LLM-HARNESS-BEGIN: us-800bbbb0
-extern "C" void CfObject_UnkVirtualFunc31__Q22cf13CfObjectModelFv() {}
+extern "C" float CfObject_UnkVirtualFunc31__Q22cf13CfObjectModelFv(void* self) {
+    void* ptr = *(void**)((unsigned char*)self + 0x98);
+    if (ptr != 0) {
+        void* result = func_8048315C(ptr);
+        return *(float*)((unsigned char*)result + 0xc8);
+    } else {
+        return *(float*)((unsigned char*)self + 0x4c);
+    }
+}
 // LLM-HARNESS-END: us-800bbbb0
 
 // LLM-HARNESS-BEGIN: us-800bbbec

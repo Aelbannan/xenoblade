@@ -752,7 +752,18 @@ void SFXA_MakeAlp3110Tbl() {}
 // LLM-HARNESS-END: us-803d83a8
 
 // LLM-HARNESS-BEGIN: us-803d83d4
-void SFXA_MakeAlp3211Tbl() {}
+void SFXA_MakeAlp3211Tbl(void* obj, int a, int b)
+{
+    unsigned char* base = (unsigned char*)obj;
+    void (*func)(int, int, int, int) = *(void (**)(int, int, int, int))&base[0x20];
+    int byte14 = base[0x14];
+    int byte15 = base[0x15];
+    int byte16 = base[0x16];
+    if (func != NULL)
+    {
+        func(b, byte14, byte15, byte16);
+    }
+}
 // LLM-HARNESS-END: us-803d83d4
 
 // LLM-HARNESS-BEGIN: us-803d8400

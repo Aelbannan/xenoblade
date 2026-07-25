@@ -61,7 +61,7 @@ extern "C" void func_801901A4() {}
 // LLM-HARNESS-END: us-801917ec
 
 // LLM-HARNESS-BEGIN: us-8019189c
-extern "C" void func_80190254() {}
+extern "C" int func_80190254(int a, int b) { extern int func_801C0094(int); func_801C0094(b); return 0; }
 // LLM-HARNESS-END: us-8019189c
 
 // LLM-HARNESS-BEGIN: us-801918c4

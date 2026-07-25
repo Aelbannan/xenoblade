@@ -95,14 +95,8 @@ void CScn::Draw() {
 }
 
 
-// LLM-HARNESS-BEGIN: us-80499ca0
-extern "C" bool func_80495E84(void* self) {
-    extern bool func_8048CB14(void*);
-    return func_8048CB14(*(void**)((char*)self + 0x60));
-}
-// LLM-HARNESS-END: us-80499ca0
 // LLM-HARNESS-BEGIN: us-80499ed8
-extern "C" bool func_80495E84(void* self) {
+extern "C" bool func_80495E60(void* self) {
     extern bool func_8048CB14(void*);
     return func_8048CB14(*(void**)((char*)self + 0x60));
 }

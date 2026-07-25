@@ -1356,7 +1356,17 @@ extern "C" void __ct__801C5514() {}
 // LLM-HARNESS-END: us-801c6ed8
 
 // LLM-HARNESS-BEGIN: us-801c6fc8
-extern "C" void func_801C5604() {}
+extern "C" void func_801C5604(void* p, unsigned short a, unsigned char b, unsigned char c, unsigned char d, unsigned char e, unsigned char f, unsigned char g, unsigned char h) {
+    unsigned char* buf = (unsigned char*)p;
+    *((unsigned short*)(buf + 0)) = a;
+    buf[2] = b;
+    buf[3] = c;
+    buf[4] = d;
+    buf[5] = e;
+    buf[6] = f;
+    buf[7] = g;
+    buf[8] = h;
+}
 // LLM-HARNESS-END: us-801c6fc8
 
 // LLM-HARNESS-BEGIN: us-801c6ff0
@@ -1448,7 +1458,11 @@ extern "C" void func_801C6840() {}
 // LLM-HARNESS-END: us-801c8204
 
 // LLM-HARNESS-BEGIN: us-801c8240
-extern "C" void func_801C687C() {}
+extern "C" int func_801C687C(void* obj) {
+    char off = *(signed char*)((char*)obj + 0x2804);
+    if (off >= 0x400) return 0;
+    return *(unsigned char*)((char*)obj + off + 0x28a5);
+}
 // LLM-HARNESS-END: us-801c8240
 
 // LLM-HARNESS-BEGIN: us-801c8264
@@ -1657,7 +1671,14 @@ extern "C" void func_801CB480() {}
 // LLM-HARNESS-END: us-801cced4
 
 // LLM-HARNESS-BEGIN: us-801ccf18
-extern "C" void func_801CB4C4() {}
+extern "C" void func_801CB4C4(unsigned char *self, unsigned char val) {
+    unsigned char count = self[0x6e];
+    if (count >= 0xc) {
+        return;
+    }
+    self[0x62 + count] = val;
+    self[0x6e] = count + 1;
+}
 // LLM-HARNESS-END: us-801ccf18
 
 // LLM-HARNESS-BEGIN: us-801ccf38
@@ -1673,7 +1694,12 @@ extern "C" void func_801CB5F0() {}
 // LLM-HARNESS-END: us-801cd044
 
 // LLM-HARNESS-BEGIN: us-801cd410
-extern "C" void func_801CB9BC() {}
+extern "C" unsigned short func_801CB9BC(const unsigned short* p, unsigned char i) {
+    if (i < 12) {
+        return p[i];
+    }
+    return 0;
+}
 // LLM-HARNESS-END: us-801cd410
 
 // LLM-HARNESS-BEGIN: us-801cd42c
@@ -1745,7 +1771,17 @@ extern "C" void func_801CE1A0() {}
 // LLM-HARNESS-END: us-801cfbf4
 
 // LLM-HARNESS-BEGIN: us-801cfd30
-extern "C" void func_801CE2DC() {}
+extern "C" float lbl_eu_80667F78;
+
+namespace nw4r { namespace lyt { class AnimTransform; } }
+void func_80137444(nw4r::lyt::AnimTransform*, float);
+
+extern "C" void func_801CE2DC(void* self) {
+    if (*(unsigned char*)((char*)self + 0x527) != 4) {
+        return;
+    }
+    func_80137444(*(nw4r::lyt::AnimTransform**)((char*)self + 0x50), lbl_eu_80667F78);
+}
 // LLM-HARNESS-END: us-801cfd30
 
 // LLM-HARNESS-BEGIN: us-801cfd4c
@@ -1873,7 +1909,7 @@ extern "C" void OnFileEvent__12CItemBoxGridFP10CEventFile() {}
 // LLM-HARNESS-END: us-801d2e3c
 
 // LLM-HARNESS-BEGIN: us-801d3858
-extern "C" void func_801D1E0C() {}
+extern "C" void func_801D1E0C(short* dst, const short* src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
 // LLM-HARNESS-END: us-801d3858
 
 // LLM-HARNESS-BEGIN: us-801d39e8

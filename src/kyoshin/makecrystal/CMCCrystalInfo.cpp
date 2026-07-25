@@ -111,7 +111,16 @@ extern "C" void func_8021B42C() {}
 // LLM-HARNESS-END: us-8021d284
 
 // LLM-HARNESS-BEGIN: us-8021d358
-extern "C" void func_8021B500() {}
+extern "C" void func_8021B500(void* this_) {
+    unsigned int* p34 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x34);
+    unsigned int* p30 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x30);
+    if (*p34 != 0) {
+        if (*p30 != 0) {
+            *reinterpret_cast<unsigned char*>(static_cast<char*>(this_) + 0x48) = 1;
+            *reinterpret_cast<unsigned char*>(static_cast<char*>(this_) + 0x50) = 1;
+        }
+    }
+}
 // LLM-HARNESS-END: us-8021d358
 
 // LLM-HARNESS-BEGIN: us-8021d384

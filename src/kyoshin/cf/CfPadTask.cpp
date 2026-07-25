@@ -23,6 +23,7 @@ extern "C" {
     const wchar_t* func_eu_802B13CC();
     // Retail symbols.txt recovers this as Fv (wrong mangling); call by that name for reloc match.
     void setPad__Q22cf13CfGameManagerFv(int r3, CPad* pPad, u32 r5);
+    extern const float lbl_eu_8066A208;
 }
 
 namespace cf{
@@ -56,39 +57,38 @@ void CfPadTask::Init(){
         spInstance = nullptr;
     }
 
-void CfPadTask::copyInputFlag(CPad* pPad, u32 r5, u32 r6){
-        if(pPad->mPressedButtonFlags & r5) pPad->mPressedButtonFlags |= r6;
-        else pPad->mPressedButtonFlags &= ~r6;
+void CfPadTask::copyInputFlag(CPad* pPad, u32 srcFlag, u32 dstFlag){
+        if(pPad->mPressedButtonFlags & srcFlag) pPad->mPressedButtonFlags |= dstFlag;
+        else pPad->mPressedButtonFlags &= ~dstFlag;
 
-        if(pPad->mTurboPressButtonFlags & r5) pPad->mTurboPressButtonFlags |= r6;
-        else pPad->mTurboPressButtonFlags &= ~r6;
+        if(pPad->mTurboPressButtonFlags & srcFlag) pPad->mTurboPressButtonFlags |= dstFlag;
+        else pPad->mTurboPressButtonFlags &= ~dstFlag;
 
-        if(pPad->mReleasedButtonFlags & r5) pPad->mReleasedButtonFlags |= r6;
-        else pPad->mReleasedButtonFlags &= ~r6;
+        if(pPad->mReleasedButtonFlags & srcFlag) pPad->mReleasedButtonFlags |= dstFlag;
+        else pPad->mReleasedButtonFlags &= ~dstFlag;
 
-        if(pPad->mHeldButtonFlags & r5) pPad->mHeldButtonFlags |= r6;
-        else pPad->mHeldButtonFlags &= ~r6;
+        if(pPad->mHeldButtonFlags & srcFlag) pPad->mHeldButtonFlags |= dstFlag;
+        else pPad->mHeldButtonFlags &= ~dstFlag;
 
-        if(pPad->mLongHoldButtonFlags & r5) pPad->mLongHoldButtonFlags |= r6;
-        else pPad->mLongHoldButtonFlags &= ~r6;
+        if(pPad->mLongHoldButtonFlags & srcFlag) pPad->mLongHoldButtonFlags |= dstFlag;
+        else pPad->mLongHoldButtonFlags &= ~dstFlag;
 
-        if(pPad->mShortPressButtonFlags & r5) pPad->mShortPressButtonFlags |= r6;
-        else pPad->mShortPressButtonFlags &= ~r6;
+        if(pPad->mShortPressButtonFlags & srcFlag) pPad->mShortPressButtonFlags |= dstFlag;
+        else pPad->mShortPressButtonFlags &= ~dstFlag;
     }
 
-extern "C" {
-    extern const float lbl_eu_8066A208;
-}
-
+//Set the input disable timer (all inputs ignored until timer expires)
 void CfPadTask::func_801C1B94(float f1){
     if(f1 < lbl_eu_8066A208) sInputDisableTimer = 0;
     else if(f1 > sInputDisableTimer) sInputDisableTimer = f1;
 }
 
+//Check if input is currently disabled
 bool CfPadTask::func_801C1BC0(){
         return sInputDisableTimer > ml::epsilon;
     }
 
+//Set the button disable timer (A/B/+- buttons ignored until timer expires)
 void CfPadTask::func_801C1BD8(float f1) {
     if (f1 < lbl_eu_8066A208) {
         sButtonDisableTimer = lbl_eu_80667EA8;
@@ -97,60 +97,63 @@ void CfPadTask::func_801C1BD8(float f1) {
     }
 }
 
-    void CfPadTask::updateCfPadData(CfPadData* r4, const CPad* r5){
-        u32 prevHoldFlags = r4->mHeldButtonFlags;
-        r4->mPrevHeldButtonFlags = prevHoldFlags;
-        r4->mHeldButtonFlags = r5->mHeldButtonFlags;
-        r4->mPad = *r5;
+    void CfPadTask::updateCfPadData(CfPadData* padData, const CPad* pad){
+        u32 prevHoldFlags = padData->mHeldButtonFlags;
+        padData->mPrevHeldButtonFlags = prevHoldFlags;
+        padData->mHeldButtonFlags = pad->mHeldButtonFlags;
+        padData->mPad = *pad;
 
         //Override the default deadzone check for the left stick for whatever reason
-        if(ml::math::abs(r4->mPad.mLStickXRaw) < lbl_eu_80667EB0){
-            r4->mHeldButtonFlags &= ~(PAD_INPUT_FLAG_LSTICK_LEFT | PAD_INPUT_FLAG_LSTICK_RIGHT);
+        if(ml::math::abs(padData->mPad.mLStickXRaw) < lbl_eu_80667EB0){
+            padData->mHeldButtonFlags &= ~(PAD_INPUT_FLAG_LSTICK_LEFT | PAD_INPUT_FLAG_LSTICK_RIGHT);
         }
 
-        if(ml::math::abs(r4->mPad.mLStickYRaw) < lbl_eu_80667EB0){
-            r4->mHeldButtonFlags &= ~(PAD_INPUT_FLAG_LSTICK_UP | PAD_INPUT_FLAG_LSTICK_DOWN);
+        if(ml::math::abs(padData->mPad.mLStickYRaw) < lbl_eu_80667EB0){
+            padData->mHeldButtonFlags &= ~(PAD_INPUT_FLAG_LSTICK_UP | PAD_INPUT_FLAG_LSTICK_DOWN);
         }
 
-        //TODO: what does this code do?
+        //Enforce DPad / left-stick mutual exclusivity:
+        //If the user is holding a DPad direction this frame, clear the stick directional flags
+        //that were set by CPadManager (and vice versa), so inputs remain mutually exclusive.
         bool wasHoldingDpadButton = prevHoldFlags & PAD_INPUT_FLAG_DPAD;
         bool wasHoldingStickDir = prevHoldFlags & PAD_INPUT_FLAG_LSTICK;
 
-        if(r4->mHeldButtonFlags & PAD_INPUT_FLAG_DPAD){
-            if(wasHoldingStickDir) r4->mHeldButtonFlags &= ~PAD_INPUT_FLAG_DPAD;
-            else r4->mHeldButtonFlags &= ~PAD_INPUT_FLAG_LSTICK;
+        if(padData->mHeldButtonFlags & PAD_INPUT_FLAG_DPAD){
+            if(wasHoldingStickDir) padData->mHeldButtonFlags &= ~PAD_INPUT_FLAG_DPAD;
+            else padData->mHeldButtonFlags &= ~PAD_INPUT_FLAG_LSTICK;
         }else{
-            if(wasHoldingDpadButton) r4->mHeldButtonFlags &= ~PAD_INPUT_FLAG_LSTICK;
-            else r4->mHeldButtonFlags &= ~PAD_INPUT_FLAG_DPAD;
+            if(wasHoldingDpadButton) padData->mHeldButtonFlags &= ~PAD_INPUT_FLAG_LSTICK;
+            else padData->mHeldButtonFlags &= ~PAD_INPUT_FLAG_DPAD;
         }
 
-        //Do basically the same thing done in CPadManager again bc why not!
-        u32 changedFlags = prevHoldFlags ^ r4->mHeldButtonFlags;
-        u32 pressedButtonFlags = r4->mHeldButtonFlags & changedFlags;
-        r4->mPressedButtonFlags = pressedButtonFlags;
-        r4->mTurboPressButtonFlags = pressedButtonFlags;
+        //Compute pressed/turbo flags from the frame-to-frame change in held state.
+        //This duplicates logic already done in CPadManager::updatePadInputs.
+        u32 changedFlags = prevHoldFlags ^ padData->mHeldButtonFlags;
+        u32 pressedButtonFlags = padData->mHeldButtonFlags & changedFlags;
+        padData->mPressedButtonFlags = pressedButtonFlags;
+        padData->mTurboPressButtonFlags = pressedButtonFlags;
 
         u32 bit = 1;
 
         for(int i = 0; i < MAX_PAD_INPUT_FLAGS; i++){
-            if(r4->mHeldButtonFlags & bit){
-                if(r4->mPressedButtonFlags & bit){
-                    r4->mButtonHoldTimersTurbo[i] = 0;
+            if(padData->mHeldButtonFlags & bit){
+                if(padData->mPressedButtonFlags & bit){
+                    padData->mButtonHoldTimersTurbo[i] = 0;
                 }
 
-                r4->mButtonHoldTimersTurbo[i]++;
+                padData->mButtonHoldTimersTurbo[i]++;
 
-                if(r4->mButtonHoldTimersTurbo[i] >= TURBO_HOLD_TIMER_THRESHOLD + TURBO_INPUT_FRAMES){
-                    r4->mTurboPressButtonFlags |= bit;
-                    r4->mButtonHoldTimersTurbo[i] -= TURBO_INPUT_FRAMES;
+                if(padData->mButtonHoldTimersTurbo[i] >= TURBO_HOLD_TIMER_THRESHOLD + TURBO_INPUT_FRAMES){
+                    padData->mTurboPressButtonFlags |= bit;
+                    padData->mButtonHoldTimersTurbo[i] -= TURBO_INPUT_FRAMES;
                 }
             }
 
             bit <<= 1;
         }
 
-        //Why???
-        r4->mTurboPressButtonFlags &= r4->mHeldButtonFlags;
+        //Mask turbo flags against current held state (turbo should only fire for held buttons)
+        padData->mTurboPressButtonFlags &= padData->mHeldButtonFlags;
     }
 
     void CfPadTask::Move(){
@@ -186,7 +189,7 @@ void CfPadTask::func_801C1BD8(float f1) {
     }
 
     bool CfPadTask::update(){
-        bool r22 = 0;
+        bool hasActivePad = false;
         u32 systemType = PAD_SYSTEM_WII;
         u32 enabledInputFlags = CfGameManager::getEnabledInputFlags();
         u32 mainPadChannel = CfGameManager::getCurrentPadChannel();
@@ -279,7 +282,7 @@ void CfPadTask::func_801C1BD8(float f1) {
             lbl_80666D3C = sMainPadType;
         }
 
-        bool r17 = false;
+        bool anyPadActive = false;
 
         for(u32 i = 0; i < TOTAL_CONTROLLERS; i++){
             //Exclude Wii controllers in ports 2-4
@@ -309,7 +312,7 @@ void CfPadTask::func_801C1BD8(float f1) {
             }
             
             if(result != 0){
-                r17 = true;
+                anyPadActive = true;
                 //Map the Wii A/B buttons to the classic controller A/B buttons
                 if(padType == PAD_TYPE_CLASSIC){
                     copyInputFlag(&newPad, PAD_INPUT_FLAG_CLASSIC_A, PAD_INPUT_FLAG_CORE_A);
@@ -373,7 +376,7 @@ void CfPadTask::func_801C1BD8(float f1) {
 
                 if(mainPad != nullptr && mainPad == pad && isWpadChannel(i)){
                     CfGameManager::setCurrentPadPtr(CfGameManager::getPad(i), i);
-                    r22 = 1;
+                    hasActivePad = 1;
                     if(newPad.mPadType == PAD_TYPE_CLASSIC) sMainPadExtension = PAD_EXT_CLASSIC_CONTROLLER;
                     if(newPad.mPadType == PAD_TYPE_FS) sMainPadExtension = PAD_EXT_NUNCHUCK;
                     if(newPad.mPadType == PAD_TYPE_CORE) sMainPadExtension = PAD_EXT_NONE;
@@ -387,7 +390,7 @@ void CfPadTask::func_801C1BD8(float f1) {
             setPad__Q22cf13CfGameManagerFv(i, &newPad, systemType);
         }
 
-        if(r17){
+        if(anyPadActive){
             updateCfPadData(CfGameManager::getCfPadData(),CfGameManager::getCurrentPad());
         }else{
             std::memset(CfGameManager::getCfPadData(), 0, sizeof(CfPadData));
@@ -409,7 +412,7 @@ void CfPadTask::func_801C1BD8(float f1) {
             }
         }
 
-        return r22;
+        return hasActivePad;
     }
 
     CfPadTask* CfPadTask::create(CProcess* pParent){
@@ -418,7 +421,7 @@ void CfPadTask::func_801C1BD8(float f1) {
         return padTask;
     }
     
-    bool CfPadTask::gameExceptionCB(u32 r4){
+    bool CfPadTask::gameExceptionCB(u32 unusedArg){
         if(checkForControllerError(update()) == ERROR_NONE){
             mNoErrorFrameCount++;
             //If there has been no controller error for more than 9 frames, allow the exception message to be disabled

@@ -71,7 +71,12 @@ extern "C" void func_801835D4(void* self) {}
 // LLM-HARNESS-END: us-801849f0
 
 // LLM-HARNESS-BEGIN: us-80184ae8
-extern "C" void func_801836CC(void* self) {}
+extern "C" void func_801836CC(void* self, unsigned long value)
+{
+    if (*(unsigned long*)((char*)self + 0x7c) == value) {
+        *(unsigned long*)((char*)self + 0x7c) = 0;
+    }
+}
 // LLM-HARNESS-END: us-80184ae8
 
 // LLM-HARNESS-BEGIN: us-80184b00

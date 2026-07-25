@@ -16570,6 +16570,9 @@ class CViewFrame {
 public:
     bool render();
     void detachRenderWork(CWorkThread* pThread);
+    void CView_UnkVirtualFunc1();
+    void CView_UnkVirtualFunc8();
+    void CView_UnkVirtualFunc9();
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
@@ -17460,7 +17463,7 @@ public:
     virtual ~CDeviceVICb();
     virtual void viBeforeDrawDone(){}
     virtual void viAfterDrawDone(){}
-    virtual void viBeginFrame(){}
+    virtual void viBeginFrame();
 };
 /* end "monolib/device/CDeviceVICb.hpp" */
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 5 "monolib/util.hpp" */
@@ -235827,16 +235830,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -240316,6 +240317,7 @@ public:
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -245732,7 +245734,7 @@ namespace cf{
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
-        static CfObjectMove* func_80082D54(int playerIndex);
+        static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
         static bool func_80086F9C(s16);
         static void setCurrentPadPtr(const CPad* pPad, u32 r4);
@@ -247501,7 +247503,7 @@ after_bit10:
     }
 
     if (unkE9 == 0 && func_80164410() == 0) {
-        if (cf::CfGameManager::func_80082D54(0) != NULL) {
+        if (cf::CfGameManager::getPlayer(0) != NULL) {
             if (mFileArtsElemDone == NULL) {
                 mFileArtsElem =
                     CDeviceFile::readFile(mHeap, lbl_eu_804FFF2C + 0xa, battleWorkEvent(this), 0, 0);
@@ -247570,7 +247572,7 @@ after_assets:
         if (func_801042A4() == 0) {
             cf::CfGameManager::getInstance();
             if (func_8006EF04(0x10000000) == 0) {
-                objMove = cf::CfGameManager::func_80082D54(0);
+                objMove = cf::CfGameManager::getPlayer(0);
                 if (objMove != NULL) {
                     actor2 = func_8016FE34();
                     subObj = *(void**)((u8*)actor2 + 4);

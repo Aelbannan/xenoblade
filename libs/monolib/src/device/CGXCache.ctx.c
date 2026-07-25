@@ -11671,24 +11671,28 @@ namespace ml {
 } //namespace ml
 /* end "monolib/math/CMat34.hpp" */
 
+// __ct__80449548 (constructor at 0x80449548) defined once — all harness stubs
+// that map to this same symbol reference it rather than redefining.
+extern "C" void __ct__80449548(void) {}
+
 // LLM-HARNESS-BEGIN: us-8044bbd4
-extern "C" void __ct__8CGXCacheFv() {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bbd4
 
 // LLM-HARNESS-BEGIN: us-8044be7c
-extern "C" void __dt__11IStateCacheFv() {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044be7c
 
 // LLM-HARNESS-BEGIN: us-8044bebc
-extern "C" void __ct__CMsgParam_32() {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bebc
 
 // LLM-HARNESS-BEGIN: us-8044bef0
-extern "C" void __dt__CMsgParam_32() {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bef0
 
 // LLM-HARNESS-BEGIN: us-8044bf48
-extern "C" void __dt__804494D8() {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bf48
 
 // LLM-HARNESS-BEGIN: us-8044bfa4
@@ -11696,7 +11700,7 @@ extern "C" void __ct__80449534() {}
 // LLM-HARNESS-END: us-8044bfa4
 
 // LLM-HARNESS-BEGIN: us-8044bfb8
-extern "C" void __ct__80449548(void) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bfb8
 
 // LLM-HARNESS-BEGIN: us-8044bfbc
@@ -11704,7 +11708,7 @@ extern "C" void func_8044954C(void) {}
 // LLM-HARNESS-END: us-8044bfbc
 
 // LLM-HARNESS-BEGIN: us-8044bfc0
-extern "C" void func_80449550__FRQ22ml5CCol4() {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044bfc0
 
 // LLM-HARNESS-BEGIN: us-8044c764
@@ -12347,28 +12351,30 @@ struct MsgParam32Ring {
 };
 
 extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd) {
+    void* saved = self;
     MsgParam32Ring* ring = (MsgParam32Ring*)self;
-    u32 i = 0;
-    u32 n;
+    u32 i;
 
-    // `for (n = size; n != 0; n--)` emits retail mtctr/bdnz (~86%).
-    for (n = ring->mSize; n != 0; n--) {
+    // Ascending `i < mSize` → mtctr + cmplwi/ble (same as C1FC ring walk).
+    // Residual vs retail: early `mr r9,r3` (decomp late-copies at dispatch)
+    // and match `beq` vs retail `bne+8; b` (+4B → 140/144).
+    for (i = 0; i < ring->mSize; i++) {
         u32 idx = ring->mFront + i;
         u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
         if (ring->mArrayPtr[slot].command == cmd) {
             goto dispatch;
         }
-        i++;
     }
     i = (u32)-1;
 dispatch:
     {
-        void* obj = ring->field7;
-        void** vtbl = *(void***)obj;
-        u32 idx = ring->mFront + i;
-        u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
-        // Retail: r3=obj, r4=cmd, r5=entry+4, then bctr vtbl[3].
-        ((void (*)(void*, u32, void*))vtbl[3])(obj, cmd, (u8*)&ring->mArrayPtr[slot] + 4);
+        MsgParam32Ring* base = (MsgParam32Ring*)saved;
+        u32 idx = base->mFront + i;
+        u32 slot = idx - (idx / base->mCapacity) * base->mCapacity;
+        MsgParam32Entry* entry = &base->mArrayPtr[slot];
+        self = ((MsgParam32Ring*)self)->field7;
+        void** vtbl = *(void***)self;
+        ((void (*)(void*, u32, void*))vtbl[3])(self, cmd, (u8*)entry + 4);
     }
 }
 // LLM-HARNESS-END: us-8044f8d8
@@ -12376,16 +12382,14 @@ dispatch:
 // LLM-HARNESS-BEGIN: us-8044f968
 extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd) {
     MsgParam32Ring* ring = (MsgParam32Ring*)self;
-    u32 i = 0;
-    u32 n;
+    u32 i;
 
-    for (n = ring->mSize; n != 0; n--) {
+    for (i = 0; i < ring->mSize; i++) {
         u32 idx = ring->mFront + i;
         u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
         if (ring->mArrayPtr[slot].command == cmd) {
             goto found_entry;
         }
-        i++;
     }
     i = (u32)-1;
 found_entry:
@@ -12409,16 +12413,16 @@ public:
     void func_80449B94(unsigned long);
 };
 // LLM-HARNESS-BEGIN: us-8044c034
-template <> void CMsgParam<32>::func_804495C4(unsigned long) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044c034
 // LLM-HARNESS-BEGIN: us-8044c19c
-template <> void CMsgParam<32>::func_8044972C(unsigned long) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044c19c
 // LLM-HARNESS-BEGIN: us-8044c314
-template <> void CMsgParam<32>::func_804498A4(unsigned long) {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044c314
 // LLM-HARNESS-BEGIN: us-8044c48c
-template <> void CMsgParam<32>::func_80449A1C() {}
+// (mapped to __ct__80449548 above)
 // LLM-HARNESS-END: us-8044c48c
 // LLM-HARNESS-BEGIN: us-8044c604
 template <> void CMsgParam<32>::func_80449B94(unsigned long) {}

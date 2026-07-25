@@ -73,7 +73,11 @@ extern "C" void func_804BC9A0() {}
 // LLM-HARNESS-END: us-804c0afc
 
 // LLM-HARNESS-BEGIN: us-804c0b10
-extern "C" void func_804BC9B4() {}
+extern "C" void func_804BC9B4(int *dest, int offset, int *src) {
+    dest[0] = offset + src[1];
+    dest[1] = offset + src[2];
+    dest[2] = offset + src[3];
+}
 // LLM-HARNESS-END: us-804c0b10
 
 // LLM-HARNESS-BEGIN: us-804c0b38

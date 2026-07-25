@@ -732,7 +732,13 @@ void MWSFSVM_EntryIdleFunc() {}
 // LLM-HARNESS-END: us-803a1010
 
 // LLM-HARNESS-BEGIN: us-803a1050
-void MWSFSVM_EntryMainFunc() {}
+extern int lbl_eu_805FF1DC;
+
+void MWSFSVM_EntryMainFunc(int arg1, int arg2, int arg3)
+{
+    int result = SVM_SetCbSvrWithString(5, arg1, arg2, arg3);
+    lbl_eu_805FF1DC = result;
+}
 // LLM-HARNESS-END: us-803a1050
 
 // LLM-HARNESS-BEGIN: us-803a1090

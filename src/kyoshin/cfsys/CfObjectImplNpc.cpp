@@ -21,7 +21,12 @@ extern "C" void func_800CA854() {}
 // LLM-HARNESS-END: us-800cb288
 
 // LLM-HARNESS-BEGIN: us-800cb318
-extern "C" void __dt__Q22cf15CfObjectImplNpcFv(void* self) {}
+extern "C" void* __dt__Q22cf15CfObjectImplNpcFv(void* self, int deleteFlag) {
+    if (self != nullptr && deleteFlag > 0) {
+        operator delete(self);
+    }
+    return self;
+}
 // LLM-HARNESS-END: us-800cb318
 
 // LLM-HARNESS-BEGIN: us-800cb358

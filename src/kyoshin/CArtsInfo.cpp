@@ -64,7 +64,10 @@ extern "C" u32 func_80235F3C(void* self) {
 // LLM-HARNESS-END: us-80237e34
 
 // LLM-HARNESS-BEGIN: us-80237e48
-extern "C" void func_80235F50() {}
+extern "C" int func_80235F50(void* thisPtr) {
+    int field = *(int*)((char*)thisPtr + 0x44);
+    return field >= 6 ? 1 : 0;
+}
 // LLM-HARNESS-END: us-80237e48
 
 // LLM-HARNESS-BEGIN: us-80237e64
@@ -340,7 +343,19 @@ extern "C" void func_eu_8023D490() {}
 // LLM-HARNESS-END: us-8023d490
 
 // LLM-HARNESS-BEGIN: us-8023d55c
-extern "C" void func_8023B430() {}
+extern "C" void func_8023B430(void* r3) {
+    int* field20 = (int*)((char*)r3 + 0x20);
+    if (*field20 == 0) return;
+    int* field4c = (int*)((char*)r3 + 0x4c);
+    if (*field4c == 0) return;
+    int* field50 = (int*)((char*)r3 + 0x50);
+    if (*field50 != 0) {
+        char* field48 = (char*)r3 + 0x48;
+        char* field40 = (char*)r3 + 0x40;
+        *field48 = 1;
+        *field40 = 1;
+    }
+}
 // LLM-HARNESS-END: us-8023d55c
 
 // LLM-HARNESS-BEGIN: us-8023d594

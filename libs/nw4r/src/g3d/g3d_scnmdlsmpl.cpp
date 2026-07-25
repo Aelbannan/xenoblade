@@ -73,7 +73,18 @@ extern "C" void GetViewPosMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv() {}
 // LLM-HARNESS-END: us-803fb3c0
 
 // LLM-HARNESS-BEGIN: us-803fb3e4
-extern "C" void GetViewNrmMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv() {}
+extern "C" void* GetViewNrmMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(void* r3) {
+    void* r5 = *(void**)((char*)r3 + 0xf8);
+    if (r5 == nullptr) {
+        return nullptr;
+    }
+    unsigned short r0 = *(unsigned short*)((char*)r3 + 0x102);
+    unsigned char r4 = *(unsigned char*)((char*)r3 + 0x101);
+    unsigned int r3_val = r0 * 0x24;
+    unsigned int aligned = (r3_val + 0x1f) & ~0x1f;
+    unsigned int offset = r4 * aligned;
+    return (void*)((char*)r5 + offset);
+}
 // LLM-HARNESS-END: us-803fb3e4
 
 // LLM-HARNESS-BEGIN: us-803fb418

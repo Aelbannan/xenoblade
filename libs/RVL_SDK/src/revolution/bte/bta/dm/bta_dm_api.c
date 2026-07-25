@@ -13,7 +13,13 @@ void BTA_DisableBluetooth() {}
 // LLM-HARNESS-END: us-802e3ad8
 
 // LLM-HARNESS-BEGIN: us-802e3b10
-void BTA_DmIsDeviceUp() {}
+BOOL BTA_DmIsDeviceUp() {
+    BOOL ret;
+    GKI_sched_lock();
+    ret = BTM_IsDeviceUp();
+    GKI_sched_unlock();
+    return ret;
+}
 // LLM-HARNESS-END: us-802e3b10
 
 // LLM-HARNESS-BEGIN: us-802e3b48

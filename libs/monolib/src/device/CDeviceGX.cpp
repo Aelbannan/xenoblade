@@ -8,19 +8,18 @@
 using namespace ml;
 
 extern "C" {
-CDeviceGX* lbl_eu_806656A0;
+extern CDeviceGX* lbl_eu_806656A0;
 extern const f64 lbl_eu_8066A440;  // int→double magic (unsigned)
 extern const f64 lbl_eu_8066A448;  // int→double magic (signed)
 extern const f32 lbl_eu_8066A438;
-f32 lbl_eu_80665698;
+extern f32 lbl_eu_80665698;
 }
 
 float CDeviceGX::sCostTime;
 GXPixelFmt CDeviceGX::pixelFormat;
 CDeviceGX* CDeviceGX::spInstance;
-CGXCache* CDeviceGX::cacheInstance;
-int CDeviceGX::gxHeapSize = 0x200000; //2 MB
-const char* CDeviceGX::someString = "GPCost";
+// cacheInstance/gxHeapSize/someString are provided by the retail data object
+// (monolibdata2) until this unit's .sdata/.sbss is data-matched.
 
 CDeviceGX::CDeviceGX(const char* pName, CWorkThread* pParent) :
 CDeviceBase(pName, pParent, 0),

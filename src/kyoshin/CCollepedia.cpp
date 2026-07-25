@@ -33,7 +33,23 @@ extern "C" void func_802533F4() {}
 // LLM-HARNESS-END: us-80255630
 
 // LLM-HARNESS-BEGIN: us-802556c8
-extern "C" void func_8025348C() {}
+struct CCollepedia {
+    int field_0;
+    int field_4;
+    int field_8;
+    unsigned char field_c;
+    unsigned char field_d;
+    unsigned char field_e;
+};
+
+extern "C" void func_8025348C(CCollepedia* obj, int val) {
+    obj->field_0 = val;
+    obj->field_4 = 0;
+    obj->field_8 = 0;
+    obj->field_c = 0;
+    obj->field_d = 1;
+    obj->field_e = 0;
+}
 // LLM-HARNESS-END: us-802556c8
 
 // LLM-HARNESS-BEGIN: us-802556ec
@@ -106,7 +122,12 @@ extern "C" void func_80254040() {}
 // LLM-HARNESS-END: us-8025627c
 
 // LLM-HARNESS-BEGIN: us-802562a8
-extern "C" void func_8025406C() {}
+extern "C" void func_8025406C(unsigned char* obj) {
+    obj[1] = obj[1] - 1;
+    if ((signed char)obj[1] < 0) {
+        obj[1] = obj[0] - 1;
+    }
+}
 // LLM-HARNESS-END: us-802562a8
 
 // LLM-HARNESS-BEGIN: us-802562d0
@@ -114,7 +135,11 @@ extern "C" void func_80254094() {}
 // LLM-HARNESS-END: us-802562d0
 
 // LLM-HARNESS-BEGIN: us-80256318
-extern "C" void func_802540DC() {}
+extern "C" unsigned char func_802540DC(void* thisPtr) {
+    signed char idx = *(signed char*)((char*)thisPtr + 1);
+    unsigned char* base = (unsigned char*)thisPtr + idx * 320;
+    return *(base + 4);
+}
 // LLM-HARNESS-END: us-80256318
 
 // LLM-HARNESS-BEGIN: us-80256330
@@ -122,7 +147,10 @@ extern "C" void func_802540F4() {}
 // LLM-HARNESS-END: us-80256330
 
 // LLM-HARNESS-BEGIN: us-80256380
-extern "C" void func_80254144() {}
+extern "C" unsigned char func_80254144(const unsigned char* ptr) {
+    int idx = (signed char)ptr[1];
+    return ptr[5 + idx * 0x140];
+}
 // LLM-HARNESS-END: us-80256380
 
 // LLM-HARNESS-BEGIN: us-80256398
@@ -202,11 +230,11 @@ extern "C" void func_80254D0C() {}
 // LLM-HARNESS-END: us-80256f48
 
 // LLM-HARNESS-BEGIN: us-80256f8c
-extern "C" void func_80254D50() {}
+extern "C" unsigned char func_80254D50(void* self) { unsigned char* base = (unsigned char*)self; return base[0x28f9] ? base[0x51] : 0; }
 // LLM-HARNESS-END: us-80256f8c
 
 // LLM-HARNESS-BEGIN: us-80256fa8
-extern "C" void func_80254D6C() {}
+extern "C" void func_80254D6C(void* p) { unsigned char* b = (unsigned char*)p; if (b[0x49] != 0) return; b[0x49] = 1; b[0x51] = 0; }
 // LLM-HARNESS-END: us-80256fa8
 
 // LLM-HARNESS-BEGIN: us-80256fc8

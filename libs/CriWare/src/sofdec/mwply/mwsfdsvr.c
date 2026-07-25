@@ -41,7 +41,7 @@ void mwsfd_ExecSvrHndl() {}
 // LLM-HARNESS-END: us-803a63c4
 
 // LLM-HARNESS-BEGIN: us-803a6658
-void MWSFSVR_SetMwsfdSvrFlg() {}
+void MWSFSVR_SetMwsfdSvrFlg(int flag) { *(int*)((char*)MWSFLIB_GetLibWorkPtr() + 0x58) = flag; }
 // LLM-HARNESS-END: us-803a6658
 
 // LLM-HARNESS-BEGIN: us-803a6688

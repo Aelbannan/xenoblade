@@ -1429,7 +1429,14 @@ extern "C" void func_801EDA08() {}
 // LLM-HARNESS-END: us-801ef6c4
 
 // LLM-HARNESS-BEGIN: us-801ef708
-extern "C" void func_801EDA4C() {}
+extern "C" void func_801EDA4C(unsigned char* self, unsigned char val) {
+    unsigned char n = self[0x63];
+    if (n >= 9) {
+        return;
+    }
+    self[0x5a + n] = val;
+    self[0x63] = n + 1;
+}
 // LLM-HARNESS-END: us-801ef708
 
 // LLM-HARNESS-BEGIN: us-801ef728
@@ -1469,7 +1476,11 @@ extern "C" u8 func_801EECC0(void* self) { return ((u8*)self)[0x39E]; }
 // LLM-HARNESS-END: us-801f097c
 
 // LLM-HARNESS-BEGIN: us-801f0984
-extern "C" void func_801EECC8() {}
+extern "C" void func_801EC3B0(void*, unsigned int);
+
+extern "C" void func_801EECC8(char* self) {
+    func_801EC3B0(self + 0x3A4, (unsigned char)(*(short*)(self + 0x38C) + *(short*)(self + 0x38E)));
+}
 // LLM-HARNESS-END: us-801f0984
 
 extern "C" void func_801D2E4C(void* self);

@@ -1867,7 +1867,7 @@ namespace cf {
         virtual void CfObjectActor_UnkVirtualFunc3();  //0x5A8
         virtual void CfObjectActor_UnkVirtualFunc4();  //0x5AC
         virtual void CfObjectActor_UnkVirtualFunc5();  //0x5B0
-        virtual void CfObjectActor_UnkVirtualFunc6();  //0x5B4
+        virtual float CfObjectActor_UnkVirtualFunc6();  //0x5B4
         virtual void CfObjectActor_UnkVirtualFunc7();  //0x5B8
         virtual void CfObjectActor_UnkVirtualFunc8();  //0x5BC
         virtual void CfObjectActor_UnkVirtualFunc9();  //0x5C0
@@ -1894,6 +1894,14 @@ namespace cf {
     CActorParam(static_cast<CObjectParam*>(this), nullptr) {
         
     }
+
+// LLM-HARNESS-BEGIN: us-80173828
+float CfObjectActor::CfObjectActor_UnkVirtualFunc6() {
+    // Float field at absolute offset 0x3EE8 within CfObjectActor
+    // (0x4C within the CfObjectMove subobject at 0x3E9C)
+    return *(float*)(reinterpret_cast<uintptr_t>(this) + 0x3EE8);
+}
+// LLM-HARNESS-END: us-80173828
 }
 
 // Forward declarations for thunks
@@ -1903,9 +1911,6 @@ extern "C" void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 // LLM-HARNESS-BEGIN: us-80173514
 extern "C" void CfObjectActor_UnkVirtualFunc5__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-80173514
-// LLM-HARNESS-BEGIN: us-80173828
-extern "C" float CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self) { return *(float*)((u8*)self + 0x3ee8); }
-// LLM-HARNESS-END: us-80173828
 // LLM-HARNESS-BEGIN: us-801738a4
 extern "C" void CfObjectActor_UnkVirtualFunc8__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-801738a4
@@ -1913,20 +1918,26 @@ extern "C" void CfObjectActor_UnkVirtualFunc8__Q22cf13CfObjectActorFv() {}
 extern "C" void CfObjectActor_UnkVirtualFunc9__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-801738c0
 // LLM-HARNESS-BEGIN: us-801739bc
-extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv() {}
+extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg) {
+    void* p = *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 0x3f60);
+    if (p != 0) {
+        *reinterpret_cast<void**>(reinterpret_cast<char*>(p) + 0x37c) = arg;
+    }
+    *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 0x45bc) = arg;
+}
 // LLM-HARNESS-END: us-801739bc
 
 // LLM-HARNESS-BEGIN: us-80171310
-extern "C" float CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self) { return *(float*)((u8*)self + 0x3ee8); }
+extern "C" void func_8016FF14() {}
 // LLM-HARNESS-END: us-80171310
 // LLM-HARNESS-BEGIN: us-80171eac
-extern "C" float CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self) { return *(float*)((u8*)self + 0x3ee8); }
+extern "C" void func_80170AB0() {}
 // LLM-HARNESS-END: us-80171eac
 // LLM-HARNESS-BEGIN: us-80172b64
-extern "C" float CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self) { return *(float*)((u8*)self + 0x3ee8); }
+extern "C" void CfObjectActor_UnkVirtualFunc3__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-80172b64
 // LLM-HARNESS-BEGIN: us-80172bbc
-extern "C" float CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self) { return *(float*)((u8*)self + 0x3ee8); }
+extern "C" void CfObjectActor_UnkVirtualFunc4__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-80172bbc
 // LLM-HARNESS-BEGIN: us-80173830
 extern "C" void CfObjectActor_UnkVirtualFunc7__Q22cf13CfObjectActorFv() {}
@@ -1934,3 +1945,13 @@ extern "C" void CfObjectActor_UnkVirtualFunc7__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-BEGIN: us-80173924
 extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-80173924
+
+
+// LLM-HARNESS-BEGIN: us-80173818
+extern "C" void CActorParam_UnkVirtualFunc23__Q22cf13CfObjectActorFv(void* self) {
+    self = (char*)self + 0x3e9c;
+    void** vtable = *(void***)self;
+    void (*func)(void*) = (void (*)(void*))vtable[0xe0 / 4];
+    func(self);
+}
+// LLM-HARNESS-END: us-80173818

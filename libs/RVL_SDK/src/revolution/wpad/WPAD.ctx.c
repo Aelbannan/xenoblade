@@ -222646,13 +222646,21 @@ int WBCGetCalibrationStatus() { return 0; }
 int WBCGetBatteryLevel() { return 0; }
 // LLM-HARNESS-END: us-8036bb60
 // LLM-HARNESS-BEGIN: us-8036bb70
-void WBCReadDummy() {}
+int WBCReadDummy() {
+    extern const char lbl_80560650[];
+    DEBUGPrint(lbl_80560650);
+    return -1;
+}
 // LLM-HARNESS-END: us-8036bb70
 // LLM-HARNESS-BEGIN: us-8036bba0
 void WBCSetZEROPointDummy() {}
 // LLM-HARNESS-END: us-8036bba0
 // LLM-HARNESS-BEGIN: us-8036bbd0
-void WBCGetTGCWeightDummy() {}
+int WBCGetTGCWeightDummy(void) {
+    extern char lbl_80560678[];
+    DEBUGPrint(lbl_80560678);
+    return -1;
+}
 // LLM-HARNESS-END: us-8036bbd0
 // LLM-HARNESS-BEGIN: us-8036bdd0
 void __wpadSendDataSub() {}

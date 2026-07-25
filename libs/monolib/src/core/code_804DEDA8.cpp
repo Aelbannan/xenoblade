@@ -5,7 +5,16 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-804e3244
-extern "C" void func_804DEDA8() {}
+extern "C" void func_804DEDA8(void* r3) {
+    char* base = (char*)r3;
+    base[0] = 0;
+    base[2] = 0;
+    base[3] = 0;
+    *(int*)(base + 4) = 0;
+    *(int*)(base + 8) = 0;
+    *(int*)(base + 0x10) = 0;
+    *(int*)(base + 0xc) = 0;
+}
 // LLM-HARNESS-END: us-804e3244
 
 // LLM-HARNESS-BEGIN: us-804e3268
@@ -29,7 +38,12 @@ extern "C" void func_804DF164() {}
 // LLM-HARNESS-END: us-804e3600
 
 // LLM-HARNESS-BEGIN: us-804e3744
-extern "C" void func_804DF2A8() {}
+extern "C" void* func_804DF2A8(void* self, int index) {
+    uint8_t* base = *(uint8_t**)((uint8_t*)self + 0x10);
+    uint8_t* arrayBase = base + *(uint32_t*)(base + 0x8);
+    uint32_t offset = *(uint32_t*)(arrayBase + (index << 3));
+    return base + offset;
+}
 // LLM-HARNESS-END: us-804e3744
 
 // LLM-HARNESS-BEGIN: us-804e3760

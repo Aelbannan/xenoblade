@@ -4,36 +4,40 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-804ed8e8
+// func_804E9FC8 (inline getter at 0x804E9FC8) defined once — all harness stubs
+// mapping to the same symbol reference it rather than redefining.
 extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+
+// LLM-HARNESS-BEGIN: us-804ed8e8
+// (mapped to func_804E9FC8 above)
 // LLM-HARNESS-END: us-804ed8e8
 
 // LLM-HARNESS-BEGIN: us-804ed91c
-extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+// (mapped to func_804E9FC8 above)
 // LLM-HARNESS-END: us-804ed91c
 
 // LLM-HARNESS-BEGIN: us-804ed9b4
-extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+// (mapped to func_804E9FC8 above)
 // LLM-HARNESS-END: us-804ed9b4
 
 // LLM-HARNESS-BEGIN: us-804eda9c
-extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+// (mapped to func_804E9FC8 above)
 // LLM-HARNESS-END: us-804eda9c
 
 // LLM-HARNESS-BEGIN: us-804ee484
-extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+// (mapped to func_804E9FC8 above)
 // LLM-HARNESS-END: us-804ee484
 
 // LLM-HARNESS-BEGIN: us-804ee48c
-extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+// (mapped to func_804E9FC8 above)
 // LLM-HARNESS-END: us-804ee48c
 
 // LLM-HARNESS-BEGIN: us-804ee4f4
-extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+// (mapped to func_804E9FC8 above)
 // LLM-HARNESS-END: us-804ee4f4
 
 // LLM-HARNESS-BEGIN: us-804ee590
-extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+// (mapped to func_804E9FC8 above)
 // LLM-HARNESS-END: us-804ee590
 
 // LLM-HARNESS-BEGIN: us-804ee59c
@@ -41,7 +45,7 @@ extern "C" u32 func_804EA0E0(void* self) { return *(u32*)((u8*)self + 0x4); }
 // LLM-HARNESS-END: us-804ee59c
 
 // LLM-HARNESS-BEGIN: us-804ee5a4
-extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+// (mapped to func_804E9FC8 above)
 // LLM-HARNESS-END: us-804ee5a4
 
 // LLM-HARNESS-BEGIN: us-804ee68c
@@ -145,7 +149,20 @@ extern "C" void func_804EB758() {}
 // LLM-HARNESS-END: us-804efc14
 
 // LLM-HARNESS-BEGIN: us-804efc20
-extern "C" void func_804EB764() {}
+extern "C" void func_804EB764(void *r3, void *r4) {
+    int *p = (int *)r3;
+    int *src = (int *)r4;
+    int idx = p[1];
+    int base = p[0];
+    int off = idx * 12;
+    p[1] = idx + 1;
+    int *dst = (int *)(base + off);
+    dst[0] = src[0];
+    float *fdst = (float *)dst;
+    float *fsrc = (float *)src;
+    fdst[1] = fsrc[1];
+    dst[2] = src[2];
+}
 // LLM-HARNESS-END: us-804efc20
 
 // LLM-HARNESS-BEGIN: us-804efc54

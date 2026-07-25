@@ -57,7 +57,16 @@ extern "C" void func_80212480() {}
 // LLM-HARNESS-END: us-802142d8
 
 // LLM-HARNESS-BEGIN: us-802142e8
-extern "C" void func_80212490() {}
+extern "C" void* lbl_eu_806646C8;
+extern "C" void* func_80212BE0(void*);
+
+extern "C" void* func_80212490() {
+    char* p = (char*)lbl_eu_806646C8;
+    if (p != 0) {
+        return func_80212BE0(p + 0x80);
+    }
+    return 0;
+}
 // LLM-HARNESS-END: us-802142e8
 
 // LLM-HARNESS-BEGIN: us-80214304

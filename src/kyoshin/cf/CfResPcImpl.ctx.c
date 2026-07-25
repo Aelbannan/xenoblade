@@ -1347,7 +1347,10 @@ extern "C" void __dt__Q22cf11CfResPcImplFv() {}
 // LLM-HARNESS-END: us-8018e010
 
 // LLM-HARNESS-BEGIN: us-8018e0c8
-extern "C" void func_8018CB14() {}
+extern "C" int func_8018CB14(void* p)
+{
+    return (unsigned int)*(unsigned short*)((char*)p + 8) >= 3;
+}
 // LLM-HARNESS-END: us-8018e0c8
 
 // LLM-HARNESS-BEGIN: us-8018e0e8
@@ -1464,7 +1467,15 @@ extern "C" void __dt__Q22cf17UnkClass_8018EF3CFv() {}
 // LLM-HARNESS-END: us-80190594
 
 // LLM-HARNESS-BEGIN: us-801905fc
-extern "C" void func_8018EFB4() {}
+/* "src/kyoshin/cf/CfResPcImpl.cpp" line 135 "string.h" */
+/* end "string.h" */
+
+extern "C" void func_8018EFB4(unsigned char* p)
+{
+    *reinterpret_cast<unsigned int*>(p + 0x404) = 0;
+    *reinterpret_cast<unsigned int*>(p + 0x400) = 0;
+    memset(p, 0, 0x400);
+}
 // LLM-HARNESS-END: us-801905fc
 
 // LLM-HARNESS-BEGIN: us-80190614

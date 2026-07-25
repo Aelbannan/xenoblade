@@ -122,11 +122,18 @@ def equivalence_certificate_error(
     # §2.5.4: declared_return staleness check — if the registry target's current
     # declared_return differs from the certificate's abi_shape.declared_return,
     # the certificate is stale. Absent-on-both-sides is treated as equal.
+    # Registry values that map to no narrowing shape (aggregate, f128, unknown)
+    # are normalized to None since they produce no narrowing.
     registry_declared = row.get("declared_return")
+    from tools.ppc_equivalence.abi_infer import abi_shape_from_declared_return
+    if abi_shape_from_declared_return(registry_declared) is None:
+        registry_declared = None
     cert_abi_shape = certificate.get("abi_shape")
     cert_declared = None
     if isinstance(cert_abi_shape, dict):
         cert_declared = cert_abi_shape.get("declared_return")
+    if abi_shape_from_declared_return(cert_declared) is None:
+        cert_declared = None
     if registry_declared != cert_declared and not (
         registry_declared is None and cert_declared is None
     ):
@@ -603,12 +610,15 @@ def _certified_target_ids(
     rows_by_id: Optional[Dict[str, Dict[str, Any]]] = None,
 ) -> set[str]:
     rows = rows_by_id if rows_by_id is not None else _target_registry_rows(targets)
-    return {
+    return set(
         target.id
         for target in targets
-        if target.status in ACCEPTED_MATCH_STATUSES
-        and equivalence_certificate_error(rows[target.id], rows) is None
-    }
+        if target.status == "FULL_MATCH"
+        or (
+            target.status == "EQUIVALENT_MATCH"
+            and equivalence_certificate_error(rows[target.id], rows) is None
+        )
+    )
 
 
 def _callgraph_blocks_certification(target: Target) -> Optional[str]:
@@ -656,6 +666,8 @@ def plan_recertify_bottom_up(
     for target in targets:
         if target.status not in ACCEPTED_MATCH_STATUSES:
             continue
+        if target.status == "FULL_MATCH":
+            continue  # FULL_MATCH is intrinsically certified; no certificate needed
         if not target.buildable:
             continue
         if not include_catalog and target.extra.get("origin") == "symbols.txt":
@@ -726,6 +738,8 @@ def recertify_ready_wave(
             continue
         if target.status not in ACCEPTED_MATCH_STATUSES or not target.buildable:
             continue
+        if target.status == "FULL_MATCH":
+            continue  # FULL_MATCH is intrinsically certified; no certificate needed
         if not include_catalog and target.extra.get("origin") == "symbols.txt":
             continue
         if equivalence_certificate_error(rows_by_id[target.id], rows_by_id) is None:

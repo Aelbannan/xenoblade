@@ -1368,7 +1368,15 @@ extern "C" void func_8028EB9C() {}
 // LLM-HARNESS-END: us-80291018
 
 // LLM-HARNESS-BEGIN: us-80291080
-extern "C" void func_8028EC04() {}
+extern "C" void func_8028EC04(void* arg1, const void* arg2) {
+    void* ptr1 = *(void**)((char*)arg1 + 8);
+    void* ptr2 = *(void**)((char*)ptr1 + 0x10);
+    const float* src = (const float*)arg2;
+    float* dst = (float*)((char*)ptr2 + 0x2c);
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+}
 // LLM-HARNESS-END: us-80291080
 
 // LLM-HARNESS-BEGIN: us-802910a4
@@ -1380,7 +1388,23 @@ extern "C" void func_8028EC74() {}
 // LLM-HARNESS-END: us-802910f0
 
 // LLM-HARNESS-BEGIN: us-80291188
-extern "C" void func_8028ED0C() {}
+extern "C" void func_8028ED0C(void* r3, int r4) {
+    struct InitData {
+        int field0;
+        int field4;
+        int field8;
+        unsigned char field12;
+        unsigned char field13;
+        unsigned char field14;
+    };
+    InitData* data = static_cast<InitData*>(r3);
+    data->field0 = r4;
+    data->field4 = 0;
+    data->field8 = 0;
+    data->field12 = 0;
+    data->field13 = 0;
+    data->field14 = 1;
+}
 // LLM-HARNESS-END: us-80291188
 
 // LLM-HARNESS-BEGIN: us-802911ac
@@ -1525,7 +1549,12 @@ extern "C" void func_8029040C() {}
 // LLM-HARNESS-END: us-802928a0
 
 // LLM-HARNESS-BEGIN: us-80292930
-extern "C" void func_8029049C() {}
+extern "C" void func_8029049C(void* p) {
+    unsigned char* base = reinterpret_cast<unsigned char*>(p);
+    if (base[0x11e] != 0) {
+        base[0x121] = 3;
+    }
+}
 // LLM-HARNESS-END: us-80292930
 
 // LLM-HARNESS-BEGIN: us-80292948

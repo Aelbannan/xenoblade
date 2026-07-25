@@ -21,7 +21,15 @@ extern "C" void func_802228B8() {}
 // LLM-HARNESS-END: us-802246f8
 
 // LLM-HARNESS-BEGIN: us-802247a4
-extern "C" void func_80222964() {}
+namespace nw4r { namespace lyt { class Layout; class DrawInfo; } }
+void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+
+extern "C" void func_80222964(unsigned char* self, nw4r::lyt::DrawInfo* drawInfo)
+{
+    if (self[0x4c] != 0) {
+        func_80137038(*reinterpret_cast<nw4r::lyt::Layout**>(self + 0x34), drawInfo, 0, 1);
+    }
+}
 // LLM-HARNESS-END: us-802247a4
 
 // LLM-HARNESS-BEGIN: us-802247c4

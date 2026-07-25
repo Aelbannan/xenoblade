@@ -52,6 +52,10 @@ public:
     TextWriterBase();
     ~TextWriterBase();
 
+    f32 GetWidthLimit() const;
+    void SetWidthLimit(f32 limit);
+    void ResetWidthLimit();
+
     f32 GetCharSpace() const;
     void SetCharSpace(f32 space);
 
@@ -115,11 +119,12 @@ private:
     f32 AdjustCursor(f32* pX, f32* pY, const T* pStr, int len);
 
 private:
-    f32 mCharSpace;                     // at 0x4C
-    f32 mLineSpace;                     // at 0x50
-    int mTabWidth;                      // at 0x54
-    u32 mDrawFlag;                      // at 0x58
-    TagProcessorBase<T>* mTagProcessor; // at 0x5C
+    f32 mWidthLimit;                    // at 0x4C
+    f32 mCharSpace;                     // at 0x50
+    f32 mLineSpace;                     // at 0x54
+    int mTabWidth;                      // at 0x58
+    u32 mDrawFlag;                      // at 0x5C
+    TagProcessorBase<T>* mTagProcessor; // at 0x60
 
     static T* mFormatBuffer;
     static u32 mFormatBufferSize;

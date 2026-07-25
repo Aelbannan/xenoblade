@@ -1495,8 +1495,10 @@ extern "C" void func_802042C0() {}
 
 // LLM-HARNESS-BEGIN: us-80207074
 extern "C" void func_80205294(void* dst, void* src) {
-    *(u16*)dst = *(u16*)src;
-    *(u32*)((u8*)dst + 4) = *(u32*)((u8*)src + 4);
+    u16 a = *(u16*)src;
+    u32 b = *(u32*)((u8*)src + 4);
+    *(u16*)dst = a;
+    *(u32*)((u8*)dst + 4) = b;
 }
 // LLM-HARNESS-END: us-80207074
 

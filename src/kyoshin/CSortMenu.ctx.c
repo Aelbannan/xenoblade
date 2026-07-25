@@ -1365,7 +1365,14 @@ extern "C" void func_801D350C(void) {}
 // LLM-HARNESS-END: us-801d4f58
 
 // LLM-HARNESS-BEGIN: us-801d4f64
-extern "C" void func_801D3518() {}
+extern "C" void func_801D3518(void* this_, int value) {
+    unsigned char* countPtr = (unsigned char*)this_ + 0xec;
+    unsigned char count = *countPtr;
+    if (count >= 32) return;
+    int* array = (int*)((char*)this_ + 0x6c);
+    array[count] = value;
+    *countPtr = count + 1;
+}
 // LLM-HARNESS-END: us-801d4f64
 
 // LLM-HARNESS-BEGIN: us-801d4f88

@@ -739,7 +739,7 @@ namespace cf{
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
-        static CfObjectMove* func_80082D54(int playerIndex);
+        static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
         static bool func_80086F9C(s16);
         static void setCurrentPadPtr(const CPad* pPad, u32 r4);
@@ -16546,6 +16546,9 @@ class CViewFrame {
 public:
     bool render();
     void detachRenderWork(CWorkThread* pThread);
+    void CView_UnkVirtualFunc1();
+    void CView_UnkVirtualFunc8();
+    void CView_UnkVirtualFunc9();
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
@@ -233914,7 +233917,7 @@ u32 lbl_eu_80663E64;
 u32 lbl_eu_80663E24;
 u32 lbl_eu_80663E28;
 
-// symbols.txt: Fv, but callers leave the index in r4 (see func_80082D54).
+// symbols.txt: Fv, but callers leave the index in r4 (see getPlayer).
 cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots, int index);
 
 void __ct__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
@@ -233982,7 +233985,7 @@ CPad* CfGameManager::getCurrentPad() {
     return &lbl_eu_80570D40[channel & 7];
 }
 
-CfObjectMove* CfGameManager::func_80082D54(int playerIndex) {
+CfObjectMove* CfGameManager::getPlayer(int playerIndex) {
     return *func_8007C6B4__Q22cf13CfGameManagerFv(getInstance()->unk94, playerIndex);
 }
 
@@ -234026,7 +234029,10 @@ extern "C" void func_8007E218__Q22cf13CfGameManagerFv() {}
 extern "C" void func_8007F930__Q22cf13CfGameManagerFv() {}
 // LLM-HARNESS-END: us-800802cc
 // LLM-HARNESS-BEGIN: us-80083c1c
-extern "C" void func_80083298__Q22cf13CfGameManagerFv() {}
+extern "C" void* func_80083298__Q22cf13CfGameManagerFv() {
+    extern void* getInstance__Q22cf13CfGameManagerFv();
+    return *(void**)((char*)getInstance__Q22cf13CfGameManagerFv() + 0x90);
+}
 // LLM-HARNESS-END: us-80083c1c
 // LLM-HARNESS-BEGIN: us-800874cc
 extern "C" void func_800B76CC();

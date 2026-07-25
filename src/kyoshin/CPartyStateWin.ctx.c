@@ -1339,16 +1339,13 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801faf94
-extern "C" void __ct__CPartyStateWin() {}
+extern "C" u32 func_801F9694(void) {
+    extern u32 lbl_eu_80663E10;
+    return lbl_eu_80663E10;
+}
 // LLM-HARNESS-END: us-801faf94
 
-// LLM-HARNESS-BEGIN: us-801fb048
-extern "C" void __dt__14CPartyStateWinFv(void* self) {}
-// LLM-HARNESS-END: us-801fb048
 
-// LLM-HARNESS-BEGIN: us-801fb0d8
-extern "C" void func_801F941C() {}
-// LLM-HARNESS-END: us-801fb0d8
 
 // LLM-HARNESS-BEGIN: us-801fb340
 extern "C" u32 func_801F9684(void* self) { return *(u32*)((u8*)self + 0x6C); }
@@ -1358,36 +1355,12 @@ extern "C" u32 func_801F9684(void* self) { return *(u32*)((u8*)self + 0x6C); }
 extern "C" u32 func_801F968C(void* self) { return *(u32*)((u8*)self + 0x70); }
 // LLM-HARNESS-END: us-801fb348
 
-// LLM-HARNESS-BEGIN: us-801fb350
-extern "C" u32 func_801F9694(void) {
-    extern u32 lbl_eu_80663E10;
-    return lbl_eu_80663E10;
-}
-// LLM-HARNESS-END: us-801fb350
 
-// LLM-HARNESS-BEGIN: us-801fb358
-extern "C" void func_801F969C() {}
-// LLM-HARNESS-END: us-801fb358
 
-// LLM-HARNESS-BEGIN: us-801fb3c8
-extern "C" void func_801F970C() {}
-// LLM-HARNESS-END: us-801fb3c8
 
-// LLM-HARNESS-BEGIN: us-801fb3ec
-extern "C" void func_801F9730() {}
-// LLM-HARNESS-END: us-801fb3ec
 
-// LLM-HARNESS-BEGIN: us-801fb410
-extern "C" void func_801F9754() {}
-// LLM-HARNESS-END: us-801fb410
 
-// LLM-HARNESS-BEGIN: us-801fb4d8
-extern "C" void func_801F981C() {}
-// LLM-HARNESS-END: us-801fb4d8
 
-// LLM-HARNESS-BEGIN: us-801fb520
-extern "C" void func_801F9864() {}
-// LLM-HARNESS-END: us-801fb520
 
 // LLM-HARNESS-BEGIN: us-801fb550
 extern "C" void func_801F9894() {}
@@ -1414,7 +1387,18 @@ extern "C" void func_801F9CB4() {}
 // LLM-HARNESS-END: us-801fb970
 
 // LLM-HARNESS-BEGIN: us-801fbedc
-extern "C" void func_801FA220() {}
+extern "C" void func_801FA220(void* r3, const void* r4) {
+    unsigned int* destWords = (unsigned int*)((char*)r3 + 4);
+    const unsigned int* srcWords = (const unsigned int*)((char*)r4 + 4);
+    destWords[0] = srcWords[0];
+    destWords[1] = srcWords[1];
+    destWords[2] = srcWords[2];
+    destWords[3] = srcWords[3];
+    char* destBytes = (char*)r3;
+    const char* srcBytes = (const char*)r4;
+    destBytes[0x14] = srcBytes[0x14];
+    destBytes[0x15] = srcBytes[0x15];
+}
 // LLM-HARNESS-END: us-801fbedc
 
 // LLM-HARNESS-BEGIN: us-801fbf10
@@ -1517,6 +1501,7 @@ extern "C" void cbRenderBefore__14CPartyStateWinFv(void* self) {}
 extern "C" void func_801FBDB8(void* self) { ((void(*)(void*))cbRenderBefore__14CPartyStateWinFv)((char*)self - 0x4); }
 // LLM-HARNESS-END: us-801fda74
 
+extern "C" void __dt__14CPartyStateWinFv(void* self);
 // LLM-HARNESS-BEGIN: us-801fda7c
 extern "C" void func_801FBDC0(void* self) { ((void(*)(void*))__dt__14CPartyStateWinFv)((char*)self - 0x4); }
 // LLM-HARNESS-END: us-801fda7c

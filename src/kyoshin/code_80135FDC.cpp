@@ -485,15 +485,29 @@ extern "C" u8 func_8013BE50() { return lbl_eu_806621F0; }
 // LLM-HARNESS-END: us-8013c814
 
 // LLM-HARNESS-BEGIN: us-8013c81c
-extern "C" void func_8013BE58() {}
+extern "C" void* getInstance__14Class_80296898Fv();
+
+extern "C" int func_8013BE58() {
+    unsigned char byte = ((unsigned char*)getInstance__14Class_80296898Fv())[0x11];
+    return byte != 0 ? 1 : 0;
+}
 // LLM-HARNESS-END: us-8013c81c
 
 // LLM-HARNESS-BEGIN: us-8013c84c
-extern "C" void func_8013BE88() {}
+extern "C" bool func_8013BE88() {
+    extern void* getInstance__14Class_80296898Fv();
+    void* inst = getInstance__14Class_80296898Fv();
+    unsigned char b = ((unsigned char*)inst)[0x10];
+    return b != 0;
+}
 // LLM-HARNESS-END: us-8013c84c
 
 // LLM-HARNESS-BEGIN: us-8013c87c
-extern "C" void func_8013BEB8() {}
+extern "C" int func_8013BEB8() {
+    extern void* getInstance__14Class_80296898Fv();
+    unsigned char* p = (unsigned char*)getInstance__14Class_80296898Fv();
+    return p[0x21] != 0 ? 1 : 0;
+}
 // LLM-HARNESS-END: us-8013c87c
 
 // LLM-HARNESS-BEGIN: us-8013c8ac
@@ -523,7 +537,11 @@ extern "C" void func_8013BF78() {}
 // LLM-HARNESS-END: us-8013c968
 
 // LLM-HARNESS-BEGIN: us-8013c998
-extern "C" void func_8013BFA8() {}
+extern "C" int func_8013BFA8() {
+    void* getInstance__14Class_80296898Fv();
+    void* obj = getInstance__14Class_80296898Fv();
+    return (static_cast<unsigned char*>(obj)[0x22] != 0) ? 1 : 0;
+}
 // LLM-HARNESS-END: us-8013c998
 
 // LLM-HARNESS-BEGIN: us-8013c9c8

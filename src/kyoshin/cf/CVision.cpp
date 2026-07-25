@@ -117,7 +117,12 @@ extern "C" void func_801A7D6C() {}
 // LLM-HARNESS-END: us-801a94a0
 
 // LLM-HARNESS-BEGIN: us-801a97a4
-extern "C" void func_801A8070() {}
+extern "C" int* func_801A8070(int* param) {
+    if (param[1] == 0) {
+        return 0;
+    }
+    return &param[1];
+}
 // LLM-HARNESS-END: us-801a97a4
 
 // LLM-HARNESS-BEGIN: us-801a97c0

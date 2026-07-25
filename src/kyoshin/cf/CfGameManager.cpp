@@ -129,7 +129,10 @@ extern "C" void func_8007E218__Q22cf13CfGameManagerFv() {}
 extern "C" void func_8007F930__Q22cf13CfGameManagerFv() {}
 // LLM-HARNESS-END: us-800802cc
 // LLM-HARNESS-BEGIN: us-80083c1c
-extern "C" void func_80083298__Q22cf13CfGameManagerFv() {}
+extern "C" void* func_80083298__Q22cf13CfGameManagerFv() {
+    extern void* getInstance__Q22cf13CfGameManagerFv();
+    return *(void**)((char*)getInstance__Q22cf13CfGameManagerFv() + 0x90);
+}
 // LLM-HARNESS-END: us-80083c1c
 // LLM-HARNESS-BEGIN: us-800874cc
 extern "C" void func_800B76CC();

@@ -839,7 +839,11 @@ extern "C" void SetLightObj__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d8LightObji() {}
 // LLM-HARNESS-END: us-803ece90
 
 // LLM-HARNESS-BEGIN: us-803ecea8
-extern "C" void GetLightObj__Q34nw4r3g3d8G3DStateFi() {}
+extern "C" void* GetLightObj__Q34nw4r3g3d8G3DStateFi(int index) {
+    if (index < 0 || index >= 128) return nullptr;
+    extern char lbl_eu_8061B574[];
+    return &lbl_eu_8061B574[index * 0x44 + 0x2c];
+}
 // LLM-HARNESS-END: us-803ecea8
 
 // LLM-HARNESS-BEGIN: us-803eced8
@@ -855,7 +859,13 @@ extern "C" void SetCameraProjMtx__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d6Cameraib() 
 // LLM-HARNESS-END: us-803ecf78
 
 // LLM-HARNESS-BEGIN: us-803ed024
-extern "C" void GetCameraMtxPtr__Q34nw4r3g3d8G3DStateFv() {}
+extern "C" const unsigned char lbl_eu_8061DFA0[];
+
+extern "C" const void* GetCameraMtxPtr__Q34nw4r3g3d8G3DStateFv() {
+    const unsigned char* base = lbl_eu_8061DFA0;
+    unsigned short index = *(const unsigned short*)(base + 2);
+    return base + index * 0x30 + 0x34;
+}
 // LLM-HARNESS-END: us-803ed024
 
 // LLM-HARNESS-BEGIN: us-803ed040

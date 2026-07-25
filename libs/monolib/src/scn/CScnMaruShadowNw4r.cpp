@@ -55,7 +55,16 @@ extern "C" void func_8048E2F8() {}
 
 // us-804926f0: func_8048E67C (0x20 bytes)
 // LLM-HARNESS-BEGIN: us-804926f0
-extern "C" void func_8048E67C() {}
+extern "C" float lbl_eu_8066A994;
+extern "C" float lbl_eu_8066A9CC;
+
+extern "C" void func_8048E67C(void* obj, int condition) {
+    if (condition == 0) {
+        *(float*)((char*)obj + 0x1c) = lbl_eu_8066A9CC;
+    } else {
+        *(float*)((char*)obj + 0x1c) = lbl_eu_8066A994;
+    }
+}
 // LLM-HARNESS-END: us-804926f0
 
 // us-80492710: func_8048E69C (0x39C bytes)

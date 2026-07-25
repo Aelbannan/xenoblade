@@ -69,7 +69,18 @@ void mwply_Destroy() {}
 // LLM-HARNESS-END: us-803a3fac
 
 // LLM-HARNESS-BEGIN: us-803a4108
-void criware_803A0BA8() {}
+uint32_t criware_803A0BA8(void* r3_this, uint32_t r4) {
+    uint32_t a = *(uint32_t*)((char*)r3_this + 0x54c);
+    uint32_t limit = *(uint32_t*)((char*)r3_this + 0x544);
+    uint32_t sum = a + r4;
+    if (sum > limit) {
+        return 0;
+    }
+    uint32_t b = *(uint32_t*)((char*)r3_this + 0x548);
+    *(uint32_t*)((char*)r3_this + 0x54c) = sum;
+    *(uint32_t*)((char*)r3_this + 0x548) = b + r4;
+    return b;
+}
 // LLM-HARNESS-END: us-803a4108
 
 // LLM-HARNESS-BEGIN: us-803a413c

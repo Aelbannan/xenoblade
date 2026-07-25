@@ -31,7 +31,13 @@ extern "C" void CfObjectActor_UnkVirtualFunc8__Q22cf13CfObjectActorFv() {}
 extern "C" void CfObjectActor_UnkVirtualFunc9__Q22cf13CfObjectActorFv() {}
 // LLM-HARNESS-END: us-801738c0
 // LLM-HARNESS-BEGIN: us-801739bc
-extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv() {}
+extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg) {
+    void* p = *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 0x3f60);
+    if (p != 0) {
+        *reinterpret_cast<void**>(reinterpret_cast<char*>(p) + 0x37c) = arg;
+    }
+    *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 0x45bc) = arg;
+}
 // LLM-HARNESS-END: us-801739bc
 
 // LLM-HARNESS-BEGIN: us-80171310

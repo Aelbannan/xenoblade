@@ -789,7 +789,15 @@ u32 ADXPD_GetStat(void* self) { return *(u32*)((u8*)self + 0xc); }
 // LLM-HARNESS-END: us-80388aa0
 
 // LLM-HARNESS-BEGIN: us-80388aa8
-void ADXPD_EntryMono() {}
+int ADXPD_EntryMono(void* r3, int r4, int r5, int r6, int r7) {
+    if (*(int*)((char*)r3 + 0xc) != 0) return 0;
+    *(int*)((char*)r3 + 0x14) = 1;
+    *(int*)((char*)r3 + 0x18) = r4;
+    *(int*)((char*)r3 + 0x1c) = r5;
+    *(int*)((char*)r3 + 0x20) = r6;
+    *(int*)((char*)r3 + 0x24) = r7;
+    return 1;
+}
 // LLM-HARNESS-END: us-80388aa8
 
 // LLM-HARNESS-BEGIN: us-80388adc

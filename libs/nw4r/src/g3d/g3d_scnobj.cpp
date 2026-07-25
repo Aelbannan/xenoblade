@@ -723,7 +723,12 @@ extern "C" void GetTypeName__Q34nw4r3g3d8ScnGroupCFv() {}
 // LLM-HARNESS-END: us-803f7f5c
 // LLM-HARNESS-END: us-803f7f5c
 // LLM-HARNESS-BEGIN: us-803f7f68
-extern "C" void GetTypeName__Q34nw4r3g3d6ScnObjCFv() {}
+extern "C" const char* GetTypeName__Q34nw4r3g3d6ScnObjCFv(const void* self) {
+    const void* vtable = *static_cast<const void* const*>(self);
+    const char* (*vfunc)(const void*) = reinterpret_cast<const char* (*)(const void*)>(static_cast<const void* const*>(vtable)[0x14 / sizeof(void*)]);
+    const char* result = vfunc(self);
+    return result + 4;
+}
 // LLM-HARNESS-END: us-803f7f68
 // LLM-HARNESS-BEGIN: us-803f7f98
 // LLM-HARNESS-BEGIN: us-803f7f98

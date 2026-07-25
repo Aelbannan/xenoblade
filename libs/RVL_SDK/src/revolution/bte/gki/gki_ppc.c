@@ -53,7 +53,12 @@ void GKI_exception(void) {}
 // LLM-HARNESS-END: us-802df3a0
 
 // LLM-HARNESS-BEGIN: us-802df3b0
-void GKI_os_malloc() {}
+void* GKI_os_malloc(size_t size) {
+    extern void* App_MEMalloc(size_t);
+    void* result = App_MEMalloc(size);
+    if (result == 0) return 0;
+    return result;
+}
 // LLM-HARNESS-END: us-802df3b0
 
 // LLM-HARNESS-BEGIN: us-802df3e0

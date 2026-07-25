@@ -1584,41 +1584,44 @@ def _prove_bytes(
     # §2.7.1: Resolve declared_return (explicit kwarg > registry lookup via target_id).
     # Registry lookup is NOT gated on abi_shape_inference_enabled.
     declared_return_value: str | None = declared_return
+    registry_resolution_note: str | None = None
     if declared_return_value is None and certificate_target_id is not None and project is not None:
         try:
             from tools.coop.lib.targets import get_target, load_targets
-            from tools.coop.lib.config import load_config
 
-            config = load_config(None, project.root)
-            targets = load_targets(config)
+            targets = load_targets(project.config)
             registry_target = get_target(targets, certificate_target_id)
             registry_declared = registry_target.extra.get("declared_return")
             if registry_declared is not None:
                 declared_return_value = str(registry_declared)
-            # §2.7.2: symbol mismatch → INVALID_INPUT (fail closed)
-            if (
-                registry_target.symbol is not None
-                and registry_target.symbol != symbol
-            ):
-                return EquivalenceProbe(
-                    ProofStatus.INVALID_INPUT,
-                    f"declared_return from registry target {certificate_target_id!r} "
-                    f"symbol {registry_target.symbol!r} differs from proved symbol {symbol!r}",
-                )
+                # §2.7.2: symbol mismatch → INVALID_INPUT (fail closed)
+                # Only scope this check when a registry declaration is present
+                # and about to be applied.
+                if (
+                    registry_target.symbol is not None
+                    and registry_target.symbol != symbol
+                ):
+                    return EquivalenceProbe(
+                        ProofStatus.INVALID_INPUT,
+                        f"declared_return from registry target {certificate_target_id!r} "
+                        f"symbol {registry_target.symbol!r} differs from proved symbol {symbol!r}",
+                    )
         except KeyError:
             # Target not in registry → no declaration.
             pass
-        except Exception:
-            # Any other error → no declaration (fail closed, no narrowing).
+        except Exception as exc:
+            # Any other error → no declaration (fail closed, no narrowing),
+            # but record why so the refusal is not silent.
+            registry_resolution_note = f"declared-return registry lookup failed: {exc!r}"
             pass
 
     # §2.7.3: Attach declared-return ABI shape when a declaration was resolved.
     declared_shape: Any | None = None
     gate_refused = False
     gate_forced = False
+    gate_refused_reason: str | None = None
     if declared_return_value is not None:
         from tools.ppc_equivalence.abi_infer import (
-            DECLARED_RETURN_SHAPES,
             abi_shape_from_declared_return,
             combine_abi_shapes,
         )
@@ -1633,37 +1636,58 @@ def _prove_bytes(
             if not force_declared_return and project is not None and certificate_target_id is not None:
                 try:
                     from tools.coop.lib.targets import get_target, load_targets
-                    from tools.coop.lib.config import load_config
 
-                    config = load_config(None, project.root)
-                    all_targets = load_targets(config)
+                    all_targets = load_targets(project.config)
                     reg_target = get_target(all_targets, certificate_target_id)
-                    has_indirect = bool(reg_target.extra.get("has_indirect_calls", False))
-                    unresolved = reg_target.extra.get("unresolved_called_functions", [])
-                    if has_indirect or unresolved:
+                    # Fail-closed: missing call-graph fields or incomplete
+                    # status default to REFUSED (unknown → unsafe).
+                    cg_status = reg_target.extra.get("callgraph_status")
+                    if cg_status is not None and cg_status != "complete":
                         gate_refused = True
+                        gate_refused_reason = (
+                            "declared-return narrowing refused (caller-corroboration "
+                            f"gate): callgraph_status={cg_status!r}"
+                        )
                     else:
-                        # Scan registry for callers that reference this target's symbol.
-                        called_by = reg_target.extra.get("called_functions", [])
-                        # Find any target that calls this target.
-                        has_caller = False
-                        target_symbol = reg_target.symbol
-                        if target_symbol is not None:
-                            for t in all_targets:
-                                callees = t.extra.get("called_functions", [])
-                                if isinstance(callees, list) and certificate_target_id in callees:
-                                    has_caller = True
-                                    break
-                        if not has_caller:
+                        has_indirect_key = "has_indirect_calls"
+                        has_indirect = bool(reg_target.extra.get(has_indirect_key, True))
+                        unresolved_key = "unresolved_called_functions"
+                        unresolved = reg_target.extra.get(unresolved_key, ["unknown"])
+                        if has_indirect or unresolved:
                             gate_refused = True
+                            reasons: list[str] = []
+                            if has_indirect:
+                                reasons.append("indirect calls")
+                            if unresolved:
+                                reasons.append("unresolved callees")
+                            gate_refused_reason = "declared-return narrowing refused (caller-corroboration gate): " + ", ".join(reasons)
+                        else:
+                            # Find any target that calls this target.
+                            has_caller = False
+                            target_symbol = reg_target.symbol
+                            if target_symbol is not None:
+                                for t in all_targets:
+                                    callees = t.extra.get("called_functions", [])
+                                    if isinstance(callees, list) and certificate_target_id in callees:
+                                        has_caller = True
+                                        break
+                            if not has_caller:
+                                gate_refused = True
+                                gate_refused_reason = "declared-return narrowing refused (caller-corroboration gate): no direct caller in registry"
                 except (KeyError, Exception):
                     gate_refused = True
+                    gate_refused_reason = "declared-return narrowing refused (caller-corroboration gate): registry lookup failed"
 
             if gate_refused and not force_declared_return:
                 # Narrowing refused — treat as no declaration.
                 declared_shape = None
             elif gate_refused and force_declared_return:
                 gate_forced = True
+
+        # Always set the forced marker when force_declared_return is active
+        # and a narrowing shape was resolved, regardless of gate evaluation.
+        if force_declared_return and declared_shape is not None:
+            gate_forced = True
 
         if declared_shape is not None:
             # Combine declared shape with inference (or conservative if none).
@@ -1931,6 +1955,7 @@ def _prove_bytes(
         memory_loop_readonly=memory_loop_readonly_identity,
         platform_profile_sha256=platform_profile_sha256,
         memory_bus=memory_bus_identity,
+        abi_shape=abi_shape_payload,
     )
     result = check_equivalence(
         original,
@@ -1955,6 +1980,15 @@ def _prove_bytes(
         platform_profile=platform_profile_obj,
         memory_bus=memory_bus_obj,
     )
+    # Merge declaration audit fields (declared_return / declared_return_forced)
+    # into the result's contract resolution so certificates and the §2.9 tier
+    # cap see them; the engine only round-trips AbiShape.to_dict().
+    if abi_shape_payload is not None and result.contract_resolution is not None:
+        res_shape = result.contract_resolution.get("abi_shape")
+        if isinstance(res_shape, dict):
+            for audit_key in ("declared_return", "declared_return_forced"):
+                if audit_key in abi_shape_payload and abi_shape_payload[audit_key] is not None:
+                    res_shape[audit_key] = abi_shape_payload[audit_key]
     # Stage 4: derive requirements + attach drafts (ledger + certified callees).
     # Engine may already have attached; orchestrator refreshes ledger binding.
     assurance_errors = _apply_capability_assurance(
@@ -2016,6 +2050,12 @@ def _prove_bytes(
         note = f"capability-assurance-generation-failed:{code}"
         if note not in detail:
             detail = f"{detail}; {note}" if detail else note
+
+    if gate_refused_reason is not None:
+        detail = f"{detail}; {gate_refused_reason}" if detail else gate_refused_reason
+
+    if registry_resolution_note is not None:
+        detail = f"{detail}; {registry_resolution_note}" if detail else registry_resolution_note
 
     certificate = None
     if (

@@ -25,7 +25,19 @@ extern "C" void __dt___reslist_base_CArcItem() {}
 // LLM-HARNESS-END: us-804e1e6c
 
 // LLM-HARNESS-BEGIN: us-804e1ee8
-extern "C" void func_804DDBD8() {}
+extern "C" void func_804DDBD8(void* self) {
+    uint32_t* head = *(uint32_t**)((uint8_t*)self + 4);
+    uint32_t* node = (uint32_t*)*head;
+    goto loop_cond;
+loop_body:
+    uint32_t* cur = node;
+    node = (uint32_t*)*node;
+    *cur = 0;
+loop_cond:
+    head = *(uint32_t**)((uint8_t*)self + 4);
+    if (node != head) goto loop_body;
+    *head = (uint32_t)head;
+}
 // LLM-HARNESS-END: us-804e1ee8
 
 // LLM-HARNESS-BEGIN: us-804e1f18

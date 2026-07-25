@@ -95,7 +95,13 @@ extern "C" void wkStandbyLogout__11CDeviceFileFv() {}
 // LLM-HARNESS-END: us-80452050
 
 // LLM-HARNESS-BEGIN: us-804520b0
-extern "C" void func_eu_804520B0() {}
+extern "C" void func_eu_804520B0(void* r3) {
+    extern int lbl_eu_80665664;
+    extern void* lbl_eu_80657580[];
+    int idx = lbl_eu_80665664;
+    lbl_eu_80657580[idx] = r3;
+    lbl_eu_80665664 = idx + 1;
+}
 // LLM-HARNESS-END: us-804520b0
 
 // LLM-HARNESS-BEGIN: us-804520d0
@@ -138,5 +144,9 @@ extern "C" void getFileDataPtr__10CEventFileFv() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // LLM-HARNESS-BEGIN: us-80452248
-extern "C" void sinit_eu_80452248() {}
+extern "C" void sinit_eu_80452248() {
+    extern unsigned char lbl_eu_806575C0[];
+    lbl_eu_806575C0[0] = 0;
+    *(unsigned int*)(lbl_eu_806575C0 + 0x100) = 0;
+}
 // LLM-HARNESS-END: us-80452248

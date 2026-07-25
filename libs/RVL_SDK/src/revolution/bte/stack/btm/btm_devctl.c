@@ -21,7 +21,10 @@ void BTM_SendHciReset() {}
 // LLM-HARNESS-END: us-802e944c
 
 // LLM-HARNESS-BEGIN: us-802e94f4
-void BTM_IsDeviceUp() {}
+int BTM_IsDeviceUp(void) {
+    extern unsigned char btm_cb[];
+    return (btm_cb[0x64e] == 5) ? 1 : 0;
+}
 // LLM-HARNESS-END: us-802e94f4
 
 // LLM-HARNESS-BEGIN: us-802e9510

@@ -4,7 +4,7 @@
 #include "monolib/util/MemManager.hpp"
 
 extern "C" {
-CProcRoot* lbl_eu_806655A0;
+extern CProcRoot* lbl_eu_806655A0;
 // Shared string pool: "CDesktop\0CProcRoot" - create uses +9 ("CProcRoot").
 char lbl_eu_80522514[];
 // Retail CProcRoot vtable (outside this .text-only split).
@@ -19,8 +19,8 @@ void entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(CWorkThread* ths,
                                                          bool prepend);
 }
 
-// Keep the static for ABI; retail singleton slot is lbl_eu_806655A0.
-CProcRoot* CProcRoot::spInstance;
+// spInstance is provided by the retail data object (monolibdata1d) until
+// this unit's .sbss is data-matched; retail code uses lbl_eu_806655A0.
 
 // No out-of-line __ct__9CProcRoot - retail create inlines CWorkThread ctor +
 // vtable/singleton/mType stores (same pattern as CViewRoot::create).

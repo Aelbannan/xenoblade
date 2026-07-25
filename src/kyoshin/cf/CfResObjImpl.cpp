@@ -53,7 +53,12 @@ extern "C" void func_8016CD64(void) {}
 // LLM-HARNESS-END: us-8016e0c0
 
 // LLM-HARNESS-BEGIN: us-8016e0c4
-extern "C" void func_8016CD68() {}
+extern "C" void func_8016CD68(void* self, int index, int value) {
+    if (index < 2) {
+        int* arr = (int*)((char*)self + 0x14);
+        arr[index] = value;
+    }
+}
 // LLM-HARNESS-END: us-8016e0c4
 
 // LLM-HARNESS-BEGIN: us-8016e0dc

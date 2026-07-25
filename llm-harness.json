@@ -63,7 +63,7 @@
       {
 		"id": "or-kimi-k3",
 		"provider": "openrouter",
-		"model": "moonshotai/kimi-k3",
+		"model": "deepseek/deepseek-v4-flash",
 		"runs": 1,
 		"max_tokens": 16384,
 		"thinking_budget": "unlimited"
@@ -72,7 +72,7 @@
   },
   "execution": {
     "initial_parallel": 1,
-    "target_parallel": 20,
+    "target_parallel": 50,
     "max_retries": 0,
     "auto_promote": true,
     "auto_promote_owner": "llm-harness",

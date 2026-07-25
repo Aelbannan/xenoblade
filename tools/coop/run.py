@@ -1401,6 +1401,10 @@ def _run_check_unit_direct(
 
     Used when --declared-return or --force-declared-return is set, since
     the upstream CLI does not support these flags.
+
+    Resolves the registry target by symbol so the §2.8 caller-corroboration
+    gate runs. If --declared-return is given but no registry target exists
+    for the symbol, errors unless --force-declared-return is also given.
     """
     from tools.coop.lib.equivalence_check import prove_unit_symbol
     from tools.ppc_equivalence.result import ProofStatus
@@ -1413,15 +1417,64 @@ def _run_check_unit_direct(
         elif arg.startswith("--contract="):
             contract = arg.split("=", 1)[1]
         elif arg == "--observe":
-            # consume but unused here; prove_unit_symbol uses contract-based obs
-            next(rest_iter, None)
+            print(
+                "ERROR: --observe is not supported in direct mode "
+                "(prove_unit_symbol uses contract-based observables)",
+                file=sys.stderr,
+            )
+            return 3
         elif arg.startswith("--observe="):
-            pass
+            print(
+                "ERROR: --observe is not supported in direct mode "
+                "(prove_unit_symbol uses contract-based observables)",
+                file=sys.stderr,
+            )
+            return 3
+        elif arg.startswith("--"):
+            print(f"ERROR: unsupported flag {arg!r} in direct mode", file=sys.stderr)
+            return 3
+
+    # Resolve registry target by symbol so the §2.8 gate can run.
+    target_id: str | None = None
+    if declared_return is not None or force_declared_return:
+        try:
+            from tools.coop.lib.targets import load_targets
+            from tools.coop.lib.config import load_config
+
+            config = load_config(None, project.root)
+            all_targets = load_targets(config)
+            matching = [t for t in all_targets if t.symbol == symbol]
+            if len(matching) == 1:
+                target_id = matching[0].id
+            elif len(matching) > 1:
+                print(
+                    f"ERROR: --declared-return given but {len(matching)} registry targets "
+                    f"match symbol {symbol!r}; refusing ambiguous resolution",
+                    file=sys.stderr,
+                )
+                return 3
+            else:
+                # No registry target for this symbol.
+                if declared_return is not None and not force_declared_return:
+                    print(
+                        f"ERROR: --declared-return given but no registry target exists for "
+                        f"symbol {symbol!r}; use --force-declared-return to proceed without "
+                        f"registry corroboration",
+                        file=sys.stderr,
+                    )
+                    return 3
+                # With --force-declared-return alone, proceed without a target_id.
+        except Exception as exc:
+            print(
+                f"WARNING: could not load registry for target resolution: {exc}",
+                file=sys.stderr,
+            )
 
     probe = prove_unit_symbol(
         project, unit, symbol,
         contract=contract,
         candidate_symbol=candidate_symbol,
+        target_id=target_id,
         declared_return=declared_return,
         force_declared_return=force_declared_return,
     )
@@ -1474,6 +1527,16 @@ def _run_check_unit_linked(
             contract = next(rest_iter, contract)
         elif arg.startswith("--contract="):
             contract = arg.split("=", 1)[1]
+        elif arg.startswith("--observe"):
+            print(
+                "ERROR: --observe is not supported in linked mode "
+                "(prove_unit_symbol uses contract-based observables)",
+                file=sys.stderr,
+            )
+            return 3
+        elif arg.startswith("--"):
+            print(f"ERROR: unsupported flag {arg!r} in linked mode", file=sys.stderr)
+            return 3
 
     probe = prove_unit_symbol(
         project, unit, symbol,

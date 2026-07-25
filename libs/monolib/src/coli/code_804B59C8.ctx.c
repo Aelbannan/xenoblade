@@ -895,7 +895,14 @@ extern "C" void func_804B7B6C() {}
 // LLM-HARNESS-END: us-804bbcc8
 
 // LLM-HARNESS-BEGIN: us-804bbef8
-extern "C" void func_804B7D9C() {}
+extern "C" u32 lbl_eu_8065F1A0;
+extern "C" void func_804B7D9C(int, int bit_index) {
+    if (bit_index > 0x140) bit_index = 0x140;
+    int word_idx = bit_index >> 5;
+    int bit_off = bit_index & 0x1F;
+    int mask = 1 << bit_off;
+    ((int*)&lbl_eu_8065F1A0)[word_idx] &= ~mask;
+}
 // LLM-HARNESS-END: us-804bbef8
 
 // LLM-HARNESS-BEGIN: us-804bbf30

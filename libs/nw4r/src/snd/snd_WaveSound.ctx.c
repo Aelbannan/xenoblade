@@ -21122,7 +21122,8 @@ struct WaveInfo {
     u8 numChannels;             // at 0x2
     u8 sampleRate24;            // at 0x3
     u16 sampleRate;             // at 0x4
-    u16 PADDING_0x6;            // at 0x6
+    u8 dataType;                // at 0x6 (used by GetWaveDataAddress)
+    u8 PADDING_0x7;            // at 0x7
     u32 loopStart;              // at 0x8
     u32 loopEnd;                // at 0xC
     u32 channelInfoTableOffset; // at 0x10
@@ -21171,11 +21172,23 @@ public:
     explicit WaveFileReader(const WaveFile::WaveInfo* pWaveInfo);
 
     bool ReadWaveParam(WaveData* pWaveData, const void* pWaveAddr) const;
+    void* GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
+                              const void* addr) const;
 
     static AxVoice::Format GetAxVoiceFormatFromWaveFileFormat(u32 format);
 
 private:
     const WaveFile::WaveInfo* mWaveInfo; // at 0x0
+};
+
+class WaveArchiveReader {
+public:
+    explicit WaveArchiveReader(const void* pData);
+    const void* GetWaveFile(int index) const;
+
+private:
+    const void* mFileStart; // at 0x0
+    const void* mWaveData;  // at 0x4
 };
 
 inline AxVoice::Format WaveFormatToAxFormat(u32 format) {
@@ -237508,6 +237521,7 @@ public:
         virtual void detail_Update(SoundParam* pParam, u32 id,
                                    BasicSound* pSound, const void* pArg,
                                    u32 flags) = 0; // at 0xC
+        virtual u32 GetPriority(void* arg, u32 param) = 0; // at 0x10
     };
 
     struct AmbientArgUpdateCallback {
@@ -237530,6 +237544,16 @@ public:
         void* arg;                                         // at 0xC
         u32 argSize;                                       // at 0x10
     };
+
+    struct AmbientInfo {
+        AmbientParamUpdateCallback* paramUpdateCallback;   // at 0x0
+        AmbientArgUpdateCallback* argUpdateCallback;       // at 0x4
+        AmbientArgAllocaterCallback* argAllocaterCallback; // at 0x8
+        void* arg;                                         // at 0xC
+        u32 argSize;                                       // at 0x10
+    };
+
+    static u32 GetAmbientPriority(const AmbientInfo& info, u32 param);
 
     static const u32 INVALID_ID = 0xFFFFFFFF;
     static const int PRIORITY_MAX = 127;
@@ -244009,11 +244033,20 @@ public:
     }
 
     bool Setup(StrmBufferPool* pBufferPool);
+    bool Setup(StrmBufferPool* pBufferPool, int voices, u16 param, int zero);
     void Shutdown();
 
     bool Prepare(ut::FileStream* pFileStream, int voices,
                  StartOffsetType offsetType, int offset);
+    bool Prepare(ut::FileStream* pFileStream, StartOffsetType offsetType,
+                 s32 offset);
     void InitParam();
+
+    struct PlayerTrack {
+        u8 data[0x38];
+    };
+
+    PlayerTrack* GetPlayerTrack(int index);
 
     void Update();
 
@@ -244153,6 +244186,14 @@ private:
     u16 mAdpcmLoopPredScale[CHANNEL_MAX]; // at 0x8A4
     u16 mAdpcmLoopYn1[CHANNEL_MAX];       // at 0x8A8
     u16 mAdpcmLoopYn2[CHANNEL_MAX];       // at 0x8AC
+
+    PlayerTrack mPlayerTracks[8]; // at 0xB78
+    
+    struct MoveBlock {
+        u32 limit; // at 0x0
+        u32 count; // at 0x4
+    };
+    MoveBlock mMoveBlocks[8]; // at 0xD7C
 
     static u8 sLoadBuffer[LOAD_BUFFER_SIZE] ALIGN(32);
     static OSMutex sLoadBufferMutex;

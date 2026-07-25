@@ -36,7 +36,7 @@ void SFADXT_Init() {}
 // LLM-HARNESS-END: us-803bfcbc
 
 // LLM-HARNESS-BEGIN: us-803bfcf8
-void SFADXT_Finish() {}
+int SFADXT_Finish() { SFA_Finish(); ADXT_Finish(); return 0; }
 // LLM-HARNESS-END: us-803bfcf8
 
 // LLM-HARNESS-BEGIN: us-803bfd20

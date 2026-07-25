@@ -16133,16 +16133,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -20622,6 +20620,7 @@ public:
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -22227,10 +22226,12 @@ namespace detail {
  * Pointer operations
  *
  ******************************************************************************/
-template <typename T> T* ConvertOffsToPtr(void* pBase, u32 offset) {
+// Use unsigned int (not u32) to match retail name mangling (Ui vs Ul).
+// On PowerPC both are 32-bit with identical ABI.
+template <typename T> T* ConvertOffsToPtr(void* pBase, unsigned int offset) {
     return reinterpret_cast<T*>(reinterpret_cast<u8*>(pBase) + offset);
 }
-template <typename T> const T* ConvertOffsToPtr(const void* pBase, u32 offset) {
+template <typename T> const T* ConvertOffsToPtr(const void* pBase, unsigned int offset) {
     return reinterpret_cast<const T*>(reinterpret_cast<const u8*>(pBase) +
                                       offset);
 }
@@ -27301,7 +27302,7 @@ public:
     virtual ~CDeviceVICb();
     virtual void viBeforeDrawDone(){}
     virtual void viAfterDrawDone(){}
-    virtual void viBeginFrame(){}
+    virtual void viBeginFrame();
 };
 /* end "monolib/device/CDeviceVICb.hpp" */
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 5 "monolib/util.hpp" */
@@ -29126,7 +29127,7 @@ namespace cf{
         static UNKWORD func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
-        static CfObjectMove* func_80082D54(int playerIndex);
+        static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
         static bool func_80086F9C(s16);
         static void setCurrentPadPtr(const CPad* pPad, u32 r4);
@@ -29545,7 +29546,7 @@ after_flags:
             goto after_enum;
         }
     }
-    party = cf::CfGameManager::func_80082D54(0);
+    party = cf::CfGameManager::getPlayer(0);
     if (party == NULL) {
         goto after_enum;
     }
@@ -29553,7 +29554,7 @@ after_flags:
     func_80043D90(&holder);
     list = func_80043F18(&holder);
     func_800F4A98(list, 0x130, 0);
-    party = cf::CfGameManager::func_80082D54(0);
+    party = cf::CfGameManager::getPlayer(0);
     {
         void** vt = *reinterpret_cast<void***>(party);
         partyHandle = reinterpret_cast<CUICfVPtrFn>(vt[0xAC / 4])(party);

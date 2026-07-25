@@ -899,7 +899,18 @@ extern "C" void func_804C5198() {}
 // LLM-HARNESS-END: us-804c92f4
 
 // LLM-HARNESS-BEGIN: us-804c9330
-extern "C" void func_804C51D4() {}
+extern "C" bool func_804C51D4(void* r3, void* r4) {
+    if (!(*(unsigned int*)((char*)r3 + 4) & 0x400)) return false;
+    unsigned int v7 = *(unsigned int*)((char*)r3 + 0x64);
+    unsigned int v6 = *(unsigned int*)((char*)r3 + 0x68);
+    unsigned int v5 = *(unsigned int*)((char*)r3 + 0x6c);
+    unsigned int v0 = *(unsigned int*)((char*)r3 + 0x70);
+    *(unsigned int*)((char*)r4 + 0) = v7;
+    *(unsigned int*)((char*)r4 + 4) = v6;
+    *(unsigned int*)((char*)r4 + 8) = v5;
+    *(unsigned int*)((char*)r4 + 0xc) = v0;
+    return true;
+}
 // LLM-HARNESS-END: us-804c9330
 
 // LLM-HARNESS-BEGIN: us-804c936c
@@ -947,7 +958,22 @@ extern "C" void func_804C5C6C() {}
 // LLM-HARNESS-END: us-804c9dc8
 
 // LLM-HARNESS-BEGIN: us-804c9ed8
-extern "C" void func_804C5D7C() {}
+extern "C" void func_804C5D7C(void* self, unsigned int* out) {
+    struct SelfStruct {
+        char pad[0x40];
+        void* ptr;
+    };
+    SelfStruct* s = static_cast<SelfStruct*>(self);
+    void* subPtr = s->ptr;
+    if (subPtr == nullptr) return;
+    struct SubStruct {
+        unsigned short flags;
+        unsigned short value;
+    };
+    SubStruct* sub = static_cast<SubStruct*>(subPtr);
+    if (!(sub->flags & 1)) return;
+    *out = sub->value;
+}
 // LLM-HARNESS-END: us-804c9ed8
 
 // LLM-HARNESS-BEGIN: us-804c9efc
@@ -1005,11 +1031,23 @@ extern "C" int func_804C6AE8(unsigned int* arg0) {
 // LLM-HARNESS-END: us-804cac44
 
 // LLM-HARNESS-BEGIN: us-804cac50
-extern "C" void func_804C6AF4() {}
+extern "C" void func_804C6AF4(void* ptr, int flag) {
+    unsigned int* word = (unsigned int*)((char*)ptr + 4);
+    if (flag != 0)
+        *word |= 0x40000000;
+    else
+        *word &= ~0x40000000;
+}
 // LLM-HARNESS-END: us-804cac50
 
 // LLM-HARNESS-BEGIN: us-804cac78
-extern "C" void func_804C6B1C() {}
+extern "C" void func_804C6B1C(void* r3, int r4) {
+    if (r4 != 0) {
+        *(unsigned int*)((char*)r3 + 4) |= 0x80000000u;
+    } else {
+        *(unsigned int*)((char*)r3 + 4) &= ~0x80000000u;
+    }
+}
 // LLM-HARNESS-END: us-804cac78
 
 // LLM-HARNESS-BEGIN: us-804caca0
@@ -1116,7 +1154,10 @@ extern "C" void func_804C7620() {}
 // LLM-HARNESS-END: us-804cb77c
 
 // LLM-HARNESS-BEGIN: us-804cb798
-extern "C" void func_804C763C() {}
+extern "C" void func_804C763C(int dummy, float f, void* ptr) {
+    int val = (int)f;
+    *(int*)((char*)ptr + 0x38) = val;
+}
 // LLM-HARNESS-END: us-804cb798
 
 // LLM-HARNESS-BEGIN: us-804cb7b4
@@ -1168,7 +1209,10 @@ extern "C" void func_804C7700() {}
 // LLM-HARNESS-END: us-804cb85c
 
 // LLM-HARNESS-BEGIN: us-804cb878
-extern "C" void func_804C771C() {}
+extern "C" void func_804C771C(int, void* ptr, float value) {
+    int i = (int)value;
+    *(short*)((char*)ptr + 0xe) = (short)i;
+}
 // LLM-HARNESS-END: us-804cb878
 
 // LLM-HARNESS-BEGIN: us-804cb894

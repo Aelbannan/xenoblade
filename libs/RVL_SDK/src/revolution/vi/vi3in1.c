@@ -9,7 +9,13 @@ void __VISetYUVSEL() {}
 // LLM-HARNESS-END: us-8036a090
 
 // LLM-HARNESS-BEGIN: us-8036a130
-void __VISetFilter4EURGB60() {}
+void __VISetFilter4EURGB60(u8 param1) {
+    u8 buf[2];
+    buf[0] = 0x6e;
+    buf[1] = param1;
+    __VISendI2CData(0xe0, buf, 2);
+    WaitMicroTime(2);
+}
 // LLM-HARNESS-END: us-8036a130
 
 // LLM-HARNESS-BEGIN: us-8036a170

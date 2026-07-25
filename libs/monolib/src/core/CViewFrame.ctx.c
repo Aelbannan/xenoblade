@@ -6711,6 +6711,9 @@ class CViewFrame {
 public:
     bool render();
     void detachRenderWork(CWorkThread* pThread);
+    void CView_UnkVirtualFunc1();
+    void CView_UnkVirtualFunc8();
+    void CView_UnkVirtualFunc9();
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
@@ -17311,3 +17314,7 @@ extern "C" void func_8043FC60__10CViewFrameFUl(void* self, u32 val) {
     *(u32*)((u8*)self + 4) = val;
 }
 // LLM-HARNESS-END: us-804425f8
+
+void CViewFrame::CView_UnkVirtualFunc1() {}
+void CViewFrame::CView_UnkVirtualFunc8() {}
+void CViewFrame::CView_UnkVirtualFunc9() {}

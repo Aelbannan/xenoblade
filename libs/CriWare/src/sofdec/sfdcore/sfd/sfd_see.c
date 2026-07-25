@@ -18,7 +18,16 @@ void SFD_EntrySeek() {}
 // LLM-HARNESS-END: us-803ce5c0
 
 // LLM-HARNESS-BEGIN: us-803ce61c
-void SFSEE_FixAvPlay() {}
+void SFSEE_FixAvPlay(void *arg, int arg2, int arg3) {
+    void *ptr = *(void**)((char*)arg + 0x2670);
+    if (ptr == NULL) return;
+    if (*(int*)((char*)ptr + 0xdb8) < 0) {
+        *(int*)((char*)ptr + 0xdb8) = arg2;
+    }
+    if (*(int*)((char*)ptr + 0xdbc) < 0) {
+        *(int*)((char*)ptr + 0xdbc) = arg3;
+    }
+}
 // LLM-HARNESS-END: us-803ce61c
 
 // LLM-HARNESS-BEGIN: us-803ce64c

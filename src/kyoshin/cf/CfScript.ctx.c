@@ -1389,7 +1389,9 @@ extern "C" void func_80068A30() {}
 // LLM-HARNESS-END: us-80069440
 
 // LLM-HARNESS-BEGIN: us-80069490
-extern "C" void func_80068A80() {}
+extern "C" void func_80068A80() {
+    cf::CfScriptManager::getInstance()->init();
+}
 // LLM-HARNESS-END: us-80069490
 
 // LLM-HARNESS-BEGIN: us-800694b4

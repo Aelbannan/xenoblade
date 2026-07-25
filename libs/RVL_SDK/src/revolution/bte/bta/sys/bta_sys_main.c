@@ -21,7 +21,12 @@ void bta_sys_register() {}
 // LLM-HARNESS-END: us-802e141c
 
 // LLM-HARNESS-BEGIN: us-802e1430
-void bta_sys_sendmsg() {}
+unsigned char bta_sys_sendmsg(void *p_msg) {
+    extern unsigned char bta_sys_cb[];
+    extern unsigned char *p_bta_sys_cfg;
+    extern unsigned char GKI_send_msg(unsigned char, unsigned char, void *);
+    return GKI_send_msg(bta_sys_cb[0x7D], p_bta_sys_cfg[2], p_msg);
+}
 // LLM-HARNESS-END: us-802e1430
 
 // LLM-HARNESS-BEGIN: us-802e144c

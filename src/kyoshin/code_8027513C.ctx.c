@@ -1339,44 +1339,17 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-802775c0
-extern "C" void initCamControlInstances() {}
+extern "C" int func_802759A8(void* self) { return 0; }
 // LLM-HARNESS-END: us-802775c0
 
-// LLM-HARNESS-BEGIN: us-8027767c
-extern "C" void func_802751F8() {}
-// LLM-HARNESS-END: us-8027767c
 
-// LLM-HARNESS-BEGIN: us-802776bc
-extern "C" void func_80275238() {}
-// LLM-HARNESS-END: us-802776bc
 
-// LLM-HARNESS-BEGIN: us-802776fc
-extern "C" void func_80275278() {}
-// LLM-HARNESS-END: us-802776fc
 
-// LLM-HARNESS-BEGIN: us-8027773c
-extern "C" void func_802752B8() {}
-// LLM-HARNESS-END: us-8027773c
 
-// LLM-HARNESS-BEGIN: us-8027777c
-extern "C" void func_802752F8() {}
-// LLM-HARNESS-END: us-8027777c
 
-// LLM-HARNESS-BEGIN: us-802777bc
-extern "C" void func_80275338() {}
-// LLM-HARNESS-END: us-802777bc
 
-// LLM-HARNESS-BEGIN: us-802777fc
-extern "C" void func_80275378() {}
-// LLM-HARNESS-END: us-802777fc
 
-// LLM-HARNESS-BEGIN: us-8027783c
-extern "C" void func_802753B8() {}
-// LLM-HARNESS-END: us-8027783c
 
-// LLM-HARNESS-BEGIN: us-8027787c
-extern "C" void func_802753F8() {}
-// LLM-HARNESS-END: us-8027787c
 
 // LLM-HARNESS-BEGIN: us-802778d8
 extern "C" void func_80275454() {}
@@ -1387,7 +1360,12 @@ extern "C" void func_802756F0() {}
 // LLM-HARNESS-END: us-80277b74
 
 // LLM-HARNESS-BEGIN: us-80277c8c
-extern "C" void func_80275808() {}
+extern "C" void func_80275808(void *ptr) {
+    *(int*)((char*)ptr + 0x20) = -1;
+    *(int*)((char*)ptr + 0x1c) = 0;
+    *(int*)((char*)ptr + 0x74) = 0;
+    *(short*)((char*)ptr + 0x78) = 0;
+}
 // LLM-HARNESS-END: us-80277c8c
 
 // LLM-HARNESS-BEGIN: us-80277ca8
@@ -1406,9 +1384,6 @@ extern "C" void func_8027594C(void* self) {}
 extern "C" void __dt__Q22cf16CfObjectImplTboxFv(void* self) {}
 // LLM-HARNESS-END: us-80277dec
 
-// LLM-HARNESS-BEGIN: us-80277e2c
-extern "C" int func_802759A8(void* self) { return 0; }
-// LLM-HARNESS-END: us-80277e2c
 
 // LLM-HARNESS-BEGIN: us-80277e34
 extern "C" void func_802759B0(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplTboxFv)((char*)self - 0xc); }

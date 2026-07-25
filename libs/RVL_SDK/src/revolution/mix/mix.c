@@ -25,7 +25,12 @@ void MIXInitChannel() {}
 // LLM-HARNESS-END: us-8034ca00
 
 // LLM-HARNESS-BEGIN: us-8034e0d0
-void MIXReleaseChannel() {}
+void MIXReleaseChannel(void* arg) {
+    extern void* __MIXChannel;
+    int channelIndex = *(int*)((char*)arg + 0x18);
+    char* base = (char*)__MIXChannel;
+    *(int*)(base + channelIndex * 0x70) = 0;
+}
 // LLM-HARNESS-END: us-8034e0d0
 
 // LLM-HARNESS-BEGIN: us-8034e0f0

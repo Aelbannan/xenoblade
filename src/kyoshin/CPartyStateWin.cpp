@@ -53,7 +53,18 @@ extern "C" void func_801F9CB4() {}
 // LLM-HARNESS-END: us-801fb970
 
 // LLM-HARNESS-BEGIN: us-801fbedc
-extern "C" void func_801FA220() {}
+extern "C" void func_801FA220(void* r3, const void* r4) {
+    unsigned int* destWords = (unsigned int*)((char*)r3 + 4);
+    const unsigned int* srcWords = (const unsigned int*)((char*)r4 + 4);
+    destWords[0] = srcWords[0];
+    destWords[1] = srcWords[1];
+    destWords[2] = srcWords[2];
+    destWords[3] = srcWords[3];
+    char* destBytes = (char*)r3;
+    const char* srcBytes = (const char*)r4;
+    destBytes[0x14] = srcBytes[0x14];
+    destBytes[0x15] = srcBytes[0x15];
+}
 // LLM-HARNESS-END: us-801fbedc
 
 // LLM-HARNESS-BEGIN: us-801fbf10

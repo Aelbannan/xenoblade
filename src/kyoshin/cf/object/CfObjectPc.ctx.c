@@ -1387,7 +1387,12 @@ extern "C" void func_800C02C4__Q22cf10CfObjectPcFv() {}
 // LLM-HARNESS-END: us-800c0d0c
 
 // LLM-HARNESS-BEGIN: us-800c0d34
-extern "C" void func_800C02EC__Q22cf10CfObjectPcFv() {}
+extern "C" void func_800C02EC__Q22cf10CfObjectPcFv(void* self, void* param) {
+    if (param == 0) return;
+    extern void* func_8009EC9C(unsigned short);
+    extern void func_800A18A4(void*, void*);
+    func_800A18A4(func_8009EC9C(*(unsigned short*)((char*)self + 0x3f28)), param);
+}
 // LLM-HARNESS-END: us-800c0d34
 
 // LLM-HARNESS-BEGIN: us-800c0d74

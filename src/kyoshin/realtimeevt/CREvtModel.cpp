@@ -38,7 +38,14 @@ extern "C" void func_8017298C() {}
 // LLM-HARNESS-END: us-80173d88
 
 // LLM-HARNESS-BEGIN: us-80173dcc
-extern "C" void func_801729D0() {}
+extern "C" int func_801729D0(char* p)
+{
+    char* q = *(char**)(p + 0x1c);
+    if (q == 0) {
+        return 0;
+    }
+    return (*(unsigned int*)(q + 0x58) >> 4) & 1;
+}
 // LLM-HARNESS-END: us-80173dcc
 
 // LLM-HARNESS-BEGIN: us-80173dec

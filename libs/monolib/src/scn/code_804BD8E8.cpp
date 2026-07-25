@@ -37,7 +37,11 @@ extern "C" void func_804BE458() {}
 // LLM-HARNESS-END: us-804c25b4
 
 // LLM-HARNESS-BEGIN: us-804c25cc
-extern "C" void func_804BE470() {}
+extern "C" void func_804BE470(void* a1, void* a2, void* a3, void* a4, void* a5) {
+    extern void func_804BA8B4(void*, void*, void*, void*, void*, void*);
+    extern char lbl_eu_8065F32C[];
+    func_804BA8B4(lbl_eu_8065F32C, a1, a2, a3, a4, a5);
+}
 // LLM-HARNESS-END: us-804c25cc
 
 // LLM-HARNESS-BEGIN: us-804c25fc
@@ -64,7 +68,10 @@ extern "C" void func_804BE50C() {}
 // LLM-HARNESS-END: us-804c2668
 
 // LLM-HARNESS-BEGIN: us-804c267c
-extern "C" void func_804BE520() {}
+extern "C" void* func_804BE520(int index) {
+    extern unsigned char lbl_eu_8065F428[];
+    return (void*)(lbl_eu_8065F428 + index * 0x24 + 0xc);
+}
 // LLM-HARNESS-END: us-804c267c
 
 // LLM-HARNESS-BEGIN: us-804c2694
@@ -106,7 +113,11 @@ extern "C" void func_804BE5C8() {}
 // LLM-HARNESS-END: us-804c2724
 
 // LLM-HARNESS-BEGIN: us-804c2760
-extern "C" void func_804BE604() {}
+extern "C" int func_804BE604(int index) {
+    extern char lbl_eu_8065F428[];
+    int val = *(int*)(lbl_eu_8065F428 + index * 0x24 + 0x20);
+    return (val != 0) ? 1 : 0;
+}
 // LLM-HARNESS-END: us-804c2760
 
 // LLM-HARNESS-BEGIN: us-804c2784

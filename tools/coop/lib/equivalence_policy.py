@@ -555,10 +555,19 @@ def compute_confidence_tier_from_certificate(
         and not has_domain_exception
         and not has_assumed_fp
     ):
-        return "A"
-    if has_fp_access or has_assumed_fp or has_domain_exception:
-        return "C"
-    return "B"
+        tier = "A"
+    elif has_fp_access or has_assumed_fp or has_domain_exception:
+        tier = "C"
+    else:
+        tier = "B"
+
+    # §2.9 Cap: declared-return ABI-shape narrowing limits to Tier C.
+    cert_abi = certificate.get("abi_shape")
+    if isinstance(cert_abi, dict) and cert_abi.get("declared_return"):
+        if tier in ("A", "B"):
+            tier = "C"
+
+    return tier
 
 
 def compute_confidence_tier(

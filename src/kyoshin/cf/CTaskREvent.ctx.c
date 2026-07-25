@@ -1339,66 +1339,39 @@ void ocBdatRegist();
 /* end "kyoshin/harness_catalog.hpp" */
 
 // LLM-HARNESS-BEGIN: us-801652b8
-extern "C" u32 func_801644AC(void) {
-    extern u32 lbl_eu_80662380;
-    return lbl_eu_80662380;
-}
+extern "C" void __ct__cf_CTaskREvent() {}
 // LLM-HARNESS-END: us-801652b8
 
 // LLM-HARNESS-BEGIN: us-801654ac
-extern "C" u32 func_801644AC(void) {
-    extern u32 lbl_eu_80662380;
-    return lbl_eu_80662380;
-}
+extern "C" void __dt__Q22cf11CTaskREventFv(void* self) {}
 // LLM-HARNESS-END: us-801654ac
 
 // LLM-HARNESS-BEGIN: us-801655a8
-extern "C" u32 func_801644AC(void) {
-    extern u32 lbl_eu_80662380;
-    return lbl_eu_80662380;
-}
+extern "C" void func_80164410() {}
 // LLM-HARNESS-END: us-801655a8
 
 // LLM-HARNESS-BEGIN: us-80165610
-extern "C" u32 func_801644AC(void) {
-    extern u32 lbl_eu_80662380;
-    return lbl_eu_80662380;
-}
+extern "C" void func_80164478() {}
 // LLM-HARNESS-END: us-80165610
 
 // LLM-HARNESS-BEGIN: us-80165644
-extern "C" u32 func_801644AC(void) {
-    extern u32 lbl_eu_80662380;
-    return lbl_eu_80662380;
-}
+extern "C" bool func_801644AC() { return false; }
 // LLM-HARNESS-END: us-80165644
 
 // LLM-HARNESS-BEGIN: us-8016564c
-extern "C" u32 func_801644B4(void) {
-    extern u32 lbl_eu_80664240;
-    return lbl_eu_80664240;
-}
+extern "C" bool func_801644B4() { return false; }
 // LLM-HARNESS-END: us-8016564c
 
 // LLM-HARNESS-BEGIN: us-80165654
-extern "C" u32 func_801644AC(void) {
-    extern u32 lbl_eu_80662380;
-    return lbl_eu_80662380;
-}
+extern "C" void func_801644BC__FUl() {}
 // LLM-HARNESS-END: us-80165654
 
 // LLM-HARNESS-BEGIN: us-80165670
-extern "C" u32 func_801644AC(void) {
-    extern u32 lbl_eu_80662380;
-    return lbl_eu_80662380;
-}
+extern "C" void func_801644D8(void* self) {}
 // LLM-HARNESS-END: us-80165670
 
 // LLM-HARNESS-BEGIN: us-801656f4
-extern "C" u32 func_801644AC(void) {
-    extern u32 lbl_eu_80662380;
-    return lbl_eu_80662380;
-}
+extern "C" void func_8016455C() {}
 // LLM-HARNESS-END: us-801656f4
 
 // LLM-HARNESS-BEGIN: us-801657c4
@@ -1458,7 +1431,14 @@ extern "C" void func_80164FB4() {}
 // LLM-HARNESS-END: us-80166150
 
 // LLM-HARNESS-BEGIN: us-80166184
-extern "C" void func_80164FE8() {}
+extern "C" void* lbl_eu_80664240;
+
+extern "C" int func_80164FE8(void) {
+    int* ptr = (int*)lbl_eu_80664240;
+    if (!ptr) return 0;
+    int val = *(int*)((char*)ptr + 0x1e0);
+    return (unsigned)((-1 - val) | (val + 1)) >> 31;
+}
 // LLM-HARNESS-END: us-80166184
 
 // LLM-HARNESS-BEGIN: us-801661b0
@@ -1563,10 +1543,7 @@ public:
 
 namespace cf { class CTaskREvent; }
 // LLM-HARNESS-BEGIN: us-80165454
-extern "C" u32 func_801644AC(void) {
-    extern u32 lbl_eu_80662380;
-    return lbl_eu_80662380;
-}
+template<> CTTask<cf::CTaskREvent>::~CTTask() {}
 // LLM-HARNESS-END: us-80165454
 // LLM-HARNESS-BEGIN: us-801677f0
 template<> void CTTask<cf::CTaskREvent>::Move() {}

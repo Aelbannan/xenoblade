@@ -65,7 +65,14 @@ extern "C" void func_800A86AC() {}
 // LLM-HARNESS-END: us-800a8f78
 
 // LLM-HARNESS-BEGIN: us-800a8fa4
-extern "C" void func_800A86D8() {}
+extern "C" void* func_800A86D8(unsigned int param1, unsigned int param2) {
+    extern void* lbl_eu_80528398[];
+    void* r4 = lbl_eu_80528398[param2];
+    if (param1 >= 0xe) {
+        return *(void**)r4;
+    }
+    return ((void**)r4)[param1];
+}
 // LLM-HARNESS-END: us-800a8fa4
 
 // LLM-HARNESS-BEGIN: us-800a8fd0

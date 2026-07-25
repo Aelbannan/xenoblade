@@ -33,7 +33,14 @@ void adxm_goto_mwidle_border() {}
 // LLM-HARNESS-END: us-8039dea0
 
 // LLM-HARNESS-BEGIN: us-8039df5c
-void adxm_safe_proc() {}
+void adxm_safe_proc(void) {
+    extern int lbl_eu_805F3A50[];
+    int *base = (int *)lbl_eu_805F3A50;
+    while (*(int *)((char *)base + 0x9d0) == 1) {
+        (*(int *)((char *)base + 0x48))++;
+    }
+    *(int *)((char *)base + 0x9d4) = 1;
+}
 // LLM-HARNESS-END: us-8039df5c
 
 // LLM-HARNESS-BEGIN: us-8039df8c

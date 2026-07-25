@@ -9,7 +9,12 @@ void reset_kpad() {}
 // LLM-HARNESS-END: us-80347690
 
 // LLM-HARNESS-BEGIN: us-80347860
-void KPADEnableAimingMode() {}
+void KPADEnableAimingMode(int channel) {
+    extern unsigned char inside_kpads[];
+    unsigned char *pad = inside_kpads + channel * 0x578;
+    pad[0x55c] = 1;
+    pad[0x55d] = 1;
+}
 // LLM-HARNESS-END: us-80347860
 
 // LLM-HARNESS-BEGIN: us-80347880
@@ -109,7 +114,10 @@ void KPADDisableDPD() {}
 // LLM-HARNESS-END: us-8034aed0
 
 // LLM-HARNESS-BEGIN: us-8034aef0
-void KPADEnableDPD() {}
+void KPADEnableDPD(int channel) {
+    extern unsigned char inside_kpads[];
+    inside_kpads[channel * 0x578 + 0x556] = 1;
+}
 // LLM-HARNESS-END: us-8034aef0
 
 // LLM-HARNESS-BEGIN: us-8034af10

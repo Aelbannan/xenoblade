@@ -752,7 +752,10 @@ int SFAOAP_Destroy(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c1348
 
 // LLM-HARNESS-BEGIN: us-803c1350
-void SFAOAP_RequestStop() {}
+int SFAOAP_RequestStop(void* param_1) {
+    SFSET_GetCond(param_1, 6);
+    return 0;
+}
 // LLM-HARNESS-END: us-803c1350
 
 // LLM-HARNESS-BEGIN: us-803c1378

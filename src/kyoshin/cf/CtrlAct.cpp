@@ -96,7 +96,29 @@ extern "C" void func_800D5874() {}
 // LLM-HARNESS-END: us-800d635c
 
 // LLM-HARNESS-BEGIN: us-800d64e4
-extern "C" void func_800D59FC() {}
+extern "C" const float lbl_eu_80666CFC;
+
+extern "C" void func_800D59FC(void* obj) {
+    struct __attribute__((packed)) Data70 {
+        float f70;
+        unsigned short u74;
+        unsigned short u76;
+        unsigned char u78;
+        unsigned char u79;
+        unsigned char u7a;
+        unsigned char u7b;
+    };
+    Data70* data = (Data70*)((char*)obj + 0x70);
+    unsigned short temp = data->u74;
+    temp &= 0x2000;
+    data->u78 = 0;
+    data->u7b = 0;
+    data->f70 = lbl_eu_80666CFC;
+    data->u7a = 0;
+    data->u79 = 0;
+    data->u76 = 0;
+    data->u74 = temp;
+}
 // LLM-HARNESS-END: us-800d64e4
 
 // LLM-HARNESS-BEGIN: us-800d6514

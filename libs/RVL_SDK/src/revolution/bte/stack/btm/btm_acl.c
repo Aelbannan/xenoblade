@@ -5,7 +5,11 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-802e6e50
-void btm_acl_init() {}
+extern char btm_cb[];
+void btm_acl_init() {
+    *(short*)(btm_cb + 0x4c6) = 0x7d00;
+    btm_cb[0x27bf] = (char)0xff;
+}
 // LLM-HARNESS-END: us-802e6e50
 
 // LLM-HARNESS-BEGIN: us-802e6e6c

@@ -1347,7 +1347,14 @@ extern "C" void __dt__Q22cf7CtrlActFv() {}
 // LLM-HARNESS-END: us-80087fe0
 
 // LLM-HARNESS-BEGIN: us-80088020
-extern "C" void __dt__Q22cf8CtrlBaseFv() {}
+extern "C" void* __dt__Q22cf8CtrlBaseFv(void* self, int deleteFlag) {
+    if (self != nullptr) {
+        if (deleteFlag > 0) {
+            operator delete(self);
+        }
+    }
+    return self;
+}
 // LLM-HARNESS-END: us-80088020
 
 // LLM-HARNESS-BEGIN: us-80088060

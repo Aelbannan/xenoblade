@@ -895,7 +895,13 @@ extern "C" float func_8006BB00(const float* v) { return PSVECMag(v); }
 extern "C" void func_8006BB04() {}
 // LLM-HARNESS-END: us-8006c55c
 // LLM-HARNESS-BEGIN: us-8006c64c
-extern "C" void func_8006BBF4() {}
+extern "C" void func_8006BBF4(void* r3, int r4, int r5) {
+    if (r5) {
+        *(int*)((char*)r3 + 4) |= r4;
+    } else {
+        *(int*)((char*)r3 + 4) &= ~r4;
+    }
+}
 // LLM-HARNESS-END: us-8006c64c
 // LLM-HARNESS-BEGIN: us-8006c674
 extern "C" void func_8006BC1C(unsigned int* p, unsigned int mask) {
@@ -951,7 +957,13 @@ extern "C" void func_8006C1BC(void* ptr, float f) {
 }
 // LLM-HARNESS-END: us-8006cc14
 // LLM-HARNESS-BEGIN: us-8006d098
-extern "C" void func_8006C640() {}
+extern "C" void func_8006C640(void* obj, unsigned int bits, int set_flag) {
+    unsigned int* ptr = (unsigned int*)((char*)obj + 0x1d4);
+    if (set_flag != 0)
+        *ptr |= bits;
+    else
+        *ptr &= ~bits;
+}
 // LLM-HARNESS-END: us-8006d098
 // LLM-HARNESS-BEGIN: us-8006d0c8
 extern "C" int func_8006C670(void* self) { return *(int*)((char*)self + 0xc4); }
@@ -1146,7 +1158,14 @@ extern "C" void func_8006F9D4() {}
 extern "C" void func_80071694() {}
 // LLM-HARNESS-END: us-800720c0
 // LLM-HARNESS-BEGIN: us-8007215c
-extern "C" void func_80071730() {}
+extern "C" void func_80071730(void *r3, const void *r4) {
+    const unsigned int *src = (const unsigned int *)r4;
+    unsigned int *dst = (unsigned int *)r3;
+    dst[0] = src[0];
+    dst[1] = src[1];
+    dst[2] = src[2];
+    dst[3] = src[3];
+}
 // LLM-HARNESS-END: us-8007215c
 // LLM-HARNESS-BEGIN: us-800724bc
 extern "C" int func_80071A90(void* ptr) {
@@ -1255,7 +1274,17 @@ extern "C" void func_8006B720() {}
 extern "C" void func_8006B8E4() {}
 // LLM-HARNESS-END: us-8006c33c
 // LLM-HARNESS-BEGIN: us-8006c3a0
-extern "C" void func_8006B948() {}
+extern "C" float lbl_eu_80527230[];
+extern "C" float lbl_eu_80661BA8;
+
+struct Class_80296898 {
+    static void* getInstance();
+};
+
+extern "C" void func_8006B948() {
+    unsigned char idx = reinterpret_cast<unsigned char*>(Class_80296898::getInstance())[4];
+    lbl_eu_80661BA8 = lbl_eu_80527230[idx];
+}
 // LLM-HARNESS-END: us-8006c3a0
 // LLM-HARNESS-BEGIN: us-8006c3d8
 extern "C" void func_8006B980() {}
@@ -1378,7 +1407,13 @@ extern "C" void func_800705D8() {}
 extern "C" void func_80070674() {}
 // LLM-HARNESS-END: us-800710cc
 // LLM-HARNESS-BEGIN: us-800711b0
-extern "C" void func_80070784() {}
+extern "C" void func_804BE4B4(void*, int);
+extern "C" void* func_804BE4E0(void*, int);
+
+extern "C" void* func_80070784(void* a, void* b) {
+    func_804BE4B4(a, 0);
+    return func_804BE4E0(b, 0);
+}
 // LLM-HARNESS-END: us-800711b0
 // LLM-HARNESS-BEGIN: us-800711ec
 extern "C" void func_800707C0() {}

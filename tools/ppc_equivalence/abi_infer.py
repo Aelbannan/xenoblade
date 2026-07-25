@@ -311,7 +311,8 @@ def combine_abi_shapes(
     ``inferred.returns_i64 AND declared.returns_i64``; same for
     ``returns_float``. ``outgoing_gpr_args`` / ``outgoing_fpr_args`` come from
     the inferred shape. ``declared_return`` is preserved from the declared
-    shape (or from inferred if declared is None).
+    shape, falling back to the inferred shape's value when the declared
+    shape's is None (or from inferred if declared itself is None).
 
     Source strings are joined with ``"+"`` in order (inferred first, then
     declared), skipping ``"default-conservative"`` and duplicates.
@@ -331,5 +332,9 @@ def combine_abi_shapes(
         outgoing_gpr_args=inferred.outgoing_gpr_args,
         outgoing_fpr_args=inferred.outgoing_fpr_args,
         source=source,
-        declared_return=declared.declared_return,
+        declared_return=(
+            declared.declared_return
+            if declared.declared_return is not None
+            else inferred.declared_return
+        ),
     )

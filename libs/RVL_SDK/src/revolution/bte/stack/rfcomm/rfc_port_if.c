@@ -5,7 +5,10 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-803034b8
-void RFCOMM_StartRsp() {}
+void RFCOMM_StartRsp(unsigned short param1, unsigned short param2) {
+    unsigned short local = param2;
+    rfc_mx_sm_execute(param1, 7, &local);
+}
 // LLM-HARNESS-END: us-803034b8
 
 // LLM-HARNESS-BEGIN: us-803034e4

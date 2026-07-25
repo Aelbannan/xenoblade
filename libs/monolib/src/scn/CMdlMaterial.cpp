@@ -5,7 +5,18 @@
 #include <harness_catalog.h>
 
 // LLM-HARNESS-BEGIN: us-804e98e0
-extern "C" void __ct__CMdlMaterial() {}
+extern "C" void __ct__CMdlMaterial(void *r3) {
+    extern unsigned char lbl_eu_805700D8[];
+    unsigned int *p = (unsigned int *)r3;
+    p[0] = (unsigned int)lbl_eu_805700D8;
+    p[1] = 0;
+    p[2] = 0;
+    p[3] = 0;
+    ((unsigned char *)r3)[0x10] = 0;
+    p[5] = 0xFFFFFFFF;
+    p[0xC] = 0;
+    p[0xD] = 0;
+}
 // LLM-HARNESS-END: us-804e98e0
 
 // LLM-HARNESS-BEGIN: us-804e9914

@@ -25,11 +25,23 @@ extern "C" void func_80490310__14CScnTexWorkManFv(void) {}
 // LLM-HARNESS-END: us-80494384
 
 // LLM-HARNESS-BEGIN: us-80494388
-extern "C" void func_80490314() {}
+extern "C" int lbl_eu_806658FC;
+extern "C" int lbl_eu_806658F0;
+extern "C" int lbl_eu_806658F8;
+
+extern "C" void func_80490314() {
+    if (lbl_eu_806658FC == 0) {
+        lbl_eu_806658F8 = lbl_eu_806658F0;
+    }
+}
 // LLM-HARNESS-END: us-80494388
 
 // LLM-HARNESS-BEGIN: us-804943a0
-extern "C" void func_8049032C() {}
+extern "C" void func_8049032C() {
+    if (lbl_eu_806658FC != 0) return;
+    lbl_eu_806658F0 = lbl_eu_806658F8;
+    lbl_eu_806658F8 = 0;
+}
 // LLM-HARNESS-END: us-804943a0
 
 // LLM-HARNESS-BEGIN: us-804943c0

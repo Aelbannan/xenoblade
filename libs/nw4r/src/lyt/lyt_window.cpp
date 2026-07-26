@@ -670,6 +670,4 @@ Material* Window::GetFrameMaterial(u32 idx) const {
 } // namespace lyt
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-8040772c
 extern "C" int GetRuntimeTypeInfo__Q34nw4r3lyt6WindowCFv() { return 0; }
-// LLM-HARNESS-END: us-8040772c

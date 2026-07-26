@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803d9650
 void SFX_CnvFrmY84C44ByCbFunc() {}
-// LLM-HARNESS-END: us-803d9650

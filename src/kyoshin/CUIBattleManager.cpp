@@ -621,94 +621,44 @@ mark_remove:
 done:;
 }
 
-// LLM-HARNESS-BEGIN: us-8012f1b0
 extern "C" void func_8012E6DC() {}
-// LLM-HARNESS-END: us-8012f1b0
-// LLM-HARNESS-BEGIN: us-8012fd70
 extern "C" void func_8012F29C() {}
-// LLM-HARNESS-END: us-8012fd70
-// LLM-HARNESS-BEGIN: us-8012fd90
 extern "C" void func_8012F2BC() {}
-// LLM-HARNESS-END: us-8012fd90
-// LLM-HARNESS-BEGIN: us-80130334
 extern "C" void func_8012F860() {
     if (lbl_eu_80664048 != 0) {
         reinterpret_cast<unsigned char *>(lbl_eu_80664048)[0x82] |= 0x3b;
     }
 }
-// LLM-HARNESS-END: us-80130334
-// LLM-HARNESS-BEGIN: us-80130350
 extern "C" void func_8012F87C() {}
-// LLM-HARNESS-END: us-80130350
-// LLM-HARNESS-BEGIN: us-80130530
 extern "C" unsigned char func_8012FA5C() { return lbl_eu_80664048 == 0 ? 0 : *(unsigned char *)((char *)lbl_eu_80664048 + 0xe8); }
-// LLM-HARNESS-END: us-80130530
-// LLM-HARNESS-BEGIN: us-8013054c
 extern "C" void* func_8012FA78() { void* p = lbl_eu_80664048; if (p == 0) return 0; if (*(unsigned char*)((char*)p + 0xe8) != 0) return (char*)p + 0xb8; return 0; }
-// LLM-HARNESS-END: us-8013054c
-// LLM-HARNESS-BEGIN: us-80130890
 extern "C" int func_8012FDBC() { if (lbl_eu_80664048 == 0) return -1; return *(int*)((char*)lbl_eu_80664048 + 0xec); }
-// LLM-HARNESS-END: us-80130890
-// LLM-HARNESS-BEGIN: us-801308ac
 extern "C" void Draw__Q216CUIBattleManager5CTestFv() {}
-// LLM-HARNESS-END: us-801308ac
-// LLM-HARNESS-BEGIN: us-801308b0
 extern "C" void Move__Q216CUIBattleManager5CTestFv() {}
-// LLM-HARNESS-END: us-801308b0
-// LLM-HARNESS-BEGIN: us-801308b4
 extern "C" void Term__Q216CUIBattleManager5CTestFv() {}
-// LLM-HARNESS-END: us-801308b4
-// LLM-HARNESS-BEGIN: us-801308b8
 extern "C" void Init__Q216CUIBattleManager5CTestFv() {}
-// LLM-HARNESS-END: us-801308b8
-// LLM-HARNESS-BEGIN: us-80130a40
 extern "C" void __dt__16CUIBattleManagerFv(void*);
 
 extern "C" void func_8012FF6C(void* p) {
     __dt__16CUIBattleManagerFv((char*)p - 0x54);
 }
-// LLM-HARNESS-END: us-80130a40
 
-// LLM-HARNESS-BEGIN: us-8012ea60
 extern "C" void __ct__CUIBattleManager() {}
-// LLM-HARNESS-END: us-8012ea60
-// LLM-HARNESS-BEGIN: us-8012f104
 extern "C" void func_8012E630() {}
-// LLM-HARNESS-END: us-8012f104
-// LLM-HARNESS-BEGIN: us-8012fd94
 // Forward declaration - used by OnFileEvent this-adjusting thunk
 extern "C" void func_8012F2C0(void*, void*);
-// LLM-HARNESS-END: us-8012fd94
-// LLM-HARNESS-BEGIN: us-8013002c
 extern "C" void func_8012F558() {}
-// LLM-HARNESS-END: us-8013002c
-// LLM-HARNESS-BEGIN: us-801300cc
 extern "C" void func_8012F5F8() {}
-// LLM-HARNESS-END: us-801300cc
-// LLM-HARNESS-BEGIN: us-80130224
 extern "C" void func_8012F750() {}
-// LLM-HARNESS-END: us-80130224
-// LLM-HARNESS-BEGIN: us-8013057c
 extern "C" void func_8012FAA8() {}
-// LLM-HARNESS-END: us-8013057c
-// LLM-HARNESS-BEGIN: us-80130748
 extern "C" void func_8012FC74() {}
-// LLM-HARNESS-END: us-80130748
-// LLM-HARNESS-BEGIN: us-801307d8
 extern "C" void func_8012FD04() {}
-// LLM-HARNESS-END: us-801307d8
-// LLM-HARNESS-BEGIN: us-80130834
 extern "C" void func_8012FD60() {}
-// LLM-HARNESS-END: us-80130834
-// LLM-HARNESS-BEGIN: us-801309dc
 extern "C" void __dt__Q216CUIBattleManager5CTestFv() {}
-// LLM-HARNESS-END: us-801309dc
 
-// LLM-HARNESS-BEGIN: us-80130a38
 // This-adjusting thunk: subi r3, r3, 0x54; b func_8012F2C0
 // MWCC does not generate this automatically for non-dtor virtual overrides.
 // Accepting as-is; may need DECOMP_ASM_INSN for exact match.
 extern "C" void OnFileEvent__16CUIBattleManagerFP10CEventFile(void* self, void* file) {
     func_8012F2C0((char*)self - 0x54, file);
 }
-// LLM-HARNESS-END: us-80130a38

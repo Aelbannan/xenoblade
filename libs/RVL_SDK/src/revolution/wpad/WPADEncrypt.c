@@ -3,14 +3,8 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-80377750
 void WPADiCreateKey() {}
-// LLM-HARNESS-END: us-80377750
 
-// LLM-HARNESS-BEGIN: us-80377e40
 void WPADiCreateKeyFor3rd() {}
-// LLM-HARNESS-END: us-80377e40
 
-// LLM-HARNESS-BEGIN: us-80378540
 void WPADiDecode() {}
-// LLM-HARNESS-END: us-80378540

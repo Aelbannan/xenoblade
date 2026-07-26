@@ -718,51 +718,27 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-8046e500
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-8046e500
 
-// LLM-HARNESS-BEGIN: us-8046e554
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-8046e554
 
-// LLM-HARNESS-BEGIN: us-8046e594
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-8046e594
 
-// LLM-HARNESS-BEGIN: us-8046eaa8
 extern "C" void func_8046AAD8__Q23LOD17UnkClass_8046A530Fv(void) {}
-// LLM-HARNESS-END: us-8046eaa8
 
-// LLM-HARNESS-BEGIN: us-8046eaac
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-8046eaac
 
-// LLM-HARNESS-BEGIN: us-8046eb24
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-8046eb24
 
-// LLM-HARNESS-BEGIN: us-8046ecfc
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-8046ecfc
 
-// LLM-HARNESS-BEGIN: us-8046f07c
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-8046f07c
 
-// LLM-HARNESS-BEGIN: us-8046fab0
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-8046fab0
 
-// LLM-HARNESS-BEGIN: us-80470550
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-80470550
 
-// LLM-HARNESS-BEGIN: us-80470f84
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-80470f84
 
 extern "C" void func_80471834__Q23LOD9LODMemManFv(void* self);
-// LLM-HARNESS-BEGIN: us-80470fa8
 extern "C" void func_8046CFD8__Q23LOD17UnkClass_8046A530Fv(void* self) { ((void(*)(void*))func_80471834__Q23LOD9LODMemManFv)((char*)self + 0xa44); }
-// LLM-HARNESS-END: us-80470fa8

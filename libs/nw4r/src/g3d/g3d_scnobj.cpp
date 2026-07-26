@@ -699,38 +699,16 @@ ScnGroup::~ScnGroup() {
 } // namespace g3d
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-803f72f4
 extern "C" void ExecCallback_CALC_WORLD__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
-// LLM-HARNESS-END: us-803f72f4
-// LLM-HARNESS-BEGIN: us-803f72f8
 extern "C" void ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
-// LLM-HARNESS-END: us-803f72f8
-// LLM-HARNESS-BEGIN: us-803f72fc
 extern "C" void ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
-// LLM-HARNESS-END: us-803f72fc
-// LLM-HARNESS-BEGIN: us-803f7ea4
 extern "C" void IsDerivedFrom__Q34nw4r3g3d8ScnGroupCFQ44nw4r3g3d6G3dObj7TypeObj() {}
-// LLM-HARNESS-END: us-803f7ea4
-// LLM-HARNESS-BEGIN: us-803f7ef4
 extern "C" void IsDerivedFrom__Q34nw4r3g3d6ScnObjCFQ44nw4r3g3d6G3dObj7TypeObj() {}
-// LLM-HARNESS-END: us-803f7ef4
-// LLM-HARNESS-BEGIN: us-803f7f2c
 extern "C" void GetTypeName__Q34nw4r3g3d8ScnGroupCFv() {}
-// LLM-HARNESS-END: us-803f7f2c
-// LLM-HARNESS-BEGIN: us-803f7f5c
 // Defined inline via NW4R_G3D_RTTI_DECL_DERIVED macros
-// LLM-HARNESS-BEGIN: us-803f7f5c
-// LLM-HARNESS-END: us-803f7f5c
-// LLM-HARNESS-END: us-803f7f5c
-// LLM-HARNESS-BEGIN: us-803f7f68
 extern "C" const char* GetTypeName__Q34nw4r3g3d6ScnObjCFv(const void* self) {
     const void* vtable = *static_cast<const void* const*>(self);
     const char* (*vfunc)(const void*) = reinterpret_cast<const char* (*)(const void*)>(static_cast<const void* const*>(vtable)[0x14 / sizeof(void*)]);
     const char* result = vfunc(self);
     return result + 4;
 }
-// LLM-HARNESS-END: us-803f7f68
-// LLM-HARNESS-BEGIN: us-803f7f98
-// LLM-HARNESS-BEGIN: us-803f7f98
-// LLM-HARNESS-END: us-803f7f98
-// LLM-HARNESS-END: us-803f7f98

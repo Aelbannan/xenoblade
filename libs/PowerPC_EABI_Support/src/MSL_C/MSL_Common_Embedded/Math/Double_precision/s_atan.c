@@ -83,7 +83,6 @@ static double
     = 1.0,
     huge = 1.0e300;
 
-// LLM-HARNESS-BEGIN: us-802cd168
 #ifdef __STDC__
 double atan(double x)
 #else
@@ -142,5 +141,4 @@ double atan(x) double x;
 		return (hx < 0) ? -z : z;
 	}
 }
-// LLM-HARNESS-END: us-802cd168
 

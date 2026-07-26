@@ -1,4 +1,3 @@
-// LLM-HARNESS-BEGIN: us-8044255c
 /* "libs/monolib/src/core/CView.cpp" line 1 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
@@ -711,7 +710,6 @@ extern "C" void __dt__5CViewFv(void*);
 extern "C" void func_8043FBC4(void* self) {
     __dt__5CViewFv((char*)self - 0x1C4);
 }
-// LLM-HARNESS-END: us-8044255c
 
 /* "libs/monolib/src/core/CView.cpp" line 8 "monolib/core.hpp" */
 #pragma once
@@ -246178,36 +246176,18 @@ CView::CView(const char* pName, CWorkThread* pParent)
     *(ml::CCol4*)((u8*)&mFrame + 0x28) = lbl_8065A0C8;
 }
 
-// LLM-HARNESS-BEGIN: us-8043f350
 extern "C" void CView_UnkVirtualFunc7__5CViewFv() {}
-// LLM-HARNESS-END: us-8043f350
-// LLM-HARNESS-BEGIN: us-80440380
 extern "C" void CView_UnkVirtualFunc3__5CViewFv() {}
-// LLM-HARNESS-END: us-80440380
-// LLM-HARNESS-BEGIN: us-804406b8
 extern "C" void CView_UnkVirtualFunc4__5CViewFv() {}
-// LLM-HARNESS-END: us-804406b8
-// LLM-HARNESS-BEGIN: us-80441460
 extern "C" void CView_UnkVirtualFunc9__5CViewFv(void* self) {
     ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc9();
 }
-// LLM-HARNESS-END: us-80441460
-// LLM-HARNESS-BEGIN: us-80441468
 extern "C" void CView_UnkVirtualFunc8__5CViewFv(void* self) {
     ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc8();
 }
-// LLM-HARNESS-END: us-80441468
-// LLM-HARNESS-BEGIN: us-804424f0
 extern "C" int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
-// LLM-HARNESS-END: us-804424f0
-// LLM-HARNESS-BEGIN: us-804424f8
 extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
-// LLM-HARNESS-END: us-804424f8
-// LLM-HARNESS-BEGIN: us-80442500
 extern "C" void CView_UnkVirtualFunc1__5CViewFv(void* self) {
     ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc1();
 }
-// LLM-HARNESS-END: us-80442500
-// LLM-HARNESS-BEGIN: us-80442508
 extern "C" void sinit_8043FB70() {}
-// LLM-HARNESS-END: us-80442508

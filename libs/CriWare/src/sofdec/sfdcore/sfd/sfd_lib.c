@@ -3,21 +3,14 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803c3310
 u32 SFD_IsVersionCompatible(void* self, u32 version) {
     return (version == 0x39b0) ? 1 : 0;
 }
-// LLM-HARNESS-END: us-803c3310
 
-// LLM-HARNESS-BEGIN: us-803c3320
 void fn_803C3320() {}
-// LLM-HARNESS-END: us-803c3320
 
-// LLM-HARNESS-BEGIN: us-803c3400
 void fn_803C3400() {}
-// LLM-HARNESS-END: us-803c3400
 
-// LLM-HARNESS-BEGIN: us-803c34dc
 void fn_803C34DC(void* self) {
     *(u32*)((u8*)self) = 0;
     *(u32*)((u8*)self + 4) = 0;
@@ -25,16 +18,12 @@ void fn_803C34DC(void* self) {
     *(u32*)((u8*)self + 0xc) = 0;
     *(u32*)((u8*)self + 0x10) = 0;
 }
-// LLM-HARNESS-END: us-803c34dc
 
-// LLM-HARNESS-BEGIN: us-803c34f8
 s32 SFLIB_SetErr(s32 val, u32 err_code);
 s32 fn_803C34F8(s32 val, u32 err_code) {
     return SFLIB_SetErr(val, err_code);
 }
-// LLM-HARNESS-END: us-803c34f8
 
-// LLM-HARNESS-BEGIN: us-803c34fc
 extern void* lbl_eu_80606E34;
 extern u32 lbl_eu_80568720[];
 extern u32 lbl_eu_80606E20[];
@@ -88,13 +77,9 @@ s32 SFLIB_SetErr(s32 val, u32 err_code) {
 
     return err_code;
 }
-// LLM-HARNESS-END: us-803c34fc
 
-// LLM-HARNESS-BEGIN: us-803c363c
 void criware_803C0D94() {}
-// LLM-HARNESS-END: us-803c363c
 
-// LLM-HARNESS-BEGIN: us-803c36ac
 extern void* lbl_eu_8060715C;
 s32 SFLIB_CheckHn(void* h) {
     if (h == NULL) return -1;
@@ -102,18 +87,13 @@ s32 SFLIB_CheckHn(void* h) {
     lbl_eu_8060715C = h;
     return 0;
 }
-// LLM-HARNESS-END: us-803c36ac
 
-// LLM-HARNESS-BEGIN: us-803c36e0
 void SVM_Lock(void);
 void SFLIB_LockCs(void* cs) {
     SVM_Lock();
 }
-// LLM-HARNESS-END: us-803c36e0
 
-// LLM-HARNESS-BEGIN: us-803c36e4
 void SVM_Unlock(void);
 void SFLIB_UnlockCs(void* cs) {
     SVM_Unlock();
 }
-// LLM-HARNESS-END: us-803c36e4

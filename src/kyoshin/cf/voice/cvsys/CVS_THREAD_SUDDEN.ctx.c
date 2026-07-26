@@ -1337,22 +1337,12 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-802ab338
 extern "C" void __ct__802A8C04() {}
-// LLM-HARNESS-END: us-802ab338
 
-// LLM-HARNESS-BEGIN: us-802ab400
 extern "C" void func_802A8CCC() {}
-// LLM-HARNESS-END: us-802ab400
 
-// LLM-HARNESS-BEGIN: us-802ab43c
 extern "C" void func_802A8D08() {}
-// LLM-HARNESS-END: us-802ab43c
 
-// LLM-HARNESS-BEGIN: us-802ab494
 extern "C" void func_802A8D60() {}
-// LLM-HARNESS-END: us-802ab494
 
-// LLM-HARNESS-BEGIN: us-802ab514
 extern "C" int func_802A8DE0(void* self) { return 1; }
-// LLM-HARNESS-END: us-802ab514

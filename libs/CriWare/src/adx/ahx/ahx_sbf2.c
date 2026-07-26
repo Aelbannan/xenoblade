@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-8038f608
 void AHXSBF_Synthesize() {}
-// LLM-HARNESS-END: us-8038f608

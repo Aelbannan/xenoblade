@@ -16,7 +16,6 @@ static ui8 gWriteBuf[0x110a]; //unused
 //_MetroTRK_Has_Framing //unused
 
 
-// LLM-HARNESS-BEGIN: us-802ceb80
 asm void TRKLoadContext(OSContext* ctx, ui32 r4) {
     nofralloc
     lwz r0, OSContext.gprs[0](r3)
@@ -56,7 +55,6 @@ L_802CC250:
     lwz r31, OSContext.gprs[31](r31)
     b TRK_InterruptHandler
 }
-// LLM-HARNESS-END: us-802ceb80
 
 void TRKEXICallBack(OSInterrupt r3, OSContext* ctx){
     OSEnableScheduler();

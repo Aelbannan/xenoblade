@@ -3,7 +3,6 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803c25d8
 s32 SFLIB_CheckHn(void* h);
 s32 SFLIB_SetErr(s32 val, u32 code);
 void SFSET_SetCond(void* h, u32 cond, u32 sw);
@@ -14,16 +13,12 @@ s32 SFD_SetConcatPlay(void* h) {
     SFSET_SetCond(h, 0x31, 1);
     return 0;
 }
-// LLM-HARNESS-END: us-803c25d8
 
-// LLM-HARNESS-BEGIN: us-803c2634
 s32 SFSET_GetCond(void* h, u32 cond);
 s32 SFCON_IsEndcodeSkip(void* h) {
     return SFSET_GetCond(h, 0x31) ? 1 : 0;
 }
-// LLM-HARNESS-END: us-803c2634
 
-// LLM-HARNESS-BEGIN: us-803c2664
 s32 SFSET_GetCond(void* h, u32 cond);
 s32 SFCON_IsSystemEndcodeSkip(void* h) {
     s32 r = SFSET_GetCond(h, 0x31);
@@ -35,9 +30,7 @@ ret1:
 ret0:
     return 0;
 }
-// LLM-HARNESS-END: us-803c2664
 
-// LLM-HARNESS-BEGIN: us-803c26bc
 s32 SFSET_GetCond(void* h, u32 cond);
 s32 SFCON_IsVideoEndcodeSkip(void* h) {
     s32 r = SFSET_GetCond(h, 0x31);
@@ -49,9 +42,7 @@ ret1:
 ret0:
     return 0;
 }
-// LLM-HARNESS-END: us-803c26bc
 
-// LLM-HARNESS-BEGIN: us-803c2714
 void SFLIB_LockCs(void* cs);
 void SFLIB_UnlockCs(void* cs);
 void SFCON_UpdateConcatTime(void* h, s32 delta) {
@@ -66,9 +57,7 @@ void SFCON_UpdateConcatTime(void* h, s32 delta) {
     *(s32*)(base + 0x168) = idx;
     SFLIB_UnlockCs(&cs);
 }
-// LLM-HARNESS-END: us-803c2714
 
-// LLM-HARNESS-BEGIN: us-803c2790
 void SFLIB_LockCs(void* cs);
 void SFLIB_UnlockCs(void* cs);
 s32 SFCON_WriteTotSmplQue(void* h, s32 lastSmpl, s32 value) {
@@ -88,9 +77,7 @@ s32 SFCON_WriteTotSmplQue(void* h, s32 lastSmpl, s32 value) {
     SFLIB_UnlockCs(&cs);
     return 1;
 }
-// LLM-HARNESS-END: us-803c2790
 
-// LLM-HARNESS-BEGIN: us-803c2840
 void SFLIB_LockCs(void* cs);
 void SFLIB_UnlockCs(void* cs);
 s32 SFCON_ReadTotSmplQue(void* h, s32* lastSmpl, s32* value) {
@@ -110,4 +97,3 @@ s32 SFCON_ReadTotSmplQue(void* h, s32* lastSmpl, s32* value) {
     SFLIB_UnlockCs(&cs);
     return 1;
 }
-// LLM-HARNESS-END: us-803c2840

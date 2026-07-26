@@ -718,38 +718,22 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-803905a0
 void AHXBSR_Create() {}
-// LLM-HARNESS-END: us-803905a0
 
-// LLM-HARNESS-BEGIN: us-80390678
 void* memset(void* s, int c, size_t n);
 void AHXBSR_Destroy(void* self) {
     if (self == NULL) return;
     memset(self, 0, 0x2c);
 }
-// LLM-HARNESS-END: us-80390678
 
-// LLM-HARNESS-BEGIN: us-80390690
 void AHXBSR_Restruct() {}
-// LLM-HARNESS-END: us-80390690
 
-// LLM-HARNESS-BEGIN: us-80390754
 void ahxbsr_get_data() {}
-// LLM-HARNESS-END: us-80390754
 
-// LLM-HARNESS-BEGIN: us-80390998
 void AHXBSR_IsDataAvailable() {}
-// LLM-HARNESS-END: us-80390998
 
-// LLM-HARNESS-BEGIN: us-803909f4
 void AHXBSR_GetBitStm() {}
-// LLM-HARNESS-END: us-803909f4
 
-// LLM-HARNESS-BEGIN: us-80390a90
 u32 AHXBSR_Tell(void* self) { return *(u32*)((u8*)self + 0x10); }
-// LLM-HARNESS-END: us-80390a90
 
-// LLM-HARNESS-BEGIN: us-80390a98
 void AHXBSR_SearchSync() {}
-// LLM-HARNESS-END: us-80390a98

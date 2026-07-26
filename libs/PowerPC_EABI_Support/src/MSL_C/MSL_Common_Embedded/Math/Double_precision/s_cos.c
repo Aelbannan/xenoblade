@@ -44,7 +44,6 @@
 
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common_Embedded/Math/fdlibm.h"
 
-// LLM-HARNESS-BEGIN: us-802cd510
 #ifdef __STDC__
 double cos(double x)
 #else
@@ -81,5 +80,4 @@ double cos(x) double x;
 		}
 	}
 }
-// LLM-HARNESS-END: us-802cd510
 

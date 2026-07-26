@@ -3,10 +3,6 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-8039eb5c
 void CFT_Ycc420plnToArgb8888Init() {}
-// LLM-HARNESS-END: us-8039eb5c
 
-// LLM-HARNESS-BEGIN: us-8039ecc4
 void CFT_Ycc420plnToY84C44() {}
-// LLM-HARNESS-END: us-8039ecc4

@@ -151,13 +151,11 @@ void CDevice::initDevices(){
     CDeviceGX::setDevicesInitializedFlag(true);
 }
 
-// LLM-HARNESS-BEGIN: us-80450288
 #pragma dont_inline on
 CDeviceException* CDeviceException::getInstance(){
     return spInstance;
 }
 #pragma dont_inline off
-// LLM-HARNESS-END: us-80450288
 
 bool CDevice::wkStandbyLogin(){
     CDeviceException::create("CDeviceException", this);

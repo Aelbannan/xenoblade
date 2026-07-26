@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802f5f90
 void hidd_conn_initiate() {}
-// LLM-HARNESS-END: us-802f5f90

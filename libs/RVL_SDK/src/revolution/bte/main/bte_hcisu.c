@@ -3,7 +3,6 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802e0730
 extern void GKI_freebuf(void*);
 
 void bte_hcisu_send(void* buffer, uint16_t value) {
@@ -14,13 +13,9 @@ void bte_hcisu_send(void* buffer, uint16_t value) {
         GKI_freebuf(buffer);
     }
 }
-// LLM-HARNESS-END: us-802e0730
 
-// LLM-HARNESS-BEGIN: us-802e0750
 void bte_hcisu_task() {}
-// LLM-HARNESS-END: us-802e0750
 
-// LLM-HARNESS-BEGIN: us-802e07c0
 extern void* p_hcisu_if;
 void bte_hcisu_close(void) {
     if (p_hcisu_if) {
@@ -30,8 +25,5 @@ void bte_hcisu_close(void) {
         }
     }
 }
-// LLM-HARNESS-END: us-802e07c0
 
-// LLM-HARNESS-BEGIN: us-802e07f0
 void bta_ci_hci_msg_handler() {}
-// LLM-HARNESS-END: us-802e07f0

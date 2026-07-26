@@ -250,6 +250,4 @@ void CTaskGameCf::func_8004499C() {
 
 } //namespace cf
 
-// LLM-HARNESS-BEGIN: us-80044704
 extern "C" void __ct__cf_CTaskGameCf() {}
-// LLM-HARNESS-END: us-80044704

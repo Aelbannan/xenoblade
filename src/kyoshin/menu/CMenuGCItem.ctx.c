@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuGCItem
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/menu/CMenuGCItem.cpp" line 4 "kyoshin/harness_catalog.hpp" */
@@ -1338,42 +1337,22 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-802b2e40
 extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b2e40
 
-// LLM-HARNESS-BEGIN: us-802b2ecc
 extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b2ecc
 
-// LLM-HARNESS-BEGIN: us-802b341c
 extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b341c
 
-// LLM-HARNESS-BEGIN: us-802b3480
 extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3480
 
-// LLM-HARNESS-BEGIN: us-802b35bc
 extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b35bc
 
-// LLM-HARNESS-BEGIN: us-802b3660
 extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3660
 
-// LLM-HARNESS-BEGIN: us-802b3780
 extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3780
 
-// LLM-HARNESS-BEGIN: us-802b3794
 extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3794
 
-// LLM-HARNESS-BEGIN: us-802b3978
 extern "C" void func_802B0F08(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3978
 
-// LLM-HARNESS-BEGIN: us-802b3980
 extern "C" void func_802B0F10(void* self) { ((void(*)(void*))__dt__11CMenuGCItemFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3980

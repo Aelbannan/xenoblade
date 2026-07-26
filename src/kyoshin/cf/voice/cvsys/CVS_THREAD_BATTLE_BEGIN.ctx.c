@@ -1337,38 +1337,20 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-802b24f0
 extern "C" int func_802B033C(void* self) { return 30; }
-// LLM-HARNESS-END: us-802b24f0
 
-// LLM-HARNESS-BEGIN: us-802b26c4
 extern "C" int func_802B033C(void* self) { return 30; }
-// LLM-HARNESS-END: us-802b26c4
 
-// LLM-HARNESS-BEGIN: us-802b2738
 extern "C" int func_802B033C(void* self) { return 30; }
-// LLM-HARNESS-END: us-802b2738
 
-// LLM-HARNESS-BEGIN: us-802b2b5c
 extern "C" int func_802B033C(void* self) { return 30; }
-// LLM-HARNESS-END: us-802b2b5c
 
-// LLM-HARNESS-BEGIN: us-802b2c20
 extern "C" int func_802B033C(void* self) { return 30; }
-// LLM-HARNESS-END: us-802b2c20
 
-// LLM-HARNESS-BEGIN: us-802b2cb8
 extern "C" int func_802B033C(void* self) { return 30; }
-// LLM-HARNESS-END: us-802b2cb8
 
-// LLM-HARNESS-BEGIN: us-802b2dac
 extern "C" int func_802B033C(void* self) { return 30; }
-// LLM-HARNESS-END: us-802b2dac
 
-// LLM-HARNESS-BEGIN: us-802b2db4
 extern "C" int func_802B033C(void* self) { return 30; }
-// LLM-HARNESS-END: us-802b2db4
 
-// LLM-HARNESS-BEGIN: us-802b2e14
 extern "C" int func_802B033C(void* self) { return 30; }
-// LLM-HARNESS-END: us-802b2e14

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import unittest
 
-from tools.llm_harness.source_regions import find_function_region
+from tools.llm_decomp.source_regions import find_function_region
 
 
 class _Target:

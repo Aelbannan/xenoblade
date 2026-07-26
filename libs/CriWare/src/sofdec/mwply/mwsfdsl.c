@@ -3,31 +3,18 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803a02d4
 void mwPlyEntryFname() {}
-// LLM-HARNESS-END: us-803a02d4
 
-// LLM-HARNESS-BEGIN: us-803a03f8
 void mwPlyStartSeamless() {}
-// LLM-HARNESS-END: us-803a03f8
 
-// LLM-HARNESS-BEGIN: us-803a0518
 void mwPlySetSeamlessLp() {}
-// LLM-HARNESS-END: us-803a0518
 
-// LLM-HARNESS-BEGIN: us-803a05d8
 void mwPlyStartFnameLp() {}
-// LLM-HARNESS-END: us-803a05d8
 
-// LLM-HARNESS-BEGIN: us-803a07a0
 void mwPlyStartFnameRangeLp() {}
-// LLM-HARNESS-END: us-803a07a0
 
-// LLM-HARNESS-BEGIN: us-803a0938
 int MWSFLSC_IsFsStatErr(void) { extern int LSC_GetStat(void); return (LSC_GetStat() == 3) ? 1 : 0; }
-// LLM-HARNESS-END: us-803a0938
 
-// LLM-HARNESS-BEGIN: us-803a0964
 void LSC_SetFlowLimit(void* a);
 void MWSFLSC_SetFlowLimit(void* self) {
     void* obj = *(void**)((u8*)self + 0x64);
@@ -35,9 +22,7 @@ void MWSFLSC_SetFlowLimit(void* self) {
         LSC_SetFlowLimit(obj);
     }
 }
-// LLM-HARNESS-END: us-803a0964
 
-// LLM-HARNESS-BEGIN: us-803a0978
 void LSC_Pause(void* a);
 void MWSFLSC_Pause(void* self) {
     void* obj = *(void**)((u8*)self + 0x64);
@@ -45,12 +30,7 @@ void MWSFLSC_Pause(void* self) {
         LSC_Pause(obj);
     }
 }
-// LLM-HARNESS-END: us-803a0978
 
-// LLM-HARNESS-BEGIN: us-803a098c
 void mwPlyLinkStm() {}
-// LLM-HARNESS-END: us-803a098c
 
-// LLM-HARNESS-BEGIN: us-803a0a04
 void mwPlyExecInfiniteLoopHandle() {}
-// LLM-HARNESS-END: us-803a0a04

@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802f2574
 void WBT_ExtCreateRecord() {}
-// LLM-HARNESS-END: us-802f2574

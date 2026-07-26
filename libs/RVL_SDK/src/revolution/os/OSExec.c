@@ -158,57 +158,39 @@ static s32 _ES_LaunchTitle(s32* fd, u64 tid, void* pViews) {
     return IOS_IoctlvReboot(*fd, ES_IOCTLV_LAUNCH_TITLE, 2, 0, pVectors);
 }
 
-// LLM-HARNESS-BEGIN: us-80358180
 extern int Prepared;
 void Callback() {
     Prepared = 1;
 }
-// LLM-HARNESS-END: us-80358180
-// LLM-HARNESS-BEGIN: us-80358300
 extern int Prepared;
 void Callback() {
     Prepared = 1;
 }
-// LLM-HARNESS-END: us-80358300
-// LLM-HARNESS-BEGIN: us-80358460
 extern int Prepared;
 void Callback() {
     Prepared = 1;
 }
-// LLM-HARNESS-END: us-80358460
-// LLM-HARNESS-BEGIN: us-80358630
 extern int Prepared;
 void Callback() {
     Prepared = 1;
 }
-// LLM-HARNESS-END: us-80358630
-// LLM-HARNESS-BEGIN: us-80358670
 extern int Prepared;
 void Callback() {
     Prepared = 1;
 }
-// LLM-HARNESS-END: us-80358670
-// LLM-HARNESS-BEGIN: us-803586b0
 extern unsigned long DVDLowIntType;
 void callback(unsigned long type) {
     DVDLowIntType = type;
 }
-// LLM-HARNESS-END: us-803586b0
-// LLM-HARNESS-BEGIN: us-803586c0
 extern int Prepared;
 void Callback() {
     Prepared = 1;
 }
-// LLM-HARNESS-END: us-803586c0
-// LLM-HARNESS-BEGIN: us-80358e20
 extern int Prepared;
 void Callback() {
     Prepared = 1;
 }
-// LLM-HARNESS-END: us-80358e20
-// LLM-HARNESS-BEGIN: us-80359580
 extern int Prepared;
 void Callback() {
     Prepared = 1;
 }
-// LLM-HARNESS-END: us-80359580

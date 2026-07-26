@@ -8,33 +8,24 @@
 extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame);
 
-// LLM-HARNESS-BEGIN: us-8043df30
 extern "C" void apply__11CSplitFrameFv(CSplitFrame* self) {
     // Implementation pending - currently NonMatching
 }
-// LLM-HARNESS-END: us-8043df30
 
-// LLM-HARNESS-BEGIN: us-8043e060
 extern "C" CView* getView1__11CSplitFrameFv(CSplitFrame* self) {
     return CViewRoot::getView(self->mView1);
 }
-// LLM-HARNESS-END: us-8043e060
 
-// LLM-HARNESS-BEGIN: us-8043e068
 extern "C" CView* getView2__11CSplitFrameFv(CSplitFrame* self) {
     return CViewRoot::getView(self->mView2);
 }
-// LLM-HARNESS-END: us-8043e068
 
-// LLM-HARNESS-BEGIN: us-8043e070
 extern "C" bool isActive__11CSplitFrameFv(CSplitFrame* self) {
     CView* view1 = CViewRoot::getView(self->mView1);
     CView* view2 = CViewRoot::getView(self->mView2);
     return view1 != nullptr || view2 != nullptr;
 }
-// LLM-HARNESS-END: us-8043e070
 
-// LLM-HARNESS-BEGIN: us-8043e288
 void getScissorRect1(ml::CRect16* out, const CSplitFrame* self) {
     // MWCC: first local = higher addr. Retail wants split@sp+0x10, offset@sp+0x8.
     volatile ml::CRect16 split;
@@ -120,9 +111,7 @@ void getScissorRect1(ml::CRect16* out, const CSplitFrame* self) {
     out->mSize.x = (s16)(x1 - x0);
     out->mSize.y = (s16)(y1 - y0);
 }
-// LLM-HARNESS-END: us-8043e288
 
-// LLM-HARNESS-BEGIN: us-8043e43c
 void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
     volatile ml::CRect16 split;
     volatile ml::CRect16 offset;
@@ -210,4 +199,3 @@ void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
     out->mSize.x = (s16)(x1 - x0);
     out->mSize.y = (s16)(y1 - y0);
 }
-// LLM-HARNESS-END: us-8043e43c

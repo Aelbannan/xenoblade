@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/realtimeevt/CREvtCamera
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/realtimeevt/CREvtCamera.cpp" line 4 "kyoshin/realtimeevt/CREvtCamera.hpp" */
@@ -723,67 +722,37 @@ struct CREvtCamera {
 };
 /* end "kyoshin/realtimeevt/CREvtCamera.hpp" */
 
-// LLM-HARNESS-BEGIN: us-80181374
 extern "C" void __ct__CREvtCamera() {}
-// LLM-HARNESS-END: us-80181374
 
-// LLM-HARNESS-BEGIN: us-80181484
 extern "C" void __ct__80180088() {}
-// LLM-HARNESS-END: us-80181484
 
-// LLM-HARNESS-BEGIN: us-8018160c
 extern "C" void func_80180210() {}
-// LLM-HARNESS-END: us-8018160c
 
-// LLM-HARNESS-BEGIN: us-80181790
 extern "C" void func_80180394() {}
-// LLM-HARNESS-END: us-80181790
 
-// LLM-HARNESS-BEGIN: us-80181810
 extern "C" void func_80180414() {}
-// LLM-HARNESS-END: us-80181810
 
-// LLM-HARNESS-BEGIN: us-801818c8
 extern "C" void func_801804CC() {}
-// LLM-HARNESS-END: us-801818c8
 
-// LLM-HARNESS-BEGIN: us-80181a1c
 extern "C" void func_80180620() {}
-// LLM-HARNESS-END: us-80181a1c
 
-// LLM-HARNESS-BEGIN: us-80181a60
 extern "C" void func_80180664() {}
-// LLM-HARNESS-END: us-80181a60
 
-// LLM-HARNESS-BEGIN: us-80181d3c
 extern "C" unsigned long func_80180940() {
     extern unsigned long lbl_eu_806642A8;
     unsigned long* ptr = (unsigned long*)lbl_eu_806642A8;
     unsigned long v = ptr[0xa0 / 4];
     return v ? 0 : 1;
 }
-// LLM-HARNESS-END: us-80181d3c
 
-// LLM-HARNESS-BEGIN: us-80181d50
 extern "C" void func_80180954() {}
-// LLM-HARNESS-END: us-80181d50
 
-// LLM-HARNESS-BEGIN: us-80181d5c
 extern "C" void func_80180960() {}
-// LLM-HARNESS-END: us-80181d5c
 
-// LLM-HARNESS-BEGIN: us-80181d74
 extern "C" void func_80180978() {}
-// LLM-HARNESS-END: us-80181d74
 
-// LLM-HARNESS-BEGIN: us-80181d8c
 extern "C" void func_80180990() {}
-// LLM-HARNESS-END: us-80181d8c
 
-// LLM-HARNESS-BEGIN: us-80181da4
 extern "C" int func_801809A8(const CREvtCamera* self) { return 1; }
-// LLM-HARNESS-END: us-80181da4
 
-// LLM-HARNESS-BEGIN: us-80181dac
 extern "C" u32 func_801809B0(const CREvtCamera* self) { return self->mField1C; }
-// LLM-HARNESS-END: us-80181dac

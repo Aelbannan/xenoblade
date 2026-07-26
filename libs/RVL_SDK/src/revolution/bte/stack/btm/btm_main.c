@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802ec7b4
 void btm_init() {}
-// LLM-HARNESS-END: us-802ec7b4

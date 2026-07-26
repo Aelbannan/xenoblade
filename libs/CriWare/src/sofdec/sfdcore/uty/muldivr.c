@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803d6c68
 void UTY_MulDivRound64() {}
-// LLM-HARNESS-END: us-803d6c68

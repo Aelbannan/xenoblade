@@ -3,9 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-// LLM-HARNESS-BEGIN: us-8022d450
 extern "C" u8 CSysWin_isReady(void* self) { return ((u8*)self)[0x28]; }
-// LLM-HARNESS-END: us-8022d450
 
 
 
@@ -13,46 +11,26 @@ extern "C" u8 CSysWin_isReady(void* self) { return ((u8*)self)[0x28]; }
 
 
 
-// LLM-HARNESS-BEGIN: us-8022d6e0
 extern "C" u8 CSysWin_getUnk34(void* self) { return ((u8*)self)[0x34]; }
-// LLM-HARNESS-END: us-8022d6e0
 
-// LLM-HARNESS-BEGIN: us-8022d6e8
 extern "C" u8 CSysWin_isActive(void* self) { return ((u8*)self)[0x36]; }
-// LLM-HARNESS-END: us-8022d6e8
 
 
 
 
 
-// LLM-HARNESS-BEGIN: us-8022de64
 extern "C" void func_8022BF6C() {}
-// LLM-HARNESS-END: us-8022de64
 
-// LLM-HARNESS-BEGIN: us-8022dec0
 extern "C" void func_8022BFC8() {}
-// LLM-HARNESS-END: us-8022dec0
 
-// LLM-HARNESS-BEGIN: us-8022e0ac
 extern "C" void func_8022C1B4() {}
-// LLM-HARNESS-END: us-8022e0ac
 
-// LLM-HARNESS-BEGIN: us-8022e150
 extern "C" void func_8022C258() {}
-// LLM-HARNESS-END: us-8022e150
 
-// LLM-HARNESS-BEGIN: us-8022e19c
 extern "C" void func_8022C2A4() {}
-// LLM-HARNESS-END: us-8022e19c
 
-// LLM-HARNESS-BEGIN: us-8022e1f0
 extern "C" void func_8022C2F8() {}
-// LLM-HARNESS-END: us-8022e1f0
 
-// LLM-HARNESS-BEGIN: us-8022e240
 extern "C" void func_8022C348() {}
-// LLM-HARNESS-END: us-8022e240
 
-// LLM-HARNESS-BEGIN: us-8022e43c
 extern "C" void OnFileEvent__7CSysWinFP10CEventFile() {}
-// LLM-HARNESS-END: us-8022e43c

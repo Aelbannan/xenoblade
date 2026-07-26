@@ -53,7 +53,6 @@ static double
     pi     = 3.1415926535897931160E+00,             /* 0x400921FB, 0x54442D18 */
     pi_lo  = 1.2246467991473531772E-16;             /* 0x3CA1A626, 0x33145C07 */
 
-// LLM-HARNESS-BEGIN: us-802ca158
 #ifdef __STDC__
 double __ieee754_atan2(double y, double x)
 #else
@@ -142,5 +141,4 @@ double __ieee754_atan2(y, x) double y, x;
 		return (z - pi_lo) - pi; /* atan(-,-) */
 	}
 }
-// LLM-HARNESS-END: us-802ca158
 

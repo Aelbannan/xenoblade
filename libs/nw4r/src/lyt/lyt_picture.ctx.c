@@ -23210,8 +23210,6 @@ void Picture::DrawSelf(const DrawInfo& rInfo) {
 } // namespace lyt
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-8040360c
 extern "C" const nw4r::ut::detail::RuntimeTypeInfo* GetRuntimeTypeInfo__Q34nw4r3lyt7PictureCFv() {
     return &nw4r::lyt::Picture::typeInfo;
 }
-// LLM-HARNESS-END: us-8040360c

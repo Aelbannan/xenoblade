@@ -1,4 +1,7 @@
-"""Allow-listed llm-harness job controller (no claims, no promotions)."""
+"""Allow-listed llm-decomp job controller (no claims, no promotions)."""
+
+# Legacy harness has been retired; all subprocess spawning now
+# uses tools/llm_decomp/run.py solve <target-id>.
 
 from __future__ import annotations
 
@@ -107,9 +110,11 @@ class JobController:
             log_path = job_path / "log.txt"
             argv = [
                 sys.executable,
-                str(self.root / "tools" / "llm_harness" / "run.py"),
-                workflow,
+                str(self.root / "tools" / "llm_decomp" / "run.py"),
+                "solve",
                 target_id,
+                "--type",
+                "match",
             ]
             meta: Dict[str, Any] = {
                 "job_id": job_id,

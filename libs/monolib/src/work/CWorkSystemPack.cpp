@@ -3,27 +3,16 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-804e1c0c
 extern "C" void __ct__15CWorkSystemPackFPCcP11CWorkThread() {}
-// LLM-HARNESS-END: us-804e1c0c
 
-// LLM-HARNESS-BEGIN: us-804e1d70
 extern "C" void __dt___reslist_base_CPackItem() {}
-// LLM-HARNESS-END: us-804e1d70
 
-// LLM-HARNESS-BEGIN: us-804e1dec
 extern "C" void func_804DDADC() {}
-// LLM-HARNESS-END: us-804e1dec
 
-// LLM-HARNESS-BEGIN: us-804e1e1c
 extern "C" void __dt__reslist_CPackItem() {}
-// LLM-HARNESS-END: us-804e1e1c
 
-// LLM-HARNESS-BEGIN: us-804e1e6c
 extern "C" void __dt___reslist_base_CArcItem() {}
-// LLM-HARNESS-END: us-804e1e6c
 
-// LLM-HARNESS-BEGIN: us-804e1ee8
 extern "C" void func_804DDBD8(void* self) {
     uint32_t* head = *(uint32_t**)((uint8_t*)self + 4);
     uint32_t* node = (uint32_t*)*head;
@@ -37,82 +26,47 @@ loop_cond:
     if (node != head) goto loop_body;
     *head = (uint32_t)head;
 }
-// LLM-HARNESS-END: us-804e1ee8
 
-// LLM-HARNESS-BEGIN: us-804e1f18
 extern "C" void __dt__reslist_CArcItem() {}
-// LLM-HARNESS-END: us-804e1f18
 
-// LLM-HARNESS-BEGIN: us-804e1f68
 extern "C" void __dt__15CWorkSystemPackFv() {}
-// LLM-HARNESS-END: us-804e1f68
 
-// LLM-HARNESS-BEGIN: us-804e1fe4
 extern "C" void func_804DDCD4() {}
-// LLM-HARNESS-END: us-804e1fe4
 
-// LLM-HARNESS-BEGIN: us-804e2064
 extern "C" void func_804DDD54() {}
-// LLM-HARNESS-END: us-804e2064
 
-// LLM-HARNESS-BEGIN: us-804e2104
 extern "C" void func_804DDDF4__15CWorkSystemPackFPCcPvPUl() {}
-// LLM-HARNESS-END: us-804e2104
 
-// LLM-HARNESS-BEGIN: us-804e213c
 extern "C" const char* const* lbl_eu_80665A14;
 
 // Store the PKH filenames array pointer for later retrieval by the work system.
 extern "C" void SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc(const char* const* pArray) {
     lbl_eu_80665A14 = pArray;
 }
-// LLM-HARNESS-END: us-804e213c
 
-// LLM-HARNESS-BEGIN: us-804e2144
 extern "C" const char* const* lbl_eu_80665A18;
 
 // Store the static arc filename string pointer for later retrieval by the work system.
 extern "C" void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const char* const* pFilenameStr) {
     lbl_eu_80665A18 = pFilenameStr;
 }
-// LLM-HARNESS-END: us-804e2144
 
-// LLM-HARNESS-BEGIN: us-804e214c
 extern "C" void func_804DDE3C() {}
-// LLM-HARNESS-END: us-804e214c
 
-// LLM-HARNESS-BEGIN: us-804e2264
 extern "C" void func_804DDF00() {}
-// LLM-HARNESS-END: us-804e2264
 
-// LLM-HARNESS-BEGIN: us-804e2340
 extern "C" void func_eu_804E2340() {}
-// LLM-HARNESS-END: us-804e2340
 
-// LLM-HARNESS-BEGIN: us-804e23e8
 extern "C" void func_804DDFBC__15CWorkSystemPackFi() {}
-// LLM-HARNESS-END: us-804e23e8
 
-// LLM-HARNESS-BEGIN: us-804e243c
 extern "C" void func_804DE010() {}
-// LLM-HARNESS-END: us-804e243c
 
-// LLM-HARNESS-BEGIN: us-804e24b8
 extern "C" void func_804DE08C__15CWorkSystemPackFv() {}
-// LLM-HARNESS-END: us-804e24b8
 
-// LLM-HARNESS-BEGIN: us-804e252c
 extern "C" void func_804DE100__15CWorkSystemPackFv() {}
-// LLM-HARNESS-END: us-804e252c
 
-// LLM-HARNESS-BEGIN: us-804e2578
 extern "C" void wkUpdate__15CWorkSystemPackFv() {}
-// LLM-HARNESS-END: us-804e2578
 
-// LLM-HARNESS-BEGIN: us-804e25f0
 extern "C" void wkStandbyLogin__15CWorkSystemPackFv() {}
-// LLM-HARNESS-END: us-804e25f0
 
-// LLM-HARNESS-BEGIN: us-804e26bc
 extern "C" void wkStandbyLogout__15CWorkSystemPackFv() {}
-// LLM-HARNESS-END: us-804e26bc

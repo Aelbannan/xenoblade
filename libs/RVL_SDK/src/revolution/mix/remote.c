@@ -3,18 +3,10 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-8034f860
 void MIXRmtSetVolumes() {}
-// LLM-HARNESS-END: us-8034f860
 
-// LLM-HARNESS-BEGIN: us-8034f8b0
 void MIXRmtSetFader() {}
-// LLM-HARNESS-END: us-8034f8b0
 
-// LLM-HARNESS-BEGIN: us-8034f910
 void __MIXRmtUpdateSettings() {}
-// LLM-HARNESS-END: us-8034f910
 
-// LLM-HARNESS-BEGIN: us-8034fd50
 void __MIXRmtResetChannel() {}
-// LLM-HARNESS-END: us-8034fd50

@@ -718,10 +718,6 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-803826f8
 void ADXMNG_SetFramework(u32 val) {}
-// LLM-HARNESS-END: us-803826f8
 
-// LLM-HARNESS-BEGIN: us-80382704
 void ADXMNG_CallMainServerFunctions() {}
-// LLM-HARNESS-END: us-80382704

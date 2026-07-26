@@ -718,59 +718,39 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-803a122c
 int MWSTM_SetTrSct(void) { return 0x0; }
-// LLM-HARNESS-END: us-803a122c
 
-// LLM-HARNESS-BEGIN: us-803a1234
 int MWSTM_IsFsStatErr(void) {
     extern int ADXSTM_GetStat(void);
     int stat = ADXSTM_GetStat();
     return (stat == 4) ? 1 : 0;
 }
-// LLM-HARNESS-END: us-803a1234
 
-// LLM-HARNESS-BEGIN: us-803a1260
 void ADXSTM_SetBufSize(void* a);
 void MWSTM_SetFlowLimit(void* a) {
     if (a != NULL) {
         ADXSTM_SetBufSize(a);
     }
 }
-// LLM-HARNESS-END: us-803a1260
 
-// LLM-HARNESS-BEGIN: us-803a1270
 void MWSTM_GetReadFlg(void) {
     ADXSTM_IsOpenedFile();
 }
-// LLM-HARNESS-END: us-803a1270
 
-// LLM-HARNESS-BEGIN: us-803a1274
 void MWSTM_Create(void) {}
-// LLM-HARNESS-END: us-803a1274
 
-// LLM-HARNESS-BEGIN: us-803a127c
 void MWSTM_Destroy(void) {
     ADXSTM_Destroy();
 }
-// LLM-HARNESS-END: us-803a127c
 
-// LLM-HARNESS-BEGIN: us-803a1280
 void MWSTM_SetFileRange() {}
-// LLM-HARNESS-END: us-803a1280
 
-// LLM-HARNESS-BEGIN: us-803a12ec
 void MWSTM_ReqStart(void) {
     ADXSTM_Start();
 }
-// LLM-HARNESS-END: us-803a12ec
 
-// LLM-HARNESS-BEGIN: us-803a12f0
 void MWSTM_ReqStop() {}
-// LLM-HARNESS-END: us-803a12f0
 
-// LLM-HARNESS-BEGIN: us-803a1324
 void MWSTM_GetStat(void) {
     ADXSTM_GetStat();
 }
-// LLM-HARNESS-END: us-803a1324

@@ -45,8 +45,8 @@ class JobsTests(unittest.TestCase):
         fake = _FakeProc()
 
         def fake_popen(argv, **kwargs):
-            self.assertTrue(str(argv[1]).endswith("tools/llm_harness/run.py"))
-            self.assertEqual(argv[2], "new")
+            self.assertTrue(str(argv[1]).endswith("tools/llm_decomp/run.py"))
+            self.assertEqual(argv[2], "solve")
             self.assertEqual(argv[3], "demo-leaf")
             self.assertFalse(kwargs.get("shell"))
             return fake

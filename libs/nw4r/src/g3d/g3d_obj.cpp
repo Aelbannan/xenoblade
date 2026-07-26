@@ -25,12 +25,6 @@ DECOMP_FORCEACTIVE(g3d_obj_cpp,
 } // namespace g3d
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-803e96bc
 extern "C" void IsDerivedFrom__Q34nw4r3g3d6G3dObjCFQ44nw4r3g3d6G3dObj7TypeObj() {}
-// LLM-HARNESS-END: us-803e96bc
-// LLM-HARNESS-BEGIN: us-803e96d8
 extern "C" void GetTypeName__Q34nw4r3g3d6G3dObjCFv() {}
-// LLM-HARNESS-END: us-803e96d8
-// LLM-HARNESS-BEGIN: us-803e9708
 // Defined inline via NW4R_G3D_RTTI_DECL_BASE(G3dObj) in g3d_obj.h
-// LLM-HARNESS-END: us-803e9708

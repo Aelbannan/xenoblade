@@ -718,81 +718,48 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-8038fa00
 void AHXSJD_Init() {}
-// LLM-HARNESS-END: us-8038fa00
 
-// LLM-HARNESS-BEGIN: us-8038faac
 void AHXSJD_Finish() {}
-// LLM-HARNESS-END: us-8038faac
 
-// LLM-HARNESS-BEGIN: us-8038faec
 void AHXSJD_Create() {}
-// LLM-HARNESS-END: us-8038faec
 
-// LLM-HARNESS-BEGIN: us-8038fcf8
 void AHXSJD_Destroy() {}
-// LLM-HARNESS-END: us-8038fcf8
 
-// LLM-HARNESS-BEGIN: us-8038fd6c
 int AHXSJD_GetStat(void* self) { return (signed char)((u8*)self)[0]; }
-// LLM-HARNESS-END: us-8038fd6c
 
-// LLM-HARNESS-BEGIN: us-8038fd78
 void AHXSJD_SetInSj(void* self, u32 val) { *(u32*)((u8*)self + 0x10) = val; }
-// LLM-HARNESS-END: us-8038fd78
 
-// LLM-HARNESS-BEGIN: us-8038fd80
 void AHXSJD_Start() {}
-// LLM-HARNESS-END: us-8038fd80
 
-// LLM-HARNESS-BEGIN: us-8038fe04
 void AHXSJD_Stop() {}
-// LLM-HARNESS-END: us-8038fe04
 
-// LLM-HARNESS-BEGIN: us-8038fe3c
 void criware_8038CB9C() {}
-// LLM-HARNESS-END: us-8038fe3c
 
-// LLM-HARNESS-BEGIN: us-803900e4
 void AHXSJD_ExecHndl() {}
-// LLM-HARNESS-END: us-803900e4
 
-// LLM-HARNESS-BEGIN: us-80390164
 u32 AHXSJD_GetDecDtLen(void* self) { return *(u32*)((u8*)self + 0x24); }
-// LLM-HARNESS-END: us-80390164
 
-// LLM-HARNESS-BEGIN: us-8039016c
 u32 AHXSJD_GetDecNumSmpl(void* self) {
     return *(u32*)((u8*)self + 0x2c) + *(u32*)((u8*)self + 0x28);
 }
-// LLM-HARNESS-END: us-8039016c
 
-// LLM-HARNESS-BEGIN: us-8039017c
 void AHXSJD_EntryFltFunc(void* self, void* func, void* ctx) {
     *(void**)((u8*)self + 0x54) = func;
     *(void**)((u8*)self + 0x58) = ctx;
 }
-// LLM-HARNESS-END: us-8039017c
 
-// LLM-HARNESS-BEGIN: us-80390188
 void AHXDCD_SetExtPrm(void* a);
 void AHXSJD_SetExtPrm(void* self) {
     AHXDCD_SetExtPrm(*(void**)((u8*)self + 0));
 }
-// LLM-HARNESS-END: us-80390188
 
-// LLM-HARNESS-BEGIN: us-80390190
 void AHXSJD_SetDecSmpl(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
-// LLM-HARNESS-END: us-80390190
 
-// LLM-HARNESS-BEGIN: us-80390198
 void func_8006BEE4(void* p) {
     ((u32*)p)[1] = 0;
 }
-// LLM-HARNESS-END: us-80390198
 
-// LLM-HARNESS-BEGIN: us-803901a4
 void AHXSJD_SetLnkSw(void* self, int val) {
     if (val == 0) {
         *(u32*)((u8*)self + 0x38) = 0;
@@ -800,4 +767,3 @@ void AHXSJD_SetLnkSw(void* self, int val) {
         *(u32*)((u8*)self + 0x38) = 1;
     }
 }
-// LLM-HARNESS-END: us-803901a4

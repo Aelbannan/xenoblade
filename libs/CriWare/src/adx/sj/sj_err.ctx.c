@@ -718,6 +718,4 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-80399b08
 void SJERR_CallErr(void) {}
-// LLM-HARNESS-END: us-80399b08

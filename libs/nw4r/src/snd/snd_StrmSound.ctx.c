@@ -247206,10 +247206,6 @@ void StrmSound::DetachTempSpecialHandle() {
 } // namespace snd
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-804277ac
 extern "C" void UpdateParam__Q44nw4r3snd6detail9StrmSoundFv() {}
-// LLM-HARNESS-END: us-804277ac
-// LLM-HARNESS-BEGIN: us-80427984
 extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail9StrmSoundFv() {}
-// LLM-HARNESS-END: us-80427984
 

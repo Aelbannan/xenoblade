@@ -718,14 +718,8 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-80344ab0
 void __HBMSYNClearVoiceReferences() {}
-// LLM-HARNESS-END: us-80344ab0
 
-// LLM-HARNESS-BEGIN: us-80344b60
 void __HBMSYNSetVoiceToRelease(void) {}
-// LLM-HARNESS-END: us-80344b60
 
-// LLM-HARNESS-BEGIN: us-80344b70
 void __HBMSYNServiceVoice() {}
-// LLM-HARNESS-END: us-80344b70

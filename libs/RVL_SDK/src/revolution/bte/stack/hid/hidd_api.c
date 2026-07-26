@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802f5f28
 void HID_DevInit() {}
-// LLM-HARNESS-END: us-802f5f28

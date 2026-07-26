@@ -718,10 +718,6 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-803a02cc
 void mwPlySaveRsc() {}
-// LLM-HARNESS-END: us-803a02cc
 
-// LLM-HARNESS-BEGIN: us-803a02d0
 void mwPlyRestoreRsc() {}
-// LLM-HARNESS-END: us-803a02d0

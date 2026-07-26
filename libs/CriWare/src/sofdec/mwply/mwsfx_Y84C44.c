@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803a7128
 void mwPlyFxCnvFrmY84C44() {}
-// LLM-HARNESS-END: us-803a7128

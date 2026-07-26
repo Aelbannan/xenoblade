@@ -1169,10 +1169,7 @@ void Voice::InvalidateWaveData(const void* pStart, const void* pEnd) {
 } // namespace snd
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-804296a0
 extern "C" void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(int, float) {}
-// LLM-HARNESS-END: us-804296a0
-// LLM-HARNESS-BEGIN: us-80429920
 extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(unsigned char* self, int index, const float* param) {
     float* dst = reinterpret_cast<float*>(self + index * 0x18 + 0x2c);
     dst[0] = param[0];
@@ -1183,7 +1180,4 @@ extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13Voice
     dst[5] = param[5];
     *reinterpret_cast<unsigned short*>(self + 0xa2) |= 0x003c;
 }
-// LLM-HARNESS-END: us-80429920
-// LLM-HARNESS-BEGIN: us-8042afb8
 extern "C" void InvalidateData__Q44nw4r3snd6detail5VoiceFPCvPCv() {}
-// LLM-HARNESS-END: us-8042afb8

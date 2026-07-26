@@ -718,63 +718,37 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-802df0e0
 void GKI_init() {}
-// LLM-HARNESS-END: us-802df0e0
 
-// LLM-HARNESS-BEGIN: us-802df170
 void GKI_shutdown() {}
-// LLM-HARNESS-END: us-802df170
 
-// LLM-HARNESS-BEGIN: us-802df220
 void GKI_run(void) {
 }
-// LLM-HARNESS-END: us-802df220
 
-// LLM-HARNESS-BEGIN: us-802df230
 void GKI_sched_lock(void) {
 }
-// LLM-HARNESS-END: us-802df230
 
-// LLM-HARNESS-BEGIN: us-802df240
 void GKI_sched_unlock(void) {
 }
-// LLM-HARNESS-END: us-802df240
 
-// LLM-HARNESS-BEGIN: us-802df250
 void GKI_delay(void) {
 }
-// LLM-HARNESS-END: us-802df250
 
-// LLM-HARNESS-BEGIN: us-802df260
 void GKI_send_event() {}
-// LLM-HARNESS-END: us-802df260
 
-// LLM-HARNESS-BEGIN: us-802df310
 int GKI_get_taskid(void) { return 0x2; }
-// LLM-HARNESS-END: us-802df310
 
-// LLM-HARNESS-BEGIN: us-802df320
 void GKI_enable() {}
-// LLM-HARNESS-END: us-802df320
 
-// LLM-HARNESS-BEGIN: us-802df350
 void GKI_disable() {}
-// LLM-HARNESS-END: us-802df350
 
-// LLM-HARNESS-BEGIN: us-802df3a0
 void GKI_exception(void) {}
-// LLM-HARNESS-END: us-802df3a0
 
-// LLM-HARNESS-BEGIN: us-802df3b0
 void* GKI_os_malloc(size_t size) {
     extern void* App_MEMalloc(size_t);
     void* result = App_MEMalloc(size);
     if (result == 0) return 0;
     return result;
 }
-// LLM-HARNESS-END: us-802df3b0
 
-// LLM-HARNESS-BEGIN: us-802df3e0
 void GKI_os_free(void) { App_MEMfree(); }
-// LLM-HARNESS-END: us-802df3e0

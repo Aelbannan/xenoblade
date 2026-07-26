@@ -3,10 +3,6 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-8037f3a0
 void ADXF_Init() {}
-// LLM-HARNESS-END: us-8037f3a0
 
-// LLM-HARNESS-BEGIN: us-8037f454
 void ADXF_Finish() {}
-// LLM-HARNESS-END: us-8037f454

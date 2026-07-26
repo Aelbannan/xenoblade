@@ -3,103 +3,61 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-// LLM-HARNESS-BEGIN: us-80122c40
 extern "C" u32 func_80122448(void) {
     extern u32 lbl_eu_80663FD0;
     return lbl_eu_80663FD0;
 }
-// LLM-HARNESS-END: us-80122c40
 
-// LLM-HARNESS-BEGIN: us-80122f2c
 extern "C" int lbl_eu_80663D1C;
 
 extern "C" int func_80042864() {
     return lbl_eu_80663D1C != 0;
 }
-// LLM-HARNESS-END: us-80122f2c
 
 extern u32 lbl_eu_80663F24;
-// LLM-HARNESS-BEGIN: us-80122f3c
 extern "C" void func_80122460() { lbl_eu_80663F24 = 0; }
-// LLM-HARNESS-END: us-80122f3c
 
-// LLM-HARNESS-BEGIN: us-80123130
 extern "C" void func_80122654() {}
-// LLM-HARNESS-END: us-80123130
 
-// LLM-HARNESS-BEGIN: us-801231a4
 extern "C" void func_801226C8() {}
-// LLM-HARNESS-END: us-801231a4
 
-// LLM-HARNESS-BEGIN: us-80123268
 extern "C" void func_8012278C(void* self) {}
-// LLM-HARNESS-END: us-80123268
 
-// LLM-HARNESS-BEGIN: us-8012355c
 extern "C" void cbRenderBefore__12CQuestWindowFv(void* self) {}
-// LLM-HARNESS-END: us-8012355c
 
-// LLM-HARNESS-BEGIN: us-80123608
 extern "C" void func_80122B2C() {}
-// LLM-HARNESS-END: us-80123608
 
-// LLM-HARNESS-BEGIN: us-8012368c
 extern "C" void func_80122BB0() {}
-// LLM-HARNESS-END: us-8012368c
 
-// LLM-HARNESS-BEGIN: us-801236e4
 extern "C" void func_80122C08() {}
-// LLM-HARNESS-END: us-801236e4
 
-// LLM-HARNESS-BEGIN: us-801239d4
 extern "C" void func_80122EF8() {}
-// LLM-HARNESS-END: us-801239d4
 
-// LLM-HARNESS-BEGIN: us-80123ca0
 extern "C" void func_801231C4() {}
-// LLM-HARNESS-END: us-80123ca0
 
-// LLM-HARNESS-BEGIN: us-80124d4c
 extern "C" void func_80124270() {}
-// LLM-HARNESS-END: us-80124d4c
 
-// LLM-HARNESS-BEGIN: us-80124d64
 extern "C" void func_80124288(void* self, void* src) {
     float a = *(float*)src;
     float b = *(float*)((u8*)src + 4);
     *(float*)((u8*)self + 0x4C) = a;
     *(float*)((u8*)self + 0x50) = b;
 }
-// LLM-HARNESS-END: us-80124d64
 
-// LLM-HARNESS-BEGIN: us-80124d78
 extern "C" void func_8012429C() {}
-// LLM-HARNESS-END: us-80124d78
 
-// LLM-HARNESS-BEGIN: us-80124dd8
 extern "C" void func_801242FC() {}
-// LLM-HARNESS-END: us-80124dd8
 
-// LLM-HARNESS-BEGIN: us-80124e38
 extern "C" void func_8012435C() {}
-// LLM-HARNESS-END: us-80124e38
 
 extern "C" void __dt__12CQuestWindowFv();
-// LLM-HARNESS-BEGIN: us-801250a8
 extern "C" void OnFileEvent__12CQuestWindowFP10CEventFile(void* self) { ((void(*)(void*))func_8012278C)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801250a8
 
-// LLM-HARNESS-BEGIN: us-801250b0
 extern "C" void func_801245D4(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801250b0
 
-// LLM-HARNESS-BEGIN: us-801250b8
 extern "C" void func_801245DC(void* self) { ((void(*)(void*))cbRenderBefore__12CQuestWindowFv)((char*)self - 0x70); }
-// LLM-HARNESS-END: us-801250b8
 
-// LLM-HARNESS-BEGIN: us-801250c0
 extern "C" void func_801245E4(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x70); }
-// LLM-HARNESS-END: us-801250c0
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
@@ -114,9 +72,5 @@ public:
 };
 
 class IUIWindow;
-// LLM-HARNESS-BEGIN: us-80125018
 template<> void CTTask<IUIWindow>::Move() {}
-// LLM-HARNESS-END: us-80125018
-// LLM-HARNESS-BEGIN: us-80125060
 template<> void CTTask<IUIWindow>::Draw() {}
-// LLM-HARNESS-END: us-80125060

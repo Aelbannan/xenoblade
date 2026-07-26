@@ -73,7 +73,6 @@ static double
     pio2_3  = 2.02226624871116645580e-21, /* 0x3BA3198A, 0x2E000000 */
     pio2_3t = 8.47842766036889956997e-32; /* 0x397B839A, 0x252049C1 */
 
-// LLM-HARNESS-BEGIN: us-802cb30c
 #ifdef __STDC__
 int __ieee754_rem_pio2(double x, double* y)
 #else
@@ -180,5 +179,4 @@ int __ieee754_rem_pio2(x, y) double x, y[];
 	}
 	return n;
 }
-// LLM-HARNESS-END: us-802cb30c
 

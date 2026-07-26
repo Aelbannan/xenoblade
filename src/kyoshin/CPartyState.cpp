@@ -3,9 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-// LLM-HARNESS-BEGIN: us-801feb2c
 extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
-// LLM-HARNESS-END: us-801feb2c
 
 
 
@@ -13,102 +11,56 @@ extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 
 
 
-// LLM-HARNESS-BEGIN: us-801fee44
 extern "C" u8 func_801FD184(void* self) { return ((u8*)self)[0x31]; }
-// LLM-HARNESS-END: us-801fee44
 
-// LLM-HARNESS-BEGIN: us-801fee4c
 extern "C" u8 func_801FD18C(void* self) { return ((u8*)self)[0x57]; }
-// LLM-HARNESS-END: us-801fee4c
 
 
 
 
 
-// LLM-HARNESS-BEGIN: us-801fefc4
 extern "C" void func_801FD304() {}
-// LLM-HARNESS-END: us-801fefc4
 
-// LLM-HARNESS-BEGIN: us-801ff094
 extern "C" void func_801FD3D4() {}
-// LLM-HARNESS-END: us-801ff094
 
-// LLM-HARNESS-BEGIN: us-801ff14c
 extern "C" void func_801FD48C() {}
-// LLM-HARNESS-END: us-801ff14c
 
-// LLM-HARNESS-BEGIN: us-801ff240
 extern "C" u32 func_801FD580(void* self) {
     s8 val = *(s8*)((u8*)self + 0x4D);
     // Match rlwinm extraction of sign bit followed by xori
     return ((u32)(val >> 31) & 1) ^ 1;
 }
-// LLM-HARNESS-END: us-801ff240
 
-// LLM-HARNESS-BEGIN: us-801ff254
 extern "C" void func_801FD594() {}
-// LLM-HARNESS-END: us-801ff254
 
-// LLM-HARNESS-BEGIN: us-801ff284
 extern "C" void func_801FD5C4() {}
-// LLM-HARNESS-END: us-801ff284
 
-// LLM-HARNESS-BEGIN: us-801ff2b4
 extern "C" u8 func_801FD5F4(void* self) { return ((u8*)self)[0x4E]; }
-// LLM-HARNESS-END: us-801ff2b4
 
-// LLM-HARNESS-BEGIN: us-801ff2bc
 extern "C" u8 func_801FD5FC(void* self) { return ((u8*)self)[0x4C]; }
-// LLM-HARNESS-END: us-801ff2bc
 
-// LLM-HARNESS-BEGIN: us-801ff2c4
 extern "C" void func_801FD604() {}
-// LLM-HARNESS-END: us-801ff2c4
 
-// LLM-HARNESS-BEGIN: us-801ff3b0
 extern "C" void func_801FD6F0() {}
-// LLM-HARNESS-END: us-801ff3b0
 
-// LLM-HARNESS-BEGIN: us-801ff42c
 extern "C" void func_801FD76C() {}
-// LLM-HARNESS-END: us-801ff42c
 
-// LLM-HARNESS-BEGIN: us-801ff48c
 extern "C" void func_801FD7CC() {}
-// LLM-HARNESS-END: us-801ff48c
 
-// LLM-HARNESS-BEGIN: us-801ff508
 extern "C" void func_801FD848() {}
-// LLM-HARNESS-END: us-801ff508
 
-// LLM-HARNESS-BEGIN: us-801ff560
 extern "C" void func_801FD8A0() {}
-// LLM-HARNESS-END: us-801ff560
 
-// LLM-HARNESS-BEGIN: us-801ff5b8
 extern "C" void func_801FD8F8() {}
-// LLM-HARNESS-END: us-801ff5b8
 
-// LLM-HARNESS-BEGIN: us-801ff73c
 extern "C" void func_801FDA7C() {}
-// LLM-HARNESS-END: us-801ff73c
 
-// LLM-HARNESS-BEGIN: us-801ffd88
 extern "C" void func_801FE0C8() {}
-// LLM-HARNESS-END: us-801ffd88
 
-// LLM-HARNESS-BEGIN: us-801ffe14
 extern "C" void func_801FE154() {}
-// LLM-HARNESS-END: us-801ffe14
 
-// LLM-HARNESS-BEGIN: us-801ffefc
 extern "C" void func_801FE20C() {}
-// LLM-HARNESS-END: us-801ffefc
 
-// LLM-HARNESS-BEGIN: us-8020008c
 extern "C" void func_801FE39C() {}
-// LLM-HARNESS-END: us-8020008c
 
-// LLM-HARNESS-BEGIN: us-8020019c
 extern "C" void OnFileEvent__11CPartyStateFP10CEventFile() {}
-// LLM-HARNESS-END: us-8020019c

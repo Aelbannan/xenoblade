@@ -1,0 +1,30 @@
+{
+  "models": {
+    "default": {
+      "provider": "openrouter",
+      "model": "deepseek/deepseek-chat",
+      "max_tokens": 8192
+    }
+  },
+  "session_types": {
+    "match": {},
+    "type-recovery": {},
+    "rename": {},
+    "tu-cleanup": {},
+    "size-trim": {}
+  },
+  "concurrency": {"workers": 8, "target_parallel": 4},
+  "prompt": {"max_chars": 60000, "include_raw_hex": false},
+  "verification": {
+    "equivalence_min_fuzzy": 50,
+    "cross_tu_full_sweep_max": 10,
+    "cross_tu_refuse_over": 40
+  },
+  "stop": {"max_repeated_fingerprint": 3, "max_compile_error_streak": 4},
+  "pipeline": {"auto_size_trim": true, "max_size_trim_attempts": 2},
+  "execution": {
+    "auto_promote": true,
+    "auto_promote_owner": "llm-decomp",
+    "checkpoint_commits": true
+  }
+}

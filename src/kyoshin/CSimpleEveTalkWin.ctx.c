@@ -1337,50 +1337,26 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-801a2f80
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a2f80
 
-// LLM-HARNESS-BEGIN: us-801a3080
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a3080
 
-// LLM-HARNESS-BEGIN: us-801a30f4
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a30f4
 
-// LLM-HARNESS-BEGIN: us-801a3514
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a3514
 
-// LLM-HARNESS-BEGIN: us-801a35d8
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a35d8
 
-// LLM-HARNESS-BEGIN: us-801a3764
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a3764
 
-// LLM-HARNESS-BEGIN: us-801a37f8
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a37f8
 
-// LLM-HARNESS-BEGIN: us-801a38b0
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a38b0
 
-// LLM-HARNESS-BEGIN: us-801a3d44
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a3d44
 
-// LLM-HARNESS-BEGIN: us-801a40d4
 extern "C" void func_801A29B4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-801a40d4
 
-// LLM-HARNESS-BEGIN: us-801a40dc
 extern "C" void func_801A29BC(void* self) { ((void(*)(void*))cbRenderBefore__17CSimpleEveTalkWinFv)((char*)self - 0x70); }
-// LLM-HARNESS-END: us-801a40dc
 
-// LLM-HARNESS-BEGIN: us-801a40e4
 extern "C" void func_801A29C4(void* self) { ((void(*)(void*))__dt__17CSimpleEveTalkWinFv)((char*)self - 0x70); }
-// LLM-HARNESS-END: us-801a40e4

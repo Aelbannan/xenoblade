@@ -837,6 +837,4 @@ void* __dynamic_cast(void* obj, int offset, type_info_struct* typeInfo, type_inf
     return NULL;
 }
 
-// LLM-HARNESS-BEGIN: us-802bca90
 extern "C" const char* what__Q23std8bad_castCFv(void) { return "bad_cast"; }
-// LLM-HARNESS-END: us-802bca90

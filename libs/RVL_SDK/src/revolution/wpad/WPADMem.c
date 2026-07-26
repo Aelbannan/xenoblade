@@ -3,7 +3,6 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-80378810
 void WPADiClearMemBlock(int index) {
     extern void* __rvl_p_wpadcb[];
     void* block = __rvl_p_wpadcb[index];
@@ -13,8 +12,5 @@ void WPADiClearMemBlock(int index) {
     *(unsigned int*)((char*)block + 0x9a4) = 0;
     *(unsigned int*)((char*)block + 0x9a8) = 0;
 }
-// LLM-HARNESS-END: us-80378810
 
-// LLM-HARNESS-BEGIN: us-80378840
 void WPADWriteExtReg() {}
-// LLM-HARNESS-END: us-80378840

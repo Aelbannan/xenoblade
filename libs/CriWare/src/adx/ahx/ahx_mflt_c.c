@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-8038dc50
 void ahxsbf_mult_flt_ex() {}
-// LLM-HARNESS-END: us-8038dc50

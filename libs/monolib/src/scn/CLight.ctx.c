@@ -6728,42 +6728,27 @@ CLight::CLight(){
     unk30 = r0;
 }
 
-// LLM-HARNESS-BEGIN: us-804c4440
 extern "C" void func_804C0398(void* self, int value) {
     *(int*)((char*)self + 0x2c) = value;
 }
-// LLM-HARNESS-END: us-804c4440
-// LLM-HARNESS-BEGIN: us-804c44f4
 extern "C" void func_804C0398(void* self, int value) {
     *(int*)((char*)self + 0x2c) = value;
 }
-// LLM-HARNESS-END: us-804c44f4
-// LLM-HARNESS-BEGIN: us-804c44fc
 extern "C" void func_804C0398(void* self, int value) {
     *(int*)((char*)self + 0x2c) = value;
 }
-// LLM-HARNESS-END: us-804c44fc
-// LLM-HARNESS-BEGIN: us-804c45b0
 extern "C" void func_804C0398(void* self, int value) {
     *(int*)((char*)self + 0x2c) = value;
 }
-// LLM-HARNESS-END: us-804c45b0
-// LLM-HARNESS-BEGIN: us-804c45e0
 extern "C" void func_804C0398(void* self, int value) {
     *(int*)((char*)self + 0x2c) = value;
 }
-// LLM-HARNESS-END: us-804c45e0
-// LLM-HARNESS-BEGIN: us-804c46cc
 extern "C" void func_804C0398(void* self, int value) {
     *(int*)((char*)self + 0x2c) = value;
 }
-// LLM-HARNESS-END: us-804c46cc
-// LLM-HARNESS-BEGIN: us-804c494c
 extern "C" void func_804C0398(void* self, int value) {
     *(int*)((char*)self + 0x2c) = value;
 }
-// LLM-HARNESS-END: us-804c494c
-// LLM-HARNESS-BEGIN: us-804c4a24
 extern "C" void func_804C08C8(void* self, int param) {
     struct Obj {
         char pad[0x2c];
@@ -6780,21 +6765,12 @@ extern "C" void func_804C08C8(void* self, int param) {
     else
         *obj->ptr &= ~0x4;
 }
-// LLM-HARNESS-END: us-804c4a24
-// LLM-HARNESS-BEGIN: us-804c4a7c
 namespace nw4r { namespace g3d { class LightObj { public: void InitLightSpot(float, _GXSpotFn); }; } }
 
 extern "C" void func_804C0920(CLight* _this, float f, _GXSpotFn spotFn) {
     (*(nw4r::g3d::LightObj**)((char*)_this + 0x2c))->InitLightSpot(f, spotFn);
 }
-// LLM-HARNESS-END: us-804c4a7c
-// LLM-HARNESS-BEGIN: us-804c4a84
 extern "C" void func_804C0928() {}
-// LLM-HARNESS-END: us-804c4a84
-// LLM-HARNESS-BEGIN: us-804c4b3c
 extern void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
 extern "C" void func_804C09E0(void* self) { InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
-// LLM-HARNESS-END: us-804c4b3c
-// LLM-HARNESS-BEGIN: us-804c4b44
 extern "C" void func_804C09E8() {}
-// LLM-HARNESS-END: us-804c4b44

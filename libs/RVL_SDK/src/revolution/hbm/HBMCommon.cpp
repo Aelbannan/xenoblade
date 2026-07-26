@@ -3,52 +3,31 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803253d0
 extern "C" void HBMAllocMem__FUl() {}
-// LLM-HARNESS-END: us-803253d0
 
-// LLM-HARNESS-BEGIN: us-803253e0
 extern "C" void HBMFreeMem__FPv() {}
-// LLM-HARNESS-END: us-803253e0
 
-// LLM-HARNESS-BEGIN: us-803253f0
 extern "C" void HBMCreate() {}
-// LLM-HARNESS-END: us-803253f0
 
-// LLM-HARNESS-BEGIN: us-80325510
 extern "C" void HBMDelete() {}
-// LLM-HARNESS-END: us-80325510
 
-// LLM-HARNESS-BEGIN: us-80325580
 extern "C" void HBMInit() {}
-// LLM-HARNESS-END: us-80325580
 
-// LLM-HARNESS-BEGIN: us-803255b0
 extern "C" void HBMCalc() {}
-// LLM-HARNESS-END: us-803255b0
 
-// LLM-HARNESS-BEGIN: us-803255f0
 extern "C" void HBMDraw() {}
-// LLM-HARNESS-END: us-803255f0
 
-// LLM-HARNESS-BEGIN: us-80325620
 extern "C" void HBMSetAdjustFlag() {}
-// LLM-HARNESS-END: us-80325620
 
-// LLM-HARNESS-BEGIN: us-80325660
 extern "C" void HBMCreateSound(const void* data, void* ptr, unsigned long size) {
     extern void getInstance__Q210homebutton10HomeButtonFv(void);
     extern void InitAxSound__10homebuttonFPCvPvUl(const void*, void*, unsigned long);
     getInstance__Q210homebutton10HomeButtonFv();
     InitAxSound__10homebuttonFPCvPvUl(data, ptr, size);
 }
-// LLM-HARNESS-END: us-80325660
 
-// LLM-HARNESS-BEGIN: us-803256c0
 extern "C" void HBMDeleteSound(void) {}
-// LLM-HARNESS-END: us-803256c0
 
-// LLM-HARNESS-BEGIN: us-803256d0
 namespace homebutton {
 class HomeButton {
 public:
@@ -60,4 +39,3 @@ public:
 extern "C" void HBMUpdateSound() {
     homebutton::HomeButton::getInstance()->update_sound();
 }
-// LLM-HARNESS-END: us-803256d0

@@ -247521,9 +247521,7 @@ void SoundSystem::WaitForResetReady() {
 } // namespace snd
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-804235f8
 extern "C" bool lbl_eu_80665508;
 extern "C" bool IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv() {
     return lbl_eu_80665508;
 }
-// LLM-HARNESS-END: us-804235f8

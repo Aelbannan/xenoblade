@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 from tools.decomp_atlas.lib.artifacts import extract_artifacts
-from tools.llm_harness.asm_listings import assembly_function_block
+from tools.llm_decomp.asm_listings import assembly_function_block
 
 
 class AsmListingTests(unittest.TestCase):

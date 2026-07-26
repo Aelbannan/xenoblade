@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802f6050
 void hidd_proc_repage_timeout() {}
-// LLM-HARNESS-END: us-802f6050

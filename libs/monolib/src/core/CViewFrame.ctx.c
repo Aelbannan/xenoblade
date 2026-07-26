@@ -17209,12 +17209,9 @@ extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw
     draw->end();
 }
 
-// LLM-HARNESS-BEGIN: us-80442564
 // CViewFrame default constructor — empty; initialisation is done by the
 // placement-new caller or caller-side inline init.
 extern "C" void __ct__CViewFrame() {}
-// LLM-HARNESS-END: us-80442564
-// LLM-HARNESS-BEGIN: us-80442600
 // Compute the offset from the frame's outer rect to its viewport content
 // area (i.e. how much the content region is inset by border + split gap).
 // Only applies when the owner view has border-expand/split flags enabled.
@@ -17254,7 +17251,6 @@ extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
 
     out->mPos.y = (s16)(out->mPos.y + (s16)(frame->mBorder + 0x16));
 }
-// LLM-HARNESS-END: us-80442600
 
 // Get the client rect of the frame's owner view, optionally expanded
 // by the border thickness (same gate logic as render()). The result
@@ -17303,17 +17299,13 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
     }
 }
 
-// LLM-HARNESS-BEGIN: us-80444550
 // Detach the frame from a CWorkThread's render list. Currently a stub;
 // the retail function unlinks from a linked-list render-work chain.
 extern "C" void detachRenderWork__10CViewFrameFP11CWorkThread() {}
-// LLM-HARNESS-END: us-80444550
 
-// LLM-HARNESS-BEGIN: us-804425f8
 extern "C" void func_8043FC60__10CViewFrameFUl(void* self, u32 val) {
     *(u32*)((u8*)self + 4) = val;
 }
-// LLM-HARNESS-END: us-804425f8
 
 void CViewFrame::CView_UnkVirtualFunc1() {}
 void CViewFrame::CView_UnkVirtualFunc8() {}

@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803bf200
 void MPS_CheckDelim() {}
-// LLM-HARNESS-END: us-803bf200

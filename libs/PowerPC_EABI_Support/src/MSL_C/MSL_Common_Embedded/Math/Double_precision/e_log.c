@@ -82,7 +82,6 @@ static double
 
 static double zero = 0.0;
 
-// LLM-HARNESS-BEGIN: us-802ca730
 #ifdef __STDC__
 double __ieee754_log(double x)
 #else
@@ -155,5 +154,4 @@ double __ieee754_log(x) double x;
 			return dk * ln2_hi - ((s * (f - R) - dk * ln2_lo) - f);
 	}
 }
-// LLM-HARNESS-END: us-802ca730
 

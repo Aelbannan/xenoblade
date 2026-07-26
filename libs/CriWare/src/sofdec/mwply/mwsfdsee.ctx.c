@@ -718,10 +718,6 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-803a1328
 void MWSFSEE_StartFnameSub1() {}
-// LLM-HARNESS-END: us-803a1328
 
-// LLM-HARNESS-BEGIN: us-803a132c
 void MWSFSEE_StartFnameSub2() {}
-// LLM-HARNESS-END: us-803a132c

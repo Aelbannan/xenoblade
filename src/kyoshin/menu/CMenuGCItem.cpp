@@ -4,40 +4,24 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-// LLM-HARNESS-BEGIN: us-802b2e40
 extern "C" void __dt__11CMenuGCItemFv(void* self) {}
-// LLM-HARNESS-END: us-802b2e40
 
-// LLM-HARNESS-BEGIN: us-802b2ecc
 extern "C" void Init__11CMenuGCItemFv() {}
-// LLM-HARNESS-END: us-802b2ecc
 
-// LLM-HARNESS-BEGIN: us-802b341c
 extern "C" void Term__11CMenuGCItemFv() {}
-// LLM-HARNESS-END: us-802b341c
 
-// LLM-HARNESS-BEGIN: us-802b3480
 extern "C" void Move__11CMenuGCItemFv() {}
-// LLM-HARNESS-END: us-802b3480
 
-// LLM-HARNESS-BEGIN: us-802b35bc
 extern "C" void cbRenderBefore__11CMenuGCItemFv(void* self) {}
-// LLM-HARNESS-END: us-802b35bc
 
-// LLM-HARNESS-BEGIN: us-802b3660
 extern "C" void __ct__CMenuGCItem() {}
-// LLM-HARNESS-END: us-802b3660
 
-// LLM-HARNESS-BEGIN: us-802b3780
 extern "C" unsigned long func_802B0D10() {
     unsigned long v = *(unsigned long*)(lbl_eu_80664C00);
     return !!v;
 }
-// LLM-HARNESS-END: us-802b3780
 
-// LLM-HARNESS-BEGIN: us-802b3794
 extern "C" void func_802B0D24() {}
-// LLM-HARNESS-END: us-802b3794
 
 /**
  * IScnRender vtable this-adjusting thunk for cbRenderBefore.
@@ -48,12 +32,10 @@ extern "C" void func_802B0D24() {}
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuGCItemFv
  */
-// LLM-HARNESS-BEGIN: us-802b3978
 extern "C" void func_802B0F08(IScnRender* self) {
     ((void(*)(CMenuGCItem*))cbRenderBefore__11CMenuGCItemFv)(
         (CMenuGCItem*)((uintptr_t)self - 0x58));
 }
-// LLM-HARNESS-END: us-802b3978
 
 /**
  * IScnRender vtable this-adjusting thunk for ~CMenuGCItem.
@@ -65,9 +47,7 @@ extern "C" void func_802B0F08(IScnRender* self) {
  *
  * Retail: subi r3, r3, 0x58; b __dt__11CMenuGCItemFv
  */
-// LLM-HARNESS-BEGIN: us-802b3980
 extern "C" void func_802B0F10(IScnRender* self) {
     ((void(*)(CMenuGCItem*))__dt__11CMenuGCItemFv)(
         (CMenuGCItem*)((uintptr_t)self - 0x58));
 }
-// LLM-HARNESS-END: us-802b3980

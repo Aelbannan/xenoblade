@@ -245,12 +245,6 @@ void ResMdl::Terminate() {
 } // namespace g3d
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-803db918
 extern "C" void GetParent__Q34nw4r3g3d6ResMdlFv() {}
-// LLM-HARNESS-END: us-803db918
-// LLM-HARNESS-BEGIN: us-803dbdd4
 extern "C" void GetResVtxFurPos__Q34nw4r3g3d6ResMdlCFi(int) {}
-// LLM-HARNESS-END: us-803dbdd4
-// LLM-HARNESS-BEGIN: us-803dbf98
 extern "C" void GetResTev__Q34nw4r3g3d6ResMdlCFUl() {}
-// LLM-HARNESS-END: us-803dbf98

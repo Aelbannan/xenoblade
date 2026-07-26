@@ -26053,7 +26053,6 @@ public:
 }; // size: 0x58
 /* end "monolib/scn/CScnItemAnim.hpp" */
 
-// LLM-HARNESS-BEGIN: us-804a2864
 /**
  * Get a character animation resource by index from the embedded ResFile.
  *
@@ -26064,9 +26063,7 @@ public:
 extern "C" nw4r::g3d::ResAnmChr func_8049E708(CScnItemAnim* self, int index) {
     return self->mResFile.GetResAnmChr(index);
 }
-// LLM-HARNESS-END: us-804a2864
 
-// LLM-HARNESS-BEGIN: us-804a2a10
 /**
  * Return pointer to the animation name buffer at offset 0x10.
  *
@@ -26076,9 +26073,7 @@ extern "C" nw4r::g3d::ResAnmChr func_8049E708(CScnItemAnim* self, int index) {
 extern "C" char* func_8049E8B4(CScnItemAnim* self) {
     return self->mName;
 }
-// LLM-HARNESS-END: us-804a2a10
 
-// LLM-HARNESS-BEGIN: us-804a2a18
 /**
  * Return the value at offset 0x54 of the object.
  *
@@ -26088,4 +26083,3 @@ extern "C" char* func_8049E8B4(CScnItemAnim* self) {
 extern "C" nw4r::g3d::ResFile func_8049E8BC(CScnItemAnim* self) {
     return self->mResFileCopy;
 }
-// LLM-HARNESS-END: us-804a2a18

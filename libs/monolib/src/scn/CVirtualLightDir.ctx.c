@@ -718,14 +718,8 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-80498770
 extern "C" void __ct__CVirtualLightDir() {}
-// LLM-HARNESS-END: us-80498770
 
-// LLM-HARNESS-BEGIN: us-804987c0
 extern "C" void func_8049474C(void* self, float a, float b) {}
-// LLM-HARNESS-END: us-804987c0
 
-// LLM-HARNESS-BEGIN: us-804987cc
 extern "C" void __dt__16CVirtualLightDirFv() {}
-// LLM-HARNESS-END: us-804987cc

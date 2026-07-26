@@ -3,7 +3,6 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802e0f84
 void bdcpy(void *dst, const void *src) {
     ((unsigned char *)dst)[0] = ((const unsigned char *)src)[0];
     ((unsigned char *)dst)[1] = ((const unsigned char *)src)[1];
@@ -12,8 +11,5 @@ void bdcpy(void *dst, const void *src) {
     ((unsigned char *)dst)[4] = ((const unsigned char *)src)[4];
     ((unsigned char *)dst)[5] = ((const unsigned char *)src)[5];
 }
-// LLM-HARNESS-END: us-802e0f84
 
-// LLM-HARNESS-BEGIN: us-802e0fb8
 void bdcmp() {}
-// LLM-HARNESS-END: us-802e0fb8

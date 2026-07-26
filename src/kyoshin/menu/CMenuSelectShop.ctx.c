@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuSelectShop
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/menu/CMenuSelectShop.cpp" line 4 "kyoshin/harness_catalog.hpp" */
@@ -1338,65 +1337,35 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-8018b39c
 extern "C" void __ct__CMenuSelectShop() {}
-// LLM-HARNESS-END: us-8018b39c
 
-// LLM-HARNESS-BEGIN: us-8018b48c
 extern "C" void __dt__15CMenuSelectShopFv(void* self) {}
-// LLM-HARNESS-END: us-8018b48c
 
-// LLM-HARNESS-BEGIN: us-8018b504
 extern "C" void Init__15CMenuSelectShopFv() {}
-// LLM-HARNESS-END: us-8018b504
 
-// LLM-HARNESS-BEGIN: us-8018b670
 extern "C" void Term__15CMenuSelectShopFv() {}
-// LLM-HARNESS-END: us-8018b670
 
-// LLM-HARNESS-BEGIN: us-8018b6e0
 extern "C" void Move__15CMenuSelectShopFv() {}
-// LLM-HARNESS-END: us-8018b6e0
 
-// LLM-HARNESS-BEGIN: us-8018b7b4
 extern "C" void func_8018A200() {}
-// LLM-HARNESS-END: us-8018b7b4
 
-// LLM-HARNESS-BEGIN: us-8018b7fc
 extern "C" void func_8018A248() {}
-// LLM-HARNESS-END: us-8018b7fc
 
-// LLM-HARNESS-BEGIN: us-8018b874
 extern "C" void func_8018A2C0() {}
-// LLM-HARNESS-END: us-8018b874
 
-// LLM-HARNESS-BEGIN: us-8018ba54
 extern "C" void func_8018A4A0() {}
-// LLM-HARNESS-END: us-8018ba54
 
-// LLM-HARNESS-BEGIN: us-8018ba9c
 extern "C" void cbRenderBefore__15CMenuSelectShopFv(void* self) {}
-// LLM-HARNESS-END: us-8018ba9c
 
-// LLM-HARNESS-BEGIN: us-8018bb40
 extern "C" void func_8018A58C() {}
-// LLM-HARNESS-END: us-8018bb40
 
-// LLM-HARNESS-BEGIN: us-8018bbbc
 extern "C" u32 func_8018A608(void) {
     extern u32 lbl_eu_806642E8;
     return lbl_eu_806642E8;
 }
-// LLM-HARNESS-END: us-8018bbbc
 
-// LLM-HARNESS-BEGIN: us-8018bbc4
 extern "C" void func_8018A610(void* self) { ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)self - 0x6c); }
-// LLM-HARNESS-END: us-8018bbc4
 
-// LLM-HARNESS-BEGIN: us-8018bbcc
 extern "C" void func_8018A618(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuSelectShopFv)((char*)self - 0x70); }
-// LLM-HARNESS-END: us-8018bbcc
 
-// LLM-HARNESS-BEGIN: us-8018bbd4
 extern "C" void func_8018A620(void* self) { ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)self - 0x70); }
-// LLM-HARNESS-END: us-8018bbd4

@@ -15207,39 +15207,24 @@ CBattleManager* CBattleManager::getInstance() {
 
 }
 
-// LLM-HARNESS-BEGIN: us-800dab54
 extern "C" bool func_800DA06C(void* self, unsigned int value) { struct Node { Node* next; unsigned int unused; unsigned int value; }; struct Manager { unsigned char unused[8]; Node* list; }; Manager* manager = static_cast<Manager*>(self); Node* sentinel = manager->list; Node* current = sentinel->next; while (current != sentinel && current->value != value) current = current->next; return current != sentinel; }
-// LLM-HARNESS-END: us-800dab54
-// LLM-HARNESS-BEGIN: us-800e306c
 extern "C" void func_800E2584(void* p, u32 mask) {
     *(u32*)((u8*)p + 0x84) &= ~mask;
 }
-// LLM-HARNESS-END: us-800e306c
-// LLM-HARNESS-BEGIN: us-800eae6c
 extern "C" void* func_800EA384(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
-// LLM-HARNESS-END: us-800eae6c
-// LLM-HARNESS-BEGIN: us-800eae94
 extern "C" void func_800EA3AC() {}
-// LLM-HARNESS-END: us-800eae94
-// LLM-HARNESS-BEGIN: us-800eaef8
 extern "C" void func_800EA410(void* self) {
     self = (char*)self + 0x219c;
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[0x10 / 4];
     func(self);
 }
-// LLM-HARNESS-END: us-800eaef8
-// LLM-HARNESS-BEGIN: us-800eaf08
 extern "C" void func_800EA420() {}
-// LLM-HARNESS-END: us-800eaf08
-// LLM-HARNESS-BEGIN: us-800eaf2c
 extern "C" unsigned int lbl_eu_80663F00;
 extern "C" void* func_801A8070(void*);
 extern "C" void* func_800EA444(void* self) {
     return lbl_eu_80663F00 ? func_801A8070(static_cast<unsigned char*>(self) + 0x219c) : 0;
 }
-// LLM-HARNESS-END: us-800eaf2c
-// LLM-HARNESS-BEGIN: us-800eaf48
 extern "C" void func_800EA460(void* self, float a, float b, unsigned long c) {
     extern void func_800EA484(void*);
     *(float*)((char*)self + 0x88) = b;
@@ -15247,150 +15232,57 @@ extern "C" void func_800EA460(void* self, float a, float b, unsigned long c) {
     *(float*)((char*)self + 0x90) = a;
     func_800EA484(self);
 }
-// LLM-HARNESS-END: us-800eaf48
-// LLM-HARNESS-BEGIN: us-800eaf58
 extern "C" void func_800EA470() {}
-// LLM-HARNESS-END: us-800eaf58
-// LLM-HARNESS-BEGIN: us-800eb480
 extern "C" void func_800EA998(void* self) {
     self = (char*)self + 0x219c;
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[0x24 / 4];
     func(self);
 }
-// LLM-HARNESS-END: us-800eb480
-// LLM-HARNESS-BEGIN: us-800ed3e4
 extern "C" void func_800EC8FC() {}
-// LLM-HARNESS-END: us-800ed3e4
-// LLM-HARNESS-BEGIN: us-800f4440
 extern "C" void func_800F3958() {}
-// LLM-HARNESS-END: us-800f4440
-// LLM-HARNESS-BEGIN: us-800f48b0
 extern "C" unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
-// LLM-HARNESS-END: us-800f48b0
-// LLM-HARNESS-BEGIN: us-800f4aec
 extern "C" void func_800F4004(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }
-// LLM-HARNESS-END: us-800f4aec
-// LLM-HARNESS-BEGIN: us-800f4d88
 extern "C" void func_800F42A0(void* _this) {
     *(int*)((char*)_this + 0x84) = 0;
 }
-// LLM-HARNESS-END: us-800f4d88
 
-// LLM-HARNESS-BEGIN: us-800d880c
 extern "C" void func_800D7D24() {}
-// LLM-HARNESS-END: us-800d880c
-// LLM-HARNESS-BEGIN: us-800d8988
 extern "C" void func_800D7EA0() {}
-// LLM-HARNESS-END: us-800d8988
-// LLM-HARNESS-BEGIN: us-800d8c90
 extern "C" void func_800D81A8() {}
-// LLM-HARNESS-END: us-800d8c90
-// LLM-HARNESS-BEGIN: us-800d9e3c
 extern "C" void func_800D9354() {}
-// LLM-HARNESS-END: us-800d9e3c
-// LLM-HARNESS-BEGIN: us-800da460
 extern "C" void func_800D9978() {}
-// LLM-HARNESS-END: us-800da460
-// LLM-HARNESS-BEGIN: us-800da788
 extern "C" void func_800D9CA0() {}
-// LLM-HARNESS-END: us-800da788
-// LLM-HARNESS-BEGIN: us-800dab8c
 extern "C" void func_800DA0A4() {}
-// LLM-HARNESS-END: us-800dab8c
-// LLM-HARNESS-BEGIN: us-800dbbe4
 extern "C" void func_800DB0FC() {}
-// LLM-HARNESS-END: us-800dbbe4
-// LLM-HARNESS-BEGIN: us-800dbfe4
 extern "C" void func_800DB4FC() {}
-// LLM-HARNESS-END: us-800dbfe4
-// LLM-HARNESS-BEGIN: us-800dc2e0
 extern "C" void func_800DB7F8() {}
-// LLM-HARNESS-END: us-800dc2e0
-// LLM-HARNESS-BEGIN: us-800dc514
 extern "C" void func_800DBA2C() {}
-// LLM-HARNESS-END: us-800dc514
-// LLM-HARNESS-BEGIN: us-800dc5b4
 extern "C" void func_800DBACC() {}
-// LLM-HARNESS-END: us-800dc5b4
-// LLM-HARNESS-BEGIN: us-800dd63c
 extern "C" void func_800DCB54() {}
-// LLM-HARNESS-END: us-800dd63c
-// LLM-HARNESS-BEGIN: us-800e13d0
 extern "C" void func_800E08E8() {}
-// LLM-HARNESS-END: us-800e13d0
-// LLM-HARNESS-BEGIN: us-800e2644
 extern "C" void func_800E1B5C() {}
-// LLM-HARNESS-END: us-800e2644
-// LLM-HARNESS-BEGIN: us-800e307c
 extern "C" void func_800E2594() {}
-// LLM-HARNESS-END: us-800e307c
-// LLM-HARNESS-BEGIN: us-800e3584
 extern "C" void func_800E2A9C() {}
-// LLM-HARNESS-END: us-800e3584
-// LLM-HARNESS-BEGIN: us-800e6fb4
 extern "C" void func_800E64CC() {}
-// LLM-HARNESS-END: us-800e6fb4
-// LLM-HARNESS-BEGIN: us-800e90d8
 extern "C" void func_800E85F0() {}
-// LLM-HARNESS-END: us-800e90d8
-// LLM-HARNESS-BEGIN: us-800e965c
 extern "C" void CBattleManager_preCalcTotalDamage() {}
-// LLM-HARNESS-END: us-800e965c
-// LLM-HARNESS-BEGIN: us-800e9d04
 extern "C" void func_800E921C() {}
-// LLM-HARNESS-END: us-800e9d04
-// LLM-HARNESS-BEGIN: us-800ea63c
 extern "C" void func_800E9B54() {}
-// LLM-HARNESS-END: us-800ea63c
-// LLM-HARNESS-BEGIN: us-800eaacc
 extern "C" void func_800E9FE4() {}
-// LLM-HARNESS-END: us-800eaacc
-// LLM-HARNESS-BEGIN: us-800ead8c
 extern "C" void func_800EA2A4() {}
-// LLM-HARNESS-END: us-800ead8c
-// LLM-HARNESS-BEGIN: us-800eaf6c
 extern "C" void func_800EA484() {}
-// LLM-HARNESS-END: us-800eaf6c
-// LLM-HARNESS-BEGIN: us-800eb490
 extern "C" void func_800EA9A8() {}
-// LLM-HARNESS-END: us-800eb490
-// LLM-HARNESS-BEGIN: us-800eb514
 extern "C" void func_800EAA2C() {}
-// LLM-HARNESS-END: us-800eb514
-// LLM-HARNESS-BEGIN: us-800ed400
 extern "C" void func_800EC918() {}
-// LLM-HARNESS-END: us-800ed400
-// LLM-HARNESS-BEGIN: us-800f421c
 extern "C" void func_800F3734() {}
-// LLM-HARNESS-END: us-800f421c
-// LLM-HARNESS-BEGIN: us-800f42e0
 extern "C" void func_800F37F8() {}
-// LLM-HARNESS-END: us-800f42e0
-// LLM-HARNESS-BEGIN: us-800f43c8
 extern "C" void func_800F38E0() {}
-// LLM-HARNESS-END: us-800f43c8
-// LLM-HARNESS-BEGIN: us-800f4458
 extern "C" void func_800F3970() {}
-// LLM-HARNESS-END: us-800f4458
-// LLM-HARNESS-BEGIN: us-800f46f0
 extern "C" void func_800F3C08() {}
-// LLM-HARNESS-END: us-800f46f0
-// LLM-HARNESS-BEGIN: us-800f4754
 extern "C" void func_800F3C6C() {}
-// LLM-HARNESS-END: us-800f4754
-// LLM-HARNESS-BEGIN: us-800f4974
 extern "C" void func_800F3E8C() {}
-// LLM-HARNESS-END: us-800f4974
-// LLM-HARNESS-BEGIN: us-800f4a74
 extern "C" void func_800F3F8C() {}
-// LLM-HARNESS-END: us-800f4a74
-// LLM-HARNESS-BEGIN: us-800f4ab0
 extern "C" void func_800F3FC8() {}
-// LLM-HARNESS-END: us-800f4ab0
-// LLM-HARNESS-BEGIN: us-800f4b1c
 extern "C" void func_800F4034() {}
-// LLM-HARNESS-END: us-800f4b1c
-// LLM-HARNESS-BEGIN: us-800f4c88
 extern "C" void func_800F41A0() {}
-// LLM-HARNESS-END: us-800f4c88

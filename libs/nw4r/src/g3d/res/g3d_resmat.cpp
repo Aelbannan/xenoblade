@@ -1595,10 +1595,7 @@ void ResTexPlttInfo::Release(ResTexObj texObj, ResTlutObj tlutObj) {
 } // namespace g3d
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-803de1e8
 extern "C" void GetLyrRate__Q34nw4r3g3d9ResMatFurCFUl() {}
-// LLM-HARNESS-END: us-803de1e8
-// LLM-HARNESS-BEGIN: us-803de358
 bool GXGetBlendMode__Q34nw4r3g3d9ResMatPixCFP12_GXBlendModeP14_GXBlendFactorP14_GXBlendFactorP10_GXLogicOp(const void* self, unsigned int* blendMode, unsigned int* srcFactor, unsigned int* dstFactor, unsigned int* logicOp) {
     const unsigned char* data = *reinterpret_cast<const unsigned char* const*>(self);
     if (data[0xA] == 0) {
@@ -1630,18 +1627,9 @@ bool GXGetBlendMode__Q34nw4r3g3d9ResMatPixCFP12_GXBlendModeP14_GXBlendFactorP14_
     }
     return true;
 }
-// LLM-HARNESS-END: us-803de358
-// LLM-HARNESS-BEGIN: us-803dee54
 bool GXGetChanCtrl__Q34nw4r3g3d10ResMatChanCF12_GXChannelIDPUcP11_GXColorSrcP11_GXColorSrcP10_GXLightIDP12_GXDiffuseFnP9_GXAttnFn(const void* self, _GXChannelID channel, unsigned char* enable, _GXColorSrc* ambSrc, _GXColorSrc* matSrc, _GXLightID* lightMask, _GXDiffuseFn* diffFn, _GXAttnFn* attnFn) { const unsigned char* chan = reinterpret_cast<const unsigned char*>(*reinterpret_cast<const void* const*>(self)) + (static_cast<unsigned int>(channel) & 1u) * 0x14u; unsigned int ctrl = *reinterpret_cast<const unsigned int*>(chan + ((static_cast<unsigned int>(channel) & 0x40000000u) ? 0x10u : 0x0cu)); if (enable) *enable = static_cast<unsigned char>((ctrl >> 1) & 1u); if (ambSrc) *ambSrc = static_cast<_GXColorSrc>((ctrl >> 6) & 1u); if (matSrc) *matSrc = static_cast<_GXColorSrc>(ctrl & 1u); if (lightMask) *lightMask = static_cast<_GXLightID>(((ctrl >> 2) & 0xfu) | (((ctrl >> 11) & 0xfu) << 4)); unsigned int attn = 0; if (ctrl & (1u << 10)) attn = (ctrl & (1u << 9)) ? 1u : 2u; if (diffFn) *diffFn = static_cast<_GXDiffuseFn>((ctrl >> 7) & 3u); if (attnFn) *attnFn = static_cast<_GXAttnFn>(attn); return true; }
-// LLM-HARNESS-END: us-803dee54
-// LLM-HARNESS-BEGIN: us-803df1fc
 extern "C" void GetResMatFur__Q34nw4r3g3d6ResMatFv() {}
-// LLM-HARNESS-END: us-803df1fc
-// LLM-HARNESS-BEGIN: us-803df21c
 extern "C" void GetResUserData__Q34nw4r3g3d6ResMatFv() {}
-// LLM-HARNESS-END: us-803df21c
-// LLM-HARNESS-BEGIN: us-803df518
 const void* GetResTex__Q34nw4r3g3d14ResTexPlttInfoCFv(const void* p) {
     return *(const void**)((const char*)*(const void**)p + 8);
 }
-// LLM-HARNESS-END: us-803df518

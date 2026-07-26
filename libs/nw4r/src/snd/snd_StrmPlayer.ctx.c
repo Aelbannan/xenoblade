@@ -248087,34 +248087,16 @@ void StrmPlayer::StrmDataLoadTask::OnCancel() {
 } // namespace snd
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-80425d38
 extern "C" void AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(int) {}
-// LLM-HARNESS-END: us-80425d38
-// LLM-HARNESS-BEGIN: us-80425fd8
 extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack() {}
-// LLM-HARNESS-END: us-80425fd8
-// LLM-HARNESS-BEGIN: us-80426ee8
 extern "C" void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf() {}
-// LLM-HARNESS-END: us-80426ee8
-// LLM-HARNESS-BEGIN: us-80426f68
 extern "C" void* GetPlayerTrack__Q44nw4r3snd6detail10StrmPlayerFi(void* self, int index) {
     if (index > 7) return nullptr;
     return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(self) + index * 0x38 + 0xb78);
 }
-// LLM-HARNESS-END: us-80426f68
-// LLM-HARNESS-BEGIN: us-804272d0
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
-// LLM-HARNESS-END: us-804272d0
-// LLM-HARNESS-BEGIN: us-804272d4
 extern "C" void OnUpdateVoiceSoundThread__Q44nw4r3snd6detail10StrmPlayerFv() {}
-// LLM-HARNESS-END: us-804272d4
 
-// LLM-HARNESS-BEGIN: us-804272e8
 extern "C" u8 IsPause__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return ((u8*)self)[295]; }
-// LLM-HARNESS-END: us-804272e8
-// LLM-HARNESS-BEGIN: us-804272f0
 extern "C" u8 IsStarted__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return ((u8*)self)[290]; }
-// LLM-HARNESS-END: us-804272f0
-// LLM-HARNESS-BEGIN: us-804272f8
 extern "C" u8 IsActive__Q44nw4r3snd6detail10StrmPlayerCFv(void* self) { return ((u8*)self)[289]; }
-// LLM-HARNESS-END: us-804272f8

@@ -320,9 +320,5 @@ void WsdPlayer::ChannelCallbackFunc(Channel* pDropChannel,
 } // namespace snd
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-8042d664
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9WsdPlayerFv() {}
-// LLM-HARNESS-END: us-8042d664
-// LLM-HARNESS-BEGIN: us-8042d678
 extern "C" void InvalidateWaveData__Q44nw4r3snd6detail9WsdPlayerFPCvPCv() {}
-// LLM-HARNESS-END: us-8042d678

@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803949ac
 void gcCiSetRdMode(u32 val) {}
-// LLM-HARNESS-END: us-803949ac

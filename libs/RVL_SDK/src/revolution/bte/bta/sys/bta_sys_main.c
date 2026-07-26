@@ -3,44 +3,26 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802e12ac
 void bta_sys_init() {}
-// LLM-HARNESS-END: us-802e12ac
 
-// LLM-HARNESS-BEGIN: us-802e1310
 void bta_sys_event() {}
-// LLM-HARNESS-END: us-802e1310
 
-// LLM-HARNESS-BEGIN: us-802e13fc
 void bta_sys_timer_update() {}
-// LLM-HARNESS-END: us-802e13fc
 
-// LLM-HARNESS-BEGIN: us-802e141c
 void bta_sys_register() {}
-// LLM-HARNESS-END: us-802e141c
 
-// LLM-HARNESS-BEGIN: us-802e1430
 unsigned char bta_sys_sendmsg(void *p_msg) {
     extern unsigned char bta_sys_cb[];
     extern unsigned char *p_bta_sys_cfg;
     extern unsigned char GKI_send_msg(unsigned char, unsigned char, void *);
     return GKI_send_msg(bta_sys_cb[0x7D], p_bta_sys_cfg[2], p_msg);
 }
-// LLM-HARNESS-END: us-802e1430
 
-// LLM-HARNESS-BEGIN: us-802e144c
 void bta_sys_start_timer() {}
-// LLM-HARNESS-END: us-802e144c
 
-// LLM-HARNESS-BEGIN: us-802e146c
 void bta_sys_stop_timer() {}
-// LLM-HARNESS-END: us-802e146c
 
-// LLM-HARNESS-BEGIN: us-802e1480
 void bta_sys_disable() {}
-// LLM-HARNESS-END: us-802e1480
 
-// LLM-HARNESS-BEGIN: us-802e14e8
 extern u8 appl_trace_level;
 extern u8 bta_sys_set_trace_level(u8 val) { appl_trace_level = val; return val; }
-// LLM-HARNESS-END: us-802e14e8

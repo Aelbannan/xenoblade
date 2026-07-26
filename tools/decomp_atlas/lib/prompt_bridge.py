@@ -40,17 +40,15 @@ def preview_prompt(
     try:
         settings = json.loads(harness_config.read_text(encoding="utf-8"))
         project_settings = settings.get("project") or {}
-        from tools.llm_harness.xenoblade_project import XenobladeAdapter
-
-        adapter = XenobladeAdapter(root_path, project_settings)
-        options = {"full_context": bool(full_context)}
-        prompt = adapter.build_prompt(workflow, target_id, history=[], options=options)
-        encoded = prompt.encode("utf-8")
+        # Legacy prompt preview required the retired harness package.
+        # That package is being removed; the preview endpoint is deprecated.
         return {
-            "ok": True,
-            "prompt": prompt,
-            "error": None,
-            "bytes": len(encoded),
+            "ok": False,
+            "prompt": None,
+            "error": ("prompt preview requires the retired harness package "
+                       "which has been removed from this repository; "
+                       "use tools/llm_decomp for direct decompilation"),
+            "bytes": 0,
             "workflow": workflow,
             "target_id": target_id,
             "full_context": bool(full_context),

@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuPTState
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/menu/CMenuPTState.cpp" line 4 "kyoshin/harness_catalog.hpp" */
@@ -1338,36 +1337,20 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-801941d4
 extern "C" void func_80192BE4(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuPTStateFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-801941d4
 
-// LLM-HARNESS-BEGIN: us-801942ec
 extern "C" bool func_80192BD0() { return lbl_eu_80663F20 != 0; }
-// LLM-HARNESS-END: us-801942ec
 
 extern "C" void cbRenderBefore__12CMenuPTStateFv(void* self);
-// LLM-HARNESS-BEGIN: us-80194300
 extern "C" void func_80192BE4(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuPTStateFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80194300
 
 extern "C" void __dt__12CMenuPTStateFv(void* self);
-// LLM-HARNESS-BEGIN: us-80194308
 extern "C" void func_80192BEC(void* self) { ((void(*)(void*))__dt__12CMenuPTStateFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80194308
 
-// LLM-HARNESS-BEGIN: us-80194310
 extern "C" void func_80192BE4(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuPTStateFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80194310
 
-// LLM-HARNESS-BEGIN: us-8019432c
 extern "C" void func_80192BE4(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuPTStateFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-8019432c
 
-// LLM-HARNESS-BEGIN: us-80194348
 extern "C" void func_80192BE4(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuPTStateFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80194348
 
-// LLM-HARNESS-BEGIN: us-801943cc
 extern "C" void func_80192BE4(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuPTStateFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-801943cc

@@ -105,9 +105,5 @@ namespace{
     }
 }
 
-// LLM-HARNESS-BEGIN: us-8045a000
 extern "C" void OnFileEvent__8CDesktopFP10CEventFile() {}
-// LLM-HARNESS-END: us-8045a000
-// LLM-HARNESS-BEGIN: us-8045a05c
 extern "C" void WorkEvent3__8CDesktopFPv() {}
-// LLM-HARNESS-END: us-8045a05c

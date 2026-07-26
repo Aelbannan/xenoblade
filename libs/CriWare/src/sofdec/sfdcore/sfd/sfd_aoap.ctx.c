@@ -718,85 +718,51 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-803c10c8
 void SFD_SetOutVol() {}
-// LLM-HARNESS-END: us-803c10c8
 
-// LLM-HARNESS-BEGIN: us-803c1148
 void SFD_GetOutVol() {}
-// LLM-HARNESS-END: us-803c1148
 
-// LLM-HARNESS-BEGIN: us-803c11c4
 void SFAOAP_SetSpeed() {}
-// LLM-HARNESS-END: us-803c11c4
 
-// LLM-HARNESS-BEGIN: us-803c1238
 int SFAOAP_Init(void) { return 0x0; }
-// LLM-HARNESS-END: us-803c1238
 
-// LLM-HARNESS-BEGIN: us-803c1240
 int SFAOAP_Finish(void) { return 0x0; }
-// LLM-HARNESS-END: us-803c1240
 
-// LLM-HARNESS-BEGIN: us-803c1248
 void SFAOAP_ExecServer() {}
-// LLM-HARNESS-END: us-803c1248
 
-// LLM-HARNESS-BEGIN: us-803c12fc
 void SFAOAP_Create() {}
-// LLM-HARNESS-END: us-803c12fc
 
-// LLM-HARNESS-BEGIN: us-803c1348
 int SFAOAP_Destroy(void) { return 0x0; }
-// LLM-HARNESS-END: us-803c1348
 
-// LLM-HARNESS-BEGIN: us-803c1350
 int SFAOAP_RequestStop(void* param_1) {
     SFSET_GetCond(param_1, 6);
     return 0;
 }
-// LLM-HARNESS-END: us-803c1350
 
-// LLM-HARNESS-BEGIN: us-803c1378
 void SFAOAP_Start() {}
-// LLM-HARNESS-END: us-803c1378
 
-// LLM-HARNESS-BEGIN: us-803c13e4
 void SFAOAP_Stop() {}
-// LLM-HARNESS-END: us-803c13e4
 
-// LLM-HARNESS-BEGIN: us-803c1450
 void SFAOAP_Pause() {}
-// LLM-HARNESS-END: us-803c1450
 
-// LLM-HARNESS-BEGIN: us-803c14c8
 s32 SFLIB_SetErr(void* h, u32 err_code);
 s32 SFAOAP_GetWrite(void* h) {
     return SFLIB_SetErr(h, 0xff000a01);
 }
-// LLM-HARNESS-END: us-803c14c8
 
-// LLM-HARNESS-BEGIN: us-803c14d4
 s32 SFLIB_SetErr(void* h, u32 err_code);
 s32 SFAOAP_AddWrite(void* h) {
     return SFLIB_SetErr(h, 0xff000a01);
 }
-// LLM-HARNESS-END: us-803c14d4
 
-// LLM-HARNESS-BEGIN: us-803c14e0
 s32 SFLIB_SetErr(void* h, u32 err_code);
 s32 SFAOAP_GetRead(void* h) {
     return SFLIB_SetErr(h, 0xff000a01);
 }
-// LLM-HARNESS-END: us-803c14e0
 
-// LLM-HARNESS-BEGIN: us-803c14ec
 s32 SFLIB_SetErr(void* h, u32 err_code);
 s32 SFAOAP_AddRead(void* h) {
     return SFLIB_SetErr(h, 0xff000a01);
 }
-// LLM-HARNESS-END: us-803c14ec
 
-// LLM-HARNESS-BEGIN: us-803c14f8
 int SFAOAP_Seek(void) { return 0x0; }
-// LLM-HARNESS-END: us-803c14f8

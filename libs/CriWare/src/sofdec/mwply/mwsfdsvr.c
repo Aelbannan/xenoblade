@@ -3,74 +3,38 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803a5a18
 void mwsfsvr_SyncStartSst() {}
-// LLM-HARNESS-END: us-803a5a18
 
-// LLM-HARNESS-BEGIN: us-803a5b1c
 void mwsfsvr_StartStream() {}
-// LLM-HARNESS-END: us-803a5b1c
 
-// LLM-HARNESS-BEGIN: us-803a5bf4
 void mwlSfdExecDecSvrPlaying() {}
-// LLM-HARNESS-END: us-803a5bf4
 
-// LLM-HARNESS-BEGIN: us-803a5cb4
 void MWSFSVR_VsyncThrdProc() {}
-// LLM-HARNESS-END: us-803a5cb4
 
-// LLM-HARNESS-BEGIN: us-803a5e0c
 void MWSFSVR_MainThrdProc() {}
-// LLM-HARNESS-END: us-803a5e0c
 
-// LLM-HARNESS-BEGIN: us-803a6050
 void criware_803A2908() {}
-// LLM-HARNESS-END: us-803a6050
 
-// LLM-HARNESS-BEGIN: us-803a6168
 void mwsfsvr_DecodeServer() {}
-// LLM-HARNESS-END: us-803a6168
 
-// LLM-HARNESS-BEGIN: us-803a6298
 void mwply_ExecSvrHndl() {}
-// LLM-HARNESS-END: us-803a6298
 
-// LLM-HARNESS-BEGIN: us-803a63c4
 void mwsfd_ExecSvrHndl() {}
-// LLM-HARNESS-END: us-803a63c4
 
-// LLM-HARNESS-BEGIN: us-803a6658
 void MWSFSVR_SetMwsfdSvrFlg(int flag) { *(int*)((char*)MWSFLIB_GetLibWorkPtr() + 0x58) = flag; }
-// LLM-HARNESS-END: us-803a6658
 
-// LLM-HARNESS-BEGIN: us-803a6688
 void MWSFSVR_SetHnMwplySvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x7c) = val; }
-// LLM-HARNESS-END: us-803a6688
 
-// LLM-HARNESS-BEGIN: us-803a6690
 void MWSFSVR_SetHnSfdSvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x80) = val; }
-// LLM-HARNESS-END: us-803a6690
 
-// LLM-HARNESS-BEGIN: us-803a6698
 void MWSFSVR_IsSvrBdrHndl() {}
-// LLM-HARNESS-END: us-803a6698
 
-// LLM-HARNESS-BEGIN: us-803a66fc
 void mwlSfdSleepDecSvr() {}
-// LLM-HARNESS-END: us-803a66fc
 
-// LLM-HARNESS-BEGIN: us-803a67d8
 void MWSFD_RequestStopRead() {}
-// LLM-HARNESS-END: us-803a67d8
 
-// LLM-HARNESS-BEGIN: us-803a6814
 void MWSFD_IsFsBdr() {}
-// LLM-HARNESS-END: us-803a6814
 
-// LLM-HARNESS-BEGIN: us-803a6848
 void MWSFD_SetProhibitServer() {}
-// LLM-HARNESS-END: us-803a6848
 
-// LLM-HARNESS-BEGIN: us-803a6878
 void mwPlyExecRequestServer() {}
-// LLM-HARNESS-END: us-803a6878

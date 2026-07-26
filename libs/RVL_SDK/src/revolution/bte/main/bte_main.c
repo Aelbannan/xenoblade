@@ -3,23 +3,15 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802e09d0
 void BTUInterruptHandler() {
     extern void OSSwitchFiber(void *, void *);
     extern char __BTUInterruptHandlerStack[];
     extern void btu_task_msg_handler();
     OSSwitchFiber((void*)btu_task_msg_handler, (void*)(__BTUInterruptHandlerStack + 0x1000));
 }
-// LLM-HARNESS-END: us-802e09d0
 
-// LLM-HARNESS-BEGIN: us-802e09f0
 void BTA_Init() {}
-// LLM-HARNESS-END: us-802e09f0
 
-// LLM-HARNESS-BEGIN: us-802e0ad0
 void BTA_CleanUp() {}
-// LLM-HARNESS-END: us-802e0ad0
 
-// LLM-HARNESS-BEGIN: us-802e0b10
 void bta_usb_close_evt() {}
-// LLM-HARNESS-END: us-802e0b10

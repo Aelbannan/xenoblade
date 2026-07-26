@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-80392748
 void CRICFG_Read() {}
-// LLM-HARNESS-END: us-80392748

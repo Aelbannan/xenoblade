@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803d6b98
 void UTY_MemsetDword() {}
-// LLM-HARNESS-END: us-803d6b98

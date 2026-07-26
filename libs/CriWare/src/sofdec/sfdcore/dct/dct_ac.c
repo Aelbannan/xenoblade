@@ -3,10 +3,6 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803bd250
 void DCT_AcInit() {}
-// LLM-HARNESS-END: us-803bd250
 
-// LLM-HARNESS-BEGIN: us-803bd348
 void DCT_AcIdctDouble() {}
-// LLM-HARNESS-END: us-803bd348

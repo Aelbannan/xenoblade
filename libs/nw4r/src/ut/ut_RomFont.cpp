@@ -241,6 +241,4 @@ void* RomFont::Unload() {
 } // namespace ut
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-8042e914
 extern "C" bool HasGlyph__Q34nw4r2ut7RomFontCFUs(unsigned short) { return false; }
-// LLM-HARNESS-END: us-8042e914

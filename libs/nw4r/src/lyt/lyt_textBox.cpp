@@ -379,26 +379,14 @@ u32 TextBox::MakeDrawFlag() const {
     return flag;
 }
 
-// LLM-HARNESS-BEGIN: us-80403ce4
 extern "C" void GetTextColor__Q34nw4r3lyt7TextBoxCFUl() {}
-// LLM-HARNESS-END: us-80403ce4
 
-// LLM-HARNESS-BEGIN: us-80403d60
 extern "C" void SetTextColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color() {}
-// LLM-HARNESS-END: us-80403d60
 
 } // namespace lyt
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-80404324
 void SetColorMapping__Q34nw4r2ut10CharWriterFQ34nw4r2ut5ColorQ34nw4r2ut5Color(unsigned char* self, const unsigned char* color1, const unsigned char* color2) { self[0] = color1[0]; self[1] = color1[1]; self[2] = color1[2]; self[3] = color1[3]; self[4] = color2[0]; self[5] = color2[1]; self[6] = color2[2]; self[7] = color2[3]; }
-// LLM-HARNESS-END: us-80404324
-// LLM-HARNESS-BEGIN: us-80404748
 extern "C" void GetCharStrmReader__Q34nw4r2ut4FontCFv() {}
-// LLM-HARNESS-END: us-80404748
-// LLM-HARNESS-BEGIN: us-80404b9c
 extern "C" void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo() {}
-// LLM-HARNESS-END: us-80404b9c
-// LLM-HARNESS-BEGIN: us-80405178
 extern "C" bool GetRuntimeTypeInfo__Q34nw4r3lyt7TextBoxCFv() { return false; }
-// LLM-HARNESS-END: us-80405178

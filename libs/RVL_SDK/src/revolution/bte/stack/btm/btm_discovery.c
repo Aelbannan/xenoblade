@@ -3,14 +3,8 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802eabe8
 void btm_discovery_db_init() {}
-// LLM-HARNESS-END: us-802eabe8
 
-// LLM-HARNESS-BEGIN: us-802eac60
 void btm_discovery_db_reset() {}
-// LLM-HARNESS-END: us-802eac60
 
-// LLM-HARNESS-BEGIN: us-802ead18
 void btm_discovery_timeout(void) {}
-// LLM-HARNESS-END: us-802ead18

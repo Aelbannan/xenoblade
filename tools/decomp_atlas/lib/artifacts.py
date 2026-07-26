@@ -9,8 +9,8 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from tools.decomp_atlas.lib.database import file_sha256
-from tools.llm_harness.asm_listings import assembly_function_block
-from tools.llm_harness.source_regions import find_function_region
+from tools.llm_decomp.asm_listings import assembly_function_block
+from tools.llm_decomp.source_regions import find_function_region
 
 
 @dataclass

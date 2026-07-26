@@ -718,22 +718,12 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-// LLM-HARNESS-BEGIN: us-803a7710
 void MPVCDEC_Init() {}
-// LLM-HARNESS-END: us-803a7710
 
-// LLM-HARNESS-BEGIN: us-803a7770
 void fn_803A7770(void) {}
-// LLM-HARNESS-END: us-803a7770
 
-// LLM-HARNESS-BEGIN: us-803a7778
 void MPVCDEC_StartFrame() {}
-// LLM-HARNESS-END: us-803a7778
 
-// LLM-HARNESS-BEGIN: us-803a77b8
 void mpvcdec_IntraBlocksInt1() {}
-// LLM-HARNESS-END: us-803a77b8
 
-// LLM-HARNESS-BEGIN: us-803a7c60
 void mpvcdec_NintraBlocksInt1() {}
-// LLM-HARNESS-END: us-803a7c60

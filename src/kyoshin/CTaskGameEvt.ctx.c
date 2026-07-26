@@ -1337,47 +1337,29 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-80297b60
 extern "C" void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
-// LLM-HARNESS-END: us-80297b60
 
 
-// LLM-HARNESS-BEGIN: us-80297ca0
 extern "C" void func_802956A4(void) {}
-// LLM-HARNESS-END: us-80297ca0
 
-// LLM-HARNESS-BEGIN: us-80297ca4
 extern "C" void func_802956A8(void) {}
-// LLM-HARNESS-END: us-80297ca4
 
 
 
 
-// LLM-HARNESS-BEGIN: us-80297d5c
 extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self) {}
-// LLM-HARNESS-END: us-80297d5c
 
-// LLM-HARNESS-BEGIN: us-80297d60
 extern "C" int func_80295764(void* self) { return 0; }
-// LLM-HARNESS-END: us-80297d60
 
 
-// LLM-HARNESS-BEGIN: us-80297dd0
 extern "C" void Draw__12CTaskGameEvtFv() {}
-// LLM-HARNESS-END: us-80297dd0
 
 
-// LLM-HARNESS-BEGIN: us-80297e6c
 extern "C" void func_80295870(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }
-// LLM-HARNESS-END: us-80297e6c
 
-// LLM-HARNESS-BEGIN: us-80297e74
 extern "C" void func_80295878(void* self) { ((void(*)(void*))cbRenderBefore__12CTaskGameEvtFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80297e74
 
-// LLM-HARNESS-BEGIN: us-80297e7c
 extern "C" void func_80295880(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80297e7c
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
@@ -1392,11 +1374,9 @@ public:
 };
 
 class CTaskGameEvt;
-// LLM-HARNESS-BEGIN: us-80297cc8
 extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
 extern "C" void Term__12CTaskGameEvtFv(void* self) {
     void* r4 = self ? (u8*)self + 0x58 : 0;
     void* scn = *(void**)((u8*)self + 0x5C);
     removeRenderCB__4CScnFP10IScnRender(scn, r4);
 }
-// LLM-HARNESS-END: us-80297cc8

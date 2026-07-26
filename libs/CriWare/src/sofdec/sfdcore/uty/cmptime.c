@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803d6aa4
 void UTY_CmpTime() {}
-// LLM-HARNESS-END: us-803d6aa4

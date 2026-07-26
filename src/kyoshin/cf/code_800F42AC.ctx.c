@@ -740,44 +740,26 @@ struct CfCode800F42AC {
 } // namespace cf
 /* end "kyoshin/cf/code_800F42AC.hpp" */
 
-// LLM-HARNESS-BEGIN: us-800f4d94
 extern "C" void func_800F42AC() {}
-// LLM-HARNESS-END: us-800f4d94
 
-// LLM-HARNESS-BEGIN: us-800f4f0c
 extern "C" void func_800F4424() {}
-// LLM-HARNESS-END: us-800f4f0c
 
-// LLM-HARNESS-BEGIN: us-800f4f84
 extern "C" void func_800F449C() {}
-// LLM-HARNESS-END: us-800f4f84
 
-// LLM-HARNESS-BEGIN: us-800f5130
 extern "C" void func_800F4648() {}
-// LLM-HARNESS-END: us-800f5130
 
-// LLM-HARNESS-BEGIN: us-800f51a8
 extern "C" void func_800F46C0() {}
-// LLM-HARNESS-END: us-800f51a8
 
-// LLM-HARNESS-BEGIN: us-800f5218
 extern "C" void func_800F4730() {}
-// LLM-HARNESS-END: us-800f5218
 
-// LLM-HARNESS-BEGIN: us-800f5264
 /// Returns the sub-object pointer at offset 0x0C (field subObject).
 extern "C" cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self) {
     return self->subObject;
 }
-// LLM-HARNESS-END: us-800f5264
 
-// LLM-HARNESS-BEGIN: us-800f526c
 extern "C" void* func_800F4784(void* self) {
     void* v = *(void**)((char*)self + 0xc);
     return v ? v : 0;
 }
-// LLM-HARNESS-END: us-800f526c
 
-// LLM-HARNESS-BEGIN: us-800f5280
 extern "C" void func_800F4798() {}
-// LLM-HARNESS-END: us-800f5280

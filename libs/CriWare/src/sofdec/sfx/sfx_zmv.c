@@ -3,22 +3,15 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-803d8408
 void SFXZ_Init() {}
-// LLM-HARNESS-END: us-803d8408
 
-// LLM-HARNESS-BEGIN: us-803d8454
 void SFXZ_Create() {}
-// LLM-HARNESS-END: us-803d8454
 
-// LLM-HARNESS-BEGIN: us-803d84d0
 void SFXZ_Destroy(void* self) {
     if (self == NULL) return;
     *(u32*)self = 0;
 }
-// LLM-HARNESS-END: us-803d84d0
 
-// LLM-HARNESS-BEGIN: us-803d84f4
 void sfxzmv_SetTagGrp();
 void SFXZ_SetTagInf(void* self, u32 a, u32 b) {
     *(u32*)((u8*)self + 0x08) = 1;
@@ -26,32 +19,17 @@ void SFXZ_SetTagInf(void* self, u32 a, u32 b) {
     *(u32*)((u8*)self + 0x10) = b;
     sfxzmv_SetTagGrp();
 }
-// LLM-HARNESS-END: us-803d84f4
 
-// LLM-HARNESS-BEGIN: us-803d8508
 void sfxzmv_SetTagGrp() {}
-// LLM-HARNESS-END: us-803d8508
 
-// LLM-HARNESS-BEGIN: us-803d85d8
 void SFXZ_GetZfrmRange() {}
-// LLM-HARNESS-END: us-803d85d8
 
-// LLM-HARNESS-BEGIN: us-803d8728
 void sfxzmv_MakeOrgZ32TblByDirect() {}
-// LLM-HARNESS-END: us-803d8728
 
-// LLM-HARNESS-BEGIN: us-803d8a58
 void sfxzmv_MakeOrgZ32TblByCCIR() {}
-// LLM-HARNESS-END: us-803d8a58
 
-// LLM-HARNESS-BEGIN: us-803d9178
 void SFXZ_MakeCnvZTbl() {}
-// LLM-HARNESS-END: us-803d9178
 
-// LLM-HARNESS-BEGIN: us-803d9264
 void sfxzmv_MakeZ16TblFromOrgZ32() {}
-// LLM-HARNESS-END: us-803d9264
 
-// LLM-HARNESS-BEGIN: us-803d9444
 void sfxzmv_MakeZ32TblFromOrgZ32() {}
-// LLM-HARNESS-END: us-803d9444

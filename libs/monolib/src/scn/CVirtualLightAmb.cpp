@@ -3,10 +3,6 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-804986ec
 extern "C" void __ct__CVirtualLightAmb() {}
-// LLM-HARNESS-END: us-804986ec
 
-// LLM-HARNESS-BEGIN: us-80498730
 extern "C" void __dt__16CVirtualLightAmbFv() {}
-// LLM-HARNESS-END: us-80498730

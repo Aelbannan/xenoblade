@@ -3,19 +3,12 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802df3f0
 void hcisu_h2_usb_cback() {}
-// LLM-HARNESS-END: us-802df3f0
 
-// LLM-HARNESS-BEGIN: us-802df410
 void hcisu_h2_receive_msg() {}
-// LLM-HARNESS-END: us-802df410
 
-// LLM-HARNESS-BEGIN: us-802df7b0
 void hcisu_h2_send_msg_now() {}
-// LLM-HARNESS-END: us-802df7b0
 
-// LLM-HARNESS-BEGIN: us-802df960
 extern unsigned char hcisu_h2_cb[];
 
 void hcisu_h2_init(unsigned char arg0, unsigned char arg1, unsigned short arg2) {
@@ -28,24 +21,15 @@ void hcisu_h2_init(unsigned char arg0, unsigned char arg1, unsigned short arg2) 
     base[0x20] = arg1;
     *((unsigned short *)(base + 0x12)) = arg2;
 }
-// LLM-HARNESS-END: us-802df960
 
-// LLM-HARNESS-BEGIN: us-802df990
 void hcisu_h2_open() {}
-// LLM-HARNESS-END: us-802df990
 
-// LLM-HARNESS-BEGIN: us-802dfa00
 void hcisu_h2_close() {
     hcisu_h2_cb[0x1e] = 0;
     UUSB_Close();
     UUSB_Unregister();
 }
-// LLM-HARNESS-END: us-802dfa00
 
-// LLM-HARNESS-BEGIN: us-802dfa40
 void hcisu_h2_send() {}
-// LLM-HARNESS-END: us-802dfa40
 
-// LLM-HARNESS-BEGIN: us-802dfa70
 void hcisu_h2_handle_event() {}
-// LLM-HARNESS-END: us-802dfa70

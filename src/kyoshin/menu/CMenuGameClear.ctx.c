@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuGameClear
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/menu/CMenuGameClear.cpp" line 4 "kyoshin/harness_catalog.hpp" */
@@ -1338,53 +1337,29 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-802b3988
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3988
 
-// LLM-HARNESS-BEGIN: us-802b3a14
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3a14
 
-// LLM-HARNESS-BEGIN: us-802b3e2c
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3e2c
 
-// LLM-HARNESS-BEGIN: us-802b3eb0
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b3eb0
 
-// LLM-HARNESS-BEGIN: us-802b4b74
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b4b74
 
-// LLM-HARNESS-BEGIN: us-802b4c0c
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b4c0c
 
-// LLM-HARNESS-BEGIN: us-802b4d50
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b4d50
 
-// LLM-HARNESS-BEGIN: us-802b4d64
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b4d64
 
-// LLM-HARNESS-BEGIN: us-802b4ef8
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b4ef8
 
-// LLM-HARNESS-BEGIN: us-802b508c
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b508c
 
-// LLM-HARNESS-BEGIN: us-802b5094
 extern "C" void func_802B2624(void* self) { ((void(*)(void*))__dt__14CMenuGameClearFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802b5094
 
-// LLM-HARNESS-BEGIN: us-802b509c
 extern "C" u32 func_802B262C(void) {
     extern u32 lbl_eu_80664C10;
     return lbl_eu_80664C10;
 }
-// LLM-HARNESS-END: us-802b509c

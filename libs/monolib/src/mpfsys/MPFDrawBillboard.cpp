@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-8047deac
 extern "C" void getInstance__Q26mpfsys16MPFDrawBillboardFv() {}
-// LLM-HARNESS-END: us-8047deac

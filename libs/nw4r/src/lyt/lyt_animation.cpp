@@ -508,22 +508,11 @@ void UnbindAnimationLink(AnimationLinkList* pAnimList,
 } // namespace lyt
 } // namespace nw4r
 
-// LLM-HARNESS-BEGIN: us-8040b754
 extern "C" void Set__Q34nw4r3lyt12AnimResourceFPCv() {}
-// LLM-HARNESS-END: us-8040b754
-// LLM-HARNESS-BEGIN: us-8040b864
 extern "C" void GetGroupNum__Q34nw4r3lyt12AnimResourceCFv() {}
-// LLM-HARNESS-END: us-8040b864
-// LLM-HARNESS-BEGIN: us-8040b880
 extern "C" void GetGroupArray__Q34nw4r3lyt12AnimResourceCFv() {}
-// LLM-HARNESS-END: us-8040b880
-// LLM-HARNESS-BEGIN: us-8040b8a0
 extern "C" void IsDescendingBind__Q34nw4r3lyt12AnimResourceCFv() {}
-// LLM-HARNESS-END: us-8040b8a0
-// LLM-HARNESS-BEGIN: us-8040b8c0
 extern "C" void GetAnimationShareInfoNum__Q34nw4r3lyt12AnimResourceCFv() {}
-// LLM-HARNESS-END: us-8040b8c0
-// LLM-HARNESS-BEGIN: us-8040b8dc
 void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(void* _this) {
     void* ptr = *(void**)((char*)_this + 0xc);
     if (!ptr) return 0;
@@ -556,16 +545,7 @@ void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(void* _this) {
 // If I must return void, I can't return the pointer. But the ASM returns it.
 // I will assume the signature in the prompt is slightly off and the function actually returns a pointer.
 // But the prompt says "return_info": {"type": "void"}
-// LLM-HARNESS-END: us-8040b8dc
-// LLM-HARNESS-BEGIN: us-8040b8fc
 extern "C" void CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb() {}
-// LLM-HARNESS-END: us-8040b8fc
-// LLM-HARNESS-BEGIN: us-8040b9d4
 extern "C" void CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb() {}
-// LLM-HARNESS-END: us-8040b9d4
-// LLM-HARNESS-BEGIN: us-8040ba3c
 extern "C" void Init__Q44nw4r3lyt6detail12AnimPaneTreeFv() {}
-// LLM-HARNESS-END: us-8040ba3c
-// LLM-HARNESS-BEGIN: us-8040ba74
 extern "C" void Set__Q44nw4r3lyt6detail12AnimPaneTreeFPQ34nw4r3lyt4PaneRCQ34nw4r3lyt12AnimResource() {}
-// LLM-HARNESS-END: us-8040ba74

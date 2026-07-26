@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/plugin/ocMsg
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/plugin/ocMsg.cpp" line 4 "kyoshin/plugin/ocMsg.hpp" */
@@ -1183,11 +1182,8 @@ struct OcMsgRingHdr {
     u32 count;
 };
 
-// LLM-HARNESS-BEGIN: us-8003a91c
 extern "C" void func_8003A53C() {}
-// LLM-HARNESS-END: us-8003a91c
 
-// LLM-HARNESS-BEGIN: us-8003a968
 extern "C" int func_8003A588(void* thread) {
     extern void vmRetValSet(void*, void*);
     int args[2];
@@ -1196,9 +1192,7 @@ extern "C" int func_8003A588(void* thread) {
     vmRetValSet(thread, args);
     return 1;
 }
-// LLM-HARNESS-END: us-8003a968
 
-// LLM-HARNESS-BEGIN: us-8003a9a0
 extern "C" int func_8003A5C0(void* thread) {
     extern void vmRetValSet(void*, void*);
     int args[2];
@@ -1207,27 +1201,21 @@ extern "C" int func_8003A5C0(void* thread) {
     vmRetValSet(thread, args);
     return 1;
 }
-// LLM-HARNESS-END: us-8003a9a0
 
-// LLM-HARNESS-BEGIN: us-8003a9d8
 extern "C" int func_8003A5F8(void* thread) {
     extern void* vmOCPropertyGet(void*);
     void* prop = vmOCPropertyGet(thread);
     *(int*)((char*)thread + 100) = *(int*)((char*)prop + 4);
     return 0;
 }
-// LLM-HARNESS-END: us-8003a9d8
 
-// LLM-HARNESS-BEGIN: us-8003aa10
 extern "C" int func_8003A630(void* thread) {
     extern void* vmOCPropertyGet(void*);
     void* prop = vmOCPropertyGet(thread);
     *(int*)((char*)thread + 104) = *(int*)((char*)prop + 4);
     return 0;
 }
-// LLM-HARNESS-END: us-8003aa10
 
-// LLM-HARNESS-BEGIN: us-8003aa48
 extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
     list->count = 0;
     list->wrap = 0;
@@ -1236,17 +1224,11 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
     list->capacity = 9;
     return 0;
 }
-// LLM-HARNESS-END: us-8003aa48
 
-// LLM-HARNESS-BEGIN: us-8003aa6c
 extern "C" void func_8003A68C() {}
-// LLM-HARNESS-END: us-8003aa6c
 
-// LLM-HARNESS-BEGIN: us-8003aab4
 extern "C" void func_8003A6D4() {}
-// LLM-HARNESS-END: us-8003aab4
 
-// LLM-HARNESS-BEGIN: us-8003aaf4
 extern "C" s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
     // Reuse `ret` for writeIdx then count so +1 lands in a distinct reg (retail addi r5,r3,1).
     // Signed compare → cmpw (u32 > emits cmplw).
@@ -1266,9 +1248,7 @@ extern "C" s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
     *reinterpret_cast<u32*>(slotBase + 0x18) = *reinterpret_cast<u32*>(obj + 0x68);
     return 0;
 }
-// LLM-HARNESS-END: us-8003aaf4
 
-// LLM-HARNESS-BEGIN: us-8003ab44
 extern "C" s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
     ret = list->readIdx;
     s32 capacity = list->capacity;
@@ -1286,13 +1266,9 @@ extern "C" s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
     *reinterpret_cast<u32*>(obj + 0x68) = *reinterpret_cast<u32*>(slotBase + 0x18);
     return 0;
 }
-// LLM-HARNESS-END: us-8003ab44
 
-// LLM-HARNESS-BEGIN: us-8003ab94
 extern "C" void func_8003A7B4() {}
-// LLM-HARNESS-END: us-8003ab94
 
-// LLM-HARNESS-BEGIN: us-8003abe0
 extern "C" int func_8003A800(void* thread) {
     extern void vmRetValSet(void*, void*);
     int args[2];
@@ -1301,9 +1277,7 @@ extern "C" int func_8003A800(void* thread) {
     vmRetValSet(thread, args);
     return 1;
 }
-// LLM-HARNESS-END: us-8003abe0
 
-// LLM-HARNESS-BEGIN: us-8003ac18
 extern "C" int func_8003A838(void* thread) {
     extern void vmRetValSet(void*, void*);
     int args[2];
@@ -1312,9 +1286,7 @@ extern "C" int func_8003A838(void* thread) {
     vmRetValSet(thread, args);
     return 1;
 }
-// LLM-HARNESS-END: us-8003ac18
 
-// LLM-HARNESS-BEGIN: us-8003ac50
 extern "C" int func_8003A870(void* thread) {
     extern void vmRetValSet(void*, void*);
     int args[2];
@@ -1323,26 +1295,18 @@ extern "C" int func_8003A870(void* thread) {
     vmRetValSet(thread, args);
     return 1;
 }
-// LLM-HARNESS-END: us-8003ac50
 
-// LLM-HARNESS-BEGIN: us-8003ac88
 extern "C" int func_8003A8A8(void* thread) {
     extern void* vmOCPropertyGet(void*);
     void* prop = vmOCPropertyGet(thread);
     *(int*)((char*)thread + 140) = *(int*)((char*)prop + 4);
     return 0;
 }
-// LLM-HARNESS-END: us-8003ac88
 
-// LLM-HARNESS-BEGIN: us-8003acc0
 extern "C" void func_8003A8E0() {}
-// LLM-HARNESS-END: us-8003acc0
 
-// LLM-HARNESS-BEGIN: us-8003acf8
 extern "C" void func_8003A918() {}
-// LLM-HARNESS-END: us-8003acf8
 
-// LLM-HARNESS-BEGIN: us-8003ad30
 extern "C" s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
     ret = list->writeIdx;
     s32 capacity = list->capacity;
@@ -1361,9 +1325,7 @@ extern "C" s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
     *reinterpret_cast<u32*>(slotBase + 0x1c) = *reinterpret_cast<u32*>(obj + 0x94);
     return 0;
 }
-// LLM-HARNESS-END: us-8003ad30
 
-// LLM-HARNESS-BEGIN: us-8003ad88
 extern "C" s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
     ret = list->readIdx;
     s32 capacity = list->capacity;
@@ -1382,9 +1344,7 @@ extern "C" s32 func_8003A9A8(s32 ret, OcMsgRingHdr* list) {
     *reinterpret_cast<u32*>(obj + 0x94) = *reinterpret_cast<u32*>(slotBase + 0x1c);
     return 0;
 }
-// LLM-HARNESS-END: us-8003ad88
 
-// LLM-HARNESS-BEGIN: us-8003ade0
 extern "C" BOOL vmOCRegist(OCData* pOC);
 extern OCData lbl_eu_80524CE8[];
 extern OCData lbl_eu_80524D80[];
@@ -1392,4 +1352,3 @@ void ocMsgRegist() {
     vmOCRegist(lbl_eu_80524CE8);
     vmOCRegist(lbl_eu_80524D80);
 }
-// LLM-HARNESS-END: us-8003ade0

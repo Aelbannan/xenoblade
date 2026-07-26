@@ -390,9 +390,7 @@ u32 TextBox::MakeDrawFlag() const {
 } // namespace lyt
 } // namespace nw4hbm
 
-// LLM-HARNESS-BEGIN: us-80336b80
 extern "C" void* GetRuntimeTypeInfo__Q36nw4hbm3lyt7TextBoxCFv(void) {
     extern const char typeInfo__Q36nw4hbm3lyt7TextBox[];
     return (void*)typeInfo__Q36nw4hbm3lyt7TextBox;
 }
-// LLM-HARNESS-END: us-80336b80

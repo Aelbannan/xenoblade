@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/menu/CMenuPassiveSkill
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/menu/CMenuPassiveSkill.cpp" line 4 "kyoshin/harness_catalog.hpp" */
@@ -1338,70 +1337,36 @@ void ocBdatRegist();
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-// LLM-HARNESS-BEGIN: us-802655c8
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-802655c8
 
-// LLM-HARNESS-BEGIN: us-80265698
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80265698
 
-// LLM-HARNESS-BEGIN: us-80265710
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80265710
 
-// LLM-HARNESS-BEGIN: us-80265b7c
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80265b7c
 
-// LLM-HARNESS-BEGIN: us-80265be8
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80265be8
 
-// LLM-HARNESS-BEGIN: us-80265c9c
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80265c9c
 
-// LLM-HARNESS-BEGIN: us-80265d40
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80265d40
 
-// LLM-HARNESS-BEGIN: us-80265db4
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80265db4
 
-// LLM-HARNESS-BEGIN: us-80265dc4
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80265dc4
 
-// LLM-HARNESS-BEGIN: us-80265e54
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80265e54
 
-// LLM-HARNESS-BEGIN: us-80265ea4
 extern "C" void func_80263A34() {}
-// LLM-HARNESS-END: us-80265ea4
 
-// LLM-HARNESS-BEGIN: us-802661ac
 extern "C" void func_80263D3C() {}
-// LLM-HARNESS-END: us-802661ac
 
-// LLM-HARNESS-BEGIN: us-802661fc
 extern "C" void func_80263D8C() {}
-// LLM-HARNESS-END: us-802661fc
 
-// LLM-HARNESS-BEGIN: us-80266258
 extern "C" void func_80263DE8() {}
-// LLM-HARNESS-END: us-80266258
 
-// LLM-HARNESS-BEGIN: us-802662bc
 extern "C" void func_80263E4C() {}
-// LLM-HARNESS-END: us-802662bc
 
-// LLM-HARNESS-BEGIN: us-8026631c
 extern "C" void func_80263EAC(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-8026631c
 
-// LLM-HARNESS-BEGIN: us-80266324
 extern "C" void func_80263EB4(void* self) { ((void(*)(void*))__dt__17CMenuPassiveSkillFv)((char*)self - 0x58); }
-// LLM-HARNESS-END: us-80266324

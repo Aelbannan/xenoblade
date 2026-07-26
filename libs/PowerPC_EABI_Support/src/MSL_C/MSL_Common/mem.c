@@ -68,7 +68,6 @@ void* __memrchr(const void* src, int val, size_t n)
     return NULL;
 }
 
-// LLM-HARNESS-BEGIN: us-802c1250
 int memcmp(const void* src1, const void* src2, size_t n)
 {
     const u8* p1;
@@ -82,7 +81,6 @@ int memcmp(const void* src1, const void* src2, size_t n)
 
     return 0;
 }
-// LLM-HARNESS-END: us-802c1250
 
 //unused
 void memcpy_s(){

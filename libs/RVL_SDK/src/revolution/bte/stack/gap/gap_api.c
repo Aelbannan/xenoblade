@@ -3,6 +3,4 @@
 
 #include <harness_catalog.h>
 
-// LLM-HARNESS-BEGIN: us-802f2654
 void GAP_Init() {}
-// LLM-HARNESS-END: us-802f2654

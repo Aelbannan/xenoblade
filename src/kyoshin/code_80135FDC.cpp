@@ -119,8 +119,11 @@ extern "C" void func_80137250__FPQ34nw4r3lyt8DrawInfo() {}
 // LLM-HARNESS-BEGIN: us-80137c30
 extern "C" int func_801372B4(int value) {
     if (value >= 11) {
-        if (value >= 19)
-            return 0;
+        if (value >= 19) {
+            if (value >= 29)
+                return 0;
+            return 5;
+        }
         if (value >= 17)
             return 2;
         return 4;

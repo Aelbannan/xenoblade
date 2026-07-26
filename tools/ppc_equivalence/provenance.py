@@ -256,6 +256,7 @@ def proof_request_identity(
     obligations: dict | None = None,
     capability_assurance: dict | None = None,
     abi_shape: dict | None = None,
+    initial_gpr_ranges: dict | None = None,
 ) -> dict:
     """Canonical proof-request fields hashed into ``ProofResult.source_hash``.
 
@@ -351,6 +352,15 @@ def proof_request_identity(
         payload["capability_assurance"] = capability_assurance
     if abi_shape is not None:
         payload["abi_shape"] = abi_shape
+    # Bind entry-GPR range premises (e.g. object-base-mem1) into the request
+    # identity so constrained and unconstrained proofs never share a hash.
+    if initial_gpr_ranges is not None:
+        payload["initial_gpr_ranges"] = {
+            str(reg): [int(bounds[0]), int(bounds[1])]
+            for reg, bounds in sorted(
+                initial_gpr_ranges.items(), key=lambda item: int(item[0])
+            )
+        }
     return payload
 
 

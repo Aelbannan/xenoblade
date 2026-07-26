@@ -4,6 +4,9 @@
 
 #include <harness_catalog.h>
 
+extern int SFHLOCAL_GetSizeofMember(int, int);
+extern int SFHLOCAL_GetNbyteB();
+
 // LLM-HARNESS-BEGIN: us-803d53cc
 void VER2_IsSfdHeader() {}
 // LLM-HARNESS-END: us-803d53cc
@@ -33,8 +36,6 @@ void VER2_AnlyHdrModuleVer() {}
 // LLM-HARNESS-END: us-803d5b60
 
 // LLM-HARNESS-BEGIN: us-803d5bf0
-extern int SFHLOCAL_GetSizeofMember(int, int);
-extern int SFHLOCAL_GetNbyteB(int, int);
 
 int VER2_AnlyHdrSiz(const unsigned int *hdr, int *out_size) {
     int sz;
@@ -64,8 +65,6 @@ void VER2_AnlyPackSiz() {}
 // LLM-HARNESS-END: us-803d5c70
 
 // LLM-HARNESS-BEGIN: us-803d5cd0
-int SFHLOCAL_GetSizeofMember(int, int);
-int SFHLOCAL_GetNbyteB(void *, int);
 
 int VER2_AnlyNumElemTot(char *work, int *out) {
     *out = 0;
@@ -80,8 +79,6 @@ void VER2_AnlyNumElemAud() {}
 // LLM-HARNESS-END: us-803d5d30
 
 // LLM-HARNESS-BEGIN: us-803d5d90
-int SFHLOCAL_GetSizeofMember(int, int);
-int SFHLOCAL_GetNbyteB(const unsigned char *, int);
 
 int VER2_AnlyNumElemVid(unsigned char **ctx, int *out) {
     *out = 0;

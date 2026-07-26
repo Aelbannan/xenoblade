@@ -292,6 +292,37 @@ def _has_untrusted_callees(result: ProofResult) -> bool:
     )
 
 
+_TIER_ORDER = {"A": 0, "B": 1, "C": 2}
+
+
+def _cap_tier(tier: str | None, cap: str | None) -> str | None:
+    """Demote ``tier`` to ``cap`` when ``cap`` is weaker (fail closed)."""
+    if tier is None or cap is None:
+        return tier
+    if _TIER_ORDER[tier] < _TIER_ORDER[cap]:
+        return cap
+    return tier
+
+
+def _object_base_mem1_tier_cap(assumptions: list | None) -> str | None:
+    """Tier cap for object-base-mem1 entry-GPR range assumptions.
+
+    Ranging an input register (e.g. r3) to MEM1 assumes away every input
+    outside the range — sound only when that register is justified as a
+    pointer. Unjustified range proofs cap at Tier C (blocked from automatic
+    promotion under the default {"A","B"} policy); justified ones cap at
+    Tier B (they still rest on an environment assumption). No range → no cap.
+    """
+    if not assumptions:
+        return None
+    texts = [str(item) for item in assumptions]
+    if not any(item.startswith("object-base-mem1:r") for item in texts):
+        return None
+    if any(item.startswith("object-base-mem1-justified:") for item in texts):
+        return "B"
+    return "C"
+
+
 def _compute_confidence_tier_legacy(
     result: ProofResult,
     ledger: ValidationLedger | None = None,
@@ -398,6 +429,13 @@ def _compute_confidence_tier_legacy(
     ):
         if tier in ("A", "B"):
             tier = "C"
+
+    # Object-base-mem1 entry-GPR range cap: unjustified ranges assume away
+    # out-of-range inputs (they masked a real bug on us-80137c30) and must
+    # not reach automatic-promotion tiers.
+    tier = _cap_tier(
+        tier, _object_base_mem1_tier_cap(list(result.assumptions or []))
+    )
 
     return tier
 
@@ -566,6 +604,18 @@ def compute_confidence_tier_from_certificate(
     if isinstance(cert_abi, dict) and cert_abi.get("declared_return"):
         if tier in ("A", "B"):
             tier = "C"
+
+    # Object-base-mem1 entry-GPR range cap (certificate path). Certificates
+    # issued before the two-phase prove carry the range assumption without a
+    # justification marker and therefore cap at Tier C — this is what flags
+    # them for revalidation.
+    raw_assumptions = certificate.get("assumptions")
+    tier = _cap_tier(
+        tier,
+        _object_base_mem1_tier_cap(
+            list(raw_assumptions) if isinstance(raw_assumptions, list) else None
+        ),
+    )
 
     return tier
 

@@ -251,6 +251,9 @@ class Stage3CMmioAttachmentTests(unittest.TestCase):
                     {"device_id": "pi", "theory": "mmio-register-bank"},
                 ],
             },
+            # mmio-register-bank is only demanded when a bank was actually
+            # touched (gate added in 2f6ffd0); attest the touch here.
+            "register_bank_extensional": {"touched": True},
             "fifo_theory": {"status": "present"},
             "gxfifo_trace": True,
             "has_read_side_effects": True,

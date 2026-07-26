@@ -1322,6 +1322,42 @@ def _equivalence_strength_for_proof(proof: object) -> str:
     return "integer-core"
 
 
+# Proof statuses where a retry WITH object-base-mem1 ranges may still succeed:
+# resource/abstraction limits only. Unsupported instructions, unvalidated
+# callees, and NOT_EQUIVALENT are never rescued by entry-GPR ranges.
+_OBJECT_BASE_RETRY_STATUSES = frozenset(
+    {
+        ProofStatus.INCONCLUSIVE_TIMEOUT,
+        ProofStatus.INCONCLUSIVE_UNKNOWN,
+        ProofStatus.INCONCLUSIVE_ABSTRACTION,
+        ProofStatus.INCONCLUSIVE_LAYOUT,
+    }
+)
+
+
+def _object_base_r3_justification(symbol: str) -> str | None:
+    """Evidence that entry r3 is a pointer for ``symbol`` (MWCC mangling).
+
+    Returns a short evidence tag, or ``None`` when there is no pointer
+    evidence. Non-static C++ methods receive ``this`` in r3 (always a MEM1
+    object pointer); free functions are justified only when the first mangled
+    parameter is a pointer (``P…``) or reference (``R…``). Unmangled / C /
+    placeholder (``func_*``) names carry no type evidence → ``None``.
+    """
+    if "__" not in symbol:
+        return None
+    suffix = symbol.rsplit("__", 1)[1]
+    if not suffix:
+        return None
+    if not suffix.startswith("F"):
+        # Qualified class part before ``F<params>`` → non-static method: r3=this.
+        return "cpp-method-this"
+    params = suffix[1:]
+    if params[:1] in ("P", "R"):
+        return "mangled-first-param-pointer"
+    return None
+
+
 def _prove_bytes(
     project: Project,
     symbol: str,
@@ -1354,6 +1390,7 @@ def _prove_bytes(
     indirect_targets: dict[str, Any] | None = None,
     declared_return: str | None = None,
     force_declared_return: bool = False,
+    object_base_mode: str = "auto",
 ) -> EquivalenceProbe:
     """Run the Z3 proof against already-extracted instruction bytes+bases.
 
@@ -1361,6 +1398,12 @@ def _prove_bytes(
     linked-bytes fallback (bytes from ``main.dol`` / ``main.elf``). The
     ``fallback_note`` is prefixed to the returned ``detail`` so callers can see
     which path produced the result.
+
+    ``object_base_mode`` controls the object-base-mem1 entry-GPR ranges:
+    ``"auto"`` applies them when configured (legacy behavior), ``"off"`` never
+    applies them (phase 1 of the two-phase prove), and ``"retry"`` applies
+    them and annotates the result with a pointer-justification marker so the
+    promotion policy can cap the confidence tier.
     """
     original = decode_block(
         orig_code, orig_base, validate_with_capstone=False,
@@ -1798,7 +1841,7 @@ def _prove_bytes(
                 memory_bus_identity["ram_only_projection"] = True
 
     initial_gpr_ranges: dict[int, tuple[int, int]] | None = None
-    if project is not None:
+    if project is not None and object_base_mode != "off":
         from tools.coop.lib.config import object_base_mem1_enabled
 
         if object_base_mem1_enabled(project.config):
@@ -1956,6 +1999,11 @@ def _prove_bytes(
         platform_profile_sha256=platform_profile_sha256,
         memory_bus=memory_bus_identity,
         abi_shape=abi_shape_payload,
+        initial_gpr_ranges=(
+            {str(reg): [lo, hi] for reg, (lo, hi) in initial_gpr_ranges.items()}
+            if initial_gpr_ranges
+            else None
+        ),
     )
     result = check_equivalence(
         original,
@@ -2017,6 +2065,21 @@ def _prove_bytes(
             for reg, (lo, hi) in sorted(initial_gpr_ranges.items())
         )
         detail = f"{detail}; {range_notes}" if detail else range_notes
+    if initial_gpr_ranges and object_base_mode == "retry":
+        # Two-phase prove, phase 2: the unconstrained proof was inconclusive,
+        # so the mem1 ranges were applied as a fallback. Record whether the
+        # ranged register (r3) is justified as a pointer by the mangled
+        # symbol; the promotion policy caps unjustified range proofs at Tier C
+        # and justified ones at Tier B.
+        justification = _object_base_r3_justification(symbol)
+        marker = (
+            f"object-base-mem1-justified:{justification}"
+            if justification
+            else "object-base-mem1-unjustified"
+        )
+        if marker not in result.assumptions:
+            result.assumptions.append(marker)
+        detail = f"{detail}; {marker}" if detail else marker
     if result.unsupported:
         detail = "; ".join(result.unsupported)
     elif result.mismatch:
@@ -2124,7 +2187,22 @@ def prove_unit_symbol(
     try:
         left, right = extract_function_pair(retail, decomp, symbol)
         certified_context = _load_certified_callees(project, target_id) if target_id else None
-        try:
+
+        from tools.coop.lib.config import CoopConfig, object_base_mem1_enabled
+
+        # Two-phase prove: phase 1 runs WITHOUT object-base-mem1 entry-GPR
+        # ranges so the solver can refute value-dependent bugs that the range
+        # would assume away (e.g. int-typed first arguments). Only when the
+        # unconstrained proof hits a resource/abstraction limit does phase 2
+        # retry with the ranges, annotated with a pointer-justification marker
+        # for the promotion policy's tier cap.
+        two_phase = (
+            project is not None
+            and isinstance(getattr(project, "config", None), CoopConfig)
+            and object_base_mem1_enabled(project.config)
+        )
+
+        def _run_prove(object_base_mode: str) -> EquivalenceProbe:
             return _prove_bytes(
                 project, symbol,
                 left.code, left.base,
@@ -2147,7 +2225,14 @@ def prove_unit_symbol(
                 memory_environment=memory_environment,
                 declared_return=declared_return,
                 force_declared_return=force_declared_return,
+                object_base_mode=object_base_mode,
             )
+
+        try:
+            probe = _run_prove("off" if two_phase else "auto")
+            if two_phase and probe.status in _OBJECT_BASE_RETRY_STATUSES:
+                probe = _run_prove("retry")
+            return probe
         except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
             if not linked or not (left.relocations or right.relocations):
                 raise

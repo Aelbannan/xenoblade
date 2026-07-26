@@ -1,0 +1,13 @@
+{
+  "matchModel": { "provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "thinkingLevel": "off" },
+  "cleanupModel": { "provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "thinkingLevel": "off" },
+  "batchSize": 5,
+  "maxParallelTUs": 2,
+  "maxBatchRetries": 2,
+  "singletonRetry": true,
+  "maxBriefChars": 80000,
+  "maxBatchMinutes": 45,
+  "region": "us",
+  "sessionDir": "build/pi-harness/sessions",
+  "ledgerPath": "build/pi-harness/ledger.jsonl"
+}

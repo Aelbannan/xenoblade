@@ -37,6 +37,12 @@ python3 tools/llm_decomp/run.py reconcile                     # restore after cr
 python3 tools/llm_decomp/run.py show-config                   # effective llm-decomp.json
 python3 tools/coop/run.py atlas index --vectors   # Decomp Atlas catalog
 python3 tools/coop/run.py atlas serve             # http://127.0.0.1:8765
+
+# pi-harness: TU-level batch matching with pi SDK agents (tools/pi_harness)
+cd tools/pi_harness && npm install                # first time only
+cp tools/pi_harness/pi-harness.example.json pi-harness.json   # repo root; set models
+npm --prefix tools/pi_harness run pi-harness -- --tu kyoshin/CGame --dry-run
+npm --prefix tools/pi_harness run pi-harness -- --tu kyoshin/CGame [--tu other/Unit]
 ```
 
 ## LLM decompilation (tools/llm_decomp)
@@ -72,6 +78,7 @@ python -m tools.ppc_equivalence.docs_sync --check
 ## Do not
 
 - Submit LLM-assisted matching work to upstream `xbret/xenoblade`.
+- **Prefer `hexdiff` over raw `ninja`** — use `python3 tools/coop/hexdiff.py <unit> --symbol <sym>` for build+diff feedback. hexdiff performs the build itself and holds the repo-wide build lock (`build/<region>/.hexdiff.lock`), making it safe for concurrent agents. Only run `ninja`/`configure.py` directly when hexdiff cannot express the operation (e.g. full-tree rebuild after reconfiguration).
 - Commit `orig/`, `main.dol`, RELs, or disc assets.
 - **Decompile to assembly or registers** — matched code in `src/**` and `libs/**` must be **high-level C or C++**. **Inline asm of any kind (`asm { }`, `asm void`) is not allowed.** See `PLAN.md` **§17.6** for narrow intrinsics exceptions only.
 - Run Dolphin inside the restricted process — its universal binary reports missing NEON, so it must be launched outside the restricted process.

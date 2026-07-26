@@ -271,6 +271,8 @@ python3 tools/coop/run.py size kyoshin/cf/CfPadTask
 
 **Primary rapid feedback tool** — ~1s per build+diff vs 2-3min for `cycle`. Use hexdiff during iterative editing, run `cycle` only for final acceptance.
 
+> **Prefer hexdiff over raw ninja:** hexdiff performs the build itself and holds the repo-wide build lock (`build/<region>/.hexdiff.lock`), making it safe for concurrent agents. Only run `ninja`/`configure.py` directly when hexdiff cannot express the operation (e.g. full-tree rebuild after reconfiguration).
+
 ```bash
 # Terminal mode — colour-coded side-by-side
 python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol>

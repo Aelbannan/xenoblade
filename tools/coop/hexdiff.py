@@ -15,6 +15,7 @@ If --build is passed, runs `ninja` on the decomp object first.
 from __future__ import annotations
 
 import argparse
+import fcntl
 import subprocess
 import sys
 from pathlib import Path
@@ -566,6 +567,18 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="do not build the decomp object before diffing",
     )
     parser.add_argument(
+        "--build-timeout",
+        type=int,
+        default=600,
+        metavar="SECONDS",
+        help="build timeout in seconds (default: 600)",
+    )
+    parser.add_argument(
+        "--no-lock",
+        action="store_true",
+        help="skip the advisory build lock",
+    )
+    parser.add_argument(
         "--json",
         action="store_true",
         help="output machine-readable JSON instead of colour terminal diff",
@@ -594,15 +607,44 @@ def run(argv: list[str] | None = None) -> int:
         print(f"ERROR: no decomp (base) object for unit {unit.name}", file=sys.stderr)
         return 1
 
-    # Build decomp if needed
+    # Build decomp if needed. The ninja invocation is serialised through an
+    # advisory repo-wide lock so concurrent hexdiff processes (parallel
+    # agents) cannot race builds in the shared build directory; the diff
+    # path below stays lock-free.
     if not args.no_build:
         rel_path = str(decomp_path.relative_to(project.root))
         print(f"building {rel_path} ...", file=sys.stderr, flush=True)
-        # Build with output redirected to stderr so --json stdout is clean
-        build_result = subprocess.run(
-            [project.ninja_bin(), rel_path],
-            cwd=project.root, check=False, capture_output=True, text=True,
-        )
+
+        def _run_build() -> subprocess.CompletedProcess:
+            # Output redirected to stderr so --json stdout stays clean
+            return subprocess.run(
+                [project.ninja_bin(), rel_path],
+                cwd=project.root, check=False, capture_output=True, text=True,
+                timeout=args.build_timeout,
+            )
+
+        try:
+            if args.no_lock:
+                build_result = _run_build()
+            else:
+                lock_path = project.config.build_dir / ".hexdiff.lock"
+                lock_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(lock_path, "w") as lock_fd:
+                    try:
+                        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                    except OSError:
+                        print(f"waiting for build lock ({lock_path})...",
+                              file=sys.stderr, flush=True)
+                        fcntl.flock(lock_fd, fcntl.LOCK_EX)
+                    try:
+                        build_result = _run_build()
+                    finally:
+                        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+        except subprocess.TimeoutExpired:
+            print(f"ERROR: build timed out after {args.build_timeout}s for {rel_path}",
+                  file=sys.stderr)
+            return 2
+
         if build_result.returncode != 0:
             print(build_result.stdout, file=sys.stderr)
             print(build_result.stderr, file=sys.stderr)

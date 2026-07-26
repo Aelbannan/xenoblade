@@ -314,6 +314,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 ## Do not
 
 - Commit `orig/`, `main.dol`, RELs, or disc assets
+- **Prefer `hexdiff` over raw `ninja`** — use `python3 tools/coop/hexdiff.py <unit> --symbol <sym>` for build+diff feedback. hexdiff performs the build itself and holds the repo-wide build lock (`build/<region>/.hexdiff.lock`), making it safe for concurrent agents. Only run `ninja`/`configure.py` directly when hexdiff cannot express the operation (e.g. full-tree rebuild after reconfiguration).
 - Call `CGame::wkRender` or full frame update twice for split-screen experiments
 - Accept `STRUCTURAL` / `CODE_MATCH` / `HIGH_MATCH` as final state (policy is `EQUIVALENT_MATCH`)
 - Submit AI-assisted reconstruction upstream

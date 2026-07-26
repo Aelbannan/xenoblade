@@ -29,11 +29,30 @@ python3 tools/coop/batch-cycle.py <target-id> [<target-id> ...] \
 python3 tools/coop/batch-cycle.py <target-id> \
     --default-hypothesis "..." --default-next-change "..." \
     --summary sum.json                   # with structured report
-python3 tools/llm_harness/run.py solve <target-id> --dry-run
-python3 tools/llm_harness/run.py solve <target-id>
+python3 tools/llm_decomp/run.py solve <target-id> --dry-run   # conversational match session
+python3 tools/llm_decomp/run.py solve <target-id>
+python3 tools/llm_decomp/run.py pipeline --tu kyoshin/CGame   # whole-TU pipeline
+python3 tools/llm_decomp/run.py pipeline --number 4 --dry-run # auto-select TUs
+python3 tools/llm_decomp/run.py reconcile                     # restore after crashes
+python3 tools/llm_decomp/run.py show-config                   # effective llm-decomp.json
 python3 tools/coop/run.py atlas index --vectors   # Decomp Atlas catalog
 python3 tools/coop/run.py atlas serve             # http://127.0.0.1:8765
 ```
+
+## LLM decompilation (tools/llm_decomp)
+
+Conversational agent harness (replaces the retired `tools/llm_harness`
+single-shot solve loop — do not use its commands). One session = one
+target: the model gets a markdown brief (retail ASM, locked signature,
+writable scope) and tools (read_file, grep, patch, build, diff,
+equivalence, submit); the harness owns file writes, verification, and
+acceptance (FULL_MATCH / proven EQUIVALENT_MATCH + zero regressions +
+split-size). Config in `llm-decomp.json` (models/budgets per session type;
+see docs/llm_decomp_design.md §9). Session types: match, type-recovery,
+rename, tu-cleanup, size-trim. Transcripts at
+build/llm-decomp/sessions/<target>/<session>/conversation.jsonl. Run
+`reconcile` after any crash to restore files and abort orphaned sessions.
+Full design: docs/llm_decomp_design.md.
 
 ## CI commands
 

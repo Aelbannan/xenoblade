@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_vom
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
@@ -41,16 +40,16 @@ int SFVOM_Pause(void) { return 0x0; }
 // LLM-HARNESS-END: us-803d176c
 
 // LLM-HARNESS-BEGIN: us-803d1774
-void SFLIB_SetErr(u32 err_code);
-void SFVOM_GetWrite(void) {
-    SFLIB_SetErr(0xff000701);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFVOM_GetWrite(void* h) {
+    return SFLIB_SetErr(h, 0xff000701);
 }
 // LLM-HARNESS-END: us-803d1774
 
 // LLM-HARNESS-BEGIN: us-803d1780
-void SFLIB_SetErr(u32 err_code);
-void SFVOM_AddWrite(void) {
-    SFLIB_SetErr(0xff000701);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFVOM_AddWrite(void* h) {
+    return SFLIB_SetErr(h, 0xff000701);
 }
 // LLM-HARNESS-END: us-803d1780
 

@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/CSystemWindow
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/CSystemWindow.hpp"

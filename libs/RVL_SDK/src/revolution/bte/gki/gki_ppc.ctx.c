@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for RVL_SDK/src/revolution/bte/gki/gki_ppc
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/RVL_SDK/src/revolution/bte/gki/gki_ppc.c" line 4 "harness_catalog.h" */

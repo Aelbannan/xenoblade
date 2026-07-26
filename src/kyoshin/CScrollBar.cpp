@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/CScrollBar
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"

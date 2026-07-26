@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for nw4r/src/ut/ut_PackedFont
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>

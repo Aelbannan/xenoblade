@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_lib
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_lib.c" line 4 "harness_catalog.h" */
@@ -744,45 +743,64 @@ void fn_803C34DC(void* self) {
 // LLM-HARNESS-END: us-803c34dc
 
 // LLM-HARNESS-BEGIN: us-803c34f8
-void fn_803C34F8(void) {}
+s32 SFLIB_SetErr(s32 val, u32 err_code);
+s32 fn_803C34F8(s32 val, u32 err_code) {
+    return SFLIB_SetErr(val, err_code);
+}
 // LLM-HARNESS-END: us-803c34f8
 
 // LLM-HARNESS-BEGIN: us-803c34fc
-extern u32 lbl_eu_80606E34;
+extern void* lbl_eu_80606E34;
 extern u32 lbl_eu_80568720[];
 extern u32 lbl_eu_80606E20[];
 s32 SFLIB_SetErr(s32 val, u32 err_code) {
-    if (err_code == 0) return 0;
-    {
-        u32* cb = (u32*)lbl_eu_80606E34;
-        if (cb) {
-            lbl_eu_80568720[3] = val;  // offset 0xc
-            ((void (*)(u32*, u32*))(*cb ? *(void**)(*((u32*)*cb) + 0x24) : 0))(cb, &lbl_eu_80568720[1]);
-        }
+    void (*fn)(void*, void*);
+
+    if (err_code == 0) {
+        return 0;
     }
+
+    if (lbl_eu_80606E34 != NULL) {
+        lbl_eu_80568720[3] = val;
+        lbl_eu_80568720[6] = (u32)&err_code;
+        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
+        fn(lbl_eu_80606E34, &lbl_eu_80568720[1]);
+    }
+
     if (val == 0) {
-        u32* ctx = lbl_eu_80606E20;
-        if (ctx[2] == 0) ctx[2] = err_code;
-        if (err_code) {
-            void (*cb)(u32) = (void (*)(u32))ctx[0];
-            if (cb) cb(ctx[1]);
+        u32 err = err_code;
+        if (lbl_eu_80606E20[2] == 0) {
+            lbl_eu_80606E20[2] = err;
+        }
+        if (err != 0) {
+            void (*cb)(u32, u32) = (void (*)(u32, u32))lbl_eu_80606E20[0];
+            if (cb != NULL) {
+                cb(lbl_eu_80606E20[1], err);
+            }
         }
     } else {
-        u8* h = (u8*)(long)val;
-        if (*(u32*)(h + 0xa10) == 0) *(u32*)(h + 0xa10) = err_code;
-        if (err_code) {
-            void (*cb)(u32) = (void (*)(u32))(*(u32*)(h + 0xa08));
-            if (cb) cb(*(u32*)(h + 0xa0c));
+        u8* h = (u8*)val;
+        u32 last = *(u32*)(h + 0xa10);
+        u32 err = err_code;
+        if (last == 0) {
+            *(u32*)(h + 0xa10) = err;
         }
-        if (*(s32*)(h + 0x54) > 0) *(s32*)(h + 0x54) = -*(s32*)(h + 0x54);
-    }
-    {
-        u32* cb = (u32*)lbl_eu_80606E34;
-        if (cb) {
-            void (*fn)(u32*, u32*) = (void (*)(u32*, u32*))(*(void**)*cb ? *(void**)(*((u32*)*cb) + 0x24) : 0);
-            fn(cb, &lbl_eu_80568720[27]);  // offset 0x6c
+        if (err != 0) {
+            void (*cb)(u32, u32) = *(void (**)(u32, u32))(h + 0xa08);
+            if (cb != NULL) {
+                cb(*(u32*)(h + 0xa0c), err);
+            }
+        }
+        if (*(s32*)(h + 0x54) > 0) {
+            *(s32*)(h + 0x54) = -*(s32*)(h + 0x54);
         }
     }
+
+    if (lbl_eu_80606E34 != NULL) {
+        fn = *(void (**)(void*, void*))((u8*)*(u32*)lbl_eu_80606E34 + 0x24);
+        fn(lbl_eu_80606E34, &lbl_eu_80568720[27]);
+    }
+
     return err_code;
 }
 // LLM-HARNESS-END: us-803c34fc

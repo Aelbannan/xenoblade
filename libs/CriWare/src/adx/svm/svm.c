@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/svm/svm
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
@@ -80,18 +79,24 @@ void SVM_SetCbErr() {}
 // LLM-HARNESS-END: us-8039a568
 
 // LLM-HARNESS-BEGIN: us-8039a658
-extern u32 lbl_eu_805F2700;
+typedef struct SvmCbPair {
+    void* cb;
+    void* ctx;
+} SvmCbPair;
+extern SvmCbPair lbl_eu_805F2700;
 void SVM_SetCbLock(void* cb, void* ctx) {
-    lbl_eu_805F2700 = (u32)cb;
-    *(u32*)((u8*)&lbl_eu_805F2700 + 4) = (u32)ctx;
+    SvmCbPair* p = &lbl_eu_805F2700;
+    p->cb = cb;
+    p->ctx = ctx;
 }
 // LLM-HARNESS-END: us-8039a658
 
 // LLM-HARNESS-BEGIN: us-8039a66c
-extern u32 lbl_eu_805F2708;
+extern SvmCbPair lbl_eu_805F2708;
 void SVM_SetCbUnlock(void* cb, void* ctx) {
-    lbl_eu_805F2708 = (u32)cb;
-    *(u32*)((u8*)&lbl_eu_805F2708 + 4) = (u32)ctx;
+    SvmCbPair* p = &lbl_eu_805F2708;
+    p->cb = cb;
+    p->ctx = ctx;
 }
 // LLM-HARNESS-END: us-8039a66c
 

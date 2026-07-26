@@ -321,6 +321,39 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 - **Micro-manage registers or the stack in source** — use §17.6 intrinsics when C++ is exhausted
 - **Post-process Chaitin / register soft-caps in `.text`** — no general `insn_patches`. Narrow linker-ADDR16 bake (`bake_linker_addrs` / `force_symbol_relocs` for DOL-split absolute symbols like `_stack_addr`) is allowed; rename relocs/pools and trim/drop symbols remain OK
 
+## LLM decompilation harness (tools/llm_decomp)
+
+Conversational agent harness for matching — **replaces the retired
+`tools/llm_harness` single-shot solve loop; do not use its commands.**
+One session = one target. The model receives a markdown brief (retail
+ASM, locked signature, writable scope, rules) and tools: `read_file`,
+`grep`, `patch` (SEARCH/REPLACE, all-or-nothing), `build`, `diff`,
+`equivalence`, `submit`. The harness owns file writes (delta lint gate —
+no asm, no register/stack tricks, no extern "C" outside lbl_*, no void*,
+no DECOMP_* macros, no new pragmas), verification (byte-exact sibling
+baselines + split size + SMT), and acceptance. Acceptance is automatic on
+FULL_MATCH / proven EQUIVALENT_MATCH with zero regressions; `submit` is a
+checkpoint, not a finish line.
+
+```bash
+python3 tools/llm_decomp/run.py solve <target-id> --dry-run
+python3 tools/llm_decomp/run.py solve <target-id>
+python3 tools/llm_decomp/run.py pipeline --tu kyoshin/CGame
+python3 tools/llm_decomp/run.py pipeline --number 4 --dry-run
+python3 tools/llm_decomp/run.py reconcile    # after crashes: restore files, abort orphans
+python3 tools/llm_decomp/run.py show-config
+```
+
+Session types: `match` (default), `type-recovery` (model UnkClass_*
+types in headers), `rename` (harness-mediated symrecover),
+`tu-cleanup` (byte-identical polish), `size-trim`. Pipelines chain match
+sessions per TU with carryover summaries, promote accepted matches to
+targets.json, checkpoint-commit per stage, and record completion in
+tools/llm_decomp/tu_ledger.json. Config: `llm-decomp.json` (per-session
+models/budgets, docs/llm_decomp_design.md §9). Transcripts:
+build/llm-decomp/sessions/<target>/<session>/conversation.jsonl. Full
+design: docs/llm_decomp_design.md.
+
 ## Key paths
 
 | Path | Role |

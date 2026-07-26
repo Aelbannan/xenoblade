@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfTFile
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/cf/CfTFile.cpp" line 4 "kyoshin/cf/CfTFile.hpp" */

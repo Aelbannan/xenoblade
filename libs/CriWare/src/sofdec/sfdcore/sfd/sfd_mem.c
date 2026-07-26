@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_mem
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
@@ -59,16 +58,16 @@ void SFMEM_AddWrite(void* self, u32* a, u32* b) {
 // LLM-HARNESS-END: us-803c3760
 
 // LLM-HARNESS-BEGIN: us-803c3778
-void SFLIB_SetErr(u32 err_code);
-void SFMEM_GetRead(void) {
-    SFLIB_SetErr(0xff000501);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFMEM_GetRead(void* h) {
+    return SFLIB_SetErr(h, 0xff000501);
 }
 // LLM-HARNESS-END: us-803c3778
 
 // LLM-HARNESS-BEGIN: us-803c3784
-void SFLIB_SetErr(u32 err_code);
-void SFMEM_AddRead(void) {
-    SFLIB_SetErr(0xff000501);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFMEM_AddRead(void* h) {
+    return SFLIB_SetErr(h, 0xff000501);
 }
 // LLM-HARNESS-END: us-803c3784
 

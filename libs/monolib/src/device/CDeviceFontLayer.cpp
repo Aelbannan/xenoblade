@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for monolib/src/device/CDeviceFontLayer
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>

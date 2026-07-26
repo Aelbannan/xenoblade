@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_mpv
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mpv.c" line 4 "harness_catalog.h" */
@@ -901,16 +900,16 @@ int SFMPV_Pause(void) { return 0x0; }
 // LLM-HARNESS-END: us-803ca140
 
 // LLM-HARNESS-BEGIN: us-803ca148
-void SFLIB_SetErr(u32 err_code);
-void SFMPV_GetWrite(void) {
-    SFLIB_SetErr(0xff000f0d);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFMPV_GetWrite(void* h) {
+    return SFLIB_SetErr(h, 0xff000f0d);
 }
 // LLM-HARNESS-END: us-803ca148
 
 // LLM-HARNESS-BEGIN: us-803ca154
-void SFLIB_SetErr(u32 err_code);
-void SFMPV_AddWrite(void) {
-    SFLIB_SetErr(0xff000f0d);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFMPV_AddWrite(void* h) {
+    return SFLIB_SetErr(h, 0xff000f0d);
 }
 // LLM-HARNESS-END: us-803ca154
 

@@ -268,9 +268,8 @@ Fork extensions on top of upstream force-active/literal macros:
 | Macro | Purpose |
 |-------|---------|
 | `DECOMP_PPC_RLWINM` / `DECOMP_PPC_SHL1_U32` | MWCC `__rlwinm` builtins (§17.6) — count as high-level C |
-| `DECOMP_ASM_INSN_BEGIN` / `END` | Markers for **single-instruction** asm carve-out only; log `policy_exception` in `attempts.jsonl` |
 
-`NONMATCHING` / `COMPAT_ANY` builds expand PPC macros to portable shifts and no-op asm markers.
+`NONMATCHING` / `COMPAT_ANY` builds expand PPC macros to portable shifts.
 
 ---
 

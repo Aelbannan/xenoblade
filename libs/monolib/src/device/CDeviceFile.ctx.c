@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for monolib/src/device/CDeviceFile
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/monolib/src/device/CDeviceFile.cpp" line 4 "harness_catalog.h" */

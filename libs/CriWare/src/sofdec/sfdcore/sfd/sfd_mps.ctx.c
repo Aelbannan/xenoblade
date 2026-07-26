@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_mps
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mps.c" line 4 "harness_catalog.h" */
@@ -824,7 +823,10 @@ void sfmps_InitInf() {}
 // LLM-HARNESS-END: us-803c5414
 
 // LLM-HARNESS-BEGIN: us-803c552c
-void sfmps_ErrFn(void) {}
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 sfmps_ErrFn(void* h, u32 err_code) {
+    return SFLIB_SetErr(h, err_code);
+}
 // LLM-HARNESS-END: us-803c552c
 
 // LLM-HARNESS-BEGIN: us-803c5530
@@ -848,30 +850,30 @@ int SFMPS_Pause(void) { return 0x0; }
 // LLM-HARNESS-END: us-803c559c
 
 // LLM-HARNESS-BEGIN: us-803c55a4
-void SFLIB_SetErr(u32 err_code);
-void SFMPS_GetWrite(void) {
-    SFLIB_SetErr(0xff000d0b);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFMPS_GetWrite(void* h) {
+    return SFLIB_SetErr(h, 0xff000d0b);
 }
 // LLM-HARNESS-END: us-803c55a4
 
 // LLM-HARNESS-BEGIN: us-803c55b0
-void SFLIB_SetErr(u32 err_code);
-void SFMPS_AddWrite(void) {
-    SFLIB_SetErr(0xff000d0b);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFMPS_AddWrite(void* h) {
+    return SFLIB_SetErr(h, 0xff000d0b);
 }
 // LLM-HARNESS-END: us-803c55b0
 
 // LLM-HARNESS-BEGIN: us-803c55bc
-void SFLIB_SetErr(u32 err_code);
-void SFMPS_GetRead(void) {
-    SFLIB_SetErr(0xff000d0b);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFMPS_GetRead(void* h) {
+    return SFLIB_SetErr(h, 0xff000d0b);
 }
 // LLM-HARNESS-END: us-803c55bc
 
 // LLM-HARNESS-BEGIN: us-803c55c8
-void SFLIB_SetErr(u32 err_code);
-void SFMPS_AddRead(void) {
-    SFLIB_SetErr(0xff000d0b);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFMPS_AddRead(void* h) {
+    return SFLIB_SetErr(h, 0xff000d0b);
 }
 // LLM-HARNESS-END: us-803c55c8
 

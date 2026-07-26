@@ -1382,3 +1382,77 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
   (`strlen` capped), `rem = hash % bucketCount` via div/mul/sub, bucket walk with
   `strcmp(col, entry+4)` and `lhz(entry+2)` chain.
 
+
+## CriWare tiny setters/getters — r3 clobber vs value-in-r3 (US)
+
+- **`SVM_SetCbLock` / `SVM_SetCbUnlock`** (`libs/CriWare/src/adx/svm/svm.c`,
+  fuzzy 54 → **FULL_MATCH**): retail keeps both `@ha` base and a materialized
+  struct pointer live (`lis r6,@ha; addi r5,r6,@l; stw r3,@l(r6); stw r4,4(r5)`).
+  Two separate `extern u32` accesses made MWCC rematerialize the address into
+  **r3** (clobbering the arg) — and the effect-aware contract compares r3 even
+  for `void` functions, so this is `not_equivalent`, not a cosmetic diff. Fix:
+  size-8 struct + mixed access through one local pointer:
+
+  ```c
+  typedef struct SvmCbPair { void* cb; void* ctx; } SvmCbPair;
+  extern SvmCbPair lbl_eu_805F2700;
+  void SVM_SetCbLock(void* cb, void* ctx) {
+      SvmCbPair* p = &lbl_eu_805F2700;
+      p->cb = cb;   // stw r3, @l(r6) — first store folds off the @ha base
+      p->ctx = ctx; // stw r4, 4(r5) — second via the materialized pointer
+  }
+  ```
+
+  (Plain consecutive member stores are enough — no mixed global/pointer
+  idiom needed; MWCC itself keeps both `@ha` base and pointer live here.)
+
+- **`criCrw_GetVersion` / `DCT_GetVerStr`** (fuzzy 94 → **FULL_MATCH**):
+  `dst = src_string;` is a pure r3↔r4 swap. Retail materializes the **value**
+  (string address) in r3 and stores via `dst@l(r4)` — that is exactly a
+  `char*` return type: `return dst = src;` forces the value into the return
+  register. Declaring the function `void` with a plain assignment gives the
+  swapped allocation and fails the r3 check. Do **not** "fix" this by
+  relaxing the contract; restyle the C.
+
+## CriWare SFLIB_SetErr + `b SFLIB_SetErr` wrappers (US)
+
+- **`SFLIB_SetErr`** (`libs/CriWare/src/sofdec/sfdcore/sfd/sfd_lib.c`,
+  17.4% → **FULL_MATCH**): three non-obvious retail facts, all recoverable
+  from the asm: (1) `err_code`'s **address is taken** (stored into the error
+  frame at `buffer[6]`), which forces the param spill at `0x8(sp)` and the
+  per-branch reloads; (2) the two `bctrl`s are vtable+0x24 calls on
+  `lbl_eu_80606E34` (`fn = *(void(**)(void*,void*))((u8*)*(u32*)obj + 0x24)`);
+  (3) the error callbacks are **2-arg** `cb(ctx, err)` — r4 (=err) is still
+  live at both `bctrl`s, which is why MWCC pre-colors the per-branch `err`
+  temp to r4 (argument register). With a 1-arg callback type the temp lands
+  in r3 and you stall at 96.2% with 3 pure reg-swaps.
+- **Engine limit:** any `bctrl`/`blrl` in retail sets `has_indirect_calls`
+  (sync-calls), which fail-closes **certificate minting** for that function
+  and therefore the certified-callee path for all of its callers
+  (`inconclusive_unvalidated_callee: missing equivalence_certificate`).
+  `--linked` only covers unresolved relocations, not this gate. The only
+  acceptance route for such functions and their callers is **FULL_MATCH**
+  (100% static), which needs no certificate. Do not edit the registry flag
+  or the engine contract to work around this.
+- **`b SFLIB_SetErr` wrappers** (SFADXT/SFAOAP/SFMEM/SFMPS/SFMPV/SFUO/SFVOM
+  Get/AddRead/Write, sfmps_ErrFn, fn_803C34F8): 3-insn thunks are **2-arg
+  passthrough tail calls** — the wrapper's own r3 (handle) passes through
+  unchanged and the error constant loads into r4:
+
+  ```c
+  s32 SFLIB_SetErr(void* h, u32 err_code);
+  s32 SFADXT_GetWrite(void* h) {
+      return SFLIB_SetErr(h, 0xff000c03);   // lis r4,0xFF00; addi r4,r4,0xC03; b
+  }
+  ```
+
+  A 1-arg call loads the constant into r3 and stalls at 95%. Use the `s32`
+  `return`-tail-call form, not `void`: the tail `b` forwards SFLIB_SetErr's
+  r3 (error code) to the wrapper's caller, so a `void` signature
+  misrepresents the ABI (both are byte-identical; `s32` is the honest one). Error codes are
+  per-subsystem (`0xff000c03` ADXT, `0xff000a01` AOAP, `0xff000501` MEM,
+  `0xff000d0b` MPS, `0xff000f0d` MPV, `0xff000601` UO, `0xff000701` VOM).
+- **`SFD_SetConcatPlay`** (`sfd_con.c`, 90.8% → **FULL_MATCH**): the error
+  path **returns `SFLIB_SetErr`'s result** (retail branch skips the
+  `li r3,0`); `SFLIB_SetErr(...); return 0;` is a semantic mismatch, not a
+  schedule difference.

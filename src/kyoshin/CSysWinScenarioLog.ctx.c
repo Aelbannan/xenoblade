@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/CSysWinScenarioLog
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/CSysWinScenarioLog.cpp" line 4 "kyoshin/harness_catalog.hpp" */

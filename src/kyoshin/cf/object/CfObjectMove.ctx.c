@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectMove
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/cf/object/CfObjectMove.cpp" line 4 "kyoshin/harness_catalog.hpp" */

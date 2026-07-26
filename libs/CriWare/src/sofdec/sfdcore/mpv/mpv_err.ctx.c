@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/mpv/mpv_err
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_err.c" line 4 "harness_catalog.h" */

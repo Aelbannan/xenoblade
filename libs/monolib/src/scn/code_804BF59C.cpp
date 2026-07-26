@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/code_804BF59C
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 //
 // This TU defines a light-environment management class containing:

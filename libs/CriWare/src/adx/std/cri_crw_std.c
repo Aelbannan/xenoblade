@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/std/cri_crw_std
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
@@ -7,8 +6,8 @@
 // LLM-HARNESS-BEGIN: us-8039e76c
 extern char lbl_eu_80519750[];
 extern void* lbl_eu_805FDDA0;
-void criCrw_GetVersion(void) {
-    lbl_eu_805FDDA0 = lbl_eu_80519750;
+char* criCrw_GetVersion(void) {
+    return lbl_eu_805FDDA0 = lbl_eu_80519750;
 }
 // LLM-HARNESS-END: us-8039e76c
 

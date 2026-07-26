@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/adxt/adx_dcd5
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>

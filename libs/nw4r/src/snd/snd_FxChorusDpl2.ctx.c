@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for nw4r/src/snd/snd_FxChorusDpl2
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/nw4r/src/snd/snd_FxChorusDpl2.cpp" line 4 "harness_catalog.h" */

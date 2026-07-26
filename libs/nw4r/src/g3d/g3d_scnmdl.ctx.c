@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for nw4r/src/g3d/g3d_scnmdl
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/nw4r/src/g3d/g3d_scnmdl.cpp" line 4 "harness_catalog.h" */

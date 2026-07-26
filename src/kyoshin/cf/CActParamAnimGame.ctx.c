@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CActParamAnimGame
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/cf/CActParamAnimGame.cpp" line 4 "kyoshin/cf/CActParamAnimGame.hpp" */

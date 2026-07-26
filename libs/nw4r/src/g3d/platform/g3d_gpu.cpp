@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for nw4r/src/g3d/platform/g3d_gpu
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>

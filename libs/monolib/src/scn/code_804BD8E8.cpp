@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/code_804BD8E8
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>

@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>

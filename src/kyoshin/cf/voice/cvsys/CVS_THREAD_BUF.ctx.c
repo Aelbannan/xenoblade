@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/voice/cvsys/CVS_THREAD_BUF
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.cpp" line 4 "kyoshin/harness_catalog.hpp" */

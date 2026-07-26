@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for monolib/src/coli/code_804B59C8
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/monolib/src/coli/code_804B59C8.cpp" line 4 "harness_catalog.h" */

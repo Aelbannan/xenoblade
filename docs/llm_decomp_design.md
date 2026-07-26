@@ -4,19 +4,25 @@ Conversational, tool-using successor to the single-shot `llm_harness` solve loop
 The model drives the decompilation loop (compile → hexdiff → revise) itself;
 the harness owns file writes, verification, and acceptance.
 
-Status: **design, not implemented**. Discussion captured 2026; see
-`tools/llm_harness/README.md` for the current (single-shot) harness.
+Status: **implemented** (v1 + v1.1) in `tools/llm_decomp/` — session loop,
+5 session types with gates, patch/lint, verification, promotion + ledger +
+checkpoints, parallel pipelines with carryover chaining, rename tooling,
+crash reconciliation, and cross-TU shared-header writes with tiered
+dependent sweeps. First live `FULL_MATCH` accepted 2026-07 (us-8048fdd8).
 
 ## 1. Scope and placement
 
 - New package `tools/llm_decomp/` (not a provider mode of `tools/llm_harness`).
   The session loop, patch engine, and concurrency model are different enough
   that shoehorning into `core.py` would entangle two architectures.
-- `tools/llm_harness` is **retired**. Vendor the still-useful modules into
-  `tools/llm_decomp` (copy, don't import — the old package is deleted):
+- `tools/llm_harness`'s **solve loop is retired** (review #15). Vendor the
+  still-useful modules into `tools/llm_decomp` (copy, don't import):
   `compile_diagnostic`, `candidate_sanitize` (extended into the lint gate),
   `asm_listings` (retail ASM extraction for the brief), `eval_cache`
-  stamping, `metrics.TimingRecorder`.
+  stamping, `metrics.TimingRecorder`. **Keep or port before deletion:**
+  the no-LLM `probe` path (SMT-only equivalence discovery — valuable
+  independent of any LLM) and the benchmark/golden-corpus infrastructure.
+  ChatGPT web batches go away with the solve loop.
 - **No promotion splicing** (`promotion.py` / `source_regions.py` are
   dead): sessions work in the live tree, so the accepted snapshot *is* the
   source. Promotion = `targets.json` update + `configure.py` `Matching`
@@ -33,11 +39,13 @@ Status: **design, not implemented**. Discussion captured 2026; see
 
 ```
 INIT ──► MATCHING ──► ACCEPTED ──► CLEANUP ──► DONE
-  │         │            ▲           │  ▲        │
-  │         │            │           │  └── cleanup breaks match:
-  │         │            │           │      revert-to-snapshot offered,
-  │         │            │           │      limited fix turns, else DONE
-  │         ├─ submit ──►├─ final check fails ─► DONE (failed session)
+  │         │  ▲         ▲           │  ▲        │
+  │         │  │         │           │  └── cleanup breaks match:
+  │         │  │         │           │      revert to accepted snapshot,
+  │         │  │         │           │      limited fix turns, else DONE
+  │         ├──┘         │           │
+  │         │ submit = verification checkpoint (review #8):
+  │         │ fail → verdict feedback, conversation CONTINUES
   │         └─ budget exhausted ─────────────────► DONE
   └─ claim/setup failure ────────────────────────► DONE (error)
 ```
@@ -48,15 +56,24 @@ States:
 |---|---|
 | `INIT` | Claim target, snapshot writable files, capture TU baseline, build initial prompt. |
 | `MATCHING` | Normal tool loop. Turn/compile budgets apply. |
-| `ACCEPTED` | Target symbol verified `FULL_MATCH`/`EQUIVALENT_MATCH` **and** regression sweep clean. Harness snapshots accepted file state immediately — this snapshot is the deliverable regardless of what follows. |
+| `ACCEPTED` | Target symbol verified `FULL_MATCH`/`EQUIVALENT_MATCH` **and** regression sweep clean. Harness snapshots accepted file state **to disk (session dir) and fsyncs before entering CLEANUP** (review #2) — this snapshot is the deliverable regardless of what follows, and promotion reads from that file, not the live tree. |
 | `CLEANUP` | Optional, bounded (`cleanup_turns`, default 5). Agent may tidy (dead structs, comments, unused helpers). Every patch re-verified. Breaking the match or any regression → revert to accepted snapshot, offer remaining fix turns; on budget end, whichever accepted snapshot stands is final. |
 | `DONE` | Terminal. Harness releases claim, finalizes transcript, promotes or discards. |
 
-`submit` is only "end the conversation now". It triggers the full final
-check but **never decides acceptance** — acceptance is always automatic on
-verification. Exit paths: `submit`, acceptance → cleanup → budget, or
-budget exhausted. A session that ends without acceptance is a failed
-session; writable files are restored to the pre-session snapshot.
+`submit` is a **verification checkpoint, not a session ender** (review #8):
+it triggers the full check; on failure the verdict goes back as feedback
+and the conversation continues. DONE is reached only via acceptance →
+cleanup → budget, or budget exhausted. Acceptance is always automatic on
+verification — the agent never grades itself.
+
+**Snapshot identity** (review #19): snapshots are per-(session,
+acceptance-event) file copies with content hashes recorded in the
+transcript; "revert" always means *most recent verified state* (accepted
+snapshot if one exists, else INIT snapshot). A session that ends without
+acceptance restores writable files to the INIT snapshot — **but** the best
+file state (fewest target mismatches) is preserved into the session dir
+and summarized into the `carryover` chain (review #6), so near-miss work
+is not lost.
 
 ## 3. Writable scope
 
@@ -127,8 +144,10 @@ that acquires it.
   hint). No partial application.
 - `create=true` fails if the file exists; without it, at least one block is
   required.
-- After applying, the **lint gate** (§5) runs on final file content; a lint
-  failure reverts the patch and returns the violated rules.
+- After applying, the **lint gate** (§5) runs on the **patch delta vs the
+  INIT snapshot** (never whole-file — review #7); a lint failure reverts
+  the patch and returns the violated rules. Lint rejects are feedback, not
+  failures — they do not count toward `max_patch_failures` (review #20).
 - Post-patch, returns the changed line ranges so the model can re-orient
   (SEARCH/REPLACE drifts after self-edits; echoing the new state keeps
   anchors honest).
@@ -149,8 +168,11 @@ that acquires it.
 {"unit": "kyoshin/cf/CfPadTask", "symbol": "<mangled>", "mode": "target|sweep"}
 ```
 
-- Assumes a successful `build` (refuses on stale object — tracks last
-  built content hash per unit).
+- Assumes a successful `build` by **this session**: the harness records
+  (source-hash → object-hash) pairs written only by its own build steps
+  and re-hashes the object before every `--no-build` diff (review #17) —
+  objects left by humans, crashed sessions, or chained sessions are never
+  trusted.
 - `target`: hexdiff JSON for one symbol — `mismatch_count`,
   reg-swap vs structural split, register mapping table.
 - `sweep`: every defined symbol vs the INIT baseline, parallel; used by the
@@ -167,15 +189,16 @@ that acquires it.
 - Ends the conversation → final verification → DONE.
 - `note` is free-text appended to `attempts.jsonl`.
 
-### 4.7 `equivalence` (v1.1, not v1)
+### 4.7 `equivalence`
 
 ```json
 {"unit": "...", "symbol": "..."}
 ```
 
-- `ppc_equivalence` check-unit for the fuzzy-[50,100) band. Deferred
-  because v1 targets the FULL_MATCH-or-keep-iterating loop; the harness
-  still runs equivalence internally at verification time.
+- `ppc_equivalence` check-unit for the fuzzy-[50,100) band. **Ships in
+  v1** (review #6): without it an agent stuck at fuzzy 60 must blind-submit
+  toward a possibly-impossible FULL_MATCH. The harness also runs it
+  internally at verification time.
 
 Deliberately absent: objdiff CLI, `cycle`, `targets.json` writes, git ops,
 promotion. All harness-owned.
@@ -197,8 +220,16 @@ rule list returned):
   closed with clean C, the agent reports it in `submit.note` —
   `ppc_equivalence` can still carry the function to `EQUIVALENT_MATCH`
 - edits outside the writable scope (belt-and-braces; the patch engine already refuses)
+- **new preprocessor directives and pragmas** in patch-introduced content
+  (review #9): `#pragma peephole/optimization_level/scheduling/pool_data`,
+  `#if 0` / conditional-compilation wrapping, `__declspec(section)` — all
+  classic codegen-steering or symbol-hiding cheats. Exception: include
+  guards in a `create=true` header, and `#include`s from a whitelist
+  (project headers; no new SDK/system includes without a session note)
 - signature drift: the target function's signature must remain the locked
-  dossier signature (parsed and compared)
+  signature — checked by **demangling the built symbol post-build**
+  (review #18), not by parsing source (templates/default args/cv-qualifiers
+  make source parsing fragile)
 
 The violated rule names go back as tool feedback; models correct in one turn.
 
@@ -221,30 +252,40 @@ definition in the TU) instead of markers.
 
 ### INIT baseline (once per session)
 
-1. Snapshot writable files (in-memory copies; restore = write back).
-2. Build the unit (build lock).
-3. hexdiff every defined symbol → `baseline[symbol] = mismatch_count`;
-   record split `.text` budget + current size; cache the object hash.
+1. Snapshot writable files **to the on-disk session dir** (fsync), along
+   with the claim record (review #1) — in-memory-only snapshots die with
+   the process. **Startup reconciliation:** on launch, the harness scans
+   for orphaned session dirs (process died mid-session), restores their
+   files from the INIT snapshot, and releases their claims before
+   scheduling new work.
+2. Build the unit (build lock); **save the baseline object** into the
+   session dir (review #13).
+3. Compare every defined symbol against retail → `baseline[symbol] =
+   (byte_hash, diff_fingerprint, mismatch_count)`; record split `.text`
+   budget + current size. **Byte hash, not count alone** (review #3): a
+   sibling that gains one mismatch and loses another has equal count and
+   would pass a count-only gate; regression = any byte difference.
 
 ### Per `submit` (and per cleanup patch)
 
-1. Lint gate on current files (already run per-patch; re-run cheap).
-2. Build lock → ninja TU → release.
-3. Parallel fan-out (thread pool):
-   - hexdiff target symbol
-   - hexdiff sweep of all other defined symbols vs baseline
-   - split `.text` size check
-   - equivalence probe (if target fuzzy ∈ [50,100))
+1. Lint gate on the delta vs INIT snapshot (cheap re-run).
+2. Build lock → ninja TU → release; record (source-hash → object-hash).
+3. **Sweep = one object-vs-object comparison** of the freshly built object
+   against the saved baseline object, emitting only differing symbols
+   (review #13) — never per-symbol hexdiff subprocess spawns. Parallel
+   fan-out (thread pool): sweep, target-symbol hexdiff detail (only if the
+   target differs), split `.text` size check, equivalence probe (if target
+   fuzzy ∈ [50,100)).
 4. Verdict:
    - **accept** = target `FULL_MATCH`, or fuzzy ≥ 50 + SMT `EQUIVALENT`
-     under effect-aware policy, **and** zero sibling regressions, **and**
-     size within budget.
-   - Already-matched siblings (baseline 0) that regress → **hard reject,
-     auto-revert to last-good file state**, conversation continues.
+     under effect-aware policy, **and** zero sibling byte differences,
+     **and** size within budget.
+   - Already-matched siblings (baseline-matched) that differ → **hard
+     reject, auto-revert to last verified state**, conversation continues.
    - Unmatched sibling got worse → soft reject: agent must fix or revert
      its own change before any acceptance.
-5. Verdict JSON back to the agent (target mismatches, regression list with
-   baseline-vs-now, size, rule).
+5. Verdict back to the agent **as markdown** (target mismatches,
+   regression list with baseline-vs-now, size, rule).
 
 ### Cross-TU (shared-header) path — v1.1
 
@@ -282,6 +323,32 @@ agents, disjoint units) serializes only on seconds-long builds. The
 scheduler skips a candidate target whose TU or designated header is
 write-locked by a live session and picks the next frontier target instead.
 
+### Shared-state serialization (review #4, #5, #21)
+
+- **Promotion queue:** all writes to checked-in state (`targets.json`,
+  `configure.py`, `tu_ledger.json`, `attempts.jsonl`) go through a
+  single-writer queue with atomic tmp-file+rename per artifact;
+  `configure.py` edits additionally hold the build lock (they regen
+  build.ninja). Parallel pipelines never write these directly.
+- **Git policy:** `checkpoint_commits` is **on by default** — the
+  orchestrator (never the agent) commits at each accepted session and at
+  each pipeline stage transition, i.e. only when a verification gate has
+  just passed, so every commit is a known-good tree (bisect/review-safe,
+  bounds crash loss to the in-flight stage). Message format:
+  `llm-decomp: match <demangled> (<target-id>) in <unit> [<tier>]`
+  carrying the session id for transcript traceability. Failed sessions
+  are never committed. Assumes pipelines run on a dedicated branch.
+- **Rename quiesce:** `rename` stages rewrite call sites repo-wide, which
+  would invalidate live sessions' anchors/snapshots and risk their
+  failure-restores writing pre-rename text over renamed files. Renames
+  are **batched at pipeline end and run under global quiesce** — the
+  scheduler drains all sessions first; no sessions start until the rename
+  stage completes. This also bounds how long renames hold the build lock.
+- **Compile-error attribution (review #11):** a build failure is charged
+  to a session's `max_compile_error_streak` only when diagnostics point
+  at files in that session's write set; foreign-caused failures (dirty
+  tree residue, v1.1 shared-header edits) are reported but not counted.
+
 ### Include graph (built in v1)
 
 MWCC emits no gcc-style depfiles, so the graph is self-built, not
@@ -296,8 +363,12 @@ ninja-derived:
 - SDK/system includes recorded but excluded from dependent sweeps.
 
 Built in v1 even though shared-header writes stay locked: the graph also
-feeds dossier assembly (right type snippets) and the dependent-count tiers
-(§11.4) later.
+feeds brief assembly and the dependent-count tiers (§14.4) later.
+Sessions **pin a graph snapshot at INIT** (review #16) so a concurrent
+header edit can't change another session's dependent set mid-flight; the
+regex scanner is a best-effort index, not an enforcement basis — the v1.1
+cross-TU sweep derives edges from actual preprocessor/dep output before
+trusting the tiers.
 
 ## 8. Transcript log
 
@@ -338,7 +409,7 @@ Everything tunable lives in one checked-in JSON file. Precedence:
   "verification": {"equivalence_min_fuzzy": 50, "cross_tu_full_sweep_max": 10, "cross_tu_refuse_over": 40},
   "stop": {"max_repeated_fingerprint": 3, "max_compile_error_streak": 4},
   "pipeline": {"auto_size_trim": true, "ledger": "tools/llm_decomp/tu_ledger.json"},
-  "execution": {"auto_promote": true, "auto_promote_owner": "llm-decomp"}
+  "execution": {"auto_promote": true, "auto_promote_owner": "llm-decomp", "checkpoint_commits": true}
 }
 ```
 
@@ -359,7 +430,8 @@ Everything tunable lives in one checked-in JSON file. Precedence:
 | `max_turns` | 25 | Hard cap on assistant turns per session. |
 | `max_builds` | 15 | Cap on `build` tool calls (each holds the global build lock). |
 | `max_sweeps` | 5 | Cap on agent-initiated `diff mode=sweep` calls; harness sweeps exempt (§14.1). |
-| `max_patch_failures` | 4 | Consecutive unparseable/unanchoring `patch` calls before the session ends — protects against anchor drift loops. |
+| `max_patch_failures` | 4 | Consecutive unparseable/unanchoring `patch` calls before the session ends — protects against anchor drift loops. Lint-rejected patches are feedback and do **not** count (review #20). |
+| `max_session_tokens` | 400000 | Total input tokens per session; on approach, stale tool results (superseded `read_file`/`grep` outputs) are elided from history (review #14). |
 | `cleanup_turns` | 5 | Turns allowed in CLEANUP after acceptance (§2). |
 
 ### `concurrency`
@@ -396,6 +468,7 @@ Everything tunable lives in one checked-in JSON file. Precedence:
 | Setting | Default | Effect |
 |---|---|---|
 | `auto_size_trim` | true | Insert a `size-trim` stage automatically whenever a stage reports the unit over its split budget. |
+| `max_size_trim_attempts` | 2 | Cap on auto-inserted size-trim stages per unit; afterwards the ledger records terminal `over-budget` and the pipeline continues (review #12). |
 | `ledger` | `tools/llm_decomp/tu_ledger.json` | Checked-in TU completion ledger (§12). |
 
 ### `execution`
@@ -404,6 +477,7 @@ Everything tunable lives in one checked-in JSON file. Precedence:
 |---|---|---|
 | `auto_promote` | true | On acceptance, harness updates `targets.json` (+ `configure.py` `Matching` at full-TU) without manual review. |
 | `auto_promote_owner` | `"llm-decomp"` | Owner string recorded for claims/promotions. |
+| `checkpoint_commits` | true | Orchestrator makes a git checkpoint commit at each accepted session and pipeline stage transition — only post-gate, so every commit is a verified tree (§7). |
 
 Stop conditions also include the unvalidated-callee block (target has
 unresolved/indirect callees → session ends, orchestrator re-queues after
@@ -439,7 +513,7 @@ shared; a new type is ~50 lines of policy + a prompt template.
 
 ### Per-type lifecycle notes
 
-- **`match`** — as designed: dossier prompt, target symbol, acceptance
+- **`match`** — as designed: brief prompt, target symbol, acceptance
   snapshots.
 - **`tu-cleanup`** — INIT baseline captures every symbol's byte state; the
   gate is *stricter* than match: mismatch delta exactly 0 in both
@@ -461,8 +535,15 @@ shared; a new type is ~50 lines of policy + a prompt template.
     reconfigure + rebuild affected units (build lock) → re-diff every
     affected symbol in parallel. All match → done; any regression →
     restore snapshot, return failing symbols as tool feedback.
-- **`size-trim`** — accepted symbols locked (byte-identical or still
-  accepted); gate rewards `.text` reduction toward the split budget.
+  - Rename stages run **batched at pipeline end under global quiesce**
+    (§7): all other sessions drained first, so no live anchors/snapshots
+    are invalidated and build-lock hold time is bounded.
+- **`size-trim`** — accepted symbols locked: byte-identical for
+  `FULL_MATCH` symbols, re-proved equivalence for `EQUIVALENT_MATCH`
+  symbols (review #12). Gate rewards `.text` reduction toward the split
+  budget. Auto-inserted attempts are capped (`max_size_trim_attempts`);
+  an over-budget unit that can't shrink within the cap records terminal
+  `over-budget` in the ledger instead of re-triggering forever.
 
 No separate "equivalence-closure" type — that is `match` with a different
 starting fuzzy.
@@ -524,8 +605,8 @@ already covered there). Decomp-specific rules:
 - human-readable names **only when understood**; unknown struct fields
   keep offset names (`field_0x1C`) — a wrong guess is worse than no name
 - no `extern "C"` outside the approved reloc-name pattern (stubs aside)
-- no dead helpers/scratch code left after matching; no `goto` outside
-  `goto`; project typedefs (`u8`/`s32`/`f32`), not `uint32_t`/`int`
+- no dead helpers/scratch code left after matching; no `goto`;
+  project typedefs (`u8`/`s32`/`f32`), not `uint32_t`/`int`
 
 Enforced at three points, not just pipeline end: **lint gate** (per-patch,
 mechanical subset), **brief/prompt** (style-doc reference in every
@@ -614,8 +695,11 @@ The harness drives the loop; the provider never sees the filesystem.
    the agent may freely create/edit file-scope symbols that are not in
    `targets.json` and not exported (`static`, `inline`, anonymous
    namespace). At each verification the post-build symbol table is diffed
-   against the INIT snapshot — any new exported symbol or any modified
-   registered symbol other than the target is a hard reject. Lint gate
+   against the INIT snapshot **bidirectionally** (review #10): any added,
+   **removed, or renamed** registered symbol, and any modified registered
+   symbol other than the target, is a hard reject — so `#if 0`-ing a
+   sibling out of the object or rename-edit-rename-back games are caught.
+   Every baseline-defined symbol is also byte-compared. Lint gate
    additionally rejects new non-static free functions in the TU ("make it
    static or header-inline"). Helpers worth registering become separate
    targets later via `submit.note`.
@@ -637,3 +721,32 @@ The harness drives the loop; the provider never sees the filesystem.
    (restructure into a TU-local header). Broken build in any dependent is
    always a hard reject. Threshold 40 is a placeholder pending the real
    include graph.
+
+## 15. Adversarial review resolutions
+
+Reviewed by an adversarial agent against this doc + repo; 21 findings,
+all folded in above. Index:
+
+| # | Severity | Resolution |
+|---|---|---|
+| 1 | BLOCKER | §6.1: snapshots/claim persisted to session dir at INIT + startup reconciliation pass |
+| 2 | BLOCKER | §2: accepted snapshot written to disk + fsync before CLEANUP; promotion reads from file |
+| 3 | BLOCKER | §6.1: baseline stores byte hash + fingerprint; regression = any byte difference |
+| 4 | BLOCKER | §7: renames batched at pipeline end under global quiesce |
+| 5 | BLOCKER | §7: single-writer promotion queue, atomic writes, configure under build lock, git checkpoint policy |
+| 6 | BLOCKER | §4.7: `equivalence` tool ships in v1; §2: failed sessions checkpoint best state into carryover |
+| 7 | MAJOR | §4.3/§5/§6: lint always on delta vs INIT snapshot, never whole-file |
+| 8 | MAJOR | §2: submit = verification checkpoint, conversation continues on failure |
+| 9 | MAJOR | §5: new pragmas/preprocessor directives forbidden; include whitelist |
+| 10 | MAJOR | §14.2: bidirectional symbol-table diff (added/removed/renamed all reject) |
+| 11 | MAJOR | §7: compile errors attributed by diagnostics path; foreign failures don't count |
+| 12 | MAJOR | §9/§10: size-trim attempt cap + terminal `over-budget` ledger state; gate defined per acceptance tier |
+| 13 | MAJOR | §6: sweep = one object-vs-object comparison vs saved baseline object |
+| 14 | MAJOR | §9: `max_session_tokens` + stale tool-result elision |
+| 15 | MAJOR | §1: retirement scoped to solve loop; keep/port `probe` + benchmark |
+| 16 | MINOR | §7: sessions pin include-graph snapshot at INIT; v1.1 derives edges from dep output |
+| 17 | MINOR | §4.5: (source-hash → object-hash) from own builds; re-hash before `--no-build` |
+| 18 | MINOR | §5: signature checked via built-symbol demangling; garbled goto text fixed |
+| 19 | MINOR | §2: snapshot identity = per-(session, acceptance-event), content-hashed; revert = most recent verified |
+| 20 | MINOR | §9: `max_patch_failures` counts anchoring failures only |
+| 21 | MINOR | merged into #4 (same quiesce mechanism bounds build-lock hold) |

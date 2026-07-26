@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for monolib/src/scn/CScnVirtualLight
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/monolib/src/scn/CScnVirtualLight.cpp" line 4 "harness_catalog.h" */

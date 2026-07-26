@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_aoap
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
@@ -56,30 +55,30 @@ void SFAOAP_Pause() {}
 // LLM-HARNESS-END: us-803c1450
 
 // LLM-HARNESS-BEGIN: us-803c14c8
-void SFLIB_SetErr(u32 err_code);
-void SFAOAP_GetWrite(void) {
-    SFLIB_SetErr(0xff000a01);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFAOAP_GetWrite(void* h) {
+    return SFLIB_SetErr(h, 0xff000a01);
 }
 // LLM-HARNESS-END: us-803c14c8
 
 // LLM-HARNESS-BEGIN: us-803c14d4
-void SFLIB_SetErr(u32 err_code);
-void SFAOAP_AddWrite(void) {
-    SFLIB_SetErr(0xff000a01);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFAOAP_AddWrite(void* h) {
+    return SFLIB_SetErr(h, 0xff000a01);
 }
 // LLM-HARNESS-END: us-803c14d4
 
 // LLM-HARNESS-BEGIN: us-803c14e0
-void SFLIB_SetErr(u32 err_code);
-void SFAOAP_GetRead(void) {
-    SFLIB_SetErr(0xff000a01);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFAOAP_GetRead(void* h) {
+    return SFLIB_SetErr(h, 0xff000a01);
 }
 // LLM-HARNESS-END: us-803c14e0
 
 // LLM-HARNESS-BEGIN: us-803c14ec
-void SFLIB_SetErr(u32 err_code);
-void SFAOAP_AddRead(void) {
-    SFLIB_SetErr(0xff000a01);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 SFAOAP_AddRead(void* h) {
+    return SFLIB_SetErr(h, 0xff000a01);
 }
 // LLM-HARNESS-END: us-803c14ec
 

@@ -1,5 +1,4 @@
 // Auto-scaffolded catalog TU for nw4r/src/ut/ut_ArchiveFontBase
-// Mangled extern stubs for llm-harness / coop selection.
 // Replace stubs with high-level C/C++ during decomp.
 
 /* "libs/nw4r/src/ut/ut_ArchiveFontBase.cpp" line 4 "harness_catalog.h" */

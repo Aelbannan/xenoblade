@@ -69,3 +69,28 @@ class Provider(Protocol):
                 or unrecoverable API errors after retries.
         """
         ...
+
+
+def compute_cost(usage: dict) -> dict:
+    """Estimate USD cost from a usage dict for DeepSeek V4 Flash pricing.
+
+    Rates (per 1M tokens):
+        Input:      $0.09
+        Output:     $0.18
+        Cached in:  $0.009 (~90% discount)
+
+    Returns {"input_cost", "cached_input_cost", "output_cost", "total_cost"}
+    with 6-decimal precision. Zero values if usage is empty/missing.
+    """
+    inp = usage.get("input_tokens", 0) or 0
+    cached = usage.get("cache_input_tokens", 0) or 0
+    out = usage.get("output_tokens", 0) or 0
+    return {
+        "input_cost": round(inp * 0.09 / 1_000_000, 6),
+        "cached_input_cost": round(cached * 0.009 / 1_000_000, 6),
+        "output_cost": round(out * 0.18 / 1_000_000, 6),
+        "total_cost": round(
+            inp * 0.09 / 1_000_000
+            + cached * 0.009 / 1_000_000
+            + out * 0.18 / 1_000_000, 6),
+    }

@@ -8,6 +8,7 @@ Design reference: docs/llm_decomp_design.md §4.
 """
 from __future__ import annotations
 
+import fnmatch
 import os
 import re
 import shutil
@@ -20,6 +21,42 @@ from tools.llm_decomp.contracts import ToolCall, ToolResult
 
 # Repository roots that read_file and grep may access.
 _ALLOWED_ROOTS = ("src/", "libs/", "include/")
+
+# Filename-to-path index for read_file auto-resolution.
+# Built lazily from the first failed direct-path lookup.
+_filename_index: dict[str, list[str]] | None = None
+
+
+def _build_filename_index(repo_root: Path) -> dict[str, list[str]]:
+    """Index all repo-relative paths under src/, libs/, include/ by basename."""
+    index: dict[str, list[str]] = {}
+    for root_dir in ("src", "libs", "include"):
+        d = repo_root / root_dir
+        if not d.is_dir():
+            continue
+        for f in d.rglob("*"):
+            if f.suffix in (".cpp", ".hpp", ".h", ".c", ".s"):
+                try:
+                    rel = str(f.relative_to(repo_root))
+                except ValueError:
+                    continue
+                index.setdefault(f.name, []).append(rel)
+    return index
+
+
+def _resolve_filename(repo_root: Path, basename: str) -> str | None:
+    """Look up a bare filename like 'CfGameManager.hpp' in the index.
+
+    Returns the repo-relative path if exactly one match exists, or None
+    if zero or multiple files share the same basename.
+    """
+    global _filename_index
+    if _filename_index is None:
+        _filename_index = _build_filename_index(repo_root)
+    paths = _filename_index.get(basename)
+    if paths and len(paths) == 1:
+        return paths[0]
+    return None
 
 # ── Tool schemas ────────────────────────────────────────────────────────
 
@@ -248,12 +285,21 @@ def _read_file(repo_root: Path, args: dict) -> ToolResult:
     count = min(400, max(1, int(args.get("count", 200))))
     resolved = _resolve_allowed(repo_root, rel)
     if resolved is None:
-        return ToolResult(ok=False, content=(
-            f"**read_file:** `{rel}` is not allowed — paths must stay under "
-            "src/, libs/, or include/ and must not contain `..`."))
+        # Try filename-based resolution as fallback.
+        fname = rel.rstrip("/").split("/")[-1] if rel else ""
+        if fname:
+            candidate = _resolve_filename(repo_root, fname)
+            if candidate is not None:
+                rel = candidate
+                resolved = _resolve_allowed(repo_root, rel)
+    if resolved is None:
+        return ToolResult(ok=False,
+            content=f"**read_file:** `{rel}` is not allowed.",
+            data={"path": rel, "error": "not allowed"})
     if not resolved.is_file():
         return ToolResult(ok=False,
-                          content=f"**read_file:** `{rel}` does not exist.")
+            content=f"**read_file:** `{rel}` does not exist.",
+            data={"path": rel, "error": "file not found"})
     lines = resolved.read_text(encoding="utf-8", errors="replace").splitlines()
     if lines and start > len(lines):
         return ToolResult(ok=False, content=(

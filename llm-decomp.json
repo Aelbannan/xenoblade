@@ -2,19 +2,19 @@
   "models": {
     "default": {
       "provider": "openrouter",
-      "model": "deepseek/deepseek-chat",
-      "max_tokens": 8192
+      "model": "z-ai/glm-5.2",
+      "max_tokens": 100000
     }
   },
   "session_types": {
-    "match": {},
-    "type-recovery": {},
+    "match": {"budgets": {"max_turns": 75}},
+    "type-recovery": {"budgets": {"max_turns": 50}},
     "rename": {},
     "tu-cleanup": {},
     "size-trim": {}
   },
   "concurrency": {"workers": 8, "target_parallel": 4},
-  "prompt": {"max_chars": 60000, "include_raw_hex": false},
+  "prompt": {"max_chars": 99999999, "include_raw_hex": false},
   "verification": {
     "equivalence_min_fuzzy": 50,
     "cross_tu_full_sweep_max": 10,

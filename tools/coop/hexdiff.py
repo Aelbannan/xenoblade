@@ -818,7 +818,8 @@ def _output_terminal(
                 else:
                     parts_list.append(f"r{r_r}→{','.join(_GPR[dr] for dr in d_regs)}")
             instr_part = key.split("*")[0]
-            print(f"  {instr_part:<12s}  {", ".join(parts_list)}")
+            joined = ", ".join(parts_list)
+            print(f"  {instr_part:<12s}  {joined}")
 
     return 0 if byte_mismatches == 0 else 5
 

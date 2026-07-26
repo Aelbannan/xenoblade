@@ -1,6 +1,10 @@
 #include "types.h"
 #include "kyoshin/cf/CfCollCapsuleImpl.hpp"
 
+struct CfCollCapsuleImpl_Col {
+    struct { float x, y, z, w; };
+};
+
 // cf::CfDebugDrawManager::renderCapsule(Vec3* start, Vec3* end, float* color, float radius)
 extern "C" void renderCapsule__Q22cf18CfDebugDrawManagerFv(
     const ml::CVec3* start, const ml::CVec3* end, const float* color, float radius);
@@ -12,22 +16,26 @@ extern "C" void func_800A4C48(void* query, const ml::CVec3* start,
 // Render the capsule for debug visualization.
 // r3 is unused (this of CfDebugDrawManager).
 extern "C" void func_800AB2E4(void* /*unused*/, cf::CfCollCapsuleImpl* capsule) {
-    float col[4] = {0.0f, 0.5f, 1.0f, 0.15f};
+    CfCollCapsuleImpl_Col col;
+    col.x = 0.0f;
+    col.y = 0.5f;
+    col.z = 1.0f;
+    col.w = 0.15f;
 
     if (capsule->mKind == 1) {
-        col[0] = 0.0f;
-        col[1] = 1.0f;
-        col[2] = 1.0f;
-        col[3] = 0.1f;
+        col.x = 0.0f;
+        col.y = 1.0f;
+        col.z = 1.0f;
+        col.w = 0.1f;
     } else if (capsule->mKind == 6) {
-        col[0] = 0.0f;
-        col[1] = 0.75f;
-        col[2] = 0.75f;
-        col[3] = 0.1f;
+        col.x = 0.0f;
+        col.y = 0.75f;
+        col.z = 0.75f;
+        col.w = 0.1f;
     }
 
     renderCapsule__Q22cf18CfDebugDrawManagerFv(
-        &capsule->mStart, &capsule->mEnd, col, capsule->mRadius);
+        &capsule->mStart, &capsule->mEnd, (const float*)&col, capsule->mRadius);
 }
 
 // Forward capsule collision data to the collision query system.

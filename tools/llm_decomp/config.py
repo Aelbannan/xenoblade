@@ -36,6 +36,7 @@ class ModelConfig:
     model: str = ""
     max_tokens: int | None = 8192  # None = unlimited
     thinking_budget: int | None = None  # None = provider default; -1 = unlimited
+    openrouter_provider: dict | None = None  # OpenRouter provider routing (order, allow_fallbacks, only, ignore, etc.)
 
 
 @dataclass
@@ -91,6 +92,7 @@ def _model_from(d: dict, base: ModelConfig) -> ModelConfig:
         model=d.get("model", base.model),
         max_tokens=max_tokens,
         thinking_budget=thinking,
+        openrouter_provider=d.get("openrouter_provider", base.openrouter_provider),
     )
 
 

@@ -28,13 +28,22 @@ from .providers.base import Provider
 from .rename_tools import RENAME_TOOL_SCHEMAS, symbols_tool, rename_symbol_tool
 from .tools import TOOL_SCHEMAS, ToolContext, dispatch
 from .transcript import Transcript
+from .providers.base import compute_cost
 
 _SYSTEM_PROMPT = """\
 You are a decompilation agent working on a Wii game (PowerPC, MWCC \
 compiler). Your job: reconstruct high-level C/C++ whose compiled bytes \
 match the retail binary. You have tools to read project files, apply \
 patches, build, and diff. Follow the brief exactly. Acceptance is decided \
-by the harness, never by you."""
+by the harness, never by you.
+
+**Build early.** Call `build` on your first or second turn to see the \
+current mismatch state. Analysis alone wastes turns — compile the \
+baseline, read the diff, then patch and iterate.
+
+**Patch after the first diff.** After the first `diff` call, apply \
+your best-guess patch immediately. Don't read more files — iterate \
+with patch → build → diff cycles. Analysis without editing burns turns."""
 
 
 @dataclass
@@ -73,12 +82,16 @@ class Session:
         self.patch_failures = 0  # consecutive anchoring failures
         self.compile_error_streak = 0
         self.tokens_in = 0
+        self.cache_tokens_in = 0
+        self.tokens_out = 0
+        self.cost_total = 0.0
         self.cleanup_turns_left = 0
         self.best_mismatches: int | None = None
         self._built_this_session = False
         self._submitted = False
         self._submit_note = ""
         self._needs_cleanup_verify = False
+        self._auto_verify = False  # auto-trigger verification after patch+build
         self._verdict: Verdict | None = None
         self._dirty = False  # files changed since last verification
         self._no_tool_turns = 0  # consecutive replies with no tool calls
@@ -106,6 +119,30 @@ class Session:
         snap = paths.init_snapshot_dir(self.sdir) / rel
         if snap.exists():
             return snap.read_text(encoding="utf-8")
+        return None
+
+    def _init_read_src(self) -> str | None:
+        """Read the TU source file for the brief."""
+        for w in self.meta.writable:
+            if w.endswith(".cpp"):
+                p = self.repo_root / w
+                if p.is_file():
+                    try:
+                        return p.read_text(encoding="utf-8", errors="replace")
+                    except Exception:
+                        return None
+        return None
+
+    def _read_tu_header(self, unit: str) -> str | None:
+        """Read the TU's header file content, if it exists."""
+        for candidate in (f"include/{unit}.hpp", f"include/{unit}.h",
+                          f"src/{unit}.hpp", f"src/{unit}.h"):
+            p = self.repo_root / candidate
+            if p.is_file():
+                try:
+                    return p.read_text(encoding="utf-8", errors="replace")
+                except Exception:
+                    return None
         return None
 
     def _patch_fn(self, files_raw: list[dict]) -> ToolResult:
@@ -177,7 +214,15 @@ class Session:
                 old_text = pre[fp.path]
             all_violations += lint_delta(fp.path, old_text, new_text)
 
-        if all_violations:
+        # Separate hard violations (reject patch) from soft ones (warn only).
+        # Soft violations are style issues the model should fix later but
+        # shouldn't block matching.
+        _SOFT_LINT_RULES = {"no_void_ptr", "no_offset_arithmetic",
+                           "no_register_names", "no_register_keyword"}
+        hard = [v for v in all_violations if v.rule not in _SOFT_LINT_RULES]
+        soft = [v for v in all_violations if v.rule in _SOFT_LINT_RULES]
+
+        if hard:
             for rel, old in pre.items():
                 dest = self.repo_root / rel
                 if old is None:
@@ -192,16 +237,26 @@ class Session:
                 content=("**patch reverted — lint violations:**\n" + listing),
                 data={"violations": [v.rule for v in all_violations]})
 
+        soft_warning = None
+        if soft:
+            soft_warning = "\n".join(
+                f"- **{v.rule}** (line {v.line}): {v.detail}"
+                for v in soft)
+            self.transcript.log({
+                "role": "harness", "kind": "lint_warning",
+                "violations": [v.rule for v in soft]})
+
         self.patch_failures = 0
         self._dirty = True
         self._shared_headers.update(new_shared)
         if self.meta.status == SessionStatus.CLEANUP.value:
             self._needs_cleanup_verify = True
         ranges = {k: v for k, v in outcome.changed_ranges.items()}
-        return ToolResult(ok=True,
-                          content=(f"**patch applied.** Changed ranges: "
-                                   f"`{json.dumps(ranges)}`"),
-                          data={"changed_ranges": ranges})
+        msg = f"**patch applied.** Changed ranges: `{json.dumps(ranges)}`"
+        if soft_warning:
+            msg += "\n\n**Style warnings (fix in a later patch):**\n" + soft_warning
+        return ToolResult(ok=True, content=msg,
+                          data={"changed_ranges": ranges, "warning": soft_warning})
 
     def _coerce_unit(self, unit: str) -> str:
         """The session's unit is fixed; the LLM sometimes invents names."""
@@ -217,6 +272,8 @@ class Session:
         self._built_this_session = self._built_this_session or ok
         if ok:
             self.compile_error_streak = 0
+            if self._dirty:
+                self._auto_verify = True
             return ToolResult(ok=True, content="**build succeeded.**",
                               data={"unit": unit})
         # Compile-error attribution (review #11): foreign-caused failures
@@ -476,7 +533,9 @@ class Session:
             unit=meta.unit, retail_asm=self.retail_asm,
             writable=meta.writable, baseline=self.baseline,
             carryover=self.carryover, session_type=self.policy.name,
-            max_chars=cfg.prompt_max_chars)
+            max_chars=cfg.prompt_max_chars,
+            source_content=self._init_read_src(),
+            header_content=self._read_tu_header(meta.unit))
         self.transcript.log({"role": "system", "config": self.model.model})
         self.transcript.log({"role": "user", "kind": "brief",
                              "chars": len(brief)})
@@ -509,11 +568,16 @@ class Session:
             reply = self.provider.send(messages, schemas, self.model)
             self.turns += 1
             self.tokens_in += reply.usage.get("input_tokens", 0)
+            self.cache_tokens_in += reply.usage.get("cache_input_tokens", 0) or 0
+            self.tokens_out += reply.usage.get("output_tokens", 0) or 0
+            cost = compute_cost(reply.usage)
+            self.cost_total += cost.get("total_cost", 0) or 0
             self.transcript.log({
                 "turn": self.turns, "role": "assistant",
                 "text": reply.text[:2000],
-                "tool_calls": [{"name": c.name} for c in reply.tool_calls],
+                "tool_calls": [{"name": c.name, "args": c.args} for c in reply.tool_calls],
                 "usage": reply.usage,
+                "cost": cost,
                 "finish_reason": reply.finish_reason})
 
             messages.append({
@@ -546,7 +610,8 @@ class Session:
                 result = dispatch(call, self._ctx())
                 self.transcript.log({
                     "turn": self.turns, "role": "tool", "name": call.name,
-                    "ok": result.ok, "data": result.data})
+                    "ok": result.ok, "data": result.data,
+                    "content": result.content[:2000]})
                 if result.data.get("submitted"):
                     self._submitted = True
                     self._submit_note = result.data.get("note", "")
@@ -556,11 +621,12 @@ class Session:
                     "content": result.content,
                 })
 
-            # Verification triggers: submit (any state) or cleanup patch.
-            # Skip when nothing changed since the last verdict.
-            if (self._submitted or self._needs_cleanup_verify) and (
+            # Verification triggers: submit, cleanup patch, or auto-verify
+            # (build after patch). Skip when nothing changed since last verdict.
+            if (self._submitted or self._needs_cleanup_verify or self._auto_verify) and (
                     self._dirty or self._verdict is None):
                 self._needs_cleanup_verify = False
+                self._auto_verify = False
                 self._dirty = False
                 verdict = self._verify()
                 self.transcript.log({
@@ -608,7 +674,10 @@ class Session:
             "verdict_rule": self._verdict.rule if self._verdict else "",
             "submit_note": self._submit_note,
             "turns": self.turns, "builds": self.builds,
-            "tokens_in": self.tokens_in})
+            "tokens_in": self.tokens_in,
+            "cache_tokens_in": self.cache_tokens_in,
+            "tokens_out": self.tokens_out,
+            "cost_total": round(self.cost_total, 6)})
         self.transcript.close()
         return SessionOutcome(
             accepted=accepted, reason=reason, session_id=meta.session_id,

@@ -1,4 +1,5 @@
 {
+  "ninja": "/Users/ahmedelbannan/.local/bin/ninja",
   "project_root": ".",
   "region": "us",
   "match_policy": "equivalent",

@@ -3,30 +3,30 @@
 
 #include <harness_catalog.h>
 
-typedef struct ADXT_LscCallbackParam {
-    // Will be populated when callback types are known
-} ADXT_LscCallbackParam;
+struct ADXT_LscGlobals {
+    void (*pre_callback)(struct ADXT_LscCallbackParam*);
+    struct ADXT_LscCallbackParam* pre_param;
+    void (*post_callback)(struct ADXT_LscCallbackParam*);
+    struct ADXT_LscCallbackParam* post_param;
+};
 
-typedef struct {
-    void (*pre_callback)(ADXT_LscCallbackParam*);
-    ADXT_LscCallbackParam* pre_param;
-    void (*post_callback)(ADXT_LscCallbackParam*);
-    ADXT_LscCallbackParam* post_param;
-} ADXT_LscCallbacks;
+#define ADXT_LSC_GLOBALS ((struct ADXT_LscGlobals*)0x805E3328)
 
-static ADXT_LscCallbacks s_lsc_callbacks = {0};
+struct ADXT_LscCallbackParam {
+    int placeholder;
+};
 
-void ADXT_ExecLscSvr() {
+void ADXT_ExecLscSvr(void) {
     ADXCRS_Enter();
     
-    if (s_lsc_callbacks.pre_callback) {
-        s_lsc_callbacks.pre_callback(s_lsc_callbacks.pre_param);
+    if (ADXT_LSC_GLOBALS->pre_callback) {
+        ADXT_LSC_GLOBALS->pre_callback(ADXT_LSC_GLOBALS->pre_param);
     }
     
     LSC_ExecServer();
     
-    if (s_lsc_callbacks.post_callback) {
-        s_lsc_callbacks.post_callback(s_lsc_callbacks.post_param);
+    if (ADXT_LSC_GLOBALS->post_callback) {
+        ADXT_LSC_GLOBALS->post_callback(ADXT_LSC_GLOBALS->post_param);
     }
     
     ADXCRS_Leave();

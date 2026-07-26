@@ -21,6 +21,31 @@ from tools.llm_decomp.config import ModelConfig
 from tools.llm_decomp.contracts import ToolCall
 from .base import Provider, ProviderError, ProviderReply
 
+# DeepSeek V4 Flash pricing per 1M tokens (OpenRouter)
+_INPUT_RATE = 0.09
+_OUTPUT_RATE = 0.18
+_CACHED_INPUT_RATE = 0.009  # ~90% discount for cached hits
+
+
+def compute_cost(usage: dict) -> dict:
+    """Compute estimated cost from a usage dict.
+
+    Returns {"input_cost", "cached_input_cost", "output_cost", "total_cost"}
+    in USD, or zeros if usage is empty/missing.
+    """
+    inp = usage.get("input_tokens", 0) or 0
+    cached = usage.get("cache_input_tokens", 0) or 0
+    out = usage.get("output_tokens", 0) or 0
+    return {
+        "input_cost": round(inp * _INPUT_RATE / 1_000_000, 6),
+        "cached_input_cost": round(cached * _CACHED_INPUT_RATE / 1_000_000, 6),
+        "output_cost": round(out * _OUTPUT_RATE / 1_000_000, 6),
+        "total_cost": round(
+            inp * _INPUT_RATE / 1_000_000
+            + cached * _CACHED_INPUT_RATE / 1_000_000
+            + out * _OUTPUT_RATE / 1_000_000, 6),
+    }
+
 _API_BASE = "https://openrouter.ai/api/v1/chat/completions"
 _REFERER = "https://github.com/xenoblade-decomp"
 _TITLE = "llm-decomp"
@@ -77,15 +102,20 @@ def _build_body(messages: list[dict], tools: list[dict], model: ModelConfig) -> 
         if model.thinking_budget >= 0:
             reasoning["max_tokens"] = model.thinking_budget
         body["reasoning"] = reasoning
+    if model.openrouter_provider is not None:
+        body["provider"] = model.openrouter_provider
     return body
 
 
 def _parse_response(data: dict) -> ProviderReply:
     """Parse an OpenRouter chat completion response into a ProviderReply."""
     usage_raw = data.get("usage") or {}
+    details = usage_raw.get("prompt_tokens_details") or {}
     usage = {
         "input_tokens": usage_raw.get("prompt_tokens", 0),
         "output_tokens": usage_raw.get("completion_tokens", 0),
+        "cache_input_tokens": details.get("cached_tokens", 0) or 0,
+        "cache_write_tokens": details.get("cache_write_tokens", 0) or 0,
     }
     choices = data.get("choices") or []
     if not choices:
@@ -165,6 +195,15 @@ class OpenRouterProvider:
         """
         api_key = _resolve_api_key()
         body = _build_body(messages, tools, model)
+        # Use the first user message as a session_id so OpenRouter pins all
+        # turns in this session to the same provider backend, enabling
+        # prompt caching across turns.
+        for m in messages:
+            if m.get("role") == "user":
+                content = m.get("content", "")
+                if isinstance(content, str) and len(content) > 50:
+                    body["session_id"] = str(hash(content[:200]))
+                    break
         payload = json.dumps(body).encode("utf-8")
         req = urllib.request.Request(
             self._api_base,

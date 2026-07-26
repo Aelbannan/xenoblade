@@ -48,7 +48,7 @@ POLICIES: dict[str, SessionPolicy] = {
         name="match",
         scope=WritableScope(owning_tu=True, designated_header=True,
                              shared_headers=True),
-        tools=("read_file", "grep", "patch", "build", "diff", "equivalence", "submit"),
+        tools=("read_file", "patch", "build", "diff", "equivalence", "submit"),
         gate="match",
         prompt_template="prompts/match.md",
         budgets=dict(DEFAULT_BUDGETS["match"]),
@@ -56,7 +56,7 @@ POLICIES: dict[str, SessionPolicy] = {
     "type-recovery": SessionPolicy(
         name="type-recovery",
         scope=WritableScope(header_only=True, shared_headers=True),
-        tools=("read_file", "grep", "patch", "build", "diff", "equivalence", "submit"),
+        tools=("read_file", "patch", "build", "diff", "equivalence", "submit"),
         gate="type_recovery",
         prompt_template="prompts/type-recovery.md",
         budgets=dict(DEFAULT_BUDGETS["type-recovery"]),
@@ -64,7 +64,7 @@ POLICIES: dict[str, SessionPolicy] = {
     "rename": SessionPolicy(
         name="rename",
         scope=WritableScope(rename_only=True),
-        tools=("read_file", "grep", "symbols", "rename_symbol", "submit"),
+        tools=("read_file", "symbols", "rename_symbol", "submit"),
         gate="rename",
         prompt_template="prompts/rename.md",
         budgets=dict(DEFAULT_BUDGETS["rename"]),
@@ -72,7 +72,7 @@ POLICIES: dict[str, SessionPolicy] = {
     "tu-cleanup": SessionPolicy(
         name="tu-cleanup",
         scope=WritableScope(whole_tu=True, shared_headers=True),
-        tools=("read_file", "grep", "patch", "build", "diff", "submit"),
+        tools=("read_file", "patch", "build", "diff", "submit"),
         gate="byte_identical",
         prompt_template="prompts/tu-cleanup.md",
         budgets=dict(DEFAULT_BUDGETS["tu-cleanup"]),
@@ -80,7 +80,7 @@ POLICIES: dict[str, SessionPolicy] = {
     "size-trim": SessionPolicy(
         name="size-trim",
         scope=WritableScope(whole_tu=True, shared_headers=True),
-        tools=("read_file", "grep", "patch", "build", "diff", "equivalence", "submit"),
+        tools=("read_file", "patch", "build", "diff", "equivalence", "submit"),
         gate="size_trim",
         prompt_template="prompts/size-trim.md",
         budgets=dict(DEFAULT_BUDGETS["size-trim"]),

@@ -58,6 +58,8 @@ def build_brief(
     carryover: str | None = None,
     session_type: str = "match",
     max_chars: int = 60_000,
+    source_content: str | None = None,
+    header_content: str | None = None,
 ) -> str:
     """Build the markdown brief for the decompilation session.
 
@@ -131,6 +133,20 @@ def build_brief(
     else:
         state_section += "baseline pending\n\n"
 
+    # -- Source file content --------------------------------------------------
+    source_section = ""
+    if source_content:
+        source_section = "## Current source file\n\n```cpp\n"
+        source_section += source_content.rstrip("\n")
+        source_section += "\n```\n\n"
+
+    # -- Header content -------------------------------------------------------
+    header_section = ""
+    if header_content:
+        header_section = "## TU header\n\n```cpp\n"
+        header_section += header_content.rstrip("\n")
+        header_section += "\n```\n\n"
+
     # -- Rules ----------------------------------------------------------------
     rules_section = "## Rules\n\n"
     rules = [
@@ -160,7 +176,7 @@ def build_brief(
     # -- Assemble & enforce size budget ---------------------------------------
     # Build prefix without the raw ASM lines to compute headroom.
     prefix = heading + target_section
-    suffix = writable_section + state_section + rules_section + carryover_section + closing
+    suffix = writable_section + state_section + source_section + header_section + rules_section + carryover_section + closing
 
     # Estimate overhead of unknown-length section markers.
     asm_overhead = len(asm_header) + len(asm_footer)

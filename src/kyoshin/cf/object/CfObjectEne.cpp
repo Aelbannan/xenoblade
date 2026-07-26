@@ -1,6 +1,3 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/object/CfObjectEne
-// Replace stubs with high-level C/C++ during decomp.
-
 #include "kyoshin/harness_catalog.hpp"
 
 extern "C" void __ct__cf_CfObjectEne() {}

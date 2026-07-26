@@ -5,7 +5,46 @@
 
 extern "C" void func_80061870() {}
 
-extern "C" void func_80061A80() {}
+struct CfResBuffer {
+    u8 buffer[0x400];
+    u32 field_400;
+    u32 field_404;
+};
+
+int func_80061A80(struct CfResBuffer* self, unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits) {
+    unsigned int usedSize = self->field_404;
+    unsigned int total = usedSize + count + 2;
+    if (total >= 0x100) {
+        return 0;
+    }
+
+    unsigned int writeIdx = self->field_400;
+    unsigned int newIdx = (writeIdx - count - 2) & 0xFF;
+    self->field_400 = newIdx;
+
+    unsigned int h = headerBits & 0xFF0FFFFF;
+    h = (h & 0x00FFFFFF) | ((unsigned int)byte1 << 24);
+    h = (h & 0xFFFF0000) | (unsigned int)halfword;
+    h &= 0xFFF7FFFF;
+    h = (h & 0xFFF0FFFF) | (((unsigned int)count & 0xF) << 20);
+
+    unsigned int* buf = (unsigned int*)self->buffer;
+    buf[newIdx] = h;
+    buf[(newIdx + 1) & 0xFF] = dataVal;
+
+    if (count > 0) {
+        unsigned int i = 0;
+        unsigned int off = 2;
+        while (i < (unsigned int)count) {
+            buf[(newIdx + off) & 0xFF] = src[i];
+            i++;
+            off++;
+        }
+    }
+
+    self->field_404 = usedSize + count + 2;
+    return 1;
+}
 
 extern "C" void func_80061C5C() {}
 

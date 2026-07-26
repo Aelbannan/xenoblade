@@ -69,6 +69,7 @@ from tools.coop.lib.targets import (
     release_target,
     sync_results_from_attempts,
     sync_called_functions,
+    targets_path,
     update_target_result,
     validate_targets,
     write_targets_document,
@@ -349,8 +350,28 @@ def cmd_cycle(
     if unit.base_path:
         _postprocess_mtrand_object(project, unit.base_path)
 
+    # §2.7.6: honor a declared_return recorded on the target's stored
+    # certificate (manual review), so cycle re-proofs replay it.
+    _declared_return = None
+    try:
+        import json as _json
+
+        _raw = _json.loads(targets_path(config).read_text(encoding="utf-8"))
+        for _row in _raw.get("targets", []):
+            if _row.get("id") == target_id:
+                _abi = (_row.get("equivalence_certificate") or {}).get("abi_shape")
+                if isinstance(_abi, dict):
+                    _declared_return = _abi.get("declared_return")
+                if _declared_return is None and isinstance(
+                    _row.get("declared_return"), str
+                ):
+                    _declared_return = _row["declared_return"]
+                break
+    except (OSError, ValueError):
+        pass
     evaluation = evaluate_unit_match(
         project, unit, target.symbol, linked=linked, target_id=target.id,
+        declared_return=_declared_return,
     )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match

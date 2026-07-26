@@ -68,7 +68,16 @@ class R4ThunkLeakTests(unittest.TestCase):
     def test_r3_clobber_is_correctly_not_equivalent(self) -> None:
         result = _prove(self._CORRECT_THUNK, self._CLOBBER_R3)
         self.assertEqual(result.status, ProofStatus.NOT_EQUIVALENT)
-        self.assertEqual((result.mismatch or {}).get("name"), "exit.target")
+        # The clobbered r3 feeds the lwz that forms the branch target, so the
+        # inequivalence may legitimately surface as exit.target, as the r3
+        # observable, or as a definedness difference (the load from address 0
+        # can be invalid) — which one is reported depends on the model the
+        # solver happens to produce (z3 model values are influenced by global
+        # solver state from previously-run proofs in the same process).
+        self.assertIn(
+            (result.mismatch or {}).get("name"),
+            {"exit.target", "r3", "defined-domain"},
+        )
 
 
 if __name__ == "__main__":

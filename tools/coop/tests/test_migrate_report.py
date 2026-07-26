@@ -48,8 +48,34 @@ def _certificate(
             "masking_semantics": "per-implementation-independent-v1",
         },
     }
+    certificate["opcodes_used"] = ["add"]
+    certificate["capability_requirements"] = _derive_requirements(certificate)
+    _attach_assurance(certificate)
     certificate["certificate_sha256"] = equivalence_certificate_hash(certificate)
     return certificate
+
+
+def _derive_requirements(certificate: dict) -> dict:
+    from tools.coop.lib.equivalence_policy import proof_result_from_certificate
+    from tools.ppc_equivalence.capability_requirements import (
+        derive_capability_requirements,
+    )
+    from tools.ppc_equivalence.result import ProofStatus
+
+    proof = proof_result_from_certificate(ProofStatus.EQUIVALENT, certificate)
+    return derive_capability_requirements(proof).to_dict()
+
+
+def _attach_assurance(certificate: dict) -> None:
+    from tools.coop.lib.equivalence_check import _apply_capability_assurance
+    from tools.coop.lib.equivalence_policy import proof_result_from_certificate
+    from tools.ppc_equivalence.result import ProofStatus
+
+    proof = proof_result_from_certificate(ProofStatus.EQUIVALENT, certificate)
+    _apply_capability_assurance(proof)
+    certificate["capability_assurance"] = getattr(
+        proof, "capability_assurance", None
+    )
 
 
 class MigrateReportTests(unittest.TestCase):

@@ -1,5 +1,15 @@
 {
   "units": {
+    "kyoshin/cf/CfGameManager": {
+      "notes": "",
+      "sessions": [
+        "0040763507e4"
+      ],
+      "stages": {
+        "type-recovery": "2026-07-26T13:24:39Z"
+      },
+      "status": "in_progress"
+    },
     "kyoshin/code_800B06A4": {
       "notes": "",
       "sessions": [

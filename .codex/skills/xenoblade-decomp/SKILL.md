@@ -413,11 +413,10 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 | Tool | Use |
 |------|-----|
 | `DECOMP_PPC_RLWINM` / `DECOMP_PPC_SHL1_U32` in `decomp.h` | MWCC `__rlwinm` builtins (SDK-equivalent); opcode selection e.g. `slwi` vs `rlwinm …,16,30` |
-| `DECOMP_ASM_INSN_BEGIN` / `END` + one `asm { }` insn | Single-instruction gap in an otherwise ≥99% function |
 | `extern "C" lbl_eu_*` | Reloc names when values match under `functionRelocDiffs=data_value` |
 | Goto gate chains | Multi-exit guards (`setSplitLine` pattern) — not for prologue spill order alone |
 
-**Still forbidden:** `register rN`, fake `sp[]` buffers, **`asm void` / whole-function asm bodies**, standalone `.s`. Do not close a target by replacing its body with an `asm void` retail transcription.
+**Still forbidden:** `register rN`, fake `sp[]` buffers, inline `asm { }` of any size (including single-instruction), **`asm void` / whole-function asm bodies**, standalone `.s`. Do not close a target by replacing its body with an `asm void` retail transcription.
 
 ## Low-level techniques — do not use in `src/**` / `libs/**`
 
@@ -436,8 +435,8 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 - Call `CGame::wkRender` or full frame update twice for split-screen experiments
 - Accept `STRUCTURAL` / `CODE_MATCH` / `HIGH_MATCH` as final state (policy is `EQUIVALENT_MATCH`)
 - Submit AI-assisted reconstruction upstream
-- **Use assembly as decompilation output** — no `asm void` bodies, whole-function `asm { }`, or `.s` units; **single-instruction** inline asm only per `PLAN.md` §17.6
-- **Micro-manage registers or the stack in source** — use §17.6 intrinsics or logged single-instruction asm when C++ is exhausted
+- **Use assembly as decompilation output** — no `asm void` bodies, inline `asm { }` of any size, or `.s` units; assembly is never an acceptable match artifact
+- **Micro-manage registers or the stack in source** — use §17.6 intrinsics when C++ is exhausted
 - **Post-process Chaitin / register soft-caps in `.text`** — no general `insn_patches`. Narrow linker-ADDR16 bake (`bake_linker_addrs` / `force_symbol_relocs` for DOL-split absolute symbols like `_stack_addr`) is allowed; rename relocs/pools and trim/drop symbols remain OK
 
 ## Key paths

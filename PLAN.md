@@ -1456,13 +1456,12 @@ Use only after normal C++ and decomp.me fail, and **log every use** in `docs/evi
 | Exception | Allowed when | Requirements |
 |-----------|----------------|--------------|
 | **MWCC PPC intrinsics** | Opcode selection (`slwi` vs `rlwinm`, bitfield inserts) | Use `DECOMP_PPC_*` macros from `include/decomp.h` (same family as SDK `__rlwimi` / `__rlwinm`). Document in `MWCC_REFERENCE.md` if a new pattern is reusable. |
-| **Single-instruction inline asm** | Exactly one insn differs in an otherwise ≥99% function; semantics proven equivalent | Wrap in `DECOMP_ASM_INSN_BEGIN` / `DECOMP_ASM_INSN_END` (or a named `DECOMP_ASM_*` helper macro). No register variables; asm must mirror retail mnemonic/operands only. Max **one** insn per function unless user approves more. |
 | **Goto gate chains** | CSplitFrame / multi-exit guards (see `setSplitLine` 100%) | Gotos for control-flow gates are OK; not for prologue spill ordering alone. |
 | **Relocation name drift** | `functionRelocDiffs=data_value` already compares values; TU-local `@N` vs retail `lbl_eu_*` at same offset | Prefer `extern "C" lbl_eu_*` when it does not regress codegen. If names still block 100% with identical instructions/data, post-process the object with `powerpc-eabi-objcopy --redefine-sym` (see `tools/postprocess_mtrand_object.py`; log in `attempts.jsonl`). `objdiff.json` `symbol_mappings` does not affect CLI reports (objdiff #279). |
 
-**Not approved:** `register rN`, fake `sp[]` buffers, **`asm void` / whole-function asm bodies**, standalone `.s` units, or transcribed retail asm blocks. Matching targets must remain **high-level C/C++**; do not replace a function with an `asm void` retail dump to force `FULL_MATCH`.
+**Not approved:** `register rN`, fake `sp[]` buffers, inline `asm { }` of any size (including single-instruction), **`asm void` / whole-function asm bodies**, standalone `.s` units, or transcribed retail asm blocks. Matching targets must remain **high-level C/C++**; do not replace a function with an `asm void` retail dump to force `FULL_MATCH`.
 
-**Escalation:** frame-size / caller-stack ABI gaps (`setCurrent`, `setRect` prologue) may combine intrinsics, leaf helpers, decomp.me, and single-instruction asm per row above — not wholesale asm functions.
+**Escalation:** frame-size / caller-stack ABI gaps (`setCurrent`, `setRect` prologue) may combine intrinsics, leaf helpers, and decomp.me — not asm of any kind.
 
 ### 17.3 Common mismatch categories
 

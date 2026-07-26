@@ -3875,7 +3875,15 @@ def _missing_type_forward_decls(
     Extracts class qualifiers from all relocation symbols (mangled names)
     and generates ``struct TypeName;`` forward decls for any type name not
     found at file scope in the TU source.
+
+    Skips namespaces (lowercase names) and names already declared or defined.
     """
+    # Known namespace names that appear in qualifiers — never types.
+    _NAMESPACE_NAMES = frozenset({
+        "nw4r", "mtl", "detail", "lyt", "g3d", "ut", "math", "cf", "snd",
+        "res", "arc", "lyt", "g3d", "ut", "rvl", "cri", "eula", "jp",
+    })
+
     # Collect type-like qualifiers from all relocation symbols
     seen_qualifiers: List[str] = []
     for reloc in (function_bytes.relocations or ()):
@@ -3889,14 +3897,22 @@ def _missing_type_forward_decls(
     file_scope = _mask_block_scopes(tu_source)
     decls: List[str] = []
     for qual in seen_qualifiers:
-        # Skip qualifiers that are already declared or defined
-        if re.search(
-            rf"\b{qual}\b",
-            file_scope,
-        ):
+        # Skip namespaces (lowercase) and known non-type qualifiers
+        if qual[0].islower():
+            continue
+        if qual in _NAMESPACE_NAMES:
+            continue
+        # Skip qualifiers containing template angle brackets or anonymous markers
+        if '<' in qual or '>' in qual or '@' in qual:
             continue
         # Skip single-letter/generic qualifiers that are likely not type names
         if len(qual) <= 2:
+            continue
+        # Skip qualifiers that are already declared or defined at file scope
+        if re.search(
+            rf"\b{re.escape(qual)}\b",
+            file_scope,
+        ):
             continue
         decls.append(f"struct {qual};")
     return decls

@@ -286,7 +286,7 @@ When a vtable / data table already references the shortened `…Fv` name (common
 
 Retail `__ct__Q22cf5CHelpFv` stores `owner@0`, `param@4`, `lbl_eu_8053B3A0@8` — **not** a C++ vptr at +0. Derived helps add fields from `+0xC` (`s32` thresholds need `s32`/`cmpw`, not `u32`/`cmplw`). Calls through `this+0x8` are a manual interface table; MWCC function-pointer codegen often uses `r4` where retail virtual-style loads use `r12` (~99.3–99.6% near-miss).
 
-High-level source should use `mVtbl->mSlots[N]` (or equivalent `this+0x8` reload between calls). Near-misses that are only vtbl temp register coloring (retail `r12` vs MWCC `r4`) need further high-level C reshaping or §17.6 single-instruction asm — do **not** post-process `.text` instruction words.
+High-level source should use `mVtbl->mSlots[N]` (or equivalent `this+0x8` reload between calls). Near-misses that are only vtbl temp register coloring (retail `r12` vs MWCC `r4`) need further high-level C reshaping — do **not** post-process `.text` instruction words and do **not** use inline asm.
 
 **Actor/move deep vtable slots (r12):** function-pointer `vslot` loads color the vptr as `r4`. Cast the object to a fake single-inheritance interface with `virtual` methods at the retail byte offsets and call through that — MWCC emits `lwz r12,0(obj)` / `lwz r12,off(r12)` / `bcctrl`. With kyoshin `-RTTI on`, omit the first **two** pad virtuals so slot `0xN` lands at offset `0xN` (hidden typeinfo slots). See `MenuBpsActorIf` / `MenuBpsMoveIf` in `CMenuBattlePlayerState.cpp` (`menu-bps-move` ~99.8%).
 

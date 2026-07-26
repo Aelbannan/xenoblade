@@ -243,3 +243,69 @@ class BuildBriefTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+from tools.llm_decomp.brief import TargetBrief, build_batch_brief  # noqa: E402
+
+
+def _tb(i: int, asm: str = "li r3, 0\nblr") -> TargetBrief:
+    return TargetBrief(
+        target_id=f"target-{i}",
+        symbol=f"fn{i}__Fv",
+        demangled=f"fn{i}()",
+        signature=f"void fn{i}()",
+        retail_asm=asm,
+    )
+
+
+class BuildBatchBriefTest(unittest.TestCase):
+    def test_single_source_header_n_target_blocks(self) -> None:
+        brief = build_batch_brief(
+            targets=[_tb(1), _tb(2), _tb(3)],
+            unit="kyoshin/cf/CfPadTask",
+            writable=["src/kyoshin/cf/CfPadTask.cpp"],
+            baseline=None,
+            source_content="// source",
+            header_content="// header",
+        )
+        self.assertEqual(brief.count("## Current source file"), 1)
+        self.assertEqual(brief.count("## TU header"), 1)
+        for i in (1, 2, 3):
+            self.assertIn(f"## Target {i}: target-{i}", brief)
+            self.assertIn(f"`fn{i}__Fv`", brief)
+            self.assertIn(f"void fn{i}()", brief)
+        self.assertIn("# Decompilation session: batch-match", brief)
+        self.assertIn("## Targets", brief)
+
+    def test_rules_include_base_and_batch_rules(self) -> None:
+        brief = build_batch_brief(
+            targets=[_tb(1)], unit="u", writable=["w.cpp"], baseline=None)
+        self.assertIn("**High-level C/C++ only.**", brief)
+        self.assertIn("**The signature is locked.**", brief)
+        self.assertIn("**Submit each target separately**", brief)
+        self.assertIn("**Accepted targets are frozen**", brief)
+
+    def test_asm_truncated_within_budget(self) -> None:
+        big_asm = "\n".join(f"li r3, {i}" for i in range(5000))
+        brief = build_batch_brief(
+            targets=[_tb(1, big_asm), _tb(2, big_asm)],
+            unit="u", writable=["w.cpp"], baseline=None,
+            max_chars=20_000)
+        self.assertIn("lines elided", brief)
+        self.assertLessEqual(len(brief), 20_000)
+
+    def test_baseline_none_renders(self) -> None:
+        brief = build_batch_brief(
+            targets=[_tb(1)], unit="u", writable=["w.cpp"], baseline=None)
+        self.assertIn("baseline pending", brief)
+
+    def test_baseline_reports_per_target_mismatches(self) -> None:
+        baseline = Baseline(
+            unit="u",
+            symbols={"fn1__Fv": SymbolBaseline("h", 12, "")},
+            text_size=100, text_budget=200, object_path="o")
+        brief = build_batch_brief(
+            targets=[_tb(1), _tb(2)], unit="u", writable=["w.cpp"],
+            baseline=baseline)
+        self.assertIn("current mismatches for `fn1__Fv`: 12", brief)
+        self.assertIn("current mismatches for `fn2__Fv`: not yet compiled",
+                      brief)

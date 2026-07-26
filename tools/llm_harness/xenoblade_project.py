@@ -57,6 +57,7 @@ from tools.llm_harness.match_improve import (
     format_objdiff_feedback_text,
 )
 from tools.llm_harness.structural import compare_structural
+from tools.ppc_equivalence.ir import R_PPC_REL24
 from tools.llm_harness.types import (
     Candidate,
     CandidateEvaluation,
@@ -1505,6 +1506,17 @@ class XenobladeAdapter:
             raise FileNotFoundError(f"Retail split object is missing for {target.unit}")
         function = extract_function(unit.target_path, target.symbol)
         source = target.source.read_text(encoding="utf-8")
+        # Seed function stubs and type forward declarations from retail
+        # relocations into the source context so the model sees them.
+        seeded_stubs = _missing_function_extern_decls(
+            source, "", function
+        )
+        seeded_types = _missing_type_forward_decls(
+            source, function, target.symbol or ""
+        )
+        if seeded_stubs or seeded_types:
+            stub_block = "\n".join(seeded_stubs + seeded_types)
+            source = stub_block + "\n\n" + source
         region = _find_function_region(source, target)
         current_function = source[region.content_start : region.content_end].strip()
         # Oldest→newest so the cacheable prefix through the older attempts stays
@@ -1969,6 +1981,16 @@ class XenobladeAdapter:
         assert target.source is not None and target.unit is not None
         original = target.source.read_text(encoding="utf-8")
         region = _find_function_region(original, target)
+        unit = self.project.resolve_unit(target.unit)
+        # Extract retail function bytes for relocation analysis (used by both
+        # data-decl and function-stub injection).
+        retail_function = None
+        if unit.target_path and unit.target_path.is_file() and target.symbol:
+            try:
+                retail_function = extract_function(unit.target_path, target.symbol)
+            except (FileNotFoundError, ValueError):
+                pass
+
         # Inject extern "C" declarations for flat lbl_* data symbols the
         # retail asm references but nothing declares. Prepending them to the
         # candidate keeps them inside the slot region so accepted artifacts
@@ -1976,9 +1998,27 @@ class XenobladeAdapter:
         missing_decls = _missing_data_extern_decls(
             original, candidate.source, self._retail_assembly(target)
         )
+        # Inject extern "C" function stubs for func_* callees referenced in
+        # the retail relocations but not declared anywhere in the TU.
+        if retail_function is not None:
+            missing_func_decls = _missing_function_extern_decls(
+                original, candidate.source, retail_function
+            )
+            if missing_func_decls:
+                missing_decls.extend(missing_func_decls)
+            # Inject forward declarations for class/type qualifiers found in
+            # relocation symbols but not declared at file scope.
+            missing_type_decls = _missing_type_forward_decls(
+                original, retail_function, target.symbol or ""
+            )
+            if missing_type_decls:
+                missing_decls.extend(missing_type_decls)
         if missing_decls:
             candidate.source = "\n".join(missing_decls) + "\n" + candidate.source
-        self._validate_source(original[region.content_start : region.content_end], candidate.source)
+        self._validate_source(
+            original[region.content_start : region.content_end], candidate.source,
+            context=target_id,
+        )
         candidate_file = _replace_function_source(
             original,
             region,
@@ -1989,7 +2029,6 @@ class XenobladeAdapter:
             target_id=target.id,
             local_mode=bool(self.local_sanitize),
         )
-        unit = self.project.resolve_unit(target.unit)
         original_object = unit.base_path.read_bytes() if unit.base_path and unit.base_path.is_file() else None
         try:
             target.source.write_text(candidate_file, encoding="utf-8")
@@ -2411,10 +2450,11 @@ class XenobladeAdapter:
                 if slot is None:
                     raise ValueError(f"TU candidate references unknown slot {patch.slot_id!r}")
                 self._validate_source(
-                    original[slot.content_start : slot.content_end], patch.source
+                    original[slot.content_start : slot.content_end], patch.source,
+                    context=patch.slot_id,
                 )
             return _apply_tu_patches(original, slots, candidate.patches)
-        self._validate_source(original, candidate.source)
+        self._validate_source(original, candidate.source, context="tu_candidate_source")
         return candidate.source
 
     def _tu_regression_guard(
@@ -2500,15 +2540,25 @@ class XenobladeAdapter:
             float(metrics.get("fuzzy_percent") or 0.0),
         )
 
-    def _validate_source(self, original: str, candidate: str) -> None:
+    def _validate_source(
+        self, original: str, candidate: str, *, context: str = ""
+    ) -> None:
         if not candidate.strip():
-            raise ValueError("Candidate source is empty")
+            parts = ["Candidate source is empty"]
+            if context:
+                parts.append(f"({context})")
+            raise ValueError(" ".join(parts))
         if len(candidate) > self.max_source_chars * 2:
-            raise ValueError("Candidate source exceeds the safety limit")
+            raise ValueError(
+                f"Candidate source exceeds the safety limit (context={context})"
+            )
         forbidden = ("asm {", "asm void", "register r", "asm(\"r", "sp[")
         added = [token for token in forbidden if candidate.count(token) > original.count(token)]
         if added:
-            raise ValueError(f"Candidate adds forbidden low-level source patterns: {', '.join(added)}")
+            raise ValueError(
+                f"Candidate adds forbidden low-level source patterns: {', '.join(added)} "
+                f"(context={context})"
+            )
 
     def _build_object(self, object_path: Path) -> str:
         with self._phase("ninja"):
@@ -2987,7 +3037,10 @@ class XenobladeAdapter:
         source_path = root / target.source.relative_to(self.root)
         source = source_path.read_text(encoding="utf-8")
         region = _find_function_region(source, target)
-        self._validate_source(source[region.content_start : region.content_end], candidate.source)
+        self._validate_source(
+            source[region.content_start : region.content_end], candidate.source,
+            context=f"apply_candidate:{target_id}",
+        )
         updated = _replace_function_source(
             source,
             region,
@@ -3011,7 +3064,10 @@ class XenobladeAdapter:
         source_path = root / target.source.relative_to(self.root)
         original = source_path.read_text(encoding="utf-8")
         region = _find_function_region(original, target)
-        self._validate_source(original[region.content_start : region.content_end], candidate.source)
+        self._validate_source(
+            original[region.content_start : region.content_end], candidate.source,
+            context=f"evaluate_candidate:{target_id}",
+        )
         candidate_file = _replace_function_source(
             original,
             region,
@@ -3763,6 +3819,86 @@ def _missing_data_extern_decls(
         ):
             continue
         decls.append(f'extern "C" {ctype} {sym};')
+    return decls
+
+
+def _missing_function_extern_decls(
+    tu_source: str, candidate_source: str, function_bytes: Any
+) -> List[str]:
+    """``extern "C"`` function stubs for ``func_*`` callees nothing declares.
+
+    Skips symbols already declared at file scope in the TU or anywhere in the
+    candidate (block-scope declarations inside the candidate are sufficient).
+    Also skips symbols whose base name doesn't start with ``func_`` (mangled
+    symbols have proper declarations from matched functions).
+    """
+    from tools.ppc_equivalence.ir import R_PPC_REL24
+
+    callee_symbols: List[str] = []
+    for reloc in (function_bytes.relocations or ()):
+        if getattr(reloc, 'relocation_type', None) == R_PPC_REL24:
+            sym = getattr(reloc, 'symbol', None) or ''
+            if sym and sym not in callee_symbols:
+                callee_symbols.append(sym)
+    if not callee_symbols:
+        return []
+
+    file_scope = _mask_block_scopes(tu_source)
+    decls: List[str] = []
+    for sym in callee_symbols:
+        # Only auto-stub func_* symbols — mangled/class-qualified symbols
+        # either have declarations from matched functions or are referenced
+        # via their C++ names (not the mangled relocation symbol).
+        base = sym.split("__")[0] if "__" in sym else sym
+        if not base.startswith("func_"):
+            continue
+        escaped = re.escape(sym)
+        if re.search(
+            rf"\b{escaped}\b",
+            file_scope,
+        ):
+            continue
+        if re.search(
+            rf"\b{escaped}\b",
+            candidate_source or "",
+        ):
+            continue
+        decls.append(f'extern "C" void {sym}();')
+    return decls
+
+
+def _missing_type_forward_decls(
+    tu_source: str, function_bytes: Any, target_symbol: str
+) -> List[str]:
+    """Forward declarations for class/type names referenced but not declared.
+
+    Extracts class qualifiers from all relocation symbols (mangled names)
+    and generates ``struct TypeName;`` forward decls for any type name not
+    found at file scope in the TU source.
+    """
+    # Collect type-like qualifiers from all relocation symbols
+    seen_qualifiers: List[str] = []
+    for reloc in (function_bytes.relocations or ()):
+        sym = getattr(reloc, 'symbol', None) or ''
+        for q in _mangled_class_qualifiers(sym):
+            if q not in seen_qualifiers:
+                seen_qualifiers.append(q)
+    if not seen_qualifiers:
+        return []
+
+    file_scope = _mask_block_scopes(tu_source)
+    decls: List[str] = []
+    for qual in seen_qualifiers:
+        # Skip qualifiers that are already declared or defined
+        if re.search(
+            rf"\b{qual}\b",
+            file_scope,
+        ):
+            continue
+        # Skip single-letter/generic qualifiers that are likely not type names
+        if len(qual) <= 2:
+            continue
+        decls.append(f"struct {qual};")
     return decls
 
 

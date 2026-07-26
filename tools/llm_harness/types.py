@@ -502,6 +502,11 @@ class Candidate:
             value if isinstance(value, SourcePatch) else SourcePatch(**value)
             for value in self.patches
         ]
+        for p in self.patches:
+            if not p.source.strip():
+                raise ValueError(
+                    f"Candidate patch {p.slot_id!r} has empty source"
+                )
 
 
 @dataclass

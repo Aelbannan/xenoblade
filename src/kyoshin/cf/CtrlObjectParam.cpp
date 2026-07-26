@@ -115,7 +115,22 @@ extern "C" void func_8009E168() {}
 // LLM-HARNESS-END: us-8009eb40
 
 // LLM-HARNESS-BEGIN: us-8009ebe4
-extern "C" void func_8009E20C() {}
+extern "C" int func_8009E20C(void* self, int firstType, int firstIndex, int secondType, int secondIndex) {
+    int* first = 0;
+    int* second = 0;
+    if (firstType == 1)
+        first = reinterpret_cast<int*>(reinterpret_cast<char*>(self) + firstIndex * 4 + 4);
+    else if (firstType == 2)
+        first = reinterpret_cast<int*>(reinterpret_cast<char*>(self) + firstIndex * 4 + 16);
+    if (secondType == 1)
+        second = reinterpret_cast<int*>(reinterpret_cast<char*>(self) + secondIndex * 4 + 4);
+    else if (secondType == 2)
+        second = reinterpret_cast<int*>(reinterpret_cast<char*>(self) + secondIndex * 4 + 16);
+    int value = *first;
+    *first = *second;
+    *second = value;
+    return 1;
+}
 // LLM-HARNESS-END: us-8009ebe4
 
 // LLM-HARNESS-BEGIN: us-8009ec5c
@@ -123,7 +138,23 @@ extern "C" void func_8009E284() {}
 // LLM-HARNESS-END: us-8009ec5c
 
 // LLM-HARNESS-BEGIN: us-8009ed1c
-extern "C" void func_8009E344() {}
+extern "C" int func_8009E344(const unsigned int* param_1, unsigned int param_2, int* param_3, int* param_4) {
+    for (int i = 0; i < 3; ++i) {
+        if (param_1[i + 1] == param_2) {
+            *param_3 = 1;
+            *param_4 = i;
+            return 1;
+        }
+    }
+    for (int i = 0; i < 6; ++i) {
+        if (param_1[i + 4] == param_2) {
+            *param_3 = 2;
+            *param_4 = i;
+            return 1;
+        }
+    }
+    return 0;
+}
 // LLM-HARNESS-END: us-8009ed1c
 
 // LLM-HARNESS-BEGIN: us-8009ed98
@@ -148,7 +179,7 @@ extern "C" void func_8009E740() {}
 // LLM-HARNESS-END: us-8009f118
 
 // LLM-HARNESS-BEGIN: us-8009f1a0
-extern "C" void func_8009E7C8() {}
+extern "C" int func_8009E7C8(unsigned char* self) { self[0] = 0; unsigned int* words = reinterpret_cast<unsigned int*>(self + 4); words[0] = 0; words[1] = 0; words[2] = 0; words[3] = 0; words[4] = 0; words[5] = 0; words[6] = 0; words[7] = 0; words[8] = 0; words[9] = 0; words[10] = 0; words[11] = 0; words[12] = 0; words[13] = 0; words[14] = 0; words[15] = 0; words[16] = 0; words[17] = 0; words[18] = 0; words[19] = 0; words[20] = 0; words[21] = 0; words[22] = 0; words[23] = 0; return 1; }
 // LLM-HARNESS-END: us-8009f1a0
 
 // LLM-HARNESS-BEGIN: us-8009f210

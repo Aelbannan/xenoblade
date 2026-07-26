@@ -1475,7 +1475,20 @@ extern "C" u16 func_8016E094() { return lbl_eu_8066427E; }
 // LLM-HARNESS-END: us-8016f448
 
 // LLM-HARNESS-BEGIN: us-8016f450
-extern "C" void func_8016E09C() {}
+extern "C" unsigned short lbl_eu_8066427A;
+extern "C" unsigned short lbl_eu_8066427C;
+extern "C" void* memset(void*, int, unsigned long);
+
+extern "C" void func_8016E09C(void* self) {
+    unsigned char* p = static_cast<unsigned char*>(self);
+    memset(self, 0, 0x10);
+    *reinterpret_cast<float*>(p + 0x0) = lbl_eu_80664284;
+    *reinterpret_cast<unsigned short*>(p + 0x4) = lbl_eu_80664278;
+    *reinterpret_cast<unsigned short*>(p + 0x6) = lbl_eu_8066427E;
+    *reinterpret_cast<unsigned short*>(p + 0xC) = lbl_eu_80664280;
+    *reinterpret_cast<unsigned short*>(p + 0x8) = lbl_eu_8066427A;
+    *reinterpret_cast<unsigned short*>(p + 0xA) = lbl_eu_8066427C;
+}
 // LLM-HARNESS-END: us-8016f450
 
 // LLM-HARNESS-BEGIN: us-8016f4b4

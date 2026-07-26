@@ -1370,7 +1370,27 @@ extern "C" void func_801B1CCC() {}
 // LLM-HARNESS-END: us-801b3590
 
 // LLM-HARNESS-BEGIN: us-801b3610
-extern "C" void func_801B1D4C() {}
+extern "C" int func_801B1D4C(int index)
+{
+    if (lbl_eu_80664398 == 0)
+        return -1;
+
+    if (index < 0)
+    {
+        for (int i = 2; i >= 0; --i)
+        {
+            unsigned char *entry = lbl_eu_80664398 + i * 0x18;
+            if (*(short *)(entry + 0x14) == 1)
+                return *(unsigned char *)(entry + 0x1c);
+        }
+        return -1;
+    }
+
+    unsigned char *entry = lbl_eu_80664398 + index * 0x18;
+    if (*(short *)(entry + 0x14) == 1)
+        return *(unsigned char *)(entry + 0x1c);
+    return -1;
+}
 // LLM-HARNESS-END: us-801b3610
 
 // LLM-HARNESS-BEGIN: us-801b3690

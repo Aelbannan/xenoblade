@@ -1573,7 +1573,22 @@ extern "C" void func_8006861C() {}
 // LLM-HARNESS-END: us-80069024
 
 // LLM-HARNESS-BEGIN: us-80069088
-extern "C" void func_80068680() {}
+extern "C" void* func_80068680(void* self, unsigned int id, unsigned int* outIndex, unsigned int* outValue) {
+    unsigned char* entry = static_cast<unsigned char*>(self) + 0x14DC;
+    unsigned int index = 0x59;
+    *outIndex = 0;
+    *outValue = static_cast<unsigned int>(-1);
+    if (id == 0)
+        return 0;
+    for (unsigned int i = 0; i < 0x28; ++i, ++index, entry += 0x3C) {
+        if (*reinterpret_cast<unsigned int*>(entry + 8) == id) {
+            *outIndex = index;
+            *outValue = *(entry + 0x36);
+            return entry + 4;
+        }
+    }
+    return 0;
+}
 // LLM-HARNESS-END: us-80069088
 
 // LLM-HARNESS-BEGIN: us-800690ec

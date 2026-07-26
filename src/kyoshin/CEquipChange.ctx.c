@@ -1403,7 +1403,22 @@ extern "C" void func_80202EB4() {}
 // LLM-HARNESS-END: us-80204bac
 
 // LLM-HARNESS-BEGIN: us-80204e30
-extern "C" void func_80203138() {}
+extern "C" int func_80203138(void* self) {
+    signed char value = *reinterpret_cast<const signed char*>(reinterpret_cast<const unsigned char*>(self) + 0x98);
+    if (value == 0)
+        return 2;
+    if (value == 4)
+        return 4;
+    if (value == 6)
+        return 5;
+    if (value == 8)
+        return 6;
+    if (value == 10)
+        return 7;
+    if (value == 12)
+        return 8;
+    return 3;
+}
 // LLM-HARNESS-END: us-80204e30
 
 // LLM-HARNESS-BEGIN: us-80204e98

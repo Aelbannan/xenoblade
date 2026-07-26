@@ -2422,7 +2422,12 @@ extern "C" void Draw__Q22cf9CfResTaskFv() {}
 // LLM-HARNESS-END: us-800664d4
 
 // LLM-HARNESS-BEGIN: us-80066568
-extern "C" void func_80065BE4() {}
+extern "C" char* func_80065BE4(char* buffer, const char* suffix) {
+    unsigned int length = (unsigned int)strlen(suffix);
+    strcat(buffer, suffix);
+    *(unsigned int*)(buffer + 0x40) += length;
+    return buffer;
+}
 // LLM-HARNESS-END: us-80066568
 
 // LLM-HARNESS-BEGIN: us-800665cc

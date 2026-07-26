@@ -176,7 +176,21 @@ extern "C" void CfObject_UnkVirtualFunc27__Q22cf12CfObjectMoveFv() {}
 // LLM-HARNESS-END: us-800be830
 
 // LLM-HARNESS-BEGIN: us-800be8e4
-extern "C" void CfObject_UnkVirtualFunc29__Q22cf12CfObjectMoveFv() {}
+extern "C" void CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(void*);
+extern "C" void func_8004B4A4(void*, float);
+
+extern "C" void CfObject_UnkVirtualFunc29__Q22cf12CfObjectMoveFv(void* self, float value) {
+    unsigned char* object = static_cast<unsigned char*>(self);
+    CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(self);
+    void* target = *reinterpret_cast<void**>(object + 0xC4);
+    if (target != 0 && ((*reinterpret_cast<unsigned int*>(object + 0x68) & 0x4) != 0)) {
+        func_8004B4A4(target, value);
+    }
+    target = *reinterpret_cast<void**>(object + 0x6C0);
+    if (target != 0) {
+        *reinterpret_cast<float*>(static_cast<unsigned char*>(target) + 0xC) = value;
+    }
+}
 // LLM-HARNESS-END: us-800be8e4
 
 // LLM-HARNESS-BEGIN: us-800be94c

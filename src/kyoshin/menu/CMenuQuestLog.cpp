@@ -61,7 +61,22 @@ extern "C" void func_8011D03C() {}
 // LLM-HARNESS-END: us-8011db18
 
 // LLM-HARNESS-BEGIN: us-8011db68
-extern "C" void func_8011D08C() {}
+extern "C" bool isIdle__11CTitleAHelpFv(void*);
+extern "C" bool func_80227CCC(void*);
+extern "C" unsigned int func_80228394(void*);
+extern "C" void func_80229768(void*, unsigned short);
+extern "C" void func_80229510(void*);
+
+extern "C" void func_8011D08C(void* self)
+{
+    unsigned char* base = static_cast<unsigned char*>(self);
+    if (isIdle__11CTitleAHelpFv(base + 0x80) && func_80227CCC(base + 0xB8)) {
+        unsigned int value = func_80228394(base + 0xB8);
+        func_80229768(base + 0x2240, static_cast<unsigned short>(value));
+        func_80229510(base + 0x2240);
+        base[0x2284] = 5;
+    }
+}
 // LLM-HARNESS-END: us-8011db68
 
 // LLM-HARNESS-BEGIN: us-8011dbd8

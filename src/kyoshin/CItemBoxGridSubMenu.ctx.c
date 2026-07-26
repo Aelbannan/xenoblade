@@ -23119,7 +23119,26 @@ extern "C" u8 func_80208360(CItemBoxGridSubMenu* self) {
 }
 
 // LLM-HARNESS-BEGIN: us-8020a1ac
-extern "C" void func_802083CC() {}
+extern "C" void func_802083CC(unsigned char* self) {
+    if (self[0x22] != 2)
+        return;
+
+    switch (self[0x23]) {
+    case 1:
+        self[0x24] = 0;
+        break;
+    case 2:
+        self[0x24] = (unsigned char)(self[0x24] - 1);
+        if ((signed char)self[0x24] < 0)
+            self[0x24] = 1;
+        break;
+    case 3:
+        self[0x24] = (unsigned char)(self[0x24] - 1);
+        if ((signed char)self[0x24] < 0)
+            self[0x24] = 2;
+        break;
+    }
+}
 // LLM-HARNESS-END: us-8020a1ac
 
 // LLM-HARNESS-BEGIN: us-8020a22c

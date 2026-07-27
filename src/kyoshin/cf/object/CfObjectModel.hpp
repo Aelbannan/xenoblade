@@ -69,15 +69,3 @@ namespace cf {
     };
 }
 
-namespace cf {
-
-class CfObject {
-public:
-    void CfObject_UnkVirtualFunc63();
-    void CfObject_UnkVirtualFunc25();
-    void CfObject_UnkVirtualFunc20();
-
-    // TODO: add fields
-};
-} // namespace cf
-

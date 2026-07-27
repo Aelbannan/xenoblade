@@ -29,6 +29,19 @@ int func_80107C54(CMenuArtsSelect* self, s32 index);
 void func_801080F8(CMenuArtsSelect* self);
 void func_80108994(CMenuArtsSelect*);
 extern "C" {
+void CMenuArtsSelect_clearArtsRef();
+void CMenuArtsSelect_releaseArtsRef(void* self, UnkArtsSelectRef* ref);
+void CMenuArtsSelect_setDisabled();
+bool CMenuArtsSelect_isFinished();
+CMenuArtsSelect* CMenuArtsSelect_getInstance();
+bool CMenuArtsSelect_isCreated();
+int CMenuArtsSelect_isInteractable();
+CMenuArtsSelect* CMenuArtsSelect_getSelectState();
+int CMenuArtsSelect_isNotReady();
+void CMenuArtsSelect_workEventDraw(void* self);
+void CMenuArtsSelect_workEventDtor(void* p);
+void CMenuArtsSelect_scnRenderRelease(void* ptr);
+void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self);
 void* func_80110A70();
 void* func_8010CE48();
 void func_8010EDE4(void*);
@@ -1176,30 +1189,30 @@ done:
     ;
 }
 
-extern "C" void func_801023D0() { lbl_eu_80663F24 = 0; }
-extern "C" void func_801041F4(void* self, UnkArtsSelectRef* ref) { if (lbl_eu_80663F24 == ref) { *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(ref) + 0xb0) = 0; lbl_eu_80663F24 = 0; } }
-extern "C" void func_8010428C() { if (lbl_eu_80663F20 != 0) *(unsigned char *)((char *)lbl_eu_80663F20 + 0x336) = 1; }
-extern "C" bool func_801042A4() { return false; }
-extern "C" CMenuArtsSelect* func_801042AC() { return lbl_eu_80663F20; }
-extern "C" bool func_801042B4() { return lbl_eu_80663F20 != 0; }
+extern "C" void CMenuArtsSelect_clearArtsRef() { lbl_eu_80663F24 = 0; }
+extern "C" void CMenuArtsSelect_releaseArtsRef(void* self, UnkArtsSelectRef* ref) { if (lbl_eu_80663F24 == ref) { *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(ref) + 0xb0) = 0; lbl_eu_80663F24 = 0; } }
+extern "C" void CMenuArtsSelect_setDisabled() { if (lbl_eu_80663F20 != 0) *(unsigned char *)((char *)lbl_eu_80663F20 + 0x336) = 1; }
+extern "C" bool CMenuArtsSelect_isFinished() { return false; }
+extern "C" CMenuArtsSelect* CMenuArtsSelect_getInstance() { return lbl_eu_80663F20; }
+extern "C" bool CMenuArtsSelect_isCreated() { return lbl_eu_80663F20 != 0; }
 void func_801042C8(){}
-extern "C" int func_801042F0() { CMenuArtsSelect* menu = lbl_eu_80663F20; if (menu != 0) { int value = *reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(menu) + 0x298); if (value != 1 && value != 3) return 1; } return 0; }
-extern "C" CMenuArtsSelect* func_80104320() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(reinterpret_cast<unsigned char*>(lbl_eu_80663F20) + 0x7c); }
-extern "C" int func_80104398() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
+extern "C" int CMenuArtsSelect_isInteractable() { CMenuArtsSelect* menu = lbl_eu_80663F20; if (menu != 0) { int value = *reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(menu) + 0x298); if (value != 1 && value != 3) return 1; } return 0; }
+extern "C" CMenuArtsSelect* CMenuArtsSelect_getSelectState() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(reinterpret_cast<unsigned char*>(lbl_eu_80663F20) + 0x7c); }
+extern "C" int CMenuArtsSelect_isNotReady() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
 void __dt__15CMenuArtsSelectFv(void*);
 bool func_80108C30(void* self){
     __dt__15CMenuArtsSelectFv((char*)self - 0x58);
     return false;
 }
-extern "C" void func_80108C38(void* self) {
+extern "C" void CMenuArtsSelect_workEventDraw(void* self) {
     ((CMenuArtsSelect*)((char*)self - 0x5c))->cbRenderBefore();
 }
-extern "C" void func_80108C40(void* p) {
+extern "C" void CMenuArtsSelect_workEventDtor(void* p) {
     extern void __dt__15CMenuArtsSelectFv(void*);
     __dt__15CMenuArtsSelectFv((u8*)p - 0x5c);
 }
-extern "C" void func_80108C48(void* ptr) { ((void (*)(char*))func_801041F4)((char*)ptr - 0x60); }
-extern "C" void func_80108C50(CMenuArtsSelect* self) {
+extern "C" void CMenuArtsSelect_scnRenderRelease(void* ptr) { ((void (*)(char*))CMenuArtsSelect_releaseArtsRef)((char*)ptr - 0x60); }
+extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self) {
     extern void __dt__15CMenuArtsSelectFv(void*);
     __dt__15CMenuArtsSelectFv((CMenuArtsSelect*)((char*)self - 0x60));
 }

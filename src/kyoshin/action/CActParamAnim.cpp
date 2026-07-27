@@ -8,27 +8,27 @@ CActParamAnim::CActParamAnim() {}
 
 void __dt__8004B070(){}
 
-void func_8004B0B0() {}
+void CActParamAnim_initSub1() {}
 
-void func_8004B0B4() {}
+void CActParamAnim_initSub2() {}
 
-void CActParamAnim::~CActParamAnim() {}
+CActParamAnim::~CActParamAnim() {}
 
 void CActParamAnim::func_8004B114() {}
 
-void* func_8004B344(void* self) { return static_cast<char*>(self) + 0x10; }
+void* CActParamAnim_getChild(CActParamAnim* self) { return reinterpret_cast<char*>(self) + 0x10; }
 
-float func_8004B34C(void* self) {
+float CActParamAnim_getBlendWeight(CActParamAnim* self) {
     return *(float*)((char*)self + 0x43c);
 }
 
 void func_8004B354(){}
 
-int func_8004B3D8(void* self, int mask) {
+int CActParamAnim_checkFlag(CActParamAnim* self, int mask) {
     return (*(int*)((char*)self) & mask) != 0 ? 1 : 0;
 }
 
-void func_8004B3F0(void* dst, const void* src) {
+void CActParamAnim_copyTranslation(void* dst, const void* src) {
     *(int*)((char*)dst + 0) = *(int*)((char*)src + 0);
     *(int*)((char*)dst + 4) = *(int*)((char*)src + 4);
     *(int*)((char*)dst + 8) = *(int*)((char*)src + 8);
@@ -38,29 +38,29 @@ void func_8004B40C(){}
 
 void func_8004B4A4(){}
 
-void* func_8004B51C(void* self) {
+void* CActParamAnim_getOwner(CActParamAnim* self) {
     return *(void**)((char*)self + 8);
 }
 
-bool func_8004B524() { return true; }
+bool CActParamAnim_isEnabled() { return true; }
 
 void func_8004B52C(){}
 
-void func_8004B5F0(void* dst, const void* src) {
+void CActParamAnim_copyRotation(void* dst, const void* src) {
     *(int*)((char*)dst + 0xC) = *(int*)((char*)src + 0);
     *(int*)((char*)dst + 0x10) = *(int*)((char*)src + 4);
     *(int*)((char*)dst + 0x14) = *(int*)((char*)src + 8);
 }
 
-void func_8004B60C(float *data, float a, float b, float c) { data[0] = a; data[1] = b; data[2] = c; }
+void vec3_set(float *data, float a, float b, float c) { data[0] = a; data[1] = b; data[2] = c; }
 
-float func_8004B61C(void* self) {
+float CActParamAnim_getScale(CActParamAnim* self) {
     return *(float*)((char*)self + 0x444);
 }
 
 void func_8004B624(){}
 
-void func_8004B694(uint32_t* ptr, uint32_t mask) {
+void bits_clear(uint32_t* ptr, uint32_t mask) {
     *ptr &= ~mask;
 }
 

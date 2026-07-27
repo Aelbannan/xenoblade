@@ -17,7 +17,7 @@ CMCEffStart::CMCEffStart(nw4r::lyt::ArcResourceAccessor* arcResourceAccessor)
 
 CMCEffStart::~CMCEffStart() {}
 
-void CMCEffStart::func_80223DB0() {
+void CMCEffStart::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry06_start.brlyt");
     func_80136F08(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry06_start_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
@@ -25,21 +25,21 @@ void CMCEffStart::func_80223DB0() {
     unk14 = 1;
 }
 
-void CMCEffStart::func_80223E40() {
+void CMCEffStart::update() {
     if(unk14) {
         if((s8)unk4 == 1) {
-            func_80223F44();
+            updateInAnim();
         }
         mLayout->Animate(false);
     }
 }
 
-void func_80223E9C(CMCEffStart* obj, nw4r::lyt::DrawInfo* drawInfo) {
+void draw(CMCEffStart* obj, nw4r::lyt::DrawInfo* drawInfo) {
     if (!obj->unk14) return;
     func_80137038(obj->mLayout, drawInfo, 0, 1);
 }
 
-void CMCEffStart::func_80223EBC() {
+void CMCEffStart::destroy() {
     unk14 = 0;
     if(mLayout != nullptr) {
         delete mLayout;
@@ -47,17 +47,17 @@ void CMCEffStart::func_80223EBC() {
     }
 }
 
-u8 CMCEffStart::func_80223F1C() {
+u8 CMCEffStart::isFinished() {
     return unk5;
 }
 
-void CMCEffStart::func_80223F24() {
+void CMCEffStart::startInAnim() {
     unk4 = 1;
     mAnimTrans->SetFrame(0.0f);
     unk5 = 0;
 }
 
-void CMCEffStart::func_80223F44() {
+void CMCEffStart::updateInAnim() {
     if(func_80137444(mAnimTrans, 1.0f)) {
         unk4 = 0;
         unk5 = 1;
@@ -72,7 +72,7 @@ CMCEffUpRed::CMCEffUpRed(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) :
 
 CMCEffUpRed::~CMCEffUpRed() {}
 
-void CMCEffUpRed::func_8022400C() {
+void CMCEffUpRed::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry02_prt00.brlyt");
     func_80136F08(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry02_prt00_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
@@ -80,8 +80,8 @@ void CMCEffUpRed::func_8022400C() {
     unk14 = 1;
 }
 
-void CMCEffUpRed::func_8022409C() {
-    func_80223F24();
+void CMCEffUpRed::play() {
+    startInAnim();
     func_80138078(0x8c); //140 Dec
 }
 /******************************************************************************
@@ -93,7 +93,7 @@ CMCEffUpBlue::CMCEffUpBlue(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
 
 CMCEffUpBlue::~CMCEffUpBlue() {}
 
-void CMCEffUpBlue::func_80224140() {
+void CMCEffUpBlue::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry02_prt01.brlyt");
     func_80136F08(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry02_prt01_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
@@ -101,8 +101,8 @@ void CMCEffUpBlue::func_80224140() {
     unk14 = 1;
 }
 
-void CMCEffUpBlue::func_802241D0() {
-    func_80223F24();
+void CMCEffUpBlue::play() {
+    startInAnim();
     func_80138078(0x8c); //140 Dec
 }
 /******************************************************************************
@@ -114,7 +114,7 @@ CMCEffUpGreen::CMCEffUpGreen(nw4r::lyt::ArcResourceAccessor* pArcResourceAccesso
 
 CMCEffUpGreen::~CMCEffUpGreen() {}
 
-void CMCEffUpGreen::func_80224274() {
+void CMCEffUpGreen::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry02_prt02.brlyt");
     func_80136F08(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry02_prt02_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
@@ -122,8 +122,8 @@ void CMCEffUpGreen::func_80224274() {
     unk14 = 1;
 }
 
-void CMCEffUpGreen::func_80224304() {
-    func_80223F24();
+void CMCEffUpGreen::play() {
+    startInAnim();
     func_80138078(0x8c); //140 Dec
 }
 /******************************************************************************
@@ -144,7 +144,7 @@ CMCEffUpPrm::CMCEffUpPrm(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor) :
 
 CMCEffUpPrm::~CMCEffUpPrm() {}
 
-void CMCEffUpPrm::func_802243B4() {
+void CMCEffUpPrm::init() {
     for(u8 i = 0; i < 8; ++i) {
         UnkStruct* unkStructure = &unkStruct[i];
         func_80136E84(&unkStructure->layout, mArcResourceAccessor, "mf10_cry02_prt03.brlyt");
@@ -157,7 +157,7 @@ void CMCEffUpPrm::func_802243B4() {
     unk6c = 1;
 }
 
-void CMCEffUpPrm::func_8022447C() {
+void CMCEffUpPrm::update() {
     if(unk6c == 0) {
         return;
     }
@@ -169,7 +169,7 @@ void CMCEffUpPrm::func_8022447C() {
     }
 }
 
-void CMCEffUpPrm::func_80224514(nw4r::lyt::DrawInfo* drawInfo) {
+void CMCEffUpPrm::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if(unk6c == 0) {
         return;
     }
@@ -178,7 +178,7 @@ void CMCEffUpPrm::func_80224514(nw4r::lyt::DrawInfo* drawInfo) {
     }
 }
 
-void CMCEffUpPrm::func_8022457C() {
+void CMCEffUpPrm::destroy() {
     unk6c = 0;
     for(u8 i = 0; i < 8; i++) {
         UnkStruct* unk_struct = &unkStruct[i];
@@ -189,7 +189,7 @@ void CMCEffUpPrm::func_8022457C() {
     }
 }
 
-void CMCEffUpPrm::func_802245F0(u32 arg) {
+void CMCEffUpPrm::activateSlots(u32 arg) {
     for(u8 i = 0; i < 8; ++i) {
         unkStruct[i].unk8 = 0;
         unkStruct[i].animTrans->SetFrame(0.0f);
@@ -200,14 +200,14 @@ void CMCEffUpPrm::func_802245F0(u32 arg) {
     }
 }
 
-void CMCEffUpPrm::func_80224690(u32 arg1, nw4r::math::VEC3 arg2) {
+void CMCEffUpPrm::setTranslate(u32 arg1, nw4r::math::VEC3 arg2) {
     if(arg1 >= 8) {
         return;
     }
     unkStruct[arg1].layout->GetRootPane()->SetTranslate(arg2);
 }
 
-void CMCEffUpPrm::func_802246C4(u32 arg1, u8 arg2) {
+void CMCEffUpPrm::setNumber(u32 arg1, u8 arg2) {
     if(arg1 >= 8) {
         return;
     }
@@ -229,39 +229,39 @@ CMCEffSuccess::CMCEffSuccess(nw4r::lyt::ArcResourceAccessor* pArcResourceAccesso
 
 CMCEffSuccess::~CMCEffSuccess() {}
 
-void CMCEffSuccess::func_80224760() {
+void CMCEffSuccess::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry06_comp.brlyt");
     func_80136F08(mLayout, &mAnimTrans10, mArcResourceAccessor, "mf10_cry06_comp_in.brlan");
     func_80136F08(mLayout, &mAnimTrans14, mArcResourceAccessor, "mf10_cry06_comp_out.brlan");
-    func_80224A30();
+    bindInAnim();
     mLayout->Animate(0);
     unk18 = 1;
 }
 
-void CMCEffSuccess::func_802247F0() {
+void CMCEffSuccess::update() {
     if(!unk18) {
         return;
     }
     switch(unk4) {
         case 1:
-            func_80224998();
+            updateIn();
             break;
         case 3:
-            func_802249E4();
+            updateOut();
             break;
         default:
     }
     mLayout->Animate(0);
 }
 
-void CMCEffSuccess::func_80224860(nw4r::lyt::DrawInfo* drawInfo) {
+void CMCEffSuccess::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (!unk18) {
         return;
     }
     func_80137038(mLayout, drawInfo, 0, 1);
 }
 
-void CMCEffSuccess::func_80224880() {
+void CMCEffSuccess::destroy() {
     unk18 = 0;
     if(mLayout != nullptr) {
         delete mLayout;
@@ -269,52 +269,52 @@ void CMCEffSuccess::func_80224880() {
     }
 }
 
-u8 func_802248E0(void* self) {
+u8 isFinished(void* self) {
     return *(u8*)((u8*)self + 5);
 }
 
-void CMCEffSuccess::func_802248E8() {
+void CMCEffSuccess::startIn() {
     if(unk4 != nullptr) {
         return;
     }
     unk4 = 1;
-    func_80224A30();
+    bindInAnim();
     mAnimTrans10->SetFrame(0.0f);
     unk5 = 0;
     func_80138078(0x91);
 }
 
-void CMCEffSuccess::func_80224944() {
+void CMCEffSuccess::startOut() {
     if(unk4 == 2) {
         unk4 = 3;
-        func_80224AB8();
+        bindOutAnim();
         mAnimTrans14->SetFrame(0.0f);
         unk5 = 0;
     }
 }
 
-void CMCEffSuccess::func_80224998() {
+void CMCEffSuccess::updateIn() {
     if(func_80137444(mAnimTrans10, 1.0f) != 0) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
-void CMCEffSuccess::func_802249E4() {
+void CMCEffSuccess::updateOut() {
     if(func_80137444(mAnimTrans14, 1.0f) != 0) {
         unk4 = 0;
         unk5 = 1;
     }
 }
 
-void CMCEffSuccess::func_80224A30() {
+void CMCEffSuccess::bindInAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans10);
     mLayout->SetAnimationEnable(mAnimTrans10, true);
     mLayout->Animate(0);
 }
 
-void CMCEffSuccess::func_80224AB8() {
+void CMCEffSuccess::bindOutAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans14);
     mLayout->SetAnimationEnable(mAnimTrans14, true);
@@ -329,7 +329,7 @@ CMCEffFailure::CMCEffFailure(nw4r::lyt::ArcResourceAccessor* pArcResourceAccesso
 
 CMCEffFailure::~CMCEffFailure() {}
 
-void CMCEffFailure::func_80224BBC() {
+void CMCEffFailure::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry06_fail.brlyt");
     func_80136F08(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry06_fail_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
@@ -378,29 +378,29 @@ void CMCEffCrystal::func_80224CE4(){
     func_8013676C(rootPane, result);
     func_80136E84(&mLayout2c, mArcResourceAccessor, "mf10_cry04_lst.brlyt");
     func_80136F08(mLayout2c, &mAnimTrans30, mArcResourceAccessor, "mf10_cry04_lst_roop.brlan");
-    func_802256E0();
-    func_802257F0();
-    func_80225A10();
+    bindInAnimTrace();
+    bindInAnimCrystal();
+    bindLoopAnim();
     unk34 = 1;
 }
 
-void CMCEffCrystal::func_80224E1C() {
+void CMCEffCrystal::update() {
     if(unk34 == 0) return;
     switch(unk4) {
         case 1:
-            func_802254C4();
+            updateIn();
             break;
         case 2:
-            func_80225514();
+            checkInDone();
             break;
         case 4:
-            func_80225560();
+            updateOut();
             break;
         case 5:
-            func_802255CC();
+            updateChange();
             break;
         case 6:
-            func_80225694();
+            updateSpecial();
             break;
         default:
             break;
@@ -411,7 +411,7 @@ void CMCEffCrystal::func_80224E1C() {
     mLayout2c->Animate(0);
 }
 
-void CMCEffCrystal::func_80224EF8(nw4r::lyt::DrawInfo* drawInfo) {
+void CMCEffCrystal::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if(unk34 == 0) return;
     func_80137038(mLayoutC, drawInfo, 0, 1);
     func_80137038(mLayout18, drawInfo, 0, 1);
@@ -423,7 +423,7 @@ void CMCEffCrystal::func_80224EF8(nw4r::lyt::DrawInfo* drawInfo) {
     func_80137038(mLayout2c, drawInfo, 0, 1);
 }
 
-void CMCEffCrystal::func_80224F84() {
+void CMCEffCrystal::destroy() {
     unk34 = 0;
     if(mLayoutC != nullptr) {
         delete mLayoutC;
@@ -439,28 +439,28 @@ void CMCEffCrystal::func_80224F84() {
     }
 }
 
-u8 CMCEffCrystal::func_8022503C() {
+u8 CMCEffCrystal::isFinished() {
     return unk5;
 }
 
-void CMCEffCrystal::func_80225044() {
+void CMCEffCrystal::startIn() {
     if(unk4 == 0) {
         unk4 = 1;
-        func_802256E0();
+        bindInAnimTrace();
         mAnimTrans10->SetFrame(0.0f);
-        func_802257F0();
+        bindInAnimCrystal();
         mAnimTrans1c->SetFrame(0.0f);
         unk5 = 0;
         func_80124270(mLayout2c->GetRootPane(), 1);
     }
 }
 
-void CMCEffCrystal::func_802250BC() {
+void CMCEffCrystal::startOut() {
     if(unk4 == 3) {
         unk4 = 4;
-        func_80225768();
+        bindOutAnimTrace();
         mAnimTrans14->SetFrame(0.0f);
-        func_80225988();
+        bindOutAnim();
         if(mLayout2c->GetRootPane()->IsVisible()) {
             mAnimTrans28->SetFrame(0.0f);
         } else {
@@ -470,30 +470,30 @@ void CMCEffCrystal::func_802250BC() {
     }
 }
 
-void CMCEffCrystal::func_80225170() {
+void CMCEffCrystal::startChange() {
     if(unk4 == 3) {
         unk4 = 5;
-        func_80225878();
+        bindChangeAnim();
         mAnimTrans20->SetFrame(0.0f);
         unk5 = 0;
     }
 }
 
-void CMCEffCrystal::func_802251C4() {
+void CMCEffCrystal::startSpecial() {
     if(unk4 == 3) {
         unk4 = 6;
-        func_80225900();
+        bindSpecialAnim();
         mAnimTrans24->SetFrame(0.0f);
         unk5 = 0;
         func_80124270(mLayout2c->GetRootPane(), 0);
     }
 }
 
-void CMCEffCrystal::func_80225228(u32 arg1) {
+void CMCEffCrystal::setTraceVisible(u32 arg1) {
     func_80124270(mLayoutC->GetRootPane()->FindPaneByName("nul_trc01", true), arg1);
 }
 
-void CMCEffCrystal::func_80225280(u16 arg1, u8 arg2) {
+void CMCEffCrystal::setCrystalInfo(u16 arg1, u8 arg2) {
     unk36 = arg1;
     unk38 = arg2;
     char* name = func_8013639C(cf::CfBdat::spBtlSkillListFileData, "name", arg1);
@@ -534,21 +534,21 @@ void CMCEffCrystal::func_80225280(u16 arg1, u8 arg2) {
     }
 }
 
-void CMCEffCrystal::func_802254C4() {
+void CMCEffCrystal::updateIn() {
     func_80137444(mAnimTrans1c, 1.0f);
     if(func_80137444(mAnimTrans10, 1.0f) != 0) {
         unk4 = 2;
     }
 }
 
-void CMCEffCrystal::func_80225514() {
+void CMCEffCrystal::checkInDone() {
     if(func_80137444(mAnimTrans1c, 1.0f) != 0) {
         unk4 = 3;
         unk5 = 1;
     }
 }
 
-void CMCEffCrystal::func_80225560() {
+void CMCEffCrystal::updateOut() {
     u32 unk1 = func_80137444(mAnimTrans14, 1.0f);
     u32 unk2 = func_80137444(mAnimTrans28, 1.0f);
     if(unk1 != 0 && unk2 != 0) {
@@ -557,7 +557,7 @@ void CMCEffCrystal::func_80225560() {
     }
 }
 
-void CMCEffCrystal::func_802255CC() {
+void CMCEffCrystal::updateChange() {
     if(func_80137444(mAnimTrans20, 1.0f)) {
         unk4 = 3;
         unk5 = 1;
@@ -571,56 +571,56 @@ void CMCEffCrystal::func_802255CC() {
     }
 }
 
-void CMCEffCrystal::func_80225694() {
+void CMCEffCrystal::updateSpecial() {
     if(func_80137444(mAnimTrans24, 1.0f)) {
         unk4 = 3;
         unk5 = 1;
     }
 }
 
-void CMCEffCrystal::func_802256E0() {
+void CMCEffCrystal::bindInAnimTrace() {
     mLayoutC->UnbindAllAnimation();
     mLayoutC->BindAnimation(mAnimTrans10);
     mLayoutC->SetAnimationEnable(mAnimTrans10, true);
     mLayoutC->Animate(0);
 }
 
-void CMCEffCrystal::func_80225768() {
+void CMCEffCrystal::bindOutAnimTrace() {
     mLayoutC->UnbindAllAnimation();
     mLayoutC->BindAnimation(mAnimTrans14);
     mLayoutC->SetAnimationEnable(mAnimTrans14, true);
     mLayoutC->Animate(0);
 }
 
-void CMCEffCrystal::func_802257F0() {
+void CMCEffCrystal::bindInAnimCrystal() {
     mLayout18->UnbindAllAnimation();
     mLayout18->BindAnimation(mAnimTrans1c);
     mLayout18->SetAnimationEnable(mAnimTrans1c, true);
     mLayout18->Animate(0);
 }
 
-void CMCEffCrystal::func_80225878() {
+void CMCEffCrystal::bindChangeAnim() {
     mLayout18->UnbindAllAnimation();
     mLayout18->BindAnimation(mAnimTrans20);
     mLayout18->SetAnimationEnable(mAnimTrans20, true);
     mLayout18->Animate(0);
 }
 
-void CMCEffCrystal::func_80225900() {
+void CMCEffCrystal::bindSpecialAnim() {
     mLayout18->UnbindAllAnimation();
     mLayout18->BindAnimation(mAnimTrans24);
     mLayout18->SetAnimationEnable(mAnimTrans24, true);
     mLayout18->Animate(0);
 }
 
-void CMCEffCrystal::func_80225988() {
+void CMCEffCrystal::bindOutAnim() {
     mLayout18->UnbindAllAnimation();
     mLayout18->BindAnimation(mAnimTrans28);
     mLayout18->SetAnimationEnable(mAnimTrans28, true);
     mLayout18->Animate(0);
 }
 
-void CMCEffCrystal::func_80225A10() {
+void CMCEffCrystal::bindLoopAnim() {
     mLayout2c->UnbindAllAnimation();
     mLayout2c->BindAnimation(mAnimTrans30);
     mLayout2c->SetAnimationEnable(mAnimTrans30, true);
@@ -635,7 +635,7 @@ CMCEffUpRank::CMCEffUpRank(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
 
 CMCEffUpRank::~CMCEffUpRank() {}
 
-void CMCEffUpRank::func_80225B14() {
+void CMCEffUpRank::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry05_rank.brlyt");
     func_80136F08(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry05_rank_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
@@ -643,8 +643,8 @@ void CMCEffUpRank::func_80225B14() {
     unk14 = 1;
 }
 
-void CMCEffUpRank::func_80225BA4() {
-    func_80223F24();
+void CMCEffUpRank::play() {
+    startInAnim();
     func_80138078(0x8d);
 }
 /******************************************************************************
@@ -656,7 +656,7 @@ CMCEffDivide::CMCEffDivide(nw4r::lyt::ArcResourceAccessor* pArcResourceAccessor)
 
 CMCEffDivide::~CMCEffDivide() {}
 
-void CMCEffDivide::func_80225C48() {
+void CMCEffDivide::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry05_spl.brlyt");
     func_80136F08(mLayout, &mAnimTrans, mArcResourceAccessor, "mf10_cry05_spl_in.brlan");
     mLayout->SetAnimationEnable(mAnimTrans, true);
@@ -664,8 +664,8 @@ void CMCEffDivide::func_80225C48() {
     unk14 = 1;
 }
 
-void CMCEffDivide::func_80225CD8() {
-    func_80223F24();
+void CMCEffDivide::play() {
+    startInAnim();
     func_80138078(0x8d);
 }
 /******************************************************************************
@@ -685,7 +685,7 @@ CMCEffCylinder::CMCEffCylinder(nw4r::lyt::ArcResourceAccessor* pArcResourceAcces
 
 CMCEffCylinder::~CMCEffCylinder() {}
 
-void CMCEffCylinder::func_80225D78() {
+void CMCEffCylinder::init() {
     func_80136E84(&mLayout, mArcResourceAccessor, "mf10_cry06_chn.brlyt");
     func_80136F08(mLayout, &mAnimTrans10, mArcResourceAccessor, "mf10_cry06_chn_in.brlan");
     func_80136F08(mLayout, &mAnimTrans14, mArcResourceAccessor, "mf10_cry06_chn_change.brlan");
@@ -694,21 +694,21 @@ void CMCEffCylinder::func_80225D78() {
     if(ul) {
         func_801368C0(mLayout, "txt_num", ul);
     }
-    func_80226120();
+    bindInAnim();
     unk1c = 1;
 }
 
-void CMCEffCylinder::func_80225E20() {
+void CMCEffCylinder::update() {
     if(unk1c == 0) return;
     switch(unk4) {
         case 1:
-            func_8022603C();
+            updateIn();
             break;
         case 3:
-            func_80226088();
+            updateOut();
             break;
         case 4:
-            func_802260D4();
+            updateChange();
             break;
         default:
             break;
@@ -716,12 +716,12 @@ void CMCEffCylinder::func_80225E20() {
     mLayout->Animate(0);
 }
 
-void CMCEffCylinder::func_80225EA0(nw4r::lyt::DrawInfo* drawInfo) {
+void CMCEffCylinder::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if(unk1c == 0) return;
     func_80137038(mLayout, drawInfo, 0, 1);
 }
 
-void CMCEffCylinder::func_80225EC0() {
+void CMCEffCylinder::destroy() {
     unk1c = 0;
     if(mLayout != nullptr) {
         delete mLayout;
@@ -729,77 +729,77 @@ void CMCEffCylinder::func_80225EC0() {
     }
 }
 
-u8 CMCEffCylinder::func_80225F20() {
+u8 CMCEffCylinder::isFinished() {
     return unk5;
 }
 
-void CMCEffCylinder::func_80225F28() {
+void CMCEffCylinder::startIn() {
     if(unk4 == 0) {
         unk4 = 1;
-        func_80226120();
+        bindInAnim();
         mAnimTrans10->SetFrame(0.0f);
         unk5 = 0;
     }
 }
 
-void CMCEffCylinder::func_80225F7C() {
+void CMCEffCylinder::startOut() {
     if(unk4 == 2) {
         unk4 = 3;
-        func_80226230();
+        bindOutAnim();
         mAnimTrans18->SetFrame(0.0f);
         unk5 = 0;
     }
 }
 
-void CMCEffCylinder::func_80225FD0() {
+void CMCEffCylinder::startChange() {
     if(unk4 == 2) {
         unk4 = 4;
-        func_802261A8();
+        bindChangeAnim();
         mAnimTrans14->SetFrame(0.0f);
         unk5 = 0;
     }
 }
 
-void CMCEffCylinder::func_80226024(u8 arg) {
+void CMCEffCylinder::setNumber(u8 arg) {
     func_80136910(mLayout, "txt_num", arg);
 }
 
-void CMCEffCylinder::func_8022603C() {
+void CMCEffCylinder::updateIn() {
     if(func_80137444(mAnimTrans10, 1.0f)) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
-void CMCEffCylinder::func_80226088() {
+void CMCEffCylinder::updateOut() {
     if(func_80137444(mAnimTrans18, 1.0f)) {
         unk4 = 0;
         unk5 = 1;
     }
 }
 
-void CMCEffCylinder::func_802260D4() {
+void CMCEffCylinder::updateChange() {
     if(func_80137444(mAnimTrans14, 1.0f)) {
         unk4 = 2;
         unk5 = 1;
     }
 }
 
-void CMCEffCylinder::func_80226120() {
+void CMCEffCylinder::bindInAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans10);
     mLayout->SetAnimationEnable(mAnimTrans10, true);
     mLayout->Animate(0);
 }
 
-void CMCEffCylinder::func_802261A8() {
+void CMCEffCylinder::bindChangeAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans14);
     mLayout->SetAnimationEnable(mAnimTrans14, true);
     mLayout->Animate(0);
 }
 
-void CMCEffCylinder::func_80226230() {
+void CMCEffCylinder::bindOutAnim() {
     mLayout->UnbindAllAnimation();
     mLayout->BindAnimation(mAnimTrans18);
     mLayout->SetAnimationEnable(mAnimTrans18, true);

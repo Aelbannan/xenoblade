@@ -39,7 +39,6 @@ namespace cf {
         //0x0-BE: CfObjectModel
         u8 unkBE_3[0x657];
         u8 unk715[3]; //might not belong here
-    CfObjectMove();
     void CfObject_UnkVirtualFunc4();
     void CfObject_UnkVirtualFunc7();
     void CfObject_UnkVirtualFunc6();
@@ -87,14 +86,4 @@ namespace cf {
     void CfObject_UnkVirtualFunc29();
     };
 }
-
-namespace cf {
-
-class CfObject {
-public:
-    void func_800BE898();
-
-    // TODO: add fields
-};
-} // namespace cf
 

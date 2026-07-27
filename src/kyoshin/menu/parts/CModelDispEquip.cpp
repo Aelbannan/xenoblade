@@ -4,9 +4,13 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/parts/CModelDispEquip.hpp"
+
+// Forward declarations for symbols referenced by thunks
+extern "C" void __dt__15CModelDispEquipFv();
+
 void __ct__CModelDispEquip(){}
 
-void func_801FF6DC(void* self) {
+void CModelDispEquip_resetBase(CModelDispEquip* self) {
     *(unsigned long*)self = 0;
     *(unsigned long*)((char*)self + 4) = 0;
     ((unsigned char*)self)[8] = 0;
@@ -14,7 +18,7 @@ void func_801FF6DC(void* self) {
 
 void __dt__801FF6F0(){}
 
-void CModelDispEquip::~CModelDispEquip() {}
+CModelDispEquip::~CModelDispEquip() {}
 
 void func_801FF7B0(){}
 
@@ -22,11 +26,11 @@ void func_801FF82C(){}
 
 void func_801FF874(){}
 
-u8 func_801FF95C(void* self) { return ((u8*)self)[0x1020]; }
+u8 CModelDispEquip_getState20(CModelDispEquip* self) { return ((u8*)self)[0x1020]; }
 
-u8 func_801FF964(void* self) { return ((u8*)self)[0x1021]; }
+u8 CModelDispEquip_getState21(CModelDispEquip* self) { return ((u8*)self)[0x1021]; }
 
-void func_801FF96C(unsigned char* p) {
+void CModelDispEquip_setState14(unsigned char* p) {
     if (p[0x1014] != 0) {
         return;
     }
@@ -34,7 +38,7 @@ void func_801FF96C(unsigned char* p) {
     p[0x1020] = 0;
 }
 
-void func_801FF98C(void* self) {
+void CModelDispEquip_setState14_3(CModelDispEquip* self) {
     ((unsigned char*)self)[0x1014] = 3;
     ((unsigned char*)self)[0x1020] = 0;
 }
@@ -43,7 +47,7 @@ void func_801FF9A0(){}
 
 void func_801FF9AC(){}
 
-void func_801FFAB4(float* dest, float a, float b, float c, float d) {
+void CModelDispEquip_storeFloats(float* dest, float a, float b, float c, float d) {
     dest[0] = a;
     dest[1] = b;
     dest[2] = c;
@@ -82,11 +86,11 @@ void func_80201148(){}
 
 void func_80201298(void* self){}
 
-void func_80201318(void) {}
+void CModelDispEquip_vfunc18(void) {}
 
 void func_8020131C(void* self){}
 
-void func_80201440(void) {}
+void CModelDispEquip_vfunc40(void) {}
 
 void func_80201444(void* self){}
 
@@ -112,21 +116,21 @@ void func_80201808(){}
 
 void func_80201900(){}
 
-void func_80201A44(void* self) { ((void(*)(void*))func_80201298)((char*)self - 0x4); }
+void CModelDispEquip_thunk4_1298(char* self) { ((void(*)(void*))func_80201298)(self - 0x4); }
 
-void func_80201A4C(void* self) { ((void(*)(void*))func_80201440)((char*)self - 0x4); }
+void CModelDispEquip_thunk4_1440(char* self) { ((void(*)(void*))CModelDispEquip_vfunc40)(self - 0x4); }
 
-void func_80201A54(void* self) { ((void(*)(void*))func_8020131C)((char*)self - 0x4); }
+void CModelDispEquip_thunk4_131C(char* self) { ((void(*)(void*))func_8020131C)(self - 0x4); }
 
-void func_80201A5C(void* self) { ((void(*)(void*))func_80201318)((char*)self - 0x4); }
+void CModelDispEquip_thunk4_1318(char* self) { ((void(*)(void*))CModelDispEquip_vfunc18)(self - 0x4); }
 
-void func_80201A64(void* self) { ((void(*)(void*))func_80200F9C)((char*)self - 0x4); }
+void CModelDispEquip_thunk4_F9C(char* self) { ((void(*)(void*))func_80200F9C)(self - 0x4); }
 
-void func_80201A6C(void* self) { ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)self - 0x4); }
+void CModelDispEquip_thunk4_dtor(char* self) { ((void(*)(void*))__dt__15CModelDispEquipFv)(self - 0x4); }
 
-void func_80201A74(void* self) { ((void(*)(void*))func_80201444)((char*)self - 0x8); }
+void CModelDispEquip_thunk8_1444(char* self) { ((void(*)(void*))func_80201444)(self - 0x8); }
 
-extern "C" void func_80201A7C(void* self) { ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)self - 0x8); }
+extern "C" void CModelDispEquip_thunk8_dtor(char* self) { ((void(*)(void*))__dt__15CModelDispEquipFv)(self - 0x8); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_802019F8(){}

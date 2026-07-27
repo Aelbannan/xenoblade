@@ -162,7 +162,7 @@ void func_8003DFE4(){}
 
 void lookAt(){}
 
-void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { ((u8*)self)[0xBD] = val; }
+void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { static_cast<cf::CfObjectModel*>(self)->field_BD = val; }
 
 void turn(){}
 

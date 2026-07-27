@@ -3,6 +3,19 @@
 
 #include <harness_catalog.h>
 
+typedef struct {
+    u8 _pad00[0x164];
+    s32 time;
+    s32 idx;
+    s32 timeQueue[32];
+    s32 value;
+    s32 totalSmpl;
+    s32 _pad1f4;
+    s32 wr;
+    s32 rd;
+    s32 smplQueue[32];
+} SfdConcatContext;
+
 s32 SFLIB_CheckHn(void* h);
 s32 SFLIB_SetErr(s32 val, u32 code);
 void SFSET_SetCond(void* h, u32 cond, u32 sw);
@@ -48,13 +61,13 @@ void SFLIB_UnlockCs(void* cs);
 void SFCON_UpdateConcatTime(void* h, s32 delta) {
     u32 cs;
     SFLIB_LockCs(&cs);
-    u8* base = (u8*)h + 0xd98;
-    s32 idx = *(s32*)(base + 0x168);
-    s32 time = *(s32*)(base + 0x164) + delta;
-    *(s32*)(base + 0x164) = time;
+    SfdConcatContext* ctx = (SfdConcatContext*)((u8*)h + 0xd98);
+    s32 idx = ctx->idx;
+    s32 time = ctx->time + delta;
+    ctx->time = time;
     idx++;
-    *(s32*)(base + 0x16c + (idx % 32) * 4) = time;
-    *(s32*)(base + 0x168) = idx;
+    ctx->timeQueue[idx % 32] = time;
+    ctx->idx = idx;
     SFLIB_UnlockCs(&cs);
 }
 
@@ -63,17 +76,17 @@ void SFLIB_UnlockCs(void* cs);
 s32 SFCON_WriteTotSmplQue(void* h, s32 lastSmpl, s32 value) {
     u32 cs;
     SFLIB_LockCs(&cs);
-    u8* base = (u8*)h + 0xd98;
-    s32 wr = *(s32*)(base + 0x1f8);
-    s32 rd = *(s32*)(base + 0x1fc);
+    SfdConcatContext* ctx = (SfdConcatContext*)((u8*)h + 0xd98);
+    s32 wr = ctx->wr;
+    s32 rd = ctx->rd;
     if (wr - rd >= 32) {
         SFLIB_UnlockCs(&cs);
         return 0;
     }
-    *(s32*)(base + 0x1ec) = value;
-    *(s32*)(base + 0x200 + (wr % 32) * 4) = lastSmpl;
-    *(s32*)(base + 0x1f8) = wr + 1;
-    *(s32*)(base + 0x1f0) += lastSmpl;
+    ctx->value = value;
+    ctx->smplQueue[wr % 32] = lastSmpl;
+    ctx->wr = wr + 1;
+    ctx->totalSmpl += lastSmpl;
     SFLIB_UnlockCs(&cs);
     return 1;
 }
@@ -83,17 +96,17 @@ void SFLIB_UnlockCs(void* cs);
 s32 SFCON_ReadTotSmplQue(void* h, s32* lastSmpl, s32* value) {
     u32 cs;
     SFLIB_LockCs(&cs);
-    u8* base = (u8*)h + 0xd98;
-    s32 rd = *(s32*)(base + 0x1fc);
-    s32 wr = *(s32*)(base + 0x1f8);
+    SfdConcatContext* ctx = (SfdConcatContext*)((u8*)h + 0xd98);
+    s32 rd = ctx->rd;
+    s32 wr = ctx->wr;
     if (wr - rd <= 0) {
         *lastSmpl = -1;
         SFLIB_UnlockCs(&cs);
         return 0;
     }
-    *value = *(s32*)(base + 0x1ec);
-    *lastSmpl = *(s32*)(base + 0x200 + (rd % 32) * 4);
-    *(s32*)(base + 0x1fc) = rd + 1;
+    *value = ctx->value;
+    *lastSmpl = ctx->smplQueue[rd % 32];
+    ctx->rd = rd + 1;
     SFLIB_UnlockCs(&cs);
     return 1;
 }

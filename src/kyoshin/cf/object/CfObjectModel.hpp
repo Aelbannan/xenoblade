@@ -35,7 +35,8 @@ namespace cf {
         //0x0-70: CfObject
         u8 unk70_3[0x1C];
         u16 unk8C_3;
-        u8 unk8E_3[0x30];
+        u8 unk8E_3[0x2F];   // 0x8E-0xBC
+        u8 field_BD;          // 0xBD
     CfObjectModel();
     void CfObject_UnkVirtualFunc2();
     void CfObject_UnkVirtualFunc6();

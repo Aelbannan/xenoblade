@@ -874,11 +874,15 @@ inline void vmExceptionThrow(VMThread* pThread, u32 exception){
 inline void* poolEntryGet(volatile SBSectionHeader* sectionHeader, u32 no){
     int size = sectionHeader->offsetSize;
     u8* entriesPtr = (u8*)sectionHeader + sectionHeader->entriesOffset;
-    u32 entryOffset = size * no;
 
     u32 result;
-    if (size == 2) result = *(u16*)(entriesPtr + entryOffset);
-    else result = *(u32*)(entriesPtr + entryOffset);
+    if (size == 2) {
+        u16* entries = (u16*)entriesPtr;
+        result = entries[no];
+    } else {
+        u32* entries = (u32*)entriesPtr;
+        result = entries[no];
+    }
     return entriesPtr + result;
 }
 
@@ -889,8 +893,8 @@ inline void* poolEntryOfsGet(SBSectionHeader* sectionHeader, u32 no){
 
 inline u32 poolEntryGetU32(SBSectionHeader* sectionHeader, u32 no){
     u8* entriesPtr = (u8*)sectionHeader + sectionHeader->entriesOffset;
-    u32 entryOffset = sectionHeader->offsetSize * no;
-    return *(u32*)(entriesPtr + entryOffset);
+    u32* entries = (u32*)entriesPtr;
+    return entries[no];
 }
 
 inline const char* vmIdPoolGet(SBHeader* data, u32 no){

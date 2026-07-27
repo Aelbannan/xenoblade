@@ -60,7 +60,7 @@ namespace cf{
                         //likely an inline
                         if(pObjectEne != nullptr && pObjectEne->unk64 & 0x2){
                             UNKTYPE* r3_1 = func_8009EC9C(pObjectEne->unk8C_3);
-                            func_8009D7E4((UNKTYPE*)((u32)r3_1 + 0x1C), 1);
+                            func_8009D7E4(&static_cast<UnkStruct_8009EC9C_Ret*>(r3_1)->unk1C, 1);
                         }
 
                         if(pObjectEne->CActorParam_UnkVirtualFunc19() == 1 ||
@@ -77,7 +77,7 @@ namespace cf{
                         //likely an inline
                         if(pObjectEne != nullptr && pObjectEne->unk64 & 0x2){
                             UNKTYPE* r3_1 = func_8009EC9C(pObjectEne->unk8C_3);
-                            func_8009D7E4((UNKTYPE*)((u32)r3_1 + 0x1C), 1);
+                            func_8009D7E4(&static_cast<UnkStruct_8009EC9C_Ret*>(r3_1)->unk1C, 1);
                         }
 
                         if(pObjectEne->CActorParam_UnkVirtualFunc19() == 1 ||
@@ -151,8 +151,8 @@ CBattleManager* CBattleManager::getInstance() {
 }
 
 bool func_800DA06C(void* self, unsigned int value) { struct Node { Node* next; unsigned int unused; unsigned int value; }; struct Manager { unsigned char unused[8]; Node* list; }; Manager* manager = static_cast<Manager*>(self); Node* sentinel = manager->list; Node* current = sentinel->next; while (current != sentinel && current->value != value) current = current->next; return current != sentinel; }
-void func_800E2584(void* p, u32 mask) {
-    *(u32*)((u8*)p + 0x84) &= ~mask;
+void func_800E2584(cf::CBattleManager* p, u32 mask) {
+    p->unk84 &= ~mask;
 }
 void* func_800EA384(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
 void func_800EA3AC(){}
@@ -165,14 +165,14 @@ void func_800EA410(void* self){
 void func_800EA420(){}
 unsigned int lbl_eu_80663F00;
 void* func_801A8070(void*);
-void* func_800EA444(void* self) {
-    return lbl_eu_80663F00 ? func_801A8070(static_cast<unsigned char*>(self) + 0x219c) : 0;
+void* func_800EA444(cf::CBattleManager* self) {
+    return lbl_eu_80663F00 ? func_801A8070(&self->mVision) : 0;
 }
-void func_800EA460(void* self, float a, float b, unsigned long c) {
-    extern void func_800EA484(void*);
-    *(float*)((char*)self + 0x88) = b;
-    *(unsigned long*)((char*)self + 0x8c) = c;
-    *(float*)((char*)self + 0x90) = a;
+void func_800EA460(cf::CBattleManager* self, float a, float b, unsigned long c) {
+    extern void func_800EA484(cf::CBattleManager*);
+    self->unk88 = b;
+    self->unk8C = c;
+    self->unk90 = a;
     func_800EA484(self);
 }
 void func_800EA470(){}
@@ -186,8 +186,8 @@ void func_800EC8FC(){}
 void func_800F3958(){}
 unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
 void func_800F4004(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }
-void func_800F42A0(void* _this) {
-    *(int*)((char*)_this + 0x84) = 0;
+void func_800F42A0(cf::CBattleManager* _this) {
+    _this->unk84 = 0;
 }
 
 void func_800D7D24(){}

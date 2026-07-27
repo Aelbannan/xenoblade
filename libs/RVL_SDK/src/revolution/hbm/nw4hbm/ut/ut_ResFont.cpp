@@ -24,8 +24,9 @@ bool ResFont::SetResource(void* pBuffer) {
     }
 
     if (pHeader->signature == SIGNATURE_UNPACKED) {
+        char* pHeaderBytes = reinterpret_cast<char*>(pHeader);
         BinaryBlockHeader* pBlock = reinterpret_cast<BinaryBlockHeader*>(
-            reinterpret_cast<char*>(pHeader) + pHeader->headerSize);
+            pHeaderBytes + pHeader->headerSize);
 
         for (int i = 0; i < pHeader->dataBlocks; i++) {
             if (pBlock->kind == SIGNATURE_FONTINFO) {
@@ -33,8 +34,9 @@ bool ResFont::SetResource(void* pBuffer) {
                 break;
             }
 
+            char* pBlockBytes = reinterpret_cast<char*>(pBlock);
             pBlock = reinterpret_cast<BinaryBlockHeader*>(
-                reinterpret_cast<char*>(pBlock) + pBlock->size);
+                pBlockBytes + pBlock->size);
         }
     } else {
         if (pHeader->version == NW4R_VERSION(1, 4)) {
@@ -60,8 +62,9 @@ bool ResFont::SetResource(void* pBuffer) {
 }
 
 FontInformation* ResFont::Rebuild(BinaryFileHeader* pHeader) {
+    char* pHeaderBytes = reinterpret_cast<char*>(pHeader);
     BinaryBlockHeader* pBlock = reinterpret_cast<BinaryBlockHeader*>(
-        reinterpret_cast<char*>(pHeader) + pHeader->headerSize);
+        pHeaderBytes + pHeader->headerSize);
 
     FontInformation* pInfo = NULL;
 
@@ -113,8 +116,9 @@ FontInformation* ResFont::Rebuild(BinaryFileHeader* pHeader) {
         }
         }
 
+        char* pBlockBytes = reinterpret_cast<char*>(pBlock);
         pBlock = reinterpret_cast<BinaryBlockHeader*>(
-            reinterpret_cast<char*>(pBlock) + pBlock->size);
+            pBlockBytes + pBlock->size);
     }
 
     pHeader->signature = SIGNATURE_UNPACKED;

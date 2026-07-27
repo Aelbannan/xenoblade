@@ -92,3 +92,29 @@ namespace cf{
         static CBattleManager* spInstance;
     };
 }
+
+// --- Standalone function access structs (CBattleManager.cpp) ---
+
+// Intrusive linked-list node: +0x00 = next, +0x08 = data ptr
+struct SimpleListNode {
+    SimpleListNode* next;
+    void* data;
+};
+
+// Return layout of func_8009EC9C (accessed at +0x1C, cast_int_arith L63/L80)
+struct UnkStruct_8009EC9C_Ret {
+    u8 pad_00[0x1C];
+    u8 unk1C;
+};
+
+// Layout for func_800EA384 self: list sentinel ptr at +0x08
+struct Func800EA384_Self {
+    u8 pad_00[0x08];
+    SimpleListNode* listHead;
+};
+
+// Layout for func_800F4004 this_: list sentinel ptr at +0x48
+struct Func800F4004_Self {
+    u8 pad_00[0x48];
+    SimpleListNode* listHead;
+};

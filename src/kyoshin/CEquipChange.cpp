@@ -2,8 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CEquipChange.hpp"
 
-u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
+u8 func_802023C0(CEquipChange* self) { return self->field_4D; }
 
 
 
@@ -13,12 +14,12 @@ u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 
 
 void func_802865A0(void* self);
-void func_802023C8(void* self) { ((void(*)(void*))func_802865A0)((char*)self + 0x2b0); }
+void func_802023C8(CEquipChange* self) { func_802865A0(&self->mEquipItemBox); }
 
 
 
 void func_80286650(void* self);
-void func_8020247C(void* self) { ((void(*)(void*))func_80286650)((char*)self + 0x2b0); }
+void func_8020247C(CEquipChange* self) { func_80286650(&self->mEquipItemBox); }
 
 
 void func_802024CC(){}
@@ -41,8 +42,8 @@ void func_80202CCC(){}
 
 void func_80202EB4(){}
 
-int func_80203138(void* self) {
-    signed char value = *reinterpret_cast<const signed char*>(reinterpret_cast<const unsigned char*>(self) + 0x98);
+int func_80203138(CEquipChange* self) {
+    signed char value = self->field_98;
     if (value == 0)
         return 2;
     if (value == 4)
@@ -65,13 +66,13 @@ void func_80203210(){}
 void func_8020392C(){}
 
 void func_801D2E4C(void* self);
-void func_8020397C(void* self) { ((void(*)(void*))func_801D2E4C)((char*)self + 0x80); }
+void func_8020397C(CEquipChange* self) { func_801D2E4C(self->field_80); }
 
 void func_80287FE0(void* self);
-void func_80203984(void* self) { ((void(*)(void*))func_80287FE0)((char*)self + 0x2b0); }
+void func_80203984(CEquipChange* self) { func_80287FE0(&self->mEquipItemBox); }
 
 void func_802886D8(void* self);
-void func_8020398C(void* self) { ((void(*)(void*))func_802886D8)((char*)self + 0x2b0); }
+void func_8020398C(CEquipChange* self) { func_802886D8(&self->mEquipItemBox); }
 
 void func_80203994(){}
 
@@ -112,7 +113,7 @@ void func_80205294(void* dst, void* src) {
 
 void func_802052A8(){}
 
-void CEquipChange::OnFileEvent() {}
+bool CEquipChange::OnFileEvent(CEventFile* file) { return true; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_802059E8(){}

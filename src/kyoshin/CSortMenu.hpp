@@ -8,6 +8,13 @@ public:
     virtual ~CSortMenu();
     void OnFileEvent();
 
-    // TODO: add fields
+    u8 _00[0x28];
+    u8 field_0x28;
+    u8 _29[0x2B - 0x29];
+    u8 field_0x2B;
+    u8 _2C[0x6C - 0x2C];
+    int mArray[32];    // 0x6C-0xEB (32 * 4 = 128 bytes)
+    u8 field_0xEC;     // count / flag
+    u8 field_0xED;
+    u8 field_0xEE;
 };
-

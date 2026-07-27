@@ -12,6 +12,80 @@
 #include <nw4r/math.h>
 #include <revolution/GX.h>
 
+// ---------------------------------------------------------------------------
+// Local overlay structs for external objects accessed via pointer arithmetic.
+// Each matches the retail layout of the accessed fields.
+// ---------------------------------------------------------------------------
+
+// Many rendering / actor objects have a flag byte at +0xBB.
+struct ObjBBFlag {
+    u8 gap00[0xBB];
+    u8 flagBB;           // +0xBB, bit 0 = visible / highlight
+};
+
+// Object with flag word at +0x64 and anim-state byte at +0x91.
+// (CfObjectMove / CfObjectPc base region.)
+struct Obj64_91 {
+    u8 gap00[0x64];
+    u32 word64;           // +0x64  bitfield flags
+    u8 gap68[0x91 - 0x68];
+    u8 byte91;            // +0x91  animation state id
+};
+
+// Actor2 from func_8016FE34 — has a sub-object pointer at +0x04 and
+// a larger sub-object pointer at +0x3F34.
+struct Actor2Layout {
+    u8 gap00[0x04];
+    void* subObj4;        // +0x04
+    u8 gap08[0x3F34 - 0x08];
+    void* sub3F34;        // +0x3F34
+};
+
+// The object that actor2->sub3F34 points to.
+struct Sub3F34Layout {
+    u8 gap00[0x7A4];
+    u32 bits7A4;          // +0x7A4  bitfield (bit 26 checked)
+};
+
+// CfObjectPc has an embedded sub-object at +0x3E9C with its own vtable.
+struct PcEmbedLayout {
+    void* vtable;         // +0x00 (at pc+0x3E9C)
+};
+
+// Pose data returned by func_80496264(unk60, -1).
+// Two Vec3f clusters at +0x10C and +0x138.
+struct PoseLayout {
+    u8 gap00[0x10C];
+    f32 vec10c_x;
+    f32 vec10c_y;
+    f32 vec10c_z;
+    u8 gap118[0x138 - 0x118];
+    f32 vec138_x;
+    f32 vec138_y;
+    f32 vec138_z;
+};
+
+// Object returned by vslot GetVecFn(handle, 0x12C).
+// Three f32 components at 16-byte stride (0x0C / 0x1C / 0x2C).
+struct RLayout {
+    u8 gap00[0x0C];
+    f32 val0C;
+    u8 gap10[0x1C - 0x10];
+    f32 val1C;
+    u8 gap20[0x2C - 0x20];
+    f32 val2C;
+};
+
+// Minimal overlay for nw4r::lyt::AnimTransform field at +0x10.
+struct AnimTransformOverlay {
+    u8 gap00[0x10];
+    f32 field10;
+};
+
+// ---------------------------------------------------------------------------
+// End of overlay structs
+// ---------------------------------------------------------------------------
+
 // Batch 2026-07-14f: menu-enemy-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14h: menu-enemy-move owns Move exclusively; do not touch
 // cbRenderBefore above.
@@ -48,8 +122,8 @@ extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* s
     u32 ptmfWord1;
     u32 ptmfWord0;
     u32 ptmfWord2;
-    u8* panel;
-    u8* panelEnd;
+    MenuEnemyPanel* panel;
+    MenuEnemyPanel* panelEnd;
     f32 panelMarker;
     u8 tmp[0x48];
     u32 copy;
@@ -74,115 +148,118 @@ extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* s
     ptmfWord2 = *reinterpret_cast<u32*>(ptmfBase + 8);
     process->callbacks[5] = ptmfWord2;
     zero = 0;
-    *reinterpret_cast<u8*>(reinterpret_cast<u8*>(thisPtr) + 0x54) = 0;
-    *reinterpret_cast<u8*>(reinterpret_cast<u8*>(thisPtr) + 0x55) = 0;
+    thisPtr->unk54 = 0;
+    thisPtr->unk55 = 0;
     process->vtable = vtFinal;
-    *reinterpret_cast<char**>(reinterpret_cast<u8*>(thisPtr) + 0x58) = vtFinal + 0x24;
-    *reinterpret_cast<char**>(reinterpret_cast<u8*>(thisPtr) + 0x5c) = vtFinal + 0xac;
+    thisPtr->vtPtr1 = vtFinal + 0x24;
+    thisPtr->vtPtr2 = vtFinal + 0xac;
     thisPtr->unk60 = scnArg;
 
-    __ct__17UnkClass_8045F564Fv(reinterpret_cast<u8*>(thisPtr) + 0x64);
+    __ct__17UnkClass_8045F564Fv(thisPtr->unk64);
 
     thisPtr->unk74 = NULL;
-    panel = reinterpret_cast<u8*>(thisPtr) + 0xa4;
+    panel = thisPtr->panels;
     panelMarker = lbl_eu_80666FEC;
-    panelEnd = reinterpret_cast<u8*>(thisPtr) + 0x7c4;
+    panelEnd = &thisPtr->panels[24];
     thisPtr->unk78 = NULL;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7c) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x80) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x84) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x88) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x8c) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x90) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x94) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x98) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x9c) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0xa0) = zero;
+    thisPtr->field7C = zero;
+    thisPtr->field80 = zero;
+    thisPtr->field84 = zero;
+    thisPtr->field88 = zero;
+    thisPtr->field8C = zero;
+    thisPtr->field90 = zero;
+    thisPtr->field94 = zero;
+    thisPtr->field98 = zero;
+    thisPtr->field9C = zero;
+    thisPtr->fieldA0 = zero;
 
     // do-while + live panelEnd matches retail fall-into-body cmplw/blt shape.
     // panelEnd/one r0/r3 Chaitin soft-cap — keep iterating in high-level C.
     do {
-        *reinterpret_cast<u32*>(panel + 0x00) = zero;
-        *reinterpret_cast<u32*>(panel + 0x04) = zero;
-        *reinterpret_cast<u32*>(panel + 0x08) = zero;
-        *reinterpret_cast<u32*>(panel + 0x0c) = zero;
-        *reinterpret_cast<u32*>(panel + 0x10) = zero;
-        panel[0x14] = 0;
-        panel[0x15] = 0;
-        *reinterpret_cast<f32*>(panel + 0x18) = panelMarker;
-        panel[0x1c] = 0;
-        panel[0x1d] = 0;
-        panel[0x1e] = 0;
-        panel[0x1f] = 0;
-        panel[0x20] = 0;
-        panel[0x21] = 0;
-        panel[0x22] = 0;
-        *reinterpret_cast<u32*>(panel + 0x24) = zero;
-        panel[0x28] = 0;
-        panel[0x29] = 1;
-        *reinterpret_cast<u32*>(panel + 0x2c) = zero;
-        *reinterpret_cast<u32*>(panel + 0x30) = zero;
-        *reinterpret_cast<u32*>(panel + 0x34) = zero;
-        *reinterpret_cast<u32*>(panel + 0x38) = zero;
-        *reinterpret_cast<u32*>(panel + 0x3c) = zero;
-        *reinterpret_cast<u32*>(panel + 0x40) = zero;
-        *reinterpret_cast<u32*>(panel + 0x44) = zero;
-        *reinterpret_cast<u32*>(panel + 0x48) = zero;
-        panel += 0x4c;
+        panel->actorId = zero;
+        panel->layout1 = reinterpret_cast<nw4r::lyt::Layout*>(zero);
+        panel->unk08 = zero;
+        panel->layout2 = reinterpret_cast<nw4r::lyt::Layout*>(zero);
+        panel->unk10 = zero;
+        panel->drawLayout0Flag = 0;
+        panel->visible = 0;
+        panel->animMarker = panelMarker;
+        panel->unk1C = 0;
+        panel->unk1D = 0;
+        panel->unk1E = 0;
+        panel->unk1F = 0;
+        panel->unk20 = 0;
+        panel->unk21 = 0;
+        panel->unk22 = 0;
+        panel->unk24 = zero;
+        panel->panelType = 0;
+        panel->unk29 = 1;
+        panel->obj1 = reinterpret_cast<void*>(zero);
+        panel->obj2 = reinterpret_cast<void*>(zero);
+        panel->obj3 = reinterpret_cast<void*>(zero);
+        panel->unk38 = zero;
+        panel->unk3C = zero;
+        panel->unk40 = zero;
+        panel->unk44 = zero;
+        panel->unk48 = zero;
+        panel++;
     } while (panel < panelEnd);
 
     zero = 0;
-    reinterpret_cast<u8*>(thisPtr)[0x7c4] = 0;
-    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x7c8) = panelMarker;
-    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x7cc) = panelMarker;
-    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x7d0) = panelMarker;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7d4) = zero;
-    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x7d8) = panelMarker;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7dc) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7e0) = zero;
+    thisPtr->field7C4 = 0;
+    thisPtr->field7C8 = panelMarker;
+    thisPtr->field7CC = panelMarker;
+    thisPtr->field7D0 = panelMarker;
+    thisPtr->field7D4 = zero;
+    thisPtr->field7D8 = panelMarker;
+    thisPtr->field7DC = zero;
+    thisPtr->field7E0 = zero;
 
-    __ct__CPcSelectCursor(reinterpret_cast<u8*>(thisPtr) + 0x7e4);
+    __ct__CPcSelectCursor(&thisPtr->selectCursor);
 
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x82c) = zero;
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x830) = zero;
-    reinterpret_cast<u8*>(thisPtr)[0x834] = 0;
-    *reinterpret_cast<f32*>(reinterpret_cast<u8*>(thisPtr) + 0x838) = lbl_eu_80667004;
+    thisPtr->field82C = zero;
+    thisPtr->unk830 = zero;
+    thisPtr->unk834 = 0;
+    thisPtr->unk838 = lbl_eu_80667004;
 
     __ct__CPcSelectCursor(tmp);
-    copy = *reinterpret_cast<u32*>(tmp + 0x04);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7e8) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x08);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7ec) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x0c);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7f0) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x10);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7f4) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x14);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7f8) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x18);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x7fc) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x1c);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x800) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x20);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x804) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x24);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x808) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x28);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x80c) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x2c);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x810) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x30);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x814) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x34);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x818) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x38);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x81c) = copy;
-    copy = *reinterpret_cast<u32*>(tmp + 0x3c);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x820) = copy;
-    reinterpret_cast<u8*>(thisPtr)[0x824] = tmp[0x40];
-    reinterpret_cast<u8*>(thisPtr)[0x825] = tmp[0x41];
-    copy = *reinterpret_cast<u32*>(tmp + 0x44);
-    *reinterpret_cast<u32*>(reinterpret_cast<u8*>(thisPtr) + 0x828) = copy;
+    {
+        CPcSelectCursorLayout* tmpSel = reinterpret_cast<CPcSelectCursorLayout*>(tmp);
+        copy = tmpSel->field04;
+        thisPtr->selectCursor.field04 = copy;
+        copy = tmpSel->field08;
+        thisPtr->selectCursor.field08 = copy;
+        copy = tmpSel->field0C;
+        thisPtr->selectCursor.field0C = copy;
+        copy = tmpSel->field10;
+        thisPtr->selectCursor.field10 = copy;
+        copy = tmpSel->field14;
+        thisPtr->selectCursor.field14 = copy;
+        copy = tmpSel->field18;
+        thisPtr->selectCursor.field18 = copy;
+        copy = tmpSel->layout1C;
+        thisPtr->selectCursor.layout1C = copy;
+        copy = tmpSel->anim20;
+        thisPtr->selectCursor.anim20 = copy;
+        copy = tmpSel->anim24;
+        thisPtr->selectCursor.anim24 = copy;
+        copy = tmpSel->field28;
+        thisPtr->selectCursor.field28 = copy;
+        copy = tmpSel->field2C;
+        thisPtr->selectCursor.field2C = copy;
+        copy = tmpSel->field30;
+        thisPtr->selectCursor.field30 = copy;
+        copy = tmpSel->field34;
+        thisPtr->selectCursor.field34 = copy;
+        copy = tmpSel->field38;
+        thisPtr->selectCursor.field38 = copy;
+        copy = tmpSel->field3C;
+        thisPtr->selectCursor.field3C = copy;
+        thisPtr->selectCursor.byte40 = tmpSel->byte40;
+        thisPtr->selectCursor.byte41 = tmpSel->byte41;
+        copy = tmpSel->field44;
+        thisPtr->selectCursor.field44 = copy;
+    }
     __dt__17UnkClass_8045F564Fv(tmp + 0x08, -1);
 
     return thisPtr;
@@ -312,10 +389,8 @@ after_bit21:
                     u32* pair = &indices[j];
                     u32 idxA = order[j];
                     u32 idxB = pair[1];
-                    f32 depthB = *reinterpret_cast<f32*>(
-                        reinterpret_cast<u8*>(this) + idxB * 0x4c + 0xbc);
-                    f32 depthA = *reinterpret_cast<f32*>(
-                        reinterpret_cast<u8*>(this) + idxA * 0x4c + 0xbc);
+                    f32 depthB = panels[idxB].animMarker;
+                    f32 depthA = panels[idxA].animMarker;
                     if (depthA > depthB) {
                         u32 tmp = order[j] ^ pair[1];
                         order[j] = tmp;
@@ -342,42 +417,36 @@ after_bit21:
         // u32 counter; cast to u8 only when indexing. Compare stays cmpli (no
         // terminal clrlwi) so .text is retail 0x274.
         {
-            u8* entry;
-            u32* order;
             u32 i;
+            u32* order;
             order = indices;
             i = 0;
             do {
-                entry = reinterpret_cast<u8*>(this) +
-                        order[static_cast<u8>(i)] * 0x4c;
-                if (entry[0xb9] == 0) {
+                MenuEnemyPanel& p = panels[order[static_cast<u8>(i)]];
+                if (p.visible == 0) {
                     goto draw_next;
                 }
-                if (entry[0xcd] == 0) {
+                if (p.unk29 == 0) {
                     goto draw_next;
                 }
-                if (entry[0xcc] != 0) {
+                if (p.panelType != 0) {
                     func_80137038(unk74, &drawInfo, 0, 1);
                 }
                 {
-                    u8 cc = entry[0xcc];
-                    int drawFlag = (cc == 0);
-                    func_80137038(
-                        *reinterpret_cast<nw4r::lyt::Layout**>(entry + 0xb0),
-                        &drawInfo, drawFlag, 1);
+                    int drawFlag = (p.panelType == 0) ? 0 : 1;
+                    drawFlag = (drawFlag == 0) ? 1 : 0;
+                    func_80137038(p.layout2, &drawInfo, drawFlag, 1);
                 }
-                if (entry[0xb8] == 0) {
-                    func_80137038(
-                        *reinterpret_cast<nw4r::lyt::Layout**>(entry + 0xa8),
-                        &drawInfo, 0, 1);
+                if (p.drawLayout0Flag == 0) {
+                    func_80137038(p.layout1, &drawInfo, 0, 1);
                 }
             draw_next:
                 i++;
             } while (i < 0x18);
         }
 
-        if (unk828 != 0) {
-            func_80137038(unk800, &drawInfo, 0, 1);
+        if (selectCursor.field44 != 0) {
+            func_80137038(selectCursor.layout1C, &drawInfo, 0, 1);
         }
     }
 done:
@@ -417,6 +486,9 @@ after_bit21:
         int noTarget = 1;
 
         if (cf::CfGameManager::getPlayer(0) != NULL) {
+            // (Not in the 47-reinterpret_arith findings — reading offset
+            //  0x90E4 from func_800FE68C().  Overlay struct with a u32 at
+            //  that offset would be unwieldy; keep the original expression.)
             u32 lastId = *reinterpret_cast<u32*>(
                 reinterpret_cast<u8*>(func_800FE68C()) + 0x90E4);
 
@@ -425,7 +497,7 @@ after_bit21:
 
                 if (obj != NULL) {
                     bool active =
-                        (*reinterpret_cast<u32*>(reinterpret_cast<u8*>(obj) + 0x64) & 4) != 0;
+                        (static_cast<Obj64_91*>(obj)->word64 & 4) != 0;
 
                     if (active) {
                         if (unk834 != 0) {
@@ -502,32 +574,27 @@ after_bit21:
     u8 z = 0;
 
     for (; i < 0x18; i++) {
-        u8* entry = reinterpret_cast<u8*>(this) + static_cast<u8>(i) * 0x4c;
+        MenuEnemyPanel& panel = panels[i];
 
-        if (entry[0xB9] == 0) {
+        if (panel.visible == 0) {
             continue;
         }
 
-        u8* panelData = entry + 0xA4;
-
-        if (panelData[0x28] == 0) { // entry+0xCC
+        if (panel.panelType == 0) {
             if (func_8013BF48()) {
-                void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-                void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-                void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-                u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-                u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-                u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
-                *b1 = (*b1 & 0xFE) | 1;
-                *b2 = (*b2 & 0xFE) | 1;
-                *b3 = (*b3 & 0xFE) | 1;
+                u8& b1 = static_cast<ObjBBFlag*>(panel.obj1)->flagBB;
+                u8& b2 = static_cast<ObjBBFlag*>(panel.obj2)->flagBB;
+                u8& b3 = static_cast<ObjBBFlag*>(panel.obj3)->flagBB;
+                b1 = (b1 & 0xFE) | 1;
+                b2 = (b2 & 0xFE) | 1;
+                b3 = (b3 & 0xFE) | 1;
             }
         }
 
-        u32 actorId = *reinterpret_cast<u32*>(panelData + 0x0);
+        u32 actorId = panel.actorId;
         void* handle = func_800B708C(static_cast<int>(actorId));
         if (handle == NULL) {
-            panelData[0x15] = z;
+            panel.visible = z;
             continue;
         }
 
@@ -536,16 +603,14 @@ after_bit21:
         int skipDist = 0;
         int hasSub = 0;
         if (actor2 != NULL) {
-            void* sub3f34 =
-                *reinterpret_cast<void**>(reinterpret_cast<u8*>(actor2) + 0x3f34);
+            void* sub3f34 = static_cast<Actor2Layout*>(actor2)->sub3F34;
             if (sub3f34 != NULL) {
                 hasSub = 1;
             }
         }
         if (hasSub) {
-            void* sub3f34 =
-                *reinterpret_cast<void**>(reinterpret_cast<u8*>(actor2) + 0x3f34);
-            u32 bits = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(sub3f34) + 0x7a4);
+            void* sub3f34 = static_cast<Actor2Layout*>(actor2)->sub3F34;
+            u32 bits = static_cast<Sub3F34Layout*>(sub3f34)->bits7A4;
             if ((bits >> 26) & 1) {
                 skipDist = 1;
             }
@@ -556,24 +621,24 @@ after_bit21:
             f32 stateVal = vslot<GetFloatFn>(actor2, 0x128)(actor2);
             // Retail: state==FEC && panelData[0x1c]==0 → always cull.
             if (animMarker == stateVal) {
-                if (panelData[0x1c] == 0) { // entry+0xC0
-                    panelData[0x15] = z;
+                if (panel.unk1C == 0) {
+                    panel.visible = z;
                     continue;
                 }
             }
         }
         if (skipDist) {
-            panelData[0x15] = z;
+            panel.visible = z;
             continue;
         }
 
-        // Distance cull + frustum test only when panelData[0x28]==0 and pc!=NULL.
+        // Distance cull + frustum test only when panelType==0 and pc!=NULL.
         // Retail skips both when either gate fails (falls through to flag work).
-        if (panelData[0x28] == 0 && pc != NULL) {
+        if (panel.panelType == 0 && pc != NULL) {
             typedef void* (*GetPosFn)(void*);
             void* handlePos = vslot<GetPosFn>(handle, 0xAC)(handle);
-            void* pcEmbed = reinterpret_cast<u8*>(pc) + 0x3e9c;
-            void* pcPos = vslot<GetPosFn>(pcEmbed, 0xAC)(pcEmbed);
+            PcEmbedLayout* pcEmbed = reinterpret_cast<PcEmbedLayout*>(pc);
+            void* pcPos = vslot<GetPosFn>(&pcEmbed->vtable, 0xAC)(&pcEmbed->vtable);
 
             nw4r::math::VEC3Sub(
                 pDelta,
@@ -583,72 +648,63 @@ after_bit21:
             // Retail: interleaved assign + VEC3LenSq (ps_mul/ps_madd/ps_sum0).
             f32 distSq = nw4r::math::VEC3LenSq(pScratch);
             if (distSq > distThresh) {
-                panelData[0x15] = z;
+                panel.visible = z;
                 continue;
             }
 
             {
-                void* pose = func_80496264(unk60, -1);
+                PoseLayout* pose = static_cast<PoseLayout*>(func_80496264(unk60, -1));
                 Vec3f a;
-                a.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x10c);
-                a.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x110);
-                a.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x114);
+                a.x = pose->vec10c_x;
+                a.y = pose->vec10c_y;
+                a.z = pose->vec10c_z;
                 Vec3f b;
-                b.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x138);
-                b.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x13c);
-                b.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(pose) + 0x140);
+                b.x = pose->vec138_x;
+                b.y = pose->vec138_y;
+                b.z = pose->vec138_z;
 
                 void* qpos = vslot<GetPosFn>(handle, 0xAC)(handle);
-                Vec3f c;
-                c.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(qpos) + 0);
-                c.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(qpos) + 4);
-                c.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(qpos) + 8);
+                Vec3f c = *static_cast<const Vec3f*>(qpos);
 
                 if (!func_8013A4B4(&a, &b, &c)) {
-                    panelData[0x15] = z;
+                    panel.visible = z;
                     continue;
                 }
             }
         }
 
-        if (panelData[0x28] == 0) { // entry+0xCC
-            if (panelData[0x1d] != 0) { // entry+0xC1
+        if (panel.panelType == 0) {
+            if (panel.unk1D != 0) {
                 if (actor2 != NULL) {
-                    void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-                    void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-                    void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-                    u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-                    u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-                    u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
+                    u8& b1 = static_cast<ObjBBFlag*>(panel.obj1)->flagBB;
+                    u8& b2 = static_cast<ObjBBFlag*>(panel.obj2)->flagBB;
+                    u8& b3 = static_cast<ObjBBFlag*>(panel.obj3)->flagBB;
 
-                    *b1 = (*b1 & 0xFE) | 1;
-                    *b2 = *b2 & 0xFE;
+                    b1 = (b1 & 0xFE) | 1;
+                    b2 = b2 & 0xFE;
 
                     typedef void* (*GetPtrFn)(void*);
                     void* r = vslot<GetPtrFn>(actor2, 0x258)(actor2);
                     u32 v = *reinterpret_cast<u32*>(r);
                     if (v - 1 <= 3) {
-                        *b2 = (*b2 & 0xFE) | 1;
+                        b2 = (b2 & 0xFE) | 1;
                     }
 
                     typedef u32 (*GetU8Fn)(void*);
                     u32 byteVal = vslot<GetU8Fn>(actor2, 0x260)(actor2) & 0xFF;
-                    *b3 = (*b3 & 0xFE) | static_cast<u8>(byteVal);
+                    b3 = (b3 & 0xFE) | static_cast<u8>(byteVal);
                 }
             } else {
-                void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-                void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-                void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-                u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-                u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-                u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
-                *b1 = *b1 & 0xFE;
-                *b2 = *b2 & 0xFE;
-                *b3 = *b3 & 0xFE;
+                u8& b1 = static_cast<ObjBBFlag*>(panel.obj1)->flagBB;
+                u8& b2 = static_cast<ObjBBFlag*>(panel.obj2)->flagBB;
+                u8& b3 = static_cast<ObjBBFlag*>(panel.obj3)->flagBB;
+                b1 = b1 & 0xFE;
+                b2 = b2 & 0xFE;
+                b3 = b3 & 0xFE;
             }
         }
 
-        func_801115E8(this, panelData);
+        func_801115E8(this, reinterpret_cast<u8*>(&panel));
 
         {
             Vec3f posTmp;
@@ -659,97 +715,89 @@ after_bit21:
             typedef void* (*GetVecFn)(void*, int);
             void* r = vslot<GetVecFn>(handle, 0x12C)(handle, 0x64);
             if (r != NULL) {
-                posTmpPtr->x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(r) + 0xc);
-                posTmpPtr->y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(r) + 0x1c);
-                posTmpPtr->z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(r) + 0x2c);
+                RLayout* rl = static_cast<RLayout*>(r);
+                posTmpPtr->x = rl->val0C;
+                posTmpPtr->y = rl->val1C;
+                posTmpPtr->z = rl->val2C;
                 posA = *posTmpPtr;
             } else {
                 typedef void* (*GetPosFn)(void*);
                 void* p = vslot<GetPosFn>(handle, 0xAC)(handle);
-                posA.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p) + 0);
-                posA.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p) + 4);
-                posA.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p) + 8);
+                posA = *static_cast<const Vec3f*>(p);
             }
 
             typedef void* (*GetPosFn)(void*);
             void* p2 = vslot<GetPosFn>(handle, 0xAC)(handle);
-            posB.x = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p2) + 0);
-            posB.y = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p2) + 4);
-            posB.z = *reinterpret_cast<f32*>(reinterpret_cast<u8*>(p2) + 8);
+            posB = *static_cast<const Vec3f*>(p2);
 
-            u32 flagWord = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(handle) + 0x64);
+            Obj64_91* hf = static_cast<Obj64_91*>(handle);
+            u32 flagWord = hf->word64;
             if ((flagWord & 0x4000) != 0 || (flagWord & 0x8000) != 0) {
                 if (handle != NULL) {
-                    u8 animState = *(reinterpret_cast<u8*>(handle) + 0x91);
+                    u8 animState = hf->byte91;
                     if (animState == 6) {
                         posA.y += one;
                     }
                 }
             }
 
-            func_80111080(this, panelData, &posA, &posB);
+            func_80111080(this, reinterpret_cast<u8*>(&panel), &posA, &posB);
         }
 
-        if (panelData[0x1f] == 0 && actor2 != NULL) { // entry+0xC3
-            func_80112170(this, panelData);
+        if (panel.unk1F == 0 && actor2 != NULL) {
+            func_80112170(this, reinterpret_cast<u8*>(&panel));
 
-            if (panelData[0x1c] != 0) { // entry+0xC0
+            if (panel.unk1C != 0) {
                 u32 count = cf::CBattleManager::getInstance()->mActorList1.size();
-                panelData[0x14] = count == 0 ? 1 : 0; // entry+0xB8
+                panel.drawLayout0Flag = (count == 0) ? 1 : 0;
             } else {
-                void* subObj = *reinterpret_cast<void**>(reinterpret_cast<u8*>(actor2) + 4);
+                void* subObj = static_cast<Actor2Layout*>(actor2)->subObj4;
                 typedef void* (*SubGetFn)(void*);
                 void* result = vslot<SubGetFn>(subObj, 0x30)(subObj);
                 u32 localVal = *reinterpret_cast<u32*>(result);
                 u32 ret = func_80174C98(actor2, &localVal, 0x803);
-                panelData[0x14] = ret == 0 ? 1 : 0;
+                panel.drawLayout0Flag = (ret == 0) ? 1 : 0;
             }
 
-            if (panelData[0x14] == 0) {
+            if (panel.drawLayout0Flag == 0) {
                 typedef f32 (*GetFloatFn)(void*);
                 f32 v12c = vslot<GetFloatFn>(actor2, 0x12C)(actor2);
                 f32 v128 = vslot<GetFloatFn>(actor2, 0x128)(actor2);
-                func_80111B08(this, panelData, v128, v12c);
+                func_80111B08(this, reinterpret_cast<u8*>(&panel), v128, v12c);
 
                 v12c = vslot<GetFloatFn>(actor2, 0x12C)(actor2);
                 v128 = vslot<GetFloatFn>(actor2, 0x128)(actor2);
-                func_80111E70(this, panelData, v128, v12c);
+                func_80111E70(this, reinterpret_cast<u8*>(&panel), v128, v12c);
 
-                func_801132A8(this, panelData, actor2);
+                func_801132A8(this, reinterpret_cast<u8*>(&panel), actor2);
             }
         }
 
-        if (panelData[0x28] != 0) {
-            void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-            void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-            void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-            u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-            u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-            u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
-            *b1 = *b1 & 0xFE;
-            *b2 = *b2 & 0xFE;
-            *b3 = *b3 & 0xFE;
+        if (panel.panelType != 0) {
+            u8& b1 = static_cast<ObjBBFlag*>(panel.obj1)->flagBB;
+            u8& b2 = static_cast<ObjBBFlag*>(panel.obj2)->flagBB;
+            u8& b3 = static_cast<ObjBBFlag*>(panel.obj3)->flagBB;
+            b1 = b1 & 0xFE;
+            b2 = b2 & 0xFE;
+            b3 = b3 & 0xFE;
         } else if (!func_8013BF48()) {
-            void* o1 = *reinterpret_cast<void**>(panelData + 0x2c);
-            void* o2 = *reinterpret_cast<void**>(panelData + 0x30);
-            void* o3 = *reinterpret_cast<void**>(panelData + 0x34);
-            u8* b1 = reinterpret_cast<u8*>(o1) + 0xBB;
-            u8* b2 = reinterpret_cast<u8*>(o2) + 0xBB;
-            u8* b3 = reinterpret_cast<u8*>(o3) + 0xBB;
-            *b1 = *b1 & 0xFE;
-            *b2 = *b2 & 0xFE;
-            *b3 = *b3 & 0xFE;
+            u8& b1 = static_cast<ObjBBFlag*>(panel.obj1)->flagBB;
+            u8& b2 = static_cast<ObjBBFlag*>(panel.obj2)->flagBB;
+            u8& b3 = static_cast<ObjBBFlag*>(panel.obj3)->flagBB;
+            b1 = b1 & 0xFE;
+            b2 = b2 & 0xFE;
+            b3 = b3 & 0xFE;
         }
     }
 
-    if (unk78D != 0) {
+    if (panels[23].visible != 0) {
         u32 left = 0x17;
         u32 j = 0;
         do {
-            u8* entry2 = reinterpret_cast<u8*>(this) + static_cast<u8>(j) * 0x4c;
-            if (entry2[0xB9] != 0) {
-                if (*reinterpret_cast<u32*>(entry2 + 0xA4) == unk778) {
-                    entry2[0xB9] = z;
+            MenuEnemyPanel& panel2 = panels[j];
+            if (panel2.visible != 0) {
+                if (panel2.actorId == panels[23].actorId) {
+                    panel2.visible = z;
                     break;
                 }
             }
@@ -760,37 +808,37 @@ after_bit21:
     func_80137444(unk78, lbl_eu_80666FE8);
     unk74->Animate(0);
 
-    switch (unk828) {
+    switch (selectCursor.field44) {
     case 1:
-        if (func_80137444(unk804, lbl_eu_80666FE8) != 0) {
-            unk824 = 1;
-            unk828 = 2;
+        if (func_80137444(selectCursor.anim20, lbl_eu_80666FE8) != 0) {
+            selectCursor.byte40 = 1;
+            selectCursor.field44 = 2;
         }
         break;
     case 3:
-        if (func_80137510(static_cast<void*>(unk804), lbl_eu_80666FE8) != 0) {
-            unk824 = 1;
-            unk828 = 0;
+        if (func_80137510(static_cast<void*>(selectCursor.anim20), lbl_eu_80666FE8) != 0) {
+            selectCursor.byte40 = 1;
+            selectCursor.field44 = 0;
         }
         break;
     case 4:
-        if (func_80137444(unk808, lbl_eu_80666FE8) != 0) {
-            *reinterpret_cast<f32*>(reinterpret_cast<u8*>(unk808) + 0x10) = lbl_eu_80666FEC;
-            unk800->Animate(0);
-            unk800->SetAnimationEnable(unk808, false);
-            unk800->SetAnimationEnable(unk804, true);
-            unk828 = 3;
+        if (func_80137444(selectCursor.anim24, lbl_eu_80666FE8) != 0) {
+            static_cast<AnimTransformOverlay*>(selectCursor.anim24)->field10 = lbl_eu_80666FEC;
+            selectCursor.layout1C->Animate(0);
+            selectCursor.layout1C->SetAnimationEnable(selectCursor.anim24, false);
+            selectCursor.layout1C->SetAnimationEnable(selectCursor.anim20, true);
+            selectCursor.field44 = 3;
         }
         break;
     default:
         break;
     }
 
-    if (unk828 != 0) {
-        func_8010EE40(&unk7E4);
+    if (selectCursor.field44 != 0) {
+        func_8010EE40(&selectCursor);
     }
 
-    unk800->Animate(0);
+    selectCursor.layout1C->Animate(0);
     }
 done:
     ;

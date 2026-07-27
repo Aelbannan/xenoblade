@@ -14,6 +14,14 @@ public:
     // TODO: add fields
 };
 
+// Full object layout for CMenuUpdate (used by C-linkage accessors)
+struct CMenuUpdateFull {
+    u8 _00[0x64];
+    u8 field_64;
+    u8 _65[0x67 - 0x65];
+    u8 field_67;
+};
+
 class IUIWindow {
 public:
     IUIWindow();

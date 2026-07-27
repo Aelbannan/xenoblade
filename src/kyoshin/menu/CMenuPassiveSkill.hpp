@@ -1,7 +1,12 @@
 #pragma once
 
-// Forward declaration for adjusting thunks.
-// Full class definition TBD as more functions are decompiled.
+#include <monolib/work/CProcess.hpp>
+#include <monolib/scn/IScnRender.hpp>
+
+/*
+ * Passive skill menu screen process.
+ * IScnRender subobject is at offset 0x58.
+ */
 class CMenuPassiveSkill;
 
 extern "C" void __ct__CMenuPassiveSkill();
@@ -24,16 +29,16 @@ extern "C" void func_80263E4C();
 // These are called through a secondary base vtable entry at offset +0x58
 // within CMenuPassiveSkill (IScnRender interface). They adjust this back
 // to the full object before tail-calling the actual implementation.
-extern "C" void func_80263EAC(CMenuPassiveSkill* self);
-extern "C" void func_80263EB4(CMenuPassiveSkill* self);
+extern "C" void func_80263EAC(IScnRender* self);
+extern "C" void func_80263EB4(IScnRender* self);
 
-class CMenuPassiveSkill {
+class CMenuPassiveSkill : public CProcess, public IScnRender {
 public:
     CMenuPassiveSkill();
     virtual ~CMenuPassiveSkill();
-    void Init();
-    void Term();
-    void Move();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
     void cbRenderBefore();
 
     // TODO: add fields

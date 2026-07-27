@@ -34,7 +34,7 @@ void func_802B0D24(){}
  */
 void func_802B0F08(IScnRender* self) {
     ((void(*)(CMenuGCItem*))cbRenderBefore__11CMenuGCItemFv)(
-        (CMenuGCItem*)((uintptr_t)self - 0x58));
+        static_cast<CMenuGCItem*>(self));
 }
 
 /**
@@ -49,5 +49,5 @@ void func_802B0F08(IScnRender* self) {
  */
 void func_802B0F10(IScnRender* self){
     ((void(*)(CMenuGCItem*))__dt__11CMenuGCItemFv)(
-        (CMenuGCItem*)((uintptr_t)self - 0x58));
+        static_cast<CMenuGCItem*>(self));
 }

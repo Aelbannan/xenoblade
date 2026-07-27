@@ -68,7 +68,11 @@ void AnmScn::GetLightSetting(LightSetting* pSetting) {
 } // namespace g3d
 } // namespace nw4r
 
-void GetLightSet__Q34nw4r3g3d12LightSettingFi(void *result, void *self, int index) { unsigned short count = *(unsigned short *)((unsigned char *)self + 2); *(void **)result = self; if (index >= 0 && index < (int)count) *(void **)((unsigned char *)result + 4) = (unsigned char *)*(void **)((unsigned char *)self + 0xC) + index * 12; else *(void **)((unsigned char *)result + 4) = 0; }
+void GetLightSet__Q34nw4r3g3d12LightSettingFi(void* result, void* self, int index) {
+    nw4r::g3d::LightSetting* setting = static_cast<nw4r::g3d::LightSetting*>(self);
+    nw4r::g3d::LightSet* lightSet = static_cast<nw4r::g3d::LightSet*>(result);
+    *lightSet = setting->GetLightSet(index);
+}
 int Attach__Q34nw4r3g3d6AnmScnFiPQ34nw4r3g3d9AnmScnRes(void) { return 0x0; }
 int Detach__Q34nw4r3g3d6AnmScnFi(int) { return 0; }
 unsigned int GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
@@ -101,7 +105,7 @@ int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
 void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv(void*);
 void GetNumCamera__Q34nw4r3g3d9AnmScnResCFv(void* self) {
     reinterpret_cast<void(*)(void*)>(GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv)(
-        reinterpret_cast<char*>(self) + 0x20);
+        static_cast<char*>(self) + 0x20);
 }
 u16 GetLightSetMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* _this) {
     return *reinterpret_cast<const u16*>(*reinterpret_cast<const u8* const*>(reinterpret_cast<const u8*>(_this) + 0x20) + 0x3c);

@@ -14,7 +14,7 @@ bool CHelp_ArtsAttack::func_802B7D00() {
     CfObjectPc* objPc = func_800BFC68(CfGameManager::getPlayer(0));
 
     if (objPc != nullptr) {
-        void* sub = *reinterpret_cast<void**>(reinterpret_cast<u8*>(objPc) + 4);
+        void* sub = reinterpret_cast<void*>(static_cast<CObjectState*>(objPc)->unk4);
         u32 localVal = *reinterpret_cast<u32*>(
             reinterpret_cast<GetPtrFn>((*reinterpret_cast<void***>(sub))[0x30 / 4])(sub));
 

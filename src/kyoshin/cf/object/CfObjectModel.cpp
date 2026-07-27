@@ -50,11 +50,17 @@ void cf::CfObjectModel::CfObject_UnkVirtualFunc27() {}
 void* func_8048315C(void*);
 
 void* CfObject_UnkVirtualFunc28__Q22cf13CfObjectModelFv(void* self) {
-    void* ptr = *(void**)((char*)self + 0x98);
+    struct Data {
+        u8 _pad00[0x48];
+        u8 field_48[0x50];  // 0x48-0x97
+        void* mPtr;         // 0x98
+    };
+    Data* data = static_cast<Data*>(self);
+    void* ptr = data->mPtr;
     if (ptr) {
-        return (char*)func_8048315C(ptr) + 0xC4;
+        return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(func_8048315C(ptr)) + 0xC4);
     } else {
-        return (char*)self + 0x48;
+        return data->field_48;
     }
 }
 

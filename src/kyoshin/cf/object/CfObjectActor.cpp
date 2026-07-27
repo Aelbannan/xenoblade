@@ -22,12 +22,25 @@ void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc5() {}
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc8() {}
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc9() {}
+struct CfObjectActorData {
+    u8 _pad00[0x3f60];
+    void* mSomePtr;     // 0x3f60
+    u8 _pad3f64[0x658];
+    void* mOtherPtr;    // 0x45bc
+};
+
+struct CfObjectActorInner {
+    u8 _pad00[0x37c];
+    void* mArgStorage;  // 0x37c
+};
+
 void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg) {
-    void* p = *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 0x3f60);
+    CfObjectActorData* data = reinterpret_cast<CfObjectActorData*>(self);
+    void* p = data->mSomePtr;
     if (p != 0) {
-        *reinterpret_cast<void**>(reinterpret_cast<char*>(p) + 0x37c) = arg;
+        static_cast<CfObjectActorInner*>(p)->mArgStorage = arg;
     }
-    *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 0x45bc) = arg;
+    data->mOtherPtr = arg;
 }
 
 void func_8016FF14(){}

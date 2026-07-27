@@ -166,26 +166,26 @@ void func_80198524(){}
 
 void func_801986CC(){}
 
-void func_80198710(void *r3, void *r4, float f1, int r5, int r6, float f2, float f3) {
+void func_80198710(CfPartyInfo* r3, void* r4, float f1, int r5, int r6, float f2, float f3) {
     int r8 = *(int*)((char*)r4 + 0);
     int r7 = *(int*)((char*)r4 + 4);
     int r0 = *(int*)((char*)r4 + 8);
-    *(int*)((char*)r3 + 0) = r8;
-    *(int*)((char*)r3 + 4) = r7;
-    *(int*)((char*)r3 + 8) = r0;
-    *(float*)((char*)r3 + 0x18) = f1;
-    *(int*)((char*)r3 + 0xc) = r5;
-    *(int*)((char*)r3 + 0x14) = r6;
-    *(float*)((char*)r3 + 0x1c) = f2;
-    *(float*)((char*)r3 + 0x20) = f3;
+    r3->field_00 = r8;
+    r3->field_04 = r7;
+    r3->field_08 = r0;
+    r3->field_18 = f1;
+    r3->field_0C = r5;
+    r3->field_14 = r6;
+    r3->field_1C = f2;
+    r3->field_20 = f3;
     if (r6 <= 0) {
-        *(int*)((char*)r3 + 0x14) = 1;
+        r3->field_14 = 1;
     }
     extern float lbl_eu_80667B28;
-    *(float*)((char*)r3 + 0x28) = lbl_eu_80667B28;
-    *(char*)((char*)r3 + 0x2c) = 0;
-    *(char*)((char*)r3 + 0x2d) = 1;
-    *(char*)((char*)r3 + 0x2e) = 0;
+    r3->field_28 = lbl_eu_80667B28;
+    r3->field_2C = 0;
+    r3->field_2D = 1;
+    r3->field_2E = 0;
 }
 
 void func_8019876C(){}

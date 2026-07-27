@@ -566,9 +566,14 @@ extern "C" void CfRes_clearE28Mask(unsigned long mask) {
     lbl_eu_80663E28 &= ~mask;
 }
 
+struct CfResData {
+    u8 _pad00[0x2C];
+    void* field_2C;
+};
+
 extern "C" void CfRes_delegateCleanup(void* self) {
     extern void func_80065CA4(void* a, void* b);
-    func_80065CA4(*(void**)((u32)self + 0x2C), self);
+    func_80065CA4(static_cast<CfResData*>(self)->field_2C, self);
 }
 
 extern "C" unsigned long CfRes_isField4Zero(void* self) {

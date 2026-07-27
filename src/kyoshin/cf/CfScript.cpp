@@ -42,20 +42,20 @@ void func_80068B94(cf::CfScriptManager* manager, const char* name) {
 
 void func_80068B9C(){}
 
-void func_80068BC0(void* self) {
-    *(unsigned long*)((char*)self + 0x4c) |= 4;
+void func_80068BC0(cf::CfScriptManager* self) {
+    self->mScripts[0].mFlags |= 4;
 }
 
 void func_80068BD0(){}
 
-void func_80068BF4(void* self) {
-    *(unsigned long*)((char*)self + 0xa4) |= 4;
+void func_80068BF4(cf::CfScriptManager* self) {
+    self->mScripts[1].mFlags |= 4;
 }
 
 void func_80068C04(){}
 
-void func_80068C28(void* self) {
-    *(unsigned long*)((char*)self + 0xfc) |= 4;
+void func_80068C28(cf::CfScriptManager* self) {
+    self->mScripts[2].mFlags |= 4;
 }
 
 void func_80068C38(){}
@@ -83,8 +83,8 @@ void func_80068E9C(){}
 
 void cf::CfScript::waitLoad() {}
 
-void update__Q22cf8CfScriptFv(void* self) {
-    *(unsigned long*)((char*)self + 0x4c) |= 0x20;
+void update__Q22cf8CfScriptFv(cf::CfScript* self) {
+    self->mFlags |= 0x20;
 }
 
 void CfScript::OnFileEvent() {}

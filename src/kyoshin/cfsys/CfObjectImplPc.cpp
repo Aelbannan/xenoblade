@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cfsys/CfObjectImplPc.hpp"
 
 void func_800C5998(){}
 
@@ -39,9 +40,9 @@ void func_800CEA34(void*);
 
 void func_800CA274(void* self, int value)
 {
-    char* sub = *(char**)((char*)self + 0x18);
-    if (*(int*)(sub + 0x3e98) != 0 && value != 0) {
-        *(int*)(sub + 0x3e98) = value;
+    CfObjectImplPcSubObj* sub = static_cast<CfObjectImplPcData*>(self)->mSubObj;
+    if (sub->mSomeValue != 0 && value != 0) {
+        sub->mSomeValue = value;
     }
     func_800CEA34(self);
 }

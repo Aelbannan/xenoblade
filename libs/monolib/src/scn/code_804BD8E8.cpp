@@ -17,6 +17,11 @@ void func_804BE3E0(){}
 
 void func_804BE408(){}
 
+struct ScnResourceEntry {
+    u8 _00[0x20];
+    int value;
+};
+
 void func_804BE458(){}
 
 void func_804BE470(void* a1, void* a2, void* a3, void* a4, void* a5) {
@@ -40,7 +45,7 @@ void func_804BE50C(){}
 
 void* func_804BE520(int index) {
     extern unsigned char lbl_eu_8065F428[];
-    return (void*)(lbl_eu_8065F428 + index * 0x24 + 0xc);
+    return (void*)(lbl_eu_8065F428 + index * sizeof(ScnResourceEntry) + 0x0c);
 }
 
 void func_804BE538(void){}
@@ -64,9 +69,9 @@ u8 func_804BE5C0() { return lbl_eu_8066597D; }
 void func_804BE5C8(){}
 
 int func_804BE604(int index) {
-    extern char lbl_eu_8065F428[];
-    int val = *(int*)(lbl_eu_8065F428 + index * 0x24 + 0x20);
-    return (val != 0) ? 1 : 0;
+    extern unsigned char lbl_eu_8065F428[];
+    ScnResourceEntry* entries = (ScnResourceEntry*)lbl_eu_8065F428;
+    return entries[index].value != 0;
 }
 
 void func_804BE628(void){}

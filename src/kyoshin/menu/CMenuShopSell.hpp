@@ -1,7 +1,12 @@
 #pragma once
 
-// Forward declaration for adjusting thunks.
-// Full class definition TBD as more functions are decompiled.
+#include <monolib/work/CProcess.hpp>
+#include <monolib/scn/IScnRender.hpp>
+
+/*
+ * Shop sell menu screen process.
+ * IScnRender subobject is at offset 0x58.
+ */
 class CMenuShopSell;
 
 extern "C" void __ct__CMenuShopSell();
@@ -20,16 +25,16 @@ extern "C" void func_8018B470();
 extern "C" void func_8018B658();
 
 // Adjusting thunks (virtual dispatch from secondary base at offset 0x58)
-extern "C" void func_8018B6A8(CMenuShopSell* self);
-extern "C" void func_8018B6B0(CMenuShopSell* self);
+extern "C" void func_8018B6A8(IScnRender* self);
+extern "C" void func_8018B6B0(IScnRender* self);
 
-class CMenuShopSell {
+class CMenuShopSell : public CProcess, public IScnRender {
 public:
     CMenuShopSell();
     virtual ~CMenuShopSell();
-    void Init();
-    void Term();
-    void Move();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
     void cbRenderBefore();
 
     // TODO: add fields

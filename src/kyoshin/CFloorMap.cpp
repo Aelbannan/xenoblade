@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-u8 func_8024CE60(void* self) { return ((u8*)self)[0x40]; }
+u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
 
 
@@ -119,7 +119,7 @@ u32 func_8024F538(void* self) {
 
 u16 func_8024F54C(void* self) { return *(u16*)((u8*)self + 0x5A); }
 
-u8 func_8024F554(void* self) { return ((u8*)self)[0x58]; }
+u8 func_8024F554(void* self) { return static_cast<CFloorMapFull*>(self)->field_58; }
 
 void func_8024F55C(){}
 
@@ -135,7 +135,7 @@ void func_8024F658(){}
 
 void func_8024F6BC(){}
 
-u8 func_8024F6D8(void* self) { return ((u8*)self)[0x208]; }
+u8 func_8024F6D8(void* self) { return static_cast<CFloorMapFull*>(self)->field_208; }
 
 void func_8024F6E0(){}
 

@@ -127,7 +127,14 @@ void func_8049D9CC(void){}
 
 void func_8049D9D0(){}
 
-u8 func_8049DAF4(void* self) { return ((u8*)self)[0x4]; }
+struct CScnFilterState {
+    u8 _00[4];
+    u8 state;
+};
+
+u8 func_8049DAF4(void* self) {
+    return ((CScnFilterState*)self)->state;
+}
 
 void func_8049DAFC(){}
 

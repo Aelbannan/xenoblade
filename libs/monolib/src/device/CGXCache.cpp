@@ -114,14 +114,16 @@ void CGXCache::func_8044B298(void* a, void* b, void* c) {
     // Keep b in r31 across the function like retail (null → this+0x4A8).
     insetPair = (u32*)b;
     if (a != 0) {
-        u32 w0 = ((u32*)a)[0];
-        u32 w1 = ((u32*)a)[1];
+        u32* a32 = (u32*)a;
+        u32 w0 = a32[0];
+        u32 w1 = a32[1];
         *(u32*)&cache->rect4A8[2] = w1;
         *(u32*)&cache->rect4A8[0] = w0;
     }
     if (c != 0) {
-        u32 w0 = ((u32*)c)[0];
-        u32 w1 = ((u32*)c)[1];
+        u32* c32 = (u32*)c;
+        u32 w0 = c32[0];
+        u32 w1 = c32[1];
         *(u32*)&cache->rect4B0[2] = w1;
         *(u32*)&cache->rect4B0[0] = w0;
     }

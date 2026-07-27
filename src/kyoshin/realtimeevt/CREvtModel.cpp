@@ -20,13 +20,23 @@ void func_801728F8(){}
 
 void func_8017298C(){}
 
+struct CREvtModelOuter {
+    u8 _pad00[0x1C];
+    void* mPtr;  // 0x1C
+};
+
+struct CREvtModelInner {
+    u8 _pad00[0x58];
+    u32 mFlags;  // 0x58
+};
+
 int func_801729D0(char* p)
 {
-    char* q = *(char**)(p + 0x1c);
+    void* q = reinterpret_cast<CREvtModelOuter*>(p)->mPtr;
     if (q == 0) {
         return 0;
     }
-    return (*(unsigned int*)(q + 0x58) >> 4) & 1;
+    return (static_cast<CREvtModelInner*>(q)->mFlags >> 4) & 1;
 }
 
 void func_801729F0(){}

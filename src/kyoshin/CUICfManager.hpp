@@ -135,6 +135,34 @@ public:
     u16 getFlags() const {
         return mFlags;
     }
+    void setTimeout30() {
+        unk120 = 30;
+    }
+    void setFlagState(bool value) {
+        if (value) {
+            mInitSlots[0].unk00[1] = 1;
+        } else {
+            mInitSlots[0].unk00[0] = 1;
+        }
+        mFlags = 0;
+    }
+    void* getArcResourceAccessor() const {
+        return mArcResourceAccessor;
+    }
+    void setFieldC8C(u8 value) {
+        unkC88[4] = value;
+    }
+    void* getPackedFont9C() { return &mPackedFont9C; }
+    void* getPackedFontD8() { return &mPackedFontD8; }
+    int prepareMenus() {
+        if (mArcResourceAccessor == 0) {
+            mFlags |= 0x4;
+            return 0;
+        }
+        mFlags &= 0xfffb;
+        mFlags |= 0x8 | 0x10 | 0x20 | 0x40 | 0x80;
+        return 0;
+    }
 
 private:
     // 0x000-0x054 CTTask

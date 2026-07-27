@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/CTutorial.hpp"
-u8 func_8029ACAC(void* self) { return ((u8*)self)[0x46]; }
+u8 func_8029ACAC(void* self) { return static_cast<CTutorialFull*>(self)->field_46; }
 
 
 
@@ -12,9 +12,9 @@ u8 func_8029ACAC(void* self) { return ((u8*)self)[0x46]; }
 
 
 
-u8 func_8029ACB4(void* self) { return ((u8*)self)[0x47]; }
+u8 func_8029ACB4(void* self) { return static_cast<CTutorialFull*>(self)->field_47; }
 
-u8 func_8029ACBC(void* self) { return ((u8*)self)[0x52]; }
+u8 func_8029ACBC(void* self) { return static_cast<CTutorialFull*>(self)->field_52; }
 
 
 

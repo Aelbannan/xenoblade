@@ -30,7 +30,7 @@ namespace cf {
     public:
         virtual void CBattleState_UnkVirtualFunc1();  //0x8
         virtual void CBattleState_UnkVirtualFunc2();  //0xC
-        virtual void CBattleState_UnkVirtualFunc3();  //0x10
+        virtual int CBattleState_UnkVirtualFunc3();  //0x10
         virtual void CBattleState_UnkVirtualFunc4();  //0x14
         virtual void CBattleState_UnkVirtualFunc5();  //0x18
         virtual void CBattleState_UnkVirtualFunc6();  //0x1C

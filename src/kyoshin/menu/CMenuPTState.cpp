@@ -15,17 +15,15 @@ unsigned long func_80192BD0(){
     return !!v;
 }
 
-// FULL_MATCH: vtable adjustor thunks (offset +0x58).
+// FULL_MATCH: vtable adjustor thunks (IScnRender secondary base at offset +0x58).
 void func_80192BE4(void* self) {
     cbRenderBefore__12CMenuPTStateFv(
-        reinterpret_cast<CMenuPTState*>(
-            reinterpret_cast<char*>(self) - 0x58));
+        static_cast<CMenuPTState*>(reinterpret_cast<IScnRender*>(self)));
 }
 
 void func_80192BEC(void* self) {
     __dt__12CMenuPTStateFv(
-        reinterpret_cast<CMenuPTState*>(
-            reinterpret_cast<char*>(self) - 0x58));
+        static_cast<CMenuPTState*>(reinterpret_cast<IScnRender*>(self)));
 }
 
 // ---------------------------------------------------------------------------

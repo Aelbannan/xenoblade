@@ -26,13 +26,13 @@ void func_8021C8B0(){}
 
 void func_8021C928(){}
 
-u8 getCrystalStateA(CModelDispMakeCrystal* self) { return ((u8*)self)[0xBE8]; }
+u8 getCrystalStateA(CModelDispMakeCrystal* self) { return reinterpret_cast<CModelDispMakeCrystalFull*>(self)->field_BE8; }
 
 void func_8021CA3C(){}
 
-u8 getCrystalStateB(CModelDispMakeCrystal* self) { return ((u8*)self)[0x2DC3]; }
+u8 getCrystalStateB(CModelDispMakeCrystal* self) { return reinterpret_cast<CModelDispMakeCrystalFull*>(self)->field_2DC3; }
 
-u8 getCrystalStateC(CModelDispMakeCrystal* self) { return ((u8*)self)[0x2DD2]; }
+u8 getCrystalStateC(CModelDispMakeCrystal* self) { return reinterpret_cast<CModelDispMakeCrystalFull*>(self)->field_2DD2; }
 
 void func_8021CB20(){}
 

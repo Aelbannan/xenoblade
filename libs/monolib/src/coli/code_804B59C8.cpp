@@ -98,7 +98,8 @@ void func_804B7D9C(int, int bit_index) {
     int word_idx = bit_index >> 5;
     int bit_off = bit_index & 0x1F;
     int mask = 1 << bit_off;
-    ((int*)&lbl_eu_8065F1A0)[word_idx] &= ~mask;
+    int* bits = (int*)&lbl_eu_8065F1A0;
+    bits[word_idx] &= ~mask;
 }
 
 void func_804B7DD4(){}

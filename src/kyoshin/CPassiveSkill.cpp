@@ -246,7 +246,7 @@ void UI_CPassiveSkill_thunk28_68518(UI_CPassiveSkill* self) { ((void(*)(void*))f
 
 void func_8026DB74(){}
 
-void UI_CPassiveSkill_setByte180(UI_CPassiveSkill* self, u8 val) { ((u8*)self)[0x180] = val; }
+void UI_CPassiveSkill_setByte180(UI_CPassiveSkill* self, u8 val) { self->field_180 = val; }
 
 void UI_CPassiveSkill_thunk28_68C38(UI_CPassiveSkill* self) { ((void(*)(void*))func_80268C38)((char*)self + 0x28); }
 

@@ -35,7 +35,7 @@ mFilter(VFILTER_NONE){
     spInstance = this;
     cacheInstance = &unk27C;
     mGxHeap = new (CDevice::getDevSys1Handle(), 32) u8[gxHeapSize];
-    mGxHeapEndAddr = (void*)((u32)mGxHeap + gxHeapSize);
+    mGxHeapEndAddr = mGxHeap + gxHeapSize;
     cacheInstance->unk50C = 0;
     updateVerticalFilter(VFILTER_NONE);
     cacheInstance->func_8044B294(0);

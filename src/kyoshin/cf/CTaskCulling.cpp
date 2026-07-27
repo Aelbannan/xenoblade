@@ -4,6 +4,25 @@
 #include "monolib/scn.hpp"
 #include <cstring>
 
+// Buffer header for spInstance->unk94 (occ culling data)
+#pragma pack(push, 1)
+struct OccBufferHead {
+    char magic[4];   // "occ\0"
+    u8 _04[2];       // padding
+    u16 count;        // at offset 6
+    u8 _08[8];        // 0x08-0x0F
+    // OccFrustumEntry entries[] at offset 0x10
+};
+
+struct OccFrustumEntry {
+    ml::CVec3 vec0;   // 0x00
+    ml::CVec3 vec1;   // 0x0C
+    ml::CVec3 vec2;   // 0x18
+    u32 field_24;      // 0x24
+    u8 _28[0x0C];      // 0x28-0x33 padding
+};
+#pragma pack(pop)
+
 // Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
 cf::CTaskCulling* lbl_eu_80664328;
 
@@ -74,31 +93,25 @@ void CTaskCulling::func_801A2C94(){
 
         func_801A2C94();
 
-        UNKTYPE* r3 = cf::CfGameManager::func_80083298();
+        cf::CfGameManager* gm = cf::CfGameManager::func_80083298();
         u32 r4, r5, r6, r7;
 
-        func_800AA318(*(u32*)((u32)r3 + 0x70), &r4, &r5, &r6, &r7);
-        func_800AA33C(spInstance->unk98, *(u32*)((u32)r3 + 0x70), 0, 0);
-        func_800AA33C(spInstance->unkDC, *(u32*)((u32)r3 + 0x70), 1, 0);
+        func_800AA318(gm->unk70, &r4, &r5, &r6, &r7);
+        func_800AA33C(spInstance->unk98, gm->unk70, 0, 0);
+        func_800AA33C(spInstance->unkDC, gm->unk70, 1, 0);
 
         spInstance->unkDC.unkInline1("\\");
 
-        int r29 = 0;
-        void* r27 = spInstance->unk94;
+        OccBufferHead* head = (OccBufferHead*)spInstance->unk94;
 
-        if(std::strcmp("occ", (const char*)r27) == 0){
-            ml::CVec3* r28_1 = (ml::CVec3*)((u32)r27 + 0x10);
-            r29 = 0;
+        if(std::strcmp("occ", head->magic) == 0){
+            OccFrustumEntry* entry = (OccFrustumEntry*)(head + 1); // at offset 0x10
 
-            while(r29 < *(u16*)((u32)r27 + 6)){
-                u32 r7_1 = *(u32*)((u32)r28_1 + 0x24);
-
+            for (int i = 0; i < head->count; i++) {
                 if(spInstance != nullptr){
-                    spInstance->mOccCulling.addFrustum(r28_1[0], r28_1[1], r28_1[2], r7_1);
+                    spInstance->mOccCulling.addFrustum(entry->vec0, entry->vec1, entry->vec2, entry->field_24);
                 }
-
-                r29++;
-                r28_1 = (ml::CVec3*)((u32)r28_1 + 0x34);
+                entry++;
             }
         }
     }

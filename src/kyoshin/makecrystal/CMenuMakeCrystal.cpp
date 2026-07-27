@@ -46,11 +46,11 @@ void func_802124AC(){}
 // IScnRender is a non-primary base at offset 0x58 within CMenuMakeCrystal.
 void func_802124F4(IScnRender* self) {
     ((void(*)(CMenuMakeCrystal*))cbRenderBefore__16CMenuMakeCrystalFv)(
-        reinterpret_cast<CMenuMakeCrystal*>(reinterpret_cast<char*>(self) - 0x58));
+        static_cast<CMenuMakeCrystal*>(self));
 }
 
 // IScnRender vtable this-adjusting thunk for destructor.
 extern "C" void func_802124FC(IScnRender* self) {
     ((void(*)(CMenuMakeCrystal*))__dt__16CMenuMakeCrystalFv)(
-        reinterpret_cast<CMenuMakeCrystal*>(reinterpret_cast<char*>(self) - 0x58));
+        static_cast<CMenuMakeCrystal*>(self));
 }

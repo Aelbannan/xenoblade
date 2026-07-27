@@ -185,8 +185,11 @@ static BOOL __SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr,
     Si.inAddr = inAddr;
 
     alignSize = (outSize + 3) / 4;
-    for (i = 0; i < alignSize; i++) {
-        SI_HW_REGS[SI_RAM_BASE + i] = ((u32*)outAddr)[i];
+    {
+        u32* out = (u32*)outAddr;
+        for (i = 0; i < alignSize; i++) {
+            SI_HW_REGS[SI_RAM_BASE + i] = out[i];
+        }
     }
 
     comscr.reg = SI_HW_REGS[SI_SICOMSCR];

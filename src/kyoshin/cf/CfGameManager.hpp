@@ -57,7 +57,9 @@ namespace cf{
         u8 unk29[0x68 - 0x29];
         u32 unk68;
         u8 unk6C;
-        u8 unk6D[0x7C - 0x6D];
+        u8 unk6D[3];          // 0x6D-0x6F
+        u32 unk70;             // 0x70-0x73
+        u8 unk74[8];           // 0x74-0x7B
         u32 unk7C;
         u8 unk80[0x8C - 0x80];
         u32 unk8C;

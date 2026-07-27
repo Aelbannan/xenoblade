@@ -113,7 +113,11 @@ void func_800444DC(cf::CTaskGameCf* self){
 u32 lbl_eu_80525B18[3];
 
 void CTaskGameCf::func_800444FC(){
-    u32* dst = reinterpret_cast<u32*>(reinterpret_cast<char*>(this) + 0x3c);
+    struct CTTaskData {
+        u8 _00[0x3c];
+        u32 mData[3];
+    };
+    u32* dst = static_cast<CTTaskData*>(static_cast<void*>(this))->mData;
     dst[0] = lbl_eu_80525B18[0];
     dst[1] = lbl_eu_80525B18[1];
     dst[2] = lbl_eu_80525B18[2];

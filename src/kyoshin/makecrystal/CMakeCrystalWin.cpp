@@ -14,7 +14,7 @@ void func_8021299C(){}
 
 void func_80212A68(){}
 
-u8 func_80212B68(void* self) { return ((u8*)self)[0x4361]; }
+u8 func_80212B68(void* self) { return ((CMakeCrystalWin*)self)->field_4361; }
 
 void func_80212B70(){}
 

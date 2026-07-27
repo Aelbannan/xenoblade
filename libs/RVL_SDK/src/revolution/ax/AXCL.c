@@ -206,10 +206,11 @@ void __AXNextFrame(void* surround, void* lr, void* rmt) {
     }
 
     LIST_WRITE_16(COMMAND_WM_OUTPUT);
-    LIST_WRITE_32(((u32*)rmt)[0]);
-    LIST_WRITE_32(((u32*)rmt)[1]);
-    LIST_WRITE_32(((u32*)rmt)[2]);
-    LIST_WRITE_32(((u32*)rmt)[3]);
+    u32* rmt32 = (u32*)rmt;
+    LIST_WRITE_32(rmt32[0]);
+    LIST_WRITE_32(rmt32[1]);
+    LIST_WRITE_32(rmt32[2]);
+    LIST_WRITE_32(rmt32[3]);
     __AXCommandListCycles += 409;
 
     if (__AXClMode == AX_OUTPUT_DPL2) {

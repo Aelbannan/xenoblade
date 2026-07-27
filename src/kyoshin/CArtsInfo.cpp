@@ -2,16 +2,17 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CArtsInfo.hpp"
 
-u8 func_80235A90(void* self) { return ((u8*)self)[0x48]; }
-
-
-
+u8 CArtsInfo_getField48(CArtsInfo* self) { return self->field_0x48; }
 
 
 
 
-u8 func_80235A98(void* self) { return ((u8*)self)[0x49]; }
+
+
+
+u8 CArtsInfo_getField49(CArtsInfo* self) { return self->field_0x49; }
 
 
 
@@ -19,13 +20,13 @@ u8 func_80235A98(void* self) { return ((u8*)self)[0x49]; }
 
 void func_80235DD8(){}
 
-void func_80235E84(void* self, u8 val) { ((u8*)self)[0x54] = val; }
+void CArtsInfo_setField54(CArtsInfo* self, u8 val) { self->field_0x54 = val; }
 
-void func_80235E8C(void* self, u8 val) { ((u8*)self)[0x55] = val; }
+void CArtsInfo_setField55(CArtsInfo* self, u8 val) { self->field_0x55 = val; }
 
-void func_80235E94(void* self, u8 val) { ((u8*)self)[0x56] = val; }
+void CArtsInfo_setField56(CArtsInfo* self, u8 val) { self->field_0x56 = val; }
 
-void func_80235E9C(void* self, u16 val) { *(u16*)((u8*)self + 0x58) = val; }
+void CArtsInfo_setField58(CArtsInfo* self, u16 val) { self->field_0x58 = val; }
 
 void func_80235EA4(){}
 
@@ -33,14 +34,14 @@ void func_80235EF0(){}
 
 void func_80235F14(){}
 
-u32 func_80235F3C(void* self) {
-    s8 val = *(s8*)((u8*)self + 0x5A);
+u32 CArtsInfo_getField5A(CArtsInfo* self) {
+    s8 val = self->field_0x5A;
     u32 result = __cntlzw(val);
     return result >> 5;
 }
 
-int func_80235F50(void* thisPtr) {
-    int field = *(int*)((char*)thisPtr + 0x44);
+int CArtsInfo_isField44GE6(CArtsInfo* self) {
+    int field = self->field_0x44;
     return field >= 6 ? 1 : 0;
 }
 
@@ -180,17 +181,12 @@ void func_8023B368(){}
 
 void func_eu_8023D490(){}
 
-void func_8023B430(void* r3) {
-    int* field20 = (int*)((char*)r3 + 0x20);
-    if (*field20 == 0) return;
-    int* field4c = (int*)((char*)r3 + 0x4c);
-    if (*field4c == 0) return;
-    int* field50 = (int*)((char*)r3 + 0x50);
-    if (*field50 != 0) {
-        char* field48 = (char*)r3 + 0x48;
-        char* field40 = (char*)r3 + 0x40;
-        *field48 = 1;
-        *field40 = 1;
+void CArtsInfo_initialize(CArtsInfo* self) {
+    if (self->field_0x20 == 0) return;
+    if (self->field_0x4C == 0) return;
+    if (self->field_0x50 != 0) {
+        self->field_0x48 = 1;
+        self->field_0x40 = 1;
     }
 }
 

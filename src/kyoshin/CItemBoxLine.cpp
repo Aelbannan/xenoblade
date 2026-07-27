@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-u8 func_801ED800(void* self) { return ((u8*)self)[0x59]; }
+u8 func_801ED800(void* self) { return static_cast<CItemBoxLine*>(self)->unk59; }
 
 
 
@@ -78,11 +78,12 @@ void func_801EE684(){}
 
 void func_801EE788(){}
 
-u8 func_801EECC0(void* self) { return ((u8*)self)[0x39E]; }
+u8 func_801EECC0(void* self) { return static_cast<CItemBoxLine*>(self)->unk39E; }
 
 void func_801EC3B0(void*, unsigned int);
 void func_801EECC8(char* self) {
-    func_801EC3B0(self + 0x3A4, (unsigned char)(*(short*)(self + 0x38C) + *(short*)(self + 0x38E)));
+    auto* obj = reinterpret_cast<CItemBoxLine*>(self);
+    func_801EC3B0(&obj->unk3A4, (unsigned char)(obj->unk38C + obj->unk38E));
 }
 
 void func_801D2E4C(void* self);

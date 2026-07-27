@@ -14,8 +14,10 @@ void __copy_longs_aligned(void *dst, const void *src, unsigned long n) {
     unsigned long *dw, *sw;
 
     i = (-(unsigned long)dst) & 3;
-    s = (unsigned char *)src - 1;
-    d = (unsigned char *)dst - 1;
+    s = (unsigned char *)src;
+    s--;
+    d = (unsigned char *)dst;
+    d--;
 
     if (i) {
         n -= i;
@@ -48,8 +50,10 @@ void __copy_longs_aligned(void *dst, const void *src, unsigned long n) {
         } while (--i);
     }
 
-    s = (unsigned char *)(sw + 1) - 1;
-    d = (unsigned char *)(dw + 1) - 1;
+    s = (unsigned char *)(sw + 1);
+    s--;
+    d = (unsigned char *)(dw + 1);
+    d--;
 
     n &= 3;
     if (n) {
@@ -118,8 +122,10 @@ void __copy_longs_unaligned(void *pDest, const void *pSrc, unsigned long len) {
     unsigned long* destLong;
 
     i = (-(unsigned long)pDest) & 3;
-    srcChar = (unsigned char*)pSrc - 1;
-    destChar = (unsigned char*)pDest - 1;
+    srcChar = (unsigned char*)pSrc;
+    srcChar--;
+    destChar = (unsigned char*)pDest;
+    destChar--;
 
     if (i != 0) {
         len -= i;
@@ -153,8 +159,10 @@ void __copy_longs_unaligned(void *pDest, const void *pSrc, unsigned long len) {
         *++destLong = (v1 << ls) | (v2 >> rs);
     }
 
-    srcChar = (unsigned char*)(srcLong + 1) - 1;
-    destChar = (unsigned char*)(destLong + 1) - 1;
+    srcChar = (unsigned char*)(srcLong + 1);
+    srcChar--;
+    destChar = (unsigned char*)(destLong + 1);
+    destChar--;
 
     len &= 3;
 

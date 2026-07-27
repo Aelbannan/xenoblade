@@ -8,7 +8,7 @@ void func_800C1F44(){}
 
 void func_800C1FB8(){}
 
-void* func_800C22C4(void* self) { return (void*)((u8*)self + 0x68); }
+void* func_800C22C4(cf::CfObjectImplWalker* self) { return (void*)((u8*)self + 0x68); }
 
 void func_800C22CC(){}
 
@@ -46,18 +46,23 @@ void func_800C551C(){}
 
 void func_800C5928(void) {}
 
-void cf::CfObjectImplWalker::~CfObjectImplWalker() {}
+extern "C" void* __dt__Q22cf18CfObjectImplWalkerFv(void* self, int deleteFlag) {
+    if (self != nullptr && deleteFlag > 0) {
+        operator delete(self);
+    }
+    return self;
+}
 
 void func_800C596C(void) {}
 
-extern "C" u32 func_800C5970(void* self) { return *(u32*)((u8*)self + 0x380); }
+u32 func_800C5970(cf::CfObjectImplWalker* self) { return *(u32*)((u8*)self + 0x380); }
 
 extern "C" void func_800C6EC0(void* self);
-extern "C" void func_800C5978(void* self) { ((void(*)(void*))func_800C6EC0)((char*)self - 0xc); }
+void func_800C5978(char* self) { ((void(*)(void*))func_800C6EC0)(self - 0xc); }
 
-extern "C" void func_800C5980(void* self) { ((void(*)(void*))__dt__Q22cf18CfObjectImplWalkerFv)((char*)self - 0xc); }
+void func_800C5980(char* self) { ((void(*)(void*))__dt__Q22cf18CfObjectImplWalkerFv)(self - 0xc); }
 
 extern "C" void func_800CFFA0(void* self);
-extern "C" void func_800C5988(void* self) { ((void(*)(void*))func_800CFFA0)((char*)self - 0x10); }
+void func_800C5988(char* self) { ((void(*)(void*))func_800CFFA0)(self - 0x10); }
 
-extern "C" void func_800C5990(void* self) { ((void(*)(void*))__dt__Q22cf18CfObjectImplWalkerFv)((char*)self - 0x10); }
+void func_800C5990(char* self) { ((void(*)(void*))__dt__Q22cf18CfObjectImplWalkerFv)(self - 0x10); }

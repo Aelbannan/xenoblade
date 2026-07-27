@@ -1,10 +1,8 @@
 #pragma once
 
 #include <types.h>
-
-/// Forward declaration -- CMenuPTState is defined across multiple TUs
-/// (Init/cbRenderBefore/Move/Term in code_8018F8D8.cpp).
-class CMenuPTState;
+#include <monolib/work/CProcess.hpp>
+#include <monolib/scn/IScnRender.hpp>
 
 // Vtable adjustor thunks -- when a derived class overrides CMenuPTState
 // virtual functions and the vtable slot is at offset +0x58 from the
@@ -16,9 +14,14 @@ extern "C" {
     void func_80192BEC(void* self);
 }
 
-class CMenuPTState {
+class CMenuPTState : public CProcess, public IScnRender {
 public:
     CMenuPTState();
+    virtual ~CMenuPTState();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
+    void cbRenderBefore();
 
     // TODO: add fields
 };

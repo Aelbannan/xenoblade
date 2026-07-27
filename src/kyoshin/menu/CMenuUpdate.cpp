@@ -34,7 +34,7 @@ void CMenuUpdate::Init() {}
 
 u32 getField10(void* self) { return *(u32*)((u8*)self + 0x10); }
 
-void setField67(void* self, u8 val) { ((u8*)self)[0x67] = val; }
+void setField67(void* self, u8 val) { static_cast<CMenuUpdateFull*>(self)->field_67 = val; }
 
 void CMenuUpdate::Term() {}
 
@@ -53,7 +53,7 @@ int getGlobal0E0() { return lbl_eu_806640E0; }
 
 void func_80142C80(){}
 
-void setField64(void* self, u8 val) { ((u8*)self)[0x64] = val; }
+void setField64(void* self, u8 val) { static_cast<CMenuUpdateFull*>(self)->field_64 = val; }
 
 void func_80142CA0(){}
 
@@ -78,7 +78,7 @@ void init_8014274C(CMenuUpdate_8014274C* self, uint32_t v0, uint32_t v1, uint32_
     p[3] = v3;
 }
 
-u8 getField64(void* self) { return ((u8*)self)[0x64]; }
+u8 getField64(void* self) { return static_cast<CMenuUpdateFull*>(self)->field_64; }
 
 void func_80143F54(void* dest, const void* src){
     unsigned int* d = (unsigned int*)dest;

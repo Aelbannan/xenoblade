@@ -634,11 +634,7 @@ void CMenuBattlePlayerState::Init() {
             slot.unk214 = maxHp;
         }
 
-        cb = this;
-        if (this != NULL) {
-            cb = reinterpret_cast<IScnRender*>(
-                reinterpret_cast<u8*>(this) + 0x5C);
-        }
+        cb = static_cast<IScnRender*>(this);
         mScn->addRenderCB(cb, 0xA, 0);
 
         unk64.func_8045F810();
@@ -772,8 +768,8 @@ after_bit21:
                 lbl_eu_80666FC0 * (static_cast<f32>(hp) / static_cast<f32>(maxHp));
         skip_ratio:
 
-            slot->unk204 = static_cast<u8>(*reinterpret_cast<u16*>(
-                reinterpret_cast<u8*>(actor) + 0x3f28));
+            slot->unk204 = static_cast<u8>(
+                static_cast<MenuBpsActorFields*>(actor)->unk3f28);
             slot->unk208 = actor->vf290();
 
             {
@@ -853,8 +849,7 @@ after_bit21:
                         if (id != 0) {
                             void* handle = func_800B708C(id);
                             if (handle != NULL) {
-                                u32 bits = *reinterpret_cast<u32*>(
-                                    reinterpret_cast<u8*>(handle) + 0x64);
+                                u32 bits = static_cast<Func800B708C_Ret*>(handle)->unk64;
                                 if (bits & 4) {
                                     slot->unk240 = 1;
                                 }
@@ -1155,7 +1150,7 @@ void func_8010B324(CMenuBattlePlayerStateSlot* slot){
 }
 extern "C" int func_8010CE48() { return (int)lbl_eu_80663F48; }
 extern "C" void func_8010CF5C(void* p) {
-    ((u8*)p)[0x7c9] = 1;
+    static_cast<CMenuBattlePlayerState*>(p)->unk7C9 = 1;
 }
 extern "C" void sinit_8010E9F8() { lbl_eu_80663F30[3] = 0xff; lbl_eu_80663F30[2] = 0xff; lbl_eu_80663F30[1] = 0xff; lbl_eu_80663F30[0] = 0xff; lbl_eu_80663F38[3] = 0xff; lbl_eu_80663F38[2] = 0x5c; lbl_eu_80663F38[1] = 0x92; lbl_eu_80663F38[0] = 0xb9; lbl_eu_80663F40[3] = 0xff; lbl_eu_80663F40[2] = 0x50; lbl_eu_80663F40[1] = 0x50; lbl_eu_80663F40[0] = 0x50; }
 void CMenuBattlePlayerState::~CMenuBattlePlayerState(void*);

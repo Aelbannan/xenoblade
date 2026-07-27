@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
+u8 func_801EB018(void* self) { return static_cast<CNumSelectFull*>(self)->field_2D; }
 
 
 
@@ -11,9 +11,9 @@ u8 func_801EB018(void* self) { return ((u8*)self)[0x2D]; }
 
 
 
-u8 func_801EB020(void* self) { return ((u8*)self)[0x2C]; }
+u8 func_801EB020(void* self) { return static_cast<CNumSelectFull*>(self)->field_2C; }
 
-u8 func_801EB028(void* self) { return ((u8*)self)[0x2E]; }
+u8 func_801EB028(void* self) { return static_cast<CNumSelectFull*>(self)->field_2E; }
 
 
 

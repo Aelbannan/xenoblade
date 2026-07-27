@@ -11,12 +11,21 @@ void fn_803C3320() {}
 
 void fn_803C3400() {}
 
+typedef struct SfdErrorState {
+    u32 field00;
+    u32 field04;
+    u32 field08;
+    u32 field0C;
+    u32 field10;
+} SfdErrorState;
+
 void fn_803C34DC(void* self) {
-    *(u32*)((u8*)self) = 0;
-    *(u32*)((u8*)self + 4) = 0;
-    *(u32*)((u8*)self + 8) = 0;
-    *(u32*)((u8*)self + 0xc) = 0;
-    *(u32*)((u8*)self + 0x10) = 0;
+    SfdErrorState* state = (SfdErrorState*)self;
+    state->field00 = 0;
+    state->field04 = 0;
+    state->field08 = 0;
+    state->field0C = 0;
+    state->field10 = 0;
 }
 
 s32 SFLIB_SetErr(s32 val, u32 err_code);
@@ -53,20 +62,26 @@ s32 SFLIB_SetErr(s32 val, u32 err_code) {
             }
         }
     } else {
-        u8* h = (u8*)val;
-        u32 last = *(u32*)(h + 0xa10);
+        typedef void (*SfdErrorCallback)(u32, u32);
+        typedef struct SfdHandle {
+            u8 _00[0x54];
+            s32 errorState;
+            u8 _58[0x9B0];
+            SfdErrorCallback errorCallback;
+            u32 errorCallbackArg;
+            u32 lastError;
+        } SfdHandle;
+        SfdHandle* handle = (SfdHandle*)val;
+        u32 last = handle->lastError;
         u32 err = err_code;
         if (last == 0) {
-            *(u32*)(h + 0xa10) = err;
+            handle->lastError = err;
         }
-        if (err != 0) {
-            void (*cb)(u32, u32) = *(void (**)(u32, u32))(h + 0xa08);
-            if (cb != NULL) {
-                cb(*(u32*)(h + 0xa0c), err);
-            }
+        if (err != 0 && handle->errorCallback != NULL) {
+            handle->errorCallback(handle->errorCallbackArg, err);
         }
-        if (*(s32*)(h + 0x54) > 0) {
-            *(s32*)(h + 0x54) = -*(s32*)(h + 0x54);
+        if (handle->errorState > 0) {
+            handle->errorState = -handle->errorState;
         }
     }
 
@@ -82,8 +97,12 @@ void criware_803C0D94() {}
 
 extern void* lbl_eu_8060715C;
 s32 SFLIB_CheckHn(void* h) {
+    typedef struct SfdHandleHeader {
+        u8 _00[0x54];
+        s32 errorState;
+    } SfdHandleHeader;
     if (h == NULL) return -1;
-    if (*(s32*)((u8*)h + 0x54) == 0) return -1;
+    if (((SfdHandleHeader*)h)->errorState == 0) return -1;
     lbl_eu_8060715C = h;
     return 0;
 }

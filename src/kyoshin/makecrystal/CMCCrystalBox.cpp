@@ -63,7 +63,7 @@ void func_802144F4(){}
 
 void func_80214634(){}
 
-u8 getByte_69_802146C0(void* self) { return ((u8*)self)[0x69]; }
+u8 getByte_69_802146C0(void* self) { return static_cast<CMCCrystalBox*>(self)->unk69; }
 
 void func_802146C8(){}
 
@@ -96,13 +96,16 @@ void func_80215518(){}
 
 void func_802156C0(){}
 
+struct CMCCrystalBoxLookup {
+    int values[8];
+    s8 valueIndex[0x49 - 0x20];
+};
+
 int lookupIndexedValue_80215AE8(void* self) {
-    unsigned char* base = (unsigned char*)self;
-    if (base[0x20] == 0) return 0;
-    unsigned char idx = base[0x29];
-    unsigned char* ptr = base + idx;
-    int off = (signed char)ptr[0x20] * 4;
-    return *(int*)(base + off);
+    CMCCrystalBox* obj = static_cast<CMCCrystalBox*>(self);
+    if (obj->unk20 == 0) return 0;
+    CMCCrystalBoxLookup* lookup = (CMCCrystalBoxLookup*)obj;
+    return lookup->values[lookup->valueIndex[obj->unk29]];
 }
 
 void func_80215B18(){}
@@ -111,9 +114,9 @@ void func_80215B78(){}
 
 void func_80215D98(){}
 
-u8 getByte_2D4_8021624C(void* self) { return ((u8*)self)[0x2D4]; }
+u8 getByte_2D4_8021624C(void* self) { return static_cast<CMCCrystalBox*>(self)->unk2D4; }
 
-u8 getByte_2D5_80216254(void* self) { return ((u8*)self)[0x2D5]; }
+u8 getByte_2D5_80216254(void* self) { return static_cast<CMCCrystalBox*>(self)->unk2D5; }
 
 void func_8021625C(){}
 

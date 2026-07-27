@@ -10,8 +10,7 @@ void __ct__8009D604(){}
 
 void __dt__8009D72C(){}
 
-extern "C" void* func_8009D764(void* self) {
-    cf::CtrlObjectParamInit* p = static_cast<cf::CtrlObjectParamInit*>(self);
+extern "C" void* func_8009D764(cf::CtrlObjectParamInit* p) {
     p->field_00 = 0xFFFF;
     p->field_02 = 0xFFFF;
     p->field_04 = 0xFFFF;
@@ -24,15 +23,14 @@ extern "C" void* func_8009D764(void* self) {
 
 void func_8009D790(){}
 
-extern "C" void* func_8009D7E4(void* self, unsigned long index) {
-    cf::CtrlObjectParamData* p = static_cast<cf::CtrlObjectParamData*>(self);
-    return &p->entries[index];
+extern "C" cf::CtrlObjectParamSubEntry* func_8009D7E4(cf::CtrlObjectParamData* self, unsigned long index) {
+    return &self->entries[index];
 }
 
 void func_8009D7F4(){}
 
-extern "C" void* CActorParam_UnkVirtualFunc94__Q22cf11CActorParamFv(void* self) {
-    return &static_cast<cf::CActorParam*>(self)->unk1650;
+extern "C" void* CActorParam_UnkVirtualFunc94__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    return &self->unk1650;
 }
 
 void func_8009DB1C(){}
@@ -41,9 +39,8 @@ void func_8009DB28(){}
 
 void func_8009DBF4(){}
 
-extern "C" void CActorParam_UnkVirtualFunc33__Q22cf11CActorParamFv(void* self, float val) {
-    cf::CActorParam* p = static_cast<cf::CActorParam*>(self);
-    reinterpret_cast<float&>(p->unk17E4.unk0[4]) = val;
+extern "C" void CActorParam_UnkVirtualFunc33__Q22cf11CActorParamFv(cf::CActorParam* self, float val) {
+    reinterpret_cast<float&>(self->unk17E4.unk0[4]) = val;
 }
 
 void func_8009DFC8(){}
@@ -52,26 +49,25 @@ void func_8009E024(){}
 
 void func_8009E030(){}
 
-extern "C" void func_8009E03C(void* self, void* arg) {
-    extern void func_8009DBF4(void*, unsigned long, void*);
+extern "C" void func_8009E03C(cf::CtrlObjectParamData* self, void* arg) {
+    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);
     func_8009DBF4(self, 2, arg);
 }
 
-extern "C" void func_8009E048(void* self, void* arg) {
-    extern void func_8009DBF4(void*, unsigned long, void*);
+extern "C" void func_8009E048(cf::CtrlObjectParamData* self, void* arg) {
+    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);
     func_8009DBF4(self, 3, arg);
 }
 
 void func_8009E054(){}
 
-extern "C" void func_8009E0A8(void* self, void* arg) {
-    extern void func_8009DBF4(void*, unsigned long, void*);
+extern "C" void func_8009E0A8(cf::CtrlObjectParamData* self, void* arg) {
+    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);
     func_8009DBF4(self, 5, arg);
 }
 
-extern "C" long func_8009E0B4(void* self, unsigned long index) {
-    cf::CtrlObjectParamData* p = static_cast<cf::CtrlObjectParamData*>(self);
-    return p->entries[0].shortArr[index];
+extern "C" long func_8009E0B4(cf::CtrlObjectParamData* self, unsigned long index) {
+    return self->entries[0].shortArr[index];
 }
 
 void func_8009E0C4(){}
@@ -80,19 +76,18 @@ void func_8009E120(){}
 
 void func_8009E168(){}
 
-extern "C" int func_8009E20C(void* self, int firstType, int firstIndex,
+extern "C" int func_8009E20C(cf::CtrlObjectParamSwap* self, int firstType, int firstIndex,
                              int secondType, int secondIndex) {
-    cf::CtrlObjectParamSwap* p = static_cast<cf::CtrlObjectParamSwap*>(self);
     int* first = 0;
     int* second = 0;
     if (firstType == 1)
-        first = &p->intArr1[firstIndex];
+        first = &self->intArr1[firstIndex];
     else if (firstType == 2)
-        first = &p->intArr2[firstIndex];
+        first = &self->intArr2[firstIndex];
     if (secondType == 1)
-        second = &p->intArr1[secondIndex];
+        second = &self->intArr1[secondIndex];
     else if (secondType == 2)
-        second = &p->intArr2[secondIndex];
+        second = &self->intArr2[secondIndex];
     int value = *first;
     *first = *second;
     *second = value;
@@ -130,10 +125,9 @@ void func_8009E56C(void* self){ func_8009E574(); }
 
 void func_8009E740(){}
 
-extern "C" int func_8009E7C8(unsigned char* self) {
-    cf::CtrlObjectParamClear* p = reinterpret_cast<cf::CtrlObjectParamClear*>(self);
-    p->firstByte = 0;
-    for (int i = 0; i < 24; ++i) p->words[i] = 0;
+extern "C" int func_8009E7C8(cf::CtrlObjectParamClear* self) {
+    self->firstByte = 0;
+    for (int i = 0; i < 24; ++i) self->words[i] = 0;
     return 1;
 }
 
@@ -198,66 +192,66 @@ void __ct__8009ED08(){}
 
 void func_8009EF9C(){}
 
-extern "C" void CActorParam_UnkVirtualFunc16__Q22cf11CActorParamFv(void* self, float val) {
-    static_cast<cf::CActorParam*>(self)->unk15F8 = val;
+extern "C" void CActorParam_UnkVirtualFunc16__Q22cf11CActorParamFv(cf::CActorParam* self, float val) {
+    self->unk15F8 = val;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc55__Q22cf11CActorParamFv(void* self, u16 val) {
-    static_cast<cf::CActorParam*>(self)->unk160E = val;
+extern "C" void CActorParam_UnkVirtualFunc55__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) {
+    self->unk160E = val;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc61__Q22cf11CActorParamFv(void* self, u16 val) {
-    static_cast<cf::CActorParam*>(self)->unk1616 = val;
+extern "C" void CActorParam_UnkVirtualFunc61__Q22cf11CActorParamFv(cf::CActorParam* self, u16 val) {
+    self->unk1616 = val;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc65__Q22cf11CActorParamFv(void* self, float val) {
-    static_cast<cf::CActorParam*>(self)->unk1610 = val;
+extern "C" void CActorParam_UnkVirtualFunc65__Q22cf11CActorParamFv(cf::CActorParam* self, float val) {
+    self->unk1610 = val;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc68__Q22cf11CActorParamFv(void* self, float val) {
-    static_cast<cf::CActorParam*>(self)->unk1618 = val;
+extern "C" void CActorParam_UnkVirtualFunc68__Q22cf11CActorParamFv(cf::CActorParam* self, float val) {
+    self->unk1618 = val;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc74__Q22cf11CActorParamFv(void* self, float val) {
-    static_cast<cf::CActorParam*>(self)->unk17E4.unk4C = val;
+extern "C" void CActorParam_UnkVirtualFunc74__Q22cf11CActorParamFv(cf::CActorParam* self, float val) {
+    self->unk17E4.unk4C = val;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc14__Q22cf11CActorParamFv(void* self, u8 val) {
-    static_cast<cf::CActorParam*>(self)->unk15F4[0] = val;
+extern "C" void CActorParam_UnkVirtualFunc14__Q22cf11CActorParamFv(cf::CActorParam* self, u8 val) {
+    self->unk15F4[0] = val;
 }
 
-extern "C" void* CActorParam_UnkVirtualFunc165__Q22cf11CActorParamFv(void* self) {
-    return &static_cast<cf::CActorParam*>(self)->unk164C;
+extern "C" void* CActorParam_UnkVirtualFunc165__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    return &self->unk164C;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc116__Q22cf11CActorParamFv(void* self, float val) {
-    static_cast<cf::CActorParam*>(self)->unk1620 = val;
+extern "C" void CActorParam_UnkVirtualFunc116__Q22cf11CActorParamFv(cf::CActorParam* self, float val) {
+    self->unk1620 = val;
 }
 
 void func_8009F6D4(){}
 
-extern "C" void* CActorParam_UnkVirtualFunc152__Q22cf11CActorParamFv(void* self) {
-    return &static_cast<cf::CActorParam*>(self)->unk3358;
+extern "C" void* CActorParam_UnkVirtualFunc152__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    return &self->unk3358;
 }
 
 void __ct__8009F8B8(){}
 
 void func_800A03F4(){}
 
-extern "C" void* CActorParam_UnkVirtualFunc125__Q22cf11CActorParamFv(void* self) {
-    return static_cast<cf::CActorParam*>(self)->unk2740;
+extern "C" void* CActorParam_UnkVirtualFunc125__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    return self->unk2740;
 }
 
-extern "C" void* CActorParam_UnkVirtualFunc76__Q22cf11CActorParamFv(void* self) {
-    return &static_cast<cf::CActorParam*>(self)->unk17E4.unk4C;
+extern "C" void* CActorParam_UnkVirtualFunc76__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    return &self->unk17E4.unk4C;
 }
 
 void func_800A082C(){}
 
 void func_800A0860(){}
 
-extern "C" void* CActorParam_UnkVirtualFunc100__Q22cf11CActorParamFv(void* self) {
-    return &static_cast<cf::CActorParam*>(self)->unk17E4;
+extern "C" void* CActorParam_UnkVirtualFunc100__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    return &self->unk17E4;
 }
 
 void func_800A0E64(){}
@@ -272,8 +266,8 @@ void func_800A13C4(){}
 
 void func_800A145C(){}
 
-extern "C" u32 CActorParam_UnkVirtualFunc26__Q22cf11CActorParamFv(void* self) {
-    return reinterpret_cast<u32&>(static_cast<cf::CActorParam*>(self)->unk1650);
+extern "C" u32 CActorParam_UnkVirtualFunc26__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    return reinterpret_cast<u32&>(self->unk1650);
 }
 
 void CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv() {}
@@ -288,23 +282,21 @@ void func_800A1E3C(){}
 
 void func_800A21F8(){}
 
-extern "C" void CActorParam_UnkVirtualFunc82__Q22cf11CActorParamFv(void* self, u32 addend) {
-    cf::CActorParam* p = static_cast<cf::CActorParam*>(self);
+extern "C" void CActorParam_UnkVirtualFunc82__Q22cf11CActorParamFv(cf::CActorParam* self, u32 addend) {
     u32 cap = 0x05F60000 - 7937;
-    u32 val = p->unk1604 + addend;
-    p->unk1604 = val;
+    u32 val = self->unk1604 + addend;
+    self->unk1604 = val;
     if (val > cap) {
-        p->unk1604 = cap;
+        self->unk1604 = cap;
     }
 }
 
-extern "C" void CActorParam_UnkVirtualFunc90__Q22cf11CActorParamFv(void* self, u32 addend) {
-    cf::CActorParam* p = static_cast<cf::CActorParam*>(self);
+extern "C" void CActorParam_UnkVirtualFunc90__Q22cf11CActorParamFv(cf::CActorParam* self, u32 addend) {
     u32 cap = 0x05F60000 - 7937;
-    u32 val = p->unk1608 + addend;
-    p->unk1608 = val;
+    u32 val = self->unk1608 + addend;
+    self->unk1608 = val;
     if (val > cap) {
-        p->unk1608 = cap;
+        self->unk1608 = cap;
     }
 }
 
@@ -314,22 +306,21 @@ void func_800A282C(){}
 
 void func_800A2974(){}
 
-extern "C" u32 CActorParam_UnkVirtualFunc85__Q22cf11CActorParamFv(void* self) {
-    return static_cast<cf::CActorParam*>(self)->unk1604;
+extern "C" u32 CActorParam_UnkVirtualFunc85__Q22cf11CActorParamFv(cf::CActorParam* self) {
+    return self->unk1604;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc83__Q22cf11CActorParamFv(void* self, u32 addend) {
-    cf::CActorParam* p = static_cast<cf::CActorParam*>(self);
+extern "C" void CActorParam_UnkVirtualFunc83__Q22cf11CActorParamFv(cf::CActorParam* self, u32 addend) {
     u32 cap = 0x05F60000 - 7937;
-    u32 val = p->unk1600 + addend;
-    p->unk1600 = val;
+    u32 val = self->unk1600 + addend;
+    self->unk1600 = val;
     if (val > cap) {
-        p->unk1600 = cap;
+        self->unk1600 = cap;
     }
 }
 
-extern "C" void CActorParam_UnkVirtualFunc81__Q22cf11CActorParamFv(void* self, u32 val) {
-    static_cast<cf::CActorParam*>(self)->unk1604 = val;
+extern "C" void CActorParam_UnkVirtualFunc81__Q22cf11CActorParamFv(cf::CActorParam* self, u32 val) {
+    self->unk1604 = val;
 }
 
 void func_800A2AF0(){}
@@ -338,9 +329,8 @@ void func_800A2DE8(){}
 
 void func_800A30E4(){}
 
-extern "C" u8 func_800A32BC(void* self) {
-    cf::CtrlObjectParamByteE4* p = reinterpret_cast<cf::CtrlObjectParamByteE4*>(self);
-    return p->field_E4;
+extern "C" u8 func_800A32BC(cf::CtrlObjectParamByteE4* self) {
+    return self->field_E4;
 }
 
 void func_800A32C4(){}
@@ -349,34 +339,31 @@ void func_800A3304(){}
 
 void func_800A33C8(){}
 
-extern "C" void CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv(void* self) {
-    cf::CObjectState* p = static_cast<cf::CObjectState*>(self);
-    p->unkC = p->unk8;
+extern "C" void CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv(cf::CObjectState* self) {
+    self->unkC = self->unk8;
 }
 
-extern "C" void* CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv(void* self) {
-    return &static_cast<cf::CObjectState*>(self)->unkC;
+extern "C" void* CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv(cf::CObjectState* self) {
+    return &self->unkC;
 }
 
-extern "C" void CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv(void* self) {
-    static_cast<cf::CObjectState*>(self)->unk8 = 0;
+extern "C" void CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv(cf::CObjectState* self) {
+    self->unk8 = 0;
 }
 
-extern "C" void CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv(void* self) {
-    static_cast<cf::CObjectState*>(self)->unk4 = 0;
+extern "C" void CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv(cf::CObjectState* self) {
+    self->unk4 = 0;
 }
 
-extern "C" int CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv(void* self) {
-    cf::CObjectParam* p = static_cast<cf::CObjectParam*>(self);
-    return p->field_30 != 0 ? 1 : 0;
+extern "C" int CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv(cf::CObjectParam* self) {
+    return self->field_30 != 0 ? 1 : 0;
 }
 
-extern "C" void func_800A34C8(void* self) {
-    cf::CtrlObjectParamClear16* p = reinterpret_cast<cf::CtrlObjectParamClear16*>(self);
-    p->words[0] = 0;
-    p->words[1] = 0;
-    p->words[2] = 0;
-    p->words[3] = 0;
+extern "C" void func_800A34C8(cf::CtrlObjectParamClear16* self) {
+    self->words[0] = 0;
+    self->words[1] = 0;
+    self->words[2] = 0;
+    self->words[3] = 0;
 }
 
 void __dt__800A34E0(){}

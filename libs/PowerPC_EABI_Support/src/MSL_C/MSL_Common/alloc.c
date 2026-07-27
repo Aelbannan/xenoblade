@@ -117,7 +117,7 @@ static const unsigned long fix_pool_sizes[] = {4, 12, 20, 36, 52, 68};
 #define __msize_inline(ptr) (!classify(ptr) ? FixSubBlock_size(FixSubBlock_from_pointer(ptr)) : SubBlock_size(SubBlock_from_pointer(ptr)) - 8)
 
 #define Block_empty(ths)                                                      \
-    (_sb = (SubBlock*)((char*)(ths) + 16)),                    \
+    (_sb = (SubBlock*)((Block*)(ths) + 1)),                    \
     SubBlock_is_free(_sb) && SubBlock_size(_sb) == Block_size((ths)) - 24
 
 //unused

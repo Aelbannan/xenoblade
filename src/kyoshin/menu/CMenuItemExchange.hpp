@@ -1,27 +1,34 @@
 #pragma once
 
 #include <types.h>
+#include <monolib/work/CProcess.hpp>
+#include <monolib/scn/IScnRender.hpp>
 
 /**
- * Forward declaration for the OC thunk interface embedded at offset 0x6c
- * within CMenuItemExchange. Thunks such as func_801BF75C / func_801BF764
- * receive a CMenuItemExchangeOC* (the OC sub-object pointer) and adjust
- * back to the containing CMenuItemExchange before delegating to the real
- * implementation.
+ * OC (object-component) interface embedded at offset 0x6c within
+ * CMenuItemExchange. Used for virtual dispatch through the OC vtable;
+ * thunks adjust back to the containing object before delegating.
  */
-struct CMenuItemExchangeOC;
+struct CMenuItemExchangeOC {
+    virtual ~CMenuItemExchangeOC() {}
+};
 
 /**
  * Menu item exchange / equipment screen controller.
  *
+ * MI layout:
+ *   0x00: CProcess
+ *   0x58: IScnRender
+ *   0x6c: CMenuItemExchangeOC (secondary base for OC dispatch)
+ *
  * Full class layout TBD - members will be filled in during decomp.
  */
-class CMenuItemExchange {
-    // ...
+class CMenuItemExchange : public CProcess, public IScnRender, public CMenuItemExchangeOC {
+public:
     CMenuItemExchange();
     virtual ~CMenuItemExchange();
-    void Init();
-    void Term();
-    void Move();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
     void cbRenderBefore();
 };

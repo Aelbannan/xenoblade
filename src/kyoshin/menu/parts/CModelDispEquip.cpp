@@ -26,9 +26,9 @@ void func_801FF82C(){}
 
 void func_801FF874(){}
 
-u8 CModelDispEquip_getState20(CModelDispEquip* self) { return ((u8*)self)[0x1020]; }
+u8 CModelDispEquip_getState20(CModelDispEquip* self) { return self->field_1020; }
 
-u8 CModelDispEquip_getState21(CModelDispEquip* self) { return ((u8*)self)[0x1021]; }
+u8 CModelDispEquip_getState21(CModelDispEquip* self) { return self->field_1021; }
 
 void CModelDispEquip_setState14(unsigned char* p) {
     if (p[0x1014] != 0) {

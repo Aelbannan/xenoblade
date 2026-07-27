@@ -8,6 +8,19 @@
 
 #include <nw4r/lyt.h>
 
+// Layout for actor fields accessed via byte-offset arithmetic
+// (actor is cf::CfObjectPc*, accessed through MenuBpsActorIf cast-only iface)
+struct MenuBpsActorFields {
+    u8 pad_00[0x3f28];
+    u16 unk3f28;  // +0x3f28: low byte snapshotted into CMenuBattlePlayerStateSlot::unk204
+};
+
+// Layout for handle returned by func_800B708C
+struct Func800B708C_Ret {
+    u8 pad_00[0x64];
+    u32 unk64;    // +0x64: bit flags read by Move()
+};
+
 // Per-party slot (stride 0x270). Exception table: member array at 0x74, count 3.
 struct CMenuBattlePlayerStateSlot {
     nw4r::lyt::Layout* unk00; // +0x00 → this+0x74

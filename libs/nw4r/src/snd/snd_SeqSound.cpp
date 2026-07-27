@@ -95,7 +95,7 @@ void SeqSound::SetTempoRatio(f32 tempo) {
 }
 
 void SeqSound::SetChannelPriority(int priority) {
-    (reinterpret_cast<nw4r::snd::detail::SeqPlayer*>(reinterpret_cast<u8*>(this) + 0x10C))->SetChannelPriority(priority);
+    mSeqPlayer.SetChannelPriority(priority);
 }
 
 void SeqSound::SetReleasePriorityFix(bool flag) {
@@ -209,5 +209,5 @@ void SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUs
 void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv(){}
 void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
-extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return ((u8*)self)[677]; }
+extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return *(static_cast<u8*>(self) + 677); }
 int GetRuntimeTypeInfo__Q44nw4r3snd6detail8SeqSoundCFv(void){ return 0; }

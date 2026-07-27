@@ -56,11 +56,19 @@ void func_80095224(){}
 
 void func_80095450(){}
 
+struct CtrlNpcData {
+    u8 _pad00[0xBA];
+    short field_BA;
+    u8 _padBC[2];
+    short field_BE;
+};
+
 void func_8009563C(char* p) {
-    short v = *(short*)(p + 0xBA) - 1;
-    *(short*)(p + 0xBA) = v;
+    CtrlNpcData* data = reinterpret_cast<CtrlNpcData*>(p);
+    short v = data->field_BA - 1;
+    data->field_BA = v;
     if (v <= 0) {
-        *(short*)(p + 0xBE) = 1;
+        data->field_BE = 1;
     }
 }
 

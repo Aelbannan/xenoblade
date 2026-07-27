@@ -295,7 +295,7 @@ const char* CfBdat::func_801424A8(u16 index) {
         bool result = false;
 
         if(lbl_80666A6C == pEventFile->mFileHandle){
-            if(pEventFile->unk0 == 1 && *(u32*)((u32)pEventFile + 0x14) != 0){
+            if(pEventFile->unk0 == 1 && pEventFile->field_14 != 0){
                 CBdat::func_8003AA78(3, lbl_80666A70);
                 spMnuEveStartFileData = CBdat::getFP("MNU_eve_start");
                 spMnuEveTableFileData = CBdat::getFP("MNU_eve_table");

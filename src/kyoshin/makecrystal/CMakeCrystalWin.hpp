@@ -9,5 +9,7 @@ public:
     void cbRenderBefore();
 
     // TODO: add fields
+    u8 _pad4361[0x4361];
+    u8 field_4361; // 0x4361
 };
 

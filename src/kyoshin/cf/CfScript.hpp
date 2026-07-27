@@ -16,7 +16,9 @@ class CfScriptManager;
 // TODO: replace placeholder with real members when this class is decompiled.
 class CfScript {
     friend class CfScriptManager;
-    u8 gap00[0x58];
+    u8 gap00[0x4c];
+    u32 mFlags;  // at 0x4c — flags accessed by CfScript functions
+    u8 gap50[0x08];
 public:
     // Currently a placeholder - actual fields TBD.
     void waitLoad();

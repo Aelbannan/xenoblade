@@ -70,7 +70,7 @@ void func_8016A24C(){}
 
 void func_8016A27C(){}
 
-u32 func_8016A354(void* self) { return *(u32*)((u8*)self + 0x20); }
+u32 func_8016A354(cf::CTaskREvtSequence* self) { return self->field_0x20; }
 
 void func_8016A35C(){}
 
@@ -136,7 +136,7 @@ void func_8016C720(){}
 
 void func_eu_8016DA48(){}
 
-void OnFileEvent__17CTaskREvtSequenceFP10CEventFile(void* self) { ((void(*)(void*))func_8016ABA8)((char*)self - 0x54); }
+void OnFileEvent__17CTaskREvtSequenceFP10CEventFile(cf::CTaskREvtSequence* self) { ((void(*)(void*))func_8016ABA8)((char*)self - 0x54); }
 
 void func_8016C7D8(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x54); }
 

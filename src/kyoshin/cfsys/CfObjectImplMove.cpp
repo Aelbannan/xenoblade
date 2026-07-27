@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cfsys/CfObjectImplMove.hpp"
 
 void func_800CA948(){}
 
@@ -41,9 +42,9 @@ void func_800CD460(){}
 
 void func_800BE824(void*, unsigned int);
 
-void func_800CD5C0(char* self, unsigned int a, unsigned int b) {
-    void* inner = *(void**)(self + 0x14);
-    if (a == *(unsigned int*)((char*)inner + 0xc4)) {
+void func_800CD5C0(CfObjectImplMoveData* self, unsigned int a, unsigned int b) {
+    CfObjectImplMoveSubObj* inner = (CfObjectImplMoveSubObj*)self->mSubObj;
+    if (a == inner->mSomeId) {
         func_800BE824(inner, b);
     }
 }
@@ -76,7 +77,7 @@ void func_800CF064(){}
 
 void func_800CF810(){}
 
-extern "C" void func_800CFFA0(unsigned int* self, unsigned int* param) {
+void func_800CFFA0(unsigned int* self, unsigned int* param) {
     if (param == (unsigned int*)self[7]) {
         param[44] = 0;
         self[7] = 0;
@@ -84,6 +85,6 @@ extern "C" void func_800CFFA0(unsigned int* self, unsigned int* param) {
 }
 
 extern "C" void __dt__Q22cf16CfObjectImplMoveFv(void* self);
-extern "C" void func_800CFFBC(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplMoveFv)((char*)self - 0xc); }
+void func_800CFFBC(char* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplMoveFv)(self - 0xc); }
 
-extern "C" void func_800CFFC4(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplMoveFv)((char*)self - 0x10); }
+void func_800CFFC4(char* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplMoveFv)(self - 0x10); }

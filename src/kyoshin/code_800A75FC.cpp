@@ -35,11 +35,11 @@ void func_800A86AC(){}
 
 void* func_800A86D8(unsigned int param1, unsigned int param2) {
     extern void* lbl_eu_80528398[];
-    void* r4 = lbl_eu_80528398[param2];
+    void** r4 = static_cast<void**>(lbl_eu_80528398[param2]);
     if (param1 >= 0xe) {
-        return *(void**)r4;
+        return r4[0];
     }
-    return ((void**)r4)[param1];
+    return r4[param1];
 }
 
 void func_800A8704(){}

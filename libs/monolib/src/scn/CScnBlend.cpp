@@ -7,12 +7,17 @@ void __ct__CScnBlend(){}
 
 void CScnBlend::~CScnBlend() {}
 
+struct CScnBlendState {
+    u8 _00[0x54];
+    u8 flags;
+};
+
 void func_80498D98(void* r3, int r4) {
-    uint8_t v = *(uint8_t*)((uintptr_t)r3 + 0x54);
+    CScnBlendState* state = (CScnBlendState*)r3;
     if (r4 != 0) {
-        *(uint8_t*)((uintptr_t)r3 + 0x54) = v | 1;
+        state->flags |= 1;
     } else {
-        *(uint8_t*)((uintptr_t)r3 + 0x54) = v & 0xFE;
+        state->flags &= 0xFE;
     }
 }
 

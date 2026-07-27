@@ -11,11 +11,11 @@
 //Utility pointer functions
 
 static inline void* getSectionEntriesPtr(SBSectionHeader* header){
-    return (void*)((u32)header + header->entriesOffset);
+    return (void*)((char*)header + header->entriesOffset);
 }
 
 static inline void* getRelativePtr(void* header){
-    return (void*)((u32)header + *(u32*)header);
+    return (void*)((char*)header + *(u32*)header);
 }
 
 static inline void adjustSectionPtr(void* pBase, void* pPtr){

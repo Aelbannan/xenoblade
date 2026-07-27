@@ -8,7 +8,8 @@ public:
     virtual ~CArtsInfo();
     void OnFileEvent();
 
-    u8 _00[0x20];
+    // vtable pointer at 0x00 (implicit)
+    u8 _00[0x20 - 4];
     int field_0x20;
     u8 _24[0x40 - 0x24];
     u8 field_0x40;

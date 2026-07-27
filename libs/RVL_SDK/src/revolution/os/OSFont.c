@@ -236,33 +236,40 @@ static u32 GetFontCode(u16 encode, u16 code) {
     return 0;
 }
 
+typedef struct {
+    char magic[4];
+    s32 expandSize;
+    s32 linkTblOfs;
+    s32 chunksOfs;
+} Yay0Header;
+
 // 'Yay0' decompression (See YAGCD sections 16.1.1, 16.1.2)
 static void Decode(u8* src, u8* dst) {
+    Yay0Header* hdr = (Yay0Header*)src;
+    const u32* maskPtr;
     int j;
     s32 linkOfs;
     s32 chunkPos;
     int i;
     s32 chunksOfs;
-    u32 maskTblPos;
     s32 expandSize;
     s32 linkTblOfs;
     s32 count;
     u32 maskBits;
     u32 mask;
 
-    expandSize = *(s32*)(src + 0x4);
-    linkTblOfs = *(s32*)(src + 0x8);
-    chunksOfs = *(s32*)(src + 0xC);
+    expandSize = hdr->expandSize;
+    linkTblOfs = hdr->linkTblOfs;
+    chunksOfs = hdr->chunksOfs;
 
     i = 0;
     maskBits = 0;
-    maskTblPos = 16;
+    maskPtr = (const u32*)(hdr + 1);
 
     do {
         // Get next mask
         if (maskBits == 0) {
-            mask = *(u32*)(src + maskTblPos);
-            maskTblPos += sizeof(u32);
+            mask = *maskPtr++;
             maskBits = sizeof(u32) * 8;
         }
 
@@ -298,8 +305,9 @@ static void Decode(u8* src, u8* dst) {
 }
 
 static u32 GetFontSize(const u8* font) {
+    const Yay0Header* hdr = (const Yay0Header*)font;
     if (font[0] == 'Y' && font[1] == 'a' && font[2] == 'y') {
-        return *(u32*)(font + 0x4);
+        return (u32)hdr->expandSize;
     }
 
     return 0;

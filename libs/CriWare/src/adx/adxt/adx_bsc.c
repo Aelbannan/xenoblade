@@ -49,7 +49,14 @@ u32 ADXB_GetSfreq(void* self) { return *(u32*)((u8*)self + 0x14); }
 
 void ADXB_GetNumChan() {}
 
-s16 ADXB_GetFmtBps(void* self) { return (signed char)((u8*)self)[0x0d]; }
+typedef struct ADXBFormatInfo {
+    u8 _00[0x0d];
+    s8 formatBitsPerSample;
+} ADXBFormatInfo;
+
+s16 ADXB_GetFmtBps(void* self) {
+    return ((ADXBFormatInfo*)self)->formatBitsPerSample;
+}
 
 void ADXB_GetOutBps() {}
 

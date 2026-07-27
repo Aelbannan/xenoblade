@@ -3,6 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+class CEventFile;
+
 void __ct__cf_CTaskREvent(){}
 
 void cf::CTaskREvent::~CTaskREvent() {}
@@ -98,7 +100,7 @@ void func_801666E4(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskRE
 
 extern "C" void func_801666EC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 
-extern "C" void OnFileEvent__11CTaskREventFP10CEventFile(void* self) { ((void(*)(void*))func_801663A8)((char*)self - 0x60); }
+extern "C" void OnFileEvent__11CTaskREventFP10CEventFile(class CEventFile* self) { ((void(*)(void*))func_801663A8)((char*)self - 0x60); }
 
 extern "C" void func_801666FC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x60); }
 

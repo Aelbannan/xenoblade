@@ -43,17 +43,12 @@ void func_802ACB50(){}
 // the subobject within the full object).  Each thunk adjusts 'this' back by
 // -0x58 so the real CMenuTutorialList implementation receives the correct pointer.
 
-class IScnRender;
-typedef void (*CbRenderBeforeFunc)(CMenuTutorialList*);
 void func_802ACBCC(IScnRender* self) {
-    ((CbRenderBeforeFunc)cbRenderBefore__17CMenuTutorialListFv)(
-        reinterpret_cast<CMenuTutorialList*>(
-            reinterpret_cast<char*>(self) - 0x58));
+    ((void(*)(CMenuTutorialList*))cbRenderBefore__17CMenuTutorialListFv)(
+        static_cast<CMenuTutorialList*>(self));
 }
 
-typedef void (*DtorFunc)(CMenuTutorialList*);
 void func_802ACBD4(IScnRender* self) {
-    ((DtorFunc)__dt__17CMenuTutorialListFv)(
-        reinterpret_cast<CMenuTutorialList*>(
-            reinterpret_cast<char*>(self) - 0x58));
+    ((void(*)(CMenuTutorialList*))__dt__17CMenuTutorialListFv)(
+        static_cast<CMenuTutorialList*>(self));
 }

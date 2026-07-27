@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-u8 func_8022D08C(void* self) { return ((u8*)self)[0x25]; }
+u8 func_8022D08C(void* self) { return static_cast<CExchangeWinFull*>(self)->field_25; }
 
 
 
@@ -11,9 +11,9 @@ u8 func_8022D08C(void* self) { return ((u8*)self)[0x25]; }
 
 
 
-u8 func_8022D094(void* self) { return ((u8*)self)[0x24]; }
+u8 func_8022D094(void* self) { return static_cast<CExchangeWinFull*>(self)->field_24; }
 
-extern "C" u8 func_8022D09C(void* self) { return ((u8*)self)[0x27]; }
+extern "C" u8 func_8022D09C(void* self) { return static_cast<CExchangeWinFull*>(self)->field_27; }
 
 
 

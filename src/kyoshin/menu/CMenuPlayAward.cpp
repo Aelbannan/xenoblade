@@ -49,8 +49,8 @@ void func_80270AD8(){}
 
 void* func_80270AEC(void* self, int param) {
     if (param >= 256) return 0;
-    unsigned char byte = ((unsigned char*)self)[0x100a];
-    return (void*)((unsigned char*)self + (byte << 11) + ((param & 0xFF) << 3));
+    auto menu = static_cast<CMenuPlayAward*>(self);
+    return (void*)((unsigned char*)menu + (menu->mPageIndex << 11) + ((param & 0xFF) << 3));
 }
 
 void __ct__CPlayAwardList(){}
@@ -74,7 +74,7 @@ unsigned char func_80270F28(void* this_) {
     return 0;
 }
 
-u8 func_80270F6C(void* self) { return ((u8*)self)[0x8b]; }
+u8 func_80270F6C(void* self) { return static_cast<CMenuPlayAward*>(self)->mField_8B; }
 
 void func_80270F74(){}
 

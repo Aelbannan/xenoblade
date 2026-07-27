@@ -96,8 +96,9 @@ BOOL EXIImm(EXIChannel chan, void* buf, s32 len, u32 type,
     if (type != EXI_READ) {
         int i;
         u32 word = 0;
+        const u8* bytes = (const u8*)buf;
         for (i = 0; i < len; i++) {
-            word |= ((u8*)buf)[i] << (3 - i) * 8;
+            word |= bytes[i] << (3 - i) * 8;
         }
 
         EXI_CHAN_PARAMS[chan].data = word;

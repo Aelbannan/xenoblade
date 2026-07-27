@@ -143,7 +143,7 @@ void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(){}
 
 void func_80139198(){}
 
-u8 func_801392B4(void* self){ return ((u8*)self)[0]; }
+u8 func_801392B4(void* self){ return *(u8*)self; }
 
 extern u8 lbl_eu_80664077;
 u8 code80135FDC_getByte_64077() { return lbl_eu_80664077; }

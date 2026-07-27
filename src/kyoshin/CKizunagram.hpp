@@ -41,5 +41,6 @@ public:
     void OnFileEvent();
 
     // TODO: add fields
+    u8 field_8C; // 0x8C
 };
 

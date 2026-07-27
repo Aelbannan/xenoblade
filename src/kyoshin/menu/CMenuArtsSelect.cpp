@@ -51,6 +51,31 @@ void func_80133770();
 // Batch 2026-07-14g: menu-arts-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14j: menu-arts-move owns Move exclusively.
 // Batch 2026-07-14k: menu-arts-ctor owns __ct__CMenuArtsSelect exclusively.
+
+// Arts parameter info layout (case 10 in Move).
+struct ArtsParamInfo {
+    u8 _pad00[0x74];
+    u16 mCheckFlag;  // +0x74: non-zero when skill has gauge
+    u8 _pad76[0x80 - 0x76];
+    f32 mRatioNum;   // +0x80: current gauge value
+    void* mTablePtr; // +0x84: pointer to function table
+};
+
+// Function table for arts param info (+0x14 = getMax vtable slot).
+struct ArtsParamTable {
+    u8 _pad00[0x14];
+    void* mGetMaxFn; // +0x14: vtable entry for getMax()
+};
+
+// Battle actor container: CfObjectMove lives at offset 0x3e9c.
+// The +0x04 field is a secondary MI vtable pointer.
+struct BattleActor {
+    void* mVtable0;          // +0x00: primary vtable
+    void* mSecondaryVtable;  // +0x04: secondary MI vtable
+    u8 _pad08[0x3e9c - 0x08];
+    u8 mMoveStart;           // +0x3e9c: CfObjectMove starts here
+};
+
 extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 // Unmangled retail names; int (not u8) avoids clrlwi before cmpwi.
@@ -563,7 +588,7 @@ void CMenuArtsSelect::Term() {
     // MI adjust: IScnRender at +0x5c (null-this safe).
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x5c);
+        cb = reinterpret_cast<IScnRender*>(&this->vtScnRender);
     }
     mScn->removeRenderCB(cb);
 
@@ -710,13 +735,13 @@ after_ce48:
 
     if (unk298 >= 2) {
         void* move = cf::CfGameManager::getPlayer(0);
-        void* actor = move;
+        BattleActor* actor = reinterpret_cast<BattleActor*>(move);
         if (move != NULL) {
-            actor = reinterpret_cast<u8*>(move) - 0x3e9c;
+            actor = (BattleActor*)((char*)move - 0x3e9c);
         }
         if (actor != NULL) {
             typedef void* (*GetPtrFn)(void*);
-            void* sub = *reinterpret_cast<void**>(reinterpret_cast<u8*>(actor) + 4);
+            void* sub = actor->mSecondaryVtable;
             u32* pVal = reinterpret_cast<u32*>(artsVslot<GetPtrFn>(sub, 0x30)(sub));
             u32 localVal = pVal[0];
             if (func_80174C98(actor, &localVal, 0x803) != 0) {
@@ -826,9 +851,9 @@ after_ce48:
 
     if (unk298 != 0) {
         void* move = cf::CfGameManager::getPlayer(0);
-        void* actor = move;
+        BattleActor* actor = reinterpret_cast<BattleActor*>(move);
         if (move != NULL) {
-            actor = reinterpret_cast<u8*>(move) - 0x3e9c;
+            actor = (BattleActor*)((char*)move - 0x3e9c);
         }
         if (actor != NULL) {
             if (unk298 >= 2 && !(unk308 & 0x80u)) {
@@ -873,24 +898,18 @@ after_ce48:
                         typedef void* (*GetPtrFn)(void*);
                         void* skill =
                             artsVslot<GetPtrFn>(skillSrc, 0x278)(skillSrc);
-                        void* info = getArtsParamAtCnt(skill, i);
+                        void* infoRaw = getArtsParamAtCnt(skill, i);
                         if (ready == 0) {
-                            if (*reinterpret_cast<u16*>(
-                                    reinterpret_cast<u8*>(info) + 0x74) != 0) {
+                            ArtsParamInfo* info = static_cast<ArtsParamInfo*>(infoRaw);
+                            if (info->mCheckFlag != 0) {
                                 typedef f32 (*GetF32Fn)(void*);
-                                void* table = *reinterpret_cast<void**>(
-                                    reinterpret_cast<u8*>(info) + 0x84);
-                                GetF32Fn getMax = reinterpret_cast<GetF32Fn>(
-                                    *reinterpret_cast<void**>(
-                                        reinterpret_cast<u8*>(table) + 0x14));
-                                f32 denom = getMax(info);
+                                ArtsParamTable* table = static_cast<ArtsParamTable*>(info->mTablePtr);
+                                GetF32Fn getMax = reinterpret_cast<GetF32Fn>(table->mGetMaxFn);
+                                f32 denom = getMax(infoRaw);
                                 f32 ratio;
                                 if (denom != zeroF) {
-                                    denom = getMax(info);
-                                    ratio =
-                                        *reinterpret_cast<f32*>(
-                                            reinterpret_cast<u8*>(info) + 0x80) /
-                                        denom;
+                                    denom = getMax(infoRaw);
+                                    ratio = info->mRatioNum / denom;
                                 } else {
                                     ratio = lbl_eu_80666F44;
                                 }

@@ -31,7 +31,6 @@ extern const f32 lbl_eu_80666FB0; // -1.0f
 extern "C" CMenuBattlePlayerState*
 __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     CMenuBpsProcessShim* process;
-    u8* ptmfBase;
     char* vtFinal;
     char* vtWork;
     char* vtRender;
@@ -62,22 +61,21 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C (ArtsSelect order).
     process->vtable = lbl_eu_8052C1C0;
     vtFinal = lbl_eu_8052C330;
-    ptmfBase = (u8*)__ptmf_null;
-    ptmfWord0 = *(u32*)(ptmfBase + 0);
+    ptmfWord0 = __ptmf_null[0];
     vtWork = vtFinal + 0x24;
     vtRender = vtFinal + 0xac;
     z = 0;
     unk64p = &self->unk64;
-    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    ptmfWord1 = __ptmf_null[1];
     process->callbacks[1] = ptmfWord1;
     process->callbacks[0] = ptmfWord0;
-    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    ptmfWord2 = __ptmf_null[2];
     process->callbacks[2] = ptmfWord2;
-    ptmfWord0 = *(u32*)(ptmfBase + 0);
-    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    ptmfWord0 = __ptmf_null[0];
+    ptmfWord1 = __ptmf_null[1];
     process->callbacks[4] = ptmfWord1;
     process->callbacks[3] = ptmfWord0;
-    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    ptmfWord2 = __ptmf_null[2];
     process->callbacks[5] = ptmfWord2;
     self->unk54 = (u8)z;
     self->unk55 = (u8)z;
@@ -322,8 +320,10 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
                 dst->unk80 = slot.unk80;
 
                 // First pair is +0x84/+0x88; pointers biased like CBattleState.
-                s = reinterpret_cast<u32*>(reinterpret_cast<u8*>(&slot) + 0x84) - 1;
-                d = reinterpret_cast<u32*>(reinterpret_cast<u8*>(dst) + 0x84) - 1;
+                u32* slotWords = reinterpret_cast<u32*>(&slot.unk84);
+                u32* dstWords = reinterpret_cast<u32*>(&dst->unk84);
+                s = slotWords - 1;
+                d = dstWords - 1;
                 n = copyWords;
                 do {
                     u32 a = *(s + 1);

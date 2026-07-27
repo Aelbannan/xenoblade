@@ -90,9 +90,9 @@ u32 func_8006A80C() {
     return lbl_eu_80663DA8;
 }
 
-void func_8006A814(void* self) {
-    extern unsigned long lbl_eu_80663DA8;
-    lbl_eu_80663DA8 = *(unsigned long*)self;
+void func_8006A814(u32* self) {
+    extern u32 lbl_eu_80663DA8;
+    lbl_eu_80663DA8 = *self;
 }
 
 void func_eu_8006B238(){}

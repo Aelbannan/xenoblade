@@ -28,6 +28,8 @@ public:
     UI_CPassiveSkill();
 
     // TODO: add fields
+    u8 _pad180[0x180];
+    u8 field_180; // 0x180
 };
 
 class CPassiveSkill {

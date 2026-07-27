@@ -53,7 +53,7 @@ void func_80251D94(){}
 // does not have).
 void func_80251DE8(IScnRender* self) {
     ((void(*)(CMenuMapSelectSC*))cbRenderBefore__16CMenuMapSelectSCFv)(
-        (CMenuMapSelectSC*)((u32)self - 0x58));
+        static_cast<CMenuMapSelectSC*>(self));
 }
 
 // IScnRender vtable this-adjusting thunk for destructor.
@@ -63,5 +63,5 @@ void func_80251DE8(IScnRender* self) {
 // parameter, leaving r4 untouched.
 void func_80251DF0(IScnRender* self) {
     ((void(*)(CMenuMapSelectSC*))__dt__16CMenuMapSelectSCFv)(
-        (CMenuMapSelectSC*)((u32)self - 0x58));
+        static_cast<CMenuMapSelectSC*>(self));
 }

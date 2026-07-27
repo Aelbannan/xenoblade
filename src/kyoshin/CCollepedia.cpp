@@ -28,7 +28,7 @@ struct CCollepedia {
     void OnFileEvent() {}
 };
 
-void func_8025348C(CCollepedia* obj, int val) {
+void CCollepedia_reset(CCollepedia* obj, int val) {
     obj->field_0 = val;
     obj->field_4 = 0;
     obj->field_8 = 0;
@@ -77,7 +77,7 @@ void func_80253F3C(){}
 
 void func_80254040(){}
 
-void func_8025406C(unsigned char* obj) {
+void CCollepedia_decrementWrap(unsigned char* obj) {
     obj[1] = obj[1] - 1;
     if ((signed char)obj[1] < 0) {
         obj[1] = obj[0] - 1;
@@ -86,7 +86,7 @@ void func_8025406C(unsigned char* obj) {
 
 void func_80254094(){}
 
-unsigned char func_802540DC(u8* thisPtr) {
+unsigned char CCollepedia_getFieldAtIdx(u8* thisPtr) {
     s8 idx = (s8)thisPtr[1];
     u8* base = thisPtr + idx * 320;
     return base[4];
@@ -94,7 +94,7 @@ unsigned char func_802540DC(u8* thisPtr) {
 
 void func_802540F4(){}
 
-unsigned char func_80254144(const unsigned char* ptr) {
+unsigned char CCollepedia_getFieldOffset(const unsigned char* ptr) {
     int idx = (signed char)ptr[1];
     return ptr[5 + idx * 0x140];
 }
@@ -105,7 +105,7 @@ void func_8025418C(){}
 
 void func_802541BC(){}
 
-u16 func_80254204(u8* p1, u32 arg2, u32 arg3) {
+u16 CCollepedia_getField12(u8* p1, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)p1[1];
@@ -141,9 +141,26 @@ void func_80254C04(){}
 
 void func_80254D0C(){}
 
-unsigned char func_80254D50(u8* self) { return self[0x28f9] ? self[0x51] : 0; }
+struct CCollepediaState {
+    u8 _00[0x49];
+    u8 initialized;
+    u8 _4A[7];
+    u8 field51;
+    u8 _52[0x28F9 - 0x52];
+    u8 condition;
+};
 
-void func_80254D6C(u8* p) { if (p[0x49] != 0) return; p[0x49] = 1; p[0x51] = 0; }
+unsigned char CCollepedia_condGetField51(u8* self) {
+    CCollepediaState* state = (CCollepediaState*)self;
+    return state->condition ? state->field51 : 0;
+}
+
+void CCollepedia_initFields(u8* p) {
+    CCollepediaState* state = (CCollepediaState*)p;
+    if (state->initialized != 0) return;
+    state->initialized = 1;
+    state->field51 = 0;
+}
 
 void func_80254D8C(){}
 

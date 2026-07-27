@@ -189,7 +189,7 @@ static u32 lbl_80665A20[2] = { 0x8C8D8E8F, 0xACADAEAF };
 static u32 lbl_80665A28[2] = { 0x90919293, 0xB0B1B2B3 };
 static u32 lbl_80665A30[2] = { 0x94959697, 0xB4B5B6B7 };
 static u32 lbl_80665A38[2] = { 0x98999A9B, 0xB8B9BABB };
-static u32 lbl_80665A40[2] = { 0x00040105, 0x02060000 };
+static const u8 lbl_80665A40[] = { 0x00, 0x04, 0x01, 0x05, 0x02, 0x06, 0x00, 0x00 };
 static u32 lbl_80665A48[2] = { 0x00020400, 0x01030500 };
 
 static const f32 float_8066C010[2] = { 16.0f, 0.0f };
@@ -473,7 +473,7 @@ void GXInitTexObjFilter(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_fil
     t->mode0 = mode0;
 
     mode0 = t->mode0;
-    minHw = ((u8*)lbl_80665A40)[min_filt];
+    minHw = lbl_80665A40[min_filt];
     mode0 = __rlwimi(mode0, minHw, 5, 24, 26);
     t->mode0 = mode0;
 }
@@ -528,9 +528,7 @@ void GXGetTexObjLODAll(GXTexObj* tex_obj, GXTexFilter* min_filt, GXTexFilter* ma
     s16 lodBiasRaw;
     const u8* filtConv;
     GXTexObjImpl* t = (GXTexObjImpl*)tex_obj;
-    volatile f64 cvtMin;
-    volatile f64 cvtMax;
-    volatile f64 cvtBias;
+    union { volatile f64 d; u32 u[2]; } cvtMin, cvtMax, cvtBias;
 
     mode1 = t->mode1;
     mode0 = t->mode0;
@@ -540,19 +538,19 @@ void GXGetTexObjLODAll(GXTexObj* tex_obj, GXTexFilter* min_filt, GXTexFilter* ma
     *mag_filt = (GXTexFilter)TX_SETMODE0_GET_MAG_FILTER(mode0);
 
     minLodByte = TX_SETMODE1_GET_MINLOD(mode1);
-    ((u32*)&cvtMin)[0] = 0x43300000;
-    ((u32*)&cvtMin)[1] = (u32)minLodByte;
-    *min_lod = (f32)(cvtMin - double_8066C018) * float_8066C038;
+    cvtMin.u[0] = 0x43300000;
+    cvtMin.u[1] = (u32)minLodByte;
+    *min_lod = (f32)(cvtMin.d - double_8066C018) * float_8066C038;
 
     maxLodByte = TX_SETMODE1_GET_MAXLOD(mode1);
-    ((u32*)&cvtMax)[0] = 0x43300000;
-    ((u32*)&cvtMax)[1] = (u32)maxLodByte;
-    *max_lod = (f32)(cvtMax - double_8066C018) * float_8066C038;
+    cvtMax.u[0] = 0x43300000;
+    cvtMax.u[1] = (u32)maxLodByte;
+    *max_lod = (f32)(cvtMax.d - double_8066C018) * float_8066C038;
 
     lodBiasRaw = (s16)TX_SETMODE0_GET_LODBIAS(mode0);
-    ((u32*)&cvtBias)[0] = 0x43300000;
-    ((u32*)&cvtBias)[1] = (u32)((s32)lodBiasRaw ^ 0x8000);
-    *lod_bias = (f32)(cvtBias - double_8066C040) * float_8066C03C;
+    cvtBias.u[0] = 0x43300000;
+    cvtBias.u[1] = (u32)((s32)lodBiasRaw ^ 0x8000);
+    *lod_bias = (f32)(cvtBias.d - double_8066C040) * float_8066C03C;
 
     *bias_clamp = (GXBool)TX_SETMODE0_GET_LODCLAMP(mode0);
     *do_edge_lod = (GXBool)!TX_SETMODE0_GET_DIAGLOD_ENABLE(mode0);

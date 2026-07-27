@@ -8,7 +8,9 @@ extern void GKI_freebuf(void*);
 void bte_hcisu_send(void* buffer, uint16_t value) {
     *(uint16_t*)buffer = value;
     if (p_hcisu_if) {
-        ((void (*)(void*, void*))(((uint32_t*)p_hcisu_if)[3]))(buffer, p_hcisu_if);
+        uint32_t* p_if = (uint32_t*)p_hcisu_if;
+        void (*func)(void*, void*) = (void (*)(void*, void*))p_if[3];
+        func(buffer, p_hcisu_if);
     } else {
         GKI_freebuf(buffer);
     }

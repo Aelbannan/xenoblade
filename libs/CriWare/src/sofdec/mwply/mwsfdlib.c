@@ -11,20 +11,27 @@ void mwPlyInitSfdFx() {}
 
 void mwsflib_InitLibWork() {}
 
-extern char lbl_eu_805FF3A8[];
+typedef struct MWSFDLibWork {
+    u8 _00[0x38];
+    u32 usePicUsr;
+    u32 pauseBdr;
+    u8 _40[0x28];
+    u32 errCode;
+} MWSFDLibWork;
+
+extern MWSFDLibWork lbl_eu_805FF3A8;
 u32 MWSFD_GetUsePicUsr(void) {
-    return *(u32*)(lbl_eu_805FF3A8 + 0x38);
+    return lbl_eu_805FF3A8.usePicUsr;
 }
 
-extern char lbl_eu_805FF3A8[];
 u32 MWSFD_GetPauseBdr(void) {
-    return *(u32*)(lbl_eu_805FF3A8 + 0x3c);
+    return lbl_eu_805FF3A8.pauseBdr;
 }
 
 u32 MWSFLIB_SetErrCode(u32 code) {
     u32 lz = __cntlzw(code);
     u32 bit = (lz >> 5) & 1;
-    *(u32*)(lbl_eu_805FF3A8 + 0x68) = code;
+    lbl_eu_805FF3A8.errCode = code;
     return code & ~(0 - bit);
 }
 

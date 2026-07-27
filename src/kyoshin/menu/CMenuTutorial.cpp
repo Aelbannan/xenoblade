@@ -41,7 +41,7 @@ void func_8029A8D4(){}
  */
 void func_8029A924(IScnRender* self) {
     ((void(*)(CMenuTutorial*))cbRenderBefore__13CMenuTutorialFv)(
-        (CMenuTutorial*)((uintptr_t)self - 0x58));
+        static_cast<CMenuTutorial*>(self));
 }
 
 /**
@@ -56,5 +56,5 @@ void func_8029A924(IScnRender* self) {
  */
 void func_8029A92C(IScnRender* self){
     ((void(*)(CMenuTutorial*))__dt__13CMenuTutorialFv)(
-        (CMenuTutorial*)((uintptr_t)self - 0x58));
+        static_cast<CMenuTutorial*>(self));
 }

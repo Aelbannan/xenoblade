@@ -58,17 +58,18 @@ void func_800AB010(void* r3, void* r4){
 
 void func_800AB248(void* r3, void* r4, void* r5, void* r6, float f1){
     float threshold = 0.01f;
-    float heightDiff = *(float*)((char*)r4 + 0xB0) - *(float*)((char*)r4 + 0xA4);
+    auto* impl = static_cast<cf::CfCollCylinderImpl*>(r4);
+    float heightDiff = impl->mEnd.y - impl->mStart.y;
 
     if (f1 < threshold) {
-        func_800A5B18(r5, (char*)r4 + 0xA0, r6, *(float*)((char*)r4 + 0xB8) + f1, heightDiff);
+        func_800A5B18(r5, &impl->mStart, r6, impl->mRadius + f1, heightDiff);
     } else {
         float pos[3];
-        pos[0] = *(float*)((char*)r4 + 0xA0);
+        pos[0] = impl->mStart.x;
         float adj = 0.4f * f1;
-        pos[1] = *(float*)((char*)r4 + 0xA4) - adj;
-        pos[2] = *(float*)((char*)r4 + 0xA8);
+        pos[1] = impl->mStart.y - adj;
+        pos[2] = impl->mStart.z;
         float extra = f1 - adj;
-        func_800A5B18(r5, pos, r6, *(float*)((char*)r4 + 0xB8) + f1, heightDiff + extra);
+        func_800A5B18(r5, pos, r6, impl->mRadius + f1, heightDiff + extra);
     }
 }

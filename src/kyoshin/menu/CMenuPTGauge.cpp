@@ -92,7 +92,8 @@ void CMenuPTGauge::Init() {
     // CMenuArtsSelect::Term.
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x5c);
+        // Access IScnRender subobject at unk00[0x5c] via member offset
+        cb = reinterpret_cast<IScnRender*>(&this->unk00[0x5c]);
     }
     mScn->addRenderCB(cb, 0xa, 0); // priority 0xa = HUD render layer
 
@@ -339,7 +340,8 @@ extern "C" void func_80187F04(void* self) {
     cbRenderBefore__12CMenuPTGaugeFv((char*)self - 0x5c);
 }
 void __dt__12CMenuPTGaugeFv(void*); void func_80187F0C(void* p) {
-    __dt__12CMenuPTGaugeFv(reinterpret_cast<char*>(p) - 0x5c);
+    // Adjust from IScnRender subobject (+0x5c) back to CMenuPTGauge
+    __dt__12CMenuPTGaugeFv(static_cast<char*>(p) - 0x5c);
 }
 
 void __ct__CMenuPTGauge(){}

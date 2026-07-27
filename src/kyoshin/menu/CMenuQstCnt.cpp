@@ -132,10 +132,17 @@ void func_80227660(){}
 
 void func_8022769C(){}
 
+struct QstData {
+    u8 _pad[0x2000];
+    u16 field_2000;  // 0x2000
+    s16 field_2002;  // 0x2002
+};
+
 unsigned short selectQstIndex(unsigned char* p) {
-    short v = *(short*)(p + 0x2002);
+    QstData* data = reinterpret_cast<QstData*>(p);
+    short v = data->field_2002;
     if (v < 0) {
-        v = *(unsigned short*)(p + 0x2000);
+        v = data->field_2000;
     }
     return (unsigned short)v;
 }

@@ -483,13 +483,16 @@ void MemManager::initialize() {
 
     //Why assume that it starts from 0x80000000?
     void* mem1RegionLo = OSGetMEM1ArenaLo();
-    void* mem1RegionMax = reinterpret_cast<u8*>(0x80000000) + MemRegion::getMEM1MaxSize();
+    u8* baseAddr = reinterpret_cast<u8*>(0x80000000);
+    u8* mem1MaxBytes = baseAddr + MemRegion::getMEM1MaxSize();
+    void* mem1RegionMax = mem1MaxBytes;
     
     (void)OSGetMEM1ArenaHi(); //unused
 
-    u32 mem1RegionSize = reinterpret_cast<u8*>(mem1RegionMax) - reinterpret_cast<u8*>(mem1RegionLo);
+    u8* mem1LoBytes = reinterpret_cast<u8*>(mem1RegionLo);
+    u32 mem1RegionSize = mem1MaxBytes - mem1LoBytes;
     if (mem1RegionMax < mem1RegionLo) {
-        mem1RegionSize = reinterpret_cast<u8*>(mem1RegionLo) - reinterpret_cast<u8*>(mem1RegionMax);
+        mem1RegionSize = mem1LoBytes - mem1MaxBytes;
     }
 
     //Remaining program region %x / maximum %x
@@ -505,12 +508,15 @@ void MemManager::initialize() {
 
     (void)OSGetMEM2ArenaHi(); //unused
 
+    u8* mem1HiBytes = reinterpret_cast<u8*>(OSGetMEM1ArenaHi());
     sHandleMEM1 = create(mem1RegionLo,
-        reinterpret_cast<u8*>(OSGetMEM1ArenaHi()) - reinterpret_cast<u8*>(mem1RegionMax), scRegionNameMEM1);
+        mem1HiBytes - mem1MaxBytes, scRegionNameMEM1);
 
     // Retail SDA slot is lbl_eu_8066350C (same as getHandleMEM2 / setHandleMEM2).
+    u8* mem2EndBytes = reinterpret_cast<u8*>(MEM2_REGION_END);
+    u8* mem2LoBytes = reinterpret_cast<u8*>(OSGetMEM2ArenaLo());
     lbl_eu_8066350C = create(OSGetMEM2ArenaLo(),
-        reinterpret_cast<u8*>(MEM2_REGION_END) - reinterpret_cast<u8*>(OSGetMEM2ArenaLo()), scRegionNameMEM2);
+        mem2EndBytes - mem2LoBytes, scRegionNameMEM2);
 }
 #pragma global_optimizer reset
 

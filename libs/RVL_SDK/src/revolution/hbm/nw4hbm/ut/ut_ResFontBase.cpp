@@ -69,7 +69,7 @@ CharWidths ResFontBase::GetDefaultCharWidths() const {
 }
 
 void ResFontBase::SetDefaultCharWidths(const CharWidths& rWidths) {
-    u8* dst = reinterpret_cast<u8*>(mFontInfo) + 4;
+    u8* dst = reinterpret_cast<u8*>(&mFontInfo->defaultWidth);
     const u8* src = reinterpret_cast<const u8*>(&rWidths);
     dst[0] = src[0];
     dst[1] = src[1];

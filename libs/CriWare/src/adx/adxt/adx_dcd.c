@@ -27,7 +27,11 @@ int ADX_DecodeInfoExVer(void *info, int size, unsigned char *outBits, unsigned c
         return -1;
     if (*(unsigned short *)info != 0x8000)
         return -2;
-    if (((short *)info)[1] < 0x10)
+    typedef struct ADXDecodeInfoHeader {
+        u16 format;
+        s16 version;
+    } ADXDecodeInfoHeader;
+    if (((ADXDecodeInfoHeader*)info)->version < 0x10)
         return -1;
     *outBits = ((unsigned char *)info)[0x12];
     *outCh   = ((unsigned char *)info)[0x13];

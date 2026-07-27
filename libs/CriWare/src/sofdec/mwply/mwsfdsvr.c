@@ -21,7 +21,14 @@ void mwply_ExecSvrHndl() {}
 
 void mwsfd_ExecSvrHndl() {}
 
-void MWSFSVR_SetMwsfdSvrFlg(int flag) { *(int*)((char*)MWSFLIB_GetLibWorkPtr() + 0x58) = flag; }
+typedef struct MWSFDServerWork {
+    u8 _00[0x58];
+    int serverFlag;
+} MWSFDServerWork;
+
+void MWSFSVR_SetMwsfdSvrFlg(int flag) {
+    ((MWSFDServerWork*)MWSFLIB_GetLibWorkPtr())->serverFlag = flag;
+}
 
 void MWSFSVR_SetHnMwplySvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x7c) = val; }
 

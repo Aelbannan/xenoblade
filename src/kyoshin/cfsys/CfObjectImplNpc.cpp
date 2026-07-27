@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cfsys/CfObjectImplNpc.hpp"
 
 void func_800CA6E4(){}
 
@@ -18,14 +19,14 @@ extern "C" void* __dt__Q22cf15CfObjectImplNpcFv(void* self, int deleteFlag) {
     return self;
 }
 
-extern "C" void* func_800CA924(void* self) { return (void*)((u8*)self + 0x68); }
+extern "C" u8* func_800CA924(cf::CfObjectImplNpc* self) { return self->mUnk_0x68; }
 
-extern "C" void func_800CA92C(void) {}
+void func_800CA92C() {}
 
-extern "C" void func_800CA930(void) {}
+void func_800CA930() {}
 
-extern "C" void func_800CA934(void) {}
+void func_800CA934() {}
 
-extern "C" void func_800CA938(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplNpcFv)((char*)self - 0xc); }
+extern "C" void func_800CA938(char* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplNpcFv)(self - 0xc); }
 
-extern "C" void func_800CA940(void* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplNpcFv)((char*)self - 0x10); }
+extern "C" void func_800CA940(char* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplNpcFv)(self - 0x10); }

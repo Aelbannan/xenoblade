@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
 
-u8 GetField61(u8* self) { return ((u8*)self)[0x61]; }
+u8 GetField61(u8* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_61; }
 
 
 
@@ -181,7 +181,7 @@ void func_801CB0FC(){}
 
 void func_801CB184(){}
 
-u8 GetField549(u8* self) { return ((u8*)self)[0x549]; }
+u8 GetField549(u8* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_549; }
 
 void func_801CB1E4(){}
 
@@ -235,7 +235,7 @@ void func_801CDB94(){}
 
 void func_801CDBE0(){}
 
-u8 GetField52D(u8* self) { return ((u8*)self)[0x52D]; }
+u8 GetField52D(u8* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_52D; }
 
 void func_801CDC40(){}
 

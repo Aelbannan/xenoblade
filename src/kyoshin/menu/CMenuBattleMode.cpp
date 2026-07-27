@@ -55,7 +55,7 @@ extern "C" void func_801A048C(IWorkEvent* self) {
     extern void __dt__15CMenuBattleModeFv(CMenuBattleMode*);
     return __dt__15CMenuBattleModeFv(
         reinterpret_cast<CMenuBattleMode*>(
-            reinterpret_cast<char*>(self) - 0x58));
+            reinterpret_cast<uintptr_t>(self) - 0x58));
 }
 extern void cbRenderBefore__15CMenuBattleModeFv();
 void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }

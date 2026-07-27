@@ -11,7 +11,13 @@ void ADXSJD_Create() {}
 
 void ADXSJD_Destroy() {}
 
-int ADXSJD_GetStat(void* self) { return (signed char)((u8*)self)[0]; }
+typedef struct ADXSJDState {
+    s8 status;
+} ADXSJDState;
+
+int ADXSJD_GetStat(void* self) {
+    return ((ADXSJDState*)self)->status;
+}
 
 void ADXB_SetAhxInSj(void* base);
 void ADXSJD_SetInSj(void* self, void* sj) {

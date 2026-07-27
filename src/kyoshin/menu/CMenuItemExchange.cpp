@@ -61,8 +61,9 @@ void func_801BF70C(){}
  * containing CMenuItemExchange and delegates to cbRenderBefore.
  */
 void func_801BF75C(CMenuItemExchangeOC* param) {
-    ((void(*)(CMenuItemExchange*))cbRenderBefore__17CMenuItemExchangeFv)(
-        (CMenuItemExchange*)((u32)param - CMENU_ITEM_EXCHANGE_OC_OFFSET));
+    auto self = reinterpret_cast<CMenuItemExchange*>(
+        reinterpret_cast<uintptr_t>(param) - CMENU_ITEM_EXCHANGE_OC_OFFSET);
+    ((void(*)(CMenuItemExchange*))cbRenderBefore__17CMenuItemExchangeFv)(self);
 }
 
 /**
@@ -70,6 +71,7 @@ void func_801BF75C(CMenuItemExchangeOC* param) {
  * containing CMenuItemExchange and delegates to the real destructor.
  */
 void func_801BF764(CMenuItemExchangeOC* param) {
-    ((void(*)(CMenuItemExchange*))__dt__17CMenuItemExchangeFv)(
-        (CMenuItemExchange*)((u32)param - CMENU_ITEM_EXCHANGE_OC_OFFSET));
+    auto self = reinterpret_cast<CMenuItemExchange*>(
+        reinterpret_cast<uintptr_t>(param) - CMENU_ITEM_EXCHANGE_OC_OFFSET);
+    ((void(*)(CMenuItemExchange*))__dt__17CMenuItemExchangeFv)(self);
 }

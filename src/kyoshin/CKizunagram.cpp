@@ -44,7 +44,7 @@ void func_8025949C(){}
 
 void func_80259820(){}
 
-void func_80259AF4(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
+void CKizunagram_copyShortString(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
 
 void func_80259B18(){}
 
@@ -65,7 +65,7 @@ void func_8025AB04(){}
 void func_8025AB84(){}
 
 extern float lbl_eu_80668828[];
-void func_8025AC04(void* self){
+void CKizunagram_resetFields(void* self){
     *(u8*)((u8*)self + 0x34) = 0;
     *(u16*)((u8*)self + 0x36) = 0;
     *(float*)((u8*)self + 0x38) = lbl_eu_80668828[0];
@@ -73,7 +73,7 @@ void func_8025AC04(void* self){
 
 void func_8025AC1C(){}
 
-void func_8025B5D4(unsigned char* dst, const unsigned char* src) {
+void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
@@ -116,7 +116,7 @@ void func_8025C61C(){}
 
 void func_8025C6F0(){}
 
-unsigned char func_8025C770(void* this_ptr) {
+unsigned char CKizunagram_getField7E(void* this_ptr) {
     if (*(unsigned char*)((unsigned char*)this_ptr + 0x7e) != 0) {
         return *(unsigned char*)((unsigned char*)this_ptr + 0x3b);
     } else {
@@ -124,7 +124,7 @@ unsigned char func_8025C770(void* this_ptr) {
     }
 }
 
-unsigned char func_8025C78C(void* arg1)
+unsigned char CKizunagram_checkFields(void* arg1)
 {
     if (*(unsigned char*)((char*)arg1 + 0x61) == 0)
         return 0;
@@ -154,9 +154,16 @@ void func_8025CAE4(){}
 
 void func_8025CB50(){}
 
-int func_8025CBBC(void* self) { return 0; }
+int CKizunagram_stub(void* self) { return 0; }
 
-u8 func_8025CBC4(void* self) { return ((u8*)self)[0x8C]; }
+struct CKizunagramState {
+    u8 _00[0x8C];
+    u8 field8C;
+};
+
+u8 CKizunagram_getField8C(void* self) {
+    return ((CKizunagramState*)self)->field8C;
+}
 
 void func_8025CBCC(){}
 
@@ -166,14 +173,14 @@ void func_8025CC88(){}
 
 void func_8025CCA8(){}
 
-void func_8025CCF8(void* arg) {
+void CKizunagram_setField39(void* arg) {
     unsigned char* ptr = (unsigned char*)arg;
     if (ptr[0x62] != 0) {
         ptr[0x39] = 5;
     }
 }
 
-void func_8025CD10(void* self) {
+void CKizunagram_resetState(void* self) {
     uint8_t* b = static_cast<uint8_t*>(self);
     if (!b[0x61]) return;
     if (!b[0x7d]) return;

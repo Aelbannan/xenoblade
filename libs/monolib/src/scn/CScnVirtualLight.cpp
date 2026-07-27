@@ -141,7 +141,14 @@ void func_80493C30(){}
 
 float func_80493EC0(void* self) { return *(float*)((u8*)self + 0xd4); }
 
-u8 func_80493EC8(void* self) { return ((u8*)self)[0xd0]; }
+struct CScnVirtualLightState {
+    u8 _00[0xD0];
+    u8 enabled;
+};
+
+u8 func_80493EC8(void* self) {
+    return ((CScnVirtualLightState*)self)->enabled;
+}
 
 void* func_80493ED0(void* self) { return (void*)((u8*)self + 0x14); }
 

@@ -553,7 +553,7 @@ u32 cf::CfGameManager::func_80087244() {
 }
 
 void* cf::CfGameManager::func_800873C8() {
-    return (u8*)*(u32*)((u8*)this + 0x4) + 0x54;
+    return (u8*)this->unk4 + 0x54;
 }
 
 void cf::CfGameManager::func_8008743C() {

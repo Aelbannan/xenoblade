@@ -1,6 +1,8 @@
 #pragma once
 
 #include <types.h>
+#include <monolib/work/CProcess.hpp>
+#include <monolib/scn/IScnRender.hpp>
 
 // Forward declarations
 class CScn;
@@ -25,10 +27,10 @@ class CScn;
  *   0x39A:     u16
  *   0x39C:     total
  */
-class CMenuTutorialList {
+class CMenuTutorialList : public CProcess, public IScnRender {
 public:
-    // 0x00-0x57: CProcess base + pre-IScnRender members (opaque)
-    u8 unk00[0x5C];
+    // 0x00-0x57: CProcess base + pre-IScnRender fields (managed by compiler)
+    // IScnRender at 0x58 (managed by compiler, 4 bytes vtable ptr)
 
     // 0x5C: owning scene for render callbacks
     CScn* mScene;
@@ -44,9 +46,9 @@ public:
     u16 mChoice;             // 0x39A
     CMenuTutorialList();
     virtual ~CMenuTutorialList();
-    void Init();
-    void Term();
-    void Move();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
     void cbRenderBefore();
 };
 // Total size: 0x39C

@@ -11,9 +11,19 @@ void AHXSJD_Create() {}
 
 void AHXSJD_Destroy() {}
 
-int AHXSJD_GetStat(void* self) { return (signed char)((u8*)self)[0]; }
+int AHXSJD_GetStat(void* self) { return *(signed char*)self; }
 
-void AHXSJD_SetInSj(void* self, u32 val) { *(u32*)((u8*)self + 0x10) = val; }
+typedef struct AHXSJDState {
+    s8 status;
+    u8 _01[0x0f];
+    u32 input;
+    u8 _14[0x10];
+    u32 decodedDataLength;
+    u32 decodedNumSmpl;
+    u32 decodedNumSmplBase;
+} AHXSJDState;
+
+void AHXSJD_SetInSj(void* self, u32 val) { ((AHXSJDState*)self)->input = val; }
 
 void AHXSJD_Start() {}
 
@@ -23,10 +33,13 @@ void criware_8038CB9C() {}
 
 void AHXSJD_ExecHndl() {}
 
-u32 AHXSJD_GetDecDtLen(void* self) { return *(u32*)((u8*)self + 0x24); }
+u32 AHXSJD_GetDecDtLen(void* self) {
+    return ((AHXSJDState*)self)->decodedDataLength;
+}
 
 u32 AHXSJD_GetDecNumSmpl(void* self) {
-    return *(u32*)((u8*)self + 0x2c) + *(u32*)((u8*)self + 0x28);
+    AHXSJDState* state = (AHXSJDState*)self;
+    return state->decodedNumSmplBase + state->decodedNumSmpl;
 }
 
 void AHXSJD_EntryFltFunc(void* self, void* func, void* ctx) {
@@ -42,7 +55,8 @@ void AHXSJD_SetExtPrm(void* self) {
 void AHXSJD_SetDecSmpl(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
 
 void func_8006BEE4(void* p) {
-    ((u32*)p)[1] = 0;
+    u32* p32 = (u32*)p;
+    p32[1] = 0;
 }
 
 void AHXSJD_SetLnkSw(void* self, int val) {

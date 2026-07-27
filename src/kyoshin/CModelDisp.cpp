@@ -2,8 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CModelDisp.hpp"
 
-u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
+u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 
 
 

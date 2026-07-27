@@ -272,7 +272,7 @@ static u32 entryToPath(ARCHandle* handle, u32 entrynum, char* string,
         return 0;
     }
 
-    name = ((char*)handle->FSTStringStart) + nodes[entrynum].name;
+    name = handle->FSTStringStart + nodes[entrynum].name;
 
     written =
         entryToPath(handle, nodes[entrynum].folder.parent, string, maxlen);

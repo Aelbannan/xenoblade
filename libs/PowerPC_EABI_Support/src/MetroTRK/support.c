@@ -64,8 +64,8 @@ bool need_reply, bool read){
                 if (error == kNoError) {
                     replyBuffer = TRKGetBuffer(replyBufferId);
                 }
-                replyIOResult = (ui8)*(ui32*)(replyBuffer->fData + 0x10);
-                replyLength = *(ui16*)(replyBuffer->fData + 0x14);
+                replyIOResult = (ui8)*(ui32*)&replyBuffer->fData[0x10];
+                replyLength = *(ui16*)&replyBuffer->fData[0x14];
                 if (read && error == kNoError && replyLength <= length) {
                     TRK_SetBufferPosition(replyBuffer, 0x40);
                     error = TRKReadBuffer_ui8(replyBuffer, data + i, replyLength);

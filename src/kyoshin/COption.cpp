@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-u8 func_8029C790(void* self) { return ((u8*)self)[0x2B]; }
+u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
 
 
@@ -21,9 +21,9 @@ void func_8029C66C(){}
 void func_8029C734(){}
 
 
-u8 func_8029C798(void* self) { return ((u8*)self)[0x30]; }
+u8 func_8029C798(void* self) { return static_cast<COptionFull*>(self)->field_30; }
 
-u8 func_8029C7A0(void* self) { return ((u8*)self)[0x32]; }
+u8 func_8029C7A0(void* self) { return static_cast<COptionFull*>(self)->field_32; }
 
 void func_8029C7A8(){}
 

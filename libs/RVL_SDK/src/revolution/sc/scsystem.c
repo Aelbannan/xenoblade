@@ -473,7 +473,10 @@ static SCStatus ParseConfBuf(u8* conf, u32 size) {
      */
 
     confItems = (u16*)conf;
-    itemOffset = (u8*)(confItems + numItems + 1) - confBegin;
+    {
+        u16* confItemsEnd = confItems + numItems + 1;
+        itemOffset = (u8*)confItemsEnd - confBegin;
+    }
 
     for (i = 0; i < numItems; i++) {
         SCItem item;
@@ -540,8 +543,10 @@ static SCStatus ParseConfBuf(u8* conf, u32 size) {
             }
 
             // LUT items are in reverse order
-            ((u16*)confLutBegin)[-tblIter->id] =
-                (u8*)(confItems + i) - confBegin;
+            u16* confLut = (u16*)confLutBegin;
+            u16* curItem = confItems + i;
+            confLut[-tblIter->id] =
+                (u8*)curItem - confBegin;
 
             break;
         }
@@ -635,7 +640,8 @@ static BOOL FindItemByID(SCItemID id, SCItem* item) {
         itemOfsOfs = ofsTbl[-id];
 
         if (itemOfsOfs > 0) {
-            return UnpackItem((SCConfItem*)(conf + *(u16*)(conf + itemOfsOfs)),
+            u16* ofsPtr = (u16*)(conf + itemOfsOfs);
+            return UnpackItem((SCConfItem*)(conf + *ofsPtr),
                               item);
         }
     }

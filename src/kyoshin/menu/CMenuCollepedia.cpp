@@ -47,7 +47,7 @@ void func_80253128(){}
  */
 void func_80253188(IScnRender* self) {
     ((void(*)(CMenuCollepedia*))cbRenderBefore__15CMenuCollepediaFv)(
-        (CMenuCollepedia*)((u32)self - 0x58));
+        static_cast<CMenuCollepedia*>(self));
 }
 
 /**
@@ -63,5 +63,5 @@ void func_80253188(IScnRender* self) {
  */
 void func_80253190(IScnRender* self){
     ((void(*)(CMenuCollepedia*))__dt__15CMenuCollepediaFv)(
-        (CMenuCollepedia*)((u32)self - 0x58));
+        static_cast<CMenuCollepedia*>(self));
 }

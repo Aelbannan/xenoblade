@@ -42,7 +42,7 @@ void checkBothBlocks(){}
 void validateBlockData(){}
 
 void processBlockCore(void* self);
-void callBlockAt2E0(void* self) { processBlockCore(reinterpret_cast<char*>(self) + 0x2e0); }
+void callBlockAt2E0(void* self) { processBlockCore(static_cast<CActParamData*>(self)->mSubObj2E0); }
 
 void nop_800550D8() {}
 
@@ -83,9 +83,10 @@ void getFloatFieldB(){}
 void resetBlockFields(){}
 
 void* getSubObjPtr(void* param) {
-    void* val = *(void**)(reinterpret_cast<char*>(param) + 0x2f4);
+    CActParamData* p = static_cast<CActParamData*>(param);
+    void* val = p->mPtr2F4;
     if (!val) return 0;
-    return reinterpret_cast<char*>(val) + 0x14;
+    return &static_cast<CActParamDataSub*>(val)->mPtr14;
 }
 
 void hasAnyFieldSet(){}
@@ -95,39 +96,43 @@ void saveStateFields(){}
 void clearStateFields(){}
 
 int getShortValue_A(void* self) {
-    char* base = reinterpret_cast<char*>(self) + 0x260;
-    if (*reinterpret_cast<int*>(reinterpret_cast<char*>(self) + 0x2d4) == 0)
-        base = reinterpret_cast<char*>(self) + 0x2e0;
-    void* ptr = *reinterpret_cast<void**>(base + 0x74);
+    CActParamData* p = static_cast<CActParamData*>(self);
+    void* ptr;
+    if (p->mField2D4 == 0)
+        ptr = reinterpret_cast<void*>(p->mField354);
+    else
+        ptr = reinterpret_cast<void*>(p->mField2D4);
     if (ptr == NULL)
         return -1;
-    return *reinterpret_cast<short*>(reinterpret_cast<char*>(ptr) + 8);
+    return static_cast<CActParamDataRef*>(ptr)->mShort08;
 }
 
 s16 getShortValue_B(void* self) {
-    u8* base = reinterpret_cast<u8*>(self) + 0x260;
-    if (*reinterpret_cast<s32*>(reinterpret_cast<u8*>(self) + 0x2d4) == 0)
-        base = reinterpret_cast<u8*>(self) + 0x2e0;
-    void* ptr = *reinterpret_cast<void**>(base + 0x74);
+    CActParamData* p = static_cast<CActParamData*>(self);
+    void* ptr;
+    if (p->mField2D4 == 0)
+        ptr = reinterpret_cast<void*>(p->mField354);
+    else
+        ptr = reinterpret_cast<void*>(p->mField2D4);
     if (!ptr) return -1;
-    return *reinterpret_cast<s16*>(reinterpret_cast<u8*>(ptr) + 0xa);
+    return static_cast<CActParamDataRef*>(ptr)->mShort0A;
 }
 
 void clearTwoFields(void* self) {
-    *reinterpret_cast<unsigned long*>(reinterpret_cast<char*>(self) + 0x2d4) = 0;
-    *reinterpret_cast<unsigned long*>(reinterpret_cast<char*>(self) + 0x354) = 0;
+    CActParamData* p = static_cast<CActParamData*>(self);
+    p->mField2D4 = 0;
+    p->mField354 = 0;
 }
 
 void getDataFromOffset48(){}
 
 void* getNonNullPtr(void* param) {
-    if (*reinterpret_cast<int*>(reinterpret_cast<char*>(param) + 0x274) != 0) {
-        void* ptr = *reinterpret_cast<void**>(reinterpret_cast<char*>(param) + 0x2d8);
-        if (ptr != 0) return ptr;
+    CActParamData* p = static_cast<CActParamData*>(param);
+    if (p->mField274 != 0) {
+        if (p->mPtr2D8 != 0) return p->mPtr2D8;
     }
-    if (*reinterpret_cast<int*>(reinterpret_cast<char*>(param) + 0x2f4) != 0) {
-        void* result = *reinterpret_cast<void**>(reinterpret_cast<char*>(param) + 0x358);
-        if (result != 0) return result;
+    if (p->mPtr2F4 != 0) {
+        if (p->mPtr358 != 0) return p->mPtr358;
     }
     return 0;
 }

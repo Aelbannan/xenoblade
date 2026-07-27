@@ -202,6 +202,8 @@ bool CViewRoot::isInitialized() {
 
 extern "C" void func_8044B298__8CGXCacheFv(void* self, void* a, void* b, void* c);
 
+struct PoolPair { u32 w0; u32 w1; };
+
 // Retail symbol is FPvPv but call sites pass three rect pointers (r3/r4/r5).
 // Inline three ring pushes (divw/mullw/subf shape) with instance reloads.
 void CViewRoot::func_80442B54(void* a, void* b, void* c) {
@@ -223,13 +225,13 @@ void CViewRoot::func_80442B54(void* a, void* b, void* c) {
     }
 
     savedB = b;
-    w0 = ((u32*)a)[0];
-    w1 = ((u32*)a)[1];
+    w0 = ((PoolPair*)a)->w0;
+    w1 = ((PoolPair*)a)->w1;
     index = *(u32*)&root->mPool0.mList;
     used = root->mPool0.mUsed;
     cap = (u32)root->mPool0.mCapacity;
     {
-        PoolPair* pairBase = static_cast<PoolPair*>(root->mPool0.mStartNodePtr);
+        PoolPair* pairBase = reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr);
         u32 pairSlot = (index + used) % cap;
         pairBase[pairSlot].w0 = w0;
         pairBase[pairSlot].w1 = w1;
@@ -237,13 +239,13 @@ void CViewRoot::func_80442B54(void* a, void* b, void* c) {
     root->mPool0.mUsed = used + 1;
 
     root = lbl_eu_806655D0;
-    w0 = ((u32*)savedB)[0];
-    w1 = ((u32*)savedB)[1];
+    w0 = ((PoolPair*)savedB)->w0;
+    w1 = ((PoolPair*)savedB)->w1;
     index = *(u32*)&root->mPool1.mList;
     used = root->mPool1.mUsed;
     cap = (u32)root->mPool1.mCapacity;
     {
-        PoolPair* pairBase = static_cast<PoolPair*>(root->mPool1.mStartNodePtr);
+        PoolPair* pairBase = reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr);
         u32 pairSlot = (index + used) % cap;
         pairBase[pairSlot].w0 = w0;
         pairBase[pairSlot].w1 = w1;
@@ -251,13 +253,13 @@ void CViewRoot::func_80442B54(void* a, void* b, void* c) {
     root->mPool1.mUsed = used + 1;
 
     root = lbl_eu_806655D0;
-    w0 = ((u32*)c)[0];
-    w1 = ((u32*)c)[1];
+    w0 = ((PoolPair*)c)->w0;
+    w1 = ((PoolPair*)c)->w1;
     index = *(u32*)&root->mPool2.mList;
     used = root->mPool2.mUsed;
     cap = (u32)root->mPool2.mCapacity;
     {
-        PoolPair* pairBase = static_cast<PoolPair*>(root->mPool2.mStartNodePtr);
+        PoolPair* pairBase = reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr);
         u32 pairSlot = (index + used) % cap;
         pairBase[pairSlot].w0 = w0;
         pairBase[pairSlot].w1 = w1;
@@ -267,10 +269,8 @@ void CViewRoot::func_80442B54(void* a, void* b, void* c) {
     func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0, 0);
 }
 
-struct PoolPair { u32 w0; u32 w1; };
-
 static PoolPair* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
-    PoolPair* base = static_cast<PoolPair*>(pool->mStartNodePtr);
+    PoolPair* base = reinterpret_cast<PoolPair*>(pool->mStartNodePtr);
     u32 slot = (*(u32*)&pool->mList + logicalIndex) % (u32)pool->mCapacity;
     return &base[slot];
 }
@@ -572,8 +572,6 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     _reslist_node<WORK_ID>* historySentinel;
     void* histList;
     u32 loopCount;
-    u32 addrOffset;
-    u8* clearRow;
 
     name = lbl_eu_8052266C;
     parent = pParent;
@@ -632,33 +630,22 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     histList = allocate_array__Q23mtl10MemManagerFUlUl(0x600, root->mAllocHandle);
     loopCount = 8;
     root->mViewHistory.mList = (_reslist_node<WORK_ID>*)histList;
-    addrOffset = 0;
     goto create_clear_test;
 
 create_clear_loop:
     {
-        _reslist_node<WORK_ID>* nodeBase = root->mViewHistory.mList;
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 0].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 1].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 2].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 3].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 4].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 5].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 6].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 7].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        addrOffset += 8 * sizeof(_reslist_node<WORK_ID>);
+        _reslist_node<WORK_ID>* nodeBase =
+            root->mViewHistory.mList + (8 - loopCount) * 16;
+        for (int i = 0; i < 8; ++i) {
+            nodeBase[i].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        }
     }
     {
-        _reslist_node<WORK_ID>* nodeBase = root->mViewHistory.mList;
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 0].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 1].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 2].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 3].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 4].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 5].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 6].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 7].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        addrOffset += 8 * sizeof(_reslist_node<WORK_ID>);
+        _reslist_node<WORK_ID>* nodeBase =
+            root->mViewHistory.mList + (8 - loopCount) * 16 + 8;
+        for (int i = 0; i < 8; ++i) {
+            nodeBase[i].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        }
     }
     loopCount--;
 

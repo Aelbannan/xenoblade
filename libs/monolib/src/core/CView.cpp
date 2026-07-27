@@ -231,7 +231,8 @@ updateMsg_loop:
     readIdx = unk3F0;
     cap = mContextRingCapacity;
     u32 ringIdx = readIdx % cap;
-    entry = &((CMsgParamEntry*)mContextRingBase)[ringIdx];
+    CMsgParamEntry* contextRing = (CMsgParamEntry*)mContextRingBase;
+    entry = &contextRing[ringIdx];
     tag = entry->command;
 
     if (tag > 7) {
@@ -1554,9 +1555,8 @@ CView::CView(const char* pName, CWorkThread* pParent)
     unk238.mCapacity = (int)zero;
     unk238.unk1C = (u8)zero;
     unk238.mStartNodePtr = sentinel0;
-    ((void**)sentinel0)[0] = sentinel0;
-    sentinel0 = unk238.mStartNodePtr;
-    ((void**)sentinel0)[1] = sentinel0;
+    unk238.mSentinelNext = sentinel0;
+    unk238.mSentinelPrev = sentinel0;
     *(void**)&unk238 = lbl_eu_8056B280;
 
     *(void**)&unk258 = lbl_eu_8056B6F0;
@@ -1565,9 +1565,8 @@ CView::CView(const char* pName, CWorkThread* pParent)
     unk258.mCapacity = (int)zero;
     unk258.unk1C = (u8)zero;
     unk258.mStartNodePtr = sentinel1;
-    ((void**)sentinel1)[0] = sentinel1;
-    sentinel1 = unk258.mStartNodePtr;
-    ((void**)sentinel1)[1] = sentinel1;
+    unk258.mSentinelNext = sentinel1;
+    unk258.mSentinelPrev = sentinel1;
     *(void**)&unk258 = lbl_eu_8056B6D8;
 
     unk278 = zero;

@@ -24,11 +24,20 @@ void func_804DF150(){}
 
 void func_804DF164(){}
 
+struct ResTableIndex {
+    u32 offset;
+    u32 size;
+};
+
+struct ResTable {
+    u8 _00[8];
+    u32 indexOffset;
+};
+
 void* func_804DF2A8(void* self, int index) {
-    uint8_t* base = *(uint8_t**)((uint8_t*)self + 0x10);
-    uint8_t* arrayBase = base + *(uint32_t*)(base + 0x8);
-    uint32_t offset = *(uint32_t*)(arrayBase + (index << 3));
-    return base + offset;
+    ResTable* base = *(ResTable**)((u8*)self + 0x10);
+    ResTableIndex* entries = (ResTableIndex*)((u8*)base + base->indexOffset);
+    return (u8*)base + entries[index].offset;
 }
 
 void func_804DF2C4(){}

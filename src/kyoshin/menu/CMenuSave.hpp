@@ -1,16 +1,19 @@
 #pragma once
 
-/// Menu save/load screen process.
-/// Full class layout TBD - forward declaration sufficient for adjusting thunks.
-class CMenuSave;
+#include <monolib/work/CProcess.hpp>
+#include <monolib/scn/IScnRender.hpp>
 
-class CMenuSave {
+/*
+ * Menu save/load screen process.
+ * IScnRender subobject is at offset 0x58.
+ */
+class CMenuSave : public CProcess, public IScnRender {
 public:
     CMenuSave();
     virtual ~CMenuSave();
-    void Init();
-    void Term();
-    void Move();
+    virtual void Init();
+    virtual void Term();
+    virtual void Move();
     void cbRenderBefore();
 
     // TODO: add fields

@@ -24,6 +24,16 @@ public:
     // TODO: add fields
 };
 
+// Full object layout for CItemBoxGrid (used by C-linkage accessors)
+struct CItemBoxGridFull {
+    u8 _00[0x61];
+    u8 field_61;
+    u8 _62[0x52D - 0x62];
+    u8 field_52D;
+    u8 _52E[0x549 - 0x52E];
+    u8 field_549;
+};
+
 class CItemBoxGrid {
 public:
     CItemBoxGrid();

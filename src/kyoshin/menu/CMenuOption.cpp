@@ -41,7 +41,7 @@ void func_8029BE7C(){}
  */
 void func_8029BECC(IScnRender* self) {
     ((void(*)(CMenuOption*))cbRenderBefore__11CMenuOptionFv)(
-        (CMenuOption*)((uintptr_t)self - 0x58));
+        static_cast<CMenuOption*>(self));
 }
 
 /**
@@ -56,5 +56,5 @@ void func_8029BECC(IScnRender* self) {
  */
 void func_8029BED4(IScnRender* self){
     ((void(*)(CMenuOption*))__dt__11CMenuOptionFv)(
-        (CMenuOption*)((uintptr_t)self - 0x58));
+        static_cast<CMenuOption*>(self));
 }

@@ -55,13 +55,13 @@ void KPADiConnectCallback() {}
 void* KPADSetConnectCallback(int chan, void* callback) {
     extern unsigned char inside_kpads[];
     unsigned int enabled;
-    unsigned char* base;
+    void** pCallback;
     void* old;
 
     enabled = OSDisableInterrupts();
-    base = inside_kpads + chan * 0x578;
-    old = *(void**)(base + 0x550);
-    *(void**)(base + 0x550) = callback;
+    pCallback = (void**)(inside_kpads + chan * 0x578 + 0x550);
+    old = *pCallback;
+    *pCallback = callback;
     OSRestoreInterrupts(enabled);
     return old;
 }

@@ -54,7 +54,8 @@ void SFD_Stop() {}
 
 extern char lbl_eu_80606E38[];
 u32 SFPLY_GetResetFlg(void) {
-    return *(u32*)(lbl_eu_80606E38 + 0x1f0);
+    u32* p = (u32*)(lbl_eu_80606E38 + 0x1f0);
+    return *p;
 }
 
 void sfply_ResetHn() {}

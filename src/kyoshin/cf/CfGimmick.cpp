@@ -8,14 +8,14 @@ void __ct__cf_CfGimmick(){}
 
 void cf::CfGimmick::~CfGimmick() {}
 
-void func_8020896C(void* self, void* other) {
+void func_8020896C(cf::CfGimmick* self, void* other) {
     void* cur = *(void**)((char*)self + 0x78);
     if (cur != other) return;
     *(void**)((char*)cur + 0xB0) = 0;
     *(void**)((char*)self + 0x78) = 0;
 }
 
-void func_80208988(void* self) {
+void func_80208988(cf::CfGimmick* self) {
     extern void func_802089BC(void*, void*, void*);
     func_802089BC((char*)self + 0x1c, (char*)self + 4, (char*)self + 0x10);
 }
@@ -111,7 +111,7 @@ void func_8020A6B0(){}
 
 void func_8020A87C(){}
 
-int func_8020A8AC(void* self) { return 1; }
+int func_8020A8AC(cf::CfGimmick* self) { return 1; }
 
 void func_8020A8B4(){}
 

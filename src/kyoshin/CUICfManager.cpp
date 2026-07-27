@@ -28,11 +28,7 @@ void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 }
 
 static IWorkEvent* cfWorkEvent(CUICfManager* self) {
-    IWorkEvent* workEvent = reinterpret_cast<IWorkEvent*>(self);
-    if (self != NULL) {
-        workEvent = reinterpret_cast<IWorkEvent*>(reinterpret_cast<u8*>(self) + 0x54);
-    }
-    return workEvent;
+    return (self != NULL) ? static_cast<IWorkEvent*>(self) : NULL;
 }
 
 // Virtual function thunks: adjust `this` and tail-call.
@@ -44,8 +40,8 @@ void CUICfManager::func_80135FC4() {
 
 // us-80136aa0
 extern "C" void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
-void CUICfManager::func_80135FCC(int id, int a1, int a2) {
-    func_80133324__12CUICfManagerFv((CUICfManager*)((char*)this - 0x58), id, a1, a2);
+void CUICfManager::func_80135FCC() {
+    func_80133324__12CUICfManagerFv((CUICfManager*)((char*)this - 0x58), 0, 0, 0);
 }
 
 // us-80136aa8
@@ -55,7 +51,6 @@ void __dt__12CUICfManagerFv(void*); void func_80135FD4__12CUICfManagerFv(void* s
 
 void CUICfManager::Init() {
     CUICfInitProcess* process;
-    u8* ptmfBase;
     char* vtFinal;
     u32 ptmfWord1;
     u32 ptmfWord0;
@@ -78,20 +73,19 @@ void CUICfManager::Init() {
         mtl::MemManager::allocate(0x54, CWorkThreadSystem::getWorkMem()));
     if (process != NULL) {
         __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
-        ptmfBase = (u8*)__ptmf_null;
         process->vtable = lbl_eu_8052E404;
-        ptmfWord1 = *(u32*)(ptmfBase + 4);
+        ptmfWord1 = __ptmf_null[1];
         vtFinal = lbl_eu_8052E3BC;
-        ptmfWord0 = *(u32*)(ptmfBase + 0);
+        ptmfWord0 = __ptmf_null[0];
         process->callbacks[0] = ptmfWord0;
         process->callbacks[1] = ptmfWord1;
-        ptmfWord2 = *(u32*)(ptmfBase + 8);
+        ptmfWord2 = __ptmf_null[2];
         process->callbacks[2] = ptmfWord2;
-        ptmfWord1 = *(u32*)(ptmfBase + 4);
-        ptmfWord0 = *(u32*)(ptmfBase + 0);
+        ptmfWord1 = __ptmf_null[1];
+        ptmfWord0 = __ptmf_null[0];
         process->callbacks[3] = ptmfWord0;
         process->callbacks[4] = ptmfWord1;
-        ptmfWord2 = *(u32*)(ptmfBase + 8);
+        ptmfWord2 = __ptmf_null[2];
         process->callbacks[5] = ptmfWord2;
         process->vtable = vtFinal;
     }
@@ -114,21 +108,18 @@ void CUICfManager::Init() {
         // Fresh &blocks[0] + (end+stride-1-start)/stride (retail clear shape).
         clearPtr = &tmpl.blocks[0];
         if (clearPtr < clearEnd) {
-            clearCount =
-                (reinterpret_cast<u8*>(clearEnd) + (blockStride - 1) - reinterpret_cast<u8*>(clearPtr)) /
-                blockStride;
+            clearCount = clearEnd - clearPtr;
             do {
                 clearPtr->unk04 = 0;
                 clearPtr->unk00 = 0;
-                clearPtr = reinterpret_cast<CUICfInitBlock*>(reinterpret_cast<u8*>(clearPtr) +
-                                                             blockStride);
+                ++clearPtr;
             } while (--clearCount != 0);
         }
 
         tmpl.state.state = 0;
         tmpl.tail.unk00 = 0;
         // Overlay: retail sth zeros at +4..+0xE (copy still words at +4/+8).
-        tailHalves = reinterpret_cast<u16*>(reinterpret_cast<u8*>(&tmpl.tail) + 4);
+        tailHalves = reinterpret_cast<u16*>(&tmpl.tail.mid);
         tailHalves[0] = 0;
         tailHalves[1] = 0;
         tailHalves[2] = 0;
@@ -1027,14 +1018,35 @@ unlink_done:
 }
 
 void func_8013314C(){}
-void func_80133178(){}
-int func_80133AE8(){ if (lbl_eu_80664054 == 0) return 0; if (*reinterpret_cast<volatile int *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0x5c) == 0) { volatile unsigned short *flags = reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90); *flags = (unsigned short)(*flags | 0x4); return 0; } volatile unsigned short *flags = reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90); *flags = (unsigned short)(*flags & 0xfffb); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x8); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x10); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x20); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x40); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x80); return 0; }
-void func_80135550(){ if (lbl_eu_80664054 != 0) *(int*)((char*)lbl_eu_80664054 + 0x120) = 30; }
-void func_80135568(int value){ if (lbl_eu_80664054 == 0) return; if (value != 0) *(unsigned char *)((char *)lbl_eu_80664054 + 0x149) = 1; else *(unsigned char *)((char *)lbl_eu_80664054 + 0x148) = 1; *(unsigned short *)((char *)lbl_eu_80664054 + 0xc90) = 0; }
+void CUICfManager_func_33178(){}
+int CUICfManager_prepareMenus(){
+    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    if (m == 0) return 0;
+    return m->prepareMenus();
+}
+void CUICfManager_setTimeout30(){
+    if (lbl_eu_80664054 != 0) {
+        static_cast<CUICfManager*>(lbl_eu_80664054)->setTimeout30();
+    }
+}
+void CUICfManager_setFlags(int value){
+    if (lbl_eu_80664054 == 0) return;
+    CUICfManager* manager = static_cast<CUICfManager*>(lbl_eu_80664054);
+    manager->setFlagState(value != 0);
+}
 void func_801355A0__Fv(){}
-void* func_801355BC(){ if (lbl_eu_80664054 == 0) return 0; return reinterpret_cast<char*>(lbl_eu_80664054) + 0x9c; }
-void* func_801355D8(){ if (lbl_eu_80664054 == 0) return 0; return reinterpret_cast<char*>(lbl_eu_80664054) + 0xd8; }
-void* func_801355F4(){ void* p = lbl_eu_80664054; if (p == 0) return 0; return *(void**)((char*)p + 0x5c); }
+void* CUICfManager_getPackedFont9C(){
+    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    return m == 0 ? 0 : m->getPackedFont9C();
+}
+void* CUICfManager_getPackedFontD8(){
+    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    return m == 0 ? 0 : m->getPackedFontD8();
+}
+void* CUICfManager_getField5C(){
+    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    return m == 0 ? 0 : m->getArcResourceAccessor();
+}
 void func_80135610(){}
 void func_80135630(){}
 void func_80135654(){}
@@ -1042,11 +1054,11 @@ void func_80135694(){}
 void func_801356BC(){}
 void func_801356E0(){}
 void func_80135898(){}
-void func_80135998(u8 value){
-    u8 *obj = (u8 *)lbl_eu_80664054;
-    if (obj == NULL)
+void CUICfManager_setFieldC8C(u8 value){
+    CUICfManager* m = (CUICfManager*)lbl_eu_80664054;
+    if (m == NULL)
         return;
-    obj[0xc8c] = value;
+    m->setFieldC8C(value);
 }
 void Draw__Q212CUICfManager5CTestFv(){}
 void Move__Q212CUICfManager5CTestFv(){}

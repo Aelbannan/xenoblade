@@ -2,6 +2,15 @@
 
 #include <types.h>
 
+// Full object layout for C-linkage accessors
+struct CActParamAnimFull {
+    u8 _00[0x10];
+    u8 mChildData[0x4AE]; // from +0x10 to +0x4BE
+    u8 mEffByte0;          // +0x4BE
+    u8 mEffByte1;          // +0x4BF
+    u8 _4C0[4];            // +0x4C0: eff obj pointer
+};
+
 class CActParamAnim {
 public:
     CActParamAnim();

@@ -37,8 +37,18 @@ namespace cf {
 
         //0x0: vtable
         //0x0-BE: CfObjectModel
-        u8 unkBE_3[0x657];
-        u8 unk715[3]; //might not belong here
+        // Field layout starting at offset 0xBE:
+        u8 _BE[6];              // 0xBE-0xC3
+        void* mTargetC4;         // 0xC4-0xC7
+        u8 _C8[0x544];           // 0xC8-0x60B
+        u8 _60C_region[0xB4];   // 0x60C-0x6BF
+        void* mTarget6C0;         // 0x6C0-0x6C3
+        u8 _6C4[5];              // 0x6C4-0x6C8
+        u8 mFlags6C9;             // 0x6C9
+        u8 _6CA[0x26];           // 0x6CA-0x6EF
+        float mMoveSpeed;         // 0x6F0-0x6F3
+        u8 _6F4[0x21];           // 0x6F4-0x714
+        u8 unk715[3];            // 0x715-0x717
     void CfObject_UnkVirtualFunc4();
     void CfObject_UnkVirtualFunc7();
     void CfObject_UnkVirtualFunc6();

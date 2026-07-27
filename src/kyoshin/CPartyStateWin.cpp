@@ -2,7 +2,6 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/CPartyStateWin.hpp"
 
 u32 func_801F9694(void) {
     extern u32 lbl_eu_80663E10;

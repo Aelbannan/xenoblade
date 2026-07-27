@@ -47,7 +47,7 @@ void func_801836CC(void* self, unsigned long value)
 
 void func_801836E4(){}
 
-void OnFileEvent__13CREvtModelObjFP10CEventFile(void* self) { ((void(*)(void*))func_801835D4)((char*)self - 0x38); }
+extern "C" void OnFileEvent__13CREvtModelObjFP10CEventFile(CREvtModelObj* self) { ((void(*)(void*))func_801835D4)((char*)self - 0x38); }
 
 extern "C" void func_8018370C(void* self) { ((void(*)(void*))__ct__80181B74)((char*)self - 0x38); }
 

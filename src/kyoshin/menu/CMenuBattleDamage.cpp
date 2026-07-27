@@ -45,14 +45,25 @@ void setDamageFlag2() {}
 
 void addDamageSlot() {}
 
-extern "C" void __dt__17CMenuBattleDamageFv();
-extern "C" void cbRenderBefore__17CMenuBattleDamageFv();
+// MI thunk: IWorkEvent subobject is at +0x58; recover the containing object
+void thunk_IWorkEvent_dtor(IWorkEvent* self) {
+    uintptr_t base = reinterpret_cast<uintptr_t>(self) - offsetof(CMenuBattleDamageLayout, mIWorkEvent);
+    auto* obj = reinterpret_cast<CMenuBattleDamage*>(base);
+    obj->~CMenuBattleDamage();
+}
 
-void thunk_IWorkEvent_dtor(IWorkEvent* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)(reinterpret_cast<char*>(self) - 0x58); }
+// MI thunk: IScnRender subobject is at +0x5c
+void thunk_IScnRender_cbRenderBefore(IScnRender* self) {
+    uintptr_t base = reinterpret_cast<uintptr_t>(self) - offsetof(CMenuBattleDamageLayout, mIScnRender);
+    auto* obj = reinterpret_cast<CMenuBattleDamage*>(base);
+    obj->cbRenderBefore();
+}
 
-void thunk_IScnRender_cbRenderBefore(IScnRender* self) { ((void(*)(void*))cbRenderBefore__17CMenuBattleDamageFv)(reinterpret_cast<char*>(self) - 0x5c); }
-
-void thunk_IScnRender_dtor(IScnRender* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)(reinterpret_cast<char*>(self) - 0x5c); }
+void thunk_IScnRender_dtor(IScnRender* self) {
+    uintptr_t base = reinterpret_cast<uintptr_t>(self) - offsetof(CMenuBattleDamageLayout, mIScnRender);
+    auto* obj = reinterpret_cast<CMenuBattleDamage*>(base);
+    obj->~CMenuBattleDamage();
+}
 
 CPcSelectCursor01::~CPcSelectCursor01() {}
 

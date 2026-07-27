@@ -16,7 +16,8 @@ namespace cf {
 
         //0x0: vtable
         //0x0-10: CObjectState
-        u8  unk10[0x20];       // 0x10..0x2F
+        void* mPtr10;          // 0x10-0x13 (pointer stored at offset 0x10)
+        u8 unk14[0x20 - 0x14]; // 0x14-0x2F
         u32 field_30;          // 0x30  — checked for non-zero by UnkVirtualFunc3
         u8  unk34[4];          // 0x34..0x37  (remainder of old unk10_3[0x28])
     };

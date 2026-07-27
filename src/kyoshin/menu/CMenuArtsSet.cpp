@@ -4,6 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuArtsSet.hpp"
+#include <cstddef>
 void __ct__CMenuArtsSet(){}
 
 unsigned long func_8022F530(){
@@ -14,10 +15,18 @@ unsigned long func_8022F530(){
 void func_8022F544(){}
 
 void cbRenderBefore__12CMenuArtsSetFv(void* self);
-void func_8022FA48(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuArtsSetFv)(reinterpret_cast<char*>(self) - 0x58); }
+void func_8022FA48(void* self) {
+    // Thunk: adjust this down from sub-object at offset 0x58
+    CMenuArtsSet* obj = (CMenuArtsSet*)((char*)self - offsetof(CMenuArtsSet, mSubObj58_start));
+    cbRenderBefore__12CMenuArtsSetFv(obj);
+}
 
 void __dt__12CMenuArtsSetFv(void* self);
-void func_8022FA50(void* self) { ((void(*)(void*))__dt__12CMenuArtsSetFv)(reinterpret_cast<char*>(self) - 0x58); }
+void func_8022FA50(void* self) {
+    // Thunk: adjust this down from sub-object at offset 0x58
+    CMenuArtsSet* obj = (CMenuArtsSet*)((char*)self - offsetof(CMenuArtsSet, mSubObj58_start));
+    __dt__12CMenuArtsSetFv(obj);
+}
 
 void __ct__8022FA58(){}
 
@@ -168,14 +177,14 @@ void func_80233760(){}
 
 void func_8023380C(){}
 
-u8 func_80233880(void* self) { return ((u8*)self)[0x31]; }
+u8 func_80233880(CMenuArtsSet* self) { return self->mField31; }
 
 void func_80233888(){}
 
 void func_8023390C(){}
 
 void func_80235F50(void* self);
-void func_80233968(void* self) { ((void(*)(void*))func_80235F50)(reinterpret_cast<char*>(self) + 0x74); }
+void func_80233968(CMenuArtsSet* self) { func_80235F50(self->mSubObj74); }
 
 void func_80233970(){}
 
@@ -203,7 +212,7 @@ void func_80234928(){}
 
 void func_802349F8(CMenuArtsSet* self, u8 val) { self->mField139 = val; }
 
-void func_80234A00(void* self) { ((void(*)(void*))func_80231320)(reinterpret_cast<char*>(self) + 0x148); }
+void func_80234A00(CMenuArtsSet* self) { func_80231320(self->mSubObj148); }
 
 void func_80234A08(){}
 

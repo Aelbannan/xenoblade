@@ -110,7 +110,7 @@ u16 CCollepedia_getField12(u8* p1, u32 arg2, u32 arg3) {
     if (arg3 >= 5) return 0;
     s8 idx = (s8)p1[1];
     u8* ptr = p1 + idx * 0x140 + arg2 * 0x34 + arg3 * 0xa;
-    return *(u16*)(ptr + 0x12);
+    return reinterpret_cast<CCollepediaEntry*>(ptr)[1].field_08;
 }
 
 void func_8025424C(){}
@@ -181,7 +181,8 @@ void func_802552B4(){}
 void func_802553AC(){}
 
 void func_80255688(void* self) {
-    func_80253EE8((u8*)self + 0xE8, ((u8*)self)[0xD9], ((u8*)self)[0xD8]);
+    auto* full = static_cast<CCollepediaFull*>(self);
+    func_80253EE8((u8*)self + 0xE8, full->field_D9, full->field_D8);
 }
 
 void func_80255698(){}

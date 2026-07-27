@@ -16,7 +16,7 @@ CActParamAnim::~CActParamAnim() {}
 
 void CActParamAnim::func_8004B114() {}
 
-void* CActParamAnim_getChild(CActParamAnim* self) { return reinterpret_cast<char*>(self) + 0x10; }
+void* CActParamAnim_getChild(CActParamAnim* self) { return &reinterpret_cast<CActParamAnimFull*>(self)->mChildData; }
 
 float CActParamAnim_getBlendWeight(CActParamAnim* self) {
     return *(float*)((char*)self + 0x43c);
@@ -231,8 +231,9 @@ void* CActParamAnim_getEffObj(CActParamAnim* self) {
 }
 
 void CActParamAnim_clearEffObj(CActParamAnim* self) {
-    ((char *)self)[0x4be] = 0;
-    ((char *)self)[0x4bf] = 0;
+    auto* full = reinterpret_cast<CActParamAnimFull*>(self);
+    full->mEffByte0 = 0;
+    full->mEffByte1 = 0;
     *(int *)((char *)self + 0x4c0) = 0;
 }
 

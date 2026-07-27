@@ -53,3 +53,11 @@ public:
     virtual ~CMapSel();
     void OnFileEvent();
 };
+
+// Extended layout for free-function accessors
+struct CMapSelFull {
+    u8 _00[0x8C];
+    s8 field_8C;  // y coordinate
+    s8 field_8D;  // x coordinate
+    u8 mGridData[128]; // grid lookup data starting at +0x8E
+};

@@ -7,6 +7,12 @@ public:
     CPartyState();
     virtual ~CPartyState();
     void OnFileEvent();
+    u8 func_801FD17C();
+    u8 func_801FD184();
+    u8 func_801FD18C();
+    u32 func_801FD580();
+    u8 func_801FD5F4();
+    u8 func_801FD5FC();
 
     u8 _00[0x30];
     u8 field_0x30;

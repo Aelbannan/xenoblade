@@ -25,52 +25,51 @@ extern "C" u32 lbl_eu_80664184;
 extern "C" s32 lbl_eu_80664460;
 extern "C" nw4r::lyt::ArcResourceAccessor* lbl_eu_80664464;
 
-void func_801C3E3C(CBgTex* self);
+void CBgTex::func_801C3E3C();
 // Emit ctor before dtor so .text order matches retail (avoids 0xC align pad).
-CBgTex* __ct__CBgTex(CBgTex* self, u8 arg){
-    self->mVtbl = lbl_eu_80533DC8;
-    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
-    self->mFileHandle = nullptr;
-    self->mLayout = nullptr;
-    self->mLayoutReady = false;
-    self->mLoaded = 0;
-    self->mPtmMode = arg;
-    return self;
+CBgTex::CBgTex(u8 arg) {
+    mVtbl = lbl_eu_80533DC8;
+    __ct__17UnkClass_8045F564Fv(&mMemRegion);
+    mFileHandle = nullptr;
+    mLayout = nullptr;
+    mLayoutReady = false;
+    mLoaded = 0;
+    mPtmMode = arg;
 }
 
 CBgTex::~CBgTex() {}
 
 
-extern "C" void func_801C3A24(CBgTex* self) {
+void CBgTex::func_801C3A24() {
     u32 handle = mtl::MemManager::getHandleMEM2();
-    self->mMemRegion.createRegion(handle, 0x2000, lbl_eu_80505370, 1);
-    Class_8045F858 unusedVar = Class_8045F858(&self->mMemRegion);
+    mMemRegion.createRegion(handle, 0x2000, lbl_eu_80505370, 1);
+    Class_8045F858 unusedVar = Class_8045F858(&mMemRegion);
     mtl::MemManager::func_80434A4C(false);
 
     u8 regionId = static_cast<u8>(lbl_eu_80664184);
     if (regionId == 0x19) {
-        func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x0A);
+        func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x0A);
     } else if (regionId == 0x1A) {
-        func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x1E);
+        func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x1E);
     } else {
         switch (func_801372B4(regionId)) {
         case 1:
-            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
+            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
             break;
         case 2:
-            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x46);
+            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x46);
             break;
         case 3:
-            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x5A);
+            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x5A);
             break;
         case 4:
-            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x6E);
+            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x6E);
             break;
         case 5:
-            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x82);
+            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x82);
             break;
         case 0:
-            func_80136E84(&self->mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
+            func_80136E84(&mLayout, lbl_eu_80664464, lbl_eu_80505370 + 0x32);
             break;
         default:
             break;
@@ -78,15 +77,15 @@ extern "C" void func_801C3A24(CBgTex* self) {
     }
 
     nw4r::lyt::Pane* pane =
-        self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0x96, true);
-    func_80124270(pane, !self->mPtmMode);
-    pane = self->mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0xA0, true);
-    func_80124270(pane, !self->mPtmMode);
-    func_801C3E3C(self);
-    self->mMemRegion.func_8045F810();
+        mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0x96, true);
+    func_80124270(pane, !mPtmMode);
+    pane = mLayout->GetRootPane()->FindPaneByName(lbl_eu_80505370 + 0xA0, true);
+    func_80124270(pane, !mPtmMode);
+    func_801C3E3C();
+    mMemRegion.func_8045F810();
 }
 
-bool func_801C3C14(CBgTex* self){
+bool CBgTex::func_801C3C14() {
     nw4r::lyt::ArcResourceAccessor* accessor = lbl_eu_80664464;
     s32 count = lbl_eu_80664460;
     lbl_eu_80664460 = count + 1;
@@ -124,49 +123,49 @@ bool func_801C3C14(CBgTex* self){
     }
 
     u32 allocHandle = mtl::MemManager::getHandleMEM2();
-    self->mFileHandle = CDeviceFile::readFile(
-        allocHandle, file, reinterpret_cast<IWorkEvent*>(self), 0, 0);
-    CDeviceFile::setHandleFlag1(self->mFileHandle);
+    mFileHandle = CDeviceFile::readFile(
+        allocHandle, file, reinterpret_cast<IWorkEvent*>(this), 0, 0);
+    CDeviceFile::setHandleFlag1(mFileHandle);
     return false;
 }
 
-extern "C" void func_801C3D54(CBgTex* self) {
-    if (self->mLayoutReady == false)
+void CBgTex::func_801C3D54() {
+    if (mLayoutReady == false)
         return;
-    self->mLayout->Animate(0);
+    mLayout->Animate(0);
 }
 
-extern "C" void func_801C3D7C(CBgTex* self, nw4r::lyt::DrawInfo* drawInfo) {
-    if (self->mLayoutReady == false)
+void CBgTex::func_801C3D7C(nw4r::lyt::DrawInfo* drawInfo) {
+    if (mLayoutReady == false)
         return;
-    func_80137038(self->mLayout, drawInfo, 0, 1);
+    func_80137038(mLayout, drawInfo, 0, 1);
 }
 
-extern "C" void func_801C3D9C(CBgTex* self) {
+void CBgTex::func_801C3D9C() {
     lbl_eu_80664460 -= 1;
-    func_801390E0(&self->mFileHandle);
-    self->mLayoutReady = false;
+    func_801390E0(&mFileHandle);
+    mLayoutReady = false;
     CDeviceVI::waitForDrawDone();
-    if (self->mLayout != nullptr) {
-        delete self->mLayout;
-        self->mLayout = nullptr;
+    if (mLayout != nullptr) {
+        delete mLayout;
+        mLayout = nullptr;
     }
     if (lbl_eu_80664460 <= 0) {
         func_80139124(lbl_eu_80664464);
         lbl_eu_80664464 = nullptr;
     }
-    self->mMemRegion.func_8045F778();
+    mMemRegion.func_8045F778();
 }
 
-extern "C" u8 func_801C3E34(CBgTex* self) {
-    return self->mLoaded;
+u8 CBgTex::func_801C3E34() {
+    return mLoaded;
 }
 
-extern "C" void func_801C3E3C(CBgTex* self) {
-    if (self->mLayout == nullptr)
+void CBgTex::func_801C3E3C() {
+    if (mLayout == nullptr)
         return;
-    self->mLoaded = 1;
-    self->mLayoutReady = true;
+    mLoaded = 1;
+    mLayoutReady = true;
 }
 
 bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
@@ -175,7 +174,7 @@ bool CBgTex::OnFileEvent(CEventFile* pEventFile) {
         lbl_eu_80664464 = CLibLayout::createArcResourceAccessor();
         lbl_eu_80664464->Attach(pArchive, lbl_eu_80505370 + 0x136);
         mFileHandle = nullptr;
-        func_801C3A24(this);
+        func_801C3A24();
         return true;
     }
     return false;

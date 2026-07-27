@@ -17,6 +17,7 @@ export function buildBatchPrompt(opts: {
     `- Match as many of the ${targetIds.length} listed target(s) as possible, in order: ${targetIds.map((id) => `\`${id}\``).join(", ")}. Partial progress is fine — the harness accepts whatever passes.\n` +
     `- For builds and diffs use ONLY: \`${pythonBin} tools/coop/hexdiff.py ${unit} --symbol <symbol> --json\`. A plain \`python3\` also works (the harness puts the repo venv on PATH).\n` +
     "- Do NOT run `cycle`, `batch-cycle`, `ninja`, or `configure.py` — the harness owns acceptance.\n" +
+    "- NEVER revert using git (`git checkout`, `git reset`, `git restore`, etc.) — other agents share this branch.\n" +
     "- Reminder: add comments to complicated code.\n"
   );
 }
@@ -38,6 +39,12 @@ is already loaded — follow it (high-level C++ only, no asm/register tricks).
 
 Source files in scope:
 ${sourceFiles.map((f) => `- \`${f}\``).join("\n")}
+
+### 0. NEVER revert using git
+
+Other agents share this branch. Do NOT run \`git checkout\`, \`git reset\`,
+\`git restore\`, or any command that would revert or discard changes. If you
+need to undo your own edits, use the editor to make forward fixes.
 
 ### 1. Verify the full TU matches — including data
 

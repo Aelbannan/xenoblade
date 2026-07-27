@@ -16,6 +16,13 @@
 class CEquipChange : public IWorkEvent {
 public:
     bool OnFileEvent(CEventFile*);
+    u8 func_802023C0();
+    void func_802023C8();
+    void func_8020247C();
+    int func_80203138();
+    void func_8020397C();
+    void func_80203984();
+    void func_8020398C();
 
     // 0x04: UnkClass_8045F564 (size 0x10)
     u8 _pad04[0x10];

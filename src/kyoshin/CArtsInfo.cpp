@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CArtsInfo.hpp"
 
-u8 CArtsInfo_getField48(CArtsInfo* self) { return self->field_0x48; }
+u8 CArtsInfo::getField48() { return field_0x48; }
 
 
 
@@ -12,7 +12,7 @@ u8 CArtsInfo_getField48(CArtsInfo* self) { return self->field_0x48; }
 
 
 
-u8 CArtsInfo_getField49(CArtsInfo* self) { return self->field_0x49; }
+u8 CArtsInfo::getField49() { return field_0x49; }
 
 
 
@@ -20,13 +20,13 @@ u8 CArtsInfo_getField49(CArtsInfo* self) { return self->field_0x49; }
 
 void func_80235DD8(){}
 
-void CArtsInfo_setField54(CArtsInfo* self, u8 val) { self->field_0x54 = val; }
+void CArtsInfo::setField54(u8 val) { field_0x54 = val; }
 
-void CArtsInfo_setField55(CArtsInfo* self, u8 val) { self->field_0x55 = val; }
+void CArtsInfo::setField55(u8 val) { field_0x55 = val; }
 
-void CArtsInfo_setField56(CArtsInfo* self, u8 val) { self->field_0x56 = val; }
+void CArtsInfo::setField56(u8 val) { field_0x56 = val; }
 
-void CArtsInfo_setField58(CArtsInfo* self, u16 val) { self->field_0x58 = val; }
+void CArtsInfo::setField58(u16 val) { field_0x58 = val; }
 
 void func_80235EA4(){}
 
@@ -34,14 +34,14 @@ void func_80235EF0(){}
 
 void func_80235F14(){}
 
-u32 CArtsInfo_getField5A(CArtsInfo* self) {
-    s8 val = self->field_0x5A;
+u32 CArtsInfo::getField5A() {
+    s8 val = field_0x5A;
     u32 result = __cntlzw(val);
     return result >> 5;
 }
 
-int CArtsInfo_isField44GE6(CArtsInfo* self) {
-    int field = self->field_0x44;
+int CArtsInfo::isField44GE6() {
+    int field = field_0x44;
     return field >= 6 ? 1 : 0;
 }
 
@@ -181,12 +181,12 @@ void func_8023B368(){}
 
 void func_eu_8023D490(){}
 
-void CArtsInfo_initialize(CArtsInfo* self) {
-    if (self->field_0x20 == 0) return;
-    if (self->field_0x4C == 0) return;
-    if (self->field_0x50 != 0) {
-        self->field_0x48 = 1;
-        self->field_0x40 = 1;
+void CArtsInfo::initialize() {
+    if (field_0x20 == 0) return;
+    if (field_0x4C == 0) return;
+    if (field_0x50 != 0) {
+        field_0x48 = 1;
+        field_0x40 = 1;
     }
 }
 

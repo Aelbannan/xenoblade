@@ -39,22 +39,22 @@ void CDeviceFontInfoRom::func_804537D4(void) {}
 
 // ---- func_80453800 (0x804578D0) — reads mFontInfo->field_0x12 ----
 u32 CDeviceFontInfoRom::func_80453800() {
-    return *(u32*)((u8*)this + 0x0C);
+    return (u32)mFontInfo;
 }
 
 // ---- func_8045380C (0x804578DC) — reads mFontInfo->field_0x18 ----
 u16 CDeviceFontInfoRom::func_8045380C() {
-    return *(u16*)((u8*)this + 0x0C + 0x18);
+    return *(u16*)((u8*)mFontInfo + 0x18);
 }
 
 // ---- func_80453818 (0x804578E8) — reads mFontInfo->field_0x20 ----
 u16 CDeviceFontInfoRom::func_80453818() {
-    return *(u16*)((u8*)this + 0x0C + 0x20);
+    return *(u16*)((u8*)mFontInfo + 0x20);
 }
 
 // ---- func_80453824 (0x804578F4) — reads mFontInfo->field_0x1E ----
 u16 func_80453824__18CDeviceFontInfoRomFv(void* self) {
-    return *(u16*)((u8*)self + 0x0C + 0x1E);
+    return *(u16*)((u8*)((CDeviceFontInfoRom*)self)->mFontInfo + 0x1E);
 }
 
 // ---- func_80453830 (0x80457900) — returns field_0x04 ----

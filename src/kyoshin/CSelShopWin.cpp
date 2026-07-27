@@ -18,10 +18,11 @@ extern "C" u8 func_8022C8D8(CSelShopWin* self) {
 void func_8022CA20(){}
 
 extern "C" void func_8022CA6C(void* self) {
-    if (*(u32*)((u8*)self + 0x1C) != 0) {
-        *(u8*)((u8*)self + 0x25) = 1;
-        *(u8*)((u8*)self + 0x24) = 1;
+    CSelShopWin* window = static_cast<CSelShopWin*>(self);
+    if (window->mLayout != 0) {
+        window->mIsLoaded = 1;
+        window->mIsLayoutBuilt = 1;
     }
 }
 
-void CSelShopWin::OnFileEvent() {}
+bool CSelShopWin::OnFileEvent(CEventFile*) { return true; }

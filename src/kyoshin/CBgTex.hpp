@@ -24,6 +24,14 @@ struct CBgTex {
     u8 mLoaded; // 0x1D
     u8 mPtmMode; // 0x1E
 
+    CBgTex(u8 arg);
+    void func_801C3A24();
+    bool func_801C3C14();
+    void func_801C3D54();
+    void func_801C3D7C(nw4r::lyt::DrawInfo* drawInfo);
+    void func_801C3D9C();
+    u8 func_801C3E34();
+    void func_801C3E3C();
     ~CBgTex();
     bool OnFileEvent(CEventFile* pEventFile);
 };

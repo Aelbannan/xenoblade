@@ -7,6 +7,15 @@ public:
     CArtsInfo();
     virtual ~CArtsInfo();
     void OnFileEvent();
+    u8 getField48();
+    u8 getField49();
+    void setField54(u8 val);
+    void setField55(u8 val);
+    void setField56(u8 val);
+    void setField58(u16 val);
+    u32 getField5A();
+    int isField44GE6();
+    void initialize();
 
     // vtable pointer at 0x00 (implicit)
     u8 _00[0x20 - 4];

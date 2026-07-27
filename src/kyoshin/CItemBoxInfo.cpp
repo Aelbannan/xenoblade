@@ -3,11 +3,27 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+struct CItemBoxInfoState {
+    u8 _00[0x30];
+    void* resource;
+    void* layout;
+    u8 _38[0x52];
+    u8 active;
+    u8 _8B[5];
+    u32 state;
+    u8 current;
+    u8 visible;
+    u8 _9A[0x26];
+    s16 values[12];
+};
+
 struct CItemBoxInfo {
+    CItemBoxInfoState state;
     void OnFileEvent();
 };
 
 struct CItemBoxInfo2 {
+    CItemBoxInfoState state;
     ~CItemBoxInfo2();
     void OnFileEvent();
 };
@@ -22,21 +38,14 @@ void resetCItemBox() {}
 
 
 u8 getItemBoxState(CItemBoxInfo* self) {
-    return *(u8*)((char*)self + 0x98);
+    return self->state.current;
 }
 
 
 void advanceItemBoxState(CItemBoxInfo* self) {
-    struct Layout {
-        unsigned char _pad[0x94];
-        int field_94;
-        unsigned char _pad98[1];
-        unsigned char field_99;
-    };
-    Layout* p = (Layout*)self;
-    if (p->field_94 == 3) {
-        p->field_94 = 4;
-        p->field_99 = 0;
+    if (self->state.state == 3) {
+        self->state.state = 4;
+        self->state.visible = 0;
     }
 }
 
@@ -86,7 +95,7 @@ void func_801D69FC(){}
 
 void setItemBoxIndex(CItemBoxInfo* self, unsigned char index, short value) {
     if (index >= 12) return;
-    *(short*)((char*)self + index * 2 + 0xC0) = value;
+    self->state.values[index] = value;
 }
 
 void func_801D77BC(){}
@@ -114,30 +123,29 @@ void func_801D8B60(){}
 void func_801D8C0C(){}
 
 void tryActivateItemBox(CItemBoxInfo* arg) {
-    if (*(unsigned int*)((char*)arg + 0x34) == 0) return;
-    if (*(unsigned int*)((char*)arg + 0x30) == 0) return;
-    *((char*)arg + 0x98) = 1;
-    *((char*)arg + 0x90) = 1;
+    if (arg->state.layout == 0) return;
+    if (arg->state.resource == 0) return;
+    arg->state.current = 1;
+    arg->state.active = 1;
 }
 
 void func_801D8E34(){}
 
 struct CItemBoxInfoEntry {
-    unsigned short unk0;
-    unsigned int unk4;
-    unsigned char unk8;
+    u16 itemId;
+    u16 _02;
+    u32 value;
+    u8 state;
 };
 
 void copyItemBoxEntry(CItemBoxInfoEntry* dst, const CItemBoxInfoEntry* src) {
-    dst->unk0 = src->unk0;
-    dst->unk4 = src->unk4;
-    dst->unk8 = src->unk8;
+    *dst = *src;
 }
 
 void setItemBoxEntry(CItemBoxInfoEntry* self, u16 r4, u32 r5, u8 r6) {
-    *(u16*)self = r4;
-    *((u32*)self + 1) = r5;
-    *((u8*)self + 8) = r6;
+    self->itemId = r4;
+    self->value = r5;
+    self->state = r6;
 }
 
 void func_801DF4E0(){}
@@ -170,30 +178,23 @@ namespace nw4r { namespace lyt { class Layout; class DrawInfo; } }
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
 void drawItemBox2Layout(CItemBoxInfo2* self, nw4r::lyt::DrawInfo* drawInfo) {
-    if (*(unsigned char*)((char*)self + 0x90) != 0) {
-        func_80137038(*(nw4r::lyt::Layout**)((char*)self + 0x34), drawInfo, 0, 1);
+    if (self->state.active != 0) {
+        func_80137038((nw4r::lyt::Layout*)self->state.layout, drawInfo, 0, 1);
     }
 }
 
 void func_801E13F8(){}
 
 u8 getItemBox2State(CItemBoxInfo2* self) {
-    return *(u8*)((char*)self + 0x98);
+    return self->state.current;
 }
 
 void func_801E1498(){}
 
-void advanceItemBox2State(CItemBoxInfo2* param_1) {
-    struct Fields {
-        char unk_0x00[0x94];
-        int field_0x94;
-        char unk_0x98;
-        unsigned char field_0x99;
-    };
-    Fields* p = reinterpret_cast<Fields*>(param_1);
-    if (p->field_0x94 == 3) {
-        p->field_0x94 = 4;
-        p->field_0x99 = 0;
+void advanceItemBox2State(CItemBoxInfo2* self) {
+    if (self->state.state == 3) {
+        self->state.state = 4;
+        self->state.visible = 0;
     }
 }
 
@@ -255,20 +256,16 @@ void func_801E4390(){}
 
 void func_801E43BC(){}
 
-struct ItemBoxInfoCopy {
-    unsigned short unk0;
-    unsigned int unk4;
-    unsigned char unk8;
-};
+typedef CItemBoxInfoEntry ItemBoxInfoCopy;
 
 void copyItemBoxCopy(ItemBoxInfoCopy* dst, const ItemBoxInfoCopy* src) {
     *dst = *src;
 }
 
 void setItemBoxCopy(ItemBoxInfoCopy* self, unsigned short a, unsigned int b, unsigned char c) {
-    *(unsigned short*)self = a;
-    *(unsigned long*)((char*)self + 4) = b;
-    *(unsigned char*)((char*)self + 8) = c;
+    self->itemId = a;
+    self->value = b;
+    self->state = c;
 }
 
 void func_801E9190(){}

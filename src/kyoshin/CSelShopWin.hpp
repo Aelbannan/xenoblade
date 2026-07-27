@@ -61,5 +61,4 @@ public:
     u8 mAnimState;
     // +0x27: animation in progress flag
     u8 mAnimActive;
-    CSelShopWin();
 };

@@ -16,18 +16,15 @@ void __dt__800FDEF8(){}
 
 void func_800FE104(){}
 
-// spInstance for the CfObjectSelectorObj singleton
 cf::CfObjectSelectorObj* lbl_eu_80663F14;
 
-// Returns the CfObjectSelectorObj singleton instance
 cf::CfObjectSelectorObj* func_800FE68C() {
     return lbl_eu_80663F14;
 }
 
-void func_800FE694(void* self, float val) {
-    float* base = (float*)((char*)self + 0x10000);
-    base[-0x6f08 / 4] = val;
-    base[-0x3e9c / 4] = val;
+void func_800FE694(cf::CfObjectSelectorObj* self, float val) {
+    self->mField90F8 = val;
+    self->mFieldC164 = val;
 }
 
 void func_800FE6A4(){}
@@ -38,32 +35,29 @@ void func_800FE7D8(){}
 
 void func_800FE860(){}
 
-unsigned long func_800FE910(void* self) {
-    unsigned long* base = (unsigned long*)((char*)self + 0x10000);
-    unsigned long v = base[-0x3e80 / 4];
-    return (v >> 10) & 1;
+unsigned long func_800FE910(cf::CfObjectSelectorObj* self) {
+    return (self->mFieldC180 >> 10) & 1;
 }
 
-void func_800FE920(char* p)
+void func_800FE920(cf::CfObjectSelectorObj* p)
 {
-    char* obj = *(char**)(p + 0xC178);
-    *(unsigned int*)(obj + 0x3068) |= 4;
+    char* obj = static_cast<char*>(p->mPtrC178);
+    *reinterpret_cast<unsigned int*>(obj + 0x3068) |= 4;
 }
 
-void func_800FE938(char* param_1) {
-    char* obj = *(char**)(param_1 + 0xC178);
-    *(unsigned int*)(obj + 0x3068) |= 8u;
+void func_800FE938(cf::CfObjectSelectorObj* param_1) {
+    char* obj = static_cast<char*>(param_1->mPtrC178);
+    *reinterpret_cast<unsigned int*>(obj + 0x3068) |= 8u;
 }
 
-void func_800FE950(char* this_, unsigned int a, unsigned int b, unsigned int c) {
-    *(unsigned int*)(this_ + 0x608c) = a;
-    *(unsigned int*)(this_ + 0x6094) = b;
-    *(unsigned int*)(this_ + 0x6098) = c;
-    *(unsigned int*)(this_ + 0x90e8) = a;
-    *(unsigned int*)(this_ + 0x90ec) = b;
+void func_800FE950(cf::CfObjectSelectorObj* this_, unsigned int a, unsigned int b, unsigned int c) {
+    this_->mField608C = a;
+    this_->mField6094 = b;
+    this_->mField6098 = c;
+    this_->mField90E8 = a;
+    this_->mField90EC = b;
 }
 
 void func_800FE96C(){}
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_800FEA14(){}

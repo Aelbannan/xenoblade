@@ -30,34 +30,32 @@ typedef void (*CfCamVFn)(cf::CfCamFollow* self);
 
 extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(cf::CfCamFollow* self, void* arg1,
                                                  void* arg2) {
-    u8* base = reinterpret_cast<u8*>(self);
-
     __ct__cf_CfCam(self, arg2);
     self->vtable = lbl_eu_80527260;
 
-    func_8004B0B0(base + 0x1C);
-    func_8004B60C(base + 0x28, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
-    func_8004B60C(base + 0x34, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
-    func_8004B0B0(base + 0x40);
-    func_8004B0B0(base + 0x4C);
-    func_8004B0B0(base + 0x58);
-    func_8004B60C(base + 0x64, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
-    cfCam_stub_8006BEF8(base + 0x70);
-    cfCam_stub_8006BEC0(base + 0x130);
+    func_8004B0B0(self->unk1C);
+    func_8004B60C(self->unk1C + 12, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
+    func_8004B60C(self->unk1C + 24, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
+    func_8004B0B0(self->unk1C + 36);
+    func_8004B0B0(self->unk1C + 48);
+    func_8004B0B0(self->unk1C + 60);
+    func_8004B60C(self->unk1C + 72, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
+    cfCam_stub_8006BEF8(self->unk70);
+    cfCam_stub_8006BEC0(self->unk130);
 
     self->unk164 = arg1;
 
-    func_8004B0B0(base + 0x168);
-    func_8004B0B0(base + 0x174);
-    func_8004B60C(base + 0x180, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
-    func_8004B60C(base + 0x18C, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
-    func_8004B0B0(base + 0x198);
-    func_8004B0B0(base + 0x1A4);
-    func_8004B0B0(base + 0x1B0);
-    func_8004B0B0(base + 0x1BC);
-    func_8004B60C(base + 0x1C8, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
-    cfCam_clearFirstWord(base + 0x1D4);
-    cfCam_clearWord16(base + 0x1D8);
+    func_8004B0B0(self->unk168);
+    func_8004B0B0(self->unk168 + 12);
+    func_8004B60C(self->unk168 + 24, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
+    func_8004B60C(self->unk168 + 36, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
+    func_8004B0B0(self->unk168 + 48);
+    func_8004B0B0(self->unk168 + 60);
+    func_8004B0B0(self->unk168 + 72);
+    func_8004B0B0(self->unk168 + 84);
+    func_8004B60C(self->unk168 + 96, lbl_eu_806662DC, lbl_eu_806662DC, lbl_eu_806662DC);
+    cfCam_clearFirstWord(&self->unk1D4);
+    cfCam_clearWord16(&self->unk1D8);
 
     self->unk1DC = lbl_eu_806662DC;
     self->unk1E0 = lbl_eu_80661B50;
@@ -85,27 +83,30 @@ extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(cf::CfCamFollow* self, void* ar
     lbl_eu_80663DEC = self;
     self->unk160 = arg2;
 
-    func_8006BEC4(base + 0x10);
-    func_8006BEC4(base + 0x1A4);
-    func_8006BEC4(base + 0x1B0);
-    func_8006BEC4(base + 0x1BC);
+    func_8006BEC4(self->unk10);
+    func_8006BEC4(self->unk168 + 60);
+    func_8006BEC4(self->unk168 + 72);
+    func_8006BEC4(self->unk168 + 84);
     cfCam_clearUnk04(self);
-    memset(cfCam_getElemStride12(base + 0x70, 0), 0, 0xC0);
+    memset(cfCam_getElemStride12(self->unk70, 0), 0, 0xC0);
 
     self->unk250 = 0;
     self->unk22C = lbl_eu_806662D0;
     self->unk230 = lbl_eu_806662D0;
 
-    reinterpret_cast<CfCamVFn_ui>((*reinterpret_cast<void***>(self))[0x40 / 4])(self, 1);
-    reinterpret_cast<CfCamVFn>((*reinterpret_cast<void***>(self))[0x28 / 4])(self);
+    {
+        void** vtbl = reinterpret_cast<void**>(self->vtable);
+        reinterpret_cast<CfCamVFn_ui>(vtbl[16])(self, 1);
+        reinterpret_cast<CfCamVFn>(vtbl[10])(self);
+    }
 
     return self;
 }
 
-extern "C" void* cfCam_getUnk10Ptr(void* self) { return (char*)self + 0x10; }
-extern "C" u32 cfCam_getUnk164(const void* self) { return *(const u32*)((const char*)self + 0x164); }
-extern "C" void* cfCam_getUnk40Ptr(void* ptr) { return static_cast<char*>(ptr) + 0x40; }
-extern "C" void* cfCam_getUnk1CPtr(void* self) { return (char*)self + 0x1c; }
+extern "C" void* cfCam_getUnk10Ptr(void* self) { return static_cast<cf::CfCamFollow*>(self)->unk10; }
+extern "C" u32 cfCam_getUnk164(const void* self) { return reinterpret_cast<u32>(static_cast<const cf::CfCamFollow*>(self)->unk164); }
+extern "C" void* cfCam_getUnk40Ptr(void* ptr) { return static_cast<cf::CfCamFollow*>(ptr)->unk1C + 0x24; }
+extern "C" void* cfCam_getUnk1CPtr(void* self) { return static_cast<cf::CfCamFollow*>(self)->unk1C; }
 extern "C" bool cfCam_getTrue() { return true; }
 void func_8006BA80(){}
 float func_8006BAF0(void* self){
@@ -115,10 +116,11 @@ extern "C" float PSVECMag(const float* v);
 extern "C" float cfCam_vecMag(const float* v) { return PSVECMag(v); }
 void func_8006BB04(){}
 extern "C" void cfCam_setOrClearUnk04Bits(void* r3, int r4, int r5) {
+    auto self = static_cast<cf::CfCamFollow*>(r3);
     if (r5) {
-        *(int*)((char*)r3 + 4) |= r4;
+        self->unk04 |= r4;
     } else {
-        *(int*)((char*)r3 + 4) &= ~r4;
+        self->unk04 &= ~r4;
     }
 }
 extern "C" void cfCam_clearUnk04Bits(unsigned int* p, unsigned int mask) {
@@ -128,30 +130,30 @@ extern "C" void __ct__Q22cf5CfCamFv() {}
 extern "C" void cfCam_stub_8006BEC0(void* self) {}
 void func_8006BEC4(void* self){}
 extern "C" void cfCam_clearUnk04(void* p) {
-    ((u32*)p)[1] = 0;
+    static_cast<cf::CfCamFollow*>(p)->unk04 = 0;
 }
-extern "C" void cfCam_setUnk08(void* self, int val) { *(int*)((char*)self + 0x8) = val; }
+extern "C" void cfCam_setUnk08(void* self, int val) { static_cast<cf::CfCamFollow*>(self)->unk08 = val; }
 extern "C" void cfCam_stub_8006BEF8(void* self) {}
 void cfCam_clearFirstWord(void* param_1) { *(u32*)param_1 = 0; }
 extern "C" void cfCam_clearWord16(void* ptr) {
     *(short*)ptr = 0;
 }
 void* cfCam_getElemStride12(void* r3, int r4) { return (char*)r3 + r4 * 12; }
-extern "C" u32 cfCam_getUnk08(void *self) { return *(u32 *)((char *)self + 8); }
-extern "C" bool cfCam_testUnk04Bits(const void* self, unsigned int mask) { return ((*reinterpret_cast<const unsigned int*>(static_cast<const unsigned char*>(self) + 4)) & mask) != 0; }
+extern "C" u32 cfCam_getUnk08(void *self) { return static_cast<cf::CfCamFollow*>(self)->unk08; }
+extern "C" bool cfCam_testUnk04Bits(const void* self, unsigned int mask) { return (static_cast<const cf::CfCamFollow*>(self)->unk04 & mask) != 0; }
 extern "C" int cfCam_getBit1_0x64(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
 }
 extern "C" void cfCam_setField1E0AndGlobal(void* ptr, float f) {
     lbl_eu_80661B50 = f;
-    *(float*)((u8*)ptr + 0x1e0) = f;
+    static_cast<cf::CfCamFollow*>(ptr)->unk1E0 = f;
 }
 extern "C" void cfCam_setOrClearUnk1D4Bits(void* obj, unsigned int bits, int set_flag) {
-    unsigned int* ptr = (unsigned int*)((char*)obj + 0x1d4);
+    auto self = static_cast<cf::CfCamFollow*>(obj);
     if (set_flag != 0)
-        *ptr |= bits;
+        self->unk1D4 |= bits;
     else
-        *ptr &= ~bits;
+        self->unk1D4 &= ~bits;
 }
 extern "C" int cfCam_getUnkC4(void* self) { return *(int*)((char*)self + 0xc4); }
 extern "C" int cfCam_getBit0_0x530(void* p) {
@@ -159,11 +161,11 @@ extern "C" int cfCam_getBit0_0x530(void* p) {
 }
 extern "C" bool cfCam_testBits2_3_0x530(const unsigned char* this_) { return (*(const unsigned short*)(this_ + 0x530) & 0x000C) != 0; }
 extern "C" bool cfCam_testBits4_5_0x530(const void* self) { return (*(const unsigned short*)((const unsigned char*)self + 0x530) & 0x30) != 0; }
-extern "C" bool cfCam_testUnk1D4Bits(void* self, unsigned int mask) { return ((*(unsigned int*)((char*)self + 0x1d4) & mask) != 0); }
+extern "C" bool cfCam_testUnk1D4Bits(void* self, unsigned int mask) { return (static_cast<cf::CfCamFollow*>(self)->unk1D4 & mask) != 0; }
 void func_8006C6CC(){}
 void func_8006C6E8(){}
 extern "C" void cfCam_clearUnk1D4Bits(void* _this, unsigned int mask) {
-    *(unsigned int*)((char*)_this + 0x1d4) &= ~mask;
+    static_cast<cf::CfCamFollow*>(_this)->unk1D4 &= ~mask;
 }
 extern "C" int cfCam_getBit1_0x4EC(void* _this) {
     return (*(int*)((char*)_this + 0x4EC) >> 1) & 1;
@@ -172,13 +174,13 @@ void func_8006CBD8(){}
 void func_8006CBEC(){}
 void func_8006CC4C(){}
 extern "C" void cfCam_zeroUnk1D4(void* arg0) {
-    *(u32*)((char*)arg0 + 0x1d4) = 0;
+    static_cast<cf::CfCamFollow*>(arg0)->unk1D4 = 0;
 }
 extern "C" u32 cfCam_getSignBitUnk04(void* p) {
-    return *(u32*)((u8*)p + 4) >> 31;
+    return static_cast<cf::CfCamFollow*>(p)->unk04 >> 31;
 }
-extern "C" u32 cfCam_getUnk04(void *self) { return *(u32*)((char*)self + 4); }
-extern "C" float cfCam_getField1E0(void* self) { return *(float*)((char*)self + 0x1e0); }
+extern "C" u32 cfCam_getUnk04(void *self) { return static_cast<cf::CfCamFollow*>(self)->unk04; }
+extern "C" float cfCam_getField1E0(void* self) { return static_cast<cf::CfCamFollow*>(self)->unk1E0; }
 extern "C" float cfCam_scaleByConst(float f) {
     extern float lbl_eu_8066A20C;
     return f * lbl_eu_8066A20C;
@@ -308,7 +310,7 @@ extern "C" int cfCam_getZero(void* self) { return 0x0; }
 extern "C" void* cfCam_getNestedPtr118(void* p) {
     return (void*)((char*)*(void**)((char*)p + 0xC) + 0x118);
 }
-extern "C" float cfCam_getFloat1E0(void* self) { return *(float*)((char*)self + 0x1e0); }
+extern "C" float cfCam_getFloat1E0(void* self) { return static_cast<cf::CfCamFollow*>(self)->unk1E0; }
 extern "C" void cfCam_copyVec3U32(u32* self, const u32* src)
 {
     self[10] = src[0];

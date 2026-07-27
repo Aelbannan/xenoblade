@@ -88,8 +88,7 @@ void WsdPlayer::Pause(bool flag) {
 }
 
 void WsdPlayer::SetChannelPriority(int priority) {
-    u8* dst = reinterpret_cast<u8*>(this) + 0xfc;
-    *dst = static_cast<u8>(priority);
+    mPriority = static_cast<u8>(priority);
 }
 
 void WsdPlayer::SetReleasePriorityFix(bool flag) {

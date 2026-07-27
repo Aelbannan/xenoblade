@@ -110,8 +110,8 @@ void cf::CfGameManager::func_8007D190(unsigned long flags) {
 }
 
 void cf::CfGameManager::func_8007D794() {
-    *(unsigned char*)this = 0;
-    *(unsigned long*)((char*)this + 0x20) = 0;
+    this->unk0 = 0;
+    *(u32*)&this->unkC[0x14] = 0;
 }
 
 void cf::CfGameManager::func_8007E1B4() {}
@@ -119,7 +119,7 @@ void cf::CfGameManager::func_8007E218() {}
 void cf::CfGameManager::func_8007F930() {}
 void* cf::CfGameManager::func_80083298() {
     extern void* getInstance__Q22cf13CfGameManagerFv();
-    return *(void**)((char*)getInstance__Q22cf13CfGameManagerFv() + 0x90);
+    return static_cast<cf::CfGameManager*>(getInstance__Q22cf13CfGameManagerFv())->unk90;
 }
 extern "C" void func_800B76CC();
 void func_eu_800874CC(){ func_800B76CC(); }
@@ -303,7 +303,7 @@ void cf::CfGameManager::func_80086DBC() {
 }
 
 u16 cf::CfGameManager::func_8007F8B8() {
-    return *(u16*)((u8*)this + 0x8c);
+    return static_cast<u16>(this->unk8C & 0xFFFF);
 }
 
 extern u16 lbl_eu_80663E3A;
@@ -317,7 +317,7 @@ void cf::CfGameManager::func_8007F9B4(u16 val) {
 }
 
 void cf::CfGameManager::func_80081264(u32 val) {
-    *(u32*)((u8*)this + 0x4) = val;
+    this->unk4 = val;
 }
 
 extern "C" void func_8009E120(u32, u32);
@@ -326,7 +326,7 @@ void cf::CfGameManager::func_8008126C(u32 self) {
 }
 
 void cf::CfGameManager::func_80081274(u32 val) {
-    *(u32*)((u8*)this + 0x8) = val;
+    this->unk8 = val;
 }
 
 extern "C" void func_8009E120(u32, u32);
@@ -335,7 +335,7 @@ void cf::CfGameManager::func_8008127C(u32 self) {
 }
 
 void cf::CfGameManager::func_80081284(u32 val) {
-    *(u32*)((u8*)this + 0x10) = val;
+    *(u32*)&this->unkC[4] = val;
 }
 
 extern "C" void func_8009E120(u32, u32);
@@ -344,7 +344,7 @@ void cf::CfGameManager::func_8008128C(u32 self) {
 }
 
 void cf::CfGameManager::func_80081294(u32 val) {
-    *(u32*)((u8*)this + 0xc) = val;
+    *(u32*)this->unkC = val;
 }
 
 extern "C" void func_8009E120(u32, u32);
@@ -353,7 +353,7 @@ void cf::CfGameManager::func_8008129C(u32 self) {
 }
 
 void cf::CfGameManager::func_800812A4(u32 val) {
-    *(u32*)((u8*)this + 0x14) = val;
+    *(u32*)&this->unkC[8] = val;
 }
 
 extern "C" void func_8009E120(u32, u32);
@@ -362,23 +362,23 @@ void cf::CfGameManager::func_800812AC(u32 self) {
 }
 
 u16 cf::CfGameManager::func_800812B4() {
-    return *(u16*)((u8*)this + 0xe);
+    return *(u16*)&this->unkC[2];
 }
 
 u16 cf::CfGameManager::func_800812BC() {
-    return *(u16*)((u8*)this + 0x10);
+    return *(u16*)&this->unkC[4];
 }
 
 u16 cf::CfGameManager::func_800812C4() {
-    return *(u16*)((u8*)this + 0x12);
+    return *(u16*)&this->unkC[6];
 }
 
 u16 cf::CfGameManager::func_800812CC() {
-    return *(u16*)((u8*)this + 0x14);
+    return *(u16*)&this->unkC[8];
 }
 
 u16 cf::CfGameManager::func_800812D4() {
-    return *(u16*)((u8*)this + 0x16);
+    return *(u16*)&this->unkC[10];
 }
 
 extern "C" void func_8009E120(u32, u32);
@@ -387,51 +387,51 @@ void cf::CfGameManager::func_800812DC(u32 self) {
 }
 
 u16 cf::CfGameManager::func_800812E4() {
-    return *(u16*)((u8*)this + 0xc);
+    return *(u16*)this->unkC;
 }
 
 void cf::CfGameManager::func_800812EC(u16 val) {
-    *(u16*)((u8*)this + 0x24) = val;
+    *(u16*)&this->unkC[24] = val;
 }
 
 void cf::CfGameManager::func_800812F4(u32 val) {
-    *(u32*)((u8*)this + 0x0) = val;
+    this->unk0 = val;
 }
 
 void cf::CfGameManager::func_80081330(u32 val) {
-    *(u32*)((u8*)this + 0x18) = val;
+    *(u32*)&this->unkC[12] = val;
 }
 
 void cf::CfGameManager::func_80081338(u16 val) {
-    *(u16*)((u8*)this + 0x20) = val;
+    *(u16*)&this->unkC[20] = val;
 }
 
 void cf::CfGameManager::func_80081340(u16 val) {
-    *(u16*)((u8*)this + 0x22) = val;
+    *(u16*)&this->unkC[22] = val;
 }
 
 void cf::CfGameManager::func_80081348(u16 val) {
-    *(u16*)((u8*)this + 0x1c) = val;
+    *(u16*)&this->unkC[16] = val;
 }
 
 void cf::CfGameManager::func_80081350(u16 val) {
-    *(u16*)((u8*)this + 0x1e) = val;
+    *(u16*)&this->unkC[18] = val;
 }
 
 u32 cf::CfGameManager::func_800817A8() {
-    return *(u32*)((u8*)this + 0x8);
+    return this->unk8;
 }
 
 void cf::CfGameManager::func_80081874(u32 val) {
-    *(u32*)((u8*)this + 0x64) = val;
+    *(u32*)&this->unk29[59] = val;
 }
 
 void cf::CfGameManager::func_80081988(u32 val) {
-    *(u32*)((u8*)this + 0xa8) = val;
+    this->unkA8 = val;
 }
 
 void cf::CfGameManager::func_80081CB0(u16 val) {
-    *(u16*)((u8*)this + 0x8c) = val;
+    *(u16*)&this->unk8C = val;
 }
 
 extern "C" void func_8009CF8C(u32);
@@ -455,7 +455,7 @@ void cf::CfGameManager::func_80082694(u32 self) {
 }
 
 u32 cf::CfGameManager::func_80082768() {
-    return *(u32*)((u8*)this + 0x48);
+    return *(u32*)&this->unk29[31];
 }
 
 s16 cf::CfGameManager::func_80083290() {
@@ -483,7 +483,7 @@ float cf::CfObject::CfObject_UnkVirtualFunc56() {
 }
 
 u32 cf::CfGameManager::func_80087424() {
-    return *(u32*)((u8*)this + 0x8);
+    return this->unk8;
 }
 
 extern u32 lbl_eu_80663E24;
@@ -492,15 +492,15 @@ u32 cf::CfGameManager::func_8007CBC8() {
 }
 
 u32 cf::CfGameManager::func_8007EEF8() {
-    return *(u32*)((u8*)this + 0x0) >> 20;
+    return this->unk0 >> 20;
 }
 
 void* cf::CfGameManager::func_8007F8D0() {
-    return (u8*)*(u32**)((u8*)this + 0x0) + 0x8;
+    return reinterpret_cast<u8*>(reinterpret_cast<u32*>(this->unk0)) + 0x8;
 }
 
 void cf::CfGameManager::func_8007F8F4(void* src) {
-    *(u32*)((u8*)this + 0x0) = *(u32*)((u8*)src + 0x4);
+    this->unk0 = *(u32*)((const u8*)src + 0x4);
 }
 
 extern void __fill_mem(void*, int, int);
@@ -557,7 +557,7 @@ void* cf::CfGameManager::func_800873C8() {
 }
 
 void cf::CfGameManager::func_8008743C() {
-    *(u32*)((u8*)this + 0x8) = 0;
+    this->unk8 = 0;
 }
 
 void cf::CActorParam::CActorParam_UnkVirtualFunc89(u32 val) {

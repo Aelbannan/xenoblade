@@ -41,6 +41,8 @@ namespace cf {
 
         //0x0: vtable
         //0x0-45BC: CfObjectActor
+        //0x0: vtable
+        //0x0-45BC: CfObjectActor
         u8 unk45BC[0x4];
     CfObjectPc();
     void CActorParam_UnkVirtualFunc166();
@@ -60,14 +62,3 @@ namespace cf {
     void func_800C1220();
     };
 }
-
-namespace cf {
-
-class CfObjectPoint {
-public:
-    void func_800C1244();
-
-    // TODO: add fields
-};
-} // namespace cf
-

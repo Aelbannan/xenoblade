@@ -22,7 +22,7 @@ namespace cf {
         u8 unk38[4];
         u16 unk3C;
         u8 unk3E;
-        u8 unk3F; //padding?
+        u8 unk3F;
         u16 unk40;
         u8 unk42;
         u8 unk43;
@@ -44,19 +44,18 @@ namespace cf {
         u16 unk68;
         u16 unk6A;
         u8 unk6C[5];
-        u8 unk71; //filler?
+        u8 unk71;
         u16 unk72;
         u16 unk74;
-        u8 unk76; //filler?
+        u8 unk76;
         u8 unk77;
         u32 unk78;
         float unk7C;
         float unk80;
-        //0x84: vtable
 
         CAttackParam();
 
-        virtual void CAttackParam_UnkVirtualFunc1(){ //0x8
+        virtual void CAttackParam_UnkVirtualFunc1(){
             unk0 = 0;
             unk20 = 0;
             unk24 = 0;
@@ -98,10 +97,9 @@ namespace cf {
             std::memset(unk38, 0, sizeof(unk38));
             std::memset(unk6C, 0, sizeof(unk6C));
         }
-        virtual u8 CAttackParam_UnkVirtualFunc2(); //0xC
-        virtual void CAttackParam_UnkVirtualFunc3(u8 r4); //0x10
-        virtual void CAttackParam_UnkVirtualFunc4(); //0x14
-
+        virtual u8 CAttackParam_UnkVirtualFunc2();
+        virtual void CAttackParam_UnkVirtualFunc3(u8 r4);
+        virtual void CAttackParam_UnkVirtualFunc4();
     };
 
     struct _sAttackSet {
@@ -120,8 +118,6 @@ namespace cf {
     //size: 0x8C
     class CArtsParam : public CAttackParam {
     public:
-        //0x0: vtable
-        //0x0-0x88: CAttackParam
         UNKTYPE* unk88;
 
         CArtsParam();
@@ -132,13 +128,17 @@ namespace cf {
 
     //size: 0x38
     struct _sArtsSet {
-        u16 unk0;
-        u8 unk2[2];
-        u8 unk4[0x30];
-        //0x34: vtable
+        union {
+            struct {
+                u16 unk0;
+                u8 unk2[2];
+                u8 unk4[0x30];
+            };
+            u16 mArtsSlotData[24];
+        };
 
         _sArtsSet();
-        virtual void _sArtsSet_UnkVirtualFunc1(){ //0x8
+        virtual void _sArtsSet_UnkVirtualFunc1(){
             unk0 = 0;
             std::memset(unk4, 0, sizeof(unk4));
         }
@@ -148,11 +148,10 @@ namespace cf {
     class CArtsSet : _sArtsSet {
     public:
         CArtsSet(){}
-        virtual void CArtsSet_UnkVirtualFunc1(); //0x8
+        virtual void CArtsSet_UnkVirtualFunc1();
 
         //0x0: vtable
         //0x0-38: _sArtsSet
         CArtsParam mArtsParams[24]; //0x38
     };
 };
-

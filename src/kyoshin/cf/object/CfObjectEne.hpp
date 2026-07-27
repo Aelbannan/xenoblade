@@ -49,17 +49,6 @@ public:
     void CfObject_UnkVirtualFunc14();
 };
 } // namespace cf
-
-namespace cf {
-
-class CAIAction {
-public:
-    virtual ~CAIAction();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CActorParam {
@@ -156,17 +145,6 @@ public:
     void CActorParam_UnkVirtualFunc15();
 };
 } // namespace cf
-
-namespace cf {
-
-class CActorState {
-public:
-    void CActorState_UnkVirtualFunc1();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CBattleState {

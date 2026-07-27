@@ -4,9 +4,15 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CPartsChange.hpp"
+
+using cf::CfPartyInfo;
+using cf::CfPartyInfoSortKey;
+using cf::CfActorAccessors;
+using cf::CfObjectPcExt;
+
 void __ct__cf_CPartsChange(){}
 
-void cf::CPartsChange::~CPartsChange() {}
+cf::CPartsChange::~CPartsChange() {}
 
 void func_80192E80(){}
 
@@ -38,17 +44,17 @@ void func_80193810(){}
 
 void func_8019397C(){}
 
-void func_80193A88(void* obj, int enable) { unsigned short* flag = (unsigned short*)((unsigned char*)obj + 0x1e); if (enable) *flag |= 0x400; else *flag &= ~0x400; }
+void func_80193A88(CfActorAccessors* obj, int enable) { if (enable) obj->mFlags1E |= 0x400; else obj->mFlags1E &= ~0x400; }
 
 void func_80193AB0(){}
 
-u32 func_80193B04(void* self) { return *(u32*)((u8*)self + 0x94); }
+u32 func_80193B04(CfActorAccessors* self) { return self->mField94; }
 
 void func_80193B0C(){}
 
 void func_80193C74(){}
 
-u16 func_80193CC8(void* self) { return *(u16*)((u8*)self + 0x9E); }
+u16 func_80193CC8(CfActorAccessors* self) { return self->mField9E; }
 
 void func_80193CD0(){}
 
@@ -68,7 +74,7 @@ void func_80194D5C(){}
 
 void func_8019514C(){}
 
-u32 func_80195284(void* self) { return (*(u16*)((u8*)self + 30) >> 10) & 0x1u; }
+u32 func_80195284(CfActorAccessors* self) { return (self->mFlags1E >> 10) & 0x1u; }
 
 void func_80195290(){}
 
@@ -78,21 +84,21 @@ void func_80195384(){}
 
 void func_801953E8(){}
 
-u32 func_80195AC0(void* self) { return (*(u16*)((u8*)self + 30) >> 3) & 0x1u; }
+u32 func_80195AC0(CfActorAccessors* self) { return (self->mFlags1E >> 3) & 0x1u; }
 
-void func_80195ACC(void* self, float val) { *(float*)((u8*)self + 0x8c) = val; }
+void func_80195ACC(CfActorAccessors* self, float val) { self->mField8C = val; }
 
-void func_80195AD4(void* self, u16 val) { *(u16*)((u8*)self + 0x45C4) = val; }
+void func_80195AD4(CfObjectPcExt* self, u16 val) { self->mField45C4 = val; }
 
-void func_80195ADC(void* self, u16 val) { *(u16*)((u8*)self + 0x45C8) = val; }
+void func_80195ADC(CfObjectPcExt* self, u16 val) { self->mField45C8 = val; }
 
-u16 func_80195AE4(void* self) { return *(u16*)((u8*)self + 0x45C6); }
+u16 func_80195AE4(CfObjectPcExt* self) { return self->mField45C6; }
 
-void* func_80195AEC(void* self) { return (void*)((u8*)self + 0x30); }
+void* func_80195AEC(CfActorAccessors* self) { return &self->mField30; }
 
-void* func_80195AF4(void* self) { return (void*)((u8*)self + 0x60c); }
+void* func_80195AF4(CfObjectPcExt* self) { return (void*)((u8*)self + 0x60c); }
 
-void func_80195AFC(void* self, u8 val) { ((u8*)self)[0x2D] = val; }
+void func_80195AFC(CfPartyInfo* self, u8 val) { self->field_2D = val; }
 
 void func_80195B04(){}
 
@@ -100,8 +106,8 @@ void func_80195BD4(){}
 
 void func_80195E5C(){}
 
-bool func_8019641C(const void* a, const void* b) {
-    return *(const float*)((const char*)a + 4) < *(const float*)((const char*)b + 4);
+bool func_8019641C(const CfPartyInfoSortKey* a, const CfPartyInfoSortKey* b) {
+    return a->sortKey < b->sortKey;
 }
 
 void func_80196434(){}

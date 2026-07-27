@@ -233,13 +233,15 @@ private:
     u16 mAdpcmLoopYn2[CHANNEL_MAX];       // at 0x8AC
 
     PlayerTrack mPlayerTracks[8]; // at 0xB78
-    
+
+public:
     struct MoveBlock {
         u32 limit; // at 0x0
         u32 count; // at 0x4
     };
     MoveBlock mMoveBlocks[8]; // at 0xD7C
 
+private:
     static u8 sLoadBuffer[LOAD_BUFFER_SIZE] ALIGN(32);
     static OSMutex sLoadBufferMutex;
 

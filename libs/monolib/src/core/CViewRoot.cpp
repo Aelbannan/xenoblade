@@ -228,12 +228,12 @@ void CViewRoot::func_80442B54(void* a, void* b, void* c) {
     index = *(u32*)&root->mPool0.mList;
     used = root->mPool0.mUsed;
     cap = (u32)root->mPool0.mCapacity;
-    base = (u32*)root->mPool0.mStartNodePtr;
-    sum = index + used;
-    slot = sum - (sum / cap) * cap;
-    p = (u32*)((u8*)base + (slot << 3));
-    p[0] = w0;
-    p[1] = w1;
+    {
+        PoolPair* pairBase = static_cast<PoolPair*>(root->mPool0.mStartNodePtr);
+        u32 pairSlot = (index + used) % cap;
+        pairBase[pairSlot].w0 = w0;
+        pairBase[pairSlot].w1 = w1;
+    }
     root->mPool0.mUsed = used + 1;
 
     root = lbl_eu_806655D0;
@@ -242,12 +242,12 @@ void CViewRoot::func_80442B54(void* a, void* b, void* c) {
     index = *(u32*)&root->mPool1.mList;
     used = root->mPool1.mUsed;
     cap = (u32)root->mPool1.mCapacity;
-    base = (u32*)root->mPool1.mStartNodePtr;
-    sum = index + used;
-    slot = sum - (sum / cap) * cap;
-    p = (u32*)((u8*)base + (slot << 3));
-    p[0] = w0;
-    p[1] = w1;
+    {
+        PoolPair* pairBase = static_cast<PoolPair*>(root->mPool1.mStartNodePtr);
+        u32 pairSlot = (index + used) % cap;
+        pairBase[pairSlot].w0 = w0;
+        pairBase[pairSlot].w1 = w1;
+    }
     root->mPool1.mUsed = used + 1;
 
     root = lbl_eu_806655D0;
@@ -256,23 +256,23 @@ void CViewRoot::func_80442B54(void* a, void* b, void* c) {
     index = *(u32*)&root->mPool2.mList;
     used = root->mPool2.mUsed;
     cap = (u32)root->mPool2.mCapacity;
-    base = (u32*)root->mPool2.mStartNodePtr;
-    sum = index + used;
-    slot = sum - (sum / cap) * cap;
-    p = (u32*)((u8*)base + (slot << 3));
-    p[0] = w0;
-    p[1] = w1;
+    {
+        PoolPair* pairBase = static_cast<PoolPair*>(root->mPool2.mStartNodePtr);
+        u32 pairSlot = (index + used) % cap;
+        pairBase[pairSlot].w0 = w0;
+        pairBase[pairSlot].w1 = w1;
+    }
     root->mPool2.mUsed = used + 1;
 
     func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0, 0);
 }
 
-static u32* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
-    u32 index = *(u32*)&pool->mList;
-    u32 cap = (u32)pool->mCapacity;
-    u32* base = (u32*)pool->mStartNodePtr;
-    u32 slot = (index + logicalIndex) % cap;
-    return (u32*)((u8*)base + slot * 8);
+struct PoolPair { u32 w0; u32 w1; };
+
+static PoolPair* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
+    PoolPair* base = static_cast<PoolPair*>(pool->mStartNodePtr);
+    u32 slot = (*(u32*)&pool->mList + logicalIndex) % (u32)pool->mCapacity;
+    return &base[slot];
 }
 
 void CViewRoot::func_80442C68() {
@@ -636,39 +636,30 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     goto create_clear_test;
 
 create_clear_loop:
-    *(u32*)((u8*)root->mViewHistory.mList + addrOffset) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0xC) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x18) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x24) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x30) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x3C) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x48) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    addrOffset += 0x60;
-    *(u32*)(clearRow + 0x54) = zero;
-
-    *(u32*)((u8*)root->mViewHistory.mList + addrOffset) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0xC) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x18) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x24) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x30) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x3C) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x48) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    addrOffset += 0x60;
-    *(u32*)(clearRow + 0x54) = zero;
+    {
+        _reslist_node<WORK_ID>* nodeBase = root->mViewHistory.mList;
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 0].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 1].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 2].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 3].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 4].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 5].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 6].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 7].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        addrOffset += 8 * sizeof(_reslist_node<WORK_ID>);
+    }
+    {
+        _reslist_node<WORK_ID>* nodeBase = root->mViewHistory.mList;
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 0].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 1].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 2].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 3].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 4].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 5].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 6].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        nodeBase[addrOffset / sizeof(_reslist_node<WORK_ID>) + 7].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
+        addrOffset += 8 * sizeof(_reslist_node<WORK_ID>);
+    }
     loopCount--;
 
 create_clear_test:

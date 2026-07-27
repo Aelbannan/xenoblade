@@ -2,21 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CQstLogInfo.hpp"
 
-u8 func_802296D0(void* self) { return ((u8*)self)[0x38]; }
+u8 func_802296D0(CQstLogInfo* self) { return self->mField38; }
 
+u8 func_802296D8(CQstLogInfo* self) { return self->mField39; }
 
-
-
-
-
-
-
-u8 func_802296D8(void* self) { return ((u8*)self)[0x39]; }
-
-
-
-void func_80229768(void* self, u16 val) { *(u16*)((u8*)self + 0x3A) = val; }
+void func_80229768(CQstLogInfo* self, u16 val) { self->mField3A = val; }
 
 
 void func_802297BC(){}
@@ -46,7 +38,7 @@ void func_8022AFF8(){}
 void CQstLogInfo::OnFileEvent() {}
 
 extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
-void func_80229600(void* self){
-    if (*(u8*)((u8*)self + 0x30) == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)((u8*)self + 0x20), 0, 0, 1);
+void func_80229600(CQstLogInfo* self){
+    if (self->mUnk30 == 0) return;
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(self->mUnk20, 0, 0, 1);
 }

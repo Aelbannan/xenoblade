@@ -23,6 +23,6 @@ extern "C" void InvalidateWaveData__Q44nw4r3snd6detail9SeqPlayerFPCvPCv(void) {
 }
 extern "C" void OnUpdateVoiceSoundThread__Q54nw4r3snd6detail11SoundThread14PlayerCallbackFv(void) {
 }
-extern "C" u8 IsPause__Q44nw4r3snd6detail9SeqPlayerCFv(void* self) { return ((u8*)self)[0xee]; }
-extern "C" u8 IsStarted__Q44nw4r3snd6detail9SeqPlayerCFv(void* self) { return ((u8*)self)[0xed]; }
-extern "C" u8 IsActive__Q44nw4r3snd6detail9SeqPlayerCFv(void* self) { return ((u8*)self)[0xec]; }
+extern "C" u8 IsPause__Q44nw4r3snd6detail9SeqPlayerCFv(void* self) { return static_cast<SeqPlayer*>(self)->IsPause(); }
+extern "C" u8 IsStarted__Q44nw4r3snd6detail9SeqPlayerCFv(void* self) { return static_cast<SeqPlayer*>(self)->IsStarted(); }
+extern "C" u8 IsActive__Q44nw4r3snd6detail9SeqPlayerCFv(void* self) { return static_cast<SeqPlayer*>(self)->IsActive(); }

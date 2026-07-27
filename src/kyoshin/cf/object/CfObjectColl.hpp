@@ -1,22 +1,6 @@
 #pragma once
 
 #include <types.h>
-
-namespace cf {
-
-class CfObjectColl {
-public:
-    virtual ~CfObjectColl();
-    void func_800AB3EC();
-    void func_800AB498();
-    void func_800AB57C();
-    void func_800AB798();
-    void func_800AB7A8();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CfObject {
@@ -62,14 +46,3 @@ public:
     void CfObject_UnkVirtualFunc5();
 };
 } // namespace cf
-
-namespace cf {
-
-class CfObjectPoint {
-public:
-    void func_800AC604();
-
-    // TODO: add fields
-};
-} // namespace cf
-

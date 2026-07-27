@@ -200,7 +200,7 @@ inline void vmInitDataLink(SBHeader* data, VMArg* pEntry){
         }
         case VM_TYPE_PLUGIN: {
             void* sectionData = getSectionEntriesPtr(data->pluginImportsOfs);
-            PluginImportEntry* pluginImport = &((PluginImportEntry*)sectionData)[pEntry->value.uintVal];
+            PluginImportEntry* pluginImport = (PluginImportEntry*)sectionData + pEntry->value.uintVal;
             pEntry->unk2 = pluginImport->unk0;
             pEntry->value.uintVal = pluginImport->unk2;
             break;
@@ -212,7 +212,7 @@ inline void vmInitDataLink(SBHeader* data, VMArg* pEntry){
                 pEntry->value.uintVal = index; //???
             } else {
                 void* sectionData = getSectionEntriesPtr(data->functionImportsOfs);
-                FunctionImportEntry* funcImport = &((FunctionImportEntry*)sectionData)[index];
+                FunctionImportEntry* funcImport = (FunctionImportEntry*)sectionData + index;
                 pEntry->unk2 = funcImport->unk0;
                 pEntry->value.uintVal = funcImport->unk2;
             }
@@ -260,46 +260,49 @@ BOOL vmLink(u8* pData){
 
     //Load plugin imports
     PluginImportEntry* pluginImportPtr = (PluginImportEntry*)getSectionEntriesPtr(header->pluginImportsOfs);
+    PluginImportEntry* pluginImportEnd = pluginImportPtr + header->pluginImportsOfs->entries;
 
-    for(int i = 0; i < header->pluginImportsOfs->entries; i++){
+    for(; pluginImportPtr < pluginImportEnd; pluginImportPtr++){
         //Search for the plugin entry
-        const char* string1 = vmIdPoolGet(header, pluginImportPtr[i].unk0);
-        const char* string2 = vmIdPoolGet(header, pluginImportPtr[i].unk2);
+        const char* string1 = vmIdPoolGet(header, pluginImportPtr->unk0);
+        const char* string2 = vmIdPoolGet(header, pluginImportPtr->unk2);
         u32 index = vmPluginSearch(string1, string2);
 
         if(index == -1) return FALSE;
         
-        pluginImportPtr[i].unk0 = (index >> 16) & 0xFFFF;
-        pluginImportPtr[i].unk2 = index & 0xFFFF;
+        pluginImportPtr->unk0 = (index >> 16) & 0xFFFF;
+        pluginImportPtr->unk2 = index & 0xFFFF;
     }
 
     //Load OC imports
     OCImportEntry* ocImportEntryPtr = (OCImportEntry*)getSectionEntriesPtr(header->ocImportsOfs);
+    OCImportEntry* ocImportEnd = ocImportEntryPtr + header->ocImportsOfs->entries;
 
-    for(int i = 0; i < header->ocImportsOfs->entries; i++){
+    for(; ocImportEntryPtr < ocImportEnd; ocImportEntryPtr++){
         //Search for the OC entry
-        const char* string = vmIdPoolGet(header, ocImportEntryPtr[i].unk0);
+        const char* string = vmIdPoolGet(header, ocImportEntryPtr->unk0);
         u32 index = vmOCSearch(string);
 
         if(index == -1) return FALSE;
 
-        ocImportEntryPtr[i].unk0 = (u16)index;
+        ocImportEntryPtr->unk0 = (u16)index;
     }
 
     //Load function imports
     FunctionImportEntry* funcImportEntryPtr = (FunctionImportEntry*)getSectionEntriesPtr(header->functionImportsOfs);
+    FunctionImportEntry* funcImportEnd = funcImportEntryPtr + header->functionImportsOfs->entries;
 
-    for(int i = 0; i < header->functionImportsOfs->entries; i++){
-        const char* packageName = vmIdPoolGet(header, funcImportEntryPtr[i].unk0);
-        const char* funcName = vmIdPoolGet(header, funcImportEntryPtr[i].unk2);
+    for(; funcImportEntryPtr < funcImportEnd; funcImportEntryPtr++){
+        const char* packageName = vmIdPoolGet(header, funcImportEntryPtr->unk0);
+        const char* funcName = vmIdPoolGet(header, funcImportEntryPtr->unk2);
         //Search for the function import in the loaded files
         u32 index = vmFuncFarSearch(packageName, funcName);
 
         //If no matching function was found, return
         if(index == -1) return FALSE;
 
-        funcImportEntryPtr[i].unk0 = (index >> 16) & 0xFFFF;
-        funcImportEntryPtr[i].unk2 = index & 0xFFFF;
+        funcImportEntryPtr->unk0 = (index >> 16) & 0xFFFF;
+        funcImportEntryPtr->unk2 = index & 0xFFFF;
     }
 
     //Load static var data
@@ -482,12 +485,12 @@ BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs){
 but doing it normally doesn't match. There has to be a better way, right?? */
 
 inline u8 vmArgCntGet(VMThread* pThread){
-    return ((u32*)&pThread->stack[pThread->reg.sp])[-1]; //???
+    return pThread->stack[pThread->reg.sp - 1].value.uintVal;
 }
 
 //Not official
 inline void vmArgCntSet(VMThread* pThread, u32 value){
-    ((u32*)&pThread->stack[pThread->reg.sp])[-1] = value; //???
+    pThread->stack[pThread->reg.sp - 1].value.uintVal = value;
 }
 
 VMArg* vmArgPtrGet(VMThread* pThread, int r4){
@@ -881,14 +884,13 @@ inline void* poolEntryGet(volatile SBSectionHeader* sectionHeader, u32 no){
 
 inline void* poolEntryOfsGet(SBSectionHeader* sectionHeader, u32 no){
     u8* entriesPtr = (u8*)sectionHeader + sectionHeader->entriesOffset;
-    u32* uintPtr = (u32*)entriesPtr;
-    return &uintPtr[no];
+    return entriesPtr + sectionHeader->offsetSize * no;
 }
 
 inline u32 poolEntryGetU32(SBSectionHeader* sectionHeader, u32 no){
     u8* entriesPtr = (u8*)sectionHeader + sectionHeader->entriesOffset;
-    u32* uintPtr = (u32*)entriesPtr;
-    return uintPtr[no];
+    u32 entryOffset = sectionHeader->offsetSize * no;
+    return *(u32*)(entriesPtr + entryOffset);
 }
 
 inline const char* vmIdPoolGet(SBHeader* data, u32 no){
@@ -1844,7 +1846,7 @@ int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6){
         }
 
         pThread->reg.sp = puVar8 + iVar10;
-        ((u32*)&pThread->stack[puVar8 + iVar10])[-1]  = (poolEntry->unk2 & 0xFF) | (uVar11 & 0xFF00);
+        pThread->stack[puVar8 + iVar10 - 1].value.uintVal = (poolEntry->unk2 & 0xFF) | (uVar11 & 0xFF00);
     }
 
     VMArg* puVar4 = vmStackNextGet(pThread);

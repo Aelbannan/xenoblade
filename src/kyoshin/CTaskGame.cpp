@@ -106,9 +106,9 @@ void CTaskGame_stub_800419BC(){}
 void CTaskGame_stub_80041AFC(){}
 void CTaskGame_stub_800426A4() {}
 int CTaskGame_checkLblUnk68Bit0() {
-    extern void* lbl_eu_80663D18;
-    if (lbl_eu_80663D18 == 0) return 1;
-    return *(reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(lbl_eu_80663D18) + 0x68)) & 1;
+    extern CTaskGame* lbl_eu_80663D18;
+    if (lbl_eu_80663D18 == nullptr) return 1;
+    return lbl_eu_80663D18->unk68 & 1;
 }
 void CTaskGame_stub_80042710() {}
 int lbl_eu_80663D1C;
@@ -121,39 +121,90 @@ int CTaskGame_stubReturnZero_80043024(void* self) { return 0x0; }
 void CTaskGame_stub_80043310(){}
 void CTaskGame_stub_8004335C(){}
 bool CTaskGame_stubReturnTrue_800433A8() { return true; }
-void CTaskGame_setFlag_200(void* self, bool enabled, unsigned int mode) { unsigned int& flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x68); flags &= ~0x100u; if (enabled) flags |= 0x200u; else flags &= ~0x200u; if (!enabled) { if (mode == 1u) flags |= 0x20000u; else if (mode == 2u) flags |= 0x40000u; } }
-void CTaskGame_setFlag_400(void* self, int enabled, unsigned int mode, unsigned int value) {
-    volatile unsigned int* flags_ptr = reinterpret_cast<volatile unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x68);
-    unsigned int flags = *flags_ptr;
+void CTaskGame_setFlag_200(CTaskGame* self, bool enabled, unsigned int mode) {
+    unsigned int flags = self->unk68;
     flags &= ~0x100u;
-    *flags_ptr = flags;
+    if (enabled) flags |= 0x200u;
+    else flags &= ~0x200u;
+    if (!enabled) {
+        if (mode == 1u) flags |= 0x20000u;
+        else if (mode == 2u) flags |= 0x40000u;
+    }
+    self->unk68 = flags;
+}
+void CTaskGame_setFlag_400(CTaskGame* self, int enabled, unsigned int mode, unsigned int value) {
+    unsigned int flags = self->unk68;
+    flags &= ~0x100u;
+    self->unk68 = flags;
     if (enabled != 0) {
         flags |= 0x400u;
-        *flags_ptr = flags;
+        self->unk68 = flags;
     } else {
         flags &= ~0x400u;
-        *flags_ptr = flags;
+        self->unk68 = flags;
     }
     if (enabled != 0)
         return;
     if (mode == 0) {
-        flags = *flags_ptr;
+        flags = self->unk68;
         flags |= 0x4000u;
-        *flags_ptr = flags;
+        self->unk68 = flags;
         return;
     }
     if (mode != 5 && mode != 3)
         return;
-    flags = *flags_ptr;
-    *reinterpret_cast<volatile unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0xfc) = value;
+    self->unkFC = value;
+    flags = self->unk68;
     flags |= 0x8000u;
-    *flags_ptr = flags;
+    self->unk68 = flags;
 }
-void CTaskGame_setFlag_80000(void* this_, int arg1, int arg2, unsigned int arg3) { unsigned int flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68); flags &= ~0x00000100u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; if (arg1 != 0) { flags |= 0x00080000u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; } else { flags &= ~0x00080000u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; } *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0xfc) = arg3; }
-void CTaskGame_setFlag_800(unsigned char* this_, int enabled, int unused, unsigned int value) { unsigned int& flags = *reinterpret_cast<unsigned int*>(this_ + 0x68); flags &= 0xFFFFFEFFu; if (enabled) flags |= 0x800u; else flags &= 0xFFFFF7FFu; *reinterpret_cast<unsigned int*>(this_ + 0xFC) = value; }
-void CTaskGame_setFlag_100000(unsigned char* self, int enabled, int unused, unsigned int value) { unsigned int flags = *(unsigned int*)(self + 0x68); flags &= ~0x00000100u; *(unsigned int*)(self + 0x68) = flags; if (enabled != 0) { flags |= 0x00100000u; *(unsigned int*)(self + 0x68) = flags; } else { flags &= ~0x00100000u; *(unsigned int*)(self + 0x68) = flags; } *(unsigned int*)(self + 0xfc) = value; }
+void CTaskGame_setFlag_80000(CTaskGame* this_, int arg1, int arg2, unsigned int arg3) {
+    unsigned int flags = this_->unk68;
+    flags &= ~0x00000100u;
+    this_->unk68 = flags;
+    if (arg1 != 0) {
+        flags |= 0x00080000u;
+        this_->unk68 = flags;
+    } else {
+        flags &= ~0x00080000u;
+        this_->unk68 = flags;
+    }
+    this_->unkFC = arg3;
+}
+void CTaskGame_setFlag_800(CTaskGame* this_, int enabled, int unused, unsigned int value) {
+    unsigned int flags = this_->unk68;
+    flags &= 0xFFFFFEFFu;
+    if (enabled) flags |= 0x800u;
+    else flags &= 0xFFFFF7FFu;
+    this_->unk68 = flags;
+    this_->unkFC = value;
+}
+void CTaskGame_setFlag_100000(CTaskGame* self, int enabled, int unused, unsigned int value) {
+    unsigned int flags = self->unk68;
+    flags &= ~0x00000100u;
+    self->unk68 = flags;
+    if (enabled != 0) {
+        flags |= 0x00100000u;
+        self->unk68 = flags;
+    } else {
+        flags &= ~0x00100000u;
+        self->unk68 = flags;
+    }
+    self->unkFC = value;
+}
 void CTaskGame_stub_8004350C(){}
-void CTaskGame_setFlag_1000000(void* self, int enabled) { volatile unsigned int* flags = reinterpret_cast<volatile unsigned int*>(static_cast<unsigned char*>(self) + 0x68); unsigned int value = *flags; value &= ~0x00000100u; *flags = value; if (enabled != 0) { value |= 0x01000000u; *flags = value; } else { value &= ~0x01000000u; *flags = value; } }
+void CTaskGame_setFlag_1000000(CTaskGame* self, int enabled) {
+    unsigned int value = self->unk68;
+    value &= ~0x00000100u;
+    self->unk68 = value;
+    if (enabled != 0) {
+        value |= 0x01000000u;
+        self->unk68 = value;
+    } else {
+        value &= ~0x01000000u;
+        self->unk68 = value;
+    }
+}
 void CTaskGame_stub_80043564(){}
 void func_80039364__5CGameFv();
 
@@ -162,53 +213,72 @@ void CTaskGame_callCGameFunc() {
 }
 s32 CTaskGame_stubReturnZero_800436A8();
 s32 CTaskGame::callStubReturnZero_800436A8() {
-    extern void* lbl_eu_80663D18;
-    if (lbl_eu_80663D18 == NULL) {
+    extern CTaskGame* lbl_eu_80663D18;
+    if (lbl_eu_80663D18 == nullptr) {
         return 0;
     }
     return CTaskGame_stubReturnZero_800436A8();
 }
-void CTaskGame_setFlag_1000(void* self, int value) { unsigned int& flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x68); if ((flags & 0x2000) != 0 && value == 1) return; void* object = *reinterpret_cast<void**>(reinterpret_cast<unsigned char*>(self) + 0xf0); *reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(self) + 0xf4) = value; flags |= 0x1000; if (object != 0) *reinterpret_cast<unsigned char*>(reinterpret_cast<unsigned char*>(object) + 0xea) = 1; }
-void CTaskGame_setF8(void* obj, int val) {
-    *(int*)((char*)obj + 0xf8) = val;
+// Object pointed to by CTaskGame::unkF0 has a flag byte at offset 0xEA
+struct CTaskGameFlag1000Object {
+    u8 gap0[0xEA];
+    volatile u8 flagEA;
+};
+
+void CTaskGame_setFlag_1000(CTaskGame* self, int value) {
+    unsigned int flags = self->unk68;
+    if ((flags & 0x2000) != 0 && value == 1) return;
+    void* object = reinterpret_cast<void*>(self->unkF0);
+    self->unkF4 = static_cast<u32>(value);
+    flags |= 0x1000;
+    self->unk68 = flags;
+    if (object != nullptr) {
+        static_cast<CTaskGameFlag1000Object*>(object)->flagEA = 1;
+    }
+}
+void CTaskGame_setF8(CTaskGame* obj, int val) {
+    obj->unkF8 = val;
 }
 int CTaskGame_checkUnkD8() {
-    extern void* lbl_eu_80663D18;
+    extern CTaskGame* lbl_eu_80663D18;
     extern int func_80459AA4__7CLibCriFv(unsigned int arg);
-    if (lbl_eu_80663D18 == 0) return 0;
-    return func_80459AA4__7CLibCriFv(*(reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(lbl_eu_80663D18) + 0xd8)));
+    if (lbl_eu_80663D18 == nullptr) return 0;
+    return func_80459AA4__7CLibCriFv(static_cast<unsigned int>(lbl_eu_80663D18->unkD8));
 }
 bool CTaskGame_checkUnkD8NotNegOne() {
-    extern void* lbl_eu_80663D18;
-    if (lbl_eu_80663D18 == 0) return false;
-    unsigned int value = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(lbl_eu_80663D18) + 0xd8);
+    extern CTaskGame* lbl_eu_80663D18;
+    if (lbl_eu_80663D18 == nullptr) return false;
+    unsigned int value = static_cast<unsigned int>(lbl_eu_80663D18->unkD8);
     return value != 0xffffffffu;
 }
 u32 CTaskGame_readU32FromPtr(void *ptr) { return *(u32 *)ptr; }
 void Tail__8CProcessFv() {}
 void __dt__9CTaskGameFv(CTaskGame*);
 void CTaskGame_thunk_IWorkEvent_dtor(void *self) {
-    __dt__9CTaskGameFv(reinterpret_cast<CTaskGame*>((char*)self - 0x54));
+    __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IWorkEvent*>(self)));
 }
 void cbRenderBefore__9CTaskGameFv(void*);
-void CTaskGame_thunk_IScnRender_cbRenderBefore(void* self) { cbRenderBefore__9CTaskGameFv((void*)((char*)self - 0x58)); }
+void CTaskGame_thunk_IScnRender_cbRenderBefore(void* self) { cbRenderBefore__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IScnRender*>(self))); }
 void CTaskGame_thunk_IScnRender_dtor(void* p) {
-    p = (char*)p - 0x58;
-    __dt__9CTaskGameFv((CTaskGame*)p);
+    __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IScnRender*>(p)));
 }
-bool CTaskGame_thunk_IGameException_gameExceptionCB(void* ptr) { return ((bool(*)(char*))CTaskGame_stubReturnTrue_800433A8)((char*)ptr - 0x5c); }
+bool CTaskGame_thunk_IGameException_gameExceptionCB(void* ptr) { return CTaskGame_stubReturnTrue_800433A8(); }
 void CTaskGame_thunk_IGameException_dtor(void* p) {
-    __dt__9CTaskGameFv((CTaskGame*)((char*)p - 0x5c));
+    __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IGameException*>(p)));
 }
-bool CTaskGame_thunk_ITitleMenu_vfunc(void* obj) { return ((bool (*)(void*))CTaskGame_setFlag_1000)((void*)((char*)obj - 0x60)); }
+bool CTaskGame_thunk_ITitleMenu_vfunc(void* obj) {
+    CTaskGame* thiz = static_cast<CTaskGame*>(static_cast<ITitleMenu*>(obj));
+    return ((bool (*)(void*))CTaskGame_setFlag_1000)(thiz);
+}
 void CTaskGame_thunk_ITitleMenu_dtor(void* p) {
-    return __dt__9CTaskGameFv((CTaskGame*)((char*)p - 0x60));
+    __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<ITitleMenu*>(p)));
 }
 bool CTaskGame_thunk_IErrMesWinSel_vfunc(void* p) {
-    return ((bool(*)(char*))CTaskGame_setF8)((char*)p - 0x64);
+    CTaskGame* thiz = static_cast<CTaskGame*>(static_cast<IErrMesWinSel*>(p));
+    return ((bool(*)(char*))CTaskGame_setF8)(reinterpret_cast<char*>(thiz));
 }
 void CTaskGame_thunk_IErrMesWinSel_dtor(void* p) {
-    __dt__9CTaskGameFv((CTaskGame*)((char*)p - 0x64));
+    __dt__9CTaskGameFv(static_cast<CTaskGame*>(static_cast<IErrMesWinSel*>(p)));
 }
 
 void CTaskGame::Term() {}
@@ -264,11 +334,9 @@ void CTaskGame_stub_80043CD8(){}
 void CTaskGame_stub_80043D90(){}
 void CTaskGame_stub_80043E08(){}
 void CTaskGame_stub_80044070(){}
-char* CTaskGame_FixStr_append(char* r3_this, const char* r4_str) {
-    size_t len = strlen(r4_str);
-    strcat(r3_this, r4_str);
-    *(int*)(r3_this + 0x20) += (int)len;
-    return r3_this;
+char* CTaskGame_FixStr_append(ml::FixStr<32>* str, const char* r4_str) {
+    str->operator+=(r4_str);
+    return const_cast<char*>(str->c_str());
 }
 
 void func_8004312C(); void Draw__9CTaskGameFv() {

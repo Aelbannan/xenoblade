@@ -5,7 +5,9 @@
 
 #include "kyoshin/code_800B06A4.hpp"
 // Forward declarations for functions called from wrappers
-void* func_800B07E8();
+// func_800B07E8 is declared as UnkClass_805764CC::func_800B07E8() in the header.
+// Provide an alias for unqualified calls (sub_mainReset, sub_dispatchInit_*).
+UnkClass_805764CC* func_800B07E8();
 u32 func_800AA2BC(u32 a, u32 b);
 
 void gfloat_initStore(float a){
@@ -47,7 +49,6 @@ void __ct__reslist_cf_TboxInfo(){}
 
 void __ct__reslist_cf_IFactoryEvent(){}
 
-void UnkClass_805764CC::~UnkClass_805764CC() const {}
 
 void init_0FA0(){}
 
@@ -378,43 +379,35 @@ void init_6AF4(){}
 void init_6BA0(void){}
 
 void* sub_getReslist_B28() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xB28;
+    return &UnkClass_805764CC::func_800B07E8()->field_0xB28;
 }
 
 void* sub_getReslist_B48() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xB48;
+    return &UnkClass_805764CC::func_800B07E8()->field_0xB48;
 }
 
 void* sub_getReslist_B68() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xB68;
+    return &UnkClass_805764CC::func_800B07E8()->field_0xB68;
 }
 
 void* sub_getReslist_B88() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xB88;
+    return &UnkClass_805764CC::func_800B07E8()->field_0xB88;
 }
 
 void* sub_getReslist_BE8() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xBE8;
+    return &UnkClass_805764CC::func_800B07E8()->field_0xBE8;
 }
 
 void* sub_getReslist_BC8() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xBC8;
+    return &UnkClass_805764CC::func_800B07E8()->field_0xBC8;
 }
 
 void* sub_getReslist_C08() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xC08;
+    return &UnkClass_805764CC::func_800B07E8()->field_0xC08;
 }
 
 void* sub_getReslist_C48() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xC48;
+    return &UnkClass_805764CC::func_800B07E8()->field_0xC48;
 }
 
 void init_6CC4(){}
@@ -507,43 +500,35 @@ int list_countNodes(void* self){
 }
 
 void sub_resetReslist_B28(void* self) {
-    void* ptr = func_800B07E8();
-    func_800B6D3C((void*)((u8*)ptr + 0xB28));
+    func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB28);
 }
 
 void sub_resetReslist_B48(void* self) {
-    void* ptr = func_800B07E8();
-    func_800B6D3C((void*)((u8*)ptr + 0xB48));
+    func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB48);
 }
 
 void sub_resetReslist_B68(void* self) {
-    void* ptr = func_800B07E8();
-    func_800B6D3C((void*)((u8*)ptr + 0xB68));
+    func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB68);
 }
 
 void* sub_resetReslist_B88(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xB88);
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB88);
 }
 
 void* sub_resetReslist_BE8(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xBE8);
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBE8);
 }
 
 void* sub_resetReslist_BC8(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xBC8);
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBC8);
 }
 
 void* sub_resetReslist_C08(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xC08);
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xC08);
 }
 
 void* sub_resetReslist_BA8(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xBA8);
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBA8);
 }
 
 void init_77E4(){}
@@ -552,7 +537,7 @@ void init_781C(){}
 
 void init_7854(){}
 
-void sub_pushToReslist_B88(cf::CfObject* param_1) { extern void* func_800B07E8(); extern void fwd_6DD0_body(void*, void*); void* ptr = func_800B07E8(); fwd_6DD0_body((char*)ptr + 0xb88, param_1); }
+void sub_pushToReslist_B88(cf::CfObject* param_1) { extern void fwd_6DD0_body(void*, void*); fwd_6DD0_body(&UnkClass_805764CC::func_800B07E8()->field_0xB88, param_1); }
 
 void init_78C4(){}
 
@@ -651,7 +636,7 @@ void init_957C(){}
 
 void obj_set_u32_734(UnkClass_805764CC* self, u32 val) { *(u32*)((u8*)self + 0x734) = val; }
 
-void obj_set_u8_73A(UnkClass_805764CC* self, u8 a, u8 b) { ((u8*)self)[1850] = a; ((u8*)self)[1851] = b; }
+void obj_set_u8_73A(UnkClass_805764CC* self, u8 a, u8 b) { self->field_0x20.unk0[0x71A] = a; self->field_0x20.unk0[0x71B] = b; }
 
 void obj_set_u32_720(UnkClass_805764CC* self, u32 val) { *(u32*)((u8*)self + 0x720) = val; }
 
@@ -680,10 +665,7 @@ void fwd_99EC_body(){}
 void init_9A30() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-namespace cf { struct TboxInfo { char _pad; }; }
-namespace cf { struct IFactoryEvent { char _pad; }; }
-template <typename T> class _reslist_base { public: ~_reslist_base(); };
-template <typename T> class reslist { public: ~reslist(); };
+// Definitions provided by include/kyoshin/code_800B06A4.hpp
 template <> _reslist_base<cf::TboxInfo>::~_reslist_base() {}
 template <> reslist<cf::TboxInfo>::~reslist() {}
 template <> _reslist_base<cf::IFactoryEvent*>::~_reslist_base() {}

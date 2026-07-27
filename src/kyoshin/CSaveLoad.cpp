@@ -2,17 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSaveLoad.hpp"
 
-u8 func_8028F664(void* self) { return ((u8*)self)[0x123]; }
-
-
-
-
-
-
-
-
-
+u8 func_8028F664(CSaveLoad* self) { return self->mField123; }
 
 void CSLCur::func_8028EA74() {}
 
@@ -36,22 +28,13 @@ void func_8028EC28(){}
 
 void func_8028EC74(){}
 
-void func_8028ED0C(void* r3, int r4) {
-    struct InitData {
-        int field0;
-        int field4;
-        int field8;
-        unsigned char field12;
-        unsigned char field13;
-        unsigned char field14;
-    };
-    InitData* data = static_cast<InitData*>(r3);
-    data->field0 = r4;
-    data->field4 = 0;
-    data->field8 = 0;
-    data->field12 = 0;
-    data->field13 = 0;
-    data->field14 = 1;
+void func_8028ED0C(CSLCur* data, int r4) {
+    data->mField0 = r4;
+    data->mField4 = 0;
+    data->mField8 = 0;
+    data->mFieldC = 0;
+    data->mFieldD = 0;
+    data->mFieldE = 1;
 }
 
 void __dt__8028ED30(){}
@@ -62,10 +45,10 @@ void func_8028EDF8(){}
 
 void func_8028EE68(){}
 
-void func_8028EEC0(void* self) {
-    *(u8*)((u8*)self + 0xC) = 1;
-    *(u8*)((u8*)self + 0xD) = 1;
-    *(u8*)((u8*)self + 0xE) = 0;
+void func_8028EEC0(CSLCur* self) {
+    self->mFieldC = 1;
+    self->mFieldD = 1;
+    self->mFieldE = 0;
 }
 
 void func_8028EED8(){}
@@ -107,7 +90,7 @@ void func_8028FC18(){}
 
 void func_8028FE50(){}
 
-u8 func_8028FEC4(void* self) { return ((u8*)self)[0x12A]; }
+u8 func_8028FEC4(CSaveLoad* self) { return self->mField12A; }
 
 void func_8028FECC(){}
 
@@ -127,10 +110,9 @@ void func_8029022C(){}
 
 void func_8029040C(){}
 
-void func_8029049C(void* p) {
-    unsigned char* base = reinterpret_cast<unsigned char*>(p);
-    if (base[0x11e] != 0) {
-        base[0x121] = 3;
+void func_8029049C(CSaveLoad* p) {
+    if (p->mField11E != 0) {
+        p->mField121 = 3;
     }
 }
 
@@ -187,5 +169,4 @@ void func_802929C8(){}
 
 void func_80292EC0(){}
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_802930E0(){}

@@ -376,7 +376,8 @@ namespace cf {
         float unk15E8;
         u32 unk15EC;
         u32 unk15F0;
-        u8 unk15F4[8];
+        u8 unk15F4[4];        // 0x15F4
+        float unk15F8;         // 0x15F8
         float unk15FC;
         u32 unk1600;
         u32 unk1604;

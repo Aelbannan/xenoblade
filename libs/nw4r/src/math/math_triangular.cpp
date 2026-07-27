@@ -88,9 +88,9 @@ void SinCosFIdx(register f32* pSin, register f32* pCos, register f32 fidx) {
         abs_fidx -= idxmax;
     }
 
-    *((u16*)pSin) = F32ToU16(abs_fidx);
+    u16 raw = F32ToU16(abs_fidx);
 
-    idx = *((u16*)pSin);
+    idx = raw;
     c_zero = 0; (or idxmax - idxmax bc hudsonsoft silly)
     idx = (idx & 0xFF) << 4;
     pTbl += idx;
@@ -113,7 +113,7 @@ void SinCosFIdx(register f32* pSin, register f32* pCos, register f32 fidx) {
     )
 
     /*
-    r = abs_fidx - U16ToF32(((u16*)pSin)[0]);
+    r = abs_fidx - U16ToF32(*reinterpret_cast<const u16*>(pSin));
 
     scval[0] = pTbl[0];
     scval[1] = pTbl[1];

@@ -88,8 +88,12 @@ namespace cf {
 
         //0x0: vtable
         //0x0-38: CObjectParam
-        u8 unk38_3[0x64 - 0x38];
-        u32 unk64;
-        u8 unk68[0x70 - 0x68];
+        u8 _pad38[0x4C - 0x38];   // 0x38-0x4B
+        u32 mField4C;             // 0x4C-0x4F (also read as float)
+        u8 _pad50[0x60 - 0x50];   // 0x50-0x5F
+        float mFloat60;            // 0x60-0x63
+        u32 unk64;                  // 0x64-0x67
+        u32 mFlags68;               // 0x68-0x6B
+        u8 _pad6C[0x70 - 0x6C];    // 0x6C-0x6F
     };
 }

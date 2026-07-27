@@ -7,17 +7,17 @@
 void __ct__CMenuArtsSet(){}
 
 unsigned long func_8022F530(){
-    unsigned long v = *(unsigned long*)(lbl_eu_80664740);
-    return !!v;
+    extern unsigned long lbl_eu_80664740;
+    return !!lbl_eu_80664740;
 }
 
 void func_8022F544(){}
 
 void cbRenderBefore__12CMenuArtsSetFv(void* self);
-void func_8022FA48(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuArtsSetFv)((char*)self - 0x58); }
+void func_8022FA48(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuArtsSetFv)(reinterpret_cast<char*>(self) - 0x58); }
 
 void __dt__12CMenuArtsSetFv(void* self);
-void func_8022FA50(void* self) { ((void(*)(void*))__dt__12CMenuArtsSetFv)((char*)self - 0x58); }
+void func_8022FA50(void* self) { ((void(*)(void*))__dt__12CMenuArtsSetFv)(reinterpret_cast<char*>(self) - 0x58); }
 
 void __ct__8022FA58(){}
 
@@ -93,9 +93,9 @@ void func_80231648(){}
 
 void func_802316F8(){}
 
-void func_80231848(void* self, void* src){
-    *(float*)((char*)self + 0x44) = *(float*)((char*)src + 0);
-    *(float*)((char*)self + 0x48) = *(float*)((char*)src + 4);
+void func_80231848(CMenuArtsSet* self, void* src){
+    self->mField44 = *static_cast<float*>(src);
+    self->mField48 = *static_cast<float*>(static_cast<char*>(src) + 4);
 }
 
 void func_8023185C(){}
@@ -175,7 +175,7 @@ void func_80233888(){}
 void func_8023390C(){}
 
 void func_80235F50(void* self);
-void func_80233968(void* self) { ((void(*)(void*))func_80235F50)((char*)self + 0x74); }
+void func_80233968(void* self) { ((void(*)(void*))func_80235F50)(reinterpret_cast<char*>(self) + 0x74); }
 
 void func_80233970(){}
 
@@ -201,9 +201,9 @@ void func_80234844(){}
 
 void func_80234928(){}
 
-void func_802349F8(void* self, u8 val) { ((u8*)self)[0x139] = val; }
+void func_802349F8(CMenuArtsSet* self, u8 val) { self->mField139 = val; }
 
-void func_80234A00(void* self) { ((void(*)(void*))func_80231320)((char*)self + 0x148); }
+void func_80234A00(void* self) { ((void(*)(void*))func_80231320)(reinterpret_cast<char*>(self) + 0x148); }
 
 void func_80234A08(){}
 

@@ -21,6 +21,8 @@ namespace cf {
         virtual void CObjectState_UnkVirtualFunc13(); //0x38
 
         //0x0: vtable
-        u8 unk4_3[0xC];
+        u32 unk4;          // 0x04
+        u32 unk8;          // 0x08
+        u32 unkC;          // 0x0C
     };
 }

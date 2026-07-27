@@ -24,6 +24,8 @@ struct CCollepedia {
     unsigned char field_c;
     unsigned char field_d;
     unsigned char field_e;
+    ~CCollepedia() {}
+    void OnFileEvent() {}
 };
 
 void func_8025348C(CCollepedia* obj, int val) {
@@ -84,10 +86,10 @@ void func_8025406C(unsigned char* obj) {
 
 void func_80254094(){}
 
-unsigned char func_802540DC(void* thisPtr) {
-    signed char idx = *(signed char*)((char*)thisPtr + 1);
-    unsigned char* base = (unsigned char*)thisPtr + idx * 320;
-    return *(base + 4);
+unsigned char func_802540DC(u8* thisPtr) {
+    s8 idx = (s8)thisPtr[1];
+    u8* base = thisPtr + idx * 320;
+    return base[4];
 }
 
 void func_802540F4(){}
@@ -129,8 +131,6 @@ void func_802545C0(){}
 
 void __ct__CCollepedia(){}
 
-void CCollepedia::~CCollepedia() {}
-
 void func_8025492C(){}
 
 void func_80254A20(){}
@@ -141,9 +141,9 @@ void func_80254C04(){}
 
 void func_80254D0C(){}
 
-unsigned char func_80254D50(void* self) { unsigned char* base = (unsigned char*)self; return base[0x28f9] ? base[0x51] : 0; }
+unsigned char func_80254D50(u8* self) { return self[0x28f9] ? self[0x51] : 0; }
 
-void func_80254D6C(void* p) { unsigned char* b = (unsigned char*)p; if (b[0x49] != 0) return; b[0x49] = 1; b[0x51] = 0; }
+void func_80254D6C(u8* p) { if (p[0x49] != 0) return; p[0x49] = 1; p[0x51] = 0; }
 
 void func_80254D8C(){}
 
@@ -164,7 +164,7 @@ void func_802552B4(){}
 void func_802553AC(){}
 
 void func_80255688(void* self) {
-    func_80253EE8((u8*)self + 0xE8, *(u8*)((u8*)self + 0xD9), *(u8*)((u8*)self + 0xD8));
+    func_80253EE8((u8*)self + 0xE8, ((u8*)self)[0xD9], ((u8*)self)[0xD8]);
 }
 
 void func_80255698(){}
@@ -202,5 +202,3 @@ void func_8025629C(){}
 void func_80256314(){}
 
 void func_8025641C(){}
-
-void CCollepedia::OnFileEvent() {}

@@ -17,9 +17,11 @@ public:
     void func_802B8390();
 
     // CHelp at +0x00..+0x0B (mOwner, mParam, mVtbl)
-    u32 field_10;      // +0x10
-    s32 mTimer;        // +0x14
-    u32 mSavedFlags;   // +0x18
+    // Second base-class subobject (invisible in single-inheritance C++)
+    char mSecondBase[4]; // +0x0C
+    u32 field_10;         // +0x10
+    s32 mTimer;           // +0x14
+    u32 mSavedFlags;      // +0x18
 };
 
 } // namespace cf

@@ -31,14 +31,3 @@ public:
 };
 
 } // namespace cf
-
-namespace cf {
-
-class CActorParam {
-public:
-    void CActorParam_UnkVirtualFunc38();
-
-    // TODO: add fields
-};
-} // namespace cf
-

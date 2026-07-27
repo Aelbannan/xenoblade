@@ -9,14 +9,11 @@ extern u32 lbl_eu_80663E24;
 namespace cf {
 
 CHelp_LandMark::CHelp_LandMark() : CHelp() {
-    // Subobject at +0x0C is the second base class.
-    // Using pointer arithmetic is required because there's no
-    // named type for this subobject in single-inheritance C++.
-    func_8009D414(reinterpret_cast<char*>(this) + 0x0C);
+    func_8009D414(this->mSecondBase);
 }
 
 CHelp_LandMark::~CHelp_LandMark() {
-    func_8009D514(reinterpret_cast<char*>(this) + 0x0C);
+    func_8009D514(this->mSecondBase);
 }
 
 void CHelp_LandMark::func_802B8280() {

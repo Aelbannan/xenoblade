@@ -11,7 +11,9 @@ void GetCamera__Q34nw4r3g3d7ScnRootFi(){}
 
 void GetCurrentCamera__Q34nw4r3g3d7ScnRootFv(){}
 
-void SetCurrentCamera__Q34nw4r3g3d7ScnRootFi(void* self, u8 val) { ((u8*)self)[0xf4] = val; }
+void SetCurrentCamera__Q34nw4r3g3d7ScnRootFi(void* self, int idx) {
+    static_cast<ScnRoot*>(self)->mCurrentCameraID = static_cast<u8>(idx);
+}
 
 void GetFog__Q34nw4r3g3d7ScnRootFi(){}
 

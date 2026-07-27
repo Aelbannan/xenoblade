@@ -84,7 +84,6 @@ namespace cf{
     void func_8007C360();
     void func_8007C374();
     void func_8007C4B4();
-    CfGameManager();
     virtual ~CfGameManager();
     void func_8007C5B8();
     void func_8007C6B4();
@@ -372,17 +371,6 @@ namespace cf{
     }; //size = 0xB8
 
 } //namespace cf
-
-namespace cf {
-
-class CfObjectMap {
-public:
-    void func_8007D814();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CfObject {
@@ -405,17 +393,6 @@ public:
 
     // TODO: add fields
 };
-
-namespace cf {
-
-class IObjectInfo {
-public:
-    virtual ~IObjectInfo();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CCharVoice {
@@ -425,17 +402,6 @@ public:
     // TODO: add fields
 };
 } // namespace cf
-
-namespace cf {
-
-class CfObjectImplMove {
-public:
-    virtual ~CfObjectImplMove();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CCharEffect {
@@ -445,17 +411,6 @@ public:
     // TODO: add fields
 };
 } // namespace cf
-
-namespace cf {
-
-class CCharEffectPc {
-public:
-    virtual ~CCharEffectPc();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CfObjectImplPc {
@@ -465,17 +420,6 @@ public:
     // TODO: add fields
 };
 } // namespace cf
-
-namespace cf {
-
-class CCharEffectNpc {
-public:
-    virtual ~CCharEffectNpc();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CCharEffectObj {
@@ -485,17 +429,6 @@ public:
     // TODO: add fields
 };
 } // namespace cf
-
-namespace cf {
-
-class CCharEffectEne {
-public:
-    virtual ~CCharEffectEne();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CObjectState {

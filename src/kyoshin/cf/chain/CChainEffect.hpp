@@ -15,6 +15,5 @@ namespace cf {
         //0x0-4: IObjectInfo
         u32 unk4;
         u32 unk8;
-    CChainEffect();
     };
 }

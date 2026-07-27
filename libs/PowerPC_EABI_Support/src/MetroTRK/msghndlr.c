@@ -97,10 +97,11 @@ DSError TRKDoReadMemory(MessageBuffer* b){
     ui32 start;
     ui32 length;
     msgbuf_t reply3;
+    TRKMsgBody* msg = (TRKMsgBody*)b->fData;
 
-    options = b->fData[8];
-    start = *(ui32*)(b->fData + 16);
-    length = *(ui16*)(b->fData + 12);
+    options = msg->options;
+    start = msg->param2;
+    length = msg->param1;
     
     if(options & DS_MSG_MEMORY_EXTENDED){
         return TRKStandardACK(b, kDSReplyACK, kDSReplyUnsupportedOptionError);
@@ -174,10 +175,11 @@ DSError TRKDoWriteMemory(MessageBuffer* b){
     ui32 start;
     ui32 length;
     msgbuf_t reply3;
+    TRKMsgBody* msg = (TRKMsgBody*)b->fData;
 
-    options = b->fData[8];
-    start = *(ui32*)(b->fData + 16);
-    length = *(ui16*)(b->fData + 12);
+    options = msg->options;
+    start = msg->param2;
+    length = msg->param1;
     
     if(options & DS_MSG_MEMORY_EXTENDED){
         return TRKStandardACK(b, kDSReplyACK, kDSReplyUnsupportedOptionError);
@@ -248,10 +250,11 @@ DSError TRKDoReadRegisters(MessageBuffer* b){
     ui16 lastRegister;
     size_t registersLength;
     msgbuf_t local_50;
+    TRKMsgBody* msg = (TRKMsgBody*)b->fData;
     
-    options = b->fData[8];
-    firstRegister = *(ui16*)(b->fData + 12);
-    lastRegister = *(ui16*)(b->fData + 16);
+    options = msg->options;
+    firstRegister = msg->param1;
+    lastRegister = msg->lastRegister;
 
     if(firstRegister > lastRegister){
         return TRKStandardACK(b, kDSReplyACK, kDSReplyInvalidRegisterRange);
@@ -326,10 +329,11 @@ DSError TRKDoWriteRegisters(MessageBuffer* b){
     ui16 lastRegister;
     size_t registersLength;
     msgbuf_t local_50;
+    TRKMsgBody* msg = (TRKMsgBody*)b->fData;
     
-    options = b->fData[8];
-    firstRegister = *(ui16*)(b->fData + 12);
-    lastRegister = *(ui16*)(b->fData + 16);
+    options = msg->options;
+    firstRegister = msg->param1;
+    lastRegister = msg->lastRegister;
 
     TRK_SetBufferPosition(b,0);
 
@@ -435,12 +439,13 @@ DSError TRKDoStep(MessageBuffer *b){
     ui32 rangeStart;
     ui32 rangeEnd;
     ui32 pc;
+    TRKMsgBody* msg = (TRKMsgBody*)b->fData;
 
     TRK_SetBufferPosition(b, 0);
 
-    options = b->fData[8];
-    rangeStart = *(ui32*)(b->fData + 16);
-    rangeEnd = *(ui32*)(b->fData + 20);
+    options = msg->options;
+    rangeStart = msg->param2;
+    rangeEnd = msg->param3;
 
     switch(options){
     //Count step

@@ -4,12 +4,28 @@
 #include "kyoshin/cf/object/CfObject.hpp"
 
 namespace cf {
-    //size: 0xC0
-    class CfObjectEff : public CfObject {
-    public:
-        //0x0: vtable
-        //0x0-70: CfObject
-        u8 unk70[0x50];
+
+struct CfObjectEffChild {
+    u8 _pad00[0x2C];
+    float unk2C;
+    u8 _pad30[0x34 - 0x30];
+    u32 unk34[3];
+    u32 unk40[4];
+    u8 _pad50[0x59 - 0x50];
+    u8 unk59;
+    u8 _pad5A[0x5C - 0x5A];
+    int unk5C;
+};
+
+class CfObjectEff : public CfObject {
+public:
+    u8 _pad70[0x94 - 0x70];
+    CfObjectEffChild* mChildEff;
+    u8 _pad98[0xA4 - 0x98];
+    u16 mFlagsA4;
+    u16 mCountA6;
+    u8 _padA8[0xC0 - 0xA8];
+
     CfObjectEff();
     void func_800AC7CC();
     void func_800AC7FC();
@@ -45,18 +61,6 @@ namespace cf {
     void func_800ACF34() const;
     void func_800AD850();
     void func_800AD858();
-    };
-}
-
-namespace cf {
-
-class CfObject {
-public:
-    virtual ~CfObject();
-
-    // TODO: add fields
-    void CfObject_UnkVirtualFunc3();
-    void CfObject_UnkVirtualFunc6();
 };
-} // namespace cf
 
+} // namespace cf

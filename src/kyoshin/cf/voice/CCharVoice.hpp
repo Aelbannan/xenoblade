@@ -38,14 +38,3 @@ struct CCharVoice {
     // 2 bytes padding to 0x3C
     void* mVtable;           // 0x3C -- vtable pointer
 };
-
-namespace cf {
-
-class CCharVoice {
-public:
-    CCharVoice();
-
-    // TODO: add fields
-};
-} // namespace cf
-

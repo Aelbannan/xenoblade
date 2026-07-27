@@ -1,14 +1,15 @@
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectEne.hpp"
 
 void __ct__cf_CfObjectEne(){}
 
-void cf::CfObjectActor::~CfObjectActor() {}
+cf::CfObjectActor::~CfObjectActor() {}
 
-void cf::CAIAction::~CAIAction() {}
+cf::CAIAction::~CAIAction() {}
 
 void __dt__800ADA08(){}
 
-void cf::CfObjectEne::~CfObjectEne() {}
+cf::CfObjectEne::~CfObjectEne() {}
 
 void cf::CfObjectEne::func_800ADB2C() {}
 
@@ -24,7 +25,7 @@ void CfObject_UnkVirtualFunc59__Q22cf12CfObjectMoveFv(void* self, float val) { *
 
 void CActorParam_UnkVirtualFunc112__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x161C) = val; }
 
-void CActorParam_UnkVirtualFunc114__Q22cf11CActorParamFv(void* self, u8 val) { ((u8*)self)[0x1628] = val; }
+void CActorParam_UnkVirtualFunc114__Q22cf11CActorParamFv(void* self, u8 val) { ((cf::CActorParam*)self)->unk1628 = val; }
 
 void CActorParam_UnkVirtualFunc118__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1624) = val; }
 
@@ -46,14 +47,14 @@ void func_800AF870(){}
 
 int CfObjectActor_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void* self) { return 1; }
 
-void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
+extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
 
 extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
 
 void cf::CActorState::CActorState_UnkVirtualFunc1() {}
 
 extern "C" void* CBattleState_UnkVirtualFunc28__Q22cf12CBattleStateFv(void* self, unsigned long index) {
-    return (char*)self + (index << 4) + 0x152c;
+    return ((cf::CBattleState*)self)->unk152C + (index << 4);
 }
 
 extern "C" void* CBattleState_UnkVirtualFunc27__Q22cf12CBattleStateFv(void* self) { return (void*)((u8*)self + 0x152c); }
@@ -118,7 +119,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc148() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc146() {}
 
 extern "C" void* CActorParam_UnkVirtualFunc145__Q22cf11CActorParamFv(void* self, unsigned long idx) {
-    return (char*)self + (idx * 0x18) + 0x1928;
+    return &((cf::CActorParam*)self)->unk1928[idx];
 }
 
 extern "C" void* CActorParam_UnkVirtualFunc147__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x1928); }
@@ -127,7 +128,7 @@ extern "C" u32 CActorParam_UnkVirtualFunc139__Q22cf11CActorParamFv(void* self) {
 
 void cf::CActorParam::CActorParam_UnkVirtualFunc134() {}
 
-extern "C" u8 CActorParam_UnkVirtualFunc133__Q22cf11CActorParamFv(void* self) { return ((u8*)self)[0x3354]; }
+extern "C" u8 CActorParam_UnkVirtualFunc133__Q22cf11CActorParamFv(void* self) { return ((cf::CActorParam*)self)->unk3354; }
 
 extern "C" void* CActorParam_UnkVirtualFunc131__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x31dc); }
 
@@ -143,15 +144,15 @@ extern "C" void* CActorParam_UnkVirtualFunc121__Q22cf11CActorParamFv(void* self)
 
 void cf::CActorParam::CActorParam_UnkVirtualFunc120() {}
 
-extern "C" u8 CActorParam_UnkVirtualFunc111__Q22cf11CActorParamFv(void* self) { return ((u8*)self)[0x183C]; }
+extern "C" u8 CActorParam_UnkVirtualFunc111__Q22cf11CActorParamFv(void* self) { return ((cf::CActorParam*)self)->unk17E4.unk50[8]; }
 
-extern "C" u8 CActorParam_UnkVirtualFunc110__Q22cf11CActorParamFv(void* self) { return ((u8*)self)[0x183B]; }
+extern "C" u8 CActorParam_UnkVirtualFunc110__Q22cf11CActorParamFv(void* self) { return ((cf::CActorParam*)self)->unk17E4.unk50[7]; }
 
-extern "C" u8 CActorParam_UnkVirtualFunc109__Q22cf11CActorParamFv(void* self) { return ((u8*)self)[0x183A]; }
+extern "C" u8 CActorParam_UnkVirtualFunc109__Q22cf11CActorParamFv(void* self) { return ((cf::CActorParam*)self)->unk17E4.unk50[6]; }
 
-extern "C" void CActorParam_UnkVirtualFunc108__Q22cf11CActorParamFv(void* self, u8 val) { ((u8*)self)[0x183B] = val; }
+extern "C" void CActorParam_UnkVirtualFunc108__Q22cf11CActorParamFv(void* self, u8 val) { ((cf::CActorParam*)self)->unk17E4.unk50[7] = val; }
 
-extern "C" void CActorParam_UnkVirtualFunc107__Q22cf11CActorParamFv(void* self, u8 val) { ((u8*)self)[0x183A] = val; }
+extern "C" void CActorParam_UnkVirtualFunc107__Q22cf11CActorParamFv(void* self, u8 val) { ((cf::CActorParam*)self)->unk17E4.unk50[6] = val; }
 
 extern "C" void CActorParam_UnkVirtualFunc105__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x15fc) = val; }
 
@@ -251,7 +252,7 @@ extern "C" void CActorParam_UnkVirtualFunc24__Q22cf11CActorParamFv(void* self, u
 
 extern "C" float CActorParam_UnkVirtualFunc17__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x15f8); }
 
-extern "C" u8 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(void* self) { return ((u8*)self)[0x15F4]; }
+extern "C" u8 CActorParam_UnkVirtualFunc15__Q22cf11CActorParamFv(void* self) { return ((cf::CActorParam*)self)->unk15F4[0]; }
 
 extern "C" u32 CfObjectModel_UnkVirtualFunc20__Q22cf13CfObjectModelFv(void* self) { return (*(u32*)((u8*)self + 104) >> 21) & 0x1u; }
 
@@ -280,10 +281,13 @@ extern "C" void CBattleState_UnkVirtualFunc17__Q22cf13CfObjectActorFv(void* self
 extern "C" void CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CBattleState_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc1__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
+extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void);
 extern "C" void CBattleState_UnkVirtualFunc1__Q22cf13CfObjectActorFv(void* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
+extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void);
 extern "C" void CBattleState_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void* self) { ((void(*)(void*))CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv)((char*)self - 0x8); }
 
+extern "C" void func_800ADDA8__Q22cf11CfObjectEneFv(void* self);
 extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf11CfObjectEneFv(void* self) { ((void(*)(void*))func_800ADDA8__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
 extern "C" void CfObjectActor_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self);
@@ -298,6 +302,8 @@ extern "C" void CfObjectMove_UnkVirtualFunc6__Q22cf13CfObjectActorFv(void* self)
 extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CfObject_UnkVirtualFunc14__Q22cf13CfObjectActorFv(void* self) { ((void(*)(void*))CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv)((char*)self - 0x3e9c); }
 
+extern "C" void func_800ADBD4__Q22cf11CfObjectEneFv(void* self);
 extern "C" void CfObject_UnkVirtualFunc4__Q22cf11CfObjectEneFv(void* self) { ((void(*)(void*))func_800ADBD4__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }
 
+extern "C" void __dt__Q22cf11CfObjectEneFv(void* self);
 extern "C" void func_800B069C__Q22cf11CfObjectEneFv(void* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEneFv)((char*)self - 0x3e9c); }

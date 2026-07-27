@@ -16,19 +16,16 @@ void func_800F6D50(){}
 
 void func_800F6E08(){}
 
-void* func_800F6E98(void* this_ptr, int index) {
-    void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
-    return *array;
+void* func_800F6E98(cf::CfObjEnumList* self, int index) {
+    return *static_cast<void**>(self->mPtrArray[index]);
 }
 
-void* func_800F6EAC(void* self, unsigned long idx) {
-    void** arr = (void**)((uint8_t*)self + 0x20);
-    void* ptr = arr[idx];
-    return *(void**)((uint8_t*)ptr + 4);
+void* func_800F6EAC(cf::CfObjEnumList* self, unsigned long idx) {
+    return static_cast<void*>(static_cast<void**>(self->mPtrArray[idx])[1]);
 }
 
-void* func_800F6EC0(void* this_ptr, int index) {
-    return *reinterpret_cast<void**>(reinterpret_cast<char*>(this_ptr) + index * 4 + 0x20);
+void* func_800F6EC0(cf::CfObjEnumList* self, int index) {
+    return self->mPtrArray[index];
 }
 
 void func_800F6ED0(){}

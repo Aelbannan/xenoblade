@@ -1,18 +1,6 @@
 #pragma once
 
 #include <types.h>
-
-namespace cf {
-
-class CHelpManager {
-public:
-    CHelpManager();
-    virtual ~CHelpManager();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CHelp_EtherMakeTIPS {
@@ -22,17 +10,6 @@ public:
     // TODO: add fields
 };
 } // namespace cf
-
-namespace cf {
-
-class CHelp_TalkTIPS {
-public:
-    void func_80295D98();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CHelp_KizunaTIPS {
@@ -42,17 +19,6 @@ public:
     // TODO: add fields
 };
 } // namespace cf
-
-namespace cf {
-
-class CHelp_EndEventTIPS {
-public:
-    void func_80295DA0();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CHelp_AlwaysTIPS {

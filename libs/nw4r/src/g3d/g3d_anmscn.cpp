@@ -74,42 +74,57 @@ int Detach__Q34nw4r3g3d6AnmScnFi(int) { return 0; }
 unsigned int GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
 
 unsigned int GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
-    return GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const char*)this_ptr + 0x20);
+    return GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(
+        reinterpret_cast<const char*>(this_ptr) + 0x20);
 }
 int GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
 
 int GetNumAmbLight__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* ths) {
-    return GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const char*)ths + 0x20);
+    return GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(
+        reinterpret_cast<const char*>(ths) + 0x20);
 }
 u32 GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void *);
 
 u32 GetNumDiffuseLight__Q34nw4r3g3d9AnmScnResCFv(const void *self) {
-    return GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const void *)((const char *)self + 0x20));
+    return GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(
+        reinterpret_cast<const void*>(reinterpret_cast<const char*>(self) + 0x20));
 }
 unsigned short GetNumSpecularLight__Q34nw4r3g3d9AnmScnResCFv(const void* __this) {
-    return *(const unsigned short*)(*(const unsigned char**)((const unsigned char*)__this + 0x20) + 0x36);
+    return *reinterpret_cast<const unsigned short*>(
+        *reinterpret_cast<const unsigned char* const*>(
+            reinterpret_cast<const unsigned char*>(__this) + 0x20) + 0x36);
 }
 int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
     extern int GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
     return GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(reinterpret_cast<const char*>(this_) + 0x20);
 }
 void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv(void*);
-void GetNumCamera__Q34nw4r3g3d9AnmScnResCFv(void* self) { ((void(*)(void*))GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv)((char*)self + 0x20); }
+void GetNumCamera__Q34nw4r3g3d9AnmScnResCFv(void* self) {
+    reinterpret_cast<void(*)(void*)>(GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv)(
+        reinterpret_cast<char*>(self) + 0x20);
+}
 u16 GetLightSetMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* _this) {
     return *reinterpret_cast<const u16*>(*reinterpret_cast<const u8* const*>(reinterpret_cast<const u8*>(_this) + 0x20) + 0x3c);
 }
 unsigned short GetAmbLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* self) {
-    const unsigned char* res = *(const unsigned char* const*)((const unsigned char*)self + 0x20);
-    return *(const unsigned short*)(res + 0x3e);
+    const unsigned char* res = *reinterpret_cast<const unsigned char* const*>(
+        reinterpret_cast<const unsigned char*>(self) + 0x20);
+    return *reinterpret_cast<const unsigned short*>(res + 0x3e);
 }
 int GetDiffuseLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* p) {
-    return *(const unsigned short*)(*(const char* const*)((const char*)p + 0x20) + 0x40);
+    return *reinterpret_cast<const unsigned short*>(
+        *reinterpret_cast<const char* const*>(
+            reinterpret_cast<const char*>(p) + 0x20) + 0x40);
 }
 unsigned short GetFogMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
-    return *(const unsigned short*)(*(const char* const*)((const char*)this_ + 0x20) + 0x42);
+    return *reinterpret_cast<const unsigned short*>(
+        *reinterpret_cast<const char* const*>(
+            reinterpret_cast<const char*>(this_) + 0x20) + 0x42);
 }
 u16 GetCameraMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* pThis) {
-    return *(const u16*)((const u8*)(*(const u32*)((const u8*)pThis + 0x20)) + 0x44);
+    return *reinterpret_cast<const u16*>(
+        reinterpret_cast<const u8*>(
+            *reinterpret_cast<const u32*>(reinterpret_cast<const u8*>(pThis) + 0x20)) + 0x44);
 }
 void Construct__Q34nw4r3g3d9AnmScnResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmScnb(){}
 void SetFrame__Q34nw4r3g3d9AnmScnResFf(){}

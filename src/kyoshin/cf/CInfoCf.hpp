@@ -30,17 +30,6 @@ struct CInfoCf {
 
 } // namespace cf
 
-
-namespace cf {
-
-class CInfoCf {
-public:
-    virtual ~CInfoCf();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 class CMenuItem {
 public:
     virtual ~CMenuItem();

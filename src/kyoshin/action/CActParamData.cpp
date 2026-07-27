@@ -42,8 +42,7 @@ void checkBothBlocks(){}
 void validateBlockData(){}
 
 void processBlockCore(void* self);
-void callBlockAt2E0(void* self){ ((void(*)(void*))processBlockCore)((char*)self + 0x2e0); }
-
+void callBlockAt2E0(void* self) { processBlockCore(reinterpret_cast<char*>(self) + 0x2e0); }
 
 void nop_800550D8() {}
 
@@ -84,9 +83,9 @@ void getFloatFieldB(){}
 void resetBlockFields(){}
 
 void* getSubObjPtr(void* param) {
-    void* val = *(void**)((char*)param + 0x2f4);
+    void* val = *(void**)(reinterpret_cast<char*>(param) + 0x2f4);
     if (!val) return 0;
-    return (char*)val + 0x14;
+    return reinterpret_cast<char*>(val) + 0x14;
 }
 
 void hasAnyFieldSet(){}
@@ -96,38 +95,38 @@ void saveStateFields(){}
 void clearStateFields(){}
 
 int getShortValue_A(void* self) {
-    char* base = (char*)self + 0x260;
-    if (*(int*)((char*)self + 0x2d4) == 0)
-        base = (char*)self + 0x2e0;
-    void* ptr = *(void**)(base + 0x74);
+    char* base = reinterpret_cast<char*>(self) + 0x260;
+    if (*reinterpret_cast<int*>(reinterpret_cast<char*>(self) + 0x2d4) == 0)
+        base = reinterpret_cast<char*>(self) + 0x2e0;
+    void* ptr = *reinterpret_cast<void**>(base + 0x74);
     if (ptr == NULL)
         return -1;
-    return *(short*)((char*)ptr + 8);
+    return *reinterpret_cast<short*>(reinterpret_cast<char*>(ptr) + 8);
 }
 
 s16 getShortValue_B(void* self) {
-    u8* base = (u8*)self + 0x260;
-    if (*(s32*)((u8*)self + 0x2d4) == 0)
-        base = (u8*)self + 0x2e0;
-    void* ptr = *(void**)(base + 0x74);
+    u8* base = reinterpret_cast<u8*>(self) + 0x260;
+    if (*reinterpret_cast<s32*>(reinterpret_cast<u8*>(self) + 0x2d4) == 0)
+        base = reinterpret_cast<u8*>(self) + 0x2e0;
+    void* ptr = *reinterpret_cast<void**>(base + 0x74);
     if (!ptr) return -1;
-    return *(s16*)((u8*)ptr + 0xa);
+    return *reinterpret_cast<s16*>(reinterpret_cast<u8*>(ptr) + 0xa);
 }
 
 void clearTwoFields(void* self) {
-    *(unsigned long*)((char*)self + 0x2d4) = 0;
-    *(unsigned long*)((char*)self + 0x354) = 0;
+    *reinterpret_cast<unsigned long*>(reinterpret_cast<char*>(self) + 0x2d4) = 0;
+    *reinterpret_cast<unsigned long*>(reinterpret_cast<char*>(self) + 0x354) = 0;
 }
 
 void getDataFromOffset48(){}
 
 void* getNonNullPtr(void* param) {
-    if (*(int*)((int)param + 0x274) != 0) {
-        void* ptr = *(void**)((int)param + 0x2d8);
+    if (*reinterpret_cast<int*>(reinterpret_cast<char*>(param) + 0x274) != 0) {
+        void* ptr = *reinterpret_cast<void**>(reinterpret_cast<char*>(param) + 0x2d8);
         if (ptr != 0) return ptr;
     }
-    if (*(int*)((int)param + 0x2f4) != 0) {
-        void* result = *(void**)((int)param + 0x358);
+    if (*reinterpret_cast<int*>(reinterpret_cast<char*>(param) + 0x2f4) != 0) {
+        void* result = *reinterpret_cast<void**>(reinterpret_cast<char*>(param) + 0x358);
         if (result != 0) return result;
     }
     return 0;
@@ -223,7 +222,6 @@ void actParamThunk_1(){}
 
 void actParamThunk_2(){}
 
-// Fake SI iface for vt+0x7c tail-call (-RTTI on: omit _v000/_v004).
 struct CActParamDataVTableIf {
     virtual void _v008();
     virtual void _v00C();
@@ -515,7 +513,6 @@ void setterBit1_ShortPair(){}
 
 void buildVTable() {}
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace ml {
 template <int N> class FixStr { public: void format(const char*, ...); };
 template <> void FixStr<16>::format(const char*, ...) {}

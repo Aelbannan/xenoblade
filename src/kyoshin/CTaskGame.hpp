@@ -43,6 +43,7 @@ public:
 
     static CTaskGame* getInstance();
     static u32 func_800404F0();
+    static u32 isUnk68Bit13Set();
     virtual void Init();
 
     void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);
@@ -51,8 +52,11 @@ public:
     void func_80042720();
     static bool func_8004368C();
     static CTaskGame* create(CView* pView, CWorkThread* pThread, int r5);
+    s32 callStubReturnZero_800436A8();
 
     virtual void Term();
+    void stub_80040A3C();
+    void stub_80042720();
     virtual void ITitleMenu__UnkVirtualFunc1();
     virtual void IErrMesWinSel__UnkVirtualFunc1();
     virtual bool gameExceptionCB(u32 r4);

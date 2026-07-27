@@ -124,7 +124,7 @@ void CView::setRect(const ml::CRect16& rect) {
 
         if (sourceParent != nullptr) {
             func_804592F0__17CViewRectDataCoreFRCQ22ml6CPnt16(
-                &mRectData, *(const ml::CPnt16*)((u8*)sourceParent + 0x1CC));
+                &mRectData, static_cast<CView*>(sourceParent)->mRectData.mBoundsSize);
         } else {
             {
                 u16 modeHeight;
@@ -202,12 +202,10 @@ void CView::updateMsg() {
     u32 flag;
     u32 readIdx;
     u32 cap;
-    u32 slotOff;
-    u8* ringBase;
-    u8* slot;
+    CMsgParamEntry* entry;
     u32 tag;
-    void** listSentinel;
-    void** listNode;
+    _reslist_node<WORK_ID>* listSentinel;
+    _reslist_node<WORK_ID>* listNode;
     CWorkThread* parentSnap;
     CWorkThread* parentView;
     CWorkThread* workThread;
@@ -232,10 +230,9 @@ void CView::updateMsg() {
 updateMsg_loop:
     readIdx = unk3F0;
     cap = mContextRingCapacity;
-    ringBase = (u8*)mContextRingBase;
-    slotOff = (readIdx - (readIdx / cap) * cap) * 0x24u;
-    slot = ringBase + slotOff;
-    tag = *(u32*)slot;
+    u32 ringIdx = readIdx % cap;
+    entry = &((CMsgParamEntry*)mContextRingBase)[ringIdx];
+    tag = entry->command;
 
     if (tag > 7) {
         goto updateMsg_advance;
@@ -244,17 +241,17 @@ updateMsg_loop:
     switch (tag) {
         case 0: {
             // Attach WORK_ID to unk238; fan-out dual ring msgs to child views.
-            u32 msgItem = *(u32*)(slot + 4);
-            listSentinel = (void**)unk238.mStartNodePtr;
-            listNode = (void**)*listSentinel;
-            while (listNode != listSentinel) {
-                if ((u32)listNode[2] == msgItem) {
-                    break;
+            u32 msgItem = entry->wid;
+            {
+                _reslist_node<WORK_ID>* sentinel238 = reinterpret_cast<_reslist_node<WORK_ID>*>(unk238.mStartNodePtr);
+                _reslist_node<WORK_ID>* node238 = sentinel238->mNext;
+                while (node238 != sentinel238) {
+                    if (node238->mItem == msgItem) {
+                        break;
+                    }
+                    node238 = node238->mNext;
                 }
-                listNode = (void**)listNode[0];
-            }
-
-            if (listNode == listSentinel) {
+                if (node238 == sentinel238) {
                 reinterpret_cast<reslist<u32>*>(&unk238)->push_back(msgItem);
             }
 
@@ -276,7 +273,7 @@ updateMsg_loop:
                 goto updateMsg_advance;
             }
 
-            workThread = getWorkThread__9CWorkUtilFUl(*(u32*)(ringBase + slotOff + 4));
+            workThread = getWorkThread__9CWorkUtilFUl(entry->wid);
             childSentinel = (void**)mChildren.mStartNodePtr;
             childNode = (void**)childSentinel[0];
             while (childNode != childSentinel) {
@@ -375,17 +372,17 @@ updateMsg_loop:
         }
         case 1: {
             // Attach IWorkEvent* to unk258; fan-out tag-1 msgs to child views.
-            u32 msgItem = *(u32*)(slot + 4);
-            listSentinel = (void**)unk258.mStartNodePtr;
-            listNode = (void**)*listSentinel;
-            while (listNode != listSentinel) {
-                if ((u32)listNode[2] == msgItem) {
-                    break;
+            u32 msgItem = entry->wid;
+            {
+                _reslist_node<void*>* sentinel258 = reinterpret_cast<_reslist_node<void*>*>(unk258.mStartNodePtr);
+                _reslist_node<void*>* node258 = sentinel258->mNext;
+                while (node258 != sentinel258) {
+                    if ((u32)(uintptr_t)node258->mItem == msgItem) {
+                        break;
+                    }
+                    node258 = node258->mNext;
                 }
-                listNode = (void**)listNode[0];
-            }
-
-            if (listNode == listSentinel) {
+                if (node258 == sentinel258) {
                 reinterpret_cast<reslist<void*>*>(&unk258)->push_back(
                     *reinterpret_cast<void**>(&msgItem));
             }
@@ -408,7 +405,7 @@ updateMsg_loop:
                 goto updateMsg_advance;
             }
 
-            msgItem = *(u32*)(slot + 4);
+            msgItem = entry->wid;
             childSentinel = (void**)mChildren.mStartNodePtr;
             childNode = (void**)childSentinel[0];
             while (childNode != childSentinel) {
@@ -468,18 +465,20 @@ updateMsg_loop:
         }
         case 2: {
             // Remove WORK_ID from unk238.
-            u32 msgItem = *(u32*)(slot + 4);
-            listSentinel = (void**)unk238.mStartNodePtr;
-            listNode = (void**)listSentinel[0];
-            while (listNode != listSentinel) {
-                void** nextNode = (void**)listNode[0];
-                if ((u32)listNode[2] == msgItem) {
-                    void** prevNode = (void**)listNode[1];
-                    prevNode[0] = nextNode;
-                    nextNode[1] = prevNode;
-                    listNode[0] = 0;
+            u32 msgItem = entry->wid;
+            {
+                _reslist_node<WORK_ID>* sentinel238 =
+                    reinterpret_cast<_reslist_node<WORK_ID>*>(unk238.mStartNodePtr);
+                _reslist_node<WORK_ID>* node238 = sentinel238->mNext;
+                while (node238 != sentinel238) {
+                    _reslist_node<WORK_ID>* next238 = node238->mNext;
+                    if (node238->mItem == msgItem) {
+                        node238->mPrev->mNext = next238;
+                        next238->mPrev = node238->mPrev;
+                        node238->mNext = nullptr;
+                    }
+                    node238 = next238;
                 }
-                listNode = nextNode;
             }
             break;
         }
@@ -496,7 +495,7 @@ updateMsg_loop:
             setCurrent__9CViewRootFP5CView(this);
             break;
         case 7:
-            if (*(u8*)(slot + 4) == 0) {
+            if (entry->wid == 0) {
                 unk278 |= 0x20;
             } else {
                 unk278 &= ~0x20;
@@ -592,9 +591,9 @@ void CView::renderView() {
     CProc* thisRoot;
     s16 savedSizeX;
     s16 savedSizeY;
-    void* listNode;
+    _reslist_node<WORK_ID>* listNode;
     u32 listLen;
-    void* listStart;
+    _reslist_node<WORK_ID>* listStart;
     CView* parentView;
     CWorkThread* parentThread;
     u32 invalidRect;
@@ -623,7 +622,7 @@ void CView::renderView() {
     u32 msgQualified;
     u32 stateReady;
     u32 shouldRender;
-    void** childNode;
+    _reslist_node<CWorkThread*>* childNode;
     CView* childView;
     CView* frameParent;
     s32 accumX;
@@ -647,12 +646,12 @@ void CView::renderView() {
         goto renderView_after_cross;
     }
 
-    listStart = unk238.mStartNodePtr;
+    listStart = reinterpret_cast<_reslist_node<WORK_ID>*>(unk238.mStartNodePtr);
     listLen = 0;
-    listNode = *(void**)listStart;
+    listNode = listStart->mNext;
     goto renderView_count_this_check;
 renderView_count_this_body:
-    listNode = *(void**)listNode;
+    listNode = listNode->mNext;
     listLen = listLen + 1;
 renderView_count_this_check:
     if (listNode != listStart) {
@@ -662,12 +661,12 @@ renderView_count_this_check:
         goto renderView_after_cross;
     }
 
-    listStart = fullScreenView->unk238.mStartNodePtr;
+    listStart = reinterpret_cast<_reslist_node<WORK_ID>*>(fullScreenView->unk238.mStartNodePtr);
     listLen = 0;
-    listNode = *(void**)listStart;
+    listNode = listStart->mNext;
     goto renderView_count_fs_check;
 renderView_count_fs_body:
-    listNode = *(void**)listNode;
+    listNode = listNode->mNext;
     listLen = listLen + 1;
 renderView_count_fs_check:
     if (listNode != listStart) {
@@ -678,11 +677,11 @@ renderView_count_fs_check:
     }
 
     crossRootFlag = (u32)pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
-        getWorkThread__9CWorkUtilFUl(*(u32*)((u8*)*(void**)listStart + 8))));
+        getWorkThread__9CWorkUtilFUl(listStart->mNext->mItem)));
 
     listStart = unk238.mStartNodePtr;
     thisRoot = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
-        getWorkThread__9CWorkUtilFUl(*(u32*)((u8*)*(void**)listStart + 8))));
+        getWorkThread__9CWorkUtilFUl(listStart->mNext->mItem)));
 
     {
         CProc* fullScreenRoot = (CProc*)crossRootFlag;
@@ -856,7 +855,7 @@ renderView_after_size_gate2:
                 draw.setCol(clearColor);
             }
         renderView_clear_begin:
-            *(u32*)((u8*)&draw + 0x1C) = mGXCacheId;
+            draw.unk1C = mGXCacheId;
             draw.begin(PRIM_QUADS, 1);
             getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home30,
                                                                       &mFrame);
@@ -1152,7 +1151,7 @@ renderView_self_state_end:
     goto renderView_attach_wk_check;
 
 renderView_attach_wk_body:
-    attachWork = getWorkThread__9CWorkUtilFUl(*(u32*)((u8*)attachNode + 8));
+    attachWork = getWorkThread__9CWorkUtilFUl(attachNode->mItem);
     if (attachWork == nullptr) {
         goto renderView_attach_wk_next;
     }
@@ -1298,7 +1297,7 @@ renderView_attach_wk_check:
     lbl_eu_806655C8 = nullptr;
     func_8044BE38__8CGXCacheFv(CDeviceGX::getCacheInstance());
     func_80442DA8__9CViewRootFv();
-    fontFlush__10CFontLayerFi((CFontLayer*)((u8*)this + 0x1C4), 1);
+    fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
 
 renderView_children:
     childNode = (void**)mChildren.mStartNodePtr;
@@ -1320,7 +1319,7 @@ renderView_child_check:
     goto renderView_attach_after_check;
 
 renderView_attach_after_body:
-    attachWork = getWorkThread__9CWorkUtilFUl(*(u32*)((u8*)attachNode + 8));
+    attachWork = getWorkThread__9CWorkUtilFUl(attachNode->mItem);
     if (attachWork == nullptr) {
         goto renderView_attach_after_next;
     }
@@ -1408,7 +1407,7 @@ renderView_attach_after_check:
     lbl_eu_806655C8 = nullptr;
     func_8044BE38__8CGXCacheFv(CDeviceGX::getCacheInstance());
     func_80442DA8__9CViewRootFv();
-    fontFlush__10CFontLayerFi((CFontLayer*)((u8*)this + 0x1C4), 1);
+    fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
 
     if (crossRootFlag == 0) {
         func_80442C68__9CViewRootFv();
@@ -1600,8 +1599,8 @@ CView::CView(const char* pName, CWorkThread* pParent)
     unk468 = (s16)zero;
     unk46A = (s16)zero;
 
-    *(ml::CCol4*)((u8*)&mFrame + 0x8) = sFrameColor;
-    *(ml::CCol4*)((u8*)&mFrame + 0x28) = lbl_8065A0C8;
+    mFrame.mFrameColor = sFrameColor;
+    mFrame.mColor28 = lbl_8065A0C8;
 }
 
 void CView::CView_UnkVirtualFunc7() {}

@@ -13,17 +13,6 @@ public:
     CAttackParam();
 };
 } // namespace cf
-
-namespace cf {
-
-class CActorParam {
-public:
-    void CActorParam_UnkVirtualFunc3();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CArtsParam {

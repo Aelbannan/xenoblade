@@ -17,6 +17,5 @@ namespace cf{
         u8 unk4[0x28 - 0x4];
         u32 unk28;
         float unk2C;
-    CSuddenCommu();
     };
 }

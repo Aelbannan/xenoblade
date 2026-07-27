@@ -112,7 +112,6 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 // Retail linker name is unlengthened `__ct__CMenuArtsSelect` (not __ct__15...).
 extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* scn) {
     CMenuArtsSelect* p;
-    u8* ptmfBase;
     char* vtFinal;
     char* vtWork;
     char* vtScn;
@@ -136,23 +135,22 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
     // Interim CProcess vtable, then final MI vtable + interface pieces.
     p->vtable = lbl_eu_8052C1C0;
     vtFinal = lbl_eu_8052C084;
-    ptmfBase = (u8*)__ptmf_null;
     // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C.
-    ptmfWord0 = *(u32*)(ptmfBase + 0);
+    ptmfWord0 = __ptmf_null[0];
     vtWork = vtFinal + 0x24;
     vtScn = vtFinal + 0xAC;
     z = 0;
-    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    ptmfWord1 = __ptmf_null[1];
     p->ptmfMove[1] = ptmfWord1;
     vtInfo = vtFinal + 0xBC;
     p->ptmfMove[0] = ptmfWord0;
-    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    ptmfWord2 = __ptmf_null[2];
     p->ptmfMove[2] = ptmfWord2;
-    ptmfWord0 = *(u32*)(ptmfBase + 0);
-    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    ptmfWord0 = __ptmf_null[0];
+    ptmfWord1 = __ptmf_null[1];
     p->ptmfDraw[1] = ptmfWord1;
     p->ptmfDraw[0] = ptmfWord0;
-    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    ptmfWord2 = __ptmf_null[2];
     p->ptmfDraw[2] = ptmfWord2;
     p->unk54 = (u8)z;
     p->unk55 = (u8)z;
@@ -305,7 +303,9 @@ void CMenuArtsSelect::Init() {
     {
         nw4r::lyt::Pane* pane = unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x5c, true);
         if (pane != NULL) {
-            *reinterpret_cast<void**>(reinterpret_cast<u8*>(pane) + 0xF8) = unk294;
+            // TextBox::mpTagProcessor at offset 0xF8
+            struct TextBoxLayout { u8 _[0xF8]; void* mpTagProcessor; };
+            reinterpret_cast<TextBoxLayout*>(pane)->mpTagProcessor = unk294;
         }
     }
 
@@ -471,13 +471,17 @@ void CMenuArtsSelect::Init() {
             } else {
                 lookupIdx = i + 1;
             }
-            f32 origZ = *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34));
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x2C)) = static_cast<f32>(posX[lookupIdx]);
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x30)) = static_cast<f32>(posY[lookupIdx]);
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34)) = origZ;
-            f32 s = scale[lookupIdx];
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x44)) = s;
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x48)) = s;
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[lookupIdx]);
+                trans.y = static_cast<f32>(posY[lookupIdx]);
+                // trans.z unchanged
+                pane->SetTranslate(trans);
+            }
+            {
+                f32 s = scale[lookupIdx];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
         }
     }
 
@@ -502,13 +506,17 @@ void CMenuArtsSelect::Init() {
             } else {
                 lookupIdx = i + 1;
             }
-            f32 origZ = *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34));
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x2C)) = static_cast<f32>(posX[lookupIdx]);
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x30)) = static_cast<f32>(posY[lookupIdx]);
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34)) = origZ;
-            f32 s = scale[lookupIdx];
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x44)) = s;
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x48)) = s;
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[lookupIdx]);
+                trans.y = static_cast<f32>(posY[lookupIdx]);
+                // trans.z unchanged
+                pane->SetTranslate(trans);
+            }
+            {
+                f32 s = scale[lookupIdx];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
 
             unk1B8[i]->SetAnimationEnable(unk1DC[i], true);
 
@@ -529,7 +537,7 @@ void CMenuArtsSelect::Init() {
     {
         IScnRender* cb = reinterpret_cast<IScnRender*>(this);
         if (this != NULL) {
-            cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x5c);
+            cb = reinterpret_cast<IScnRender*>(&vtScnRender);
         }
         mScn->addRenderCB(cb, 0xa, 0);
     }
@@ -738,9 +746,8 @@ after_ce48:
     case 1:
         unk308 |= 0x10u;
         if (func_80137444(unk84, lbl_eu_80666F2C) != 0) {
-            u8* flagByte =
-                reinterpret_cast<u8*>(unk8C->GetRootPane()) + 0xBB;
-            *flagByte = static_cast<u8>((*flagByte & 0xFEu) | 1u);
+            nw4r::lyt::Pane* rootPane8C = unk8C->GetRootPane();
+            rootPane8C->SetVisible(true);
             char* nameStr =
                 func_80136190(lbl_eu_804FD1E0 + 0x249, lbl_eu_804FD1E0 + 0x254, 1);
             char* helpStr =
@@ -766,11 +773,11 @@ after_ce48:
             homes[2] = lbl_eu_80666F28;
             homes[3] = homes[1];
             homes[4] = lbl_eu_80666F28;
-            f32* t = reinterpret_cast<f32*>(
-                reinterpret_cast<u8*>(unk98->GetRootPane()) + 0x2C);
-            t[0] = homes[0];
-            t[1] = homes[1];
-            t[2] = homes[2];
+            nw4r::math::VEC3 paneTrans98 = unk98->GetRootPane()->GetTranslate();
+            paneTrans98.x = homes[0];
+            paneTrans98.y = homes[1];
+            paneTrans98.z = homes[2];
+            unk98->GetRootPane()->SetTranslate(paneTrans98);
             // Sink homes[3/4] so the array storage is not truncated.
             (void)*(volatile f32*)&homes[3];
             (void)*(volatile f32*)&homes[4];
@@ -803,9 +810,7 @@ after_ce48:
                     0) {
                     if (func_8010A840(reinterpret_cast<u8*>(func_8010CE48()) +
                                       0x7cc) != 0) {
-                        u8* flagByte =
-                            reinterpret_cast<u8*>(unk8C->GetRootPane()) + 0xBB;
-                        *flagByte = static_cast<u8>((*flagByte & 0xFEu) | 1u);
+                        unk8C->GetRootPane()->SetVisible(true);
                         unk298 = 2;
                     }
                 }
@@ -1190,14 +1195,14 @@ done:
 }
 
 extern "C" void CMenuArtsSelect_clearArtsRef() { lbl_eu_80663F24 = 0; }
-extern "C" void CMenuArtsSelect_releaseArtsRef(void* self, UnkArtsSelectRef* ref) { if (lbl_eu_80663F24 == ref) { *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(ref) + 0xb0) = 0; lbl_eu_80663F24 = 0; } }
-extern "C" void CMenuArtsSelect_setDisabled() { if (lbl_eu_80663F20 != 0) *(unsigned char *)((char *)lbl_eu_80663F20 + 0x336) = 1; }
+extern "C" void CMenuArtsSelect_releaseArtsRef(void* self, UnkArtsSelectRef* ref) { if (lbl_eu_80663F24 == ref) { ref->unkB0 = NULL; lbl_eu_80663F24 = 0; } }
+extern "C" void CMenuArtsSelect_setDisabled() { if (lbl_eu_80663F20 != 0) lbl_eu_80663F20->unk336 = 1; }
 extern "C" bool CMenuArtsSelect_isFinished() { return false; }
 extern "C" CMenuArtsSelect* CMenuArtsSelect_getInstance() { return lbl_eu_80663F20; }
 extern "C" bool CMenuArtsSelect_isCreated() { return lbl_eu_80663F20 != 0; }
 void func_801042C8(){}
-extern "C" int CMenuArtsSelect_isInteractable() { CMenuArtsSelect* menu = lbl_eu_80663F20; if (menu != 0) { int value = *reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(menu) + 0x298); if (value != 1 && value != 3) return 1; } return 0; }
-extern "C" CMenuArtsSelect* CMenuArtsSelect_getSelectState() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(reinterpret_cast<unsigned char*>(lbl_eu_80663F20) + 0x7c); }
+extern "C" int CMenuArtsSelect_isInteractable() { CMenuArtsSelect* menu = lbl_eu_80663F20; if (menu != 0) { int value = menu->unk298; if (value != 1 && value != 3) return 1; } return 0; }
+extern "C" CMenuArtsSelect* CMenuArtsSelect_getSelectState() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(&lbl_eu_80663F20->unk7C); }
 extern "C" int CMenuArtsSelect_isNotReady() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
 void __dt__15CMenuArtsSelectFv(void*);
 bool func_80108C30(void* self){

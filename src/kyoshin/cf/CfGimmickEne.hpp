@@ -20,7 +20,6 @@ class CfGimmick; // Forward decl -- CfGimmick.hpp TODO
 
 class CfGimmickEne {
 public:
-    CfGimmickEne();
     ~CfGimmickEne();
 };
 

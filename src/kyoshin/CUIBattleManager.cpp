@@ -56,16 +56,12 @@ static inline Fn vslot(void* obj, u32 offset) {
 }
 
 static IWorkEvent* battleWorkEvent(CUIBattleManager* self) {
-    IWorkEvent* workEvent = reinterpret_cast<IWorkEvent*>(self);
-    if (self != NULL) {
-        workEvent = reinterpret_cast<IWorkEvent*>(reinterpret_cast<u8*>(self) + 0x54);
-    }
-    return workEvent;
+    if (self == NULL) return NULL;
+    return static_cast<IWorkEvent*>(self);
 }
 
 void CUIBattleManager::Init() {
     CUIBattleInitProcess* process;
-    u8* ptmfBase;
     char* vtFinal;
     u32 ptmfWord1;
     u32 ptmfWord0;
@@ -75,20 +71,19 @@ void CUIBattleManager::Init() {
         mtl::MemManager::allocate(0x54, CWorkThreadSystem::getWorkMem()));
     if (process != NULL) {
         __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
-        ptmfBase = (u8*)__ptmf_null;
         process->vtable = lbl_eu_8052E208;
-        ptmfWord1 = *(u32*)(ptmfBase + 4);
+        ptmfWord1 = __ptmf_null[1];
         vtFinal = lbl_eu_8052E1C0;
-        ptmfWord0 = *(u32*)(ptmfBase + 0);
+        ptmfWord0 = __ptmf_null[0];
         process->callbacks[0] = ptmfWord0;
         process->callbacks[1] = ptmfWord1;
-        ptmfWord2 = *(u32*)(ptmfBase + 8);
+        ptmfWord2 = __ptmf_null[2];
         process->callbacks[2] = ptmfWord2;
-        ptmfWord1 = *(u32*)(ptmfBase + 4);
-        ptmfWord0 = *(u32*)(ptmfBase + 0);
+        ptmfWord1 = __ptmf_null[1];
+        ptmfWord0 = __ptmf_null[0];
         process->callbacks[3] = ptmfWord0;
         process->callbacks[4] = ptmfWord1;
-        ptmfWord2 = *(u32*)(ptmfBase + 8);
+        ptmfWord2 = __ptmf_null[2];
         process->callbacks[5] = ptmfWord2;
         process->vtable = vtFinal;
     }
@@ -137,8 +132,6 @@ void CUIBattleManager::Move() {
     void* subObj;
     int partyId;
     u8 faceId;
-    u8* slotBase;
-    int off;
     int n;
     void* flagObj;
     void* obj;
@@ -394,13 +387,11 @@ after_bit10:
                     CDeviceFile::readFile(mHeap, lbl_eu_804FFF2C + 0x24, battleWorkEvent(this), 0, 0);
             }
 
-            slotBase = reinterpret_cast<u8*>(this);
-            off = 0;
             n = 0;
             for (; n < 3; n++) {
-                partyId = *(int*)((u8*)func_8009ECB0() + off + 4);
+                partyId = func_8009ECB0()[n + 1];
                 if (partyId > 0) {
-                    if (*(CFileHandle**)(slotBase + 0xa0) == NULL) {
+                    if (mFileArtsPcBusy[n] == NULL) {
                         faceId = (u8)partyId;
                         if (faceId == 4) {
                             if ((int)(u32)func_8009CF8C(0x20) < 0x21) {
@@ -410,15 +401,13 @@ after_bit10:
                             }
                         }
                         sprintf(pathBuf178, lbl_eu_804FFF2C + 0x3d, (unsigned)faceId);
-                        *(CFileHandle**)(slotBase + 0x94) =
+                        mFileArtsPc[n] =
                             CDeviceFile::readFile(mHeap, pathBuf178, battleWorkEvent(this), 0, 0);
                     }
                     sprintf(pathBufF8, lbl_eu_804FFF2C + 0x59, partyId);
-                    *(CFileHandle**)(slotBase + 0xac) =
+                    mFileFacePc[n] =
                         CDeviceFile::readFile(mHeap, pathBufF8, battleWorkEvent(this), 0, 0);
                 }
-                off += 4;
-                slotBase += 4;
             }
             unkE9 = 1;
             goto after_assets;
@@ -432,18 +421,16 @@ after_bit10:
             if (mFileArtsSys != NULL) {
                 unkE8 = 0;
             }
-            slotBase = reinterpret_cast<u8*>(this);
             n = 0;
             for (; n < 3; n++) {
-                if (*(CFileHandle**)(slotBase + 0x94) != NULL) {
+                if (mFileArtsPc[n] != NULL) {
                     unkE8 = 0;
                     goto after_assets;
                 }
-                if (*(CFileHandle**)(slotBase + 0xac) != NULL) {
+                if (mFileFacePc[n] != NULL) {
                     unkE8 = 0;
                     goto after_assets;
                 }
-                slotBase += 4;
             }
         }
     }
@@ -467,7 +454,7 @@ after_assets:
                             if ((*(u16*)((u8*)flagObj + 0x530) & 1) == 0) {
                                 objPc = func_800BFC68(objMove);
                                 {
-                                    void* moveBase = reinterpret_cast<u8*>(objPc) + 0x3e9c;
+                                    void* moveBase = static_cast<cf::CfObjectMove*>(static_cast<cf::CfObjectActor*>(objPc));
                                     handle = vslot<GetIntFn>(moveBase, 0x4c)(moveBase);
                                 }
                                 if (handle != 0) {
@@ -539,7 +526,7 @@ after_assets:
                     }
                     if (func_801042B4() == 0) {
                         {
-                            void* moveBase = reinterpret_cast<u8*>(actor2) + 0x3e9c;
+                            void* moveBase = static_cast<cf::CfObjectMove*>(static_cast<cf::CfObjectActor*>((cf::CfObjectActor*)actor2));
                             handle = vslot<GetIntFn>(moveBase, 0x4c)(moveBase);
                         }
                         lbl_eu_8066404C = (void*)handle;

@@ -2,177 +2,174 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectEff.hpp"
 
-cf::CfObjectEff::CfObjectEff() {}
+namespace cf {
+CfObjectEff::CfObjectEff() {}
+} // namespace cf
 
 void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 
-void cf::CfObject::~CfObject() {}
+namespace cf {
+CfObject::~CfObject() {}
+} // namespace cf
 
 void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv() {}
 
-void cf::CfObjectEff::func_800AC7CC() {}
-
-void cf::CfObjectEff::func_800AC7FC() {}
-
-void cf::CfObjectEff::func_800AC810() {}
-
-void cf::CfObjectEff::func_800AC86C() {}
+namespace cf {
+void CfObjectEff::func_800AC7CC() {}
+void CfObjectEff::func_800AC7FC() {}
+void CfObjectEff::func_800AC810() {}
+void CfObjectEff::func_800AC86C() {}
+} // namespace cf
 
 void CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv() {}
 
-void cf::CfObjectEff::func_800AC990() {}
-
-void cf::CfObjectEff::func_800ACA58() {}
-
-void cf::CfObjectEff::func_800ACAE8() {}
-
-void cf::CfObjectEff::func_800ACB08() {}
-
-void cf::CfObjectEff::func_800ACBA4() {}
-
-void cf::CfObjectEff::func_800ACBCC() {}
+namespace cf {
+void CfObjectEff::func_800AC990() {}
+void CfObjectEff::func_800ACA58() {}
+void CfObjectEff::func_800ACAE8() {}
+void CfObjectEff::func_800ACB08() {}
+void CfObjectEff::func_800ACBA4() {}
+void CfObjectEff::func_800ACBCC() {}
+} // namespace cf
 
 void func_800ACC14(void* self, unsigned char val) {
-    void* ptr = *(void**)((char*)self + 0x94);
-    if (ptr != nullptr)
-        *(unsigned char*)((char*)ptr + 0x59) = val;
+    cf::CfObjectEff* obj = static_cast<cf::CfObjectEff*>(self);
+    if (obj->mChildEff != nullptr)
+        obj->mChildEff->unk59 = val;
 }
 
 void func_800ACC28(){}
 
-void cf::CfObjectEff::func_800ACC3C() {}
+namespace cf {
+void CfObjectEff::func_800ACC3C() {}
+} // namespace cf
 
 void func_800ACC50(){}
 
 void func_800ACC64(void* obj, const void* src) {
-    void* dest = *(void**)((unsigned char*)obj + 0x94);
-    if (dest == 0) return;
-    unsigned int* d = (unsigned int*)((unsigned char*)dest + 0x40);
-    const unsigned int* s = (const unsigned int*)src;
-    d[0] = s[0];
-    d[1] = s[1];
-    d[2] = s[2];
-    d[3] = s[3];
+    cf::CfObjectEff* eff = static_cast<cf::CfObjectEff*>(obj);
+    cf::CfObjectEffChild* child = eff->mChildEff;
+    if (child == nullptr) return;
+    const u32* s = static_cast<const u32*>(src);
+    child->unk40[0] = s[0];
+    child->unk40[1] = s[1];
+    child->unk40[2] = s[2];
+    child->unk40[3] = s[3];
 }
 
-void cf::CfObjectEff::func_800ACC94() {}
+namespace cf {
+void CfObjectEff::func_800ACC94() {}
 
-void cf::CfObjectEff::func_800ACCD4() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[156 / 4];
-    func(this);
+void CfObjectEff::func_800ACCD4() {
+    this->CfObject_UnkVirtualFunc19();
 }
 
-void cf::CfObjectEff::func_800ACCE4() {}
+void CfObjectEff::func_800ACCE4() {}
 
-void cf::CfObjectEff::func_800ACD4C() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[180 / 4];
-    func(this);
+void CfObjectEff::func_800ACD4C() {
+    this->CfObject_UnkVirtualFunc25();
 }
 
-void cf::CfObjectEff::func_800ACD5C() {}
-
-void cf::CfObjectEff::func_800ACDA0() {}
-
-void cf::CfObjectEff::func_800ACDE0() {}
-
-void cf::CfObjectEff::func_800ACDFC() {}
+void CfObjectEff::func_800ACD5C() {}
+void CfObjectEff::func_800ACDA0() {}
+void CfObjectEff::func_800ACDE0() {}
+void CfObjectEff::func_800ACDFC() {}
+} // namespace cf
 
 float func_800ACE44__Q22cf11CfObjectEffFv(void* self) {
-    char* p = *(char**)((char*)self + 0x94);
-    if (p != 0) {
-        return *(float*)(p + 0x2c);
+    cf::CfObjectEff* obj = static_cast<cf::CfObjectEff*>(self);
+    if (obj->mChildEff != nullptr) {
+        return obj->mChildEff->unk2C;
     }
-    return *(float*)((char*)self + 0x4c);
+    return reinterpret_cast<float&>(static_cast<cf::CfObject*>(obj)->mField4C);
 }
 
-void cf::CfObjectEff::func_800ACE60() {}
-
-void cf::CfObjectEff::func_800ACE78() {}
-
-void cf::CfObjectEff::func_800ACEAC() {}
+namespace cf {
+void CfObjectEff::func_800ACE60() {}
+void CfObjectEff::func_800ACE78() {}
+void CfObjectEff::func_800ACEAC() {}
+} // namespace cf
 
 void func_800ACEF8(void* obj, const void* src) {
-    if (*(unsigned short*)((unsigned int)obj + 0xa4) & 0x4) return;
-    void* ptr = *(void**)((unsigned int)obj + 0x94);
-    if (ptr != 0) {
-        unsigned int* dst = (unsigned int*)((unsigned int)ptr + 0x34);
-        const unsigned int* s = (const unsigned int*)src;
-        dst[0] = s[0];
-        dst[1] = s[1];
-        dst[2] = s[2];
+    cf::CfObjectEff* eff = static_cast<cf::CfObjectEff*>(obj);
+    if (eff->mFlagsA4 & 0x4) return;
+    cf::CfObjectEffChild* child = eff->mChildEff;
+    if (child != nullptr) {
+        const u32* s = static_cast<const u32*>(src);
+        child->unk34[0] = s[0];
+        child->unk34[1] = s[1];
+        child->unk34[2] = s[2];
     }
-    float f = *(const float*)src;
-    *(float*)((unsigned int)obj + 0x60) = f;
+    float f = *static_cast<const float*>(src);
+    static_cast<cf::CfObject*>(eff)->mFloat60 = f;
 }
 
 float func_800ACF34__Q22cf11CfObjectEffFv(char* self) {
-    char* unk = *(char**)(self + 0x94);
-    if (unk != 0) {
-        return *(float*)(unk + 0x38);
+    cf::CfObjectEff* obj = reinterpret_cast<cf::CfObjectEff*>(self);
+    if (obj->mChildEff != nullptr) {
+        return reinterpret_cast<float&>(obj->mChildEff->unk34[1]);
     }
-    return *(float*)(self + 0x60);
+    return static_cast<cf::CfObject*>(obj)->mFloat60;
 }
 
-void cf::CfObjectEff::func_800ACF50() const {}
+namespace cf {
+void CfObjectEff::func_800ACF50() const {}
+} // namespace cf
 
 void func_800ACF78(){}
-
 void func_800ACFD8(){}
 
 void func_800AD040(char* obj, int flag) {
-    char* child = *(char**)(obj + 0x94);
-    if (child == 0) {
-        return;
-    }
-    *(int*)(child + 0x5c) = (flag != 0);
+    cf::CfObjectEff* eff = reinterpret_cast<cf::CfObjectEff*>(obj);
+    if (eff->mChildEff == nullptr) return;
+    eff->mChildEff->unk5C = (flag != 0);
 }
 
 void func_800AD060(){}
 
 void func_800AD378(void* obj) {
-    unsigned short count = *(unsigned short*)((char*)obj + 0xA6);
-    if (count == 0) return;
-    count--;
-    *(unsigned short*)((char*)obj + 0xA6) = count;
-    if (count != 0) return;
-    unsigned int flags = *(unsigned int*)((char*)obj + 0x68);
-    flags |= 0x40;
-    *(unsigned int*)((char*)obj + 0x68) = flags;
+    cf::CfObjectEff* eff = static_cast<cf::CfObjectEff*>(obj);
+    if (eff->mCountA6 == 0) return;
+    eff->mCountA6--;
+    if (eff->mCountA6 != 0) return;
+    static_cast<cf::CfObject*>(eff)->mFlags68 |= 0x40;
 }
 
-void cf::CfObjectEff::func_800AD3A4() {}
-
-void cf::CfObjectEff::func_800AD4A4() {}
+namespace cf {
+void CfObjectEff::func_800AD3A4() {}
+void CfObjectEff::func_800AD4A4() {}
+} // namespace cf
 
 void func_800AD4B0(){}
-
 void func_800AD558(){}
-
 void func_800AD5EC(){}
 
-void cf::CfObjectEff::func_800AD68C() {}
+namespace cf {
+void CfObjectEff::func_800AD68C() {}
+CfObjectEff::~CfObjectEff() {}
+void CfObjectEff::func_800AD818() {}
 
-void cf::CfObjectEff::~CfObjectEff() {}
-
-void cf::CfObjectEff::func_800AD818() {}
-
-void cf::CfObjectEff::func_800AD830() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[208 / 4];
-    func(this);
+void CfObjectEff::func_800AD830() {
+    this->CfObject_UnkVirtualFunc32();
 }
 
-void cf::CfObjectEff::func_800AD840() {
-    void** vtable = *(void***)this;
-    void (*func)(void*) = (void (*)(void*))vtable[0xc4 / 4];
-    func(this);
+void CfObjectEff::func_800AD840() {
+    this->CfObject_UnkVirtualFunc29();
+}
+} // namespace cf
+
+// Forward declarations for symbols used by thunks
+void func_800AD68C__Q22cf11CfObjectEffFv();
+void __dt__Q22cf11CfObjectEffFv();
+
+void func_800AD850__Q22cf11CfObjectEffFv(void* self) {
+    ((void(*)(void*))func_800AD68C__Q22cf11CfObjectEffFv)((char*)self - 0x90);
 }
 
-void func_800AD850__Q22cf11CfObjectEffFv(void* self) { ((void(*)(void*))func_800AD68C__Q22cf11CfObjectEffFv)((char*)self - 0x90); }
-
-void func_800AD858__Q22cf11CfObjectEffFv(void* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEffFv)((char*)self - 0x90); }
+void func_800AD858__Q22cf11CfObjectEffFv(void* self) {
+    ((void(*)(void*))__dt__Q22cf11CfObjectEffFv)((char*)self - 0x90);
+}
 
 void func_800AD860__FPv(){}

@@ -4,9 +4,12 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuBattleDamage.hpp"
-void __ct__CMenuBattleDamage(){}
+#include "monolib/work/IWorkEvent.hpp"
+#include "monolib/scn/IScnRender.hpp"
 
-void CMenuBattleDamage::~CMenuBattleDamage() {}
+CMenuBattleDamage::CMenuBattleDamage() {}
+
+CMenuBattleDamage::~CMenuBattleDamage() {}
 
 void CMenuBattleDamage::Init() {}
 
@@ -16,58 +19,61 @@ void CMenuBattleDamage::Move() {}
 
 void CMenuBattleDamage::cbRenderBefore() {}
 
-void func_801096B8(){}
+void createBattleDamage() {}
 
-void func_80109734(){}
+void addBattleDamage() {}
 
-void func_8010975C(unsigned char val) {
-    extern unsigned long lbl_eu_80663F28;
-    unsigned char* p = (unsigned char*)lbl_eu_80663F28;
-    if (p != 0) p[0x774] = val;
+void setDamageType(unsigned char val) {
+    extern CMenuBattleDamage* lbl_eu_80663F28;
+    CMenuBattleDamage* p = lbl_eu_80663F28;
+    if (p != 0) p->mDamageType = val;
 }
 
-void func_80109770(unsigned char val) {
-    extern unsigned long lbl_eu_80663F28;
-    unsigned char* p = (unsigned char*)lbl_eu_80663F28;
-    if (p != 0) p[0x775] = val;
+void setDamageDir(unsigned char val) {
+    extern CMenuBattleDamage* lbl_eu_80663F28;
+    CMenuBattleDamage* p = lbl_eu_80663F28;
+    if (p != 0) p->mDamageDir = val;
 }
 
-void func_80109784(){}
+void addBattleDamageEx() {}
 
-void func_80109874(){}
+void setDamageStyle() {}
 
-void func_80109888(){}
+void setDamageFlag1() {}
 
-void func_8010989C(){}
+void setDamageFlag2() {}
 
-void func_801098B0(){}
+void addDamageSlot() {}
 
-void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+extern "C" void __dt__17CMenuBattleDamageFv();
+extern "C" void cbRenderBefore__17CMenuBattleDamageFv();
 
-void func_8010A684(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuBattleDamageFv)((char*)self - 0x5c); }
+void thunk_IWorkEvent_dtor(IWorkEvent* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)(reinterpret_cast<char*>(self) - 0x58); }
 
-void func_8010A68C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x5c); }
+void thunk_IScnRender_cbRenderBefore(IScnRender* self) { ((void(*)(void*))cbRenderBefore__17CMenuBattleDamageFv)(reinterpret_cast<char*>(self) - 0x5c); }
 
-void CPcSelectCursor01::~CPcSelectCursor01() {}
+void thunk_IScnRender_dtor(IScnRender* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)(reinterpret_cast<char*>(self) - 0x5c); }
 
-void func_8010A6F0(char* this_) {
-    if (*(int*)(this_ + 0x2c) != 0) {
+CPcSelectCursor01::~CPcSelectCursor01() {}
+
+void cursorInit(CPcSelectCursor01* this_) {
+    if (this_->mState != 0) {
         return;
     }
-    *(int*)(this_ + 0x2c) = 1;
-    this_[0x28] = 0;
+    this_->mState = 1;
+    this_->mAnimFrame = 0;
 }
 
-void func_8010A710(){}
+void cursorMoveRight() {}
 
-void func_8010A7A8(){}
+void cursorMoveLeft() {}
 
-u8 func_8010A840(void* self) { return ((u8*)self)[0x28]; }
+u8 cursorGetAnimFrame(CPcSelectCursor01* self) { return self->mAnimFrame; }
 
-void func_8010A848(){}
+void cursorShow() {}
 
-void func_8010A8E4(){}
+void cursorHide() {}
 
-void func_8010A940(){}
+void cursorAnimate() {}
 
-void func_8010ACC4(){}
+void cursorFinalize() {}

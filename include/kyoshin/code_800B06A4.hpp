@@ -27,7 +27,7 @@ template <typename T>
 class _reslist_base {
 public:
     ~_reslist_base();
-    char _pad[0x20];
+    char _pad[0x1F];
 };
 
 template <typename T>
@@ -40,13 +40,19 @@ public:
 class UnkClass_800B0AD8 {
 public:
     UnkClass_800B0AD8();
-    char _pad[0xB08];
+    u8 unk0[0xAF8];                // 0x00
+    UnkClass_800B0AD8* unkAF8;     // 0xAF8
+    u32 unkAFC;                     // 0xAFC
+    u32 unkB00;                     // 0xB00
+    u32 unkB04;                     // 0xB04
+    // total size: 0xB08
 };
 
 class UnkClass_805764CC : public reslist<cf::CfObject> {
 public:
     UnkClass_805764CC();
-    ~UnkClass_805764CC();
+    ~UnkClass_805764CC() {}
+    static UnkClass_805764CC* func_800B07E8();
     
     // 0x20 - 0xB27
     UnkClass_800B0AD8 field_0x20;

@@ -16,39 +16,5 @@ namespace cf {
 
         CChainActorList();
         virtual ~CChainActorList();
-    CChainActorList();
     };
 }
-
-namespace cf {
-
-class CChainActorPc {
-public:
-    CChainActorPc();
-    virtual ~CChainActorPc();
-
-    // TODO: add fields
-};
-} // namespace cf
-
-namespace cf {
-
-class CChainActorEne {
-public:
-    CChainActorEne();
-    virtual ~CChainActorEne();
-
-    // TODO: add fields
-};
-} // namespace cf
-
-namespace cf {
-
-class UnkClass_8027AD70 {
-public:
-    virtual ~UnkClass_8027AD70();
-
-    // TODO: add fields
-};
-} // namespace cf
-

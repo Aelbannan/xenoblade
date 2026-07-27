@@ -18,9 +18,11 @@ void __ct__80449548(void) {}
 
 void* __dt__CMsgParam_32(void* self, int shouldDelete) {
     if (self != 0) {
-        if (reinterpret_cast<unsigned char*>(self) + 4 != 0) {
-            *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x48c) = 0;
-            *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x488) = 0;
+        unsigned char* base = static_cast<unsigned char*>(self);
+        // CMsgParam<32> layout: vtable(4) + entries[32](0x480) + mArrayPtr(4) + mFront(4) + mSize(4)
+        if (base + 4 != 0) {
+            *reinterpret_cast<unsigned int*>(base + 0x48c) = 0; // mSize
+            *reinterpret_cast<unsigned int*>(base + 0x488) = 0; // mFront
         }
         if (shouldDelete > 0)
             ::operator delete(self);
@@ -92,7 +94,9 @@ struct C1FCCacheLayout {
     u8 pad1[8]; // 0x4A0..0x4A7 so rect4A8 lands at 0x4A8
     s16 rect4A8[4];
     s16 rect4B0[4];
-    u8 pad2[0x50C - 0x4B8];
+    u8 pad2[0x50C - 0x4B8 - 4];
+    s16 mScissorDeltaX; // 0x4BC: scissor origin delta
+    s16 mScissorDeltaY; // 0x4BE: scissor origin delta
     u32 unk50C;
 };
 
@@ -122,15 +126,15 @@ void CGXCache::func_8044B298(void* a, void* b, void* c) {
         *(u32*)&cache->rect4B0[0] = w0;
     }
     if (insetPair == 0) {
-        insetPair = (u32*)((u8*)cache + 0x4a8);
+        insetPair = reinterpret_cast<u32*>(cache->rect4A8);
     }
 
     stack[0] = (s16)(cache->rect4A8[0] - cache->rect4B0[0]);
     stack[1] = (s16)(cache->rect4A8[1] - cache->rect4B0[1]);
     stack[2] = cache->rect4B0[2];
     stack[3] = cache->rect4B0[3];
-    *(s16*)((u8*)cache + 0x4bc) = stack[2];
-    *(s16*)((u8*)cache + 0x4be) = stack[3];
+    cache->mScissorDeltaX = stack[2];
+    cache->mScissorDeltaY = stack[3];
 
     i = 0;
     for (u32 n = cache->mSize; n != 0; n--) {
@@ -152,7 +156,7 @@ found_b:
     entry->wid = *(u32*)&stack[0];
     entry->unk8 = *(u32*)&stack[2];
     // Retail recomputes this+4 at each call site (addi before bl).
-    func_8044CE68__8CGXCacheFv((u8*)this + 4, 0xb);
+    func_8044CE68__8CGXCacheFv(&unk4, 0xb);
 
     i = 0;
     for (u32 n = cache->mSize; n != 0; n--) {
@@ -176,7 +180,7 @@ found_c:
     {
         // volatile blocks CSE of (this+4) into a third saved GPR (+4B over).
         void* volatile vself = this;
-        func_8044CE68__8CGXCacheFv((u8*)vself + 4, 0xc);
+        func_8044CE68__8CGXCacheFv(&static_cast<CGXCache*>(vself)->unk4, 0xc);
     }
 }
 
@@ -196,9 +200,9 @@ void CGXCache::func_8044BD74() {}
 
 void CGXCache::func_8044BE10(void) {}
 
-void* func_8044BE1C__8CGXCacheFv(void* self) { return (void*)((u8*)self + 0x510); }
+void* func_8044BE1C__8CGXCacheFv(void* self) { return &static_cast<CGXCache*>(self)->unk510[0]; }
 
-u8 func_8044BE24__8CGXCacheFv(void* self) { return ((u8*)self)[0x518]; }
+u8 func_8044BE24__8CGXCacheFv(void* self) { return static_cast<CGXCache*>(self)->unk510[8]; }
 
 void* CGXCache::func_8044BE2C(void) { return 0; }
 
@@ -282,7 +286,7 @@ void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
 #pragma dont_inline on
 void CGXCache::func_8044C1FC() {
     C1FCCacheLayout* cache = (C1FCCacheLayout*)this;
-    void* msgSelf = (u8*)this + 4;
+    void* msgSelf = &unk4;
     GXColor gxCol;
     GXRenderModeObj* rmo;
     f32 yScale;
@@ -471,7 +475,7 @@ void CGXCache::func_8044C1FC() {
             u32 slot2_5 = idx2_5 - (idx2_5 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_5 = &cache->mArrayPtr[slot2_5];
             e_5->unk23 = 0x04;
-            *(u8*)&e_5->unk8 = 1;
+            e_5->unk8 = 1;
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x5);
     }
@@ -492,7 +496,7 @@ void CGXCache::func_8044C1FC() {
             u32 slot2_6 = idx2_6 - (idx2_6 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_6 = &cache->mArrayPtr[slot2_6];
             e_6->unk23 = 0x04;
-            *(u8*)&e_6->unk8 = 1;
+            e_6->unk8 = 1;
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x6);
     }
@@ -513,7 +517,7 @@ void CGXCache::func_8044C1FC() {
             u32 slot2_7 = idx2_7 - (idx2_7 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_7 = &cache->mArrayPtr[slot2_7];
             e_7->unk23 = 0x04;
-            *(u8*)&e_7->unk8 = 1;
+            e_7->unk8 = 1;
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x7);
     }
@@ -534,7 +538,7 @@ void CGXCache::func_8044C1FC() {
             u32 slot2_8 = idx2_8 - (idx2_8 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_8 = &cache->mArrayPtr[slot2_8];
             e_8->unk23 = 0x04;
-            *(u8*)&e_8->unk8 = 1;
+            e_8->unk8 = 1;
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x8);
     }
@@ -637,7 +641,7 @@ dispatch:
         MsgParam32Entry* entry = &base->mArrayPtr[slot];
         this = ((MsgParam32Ring*)this)->field7;
         void** vtbl = *(void***)this;
-        ((void (*)(void*, u32, void*))vtbl[3])(this, cmd, (u8*)entry + 4);
+        ((void (*)(void*, u32, void*))vtbl[3])(this, cmd, &entry->wid);
     }
 }
 
@@ -657,7 +661,7 @@ found_entry:
     {
         u32 idx = ring->mFront + i;
         u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
-        return (u8*)&ring->mArrayPtr[slot] + 4;
+        return &ring->mArrayPtr[slot].wid;
     }
 }
 void CGXCache::func_8044CF74() const {}

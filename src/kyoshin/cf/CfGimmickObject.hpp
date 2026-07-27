@@ -17,7 +17,6 @@ namespace cf {
 
 class CfGimmickObject {
 public:
-    CfGimmickObject();
     ~CfGimmickObject();
 };
 

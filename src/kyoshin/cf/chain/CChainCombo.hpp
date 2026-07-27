@@ -38,7 +38,6 @@ struct CChainCombo {
     CChainGauge mGauge; // 0xC - chain gauge pair
     void* mVtbl;        // 0x14 - lbl_eu_80538994
 
-    CChainCombo();
     void func1();
 };
 

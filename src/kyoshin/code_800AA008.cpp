@@ -29,9 +29,7 @@ static inline char* fixstr_buf(ml::FixStr<64>& buf) {
 
 void func_800AA008(ml::FixStr<64>& buf, int type, u32 arg1, u32 arg2, u32 arg3) {
     char tmp[0x100];
-    for (int i = 0; i < 0x20; i++) {
-        *(u32*)(tmp + i * 8) = 0;
-    }
+    memset(tmp, 0, sizeof(tmp));
 
     switch (type) {
     case 0:
@@ -69,9 +67,7 @@ void func_800AA008(ml::FixStr<64>& buf, int type, u32 arg1, u32 arg2, u32 arg3) 
         break;
     }
 
-    u32 len = strlen(tmp);
-    strcat(fixstr_buf(buf), tmp);
-    *(u32*)(fixstr_buf(buf) + 0x40) += len;
+    buf += tmp;
 }
 
 int func_800AA1B4(const char* str, int digitCount, int* out) {
@@ -133,8 +129,7 @@ void func_800AA318(u32 packedToken, u32* outEntryId, u32* outParam1, u32* outPar
 }
 
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag) {
-    fixstr_buf(buf)[0] = '\0';
-    *(u32*)(fixstr_buf(buf) + 0x40) = 0;
+    buf.clear();
 
     if (packed == 0) return 0;
 
@@ -143,46 +138,35 @@ int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFla
     u32 field2 = (packed >> 10) & 0x3FF;
     u32 field3 = packed & 0x3FF;
 
-    u32 tableOff = id * 16;
-    const FormatEntry* entry = (const FormatEntry*)(lbl_eu_805283B0 + tableOff);
+    const FormatEntry* entry = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0) + id;
     u32 idx = id;
 
     int result = 0;
     while (idx < 0x1F) {
         if (entry->id == id) {
             if (prefixFlag != 0) {
-                strcpy(fixstr_buf(buf), entry->template_);
-                *(u32*)(fixstr_buf(buf) + 0x40) = strlen(entry->template_);
+                buf = entry->template_;
             }
 
-            strcat(fixstr_buf(buf), entry->name);
-            *(u32*)(fixstr_buf(buf) + 0x40) += strlen(entry->name);
+            buf += entry->name;
 
             func_800AA008(buf, entry->formatType, field1, field2, field3);
 
             if (suffixFlag != 0) {
-                char* pBuf = fixstr_buf(buf);
                 if (id == 1 || id == 0x1D) {
-                    strcat(pBuf, entry->suffix);
-                    *(u32*)(pBuf + 0x40) += strlen(entry->suffix);
+                    buf += entry->suffix;
                 } else if (id - 2 <= 4) {
-                    strcat(pBuf, entry->suffix);
-                    *(u32*)(pBuf + 0x40) += strlen(entry->suffix);
+                    buf += entry->suffix;
                 } else if (id - 7 <= 4) {
-                    strcat(pBuf, entry->suffix);
-                    *(u32*)(pBuf + 0x40) += strlen(entry->suffix);
+                    buf += entry->suffix;
                 } else if (id == 0x1C) {
-                    strcat(pBuf, entry->suffix);
-                    *(u32*)(pBuf + 0x40) += strlen(entry->suffix);
+                    buf += entry->suffix;
                 } else if (id - 0xC <= 5) {
-                    strcat(pBuf, entry->suffix);
-                    *(u32*)(pBuf + 0x40) += strlen(entry->suffix);
+                    buf += entry->suffix;
                 } else if (id == 0x1E) {
-                    strcat(pBuf, entry->suffix);
-                    *(u32*)(pBuf + 0x40) += strlen(entry->suffix);
+                    buf += entry->suffix;
                 } else if (id - 0x12 <= 4) {
-                    strcat(pBuf, entry->suffix);
-                    *(u32*)(pBuf + 0x40) += strlen(entry->suffix);
+                    buf += entry->suffix;
                 }
             }
 
@@ -202,20 +186,16 @@ void func_800AA5C0() {
 u32 func_800AA600(const char* str) {
     if (str == nullptr) return 0;
 
-    const u8* base = (const u8*)lbl_eu_805283B0;
-    const u8* p = base + 0x10;
+    const u32* table = reinterpret_cast<const u32*>(lbl_eu_805283B0);
+    const FormatEntry* entry = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0) + 1;
     for (int i = 0; i < 10; i++) {
-        const char* name;
-        name = *(const char**)(p + 4);
-        if (str[0] == name[0] && str[1] == name[1])
-            return *(u32*)(base + (name[1] & 0xF0));
-        name = *(const char**)(p + 0x14);
-        if (str[0] == name[0] && str[1] == name[1])
-            return *(u32*)(base + (name[1] & 0xF0));
-        name = *(const char**)(p + 0x24);
-        if (str[0] == name[0] && str[1] == name[1])
-            return *(u32*)(base + (name[1] & 0xF0));
-        p += 0x30;
+        if (str[0] == entry[0].name[0] && str[1] == entry[0].name[1])
+            return table[(entry[0].name[1] & 0xF0) / 4];
+        if (str[0] == entry[1].name[0] && str[1] == entry[1].name[1])
+            return table[(entry[1].name[1] & 0xF0) / 4];
+        if (str[0] == entry[2].name[0] && str[1] == entry[2].name[1])
+            return table[(entry[2].name[1] & 0xF0) / 4];
+        entry += 3;
     }
     return 0;
 }
@@ -224,24 +204,20 @@ u32 func_800AA714(const char* path) {
     if (path == nullptr) return 0;
 
     const char* filePtr = ml::CPathUtil::getFilePtrFromPath(path);
-    char nameBuf[0x44];
-    nameBuf[0] = '\0';
-    *(u32*)&nameBuf[0x40] = 0;
-    int nameLen = strlen(filePtr);
-    *(u32*)&nameBuf[0x40] = nameLen;
-    strcpy(nameBuf, filePtr);
+    ml::FixStr<64> nameBuf;
+    nameBuf = filePtr;
 
-    int extLen = *(u32*)&nameBuf[0x40];
+    int extLen = nameBuf.mLength;
     int extOff;
     if (extLen == 0) {
         extOff = -1;
     } else {
         int dotLen = strlen(lbl_eu_80661A40);
-        char* p = &nameBuf[0x9F - 0x40 + extLen];
-        char* pEnd = &nameBuf[0x9F - 0x40];
+        char* p = &nameBuf.mString[0x5F + extLen];
+        char* pEnd = &nameBuf.mString[0x5F];
         while (p != pEnd) {
             if (strncmp(p, lbl_eu_80661A40, dotLen) == 0) {
-                extOff = (int)(p - nameBuf);
+                extOff = (int)(p - nameBuf.mString);
                 goto found_ext;
             }
             p--;
@@ -252,28 +228,25 @@ u32 func_800AA714(const char* path) {
 found_ext:
     if (extOff + 1 > 1) {
         if (extLen != 0) {
-            char stripped[0x44];
-            stripped[0] = '\0';
-            *(u32*)&stripped[0x40] = 0;
+            ml::FixStr<64> stripped;
             if (extOff != -1) {
-                strncpy(stripped, nameBuf, extOff);
-                stripped[extOff] = '\0';
-                *(u32*)&stripped[0x40] = strlen(stripped);
+                strncpy(stripped.mString, nameBuf.mString, extOff);
+                stripped.mString[extOff] = '\0';
+                stripped.mLength = strlen(stripped.mString);
             }
-            *(u32*)&nameBuf[0x40] = strlen(stripped);
-            strcpy(nameBuf, stripped);
+            nameBuf = stripped;
         }
     }
 
     u32 result = 0;
-    u8 firstChar = nameBuf[0];
-    u8 secondChar = nameBuf[1];
-    const FormatEntry* entry = (const FormatEntry*)(lbl_eu_805283B0 + 0x10);
+    u8 firstChar = (u8)nameBuf[0];
+    u8 secondChar = (u8)nameBuf[1];
+    const FormatEntry* entry = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0) + 1;
     for (int i = 0; i < 0x1E; i++) {
         if ((u8)entry->name[0] == firstChar && (u8)entry->name[1] == secondChar) {
             u32 entryId = entry->id;
-            int remaining = *(u32*)&nameBuf[0x40] - 2;
-            const char* nameTail = &nameBuf[2];
+            int remaining = nameBuf.mLength - 2;
+            const char* nameTail = &nameBuf.mString[2];
             u8 fmtType = entry->formatType;
 
             switch (fmtType) {

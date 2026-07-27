@@ -36,10 +36,8 @@ void StrmSound::UpdateMoveValue() {
     for (int i = 0; i < 8; i++) {
         if (!mStrmPlayer.GetPlayerTrack(i)) continue;
         
-        u8* base = reinterpret_cast<u8*>(this) + 0xE54 + i * 0x10;
-        u32* limit = reinterpret_cast<u32*>(base);
-        u32* count = reinterpret_cast<u32*>(base + 4);
-        if (*count < *limit) (*count)++;
+        if (mStrmPlayer.mMoveBlocks[i].count < mStrmPlayer.mMoveBlocks[i].limit)
+            mStrmPlayer.mMoveBlocks[i].count++;
     }
 }
 

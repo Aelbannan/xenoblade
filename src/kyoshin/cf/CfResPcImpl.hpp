@@ -1,17 +1,6 @@
 #pragma once
 
 #include <types.h>
-
-namespace cf {
-
-class CfResPcImpl {
-public:
-    virtual ~CfResPcImpl();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class UnkClass_8018EF3C {

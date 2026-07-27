@@ -23,7 +23,7 @@ void MmlSeqTrackAllocator::FreeTrack(SeqTrack* pTrack) {
 extern "C" u32 CreateImpl__Q44nw4r3snd6detail8PoolImplFPvUlUl(void*, void*, u32, u32);
 
 u32 MmlSeqTrackAllocator::Create(void* pBuffer, u32 size) {
-    return CreateImpl__Q44nw4r3snd6detail8PoolImplFPvUlUl(reinterpret_cast<u8*>(this) + 8, pBuffer, size, 0xCC);
+    return CreateImpl__Q44nw4r3snd6detail8PoolImplFPvUlUl(&mTrackPool, pBuffer, size, 0xCC);
 }
 
 void MmlSeqTrackAllocator::Destroy(void* pBuffer, u32 size) {
@@ -35,4 +35,4 @@ void MmlSeqTrackAllocator::Destroy(void* pBuffer, u32 size) {
 } // namespace nw4r
 
 extern "C" u32 CountImpl__Q44nw4r3snd6detail8PoolImplCFv(void*);
-extern "C" void GetAllocatableTrackCount__Q44nw4r3snd6detail20MmlSeqTrackAllocatorCFv(void* self) { CountImpl__Q44nw4r3snd6detail8PoolImplCFv((char*)self + 0x8); }
+extern "C" int GetAllocatableTrackCount__Q44nw4r3snd6detail20MmlSeqTrackAllocatorCFv(void* self) { return static_cast<MmlSeqTrackAllocator*>(self)->GetAllocatableTrackCount(); }

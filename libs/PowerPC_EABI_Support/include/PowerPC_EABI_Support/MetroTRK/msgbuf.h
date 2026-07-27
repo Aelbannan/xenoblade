@@ -23,6 +23,28 @@ typedef struct MessageBuffer {
     ui8 fData[kMessageBufferSize]; //0xC
 } MessageBuffer;
 
+/*
+Message body overlay for command-specific fields within MessageBuffer::fData.
+Offsets are relative to fData[0] (i.e. absolute offset 0xC within MessageBuffer).
+*/
+typedef struct TRKMsgBody {
+    ui8 pad_00[4];   // 0x00-0x03
+    ui8 command;      // 0x04
+    ui8 pad_05[3];   // 0x05-0x07
+    ui8 options;      // 0x08
+    ui8 pad_09[3];   // 0x09-0x0B
+    union {
+        ui16 param1;        // 0x0C-0x0D (length, firstRegister, stepCount)
+        ui8 count;           // 0x0C (step count, single byte)
+    };
+    ui8 pad_0E[2];   // 0x0E-0x0F
+    union {
+        ui32 param2;            // 0x10-0x13 (start, rangeStart)
+        ui16 lastRegister;      // 0x10-0x11
+    };
+    ui32 param3;       // 0x14-0x17 (rangeEnd; register data follows)
+} TRKMsgBody;
+
 
 DSError TRK_InitializeMessageBuffers();
 DSError TRK_GetFreeBuffer(int*, MessageBuffer**);

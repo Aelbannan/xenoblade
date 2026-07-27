@@ -1,19 +1,6 @@
 #pragma once
 
 #include <types.h>
-
-namespace cf {
-
-class CfRes {
-public:
-    virtual ~CfRes();
-    CfRes();
-    void OnFileEvent();
-
-    // TODO: add fields
-};
-} // namespace cf
-
 namespace cf {
 
 class CfResTask {

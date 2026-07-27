@@ -30,6 +30,7 @@ struct CAIActionExport {
 class CAIAction {
 public:
     CAIAction();
+    ~CAIAction();
 
     // Declared Fv for vtable; body is extern "C" with outA/outB args
     virtual void CAIAction_UnkVirtualFunc1(); // 0x8

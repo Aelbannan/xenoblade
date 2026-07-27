@@ -32,7 +32,6 @@ namespace cf {
         //0x3e9c: vtable 3
         //0x3e9c-45b4: CfObjectMove
         u8 unk45B4[0x8];
-    CfObjectActor();
     void CActorParam_UnkVirtualFunc1();
     void CActorParam_UnkVirtualFunc140();
     void CActorParam_UnkVirtualFunc179();
@@ -48,14 +47,3 @@ namespace cf {
     void func_801725DC();
     };
 }
-
-namespace cf {
-
-class CActorParam {
-public:
-    void CActorParam_UnkVirtualFunc167();
-
-    // TODO: add fields
-};
-} // namespace cf
-

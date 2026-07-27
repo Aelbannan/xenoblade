@@ -1,15 +1,20 @@
 #ifndef CF_OBJECT_ENE_HPP
 #define CF_OBJECT_ENE_HPP
 
-#include "kyoshin/cf/CfObjectActor.hpp"
+#include "kyoshin/cf/object/CfObjectActor.hpp"
 #include "kyoshin/cf/CfResReloadImpl.hpp"
 
 namespace cf {
 
 class CfObjectEne : public CfObjectActor {
 public:
-    CfObjectEne();
     virtual ~CfObjectEne();
+    virtual void func_800ADB2C();
+    virtual void func_800ADBD4();
+    virtual void func_800ADDA8();
+    virtual void func_800AEC68();
+    void CActorParam_UnkVirtualFunc166();
+    void CActorParam_UnkVirtualFunc167();
 
 private:
     // field_0x8 is a secondary vtable pointer inherited from CfObjectActor

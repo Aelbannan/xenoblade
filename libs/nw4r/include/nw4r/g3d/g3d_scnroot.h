@@ -86,6 +86,8 @@ private:
     IScnObjGather* mpCollection;              // at 0xE8
     ResMdlDrawMode mDrawMode;                 // at 0xEC
     u32 mScnRootFlags;                        // at 0xF0
+
+public:
     u8 mCurrentCameraID;                      // at 0xF4
     u8 PADDING_0xF5;                          // at 0xF5
     u8 PADDING_0xF6;                          // at 0xF6

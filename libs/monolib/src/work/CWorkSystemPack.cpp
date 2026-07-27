@@ -13,7 +13,7 @@ void __dt__reslist_CPackItem(){}
 
 void __dt___reslist_base_CArcItem(){}
 
-extern "C" void func_804DDBD8(void* self) {
+void func_804DDBD8(void* self) {
     uint32_t* head = *(uint32_t**)((uint8_t*)self + 4);
     uint32_t* node = (uint32_t*)*head;
     goto loop_cond;
@@ -37,17 +37,17 @@ void func_804DDD54(){}
 
 void CWorkSystemPack::func_804DDDF4() {}
 
-extern "C" const char* const* lbl_eu_80665A14;
+const char* const* lbl_eu_80665A14;
 
 // Store the PKH filenames array pointer for later retrieval by the work system.
-extern "C" void SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc(const char* const* pArray) {
+void SavePkhFilenamesArrayPtr__15CWorkSystemPackFPCPCc(const char* const* pArray) {
     lbl_eu_80665A14 = pArray;
 }
 
-extern "C" const char* const* lbl_eu_80665A18;
+const char* const* lbl_eu_80665A18;
 
 // Store the static arc filename string pointer for later retrieval by the work system.
-extern "C" void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const char* const* pFilenameStr) {
+void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const char* const* pFilenameStr) {
     lbl_eu_80665A18 = pFilenameStr;
 }
 

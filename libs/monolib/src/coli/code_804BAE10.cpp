@@ -37,7 +37,7 @@ void func_804BC494(){}
 
 void func_804BC9A0(){}
 
-extern "C" void func_804BC9B4(int *dest, int offset, int *src) {
+void func_804BC9B4(int *dest, int offset, int *src) {
     dest[0] = offset + src[1];
     dest[1] = offset + src[2];
     dest[2] = offset + src[3];

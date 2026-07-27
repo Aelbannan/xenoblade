@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfScript.hpp"
 
-extern "C" void func_80068A20() {
+void func_80068A20() {
     extern void func_80068A30(void*, unsigned long);
     extern char lbl_eu_805708D0[];
     extern unsigned long lbl_eu_80661AC0;
@@ -13,7 +13,7 @@ extern "C" void func_80068A20() {
 
 void func_80068A30(){}
 
-extern "C" void func_80068A80() {
+void func_80068A80() {
     cf::CfScriptManager::getInstance()->init();
 }
 
@@ -29,32 +29,32 @@ void func_80068B24(){}
 
 void func_80068ECC(void* subObj, const char* name);
 // Thunk: forward to func_80068ECC with &manager->mScripts[1] and the script name.
-extern "C" void func_80068B58(cf::CfScriptManager* manager, const char* name) {
+void func_80068B58(cf::CfScriptManager* manager, const char* name) {
     func_80068ECC(&manager->mScripts[1], name);
 }
 
 void func_80068B60(){}
 
 // Thunk: forward to func_80068ECC with &manager->mScripts[2] and the script name.
-extern "C" void func_80068B94(cf::CfScriptManager* manager, const char* name) {
+void func_80068B94(cf::CfScriptManager* manager, const char* name) {
     func_80068ECC(&manager->mScripts[2], name);
 }
 
 void func_80068B9C(){}
 
-extern "C" void func_80068BC0(void* self) {
+void func_80068BC0(void* self) {
     *(unsigned long*)((char*)self + 0x4c) |= 4;
 }
 
 void func_80068BD0(){}
 
-extern "C" void func_80068BF4(void* self) {
+void func_80068BF4(void* self) {
     *(unsigned long*)((char*)self + 0xa4) |= 4;
 }
 
 void func_80068C04(){}
 
-extern "C" void func_80068C28(void* self) {
+void func_80068C28(void* self) {
     *(unsigned long*)((char*)self + 0xfc) |= 4;
 }
 
@@ -83,7 +83,7 @@ void func_80068E9C(){}
 
 void cf::CfScript::waitLoad() {}
 
-extern "C" void update__Q22cf8CfScriptFv(void* self) {
+void update__Q22cf8CfScriptFv(void* self) {
     *(unsigned long*)((char*)self + 0x4c) |= 0x20;
 }
 

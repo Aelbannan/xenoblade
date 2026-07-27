@@ -5,7 +5,7 @@
 
 void __ct__Q44nw4r2ut6detail15ArchiveFontBaseFv(){}
 
-extern "C" void* __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(void* self, int deleting)
+void* __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(void* self, int deleting)
 {
     extern void __dt__Q44nw4r2ut6detail11ResFontBaseFv(void*, int);
     extern void __dl__FPv(void*);

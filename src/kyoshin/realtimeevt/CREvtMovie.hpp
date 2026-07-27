@@ -55,3 +55,11 @@ struct CREvtMovie {
 };
 
 } // namespace cf
+
+class CREvtMovie {
+public:
+    CREvtMovie();
+
+    // TODO: add fields
+};
+

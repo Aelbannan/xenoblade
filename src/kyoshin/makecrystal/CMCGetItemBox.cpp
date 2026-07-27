@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/makecrystal/CMCGetItemBox.hpp"
 void func_80296B44(){}
 
 void __dt__80296BB0(){}
@@ -37,9 +38,9 @@ void func_80297B68(){}
 
 void func_80297CC0(){}
 
-extern "C" u8 func_80297D1C(void* self) { return ((u8*)self)[0x55]; }
+u8 func_80297D1C(void* self) { return ((u8*)self)[0x55]; }
 
-extern "C" u8 func_80297D24(void* self) { return ((u8*)self)[0x303]; }
+u8 func_80297D24(void* self) { return ((u8*)self)[0x303]; }
 
 void func_80297D2C(){}
 
@@ -65,8 +66,8 @@ void func_80298540(){}
 
 void func_802985B4(){}
 
-extern "C" void func_801D216C(void* self);
-extern "C" void func_8029860C(void* self) { ((void(*)(void*))func_801D216C)((char*)self + 0x88); }
+void func_801D216C(void* self);
+void func_8029860C(void* self) { ((void(*)(void*))func_801D216C)((char*)self + 0x88); }
 
 void func_80298614(){}
 

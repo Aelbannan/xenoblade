@@ -3,41 +3,41 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
-extern "C" void func_80492158(void) {}
+void func_80492158(void) {}
 
 void func_8049215C(void){}
 
 void func_80492168(void){}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
 void func_8049239C(void){}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
-extern "C" void func_80492030(void) {}
+void func_80492030(void) {}
 
 void func_804929C0(){}
 
 void func_80492A50(void){}
 
-extern "C" void func_80492A5C(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+void func_80492A5C(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 
 u32 func_80492A64(void* self){ return *(u32*)((u8*)self + 0); }
 
@@ -77,7 +77,7 @@ void func_80492E08(){}
 
 void func_804930BC(){}
 
-extern "C" void func_80493140(void* self, float val) { *(float*)((u8*)self + 0x14) = val; }
+void func_80493140(void* self, float val) { *(float*)((u8*)self + 0x14) = val; }
 
 void func_80493148(){}
 
@@ -97,7 +97,7 @@ void func_804933AC(){}
 
 void func_8049347C(){}
 
-extern "C" u32 func_80493574(void* self) { return *(u32*)((u8*)self + 0x2c); }
+u32 func_80493574(void* self) { return *(u32*)((u8*)self + 0x2c); }
 
 void func_8049357C(){}
 
@@ -114,7 +114,7 @@ void func_804936AC(){}
 extern void func_8049B158();
 void func_80493B78(void* self){ func_8049B158(); }
 
-extern "C" u32 func_80493B80(void* self) { return *(u32*)((u8*)self + 0x68); }
+u32 func_80493B80(void* self) { return *(u32*)((u8*)self + 0x68); }
 
 void func_80493B88(){}
 
@@ -124,42 +124,42 @@ void func_80493BA8(){}
 
 void func_80493BB8(){}
 
-extern "C" void func_8004B3D8(void* self);
+void func_8004B3D8(void* self);
 void func_80493BC4(void* self){ ((void(*)(void*))func_8004B3D8)((char*)self + 0x30); }
 
 void func_80493BCC(){}
 
-extern "C" void* func_80493C00(void* self) { return (void*)((u8*)self + 0x4); }
+void* func_80493C00(void* self) { return (void*)((u8*)self + 0x4); }
 
 void func_80493C08(){}
 
-extern "C" float func_80493C18(void* self) { return *(float*)((u8*)self + 0x3c); }
+float func_80493C18(void* self) { return *(float*)((u8*)self + 0x3c); }
 
 void func_80493C20(){}
 
 void func_80493C30(){}
 
-extern "C" float func_80493EC0(void* self) { return *(float*)((u8*)self + 0xd4); }
+float func_80493EC0(void* self) { return *(float*)((u8*)self + 0xd4); }
 
-extern "C" u8 func_80493EC8(void* self) { return ((u8*)self)[0xd0]; }
+u8 func_80493EC8(void* self) { return ((u8*)self)[0xd0]; }
 
-extern "C" void* func_80493ED0(void* self) { return (void*)((u8*)self + 0x14); }
+void* func_80493ED0(void* self) { return (void*)((u8*)self + 0x14); }
 
-extern "C" u32 func_80493ED8(void* self) { return *(u32*)((u8*)self + 0x8); }
+u32 func_80493ED8(void* self) { return *(u32*)((u8*)self + 0x8); }
 
-extern "C" u32 func_80493EE0(void* self) { return *(u32*)((u8*)self + 0x64); }
+u32 func_80493EE0(void* self) { return *(u32*)((u8*)self + 0x64); }
 
 void func_80493EE8(void){}
 
-extern "C" u32 func_80493EF4(void* self) { return *(u32*)((u8*)self + 0x480); }
+u32 func_80493EF4(void* self) { return *(u32*)((u8*)self + 0x480); }
 
 void* func_80493EFC(void* self){ return 0; }
 
 void func_80493F08(){}
 
-extern "C" float func_804940E0(void* self) { return *(float*)((u8*)self + 0x34); }
+float func_804940E0(void* self) { return *(float*)((u8*)self + 0x34); }
 
-extern "C" float func_804940E8(void* self) { return *(float*)((u8*)self + 0x38); }
+float func_804940E8(void* self) { return *(float*)((u8*)self + 0x38); }
 
 extern "C" void* func_804940F0(void* self) { return (void*)((u8*)self + 0x34); }
 

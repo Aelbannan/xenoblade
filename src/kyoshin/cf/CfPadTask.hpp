@@ -86,5 +86,16 @@ namespace cf {
         static WPADInfo sWpadInfo;
 
         static CfPadTask* spInstance;
+    void @84@gameExceptionCB();
+    void @88@onDeleteHbm();
+    void @88@onInitHbm();
     };
 }
+
+class IHBMCallback {
+public:
+    virtual ~IHBMCallback();
+
+    // TODO: add fields
+};
+

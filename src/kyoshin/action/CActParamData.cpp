@@ -27,9 +27,9 @@ void func_800547D4(){}
 
 void func_80054980(){}
 
-extern "C" void func_80054A20() {}
+void func_80054A20() {}
 
-extern "C" unsigned char func_80054A24(unsigned char* p, int sel) {
+unsigned char func_80054A24(unsigned char* p, int sel) {
     if (sel != 0) {
         return p[0x344];
     }
@@ -44,21 +44,21 @@ void func_80054D3C(void* self);
 void func_80054D34(void* self){ ((void(*)(void*))func_80054D3C)((char*)self + 0x2e0); }
 
 
-extern "C" void func_800550D8() {}
+void func_800550D8() {}
 
-extern "C" void func_800550DC() {}
+void func_800550DC() {}
 
-extern "C" void func_800550E0() {}
+void func_800550E0() {}
 
-extern "C" void func_800550E4() {}
+void func_800550E4() {}
 
 void func_800550E8(){}
 
-extern "C" void func_800554D0() {}
+void func_800554D0() {}
 
-extern "C" void func_800554D4() {}
+void func_800554D4() {}
 
-extern "C" void func_800554D8() {}
+void func_800554D8() {}
 
 void func_800554DC(){}
 
@@ -82,7 +82,7 @@ void func_80055DD4(){}
 
 void func_80055DF0(){}
 
-extern "C" void* func_80055EA0(void* param) {
+void* func_80055EA0(void* param) {
     void* val = *(void**)((char*)param + 0x2f4);
     if (!val) return 0;
     return (char*)val + 0x14;
@@ -94,7 +94,7 @@ void func_80055EE4(){}
 
 void func_80055F08(){}
 
-extern "C" int func_80055F24(void* self) {
+int func_80055F24(void* self) {
     char* base = (char*)self + 0x260;
     if (*(int*)((char*)self + 0x2d4) == 0)
         base = (char*)self + 0x2e0;
@@ -104,7 +104,7 @@ extern "C" int func_80055F24(void* self) {
     return *(short*)((char*)ptr + 8);
 }
 
-extern "C" s16 func_80055F54(void* self) {
+s16 func_80055F54(void* self) {
     u8* base = (u8*)self + 0x260;
     if (*(s32*)((u8*)self + 0x2d4) == 0)
         base = (u8*)self + 0x2e0;
@@ -113,14 +113,14 @@ extern "C" s16 func_80055F54(void* self) {
     return *(s16*)((u8*)ptr + 0xa);
 }
 
-extern "C" void func_80055F84(void* self) {
+void func_80055F84(void* self) {
     *(unsigned long*)((char*)self + 0x2d4) = 0;
     *(unsigned long*)((char*)self + 0x354) = 0;
 }
 
 void func_80055F94(){}
 
-extern "C" void* func_8005605C(void* param) {
+void* func_8005605C(void* param) {
     if (*(int*)((int)param + 0x274) != 0) {
         void* ptr = *(void**)((int)param + 0x2d8);
         if (ptr != 0) return ptr;
@@ -132,7 +132,7 @@ extern "C" void* func_8005605C(void* param) {
     return 0;
 }
 
-extern "C" bool func_8005609C() { return false; }
+bool func_8005609C() { return false; }
 
 void func_800560A4(void* self){
     void** vtable = *(void***)self;
@@ -256,119 +256,119 @@ struct CActParamDataVTableIf {
     virtual int vf7C(int a, int b);
 };
 
-extern "C" int func_80056290(void* self, int a) {
+int func_80056290(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 3);
 }
 
-extern "C" int func_800562A4(void* self, int a) {
+int func_800562A4(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 4);
 }
 
-extern "C" int func_800562B8(void* self, int a) {
+int func_800562B8(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 5);
 }
 
-extern "C" int func_800562CC(void* self, int a) {
+int func_800562CC(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 6);
 }
 
-extern "C" int func_800562E0(void* self, int a) {
+int func_800562E0(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 7);
 }
 
-extern "C" int func_800562F4(void* self, int a) {
+int func_800562F4(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 8);
 }
 
-extern "C" int func_80056308(void* self, int a) {
+int func_80056308(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 9);
 }
 
-extern "C" int func_8005631C(void* self, int a) {
+int func_8005631C(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 10);
 }
 
-extern "C" int func_80056330(void* self, int a) {
+int func_80056330(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 11);
 }
 
-extern "C" int func_80056344(void* self, int a) {
+int func_80056344(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 12);
 }
 
-extern "C" int func_80056358(void* self, int a) {
+int func_80056358(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 13);
 }
 
-extern "C" int func_8005636C(void* self, int a) {
+int func_8005636C(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 14);
 }
 
-extern "C" int func_80056380(void* self, int a) {
+int func_80056380(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 15);
 }
 
-extern "C" int func_80056394(void* self, int a) {
+int func_80056394(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 16);
 }
 
-extern "C" int func_800563A8(void* self, int a) {
+int func_800563A8(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 17);
 }
 
-extern "C" int func_800563BC(void* self, int a) {
+int func_800563BC(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 18);
 }
 
-extern "C" int func_800563D0(void* self, int a) {
+int func_800563D0(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 19);
 }
 
-extern "C" int func_800563E4(void* self, int a) {
+int func_800563E4(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 20);
 }
 
-extern "C" int func_800563F8(void* self, int a) {
+int func_800563F8(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 21);
 }
 
-extern "C" int func_8005640C(void* self, int a) {
+int func_8005640C(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 22);
 }
 
-extern "C" int func_80056420(void* self, int a) {
+int func_80056420(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 23);
 }
 
-extern "C" int func_80056434(void* self, int a) {
+int func_80056434(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 24);
 }
 
-extern "C" int func_80056448(void* self, int a) {
+int func_80056448(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 25);
 }
 
-extern "C" int func_8005645C(void* self, int a) {
+int func_8005645C(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 26);
 }
 
-extern "C" int func_80056470(void* self, int a) {
+int func_80056470(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 27);
 }
 
-extern "C" int func_80056484(void* self, int a) {
+int func_80056484(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 28);
 }
 
-extern "C" int func_80056498(void* self, int a) {
+int func_80056498(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 29);
 }
 
-extern "C" int func_800564AC(void* self, int a) {
+int func_800564AC(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 30);
 }
 
-extern "C" int func_800564C0(void* self, int a) {
+int func_800564C0(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 31);
 }
 
@@ -450,11 +450,11 @@ void func_800567D0(){}
 
 void func_800567E0(){}
 
-extern "C" bool func_800567F0() { return false; }
+bool func_800567F0() { return false; }
 
-extern "C" bool func_800567F8() { return false; }
+bool func_800567F8() { return false; }
 
-extern "C" bool func_80056800() { return false; }
+bool func_80056800() { return false; }
 
 void func_80056808(){}
 

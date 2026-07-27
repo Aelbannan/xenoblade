@@ -15,7 +15,7 @@ void func_8029480C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)
 
 void func_80294814(void* self) { ((void(*)(void*))cbRenderBefore__11CSysWinSaveFv)((char*)self - 0x70); }
 
-extern "C" void func_8029481C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
+void func_8029481C(void* self) { ((void(*)(void*))__dt__11CSysWinSaveFv)((char*)self - 0x70); }
 
 extern float lbl_eu_80668BA0;
 void func_80294824__FPv(void* self){
@@ -24,6 +24,6 @@ void func_80294824__FPv(void* self){
     *((float*)self + 1) = zero;
 }
 
-extern "C" void stub_us_80296e30() {}
+void stub_us_80296e30() {}
 
 void func_80294844(){}

@@ -3,16 +3,16 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u32 func_801F9694(void) {
+u32 func_801F9694(void) {
     extern u32 lbl_eu_80663E10;
     return lbl_eu_80663E10;
 }
 
 
 
-extern "C" u32 func_801F9684(void* self) { return *(u32*)((u8*)self + 0x6C); }
+u32 func_801F9684(void* self) { return *(u32*)((u8*)self + 0x6C); }
 
-extern "C" u32 func_801F968C(void* self) { return *(u32*)((u8*)self + 0x70); }
+u32 func_801F968C(void* self) { return *(u32*)((u8*)self + 0x70); }
 
 
 
@@ -33,7 +33,7 @@ void func_801F9B18(){}
 
 void func_801F9CB4(){}
 
-extern "C" void func_801FA220(void* r3, const void* r4) {
+void func_801FA220(void* r3, const void* r4) {
     unsigned int* destWords = (unsigned int*)((char*)r3 + 4);
     const unsigned int* srcWords = (const unsigned int*)((char*)r4 + 4);
     destWords[0] = srcWords[0];
@@ -50,7 +50,7 @@ void func_801FA254(){}
 
 void func_801FA338(){}
 
-extern "C" u8 func_801FA4EC(void* self) { return ((u8*)self)[0x6BE5]; }
+u8 func_801FA4EC(void* self) { return ((u8*)self)[0x6BE5]; }
 
 void func_801FA4F4(){}
 
@@ -94,7 +94,7 @@ void func_801FBC7C(){}
 
 void CPartyStateWin::cbRenderBefore() {}
 
-extern "C" void func_801FBDB8(void* self) { ((void(*)(void*))cbRenderBefore__14CPartyStateWinFv)((char*)self - 0x4); }
+void func_801FBDB8(void* self) { ((void(*)(void*))cbRenderBefore__14CPartyStateWinFv)((char*)self - 0x4); }
 
 void __dt__14CPartyStateWinFv(void* self);
 void func_801FBDC0(void* self) { ((void(*)(void*))__dt__14CPartyStateWinFv)((char*)self - 0x4); }

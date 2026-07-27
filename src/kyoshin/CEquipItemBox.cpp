@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
+u8 func_802865A0(void* self) { return ((u8*)self)[0x40]; }
 
 
 
@@ -34,7 +34,7 @@ void func_80283350(){}
 
 void func_8028345C(){}
 
-extern "C" void func_80283B24(void *r3, const void *r4) {
+void func_80283B24(void *r3, const void *r4) {
     *(short*)((char*)r3 + 0) = *(short*)((char*)r4 + 0);
     *(unsigned char*)((char*)r3 + 2) = *(unsigned char*)((char*)r4 + 2);
     *(unsigned char*)((char*)r3 + 3) = *(unsigned char*)((char*)r4 + 3);
@@ -125,21 +125,21 @@ void func_80286454(){}
 void func_8028652C(){}
 
 
-extern "C" u8 func_802865A8(void* self) { return ((u8*)self)[0x43]; }
+u8 func_802865A8(void* self) { return ((u8*)self)[0x43]; }
 
 void func_802865B0(){}
 
-extern "C" int CSysWin_getUnk34(void*);
-extern "C" int func_801D3320(void*);
+int CSysWin_getUnk34(void*);
+int func_801D3320(void*);
 
-extern "C" int func_80286650(void* arg1) {
+int func_80286650(void* arg1) {
     if (CSysWin_getUnk34((char*)arg1 + 0x17c) != 0) {
         return 1;
     }
     return func_801D3320((char*)arg1 + 0x8c);
 }
 
-extern "C" u8 func_80286698(void* self) { return ((u8*)self)[0x375]; }
+u8 func_80286698(void* self) { return ((u8*)self)[0x375]; }
 
 void func_802866A0(){}
 
@@ -169,13 +169,13 @@ void func_80287D58(){}
 
 void func_80287DB4(){}
 
-extern "C" u8 func_80287EE8(void* self) {
+u8 func_80287EE8(void* self) {
     u8 val = *(u8*)((u8*)self + 0x1FE);
     *(u8*)((u8*)self + 0x1FE) = 0;
     return val;
 }
 
-extern "C" void func_80287EFC(void* self, u32 val) { *(u32*)((u8*)self + 0x20C) = val; }
+void func_80287EFC(void* self, u32 val) { *(u32*)((u8*)self + 0x20C) = val; }
 
 void func_80287F04(){}
 
@@ -221,7 +221,7 @@ void func_80289CC0(){}
 
 void func_80289E70(){}
 
-extern "C" void func_8028A07C(void* this_) {
+void func_8028A07C(void* this_) {
     char* self = (char*)this_;
     memset(self + 0x36c, 0, 6);
     self[0x372] = 0;

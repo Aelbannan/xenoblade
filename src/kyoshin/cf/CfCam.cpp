@@ -1,12 +1,13 @@
 #include "kyoshin/cf/CfCam.hpp"
 
-extern "C" {
 void* __ct__cf_CfCam(void* self, void* arg);
+void func_8006BEC4(void* self);
+extern "C" {
 void func_8004B0B0(void* self);
 void func_8004B60C(void* self, f32 x, f32 y, f32 z);
 void func_8006BEF8(void* self);
 void func_8006BEC0(void* self);
-void func_8006BEC4(void* self);
+
 void func_8006BEE4(void* self);
 void func_8006BEFC(void* self);
 void func_8006BF08(void* self);

@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/makecrystal/CMCCrystalBox.hpp"
 void func_802138B8(){}
 
 void func_80213964(){}
@@ -23,7 +24,7 @@ struct func_80213E04_Data {
     u8 m7;
 };
 
-extern "C" void func_80213E04(func_80213E04_Data* self, s16 a, s16 b)
+void func_80213E04(func_80213E04_Data* self, s16 a, s16 b)
 {
     self->m0 = a;
     self->m2 = b;
@@ -32,7 +33,7 @@ extern "C" void func_80213E04(func_80213E04_Data* self, s16 a, s16 b)
     self->m7 = 0;
 }
 
-extern "C" void func_80213E20(void *dst, const void *src) {
+void func_80213E20(void *dst, const void *src) {
     unsigned short *d16 = (unsigned short*)dst;
     const unsigned short *s16 = (const unsigned short*)src;
     d16[0] = s16[0];
@@ -62,12 +63,12 @@ void func_802144F4(){}
 
 void func_80214634(){}
 
-extern "C" u8 func_802146C0(void* self) { return ((u8*)self)[0x69]; }
+u8 func_802146C0(void* self) { return ((u8*)self)[0x69]; }
 
 void func_802146C8(){}
 
-extern "C" u8 CSysWin_getUnk34(void* self);
-extern "C" void func_802146F8(void* self) { CSysWin_getUnk34((char*)self + 0x290); }
+u8 CSysWin_getUnk34(void* self);
+void func_802146F8(void* self) { CSysWin_getUnk34((char*)self + 0x290); }
 
 void func_80214700(){}
 
@@ -95,7 +96,7 @@ void func_80215518(){}
 
 void func_802156C0(){}
 
-extern "C" int func_80215AE8(void* self) {
+int func_80215AE8(void* self) {
     unsigned char* base = (unsigned char*)self;
     if (base[0x20] == 0) return 0;
     unsigned char idx = base[0x29];
@@ -110,20 +111,20 @@ void func_80215B78(){}
 
 void func_80215D98(){}
 
-extern "C" u8 func_8021624C(void* self) { return ((u8*)self)[0x2D4]; }
+u8 func_8021624C(void* self) { return ((u8*)self)[0x2D4]; }
 
-extern "C" u8 func_80216254(void* self) { return ((u8*)self)[0x2D5]; }
+u8 func_80216254(void* self) { return ((u8*)self)[0x2D5]; }
 
 void func_8021625C(){}
 
-extern "C" unsigned long func_802165CC(unsigned long* table, unsigned int idx) {
+unsigned long func_802165CC(unsigned long* table, unsigned int idx) {
     if (idx >= 8) {
         return 0;
     }
     return table[(unsigned char)idx];
 }
 
-extern "C" void func_802165E8(void *dest, const void *src) {
+void func_802165E8(void *dest, const void *src) {
     unsigned short *d = (unsigned short *)dest;
     const unsigned short *s = (const unsigned short *)src;
     d[0] = s[0];
@@ -198,7 +199,7 @@ void func_80218A80(){}
 void func_80218B10(){}
 
 struct func_80218FD4_S { unsigned short m0; unsigned short m2; unsigned char m4; };
-extern "C" void func_80218FD4(func_80218FD4_S* dst, const func_80218FD4_S* src) {
+void func_80218FD4(func_80218FD4_S* dst, const func_80218FD4_S* src) {
     *dst = *src;
 }
 
@@ -208,7 +209,7 @@ struct func_80218FF0_Rec {
     unsigned char c;
 };
 
-extern "C" void func_80218FF0(func_80218FF0_Rec* dst, func_80218FF0_Rec* src) {
+void func_80218FF0(func_80218FF0_Rec* dst, func_80218FF0_Rec* src) {
     unsigned short a = src->a;
     unsigned short b = src->b;
     unsigned char c = src->c;

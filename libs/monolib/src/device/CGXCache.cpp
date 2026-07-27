@@ -8,7 +8,7 @@
 
 // __ct__80449548 (constructor at 0x80449548) defined once — all harness stubs
 // that map to this same symbol reference it rather than redefining.
-extern "C" void __ct__80449548(void) {}
+void __ct__80449548(void) {}
 
 // (mapped to __ct__80449548 above)
 
@@ -16,7 +16,7 @@ extern "C" void __ct__80449548(void) {}
 
 // (mapped to __ct__80449548 above)
 
-extern "C" void* __dt__CMsgParam_32(void* self, int shouldDelete) {
+void* __dt__CMsgParam_32(void* self, int shouldDelete) {
     if (self != 0) {
         if (reinterpret_cast<unsigned char*>(self) + 4 != 0) {
             *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x48c) = 0;
@@ -34,7 +34,7 @@ void __ct__80449534(){}
 
 // (mapped to __ct__80449548 above)
 
-extern "C" void func_8044954C(void) {}
+void func_8044954C(void) {}
 
 // (mapped to __ct__80449548 above)
 
@@ -64,7 +64,7 @@ void CGXCache::func_8044B03C() {}
 
 void CGXCache::func_8044B168() {}
 
-extern "C" void func_8044B294__8CGXCacheFUl(void) {}
+void func_8044B294__8CGXCacheFUl(void) {}
 
 void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
 struct C1FCMsgEntry {
@@ -196,16 +196,16 @@ void CGXCache::func_8044BD74() {}
 
 void CGXCache::func_8044BE10(void) {}
 
-extern "C" void* func_8044BE1C__8CGXCacheFv(void* self) { return (void*)((u8*)self + 0x510); }
+void* func_8044BE1C__8CGXCacheFv(void* self) { return (void*)((u8*)self + 0x510); }
 
-extern "C" u8 func_8044BE24__8CGXCacheFv(void* self) { return ((u8*)self)[0x518]; }
+u8 func_8044BE24__8CGXCacheFv(void* self) { return ((u8*)self)[0x518]; }
 
 void* CGXCache::func_8044BE2C(void) { return 0; }
 
 // Retail is a pure tail to func_8044C1FC. Keep callee undefined here so MWCC
 // cannot inline an empty same-TU stub into a lone blr.
 void func_8044C1FC__8CGXCacheFv(void* self);
-extern "C" void func_8044BE38__8CGXCacheFv(void* self) {
+void func_8044BE38__8CGXCacheFv(void* self) {
     func_8044C1FC__8CGXCacheFv(self);
 }
 

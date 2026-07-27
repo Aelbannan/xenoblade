@@ -12,8 +12,8 @@ extern void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 extern void func_801390E0(CFileHandle**);
 
 // US retail keeps these callee names unmangled in CBgTex.o relocs.
-extern "C" void func_80124270(nw4r::lyt::Pane*, u32);
-extern "C" u8 func_801372B4(u8);
+void func_80124270(nw4r::lyt::Pane*, u32);
+u8 func_801372B4(u8);
 
 extern "C" UnkClass_8045F564* __ct__17UnkClass_8045F564Fv(UnkClass_8045F564* self);
 
@@ -25,8 +25,7 @@ extern "C" u32 lbl_eu_80664184;
 extern "C" s32 lbl_eu_80664460;
 extern "C" nw4r::lyt::ArcResourceAccessor* lbl_eu_80664464;
 
-extern "C" void func_801C3E3C(CBgTex* self);
-
+void func_801C3E3C(CBgTex* self);
 // Emit ctor before dtor so .text order matches retail (avoids 0xC align pad).
 CBgTex* __ct__CBgTex(CBgTex* self, u8 arg){
     self->mVtbl = lbl_eu_80533DC8;

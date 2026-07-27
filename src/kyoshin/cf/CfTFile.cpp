@@ -21,7 +21,7 @@ void func_80069C78(){}
 
 void CfTFile::OnFileEvent() {}
 
-extern "C" cf::CfTFile* __dt__Q22cf7CfTFileFv(cf::CfTFile* obj, int flag) {
+cf::CfTFile* __dt__Q22cf7CfTFileFv(cf::CfTFile* obj, int flag) {
     if (obj != nullptr && flag > 0) {
         operator delete(obj);
     }
@@ -29,9 +29,9 @@ extern "C" cf::CfTFile* __dt__Q22cf7CfTFileFv(cf::CfTFile* obj, int flag) {
 }
 
 extern float lbl_eu_80661AF0;
-extern "C" float func_80069EA0() { return lbl_eu_80661AF0; }
+float func_80069EA0() { return lbl_eu_80661AF0; }
 
-extern "C" void func_80069EA8(int param) {
+void func_80069EA8(int param) {
     extern unsigned char lbl_eu_80663DA0;
     extern float lbl_eu_80666214;
     extern float lbl_eu_80666218;
@@ -72,10 +72,10 @@ void func_8006A37C(){}
 void func_8006A3BC(){}
 
 extern u16 lbl_eu_80661AF8;
-extern "C" u16 func_8006A3FC(u16 val) { lbl_eu_80661AF8 = val; return val; }
+u16 func_8006A3FC(u16 val) { lbl_eu_80661AF8 = val; return val; }
 
 extern u16 lbl_eu_80661AF8;
-extern "C" u16 func_8006A404() { return lbl_eu_80661AF8; }
+u16 func_8006A404() { return lbl_eu_80661AF8; }
 
 void func_8006A40C(){}
 
@@ -86,11 +86,11 @@ void func_8006A6D0(){}
 void func_8006A75C(){}
 
 // Read-only getter for the file event frame timer.
-extern "C" u32 func_8006A80C() {
+u32 func_8006A80C() {
     return lbl_eu_80663DA8;
 }
 
-extern "C" void func_8006A814(void* self) {
+void func_8006A814(void* self) {
     extern unsigned long lbl_eu_80663DA8;
     lbl_eu_80663DA8 = *(unsigned long*)self;
 }

@@ -3,17 +3,17 @@
 
 #include <harness_catalog.h>
 
-extern "C" u32 getInstance__7CLibCriFv(void) {
+u32 getInstance__7CLibCriFv(void) {
     extern u32 lbl_eu_806656D8;
     return lbl_eu_806656D8;
 }
 
-extern "C" u32 getInstance__7CLibCriFv(void) {
+u32 getInstance__7CLibCriFv(void) {
     extern u32 lbl_eu_806656D8;
     return lbl_eu_806656D8;
 }
 
-extern "C" u32 getInstance__7CLibCriFv(void) {
+u32 getInstance__7CLibCriFv(void) {
     extern u32 lbl_eu_806656D8;
     return lbl_eu_806656D8;
 }

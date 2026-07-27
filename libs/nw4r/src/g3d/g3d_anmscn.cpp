@@ -69,19 +69,19 @@ void AnmScn::GetLightSetting(LightSetting* pSetting) {
 } // namespace nw4r
 
 void GetLightSet__Q34nw4r3g3d12LightSettingFi(void *result, void *self, int index) { unsigned short count = *(unsigned short *)((unsigned char *)self + 2); *(void **)result = self; if (index >= 0 && index < (int)count) *(void **)((unsigned char *)result + 4) = (unsigned char *)*(void **)((unsigned char *)self + 0xC) + index * 12; else *(void **)((unsigned char *)result + 4) = 0; }
-extern "C" int Attach__Q34nw4r3g3d6AnmScnFiPQ34nw4r3g3d9AnmScnRes(void) { return 0x0; }
-extern "C" int Detach__Q34nw4r3g3d6AnmScnFi(int) { return 0; }
-extern "C" unsigned int GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
+int Attach__Q34nw4r3g3d6AnmScnFiPQ34nw4r3g3d9AnmScnRes(void) { return 0x0; }
+int Detach__Q34nw4r3g3d6AnmScnFi(int) { return 0; }
+unsigned int GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
 
 unsigned int GetNumLightSet__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
     return GetResLightSetNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const char*)this_ptr + 0x20);
 }
-extern "C" int GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
+int GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
 
 int GetNumAmbLight__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* ths) {
     return GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const char*)ths + 0x20);
 }
-extern "C" u32 GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void *);
+u32 GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void *);
 
 u32 GetNumDiffuseLight__Q34nw4r3g3d9AnmScnResCFv(const void *self) {
     return GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv((const void *)((const char *)self + 0x20));
@@ -93,9 +93,9 @@ int GetNumFog__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
     extern int GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(const void*);
     return GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(reinterpret_cast<const char*>(this_) + 0x20);
 }
-extern "C" void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv(void*);
-extern "C" void GetNumCamera__Q34nw4r3g3d9AnmScnResCFv(void* self) { ((void(*)(void*))GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv)((char*)self + 0x20); }
-extern "C" u16 GetLightSetMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* _this) {
+void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv(void*);
+void GetNumCamera__Q34nw4r3g3d9AnmScnResCFv(void* self) { ((void(*)(void*))GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv)((char*)self + 0x20); }
+u16 GetLightSetMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* _this) {
     return *reinterpret_cast<const u16*>(*reinterpret_cast<const u8* const*>(reinterpret_cast<const u8*>(_this) + 0x20) + 0x3c);
 }
 unsigned short GetAmbLightMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* self) {
@@ -135,7 +135,7 @@ void UpdateCache__Q34nw4r3g3d9AnmScnResFv(){}
 void IsDerivedFrom__Q34nw4r3g3d9AnmScnResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 void IsDerivedFrom__Q34nw4r3g3d6AnmScnCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 void GetTypeName__Q34nw4r3g3d9AnmScnResCFv(){}
-extern "C" const char lbl_eu_8051D630[];
+const char lbl_eu_8051D630[];
 
 const void* GetTypeObj__Q34nw4r3g3d9AnmScnResCFv() {
     return lbl_eu_8051D630;

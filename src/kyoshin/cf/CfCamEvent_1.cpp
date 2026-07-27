@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CfCamEvent_1.hpp"
 void func_80074F4C(){}
 
 void __ct__80075298(){}
@@ -13,7 +14,7 @@ void func_800754C0(){}
 
 void func_80075540(){}
 
-extern "C" void* func_800755B0(void* self, unsigned long idx) {
+void* func_800755B0(void* self, unsigned long idx) {
     return *(void**)((char*)self + (idx << 2));
 }
 

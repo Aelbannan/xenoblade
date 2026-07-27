@@ -7,11 +7,11 @@ void TestExistence__Q34nw4r3g3d12AnmObjTexPatCFUl(){}
 
 void Release__Q34nw4r3g3d12AnmObjTexPatFv(){}
 
-extern "C" int Attach__Q34nw4r3g3d12AnmObjTexPatFiPQ34nw4r3g3d15AnmObjTexPatRes(void) { return 0x0; }
+int Attach__Q34nw4r3g3d12AnmObjTexPatFiPQ34nw4r3g3d15AnmObjTexPatRes(void) { return 0x0; }
 
-extern "C" int Detach__Q34nw4r3g3d12AnmObjTexPatFi(void) { return 0x0; }
+int Detach__Q34nw4r3g3d12AnmObjTexPatFi(void) { return 0x0; }
 
-extern "C" void DetachAll__Q34nw4r3g3d12AnmObjTexPatFv(void) {}
+void DetachAll__Q34nw4r3g3d12AnmObjTexPatFv(void) {}
 
 void __dt__Q34nw4r3g3d12AnmObjTexPatFv(){}
 
@@ -23,7 +23,7 @@ float GetFrame__Q34nw4r3g3d15AnmObjTexPatResCFv(void *self){ return *(float *)((
 
 void SetUpdateRate__Q34nw4r3g3d15AnmObjTexPatResFf(){}
 
-extern "C" float GetUpdateRate__Q34nw4r3g3d15AnmObjTexPatResCFv(void *self) { return *(float *)((char *)self + 28); }
+float GetUpdateRate__Q34nw4r3g3d15AnmObjTexPatResCFv(void *self) { return *(float *)((char *)self + 28); }
 
 void UpdateFrame__Q34nw4r3g3d15AnmObjTexPatResFv(){}
 
@@ -41,8 +41,8 @@ void IsDerivedFrom__Q34nw4r3g3d12AnmObjTexPatCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d15AnmObjTexPatResCFv(){}
 
-extern "C" const char lbl_eu_8051D578[];
-extern "C" void* GetTypeObj__Q34nw4r3g3d15AnmObjTexPatResCFv(void) { return (void*)lbl_eu_8051D578; }
+const char lbl_eu_8051D578[];
+void* GetTypeObj__Q34nw4r3g3d15AnmObjTexPatResCFv(void) { return (void*)lbl_eu_8051D578; }
 
 void __dt__Q34nw4r3g3d15AnmObjTexPatResFv(){}
 

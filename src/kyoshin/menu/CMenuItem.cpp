@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuItem.hpp"
 void __ct__CMenuItem(){}
 
 unsigned long func_80167A18(){

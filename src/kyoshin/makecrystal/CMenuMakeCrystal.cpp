@@ -29,10 +29,10 @@ void func_8021240C(){}
 
 void func_80212480(){}
 
-extern "C" void* lbl_eu_806646C8;
-extern "C" void* func_80212BE0(void*);
+void* lbl_eu_806646C8;
+void* func_80212BE0(void*);
 
-extern "C" void* func_80212490() {
+void* func_80212490() {
     char* p = (char*)lbl_eu_806646C8;
     if (p != 0) {
         return func_80212BE0(p + 0x80);
@@ -49,7 +49,7 @@ void func_802124AC(){}
 // real override. The incompatible cast to void(*)(CMenuMakeCrystal*)
 // prevents MWCC from inlining the empty-stub body (which would collapse
 // the thunk to blr).
-extern "C" void func_802124F4(IScnRender* self) {
+void func_802124F4(IScnRender* self) {
     ((void(*)(CMenuMakeCrystal*))cbRenderBefore__16CMenuMakeCrystalFv)(
         (CMenuMakeCrystal*)((u32)self - 0x58));
 }

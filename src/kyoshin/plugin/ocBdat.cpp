@@ -6,6 +6,12 @@
 #include "monolib/vm/yvm2.h"
 #include <string.h>
 
+void* func_8003B4B0(void* bdat, const char* col);
+u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
+u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index);
+u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
+u32 func_8003B748(void* table, void* col, s32 row, s32 index);
+void func_8003B800(VMArg* out, void* data, u32 type);
 extern "C" {
 extern s8 lbl_eu_80663D10;
 extern u32 lbl_eu_80663D14;
@@ -14,15 +20,13 @@ extern void* lbl_eu_805705D0[8];
 BOOL vmOCRegist(OCData* pOC);
 extern OCData lbl_eu_80524E40;
 
-void* func_8003B4B0(void* bdat, const char* col);
+
 u32 func_8003B6A0(void* base, void* data, u32 type);
-u32 func_8003B748(void* table, void* col, s32 row, s32 index);
-u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
-u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index);
+
+
+
 u32 func_8003AFC0(void* bdat, const char* col);
 u32 func_8003B204(void* bdat, const char* col);
-u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
-void func_8003B800(VMArg* out, void* data, u32 type);
 }
 
 void* func_eu_8003B720(void* p);

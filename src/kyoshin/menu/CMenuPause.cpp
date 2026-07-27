@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuPause.hpp"
 void CMenuPause::~CMenuPause() {}
 
 void CMenuPause::Init() {}
@@ -24,8 +25,8 @@ void func_80252538(){}
 
 void func_80252564(){}
 
-extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
+void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 
-extern "C" void func_80252630(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuPauseFv)((char*)self - 0x5c); }
+void func_80252630(void* self) { ((void(*)(void*))cbRenderBefore__10CMenuPauseFv)((char*)self - 0x5c); }
 
-extern "C" void func_80252638(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x5c); }
+void func_80252638(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x5c); }

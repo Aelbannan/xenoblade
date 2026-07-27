@@ -203,11 +203,11 @@ void SeqSound::SeqLoadTask::OnCancel() {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* self, void (*callback)(unsigned short, void*, void*), void* arg);
+void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* self, void (*callback)(unsigned short, void*, void*), void* arg);
 
 void SetSeqUserprocCallback__Q44nw4r3snd6detail8SeqSoundFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(void* thisPtr, void (*callback)(unsigned short, void*, void*), void* arg) { return SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv((void*)((char*)thisPtr + 0x10c), callback, arg); }
 void OnUpdatePlayerPriority__Q44nw4r3snd6detail8SeqSoundFv(){}
-extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
+void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" void* GetBasicPlayer__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return (void*)((u8*)self + 0x10c); }
 extern "C" u8 IsPrepared__Q44nw4r3snd6detail8SeqSoundCFv(void* self) { return ((u8*)self)[677]; }
 int GetRuntimeTypeInfo__Q44nw4r3snd6detail8SeqSoundCFv(void){ return 0; }

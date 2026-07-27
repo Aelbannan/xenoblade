@@ -3,23 +3,23 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
+void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 
-extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
+void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 
-extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
+void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 
-extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
+void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 
-extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
+void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 
-extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
+void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 
-extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
+void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 
-extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
+void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 
-extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
+void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 
 extern "C" void func_804954AC(void* self, u8 val) { ((u8*)self)[0x1174] = val; }
 

@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CPcEffect07.hpp"
 void __ct__cf_CPcEffect07(){}
 
 void cf::CPcEffect07::~CPcEffect07() {}
@@ -11,9 +12,9 @@ void func_801B19F0(){}
 
 void func_801B1C5C(){}
 
-extern "C" unsigned char* lbl_eu_80664398;
+unsigned char* lbl_eu_80664398;
 
-extern "C" int func_801B1CB0() {
+int func_801B1CB0() {
     if (lbl_eu_80664398 == 0) {
         return 0;
     }
@@ -22,7 +23,7 @@ extern "C" int func_801B1CB0() {
 
 void func_801B1CCC(){}
 
-extern "C" int func_801B1D4C(int index)
+int func_801B1D4C(int index)
 {
     if (lbl_eu_80664398 == 0)
         return -1;
@@ -48,7 +49,7 @@ void func_801B1DCC(){}
 
 void func_801B1E74(){}
 
-extern "C" s32 func_801B1FA4() {
+s32 func_801B1FA4() {
     void* r3 = lbl_eu_80664398;
     if (!r3) return -1;
     if (*(s16*)((u32)r3 + 0x14) == 0) return 0;
@@ -57,7 +58,7 @@ extern "C" s32 func_801B1FA4() {
     return -1;
 }
 
-extern "C" int func_801B1FFC(int index) {
+int func_801B1FFC(int index) {
     if (lbl_eu_80664398 == 0) return 0;
     struct Struct {
         char pad[20];
@@ -69,7 +70,7 @@ extern "C" int func_801B1FFC(int index) {
     return (val == 1) ? 1 : 0;
 }
 
-extern "C" bool func_801B202C() {
+bool func_801B202C() {
     void* obj = lbl_eu_80664398;
     if (!obj) return false;
     if (*(short*)((int)obj + 0x14) != 0) return true;
@@ -78,7 +79,7 @@ extern "C" bool func_801B202C() {
     return false;
 }
 
-extern "C" int func_801B2084() {
+int func_801B2084() {
     int* r4 = (int*)lbl_eu_80664398;
     if (!r4) return 0;
     int result = 0;
@@ -100,9 +101,9 @@ void func_801B23D0(){}
 
 void func_801B248C(){}
 
-extern "C" void func_801B2544(void* self) { ((void(*)(void*))func_801B21E0)((char*)self - 0x4); }
+void func_801B2544(void* self) { ((void(*)(void*))func_801B21E0)((char*)self - 0x4); }
 
-extern "C" void func_801B254C(void* self) { ((void(*)(void*))func_801B2318)((char*)self - 0x4); }
+void func_801B254C(void* self) { ((void(*)(void*))func_801B2318)((char*)self - 0x4); }
 
 extern "C" void func_801B2554(void* self) { ((void(*)(void*))func_801B20C8)((char*)self - 0x4); }
 

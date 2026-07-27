@@ -14,3 +14,14 @@ struct CfResTboxImpl {
 };
 
 } // namespace cf
+
+namespace cf {
+
+class CfResTboxImpl {
+public:
+    virtual ~CfResTboxImpl();
+
+    // TODO: add fields
+};
+} // namespace cf
+

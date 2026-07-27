@@ -1,6 +1,6 @@
 #include <types.h>
 void __dt__5CViewFv(void*);
-extern "C" void func_8043FBC4(void* self) {
+void func_8043FBC4(void* self) {
     __dt__5CViewFv((char*)self - 0x1C4);
 }
 
@@ -17,7 +17,7 @@ public:
     virtual ~CSplitFrame();
 };
 
-extern "C" {
+{
 CView* lbl_eu_806655C8;
 CViewRoot* getInstance__9CViewRootFv();
 CView* getCurrent__9CViewRootFv();
@@ -1607,15 +1607,9 @@ CView::CView(const char* pName, CWorkThread* pParent)
 void CView::CView_UnkVirtualFunc7() {}
 void CView::CView_UnkVirtualFunc3() {}
 void CView::CView_UnkVirtualFunc4() {}
-extern "C" void CView_UnkVirtualFunc9__5CViewFv(void* self) {
-    ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc9();
-}
-extern "C" void CView_UnkVirtualFunc8__5CViewFv(void* self) {
-    ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc8();
-}
-extern "C" int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
+
+
+int CView_UnkVirtualFunc6__5CViewFv() { return 0; }
 extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
-extern "C" void CView_UnkVirtualFunc1__5CViewFv(void* self) {
-    ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc1();
-}
+
 void sinit_8043FB70(){}

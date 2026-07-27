@@ -9,9 +9,9 @@ void ScnMdlSmpl_G3DPROC_GATHER_SCNOBJ__Q34nw4r3g3d12ScnMdlSimpleFUlPQ34nw4r3g3d1
 
 void ScnMdlSmpl_G3DPROC_CALC_VIEW__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34nw4r4math5MTX34(){}
 
-extern "C" void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
+void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
 
-extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
+void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
 
 void G3dProc__Q34nw4r3g3d12ScnMdlSimpleFUlUlPv(){}
 
@@ -37,7 +37,7 @@ void EnableScnMdlCallbackTiming__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d6ScnObj6Ti
 
 void GetViewPosMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
-extern "C" void* GetViewNrmMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(void* r3) {
+void* GetViewNrmMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(void* r3) {
     void* r5 = *(void**)((char*)r3 + 0xf8);
     if (r5 == nullptr) {
         return nullptr;

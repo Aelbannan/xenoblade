@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuBattleDamage.hpp"
 void __ct__CMenuBattleDamage(){}
 
 void CMenuBattleDamage::~CMenuBattleDamage() {}
@@ -19,13 +20,13 @@ void func_801096B8(){}
 
 void func_80109734(){}
 
-extern "C" void func_8010975C(unsigned char val) {
+void func_8010975C(unsigned char val) {
     extern unsigned long lbl_eu_80663F28;
     unsigned char* p = (unsigned char*)lbl_eu_80663F28;
     if (p != 0) p[0x774] = val;
 }
 
-extern "C" void func_80109770(unsigned char val) {
+void func_80109770(unsigned char val) {
     extern unsigned long lbl_eu_80663F28;
     unsigned char* p = (unsigned char*)lbl_eu_80663F28;
     if (p != 0) p[0x775] = val;
@@ -41,15 +42,15 @@ void func_8010989C(){}
 
 void func_801098B0(){}
 
-extern "C" void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
+void func_8010A67C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x58); }
 
-extern "C" void func_8010A684(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuBattleDamageFv)((char*)self - 0x5c); }
+void func_8010A684(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuBattleDamageFv)((char*)self - 0x5c); }
 
-extern "C" void func_8010A68C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x5c); }
+void func_8010A68C(void* self) { ((void(*)(void*))__dt__17CMenuBattleDamageFv)((char*)self - 0x5c); }
 
 void CPcSelectCursor01::~CPcSelectCursor01() {}
 
-extern "C" void func_8010A6F0(char* this_) {
+void func_8010A6F0(char* this_) {
     if (*(int*)(this_ + 0x2c) != 0) {
         return;
     }
@@ -61,7 +62,7 @@ void func_8010A710(){}
 
 void func_8010A7A8(){}
 
-extern "C" u8 func_8010A840(void* self) { return ((u8*)self)[0x28]; }
+u8 func_8010A840(void* self) { return ((u8*)self)[0x28]; }
 
 void func_8010A848(){}
 

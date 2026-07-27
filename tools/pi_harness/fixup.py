@@ -143,7 +143,7 @@ def _add_methods_to_header(header_path: str, class_name: str, targets: list[Fixu
     added = 0
     for ft in targets:
         d = ft.demangled
-        search = f"~{class_name}" if d.is_dtor else d.function
+        search = f"~{class_name}" if d.is_dtor else (f"{class_name}(" if d.is_ctor else d.function)
         if search in existing:
             continue
         if d.is_ctor:      decl = f"    {class_name}();\n"
@@ -257,7 +257,8 @@ def _fix_one_extern_c(source: str, ft: FixupTarget, cpp_sig: Optional[str], bloc
     if ft.status in ("FULL_MATCH", "EQUIVALENT_MATCH") and cpp_sig and _already_exists(source, cpp_sig):
         # Delete the entire extern-C definition
         pat = re.compile(
-            r'extern\s+"C"\s+[\w:*&<>\s]*?' + esc + r'[\w:*&<>(),\s]*?(\{|;)'
+            r'extern\s+"C"\s+[\w:*&<>\s]*?' + esc + r'[\w:*&<>(),\s]*?(\{|;)',
+            re.DOTALL
         )
         m = pat.search(source)
         if m and not _in_block(m.start(), block_ranges):
@@ -277,8 +278,9 @@ def _fix_one_extern_c(source: str, ft: FixupTarget, cpp_sig: Optional[str], bloc
                     return source, 1
         return source, 0
 
-    # Try member-function conversion (requires body with {)
-    if cpp_sig and d.class_name:
+    # For unmatched targets: try member-function conversion (requires body with {)
+    # SKIP for FULL/EQUIVALENT — their extern-C IS the matched code, can't change linkage
+    if cpp_sig and d.class_name and ft.status not in ("FULL_MATCH", "EQUIVALENT_MATCH"):
         pat = re.compile(
             r'extern\s+"C"\s+'
             r'([A-Za-z_][\w:*&<>\s]*?)\s*'
@@ -286,7 +288,8 @@ def _fix_one_extern_c(source: str, ft: FixupTarget, cpp_sig: Optional[str], bloc
             r'(\('
             r'((?:[^()]|\([^()]*\))*)'
             r'\))\s*'
-            r'(\{)'
+            r'(\{)',
+            re.DOTALL
         )
         m = pat.search(source)
         if m and not _in_block(m.start(), block_ranges):
@@ -310,7 +313,10 @@ def _fix_one_extern_c(source: str, ft: FixupTarget, cpp_sig: Optional[str], bloc
             return source, 1
 
     # Fallback: strip extern "C" from free function (not inside block)
-    simple = re.compile(r'extern\s+"C"\s+(.*?' + esc + r'.*?)(\{|;)')
+    # SKIP for FULL/EQUIVALENT — extern-C linkage IS the matched code
+    if ft.status in ("FULL_MATCH", "EQUIVALENT_MATCH"):
+        return source, 0
+    simple = re.compile(r'extern\s+"C"\s+(.*?' + esc + r'.*?)(\{|;)', re.DOTALL)
     m = simple.search(source)
     if not m or _in_block(m.start(), block_ranges):
         return source, 0
@@ -344,7 +350,7 @@ def fixup_file(source_path: str, targets: list[FixupTarget], dry_run: bool = Fal
     with open(source_path, encoding="utf-8", errors="replace") as f:
         source = f.read()
 
-    # 1. Group by class, ensure header declarations
+    # 1. Group by class
     header_path = _resolve_header(source_path)
     by_class: dict[str, list[FixupTarget]] = defaultdict(list)
     for ft in targets:
@@ -354,56 +360,44 @@ def fixup_file(source_path: str, targets: list[FixupTarget], dry_run: bool = Fal
             if m: cls = m.group(1)
         if cls and ft.cpp_sig:
             by_class[cls].append(ft)
-
-    if header_path and not dry_run:
-        for cls, methods in by_class.items():
-            if _add_methods_to_header(header_path, cls, methods, source_path):
-                descriptions.append(f"added {cls} declarations to {os.path.basename(header_path)}")
+    scaffolds = set(by_class.keys())
 
     # 2. Strip pragmas
     source, n = _strip_pragmas(source)
     if n: descriptions.append(f"removed {n} pragma line(s)")
 
     # 3. Fix extern-C functions
-    member = free = deleted = 0
-    scaffolds = set(by_class.keys())
+    member = free = 0
+    block_ranges = _find_block_ranges(source)
     
-    # Pre-scan: collect all symbols that will be stripped of extern "C"
+    # Pre-scan symbols to fix
     symbols_to_fix: set[str] = set()
     for ft in targets:
-        cls = ft.demangled.class_name
-        if not cls and ft.cpp_sig:
-            m = re.match(r"(?:\w+::)?(\w+)::", ft.cpp_sig)
-            if m: cls = m.group(1)
-        if ft.symbol in source.replace('extern "C" ', ''):  # rough check
+        if ft.symbol in source:
             symbols_to_fix.add(ft.symbol)
-    
-    # Fix forward declarations for symbols being converted
     source = _fix_forward_decls(source, symbols_to_fix)
-    block_ranges = _find_block_ranges(source)
+    
     for ft in targets:
         cls = ft.demangled.class_name
         if not cls and ft.cpp_sig:
             m = re.match(r"(?:\w+::)?(\w+)::", ft.cpp_sig)
             if m: cls = m.group(1)
         cpp_sig = ft.cpp_sig if (cls and cls in scaffolds) else None
-
-        old = source
         source, n_fixed = _fix_one_extern_c(source, ft, cpp_sig, block_ranges)
         if n_fixed:
-            is_full_eq = ft.status in ("FULL_MATCH", "EQUIVALENT_MATCH")
-            if cpp_sig and is_full_eq:
-                deleted += 1
-            elif cpp_sig:
-                member += 1
-            else:
-                free += 1
+            if cpp_sig: member += 1
+            else: free += 1
 
     if member: descriptions.append(f"converted {member} extern-C → member function")
-    if deleted: descriptions.append(f"deleted {deleted} dead extern-C stub(s)")
     if free: descriptions.append(f"stripped extern-C from {free} free function(s)")
 
-    if not descriptions and source == open(source_path, encoding="utf-8", errors="replace").read():
+    # 4. Add header declarations (after fixup so params are visible)
+    if header_path and not dry_run:
+        for cls, methods in by_class.items():
+            if _add_methods_to_header(header_path, cls, methods, source_path):
+                descriptions.append(f"added {cls} declarations to {os.path.basename(header_path)}")
+
+    if not descriptions:
         return []
 
     if not dry_run:

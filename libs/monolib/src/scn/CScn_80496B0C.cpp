@@ -3,27 +3,27 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
-extern "C" void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
+void func_8049771C(void* self, float val) { *(float*)((u8*)self + 0x178) = val; }
 
 void func_80497724(){}
 

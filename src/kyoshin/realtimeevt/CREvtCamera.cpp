@@ -19,7 +19,7 @@ void func_80180620(){}
 
 void func_80180664(){}
 
-extern "C" unsigned long func_80180940() {
+unsigned long func_80180940() {
     extern unsigned long lbl_eu_806642A8;
     unsigned long* ptr = (unsigned long*)lbl_eu_806642A8;
     unsigned long v = ptr[0xa0 / 4];

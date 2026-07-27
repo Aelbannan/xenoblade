@@ -238,12 +238,15 @@ async function releaseBatch(
 //  Shared onVerify factory
 // ─────────────────────────────────────────────────────────────────────
 
-/**
- * Build an onVerify callback for multi-prompt sessions. The callback runs
- * build → lint → batch-cycle after each prompt round and returns the next
- * action. It manages per-phase snapshots internally so a lint-fix that
- * breaks compilation can roll back to the compilable state.
- */
+interface VerifySession {
+  onVerify: (finalText: string, timedOut: boolean, rePromptCount: number) => Promise<VerifyResult>;
+  getResults: () => Awaited<ReturnType<typeof runBatchCycle>> | null;
+  /** Clean up per-phase snapshots; does NOT restore the original. */
+  cleanup: () => Promise<void>;
+  /** Last rejection feedback (for carryover to fresh sessions). */
+  lastFeedback: () => string | undefined;
+}
+
 function makeVerifyCallback(opts: {
   repoRoot: string;
   config: HarnessConfig;
@@ -251,61 +254,67 @@ function makeVerifyCallback(opts: {
   targetIds: string[];
   writable: string[];
   snapshot: Snapshot;
-}): {
-  onVerify: (finalText: string, timedOut: boolean, rePromptCount: number) => Promise<VerifyResult>;
-  getResults: () => Awaited<ReturnType<typeof runBatchCycle>> | null;
-} {
+}): VerifySession {
   const { repoRoot, config, unit, targetIds, writable, snapshot } = opts;
   let compilableSnapshot: Snapshot | null = null;
   let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
+  let lastFeedback: string | undefined;
 
   const onVerify = async (
     _finalText: string,
     timedOut: boolean,
     rePromptCount: number,
   ): Promise<VerifyResult> => {
-    const effectiveMax = timedOut ? config.maxRePrompts : config.maxStuckRePrompts;
-    if (rePromptCount >= effectiveMax) {
-      return { action: "fail", reason: `re-prompt cap hit (${effectiveMax})` };
-    }
-
     // ── Build check ──
     const build = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
     if (!build.ok) {
       // If we have a compilable checkpoint (from prior lint pass that
-      // later broke), restore to it. Otherwise keep broken code in place
-      // so the model can fix it with full context.
+      // later broke), restore to it and tell the model what happened.
       if (compilableSnapshot) {
         await restoreSnapshot(repoRoot, compilableSnapshot);
         compilableSnapshot = null;
+        lastFeedback =
+          `## Build Failure — Lint fix reverted\n\n` +
+          `Your lint fix broke compilation. The code has been reverted ` +
+          `to the last compilable state (which still has lint violations). ` +
+          `Re-apply the lint fix without breaking compilation.\n\n` +
+          `Build error from the broken attempt:\n\`\`\`\n${build.output}\n\`\`\``;
+        return { action: "re-prompt", feedback: lastFeedback };
       }
-      return {
-        action: "re-prompt",
-        feedback:
-          `## Build Failure — Fix This First\n\n` +
-          `Your code does not compile. Fix the errors below before ` +
-          `continuing with any unmatched targets.\n\n` +
-          `\`\`\`\n${build.output}\n\`\`\``,
-      };
+      // No checkpoint: keep broken code in place so the model can fix
+      // it with full context.
+      lastFeedback =
+        `## Build Failure — Fix This First\n\n` +
+        `Your code does not compile. Fix the errors below before ` +
+        `continuing with any unmatched targets.\n\n` +
+        `\`\`\`\n${build.output}\n\`\`\``;
+      return { action: "re-prompt", feedback: lastFeedback };
     }
 
     // Build passed — clear any stale compilable checkpoint.
-    compilableSnapshot = null;
+    if (compilableSnapshot) {
+      compilableSnapshot = null;
+    }
 
     // ── Lint check ──
     const lint = await runLint(repoRoot, config.pythonBin, snapshot);
     if (!lint.ok) {
-      // Save compilable checkpoint before re-prompting for lint fix,
-      // so we can restore if the fix breaks compilation.
+      // Save compilable checkpoint before re-prompting for lint fix.
       compilableSnapshot = await snapshotUnit(repoRoot, unit, writable);
-      return {
-        action: "re-prompt",
-        feedback:
-          `## Lint Failure — Fix This First\n\n` +
-          `Your code compiles but violates these rules. Fix ONLY the ` +
-          `violations — do not make any other changes.\n\n` +
-          `\`\`\`json\n${JSON.stringify(lint.violations, null, 2)}\n\`\`\``,
-      };
+      lastFeedback =
+        `## Lint Failure — Fix This First\n\n` +
+        `Your code compiles but violates these rules. Fix ONLY the ` +
+        `violations — do not make any other changes.\n\n` +
+        `\`\`\`json\n${JSON.stringify(lint.violations, null, 2)}\n\`\`\``;
+      return { action: "re-prompt", feedback: lastFeedback };
+    }
+
+    // ── Cap check: both compile and lint passed, so this round is
+    //    productive. Only reject on re-prompt budget exhaustion. ──
+    const effectiveMax = timedOut ? config.maxRePrompts : config.maxStuckRePrompts;
+    if (rePromptCount >= effectiveMax) {
+      lastFeedback = `re-prompt cap hit (${effectiveMax})`;
+      return { action: "fail", reason: lastFeedback };
     }
 
     // ── Acceptance ──
@@ -313,7 +322,18 @@ function makeVerifyCallback(opts: {
     return { action: "accept" };
   };
 
-  return { onVerify, getResults: () => batchResults };
+  const cleanup = async (): Promise<void> => {
+    // compilableSnapshot is a temp directory; nothing we can easily
+    // delete, but we null the ref so it's not mistakenly used later.
+    compilableSnapshot = null;
+  };
+
+  return {
+    onVerify,
+    getResults: () => batchResults,
+    cleanup,
+    lastFeedback: () => lastFeedback,
+  };
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -330,8 +350,6 @@ async function runOneTu(
   const sanitized = unit.replace(/\//g, "__");
   const targets = loadUnmatchedTargets(repoRoot, config.region, unit);
 
-  // Nothing unmatched: only run TU-final if this harness previously worked
-  // the unit (or dry-run), otherwise there is nothing to do.
   if (targets.length === 0) {
     const entries = readLedger(repoRoot, config.ledgerPath).filter((e) => e.tu === unit);
     const wasWorked = entries.some(
@@ -363,7 +381,6 @@ async function runOneTu(
     const batchIds = allIds.slice(batchIndex, batchIndex + config.batchSize);
     const batchTargets = targets.filter((t) => batchIds.includes(t.id));
 
-    // Build briefs once per batch; targets without retail ASM are skipped.
     const { briefs, missingAsm } = buildBriefs(repoRoot, batchTargets);
     for (const id of missingAsm) {
       if (!dryRun) handleSkipped(repoRoot, config, unit, id, "no retail asm");
@@ -398,7 +415,6 @@ async function runOneTu(
         break;
       }
 
-      // ── Session + acceptance (with in-session continuation) ─────
       let snapshot: Snapshot | null = batchSnapshot;
       let attemptError: string | null = null;
       let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
@@ -407,7 +423,7 @@ async function runOneTu(
         await claimBatch(repoRoot, config, currentIds);
         snapshot = await snapshotUnit(repoRoot, unit, writable);
 
-        const { onVerify, getResults } = makeVerifyCallback({
+        const verify = makeVerifyCallback({
           repoRoot, config, unit, targetIds: currentIds, writable, snapshot,
         });
 
@@ -423,7 +439,7 @@ async function runOneTu(
           multiPrompt: {
             maxRePrompts: config.maxRePrompts,
             maxStuckRePrompts: config.maxStuckRePrompts,
-            onVerify,
+            onVerify: verify.onVerify,
             totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.maxRePrompts),
           },
         });
@@ -443,27 +459,28 @@ async function runOneTu(
             sessionResult.usage, sessionResult.timedOut);
         }
 
-        carryover = sessionResult.finalText.slice(0, 1500);
-
         if (sessionResult.outcome === "accepted") {
-          batchResults = getResults();
+          batchResults = verify.getResults();
         } else {
-          // Session gave up or failed — restore snapshot, let fresh
-          // session retry.
+          // Session gave up or failed — restore snapshot, build carryover
+          // from the last rejection feedback.
+          await verify.cleanup();
           if (snapshot) await restoreSnapshot(repoRoot, snapshot);
-          const reason = sessionResult.outcome === "gave-up"
-            ? `re-prompts exhausted (${sessionResult.rePromptsUsed} used)`
-            : "session failed";
-          attemptError = reason;
+
+          const rejectionReason = sessionResult.lastRejection
+            ?? verify.lastFeedback()
+            ?? `${sessionResult.outcome} after ${sessionResult.rePromptsUsed} re-prompt(s)`;
+          carryover = `Previous session failed (${sessionResult.outcome}). ${rejectionReason}`;
+
           appendLedger(repoRoot, config.ledgerPath, {
             ts: new Date().toISOString(), event: "batch-session-exhausted", tu: unit,
             detail: {
               batchIndex, attempt, outcome: sessionResult.outcome,
               rePromptsUsed: sessionResult.rePromptsUsed,
+              lastRejection: sessionResult.lastRejection,
             },
           });
           await releaseBatch(repoRoot, config, currentIds);
-          carryover = `Previous session was rejected after ${sessionResult.rePromptsUsed} re-prompt(s). Fix:\n${reason}`;
           continue;
         }
       } catch (err) {
@@ -474,7 +491,6 @@ async function runOneTu(
         }
       }
 
-      // ── Failure handling: restore on unhandled error ──────────
       if (attemptError !== null && batchResults === null) {
         let recoveryOutput = "";
         if (batchSnapshot) {
@@ -492,8 +508,6 @@ async function runOneTu(
       }
 
       if (batchResults === null) {
-        // Session didn't error but also didn't produce results — should
-        // not happen; bail safely.
         await releaseBatch(repoRoot, config, currentIds);
         carryover = "Previous attempt produced no results (internal error).";
         continue;
@@ -514,13 +528,14 @@ async function runOneTu(
 
       const failedIds = batchResults.filter((r) => !r.accepted).map((r) => r.targetId);
       for (const fid of failedIds) {
-        const remainingAttempts = Math.max(0, maxAttempts - attempt);
-        if (!config.singletonRetry || remainingAttempts === 0) {
+        // Each failed target gets its own singleton budget, independent
+        // of the batch attempt count.
+        const singletonAttempts = config.maxBatchRetries;
+        if (!config.singletonRetry || singletonAttempts === 0) {
           handleSkipped(repoRoot, config, unit, fid,
-            config.singletonRetry ? "exhausted retries" : "singleton retry disabled");
+            config.singletonRetry ? "singleton retries exhausted" : "singleton retry disabled");
           continue;
         }
-        // Route small targets to the re-batch pool instead of singletons.
         if (config.singletonMinSize > 0) {
           const b = briefs.find((x) => x.targetId === fid);
           if (b && b.retailAsm.length < config.singletonMinSize) {
@@ -529,7 +544,7 @@ async function runOneTu(
           }
         }
         const ok = await runSingleton(
-          repoRoot, unit, fid, config, modelRuntime, sanitized, batchIndex, carryover, remainingAttempts,
+          repoRoot, unit, fid, config, modelRuntime, sanitized, carryover, singletonAttempts,
         );
         if (!ok) {
           handleSkipped(repoRoot, config, unit, fid, "exhausted singleton retries");
@@ -539,7 +554,6 @@ async function runOneTu(
       currentIds = [];
     }
 
-    // Attempts exhausted with targets still unhandled — record the skip.
     if (!dryRun && currentIds.length > 0) {
       for (const id of currentIds) {
         handleSkipped(repoRoot, config, unit, id, "exhausted batch retries");
@@ -631,7 +645,7 @@ async function runRebatchPhase(
         await claimBatch(repoRoot, config, rbCurrent);
         snapshot = await snapshotUnit(repoRoot, unit, writable);
 
-        const { onVerify, getResults } = makeVerifyCallback({
+        const verify = makeVerifyCallback({
           repoRoot, config, unit, targetIds: rbCurrent, writable, snapshot,
         });
 
@@ -644,7 +658,7 @@ async function runRebatchPhase(
           multiPrompt: {
             maxRePrompts: config.maxRePrompts,
             maxStuckRePrompts: config.maxStuckRePrompts,
-            onVerify,
+            onVerify: verify.onVerify,
             totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.maxRePrompts),
           },
         });
@@ -660,25 +674,26 @@ async function runRebatchPhase(
             sessionResult.usage, sessionResult.timedOut);
         }
 
-        sharedCarryover = sessionResult.finalText.slice(0, 1500);
-
         if (sessionResult.outcome === "accepted") {
-          batchResults = getResults();
+          batchResults = verify.getResults();
         } else {
+          await verify.cleanup();
           if (snapshot) await restoreSnapshot(repoRoot, snapshot);
-          const reason = sessionResult.outcome === "gave-up"
-            ? `re-prompts exhausted (${sessionResult.rePromptsUsed} used)`
-            : "session failed";
-          attemptError = reason;
+
+          const rejectionReason = sessionResult.lastRejection
+            ?? verify.lastFeedback()
+            ?? `${sessionResult.outcome} after ${sessionResult.rePromptsUsed} re-prompt(s)`;
+          sharedCarryover = `Previous re-batch session failed (${sessionResult.outcome}). ${rejectionReason}`;
+
           appendLedger(repoRoot, config.ledgerPath, {
             ts: new Date().toISOString(), event: "batch-session-exhausted", tu: unit,
             detail: {
               batchIndex: rbIdx, attempt: rbAttempt, phase: "rebatch",
               outcome: sessionResult.outcome, rePromptsUsed: sessionResult.rePromptsUsed,
+              lastRejection: sessionResult.lastRejection,
             },
           });
           await releaseBatch(repoRoot, config, rbCurrent);
-          sharedCarryover = `Previous re-batch session failed: ${reason}`;
           continue;
         }
       } catch (err) {
@@ -725,13 +740,15 @@ async function runRebatchPhase(
 
       const rbFailed = batchResults.filter((r) => !r.accepted).map((r) => r.targetId);
       for (const fid of rbFailed) {
-        const remainingAttempts = Math.max(0, rbMax - rbAttempt);
-        if (remainingAttempts === 0) {
-          handleSkipped(repoRoot, config, unit, fid, "exhausted rebatch retries");
+        // Re-batch failed targets still go to singletons (if
+        // singletonRetry is on) — they got a second chance in the
+        // re-batch and still didn't match.
+        if (!config.singletonRetry) {
+          handleSkipped(repoRoot, config, unit, fid, "singleton retry disabled");
           continue;
         }
         const ok = await runSingleton(
-          repoRoot, unit, fid, config, modelRuntime, sanitized, rbIdx, sharedCarryover, remainingAttempts,
+          repoRoot, unit, fid, config, modelRuntime, sanitized, sharedCarryover, config.maxBatchRetries,
         );
         if (!ok) {
           handleSkipped(repoRoot, config, unit, fid, "exhausted singleton retries");
@@ -755,7 +772,7 @@ async function runRebatchPhase(
 
 async function runSingleton(
   repoRoot: string, unit: string, targetId: string, config: HarnessConfig,
-  modelRuntime: ModelRuntime, sanitized: string, batchIndex: number,
+  modelRuntime: ModelRuntime, sanitized: string,
   carryover: string, maxAttempts: number,
 ): Promise<boolean> {
   const targets = loadUnmatchedTargets(repoRoot, config.region, unit).filter(
@@ -786,7 +803,7 @@ async function runSingleton(
       await claimBatch(repoRoot, config, [targetId]);
       snapshot = await snapshotUnit(repoRoot, unit, writable);
 
-      const { onVerify, getResults } = makeVerifyCallback({
+      const verify = makeVerifyCallback({
         repoRoot, config, unit, targetIds: [targetId], writable, snapshot,
       });
 
@@ -799,7 +816,7 @@ async function runSingleton(
         multiPrompt: {
           maxRePrompts: config.maxRePrompts,
           maxStuckRePrompts: config.maxStuckRePrompts,
-          onVerify,
+          onVerify: verify.onVerify,
           totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.maxRePrompts),
         },
       });
@@ -822,7 +839,7 @@ async function runSingleton(
       );
 
       if (sessionResult.outcome === "accepted") {
-        const results = getResults();
+        const results = verify.getResults();
         const accepted = results?.find((r) => r.targetId === targetId)?.accepted ?? false;
         appendLedger(repoRoot, config.ledgerPath, {
           ts: new Date().toISOString(),
@@ -836,27 +853,29 @@ async function runSingleton(
         });
         await releaseBatch(repoRoot, config, [targetId]);
         if (accepted) return true;
-        // Compile + lint passed but batch-cycle rejected — treat as
-        // exhausted for this session, fall through to next session.
-        feedback = `Previous singleton session passed compile and lint but was not accepted by batch-cycle.`;
+        // Compile + lint passed but batch-cycle rejected.
+        feedback = `Previous singleton session passed compile and lint but was not accepted by batch-cycle (status: ${results?.[0]?.status ?? "unknown"}).`;
         continue;
       }
 
       // Session gave up or failed — restore and try next session.
+      await verify.cleanup();
       if (snapshot) await restoreSnapshot(repoRoot, snapshot);
-      const reason = sessionResult.outcome === "gave-up"
-        ? `re-prompts exhausted (${sessionResult.rePromptsUsed} used)`
-        : "session failed";
-      feedback = `Previous singleton session was rejected: ${reason}`;
+
+      const rejectionReason = sessionResult.lastRejection
+        ?? verify.lastFeedback()
+        ?? `${sessionResult.outcome} after ${sessionResult.rePromptsUsed} re-prompt(s)`;
+      feedback = `Previous singleton session failed (${sessionResult.outcome}). ${rejectionReason}`;
+
       appendLedger(repoRoot, config.ledgerPath, {
         ts: new Date().toISOString(), event: "batch-session-exhausted", tu: unit,
         detail: {
           targetId, sessionAttempt, singleton: true,
           outcome: sessionResult.outcome, rePromptsUsed: sessionResult.rePromptsUsed,
+          lastRejection: sessionResult.lastRejection,
         },
       });
       await releaseBatch(repoRoot, config, [targetId]);
-      // continue to next sessionAttempt
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       const usage = usageFromError(err);
@@ -875,7 +894,6 @@ async function runSingleton(
         detail: { targetId, sessionAttempt, singleton: true, error: msg },
       });
       await releaseBatch(repoRoot, config, [targetId]);
-      // continue to next sessionAttempt
     }
   }
 
@@ -927,7 +945,6 @@ async function runTuFinal(
       label: "tu-final",
       timeoutMinutes: config.maxBatchMinutes * 2,
       maxTokens: config.maxTokens,
-      // No multiPrompt for TU-final — it's a one-shot cleanup pass.
     });
     logUsage(repoRoot, config, unit, "tu-final", sessionResult.usage, sessionResult.timedOut);
   } catch (err) {
@@ -948,7 +965,6 @@ async function runTuFinal(
 
   const finalLint = await runLint(repoRoot, config.pythonBin, snapshot);
   if (!finalLint.ok) {
-    // Keep compilable cleanup edits; report lint feedback for a later run.
     appendLedger(repoRoot, config.ledgerPath, {
       ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
       detail: { reason: "lint-rejected", violations: finalLint.violations },
@@ -957,7 +973,6 @@ async function runTuFinal(
     return;
   }
 
-  // Verify: configure + ninja + size, each under the repo build lock.
   let buildOk = false;
   let buildOutput = "";
   let sizeOutput = "";
@@ -988,7 +1003,6 @@ async function runTuFinal(
   }
 
   if (!buildOk) {
-    // The finalised TU does not build — restore the pre-session copies.
     await restoreSnapshot(repoRoot, snapshot);
   }
 

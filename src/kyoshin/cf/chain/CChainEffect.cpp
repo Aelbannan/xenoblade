@@ -11,7 +11,7 @@ void func_802A0818(){}
 
 cf::CChainEffect::CChainEffect() {}
 
-extern "C" void func_802A08F4(void* self) {
+void func_802A08F4(void* self) {
     *(unsigned long*)((char*)self + 4) = 0;
     *(unsigned long*)((char*)self + 8) = 0;
 }

@@ -3,14 +3,14 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u32 func_80122448(void) {
+u32 func_80122448(void) {
     extern u32 lbl_eu_80663FD0;
     return lbl_eu_80663FD0;
 }
 
-extern "C" int lbl_eu_80663D1C;
+int lbl_eu_80663D1C;
 
-extern "C" int func_80042864() {
+int func_80042864() {
     return lbl_eu_80663D1C != 0;
 }
 
@@ -51,11 +51,11 @@ void func_801242FC(){}
 void func_8012435C(){}
 
 void __dt__12CQuestWindowFv();
-extern "C" void OnFileEvent__12CQuestWindowFP10CEventFile(void* self) { ((void(*)(void*))func_8012278C)((char*)self - 0x6c); }
+void OnFileEvent__12CQuestWindowFP10CEventFile(void* self) { ((void(*)(void*))func_8012278C)((char*)self - 0x6c); }
 
 void func_801245D4(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x6c); }
 
-extern "C" void func_801245DC(void* self) { ((void(*)(void*))cbRenderBefore__12CQuestWindowFv)((char*)self - 0x70); }
+void func_801245DC(void* self) { ((void(*)(void*))cbRenderBefore__12CQuestWindowFv)((char*)self - 0x70); }
 
 extern "C" void func_801245E4(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x70); }
 

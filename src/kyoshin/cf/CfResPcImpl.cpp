@@ -7,12 +7,12 @@ void __ct__cf_CfResPcImpl(){}
 
 void cf::CfResPcImpl::~CfResPcImpl() {}
 
-extern "C" int func_8018CB14(void* p)
+int func_8018CB14(void* p)
 {
     return (unsigned int)*(unsigned short*)((char*)p + 8) >= 3;
 }
 
-extern "C" int func_8018CB34() { return 2; }
+int func_8018CB34() { return 2; }
 
 void func_8018CB3C(){}
 
@@ -64,23 +64,21 @@ void func_8018EE18(){}
 
 void func_8018EEF0(){}
 
-extern "C" void __ct__Q22cf17UnkClass_8018EF3CFv(void* self) {
-    *(unsigned long*)((char*)self + 0x400) = 0;
-    *(unsigned long*)((char*)self + 0x404) = 0;
-}
+
 
 void cf::UnkClass_8018EF3C::~UnkClass_8018EF3C() const {}
 
 #include <string.h>
 
-extern "C" void func_8018EFB4(unsigned char* p)
+#include "kyoshin/cf/CfResPcImpl.hpp"
+void func_8018EFB4(unsigned char* p)
 {
     *reinterpret_cast<unsigned int*>(p + 0x404) = 0;
     *reinterpret_cast<unsigned int*>(p + 0x400) = 0;
     memset(p, 0, 0x400);
 }
 
-extern "C" int func_8018EFCC() { return 1; }
+int func_8018EFCC() { return 1; }
 
 void func_8018EFD4(){}
 

@@ -9,3 +9,14 @@ extern "C" bool func_8004A2E8();
 extern "C" void func_8004A400();
 
 extern "C" void pluginCfsRegist();
+
+namespace cf {
+
+class CfObject {
+public:
+    void CfObject_UnkVirtualFunc31();
+
+    // TODO: add fields
+};
+} // namespace cf
+

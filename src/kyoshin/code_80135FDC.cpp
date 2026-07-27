@@ -59,7 +59,7 @@ void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(){}
 
 void func_80137250__FPQ34nw4r3lyt8DrawInfo(){}
 
-extern "C" int func_801372B4(int value) {
+int func_801372B4(int value) {
     if (value >= 11) {
         if (value >= 19) {
             if (value >= 29)
@@ -88,7 +88,7 @@ void func_80137510(){}
 
 void func_801375A0(){}
 
-extern "C" void func_80137728(void* self, float a, float b, float c) {
+void func_80137728(void* self, float a, float b, float c) {
     *(float*)((char*)self + 0) = a;
     *(float*)((char*)self + 4) = b;
     *(float*)((char*)self + 8) = c;
@@ -114,7 +114,7 @@ void func_80137F88(){}
 
 void func_80138078__FUl(){}
 
-extern "C" void func_80138090(void* arg) {
+void func_80138090(void* arg) {
     extern void func_801BFE8C(unsigned long, void*, unsigned long);
     func_801BFE8C(0, arg, 0);
 }
@@ -146,12 +146,12 @@ void func_80139198(){}
 u8 func_801392B4(void* self){ return ((u8*)self)[0]; }
 
 extern u8 lbl_eu_80664077;
-extern "C" u8 func_801392C0() { return lbl_eu_80664077; }
+u8 func_801392C0() { return lbl_eu_80664077; }
 
 void func_801392C8(){}
 
 extern u8 lbl_eu_8066407E;
-extern "C" u8 func_801392DC() { return lbl_eu_8066407E; }
+u8 func_801392DC() { return lbl_eu_8066407E; }
 
 void func_801392E4(){}
 
@@ -202,14 +202,14 @@ void func_8013B380(){}
 void func_8013B428__FUl(){}
 
 extern u8 lbl_eu_8066407F;
-extern "C" u8 func_8013B87C(u8 val) { lbl_eu_8066407F = val; return val; }
+u8 func_8013B87C(u8 val) { lbl_eu_8066407F = val; return val; }
 
 extern u8 lbl_eu_8066407F;
-extern "C" u8 func_8013B884() { return lbl_eu_8066407F; }
+u8 func_8013B884() { return lbl_eu_8066407F; }
 
 void func_8013B88C(){}
 
-extern "C" unsigned char func_8013B970() {
+unsigned char func_8013B970() {
     extern unsigned char lbl_eu_80664080;
     unsigned char v = lbl_eu_80664080;
     lbl_eu_80664080 = v + 1;
@@ -219,7 +219,7 @@ extern "C" unsigned char func_8013B970() {
 void func_8013B980(){}
 
 extern u8 lbl_eu_80664080;
-extern "C" u8 func_8013B9A4() { return lbl_eu_80664080; }
+u8 func_8013B9A4() { return lbl_eu_80664080; }
 
 void func_8013B9AC(){}
 
@@ -234,43 +234,43 @@ void func_8013BD24(){}
 void func_8013BD9C(void){}
 
 extern u8 lbl_eu_80664058;
-extern "C" void func_8013BDA8() { lbl_eu_80664058 = 0; }
+void func_8013BDA8() { lbl_eu_80664058 = 0; }
 
 extern u8 lbl_eu_80664058;
-extern "C" u8 func_8013BDB4() { return lbl_eu_80664058; }
+u8 func_8013BDB4() { return lbl_eu_80664058; }
 
 void func_8013BDBC(){}
 
 extern u8 lbl_eu_80664059;
-extern "C" void func_8013BDD0() { lbl_eu_80664059 = 0; }
+void func_8013BDD0() { lbl_eu_80664059 = 0; }
 
 extern u8 lbl_eu_80664059;
-extern "C" u8 func_8013BDDC() { return lbl_eu_80664059; }
+u8 func_8013BDDC() { return lbl_eu_80664059; }
 
 void func_8013BDE4(){}
 
 extern u8 lbl_eu_8066405B;
-extern "C" void func_8013BE00() { lbl_eu_8066405B = 1; }
+void func_8013BE00() { lbl_eu_8066405B = 1; }
 
 extern u8 lbl_eu_8066405A;
-extern "C" u8 func_8013BE0C() { return lbl_eu_8066405A; }
+u8 func_8013BE0C() { return lbl_eu_8066405A; }
 
 extern u8 lbl_eu_8066405B;
-extern "C" u8 func_8013BE14() { return lbl_eu_8066405B; }
+u8 func_8013BE14() { return lbl_eu_8066405B; }
 
-extern "C" void func_8013BE1C(u32 a, u32 b) {
+void func_8013BE1C(u32 a, u32 b) {
     extern u32 lbl_eu_8066405C;
     extern u32 lbl_eu_80664060;
     lbl_eu_8066405C = a;
     lbl_eu_80664060 = b;
 }
 
-extern "C" u32 func_8013BE28(void) {
+u32 func_8013BE28(void) {
     extern u32 lbl_eu_8066405C;
     return lbl_eu_8066405C;
 }
 
-extern "C" u32 func_8013BE30(void) {
+u32 func_8013BE30(void) {
     extern u32 lbl_eu_80664060;
     return lbl_eu_80664060;
 }
@@ -278,9 +278,9 @@ extern "C" u32 func_8013BE30(void) {
 void func_8013BE38(){}
 
 extern u8 lbl_eu_806621F0;
-extern "C" u8 func_8013BE50() { return lbl_eu_806621F0; }
+u8 func_8013BE50() { return lbl_eu_806621F0; }
 
-extern "C" void* getInstance__14Class_80296898Fv();
+void* getInstance__14Class_80296898Fv();
 
 int func_8013BE58(){
     unsigned char byte = ((unsigned char*)getInstance__14Class_80296898Fv())[0x11];
@@ -303,10 +303,10 @@ int func_8013BEB8(){
 void func_8013BEE8(){}
 
 extern u8 lbl_eu_80664064;
-extern "C" void func_eu_8013C8DC() { lbl_eu_80664064 = 1; }
+void func_eu_8013C8DC() { lbl_eu_80664064 = 1; }
 
 extern u8 lbl_eu_80664064;
-extern "C" void func_eu_8013C8E8() { lbl_eu_80664064 = 0; }
+void func_eu_8013C8E8() { lbl_eu_80664064 = 0; }
 
 void func_eu_8013C8F4(){}
 

@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 void __dt__11CTalkWindowFv(void* self);
 void cbRenderBefore__11CTalkWindowFv(void* self);
-extern "C" void Draw__11CTalkWindowFv() {}
+void Draw__11CTalkWindowFv() {}
 
 void func_8012BDD0(void){}
 
@@ -18,7 +18,7 @@ void func_8012DF78(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)
 
 void func_8012DF80(void* self) { ((void(*)(void*))cbRenderBefore__11CTalkWindowFv)((char*)self - 0x70); }
 
-extern "C" void func_8012DF88(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x70); }
+void func_8012DF88(void* self) { ((void(*)(void*))__dt__11CTalkWindowFv)((char*)self - 0x70); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_8012DE98(){}

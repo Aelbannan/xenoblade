@@ -41,3 +41,12 @@ public:
 };
 
 extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* scn);
+
+class CPcSelectCursor {
+public:
+    CPcSelectCursor();
+    virtual ~CPcSelectCursor();
+
+    // TODO: add fields
+};
+

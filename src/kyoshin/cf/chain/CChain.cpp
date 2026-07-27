@@ -9,21 +9,21 @@ namespace cf {
 void func_80277154(){}
 void func_80277A7C(){}
 void func_80277B34(void){}
-extern "C" void func_80278E00() {}
-extern "C" int func_80278E04(void* self) { return 0; }
+void func_80278E00() {}
+int func_80278E04(void* self) { return 0; }
 void func_80278F5C(){}
 void func_80278F70(){}
-extern "C" void func_802795D0() {}
-extern "C" bool func_8027B770(void*);
+void func_802795D0() {}
+bool func_8027B770(void*);
 
-extern "C" bool func_8027968C(void* self) {
+bool func_8027968C(void* self) {
     return func_8027B770((char*)self + 0x18);
 }
-extern "C" void func_80279768() {}
-extern "C" u16 func_8027976C(void** arg0) {
+void func_80279768() {}
+u16 func_8027976C(void** arg0) {
     return *(u16*)((char*)*arg0 + 0x3f28);
 }
-extern "C" bool func_802798B0(unsigned char* a1, unsigned char* a2, int a3) {
+bool func_802798B0(unsigned char* a1, unsigned char* a2, int a3) {
     unsigned char v = a1[2];
     if (v < 1 || v > 0x18) return false;
     if (v == 5) {
@@ -32,21 +32,21 @@ extern "C" bool func_802798B0(unsigned char* a1, unsigned char* a2, int a3) {
     }
     return true;
 }
-extern "C" void func_80279B24(void* _this, int val) {
+void func_80279B24(void* _this, int val) {
     *(int*)_this = val;
     *(unsigned short*)((char*)_this + 0x6C) = 0;
 }
 void func_8027A324(){}
-extern "C" int func_8027A584(void* self) { return 0; }
-extern "C" int func_8027A9D0(void* self) { return 0; }
-extern "C" int func_8027A9D8(void* self) { return 0; }
-extern "C" int func_8027A9E0(void* self) { return 0; }
-extern "C" void func_8027A9E8() {}
-extern "C" int func_8027A9EC(void* self) { return 0; }
-extern "C" int func_8027A9F4(void* self) { return 0; }
-extern "C" int func_8027A9FC(void* self) { return 0; }
-extern "C" int func_8027AA04(void* self) { return 0; }
-extern "C" void func_8027AA0C() {}
+int func_8027A584(void* self) { return 0; }
+int func_8027A9D0(void* self) { return 0; }
+int func_8027A9D8(void* self) { return 0; }
+int func_8027A9E0(void* self) { return 0; }
+void func_8027A9E8() {}
+int func_8027A9EC(void* self) { return 0; }
+int func_8027A9F4(void* self) { return 0; }
+int func_8027A9FC(void* self) { return 0; }
+int func_8027AA04(void* self) { return 0; }
+void func_8027AA0C() {}
 
 void func_80276C30(){}
 void func_80276C58(){}

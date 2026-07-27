@@ -7,12 +7,12 @@
 // Singleton instance (retail: lbl_eu_80664230).
 CCol6CheckBat* gCol6CheckBat;
 
-extern "C" int lbl_eu_80664230;
-extern "C" int lbl_eu_80664234;
-extern "C" int lbl_eu_80664238;
-extern "C" int lbl_eu_8066235C;
+int lbl_eu_80664230;
+int lbl_eu_80664234;
+int lbl_eu_80664238;
+int lbl_eu_8066235C;
 
-extern "C" void func_8015D0B8() {
+void func_8015D0B8() {
     lbl_eu_80664230 = 0;
     lbl_eu_80664234 = 0;
     lbl_eu_80664238 = 0;
@@ -110,9 +110,6 @@ void CCol6Invite::~CCol6Invite() {}
 void CCol6Invite::Init() {}
 
 extern u32 lbl_eu_8066423C;
-extern "C" void Term__11CCol6InviteFv(void* self) {
-    *((u8*)self + 0x67) = 0;
-    lbl_eu_8066423C = 0;
-}
+
 
 void CCol6Invite::Move() {}

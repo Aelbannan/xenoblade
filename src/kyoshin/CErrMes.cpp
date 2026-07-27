@@ -35,7 +35,7 @@ void* func_eu_802B14D4(void){ return 0; }
 
 void* func_eu_802B14E0(void){ return 0; }
 
-extern "C" u32 lbl_eu_8053A478[];
+u32 lbl_eu_8053A478[];
 extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 
 void func_eu_802B14F8(){}

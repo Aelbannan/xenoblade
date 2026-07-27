@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuBattleEnd.hpp"
 void __ct__CMenuBattleEnd(){}
 
 void CMenuBattleEnd::~CMenuBattleEnd() {}
@@ -21,8 +22,8 @@ void func_8026F95C(){}
 
 void func_8026FB0C(){}
 
-extern "C" void func_8026FC90(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x6c); }
+void func_8026FC90(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x6c); }
 
-extern "C" void func_8026FC98(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuBattleEndFv)((char*)self - 0x70); }
+void func_8026FC98(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuBattleEndFv)((char*)self - 0x70); }
 
-extern "C" void func_8026FCA0(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x70); }
+void func_8026FCA0(void* self) { ((void(*)(void*))__dt__14CMenuBattleEndFv)((char*)self - 0x70); }

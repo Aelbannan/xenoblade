@@ -28,3 +28,14 @@ namespace cf {
     CChain();
     };
 }
+
+namespace cf {
+
+class CChainActor {
+public:
+    virtual ~CChainActor();
+
+    // TODO: add fields
+};
+} // namespace cf
+

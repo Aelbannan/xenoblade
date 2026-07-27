@@ -16,7 +16,7 @@ void func_802A85A8(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank2 slot in vtable; PARTY_GAGE subclass returns 0x8C (140).
-extern "C" int func_802A8620(CVS_THREAD_PARTY_GAGE* self) {
+int func_802A8620(CVS_THREAD_PARTY_GAGE* self) {
     return CVS_THREAD_PARTY_GAGE::BUFFER_SIZE;
 }
 

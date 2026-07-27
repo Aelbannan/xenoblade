@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CTaskREvtSequence.hpp"
 void __ct__cf_CTaskREvtSequence(){}
 
 void __dt__801682AC(){}
@@ -25,7 +26,7 @@ void func_8016841C(){}
 
 void func_8016846C(){}
 
-extern "C" bool func_8016847C() { return false; }
+bool func_8016847C() { return false; }
 
 void func_80168484(){}
 
@@ -43,17 +44,17 @@ void func_80168800(){}
 
 void func_80168F38(){}
 
-extern "C" int func_80169048(void* self) { return 1; }
+int func_80169048(void* self) { return 1; }
 
 void func_80169050(){}
 
 void func_8016925C(){}
 
-extern "C" int func_801696C4(void* self) { return 0; }
+int func_801696C4(void* self) { return 0; }
 
 void func_801696CC(){}
 
-extern "C" void func_80169A34() {}
+void func_80169A34() {}
 
 void func_80169A38(){}
 
@@ -61,7 +62,7 @@ void func_80169CD0(){}
 
 void func_80169DD0(){}
 
-extern "C" void func_80169F24() {}
+void func_80169F24() {}
 
 void func_80169F28(){}
 
@@ -69,7 +70,7 @@ void func_8016A24C(){}
 
 void func_8016A27C(){}
 
-extern "C" u32 func_8016A354(void* self) { return *(u32*)((u8*)self + 0x20); }
+u32 func_8016A354(void* self) { return *(u32*)((u8*)self + 0x20); }
 
 void func_8016A35C(){}
 
@@ -85,7 +86,7 @@ void cf::CTaskREvtSequence::Term() {}
 
 void func_8016A480(){}
 
-extern "C" void Draw__Q22cf17CTaskREvtSequenceFv() {}
+
 
 void func_8016ABA8(void* self){}
 
@@ -135,11 +136,11 @@ void func_8016C720(){}
 
 void func_eu_8016DA48(){}
 
-extern "C" void OnFileEvent__17CTaskREvtSequenceFP10CEventFile(void* self) { ((void(*)(void*))func_8016ABA8)((char*)self - 0x54); }
+void OnFileEvent__17CTaskREvtSequenceFP10CEventFile(void* self) { ((void(*)(void*))func_8016ABA8)((char*)self - 0x54); }
 
-extern "C" void func_8016C7D8(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x54); }
+void func_8016C7D8(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x54); }
 
-extern "C" void func_8016C7E0(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
+void func_8016C7E0(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
 
 extern "C" void func_8016C7E8(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
 

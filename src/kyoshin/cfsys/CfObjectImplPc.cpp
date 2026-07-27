@@ -35,9 +35,9 @@ void func_800CA084(){}
 
 void func_800CA104(){}
 
-extern "C" void func_800CEA34(void*);
+void func_800CEA34(void*);
 
-extern "C" void func_800CA274(void* self, int value)
+void func_800CA274(void* self, int value)
 {
     char* sub = *(char**)((char*)self + 0x18);
     if (*(int*)(sub + 0x3e98) != 0 && value != 0) {

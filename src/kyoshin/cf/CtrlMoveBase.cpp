@@ -17,11 +17,11 @@ void func_80089398(){}
 void func_800895A8(){}
 
 // FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_80089628)
-extern "C" void func_80089628() {}
+void func_80089628() {}
 
 void func_8008962C(){}
 
-extern "C" void func_80089684(void* self) {
+void func_80089684(void* self) {
     *(unsigned short*)((char*)self + 0x40) &= 1;
 }
 
@@ -33,14 +33,14 @@ void func_800898D4(){}
 
 struct func_80089990_child { char pad[0x10]; unsigned short flags; };
 struct func_80089990_obj { char pad[0x30]; func_80089990_child* child; };
-extern "C" void func_80089990(func_80089990_obj* self) {
+void func_80089990(func_80089990_obj* self) {
     func_80089990_child* p = self->child;
     if (p != 0) {
         p->flags &= 0xff83;
     }
 }
 
-extern "C" void func_800899AC(void* obj, float val) {
+void func_800899AC(void* obj, float val) {
     void* it = *(void**)((char*)obj + 0x30);
     if (it) {
         *(float*)((char*)it + 0x4) = val;

@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 CSysWin_isReady(void* self) { return ((u8*)self)[0x28]; }
+u8 CSysWin_isReady(void* self) { return ((u8*)self)[0x28]; }
 
 
 
@@ -11,9 +11,9 @@ extern "C" u8 CSysWin_isReady(void* self) { return ((u8*)self)[0x28]; }
 
 
 
-extern "C" u8 CSysWin_getUnk34(void* self) { return ((u8*)self)[0x34]; }
+u8 CSysWin_getUnk34(void* self) { return ((u8*)self)[0x34]; }
 
-extern "C" u8 CSysWin_isActive(void* self) { return ((u8*)self)[0x36]; }
+u8 CSysWin_isActive(void* self) { return ((u8*)self)[0x36]; }
 
 
 

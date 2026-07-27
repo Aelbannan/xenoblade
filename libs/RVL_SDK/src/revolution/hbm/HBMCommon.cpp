@@ -19,7 +19,7 @@ void HBMDraw(){}
 
 void HBMSetAdjustFlag(){}
 
-extern "C" void HBMCreateSound(const void* data, void* ptr, unsigned long size) {
+void HBMCreateSound(const void* data, void* ptr, unsigned long size){
     extern void getInstance__Q210homebutton10HomeButtonFv(void);
     extern void InitAxSound__10homebuttonFPCvPvUl(const void*, void*, unsigned long);
     getInstance__Q210homebutton10HomeButtonFv();

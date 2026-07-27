@@ -3,23 +3,23 @@
 
 #include <harness_catalog.h>
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
+void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
+void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
+void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
+void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
+void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
+void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
+void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
+void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
+void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
 extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 

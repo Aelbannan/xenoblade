@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuPlayAward.hpp"
 void __ct__CMenuPlayAward(){}
 
 void CMenuPlayAward::~CMenuPlayAward() {}
@@ -17,7 +18,7 @@ void CMenuPlayAward::cbRenderBefore() {}
 
 void func_80270308(){}
 
-extern "C" void stub_us_80272800() {}
+void stub_us_80272800() {}
 
 void func_8027038C(){}
 
@@ -27,13 +28,13 @@ void func_80270454(){}
 
 void func_802705F4(){}
 
-extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
+void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 
-extern "C" void func_8027064C(void* self) { ((void(*)(void*))__dt__14CMenuPlayAwardFv)((char*)self - 0x58); }
+void func_8027064C(void* self) { ((void(*)(void*))__dt__14CMenuPlayAwardFv)((char*)self - 0x58); }
 
 void func_80270654(){}
 
-extern "C" void func_802706C4(void* self) {
+void func_802706C4(void* self) {
     *(unsigned long*)((char*)self + 0) = 0;
     *(unsigned long*)((char*)self + 4) = 0;
 }
@@ -46,7 +47,7 @@ void func_80270770(){}
 
 void func_80270AD8(){}
 
-extern "C" void* func_80270AEC(void* self, int param) {
+void* func_80270AEC(void* self, int param) {
     if (param >= 256) return 0;
     unsigned char byte = ((unsigned char*)self)[0x100a];
     return (void*)((unsigned char*)self + (byte << 11) + ((param & 0xFF) << 3));
@@ -64,16 +65,16 @@ void func_80270E04(){}
 
 void func_80270E64(){}
 
-extern "C" bool CScrollBar_isVisible(void*);
+bool CScrollBar_isVisible(void*);
 
-extern "C" unsigned char func_80270F28(void* this_) {
+unsigned char func_80270F28(void* this_) {
     if (CScrollBar_isVisible((void*)((char*)this_ + 0x48))) {
         return *((unsigned char*)this_ + 0x8a);
     }
     return 0;
 }
 
-extern "C" u8 func_80270F6C(void* self) { return ((u8*)self)[0x8b]; }
+u8 func_80270F6C(void* self) { return ((u8*)self)[0x8b]; }
 
 void func_80270F74(){}
 

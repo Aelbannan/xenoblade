@@ -1,6 +1,6 @@
 
 
-extern "C" void pluginUnitRegist() {
+void pluginUnitRegist() {
     extern const char lbl_eu_80507FC0[];
     extern const char lbl_eu_80535460[];
     extern void vmPluginRegist(const char*, const char*);

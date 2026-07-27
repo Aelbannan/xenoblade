@@ -35,6 +35,6 @@ void func_802AF844(){}
 
 void func_802AF980(){}
 
-extern "C" int func_802AF9C8() { return 270; }
+int func_802AF9C8() { return 270; }
 
 void func_802AF9D0(){}

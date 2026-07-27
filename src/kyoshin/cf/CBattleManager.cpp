@@ -150,11 +150,11 @@ CBattleManager* CBattleManager::getInstance() {
 
 }
 
-extern "C" bool func_800DA06C(void* self, unsigned int value) { struct Node { Node* next; unsigned int unused; unsigned int value; }; struct Manager { unsigned char unused[8]; Node* list; }; Manager* manager = static_cast<Manager*>(self); Node* sentinel = manager->list; Node* current = sentinel->next; while (current != sentinel && current->value != value) current = current->next; return current != sentinel; }
-extern "C" void func_800E2584(void* p, u32 mask) {
+bool func_800DA06C(void* self, unsigned int value) { struct Node { Node* next; unsigned int unused; unsigned int value; }; struct Manager { unsigned char unused[8]; Node* list; }; Manager* manager = static_cast<Manager*>(self); Node* sentinel = manager->list; Node* current = sentinel->next; while (current != sentinel && current->value != value) current = current->next; return current != sentinel; }
+void func_800E2584(void* p, u32 mask) {
     *(u32*)((u8*)p + 0x84) &= ~mask;
 }
-extern "C" void* func_800EA384(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
+void* func_800EA384(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
 void func_800EA3AC(){}
 void func_800EA410(void* self){
     self = (char*)self + 0x219c;
@@ -163,12 +163,12 @@ void func_800EA410(void* self){
     func(self);
 }
 void func_800EA420(){}
-extern "C" unsigned int lbl_eu_80663F00;
-extern "C" void* func_801A8070(void*);
-extern "C" void* func_800EA444(void* self) {
+unsigned int lbl_eu_80663F00;
+void* func_801A8070(void*);
+void* func_800EA444(void* self) {
     return lbl_eu_80663F00 ? func_801A8070(static_cast<unsigned char*>(self) + 0x219c) : 0;
 }
-extern "C" void func_800EA460(void* self, float a, float b, unsigned long c) {
+void func_800EA460(void* self, float a, float b, unsigned long c) {
     extern void func_800EA484(void*);
     *(float*)((char*)self + 0x88) = b;
     *(unsigned long*)((char*)self + 0x8c) = c;
@@ -184,9 +184,9 @@ void func_800EA998(void* self){
 }
 void func_800EC8FC(){}
 void func_800F3958(){}
-extern "C" unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
-extern "C" void func_800F4004(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }
-extern "C" void func_800F42A0(void* _this) {
+unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
+void func_800F4004(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }
+void func_800F42A0(void* _this) {
     *(int*)((char*)_this + 0x84) = 0;
 }
 

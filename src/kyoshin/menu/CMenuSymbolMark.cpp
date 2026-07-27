@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuSymbolMark.hpp"
 void func_8011D338(){}
 
 void __ct__CMenuSymbolMark(){}
@@ -43,19 +44,19 @@ void CArrow3D::~CArrow3D() {}
 
 void CArrow3D::cbRenderBefore() {}
 
-extern "C" void Move__8CArrow3DFv(void) {}
+void Move__8CArrow3DFv(void) {}
 
 void CArrow3D::Term() {}
 
 void CArrow3D::Init() {}
 
-extern "C" void func_8012213C(void* self) { ((void(*)(void*))__dt__15CMenuSymbolMarkFv)((char*)self - 0x58); }
+void func_8012213C(void* self) { ((void(*)(void*))__dt__15CMenuSymbolMarkFv)((char*)self - 0x58); }
 
-extern "C" void func_80122144(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuSymbolMarkFv)((char*)self - 0x5c); }
+void func_80122144(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuSymbolMarkFv)((char*)self - 0x5c); }
 
-extern "C" void func_8012214C(void* self) { ((void(*)(void*))__dt__15CMenuSymbolMarkFv)((char*)self - 0x5c); }
+void func_8012214C(void* self) { ((void(*)(void*))__dt__15CMenuSymbolMarkFv)((char*)self - 0x5c); }
 
-extern "C" void func_80122154(void* self) { ((void(*)(void*))cbRenderBefore__8CArrow3DFv)((char*)self - 0x54); }
+void func_80122154(void* self) { ((void(*)(void*))cbRenderBefore__8CArrow3DFv)((char*)self - 0x54); }
 
 extern "C" void func_8012215C(void* self) { ((void(*)(void*))__dt__8CArrow3DFv)((char*)self - 0x54); }
 

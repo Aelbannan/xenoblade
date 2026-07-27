@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/realtimeevt/CREvtModelMap.hpp"
 void __ct__CREvtModelMap(){}
 
 void __ct__80180B00(void* self){}
@@ -35,12 +36,12 @@ void func_80181988(void* self){}
 
 // Adjusting thunk: upcasts from IWorkEvent sub-object (at offset +0x38 within CREvtModelMap)
 // to the full CREvtModelMap, then tail-calls the real event handler.
-extern "C" void OnFileEvent__13CREvtModelMapFP10CEventFile(void* self) {
+void OnFileEvent__13CREvtModelMapFP10CEventFile(void* self) {
     ((void(*)(void*))func_80181988)(static_cast<char*>(self) - 0x38);
 }
 
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x38 within CREvtModelMap)
 // to the full object, then tail-calls the constructor.
-extern "C" void func_80181A54(void* self) {
+void func_80181A54(void* self) {
     ((void(*)(void*))__ct__80180B00)(static_cast<char*>(self) - 0x38);
 }

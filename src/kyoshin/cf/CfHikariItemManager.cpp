@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CfHikariItemManager.hpp"
 void __ct__cf_CfHikariItemManager(){}
 
 void cf::CfHikariItemManager::~CfHikariItemManager() {}
@@ -11,7 +12,7 @@ void func_802B2894(){}
 
 void func_802B2938(){}
 
-extern "C" void func_802B2A08(void* self) {
+void func_802B2A08(void* self) {
     *(unsigned long*)((char*)self + 0x1194) |= 2;
 }
 

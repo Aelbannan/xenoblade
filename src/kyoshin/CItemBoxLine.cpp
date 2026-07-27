@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_801ED800(void* self) { return ((u8*)self)[0x59]; }
+u8 func_801ED800(void* self) { return ((u8*)self)[0x59]; }
 
 
 
@@ -53,7 +53,7 @@ void func_801ED97C(){}
 
 void func_801EDA08(){}
 
-extern "C" void func_801EDA4C(unsigned char* self, unsigned char val) {
+void func_801EDA4C(unsigned char* self, unsigned char val) {
     unsigned char n = self[0x63];
     if (n >= 9) {
         return;
@@ -78,15 +78,15 @@ void func_801EE684(){}
 
 void func_801EE788(){}
 
-extern "C" u8 func_801EECC0(void* self) { return ((u8*)self)[0x39E]; }
+u8 func_801EECC0(void* self) { return ((u8*)self)[0x39E]; }
 
 void func_801EC3B0(void*, unsigned int);
-extern "C" void func_801EECC8(char* self) {
+void func_801EECC8(char* self) {
     func_801EC3B0(self + 0x3A4, (unsigned char)(*(short*)(self + 0x38C) + *(short*)(self + 0x38E)));
 }
 
-extern "C" void func_801D2E4C(void* self);
-extern "C" void func_801EECE0(void* self) { ((void(*)(void*))func_801D2E4C)((char*)self + 0xb8); }
+void func_801D2E4C(void* self);
+void func_801EECE0(void* self) { ((void(*)(void*))func_801D2E4C)((char*)self + 0xb8); }
 
 void func_801EECE8(){}
 

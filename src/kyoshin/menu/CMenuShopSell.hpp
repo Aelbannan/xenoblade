@@ -22,3 +22,16 @@ extern "C" void func_8018B658();
 // Adjusting thunks (virtual dispatch from secondary base at offset 0x58)
 extern "C" void func_8018B6A8(CMenuShopSell* self);
 extern "C" void func_8018B6B0(CMenuShopSell* self);
+
+class CMenuShopSell {
+public:
+    CMenuShopSell();
+    virtual ~CMenuShopSell();
+    void Init();
+    void Term();
+    void Move();
+    void cbRenderBefore();
+
+    // TODO: add fields
+};
+

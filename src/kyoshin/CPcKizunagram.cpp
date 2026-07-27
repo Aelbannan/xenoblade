@@ -3,7 +3,7 @@
 
 #include "kyoshin/CPcKizunagram.hpp"
 
-extern "C" u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
+u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 
 
 
@@ -21,7 +21,7 @@ void func_8025D954(){}
 void func_8025D9C4(){}
 
 
-extern "C" u8 func_8025DA48(CPcKizunagram* pKizunagram) { return pKizunagram->mIsOpen; }
+u8 func_8025DA48(CPcKizunagram* pKizunagram) { return pKizunagram->mIsOpen; }
 
 void func_8025DA50(){}
 

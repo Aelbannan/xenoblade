@@ -39,7 +39,7 @@ void func_8029A8D4(){}
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__13CMenuTutorialFv
  */
-extern "C" void func_8029A924(IScnRender* self) {
+void func_8029A924(IScnRender* self) {
     ((void(*)(CMenuTutorial*))cbRenderBefore__13CMenuTutorialFv)(
         (CMenuTutorial*)((uintptr_t)self - 0x58));
 }
@@ -54,7 +54,7 @@ extern "C" void func_8029A924(IScnRender* self) {
  *
  * Retail: subi r3, r3, 0x58; b __dt__13CMenuTutorialFv
  */
-extern "C" void func_8029A92C(IScnRender* self) {
+void func_8029A92C(IScnRender* self){
     ((void(*)(CMenuTutorial*))__dt__13CMenuTutorialFv)(
         (CMenuTutorial*)((uintptr_t)self - 0x58));
 }

@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_804DEDA8(void* r3) {
+void func_804DEDA8(void* r3) {
     char* base = (char*)r3;
     base[0] = 0;
     base[2] = 0;
@@ -24,7 +24,7 @@ void func_804DF150(){}
 
 void func_804DF164(){}
 
-extern "C" void* func_804DF2A8(void* self, int index) {
+void* func_804DF2A8(void* self, int index) {
     uint8_t* base = *(uint8_t**)((uint8_t*)self + 0x10);
     uint8_t* arrayBase = base + *(uint32_t*)(base + 0x8);
     uint32_t offset = *(uint32_t*)(arrayBase + (index << 3));
@@ -45,13 +45,13 @@ void func_804DF5F8(){}
 
 void func_804DF690(){}
 
-extern "C" void __dla__FPv(void*);
-extern "C" void* lbl_eu_80665A30;
-extern "C" void* lbl_eu_80665A34;
-extern "C" void* lbl_eu_80665A38;
-extern "C" void* lbl_eu_80665A3C;
+void __dla__FPv(void*);
+void* lbl_eu_80665A30;
+void* lbl_eu_80665A34;
+void* lbl_eu_80665A38;
+void* lbl_eu_80665A3C;
 
-extern "C" void __dt__804DF744() {
+void __dt__804DF744() {
     void* p1 = lbl_eu_80665A34;
     lbl_eu_80665A30 = 0;
     if (p1) {

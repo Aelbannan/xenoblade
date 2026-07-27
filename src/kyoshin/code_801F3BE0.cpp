@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u32 getUnk80664658(void) {
+u32 getUnk80664658(void) {
     extern u32 lbl_eu_80664658;
     return lbl_eu_80664658;
 }
@@ -32,21 +32,21 @@ void func_801F4504(){}
 
 void func_801F45B4(){}
 
-extern "C" void func_801F4994(void) {}
+void func_801F4994(void) {}
 
 void func_801F4998(){}
 
 void func_801F4AD4(){}
 
-extern "C" void func_801F4B64(void) {}
+void func_801F4B64(void) {}
 
 void func_801F4B68(){}
 
-extern "C" void func_801F4BF8(void) {}
+void func_801F4BF8(void) {}
 
 void func_801F4BFC(){}
 
-extern "C" void func_801F4C8C(void) {}
+void func_801F4C8C(void) {}
 
 void func_801F4C90(){}
 

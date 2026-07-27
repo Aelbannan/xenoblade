@@ -1,9 +1,9 @@
 #include "types.h"
 
-extern "C" void __ct__7CDrawGXFv(void* self);
-extern "C" void __dt__7CDrawGXFv(void* self, int param);
-extern "C" void setCol__7CDrawGXFRCQ22ml5CCol4(void* self, const void* col);
-extern "C" void renderCircle__7CDrawGXFRCQ22ml5CVec3if(void* self, const void* pos, int verts, float r);
+void __ct__7CDrawGXFv(void* self);
+void __dt__7CDrawGXFv(void* self, int param);
+void setCol__7CDrawGXFRCQ22ml5CCol4(void* self, const void* col);
+void renderCircle__7CDrawGXFRCQ22ml5CVec3if(void* self, const void* pos, int verts, float r);
 extern "C" void func_8049034C(void* a, void* b, int c);
 extern "C" void func_800A50AC(void* a, void* b, float c, void* d);
 

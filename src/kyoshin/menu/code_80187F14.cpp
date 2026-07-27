@@ -42,12 +42,12 @@ void func_80189450(){}
 void func_80189510(){}
 
 extern float lbl_eu_80662490;
-extern "C" float func_801895EC() { return lbl_eu_80662490; }
+float func_801895EC() { return lbl_eu_80662490; }
 
 void func_801895F4(){}
 
 extern float lbl_eu_80662498;
-extern "C" float func_801896A0() { return lbl_eu_80662498; }
+float func_801896A0() { return lbl_eu_80662498; }
 
 void func_801896A8(){}
 

@@ -16,11 +16,11 @@ void func_800F46C0(){}
 void func_800F4730(){}
 
 /// Returns the sub-object pointer at offset 0x0C (field subObject).
-extern "C" cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self) {
+cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self) {
     return self->subObject;
 }
 
-extern "C" void* func_800F4784(void* self) {
+void* func_800F4784(void* self) {
     void* v = *(void**)((char*)self + 0xc);
     return v ? v : 0;
 }

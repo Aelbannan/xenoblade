@@ -3,13 +3,14 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/code_802405F4.hpp"
 void func_80240614(){}
 
 void func_80240878(){}
 
 void func_802408D4(){}
 
-extern "C" void func_80240A64(void *r3) {
+void func_80240A64(void *r3) {
     unsigned char *base = (unsigned char *)r3;
     base[0x0] = 0;
     *(int *)(base + 0x4) = 0;

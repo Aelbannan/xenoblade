@@ -32,7 +32,7 @@ void func_8026E584(){}
 // CfGimmick base impl at func_80208988 is non-empty; Ene does nothing.
 // ---------------------------------------------------------------------------
 
-extern "C" void func_8026E5BC() {}
+void func_8026E5BC() {}
 
 // ---------------------------------------------------------------------------
 // Remaining functions (scaffolds - NOT YET DECOMPILED)
@@ -64,7 +64,7 @@ void func_8026F254(){}
 // Related:    func_8026E584 uses this dispatch table.
 // ---------------------------------------------------------------------------
 
-extern "C" void func_8026F31C() {}
+void func_8026F31C(){}
 
 // ---------------------------------------------------------------------------
 // Remaining (scaffold)

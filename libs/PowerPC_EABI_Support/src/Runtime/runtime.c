@@ -460,7 +460,6 @@ asm void __div2u(void)
        blr
 }
 
-#pragma push
 #pragma optimization_level 0
 #pragma optimizewithasm off
 asm void __div2i(void)
@@ -560,9 +559,7 @@ positive2:
        addi r1,r1,16
        blr
 }
-#pragma pop
 
-#pragma push
 #pragma optimization_level 0
 #pragma optimizewithasm off
 asm void __mod2u(void)
@@ -635,9 +632,7 @@ asm void __mod2u(void)
  lab9:
        blr
 }
-#pragma pop
 
-#pragma push
 #pragma optimization_level 0
 #pragma optimizewithasm off
 asm void __mod2i(void)
@@ -724,7 +719,6 @@ positive2:
  no_adjust:
        blr
 }
-#pragma pop
 
 asm void __shl2i(void)
 {

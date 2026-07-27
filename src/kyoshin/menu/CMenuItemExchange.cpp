@@ -36,7 +36,7 @@ void func_801BEDE0(){}
 void func_801BEE5C(){}
 
 extern u8 lbl_eu_8066442C;
-extern "C" u8 func_801BEE6C() { return lbl_eu_8066442C; }
+u8 func_801BEE6C() { return lbl_eu_8066442C; }
 
 void func_801BEE74(){}
 
@@ -60,7 +60,7 @@ void func_801BF70C(){}
  * OC thunk for cbRenderBefore. Adjusts the OC wrapper pointer back to the
  * containing CMenuItemExchange and delegates to cbRenderBefore.
  */
-extern "C" void func_801BF75C(CMenuItemExchangeOC* param) {
+void func_801BF75C(CMenuItemExchangeOC* param) {
     ((void(*)(CMenuItemExchange*))cbRenderBefore__17CMenuItemExchangeFv)(
         (CMenuItemExchange*)((u32)param - CMENU_ITEM_EXCHANGE_OC_OFFSET));
 }
@@ -69,7 +69,7 @@ extern "C" void func_801BF75C(CMenuItemExchangeOC* param) {
  * OC thunk for the destructor. Adjusts the OC wrapper pointer back to the
  * containing CMenuItemExchange and delegates to the real destructor.
  */
-extern "C" void func_801BF764(CMenuItemExchangeOC* param) {
+void func_801BF764(CMenuItemExchangeOC* param) {
     ((void(*)(CMenuItemExchange*))__dt__17CMenuItemExchangeFv)(
         (CMenuItemExchange*)((u32)param - CMENU_ITEM_EXCHANGE_OC_OFFSET));
 }

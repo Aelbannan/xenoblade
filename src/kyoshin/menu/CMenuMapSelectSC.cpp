@@ -10,7 +10,7 @@ void CMenuMapSelectSC::~CMenuMapSelectSC(int deletionFlag) const {}
 
 void CMenuMapSelectSC::Init() const {}
 
-extern "C" void func_80251294(void* r3, const void* r4) {
+void func_80251294(void* r3, const void* r4) {
     struct S { int dummy; int a; int b; int c; int d; unsigned char e; unsigned char f; };
     S* dst = (S*)r3;
     const S* src = (const S*)r4;
@@ -51,7 +51,7 @@ void func_80251D94(){}
 // real override. The function-pointer cast prevents MWCC from null-checking
 // the static_cast chain (which would add a cmpwi/beq that the retail thunk
 // does not have).
-extern "C" void func_80251DE8(IScnRender* self) {
+void func_80251DE8(IScnRender* self) {
     ((void(*)(CMenuMapSelectSC*))cbRenderBefore__16CMenuMapSelectSCFv)(
         (CMenuMapSelectSC*)((u32)self - 0x58));
 }
@@ -61,7 +61,7 @@ extern "C" void func_80251DE8(IScnRender* self) {
 // forwards to ~CMenuMapSelectSC(). r4 (deletion flag) is preserved from the
 // caller because the cast to void(*)(CMenuMapSelectSC*) declares only one
 // parameter, leaving r4 untouched.
-extern "C" void func_80251DF0(IScnRender* self) {
+void func_80251DF0(IScnRender* self) {
     ((void(*)(CMenuMapSelectSC*))__dt__16CMenuMapSelectSCFv)(
         (CMenuMapSelectSC*)((u32)self - 0x58));
 }

@@ -1,8 +1,8 @@
 #include "types.h"
 #include "kyoshin/cf/CfCollAABBImpl.hpp"
 
-extern "C" void __ct__7CDrawGXFv(void* self);
-extern "C" void __dt__7CDrawGXFv(void* self, int param);
+void __ct__7CDrawGXFv(void* self);
+void __dt__7CDrawGXFv(void* self, int param);
 extern "C" void setCol__7CDrawGXFRCQ22ml5CCol4(void* self, const void* col);
 extern "C" void setMatrix__7CDrawGXFRCQ22ml6CMat34(void* self, const void* mat);
 extern "C" void renderCube__7CDrawGXFRCQ22ml5CVec3RCQ22ml5CVec3(void* self, const void* min, const void* max);

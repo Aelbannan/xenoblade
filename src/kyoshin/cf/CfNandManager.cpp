@@ -9,7 +9,7 @@ void __dt__8023BFCC(){}
 
 void cf::CfNandManager::~CfNandManager() {}
 
-extern "C" void Init__Q22cf13CfNandManagerFv(void) {
+void Init__Q22cf13CfNandManagerFv(void) {
     extern void func_804DA1B4(void*);
     extern char lbl_eu_8065FD00[];
     func_804DA1B4((void*)lbl_eu_8065FD00);
@@ -87,11 +87,11 @@ void func_80240420(){}
 
 void cf::CfNandManager::cbRenderBefore() {}
 
-extern "C" void OnFileEvent__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))func_8023E4D4__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
+void OnFileEvent__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))func_8023E4D4__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
 
-extern "C" void func_802405FC__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
+void func_802405FC__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
 
-extern "C" void func_80240604__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
+void func_80240604__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
 
 extern "C" void func_8024060C__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))__dt__Q22cf13CfNandManagerFv)((char*)self - 0x58); }
 

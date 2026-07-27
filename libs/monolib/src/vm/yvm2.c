@@ -805,7 +805,6 @@ VMArg* vmStackNextGet(VMThread* pThread){
 #define rotrBytes(a, b, n) (a >> n) | ((b & rotrMask(n)) << (8 - n))
 
 //I have no idea how to match this
-#pragma push
 #pragma optimize_for_size on
 DECOMP_DONT_INLINE void encodeScrambleSub(u8* pData, int length) {
     //Rotate each group of 32 bits by 2 to the right
@@ -823,7 +822,6 @@ DECOMP_DONT_INLINE void encodeScrambleSub(u8* pData, int length) {
         pData += 4;
     }
 }
-#pragma pop
 
 void encodeScramble(u8* pData){
     SBHeader* header = (SBHeader*)pData;

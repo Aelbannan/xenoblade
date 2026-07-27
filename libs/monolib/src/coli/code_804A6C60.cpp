@@ -44,7 +44,7 @@ void func_804A7E18(){}
 void func_804A7E7C(){}
 
 extern u32 lbl_eu_80665938;
-extern "C" u32 func_804A7EC8(u32 unused, u32 val) { lbl_eu_80665938 = val; return unused; }
+u32 func_804A7EC8(u32 unused, u32 val) { lbl_eu_80665938 = val; return unused; }
 
 void func_804A7ED0(){}
 
@@ -54,7 +54,7 @@ void func_804A7F50(){}
 
 // No-op handler. Used as a default stub in collision dispatch tables for
 // method slots that require no action (e.g. optional callbacks).
-extern "C" void func_804A822C() {}
+void func_804A822C() {}
 
 void func_804A8230(){}
 
@@ -115,7 +115,7 @@ void func_804AC5D8(){}
 // Default false-return handler. Used as a placeholder in collision method
 // dispatch tables for boolean-returning virtual method slots that are
 // not overridden (always returns 0 / false). The self pointer is unused.
-extern "C" int func_804AC61C(CColiObject* /*self*/) { return 0; }
+int func_804AC61C(CColiObject* /*self*/) { return 0; }
 
 void func_804AC624(){}
 
@@ -215,7 +215,7 @@ void func_804B1BDC(){}
 
 void func_804B1C9C(){}
 
-extern "C" void func_804B1DC0(void* self, int arg) {
+void func_804B1DC0(void* self, int arg) {
     int* flags = (int*)((char*)self + 0xa8);
     if (arg != 0) {
         *flags &= ~0x100;

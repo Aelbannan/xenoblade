@@ -19,7 +19,7 @@ void func_802A6760(){}
 
 // Virtual override: returns the allocation size for CVS_THREAD_EHP instances.
 // Caller passes an unused implicit this pointer per EABI; the body ignores it.
-extern "C" int func_802A6818() { return 0xB4; }
+int func_802A6818() { return 0xB4; }
 
 void func_802A6820(){}
 

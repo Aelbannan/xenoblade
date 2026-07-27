@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuGetItem.hpp"
 void __ct__CMenuGetItem(){}
 
 void __ct__80149878(){}
@@ -42,8 +43,8 @@ void func_8014A570(){}
 
 void func_8014A6F8(){}
 
-extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
+void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 
-extern "C" void func_8014A85C(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuGetItemFv)((char*)self - 0x5c); }
+void func_8014A85C(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuGetItemFv)((char*)self - 0x5c); }
 
-extern "C" void func_8014A864(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x5c); }
+void func_8014A864(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x5c); }

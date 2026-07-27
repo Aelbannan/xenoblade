@@ -16,6 +16,7 @@ import {
   createAgentSession,
   ModelRuntime,
   SessionManager,
+  type AgentSession,
 } from "@earendil-works/pi-coding-agent";
 import type { ModelSpec, SessionUsage, VerifyResult } from "./types.js";
 
@@ -33,6 +34,9 @@ export interface SessionRunResult {
   rePromptsUsed?: number;
   /** Usage per prompt round (index 0 = initial, 1+ = re-prompts). */
   roundUsages?: SessionUsage[];
+  /** The last rejection feedback from onVerify, for carryover to the
+   *  next fresh session (set when outcome is "failed" or "gave-up"). */
+  lastRejection?: string;
 }
 
 export interface MultiPromptOpts {
@@ -164,14 +168,9 @@ export async function runAgentSession(opts: {
   };
 
   try {
-    // ── Single-prompt path (no multiPrompt, or maxRePrompts == 0) ──
-    if (
-      !multiPrompt ||
-      (multiPrompt.maxRePrompts === 0 && multiPrompt.maxStuckRePrompts === 0)
-    ) {
-      const result = await runOnePrompt(
-        session, prompt, timeoutMinutes, transcriptContent, queueTranscriptWrite,
-      );
+    // ── Single-prompt path (no multiPrompt provided) ──
+    if (!multiPrompt) {
+      const result = await runOnePrompt(session, prompt, timeoutMinutes);
       const usage = sumUsage(session.state.messages);
       return {
         finalText: result.finalText,
@@ -182,6 +181,7 @@ export async function runAgentSession(opts: {
     }
 
     // ── Multi-prompt path ──
+    // Even when caps are 0, we enter this path so onVerify runs once.
     const { maxRePrompts, maxStuckRePrompts, onVerify, totalTimeoutMinutes } = multiPrompt;
     const overallDeadline =
       totalTimeoutMinutes && totalTimeoutMinutes > 0
@@ -192,29 +192,35 @@ export async function runAgentSession(opts: {
     let rePromptsUsed = 0;
     let finalText = "";
     let timedOut = false;
+    let lastRejection: string | undefined;
 
     // ── Initial prompt ──
     transcriptContent += `\n\n## Round 0 (initial)\n\n`;
     queueTranscriptWrite();
-    let usageBefore = sumUsage(session.state.messages);
-    const initialResult = await runOnePrompt(
-      session, prompt, timeoutMinutes, transcriptContent, queueTranscriptWrite,
-    );
-    const usageAfter = sumUsage(session.state.messages);
+    const usageBefore = sumUsage(session.state.messages);
+    const initialResult = await runOnePrompt(session, prompt, timeoutMinutes);
+    let usageAfter = sumUsage(session.state.messages);
     roundUsages.push(usageDelta(usageBefore, usageAfter));
     finalText = initialResult.finalText;
     timedOut = initialResult.timedOut;
 
     // ── Verify → re-prompt loop ──
+    let lastVerifyResult: VerifyResult | null = null;
+
     while (true) {
-      const effectiveMax = timedOut ? maxRePrompts : maxStuckRePrompts;
+      // onVerify is responsible for checking caps and returning fail
+      // when exhausted. It receives timedOut + rePromptCount so it can
+      // use the appropriate cap.
       const verifyResult = await onVerify(finalText, timedOut, rePromptsUsed);
+      lastVerifyResult = verifyResult;
 
       if (verifyResult.action === "accept") {
+        // Flush transcript before returning.
+        await transcriptQueue;
         return {
           finalText,
           sessionFile: session.sessionFile,
-          timedOut: false,
+          timedOut,
           usage: usageAfter,
           outcome: "accepted",
           rePromptsUsed,
@@ -223,6 +229,8 @@ export async function runAgentSession(opts: {
       }
 
       if (verifyResult.action === "fail") {
+        lastRejection = verifyResult.reason ?? verifyResult.feedback;
+        await transcriptQueue;
         return {
           finalText,
           sessionFile: session.sessionFile,
@@ -231,11 +239,15 @@ export async function runAgentSession(opts: {
           outcome: "failed",
           rePromptsUsed,
           roundUsages,
+          lastRejection,
         };
       }
 
-      // action === "re-prompt"
+      // action === "re-prompt" — check budget and deadline
+      const effectiveMax = timedOut ? maxRePrompts : maxStuckRePrompts;
       if (rePromptsUsed >= effectiveMax) {
+        lastRejection = verifyResult.feedback;
+        await transcriptQueue;
         return {
           finalText,
           sessionFile: session.sessionFile,
@@ -244,11 +256,14 @@ export async function runAgentSession(opts: {
           outcome: "gave-up",
           rePromptsUsed,
           roundUsages,
+          lastRejection,
         };
       }
 
       const now = Date.now();
       if (now >= overallDeadline) {
+        lastRejection = "session deadline exceeded";
+        await transcriptQueue;
         return {
           finalText,
           sessionFile: session.sessionFile,
@@ -257,21 +272,7 @@ export async function runAgentSession(opts: {
           outcome: "gave-up",
           rePromptsUsed,
           roundUsages,
-        };
-      }
-
-      // Run re-prompt. If a prior re-prompt timed out the session is
-      // already polluted — the onVerify should have caught it and
-      // returned "fail" above. Guard defensively anyway.
-      if (timedOut) {
-        return {
-          finalText,
-          sessionFile: session.sessionFile,
-          timedOut: true,
-          usage: usageAfter,
-          outcome: "gave-up",
-          rePromptsUsed,
-          roundUsages,
+          lastRejection,
         };
       }
 
@@ -285,20 +286,16 @@ export async function runAgentSession(opts: {
       transcriptContent += `\n\n## Round ${rePromptsUsed} (re-prompt)\n\n`;
       queueTranscriptWrite();
 
-      usageBefore = sumUsage(session.state.messages);
+      const roundUsageBefore = sumUsage(session.state.messages);
       const rePromptResult = await runOnePrompt(
         session,
-        verifyResult.feedback!,
+        verifyResult.feedback ?? "",
         remainingMinutes,
-        transcriptContent,
-        queueTranscriptWrite,
       );
-      const rePromptUsageAfter = sumUsage(session.state.messages);
-      roundUsages.push(usageDelta(usageBefore, rePromptUsageAfter));
+      usageAfter = sumUsage(session.state.messages);
+      roundUsages.push(usageDelta(roundUsageBefore, usageAfter));
       finalText = rePromptResult.finalText;
       timedOut = rePromptResult.timedOut;
-      // usageAfter tracks cumulative for the return value
-      (usageAfter as SessionUsage) = rePromptUsageAfter;
     }
   } catch (err) {
     // Attach partial usage so the caller can ledger it even on failure.
@@ -311,12 +308,13 @@ export async function runAgentSession(opts: {
     }
     throw err;
   } finally {
+    await transcriptQueue;
     dispose();
   }
 }
 
 // ─────────────────────────────────────────────────────────────────────
-//  Single-prompt runner (used by both single and multi-prompt paths)
+//  Single-prompt runner
 // ─────────────────────────────────────────────────────────────────────
 
 interface PromptResult {
@@ -324,12 +322,12 @@ interface PromptResult {
   timedOut: boolean;
 }
 
+const POST_ABORT_SETTLE_MS = 30_000;
+
 async function runOnePrompt(
-  session: { prompt: (text: string, options?: Record<string, unknown>) => Promise<void>; abort: () => Promise<void>; state: { messages: readonly unknown[] } },
+  session: AgentSession,
   prompt: string,
   timeoutMinutes: number,
-  transcriptContent: string,
-  _queueTranscriptWrite: () => void,
 ): Promise<PromptResult> {
   let timedOut = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -351,8 +349,13 @@ async function runOnePrompt(
 
     const result = await Promise.race([promptPromise, timeoutPromise]);
     if (result === "timeout") {
+      // Let the aborted prompt settle, but with a hard deadline so a
+      // stuck abort cannot hang a worker forever.
       try {
-        await promptPromise; // let the aborted prompt settle
+        await Promise.race([
+          promptPromise,
+          new Promise<void>((r) => setTimeout(r, POST_ABORT_SETTLE_MS)),
+        ]);
       } catch {
         // expected — the prompt rejects after abort
       }

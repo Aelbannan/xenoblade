@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_80235A90(void* self) { return ((u8*)self)[0x48]; }
+u8 func_80235A90(void* self) { return ((u8*)self)[0x48]; }
 
 
 
@@ -11,7 +11,7 @@ extern "C" u8 func_80235A90(void* self) { return ((u8*)self)[0x48]; }
 
 
 
-extern "C" u8 func_80235A98(void* self) { return ((u8*)self)[0x49]; }
+u8 func_80235A98(void* self) { return ((u8*)self)[0x49]; }
 
 
 
@@ -19,13 +19,13 @@ extern "C" u8 func_80235A98(void* self) { return ((u8*)self)[0x49]; }
 
 void func_80235DD8(){}
 
-extern "C" void func_80235E84(void* self, u8 val) { ((u8*)self)[0x54] = val; }
+void func_80235E84(void* self, u8 val) { ((u8*)self)[0x54] = val; }
 
-extern "C" void func_80235E8C(void* self, u8 val) { ((u8*)self)[0x55] = val; }
+void func_80235E8C(void* self, u8 val) { ((u8*)self)[0x55] = val; }
 
-extern "C" void func_80235E94(void* self, u8 val) { ((u8*)self)[0x56] = val; }
+void func_80235E94(void* self, u8 val) { ((u8*)self)[0x56] = val; }
 
-extern "C" void func_80235E9C(void* self, u16 val) { *(u16*)((u8*)self + 0x58) = val; }
+void func_80235E9C(void* self, u16 val) { *(u16*)((u8*)self + 0x58) = val; }
 
 void func_80235EA4(){}
 
@@ -33,13 +33,13 @@ void func_80235EF0(){}
 
 void func_80235F14(){}
 
-extern "C" u32 func_80235F3C(void* self) {
+u32 func_80235F3C(void* self) {
     s8 val = *(s8*)((u8*)self + 0x5A);
     u32 result = __cntlzw(val);
     return result >> 5;
 }
 
-extern "C" int func_80235F50(void* thisPtr) {
+int func_80235F50(void* thisPtr) {
     int field = *(int*)((char*)thisPtr + 0x44);
     return field >= 6 ? 1 : 0;
 }
@@ -180,7 +180,7 @@ void func_8023B368(){}
 
 void func_eu_8023D490(){}
 
-extern "C" void func_8023B430(void* r3) {
+void func_8023B430(void* r3) {
     int* field20 = (int*)((char*)r3 + 0x20);
     if (*field20 == 0) return;
     int* field4c = (int*)((char*)r3 + 0x4c);

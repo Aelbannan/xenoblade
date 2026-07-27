@@ -29,17 +29,17 @@ namespace cf{
     }
 }
 
-extern "C" bool func_802A1EA0() { return true; }
-extern "C" unsigned char* lbl_eu_80664A58;
-extern "C" void func_802A1F9C() {
+bool func_802A1EA0() { return true; }
+unsigned char* lbl_eu_80664A58;
+void func_802A1F9C() {
     unsigned char* voice_man = lbl_eu_80664A58;
     if (voice_man != 0)
         voice_man[0x222] = 0;
 }
 void func_802A2CF0(){}
 void func_802A34E4(){}
-extern "C" unsigned int func_802A35A0(unsigned int value) { extern unsigned int lbl_eu_80664A5C; unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
-extern "C" int func_802A3740(void* self) { return 0; }
+unsigned int func_802A35A0(unsigned int value) { extern unsigned int lbl_eu_80664A5C; unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
+int func_802A3740(void* self) { return 0; }
 
 void __ct__CCharVoiceMan(){}
 void func_802A14B8(){}

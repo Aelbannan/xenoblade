@@ -234,5 +234,5 @@ void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
 } // namespace lyt
 } // namespace nw4hbm
 
-extern "C" bool EqualsPaneName__Q36nw4hbm3lyt6detailFPCcPCc(const char* a, const char* b) { return strncmp(a, b, 16) == 0; }
+bool EqualsPaneName__Q36nw4hbm3lyt6detailFPCcPCc(const char* a, const char* b) { return strncmp(a, b, 16) == 0; }
 void InitGXTexObjFromTPL__Q36nw4hbm3lyt6detailFP9_GXTexObjP10TPLPaletteUl(){}

@@ -15,7 +15,7 @@ void func_8021A840(){}
 
 void func_8021A860(){}
 
-extern "C" u8 func_8021A8EC(CMCCrystalInfo* self) {
+u8 func_8021A8EC(CMCCrystalInfo* self) {
     return self->mIsActive;
 }
 
@@ -57,7 +57,7 @@ void func_8021B2E0(){}
 
 void func_8021B42C(){}
 
-extern "C" void func_8021B500(void* this_) {
+void func_8021B500(void* this_) {
     unsigned int* p34 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x34);
     unsigned int* p30 = reinterpret_cast<unsigned int*>(static_cast<char*>(this_) + 0x30);
     if (*p34 != 0) {

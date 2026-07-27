@@ -3,9 +3,10 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CTaskEnvironment.hpp"
 void __ct__CTaskEnvironment(){}
 
-extern "C" void func_800586E8(void *dst, const void *src) {
+void func_800586E8(void *dst, const void *src) {
     const unsigned int *s = (const unsigned int *)src;
     unsigned int *d = (unsigned int *)dst;
     d[0] = s[0];
@@ -16,7 +17,7 @@ extern "C" void func_800586E8(void *dst, const void *src) {
 
 bool func_8005870C(){ return false; }
 
-extern "C" u32 func_80058714(void* self) { return *(u32*)((u8*)self + 0x78); }
+u32 func_80058714(void* self) { return *(u32*)((u8*)self + 0x78); }
 
 bool func_8005871C(){ return false; }
 
@@ -24,13 +25,13 @@ bool func_80058724(){ return false; }
 
 void CTaskEnvironment::~CTaskEnvironment() {}
 
-extern "C" bool func_800587E8() { return false; }
+bool func_800587E8() { return false; }
 
-extern "C" u32 func_800587F0(void* self) { return *(u32*)((u8*)self + 0x7C); }
+u32 func_800587F0(void* self) { return *(u32*)((u8*)self + 0x7C); }
 
 void func_800587F8(){}
 
-extern "C" u32 func_8005883C(void* self) { return *(u32*)((u8*)self + 0x5C); }
+u32 func_8005883C(void* self) { return *(u32*)((u8*)self + 0x5C); }
 
 void func_80058844(){}
 
@@ -42,20 +43,20 @@ void CTaskEnvironment::Term() {}
 
 void CTaskEnvironment::Move() {}
 
-extern "C" void func_8005960C() {}
+void func_8005960C() {}
 
 void func_80059610(){}
 
 extern float lbl_eu_8066A210;
-extern "C" float func_800596AC(float val) { return val * lbl_eu_8066A210; }
+float func_800596AC(float val) { return val * lbl_eu_8066A210; }
 
 void func_800596B8(){}
 
 void func_800598A8(){}
 
-extern "C" u32 func_8005990C(void* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
+u32 func_8005990C(void* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
 
-extern "C" u32 func_80059918(void* self) { return *(u32*)((u8*)self + 0x68); }
+u32 func_80059918(void* self) { return *(u32*)((u8*)self + 0x68); }
 
 void func_80059920(){}
 
@@ -63,14 +64,14 @@ void func_80059944(){}
 
 void func_80059974(){}
 
-extern "C" void func_800599B8(unsigned int* dst, const unsigned int* src) {
+void func_800599B8(unsigned int* dst, const unsigned int* src) {
     dst[1] = src[0];
     dst[2] = src[1];
     dst[3] = src[2];
     dst[4] = src[3];
 }
 
-extern "C" void Draw__16CTaskEnvironmentFv() {}
+
 
 void func_800599E0(){}
 

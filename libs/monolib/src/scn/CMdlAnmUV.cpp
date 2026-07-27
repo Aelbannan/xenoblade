@@ -7,7 +7,7 @@ void __ct__CMdlAnmUV(){}
 
 void CMdlAnmUV::~CMdlAnmUV() {}
 
-extern "C" u32 func_804E6C78(void) {
+u32 func_804E6C78(void) {
     extern u32 lbl_eu_80663C74;
     return lbl_eu_80663C74;
 }

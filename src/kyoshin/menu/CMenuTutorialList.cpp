@@ -45,14 +45,14 @@ void func_802ACB50(){}
 
 class IScnRender;
 typedef void (*CbRenderBeforeFunc)(CMenuTutorialList*);
-extern "C" void func_802ACBCC(IScnRender* self) {
+void func_802ACBCC(IScnRender* self) {
     ((CbRenderBeforeFunc)cbRenderBefore__17CMenuTutorialListFv)(
         reinterpret_cast<CMenuTutorialList*>(
             reinterpret_cast<char*>(self) - 0x58));
 }
 
 typedef void (*DtorFunc)(CMenuTutorialList*);
-extern "C" void func_802ACBD4(IScnRender* self) {
+void func_802ACBD4(IScnRender* self) {
     ((DtorFunc)__dt__17CMenuTutorialListFv)(
         reinterpret_cast<CMenuTutorialList*>(
             reinterpret_cast<char*>(self) - 0x58));

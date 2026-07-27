@@ -28,7 +28,7 @@ namespace cf{
 
     CTaskGameCf::~CTaskGameCf(){}
 
-extern "C" cf::CTaskGameCf* lbl_eu_80663D38;
+cf::CTaskGameCf* lbl_eu_80663D38;
 
 CTaskGameCf* CTaskGameCf::getInstance() {
     return lbl_eu_80663D38;
@@ -68,7 +68,7 @@ void CTaskGameCf::func_8004433C() {
         mMoveFunc = &CTaskGameCf::func_800444DC;
     }
 
-extern "C" cf::CTaskGameCf* lbl_eu_80663D38;
+cf::CTaskGameCf* lbl_eu_80663D38;
 
 void CTaskGameCf::Init() {
     lbl_eu_80663D38 = this;
@@ -112,9 +112,9 @@ void func_800444DC(cf::CTaskGameCf* self){
     *(Ptmf*)((char*)self + 0x3C) = &cf::CTaskGameCf::func_800444FC;
 }
 
-extern "C" u32 lbl_eu_80525B18[3];
+u32 lbl_eu_80525B18[3];
 
-void CTaskGameCf::func_800444FC() {
+void CTaskGameCf::func_800444FC(){
     u32* dst = reinterpret_cast<u32*>(reinterpret_cast<char*>(this) + 0x3c);
     dst[0] = lbl_eu_80525B18[0];
     dst[1] = lbl_eu_80525B18[1];

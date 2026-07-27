@@ -3,29 +3,29 @@
 
 #include <harness_catalog.h>
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
 void func_804CCF84(){}
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
 void func_804CD0CC(){}
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
-extern "C" u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804CC800(void* self) { return *(u32*)((u8*)self + 0x0); }
 
 void func_804CDE50(){}
 
@@ -37,9 +37,9 @@ void func_804CE160(){}
 
 void func_804CE264(){}
 
-extern "C" u32 func_804CE378(void* self) { return *(u32*)((u8*)self + 0x4); }
+u32 func_804CE378(void* self) { return *(u32*)((u8*)self + 0x4); }
 
-extern "C" u32 func_804CE380(void* self) { return *(u32*)((u8*)self + 0x5c); }
+u32 func_804CE380(void* self) { return *(u32*)((u8*)self + 0x5c); }
 
 void func_804CE388(){}
 
@@ -107,7 +107,7 @@ void func_804D5E90(){}
 
 void func_804D5F54(){}
 
-extern "C" void func_804D6070(void) {}
+void func_804D6070(void) {}
 
 void func_804D6074(){}
 

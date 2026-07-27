@@ -19,7 +19,7 @@ void CMenuCollepedia::cbRenderBefore() {}
 
 void func_80252C60(){}
 
-extern "C" void stub_us_80254f10() {}
+void stub_us_80254f10() {}
 
 void func_80252CE4(){}
 
@@ -45,7 +45,7 @@ void func_80253128(){}
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__15CMenuCollepediaFv
  */
-extern "C" void func_80253188(IScnRender* self) {
+void func_80253188(IScnRender* self) {
     ((void(*)(CMenuCollepedia*))cbRenderBefore__15CMenuCollepediaFv)(
         (CMenuCollepedia*)((u32)self - 0x58));
 }
@@ -61,7 +61,7 @@ extern "C" void func_80253188(IScnRender* self) {
  *
  * Retail: subi r3, r3, 0x58; b __dt__15CMenuCollepediaFv
  */
-extern "C" void func_80253190(IScnRender* self) {
+void func_80253190(IScnRender* self){
     ((void(*)(CMenuCollepedia*))__dt__15CMenuCollepediaFv)(
         (CMenuCollepedia*)((u32)self - 0x58));
 }

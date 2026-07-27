@@ -5,7 +5,7 @@
 #include <cstring>
 
 // Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
-extern "C" cf::CTaskCulling* lbl_eu_80664328;
+cf::CTaskCulling* lbl_eu_80664328;
 
 namespace cf{
     CTaskCulling* CTaskCulling::spInstance;

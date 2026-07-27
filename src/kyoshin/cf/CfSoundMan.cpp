@@ -94,7 +94,7 @@ void func_801C0D28(){}
 
 // No-op: called when nw4r sound playback starts successfully.
 // Retained as an empty hook in the retail binary (single blr).
-extern "C" void func_801C0DC0() {}
+void func_801C0DC0() {}
 
 void func_801C0DC4(){}
 

@@ -5,7 +5,7 @@
 #include "kyoshin/CBaseCur.hpp"
 
 /* Sets the visible flag on a CBaseCur cursor widget. */
-extern "C" void func_801D216C(CBaseCur* pCur, u8 val) { pCur->mVisible = val; }
+void func_801D216C(CBaseCur* pCur, u8 val) { pCur->mVisible = val; }
 
 
 

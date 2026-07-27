@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/object/CfObjectColl.hpp"
 void func_800AB3D0(){}
 
 void cf::CfObjectColl::func_800AB3EC() {}
@@ -57,11 +58,11 @@ void func_800AC378(){}
 
 void func_800AC3F4(){}
 
-extern "C" void func_800AC450(void* self, unsigned long a, unsigned long b) {
+void func_800AC450(void* self, unsigned long a, unsigned long b) {
     *(unsigned long*)((char*)self + 0x9c) = (a << 16) + b;
 }
 
-extern "C" unsigned long func_800AC460(void* self) {
+unsigned long func_800AC460(void* self) {
     extern unsigned long func_8009D018(unsigned long);
     unsigned long v = *(unsigned long*)((char*)self + 0x9c);
     return func_8009D018((v >> 16) + 0x20c8);

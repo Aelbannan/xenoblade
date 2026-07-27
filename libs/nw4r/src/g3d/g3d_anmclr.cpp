@@ -7,11 +7,11 @@ void TestExistence__Q34nw4r3g3d12AnmObjMatClrCFUl(){}
 
 void Release__Q34nw4r3g3d12AnmObjMatClrFv(){}
 
-extern "C" int Attach__Q34nw4r3g3d12AnmObjMatClrFiPQ34nw4r3g3d15AnmObjMatClrRes(void) { return 0x0; }
+int Attach__Q34nw4r3g3d12AnmObjMatClrFiPQ34nw4r3g3d15AnmObjMatClrRes(void) { return 0x0; }
 
-extern "C" int Detach__Q34nw4r3g3d12AnmObjMatClrFi(void) { return 0x0; }
+int Detach__Q34nw4r3g3d12AnmObjMatClrFi(void) { return 0x0; }
 
-extern "C" void DetachAll__Q34nw4r3g3d12AnmObjMatClrFv(void) {}
+void DetachAll__Q34nw4r3g3d12AnmObjMatClrFv(void) {}
 
 void __dt__Q34nw4r3g3d12AnmObjMatClrFv(){}
 
@@ -23,7 +23,7 @@ float GetFrame__Q34nw4r3g3d15AnmObjMatClrResCFv(void *self){ return *(float *)((
 
 void SetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResFf(){}
 
-extern "C" float GetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResCFv(void *self) { return *(float *)((char *)self + 28); }
+float GetUpdateRate__Q34nw4r3g3d15AnmObjMatClrResCFv(void *self) { return *(float *)((char *)self + 28); }
 
 void UpdateFrame__Q34nw4r3g3d15AnmObjMatClrResFv(){}
 
@@ -45,8 +45,8 @@ void IsDerivedFrom__Q34nw4r3g3d12AnmObjMatClrCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d15AnmObjMatClrResCFv(){}
 
-extern "C" const char lbl_eu_8051D548[];
-extern "C" void* GetTypeObj__Q34nw4r3g3d15AnmObjMatClrResCFv(void) { return (void*)lbl_eu_8051D548; }
+const char lbl_eu_8051D548[];
+void* GetTypeObj__Q34nw4r3g3d15AnmObjMatClrResCFv(void) { return (void*)lbl_eu_8051D548; }
 
 void __dt__Q34nw4r3g3d15AnmObjMatClrResFv(){}
 

@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CfRes.hpp"
 void func_80061870(){}
 
 struct CfResBuffer {
@@ -53,10 +54,10 @@ void func_80061D2C(){}
 void func_80061E8C(){}
 
 extern u32 lbl_eu_80663D80;
-extern "C" int func_80061FD8() { return lbl_eu_80663D80; }
+int func_80061FD8() { return lbl_eu_80663D80; }
 
 extern u32 lbl_eu_80663D80;
-extern "C" u32 func_80061FE0(u32 val) { lbl_eu_80663D80 = val; return val; }
+u32 func_80061FE0(u32 val) { lbl_eu_80663D80 = val; return val; }
 
 void func_80061FE8(){
     extern u32 lbl_eu_80663D80;
@@ -80,7 +81,7 @@ void func_80061FFC(){
 
 // Use explicit default return to match retail pattern
 extern u32 lbl_eu_80663D7C;
-extern "C" int func_80062010() {
+int func_80062010() {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
     if (val) {
@@ -90,13 +91,13 @@ extern "C" int func_80062010() {
 }
 
 extern u32 lbl_eu_80663D7C;
-extern "C" int CfRes_getInstance() { return lbl_eu_80663D7C; }
+int CfRes_getInstance() { return lbl_eu_80663D7C; }
 
-extern "C" {
+{
 extern u32 lbl_eu_80663D7C;
 extern int func_80067E78(int, int);
 }
-extern "C" int func_80062030() {
+int func_80062030() {
     u32 val = lbl_eu_80663D7C;
     int ret = 0;
     if (val) {
@@ -108,7 +109,7 @@ extern "C" int func_80062030() {
     return ret;
 }
 
-extern "C" {
+{
 extern u32 lbl_eu_80663D7C;
 extern int func_80067F10(int, int);
 }
@@ -727,11 +728,11 @@ extern "C" void Init__Q22cf9CfResTaskFv() {}
 
 void cf::CfResTask::Term() {}
 
-extern "C" void Move__Q22cf9CfResTaskFv() {}
+
 
 cf::CfRes::CfRes() {}
 
-extern "C" void Draw__Q22cf9CfResTaskFv() {}
+
 
 extern "C" char* func_80065BE4(char* buffer, const char* suffix) {
     unsigned int length = (unsigned int)strlen(suffix);

@@ -38,14 +38,14 @@ void __ct__8011C1B8(){}
 
 extern u32 lbl_eu_80663F20;
 extern u32 lbl_eu_80663FB0;
-extern "C" bool func_8011C2E8() {
+bool func_8011C2E8() {
     u32 v = lbl_eu_80663FB0;
     return ((-v) | v) >> 31;
 }
 
 void func_8011C2FC(){}
 
-extern "C" void func_8011C400()
+void func_8011C400()
 {
     if (lbl_eu_80663FB0 != 0)
     {

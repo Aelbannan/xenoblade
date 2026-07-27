@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/code_8018F8D8.hpp"
 void func_8018F8D8(){}
 
 void func_8018F924(){}
@@ -17,9 +18,9 @@ void func_8018FCA8(){}
 
 void func_80190034(){}
 
-extern "C" int func_80190060(void* self) { return 0; }
+int func_80190060(void* self) { return 0; }
 
-extern "C" int func_80190068(void* self) { return 0; }
+int func_80190068(void* self) { return 0; }
 
 void func_80190070(){}
 
@@ -31,11 +32,11 @@ void func_8019017C(){}
 
 void func_801901A4(){}
 
-extern "C" int func_80190254(int a, int b) { extern int func_801C0094(int); func_801C0094(b); return 0; }
+int func_80190254(int a, int b) { extern int func_801C0094(int); func_801C0094(b); return 0; }
 
-extern "C" int func_8019027C(void* self) { return 0; }
+int func_8019027C(void* self) { return 0; }
 
-extern "C" unsigned long func_80190284() {
+unsigned long func_80190284() {
     extern unsigned long lbl_eu_80663E24;
     lbl_eu_80663E24 |= 8;
     return 0;
@@ -78,7 +79,7 @@ void func_eu_80191F08(){}
 void func_80190840(){}
 
 extern float lbl_eu_80667A90;
-extern "C" float func_80190938() { return lbl_eu_80667A90; }
+float func_80190938() { return lbl_eu_80667A90; }
 
 void func_80190940(){}
 

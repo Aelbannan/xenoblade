@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-extern "C" void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable)
+void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable)
 {
     unsigned char* object = static_cast<unsigned char*>(self);
     void* resource = *reinterpret_cast<void**>(object);
@@ -20,7 +20,7 @@ extern "C" void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self,
 
 void GetResMatChan__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(){}
 
-extern "C" void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable) {
+void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable) {
     struct Model {
         unsigned char pad[0x140];
         unsigned* flags;

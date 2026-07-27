@@ -3,11 +3,12 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CtrlNpc.hpp"
 void __ct__CtrlNpc(){}
 
 void func_8009377C(){}
 
-extern "C" void CfObjectMove_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(void* self, unsigned long val) {
+void CfObjectMove_UnkVirtualFunc6__Q22cf12CfObjectMoveFv(void* self, unsigned long val) {
     void* ptr = *(void**)((char*)self + 0xc4);
     if (ptr != 0)
         *(unsigned long*)((char*)ptr + 0x37c) = val;
@@ -37,9 +38,9 @@ void func_80094EDC(){}
 
 void func_80094FC8(){}
 
-extern "C" float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
+float CfObject_UnkVirtualFunc73__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa4); }
 
-extern "C" float CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa0); }
+float CfObject_UnkVirtualFunc71__Q22cf13CfObjectModelFv(void* self) { return *(float*)((u8*)self + 0xa0); }
 
 void func_80095000(){}
 
@@ -47,7 +48,7 @@ void func_8009505C(){}
 
 void func_800950E8(){}
 
-extern "C" void func_8009519C() {}
+void func_8009519C() {}
 
 void func_800951A0(){}
 
@@ -55,7 +56,7 @@ void func_80095224(){}
 
 void func_80095450(){}
 
-extern "C" void func_8009563C(char* p) {
+void func_8009563C(char* p) {
     short v = *(short*)(p + 0xBA) - 1;
     *(short*)(p + 0xBA) = v;
     if (v <= 0) {

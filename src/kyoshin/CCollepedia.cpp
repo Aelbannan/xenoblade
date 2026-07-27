@@ -26,7 +26,7 @@ struct CCollepedia {
     unsigned char field_e;
 };
 
-extern "C" void func_8025348C(CCollepedia* obj, int val) {
+void func_8025348C(CCollepedia* obj, int val) {
     obj->field_0 = val;
     obj->field_4 = 0;
     obj->field_8 = 0;
@@ -63,7 +63,7 @@ void __dt__80253AFC(){}
 
 void func_80253B3C(){}
 
-extern "C" bool func_80253EE8(u8* this_, u32 arg1, u32 arg2) {
+bool func_80253EE8(u8* this_, u32 arg1, u32 arg2) {
     if (arg1 >= 6) return false;
     if (arg2 >= 5) return false;
     s8 idx = (s8)this_[1];
@@ -75,7 +75,7 @@ void func_80253F3C(){}
 
 void func_80254040(){}
 
-extern "C" void func_8025406C(unsigned char* obj) {
+void func_8025406C(unsigned char* obj) {
     obj[1] = obj[1] - 1;
     if ((signed char)obj[1] < 0) {
         obj[1] = obj[0] - 1;
@@ -84,7 +84,7 @@ extern "C" void func_8025406C(unsigned char* obj) {
 
 void func_80254094(){}
 
-extern "C" unsigned char func_802540DC(void* thisPtr) {
+unsigned char func_802540DC(void* thisPtr) {
     signed char idx = *(signed char*)((char*)thisPtr + 1);
     unsigned char* base = (unsigned char*)thisPtr + idx * 320;
     return *(base + 4);
@@ -92,7 +92,7 @@ extern "C" unsigned char func_802540DC(void* thisPtr) {
 
 void func_802540F4(){}
 
-extern "C" unsigned char func_80254144(const unsigned char* ptr) {
+unsigned char func_80254144(const unsigned char* ptr) {
     int idx = (signed char)ptr[1];
     return ptr[5 + idx * 0x140];
 }
@@ -103,7 +103,7 @@ void func_8025418C(){}
 
 void func_802541BC(){}
 
-extern "C" u16 func_80254204(u8* p1, u32 arg2, u32 arg3) {
+u16 func_80254204(u8* p1, u32 arg2, u32 arg3) {
     if (arg2 >= 6) return 0;
     if (arg3 >= 5) return 0;
     s8 idx = (s8)p1[1];
@@ -141,9 +141,9 @@ void func_80254C04(){}
 
 void func_80254D0C(){}
 
-extern "C" unsigned char func_80254D50(void* self) { unsigned char* base = (unsigned char*)self; return base[0x28f9] ? base[0x51] : 0; }
+unsigned char func_80254D50(void* self) { unsigned char* base = (unsigned char*)self; return base[0x28f9] ? base[0x51] : 0; }
 
-extern "C" void func_80254D6C(void* p) { unsigned char* b = (unsigned char*)p; if (b[0x49] != 0) return; b[0x49] = 1; b[0x51] = 0; }
+void func_80254D6C(void* p) { unsigned char* b = (unsigned char*)p; if (b[0x49] != 0) return; b[0x49] = 1; b[0x51] = 0; }
 
 void func_80254D8C(){}
 
@@ -163,7 +163,7 @@ void func_802552B4(){}
 
 void func_802553AC(){}
 
-extern "C" void func_80255688(void* self) {
+void func_80255688(void* self) {
     func_80253EE8((u8*)self + 0xE8, *(u8*)((u8*)self + 0xD9), *(u8*)((u8*)self + 0xD8));
 }
 

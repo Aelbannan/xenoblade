@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuSelectShop.hpp"
 void __ct__CMenuSelectShop(){}
 
 void CMenuSelectShop::~CMenuSelectShop() {}
@@ -25,10 +26,10 @@ void CMenuSelectShop::cbRenderBefore() {}
 
 void func_8018A58C(){}
 
-extern "C" bool func_8018A608() { return false; }
+bool func_8018A608() { return false; }
 
-extern "C" void func_8018A610(void* self) { ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)self - 0x6c); }
+void func_8018A610(void* self) { ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)self - 0x6c); }
 
-extern "C" void func_8018A618(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuSelectShopFv)((char*)self - 0x70); }
+void func_8018A618(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuSelectShopFv)((char*)self - 0x70); }
 
 extern "C" void func_8018A620(void* self) { ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)self - 0x70); }

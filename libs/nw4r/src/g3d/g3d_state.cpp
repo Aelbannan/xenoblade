@@ -51,7 +51,7 @@ void SetViewPosNrmMtxArray__Q34nw4r3g3d8G3DStateFPCQ34nw4r4math5MTX34PCQ34nw4r4m
 
 void GetViewNrmMtxPtr__Q34nw4r3g3d8G3DStateFUl(){}
 
-extern "C" u32 GetIndMtxOp__Q34nw4r3g3d8G3DStateFv(void) {
+u32 GetIndMtxOp__Q34nw4r3g3d8G3DStateFv(void) {
     extern u32 lbl_eu_8066346C;
     return lbl_eu_8066346C;
 }
@@ -64,7 +64,7 @@ void SetLightSetting__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d12LightSetting(){}
 
 void SetLightObj__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d8LightObji(){}
 
-extern "C" void* GetLightObj__Q34nw4r3g3d8G3DStateFi(int index) {
+void* GetLightObj__Q34nw4r3g3d8G3DStateFi(int index) {
     if (index < 0 || index >= 128) return nullptr;
     extern char lbl_eu_8061B574[];
     return &lbl_eu_8061B574[index * 0x44 + 0x2c];
@@ -76,9 +76,9 @@ void LoadLightSet__Q34nw4r3g3d8G3DStateFiPUlPUlPUlPUlPQ34nw4r3g3d11AmbLightObj()
 
 void SetCameraProjMtx__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d6Cameraib(){}
 
-extern "C" const unsigned char lbl_eu_8061DFA0[];
+const unsigned char lbl_eu_8061DFA0[];
 
-extern "C" const void* GetCameraMtxPtr__Q34nw4r3g3d8G3DStateFv() {
+const void* GetCameraMtxPtr__Q34nw4r3g3d8G3DStateFv() {
     const unsigned char* base = lbl_eu_8061DFA0;
     unsigned short index = *(const unsigned short*)(base + 2);
     return base + index * 0x30 + 0x34;

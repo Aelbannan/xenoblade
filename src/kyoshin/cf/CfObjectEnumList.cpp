@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CfObjectEnumList.hpp"
 void __ct__cf_CfObjEnumList(){}
 
 void func_800F49F8(){}
@@ -15,18 +16,18 @@ void func_800F6D50(){}
 
 void func_800F6E08(){}
 
-extern "C" void* func_800F6E98(void* this_ptr, int index) {
+void* func_800F6E98(void* this_ptr, int index) {
     void** array = *reinterpret_cast<void***>(reinterpret_cast<char*>(this_ptr) + 0x20 + index * 4);
     return *array;
 }
 
-extern "C" void* func_800F6EAC(void* self, unsigned long idx) {
+void* func_800F6EAC(void* self, unsigned long idx) {
     void** arr = (void**)((uint8_t*)self + 0x20);
     void* ptr = arr[idx];
     return *(void**)((uint8_t*)ptr + 4);
 }
 
-extern "C" void* func_800F6EC0(void* this_ptr, int index) {
+void* func_800F6EC0(void* this_ptr, int index) {
     return *reinterpret_cast<void**>(reinterpret_cast<char*>(this_ptr) + index * 4 + 0x20);
 }
 
@@ -90,7 +91,7 @@ void func_800FD3FC(){}
 
 void func_800FD68C(void* self){}
 
-extern "C" void func_800FD698(void* self) { ((void(*)(void*))func_800FD68C)((char*)self - 0x604); }
+void func_800FD698(void* self) { ((void(*)(void*))func_800FD68C)((char*)self - 0x604); }
 
 extern "C" void func_800F4798(void* self);
 extern "C" void func_800FD6A0(void* self) { ((void(*)(void*))func_800F4798)((char*)self - 0x604); }

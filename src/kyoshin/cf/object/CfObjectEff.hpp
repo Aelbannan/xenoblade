@@ -41,5 +41,22 @@ namespace cf {
     void func_800AD818();
     void func_800AD830();
     void func_800AD840();
+    void func_800ACE44();
+    void func_800ACF34() const;
+    void func_800AD850();
+    void func_800AD858();
     };
 }
+
+namespace cf {
+
+class CfObject {
+public:
+    virtual ~CfObject();
+
+    // TODO: add fields
+    void CfObject_UnkVirtualFunc3();
+    void CfObject_UnkVirtualFunc6();
+};
+} // namespace cf
+

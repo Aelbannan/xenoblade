@@ -4,7 +4,7 @@
 #include "kyoshin/CKizunaTalkList.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_8027355C(CKizunaTalkList* self) {
+u8 func_8027355C(CKizunaTalkList* self) {
     return self->mNeedsRebuild;
 }
 

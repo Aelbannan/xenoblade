@@ -27,7 +27,7 @@ void func_80261844(){}
 
 void func_8026187C(){}
 
-extern "C" void func_802618AC(void* obj, int value) {
+void func_802618AC(void* obj, int value) {
     int* field = (int*)((char*)obj + 0x884);
     *field = value;
     if (value < 0) *field = 0;
@@ -38,12 +38,12 @@ void func_eu_80263A24(){}
 
 void func_802618D8(){}
 
-extern "C" int lbl_eu_80664864;
-extern "C" int lbl_eu_80664868;
-extern "C" int lbl_eu_80662980;
-extern "C" int lbl_eu_80664874;
+int lbl_eu_80664864;
+int lbl_eu_80664868;
+int lbl_eu_80662980;
+int lbl_eu_80664874;
 
-extern "C" void func_80261944(int arg) {
+void func_80261944(int arg) {
     lbl_eu_80664864 = arg;
     lbl_eu_80664868 = arg;
     lbl_eu_80662980 = -1;

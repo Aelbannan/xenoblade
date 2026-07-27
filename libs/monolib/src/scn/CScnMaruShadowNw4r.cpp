@@ -37,10 +37,10 @@ void func_8048DD18(){}
 void func_8048E2F8(){}
 
 // us-804926f0: func_8048E67C (0x20 bytes)
-extern "C" float lbl_eu_8066A994;
-extern "C" float lbl_eu_8066A9CC;
+float lbl_eu_8066A994;
+float lbl_eu_8066A9CC;
 
-extern "C" void func_8048E67C(void* obj, int condition) {
+void func_8048E67C(void* obj, int condition) {
     if (condition == 0) {
         *(float*)((char*)obj + 0x1c) = lbl_eu_8066A9CC;
     } else {
@@ -55,7 +55,7 @@ void func_8048E69C(){}
 void func_8048EA38(){}
 
 // us-80492ab4: func_8048EA40 (0x8 bytes) — loads float from sda21 global
-extern "C" float func_8048EA40()
+float func_8048EA40()
 {
     extern float lbl_eu_80663964;
     return lbl_eu_80663964;

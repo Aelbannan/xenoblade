@@ -99,7 +99,7 @@ void CTitleAHelp::func_801C412C() {
     }
 }
 
-extern "C" void func_801C414C(CTitleAHelp* pThis) {
+void func_801C414C(CTitleAHelp* pThis) {
     if (pThis->unk2c == 3) {
         pThis->unk2c = 4;
         pThis->unk36 = 0;
@@ -334,7 +334,7 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
  * Utility functions
  *
  ******************************************************************************/
-extern "C" bool func_801C4648(const void* self) {
+bool func_801C4648(const void* self) {
     const uint8_t* bytes = static_cast<const uint8_t*>(self);
     return (bytes[0xBB] & 1) != 0;
 }

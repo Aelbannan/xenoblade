@@ -3,9 +3,10 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
 void __ct__CModelDispMakeCrystal(){}
 
-extern "C" void func_8021C4DC(void* self) {
+void func_8021C4DC(void* self) {
     *(unsigned long*)self = 0;
     *(unsigned long*)((char*)self + 4) = 0;
     ((unsigned char*)self)[8] = 0;
@@ -25,13 +26,13 @@ void func_8021C8B0(){}
 
 void func_8021C928(){}
 
-extern "C" u8 func_8021CA34(void* self) { return ((u8*)self)[0xBE8]; }
+u8 func_8021CA34(void* self) { return ((u8*)self)[0xBE8]; }
 
 void func_8021CA3C(){}
 
-extern "C" u8 func_8021CB10(void* self) { return ((u8*)self)[0x2DC3]; }
+u8 func_8021CB10(void* self) { return ((u8*)self)[0x2DC3]; }
 
-extern "C" u8 func_8021CB18(void* self) { return ((u8*)self)[0x2DD2]; }
+u8 func_8021CB18(void* self) { return ((u8*)self)[0x2DD2]; }
 
 void func_8021CB20(){}
 
@@ -55,7 +56,7 @@ void func_8021D564(){}
 
 void func_8021D6B4(){}
 
-extern "C" void func_8021D99C(void* self, unsigned short index, short a, short b)
+void func_8021D99C(void* self, unsigned short index, short a, short b)
 {
     struct Entry {
         char _pad0[4];
@@ -164,13 +165,13 @@ void CModelDispMakeCrystal::OnFileEvent() {}
 
 void func_80221B90(){}
 
-extern "C" void func_80221CC8(void* self, u32 val) { *(u32*)((u8*)self + 0xE1C) = val; }
+void func_80221CC8(void* self, u32 val) { *(u32*)((u8*)self + 0xE1C) = val; }
 
 void func_80221CD0(){}
 
 void func_80221D58(void* self){}
 
-extern "C" void func_80221E38(unsigned char* p) {
+void func_80221E38(unsigned char* p) {
     p[0] = 0;
     p[1] = 0;
     p[2] = 0;
@@ -178,11 +179,11 @@ extern "C" void func_80221E38(unsigned char* p) {
     p[5] = 0;
 }
 
-extern "C" void func_80221E54(void* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x4); }
+void func_80221E54(void* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x4); }
 
-extern "C" void func_80221E5C(void* self) { ((void(*)(void*))func_80221D58)((char*)self - 0x8); }
+void func_80221E5C(void* self) { ((void(*)(void*))func_80221D58)((char*)self - 0x8); }
 
-extern "C" void func_80221E64(void* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x8); }
+void func_80221E64(void* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x8); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_80221DDC(){}

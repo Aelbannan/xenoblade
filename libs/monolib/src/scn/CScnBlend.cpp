@@ -7,7 +7,7 @@ void __ct__CScnBlend(){}
 
 void CScnBlend::~CScnBlend() {}
 
-extern "C" void func_80498D98(void* r3, int r4) {
+void func_80498D98(void* r3, int r4) {
     uint8_t v = *(uint8_t*)((uintptr_t)r3 + 0x54);
     if (r4 != 0) {
         *(uint8_t*)((uintptr_t)r3 + 0x54) = v | 1;

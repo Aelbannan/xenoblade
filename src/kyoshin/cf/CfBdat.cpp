@@ -285,7 +285,7 @@ void CfBdat::resetMapBdatFileDataPointers(){
         return 0;
     }
 
-extern "C" const char* lbl_eu_8052E6F0[];
+const char* lbl_eu_8052E6F0[];
 
 const char* CfBdat::func_801424A8(u16 index) {
     return lbl_eu_8052E6F0[index];

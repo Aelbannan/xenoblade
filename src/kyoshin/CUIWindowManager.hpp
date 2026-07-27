@@ -36,3 +36,11 @@ private:
     void Init();
 
 }; //size = 0xA4
+
+class CTTask_CUIWindowManager {
+public:
+    virtual ~CTTask_CUIWindowManager();
+
+    // TODO: add fields
+};
+

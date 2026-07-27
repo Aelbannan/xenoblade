@@ -3,8 +3,8 @@
 // These functions exist in the retail binary but are no-ops
 // (each compiles to a single blr instruction).
 
-extern "C" void func_804C8684(void) {}
-extern "C" void func_804C8688(void) {}
+void func_804C8684(void) {}
+void func_804C8688(void) {}
 extern "C" void func_804C868C(void) {}
 
 void func_804C8690(){}

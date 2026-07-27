@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u32 getInstance__11CSysWinBuffFv(void) {
+u32 getInstance__11CSysWinBuffFv(void) {
     extern u32 lbl_eu_806648E0;
     return lbl_eu_806648E0;
 }

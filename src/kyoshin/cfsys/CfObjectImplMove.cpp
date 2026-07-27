@@ -11,7 +11,7 @@ void func_800CAA44(){}
 
 void func_800CAB00(){}
 
-extern "C" void func_800CAB2C(void) {}
+void func_800CAB2C(void) {}
 
 void func_800CAB30(){}
 
@@ -25,7 +25,7 @@ void func_800CB9AC(){}
 
 void func_800CBBD8(){}
 
-extern "C" void func_800CC01C(void) {}
+void func_800CC01C(void) {}
 
 void func_800CC020(){}
 
@@ -39,9 +39,9 @@ void func_800CD268(){}
 
 void func_800CD460(){}
 
-extern "C" void func_800BE824(void*, unsigned int);
+void func_800BE824(void*, unsigned int);
 
-extern "C" void func_800CD5C0(char* self, unsigned int a, unsigned int b) {
+void func_800CD5C0(char* self, unsigned int a, unsigned int b) {
     void* inner = *(void**)(self + 0x14);
     if (a == *(unsigned int*)((char*)inner + 0xc4)) {
         func_800BE824(inner, b);
@@ -68,7 +68,7 @@ void func_800CED64(){}
 
 void func_800CEE28(){}
 
-extern "C" void func_800CEE7C(void) {}
+void func_800CEE7C(void) {}
 
 void func_800CEE80(){}
 

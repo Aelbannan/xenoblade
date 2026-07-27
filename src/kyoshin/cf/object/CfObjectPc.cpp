@@ -27,7 +27,7 @@ void cf::CfObjectPc::CActorParam_UnkVirtualFunc167() {}
 
 void cf::CfObjectPc::func_800C02C4() {}
 
-extern "C" void func_800C02EC__Q22cf10CfObjectPcFv(void* self, void* param) {
+void func_800C02EC__Q22cf10CfObjectPcFv(void* self, void* param) {
     if (param == 0) return;
     extern void* func_8009EC9C(unsigned short);
     extern void func_800A18A4(void*, void*);
@@ -56,7 +56,7 @@ void cf::CfObjectPc::func_800C0524() {}
 
 void cf::CfObjectPc::CActorParam_UnkVirtualFunc4() {}
 
-extern "C" void CActorParam_UnkVirtualFunc173__Q22cf10CfObjectPcFv(void) {}
+void CActorParam_UnkVirtualFunc173__Q22cf10CfObjectPcFv(void) {}
 
 void cf::CfObjectPc::CActorParam_UnkVirtualFunc176() {}
 
@@ -70,19 +70,19 @@ void func_800C0DD4(){}
 
 void cf::CfObjectPc::func_800C11CC() {}
 
-extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C00C0__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CObjectParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C00C0__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_UnkVirtualFunc3__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0080__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CfObject_UnkVirtualFunc3__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0080__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_UnkVirtualFunc2__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800BFF20__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CfObject_UnkVirtualFunc2__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800BFF20__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObjectMove_UnkVirtualFunc16__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C11CC__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CfObjectMove_UnkVirtualFunc16__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C11CC__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_UnkVirtualFunc6__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800BFFEC__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CfObject_UnkVirtualFunc6__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800BFFEC__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-extern "C" void CfObject_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0524__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void CfObject_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C0524__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-extern "C" void func_800C1220__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))__dt__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
+void func_800C1220__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))__dt__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
 void func_800C1228__FPv(){}
 

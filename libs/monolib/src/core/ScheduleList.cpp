@@ -25,7 +25,7 @@ void func_804E4AD4(){}
 
 void func_804E4B24(){}
 
-extern "C" void* func_804E4B48(void* self) {
+void* func_804E4B48(void* self) {
     void* head = *(void**)((char*)self + 8);
     void* cur = *(void**)head;
     while (cur != head) {

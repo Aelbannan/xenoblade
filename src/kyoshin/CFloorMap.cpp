@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_8024CE60(void* self) { return ((u8*)self)[0x40]; }
+u8 func_8024CE60(void* self) { return ((u8*)self)[0x40]; }
 
 
 
@@ -111,21 +111,21 @@ void func_8024EE50(){}
 
 void func_8024F1FC(){}
 
-extern "C" u32 func_8024F538(void* self) {
+u32 func_8024F538(void* self) {
     u8 val = *(u8*)((u8*)self + 0x41);
     u32 result = __cntlzw(val - 2);
     return result >> 5;
 }
 
-extern "C" u16 func_8024F54C(void* self) { return *(u16*)((u8*)self + 0x5A); }
+u16 func_8024F54C(void* self) { return *(u16*)((u8*)self + 0x5A); }
 
-extern "C" u8 func_8024F554(void* self) { return ((u8*)self)[0x58]; }
+u8 func_8024F554(void* self) { return ((u8*)self)[0x58]; }
 
 void func_8024F55C(){}
 
 void func_8024F5C4(){}
 
-extern "C" unsigned char func_8024F630(void) {
+unsigned char func_8024F630(void) {
     extern unsigned int lbl_eu_8066479C;
     extern int func_8003B1EC(unsigned int);
     return (unsigned char)func_8003B1EC(lbl_eu_8066479C);
@@ -135,7 +135,7 @@ void func_8024F658(){}
 
 void func_8024F6BC(){}
 
-extern "C" u8 func_8024F6D8(void* self) { return ((u8*)self)[0x208]; }
+u8 func_8024F6D8(void* self) { return ((u8*)self)[0x208]; }
 
 void func_8024F6E0(){}
 

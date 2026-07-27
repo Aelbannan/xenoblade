@@ -3,31 +3,32 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/action/CActParamAnim.hpp"
 CActParamAnim::CActParamAnim() {}
 
 void __dt__8004B070(){}
 
-extern "C" void func_8004B0B0() {}
+void func_8004B0B0() {}
 
-extern "C" void func_8004B0B4() {}
+void func_8004B0B4() {}
 
 void CActParamAnim::~CActParamAnim() {}
 
 void CActParamAnim::func_8004B114() {}
 
-extern "C" void* func_8004B344(void* self) { return static_cast<char*>(self) + 0x10; }
+void* func_8004B344(void* self) { return static_cast<char*>(self) + 0x10; }
 
-extern "C" float func_8004B34C(void* self) {
+float func_8004B34C(void* self) {
     return *(float*)((char*)self + 0x43c);
 }
 
 void func_8004B354(){}
 
-extern "C" int func_8004B3D8(void* self, int mask) {
+int func_8004B3D8(void* self, int mask) {
     return (*(int*)((char*)self) & mask) != 0 ? 1 : 0;
 }
 
-extern "C" void func_8004B3F0(void* dst, const void* src) {
+void func_8004B3F0(void* dst, const void* src) {
     *(int*)((char*)dst + 0) = *(int*)((char*)src + 0);
     *(int*)((char*)dst + 4) = *(int*)((char*)src + 4);
     *(int*)((char*)dst + 8) = *(int*)((char*)src + 8);
@@ -37,40 +38,40 @@ void func_8004B40C(){}
 
 void func_8004B4A4(){}
 
-extern "C" void* func_8004B51C(void* self) {
+void* func_8004B51C(void* self) {
     return *(void**)((char*)self + 8);
 }
 
-extern "C" bool func_8004B524() { return true; }
+bool func_8004B524() { return true; }
 
 void func_8004B52C(){}
 
-extern "C" void func_8004B5F0(void* dst, const void* src) {
+void func_8004B5F0(void* dst, const void* src) {
     *(int*)((char*)dst + 0xC) = *(int*)((char*)src + 0);
     *(int*)((char*)dst + 0x10) = *(int*)((char*)src + 4);
     *(int*)((char*)dst + 0x14) = *(int*)((char*)src + 8);
 }
 
-extern "C" void func_8004B60C(float *data, float a, float b, float c) { data[0] = a; data[1] = b; data[2] = c; }
+void func_8004B60C(float *data, float a, float b, float c) { data[0] = a; data[1] = b; data[2] = c; }
 
-extern "C" float func_8004B61C(void* self) {
+float func_8004B61C(void* self) {
     return *(float*)((char*)self + 0x444);
 }
 
 void func_8004B624(){}
 
-extern "C" void func_8004B694(uint32_t* ptr, uint32_t mask) {
+void func_8004B694(uint32_t* ptr, uint32_t mask) {
     *ptr &= ~mask;
 }
 
-extern "C" void func_8004B6A4(void* self) {
+void func_8004B6A4(void* self) {
     extern void func_80055AC4(void*);
     if (*(int*)((char*)self + 0x3A4) != 0) func_80055AC4((char*)self + 16);
 }
 
 void func_8004B6BC(){}
 
-extern "C" void func_8004B730(void* self, int val) { *(int*)((char*)self + 8) = val; }
+void func_8004B730(void* self, int val) { *(int*)((char*)self + 8) = val; }
 
 // STALLED: uses paired-single (PS) SIMD instructions (psq_l/ps_sum1/psq_st)
 // that MWCC Wii 1.1 cannot generate from standard C. Requires DECOMP_ASM_INSN
@@ -80,17 +81,17 @@ void func_8004B738(){}
 
 void func_8004B75C(){}
 
-extern "C" void func_8004B79C(float *dst, const float *src) {
+void func_8004B79C(float *dst, const float *src) {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
 }
 
-extern "C" float func_8004B7B8(const void* self) {
+float func_8004B7B8(const void* self) {
     return *(const float*)((const char*)self + 0x390);
 }
 
-extern "C" void func_8004B7C0(void* self, const void* src) {
+void func_8004B7C0(void* self, const void* src) {
     *(int*)((char*)self + 0x3C0) = *(int*)((char*)src + 0);
     *(int*)((char*)self + 0x3C4) = *(int*)((char*)src + 4);
     *(int*)((char*)self + 0x3C8) = *(int*)((char*)src + 8);
@@ -98,15 +99,15 @@ extern "C" void func_8004B7C0(void* self, const void* src) {
 
 void func_8004B7DC(){}
 
-extern "C" void func_8004B840(void* self, float val) {
+void func_8004B840(void* self, float val) {
     *(float*)((char*)self + 0x3c4) = val;
 }
 
-extern "C" int func_8004B848(void *self) {
+int func_8004B848(void *self) {
     return (*(unsigned int *)((char *)self + 12) >> 1) & 1;
 }
 
-extern "C" float func_8004B854__13CActParamAnimFv(void* self) {
+float func_8004B854__13CActParamAnimFv(void* self) {
     extern float func_80484F18(void*);
     extern float lbl_eu_80665EA0;
     void* obj = *(void**)((char*)self + 0x3A0);
@@ -114,7 +115,7 @@ extern "C" float func_8004B854__13CActParamAnimFv(void* self) {
     return lbl_eu_80665EA0;
 }
 
-extern "C" float func_8004B86C__13CActParamAnimFv(void* self) {
+float func_8004B86C__13CActParamAnimFv(void* self) {
     extern float func_804850A4(void*);
     extern float lbl_eu_80665EA0;
     void* obj = *(void**)((char*)self + 0x3A0);
@@ -122,13 +123,13 @@ extern "C" float func_8004B86C__13CActParamAnimFv(void* self) {
     return lbl_eu_80665EA0;
 }
 
-extern "C" void func_8004B884(void* self) {
+void func_8004B884(void* self) {
     extern void func_80484F80(void*);
     void* obj = *(void**)((char*)self + 0x3A0);
     if (obj != 0) func_80484F80(obj);
 }
 
-extern "C" float func_8004B898__13CActParamAnimFv(void* self) {
+float func_8004B898__13CActParamAnimFv(void* self) {
     extern float func_80484EB0(void*);
     extern float lbl_eu_80665EA0;
     void* obj = *(void**)((char*)self + 0x3A0);
@@ -140,11 +141,11 @@ void func_8004B8B0(){}
 
 void func_8004B8F8(){}
 
-extern "C" {
+{
 extern int func_80485464(void*, void*);
 extern int func_80485244(void*);
 }
-extern "C" int func_8004B990(void* self, void* param) {
+int func_8004B990(void* self, void* param) {
     void* val = *(void**)((char*)self + 0x3A0);
     if (!val) return 0;
     if (!param) {
@@ -153,7 +154,7 @@ extern "C" int func_8004B990(void* self, void* param) {
     return func_80485464(val, param);
 }
 
-extern "C" void* func_8004B9B8(void* self) {
+void* func_8004B9B8(void* self) {
     void* v = *(void**)((char*)self + 0x8);
     if (v) {
         return *(void**)((char*)v + 0x18);
@@ -165,7 +166,7 @@ void func_8004B9D4(){}
 
 void func_8004BC28(){}
 
-extern "C" void func_8004BC64(void* self, int param) {
+void func_8004BC64(void* self, int param) {
     if (param != 0) {
         int tmp = *(int*)((char*)self + 0xc);
         *(unsigned char*)((char*)self + 0x4da) = 30;
@@ -179,9 +180,9 @@ void func_8004BC94(){}
 
 void func_8004BDCC(){}
 
-extern "C" void func_8004C5E8__13CActParamAnimFv() {}
+void func_8004C5E8__13CActParamAnimFv() {}
 
-extern "C" void* func_8004C5EC(void* _this) {
+void* func_8004C5EC(void* _this) {
     void* result = *(void**)((char*)_this + 0x2fc);
     if (result) return result;
     return *(void**)((char*)_this + 0x27c);
@@ -193,8 +194,8 @@ void func_8004CB80(){}
 
 void func_8004CBC8(){}
 
-extern "C" float Atan2FIdx__Q24nw4r4mathFff(float, float);
-extern "C" float func_8004CC40(float y, float x) {
+float Atan2FIdx__Q24nw4r4mathFff(float, float);
+float func_8004CC40(float y, float x) {
     extern float lbl_eu_80665ED0;
     return lbl_eu_80665ED0 * Atan2FIdx__Q24nw4r4mathFff(y, x);
 }
@@ -203,11 +204,11 @@ void func_8004CC68(){}
 
 void func_8004CC74(){}
 
-extern "C" int func_8004CC80(void *self) { return ((*(unsigned int*)((unsigned char*)self + 0x260) >> 5) & 1); }
+int func_8004CC80(void *self) { return ((*(unsigned int*)((unsigned char*)self + 0x260) >> 5) & 1); }
 
 void func_8004CC8C(){}
 
-extern "C" void func_8004CEF8(void* obj, int value) {
+void func_8004CEF8(void* obj, int value) {
     *(int*)((char*)obj + 0x374) = value;
 }
 
@@ -227,11 +228,11 @@ void CActParamAnim::func_8004D7EC() {}
 
 void CActParamAnim::func_8004D950() {}
 
-extern "C" void* func_8004DAC4(void* self) {
+void* func_8004DAC4(void* self) {
     return *(void**)((char*)self + 0x4c0);
 }
 
-extern "C" void func_8004DACC(void *self) {
+void func_8004DACC(void *self) {
     ((char *)self)[0x4be] = 0;
     ((char *)self)[0x4bf] = 0;
     *(int *)((char *)self + 0x4c0) = 0;
@@ -308,9 +309,9 @@ void CActParamAnim::func_800517FC() {}
 void CActParamAnim::func_8005194C() {}
 
 extern float lbl_eu_80665EA0;
-extern "C" void func_80051A9C(void* self) { *(float*)((u8*)self + 964) = lbl_eu_80665EA0; }
+void func_80051A9C(void* self) { *(float*)((u8*)self + 964) = lbl_eu_80665EA0; }
 
-extern "C" void func_80051AA8(void* self, s32 param) {
+void func_80051AA8(void* self, s32 param) {
     if (param != 0) {
         *(u32*)((u8*)self + 0xC) |= 2;
     } else {
@@ -322,12 +323,12 @@ void func_80051AD0(){}
 
 void func_80051B38(){}
 
-extern "C" void func_80051B84(void *this_) {
+void func_80051B84(void *this_) {
     *(unsigned int *)((char *)this_ + 0x4a8) = 0x44a05;
     *(unsigned int *)((char *)this_ + 0xc) |= 0x800000;
 }
 
-extern "C" void func_80051BA0(void* self) {
+void func_80051BA0(void* self) {
     extern float lbl_eu_80665F18;
     u32 v = *(u32*)((u8*)self + 12);
     float f = lbl_eu_80665F18;
@@ -336,14 +337,14 @@ extern "C" void func_80051BA0(void* self) {
     *(u32*)((u8*)self + 12) = v | 0x00800000;
 }
 
-extern "C" void func_80051BC4(void* self) {
+void func_80051BC4(void* self) {
     extern float lbl_eu_80665F18;
     float tmp = lbl_eu_80665F18;
     *(volatile unsigned int*)((char*)self + 0x4A8) = 0x44A09;
     *(volatile float*)((char*)self + 0x484) = tmp;
 }
 
-extern "C" void func_80051BDC(void* self) {
+void func_80051BDC(void* self) {
     extern float lbl_eu_80665F18;
     float tmp = lbl_eu_80665F18;
     *(volatile unsigned int*)((char*)self + 0x4A8) = 0x44A11;
@@ -354,7 +355,7 @@ void func_80051BF4(){}
 
 void func_80051C40(){}
 
-extern "C" void func_80051CAC(void* self) {
+void func_80051CAC(void* self) {
     u32 val = *(u32*)((u8*)self + 12);
     u32 tmp = val & ~0x10u;
     *(u32*)((u8*)self + 12) = tmp;
@@ -366,17 +367,17 @@ extern "C" void func_80051CAC(void* self) {
 
 void func_80051CD4(){}
 
-extern "C" u32 func_80052540(void* self) { return (*(u32*)((u8*)self + 608) >> 13) & 0x1u; }
+u32 func_80052540(void* self) { return (*(u32*)((u8*)self + 608) >> 13) & 0x1u; }
 
-extern "C" float func_8005254C(void* self) { return *(float*)((char*)self + 0x4A0); }
+float func_8005254C(void* self) { return *(float*)((char*)self + 0x4A0); }
 
-extern "C" float func_80052554(void *self) { return *(float *)((char *)self + 0x10); }
+float func_80052554(void *self) { return *(float *)((char *)self + 0x10); }
 
-extern "C" u32 func_8005255C(void* ptr) {
+u32 func_8005255C(void* ptr) {
     return (*(u32*)((u8*)ptr + 0x260) >> 0x10) & 1;
 }
 
-extern "C" u32 func_80052568(void* self) {
+u32 func_80052568(void* self) {
     u32 result = (*(u32*)((u8*)self + 0x260) >> 18) & 1u;
     *(volatile u32*)((u8*)self + 0x260) &= ~(1u << 18);
     return result;
@@ -400,7 +401,7 @@ void func_800527B0(){}
 
 void func_800527E8(){}
 
-extern "C" void func_80052924(void* param_1, float param_2) {
+void func_80052924(void* param_1, float param_2) {
     *(float*)((char*)param_1 + 0x3c4) *= param_2;
 }
 

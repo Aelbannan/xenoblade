@@ -22,6 +22,7 @@ public:
     void waitLoad();
     void OnFileEvent();
     virtual ~CfScript();
+    void update();
 };
 
 // CfScriptManager - manages an array of up to 3 CfScript objects.

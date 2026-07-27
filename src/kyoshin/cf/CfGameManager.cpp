@@ -3,6 +3,7 @@
 
 #include "monolib/core/CPadManager.hpp"
 
+void cf::CfGameManager::~CfGameManager();
 extern "C" {
 u32 lbl_eu_80661BC8;
 cf::CfPadData lbl_eu_80571500;
@@ -21,7 +22,7 @@ u32 lbl_eu_80663E28;
 cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots, int index);
 
 void __ct__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
-void __dt__Q22cf13CfGameManagerFv();
+
 void* __register_global_object(void* object, void* destructor, void* registration);
 }
 

@@ -166,7 +166,7 @@ void Controller::clrKpadButton() {
     mHBController.release = 0;
 }
 
-extern "C" const float lbl_80518684;
+const float lbl_80518684;
 extern "C" const float lbl_80518688;
 
 void Controller::setInValidPos() {

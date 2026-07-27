@@ -12,7 +12,7 @@ void __dt__reslist_CFileHandle(void* self, int type){}
 void CDeviceFile::~CDeviceFile(int type) {}
 
 extern u32 lbl_eu_80665660;
-extern "C" u32 getInstance__11CDeviceFileFv(void) { return lbl_eu_80665660; }
+u32 getInstance__11CDeviceFileFv(void) { return lbl_eu_80665660; }
 
 int CDeviceFile::isInitialized() { return 0; }
 

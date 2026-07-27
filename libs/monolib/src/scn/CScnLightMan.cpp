@@ -7,7 +7,7 @@ void __ct__CScnLightMan(){}
 
 void CScnLightMan::~CScnLightMan() {}
 
-extern "C" void func_8048D124(void* arg1, void* arg2) {
+void func_8048D124(void* arg1, void* arg2) {
     extern void func_804BF944(void*);
     func_804BF944(arg2);
     char* ptr = *(char**)((char*)arg1 + 8);

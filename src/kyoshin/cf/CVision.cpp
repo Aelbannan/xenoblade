@@ -59,7 +59,7 @@ void func_801A7704(){}
 
 void func_801A7D6C(){}
 
-extern "C" int* func_801A8070(int* param) {
+int* func_801A8070(int* param) {
     if (param[1] == 0) {
         return 0;
     }

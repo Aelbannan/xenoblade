@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CtrlAct.hpp"
 void __ct__800D10DC(){}
 
 void func_800D11B0(){}
@@ -27,9 +28,9 @@ void func_800D3FFC(){}
 
 void func_800D4834(){}
 
-extern "C" int func_800D49E4(void* self) { return 0; }
+int func_800D49E4(void* self) { return 0; }
 
-extern "C" int func_800D49EC(void* self) { return 0; }
+int func_800D49EC(void* self) { return 0; }
 
 void func_800D49F4(){}
 
@@ -39,20 +40,20 @@ void func_800D5308(){}
 
 void func_800D56F0(){}
 
-extern "C" int func_800D5814(void* self) { return 0; }
+int func_800D5814(void* self) { return 0; }
 
 void func_800D581C(){}
 
-extern "C" unsigned long func_800D5860(void* self) {
+unsigned long func_800D5860(void* self) {
     unsigned long v = *(unsigned long*)((char*)self + 0x58);
     return !((v >> 15) & 1);
 }
 
 void func_800D5874(){}
 
-extern "C" const float lbl_eu_80666CFC;
+const float lbl_eu_80666CFC;
 
-extern "C" void func_800D59FC(void* obj) {
+void func_800D59FC(void* obj) {
     struct __attribute__((packed)) Data70 {
         float f70;
         unsigned short u74;
@@ -80,9 +81,9 @@ void func_800D5D68(){}
 
 void func_800D5F98(){}
 
-extern "C" int func_800D64D8(void* self) { return 0; }
+int func_800D64D8(void* self) { return 0; }
 
-extern "C" int func_800D64E0(void* self) { return 0; }
+int func_800D64E0(void* self) { return 0; }
 
 void func_800D64E8(){}
 

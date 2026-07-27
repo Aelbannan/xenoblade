@@ -4,9 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQstLogList.hpp"
 
-extern "C" void __ct__11CQstLogListFv() {}
+void __ct__11CQstLogListFv() {}
 
-extern "C" u8 func_80227CCC(CQstLogList* self) { return self->mSortEnabled; }
+u8 func_80227CCC(CQstLogList* self) { return self->mSortEnabled; }
 
 void func_80227994(){}
 
@@ -17,7 +17,7 @@ void func_80227994(){}
 
 
 
-extern "C" u8 func_80227CD4(CQstLogList* self) { return self->mSortDescending; }
+u8 func_80227CD4(CQstLogList* self) { return self->mSortDescending; }
 
 
 
@@ -65,7 +65,7 @@ void CQstLogList::OnFileEvent() {}
 void func_80229398(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void __construct_array(void*, void*, int, int, int);
+void __construct_array(void*, void*, int, int, int);
 extern void func_80229398();
 extern u8 lbl_eu_80576670[];
 extern "C" void sinit_80229378() {

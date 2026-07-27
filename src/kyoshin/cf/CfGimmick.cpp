@@ -3,18 +3,19 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CfGimmick.hpp"
 void __ct__cf_CfGimmick(){}
 
 void cf::CfGimmick::~CfGimmick() {}
 
-extern "C" void func_8020896C(void* self, void* other) {
+void func_8020896C(void* self, void* other) {
     void* cur = *(void**)((char*)self + 0x78);
     if (cur != other) return;
     *(void**)((char*)cur + 0xB0) = 0;
     *(void**)((char*)self + 0x78) = 0;
 }
 
-extern "C" void func_80208988(void* self) {
+void func_80208988(void* self) {
     extern void func_802089BC(void*, void*, void*);
     func_802089BC((char*)self + 0x1c, (char*)self + 4, (char*)self + 0x10);
 }
@@ -33,7 +34,7 @@ void func_80208CC0(){}
 
 void func_80208E98(){}
 
-extern "C" bool func_80208EDC() { return false; }
+bool func_80208EDC() { return false; }
 
 void func_80208EE4(){}
 
@@ -55,8 +56,8 @@ void func_802096EC(){}
 
 void func_8020971C(){}
 
-extern "C" void func_8009D018(void* self);
-extern "C" void func_8020974C(void* self) { ((void(*)(void*))func_8009D018)((char*)self + 0x2cc8); }
+void func_8009D018(void* self);
+void func_8020974C(void* self) { ((void(*)(void*))func_8009D018)((char*)self + 0x2cc8); }
 
 void func_80209754(){}
 
@@ -64,14 +65,14 @@ void func_802098EC(){}
 
 void func_80209F2C(){}
 
-extern "C" void func_80209F5C() {
+void func_80209F5C() {
     extern void* getUnk80664658();
     void* p = getUnk80664658();
     *(volatile unsigned int*)((unsigned char*)p + 0x214) |= 0x000C0002;
 }
 
-extern "C" void* getUnk80664658();
-extern "C" void func_80209F8C() {
+void* getUnk80664658();
+void func_80209F8C() {
     void* p = getUnk80664658();
     *(unsigned int*)((char*)p + 0x214) |= 0x8008;
 }
@@ -110,7 +111,7 @@ void func_8020A6B0(){}
 
 void func_8020A87C(){}
 
-extern "C" int func_8020A8AC(void* self) { return 1; }
+int func_8020A8AC(void* self) { return 1; }
 
 void func_8020A8B4(){}
 

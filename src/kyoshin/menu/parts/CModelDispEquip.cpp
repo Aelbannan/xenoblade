@@ -3,9 +3,10 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/parts/CModelDispEquip.hpp"
 void __ct__CModelDispEquip(){}
 
-extern "C" void func_801FF6DC(void* self) {
+void func_801FF6DC(void* self) {
     *(unsigned long*)self = 0;
     *(unsigned long*)((char*)self + 4) = 0;
     ((unsigned char*)self)[8] = 0;
@@ -21,11 +22,11 @@ void func_801FF82C(){}
 
 void func_801FF874(){}
 
-extern "C" u8 func_801FF95C(void* self) { return ((u8*)self)[0x1020]; }
+u8 func_801FF95C(void* self) { return ((u8*)self)[0x1020]; }
 
-extern "C" u8 func_801FF964(void* self) { return ((u8*)self)[0x1021]; }
+u8 func_801FF964(void* self) { return ((u8*)self)[0x1021]; }
 
-extern "C" void func_801FF96C(unsigned char* p) {
+void func_801FF96C(unsigned char* p) {
     if (p[0x1014] != 0) {
         return;
     }
@@ -33,7 +34,7 @@ extern "C" void func_801FF96C(unsigned char* p) {
     p[0x1020] = 0;
 }
 
-extern "C" void func_801FF98C(void* self) {
+void func_801FF98C(void* self) {
     ((unsigned char*)self)[0x1014] = 3;
     ((unsigned char*)self)[0x1020] = 0;
 }
@@ -42,7 +43,7 @@ void func_801FF9A0(){}
 
 void func_801FF9AC(){}
 
-extern "C" void func_801FFAB4(float* dest, float a, float b, float c, float d) {
+void func_801FFAB4(float* dest, float a, float b, float c, float d) {
     dest[0] = a;
     dest[1] = b;
     dest[2] = c;
@@ -81,11 +82,11 @@ void func_80201148(){}
 
 void func_80201298(void* self){}
 
-extern "C" void func_80201318(void) {}
+void func_80201318(void) {}
 
 void func_8020131C(void* self){}
 
-extern "C" void func_80201440(void) {}
+void func_80201440(void) {}
 
 void func_80201444(void* self){}
 
@@ -111,19 +112,19 @@ void func_80201808(){}
 
 void func_80201900(){}
 
-extern "C" void func_80201A44(void* self) { ((void(*)(void*))func_80201298)((char*)self - 0x4); }
+void func_80201A44(void* self) { ((void(*)(void*))func_80201298)((char*)self - 0x4); }
 
-extern "C" void func_80201A4C(void* self) { ((void(*)(void*))func_80201440)((char*)self - 0x4); }
+void func_80201A4C(void* self) { ((void(*)(void*))func_80201440)((char*)self - 0x4); }
 
-extern "C" void func_80201A54(void* self) { ((void(*)(void*))func_8020131C)((char*)self - 0x4); }
+void func_80201A54(void* self) { ((void(*)(void*))func_8020131C)((char*)self - 0x4); }
 
-extern "C" void func_80201A5C(void* self) { ((void(*)(void*))func_80201318)((char*)self - 0x4); }
+void func_80201A5C(void* self) { ((void(*)(void*))func_80201318)((char*)self - 0x4); }
 
-extern "C" void func_80201A64(void* self) { ((void(*)(void*))func_80200F9C)((char*)self - 0x4); }
+void func_80201A64(void* self) { ((void(*)(void*))func_80200F9C)((char*)self - 0x4); }
 
-extern "C" void func_80201A6C(void* self) { ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)self - 0x4); }
+void func_80201A6C(void* self) { ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)self - 0x4); }
 
-extern "C" void func_80201A74(void* self) { ((void(*)(void*))func_80201444)((char*)self - 0x8); }
+void func_80201A74(void* self) { ((void(*)(void*))func_80201444)((char*)self - 0x8); }
 
 extern "C" void func_80201A7C(void* self) { ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)self - 0x8); }
 

@@ -9,8 +9,8 @@ void ui_mesGetArts(VMThread* pThread) {
     int num2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
 }
 
-extern "C" bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
-extern "C" void pluginUiRegist() {
+bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+void pluginUiRegist() {
     extern void vmPluginRegist(void*, void*);
     extern char lbl_eu_804FABF0[];
     extern char lbl_eu_80525D68[];
@@ -24,33 +24,33 @@ void winTalkNoName(){}
 void fadeIn_1(){}
 void fadeOut_1(){}
 void fadeWait_1(){}
-extern "C" int createCol6Sys(VMThread* pThread) {
+int createCol6Sys(VMThread* pThread) {
     extern void func_8013DD94();
     func_8013DD94();
     return 0;
 }
-extern "C" int createCol6Hint(VMThread* pThread) {
+int createCol6Hint(VMThread* pThread) {
     extern void func_8013DE6C();
     func_8013DE6C();
     return 0;
 }
 void createCol6Invite(){}
-extern "C" int createCol6Init(VMThread* pThread) {
+int createCol6Init(VMThread* pThread) {
     extern void func_80139CEC();
     func_80139CEC();
     return 0;
 }
-extern "C" int checkCol6Bat(VMThread* pThread) {
+int checkCol6Bat(VMThread* pThread) {
     extern void func_8013E030();
     func_8013E030();
     return 0;
 }
-extern "C" int simpleEventStart(VMThread* pThread) {
+int simpleEventStart(VMThread* pThread) {
     extern void func_8013BD9C();
     func_8013BD9C();
     return 0;
 }
-extern "C" int simpleEventEnd(VMThread* pThread) {
+int simpleEventEnd(VMThread* pThread) {
     extern void func_8013BDA8();
     func_8013BDA8();
     return 0;
@@ -74,13 +74,13 @@ int ptChangeNotice(){
     func_8013E8E0();
     return 0;
 }
-extern "C" int save() {
+int save() {
     extern u32 lbl_eu_80663E28;
     extern void func_8013E9D8();
     if (!(lbl_eu_80663E28 & 0x40000000)) func_8013E9D8();
     return 0;
 }
-extern "C" int kizunaTalkStart() {
+int kizunaTalkStart() {
     extern void func_8013BDBC();
     extern u32 lbl_eu_80663E28;
     extern void func_8007D7A4__Q22cf13CfGameManagerFv();
@@ -97,7 +97,7 @@ int kizunaTalkEnd(){
     return 0;
 }
 void isPrioReq(){}
-extern "C" int gameClear(VMThread* pThread) {
+int gameClear(VMThread* pThread) {
     extern void func_8013500C();
     func_8013500C();
     return 0;

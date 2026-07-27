@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_802296D0(void* self) { return ((u8*)self)[0x38]; }
+u8 func_802296D0(void* self) { return ((u8*)self)[0x38]; }
 
 
 
@@ -12,11 +12,11 @@ extern "C" u8 func_802296D0(void* self) { return ((u8*)self)[0x38]; }
 
 
 
-extern "C" u8 func_802296D8(void* self) { return ((u8*)self)[0x39]; }
+u8 func_802296D8(void* self) { return ((u8*)self)[0x39]; }
 
 
 
-extern "C" void func_80229768(void* self, u16 val) { *(u16*)((u8*)self + 0x3A) = val; }
+void func_80229768(void* self, u16 val) { *(u16*)((u8*)self + 0x3A) = val; }
 
 
 void func_802297BC(){}

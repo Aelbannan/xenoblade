@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CfMapEffectManager.hpp"
 void __ct__cf_CfMapEffectManager(){}
 
 void cf::CfMapEffectManager::~CfMapEffectManager() {}

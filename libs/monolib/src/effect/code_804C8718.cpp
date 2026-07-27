@@ -3,25 +3,25 @@
 
 #include <harness_catalog.h>
 
-extern "C" void sinit_804CC2B4(void) {}
+void sinit_804CC2B4(void) {}
 
-extern "C" void sinit_804CC2B4(void) {}
+void sinit_804CC2B4(void) {}
 
-extern "C" void sinit_804CC2B4(void) {}
+void sinit_804CC2B4(void) {}
 
-extern "C" void sinit_804CC2B4(void) {}
+void sinit_804CC2B4(void) {}
 
 void func_804C9D24(void){}
 
-extern "C" void sinit_804CC2B4(void) {}
+void sinit_804CC2B4(void) {}
 
-extern "C" void sinit_804CC2B4(void) {}
+void sinit_804CC2B4(void) {}
 
-extern "C" void sinit_804CC2B4(void) {}
+void sinit_804CC2B4(void) {}
 
-extern "C" void sinit_804CC2B4(void) {}
+void sinit_804CC2B4(void) {}
 
-extern "C" void sinit_804CC2B4(void) {}
+void sinit_804CC2B4(void) {}
 
 void func_804CB3E4(){}
 

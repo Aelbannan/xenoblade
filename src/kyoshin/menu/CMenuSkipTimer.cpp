@@ -39,7 +39,7 @@ __attribute__((never_inline)) void func_8029F048(){}
 // back to the enclosing CMenuSkipTimer* before calling the real implementation.
 // Tail-call via direct function symbol to let MWCC optimise to `b` (not `bl` + `blr`).
 //
-extern "C" void func_8029F098(IScnRender* self) {
+void func_8029F098(IScnRender* self) {
     cbRenderBefore__14CMenuSkipTimerFv(
         reinterpret_cast<CMenuSkipTimer*>(
             reinterpret_cast<uintptr_t>(self) - 0x58));
@@ -48,7 +48,7 @@ extern "C" void func_8029F098(IScnRender* self) {
 // Vtable adjustment thunk: IScnRender::~IScnRender → CMenuSkipTimer::~CMenuSkipTimer.
 // Same +0x58 this-adjustment as func_8029F098.
 //
-extern "C" void func_8029F0A0(IScnRender* self) {
+void func_8029F0A0(IScnRender* self) {
     __dt__14CMenuSkipTimerFv(
         reinterpret_cast<CMenuSkipTimer*>(
             reinterpret_cast<uintptr_t>(self) - 0x58));

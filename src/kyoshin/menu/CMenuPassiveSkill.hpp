@@ -26,3 +26,16 @@ extern "C" void func_80263E4C();
 // to the full object before tail-calling the actual implementation.
 extern "C" void func_80263EAC(CMenuPassiveSkill* self);
 extern "C" void func_80263EB4(CMenuPassiveSkill* self);
+
+class CMenuPassiveSkill {
+public:
+    CMenuPassiveSkill();
+    virtual ~CMenuPassiveSkill();
+    void Init();
+    void Term();
+    void Move();
+    void cbRenderBefore();
+
+    // TODO: add fields
+};
+

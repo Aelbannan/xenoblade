@@ -5,7 +5,7 @@
 
 // func_804E9FC8 (inline getter at 0x804E9FC8) defined once — all harness stubs
 // mapping to the same symbol reference it rather than redefining.
-extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
+u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
 
 // (mapped to func_804E9FC8 above)
 
@@ -23,13 +23,13 @@ extern "C" u32 func_804E9FC8(void* self) { return *(u32*)((u8*)self + 0x146c); }
 
 // (mapped to func_804E9FC8 above)
 
-extern "C" u32 func_804EA0E0(void* self) { return *(u32*)((u8*)self + 0x4); }
+u32 func_804EA0E0(void* self) { return *(u32*)((u8*)self + 0x4); }
 
 // (mapped to func_804E9FC8 above)
 
 void __dt__804EA1D0(){}
 
-extern "C" u32 func_804EA268(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804EA268(void* self) { return *(u32*)((u8*)self + 0x0); }
 
 void func_804EA270(){}
 
@@ -37,7 +37,7 @@ void func_804EA284(){}
 
 void func_804EAA10(void){}
 
-extern "C" void func_804EAA14(void) {}
+void func_804EAA14(void) {}
 
 void func_804EAA18(){}
 
@@ -65,7 +65,7 @@ void func_804EB564(){}
 
 void func_804EB6E0(){}
 
-extern "C" u32 func_804EB6F0(void* self) { return *(u32*)((u8*)self + 0x4); }
+u32 func_804EB6F0(void* self) { return *(u32*)((u8*)self + 0x4); }
 
 void func_804EB6F8(){}
 
@@ -77,7 +77,7 @@ void func_804EB740(){}
 
 void func_804EB758(){}
 
-extern "C" void func_804EB764(void *r3, void *r4) {
+void func_804EB764(void *r3, void *r4) {
     int *p = (int *)r3;
     int *src = (int *)r4;
     int idx = p[1];
@@ -100,7 +100,7 @@ void func_804EB8A0(){}
 
 void func_804EBAE8(){}
 
-extern "C" u32 func_804EBBC4(void* self) { return *(u32*)((u8*)self + 0x7e8); }
+u32 func_804EBBC4(void* self) { return *(u32*)((u8*)self + 0x7e8); }
 
 void func_804EBBCC(){}
 
@@ -138,7 +138,7 @@ void func_804EC81C(){}
 
 void func_804EC8AC(){}
 
-extern "C" u32 func_804EC9E4(void* self) { return *(u32*)((u8*)self + 0x0); }
+u32 func_804EC9E4(void* self) { return *(u32*)((u8*)self + 0x0); }
 
 void func_804EC9EC(){}
 

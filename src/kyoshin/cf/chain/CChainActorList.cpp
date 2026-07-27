@@ -13,7 +13,7 @@ namespace cf {
 
 // Initializes partial CChainChance fields to 0
 // Called from CChain constructor during chain attack chance setup
-extern "C" void func_8027C098(cf::CChainChance* self) {
+void func_8027C098(cf::CChainChance* self) {
     self->mChainCount = 0;
     self->mField08 = 0;
     self->mField0A = 0;
@@ -33,9 +33,9 @@ void func_8027BB4C(){}
 void func_8027BC14(){}
 void func_8027BE84(){}
 void func_8027BF58(){}
-extern "C" void func_8027EEF4(int);
+void func_8027EEF4(int);
 
-extern "C" void func_8027BFE0(unsigned int param) {
+void func_8027BFE0(unsigned int param) {
     if (param >= 0xBB8) {
         func_8027EEF4(0x33);
     }

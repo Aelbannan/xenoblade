@@ -19,7 +19,7 @@ void func_802435CC(){}
 void func_80243680(){}
 
 // FULL_MATCH: reads the initial-setup flag at +0x33 (set to 1 in ctor, cleared on play/close)
-extern "C" u8 func_802436C4(CMapSel* self) { return self->mFlag33; }
+u8 func_802436C4(CMapSel* self) { return self->mFlag33; }
 
 void func_802436CC(){}
 

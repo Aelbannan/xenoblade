@@ -11,7 +11,7 @@ void GetCamera__Q34nw4r3g3d7ScnRootFi(){}
 
 void GetCurrentCamera__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void SetCurrentCamera__Q34nw4r3g3d7ScnRootFi(void* self, u8 val) { ((u8*)self)[0xf4] = val; }
+void SetCurrentCamera__Q34nw4r3g3d7ScnRootFi(void* self, u8 val) { ((u8*)self)[0xf4] = val; }
 
 void GetFog__Q34nw4r3g3d7ScnRootFi(){}
 
@@ -53,7 +53,7 @@ void DrawOpa__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(){}
 
 void DrawXlu__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(){}
 
-extern "C" int CheckScnObj__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObj(void) { return 0x0; }
+int CheckScnObj__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObj(void) { return 0x0; }
 
 void Clear__Q34nw4r3g3d12ScnObjGatherFv(){}
 

@@ -24,6 +24,7 @@ struct CMenuEnemyCtorProcess {
     u32 callbacks[6]; // 0x3C / 0x48 PTMF blocks
 };
 
+void CPcSelectCursor::CPcSelectCursor(void* self);
 extern "C" {
 char lbl_eu_8052BF70[];
 char lbl_eu_8052C438[];
@@ -31,7 +32,7 @@ extern u32 __ptmf_null[3];
 void __ct__8CProcessFv(CProcess*);
 void __ct__17UnkClass_8045F564Fv(void*);
 void __dt__17UnkClass_8045F564Fv(void*, s16);
-void __ct__CPcSelectCursor(void* self);
+
 extern const f32 lbl_eu_80666FEC;
 extern const f32 lbl_eu_80667004;
 }
@@ -198,6 +199,14 @@ int func_8013BE50();
 // linker names (func_800B708C__Fi / func_800BFC68__FPQ22cf12CfObjectMove).
 extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
 
+void func_8010EE40(void* self);
+void func_80111080(CMenuEnemyState* self, u8* panelData, void* posA, void* posB);
+void func_801115E8(CMenuEnemyState* self, u8* panelData);
+void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
+void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
+void func_80112170(CMenuEnemyState* self, u8* panelData);
+void func_801127B0(CMenuEnemyState* self);
+void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor);
 extern "C" {
 // CfGameManager::func_8008585C is not declared in CfGameManager.hpp (owned
 // by other batch targets); call the mangled linker name directly instead of
@@ -220,17 +229,17 @@ int func_8013BF48();
 void func_800BBA08(void* r3);
 void func_800BBA7C(void* r3);
 int func_8013A4B4(void* a, void* b, void* c);
-void func_80111080(CMenuEnemyState* self, u8* panelData, void* posA, void* posB);
-void func_80112170(CMenuEnemyState* self, u8* panelData);
+
+
 // Retail leaves f1=vt+0x128 and f2=vt+0x12C live into these calls.
-void func_80111B08(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
-void func_80111E70(CMenuEnemyState* self, u8* panelData, f32 v128, f32 v12c);
-void func_801132A8(CMenuEnemyState* self, u8* panelData, void* actor);
-void func_801127B0(CMenuEnemyState* self);
-void func_801115E8(CMenuEnemyState* self, u8* panelData);
+
+
+
+
+
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 void* func_80496264(void* obj, int index);
-void func_8010EE40(void* self);
+
 // Retail leaves this unmangled (distinct from the FPAnimTransformf-mangled
 // overload in code_80135FDC.hpp); call via a void* so overload resolution
 // selects this one, same trick as CMenuPTGauge::Move.

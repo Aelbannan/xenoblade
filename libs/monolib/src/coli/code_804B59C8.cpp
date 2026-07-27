@@ -5,7 +5,7 @@
 
 void func_804B59C8(){}
 
-extern "C" u32 func_804B5A68(void) {
+u32 func_804B5A68(void) {
     extern u32 lbl_eu_80663AC8;
     return lbl_eu_80663AC8;
 }
@@ -16,7 +16,7 @@ void __dt__804B5A7C(){}
 
 void __dt__804B5AD0(){}
 
-extern "C" void func_804B5B34(void) {}
+void func_804B5B34(void) {}
 
 void func_804B5B38(){}
 
@@ -30,7 +30,7 @@ void func_804B5DE8(){}
 
 void func_804B5E68(){}
 
-extern "C" void func_804B61F8(void) {}
+void func_804B61F8(void) {}
 
 void func_804B61FC(){}
 
@@ -44,7 +44,7 @@ void func_804B64CC(){}
 
 void func_804B6580(){}
 
-extern "C" void func_804B6634(void) {}
+void func_804B6634(void) {}
 
 void func_804B6638(){}
 
@@ -86,14 +86,14 @@ void func_804B7944(){}
 
 void func_804B7A00(){}
 
-extern "C" void func_804B7AC8(void) {}
+void func_804B7AC8(void) {}
 
 void func_804B7ACC(){}
 
 void func_804B7B6C(){}
 
-extern "C" u32 lbl_eu_8065F1A0;
-extern "C" void func_804B7D9C(int, int bit_index) {
+u32 lbl_eu_8065F1A0;
+void func_804B7D9C(int, int bit_index) {
     if (bit_index > 0x140) bit_index = 0x140;
     int word_idx = bit_index >> 5;
     int bit_off = bit_index & 0x1F;

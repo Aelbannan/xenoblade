@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
+u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 
 
 
@@ -11,9 +11,9 @@ extern "C" u8 func_801FD17C(void* self) { return ((u8*)self)[0x30]; }
 
 
 
-extern "C" u8 func_801FD184(void* self) { return ((u8*)self)[0x31]; }
+u8 func_801FD184(void* self) { return ((u8*)self)[0x31]; }
 
-extern "C" u8 func_801FD18C(void* self) { return ((u8*)self)[0x57]; }
+u8 func_801FD18C(void* self) { return ((u8*)self)[0x57]; }
 
 
 
@@ -25,7 +25,7 @@ void func_801FD3D4(){}
 
 void func_801FD48C(){}
 
-extern "C" u32 func_801FD580(void* self) {
+u32 func_801FD580(void* self) {
     s8 val = *(s8*)((u8*)self + 0x4D);
     // Match rlwinm extraction of sign bit followed by xori
     return ((u32)(val >> 31) & 1) ^ 1;
@@ -35,9 +35,9 @@ void func_801FD594(){}
 
 void func_801FD5C4(){}
 
-extern "C" u8 func_801FD5F4(void* self) { return ((u8*)self)[0x4E]; }
+u8 func_801FD5F4(void* self) { return ((u8*)self)[0x4E]; }
 
-extern "C" u8 func_801FD5FC(void* self) { return ((u8*)self)[0x4C]; }
+u8 func_801FD5FC(void* self) { return ((u8*)self)[0x4C]; }
 
 void func_801FD604(){}
 

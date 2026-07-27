@@ -9,7 +9,7 @@ namespace detail {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void Update__Q44nw4r3snd6detail9SeqPlayerFv(void);
+void Update__Q44nw4r3snd6detail9SeqPlayerFv(void);
 extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9SeqPlayerFv(void) {
     Update__Q44nw4r3snd6detail9SeqPlayerFv();
 }

@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_801A9338(void* self) {
+void func_801A9338(void* self) {
     *(unsigned short*)((char*)self + 0x2c) = 0xFFFF;
 }
 
@@ -33,7 +33,7 @@ void func_801AAC78(){}
 
 void func_801AACA8(){}
 
-extern "C" void func_801AACBC(void *r3, void *r4) {
+void func_801AACBC(void *r3, void *r4) {
     extern unsigned char lbl_eu_80664330;
     unsigned int *p = (unsigned int *)&lbl_eu_80664330;
     if (!*p) return;

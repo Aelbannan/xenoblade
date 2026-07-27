@@ -6,11 +6,11 @@ struct CfCollCapsuleImpl_Col {
 };
 
 // cf::CfDebugDrawManager::renderCapsule(Vec3* start, Vec3* end, float* color, float radius)
-extern "C" void renderCapsule__Q22cf18CfDebugDrawManagerFv(
+void renderCapsule__Q22cf18CfDebugDrawManagerFv(
     const ml::CVec3* start, const ml::CVec3* end, const float* color, float radius);
 
 // Collision query helper: process capsule against collision context.
-extern "C" void func_800A4C48(void* query, const ml::CVec3* start,
+void func_800A4C48(void* query, const ml::CVec3* start,
                                const ml::CVec3* end, float radius);
 
 // Render the capsule for debug visualization.

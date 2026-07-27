@@ -11,11 +11,11 @@ void cf::CfObjectMap::func_800B9B78() {}
 
 void func_800B9C14(){}
 
-extern "C" void func_800B9C64__Q22cf11CfObjectMapFv(void* self) {
+void func_800B9C64__Q22cf11CfObjectMapFv(void* self) {
     *(unsigned short*)((char*)self + 0x8e) = 0;
 }
 
-extern "C" void func_800B9C70() {}
+void func_800B9C70() {}
 
 void func_800B9C74(){}
 

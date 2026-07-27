@@ -17,9 +17,9 @@ void realtimeEventStart(){}
 
 void realtimeEventPlay(){}
 
-extern "C" void func_80086490__Q22cf13CfGameManagerFv();
+void func_80086490__Q22cf13CfGameManagerFv();
 
-extern "C" int realtimeEventEnd(VMThread* pThread) {
+int realtimeEventEnd(VMThread* pThread) {
     func_80086490__Q22cf13CfGameManagerFv();
     return 0;
 }
@@ -38,10 +38,10 @@ void fadeWait(){}
 
 void checkEvent(){}
 
-extern "C" {
+{
 extern u32 lbl_eu_80663E28;
 }
-extern "C" int clearEventSkip() {
+int clearEventSkip() {
     lbl_eu_80663E28 &= ~0x100000;
     return 0;
 }
@@ -50,7 +50,7 @@ void isEvent(){}
 
 void isTalkEvent(){}
 
-extern "C" void isVisionEvent() {}
+void isVisionEvent(){}
 
 extern "C" void pluginEveRegist() {
     extern void vmPluginRegist(void*, void*);

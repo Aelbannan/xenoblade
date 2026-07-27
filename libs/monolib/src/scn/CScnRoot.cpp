@@ -14,15 +14,15 @@ void __dt__8CScnRootFv(void* self, int deleteFlag);
 // Allocates and constructs a CScnRootNw4r.
 void* func_8048ED80(void* self, u32 allocTag, void* param);
 // --- FULL_MATCH virtual callback stubs ---
-// These are extern "C" C-linkage functions referenced from the CScnRoot vtable.
+// These are C-linkage functions referenced from the CScnRoot vtable.
 // They unconditionally return -1 (no-op stubs for unused virtual slots).
 
-extern "C" int func_8048EDD0()
+int func_8048EDD0()
 {
     return -1;
 }
 
-extern "C" int func_8048EDD8()
+int func_8048EDD8()
 {
     return -1;
 }

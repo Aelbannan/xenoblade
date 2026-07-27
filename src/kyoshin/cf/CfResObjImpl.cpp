@@ -3,11 +3,12 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CfResObjImpl.hpp"
 void __ct__cf_CfResObjImpl(){}
 
 void func_8016C860(){}
 
-extern "C" int func_8016C880(void* self) { return 128; }
+int func_8016C880(void* self) { return 128; }
 
 void func_8016C888(){}
 
@@ -17,7 +18,7 @@ void func_8016C98C(){}
 
 void func_8016CCBC(){}
 
-extern "C" void func_8016CCDC(void) {}
+void func_8016CCDC(void) {}
 
 void func_8016CCE0(){}
 

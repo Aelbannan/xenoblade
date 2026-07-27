@@ -4,7 +4,7 @@
 #include <harness_catalog.h>
 
 extern u32 lbl_eu_80665968;
-extern "C" int func_804BC9EC__Fv(void* self) { return (int)(intptr_t)&lbl_eu_80665968; }
+int func_804BC9EC__Fv(void* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 
 void func_804BC9F4__FPvUl(){}
 

@@ -9,3 +9,11 @@
 // Forward declaration for the CREvtModel class (namespace: global/<unnamed>)
 // Retail symbol prefix: __ct__10CREvtModelF...
 struct CREvtModel;
+
+class CREvtModel {
+public:
+    CREvtModel();
+
+    // TODO: add fields
+};
+

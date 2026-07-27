@@ -40,7 +40,7 @@ bool cf::CActorParam::CActorParam_UnkVirtualFunc37() { return false; }
 
 void func_8003C480(){}
 
-extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, void* src) {
+void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);
@@ -73,7 +73,7 @@ void func_8003C84C(){}
 
 void cf::CfObject::CfObject_UnkVirtualFunc26() {}
 
-extern "C" void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv(void* self, void* src) {
+void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);
@@ -88,7 +88,7 @@ void dispOff(){}
 
 void cf::CObjectState::CObjectState_UnkVirtualFunc8() {}
 
-extern "C" int CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv(void* self, int mask) {
+int CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv(void* self, int mask) {
     return (*(int*)((char*)self + 4) & mask) != 0 ? 1 : 0;
 }
 
@@ -98,7 +98,7 @@ void func_8003CC0C(){}
 
 void func_8003CC9C(){}
 
-extern "C" void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv() {}
+void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv() {}
 
 void func_8003CD6C(){}
 
@@ -138,15 +138,15 @@ void func_8003D9C4(){}
 
 void winTalk(){}
 
-extern "C" void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv(void* self, unsigned long bits) {
+void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv(void* self, unsigned long bits) {
     *(unsigned long*)((char*)self + 4) |= bits;
 }
 
-extern "C" void CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
+void CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
 
 void func_8003DC7C(){}
 
-extern "C" void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv(void* self, unsigned long mask) {
+void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv(void* self, unsigned long mask) {
     *(unsigned long*)((char*)self + 4) &= ~mask;
 }
 
@@ -162,9 +162,9 @@ void func_8003DFE4(){}
 
 void lookAt(){}
 
-extern "C" void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { ((u8*)self)[0xBD] = val; }
+void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { ((u8*)self)[0xBD] = val; }
 
-extern "C" void turn() {}
+void turn(){}
 
 void func_8003E478(){}
 
@@ -172,7 +172,7 @@ void func_8003E4D0(){}
 
 void func_8003E528(){}
 
-extern "C" u32 CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
+u32 CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
 
 void func_8003E66C(){}
 
@@ -206,7 +206,7 @@ void func_8003EEE0(){}
 
 void setRot(){}
 
-extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv(void* self, void* src) {
+void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);
@@ -217,7 +217,7 @@ extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv(void* self, void* sr
 
 void gravity(){}
 
-extern "C" void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv(void* self, int flag) {
+void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv(void* self, int flag) {
     u32* field = (u32*)((char*)self + 0x68);
     if (flag) {
         *field |= 0x01000000;

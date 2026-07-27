@@ -34,7 +34,7 @@ void CMCEffStart::func_80223E40() {
     }
 }
 
-extern "C" void func_80223E9C(CMCEffStart* obj, nw4r::lyt::DrawInfo* drawInfo) {
+void func_80223E9C(CMCEffStart* obj, nw4r::lyt::DrawInfo* drawInfo) {
     if (!obj->unk14) return;
     func_80137038(obj->mLayout, drawInfo, 0, 1);
 }
@@ -269,7 +269,7 @@ void CMCEffSuccess::func_80224880() {
     }
 }
 
-extern "C" u8 func_802248E0(void* self) {
+u8 func_802248E0(void* self) {
     return *(u8*)((u8*)self + 5);
 }
 
@@ -361,7 +361,7 @@ CMCEffCrystal::CMCEffCrystal(nw4r::lyt::ArcResourceAccessor* pArcResourceAccesso
 
 CMCEffCrystal::~CMCEffCrystal() {}
 
-void CMCEffCrystal::func_80224CE4() {
+void CMCEffCrystal::func_80224CE4(){
     func_80136E84(&mLayoutC, mArcResourceAccessor, "mf10_cry02_trc.brlyt");
     func_80136F08(mLayoutC, &mAnimTrans10, mArcResourceAccessor, "mf10_cry02_trc_in.brlan");
     func_80136F08(mLayoutC, &mAnimTrans14, mArcResourceAccessor, "mf10_cry02_trc_out.brlan");

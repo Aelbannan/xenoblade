@@ -39,7 +39,7 @@ void func_8029BE7C(){}
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuOptionFv
  */
-extern "C" void func_8029BECC(IScnRender* self) {
+void func_8029BECC(IScnRender* self) {
     ((void(*)(CMenuOption*))cbRenderBefore__11CMenuOptionFv)(
         (CMenuOption*)((uintptr_t)self - 0x58));
 }
@@ -54,7 +54,7 @@ extern "C" void func_8029BECC(IScnRender* self) {
  *
  * Retail: subi r3, r3, 0x58; b __dt__11CMenuOptionFv
  */
-extern "C" void func_8029BED4(IScnRender* self) {
+void func_8029BED4(IScnRender* self){
     ((void(*)(CMenuOption*))__dt__11CMenuOptionFv)(
         (CMenuOption*)((uintptr_t)self - 0x58));
 }

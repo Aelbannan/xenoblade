@@ -18,7 +18,7 @@ void CMenuKizunagram::cbRenderBefore() {}
 
 void func_8025728C(){}
 
-extern "C" void stub_us_80259544() {}
+void stub_us_80259544() {}
 
 void func_80257318(){}
 
@@ -51,7 +51,7 @@ void __dt__15CMenuKizunagramFv(CMenuKizunagram* self, int deletionFlag);
 // 'this' points to the IScnRender subobject at offset +0x58 within
 // CMenuKizunagram. This thunk adjusts it back and tail-calls the
 // real implementation.
-extern "C" void func_80257A7C(IScnRender* self) {
+void func_80257A7C(IScnRender* self) {
     ((void(*)(CMenuKizunagram*))cbRenderBefore__15CMenuKizunagramFv)(
         reinterpret_cast<CMenuKizunagram*>(
             reinterpret_cast<uintptr_t>(self) - 0x58));
@@ -61,7 +61,7 @@ extern "C" void func_80257A7C(IScnRender* self) {
 // Same pointer adjustment as func_80257A7C. r4 (deletion flag)
 // is passed through from the IScnRender vtable caller unchanged.
 // The single-arg function pointer cast avoids MWCC zeroing r4.
-extern "C" void func_80257A84(IScnRender* self) {
+void func_80257A84(IScnRender* self) {
     ((void(*)(CMenuKizunagram*))__dt__15CMenuKizunagramFv)(
         reinterpret_cast<CMenuKizunagram*>(
             reinterpret_cast<uintptr_t>(self) - 0x58));

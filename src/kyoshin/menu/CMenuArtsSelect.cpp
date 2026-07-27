@@ -13,6 +13,21 @@
 #include "decomp.h"
 #include <revolution/GX.h>
 
+void func_80104454(CMenuArtsSelect* self);
+void func_80105A34(CMenuArtsSelect* self);
+void func_80105D54(CMenuArtsSelect* self);
+void func_80106450(CMenuArtsSelect* self);
+void func_801065E4(CMenuArtsSelect* self);
+void func_80106900(CMenuArtsSelect* self);
+void func_80106C30(CMenuArtsSelect* self, s32 index);
+void func_80106EC8(CMenuArtsSelect* self, s32 index);
+void func_801071B8(CMenuArtsSelect* self, s32 index);
+void func_801072E0(CMenuArtsSelect* self);
+void func_80107580(CMenuArtsSelect* self);
+int func_80107970(CMenuArtsSelect* self, s32 index);
+int func_80107C54(CMenuArtsSelect* self, s32 index);
+void func_801080F8(CMenuArtsSelect* self);
+void func_80108994(CMenuArtsSelect*);
 extern "C" {
 void* func_80110A70();
 void* func_8010CE48();
@@ -32,7 +47,7 @@ int func_80122448();
 
 void* getInstance__11CSysWinBuffFv();
 u8 func_8013BEB8();
-void func_801080F8(CMenuArtsSelect* self);
+
 int func_8012FA5C();
 void func_80138078(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
@@ -43,19 +58,19 @@ void* func_80153DB0(void* obj, s32 index);
 int func_8010EDD4(void*);
 int func_8010A840(void*);
 
-void func_80104454(CMenuArtsSelect* self);
-void func_80105A34(CMenuArtsSelect* self);
-void func_80105D54(CMenuArtsSelect* self);
-void func_80106450(CMenuArtsSelect* self);
-void func_801065E4(CMenuArtsSelect* self);
-void func_80106900(CMenuArtsSelect* self);
-void func_80106C30(CMenuArtsSelect* self, s32 index);
-void func_80106EC8(CMenuArtsSelect* self, s32 index);
-void func_801071B8(CMenuArtsSelect* self, s32 index);
-void func_801072E0(CMenuArtsSelect* self);
-void func_80107580(CMenuArtsSelect* self);
-int func_80107970(CMenuArtsSelect* self, s32 index);
-int func_80107C54(CMenuArtsSelect* self, s32 index);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 extern char lbl_eu_804FD1E0[];
 extern u8 lbl_eu_804FD0D0[];
@@ -65,7 +80,7 @@ u32 getAllocHandle__10CLibLayoutFv();
 void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 void __ct__CTagProcessor(void*);
 void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-void func_80108994(CMenuArtsSelect*);
+
 void func_80139198(u32);
 u32 func_801392C0();
 extern const f32 lbl_eu_80666F28; // 0.0f

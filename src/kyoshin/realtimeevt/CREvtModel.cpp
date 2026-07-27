@@ -20,7 +20,7 @@ void func_801728F8(){}
 
 void func_8017298C(){}
 
-extern "C" int func_801729D0(char* p)
+int func_801729D0(char* p)
 {
     char* q = *(char**)(p + 0x1c);
     if (q == 0) {
@@ -33,7 +33,7 @@ void func_801729F0(){}
 
 // Trivial no-op placeholder. The retail function is a bare blr — no
 // initialization or side effects are required at this stub stage.
-extern "C" void func_80172CC0(void) {}
+void func_80172CC0(void) {}
 
 void func_80172CC4(){}
 

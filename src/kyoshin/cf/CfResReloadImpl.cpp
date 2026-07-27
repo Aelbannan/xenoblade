@@ -5,7 +5,7 @@
 
 void __ct__cf_CfResReloadImpl(){}
 
-extern "C" int func_8016CE3C(void* arg) {
+int func_8016CE3C(void* arg) {
     unsigned int v = *(unsigned short*)((char*)arg + 8);
     return (int)(((v | 0xFFFFFFFCu) - ((v - 3u) >> 1)) >> 31);
 }
@@ -13,7 +13,7 @@ extern "C" int func_8016CE3C(void* arg) {
 void func_8016CE5C(){}
 
 // FULL_MATCH: vtable slot 6 - returns constant resource type identifier
-extern "C" int func_8016CF1C() { return 12; }
+int func_8016CF1C() { return 12; }
 
 void func_8016CF24(){}
 
@@ -50,24 +50,24 @@ void func_8016DE68(){}
 void func_8016DE8C(){}
 
 // FULL_MATCH: vtable slot 23 - returns constant resource sub-type
-extern "C" int func_8016DECC() { return 1; }
+int func_8016DECC() { return 1; }
 
-extern "C" void func_8016DED4(void* thisPtr, int index, unsigned int value) {
+void func_8016DED4(void* thisPtr, int index, unsigned int value) {
     if (index < 2) {
         ((unsigned int*)((char*)thisPtr + 0x14))[index] = value;
     }
 }
 
-extern "C" void* __dt__Q22cf15CfResReloadImplFv(void* this_, int deletingFlag) { if (this_ && deletingFlag > 0) ::operator delete(this_); return this_; }
+void* __dt__Q22cf15CfResReloadImplFv(void* this_, int deletingFlag) { if (this_ && deletingFlag > 0) ::operator delete(this_); return this_; }
 
 extern u16 lbl_eu_80664278;
-extern "C" u16 func_8016DF2C() { return lbl_eu_80664278; }
+u16 func_8016DF2C() { return lbl_eu_80664278; }
 
-extern "C" float lbl_eu_806676B0;
-extern "C" float lbl_eu_80666210;
-extern "C" float lbl_eu_80664284;
+float lbl_eu_806676B0;
+float lbl_eu_80666210;
+float lbl_eu_80664284;
 
-extern "C" void func_8016DF34(short param_1)
+void func_8016DF34(short param_1)
 {
     lbl_eu_80664278 = param_1;
     lbl_eu_80664284 = lbl_eu_806676B0 * lbl_eu_80666210;
@@ -76,16 +76,16 @@ extern "C" void func_8016DF34(short param_1)
 void func_8016DF4C(){}
 
 extern u16 lbl_eu_80664280;
-extern "C" u16 func_8016E08C() { return lbl_eu_80664280; }
+u16 func_8016E08C() { return lbl_eu_80664280; }
 
 extern u16 lbl_eu_8066427E;
-extern "C" u16 func_8016E094() { return lbl_eu_8066427E; }
+u16 func_8016E094() { return lbl_eu_8066427E; }
 
-extern "C" unsigned short lbl_eu_8066427A;
-extern "C" unsigned short lbl_eu_8066427C;
-extern "C" void* memset(void*, int, unsigned long);
+unsigned short lbl_eu_8066427A;
+unsigned short lbl_eu_8066427C;
+void* memset(void*, int, unsigned long);
 
-extern "C" void func_8016E09C(void* self) {
+void func_8016E09C(void* self) {
     unsigned char* p = static_cast<unsigned char*>(self);
     memset(self, 0, 0x10);
     *reinterpret_cast<float*>(p + 0x0) = lbl_eu_80664284;
@@ -100,7 +100,7 @@ void func_8016E100(){}
 
 void func_8016E13C(){}
 
-extern "C" void func_8016E164(u16 r3, u16 r4) {
+void func_8016E164(u16 r3, u16 r4) {
     extern u16 lbl_eu_8066427A;
     extern u16 lbl_eu_8066427C;
     extern u16 lbl_eu_80664288;

@@ -16,13 +16,13 @@ float CfObjectActor::CfObjectActor_UnkVirtualFunc6() {
 }
 
 // Forward declarations for thunks
-extern "C" void __dt__Q22cf13CfObjectActorFv(void* self);
-extern "C" void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
+void __dt__Q22cf13CfObjectActorFv(void* self);
+void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc5() {}
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc8() {}
 void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc9() {}
-extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg) {
+void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg) {
     void* p = *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 0x3f60);
     if (p != 0) {
         *reinterpret_cast<void**>(reinterpret_cast<char*>(p) + 0x37c) = arg;

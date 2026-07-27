@@ -5,7 +5,7 @@
 
 /* Returns whether the shop window has finished loading resources
    and is ready for interaction. (C-linkage: func_8022C8D0) */
-extern "C" u8 func_8022C8D0(CSelShopWin* self) {
+u8 func_8022C8D0(CSelShopWin* self) {
     return self->mIsLoaded;
 }
 

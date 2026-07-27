@@ -12,7 +12,7 @@ void func_802A5934(){}
 
 void func_802A598C(){}
 
-extern "C" int func_802A5A0C(cf::CVS_THREAD_CHAIN* self) { return 1; }
+int func_802A5A0C(cf::CVS_THREAD_CHAIN* self) { return 1; }
 
 void func_802A5A14(){}
 

@@ -18,7 +18,7 @@
 // to initialize a BSS array of 32 objects (0x24 bytes each) at lbl_eu_8065F428.
 // Since BSS provides zero-initialization, runtime construction is a no-op.
 // ---------------------------------------------------------------------------
-extern "C" void func_804BF59C(void) {}
+void func_804BF59C(void) {}
 
 void __ct__804BF5A0(){}
 
@@ -35,7 +35,7 @@ void func_804BF8A8(){}
 // Currently a no-op in the base implementation; likely overridden in derived
 // classes for post-processing after light parameter updates.
 // ---------------------------------------------------------------------------
-extern "C" void func_804BF940(void) {}
+void func_804BF940(void) {}
 
 void func_804BF944(){}
 

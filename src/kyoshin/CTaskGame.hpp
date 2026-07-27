@@ -121,4 +121,5 @@ protected:
     CTaskGame();
     void cbRenderBefore();
     void OnFileEvent();
+    void Draw();
 };

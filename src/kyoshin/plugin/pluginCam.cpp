@@ -11,19 +11,19 @@ void setPos(){}
 
 void setLookat(){}
 
-extern "C" void func_800605D0() {}
+void func_800605D0() {}
 
 void setDir(){}
 
-extern "C" void func_800606AC() {}
+void func_800606AC() {}
 
 void setRotX(){}
 
-extern "C" void func_80060738() {}
+void func_80060738() {}
 
 void setRotY(){}
 
-extern "C" void func_800607C4() {}
+void func_800607C4() {}
 
 void setFov(){}
 
@@ -31,11 +31,11 @@ void setTarget(){}
 
 void setPosOfs(){}
 
-extern "C" void func_80060A08() {}
+void func_80060A08() {}
 
 void setLookatOfs(){}
 
-extern "C" void func_80060B84() {}
+void func_80060B84() {}
 
 void getPos(){}
 

@@ -5,11 +5,11 @@
 
 cf::CfObjectEff::CfObjectEff() {}
 
-extern "C" void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
+void CfObject_UnkVirtualFunc3__Q22cf8CfObjectFv() {}
 
 void cf::CfObject::~CfObject() {}
 
-extern "C" void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv() {}
+void CfObject_UnkVirtualFunc6__Q22cf8CfObjectFv() {}
 
 void cf::CfObjectEff::func_800AC7CC() {}
 
@@ -19,7 +19,7 @@ void cf::CfObjectEff::func_800AC810() {}
 
 void cf::CfObjectEff::func_800AC86C() {}
 
-extern "C" void CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv() {}
+void CfObjectModel_UnkVirtualFunc18__Q22cf13CfObjectModelFv() {}
 
 void cf::CfObjectEff::func_800AC990() {}
 
@@ -33,7 +33,7 @@ void cf::CfObjectEff::func_800ACBA4() {}
 
 void cf::CfObjectEff::func_800ACBCC() {}
 
-extern "C" void func_800ACC14(void* self, unsigned char val) {
+void func_800ACC14(void* self, unsigned char val) {
     void* ptr = *(void**)((char*)self + 0x94);
     if (ptr != nullptr)
         *(unsigned char*)((char*)ptr + 0x59) = val;
@@ -45,7 +45,7 @@ void cf::CfObjectEff::func_800ACC3C() {}
 
 void func_800ACC50(){}
 
-extern "C" void func_800ACC64(void* obj, const void* src) {
+void func_800ACC64(void* obj, const void* src) {
     void* dest = *(void**)((unsigned char*)obj + 0x94);
     if (dest == 0) return;
     unsigned int* d = (unsigned int*)((unsigned char*)dest + 0x40);
@@ -80,7 +80,7 @@ void cf::CfObjectEff::func_800ACDE0() {}
 
 void cf::CfObjectEff::func_800ACDFC() {}
 
-extern "C" float func_800ACE44__Q22cf11CfObjectEffFv(void* self) {
+float func_800ACE44__Q22cf11CfObjectEffFv(void* self) {
     char* p = *(char**)((char*)self + 0x94);
     if (p != 0) {
         return *(float*)(p + 0x2c);
@@ -94,7 +94,7 @@ void cf::CfObjectEff::func_800ACE78() {}
 
 void cf::CfObjectEff::func_800ACEAC() {}
 
-extern "C" void func_800ACEF8(void* obj, const void* src) {
+void func_800ACEF8(void* obj, const void* src) {
     if (*(unsigned short*)((unsigned int)obj + 0xa4) & 0x4) return;
     void* ptr = *(void**)((unsigned int)obj + 0x94);
     if (ptr != 0) {
@@ -108,7 +108,7 @@ extern "C" void func_800ACEF8(void* obj, const void* src) {
     *(float*)((unsigned int)obj + 0x60) = f;
 }
 
-extern "C" float func_800ACF34__Q22cf11CfObjectEffFv(char* self) {
+float func_800ACF34__Q22cf11CfObjectEffFv(char* self) {
     char* unk = *(char**)(self + 0x94);
     if (unk != 0) {
         return *(float*)(unk + 0x38);
@@ -122,7 +122,7 @@ void func_800ACF78(){}
 
 void func_800ACFD8(){}
 
-extern "C" void func_800AD040(char* obj, int flag) {
+void func_800AD040(char* obj, int flag) {
     char* child = *(char**)(obj + 0x94);
     if (child == 0) {
         return;
@@ -132,7 +132,7 @@ extern "C" void func_800AD040(char* obj, int flag) {
 
 void func_800AD060(){}
 
-extern "C" void func_800AD378(void* obj) {
+void func_800AD378(void* obj) {
     unsigned short count = *(unsigned short*)((char*)obj + 0xA6);
     if (count == 0) return;
     count--;
@@ -171,8 +171,8 @@ void cf::CfObjectEff::func_800AD840() {
     func(this);
 }
 
-extern "C" void func_800AD850__Q22cf11CfObjectEffFv(void* self) { ((void(*)(void*))func_800AD68C__Q22cf11CfObjectEffFv)((char*)self - 0x90); }
+void func_800AD850__Q22cf11CfObjectEffFv(void* self) { ((void(*)(void*))func_800AD68C__Q22cf11CfObjectEffFv)((char*)self - 0x90); }
 
-extern "C" void func_800AD858__Q22cf11CfObjectEffFv(void* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEffFv)((char*)self - 0x90); }
+void func_800AD858__Q22cf11CfObjectEffFv(void* self) { ((void(*)(void*))__dt__Q22cf11CfObjectEffFv)((char*)self - 0x90); }
 
 void func_800AD860__FPv(){}

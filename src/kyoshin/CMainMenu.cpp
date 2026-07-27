@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 void __dt__9CMainMenuFv();
-extern "C" u32 func_800FEDF8(void) {
+u32 func_800FEDF8(void) {
     extern u32 lbl_eu_80663F18;
     return lbl_eu_80663F18;
 }
@@ -46,11 +46,11 @@ void func_80101A88(){}
 
 void func_80101BF8(){}
 
-extern "C" void OnFileEvent__9CMainMenuFP10CEventFile(void* self) { ((void(*)(void*))__ct__800FF300)((char*)self - 0x58); }
+void OnFileEvent__9CMainMenuFP10CEventFile(void* self) { ((void(*)(void*))__ct__800FF300)((char*)self - 0x58); }
 
 void func_80102008(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x58); }
 
-extern "C" void func_80102010(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((char*)self - 0x5c); }
+void func_80102010(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((char*)self - 0x5c); }
 
 extern "C" void func_80102018(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x5c); }
 

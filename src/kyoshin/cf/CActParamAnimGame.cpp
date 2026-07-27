@@ -27,8 +27,8 @@ void cf::CActParamAnimGame::func_8005D67C() {}
 
 void cf::CActParamAnimGame::func_8005D6C0() {}
 
-extern "C" bool func_8004ECF4__13CActParamAnimFv(void* self);
-extern "C" bool func_8005D70C__Q22cf17CActParamAnimGame(void* self) {
+bool func_8004ECF4__13CActParamAnimFv(void* self);
+bool func_8005D70C__Q22cf17CActParamAnimGame(void* self) {
     if (*(unsigned int*)((unsigned char*)self + 0x4ec) & 2) {
         return false;
     }
@@ -45,8 +45,8 @@ void cf::CActParamAnimGame::func_8005D99C() {}
 
 void cf::CActParamAnimGame::func_8005DA44() {}
 
-extern "C" void func_8004BC94(void*);
-extern "C" bool func_8005DAE4__Q22cf17CActParamAnimGame(void* self) {
+void func_8004BC94(void*);
+bool func_8005DAE4__Q22cf17CActParamAnimGame(void* self) {
     if (*(unsigned int*)((unsigned char*)self + 0x4ec) & 0x00040000) {
         func_8004BC94(self);
         return true;
@@ -61,8 +61,8 @@ bool cf::CActorParam::CActorParam_UnkVirtualFunc38() { return false; }
 void cf::CActParamAnimGame::func_8005DC30() {}
 
 // cf::CActParamAnimGame::func_8005DCA0 — trivial leaf, returns false
-// Retail symbol lacks Fv suffix; extern "C" preserves exact mangling for FULL_MATCH
-extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
+// Retail symbol lacks Fv suffix; preserves exact mangling for FULL_MATCH
+bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 
 void cf::CActParamAnimGame::func_8005DCA8() {}
 

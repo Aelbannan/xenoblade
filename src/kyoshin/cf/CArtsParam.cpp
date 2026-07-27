@@ -1,5 +1,6 @@
 #include "kyoshin/cf/CArtsSet.hpp"
 
+#include "kyoshin/cf/CArtsParam.hpp"
 namespace cf {
     CArtsParam lbl_80577580;
 
@@ -34,10 +35,10 @@ u8 CArtsParam::CArtsParam_UnkVirtualFunc2(){
 }
 
 void func_8015403C(){}
-extern "C" float func_80154058(void* this_) { unsigned short raw = *(const unsigned short*)((const unsigned char*)this_ + 0x5a); int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; extern const float lbl_eu_80501978[]; return lbl_eu_80501978[value]; }
+float func_80154058(void* this_) { unsigned short raw = *(const unsigned short*)((const unsigned char*)this_ + 0x5a); int value = raw; if (value < 0) value = 0; else if (value > 4) value = 4; extern const float lbl_eu_80501978[]; return lbl_eu_80501978[value]; }
 void func_8015408C(){}
-extern "C" const float lbl_eu_805019C0[];
-extern "C" float func_80154134(const void* self) {
+const float lbl_eu_805019C0[];
+float func_80154134(const void* self) {
     int index = *reinterpret_cast<const unsigned short*>(reinterpret_cast<const unsigned char*>(self) + 0x5a);
     if (index < 0)
         index = 0;
@@ -45,8 +46,8 @@ extern "C" float func_80154134(const void* self) {
         index = 5;
     return lbl_eu_805019C0[index];
 }
-extern "C" int func_80154168(const void* self) { const unsigned short value = *reinterpret_cast<const unsigned short*>(static_cast<const unsigned char*>(self) + 0x5c); return value == 3 || value == 4 || value == 11; }
-extern "C" bool func_8015419C(void* self) {
+int func_80154168(const void* self) { const unsigned short value = *reinterpret_cast<const unsigned short*>(static_cast<const unsigned char*>(self) + 0x5c); return value == 3 || value == 4 || value == 11; }
+bool func_8015419C(void* self) {
     return *(unsigned short*)((char*)self + 0x5C) == 11;
 }
 

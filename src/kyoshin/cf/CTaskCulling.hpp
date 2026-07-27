@@ -54,5 +54,17 @@ namespace cf{
         static ml::CVec4 lbl_80579018_28;
 
         static CTaskCulling* spInstance;
+    void @88@cbRenderBefore();
+    void @92@ICulling_UnkVirtualFunc3();
+    void @92@ICulling_UnkVirtualFunc2();
+    void @92@ICulling_UnkVirtualFunc1() const;
     };
 } //namespace  cf
+
+class ICulling {
+public:
+    virtual ~ICulling();
+
+    // TODO: add fields
+};
+

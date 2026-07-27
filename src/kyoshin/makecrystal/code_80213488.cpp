@@ -5,7 +5,7 @@
 
 void func_80213488(){}
 
-extern "C" void func_8021351C(void* dst, const void* src) {
+void func_8021351C(void* dst, const void* src) {
     *(short*)dst = *(short*)src;
     ((unsigned char*)dst)[2] = ((unsigned char*)src)[2];
 }
@@ -14,7 +14,7 @@ void __dt__80213530(){}
 
 void func_80213570(){}
 
-extern "C" void func_802136E0(char* self, int idx, unsigned char val)
+void func_802136E0(char* self, int idx, unsigned char val)
 {
     int adj = idx + ((signed char)(self[0x1004])) * 30;
     adj &= 0xFFFF;
@@ -25,7 +25,7 @@ extern "C" void func_802136E0(char* self, int idx, unsigned char val)
 
 void func_80213710(){}
 
-extern "C" int func_80213748(void* this_ptr) {
+int func_80213748(void* this_ptr) {
     struct Layout {
         struct Element {
             char pad[2];
@@ -47,7 +47,7 @@ extern "C" int func_80213748(void* this_ptr) {
 
 void func_80213788(){}
 
-extern "C" void func_802137B4(void* self) {
+void func_802137B4(void* self) {
     unsigned char* base = (unsigned char*)self;
     signed char val = (signed char)(base[0x1004] - 1);
     base[0x1004] = (unsigned char)val;

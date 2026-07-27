@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
+void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
 
 
 void func_802956A4(void){}
@@ -18,7 +18,7 @@ extern "C" void cbRenderBefore__12CTaskGameEvtFv(void* self) {}
 extern "C" int func_80295764(void* self) { return 0; }
 
 
-extern "C" void Draw__12CTaskGameEvtFv() {}
+
 
 
 void func_80295870(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }

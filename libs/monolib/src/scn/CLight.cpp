@@ -19,7 +19,7 @@ CLight::CLight(){
 void func_804C02E4(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-extern "C" void func_804C0398(CLight* self, int lightObjPtr) {
+void func_804C0398(CLight* self, int lightObjPtr) {
     self->mpLightObj = (nw4r::g3d::LightObj*)lightObjPtr;
 }
 void func_804C03A0(void* self, int value){
@@ -39,7 +39,7 @@ void func_804C07F0(void* self, int value){
 }
 // Toggles a light-enable flag (bit 16 of mFlags) and propagates it
 // to the GX LightObj's enable bit (bit 2 of its internal flag).
-extern "C" void func_804C08C8(CLight* self, int enable) {
+void func_804C08C8(CLight* self, int enable) {
     if (enable)
         self->mFlags |= 0x10000;
     else
@@ -50,7 +50,7 @@ extern "C" void func_804C08C8(CLight* self, int enable) {
     else
         self->mpLightObj->Disable();
 }
-extern "C" void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn) {
+void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn) {
     self->mpLightObj->InitLightSpot(cutoff, spotFn);
 }
 void func_804C0928(){}

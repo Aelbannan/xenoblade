@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuVision.hpp"
 void __ct__CMenuVision(){}
 
 void CMenuVision::~CMenuVision() {}
@@ -36,11 +37,11 @@ void func_801AF934(){}
 
 void func_801AFAD0(){}
 
-extern "C" void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
+void func_801AFE04(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x58); }
 
-extern "C" void func_801AFE0C(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuVisionFv)((char*)self - 0x5c); }
+void func_801AFE0C(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuVisionFv)((char*)self - 0x5c); }
 
-extern "C" void func_801AFE14(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x5c); }
+void func_801AFE14(void* self) { ((void(*)(void*))__dt__11CMenuVisionFv)((char*)self - 0x5c); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_801AFCE8(){}

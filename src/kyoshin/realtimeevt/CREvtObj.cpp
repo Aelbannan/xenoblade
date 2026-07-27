@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/realtimeevt/CREvtObj.hpp"
 void __ct__cf_CREvtObj(){}
 
 void cf::CREvtObj::~CREvtObj() {}

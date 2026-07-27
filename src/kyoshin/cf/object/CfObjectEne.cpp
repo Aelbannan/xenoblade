@@ -16,19 +16,19 @@ void cf::CfObjectEne::func_800ADBD4() {}
 
 void cf::CfObjectEne::func_800ADDA8() {}
 
-extern "C" void CActorParam_UnkVirtualFunc20__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15E4) = val; }
+void CActorParam_UnkVirtualFunc20__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15E4) = val; }
 
-extern "C" void CActorParam_UnkVirtualFunc18__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15EC) = val; }
+void CActorParam_UnkVirtualFunc18__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x15EC) = val; }
 
-extern "C" void CfObject_UnkVirtualFunc59__Q22cf12CfObjectMoveFv(void* self, float val) { *(float*)((u8*)self + 0x6ec) = val; }
+void CfObject_UnkVirtualFunc59__Q22cf12CfObjectMoveFv(void* self, float val) { *(float*)((u8*)self + 0x6ec) = val; }
 
-extern "C" void CActorParam_UnkVirtualFunc112__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x161C) = val; }
+void CActorParam_UnkVirtualFunc112__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x161C) = val; }
 
-extern "C" void CActorParam_UnkVirtualFunc114__Q22cf11CActorParamFv(void* self, u8 val) { ((u8*)self)[0x1628] = val; }
+void CActorParam_UnkVirtualFunc114__Q22cf11CActorParamFv(void* self, u8 val) { ((u8*)self)[0x1628] = val; }
 
-extern "C" void CActorParam_UnkVirtualFunc118__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1624) = val; }
+void CActorParam_UnkVirtualFunc118__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1624) = val; }
 
-extern "C" void CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1630) = val; }
+void CActorParam_UnkVirtualFunc168__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1630) = val; }
 
 void cf::CActorParam::CActorParam_UnkVirtualFunc98() {}
 
@@ -44,9 +44,9 @@ void func_800AF82C(){}
 
 void func_800AF870(){}
 
-extern "C" int CfObjectActor_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void* self) { return 1; }
+int CfObjectActor_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void* self) { return 1; }
 
-extern "C" void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
+void CActorParam_UnkVirtualFunc3__Q22cf13CfObjectActorFv(void) {}
 
 extern "C" void CActorParam_UnkVirtualFunc2__Q22cf13CfObjectActorFv(void) {}
 

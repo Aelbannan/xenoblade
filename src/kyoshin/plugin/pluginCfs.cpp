@@ -6,7 +6,7 @@
 
 void setMapJumpArea(){}
 
-extern "C" void func_80047814__Q22cf13CfObjectPointFv(void* self, void* src) {
+void func_80047814__Q22cf13CfObjectPointFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);
@@ -41,7 +41,7 @@ void changeWalker(){}
 
 void eventStart(){}
 
-extern "C" unsigned long battleEventStart() {
+unsigned long battleEventStart() {
     extern unsigned long lbl_eu_80663E24;
     lbl_eu_80663E24 |= 0x40000;
     return 0;
@@ -127,7 +127,7 @@ void waitPop(){}
 
 void partyWarp(){}
 
-extern "C" void* CfObject_UnkVirtualFunc48__Q22cf12CfObjectMoveFv(void* self) {
+void* CfObject_UnkVirtualFunc48__Q22cf12CfObjectMoveFv(void* self) {
     void* ptr = *(void**)((u8*)self + 0xC4);
     if (ptr == NULL) {
         return *(void**)((u8*)self + 0x6C0);
@@ -145,7 +145,7 @@ void delHoldBox(){}
 
 void getWeaponID(){}
 
-extern "C" int clearTbox() {
+int clearTbox() {
     extern void* func_800B07E8__Fv();
     extern void func_800B1AF4(void*);
     void* ptr = func_800B07E8__Fv();
@@ -154,16 +154,16 @@ extern "C" int clearTbox() {
 }
 
 // Forward declarations for functions called from this unit
-extern "C" void func_80043628();
-extern "C" void func_801579A4();
-extern "C" void func_800A3304();
+void func_80043628();
+void func_801579A4();
+void func_800A3304();
 
-extern "C" int returnTitle() {
+int returnTitle() {
     func_80043628();
     return 0;
 }
 
-extern "C" int dispLoading() {
+int dispLoading() {
     extern void func_8004302C(int, int);
     func_8004302C(1, 0);
     return 0;
@@ -171,19 +171,19 @@ extern "C" int dispLoading() {
 
 void addItemLimit(){}
 
-extern "C" int clearItemLimit() {
+int clearItemLimit() {
     func_801579A4();
     return 0;
 }
 
-extern "C" int clearEquipGem() {
+int clearEquipGem() {
     func_800A3304();
     return 0;
 }
 
 void setPcCtrl(){}
 
-extern "C" unsigned long setFieldVision() {
+unsigned long setFieldVision() {
     extern unsigned long lbl_eu_80663E28;
     lbl_eu_80663E28 |= 0x20000000;
     return 0;

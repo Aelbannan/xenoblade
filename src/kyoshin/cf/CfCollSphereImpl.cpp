@@ -2,10 +2,10 @@
 
 // renderSphere: member of cf::CfDebugDrawManager.
 // Stub declares Fv but retail passes a float in f1.
-extern "C" void renderSphere__Q22cf18CfDebugDrawManagerFv(void* self, float val);
+void renderSphere__Q22cf18CfDebugDrawManagerFv(void* self, float val);
 
 // func_800A5738: defined in kyoshin/code_800A3B24.
-extern "C" void func_800A5738(void* a, void* b, float val, void* c);
+void func_800A5738(void* a, void* b, float val, void* c);
 
 // func_800AAD28: debug draw for sphere collision shape.
 // Reads field at shape+0xB8, converts to unsigned, calls shape's vfunc at

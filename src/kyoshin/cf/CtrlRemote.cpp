@@ -3,13 +3,14 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CtrlRemote.hpp"
 void __ct__CtrlRemote(){}
 
 void func_80098CB8(){}
 
 void func_80098EF8(){}
 
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
+float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
 
 void func_8009A1DC(){}
 
@@ -23,9 +24,9 @@ void func_8009BD14(){}
 
 void func_8009C1BC(){}
 
-extern "C" void func_8009C6B4() {}
+void func_8009C6B4() {}
 
-extern "C" void func_8009C6B8() {}
+void func_8009C6B8() {}
 
 void func_8009C6BC(){}
 
@@ -49,7 +50,7 @@ void func_8009CE88(){}
 
 void func_8009CF0C(){}
 
-extern "C" int func_8009CF84(void* self) { return 4628; }
+int func_8009CF84(void* self) { return 4628; }
 
 void func_8009CF8C(){}
 

@@ -3,9 +3,10 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CTaskGameEffAfter.hpp"
 void __ct__CTaskGameEffAfter(){}
 
-extern "C" void Draw__17CTaskGameEffAfterFv() {}
+
 
 extern "C" void Term__17CTaskGameEffAfterFv() {}
 

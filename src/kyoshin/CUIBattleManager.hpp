@@ -51,4 +51,5 @@ private:
     mtl::ALLOC_HANDLE mHeap;               // 0xEC
     CUIBattleManager();
     virtual ~CUIBattleManager();
+    void OnFileEvent();
 }; // size = 0xF0

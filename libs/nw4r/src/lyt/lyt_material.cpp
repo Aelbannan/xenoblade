@@ -1280,20 +1280,20 @@ Size GetTextureSize(Material* pMaterial, u8 idx) {
 } // namespace nw4r
 
 void __as__Q34nw4r4math4VEC2FRCQ34nw4r4math4VEC2(){}
-extern "C" nw4r::ut::Color* __as__Q34nw4r2ut5ColorFRC8_GXColor(nw4r::ut::Color* self, const GXColor* other) {
+nw4r::ut::Color* __as__Q34nw4r2ut5ColorFRC8_GXColor(nw4r::ut::Color* self, const GXColor* other) {
     *(u32*)self = *(const u32*)other;
     return self;
 }
 unsigned int GetTexMapNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* p) {
     return *(const unsigned int*)p & 0xF;
 }
-extern "C" u32 GetTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+u32 GetTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
     return ((*(const u32*)_this) >> 4) & 0xF;
 }
-extern "C" int GetTexCoordGenNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+int GetTexCoordGenNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
     return (*(const unsigned int*)self >> 8) & 0x0F;
 }
-extern "C" int GetChanCtrlNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+int GetChanCtrlNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
     return (*(const u32*)self >> 25) & 1;
 }
 u32 GetMatColNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
@@ -1308,10 +1308,10 @@ int HasAlphaCompare__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) 
 bool HasBlendMode__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
     return (*(const u32*)self >> 24) & 1;
 }
-extern "C" int GetIndTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
+int GetIndTexSRTNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* _this) {
     return (*(const u32*)_this >> 13) & 3;
 }
-extern "C" unsigned int GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
+unsigned int GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
     return (*(const unsigned int*)self >> 15) & 7;
 }
 unsigned int GetTevStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
@@ -1334,7 +1334,7 @@ void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(void* self, cons
     return self;
 }
 void __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT(){}
-extern "C" void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(void *dst, const void *src) {
+void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(void *dst, const void *src) {
     ((unsigned char*)dst)[0] = ((const unsigned char*)src)[0];
     ((unsigned char*)dst)[1] = ((const unsigned char*)src)[1];
     ((unsigned char*)dst)[2] = ((const unsigned char*)src)[2];

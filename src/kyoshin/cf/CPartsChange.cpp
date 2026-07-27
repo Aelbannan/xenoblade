@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CPartsChange.hpp"
 void __ct__cf_CPartsChange(){}
 
 void cf::CPartsChange::~CPartsChange() {}
@@ -23,13 +24,13 @@ void __dt__reslist_cf_CfPartyInfo(){}
 
 void __dt__80193538(){}
 
-extern "C" bool func_80193670() { return false; }
+bool func_80193670() { return false; }
 
 void func_80193678(){}
 
 void func_80193710(){}
 
-extern "C" bool func_80193804() { return false; }
+bool func_80193804() { return false; }
 
 void func_8019380C(void){}
 
@@ -37,17 +38,17 @@ void func_80193810(){}
 
 void func_8019397C(){}
 
-extern "C" void func_80193A88(void* obj, int enable) { unsigned short* flag = (unsigned short*)((unsigned char*)obj + 0x1e); if (enable) *flag |= 0x400; else *flag &= ~0x400; }
+void func_80193A88(void* obj, int enable) { unsigned short* flag = (unsigned short*)((unsigned char*)obj + 0x1e); if (enable) *flag |= 0x400; else *flag &= ~0x400; }
 
 void func_80193AB0(){}
 
-extern "C" u32 func_80193B04(void* self) { return *(u32*)((u8*)self + 0x94); }
+u32 func_80193B04(void* self) { return *(u32*)((u8*)self + 0x94); }
 
 void func_80193B0C(){}
 
 void func_80193C74(){}
 
-extern "C" u16 func_80193CC8(void* self) { return *(u16*)((u8*)self + 0x9E); }
+u16 func_80193CC8(void* self) { return *(u16*)((u8*)self + 0x9E); }
 
 void func_80193CD0(){}
 
@@ -67,7 +68,7 @@ void func_80194D5C(){}
 
 void func_8019514C(){}
 
-extern "C" u32 func_80195284(void* self) { return (*(u16*)((u8*)self + 30) >> 10) & 0x1u; }
+u32 func_80195284(void* self) { return (*(u16*)((u8*)self + 30) >> 10) & 0x1u; }
 
 void func_80195290(){}
 
@@ -77,21 +78,21 @@ void func_80195384(){}
 
 void func_801953E8(){}
 
-extern "C" u32 func_80195AC0(void* self) { return (*(u16*)((u8*)self + 30) >> 3) & 0x1u; }
+u32 func_80195AC0(void* self) { return (*(u16*)((u8*)self + 30) >> 3) & 0x1u; }
 
-extern "C" void func_80195ACC(void* self, float val) { *(float*)((u8*)self + 0x8c) = val; }
+void func_80195ACC(void* self, float val) { *(float*)((u8*)self + 0x8c) = val; }
 
-extern "C" void func_80195AD4(void* self, u16 val) { *(u16*)((u8*)self + 0x45C4) = val; }
+void func_80195AD4(void* self, u16 val) { *(u16*)((u8*)self + 0x45C4) = val; }
 
-extern "C" void func_80195ADC(void* self, u16 val) { *(u16*)((u8*)self + 0x45C8) = val; }
+void func_80195ADC(void* self, u16 val) { *(u16*)((u8*)self + 0x45C8) = val; }
 
-extern "C" u16 func_80195AE4(void* self) { return *(u16*)((u8*)self + 0x45C6); }
+u16 func_80195AE4(void* self) { return *(u16*)((u8*)self + 0x45C6); }
 
-extern "C" void* func_80195AEC(void* self) { return (void*)((u8*)self + 0x30); }
+void* func_80195AEC(void* self) { return (void*)((u8*)self + 0x30); }
 
-extern "C" void* func_80195AF4(void* self) { return (void*)((u8*)self + 0x60c); }
+void* func_80195AF4(void* self) { return (void*)((u8*)self + 0x60c); }
 
-extern "C" void func_80195AFC(void* self, u8 val) { ((u8*)self)[0x2D] = val; }
+void func_80195AFC(void* self, u8 val) { ((u8*)self)[0x2D] = val; }
 
 void func_80195B04(){}
 
@@ -99,7 +100,7 @@ void func_80195BD4(){}
 
 void func_80195E5C(){}
 
-extern "C" bool func_8019641C(const void* a, const void* b) {
+bool func_8019641C(const void* a, const void* b) {
     return *(const float*)((const char*)a + 4) < *(const float*)((const char*)b + 4);
 }
 
@@ -129,8 +130,8 @@ void func_80197C6C(){}
 
 void func_80197DE8(){}
 
-extern "C" u32 lbl_eu_8066430C;
-extern "C" void func_80198108(int arg) {
+u32 lbl_eu_8066430C;
+void func_80198108(int arg) {
     if (lbl_eu_8066430C == 0) return;
     unsigned char* p = (unsigned char*)lbl_eu_8066430C + 0x10000;
     *(unsigned short*)(p - 0x4d88) = (unsigned short)arg;
@@ -149,7 +150,7 @@ void func_80198340(){}
 
 void func_80198400(){}
 
-extern "C" void* func_801984E4(void* self, unsigned long idx) {
+void* func_801984E4(void* self, unsigned long idx) {
     return *(void**)((char*)self + (idx << 3));
 }
 
@@ -159,7 +160,7 @@ void func_80198524(){}
 
 void func_801986CC(){}
 
-extern "C" void func_80198710(void *r3, void *r4, float f1, int r5, int r6, float f2, float f3) {
+void func_80198710(void *r3, void *r4, float f1, int r5, int r6, float f2, float f3) {
     int r8 = *(int*)((char*)r4 + 0);
     int r7 = *(int*)((char*)r4 + 4);
     int r0 = *(int*)((char*)r4 + 8);

@@ -5,16 +5,16 @@
 
 void Release__Q34nw4r3g3d9AnmObjChrFv(){}
 
-extern "C" int Attach__Q34nw4r3g3d9AnmObjChrFiPQ34nw4r3g3d12AnmObjChrRes(void) { return 0x0; }
+int Attach__Q34nw4r3g3d9AnmObjChrFiPQ34nw4r3g3d12AnmObjChrRes(void) { return 0x0; }
 
-extern "C" int Detach__Q34nw4r3g3d9AnmObjChrFi(void) { return 0x0; }
+int Detach__Q34nw4r3g3d9AnmObjChrFi(void) { return 0x0; }
 
-extern "C" void SetWeight__Q34nw4r3g3d9AnmObjChrFif(void) {}
+void SetWeight__Q34nw4r3g3d9AnmObjChrFif(void) {}
 
 extern float lbl_eu_80669B88;
-extern "C" float GetWeight__Q34nw4r3g3d9AnmObjChrCFi() { return lbl_eu_80669B88; }
+float GetWeight__Q34nw4r3g3d9AnmObjChrCFi() { return lbl_eu_80669B88; }
 
-extern "C" void DetachAll__Q34nw4r3g3d9AnmObjChrFv(void) {}
+void DetachAll__Q34nw4r3g3d9AnmObjChrFv(void) {}
 
 void __dt__Q34nw4r3g3d9AnmObjChrFv(){}
 
@@ -62,7 +62,7 @@ float GetFrame__Q34nw4r3g3d12AnmObjChrResCFv(void *self){ return *(float *)((cha
 
 void SetUpdateRate__Q34nw4r3g3d12AnmObjChrResFf(){}
 
-extern "C" float GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv(void *self) { return *(float *)((char *)self + 28); }
+float GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv(void *self) { return *(float *)((char *)self + 28); }
 
 void UpdateFrame__Q34nw4r3g3d12AnmObjChrResFv(){}
 
@@ -82,8 +82,8 @@ void IsDerivedFrom__Q34nw4r3g3d9AnmObjChrCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d12AnmObjChrResCFv(){}
 
-extern "C" const char lbl_eu_8051D5F8[];
-extern "C" void* GetTypeObj__Q34nw4r3g3d12AnmObjChrResCFv(void) { return (void*)lbl_eu_8051D5F8; }
+const char lbl_eu_8051D5F8[];
+void* GetTypeObj__Q34nw4r3g3d12AnmObjChrResCFv(void) { return (void*)lbl_eu_8051D5F8; }
 
 void __dt__Q34nw4r3g3d12AnmObjChrResFv(){}
 
@@ -93,14 +93,14 @@ void IsDerivedFrom__Q34nw4r3g3d13AnmObjChrNodeCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d14AnmObjChrBlendCFv(){}
 
-extern "C" const char lbl_eu_8051D5E4[];
-extern "C" void* GetTypeObj__Q34nw4r3g3d14AnmObjChrBlendCFv(void) { return (void*)lbl_eu_8051D5E4; }
+const char lbl_eu_8051D5E4[];
+void* GetTypeObj__Q34nw4r3g3d14AnmObjChrBlendCFv(void) { return (void*)lbl_eu_8051D5E4; }
 
 void __dt__Q34nw4r3g3d14AnmObjChrBlendFv(){}
 
 void GetTypeName__Q34nw4r3g3d13AnmObjChrNodeCFv(){}
 
-extern "C" const char lbl_eu_8051D5D0[];
+const char lbl_eu_8051D5D0[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d13AnmObjChrNodeCFv(void) { return (void*)lbl_eu_8051D5D0; }
 
 void GetTypeName__Q34nw4r3g3d9AnmObjChrCFv(){}

@@ -26,6 +26,19 @@ public:
     void func_8005EEB4();
     void func_80060110();
     void func_80060268();
+    void func_8005D70C();
+    void func_8005DAE4();
 };
 
 } // namespace cf
+
+namespace cf {
+
+class CActorParam {
+public:
+    void CActorParam_UnkVirtualFunc38();
+
+    // TODO: add fields
+};
+} // namespace cf
+

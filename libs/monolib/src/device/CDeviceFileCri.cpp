@@ -16,9 +16,9 @@ void CDeviceFileCri::func_80450B24(const wchar_t* pData){
     lbl_80665FF8 = pData;
 }
 
-extern "C" void getInstance__14CDeviceFileCriFv() {}
-extern "C" void getInstance__14CDeviceFileCriFv() {}
-extern "C" void getInstance__14CDeviceFileCriFv() {}
+void getInstance__14CDeviceFileCriFv() {}
+void getInstance__14CDeviceFileCriFv() {}
+void getInstance__14CDeviceFileCriFv() {}
 extern "C" void getInstance__14CDeviceFileCriFv() {}
 void sinit_80450B2C(){}
 extern "C" {

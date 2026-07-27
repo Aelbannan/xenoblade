@@ -53,3 +53,58 @@ struct CfCamFollow {
 } // namespace cf
 
 extern "C" cf::CfCamFollow* __ct__cf_CfCamFollow(cf::CfCamFollow* self, void* arg1, void* arg2);
+
+namespace cf {
+
+class CfCamEvent {
+public:
+    virtual ~CfCamEvent();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CfCam {
+public:
+    virtual ~CfCam();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CfCamFollow {
+public:
+    virtual ~CfCamFollow();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CfObject {
+public:
+    void CfObject_UnkVirtualFunc54();
+    void CfObject_UnkVirtualFunc9();
+
+    // TODO: add fields
+    void CfObject_UnkVirtualFunc48();
+    void CfObject_UnkVirtualFunc55();
+    void CfObject_UnkVirtualFunc52();
+};
+} // namespace cf
+
+namespace cf {
+
+class CActorParam {
+public:
+    void CActorParam_UnkVirtualFunc22();
+
+    // TODO: add fields
+};
+} // namespace cf
+

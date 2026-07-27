@@ -14,12 +14,12 @@
 // Used by __construct_array when initializing mSubObjArray1
 // and mSubObjArray2 at offsets 0x1F8 and 0x258.
 // Equivalent to: CScnItemCameraSubObj::CScnItemCameraSubObj() {}
-extern "C" void func_8049EA98() {}
+void func_8049EA98() {}
 
 // Trivial no-op virtual function override at vtable+0x0C.
 // Base class default is overridden with a no-op in this class.
 // Equivalent to: void CScnItemCamera::vfunc_0C() {}
-extern "C" void func_8049F9A4() {}
+void func_8049F9A4() {}
 
 // ============================================================
 // NOT_STARTED stubs (to be decompiled)

@@ -38,13 +38,13 @@ void func_804DA9C4(){}
 void func_804DAA58(){}
 
 // Set the NAND error message string for error code -4 / -64
-extern "C" void func_804DAA90__FPCw(const wchar_t* msg) {
+void func_804DAA90__FPCw(const wchar_t* msg) {
     extern const wchar_t* lbl_eu_80663B60;
     lbl_eu_80663B60 = msg;
 }
 
 // Set the NAND error message string for error code -3
-extern "C" void func_804DAA98__FPCw(const wchar_t* msg) {
+void func_804DAA98__FPCw(const wchar_t* msg) {
     extern const wchar_t* lbl_eu_80663B64;
     lbl_eu_80663B64 = msg;
 }

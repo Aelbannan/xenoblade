@@ -16,7 +16,7 @@
 // Overrides the null entry at vfunc 1 in cf::CREvtObj's vtable.
 // ============================================================================
 
-extern "C" void func_80294CB0(void) {}
+void func_80294CB0(void) {}
 
 // ============================================================================
 // NOT_STARTED stubs below -- replace with proper implementations during decomp

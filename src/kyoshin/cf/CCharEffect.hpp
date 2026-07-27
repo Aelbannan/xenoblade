@@ -15,3 +15,14 @@ int func_8015CCB4();
 #ifdef __cplusplus
 }
 #endif
+
+namespace cf {
+
+class CCharEffect {
+public:
+    CCharEffect();
+
+    // TODO: add fields
+};
+} // namespace cf
+

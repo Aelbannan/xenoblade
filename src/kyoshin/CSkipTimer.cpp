@@ -6,7 +6,7 @@
 
 void __ct__CSkipTimer2(){}
 
-extern "C" u8 func_8029FF1C(CSkipTimer* self) { return self->mActive; }
+u8 func_8029FF1C(CSkipTimer* self) { return self->mActive; }
 
 
 
@@ -21,7 +21,7 @@ void func_8029F6EC(){}
 
 void func_8029F73C(){}
 
-extern "C" void func_8029F788(void* self) {
+void func_8029F788(void* self) {
     if (*(u32*)((u8*)self + 0x14) != 0) {
         *(u8*)((u8*)self + 0x22) = 1;
         *(u8*)((u8*)self + 0x20) = 1;
@@ -53,7 +53,7 @@ void func_8029FF24(){}
 
 void func_8029FF98(){}
 
-extern "C" void func_802A0008(void* obj) {
+void func_802A0008(void* obj) {
     unsigned char* bytes = (unsigned char*)obj;
     if (bytes[0x29] != 0) return;
     bytes[0x29] = 1;

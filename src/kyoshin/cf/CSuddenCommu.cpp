@@ -11,7 +11,7 @@ void func_801BA250(){}
 
 void func_801BA25C(){}
 
-extern "C" unsigned long func_801BA2C8(void* self) {
+unsigned long func_801BA2C8(void* self) {
     unsigned long v = *(unsigned long*)((char*)self + 0x14);
     return !!v;
 }
@@ -30,7 +30,7 @@ void func_801BADE4(){}
 
 void func_801BB464(){}
 
-extern "C" void func_801BB818() {}
+void func_801BB818() {}
 
 void func_801BB81C(){}
 

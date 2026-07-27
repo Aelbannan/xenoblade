@@ -50,5 +50,24 @@ namespace cf {
     void CActorParam_UnkVirtualFunc86();
     void CActorParam_UnkVirtualFunc88();
     void CActorParam_UnkVirtualFunc178();
+    void CActorParam_UnkVirtualFunc173();
+    void CObjectParam_UnkVirtualFunc4();
+    void CfObject_UnkVirtualFunc3();
+    void CfObject_UnkVirtualFunc2();
+    void CfObjectMove_UnkVirtualFunc16();
+    void CfObject_UnkVirtualFunc6();
+    void CfObject_UnkVirtualFunc4();
+    void func_800C1220();
     };
 }
+
+namespace cf {
+
+class CfObjectPoint {
+public:
+    void func_800C1244();
+
+    // TODO: add fields
+};
+} // namespace cf
+

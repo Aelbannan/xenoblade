@@ -46,7 +46,7 @@ int func_8003A630(void* thread){
     return 0;
 }
 
-extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
+s32 func_8003A668(void*, OcMsgRingHdr* list) {
     list->count = 0;
     list->wrap = 0;
     list->writeIdx = 0;
@@ -59,7 +59,7 @@ void func_8003A68C(){}
 
 void func_8003A6D4(){}
 
-extern "C" s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
+s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
     // Reuse `ret` for writeIdx then count so +1 lands in a distinct reg (retail addi r5,r3,1).
     // Signed compare → cmpw (u32 > emits cmplw).
     ret = list->writeIdx;
@@ -79,7 +79,7 @@ extern "C" s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern "C" s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
+s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
     ret = list->readIdx;
     s32 capacity = list->capacity;
     s32 newReadIdx = ret + 1;

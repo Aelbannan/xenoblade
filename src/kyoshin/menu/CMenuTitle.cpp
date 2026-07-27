@@ -3,13 +3,14 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuTitle.hpp"
 void __ct__CMenuTitle(){}
 
 void func_802B5F0C(){}
 
 void func_802B5F18(){}
 
-extern "C" void func_802B5F58(void* self) {
+void func_802B5F58(void* self) {
     extern void func_802B75B8(void*);
     ((unsigned char*)self)[0xe8] = 3;
     func_802B75B8((char*)self + 0x60);

@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CScrollBar.hpp"
 
-extern "C" u8 CScrollBar_isVisible(CScrollBar* self) { return self->mVisible; }
+u8 CScrollBar_isVisible(CScrollBar* self) { return self->mVisible; }
 
 
 
@@ -12,7 +12,7 @@ extern "C" u8 CScrollBar_isVisible(CScrollBar* self) { return self->mVisible; }
 
 
 
-extern "C" u8 func_801F3668(CScrollBar* self) { return self->mActive; }
+u8 func_801F3668(CScrollBar* self) { return self->mActive; }
 
 void func_801F3670(void){}
 

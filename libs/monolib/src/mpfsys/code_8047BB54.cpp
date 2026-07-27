@@ -3,9 +3,9 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
+void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
 
-extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
+void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
 
 extern "C" void func_8047BD84__17UnkClass_8047BB54Fv(void* self) { ((void(*)(void*))func_80472870__Q26mpfsys17UnkClass_80471EC8Fv)((char*)self + 0x24); }
 

@@ -10,7 +10,7 @@ void cf::CfGimmickObject::~CfGimmickObject() {}
 
 void func_801F5B00(){}
 
-extern "C" void func_801F5BF8(void* self) {
+void func_801F5BF8(void* self) {
     *(unsigned long*)((char*)self + 0x74) |= 0x10000;
 }
 
@@ -52,7 +52,7 @@ void func_801F7D38(){}
 
 void func_801F7F24(){}
 
-extern "C" int func_801F8564() { return 1; }
+int func_801F8564() { return 1; }
 
 void func_801F856C(){}
 

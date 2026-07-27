@@ -1,17 +1,17 @@
 #include "kyoshin/cf/object/CBattleState.hpp"
 
-extern "C" void* memset(void* dest, int val, size_t count);
-extern "C" void* memcpy(void* dest, const void* src, size_t count);
+void* memset(void* dest, int val, size_t count);
+void* memcpy(void* dest, const void* src, size_t count);
 
 // sdata2 float constants used by CBattleState_UnkVirtualFunc5
-extern "C" const float lbl_eu_80667400;  // 0x80146E48: id==0x35 unk24
-extern "C" const float lbl_eu_80667404;  // 0x80146E90: unk20 *= float
-extern "C" const double lbl_eu_80667408; // 0x80146EC4: unk20 *= double
-extern "C" const float lbl_eu_80667410;  // 0x80146ED4: compared with unk20
-extern "C" const float lbl_eu_80667414;  // 0x80148134: 0.9f scaling (same as vfunc6)
+const float lbl_eu_80667400;  // 0x80146E48: id==0x35 unk24
+const float lbl_eu_80667404;  // 0x80146E90: unk20 *= float
+const double lbl_eu_80667408; // 0x80146EC4: unk20 *= double
+const float lbl_eu_80667410;  // 0x80146ED4: compared with unk20
+const float lbl_eu_80667414;  // 0x80148134: 0.9f scaling (same as vfunc6)
 
-extern "C" void func_80109784(void* ptr, u32 id, int arg);
-extern "C" void func_8013DB6C(int a, u32 id, int b, int c);
+void func_80109784(void* ptr, u32 id, int arg);
+void func_8013DB6C(int a, u32 id, int b, int c);
 
 namespace cf {
 
@@ -92,7 +92,7 @@ void CBattleState::CBattleState_UnkVirtualFunc29() {
 // docs/MWCC_REFERENCE.md).
 //
 // sdata2 float pool constant read via lbl_eu_80667414@sda21 (0.9f).
-extern "C" const float lbl_eu_80667414;
+const float lbl_eu_80667414;
 
 // Cast-only SI iface for vt+0x48 tail-call (same RTTI omit as BattleStateV8If).
 struct BattleStateV6If {
@@ -115,7 +115,7 @@ struct BattleStateV6If {
     virtual void vf48(cf::CBattleStateEntry* entry); // UnkVirtualFunc17 @0x48
 };
 
-extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
+void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* arg) {
     cf::CBattleStateEntry* entries;
     cf::CBattleStateEntry* p;
@@ -172,7 +172,7 @@ extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
 
 // symbols.txt mangles Fv, but retail leaves the id in r4. This lookup reads
 // the independent halfword state at +0x6.
-extern "C" int CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv(
+int CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv(
     cf::CBattleState* self, u32 id) {
     u16 mask;
 
@@ -248,7 +248,7 @@ extern "C" int CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv(
 // array, 13 groups of 8, matching MWCC's fixed-trip-count unroll), the
 // this+0x15AC status bit for that id is left alone; otherwise it's
 // cleared (ids >= 0x12f always clear, skipping the scan).
-extern "C" void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
+void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
     cf::CBattleState* self, u32 mask) {
     typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
 
@@ -311,7 +311,7 @@ extern "C" void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
 // Leaf / no stack frame: maps specific ids to single-bit masks (or 0 for
 // unmapped ids), then returns (self->unk4 & mask) != 0 via the standard
 // MWCC branchless neg/or/srwi boolify idiom (see MWCC_REFERENCE section 8c9).
-extern "C" int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
+int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
     cf::CBattleState* self, u32 id) {
     u16 mask;
 
@@ -407,7 +407,7 @@ struct BattleStateV26If {
     virtual void vf1C(cf::CBattleStateEntry* entry); // UnkVirtualFunc6 @0x1C
 };
 
-extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
+void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
     cf::CBattleState* self, const cf::CBattleStateSrcEntry* src) {
     const cf::CBattleStateSrcEntry* rec;
     const cf::CBattleStateSrcEntry* recFlags;
@@ -505,7 +505,7 @@ struct BattleStateV8If {
     virtual void vf4C(cf::CBattleStateEntry* entry); // UnkVirtualFunc18 @0x4C
 };
 
-extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
+void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
     cf::CBattleState* self, cf::CBattleStateEntry* entry) {
     // Function-scope slot/i reserve r31/r30 so Chaitin parks this/entry in
     // r28/r29 and one/thirteen in r26/r27 (block-local slot/i stole r27/r28).

@@ -48,3 +48,14 @@ namespace cf {
     void func_801725DC();
     };
 }
+
+namespace cf {
+
+class CActorParam {
+public:
+    void CActorParam_UnkVirtualFunc167();
+
+    // TODO: add fields
+};
+} // namespace cf
+

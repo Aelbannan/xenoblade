@@ -18,7 +18,7 @@ void CMenuPassiveSkill::cbRenderBefore() {}
 
 void func_802638D0(){}
 
-extern "C" void stub_us_80265db4() {}
+void stub_us_80265db4() {}
 
 void func_80263954(){}
 
@@ -37,7 +37,7 @@ void func_80263E4C(){}
 // Adjusted-this thunk: called through a secondary-base vtable entry
 // (IScnRender at offset +0x58 within CMenuPassiveSkill).
 // Upcasts to the full object and tail-calls cbRenderBefore.
-extern "C" void func_80263EAC(CMenuPassiveSkill* self) {
+void func_80263EAC(CMenuPassiveSkill* self) {
     ((void(*)(CMenuPassiveSkill*))cbRenderBefore__17CMenuPassiveSkillFv)(
         reinterpret_cast<CMenuPassiveSkill*>(
             reinterpret_cast<char*>(self) - 0x58));
@@ -47,7 +47,7 @@ extern "C" void func_80263EAC(CMenuPassiveSkill* self) {
 // (IScnRender at offset +0x58 within CMenuPassiveSkill).
 // Upcasts to the full object and tail-calls the destructor.
 // r4 (dealloc flag) is left unchanged — the caller sets it via vtable.
-extern "C" void func_80263EB4(CMenuPassiveSkill* self) {
+void func_80263EB4(CMenuPassiveSkill* self) {
     ((void(*)(CMenuPassiveSkill*))__dt__17CMenuPassiveSkillFv)(
         reinterpret_cast<CMenuPassiveSkill*>(
             reinterpret_cast<char*>(self) - 0x58));

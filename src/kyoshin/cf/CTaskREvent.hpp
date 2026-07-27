@@ -27,5 +27,6 @@ namespace cf{
     void Move();
     void Draw();
     void cbRenderBefore();
+    void OnFileEvent();
     }; //size = 0x1F8
 } //namespace cf

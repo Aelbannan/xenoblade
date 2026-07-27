@@ -11,7 +11,7 @@ void GDSetTexCoordScale2__Q34nw4r3g3d4fifoF13_GXTexCoordIDUsUcUcUsUcUc(){}
 
 void GDSetIndTexMtx__Q34nw4r3g3d4fifoFUlRCQ34nw4r4math5MTX34(){}
 
-extern "C" void GDResetCurrentMtx__Q34nw4r3g3d4fifoFv() {
+void GDResetCurrentMtx__Q34nw4r3g3d4fifoFv() {
     volatile unsigned char* const fifo = (volatile unsigned char*)0xCC008000;
     *fifo = 0x08;
     *fifo = 0x30;

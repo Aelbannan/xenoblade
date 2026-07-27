@@ -11,9 +11,9 @@ void func_80164410(){}
 
 void func_80164478(){}
 
-extern "C" bool func_801644AC() { return false; }
+bool func_801644AC() { return false; }
 
-extern "C" bool func_801644B4() { return false; }
+bool func_801644B4() { return false; }
 
 void func_801644BC__FUl(){}
 
@@ -49,9 +49,9 @@ void func_80164F6C(){}
 
 void func_80164FB4(){}
 
-extern "C" void* lbl_eu_80664240;
+void* lbl_eu_80664240;
 
-extern "C" int func_80164FE8(void) {
+int func_80164FE8(void) {
     int* ptr = (int*)lbl_eu_80664240;
     if (!ptr) return 0;
     int val = *(int*)((char*)ptr + 0x1e0);
@@ -82,19 +82,19 @@ void func_801663A8(void* self){}
 
 void func_801665A4(){}
 
-extern "C" void viAfterDrawDone__11CDeviceVICbFv() {}
+void viAfterDrawDone__11CDeviceVICbFv() {}
 
-extern "C" void viBeforeDrawDone__11CDeviceVICbFv() {}
+void viBeforeDrawDone__11CDeviceVICbFv() {}
 
-extern "C" void func_801666C4(void* self) { ((void(*)(void*))func_801662E8)((char*)self - 0x54); }
+void func_801666C4(void* self) { ((void(*)(void*))func_801662E8)((char*)self - 0x54); }
 
-extern "C" void func_801666CC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x54); }
+void func_801666CC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x54); }
 
-extern "C" void func_801666D4(void* self) { ((void(*)(void*))func_801644D8)((char*)self - 0x58); }
+void func_801666D4(void* self) { ((void(*)(void*))func_801644D8)((char*)self - 0x58); }
 
-extern "C" void func_801666DC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x58); }
+void func_801666DC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x58); }
 
-extern "C" void func_801666E4(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
+void func_801666E4(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 
 extern "C" void func_801666EC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
 

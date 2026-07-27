@@ -60,5 +60,24 @@ namespace cf {
     void CfObject_UnkVirtualFunc70();
     void CfObject_UnkVirtualFunc69();
     void CfObject_UnkVirtualFunc68();
+    void CfObject_UnkVirtualFunc24();
+    void CfObject_UnkVirtualFunc28();
+    void CfObject_UnkVirtualFunc31();
+    void CfObject_UnkVirtualFunc35();
+    void CfObject_UnkVirtualFunc36();
+    void CfObject_UnkVirtualFunc72();
     };
 }
+
+namespace cf {
+
+class CfObject {
+public:
+    void CfObject_UnkVirtualFunc63();
+    void CfObject_UnkVirtualFunc25();
+    void CfObject_UnkVirtualFunc20();
+
+    // TODO: add fields
+};
+} // namespace cf
+

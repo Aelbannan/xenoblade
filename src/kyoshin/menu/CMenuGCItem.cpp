@@ -32,7 +32,7 @@ void func_802B0D24(){}
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuGCItemFv
  */
-extern "C" void func_802B0F08(IScnRender* self) {
+void func_802B0F08(IScnRender* self) {
     ((void(*)(CMenuGCItem*))cbRenderBefore__11CMenuGCItemFv)(
         (CMenuGCItem*)((uintptr_t)self - 0x58));
 }
@@ -47,7 +47,7 @@ extern "C" void func_802B0F08(IScnRender* self) {
  *
  * Retail: subi r3, r3, 0x58; b __dt__11CMenuGCItemFv
  */
-extern "C" void func_802B0F10(IScnRender* self) {
+void func_802B0F10(IScnRender* self){
     ((void(*)(CMenuGCItem*))__dt__11CMenuGCItemFv)(
         (CMenuGCItem*)((uintptr_t)self - 0x58));
 }

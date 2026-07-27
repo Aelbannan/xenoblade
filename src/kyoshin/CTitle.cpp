@@ -21,7 +21,7 @@ void func_802B6580(){}
 
 void func_802B65C8(){}
 
-extern "C" void func_802B6660() {}
+void func_802B6660() {}
 
 void func_802B6664(){}
 
@@ -59,7 +59,7 @@ void func_802B6CBC(){}
 
 void func_802B6D5C(){}
 
-extern "C" void func_802B6DF4() {}
+void func_802B6DF4() {}
 
 void func_802B6DF8(){}
 
@@ -115,9 +115,9 @@ void func_802B775C(){}
 
 void func_802B7800(){}
 
-extern "C" void func_802B7838() {}
+void func_802B7838() {}
 
-extern "C" void func_802B783C(void* thisPtr) {
+void func_802B783C(void* thisPtr) {
     uint8_t* bytes = static_cast<uint8_t*>(thisPtr);
     if (bytes[0x6d] == 0) {
         return;
@@ -125,13 +125,13 @@ extern "C" void func_802B783C(void* thisPtr) {
     bytes[0x24] = 2;
 }
 
-extern "C" void func_802B7854() {}
+void func_802B7854() {}
 
 void func_802B7858(){}
 
 void func_802B78A4(){}
 
-extern "C" void func_802B7920() {}
+void func_802B7920() {}
 
 void func_802B7924(){}
 

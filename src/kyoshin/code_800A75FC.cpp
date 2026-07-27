@@ -33,7 +33,7 @@ void func_800A85D8(){}
 
 void func_800A86AC(){}
 
-extern "C" void* func_800A86D8(unsigned int param1, unsigned int param2) {
+void* func_800A86D8(unsigned int param1, unsigned int param2) {
     extern void* lbl_eu_80528398[];
     void* r4 = lbl_eu_80528398[param2];
     if (param1 >= 0xe) {
@@ -60,7 +60,7 @@ void func_800A8C1C(){}
 
 void func_800A8C68(){}
 
-extern "C" void func_800A8C84(void) {
+void func_800A8C84(void) {
     extern void func_800A3940(void*);
     extern char lbl_eu_80572B38[];
     func_800A3940((void*)lbl_eu_80572B38);
@@ -84,10 +84,10 @@ void func_800A9134(){}
 
 void func_800A92F8(){}
 
-extern "C" char lbl_eu_80572B78[];
-extern "C" void func_800A37CC(void*, void*);
+char lbl_eu_80572B78[];
+void func_800A37CC(void*, void*);
 
-extern "C" void func_800A9344(void* p)
+void func_800A9344(void* p)
 {
     if (p != 0) {
         func_800A37CC(lbl_eu_80572B78, p);

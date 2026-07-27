@@ -3,9 +3,9 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8049DE68(void* self, u32 val) { *(u32*)((u8*)self + 0x8) = val; }
+void func_8049DE68(void* self, u32 val) { *(u32*)((u8*)self + 0x8) = val; }
 
-extern "C" void func_8049DE68(void* self, u32 val) { *(u32*)((u8*)self + 0x8) = val; }
+void func_8049DE68(void* self, u32 val) { *(u32*)((u8*)self + 0x8) = val; }
 
 extern "C" void func_8049DE68(void* self, u32 val) { *(u32*)((u8*)self + 0x8) = val; }
 

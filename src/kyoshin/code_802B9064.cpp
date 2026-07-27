@@ -1,8 +1,8 @@
 #include <types.h>
 #include "kyoshin/cf/CBattleManager.hpp"
 
-extern "C" bool func_802A330C(u32, u32);
-extern "C" bool func_802A34E4(u32);
+bool func_802A330C(u32, u32);
+bool func_802A34E4(u32);
 extern "C" void func_802A3D54(void*, u32, u32);
 
 typedef bool (*BoolVFunc)(void*);

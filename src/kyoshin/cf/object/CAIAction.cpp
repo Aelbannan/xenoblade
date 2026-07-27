@@ -3,7 +3,7 @@
 #include <cstring>
 
 // Batch 2026-07-14e: aiaction-ctor owns CAIAction::CAIAction()
-// Batch 2026-07-14f: aiaction-vfunc1 owns CAIAction_UnkVirtualFunc1 (extern "C" Fv)
+// Batch 2026-07-14f: aiaction-vfunc1 owns CAIAction_UnkVirtualFunc1 (Fv)
 
 namespace cf {
 
@@ -55,7 +55,7 @@ CAIAction::CAIAction() {
 // Soft-cap ~96.02941%: MWCC fuses first dest store to stwux; retail is stwx+add
 // (src in r9, 8-then-4). slots[]/dstBytes identical; dual buffer aliases regress.
 // EQUIVALENT blocked by ring-loop bounds / Z3 timeout. No insn_patches/asm void.
-extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
+void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
                                                               cf::CAIActionSlot* outA,
                                                               cf::CAIActionExport* outB) {
     cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)self->trailer;
@@ -105,10 +105,10 @@ extern "C" void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self
     }
 }
 
-// Batch 2026-07-14g: aiaction-vfunc2 owns CAIAction_UnkVirtualFunc2 (extern "C" Fv)
+// Batch 2026-07-14g: aiaction-vfunc2 owns CAIAction_UnkVirtualFunc2 (Fv)
 // Inverse of UnkVirtualFunc1: imports trailer from inA, then drains ring
 // entries from inB into this->unk20C.
-extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
+void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self,
                                                               cf::CAIActionSlot* inA,
                                                               cf::CAIActionExport* inB) {
     cf::CAIActionSlot* trailer = (cf::CAIActionSlot*)self->trailer;
@@ -159,17 +159,17 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
     }
 }
 
-extern "C" void func_8014A8F8__Fv() {}
-extern "C" void func_8014AA10(void* obj, unsigned int value) {
+void func_8014A8F8__Fv() {}
+void func_8014AA10(void* obj, unsigned int value) {
     *(unsigned int*)((unsigned char*)obj + 0xB14) = value;
 }
 void func_8014AC38(){}
 void func_8014AE00(){}
 void func_8014B120(){}
-extern "C" void* func_8014B2DC(void* p) {
+void* func_8014B2DC(void* p) {
     return memset((char*)p + 0xADC, 0, 0x20);
 }
-extern "C" void func_8014B2EC(void* self, float delta) {
+void func_8014B2EC(void* self, float delta) {
     struct Entry {
         unsigned char pad0[0x14];
         float value;
@@ -195,8 +195,8 @@ extern "C" void func_8014B2EC(void* self, float delta) {
     }
 }
 void func_8014B344(){}
-extern "C" void func_8014B804(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; *(unsigned short*)(base + 0x228) = a13; if (a7 == 11 || a9 == 11) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 10 || a9 == 10) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 7 || a9 == 7) *(unsigned short*)(base + 0x228) |= 2; }
-extern "C" void func_801537E0(void* self) {
+void func_8014B804(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; *(unsigned short*)(base + 0x228) = a13; if (a7 == 11 || a9 == 11) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 10 || a9 == 10) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 7 || a9 == 7) *(unsigned short*)(base + 0x228) |= 2; }
+void func_801537E0(void* self) {
     *(u16*)((u8*)self + 8) &= ~0x0006;
 }
 

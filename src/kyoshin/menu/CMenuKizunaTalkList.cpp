@@ -17,7 +17,7 @@ void CMenuKizunaTalkList::cbRenderBefore() {}
 
 void func_80272414(){}
 
-extern "C" void stub_us_8027490c() {}
+void stub_us_8027490c() {}
 
 void func_80272498(){}
 
@@ -36,7 +36,7 @@ void __dt__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self, int deletionFlag);
 // 'this' points to the IScnRender subobject at offset +0x58 within
 // CMenuKizunaTalkList. This thunk adjusts it back and tail-calls the
 // real implementation.
-extern "C" void func_802726E4(IScnRender* self) {
+void func_802726E4(IScnRender* self) {
     ((void(*)(CMenuKizunaTalkList*))cbRenderBefore__19CMenuKizunaTalkListFv)(
         reinterpret_cast<CMenuKizunaTalkList*>(
             reinterpret_cast<uintptr_t>(self) - 0x58));
@@ -46,7 +46,7 @@ extern "C" void func_802726E4(IScnRender* self) {
 // Same pointer adjustment as func_802726E4. r4 (deletion flag)
 // is passed through from the IScnRender vtable caller unchanged.
 // The single-arg function pointer cast avoids MWCC zeroing r4.
-extern "C" void func_802726EC(IScnRender* self) {
+void func_802726EC(IScnRender* self) {
     ((void(*)(CMenuKizunaTalkList*))__dt__19CMenuKizunaTalkListFv)(
         reinterpret_cast<CMenuKizunaTalkList*>(
             reinterpret_cast<uintptr_t>(self) - 0x58));

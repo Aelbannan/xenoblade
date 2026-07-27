@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_8028F664(void* self) { return ((u8*)self)[0x123]; }
+u8 func_8028F664(void* self) { return ((u8*)self)[0x123]; }
 
 
 
@@ -22,7 +22,7 @@ void func_8028EB70(){}
 
 void func_8028EB9C(){}
 
-extern "C" void func_8028EC04(void* arg1, const void* arg2) {
+void func_8028EC04(void* arg1, const void* arg2) {
     void* ptr1 = *(void**)((char*)arg1 + 8);
     void* ptr2 = *(void**)((char*)ptr1 + 0x10);
     const float* src = (const float*)arg2;
@@ -36,7 +36,7 @@ void func_8028EC28(){}
 
 void func_8028EC74(){}
 
-extern "C" void func_8028ED0C(void* r3, int r4) {
+void func_8028ED0C(void* r3, int r4) {
     struct InitData {
         int field0;
         int field4;
@@ -62,7 +62,7 @@ void func_8028EDF8(){}
 
 void func_8028EE68(){}
 
-extern "C" void func_8028EEC0(void* self) {
+void func_8028EEC0(void* self) {
     *(u8*)((u8*)self + 0xC) = 1;
     *(u8*)((u8*)self + 0xD) = 1;
     *(u8*)((u8*)self + 0xE) = 0;
@@ -107,7 +107,7 @@ void func_8028FC18(){}
 
 void func_8028FE50(){}
 
-extern "C" u8 func_8028FEC4(void* self) { return ((u8*)self)[0x12A]; }
+u8 func_8028FEC4(void* self) { return ((u8*)self)[0x12A]; }
 
 void func_8028FECC(){}
 
@@ -127,7 +127,7 @@ void func_8029022C(){}
 
 void func_8029040C(){}
 
-extern "C" void func_8029049C(void* p) {
+void func_8029049C(void* p) {
     unsigned char* base = reinterpret_cast<unsigned char*>(p);
     if (base[0x11e] != 0) {
         base[0x121] = 3;
@@ -152,7 +152,7 @@ void func_80291204(){}
 
 void CSaveLoad::OnFileEvent() {}
 
-extern "C" u32 func_8029183C(void) {
+u32 func_8029183C(void) {
     extern u32 lbl_eu_80662AD0;
     return lbl_eu_80662AD0;
 }

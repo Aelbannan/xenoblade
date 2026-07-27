@@ -436,5 +436,8 @@ namespace cf {
         float unk337C;
     CActorParam();
     void CBattleState_UnkVirtualFunc18();
+    void CBattleState_UnkVirtualFunc17();
+    void CBattleState_UnkVirtualFunc3();
+    void CBattleState_UnkVirtualFunc2();
     };
 }

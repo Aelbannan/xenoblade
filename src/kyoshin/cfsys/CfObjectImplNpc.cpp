@@ -7,7 +7,7 @@ void func_800CA6E4(){}
 
 void func_800CA7B4(){}
 
-extern "C" void func_800CA850(void) {}
+void func_800CA850(void) {}
 
 void func_800CA854(){}
 

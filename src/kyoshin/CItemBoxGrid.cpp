@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
+u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
 
 
 
@@ -16,7 +16,7 @@ extern "C" u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
 
 void __ct__801C5514(){}
 
-extern "C" void func_801C5604(void* p, unsigned short a, unsigned char b, unsigned char c, unsigned char d, unsigned char e, unsigned char f, unsigned char g, unsigned char h) {
+void func_801C5604(void* p, unsigned short a, unsigned char b, unsigned char c, unsigned char d, unsigned char e, unsigned char f, unsigned char g, unsigned char h) {
     unsigned char* buf = (unsigned char*)p;
     *((unsigned short*)(buf + 0)) = a;
     buf[2] = b;
@@ -72,7 +72,7 @@ void func_801C67F8(){}
 
 void func_801C6840(){}
 
-extern "C" int func_801C687C(void* obj) {
+int func_801C687C(void* obj) {
     char off = *(signed char*)((char*)obj + 0x2804);
     if (off >= 0x400) return 0;
     return *(unsigned char*)((char*)obj + off + 0x28a5);
@@ -90,7 +90,7 @@ void func_801C6EC0(){}
 
 void func_801C7730(){}
 
-extern "C" void func_801C7914(void *dst, const void *src) {
+void func_801C7914(void *dst, const void *src) {
     *(short*)((char*)dst + 0) = *(short*)((char*)src + 0);
     *(char*)((char*)dst + 2) = *(char*)((char*)src + 2);
     *(char*)((char*)dst + 3) = *(char*)((char*)src + 3);
@@ -180,7 +180,7 @@ void func_801CB0FC(){}
 
 void func_801CB184(){}
 
-extern "C" u8 func_801CB1DC(void* self) { return ((u8*)self)[0x549]; }
+u8 func_801CB1DC(void* self) { return ((u8*)self)[0x549]; }
 
 void func_801CB1E4(){}
 
@@ -190,7 +190,7 @@ void func_801CB38C(){}
 
 void func_801CB480(){}
 
-extern "C" void func_801CB4C4(unsigned char *self, unsigned char val) {
+void func_801CB4C4(unsigned char *self, unsigned char val) {
     unsigned char count = self[0x6e];
     if (count >= 0xc) {
         return;
@@ -205,7 +205,7 @@ void func_801CB56C(){}
 
 void func_801CB5F0(){}
 
-extern "C" unsigned short func_801CB9BC(const unsigned short* p, unsigned char i) {
+unsigned short func_801CB9BC(const unsigned short* p, unsigned char i) {
     if (i < 12) {
         return p[i];
     }
@@ -234,7 +234,7 @@ void func_801CDB94(){}
 
 void func_801CDBE0(){}
 
-extern "C" u8 func_801CDC38(void* self) { return ((u8*)self)[0x52D]; }
+u8 func_801CDC38(void* self) { return ((u8*)self)[0x52D]; }
 
 void func_801CDC40(){}
 
@@ -246,12 +246,12 @@ void func_801CE108(){}
 
 void func_801CE1A0(){}
 
-extern "C" float lbl_eu_80667F78;
+float lbl_eu_80667F78;
 
 namespace nw4r { namespace lyt { class AnimTransform; } }
 void func_80137444(nw4r::lyt::AnimTransform*, float);
 
-extern "C" void func_801CE2DC(void* self) {
+void func_801CE2DC(void* self) {
     if (*(unsigned char*)((char*)self + 0x527) != 4) {
         return;
     }
@@ -320,7 +320,7 @@ void func_801D12D4(){}
 
 void CItemBoxGrid::OnFileEvent() {}
 
-extern "C" void func_801D1E0C(short* dst, const short* src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
+void func_801D1E0C(short* dst, const short* src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
 
 void func_801D1F9C(){}
 
@@ -328,8 +328,4 @@ void func_801D1F9C(){}
 void sinit_801D1E30(){}
 
 extern u8 lbl_eu_805347F8[];
-extern "C" void __ct__CVisionItem(void* self) {
-    // Match retail store order: 0x804 first, then vtable
-    *(u16*)((u8*)self + 0x804) = 0;
-    *(void**)self = lbl_eu_805347F8;
-}
+

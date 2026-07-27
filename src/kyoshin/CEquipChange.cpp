@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
+u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 
 
 
@@ -12,13 +12,13 @@ extern "C" u8 func_802023C0(void* self) { return ((u8*)self)[0x4D]; }
 
 
 
-extern "C" void func_802865A0(void* self);
-extern "C" void func_802023C8(void* self) { ((void(*)(void*))func_802865A0)((char*)self + 0x2b0); }
+void func_802865A0(void* self);
+void func_802023C8(void* self) { ((void(*)(void*))func_802865A0)((char*)self + 0x2b0); }
 
 
 
-extern "C" void func_80286650(void* self);
-extern "C" void func_8020247C(void* self) { ((void(*)(void*))func_80286650)((char*)self + 0x2b0); }
+void func_80286650(void* self);
+void func_8020247C(void* self) { ((void(*)(void*))func_80286650)((char*)self + 0x2b0); }
 
 
 void func_802024CC(){}
@@ -41,7 +41,7 @@ void func_80202CCC(){}
 
 void func_80202EB4(){}
 
-extern "C" int func_80203138(void* self) {
+int func_80203138(void* self) {
     signed char value = *reinterpret_cast<const signed char*>(reinterpret_cast<const unsigned char*>(self) + 0x98);
     if (value == 0)
         return 2;
@@ -64,14 +64,14 @@ void func_80203210(){}
 
 void func_8020392C(){}
 
-extern "C" void func_801D2E4C(void* self);
-extern "C" void func_8020397C(void* self) { ((void(*)(void*))func_801D2E4C)((char*)self + 0x80); }
+void func_801D2E4C(void* self);
+void func_8020397C(void* self) { ((void(*)(void*))func_801D2E4C)((char*)self + 0x80); }
 
-extern "C" void func_80287FE0(void* self);
-extern "C" void func_80203984(void* self) { ((void(*)(void*))func_80287FE0)((char*)self + 0x2b0); }
+void func_80287FE0(void* self);
+void func_80203984(void* self) { ((void(*)(void*))func_80287FE0)((char*)self + 0x2b0); }
 
-extern "C" void func_802886D8(void* self);
-extern "C" void func_8020398C(void* self) { ((void(*)(void*))func_802886D8)((char*)self + 0x2b0); }
+void func_802886D8(void* self);
+void func_8020398C(void* self) { ((void(*)(void*))func_802886D8)((char*)self + 0x2b0); }
 
 void func_80203994(){}
 
@@ -103,7 +103,7 @@ void func_802040FC(){}
 
 void func_802042C0(){}
 
-extern "C" void func_80205294(void* dst, void* src) {
+void func_80205294(void* dst, void* src) {
     u16 a = *(u16*)src;
     u32 b = *(u32*)((u8*)src + 4);
     *(u16*)dst = a;

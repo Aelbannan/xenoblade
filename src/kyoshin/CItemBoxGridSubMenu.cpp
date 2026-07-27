@@ -3,15 +3,15 @@
 
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
 
-extern "C" u8 func_80208358(CItemBoxGridSubMenu* self) {
+u8 func_80208358(CItemBoxGridSubMenu* self) {
     return self->mIsVisible;
 }
 
-extern "C" u8 func_80208360(CItemBoxGridSubMenu* self) {
+u8 func_80208360(CItemBoxGridSubMenu* self) {
     return self->mIsOpened;
 }
 
-extern "C" void func_802083CC(unsigned char* self) {
+void func_802083CC(unsigned char* self) {
     if (self[0x22] != 2)
         return;
 

@@ -372,3 +372,137 @@ namespace cf{
     }; //size = 0xB8
 
 } //namespace cf
+
+namespace cf {
+
+class CfObjectMap {
+public:
+    void func_8007D814();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CfObject {
+public:
+    void CfObject_UnkVirtualFunc47();
+    void CfObject_UnkVirtualFunc33();
+    void CfObject_UnkVirtualFunc32();
+    void CfObject_UnkVirtualFunc46();
+    void CfObject_UnkVirtualFunc58();
+
+    // TODO: add fields
+    void CfObject_UnkVirtualFunc53();
+    void CfObject_UnkVirtualFunc56();
+};
+} // namespace cf
+
+class UnkClass_8007DAE0 {
+public:
+    void init();
+
+    // TODO: add fields
+};
+
+namespace cf {
+
+class IObjectInfo {
+public:
+    virtual ~IObjectInfo();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CCharVoice {
+public:
+    virtual ~CCharVoice();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CfObjectImplMove {
+public:
+    virtual ~CfObjectImplMove();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CCharEffect {
+public:
+    virtual ~CCharEffect();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CCharEffectPc {
+public:
+    virtual ~CCharEffectPc();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CfObjectImplPc {
+public:
+    virtual ~CfObjectImplPc();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CCharEffectNpc {
+public:
+    virtual ~CCharEffectNpc();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CCharEffectObj {
+public:
+    virtual ~CCharEffectObj();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CCharEffectEne {
+public:
+    virtual ~CCharEffectEne();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+namespace cf {
+
+class CObjectState {
+public:
+    void CObjectState_UnkVirtualFunc7();
+
+    // TODO: add fields
+};
+} // namespace cf
+

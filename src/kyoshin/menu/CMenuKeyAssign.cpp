@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/menu/CMenuKeyAssign.hpp"
 void CMenuKeyAssign::~CMenuKeyAssign() {}
 
 void CMenuKeyAssign::Init() {}
@@ -11,7 +12,7 @@ void CMenuKeyAssign::Term() {}
 
 void CMenuKeyAssign::Move() {}
 
-extern "C" void Draw__14CMenuKeyAssignFv(void) {}
+void Draw__14CMenuKeyAssignFv(void) {}
 
 void CMenuKeyAssign::cbRenderBefore() {}
 
@@ -27,8 +28,8 @@ void func_80115BD8(){}
 
 void func_80115DB0(){}
 
-extern "C" void func_80115FB8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x58); }
+void func_80115FB8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x58); }
 
-extern "C" void func_80115FC0(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuKeyAssignFv)((char*)self - 0x5c); }
+void func_80115FC0(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuKeyAssignFv)((char*)self - 0x5c); }
 
 extern "C" void func_80115FC8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x5c); }

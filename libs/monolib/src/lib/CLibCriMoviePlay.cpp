@@ -3,9 +3,9 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
+void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
+void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
 extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 

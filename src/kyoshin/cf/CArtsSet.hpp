@@ -155,3 +155,15 @@ namespace cf {
         CArtsParam mArtsParams[24]; //0x38
     };
 };
+
+namespace cf {
+
+class _sArtsSet {
+public:
+    void _sArtsSet_UnkVirtualFunc1();
+
+    // TODO: add fields
+    _sArtsSet();
+};
+} // namespace cf
+

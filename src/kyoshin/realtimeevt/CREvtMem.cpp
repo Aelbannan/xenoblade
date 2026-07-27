@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/realtimeevt/CREvtMem.hpp"
 void __ct__cf_CREvtMem(){}
 
 void cf::CREvtMem::~CREvtMem() {}

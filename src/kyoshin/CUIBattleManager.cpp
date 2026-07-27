@@ -17,6 +17,7 @@ struct CUIBattleInitProcess {
     u32 callbacks[6];
 };
 
+void func_8012F5F8();
 extern "C" {
 CUIBattleManager* lbl_eu_80664048;
 void* lbl_eu_8066404C;
@@ -32,7 +33,7 @@ void* func_801ACCE0(void* proc, void* scn);
 void* func_80187694(void* proc, void* scn);
 void* func_801B0E0C(void* proc, void* scn);
 void* func_80104210(void* proc, void* scn);
-void func_8012F5F8();
+
 int func_80164410();
 int func_801042A4();
 int func_801042B4();

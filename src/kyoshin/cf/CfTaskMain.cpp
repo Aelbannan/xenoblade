@@ -3,11 +3,12 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+#include "kyoshin/cf/CfTaskMain.hpp"
 void cf::CfTaskMain::~CfTaskMain() {}
 
-extern "C" void Init__Q22cf10CfTaskMainFv() {}
+void Init__Q22cf10CfTaskMainFv() {}
 
-extern "C" void Term__Q22cf10CfTaskMainFv() {}
+void Term__Q22cf10CfTaskMainFv() {}
 
 void cf::CfTaskMain::Move() {
     extern void func_8007F9C4__Q22cf13CfGameManagerFv(void);
@@ -22,7 +23,7 @@ void cf::CfTaskMain::Tail(void) {}
 
 void __ct__800697E8(){}
 
-extern "C" void func_80069944(void* self) { ((void(*)(void*))__dt__Q22cf10CfTaskMainFv)((char*)self - 0x54); }
+void func_80069944(void* self) { ((void(*)(void*))__dt__Q22cf10CfTaskMainFv)((char*)self - 0x54); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.

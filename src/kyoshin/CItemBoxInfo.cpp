@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_801D3FF0() {}
+void func_801D3FF0() {}
 
 
 
@@ -12,12 +12,12 @@ extern "C" void func_801D3FF0() {}
 
 
 
-extern "C" u8 func_801D4214(void* self) {
+u8 func_801D4214(void* self) {
     return *(u8*)((char*)self + 0x98);
 }
 
 
-extern "C" void func_801D4240(void* self) {
+void func_801D4240(void* self) {
     struct Layout {
         unsigned char _pad[0x94];
         int field_94;
@@ -75,7 +75,7 @@ void func_801D6394(){}
 
 void func_801D69FC(){}
 
-extern "C" void func_801D77A4(void* self, unsigned char index, short value) {
+void func_801D77A4(void* self, unsigned char index, short value) {
     if (index >= 12) return;
     *(short*)((char*)self + index * 2 + 0xC0) = value;
 }
@@ -104,7 +104,7 @@ void func_801D8B60(){}
 
 void func_801D8C0C(){}
 
-extern "C" void func_801D8E08(void* arg) {
+void func_801D8E08(void* arg) {
     if (*(unsigned int*)((char*)arg + 0x34) == 0) return;
     if (*(unsigned int*)((char*)arg + 0x30) == 0) return;
     *((char*)arg + 0x98) = 1;
@@ -119,13 +119,13 @@ struct CItemBoxInfoEntry {
     unsigned char unk8;
 };
 
-extern "C" void func_801DF4B4(CItemBoxInfoEntry* dst, const CItemBoxInfoEntry* src) {
+void func_801DF4B4(CItemBoxInfoEntry* dst, const CItemBoxInfoEntry* src) {
     dst->unk0 = src->unk0;
     dst->unk4 = src->unk4;
     dst->unk8 = src->unk8;
 }
 
-extern "C" void func_801DF4D0(void* self, u16 r4, u32 r5, u8 r6) {
+void func_801DF4D0(void* self, u16 r4, u32 r5, u8 r6) {
     *(u16*)self = r4;
     *((u32*)self + 1) = r5;
     *((u8*)self + 8) = r6;
@@ -160,7 +160,7 @@ void func_801E1348(){}
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; } }
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
-extern "C" void func_801E13D8(void* self, nw4r::lyt::DrawInfo* drawInfo) {
+void func_801E13D8(void* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (*(unsigned char*)((char*)self + 0x90) != 0) {
         func_80137038(*(nw4r::lyt::Layout**)((char*)self + 0x34), drawInfo, 0, 1);
     }
@@ -168,13 +168,13 @@ extern "C" void func_801E13D8(void* self, nw4r::lyt::DrawInfo* drawInfo) {
 
 void func_801E13F8(){}
 
-extern "C" u8 func_801E1490(void* self) {
+u8 func_801E1490(void* self) {
     return *(u8*)((char*)self + 0x98);
 }
 
 void func_801E1498(){}
 
-extern "C" void func_801E14BC(void* param_1) {
+void func_801E14BC(void* param_1) {
     struct Fields {
         char unk_0x00[0x94];
         int field_0x94;
@@ -252,11 +252,11 @@ struct ItemBoxInfoCopy {
     unsigned char unk8;
 };
 
-extern "C" void func_801E9164(ItemBoxInfoCopy* dst, const ItemBoxInfoCopy* src) {
+void func_801E9164(ItemBoxInfoCopy* dst, const ItemBoxInfoCopy* src) {
     *dst = *src;
 }
 
-extern "C" void func_801E9180(void* self, unsigned short a, unsigned long b, unsigned char c) {
+void func_801E9180(void* self, unsigned short a, unsigned long b, unsigned char c) {
     *(unsigned short*)self = a;
     *(unsigned long*)((char*)self + 4) = b;
     *(unsigned char*)((char*)self + 8) = c;

@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" u32 func_8027EA64(void) {
+u32 func_8027EA64(void) {
     extern u32 lbl_eu_80664908;
     return lbl_eu_80664908;
 }
@@ -23,7 +23,7 @@ void func_8027EE70(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)(
 
 void func_8027EE78(void* self) { ((void(*)(void*))cbRenderBefore__18CSysWinScenarioLogFv)((char*)self - 0x70); }
 
-extern "C" void func_8027EE80(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x70); }
+void func_8027EE80(void* self) { ((void(*)(void*))__dt__18CSysWinScenarioLogFv)((char*)self - 0x70); }
 
 void func_8027EE88(){}
 

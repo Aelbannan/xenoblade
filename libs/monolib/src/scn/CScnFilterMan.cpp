@@ -3,39 +3,39 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8049CB6C(void) {}
+void func_8049CB6C(void) {}
 
 void func_8049C9F8(void){}
 
-extern "C" void func_8049CB6C(void) {}
+void func_8049CB6C(void) {}
 
-extern "C" void func_8049CB6C(void) {}
+void func_8049CB6C(void) {}
 
-extern "C" void func_8049CB6C(void) {}
+void func_8049CB6C(void) {}
 
-extern "C" void func_8049CB6C(void) {}
+void func_8049CB6C(void) {}
 
-extern "C" void func_8049CB6C(void) {}
+void func_8049CB6C(void) {}
 
 void func_8049CB70(void){}
 
-extern "C" void func_8049CB6C(void) {}
+void func_8049CB6C(void) {}
 
-extern "C" void func_8049CB6C(void) {}
+void func_8049CB6C(void) {}
 
-extern "C" void func_8049CB6C(void) {}
+void func_8049CB6C(void) {}
 
 void func_8049CC70(){}
 
-extern "C" void func_8049CCA4(void) {}
+void func_8049CCA4(void) {}
 
 void __dt___reslist_base__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(){}
 
 void func_8049CD34(){}
 
-extern "C" void func_8049CDAC(void) {}
+void func_8049CDAC(void) {}
 
-void func_8049CDB0(void* param_1) { *(u32*)param_1 = 0; }
+void func_8049CDB0(void* param_1){ *(u32*)param_1 = 0; }
 
 void __dt__reslist__reslist_iterator_CScnFilter_CScnFilter_CScnFilter(){}
 
@@ -61,7 +61,7 @@ void func_8049D1EC(){}
 
 void func_8049D218(){}
 
-extern "C" void func_8049D274(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+void func_8049D274(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 
 void func_8049D26C(void* self){ func_8049D274(*(void**)((char*)self + 0x4), 0); }
 
@@ -91,7 +91,7 @@ void func_8049D570(){}
 
 void func_8049D5F0(){}
 
-extern "C" void func_8049D64C(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+void func_8049D64C(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 
 void func_8049D644(void* self){ func_8049D64C(*(void**)((char*)self + 0x4), 0); }
 
@@ -127,7 +127,7 @@ void func_8049D9CC(void){}
 
 void func_8049D9D0(){}
 
-extern "C" u8 func_8049DAF4(void* self) { return ((u8*)self)[0x4]; }
+u8 func_8049DAF4(void* self) { return ((u8*)self)[0x4]; }
 
 void func_8049DAFC(){}
 
@@ -150,7 +150,7 @@ void func_8049DCD8(){}
 
 void func_8049DCF4(){}
 
-extern "C" void func_8049DD28(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+void func_8049DD28(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 
 void func_8049DD30(){}
 

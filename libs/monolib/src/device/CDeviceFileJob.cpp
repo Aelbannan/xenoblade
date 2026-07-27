@@ -11,7 +11,7 @@ unk210(0){
 }
 
 // CDeviceFileJob::cancel(CDeviceFileJob_UnkStruct1*) — returns false
-extern "C" bool cancel__14CDeviceFileJobFP25CDeviceFileJob_UnkStruct1(CDeviceFileJob_UnkStruct1* pStruct) { return false; }
+
 
 bool CDeviceFileJob::cancel(const char* pFilename){
     return false;

@@ -25,7 +25,7 @@ void func_eu_8015D258(){}
 
 void func_8015C214(){}
 
-extern "C" bool func_8015C294(unsigned int* param1, int param2) {
+bool func_8015C294(unsigned int* param1, int param2) {
     return param1[param2 + 1] != 0;
 }
 
@@ -37,7 +37,7 @@ void func_8015C8F4(){}
 
 void func_8015C9A0(){}
 
-extern "C" int func_8015CB88() { return 1; }
+int func_8015CB88() { return 1; }
 
 void func_8015CB90(){}
 

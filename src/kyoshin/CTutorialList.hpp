@@ -25,3 +25,13 @@ struct CTutorialList {
 
     u8 mInitialized;        // 0x177 -- non-zero after construction
 };
+
+class CTutorialList {
+public:
+    CTutorialList();
+    virtual ~CTutorialList();
+    void OnFileEvent();
+
+    // TODO: add fields
+};
+

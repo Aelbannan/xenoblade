@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
+void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 
 
 
@@ -88,7 +88,7 @@ void func_804C4E04(){}
 
 void func_804C5198(){}
 
-extern "C" bool func_804C51D4(void* r3, void* r4) {
+bool func_804C51D4(void* r3, void* r4) {
     if (!(*(unsigned int*)((char*)r3 + 4) & 0x400)) return false;
     unsigned int v7 = *(unsigned int*)((char*)r3 + 0x64);
     unsigned int v6 = *(unsigned int*)((char*)r3 + 0x68);
@@ -123,7 +123,7 @@ void func_804C5C08(){}
 
 void func_804C5C6C(){}
 
-extern "C" void func_804C5D7C(void* self, unsigned int* out) {
+void func_804C5D7C(void* self, unsigned int* out) {
     struct SelfStruct {
         char pad[0x40];
         void* ptr;
@@ -150,7 +150,7 @@ void func_804C5F6C(){}
 
 void func_804C5FB0(){}
 
-extern "C" void func_804C6010(void* _this, int r4, int r5) {
+void func_804C6010(void* _this, int r4, int r5) {
     void* r3 = *(void**)((char*)_this + 0x24);
     if (r3 == nullptr) {
         return;
@@ -181,11 +181,11 @@ void func_804C6A70(){}
 
 u32 func_804C6ADC(u32 val){ return (val >> 16) & 0xFF; }
 
-extern "C" int func_804C6AE8(unsigned int* arg0) {
+int func_804C6AE8(unsigned int* arg0) {
     return (arg0[1] >> 28) & 1;
 }
 
-extern "C" void func_804C6AF4(void* ptr, int flag) {
+void func_804C6AF4(void* ptr, int flag) {
     unsigned int* word = (unsigned int*)((char*)ptr + 4);
     if (flag != 0)
         *word |= 0x40000000;
@@ -193,7 +193,7 @@ extern "C" void func_804C6AF4(void* ptr, int flag) {
         *word &= ~0x40000000;
 }
 
-extern "C" void func_804C6B1C(void* r3, int r4) {
+void func_804C6B1C(void* r3, int r4) {
     if (r4 != 0) {
         *(unsigned int*)((char*)r3 + 4) |= 0x80000000u;
     } else {
@@ -206,13 +206,13 @@ void func_804C6B44(){}
 
 void func_804C6B6C(){}
 
-extern "C" float func_804C6B88(void* self) { return *(float*)((u8*)self + 0xc8); }
+float func_804C6B88(void* self) { return *(float*)((u8*)self + 0xc8); }
 
-extern "C" void func_804C6B90(void* self, float val) { *(float*)((u8*)self + 0xc8) = val; }
+void func_804C6B90(void* self, float val) { *(float*)((u8*)self + 0xc8) = val; }
 
-extern "C" float func_804C6B98(void* self) { return *(float*)((u8*)self + 0xcc); }
+float func_804C6B98(void* self) { return *(float*)((u8*)self + 0xcc); }
 
-extern "C" void func_804C6BA0(void* self, float val) { *(float*)((u8*)self + 0xcc) = val; }
+void func_804C6BA0(void* self, float val) { *(float*)((u8*)self + 0xcc) = val; }
 
 void func_804C6BA8(){}
 
@@ -232,11 +232,11 @@ void func_804C758C(){}
 
 void func_804C75A0(){}
 
-extern "C" u32 func_804C75B4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 0) = val; return unused; }
+u32 func_804C75B4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 0) = val; return unused; }
 
-extern "C" u32 func_804C75BC(u32 unused, void* obj, float val) { *(float*)((char*)obj + 4) = val; return unused; }
+u32 func_804C75BC(u32 unused, void* obj, float val) { *(float*)((char*)obj + 4) = val; return unused; }
 
-extern "C" u32 func_804C75C4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 8) = val; return unused; }
+u32 func_804C75C4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 8) = val; return unused; }
 
 void func_804C75CC(){}
 
@@ -244,34 +244,34 @@ void func_804C75E0(){}
 
 void func_804C75F4(){}
 
-extern "C" u32 func_804C7608(u32 unused, void* obj, float val) { *(float*)((char*)obj + 40) = val; return unused; }
+u32 func_804C7608(u32 unused, void* obj, float val) { *(float*)((char*)obj + 40) = val; return unused; }
 
-extern "C" u32 func_804C7610(u32 unused, void* obj, float val) { *(float*)((char*)obj + 44) = val; return unused; }
+u32 func_804C7610(u32 unused, void* obj, float val) { *(float*)((char*)obj + 44) = val; return unused; }
 
-extern "C" u32 func_804C7618(u32 unused, void* obj, float val) { *(float*)((char*)obj + 48) = val; return unused; }
+u32 func_804C7618(u32 unused, void* obj, float val) { *(float*)((char*)obj + 48) = val; return unused; }
 
 void func_804C7620(){}
 
-extern "C" void func_804C763C(int dummy, float f, void* ptr) {
+void func_804C763C(int dummy, float f, void* ptr) {
     int val = (int)f;
     *(int*)((char*)ptr + 0x38) = val;
 }
 
 void func_804C7658(){}
 
-extern "C" u32 func_804C7674(u32 unused, void* obj, float val) { *(float*)((char*)obj + 184) = val; return unused; }
+u32 func_804C7674(u32 unused, void* obj, float val) { *(float*)((char*)obj + 184) = val; return unused; }
 
-extern "C" u32 func_804C767C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 188) = val; return unused; }
+u32 func_804C767C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 188) = val; return unused; }
 
-extern "C" u32 func_804C7684(u32 unused, void* obj, float val) { *(float*)((char*)obj + 192) = val; return unused; }
+u32 func_804C7684(u32 unused, void* obj, float val) { *(float*)((char*)obj + 192) = val; return unused; }
 
-extern "C" u32 func_804C768C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 196) = val; return unused; }
+u32 func_804C768C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 196) = val; return unused; }
 
-extern "C" u32 func_804C7694(u32 unused, void* obj, float val) { *(float*)((char*)obj + 200) = val; return unused; }
+u32 func_804C7694(u32 unused, void* obj, float val) { *(float*)((char*)obj + 200) = val; return unused; }
 
-extern "C" u32 func_804C769C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 204) = val; return unused; }
+u32 func_804C769C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 204) = val; return unused; }
 
-extern "C" u32 func_804C76A4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 208) = val; return unused; }
+u32 func_804C76A4(u32 unused, void* obj, float val) { *(float*)((char*)obj + 208) = val; return unused; }
 
 void func_804C76AC(){}
 
@@ -281,16 +281,16 @@ void func_804C76E4(){}
 
 void func_804C7700(){}
 
-extern "C" void func_804C771C(int, void* ptr, float value) {
+void func_804C771C(int, void* ptr, float value) {
     int i = (int)value;
     *(short*)((char*)ptr + 0xe) = (short)i;
 }
 
 void func_804C7738(){}
 
-extern "C" u32 func_804C7754(u32 unused, void* obj, float val) { *(float*)((char*)obj + 200) = val; return unused; }
+u32 func_804C7754(u32 unused, void* obj, float val) { *(float*)((char*)obj + 200) = val; return unused; }
 
-extern "C" u32 func_804C775C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 204) = val; return unused; }
+u32 func_804C775C(u32 unused, void* obj, float val) { *(float*)((char*)obj + 204) = val; return unused; }
 
 extern "C" u32 func_804C7764(u32 unused, void* obj, float val) { *(float*)((char*)obj + 208) = val; return unused; }
 

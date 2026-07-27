@@ -15,3 +15,21 @@ extern "C" {
     void func_80192BE4(void* self);
     void func_80192BEC(void* self);
 }
+
+class CMenuPTState {
+public:
+    CMenuPTState();
+
+    // TODO: add fields
+};
+
+namespace cf {
+
+class UnkClass_80192BF4 {
+public:
+    UnkClass_80192BF4();
+
+    // TODO: add fields
+};
+} // namespace cf
+

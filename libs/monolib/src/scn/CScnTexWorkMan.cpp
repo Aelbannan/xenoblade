@@ -11,19 +11,19 @@ void func_80490208(){}
 
 void func_804902D8(){}
 
-extern "C" void func_80490310__14CScnTexWorkManFv(void) {}
+void func_80490310__14CScnTexWorkManFv(void) {}
 
-extern "C" int lbl_eu_806658FC;
-extern "C" int lbl_eu_806658F0;
-extern "C" int lbl_eu_806658F8;
+int lbl_eu_806658FC;
+int lbl_eu_806658F0;
+int lbl_eu_806658F8;
 
-extern "C" void func_80490314() {
+void func_80490314() {
     if (lbl_eu_806658FC == 0) {
         lbl_eu_806658F8 = lbl_eu_806658F0;
     }
 }
 
-extern "C" void func_8049032C() {
+void func_8049032C() {
     if (lbl_eu_806658FC != 0) return;
     lbl_eu_806658F0 = lbl_eu_806658F8;
     lbl_eu_806658F8 = 0;

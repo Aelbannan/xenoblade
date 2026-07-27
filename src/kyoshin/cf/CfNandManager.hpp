@@ -19,5 +19,10 @@ namespace cf{
     void func_8023E4D4();
     void create();
     void cbRenderBefore();
+    void Init();
+    void OnFileEvent();
+    void func_802405FC();
+    void func_80240604();
+    void func_8024060C();
     }; //size = 0x194
 } //namespace cf

@@ -84,5 +84,17 @@ namespace cf {
     void CfObject_UnkVirtualFunc43();
     void CfObject_UnkVirtualFunc45();
     void CfObject_UnkVirtualFunc70();
+    void CfObject_UnkVirtualFunc29();
     };
 }
+
+namespace cf {
+
+class CfObject {
+public:
+    void func_800BE898();
+
+    // TODO: add fields
+};
+} // namespace cf
+

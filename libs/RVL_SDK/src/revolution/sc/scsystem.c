@@ -543,10 +543,12 @@ static SCStatus ParseConfBuf(u8* conf, u32 size) {
             }
 
             // LUT items are in reverse order
-            u16* confLut = (u16*)confLutBegin;
-            u16* curItem = confItems + i;
-            confLut[-tblIter->id] =
-                (u8*)curItem - confBegin;
+            {
+                u16* confLut = (u16*)confLutBegin;
+                u16* curItem = confItems + i;
+                confLut[-tblIter->id] =
+                    (u8*)curItem - confBegin;
+            }
 
             break;
         }

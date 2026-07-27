@@ -14,7 +14,7 @@
 #include <nw4r/ut.h>
 
 extern void func_80124270(nw4r::lyt::Pane*, u32);
-extern void func_80127BD8(nw4r::math::VEC3*, nw4r::math::VEC3*);
+extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
 
 static GXColorS10 lbl_80666D58; //light orange
 static GXColorS10 lbl_80666D60;
@@ -181,12 +181,12 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         if(CTitleAHelp_isPaneVisible(aPane) == 0) return;
         if((u8)i == 0) {
             nw4r::math::VEC3* translate = (nw4r::math::VEC3*)&aPane->GetTranslate();
-            func_80127BD8(&oldVec, translate);
+            copyVEC3(&oldVec, translate);
         }
         nw4r::math::VEC3 newVec = oldVec;
         newVec.x -= (float)someWidth;
 
-        func_80127BD8((nw4r::math::VEC3*)&aPane->GetTranslate(), &newVec);
+        copyVEC3((nw4r::math::VEC3*)&aPane->GetTranslate(), &newVec);
 
         nw4r::ut::Font* font = (nw4r::ut::Font*)((nw4r::lyt::TextBox*)aPane)->GetFont();
         const wchar_t* string = ((nw4r::lyt::TextBox*)aPane)->GetString();
@@ -202,9 +202,9 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         sprintf(buffer4, "pic_btn%02d", (u8)i);
         nw4r::lyt::Pane* selectedPane = mLayout->GetRootPane()->FindPaneByName(buffer4, true);
 
-        func_80127BD8(&newVec, &oldVec);
+        copyVEC3(&newVec, &oldVec);
         newVec.x -= (float)someWidth;
-        func_80127BD8((nw4r::math::VEC3*)&selectedPane->GetTranslate(), &newVec);
+        copyVEC3((nw4r::math::VEC3*)&selectedPane->GetTranslate(), &newVec);
 
         someWidth += selectedPane->GetSize().width;
         if((u8)i < 5) {

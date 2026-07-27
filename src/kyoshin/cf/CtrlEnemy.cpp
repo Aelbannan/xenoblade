@@ -4,11 +4,18 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlEnemy.hpp"
+
+namespace cf {
+class CtrlBase;
+class CBattleManager;
+class CfObjectMove;
+class CActorParam;
+}
 void __ct__cf_CtrlEnemy(){}
 
-void cf::CtrlAct::~CtrlAct() {}
+cf::CtrlAct::~CtrlAct() {}
 
-void* __dt__Q22cf8CtrlBaseFv(void* self, int deleteFlag) {
+void* __dt__Q22cf8CtrlBaseFv(cf::CtrlBase* self, int deleteFlag) {
     if (self != nullptr) {
         if (deleteFlag > 0) {
             operator delete(self);
@@ -19,84 +26,84 @@ void* __dt__Q22cf8CtrlBaseFv(void* self, int deleteFlag) {
 
 void __dt__80087688(){}
 
-void cf::CtrlEnemy::~CtrlEnemy() {}
+cf::CtrlEnemy::~CtrlEnemy() {}
 
-void func_8008772C(){}
+void CtrlEnemy_UnkFunc_8008772C(){}
 
-void func_800877A8(){}
+void CtrlEnemy_UnkFunc_800877A8(){}
 
-float CfObject_UnkVirtualFunc60__Q22cf12CfObjectMoveFv(void* self) { return *(float*)((u8*)self + 0x6ec); }
+float CfObject_UnkVirtualFunc60__Q22cf12CfObjectMoveFv(cf::CfObjectMove* self) { return *(float*)((u8*)self + 0x6ec); }
 
-void func_80087EEC(){}
+void CtrlEnemy_UnkFunc_80087EEC(){}
 
-void* CActorParam_UnkVirtualFunc113__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x161c); }
+u32* CActorParam_UnkVirtualFunc113__Q22cf11CActorParamFv(cf::CActorParam* self) { return (u32*)((u8*)self + 0x161c); }
 
-bool func_800885F0(void* obj, unsigned int mask)
+bool CBattleManager_CheckUnk84Flag(cf::CBattleManager* obj, unsigned int mask)
 {
     return (*(unsigned int*)((char*)obj + 0x84) & mask) != 0;
 }
 
-void* CActorParam_UnkVirtualFunc117__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x1620); }
+float* CActorParam_UnkVirtualFunc117__Q22cf11CActorParamFv(cf::CActorParam* self) { return (float*)((u8*)self + 0x1620); }
 
-void* CActorParam_UnkVirtualFunc119__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x1624); }
+float* CActorParam_UnkVirtualFunc119__Q22cf11CActorParamFv(cf::CActorParam* self) { return (float*)((u8*)self + 0x1624); }
 
-u32 CActorParam_UnkVirtualFunc29__Q22cf11CActorParamFv(void* self) { return *(u32*)((u8*)self + 0x17E4); }
+u32 CActorParam_UnkVirtualFunc29__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x17E4); }
 
-void func_80088620(){}
+void CtrlEnemy_UnkFunc_80088620(){}
 
-unsigned long CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv(void* self) {
+bool CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv(cf::CActorParam* self) {
     return !!((unsigned char*)self)[0x1628];
 }
 
-extern "C" u32 CActorParam_UnkVirtualFunc19__Q22cf11CActorParamFv(void* self) { return *(u32*)((u8*)self + 0x15EC); }
+extern "C" u32 CActorParam_UnkVirtualFunc19__Q22cf11CActorParamFv(cf::CActorParam* self) { return *(u32*)((u8*)self + 0x15EC); }
 
-void func_80088800(){}
+void CtrlEnemy_UnkFunc_80088800(){}
 
-void func_8008884C(){}
+void CtrlEnemy_UnkFunc_8008884C(){}
 
 extern "C" void func_80089B24(void* self);
-extern "C" void func_80088858(void* self) { ((void(*)(void*))func_80089B24)((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089B24(cf::CtrlEnemy* self) { ((void(*)(void*))func_80089B24)((char*)self + 0x84); }
 
 extern "C" void func_80089E88(void* self);
-extern "C" void func_80088860(void* self) { ((void(*)(void*))func_80089E88)((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089E88(cf::CtrlEnemy* self) { ((void(*)(void*))func_80089E88)((char*)self + 0x84); }
 
 extern "C" void func_80089F68(void* self);
-extern "C" void func_80088868(void* self) { ((void(*)(void*))func_80089F68)((char*)self + 0x84); }
+extern "C" void CtrlEnemy_delegateTo80089F68(cf::CtrlEnemy* self) { ((void(*)(void*))func_80089F68)((char*)self + 0x84); }
 
-extern "C" int func_80088870(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_80088870(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_80088878(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_80088878(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_80088880(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_80088880(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_80088888(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_80088888(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_80088890(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_80088890(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_80088898(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_80088898(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888A0(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888A0(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888A8(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888A8(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888B0(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888B0(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888B8(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888B8(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888C0(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888C0(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888C8(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888C8(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888D0(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888D0(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888D8(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888D8(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888E0(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888E0(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" int func_800888E8(void* self) { return 0; }
+extern "C" int CtrlEnemy_ret0_800888E8(cf::CtrlEnemy* self) { return 0; }
 
-extern "C" void func_800888F0() {}
+extern "C" void CtrlEnemy_emptyStub_800888F0() {}
 
-extern "C" int func_800888F4(void* self) { return 1; }
+extern "C" int CtrlEnemy_ret1_800888F4(cf::CtrlEnemy* self) { return 1; }
 
-extern "C" int func_800888FC(void* self) { return 1; }
+extern "C" int CtrlEnemy_ret1_800888FC(cf::CtrlEnemy* self) { return 1; }

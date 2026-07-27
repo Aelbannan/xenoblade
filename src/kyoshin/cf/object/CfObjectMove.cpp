@@ -17,17 +17,17 @@ void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc1() {}
 
 void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc2() {}
 
-void func_800BC2DC() {}
+void CfObjectMove_nullsub_1() {}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc2() {}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc1() {}
 
-void func_800BC3AC() {}
+void CfObjectMove_nullsub_2() {}
 
-void func_800BC3B0(){}
+void CfObjectMove_nullsub_3(){}
 
-void func_800BC3D8(void* obj, float value)
+void CfObjectMove_setMoveSpeed(CfObjectMove* obj, float value)
 {
     *(float*)((char*)obj + 0x6f0) = value;
     unsigned int flags = *(unsigned int*)((char*)obj + 0x68);
@@ -35,38 +35,38 @@ void func_800BC3D8(void* obj, float value)
     *(unsigned int*)((char*)obj + 0x68) = flags;
 }
 
-void func_800BC3F0(){}
+void CfObjectMove_nullsub_4(){}
 
-void func_800BC458(){}
+void CfObjectMove_nullsub_5(){}
 
 f32 lbl_eu_80666A88;
 
-void func_800BC4A0(u8* arg0) {
+void CfObjectMove_resetMoveSpeed(u8* arg0) {
     u32 flags = *(u32*)(arg0 + 0x68);
     f32 value = lbl_eu_80666A88;
     *(f32*)(arg0 + 0x6F0) = value;
     *(u32*)(arg0 + 0x68) = flags & ~0xC00;
 }
 
-void func_800BC4B8(){}
+void CfObjectMove_nullsub_6(){}
 
-void func_800BC4CC(){}
+void CfObjectMove_nullsub_7(){}
 
-void func_800BC68C(){}
+void CfObjectMove_nullsub_8(){}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc5() {}
 
-void func_800BC8D8(){}
+void CfObjectMove_nullsub_9(){}
 
-void func_800BC9EC(){}
+void CfObjectMove_nullsub_10(){}
 
-void func_800BCD04(){}
+void CfObjectMove_nullsub_11(){}
 
-void func_800BCFA0(){}
+void CfObjectMove_nullsub_12(){}
 
-void func_800BD638(){}
+void CfObjectMove_nullsub_13(){}
 
-void func_800BD644(){}
+void CfObjectMove_nullsub_14(){}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc46() {}
 
@@ -80,7 +80,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc65() {}
 
 void func_804B0B54(void*, void*);
 
-void func_800BDB4C(unsigned int* param_1) {
+void CfObjectMove_updatePos(unsigned int* param_1) {
     if ((param_1[0x19] & 8) != 0) {
         func_804B0B54((char*)param_1 + 0x60c, (char*)param_1 + 0x3c);
     }
@@ -98,10 +98,10 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc23() {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc27() {}
 
-void CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(void*);
+void CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(CfObjectModel*);
 void func_8004B4A4(void*, float);
 
-void CfObject_UnkVirtualFunc29__Q22cf12CfObjectMoveFv(void* self, float value) {
+void CfObject_UnkVirtualFunc29__Q22cf12CfObjectMoveFv(CfObjectMove* self, float value) {
     unsigned char* object = static_cast<unsigned char*>(self);
     CfObject_UnkVirtualFunc29__Q22cf13CfObjectModelFv(self);
     void* target = *reinterpret_cast<void**>(object + 0xC4);
@@ -122,7 +122,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc33() {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc13() {}
 
-void* func_800BE0B0(void* self) { return (void*)((u8*)self + 0x54); }
+void* CfObjectMove_getUnk54(CfObjectMove* self) { return (void*)((u8*)self + 0x54); }
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc57() {}
 
@@ -130,11 +130,11 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc4() {}
 
 void cf::CfObjectMove::CObjectParam_UnkVirtualFunc2(void) {}
 
-void func_800BE0F8(){}
+void CfObjectMove_nullsub_15(){}
 
-void func_800BE12C(){}
+void CfObjectMove_nullsub_16(){}
 
-void func_800BE1A4(){}
+void CfObjectMove_nullsub_17(){}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc14() {}
 
@@ -148,7 +148,7 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc7() {}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc8() {}
 
-void func_800BE28C(){}
+void CfObjectMove_nullsub_18(){}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc9() {}
 
@@ -162,9 +162,9 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc13() {}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc14() {}
 
-void func_800BE33C(){}
+void CfObjectMove_nullsub_19(){}
 
-void func_800BE3E8(){}
+void CfObjectMove_nullsub_20(){}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc16() {}
 
@@ -182,17 +182,17 @@ void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc20() {}
 
 void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc18() {}
 
-void func_800BE824(){}
+void CfObjectMove_nullsub_21(){}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc23() {}
 
 void cf::CfObject::func_800BE898() {}
 
-void func_800BE8B4(){}
+void CfObjectMove_nullsub_22(){}
 
-int func_800BE8F4(void* this_ptr) { struct SubObj { int dummy0[11]; int field_2c; int field_30; }; SubObj* sub = *(SubObj**)((char*)this_ptr + 0x38); if (!sub) return -1; if (sub->field_2c < 0) return -1; return sub->field_30; }
+int CfObjectMove_getSubState(CfObjectMove* this_ptr) { struct SubObj { int dummy0[11]; int field_2c; int field_30; }; SubObj* sub = *(SubObj**)((char*)this_ptr + 0x38); if (!sub) return -1; if (sub->field_2c < 0) return -1; return sub->field_30; }
 
-void func_800BE924(void* self)
+void CfObjectMove_freeSub(CfObjectMove* self)
 {
     extern void func_802A1304(void*);
     char* sub = *reinterpret_cast<char**>(reinterpret_cast<char*>(self) + 0x38);
@@ -201,23 +201,23 @@ void func_800BE924(void* self)
     }
 }
 
-void func_800BE93C(){}
+void CfObjectMove_nullsub_23(){}
 
-void func_800BE948(void* self, unsigned short val) {
+void CfObjectMove_setSubFieldC(CfObjectMove* self, unsigned short val) {
     void* ptr = *(void**)((char*)self + 0xb0);
     *(unsigned short*)((char*)ptr + 0xc) = val;
 }
 
-int func_800BE954(void* self) { return *(s16*)((u8*)*(void**)((u8*)self + 176) + 10); }
+int CfObjectMove_getSubFieldA(CfObjectMove* self) { return *(s16*)((u8*)*(void**)((u8*)self + 176) + 10); }
 
-void func_800BE960(void* self, unsigned short val) {
+void CfObjectMove_setSubFieldA(CfObjectMove* self, unsigned short val) {
     void* ptr = *(void**)((char*)self + 0xb0);
     *(unsigned short*)((char*)ptr + 0xa) = val;
 }
 
-int func_800BE96C(void* self) { return *(s16*)((u8*)*(void**)((u8*)self + 176) + 14); }
+int CfObjectMove_getSubFieldE(CfObjectMove* self) { return *(s16*)((u8*)*(void**)((u8*)self + 176) + 14); }
 
-void func_800BE978(void* self, unsigned short val) {
+void CfObjectMove_setSubFieldE(CfObjectMove* self, unsigned short val) {
     void* ptr = *(void**)((char*)self + 0xb0);
     *(unsigned short*)((char*)ptr + 0xe) = val;
 }
@@ -226,7 +226,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc9() {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc10() {}
 
-void func_800BE9AC(void* self){
+void CfObjectMove_virtCall10(CfObjectMove* self){
     void** inner = *(void***)((char*)self + 0x10);
     void (*func)(void*) = (void (*)(void*))inner[0x14 / 4];
     func(self);
@@ -238,9 +238,9 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc62() {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc12() {}
 
-void func_800BEA34() {}
+void CfObjectMove_nullsub_24() {}
 
-int func_800BEA38(void* self) { return 0; }
+int CfObjectMove_nullsub_25(CfObjectMove* self) { return 0; }
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc3() {}
 
@@ -250,27 +250,27 @@ void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc19() {}
 
 void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc6() {}
 
-int func_800BEC44(void* self) { return 0; }
+int CfObjectMove_nullsub_26(CfObjectMove* self) { return 0; }
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc37() {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc38() {}
 
-int func_800BED5C(void* self) { return 0; }
+int CfObjectMove_nullsub_27(CfObjectMove* self) { return 0; }
 
-int func_800BED64(void* self) { return 0; }
+int CfObjectMove_nullsub_28(CfObjectMove* self) { return 0; }
 
-void func_800BED6C(){}
+void CfObjectMove_nullsub_29(){}
 
-void func_800BED80(){}
+void CfObjectMove_nullsub_30(){}
 
-void func_800BEDC4(){}
+void CfObjectMove_nullsub_31(){}
 
-void func_800BEE08(){}
+void CfObjectMove_nullsub_32(){}
 
-void func_800BEE1C(){}
+void CfObjectMove_nullsub_33(){}
 
-void func_800BEE30() {}
+void CfObjectMove_nullsub_34() {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc39() {}
 
@@ -282,36 +282,36 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc43() {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc45() {}
 
-void func_800BF29C(){}
+void CfObjectMove_nullsub_35(){}
 
-void func_800BF2B0(){}
+void CfObjectMove_nullsub_36(){}
 
-void func_800BF2C4() {}
+void CfObjectMove_nullsub_37() {}
 
-void func_800BF2C8() {}
+void CfObjectMove_nullsub_38() {}
 
-void func_800BF2CC(){}
+void CfObjectMove_nullsub_39(){}
 
-void func_800BF2E0(){}
+void CfObjectMove_nullsub_40(){}
 
-void func_800BF2F4() {}
+void CfObjectMove_nullsub_41() {}
 
-void func_800BF2F8(){}
+void CfObjectMove_nullsub_42(){}
 
 void func_eu_800BFC78() {}
 
 void func_eu_800BFC7C(){}
 
-extern "C" int func_800BF30C(void* self) { return 1; }
+extern "C" int CfObjectMove_isActive(CfObjectMove* self) { return 1; }
 
-extern "C" void func_800BF314(void* self, unsigned long bit) {
+extern "C" void CfObjectMove_setBit6c9(CfObjectMove* self, unsigned long bit) {
     unsigned char val = *(unsigned char*)((char*)self + 0x6c9);
     *(unsigned char*)((char*)self + 0x6c9) = __rlwimi(val, bit, 0, 31, 31);
 }
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc70() {}
 
-extern "C" void* func_800BF324(void* param_1) {
+extern "C" CfObjectMove* CfObjectMove_testFlag8(CfObjectMove* param_1) {
     if (param_1 != NULL && (*reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(param_1) + 0x64) & 8) != 0) {
         return param_1;
     }

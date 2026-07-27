@@ -67,7 +67,7 @@ nw4r::lyt::ArcResourceAccessor* func_801355F4();
 u32 func_80137510(void* anim, float frame);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 void* func_8016FE34();
-void* func_80153DB0(void* obj, s32 index);
+void* getArtsParamAtCnt(void* obj, s32 index);
 int func_8010EDD4(void*);
 int func_8010A840(void*);
 
@@ -868,7 +868,7 @@ after_ce48:
                         typedef void* (*GetPtrFn)(void*);
                         void* skill =
                             artsVslot<GetPtrFn>(skillSrc, 0x278)(skillSrc);
-                        void* info = func_80153DB0(skill, i);
+                        void* info = getArtsParamAtCnt(skill, i);
                         if (ready == 0) {
                             if (*reinterpret_cast<u16*>(
                                     reinterpret_cast<u8*>(info) + 0x74) != 0) {

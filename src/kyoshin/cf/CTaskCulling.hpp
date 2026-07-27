@@ -54,17 +54,9 @@ namespace cf{
         static ml::CVec4 lbl_80579018_28;
 
         static CTaskCulling* spInstance;
-    void @88@cbRenderBefore();
-    void @92@ICulling_UnkVirtualFunc3();
-    void @92@ICulling_UnkVirtualFunc2();
-    void @92@ICulling_UnkVirtualFunc1() const;
     };
+
+    // Thunk symbols present in object (@88@cbRenderBefore, @92@ICulling_UnkVirtualFunc*);
+    // Declared manually — MWCC does not accept @ in identifiers.
 } //namespace  cf
-
-class ICulling {
-public:
-    virtual ~ICulling();
-
-    // TODO: add fields
-};
 

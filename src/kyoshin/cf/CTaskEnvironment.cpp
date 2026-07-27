@@ -6,9 +6,9 @@
 #include "kyoshin/cf/CTaskEnvironment.hpp"
 void __ct__CTaskEnvironment(){}
 
-void func_800586E8(void *dst, const void *src) {
-    const unsigned int *s = (const unsigned int *)src;
-    unsigned int *d = (unsigned int *)dst;
+void copyWord4(u32* dst, const u32* src) {
+    const u32* s = src;
+    u32* d = dst;
     d[0] = s[0];
     d[1] = s[1];
     d[2] = s[2];
@@ -17,7 +17,7 @@ void func_800586E8(void *dst, const void *src) {
 
 bool func_8005870C(){ return false; }
 
-u32 func_80058714(void* self) { return *(u32*)((u8*)self + 0x78); }
+u32 getSubField78(void* self) { return *(u32*)((u8*)self + 0x78); }
 
 bool func_8005871C(){ return false; }
 
@@ -25,13 +25,13 @@ bool func_80058724(){ return false; }
 
 void CTaskEnvironment::~CTaskEnvironment() {}
 
-bool func_800587E8() { return false; }
+bool getGlobalSda() { return false; }
 
-u32 func_800587F0(void* self) { return *(u32*)((u8*)self + 0x7C); }
+u32 getSubField7C(void* self) { return *(u32*)((u8*)self + 0x7C); }
 
 void func_800587F8(){}
 
-u32 func_8005883C(void* self) { return *(u32*)((u8*)self + 0x5C); }
+u32 getField5C(void* self) { return *(u32*)((u8*)self + 0x5C); }
 
 void func_80058844(){}
 
@@ -43,20 +43,20 @@ void CTaskEnvironment::Term() {}
 
 void CTaskEnvironment::Move() {}
 
-void func_8005960C() {}
+void nopFunc() {}
 
 void func_80059610(){}
 
 extern float lbl_eu_8066A210;
-float func_800596AC(float val) { return val * lbl_eu_8066A210; }
+float scaleByGlobal(float val) { return val * lbl_eu_8066A210; }
 
 void func_800596B8(){}
 
 void func_800598A8(){}
 
-u32 func_8005990C(void* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
+u32 checkBitFlag(void* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
 
-u32 func_80059918(void* self) { return *(u32*)((u8*)self + 0x68); }
+u32 getField68(CTaskEnvironment* self) { return *(u32*)((u8*)self + 0x68); }
 
 void func_80059920(){}
 
@@ -64,7 +64,7 @@ void func_80059944(){}
 
 void func_80059974(){}
 
-void func_800599B8(unsigned int* dst, const unsigned int* src) {
+void copyWord4Offset(u32* dst, const u32* src) {
     dst[1] = src[0];
     dst[2] = src[1];
     dst[3] = src[2];

@@ -14,7 +14,7 @@ void func_801B1C5C(){}
 
 unsigned char* lbl_eu_80664398;
 
-int func_801B1CB0() {
+int getEffectMax() {
     if (lbl_eu_80664398 == 0) {
         return 0;
     }
@@ -23,7 +23,7 @@ int func_801B1CB0() {
 
 void func_801B1CCC(){}
 
-int func_801B1D4C(int index)
+int findActiveEntryID(int index)
 {
     if (lbl_eu_80664398 == 0)
         return -1;
@@ -49,8 +49,8 @@ void func_801B1DCC(){}
 
 void func_801B1E74(){}
 
-s32 func_801B1FA4() {
-    void* r3 = lbl_eu_80664398;
+s32 getFirstFreeSlot() {
+    unsigned char* r3 = lbl_eu_80664398;
     if (!r3) return -1;
     if (*(s16*)((u32)r3 + 0x14) == 0) return 0;
     if (*(s16*)((u32)r3 + 0x2c) == 0) return 1;
@@ -58,7 +58,7 @@ s32 func_801B1FA4() {
     return -1;
 }
 
-int func_801B1FFC(int index) {
+int isSlotActive(int index) {
     if (lbl_eu_80664398 == 0) return 0;
     struct Struct {
         char pad[20];
@@ -70,8 +70,8 @@ int func_801B1FFC(int index) {
     return (val == 1) ? 1 : 0;
 }
 
-bool func_801B202C() {
-    void* obj = lbl_eu_80664398;
+bool hasAnyActiveSlot() {
+    unsigned char* obj = lbl_eu_80664398;
     if (!obj) return false;
     if (*(short*)((int)obj + 0x14) != 0) return true;
     if (*(short*)((int)obj + 0x2c) != 0) return true;
@@ -79,7 +79,7 @@ bool func_801B202C() {
     return false;
 }
 
-int func_801B2084() {
+int countActiveSlots() {
     int* r4 = (int*)lbl_eu_80664398;
     if (!r4) return 0;
     int result = 0;
@@ -101,9 +101,9 @@ void func_801B23D0(){}
 
 void func_801B248C(){}
 
-void func_801B2544(void* self) { ((void(*)(void*))func_801B21E0)((char*)self - 0x4); }
+void thunk_adj4_reset(void* self) { ((void(*)(void*))func_801B21E0)((char*)self - 0x4); }
 
-void func_801B254C(void* self) { ((void(*)(void*))func_801B2318)((char*)self - 0x4); }
+void thunk_adj4_update(void* self) { ((void(*)(void*))func_801B2318)((char*)self - 0x4); }
 
 extern "C" void func_801B2554(void* self) { ((void(*)(void*))func_801B20C8)((char*)self - 0x4); }
 

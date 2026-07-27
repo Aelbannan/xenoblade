@@ -34,7 +34,7 @@ CTaskGameCf* CTaskGameCf::getInstance() {
     return lbl_eu_80663D38;
 }
 
-    void CTaskGameCf::func_800442DC(){
+    void CTaskGameCf::reqExit(){
         unk_54 |= 1;
         if(cf::CfGameManager::func_8007E1B4()){
             cf::CfGameManager::sUnkFlags |= 0x200000;
@@ -58,7 +58,7 @@ void CTaskGameCf::func_8004433C() {
     reinterpret_cast<u32*>(this)[0x44 / 4] = v2;
 }
 
-    void CTaskGameCf::func_8004435C(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4){
+    void CTaskGameCf::startMission(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4){
         unk_5C = arg1;
         unk_5E = arg2;
         unk_60 = 12;
@@ -67,8 +67,6 @@ void CTaskGameCf::func_8004433C() {
         unk_88 = arg4;
         mMoveFunc = &CTaskGameCf::func_800444DC;
     }
-
-cf::CTaskGameCf* lbl_eu_80663D38;
 
 void CTaskGameCf::Init() {
     lbl_eu_80663D38 = this;
@@ -83,11 +81,11 @@ void CTaskGameCf::Init() {
 
 void CTaskGameCf::Draw() {}
 
-    void CTaskGameCf::func_80044424(){
-        mMoveFunc = &CTaskGameCf::func_80044444;
+    void CTaskGameCf::startNewGame(){
+        mMoveFunc = &CTaskGameCf::initNewGame;
     }
 
-    void CTaskGameCf::func_80044444(){
+    void CTaskGameCf::initNewGame(){
         unk_5C = 1;
         unk_5E = 1;
         unk_60 = 12;
@@ -95,11 +93,11 @@ void CTaskGameCf::Draw() {}
         mMoveFunc = &CTaskGameCf::func_8004451C;
     }
 
-    void CTaskGameCf::func_80044480(){
-        mMoveFunc = &CTaskGameCf::func_800444A0;
+    void CTaskGameCf::startContinue(){
+        mMoveFunc = &CTaskGameCf::initContinue;
     }
 
-    void CTaskGameCf::func_800444A0(){
+    void CTaskGameCf::initContinue(){
         unk_5C = 1;
         unk_5E = 1;
         unk_60 = 12;
@@ -209,11 +207,11 @@ void CTaskGameCf::func_800444FC(){
 
             CUIBattleManager::func_8012F87C(0);
             CTaskREvent::getInstance()->SetRemove();
-            mMoveFunc = &CTaskGameCf::func_800448DC;
+            mMoveFunc = &CTaskGameCf::beginExit;
         }
     }
 
-void CTaskGameCf::func_800448DC() {
+void CTaskGameCf::beginExit() {
     if (CUICfManager::getInstance()) {
         CUICfManager::getInstance()->SetRemove();
     }
@@ -221,21 +219,21 @@ void CTaskGameCf::func_800448DC() {
     setUnk54(2, false);
     pTaskGame->getScene()->unk_3E4 = 1;
     unk_8C = 2;
-    mMoveFunc = &CTaskGameCf::func_80044934;
+    mMoveFunc = &CTaskGameCf::waitExit;
 }
 
-    void CTaskGameCf::func_80044934(){
+    void CTaskGameCf::waitExit(){
         unk_8C--;
         if(unk_8C <= 0){
             if(!chkUnk54(2)){
                 CfGameManager::func_8007E218();
             }
             CfObjectSelectorObj::destroy();
-            mMoveFunc = &CTaskGameCf::func_8004499C;
+            mMoveFunc = &CTaskGameCf::finishExit;
         }
     }
 
-void CTaskGameCf::func_8004499C() {
+void CTaskGameCf::finishExit() {
     u32* taskGame = *(u32**)((u8*)this + 0x58);
     u32* sceneData = *(u32**)((u8*)taskGame + 0x74);
     *(u8*)((u8*)sceneData + 0x3E4) = 0;

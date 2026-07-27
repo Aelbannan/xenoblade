@@ -34,22 +34,22 @@ namespace cf{
             }
         }
 
-        void func_800442DC();
+        void reqExit();
         void func_8004431C();
         void func_8004433C();
-        void func_8004435C(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4);
+        void startMission(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4);
 
-        void func_80044424();
-        void func_80044444();
-        void func_80044480();
-        void func_800444A0();
+        void startNewGame();
+        void initNewGame();
+        void startContinue();
+        void initContinue();
         void func_800444DC();
         void func_800444FC();
         void func_8004451C();
         void func_800447B4();
-        void func_800448DC();
-        void func_80044934();
-        void func_8004499C();
+        void beginExit();
+        void waitExit();
+        void finishExit();
 
         //0x0-0x54: CTTask
         u32 unk_54; // 0x54

@@ -2,8 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CItemBoxGrid.hpp"
 
-u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
+u8 GetField61(u8* self) { return ((u8*)self)[0x61]; }
 
 
 
@@ -16,7 +17,7 @@ u8 func_801CB0F4(void* self) { return ((u8*)self)[0x61]; }
 
 void __ct__801C5514(){}
 
-void func_801C5604(void* p, unsigned short a, unsigned char b, unsigned char c, unsigned char d, unsigned char e, unsigned char f, unsigned char g, unsigned char h) {
+void SetEntry9Bytes(unsigned char* p, unsigned short a, unsigned char b, unsigned char c, unsigned char d, unsigned char e, unsigned char f, unsigned char g, unsigned char h) {
     unsigned char* buf = (unsigned char*)p;
     *((unsigned short*)(buf + 0)) = a;
     buf[2] = b;
@@ -72,7 +73,7 @@ void func_801C67F8(){}
 
 void func_801C6840(){}
 
-int func_801C687C(void* obj) {
+int LookupIndexedByte(char* obj) {
     char off = *(signed char*)((char*)obj + 0x2804);
     if (off >= 0x400) return 0;
     return *(unsigned char*)((char*)obj + off + 0x28a5);
@@ -90,7 +91,7 @@ void func_801C6EC0(){}
 
 void func_801C7730(){}
 
-void func_801C7914(void *dst, const void *src) {
+void CopyEntry9Bytes(char* dst, const char* src) {
     *(short*)((char*)dst + 0) = *(short*)((char*)src + 0);
     *(char*)((char*)dst + 2) = *(char*)((char*)src + 2);
     *(char*)((char*)dst + 3) = *(char*)((char*)src + 3);
@@ -180,7 +181,7 @@ void func_801CB0FC(){}
 
 void func_801CB184(){}
 
-u8 func_801CB1DC(void* self) { return ((u8*)self)[0x549]; }
+u8 GetField549(u8* self) { return ((u8*)self)[0x549]; }
 
 void func_801CB1E4(){}
 
@@ -190,7 +191,7 @@ void func_801CB38C(){}
 
 void func_801CB480(){}
 
-void func_801CB4C4(unsigned char *self, unsigned char val) {
+void PushToList(unsigned char *self, unsigned char val) {
     unsigned char count = self[0x6e];
     if (count >= 0xc) {
         return;
@@ -205,7 +206,7 @@ void func_801CB56C(){}
 
 void func_801CB5F0(){}
 
-unsigned short func_801CB9BC(const unsigned short* p, unsigned char i) {
+unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
     if (i < 12) {
         return p[i];
     }
@@ -234,7 +235,7 @@ void func_801CDB94(){}
 
 void func_801CDBE0(){}
 
-u8 func_801CDC38(void* self) { return ((u8*)self)[0x52D]; }
+u8 GetField52D(u8* self) { return ((u8*)self)[0x52D]; }
 
 void func_801CDC40(){}
 
@@ -251,7 +252,7 @@ float lbl_eu_80667F78;
 namespace nw4r { namespace lyt { class AnimTransform; } }
 void func_80137444(nw4r::lyt::AnimTransform*, float);
 
-void func_801CE2DC(void* self) {
+void CheckState4_Animate(char* self) {
     if (*(unsigned char*)((char*)self + 0x527) != 4) {
         return;
     }
@@ -320,7 +321,7 @@ void func_801D12D4(){}
 
 void CItemBoxGrid::OnFileEvent() {}
 
-void func_801D1E0C(short* dst, const short* src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
+void CopyVec4s(short* dst, const short* src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
 
 void func_801D1F9C(){}
 

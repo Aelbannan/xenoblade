@@ -3,6 +3,21 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+// Local type definitions for IResInfo resource entries
+struct ResEntry {
+    u8 _00[4];
+    u8 data[4];      // 0x04 - returned by lookup functions
+    u32 id;           // 0x08
+    u8 _0C[0x2A];    // 0x0C - 0x35
+    u8 value;         // 0x36
+    u8 _37[5];        // 0x37 - 0x3B
+};
+
+struct ResContainer {
+    u8 _00[0x14DC];
+    ResEntry table[0x28]; // 0x14DC - 40 entries
+};
+
 void func_80065F24(){}
 
 void func_eu_80066938(){}
@@ -25,10 +40,10 @@ void func_8006626C(){}
 
 void func_80066290(){}
 
-unsigned int func_80066374(int unused, void* p)
+u32 getResEntryId(int unused, const ResEntry* p)
 {
     if (p != 0) {
-        return *(unsigned int*)((char*)p + 8);
+        return p->id;
     }
     return 0;
 }
@@ -59,7 +74,7 @@ void func_80066788(){}
 
 unsigned int lbl_eu_80663E28;
 
-bool func_80066C5C(unsigned int flags) {
+bool testResInfoFlag(u32 flags) {
     return (lbl_eu_80663E28 & flags) != 0;
 }
 
@@ -101,21 +116,21 @@ void func_80068254(){}
 
 void func_80068358(){}
 
-bool func_8006842C(const unsigned long* p, unsigned long mask) {
+bool testWordFlag(const u32* p, u32 mask) {
     return (*p & mask) != 0;
 }
 
-void func_80068444(void* self, unsigned long mask) {
-    *(unsigned long*)self &= ~mask;
+void clearWordFlag(u32* self, u32 mask) {
+    *self &= ~mask;
 }
 
-char* func_80068454(char* base, int a, int b) {
+char* getEntryPtr(char* base, int a, int b) {
     return base + (a + b + 0x59) * 0x3C + 4;
 }
 
 void func_8006846C(){}
 
-char* func_80068478(char* self, int a, int b) {
+char* getEntryPtrGrid(char* self, int a, int b) {
     return self + (b + a * 11 + 12) * 60 + 4;
 }
 
@@ -129,18 +144,18 @@ void func_800685C8(){}
 
 void func_8006861C(){}
 
-void* func_80068680(void* self, unsigned int id, unsigned int* outIndex, unsigned int* outValue) {
-    unsigned char* entry = static_cast<unsigned char*>(self) + 0x14DC;
-    unsigned int index = 0x59;
+u8* findResEntry(ResContainer* self, u32 id, u32* outIndex, u32* outValue) {
+    ResEntry* entry = self->table;
+    u32 index = 0x59;
     *outIndex = 0;
-    *outValue = static_cast<unsigned int>(-1);
+    *outValue = (u32)-1;
     if (id == 0)
         return 0;
-    for (unsigned int i = 0; i < 0x28; ++i, ++index, entry += 0x3C) {
-        if (*reinterpret_cast<unsigned int*>(entry + 8) == id) {
+    for (u32 i = 0; i < 0x28; i++, index++, entry++) {
+        if (entry->id == id) {
             *outIndex = index;
-            *outValue = *(entry + 0x36);
-            return entry + 4;
+            *outValue = entry->value;
+            return entry->data;
         }
     }
     return 0;
@@ -150,25 +165,25 @@ void func_800686E4(){}
 
 void func_80068928(){}
 
-bool func_80068990() { return false; }
+bool isResFlag0() { return false; }
 
 bool func_80068998(){ return false; }
 
-void func_800689A0() {}
+void resNoop() {}
 
-bool func_800689A4() { return false; }
+bool isResFlag1() { return false; }
 
 void func_800689AC(){}
 
 bool func_800689B8(){ return false; }
 
-bool func_800689C0() { return false; }
+bool isResFlag2() { return false; }
 
 bool func_800689C8(){ return false; }
 
-bool func_800689D0() { return false; }
+bool isResFlag3() { return false; }
 
-bool func_800689D8() { return false; }
+bool isResFlag4() { return false; }
 
 bool func_eu_800693E8(){ return false; }
 
@@ -186,4 +201,4 @@ bool func_80068A08(){ return false; }
 
 bool func_80068A10(){ return false; }
 
-extern "C" int func_80068A18(void* self) { return 512; }
+extern "C" int getResMaxCount(void* self) { return 512; }

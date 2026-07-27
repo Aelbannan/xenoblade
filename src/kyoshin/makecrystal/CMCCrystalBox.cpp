@@ -16,7 +16,7 @@ void __ct__CMCCrystalBox(){}
 
 void func_80213D74(){}
 
-struct func_80213E04_Data {
+struct CMCCrystalBoxParam {
     s16 m0;
     s16 m2;
     s16 m4;
@@ -24,7 +24,7 @@ struct func_80213E04_Data {
     u8 m7;
 };
 
-void func_80213E04(func_80213E04_Data* self, s16 a, s16 b)
+void initCrystalBoxParam_80213E04(CMCCrystalBoxParam* self, s16 a, s16 b)
 {
     self->m0 = a;
     self->m2 = b;
@@ -33,7 +33,7 @@ void func_80213E04(func_80213E04_Data* self, s16 a, s16 b)
     self->m7 = 0;
 }
 
-void func_80213E20(void *dst, const void *src) {
+void copyCrystalBoxParam_80213E20(CMCCrystalBoxParam *dst, const CMCCrystalBoxParam *src) {
     unsigned short *d16 = (unsigned short*)dst;
     const unsigned short *s16 = (const unsigned short*)src;
     d16[0] = s16[0];
@@ -51,7 +51,7 @@ void func_80213E8C(){}
 
 void __dt__80213ECC(){}
 
-void CMCCrystalBox::~CMCCrystalBox() {}
+CMCCrystalBox::~CMCCrystalBox() {}
 
 void func_80213FE4(){}
 
@@ -63,12 +63,12 @@ void func_802144F4(){}
 
 void func_80214634(){}
 
-u8 func_802146C0(void* self) { return ((u8*)self)[0x69]; }
+u8 getByte_69_802146C0(void* self) { return ((u8*)self)[0x69]; }
 
 void func_802146C8(){}
 
 u8 CSysWin_getUnk34(void* self);
-void func_802146F8(void* self) { CSysWin_getUnk34((char*)self + 0x290); }
+void syswinGetUnk34_802146F8(void* self) { CSysWin_getUnk34((char*)self + 0x290); }
 
 void func_80214700(){}
 
@@ -96,7 +96,7 @@ void func_80215518(){}
 
 void func_802156C0(){}
 
-int func_80215AE8(void* self) {
+int lookupIndexedValue_80215AE8(void* self) {
     unsigned char* base = (unsigned char*)self;
     if (base[0x20] == 0) return 0;
     unsigned char idx = base[0x29];
@@ -111,20 +111,20 @@ void func_80215B78(){}
 
 void func_80215D98(){}
 
-u8 func_8021624C(void* self) { return ((u8*)self)[0x2D4]; }
+u8 getByte_2D4_8021624C(void* self) { return ((u8*)self)[0x2D4]; }
 
-u8 func_80216254(void* self) { return ((u8*)self)[0x2D5]; }
+u8 getByte_2D5_80216254(void* self) { return ((u8*)self)[0x2D5]; }
 
 void func_8021625C(){}
 
-unsigned long func_802165CC(unsigned long* table, unsigned int idx) {
+unsigned long tableGet_802165CC(unsigned long* table, unsigned int idx) {
     if (idx >= 8) {
         return 0;
     }
     return table[(unsigned char)idx];
 }
 
-void func_802165E8(void *dest, const void *src) {
+void copyCrystalBoxParam_802165E8(CMCCrystalBoxParam *dest, const CMCCrystalBoxParam *src) {
     unsigned short *d = (unsigned short *)dest;
     const unsigned short *s = (const unsigned short *)src;
     d[0] = s[0];
@@ -198,18 +198,18 @@ void func_80218A80(){}
 
 void func_80218B10(){}
 
-struct func_80218FD4_S { unsigned short m0; unsigned short m2; unsigned char m4; };
-void func_80218FD4(func_80218FD4_S* dst, const func_80218FD4_S* src) {
+struct CMCCrystalRec5 { unsigned short m0; unsigned short m2; unsigned char m4; };
+void copyCrystalRec5_80218FD4(CMCCrystalRec5* dst, const CMCCrystalRec5* src) {
     *dst = *src;
 }
 
-struct func_80218FF0_Rec {
+struct CMCCrystalRec5Ex {
     unsigned short a;
     unsigned short b;
     unsigned char c;
 };
 
-void func_80218FF0(func_80218FF0_Rec* dst, func_80218FF0_Rec* src) {
+void copyCrystalRec5Ex_80218FF0(CMCCrystalRec5Ex* dst, CMCCrystalRec5Ex* src) {
     unsigned short a = src->a;
     unsigned short b = src->b;
     unsigned char c = src->c;
@@ -242,7 +242,7 @@ void func_80219994(){}
 
 void func_80219AF0(){}
 
-void func_80219D10(void* dst, void* src){
+void copyShortPair_80219D10(void* dst, void* src){
     *(unsigned short*)dst = *(unsigned short*)src;
     *(unsigned short*)((char*)dst + 2) = *(unsigned short*)((char*)src + 2);
 }

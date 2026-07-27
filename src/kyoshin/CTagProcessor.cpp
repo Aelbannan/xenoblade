@@ -38,7 +38,7 @@ void __dt___unnamed_CTagProcessor_cpp_CTagCodeMakeCrystal(){}
 
 void func_801258D0(){}
 
-void func_801258F8(void* obj, unsigned char a, unsigned char b, float c) {
+void initTagParam(u8* obj, unsigned char a, unsigned char b, float c) {
     unsigned char* base = (unsigned char*)obj;
     base[0] = a;
     base[1] = 0;
@@ -57,16 +57,16 @@ void __dt__8012596C(){}
 
 void __ct__CTagProcessorBase(){}
 
-void func_80125A2C(void* r3, const void* r4) {
-    unsigned char* dst = (unsigned char*)r3;
-    const unsigned char* src = (const unsigned char*)r4;
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-    dst[3] = src[3];
-    *(unsigned short*)(dst + 4) = *(const unsigned short*)(src + 4);
-    dst[6] = src[6];
-    *(float*)(dst + 8) = *(const float*)(src + 8);
+void copyTagParam(u8* dst, const u8* src) {
+    unsigned char* d = (unsigned char*)dst;
+    const unsigned char* s = (const unsigned char*)src;
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+    d[3] = s[3];
+    *(unsigned short*)(d + 4) = *(const unsigned short*)(s + 4);
+    d[6] = s[6];
+    *(float*)(d + 8) = *(const float*)(s + 8);
 }
 
 void CTagProcessorBase::~CTagProcessorBase() {}
@@ -77,7 +77,7 @@ void func_80125AB8(){}
 
 void func_80125B08(){}
 
-int func_80125B50(void* self) { return 0; }
+int defaultProcess(void* self) { return 0; }
 
 void func_80125B58(){}
 
@@ -89,18 +89,18 @@ void CTagProcessor::~CTagProcessor() {}
 
 void func_8012615C(){}
 
-void func_80127630(float *dst, const float *src) {
+void copyVEC2(float *dst, const float *src) {
     dst[0] = src[0];
     dst[1] = src[1];
 }
 
 void __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color(){}
 
-u32 func_80127668(void* self) { return *(u32*)((u8*)self + 0x4); }
+const wchar_t* getContextStr(const u8* self) { return *(const wchar_t* const*)(self + 0x4); }
 
 void func_80127670(){}
 
-void* func_801276C0(void* self) { return (void*)((u8*)self + 0x4); }
+const wchar_t** getContextStrPtr(u8* self) { return (const wchar_t**)(self + 0x4); }
 
 void func_801276C8(){}
 
@@ -112,7 +112,7 @@ void func_80127764(){}
 
 void func_80127BC4(){}
 
-void func_80127BD8(float* dst, const float* src) {
+void copyVEC3(float* dst, const float* src) {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
@@ -146,7 +146,7 @@ void func_80128AB8(){}
 
 void func_80128B0C(){}
 
-void* func_80128B80(void* arg1, void* arg2) {
+void* callInitTagProc(void* arg1, void* arg2) {
     extern void func_8013BDE4(void*);
     func_8013BDE4(arg1);
     return arg2;
@@ -164,9 +164,9 @@ void func_80128EF8(){}
 
 void func_80129008(){}
 
-void* func_80129118(void* dummy, void* r4) {
-    *(u16*)r4 = 0xD;
-    return (u16*)r4 + 1;
+u16* writeTagCode0D(void* dummy, u16* buf) {
+    *buf = 0xD;
+    return buf + 1;
 }
 
 void func_80129128(){}
@@ -179,8 +179,8 @@ void func_80129430(){}
 
 void func_80129564(){}
 
-void func_8012967C(void* self, float val) {
-    *(float*)((char*)self + 0xc) = *(float*)((char*)self + 4) + val;
+void addToCharSpace(u8* self, float val) {
+    *(float*)(self + 0xc) = *(float*)(self + 4) + val;
 }
 
 void func_8012968C(){}
@@ -227,14 +227,14 @@ void func_8012B8C4(){}
 
 void func_8012B944(){}
 
-void* func_8012B9E0(void* unused, void* buf) {
-    *(unsigned short*)buf = 3;
-    return (char*)buf + 2;
+u16* writeTagCode03(void* unused, u16* buf) {
+    *buf = 3;
+    return buf + 1;
 }
 
-extern "C" void* func_8012B9F0(void* unused, void* buf) {
-    *(unsigned short*)buf = 0xa;
-    return (char*)buf + 2;
+extern "C" u16* writeTagCode0A(void* unused, u16* buf) {
+    *buf = 0xa;
+    return buf + 1;
 }
 
 extern u32 lbl_eu_8052D9E0[];

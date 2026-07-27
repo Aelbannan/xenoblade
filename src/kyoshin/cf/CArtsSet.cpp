@@ -27,13 +27,13 @@ namespace cf {
     }
 }
 
-void func_80153C48(void* self, unsigned short value, unsigned int row, unsigned int index) { unsigned char* base = static_cast<unsigned char*>(self) + ((row & 0xffffu) << 4); base += (index & 0xffffu) << 1; *reinterpret_cast<unsigned short*>(base + 4) = value; }
-unsigned short func_80153C60(void* this_, int index, int subindex) { return ((unsigned short*)((char*)this_ + (index << 4) + 4))[subindex]; }
-void func_80153C78(void* self, unsigned short value, int index) {
+void setArtsSlotRC(cf::CArtsSet* self, unsigned short value, unsigned int row, unsigned int index) { unsigned char* base = reinterpret_cast<unsigned char*>(self) + ((row & 0xffffu) << 4); base += (index & 0xffffu) << 1; *reinterpret_cast<unsigned short*>(base + 4) = value; }
+unsigned short getArtsSlotRC(void* this_, int index, int subindex) { return ((unsigned short*)((char*)this_ + (index << 4) + 4))[subindex]; }
+void setArtsSlotByIdx(cf::CArtsSet* self, unsigned short value, int index) {
     ((unsigned short (*)[8])((unsigned char*)self + 4))[index / 8][index % 8] = value;
 }
 void func_80153CAC(){}
-unsigned short func_80153CE0(const void* this_, unsigned int index) {
+unsigned short getArtsSlotAtCnt(const void* this_, unsigned int index) {
     const unsigned char* base = static_cast<const unsigned char*>(this_);
     unsigned short count = *reinterpret_cast<const unsigned short*>(base);
     unsigned int indexOffset = index << 1;
@@ -42,11 +42,11 @@ unsigned short func_80153CE0(const void* this_, unsigned int index) {
     record += indexOffset;
     return *reinterpret_cast<const unsigned short*>(record + 4);
 }
-void* func_80153D98(void* self, int index460, int index8c) { char* result = (char*)self + index460 * 0x460; result += index8c * 0x8c; return result + 0x38; }
-extern "C" void* func_80153DB0(void* self, unsigned int index) { unsigned short count = *static_cast<unsigned short*>(self); return static_cast<unsigned char*>(self) + 0x38 + count * 0x460 + index * 0x8c; }
+void* getArtsParamRC(cf::CArtsSet* self, int index460, int index8c) { char* result = (char*)self + index460 * 0x460; result += index8c * 0x8c; return result + 0x38; }
+extern "C" void* getArtsParamAtCnt(void* self, unsigned int index) { unsigned short count = *static_cast<unsigned short*>(self); return static_cast<unsigned char*>(self) + 0x38 + count * 0x460 + index * 0x8c; }
 void func_80153DCC(){}
-extern "C" void* func_80153E3C(void* this_, int index1, int index2) { char* result = (char*)this_ + index1 * 0x460; result += index2 * 0x8c; return result + 0x38; }
-extern "C" void* func_80153E54(void* self, int index) { return (char*)self + 0x38 + (index / 8) * 0x460 + (index % 8) * 0x8c; }
-extern "C" void* func_80153EF0(void* base, int index) { return (char*)base + index * 0x88 + 0x10; }
+extern "C" void* getArtsParamRC2(void* this_, int index1, int index2) { char* result = (char*)this_ + index1 * 0x460; result += index2 * 0x8c; return result + 0x38; }
+extern "C" void* getArtsParamByIdx(void* self, int index) { return (char*)self + 0x38 + (index / 8) * 0x460 + (index % 8) * 0x8c; }
+extern "C" void* getAtkParam(void* base, int index) { return (char*)base + index * 0x88 + 0x10; }
 
 void func_80153E88(){}

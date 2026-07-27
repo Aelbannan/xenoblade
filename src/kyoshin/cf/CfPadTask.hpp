@@ -86,16 +86,9 @@ namespace cf {
         static WPADInfo sWpadInfo;
 
         static CfPadTask* spInstance;
-    void @84@gameExceptionCB();
-    void @88@onDeleteHbm();
-    void @88@onInitHbm();
     };
+
+    // Thunk symbols present in object (@84@gameExceptionCB, @88@onDeleteHbm, @88@onInitHbm);
+    // Declared manually — MWCC does not accept @ in identifiers.
 }
-
-class IHBMCallback {
-public:
-    virtual ~IHBMCallback();
-
-    // TODO: add fields
-};
 

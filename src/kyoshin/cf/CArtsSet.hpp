@@ -156,14 +156,3 @@ namespace cf {
     };
 };
 
-namespace cf {
-
-class _sArtsSet {
-public:
-    void _sArtsSet_UnkVirtualFunc1();
-
-    // TODO: add fields
-    _sArtsSet();
-};
-} // namespace cf
-

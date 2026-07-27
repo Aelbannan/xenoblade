@@ -32,9 +32,9 @@ void CMenuUpdate::~CMenuUpdate() {}
 
 void CMenuUpdate::Init() {}
 
-u32 func_80142954(void* self) { return *(u32*)((u8*)self + 0x10); }
+u32 getField10(void* self) { return *(u32*)((u8*)self + 0x10); }
 
-void func_8014295C(void* self, u8 val) { ((u8*)self)[0x67] = val; }
+void setField67(void* self, u8 val) { ((u8*)self)[0x67] = val; }
 
 void CMenuUpdate::Term() {}
 
@@ -46,31 +46,31 @@ void func_80142B4C(){}
 
 void func_80142C64(){}
 
-bool func_80142C70() { return false; }
+int getGlobalA10() { return false; }
 
 extern u32 lbl_eu_806640E0;
-int func_80142C78() { return lbl_eu_806640E0; }
+int getGlobal0E0() { return lbl_eu_806640E0; }
 
 void func_80142C80(){}
 
-void func_80142C98(void* self, u8 val) { ((u8*)self)[0x64] = val; }
+void setField64(void* self, u8 val) { ((u8*)self)[0x64] = val; }
 
 void func_80142CA0(){}
 
-void func_80142D5C(void) {}
+void noop_80142D5C(void) {}
 
 void func_80142D60(){}
 
-void func_80143AC8(void* self, float a, float b) {
+void setVec2(void* self, float a, float b) {
     *(float*)((char*)self + 0) = a;
     *(float*)((char*)self + 4) = b;
 }
 
-void func_80143AD4(void* self, float val) { *(float*)((u8*)self + 0x10) = val; }
+void setFieldFloat10(void* self, float val) { *(float*)((u8*)self + 0x10) = val; }
 
 void func_80143ADC(){}
 
-void func_80143F38(void* self, uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3) {
+void init_8014274C(CMenuUpdate_8014274C* self, uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3) {
     uint32_t* p = (uint32_t*)self;
     p[0] = v0;
     p[1] = v1;
@@ -78,7 +78,7 @@ void func_80143F38(void* self, uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v
     p[3] = v3;
 }
 
-u8 func_80143F4C(void* self) { return ((u8*)self)[0x64]; }
+u8 getField64(void* self) { return ((u8*)self)[0x64]; }
 
 void func_80143F54(void* dest, const void* src){
     unsigned int* d = (unsigned int*)dest;
@@ -99,8 +99,8 @@ void func_801443E4(){}
 
 void func_80144410(){}
 
-void func_80144590(void* self) { ((void(*)(void*))__dt__11CMenuUpdateFv)((char*)self - 0x6c); }
+void dtorThunk_6c(void* self) { ((void(*)(void*))__dt__11CMenuUpdateFv)((char*)self - 0x6c); }
 
-void func_80144598(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuUpdateFv)((char*)self - 0x70); }
+void renderThunk_70(void* self) { ((void(*)(void*))cbRenderBefore__11CMenuUpdateFv)((char*)self - 0x70); }
 
-extern "C" void func_801445A0(void* self) { ((void(*)(void*))__dt__11CMenuUpdateFv)((char*)self - 0x70); }
+extern "C" void dtorThunk_70(void* self) { ((void(*)(void*))__dt__11CMenuUpdateFv)((char*)self - 0x70); }

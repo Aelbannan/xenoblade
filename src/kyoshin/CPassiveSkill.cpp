@@ -2,8 +2,19 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CPassiveSkill.hpp"
 
-void func_8026DB34(void* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
+void func_80267BA0(void* self);
+void func_80267C44(void* self);
+void func_80267CE0(void* self);
+void func_80267E2C(void* self);
+void func_80267F88(void* self);
+void func_80268250(void* self);
+void func_80268518(void* self);
+void func_80268594(void* self);
+void func_80268C38(void* self);
+
+void UI_CPassiveSkill_thunk28_68594(UI_CPassiveSkill* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
 
 
 
@@ -219,30 +230,30 @@ void func_8026DA88(){}
 void func_8026DAD0(){}
 
 
-void func_8026DB3C(void* self) { ((void(*)(void*))func_80267CE0)((char*)self + 0x28); }
+void UI_CPassiveSkill_thunk28_67CE0(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267CE0)((char*)self + 0x28); }
 
-void func_8026DB44(void* self) { ((void(*)(void*))func_80267E2C)((char*)self + 0x28); }
+void UI_CPassiveSkill_thunk28_67E2C(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267E2C)((char*)self + 0x28); }
 
-void func_8026DB4C(void* self) { ((void(*)(void*))func_80267F88)((char*)self + 0x28); }
+void UI_CPassiveSkill_thunk28_67F88(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267F88)((char*)self + 0x28); }
 
-void func_8026DB54(void* self) { ((void(*)(void*))func_80268250)((char*)self + 0x28); }
+void UI_CPassiveSkill_thunk28_68250(UI_CPassiveSkill* self) { ((void(*)(void*))func_80268250)((char*)self + 0x28); }
 
-void func_8026DB5C(void* self) { ((void(*)(void*))func_80267BA0)((char*)self + 0x28); }
+void UI_CPassiveSkill_thunk28_67BA0(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267BA0)((char*)self + 0x28); }
 
-void func_8026DB64(void* self) { ((void(*)(void*))func_80267C44)((char*)self + 0x28); }
+void UI_CPassiveSkill_thunk28_67C44(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267C44)((char*)self + 0x28); }
 
-void func_8026DB6C(void* self) { ((void(*)(void*))func_80268518)((char*)self + 0x28); }
+void UI_CPassiveSkill_thunk28_68518(UI_CPassiveSkill* self) { ((void(*)(void*))func_80268518)((char*)self + 0x28); }
 
 void func_8026DB74(){}
 
-void func_8026DC90(void* self, u8 val) { ((u8*)self)[0x180] = val; }
+void UI_CPassiveSkill_setByte180(UI_CPassiveSkill* self, u8 val) { ((u8*)self)[0x180] = val; }
 
-void func_8026DC98(void* self) { ((void(*)(void*))func_80268C38)((char*)self + 0x28); }
+void UI_CPassiveSkill_thunk28_68C38(UI_CPassiveSkill* self) { ((void(*)(void*))func_80268C38)((char*)self + 0x28); }
 
 void func_8026DCA0(){}
 
 u8 CSysWin_getUnk34(void* self);
-void func_8026DCEC(void* self) { CSysWin_getUnk34((char*)self + 0x1b8); }
+void UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34(UI_CPassiveSkill* self) { CSysWin_getUnk34((char*)self + 0x1b8); }
 
 void func_8026DCF4(){}
 

@@ -35,13 +35,16 @@ Per batch (batches run sequentially within a TU, TUs in parallel up to
    snapshot copies and retry with the compiler output fed back into the
    next brief.
 4. **Lint** (tools/llm_decomp `lint_delta` — no asm/register tricks) — on
-   failure, restore and retry with the violations fed back.
+   failure, keep the compilable candidate and feed the violations back into
+   the next attempt.
 5. **Acceptance** (`batch-cycle.py` + targets.json). Accepted targets are
    promoted; failed ones retry as singleton sessions up to
    `maxBatchRetries` total attempts, then are skipped (ledgered).
 
-Restore only ever copies back the snapshotted `.c/.cpp/.hpp` files — there
-is deliberately **no git machinery** in the revert path.
+Restore only ever copies back the snapshotted `.c/.cpp/.hpp` files when a
+candidate fails to compile — there is deliberately **no git machinery** in
+the revert path. Regression/acceptance decisions remain owned by
+`batch-cycle.py`.
 
 When a TU reaches zero unmatched targets, the TU-final session runs
 (serialised process-wide; builds wrapped in `build_lock.py`, which holds

@@ -19,10 +19,21 @@ import sys
 
 def main() -> int:
     args = sys.argv[1:]
-    if len(args) < 3 or "--" not in args:
+    timeout = 1800
+    if len(args) >= 2 and args[0] == "--timeout":
+        try:
+            timeout = int(args[1])
+        except ValueError:
+            print("build_lock: --timeout must be an integer", file=sys.stderr)
+            return 2
+        args = args[2:]
+    if len(args) < 2 or "--" not in args:
         print(__doc__, file=sys.stderr)
         return 2
     region = args[0]
+    if not region or any(c not in "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-" for c in region):
+        print("build_lock: invalid region", file=sys.stderr)
+        return 2
     sep = args.index("--")
     cmd = args[sep + 1 :]
     if not cmd:
@@ -39,7 +50,11 @@ def main() -> int:
             print(f"waiting for build lock ({lock_path})...", file=sys.stderr)
             fcntl.flock(lock, fcntl.LOCK_EX)
         try:
-            return subprocess.run(cmd).returncode
+            return subprocess.run(cmd, timeout=timeout).returncode
+        except subprocess.TimeoutExpired:
+            print(f"build_lock: command timed out after {timeout}s: {cmd}",
+                  file=sys.stderr)
+            return 2
         finally:
             fcntl.flock(lock, fcntl.LOCK_UN)
 

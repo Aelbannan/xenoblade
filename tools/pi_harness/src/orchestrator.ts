@@ -24,9 +24,9 @@ import {
   writableScopeForTargets,
 } from "./targets.js";
 import { extractRetailAsm, buildBatchBrief } from "./brief.js";
-import { appendLedger, readLedger } from "./ledger.js";
+import { appendLedger, readLedger, drainLedger } from "./ledger.js";
 import { buildBatchPrompt, buildTuFinalPrompt } from "./prompts.js";
-import { runAgentSession } from "./session.js";
+import { runAgentSession, type SessionRunResult } from "./session.js";
 import {
   snapshotUnit,
   restoreSnapshot,
@@ -109,18 +109,19 @@ export async function runTus(
   }
 
   // Best-effort claim release on interrupt/termination.
-  const onSignal = (): void => {
+  const onSignal = async (): Promise<void> => {
     for (const id of activeClaims) {
       try {
         execFileSync(
           config.pythonBin,
           ["tools/coop/run.py", "targets", "release", id, "--owner", OWNER],
-          { cwd: repoRoot, stdio: "ignore" },
+          { cwd: repoRoot, stdio: "ignore", timeout: 5000 },
         );
       } catch {
         // best-effort
       }
     }
+    await drainLedger();
     process.exit(130);
   };
   process.on("SIGINT", onSignal);
@@ -177,6 +178,18 @@ function buildBriefs(
   return { briefs, missingAsm };
 }
 
+function usageFromError(err: unknown): SessionUsage | null {
+  const usage = (err as { usage?: unknown })?.usage;
+  if (!usage || typeof usage !== "object") return null;
+  const u = usage as Partial<SessionUsage>;
+  return {
+    input: u.input ?? 0,
+    output: u.output ?? 0,
+    cacheRead: u.cacheRead ?? 0,
+    cacheWrite: u.cacheWrite ?? 0,
+  };
+}
+
 function logUsage(
   repoRoot: string,
   config: HarnessConfig,
@@ -200,8 +213,14 @@ function logUsage(
 async function claimBatch(
   repoRoot: string, config: HarnessConfig, ids: string[],
 ): Promise<void> {
-  await claimTargets(repoRoot, config.pythonBin, ids, OWNER);
-  for (const id of ids) activeClaims.add(id);
+  const result = await claimTargets(
+    repoRoot, config.pythonBin, ids, OWNER,
+    (id) => activeClaims.add(id),
+  );
+  if (result.failed.length > 0) {
+    await releaseBatch(repoRoot, config, result.ok);
+    throw new Error(`claim failed for target(s): ${result.failed.join(", ")}`);
+  }
 }
 
 async function releaseBatch(
@@ -252,7 +271,6 @@ async function runOneTu(
 
   let carryover = "";
   const allIds = targets.map((t) => t.id);
-  const handled = new Set<string>();
 
   for (let batchIndex = 0; batchIndex < allIds.length; batchIndex += config.batchSize) {
     const batchIds = allIds.slice(batchIndex, batchIndex + config.batchSize);
@@ -262,9 +280,12 @@ async function runOneTu(
     const { briefs, missingAsm } = buildBriefs(repoRoot, batchTargets);
     for (const id of missingAsm) {
       if (!dryRun) handleSkipped(repoRoot, config, unit, id, "no retail asm");
-      handled.add(id);
     }
     const briefTargets = batchTargets.filter((t) => !missingAsm.includes(t.id));
+    const writable = writableScopeForTargets(repoRoot, briefTargets);
+    const batchSnapshot = dryRun
+      ? null
+      : await snapshotUnit(repoRoot, unit, writable);
     let currentIds = batchIds.filter((id) => !missingAsm.includes(id));
 
     let attempt = 0;
@@ -273,7 +294,6 @@ async function runOneTu(
     while (currentIds.length > 0 && attempt < maxAttempts) {
       attempt++;
 
-      const writable = writableScopeForTargets(repoRoot, briefTargets);
       const brief = buildBatchBrief({
         targets: briefs, unit, writable, carryover,
         maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
@@ -288,12 +308,11 @@ async function runOneTu(
         const lines = prompt.split("\n");
         console.log(lines.slice(0, 40).join("\n"));
         if (lines.length > 40) console.log(`  … (${lines.length - 40} more lines)`);
-        for (const id of currentIds) handled.add(id);
         break;
       }
 
       // ── Session + acceptance, exception-contained ────────────────
-      let snapshot: Snapshot | null = null;
+      let snapshot: Snapshot | null = batchSnapshot;
       let attemptError: string | null = null;
       let buildOk = false;
       let buildOutput = "";
@@ -315,7 +334,7 @@ async function runOneTu(
           sessionResult.usage, sessionResult.timedOut);
         carryover = sessionResult.finalText.slice(0, 1500);
 
-        const build = await buildUnit(repoRoot, config.pythonBin, unit);
+        const build = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
         buildOk = build.ok;
         buildOutput = build.output;
 
@@ -324,26 +343,40 @@ async function runOneTu(
           lintOk = lint.ok;
           lintViolations = lint.violations;
           if (lintOk) {
-            batchResults = await runBatchCycle(repoRoot, config.pythonBin, currentIds);
+            batchResults = await runBatchCycle(repoRoot, config.pythonBin, config.region, currentIds);
           }
         }
       } catch (err) {
         attemptError = err instanceof Error ? err.message : String(err);
+        const usage = usageFromError(err);
+        if (usage) {
+          logUsage(repoRoot, config, unit, `batch-${batchIndex}-attempt-${attempt}`, usage, false);
+        }
       }
 
-      // ── Failure handling: restore from snapshot ONLY on build/lint
-      //    failure; keep edits otherwise (best-known candidate). ──────
+      // ── Failure handling: restore only on compile failure; keep
+      //    compilable edits otherwise (best-known candidate). ────────
       if (attemptError !== null) {
+        // Restore only if the post-error source does not compile. A session
+        // error may happen after a valid edit; preserve that candidate when
+        // it still builds, per the harness restore policy.
+        let recoveryOutput = "";
+        if (batchSnapshot) {
+          const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
+          recoveryOutput = recovery.output;
+          if (!recovery.ok) await restoreSnapshot(repoRoot, batchSnapshot);
+        }
         appendLedger(repoRoot, config.ledgerPath, {
           ts: new Date().toISOString(), event: "batch-error", tu: unit,
-          detail: { batchIndex, attempt, error: attemptError },
+          detail: { batchIndex, attempt, error: attemptError, recoveryOutput },
         });
         await releaseBatch(repoRoot, config, currentIds);
+        carryover = `Previous attempt failed unexpectedly:\n${attemptError}\n${recoveryOutput}`;
         continue;
       }
 
       if (!buildOk || !lintOk) {
-        if (snapshot) await restoreSnapshot(repoRoot, snapshot);
+        if (!buildOk && snapshot) await restoreSnapshot(repoRoot, snapshot);
         const reason = !buildOk ? "compile-failed" : "lint-rejected";
         appendLedger(repoRoot, config.ledgerPath, {
           ts: new Date().toISOString(), event: "batch-rejected", tu: unit,
@@ -362,17 +395,19 @@ async function runOneTu(
       }
 
       // ── Acceptance results ────────────────────────────────────────
+      const acceptedCount = batchResults!.filter((r) => r.accepted).length;
       appendLedger(repoRoot, config.ledgerPath, {
-        ts: new Date().toISOString(), event: "batch-accept", tu: unit,
+        ts: new Date().toISOString(),
+        event: acceptedCount > 0 ? "batch-accept" : "batch-cycle",
+        tu: unit,
         detail: {
-          batchIndex, attempt,
+          batchIndex, attempt, acceptedCount,
           results: batchResults!.map((r) => ({ targetId: r.targetId, status: r.status })),
         },
       });
       await releaseBatch(repoRoot, config, currentIds);
 
       for (const r of batchResults!) {
-        if (r.accepted) handled.add(r.targetId);
       }
 
       const failedIds = batchResults!.filter((r) => !r.accepted).map((r) => r.targetId);
@@ -381,16 +416,13 @@ async function runOneTu(
         if (!config.singletonRetry || remainingAttempts === 0) {
           handleSkipped(repoRoot, config, unit, fid,
             config.singletonRetry ? "exhausted retries" : "singleton retry disabled");
-          handled.add(fid);
           continue;
         }
         const ok = await runSingleton(
           repoRoot, unit, fid, config, modelRuntime, sanitized, batchIndex, carryover, remainingAttempts,
         );
-        if (ok) handled.add(fid);
-        else {
+        if (!ok) {
           handleSkipped(repoRoot, config, unit, fid, "exhausted singleton retries");
-          handled.add(fid);
         }
       }
 
@@ -401,7 +433,6 @@ async function runOneTu(
     if (!dryRun && currentIds.length > 0) {
       for (const id of currentIds) {
         handleSkipped(repoRoot, config, unit, id, "exhausted batch retries");
-        handled.add(id);
       }
     }
   }
@@ -444,21 +475,24 @@ async function runSingleton(
   const { briefs, missingAsm } = buildBriefs(repoRoot, [target]);
   if (missingAsm.length > 0) return false;
 
-  const brief = buildBatchBrief({
-    targets: briefs, unit, writable, carryover,
-    maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
-  });
-  const prompt = buildBatchPrompt({
-    brief, unit, targetIds: [targetId], pythonBin: config.pythonBin,
-  });
-
   let feedback = carryover;
+  let singletonSnapshot: Snapshot | null = null;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    let snapshot: Snapshot | null = null;
+    const brief = buildBatchBrief({
+      targets: briefs, unit, writable, carryover: feedback,
+      maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
+    });
+    const prompt = buildBatchPrompt({
+      brief, unit, targetIds: [targetId], pythonBin: config.pythonBin,
+    });
+    let snapshot: Snapshot | null = singletonSnapshot;
     try {
       await claimBatch(repoRoot, config, [targetId]);
-      snapshot = await snapshotUnit(repoRoot, unit, writable);
+      if (!singletonSnapshot) {
+        singletonSnapshot = await snapshotUnit(repoRoot, unit, writable);
+      }
+      snapshot = singletonSnapshot;
 
       const sessionResult = await runAgentSession({
         repoRoot, modelRuntime, spec: config.matchModel, prompt,
@@ -469,7 +503,7 @@ async function runSingleton(
       logUsage(repoRoot, config, unit, `singleton-${targetId}-attempt-${attempt}`,
         sessionResult.usage, sessionResult.timedOut);
 
-      const build = await buildUnit(repoRoot, config.pythonBin, unit);
+      const build = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
       if (!build.ok) {
         await restoreSnapshot(repoRoot, snapshot);
         feedback = `Previous attempt was rejected (compile-failed):\n${build.output}`;
@@ -483,7 +517,7 @@ async function runSingleton(
 
       const lint = await runLint(repoRoot, config.pythonBin, snapshot);
       if (!lint.ok) {
-        await restoreSnapshot(repoRoot, snapshot);
+        // Keep compilable edits; lint feedback is sent to the next attempt.
         feedback = `Previous attempt was rejected (lint):\n${JSON.stringify(lint.violations).slice(0, 1200)}`;
         appendLedger(repoRoot, config.ledgerPath, {
           ts: new Date().toISOString(), event: "batch-rejected", tu: unit,
@@ -493,7 +527,7 @@ async function runSingleton(
         continue;
       }
 
-      const results = await runBatchCycle(repoRoot, config.pythonBin, [targetId]);
+      const results = await runBatchCycle(repoRoot, config.pythonBin, config.region, [targetId]);
       const accepted = results.find((r) => r.targetId === targetId)?.accepted ?? false;
       appendLedger(repoRoot, config.ledgerPath, {
         ts: new Date().toISOString(), event: accepted ? "batch-accept" : "batch-rejected", tu: unit,
@@ -503,6 +537,17 @@ async function runSingleton(
       if (accepted) return true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      const usage = usageFromError(err);
+      if (usage) {
+        logUsage(repoRoot, config, unit, `singleton-${targetId}-attempt-${attempt}`, usage, false);
+      }
+      let recoveryOutput = "";
+      if (snapshot) {
+        const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
+        recoveryOutput = recovery.output;
+        if (!recovery.ok) await restoreSnapshot(repoRoot, snapshot);
+      }
+      feedback = `Previous singleton attempt failed unexpectedly:\n${msg}\n${recoveryOutput}`;
       appendLedger(repoRoot, config.ledgerPath, {
         ts: new Date().toISOString(), event: "batch-error", tu: unit,
         detail: { targetId, attempt, singleton: true, error: msg },
@@ -551,13 +596,41 @@ async function runTuFinal(
   });
 
   const snapshot = await snapshotUnit(repoRoot, unit, writable);
-  const sessionResult = await runAgentSession({
-    repoRoot, modelRuntime, spec: config.cleanupModel, prompt,
-    sessionDir: join(config.sessionDir, sanitized, "tu-final"),
-    label: "tu-final",
-    timeoutMinutes: config.maxBatchMinutes * 2,
-  });
-  logUsage(repoRoot, config, unit, "tu-final", sessionResult.usage, sessionResult.timedOut);
+  let sessionResult: SessionRunResult;
+  try {
+    sessionResult = await runAgentSession({
+      repoRoot, modelRuntime, spec: config.cleanupModel, prompt,
+      sessionDir: join(config.sessionDir, sanitized, "tu-final"),
+      label: "tu-final",
+      timeoutMinutes: config.maxBatchMinutes * 2,
+    });
+    logUsage(repoRoot, config, unit, "tu-final", sessionResult.usage, sessionResult.timedOut);
+  } catch (err) {
+    const usage = usageFromError(err);
+    if (usage) logUsage(repoRoot, config, unit, "tu-final", usage, false);
+    const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
+    if (!recovery.ok) await restoreSnapshot(repoRoot, snapshot);
+    appendLedger(repoRoot, config.ledgerPath, {
+      ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
+      detail: {
+        reason: "session-error",
+        error: err instanceof Error ? err.message : String(err),
+        recoveryOutput: recovery.output,
+      },
+    });
+    return;
+  }
+
+  const finalLint = await runLint(repoRoot, config.pythonBin, snapshot);
+  if (!finalLint.ok) {
+    // Keep compilable cleanup edits; report lint feedback for a later run.
+    appendLedger(repoRoot, config.ledgerPath, {
+      ts: new Date().toISOString(), event: "tu-final-failed", tu: unit,
+      detail: { reason: "lint-rejected", violations: finalLint.violations },
+    });
+    console.log(`[pi-harness] ${unit}: TU-final lint failed (restored)`);
+    return;
+  }
 
   // Verify: configure + ninja + size, each under the repo build lock.
   let buildOk = false;
@@ -566,10 +639,10 @@ async function runTuFinal(
 
   try {
     const { stdout: cfgOut } = await execFilePromise(config.pythonBin, [
-      "tools/pi_harness/build_lock.py", config.region, "--", config.pythonBin, "configure.py",
+      "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--", config.pythonBin, "configure.py",
     ], { cwd: repoRoot });
     const { stdout: ninjaOut } = await execFilePromise(config.pythonBin, [
-      "tools/pi_harness/build_lock.py", config.region, "--", "ninja",
+      "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--", "ninja",
     ], { cwd: repoRoot });
     buildOutput = (cfgOut + ninjaOut).slice(-2000);
     buildOk = true;
@@ -580,7 +653,7 @@ async function runTuFinal(
   if (buildOk) {
     try {
       const { stdout } = await execFilePromise(config.pythonBin, [
-        "tools/pi_harness/build_lock.py", config.region, "--",
+        "tools/pi_harness/build_lock.py", "--timeout", "1800", config.region, "--",
         config.pythonBin, "tools/coop/run.py", "size", unit,
       ], { cwd: repoRoot });
       sizeOutput = stdout.slice(-1000);

@@ -29,7 +29,7 @@ function defaultConfig(): HarnessConfig {
     region: "us",
     sessionDir: "build/pi-harness/sessions",
     ledgerPath: "build/pi-harness/ledger.jsonl",
-    pythonBin: "python3", // resolved below
+    pythonBin: "", // resolved below
   };
 }
 
@@ -68,6 +68,9 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
     for (const [key, value] of Object.entries(raw)) {
       if (value === undefined || value === null) continue;
       if (key === "matchModel" || key === "cleanupModel") {
+        if (typeof value !== "object" || value === null || Array.isArray(value)) {
+          throw new Error(`config.${key} must be an object`);
+        }
         Object.assign(config[key], value);
       } else if (key in config) {
         (config as unknown as Record<string, unknown>)[key] = value;
@@ -75,17 +78,33 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
     }
   }
 
-  // pythonBin: explicit value wins (relative → resolved against repoRoot);
-  // otherwise auto-detect the repo venv, falling back to system python3.
-  if (config.pythonBin !== "python3") {
+  if (typeof config.pythonBin !== "string") {
+    throw new Error("config.pythonBin must be a string");
+  }
+
+  // Empty pythonBin means auto-detect; an explicit "python3" is respected
+  // as a literal command rather than being treated as a sentinel.
+  if (config.pythonBin === "") {
+    const venvPython = join(repoRoot, ".venv", "bin", "python");
+    config.pythonBin = existsSync(venvPython) ? venvPython : "python3";
+  } else if (isAbsolute(config.pythonBin) || config.pythonBin.includes("/") || config.pythonBin.includes("\\")) {
     config.pythonBin = isAbsolute(config.pythonBin)
       ? config.pythonBin
       : resolve(repoRoot, config.pythonBin);
-  } else {
-    const venvPython = join(repoRoot, ".venv", "bin", "python");
-    config.pythonBin = existsSync(venvPython) ? venvPython : "python3";
   }
 
+  if (typeof config.singletonRetry !== "boolean") {
+    throw new Error("config.singletonRetry must be a boolean");
+  }
+  if (typeof config.pythonBin !== "string" || !config.pythonBin) {
+    throw new Error("config.pythonBin must be a non-empty string");
+  }
+  if (typeof config.region !== "string" || !config.region) {
+    throw new Error("config.region must be a non-empty string");
+  }
+  if (typeof config.sessionDir !== "string" || typeof config.ledgerPath !== "string") {
+    throw new Error("config.sessionDir and config.ledgerPath must be strings");
+  }
   if (!Number.isInteger(config.batchSize) || config.batchSize < 1) {
     throw new Error("config.batchSize must be an integer >= 1");
   }

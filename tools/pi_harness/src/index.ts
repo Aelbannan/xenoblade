@@ -52,6 +52,9 @@ function parseArgs(argv: string[]): Args {
       case "--tu": {
         const v = rest[++i];
         if (!v || v.startsWith("--")) throw new Error("--tu requires a value");
+        if (v.startsWith("/") || v.split(/[\\/]/).includes("..")) {
+          throw new Error(`unsafe --tu path: ${v}`);
+        }
         args.tus.push(v);
         break;
       }
@@ -83,6 +86,7 @@ function parseArgs(argv: string[]): Args {
     }
   }
 
+  args.tus = [...new Set(args.tus)];
   if (args.tus.length === 0) {
     printUsage();
     throw new Error("At least one --tu <unit> is required");

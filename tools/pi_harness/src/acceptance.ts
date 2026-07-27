@@ -4,15 +4,15 @@
  * Deliberately minimal: snapshot/restore of writable-scope files (plain
  * copies — NO git operations), lint via tools/llm_decomp/lint.py, compile
  * check via `coop run build`, acceptance via `batch-cycle.py`, and target
- * claims. Restore happens ONLY when the build fails or lint rejects —
- * never as a scope enforcement mechanism.
+ * claims. Restore happens only when the candidate does not compile;
+ * regression and match acceptance are decided by `batch-cycle.py`.
+ * Never use git machinery in the revert path.
  *
  * @module acceptance
  */
 
 import { execFile } from "node:child_process";
-import { randomUUID } from "node:crypto";
-import { copyFile, mkdir, readFile, rm } from "node:fs/promises";
+import { copyFile, mkdir, readFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import type { BatchResult, Target } from "./types.js";
@@ -72,7 +72,7 @@ export async function snapshotUnit(
 
 /**
  * Restore the snapshotted files from their copies. Called ONLY when the
- * build fails or lint rejects — this is never a scope-enforcement tool.
+ * candidate fails to compile — this is never a scope-enforcement tool.
  */
 export async function restoreSnapshot(repoRoot: string, snapshot: Snapshot): Promise<void> {
   for (const file of snapshot.files) {
@@ -130,16 +130,24 @@ export async function runLint(
 //  Compile check
 // ─────────────────────────────────────────────────────────────────────
 
-/** Build the unit's object; returns ok + trimmed output for feedback. */
+/**
+ * Build the unit's object under the repo-wide build lock (same flock as
+ * hexdiff) so harness acceptance builds cannot race agent hexdiff builds
+ * or other workers. Returns ok + trimmed output for feedback.
+ */
 export async function buildUnit(
   repoRoot: string,
   python: string,
+  region: string,
   unit: string,
 ): Promise<{ ok: boolean; output: string }> {
   try {
     const { stdout, stderr } = await execFilePromise(
       python,
-      ["tools/coop/run.py", "build", unit],
+      [
+        "tools/pi_harness/build_lock.py", "--timeout", "900", region, "--",
+        python, "tools/coop/run.py", "build", unit,
+      ],
       { cwd: repoRoot },
     );
     return { ok: true, output: (stdout + stderr).slice(-1500) };
@@ -162,19 +170,19 @@ export async function buildUnit(
 export async function runBatchCycle(
   repoRoot: string,
   python: string,
+  region: string,
   targetIds: string[],
 ): Promise<BatchResult[]> {
-  const tmpFile = join(repoRoot, "build", "pi-harness", `batch-cycle-summary-${randomUUID()}.json`);
-  await mkdir(dirname(tmpFile), { recursive: true });
-
   try {
     await execFilePromise(
       python,
       [
+        // batch-cycle builds as it cycles — hold the repo build lock.
+        "tools/pi_harness/build_lock.py", "--timeout", "1800", region, "--",
+        python,
         "tools/coop/batch-cycle.py",
         "--default-hypothesis", "pi-harness batch match",
         "--default-next-change", "accept if pass",
-        "--summary", tmpFile,
         // `--` end-of-options: target ids come from targets.json and must
         // never be parsed as argparse flags.
         "--",
@@ -184,8 +192,6 @@ export async function runBatchCycle(
     );
   } catch {
     // tolerated — read targets.json below for actual results
-  } finally {
-    await rm(tmpFile, { force: true }).catch(() => {});
   }
 
   let allTargets: Target[] = [];
@@ -216,7 +222,10 @@ async function claimOp(
   op: "claim" | "release",
   ids: string[],
   owner: string,
-): Promise<void> {
+  onClaimed?: (id: string) => void,
+): Promise<{ ok: string[]; failed: string[] }> {
+  const ok: string[] = [];
+  const failed: string[] = [];
   for (const id of ids) {
     try {
       await execFilePromise(
@@ -224,22 +233,33 @@ async function claimOp(
         ["tools/coop/run.py", "targets", op, id, "--owner", owner],
         { cwd: repoRoot },
       );
+      ok.push(id);
+      if (op === "claim") onClaimed?.(id);
     } catch (err) {
+      failed.push(id);
       process.stderr.write(
         `[pi-harness] WARNING: targets ${op} failed for ${id}: ${err instanceof Error ? err.message : String(err)}\n`,
       );
     }
   }
+  return { ok, failed };
 }
 
+/**
+ * Claim targets. Returns which claims succeeded/failed — the caller must
+ * treat ANY failure as fatal for the batch (never edit unclaimed targets).
+ * `onClaimed` fires per id immediately after each successful claim (for
+ * signal-handler tracking).
+ */
 export function claimTargets(
   repoRoot: string, python: string, ids: string[], owner: string,
-): Promise<void> {
-  return claimOp(repoRoot, python, "claim", ids, owner);
+  onClaimed?: (id: string) => void,
+): Promise<{ ok: string[]; failed: string[] }> {
+  return claimOp(repoRoot, python, "claim", ids, owner, onClaimed);
 }
 
 export function releaseTargets(
   repoRoot: string, python: string, ids: string[], owner: string,
-): Promise<void> {
+): Promise<{ ok: string[]; failed: string[] }> {
   return claimOp(repoRoot, python, "release", ids, owner);
 }

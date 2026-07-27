@@ -11,6 +11,11 @@ import type { LedgerEntry } from "./types.js";
 
 let writeQueue: Promise<void> = Promise.resolve();
 
+/** Wait for all queued ledger appends to flush (call before process exit). */
+export async function drainLedger(): Promise<void> {
+  await writeQueue;
+}
+
 /** Append one JSON line to the ledger (queued, ordered, fire-and-forget). */
 export function appendLedger(repoRoot: string, ledgerPath: string, entry: LedgerEntry): void {
   const absPath = join(repoRoot, ledgerPath);

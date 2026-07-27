@@ -28,6 +28,21 @@ export interface SessionRunResult {
   usage: SessionUsage;
 }
 
+/** Sum token usage across assistant messages in a session state. */
+function sumUsage(messages: readonly unknown[]): SessionUsage {
+  const usage: SessionUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
+  for (const m of messages) {
+    if ((m as { role?: unknown }).role !== "assistant") continue;
+    const u = (m as { usage?: Partial<SessionUsage> }).usage;
+    if (!u) continue;
+    usage.input += u.input ?? 0;
+    usage.output += u.output ?? 0;
+    usage.cacheRead += u.cacheRead ?? 0;
+    usage.cacheWrite += u.cacheWrite ?? 0;
+  }
+  return usage;
+}
+
 export async function runAgentSession(opts: {
   repoRoot: string;
   modelRuntime: ModelRuntime;
@@ -140,17 +155,19 @@ export async function runAgentSession(opts: {
     }
 
     // Sum token usage across assistant messages.
-    const usage: SessionUsage = { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 };
-    for (const m of assistant) {
-      const u = (m as { usage?: Partial<SessionUsage> }).usage;
-      if (!u) continue;
-      usage.input += u.input ?? 0;
-      usage.output += u.output ?? 0;
-      usage.cacheRead += u.cacheRead ?? 0;
-      usage.cacheWrite += u.cacheWrite ?? 0;
-    }
+    const usage = sumUsage(session.state.messages);
 
     return { finalText, sessionFile: session.sessionFile, timedOut, usage };
+  } catch (err) {
+    // Attach partial usage so the caller can ledger it even on failure.
+    try {
+      if (err && typeof err === "object") {
+        (err as { usage?: SessionUsage }).usage = sumUsage(session.state.messages);
+      }
+    } catch {
+      // ignore
+    }
+    throw err;
   } finally {
     // Clear the abort timer on ALL exits so a late fire cannot call abort()
     // on a disposed session.

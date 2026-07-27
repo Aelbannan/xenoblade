@@ -705,7 +705,7 @@ return_zero:
     c = *--p - '0';
 
     if (c == 5) {
-        char* q = dec->sig.text + dec->sig.length;
+        char* q = (char*)dec->sig.text + dec->sig.length;
 
         while (--q > p && *q == '0')
             ;

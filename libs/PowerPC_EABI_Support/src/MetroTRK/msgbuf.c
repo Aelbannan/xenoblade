@@ -110,7 +110,7 @@ DSError TRK_AppendBuffer(MessageBuffer* buf, const void* data, size_t length){
 
     if(length == 1){
         //If the length of bytes to append is 1, just copy the byte over
-        buf->fData[buf->fPosition] = *(static_cast<ui8*>(data));
+        buf->fData[buf->fPosition] = *((ui8*)(data));
     }else{
         //Otherwise, use memcpy
         TRK_memcpy(buf->fData + buf->fPosition,data,length);

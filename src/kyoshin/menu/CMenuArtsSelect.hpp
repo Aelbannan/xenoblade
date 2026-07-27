@@ -102,6 +102,7 @@ public:
     u8 unk342[0x344 - 0x342];
     f32 unk344; // 0x344
     u8 unk348; // 0x348 - party-target latch
+    virtual ~CMenuArtsSelect();
 };
 
 extern "C" {

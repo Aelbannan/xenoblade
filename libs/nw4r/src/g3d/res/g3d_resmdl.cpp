@@ -245,6 +245,6 @@ void ResMdl::Terminate() {
 } // namespace g3d
 } // namespace nw4r
 
-extern "C" void GetParent__Q34nw4r3g3d6ResMdlFv() {}
-extern "C" void GetResVtxFurPos__Q34nw4r3g3d6ResMdlCFi(int) {}
-extern "C" void GetResTev__Q34nw4r3g3d6ResMdlCFUl() {}
+void GetParent__Q34nw4r3g3d6ResMdlFv(){}
+void GetResVtxFurPos__Q34nw4r3g3d6ResMdlCFi(int){}
+void GetResTev__Q34nw4r3g3d6ResMdlCFUl(){}

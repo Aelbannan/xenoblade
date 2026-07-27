@@ -8,55 +8,55 @@ extern "C" u8 func_8027355C(CKizunaTalkList* self) {
     return self->mNeedsRebuild;
 }
 
-extern "C" void __ct__CKizunaTalkList() {}
+void __ct__CKizunaTalkList(){}
 
-extern "C" void __dt__15CKizunaTalkListFv() {}
+void CKizunaTalkList::~CKizunaTalkList() {}
 
-extern "C" void func_802732F4() {}
+void func_802732F4(){}
 
-extern "C" void func_8027336C() {}
+void func_8027336C(){}
 
-extern "C" void func_8027340C() {}
+void func_8027340C(){}
 
-extern "C" void func_8027346C() {}
+void func_8027346C(){}
 
-extern "C" void func_80273518() {}
+void func_80273518(){}
 
 
-extern "C" void func_80273564() {}
+void func_80273564(){}
 
-extern "C" void func_802735F0() {}
+void func_802735F0(){}
 
-extern "C" void func_80273654() {}
+void func_80273654(){}
 
-extern "C" void func_80273710() {}
+void func_80273710(){}
 
-extern "C" void func_802737E0() {}
+void func_802737E0(){}
 
-extern "C" void func_8027387C() {}
+void func_8027387C(){}
 
-extern "C" void func_80273938() {}
+void func_80273938(){}
 
-extern "C" void func_80273984() {}
+void func_80273984(){}
 
-extern "C" void func_802739D8() {}
+void func_802739D8(){}
 
-extern "C" void func_80273A24() {}
+void func_80273A24(){}
 
-extern "C" void func_80273A70() {}
+void func_80273A70(){}
 
-extern "C" void func_80273AD0() {}
+void func_80273AD0(){}
 
-extern "C" void func_80273B30() {}
+void func_80273B30(){}
 
-extern "C" void func_802740E4() {}
+void func_802740E4(){}
 
-extern "C" void func_802741B0() {}
+void func_802741B0(){}
 
-extern "C" void OnFileEvent__15CKizunaTalkListFP10CEventFile() {}
+void CKizunaTalkList::OnFileEvent() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_80274458() {}
+void sinit_80274458(){}
 
 extern "C" void* func_80273040(void* self, u32 r4) {
     // Use signed compare to match retail cmpwi

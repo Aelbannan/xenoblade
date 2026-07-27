@@ -3,4 +3,4 @@
 
 #include <harness_catalog.h>
 
-extern "C" void getInstance__Q26mpfsys16MPFDrawBillboardFv() {}
+void mpfsys::MPFDrawBillboard::getInstance() {}

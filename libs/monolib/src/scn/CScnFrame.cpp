@@ -3,8 +3,8 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CScnFrame() {}
+void __ct__CScnFrame(){}
 
-extern "C" void __dt__9CScnFrameFv() {}
+void CScnFrame::~CScnFrame() {}
 
-extern "C" void update__9CScnFrameFv() {}
+void CScnFrame::update() {}

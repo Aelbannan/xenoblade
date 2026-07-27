@@ -41,4 +41,4 @@ bool AnmObj::TestAnmFlag(AnmFlag flag) const {
 } // namespace g3d
 } // namespace nw4r
 
-extern "C" void TestAnmFlag__Q34nw4r3g3d6AnmObjCFQ44nw4r3g3d6AnmObj7AnmFlag() {}
+void TestAnmFlag__Q34nw4r3g3d6AnmObjCFQ44nw4r3g3d6AnmObj7AnmFlag(){}

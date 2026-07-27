@@ -3,24 +3,24 @@
 
 #include <harness_catalog.h>
 
-extern "C" void getInstance__Q26mpfsys17MPFDrawBillLayTexFv() {}
+void mpfsys::MPFDrawBillLayTex::getInstance() {}
 
-extern "C" void func_80479F54() {}
+void func_80479F54(){}
 
-extern "C" void func_8047A330() {}
+void func_8047A330(){}
 
-extern "C" void func_8047A570() {}
+void func_8047A570(){}
 
-extern "C" void func_8047A7B0__Q26mpfsys16MPFDrawBillboardFv() {}
+void mpfsys::MPFDrawBillboard::func_8047A7B0() {}
 
-extern "C" void func_8047A86C__Q26mpfsys16MPFDrawBillboardFv() {}
+void mpfsys::MPFDrawBillboard::func_8047A86C() {}
 
-extern "C" void func_8047A918() {}
+void func_8047A918(){}
 
-extern "C" void func_8047B1E8() {}
+void func_8047B1E8(){}
 
-extern "C" void func_8047B528() {}
+void func_8047B528(){}
 
-extern "C" void func_8047B85C__Q26mpfsys17MPFDrawBillLayTexFv() {}
+void mpfsys::MPFDrawBillLayTex::func_8047B85C() {}
 
-extern "C" void func_8047B9DC__Q26mpfsys17MPFDrawBillLayTexFv() {}
+void mpfsys::MPFDrawBillLayTex::func_8047B9DC() {}

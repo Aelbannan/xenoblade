@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-extern "C" void Release__Q34nw4r3g3d9AnmObjChrFv() {}
+void Release__Q34nw4r3g3d9AnmObjChrFv(){}
 
 extern "C" int Attach__Q34nw4r3g3d9AnmObjChrFiPQ34nw4r3g3d12AnmObjChrRes(void) { return 0x0; }
 
@@ -16,94 +16,94 @@ extern "C" float GetWeight__Q34nw4r3g3d9AnmObjChrCFi() { return lbl_eu_80669B88;
 
 extern "C" void DetachAll__Q34nw4r3g3d9AnmObjChrFv(void) {}
 
-extern "C" void __dt__Q34nw4r3g3d9AnmObjChrFv() {}
+void __dt__Q34nw4r3g3d9AnmObjChrFv(){}
 
-extern "C" void __dt__Q34nw4r3g3d13AnmObjChrNodeFv() {}
+void __dt__Q34nw4r3g3d13AnmObjChrNodeFv(){}
 
-extern "C" void Attach__Q34nw4r3g3d13AnmObjChrNodeFiPQ34nw4r3g3d12AnmObjChrRes() {}
+void Attach__Q34nw4r3g3d13AnmObjChrNodeFiPQ34nw4r3g3d12AnmObjChrRes(){}
 
-extern "C" void Detach__Q34nw4r3g3d13AnmObjChrNodeFi() {}
+void Detach__Q34nw4r3g3d13AnmObjChrNodeFi(){}
 
-extern "C" void DetachAll__Q34nw4r3g3d13AnmObjChrNodeFv() {}
+void DetachAll__Q34nw4r3g3d13AnmObjChrNodeFv(){}
 
-extern "C" void UpdateFrame__Q34nw4r3g3d13AnmObjChrNodeFv() {}
+void UpdateFrame__Q34nw4r3g3d13AnmObjChrNodeFv(){}
 
-extern "C" void SetFrame__Q34nw4r3g3d13AnmObjChrNodeFf() {}
+void SetFrame__Q34nw4r3g3d13AnmObjChrNodeFf(){}
 
-extern "C" void GetFrame__Q34nw4r3g3d13AnmObjChrNodeCFv() {}
+void GetFrame__Q34nw4r3g3d13AnmObjChrNodeCFv(){}
 
-extern "C" void SetUpdateRate__Q34nw4r3g3d13AnmObjChrNodeFf() {}
+void SetUpdateRate__Q34nw4r3g3d13AnmObjChrNodeFf(){}
 
-extern "C" void GetUpdateRate__Q34nw4r3g3d13AnmObjChrNodeCFv() {}
+void GetUpdateRate__Q34nw4r3g3d13AnmObjChrNodeCFv(){}
 
-extern "C" void Bind__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdl() {}
+void Bind__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdl(){}
 
-extern "C" void Bind__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption() {}
+void Bind__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption(){}
 
-extern "C" void Release__Q34nw4r3g3d13AnmObjChrNodeFv() {}
+void Release__Q34nw4r3g3d13AnmObjChrNodeFv(){}
 
-extern "C" void Release__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption() {}
+void Release__Q34nw4r3g3d13AnmObjChrNodeFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption(){}
 
-extern "C" void G3dProc__Q34nw4r3g3d13AnmObjChrNodeFUlUlPv() {}
+void G3dProc__Q34nw4r3g3d13AnmObjChrNodeFUlUlPv(){}
 
-extern "C" void Construct__Q34nw4r3g3d14AnmObjChrBlendFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdli() {}
+void Construct__Q34nw4r3g3d14AnmObjChrBlendFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdli(){}
 
-extern "C" void GetResult__Q34nw4r3g3d14AnmObjChrBlendFPQ34nw4r3g3d12ChrAnmResultUl() {}
+void GetResult__Q34nw4r3g3d14AnmObjChrBlendFPQ34nw4r3g3d12ChrAnmResultUl(){}
 
-extern "C" void SetWeight__Q34nw4r3g3d14AnmObjChrBlendFif() {}
+void SetWeight__Q34nw4r3g3d14AnmObjChrBlendFif(){}
 
-extern "C" void GetWeight__Q34nw4r3g3d14AnmObjChrBlendCFi() {}
+void GetWeight__Q34nw4r3g3d14AnmObjChrBlendCFi(){}
 
-extern "C" void Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34nw4r3g3d6ResMdlb() {}
+void Construct__Q34nw4r3g3d12AnmObjChrResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmChrQ34nw4r3g3d6ResMdlb(){}
 
-extern "C" void SetFrame__Q34nw4r3g3d12AnmObjChrResFf() {}
+void SetFrame__Q34nw4r3g3d12AnmObjChrResFf(){}
 
-extern "C" float GetFrame__Q34nw4r3g3d12AnmObjChrResCFv(void *self) { return *(float *)((char *)self + 0x10); }
+float GetFrame__Q34nw4r3g3d12AnmObjChrResCFv(void *self){ return *(float *)((char *)self + 0x10); }
 
-extern "C" void SetUpdateRate__Q34nw4r3g3d12AnmObjChrResFf() {}
+void SetUpdateRate__Q34nw4r3g3d12AnmObjChrResFf(){}
 
 extern "C" float GetUpdateRate__Q34nw4r3g3d12AnmObjChrResCFv(void *self) { return *(float *)((char *)self + 28); }
 
-extern "C" void UpdateFrame__Q34nw4r3g3d12AnmObjChrResFv() {}
+void UpdateFrame__Q34nw4r3g3d12AnmObjChrResFv(){}
 
-extern "C" void Bind__Q34nw4r3g3d12AnmObjChrResFQ34nw4r3g3d6ResMdl() {}
+void Bind__Q34nw4r3g3d12AnmObjChrResFQ34nw4r3g3d6ResMdl(){}
 
-extern "C" void Bind__Q34nw4r3g3d15AnmObjTexSrtResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption() {}
+void Bind__Q34nw4r3g3d15AnmObjTexSrtResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption(){}
 
-extern "C" void Release__Q34nw4r3g3d12AnmObjChrResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption() {}
+void Release__Q34nw4r3g3d12AnmObjChrResFQ34nw4r3g3d6ResMdlUlQ44nw4r3g3d9AnmObjChr10BindOption(){}
 
-extern "C" void GetResult__Q34nw4r3g3d12AnmObjChrResFPQ34nw4r3g3d12ChrAnmResultUl() {}
+void GetResult__Q34nw4r3g3d12AnmObjChrResFPQ34nw4r3g3d12ChrAnmResultUl(){}
 
-extern "C" void G3dProc__Q34nw4r3g3d12AnmObjChrResFUlUlPv() {}
+void G3dProc__Q34nw4r3g3d12AnmObjChrResFUlUlPv(){}
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d12AnmObjChrResCFQ44nw4r3g3d6G3dObj7TypeObj() {}
+void IsDerivedFrom__Q34nw4r3g3d12AnmObjChrResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d9AnmObjChrCFQ44nw4r3g3d6G3dObj7TypeObj() {}
+void IsDerivedFrom__Q34nw4r3g3d9AnmObjChrCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
-extern "C" void GetTypeName__Q34nw4r3g3d12AnmObjChrResCFv() {}
+void GetTypeName__Q34nw4r3g3d12AnmObjChrResCFv(){}
 
 extern "C" const char lbl_eu_8051D5F8[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d12AnmObjChrResCFv(void) { return (void*)lbl_eu_8051D5F8; }
 
-extern "C" void __dt__Q34nw4r3g3d12AnmObjChrResFv() {}
+void __dt__Q34nw4r3g3d12AnmObjChrResFv(){}
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d14AnmObjChrBlendCFQ44nw4r3g3d6G3dObj7TypeObj() {}
+void IsDerivedFrom__Q34nw4r3g3d14AnmObjChrBlendCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d13AnmObjChrNodeCFQ44nw4r3g3d6G3dObj7TypeObj() {}
+void IsDerivedFrom__Q34nw4r3g3d13AnmObjChrNodeCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
-extern "C" void GetTypeName__Q34nw4r3g3d14AnmObjChrBlendCFv() {}
+void GetTypeName__Q34nw4r3g3d14AnmObjChrBlendCFv(){}
 
 extern "C" const char lbl_eu_8051D5E4[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d14AnmObjChrBlendCFv(void) { return (void*)lbl_eu_8051D5E4; }
 
-extern "C" void __dt__Q34nw4r3g3d14AnmObjChrBlendFv() {}
+void __dt__Q34nw4r3g3d14AnmObjChrBlendFv(){}
 
-extern "C" void GetTypeName__Q34nw4r3g3d13AnmObjChrNodeCFv() {}
+void GetTypeName__Q34nw4r3g3d13AnmObjChrNodeCFv(){}
 
 extern "C" const char lbl_eu_8051D5D0[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d13AnmObjChrNodeCFv(void) { return (void*)lbl_eu_8051D5D0; }
 
-extern "C" void GetTypeName__Q34nw4r3g3d9AnmObjChrCFv() {}
+void GetTypeName__Q34nw4r3g3d9AnmObjChrCFv(){}
 
 extern "C" const char lbl_eu_8051D5C0[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d9AnmObjChrCFv(void) { return (void*)lbl_eu_8051D5C0; }

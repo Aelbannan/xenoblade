@@ -19,6 +19,9 @@ class CfScript {
     u8 gap00[0x58];
 public:
     // Currently a placeholder - actual fields TBD.
+    void waitLoad();
+    void OnFileEvent();
+    virtual ~CfScript();
 };
 
 // CfScriptManager - manages an array of up to 3 CfScript objects.
@@ -29,6 +32,9 @@ public:
     void init();
 
     CfScript mScripts[3]; // 0x00, 0x58, 0xB0
+    void func_80068B20();
+    void func_800694B0();
+    void func_8006953C();
 };
 
 } // namespace cf

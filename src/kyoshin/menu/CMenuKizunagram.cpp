@@ -4,49 +4,48 @@
 #include <types.h>
 #include "kyoshin/menu/CMenuKizunagram.hpp"
 
-extern "C" void __ct__CMenuKizunagram() {}
+void __ct__CMenuKizunagram(){}
 
-extern "C" void __dt__15CMenuKizunagramFv(void* self) {}
+void CMenuKizunagram::~CMenuKizunagram() {}
 
-extern "C" void Init__15CMenuKizunagramFv() {}
+void CMenuKizunagram::Init() {}
 
-extern "C" void Term__15CMenuKizunagramFv() {}
+void CMenuKizunagram::Term() {}
 
-extern "C" void Move__15CMenuKizunagramFv() {}
+void CMenuKizunagram::Move() {}
 
-extern "C" void cbRenderBefore__15CMenuKizunagramFv(void* self) {}
+void CMenuKizunagram::cbRenderBefore() {}
 
-extern "C" void func_8025728C() {}
+void func_8025728C(){}
 
 extern "C" void stub_us_80259544() {}
 
-extern "C" void func_80257318() {}
+void func_80257318(){}
 
-extern "C" void func_80257360() {}
+void func_80257360(){}
 
-extern "C" void func_802573B8() {}
+void func_802573B8(){}
 
-extern "C" void func_80257448() {}
+void func_80257448(){}
 
-extern "C" void func_80257498() {}
+void func_80257498(){}
 
-extern "C" void func_80257704() {}
+void func_80257704(){}
 
-extern "C" void func_80257754() {}
+void func_80257754(){}
 
-extern "C" void func_802577F0() {}
+void func_802577F0(){}
 
-extern "C" void func_80257840() {}
+void func_80257840(){}
 
-extern "C" void func_80257994() {}
+void func_80257994(){}
 
-extern "C" void func_80257A2C() {}
+void func_80257A2C(){}
 
 // Forward declarations for member functions called by adjustor thunks
 // (used via direct function pointer to guarantee tail-call match).
-extern "C" void cbRenderBefore__15CMenuKizunagramFv(CMenuKizunagram* self);
-extern "C" void __dt__15CMenuKizunagramFv(CMenuKizunagram* self, int deletionFlag);
-
+void cbRenderBefore__15CMenuKizunagramFv(CMenuKizunagram* self);
+void __dt__15CMenuKizunagramFv(CMenuKizunagram* self, int deletionFlag);
 // IScnRender vtable adjustor thunk for cbRenderBefore.
 // When IScnRender virtual functions dispatch through IScnRender*,
 // 'this' points to the IScnRender subobject at offset +0x58 within

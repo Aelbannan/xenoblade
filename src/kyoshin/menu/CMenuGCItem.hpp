@@ -39,6 +39,7 @@ public:
     u8 _pad60to4AC4[0x4AC4 - 0x60];                  // 0x60-0x4AC3
     u8 mState;                                        // 0x4AC4
     u8 mArg;                                          // 0x4AC5
+    CMenuGCItem();
 };
 
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.

@@ -14,9 +14,9 @@ extern "C" int func_802759A8(void* self) { return 0; }
 
 
 
-extern "C" void func_80275454() {}
+void func_80275454(){}
 
-extern "C" void func_802756F0() {}
+void func_802756F0(){}
 
 extern "C" void func_80275808(void *ptr) {
     *(int*)((char*)ptr + 0x20) = -1;
@@ -25,13 +25,13 @@ extern "C" void func_80275808(void *ptr) {
     *(short*)((char*)ptr + 0x78) = 0;
 }
 
-extern "C" void func_80275824() {}
+void func_80275824(){}
 
-extern "C" void func_80275850() {}
+void func_80275850(){}
 
-extern "C" void func_8027594C(void* self) {}
+void func_8027594C(void* self){}
 
-extern "C" void __dt__Q22cf16CfObjectImplTboxFv(void* self) {}
+void cf::CfObjectImplTbox::~CfObjectImplTbox() {}
 
 
 extern "C" void func_802759B0(void* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplTboxFv)((char*)self - 0xc); }

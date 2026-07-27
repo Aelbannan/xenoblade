@@ -18,158 +18,158 @@ void LOD::LODMemMan::func_8046F088() {
 
 // --- Remaining harness stubs (empty bodies) ---
 
-extern "C" void __ct__Q23LOD9LODMemManFv() {}
+LOD::LODMemMan::LODMemMan() {}
 
-extern "C" void __dt__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::~LODMemMan() {}
 
-extern "C" void __dt__8046D144() {}
+void __dt__8046D144(){}
 
-extern "C" void func_8046D264__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046D264() {}
 
-extern "C" void func_8046D898__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046D898() {}
 
-extern "C" void func_8046DA04__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046DA04() {}
 
-extern "C" void func_8046DA64__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046DA64() {}
 
-extern "C" void func_8046DAC0__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046DAC0() {}
 
-extern "C" void func_8046DBC8__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046DBC8() {}
 
-extern "C" void func_8046DD9C__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046DD9C() {}
 
-extern "C" void func_8046E1DC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E1DC() {}
 
-extern "C" void func_8046E594__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E594() {}
 
-extern "C" void func_8046E5BC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E5BC() {}
 
-extern "C" void func_8046E6DC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E6DC() {}
 
-extern "C" void func_8046E770__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E770() {}
 
-extern "C" void func_8046E780__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E780() {}
 
-extern "C" void func_8046E7D0__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E7D0() {}
 
-extern "C" void func_8046E820__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E820() {}
 
-extern "C" void func_8046E8C8__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E8C8() {}
 
-extern "C" void func_8046E920__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E920() {}
 
-extern "C" void func_8046E988__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046E988() {}
 
-extern "C" void func_8046EAE8__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046EAE8() {}
 
-extern "C" void func_8046EB50__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046EB50() {}
 
-extern "C" void func_8046EBEC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046EBEC() {}
 
-extern "C" void func_8046EC88__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046EC88() {}
 
-extern "C" void func_8046ECD4__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046ECD4() {}
 
-extern "C" void func_8046ED68__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046ED68() {}
 
-extern "C" void func_8046EDD0__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046EDD0() {}
 
-extern "C" void func_8046EE9C__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046EE9C() {}
 
-extern "C" void func_8046EEE8__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046EEE8() {}
 
-extern "C" void func_8046EF30__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046EF30() {}
 
-extern "C" void func_8046EF7C__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046EF7C() {}
 
-extern "C" void func_8046F010__Q23LOD9LODMemManFv(void* self, float a, float b) {}
+void LOD::LODMemMan::func_8046F010(float a, float b) {}
 
-extern "C" void func_8046F024__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046F024() {}
 
-extern "C" void func_8046F090__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046F090() {}
 
-extern "C" void func_8046F164__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046F164() {}
 
-extern "C" void func_8046F258__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046F258() {}
 
-extern "C" void func_8046F594__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046F594() {}
 
-extern "C" void func_8046FC04__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046FC04() {}
 
-extern "C" void func_8046FEB8__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046FEB8() {}
 
-extern "C" void func_8046FF84__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8046FF84() {}
 
-extern "C" void func_80470184__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80470184() {}
 
-extern "C" void func_804702F0__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_804702F0() {}
 
-extern "C" void func_80470634__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80470634() {}
 
-extern "C" void func_804708B4__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_804708B4() {}
 
-extern "C" void func_804709FC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_804709FC() {}
 
-extern "C" void func_80470A90__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80470A90() {}
 
-extern "C" void func_80470B10__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80470B10() {}
 
-extern "C" void func_80470DB0__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80470DB0() {}
 
-extern "C" void func_80470DCC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80470DCC() {}
 
-extern "C" void func_80470EF8__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80470EF8() {}
 
-extern "C" void func_8047108C__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8047108C() {}
 
-extern "C" void func_80471184__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471184() {}
 
-extern "C" void func_80471224__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471224() {}
 
-extern "C" void func_804712E0__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_804712E0() {}
 
-extern "C" void func_8047130C__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8047130C() {}
 
-extern "C" void func_8047133C__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8047133C() {}
 
-extern "C" void func_80471450__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471450() {}
 
-extern "C" void func_8047146C__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8047146C() {}
 
-extern "C" void func_80471484__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471484() {}
 
-extern "C" void func_8047163C__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_8047163C() {}
 
-extern "C" void func_804716B8__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_804716B8() {}
 
-extern "C" void func_80471718__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471718() {}
 
-extern "C" void func_80471748__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471748() {}
 
-extern "C" void func_80471780__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471780() {}
 
-extern "C" void func_80471794__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471794() {}
 
-extern "C" void func_804717FC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_804717FC() {}
 
-extern "C" void func_80471834__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471834() {}
 
-extern "C" void func_80471938__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471938() {}
 
-extern "C" void func_804719FC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_804719FC() {}
 
-extern "C" void func_80471A70__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471A70() {}
 
-extern "C" void func_80471ACC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471ACC() {}
 
-extern "C" void func_80471BC8__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471BC8() {}
 
-extern "C" void func_80471BF4__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471BF4() {}
 
-extern "C" void func_80471CC4__Q23LOD9LODMemManFv(void* self) { func_804716B8__Q23LOD9LODMemManFv(); }
+void LOD::LODMemMan::func_80471CC4() { func_804716B8__Q23LOD9LODMemManFv(); }
 
-extern "C" void func_80471CCC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471CCC() {}
 
-extern "C" void func_80471CDC__Q23LOD9LODMemManFv() {}
+void LOD::LODMemMan::func_80471CDC() {}
 
-extern "C" void OnFileEvent__Q23LOD9LODMemManFP10CEventFile() {}
+void LOD::LODMemMan::OnFileEvent() {}

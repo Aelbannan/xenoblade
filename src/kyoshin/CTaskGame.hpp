@@ -118,4 +118,7 @@ public:
 
 protected:
     static CTaskGame* spInstance;
+    CTaskGame();
+    void cbRenderBefore();
+    void OnFileEvent();
 };

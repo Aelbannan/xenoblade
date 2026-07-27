@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CTaskGameEffAfter() {}
+void __ct__CTaskGameEffAfter(){}
 
 extern "C" void Draw__17CTaskGameEffAfterFv() {}
 
@@ -11,7 +11,7 @@ extern "C" void Term__17CTaskGameEffAfterFv() {}
 
 extern "C" void Init__17CTaskGameEffAfterFv() {}
 
-extern "C" void __dt__17CTaskGameEffAfterFv() {}
+void CTaskGameEffAfter::~CTaskGameEffAfter() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.

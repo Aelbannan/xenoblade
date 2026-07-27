@@ -3,6 +3,6 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8043B574__7CEvent1Fv() {}
+void CEvent1::func_8043B574() {}
 
-extern "C" void func_8043B588__7CEvent1Fv() {}
+void CEvent1::func_8043B588() {}

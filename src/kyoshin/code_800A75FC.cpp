@@ -3,35 +3,35 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __dt__800A75FC() {}
+void __dt__800A75FC(){}
 
-extern "C" void func_800A76EC() {}
+void func_800A76EC(){}
 
-extern "C" void func_800A7CDC() {}
+void func_800A7CDC(){}
 
-extern "C" void func_800A7D9C() {}
+void func_800A7D9C(){}
 
-extern "C" void func_800A7EFC() {}
+void func_800A7EFC(){}
 
-extern "C" void func_800A7FBC() {}
+void func_800A7FBC(){}
 
-extern "C" void func_800A807C() {}
+void func_800A807C(){}
 
-extern "C" void func_800A813C() {}
+void func_800A813C(){}
 
-extern "C" void func_800A81FC() {}
+void func_800A81FC(){}
 
-extern "C" void func_800A82BC() {}
+void func_800A82BC(){}
 
-extern "C" void func_800A837C() {}
+void func_800A837C(){}
 
-extern "C" void func_800A843C() {}
+void func_800A843C(){}
 
-extern "C" void func_800A84FC() {}
+void func_800A84FC(){}
 
-extern "C" void func_800A85D8() {}
+void func_800A85D8(){}
 
-extern "C" void func_800A86AC() {}
+void func_800A86AC(){}
 
 extern "C" void* func_800A86D8(unsigned int param1, unsigned int param2) {
     extern void* lbl_eu_80528398[];
@@ -42,23 +42,23 @@ extern "C" void* func_800A86D8(unsigned int param1, unsigned int param2) {
     return ((void**)r4)[param1];
 }
 
-extern "C" void func_800A8704() {}
+void func_800A8704(){}
 
-extern "C" void func_800A87E0() {}
+void func_800A87E0(){}
 
-extern "C" void func_800A88C8() {}
+void func_800A88C8(){}
 
-extern "C" void func_800A89C0() {}
+void func_800A89C0(){}
 
-extern "C" void func_800A8AAC() {}
+void func_800A8AAC(){}
 
-extern "C" void func_800A8B98() {}
+void func_800A8B98(){}
 
-extern "C" void func_800A8BD8() {}
+void func_800A8BD8(){}
 
-extern "C" void func_800A8C1C() {}
+void func_800A8C1C(){}
 
-extern "C" void func_800A8C68() {}
+void func_800A8C68(){}
 
 extern "C" void func_800A8C84(void) {
     extern void func_800A3940(void*);
@@ -66,23 +66,23 @@ extern "C" void func_800A8C84(void) {
     func_800A3940((void*)lbl_eu_80572B38);
 }
 
-extern "C" void func_800A8C90() {}
+void func_800A8C90(){}
 
-extern "C" void func_800A8CD4() {}
+void func_800A8CD4(){}
 
-extern "C" u32 func_800A8DA4(void* self) { return 0; }
+u32 func_800A8DA4(void* self){ return 0; }
 
-extern "C" void func_800A8DAC() {}
+void func_800A8DAC(){}
 
-extern "C" void func_800A8E6C() {}
+void func_800A8E6C(){}
 
-extern "C" void func_800A9024() {}
+void func_800A9024(){}
 
-extern "C" void func_800A9068() {}
+void func_800A9068(){}
 
-extern "C" void func_800A9134() {}
+void func_800A9134(){}
 
-extern "C" void func_800A92F8() {}
+void func_800A92F8(){}
 
 extern "C" char lbl_eu_80572B78[];
 extern "C" void func_800A37CC(void*, void*);
@@ -94,31 +94,31 @@ extern "C" void func_800A9344(void* p)
     }
 }
 
-extern "C" void func_800A9360() {}
+void func_800A9360(){}
 
-extern "C" void func_800A9444() {}
+void func_800A9444(){}
 
-extern "C" void func_800A9534() {}
+void func_800A9534(){}
 
-extern "C" void func_800A965C() {}
+void func_800A965C(){}
 
-extern "C" void func_800A9784() {}
+void func_800A9784(){}
 
-extern "C" void func_800A98A8() {}
+void func_800A98A8(){}
 
-extern "C" void func_800A99D0() {}
+void func_800A99D0(){}
 
-extern "C" void func_800A9A90() {}
+void func_800A9A90(){}
 
-extern "C" void func_800A9B50() {}
+void func_800A9B50(){}
 
-extern "C" void func_800A9C10() {}
+void func_800A9C10(){}
 
-extern "C" void func_800A9CD0() {}
+void func_800A9CD0(){}
 
-extern "C" void func_800A9D90() {}
+void func_800A9D90(){}
 
-extern "C" void func_800A9E50() {}
+void func_800A9E50(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_800A9F40() {}
+void sinit_800A9F40(){}

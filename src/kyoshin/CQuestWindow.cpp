@@ -15,45 +15,45 @@ extern "C" int func_80042864() {
 }
 
 extern u32 lbl_eu_80663F24;
-extern "C" void func_80122460() { lbl_eu_80663F24 = 0; }
+void func_80122460(){ lbl_eu_80663F24 = 0; }
 
-extern "C" void func_80122654() {}
+void func_80122654(){}
 
-extern "C" void func_801226C8() {}
+void func_801226C8(){}
 
-extern "C" void func_8012278C(void* self) {}
+void func_8012278C(void* self){}
 
-extern "C" void cbRenderBefore__12CQuestWindowFv(void* self) {}
+void CQuestWindow::cbRenderBefore() {}
 
-extern "C" void func_80122B2C() {}
+void func_80122B2C(){}
 
-extern "C" void func_80122BB0() {}
+void func_80122BB0(){}
 
-extern "C" void func_80122C08() {}
+void func_80122C08(){}
 
-extern "C" void func_80122EF8() {}
+void func_80122EF8(){}
 
-extern "C" void func_801231C4() {}
+void func_801231C4(){}
 
-extern "C" void func_80124270() {}
+void func_80124270(){}
 
-extern "C" void func_80124288(void* self, void* src) {
+void func_80124288(void* self, void* src){
     float a = *(float*)src;
     float b = *(float*)((u8*)src + 4);
     *(float*)((u8*)self + 0x4C) = a;
     *(float*)((u8*)self + 0x50) = b;
 }
 
-extern "C" void func_8012429C() {}
+void func_8012429C(){}
 
-extern "C" void func_801242FC() {}
+void func_801242FC(){}
 
-extern "C" void func_8012435C() {}
+void func_8012435C(){}
 
-extern "C" void __dt__12CQuestWindowFv();
+void __dt__12CQuestWindowFv();
 extern "C" void OnFileEvent__12CQuestWindowFP10CEventFile(void* self) { ((void(*)(void*))func_8012278C)((char*)self - 0x6c); }
 
-extern "C" void func_801245D4(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x6c); }
+void func_801245D4(void* self) { ((void(*)(void*))__dt__12CQuestWindowFv)((char*)self - 0x6c); }
 
 extern "C" void func_801245DC(void* self) { ((void(*)(void*))cbRenderBefore__12CQuestWindowFv)((char*)self - 0x70); }
 

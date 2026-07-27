@@ -33,81 +33,81 @@ void CCol6CheckBat::Term() {
 // CCol6CheckBat::Move() - update tick (stub pending decomp).
 void CCol6CheckBat::Move() {}
 
-extern "C" void __ct__CCol6CheckBat() {}
+void __ct__CCol6CheckBat(){}
 
-extern "C" void func_8015D310() {}
+void func_8015D310(){}
 
-extern "C" void func_8015D3A0() {}
+void func_8015D3A0(){}
 
-extern "C" void __ct__CCol6Hint() {}
+void __ct__CCol6Hint(){}
 
-extern "C" void __dt__9CCol6HintFv() {}
+void CCol6Hint::~CCol6Hint() {}
 
-extern "C" void Init__9CCol6HintFv() {}
+void CCol6Hint::Init() {}
 
-extern "C" void Term__9CCol6HintFv() {}
+void CCol6Hint::Term() {}
 
-extern "C" void Move__9CCol6HintFv() {}
+void CCol6Hint::Move() {}
 
-extern "C" void func_8015DB08() {}
+void func_8015DB08(){}
 
-extern "C" void cbRenderBefore__9CCol6HintFv() {}
+void CCol6Hint::cbRenderBefore() {}
 
-extern "C" void func_8015DCD0() {}
+void func_8015DCD0(){}
 
-extern "C" void func_8015DD4C() {}
+void func_8015DD4C(){}
 
-extern "C" void func_8015E0BC() {}
+void func_8015E0BC(){}
 
-extern "C" void __ct__CCol6System() {}
+void __ct__CCol6System(){}
 
-extern "C" void __dt__11CCol6SystemFv() {}
+void CCol6System::~CCol6System() {}
 
-extern "C" void Init__11CCol6SystemFv() {}
+void CCol6System::Init() {}
 
-extern "C" void Term__11CCol6SystemFv() {}
+void CCol6System::Term() {}
 
-extern "C" void Move__11CCol6SystemFv() {}
+void CCol6System::Move() {}
 
-extern "C" void func_80160118() {}
+void func_80160118(){}
 
-extern "C" void cbRenderBefore__11CCol6SystemFv() {}
+void CCol6System::cbRenderBefore() {}
 
-extern "C" void func_801602F4() {}
+void func_801602F4(){}
 
-extern "C" void func_80160370() {}
+void func_80160370(){}
 
-extern "C" void func_80160A6C() {}
+void func_80160A6C(){}
 
-extern "C" void func_80160EE4() {}
+void func_80160EE4(){}
 
-extern "C" void func_80161024() {}
+void func_80161024(){}
 
-extern "C" void func_80161178() {}
+void func_80161178(){}
 
-extern "C" void func_8016169C() {}
+void func_8016169C(){}
 
-extern "C" void func_80161C5C() {}
+void func_80161C5C(){}
 
-extern "C" void func_80162000() {}
+void func_80162000(){}
 
-extern "C" void func_80162C40() {}
+void func_80162C40(){}
 
-extern "C" void func_80162DB4() {}
+void func_80162DB4(){}
 
-extern "C" void func_80162EF8() {}
+void func_80162EF8(){}
 
-extern "C" void func_80163614() {}
+void func_80163614(){}
 
-extern "C" void func_8016378C() {}
+void func_8016378C(){}
 
-extern "C" void func_801638C0() {}
+void func_801638C0(){}
 
-extern "C" void func_80163AF4() {}
+void func_80163AF4(){}
 
-extern "C" void __dt__11CCol6InviteFv() {}
+void CCol6Invite::~CCol6Invite() {}
 
-extern "C" void Init__11CCol6InviteFv() {}
+void CCol6Invite::Init() {}
 
 extern u32 lbl_eu_8066423C;
 extern "C" void Term__11CCol6InviteFv(void* self) {
@@ -115,4 +115,4 @@ extern "C" void Term__11CCol6InviteFv(void* self) {
     lbl_eu_8066423C = 0;
 }
 
-extern "C" void Move__11CCol6InviteFv() {}
+void CCol6Invite::Move() {}

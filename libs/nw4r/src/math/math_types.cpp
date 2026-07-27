@@ -371,5 +371,5 @@ MTX44* MTX44Copy(register MTX44* pDst, register const MTX44* pSrc) {
 } // namespace math
 } // namespace nw4r
 
-extern "C" void MTX34Add__Q24nw4r4mathFPQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34() {}
-extern "C" void MTX34Mult__Q24nw4r4mathFPQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34f() {}
+void MTX34Add__Q24nw4r4mathFPQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34(){}
+void MTX34Mult__Q24nw4r4mathFPQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34f(){}

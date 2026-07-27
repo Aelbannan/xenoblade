@@ -21,6 +21,6 @@ void Bounding::DrawSelf(const DrawInfo& rInfo) {
 } // namespace lyt
 } // namespace nw4r
 
-extern "C" const nw4r::ut::detail::RuntimeTypeInfo* GetRuntimeTypeInfo__Q34nw4r3lyt8BoundingCFv() {
+const nw4r::ut::detail::RuntimeTypeInfo* GetRuntimeTypeInfo__Q34nw4r3lyt8BoundingCFv(){
     return &nw4r::lyt::Bounding::typeInfo;
 }

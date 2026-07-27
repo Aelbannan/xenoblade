@@ -45,6 +45,7 @@ public:
     u8 _padB8to1BC[0x1BC - 0xB8];                         // 0xB8-0x1BB (COption + other fields)
     u8 mState;                                             // 0x1BC
     u8 mArg;                                               // 0x1BD
+    CMenuOption();
 };
 
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.

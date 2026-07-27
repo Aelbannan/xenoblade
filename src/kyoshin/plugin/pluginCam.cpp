@@ -3,57 +3,57 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void select() {}
+void select(){}
 
-extern "C" void restore() {}
+void restore(){}
 
-extern "C" void setPos() {}
+void setPos(){}
 
-extern "C" void setLookat() {}
+void setLookat(){}
 
 extern "C" void func_800605D0() {}
 
-extern "C" void setDir() {}
+void setDir(){}
 
 extern "C" void func_800606AC() {}
 
-extern "C" void setRotX() {}
+void setRotX(){}
 
 extern "C" void func_80060738() {}
 
-extern "C" void setRotY() {}
+void setRotY(){}
 
 extern "C" void func_800607C4() {}
 
-extern "C" void setFov() {}
+void setFov(){}
 
-extern "C" void setTarget() {}
+void setTarget(){}
 
-extern "C" void setPosOfs() {}
+void setPosOfs(){}
 
 extern "C" void func_80060A08() {}
 
-extern "C" void setLookatOfs() {}
+void setLookatOfs(){}
 
 extern "C" void func_80060B84() {}
 
-extern "C" void getPos() {}
+void getPos(){}
 
-extern "C" void getRot() {}
+void getRot(){}
 
-extern "C" void keyBegin() {}
+void keyBegin(){}
 
-extern "C" void keyEnd() {}
+void keyEnd(){}
 
-extern "C" void keyAdd() {}
+void keyAdd(){}
 
-extern "C" void isKeyMove() {}
+void isKeyMove(){}
 
-extern "C" void waitKeyMove() {}
+void waitKeyMove(){}
 
-extern "C" void shake() {}
+void shake(){}
 
-extern "C" void stopShake() {}
+void stopShake(){}
 
 extern "C" void pluginCamRegist() {
     extern void vmPluginRegist(void*, void*);

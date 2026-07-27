@@ -101,9 +101,9 @@ CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int r5){
 }
 
 extern "C" void func_800407C8() {}
-extern "C" void func_80040AF4() {}
-extern "C" void func_800419BC() {}
-extern "C" void func_80041AFC() {}
+void func_80040AF4(){}
+void func_800419BC(){}
+void func_80041AFC(){}
 extern "C" void func_800426A4() {}
 extern "C" int func_800426F0__9CTaskGameFv() {
     extern void* lbl_eu_80663D18;
@@ -116,10 +116,10 @@ extern "C" int lbl_eu_80663D1C;
 extern "C" int func_80042864() {
     return lbl_eu_80663D1C != 0;
 }
-extern "C" void func_80042FBC() {}
+void func_80042FBC(){}
 extern "C" int func_80043024(void* self) { return 0x0; }
-extern "C" void func_80043310() {}
-extern "C" void func_8004335C() {}
+void func_80043310(){}
+void func_8004335C(){}
 extern "C" bool func_800433A8() { return true; }
 extern "C" void func_800433B0(void* self, bool enabled, unsigned int mode) { unsigned int& flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(self) + 0x68); flags &= ~0x100u; if (enabled) flags |= 0x200u; else flags &= ~0x200u; if (!enabled) { if (mode == 1u) flags |= 0x20000u; else if (mode == 2u) flags |= 0x40000u; } }
 extern "C" void func_80043410(void* self, int enabled, unsigned int mode, unsigned int value) {
@@ -152,17 +152,16 @@ extern "C" void func_80043410(void* self, int enabled, unsigned int mode, unsign
 extern "C" void func_8004347C(void* this_, int arg1, int arg2, unsigned int arg3) { unsigned int flags = *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68); flags &= ~0x00000100u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; if (arg1 != 0) { flags |= 0x00080000u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; } else { flags &= ~0x00080000u; *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0x68) = flags; } *reinterpret_cast<unsigned int*>(reinterpret_cast<unsigned char*>(this_) + 0xfc) = arg3; }
 extern "C" void func_800434AC(unsigned char* this_, int enabled, int unused, unsigned int value) { unsigned int& flags = *reinterpret_cast<unsigned int*>(this_ + 0x68); flags &= 0xFFFFFEFFu; if (enabled) flags |= 0x800u; else flags &= 0xFFFFF7FFu; *reinterpret_cast<unsigned int*>(this_ + 0xFC) = value; }
 extern "C" void func_800434DC(unsigned char* self, int enabled, int unused, unsigned int value) { unsigned int flags = *(unsigned int*)(self + 0x68); flags &= ~0x00000100u; *(unsigned int*)(self + 0x68) = flags; if (enabled != 0) { flags |= 0x00100000u; *(unsigned int*)(self + 0x68) = flags; } else { flags &= ~0x00100000u; *(unsigned int*)(self + 0x68) = flags; } *(unsigned int*)(self + 0xfc) = value; }
-extern "C" void func_8004350C() {}
+void func_8004350C(){}
 extern "C" void func_80043538(void* self, int enabled) { volatile unsigned int* flags = reinterpret_cast<volatile unsigned int*>(static_cast<unsigned char*>(self) + 0x68); unsigned int value = *flags; value &= ~0x00000100u; *flags = value; if (enabled != 0) { value |= 0x01000000u; *flags = value; } else { value &= ~0x01000000u; *flags = value; } }
-extern "C" void func_80043564() {}
+void func_80043564(){}
 extern "C" void func_80039364__5CGameFv();
 
 extern "C" void func_80043628() {
     func_80039364__5CGameFv();
 }
-extern "C" s32 func_800436A8();
-
-extern "C" s32 func_8004368C__9CTaskGameFv() {
+s32 func_800436A8();
+s32 CTaskGame::func_8004368C() {
     extern void* lbl_eu_80663D18;
     if (lbl_eu_80663D18 == NULL) {
         return 0;
@@ -192,8 +191,8 @@ extern "C" void __dt__9CTaskGameFv(CTaskGame*);
 extern "C" void func_80044120(void *self) {
     __dt__9CTaskGameFv(reinterpret_cast<CTaskGame*>((char*)self - 0x54));
 }
-extern "C" void cbRenderBefore__9CTaskGameFv(void*);
-extern "C" void func_80044128(void* self) { cbRenderBefore__9CTaskGameFv((void*)((char*)self - 0x58)); }
+void cbRenderBefore__9CTaskGameFv(void*);
+void func_80044128(void* self) { cbRenderBefore__9CTaskGameFv((void*)((char*)self - 0x58)); }
 extern "C" void func_80044130(void* p) {
     p = (char*)p - 0x58;
     __dt__9CTaskGameFv((CTaskGame*)p);
@@ -213,59 +212,59 @@ extern "C" void func_80044160(void* p) {
     __dt__9CTaskGameFv((CTaskGame*)((char*)p - 0x64));
 }
 
-extern "C" void Term__9CTaskGameFv() {}
-extern "C" void func_80040A3C__9CTaskGameFUsUsPCcs() {}
-extern "C" void func_80040B38() {}
-extern "C" void func_80040C2C() {}
-extern "C" void func_80040CD8() {}
-extern "C" void func_80040DE4() {}
-extern "C" void func_80040EB4() {}
-extern "C" void func_80041024() {}
-extern "C" void func_800411A4() {}
-extern "C" void func_8004125C() {}
-extern "C" void func_80041348() {}
-extern "C" void func_80041390() {}
-extern "C" void func_80041448() {}
-extern "C" void func_800414F4() {}
-extern "C" void func_800415AC() {}
-extern "C" void func_80041658() {}
-extern "C" void func_800416FC() {}
-extern "C" void func_800417AC() {}
-extern "C" void func_8004185C() {}
-extern "C" void func_80041908() {}
-extern "C" void func_80041A48() {}
-extern "C" void func_80041B94() {}
-extern "C" void func_80041BC0() {}
-extern "C" void func_80041CC8() {}
-extern "C" void func_80041E54() {}
-extern "C" void func_80041F54() {}
-extern "C" void func_80042048() {}
-extern "C" void func_8004213C() {}
-extern "C" void func_80042274() {}
-extern "C" void func_800424E0() {}
-extern "C" void func_8004256C() {}
-extern "C" void func_80042630() {}
-extern "C" void func_800426A8() {}
-extern "C" void func_80042720__9CTaskGameFv() {}
-extern "C" void func_80042784() {}
-extern "C" void func_80042874() {}
-extern "C" void func_8004302C() {}
+void CTaskGame::Term() {}
+void CTaskGame::func_80040A3C() {}
+void func_80040B38(){}
+void func_80040C2C(){}
+void func_80040CD8(){}
+void func_80040DE4(){}
+void func_80040EB4(){}
+void func_80041024(){}
+void func_800411A4(){}
+void func_8004125C(){}
+void func_80041348(){}
+void func_80041390(){}
+void func_80041448(){}
+void func_800414F4(){}
+void func_800415AC(){}
+void func_80041658(){}
+void func_800416FC(){}
+void func_800417AC(){}
+void func_8004185C(){}
+void func_80041908(){}
+void func_80041A48(){}
+void func_80041B94(){}
+void func_80041BC0(){}
+void func_80041CC8(){}
+void func_80041E54(){}
+void func_80041F54(){}
+void func_80042048(){}
+void func_8004213C(){}
+void func_80042274(){}
+void func_800424E0(){}
+void func_8004256C(){}
+void func_80042630(){}
+void func_800426A8(){}
+void CTaskGame::func_80042720() {}
+void func_80042784(){}
+void func_80042874(){}
+void func_8004302C(){}
 // Forward declaration only - body kept in separate TU to prevent MWCC inlining
-extern "C" void func_8004312C();
-extern "C" void func_8004362C() {}
+void func_8004312C();
+void func_8004362C(){}
 #pragma dont_inline on
-extern "C" s32 func_800436A8() { return 0; }
+s32 func_800436A8(){ return 0; }
 #pragma dont_inline reset
-extern "C" void func_80043738() {}
-extern "C" void func_8004392C() {}
-extern "C" void func_80043B04() {}
-extern "C" void func_80043B54() {}
-extern "C" void func_80043BC4() {}
-extern "C" void func_80043C88() {}
-extern "C" void func_80043CD8() {}
-extern "C" void func_80043D90() {}
-extern "C" void func_80043E08() {}
-extern "C" void func_80044070() {}
+void func_80043738(){}
+void func_8004392C(){}
+void func_80043B04(){}
+void func_80043B54(){}
+void func_80043BC4(){}
+void func_80043C88(){}
+void func_80043CD8(){}
+void func_80043D90(){}
+void func_80043E08(){}
+void func_80044070(){}
 extern "C" char* func_800440C4(char* r3_this, const char* r4_str) {
     size_t len = strlen(r4_str);
     strcat(r3_this, r4_str);
@@ -273,7 +272,6 @@ extern "C" char* func_800440C4(char* r3_this, const char* r4_str) {
     return r3_this;
 }
 
-extern "C" void func_8004312C();
-extern "C" void Draw__9CTaskGameFv() {
+void func_8004312C(); void Draw__9CTaskGameFv() {
     func_8004312C();
 }

@@ -8,27 +8,27 @@
 // ---------- CMenuSkipTimer member stubs (NonMatching) ----------
 // Marked never_inline to prevent the thunks from collapsing into blr.
 
-extern "C" __attribute__((never_inline)) void __ct__CMenuSkipTimer() {}
-extern "C" __attribute__((never_inline)) void __dt__14CMenuSkipTimerFv(void* self) {}
-extern "C" __attribute__((never_inline)) void Init__14CMenuSkipTimerFv() {}
-extern "C" __attribute__((never_inline)) void Term__14CMenuSkipTimerFv() {}
-extern "C" __attribute__((never_inline)) void Move__14CMenuSkipTimerFv() {}
-extern "C" __attribute__((never_inline)) void cbRenderBefore__14CMenuSkipTimerFv(void* self) {}
+__attribute__((never_inline)) void __ct__CMenuSkipTimer(){}
+__attribute__((never_inline)) void __dt__14CMenuSkipTimerFv(void* self){}
+__attribute__((never_inline)) void Init__14CMenuSkipTimerFv(){}
+__attribute__((never_inline)) void Term__14CMenuSkipTimerFv(){}
+__attribute__((never_inline)) void Move__14CMenuSkipTimerFv(){}
+__attribute__((never_inline)) void cbRenderBefore__14CMenuSkipTimerFv(void* self){}
 
 
 // ---------- Non-member helper stubs (same-TU, not yet identified) ----------
 
-extern "C" __attribute__((never_inline)) void func_8029EDE4() {}
+__attribute__((never_inline)) void func_8029EDE4(){}
 
-extern "C" __attribute__((never_inline)) void func_8029EE58() {}
+__attribute__((never_inline)) void func_8029EE58(){}
 
-extern "C" __attribute__((never_inline)) void func_8029EE68() {}
+__attribute__((never_inline)) void func_8029EE68(){}
 
-extern "C" __attribute__((never_inline)) void func_8029EEE0() {}
+__attribute__((never_inline)) void func_8029EEE0(){}
 
-extern "C" __attribute__((never_inline)) void func_8029EF30() {}
+__attribute__((never_inline)) void func_8029EF30(){}
 
-extern "C" __attribute__((never_inline)) void func_8029F048() {}
+__attribute__((never_inline)) void func_8029F048(){}
 
 
 // ---------- FULL_MATCH: vtable adjustment thunks ----------

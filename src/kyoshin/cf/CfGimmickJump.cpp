@@ -3,20 +3,20 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CfGimmickJump() {}
+void __ct__cf_CfGimmickJump(){}
 
-extern "C" void __dt__Q22cf13CfGimmickJumpFv() {}
+void cf::CfGimmickJump::~CfGimmickJump() {}
 
-extern "C" void func_8020F38C() {}
+void func_8020F38C(){}
 
-extern "C" void func_8020F484() {}
+void func_8020F484(){}
 
-extern "C" void func_8020F540() {}
+void func_8020F540(){}
 
-extern "C" void func_8020F8C4() {}
+void func_8020F8C4(){}
 
-extern "C" void func_8020F984() {}
+void func_8020F984(){}
 
-extern "C" void func_8020FC14() {}
+void func_8020FC14(){}
 
-extern "C" void func_8020FD2C() {}
+void func_8020FD2C(){}

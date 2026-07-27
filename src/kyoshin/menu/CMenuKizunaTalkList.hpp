@@ -15,4 +15,5 @@ public:
     void Term();
     void Move();
     void cbRenderBefore();
+    CMenuKizunaTalkList();
 };

@@ -52,6 +52,6 @@ BasicSound* ExternalSoundPlayer::GetLowestPrioritySound() {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void AppendSound__Q44nw4r3snd6detail19ExternalSoundPlayerFPQ44nw4r3snd6detail10BasicSound() {}
-extern "C" void RemoveSound__Q44nw4r3snd6detail19ExternalSoundPlayerFPQ44nw4r3snd6detail10BasicSound() {}
-extern "C" void detail_CanPlaySound__Q44nw4r3snd6detail19ExternalSoundPlayerFi(int) {}
+void AppendSound__Q44nw4r3snd6detail19ExternalSoundPlayerFPQ44nw4r3snd6detail10BasicSound(){}
+void RemoveSound__Q44nw4r3snd6detail19ExternalSoundPlayerFPQ44nw4r3snd6detail10BasicSound(){}
+void detail_CanPlaySound__Q44nw4r3snd6detail19ExternalSoundPlayerFi(int){}

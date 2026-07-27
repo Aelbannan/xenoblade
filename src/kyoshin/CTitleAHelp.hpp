@@ -50,6 +50,7 @@ public:
     u8 unk35;
     u8 unk36;
     u8 unk37;
+    CTitleAHelp();
 };
 
 bool func_801C4648(nw4r::lyt::Pane*);

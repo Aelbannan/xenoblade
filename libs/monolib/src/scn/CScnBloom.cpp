@@ -66,12 +66,12 @@ extern "C" void func_804996D8_stub7() {}
 
 extern "C" void func_804996D8_stub8() {}
 
-extern "C" void __dt__8049A0D0() {}
+void __dt__8049A0D0(){}
 
-extern "C" void func_8049A128() {}
+void func_8049A128(){}
 
-extern "C" void func_8049A318() {}
+void func_8049A318(){}
 
-extern "C" void func_8049A850() {}
+void func_8049A850(){}
 
-extern "C" void func_8049AA74() {}
+void func_8049AA74(){}

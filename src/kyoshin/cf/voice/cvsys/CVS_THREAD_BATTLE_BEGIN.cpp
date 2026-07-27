@@ -4,23 +4,23 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_BEGIN.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__802AFA80() {}
+void __ct__802AFA80(){}
 
-extern "C" void func_802AFC54() {}
+void func_802AFC54(){}
 
-extern "C" void func_802AFCC8() {}
+void func_802AFCC8(){}
 
-extern "C" void func_802B00EC() {}
+void func_802B00EC(){}
 
-extern "C" void func_802B01B0() {}
+void func_802B01B0(){}
 
-extern "C" void func_802B0248() {}
+void func_802B0248(){}
 
 // Virtual override of blank1(): returns buffer size for BATTLE_BEGIN thread.
 extern "C" int func_802B033C(CVS_THREAD_BATTLE_BEGIN* self) {
     return CVS_THREAD_BATTLE_BEGIN::BUFFER_SIZE;
 }
 
-extern "C" void func_802B0344() {}
+void func_802B0344(){}
 
-extern "C" void func_802B03A4() {}
+void func_802B03A4(){}

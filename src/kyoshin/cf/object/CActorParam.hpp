@@ -434,5 +434,7 @@ namespace cf {
         u32 unk3374;
         u8 unk3378[4];
         float unk337C;
+    CActorParam();
+    void CBattleState_UnkVirtualFunc18();
     };
 }

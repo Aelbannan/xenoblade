@@ -18,6 +18,6 @@ UnkClass_8018C5FC::UnkClass_8018C5FC() {
 
 } // namespace cf
 
-extern "C" void func_8018C610() {}
-extern "C" void func_8018C820() {}
-extern "C" void func_8018C8F4() {}
+void func_8018C610(){}
+void func_8018C820(){}
+void func_8018C8F4(){}

@@ -18,4 +18,10 @@ struct CMenuItemExchangeOC;
  */
 class CMenuItemExchange {
     // ...
+    CMenuItemExchange();
+    virtual ~CMenuItemExchange();
+    void Init();
+    void Term();
+    void Move();
+    void cbRenderBefore();
 };

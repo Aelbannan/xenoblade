@@ -3,7 +3,7 @@
 extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* this_ptr, void* r4, void* r5, float f1);
 extern "C" void func_800A5B18(void* a, void* b, void* c, float f1, float f2);
 
-extern "C" void func_800AB010(void* r3, void* r4) {
+void func_800AB010(void* r3, void* r4){
     int field94 = *(int*)((char*)r4 + 0x94);
     float col[4];
 
@@ -56,7 +56,7 @@ extern "C" void func_800AB010(void* r3, void* r4) {
     );
 }
 
-extern "C" void func_800AB248(void* r3, void* r4, void* r5, void* r6, float f1) {
+void func_800AB248(void* r3, void* r4, void* r5, void* r6, float f1){
     float threshold = 0.01f;
     float heightDiff = *(float*)((char*)r4 + 0xB0) - *(float*)((char*)r4 + 0xA4);
 

@@ -32,4 +32,7 @@ public:
     s32 mGaugePrev; // 0x98 -- gauge display / previous value
     s32 unk9C; // 0x9C -- unused
     s32 mGaugeInit; // 0xA0 -- gauge panel initialised flag (non-zero = needs layout fixup)
+    CMenuPTGauge();
+    virtual ~CMenuPTGauge();
+    void Term();
 };

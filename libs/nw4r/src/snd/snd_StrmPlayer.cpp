@@ -917,9 +917,9 @@ void StrmPlayer::StrmDataLoadTask::OnCancel() {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(int) {}
-extern "C" void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack() {}
-extern "C" void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf() {}
+void AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(int){}
+void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(){}
+void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(){}
 extern "C" void* GetPlayerTrack__Q44nw4r3snd6detail10StrmPlayerFi(void* self, int index) {
     if (index > 7) return nullptr;
     return reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(self) + index * 0x38 + 0xb78);

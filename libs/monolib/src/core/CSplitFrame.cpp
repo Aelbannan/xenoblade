@@ -8,7 +8,7 @@
 extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
     ml::CRect16* out, const CViewFrame* frame);
 
-extern "C" void apply__11CSplitFrameFv(CSplitFrame* self) {
+void CSplitFrame::apply() {
     // Implementation pending - currently NonMatching
 }
 

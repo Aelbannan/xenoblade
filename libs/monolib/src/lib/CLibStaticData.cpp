@@ -189,5 +189,5 @@ bool CLibStaticData::CItem::OnFileEvent(CEventFile* pEventFile){
     return false;
 }
 
-extern "C" void __ct__Q214CLibStaticData5CItemFP17StaticArcFileData() {}
-extern "C" void __dt__Q214CLibStaticData5CItemFv() {}
+void __ct__Q214CLibStaticData5CItemFP17StaticArcFileData(){}
+void __dt__Q214CLibStaticData5CItemFv(){}

@@ -3,16 +3,16 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_80213488() {}
+void func_80213488(){}
 
 extern "C" void func_8021351C(void* dst, const void* src) {
     *(short*)dst = *(short*)src;
     ((unsigned char*)dst)[2] = ((unsigned char*)src)[2];
 }
 
-extern "C" void __dt__80213530() {}
+void __dt__80213530(){}
 
-extern "C" void func_80213570() {}
+void func_80213570(){}
 
 extern "C" void func_802136E0(char* self, int idx, unsigned char val)
 {
@@ -23,7 +23,7 @@ extern "C" void func_802136E0(char* self, int idx, unsigned char val)
     self[offset + 2] = val;
 }
 
-extern "C" void func_80213710() {}
+void func_80213710(){}
 
 extern "C" int func_80213748(void* this_ptr) {
     struct Layout {
@@ -45,7 +45,7 @@ extern "C" int func_80213748(void* this_ptr) {
     return 1;
 }
 
-extern "C" void func_80213788() {}
+void func_80213788(){}
 
 extern "C" void func_802137B4(void* self) {
     unsigned char* base = (unsigned char*)self;
@@ -55,6 +55,6 @@ extern "C" void func_802137B4(void* self) {
     base[0x1004] = base[0x1003] - 1;
 }
 
-extern "C" void func_802137DC() {}
+void func_802137DC(){}
 
-extern "C" void func_8021384C() {}
+void func_8021384C(){}

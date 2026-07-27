@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
 
-extern "C" void setMapJumpArea() {}
+void setMapJumpArea(){}
 
 extern "C" void func_80047814__Q22cf13CfObjectPointFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
@@ -15,31 +15,31 @@ extern "C" void func_80047814__Q22cf13CfObjectPointFv(void* self, void* src) {
     *(u32*)((u8*)self + 0x44) = c;
 }
 
-extern "C" void setMapJumpAreaBox() {}
+void setMapJumpAreaBox(){}
 
-extern "C" void setWarpArea() {}
+void setWarpArea(){}
 
-extern "C" void setMapPreloadArea() {}
+void setMapPreloadArea(){}
 
-extern "C" void mapJump() {}
+void mapJump(){}
 
-extern "C" void setMapPreloadArea2() {}
+void setMapPreloadArea2(){}
 
-extern "C" void setEventArea() {}
+void setEventArea(){}
 
-extern "C" void delEventArea() {}
+void delEventArea(){}
 
-extern "C" void setTownArea() {}
+void setTownArea(){}
 
-extern "C" void addPopID() {}
+void addPopID(){}
 
-extern "C" void setTimeSpeed() {}
+void setTimeSpeed(){}
 
-extern "C" void setPopSheet() {}
+void setPopSheet(){}
 
-extern "C" void changeWalker() {}
+void changeWalker(){}
 
-extern "C" void eventStart() {}
+void eventStart(){}
 
 extern "C" unsigned long battleEventStart() {
     extern unsigned long lbl_eu_80663E24;
@@ -47,85 +47,85 @@ extern "C" unsigned long battleEventStart() {
     return 0;
 }
 
-extern "C" void eventEnd() {}
+void eventEnd(){}
 
-extern "C" void delAttr() {}
+void delAttr(){}
 
-extern "C" void setMono() {}
+void setMono(){}
 
-extern "C" void setMapDispID() {}
+void setMapDispID(){}
 
-extern "C" void loadCfEvent() {}
+void loadCfEvent(){}
 
-extern "C" void waitCfEvent() {}
+void waitCfEvent(){}
 
-extern "C" void isMainParty() {}
+void isMainParty(){}
 
-extern "C" void isResvParty() {}
+void isResvParty(){}
 
-extern "C" void addParty() {}
+void addParty(){}
 
-extern "C" void makeParty() {}
+void makeParty(){}
 
-extern "C" bool CfObject_UnkVirtualFunc31__Q22cf8CfObjectFv() { return false; }
+bool cf::CfObject::CfObject_UnkVirtualFunc31() { return false; }
 
-extern "C" void makeGuestParty() {}
+void makeGuestParty(){}
 
-extern "C" void delParty() {}
+void delParty(){}
 
-extern "C" void addItem() {}
+void addItem(){}
 
-extern "C" void delItem() {}
+void delItem(){}
 
-extern "C" void totalItem() {}
+void totalItem(){}
 
-extern "C" void equipItem() {}
+void equipItem(){}
 
-extern "C" void equipWeapon() {}
+void equipWeapon(){}
 
-extern "C" void getWeaponSlot() {}
+void getWeaponSlot(){}
 
 bool func_8004A2E8() {
     return false;
 }
 
-extern "C" void setWeaponSlot() {}
+void setWeaponSlot(){}
 
 void func_8004A400() {
     // Intentionally empty
 }
 
-extern "C" void waitEventRes() {}
+void waitEventRes(){}
 
-extern "C" void setFade() {}
+void setFade(){}
 
-extern "C" void applyPcPrm() {}
+void applyPcPrm(){}
 
-extern "C" void setDispOffArea() {}
+void setDispOffArea(){}
 
-extern "C" void setScheduleType() {}
+void setScheduleType(){}
 
-extern "C" void setWeather() {}
+void setWeather(){}
 
-extern "C" void setWeatherArea() {}
+void setWeatherArea(){}
 
-extern "C" void setGimmick() {}
+void setGimmick(){}
 
-extern "C" void setElvGim() {}
+void setElvGim(){}
 
-extern "C" void setActMapObj() {}
+void setActMapObj(){}
 
-extern "C" void getMapID() {}
+void getMapID(){}
 
-extern "C" void clearGimmickJump() {}
+void clearGimmickJump(){}
 
-extern "C" void partyMember() {}
+void partyMember(){}
 
-extern "C" void clearPartyGauge() {}
+void clearPartyGauge(){}
 
-extern "C" void waitPop() {}
+void waitPop(){}
 
-extern "C" void partyWarp() {}
+void partyWarp(){}
 
 extern "C" void* CfObject_UnkVirtualFunc48__Q22cf12CfObjectMoveFv(void* self) {
     void* ptr = *(void**)((u8*)self + 0xC4);
@@ -135,15 +135,15 @@ extern "C" void* CfObject_UnkVirtualFunc48__Q22cf12CfObjectMoveFv(void* self) {
     return *(void**)((u8*)ptr + 8);
 }
 
-extern "C" void setMoney() {}
+void setMoney(){}
 
-extern "C" void addMoney() {}
+void addMoney(){}
 
-extern "C" void isTimeSkip() {}
+void isTimeSkip(){}
 
-extern "C" void delHoldBox() {}
+void delHoldBox(){}
 
-extern "C" void getWeaponID() {}
+void getWeaponID(){}
 
 extern "C" int clearTbox() {
     extern void* func_800B07E8__Fv();
@@ -169,7 +169,7 @@ extern "C" int dispLoading() {
     return 0;
 }
 
-extern "C" void addItemLimit() {}
+void addItemLimit(){}
 
 extern "C" int clearItemLimit() {
     func_801579A4();
@@ -181,7 +181,7 @@ extern "C" int clearEquipGem() {
     return 0;
 }
 
-extern "C" void setPcCtrl() {}
+void setPcCtrl(){}
 
 extern "C" unsigned long setFieldVision() {
     extern unsigned long lbl_eu_80663E28;
@@ -189,15 +189,15 @@ extern "C" unsigned long setFieldVision() {
     return 0;
 }
 
-extern "C" void saveNamedCount() {}
+void saveNamedCount(){}
 
-extern "C" void isPal() {}
+void isPal(){}
 
-extern "C" void setIgnorePal() {}
+void setIgnorePal(){}
 
-extern "C" void isVoiceJP() {}
+void isVoiceJP(){}
 
-extern "C" void pluginCfsRegist() {
+void pluginCfsRegist(){
     extern void vmPluginRegist(void*, void*);
     vmPluginRegist((void*)0x804FB046, (void*)0x80525F98);
 }

@@ -3,27 +3,27 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_804EE558() {}
+void func_804EE558(){}
 
-extern "C" void func_804EE60C() {}
+void func_804EE60C(){}
 
-extern "C" void func_804EE658() {}
+void func_804EE658(){}
 
-extern "C" void func_804EE8FC() {}
+void func_804EE8FC(){}
 
-extern "C" void func_804EEACC() {}
+void func_804EEACC(){}
 
-extern "C" void func_804EEB40() {}
+void func_804EEB40(){}
 
-extern "C" void func_804EECB0() {}
+void func_804EECB0(){}
 
-extern "C" void func_804EF830() {}
+void func_804EF830(){}
 
-extern "C" void func_804EF9B8() {}
+void func_804EF9B8(){}
 
-extern "C" void func_804EFB38() {}
+void func_804EFB38(){}
 
-extern "C" void func_804EFD78() {}
+void func_804EFD78(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_804F01C8() {}
+void sinit_804F01C8(){}

@@ -3,9 +3,9 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CScnLightMan() {}
+void __ct__CScnLightMan(){}
 
-extern "C" void __dt__12CScnLightManFv() {}
+void CScnLightMan::~CScnLightMan() {}
 
 extern "C" void func_8048D124(void* arg1, void* arg2) {
     extern void func_804BF944(void*);
@@ -14,6 +14,6 @@ extern "C" void func_8048D124(void* arg1, void* arg2) {
     ptr[0x121c] = 1;
 }
 
-extern "C" void func_8048D160() {}
+void func_8048D160(){}
 
-extern "C" void func_8048D1B0() {}
+void func_8048D1B0(){}

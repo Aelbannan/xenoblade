@@ -3,14 +3,14 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__17UnkClass_8045F564Fv() {}
+UnkClass_8045F564::UnkClass_8045F564() {}
 
-extern "C" void __dt__17UnkClass_8045F564Fv() {}
+void UnkClass_8045F564::~UnkClass_8045F564() {}
 
-extern "C" void createRegion__17UnkClass_8045F564FiiPCci() {}
+void UnkClass_8045F564::createRegion() {}
 
-extern "C" void func_8045F778__17UnkClass_8045F564Fv() {}
+void UnkClass_8045F564::func_8045F778() {}
 
-extern "C" void func_8045F7E8__17UnkClass_8045F564Fv() {}
+void UnkClass_8045F564::func_8045F7E8() {}
 
-extern "C" void func_8045F810__17UnkClass_8045F564Fv() {}
+void UnkClass_8045F564::func_8045F810() {}

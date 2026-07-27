@@ -16,5 +16,6 @@ namespace cf {
 
         CChainActorList();
         virtual ~CChainActorList();
+    CChainActorList();
     };
 }

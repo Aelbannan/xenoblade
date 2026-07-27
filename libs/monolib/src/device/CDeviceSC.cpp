@@ -65,4 +65,4 @@ bool CDeviceSC::wkStandbyLogout(){
     return false;
 }
 
-extern "C" void func_eu_8044A600() {}
+void func_eu_8044A600(){}

@@ -28,12 +28,12 @@ void func_802A3D54(){
 void func_802A3E28(){
 }
 
-extern "C" void func_802A3E74() {}
+void func_802A3E74(){}
 
-extern "C" void __ct__cf_CVS_THREAD() {}
-extern "C" void func_802A3E88() {}
-extern "C" void func_802A3EF0() {}
-extern "C" void func_802A3FD4() {}
-extern "C" void func_802A4120() {}
-extern "C" void func_802A4430() {}
-extern "C" void func_802A4798() {}
+void __ct__cf_CVS_THREAD(){}
+void func_802A3E88(){}
+void func_802A3EF0(){}
+void func_802A3FD4(){}
+void func_802A4120(){}
+void func_802A4430(){}
+void func_802A4798(){}

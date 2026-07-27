@@ -3,32 +3,32 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CfGimmickWarp() {}
+void __ct__cf_CfGimmickWarp(){}
 
-extern "C" void __dt__Q22cf13CfGimmickWarpFv() {}
+void cf::CfGimmickWarp::~CfGimmickWarp() {}
 
-extern "C" void func_8020D6FC() {}
+void func_8020D6FC(){}
 
-extern "C" void func_8020D7BC() {}
+void func_8020D7BC(){}
 
-extern "C" void func_8020D7DC() {}
+void func_8020D7DC(){}
 
-extern "C" void func_8020D824() {}
+void func_8020D824(){}
 
-extern "C" void func_8020D998() {}
+void func_8020D998(){}
 
-extern "C" void func_8020DF04() {}
+void func_8020DF04(){}
 
-extern "C" void func_8020E27C() {}
+void func_8020E27C(){}
 
-extern "C" void func_8020E3F0() {}
+void func_8020E3F0(){}
 
-extern "C" void func_8020E6C0() {}
+void func_8020E6C0(){}
 
-extern "C" void func_8020E704() {}
+void func_8020E704(){}
 
-extern "C" void func_8020EA2C() {}
+void func_8020EA2C(){}
 
-extern "C" void func_8020ED2C() {}
+void func_8020ED2C(){}
 
-extern "C" void func_8020EE18() {}
+void func_8020EE18(){}

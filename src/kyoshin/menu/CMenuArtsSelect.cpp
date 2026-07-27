@@ -1167,12 +1167,12 @@ extern "C" void func_8010428C() { if (lbl_eu_80663F20 != 0) *(unsigned char *)((
 extern "C" bool func_801042A4() { return false; }
 extern "C" CMenuArtsSelect* func_801042AC() { return lbl_eu_80663F20; }
 extern "C" bool func_801042B4() { return lbl_eu_80663F20 != 0; }
-extern "C" void func_801042C8() {}
+void func_801042C8(){}
 extern "C" int func_801042F0() { CMenuArtsSelect* menu = lbl_eu_80663F20; if (menu != 0) { int value = *reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(menu) + 0x298); if (value != 1 && value != 3) return 1; } return 0; }
 extern "C" CMenuArtsSelect* func_80104320() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(reinterpret_cast<unsigned char*>(lbl_eu_80663F20) + 0x7c); }
 extern "C" int func_80104398() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
-extern "C" void __dt__15CMenuArtsSelectFv(void*);
-extern "C" bool func_80108C30(void* self) {
+void __dt__15CMenuArtsSelectFv(void*);
+bool func_80108C30(void* self){
     __dt__15CMenuArtsSelectFv((char*)self - 0x58);
     return false;
 }
@@ -1189,24 +1189,24 @@ extern "C" void func_80108C50(CMenuArtsSelect* self) {
     __dt__15CMenuArtsSelectFv((CMenuArtsSelect*)((char*)self - 0x60));
 }
 
-extern "C" void func_80104210() {}
-extern "C" void func_8010433C() {}
-extern "C" void func_801043BC() {}
-extern "C" void func_80104454(CMenuArtsSelect* self) {}
-extern "C" void func_80105A34(CMenuArtsSelect* self) {}
-extern "C" void func_80105D54(CMenuArtsSelect* self) {}
-extern "C" void func_80106450(CMenuArtsSelect* self) {}
-extern "C" void func_801065E4(CMenuArtsSelect* self) {}
-extern "C" void func_80106900(CMenuArtsSelect* self) {}
-extern "C" void func_80106C30(CMenuArtsSelect* self, s32 index) {}
-extern "C" void func_80106EC8(CMenuArtsSelect* self, s32 index) {}
-extern "C" void func_801071B8(CMenuArtsSelect* self, s32 index) {}
-extern "C" void func_801072E0(CMenuArtsSelect* self) {}
-extern "C" void func_80107580(CMenuArtsSelect* self) {}
-extern "C" void func_8010784C() {}
-extern "C" int func_80107970(CMenuArtsSelect* self, s32 index) { return 0; }
-extern "C" int func_80107C54(CMenuArtsSelect* self, s32 index) { return 0; }
-extern "C" void func_801080F8(CMenuArtsSelect* self) {}
-extern "C" void func_801086D0() {}
-extern "C" void func_801088CC() {}
-extern "C" void func_80108994(CMenuArtsSelect*) {}
+void func_80104210(){}
+void func_8010433C(){}
+void func_801043BC(){}
+void func_80104454(CMenuArtsSelect* self){}
+void func_80105A34(CMenuArtsSelect* self){}
+void func_80105D54(CMenuArtsSelect* self){}
+void func_80106450(CMenuArtsSelect* self){}
+void func_801065E4(CMenuArtsSelect* self){}
+void func_80106900(CMenuArtsSelect* self){}
+void func_80106C30(CMenuArtsSelect* self, s32 index){}
+void func_80106EC8(CMenuArtsSelect* self, s32 index){}
+void func_801071B8(CMenuArtsSelect* self, s32 index){}
+void func_801072E0(CMenuArtsSelect* self){}
+void func_80107580(CMenuArtsSelect* self){}
+void func_8010784C(){}
+int func_80107970(CMenuArtsSelect* self, s32 index){ return 0; }
+int func_80107C54(CMenuArtsSelect* self, s32 index){ return 0; }
+void func_801080F8(CMenuArtsSelect* self){}
+void func_801086D0(){}
+void func_801088CC(){}
+void func_80108994(CMenuArtsSelect*){}

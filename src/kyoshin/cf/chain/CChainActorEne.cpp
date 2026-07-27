@@ -8,25 +8,25 @@
 // Operates on the CChainEffect at offset 0x74; compares r4 against effect.unk8's target
 extern "C" void func_802A0AA0(cf::CChainEffect* effect);
 
-extern "C" void func_80281308() {}
+void func_80281308(){}
 
-extern "C" void func_8028133C() {}
+void func_8028133C(){}
 
-extern "C" void func_80281384() {}
+void func_80281384(){}
 
-extern "C" void func_80281438() {}
+void func_80281438(){}
 
-extern "C" void func_80281460() {}
+void func_80281460(){}
 
-extern "C" void func_8028146C() {}
+void func_8028146C(){}
 
-extern "C" void func_802814E4() {}
+void func_802814E4(){}
 
-extern "C" void func_802815B8() {}
+void func_802815B8(){}
 
-extern "C" void func_802816FC() {}
+void func_802816FC(){}
 
-extern "C" void func_8028183C() {}
+void func_8028183C(){}
 
 // Tail-calls func_802A0AA0 with &self->mChainEffect, forwarding remaining arguments
 extern "C" void func_802818D4(cf::CChainActorEne* self) {
@@ -38,6 +38,6 @@ extern "C" s32 func_802818DC(cf::CChainActorEne* self) {
     return 1;
 }
 
-extern "C" void func_802818E4() {}
+void func_802818E4(){}
 
-extern "C" void func_802818F8() {}
+void func_802818F8(){}

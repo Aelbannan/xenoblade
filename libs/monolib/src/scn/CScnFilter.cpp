@@ -3,8 +3,8 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CScnFilter() {}
+void __ct__CScnFilter(){}
 
-extern "C" void __dt__10CScnFilterFv() {}
+void CScnFilter::~CScnFilter() {}
 
-extern "C" void func_8049C868() {}
+void func_8049C868(){}

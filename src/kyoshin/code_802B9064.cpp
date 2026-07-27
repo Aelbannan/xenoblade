@@ -8,7 +8,7 @@ extern "C" void func_802A3D54(void*, u32, u32);
 typedef bool (*BoolVFunc)(void*);
 typedef float (*FloatVFunc)(void*);
 
-extern "C" bool func_802B9064(void* obj, float f1, float f2) {
+bool func_802B9064(void* obj, float f1, float f2){
     if (!(*(u32*)((u8*)obj + 0x3F00) & 2)) return false;
     if (!(f1 > f2)) return false;
 

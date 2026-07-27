@@ -3,31 +3,31 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __dt__9CMenuLvUpFv(void* self) {}
+void CMenuLvUp::~CMenuLvUp() {}
 
-extern "C" void Init__9CMenuLvUpFv() {}
+void CMenuLvUp::Init() {}
 
-extern "C" void Term__9CMenuLvUpFv() {}
+void CMenuLvUp::Term() {}
 
-extern "C" void Move__9CMenuLvUpFv() {}
+void CMenuLvUp::Move() {}
 
-extern "C" void cbRenderBefore__9CMenuLvUpFv(void* self) {}
+void CMenuLvUp::cbRenderBefore() {}
 
-extern "C" void __ct__CMenuLvUp() {}
+void __ct__CMenuLvUp(){}
 
-extern "C" void func_80276148() {}
+void func_80276148(){}
 
-extern "C" void func_802761C0() {}
+void func_802761C0(){}
 
-extern "C" void func_802761E0() {}
+void func_802761E0(){}
 
-extern "C" void func_80276200() {}
+void func_80276200(){}
 
-extern "C" void func_802764A0() {}
+void func_802764A0(){}
 
-extern "C" void func_802768E0() {}
+void func_802768E0(){}
 
-extern "C" void func_80276B14() {}
+void func_80276B14(){}
 
 extern "C" void func_80276C18(void* self) { ((void(*)(void*))__dt__9CMenuLvUpFv)((char*)self - 0x58); }
 

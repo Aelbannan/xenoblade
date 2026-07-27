@@ -70,6 +70,9 @@ private:
     /* 0x89 */ u8 _pad89;           // padding
     /* 0x8A */ u16 mUnknown8A;
     /* 0x8C */ TalkListEntryArray mEntryArray;
+    CKizunaTalkList();
+    virtual ~CKizunaTalkList();
+    void OnFileEvent();
 };
 
 

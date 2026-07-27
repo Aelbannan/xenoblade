@@ -4,24 +4,24 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __dt__11CMenuGCItemFv(void* self) {}
+void CMenuGCItem::~CMenuGCItem() {}
 
-extern "C" void Init__11CMenuGCItemFv() {}
+void CMenuGCItem::Init() {}
 
-extern "C" void Term__11CMenuGCItemFv() {}
+void CMenuGCItem::Term() {}
 
-extern "C" void Move__11CMenuGCItemFv() {}
+void CMenuGCItem::Move() {}
 
-extern "C" void cbRenderBefore__11CMenuGCItemFv(void* self) {}
+void CMenuGCItem::cbRenderBefore() {}
 
-extern "C" void __ct__CMenuGCItem() {}
+void __ct__CMenuGCItem(){}
 
-extern "C" unsigned long func_802B0D10() {
+unsigned long func_802B0D10(){
     unsigned long v = *(unsigned long*)(lbl_eu_80664C00);
     return !!v;
 }
 
-extern "C" void func_802B0D24() {}
+void func_802B0D24(){}
 
 /**
  * IScnRender vtable this-adjusting thunk for cbRenderBefore.

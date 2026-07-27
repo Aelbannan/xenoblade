@@ -11,5 +11,7 @@ namespace cf {
         //0x0-718: CfObjectMove
 
         void func_800BFAAC();
+    void func_800BFA88();
+    void func_800BFB90();
     };
 }

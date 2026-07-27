@@ -14,64 +14,64 @@ extern "C" void func_8025C870() {}
 
 
 
-extern "C" void func_80257F9C() {}
+void func_80257F9C(){}
 
-extern "C" void __ct__CKizunaLine() {}
+void __ct__CKizunaLine(){}
 
-extern "C" void __dt__11CKizunaLineFv() {}
+void CKizunaLine::~CKizunaLine() {}
 
-extern "C" void func_802580CC() {}
+void func_802580CC(){}
 
-extern "C" void func_80258F5C() {}
+void func_80258F5C(){}
 
-extern "C" void func_80258F80() {}
+void func_80258F80(){}
 
-extern "C" void func_80258F9C() {}
+void func_80258F9C(){}
 
-extern "C" void func_80259098() {}
+void func_80259098(){}
 
-extern "C" void func_80259228() {}
+void func_80259228(){}
 
-extern "C" void func_80259280() {}
+void func_80259280(){}
 
-extern "C" void func_802592D8() {}
+void func_802592D8(){}
 
-extern "C" void func_80259344() {}
+void func_80259344(){}
 
-extern "C" void func_80259394() {}
+void func_80259394(){}
 
-extern "C" void func_8025949C() {}
+void func_8025949C(){}
 
-extern "C" void func_80259820() {}
+void func_80259820(){}
 
 extern "C" void func_80259AF4(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
 
-extern "C" void func_80259B18() {}
+void func_80259B18(){}
 
-extern "C" void func_80259C5C() {}
+void func_80259C5C(){}
 
-extern "C" void func_80259D44() {}
+void func_80259D44(){}
 
-extern "C" void func_80259DE8() {}
+void func_80259DE8(){}
 
-extern "C" void func_8025A11C() {}
+void func_8025A11C(){}
 
-extern "C" void func_8025AA38() {}
+void func_8025AA38(){}
 
-extern "C" void func_8025AAE0() {}
+void func_8025AAE0(){}
 
-extern "C" void func_8025AB04() {}
+void func_8025AB04(){}
 
-extern "C" void func_8025AB84() {}
+void func_8025AB84(){}
 
 extern float lbl_eu_80668828[];
-extern "C" void func_8025AC04(void* self) {
+void func_8025AC04(void* self){
     *(u8*)((u8*)self + 0x34) = 0;
     *(u16*)((u8*)self + 0x36) = 0;
     *(float*)((u8*)self + 0x38) = lbl_eu_80668828[0];
 }
 
-extern "C" void func_8025AC1C() {}
+void func_8025AC1C(){}
 
 extern "C" void func_8025B5D4(unsigned char* dst, const unsigned char* src) {
     dst[0] = src[0];
@@ -80,41 +80,41 @@ extern "C" void func_8025B5D4(unsigned char* dst, const unsigned char* src) {
     dst[3] = 0;
 }
 
-extern "C" void __ct__CKizunaInfo() {}
+void __ct__CKizunaInfo(){}
 
-extern "C" void __dt__11CKizunaInfoFv() {}
+void CKizunaInfo::~CKizunaInfo() {}
 
-extern "C" void func_8025B670() {}
+void func_8025B670(){}
 
-extern "C" void func_8025B870() {}
+void func_8025B870(){}
 
-extern "C" void func_8025B900() {}
+void func_8025B900(){}
 
-extern "C" void func_8025B958() {}
+void func_8025B958(){}
 
-extern "C" void func_8025B9C8() {}
+void func_8025B9C8(){}
 
-extern "C" void func_8025BA38() {}
+void func_8025BA38(){}
 
-extern "C" void func_8025C16C() {}
+void func_8025C16C(){}
 
-extern "C" void func_8025C21C() {}
+void func_8025C21C(){}
 
-extern "C" void func_8025C298() {}
+void func_8025C298(){}
 
-extern "C" void func_8025C348() {}
+void func_8025C348(){}
 
-extern "C" void __ct__CKizunagram() {}
+void __ct__CKizunagram(){}
 
-extern "C" void __dt__11CKizunagramFv() {}
+void CKizunagram::~CKizunagram() {}
 
-extern "C" void func_8025C510() {}
+void func_8025C510(){}
 
-extern "C" void func_8025C580() {}
+void func_8025C580(){}
 
-extern "C" void func_8025C61C() {}
+void func_8025C61C(){}
 
-extern "C" void func_8025C6F0() {}
+void func_8025C6F0(){}
 
 extern "C" unsigned char func_8025C770(void* this_ptr) {
     if (*(unsigned char*)((unsigned char*)this_ptr + 0x7e) != 0) {
@@ -135,36 +135,36 @@ extern "C" unsigned char func_8025C78C(void* arg1)
     return 0;
 }
 
-extern "C" void func_8025C7D0() {}
+void func_8025C7D0(){}
 
-extern "C" void func_8025C7FC() {}
+void func_8025C7FC(){}
 
 
-extern "C" void func_8025C874() {}
+void func_8025C874(){}
 
-extern "C" void func_8025C904() {}
+void func_8025C904(){}
 
-extern "C" void func_8025C994() {}
+void func_8025C994(){}
 
-extern "C" void func_8025CA24() {}
+void func_8025CA24(){}
 
-extern "C" void func_8025CAB4() {}
+void func_8025CAB4(){}
 
-extern "C" void func_8025CAE4() {}
+void func_8025CAE4(){}
 
-extern "C" void func_8025CB50() {}
+void func_8025CB50(){}
 
 extern "C" int func_8025CBBC(void* self) { return 0; }
 
 extern "C" u8 func_8025CBC4(void* self) { return ((u8*)self)[0x8C]; }
 
-extern "C" void func_8025CBCC() {}
+void func_8025CBCC(){}
 
-extern "C" void func_8025CC70() {}
+void func_8025CC70(){}
 
-extern "C" void func_8025CC88() {}
+void func_8025CC88(){}
 
-extern "C" void func_8025CCA8() {}
+void func_8025CCA8(){}
 
 extern "C" void func_8025CCF8(void* arg) {
     unsigned char* ptr = (unsigned char*)arg;
@@ -182,17 +182,17 @@ extern "C" void func_8025CD10(void* self) {
     b[0x38] = 0;
 }
 
-extern "C" void func_8025CD40() {}
+void func_8025CD40(){}
 
-extern "C" void func_8025CE00() {}
+void func_8025CE00(){}
 
-extern "C" void func_8025CE78() {}
+void func_8025CE78(){}
 
-extern "C" void func_8025CF1C() {}
+void func_8025CF1C(){}
 
-extern "C" void func_8025CF40() {}
+void func_8025CF40(){}
 
-extern "C" void OnFileEvent__11CKizunagramFP10CEventFile() {}
+void CKizunagram::OnFileEvent() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_8025D304() {}
+void sinit_8025D304(){}

@@ -3,16 +3,16 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8043A8D8__6CTokenFv() {}
+void CToken::func_8043A8D8() {}
 
-extern "C" void __ct__6CTokenFv() {}
+CToken::CToken() {}
 
-extern "C" void __dt__6CTokenFv() {}
+void CToken::~CToken() {}
 
-extern "C" void func_8043AA1C__6CTokenFv() {}
+void CToken::func_8043AA1C() {}
 
-extern "C" void func_8043AA68__6CTokenFv() {}
+void CToken::func_8043AA68() {}
 
-extern "C" void func_8043AB14__6CTokenFv() {}
+void CToken::func_8043AB14() {}
 
-extern "C" void func_8043ABD4__6CTokenFv() {}
+void CToken::func_8043ABD4() {}

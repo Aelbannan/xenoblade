@@ -21,5 +21,11 @@ namespace cf{
         char unk054[0x1F8 - 0x054]; //0x054
 
         static CTaskREvent* spInstance;
+    virtual ~CTaskREvent();
+    void Init();
+    void Term();
+    void Move();
+    void Draw();
+    void cbRenderBefore();
     }; //size = 0x1F8
 } //namespace cf

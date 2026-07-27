@@ -3,12 +3,12 @@
 
 #include <harness_catalog.h>
 
-extern "C" void getInstance__Q26mpfsys15MPFDrawMdlColorFv() {}
+void mpfsys::MPFDrawMdlColor::getInstance() {}
 
-extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv() {}
+void mpfsys::MPFDrawMdlNoColor::func_80479894() {}
 
-extern "C" void func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv() {}
+void mpfsys::MPFDrawMdlNoColor::func_80479A1C() {}
 
-extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv() {}
+void mpfsys::MPFDrawMdlColor::func_80479BA0() {}
 
-extern "C" void func_80479D40__Q26mpfsys15MPFDrawMdlColorFv() {}
+void mpfsys::MPFDrawMdlColor::func_80479D40() {}

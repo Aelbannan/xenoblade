@@ -3,29 +3,29 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__Q22cf10CfObjectPcFv() {}
+cf::CfObjectPc::CfObjectPc() {}
 
-extern "C" void __dt__Q22cf10CfObjectPcFv(void* self) {}
+void cf::CfObjectPc::~CfObjectPc() {}
 
-extern "C" void func_800BFDE0() {}
+void func_800BFDE0(){}
 
-extern "C" void func_800BFF20__Q22cf10CfObjectPcFv(void* self) {}
+void cf::CfObjectPc::func_800BFF20() {}
 
-extern "C" void func_800BFFEC__Q22cf10CfObjectPcFv(void* self) {}
+void cf::CfObjectPc::func_800BFFEC() {}
 
-extern "C" void func_800C0080__Q22cf10CfObjectPcFv(void* self) {}
+void cf::CfObjectPc::func_800C0080() {}
 
-extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(void* self) {}
+void cf::CfObjectPc::func_800C00C0() {}
 
-extern "C" void func_800C0174__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::func_800C0174() {}
 
-extern "C" void func_800C01D4() {}
+void func_800C01D4(){}
 
-extern "C" void CActorParam_UnkVirtualFunc166__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc166() {}
 
-extern "C" void CActorParam_UnkVirtualFunc167__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc167() {}
 
-extern "C" void func_800C02C4__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::func_800C02C4() {}
 
 extern "C" void func_800C02EC__Q22cf10CfObjectPcFv(void* self, void* param) {
     if (param == 0) return;
@@ -34,41 +34,41 @@ extern "C" void func_800C02EC__Q22cf10CfObjectPcFv(void* self, void* param) {
     func_800A18A4(func_8009EC9C(*(unsigned short*)((char*)self + 0x3f28)), param);
 }
 
-extern "C" void func_800C032C__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::func_800C032C() {}
 
-extern "C" void func_800C03A8__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::func_800C03A8() {}
 
-extern "C" void func_800C0474__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::func_800C0474() {}
 
-extern "C" void func_800C0504__Q22cf10CfObjectPcFv(void* self) {
-    void** vtable = *(void***)self;
+void cf::CfObjectPc::func_800C0504() {
+    void** vtable = *(void***)this;
     void (*func)(void*) = (void (*)(void*))vtable[0x5f4 / 4];
-    func(self);
+    func(this);
 }
 
-extern "C" void func_800C0514__Q22cf10CfObjectPcFv(void* self) {
-    void** vtable = *(void***)self;
+void cf::CfObjectPc::func_800C0514() {
+    void** vtable = *(void***)this;
     void (*func)(void*) = (void (*)(void*))vtable[0x5f4 / 4];
-    func(self);
+    func(this);
 }
 
-extern "C" void func_800C0524__Q22cf10CfObjectPcFv(void* self) {}
+void cf::CfObjectPc::func_800C0524() {}
 
-extern "C" void CActorParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc4() {}
 
 extern "C" void CActorParam_UnkVirtualFunc173__Q22cf10CfObjectPcFv(void) {}
 
-extern "C" void CActorParam_UnkVirtualFunc176__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc176() {}
 
-extern "C" void CActorParam_UnkVirtualFunc86__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc86() {}
 
-extern "C" void CActorParam_UnkVirtualFunc88__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc88() {}
 
-extern "C" void CActorParam_UnkVirtualFunc178__Q22cf10CfObjectPcFv() {}
+void cf::CfObjectPc::CActorParam_UnkVirtualFunc178() {}
 
-extern "C" void func_800C0DD4() {}
+void func_800C0DD4(){}
 
-extern "C" void func_800C11CC__Q22cf10CfObjectPcFv(void* self) {}
+void cf::CfObjectPc::func_800C11CC() {}
 
 extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))func_800C00C0__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
@@ -84,6 +84,6 @@ extern "C" void CfObject_UnkVirtualFunc4__Q22cf10CfObjectPcFv(void* self) { ((vo
 
 extern "C" void func_800C1220__Q22cf10CfObjectPcFv(void* self) { ((void(*)(void*))__dt__Q22cf10CfObjectPcFv)((char*)self - 0x3e9c); }
 
-extern "C" void func_800C1228__FPv() {}
+void func_800C1228__FPv(){}
 
-extern "C" void func_800C1244__Q22cf13CfObjectPointFv() {}
+void cf::CfObjectPoint::func_800C1244() {}

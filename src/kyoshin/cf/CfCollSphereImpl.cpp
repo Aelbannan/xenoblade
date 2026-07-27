@@ -10,7 +10,7 @@ extern "C" void func_800A5738(void* a, void* b, float val, void* c);
 // func_800AAD28: debug draw for sphere collision shape.
 // Reads field at shape+0xB8, converts to unsigned, calls shape's vfunc at
 // vtable offset 0xAC to get the draw manager, then calls renderSphere.
-extern "C" void func_800AAD28(void* r3, void* r4) {
+void func_800AAD28(void* r3, void* r4){
     float fval = *(float*)((char*)r4 + 0xB8);
     unsigned int uval = (unsigned int)fval;
     void** vtbl = *(void***)r4;
@@ -21,7 +21,7 @@ extern "C" void func_800AAD28(void* r3, void* r4) {
 
 // func_800AAD94: same sphere debug draw but passes extra parameters through
 // to func_800A5738.
-extern "C" void func_800AAD94(void* r3, void* r4, void* r5, void* r6) {
+void func_800AAD94(void* r3, void* r4, void* r5, void* r6){
     float fval = *(float*)((char*)r4 + 0xB8);
     unsigned int uval = (unsigned int)fval;
     void** vtbl = *(void***)r4;

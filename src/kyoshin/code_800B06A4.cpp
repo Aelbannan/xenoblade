@@ -7,7 +7,7 @@
 void* func_800B07E8();
 extern "C" u32 func_800AA2BC(u32 a, u32 b);
 
-extern "C" void func_800B06A4(float a) {
+void func_800B06A4(float a){
     extern float lbl_eu_80661CCC;
     extern float lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8;
@@ -31,7 +31,7 @@ extern "C" void func_800B06A4(float a) {
 
 
 
-extern "C" void func_800B0A90(void) {}
+void func_800B0A90(void){}
 
 
 
@@ -41,22 +41,22 @@ extern "C" void func_800B0B40(void* self) {
     *(unsigned long*)((char*)self + 0xafc) = 0;
 }
 
-extern "C" void __ct__reslist_cf_TboxInfo() {}
+void __ct__reslist_cf_TboxInfo(){}
 
 
-extern "C" void __ct__reslist_cf_IFactoryEvent() {}
+void __ct__reslist_cf_IFactoryEvent(){}
 
-extern "C" void __dt__17UnkClass_805764CCFv() {}
+void UnkClass_805764CC::~UnkClass_805764CC() const {}
 
-extern "C" void func_800B0FA0() {}
+void func_800B0FA0(){}
 
 extern "C" u32 func_800B0FEC(void* self) { return *(u32*)((u8*)self + 0x18); }
 
-extern "C" void func_800B0FF4() {}
+void func_800B0FF4(){}
 
-extern "C" void func_800B1120() {}
+void func_800B1120(){}
 
-extern "C" void __ct__cf_CfValueItemManager() {}
+void __ct__cf_CfValueItemManager(){}
 
 extern "C" void func_800B1368(unsigned long flags) {
     extern unsigned long lbl_eu_80663EE0;
@@ -65,7 +65,7 @@ extern "C" void func_800B1368(unsigned long flags) {
 
 extern "C" void FactoryEvent3__Q22cf13IFactoryEventFv() {}
 
-extern "C" void func_800B137C() {}
+void func_800B137C(){}
 
 extern "C" void func_800B14C4(void* dst, void* src) {
     void* ptr = *(void**)((char*)src + 4);
@@ -84,14 +84,14 @@ extern "C" void func_800B14F0(void* dst, void* src) {
 
 extern "C" void func_800B14FC() {}
 
-extern "C" void func_800B1518(void) {}
+void func_800B1518(void){}
 
-extern "C" void __dt__800B151C() {}
+void __dt__800B151C(){}
 
-extern "C" void func_800B15A4() {}
+void func_800B15A4(){}
 
 extern u32 lbl_eu_80663F24;
-extern "C" void func_800B1808() { lbl_eu_80663F24 = 0; }
+void func_800B1808(){ lbl_eu_80663F24 = 0; }
 
 extern "C" void FactoryEvent4__Q22cf13IFactoryEventFv() {}
 
@@ -103,13 +103,13 @@ extern "C" void func_800B1820(int* dst, int* src) {
 
 extern "C" void func_800B182C() {}
 
-extern "C" void __dt__800B183C() {}
+void __dt__800B183C(){}
 
-extern "C" void __dt__800B18CC() {}
+void __dt__800B18CC(){}
 
-extern "C" void func_800B1954() {}
+void func_800B1954(){}
 
-extern "C" void func_800B1A5C() {}
+void func_800B1A5C(){}
 
 extern "C" void func_800B1A8C() {}
 
@@ -129,13 +129,13 @@ extern "C" void func_800B1ACC(void* dst, void* src) {
 
 extern "C" void func_800B1AD8() {}
 
-extern "C" void func_800B1AF4() {}
+void func_800B1AF4(){}
 
-extern "C" void func_800B1B2C() {}
+void func_800B1B2C(){}
 
-extern "C" void func_800B1BBC() {}
+void func_800B1BBC(){}
 
-extern "C" unsigned long func_800B1C00() {
+unsigned long func_800B1C00(){
     extern unsigned long lbl_eu_80663EE0;
     return (lbl_eu_80663EE0 >> 25) & 1;
 }
@@ -144,43 +144,43 @@ extern "C" void func_800B1C0C() {}
 
 extern "C" void func_800B1C24() {}
 
-extern "C" void func_800B1C40() {}
+void func_800B1C40(){}
 
-extern "C" void func_800B1C78() {}
+void func_800B1C78(){}
 
-extern "C" void func_800B1CDC() {}
+void func_800B1CDC(){}
 
-extern "C" void func_800B1E18() {}
+void func_800B1E18(){}
 
-extern "C" void func_800B1E2C() {}
+void func_800B1E2C(){}
 
 extern "C" void func_800B1EB8() {}
 
-extern "C" void func_800B1EC8() {}
+void func_800B1EC8(){}
 
-extern "C" void func_800B1F2C() {}
+void func_800B1F2C(){}
 
-extern "C" void func_800B1F40() {}
+void func_800B1F40(){}
 
-extern "C" void func_800B1F54() {}
+void func_800B1F54(){}
 
-extern "C" void func_800B1F6C() {}
+void func_800B1F6C(){}
 
-extern "C" void func_800B1FD8() {}
+void func_800B1FD8(){}
 
-extern "C" void func_800B2034() {}
+void func_800B2034(){}
 
-extern "C" void func_800B2048() {}
+void func_800B2048(){}
 
-extern "C" void func_800B205C() {}
+void func_800B205C(){}
 
-extern "C" void func_800B20A0() {}
+void func_800B20A0(){}
 
-extern "C" void func_800B20B4() {}
+void func_800B20B4(){}
 
 extern "C" u32 func_800B2D28(void* self) { return *(u32*)((u8*)self + 0x4); }
 
-extern "C" void __dt__800B2D30() {}
+void __dt__800B2D30(){}
 
 extern "C" void FactoryEvent1__Q22cf13IFactoryEventFv() {}
 
@@ -189,11 +189,11 @@ extern "C" void func_800B2D88(void* self, int param) {
     func_800B2DB0(self, &param);
 }
 
-extern "C" void func_800B2DB0() {}
+void func_800B2DB0(){}
 
-extern "C" void func_800B2E38() {}
+void func_800B2E38(){}
 
-extern "C" void func_800B2ED0() {}
+void func_800B2ED0(){}
 
 extern "C" int func_800B31B0(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
@@ -225,11 +225,11 @@ extern "C" int func_800B31F8(void* p) {
 
 extern "C" u32 func_800B3204(u32 val) { return (val >> 16) & 0xFF; }
 
-extern "C" void func_800B3210() {}
+void func_800B3210(){}
 
 extern "C" u32 func_800B39C0(void* self) { return *(u32*)((u8*)self + 0x74); }
 
-extern "C" void func_800B39C8() {}
+void func_800B39C8(){}
 
 extern "C" void func_800B3A54(int* dst, int* src) {
     *dst = *src;
@@ -240,7 +240,7 @@ extern "C" void func_800B3A60(void* self, int param) {
     func_800B99EC(self, &param);
 }
 
-extern "C" void func_800B3A88() {}
+void func_800B3A88(){}
 
 extern "C" u32 func_800B3D34(u32 val) { return val >> 24; }
 
@@ -248,43 +248,43 @@ extern "C" u32 func_800B3D40(u32 val) { return (val >> 16) & 0xFF; }
 
 extern "C" void func_800B3D4C() {}
 
-extern "C" void func_800B3D64() {}
+void func_800B3D64(){}
 
-extern "C" void func_800B4120() {}
+void func_800B4120(){}
 
-extern "C" void func_800B4278() {}
+void func_800B4278(){}
 
-extern "C" void func_800B42E8() {}
+void func_800B42E8(){}
 
-extern "C" void func_800B4368() {}
+void func_800B4368(){}
 
-extern "C" void func_800B4400() {}
+void func_800B4400(){}
 
-extern "C" void func_800B44A0() {}
+void func_800B44A0(){}
 
-extern "C" void func_800B4554() {}
+void func_800B4554(){}
 
 extern "C" void func_800B4588(u32 val) {}
 
 extern "C" u32 func_800B4594(u32 val) { return (val >> 16) & 0xFF; }
 
-extern "C" void func_800B45A0() {}
+void func_800B45A0(){}
 
-extern "C" void func_800B47A8() {}
+void func_800B47A8(){}
 
-extern "C" void func_800B4A24() {}
+void func_800B4A24(){}
 
 extern "C" int CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(void* self) { return 0; }
 
-extern "C" void func_800B4B0C() {}
+void func_800B4B0C(){}
 
-extern "C" void func_800B4B74() {}
+void func_800B4B74(){}
 
-extern "C" void func_800B4B88() {}
+void func_800B4B88(){}
 
-extern "C" void func_800B4CA0() {}
+void func_800B4CA0(){}
 
-extern "C" void func_800B4D84() {}
+void func_800B4D84(){}
 
 extern "C" u32 func_800B4F58(u32 val) { return (val >> 16) & 0xFF; }
 
@@ -302,13 +302,13 @@ extern "C" void func_800B4F90() {}
 
 extern "C" u32 func_800B4FA4(void* self) { return *(u32*)((u8*)self + 0x70); }
 
-extern "C" void func_800B4FAC() {}
+void func_800B4FAC(){}
 
-extern "C" void func_800B535C() {}
+void func_800B535C(){}
 
-extern "C" void func_800B570C() {}
+void func_800B570C(){}
 
-extern "C" void func_800B587C() {}
+void func_800B587C(){}
 
 extern "C" void func_800B5944() {}
 
@@ -320,9 +320,9 @@ extern "C" void* func_800B5964(void* self) { return 0; }
 
 extern "C" u32 func_800B5970(void* self) { return *(u32*)((u8*)self + 0x380); }
 
-extern "C" void func_800B5978() {}
+void func_800B5978(){}
 
-extern "C" void func_800B5994() {}
+void func_800B5994(){}
 
 extern "C" void func_800B6484() {}
 
@@ -357,25 +357,25 @@ extern "C" void func_800B6520(void* self, void* other) {
 
 extern "C" void func_800B6544() {}
 
-extern "C" void func_800B655C() {}
+void func_800B655C(){}
 
 extern "C" void func_800B66AC() {}
 
-extern "C" void func_800B66BC() {}
+void func_800B66BC(){}
 
-extern "C" void func_800B67CC() {}
+void func_800B67CC(){}
 
 extern "C" void* func_800B67EC(void* self) { return (void*)((u8*)self + 0x1a8); }
 
 extern "C" void func_800B67F4(void* self) { *(u32*)((u8*)self + 1792) = 0; }
 
-extern "C" void func_800B6800() {}
+void func_800B6800(){}
 
-extern "C" void func_800B68A8() {}
+void func_800B68A8(){}
 
-extern "C" void func_800B6AF4() {}
+void func_800B6AF4(){}
 
-extern "C" void func_800B6BA0(void) {}
+void func_800B6BA0(void){}
 
 extern "C" void* func_800B6BA4__Fv() {
     extern void* func_800B07E8__Fv();
@@ -417,15 +417,14 @@ extern "C" void* func_800B6CA0() {
     return (unsigned char*)func_800B07E8__Fv() + 0xC48;
 }
 
-extern "C" void func_800B6CC4() {}
+void func_800B6CC4(){}
 
-extern "C" void func_800B6CF8() {}
+void func_800B6CF8(){}
 
-extern "C" void* func_800B6D3C(void*);
+void* func_800B6D3C(void*);
+void func_800B6DD0(){}
 
-extern "C" void func_800B6DD0() {}
-
-extern "C" void func_800B6EC0() {}
+void func_800B6EC0(){}
 
 extern "C" u32 func_800B6FFC(void* self) { return *(u32*)((u8*)self + 0xB00); }
 
@@ -442,26 +441,26 @@ extern "C" void func_800B7034() {
     func_800B6D3C(func_800B07E8());
 }
 
-extern "C" void func_800B7058() {}
+void func_800B7058(){}
 
-extern "C" void func_800B708C__Fi() {}
+void func_800B708C__Fi(){}
 
-extern "C" void func_800B70FC() {}
+void func_800B70FC(){}
 
 extern "C" u32 func_800B71C4(void) {
     extern u32 lbl_eu_806640F4;
     return lbl_eu_806640F4;
 }
 
-extern "C" void func_800B71CC() {}
+void func_800B71CC(){}
 
 extern "C" void* func_800B720C(void* self) { return (void*)((u8*)self + 0x720); }
 
-extern "C" void func_800B7214() {}
+void func_800B7214(){}
 
-extern "C" void func_800B72DC() {}
+void func_800B72DC(){}
 
-extern "C" void func_800B7320() {}
+void func_800B7320(){}
 
 extern "C" void func_800B73E8(void* out_prev, void* unused, void* list_ptr) {
     (void)unused;
@@ -475,7 +474,7 @@ extern "C" void func_800B73E8(void* out_prev, void* unused, void* list_ptr) {
     *(void**)out_prev = prev;
 }
 
-extern "C" void func_800B7410() {}
+void func_800B7410(){}
 
 extern "C" unsigned short func_800B75B4()
 {
@@ -496,9 +495,9 @@ extern "C" void func_800B75C4(void* self, u32 mask, int enable) {
     }
 }
 
-extern "C" void func_800B75EC() {}
+void func_800B75EC(){}
 
-extern "C" int func_800B7680(void* self) {
+int func_800B7680(void* self){
     void* head = *(void**)((char*)self + 4);
     void* cur = *(void**)head;
     int count = 0;
@@ -549,55 +548,55 @@ extern "C" void* func_800B77BC(void* self) {
     return func_800B6D3C((char*)func_800B07E8__Fv() + 0xBA8);
 }
 
-extern "C" void func_800B77E4() {}
+void func_800B77E4(){}
 
-extern "C" void func_800B781C() {}
+void func_800B781C(){}
 
-extern "C" void func_800B7854() {}
+void func_800B7854(){}
 
 extern "C" void func_800B788C(void* param_1) { extern void* func_800B07E8(); extern void func_800B6DD0(void*, void*); void* ptr = func_800B07E8(); func_800B6DD0((char*)ptr + 0xb88, param_1); }
 
-extern "C" void func_800B78C4() {}
+void func_800B78C4(){}
 
-extern "C" void func_800B78FC() {}
+void func_800B78FC(){}
 
-extern "C" void func_800B7934() {}
+void func_800B7934(){}
 
-extern "C" void func_800B796C() {}
+void func_800B796C(){}
 
-extern "C" void func_800B79A4() {}
+void func_800B79A4(){}
 
-extern "C" void func_800B7A18() {}
+void func_800B7A18(){}
 
-extern "C" void func_800B7AF0() {}
+void func_800B7AF0(){}
 
-extern "C" void func_800B83AC() {}
+void func_800B83AC(){}
 
-extern "C" void func_800B8524() {}
+void func_800B8524(){}
 
 extern "C" void func_800B87FC() {}
 
 extern "C" void func_800B8800() {}
 
-extern "C" void func_800B8804__FPvPQ22cf13IFactoryEvent() {}
+void func_800B8804__FPvPQ22cf13IFactoryEvent(){}
 
-extern "C" void func_800B88E0() {}
+void func_800B88E0(){}
 
-extern "C" void func_800B8920() {}
+void func_800B8920(){}
 
-extern "C" void func_800B89CC() {}
+void func_800B89CC(){}
 
-extern "C" void func_800B8A64() {}
+void func_800B8A64(){}
 
-extern "C" void func_800B8AFC() {}
+void func_800B8AFC(){}
 
-extern "C" void func_800B8B94() {}
+void func_800B8B94(){}
 
-extern "C" void func_800B8C78() {}
+void func_800B8C78(){}
 
-extern "C" void func_800B8D5C() {}
+void func_800B8D5C(){}
 
-extern "C" void func_800B8FC4() {}
+void func_800B8FC4(){}
 
 extern "C" void func_800B92B4() {
     func_800B07E8();
@@ -609,7 +608,7 @@ extern "C" void func_800B92D8() {
     ((void(*)())func_800B15A4)();
 }
 
-extern "C" void func_800B92FC() {}
+void func_800B92FC(){}
 
 extern "C" void func_800B9340() {
     func_800B07E8();
@@ -631,26 +630,26 @@ extern "C" void func_800B93AC() {
     ((void(*)())func_800B1B2C)();
 }
 
-extern "C" void func_800B93D0() {}
+void func_800B93D0(){}
 
-extern "C" void func_800B9404() {}
+void func_800B9404(){}
 
-extern "C" void func_800B9438() {}
+void func_800B9438(){}
 
-extern "C" void func_800B946C() {}
+void func_800B946C(){}
 
-extern "C" void func_800B94A0() {}
+void func_800B94A0(){}
 
-extern "C" void func_800B94D4() {}
+void func_800B94D4(){}
 
 extern "C" void func_800B9524(u32 a, u32 b) {
     func_800AA2BC(a, b);
     ((void(*)())func_800B94D4)();
 }
 
-extern "C" void func_800B9548() {}
+void func_800B9548(){}
 
-extern "C" void func_800B957C() {}
+void func_800B957C(){}
 
 extern "C" void func_800B96C4(void* self, u32 val) { *(u32*)((u8*)self + 0x734) = val; }
 
@@ -664,21 +663,21 @@ extern "C" void func_800B96E8() {}
 
 extern "C" void func_800B9704(void* self, float val) { *(float*)((u8*)self + 0x730) = val; }
 
-extern "C" void __ct__800B970C() {}
+void __ct__800B970C(){}
 
-extern "C" void func_800B97A0() {}
+void func_800B97A0(){}
 
-extern "C" void func_800B985C() {}
+void func_800B985C(){}
 
-extern "C" void func_800B98C8() {}
+void func_800B98C8(){}
 
 extern "C" u32 func_800B9984(void* self) { return *(u32*)((u8*)self + 0x620); }
 
-extern "C" void func_800B998C() {}
+void func_800B998C(){}
 
-extern "C" void func_800B99BC() {}
+void func_800B99BC(){}
 
-extern "C" void func_800B99EC() {}
+void func_800B99EC(){}
 
 extern "C" void func_800B9A30() {}
 
@@ -691,4 +690,4 @@ template <> _reslist_base<cf::TboxInfo>::~_reslist_base() {}
 template <> reslist<cf::TboxInfo>::~reslist() {}
 template <> _reslist_base<cf::IFactoryEvent*>::~_reslist_base() {}
 template <> reslist<cf::IFactoryEvent*>::~reslist() {}
-extern "C" void sinit_800B9A40() {}
+void sinit_800B9A40(){}

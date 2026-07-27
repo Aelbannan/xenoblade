@@ -496,7 +496,7 @@ Material* Pane::GetMaterial(u32 index) const {
 } // namespace lyt
 } // namespace nw4r
 
-extern "C" const void* GetRuntimeTypeInfo__Q34nw4r3lyt4PaneCFv() {
+const void* GetRuntimeTypeInfo__Q34nw4r3lyt4PaneCFv(){
     extern char lbl_eu_80665470[];
     return lbl_eu_80665470;
 }

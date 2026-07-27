@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
+void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x54); }
 
 
 
@@ -13,52 +13,52 @@ extern "C" void func_802B5130(void* self) { ((void(*)(void*))__dt__12CUIErrMesWi
 
 
 
-extern "C" void Move__12CUIErrMesWinFv() {}
+void CUIErrMesWin::Move() {}
 
-extern "C" void cbRenderBefore__12CUIErrMesWinFv(void* self) {}
+void CUIErrMesWin::cbRenderBefore() {}
 
-extern "C" void __ct__802B4DF4() {}
+void __ct__802B4DF4(){}
 
-extern "C" void func_802B4EF4(void) {}
+void func_802B4EF4(void){}
 
-extern "C" void func_802B4F00() {}
+void func_802B4F00(){}
 
-extern "C" void func_802B4F40() {}
+void func_802B4F40(){}
 
-extern "C" void func_802B4FA8() {}
+void func_802B4FA8(){}
 
-extern "C" void func_802B4FE8() {}
+void func_802B4FE8(){}
 
-extern "C" void func_802B5054() {}
+void func_802B5054(){}
 
-extern "C" void func_802B5094(void) {}
+void func_802B5094(void){}
 
 
 extern "C" void func_802B5138(void* self) { ((void(*)(void*))cbRenderBefore__12CUIErrMesWinFv)((char*)self - 0x58); }
 
 extern "C" void func_802B5140(void* self) { ((void(*)(void*))__dt__12CUIErrMesWinFv)((char*)self - 0x58); }
 
-extern "C" void func_802B5148() {}
+void func_802B5148(){}
 
-extern "C" void func_802B515C() {}
+void func_802B515C(){}
 
-extern "C" void func_802B5254() {}
+void func_802B5254(){}
 
-extern "C" void func_802B58A4() {}
+void func_802B58A4(){}
 
-extern "C" void func_802B5970() {}
+void func_802B5970(){}
 
-extern "C" void func_802B5AC8() {}
+void func_802B5AC8(){}
 
-extern "C" void __dt__10CMenuTitleFv() {}
+void CMenuTitle::~CMenuTitle() {}
 
-extern "C" void Init__10CMenuTitleFv() {}
+void CMenuTitle::Init() {}
 
-extern "C" void Term__10CMenuTitleFv() {}
+void CMenuTitle::Term() {}
 
-extern "C" void Move__10CMenuTitleFv() {}
+void CMenuTitle::Move() {}
 
-extern "C" void cbRenderBefore__10CMenuTitleFv() {}
+void CMenuTitle::cbRenderBefore() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.

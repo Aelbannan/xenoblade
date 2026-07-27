@@ -3,26 +3,26 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __dt__10CMenuPauseFv(void* self) {}
+void CMenuPause::~CMenuPause() {}
 
-extern "C" void Init__10CMenuPauseFv() {}
+void CMenuPause::Init() {}
 
-extern "C" void Term__10CMenuPauseFv() {}
+void CMenuPause::Term() {}
 
-extern "C" void Move__10CMenuPauseFv() {}
+void CMenuPause::Move() {}
 
-extern "C" void cbRenderBefore__10CMenuPauseFv(void* self) {}
+void CMenuPause::cbRenderBefore() {}
 
-extern "C" void __ct__CMenuPause() {}
+void __ct__CMenuPause(){}
 
-extern "C" unsigned long isInitialized__10CMenuPauseFv() {
+unsigned long CMenuPause::isInitialized() {
     unsigned long v = *(unsigned long*)(lbl_eu_806647C8);
     return !!v;
 }
 
-extern "C" void func_80252538() {}
+void func_80252538(){}
 
-extern "C" void func_80252564() {}
+void func_80252564(){}
 
 extern "C" void func_80252628(void* self) { ((void(*)(void*))__dt__10CMenuPauseFv)((char*)self - 0x58); }
 

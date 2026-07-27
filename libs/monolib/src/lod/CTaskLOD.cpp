@@ -52,71 +52,71 @@ void CTaskLOD::Init() {}
 
 // --- Remaining harness stubs (empty bodies) ---
 
-extern "C" void __dt__8CTaskLODFv() {}
+void CTaskLOD::~CTaskLOD() {}
 
-extern "C" void Term__8CTaskLODFv() {}
+void CTaskLOD::Term() {}
 
 extern void func_8046DBC8__Q23LOD9LODMemManFv();
-extern "C" void Move__8CTaskLODFv(void* self) { func_8046DBC8__Q23LOD9LODMemManFv(); }
+void CTaskLOD::Move() { func_8046DBC8__Q23LOD9LODMemManFv(); }
 
-extern "C" void create__8CTaskLODFv() {}
+void CTaskLOD::create() {}
 
-extern "C" void func_80462A08__8CTaskLODFv() {}
+void CTaskLOD::func_80462A08() {}
 
-extern "C" void func_80462AC0__8CTaskLODFv() {}
+void CTaskLOD::func_80462AC0() {}
 
-extern "C" void func_80462B30__8CTaskLODFv() {}
+void CTaskLOD::func_80462B30() {}
 
-extern "C" void func_80462B4C__8CTaskLODFv() {}
+void CTaskLOD::func_80462B4C() {}
 
-extern "C" void func_80462B68__8CTaskLODFv() {}
+void CTaskLOD::func_80462B68() {}
 
-extern "C" void func_80462BC8__8CTaskLODFv() {}
+void CTaskLOD::func_80462BC8() {}
 
-extern "C" void func_80462BE4__8CTaskLODFv() {}
+void CTaskLOD::func_80462BE4() {}
 
-extern "C" void func_80462BFC__8CTaskLODFv() {}
+void CTaskLOD::func_80462BFC() {}
 
-extern "C" void func_80462C14__8CTaskLODFv() {}
+void CTaskLOD::func_80462C14() {}
 
-extern "C" void func_80462C48__8CTaskLODFv() {}
+void CTaskLOD::func_80462C48() {}
 
-extern "C" void func_80462C80__8CTaskLODFv() {}
+void CTaskLOD::func_80462C80() {}
 
-extern "C" void func_80462CBC__8CTaskLODFv() {}
+void CTaskLOD::func_80462CBC() {}
 
-extern "C" void func_80462CD8__8CTaskLODFv() {}
+void CTaskLOD::func_80462CD8() {}
 
-extern "C" void func_80462D04__8CTaskLODFv() {}
+void CTaskLOD::func_80462D04() {}
 
-extern "C" void func_80462D5C__8CTaskLODFv() {}
+void CTaskLOD::func_80462D5C() {}
 
-extern "C" void func_80462DB4__8CTaskLODFv() {}
+void CTaskLOD::func_80462DB4() {}
 
-extern "C" void func_80462E1C__8CTaskLODFv() {}
+void CTaskLOD::func_80462E1C() {}
 
-extern "C" void func_80462E3C__8CTaskLODFv() {}
+void CTaskLOD::func_80462E3C() {}
 
-extern "C" void func_80462E58__8CTaskLODFv() {}
+void CTaskLOD::func_80462E58() {}
 
-extern "C" void func_80462ED0__8CTaskLODFv() {}
+void CTaskLOD::func_80462ED0() {}
 
-extern "C" void func_80462EF4__8CTaskLODFv() {}
+void CTaskLOD::func_80462EF4() {}
 
-extern "C" void func_80462F10__8CTaskLODFv() {}
+void CTaskLOD::func_80462F10() {}
 
-extern "C" void func_80462F2C__8CTaskLODFv() {}
+void CTaskLOD::func_80462F2C() {}
 
-extern "C" void func_80462F4C__8CTaskLODFv() {}
+void CTaskLOD::func_80462F4C() {}
 
-extern "C" void func_80462F70__8CTaskLODFv() {}
+void CTaskLOD::func_80462F70() {}
 
-extern "C" void func_80462F94__8CTaskLODFv() {}
+void CTaskLOD::func_80462F94() {}
 
-extern "C" void func_80462FB8__8CTaskLODFv() {}
+void CTaskLOD::func_80462FB8() {}
 
-extern "C" void func_80462FD8__8CTaskLODFv() {}
+void CTaskLOD::func_80462FD8() {}
 
-extern "C" void func_80462FF4__8CTaskLODFv() {}
+void CTaskLOD::func_80462FF4() {}
 
-extern "C" void func_80463014__8CTaskLODFv() {}
+void CTaskLOD::func_80463014() {}

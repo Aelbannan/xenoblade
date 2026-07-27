@@ -43,4 +43,5 @@ public:
     bool unk24;
     u8 unk25;
     float unk28;
+    CMCCylinderGauge();
 };

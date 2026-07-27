@@ -28,4 +28,4 @@ int CNandData::sNandIconTextureSomething[] = {
 
 CNandData CNandData::sInstance = CNandData();
 
-extern "C" void func_eu_802B11C0() {}
+void func_eu_802B11C0(){}

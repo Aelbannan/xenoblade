@@ -4,16 +4,16 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_CHAIN.hpp"
 
-extern "C" void __ct__802A5830() {}
+void __ct__802A5830(){}
 
-extern "C" void func_802A58F8() {}
+void func_802A58F8(){}
 
-extern "C" void func_802A5934() {}
+void func_802A5934(){}
 
-extern "C" void func_802A598C() {}
+void func_802A598C(){}
 
 extern "C" int func_802A5A0C(cf::CVS_THREAD_CHAIN* self) { return 1; }
 
-extern "C" void func_802A5A14() {}
+void func_802A5A14(){}
 
-extern "C" void func_802A5B04() {}
+void func_802A5B04(){}

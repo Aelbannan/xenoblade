@@ -16,25 +16,25 @@ CLight::CLight(){
     mFlags = r0;
 }
 
-extern "C" void func_804C02E4(void* self, int value) {
+void func_804C02E4(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
 extern "C" void func_804C0398(CLight* self, int lightObjPtr) {
     self->mpLightObj = (nw4r::g3d::LightObj*)lightObjPtr;
 }
-extern "C" void func_804C03A0(void* self, int value) {
+void func_804C03A0(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-extern "C" void func_804C0454(void* self, int value) {
+void func_804C0454(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-extern "C" void func_804C0484(void* self, int value) {
+void func_804C0484(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-extern "C" void func_804C0570(void* self, int value) {
+void func_804C0570(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-extern "C" void func_804C07F0(void* self, int value) {
+void func_804C07F0(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
 // Toggles a light-enable flag (bit 16 of mFlags) and propagates it
@@ -53,7 +53,7 @@ extern "C" void func_804C08C8(CLight* self, int enable) {
 extern "C" void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn) {
     self->mpLightObj->InitLightSpot(cutoff, spotFn);
 }
-extern "C" void func_804C0928() {}
+void func_804C0928(){}
 extern void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
-extern "C" void func_804C09E0(void* self) { InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
-extern "C" void func_804C09E8() {}
+void func_804C09E0(void* self){ InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
+void func_804C09E8(){}

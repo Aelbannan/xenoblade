@@ -3,31 +3,31 @@
 
 #include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 
-extern "C" void __ct__CMenuMakeCrystal() {}
+void __ct__CMenuMakeCrystal(){}
 
-extern "C" void __dt__16CMenuMakeCrystalFv(void* self) {}
+void CMenuMakeCrystal::~CMenuMakeCrystal() {}
 
-extern "C" void Init__16CMenuMakeCrystalFv() {}
+void CMenuMakeCrystal::Init() {}
 
-extern "C" void func_80210E9C() {}
+void func_80210E9C(){}
 
-extern "C" void func_802116D4() {}
+void func_802116D4(){}
 
-extern "C" void func_80211CB8() {}
+void func_80211CB8(){}
 
-extern "C" void func_80211CEC() {}
+void func_80211CEC(){}
 
-extern "C" void func_80212158() {}
+void func_80212158(){}
 
-extern "C" void Term__16CMenuMakeCrystalFv() {}
+void CMenuMakeCrystal::Term() {}
 
-extern "C" void Move__16CMenuMakeCrystalFv() {}
+void CMenuMakeCrystal::Move() {}
 
-extern "C" void cbRenderBefore__16CMenuMakeCrystalFv(void* self) {}
+void CMenuMakeCrystal::cbRenderBefore() {}
 
-extern "C" void func_8021240C() {}
+void func_8021240C(){}
 
-extern "C" void func_80212480() {}
+void func_80212480(){}
 
 extern "C" void* lbl_eu_806646C8;
 extern "C" void* func_80212BE0(void*);
@@ -40,7 +40,7 @@ extern "C" void* func_80212490() {
     return 0;
 }
 
-extern "C" void func_802124AC() {}
+void func_802124AC(){}
 
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.
 // IScnRender is a non-primary base at offset 0x58 within CMenuMakeCrystal.

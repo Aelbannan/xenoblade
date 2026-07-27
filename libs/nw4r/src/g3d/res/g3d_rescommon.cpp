@@ -62,4 +62,4 @@ void ResWriteSSMask(u8* pPtr, u32 value) {
 } // namespace g3d
 } // namespace nw4r
 
-extern "C" void __eq__Q34nw4r3g3d7ResNameCFQ34nw4r3g3d7ResName() {}
+void __eq__Q34nw4r3g3d7ResNameCFQ34nw4r3g3d7ResName(){}

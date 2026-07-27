@@ -285,6 +285,6 @@ bool RemoteSpk::isPlayReady(s32 chan) const {
 
 } // namespace homebutton
 
-extern "C" void DelaySpeakerOffCallback__Q210homebutton9RemoteSpkFP7OSAlarmP9OSContext() {}
-extern "C" void SpeakerOffCallback__Q210homebutton9RemoteSpkFll() {}
-extern "C" void Disconnect__Q210homebutton9RemoteSpkFl() {}
+void DelaySpeakerOffCallback__Q210homebutton9RemoteSpkFP7OSAlarmP9OSContext(){}
+void SpeakerOffCallback__Q210homebutton9RemoteSpkFll(){}
+void Disconnect__Q210homebutton9RemoteSpkFl(){}

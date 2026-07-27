@@ -3,8 +3,8 @@
 
 #include <harness_catalog.h>
 
-extern "C" void getInstance__17UnkClass_8047CA88Fv() {}
+void UnkClass_8047CA88::getInstance() {}
 
-extern "C" void func_8047CAA8__17UnkClass_8047CA88Fv() {}
+void UnkClass_8047CA88::func_8047CAA8() {}
 
-extern "C" void func_8047CC4C__17UnkClass_8047CA88Fv() {}
+void UnkClass_8047CA88::func_8047CC4C() {}

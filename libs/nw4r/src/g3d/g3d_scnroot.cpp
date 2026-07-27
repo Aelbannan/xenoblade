@@ -3,67 +3,67 @@
 
 #include <harness_catalog.h>
 
-extern "C" void Construct__Q34nw4r3g3d7ScnRootFP12MEMAllocatorPUlUlUlUlUl() {}
+void Construct__Q34nw4r3g3d7ScnRootFP12MEMAllocatorPUlUlUlUlUl(){}
 
-extern "C" void G3dProc__Q34nw4r3g3d7ScnRootFUlUlPv() {}
+void G3dProc__Q34nw4r3g3d7ScnRootFUlUlPv(){}
 
-extern "C" void GetCamera__Q34nw4r3g3d7ScnRootFi() {}
+void GetCamera__Q34nw4r3g3d7ScnRootFi(){}
 
-extern "C" void GetCurrentCamera__Q34nw4r3g3d7ScnRootFv() {}
+void GetCurrentCamera__Q34nw4r3g3d7ScnRootFv(){}
 
 extern "C" void SetCurrentCamera__Q34nw4r3g3d7ScnRootFi(void* self, u8 val) { ((u8*)self)[0xf4] = val; }
 
-extern "C" void GetFog__Q34nw4r3g3d7ScnRootFi() {}
+void GetFog__Q34nw4r3g3d7ScnRootFi(){}
 
-extern "C" void SetAnmScn__Q34nw4r3g3d7ScnRootFPQ34nw4r3g3d6AnmScn() {}
+void SetAnmScn__Q34nw4r3g3d7ScnRootFPQ34nw4r3g3d6AnmScn(){}
 
-extern "C" void RemoveAnmScn__Q34nw4r3g3d7ScnRootFv() {}
+void RemoveAnmScn__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void UpdateFrame__Q34nw4r3g3d7ScnRootFv() {}
+void UpdateFrame__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void SetGlbSettings__Q34nw4r3g3d7ScnRootFv() {}
+void SetGlbSettings__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void CalcAnmScn__Q34nw4r3g3d7ScnRootFv() {}
+void CalcAnmScn__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void CalcWorld__Q34nw4r3g3d7ScnRootFv() {}
+void CalcWorld__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void CalcMaterial__Q34nw4r3g3d7ScnRootFv() {}
+void CalcMaterial__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void CalcView__Q34nw4r3g3d7ScnRootFv() {}
+void CalcView__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void GatherDrawScnObj__Q34nw4r3g3d7ScnRootFv() {}
+void GatherDrawScnObj__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void DrawOpa__Q34nw4r3g3d7ScnRootFv() {}
+void DrawOpa__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void DrawXlu__Q34nw4r3g3d7ScnRootFv() {}
+void DrawXlu__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void __ct__Q34nw4r3g3d7ScnRootFP12MEMAllocatorPQ34nw4r3g3d13IScnObjGatherPPQ34nw4r3g3d6ScnObjUlUlUlPQ34nw4r3g3d8LightObjPQ34nw4r3g3d11AmbLightObjPQ34nw4r3g3d12LightSetData() {}
+void __ct__Q34nw4r3g3d7ScnRootFP12MEMAllocatorPQ34nw4r3g3d13IScnObjGatherPPQ34nw4r3g3d6ScnObjUlUlUlPQ34nw4r3g3d8LightObjPQ34nw4r3g3d11AmbLightObjPQ34nw4r3g3d12LightSetData(){}
 
-extern "C" void __dt__Q34nw4r3g3d7ScnRootFv() {}
+void __dt__Q34nw4r3g3d7ScnRootFv(){}
 
-extern "C" void Add__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObjbb() {}
+void Add__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObjbb(){}
 
-extern "C" void ZSort__Q34nw4r3g3d12ScnObjGatherFv() {}
+void ZSort__Q34nw4r3g3d12ScnObjGatherFv(){}
 
-extern "C" void Sort__Q34nw4r3g3d12ScnObjGatherFv() {}
+void Sort__Q34nw4r3g3d12ScnObjGatherFv(){}
 
-extern "C" void Sort__Q34nw4r3g3d12ScnObjGatherFPFPCQ34nw4r3g3d6ScnObjPCQ34nw4r3g3d6ScnObj_bPFPCQ34nw4r3g3d6ScnObjPCQ34nw4r3g3d6ScnObj_b() {}
+void nw4r3g3d12ScnObjGatherFPFPCQ34nw4r::g3d::ScnObj::Sort() {}
 
-extern "C" void DrawOpa__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode() {}
+void DrawOpa__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(){}
 
-extern "C" void DrawXlu__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode() {}
+void DrawXlu__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(){}
 
 extern "C" int CheckScnObj__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d6ScnObj(void) { return 0x0; }
 
-extern "C" void Clear__Q34nw4r3g3d12ScnObjGatherFv() {}
+void Clear__Q34nw4r3g3d12ScnObjGatherFv(){}
 
-extern "C" void __dt__Q34nw4r3g3d12ScnObjGatherFv() {}
+void __dt__Q34nw4r3g3d12ScnObjGatherFv(){}
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d7ScnRootCFQ44nw4r3g3d6G3dObj7TypeObj() {}
+void IsDerivedFrom__Q34nw4r3g3d7ScnRootCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
-extern "C" void GetTypeName__Q34nw4r3g3d7ScnRootCFv() {}
+void GetTypeName__Q34nw4r3g3d7ScnRootCFv(){}
 
-extern "C" void* GetTypeObj__Q34nw4r3g3d7ScnRootCFv(void) { return 0; }
+void* GetTypeObj__Q34nw4r3g3d7ScnRootCFv(void){ return 0; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace nw4r { namespace g3d { class ScnObj; }}

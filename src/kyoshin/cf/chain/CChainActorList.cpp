@@ -19,20 +19,20 @@ extern "C" void func_8027C098(cf::CChainChance* self) {
     self->mField0A = 0;
     self->mField0C = 0;
 }
-extern "C" void func_8027C5CC() {}
-extern "C" void func_8027CA98() {}
+void func_8027C5CC(){}
+void func_8027CA98(){}
 
-extern "C" void func_8027B164() {}
-extern "C" void func_8027B200() {}
-extern "C" void func_8027B2CC() {}
-extern "C" void func_8027B770() {}
-extern "C" void func_8027B814() {}
-extern "C" void func_8027B8C8() {}
-extern "C" void func_8027BA0C() {}
-extern "C" void func_8027BB4C() {}
-extern "C" void func_8027BC14() {}
-extern "C" void func_8027BE84() {}
-extern "C" void func_8027BF58() {}
+void func_8027B164(){}
+void func_8027B200(){}
+void func_8027B2CC(){}
+void func_8027B770(){}
+void func_8027B814(){}
+void func_8027B8C8(){}
+void func_8027BA0C(){}
+void func_8027BB4C(){}
+void func_8027BC14(){}
+void func_8027BE84(){}
+void func_8027BF58(){}
 extern "C" void func_8027EEF4(int);
 
 extern "C" void func_8027BFE0(unsigned int param) {
@@ -46,19 +46,19 @@ extern "C" void func_8027BFE0(unsigned int param) {
         func_8027EEF4(0x35);
     }
 }
-extern "C" void func_8027C040() {}
-extern "C" void func_8027C0B0() {}
-extern "C" void func_8027C154() {}
-extern "C" void func_8027C1A8() {}
-extern "C" void func_8027C33C() {}
-extern "C" void func_8027C45C() {}
-extern "C" void func_8027C49C() {}
-extern "C" void func_8027C560() {}
-extern "C" void func_8027C5E4() {}
-extern "C" void func_8027C6B4() {}
-extern "C" void func_8027C924() {}
-extern "C" void func_8027CA0C() {}
-extern "C" void func_8027CAE0() {}
-extern "C" void func_8027CBE8() {}
-extern "C" void func_8027CC3C() {}
-extern "C" void func_8027CD08() {}
+void func_8027C040(){}
+void func_8027C0B0(){}
+void func_8027C154(){}
+void func_8027C1A8(){}
+void func_8027C33C(){}
+void func_8027C45C(){}
+void func_8027C49C(){}
+void func_8027C560(){}
+void func_8027C5E4(){}
+void func_8027C6B4(){}
+void func_8027C924(){}
+void func_8027CA0C(){}
+void func_8027CAE0(){}
+void func_8027CBE8(){}
+void func_8027CC3C(){}
+void func_8027CD08(){}

@@ -133,4 +133,4 @@ bool WsdFileReader::ReadWaveParam(int id, WaveData* pWaveData,
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void ReadWaveInfo__Q44nw4r3snd6detail13WsdFileReaderCFiPQ44nw4r3snd6detail8WaveInfoPCv() {}
+void ReadWaveInfo__Q44nw4r3snd6detail13WsdFileReaderCFiPQ44nw4r3snd6detail8WaveInfoPCv(){}

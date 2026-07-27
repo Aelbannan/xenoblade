@@ -3,25 +3,25 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_800C17DC() {}
+void func_800C17DC(){}
 
-extern "C" void func_800C1900() {}
+void func_800C1900(){}
 
-extern "C" void func_800C1A18() {}
+void func_800C1A18(){}
 
-extern "C" void func_800C1B30() {}
+void func_800C1B30(){}
 
-extern "C" void func_800C1CAC() {}
+void func_800C1CAC(){}
 
-extern "C" void func_800C1CC4() {}
+void func_800C1CC4(){}
 
-extern "C" void func_800C1DF0() {}
+void func_800C1DF0(){}
 
-extern "C" void func_800C1E40() {}
+void func_800C1E40(){}
 
-extern "C" void func_800C1E9C() {}
+void func_800C1E9C(){}
 
-extern "C" void func_800C1EB8() {}
+void func_800C1EB8(){}
 
 // Default no-op callback stored in the callback table at lbl_eu_805739F8.
 // Called by func_800C1EB8 when it iterates the callback array and a slot has no

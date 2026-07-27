@@ -3,6 +3,6 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564() {}
+Class_8045F858::Class_8045F858() {}
 
-extern "C" void __dt__14Class_8045F858Fv() {}
+void Class_8045F858::~Class_8045F858() {}

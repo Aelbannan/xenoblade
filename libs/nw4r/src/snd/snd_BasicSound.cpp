@@ -553,4 +553,4 @@ void BasicSound::SetId(u32 id) {
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-extern "C" int GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv() { return 0; }
+int GetRuntimeTypeInfo__Q44nw4r3snd6detail10BasicSoundCFv(){ return 0; }

@@ -3,21 +3,21 @@
 
 #include "kyoshin/realtimeevt/CREvtCamera.hpp"
 
-extern "C" void __ct__CREvtCamera() {}
+void __ct__CREvtCamera(){}
 
-extern "C" void __ct__80180088() {}
+void __ct__80180088(){}
 
-extern "C" void func_80180210() {}
+void func_80180210(){}
 
-extern "C" void func_80180394() {}
+void func_80180394(){}
 
-extern "C" void func_80180414() {}
+void func_80180414(){}
 
-extern "C" void func_801804CC() {}
+void func_801804CC(){}
 
-extern "C" void func_80180620() {}
+void func_80180620(){}
 
-extern "C" void func_80180664() {}
+void func_80180664(){}
 
 extern "C" unsigned long func_80180940() {
     extern unsigned long lbl_eu_806642A8;
@@ -26,13 +26,13 @@ extern "C" unsigned long func_80180940() {
     return v ? 0 : 1;
 }
 
-extern "C" void func_80180954() {}
+void func_80180954(){}
 
-extern "C" void func_80180960() {}
+void func_80180960(){}
 
-extern "C" void func_80180978() {}
+void func_80180978(){}
 
-extern "C" void func_80180990() {}
+void func_80180990(){}
 
 extern "C" int func_801809A8(const CREvtCamera* self) { return 1; }
 

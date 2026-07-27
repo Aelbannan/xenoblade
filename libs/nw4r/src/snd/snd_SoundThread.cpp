@@ -130,4 +130,4 @@ void SoundThread::SoundThreadProc() {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void FrameProcess__Q44nw4r3snd6detail11SoundThreadFv() {}
+void FrameProcess__Q44nw4r3snd6detail11SoundThreadFv(){}

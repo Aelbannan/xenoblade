@@ -3,13 +3,13 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_800CA6E4() {}
+void func_800CA6E4(){}
 
-extern "C" void func_800CA7B4() {}
+void func_800CA7B4(){}
 
 extern "C" void func_800CA850(void) {}
 
-extern "C" void func_800CA854() {}
+void func_800CA854(){}
 
 extern "C" void* __dt__Q22cf15CfObjectImplNpcFv(void* self, int deleteFlag) {
     if (self != nullptr && deleteFlag > 0) {

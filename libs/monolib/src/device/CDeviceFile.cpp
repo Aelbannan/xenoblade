@@ -3,51 +3,51 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__11CDeviceFileFPCcP11CWorkThread(void* self, const char* name, void* parent) {}
+CDeviceFile::CDeviceFile(const char* name, void* parent) {}
 
-extern "C" void __dt___reslist_base_CFileHandle(void* self, int type) {}
+void __dt___reslist_base_CFileHandle(void* self, int type){}
 
-extern "C" void __dt__reslist_CFileHandle(void* self, int type) {}
+void __dt__reslist_CFileHandle(void* self, int type){}
 
-extern "C" void __dt__11CDeviceFileFv(void* self, int type) {}
+void CDeviceFile::~CDeviceFile(int type) {}
 
 extern u32 lbl_eu_80665660;
 extern "C" u32 getInstance__11CDeviceFileFv(void) { return lbl_eu_80665660; }
 
-extern "C" int isInitialized__11CDeviceFileFv(void* self) { return 0; }
+int CDeviceFile::isInitialized() { return 0; }
 
 extern u8 lbl_eu_806636A8;
 extern "C" u8 func_8044E768__11CDeviceFileFv() { return lbl_eu_806636A8; }
 
-extern "C" void func_8044E770__11CDeviceFileFP11CWorkThread(void* self, void* parent) {}
+void CDeviceFile::func_8044E770(void* parent) {}
 
-extern "C" void func_8044E780__11CDeviceFileFv(void* self) {}
+void CDeviceFile::func_8044E780() {}
 
-extern "C" void readFile__11CDeviceFileFUlPCcP10IWorkEventii(void* self) {}
+void CDeviceFile::readFile() {}
 
-extern "C" void readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii() {}
+void CDeviceFile::readCommonArchiveFile() {}
 
-extern "C" void getFileSize__11CDeviceFileFPCc() {}
+void CDeviceFile::getFileSize() {}
 
-extern "C" void removeFileJob__11CDeviceFileFP14CDeviceFileJob() {}
+void CDeviceFile::removeFileJob() {}
 
-extern "C" void func_8044F0E4__11CDeviceFileFPCc() {}
+void CDeviceFile::func_8044F0E4() {}
 
-extern "C" void cancel__11CDeviceFileFP11CFileHandle() {}
+void CDeviceFile::cancel() const {}
 
-extern "C" void func_8044F154__11CDeviceFileFP11CFileHandlei() {}
+void CDeviceFile::func_8044F154() const {}
 
-extern "C" void func_8044F1B8__11CDeviceFileFP11CFileHandlei() {}
+void CDeviceFile::func_8044F1B8() const {}
 
-extern "C" void func_8044F400__11CDeviceFileFP11CFileHandleUl(void) {}
+void CDeviceFile::func_8044F400(void) const {}
 
-extern "C" void setHandleFlag1__11CDeviceFileFP11CFileHandle() {}
+void CDeviceFile::setHandleFlag1() const {}
 
-extern "C" void setHandleFlag2__11CDeviceFileFP11CFileHandle() {}
+void CDeviceFile::setHandleFlag2() const {}
 
-extern "C" void wkStandbyLogin__11CDeviceFileFv() {}
+void CDeviceFile::wkStandbyLogin() {}
 
-extern "C" void wkStandbyLogout__11CDeviceFileFv() {}
+void CDeviceFile::wkStandbyLogout() {}
 
 extern "C" void func_eu_804520B0(void* r3) {
     extern int lbl_eu_80665664;
@@ -57,7 +57,7 @@ extern "C" void func_eu_804520B0(void* r3) {
     lbl_eu_80665664 = idx + 1;
 }
 
-extern "C" void func_eu_804520D0() {}
+void func_eu_804520D0(){}
 
 extern "C" u8 lbl_eu_806636AA[6];
 extern "C" void func_eu_804521A8(s8 val) {
@@ -77,9 +77,9 @@ extern "C" u8 func_eu_804521C4() {
     return lbl_eu_806636A9;
 }
 
-extern "C" void __ct__10CEventFileF3CBMP11CFileHandle() {}
+CEventFile::CEventFile() const {}
 
-extern "C" void getFileDataPtr__10CEventFileFv() {}
+void CEventFile::getFileDataPtr() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_eu_80452248() {

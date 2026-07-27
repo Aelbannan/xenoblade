@@ -3,24 +3,24 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __dt__Q22cf10CfTaskMainFv(void* self) {}
+void cf::CfTaskMain::~CfTaskMain() {}
 
 extern "C" void Init__Q22cf10CfTaskMainFv() {}
 
 extern "C" void Term__Q22cf10CfTaskMainFv() {}
 
-extern "C" void Move__Q22cf10CfTaskMainFv() {
+void cf::CfTaskMain::Move() {
     extern void func_8007F9C4__Q22cf13CfGameManagerFv(void);
     extern unsigned long lbl_eu_80663E28;
     if ((lbl_eu_80663E28 & 0x4000) != 0) return;
     func_8007F9C4__Q22cf13CfGameManagerFv();
 }
 
-extern "C" void Draw__Q22cf10CfTaskMainFv(void) {}
+void cf::CfTaskMain::Draw(void) {}
 
-extern "C" void Tail__Q22cf10CfTaskMainFv(void) {}
+void cf::CfTaskMain::Tail(void) {}
 
-extern "C" void __ct__800697E8() {}
+void __ct__800697E8(){}
 
 extern "C" void func_80069944(void* self) { ((void(*)(void*))__dt__Q22cf10CfTaskMainFv)((char*)self - 0x54); }
 

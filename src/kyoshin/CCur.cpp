@@ -11,86 +11,86 @@ extern "C" void func_801D216C(CBaseCur* pCur, u8 val) { pCur->mVisible = val; }
 
 
 
-extern "C" void func_801D2144__8CBaseCurFv(void) {}
+void CBaseCur::func_801D2144(void) {}
 
 
 
-extern "C" void func_801D2174(void) {}
+void func_801D2174(void){}
 
 
-extern "C" void func_801D21CC() {}
+void func_801D21CC(){}
 
-extern "C" void func_801D2264() {}
+void func_801D2264(){}
 
-extern "C" void __ct__CCur07() {}
+void __ct__CCur07(){}
 
-extern "C" void __dt__6CCur07Fv() {}
+void CCur07::~CCur07() {}
 
-extern "C" void func_801D2378__6CCur07Fv() {}
+void CCur07::func_801D2378() {}
 
-extern "C" void __ct__CCur09() {}
+void __ct__CCur09(){}
 
-extern "C" void __dt__6CCur09Fv() {}
+void CCur09::~CCur09() {}
 
-extern "C" void func_801D2478__6CCur09Fv() {}
+void CCur09::func_801D2478() {}
 
-extern "C" void func_801D24E8() {}
+void func_801D24E8(){}
 
-extern "C" void __ct__CCur11() {}
+void __ct__CCur11(){}
 
-extern "C" void __dt__6CCur11Fv() {}
+void CCur11::~CCur11() {}
 
-extern "C" void func_801D25EC__6CCur11Fv() {}
+void CCur11::func_801D25EC() {}
 
-extern "C" void func_801D2670() {}
+void func_801D2670(){}
 
-extern "C" void __ct__CCur14() {}
+void __ct__CCur14(){}
 
-extern "C" void __dt__6CCur14Fv() {}
+void CCur14::~CCur14() {}
 
-extern "C" void func_801D2778__6CCur14Fv() {}
+void CCur14::func_801D2778() {}
 
-extern "C" void __ct__CCur15() {}
+void __ct__CCur15(){}
 
-extern "C" void __dt__6CCur15Fv() {}
+void CCur15::~CCur15() {}
 
-extern "C" void func_801D2878__6CCur15Fv() {}
+void CCur15::func_801D2878() {}
 
-extern "C" void __ct__CCur16() {}
+void __ct__CCur16(){}
 
-extern "C" void __dt__6CCur16Fv() {}
+void CCur16::~CCur16() {}
 
-extern "C" void func_801D2978__6CCur16Fv() {}
+void CCur16::func_801D2978() {}
 
-extern "C" void __ct__CCur18() {}
+void __ct__CCur18(){}
 
-extern "C" void __dt__6CCur18Fv() {}
+void CCur18::~CCur18() {}
 
-extern "C" void func_801D2A78__6CCur18Fv() {}
+void CCur18::func_801D2A78() {}
 
-extern "C" void __ct__CCur22() {}
+void __ct__CCur22(){}
 
-extern "C" void __dt__6CCur22Fv() {}
+void CCur22::~CCur22() {}
 
-extern "C" void func_801D2B78__6CCur22Fv() {}
+void CCur22::func_801D2B78() {}
 
-extern "C" void func_801D2BFC() {}
+void func_801D2BFC(){}
 
-extern "C" void func_801D2C80() {}
+void func_801D2C80(){}
 
-extern "C" void func_801D2CF4() {}
+void func_801D2CF4(){}
 
-extern "C" void __ct__CSubCur() {}
+void __ct__CSubCur(){}
 
-extern "C" void __dt__7CSubCurFv() {}
+void CSubCur::~CSubCur() {}
 
-extern "C" void func_801D2DC8__7CSubCurFv() {}
+void CSubCur::func_801D2DC8() {}
 
-extern "C" void func_801D2E4C() {}
+void func_801D2E4C(){}
 
-extern "C" void func_801D2ED8() {}
+void func_801D2ED8(){}
 
-extern "C" void func_801D2150(void* self, void* src) {
+void func_801D2150(void* self, void* src){
     float f0 = *(float*)src;
     float f1 = *(float*)((u8*)src + 4);
     float f2 = *(float*)((u8*)src + 8);

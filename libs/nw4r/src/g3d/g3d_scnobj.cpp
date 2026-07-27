@@ -702,9 +702,9 @@ ScnGroup::~ScnGroup() {
 extern "C" void ExecCallback_CALC_WORLD__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
 extern "C" void ExecCallback_CALC_MAT__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
 extern "C" void ExecCallback_CALC_VIEW__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv() {}
-extern "C" void IsDerivedFrom__Q34nw4r3g3d8ScnGroupCFQ44nw4r3g3d6G3dObj7TypeObj() {}
-extern "C" void IsDerivedFrom__Q34nw4r3g3d6ScnObjCFQ44nw4r3g3d6G3dObj7TypeObj() {}
-extern "C" void GetTypeName__Q34nw4r3g3d8ScnGroupCFv() {}
+void IsDerivedFrom__Q34nw4r3g3d8ScnGroupCFQ44nw4r3g3d6G3dObj7TypeObj(){}
+void IsDerivedFrom__Q34nw4r3g3d6ScnObjCFQ44nw4r3g3d6G3dObj7TypeObj(){}
+void GetTypeName__Q34nw4r3g3d8ScnGroupCFv(){}
 // Defined inline via NW4R_G3D_RTTI_DECL_DERIVED macros
 extern "C" const char* GetTypeName__Q34nw4r3g3d6ScnObjCFv(const void* self) {
     const void* vtable = *static_cast<const void* const*>(self);

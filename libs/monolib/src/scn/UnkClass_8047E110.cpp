@@ -24,60 +24,60 @@ extern "C" void sinit_80481E68() {}
 // NOT_STARTED stubs (to be decompiled)
 // ============================================================
 
-extern "C" void func_8047E110__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047E110() {}
 
-extern "C" void func_8047E1B0__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047E1B0() {}
 
-extern "C" void func_8047E390__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047E390() {}
 
-extern "C" void func_8047E62C__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047E62C() {}
 
-extern "C" void func_8047E6C4__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047E6C4() {}
 
-extern "C" void func_8047EAD4__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047EAD4() {}
 
-extern "C" void func_8047EEB0__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047EEB0() {}
 
-extern "C" void func_8047EFBC__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047EFBC() {}
 
-extern "C" void func_8047F214__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047F214() {}
 
-extern "C" void func_8047F658__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047F658() {}
 
-extern "C" void func_8047F730__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047F730() {}
 
-extern "C" void func_8047FE48__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047FE48() {}
 
-extern "C" void func_8047FF9C__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8047FF9C() {}
 
-extern "C" void func_80480140__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_80480140() {}
 
-extern "C" void func_8048020C__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8048020C() {}
 
-extern "C" void func_804804DC__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_804804DC() {}
 
-extern "C" void func_804808A0__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_804808A0() {}
 
-extern "C" void func_80480EF0__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_80480EF0() {}
 
-extern "C" void func_80480F48__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_80480F48() {}
 
-extern "C" void func_80481014__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_80481014() {}
 
-extern "C" void func_80481074__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_80481074() {}
 
-extern "C" void func_804812D8__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_804812D8() {}
 
-extern "C" void func_804813E8__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_804813E8() {}
 
-extern "C" void func_804814DC__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_804814DC() {}
 
-extern "C" void func_8048163C__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8048163C() {}
 
-extern "C" void func_8048169C__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_8048169C() {}
 
-extern "C" void func_80481790__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_80481790() {}
 
-extern "C" void func_804819AC__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_804819AC() {}
 
-extern "C" void func_804819C4__17UnkClass_8047E110Fv() {}
+void UnkClass_8047E110::func_804819C4() {}

@@ -3,4 +3,4 @@
 
 #include <harness_catalog.h>
 
-extern "C" void getInstance__Q26mpfsys17MPFDrawMdlNoColorFv() {}
+void mpfsys::MPFDrawMdlNoColor::getInstance() {}

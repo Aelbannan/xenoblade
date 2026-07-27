@@ -25,8 +25,7 @@ u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
 void func_8003B800(VMArg* out, void* data, u32 type);
 }
 
-extern "C" void* func_eu_8003B720(void* p);
-
+void* func_eu_8003B720(void* p);
 extern "C" void* func_8003AA34() {
     if (!lbl_eu_80663D10) {
         lbl_eu_80663D10 = 1;
@@ -106,7 +105,7 @@ void* getFP(const char* pName) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" void* func_8003B4B0(void* bdat, const char* col) {
+void* func_8003B4B0(void* bdat, const char* col){
     void* bdatArg;
     const char* colArg;
     u16 bucketCount;
@@ -159,7 +158,7 @@ extern "C" void* func_8003B4B0(void* bdat, const char* col) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) {
+u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index){
     void* bdatArg;
     const char* colArg;
     s32 indexArg;
@@ -211,7 +210,7 @@ extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) 
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index) {
+u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index){
     void* bdatArg;
     const char* colArg;
     s32 rowArg;
@@ -391,7 +390,7 @@ extern "C" u32 func_8003B41C(void* p) {
 }
 
 #pragma dont_inline on
-extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2) {
+u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2){
     void* bdatArg;
     const char* col1Arg;
     s32 rowArg;
@@ -464,7 +463,7 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
 #pragma dont_inline reset
 
 
-extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index) {
+u32 func_8003B748(void* table, void* col, s32 row, s32 index){
     char* tbl = reinterpret_cast<char*>(table);
     u16 colOff = *reinterpret_cast<u16*>(col);
     char* colHdr = tbl + colOff;
@@ -508,7 +507,7 @@ extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index) {
 
 
 #pragma dont_inline on
-extern "C" void func_8003B800(VMArg* out, void* data, u32 type) {
+void func_8003B800(VMArg* out, void* data, u32 type){
     VMArg* outArg;
     void* dataArg;
     u32 typeArg;
@@ -577,7 +576,7 @@ extern "C" int bdat(VMThread* t, void* /*unused*/, u16 unk) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" int getVal(VMThread* t, void* bdat) {
+int getVal(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
     const char* col;
@@ -599,7 +598,7 @@ extern "C" int getVal(VMThread* t, void* bdat) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" int getArrayVal(VMThread* t, void* bdat) {
+int getArrayVal(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
     const char* col;

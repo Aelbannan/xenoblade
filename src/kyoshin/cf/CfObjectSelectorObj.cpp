@@ -4,17 +4,17 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/object/CfObjectSelectorObj.hpp"
 
-extern "C" void func_800FD774() {}
+void func_800FD774(){}
 
-extern "C" void __ct__800FDB4C() {}
+void __ct__800FDB4C(){}
 
-extern "C" void __dt__800FDC1C() {}
+void __dt__800FDC1C(){}
 
-extern "C" void func_800FDE4C() {}
+void func_800FDE4C(){}
 
-extern "C" void __dt__800FDEF8() {}
+void __dt__800FDEF8(){}
 
-extern "C" void func_800FE104() {}
+void func_800FE104(){}
 
 // spInstance for the CfObjectSelectorObj singleton
 extern "C" cf::CfObjectSelectorObj* lbl_eu_80663F14;
@@ -30,13 +30,13 @@ extern "C" void func_800FE694(void* self, float val) {
     base[-0x3e9c / 4] = val;
 }
 
-extern "C" void func_800FE6A4() {}
+void func_800FE6A4(){}
 
-extern "C" void func_800FE738() {}
+void func_800FE738(){}
 
-extern "C" void func_800FE7D8() {}
+void func_800FE7D8(){}
 
-extern "C" void func_800FE860() {}
+void func_800FE860(){}
 
 extern "C" unsigned long func_800FE910(void* self) {
     unsigned long* base = (unsigned long*)((char*)self + 0x10000);
@@ -63,7 +63,7 @@ extern "C" void func_800FE950(char* this_, unsigned int a, unsigned int b, unsig
     *(unsigned int*)(this_ + 0x90ec) = b;
 }
 
-extern "C" void func_800FE96C() {}
+void func_800FE96C(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_800FEA14() {}
+void sinit_800FEA14(){}

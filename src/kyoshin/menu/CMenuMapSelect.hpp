@@ -14,4 +14,5 @@ public:
     void cbRenderBefore();
 
     // Stub declarations for functions not yet decompiled
+    CMenuMapSelect();
 };

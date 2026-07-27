@@ -1,6 +1,6 @@
 
 
-extern "C" void func_80282020() {}
+void func_80282020(){}
 extern "C" int func_802A0804(int, int);
 
 extern "C" int func_80282048(int arg) {
@@ -10,7 +10,7 @@ extern "C" int func_80282174(void* self) { int value = *reinterpret_cast<unsigne
 extern "C" bool func_802A0AA0(void*);
 extern "C" bool func_8028245C(void* self) { return func_802A0AA0((void*)((char*)self + 0x74)); }
 extern "C" bool func_80282464() { return true; }
-extern "C" void func_8028246C() {}
+void func_8028246C(){}
 extern "C" int func_80282480(void*, void* p) {
     return ((*(int*)((char*)p + 0x3f00) >> 1) & 1);
 }
@@ -18,18 +18,18 @@ extern "C" void func_80277154();
 extern "C" void func_8028248C() {
     func_80277154();
 }
-extern "C" void func_80282490() {}
+void func_80282490(){}
 
-extern "C" void func_80281924() {}
-extern "C" void func_80281958() {}
-extern "C" void func_80281CB8() {}
-extern "C" void func_80281CF0() {}
-extern "C" void func_80281F38() {}
-extern "C" void func_80281FA0() {}
-extern "C" void func_80282054() {}
-extern "C" void func_8028209C() {}
-extern "C" void func_802820D4() {}
-extern "C" void func_80282100() {}
-extern "C" void func_802821E0() {}
-extern "C" void func_802822F8() {}
-extern "C" void func_80282380() {}
+void func_80281924(){}
+void func_80281958(){}
+void func_80281CB8(){}
+void func_80281CF0(){}
+void func_80281F38(){}
+void func_80281FA0(){}
+void func_80282054(){}
+void func_8028209C(){}
+void func_802820D4(){}
+void func_80282100(){}
+void func_802821E0(){}
+void func_802822F8(){}
+void func_80282380(){}

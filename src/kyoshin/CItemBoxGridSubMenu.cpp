@@ -32,22 +32,22 @@ extern "C" void func_802083CC(unsigned char* self) {
     }
 }
 
-extern "C" void func_8020844C() {}
+void func_8020844C(){}
 
-extern "C" void func_802084D4() {}
+void func_802084D4(){}
 
-extern "C" void func_80208760() {}
+void func_80208760(){}
 
-extern "C" void func_802087B8() {}
+void func_802087B8(){}
 
-extern "C" void func_80208838(void) {}
+void func_80208838(void){}
 
-extern "C" void func_80208844() {}
+void func_80208844(){}
 
-extern "C" void func_80208890() {}
+void func_80208890(){}
 
 extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
-extern "C" void func_802082D0(void* self) {
+void func_802082D0(void* self){
     if (*(u8*)((u8*)self + 0x20) == 0) return;
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)((u8*)self + 8), 0, 0, 1);
 }

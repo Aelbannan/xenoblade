@@ -12,9 +12,9 @@ struct OcMsgRingHdr {
     u32 count;
 };
 
-extern "C" void func_8003A53C() {}
+void func_8003A53C(){}
 
-extern "C" int func_8003A588(void* thread) {
+int func_8003A588(void* thread){
     extern void vmRetValSet(void*, void*);
     int args[2];
     args[0] = 3;
@@ -23,7 +23,7 @@ extern "C" int func_8003A588(void* thread) {
     return 1;
 }
 
-extern "C" int func_8003A5C0(void* thread) {
+int func_8003A5C0(void* thread){
     extern void vmRetValSet(void*, void*);
     int args[2];
     args[0] = 3;
@@ -32,14 +32,14 @@ extern "C" int func_8003A5C0(void* thread) {
     return 1;
 }
 
-extern "C" int func_8003A5F8(void* thread) {
+int func_8003A5F8(void* thread){
     extern void* vmOCPropertyGet(void*);
     void* prop = vmOCPropertyGet(thread);
     *(int*)((char*)thread + 100) = *(int*)((char*)prop + 4);
     return 0;
 }
 
-extern "C" int func_8003A630(void* thread) {
+int func_8003A630(void* thread){
     extern void* vmOCPropertyGet(void*);
     void* prop = vmOCPropertyGet(thread);
     *(int*)((char*)thread + 104) = *(int*)((char*)prop + 4);
@@ -55,9 +55,9 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern "C" void func_8003A68C() {}
+void func_8003A68C(){}
 
-extern "C" void func_8003A6D4() {}
+void func_8003A6D4(){}
 
 extern "C" s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
     // Reuse `ret` for writeIdx then count so +1 lands in a distinct reg (retail addi r5,r3,1).
@@ -97,9 +97,9 @@ extern "C" s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern "C" void func_8003A7B4() {}
+void func_8003A7B4(){}
 
-extern "C" int func_8003A800(void* thread) {
+int func_8003A800(void* thread){
     extern void vmRetValSet(void*, void*);
     int args[2];
     args[0] = 3;
@@ -108,7 +108,7 @@ extern "C" int func_8003A800(void* thread) {
     return 1;
 }
 
-extern "C" int func_8003A838(void* thread) {
+int func_8003A838(void* thread){
     extern void vmRetValSet(void*, void*);
     int args[2];
     args[0] = 3;
@@ -117,7 +117,7 @@ extern "C" int func_8003A838(void* thread) {
     return 1;
 }
 
-extern "C" int func_8003A870(void* thread) {
+int func_8003A870(void* thread){
     extern void vmRetValSet(void*, void*);
     int args[2];
     args[0] = 3;
@@ -126,16 +126,16 @@ extern "C" int func_8003A870(void* thread) {
     return 1;
 }
 
-extern "C" int func_8003A8A8(void* thread) {
+int func_8003A8A8(void* thread){
     extern void* vmOCPropertyGet(void*);
     void* prop = vmOCPropertyGet(thread);
     *(int*)((char*)thread + 140) = *(int*)((char*)prop + 4);
     return 0;
 }
 
-extern "C" void func_8003A8E0() {}
+void func_8003A8E0(){}
 
-extern "C" void func_8003A918() {}
+void func_8003A918(){}
 
 extern "C" s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
     ret = list->writeIdx;

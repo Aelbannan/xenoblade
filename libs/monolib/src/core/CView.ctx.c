@@ -1,4 +1,4 @@
-/* "libs/monolib/src/core/CView.cpp" line 1 "types.h" */
+/* "libs/monolib/src/core/CView.cpp" line 0 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -706,12 +706,8 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-extern "C" void __dt__5CViewFv(void*);
-extern "C" void func_8043FBC4(void* self) {
-    __dt__5CViewFv((char*)self - 0x1C4);
-}
 
-/* "libs/monolib/src/core/CView.cpp" line 8 "monolib/core.hpp" */
+/* "libs/monolib/src/core/CView.cpp" line 2 "monolib/core.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/core.hpp" line 2 "monolib/core/CArcItem.hpp" */
@@ -16609,6 +16605,9 @@ public:
     bool hasCurrent() const;
     void updateMsg();
     void renderView();
+    CView* func_8043DF3C();
+
+    static void func_8043E6AC(ml::CRect& rect, CView* view);
 
     static ml::CCol4 sFrameColor;
 
@@ -233800,9 +233799,9 @@ public:
 };
 /* end "monolib/core/CViewRoot.hpp" */
 /* end "monolib/core.hpp" */
-/* "libs/monolib/src/core/CView.cpp" line 9 "monolib/core/CViewRectData.hpp" */
+/* "libs/monolib/src/core/CView.cpp" line 3 "monolib/core/CViewRectData.hpp" */
 /* end "monolib/core/CViewRectData.hpp" */
-/* "libs/monolib/src/core/CView.cpp" line 10 "monolib/device.hpp" */
+/* "libs/monolib/src/core/CView.cpp" line 4 "monolib/device.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device.hpp" line 2 "monolib/device/CDevice.hpp" */
@@ -244578,7 +244577,7 @@ private:
 /* "libs/monolib/include/monolib/device.hpp" line 14 "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device.hpp" */
-/* "libs/monolib/src/core/CView.cpp" line 11 "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/src/core/CView.cpp" line 5 "monolib/work/CWorkThread.hpp" */
 /* end "monolib/work/CWorkThread.hpp" */
 
 //Not yet decompiled (monolib/src/core/CSplitFrame.cpp); only its virtual destructor is
@@ -244622,12 +244621,17 @@ void func_8044BE38__8CGXCacheFv(CGXCache* cache);
 void func_80442DA8__9CViewRootFv();
 void fontFlush__10CFontLayerFi(CFontLayer* layer, int flag);
 void render__10CViewFrameFv(CViewFrame* frame);
+void __dla__FPv(void* ptr);
+void __dl__FPv(void* ptr);
+void __dt__10CFontLayerFv(void* self, int deleteFlag);
+void __dt__11CWorkThreadFv(void* self, int deleteFlag);
 // Incomplete arrays force lis/addi (not SDA lwz) -- same as CViewRoot::create.
 char lbl_eu_8056B298[];
 char lbl_eu_8056B280[];
 char lbl_eu_8056B6F0[];
 char lbl_eu_8056B6D8[];
 char lbl_eu_8056B6CC[];
+char lbl_eu_8056B5E0[];
 ml::CCol4 lbl_8065A0C8;
 }
 
@@ -244749,8 +244753,8 @@ void CView::detachRenderWork(CWorkThread* pThread) {
 }
 
 // Drain the context ring: classify each pending message and apply side effects.
+// Drain the context ring: classify each pending message and apply side effects.
 void CView::updateMsg() {
-#if 1
     struct CtxSnap {
         u32 w0;
         u32 w1;
@@ -244763,51 +244767,38 @@ void CView::updateMsg() {
         u8 byte;
         u8 pad;
     };
-    // Three uninit 0x24 snaps (retail -0x150 homes @ 0x48 / 0x28 / 0x08).
-    // Keep only these — dual fan-copy volatiles force -0x140 / stmw r17.
     volatile CtxSnap snapFan0;
     volatile CtxSnap snapFan1;
     volatile CtxSnap snapTag1;
-#endif
-    u32 tag0;
-    u32 tag1;
-    u32 flag;
     u32 readIdx;
     u32 cap;
-    u32 slotOff;
-    u8* ringBase;
-    u8* slot;
     u32 tag;
+    u32 msgItem;
     void** listSentinel;
     void** listNode;
-    CWorkThread* parentSnap;
-    CWorkThread* parentView;
+    CView* parentView;
     CWorkThread* workThread;
     void** childSentinel;
     void** childNode;
     CWorkThread* childThread;
     CView* childView;
-    u32 writeIdx;
-    u32 prevIdx;
+    u8* ringSlot;
+    u32 byteOff;
     u32 sumU;
     u32 slotU;
-    s32 sumSigned;
-    s32 capSigned;
-    s32 slotIndex;
-    u32 byteOff;
+    u32 writeIdx;
+    u32 prevIdx;
     u8* childRing;
     u8* childSlot;
-    u32 workId;
 
     goto updateMsg_check;
 
 updateMsg_loop:
     readIdx = unk3F0;
     cap = mContextRingCapacity;
-    ringBase = (u8*)mContextRingBase;
-    slotOff = (readIdx - (readIdx / cap) * cap) * 0x24u;
-    slot = ringBase + slotOff;
-    tag = *(u32*)slot;
+    byteOff = (readIdx - (readIdx / cap) * cap) * 0x24u;
+    ringSlot = (u8*)mContextRingBase + byteOff;
+    tag = *(u32*)ringSlot;
 
     if (tag > 7) {
         goto updateMsg_advance;
@@ -244816,7 +244807,7 @@ updateMsg_loop:
     switch (tag) {
         case 0: {
             // Attach WORK_ID to unk238; fan-out dual ring msgs to child views.
-            u32 msgItem = *(u32*)(slot + 4);
+            msgItem = *(u32*)(ringSlot + 4);
             listSentinel = (void**)unk238.mStartNodePtr;
             listNode = (void**)*listSentinel;
             while (listNode != listSentinel) {
@@ -244830,55 +244821,32 @@ updateMsg_loop:
                 reinterpret_cast<reslist<u32>*>(&unk238)->push_back(msgItem);
             }
 
-            parentSnap = mParent;
-            if (getInstance__9CViewRootFv() == parentSnap) {
-                parentView = nullptr;
-            } else {
-                parentView = mParent;
-                if (parentView == nullptr) {
-                    parentView = nullptr;
-                } else if ((s32)parentView->mType < 0x30) {
-                    parentView = nullptr;
-                } else if ((s32)parentView->mType >= 0x35) {
-                    parentView = nullptr;
-                }
+            // Check if parent is CViewRoot
+            if (getInstance__9CViewRootFv() == mParent) {
+                goto updateMsg_advance;
             }
 
+            parentView = CView::convertToView(mParent);
             if (parentView == nullptr) {
                 goto updateMsg_advance;
             }
 
-            workThread = getWorkThread__9CWorkUtilFUl(*(u32*)(ringBase + slotOff + 4));
+            workThread = getWorkThread__9CWorkUtilFUl(*(u32*)(ringSlot + 4));
             childSentinel = (void**)mChildren.mStartNodePtr;
             childNode = (void**)childSentinel[0];
             while (childNode != childSentinel) {
                 childThread = (CWorkThread*)childNode[2];
                 childView = CView::convertToView(childThread);
                 if (childView != nullptr) {
-#if 1
-                    CMsgParam<10>& childMessages =
-                        *reinterpret_cast<CMsgParam<10>*>(&childView->mContextMsgVtable);
-                    childMessages.enqueue(0);
-                    childMessages.last().unk23 = 3;
-                    childMessages.last().wid = workThread->mWorkID;
-                    childMessages.enqueue(1);
-                    childMessages.last().unk23 = 3;
-                    childMessages.last().wid = (WORK_ID)workThread;
-#else
-                    tag0 = 0;
-                    flag = 3;
-                    tag1 = 1;
-                    workId = workThread->mWorkID;
-
-                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
-                    capSigned = (s32)childView->mContextRingCapacity;
-                    slotIndex = sumSigned / capSigned;
-                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+                    // Enqueue tag 0 with snapFan0
+                    sumU = childView->unk3F0 + childView->mContextRingWriteIndex;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    byteOff = (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
                     childRing = (u8*)childView->mContextRingBase;
                     childSlot = childRing + byteOff;
-                    *(u32*)childSlot = tag0;
-                    *(u32*)(childSlot + 0x4) = snapFan0.w0;
-                    *(u32*)(childSlot + 0x8) = snapFan0.w1;
+                    *(u32*)childSlot = 0;
+                    *(u32*)(childSlot + 4) = snapFan0.w0;
+                    *(u32*)(childSlot + 8) = snapFan0.w1;
                     *(u32*)(childSlot + 0xC) = snapFan0.w2;
                     *(u32*)(childSlot + 0x10) = snapFan0.w3;
                     *(u32*)(childSlot + 0x14) = snapFan0.w4;
@@ -244886,7 +244854,7 @@ updateMsg_loop:
                     *(u32*)(childSlot + 0x1C) = snapFan0.w6;
                     *(s16*)(childSlot + 0x20) = snapFan0.half;
                     childSlot[0x22] = snapFan0.byte;
-                    childSlot[0x23] = (u8)tag0;
+                    childSlot[0x23] = 0;
 
                     writeIdx = childView->mContextRingWriteIndex + 1;
                     prevIdx = writeIdx - 1;
@@ -244897,23 +244865,23 @@ updateMsg_loop:
                     slotU = sumU / childView->mContextRingCapacity;
                     childSlot = (u8*)childView->mContextRingBase +
                         (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    childSlot[0x23] = (u8)flag;
+                    childSlot[0x23] = 3;
 
                     sumU = childView->unk3F0 + childView->unk3FC;
                     slotU = sumU / childView->mContextRingCapacity;
                     childSlot = (u8*)childView->mContextRingBase +
                         (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    *(u32*)(childSlot + 0x4) = workId;
+                    *(u32*)(childSlot + 4) = workThread->mWorkID;
 
-                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
-                    capSigned = (s32)childView->mContextRingCapacity;
-                    slotIndex = sumSigned / capSigned;
-                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+                    // Enqueue tag 1 with snapFan1
+                    sumU = childView->unk3F0 + childView->mContextRingWriteIndex;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    byteOff = (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
                     childRing = (u8*)childView->mContextRingBase;
                     childSlot = childRing + byteOff;
-                    *(u32*)childSlot = tag1;
-                    *(u32*)(childSlot + 0x4) = snapFan1.w0;
-                    *(u32*)(childSlot + 0x8) = snapFan1.w1;
+                    *(u32*)childSlot = 1;
+                    *(u32*)(childSlot + 4) = snapFan1.w0;
+                    *(u32*)(childSlot + 8) = snapFan1.w1;
                     *(u32*)(childSlot + 0xC) = snapFan1.w2;
                     *(u32*)(childSlot + 0x10) = snapFan1.w3;
                     *(u32*)(childSlot + 0x14) = snapFan1.w4;
@@ -244921,7 +244889,7 @@ updateMsg_loop:
                     *(u32*)(childSlot + 0x1C) = snapFan1.w6;
                     *(s16*)(childSlot + 0x20) = snapFan1.half;
                     childSlot[0x22] = snapFan1.byte;
-                    childSlot[0x23] = (u8)tag0;
+                    childSlot[0x23] = 0;
 
                     writeIdx = childView->mContextRingWriteIndex + 1;
                     childView->mContextRingWriteIndex = writeIdx;
@@ -244932,14 +244900,13 @@ updateMsg_loop:
                     slotU = sumU / childView->mContextRingCapacity;
                     childSlot = (u8*)childView->mContextRingBase +
                         (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    childSlot[0x23] = (u8)flag;
+                    childSlot[0x23] = 3;
 
                     sumU = childView->unk3F0 + childView->unk3FC;
                     slotU = sumU / childView->mContextRingCapacity;
                     childSlot = (u8*)childView->mContextRingBase +
                         (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    *(u32*)(childSlot + 0x4) = (u32)workThread;
-#endif
+                    *(u32*)(childSlot + 4) = (u32)workThread;
                 }
                 childNode = (void**)childNode[0];
             }
@@ -244947,7 +244914,7 @@ updateMsg_loop:
         }
         case 1: {
             // Attach IWorkEvent* to unk258; fan-out tag-1 msgs to child views.
-            u32 msgItem = *(u32*)(slot + 4);
+            msgItem = *(u32*)(ringSlot + 4);
             listSentinel = (void**)unk258.mStartNodePtr;
             listNode = (void**)*listSentinel;
             while (listNode != listSentinel) {
@@ -244962,51 +244929,31 @@ updateMsg_loop:
                     *reinterpret_cast<void**>(&msgItem));
             }
 
-            parentSnap = mParent;
-            if (getInstance__9CViewRootFv() == parentSnap) {
-                parentView = nullptr;
-            } else {
-                parentView = mParent;
-                if (parentView == nullptr) {
-                    parentView = nullptr;
-                } else if ((s32)parentView->mType < 0x30) {
-                    parentView = nullptr;
-                } else if ((s32)parentView->mType >= 0x35) {
-                    parentView = nullptr;
-                }
+            // Check if parent is CViewRoot
+            if (getInstance__9CViewRootFv() == mParent) {
+                goto updateMsg_advance;
             }
 
+            parentView = CView::convertToView(mParent);
             if (parentView == nullptr) {
                 goto updateMsg_advance;
             }
 
-            msgItem = *(u32*)(slot + 4);
             childSentinel = (void**)mChildren.mStartNodePtr;
             childNode = (void**)childSentinel[0];
             while (childNode != childSentinel) {
                 childThread = (CWorkThread*)childNode[2];
                 childView = CView::convertToView(childThread);
                 if (childView != nullptr) {
-#if 1
-                    CMsgParam<10>& childMessages =
-                        *reinterpret_cast<CMsgParam<10>*>(&childView->mContextMsgVtable);
-                    childMessages.enqueue(1);
-                    childMessages.last().unk23 = 3;
-                    childMessages.last().wid = msgItem;
-#else
-                    tag1 = 1;
-                    flag = 3;
-                    tag0 = 0;
-
-                    sumSigned = (s32)childView->unk3F0 + (s32)childView->mContextRingWriteIndex;
-                    capSigned = (s32)childView->mContextRingCapacity;
-                    slotIndex = sumSigned / capSigned;
-                    byteOff = (u32)(sumSigned - slotIndex * capSigned) * 0x24u;
+                    // Enqueue tag 1 with snapTag1
+                    sumU = childView->unk3F0 + childView->mContextRingWriteIndex;
+                    slotU = sumU / childView->mContextRingCapacity;
+                    byteOff = (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
                     childRing = (u8*)childView->mContextRingBase;
                     childSlot = childRing + byteOff;
-                    *(u32*)childSlot = tag1;
-                    *(u32*)(childSlot + 0x4) = snapTag1.w0;
-                    *(u32*)(childSlot + 0x8) = snapTag1.w1;
+                    *(u32*)childSlot = 1;
+                    *(u32*)(childSlot + 4) = snapTag1.w0;
+                    *(u32*)(childSlot + 8) = snapTag1.w1;
                     *(u32*)(childSlot + 0xC) = snapTag1.w2;
                     *(u32*)(childSlot + 0x10) = snapTag1.w3;
                     *(u32*)(childSlot + 0x14) = snapTag1.w4;
@@ -245014,7 +244961,7 @@ updateMsg_loop:
                     *(u32*)(childSlot + 0x1C) = snapTag1.w6;
                     *(s16*)(childSlot + 0x20) = snapTag1.half;
                     childSlot[0x22] = snapTag1.byte;
-                    childSlot[0x23] = (u8)tag0;
+                    childSlot[0x23] = 0;
 
                     writeIdx = childView->mContextRingWriteIndex + 1;
                     prevIdx = writeIdx - 1;
@@ -245025,14 +244972,13 @@ updateMsg_loop:
                     slotU = sumU / childView->mContextRingCapacity;
                     childSlot = (u8*)childView->mContextRingBase +
                         (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    childSlot[0x23] = (u8)flag;
+                    childSlot[0x23] = 3;
 
                     sumU = childView->unk3F0 + childView->unk3FC;
                     slotU = sumU / childView->mContextRingCapacity;
                     childSlot = (u8*)childView->mContextRingBase +
                         (sumU - slotU * childView->mContextRingCapacity) * 0x24u;
-                    *(u32*)(childSlot + 0x4) = msgItem;
-#endif
+                    *(u32*)(childSlot + 4) = msgItem;
                 }
                 childNode = (void**)childNode[0];
             }
@@ -245040,11 +244986,11 @@ updateMsg_loop:
         }
         case 2: {
             // Remove WORK_ID from unk238.
-            u32 msgItem = *(u32*)(slot + 4);
+            msgItem = *(u32*)(ringSlot + 4);
             listSentinel = (void**)unk238.mStartNodePtr;
-            listNode = (void**)listSentinel[0];
+            listNode = (void**)*listSentinel;
             while (listNode != listSentinel) {
-                void** nextNode = (void**)listNode[0];
+                void** nextNode = (void**)*listNode;
                 if ((u32)listNode[2] == msgItem) {
                     void** prevNode = (void**)listNode[1];
                     prevNode[0] = nextNode;
@@ -245068,27 +245014,25 @@ updateMsg_loop:
             setCurrent__9CViewRootFP5CView(this);
             break;
         case 7:
-            if (*(u8*)(slot + 4) == 0) {
+            if (*(u8*)(ringSlot + 4) == 0) {
                 unk278 |= 0x20;
             } else {
                 unk278 &= ~0x20;
             }
             break;
-        }
+    }
 
-    updateMsg_advance:
-        readIdx = unk3F0;
-        cap = mContextRingCapacity;
-        mContextRingWriteIndex -= 1;
-        unk3F0 = (readIdx + 1) - ((readIdx + 1) / cap) * cap;
+updateMsg_advance:
+    readIdx = unk3F0;
+    cap = mContextRingCapacity;
+    mContextRingWriteIndex -= 1;
+    unk3F0 = (readIdx + 1) - ((readIdx + 1) / cap) * cap;
 
-    updateMsg_check:
-        if (mContextRingWriteIndex != 0) {
-            goto updateMsg_loop;
-        }
-}
-
-void CView::wkUpdate() {
+updateMsg_check:
+    if (mContextRingWriteIndex != 0) {
+        goto updateMsg_loop;
+    }
+}void CView::wkUpdate() {
     u32 hasView1;
     u32 hasView2;
 
@@ -246174,6 +246118,70 @@ CView::CView(const char* pName, CWorkThread* pParent)
 
     *(ml::CCol4*)((u8*)&mFrame + 0x8) = sFrameColor;
     *(ml::CCol4*)((u8*)&mFrame + 0x28) = lbl_8065A0C8;
+}
+
+CView::~CView() {
+    if (this == nullptr) return;
+
+    _reslist_base<u32>& list238 = reinterpret_cast<_reslist_base<u32>&>(unk238);
+    _reslist_base<void*>& list258 = reinterpret_cast<_reslist_base<void*>&>(unk258);
+
+    // Walk the unk238 list to sentinel (no-op consistency check).
+    {
+        _reslist_node<u32>* node;
+        for (node = list238.mStartNodePtr->mNext;
+             node != list238.mStartNodePtr;
+             node = node->mNext) {}
+    }
+
+    // Walk the unk258 list to sentinel (no-op consistency check).
+    {
+        _reslist_node<void*>* node;
+        for (node = list258.mStartNodePtr->mNext;
+             node != list258.mStartNodePtr;
+             node = node->mNext) {}
+    }
+
+    // Clear the context ring indices.
+    {
+        u32* vtable = &mContextMsgVtable;
+        if (vtable != nullptr) {
+            u8* ringBase = (u8*)(vtable + 1);
+            if (ringBase != nullptr) {
+                *(u32*)((u8*)vtable + 0x170) = 0;
+                *(u32*)((u8*)vtable + 0x174) = 0;
+            }
+        }
+    }
+
+    // Destroy unk258 (reslist<void*>).
+    list258.clearList();
+    if (!list258.unk1C && list258.mList != nullptr) {
+        delete[] list258.mList;
+        list258.mList = nullptr;
+    }
+    list258.mCapacity = 0;
+
+    // Destroy unk238 (reslist<u32>).
+    list238.clearList();
+    if (!list238.unk1C && list238.mList != nullptr) {
+        delete[] list238.mList;
+        list238.mList = nullptr;
+    }
+    list238.mCapacity = 0;
+
+    // Destroy CFontLayer sub-object (at offset 0x1C4).
+    __dt__10CFontLayerFv(this + 0x1C4, 0);
+
+    // Destroy CWorkThread sub-object.
+    __dt__11CWorkThreadFv(this, 0);
+}
+
+extern "C" void func_8043FBC4(void* self) {
+    // CFontLayer vtable thunk: adjust this by -0x1C4 to get the CView pointer,
+    // then delete (calls destructor + operator delete).
+    CView* view = reinterpret_cast<CView*>(static_cast<char*>(self) - 0x1C4);
+    delete view;
 }
 
 extern "C" void CView_UnkVirtualFunc7__5CViewFv() {}

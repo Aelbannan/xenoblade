@@ -15,7 +15,7 @@ extern "C" void func_800A4C48(void* query, const ml::CVec3* start,
 
 // Render the capsule for debug visualization.
 // r3 is unused (this of CfDebugDrawManager).
-extern "C" void func_800AB2E4(void* /*unused*/, cf::CfCollCapsuleImpl* capsule) {
+void func_800AB2E4(void* /*unused*/, cf::CfCollCapsuleImpl* capsule){
     CfCollCapsuleImpl_Col col;
     col.x = 0.0f;
     col.y = 0.5f;

@@ -3,39 +3,39 @@
 
 #include <harness_catalog.h>
 
-extern "C" void ScnMdlSmpl_CalcPosture__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34nw4r4math5MTX34() {}
+void ScnMdlSmpl_CalcPosture__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34nw4r4math5MTX34(){}
 
-extern "C" void ScnMdlSmpl_G3DPROC_GATHER_SCNOBJ__Q34nw4r3g3d12ScnMdlSimpleFUlPQ34nw4r3g3d13IScnObjGather() {}
+void ScnMdlSmpl_G3DPROC_GATHER_SCNOBJ__Q34nw4r3g3d12ScnMdlSimpleFUlPQ34nw4r3g3d13IScnObjGather(){}
 
-extern "C" void ScnMdlSmpl_G3DPROC_CALC_VIEW__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34nw4r4math5MTX34() {}
+void ScnMdlSmpl_G3DPROC_CALC_VIEW__Q34nw4r3g3d12ScnMdlSimpleFUlPCQ34nw4r4math5MTX34(){}
 
 extern "C" void ExecCallback_DRAW_OPA__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
 
 extern "C" void ExecCallback_DRAW_XLU__Q34nw4r3g3d15IScnObjCallbackFQ44nw4r3g3d6ScnObj6TimingPQ34nw4r3g3d6ScnObjUlPv(void) {}
 
-extern "C" void G3dProc__Q34nw4r3g3d12ScnMdlSimpleFUlUlPv() {}
+void G3dProc__Q34nw4r3g3d12ScnMdlSimpleFUlUlPv(){}
 
-extern "C" void SetScnObjOption__Q34nw4r3g3d12ScnMdlSimpleFUlUl() {}
+void SetScnObjOption__Q34nw4r3g3d12ScnMdlSimpleFUlUl(){}
 
-extern "C" void GetScnObjOption__Q34nw4r3g3d12ScnMdlSimpleCFUlPUl() {}
+void GetScnObjOption__Q34nw4r3g3d12ScnMdlSimpleCFUlPUl(){}
 
-extern "C" void GetScnMtxPos__Q34nw4r3g3d12ScnMdlSimpleCFPQ34nw4r4math5MTX34Q44nw4r3g3d6ScnObj13ScnObjMtxTypeUl() {}
+void GetScnMtxPos__Q34nw4r3g3d12ScnMdlSimpleCFPQ34nw4r4math5MTX34Q44nw4r3g3d6ScnObj13ScnObjMtxTypeUl(){}
 
-extern "C" void SetAnmObj__Q34nw4r3g3d12ScnMdlSimpleFPQ34nw4r3g3d6AnmObjQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void SetAnmObj__Q34nw4r3g3d12ScnMdlSimpleFPQ34nw4r3g3d6AnmObjQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void RemoveAnmObj__Q34nw4r3g3d12ScnMdlSimpleFPQ34nw4r3g3d6AnmObj() {}
+void RemoveAnmObj__Q34nw4r3g3d12ScnMdlSimpleFPQ34nw4r3g3d6AnmObj(){}
 
-extern "C" void RemoveAnmObj__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void RemoveAnmObj__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void GetAnmObj__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void GetAnmObj__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void GetAnmObj__Q34nw4r3g3d12ScnMdlSimpleCFQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void GetAnmObj__Q34nw4r3g3d12ScnMdlSimpleCFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void UpdateFrame__Q34nw4r3g3d12ScnMdlSimpleFv() {}
+void UpdateFrame__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
-extern "C" void EnableScnMdlCallbackTiming__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d6ScnObj6Timing() {}
+void EnableScnMdlCallbackTiming__Q34nw4r3g3d12ScnMdlSimpleFQ44nw4r3g3d6ScnObj6Timing(){}
 
-extern "C" void GetViewPosMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv() {}
+void GetViewPosMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
 extern "C" void* GetViewNrmMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(void* r3) {
     void* r5 = *(void**)((char*)r3 + 0xf8);
@@ -50,16 +50,16 @@ extern "C" void* GetViewNrmMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(void* r3) {
     return (void*)((char*)r5 + offset);
 }
 
-extern "C" void GetViewTexMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv() {}
+void GetViewTexMtxArray__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
-extern "C" void __ct__Q34nw4r3g3d12ScnMdlSimpleFP12MEMAllocatorQ34nw4r3g3d6ResMdlPQ34nw4r4math5MTX34PUlPQ34nw4r4math5MTX34PQ34nw4r4math5MTX33PQ34nw4r4math5MTX34ii() {}
+void __ct__Q34nw4r3g3d12ScnMdlSimpleFP12MEMAllocatorQ34nw4r3g3d6ResMdlPQ34nw4r4math5MTX34PUlPQ34nw4r4math5MTX34PQ34nw4r4math5MTX33PQ34nw4r4math5MTX34ii(){}
 
-extern "C" void __dt__Q34nw4r3g3d12ScnMdlSimpleFv() {}
+void __dt__Q34nw4r3g3d12ScnMdlSimpleFv(){}
 
-extern "C" void __dt__Q34nw4r3g3d18ICalcWorldCallbackFv() {}
+void __dt__Q34nw4r3g3d18ICalcWorldCallbackFv(){}
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d12ScnMdlSimpleCFQ44nw4r3g3d6G3dObj7TypeObj() {}
+void IsDerivedFrom__Q34nw4r3g3d12ScnMdlSimpleCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
-extern "C" void GetTypeName__Q34nw4r3g3d12ScnMdlSimpleCFv() {}
+void GetTypeName__Q34nw4r3g3d12ScnMdlSimpleCFv(){}
 
-extern "C" void* GetTypeObj__Q34nw4r3g3d12ScnMdlSimpleCFv(void) { return 0; }
+void* GetTypeObj__Q34nw4r3g3d12ScnMdlSimpleCFv(void){ return 0; }

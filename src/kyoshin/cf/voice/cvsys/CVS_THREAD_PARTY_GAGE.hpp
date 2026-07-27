@@ -21,4 +21,5 @@ public:
 
     // Gauge change threshold level (0=low, 1=mid, 2=high) (offset 0x28).
     u32 thresholdLevel;
+    CVS_THREAD_PARTY_GAGE();
 };

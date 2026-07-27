@@ -3,19 +3,19 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_800CA4EC() {}
+void func_800CA4EC(){}
 
 extern "C" void* func_800CA538(void* self) { return (void*)((u8*)self + 0x68); }
 
-extern "C" void func_800CA540() {}
+void func_800CA540(){}
 
-extern "C" void func_800CA580() {}
+void func_800CA580(){}
 
 extern "C" void func_800CA58C(void) {}
 
-extern "C" void func_800CA590() {}
+void func_800CA590(){}
 
-extern "C" void __dt__Q22cf15CfObjectImplObjFv(void* self) {}
+void cf::CfObjectImplObj::~CfObjectImplObj() {}
 
 extern "C" void func_800CEE28(void* self);
 extern "C" void func_800CA6CC(void* self) { ((void(*)(void*))func_800CEE28)((char*)self - 0xc); }

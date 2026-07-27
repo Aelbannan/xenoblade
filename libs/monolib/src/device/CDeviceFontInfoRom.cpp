@@ -6,28 +6,28 @@
 #include "nw4r/ut/ut_RomFont.h"
 
 // ---- CDeviceFontInfoRom constructor (0x804576A8) ----
-extern "C" void __ct__18CDeviceFontInfoRomFv(void) {}
+CDeviceFontInfoRom::CDeviceFontInfoRom(void) {}
 
 // ---- CDeviceFontInfoRom destructor (0x80457760) ----
-extern "C" void __dt__18CDeviceFontInfoRomFv(void) {}
+void CDeviceFontInfoRom::~CDeviceFontInfoRom(void) {}
 
 // ---- func_804536DC (0x80457808) — OSGetFontTexture wrapper ----
-extern "C" void func_804536DC__18CDeviceFontInfoRomFv(void) {}
+void CDeviceFontInfoRom::func_804536DC(void) {}
 
 // ---- create() (0x80457820) — static factory ----
-extern "C" void* create__18CDeviceFontInfoRomFv() { return nullptr; }
+void* CDeviceFontInfoRom::create() { return nullptr; }
 
 // ---- func_8045378C (0x8045785C) — state machine step ----
-extern "C" void func_8045378C__18CDeviceFontInfoRomFv(void) {}
+void CDeviceFontInfoRom::func_8045378C(void) {}
 
 // ---- func_804537A8 (0x80457878) — state check ----
-extern "C" void func_804537A8__18CDeviceFontInfoRomFv(void) {}
+void CDeviceFontInfoRom::func_804537A8(void) {}
 
 // ---- func_804537C0 (0x80457890) — bool return ----
-extern "C" void func_804537C0__18CDeviceFontInfoRomFv(void) {}
+void CDeviceFontInfoRom::func_804537C0(void) {}
 
 // ---- func_804537D4 (0x804578A4) — state comparison ----
-extern "C" void func_804537D4__18CDeviceFontInfoRomFv(void) {}
+void CDeviceFontInfoRom::func_804537D4(void) {}
 
 // ---- func_804537F0 (0x804578C0) — returns &mRomFont (non-const) ----
 // FULL_MATCH: size 0x8
@@ -42,18 +42,18 @@ extern "C" const nw4r::ut::RomFont* func_804537F8__18CDeviceFontInfoRomFv(const 
 }
 
 // ---- func_80453800 (0x804578D0) — reads mFontInfo->field_0x12 ----
-extern "C" u32 func_80453800__18CDeviceFontInfoRomFv(void* self) {
-    return *(u32*)((u8*)self + 0x0C);
+u32 CDeviceFontInfoRom::func_80453800() {
+    return *(u32*)((u8*)this + 0x0C);
 }
 
 // ---- func_8045380C (0x804578DC) — reads mFontInfo->field_0x18 ----
-extern "C" u16 func_8045380C__18CDeviceFontInfoRomFv(void* self) {
-    return *(u16*)((u8*)self + 0x0C + 0x18);
+u16 CDeviceFontInfoRom::func_8045380C() {
+    return *(u16*)((u8*)this + 0x0C + 0x18);
 }
 
 // ---- func_80453818 (0x804578E8) — reads mFontInfo->field_0x20 ----
-extern "C" u16 func_80453818__18CDeviceFontInfoRomFv(void* self) {
-    return *(u16*)((u8*)self + 0x0C + 0x20);
+u16 CDeviceFontInfoRom::func_80453818() {
+    return *(u16*)((u8*)this + 0x0C + 0x20);
 }
 
 // ---- func_80453824 (0x804578F4) — reads mFontInfo->field_0x1E ----

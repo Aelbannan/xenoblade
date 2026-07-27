@@ -31,5 +31,8 @@ private:
     char unkA2[0xA4 - 0xA2]; //0xA2
 
     static CUIWindowManager* spInstance;
+    CUIWindowManager();
+    virtual ~CUIWindowManager();
+    void Init();
 
 }; //size = 0xA4

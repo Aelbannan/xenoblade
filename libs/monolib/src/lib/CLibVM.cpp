@@ -1,6 +1,6 @@
 #include "monolib/lib/CLibVM.hpp"
 
-extern "C" void __ct__6CLibVMFPCcP11CWorkThread() {}
+CLibVM::CLibVM() {}
 
 extern "C" void* lbl_eu_80665720;
 extern "C" void __dt__11CWorkThreadFv(void*, int);
@@ -23,10 +23,10 @@ CLibVM* CLibVM::getInstance() {
     return spInstance;
 }
 
-extern "C" void isInitialized__6CLibVMFv() {}
+void CLibVM::isInitialized() {}
 
-extern "C" void setCallbacks__6CLibVMFPFv_vPFv_v(void* self, u32 a, u32 b) {}
+void CLibVM::setCallbacks(u32 a, u32 b) {}
 
-extern "C" void wkStandbyLogin__6CLibVMFv() {}
+void CLibVM::wkStandbyLogin() {}
 
-extern "C" void wkStandbyLogout__6CLibVMFv() {}
+void CLibVM::wkStandbyLogout() {}

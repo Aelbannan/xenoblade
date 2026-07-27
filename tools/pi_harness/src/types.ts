@@ -17,6 +17,11 @@ export interface HarnessConfig {
   maxParallelTUs: number;
   maxBatchRetries: number;
   singletonRetry: boolean;
+  /** Max output tokens per session (0 = model default, no override). */
+  maxTokens: number;
+  /** Targets with retail ASM smaller than this (bytes) go to re-batch
+   *  instead of singleton retries. 0 = all use singletons. */
+  singletonMinSize: number;
   maxBriefChars: number;
   maxBatchMinutes: number;
   region: string;
@@ -24,6 +29,12 @@ export interface HarnessConfig {
   ledgerPath: string;
   /** Python interpreter for coop tooling; auto-detected from .venv. */
   pythonBin: string;
+  /** Total in-session re-prompts on compile/lint failure before falling
+   *  back to a fresh session. 0 = single-prompt, no continuation. */
+  maxRePrompts: number;
+  /** In-session re-prompts when the model completed but code still
+   *  fails (not a timeout). Lower cap avoids entrenchment on dead ends. */
+  maxStuckRePrompts: number;
 }
 
 export interface Target {
@@ -63,4 +74,12 @@ export interface SessionUsage {
   output: number;
   cacheRead: number;
   cacheWrite: number;
+}
+
+export interface VerifyResult {
+  action: "accept" | "re-prompt" | "fail";
+  /** Required when action is "re-prompt". */
+  feedback?: string;
+  /** Optional when action is "fail". */
+  reason?: string;
 }

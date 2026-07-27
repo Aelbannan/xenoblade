@@ -49,4 +49,6 @@ private:
     u8 unkE9;                              // 0xE9 - assets requested
     u8 unkEA[0xEC - 0xEA];                 // 0xEA
     mtl::ALLOC_HANDLE mHeap;               // 0xEC
+    CUIBattleManager();
+    virtual ~CUIBattleManager();
 }; // size = 0xF0

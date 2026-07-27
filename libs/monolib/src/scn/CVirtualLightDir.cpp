@@ -3,8 +3,8 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CVirtualLightDir() {}
+void __ct__CVirtualLightDir(){}
 
-extern "C" void func_8049474C(void* self, float a, float b) {}
+void func_8049474C(void* self, float a, float b){}
 
-extern "C" void __dt__16CVirtualLightDirFv() {}
+void CVirtualLightDir::~CVirtualLightDir() {}

@@ -26,4 +26,4 @@ extern "C" void func_802AE8E0(void* self) {
     }
 }
 
-extern "C" void OnFileEvent__5CLoadFP10CEventFile() {}
+void CLoad::OnFileEvent() {}

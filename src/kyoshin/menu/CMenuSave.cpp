@@ -4,23 +4,23 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/menu/CMenuSave.hpp"
 
-extern "C" void __ct__CMenuSave() {}
+void __ct__CMenuSave(){}
 
-extern "C" void __dt__9CMenuSaveFv(CMenuSave* self, int dtorFlag) {}
+void CMenuSave::~CMenuSave(int dtorFlag) {}
 
-extern "C" void Init__9CMenuSaveFv() {}
+void CMenuSave::Init() {}
 
-extern "C" void Term__9CMenuSaveFv() {}
+void CMenuSave::Term() {}
 
-extern "C" void Move__9CMenuSaveFv() {}
+void CMenuSave::Move() {}
 
-extern "C" void cbRenderBefore__9CMenuSaveFv(CMenuSave* self) {}
+void CMenuSave::cbRenderBefore() {}
 
-extern "C" void func_8028E3B4() {}
+void func_8028E3B4(){}
 
 extern "C" void stub_us_802908bc() {}
 
-extern "C" void func_8028E450() {}
+void func_8028E450(){}
 
 extern "C" int func_8028F664(void*);
 
@@ -33,9 +33,9 @@ extern "C" void func_8028E4E0(void* this_) {
     }
 }
 
-extern "C" void func_8028E530() {}
+void func_8028E530(){}
 
-extern "C" void func_8028E768() {}
+void func_8028E768(){}
 
 /// Adjusting thunk: called when IScnRender subobject (at CMenuSave+0x58)
 /// receives cbRenderBefore. Adjusts this back to full CMenuSave*.

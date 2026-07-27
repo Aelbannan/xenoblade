@@ -73,4 +73,5 @@ public:
 
 private:
     static ml::CVec3 sPlaneCoords[];
+    COccCulling();
 };

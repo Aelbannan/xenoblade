@@ -13,25 +13,25 @@
 // Constructor / Destructor (scaffold - NOT YET DECOMPILED)
 // ---------------------------------------------------------------------------
 
-extern "C" void __ct__cf_CfGimmickItem() {}
+void __ct__cf_CfGimmickItem(){}
 
-extern "C" void __dt__Q22cf13CfGimmickItemFv() {}
+void cf::CfGimmickItem::~CfGimmickItem() {}
 
 // ---------------------------------------------------------------------------
 // Remaining functions (scaffolds - NOT YET DECOMPILED)
 // ---------------------------------------------------------------------------
 
-extern "C" void func_80210668() {}
+void func_80210668(){}
 
-extern "C" void func_802106F8() {}
+void func_802106F8(){}
 
-extern "C" void func_80210844() {}
+void func_80210844(){}
 
-extern "C" void func_802108D8() {}
+void func_802108D8(){}
 
-extern "C" void func_80210AD0() {}
+void func_80210AD0(){}
 
-extern "C" void func_80210BAC() {}
+void func_80210BAC(){}
 
 // ---------------------------------------------------------------------------
 // FULL_MATCH: Virtual function override -- no-op

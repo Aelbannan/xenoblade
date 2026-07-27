@@ -3,13 +3,13 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CPcEffect07() {}
+void __ct__cf_CPcEffect07(){}
 
-extern "C" void __dt__Q22cf11CPcEffect07Fv(void* self) {}
+void cf::CPcEffect07::~CPcEffect07() {}
 
-extern "C" void func_801B19F0() {}
+void func_801B19F0(){}
 
-extern "C" void func_801B1C5C() {}
+void func_801B1C5C(){}
 
 extern "C" unsigned char* lbl_eu_80664398;
 
@@ -20,7 +20,7 @@ extern "C" int func_801B1CB0() {
     return lbl_eu_80664398[0x58];
 }
 
-extern "C" void func_801B1CCC() {}
+void func_801B1CCC(){}
 
 extern "C" int func_801B1D4C(int index)
 {
@@ -44,9 +44,9 @@ extern "C" int func_801B1D4C(int index)
     return -1;
 }
 
-extern "C" void func_801B1DCC() {}
+void func_801B1DCC(){}
 
-extern "C" void func_801B1E74() {}
+void func_801B1E74(){}
 
 extern "C" s32 func_801B1FA4() {
     void* r3 = lbl_eu_80664398;
@@ -88,17 +88,17 @@ extern "C" int func_801B2084() {
     return result;
 }
 
-extern "C" void func_801B20C8(void* self) {}
+void func_801B20C8(void* self){}
 
-extern "C" void func_801B218C() {}
+void func_801B218C(){}
 
-extern "C" void func_801B21E0(void* self) {}
+void func_801B21E0(void* self){}
 
-extern "C" void func_801B2318(void* self) {}
+void func_801B2318(void* self){}
 
-extern "C" void func_801B23D0() {}
+void func_801B23D0(){}
 
-extern "C" void func_801B248C() {}
+void func_801B248C(){}
 
 extern "C" void func_801B2544(void* self) { ((void(*)(void*))func_801B21E0)((char*)self - 0x4); }
 

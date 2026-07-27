@@ -3,10 +3,10 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_80274DD8() {}
+void func_80274DD8(){}
 
-extern "C" void func_80274E0C() {}
+void func_80274E0C(){}
 
-extern "C" void func_80274E40() {}
+void func_80274E40(){}
 
-extern "C" void func_80274E74() {}
+void func_80274E74(){}

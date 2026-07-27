@@ -6,9 +6,9 @@
 extern "C" void OnFileEvent__12CTaskGameEvtFP10CEventFile(void* self) { ((void(*)(void*))func_80295764)((char*)self - 0x54); }
 
 
-extern "C" void func_802956A4(void) {}
+void func_802956A4(void){}
 
-extern "C" void func_802956A8(void) {}
+void func_802956A8(void){}
 
 
 
@@ -21,7 +21,7 @@ extern "C" int func_80295764(void* self) { return 0; }
 extern "C" void Draw__12CTaskGameEvtFv() {}
 
 
-extern "C" void func_80295870(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }
+void func_80295870(void* self) { ((void(*)(void*))__dt__12CTaskGameEvtFv)((char*)self - 0x54); }
 
 extern "C" void func_80295878(void* self) { ((void(*)(void*))cbRenderBefore__12CTaskGameEvtFv)((char*)self - 0x58); }
 
@@ -41,8 +41,8 @@ public:
 
 class CTaskGameEvt;
 extern "C" void removeRenderCB__4CScnFP10IScnRender(void*, void*);
-extern "C" void Term__12CTaskGameEvtFv(void* self) {
-    void* r4 = self ? (u8*)self + 0x58 : 0;
-    void* scn = *(void**)((u8*)self + 0x5C);
+void CTaskGameEvt::Term() {
+    void* r4 = this ? (u8*)this + 0x58 : 0;
+    void* scn = *(void**)((u8*)this + 0x5C);
     removeRenderCB__4CScnFP10IScnRender(scn, r4);
 }

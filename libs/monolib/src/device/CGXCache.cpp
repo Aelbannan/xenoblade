@@ -30,7 +30,7 @@ extern "C" void* __dt__CMsgParam_32(void* self, int shouldDelete) {
 
 // (mapped to __ct__80449548 above)
 
-extern "C" void __ct__80449534() {}
+void __ct__80449534(){}
 
 // (mapped to __ct__80449548 above)
 
@@ -38,36 +38,35 @@ extern "C" void func_8044954C(void) {}
 
 // (mapped to __ct__80449548 above)
 
-extern "C" void __ct__IStateCache() {}
+void __ct__IStateCache(){}
 
-extern "C" void __dt__8CGXCacheFv() {}
+void CGXCache::~CGXCache() {}
 
-extern "C" void func_80449D68__8CGXCacheFv() {}
+void CGXCache::func_80449D68() {}
 
-extern "C" void func_8044A578__8CGXCacheFv() {}
+void CGXCache::func_8044A578() {}
 
-extern "C" void func_8044A6C8__8CGXCacheFii() {}
+void CGXCache::func_8044A6C8() {}
 
-extern "C" void func_8044A7F8__8CGXCacheFv() {}
+void CGXCache::func_8044A7F8() {}
 
-extern "C" void func_8044A94C__8CGXCacheFii() {}
+void CGXCache::func_8044A94C() {}
 
-extern "C" void func_8044AA7C__8CGXCacheFii() {}
+void CGXCache::func_8044AA7C() {}
 
-extern "C" void func_8044ABAC__8CGXCacheFv() {}
+void CGXCache::func_8044ABAC() {}
 
-extern "C" void func_8044ACDC__8CGXCacheFRCQ22ml5CCol4i() {}
+void CGXCache::func_8044ACDC() {}
 
-extern "C" void func_8044AE8C__8CGXCacheFRCQ22ml5CCol4i() {}
+void CGXCache::func_8044AE8C() {}
 
-extern "C" void func_8044B03C__8CGXCacheFi() {}
+void CGXCache::func_8044B03C() {}
 
-extern "C" void func_8044B168__8CGXCacheFi() {}
+void CGXCache::func_8044B168() {}
 
 extern "C" void func_8044B294__8CGXCacheFUl(void) {}
 
-extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
-
+void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
 struct C1FCMsgEntry {
     u32 command;
     u32 wid;
@@ -99,8 +98,8 @@ struct C1FCCacheLayout {
 
 // Optional ring pair pointers in r4–r6 update cached scissor rects, then enqueue
 // GX commands for tags 0xB / 0xC via func_8044CE68 (this+4).
-extern "C" void func_8044B298__8CGXCacheFv(void* self, void* a, void* b, void* c) {
-    C1FCCacheLayout* cache = (C1FCCacheLayout*)self;
+void CGXCache::func_8044B298(void* a, void* b, void* c) {
+    C1FCCacheLayout* cache = (C1FCCacheLayout*)this;
     u32* insetPair;
     s16 stack[4];
     u32 i;
@@ -153,7 +152,7 @@ found_b:
     entry->wid = *(u32*)&stack[0];
     entry->unk8 = *(u32*)&stack[2];
     // Retail recomputes this+4 at each call site (addi before bl).
-    func_8044CE68__8CGXCacheFv((u8*)self + 4, 0xb);
+    func_8044CE68__8CGXCacheFv((u8*)this + 4, 0xb);
 
     i = 0;
     for (u32 n = cache->mSize; n != 0; n--) {
@@ -175,43 +174,43 @@ found_c:
     entry->wid = insetPair[0];
     entry->unk8 = insetPair[1];
     {
-        // volatile blocks CSE of (self+4) into a third saved GPR (+4B over).
-        void* volatile vself = self;
+        // volatile blocks CSE of (this+4) into a third saved GPR (+4B over).
+        void* volatile vself = this;
         func_8044CE68__8CGXCacheFv((u8*)vself + 4, 0xc);
     }
 }
 
-extern "C" void func_8044B4B8__8CGXCacheFP9_GXTexObjUsUs() {}
+void CGXCache::func_8044B4B8() {}
 
-extern "C" void func_8044B5B4__8CGXCacheFv(void) {}
+void CGXCache::func_8044B5B4(void) {}
 
-extern "C" void func_8044B5C0__8CGXCacheFv() {}
+void CGXCache::func_8044B5C0() {}
 
-extern "C" void func_8044B660__8CGXCacheFv() {}
+void CGXCache::func_8044B660() {}
 
-extern "C" void func_8044B8CC__8CGXCacheFfff() {}
+void CGXCache::func_8044B8CC() {}
 
-extern "C" void func_8044BB20__8CGXCacheFv() {}
+void CGXCache::func_8044BB20() {}
 
-extern "C" void func_8044BD74__8CGXCacheFi() {}
+void CGXCache::func_8044BD74() {}
 
-extern "C" void func_8044BE10__8CGXCacheFv(void) {}
+void CGXCache::func_8044BE10(void) {}
 
 extern "C" void* func_8044BE1C__8CGXCacheFv(void* self) { return (void*)((u8*)self + 0x510); }
 
 extern "C" u8 func_8044BE24__8CGXCacheFv(void* self) { return ((u8*)self)[0x518]; }
 
-extern "C" void* func_8044BE2C__8CGXCacheFv(void) { return 0; }
+void* CGXCache::func_8044BE2C(void) { return 0; }
 
 // Retail is a pure tail to func_8044C1FC. Keep callee undefined here so MWCC
 // cannot inline an empty same-TU stub into a lone blr.
-extern "C" void func_8044C1FC__8CGXCacheFv(void* self);
+void func_8044C1FC__8CGXCacheFv(void* self);
 extern "C" void func_8044BE38__8CGXCacheFv(void* self) {
     func_8044C1FC__8CGXCacheFv(self);
 }
 
-extern "C" void func_8044BE3C__8CGXCacheFv(void* self) {
-    (void)self;
+void CGXCache::func_8044BE3C() {
+    (void)this;
     GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX4, 0x3C, GX_DISABLE, 0x7D);
     GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX5, 0x3C, GX_DISABLE, 0x7D);
     GXSetTexCoordGen2(GX_TEXCOORD2, GX_TG_MTX2x4, GX_TG_TEX6, 0x3C, GX_DISABLE, 0x7D);
@@ -231,10 +230,10 @@ extern "C" void func_8044BE3C__8CGXCacheFv(void* self) {
     GXEnableTexOffsets(GX_TEXCOORD7, GX_DISABLE, GX_DISABLE);
 }
 
-extern "C" void func_8044BFC0__8CGXCacheFv() {}
+void CGXCache::func_8044BFC0() {}
 
-extern "C" void func_8044C034__8CGXCacheFv(void* self) {
-    (void)self;
+void CGXCache::func_8044C034() {
+    (void)this;
     u32 tevStage;
     GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, GX_TEXMAP0, GX_COLOR0A0);
     GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, GX_TEXMAP1, GX_COLOR0A0);
@@ -281,9 +280,9 @@ void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
 }
 
 #pragma dont_inline on
-extern "C" void func_8044C1FC__8CGXCacheFv(void* self) {
-    C1FCCacheLayout* cache = (C1FCCacheLayout*)self;
-    void* msgSelf = (u8*)self + 4;
+void CGXCache::func_8044C1FC() {
+    C1FCCacheLayout* cache = (C1FCCacheLayout*)this;
+    void* msgSelf = (u8*)this + 4;
     GXColor gxCol;
     GXRenderModeObj* rmo;
     f32 yScale;
@@ -300,7 +299,7 @@ extern "C" void func_8044C1FC__8CGXCacheFv(void* self) {
     GXSetCoPlanar(GX_DISABLE);
     GXSetCullMode(GX_CULL_BACK);
     GXSetClipMode(GX_CLIP_ENABLE);
-    func_8044BE3C__8CGXCacheFv(self);
+    func_8044BE3C__8CGXCacheFv(this);
     GXInvalidateVtxCache();
     GXInvalidateTexAll();
     GXClearVtxDesc();
@@ -346,7 +345,7 @@ extern "C" void func_8044C1FC__8CGXCacheFv(void* self) {
     GXSetAlphaCompare(GX_ALWAYS, 0, GX_AOP_AND, GX_ALWAYS, 0);
     GXSetZTexture(GX_ZT_DISABLE, GX_TF_Z8, 0);
 
-    func_8044C034__8CGXCacheFv(self);
+    func_8044C034__8CGXCacheFv(this);
 
     GXSetNumIndStages(0);
     GXSetIndTexCoordScale(GX_INDTEXSTAGE0, GX_ITS_1, GX_ITS_1);
@@ -614,9 +613,9 @@ struct MsgParam32Ring {
     void* field7;
 };
 
-extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd) {
-    void* saved = self;
-    MsgParam32Ring* ring = (MsgParam32Ring*)self;
+void CGXCache::func_8044CE68(u32 cmd) {
+    void* saved = this;
+    MsgParam32Ring* ring = (MsgParam32Ring*)this;
     u32 i;
 
     // Ascending `i < mSize` → mtctr + cmplwi/ble (same as C1FC ring walk).
@@ -636,14 +635,14 @@ dispatch:
         u32 idx = base->mFront + i;
         u32 slot = idx - (idx / base->mCapacity) * base->mCapacity;
         MsgParam32Entry* entry = &base->mArrayPtr[slot];
-        self = ((MsgParam32Ring*)self)->field7;
-        void** vtbl = *(void***)self;
-        ((void (*)(void*, u32, void*))vtbl[3])(self, cmd, (u8*)entry + 4);
+        this = ((MsgParam32Ring*)this)->field7;
+        void** vtbl = *(void***)this;
+        ((void (*)(void*, u32, void*))vtbl[3])(this, cmd, (u8*)entry + 4);
     }
 }
 
-extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd) {
-    MsgParam32Ring* ring = (MsgParam32Ring*)self;
+void* CGXCache::func_8044CEF8(u32 cmd) {
+    MsgParam32Ring* ring = (MsgParam32Ring*)this;
     u32 i;
 
     for (i = 0; i < ring->mSize; i++) {
@@ -661,7 +660,7 @@ found_entry:
         return (u8*)&ring->mArrayPtr[slot] + 4;
     }
 }
-extern "C" void func_8044CF74__8CGXCacheFv() {}
+void CGXCache::func_8044CF74() const {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 template <int N> class CMsgParam {

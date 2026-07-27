@@ -2,40 +2,39 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-extern "C" void __dt__13CMenuMiniMap2Fv(void* self);
+void __dt__13CMenuMiniMap2Fv(void* self);
+void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
 
-extern "C" void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
+void CMMTex::~CMMTex() {}
 
-extern "C" void __dt__6CMMTexFv() {}
+void func_80117734(){}
 
-extern "C" void func_80117734() {}
+void CMMTex::OnFileEvent() {}
 
-extern "C" void OnFileEvent__6CMMTexFP10CEventFile() {}
+void __ct__CMiniMap(){}
 
-extern "C" void __ct__CMiniMap() {}
+void CMiniMap::~CMiniMap() {}
 
-extern "C" void __dt__8CMiniMapFv() {}
+void func_80117C30(){}
 
-extern "C" void func_80117C30() {}
+void func_80118058(){}
 
-extern "C" void func_80118058() {}
+void CMiniMap::OnFileEvent() {}
 
-extern "C" void OnFileEvent__8CMiniMapFP10CEventFile() {}
+void func_80118854(){}
 
-extern "C" void func_80118854() {}
-
-extern "C" void func_8011B05C() {}
+void func_8011B05C(){}
 
 
-extern "C" void Init__13CMenuMiniMap2Fv() {}
+void CMenuMiniMap2::Init() {}
 
-extern "C" void Term__13CMenuMiniMap2Fv() {}
+void CMenuMiniMap2::Term() {}
 
-extern "C" void Move__13CMenuMiniMap2Fv() {}
+void CMenuMiniMap2::Move() {}
 
-extern "C" void cbRenderBefore__13CMenuMiniMap2Fv(void* self) {}
+void CMenuMiniMap2::cbRenderBefore() {}
 
-extern "C" void __ct__8011C1B8() {}
+void __ct__8011C1B8(){}
 
 extern u32 lbl_eu_80663F20;
 extern u32 lbl_eu_80663FB0;
@@ -44,7 +43,7 @@ extern "C" bool func_8011C2E8() {
     return ((-v) | v) >> 31;
 }
 
-extern "C" void func_8011C2FC() {}
+void func_8011C2FC(){}
 
 extern "C" void func_8011C400()
 {

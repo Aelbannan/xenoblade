@@ -259,7 +259,6 @@ PaneComponent* PaneManager::getPaneComponentByPane(nw4hbm::lyt::Pane* pPane) {
     return NULL;
 }
 
-#pragma push
 #pragma opt_propagation off // ???
 
 void PaneManager::setAllBoundingBoxComponentTriggerTarget(bool target) {
@@ -273,7 +272,6 @@ void PaneManager::setAllBoundingBoxComponentTriggerTarget(bool target) {
     }
 }
 
-#pragma pop
 
 bool PaneComponent::contain(f32 x, f32 y) {
     if (mpManager == NULL) {
@@ -358,14 +356,14 @@ bool PaneComponent::isVisible() {
 } // namespace gui
 } // namespace homebutton
 
-extern "C" void drawLine___Q210homebutton3guiFfffffUcR8_GXColor() {}
-extern "C" void delComponent__Q310homebutton3gui7ManagerFPQ310homebutton3gui9Component() {}
-extern "C" void addLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout() {}
+void drawLine___Q210homebutton3guiFfffffUcR8_GXColor(){}
+void delComponent__Q310homebutton3gui7ManagerFPQ310homebutton3gui9Component(){}
+void addLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout(){}
 const void* GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv() {
     extern const char typeInfo__Q36nw4hbm3lyt4Pane[];
     return typeInfo__Q36nw4hbm3lyt4Pane;
 }
-extern "C" void delLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout() {}
+void delLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout(){}
 void IsVisible__Q36nw4hbm3lyt4PaneCFv() { *(u8*)0xcf = 0; }
 inline void GetParent__Q36nw4hbm3lyt4PaneCFv() { }
 extern "C" void onDrag__Q310homebutton3gui9ComponentFff() {}

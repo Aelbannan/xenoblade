@@ -3,15 +3,15 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CREvtObj() {}
+void __ct__cf_CREvtObj(){}
 
-extern "C" void __dt__Q22cf8CREvtObjFv() {}
+void cf::CREvtObj::~CREvtObj() {}
 
-extern "C" void func_80185700() {}
+void func_80185700(){}
 
-extern "C" void func_80185748() {}
+void func_80185748(){}
 
-extern "C" void __dt__80185754(void) {}
+void __dt__80185754(void){}
 
 // Returns 0 unconditionally.
 extern "C" int func_80185758() { return 0; }

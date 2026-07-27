@@ -241,4 +241,4 @@ void* RomFont::Unload() {
 } // namespace ut
 } // namespace nw4r
 
-extern "C" bool HasGlyph__Q34nw4r2ut7RomFontCFUs(unsigned short) { return false; }
+bool HasGlyph__Q34nw4r2ut7RomFontCFUs(unsigned short){ return false; }

@@ -13,28 +13,28 @@
 
 
 // us-80491238: __ct__CScnMaruShadowNw4r (constructor, 0x60 bytes)
-extern "C" void __ct__CScnMaruShadowNw4r() {}
+void __ct__CScnMaruShadowNw4r(){}
 
 // us-80491298: __dt__4CScnFvMaruShadowNw4r (destructor, 0x40 bytes)
-extern "C" void __dt__4CScnFvMaruShadowNw4r() {}
+void CScn::~CScn() {}
 
 // us-804912d8: func_8048D264 (0x29C bytes)
-extern "C" void func_8048D264() {}
+void func_8048D264(){}
 
 // us-80491574: func_8048D500 (0x658 bytes)
-extern "C" void func_8048D500() {}
+void func_8048D500(){}
 
 // us-80491bcc: func_8048DB58 (0x18 bytes)
-extern "C" void func_8048DB58() {}
+void func_8048DB58(){}
 
 // us-80491be4: func_8048DB70 (0x1A8 bytes)
-extern "C" void func_8048DB70() {}
+void func_8048DB70(){}
 
 // us-80491d8c: func_8048DD18 (0x5E0 bytes)
-extern "C" void func_8048DD18() {}
+void func_8048DD18(){}
 
 // us-8049236c: func_8048E2F8 (0x384 bytes)
-extern "C" void func_8048E2F8() {}
+void func_8048E2F8(){}
 
 // us-804926f0: func_8048E67C (0x20 bytes)
 extern "C" float lbl_eu_8066A994;
@@ -49,10 +49,10 @@ extern "C" void func_8048E67C(void* obj, int condition) {
 }
 
 // us-80492710: func_8048E69C (0x39C bytes)
-extern "C" void func_8048E69C() {}
+void func_8048E69C(){}
 
 // us-80492aac: func_8048EA38 (0x8 bytes) — stores float to sda21 global
-extern "C" void func_8048EA38() {}
+void func_8048EA38(){}
 
 // us-80492ab4: func_8048EA40 (0x8 bytes) — loads float from sda21 global
 extern "C" float func_8048EA40()
@@ -62,10 +62,10 @@ extern "C" float func_8048EA40()
 }
 
 // us-80492abc: func_8048EA48 (0x2C bytes) — sets/clears flag 0x80 in halfword + stores float
-extern "C" void func_8048EA48() {}
+void func_8048EA48(){}
 
 // us-80492ae8: func_8048EA74 (0x28 bytes) — sets/clears flag 0x100 in halfword
-extern "C" void func_8048EA74() {}
+void func_8048EA74(){}
 
 // --- FULL_MATCH functions ---
 

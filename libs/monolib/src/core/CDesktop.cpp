@@ -105,5 +105,5 @@ namespace{
     }
 }
 
-extern "C" void OnFileEvent__8CDesktopFP10CEventFile() {}
-extern "C" void WorkEvent3__8CDesktopFPv() {}
+void CDesktop::OnFileEvent() {}
+void CDesktop::WorkEvent3() {}

@@ -945,7 +945,7 @@ void ChrAnmResult::SetRotTrans(const math::MTX34* pRotTrans) {
 } // namespace g3d
 } // namespace nw4r
 
-extern "C" void GetResUserData__Q34nw4r3g3d9ResAnmChrFv() {}
-extern "C" void GetMtx__Q34nw4r3g3d12ChrAnmResultCFPQ34nw4r4math5MTX34() {}
-extern "C" void SetRotateDeg__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3() {}
-extern "C" void SetTranslate__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3() {}
+void GetResUserData__Q34nw4r3g3d9ResAnmChrFv(){}
+void GetMtx__Q34nw4r3g3d12ChrAnmResultCFPQ34nw4r4math5MTX34(){}
+void SetRotateDeg__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3(){}
+void SetTranslate__Q34nw4r3g3d12ChrAnmResultFPCQ34nw4r4math4VEC3(){}

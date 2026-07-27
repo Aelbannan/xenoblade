@@ -5,8 +5,12 @@
   "maxParallelTUs": 2,
   "maxBatchRetries": 2,
   "singletonRetry": true,
+  "maxTokens": 0,
+  "singletonMinSize": 0,
   "maxBriefChars": 80000,
   "maxBatchMinutes": 45,
+  "maxRePrompts": 3,
+  "maxStuckRePrompts": 1,
   "region": "us",
   "sessionDir": "build/pi-harness/sessions",
   "ledgerPath": "build/pi-harness/ledger.jsonl"

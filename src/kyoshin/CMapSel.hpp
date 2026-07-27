@@ -50,4 +50,6 @@ private:
 
 public:
     u8 mFlag33;                               // +0x33 -- initial-setup flag
+    virtual ~CMapSel();
+    void OnFileEvent();
 };

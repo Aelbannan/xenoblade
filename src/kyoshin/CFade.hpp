@@ -24,4 +24,6 @@ public:
     u8 mFadeState;  // 0x25 - 0:idle, 1:fading in, 2:faded in, 3:fading out
     u8 mReady;      // 0x26 - true after layout is attached and visible
     u8 mVisible;    // 0x27 - visibility flag (toggled during fade animation)
+    CFade();
+    virtual ~CFade();
 };

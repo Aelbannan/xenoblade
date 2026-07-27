@@ -3,29 +3,29 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __dt__14CMenuKeyAssignFv(void* self) {}
+void CMenuKeyAssign::~CMenuKeyAssign() {}
 
-extern "C" void Init__14CMenuKeyAssignFv() {}
+void CMenuKeyAssign::Init() {}
 
-extern "C" void Term__14CMenuKeyAssignFv() {}
+void CMenuKeyAssign::Term() {}
 
-extern "C" void Move__14CMenuKeyAssignFv() {}
+void CMenuKeyAssign::Move() {}
 
 extern "C" void Draw__14CMenuKeyAssignFv(void) {}
 
-extern "C" void cbRenderBefore__14CMenuKeyAssignFv(void* self) {}
+void CMenuKeyAssign::cbRenderBefore() {}
 
-extern "C" void __ct__CMenuKeyAssign() {}
+void __ct__CMenuKeyAssign(){}
 
-extern "C" void func_80115060() {}
+void func_80115060(){}
 
-extern "C" void func_801154D0() {}
+void func_801154D0(){}
 
-extern "C" void func_801159DC() {}
+void func_801159DC(){}
 
-extern "C" void func_80115BD8() {}
+void func_80115BD8(){}
 
-extern "C" void func_80115DB0() {}
+void func_80115DB0(){}
 
 extern "C" void func_80115FB8(void* self) { ((void(*)(void*))__dt__14CMenuKeyAssignFv)((char*)self - 0x58); }
 

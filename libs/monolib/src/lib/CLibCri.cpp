@@ -23,52 +23,52 @@ extern "C" u32 getInstance__7CLibCriFv(void) {
     return lbl_eu_806656D8;
 }
 
-extern "C" void func_80459A78__7CLibCriFv() {}
+void CLibCri::func_80459A78() {}
 
-extern "C" void func_80459A7C__7CLibCriFv() {}
+void CLibCri::func_80459A7C() {}
 
-extern "C" void func_80459A80__7CLibCriFv() {}
+void CLibCri::func_80459A80() {}
 
-extern "C" void func_80459A84__7CLibCriFv() {}
+void CLibCri::func_80459A84() {}
 
-extern "C" void func_80459A88__7CLibCriFv() {}
+void CLibCri::func_80459A88() {}
 
-extern "C" void func_80459A8C__7CLibCriFv() {}
+void CLibCri::func_80459A8C() {}
 
-extern "C" void func_80459A90__7CLibCriFv() {}
+void CLibCri::func_80459A90() {}
 
-extern "C" void func_80459A94__7CLibCriFv() {}
+void CLibCri::func_80459A94() {}
 
-extern "C" void func_80459A98__7CLibCriFv() {}
+void CLibCri::func_80459A98() {}
 
-extern "C" void func_80459A9C__7CLibCriFv() {}
+void CLibCri::func_80459A9C() {}
 
-extern "C" void func_80459AA0__7CLibCriFv() {}
+void CLibCri::func_80459AA0() {}
 
-extern "C" void func_80459AA4__7CLibCriFv() {}
+void CLibCri::func_80459AA4() {}
 
-extern "C" void func_80459AA8__7CLibCriFv() {}
+void CLibCri::func_80459AA8() {}
 
-extern "C" void func_80459AAC__7CLibCriFv() {}
+void CLibCri::func_80459AAC() {}
 
 extern "C" u32 getInstance__7CLibCriFv(void) {
     extern u32 lbl_eu_806656D8;
     return lbl_eu_806656D8;
 }
 
-extern "C" void func_80459AC0__7CLibCriFv() {}
+void CLibCri::func_80459AC0() {}
 
-extern "C" void func_80459AC4__7CLibCriFv() {}
+void CLibCri::func_80459AC4() {}
 
-extern "C" void func_80459AC8__7CLibCriFv() {}
+void CLibCri::func_80459AC8() {}
 
-extern "C" void func_80459ACC__7CLibCriFv() {}
+void CLibCri::func_80459ACC() {}
 
-extern "C" void func_80459AD0__7CLibCriFv() {}
+void CLibCri::func_80459AD0() {}
 
 extern "C" void wkUpdate__7CLibCriFv() {}
 
-extern "C" void func_80459AD8__7CLibCriFv() {}
+void CLibCri::func_80459AD8() {}
 
 extern "C" u32 getInstance__7CLibCriFv(void) {
     extern u32 lbl_eu_806656D8;
@@ -87,11 +87,11 @@ extern "C" u32 getInstance__7CLibCriFv(void) {
 
 extern "C" void func_80459C70() {}
 
-extern "C" void func_80459C74__7CLibCriFv() {}
+void CLibCri::func_80459C74() {}
 
 extern "C" void func_80459C78__7CLibCriFv(void* self) { ((void(*)(void*))func_80459AD8__7CLibCriFv)((char*)self - 0x1c4); }
 
-extern "C" void func_80459C80__7CLibCriFv(void* self) { ((void(*)(void*))__dt__7CLibCriFv)((char*)self - 0x1c4); }
+void func_80459C80__7CLibCriFv(void* self) { ((void(*)(void*))__dt__7CLibCriFv)((char*)self - 0x1c4); }
 
 extern "C" void func_80459C88__7CLibCriFv(void* self) { ((void(*)(void*))func_80459C74__7CLibCriFv)((char*)self - 0x1c8); }
 

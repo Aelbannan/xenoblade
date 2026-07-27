@@ -42,5 +42,11 @@ public:
     f32 mTimer;              // 0x394
     u8 mFlag;                // 0x398
     u16 mChoice;             // 0x39A
+    CMenuTutorialList();
+    virtual ~CMenuTutorialList();
+    void Init();
+    void Term();
+    void Move();
+    void cbRenderBefore();
 };
 // Total size: 0x39C

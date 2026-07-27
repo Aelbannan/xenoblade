@@ -33,4 +33,5 @@ public:
     u8 mHelpData[0x38];            // 0x80 — CTitleAHelp placeholder
     u8 mTimerData[0x98];           // 0xB8 — CSkipTimer placeholder
     u8 mFlag3;                     // 0x150
+    CMenuSkipTimer();
 };

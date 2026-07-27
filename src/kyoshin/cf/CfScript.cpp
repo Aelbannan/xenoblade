@@ -11,100 +11,99 @@ extern "C" void func_80068A20() {
     func_80068A30((void*)lbl_eu_805708D0, lbl_eu_80661AC0);
 }
 
-extern "C" void func_80068A30() {}
+void func_80068A30(){}
 
 extern "C" void func_80068A80() {
     cf::CfScriptManager::getInstance()->init();
 }
 
-extern "C" void func_80068AA4() {}
+void func_80068AA4(){}
 
-extern "C" void func_80068AC8() {}
+void func_80068AC8(){}
 
-extern "C" void func_80068AEC() {}
+void func_80068AEC(){}
 
-extern "C" void func_80068B20__Q22cf15CfScriptManagerFv(void) {}
+void cf::CfScriptManager::func_80068B20(void) {}
 
-extern "C" void func_80068B24() {}
+void func_80068B24(){}
 
-extern "C" void func_80068ECC(void* subObj, const char* name);
-
+void func_80068ECC(void* subObj, const char* name);
 // Thunk: forward to func_80068ECC with &manager->mScripts[1] and the script name.
 extern "C" void func_80068B58(cf::CfScriptManager* manager, const char* name) {
     func_80068ECC(&manager->mScripts[1], name);
 }
 
-extern "C" void func_80068B60() {}
+void func_80068B60(){}
 
 // Thunk: forward to func_80068ECC with &manager->mScripts[2] and the script name.
 extern "C" void func_80068B94(cf::CfScriptManager* manager, const char* name) {
     func_80068ECC(&manager->mScripts[2], name);
 }
 
-extern "C" void func_80068B9C() {}
+void func_80068B9C(){}
 
 extern "C" void func_80068BC0(void* self) {
     *(unsigned long*)((char*)self + 0x4c) |= 4;
 }
 
-extern "C" void func_80068BD0() {}
+void func_80068BD0(){}
 
 extern "C" void func_80068BF4(void* self) {
     *(unsigned long*)((char*)self + 0xa4) |= 4;
 }
 
-extern "C" void func_80068C04() {}
+void func_80068C04(){}
 
 extern "C" void func_80068C28(void* self) {
     *(unsigned long*)((char*)self + 0xfc) |= 4;
 }
 
-extern "C" void func_80068C38() {}
+void func_80068C38(){}
 
-extern "C" void func_80068C5C() {}
+void func_80068C5C(){}
 
-extern "C" void func_80068C7C() {}
+void func_80068C7C(){}
 
-extern "C" void func_80068CA0() {}
+void func_80068CA0(){}
 
-extern "C" void func_80068D14() {}
+void func_80068D14(){}
 
-extern "C" void func_80068D38() {}
+void func_80068D38(){}
 
-extern "C" void func_80068DAC() {}
+void func_80068DAC(){}
 
-extern "C" void func_80068DD0() {}
+void func_80068DD0(){}
 
-extern "C" void func_80068E44() {}
+void func_80068E44(){}
 
-extern "C" void func_80068E7C() {}
+void func_80068E7C(){}
 
-extern "C" void func_80068E9C() {}
+void func_80068E9C(){}
 
 
-extern "C" void waitLoad__Q22cf8CfScriptFv() {}
+void cf::CfScript::waitLoad() {}
 
 extern "C" void update__Q22cf8CfScriptFv(void* self) {
     *(unsigned long*)((char*)self + 0x4c) |= 0x20;
 }
 
-extern "C" void OnFileEvent__8CfScriptFP10CEventFile() {}
+void CfScript::OnFileEvent() {}
 
-extern "C" void getInstance__Q22cf15CfScriptManagerFv() {}
+void cf::CfScriptManager::getInstance() {}
 
-extern "C" void __ct__cf_CfScript() {}
+void __ct__cf_CfScript(){}
 
-extern "C" void __dt__Q22cf8CfScriptFv() {}
+void cf::CfScript::~CfScript() {}
 
-extern "C" void init__Q22cf15CfScriptManagerFv() {}
+void cf::CfScriptManager::init() {}
 
-extern "C" void func_800694B0__Q22cf15CfScriptManagerFv() {}
+void cf::CfScriptManager::func_800694B0() {}
 
-extern "C" void func_8006953C__Q22cf15CfScriptManagerFv() {}
+void cf::CfScriptManager::func_8006953C() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace ml {
 template <int N> class FixStr { public: void format(const char*, ...); };
 template <> void FixStr<128>::format(const char*, ...) {}
 }
-extern "C" void sinit_800696C8() {}
+void sinit_800696C8(){}

@@ -48,15 +48,15 @@ extern "C" float func_8006ACB8(void* self) {
     return *(float*)((char*)self + 0x280);
 }
 
-extern "C" void func_8006A82C() {}
-extern "C" void func_8006A8C4() {}
-extern "C" void func_8006A90C() {}
-extern "C" void func_8006A9F8() {}
-extern "C" void func_8006AA34() {}
-extern "C" void func_8006AA84() {}
-extern "C" void func_8006AAEC() {}
-extern "C" void func_8006AB40() {}
-extern "C" void func_8006AB94() {}
-extern "C" void func_8006AC10() {}
-extern "C" void func_8006AC60() {}
-extern "C" void func_8006ACC0() {}
+void func_8006A82C(){}
+void func_8006A8C4(){}
+void func_8006A90C(){}
+void func_8006A9F8(){}
+void func_8006AA34(){}
+void func_8006AA84(){}
+void func_8006AAEC(){}
+void func_8006AB40(){}
+void func_8006AB94(){}
+void func_8006AC10(){}
+void func_8006AC60(){}
+void func_8006ACC0(){}

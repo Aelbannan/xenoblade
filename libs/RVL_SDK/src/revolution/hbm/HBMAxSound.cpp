@@ -3,19 +3,19 @@
 
 #include <harness_catalog.h>
 
-extern "C" void PlaySeq__10homebuttonFi() {}
+void homebutton::PlaySeq() {}
 
-extern "C" void InitAxSound__10homebuttonFPCvPvUl() {}
+void homebutton::InitAxSound() {}
 
-extern "C" void ShutdownAxSound__10homebuttonFv() {}
+void homebutton::ShutdownAxSound() {}
 
 extern "C" void AxSoundMain__10homebuttonFv() {}
 
-extern "C" void StopAllSeq__10homebuttonFv() {}
+void homebutton::StopAllSeq() {}
 
-extern "C" void SetVolumeAllSeq__10homebuttonFf() {}
+void homebutton::SetVolumeAllSeq() {}
 
-extern "C" void SetSoundMode__10homebuttonFUl(void) {}
+void homebutton::SetSoundMode(void) {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace {

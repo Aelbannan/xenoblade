@@ -40,22 +40,22 @@ extern "C" void* __dt__Q34nw4r2ut10PackedFontFv(void* self, int freeFlag)
     return self;
 }
 
-extern "C" void GetRequireBufferSize__Q34nw4r2ut10PackedFontFPCvPCcf() {}
+void GetRequireBufferSize__Q34nw4r2ut10PackedFontFPCvPCcf(){}
 
-extern "C" void StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl() {}
+void StreamingConstruct__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPCvUl(){}
 
-extern "C" void Construct__Q34nw4r2ut10PackedFontFPvUlPCvPCc() {}
+void Construct__Q34nw4r2ut10PackedFontFPvUlPCvPCc(){}
 
-extern "C" void Destroy__Q34nw4r2ut10PackedFontFv() {}
+void Destroy__Q34nw4r2ut10PackedFontFv(){}
 
-extern "C" void GetGlyph__Q34nw4r2ut10PackedFontCFPQ34nw4r2ut5GlyphUs() {}
+void GetGlyph__Q34nw4r2ut10PackedFontCFPQ34nw4r2ut5GlyphUs(){}
 
-extern "C" void CalcCopySize__Q34nw4r2ut10PackedFontFRCQ54nw4r2ut6detail15ArchiveFontBase18FontGlyphGroupsAcsPCcPi() {}
+void CalcCopySize__Q34nw4r2ut10PackedFontFRCQ54nw4r2ut6detail15ArchiveFontBase18FontGlyphGroupsAcsPCcPi(){}
 
-extern "C" void AssignMemory__Q34nw4r2ut10PackedFontFPUcUlUlUlUl() {}
+void AssignMemory__Q34nw4r2ut10PackedFontFPUcUlUlUlUl(){}
 
-extern "C" void MakeGlyph__Q34nw4r2ut10PackedFontCFPQ34nw4r2ut5GlyphUsi() {}
+void MakeGlyph__Q34nw4r2ut10PackedFontCFPQ34nw4r2ut5GlyphUsi(){}
 
-extern "C" void ConstructOpAnalyzeGLGRPacked__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader() {}
+void ConstructOpAnalyzeGLGRPacked__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}
 
-extern "C" void ConstructOpPrepairCopyPackedSheet__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader() {}
+void ConstructOpPrepairCopyPackedSheet__Q34nw4r2ut10PackedFontFPQ54nw4r2ut6detail15ArchiveFontBase16ConstructContextPQ54nw4r2ut6detail15ArchiveFontBase18CachedStreamReader(){}

@@ -1169,7 +1169,7 @@ void Voice::InvalidateWaveData(const void* pStart, const void* pEnd) {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(int, float) {}
+void SetBiquadFilter__Q44nw4r3snd6detail5VoiceFif(int, float){}
 extern "C" void SetVoiceOutParam__Q44nw4r3snd6detail5VoiceFiRCQ34nw4r3snd13VoiceOutParam(unsigned char* self, int index, const float* param) {
     float* dst = reinterpret_cast<float*>(self + index * 0x18 + 0x2c);
     dst[0] = param[0];

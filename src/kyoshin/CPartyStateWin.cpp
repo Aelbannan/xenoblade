@@ -21,17 +21,17 @@ extern "C" u32 func_801F968C(void* self) { return *(u32*)((u8*)self + 0x70); }
 
 
 
-extern "C" void func_801F9894() {}
+void func_801F9894(){}
 
-extern "C" void func_801F9914() {}
+void func_801F9914(){}
 
-extern "C" void func_801F9998() {}
+void func_801F9998(){}
 
-extern "C" void func_801F9A48() {}
+void func_801F9A48(){}
 
-extern "C" void func_801F9B18() {}
+void func_801F9B18(){}
 
-extern "C" void func_801F9CB4() {}
+void func_801F9CB4(){}
 
 extern "C" void func_801FA220(void* r3, const void* r4) {
     unsigned int* destWords = (unsigned int*)((char*)r3 + 4);
@@ -46,55 +46,55 @@ extern "C" void func_801FA220(void* r3, const void* r4) {
     destBytes[0x15] = srcBytes[0x15];
 }
 
-extern "C" void func_801FA254() {}
+void func_801FA254(){}
 
-extern "C" void func_801FA338() {}
+void func_801FA338(){}
 
 extern "C" u8 func_801FA4EC(void* self) { return ((u8*)self)[0x6BE5]; }
 
-extern "C" void func_801FA4F4() {}
+void func_801FA4F4(){}
 
-extern "C" void func_801FA524() {}
+void func_801FA524(){}
 
-extern "C" void func_801FA59C() {}
+void func_801FA59C(){}
 
-extern "C" void func_801FA614() {}
+void func_801FA614(){}
 
-extern "C" void func_801FA674() {}
+void func_801FA674(){}
 
-extern "C" void func_801FA8AC() {}
+void func_801FA8AC(){}
 
-extern "C" void func_801FA92C() {}
+void func_801FA92C(){}
 
-extern "C" void func_801FAA10() {}
+void func_801FAA10(){}
 
-extern "C" void func_801FAA60() {}
+void func_801FAA60(){}
 
-extern "C" void func_801FB560() {}
+void func_801FB560(){}
 
-extern "C" void func_801FB60C() {}
+void func_801FB60C(){}
 
-extern "C" void func_801FB66C() {}
+void func_801FB66C(){}
 
-extern "C" void func_801FB6CC() {}
+void func_801FB6CC(){}
 
-extern "C" void func_801FB72C() {}
+void func_801FB72C(){}
 
-extern "C" void func_801FB834() {}
+void func_801FB834(){}
 
-extern "C" void func_801FB8B0() {}
+void func_801FB8B0(){}
 
-extern "C" void func_801FB900() {}
+void func_801FB900(){}
 
-extern "C" void func_801FBBE0() {}
+void func_801FBBE0(){}
 
-extern "C" void func_801FBC30() {}
+void func_801FBC30(){}
 
-extern "C" void func_801FBC7C() {}
+void func_801FBC7C(){}
 
-extern "C" void cbRenderBefore__14CPartyStateWinFv(void* self) {}
+void CPartyStateWin::cbRenderBefore() {}
 
 extern "C" void func_801FBDB8(void* self) { ((void(*)(void*))cbRenderBefore__14CPartyStateWinFv)((char*)self - 0x4); }
 
-extern "C" void __dt__14CPartyStateWinFv(void* self);
-extern "C" void func_801FBDC0(void* self) { ((void(*)(void*))__dt__14CPartyStateWinFv)((char*)self - 0x4); }
+void __dt__14CPartyStateWinFv(void* self);
+void func_801FBDC0(void* self) { ((void(*)(void*))__dt__14CPartyStateWinFv)((char*)self - 0x4); }

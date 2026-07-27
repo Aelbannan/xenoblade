@@ -3,35 +3,35 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8047CD0C__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047CD0C() const {}
 
-extern "C" void func_8047CDBC__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047CDBC() const {}
 
-extern "C" void func_8047CE7C__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047CE7C() const {}
 
-extern "C" void func_8047CF20__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047CF20() const {}
 
-extern "C" void func_8047CFBC__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047CFBC() const {}
 
-extern "C" void func_8047CFD0__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047CFD0() const {}
 
-extern "C" void func_8047D024__17UnkClass_8047CD0CFv(void) {}
+void UnkClass_8047CD0C::func_8047D024(void) const {}
 
-extern "C" void func_8047D028__17UnkClass_8047CD0CFv(void) {}
+void UnkClass_8047CD0C::func_8047D028(void) const {}
 
-extern "C" void func_8047D02C__17UnkClass_8047CD0CFv(void) {}
+void UnkClass_8047CD0C::func_8047D02C(void) const {}
 
-extern "C" void func_8047D038__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047D038() const {}
 
-extern "C" void func_8047D0F0__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047D0F0() const {}
 
-extern "C" void func_8047D178__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047D178() const {}
 
-extern "C" void func_8047D1B0__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047D1B0() const {}
 
-extern "C" void func_8047D208__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047D208() const {}
 
-extern "C" void func_8047D258__17UnkClass_8047CD0CFv() {}
+void UnkClass_8047CD0C::func_8047D258() const {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_8047D290() {}
+void sinit_8047D290(){}

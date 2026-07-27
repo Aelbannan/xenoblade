@@ -3,137 +3,137 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CTaskREvtSequence() {}
+void __ct__cf_CTaskREvtSequence(){}
 
-extern "C" void __dt__801682AC() {}
+void __dt__801682AC(){}
 
-extern "C" void __dt__Q22cf17CTaskREvtSequenceFv(void* self) {}
+void cf::CTaskREvtSequence::~CTaskREvtSequence() {}
 
-extern "C" unsigned long func_801683FC() {
+unsigned long func_801683FC(){
     extern unsigned long lbl_eu_80664268;
     unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
     return (ptr[0x5c/4] >> 17) & 1;
 }
 
-extern "C" unsigned long func_8016840C() {
+unsigned long func_8016840C(){
     extern unsigned long lbl_eu_80664268;
     unsigned long* ptr = (unsigned long*)lbl_eu_80664268;
     return (ptr[0x5c/4] >> 19) & 1;
 }
 
-extern "C" void func_8016841C() {}
+void func_8016841C(){}
 
-extern "C" void func_8016846C() {}
+void func_8016846C(){}
 
 extern "C" bool func_8016847C() { return false; }
 
-extern "C" void func_80168484() {}
+void func_80168484(){}
 
-extern "C" void func_801684F4() {}
+void func_801684F4(){}
 
-extern "C" void func_80168514() {}
+void func_80168514(){}
 
-extern "C" void func_80168610() {}
+void func_80168610(){}
 
-extern "C" void func_801686B0() {}
+void func_801686B0(){}
 
-extern "C" void func_8016872C() {}
+void func_8016872C(){}
 
-extern "C" void func_80168800() {}
+void func_80168800(){}
 
-extern "C" void func_80168F38() {}
+void func_80168F38(){}
 
 extern "C" int func_80169048(void* self) { return 1; }
 
-extern "C" void func_80169050() {}
+void func_80169050(){}
 
-extern "C" void func_8016925C() {}
+void func_8016925C(){}
 
 extern "C" int func_801696C4(void* self) { return 0; }
 
-extern "C" void func_801696CC() {}
+void func_801696CC(){}
 
 extern "C" void func_80169A34() {}
 
-extern "C" void func_80169A38() {}
+void func_80169A38(){}
 
-extern "C" void func_80169CD0() {}
+void func_80169CD0(){}
 
-extern "C" void func_80169DD0() {}
+void func_80169DD0(){}
 
 extern "C" void func_80169F24() {}
 
-extern "C" void func_80169F28() {}
+void func_80169F28(){}
 
-extern "C" void func_8016A24C() {}
+void func_8016A24C(){}
 
-extern "C" void func_8016A27C() {}
+void func_8016A27C(){}
 
 extern "C" u32 func_8016A354(void* self) { return *(u32*)((u8*)self + 0x20); }
 
-extern "C" void func_8016A35C() {}
+void func_8016A35C(){}
 
-extern "C" void func_8016A378() {}
+void func_8016A378(){}
 
-extern "C" void func_8016A3A8() {}
+void func_8016A3A8(){}
 
-extern "C" void func_8016A3C4() {}
+void func_8016A3C4(){}
 
-extern "C" void Init__Q22cf17CTaskREvtSequenceFv() {}
+void cf::CTaskREvtSequence::Init() {}
 
-extern "C" void Term__Q22cf17CTaskREvtSequenceFv() {}
+void cf::CTaskREvtSequence::Term() {}
 
-extern "C" void func_8016A480() {}
+void func_8016A480(){}
 
 extern "C" void Draw__Q22cf17CTaskREvtSequenceFv() {}
 
-extern "C" void func_8016ABA8(void* self) {}
+void func_8016ABA8(void* self){}
 
-extern "C" void func_8016AD44() {}
+void func_8016AD44(){}
 
-extern "C" void func_8016ADF8() {}
+void func_8016ADF8(){}
 
-extern "C" void func_8016AED4() {}
+void func_8016AED4(){}
 
-extern "C" void func_8016AF4C() {}
+void func_8016AF4C(){}
 
-extern "C" void func_8016B164() {}
+void func_8016B164(){}
 
-extern "C" void func_8016B384() {}
+void func_8016B384(){}
 
-extern "C" void func_8016B5A4() {}
+void func_8016B5A4(){}
 
-extern "C" void func_8016B788() {}
+void func_8016B788(){}
 
-extern "C" void func_8016B860() {}
+void func_8016B860(){}
 
-extern "C" void func_8016BB38() {}
+void func_8016BB38(){}
 
-extern "C" void func_8016BC1C() {}
+void func_8016BC1C(){}
 
-extern "C" void func_8016BDA8() {}
+void func_8016BDA8(){}
 
-extern "C" void func_8016C118() {}
+void func_8016C118(){}
 
-extern "C" void cbRenderBefore__Q22cf17CTaskREvtSequenceFv(void* self) {}
+void cf::CTaskREvtSequence::cbRenderBefore() {}
 
-extern "C" void func_8016C2C8() {}
+void func_8016C2C8(){}
 
-extern "C" void func_8016C2E4() {}
+void func_8016C2E4(){}
 
-extern "C" void func_8016C300() {}
+void func_8016C300(){}
 
-extern "C" void func_8016C3DC() {}
+void func_8016C3DC(){}
 
-extern "C" void func_8016C410() {}
+void func_8016C410(){}
 
-extern "C" void func_8016C450() {}
+void func_8016C450(){}
 
-extern "C" void func_8016C6EC() {}
+void func_8016C6EC(){}
 
-extern "C" void func_8016C720() {}
+void func_8016C720(){}
 
-extern "C" void func_eu_8016DA48() {}
+void func_eu_8016DA48(){}
 
 extern "C" void OnFileEvent__17CTaskREvtSequenceFP10CEventFile(void* self) { ((void(*)(void*))func_8016ABA8)((char*)self - 0x54); }
 

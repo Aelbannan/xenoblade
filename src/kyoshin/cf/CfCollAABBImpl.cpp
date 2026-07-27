@@ -13,7 +13,7 @@ extern "C" void func_800A5FE8(void* a, void* b, void* c, void* d, void* e);
 
 extern "C" void* lbl_eu_80663E14;
 
-extern "C" void func_800AAE24(void* r3, void* r4) {
+void func_800AAE24(void* r3, void* r4){
     float angle = *(float*)((char*)r4 + 0x14C);
     float sinVal;
     float cosVal;

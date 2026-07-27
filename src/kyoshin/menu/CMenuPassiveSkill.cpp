@@ -4,35 +4,35 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/menu/CMenuPassiveSkill.hpp"
 
-extern "C" void __ct__CMenuPassiveSkill() {}
+void __ct__CMenuPassiveSkill(){}
 
-extern "C" void __dt__17CMenuPassiveSkillFv(void* self) {}
+void CMenuPassiveSkill::~CMenuPassiveSkill() {}
 
-extern "C" void Init__17CMenuPassiveSkillFv() {}
+void CMenuPassiveSkill::Init() {}
 
-extern "C" void Term__17CMenuPassiveSkillFv() {}
+void CMenuPassiveSkill::Term() {}
 
-extern "C" void Move__17CMenuPassiveSkillFv() {}
+void CMenuPassiveSkill::Move() {}
 
-extern "C" void cbRenderBefore__17CMenuPassiveSkillFv(void* self) {}
+void CMenuPassiveSkill::cbRenderBefore() {}
 
-extern "C" void func_802638D0() {}
+void func_802638D0(){}
 
 extern "C" void stub_us_80265db4() {}
 
-extern "C" void func_80263954() {}
+void func_80263954(){}
 
-extern "C" void func_802639E4() {}
+void func_802639E4(){}
 
-extern "C" void func_80263A34() {}
+void func_80263A34(){}
 
-extern "C" void func_80263D3C() {}
+void func_80263D3C(){}
 
-extern "C" void func_80263D8C() {}
+void func_80263D8C(){}
 
-extern "C" void func_80263DE8() {}
+void func_80263DE8(){}
 
-extern "C" void func_80263E4C() {}
+void func_80263E4C(){}
 
 // Adjusted-this thunk: called through a secondary-base vtable entry
 // (IScnRender at offset +0x58 within CMenuPassiveSkill).

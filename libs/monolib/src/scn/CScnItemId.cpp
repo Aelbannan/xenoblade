@@ -3,9 +3,9 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __dt__10CScnItemIdFv() {}
+void CScnItemId::~CScnItemId() {}
 
-extern "C" void __ct__804820F8() {}
+void __ct__804820F8(){}
 
 extern "C" void func_80482288(void) {}
 

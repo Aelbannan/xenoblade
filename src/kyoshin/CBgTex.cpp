@@ -28,7 +28,7 @@ extern "C" nw4r::lyt::ArcResourceAccessor* lbl_eu_80664464;
 extern "C" void func_801C3E3C(CBgTex* self);
 
 // Emit ctor before dtor so .text order matches retail (avoids 0xC align pad).
-extern "C" CBgTex* __ct__CBgTex(CBgTex* self, u8 arg) {
+CBgTex* __ct__CBgTex(CBgTex* self, u8 arg){
     self->mVtbl = lbl_eu_80533DC8;
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
     self->mFileHandle = nullptr;
@@ -87,7 +87,7 @@ extern "C" void func_801C3A24(CBgTex* self) {
     self->mMemRegion.func_8045F810();
 }
 
-extern "C" bool func_801C3C14(CBgTex* self) {
+bool func_801C3C14(CBgTex* self){
     nw4r::lyt::ArcResourceAccessor* accessor = lbl_eu_80664464;
     s32 count = lbl_eu_80664460;
     lbl_eu_80664460 = count + 1;

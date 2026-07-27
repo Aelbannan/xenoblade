@@ -3,48 +3,48 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuPlayAward() {}
+void __ct__CMenuPlayAward(){}
 
-extern "C" void __dt__14CMenuPlayAwardFv(void* self) {}
+void CMenuPlayAward::~CMenuPlayAward() {}
 
-extern "C" void Init__14CMenuPlayAwardFv() {}
+void CMenuPlayAward::Init() {}
 
-extern "C" void Term__14CMenuPlayAwardFv() {}
+void CMenuPlayAward::Term() {}
 
-extern "C" void Move__14CMenuPlayAwardFv() {}
+void CMenuPlayAward::Move() {}
 
-extern "C" void cbRenderBefore__14CMenuPlayAwardFv(void* self) {}
+void CMenuPlayAward::cbRenderBefore() {}
 
-extern "C" void func_80270308() {}
+void func_80270308(){}
 
 extern "C" void stub_us_80272800() {}
 
-extern "C" void func_8027038C() {}
+void func_8027038C(){}
 
-extern "C" void func_80270404() {}
+void func_80270404(){}
 
-extern "C" void func_80270454() {}
+void func_80270454(){}
 
-extern "C" void func_802705F4() {}
+void func_802705F4(){}
 
 extern "C" void func_80270644(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuPlayAwardFv)((char*)self - 0x58); }
 
 extern "C" void func_8027064C(void* self) { ((void(*)(void*))__dt__14CMenuPlayAwardFv)((char*)self - 0x58); }
 
-extern "C" void func_80270654() {}
+void func_80270654(){}
 
 extern "C" void func_802706C4(void* self) {
     *(unsigned long*)((char*)self + 0) = 0;
     *(unsigned long*)((char*)self + 4) = 0;
 }
 
-extern "C" void __dt__802706D4() {}
+void __dt__802706D4(){}
 
-extern "C" void __dt__80270714() {}
+void __dt__80270714(){}
 
-extern "C" void func_80270770() {}
+void func_80270770(){}
 
-extern "C" void func_80270AD8() {}
+void func_80270AD8(){}
 
 extern "C" void* func_80270AEC(void* self, int param) {
     if (param >= 256) return 0;
@@ -52,17 +52,17 @@ extern "C" void* func_80270AEC(void* self, int param) {
     return (void*)((unsigned char*)self + (byte << 11) + ((param & 0xFF) << 3));
 }
 
-extern "C" void __ct__CPlayAwardList() {}
+void __ct__CPlayAwardList(){}
 
-extern "C" void __dt__14CPlayAwardListFv() {}
+void CPlayAwardList::~CPlayAwardList() {}
 
-extern "C" void func_80270CEC() {}
+void func_80270CEC(){}
 
-extern "C" void func_80270D64() {}
+void func_80270D64(){}
 
-extern "C" void func_80270E04() {}
+void func_80270E04(){}
 
-extern "C" void func_80270E64() {}
+void func_80270E64(){}
 
 extern "C" bool CScrollBar_isVisible(void*);
 
@@ -75,40 +75,40 @@ extern "C" unsigned char func_80270F28(void* this_) {
 
 extern "C" u8 func_80270F6C(void* self) { return ((u8*)self)[0x8b]; }
 
-extern "C" void func_80270F74() {}
+void func_80270F74(){}
 
-extern "C" void func_80271070() {}
+void func_80271070(){}
 
-extern "C" void func_802710D4() {}
+void func_802710D4(){}
 
-extern "C" void func_80271190() {}
+void func_80271190(){}
 
-extern "C" void func_80271260() {}
+void func_80271260(){}
 
-extern "C" void func_80271300() {}
+void func_80271300(){}
 
-extern "C" void func_802713BC() {}
+void func_802713BC(){}
 
-extern "C" void func_80271468() {}
+void func_80271468(){}
 
-extern "C" void func_80271480() {}
+void func_80271480(){}
 
-extern "C" void func_802714D4() {}
+void func_802714D4(){}
 
-extern "C" void func_80271528() {}
+void func_80271528(){}
 
-extern "C" void func_80271574() {}
+void func_80271574(){}
 
-extern "C" void func_802715C0() {}
+void func_802715C0(){}
 
-extern "C" void func_80271620() {}
+void func_80271620(){}
 
-extern "C" void func_80271680() {}
+void func_80271680(){}
 
-extern "C" void func_80271730() {}
+void func_80271730(){}
 
-extern "C" void func_802717F8() {}
+void func_802717F8(){}
 
-extern "C" void func_802719F8() {}
+void func_802719F8(){}
 
-extern "C" void OnFileEvent__14CPlayAwardListFP10CEventFile() {}
+void CPlayAwardList::OnFileEvent() {}

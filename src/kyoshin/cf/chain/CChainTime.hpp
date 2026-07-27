@@ -17,5 +17,6 @@ namespace cf {
         }
         
         void func_8027CE30();
+    CChainTime();
     };
 }

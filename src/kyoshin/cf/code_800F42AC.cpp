@@ -3,17 +3,17 @@
 
 #include "kyoshin/cf/code_800F42AC.hpp"
 
-extern "C" void func_800F42AC() {}
+void func_800F42AC(){}
 
-extern "C" void func_800F4424() {}
+void func_800F4424(){}
 
-extern "C" void func_800F449C() {}
+void func_800F449C(){}
 
-extern "C" void func_800F4648() {}
+void func_800F4648(){}
 
-extern "C" void func_800F46C0() {}
+void func_800F46C0(){}
 
-extern "C" void func_800F4730() {}
+void func_800F4730(){}
 
 /// Returns the sub-object pointer at offset 0x0C (field subObject).
 extern "C" cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self) {
@@ -25,4 +25,4 @@ extern "C" void* func_800F4784(void* self) {
     return v ? v : 0;
 }
 
-extern "C" void func_800F4798() {}
+void func_800F4798(){}

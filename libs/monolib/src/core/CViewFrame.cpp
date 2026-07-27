@@ -229,18 +229,17 @@ bool CViewFrame::render() {
 // @param self  CViewFrame with mBorder thickness and mFrameColor.
 // @param draw  Target CDrawGX draw context.
 // @param rect  Bounding rectangle of the frame area to draw.
-extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw,
-                                                 ml::CRect16* rect) {
+void CViewFrame::func_804409D0(CDrawGX* draw) {
     ml::CCol4 col;
     ml::CRect16 piece;
-    s16 border = self->mBorder;
+    s16 border = this->mBorder;
     float scale = lbl_eu_8066A318;
-    float opacity = self->mOwner->mAlpha;
+    float opacity = this->mOwner->mAlpha;
 
-    col.r = self->mFrameColor.r * scale;
-    col.g = self->mFrameColor.g * scale;
-    col.b = self->mFrameColor.b * scale;
-    col.a = self->mFrameColor.a * opacity;
+    col.r = this->mFrameColor.r * scale;
+    col.g = this->mFrameColor.g * scale;
+    col.b = this->mFrameColor.b * scale;
+    col.a = this->mFrameColor.a * opacity;
     draw->setCol(col);
 
     draw->begin(9, 1);
@@ -276,10 +275,10 @@ extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw
     draw->end();
 
     scale = lbl_eu_8066A2F4;
-    col.r = self->mFrameColor.r * scale;
-    col.g = self->mFrameColor.g * scale;
-    col.b = self->mFrameColor.b * scale;
-    col.a = self->mFrameColor.a * opacity;
+    col.r = this->mFrameColor.r * scale;
+    col.g = this->mFrameColor.g * scale;
+    col.b = this->mFrameColor.b * scale;
+    col.a = this->mFrameColor.a * opacity;
     draw->setCol(col);
 
     draw->begin(9, 1);
@@ -317,7 +316,7 @@ extern "C" void func_804409D0__10CViewFrameFPvPv(CViewFrame* self, CDrawGX* draw
 
 // CViewFrame default constructor — empty; initialisation is done by the
 // placement-new caller or caller-side inline init.
-extern "C" void __ct__CViewFrame() {}
+void __ct__CViewFrame(){}
 // Compute the offset from the frame's outer rect to its viewport content
 // area (i.e. how much the content region is inset by border + split gap).
 // Only applies when the owner view has border-expand/split flags enabled.
@@ -407,7 +406,7 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
 
 // Detach the frame from a CWorkThread's render list. Currently a stub;
 // the retail function unlinks from a linked-list render-work chain.
-extern "C" void detachRenderWork__10CViewFrameFP11CWorkThread() {}
+void CViewFrame::detachRenderWork() {}
 
 extern "C" void func_8043FC60__10CViewFrameFUl(void* self, u32 val) {
     *(u32*)((u8*)self + 4) = val;

@@ -4,19 +4,19 @@
 #include "kyoshin/CSystemWindow.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CSystemWindow() {}
+void __ct__CSystemWindow(){}
 
-extern "C" void __dt__13CSystemWindowFv() {}
+void CSystemWindow::~CSystemWindow() {}
 
-extern "C" void Init__13CSystemWindowFv() {}
+void CSystemWindow::Init() {}
 
-extern "C" void Term__13CSystemWindowFv() {}
+void CSystemWindow::Term() {}
 
-extern "C" void Move__13CSystemWindowFv() {}
+void CSystemWindow::Move() {}
 
-extern "C" void cbRenderBefore__13CSystemWindowFv() {}
+void CSystemWindow::cbRenderBefore() {}
 
-extern "C" void func_80124AEC() {}
+void func_80124AEC(){}
 
 /* Returns the singleton CSystemWindow instance (lbl_eu_80663FD8 in .sbss). */
 extern "C" u32 func_80124B78() {

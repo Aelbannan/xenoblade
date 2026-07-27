@@ -4,11 +4,13 @@
  * runTus manages a concurrency-limited pool of TU workers. Each TU:
  *   1. Loads unmatched targets
  *   2. Processes them in batches:
- *      claim → brief → snapshot → session → compile check → lint →
- *      batch-cycle (acceptance). Restore from snapshot copies ONLY when the
- *      build fails or lint rejects.
- *   3. Retries failed targets as singleton sessions
- *   4. Runs a TU-finalisation session once every function matches
+ *      claim → brief → snapshot → session (with optional in-session
+ *      continuation on compile/lint failure via multi-prompt) →
+ *      batch-cycle (acceptance). Restore from snapshot copies ONLY when
+ *      falling back to a fresh session.
+ *   3. Routes large failed targets to singleton sessions
+ *   4. Collects small failed targets for a re-batch pass
+ *   5. Runs a TU-finalisation session once every function matches
  *
  * @module orchestrator
  */
@@ -16,7 +18,9 @@
 import { execFileSync } from "node:child_process";
 import { join } from "node:path";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
-import type { HarnessConfig, Target, TargetBrief, SessionUsage } from "./types.js";
+import type {
+  HarnessConfig, Target, TargetBrief, SessionUsage, VerifyResult,
+} from "./types.js";
 import {
   findClaimsByOwner,
   loadUnmatchedTargets,
@@ -231,6 +235,88 @@ async function releaseBatch(
 }
 
 // ─────────────────────────────────────────────────────────────────────
+//  Shared onVerify factory
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Build an onVerify callback for multi-prompt sessions. The callback runs
+ * build → lint → batch-cycle after each prompt round and returns the next
+ * action. It manages per-phase snapshots internally so a lint-fix that
+ * breaks compilation can roll back to the compilable state.
+ */
+function makeVerifyCallback(opts: {
+  repoRoot: string;
+  config: HarnessConfig;
+  unit: string;
+  targetIds: string[];
+  writable: string[];
+  snapshot: Snapshot;
+}): {
+  onVerify: (finalText: string, timedOut: boolean, rePromptCount: number) => Promise<VerifyResult>;
+  getResults: () => Awaited<ReturnType<typeof runBatchCycle>> | null;
+} {
+  const { repoRoot, config, unit, targetIds, writable, snapshot } = opts;
+  let compilableSnapshot: Snapshot | null = null;
+  let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
+
+  const onVerify = async (
+    _finalText: string,
+    timedOut: boolean,
+    rePromptCount: number,
+  ): Promise<VerifyResult> => {
+    const effectiveMax = timedOut ? config.maxRePrompts : config.maxStuckRePrompts;
+    if (rePromptCount >= effectiveMax) {
+      return { action: "fail", reason: `re-prompt cap hit (${effectiveMax})` };
+    }
+
+    // ── Build check ──
+    const build = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
+    if (!build.ok) {
+      // If we have a compilable checkpoint (from prior lint pass that
+      // later broke), restore to it. Otherwise keep broken code in place
+      // so the model can fix it with full context.
+      if (compilableSnapshot) {
+        await restoreSnapshot(repoRoot, compilableSnapshot);
+        compilableSnapshot = null;
+      }
+      return {
+        action: "re-prompt",
+        feedback:
+          `## Build Failure — Fix This First\n\n` +
+          `Your code does not compile. Fix the errors below before ` +
+          `continuing with any unmatched targets.\n\n` +
+          `\`\`\`\n${build.output}\n\`\`\``,
+      };
+    }
+
+    // Build passed — clear any stale compilable checkpoint.
+    compilableSnapshot = null;
+
+    // ── Lint check ──
+    const lint = await runLint(repoRoot, config.pythonBin, snapshot);
+    if (!lint.ok) {
+      // Save compilable checkpoint before re-prompting for lint fix,
+      // so we can restore if the fix breaks compilation.
+      compilableSnapshot = await snapshotUnit(repoRoot, unit, writable);
+      return {
+        action: "re-prompt",
+        feedback:
+          `## Lint Failure — Fix This First\n\n` +
+          `Your code compiles but violates these rules. Fix ONLY the ` +
+          `violations — do not make any other changes.\n\n` +
+          `\`\`\`json\n${JSON.stringify(lint.violations, null, 2)}\n\`\`\``,
+      };
+    }
+
+    // ── Acceptance ──
+    batchResults = await runBatchCycle(repoRoot, config.pythonBin, config.region, targetIds);
+    return { action: "accept" };
+  };
+
+  return { onVerify, getResults: () => batchResults };
+}
+
+// ─────────────────────────────────────────────────────────────────────
 //  Per-TU worker
 // ─────────────────────────────────────────────────────────────────────
 
@@ -271,6 +357,7 @@ async function runOneTu(
 
   let carryover = "";
   const allIds = targets.map((t) => t.id);
+  const smallRetryPool: string[] = [];
 
   for (let batchIndex = 0; batchIndex < allIds.length; batchIndex += config.batchSize) {
     const batchIds = allIds.slice(batchIndex, batchIndex + config.batchSize);
@@ -311,55 +398,84 @@ async function runOneTu(
         break;
       }
 
-      // ── Session + acceptance, exception-contained ────────────────
+      // ── Session + acceptance (with in-session continuation) ─────
       let snapshot: Snapshot | null = batchSnapshot;
       let attemptError: string | null = null;
-      let buildOk = false;
-      let buildOutput = "";
-      let lintOk = false;
-      let lintViolations: unknown[] = [];
       let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
 
       try {
         await claimBatch(repoRoot, config, currentIds);
         snapshot = await snapshotUnit(repoRoot, unit, writable);
 
-        const sessionResult = await runAgentSession({
-          repoRoot, modelRuntime, spec: config.matchModel, prompt,
-          sessionDir: join(config.sessionDir, sanitized, `batch-${batchIndex}-attempt-${attempt}`),
-          label: `batch-${batchIndex}-attempt-${attempt}`,
-          timeoutMinutes: config.maxBatchMinutes,
+        const { onVerify, getResults } = makeVerifyCallback({
+          repoRoot, config, unit, targetIds: currentIds, writable, snapshot,
         });
-        logUsage(repoRoot, config, unit, `batch-${batchIndex}-attempt-${attempt}`,
-          sessionResult.usage, sessionResult.timedOut);
+
+        const sessionResult = await runAgentSession({
+          repoRoot,
+          modelRuntime,
+          spec: config.matchModel,
+          prompt,
+          sessionDir: join(config.sessionDir, sanitized, `batch-${batchIndex}`),
+          label: `batch-${batchIndex}-session-${attempt}`,
+          timeoutMinutes: config.maxBatchMinutes,
+          maxTokens: config.maxTokens,
+          multiPrompt: {
+            maxRePrompts: config.maxRePrompts,
+            maxStuckRePrompts: config.maxStuckRePrompts,
+            onVerify,
+            totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.maxRePrompts),
+          },
+        });
+
+        // Log per-round usage.
+        if (sessionResult.roundUsages) {
+          for (let r = 0; r < sessionResult.roundUsages.length; r++) {
+            logUsage(
+              repoRoot, config, unit,
+              `batch-${batchIndex}-session-${attempt}-round-${r}`,
+              sessionResult.roundUsages[r],
+              r === sessionResult.roundUsages.length - 1 && sessionResult.timedOut,
+            );
+          }
+        } else {
+          logUsage(repoRoot, config, unit, `batch-${batchIndex}-session-${attempt}`,
+            sessionResult.usage, sessionResult.timedOut);
+        }
+
         carryover = sessionResult.finalText.slice(0, 1500);
 
-        const build = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
-        buildOk = build.ok;
-        buildOutput = build.output;
-
-        if (buildOk) {
-          const lint = await runLint(repoRoot, config.pythonBin, snapshot);
-          lintOk = lint.ok;
-          lintViolations = lint.violations;
-          if (lintOk) {
-            batchResults = await runBatchCycle(repoRoot, config.pythonBin, config.region, currentIds);
-          }
+        if (sessionResult.outcome === "accepted") {
+          batchResults = getResults();
+        } else {
+          // Session gave up or failed — restore snapshot, let fresh
+          // session retry.
+          if (snapshot) await restoreSnapshot(repoRoot, snapshot);
+          const reason = sessionResult.outcome === "gave-up"
+            ? `re-prompts exhausted (${sessionResult.rePromptsUsed} used)`
+            : "session failed";
+          attemptError = reason;
+          appendLedger(repoRoot, config.ledgerPath, {
+            ts: new Date().toISOString(), event: "batch-session-exhausted", tu: unit,
+            detail: {
+              batchIndex, attempt, outcome: sessionResult.outcome,
+              rePromptsUsed: sessionResult.rePromptsUsed,
+            },
+          });
+          await releaseBatch(repoRoot, config, currentIds);
+          carryover = `Previous session was rejected after ${sessionResult.rePromptsUsed} re-prompt(s). Fix:\n${reason}`;
+          continue;
         }
       } catch (err) {
         attemptError = err instanceof Error ? err.message : String(err);
         const usage = usageFromError(err);
         if (usage) {
-          logUsage(repoRoot, config, unit, `batch-${batchIndex}-attempt-${attempt}`, usage, false);
+          logUsage(repoRoot, config, unit, `batch-${batchIndex}-session-${attempt}`, usage, false);
         }
       }
 
-      // ── Failure handling: restore only on compile failure; keep
-      //    compilable edits otherwise (best-known candidate). ────────
-      if (attemptError !== null) {
-        // Restore only if the post-error source does not compile. A session
-        // error may happen after a valid edit; preserve that candidate when
-        // it still builds, per the harness restore policy.
+      // ── Failure handling: restore on unhandled error ──────────
+      if (attemptError !== null && batchResults === null) {
         let recoveryOutput = "";
         if (batchSnapshot) {
           const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
@@ -375,48 +491,42 @@ async function runOneTu(
         continue;
       }
 
-      if (!buildOk || !lintOk) {
-        if (!buildOk && snapshot) await restoreSnapshot(repoRoot, snapshot);
-        const reason = !buildOk ? "compile-failed" : "lint-rejected";
-        appendLedger(repoRoot, config.ledgerPath, {
-          ts: new Date().toISOString(), event: "batch-rejected", tu: unit,
-          detail: {
-            batchIndex, attempt, reason,
-            buildOutput: !buildOk ? buildOutput : undefined,
-            violations: !lintOk ? lintViolations : undefined,
-          },
-        });
-        // Feed the rejection back into the next attempt's brief.
-        carryover =
-          `Previous attempt was rejected (${reason}). Fix this before anything else:\n` +
-          (!buildOk ? buildOutput : JSON.stringify(lintViolations).slice(0, 1200));
+      if (batchResults === null) {
+        // Session didn't error but also didn't produce results — should
+        // not happen; bail safely.
         await releaseBatch(repoRoot, config, currentIds);
+        carryover = "Previous attempt produced no results (internal error).";
         continue;
       }
 
-      // ── Acceptance results ────────────────────────────────────────
-      const acceptedCount = batchResults!.filter((r) => r.accepted).length;
+      // ── Acceptance results ──────────────────────────────────────
+      const acceptedCount = batchResults.filter((r) => r.accepted).length;
       appendLedger(repoRoot, config.ledgerPath, {
         ts: new Date().toISOString(),
         event: acceptedCount > 0 ? "batch-accept" : "batch-cycle",
         tu: unit,
         detail: {
           batchIndex, attempt, acceptedCount,
-          results: batchResults!.map((r) => ({ targetId: r.targetId, status: r.status })),
+          results: batchResults.map((r) => ({ targetId: r.targetId, status: r.status })),
         },
       });
       await releaseBatch(repoRoot, config, currentIds);
 
-      for (const r of batchResults!) {
-      }
-
-      const failedIds = batchResults!.filter((r) => !r.accepted).map((r) => r.targetId);
+      const failedIds = batchResults.filter((r) => !r.accepted).map((r) => r.targetId);
       for (const fid of failedIds) {
         const remainingAttempts = Math.max(0, maxAttempts - attempt);
         if (!config.singletonRetry || remainingAttempts === 0) {
           handleSkipped(repoRoot, config, unit, fid,
             config.singletonRetry ? "exhausted retries" : "singleton retry disabled");
           continue;
+        }
+        // Route small targets to the re-batch pool instead of singletons.
+        if (config.singletonMinSize > 0) {
+          const b = briefs.find((x) => x.targetId === fid);
+          if (b && b.retailAsm.length < config.singletonMinSize) {
+            smallRetryPool.push(fid);
+            continue;
+          }
         }
         const ok = await runSingleton(
           repoRoot, unit, fid, config, modelRuntime, sanitized, batchIndex, carryover, remainingAttempts,
@@ -437,6 +547,14 @@ async function runOneTu(
     }
   }
 
+  // ── Re-batch phase for small failed targets ─────────────────────
+  if (smallRetryPool.length > 0) {
+    await runRebatchPhase(
+      repoRoot, unit, config, modelRuntime, sanitized,
+      smallRetryPool, targets, carryover,
+    );
+  }
+
   // ── TU-final phase ────────────────────────────────────────────────
   if (dryRun) {
     console.log(`[pi-harness] ${unit}: dry-run complete (no sessions run, no acceptance)`);
@@ -453,6 +571,181 @@ async function runOneTu(
     });
     console.log(`[pi-harness] ${unit}: ${remaining.length} target(s) remain unmatched after retries`);
     for (const t of remaining) console.log(`  - ${t.id} (${t.status})`);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+//  Re-batch phase
+// ─────────────────────────────────────────────────────────────────────
+
+async function runRebatchPhase(
+  repoRoot: string, unit: string, config: HarnessConfig,
+  modelRuntime: ModelRuntime, sanitized: string,
+  smallRetryPool: string[], targets: Target[], carryover: string,
+): Promise<void> {
+  const uniqueSmall = [...new Set(smallRetryPool)];
+  console.log(
+    `[pi-harness] ${unit}: re-batching ${uniqueSmall.length} small target(s) ` +
+    `(below ${config.singletonMinSize} bytes)`,
+  );
+
+  const smallTargets = targets.filter((t) => uniqueSmall.includes(t.id));
+  let sharedCarryover = carryover;
+
+  for (let rbIdx = 0; rbIdx < uniqueSmall.length; rbIdx += config.batchSize) {
+    const rbIds = uniqueSmall.slice(rbIdx, rbIdx + config.batchSize);
+    const rbTargets = smallTargets.filter((t) => rbIds.includes(t.id));
+
+    const { briefs: rbBriefs, missingAsm: rbMissing } = buildBriefs(repoRoot, rbTargets);
+    for (const id of rbMissing) {
+      handleSkipped(repoRoot, config, unit, id, "no retail asm");
+    }
+    const rbFiltered = rbIds.filter((id) => !rbMissing.includes(id));
+    if (rbFiltered.length === 0) continue;
+
+    const writable = writableScopeForTargets(
+      repoRoot,
+      rbTargets.filter((t) => !rbMissing.includes(t.id)),
+    );
+    const rbSnapshot = await snapshotUnit(repoRoot, unit, writable);
+    let rbCurrent = rbFiltered;
+    let rbAttempt = 0;
+    const rbMax = config.maxBatchRetries;
+
+    while (rbCurrent.length > 0 && rbAttempt < rbMax) {
+      rbAttempt++;
+
+      const brief = buildBatchBrief({
+        targets: rbBriefs, unit, writable, carryover: sharedCarryover,
+        maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
+      });
+      const prompt = buildBatchPrompt({
+        brief, unit, targetIds: rbCurrent, pythonBin: config.pythonBin,
+      });
+
+      let snapshot: Snapshot | null = rbSnapshot;
+      let attemptError: string | null = null;
+      let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
+
+      try {
+        await claimBatch(repoRoot, config, rbCurrent);
+        snapshot = await snapshotUnit(repoRoot, unit, writable);
+
+        const { onVerify, getResults } = makeVerifyCallback({
+          repoRoot, config, unit, targetIds: rbCurrent, writable, snapshot,
+        });
+
+        const sessionResult = await runAgentSession({
+          repoRoot, modelRuntime, spec: config.matchModel, prompt,
+          sessionDir: join(config.sessionDir, sanitized, `rebatch-${rbIdx}`),
+          label: `rebatch-${rbIdx}-session-${rbAttempt}`,
+          timeoutMinutes: config.maxBatchMinutes,
+          maxTokens: config.maxTokens,
+          multiPrompt: {
+            maxRePrompts: config.maxRePrompts,
+            maxStuckRePrompts: config.maxStuckRePrompts,
+            onVerify,
+            totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.maxRePrompts),
+          },
+        });
+
+        if (sessionResult.roundUsages) {
+          for (let r = 0; r < sessionResult.roundUsages.length; r++) {
+            logUsage(repoRoot, config, unit, `rebatch-${rbIdx}-session-${rbAttempt}-round-${r}`,
+              sessionResult.roundUsages[r],
+              r === sessionResult.roundUsages.length - 1 && sessionResult.timedOut);
+          }
+        } else {
+          logUsage(repoRoot, config, unit, `rebatch-${rbIdx}-session-${rbAttempt}`,
+            sessionResult.usage, sessionResult.timedOut);
+        }
+
+        sharedCarryover = sessionResult.finalText.slice(0, 1500);
+
+        if (sessionResult.outcome === "accepted") {
+          batchResults = getResults();
+        } else {
+          if (snapshot) await restoreSnapshot(repoRoot, snapshot);
+          const reason = sessionResult.outcome === "gave-up"
+            ? `re-prompts exhausted (${sessionResult.rePromptsUsed} used)`
+            : "session failed";
+          attemptError = reason;
+          appendLedger(repoRoot, config.ledgerPath, {
+            ts: new Date().toISOString(), event: "batch-session-exhausted", tu: unit,
+            detail: {
+              batchIndex: rbIdx, attempt: rbAttempt, phase: "rebatch",
+              outcome: sessionResult.outcome, rePromptsUsed: sessionResult.rePromptsUsed,
+            },
+          });
+          await releaseBatch(repoRoot, config, rbCurrent);
+          sharedCarryover = `Previous re-batch session failed: ${reason}`;
+          continue;
+        }
+      } catch (err) {
+        attemptError = err instanceof Error ? err.message : String(err);
+        const usage = usageFromError(err);
+        if (usage) {
+          logUsage(repoRoot, config, unit, `rebatch-${rbIdx}-session-${rbAttempt}`, usage, false);
+        }
+      }
+
+      if (attemptError !== null && batchResults === null) {
+        let recoveryOutput = "";
+        if (rbSnapshot) {
+          const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
+          recoveryOutput = recovery.output;
+          if (!recovery.ok) await restoreSnapshot(repoRoot, rbSnapshot);
+        }
+        appendLedger(repoRoot, config.ledgerPath, {
+          ts: new Date().toISOString(), event: "batch-error", tu: unit,
+          detail: { batchIndex: rbIdx, attempt: rbAttempt, error: attemptError, recoveryOutput, phase: "rebatch" },
+        });
+        await releaseBatch(repoRoot, config, rbCurrent);
+        sharedCarryover = `Previous re-batch attempt failed unexpectedly:\n${attemptError}\n${recoveryOutput}`;
+        continue;
+      }
+
+      if (batchResults === null) {
+        await releaseBatch(repoRoot, config, rbCurrent);
+        sharedCarryover = "Previous re-batch attempt produced no results.";
+        continue;
+      }
+
+      const acceptedCount = batchResults.filter((r) => r.accepted).length;
+      appendLedger(repoRoot, config.ledgerPath, {
+        ts: new Date().toISOString(),
+        event: acceptedCount > 0 ? "batch-accept" : "batch-cycle",
+        tu: unit,
+        detail: {
+          batchIndex: rbIdx, attempt: rbAttempt, acceptedCount, phase: "rebatch",
+          results: batchResults.map((r) => ({ targetId: r.targetId, status: r.status })),
+        },
+      });
+      await releaseBatch(repoRoot, config, rbCurrent);
+
+      const rbFailed = batchResults.filter((r) => !r.accepted).map((r) => r.targetId);
+      for (const fid of rbFailed) {
+        const remainingAttempts = Math.max(0, rbMax - rbAttempt);
+        if (remainingAttempts === 0) {
+          handleSkipped(repoRoot, config, unit, fid, "exhausted rebatch retries");
+          continue;
+        }
+        const ok = await runSingleton(
+          repoRoot, unit, fid, config, modelRuntime, sanitized, rbIdx, sharedCarryover, remainingAttempts,
+        );
+        if (!ok) {
+          handleSkipped(repoRoot, config, unit, fid, "exhausted singleton retries");
+        }
+      }
+
+      rbCurrent = [];
+    }
+
+    if (rbCurrent.length > 0) {
+      for (const id of rbCurrent) {
+        handleSkipped(repoRoot, config, unit, id, "exhausted rebatch retries");
+      }
+    }
   }
 }
 
@@ -476,9 +769,10 @@ async function runSingleton(
   if (missingAsm.length > 0) return false;
 
   let feedback = carryover;
-  let singletonSnapshot: Snapshot | null = null;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+  console.log(`[pi-harness] ${unit}: starting singleton for ${targetId} (up to ${maxAttempts} session(s))`);
+
+  for (let sessionAttempt = 1; sessionAttempt <= maxAttempts; sessionAttempt++) {
     const brief = buildBatchBrief({
       targets: briefs, unit, writable, carryover: feedback,
       maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
@@ -486,60 +780,88 @@ async function runSingleton(
     const prompt = buildBatchPrompt({
       brief, unit, targetIds: [targetId], pythonBin: config.pythonBin,
     });
-    let snapshot: Snapshot | null = singletonSnapshot;
+
+    let snapshot: Snapshot | null = null;
     try {
       await claimBatch(repoRoot, config, [targetId]);
-      if (!singletonSnapshot) {
-        singletonSnapshot = await snapshotUnit(repoRoot, unit, writable);
-      }
-      snapshot = singletonSnapshot;
+      snapshot = await snapshotUnit(repoRoot, unit, writable);
+
+      const { onVerify, getResults } = makeVerifyCallback({
+        repoRoot, config, unit, targetIds: [targetId], writable, snapshot,
+      });
 
       const sessionResult = await runAgentSession({
         repoRoot, modelRuntime, spec: config.matchModel, prompt,
-        sessionDir: join(config.sessionDir, sanitized, `singleton-${targetId}-attempt-${attempt}`),
-        label: `singleton-${targetId}-attempt-${attempt}`,
+        sessionDir: join(config.sessionDir, sanitized, `singleton-${targetId}`),
+        label: `singleton-${targetId}-session-${sessionAttempt}`,
         timeoutMinutes: config.maxBatchMinutes,
+        maxTokens: config.maxTokens,
+        multiPrompt: {
+          maxRePrompts: config.maxRePrompts,
+          maxStuckRePrompts: config.maxStuckRePrompts,
+          onVerify,
+          totalTimeoutMinutes: config.maxBatchMinutes * (1 + config.maxRePrompts),
+        },
       });
-      logUsage(repoRoot, config, unit, `singleton-${targetId}-attempt-${attempt}`,
-        sessionResult.usage, sessionResult.timedOut);
 
-      const build = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
-      if (!build.ok) {
-        await restoreSnapshot(repoRoot, snapshot);
-        feedback = `Previous attempt was rejected (compile-failed):\n${build.output}`;
+      if (sessionResult.roundUsages) {
+        for (let r = 0; r < sessionResult.roundUsages.length; r++) {
+          logUsage(repoRoot, config, unit, `singleton-${targetId}-session-${sessionAttempt}-round-${r}`,
+            sessionResult.roundUsages[r],
+            r === sessionResult.roundUsages.length - 1 && sessionResult.timedOut);
+        }
+      } else {
+        logUsage(repoRoot, config, unit, `singleton-${targetId}-session-${sessionAttempt}`,
+          sessionResult.usage, sessionResult.timedOut);
+      }
+
+      console.log(
+        `[pi-harness] ${unit}: singleton ${targetId} session ${sessionAttempt}/${maxAttempts} ` +
+        `completed (outcome: ${sessionResult.outcome ?? "single-prompt"}, ` +
+        `re-prompts: ${sessionResult.rePromptsUsed ?? 0})`,
+      );
+
+      if (sessionResult.outcome === "accepted") {
+        const results = getResults();
+        const accepted = results?.find((r) => r.targetId === targetId)?.accepted ?? false;
         appendLedger(repoRoot, config.ledgerPath, {
-          ts: new Date().toISOString(), event: "batch-rejected", tu: unit,
-          detail: { targetId, attempt, singleton: true, reason: "compile-failed", buildOutput: build.output },
+          ts: new Date().toISOString(),
+          event: accepted ? "batch-accept" : "batch-rejected",
+          tu: unit,
+          detail: {
+            targetId, sessionAttempt, singleton: true,
+            status: results?.[0]?.status,
+            rePromptsUsed: sessionResult.rePromptsUsed,
+          },
         });
         await releaseBatch(repoRoot, config, [targetId]);
+        if (accepted) return true;
+        // Compile + lint passed but batch-cycle rejected — treat as
+        // exhausted for this session, fall through to next session.
+        feedback = `Previous singleton session passed compile and lint but was not accepted by batch-cycle.`;
         continue;
       }
 
-      const lint = await runLint(repoRoot, config.pythonBin, snapshot);
-      if (!lint.ok) {
-        // Keep compilable edits; lint feedback is sent to the next attempt.
-        feedback = `Previous attempt was rejected (lint):\n${JSON.stringify(lint.violations).slice(0, 1200)}`;
-        appendLedger(repoRoot, config.ledgerPath, {
-          ts: new Date().toISOString(), event: "batch-rejected", tu: unit,
-          detail: { targetId, attempt, singleton: true, reason: "lint-rejected", violations: lint.violations },
-        });
-        await releaseBatch(repoRoot, config, [targetId]);
-        continue;
-      }
-
-      const results = await runBatchCycle(repoRoot, config.pythonBin, config.region, [targetId]);
-      const accepted = results.find((r) => r.targetId === targetId)?.accepted ?? false;
+      // Session gave up or failed — restore and try next session.
+      if (snapshot) await restoreSnapshot(repoRoot, snapshot);
+      const reason = sessionResult.outcome === "gave-up"
+        ? `re-prompts exhausted (${sessionResult.rePromptsUsed} used)`
+        : "session failed";
+      feedback = `Previous singleton session was rejected: ${reason}`;
       appendLedger(repoRoot, config.ledgerPath, {
-        ts: new Date().toISOString(), event: accepted ? "batch-accept" : "batch-rejected", tu: unit,
-        detail: { targetId, attempt, singleton: true, status: results[0]?.status },
+        ts: new Date().toISOString(), event: "batch-session-exhausted", tu: unit,
+        detail: {
+          targetId, sessionAttempt, singleton: true,
+          outcome: sessionResult.outcome, rePromptsUsed: sessionResult.rePromptsUsed,
+        },
       });
       await releaseBatch(repoRoot, config, [targetId]);
-      if (accepted) return true;
+      // continue to next sessionAttempt
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       const usage = usageFromError(err);
       if (usage) {
-        logUsage(repoRoot, config, unit, `singleton-${targetId}-attempt-${attempt}`, usage, false);
+        logUsage(repoRoot, config, unit, `singleton-${targetId}-session-${sessionAttempt}`, usage, false);
       }
       let recoveryOutput = "";
       if (snapshot) {
@@ -547,12 +869,13 @@ async function runSingleton(
         recoveryOutput = recovery.output;
         if (!recovery.ok) await restoreSnapshot(repoRoot, snapshot);
       }
-      feedback = `Previous singleton attempt failed unexpectedly:\n${msg}\n${recoveryOutput}`;
+      feedback = `Previous singleton session failed unexpectedly:\n${msg}\n${recoveryOutput}`;
       appendLedger(repoRoot, config.ledgerPath, {
         ts: new Date().toISOString(), event: "batch-error", tu: unit,
-        detail: { targetId, attempt, singleton: true, error: msg },
+        detail: { targetId, sessionAttempt, singleton: true, error: msg },
       });
       await releaseBatch(repoRoot, config, [targetId]);
+      // continue to next sessionAttempt
     }
   }
 
@@ -603,6 +926,8 @@ async function runTuFinal(
       sessionDir: join(config.sessionDir, sanitized, "tu-final"),
       label: "tu-final",
       timeoutMinutes: config.maxBatchMinutes * 2,
+      maxTokens: config.maxTokens,
+      // No multiPrompt for TU-final — it's a one-shot cleanup pass.
     });
     logUsage(repoRoot, config, unit, "tu-final", sessionResult.usage, sessionResult.timedOut);
   } catch (err) {

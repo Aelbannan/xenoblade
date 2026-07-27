@@ -18,4 +18,5 @@ public:
     // 0x6C: IWorkEvent base
     // 0x70: IScnRender base
     // 0x78: CSysWin subobject or similar
+    CSystemWindow();
 };

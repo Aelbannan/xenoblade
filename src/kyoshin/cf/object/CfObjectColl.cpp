@@ -3,59 +3,59 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_800AB3D0() {}
+void func_800AB3D0(){}
 
-extern "C" void func_800AB3EC__Q22cf12CfObjectCollFv() {}
+void cf::CfObjectColl::func_800AB3EC() {}
 
-extern "C" void __dt__Q22cf12CfObjectCollFv() {}
+void cf::CfObjectColl::~CfObjectColl() {}
 
-extern "C" void func_800AB498__Q22cf12CfObjectCollFv() {}
+void cf::CfObjectColl::func_800AB498() {}
 
-extern "C" void CfObjectColl_initCollImplInstances() {}
+void CfObjectColl_initCollImplInstances(){}
 
-extern "C" void func_800AB57C__Q22cf12CfObjectCollFv(void) {}
+void cf::CfObjectColl::func_800AB57C(void) {}
 
-extern "C" void func_800AB580() {}
+void func_800AB580(){}
 
-extern "C" void func_800AB798__Q22cf12CfObjectCollFv(void* self) {
-    void** vtable = *(void***)self;
+void cf::CfObjectColl::func_800AB798() {
+    void** vtable = *(void***)this;
     void (*func)(void*) = (void (*)(void*))vtable[0x9c / 4];
-    func(self);
+    func(this);
 }
 
-extern "C" void func_800AB7A8__Q22cf12CfObjectCollFv() {}
+void cf::CfObjectColl::func_800AB7A8() {}
 
-extern "C" void func_800AB7F8() {}
+void func_800AB7F8(){}
 
-extern "C" void func_800AB8CC() {}
+void func_800AB8CC(){}
 
-extern "C" void func_800AB978() {}
+void func_800AB978(){}
 
-extern "C" void func_800ABA18() {}
+void func_800ABA18(){}
 
-extern "C" void func_800ABB9C() {}
+void func_800ABB9C(){}
 
-extern "C" void func_800ABC5C() {}
+void func_800ABC5C(){}
 
-extern "C" void func_800ABD44() {}
+void func_800ABD44(){}
 
-extern "C" void func_800ABDE4() {}
+void func_800ABDE4(){}
 
-extern "C" void func_800ABE84() {}
+void func_800ABE84(){}
 
-extern "C" void func_800ABF24() {}
+void func_800ABF24(){}
 
-extern "C" void func_800ABFC4() {}
+void func_800ABFC4(){}
 
-extern "C" void func_800AC110() {}
+void func_800AC110(){}
 
-extern "C" void func_800AC1BC() {}
+void func_800AC1BC(){}
 
-extern "C" void func_800AC30C() {}
+void func_800AC30C(){}
 
-extern "C" void func_800AC378() {}
+void func_800AC378(){}
 
-extern "C" void func_800AC3F4() {}
+void func_800AC3F4(){}
 
 extern "C" void func_800AC450(void* self, unsigned long a, unsigned long b) {
     *(unsigned long*)((char*)self + 0x9c) = (a << 16) + b;
@@ -67,7 +67,7 @@ extern "C" unsigned long func_800AC460(void* self) {
     return func_8009D018((v >> 16) + 0x20c8);
 }
 
-extern "C" void func_800AC470() {}
+void func_800AC470(){}
 
 extern "C" void func_800AC4A8(void* self, u32 val) { *(u32*)((u8*)self + 0x9C) = val; }
 
@@ -83,9 +83,9 @@ extern "C" void CfObject_UnkVirtualFunc70__Q22cf8CfObjectFv() {}
 
 extern "C" int CfObject_UnkVirtualFunc69__Q22cf8CfObjectFv(void* self) { return 0; }
 
-extern "C" void CfObject_UnkVirtualFunc67__Q22cf8CfObjectFv() {}
+void cf::CfObject::CfObject_UnkVirtualFunc67() {}
 
-extern "C" void CfObject_UnkVirtualFunc65__Q22cf8CfObjectFv() {}
+void cf::CfObject::CfObject_UnkVirtualFunc65() {}
 
 extern "C" int CfObject_UnkVirtualFunc62__Q22cf8CfObjectFv(void* self) { return 0; }
 
@@ -148,17 +148,17 @@ extern "C" int CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv(void* self) { return 
 
 extern "C" void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv() {}
 
-extern "C" void CfObject_UnkVirtualFunc11__Q22cf8CfObjectFv() {}
+void cf::CfObject::CfObject_UnkVirtualFunc11() {}
 
-extern "C" void CfObject_UnkVirtualFunc10__Q22cf8CfObjectFv(void* self) {
-    void** vtable = *(void***)self;
+void cf::CfObject::CfObject_UnkVirtualFunc10() {
+    void** vtable = *(void***)this;
     void (*func)(void*) = (void (*)(void*))vtable[0x74 / 4];
-    func(self);
+    func(this);
 }
 
 extern "C" void CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv() {}
 
-extern "C" void func_800AC604__Q22cf13CfObjectPointFv() {}
+void cf::CfObjectPoint::func_800AC604() {}
 
 extern "C" void* func_800AC610(void* param_1) {
     if (param_1 != NULL && (*(unsigned int*)((char*)param_1 + 0x64) & 0x20)) {

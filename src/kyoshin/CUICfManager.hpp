@@ -162,4 +162,11 @@ private:
     u8 unkC92[2];                                        // 0xC92
 
     static CUICfManager* spInstance;
+    CUICfManager();
+    virtual ~CUICfManager();
+    void OnFileEvent();
+    void func_80135FBC();
+    void func_80135FC4();
+    void func_80135FCC();
+    void func_80135FD4();
 }; // size = 0xC94

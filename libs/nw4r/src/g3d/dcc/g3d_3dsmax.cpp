@@ -3,7 +3,7 @@
 
 #include <harness_catalog.h>
 
-extern "C" void CalcTexMtx_3dsmax__Q44nw4r3g3d6detail3dccFPQ34nw4r4math5MTX34bRCQ34nw4r3g3d6TexSrtQ44nw4r3g3d6TexSrt4Flag() {}
+void nw4r3g3d6detail3dccFPQ34nw4r4math5MTX34bRCQ3::nw4r::g3d::TexSrt::CalcTexMtx_3dsmax() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace nw4r { namespace g3d { class TexSrt; }}

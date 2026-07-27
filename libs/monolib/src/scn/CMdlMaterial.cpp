@@ -16,20 +16,20 @@ extern "C" void __ct__CMdlMaterial(void *r3) {
     p[0xD] = 0;
 }
 
-extern "C" void __dt__12CMdlMaterialFv() {}
+void CMdlMaterial::~CMdlMaterial() {}
 
-extern "C" void func_804E54B8() {}
+void func_804E54B8(){}
 
-extern "C" void func_804E5990() {}
+void func_804E5990(){}
 
-extern "C" void __dt__804E5DE0() {}
+void __dt__804E5DE0(){}
 
-extern "C" void func_804E5E38() {}
+void func_804E5E38(){}
 
-extern "C" void func_804E5FD4() {}
+void func_804E5FD4(){}
 
-extern "C" void func_804E6158() {}
+void func_804E6158(){}
 
-extern "C" void func_804E6358() {}
+void func_804E6358(){}
 
-extern "C" void func_804E64B0() {}
+void func_804E64B0(){}

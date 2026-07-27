@@ -3,35 +3,34 @@
 
 #include "kyoshin/menu/CMenuKizunaTalkList.hpp"
 
-extern "C" void __ct__CMenuKizunaTalkList() {}
+void __ct__CMenuKizunaTalkList(){}
 
-extern "C" void __dt__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self, int deletionFlag) {}
+void CMenuKizunaTalkList::~CMenuKizunaTalkList(int deletionFlag) {}
 
-extern "C" void Init__19CMenuKizunaTalkListFv() {}
+void CMenuKizunaTalkList::Init() {}
 
-extern "C" void Term__19CMenuKizunaTalkListFv() {}
+void CMenuKizunaTalkList::Term() {}
 
-extern "C" void Move__19CMenuKizunaTalkListFv() {}
+void CMenuKizunaTalkList::Move() {}
 
-extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self) {}
+void CMenuKizunaTalkList::cbRenderBefore() {}
 
-extern "C" void func_80272414() {}
+void func_80272414(){}
 
 extern "C" void stub_us_8027490c() {}
 
-extern "C" void func_80272498() {}
+void func_80272498(){}
 
-extern "C" void func_80272510() {}
+void func_80272510(){}
 
-extern "C" void func_80272560() {}
+void func_80272560(){}
 
-extern "C" void func_80272694() {}
+void func_80272694(){}
 
 // Forward declarations for member functions called by adjustor thunks
 // (used via direct function pointer to guarantee tail-call match).
-extern "C" void cbRenderBefore__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self);
-extern "C" void __dt__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self, int deletionFlag);
-
+void cbRenderBefore__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self);
+void __dt__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self, int deletionFlag);
 // IScnRender vtable adjustor thunk for cbRenderBefore.
 // When IScnRender virtual functions dispatch through IScnRender*,
 // 'this' points to the IScnRender subobject at offset +0x58 within

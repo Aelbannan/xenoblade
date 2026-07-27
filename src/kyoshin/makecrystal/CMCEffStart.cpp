@@ -806,4 +806,4 @@ void CMCEffCylinder::func_80226230() {
     mLayout->Animate(0);
 }
 
-extern "C" void __ct__CMCEffStart() {}
+void __ct__CMCEffStart(){}

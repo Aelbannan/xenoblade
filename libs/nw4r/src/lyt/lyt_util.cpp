@@ -3,4 +3,4 @@
 
 #include <harness_catalog.h>
 
-extern "C" void BindAnimation__Q24nw4r3lytFPQ34nw4r3lyt5GroupPQ34nw4r3lyt13AnimTransformbb() {}
+void BindAnimation__Q24nw4r3lytFPQ34nw4r3lyt5GroupPQ34nw4r3lyt13AnimTransformbb(){}

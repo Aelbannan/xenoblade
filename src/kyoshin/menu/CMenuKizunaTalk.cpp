@@ -3,35 +3,35 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuKizunaTalk() {}
+void __ct__CMenuKizunaTalk(){}
 
-extern "C" void __dt__15CMenuKizunaTalkFv(void* self) {}
+void CMenuKizunaTalk::~CMenuKizunaTalk() {}
 
-extern "C" void Init__15CMenuKizunaTalkFv() {}
+void CMenuKizunaTalk::Init() {}
 
-extern "C" void Term__15CMenuKizunaTalkFv() {}
+void CMenuKizunaTalk::Term() {}
 
-extern "C" void Move__15CMenuKizunaTalkFv() {}
+void CMenuKizunaTalk::Move() {}
 
-extern "C" void cbRenderBefore__15CMenuKizunaTalkFv(void* self) {}
+void CMenuKizunaTalk::cbRenderBefore() {}
 
-extern "C" void func_801BCEBC() {}
+void func_801BCEBC(){}
 
-extern "C" void func_801BCF38() {}
+void func_801BCF38(){}
 
-extern "C" void func_801BCF48() {}
+void func_801BCF48(){}
 
-extern "C" void func_801BD0B4() {}
+void func_801BD0B4(){}
 
-extern "C" void func_801BD228() {}
+void func_801BD228(){}
 
-extern "C" void func_801BD2F8() {}
+void func_801BD2F8(){}
 
-extern "C" void func_801BD594() {}
+void func_801BD594(){}
 
-extern "C" void func_801BD630() {}
+void func_801BD630(){}
 
-extern "C" void func_801BD7D8(void* self) {}
+void func_801BD7D8(void* self){}
 
 extern "C" void OnFileEvent__15CMenuKizunaTalkFP10CEventFile(void* self) { ((void(*)(void*))func_801BD7D8)((char*)self - 0x6c); }
 

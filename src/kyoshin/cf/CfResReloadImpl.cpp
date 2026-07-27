@@ -3,51 +3,51 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CfResReloadImpl() {}
+void __ct__cf_CfResReloadImpl(){}
 
 extern "C" int func_8016CE3C(void* arg) {
     unsigned int v = *(unsigned short*)((char*)arg + 8);
     return (int)(((v | 0xFFFFFFFCu) - ((v - 3u) >> 1)) >> 31);
 }
 
-extern "C" void func_8016CE5C() {}
+void func_8016CE5C(){}
 
 // FULL_MATCH: vtable slot 6 - returns constant resource type identifier
 extern "C" int func_8016CF1C() { return 12; }
 
-extern "C" void func_8016CF24() {}
+void func_8016CF24(){}
 
-extern "C" void func_8016CFBC() {}
+void func_8016CFBC(){}
 
-extern "C" void func_8016CFDC() {}
+void func_8016CFDC(){}
 
-extern "C" void func_8016D0C0() {}
+void func_8016D0C0(){}
 
-extern "C" void func_8016D144() {}
+void func_8016D144(){}
 
-extern "C" void func_8016D1D8() {}
+void func_8016D1D8(){}
 
-extern "C" void func_8016D240() {}
+void func_8016D240(){}
 
-extern "C" void func_8016D2FC() {}
+void func_8016D2FC(){}
 
-extern "C" void func_8016D390() {}
+void func_8016D390(){}
 
-extern "C" void func_8016D3F8() {}
+void func_8016D3F8(){}
 
-extern "C" void func_8016D688() {}
+void func_8016D688(){}
 
-extern "C" void func_8016DAF8() {}
+void func_8016DAF8(){}
 
-extern "C" void func_8016DCE4() {}
+void func_8016DCE4(){}
 
-extern "C" void func_8016DDE8() {}
+void func_8016DDE8(){}
 
-extern "C" void func_eu_8016F1C4() {}
+void func_eu_8016F1C4(){}
 
-extern "C" void func_8016DE68() {}
+void func_8016DE68(){}
 
-extern "C" void func_8016DE8C() {}
+void func_8016DE8C(){}
 
 // FULL_MATCH: vtable slot 23 - returns constant resource sub-type
 extern "C" int func_8016DECC() { return 1; }
@@ -73,7 +73,7 @@ extern "C" void func_8016DF34(short param_1)
     lbl_eu_80664284 = lbl_eu_806676B0 * lbl_eu_80666210;
 }
 
-extern "C" void func_8016DF4C() {}
+void func_8016DF4C(){}
 
 extern u16 lbl_eu_80664280;
 extern "C" u16 func_8016E08C() { return lbl_eu_80664280; }
@@ -96,9 +96,9 @@ extern "C" void func_8016E09C(void* self) {
     *reinterpret_cast<unsigned short*>(p + 0xA) = lbl_eu_8066427C;
 }
 
-extern "C" void func_8016E100() {}
+void func_8016E100(){}
 
-extern "C" void func_8016E13C() {}
+void func_8016E13C(){}
 
 extern "C" void func_8016E164(u16 r3, u16 r4) {
     extern u16 lbl_eu_8066427A;
@@ -115,21 +115,21 @@ extern "C" void func_8016E164(u16 r3, u16 r4) {
     lbl_eu_8066427C = r4;
 }
 
-extern "C" void func_8016E1AC() {}
+void func_8016E1AC(){}
 
-extern "C" void func_8016E430() {}
+void func_8016E430(){}
 
-extern "C" void func_8016E578() {}
+void func_8016E578(){}
 
-extern "C" void func_8016E654() {}
+void func_8016E654(){}
 
-extern "C" void func_8016E854() {}
+void func_8016E854(){}
 
-extern "C" void func_8016E9CC() {}
+void func_8016E9CC(){}
 
-extern "C" void func_8016EA68() {}
+void func_8016EA68(){}
 
-extern "C" void func_8016EC58() {}
+void func_8016EC58(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void sinit_8016ED44() {

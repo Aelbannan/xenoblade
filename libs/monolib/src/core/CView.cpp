@@ -1,5 +1,5 @@
 #include <types.h>
-extern "C" void __dt__5CViewFv(void*);
+void __dt__5CViewFv(void*);
 extern "C" void func_8043FBC4(void* self) {
     __dt__5CViewFv((char*)self - 0x1C4);
 }
@@ -1604,9 +1604,9 @@ CView::CView(const char* pName, CWorkThread* pParent)
     *(ml::CCol4*)((u8*)&mFrame + 0x28) = lbl_8065A0C8;
 }
 
-extern "C" void CView_UnkVirtualFunc7__5CViewFv() {}
-extern "C" void CView_UnkVirtualFunc3__5CViewFv() {}
-extern "C" void CView_UnkVirtualFunc4__5CViewFv() {}
+void CView::CView_UnkVirtualFunc7() {}
+void CView::CView_UnkVirtualFunc3() {}
+void CView::CView_UnkVirtualFunc4() {}
 extern "C" void CView_UnkVirtualFunc9__5CViewFv(void* self) {
     ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc9();
 }
@@ -1618,4 +1618,4 @@ extern "C" int CView_UnkVirtualFunc5__5CViewFv() { return 0; }
 extern "C" void CView_UnkVirtualFunc1__5CViewFv(void* self) {
     ((CViewFrame*)((char*)self + 0x1DC))->CView_UnkVirtualFunc1();
 }
-extern "C" void sinit_8043FB70() {}
+void sinit_8043FB70(){}

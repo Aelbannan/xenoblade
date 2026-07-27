@@ -17,13 +17,13 @@ extern "C" void pluginUiRegist() {
     vmPluginRegist((void*)((char*)lbl_eu_804FABF0 + 0x28), (void*)lbl_eu_80525D68);
 }
 
-extern "C" void winTalk() {}
-extern "C" void pcTalk() {}
-extern "C" void winTalkWait() {}
-extern "C" void winTalkNoName() {}
-extern "C" void fadeIn_1() {}
-extern "C" void fadeOut_1() {}
-extern "C" void fadeWait_1() {}
+void winTalk(){}
+void pcTalk(){}
+void winTalkWait(){}
+void winTalkNoName(){}
+void fadeIn_1(){}
+void fadeOut_1(){}
+void fadeWait_1(){}
 extern "C" int createCol6Sys(VMThread* pThread) {
     extern void func_8013DD94();
     func_8013DD94();
@@ -34,7 +34,7 @@ extern "C" int createCol6Hint(VMThread* pThread) {
     func_8013DE6C();
     return 0;
 }
-extern "C" void createCol6Invite() {}
+void createCol6Invite(){}
 extern "C" int createCol6Init(VMThread* pThread) {
     extern void func_80139CEC();
     func_80139CEC();
@@ -55,19 +55,19 @@ extern "C" int simpleEventEnd(VMThread* pThread) {
     func_8013BDA8();
     return 0;
 }
-extern "C" void setTrust() {}
-extern "C" void setItemMulti() {}
-extern "C" void setKizunaTalk() {}
-extern "C" void winSys() {}
-extern "C" void winSysSelect() {}
-extern "C" void getSelectNum() {}
-extern "C" void mesAddPT() {}
-extern "C" void mesSubPT() {}
-extern "C" void mesVisionON() {}
-extern "C" void mesVisionOFF() {}
-extern "C" void mesMonadoON() {}
-extern "C" void mesMonadoOFF() {}
-extern "C" int ptChangeNotice() {
+void setTrust(){}
+void setItemMulti(){}
+void setKizunaTalk(){}
+void winSys(){}
+void winSysSelect(){}
+void getSelectNum(){}
+void mesAddPT(){}
+void mesSubPT(){}
+void mesVisionON(){}
+void mesVisionOFF(){}
+void mesMonadoON(){}
+void mesMonadoOFF(){}
+int ptChangeNotice(){
     extern void enablePadFlags__Q22cf13CfGameManagerFUlb(int, int);
     extern void func_8013E8E0();
     enablePadFlags__Q22cf13CfGameManagerFUlb(-1, 1);
@@ -89,21 +89,21 @@ extern "C" int kizunaTalkStart() {
     func_8007D7A4__Q22cf13CfGameManagerFv();
     return 0;
 }
-extern "C" int kizunaTalkEnd() {
+int kizunaTalkEnd(){
     extern u32 lbl_eu_80663E28;
     extern void func_8013BDD0();
     lbl_eu_80663E28 &= ~0x1800;
     func_8013BDD0();
     return 0;
 }
-extern "C" void isPrioReq() {}
+void isPrioReq(){}
 extern "C" int gameClear(VMThread* pThread) {
     extern void func_8013500C();
     func_8013500C();
     return 0;
 }
-extern "C" void setLastTalkNpc() {}
-extern "C" void isSETalkVoiceWait() {}
+void setLastTalkNpc(){}
+void isSETalkVoiceWait(){}
 extern "C" int func_eu_80046DA0(VMThread* pThread) {
     extern void func_eu_8013C8DC();
     func_eu_8013C8DC();

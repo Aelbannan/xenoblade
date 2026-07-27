@@ -3,37 +3,37 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_800C5998() {}
+void func_800C5998(){}
 
-extern "C" void func_800C5AA0() {}
+void func_800C5AA0(){}
 
-extern "C" void func_800C5B00() {}
+void func_800C5B00(){}
 
-extern "C" void func_800C6A58() {}
+void func_800C6A58(){}
 
-extern "C" void func_800C6EC0() {}
+void func_800C6EC0(){}
 
-extern "C" void func_800C6F30() {}
+void func_800C6F30(){}
 
-extern "C" void func_800C70BC() {}
+void func_800C70BC(){}
 
-extern "C" void func_800C75D4() {}
+void func_800C75D4(){}
 
-extern "C" void func_800C819C() {}
+void func_800C819C(){}
 
-extern "C" void func_800C86E8() {}
+void func_800C86E8(){}
 
-extern "C" void func_800C891C() {}
+void func_800C891C(){}
 
-extern "C" void func_800C969C() {}
+void func_800C969C(){}
 
-extern "C" void func_800C9A20() {}
+void func_800C9A20(){}
 
-extern "C" void func_800C9CEC() {}
+void func_800C9CEC(){}
 
-extern "C" void func_800CA084() {}
+void func_800CA084(){}
 
-extern "C" void func_800CA104() {}
+void func_800CA104(){}
 
 extern "C" void func_800CEA34(void*);
 
@@ -46,11 +46,11 @@ extern "C" void func_800CA274(void* self, int value)
     func_800CEA34(self);
 }
 
-extern "C" void func_800CA294() {}
+void func_800CA294(){}
 
-extern "C" void func_800CA42C() {}
+void func_800CA42C(){}
 
-extern "C" void func_800CA458() {}
+void func_800CA458(){}
 
 extern "C" void __dt__Q22cf14CfObjectImplPcFv(void* self);
 

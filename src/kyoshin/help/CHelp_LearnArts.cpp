@@ -3,6 +3,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_802B8398__Q22cf15CHelp_LearnArtsFv() {}
+void cf::CHelp_LearnArts::func_802B8398() {}
 
-extern "C" void func_802B84E0__Q22cf15CHelp_LearnArtsFv() {}
+void cf::CHelp_LearnArts::func_802B84E0() {}

@@ -3,9 +3,9 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_804DB0F0() {}
+void func_804DB0F0(){}
 
-extern "C" void func_804DB114() {}
+void func_804DB114(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_804DB228() {}
+void sinit_804DB228(){}

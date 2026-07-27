@@ -3,10 +3,10 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CScnIdMan() {}
+void __ct__CScnIdMan(){}
 
-extern "C" void __dt__9CScnIdManFv() {}
+void CScnIdMan::~CScnIdMan() {}
 
-extern "C" void func_8049E51C() {}
+void func_8049E51C(){}
 
-extern "C" void cbRenderBefore__9CScnIdManFv() {}
+void CScnIdMan::cbRenderBefore() {}

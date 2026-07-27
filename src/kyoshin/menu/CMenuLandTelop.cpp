@@ -3,23 +3,23 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuLandTelop() {}
+void __ct__CMenuLandTelop(){}
 
-extern "C" void __dt__14CMenuLandTelopFv(void* self) {}
+void CMenuLandTelop::~CMenuLandTelop() {}
 
-extern "C" void Init__14CMenuLandTelopFv() {}
+void CMenuLandTelop::Init() {}
 
-extern "C" void Term__14CMenuLandTelopFv() {}
+void CMenuLandTelop::Term() {}
 
-extern "C" void Move__14CMenuLandTelopFv() {}
+void CMenuLandTelop::Move() {}
 
-extern "C" void cbRenderBefore__14CMenuLandTelopFv(void* self) {}
+void CMenuLandTelop::cbRenderBefore() {}
 
-extern "C" void func_80144EE4() {}
+void func_80144EE4(){}
 
-extern "C" void func_80144FC8() {}
+void func_80144FC8(){}
 
-extern "C" void func_80144FF0() {}
+void func_80144FF0(){}
 
 extern "C" extern int lbl_eu_806641A0;
 
@@ -37,11 +37,11 @@ extern "C" unsigned char func_80145030(void) {
     return 0;
 }
 
-extern "C" void func_8014504C() {}
+void func_8014504C(){}
 
-extern "C" void func_801453B8() {}
+void func_801453B8(){}
 
-extern "C" void func_8014548C() {}
+void func_8014548C(){}
 
 extern "C" void func_80145A90(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x6c); }
 
@@ -49,4 +49,4 @@ extern "C" void func_80145A98(void* self) { ((void(*)(void*))cbRenderBefore__14C
 
 extern "C" void func_80145AA0(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x70); }
 
-extern "C" void func_80145AA8() {}
+void func_80145AA8(){}

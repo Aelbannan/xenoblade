@@ -25,5 +25,6 @@ namespace cf {
         CChainChance mChainChance; //0x1EDC
         CChainCombo mChainCombo; //0x1EF4
         u8 unk1F0C[0x14];
+    CChain();
     };
 }

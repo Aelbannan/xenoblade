@@ -106,7 +106,7 @@ void CRsrcData::setRsrcFile(const char* name, void* path, void* data, u32 length
 }
 
 // Retail symbol is void-returning build__9CRsrcDataFPvPCcPvPvUlb (no C++ static twin).
-extern "C" void build__9CRsrcDataFPvPCcPvPvUlb(void* parent, const char* name, void* arg2, void* data,
+void CRsrcData::build(void* parent, const char* name, void* arg2, void* data,
                                                  u32 length, bool flag) {
     const char* threadName;
     mtl::ALLOC_HANDLE handle;

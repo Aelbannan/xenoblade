@@ -3,6 +3,6 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CVirtualLightAmb() {}
+void __ct__CVirtualLightAmb(){}
 
-extern "C" void __dt__16CVirtualLightAmbFv() {}
+void CVirtualLightAmb::~CVirtualLightAmb() {}

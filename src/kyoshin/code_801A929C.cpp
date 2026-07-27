@@ -7,31 +7,31 @@ extern "C" void func_801A9338(void* self) {
     *(unsigned short*)((char*)self + 0x2c) = 0xFFFF;
 }
 
-extern "C" void func_801A9348() {}
+void func_801A9348(){}
 
-extern "C" void func_801A96A0() {}
+void func_801A96A0(){}
 
-extern "C" void func_801A9CCC() {}
+void func_801A9CCC(){}
 
-extern "C" void __dt__801A9F78() {}
+void __dt__801A9F78(){}
 
-extern "C" void func_801A9FC0() {}
+void func_801A9FC0(){}
 
-extern "C" void func_801AA04C() {}
+void func_801AA04C(){}
 
-extern "C" void func_801AA2A8() {}
+void func_801AA2A8(){}
 
-extern "C" void func_801AA960() {}
+void func_801AA960(){}
 
-extern "C" void func_801AAAA0() {}
+void func_801AAAA0(){}
 
-extern "C" void func_801AAB64() {}
+void func_801AAB64(){}
 
-extern "C" void func_801AAC70(void* self) { func_801AAB64(); }
+void func_801AAC70(void* self){ func_801AAB64(); }
 
-extern "C" void func_801AAC78() {}
+void func_801AAC78(){}
 
-extern "C" void func_801AACA8() {}
+void func_801AACA8(){}
 
 extern "C" void func_801AACBC(void *r3, void *r4) {
     extern unsigned char lbl_eu_80664330;
@@ -49,4 +49,4 @@ extern "C" void func_801AACBC(void *r3, void *r4) {
     ((unsigned char *)dst)[0x18] = 1;
 }
 
-extern "C" void func_801AAD08() {}
+void func_801AAD08(){}

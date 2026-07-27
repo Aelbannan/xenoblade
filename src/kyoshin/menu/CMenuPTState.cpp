@@ -8,9 +8,9 @@
 extern "C" void cbRenderBefore__12CMenuPTStateFv(CMenuPTState* self);
 extern "C" void __dt__12CMenuPTStateFv(CMenuPTState* self);
 
-extern "C" void __ct__CMenuPTState() {}
+void __ct__CMenuPTState(){}
 
-extern "C" unsigned long func_80192BD0() {
+unsigned long func_80192BD0(){
     unsigned long v = *(unsigned long*)(lbl_eu_80664300);
     return !!v;
 }
@@ -32,10 +32,10 @@ extern "C" void func_80192BEC(void* self) {
 // Placeholder stubs (not yet FULL_MATCH — kept for label/catalog coverage)
 // ---------------------------------------------------------------------------
 
-extern "C" void __ct__Q22cf17UnkClass_80192BF4Fv() {}
+cf::UnkClass_80192BF4::UnkClass_80192BF4() {}
 
-extern "C" void __ct__80192C10() {}
+void __ct__80192C10(){}
 
-extern "C" void func_80192C2C() {}
+void func_80192C2C(){}
 
-extern "C" void func_80192CB0() {}
+void func_80192CB0(){}

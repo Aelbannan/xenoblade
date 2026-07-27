@@ -4,15 +4,15 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_VISION_TELL.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__802A96C0() {}
+void __ct__802A96C0(){}
 
-extern "C" void func_802A97A0() {}
+void func_802A97A0(){}
 
-extern "C" void func_802A9924() {}
+void func_802A9924(){}
 
-extern "C" void func_802A9AC4() {}
+void func_802A9AC4(){}
 
-extern "C" void func_802A9B0C() {}
+void func_802A9B0C(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; VISION_TELL subclass returns 0x32 (50).

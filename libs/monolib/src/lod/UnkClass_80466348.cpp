@@ -3,137 +3,137 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_80466348__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466348() {}
 
-extern "C" void func_80466390__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466390() {}
 
-extern "C" void func_804663D0__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804663D0() {}
 
-extern "C" void func_80466418__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466418() {}
 
-extern "C" void func_80466458__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466458() {}
 
-extern "C" void func_804664A0__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804664A0() {}
 
-extern "C" void func_804664E8__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804664E8() {}
 
-extern "C" void func_80466520__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466520() {}
 
-extern "C" void func_80466558__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466558() {}
 
-extern "C" void func_80466590__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466590() {}
 
-extern "C" void func_80466638__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466638() {}
 
-extern "C" void func_804666E0__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804666E0() {}
 
-extern "C" void func_80466794__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466794() {}
 
-extern "C" void func_80466848__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466848() {}
 
-extern "C" void func_804668F0__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804668F0() {}
 
-extern "C" void func_80466998__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466998() {}
 
-extern "C" void func_80466A4C__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466A4C() {}
 
-extern "C" void func_80466AE8__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466AE8() {}
 
-extern "C" void func_80466B84__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466B84() {}
 
-extern "C" void func_80466C38__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466C38() {}
 
-extern "C" void func_80466CEC__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466CEC() {}
 
-extern "C" void func_80466D94__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466D94() {}
 
-extern "C" void func_80466E3C__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466E3C() {}
 
-extern "C" void func_80466EE4__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466EE4() {}
 
-extern "C" void func_80466F8C__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466F8C() {}
 
-extern "C" void func_80466FF8__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80466FF8() {}
 
-extern "C" void func_80467070__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467070() {}
 
-extern "C" void func_804670E8__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804670E8() {}
 
-extern "C" void func_8046716C__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_8046716C() {}
 
-extern "C" void func_804671E4__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804671E4() {}
 
-extern "C" void func_80467268__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467268() {}
 
-extern "C" void func_804672D4__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804672D4() {}
 
-extern "C" void func_8046734C__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_8046734C() {}
 
-extern "C" void func_804673D0__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804673D0() {}
 
-extern "C" void func_80467454__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467454() {}
 
-extern "C" void func_804674E4__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804674E4() {}
 
-extern "C" void func_80467568__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467568() {}
 
-extern "C" void func_804675F8__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804675F8() {}
 
-extern "C" void func_80467610__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467610() {}
 
-extern "C" void func_80467628__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467628() {}
 
-extern "C" void func_80467640__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467640() {}
 
-extern "C" void func_80467654__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467654() {}
 
-extern "C" void func_80467668__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467668() {}
 
-extern "C" void func_8046767C__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_8046767C() {}
 
-extern "C" void func_80467690__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467690() {}
 
-extern "C" void func_804676A4__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804676A4() {}
 
-extern "C" void func_804676BC__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804676BC() {}
 
-extern "C" void func_804676D4__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804676D4() {}
 
-extern "C" void func_804676EC__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804676EC() {}
 
-extern "C" void func_8046774C__Q23LOD17UnkClass_80466348Fv(void) {}
+void LOD::UnkClass_80466348::func_8046774C(void) {}
 
-extern "C" void func_80467758__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467758() {}
 
-extern "C" void func_80467798__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467798() {}
 
-extern "C" void func_80467898__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467898() {}
 
-extern "C" void func_804678E8__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804678E8() {}
 
-extern "C" void func_804679E8__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804679E8() {}
 
-extern "C" void func_80467B04__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467B04() {}
 
-extern "C" void func_80467BD4__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467BD4() {}
 
-extern "C" void func_80467CF0__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467CF0() const {}
 
-extern "C" void func_80467E14__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467E14() {}
 
-extern "C" void func_80467E94__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467E94() {}
 
-extern "C" void func_80467FB8__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80467FB8() {}
 
-extern "C" void func_804680DC__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804680DC() {}
 
-extern "C" void func_804681B4__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804681B4() {}
 
-extern "C" void func_804682D8__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804682D8() {}
 
-extern "C" void func_80468354__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_80468354() {}
 
-extern "C" void func_804683D0__Q23LOD17UnkClass_80466348Fv() {}
+void LOD::UnkClass_80466348::func_804683D0() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_804683E8() {}
+void sinit_804683E8(){}

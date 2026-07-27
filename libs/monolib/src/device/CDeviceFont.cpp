@@ -4,56 +4,56 @@
 #include <harness_catalog.h>
 #include "monolib/device/CDeviceFont.hpp"
 
-extern "C" void __ct__11CDeviceFontFPCcP11CWorkThread() {}
+CDeviceFont::CDeviceFont() {}
 
-extern "C" void __dt___reslist_base_IDeviceFontInfo() {}
+void __dt___reslist_base_IDeviceFontInfo(){}
 
-extern "C" void __dt__reslist_IDeviceFontInfo() {}
+void __dt__reslist_IDeviceFontInfo(){}
 
-extern "C" void __dt__11CDeviceFontFv() {}
+void CDeviceFont::~CDeviceFont() {}
 
 extern "C" CDeviceFont* getInstance__11CDeviceFontFv() {
     extern CDeviceFont* lbl_eu_80665678; // sdata2 singleton pointer
     return lbl_eu_80665678;
 }
 
-extern "C" void func_804525D4__11CDeviceFontFv() {}
+void CDeviceFont::func_804525D4() {}
 
-extern "C" void func_804525F0__11CDeviceFontFv() {}
+void CDeviceFont::func_804525F0() {}
 
-extern "C" void func_80452690__11CDeviceFontFv() {}
+void CDeviceFont::func_80452690() {}
 
-extern "C" void func_8045271C__11CDeviceFontFv() {}
+void CDeviceFont::func_8045271C() {}
 
-extern "C" void func_804527A4__11CDeviceFontFv() {}
+void CDeviceFont::func_804527A4() {}
 
-extern "C" void func_8045283C__11CDeviceFontFv() {}
+void CDeviceFont::func_8045283C() {}
 
-extern "C" void func_804528C4__11CDeviceFontFv() {}
+void CDeviceFont::func_804528C4() {}
 
-extern "C" void func_8045294C__11CDeviceFontFv() {}
+void CDeviceFont::func_8045294C() {}
 
-extern "C" void func_804529D4__11CDeviceFontFv() {}
+void CDeviceFont::func_804529D4() {}
 
-extern "C" void func_80452B78__11CDeviceFontFv() {}
+void CDeviceFont::func_80452B78() {}
 
-extern "C" void func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout() {}
+void CDeviceFont::func_80452C10() {}
 
-extern "C" void func_eu_804558F4__11CDeviceFontFv() {}
+void CDeviceFont::func_eu_804558F4() {}
 
-extern "C" void func_80452CF8__11CDeviceFontFv() {}
+void CDeviceFont::func_80452CF8() const {}
 
-extern "C" void func_80452D80__11CDeviceFontFv() {}
+void CDeviceFont::func_80452D80() {}
 
-extern "C" void wkUpdate__11CDeviceFontFv() {}
+void CDeviceFont::wkUpdate() {}
 
-extern "C" void __dt__15CDeviceFontInfoFv() {}
+void CDeviceFontInfo::~CDeviceFontInfo() {}
 
-extern "C" void wkRender__11CDeviceFontFv() {}
+void CDeviceFont::wkRender() {}
 
-extern "C" void wkStandbyLogin__11CDeviceFontFv() {}
+void CDeviceFont::wkStandbyLogin() {}
 
-extern "C" void wkStandbyLogout__11CDeviceFontFv() {}
+void CDeviceFont::wkStandbyLogout() {}
 
 extern "C" void func_eu_80457318(u32 val) {
     extern u32 lbl_eu_80665680; // sdata2: font device config/state value

@@ -4,53 +4,53 @@
 #include <harness_catalog.h>
 #include "monolib/coli/CTaskColiManager.hpp"
 
-extern "C" void func_804B2FF0() {}
+void func_804B2FF0(){}
 
-extern "C" void func_804B30CC() {}
+void func_804B30CC(){}
 
-extern "C" void func_804B31EC() {}
+void func_804B31EC(){}
 
-extern "C" void func_804B33C8() {}
+void func_804B33C8(){}
 
-extern "C" void func_804B34F4() {}
+void func_804B34F4(){}
 
-extern "C" void func_804B3658() {}
+void func_804B3658(){}
 
-extern "C" void func_804B37E4() {}
+void func_804B37E4(){}
 
-extern "C" void func_804B3970() {}
+void func_804B3970(){}
 
-extern "C" void func_804B3B18() {}
+void func_804B3B18(){}
 
-extern "C" void func_804B3D1C() {}
+void func_804B3D1C(){}
 
-extern "C" void func_804B3EA8() {}
+void func_804B3EA8(){}
 
-extern "C" void func_804B4020() {}
+void func_804B4020(){}
 
-extern "C" void func_804B41FC() {}
+void func_804B41FC(){}
 
-extern "C" void func_804B43B4() {}
+void func_804B43B4(){}
 
-extern "C" void func_804B4478() {}
+void func_804B4478(){}
 
-extern "C" void func_804B453C() {}
+void func_804B453C(){}
 
-extern "C" void func_804B45E4() {}
+void func_804B45E4(){}
 
-extern "C" void func_804B46A8() {}
+void func_804B46A8(){}
 
-extern "C" void func_804B476C() {}
+void func_804B476C(){}
 
-extern "C" void func_804B4854() {}
+void func_804B4854(){}
 
-extern "C" void func_804B49B8() {}
+void func_804B49B8(){}
 
-extern "C" void __dt__16CTaskColiManagerFv() {}
+void CTaskColiManager::~CTaskColiManager() {}
 
-extern "C" void func_804B4BDC() {}
+void func_804B4BDC(){}
 
-extern "C" void func_804B4C7C() {}
+void func_804B4C7C(){}
 
 // --- CTTask local declaration ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
@@ -88,26 +88,26 @@ void CTaskColiManager::Term() {
     // Empty override — no termination required.
 }
 
-extern "C" void Move__16CTaskColiManagerFv() {}
+void CTaskColiManager::Move() {}
 
 void CTaskColiManager::Draw() {
     // Empty override — no draw-time work required.
 }
 
-extern "C" void func_804B4E10() {}
+void func_804B4E10(){}
 
-extern "C" void func_804B5088() {}
+void func_804B5088(){}
 
-extern "C" void func_804B526C() {}
+void func_804B526C(){}
 
-extern "C" void func_804B54D4() {}
+void func_804B54D4(){}
 
-extern "C" void func_804B5658() {}
+void func_804B5658(){}
 
-extern "C" void create__16CTaskColiManagerFv() {}
+void CTaskColiManager::create() {}
 
 // --- Explicit template specializations for CTTask<CTaskColiManager> ---
 template<> CTTask<CTaskColiManager>::~CTTask() {}
 template<> void CTTask<CTaskColiManager>::Move() {}
 template<> void CTTask<CTaskColiManager>::Draw() {}
-extern "C" void sinit_804B598C() {}
+void sinit_804B598C(){}

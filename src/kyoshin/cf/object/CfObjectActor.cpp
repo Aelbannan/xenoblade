@@ -19,9 +19,9 @@ float CfObjectActor::CfObjectActor_UnkVirtualFunc6() {
 extern "C" void __dt__Q22cf13CfObjectActorFv(void* self);
 extern "C" void CObjectParam_UnkVirtualFunc2__Q22cf12CfObjectMoveFv(void* self);
 
-extern "C" void CfObjectActor_UnkVirtualFunc5__Q22cf13CfObjectActorFv() {}
-extern "C" void CfObjectActor_UnkVirtualFunc8__Q22cf13CfObjectActorFv() {}
-extern "C" void CfObjectActor_UnkVirtualFunc9__Q22cf13CfObjectActorFv() {}
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc5() {}
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc8() {}
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc9() {}
 extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg) {
     void* p = *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 0x3f60);
     if (p != 0) {
@@ -30,17 +30,17 @@ extern "C" void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(cf::CfObj
     *reinterpret_cast<void**>(reinterpret_cast<char*>(self) + 0x45bc) = arg;
 }
 
-extern "C" void func_8016FF14() {}
-extern "C" void func_80170AB0() {}
-extern "C" void CfObjectActor_UnkVirtualFunc3__Q22cf13CfObjectActorFv() {}
-extern "C" void CfObjectActor_UnkVirtualFunc4__Q22cf13CfObjectActorFv() {}
-extern "C" void CfObjectActor_UnkVirtualFunc7__Q22cf13CfObjectActorFv() {}
-extern "C" void CfObjectActor_UnkVirtualFunc10__Q22cf13CfObjectActorFv() {}
+void func_8016FF14(){}
+void func_80170AB0(){}
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc3() {}
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc4() {}
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc7() {}
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc10() {}
 
 
-extern "C" void CActorParam_UnkVirtualFunc23__Q22cf13CfObjectActorFv(void* self) {
-    self = (char*)self + 0x3e9c;
-    void** vtable = *(void***)self;
+void cf::CfObjectActor::CActorParam_UnkVirtualFunc23() {
+    this = (char*)this + 0x3e9c;
+    void** vtable = *(void***)this;
     void (*func)(void*) = (void (*)(void*))vtable[0xe0 / 4];
-    func(self);
+    func(this);
 }

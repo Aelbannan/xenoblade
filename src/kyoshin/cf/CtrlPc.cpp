@@ -3,17 +3,17 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CtrlPad() {}
+void __ct__cf_CtrlPad(){}
 
-extern "C" void __dt__Q22cf10CtrlRemoteFv() {}
+void cf::CtrlRemote::~CtrlRemote() {}
 
-extern "C" void func_80096974() {}
+void func_80096974(){}
 
-extern "C" void func_80096EE8() {}
+void func_80096EE8(){}
 
-extern "C" void func_80096EF4() {}
+void func_80096EF4(){}
 
-extern "C" void func_80096F00() {}
+void func_80096F00(){}
 
 extern "C" u32 func_80096F0C(void* self) { return (*(u32*)((u8*)self + 44) >> 20) & 0x1u; }
 
@@ -41,35 +41,35 @@ extern "C" u32 func_80096F90(void* self) { return (*(u32*)((u8*)self + 44) >> 9)
 
 extern "C" u32 func_80096F9C(void* self) { return (*(u32*)((u8*)self + 44) >> 8) & 0x1u; }
 
-extern "C" void __dt__Q22cf7CtrlPadFv() {}
+void cf::CtrlPad::~CtrlPad() {}
 
-extern "C" void __ct__cf_CtrlPc() {}
+void __ct__cf_CtrlPc(){}
 
-extern "C" void __dt__Q22cf6CtrlPcFv() {}
+void cf::CtrlPc::~CtrlPc() {}
 
-extern "C" void func_80097134() {}
+void func_80097134(){}
 
-extern "C" void func_80097598() {}
+void func_80097598(){}
 
-extern "C" void func_80097A5C() {}
+void func_80097A5C(){}
 
-extern "C" void func_80097C74() {}
+void func_80097C74(){}
 
 extern "C" void func_80097DFC() {}
 
-extern "C" void func_80097E00() {}
+void func_80097E00(){}
 
-extern "C" void func_80098194() {}
+void func_80098194(){}
 
 extern "C" void* CActorParam_UnkVirtualFunc122__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x19e8); }
 
-extern "C" void func_800983B8() {}
+void func_800983B8(){}
 
 extern "C" void func_8009868C(void* self, u32 val) { *(u32*)((u8*)self + 0x380) = val; }
 
-extern "C" void func_80098694() {}
+void func_80098694(){}
 
-extern "C" void func_800987A0() {}
+void func_800987A0(){}
 
 extern "C" void func_800987EC(void* self) {
     extern void func_800899C0(void*, float);
@@ -86,21 +86,21 @@ extern "C" void func_80098800(void* self) { ((void(*)(void*))func_80089E88)((cha
 extern "C" void func_80089F68(void* self);
 extern "C" void func_80098808(void* self) { ((void(*)(void*))func_80089F68)((char*)self + 0x8c); }
 
-extern "C" void func_80098810() {}
+void func_80098810(){}
 
 extern "C" void CAttackParam_UnkVirtualFunc3__Q22cf12CAttackParamFv(void* self, u8 val) { ((u8*)self)[0x2A] = val; }
 
 extern "C" u8 CAttackParam_UnkVirtualFunc2__Q22cf12CAttackParamFv(void* self) { return ((u8*)self)[0x2A]; }
 
-extern "C" void func_80098A04() {}
+void func_80098A04(){}
 
-extern "C" void func_80098AF0() {}
+void func_80098AF0(){}
 
 extern "C" u32 func_80098B64(void* self) { return *(u32*)((u8*)self + 0x1D4); }
 
 extern "C" int func_80098B6C(void* self) { return 1; }
 
-extern "C" void func_80098B74() {}
+void func_80098B74(){}
 
 extern "C" int lbl_eu_80527E98[];
 

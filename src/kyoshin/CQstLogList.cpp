@@ -8,7 +8,7 @@ extern "C" void __ct__11CQstLogListFv() {}
 
 extern "C" u8 func_80227CCC(CQstLogList* self) { return self->mSortEnabled; }
 
-extern "C" void func_80227994() {}
+void func_80227994(){}
 
 
 
@@ -22,47 +22,47 @@ extern "C" u8 func_80227CD4(CQstLogList* self) { return self->mSortDescending; }
 
 
 
-extern "C" void func_80227EC8() {}
+void func_80227EC8(){}
 
-extern "C" void func_80227FC0() {}
+void func_80227FC0(){}
 
-extern "C" void func_8022807C() {}
+void func_8022807C(){}
 
-extern "C" void func_80228164() {}
+void func_80228164(){}
 
-extern "C" void func_80228280() {}
+void func_80228280(){}
 
-extern "C" void func_802282F8() {}
+void func_802282F8(){}
 
-extern "C" u32 func_80228394(u32 val) { return val & 0xFFFFFF; }
+u32 func_80228394(u32 val){ return val & 0xFFFFFF; }
 
-extern "C" void func_802283A0() {}
+void func_802283A0(){}
 
-extern "C" void func_802283EC() {}
+void func_802283EC(){}
 
-extern "C" void func_8022844C() {}
+void func_8022844C(){}
 
-extern "C" void func_80228498() {}
+void func_80228498(){}
 
-extern "C" void func_802284E4() {}
+void func_802284E4(){}
 
-extern "C" void func_80228544() {}
+void func_80228544(){}
 
-extern "C" void func_802285A4() {}
+void func_802285A4(){}
 
-extern "C" void func_802286F4() {}
+void func_802286F4(){}
 
-extern "C" void func_802289F8() {}
+void func_802289F8(){}
 
-extern "C" void func_80228B10() {}
+void func_80228B10(){}
 
-extern "C" void func_80228C04() {}
+void func_80228C04(){}
 
-extern "C" void func_80228C98() {}
+void func_80228C98(){}
 
-extern "C" void OnFileEvent__11CQstLogListFP10CEventFile() {}
+void CQstLogList::OnFileEvent() {}
 
-extern "C" void func_80229398() {}
+void func_80229398(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" void __construct_array(void*, void*, int, int, int);

@@ -14,4 +14,5 @@ public:
     virtual void Term();
     virtual void Move();
     void cbRenderBefore();
+    CMenuMapSelectSC();
 };

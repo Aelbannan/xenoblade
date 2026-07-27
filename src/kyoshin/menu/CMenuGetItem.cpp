@@ -3,44 +3,44 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuGetItem() {}
+void __ct__CMenuGetItem(){}
 
-extern "C" void __ct__80149878() {}
+void __ct__80149878(){}
 
-extern "C" void __ct__80149970() {}
+void __ct__80149970(){}
 
-extern "C" void __dt__12CMenuGetItemFv(void* self) {}
+void CMenuGetItem::~CMenuGetItem() {}
 
-extern "C" void Init__12CMenuGetItemFv() {}
+void CMenuGetItem::Init() {}
 
-extern "C" void Term__12CMenuGetItemFv() {}
+void CMenuGetItem::Term() {}
 
-extern "C" void Move__12CMenuGetItemFv() {}
+void CMenuGetItem::Move() {}
 
-extern "C" void cbRenderBefore__12CMenuGetItemFv(void* self) {}
+void CMenuGetItem::cbRenderBefore() {}
 
-extern "C" void func_8014A064() {}
+void func_8014A064(){}
 
-extern "C" void func_8014A11C() {}
+void func_8014A11C(){}
 
-extern "C" void func_8014A1D4() {}
+void func_8014A1D4(){}
 
-extern "C" unsigned long func_8014A2A0() {
+unsigned long func_8014A2A0(){
     unsigned long v = *(unsigned long*)(lbl_eu_806641A8);
     return !!v;
 }
 
-extern "C" void func_8014A2B4() {}
+void func_8014A2B4(){}
 
-extern "C" void func_8014A2D0() {}
+void func_8014A2D0(){}
 
-extern "C" void func_8014A2E8() {}
+void func_8014A2E8(){}
 
-extern "C" void func_8014A430() {}
+void func_8014A430(){}
 
-extern "C" void func_8014A570() {}
+void func_8014A570(){}
 
-extern "C" void func_8014A6F8() {}
+void func_8014A6F8(){}
 
 extern "C" void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
 

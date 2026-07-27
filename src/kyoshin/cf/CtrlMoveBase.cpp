@@ -6,30 +6,30 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CtrlMoveBase.hpp"
 
-extern "C" void __ct__80088904() {}
+void __ct__80088904(){}
 
-extern "C" void func_80088974() {}
+void func_80088974(){}
 
-extern "C" void func_800890A8() {}
+void func_800890A8(){}
 
-extern "C" void func_80089398() {}
+void func_80089398(){}
 
-extern "C" void func_800895A8() {}
+void func_800895A8(){}
 
 // FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_80089628)
 extern "C" void func_80089628() {}
 
-extern "C" void func_8008962C() {}
+void func_8008962C(){}
 
 extern "C" void func_80089684(void* self) {
     *(unsigned short*)((char*)self + 0x40) &= 1;
 }
 
-extern "C" void func_80089694() {}
+void func_80089694(){}
 
-extern "C" void func_800896F4() {}
+void func_800896F4(){}
 
-extern "C" void func_800898D4() {}
+void func_800898D4(){}
 
 struct func_80089990_child { char pad[0x10]; unsigned short flags; };
 struct func_80089990_obj { char pad[0x30]; func_80089990_child* child; };
@@ -47,15 +47,15 @@ extern "C" void func_800899AC(void* obj, float val) {
     }
 }
 
-extern "C" void func_800899C0() {}
+void func_800899C0(){}
 
-extern "C" void func_80089B24() {}
+void func_80089B24(){}
 
-extern "C" void func_80089E88() {}
+void func_80089E88(){}
 
-extern "C" void func_80089F68() {}
+void func_80089F68(){}
 
-extern "C" void func_8008A01C() {}
+void func_8008A01C(){}
 
 // FULL_MATCH: no-op virtual stub (CCtrlMoveBase::func_8008A0C4)
 extern "C" void func_8008A0C4() {}

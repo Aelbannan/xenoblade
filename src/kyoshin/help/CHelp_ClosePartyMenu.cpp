@@ -3,6 +3,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_802B84EC__Q22cf19CHelp_OpenPartyMenuFv() {}
+void cf::CHelp_OpenPartyMenu::func_802B84EC() {}
 
-extern "C" void func_802B8534__Q22cf20CHelp_ClosePartyMenuFv() {}
+void cf::CHelp_ClosePartyMenu::func_802B8534() {}

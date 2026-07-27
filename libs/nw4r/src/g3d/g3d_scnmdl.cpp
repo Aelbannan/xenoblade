@@ -18,7 +18,7 @@ extern "C" void* GetResTexSrt__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self,
     return *reinterpret_cast<void**>(object + 0x10);
 }
 
-extern "C" void GetResMatChan__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb() {}
+void GetResMatChan__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(){}
 
 extern "C" void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self, bool enable) {
     struct Model {
@@ -39,46 +39,46 @@ extern "C" void* GetResGenMode__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFb(void* self
     return access->resGenMode;
 }
 
-extern "C" void GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv() {}
+void GetResMatIndMtxAndScaleEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(){}
 
-extern "C" void GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv() {}
+void GetResMatTexCoordGenEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(){}
 
-extern "C" void GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv() {}
+void GetResTevEx__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFv(){}
 
-extern "C" void __ct__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFPQ34nw4r3g3d6ScnMdlUl() {}
+void __ct__Q44nw4r3g3d6ScnMdl15CopiedMatAccessFPQ34nw4r3g3d6ScnMdlUl(){}
 
-extern "C" void SetVisibilityEx__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFb() {}
+void SetVisibilityEx__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFb(){}
 
-extern "C" void __ct__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFPQ34nw4r3g3d6ScnMdlUl() {}
+void __ct__Q44nw4r3g3d6ScnMdl15CopiedVisAccessFPQ34nw4r3g3d6ScnMdlUl(){}
 
-extern "C" void Construct__Q34nw4r3g3d6ScnMdlFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdlUli() {}
+void Construct__Q34nw4r3g3d6ScnMdlFP12MEMAllocatorPUlQ34nw4r3g3d6ResMdlUli(){}
 
-extern "C" void ScnMdl_G3DPROC_CALC_MAT__Q34nw4r3g3d6ScnMdlFUlPv() {}
+void ScnMdl_G3DPROC_CALC_MAT__Q34nw4r3g3d6ScnMdlFUlPv(){}
 
-extern "C" void G3dProc__Q34nw4r3g3d6ScnMdlFUlUlPv() {}
+void G3dProc__Q34nw4r3g3d6ScnMdlFUlUlPv(){}
 
-extern "C" void SetScnObjOption__Q34nw4r3g3d6ScnMdlFUlUl() {}
+void SetScnObjOption__Q34nw4r3g3d6ScnMdlFUlUl(){}
 
-extern "C" void GetScnObjOption__Q34nw4r3g3d6ScnMdlCFUlPUl() {}
+void GetScnObjOption__Q34nw4r3g3d6ScnMdlCFUlPUl(){}
 
-extern "C" void InitBuffer__Q34nw4r3g3d6ScnMdlFv() {}
+void InitBuffer__Q34nw4r3g3d6ScnMdlFv(){}
 
-extern "C" void CleanMatBuffer__Q34nw4r3g3d6ScnMdlFUlUl() {}
+void CleanMatBuffer__Q34nw4r3g3d6ScnMdlFUlUl(){}
 
-extern "C" void SetAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObjQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void SetAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObjQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObj() {}
+void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFPQ34nw4r3g3d6AnmObj(){}
 
-extern "C" void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void RemoveAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void GetAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void GetAnmObj__Q34nw4r3g3d6ScnMdlFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void GetAnmObj__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d12ScnMdlSimple10AnmObjType() {}
+void GetAnmObj__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d12ScnMdlSimple10AnmObjType(){}
 
-extern "C" void __dt__Q34nw4r3g3d6ScnMdlFv() {}
+void __dt__Q34nw4r3g3d6ScnMdlFv(){}
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d6G3dObj7TypeObj() {}
+void IsDerivedFrom__Q34nw4r3g3d6ScnMdlCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
-extern "C" void GetTypeName__Q34nw4r3g3d6ScnMdlCFv() {}
+void GetTypeName__Q34nw4r3g3d6ScnMdlCFv(){}
 
-extern "C" void* GetTypeObj__Q34nw4r3g3d6ScnMdlCFv(void) { return 0; }
+void* GetTypeObj__Q34nw4r3g3d6ScnMdlCFv(void){ return 0; }

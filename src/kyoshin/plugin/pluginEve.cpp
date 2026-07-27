@@ -3,19 +3,19 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void getFlag() {}
+void getFlag(){}
 
-extern "C" void setFlag() {}
+void setFlag(){}
 
-extern "C" void getAwardFlagF16() {}
+void getAwardFlagF16(){}
 
-extern "C" void addAwardFlagF16() {}
+void addAwardFlagF16(){}
 
-extern "C" void setAwardFlagF1() {}
+void setAwardFlagF1(){}
 
-extern "C" void realtimeEventStart() {}
+void realtimeEventStart(){}
 
-extern "C" void realtimeEventPlay() {}
+void realtimeEventPlay(){}
 
 extern "C" void func_80086490__Q22cf13CfGameManagerFv();
 
@@ -24,19 +24,19 @@ extern "C" int realtimeEventEnd(VMThread* pThread) {
     return 0;
 }
 
-extern "C" void waitRealtimeEvent() {}
+void waitRealtimeEvent(){}
 
-extern "C" void onTalk() {}
+void onTalk(){}
 
-extern "C" void onTalkEnd() {}
+void onTalkEnd(){}
 
-extern "C" void fadeIn() {}
+void fadeIn(){}
 
-extern "C" void fadeOut() {}
+void fadeOut(){}
 
-extern "C" void fadeWait() {}
+void fadeWait(){}
 
-extern "C" void checkEvent() {}
+void checkEvent(){}
 
 extern "C" {
 extern u32 lbl_eu_80663E28;
@@ -46,9 +46,9 @@ extern "C" int clearEventSkip() {
     return 0;
 }
 
-extern "C" void isEvent() {}
+void isEvent(){}
 
-extern "C" void isTalkEvent() {}
+void isTalkEvent(){}
 
 extern "C" void isVisionEvent() {}
 

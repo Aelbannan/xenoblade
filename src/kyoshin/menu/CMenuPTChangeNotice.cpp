@@ -3,29 +3,29 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuPTChangeNotice() {}
+void __ct__CMenuPTChangeNotice(){}
 
-extern "C" void __dt__19CMenuPTChangeNoticeFv(void* self) {}
+void CMenuPTChangeNotice::~CMenuPTChangeNotice() {}
 
-extern "C" void Init__19CMenuPTChangeNoticeFv() {}
+void CMenuPTChangeNotice::Init() {}
 
-extern "C" void Term__19CMenuPTChangeNoticeFv() {}
+void CMenuPTChangeNotice::Term() {}
 
-extern "C" void Move__19CMenuPTChangeNoticeFv() {}
+void CMenuPTChangeNotice::Move() {}
 
-extern "C" void func_8029348C(void* self) {}
+void func_8029348C(void* self){}
 
-extern "C" void cbRenderBefore__19CMenuPTChangeNoticeFv(void* self) {}
+void CMenuPTChangeNotice::cbRenderBefore() {}
 
-extern "C" void func_80293B9C() {}
+void func_80293B9C(){}
 
 extern "C" void stub_us_8029620c() {}
 
-extern "C" void func_80293C20() {}
+void func_80293C20(){}
 
-extern "C" void func_80293C64() {}
+void func_80293C64(){}
 
-extern "C" void func_80293D2C() {}
+void func_80293D2C(){}
 
 extern "C" void OnFileEvent__19CMenuPTChangeNoticeFP10CEventFile(void* self) { ((void(*)(void*))func_8029348C)((char*)self - 0x6c); }
 

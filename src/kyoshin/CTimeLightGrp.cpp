@@ -3,16 +3,16 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CTimeLightGrp() {}
+void __ct__CTimeLightGrp(){}
 
-extern "C" void __dt__8005A03C() {}
+void __dt__8005A03C(){}
 
-extern "C" void __dt___reslist_base_CVirtualLightObj() {}
+void __dt___reslist_base_CVirtualLightObj(){}
 
-extern "C" void __dt__reslist_CVirtualLightObj() {}
+void __dt__reslist_CVirtualLightObj(){}
 
-extern "C" void __dt__13CTimeLightGrpFv() {}
+void CTimeLightGrp::~CTimeLightGrp() {}
 
-extern "C" void func_8005A2F0() {}
+void func_8005A2F0(){}
 
-extern "C" void func_8005A374() {}
+void func_8005A374(){}

@@ -3,24 +3,24 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__Q22cf17UnkClass_800D8DBCFv() {}
+cf::UnkClass_800D8DBC::UnkClass_800D8DBC() const {}
 
-extern "C" void func_8027D1A4() {}
+void func_8027D1A4(){}
 
-extern "C" void func_8027D20C() {}
+void func_8027D20C(){}
 
-extern "C" void func_8027D478() {}
+void func_8027D478(){}
 
-extern "C" void func_8027D8C4() {}
+void func_8027D8C4(){}
 
-extern "C" void func_8027DB74() {}
+void func_8027DB74(){}
 
-extern "C" void func_8027DE44() {}
+void func_8027DE44(){}
 
-extern "C" void func_8027DF38() {}
+void func_8027DF38(){}
 
-extern "C" void func_8027E018() {}
+void func_8027E018(){}
 
-extern "C" void func_8027E070() {}
+void func_8027E070(){}
 
-extern "C" void func_8027E200() {}
+void func_8027E200(){}

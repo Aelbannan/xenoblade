@@ -107,7 +107,7 @@ void CTaskGameCf::Draw() {}
         mMoveFunc = &CTaskGameCf::func_8004451C;
     }
 
-extern "C" void func_800444DC(cf::CTaskGameCf* self) {
+void func_800444DC(cf::CTaskGameCf* self){
     typedef void (cf::CTaskGameCf::*Ptmf)();
     *(Ptmf*)((char*)self + 0x3C) = &cf::CTaskGameCf::func_800444FC;
 }
@@ -250,4 +250,4 @@ void CTaskGameCf::func_8004499C() {
 
 } //namespace cf
 
-extern "C" void __ct__cf_CTaskGameCf() {}
+void __ct__cf_CTaskGameCf(){}

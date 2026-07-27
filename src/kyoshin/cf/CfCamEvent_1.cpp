@@ -3,83 +3,83 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_80074F4C() {}
+void func_80074F4C(){}
 
-extern "C" void __ct__80075298() {}
+void __ct__80075298(){}
 
-extern "C" void __dt__8007540C() {}
+void __dt__8007540C(){}
 
-extern "C" void func_800754C0() {}
+void func_800754C0(){}
 
-extern "C" void func_80075540() {}
+void func_80075540(){}
 
 extern "C" void* func_800755B0(void* self, unsigned long idx) {
     return *(void**)((char*)self + (idx << 2));
 }
 
-extern "C" void func_800755BC() {}
+void func_800755BC(){}
 
-extern "C" void func_8007560C() {}
+void func_8007560C(){}
 
-extern "C" void func_80075640() {}
+void func_80075640(){}
 
-extern "C" void func_80075674() {}
+void func_80075674(){}
 
-extern "C" void func_800756D0() {}
+void func_800756D0(){}
 
-extern "C" void func_80075934() {}
+void func_80075934(){}
 
-extern "C" void func_800762A0() {}
+void func_800762A0(){}
 
-extern "C" void func_80076C08() {}
+void func_80076C08(){}
 
-extern "C" void func_80076CE4() {}
+void func_80076CE4(){}
 
-extern "C" void func_80076D8C() {}
+void func_80076D8C(){}
 
-extern "C" void CActorParam_UnkVirtualFunc129__Q22cf11CActorParamFv() {}
+void cf::CActorParam::CActorParam_UnkVirtualFunc129() {}
 
-extern "C" void func_80076F88() {}
+void func_80076F88(){}
 
-extern "C" void func_800778E4() {}
+void func_800778E4(){}
 
-extern "C" void func_80077F20() {}
+void func_80077F20(){}
 
-extern "C" void func_80078400() {}
+void func_80078400(){}
 
-extern "C" void func_800784A0() {}
+void func_800784A0(){}
 
-extern "C" void func_80078B60() {}
+void func_80078B60(){}
 
-extern "C" void func_80078C08() {}
+void func_80078C08(){}
 
-extern "C" void func_80078D08() {}
+void func_80078D08(){}
 
-extern "C" void func_8007990C() {}
+void func_8007990C(){}
 
-extern "C" void func_80079B34() {}
+void func_80079B34(){}
 
-extern "C" void func_80079D6C() {}
+void func_80079D6C(){}
 
-extern "C" void func_80079DBC() {}
+void func_80079DBC(){}
 
-extern "C" void func_80079E04() {}
+void func_80079E04(){}
 
-extern "C" void func_8007AA4C() {}
+void func_8007AA4C(){}
 
-extern "C" void func_8007B030() {}
+void func_8007B030(){}
 
-extern "C" void func_8007B044() {}
+void func_8007B044(){}
 
-extern "C" void func_8007B078() {}
+void func_8007B078(){}
 
-extern "C" void func_8007B0A0() {}
+void func_8007B0A0(){}
 
-extern "C" void func_8007B0C8() {}
+void func_8007B0C8(){}
 
-extern "C" void func_8007BAE4() {}
+void func_8007BAE4(){}
 
-extern "C" void func_8007BAFC() {}
+void func_8007BAFC(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_8007BE74() {}
+void sinit_8007BE74(){}

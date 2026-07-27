@@ -3,14 +3,14 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CDeviceFontLoader() {}
+void __ct__CDeviceFontLoader(){}
 
-extern "C" void __dt__17CDeviceFontLoaderFv() {}
+void CDeviceFontLoader::~CDeviceFontLoader() {}
 
-extern "C" void func_80454F30__17CDeviceFontLoaderFv() {}
+void CDeviceFontLoader::func_80454F30() {}
 
-extern "C" void wkStandbyLogin__17CDeviceFontLoaderFv() {}
+void CDeviceFontLoader::wkStandbyLogin() {}
 
-extern "C" void wkStandbyLogout__17CDeviceFontLoaderFv() {}
+void CDeviceFontLoader::wkStandbyLogout() {}
 
-extern "C" void OnFileEvent__17CDeviceFontLoaderFP10CEventFile() {}
+void CDeviceFontLoader::OnFileEvent() {}

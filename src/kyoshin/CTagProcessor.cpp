@@ -10,33 +10,33 @@ extern "C" void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCL(void* self, int del
     return self;
 }
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeLine() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeLine(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect2() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect2(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeAct() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeAct(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeFade() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeFade(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeQuest() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeQuest(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeInvisible() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeInvisible(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeQstStart() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeQstStart(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodePresent() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodePresent(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeTailOff() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeTailOff(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeExchange() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeExchange(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeShop() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeShop(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeMakeCrystal() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeMakeCrystal(){}
 
-extern "C" void func_801258D0() {}
+void func_801258D0(){}
 
 extern "C" void func_801258F8(void* obj, unsigned char a, unsigned char b, float c) {
     unsigned char* base = (unsigned char*)obj;
@@ -49,13 +49,13 @@ extern "C" void func_801258F8(void* obj, unsigned char a, unsigned char b, float
     *(float*)(base + 8) = c;
 }
 
-extern "C" void func_8012591C() {}
+void func_8012591C(){}
 
-extern "C" void func_80125944() {}
+void func_80125944(){}
 
-extern "C" void __dt__8012596C() {}
+void __dt__8012596C(){}
 
-extern "C" void __ct__CTagProcessorBase() {}
+void __ct__CTagProcessorBase(){}
 
 extern "C" void func_80125A2C(void* r3, const void* r4) {
     unsigned char* dst = (unsigned char*)r3;
@@ -69,48 +69,48 @@ extern "C" void func_80125A2C(void* r3, const void* r4) {
     *(float*)(dst + 8) = *(const float*)(src + 8);
 }
 
-extern "C" void __dt__17CTagProcessorBaseFv() {}
+void CTagProcessorBase::~CTagProcessorBase() {}
 
-extern "C" void func_80125AB8() {}
+void func_80125AB8(){}
 
 
 
-extern "C" void func_80125B08() {}
+void func_80125B08(){}
 
 extern "C" int func_80125B50(void* self) { return 0; }
 
-extern "C" void func_80125B58() {}
+void func_80125B58(){}
 
-extern "C" void func_80125D00() {}
+void func_80125D00(){}
 
-extern "C" void __ct__CTagProcessor() {}
+void __ct__CTagProcessor(){}
 
-extern "C" void __dt__13CTagProcessorFv() {}
+void CTagProcessor::~CTagProcessor() {}
 
-extern "C" void func_8012615C() {}
+void func_8012615C(){}
 
 extern "C" void func_80127630(float *dst, const float *src) {
     dst[0] = src[0];
     dst[1] = src[1];
 }
 
-extern "C" void __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color() {}
+void __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color(){}
 
 extern "C" u32 func_80127668(void* self) { return *(u32*)((u8*)self + 0x4); }
 
-extern "C" void func_80127670() {}
+void func_80127670(){}
 
 extern "C" void* func_801276C0(void* self) { return (void*)((u8*)self + 0x4); }
 
-extern "C" void func_801276C8() {}
+void func_801276C8(){}
 
-extern "C" void func_801276E0() {}
+void func_801276E0(){}
 
-extern "C" void func_801276F4() {}
+void func_801276F4(){}
 
-extern "C" void func_80127764() {}
+void func_80127764(){}
 
-extern "C" void func_80127BC4() {}
+void func_80127BC4(){}
 
 extern "C" void func_80127BD8(float* dst, const float* src) {
     dst[0] = src[0];
@@ -118,33 +118,33 @@ extern "C" void func_80127BD8(float* dst, const float* src) {
     dst[2] = src[2];
 }
 
-extern "C" void func_80127BF4() {}
+void func_80127BF4(){}
 
-extern "C" void func_80127D20() {}
+void func_80127D20(){}
 
-extern "C" void func_80127E74() {}
+void func_80127E74(){}
 
-extern "C" void __ct__CTagProcessorSE() {}
+void __ct__CTagProcessorSE(){}
 
-extern "C" void __dt__15CTagProcessorSEFv() {}
+void CTagProcessorSE::~CTagProcessorSE() {}
 
-extern "C" void func_80127FB4() {}
+void func_80127FB4(){}
 
-extern "C" void func_801286E0() {}
+void func_801286E0(){}
 
-extern "C" void func_80128740() {}
+void func_80128740(){}
 
-extern "C" void func_801287BC() {}
+void func_801287BC(){}
 
-extern "C" void func_801289B4() {}
+void func_801289B4(){}
 
-extern "C" void func_801289FC() {}
+void func_801289FC(){}
 
-extern "C" void func_80128A70() {}
+void func_80128A70(){}
 
-extern "C" void func_80128AB8() {}
+void func_80128AB8(){}
 
-extern "C" void func_80128B0C() {}
+void func_80128B0C(){}
 
 extern "C" void* func_80128B80(void* arg1, void* arg2) {
     extern void func_8013BDE4(void*);
@@ -152,80 +152,80 @@ extern "C" void* func_80128B80(void* arg1, void* arg2) {
     return arg2;
 }
 
-extern "C" void func_80128BB0() {}
+void func_80128BB0(){}
 
-extern "C" void func_80128BF8() {}
+void func_80128BF8(){}
 
-extern "C" void func_80128C6C() {}
+void func_80128C6C(){}
 
-extern "C" void func_80128DA0() {}
+void func_80128DA0(){}
 
-extern "C" void func_80128EF8() {}
+void func_80128EF8(){}
 
-extern "C" void func_80129008() {}
+void func_80129008(){}
 
 extern "C" void* func_80129118(void* dummy, void* r4) {
     *(u16*)r4 = 0xD;
     return (u16*)r4 + 1;
 }
 
-extern "C" void func_80129128() {}
+void func_80129128(){}
 
-extern "C" void func_801291F4() {}
+void func_801291F4(){}
 
-extern "C" void func_8012930C() {}
+void func_8012930C(){}
 
-extern "C" void func_80129430() {}
+void func_80129430(){}
 
-extern "C" void func_80129564() {}
+void func_80129564(){}
 
 extern "C" void func_8012967C(void* self, float val) {
     *(float*)((char*)self + 0xc) = *(float*)((char*)self + 4) + val;
 }
 
-extern "C" void func_8012968C() {}
+void func_8012968C(){}
 
-extern "C" void func_801299D4() {}
+void func_801299D4(){}
 
-extern "C" void func_80129AEC() {}
+void func_80129AEC(){}
 
-extern "C" void func_80129C04() {}
+void func_80129C04(){}
 
-extern "C" void func_80129D1C() {}
+void func_80129D1C(){}
 
-extern "C" void func_80129E20() {}
+void func_80129E20(){}
 
-extern "C" void func_80129F3C() {}
+void func_80129F3C(){}
 
-extern "C" void func_8012A070() {}
+void func_8012A070(){}
 
-extern "C" void func_8012A1A4() {}
+void func_8012A1A4(){}
 
-extern "C" void func_8012A224() {}
+void func_8012A224(){}
 
-extern "C" void func_8012A388() {}
+void func_8012A388(){}
 
-extern "C" void func_8012A460() {}
+void func_8012A460(){}
 
-extern "C" void func_8012AAA4() {}
+void func_8012AAA4(){}
 
-extern "C" void func_8012AD2C() {}
+void func_8012AD2C(){}
 
-extern "C" void func_8012AD40() {}
+void func_8012AD40(){}
 
-extern "C" void func_8012AF90() {}
+void func_8012AF90(){}
 
-extern "C" void func_8012B070() {}
+void func_8012B070(){}
 
-extern "C" void func_8012B204() {}
+void func_8012B204(){}
 
-extern "C" void func_8012B328() {}
+void func_8012B328(){}
 
-extern "C" void func_8012B440() {}
+void func_8012B440(){}
 
-extern "C" void func_8012B8C4() {}
+void func_8012B8C4(){}
 
-extern "C" void func_8012B944() {}
+void func_8012B944(){}
 
 extern "C" void* func_8012B9E0(void* unused, void* buf) {
     *(unsigned short*)buf = 3;
@@ -353,4 +353,4 @@ extern "C" void __ct__CTagCodeMakeCrystal(void* self) {
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_8012BA00() {}
+void sinit_8012BA00(){}

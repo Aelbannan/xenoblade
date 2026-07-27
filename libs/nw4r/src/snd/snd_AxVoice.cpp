@@ -1355,5 +1355,5 @@ void AxVoiceParamBlock::UpdateDelta() {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam() {}
-extern "C" void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf() {}
+void IsNeedNextUpdate__Q44nw4r3snd6detail7AxVoiceCFRCQ54nw4r3snd6detail7AxVoice8MixParam(){}
+void SetBiquad__Q44nw4r3snd6detail7AxVoiceFUcf(){}

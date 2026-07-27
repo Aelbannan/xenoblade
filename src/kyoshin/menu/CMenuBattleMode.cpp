@@ -58,8 +58,8 @@ extern "C" void func_801A048C(IWorkEvent* self) {
             reinterpret_cast<char*>(self) - 0x58));
 }
 extern void cbRenderBefore__15CMenuBattleModeFv();
-extern "C" void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }
+void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }
 extern void __dt__15CMenuBattleModeFv();
-extern "C" void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
+void func_801A049C(void* self) { ((void(*)(void*))__dt__15CMenuBattleModeFv)((char*)self - 0x5c); }
 
-extern "C" void __ct__CMenuBattleMode() {}
+void __ct__CMenuBattleMode(){}

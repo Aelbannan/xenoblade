@@ -195,9 +195,9 @@ bool ResAnmScn::Bind(const ResAnmScn scene) {
 } // namespace g3d
 } // namespace nw4r
 
-extern "C" void GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv() {}
-extern "C" void GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv() {}
-extern "C" void GetResAnmFog__Q34nw4r3g3d9ResAnmScnCFUl() {}
-extern "C" void GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv() {}
-extern "C" void GetResAnmCamera__Q34nw4r3g3d9ResAnmScnCFUl() {}
-extern "C" void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv() {}
+void GetResAnmAmbLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(){}
+void GetResAnmLightNumEntries__Q34nw4r3g3d9ResAnmScnCFv(){}
+void GetResAnmFog__Q34nw4r3g3d9ResAnmScnCFUl(){}
+void GetResAnmFogNumEntries__Q34nw4r3g3d9ResAnmScnCFv(){}
+void GetResAnmCamera__Q34nw4r3g3d9ResAnmScnCFUl(){}
+void GetResAnmCameraNumEntries__Q34nw4r3g3d9ResAnmScnCFv(){}

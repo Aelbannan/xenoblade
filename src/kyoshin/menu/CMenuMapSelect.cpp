@@ -3,18 +3,18 @@
 
 #include "kyoshin/menu/CMenuMapSelect.hpp"
 
-extern "C" void __ct__CMenuMapSelect() {}
+void __ct__CMenuMapSelect(){}
 
-extern "C" unsigned long func_80242354() {
+unsigned long func_80242354(){
     unsigned long v = *(unsigned long*)(lbl_eu_80664790);
     return !!v;
 }
 
-extern "C" void func_80242368() {}
+void func_80242368(){}
 
-extern "C" void func_80242524() {}
+void func_80242524(){}
 
-extern "C" void func_80242A28() {}
+void func_80242A28(){}
 
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.
 // IScnRender is a non-primary base at offset 0x58 within CMenuMapSelect.

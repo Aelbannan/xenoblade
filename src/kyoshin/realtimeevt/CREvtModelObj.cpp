@@ -3,31 +3,31 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CREvtModelObj() {}
+void __ct__CREvtModelObj(){}
 
-extern "C" void __ct__80181B74(void* self) {}
+void __ct__80181B74(void* self){}
 
-extern "C" void func_80181C90() {}
+void func_80181C90(){}
 
-extern "C" void func_80181DDC() {}
+void func_80181DDC(){}
 
-extern "C" void func_80181F28() {}
+void func_80181F28(){}
 
-extern "C" void func_80182084() {}
+void func_80182084(){}
 
-extern "C" void func_80182100() {}
+void func_80182100(){}
 
-extern "C" void func_80182178() {}
+void func_80182178(){}
 
-extern "C" void func_80182B2C() {}
+void func_80182B2C(){}
 
 extern "C" void func_80183264(void) {}
 
-extern "C" void func_80183268() {}
+void func_80183268(){}
 
-extern "C" void func_801832D4() {}
+void func_801832D4(){}
 
-extern "C" void func_8018351C() {}
+void func_8018351C(){}
 
 extern "C" int func_801835BC(void* self) { return 1; }
 
@@ -35,7 +35,7 @@ extern "C" void func_801835C4(void* self) {
     *(unsigned long*)((char*)self + 0x18) &= ~0x20;
 }
 
-extern "C" void func_801835D4(void* self) {}
+void func_801835D4(void* self){}
 
 extern "C" void func_801836CC(void* self, unsigned long value)
 {
@@ -44,7 +44,7 @@ extern "C" void func_801836CC(void* self, unsigned long value)
     }
 }
 
-extern "C" void func_801836E4() {}
+void func_801836E4(){}
 
 extern "C" void OnFileEvent__13CREvtModelObjFP10CEventFile(void* self) { ((void(*)(void*))func_801835D4)((char*)self - 0x38); }
 

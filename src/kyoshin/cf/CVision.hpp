@@ -36,6 +36,7 @@ namespace cf{
         UnkClass_801A36D0 unk20D4[8]; //0x20D4
         u8 unk26194[0x261C4 - 0x26194]; //0x26194
         UnkClass_801A3728 unk261C4; //0x261C4
+    CVision();
     };
 
 }

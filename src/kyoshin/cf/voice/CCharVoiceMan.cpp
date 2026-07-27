@@ -36,61 +36,61 @@ extern "C" void func_802A1F9C() {
     if (voice_man != 0)
         voice_man[0x222] = 0;
 }
-extern "C" void func_802A2CF0() {}
-extern "C" void func_802A34E4() {}
+void func_802A2CF0(){}
+void func_802A34E4(){}
 extern "C" unsigned int func_802A35A0(unsigned int value) { extern unsigned int lbl_eu_80664A5C; unsigned int counter = lbl_eu_80664A5C; lbl_eu_80664A5C = counter + 1; return (counter << 16) | (value & 0xFFFF); }
 extern "C" int func_802A3740(void* self) { return 0; }
 
-extern "C" void __ct__CCharVoiceMan() {}
-extern "C" void func_802A14B8() {}
-extern "C" void func_802A1500() {}
-extern "C" void func_802A1610() {}
-extern "C" void func_802A1C68() {}
-extern "C" void func_802A1D04() {}
-extern "C" void func_802A1DA8() {}
-extern "C" void func_802A1DF0() {}
-extern "C" void func_802A1EA8() {}
-extern "C" void func_802A1FB4() {}
-extern "C" void func_802A201C() {}
-extern "C" void func_802A2078() {}
-extern "C" void func_802A216C() {}
-extern "C" void func_802A2210() {}
-extern "C" void func_802A2250() {}
-extern "C" void func_802A232C() {}
-extern "C" void func_802A2424() {}
-extern "C" void func_802A24B4() {}
-extern "C" void func_802A2558() {}
-extern "C" void func_802A25EC() {}
-extern "C" void func_802A2648() {}
-extern "C" void func_802A26D8() {}
-extern "C" void func_802A27F4() {}
-extern "C" void func_802A285C() {}
-extern "C" void func_802A28C4() {}
-extern "C" void func_802A293C() {}
-extern "C" void func_802A29A4() {}
-extern "C" void func_802A2A0C() {}
-extern "C" void func_802A2A74() {}
-extern "C" void func_802A2ADC() {}
-extern "C" void func_802A2B44() {}
-extern "C" void func_802A2BB0() {}
-extern "C" void func_802A2C1C() {}
-extern "C" void func_802A2C88() {}
-extern "C" void func_802A2D0C() {}
-extern "C" void func_802A2D84() {}
-extern "C" void func_802A2E08() {}
-extern "C" void func_802A2E68() {}
-extern "C" void func_802A2EEC() {}
-extern "C" void func_802A2F54() {}
-extern "C" void func_802A300C() {}
-extern "C" void func_802A3074() {}
-extern "C" void func_802A30DC() {}
-extern "C" void func_802A3144() {}
-extern "C" void func_802A31AC() {}
-extern "C" void func_802A3214() {}
-extern "C" void func_802A3290() {}
-extern "C" void func_802A330C() {}
-extern "C" void func_802A35B8() {}
-extern "C" void func_802A3680() {}
-extern "C" void func_802A3748() {}
-extern "C" void CCharVoiceMan_FactoryEvent2() {}
-extern "C" void func_802A38C8() {}
+void __ct__CCharVoiceMan(){}
+void func_802A14B8(){}
+void func_802A1500(){}
+void func_802A1610(){}
+void func_802A1C68(){}
+void func_802A1D04(){}
+void func_802A1DA8(){}
+void func_802A1DF0(){}
+void func_802A1EA8(){}
+void func_802A1FB4(){}
+void func_802A201C(){}
+void func_802A2078(){}
+void func_802A216C(){}
+void func_802A2210(){}
+void func_802A2250(){}
+void func_802A232C(){}
+void func_802A2424(){}
+void func_802A24B4(){}
+void func_802A2558(){}
+void func_802A25EC(){}
+void func_802A2648(){}
+void func_802A26D8(){}
+void func_802A27F4(){}
+void func_802A285C(){}
+void func_802A28C4(){}
+void func_802A293C(){}
+void func_802A29A4(){}
+void func_802A2A0C(){}
+void func_802A2A74(){}
+void func_802A2ADC(){}
+void func_802A2B44(){}
+void func_802A2BB0(){}
+void func_802A2C1C(){}
+void func_802A2C88(){}
+void func_802A2D0C(){}
+void func_802A2D84(){}
+void func_802A2E08(){}
+void func_802A2E68(){}
+void func_802A2EEC(){}
+void func_802A2F54(){}
+void func_802A300C(){}
+void func_802A3074(){}
+void func_802A30DC(){}
+void func_802A3144(){}
+void func_802A31AC(){}
+void func_802A3214(){}
+void func_802A3290(){}
+void func_802A330C(){}
+void func_802A35B8(){}
+void func_802A3680(){}
+void func_802A3748(){}
+void CCharVoiceMan_FactoryEvent2(){}
+void func_802A38C8(){}

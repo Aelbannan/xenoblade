@@ -4,13 +4,13 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END_SP.hpp"
 
-extern "C" void __ct__802AB5F0() {}
+void __ct__802AB5F0(){}
 
-extern "C" void func_802AB900() {}
+void func_802AB900(){}
 
-extern "C" void func_802ABA70() {}
+void func_802ABA70(){}
 
-extern "C" void func_802ABAC0() {}
+void func_802ABAC0(){}
 
 // Returns the object allocation size (0x46 / 70 bytes) for CVS_THREAD_BATTLE_END_SP.
 // Virtual override: ignores the this pointer entirely (r3 is overwritten on entry).

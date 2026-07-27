@@ -155,14 +155,14 @@ extern "C" void func_800E2584(void* p, u32 mask) {
     *(u32*)((u8*)p + 0x84) &= ~mask;
 }
 extern "C" void* func_800EA384(void* self) { void* p = *reinterpret_cast<void**>(static_cast<char*>(self) + 0x8); if (*reinterpret_cast<void**>(p) == p) return nullptr; return *reinterpret_cast<void**>(*reinterpret_cast<char**>(*reinterpret_cast<void* volatile*>(static_cast<char*>(self) + 0x8)) + 0x8); }
-extern "C" void func_800EA3AC() {}
-extern "C" void func_800EA410(void* self) {
+void func_800EA3AC(){}
+void func_800EA410(void* self){
     self = (char*)self + 0x219c;
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[0x10 / 4];
     func(self);
 }
-extern "C" void func_800EA420() {}
+void func_800EA420(){}
 extern "C" unsigned int lbl_eu_80663F00;
 extern "C" void* func_801A8070(void*);
 extern "C" void* func_800EA444(void* self) {
@@ -175,57 +175,57 @@ extern "C" void func_800EA460(void* self, float a, float b, unsigned long c) {
     *(float*)((char*)self + 0x90) = a;
     func_800EA484(self);
 }
-extern "C" void func_800EA470() {}
-extern "C" void func_800EA998(void* self) {
+void func_800EA470(){}
+void func_800EA998(void* self){
     self = (char*)self + 0x219c;
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[0x24 / 4];
     func(self);
 }
-extern "C" void func_800EC8FC() {}
-extern "C" void func_800F3958() {}
+void func_800EC8FC(){}
+void func_800F3958(){}
 extern "C" unsigned char func_800F3DC8(void* self, int key) { const unsigned char* item = static_cast<const unsigned char*>(self) + 0x94; for (int i = 0; i < 32; ++i) { if (*reinterpret_cast<const int*>(item) == key) return item[4]; item += 8; } return 0; }
 extern "C" void func_800F4004(void* this_) { unsigned char* self = static_cast<unsigned char*>(this_); void* anchor = *reinterpret_cast<void**>(self + 0x48); void* node = *reinterpret_cast<void**>(anchor); while (node != *reinterpret_cast<void**>(self + 0x48)) { unsigned char* object = *reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(node) + 0x8); *reinterpret_cast<unsigned int*>(object + 0x3f04) |= 0x40; node = *reinterpret_cast<void**>(node); } }
 extern "C" void func_800F42A0(void* _this) {
     *(int*)((char*)_this + 0x84) = 0;
 }
 
-extern "C" void func_800D7D24() {}
-extern "C" void func_800D7EA0() {}
-extern "C" void func_800D81A8() {}
-extern "C" void func_800D9354() {}
-extern "C" void func_800D9978() {}
-extern "C" void func_800D9CA0() {}
-extern "C" void func_800DA0A4() {}
-extern "C" void func_800DB0FC() {}
-extern "C" void func_800DB4FC() {}
-extern "C" void func_800DB7F8() {}
-extern "C" void func_800DBA2C() {}
-extern "C" void func_800DBACC() {}
-extern "C" void func_800DCB54() {}
-extern "C" void func_800E08E8() {}
-extern "C" void func_800E1B5C() {}
-extern "C" void func_800E2594() {}
-extern "C" void func_800E2A9C() {}
-extern "C" void func_800E64CC() {}
-extern "C" void func_800E85F0() {}
-extern "C" void CBattleManager_preCalcTotalDamage() {}
-extern "C" void func_800E921C() {}
-extern "C" void func_800E9B54() {}
-extern "C" void func_800E9FE4() {}
-extern "C" void func_800EA2A4() {}
-extern "C" void func_800EA484() {}
-extern "C" void func_800EA9A8() {}
-extern "C" void func_800EAA2C() {}
-extern "C" void func_800EC918() {}
-extern "C" void func_800F3734() {}
-extern "C" void func_800F37F8() {}
-extern "C" void func_800F38E0() {}
-extern "C" void func_800F3970() {}
-extern "C" void func_800F3C08() {}
-extern "C" void func_800F3C6C() {}
-extern "C" void func_800F3E8C() {}
-extern "C" void func_800F3F8C() {}
-extern "C" void func_800F3FC8() {}
-extern "C" void func_800F4034() {}
-extern "C" void func_800F41A0() {}
+void func_800D7D24(){}
+void func_800D7EA0(){}
+void func_800D81A8(){}
+void func_800D9354(){}
+void func_800D9978(){}
+void func_800D9CA0(){}
+void func_800DA0A4(){}
+void func_800DB0FC(){}
+void func_800DB4FC(){}
+void func_800DB7F8(){}
+void func_800DBA2C(){}
+void func_800DBACC(){}
+void func_800DCB54(){}
+void func_800E08E8(){}
+void func_800E1B5C(){}
+void func_800E2594(){}
+void func_800E2A9C(){}
+void func_800E64CC(){}
+void func_800E85F0(){}
+void CBattleManager_preCalcTotalDamage(){}
+void func_800E921C(){}
+void func_800E9B54(){}
+void func_800E9FE4(){}
+void func_800EA2A4(){}
+void func_800EA484(){}
+void func_800EA9A8(){}
+void func_800EAA2C(){}
+void func_800EC918(){}
+void func_800F3734(){}
+void func_800F37F8(){}
+void func_800F38E0(){}
+void func_800F3970(){}
+void func_800F3C08(){}
+void func_800F3C6C(){}
+void func_800F3E8C(){}
+void func_800F3F8C(){}
+void func_800F3FC8(){}
+void func_800F4034(){}
+void func_800F41A0(){}

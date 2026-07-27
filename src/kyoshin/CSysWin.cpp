@@ -19,18 +19,18 @@ extern "C" u8 CSysWin_isActive(void* self) { return ((u8*)self)[0x36]; }
 
 
 
-extern "C" void func_8022BF6C() {}
+void func_8022BF6C(){}
 
-extern "C" void func_8022BFC8() {}
+void func_8022BFC8(){}
 
-extern "C" void func_8022C1B4() {}
+void func_8022C1B4(){}
 
-extern "C" void func_8022C258() {}
+void func_8022C258(){}
 
-extern "C" void func_8022C2A4() {}
+void func_8022C2A4(){}
 
-extern "C" void func_8022C2F8() {}
+void func_8022C2F8(){}
 
-extern "C" void func_8022C348() {}
+void func_8022C348(){}
 
-extern "C" void OnFileEvent__7CSysWinFP10CEventFile() {}
+void CSysWin::OnFileEvent() {}

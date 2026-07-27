@@ -5,33 +5,33 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuCollepedia() {}
+void __ct__CMenuCollepedia(){}
 
-extern "C" void __dt__15CMenuCollepediaFv(void* self) {}
+void CMenuCollepedia::~CMenuCollepedia() {}
 
-extern "C" void Init__15CMenuCollepediaFv() {}
+void CMenuCollepedia::Init() {}
 
-extern "C" void Term__15CMenuCollepediaFv() {}
+void CMenuCollepedia::Term() {}
 
-extern "C" void Move__15CMenuCollepediaFv() {}
+void CMenuCollepedia::Move() {}
 
-extern "C" void cbRenderBefore__15CMenuCollepediaFv(void* self) {}
+void CMenuCollepedia::cbRenderBefore() {}
 
-extern "C" void func_80252C60() {}
+void func_80252C60(){}
 
 extern "C" void stub_us_80254f10() {}
 
-extern "C" void func_80252CE4() {}
+void func_80252CE4(){}
 
-extern "C" void func_80252D88() {}
+void func_80252D88(){}
 
-extern "C" void func_80252DD8() {}
+void func_80252DD8(){}
 
-extern "C" void func_8025306C() {}
+void func_8025306C(){}
 
-extern "C" void func_802530BC() {}
+void func_802530BC(){}
 
-extern "C" void func_80253128() {}
+void func_80253128(){}
 
 /**
  * IScnRender vtable this-adjusting thunk for cbRenderBefore.

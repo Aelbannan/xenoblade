@@ -3,11 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuUpdate() {}
+void __ct__CMenuUpdate(){}
 
-extern "C" void __ct__IUIWindow() {}
+void __ct__IUIWindow(){}
 
-extern "C" void __ct__CTTask_IUIWindow() {}
+void __ct__CTTask_IUIWindow(){}
 
 extern "C" void __ct__IWorkEvent(void* self) {
     extern char lbl_eu_80525A10[];
@@ -33,38 +33,38 @@ extern "C" void __ct__IScnRender(void* self) {
     *(void**)self = (void*)lbl_eu_80525A00;
 }
 
-extern "C" void __dt__11CMenuUpdateFv(void* self) {}
+void CMenuUpdate::~CMenuUpdate() {}
 
-extern "C" void Init__11CMenuUpdateFv() {}
+void CMenuUpdate::Init() {}
 
 extern "C" u32 func_80142954(void* self) { return *(u32*)((u8*)self + 0x10); }
 
 extern "C" void func_8014295C(void* self, u8 val) { ((u8*)self)[0x67] = val; }
 
-extern "C" void Term__11CMenuUpdateFv() {}
+void CMenuUpdate::Term() {}
 
-extern "C" void Move__11CMenuUpdateFv() {}
+void CMenuUpdate::Move() {}
 
-extern "C" void cbRenderBefore__11CMenuUpdateFv(void* self) {}
+void CMenuUpdate::cbRenderBefore() {}
 
-extern "C" void func_80142B4C() {}
+void func_80142B4C(){}
 
-extern "C" void func_80142C64() {}
+void func_80142C64(){}
 
 extern "C" bool func_80142C70() { return false; }
 
 extern u32 lbl_eu_806640E0;
 extern "C" int func_80142C78() { return lbl_eu_806640E0; }
 
-extern "C" void func_80142C80() {}
+void func_80142C80(){}
 
 extern "C" void func_80142C98(void* self, u8 val) { ((u8*)self)[0x64] = val; }
 
-extern "C" void func_80142CA0() {}
+void func_80142CA0(){}
 
 extern "C" void func_80142D5C(void) {}
 
-extern "C" void func_80142D60() {}
+void func_80142D60(){}
 
 extern "C" void func_80143AC8(void* self, float a, float b) {
     *(float*)((char*)self + 0) = a;
@@ -73,7 +73,7 @@ extern "C" void func_80143AC8(void* self, float a, float b) {
 
 extern "C" void func_80143AD4(void* self, float val) { *(float*)((u8*)self + 0x10) = val; }
 
-extern "C" void func_80143ADC() {}
+void func_80143ADC(){}
 
 extern "C" void func_80143F38(void* self, uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3) {
     uint32_t* p = (uint32_t*)self;
@@ -85,7 +85,7 @@ extern "C" void func_80143F38(void* self, uint32_t v0, uint32_t v1, uint32_t v2,
 
 extern "C" u8 func_80143F4C(void* self) { return ((u8*)self)[0x64]; }
 
-extern "C" void func_80143F54(void* dest, const void* src) {
+void func_80143F54(void* dest, const void* src){
     unsigned int* d = (unsigned int*)dest;
     const unsigned int* s = (const unsigned int*)src;
     d[0] = s[0];
@@ -94,15 +94,15 @@ extern "C" void func_80143F54(void* dest, const void* src) {
     d[3] = s[3];
 }
 
-extern "C" void func_80143F78() {}
+void func_80143F78(){}
 
-extern "C" void func_80144070() {}
+void func_80144070(){}
 
-extern "C" void func_801440A8() {}
+void func_801440A8(){}
 
-extern "C" void func_801443E4() {}
+void func_801443E4(){}
 
-extern "C" void func_80144410() {}
+void func_80144410(){}
 
 extern "C" void func_80144590(void* self) { ((void(*)(void*))__dt__11CMenuUpdateFv)((char*)self - 0x6c); }
 

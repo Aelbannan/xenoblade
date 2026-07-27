@@ -19,5 +19,5 @@ namespace cf{
     }
 }
 
-extern "C" void func_80293E24() {}
-extern "C" void func_80293EEC() {}
+void func_80293E24(){}
+void func_80293EEC(){}

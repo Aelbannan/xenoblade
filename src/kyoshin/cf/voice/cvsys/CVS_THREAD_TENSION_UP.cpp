@@ -5,15 +5,15 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__802A8DE8() {}
+void __ct__802A8DE8(){}
 
-extern "C" void func_802A8EEC() {}
+void func_802A8EEC(){}
 
-extern "C" void func_802A9030() {}
+void func_802A9030(){}
 
-extern "C" void func_802A9230() {}
+void func_802A9230(){}
 
-extern "C" void func_802A9278() {}
+void func_802A9278(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; TENSION_UP subclass returns 0x82 (130).

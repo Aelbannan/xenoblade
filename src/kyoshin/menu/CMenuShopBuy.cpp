@@ -3,31 +3,31 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuShopBuy() {}
+void __ct__CMenuShopBuy(){}
 
-extern "C" void __dt__12CMenuShopBuyFv(void* self) {}
+void CMenuShopBuy::~CMenuShopBuy() {}
 
-extern "C" void Init__12CMenuShopBuyFv() {}
+void CMenuShopBuy::Init() {}
 
-extern "C" void func_8018BE74() {}
+void func_8018BE74(){}
 
-extern "C" void Term__12CMenuShopBuyFv() {}
+void CMenuShopBuy::Term() {}
 
-extern "C" void Move__12CMenuShopBuyFv() {}
+void CMenuShopBuy::Move() {}
 
-extern "C" void cbRenderBefore__12CMenuShopBuyFv(void* self) {}
+void CMenuShopBuy::cbRenderBefore() {}
 
-extern "C" void func_8018C104() {}
+void func_8018C104(){}
 
-extern "C" void func_8018C180() {}
+void func_8018C180(){}
 
-extern "C" void func_8018C190() {}
+void func_8018C190(){}
 
-extern "C" void func_8018C208() {}
+void func_8018C208(){}
 
-extern "C" void func_8018C258() {}
+void func_8018C258(){}
 
-extern "C" void func_8018C59C() {}
+void func_8018C59C(){}
 
 // Adjusting thunk: upcasts from base sub-object (at offset +0x58 within CMenuShopBuy)
 // to the full CMenuShopBuy, then tail-calls cbRenderBefore.

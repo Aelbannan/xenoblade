@@ -3,9 +3,9 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CScnBlend() {}
+void __ct__CScnBlend(){}
 
-extern "C" void __dt__9CScnBlendFv() {}
+void CScnBlend::~CScnBlend() {}
 
 extern "C" void func_80498D98(void* r3, int r4) {
     uint8_t v = *(uint8_t*)((uintptr_t)r3 + 0x54);
@@ -16,6 +16,6 @@ extern "C" void func_80498D98(void* r3, int r4) {
     }
 }
 
-extern "C" void func_80498DC0() {}
+void func_80498DC0(){}
 
-extern "C" void func_80498DE8() {}
+void func_80498DE8(){}

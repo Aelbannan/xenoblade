@@ -7,20 +7,20 @@
 extern "C" void CreateHeap__Q44nw4r3snd6detail8AxfxImplFPvUl(void*, u32);
 extern "C" void DestroyHeap__Q44nw4r3snd6detail8AxfxImplFv(void*);
 
-extern "C" void __ct__Q34nw4r3snd12FxChorusDpl2Fv() {}
+void __ct__Q34nw4r3snd12FxChorusDpl2Fv(){}
 
-extern "C" void GetRequiredMemSize__Q34nw4r3snd12FxChorusDpl2Fv() {}
+void GetRequiredMemSize__Q34nw4r3snd12FxChorusDpl2Fv(){}
 
 extern "C" void AssignWorkBuffer__Q34nw4r3snd12FxChorusDpl2FPvUl(void* self, u32 size) { ((void(*)(void*, u32))CreateHeap__Q44nw4r3snd6detail8AxfxImplFPvUl)((char*)self + 0x14, size); }
 
 extern "C" void ReleaseWorkBuffer__Q34nw4r3snd12FxChorusDpl2Fv(void* self) { ((void(*)(void*))DestroyHeap__Q44nw4r3snd6detail8AxfxImplFv)((char*)self + 0x14); }
 
-extern "C" void StartUp__Q34nw4r3snd12FxChorusDpl2Fv() {}
+void StartUp__Q34nw4r3snd12FxChorusDpl2Fv(){}
 
-extern "C" void Shutdown__Q34nw4r3snd12FxChorusDpl2Fv() {}
+void Shutdown__Q34nw4r3snd12FxChorusDpl2Fv(){}
 
-extern "C" void SetParam__Q34nw4r3snd12FxChorusDpl2FRCQ44nw4r3snd6detail13FxChorusParam() {}
+void SetParam__Q34nw4r3snd12FxChorusDpl2FRCQ44nw4r3snd6detail13FxChorusParam(){}
 
-extern "C" void UpdateBuffer__Q34nw4r3snd12FxChorusDpl2FiPPvUlQ34nw4r3snd12SampleFormatfQ34nw4r3snd10OutputMode() {}
+void nw4r3snd12FxChorusDpl2FiPPvUlQ34nw::r3sn::UpdateBuffer() {}
 
-extern "C" void OnChangeOutputMode__Q34nw4r3snd12FxChorusDpl2Fv() {}
+void OnChangeOutputMode__Q34nw4r3snd12FxChorusDpl2Fv(){}

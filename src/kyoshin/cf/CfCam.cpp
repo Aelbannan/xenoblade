@@ -106,13 +106,13 @@ extern "C" u32 func_8006B6A8(const void* self) { return *(const u32*)((const cha
 extern "C" void* func_8006B6B0(void* ptr) { return static_cast<char*>(ptr) + 0x40; }
 extern "C" void* func_8006B6B8(void* self) { return (char*)self + 0x1c; }
 extern "C" bool func_8006B6C0() { return true; }
-extern "C" void func_8006BA80() {}
-extern "C" float func_8006BAF0(void* self) {
+void func_8006BA80(){}
+float func_8006BAF0(void* self){
     return __fabs(*(float*)self);
 }
 extern "C" float PSVECMag(const float* v);
 extern "C" float func_8006BB00(const float* v) { return PSVECMag(v); }
-extern "C" void func_8006BB04() {}
+void func_8006BB04(){}
 extern "C" void func_8006BBF4(void* r3, int r4, int r5) {
     if (r5) {
         *(int*)((char*)r3 + 4) |= r4;
@@ -125,7 +125,7 @@ extern "C" void func_8006BC1C(unsigned int* p, unsigned int mask) {
 }
 extern "C" void __ct__Q22cf5CfCamFv() {}
 extern "C" void func_8006BEC0(void* self) {}
-extern "C" void func_8006BEC4(void* self) {}
+void func_8006BEC4(void* self){}
 extern "C" void func_8006BEE4(void* p) {
     ((u32*)p)[1] = 0;
 }
@@ -159,17 +159,17 @@ extern "C" int func_8006C678(void* p) {
 extern "C" bool func_8006C684(const unsigned char* this_) { return (*(const unsigned short*)(this_ + 0x530) & 0x000C) != 0; }
 extern "C" bool func_8006C69C(const void* self) { return (*(const unsigned short*)((const unsigned char*)self + 0x530) & 0x30) != 0; }
 extern "C" bool func_8006C6B4(void* self, unsigned int mask) { return ((*(unsigned int*)((char*)self + 0x1d4) & mask) != 0); }
-extern "C" void func_8006C6CC() {}
-extern "C" void func_8006C6E8() {}
+void func_8006C6CC(){}
+void func_8006C6E8(){}
 extern "C" void func_8006C730(void* _this, unsigned int mask) {
     *(unsigned int*)((char*)_this + 0x1d4) &= ~mask;
 }
 extern "C" int func_8006CA20(void* _this) {
     return (*(int*)((char*)_this + 0x4EC) >> 1) & 1;
 }
-extern "C" void func_8006CBD8() {}
-extern "C" void func_8006CBEC() {}
-extern "C" void func_8006CC4C() {}
+void func_8006CBD8(){}
+void func_8006CBEC(){}
+void func_8006CC4C(){}
 extern "C" void func_8006CE18(void* arg0) {
     *(u32*)((char*)arg0 + 0x1d4) = 0;
 }
@@ -220,7 +220,7 @@ extern "C" unsigned int func_8006DFBC(void *self) {
     unsigned int word = *(unsigned int *)((char *)self + 0x64);
     return (word >> 27) & 1U;
 }
-extern "C" void func_8006DFC8() {}
+void func_8006DFC8(){}
 extern int lbl_eu_80663DF0;
 
 extern "C" int func_8006E59C()
@@ -248,10 +248,10 @@ extern "C" void* func_8006EEF0(void* self) { return static_cast<char*>(self) + 0
 extern "C" int func_8006EEF8(unsigned int* arg0) {
     return (arg0[1] >> 9) & 1;
 }
-extern "C" void func_8006EF04__Fi() {}
-extern "C" void func_8006EF1C() {}
-extern "C" void func_8006F9D4() {}
-extern "C" void func_80071694() {}
+void func_8006EF04__Fi(){}
+void func_8006EF1C(){}
+void func_8006F9D4(){}
+void func_80071694(){}
 extern "C" void func_80071730(void *r3, const void *r4) {
     const unsigned int *src = (const unsigned int *)r4;
     unsigned int *dst = (unsigned int *)r3;
@@ -280,7 +280,7 @@ extern "C" void* func_80071CE4(void* self) { return static_cast<char*>(self) + 0
 extern "C" void* func_80071CEC(void* ptr) {
     return (char*)ptr + 0x6c;
 }
-extern "C" void func_80071CF4() {}
+void func_80071CF4(){}
 extern "C" int func_80073390(void* _this) {
     return ((*(unsigned*)((char*)_this + 0xc)) >> 19) & 1;
 }
@@ -295,13 +295,13 @@ extern "C" void func_8004B3F0(void*);
 extern "C" void func_80073C74(void* p) {
     func_8004B3F0((char*)p + 0x10);
 }
-extern "C" void func_8007420C() {}
+void func_8007420C(){}
 extern "C" void func_800743A4(float* dst, const float* src) {
     dst[3] = src[0];
     dst[7] = src[1];
     dst[11] = src[2];
 }
-extern "C" void func_800743C0() {}
+void func_800743C0(){}
 extern "C" bool func_80074CD4(const unsigned* value, unsigned mask) { return (*value & mask) != 0; }
 extern "C" int func_80074D44(void* self) { return 0x0; }
 extern "C" void* func_80074D4C(void* p) {
@@ -314,10 +314,10 @@ extern "C" void func_80074D60(u32* self, const u32* src)
     self[11] = src[1];
     self[12] = src[2];
 }
-extern "C" void sinit_80074D7C() {}
+void sinit_80074D7C(){}
 
-extern "C" void func_8006B720() {}
-extern "C" void func_8006B8E4() {}
+void func_8006B720(){}
+void func_8006B8E4(){}
 extern "C" float lbl_eu_80527230[];
 extern "C" float lbl_eu_80661BA8;
 
@@ -329,46 +329,46 @@ extern "C" void func_8006B948() {
     unsigned char idx = reinterpret_cast<unsigned char*>(Class_80296898::getInstance())[4];
     lbl_eu_80661BA8 = lbl_eu_80527230[idx];
 }
-extern "C" void func_8006B980() {}
-extern "C" void func_8006BB20() {}
-extern "C" void func_8006BFDC() {}
-extern "C" void func_8006C16C() {}
-extern "C" void func_8006C1C8() {}
-extern "C" void func_8006C740() {}
-extern "C" void func_8006CA2C() {}
-extern "C" void func_8006CB0C() {}
-extern "C" void func_8006CC0C() {}
-extern "C" void func_8006CC68() {}
-extern "C" void func_8006CE24() {}
-extern "C" void func_8006D380() {}
-extern "C" void func_8006D3D0() {}
-extern "C" void func_8006D41C() {}
-extern "C" void func_8006D450() {}
-extern "C" void func_8006D6A8() {}
-extern "C" void func_8006D700() {}
-extern "C" void func_8006D734() {}
-extern "C" void func_8006D7A8() {}
-extern "C" void func_8006D804() {}
-extern "C" void func_8006D8D0() {}
-extern "C" void func_8006DBD4() {}
-extern "C" void func_8006DCA0() {}
-extern "C" void func_8006DD58() {}
-extern "C" void func_8006DFE0() {}
-extern "C" void func_8006E0C8() {}
-extern "C" void func_8006E18C() {}
-extern "C" void func_8006E2FC() {}
-extern "C" void func_8006E5D8() {}
-extern "C" void func_8006E884() {}
-extern "C" void func_8006EFA0() {}
-extern "C" void func_8006F5C8() {}
-extern "C" void func_8006F9EC() {}
-extern "C" void func_8006FC44() {}
-extern "C" void func_8006FD3C() {}
-extern "C" void func_8006FFA8() {}
-extern "C" void func_80070088() {}
-extern "C" void func_80070518() {}
-extern "C" void func_800705D8() {}
-extern "C" void func_80070674() {}
+void func_8006B980(){}
+void func_8006BB20(){}
+void func_8006BFDC(){}
+void func_8006C16C(){}
+void func_8006C1C8(){}
+void func_8006C740(){}
+void func_8006CA2C(){}
+void func_8006CB0C(){}
+void func_8006CC0C(){}
+void func_8006CC68(){}
+void func_8006CE24(){}
+void func_8006D380(){}
+void func_8006D3D0(){}
+void func_8006D41C(){}
+void func_8006D450(){}
+void func_8006D6A8(){}
+void func_8006D700(){}
+void func_8006D734(){}
+void func_8006D7A8(){}
+void func_8006D804(){}
+void func_8006D8D0(){}
+void func_8006DBD4(){}
+void func_8006DCA0(){}
+void func_8006DD58(){}
+void func_8006DFE0(){}
+void func_8006E0C8(){}
+void func_8006E18C(){}
+void func_8006E2FC(){}
+void func_8006E5D8(){}
+void func_8006E884(){}
+void func_8006EFA0(){}
+void func_8006F5C8(){}
+void func_8006F9EC(){}
+void func_8006FC44(){}
+void func_8006FD3C(){}
+void func_8006FFA8(){}
+void func_80070088(){}
+void func_80070518(){}
+void func_800705D8(){}
+void func_80070674(){}
 extern "C" void func_804BE4B4(void*, int);
 extern "C" void* func_804BE4E0(void*, int);
 
@@ -376,39 +376,39 @@ extern "C" void* func_80070784(void* a, void* b) {
     func_804BE4B4(a, 0);
     return func_804BE4E0(b, 0);
 }
-extern "C" void func_800707C0() {}
-extern "C" void func_80070EBC() {}
-extern "C" void func_80070FB8() {}
-extern "C" void func_80071364() {}
-extern "C" void func_80071398() {}
-extern "C" void func_80071754() {}
-extern "C" void func_80071AB0() {}
-extern "C" void func_80071B7C() {}
-extern "C" void func_80071D50() {}
-extern "C" void func_80071ED0() {}
-extern "C" void func_80071F14() {}
-extern "C" void func_80071F74() {}
-extern "C" void func_80072194() {}
-extern "C" void func_800733B8() {}
-extern "C" void func_8007351C() {}
-extern "C" void func_80073640() {}
-extern "C" void func_80073C7C() {}
-extern "C" void func_80073D8C() {}
-extern "C" void func_80073DDC() {}
-extern "C" void func_80073E74() {}
-extern "C" void func_80073F88() {}
-extern "C" void func_80074010() {}
-extern "C" void func_80074090() {}
-extern "C" void func_80074230() {}
-extern "C" void func_800742FC() {}
-extern "C" void func_80074488() {}
-extern "C" void func_80074534() {}
-extern "C" void func_80074900() {}
-extern "C" void func_800749AC() {}
-extern "C" void func_80074A3C() {}
-extern "C" void func_80074A74() {}
-extern "C" void func_80074AA4() {}
-extern "C" void func_80074CEC() {}
+void func_800707C0(){}
+void func_80070EBC(){}
+void func_80070FB8(){}
+void func_80071364(){}
+void func_80071398(){}
+void func_80071754(){}
+void func_80071AB0(){}
+void func_80071B7C(){}
+void func_80071D50(){}
+void func_80071ED0(){}
+void func_80071F14(){}
+void func_80071F74(){}
+void func_80072194(){}
+void func_800733B8(){}
+void func_8007351C(){}
+void func_80073640(){}
+void func_80073C7C(){}
+void func_80073D8C(){}
+void func_80073DDC(){}
+void func_80073E74(){}
+void func_80073F88(){}
+void func_80074010(){}
+void func_80074090(){}
+void func_80074230(){}
+void func_800742FC(){}
+void func_80074488(){}
+void func_80074534(){}
+void func_80074900(){}
+void func_800749AC(){}
+void func_80074A3C(){}
+void func_80074A74(){}
+void func_80074AA4(){}
+void func_80074CEC(){}
 extern "C" int CfObject_UnkVirtualFunc48__Q22cf8CfObjectFv() { return 0; }
 extern "C" int CfObject_UnkVirtualFunc55__Q22cf8CfObjectFv() { return 0; }
 extern "C" int CfObject_UnkVirtualFunc52__Q22cf8CfObjectFv() { return 0; }

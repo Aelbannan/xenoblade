@@ -3,29 +3,29 @@
 
 #include "kyoshin/cf/CActParamAnimGame.hpp"
 
-extern "C" void __ct__8005A3FC() {}
+void __ct__8005A3FC(){}
 
-extern "C" void __ct__Q22cf17CActParamAnimGameFv() {}
+cf::CActParamAnimGame::CActParamAnimGame() {}
 
-extern "C" void __dt__Q22cf17CActParamAnimGameFv() {}
+void cf::CActParamAnimGame::~CActParamAnimGame() {}
 
-extern "C" void func_8005A524__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005A524() {}
 
-extern "C" void func_8005A594() {}
+void func_8005A594(){}
 
-extern "C" void func_8005A5B0() {}
+void func_8005A5B0(){}
 
-extern "C" void func_8005B820() {}
+void func_8005B820(){}
 
-extern "C" void func_8005BC14() {}
+void func_8005BC14(){}
 
-extern "C" void func_8005D2C4__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005D2C4() {}
 
-extern "C" void func_8005D608__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005D608() {}
 
-extern "C" void func_8005D67C__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005D67C() {}
 
-extern "C" void func_8005D6C0__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005D6C0() {}
 
 extern "C" bool func_8004ECF4__13CActParamAnimFv(void* self);
 extern "C" bool func_8005D70C__Q22cf17CActParamAnimGame(void* self) {
@@ -35,15 +35,15 @@ extern "C" bool func_8005D70C__Q22cf17CActParamAnimGame(void* self) {
     return func_8004ECF4__13CActParamAnimFv(self);
 }
 
-extern "C" void func_8005D728__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005D728() {}
 
-extern "C" void func_8005D76C__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005D76C() {}
 
-extern "C" void func_8005D84C__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005D84C() {}
 
-extern "C" void func_8005D99C__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005D99C() {}
 
-extern "C" void func_8005DA44__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005DA44() {}
 
 extern "C" void func_8004BC94(void*);
 extern "C" bool func_8005DAE4__Q22cf17CActParamAnimGame(void* self) {
@@ -54,33 +54,33 @@ extern "C" bool func_8005DAE4__Q22cf17CActParamAnimGame(void* self) {
     return false;
 }
 
-extern "C" void func_8005DB1C__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005DB1C() {}
 
-extern "C" bool CActorParam_UnkVirtualFunc38__Q22cf11CActorParamFv() { return false; }
+bool cf::CActorParam::CActorParam_UnkVirtualFunc38() { return false; }
 
-extern "C" void func_8005DC30__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005DC30() {}
 
 // cf::CActParamAnimGame::func_8005DCA0 — trivial leaf, returns false
 // Retail symbol lacks Fv suffix; extern "C" preserves exact mangling for FULL_MATCH
 extern "C" bool func_8005DCA0__Q22cf17CActParamAnimGame() { return false; }
 
-extern "C" void func_8005DCA8__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005DCA8() {}
 
-extern "C" void func_8005DE68() {}
+void func_8005DE68(){}
 
-extern "C" void func_8005E28C() {}
+void func_8005E28C(){}
 
-extern "C" void func_8005E60C() {}
+void func_8005E60C(){}
 
-extern "C" void func_8005E7C4() {}
+void func_8005E7C4(){}
 
-extern "C" void func_8005E990() {}
+void func_8005E990(){}
 
-extern "C" void func_8005EEB4__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_8005EEB4() {}
 
-extern "C" void func_80060110__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_80060110() {}
 
-extern "C" void func_80060268__Q22cf17CActParamAnimGame() {}
+void cf::CActParamAnimGame::func_80060268() {}
 
 extern "C" bool func_80060290(void* r3) {
     int r0 = *(int*)((char*)r3 + 0x270);

@@ -379,14 +379,14 @@ u32 TextBox::MakeDrawFlag() const {
     return flag;
 }
 
-extern "C" void GetTextColor__Q34nw4r3lyt7TextBoxCFUl() {}
+void GetTextColor__Q34nw4r3lyt7TextBoxCFUl(){}
 
-extern "C" void SetTextColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color() {}
+void SetTextColor__Q34nw4r3lyt7TextBoxFUlQ34nw4r2ut5Color(){}
 
 } // namespace lyt
 } // namespace nw4r
 
 void SetColorMapping__Q34nw4r2ut10CharWriterFQ34nw4r2ut5ColorQ34nw4r2ut5Color(unsigned char* self, const unsigned char* color1, const unsigned char* color2) { self[0] = color1[0]; self[1] = color1[1]; self[2] = color1[2]; self[3] = color1[3]; self[4] = color2[0]; self[5] = color2[1]; self[6] = color2[2]; self[7] = color2[3]; }
-extern "C" void GetCharStrmReader__Q34nw4r2ut4FontCFv() {}
-extern "C" void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo() {}
-extern "C" bool GetRuntimeTypeInfo__Q34nw4r3lyt7TextBoxCFv() { return false; }
+void GetCharStrmReader__Q34nw4r2ut4FontCFv(){}
+void LoadMtx__Q34nw4r3lyt7TextBoxFRCQ34nw4r3lyt8DrawInfo(){}
+bool GetRuntimeTypeInfo__Q34nw4r3lyt7TextBoxCFv(){ return false; }

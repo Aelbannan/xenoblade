@@ -3,16 +3,16 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_80460C34__17UnkClass_80460C34Fv() {}
+void UnkClass_80460C34::func_80460C34() {}
 
-extern "C" void func_80460CB4__17UnkClass_80460C34Fv() {}
+void UnkClass_80460C34::func_80460CB4() {}
 
-extern "C" void func_80460DCC__17UnkClass_80460C34Fv() {}
+void UnkClass_80460C34::func_80460DCC() {}
 
-extern "C" void func_80460DDC__17UnkClass_80460C34Fv() {}
+void UnkClass_80460C34::func_80460DDC() {}
 
-extern "C" void func_80460F58__17UnkClass_80460C34Fv() {}
+void UnkClass_80460C34::func_80460F58() {}
 
-extern "C" void func_80461FE0__17UnkClass_80460C34Fv() {}
+void UnkClass_80460C34::func_80461FE0() {}
 
-extern "C" void func_80462068__17UnkClass_80460C34Fv() {}
+void UnkClass_80460C34::func_80462068() {}

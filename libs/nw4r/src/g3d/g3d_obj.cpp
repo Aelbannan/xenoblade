@@ -25,6 +25,6 @@ DECOMP_FORCEACTIVE(g3d_obj_cpp,
 } // namespace g3d
 } // namespace nw4r
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d6G3dObjCFQ44nw4r3g3d6G3dObj7TypeObj() {}
-extern "C" void GetTypeName__Q34nw4r3g3d6G3dObjCFv() {}
+void IsDerivedFrom__Q34nw4r3g3d6G3dObjCFQ44nw4r3g3d6G3dObj7TypeObj(){}
+void GetTypeName__Q34nw4r3g3d6G3dObjCFv(){}
 // Defined inline via NW4R_G3D_RTTI_DECL_BASE(G3dObj) in g3d_obj.h

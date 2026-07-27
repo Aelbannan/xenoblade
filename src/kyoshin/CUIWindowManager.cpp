@@ -44,7 +44,7 @@ public:
 typedef reslist<IUIWindow*>::iterator WindowIter;
 typedef _reslist_node<IUIWindow*> WindowNode;
 
-extern "C" void Term__Q216CUIWindowManager5CTestFv() {}
+void Term__Q216CUIWindowManager5CTestFv(){}
 
 void CUIWindowManager::Term() {
     cf::IFlagEvent* flagEvent = this; // implicit MI conversion -- do not static_cast / ternary / if
@@ -174,7 +174,7 @@ void CUIWindowManager::Move() {
 extern "C" u32 func_8013C54C() {
     return (u32)lbl_eu_80664088;
 }
-extern "C" void func_8013D26C() {}
+void func_8013D26C(){}
 extern "C" unsigned short func_8013EC58()
 {
     return lbl_eu_8066408C;
@@ -182,62 +182,62 @@ extern "C" unsigned short func_8013EC58()
 extern "C" void func_8013EC60() {
     lbl_eu_8066408C = 0;
 }
-extern "C" void func_8013EC6C() {}
+void func_8013EC6C(){}
 extern "C" void Draw__Q216CUIWindowManager5CTestFv(void* self) {}
 extern "C" void Init__Q216CUIWindowManager5CTestFv(void* self) {}
 extern "C" void* func_8013F234(void* self) {
     extern void* func_8013CBB4(void*);
     return func_8013CBB4((char*)self - 0x54);
 }
-extern "C" void __dt__16CUIWindowManagerFv(CUIWindowManager*);
+void __dt__16CUIWindowManagerFv(CUIWindowManager*);
 extern "C" void func_8013F23C(CUIWindowManager* p) {
     __dt__16CUIWindowManagerFv((CUIWindowManager*)((char*)p - 0x54));
 }
-extern "C" void func_8013F3EC(void) {}
+void func_8013F3EC(void){}
 extern "C" int func_801413DC(unsigned int arg0, int arg1) { unsigned int low = arg0 & 0xffff; unsigned int high = arg0 >> 16; if (arg1 >= (int)low) return -1; return (int)(high + arg1); }
 
-extern "C" void __ct__CUIWindowManager() {}
-extern "C" void __dt__CTTask_CUIWindowManager() {}
-extern "C" void func_8013CBB4() {}
-extern "C" void func_8013CFDC() {}
-extern "C" void func_8013D07C() {}
-extern "C" void func_8013D1E8() {}
-extern "C" void func_8013D448() {}
-extern "C" void func_8013D55C() {}
-extern "C" void func_8013D688() {}
-extern "C" void func_8013D7C0() {}
-extern "C" void func_8013D8A0() {}
-extern "C" void func_8013D978() {}
-extern "C" void func_8013DA60() {}
-extern "C" void func_8013DB6C() {}
-extern "C" void func_8013DCAC() {}
-extern "C" void func_8013DD94() {}
-extern "C" void func_8013DE6C() {}
-extern "C" void func_8013DF44() {}
-extern "C" void func_8013E030() {}
-extern "C" void func_8013E104() {}
-extern "C" void func_8013E204() {}
-extern "C" void func_8013E2E0() {}
-extern "C" void func_8013E424() {}
-extern "C" void func_8013E52C() {}
-extern "C" void func_8013E608() {}
-extern "C" void func_8013E704() {}
-extern "C" void func_8013E800() {}
-extern "C" void func_8013E8E0() {}
-extern "C" void func_8013E9D8() {}
-extern "C" void func_8013EAB0() {}
-extern "C" void func_8013EB90() {}
-extern "C" void __dt__Q216CUIWindowManager5CTestFv() {}
-extern "C" void func_8013F244() {}
-extern "C" void func_8013F2A0() {}
-extern "C" void func_8013F354() {}
-extern "C" void func_8013F3F0() {}
-extern "C" void func_8013F6C4() {}
-extern "C" void func_8013FFF8() {}
-extern "C" void func_80140854() {}
-extern "C" void func_80140AFC() {}
-extern "C" void func_80140CA4() {}
-extern "C" void func_80140E00() {}
-extern "C" void func_80141270() {}
-extern "C" void func_801412D0() {}
-extern "C" void sinit_801413F8() {}
+void __ct__CUIWindowManager(){}
+void __dt__CTTask_CUIWindowManager(){}
+void func_8013CBB4(){}
+void func_8013CFDC(){}
+void func_8013D07C(){}
+void func_8013D1E8(){}
+void func_8013D448(){}
+void func_8013D55C(){}
+void func_8013D688(){}
+void func_8013D7C0(){}
+void func_8013D8A0(){}
+void func_8013D978(){}
+void func_8013DA60(){}
+void func_8013DB6C(){}
+void func_8013DCAC(){}
+void func_8013DD94(){}
+void func_8013DE6C(){}
+void func_8013DF44(){}
+void func_8013E030(){}
+void func_8013E104(){}
+void func_8013E204(){}
+void func_8013E2E0(){}
+void func_8013E424(){}
+void func_8013E52C(){}
+void func_8013E608(){}
+void func_8013E704(){}
+void func_8013E800(){}
+void func_8013E8E0(){}
+void func_8013E9D8(){}
+void func_8013EAB0(){}
+void func_8013EB90(){}
+void __dt__Q216CUIWindowManager5CTestFv(){}
+void func_8013F244(){}
+void func_8013F2A0(){}
+void func_8013F354(){}
+void func_8013F3F0(){}
+void func_8013F6C4(){}
+void func_8013FFF8(){}
+void func_80140854(){}
+void func_80140AFC(){}
+void func_80140CA4(){}
+void func_80140E00(){}
+void func_80141270(){}
+void func_801412D0(){}
+void sinit_801413F8(){}

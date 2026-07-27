@@ -9,7 +9,7 @@ extern "C" void func_800A50AC(void* a, void* b, float c, void* d);
 
 extern "C" void* lbl_eu_80663E14;
 
-extern "C" void func_800AABD4(void* r3, void* r4) {
+void func_800AABD4(void* r3, void* r4){
     char gx[0xF0];
     __ct__7CDrawGXFv(gx);
     func_8049034C(lbl_eu_80663E14, gx, 0);
@@ -28,7 +28,7 @@ extern "C" void func_800AABD4(void* r3, void* r4) {
     __dt__7CDrawGXFv(gx, -1);
 }
 
-extern "C" void func_800AAC98(void* r3, void* r4, void* r5, void* r6) {
+void func_800AAC98(void* r3, void* r4, void* r5, void* r6){
     float fval = *(float*)((char*)r4 + 0xB8);
     unsigned int uval = (unsigned int)fval;
     void** vtbl = *(void***)r4;

@@ -3,23 +3,23 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CREvtEffect() {}
+void __ct__CREvtEffect(){}
 
-extern "C" void __ct__80184C3C(void* self) {}
+void __ct__80184C3C(void* self){}
 
-extern "C" void func_80184D18() {}
+void func_80184D18(){}
 
-extern "C" void func_80184D5C() {}
+void func_80184D5C(){}
 
-extern "C" void func_80184D90() {}
+void func_80184D90(){}
 
-extern "C" void func_80184F90() {}
+void func_80184F90(){}
 
-extern "C" void func_8018515C() {}
+void func_8018515C(){}
 
-extern "C" void func_80185378() {}
+void func_80185378(){}
 
-extern "C" void func_801855C4(void* self) {}
+void func_801855C4(void* self){}
 
 extern "C" u32 func_80185674(void* self) { return *(u32*)((u8*)self + 0x20); }
 

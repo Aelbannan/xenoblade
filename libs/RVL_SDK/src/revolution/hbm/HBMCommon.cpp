@@ -3,21 +3,21 @@
 
 #include <harness_catalog.h>
 
-extern "C" void HBMAllocMem__FUl() {}
+void HBMAllocMem__FUl(){}
 
-extern "C" void HBMFreeMem__FPv() {}
+void HBMFreeMem__FPv(){}
 
-extern "C" void HBMCreate() {}
+void HBMCreate(){}
 
-extern "C" void HBMDelete() {}
+void HBMDelete(){}
 
-extern "C" void HBMInit() {}
+void HBMInit(){}
 
-extern "C" void HBMCalc() {}
+void HBMCalc(){}
 
-extern "C" void HBMDraw() {}
+void HBMDraw(){}
 
-extern "C" void HBMSetAdjustFlag() {}
+void HBMSetAdjustFlag(){}
 
 extern "C" void HBMCreateSound(const void* data, void* ptr, unsigned long size) {
     extern void getInstance__Q210homebutton10HomeButtonFv(void);
@@ -26,7 +26,7 @@ extern "C" void HBMCreateSound(const void* data, void* ptr, unsigned long size) 
     InitAxSound__10homebuttonFPCvPvUl(data, ptr, size);
 }
 
-extern "C" void HBMDeleteSound(void) {}
+void HBMDeleteSound(void){}
 
 namespace homebutton {
 class HomeButton {

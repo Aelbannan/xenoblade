@@ -3,30 +3,30 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CfGimmickElv() {}
+void __ct__cf_CfGimmickElv(){}
 
-extern "C" void __dt__Q22cf12CfGimmickElvFv() {}
+void cf::CfGimmickElv::~CfGimmickElv() {}
 
-extern "C" void func_8020B20C() {}
+void func_8020B20C(){}
 
-extern "C" void func_8020B264() {}
+void func_8020B264(){}
 
-extern "C" void func_8020B2E4() {}
+void func_8020B2E4(){}
 
-extern "C" void func_8020B34C() {}
+void func_8020B34C(){}
 
-extern "C" void func_8020B474() {}
+void func_8020B474(){}
 
-extern "C" void func_8020B5C4() {}
+void func_8020B5C4(){}
 
-extern "C" void func_8020B844() {}
+void func_8020B844(){}
 
-extern "C" void func_8020B870() {}
+void func_8020B870(){}
 
-extern "C" void func_8020B89C() {}
+void func_8020B89C(){}
 
-extern "C" void func_8020BA98() {}
+void func_8020BA98(){}
 
-extern "C" void func_8020BCA8() {}
+void func_8020BCA8(){}
 
-extern "C" void func_8020C274() {}
+void func_8020C274(){}

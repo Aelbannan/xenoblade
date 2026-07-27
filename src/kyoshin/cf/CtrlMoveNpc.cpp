@@ -3,13 +3,13 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CtrlMoveNpc() {}
+void __ct__cf_CtrlMoveNpc(){}
 
-extern "C" void func_8019F6E8() {}
+void func_8019F6E8(){}
 
-extern "C" void func_8019F8E0() {}
+void func_8019F8E0(){}
 
-extern "C" void func_8019F93C() {}
+void func_8019F93C(){}
 
 extern "C" void* func_8019FB40() {
     extern void* memset(void*, int, unsigned long);
@@ -17,6 +17,6 @@ extern "C" void* func_8019FB40() {
     return memset((void*)lbl_eu_805757E0, 0, 0x10);
 }
 
-extern "C" void func_8019FB54() {}
+void func_8019FB54(){}
 
-extern "C" void func_8019FD2C() {}
+void func_8019FD2C(){}

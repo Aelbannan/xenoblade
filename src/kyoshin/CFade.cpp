@@ -25,4 +25,4 @@ extern "C" void func_802445F0(void* self) {
     }
 }
 
-extern "C" void OnFileEvent__5CFadeFP10CEventFile() {}
+void CFade::OnFileEvent() const {}

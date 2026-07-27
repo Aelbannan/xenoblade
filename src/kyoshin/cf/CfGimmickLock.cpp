@@ -3,20 +3,20 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CfGimmickLock() {}
+void __ct__cf_CfGimmickLock(){}
 
-extern "C" void __dt__Q22cf13CfGimmickLockFv() {}
+void cf::CfGimmickLock::~CfGimmickLock() {}
 
-extern "C" void func_8020C640() {}
+void func_8020C640(){}
 
-extern "C" void func_8020CAAC() {}
+void func_8020CAAC(){}
 
-extern "C" void func_8020CB28() {}
+void func_8020CB28(){}
 
-extern "C" void func_8020CC9C() {}
+void func_8020CC9C(){}
 
-extern "C" void func_8020CFD0() {}
+void func_8020CFD0(){}
 
-extern "C" void func_8020D204() {}
+void func_8020D204(){}
 
-extern "C" void func_8020D368() {}
+void func_8020D368(){}

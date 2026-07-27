@@ -668,7 +668,7 @@ Material* Window::GetFrameMaterial(u32 idx) const {
 } // namespace lyt
 } // namespace nw4hbm
 
-extern "C" void FindAnimationLink__Q36nw4hbm3lyt6WindowFPQ36nw4hbm3lyt13AnimTransform() {}
+void FindAnimationLink__Q36nw4hbm3lyt6WindowFPQ36nw4hbm3lyt13AnimTransform(){}
 extern "C" void* GetRuntimeTypeInfo__Q36nw4hbm3lyt6WindowCFv(void) {
     extern const char typeInfo__Q36nw4hbm3lyt6Window[];
     return (void*)typeInfo__Q36nw4hbm3lyt6Window;

@@ -8,7 +8,7 @@ extern "C" void func_8013DB6C(u32 mode, u32 param, u32 a, u32 b);
 extern "C" void func_8029A658();
 
 // Retail map keeps Fv mangling while passing owner/param in r4/r5.
-extern "C" void __ct__Q22cf5CHelpFv(cf::CHelp* self, void* owner, u32 param) {
+cf::CHelp::CHelp(cf::CHelp* self, void* owner, u32 param) {
     self->mOwner = owner;
     self->mVtbl = &lbl_eu_8053B3A0;
     self->mParam = param;
@@ -44,7 +44,7 @@ extern "C" void func_802B7C68(cf::CHelp* self) {
 }
 
 // Retail symbols stay Fv while the flag arg arrives in r4.
-extern "C" u32 func_802B7CBC__Q22cf11CHelpSwitchFv(cf::CHelpSwitch* self, u32 flag) {
+u32 cf::CHelpSwitch::func_802B7CBC(cf::CHelpSwitch* self, u32 flag) {
     u32 result = 0;
     u32 prev = self->mFlag;
     self->mFlag = static_cast<u8>(flag);
@@ -56,7 +56,7 @@ extern "C" u32 func_802B7CBC__Q22cf11CHelpSwitchFv(cf::CHelpSwitch* self, u32 fl
     return result;
 }
 
-extern "C" u32 func_802B7CE4__Q22cf11CHelpSwitchFv(cf::CHelpSwitch* self, u8 flag) {
+u32 cf::CHelpSwitch::func_802B7CE4(cf::CHelpSwitch* self, u8 flag) {
     u8 prev = self->mFlag;
     self->mFlag = flag;
     return prev != flag;

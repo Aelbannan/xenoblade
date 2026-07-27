@@ -10,5 +10,8 @@ namespace cf {
         //0x0: vtable
         //0x0-718: CfObjectObj
         u8 unk718[0x20];
+    CfObjectTbox();
+    virtual ~CfObjectTbox();
+    void func_801F8DD0();
     };
 }

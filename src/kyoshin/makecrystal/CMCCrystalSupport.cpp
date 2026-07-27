@@ -3,30 +3,30 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMCCrystalSupport() {}
+void __ct__CMCCrystalSupport(){}
 
-extern "C" void __dt__17CMCCrystalSupportFv() {}
+void CMCCrystalSupport::~CMCCrystalSupport() {}
 
-extern "C" void func_8022E8F8() {}
+void func_8022E8F8(){}
 
-extern "C" void func_8022E988() {}
+void func_8022E988(){}
 
-extern "C" void func_8022E9E4() {}
+void func_8022E9E4(){}
 
-extern "C" void func_8022EA04() {}
+void func_8022EA04(){}
 
-extern "C" void func_8022EA64() {}
+void func_8022EA64(){}
 
-extern "C" void func_8022EA88() {}
+void func_8022EA88(){}
 
-extern "C" void func_8022EB0C() {}
+void func_8022EB0C(){}
 
-extern "C" void __dt__12CMenuArtsSetFv() {}
+void CMenuArtsSet::~CMenuArtsSet() {}
 
-extern "C" void Init__12CMenuArtsSetFv() {}
+void CMenuArtsSet::Init() {}
 
-extern "C" void Term__12CMenuArtsSetFv() {}
+void CMenuArtsSet::Term() {}
 
-extern "C" void Move__12CMenuArtsSetFv() {}
+void CMenuArtsSet::Move() {}
 
-extern "C" void cbRenderBefore__12CMenuArtsSetFv() {}
+void CMenuArtsSet::cbRenderBefore() {}

@@ -3,8 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CfGimmickSaveOff() {}
+void __ct__cf_CfGimmickSaveOff(){}
 
-extern "C" void __dt__Q22cf16CfGimmickSaveOffFv() {}
+void cf::CfGimmickSaveOff::~CfGimmickSaveOff() {}
 
-extern "C" void func_802ABCB4() {}
+void func_802ABCB4(){}

@@ -4,33 +4,33 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/menu/CMenuShopSell.hpp"
 
-extern "C" void __ct__CMenuShopSell() {}
+void __ct__CMenuShopSell(){}
 
-extern "C" void __dt__13CMenuShopSellFv(void* self) {}
+void CMenuShopSell::~CMenuShopSell() {}
 
-extern "C" void Init__13CMenuShopSellFv() {}
+void CMenuShopSell::Init() {}
 
-extern "C" void func_8018B0FC() {}
+void func_8018B0FC(){}
 
-extern "C" void func_8018B130() {}
+void func_8018B130(){}
 
-extern "C" void Term__13CMenuShopSellFv() {}
+void CMenuShopSell::Term() {}
 
-extern "C" void Move__13CMenuShopSellFv() {}
+void CMenuShopSell::Move() {}
 
-extern "C" void cbRenderBefore__13CMenuShopSellFv(void* self) {}
+void CMenuShopSell::cbRenderBefore() {}
 
-extern "C" void func_8018B324() {}
+void func_8018B324(){}
 
-extern "C" void func_8018B398() {}
+void func_8018B398(){}
 
-extern "C" void func_8018B3A8() {}
+void func_8018B3A8(){}
 
-extern "C" void func_8018B420() {}
+void func_8018B420(){}
 
-extern "C" void func_8018B470() {}
+void func_8018B470(){}
 
-extern "C" void func_8018B658() {}
+void func_8018B658(){}
 
 // Adjusting thunk: upcasts from secondary base (at offset +0x58 within CMenuShopSell)
 // to the full object, then tail-calls cbRenderBefore.

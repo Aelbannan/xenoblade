@@ -3,11 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_80240614() {}
+void func_80240614(){}
 
-extern "C" void func_80240878() {}
+void func_80240878(){}
 
-extern "C" void func_802408D4() {}
+void func_802408D4(){}
 
 extern "C" void func_80240A64(void *r3) {
     unsigned char *base = (unsigned char *)r3;
@@ -29,28 +29,28 @@ extern "C" void func_80240A64(void *r3) {
     *(int *)(base + 0xabc) = 0;
 }
 
-extern "C" void func_80240AAC() {}
+void func_80240AAC(){}
 
-extern "C" void func_80240B10() {}
+void func_80240B10(){}
 
-extern "C" void func_80240C98() {}
+void func_80240C98(){}
 
-extern "C" void func_8024125C() {}
+void func_8024125C(){}
 
-extern "C" void func_80241344() {}
+void func_80241344(){}
 
-extern "C" void __dt__14CMenuMapSelectFv() {}
+void CMenuMapSelect::~CMenuMapSelect() {}
 
-extern "C" void Init__14CMenuMapSelectFv() {}
+void CMenuMapSelect::Init() {}
 
-extern "C" void func_80241640() {}
+void func_80241640(){}
 
-extern "C" void func_8024189C() {}
+void func_8024189C(){}
 
-extern "C" void func_80241920() {}
+void func_80241920(){}
 
-extern "C" void Term__14CMenuMapSelectFv() {}
+void CMenuMapSelect::Term() {}
 
-extern "C" void Move__14CMenuMapSelectFv() {}
+void CMenuMapSelect::Move() {}
 
-extern "C" void cbRenderBefore__14CMenuMapSelectFv() {}
+void CMenuMapSelect::cbRenderBefore() {}

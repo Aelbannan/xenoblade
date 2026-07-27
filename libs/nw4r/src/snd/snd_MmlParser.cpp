@@ -747,4 +747,4 @@ volatile s16* MmlParser::GetVariablePtr(SeqPlayer* pPlayer, SeqTrack* pTrack,
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl() {}
+void ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl(){}

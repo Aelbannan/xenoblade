@@ -11,50 +11,50 @@
  */
 static const u32 CMENU_ITEM_EXCHANGE_OC_OFFSET = 0x6c;
 
-extern "C" void __ct__CMenuItemExchange() {}
+void __ct__CMenuItemExchange(){}
 
-extern "C" void __dt__17CMenuItemExchangeFv(CMenuItemExchange* self) {}
+void CMenuItemExchange::~CMenuItemExchange() {}
 
-extern "C" void Init__17CMenuItemExchangeFv() {}
+void CMenuItemExchange::Init() {}
 
-extern "C" void func_801BE108() {}
+void func_801BE108(){}
 
-extern "C" void func_801BE16C() {}
+void func_801BE16C(){}
 
-extern "C" void func_801BE208() {}
+void func_801BE208(){}
 
-extern "C" void func_801BE590() {}
+void func_801BE590(){}
 
-extern "C" void Term__17CMenuItemExchangeFv() {}
+void CMenuItemExchange::Term() {}
 
-extern "C" void Move__17CMenuItemExchangeFv() {}
+void CMenuItemExchange::Move() {}
 
-extern "C" void cbRenderBefore__17CMenuItemExchangeFv(CMenuItemExchange* self) {}
+void CMenuItemExchange::cbRenderBefore() {}
 
-extern "C" void func_801BEDE0() {}
+void func_801BEDE0(){}
 
-extern "C" void func_801BEE5C() {}
+void func_801BEE5C(){}
 
 extern u8 lbl_eu_8066442C;
 extern "C" u8 func_801BEE6C() { return lbl_eu_8066442C; }
 
-extern "C" void func_801BEE74() {}
+void func_801BEE74(){}
 
-extern "C" void func_801BEEF4() {}
+void func_801BEEF4(){}
 
-extern "C" void func_801BEF44() {}
+void func_801BEF44(){}
 
-extern "C" void func_801BF2E8() {}
+void func_801BF2E8(){}
 
-extern "C" void func_801BF348() {}
+void func_801BF348(){}
 
-extern "C" void func_801BF414() {}
+void func_801BF414(){}
 
-extern "C" void func_801BF464() {}
+void func_801BF464(){}
 
-extern "C" void func_801BF6A0() {}
+void func_801BF6A0(){}
 
-extern "C" void func_801BF70C() {}
+void func_801BF70C(){}
 
 /**
  * OC thunk for cbRenderBefore. Adjusts the OC wrapper pointer back to the

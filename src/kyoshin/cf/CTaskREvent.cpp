@@ -3,51 +3,51 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CTaskREvent() {}
+void __ct__cf_CTaskREvent(){}
 
-extern "C" void __dt__Q22cf11CTaskREventFv(void* self) {}
+void cf::CTaskREvent::~CTaskREvent() {}
 
-extern "C" void func_80164410() {}
+void func_80164410(){}
 
-extern "C" void func_80164478() {}
+void func_80164478(){}
 
 extern "C" bool func_801644AC() { return false; }
 
 extern "C" bool func_801644B4() { return false; }
 
-extern "C" void func_801644BC__FUl() {}
+void func_801644BC__FUl(){}
 
-extern "C" void func_801644D8(void* self) {}
+void func_801644D8(void* self){}
 
-extern "C" void func_8016455C() {}
+void func_8016455C(){}
 
-extern "C" void func_8016462C() {}
+void func_8016462C(){}
 
-extern "C" void func_80164724() {}
+void func_80164724(){}
 
-extern "C" void func_80164838() {}
+void func_80164838(){}
 
-extern "C" void func_80164910__Fv() {}
+void func_80164910__Fv(){}
 
-extern "C" void func_80164954() {}
+void func_80164954(){}
 
-extern "C" void func_80164A50() {}
+void func_80164A50(){}
 
-extern "C" void func_80164C28() {}
+void func_80164C28(){}
 
-extern "C" void func_80164C48() {}
+void func_80164C48(){}
 
-extern "C" void func_80164CFC() {}
+void func_80164CFC(){}
 
-extern "C" void func_80164DB8() {}
+void func_80164DB8(){}
 
-extern "C" void Init__Q22cf11CTaskREventFv() {}
+void cf::CTaskREvent::Init() {}
 
-extern "C" void func_80164ED0() {}
+void func_80164ED0(){}
 
-extern "C" void func_80164F6C() {}
+void func_80164F6C(){}
 
-extern "C" void func_80164FB4() {}
+void func_80164FB4(){}
 
 extern "C" void* lbl_eu_80664240;
 
@@ -58,29 +58,29 @@ extern "C" int func_80164FE8(void) {
     return (unsigned)((-1 - val) | (val + 1)) >> 31;
 }
 
-extern "C" void func_80165014() {}
+void func_80165014(){}
 
-extern "C" void func_80165038(void) {}
+void func_80165038(void){}
 
-extern "C" void Term__Q22cf11CTaskREventFv() {}
+void cf::CTaskREvent::Term() {}
 
-extern "C" void Move__Q22cf11CTaskREventFv() {}
+void cf::CTaskREvent::Move() {}
 
-extern "C" void Draw__Q22cf11CTaskREventFv() {}
+void cf::CTaskREvent::Draw() {}
 
-extern "C" void func_80165DF4() {}
+void func_80165DF4(){}
 
-extern "C" void func_80166050() {}
+void func_80166050(){}
 
-extern "C" void func_80166150() {}
+void func_80166150(){}
 
-extern "C" void cbRenderBefore__Q22cf11CTaskREventFv(void* self) {}
+void cf::CTaskREvent::cbRenderBefore() {}
 
-extern "C" void func_801662E8(void* self) {}
+void func_801662E8(void* self){}
 
-extern "C" void func_801663A8(void* self) {}
+void func_801663A8(void* self){}
 
-extern "C" void func_801665A4() {}
+void func_801665A4(){}
 
 extern "C" void viAfterDrawDone__11CDeviceVICbFv() {}
 

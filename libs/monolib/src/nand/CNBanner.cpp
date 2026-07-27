@@ -3,20 +3,20 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__8CNBannerFv() {}
+CNBanner::CNBanner() {}
 
-extern "C" void __dt__8CNBannerFv() {}
+void CNBanner::~CNBanner() {}
 
-extern "C" void func_804F52F8__8CNBannerFPCc(void) {}
+void CNBanner::func_804F52F8(void) {}
 
-extern "C" void func_804F5304__8CNBannerFPCc(void) {}
+void CNBanner::func_804F5304(void) {}
 
-extern "C" void func_804F5310__8CNBannerFPCc(void) {}
+void CNBanner::func_804F5310(void) {}
 
-extern "C" void func_804F531C__8CNBannerFPPCcPi() {}
+void CNBanner::func_804F531C() {}
 
-extern "C" void func_804F53DC() {}
+void func_804F53DC(){}
 
-extern "C" void __dt__804F5738() {}
+void __dt__804F5738(){}
 
-extern "C" void OnFileEvent__8CNBannerFP10CEventFile() {}
+void CNBanner::OnFileEvent() {}

@@ -3,30 +3,30 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__16CWorkSystemCacheFPCcP11CWorkThread() {}
+CWorkSystemCache::CWorkSystemCache() {}
 
-extern "C" void __dt___reslist_base_CCacheItem() {}
+void __dt___reslist_base_CCacheItem(){}
 
-extern "C" void func_804D8EC8() {}
+void func_804D8EC8(){}
 
-extern "C" void __dt__reslist_CCacheItem() {}
+void __dt__reslist_CCacheItem(){}
 
-extern "C" void __dt__16CWorkSystemCacheFv() {}
+void CWorkSystemCache::~CWorkSystemCache() {}
 
-extern "C" void func_804D8FB4() {}
+void func_804D8FB4(){}
 
-extern "C" void func_804D8FDC() {}
+void func_804D8FDC(){}
 
-extern "C" void func_804D903C() {}
+void func_804D903C(){}
 
-extern "C" void wkUpdate__16CWorkSystemCacheFv() {}
+void CWorkSystemCache::wkUpdate() {}
 
-extern "C" void wkStandbyLogin__16CWorkSystemCacheFv(void) {}
+void CWorkSystemCache::wkStandbyLogin(void) {}
 
-extern "C" void wkStandbyLogout__16CWorkSystemCacheFv() {}
+void CWorkSystemCache::wkStandbyLogout() {}
 
-extern "C" void func_804D91BC() {}
+void func_804D91BC(){}
 
-extern "C" void func_804D91D8() {}
+void func_804D91D8(){}
 
-extern "C" void func_804D920C() {}
+void func_804D920C(){}

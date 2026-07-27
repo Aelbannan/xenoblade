@@ -3,41 +3,41 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void startObserve() {}
+void startObserve(){}
 
-extern "C" void endObserve() {}
+void endObserve(){}
 
-extern "C" void defeatingCount() {}
+void defeatingCount(){}
 
-extern "C" void isEnd() {}
+void isEnd(){}
 
-extern "C" void end() {}
+void end(){}
 
-extern "C" void attack() {}
+void attack(){}
 
-extern "C" void attackEne() {}
+void attackEne(){}
 
-extern "C" void selectTgt() {}
+void selectTgt(){}
 
-extern "C" void vision() {}
+void vision(){}
 
-extern "C" void voiceEvent() {}
+void voiceEvent(){}
 
-extern "C" void isVoiceEvent() {}
+void isVoiceEvent(){}
 
-extern "C" void unlockMonadoArts() {}
+void unlockMonadoArts(){}
 
-extern "C" void setTensionLv() {}
+void setTensionLv(){}
 
-extern "C" void setTP() {}
+void setTP(){}
 
-extern "C" void breakVision() {}
+void breakVision(){}
 
-extern "C" void setPTG() {}
+void setPTG(){}
 
-extern "C" void getPTG() {}
+void getPTG(){}
 
-extern "C" void test() {}
+void test(){}
 
 extern "C" void pluginBtlRegist() {
     extern void vmPluginRegist(void*, void*);

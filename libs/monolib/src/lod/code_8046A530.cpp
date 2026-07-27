@@ -33,7 +33,7 @@ void LOD::UnkClass_8046A530::func_8046A530() {
     func_8046A5C4();
 }
 
-extern "C" void __dt__8046A584() {}
+void __dt__8046A584(){}
 
 void LOD::UnkClass_8046A530::func_8046A5C4() {}
 

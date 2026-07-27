@@ -329,8 +329,8 @@ extern "C" int lbl_eu_806642D8;
 extern "C" int func_80187710() {
     return lbl_eu_806642D8;
 }
-extern "C" void __dt__12CMenuPTGaugeFv(void*);
-extern "C" bool func_80187EFC(void* self) {
+void __dt__12CMenuPTGaugeFv(void*);
+bool func_80187EFC(void* self){
     __dt__12CMenuPTGaugeFv((char*)self - 0x58);
     return false;
 }
@@ -338,19 +338,17 @@ extern "C" void func_80187F04(void* self) {
     extern void cbRenderBefore__12CMenuPTGaugeFv(void*);
     cbRenderBefore__12CMenuPTGaugeFv((char*)self - 0x5c);
 }
-extern "C" void __dt__12CMenuPTGaugeFv(void*);
-
-extern "C" void func_80187F0C(void* p) {
+void __dt__12CMenuPTGaugeFv(void*); void func_80187F0C(void* p) {
     __dt__12CMenuPTGaugeFv(reinterpret_cast<char*>(p) - 0x5c);
 }
 
-extern "C" void __ct__CMenuPTGauge() {}
-extern "C" void func_80187694() {}
-extern "C" void func_80187718() {}
-extern "C" void func_80187778() {}
-extern "C" void func_80187858() {}
-extern "C" void func_80187958() {}
-extern "C" void func_80187A88() {}
-extern "C" void func_80187B70() {}
-extern "C" void func_80187C90() {}
-extern "C" void func_80187E28() {}
+void __ct__CMenuPTGauge(){}
+void func_80187694(){}
+void func_80187718(){}
+void func_80187778(){}
+void func_80187858(){}
+void func_80187958(){}
+void func_80187A88(){}
+void func_80187B70(){}
+void func_80187C90(){}
+void func_80187E28(){}

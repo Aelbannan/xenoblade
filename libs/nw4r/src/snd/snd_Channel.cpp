@@ -410,5 +410,5 @@ void Channel::FreeChannel(Channel* pChannel) {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void NoteOff__Q44nw4r3snd6detail7ChannelFv() {}
-extern "C" void SetBiquadFilter__Q44nw4r3snd6detail7ChannelFif(int, float) {}
+void NoteOff__Q44nw4r3snd6detail7ChannelFv(){}
+void SetBiquadFilter__Q44nw4r3snd6detail7ChannelFif(int, float){}

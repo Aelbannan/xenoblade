@@ -4,29 +4,29 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuOption() {}
+void __ct__CMenuOption(){}
 
-extern "C" void __dt__11CMenuOptionFv(void* self) {}
+void CMenuOption::~CMenuOption() {}
 
-extern "C" void Init__11CMenuOptionFv() {}
+void CMenuOption::Init() {}
 
-extern "C" void Term__11CMenuOptionFv() {}
+void CMenuOption::Term() {}
 
-extern "C" void Move__11CMenuOptionFv() {}
+void CMenuOption::Move() {}
 
-extern "C" void cbRenderBefore__11CMenuOptionFv(void* self) {}
+void CMenuOption::cbRenderBefore() {}
 
-extern "C" void func_8029BB24() {}
+void func_8029BB24(){}
 
-extern "C" void func_8029BBA0() {}
+void func_8029BBA0(){}
 
-extern "C" void func_8029BBB0() {}
+void func_8029BBB0(){}
 
-extern "C" void func_8029BC28() {}
+void func_8029BC28(){}
 
-extern "C" void func_8029BC78() {}
+void func_8029BC78(){}
 
-extern "C" void func_8029BE7C() {}
+void func_8029BE7C(){}
 
 /**
  * IScnRender vtable this-adjusting thunk for cbRenderBefore.

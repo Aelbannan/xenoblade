@@ -508,11 +508,11 @@ void UnbindAnimationLink(AnimationLinkList* pAnimList,
 } // namespace lyt
 } // namespace nw4r
 
-extern "C" void Set__Q34nw4r3lyt12AnimResourceFPCv() {}
-extern "C" void GetGroupNum__Q34nw4r3lyt12AnimResourceCFv() {}
-extern "C" void GetGroupArray__Q34nw4r3lyt12AnimResourceCFv() {}
-extern "C" void IsDescendingBind__Q34nw4r3lyt12AnimResourceCFv() {}
-extern "C" void GetAnimationShareInfoNum__Q34nw4r3lyt12AnimResourceCFv() {}
+void Set__Q34nw4r3lyt12AnimResourceFPCv(){}
+void GetGroupNum__Q34nw4r3lyt12AnimResourceCFv(){}
+void GetGroupArray__Q34nw4r3lyt12AnimResourceCFv(){}
+void IsDescendingBind__Q34nw4r3lyt12AnimResourceCFv(){}
+void GetAnimationShareInfoNum__Q34nw4r3lyt12AnimResourceCFv(){}
 void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(void* _this) {
     void* ptr = *(void**)((char*)_this + 0xc);
     if (!ptr) return 0;
@@ -545,7 +545,7 @@ void* GetAnimationShareInfoArray__Q34nw4r3lyt12AnimResourceCFv(void* _this) {
 // If I must return void, I can't return the pointer. But the ASM returns it.
 // I will assume the signature in the prompt is slightly off and the function actually returns a pointer.
 // But the prompt says "return_info": {"type": "void"}
-extern "C" void CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb() {}
-extern "C" void CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb() {}
-extern "C" void Init__Q44nw4r3lyt6detail12AnimPaneTreeFv() {}
-extern "C" void Set__Q44nw4r3lyt6detail12AnimPaneTreeFPQ34nw4r3lyt4PaneRCQ34nw4r3lyt12AnimResource() {}
+void CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt4Paneb(){}
+void CalcAnimationNum__Q34nw4r3lyt12AnimResourceCFPQ34nw4r3lyt5Groupb(){}
+void Init__Q44nw4r3lyt6detail12AnimPaneTreeFv(){}
+void Set__Q44nw4r3lyt6detail12AnimPaneTreeFPQ34nw4r3lyt4PaneRCQ34nw4r3lyt12AnimResource(){}

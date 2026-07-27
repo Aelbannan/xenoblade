@@ -3,15 +3,15 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__15CWorkSystemPackFPCcP11CWorkThread() {}
+CWorkSystemPack::CWorkSystemPack() {}
 
-extern "C" void __dt___reslist_base_CPackItem() {}
+void __dt___reslist_base_CPackItem(){}
 
-extern "C" void func_804DDADC() {}
+void func_804DDADC(){}
 
-extern "C" void __dt__reslist_CPackItem() {}
+void __dt__reslist_CPackItem(){}
 
-extern "C" void __dt___reslist_base_CArcItem() {}
+void __dt___reslist_base_CArcItem(){}
 
 extern "C" void func_804DDBD8(void* self) {
     uint32_t* head = *(uint32_t**)((uint8_t*)self + 4);
@@ -27,15 +27,15 @@ loop_cond:
     *head = (uint32_t)head;
 }
 
-extern "C" void __dt__reslist_CArcItem() {}
+void __dt__reslist_CArcItem(){}
 
-extern "C" void __dt__15CWorkSystemPackFv() {}
+void CWorkSystemPack::~CWorkSystemPack() {}
 
-extern "C" void func_804DDCD4() {}
+void func_804DDCD4(){}
 
-extern "C" void func_804DDD54() {}
+void func_804DDD54(){}
 
-extern "C" void func_804DDDF4__15CWorkSystemPackFPCcPvPUl() {}
+void CWorkSystemPack::func_804DDDF4() {}
 
 extern "C" const char* const* lbl_eu_80665A14;
 
@@ -51,22 +51,22 @@ extern "C" void SaveStaticArcFilenameStringPtr__15CWorkSystemPackFPCPCc(const ch
     lbl_eu_80665A18 = pFilenameStr;
 }
 
-extern "C" void func_804DDE3C() {}
+void func_804DDE3C(){}
 
-extern "C" void func_804DDF00() {}
+void func_804DDF00(){}
 
-extern "C" void func_eu_804E2340() {}
+void func_eu_804E2340(){}
 
-extern "C" void func_804DDFBC__15CWorkSystemPackFi() {}
+void CWorkSystemPack::func_804DDFBC() {}
 
-extern "C" void func_804DE010() {}
+void func_804DE010(){}
 
-extern "C" void func_804DE08C__15CWorkSystemPackFv() {}
+void CWorkSystemPack::func_804DE08C() {}
 
-extern "C" void func_804DE100__15CWorkSystemPackFv() {}
+void CWorkSystemPack::func_804DE100() {}
 
-extern "C" void wkUpdate__15CWorkSystemPackFv() {}
+void CWorkSystemPack::wkUpdate() {}
 
-extern "C" void wkStandbyLogin__15CWorkSystemPackFv() {}
+void CWorkSystemPack::wkStandbyLogin() {}
 
-extern "C" void wkStandbyLogout__15CWorkSystemPackFv() {}
+void CWorkSystemPack::wkStandbyLogout() {}

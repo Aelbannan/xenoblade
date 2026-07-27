@@ -5,15 +5,15 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BUF.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__802A4E48() {}
+void __ct__802A4E48(){}
 
-extern "C" void func_802A4FA4() {}
+void func_802A4FA4(){}
 
-extern "C" void func_802A5060() {}
+void func_802A5060(){}
 
-extern "C" void func_802A50E0() {}
+void func_802A50E0(){}
 
-extern "C" void func_802A5174() {}
+void func_802A5174(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; BUF subclass returns 0x104 (260).

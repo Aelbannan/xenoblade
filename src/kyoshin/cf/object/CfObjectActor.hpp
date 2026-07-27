@@ -32,5 +32,19 @@ namespace cf {
         //0x3e9c: vtable 3
         //0x3e9c-45b4: CfObjectMove
         u8 unk45B4[0x8];
+    CfObjectActor();
+    void CActorParam_UnkVirtualFunc1();
+    void CActorParam_UnkVirtualFunc140();
+    void CActorParam_UnkVirtualFunc179();
+    void CActorParam_UnkVirtualFunc180();
+    void CActorParam_UnkVirtualFunc33();
+    void CActorParam_UnkVirtualFunc35();
+    void CActorParam_UnkVirtualFunc34();
+    void CActorParam_UnkVirtualFunc54();
+    void CActorParam_UnkVirtualFunc60();
+    void CActorParam_UnkVirtualFunc4();
+    void CActorParam_UnkVirtualFunc21();
+    void CActorParam_UnkVirtualFunc23();
+    void func_801725DC();
     };
 }

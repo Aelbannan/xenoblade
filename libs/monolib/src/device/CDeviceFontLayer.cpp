@@ -3,42 +3,42 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CDeviceFontLayer() {}
+void __ct__CDeviceFontLayer(){}
 
-extern "C" void __dt___reslist_base_const_CDeviceFontLayer_LAYER_QUE() {}
+void __dt___reslist_base_const_CDeviceFontLayer_LAYER_QUE(){}
 
-extern "C" void __dt__reslist_const_CDeviceFontLayer_LAYER_QUE() {}
+void __dt__reslist_const_CDeviceFontLayer_LAYER_QUE(){}
 
-extern "C" void __dt__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::~CDeviceFontLayer() {}
 
-extern "C" void func_80453BB4__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_80453BB4() {}
 
-extern "C" void func_80453D78__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_80453D78() {}
 
-extern "C" void func_80453F78__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_80453F78() {}
 
-extern "C" void func_80453FF0__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_80453FF0() {}
 
-extern "C" void func_804541F8__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_804541F8() {}
 
-extern "C" void func_8045438C__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_8045438C() {}
 
-extern "C" void func_80454508__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_80454508() {}
 
-extern "C" void func_80454684__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_80454684() {}
 
-extern "C" void func_804546C8__16CDeviceFontLayerFP7CDrawGX() {}
+void CDeviceFontLayer::func_804546C8() {}
 
-extern "C" void func_80454B70__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_80454B70() {}
 
-extern "C" void wkUpdate__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::wkUpdate() {}
 
-extern "C" void wkStandbyLogout__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::wkStandbyLogout() {}
 
-extern "C" void func_80454DE4__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_80454DE4() {}
 
-extern "C" void func_80454E2C__16CDeviceFontLayerFv() {}
+void CDeviceFontLayer::func_80454E2C() {}
 
-extern "C" void func_80454E6C__16CDeviceFontLayerFv(void) {}
+void CDeviceFontLayer::func_80454E6C(void) {}
 
-extern "C" u32 func_80454E78__16CDeviceFontLayerFv(void* self) { return 0; }
+u32 CDeviceFontLayer::func_80454E78() { return 0; }

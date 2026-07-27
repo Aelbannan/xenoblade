@@ -3,9 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CtrlEnemy() {}
+void __ct__cf_CtrlEnemy(){}
 
-extern "C" void __dt__Q22cf7CtrlActFv() {}
+void cf::CtrlAct::~CtrlAct() {}
 
 extern "C" void* __dt__Q22cf8CtrlBaseFv(void* self, int deleteFlag) {
     if (self != nullptr) {
@@ -16,17 +16,17 @@ extern "C" void* __dt__Q22cf8CtrlBaseFv(void* self, int deleteFlag) {
     return self;
 }
 
-extern "C" void __dt__80087688() {}
+void __dt__80087688(){}
 
-extern "C" void __dt__Q22cf9CtrlEnemyFv() {}
+void cf::CtrlEnemy::~CtrlEnemy() {}
 
-extern "C" void func_8008772C() {}
+void func_8008772C(){}
 
-extern "C" void func_800877A8() {}
+void func_800877A8(){}
 
 extern "C" float CfObject_UnkVirtualFunc60__Q22cf12CfObjectMoveFv(void* self) { return *(float*)((u8*)self + 0x6ec); }
 
-extern "C" void func_80087EEC() {}
+void func_80087EEC(){}
 
 extern "C" void* CActorParam_UnkVirtualFunc113__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x161c); }
 
@@ -41,7 +41,7 @@ extern "C" void* CActorParam_UnkVirtualFunc119__Q22cf11CActorParamFv(void* self)
 
 extern "C" u32 CActorParam_UnkVirtualFunc29__Q22cf11CActorParamFv(void* self) { return *(u32*)((u8*)self + 0x17E4); }
 
-extern "C" void func_80088620() {}
+void func_80088620(){}
 
 extern "C" unsigned long CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv(void* self) {
     return !!((unsigned char*)self)[0x1628];
@@ -49,9 +49,9 @@ extern "C" unsigned long CActorParam_UnkVirtualFunc115__Q22cf11CActorParamFv(voi
 
 extern "C" u32 CActorParam_UnkVirtualFunc19__Q22cf11CActorParamFv(void* self) { return *(u32*)((u8*)self + 0x15EC); }
 
-extern "C" void func_80088800() {}
+void func_80088800(){}
 
-extern "C" void func_8008884C() {}
+void func_8008884C(){}
 
 extern "C" void func_80089B24(void* self);
 extern "C" void func_80088858(void* self) { ((void(*)(void*))func_80089B24)((char*)self + 0x84); }

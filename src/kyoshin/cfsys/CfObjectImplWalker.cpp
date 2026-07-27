@@ -3,49 +3,49 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_800C1F44() {}
+void func_800C1F44(){}
 
-extern "C" void func_800C1FB8() {}
+void func_800C1FB8(){}
 
 extern "C" void* func_800C22C4(void* self) { return (void*)((u8*)self + 0x68); }
 
-extern "C" void func_800C22CC() {}
+void func_800C22CC(){}
 
-extern "C" void func_800C2714() {}
+void func_800C2714(){}
 
-extern "C" void func_800C2C90() {}
+void func_800C2C90(){}
 
-extern "C" void func_800C2E3C() {}
+void func_800C2E3C(){}
 
-extern "C" void func_800C3658() {}
+void func_800C3658(){}
 
-extern "C" void func_800C36AC() {}
+void func_800C36AC(){}
 
-extern "C" void func_800C3878() {}
+void func_800C3878(){}
 
-extern "C" void func_800C3A88() {}
+void func_800C3A88(){}
 
-extern "C" void func_800C3AD4() {}
+void func_800C3AD4(){}
 
-extern "C" void func_800C3BF0() {}
+void func_800C3BF0(){}
 
-extern "C" void func_800C4244() {}
+void func_800C4244(){}
 
-extern "C" void func_800C4888() {}
+void func_800C4888(){}
 
-extern "C" void func_800C4BD4() {}
+void func_800C4BD4(){}
 
-extern "C" void func_800C4FB8() {}
+void func_800C4FB8(){}
 
-extern "C" void func_800C50F4() {}
+void func_800C50F4(){}
 
-extern "C" void func_800C525C() {}
+void func_800C525C(){}
 
-extern "C" void func_800C551C() {}
+void func_800C551C(){}
 
 extern "C" void func_800C5928(void) {}
 
-extern "C" void __dt__Q22cf18CfObjectImplWalkerFv(void* self) {}
+void cf::CfObjectImplWalker::~CfObjectImplWalker() {}
 
 extern "C" void func_800C596C(void) {}
 

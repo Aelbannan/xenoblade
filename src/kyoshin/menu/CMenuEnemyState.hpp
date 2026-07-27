@@ -35,6 +35,9 @@ public:
     u8 unk834; // 0x834 - cooldown direction latch
     u8 unk835[0x838 - 0x835];
     f32 unk838; // 0x838 - target-select pulse timer
+    virtual ~CMenuEnemyState();
+    void Init();
+    void Term();
 };
 
 extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* scn);

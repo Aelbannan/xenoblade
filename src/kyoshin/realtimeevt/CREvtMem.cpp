@@ -3,17 +3,17 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CREvtMem() {}
+void __ct__cf_CREvtMem(){}
 
-extern "C" void __dt__Q22cf8CREvtMemFv() {}
+void cf::CREvtMem::~CREvtMem() {}
 
-extern "C" void func_80167D40() {}
+void func_80167D40(){}
 
-extern "C" void func_80167EF8() {}
+void func_80167EF8(){}
 
-extern "C" void func_80167F6C() {}
+void func_80167F6C(){}
 
-extern "C" void func_80167FFC() {}
+void func_80167FFC(){}
 
 extern "C" void* func_80168028(unsigned long idx) {
     extern unsigned long lbl_eu_80664260;

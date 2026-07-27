@@ -3,20 +3,20 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8047D2AC__17UnkClass_8047D2ACFv() {}
+void UnkClass_8047D2AC::func_8047D2AC() const {}
 
-extern "C" void func_8047DC8C__17UnkClass_8047D2ACFv() {}
+void UnkClass_8047D2AC::func_8047DC8C() const {}
 
-extern "C" void func_8047DD4C__17UnkClass_8047D2ACFv() {}
+void UnkClass_8047D2AC::func_8047DD4C() const {}
 
-extern "C" void func_8047DE14__17UnkClass_8047D2ACFv() {}
+void UnkClass_8047D2AC::func_8047DE14() const {}
 
-extern "C" void func_8047DE3C__17UnkClass_8047D2ACFv() {}
+void UnkClass_8047D2AC::func_8047DE3C() const {}
 
-extern "C" void func_8047DF54__17UnkClass_8047D2ACFv() {}
+void UnkClass_8047D2AC::func_8047DF54() const {}
 
-extern "C" void func_8047E064__17UnkClass_8047E064Fv() {}
+void UnkClass_8047E064::func_8047E064() {}
 
-extern "C" void func_8047E0B8__17UnkClass_8047E064Fv() {}
+void UnkClass_8047E064::func_8047E0B8() {}
 
-extern "C" void func_8047E100__17UnkClass_8047E064Fv() {}
+void UnkClass_8047E064::func_8047E100() {}

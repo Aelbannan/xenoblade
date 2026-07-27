@@ -37,20 +37,19 @@ static IWorkEvent* cfWorkEvent(CUICfManager* self) {
 
 // Virtual function thunks: adjust `this` and tail-call.
 // us-80136a98
-extern "C" void __dt__12CUICfManagerFv(void*);
-extern "C" void func_80135FC4__12CUICfManagerFv(void* self) {
-    __dt__12CUICfManagerFv((void*)((char*)self - 0x54));
+void __dt__12CUICfManagerFv(void*);
+void CUICfManager::func_80135FC4() {
+    __dt__12CUICfManagerFv((void*)((char*)this - 0x54));
 }
 
 // us-80136aa0
 extern "C" void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
-extern "C" void func_80135FCC__12CUICfManagerFv(void* self, int id, int a1, int a2) {
-    func_80133324__12CUICfManagerFv((CUICfManager*)((char*)self - 0x58), id, a1, a2);
+void CUICfManager::func_80135FCC(int id, int a1, int a2) {
+    func_80133324__12CUICfManagerFv((CUICfManager*)((char*)this - 0x58), id, a1, a2);
 }
 
 // us-80136aa8
-extern "C" void __dt__12CUICfManagerFv(void*);
-extern "C" void func_80135FD4__12CUICfManagerFv(void* self) {
+void __dt__12CUICfManagerFv(void*); void func_80135FD4__12CUICfManagerFv(void* self) {
     __dt__12CUICfManagerFv((void*)((char*)self - 0x58));
 }
 
@@ -466,13 +465,16 @@ end:
 #include "monolib/device/CDeviceVI.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 
+void func_8012FFB4(void*);
+void func_80133770();
+void func_801338C8(CUICfManager*);
 extern "C" {
 u32 lbl_eu_80663E24;
 u32 lbl_eu_80663E28;
 f32 lbl_eu_806672CC;
 
-void func_801338C8(CUICfManager*);
-void func_80133770();
+
+
 void* __ct__CMenuKeyAssign(void*, u32);
 void* func_801109D8(void*, u32, void*); // create menu; r5=0 or enum object*
 void* func_8011E4C4(void*, u32);
@@ -495,7 +497,7 @@ void* func_800F6EC0(void* list, int index); // &slot -> has +0x4 object ptr
 void* func_800F6E98(void* list, int index); // *slot -> object*
 int func_800B8920(void*);
 int func_8013A4B4(void* a, void* b, void* c);
-void func_8012FFB4(void*); // &mInitSlots[0].unk04
+ // &mInitSlots[0].unk04
 }
 
 typedef void* (*CUICfVPtrFn)(void*);
@@ -1024,83 +1026,83 @@ unlink_done:
     }
 }
 
-extern "C" void func_8013314C() {}
-extern "C" void func_80133178() {}
-extern "C" int func_80133AE8() { if (lbl_eu_80664054 == 0) return 0; if (*reinterpret_cast<volatile int *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0x5c) == 0) { volatile unsigned short *flags = reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90); *flags = (unsigned short)(*flags | 0x4); return 0; } volatile unsigned short *flags = reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90); *flags = (unsigned short)(*flags & 0xfffb); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x8); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x10); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x20); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x40); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x80); return 0; }
-extern "C" void func_80135550() { if (lbl_eu_80664054 != 0) *(int*)((char*)lbl_eu_80664054 + 0x120) = 30; }
-extern "C" void func_80135568(int value) { if (lbl_eu_80664054 == 0) return; if (value != 0) *(unsigned char *)((char *)lbl_eu_80664054 + 0x149) = 1; else *(unsigned char *)((char *)lbl_eu_80664054 + 0x148) = 1; *(unsigned short *)((char *)lbl_eu_80664054 + 0xc90) = 0; }
-extern "C" void func_801355A0__Fv() {}
-extern "C" void* func_801355BC() { if (lbl_eu_80664054 == 0) return 0; return reinterpret_cast<char*>(lbl_eu_80664054) + 0x9c; }
-extern "C" void* func_801355D8() { if (lbl_eu_80664054 == 0) return 0; return reinterpret_cast<char*>(lbl_eu_80664054) + 0xd8; }
-extern "C" void* func_801355F4() { void* p = lbl_eu_80664054; if (p == 0) return 0; return *(void**)((char*)p + 0x5c); }
-extern "C" void func_80135610() {}
-extern "C" void func_80135630() {}
-extern "C" void func_80135654() {}
-extern "C" void func_80135694() {}
-extern "C" void func_801356BC() {}
-extern "C" void func_801356E0() {}
-extern "C" void func_80135898() {}
-extern "C" void func_80135998(u8 value) {
+void func_8013314C(){}
+void func_80133178(){}
+int func_80133AE8(){ if (lbl_eu_80664054 == 0) return 0; if (*reinterpret_cast<volatile int *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0x5c) == 0) { volatile unsigned short *flags = reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90); *flags = (unsigned short)(*flags | 0x4); return 0; } volatile unsigned short *flags = reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90); *flags = (unsigned short)(*flags & 0xfffb); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x8); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x10); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x20); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x40); *reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) = (unsigned short)(*reinterpret_cast<volatile unsigned short *>(reinterpret_cast<unsigned char *>(lbl_eu_80664054) + 0xc90) | 0x80); return 0; }
+void func_80135550(){ if (lbl_eu_80664054 != 0) *(int*)((char*)lbl_eu_80664054 + 0x120) = 30; }
+void func_80135568(int value){ if (lbl_eu_80664054 == 0) return; if (value != 0) *(unsigned char *)((char *)lbl_eu_80664054 + 0x149) = 1; else *(unsigned char *)((char *)lbl_eu_80664054 + 0x148) = 1; *(unsigned short *)((char *)lbl_eu_80664054 + 0xc90) = 0; }
+void func_801355A0__Fv(){}
+void* func_801355BC(){ if (lbl_eu_80664054 == 0) return 0; return reinterpret_cast<char*>(lbl_eu_80664054) + 0x9c; }
+void* func_801355D8(){ if (lbl_eu_80664054 == 0) return 0; return reinterpret_cast<char*>(lbl_eu_80664054) + 0xd8; }
+void* func_801355F4(){ void* p = lbl_eu_80664054; if (p == 0) return 0; return *(void**)((char*)p + 0x5c); }
+void func_80135610(){}
+void func_80135630(){}
+void func_80135654(){}
+void func_80135694(){}
+void func_801356BC(){}
+void func_801356E0(){}
+void func_80135898(){}
+void func_80135998(u8 value){
     u8 *obj = (u8 *)lbl_eu_80664054;
     if (obj == NULL)
         return;
     obj[0xc8c] = value;
 }
-extern "C" void Draw__Q212CUICfManager5CTestFv() {}
-extern "C" void Move__Q212CUICfManager5CTestFv() {}
-extern "C" void Term__Q212CUICfManager5CTestFv() {}
-extern "C" void Init__Q212CUICfManager5CTestFv() {}
+void Draw__Q212CUICfManager5CTestFv(){}
+void Move__Q212CUICfManager5CTestFv(){}
+void Term__Q212CUICfManager5CTestFv(){}
+void Init__Q212CUICfManager5CTestFv(){}
 
-extern "C" void func_8012FFB4(void*) {}
-extern "C" void func_80130244() {}
-extern "C" void func_8013042C() {}
-extern "C" void func_80130720() {}
-extern "C" void func_80130960() {}
-extern "C" void func_80130B74() {}
-extern "C" void func_80130D80() {}
-extern "C" void func_80130F98() {}
-extern "C" void func_801311B8() {}
-extern "C" void func_80131820() {}
-extern "C" void __ct__CUICfManager() {}
-extern "C" void func_801336E4() {}
-extern "C" void func_80133770() {}
-extern "C" void func_801338C8(CUICfManager*) {}
-extern "C" void func_80133A08() {}
-extern "C" void func_80133B80() {}
-extern "C" void func_80133CA0() {}
-extern "C" void func_80133D78() {}
-extern "C" void func_80133E58() {}
-extern "C" void func_80133F48() {}
-extern "C" void func_80134024() {}
-extern "C" void func_80134100() {}
-extern "C" void func_801341D8() {}
-extern "C" void func_801342B0() {}
-extern "C" void func_80134388() {}
-extern "C" void func_80134460() {}
-extern "C" void func_80134538() {}
-extern "C" void func_80134628() {}
-extern "C" void func_80134714() {}
-extern "C" void func_801347EC() {}
-extern "C" void func_801348C8() {}
-extern "C" void func_801349A0() {}
-extern "C" void func_80134A78() {}
-extern "C" void func_80134B50() {}
-extern "C" void func_80134C34() {}
-extern "C" void func_80134D18() {}
-extern "C" void func_80134E50() {}
-extern "C" void func_80134F2C() {}
-extern "C" void func_8013500C() {}
-extern "C" void func_801350E4() {}
-extern "C" void func_801351C4() {}
-extern "C" void func_801352A4() {}
-extern "C" void func_80135380() {}
-extern "C" void func_80135464() {}
-extern "C" void func_80135708() {}
-extern "C" void func_801359AC() {}
-extern "C" void func_80135D04() {}
-extern "C" void __dt__Q212CUICfManager5CTestFv() {}
+void func_8012FFB4(void*){}
+void func_80130244(){}
+void func_8013042C(){}
+void func_80130720(){}
+void func_80130960(){}
+void func_80130B74(){}
+void func_80130D80(){}
+void func_80130F98(){}
+void func_801311B8(){}
+void func_80131820(){}
+void __ct__CUICfManager(){}
+void func_801336E4(){}
+void func_80133770(){}
+void func_801338C8(CUICfManager*){}
+void func_80133A08(){}
+void func_80133B80(){}
+void func_80133CA0(){}
+void func_80133D78(){}
+void func_80133E58(){}
+void func_80133F48(){}
+void func_80134024(){}
+void func_80134100(){}
+void func_801341D8(){}
+void func_801342B0(){}
+void func_80134388(){}
+void func_80134460(){}
+void func_80134538(){}
+void func_80134628(){}
+void func_80134714(){}
+void func_801347EC(){}
+void func_801348C8(){}
+void func_801349A0(){}
+void func_80134A78(){}
+void func_80134B50(){}
+void func_80134C34(){}
+void func_80134D18(){}
+void func_80134E50(){}
+void func_80134F2C(){}
+void func_8013500C(){}
+void func_801350E4(){}
+void func_801351C4(){}
+void func_801352A4(){}
+void func_80135380(){}
+void func_80135464(){}
+void func_80135708(){}
+void func_801359AC(){}
+void func_80135D04(){}
+void __dt__Q212CUICfManager5CTestFv(){}
 
-extern "C" void OnFileEvent__12CUICfManagerFv();
-extern "C" void func_80135FBC__12CUICfManagerFv() {
+void OnFileEvent__12CUICfManagerFv();
+void CUICfManager::func_80135FBC() {
     OnFileEvent__12CUICfManagerFv();
 }

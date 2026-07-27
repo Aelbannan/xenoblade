@@ -204,7 +204,7 @@ extern "C" void func_8044B298__8CGXCacheFv(void* self, void* a, void* b, void* c
 
 // Retail symbol is FPvPv but call sites pass three rect pointers (r3/r4/r5).
 // Inline three ring pushes (divw/mullw/subf shape) with instance reloads.
-extern "C" void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c) {
+void CViewRoot::func_80442B54(void* a, void* b, void* c) {
     CViewRoot* root;
     u32 index;
     u32 used;
@@ -275,7 +275,7 @@ static u32* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
     return (u32*)((u8*)base + slot * 8);
 }
 
-extern "C" void func_80442C68__9CViewRootFv() {
+void CViewRoot::func_80442C68() {
     CViewRoot* root = lbl_eu_806655D0;
     if (root == nullptr) {
         return;

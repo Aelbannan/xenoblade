@@ -3,4 +3,4 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CScnItemLightNw4r() {}
+void __ct__CScnItemLightNw4r(){}

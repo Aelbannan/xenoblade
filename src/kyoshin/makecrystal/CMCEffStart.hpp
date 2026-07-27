@@ -30,6 +30,7 @@ public:
     nw4r::lyt::Layout* mLayout;                           //0xc
     nw4r::lyt::AnimTransform* mAnimTrans;                 //0x10
     u8 unk14;
+    CMCEffStart();
 };
 /******************************************************************************
  *
@@ -42,6 +43,7 @@ public:
     virtual ~CMCEffUpRed();
     void func_8022400C();
     void func_8022409C();
+    CMCEffUpRed();
 };
 /******************************************************************************
  *
@@ -54,6 +56,7 @@ public:
     virtual ~CMCEffUpBlue();
     void func_80224140();
     void func_802241D0();
+    CMCEffUpBlue();
 };
 /******************************************************************************
  *
@@ -66,6 +69,7 @@ public:
     virtual ~CMCEffUpGreen();
     void func_80224274();
     void func_80224304();
+    CMCEffUpGreen();
 };
 /******************************************************************************
  *
@@ -94,6 +98,7 @@ public:
     nw4r::lyt::ArcResourceAccessor* mArcResourceAccessor; //0x8
     UnkStruct unkStruct[8];                               //0xc
     u8 unk6c;
+    CMCEffUpPrm();
 };
 /******************************************************************************
  *
@@ -123,6 +128,7 @@ public:
     nw4r::lyt::AnimTransform* mAnimTrans10;
     nw4r::lyt::AnimTransform* mAnimTrans14;
     u8 unk18;
+    CMCEffSuccess();
 };
 /******************************************************************************
  *
@@ -134,6 +140,7 @@ public:
     CMCEffFailure(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffFailure();
     void func_80224BBC();
+    CMCEffFailure();
 };
 /******************************************************************************
  *
@@ -184,6 +191,7 @@ public:
     u8 unk34;
     u16 unk36;
     u8 unk38;
+    CMCEffCrystal();
 };
 /******************************************************************************
  *
@@ -196,6 +204,7 @@ public:
     virtual ~CMCEffUpRank();
     void func_80225B14();
     void func_80225BA4();
+    CMCEffUpRank();
 };
 /******************************************************************************
  *
@@ -208,6 +217,7 @@ public:
     virtual ~CMCEffDivide();
     void func_80225C48();
     void func_80225CD8();
+    CMCEffDivide();
 };
 /******************************************************************************
  *
@@ -242,4 +252,5 @@ public:
     nw4r::lyt::AnimTransform* mAnimTrans14;
     nw4r::lyt::AnimTransform* mAnimTrans18;
     u8 unk1c;
+    CMCEffCylinder();
 };

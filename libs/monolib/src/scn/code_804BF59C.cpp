@@ -20,13 +20,13 @@
 // ---------------------------------------------------------------------------
 extern "C" void func_804BF59C(void) {}
 
-extern "C" void __ct__804BF5A0() {}
+void __ct__804BF5A0(){}
 
-extern "C" void __dt__804BF6F4() {}
+void __dt__804BF6F4(){}
 
-extern "C" void func_804BF774() {}
+void func_804BF774(){}
 
-extern "C" void func_804BF8A8() {}
+void func_804BF8A8(){}
 
 // ---------------------------------------------------------------------------
 // FULL_MATCH: Placeholder method called after updating light parameters.
@@ -37,14 +37,14 @@ extern "C" void func_804BF8A8() {}
 // ---------------------------------------------------------------------------
 extern "C" void func_804BF940(void) {}
 
-extern "C" void func_804BF944() {}
+void func_804BF944(){}
 
-extern "C" void func_804BFA70() {}
+void func_804BFA70(){}
 
-extern "C" void func_804BFEB4() {}
+void func_804BFEB4(){}
 
-extern "C" void func_804BFFB8() {}
+void func_804BFFB8(){}
 
-extern "C" void func_804C0228() {}
+void func_804C0228(){}
 
-extern "C" void func_804C0254() {}
+void func_804C0254(){}

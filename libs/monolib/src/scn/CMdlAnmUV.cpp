@@ -3,15 +3,15 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CMdlAnmUV() {}
+void __ct__CMdlAnmUV(){}
 
-extern "C" void __dt__9CMdlAnmUVFv() {}
+void CMdlAnmUV::~CMdlAnmUV() {}
 
 extern "C" u32 func_804E6C78(void) {
     extern u32 lbl_eu_80663C74;
     return lbl_eu_80663C74;
 }
 
-extern "C" void func_804E6C80() {}
+void func_804E6C80(){}
 
-extern "C" void func_804E72D0() {}
+void func_804E72D0(){}

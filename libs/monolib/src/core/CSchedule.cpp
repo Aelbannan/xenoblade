@@ -3,10 +3,10 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CSchedule() {}
+void __ct__CSchedule(){}
 
-extern "C" void __dt__9CScheduleFv() {}
+void CSchedule::~CSchedule() {}
 
-extern "C" void func_804E3434() {}
+void func_804E3434(){}
 
-extern "C" void func_804E3614() {}
+void func_804E3614(){}

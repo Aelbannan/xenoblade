@@ -43,4 +43,5 @@ public:
     u8 _padB8to29B4[0x29B4 - 0xB8];                     // 0xB8-0x29B3 (collepedia + other fields)
     u8 mState;                                           // 0x29B4
     f32 mTimer;                                          // 0x29B8
+    CMenuCollepedia();
 };

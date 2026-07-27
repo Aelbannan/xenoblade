@@ -350,4 +350,4 @@ Pane* Layout::BuildPaneObj(s32 kind, const void* pBinary,
 } // namespace lyt
 } // namespace nw4r
 
-extern "C" void BindAnimationAuto__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor() {}
+void BindAnimationAuto__Q34nw4r3lyt6LayoutFRCQ34nw4r3lyt12AnimResourcePQ34nw4r3lyt16ResourceAccessor(){}

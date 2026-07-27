@@ -3,11 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CfNandManager() {}
+void __ct__cf_CfNandManager(){}
 
-extern "C" void __dt__8023BFCC() {}
+void __dt__8023BFCC(){}
 
-extern "C" void __dt__Q22cf13CfNandManagerFv(void* self) {}
+void cf::CfNandManager::~CfNandManager() {}
 
 extern "C" void Init__Q22cf13CfNandManagerFv(void) {
     extern void func_804DA1B4(void*);
@@ -15,77 +15,77 @@ extern "C" void Init__Q22cf13CfNandManagerFv(void) {
     func_804DA1B4((void*)lbl_eu_8065FD00);
 }
 
-extern "C" void Term__Q22cf13CfNandManagerFv() {}
+void cf::CfNandManager::Term() {}
 
-extern "C" void Move__Q22cf13CfNandManagerFv() {}
+void cf::CfNandManager::Move() {}
 
-extern "C" void func_8023C1B4() {}
+void func_8023C1B4(){}
 
-extern "C" void func_8023C1C0() {}
+void func_8023C1C0(){}
 
-extern "C" void func_8023C1F0() {}
+void func_8023C1F0(){}
 
-extern "C" void func_8023C2E4() {}
+void func_8023C2E4(){}
 
-extern "C" void func_8023C68C() {}
+void func_8023C68C(){}
 
-extern "C" void func_8023C7C4() {}
+void func_8023C7C4(){}
 
-extern "C" void func_8023C93C() {}
+void func_8023C93C(){}
 
-extern "C" void func_8023CD9C() {}
+void func_8023CD9C(){}
 
-extern "C" void func_8023D3D8() {}
+void func_8023D3D8(){}
 
-extern "C" void __dt__8023E448() {}
+void __dt__8023E448(){}
 
-extern "C" void func_8023E4D4__Q22cf13CfNandManagerFv(void* self) {}
+void cf::CfNandManager::func_8023E4D4() {}
 
-extern "C" void func_8023E544() {}
+void func_8023E544(){}
 
-extern "C" void __dt__8023E63C() {}
+void __dt__8023E63C(){}
 
-extern "C" void func_8023EABC() {}
+void func_8023EABC(){}
 
-extern "C" void func_8023EB78() {}
+void func_8023EB78(){}
 
-extern "C" void func_8023F288() {}
+void func_8023F288(){}
 
-extern "C" void func_8023F2F4() {}
+void func_8023F2F4(){}
 
-extern "C" void func_8023F3C0() {}
+void func_8023F3C0(){}
 
-extern "C" void func_8023F5CC() {}
+void func_8023F5CC(){}
 
-extern "C" void func_8023F690() {}
+void func_8023F690(){}
 
-extern "C" void func_8023F860() {}
+void func_8023F860(){}
 
-extern "C" void func_8023FA64() {}
+void func_8023FA64(){}
 
-extern "C" void func_8023FB28() {}
+void func_8023FB28(){}
 
-extern "C" void func_8023FBA0() {}
+void func_8023FBA0(){}
 
-extern "C" void func_8023FC18() {}
+void func_8023FC18(){}
 
-extern "C" void func_8023FCCC() {}
+void func_8023FCCC(){}
 
-extern "C" void func_8023FD4C() {}
+void func_8023FD4C(){}
 
-extern "C" void func_8023FEDC() {}
+void func_8023FEDC(){}
 
-extern "C" void create__Q22cf13CfNandManagerFv() {}
+void cf::CfNandManager::create() {}
 
-extern "C" void func_8024005C() {}
+void func_8024005C(){}
 
-extern "C" void func_80240084() {}
+void func_80240084(){}
 
-extern "C" void func_80240360() {}
+void func_80240360(){}
 
-extern "C" void func_80240420() {}
+void func_80240420(){}
 
-extern "C" void cbRenderBefore__Q22cf13CfNandManagerFv(void* self) {}
+void cf::CfNandManager::cbRenderBefore() {}
 
 extern "C" void OnFileEvent__Q22cf13CfNandManagerFv(void* self) { ((void(*)(void*))func_8023E4D4__Q22cf13CfNandManagerFv)((char*)self - 0x54); }
 

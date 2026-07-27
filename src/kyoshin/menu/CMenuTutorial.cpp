@@ -4,29 +4,29 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/menu/CMenuTutorial.hpp"
 
-extern "C" void __ct__CMenuTutorial() {}
+void __ct__CMenuTutorial(){}
 
-extern "C" void __dt__13CMenuTutorialFv(void* self) {}
+void CMenuTutorial::~CMenuTutorial() {}
 
-extern "C" void Init__13CMenuTutorialFv() {}
+void CMenuTutorial::Init() {}
 
-extern "C" void Term__13CMenuTutorialFv() {}
+void CMenuTutorial::Term() {}
 
-extern "C" void Move__13CMenuTutorialFv() {}
+void CMenuTutorial::Move() {}
 
-extern "C" void cbRenderBefore__13CMenuTutorialFv(void* self) {}
+void CMenuTutorial::cbRenderBefore() {}
 
-extern "C" void func_8029A5DC() {}
+void func_8029A5DC(){}
 
-extern "C" void func_8029A658() {}
+void func_8029A658(){}
 
-extern "C" void func_8029A668() {}
+void func_8029A668(){}
 
-extern "C" void func_8029A764() {}
+void func_8029A764(){}
 
-extern "C" void func_8029A7B4() {}
+void func_8029A7B4(){}
 
-extern "C" void func_8029A8D4() {}
+void func_8029A8D4(){}
 
 /**
  * IScnRender vtable this-adjusting thunk for cbRenderBefore.

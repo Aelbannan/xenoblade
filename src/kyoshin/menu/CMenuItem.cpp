@@ -3,14 +3,14 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuItem() {}
+void __ct__CMenuItem(){}
 
-extern "C" unsigned long func_80167A18() {
+unsigned long func_80167A18(){
     unsigned long v = *(unsigned long*)(lbl_eu_80664258);
     return !!v;
 }
 
-extern "C" void func_80167A2C() {}
+void func_80167A2C(){}
 
 extern "C" void cbRenderBefore__9CMenuItemFv(void* self);
 extern "C" void func_80167C30(void* self) { cbRenderBefore__9CMenuItemFv((char*)self - 0x58); }

@@ -84,4 +84,4 @@ void TexMap::SetNoWrap(const TPLDescriptor* pDesc) {
 } // namespace lyt
 } // namespace nw4r
 
-extern "C" void ReplaceImage__Q34nw4r3lyt6TexMapFP10TPLPaletteUl() {}
+void ReplaceImage__Q34nw4r3lyt6TexMapFP10TPLPaletteUl(){}

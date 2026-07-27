@@ -163,9 +163,9 @@ extern "C" void func_8014A8F8__Fv() {}
 extern "C" void func_8014AA10(void* obj, unsigned int value) {
     *(unsigned int*)((unsigned char*)obj + 0xB14) = value;
 }
-extern "C" void func_8014AC38() {}
-extern "C" void func_8014AE00() {}
-extern "C" void func_8014B120() {}
+void func_8014AC38(){}
+void func_8014AE00(){}
+void func_8014B120(){}
 extern "C" void* func_8014B2DC(void* p) {
     return memset((char*)p + 0xADC, 0, 0x20);
 }
@@ -194,19 +194,19 @@ extern "C" void func_8014B2EC(void* self, float delta) {
         ++i;
     }
 }
-extern "C" void func_8014B344() {}
+void func_8014B344(){}
 extern "C" void func_8014B804(unsigned char* self, int index, int a2, int a3, int a4, int a5, int a6, int a7, int a8, int a9, int a10, int a11, int a12, int a13) { unsigned char* base = self + index * 14; base[0x21c] = a2; base[0x21d] = a3; base[0x21e] = a4; base[0x21f] = a5; base[0x220] = a6; base[0x221] = a7; base[0x222] = a8; base[0x223] = a9; base[0x224] = a10; base[0x225] = a11; base[0x226] = a12; *(unsigned short*)(base + 0x228) = a13; if (a7 == 11 || a9 == 11) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 10 || a9 == 10) *(unsigned short*)(base + 0x228) |= 1; if (a7 == 7 || a9 == 7) *(unsigned short*)(base + 0x228) |= 2; }
 extern "C" void func_801537E0(void* self) {
     *(u16*)((u8*)self + 8) &= ~0x0006;
 }
 
-extern "C" void func_8014A86C__FPv() {}
-extern "C" void func_8014B7B0() {}
-extern "C" void func_8014B8BC() {}
-extern "C" void func_8014CE78() {}
-extern "C" void func_8014E164() {}
-extern "C" void func_80150618() {}
-extern "C" void func_80150828() {}
-extern "C" void func_801522C4() {}
-extern "C" void func_801537F0() {}
-extern "C" void func_8015396C() {}
+void func_8014A86C__FPv(){}
+void func_8014B7B0(){}
+void func_8014B8BC(){}
+void func_8014CE78(){}
+void func_8014E164(){}
+void func_80150618(){}
+void func_80150828(){}
+void func_801522C4(){}
+void func_801537F0(){}
+void func_8015396C(){}

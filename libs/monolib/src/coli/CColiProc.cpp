@@ -3,27 +3,27 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CColiProc() {}
+void __ct__CColiProc(){}
 
-extern "C" void func_804B2590() {}
+void func_804B2590(){}
 
-extern "C" void func_804B25A4() {}
+void func_804B25A4(){}
 
-extern "C" void func_804B25BC() {}
+void func_804B25BC(){}
 
-extern "C" void func_804B27EC() {}
+void func_804B27EC(){}
 
-extern "C" void func_804B29EC() {}
+void func_804B29EC(){}
 
-extern "C" void func_804B2AA4() {}
+void func_804B2AA4(){}
 
-extern "C" void func_804B2CBC() {}
+void func_804B2CBC(){}
 
-extern "C" void func_804B2E3C() {}
+void func_804B2E3C(){}
 
-extern "C" void func_804B2F80() {}
+void func_804B2F80(){}
 
-extern "C" u32 func_804B2FA8(u32 val) { return (val >> 16) & 0xFF; }
+u32 func_804B2FA8(u32 val){ return (val >> 16) & 0xFF; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_804B2FB4() {}
+void sinit_804B2FB4(){}

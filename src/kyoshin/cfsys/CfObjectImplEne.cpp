@@ -3,31 +3,31 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_800CFFCC() {}
+void func_800CFFCC(){}
 
 extern "C" void* func_800D0088(void* self) { return (void*)((u8*)self + 0x6c); }
 
-extern "C" void func_800D0090() {}
+void func_800D0090(){}
 
-extern "C" void func_800D00DC() {}
+void func_800D00DC(){}
 
-extern "C" void func_800D02D4() {}
+void func_800D02D4(){}
 
-extern "C" void func_800D0C2C() {}
+void func_800D0C2C(){}
 
-extern "C" void func_800D0A58(void* self) { func_800D0C2C(); }
+void func_800D0A58(void* self){ func_800D0C2C(); }
 
-extern "C" void func_800D0A60() {}
+void func_800D0A60(){}
 
-extern "C" void func_800D0AFC(void) {}
+void func_800D0AFC(void){}
 
-extern "C" void func_800D0B00(void) {}
+void func_800D0B00(void){}
 
-extern "C" void func_800D0B04() {}
+void func_800D0B04(){}
 
-extern "C" void func_800D1020(void* self) {}
+void func_800D1020(void* self){}
 
-extern "C" void __dt__Q22cf15CfObjectImplEneFv(void* self) {}
+void cf::CfObjectImplEne::~CfObjectImplEne() {}
 
 extern "C" void func_800D10B4(void* self) { ((void(*)(void*))func_800D0A58)((char*)self - 0xc); }
 

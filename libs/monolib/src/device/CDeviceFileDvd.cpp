@@ -3,52 +3,52 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __ct__CDeviceFileDvd() {}
+void __ct__CDeviceFileDvd(){}
 
-extern "C" void __dt__14CDeviceFileDvdFv() {}
+void CDeviceFileDvd::~CDeviceFileDvd() {}
 
 extern "C" u32 getInstance__14CDeviceFileDvdFv(void) {
     extern u32 lbl_eu_80665670;
     return lbl_eu_80665670;
 }
 
-extern "C" void getFileSize__14CDeviceFileDvdFPCc() {}
+void CDeviceFileDvd::getFileSize() {}
 
-extern "C" void isRequestFile__14CDeviceFileDvdFPCc() {}
+void CDeviceFileDvd::isRequestFile() {}
 
-extern "C" void cancel__14CDeviceFileDvdFP11CFileHandle() {}
+void CDeviceFileDvd::cancel() const {}
 
-extern "C" void cancelCurrent__14CDeviceFileDvdFv() {}
+void CDeviceFileDvd::cancelCurrent() {}
 
-extern "C" void transState0__14CDeviceFileDvdFv() {}
+void CDeviceFileDvd::transState0() {}
 
-extern "C" void transState3__14CDeviceFileDvdFv() {}
+void CDeviceFileDvd::transState3() {}
 
-extern "C" void wkUpdate__14CDeviceFileDvdFv() {}
+void CDeviceFileDvd::wkUpdate() {}
 
-extern "C" void wkStandbyLogin__14CDeviceFileDvdFv() {}
+void CDeviceFileDvd::wkStandbyLogin() {}
 
-extern "C" void wkStandbyLogout__14CDeviceFileDvdFv() {}
+void CDeviceFileDvd::wkStandbyLogout() {}
 
-extern "C" void wkStandbyExceptionRetry__14CDeviceFileDvdFUl() {}
+void CDeviceFileDvd::wkStandbyExceptionRetry() {}
 
-extern "C" void setup1__11CFileHandleFPCcUlP10IWorkEvent() {}
+void CFileHandle::setup1() const {}
 
-extern "C" void setup2__11CFileHandleFPCcUlP10IWorkEvent() {}
+void CFileHandle::setup2() const {}
 
-extern "C" void __dt__11CFileHandleFv() {}
+void CFileHandle::~CFileHandle() const {}
 
-extern "C" void init__11CFileHandleFi() {}
+void CFileHandle::init() const {}
 
-extern "C" void func_80451984__11CFileHandleFUl() {}
+void CFileHandle::func_80451984() const {}
 
-extern "C" void destroy__11CFileHandleFv() {}
+void CFileHandle::destroy() const {}
 
-extern "C" void func_80451CBC__11CFileHandleFi() {}
+void CFileHandle::func_80451CBC() const {}
 
-extern "C" void call__11CFileHandleF3CBM() {}
+void CFileHandle::call() const {}
 
-extern "C" void checkExistRsrc__11CFileHandleF3CBM() {}
+void CFileHandle::checkExistRsrc() const {}
 
 extern void getRsrc__5CRsrcFUl(unsigned long);
-extern "C" void getRsrc__11CFileHandleFv(void* self) { getRsrc__5CRsrcFUl((unsigned long)*(void**)((char*)self + 0x14)); }
+void CFileHandle::getRsrc() const { getRsrc__5CRsrcFUl((unsigned long)*(void**)((char*)this + 0x14)); }

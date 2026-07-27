@@ -15,7 +15,7 @@ extern "C" u8 func_8022C8D8(CSelShopWin* self) {
     return self->mAnimActive;
 }
 
-extern "C" void func_8022CA20() {}
+void func_8022CA20(){}
 
 extern "C" void func_8022CA6C(void* self) {
     if (*(u32*)((u8*)self + 0x1C) != 0) {
@@ -24,4 +24,4 @@ extern "C" void func_8022CA6C(void* self) {
     }
 }
 
-extern "C" void OnFileEvent__11CSelShopWinFP10CEventFile() {}
+void CSelShopWin::OnFileEvent() {}

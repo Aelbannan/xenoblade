@@ -3,30 +3,30 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_804645CC__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_804645CC() const {}
 
-extern "C" void func_80464B84__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_80464B84() const {}
 
-extern "C" void func_8046513C__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_8046513C() const {}
 
-extern "C" void func_80465298__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_80465298() const {}
 
-extern "C" void func_80465314__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_80465314() const {}
 
-extern "C" void func_8046534C__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_8046534C() const {}
 
-extern "C" void func_8046568C__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_8046568C() const {}
 
-extern "C" void func_80465704__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_80465704() const {}
 
-extern "C" void func_80465718__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_80465718() const {}
 
-extern "C" void func_80465730__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_80465730() const {}
 
-extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_8046577C() const {}
 
-extern "C" void func_804657E4__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_804657E4() const {}
 
-extern "C" void func_80465800__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_80465800() const {}
 
-extern "C" void func_80465BC0__Q23LOD17UnkClass_804645CCFv() {}
+void LOD::UnkClass_804645CC::func_80465BC0() const {}

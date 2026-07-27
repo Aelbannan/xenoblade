@@ -4,15 +4,15 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_BATTLE_END.hpp"
 
-extern "C" void __ct__802A4870() {}
+void __ct__802A4870(){}
 
-extern "C" void func_802A497C() {}
+void func_802A497C(){}
 
-extern "C" void func_802A4A78() {}
+void func_802A4A78(){}
 
-extern "C" void func_802A4D04() {}
+void func_802A4D04(){}
 
-extern "C" void func_802A4DC8() {}
+void func_802A4DC8(){}
 
 // Virtual method: returns allocation size (0x46 bytes) for CVS_THREAD_BATTLE_END
 // Caller passes this pointer in r3 which is unused by this override

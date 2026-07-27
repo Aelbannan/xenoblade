@@ -111,35 +111,35 @@ unsigned short GetFogMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const void* this_) {
 u16 GetCameraMaxRefNumber__Q34nw4r3g3d9AnmScnResCFv(const nw4r::g3d::AnmScnRes* pThis) {
     return *(const u16*)((const u8*)(*(const u32*)((const u8*)pThis + 0x20)) + 0x44);
 }
-extern "C" void Construct__Q34nw4r3g3d9AnmScnResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmScnb() {}
-extern "C" void SetFrame__Q34nw4r3g3d9AnmScnResFf() {}
+void Construct__Q34nw4r3g3d9AnmScnResFP12MEMAllocatorPUlQ34nw4r3g3d9ResAnmScnb(){}
+void SetFrame__Q34nw4r3g3d9AnmScnResFf(){}
 float GetFrame__Q34nw4r3g3d9AnmScnResCFv(const void* this_ptr) {
     return *(const float*)((const unsigned char*)this_ptr + 0xC);
 }
-extern "C" void SetUpdateRate__Q34nw4r3g3d9AnmScnResFf() {}
+void SetUpdateRate__Q34nw4r3g3d9AnmScnResFf(){}
 float GetUpdateRate__Q34nw4r3g3d9AnmScnResCFv(const void* this_) { return *(const float*)((const char*)this_ + 0x10); }
-extern "C" void UpdateFrame__Q34nw4r3g3d9AnmScnResFv() {}
-extern "C" void G3dProc__Q34nw4r3g3d9AnmScnResFUlUlPv() {}
-extern "C" void GetLightSet__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d8LightSetUl() {}
-extern "C" void GetAmbLightColor__Q34nw4r3g3d9AnmScnResFUl() {}
-extern "C" void GetLight__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d8LightObjUl() {}
-extern "C" void GetFog__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d3FogUl() {}
-extern "C" void GetCamera__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d6CameraUl() {}
-extern "C" void GetAmbLightResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d17AmbLightAnmResultUl() {}
-extern "C" void GetLightResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d14LightAnmResultUl() {}
-extern "C" void GetFogResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d12FogAnmResultUl() {}
-extern "C" void GetCameraResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d15CameraAnmResultUl() {}
-extern "C" void GetSpecularLightID__Q34nw4r3g3d9AnmScnResCFUl() {}
-extern "C" void HasSpecularLight__Q34nw4r3g3d9AnmScnResCFUl() {}
-extern "C" void UpdateCache__Q34nw4r3g3d9AnmScnResFv() {}
-extern "C" void IsDerivedFrom__Q34nw4r3g3d9AnmScnResCFQ44nw4r3g3d6G3dObj7TypeObj() {}
-extern "C" void IsDerivedFrom__Q34nw4r3g3d6AnmScnCFQ44nw4r3g3d6G3dObj7TypeObj() {}
-extern "C" void GetTypeName__Q34nw4r3g3d9AnmScnResCFv() {}
+void UpdateFrame__Q34nw4r3g3d9AnmScnResFv(){}
+void G3dProc__Q34nw4r3g3d9AnmScnResFUlUlPv(){}
+void GetLightSet__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d8LightSetUl(){}
+void GetAmbLightColor__Q34nw4r3g3d9AnmScnResFUl(){}
+void GetLight__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d8LightObjPQ34nw4r3g3d8LightObjUl(){}
+void GetFog__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d3FogUl(){}
+void GetCamera__Q34nw4r3g3d9AnmScnResFQ34nw4r3g3d6CameraUl(){}
+void GetAmbLightResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d17AmbLightAnmResultUl(){}
+void GetLightResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d14LightAnmResultUl(){}
+void GetFogResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d12FogAnmResultUl(){}
+void GetCameraResult__Q34nw4r3g3d9AnmScnResFPQ34nw4r3g3d15CameraAnmResultUl(){}
+void GetSpecularLightID__Q34nw4r3g3d9AnmScnResCFUl(){}
+void HasSpecularLight__Q34nw4r3g3d9AnmScnResCFUl(){}
+void UpdateCache__Q34nw4r3g3d9AnmScnResFv(){}
+void IsDerivedFrom__Q34nw4r3g3d9AnmScnResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
+void IsDerivedFrom__Q34nw4r3g3d6AnmScnCFQ44nw4r3g3d6G3dObj7TypeObj(){}
+void GetTypeName__Q34nw4r3g3d9AnmScnResCFv(){}
 extern "C" const char lbl_eu_8051D630[];
 
 const void* GetTypeObj__Q34nw4r3g3d9AnmScnResCFv() {
     return lbl_eu_8051D630;
 }
-extern "C" void GetTypeName__Q34nw4r3g3d6AnmScnCFv() {}
+void GetTypeName__Q34nw4r3g3d6AnmScnCFv(){}
 extern "C" const char lbl_eu_8051D620[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d6AnmScnCFv(void) { return (void*)lbl_eu_8051D620; }

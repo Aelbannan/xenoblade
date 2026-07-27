@@ -3,6 +3,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_802B86BC__Q22cf10CHelp_TalkFv() {}
+void cf::CHelp_Talk::func_802B86BC() {}
 
-extern "C" void func_802B86F0__Q22cf10CHelp_TalkFv() {}
+void cf::CHelp_Talk::func_802B86F0() {}

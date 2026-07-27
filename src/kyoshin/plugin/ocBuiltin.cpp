@@ -6,11 +6,11 @@ void vmBuiltinOCRegist(OCData* pOC);
 extern OCData lbl_eu_80524BF8;
 }
 
-extern "C" int isExistProperty(VMThread* pThread) { return 0; }
+int isExistProperty(VMThread* pThread){ return 0; }
 
-extern "C" int isExistSelector(VMThread* pThread) { return 0; }
+int isExistSelector(VMThread* pThread){ return 0; }
 
-extern "C" int getOCName(VMThread* pThread) { return 0; }
+int getOCName(VMThread* pThread){ return 0; }
 
 extern "C" void ocBuiltinRegist() {
     vmBuiltinOCRegist(&lbl_eu_80524BF8);

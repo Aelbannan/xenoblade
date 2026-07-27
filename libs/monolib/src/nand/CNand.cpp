@@ -3,31 +3,31 @@
 
 #include <harness_catalog.h>
 
-extern "C" void __dt__5CNandFv() {}
+void CNand::~CNand() {}
 
-extern "C" void __dt__9CNRequestFv() {}
+void CNRequest::~CNRequest() {}
 
-extern "C" void __ct__CNand() {}
+void __ct__CNand(){}
 
-extern "C" void func_804DA1B4() {}
+void func_804DA1B4(){}
 
-extern "C" void func_804DA1CC() {}
+void func_804DA1CC(){}
 
-extern "C" void func_804DA248() {}
+void func_804DA248(){}
 
-extern "C" void func_804DA29C() {}
+void func_804DA29C(){}
 
-extern "C" void func_804DA34C() {}
+void func_804DA34C(){}
 
-extern "C" void func_804DA3A0() {}
+void func_804DA3A0(){}
 
-extern "C" void func_804DA3E4() {}
+void func_804DA3E4(){}
 
-extern "C" void func_804DA438() {}
+void func_804DA438(){}
 
-extern "C" void func_eu_804DE660() {}
+void func_eu_804DE660(){}
 
-extern "C" void func_804DA47C() {}
+void func_804DA47C(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_804DA4C0() {}
+void sinit_804DA4C0(){}

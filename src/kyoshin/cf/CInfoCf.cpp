@@ -7,49 +7,49 @@
 // Global: UI state flag read by func_80166830.
 extern u32 lbl_eu_80663E24;
 
-extern "C" void __ct__cf_CInfoCf() {}
+void __ct__cf_CInfoCf(){}
 
-extern "C" void __dt__Q22cf7CInfoCfFv() {}
+void cf::CInfoCf::~CInfoCf() {}
 
-extern "C" void func_8016676C() {}
+void func_8016676C(){}
 
-extern "C" void func_80166778() {}
+void func_80166778(){}
 
 // FULL_MATCH — no-op virtual function (vtable slot 2).  Immediately returns.
 extern "C" void func_80166784() {
 }
 
-extern "C" void func_80166788() {}
+void func_80166788(){}
 
-extern "C" void func_801667AC() {}
+void func_801667AC(){}
 
 // FULL_MATCH — Returns the global UI state flag value (lbl_eu_80663E24).
 extern "C" u32 func_80166830() {
     return lbl_eu_80663E24;
 }
 
-extern "C" void __dt__9CMenuItemFv() {}
+void CMenuItem::~CMenuItem() {}
 
-extern "C" void Init__9CMenuItemFv() {}
+void CMenuItem::Init() {}
 
-extern "C" void func_80166E48() {}
+void func_80166E48(){}
 
-extern "C" void func_80166F80() {}
+void func_80166F80(){}
 
-extern "C" void func_801671D4() {}
+void func_801671D4(){}
 
-extern "C" void func_80167260() {}
+void func_80167260(){}
 
-extern "C" void func_801672E4() {}
+void func_801672E4(){}
 
-extern "C" void func_80167368() {}
+void func_80167368(){}
 
-extern "C" void func_8016742C() {}
+void func_8016742C(){}
 
-extern "C" void func_801674D0() {}
+void func_801674D0(){}
 
-extern "C" void Term__9CMenuItemFv() {}
+void CMenuItem::Term() {}
 
-extern "C" void Move__9CMenuItemFv() {}
+void CMenuItem::Move() {}
 
-extern "C" void cbRenderBefore__9CMenuItemFv() {}
+void CMenuItem::cbRenderBefore() {}

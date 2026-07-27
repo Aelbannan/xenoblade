@@ -42,5 +42,13 @@ namespace cf {
         //0x0: vtable
         //0x0-45BC: CfObjectActor
         u8 unk45BC[0x4];
+    CfObjectPc();
+    void CActorParam_UnkVirtualFunc166();
+    void CActorParam_UnkVirtualFunc167();
+    void CActorParam_UnkVirtualFunc4();
+    void CActorParam_UnkVirtualFunc176();
+    void CActorParam_UnkVirtualFunc86();
+    void CActorParam_UnkVirtualFunc88();
+    void CActorParam_UnkVirtualFunc178();
     };
 }

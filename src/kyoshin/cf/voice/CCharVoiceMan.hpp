@@ -33,6 +33,7 @@ namespace cf{
         u8 unk22B;
         u32 unk22C;
         u32 unk230;
+    CCharVoiceMan();
     };
 
 }

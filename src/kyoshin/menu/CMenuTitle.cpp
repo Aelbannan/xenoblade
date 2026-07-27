@@ -3,11 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuTitle() {}
+void __ct__CMenuTitle(){}
 
-extern "C" void func_802B5F0C() {}
+void func_802B5F0C(){}
 
-extern "C" void func_802B5F18() {}
+void func_802B5F18(){}
 
 extern "C" void func_802B5F58(void* self) {
     extern void func_802B75B8(void*);
@@ -15,17 +15,17 @@ extern "C" void func_802B5F58(void* self) {
     func_802B75B8((char*)self + 0x60);
 }
 
-extern "C" void func_802B5F68() {}
+void func_802B5F68(){}
 
-extern "C" void func_802B5FA8() {}
+void func_802B5FA8(){}
 
-extern "C" void func_802B6020() {}
+void func_802B6020(){}
 
-extern "C" void func_802B60CC() {}
+void func_802B60CC(){}
 
-extern "C" void func_802B6200() {}
+void func_802B6200(){}
 
-extern "C" void func_802B6240() {}
+void func_802B6240(){}
 
 extern "C" void func_802B6280(void) {}
 

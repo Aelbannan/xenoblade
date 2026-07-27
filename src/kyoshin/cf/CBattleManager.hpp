@@ -90,5 +90,6 @@ namespace cf{
 
     protected:
         static CBattleManager* spInstance;
+    CBattleManager();
     };
 }

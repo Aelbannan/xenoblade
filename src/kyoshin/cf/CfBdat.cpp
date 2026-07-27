@@ -310,14 +310,14 @@ const char* CfBdat::func_801424A8(u16 index) {
 
 }
 
-extern "C" void func_80141B54() {}
-extern "C" void func_80141BA0() {}
-extern "C" void func_80141C6C() {}
-extern "C" void func_80141D48() {}
-extern "C" void func_80141DC4() {}
-extern "C" void func_80141E90() {}
-extern "C" void func_80141FE0() {}
-extern "C" void func_80142074() {}
-extern "C" void func_80142154() {}
-extern "C" void func_8014235C() {}
-extern "C" void func_80142428() {}
+void func_80141B54(){}
+void func_80141BA0(){}
+void func_80141C6C(){}
+void func_80141D48(){}
+void func_80141DC4(){}
+void func_80141E90(){}
+void func_80141FE0(){}
+void func_80142074(){}
+void func_80142154(){}
+void func_8014235C(){}
+void func_80142428(){}

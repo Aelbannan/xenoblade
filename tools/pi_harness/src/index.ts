@@ -134,6 +134,10 @@ async function main(): Promise<void> {
   process.stderr.write(`  maxParallel:    ${effectiveConfig.maxParallelTUs}\n`);
   process.stderr.write(`  maxRetries:     ${effectiveConfig.maxBatchRetries}\n`);
   process.stderr.write(`  singletonRetry: ${effectiveConfig.singletonRetry}\n`);
+  process.stderr.write(`  maxTokens:      ${effectiveConfig.maxTokens === 0 ? "unlimited (model default)" : effectiveConfig.maxTokens}\n`);
+  process.stderr.write(`  singletonMinSize: ${effectiveConfig.singletonMinSize === 0 ? "off (all use singletons)" : effectiveConfig.singletonMinSize + " bytes"}\n`);
+  process.stderr.write(`  maxRePrompts:   ${effectiveConfig.maxRePrompts} (in-session continuation, 0=off)\n`);
+  process.stderr.write(`  maxStuckRePrompts: ${effectiveConfig.maxStuckRePrompts} (when model completed but code fails)\n`);
   process.stderr.write(`  pythonBin:      ${effectiveConfig.pythonBin}\n`);
   process.stderr.write(`  dryRun:         ${args.dryRun}\n`);
 

@@ -24,8 +24,12 @@ function defaultConfig(): HarnessConfig {
     maxParallelTUs: 2,
     maxBatchRetries: 2,
     singletonRetry: true,
+    maxTokens: 0,
+    singletonMinSize: 0,
     maxBriefChars: 80_000,
     maxBatchMinutes: 60,
+    maxRePrompts: 3,
+    maxStuckRePrompts: 1,
     region: "us",
     sessionDir: "build/pi-harness/sessions",
     ledgerPath: "build/pi-harness/ledger.jsonl",
@@ -96,6 +100,12 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   if (typeof config.singletonRetry !== "boolean") {
     throw new Error("config.singletonRetry must be a boolean");
   }
+  if (typeof config.maxTokens !== "number" || config.maxTokens < 0 || !Number.isInteger(config.maxTokens)) {
+    throw new Error("config.maxTokens must be an integer >= 0");
+  }
+  if (typeof config.singletonMinSize !== "number" || config.singletonMinSize < 0 || !Number.isInteger(config.singletonMinSize)) {
+    throw new Error("config.singletonMinSize must be an integer >= 0");
+  }
   if (typeof config.pythonBin !== "string" || !config.pythonBin) {
     throw new Error("config.pythonBin must be a non-empty string");
   }
@@ -119,6 +129,12 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   if (!(config.maxBatchMinutes > 0)) {
     throw new Error("config.maxBatchMinutes must be > 0");
+  }
+  if (typeof config.maxRePrompts !== "number" || config.maxRePrompts < 0 || !Number.isInteger(config.maxRePrompts)) {
+    throw new Error("config.maxRePrompts must be an integer >= 0");
+  }
+  if (typeof config.maxStuckRePrompts !== "number" || config.maxStuckRePrompts < 0 || !Number.isInteger(config.maxStuckRePrompts)) {
+    throw new Error("config.maxStuckRePrompts must be an integer >= 0");
   }
   validateModel(config.matchModel, "matchModel");
   validateModel(config.cleanupModel, "cleanupModel");

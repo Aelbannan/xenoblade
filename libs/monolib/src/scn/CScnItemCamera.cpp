@@ -25,30 +25,30 @@ extern "C" void func_8049F9A4() {}
 // NOT_STARTED stubs (to be decompiled)
 // ============================================================
 
-extern "C" void __ct__CScnItemCamera() {}
+void __ct__CScnItemCamera(){}
 
-extern "C" void __dt__8049EA9C() {}
+void __dt__8049EA9C(){}
 
-extern "C" void __dt__14CScnItemCameraFv() {}
+void CScnItemCamera::~CScnItemCamera() {}
 
-extern "C" void func_8049EB60() {}
+void func_8049EB60(){}
 
-extern "C" void func_8049EBF0() {}
+void func_8049EBF0(){}
 
-extern "C" void func_8049EFF8() {}
+void func_8049EFF8(){}
 
-extern "C" void func_8049F168() {}
+void func_8049F168(){}
 
-extern "C" void func_8049F204() {}
+void func_8049F204(){}
 
-extern "C" void func_8049F6D4() {}
+void func_8049F6D4(){}
 
-extern "C" void func_8049F774() {}
+void func_8049F774(){}
 
-extern "C" void func_8049F824() {}
+void func_8049F824(){}
 
-extern "C" void func_8049F8E4() {}
+void func_8049F8E4(){}
 
-extern "C" void func_8049F9A8() {}
+void func_8049F9A8(){}
 
-extern "C" void sinit_8049FC60() {}
+void sinit_8049FC60(){}

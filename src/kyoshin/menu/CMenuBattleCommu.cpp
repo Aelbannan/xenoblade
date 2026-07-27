@@ -3,27 +3,27 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuBattleCommu() {}
+void __ct__CMenuBattleCommu(){}
 
-extern "C" void __dt__16CMenuBattleCommuFv(void* self) {}
+void CMenuBattleCommu::~CMenuBattleCommu() {}
 
-extern "C" void Init__16CMenuBattleCommuFv() {}
+void CMenuBattleCommu::Init() {}
 
-extern "C" void Term__16CMenuBattleCommuFv() {}
+void CMenuBattleCommu::Term() {}
 
-extern "C" void Move__16CMenuBattleCommuFv() {}
+void CMenuBattleCommu::Move() {}
 
-extern "C" void cbRenderBefore__16CMenuBattleCommuFv(void* self) {}
+void CMenuBattleCommu::cbRenderBefore() {}
 
-extern "C" void func_801B0E0C() {}
+void func_801B0E0C(){}
 
-extern "C" void func_801B0E88() {}
+void func_801B0E88(){}
 
-extern "C" void func_801B0F8C() {}
+void func_801B0F8C(){}
 
-extern "C" void func_801B0FB0() {}
+void func_801B0FB0(){}
 
-extern "C" void func_801B1618() {}
+void func_801B1618(){}
 
 extern "C" void func_801B18B8(void* self) { ((void(*)(void*))__dt__16CMenuBattleCommuFv)((char*)self - 0x58); }
 

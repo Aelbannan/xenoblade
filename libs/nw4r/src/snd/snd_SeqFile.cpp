@@ -45,4 +45,4 @@ const void* SeqFileReader::GetBaseAddress() const {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl() {}
+void ReadOffsetByLabel__Q44nw4r3snd6detail13SeqFileReaderCFPCcPUl(){}

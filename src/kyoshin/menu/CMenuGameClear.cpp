@@ -3,26 +3,26 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __dt__14CMenuGameClearFv(void* self) {}
+void CMenuGameClear::~CMenuGameClear() {}
 
-extern "C" void Init__14CMenuGameClearFv() {}
+void CMenuGameClear::Init() {}
 
-extern "C" void Term__14CMenuGameClearFv() {}
+void CMenuGameClear::Term() {}
 
-extern "C" void Move__14CMenuGameClearFv() {}
+void CMenuGameClear::Move() {}
 
-extern "C" void cbRenderBefore__14CMenuGameClearFv(void* self) {}
+void CMenuGameClear::cbRenderBefore() {}
 
-extern "C" void __ct__CMenuGameClear() {}
+void __ct__CMenuGameClear(){}
 
-extern "C" unsigned long func_802B22E0() {
+unsigned long func_802B22E0(){
     unsigned long v = *(unsigned long*)(lbl_eu_80664C08);
     return !!v;
 }
 
-extern "C" void func_802B22F4() {}
+void func_802B22F4(){}
 
-extern "C" void func_802B2488() {}
+void func_802B2488(){}
 
 extern "C" void func_802B261C(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuGameClearFv)((char*)self - 0x58); }
 

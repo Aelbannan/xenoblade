@@ -3,33 +3,33 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_8046376C__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_8046376C() const {}
 
-extern "C" void func_804637E8__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_804637E8() const {}
 
-extern "C" void func_80463814__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_80463814() const {}
 
-extern "C" void func_80463C24__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_80463C24() const {}
 
-extern "C" void func_80463D44__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_80463D44() const {}
 
-extern "C" void func_80463EB0__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_80463EB0() const {}
 
-extern "C" void func_80463F60__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_80463F60() const {}
 
-extern "C" void func_80463F8C__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_80463F8C() const {}
 
-extern "C" void func_80463FF8__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_80463FF8() const {}
 
-extern "C" void func_8046406C__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_8046406C() const {}
 
-extern "C" void func_80464128__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_80464128() const {}
 
-extern "C" void func_804642BC__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_804642BC() const {}
 
-extern "C" void func_804643D8__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_804643D8() const {}
 
-extern "C" void func_8046451C__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_8046451C() const {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_8046456C() {}
+void sinit_8046456C(){}

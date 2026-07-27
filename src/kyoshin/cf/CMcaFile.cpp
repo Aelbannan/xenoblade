@@ -3,8 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMcaFile() {}
+void __ct__CMcaFile(){}
 
-extern "C" void __dt__8CMcaFileFv() {}
+void CMcaFile::~CMcaFile() {}
 
-extern "C" void func_800584B8() {}
+void func_800584B8(){}

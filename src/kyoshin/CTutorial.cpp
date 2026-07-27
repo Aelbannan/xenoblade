@@ -19,20 +19,20 @@ extern "C" u8 func_8029ACBC(void* self) { return ((u8*)self)[0x52]; }
 
 
 
-extern "C" void func_8029AE5C() {}
+void func_8029AE5C(){}
 
-extern "C" void func_8029AE9C() {}
+void func_8029AE9C(){}
 
-extern "C" void func_8029AF30() {}
+void func_8029AF30(){}
 
-extern "C" void func_8029AF7C() {}
+void func_8029AF7C(){}
 
-extern "C" void func_8029B010() {}
+void func_8029B010(){}
 
-extern "C" void func_8029B05C() {}
+void func_8029B05C(){}
 
-extern "C" void func_8029B124() {}
+void func_8029B124(){}
 
-extern "C" void OnFileEvent__9CTutorialFP10CEventFile() {}
+void CTutorial::OnFileEvent() {}
 
-extern "C" void func_8029B498() {}
+void func_8029B498(){}

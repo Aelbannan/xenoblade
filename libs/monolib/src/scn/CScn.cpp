@@ -95,7 +95,7 @@ void CScn::Draw() {
 }
 
 
-extern "C" bool func_80495E60(void* self) {
+bool func_80495E60(void* self){
     extern bool func_8048CB14(void*);
     return func_8048CB14(*(void**)((char*)self + 0x60));
 }
@@ -124,11 +124,11 @@ extern "C" void __ct__804820F8();
 extern "C" void func_80495EB0() {
     __ct__804820F8();
 }
-extern "C" void func_80495FC8() {}
-extern "C" void func_80495FDC() {}
-extern "C" void func_80495FF0() {}
-extern "C" void func_80496004() {}
-extern "C" void func_80496018() {}
+void func_80495FC8(){}
+void func_80495FDC(){}
+void func_80495FF0(){}
+void func_80496004(){}
+void func_80496018(){}
 extern "C" void func_8049C72C(int);
 extern "C" void func_8049602C(void* p) {
     func_8049C72C(*(int*)((u8*)p + 0x80));
@@ -142,8 +142,8 @@ extern "C" u32 func_8049603C(void* self) {
     extern u32 func_8049C7A8(u32);
     return func_8049C7A8(*(u32*)((char*)self + 0x80));
 }
-extern "C" void func_80496044() {}
-extern "C" void func_804960A8() {}
+void func_80496044(){}
+void func_804960A8(){}
 extern "C" void* func_8049C7B0(void*);
 
 extern "C" void* func_80496110(void* self) {
@@ -154,9 +154,9 @@ extern "C" int func_8049AED4(int);
 extern "C" int func_80496118(void* _this) {
     return func_8049AED4(*(int*)((char*)_this + 0x68));
 }
-extern "C" void func_80496120() {}
-extern "C" void func_804961D4() {}
-extern "C" void func_8049621C() {}
+void func_80496120(){}
+void func_804961D4(){}
+void func_8049621C(){}
 extern "C" int func_8049B158(int);
 
 extern "C" int func_80496264(void* _this) {
@@ -172,27 +172,27 @@ extern "C" void* func_80496274(void* _this) {
     return func_8049B2C4(*(void**)((char*)_this + 0x68));
 }
 extern "C" void func_8049627C(void* self, int arg) { func_8049B0A0(*(UnkScn68**)((char*)self + 0x68), (short)arg); }
-extern "C" void func_80496288() {}
+void func_80496288(){}
 extern "C" void func_80496294() {}
 extern "C" void func_804962A0(void* p, unsigned char v) {
     ((unsigned char*)p)[0x3e5] = v;
 }
-extern "C" bool func_804962A8() { return false; }
-extern "C" void func_8049695C() {}
-extern "C" void func_80496970() {}
+bool func_804962A8(){ return false; }
+void func_8049695C(){}
+void func_80496970(){}
 extern "C" void func_80496984(u32 value) {
     lbl_eu_80665908 = (CScn *)value;
 }
 extern "C" int func_8049698C() {
     return (int)lbl_eu_80665908;
 }
-extern "C" void func_80496994__Fv(void) {}
-extern "C" void func_80496998__Fv(void) {}
-extern "C" void func_8049699C() {}
+void func_80496994__Fv(void){}
+void func_80496998__Fv(void){}
+void func_8049699C(){}
 extern "C" void func_eu_8049AB50(void* self, unsigned char byte) {
     *(unsigned char*)((uintptr_t)self + 0x3e9) = byte;
 }
-extern "C" void __dt__4CScnFv(void*, int);
+void __dt__4CScnFv(void*, int);
 extern "C" void func_80496B04(void* pThis, int r4) {
     __dt__4CScnFv((char*)pThis - 0x54, r4);
 }

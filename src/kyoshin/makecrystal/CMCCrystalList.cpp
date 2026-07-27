@@ -3,13 +3,13 @@
 
 #include "kyoshin/makecrystal/CMCCrystalList.hpp"
 
-extern "C" void __ct__CMCCrystalList() {}
+void __ct__CMCCrystalList(){}
 
-extern "C" void __dt__14CMCCrystalListFv() {}
+void CMCCrystalList::~CMCCrystalList() {}
 
-extern "C" void func_80222848() {}
+void func_80222848(){}
 
-extern "C" void func_802228B8() {}
+void func_802228B8(){}
 
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; } }
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
@@ -21,60 +21,60 @@ extern "C" void func_80222964(unsigned char* self, nw4r::lyt::DrawInfo* drawInfo
     }
 }
 
-extern "C" void __dt__80222984() {}
+void __dt__80222984(){}
 
 extern "C" u8 func_80222A50(CMCCrystalList* self) { return self->mDataFlag; }
 
 extern "C" u8 func_80222A58(CMCCrystalList* self) { return self->mIsActive; }
 
-extern "C" void func_80222A60() {}
+void func_80222A60(){}
 
-extern "C" void func_80222A84() {}
+void func_80222A84(){}
 
-extern "C" void func_80222AA8() {}
+void func_80222AA8(){}
 
-extern "C" void func_80222ACC() {}
+void func_80222ACC(){}
 
-extern "C" void func_80222AF0() {}
+void func_80222AF0(){}
 
-extern "C" void func_80222B14() {}
+void func_80222B14(){}
 
-extern "C" void func_80222D9C() {}
+void func_80222D9C(){}
 
-extern "C" void func_80222F64() {}
+void func_80222F64(){}
 
-extern "C" void func_80223004() {}
+void func_80223004(){}
 
-extern "C" void func_802232E4() {}
+void func_802232E4(){}
 
-extern "C" void func_80223334() {}
+void func_80223334(){}
 
-extern "C" void func_802233AC() {}
+void func_802233AC(){}
 
-extern "C" void func_802233F8() {}
+void func_802233F8(){}
 
-extern "C" void func_80223444() {}
+void func_80223444(){}
 
-extern "C" void func_80223498() {}
+void func_80223498(){}
 
-extern "C" void func_802234E4() {}
+void func_802234E4(){}
 
-extern "C" void func_80223530() {}
+void func_80223530(){}
 
-extern "C" void func_8022357C() {}
+void func_8022357C(){}
 
-extern "C" void func_802235C8() {}
+void func_802235C8(){}
 
-extern "C" void func_80223614() {}
+void func_80223614(){}
 
-extern "C" void func_80223698() {}
+void func_80223698(){}
 
-extern "C" void func_80223754() {}
+void func_80223754(){}
 
-extern "C" void func_80223810() {}
+void func_80223810(){}
 
-extern "C" void func_802238CC() {}
+void func_802238CC(){}
 
-extern "C" void func_80223988() {}
+void func_80223988(){}
 
-extern "C" void OnFileEvent__14CMCCrystalListFP10CEventFile() {}
+void CMCCrystalList::OnFileEvent() {}

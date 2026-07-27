@@ -220,10 +220,10 @@ void ResTev::DCStore(bool sync) {
 } // namespace g3d
 } // namespace nw4r
 
-extern "C" void GXSetTevAlphaIn__Q34nw4r3g3d6ResTevF13_GXTevStageID14_GXTevAlphaArg14_GXTevAlphaArg14_GXTevAlphaArg14_GXTevAlphaArg() {}
-extern "C" void GXSetTevAlphaOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID() {}
-extern "C" void GXSetTevKColorSel__Q34nw4r3g3d6ResTevF13_GXTevStageID15_GXTevKColorSel() {}
-extern "C" void GXSetTevKAlphaSel__Q34nw4r3g3d6ResTevF13_GXTevStageID15_GXTevKAlphaSel() {}
-extern "C" void GXSetTevOrder__Q34nw4r3g3d6ResTevF13_GXTevStageID13_GXTexCoordID11_GXTexMapID12_GXChannelID() {}
-extern "C" void GXSetTevColorOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID() {}
-extern "C" void SetNumTevStages__Q34nw4r3g3d6ResTevFUc() {}
+void GXSetTevAlphaIn__Q34nw4r3g3d6ResTevF13_GXTevStageID14_GXTevAlphaArg14_GXTevAlphaArg14_GXTevAlphaArg14_GXTevAlphaArg(){}
+void GXSetTevAlphaOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID(){}
+void GXSetTevKColorSel__Q34nw4r3g3d6ResTevF13_GXTevStageID15_GXTevKColorSel(){}
+void GXSetTevKAlphaSel__Q34nw4r3g3d6ResTevF13_GXTevStageID15_GXTevKAlphaSel(){}
+void GXSetTevOrder__Q34nw4r3g3d6ResTevF13_GXTevStageID13_GXTexCoordID11_GXTexMapID12_GXChannelID(){}
+void GXSetTevColorOp__Q34nw4r3g3d6ResTevF13_GXTevStageID8_GXTevOp10_GXTevBias11_GXTevScaleUc11_GXTevRegID(){}
+void SetNumTevStages__Q34nw4r3g3d6ResTevFUc(){}

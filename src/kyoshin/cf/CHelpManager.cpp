@@ -3,41 +3,41 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__Q22cf12CHelpManagerFv() {}
+cf::CHelpManager::CHelpManager() {}
 
-extern "C" void func_80295924() {}
+void func_80295924(){}
 
-extern "C" void __dt__Q22cf12CHelpManagerFv() {}
+void cf::CHelpManager::~CHelpManager() {}
 
-extern "C" void func_802959AC() {}
+void func_802959AC(){}
 
-extern "C" void func_80295A88() {}
+void func_80295A88(){}
 
-extern "C" void func_80295BAC() {}
+void func_80295BAC(){}
 
-extern "C" void func_80295BF4() {}
+void func_80295BF4(){}
 
-extern "C" void func_80295CC8() {}
+void func_80295CC8(){}
 
-extern "C" void func_80295D30() {}
+void func_80295D30(){}
 
 extern "C" int CHelp_UnkVirtualFunc5__Q22cf5CHelpFv(void* self) { return 0; }
 
 extern "C" void CHelp_UnkVirtualFunc1__Q22cf5CHelpFv() {}
 
-extern "C" void func_80295D8C__Q22cf19CHelp_EtherMakeTIPSFv(void) {}
+void cf::CHelp_EtherMakeTIPS::func_80295D8C(void) {}
 
 extern "C" int CHelp_UnkVirtualFunc4__Q22cf5CHelpFv(void* self) { return 0; }
 
-extern "C" void func_80295D98__Q22cf14CHelp_TalkTIPSFv(void) {}
+void cf::CHelp_TalkTIPS::func_80295D98(void) {}
 
-extern "C" void func_80295D9C__Q22cf16CHelp_KizunaTIPSFv(void) {}
+void cf::CHelp_KizunaTIPS::func_80295D9C(void) {}
 
-extern "C" void func_80295DA0__Q22cf18CHelp_EndEventTIPSFv(void) {}
+void cf::CHelp_EndEventTIPS::func_80295DA0(void) {}
 
 extern "C" int func_80295DA4__Q22cf12CHelp_AlwaysFv(void* self) { return 1; }
 
-extern "C" void func_80295DAC__Q22cf16CHelp_AlwaysTIPSFv(void) {}
+void cf::CHelp_AlwaysTIPS::func_80295DAC(void) {}
 
 extern "C" void func_80296898__Q22cf14CHelp_ToAttackFv(void* self) {
     ((unsigned char*)self)[0xc] = 0;
@@ -49,9 +49,9 @@ extern "C" void func_802968A8(void* self) {
     ((unsigned char*)self)[4] = 0;
 }
 
-extern "C" void func_802968B8() {}
+void func_802968B8(){}
 
-extern "C" void func_80296924() {}
+void func_80296924(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_80295DB0() {}
+void sinit_80295DB0(){}

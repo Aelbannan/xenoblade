@@ -432,12 +432,12 @@ Channel* SeqPlayer::NoteOn(int bankNo, const NoteOnInfo& rInfo) {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv() {}
+void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv(){}
 void SetSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFPFUsPQ34nw4r3snd24SeqUserprocCallbackParamPv_vPv(
     void* _this, void* callback, void* arg)
 {
     *(u32*)((u8*)_this + 0x118) = (u32)callback;
     *(u32*)((u8*)_this + 0x11C) = (u32)arg;
 }
-extern "C" void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack() {}
+void CallSeqUserprocCallback__Q44nw4r3snd6detail9SeqPlayerFUsPQ44nw4r3snd6detail8SeqTrack(){}
 extern "C" void ChannelCallback__Q44nw4r3snd6detail9SeqPlayerFPQ44nw4r3snd6detail7Channel() {}

@@ -39,20 +39,20 @@ extern "C" void func_804630C0__Q23LOD17CLODCacheManagerSFv(void* self)
     lbl_eu_80665744 = static_cast<char*>(self) + cache->p28;
 }
 
-extern "C" void func_80463118__Q23LOD17CLODCacheManagerSFv() {}
+void LOD::CLODCacheManagerS::func_80463118() {}
 
-extern "C" void func_8046323C__Q23LOD17CLODCacheManagerSFv() {}
+void LOD::CLODCacheManagerS::func_8046323C() {}
 
-extern "C" void func_8046339C__Q23LOD17CLODCacheManagerSFv() {}
+void LOD::CLODCacheManagerS::func_8046339C() {}
 
-extern "C" void func_80463590__Q23LOD17CLODCacheManagerSFv() {}
+void LOD::CLODCacheManagerS::func_80463590() {}
 
-extern "C" void func_8046368C__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_8046368C() const {}
 
-extern "C" void func_8046369C__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_8046369C() const {}
 
-extern "C" void func_804636AC__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_804636AC() const {}
 
-extern "C" void func_8046374C__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_8046374C() const {}
 
-extern "C" void func_8046375C__Q23LOD17UnkClass_8046368CFv() {}
+void LOD::UnkClass_8046368C::func_8046375C() const {}

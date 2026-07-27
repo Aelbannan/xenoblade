@@ -3,4 +3,4 @@
 
 #include <harness_catalog.h>
 
-extern "C" void TestExistence__Q34nw4r3g3d9AnmObjShpCFUl() {}
+void TestExistence__Q34nw4r3g3d9AnmObjShpCFUl(){}

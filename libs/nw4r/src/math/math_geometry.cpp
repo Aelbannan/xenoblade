@@ -276,6 +276,6 @@ IntersectionResult FRUSTUM::IntersectAABB_Ex(const AABB* pBox) const {
 } // namespace math
 } // namespace nw4r
 
-extern "C" void DistSqSegment3ToSegment3__Q24nw4r4mathFPCQ34nw4r4math8SEGMENT3PCQ34nw4r4math8SEGMENT3PfPf() {}
-extern "C" void IntersectionCapsule__Q24nw4r4mathFPCQ34nw4r4math7CAPSULEPCQ34nw4r4math7CAPSULE() {}
-extern "C" void IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE() {}
+void DistSqSegment3ToSegment3__Q24nw4r4mathFPCQ34nw4r4math8SEGMENT3PCQ34nw4r4math8SEGMENT3PfPf(){}
+void IntersectionCapsule__Q24nw4r4mathFPCQ34nw4r4math7CAPSULEPCQ34nw4r4math7CAPSULE(){}
+void IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(){}

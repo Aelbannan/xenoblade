@@ -1065,9 +1065,8 @@ done:
 
 // Under stock -O4,p, /0x60 strength-reduces to mulhwu. Size opt keeps
 // retail li/divwu/mtctr/bdnz (same as TU -O4,s). See MWCC_REFERENCE.
-#pragma push
 #pragma optimize_for_size on
-extern "C" void func_8010B324(CMenuBattlePlayerStateSlot* slot) {
+void func_8010B324(CMenuBattlePlayerStateSlot* slot){
     u32 z;
     u8* start;
     u8* end;
@@ -1152,7 +1151,6 @@ extern "C" void func_8010B324(CMenuBattlePlayerStateSlot* slot) {
         }
     }
 }
-#pragma pop
 extern "C" int func_8010CE48() { return (int)lbl_eu_80663F48; }
 extern "C" void func_8010CF5C(void* p) {
     ((u8*)p)[0x7c9] = 1;
@@ -1165,7 +1163,7 @@ void func_8010EA4C(void* _this) {
 }
 }
 extern "C" void cbRenderBefore__22CMenuBattlePlayerStateFv();
-extern "C" bool func_8010EA54() {
+bool func_8010EA54(){
     cbRenderBefore__22CMenuBattlePlayerStateFv();
     return false;
 }
@@ -1173,10 +1171,10 @@ extern "C" void func_8010EA5C(void* self) {
     __dt__22CMenuBattlePlayerStateFv((void*)((char*)self - 0x5c));
 }
 
-extern "C" void func_8010CDCC() {}
-extern "C" void func_8010CE50() {}
-extern "C" void func_8010CF68() {}
-extern "C" void func_8010D0D4() {}
+void func_8010CDCC(){}
+void func_8010CE50(){}
+void func_8010CF68(){}
+void func_8010D0D4(){}
 // Keep names distinct from Move's extern callees or MWCC DCE's the bl sites.
 extern "C" void harness_stub_us_8010dc90(CMenuBattlePlayerState* self,
                                          void* actor,

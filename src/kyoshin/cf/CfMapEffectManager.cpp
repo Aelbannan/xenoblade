@@ -3,33 +3,33 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__cf_CfMapEffectManager() {}
+void __ct__cf_CfMapEffectManager(){}
 
-extern "C" void __dt__Q22cf18CfMapEffectManagerFv() {}
+void cf::CfMapEffectManager::~CfMapEffectManager() {}
 
-extern "C" void func_8016EEB0() {}
+void func_8016EEB0(){}
 
-extern "C" void func_8016EF2C() {}
+void func_8016EF2C(){}
 
-extern "C" void func_8016EFD8() {}
+void func_8016EFD8(){}
 
-extern "C" void func_8016F140(void) {}
+void func_8016F140(void){}
 
-extern "C" void func_8016F144() {}
+void func_8016F144(){}
 
-extern "C" void func_8016F2A4() {}
+void func_8016F2A4(){}
 
-extern "C" void func_8016F9D4() {}
+void func_8016F9D4(){}
 
-extern "C" void func_8016FA68() {}
+void func_8016FA68(){}
 
-extern "C" void func_8016FBA8() {}
+void func_8016FBA8(){}
 
-extern "C" void func_8016FC0C() {}
+void func_8016FC0C(){}
 
-extern "C" void func_8016FC98() {}
+void func_8016FC98(){}
 
-extern "C" void func_8016FD84() {}
+void func_8016FD84(){}
 
 extern float lbl_eu_806623E8;
 extern "C" void func_8016FE2C(float val) { lbl_eu_806623E8 = val; }

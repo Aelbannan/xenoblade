@@ -14,15 +14,15 @@
 // Constructor / Destructor (scaffold - NOT YET DECOMPILED)
 // ---------------------------------------------------------------------------
 
-extern "C" void __ct__cf_CfGimmickEne() {}
+void __ct__cf_CfGimmickEne(){}
 
-extern "C" void __dt__Q22cf12CfGimmickEneFv() {}
+void cf::CfGimmickEne::~CfGimmickEne() {}
 
 // ---------------------------------------------------------------------------
 // Virtual function 2 - dispatch table router (scaffold)
 // ---------------------------------------------------------------------------
 
-extern "C" void func_8026E584() {}
+void func_8026E584(){}
 
 // ---------------------------------------------------------------------------
 // FULL_MATCH: Virtual function 6 override - no-op
@@ -38,23 +38,23 @@ extern "C" void func_8026E5BC() {}
 // Remaining functions (scaffolds - NOT YET DECOMPILED)
 // ---------------------------------------------------------------------------
 
-extern "C" void func_8026E5C0() {}
+void func_8026E5C0(){}
 
-extern "C" void func_8026E678() {}
+void func_8026E678(){}
 
-extern "C" void func_8026E6E4() {}
+void func_8026E6E4(){}
 
-extern "C" void func_8026E7F8() {}
+void func_8026E7F8(){}
 
-extern "C" void func_8026EA20() {}
+void func_8026EA20(){}
 
-extern "C" void func_8026EBA8() {}
+void func_8026EBA8(){}
 
-extern "C" void func_8026EC80() {}
+void func_8026EC80(){}
 
-extern "C" void func_8026ECEC() {}
+void func_8026ECEC(){}
 
-extern "C" void func_8026F254() {}
+void func_8026F254(){}
 
 // ---------------------------------------------------------------------------
 // FULL_MATCH: Dispatch table entry [5] - no-op
@@ -70,4 +70,4 @@ extern "C" void func_8026F31C() {}
 // Remaining (scaffold)
 // ---------------------------------------------------------------------------
 
-extern "C" void func_8026F320() {}
+void func_8026F320(){}

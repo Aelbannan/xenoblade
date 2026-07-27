@@ -354,4 +354,4 @@ void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
     color->r = r;
 }
 
-extern "C" void __ct__CTitleAHelp() {}
+void __ct__CTitleAHelp(){}

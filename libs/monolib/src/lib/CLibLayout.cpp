@@ -4,7 +4,7 @@
 #include <harness_catalog.h>
 #include "monolib/lib/CLibLayout.hpp"
 
-extern "C" void __ct__10CLibLayoutFPCcP11CWorkThread() {}
+CLibLayout::CLibLayout() {}
 
 extern "C" void* __dt__8045F000(void* self, int flags) {
     if (self != 0) {
@@ -16,9 +16,9 @@ extern "C" void* __dt__8045F000(void* self, int flags) {
     return self;
 }
 
-extern "C" void __dt__10CLibLayoutFv() {}
+void CLibLayout::~CLibLayout() {}
 
-extern "C" void getAllocHandle__10CLibLayoutFv(void) {}
+void CLibLayout::getAllocHandle(void) {}
 
 // Returns the global CLibLayout singleton instance.
 CLibLayout* CLibLayout::getInstance() {
@@ -26,25 +26,25 @@ CLibLayout* CLibLayout::getInstance() {
     return lbl_eu_80665710;
 }
 
-extern "C" void isInitialized__10CLibLayoutFv() {}
+void CLibLayout::isInitialized() {}
 
-extern "C" void createLayout__10CLibLayoutFv() {}
+void CLibLayout::createLayout() {}
 
-extern "C" void createArcResourceAccessor__10CLibLayoutFv() {}
+void CLibLayout::createArcResourceAccessor() {}
 
-extern "C" void createPicture__10CLibLayoutFv() {}
+void CLibLayout::createPicture() {}
 
-extern "C" void createTextbox__10CLibLayoutFv() {}
+void CLibLayout::createTextbox() {}
 
-extern "C" void deleteTextboxOrPicture__10CLibLayoutFv() {}
+void CLibLayout::deleteTextboxOrPicture() {}
 
 // No-op override; CLibLayout performs no per-frame work.
 void CLibLayout::wkUpdate() {}
 
-extern "C" void wkStandbyLogin__10CLibLayoutFv() {}
+void CLibLayout::wkStandbyLogin() {}
 
-extern "C" void wkStandbyLogout__10CLibLayoutFv() {}
+void CLibLayout::wkStandbyLogout() {}
 
-extern "C" void func_8045F438__10CLibLayoutFv() {}
+void CLibLayout::func_8045F438() {}
 
-extern "C" void func_8045F4E4__10CLibLayoutFv() {}
+void CLibLayout::func_8045F4E4() {}

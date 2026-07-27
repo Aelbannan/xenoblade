@@ -3,6 +3,6 @@
 
 #include <harness_catalog.h>
 
-extern "C" void func_80460308__17UnkClass_80460308Fv() {}
+void UnkClass_80460308::func_80460308() {}
 
-extern "C" void func_80460728__17UnkClass_80460308Fv() {}
+void UnkClass_80460308::func_80460728() {}

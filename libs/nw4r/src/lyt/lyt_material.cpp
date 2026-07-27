@@ -5,8 +5,6 @@
 // Force MWCC to emit standalone ConvertOffsToPtr template instantiations.
 // MWCC with -inline auto treats templates as inline; we temporarily disable
 // auto-inlining so the explicit template instantiations below produce bodies.
-#pragma push
-#pragma auto_inline off
 namespace nw4r { namespace lyt { namespace detail {
     template const BlendMode* ConvertOffsToPtr<BlendMode>(const void*, unsigned int);
     template const AlphaCompare* ConvertOffsToPtr<AlphaCompare>(const void*, unsigned int);
@@ -22,7 +20,6 @@ namespace nw4r { namespace lyt { namespace detail {
     // const overload returning const char*
     template const char* ConvertOffsToPtr<char>(const void*, unsigned int);
 }}}
-#pragma pop
 
 /******************************************************************************
  *
@@ -1282,7 +1279,7 @@ Size GetTextureSize(Material* pMaterial, u8 idx) {
 } // namespace lyt
 } // namespace nw4r
 
-extern "C" void __as__Q34nw4r4math4VEC2FRCQ34nw4r4math4VEC2() {}
+void __as__Q34nw4r4math4VEC2FRCQ34nw4r4math4VEC2(){}
 extern "C" nw4r::ut::Color* __as__Q34nw4r2ut5ColorFRC8_GXColor(nw4r::ut::Color* self, const GXColor* other) {
     *(u32*)self = *(const u32*)other;
     return self;
@@ -1320,29 +1317,29 @@ extern "C" unsigned int GetIndTexStageNum__Q44nw4r3lyt3res19MaterialResourceNumC
 unsigned int GetTevStageNum__Q44nw4r3lyt3res19MaterialResourceNumCFv(const void* self) {
     return (*(const unsigned int*)self >> 18) & 0x1F;
 }
-extern "C" void SetWrapMode__Q34nw4r3lyt6TexMapF14_GXTexWrapMode14_GXTexWrapMode() {}
+void SetWrapMode__Q34nw4r3lyt6TexMapF14_GXTexWrapMode14_GXTexWrapMode(){}
 int GetWarpModeS__Q44nw4r3lyt3res6TexMapCFv(const void* this_) {
     return (*(const unsigned char*)((const unsigned char*)this_ + 2)) & 3;
 }
 unsigned int GetWarpModeT__Q44nw4r3lyt3res6TexMapCFv(const void* p_this) {
     return ((const unsigned char*)p_this)[3] & 3;
 }
-extern "C" void SetFilter__Q34nw4r3lyt6TexMapF12_GXTexFilter12_GXTexFilter() {}
-extern "C" void GetMinFilter__Q44nw4r3lyt3res6TexMapCFv() {}
-extern "C" void GetMagFilter__Q44nw4r3lyt3res6TexMapCFv() {}
-extern "C" void __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen() {}
-extern "C" void __as__Q34nw4r3lyt8ChanCtrlFRCQ34nw4r3lyt8ChanCtrl() {}
+void SetFilter__Q34nw4r3lyt6TexMapF12_GXTexFilter12_GXTexFilter(){}
+void GetMinFilter__Q44nw4r3lyt3res6TexMapCFv(){}
+void GetMagFilter__Q44nw4r3lyt3res6TexMapCFv(){}
+void __as__Q34nw4r3lyt11TexCoordGenFRCQ34nw4r3lyt11TexCoordGen(){}
+void __as__Q34nw4r3lyt8ChanCtrlFRCQ34nw4r3lyt8ChanCtrl(){}
 void* __as__Q34nw4r3lyt11TevSwapModeFRCQ34nw4r3lyt11TevSwapMode(void* self, const void* other) {
     *(unsigned char*)self = *(const unsigned char*)other;
     return self;
 }
-extern "C" void __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT() {}
+void __as__Q34nw4r3lyt6TexSRTFRCQ34nw4r3lyt6TexSRT(){}
 extern "C" void __as__Q34nw4r3lyt13IndirectStageFRCQ34nw4r3lyt13IndirectStage(void *dst, const void *src) {
     ((unsigned char*)dst)[0] = ((const unsigned char*)src)[0];
     ((unsigned char*)dst)[1] = ((const unsigned char*)src)[1];
     ((unsigned char*)dst)[2] = ((const unsigned char*)src)[2];
     ((unsigned char*)dst)[3] = ((const unsigned char*)src)[3];
 }
-extern "C" void __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage() {}
-extern "C" void __as__Q34nw4r3lyt12AlphaCompareFRCQ34nw4r3lyt12AlphaCompare() {}
-extern "C" void __as__Q34nw4r3lyt9BlendModeFRCQ34nw4r3lyt9BlendMode() {}
+void __as__Q34nw4r3lyt8TevStageFRCQ34nw4r3lyt8TevStage(){}
+void __as__Q34nw4r3lyt12AlphaCompareFRCQ34nw4r3lyt12AlphaCompare(){}
+void __as__Q34nw4r3lyt9BlendModeFRCQ34nw4r3lyt9BlendMode(){}

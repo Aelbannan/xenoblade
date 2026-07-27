@@ -3,117 +3,117 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CTitleLogo() {}
+void __ct__CTitleLogo(){}
 
-extern "C" void __dt__10CTitleLogoFv() {}
+void CTitleLogo::~CTitleLogo() {}
 
-extern "C" void func_802B63A4() {}
+void func_802B63A4(){}
 
-extern "C" void func_802B6434() {}
+void func_802B6434(){}
 
-extern "C" void func_802B64AC() {}
+void func_802B64AC(){}
 
-extern "C" void func_802B64DC() {}
+void func_802B64DC(){}
 
-extern "C" void func_802B6534() {}
+void func_802B6534(){}
 
-extern "C" void func_802B6580() {}
+void func_802B6580(){}
 
-extern "C" void func_802B65C8() {}
+void func_802B65C8(){}
 
 extern "C" void func_802B6660() {}
 
-extern "C" void func_802B6664() {}
+void func_802B6664(){}
 
-extern "C" void func_802B66B8(void) {}
+void func_802B66B8(void){}
 
-extern "C" void func_802B66C4() {}
+void func_802B66C4(){}
 
-extern "C" void func_802B6724() {}
+void func_802B6724(){}
 
-extern "C" void func_802B67BC() {}
+void func_802B67BC(){}
 
-extern "C" void func_802B6854() {}
+void func_802B6854(){}
 
-extern "C" void __ct__CTitleMenu() {}
+void __ct__CTitleMenu(){}
 
-extern "C" void __dt__10CTitleMenuFv() {}
+void CTitleMenu::~CTitleMenu() {}
 
-extern "C" void func_802B6970() {}
+void func_802B6970(){}
 
-extern "C" void func_802B6A90() {}
+void func_802B6A90(){}
 
-extern "C" void func_802B6B08() {}
+void func_802B6B08(){}
 
-extern "C" void func_802B6B38() {}
+void func_802B6B38(){}
 
-extern "C" void func_802B6B90() {}
+void func_802B6B90(){}
 
-extern "C" void func_802B6BDC() {}
+void func_802B6BDC(){}
 
-extern "C" void func_802B6C24() {}
+void func_802B6C24(){}
 
-extern "C" void func_802B6C74() {}
+void func_802B6C74(){}
 
-extern "C" void func_802B6CBC() {}
+void func_802B6CBC(){}
 
-extern "C" void func_802B6D5C() {}
+void func_802B6D5C(){}
 
 extern "C" void func_802B6DF4() {}
 
-extern "C" void func_802B6DF8() {}
+void func_802B6DF8(){}
 
-extern "C" void func_802B6E4C(void) {}
+void func_802B6E4C(void){}
 
-extern "C" void func_802B6E58() {}
+void func_802B6E58(){}
 
-extern "C" void func_802B6EA4() {}
+void func_802B6EA4(){}
 
-extern "C" void func_802B6EF8(void) {}
+void func_802B6EF8(void){}
 
-extern "C" void func_802B6F04() {}
+void func_802B6F04(){}
 
-extern "C" void func_802B6F64() {}
+void func_802B6F64(){}
 
-extern "C" void func_802B6FFC() {}
+void func_802B6FFC(){}
 
-extern "C" void func_802B7094() {}
+void func_802B7094(){}
 
-extern "C" void func_802B712C() {}
+void func_802B712C(){}
 
-extern "C" void func_802B71C4() {}
+void func_802B71C4(){}
 
-extern "C" void func_802B725C() {}
+void func_802B725C(){}
 
-extern "C" void __ct__CTitle() {}
+void __ct__CTitle(){}
 
-extern "C" void __dt__6CTitleFv() {}
+void CTitle::~CTitle() {}
 
-extern "C" void func_802B73D4() {}
+void func_802B73D4(){}
 
-extern "C" void func_802B744C() {}
+void func_802B744C(){}
 
-extern "C" void func_802B74A8() {}
+void func_802B74A8(){}
 
-extern "C" void func_802B74F4() {}
+void func_802B74F4(){}
 
-extern "C" void func_802B7564() {}
+void func_802B7564(){}
 
-extern "C" void func_802B7590() {}
+void func_802B7590(){}
 
-extern "C" void func_802B75B8() {}
+void func_802B75B8(){}
 
-extern "C" void func_802B75D8() {}
+void func_802B75D8(){}
 
-extern "C" void func_802B7630() {}
+void func_802B7630(){}
 
-extern "C" void func_802B7650() {}
+void func_802B7650(){}
 
-extern "C" void func_802B76D4() {}
+void func_802B76D4(){}
 
-extern "C" void func_802B775C() {}
+void func_802B775C(){}
 
-extern "C" void func_802B7800() {}
+void func_802B7800(){}
 
 extern "C" void func_802B7838() {}
 
@@ -127,16 +127,16 @@ extern "C" void func_802B783C(void* thisPtr) {
 
 extern "C" void func_802B7854() {}
 
-extern "C" void func_802B7858() {}
+void func_802B7858(){}
 
-extern "C" void func_802B78A4() {}
+void func_802B78A4(){}
 
 extern "C" void func_802B7920() {}
 
-extern "C" void func_802B7924() {}
+void func_802B7924(){}
 
-extern "C" void func_802B7948() {}
+void func_802B7948(){}
 
-extern "C" void OnFileEvent__6CTitleFP10CEventFile() {}
+void CTitle::OnFileEvent() {}
 
-extern "C" void func_802B7A90__Q22cf14CHelp_ToAttackFv() {}
+void cf::CHelp_ToAttack::func_802B7A90() {}

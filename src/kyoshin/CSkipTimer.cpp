@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSkipTimer.hpp"
 
-extern "C" void __ct__CSkipTimer2() {}
+void __ct__CSkipTimer2(){}
 
 extern "C" u8 func_8029FF1C(CSkipTimer* self) { return self->mActive; }
 
@@ -17,9 +17,9 @@ extern "C" u8 func_8029FF1C(CSkipTimer* self) { return self->mActive; }
 
 
 
-extern "C" void func_8029F6EC() {}
+void func_8029F6EC(){}
 
-extern "C" void func_8029F73C() {}
+void func_8029F73C(){}
 
 extern "C" void func_8029F788(void* self) {
     if (*(u32*)((u8*)self + 0x14) != 0) {
@@ -28,30 +28,30 @@ extern "C" void func_8029F788(void* self) {
     }
 }
 
-extern "C" void func_8029F7A4() {}
+void func_8029F7A4(){}
 
-extern "C" void func_8029F82C() {}
+void func_8029F82C(){}
 
-extern "C" void __ct__CSkipTimer() {}
+void __ct__CSkipTimer(){}
 
-extern "C" void __dt__10CSkipTimerFv() {}
+void CSkipTimer::~CSkipTimer() {}
 
-extern "C" void func_8029FBE0() {}
+void func_8029FBE0(){}
 
-extern "C" void func_8029FCDC() {}
+void func_8029FCDC(){}
 
-extern "C" void func_8029FDBC() {}
+void func_8029FDBC(){}
 
-extern "C" void func_8029FE30() {}
+void func_8029FE30(){}
 
-extern "C" void func_8029FEBC() {}
+void func_8029FEBC(){}
 
-extern "C" void func_8029FF00() {}
+void func_8029FF00(){}
 
 
-extern "C" void func_8029FF24() {}
+void func_8029FF24(){}
 
-extern "C" void func_8029FF98() {}
+void func_8029FF98(){}
 
 extern "C" void func_802A0008(void* obj) {
     unsigned char* bytes = (unsigned char*)obj;
@@ -60,37 +60,37 @@ extern "C" void func_802A0008(void* obj) {
     bytes[0x2b] = 0;
 }
 
-extern "C" void func_802A0028() {}
+void func_802A0028(){}
 
-extern "C" void func_802A005C() {}
+void func_802A005C(){}
 
-extern "C" void func_802A0148() {}
+void func_802A0148(){}
 
-extern "C" void func_802A01F0() {}
+void func_802A01F0(){}
 
-extern "C" void func_802A0234() {}
+void func_802A0234(){}
 
-extern "C" void func_802A0298() {}
+void func_802A0298(){}
 
-extern "C" void func_802A02B8() {}
+void func_802A02B8(){}
 
-extern "C" void func_802A02D4() {}
+void func_802A02D4(){}
 
-extern "C" void func_802A0320() {}
+void func_802A0320(){}
 
-extern "C" void func_802A0368() {}
+void func_802A0368(){}
 
-extern "C" void func_802A03AC() {}
+void func_802A03AC(){}
 
-extern "C" void func_802A041C() {}
+void func_802A041C(){}
 
-extern "C" void func_802A04F0() {}
+void func_802A04F0(){}
 
-extern "C" void func_802A055C() {}
+void func_802A055C(){}
 
-extern "C" void func_802A05E4() {}
+void func_802A05E4(){}
 
-extern "C" void OnFileEvent__10CSkipTimerFP10CEventFile() {}
+void CSkipTimer::OnFileEvent() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_802A07D8() {}
+void sinit_802A07D8(){}

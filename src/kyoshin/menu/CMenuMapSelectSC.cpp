@@ -4,11 +4,11 @@
 #include "kyoshin/menu/CMenuMapSelectSC.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuMapSelectSC() {}
+void __ct__CMenuMapSelectSC(){}
 
-extern "C" void __dt__16CMenuMapSelectSCFv(void* self, int deletionFlag) {}
+void CMenuMapSelectSC::~CMenuMapSelectSC(int deletionFlag) const {}
 
-extern "C" void Init__16CMenuMapSelectSCFv() {}
+void CMenuMapSelectSC::Init() const {}
 
 extern "C" void func_80251294(void* r3, const void* r4) {
     struct S { int dummy; int a; int b; int c; int d; unsigned char e; unsigned char f; };
@@ -22,27 +22,27 @@ extern "C" void func_80251294(void* r3, const void* r4) {
     dst->f = src->f;
 }
 
-extern "C" void Term__16CMenuMapSelectSCFv() {}
+void CMenuMapSelectSC::Term() const {}
 
-extern "C" void Move__16CMenuMapSelectSCFv() {}
+void CMenuMapSelectSC::Move() const {}
 
-extern "C" void cbRenderBefore__16CMenuMapSelectSCFv(void* self) {}
+void CMenuMapSelectSC::cbRenderBefore() const {}
 
-extern "C" void func_802514D4() {}
+void func_802514D4(){}
 
-extern "C" void func_80251550() {}
+void func_80251550(){}
 
-extern "C" void func_80251560() {}
+void func_80251560(){}
 
-extern "C" void func_802515B8() {}
+void func_802515B8(){}
 
-extern "C" void func_80251628() {}
+void func_80251628(){}
 
-extern "C" void func_802516DC() {}
+void func_802516DC(){}
 
-extern "C" void func_80251D4C() {}
+void func_80251D4C(){}
 
-extern "C" void func_80251D94() {}
+void func_80251D94(){}
 
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.
 // IScnRender is a non-primary base at offset 0x58 within CMenuMapSelectSC.

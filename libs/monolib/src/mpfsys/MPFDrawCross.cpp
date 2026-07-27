@@ -3,4 +3,4 @@
 
 #include <harness_catalog.h>
 
-extern "C" void getInstance__Q26mpfsys12MPFDrawCrossFv() {}
+void mpfsys::MPFDrawCross::getInstance() {}

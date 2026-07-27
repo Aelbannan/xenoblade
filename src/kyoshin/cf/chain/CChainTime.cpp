@@ -3,10 +3,10 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__Q22cf10CChainTimeFv() {}
+cf::CChainTime::CChainTime() {}
 
-extern "C" void func_8027CE30__Q22cf10CChainTimeFv() {}
+void cf::CChainTime::func_8027CE30() {}
 
-extern "C" void func_8027CEB0() {}
+void func_8027CEB0(){}
 
-extern "C" void func_8027CF3C() {}
+void func_8027CF3C(){}

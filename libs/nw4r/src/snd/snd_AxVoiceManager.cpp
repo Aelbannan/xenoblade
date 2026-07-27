@@ -13,7 +13,7 @@ AxVoiceManager& AxVoiceManager::GetInstance() {
 
 AxVoiceManager::AxVoiceManager() : mInitialized(false) {}
 
-extern "C" u32 GetRequiredMemSize__Q44nw4r3snd6detail14AxVoiceManagerFi(int) { return 0; }
+u32 GetRequiredMemSize__Q44nw4r3snd6detail14AxVoiceManagerFi(int){ return 0; }
 
 u32 AxVoiceManager::GetRequiredMemSize() {
     return (AXGetMaxVoices() + VOICE_MARGIN) * sizeof(AxVoice);

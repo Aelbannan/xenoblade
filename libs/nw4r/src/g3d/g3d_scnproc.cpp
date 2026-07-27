@@ -71,6 +71,6 @@ void ScnProc::G3dProc(u32 task, u32 param, void* pInfo) {
 } // namespace g3d
 } // namespace nw4r
 
-extern "C" void IsDerivedFrom__Q34nw4r3g3d7ScnProcCFQ44nw4r3g3d6G3dObj7TypeObj() {}
-extern "C" void GetTypeName__Q34nw4r3g3d7ScnProcCFv() {}
+void IsDerivedFrom__Q34nw4r3g3d7ScnProcCFQ44nw4r3g3d6G3dObj7TypeObj(){}
+void GetTypeName__Q34nw4r3g3d7ScnProcCFv(){}
 // Defined inline via NW4R_G3D_RTTI_DECL_DERIVED macros

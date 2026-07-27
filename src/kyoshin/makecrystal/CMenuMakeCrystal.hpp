@@ -19,4 +19,5 @@ public:
     void Term();
     void Move();
     void cbRenderBefore();
+    CMenuMakeCrystal();
 };

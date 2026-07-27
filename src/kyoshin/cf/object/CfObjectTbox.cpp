@@ -3,11 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__Q22cf12CfObjectTboxFv() {}
+cf::CfObjectTbox::CfObjectTbox() {}
 
-extern "C" void __dt__Q22cf12CfObjectTboxFv() {}
+void cf::CfObjectTbox::~CfObjectTbox() {}
 
-extern "C" void func_801F8DD0__Q22cf12CfObjectTboxFv() {}
+void cf::CfObjectTbox::func_801F8DD0() {}
 
 extern "C" void func_801F8E20(void* self) {
     extern void func_802753F8(void*);

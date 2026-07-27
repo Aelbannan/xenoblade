@@ -33,4 +33,5 @@ public:
     /* 0x4E */ u8 mSlotStates[8];
     /* 0x56 */ u8 mDataFlag;
     /* 0x57 */ u8 mIsActive;
+    CMCCrystalList();
 };

@@ -19,8 +19,8 @@ extern "C" u8 func_8022D09C(void* self) { return ((u8*)self)[0x27]; }
 
 
 
-extern "C" void func_8022D1F8() {}
+void func_8022D1F8(){}
 
-extern "C" void func_8022D244() {}
+void func_8022D244(){}
 
-extern "C" void OnFileEvent__12CExchangeWinFP10CEventFile() {}
+void CExchangeWin::OnFileEvent() {}

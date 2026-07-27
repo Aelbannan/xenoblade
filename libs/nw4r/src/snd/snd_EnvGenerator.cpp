@@ -153,4 +153,4 @@ int EnvGenerator::CalcDecibelSquare(int scale) {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void SetHold__Q44nw4r3snd6detail12EnvGeneratorFi(int) {}
+void SetHold__Q44nw4r3snd6detail12EnvGeneratorFi(int){}

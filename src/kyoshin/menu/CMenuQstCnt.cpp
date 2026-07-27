@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CMenuQstCnt() {}
+void __ct__CMenuQstCnt(){}
 
 extern "C" void func_8022646C(void* self, short a, short b, unsigned char c, unsigned char d, unsigned char e)
 {
@@ -34,19 +34,19 @@ extern "C" void func_80226484(void* dst, const void* src) {
     *((unsigned char*)dst + 6) = tmp4;
 }
 
-extern "C" void __dt__11CMenuQstCntFv(void* self) {}
+void CMenuQstCnt::~CMenuQstCnt() {}
 
-extern "C" void Init__11CMenuQstCntFv() {}
+void CMenuQstCnt::Init() {}
 
-extern "C" void Term__11CMenuQstCntFv() {}
+void CMenuQstCnt::Term() {}
 
-extern "C" void Move__11CMenuQstCntFv() {}
+void CMenuQstCnt::Move() {}
 
-extern "C" void cbRenderBefore__11CMenuQstCntFv(void* self) {}
+void CMenuQstCnt::cbRenderBefore() {}
 
-extern "C" void func_802269D8() {}
+void func_802269D8(){}
 
-extern "C" void func_80226B94() {}
+void func_80226B94(){}
 
 struct Unk80226BA4 {
     unsigned char pad[0x64];
@@ -61,13 +61,13 @@ extern "C" void func_80226BA4() {
     }
 }
 
-extern "C" void func_80226BBC() {}
+void func_80226BBC(){}
 
-extern "C" void func_80226C18() {}
+void func_80226C18(){}
 
-extern "C" void func_80226C5C() {}
+void func_80226C5C(){}
 
-extern "C" void func_80226C88() {}
+void func_80226C88(){}
 
 extern "C" void func_80226E28(void *dest, const void *src) {
     unsigned char *d = (unsigned char *)dest;
@@ -79,7 +79,7 @@ extern "C" void func_80226E28(void *dest, const void *src) {
     d[6] = s[6];
 }
 
-extern "C" void func_80226E54() {}
+void func_80226E54(){}
 
 extern "C" void func_80226F94(void* self) { ((void(*)(void*))__dt__11CMenuQstCntFv)((char*)self - 0x6c); }
 
@@ -87,7 +87,7 @@ extern "C" void func_80226F9C(void* self) { ((void(*)(void*))cbRenderBefore__11C
 
 extern "C" void func_80226FA4(void* self) { ((void(*)(void*))__dt__11CMenuQstCntFv)((char*)self - 0x70); }
 
-extern "C" void func_80226FAC() {}
+void func_80226FAC(){}
 
 extern "C" void func_8022700C(void* ptr) {
     unsigned char* p = (unsigned char*)ptr;
@@ -100,11 +100,11 @@ extern "C" void func_8022700C(void* ptr) {
     p[7] = 0;
 }
 
-extern "C" void __dt__80227030() {}
+void __dt__80227030(){}
 
-extern "C" void __dt__80227070() {}
+void __dt__80227070(){}
 
-extern "C" void func_802270CC() {}
+void func_802270CC(){}
 
 extern "C" void func_80227224(void *dst, const void *src) {
     unsigned short *d16 = (unsigned short*)dst;
@@ -120,11 +120,11 @@ extern "C" void func_80227224(void *dst, const void *src) {
     d8[7] = s8[7];
 }
 
-extern "C" void func_80227260() {}
+void func_80227260(){}
 
-extern "C" void func_80227660() {}
+void func_80227660(){}
 
-extern "C" void func_8022769C() {}
+void func_8022769C(){}
 
 extern "C" unsigned short func_802276D8(unsigned char* p) {
     short v = *(short*)(p + 0x2002);
@@ -134,6 +134,6 @@ extern "C" unsigned short func_802276D8(unsigned char* p) {
     return (unsigned short)v;
 }
 
-extern "C" void func_802276F4() {}
+void func_802276F4(){}
 
-extern "C" void func_80227710() {}
+void func_80227710(){}

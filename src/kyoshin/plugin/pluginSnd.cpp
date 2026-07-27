@@ -3,39 +3,39 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void playBgm() {}
+void playBgm(){}
 
-extern "C" void stopBgm() {}
+void stopBgm(){}
 
-extern "C" void setFieldBgm() {}
+void setFieldBgm(){}
 
-extern "C" void setTownBgm() {}
+void setTownBgm(){}
 
-extern "C" void stopFieldBgm() {}
+void stopFieldBgm(){}
 
-extern "C" void stopTownBgm() {}
+void stopTownBgm(){}
 
-extern "C" void forceFieldBgm() {}
+void forceFieldBgm(){}
 
-extern "C" void setVolBgm() {}
+void setVolBgm(){}
 
-extern "C" void playVoice() {}
+void playVoice(){}
 
-extern "C" void stopVoice() {}
+void stopVoice(){}
 
-extern "C" void waitVoice() {}
+void waitVoice(){}
 
-extern "C" void playSeCommon() {}
+void playSeCommon(){}
 
-extern "C" void playSeMap() {}
+void playSeMap(){}
 
-extern "C" void volSeMap() {}
+void volSeMap(){}
 
-extern "C" void stopSeCommon() {}
+void stopSeCommon(){}
 
-extern "C" void stopSeMap() {}
+void stopSeMap(){}
 
-extern "C" void seCamPos() {}
+void seCamPos(){}
 
 extern "C" int clearCamPos() {
     extern unsigned char lbl_eu_8066443A;

@@ -317,4 +317,4 @@ void Controller::clrBatteryFlag() {
 
 } // namespace homebutton
 
-extern "C" void updateSound__Q210homebutton10ControllerFv() {}
+void updateSound__Q210homebutton10ControllerFv(){}

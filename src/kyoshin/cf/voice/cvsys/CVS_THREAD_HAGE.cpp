@@ -5,15 +5,15 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__802A6E84() {}
+void __ct__802A6E84(){}
 
-extern "C" void func_802A6F8C() {}
+void func_802A6F8C(){}
 
-extern "C" void func_802A70C8() {}
+void func_802A70C8(){}
 
-extern "C" void func_802A718C() {}
+void func_802A718C(){}
 
-extern "C" void func_802A71D4() {}
+void func_802A71D4(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; HAGE subclass returns 0xF0 (240).

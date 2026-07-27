@@ -28,6 +28,9 @@ public:
     u8 mByte44;                               // 0x44
     u8 _pad45[3];                             // 0x45
     f32 mFloat48;                             // 0x48
+    CPcKizunagram();
+    virtual ~CPcKizunagram();
+    void OnFileEvent();
 };
 
 // C-linkage accessors matching retail unmangled symbols.

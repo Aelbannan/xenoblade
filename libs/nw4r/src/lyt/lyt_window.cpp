@@ -670,4 +670,4 @@ Material* Window::GetFrameMaterial(u32 idx) const {
 } // namespace lyt
 } // namespace nw4r
 
-extern "C" int GetRuntimeTypeInfo__Q34nw4r3lyt6WindowCFv() { return 0; }
+int GetRuntimeTypeInfo__Q34nw4r3lyt6WindowCFv(){ return 0; }

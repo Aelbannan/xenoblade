@@ -65,6 +65,6 @@ void StrmSound::DetachTempSpecialHandle() {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void UpdateParam__Q44nw4r3snd6detail9StrmSoundFv() {}
-extern "C" void OnUpdatePlayerPriority__Q44nw4r3snd6detail9StrmSoundFv() {}
+void UpdateParam__Q44nw4r3snd6detail9StrmSoundFv(){}
+void OnUpdatePlayerPriority__Q44nw4r3snd6detail9StrmSoundFv(){}
 

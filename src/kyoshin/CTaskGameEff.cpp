@@ -3,23 +3,23 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void __ct__CTaskGameEff() {}
+void __ct__CTaskGameEff(){}
 
-extern "C" void __dt__80044BB0() {}
+void __dt__80044BB0(){}
 
-extern "C" void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv() {}
+void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(){}
 
-extern "C" void __dt___reslist_base_CScn() {}
+void __dt___reslist_base_CScn(){}
 
-extern "C" void __dt__reslist_CScn() {}
+void __dt__reslist_CScn(){}
 
-extern "C" void __dt__12CTaskGameEffFv() {}
+void CTaskGameEff::~CTaskGameEff() {}
 
 extern "C" bool func_80044DF4() { return false; }
 
-extern "C" void Init__12CTaskGameEffFv() {}
+void CTaskGameEff::Init() {}
 
-extern "C" void Term__12CTaskGameEffFv() {}
+void CTaskGameEff::Term() {}
 
 extern "C" void Move__12CTaskGameEffFv(void* self) {
     extern void func_804CBB14(void*, float);
@@ -32,7 +32,7 @@ extern "C" void Move__12CTaskGameEffFv(void* self) {
     }
 }
 
-extern "C" void func_80044FBC__FUl() {}
+void func_80044FBC__FUl(){}
 
 extern "C" void func_804CBB60(void*);
 extern u8 lbl_eu_8065FC18[];
@@ -40,31 +40,31 @@ extern "C" void cbRenderBefore__12CTaskGameEffFv() {
     func_804CBB60(lbl_eu_8065FC18);
 }
 
-extern "C" void func_80045044() {}
+void func_80045044(){}
 
 extern "C" void func_800450C8() {}
 
-extern "C" void func_800450CC() {}
+void func_800450CC(){}
 
-extern "C" void func_8004513C() {}
+void func_8004513C(){}
 
-extern "C" void func_800451D8() {}
+void func_800451D8(){}
 
-extern "C" void func_80045284() {}
+void func_80045284(){}
 
-extern "C" void func_800452EC() {}
+void func_800452EC(){}
 
-extern "C" void func_800453EC() {}
+void func_800453EC(){}
 
 extern "C" void Draw__12CTaskGameEffFv() {}
 
-extern "C" bool func_80045540() { return false; }
+bool func_80045540(){ return false; }
 
-extern "C" bool func_80045548() { return false; }
+bool func_80045548(){ return false; }
 
-extern "C" bool func_80045550() { return false; }
+bool func_80045550(){ return false; }
 
-extern "C" bool func_80045558() { return false; }
+bool func_80045558(){ return false; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.

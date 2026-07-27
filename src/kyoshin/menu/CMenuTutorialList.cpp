@@ -4,37 +4,37 @@
 #include "kyoshin/menu/CMenuTutorialList.hpp"
 #include <types.h>
 
-extern "C" void __ct__CMenuTutorialList() {}
+void __ct__CMenuTutorialList(){}
 
-extern "C" void __dt__17CMenuTutorialListFv(void* self) {}
+void CMenuTutorialList::~CMenuTutorialList() {}
 
-extern "C" void Init__17CMenuTutorialListFv() {}
+void CMenuTutorialList::Init() {}
 
-extern "C" void Term__17CMenuTutorialListFv() {}
+void CMenuTutorialList::Term() {}
 
-extern "C" void Move__17CMenuTutorialListFv() {}
+void CMenuTutorialList::Move() {}
 
-extern "C" void cbRenderBefore__17CMenuTutorialListFv(void* self) {}
+void CMenuTutorialList::cbRenderBefore() {}
 
-extern "C" void func_802AC494() {}
+void func_802AC494(){}
 
-extern "C" void func_802AC510() {}
+void func_802AC510(){}
 
-extern "C" void func_802AC520() {}
+void func_802AC520(){}
 
-extern "C" void func_802AC598() {}
+void func_802AC598(){}
 
-extern "C" void func_802AC5E8() {}
+void func_802AC5E8(){}
 
-extern "C" void func_802AC8A4() {}
+void func_802AC8A4(){}
 
-extern "C" void func_802AC8F4() {}
+void func_802AC8F4(){}
 
-extern "C" void func_802AC970() {}
+void func_802AC970(){}
 
-extern "C" void func_802ACA38() {}
+void func_802ACA38(){}
 
-extern "C" void func_802ACB50() {}
+void func_802ACB50(){}
 
 // --- FULL_MATCH thunks ---
 // These are IScnRender vtable trampolines.  When CMenuTutorialList inherits from

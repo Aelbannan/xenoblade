@@ -13,5 +13,11 @@ namespace cf{
         //0x054-0x058 IWorkEvent
         //0x058-0x05C IScnRender
         char unk05C[0x194 - 0x05C]; //0x05C
+    virtual ~CfNandManager();
+    void Term();
+    void Move();
+    void func_8023E4D4();
+    void create();
+    void cbRenderBefore();
     }; //size = 0x194
 } //namespace cf

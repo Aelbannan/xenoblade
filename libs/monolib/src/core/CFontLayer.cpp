@@ -6,21 +6,21 @@
 #include "monolib/core/CFontLayer.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 
-extern "C" void __ct__CFontLayer() {}
+void __ct__CFontLayer(){}
 
-extern "C" void __dt__10CFontLayerFv() {}
+void CFontLayer::~CFontLayer() const {}
 
-extern "C" void func_80449078__10CFontLayerFv() {}
+void CFontLayer::func_80449078() const {}
 
-extern "C" void func_80449148__10CFontLayerFv(void) {}
+void CFontLayer::func_80449148(void) const {}
 
-extern "C" void func_8044914C__10CFontLayerFv(void) {}
+void CFontLayer::func_8044914C(void) const {}
 
-extern "C" void func_80449150__10CFontLayerFv(void) {}
+void CFontLayer::func_80449150(void) const {}
 
-extern "C" void func_80449154__10CFontLayerFv(void) {}
+void CFontLayer::func_80449154(void) const {}
 
-extern "C" void func_80449158__10CFontLayerFv(void) {}
+void CFontLayer::func_80449158(void) const {}
 
 // FULL_MATCH: Pure tail call to CDeviceFont::func_80452CF8 (same this).
 // The 'channel' parameter is accepted but unused in this forwarding path.
@@ -31,4 +31,4 @@ void CFontLayer::fontFlush(int channel) {
     reinterpret_cast<CDeviceFont*>(this)->func_80452CF8();
 }
 
-extern "C" void func_80449160__10CFontLayerFv(void) {}
+void CFontLayer::func_80449160(void) const {}

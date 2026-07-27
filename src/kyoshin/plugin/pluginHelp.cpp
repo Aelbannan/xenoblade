@@ -3,11 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_802AEBC4() {}
+void func_802AEBC4(){}
 
-extern "C" void func_802AEC30() {}
+void func_802AEC30(){}
 
-extern "C" void func_802AEC9C() {}
+void func_802AEC9C(){}
 
 extern "C" void pluginHelpRegist() {
     extern void vmPluginRegist(void*, void*);

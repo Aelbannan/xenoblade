@@ -3,9 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-extern "C" void func_80185760() {}
+void func_80185760(){}
 
-extern "C" void func_801857A8() {}
+void func_801857A8(){}
 
 extern "C" {
 extern const char lbl_eu_80503818[];

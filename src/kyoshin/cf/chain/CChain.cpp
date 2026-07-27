@@ -6,13 +6,13 @@ namespace cf {
     }
 }
 
-extern "C" void func_80277154() {}
-extern "C" void func_80277A7C() {}
-extern "C" void func_80277B34(void) {}
+void func_80277154(){}
+void func_80277A7C(){}
+void func_80277B34(void){}
 extern "C" void func_80278E00() {}
 extern "C" int func_80278E04(void* self) { return 0; }
-extern "C" void func_80278F5C() {}
-extern "C" void func_80278F70() {}
+void func_80278F5C(){}
+void func_80278F70(){}
 extern "C" void func_802795D0() {}
 extern "C" bool func_8027B770(void*);
 
@@ -36,7 +36,7 @@ extern "C" void func_80279B24(void* _this, int val) {
     *(int*)_this = val;
     *(unsigned short*)((char*)_this + 0x6C) = 0;
 }
-extern "C" void func_8027A324() {}
+void func_8027A324(){}
 extern "C" int func_8027A584(void* self) { return 0; }
 extern "C" int func_8027A9D0(void* self) { return 0; }
 extern "C" int func_8027A9D8(void* self) { return 0; }
@@ -48,31 +48,31 @@ extern "C" int func_8027A9FC(void* self) { return 0; }
 extern "C" int func_8027AA04(void* self) { return 0; }
 extern "C" void func_8027AA0C() {}
 
-extern "C" void func_80276C30() {}
-extern "C" void func_80276C58() {}
-extern "C" void func_80276CAC() {}
-extern "C" void func_80276D30() {}
-extern "C" void func_8027711C() {}
-extern "C" void func_8027728C() {}
-extern "C" void func_8027732C() {}
-extern "C" void func_802773EC() {}
-extern "C" void func_8027750C() {}
-extern "C" void func_80277B38() {}
-extern "C" void func_80278E0C() {}
-extern "C" void func_80278F84() {}
-extern "C" void func_80279214() {}
-extern "C" void func_8027936C() {}
-extern "C" void func_802795D4() {}
-extern "C" void func_80279694() {}
-extern "C" void func_80279778() {}
-extern "C" void func_8027990C() {}
-extern "C" void func_802799F0() {}
-extern "C" void func_80279A4C() {}
-extern "C" void func_80279B34() {}
-extern "C" void func_80279DC0() {}
-extern "C" void func_80279E48() {}
-extern "C" void func_80279F6C() {}
-extern "C" void func_8027A024() {}
-extern "C" void func_8027A338() {}
-extern "C" void func_8027A58C() {}
-extern "C" void func_8027A8C8() {}
+void func_80276C30(){}
+void func_80276C58(){}
+void func_80276CAC(){}
+void func_80276D30(){}
+void func_8027711C(){}
+void func_8027728C(){}
+void func_8027732C(){}
+void func_802773EC(){}
+void func_8027750C(){}
+void func_80277B38(){}
+void func_80278E0C(){}
+void func_80278F84(){}
+void func_80279214(){}
+void func_8027936C(){}
+void func_802795D4(){}
+void func_80279694(){}
+void func_80279778(){}
+void func_8027990C(){}
+void func_802799F0(){}
+void func_80279A4C(){}
+void func_80279B34(){}
+void func_80279DC0(){}
+void func_80279E48(){}
+void func_80279F6C(){}
+void func_8027A024(){}
+void func_8027A338(){}
+void func_8027A58C(){}
+void func_8027A8C8(){}

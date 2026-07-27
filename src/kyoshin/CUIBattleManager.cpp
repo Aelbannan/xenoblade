@@ -621,15 +621,15 @@ mark_remove:
 done:;
 }
 
-extern "C" void func_8012E6DC() {}
-extern "C" void func_8012F29C() {}
+void func_8012E6DC(){}
+void func_8012F29C(){}
 extern "C" void func_8012F2BC() {}
 extern "C" void func_8012F860() {
     if (lbl_eu_80664048 != 0) {
         reinterpret_cast<unsigned char *>(lbl_eu_80664048)[0x82] |= 0x3b;
     }
 }
-extern "C" void func_8012F87C() {}
+void func_8012F87C(){}
 extern "C" unsigned char func_8012FA5C() { return lbl_eu_80664048 == 0 ? 0 : *(unsigned char *)((char *)lbl_eu_80664048 + 0xe8); }
 extern "C" void* func_8012FA78() { void* p = lbl_eu_80664048; if (p == 0) return 0; if (*(unsigned char*)((char*)p + 0xe8) != 0) return (char*)p + 0xb8; return 0; }
 extern "C" int func_8012FDBC() { if (lbl_eu_80664048 == 0) return -1; return *(int*)((char*)lbl_eu_80664048 + 0xec); }
@@ -637,24 +637,23 @@ extern "C" void Draw__Q216CUIBattleManager5CTestFv() {}
 extern "C" void Move__Q216CUIBattleManager5CTestFv() {}
 extern "C" void Term__Q216CUIBattleManager5CTestFv() {}
 extern "C" void Init__Q216CUIBattleManager5CTestFv() {}
-extern "C" void __dt__16CUIBattleManagerFv(void*);
-
+void __dt__16CUIBattleManagerFv(void*);
 extern "C" void func_8012FF6C(void* p) {
     __dt__16CUIBattleManagerFv((char*)p - 0x54);
 }
 
-extern "C" void __ct__CUIBattleManager() {}
-extern "C" void func_8012E630() {}
+void __ct__CUIBattleManager(){}
+void func_8012E630(){}
 // Forward declaration - used by OnFileEvent this-adjusting thunk
-extern "C" void func_8012F2C0(void*, void*);
-extern "C" void func_8012F558() {}
-extern "C" void func_8012F5F8() {}
-extern "C" void func_8012F750() {}
-extern "C" void func_8012FAA8() {}
-extern "C" void func_8012FC74() {}
-extern "C" void func_8012FD04() {}
-extern "C" void func_8012FD60() {}
-extern "C" void __dt__Q216CUIBattleManager5CTestFv() {}
+void func_8012F2C0(void*, void*);
+void func_8012F558(){}
+void func_8012F5F8(){}
+void func_8012F750(){}
+void func_8012FAA8(){}
+void func_8012FC74(){}
+void func_8012FD04(){}
+void func_8012FD60(){}
+void __dt__Q216CUIBattleManager5CTestFv(){}
 
 // This-adjusting thunk: subi r3, r3, 0x54; b func_8012F2C0
 // MWCC does not generate this automatically for non-dtor virtual overrides.

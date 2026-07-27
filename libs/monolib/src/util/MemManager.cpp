@@ -1067,7 +1067,7 @@ void operator delete[](void* p) {
 
 #pragma ecplusplus off
 
-extern "C" void __dt__Q33mtl10MemManager9MemRegionFv() {}
+void __dt__Q33mtl10MemManager9MemRegionFv(){}
 extern "C" int __nw__FUl() { return 0; }
-extern "C" void __dl__FPv() {}
-extern "C" void __dla__FPv() {}
+void __dl__FPv(){}
+void __dla__FPv(){}

@@ -3,24 +3,24 @@
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp"
 
-extern "C" void __ct__802A5ED4() {}
+void __ct__802A5ED4(){}
 
-extern "C" void func_802A617C() {}
+void func_802A617C(){}
 
-extern "C" void func_802A6408() {}
+void func_802A6408(){}
 
-extern "C" void func_802A658C() {}
+void func_802A658C(){}
 
-extern "C" void func_802A6650() {}
+void func_802A6650(){}
 
-extern "C" void func_802A6718() {}
+void func_802A6718(){}
 
-extern "C" void func_802A6760() {}
+void func_802A6760(){}
 
 // Virtual override: returns the allocation size for CVS_THREAD_EHP instances.
 // Caller passes an unused implicit this pointer per EABI; the body ignores it.
 extern "C" int func_802A6818() { return 0xB4; }
 
-extern "C" void func_802A6820() {}
+void func_802A6820(){}
 
-extern "C" void func_802A6958() {}
+void func_802A6958(){}

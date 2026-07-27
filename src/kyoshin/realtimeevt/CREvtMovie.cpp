@@ -22,14 +22,14 @@ extern "C" void func_80294CB0(void) {}
 // NOT_STARTED stubs below -- replace with proper implementations during decomp
 // ============================================================================
 
-extern "C" void __ct__CREvtMovie() {}
+void __ct__CREvtMovie(){}
 
-extern "C" void __ct__802948D0() {}
+void __ct__802948D0(){}
 
-extern "C" void func_8029493C() {}
+void func_8029493C(){}
 
-extern "C" void func_80294980() {}
+void func_80294980(){}
 
-extern "C" void func_80294A70() {}
+void func_80294A70(){}
 
-extern "C" void func_80294BA4() {}
+void func_80294BA4(){}

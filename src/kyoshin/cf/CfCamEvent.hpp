@@ -10,8 +10,8 @@ class CfCamEvent {
 public:
     u8 unk0[8];
     s32 unk8;
+
+    char** initCamIntfInstances();
 };
 
 } // namespace cf
-
-extern "C" char** CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self);

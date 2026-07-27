@@ -123,8 +123,8 @@ extern "C" void cfCam_setOrClearUnk04Bits(void* r3, int r4, int r5) {
         self->unk04 &= ~r4;
     }
 }
-extern "C" void cfCam_clearUnk04Bits(unsigned int* p, unsigned int mask) {
-    p[1] &= ~mask;
+void cf::CfCamFollow::clearUnk04Bits(unsigned int mask) {
+    unk04 &= ~mask;
 }
 extern "C" void __ct__Q22cf5CfCamFv() {}
 extern "C" void cfCam_stub_8006BEC0(void* self) {}
@@ -192,8 +192,8 @@ extern "C" void* cfCam_getUnk9CPtr(void* ptr) { return (char*)ptr + 0x9c; }
 extern "C" bool cfCam_testUnk04Bit8(void* param_1) {
     return ((bool (*)(void*, int))cfCam_testUnk04Bits)(param_1, 256);
 }
-extern "C" unsigned int cfCam_getBit26_0x4EC(unsigned char* self) {
-    return (*(unsigned int*)(self + 0x4ec) >> 26) & 1;
+unsigned int cf::CfCamFollow::getBit26_0x4EC() {
+    return (*(unsigned int*)((u8*)this + 0x4ec) >> 26) & 1;
 }
 extern "C" int cfCam_getBit24_0x4EC(void* p) {
     return (*(unsigned int*)((char*)p + 0x4EC) >> 24) & 1;
@@ -205,9 +205,8 @@ extern "C" uint32_t cfCam_getBit25_0x4EC(void* self) {
 extern "C" int cfCam_getBit23_0x4EC(void* self) {
     return (*(const unsigned int*)((const char*)self + 0x4ec) >> 23) & 1;
 }
-struct CfCam;
-extern "C" float cfCam_getUnk4FC(CfCam* self) {
-    return *(float *)((char *)self + 0x4FC);
+float cf::CfCam::getUnk4FC() {
+    return *(float *)((char *)this + 0x4FC);
 }
 extern "C" float cfCam_getUnk4F8(void* self) { return *(float*)((char*)self + 0x4f8); }
 extern "C" float cfCam_getUnk508(const void* self) {

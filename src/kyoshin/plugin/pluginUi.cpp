@@ -9,7 +9,9 @@ void ui_mesGetArts(VMThread* pThread) {
     int num2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
 }
 
-bool func_800459FC(const unsigned int* self, unsigned int mask) { return (self[2] & mask) != 0; }
+bool UiFlags::func_800459FC(u32 mask) const {
+    return (this->flags & mask) != 0;
+}
 void pluginUiRegist() {
     extern void vmPluginRegist(void*, void*);
     extern char lbl_eu_804FABF0[];

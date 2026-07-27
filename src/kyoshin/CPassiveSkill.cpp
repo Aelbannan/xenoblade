@@ -14,7 +14,7 @@ void func_80268518(void* self);
 void func_80268594(void* self);
 void func_80268C38(void* self);
 
-void UI_CPassiveSkill_thunk28_68594(UI_CPassiveSkill* self) { ((void(*)(void*))func_80268594)((char*)self + 0x28); }
+void UI_CPassiveSkill::thunk28_68594() { ((void(*)(void*))func_80268594)((char*)this + 0x28); }
 
 
 
@@ -230,30 +230,30 @@ void func_8026DA88(){}
 void func_8026DAD0(){}
 
 
-void UI_CPassiveSkill_thunk28_67CE0(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267CE0)((char*)self + 0x28); }
+void UI_CPassiveSkill::thunk28_67CE0() { ((void(*)(void*))func_80267CE0)((char*)this + 0x28); }
 
-void UI_CPassiveSkill_thunk28_67E2C(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267E2C)((char*)self + 0x28); }
+void UI_CPassiveSkill::thunk28_67E2C() { ((void(*)(void*))func_80267E2C)((char*)this + 0x28); }
 
-void UI_CPassiveSkill_thunk28_67F88(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267F88)((char*)self + 0x28); }
+void UI_CPassiveSkill::thunk28_67F88() { ((void(*)(void*))func_80267F88)((char*)this + 0x28); }
 
-void UI_CPassiveSkill_thunk28_68250(UI_CPassiveSkill* self) { ((void(*)(void*))func_80268250)((char*)self + 0x28); }
+void UI_CPassiveSkill::thunk28_68250() { ((void(*)(void*))func_80268250)((char*)this + 0x28); }
 
-void UI_CPassiveSkill_thunk28_67BA0(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267BA0)((char*)self + 0x28); }
+void UI_CPassiveSkill::thunk28_67BA0() { ((void(*)(void*))func_80267BA0)((char*)this + 0x28); }
 
-void UI_CPassiveSkill_thunk28_67C44(UI_CPassiveSkill* self) { ((void(*)(void*))func_80267C44)((char*)self + 0x28); }
+void UI_CPassiveSkill::thunk28_67C44() { ((void(*)(void*))func_80267C44)((char*)this + 0x28); }
 
-void UI_CPassiveSkill_thunk28_68518(UI_CPassiveSkill* self) { ((void(*)(void*))func_80268518)((char*)self + 0x28); }
+void UI_CPassiveSkill::thunk28_68518() { ((void(*)(void*))func_80268518)((char*)this + 0x28); }
 
 void func_8026DB74(){}
 
-void UI_CPassiveSkill_setByte180(UI_CPassiveSkill* self, u8 val) { self->field_180 = val; }
+void UI_CPassiveSkill::setByte180(u8 val) { field_180 = val; }
 
-void UI_CPassiveSkill_thunk28_68C38(UI_CPassiveSkill* self) { ((void(*)(void*))func_80268C38)((char*)self + 0x28); }
+void UI_CPassiveSkill::thunk28_68C38() { ((void(*)(void*))func_80268C38)((char*)this + 0x28); }
 
 void func_8026DCA0(){}
 
 u8 CSysWin_getUnk34(void* self);
-void UI_CPassiveSkill_thunk1b8_CSysWin_getUnk34(UI_CPassiveSkill* self) { CSysWin_getUnk34((char*)self + 0x1b8); }
+void UI_CPassiveSkill::thunk1b8_CSysWin_getUnk34() { CSysWin_getUnk34((char*)this + 0x1b8); }
 
 void func_8026DCF4(){}
 

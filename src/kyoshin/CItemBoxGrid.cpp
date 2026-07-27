@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
 
-u8 GetField61(u8* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_61; }
+u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_61; }
 
 
 
@@ -181,7 +181,7 @@ void func_801CB0FC(){}
 
 void func_801CB184(){}
 
-u8 GetField549(u8* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_549; }
+u8 CItemBoxGrid::GetField549() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_549; }
 
 void func_801CB1E4(){}
 
@@ -191,13 +191,13 @@ void func_801CB38C(){}
 
 void func_801CB480(){}
 
-void PushToList(unsigned char *self, unsigned char val) {
-    unsigned char count = self[0x6e];
+void CItemBoxGrid::PushToList(unsigned char val) {
+    unsigned char count = reinterpret_cast<unsigned char*>(this)[0x6e];
     if (count >= 0xc) {
         return;
     }
-    self[0x62 + count] = val;
-    self[0x6e] = count + 1;
+    reinterpret_cast<unsigned char*>(this)[0x62 + count] = val;
+    reinterpret_cast<unsigned char*>(this)[0x6e] = count + 1;
 }
 
 void func_801CB4E4(){}
@@ -235,7 +235,7 @@ void func_801CDB94(){}
 
 void func_801CDBE0(){}
 
-u8 GetField52D(u8* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_52D; }
+u8 CItemBoxGrid::GetField52D() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_52D; }
 
 void func_801CDC40(){}
 

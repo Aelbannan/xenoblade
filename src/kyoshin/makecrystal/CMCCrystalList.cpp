@@ -14,18 +14,18 @@ void func_802228B8(){}
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; } }
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
-void func_80222964(unsigned char* self, nw4r::lyt::DrawInfo* drawInfo)
+void CMCCrystalList::func_80222964(nw4r::lyt::DrawInfo* drawInfo)
 {
-    if (self[0x4c] != 0) {
-        func_80137038(*reinterpret_cast<nw4r::lyt::Layout**>(self + 0x34), drawInfo, 0, 1);
+    if (mState != 0) {
+        func_80137038(*reinterpret_cast<nw4r::lyt::Layout**>(reinterpret_cast<unsigned char*>(this) + 0x34), drawInfo, 0, 1);
     }
 }
 
 void __dt__80222984(){}
 
-u8 func_80222A50(CMCCrystalList* self) { return self->mDataFlag; }
+u8 CMCCrystalList::func_80222A50() { return mDataFlag; }
 
-u8 func_80222A58(CMCCrystalList* self) { return self->mIsActive; }
+u8 CMCCrystalList::func_80222A58() { return mIsActive; }
 
 void func_80222A60(){}
 

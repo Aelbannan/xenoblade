@@ -9,4 +9,6 @@ class CVS_THREAD_FAINT : public CVS_THREAD {
 public:
     // Size of the thread-local buffer in bytes.
     static const int BUFFER_SIZE = 0xF0;
+
+    int blank1() override;
 };

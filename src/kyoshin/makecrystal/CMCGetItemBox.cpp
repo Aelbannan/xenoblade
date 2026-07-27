@@ -38,9 +38,9 @@ void func_80297B68(){}
 
 void func_80297CC0(){}
 
-u8 func_80297D1C(CMCGetItemBox* self) { return self->mField55; }
+u8 CMCGetItemBox::func_80297D1C() { return mField55; }
 
-u8 func_80297D24(CMCGetItemBox* self) { return self->mField303; }
+u8 CMCGetItemBox::func_80297D24() { return mField303; }
 
 void func_80297D2C(){}
 

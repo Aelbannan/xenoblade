@@ -16,8 +16,8 @@ void func_802A8A48(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; REVIVE subclass returns 0xE6 (230).
-int func_802A8AC0(CVS_THREAD_REVIVE* self) {
-    return CVS_THREAD_REVIVE::BUFFER_SIZE;
+int CVS_THREAD_REVIVE::blank1() {
+    return BUFFER_SIZE;
 }
 
 void func_802A8AC8(){}

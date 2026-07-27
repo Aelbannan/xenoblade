@@ -36,6 +36,10 @@ public:
     // IScnRender override
     void cbRenderBefore();
 
+    // IScnRender vtable this-adjusting thunks
+    void func_8029A924();
+    void func_8029A92C();
+
 private:
     // 0x00-0x3B: CProcess (sizeof = 0x3C per header fields)
     u8 _pad3C[0x1C];                         // 0x3C-0x57: vtable PMF data + pre-IScnRender gap

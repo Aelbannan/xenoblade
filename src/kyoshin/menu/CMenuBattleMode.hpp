@@ -28,6 +28,7 @@ public:
     nw4r::lyt::Layout* mLayout;          // 0x74 -- layout draw target (hosts animations)
     nw4r::lyt::AnimTransform* mAnimDefault; // 0x78 -- default animation (label text, enabled at init)
     nw4r::lyt::AnimTransform* mAnimLabel;   // 0x7C -- label animation (disabled at init)
+    void func_801A048C();
     virtual ~CMenuBattleMode();
     void Term();
     void Move();

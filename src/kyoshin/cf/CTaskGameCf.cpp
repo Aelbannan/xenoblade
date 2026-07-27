@@ -105,9 +105,9 @@ void CTaskGameCf::Draw() {}
         mMoveFunc = &CTaskGameCf::func_8004451C;
     }
 
-void func_800444DC(cf::CTaskGameCf* self){
+void cf::CTaskGameCf::func_800444DC(){
     typedef void (cf::CTaskGameCf::*Ptmf)();
-    *(Ptmf*)((char*)self + 0x3C) = &cf::CTaskGameCf::func_800444FC;
+    *(Ptmf*)((char*)this + 0x3C) = &cf::CTaskGameCf::func_800444FC;
 }
 
 u32 lbl_eu_80525B18[3];

@@ -12,9 +12,6 @@ void func_802A955C(){}
 
 void func_802A95A4(){}
 
-// Returns the thread-local buffer size for vision-break.
-int func_802A95FC(CVS_THREAD* self) {
-    return CVS_THREAD_VISION_BREAK::BUFFER_SIZE;
-}
+// Converted to inline member function in header
 
 void func_802A9604(){}

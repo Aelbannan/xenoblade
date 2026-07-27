@@ -54,14 +54,16 @@ namespace cf{
         virtual ~CBattleManager(); //0x8
         virtual void FactoryEvent2(); //0x10
         virtual void func_80085220(u32 r4, u32 r5); //0x1C
-        virtual void func_800E2584(); //0x20
+        virtual void func_800E2584(u32 mask); //0x20
         virtual void func_800F42A0(); //0x24
         virtual void func_800885F0(); //0x28
         virtual void func_800EA410(); //0x2C
         virtual void func_800EA420(); //0x30
-        virtual void func_800EA460(); //0x34
+        virtual void func_800EA460(float a, float b, unsigned long c); //0x34
         virtual void func_800EA470(); //0x38
         virtual void func_800EA998(); //0x3C
+
+        void* func_800EA444();
 
         static CBattleManager* getInstance();
         static void func_800D9190();

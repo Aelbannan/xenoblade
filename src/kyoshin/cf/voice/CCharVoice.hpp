@@ -37,4 +37,10 @@ struct CCharVoice {
     u16   mBattleSndHandle;  // 0x38
     // 2 bytes padding to 0x3C
     void* mVtable;           // 0x3C -- vtable pointer
+
+    void func_802A0B8C(void* owner);
+    void func_802A0E08();
+    void func_802A0FE8();
+    bool func_802A109C(float volume, int priority, int voiceId);
+    void func_802A1304();
 };

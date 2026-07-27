@@ -34,6 +34,10 @@ public:
     // IScnRender override
     void cbRenderBefore();
 
+    // IScnRender vtable this-adjusting thunks
+    void func_80253188();
+    void func_80253190();
+
     // Fields (partial -- enough for known accessors)
     // Inherited: CProcess (0x00-0x57)
     // IScnRender at 0x58

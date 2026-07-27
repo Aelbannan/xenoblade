@@ -28,6 +28,12 @@ namespace cf {
         CtrlObjectParamSubEntry  entries[6];            // 0x0C..0xCB  (6×32=192)
         u8                       pad_CC[0x18];           // 0xCC..0xE3
         u8                       field_E4;               // 0xE4
+
+        CtrlObjectParamSubEntry* getSubStruct(unsigned long index);
+        void setArgType2(void* arg);
+        void setArgType3(void* arg);
+        void setArgType5(void* arg);
+        long getShortAt1C(unsigned long index);
     };
 
     // ── Swap view (swapIntFields): int arrays at +4 and +16 ─────────────────
@@ -41,17 +47,23 @@ namespace cf {
     struct CtrlObjectParamClear {
         u8  firstByte;        // 0x00
         u32 words[24];        // 0x04..0x63
+
+        int clearStruct();
     };
 
     // ── Clear 16 bytes view (clear16Bytes) ─────────────────────────────────
     struct CtrlObjectParamClear16 {
         u32 words[4];         // 0x00..0x0F
+
+        void clear16Bytes();
     };
 
     // ── Byte-at-E4 view (getByteE4) ────────────────────────────────────────
     struct CtrlObjectParamByteE4 {
         u8  pad_00[0xE4];
         u8  field_E4;
+
+        u8 getByteE4();
     };
 
 } // namespace cf

@@ -34,6 +34,4 @@ void func_80180978(){}
 
 void func_80180990(){}
 
-extern "C" int func_801809A8(const CREvtCamera* self) { return 1; }
-
-extern "C" u32 func_801809B0(const CREvtCamera* self) { return self->mField1C; }
+// Converted to inline member functions in header

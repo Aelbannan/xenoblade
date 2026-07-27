@@ -50,5 +50,9 @@ public:
     virtual void Term();
     virtual void Move();
     void cbRenderBefore();
+
+    // IScnRender vtable this-adjusting thunks
+    void func_802ACBCC();
+    void func_802ACBD4();
 };
 // Total size: 0x39C

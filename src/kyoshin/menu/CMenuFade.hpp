@@ -14,5 +14,6 @@ public:
     void Move();
     void Draw();
     void cbRenderBefore();
+    void func_80113E2C() { *(u8*)((char*)this + 0x54) = 1; }
 
 };

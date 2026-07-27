@@ -51,14 +51,14 @@ extern "C" void __ct__CCharVoice(CCharVoice* self)
 }
 
 // func_802A0B8C (0x802A32C0)
-extern "C" void func_802A0B8C(CCharVoice* self, void* owner)
+void CCharVoice::func_802A0B8C(void* owner)
 {
     if (owner == nullptr) return;
 
     u32 flags = *(u32*)((char*)owner + 0x64);
 
     if ((flags & 2) || (flags & 1)) {
-        self->mOwner = owner;
+        mOwner = owner;
 
         u32 posType;
         float px, py, pz;
@@ -68,152 +68,152 @@ extern "C" void func_802A0B8C(CCharVoice* self, void* owner)
         if (posType == 8) posType = 3;
 
         char* vp = lbl_eu_80662C98;
-        self->mFileNameLen = strlen(vp);
-        strcpy(self->mFileName, vp);
+        mFileNameLen = strlen(vp);
+        strcpy(mFileName, vp);
 
-        self->mFileName[0x0A] = '0' + (posType / 10);
-        self->mFileName[0x0B] = '0' + (posType % 10);
-        self->mFileName[0x0F] = '0' + (posType / 10);
-        self->mFileName[0x10] = '0' + (posType % 10);
+        mFileName[0x0A] = '0' + (posType / 10);
+        mFileName[0x0B] = '0' + (posType % 10);
+        mFileName[0x0F] = '0' + (posType / 10);
+        mFileName[0x10] = '0' + (posType % 10);
 
-        self->mSoundHandle = -1;
-        self->mField34     = 0x12;
+        mSoundHandle = -1;
+        mField34     = 0x12;
 
     } else if (flags & 4) {
-        self->mOwner           = owner;
-        self->mBattleSndHandle = 0xFFFF;
+        mOwner           = owner;
+        mBattleSndHandle = 0xFFFF;
     }
 }
 
 // func_802A0E08 (0x802A353C)
-extern "C" void func_802A0E08(CCharVoice* self)
+void CCharVoice::func_802A0E08()
 {
-    if (self->mOwner == nullptr) return;
+    if (mOwner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
+    u32 flags = *(u32*)((char*)mOwner + 0x64);
 
     if ((flags & 2) || (flags & 1)) {
-        if (self->mSoundHandle == -1) return;
+        if (mSoundHandle == -1) return;
 
-        if (func_80189A04(self->mFileName) != 0) {
-            self->mVoiceId     = -1;
-            self->mSoundHandle = -1;
+        if (func_80189A04(mFileName) != 0) {
+            mVoiceId     = -1;
+            mSoundHandle = -1;
             return;
         }
 
         void* ch = func_80496264(lbl_eu_80663E14, -1);
 
-        void** vtab = *(void***)self->mOwner;
+        void** vtab = *(void***)mOwner;
         VoiceVec3 pos;
         typedef void* (*GetModelFn)(void*);
 
-        void* model = ((GetModelFn)vtab[0x4A])(self->mOwner);
+        void* model = ((GetModelFn)vtab[0x4A])(mOwner);
         if (model != nullptr) {
             float* f = (float*)model;
             pos.x = f[0x0C / 4];
             pos.y = f[0x1C / 4];
             pos.z = f[0x2C / 4];
         } else {
-            void* alt = ((GetModelFn)vtab[0x2B])(self->mOwner);
+            void* alt = ((GetModelFn)vtab[0x2B])(mOwner);
             float* f  = (float*)alt;
             pos.x = f[0];
             pos.y = f[1];
             pos.z = f[2];
         }
 
-        func_80189C40(self->mSoundHandle, &pos, ch,
+        func_80189C40(mSoundHandle, &pos, ch,
                       lbl_eu_80668C58, lbl_eu_80668C5C, lbl_eu_80668C60);
 
     } else if (flags & 4) {
-        if (self->mBattleSndHandle == 0xFFFF) return;
+        if (mBattleSndHandle == 0xFFFF) return;
 
-        if (func_801BFAE4(self->mBattleSndHandle) == 0) {
-            self->mVoiceId          = -1;
-            self->mBattleSndHandle  = 0xFFFF;
+        if (func_801BFAE4(mBattleSndHandle) == 0) {
+            mVoiceId          = -1;
+            mBattleSndHandle  = 0xFFFF;
             return;
         }
 
-        void** vtab = *(void***)self->mOwner;
+        void** vtab = *(void***)mOwner;
         VoiceVec3 pos;
         typedef void* (*GetModelFn)(void*);
 
-        void* model = ((GetModelFn)vtab[0x4A])(self->mOwner);
+        void* model = ((GetModelFn)vtab[0x4A])(mOwner);
         if (model != nullptr) {
             float* f = (float*)model;
             pos.x = f[0x0C / 4];
             pos.y = f[0x1C / 4];
             pos.z = f[0x2C / 4];
         } else {
-            void* alt = ((GetModelFn)vtab[0x2B])(self->mOwner);
+            void* alt = ((GetModelFn)vtab[0x2B])(mOwner);
             float* f  = (float*)alt;
             pos.x = f[0];
             pos.y = f[1];
             pos.z = f[2];
         }
 
-        func_801BFAE8(self->mBattleSndHandle, &pos);
+        func_801BFAE8(mBattleSndHandle, &pos);
     }
 }
 
 // func_802A0FE8 (0x802A371C)
-extern "C" void func_802A0FE8(CCharVoice* self)
+void CCharVoice::func_802A0FE8()
 {
-    if (self->mOwner == nullptr) return;
+    if (mOwner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
+    u32 flags = *(u32*)((char*)mOwner + 0x64);
 
     if ((flags & 2) || (flags & 1)) {
-        if (self->mSoundHandle != -1) {
-            func_8018986C(self->mFileName, lbl_eu_80668C64);
-            self->mVoiceId     = -1;
-            self->mSoundHandle = -1;
+        if (mSoundHandle != -1) {
+            func_8018986C(mFileName, lbl_eu_80668C64);
+            mVoiceId     = -1;
+            mSoundHandle = -1;
         }
     } else if (flags & 4) {
-        if (self->mBattleSndHandle != 0xFFFF) {
-            void* obj = func_800BF2CC(self->mOwner);
-            func_801BFED0(obj, self->mBattleSndHandle, 0);
-            self->mVoiceId          = -1;
-            self->mBattleSndHandle  = 0xFFFF;
+        if (mBattleSndHandle != 0xFFFF) {
+            void* obj = func_800BF2CC(mOwner);
+            func_801BFED0(obj, mBattleSndHandle, 0);
+            mVoiceId          = -1;
+            mBattleSndHandle  = 0xFFFF;
         }
     }
 }
 
 // func_802A109C (0x802A37D0)
-extern "C" bool func_802A109C(CCharVoice* self, float volume,
-                              int priority, int voiceId)
+bool CCharVoice::func_802A109C(float volume,
+                                int priority, int voiceId)
 {
-    if (self->mOwner == nullptr) return false;
-    if (self->mVoiceId < 0) self->mPriorityCheck = -1;
-    if (priority >= 0 && self->mPriorityCheck >= 0
-        && self->mPriorityCheck > priority)
+    if (mOwner == nullptr) return false;
+    if (mVoiceId < 0) mPriorityCheck = -1;
+    if (priority >= 0 && mPriorityCheck >= 0
+        && mPriorityCheck > priority)
         return false;
 
-    self->mPriorityCheck = priority;
+    mPriorityCheck = priority;
 
-    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
+    u32 flags = *(u32*)((char*)mOwner + 0x64);
 
     if ((flags & 2) || (flags & 1)) {
-        if (self->mSoundHandle != -1) {
-            func_8018986C(self->mFileName, lbl_eu_80668C64);
-            self->mVoiceId     = -1;
-            self->mSoundHandle = -1;
+        if (mSoundHandle != -1) {
+            func_8018986C(mFileName, lbl_eu_80668C64);
+            mVoiceId     = -1;
+            mSoundHandle = -1;
         }
     } else if (flags & 4) {
-        if (self->mBattleSndHandle != 0xFFFF) {
-            void* obj = func_800BF2CC(self->mOwner);
-            func_801BFED0(obj, self->mBattleSndHandle, 0);
-            self->mVoiceId          = -1;
-            self->mBattleSndHandle  = 0xFFFF;
+        if (mBattleSndHandle != 0xFFFF) {
+            void* obj = func_800BF2CC(mOwner);
+            func_801BFED0(obj, mBattleSndHandle, 0);
+            mVoiceId          = -1;
+            mBattleSndHandle  = 0xFFFF;
         }
     }
 
-    flags = *(u32*)((char*)self->mOwner + 0x64);
+    flags = *(u32*)((char*)mOwner + 0x64);
 
     if ((flags & 2) || (flags & 1)) {
         // Format priority into the filename at positions relative to
         // (this + mField34).  mField34 is always 0x12 after initVoice,
         // so these writes go to mFileName[0x12..0x16].
-        char* base = (char*)self + self->mField34;
+        char* base = (char*)this + mField34;
         int v100 = priority / 100;
         int v10  = v100 / 10;
         int v1   = v100 % 10;
@@ -225,31 +225,31 @@ extern "C" bool func_802A109C(CCharVoice* self, float volume,
         base[0x13] = '0' + r10;
         base[0x14] = '0' + r1;
 
-        s32 handle = func_801897A0(self->mFileName, lbl_eu_80668C64, 1);
-        self->mSoundHandle = handle;
+        s32 handle = func_801897A0(mFileName, lbl_eu_80668C64, 1);
+        mSoundHandle = handle;
 
         if (handle != -1) {
-            self->mVoiceId = priority;
+            mVoiceId = priority;
             return true;
         }
-        self->mVoiceId = -1;
+        mVoiceId = -1;
         return false;
     }
 
     if (flags & 4) {
-        void* obj = func_800BF2CC(self->mOwner);
+        void* obj = func_800BF2CC(mOwner);
         if (obj == nullptr) return false;
         if (*(s32*)obj < 0) return false;
 
         u16 handle = func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(
-            self->mOwner, voiceId, 0, 0, volume);
-        self->mBattleSndHandle = handle;
+            mOwner, voiceId, 0, 0, volume);
+        mBattleSndHandle = handle;
 
         if (handle != 0xFFFF) {
-            self->mVoiceId = priority;
+            mVoiceId = priority;
             return true;
         }
-        self->mVoiceId = -1;
+        mVoiceId = -1;
         return false;
     }
 
@@ -257,24 +257,24 @@ extern "C" bool func_802A109C(CCharVoice* self, float volume,
 }
 
 // func_802A1304 (0x802A3A38)
-extern "C" void func_802A1304(CCharVoice* self)
+void CCharVoice::func_802A1304()
 {
-    if (self->mOwner == nullptr) return;
+    if (mOwner == nullptr) return;
 
-    u32 flags = *(u32*)((char*)self->mOwner + 0x64);
+    u32 flags = *(u32*)((char*)mOwner + 0x64);
 
     if ((flags & 2) || (flags & 1)) {
-        if (self->mSoundHandle != -1) {
-            func_8018986C(self->mFileName, lbl_eu_80668C64);
-            self->mVoiceId     = -1;
-            self->mSoundHandle = -1;
+        if (mSoundHandle != -1) {
+            func_8018986C(mFileName, lbl_eu_80668C64);
+            mVoiceId     = -1;
+            mSoundHandle = -1;
         }
     } else if (flags & 4) {
-        if (self->mBattleSndHandle != 0xFFFF) {
-            void* obj = func_800BF2CC(self->mOwner);
-            func_801BFED0(obj, self->mBattleSndHandle, 0);
-            self->mVoiceId          = -1;
-            self->mBattleSndHandle  = 0xFFFF;
+        if (mBattleSndHandle != 0xFFFF) {
+            void* obj = func_800BF2CC(mOwner);
+            func_801BFED0(obj, mBattleSndHandle, 0);
+            mVoiceId          = -1;
+            mBattleSndHandle  = 0xFFFF;
         }
     }
 }

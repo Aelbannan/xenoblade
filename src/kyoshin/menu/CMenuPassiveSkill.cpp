@@ -36,17 +36,12 @@ void func_80263E4C(){}
 
 // Adjusted-this thunk: called through a secondary-base vtable entry
 // (IScnRender at offset +0x58 within CMenuPassiveSkill).
-// Upcasts to the full object and tail-calls cbRenderBefore.
-void func_80263EAC(IScnRender* self) {
-    ((void(*)(CMenuPassiveSkill*))cbRenderBefore__17CMenuPassiveSkillFv)(
-        static_cast<CMenuPassiveSkill*>(self));
+void CMenuPassiveSkill::func_80263EAC() {
+    cbRenderBefore();
 }
 
 // Adjusted-this thunk: called through a secondary-base vtable entry
 // (IScnRender at offset +0x58 within CMenuPassiveSkill).
-// Upcasts to the full object and tail-calls the destructor.
-// r4 (dealloc flag) is left unchanged — the caller sets it via vtable.
-void func_80263EB4(IScnRender* self) {
-    ((void(*)(CMenuPassiveSkill*))__dt__17CMenuPassiveSkillFv)(
-        static_cast<CMenuPassiveSkill*>(self));
+void CMenuPassiveSkill::func_80263EB4() {
+    this->~CMenuPassiveSkill();
 }

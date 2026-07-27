@@ -127,5 +127,6 @@ public:
     u8 unk7F5; // 0x7f5: feeds pane translate Y scaling
     u8 pad7F6[0x7F8 - 0x7F6];
     u32 unk7F8; // 0x7f8: gates the trailing unk7E4 draw / shared anim state
+    CMenuBattlePlayerState(CScn* scn);
     virtual ~CMenuBattlePlayerState();
 };

@@ -28,34 +28,32 @@ void cf::CfScriptManager::func_80068B20(void) {}
 void func_80068B24(){}
 
 void func_80068ECC(void* subObj, const char* name);
-// Thunk: forward to func_80068ECC with &manager->mScripts[1] and the script name.
-void func_80068B58(cf::CfScriptManager* manager, const char* name) {
-    func_80068ECC(&manager->mScripts[1], name);
+void cf::CfScriptManager::func_80068B58(const char* name) {
+    func_80068ECC(&mScripts[1], name);
 }
 
 void func_80068B60(){}
 
-// Thunk: forward to func_80068ECC with &manager->mScripts[2] and the script name.
-void func_80068B94(cf::CfScriptManager* manager, const char* name) {
-    func_80068ECC(&manager->mScripts[2], name);
+void cf::CfScriptManager::func_80068B94(const char* name) {
+    func_80068ECC(&mScripts[2], name);
 }
 
 void func_80068B9C(){}
 
-void func_80068BC0(cf::CfScriptManager* self) {
-    self->mScripts[0].mFlags |= 4;
+void cf::CfScriptManager::func_80068BC0() {
+    mScripts[0].mFlags |= 4;
 }
 
 void func_80068BD0(){}
 
-void func_80068BF4(cf::CfScriptManager* self) {
-    self->mScripts[1].mFlags |= 4;
+void cf::CfScriptManager::func_80068BF4() {
+    mScripts[1].mFlags |= 4;
 }
 
 void func_80068C04(){}
 
-void func_80068C28(cf::CfScriptManager* self) {
-    self->mScripts[2].mFlags |= 4;
+void cf::CfScriptManager::func_80068C28() {
+    mScripts[2].mFlags |= 4;
 }
 
 void func_80068C38(){}
@@ -80,11 +78,10 @@ void func_80068E7C(){}
 
 void func_80068E9C(){}
 
-
 void cf::CfScript::waitLoad() {}
 
-void update__Q22cf8CfScriptFv(cf::CfScript* self) {
-    self->mFlags |= 0x20;
+void cf::CfScript::update() {
+    mFlags |= 0x20;
 }
 
 void CfScript::OnFileEvent() {}

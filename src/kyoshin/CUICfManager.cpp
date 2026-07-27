@@ -27,8 +27,8 @@ void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 }
 
-static IWorkEvent* cfWorkEvent(CUICfManager* self) {
-    return (self != NULL) ? static_cast<IWorkEvent*>(self) : NULL;
+IWorkEvent* CUICfManager::cfWorkEvent() {
+    return static_cast<IWorkEvent*>(this);
 }
 
 // Virtual function thunks: adjust `this` and tail-call.
@@ -66,7 +66,7 @@ void CUICfManager::Init() {
     u32 clearCount;
     u8 i;
 
-    mFileHandle = CDeviceFile::readFile(unk118, lbl_eu_806621A8, cfWorkEvent(this), 0, 0);
+    mFileHandle = CDeviceFile::readFile(unk118, lbl_eu_806621A8, cfWorkEvent(), 0, 0);
     CDeviceFile::func_8044F154(mFileHandle, 3);
 
     process = static_cast<CUICfInitProcess*>(
@@ -198,7 +198,7 @@ u16 lbl_eu_804FFFDC[];
 // C++ mangling -> retail `func_8013B428__FUl`.
 void func_8013B428(u32);
 
-void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2) {
+void CUICfManager::func_80133324(int id, int a1, int a2) {
     // Decl order: savedRet@0x8, gap, setItem stw-r1 home@0x24, idTable@0x28 (retail frame).
     volatile int savedRet;
     CUICfIdTable idTable;

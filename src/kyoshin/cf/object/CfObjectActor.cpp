@@ -34,8 +34,8 @@ struct CfObjectActorInner {
     void* mArgStorage;  // 0x37c
 };
 
-void CfObjectActor_UnkVirtualFunc11__Q22cf13CfObjectActorFv(cf::CfObjectActor* self, void* arg) {
-    CfObjectActorData* data = reinterpret_cast<CfObjectActorData*>(self);
+void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc11(void* arg) {
+    CfObjectActorData* data = reinterpret_cast<CfObjectActorData*>(this);
     void* p = data->mSomePtr;
     if (p != 0) {
         static_cast<CfObjectActorInner*>(p)->mArgStorage = arg;

@@ -15,6 +15,9 @@ public:
     virtual ~CItemBoxLine();
     void OnFileEvent();
 
+    void func_801EDA4C(unsigned char val);
+    void func_801EECC8();
+
     // Fields — populated from standalone accessor functions in CItemBoxLine.cpp
     u8 pad_00[0x59];
     u8 unk59;                       // +0x59: read by func_801ED800

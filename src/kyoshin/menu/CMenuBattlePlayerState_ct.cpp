@@ -28,8 +28,7 @@ extern const f32 lbl_eu_80666F94; // 0.0f
 extern const f32 lbl_eu_80666FB0; // -1.0f
 }
 
-extern "C" CMenuBattlePlayerState*
-__ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
+CMenuBattlePlayerState::CMenuBattlePlayerState(CScn* scn) {
     CMenuBpsProcessShim* process;
     char* vtFinal;
     char* vtWork;
@@ -54,7 +53,7 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     u32 nv25;
     u32 copyWords; // retail li r0,0x30 keep-alive
 
-    process = reinterpret_cast<CMenuBpsProcessShim*>(self);
+    process = reinterpret_cast<CMenuBpsProcessShim*>(this);
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
 
     // Interim CProcess vtable, then final MI vtable + interface pieces.
@@ -65,7 +64,7 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     vtWork = vtFinal + 0x24;
     vtRender = vtFinal + 0xac;
     z = 0;
-    unk64p = &self->unk64;
+    unk64p = &unk64;
     ptmfWord1 = __ptmf_null[1];
     process->callbacks[1] = ptmfWord1;
     process->callbacks[0] = ptmfWord0;
@@ -77,23 +76,23 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
     process->callbacks[3] = ptmfWord0;
     ptmfWord2 = __ptmf_null[2];
     process->callbacks[5] = ptmfWord2;
-    self->unk54 = (u8)z;
-    self->unk55 = (u8)z;
+    unk54 = (u8)z;
+    unk55 = (u8)z;
     process->vtable = vtFinal;
-    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x58) = vtWork;
-    *reinterpret_cast<char**>(reinterpret_cast<u8*>(self) + 0x5c) = vtRender;
-    self->mScn = scn;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(this) + 0x58) = vtWork;
+    *reinterpret_cast<char**>(reinterpret_cast<u8*>(this) + 0x5c) = vtRender;
+    mScn = scn;
 
     __ct__17UnkClass_8045F564Fv(unk64p);
-    __construct_array(self->mSlots, reinterpret_cast<void*>(func_8010B324),
+    __construct_array(mSlots, reinterpret_cast<void*>(func_8010B324),
                       reinterpret_cast<void*>(__dt__8010B444), 0x270, 3);
 
     // Retail stores 0.0f then constructs unk7D0 before loading loop floats.
-    self->unk7C4 = lbl_eu_80666F94;
-    self->unk7C8 = (u8)z;
-    self->unk7C9 = (u8)z;
-    self->unk7CC = lbl_eu_8052C42C;
-    __ct__17UnkClass_8045F564Fv(&self->unk7D0);
+    unk7C4 = lbl_eu_80666F94;
+    unk7C8 = (u8)z;
+    unk7C9 = (u8)z;
+    unk7CC = lbl_eu_8052C42C;
+    __ct__17UnkClass_8045F564Fv(&unk7D0);
 
     {
         f32 zeroF;
@@ -113,27 +112,27 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
         padEnd = reinterpret_cast<u8*>(&slot.unk204);
         padSize = static_cast<s32>(padEnd - padStart);
         sizePlus = padSize + 0xb;
-        self->unk7F4 = 1;
+        unk7F4 = 1;
         // Signed /12: under -O4,s stays divw (retail lis 0x2AAB/mulhw). Soft-cap.
         q12 = sizePlus / 12;
         sizeSign = padSize >> 31;
         padLim = padEnd - 0x60;
         zeroF = lbl_eu_80666F94;
         plusSign = sizePlus >> 31;
-        self->unk7E0 = (void*)z;
+        unk7E0 = (void*)z;
         neg1F = lbl_eu_80666FB0;
-        self->unk7E4 = (nw4r::lyt::Layout*)z;
+        unk7E4 = (nw4r::lyt::Layout*)z;
         q12p1 = q12 + 1;
-        self->unk7E8 = (nw4r::lyt::AnimTransform*)z;
+        unk7E8 = (nw4r::lyt::AnimTransform*)z;
         q12Sign = q12 >> 31;
-        self->unk7EC = (nw4r::lyt::AnimTransform*)z;
+        unk7EC = (nw4r::lyt::AnimTransform*)z;
         q12p1Sign = q12p1 >> 31;
         v4 = 4;
-        self->unk7F0 = (nw4r::lyt::AnimTransform*)z;
+        unk7F0 = (nw4r::lyt::AnimTransform*)z;
         v6 = 6;
         vB = 0xb;
         copyWords = 0x30;
-        self->unk7F8 = z;
+        unk7F8 = z;
         nv24 = 0x60;
         nv25 = 0xc;
         i = 0;
@@ -276,7 +275,7 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
             // Retail copy: dest first word = 0, head words from slot+4,
             // lbz unk80, mtctr/lwzu/stwu ×0x30 from +0x84, then tail.
             {
-                CMenuBattlePlayerStateSlot* dst = &self->mSlots[i];
+                CMenuBattlePlayerStateSlot* dst = &mSlots[i];
                 u32* s;
                 u32* d;
                 u32 n;
@@ -371,6 +370,4 @@ __ct__CMenuBattlePlayerState(CMenuBattlePlayerState* self, CScn* scn) {
             i = (u8)(i + 1);
         } while (i < 3);
     }
-
-    return self;
 }

@@ -6,7 +6,7 @@
 
 void __ct__CSkipTimer2(){}
 
-u8 func_8029FF1C(CSkipTimer* self) { return self->mActive; }
+u8 CSkipTimer::func_8029FF1C() { return mActive; }
 
 
 

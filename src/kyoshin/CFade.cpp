@@ -4,7 +4,7 @@
 
 #include "kyoshin/CFade.hpp"
 
-extern "C" u8 func_80244508(CFade* self) { return self->mReady; }
+u8 CFade::func_80244508() { return mReady; }
 
 
 
@@ -12,7 +12,7 @@ extern "C" u8 func_80244508(CFade* self) { return self->mReady; }
 
 
 
-extern "C" u8 func_80244510(CFade* self) { return self->mVisible; }
+u8 CFade::func_80244510() { return mVisible; }
 
 
 

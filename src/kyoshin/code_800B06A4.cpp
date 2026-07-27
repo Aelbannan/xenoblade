@@ -39,9 +39,9 @@ void init_0A90(void){}
 
 
 
-void sub_clearCounters(UnkClass_800B0AD8* self) {
-    *(unsigned long*)((char*)self + 0xb00) = 0;
-    *(unsigned long*)((char*)self + 0xafc) = 0;
+void UnkClass_800B0AD8::clearCounters() {
+    *(unsigned long*)((char*)this + 0xb00) = 0;
+    *(unsigned long*)((char*)this + 0xafc) = 0;
 }
 
 void __ct__reslist_cf_TboxInfo(){}
@@ -52,7 +52,7 @@ void __ct__reslist_cf_IFactoryEvent(){}
 
 void init_0FA0(){}
 
-u32 obj_get_u32_18(UnkClass_805764CC* self) { return *(u32*)((u8*)self + 0x18); }
+u32 UnkClass_805764CC::get_u32_18() { return *(u32*)((u8*)this + 0x18); }
 
 void init_0FF4(){}
 
@@ -97,7 +97,7 @@ void gvar_clearF24(){ lbl_eu_80663F24 = 0; }
 
 void FactoryEvent4__Q22cf13IFactoryEventFv() {}
 
-void obj_set_u32_00(UnkClass_805764CC* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+void UnkClass_805764CC::set_u32_00(u32 val) { *(u32*)((u8*)this + 0x0) = val; }
 
 void copy_int_ptr(int* dst, int* src) {
     *dst = *src;
@@ -180,15 +180,15 @@ void init_20A0(){}
 
 void init_20B4(){}
 
-u32 obj_get_u32_04(UnkClass_805764CC* self) { return *(u32*)((u8*)self + 0x4); }
+u32 UnkClass_805764CC::get_u32_04() { return *(u32*)((u8*)this + 0x4); }
 
 void __dt__800B2D30(){}
 
 void FactoryEvent1__Q22cf13IFactoryEventFv() {}
 
-void fwd_to_2DB0(UnkClass_805764CC* self, int param) {
+void UnkClass_805764CC::fwdTo_2DB0(int param) {
     extern void fwd_2DB0_body(void*, void*);
-    fwd_2DB0_body(self, &param);
+    fwd_2DB0_body(this, &param);
 }
 
 void fwd_2DB0_body(){}
@@ -229,7 +229,7 @@ u32 shift_u32_hi8(u32 val) { return (val >> 16) & 0xFF; }
 
 void init_3210(){}
 
-u32 obj_get_u32_74(UnkClass_805764CC* self) { return *(u32*)((u8*)self + 0x74); }
+u32 UnkClass_805764CC::get_u32_74() { return *(u32*)((u8*)this + 0x74); }
 
 void init_39C8(){}
 
@@ -237,9 +237,9 @@ void copy_int_ptr_alt2(int* dst, int* src) {
     *dst = *src;
 }
 
-void fwd_to_99EC(UnkClass_805764CC* self, int param) {
+void UnkClass_805764CC::fwdTo_99EC(int param) {
     extern void fwd_99EC_body(void*, void*);
-    fwd_99EC_body(self, &param);
+    fwd_99EC_body(this, &param);
 }
 
 void init_3A88(){}
@@ -301,7 +301,7 @@ void init_4F80() {}
 
 void init_4F90() {}
 
-u32 obj_get_u32_70(UnkClass_805764CC* self) { return *(u32*)((u8*)self + 0x70); }
+u32 UnkClass_805764CC::get_u32_70() { return *(u32*)((u8*)this + 0x70); }
 
 void init_4FAC(){}
 
@@ -315,11 +315,11 @@ void init_5944() {}
 
 void init_5948() {}
 
-void obj_clear_380(UnkClass_805764CC* self) { *(u32*)((u8*)self + 896) = 0; }
+void UnkClass_805764CC::clear_380() { *(u32*)((u8*)this + 896) = 0; }
 
-void* obj_getNull(UnkClass_805764CC* self) { return 0; }
+void* UnkClass_805764CC::getNull() { return 0; }
 
-u32 obj_get_u32_380(UnkClass_805764CC* self) { return *(u32*)((u8*)self + 0x380); }
+u32 UnkClass_805764CC::get_u32_380() { return *(u32*)((u8*)this + 0x380); }
 
 void init_5978(){}
 
@@ -335,9 +335,9 @@ void init_64B8() {}
 
 u32 shift_u32_and(u32 a, u32 b) { return a & b; }
 
-u32 obj_get_u32_98(UnkClass_805764CC* self) { return *(u32*)((u8*)self + 0x98); }
+u32 UnkClass_805764CC::get_u32_98() { return *(u32*)((u8*)this + 0x98); }
 
-u16 obj_get_u16_45C0(UnkClass_805764CC* self) { return *(u16*)((u8*)self + 0x45C0); }
+u16 UnkClass_805764CC::get_u16_45C0() { return *(u16*)((u8*)this + 0x45C0); }
 
 u32 shift_u32_hi8_alt5(u32 val) { return (val >> 16) & 0xFF; }
 
@@ -345,13 +345,13 @@ void init_64F8() {}
 
 void init_6508() {}
 
-void obj_appendToBuffer(UnkClass_805764CC* self, void* other) {
-    unsigned int count = *(unsigned int*)((unsigned char*)self + 0x700);
+void UnkClass_805764CC::appendToBuffer(void* other) {
+    unsigned int count = *(unsigned int*)((unsigned char*)this + 0x700);
     unsigned int val = *(unsigned int*)other;
     unsigned int newCount = count + 1;
-    *(unsigned int*)((unsigned char*)self + 0x700) = newCount;
+    *(unsigned int*)((unsigned char*)this + 0x700) = newCount;
     float fval = *(float*)((unsigned char*)other + 4);
-    void* dest = (unsigned char*)self + count * 8;
+    void* dest = (unsigned char*)this + count * 8;
     *(unsigned int*)dest = val;
     *(float*)((unsigned char*)dest + 4) = fval;
 }
@@ -366,9 +366,9 @@ void init_66BC(){}
 
 void init_67CC(){}
 
-void* obj_getPtr_1A8(UnkClass_805764CC* self) { return (void*)((u8*)self + 0x1a8); }
+void* UnkClass_805764CC::getPtr_1A8() { return (void*)((u8*)this + 0x1a8); }
 
-void obj_clear_700(UnkClass_805764CC* self) { *(u32*)((u8*)self + 1792) = 0; }
+void UnkClass_805764CC::clear_700() { *(u32*)((u8*)this + 1792) = 0; }
 
 void init_6800(){}
 
@@ -419,14 +419,14 @@ void fwd_6DD0_body(){}
 
 void init_6EC0(){}
 
-u32 sub_getCount(UnkClass_800B0AD8* self) { return *(u32*)((u8*)self + 0xB00); }
+u32 UnkClass_800B0AD8::getCount() { return *(u32*)((u8*)this + 0xB00); }
 
-u32 sub_getSize(UnkClass_800B0AD8* self) { return *(u32*)((u8*)self + 0xB04); }
+u32 UnkClass_800B0AD8::getSize() { return *(u32*)((u8*)this + 0xB04); }
 
-void* sub_getRingElem(UnkClass_800B0AD8* self, u32 index) {
-    u32 start = *(u32*)((u8*)self + 0xAFC);
-    u32 count = *(u32*)((u8*)self + 0xB04);
-    u32* base = *(u32**)((u8*)self + 0xAF8);
+void* UnkClass_800B0AD8::getRingElem(u32 index) {
+    u32 start = *(u32*)((u8*)this + 0xAFC);
+    u32 count = *(u32*)((u8*)this + 0xB04);
+    u32* base = *(u32**)((u8*)this + 0xAF8);
     return &base[(start + index) % count];
 }
 
@@ -447,7 +447,7 @@ u32 gvar_get40F4(void) {
 
 void init_71CC(){}
 
-void* obj_getPtr_720(UnkClass_805764CC* self) { return (void*)((u8*)self + 0x720); }
+void* UnkClass_805764CC::getPtr_720() { return (void*)((u8*)this + 0x720); }
 
 void init_7214(){}
 
@@ -477,8 +477,8 @@ unsigned short gvar_get408C_alt2(){
     return lbl_eu_8066408C;
 }
 
-void obj_maskField_6C(UnkClass_805764CC* self, u32 mask, int enable) {
-    u32* field = (u32*)((u8*)self + 0x6C);
+void UnkClass_805764CC::maskField_6C(u32 mask, int enable) {
+    u32* field = (u32*)((u8*)this + 0x6C);
     if (enable) {
         *field |= mask;
     } else {
@@ -634,17 +634,17 @@ void init_9548(){}
 
 void init_957C(){}
 
-void obj_set_u32_734(UnkClass_805764CC* self, u32 val) { *(u32*)((u8*)self + 0x734) = val; }
+void UnkClass_805764CC::set_u32_734(u32 val) { *(u32*)((u8*)this + 0x734) = val; }
 
-void obj_set_u8_73A(UnkClass_805764CC* self, u8 a, u8 b) { self->field_0x20.unk0[0x71A] = a; self->field_0x20.unk0[0x71B] = b; }
+void UnkClass_805764CC::set_u8_73A(u8 a, u8 b) { this->field_0x20.unk0[0x71A] = a; this->field_0x20.unk0[0x71B] = b; }
 
-void obj_set_u32_720(UnkClass_805764CC* self, u32 val) { *(u32*)((u8*)self + 0x720) = val; }
+void UnkClass_805764CC::set_u32_720(u32 val) { *(u32*)((u8*)this + 0x720) = val; }
 
-void obj_set_u16_738(UnkClass_805764CC* self, u16 val) { *(u16*)((u8*)self + 0x738) = val; }
+void UnkClass_805764CC::set_u16_738(u16 val) { *(u16*)((u8*)this + 0x738) = val; }
 
 void init_96E8() {}
 
-void obj_set_float_730(UnkClass_805764CC* self, float val) { *(float*)((u8*)self + 0x730) = val; }
+void UnkClass_805764CC::set_float_730(float val) { *(float*)((u8*)this + 0x730) = val; }
 
 void __ct__800B970C(){}
 
@@ -654,7 +654,7 @@ void init_985C(){}
 
 void init_98C8(){}
 
-u32 obj_get_u32_620(UnkClass_805764CC* self) { return *(u32*)((u8*)self + 0x620); }
+u32 UnkClass_805764CC::get_u32_620() { return *(u32*)((u8*)this + 0x620); }
 
 void init_998C(){}
 

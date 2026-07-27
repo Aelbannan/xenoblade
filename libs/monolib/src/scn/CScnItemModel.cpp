@@ -2,25 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/monolib/src/scn/CScnItemModel.hpp"
 
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
+void func_804970D0(void* self);
 void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
 
 void func_80482DF4(){}
@@ -51,14 +35,11 @@ void func_804842B0(){}
 
 void func_804844D0(){}
 
-void func_804970D0(void* self);
-void func_8048472C(void* self) { ((void(*)(void*))func_804970D0)((char*)self + 0xc); }
-
 void func_80484734(){}
 
 void func_80484838(){}
 
-float func_8048490C(void* self) { return *(float*)((u8*)self + 0x858); }
+float func_8048490C(void* self) { return ((CScnItemModel*)self)->value858; }
 
 void func_80484914(){}
 
@@ -72,7 +53,7 @@ void func_80484C84(){}
 
 void func_80484D3C(){}
 
-void func_80484E04(void* self, u32 val) { *(u32*)((u8*)self + 0x7e8) = val; }
+void func_80484E04(void* self, u32 val) { ((CScnItemModel*)self)->value7E8 = val; }
 
 void func_80484E0C(void) {}
 
@@ -141,4 +122,4 @@ extern "C" void func_80486084(void) {}
 
 extern "C" int func_80486088(void* self) { return 0; }
 
-extern "C" u32 func_80486090(void* self) { return *(u32*)((u8*)self + 0x7e4); }
+extern "C" u32 func_80486090(void* self) { return ((CScnItemModel*)self)->value7E4; }

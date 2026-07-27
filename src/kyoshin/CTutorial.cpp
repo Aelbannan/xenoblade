@@ -4,21 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/CTutorial.hpp"
-u8 func_8029ACAC(void* self) { return static_cast<CTutorialFull*>(self)->field_46; }
-
-
-
-
-
-
-
-u8 func_8029ACB4(void* self) { return static_cast<CTutorialFull*>(self)->field_47; }
-
-u8 func_8029ACBC(void* self) { return static_cast<CTutorialFull*>(self)->field_52; }
-
-
-
-
+u8 CTutorial::func_8029ACAC() { return this->field_46; }
+u8 CTutorial::func_8029ACB4() { return this->field_47; }
+u8 CTutorial::func_8029ACBC() { return this->field_52; }
 
 void func_8029AE5C(){}
 

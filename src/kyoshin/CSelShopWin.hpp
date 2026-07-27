@@ -42,6 +42,9 @@ public:
     void func_8022CA6C();
     bool OnFileEvent(CEventFile* pEventFile);
 
+    u8 func_8022C8D0();
+    u8 func_8022C8D8();
+
     // +0x00: vtable (lbl_eu_805365A8 via CSelShopWinVtblBase)
     // +0x04: layout memory region
     UnkClass_8045F564 mMemRegion;

@@ -14,11 +14,12 @@ struct CHelpVtbl {
 class CHelp {
 public:
     void CHelp_UnkVirtualFunc2();
+    void func_802B7C68();
 
     void* mOwner; // 0x0
     u32 mParam; // 0x4 (low byte used by UnkVirtualFunc2)
     CHelpVtbl* mVtbl; // 0x8
-    CHelp();
+    CHelp(void* owner, u32 param);
 };
 
 // Flag helper sharing the CHelp prefix; flag byte at +0xC.
@@ -28,8 +29,8 @@ public:
     void func_802B7CB0();
 
     u8 mFlag; // 0xC
-    void func_802B7CBC();
-    void func_802B7CE4();
+    u32 func_802B7CBC(u32 flag);
+    u32 func_802B7CE4(u8 flag);
 };
 
 } // namespace cf

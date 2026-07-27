@@ -9,4 +9,6 @@ class CVS_THREAD_BUF : public CVS_THREAD {
 public:
     // Size of the thread-local voice buffer in bytes.
     static const int BUFFER_SIZE = 0x104;
+
+    int blank1() override;
 };

@@ -11,14 +11,7 @@ namespace cf {
     }
 }
 
-// Initializes partial CChainChance fields to 0
-// Called from CChain constructor during chain attack chance setup
-void func_8027C098(cf::CChainChance* self) {
-    self->mChainCount = 0;
-    self->mField08 = 0;
-    self->mField0A = 0;
-    self->mField0C = 0;
-}
+// Converted to inline member function in header
 void func_8027C5CC(){}
 void func_8027CA98(){}
 

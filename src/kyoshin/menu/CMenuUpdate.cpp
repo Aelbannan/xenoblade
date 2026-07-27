@@ -17,14 +17,22 @@ struct CMenuUpdate_8014274C {
     unsigned int field_4;
     unsigned int field_8;
     unsigned int field_C;
-};
 
-void __ct__8014274C(CMenuUpdate_8014274C* self) {
-    self->field_0 = 0;
-    self->field_4 = 0;
-    self->field_8 = 0;
-    self->field_C = 0;
-}
+    void __ct__8014274C() {
+        field_0 = 0;
+        field_4 = 0;
+        field_8 = 0;
+        field_C = 0;
+    }
+
+    void init_8014274C(uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3) {
+        uint32_t* p = (uint32_t*)this;
+        p[0] = v0;
+        p[1] = v1;
+        p[2] = v2;
+        p[3] = v3;
+    }
+};
 
 
 
@@ -70,13 +78,7 @@ void setFieldFloat10(void* self, float val) { *(float*)((u8*)self + 0x10) = val;
 
 void func_80143ADC(){}
 
-void init_8014274C(CMenuUpdate_8014274C* self, uint32_t v0, uint32_t v1, uint32_t v2, uint32_t v3) {
-    uint32_t* p = (uint32_t*)self;
-    p[0] = v0;
-    p[1] = v1;
-    p[2] = v2;
-    p[3] = v3;
-}
+// Converted to inline member function in struct
 
 u8 getField64(void* self) { return static_cast<CMenuUpdateFull*>(self)->field_64; }
 

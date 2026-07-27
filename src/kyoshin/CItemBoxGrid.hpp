@@ -40,6 +40,11 @@ public:
     virtual ~CItemBoxGrid();
     void OnFileEvent();
 
+    u8 GetField61();
+    u8 GetField549();
+    u8 GetField52D();
+    void PushToList(unsigned char val);
+
     // TODO: add fields
 };
 

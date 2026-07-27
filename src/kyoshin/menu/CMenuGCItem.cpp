@@ -32,22 +32,17 @@ void func_802B0D24(){}
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuGCItemFv
  */
-void func_802B0F08(IScnRender* self) {
-    ((void(*)(CMenuGCItem*))cbRenderBefore__11CMenuGCItemFv)(
-        static_cast<CMenuGCItem*>(self));
+void CMenuGCItem::func_802B0F08() {
+    cbRenderBefore();
 }
 
 /**
  * IScnRender vtable this-adjusting thunk for ~CMenuGCItem.
  *
  * Same adjustment as func_802B0F08 but forwards to the destructor.
- * r4 (the MWCC deletion flag) is preserved from the caller because the cast
- * to void(*)(CMenuGCItem*) declares only one parameter, leaving r4 unmodified
- * in the tail call.
  *
  * Retail: subi r3, r3, 0x58; b __dt__11CMenuGCItemFv
  */
-void func_802B0F10(IScnRender* self){
-    ((void(*)(CMenuGCItem*))__dt__11CMenuGCItemFv)(
-        static_cast<CMenuGCItem*>(self));
+void CMenuGCItem::func_802B0F10() {
+    this->~CMenuGCItem();
 }

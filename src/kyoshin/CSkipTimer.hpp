@@ -20,6 +20,7 @@ public:
 
     // Returns the skip-timer active flag at +0x30.
     u8 getActive() const { return mActive; }
+    u8 func_8029FF1C() { return mActive; }
 
     // --- member fields ---
     /* 0x04 */ UnkClass_8045F564 mMemRegion;   // scratch region for layout build

@@ -30,6 +30,7 @@ public:
     /* 0x48 */ u8 mEnabled;                // Set when layout is ready; gates proc/draw
     /* 0x4C */ s32 mState;                 // State (0=inactive, 1/2/4-8=active steps)
     /* 0x50 */ u8 mIsActive;               // Active flag; set when layout initialised
+    u8 func_8021A8EC() const { return mIsActive; }
     /* 0x51 */ u8 mField51;                // Cleared when state transitions from 0→1
     CMCCrystalInfo();
 };

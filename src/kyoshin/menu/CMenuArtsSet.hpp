@@ -6,6 +6,12 @@ class CMenuArtsSet {
 public:
     CMenuArtsSet();
 
+    void func_80231848(void* src);
+    u8 func_80233880();
+    void func_80233968();
+    void func_802349F8(u8 val);
+    void func_80234A00();
+
     // +0x00: vtable
     char _pad_04[0x31 - 0x04];   // 0x04-0x30
     u8 mField31;                   // 0x31

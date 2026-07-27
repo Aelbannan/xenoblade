@@ -10,10 +10,10 @@ extern "C" void __dt__15CModelDispEquipFv();
 
 void __ct__CModelDispEquip(){}
 
-void CModelDispEquip_resetBase(CModelDispEquip* self) {
-    *(unsigned long*)self = 0;
-    *(unsigned long*)((char*)self + 4) = 0;
-    ((unsigned char*)self)[8] = 0;
+void CModelDispEquip::resetBase() {
+    *(unsigned long*)this = 0;
+    *(unsigned long*)((char*)this + 4) = 0;
+    ((unsigned char*)this)[8] = 0;
 }
 
 void __dt__801FF6F0(){}
@@ -26,28 +26,28 @@ void func_801FF82C(){}
 
 void func_801FF874(){}
 
-u8 CModelDispEquip_getState20(CModelDispEquip* self) { return self->field_1020; }
+u8 CModelDispEquip::getState20() { return field_1020; }
 
-u8 CModelDispEquip_getState21(CModelDispEquip* self) { return self->field_1021; }
+u8 CModelDispEquip::getState21() { return field_1021; }
 
-void CModelDispEquip_setState14(unsigned char* p) {
-    if (p[0x1014] != 0) {
+void CModelDispEquip::setState14() {
+    if (field_1014 != 0) {
         return;
     }
-    p[0x1014] = 1;
-    p[0x1020] = 0;
+    field_1014 = 1;
+    field_1020 = 0;
 }
 
-void CModelDispEquip_setState14_3(CModelDispEquip* self) {
-    ((unsigned char*)self)[0x1014] = 3;
-    ((unsigned char*)self)[0x1020] = 0;
+void CModelDispEquip::setState14_3() {
+    field_1014 = 3;
+    field_1020 = 0;
 }
 
 void func_801FF9A0(){}
 
 void func_801FF9AC(){}
 
-void CModelDispEquip_storeFloats(float* dest, float a, float b, float c, float d) {
+void CModelDispEquip::storeFloats(float* dest, float a, float b, float c, float d) {
     dest[0] = a;
     dest[1] = b;
     dest[2] = c;
@@ -78,21 +78,21 @@ void func_80200E94(){}
 
 void func_80200F08(){}
 
-void func_80200F9C(void* self){}
+void CModelDispEquip::func_80200F9C(){}
 
 void func_80200FB0(){}
 
 void func_80201148(){}
 
-void func_80201298(void* self){}
+void CModelDispEquip::func_80201298(){}
 
-void CModelDispEquip_vfunc18(void) {}
+void CModelDispEquip::vfunc18() {}
 
-void func_8020131C(void* self){}
+void CModelDispEquip::func_8020131C(){}
 
-void CModelDispEquip_vfunc40(void) {}
+void CModelDispEquip::vfunc40() {}
 
-void func_80201444(void* self){}
+void CModelDispEquip::func_80201444(){}
 
 void func_8020147C(){}
 
@@ -116,21 +116,37 @@ void func_80201808(){}
 
 void func_80201900(){}
 
-void CModelDispEquip_thunk4_1298(char* self) { ((void(*)(void*))func_80201298)(self - 0x4); }
+void CModelDispEquip::thunk4_1298() {
+    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->func_80201298();
+}
 
-void CModelDispEquip_thunk4_1440(char* self) { ((void(*)(void*))CModelDispEquip_vfunc40)(self - 0x4); }
+void CModelDispEquip::thunk4_1440() {
+    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->vfunc40();
+}
 
-void CModelDispEquip_thunk4_131C(char* self) { ((void(*)(void*))func_8020131C)(self - 0x4); }
+void CModelDispEquip::thunk4_131C() {
+    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->func_8020131C();
+}
 
-void CModelDispEquip_thunk4_1318(char* self) { ((void(*)(void*))CModelDispEquip_vfunc18)(self - 0x4); }
+void CModelDispEquip::thunk4_1318() {
+    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->vfunc18();
+}
 
-void CModelDispEquip_thunk4_F9C(char* self) { ((void(*)(void*))func_80200F9C)(self - 0x4); }
+void CModelDispEquip::thunk4_F9C() {
+    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->func_80200F9C();
+}
 
-void CModelDispEquip_thunk4_dtor(char* self) { ((void(*)(void*))__dt__15CModelDispEquipFv)(self - 0x4); }
+void CModelDispEquip::thunk4_dtor() {
+    ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)this - 4);
+}
 
-void CModelDispEquip_thunk8_1444(char* self) { ((void(*)(void*))func_80201444)(self - 0x8); }
+void CModelDispEquip::thunk8_1444() {
+    reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 8)->func_80201444();
+}
 
-extern "C" void CModelDispEquip_thunk8_dtor(char* self) { ((void(*)(void*))__dt__15CModelDispEquipFv)(self - 0x8); }
+void CModelDispEquip::thunk8_dtor() {
+    ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)this - 8);
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_802019F8(){}

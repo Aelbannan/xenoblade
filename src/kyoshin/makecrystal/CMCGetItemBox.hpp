@@ -8,6 +8,9 @@ public:
     virtual ~CMCGetItemBox();
     void OnFileEvent();
 
+    u8 func_80297D1C();
+    u8 func_80297D24();
+
     // +0x00: vtable
     u8 _pad_04[0x55 - 0x04]; // 0x04-0x54
     u8 mField55;             // 0x55

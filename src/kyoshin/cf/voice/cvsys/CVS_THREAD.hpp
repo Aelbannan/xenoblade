@@ -21,6 +21,7 @@ public:
     virtual void func_802A1EA0();
     virtual void func_802A3740();
     virtual int blank2();
+    int func_802A5ECC() { return 240; }
 };
 
 extern void func_802A35A0(u32* destPtr);

@@ -56,7 +56,7 @@ void func_800598A8(){}
 
 u32 checkBitFlag(void* self) { return (*(u32*)((u8*)self + 0) >> 1) & 0x1u; }
 
-u32 getField68(CTaskEnvironment* self) { return *(u32*)((u8*)self + 0x68); }
+// Converted to inline member function in header
 
 void func_80059920(){}
 

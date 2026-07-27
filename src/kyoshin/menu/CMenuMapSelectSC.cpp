@@ -46,22 +46,11 @@ void func_80251D94(){}
 
 // IScnRender vtable this-adjusting thunk for cbRenderBefore.
 // IScnRender is a non-primary base at offset 0x58 within CMenuMapSelectSC.
-// The thunk converts the subobject pointer (IScnRender*) to the enclosing
-// CMenuMapSelectSC* via integer-offset adjustment before forwarding to the
-// real override. The function-pointer cast prevents MWCC from null-checking
-// the static_cast chain (which would add a cmpwi/beq that the retail thunk
-// does not have).
-void func_80251DE8(IScnRender* self) {
-    ((void(*)(CMenuMapSelectSC*))cbRenderBefore__16CMenuMapSelectSCFv)(
-        static_cast<CMenuMapSelectSC*>(self));
+void CMenuMapSelectSC::func_80251DE8() {
+    cbRenderBefore();
 }
 
 // IScnRender vtable this-adjusting thunk for destructor.
-// Adjusts from IScnRender* (at offset 0x58) to full CMenuMapSelectSC* and
-// forwards to ~CMenuMapSelectSC(). r4 (deletion flag) is preserved from the
-// caller because the cast to void(*)(CMenuMapSelectSC*) declares only one
-// parameter, leaving r4 untouched.
-void func_80251DF0(IScnRender* self) {
-    ((void(*)(CMenuMapSelectSC*))__dt__16CMenuMapSelectSCFv)(
-        static_cast<CMenuMapSelectSC*>(self));
+void CMenuMapSelectSC::func_80251DF0() {
+    this->~CMenuMapSelectSC();
 }

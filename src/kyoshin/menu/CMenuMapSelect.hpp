@@ -13,6 +13,10 @@ public:
     virtual ~CMenuMapSelect();
     void cbRenderBefore();
 
+    // IScnRender vtable this-adjusting thunks
+    void func_8024309C();
+    void func_802430A4();
+
     // Stub declarations for functions not yet decompiled
     CMenuMapSelect();
 };

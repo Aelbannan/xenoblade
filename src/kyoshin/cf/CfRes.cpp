@@ -6,22 +6,16 @@
 #include "kyoshin/cf/CfRes.hpp"
 void func_80061870(){}
 
-struct CfResBuffer {
-    u8 buffer[0x400];
-    u32 field_400;
-    u32 field_404;
-};
-
-int func_80061A80(struct CfResBuffer* self, unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits) {
-    unsigned int usedSize = self->field_404;
+int CfResBuffer::func_80061A80(unsigned char byte1, unsigned short halfword, unsigned int dataVal, unsigned int* src, int count, unsigned int headerBits) {
+    unsigned int usedSize = field_404;
     unsigned int total = usedSize + count + 2;
     if (total >= 0x100) {
         return 0;
     }
 
-    unsigned int writeIdx = self->field_400;
+    unsigned int writeIdx = field_400;
     unsigned int newIdx = (writeIdx - count - 2) & 0xFF;
-    self->field_400 = newIdx;
+    field_400 = newIdx;
 
     unsigned int h = headerBits & 0xFF0FFFFF;
     h = (h & 0x00FFFFFF) | ((unsigned int)byte1 << 24);
@@ -29,7 +23,7 @@ int func_80061A80(struct CfResBuffer* self, unsigned char byte1, unsigned short 
     h &= 0xFFF7FFFF;
     h = (h & 0xFFF0FFFF) | (((unsigned int)count & 0xF) << 20);
 
-    unsigned int* buf = (unsigned int*)self->buffer;
+    unsigned int* buf = (unsigned int*)buffer;
     buf[newIdx] = h;
     buf[(newIdx + 1) & 0xFF] = dataVal;
 
@@ -43,7 +37,7 @@ int func_80061A80(struct CfResBuffer* self, unsigned char byte1, unsigned short 
         }
     }
 
-    self->field_404 = usedSize + count + 2;
+    field_404 = usedSize + count + 2;
     return 1;
 }
 
@@ -581,22 +575,13 @@ extern "C" unsigned long CfRes_isField4Zero(void* self) {
     return v == 0 ? 1 : 0;
 }
 
-struct CfRes_64994 {
-    u32 field_00;
-    u32 field_04;
-    u32 field_08;
-    u8 _0C[0x14];
-    u32 field_20;
-    u32 field_24;
-    u32 field_28;
-};
-extern "C" void CfRes_initStruct_64994(CfRes_64994* self) {
-    self->field_04 = 0;
-    self->field_08 = 0;
-    self->field_28 = 0;
-    self->field_00 = 0;
-    self->field_24 = 0;
-    self->field_20 = 0;
+void CfRes_64994::initStruct() {
+    field_04 = 0;
+    field_08 = 0;
+    field_28 = 0;
+    field_00 = 0;
+    field_24 = 0;
+    field_20 = 0;
 }
 
 extern "C" void CfRes_orBits_649B4(void* self, u32 bits) {
@@ -706,15 +691,11 @@ extern "C" int CfResEntry_incRefCount(void* self) {
     return ++*(int*)((char*)self + 4);
 }
 
-struct CfRes_65818 {
-    u32 field_00;
-    int field_04;
-};
-extern "C" int CfResEntry_decRefCount(CfRes_65818* self) {
-    if (self->field_04 > 0) {
-        self->field_04--;
+int CfRes_65818::decRefCount() {
+    if (field_04 > 0) {
+        field_04--;
     }
-    return self->field_04;
+    return field_04;
 }
 
 extern "C" int CfRes_incField8(void* self) {

@@ -28,10 +28,6 @@
 #include <types.h>
 #include "monolib/work/IWorkEvent.hpp"
 
-// Forward declare with C linkage for friend
-class CKizunaTalkList;
-extern "C" u8 func_8027355C(CKizunaTalkList* self);
-
 // Talk list entry (0x14 bytes each, 256 max)
 struct TalkListEntry {
     u32 field_00;   // 0x00
@@ -51,7 +47,6 @@ struct TalkListEntryArray {
 };
 
 class CKizunaTalkList : public IWorkEvent {
-    friend u8 func_8027355C(CKizunaTalkList* self);
 private:
     /* 0x04 */ u8 _pad04[0x10];     // UnkClass_8045F564 (stub)
     /* 0x14 */ u32 mEntryCount;     // number of valid entries
@@ -66,6 +61,9 @@ private:
     /* 0x85 */ u8 mState85;         // state machine progression flag
     /* 0x86 */ u8 mUnknown86;
     /* 0x87 */ u8 mNeedsRebuild;    // 1 = pending rebuild, 0 = built
+public:
+    u8 func_8027355C() const { return mNeedsRebuild; }
+private:
     /* 0x88 */ u8 mUnknown88;
     /* 0x89 */ u8 _pad89;           // padding
     /* 0x8A */ u16 mUnknown8A;

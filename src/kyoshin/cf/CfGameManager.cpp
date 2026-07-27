@@ -321,8 +321,8 @@ void cf::CfGameManager::func_80081264(u32 val) {
 }
 
 extern "C" void func_8009E120(u32, u32);
-void cf::CfGameManager::func_8008126C(u32 self) {
-    func_8009E120(self, 0);
+void cf::CfGameManager::func_8008126C() {
+    func_8009E120(reinterpret_cast<u32>(this), 0);
 }
 
 void cf::CfGameManager::func_80081274(u32 val) {
@@ -330,8 +330,8 @@ void cf::CfGameManager::func_80081274(u32 val) {
 }
 
 extern "C" void func_8009E120(u32, u32);
-void cf::CfGameManager::func_8008127C(u32 self) {
-    func_8009E120(self, 1);
+void cf::CfGameManager::func_8008127C() {
+    func_8009E120(reinterpret_cast<u32>(this), 1);
 }
 
 void cf::CfGameManager::func_80081284(u32 val) {
@@ -339,8 +339,8 @@ void cf::CfGameManager::func_80081284(u32 val) {
 }
 
 extern "C" void func_8009E120(u32, u32);
-void cf::CfGameManager::func_8008128C(u32 self) {
-    func_8009E120(self, 2);
+void cf::CfGameManager::func_8008128C() {
+    func_8009E120(reinterpret_cast<u32>(this), 2);
 }
 
 void cf::CfGameManager::func_80081294(u32 val) {
@@ -348,8 +348,8 @@ void cf::CfGameManager::func_80081294(u32 val) {
 }
 
 extern "C" void func_8009E120(u32, u32);
-void cf::CfGameManager::func_8008129C(u32 self) {
-    func_8009E120(self, 3);
+void cf::CfGameManager::func_8008129C() {
+    func_8009E120(reinterpret_cast<u32>(this), 3);
 }
 
 void cf::CfGameManager::func_800812A4(u32 val) {
@@ -357,8 +357,8 @@ void cf::CfGameManager::func_800812A4(u32 val) {
 }
 
 extern "C" void func_8009E120(u32, u32);
-void cf::CfGameManager::func_800812AC(u32 self) {
-    func_8009E120(self, 4);
+void cf::CfGameManager::func_800812AC() {
+    func_8009E120(reinterpret_cast<u32>(this), 4);
 }
 
 u16 cf::CfGameManager::func_800812B4() {
@@ -382,8 +382,8 @@ u16 cf::CfGameManager::func_800812D4() {
 }
 
 extern "C" void func_8009E120(u32, u32);
-void cf::CfGameManager::func_800812DC(u32 self) {
-    func_8009E120(self, 5);
+void cf::CfGameManager::func_800812DC() {
+    func_8009E120(reinterpret_cast<u32>(this), 5);
 }
 
 u16 cf::CfGameManager::func_800812E4() {
@@ -440,18 +440,18 @@ void cf::CfGameManager::func_800822F4() {
 }
 
 extern "C" void func_8009CF8C(u32);
-void cf::CfGameManager::func_80082354(u32 self) {
-    func_8009CF8C(self + 0x220);
+void cf::CfGameManager::func_80082354() {
+    func_8009CF8C(reinterpret_cast<u32>(this) + 0x220);
 }
 
 extern "C" void func_8009CF8C(u32);
-void cf::CfGameManager::func_80082614(u32 self) {
-    func_8009CF8C(self + 0x312c);
+void cf::CfGameManager::func_80082614() {
+    func_8009CF8C(reinterpret_cast<u32>(this) + 0x312c);
 }
 
 extern "C" void func_8009CF8C(u32);
-void cf::CfGameManager::func_80082694(u32 self) {
-    func_8009CF8C(self + 0x40);
+void cf::CfGameManager::func_80082694() {
+    func_8009CF8C(reinterpret_cast<u32>(this) + 0x40);
 }
 
 u32 cf::CfGameManager::func_80082768() {

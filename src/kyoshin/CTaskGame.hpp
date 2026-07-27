@@ -57,6 +57,11 @@ public:
     virtual void Term();
     void stub_80040A3C();
     void stub_80042720();
+    void setFlag_200(bool enabled, unsigned int mode);
+    void setFlag_400(int enabled, unsigned int mode, unsigned int value);
+    void setFlag_100000(int enabled, int unused, unsigned int value);
+    void setFlag_1000000(int enabled);
+    void setFlag_1000(int value);
     virtual void ITitleMenu__UnkVirtualFunc1();
     virtual void IErrMesWinSel__UnkVirtualFunc1();
     virtual bool gameExceptionCB(u32 r4);

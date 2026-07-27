@@ -57,6 +57,4 @@ void func_80173194(){}
 
 extern "C" u32 func_801731A0(void* self) { return (*(u32*)((u8*)self + 24) >> 4) & 0x1u; }
 
-// Stub: unconditionally returns 0. Accepts a CREvtModel pointer for ABI
-// compatibility but does not access it.
-extern "C" int func_801731AC(CREvtModel* self) { return 0; }
+// Converted to inline member function in header

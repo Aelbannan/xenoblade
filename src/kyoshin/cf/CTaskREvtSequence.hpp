@@ -16,6 +16,7 @@ public:
 
     void Draw();
     void OnFileEvent();
+    u32 func_8016A354();
 };
 } // namespace cf
 

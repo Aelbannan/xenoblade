@@ -26,4 +26,8 @@ public:
     u8 mVisible;    // 0x27 - visibility flag (toggled during fade animation)
     CFade();
     virtual ~CFade();
+    void OnFileEvent() const;
+
+    u8 func_80244508();
+    u8 func_80244510();
 };

@@ -17,6 +17,13 @@ namespace cf {
 
         virtual ~CChainChance(){}
 
+        void func_8027C098() {
+            mChainCount = 0;
+            mField08 = 0;
+            mField0A = 0;
+            mField0C = 0;
+        }
+
         u8 unk14[4];          //0x14
     };
 }

@@ -96,11 +96,19 @@ void copyVEC2(float *dst, const float *src) {
 
 void __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color(){}
 
-const wchar_t* getContextStr(const u8* self) { return *(const wchar_t* const*)(self + 0x4); }
+// TagContext struct for the u8*-self functions
+struct TagContext {
+    u8 _pad00[0x04];
+    const wchar_t* contextStr;
+    u8 _pad08[0x0C - 0x08];
+    float charSpace;
+
+    const wchar_t* getContextStr() const { return contextStr; }
+    const wchar_t** getContextStrPtr() { return &contextStr; }
+    void addToCharSpace(float val) { charSpace = *(float*)((u8*)this + 4) + val; }
+};
 
 void func_80127670(){}
-
-const wchar_t** getContextStrPtr(u8* self) { return (const wchar_t**)(self + 0x4); }
 
 void func_801276C8(){}
 
@@ -179,9 +187,7 @@ void func_80129430(){}
 
 void func_80129564(){}
 
-void addToCharSpace(u8* self, float val) {
-    *(float*)(self + 0xc) = *(float*)(self + 4) + val;
-}
+// Converted to TagContext::addToCharSpace
 
 void func_8012968C(){}
 

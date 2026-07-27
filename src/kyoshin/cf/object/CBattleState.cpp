@@ -115,18 +115,17 @@ struct BattleStateV6If {
     virtual void vf48(cf::CBattleStateEntry* entry); // UnkVirtualFunc17 @0x48
 };
 
-void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg) {
+void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) {
     cf::CBattleStateEntry* entries;
     cf::CBattleStateEntry* p;
     int n;
 
     // Bit `arg->unk0C` set into the this+0x15AC bitfield (word-aligned byte
     // offset = (id >> 3) & ~3, bit position = id & 0x1F).
-    *(u32*)(self->unk15AC + (((u32)arg->unk0C >> 3) & ~3u)) |=
+    *(u32*)(unk15AC + (((u32)arg->unk0C >> 3) & ~3u)) |=
         1u << (arg->unk0C & 0x1F);
 
-    entries = (cf::CBattleStateEntry*)((u8*)self + 0x1388);
+    entries = (cf::CBattleStateEntry*)((u8*)this + 0x1388);
     p = entries;
     for (n = 8; n != 0; n--, p++) {
         if (p->unk0C == arg->unk0C) {
@@ -138,7 +137,7 @@ void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
                     p->unk10 = arg->unk18;
                 }
             }
-            reinterpret_cast<BattleStateV6If*>(self)->vf48(p);
+            reinterpret_cast<BattleStateV6If*>(this)->vf48(p);
             return;
         }
     }
@@ -164,7 +163,7 @@ void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
             entries->unk30 = arg->unk30;
             entries->unk1C = entries->unk20;
             entries->unk28 = scaled;
-            reinterpret_cast<BattleStateV6If*>(self)->vf48(entries);
+            reinterpret_cast<BattleStateV6If*>(this)->vf48(entries);
             return;
         }
     }
@@ -172,8 +171,7 @@ void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
 
 // symbols.txt mangles Fv, but retail leaves the id in r4. This lookup reads
 // the independent halfword state at +0x6.
-int CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 id) {
+int cf::CBattleState::CBattleState_UnkVirtualFunc33(u32 id) {
     u16 mask;
 
     if (id >= 0x12f) {
@@ -233,7 +231,7 @@ int CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv(
         break;
     }
 
-    return (self->unk6 & mask) != 0;
+    return (unk6 & mask) != 0;
 }
 
 // Batch 2026-07-14h: battlestate-vfunc11 owns CBattleState_UnkVirtualFunc11
@@ -248,14 +246,13 @@ int CBattleState_UnkVirtualFunc33__Q22cf12CBattleStateFv(
 // array, 13 groups of 8, matching MWCC's fixed-trip-count unroll), the
 // this+0x15AC status bit for that id is left alone; otherwise it's
 // cleared (ids >= 0x12f always clear, skipping the scan).
-void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 mask) {
+void cf::CBattleState::CBattleState_UnkVirtualFunc11(u32 mask) {
     typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
 
     int i;
     cf::CBattleStateEntry* entry;
 
-    entry = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+    entry = (cf::CBattleStateEntry*)((u8*)this + 0x8);
     for (i = 0; i < 0x68; i++, entry++) {
         u32 id;
         int stillActive;
@@ -264,7 +261,7 @@ void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
             continue;
         }
 
-        ((Vfunc18Fn)(*(void***)self)[19])(self, entry);
+        ((Vfunc18Fn)(*(void***)this)[19])(this, entry);
         id = entry->unk0C;
         memset(entry, 0, 0x34);
 
@@ -278,7 +275,7 @@ void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
             // volatile / `trip>1000` boolify. Instruction shapes, layout, and
             // the rlwinm bit clear otherwise match -- remaining gap is Chaitin
             // register coloring only (see MWCC_REFERENCE).
-            cf::CBattleStateEntry* p = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+            cf::CBattleStateEntry* p = (cf::CBattleStateEntry*)((u8*)this + 0x8);
             int g;
 
             stillActive = 0;
@@ -296,7 +293,7 @@ void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
         }
 
         if (!stillActive) {
-            u8* wordPtr = self->unk15AC + ((id >> 3) & ~3u);
+            u8* wordPtr = this->unk15AC + ((id >> 3) & ~3u);
             *(u32*)wordPtr &= ~(1u << (id & 0x1F));
         }
     }
@@ -309,10 +306,9 @@ void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
 // as UnkVirtualFunc6 -- see docs/MWCC_REFERENCE.md).
 //
 // Leaf / no stack frame: maps specific ids to single-bit masks (or 0 for
-// unmapped ids), then returns (self->unk4 & mask) != 0 via the standard
+// unmapped ids), then returns (this->unk4 & mask) != 0 via the standard
 // MWCC branchless neg/or/srwi boolify idiom (see MWCC_REFERENCE section 8c9).
-int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 id) {
+int cf::CBattleState::CBattleState_UnkVirtualFunc31(u32 id) {
     u16 mask;
 
     if (id >= 0x12f) {
@@ -372,7 +368,7 @@ int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
         break;
     }
 
-    return (self->unk4 & mask) != 0;
+    return (unk4 & mask) != 0;
 }
 
 // Batch 2026-07-14h: battlestate-vfunc26 owns CBattleState_UnkVirtualFunc26
@@ -407,8 +403,7 @@ struct BattleStateV26If {
     virtual void vf1C(cf::CBattleStateEntry* entry); // UnkVirtualFunc6 @0x1C
 };
 
-void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, const cf::CBattleStateSrcEntry* src) {
+void cf::CBattleState::CBattleState_UnkVirtualFunc26(const cf::CBattleStateSrcEntry* src) {
     const cf::CBattleStateSrcEntry* rec;
     const cf::CBattleStateSrcEntry* recFlags;
     int n;
@@ -416,7 +411,7 @@ void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
     u32 flag4000;
     u32 flag2000;
 
-    self->CBattleState_UnkVirtualFunc29();
+    this->CBattleState_UnkVirtualFunc29();
 
     // Retail: li r26,0x4000 then li r25,0x2000.
     flag4000 = 0x4000;
@@ -451,13 +446,13 @@ void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
             entry.unk08 = flag4000;
         }
 
-        reinterpret_cast<BattleStateV26If*>(self)->vf1C(&entry);
+        reinterpret_cast<BattleStateV26If*>(this)->vf1C(&entry);
     }
 
     // Retail: mtctr/bdnz + lwzu/stwu from this+0x1528 / src-4. do-while(--i)
     // stays compact (for!=0 fully unrolls to 0x208); addic./bne soft-cap.
     {
-        u32* dst = (u32*)((u8*)self + 0x1528);
+        u32* dst = (u32*)((u8*)this + 0x1528);
         u32* s = (u32*)src - 1;
         u32 i = 0x10;
 
@@ -505,8 +500,7 @@ struct BattleStateV8If {
     virtual void vf4C(cf::CBattleStateEntry* entry); // UnkVirtualFunc18 @0x4C
 };
 
-void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* entry) {
+void cf::CBattleState::CBattleState_UnkVirtualFunc8(cf::CBattleStateEntry* entry) {
     // Function-scope slot/i reserve r31/r30 so Chaitin parks this/entry in
     // r28/r29 and one/thirteen in r26/r27 (block-local slot/i stole r27/r28).
     cf::CBattleStateEntry* slot;
@@ -674,14 +668,14 @@ kind2:
 kind_done:
 
     if (kind == 3) {
-        *(u32*)self->unk1528 = 0;
+        *(u32*)this->unk1528 = 0;
     }
 
-    reinterpret_cast<BattleStateV8If*>(self)->vf2C(entry);
+    reinterpret_cast<BattleStateV8If*>(this)->vf2C(entry);
 
     // Retail init order after the first vt+0x2C call:
     //   slot=this+8, i=0, then one=1 / thirteen=13 into r26/r27.
-    slot = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+    slot = (cf::CBattleStateEntry*)((u8*)this + 0x8);
     i = 0;
     one = 1;
     thirteen = 0xd;
@@ -752,7 +746,7 @@ kind_done:
         savedWords[12] = s[12];
         memset(clearPtr, clearVal, clearLen);
 
-        reinterpret_cast<BattleStateV8If*>(self)->vf2C(
+        reinterpret_cast<BattleStateV8If*>(this)->vf2C(
             (cf::CBattleStateEntry*)savedWords);
 
         // Load halfword id into a wide local first (retail lhz -> r5).
@@ -762,7 +756,7 @@ kind_done:
         } else {
             // Retail: savedId in r5, dead trip in r3 (li 0 / addi +7 /
             // unused after bdnz), scan base in r4, ctr=thirteen.
-            p = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+            p = (cf::CBattleStateEntry*)((u8*)this + 0x8);
             trip = 0;
             stillActive = 0;
             for (g = thirteen; g != 0; g--) {
@@ -807,11 +801,11 @@ kind_done:
         }
 
         if (stillActive == 0) {
-            u8* wordPtr = self->unk15AC + ((savedId >> 3) & ~3u);
+            u8* wordPtr = this->unk15AC + ((savedId >> 3) & ~3u);
             *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
         }
 
-        reinterpret_cast<BattleStateV8If*>(self)->vf4C(
+        reinterpret_cast<BattleStateV8If*>(this)->vf4C(
             (cf::CBattleStateEntry*)savedWords);
 
         if (entry->unk0C == 0) {
@@ -831,8 +825,7 @@ kind_done:
 // clears this+0x1528. Stack-copy + memset slot, id-dup scan / clear
 // unk15AC bit, then vt+0x4C (UnkVirtualFunc18). No recursive vt+0x2C;
 // walks all slots (no early break).
-extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg) {
+void cf::CBattleState::CBattleState_UnkVirtualFunc10(cf::CBattleStateEntry* arg) {
     typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
 
     int one;
@@ -877,7 +870,7 @@ extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
 
     one = 1;
     thirteen = 0xd;
-    slot = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+    slot = (cf::CBattleStateEntry*)((u8*)this + 0x8);
     i = 0;
 
     for (; i < 0x68; i++, slot++) {
@@ -1069,7 +1062,7 @@ extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
     kind_done:
 
         if (kind == 3) {
-            *(u32*)self->unk1528 = 0;
+            *(u32*)this->unk1528 = 0;
         }
 
         // Retail schedules memset args into the first pair of the
@@ -1112,7 +1105,7 @@ extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
         } else {
             // Retail: found in r0, dead trip in r3 (li 0 / addi +7 /
             // unused after bdnz), scan base in r4.
-            p = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+            p = (cf::CBattleStateEntry*)((u8*)this + 0x8);
             trip = 0;
             stillActive = 0;
             for (g = thirteen; g != 0; g--) {
@@ -1157,12 +1150,12 @@ extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
         }
 
         if (stillActive == 0) {
-            u8* wordPtr = self->unk15AC + ((savedId >> 3) & ~3u);
+            u8* wordPtr = this->unk15AC + ((savedId >> 3) & ~3u);
             *(u32*)wordPtr &= ~(one << (savedId & 0x1F));
         }
 
-        ((Vfunc18Fn)(*(void***)self)[19])(
-            self, (cf::CBattleStateEntry*)savedWords);
+        ((Vfunc18Fn)(*(void***)this)[19])(
+            this, (cf::CBattleStateEntry*)savedWords);
     }
 }
 
@@ -1173,7 +1166,7 @@ extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
 // fake-Fv ABI as UnkVirtualFunc6). Core battle-state-machine: id-specific
 // init, kind-based routing through vfunc1/2 helpers + sound/event dispatch,
 // then slot scan + copy/accumulate for entries sharing the same id/keys.
-extern "C" void CBattleState_UnkVirtualFunc5__Q22cf12CBattleStateFv(cf::CBattleState* self, cf::CBattleStateEntry* arg) {
+void cf::CBattleState::CBattleState_UnkVirtualFunc5(cf::CBattleStateEntry* arg) {
     typedef void (*Vfunc18Fn)(cf::CBattleState*, cf::CBattleStateEntry*);
 
     u32 id;
@@ -1228,11 +1221,11 @@ P1_10:
     arg->unk00 = 0;
     {
         cf::CBattleState* obj;
-        obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+        obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
         if (*(u32*)((u8*)obj + 0x3374) & 0x20) {
             arg->unk20 *= lbl_eu_80667404;
         } else {
-            obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+            obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
             if (*(u32*)((u8*)obj + 0x3374) & 0x40) {
                 arg->unk20 = (float)((double)arg->unk20 * lbl_eu_80667408);
             }
@@ -1306,7 +1299,7 @@ P1_done:
     K1_5f: if (id == 0x12d) { k = 0; goto K1_done; } if (id >= 0x12d) { k = 2; goto K1_done; } if (id == 0x11e) { k = 0; goto K1_done; } k = 2;
     K1_done:
         if (k == 3) {
-            *(u32*)self->unk1528 = id;
+            *(u32*)this->unk1528 = id;
         }
     }
 
@@ -1314,7 +1307,7 @@ P1_done:
     {
         u32 wordOff = (id >> 3) & ~3u;
         u32 bitPos = id & 0x1F;
-        *(u32*)(self->unk15AC + wordOff) |= (1u << bitPos);
+        *(u32*)(this->unk15AC + wordOff) |= (1u << bitPos);
     }
 
     // -- Phase 5: kind classification #2 (r31 in retail) -------------
@@ -1432,7 +1425,7 @@ BranchB:
             if (!(arg->unk30 & 0x200)) {
                 if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
                     cf::CBattleState* obj;
-                    obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+                    obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
                     func_80109784((u8*)obj + 0x3F10, id, 1);
                     func_8013DB6C(6, id, 0, 0);
                     goto after_dispatch;
@@ -1496,7 +1489,7 @@ BranchB:
             if (!(arg->unk30 & 0x200)) {
                 if (arg->unk2E == 0 || (arg->unk30 & 2) || !(arg->unk30 & 0x400)) {
                     cf::CBattleState* obj;
-                    obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+                    obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
                     if (arg->unk30 & 0x10000) {
                         func_80109784((u8*)obj + 0x3F10, id, 0x20);
                     } else {
@@ -1563,7 +1556,7 @@ BranchB:
         if (k == 3) {
             if (!(arg->unk30 & 0x200)) {
                 cf::CBattleState* obj;
-                obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+                obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
                 func_80109784((u8*)obj + 0x3F10, id, 1);
                 func_8013DB6C(6, id, 0, 0);
             }
@@ -1626,7 +1619,7 @@ BranchA:
     A3_5f: if (id == 0x12d) { k = 0; goto A3_done; } if (id >= 0x12d) { k = 2; goto A3_done; } if (id == 0x11e) { k = 0; goto A3_done; } k = 2;
     A3_done:
         if (k == 0) {
-            cf::CBattleState* obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+            cf::CBattleState* obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
             func_80109784((u8*)obj + 0x3F10, id, 5);
         }
     }
@@ -1684,7 +1677,7 @@ BranchA:
     A4_5f: if (id == 0x12d) { k = 0; goto A4_done; } if (id >= 0x12d) { k = 2; goto A4_done; } if (id == 0x11e) { k = 0; goto A4_done; } k = 2;
     A4_done:
         {
-            cf::CBattleState* obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)self)[1])(self);
+            cf::CBattleState* obj = ((cf::CBattleState* (*)(cf::CBattleState*))(*(void***)this)[1])(this);
             if (k == 1) {
                 func_80109784((u8*)obj + 0x3F10, id, 6);
             } else {
@@ -1750,7 +1743,7 @@ after_dispatch:
             cf::CBattleStateEntry* slot;
             int count;
 
-            slot = (cf::CBattleStateEntry*)((u8*)self + 0x8);
+            slot = (cf::CBattleStateEntry*)((u8*)this + 0x8);
             for (count = 0x68; count != 0; count--, slot++) {
                 if (slot->unk0C != entryId)
                     goto F_next;
@@ -1781,7 +1774,7 @@ after_dispatch:
                     slot->unk2C = arg->unk2C;
                     slot->unk2E = arg->unk2E;
                     slot->unk30 = arg->unk30 | 8;
-                    ((Vfunc18Fn)(*(void***)self)[18])(self, slot);
+                    ((Vfunc18Fn)(*(void***)this)[18])(this, slot);
                     goto F_slot_done;
                 }
 
@@ -1809,7 +1802,7 @@ after_dispatch:
                         slot->unk10 = slot->unk18;
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
-                    ((Vfunc18Fn)(*(void***)self)[18])(self, slot);
+                    ((Vfunc18Fn)(*(void***)this)[18])(this, slot);
                     goto F_slot_done;
                 }
 
@@ -1838,7 +1831,7 @@ after_dispatch:
                     slot->unk1C = slot->unk20;
                     slot->unk28 = old28;
                     slot->unk30 |= 8;
-                    ((Vfunc18Fn)(*(void***)self)[18])(self, slot);
+                    ((Vfunc18Fn)(*(void***)this)[18])(this, slot);
                     goto F_slot_done;
                 }
 
@@ -1849,9 +1842,9 @@ after_dispatch:
 
         // 3-array empty-slot scan
         {
-            u8* base1 = (u8*)self + 0x8;
-            u8* base2 = (u8*)self + 0x688;
-            u8* base3 = (u8*)self + 0xD08;
+            u8* base1 = (u8*)this + 0x8;
+            u8* base2 = (u8*)this + 0x688;
+            u8* base3 = (u8*)this + 0xD08;
             int trip;
 
             for (trip = 0x20; trip != 0; trip--) {
@@ -1885,7 +1878,7 @@ after_dispatch:
                     if (lbl_eu_80667410 == dst->unk28) {
                         dst->unk28 = lbl_eu_80667414 * dst->unk24;
                     }
-                    ((Vfunc18Fn)(*(void***)self)[18])(self, dst);
+                    ((Vfunc18Fn)(*(void***)this)[18])(this, dst);
                     goto F_slot_done;
                 }
 
@@ -1911,8 +1904,8 @@ extern "C" int CBattleState_UnkVirtualFunc1__Q22cf12CBattleStateFv() { return 0;
 extern "C" void CBattleState_UnkVirtualFunc17__Q22cf12CBattleStateFv() {}
 extern "C" void CBattleState_UnkVirtualFunc18__Q22cf12CBattleStateFv() {}
 void cf::CBattleState::CBattleState_UnkVirtualFunc12() {}
-extern "C" void* CBattleState_UnkVirtualFunc13__Q22cf12CBattleStateFv(cf::CBattleState* self, int index) {
-    return (char*)&((cf::CBattleStateEntry*)((u8*)self + 0x8))[index];
+void* cf::CBattleState::CBattleState_UnkVirtualFunc13(int index) {
+    return (char*)&((cf::CBattleStateEntry*)((u8*)this + 0x8))[index];
 }
 extern "C" void* CBattleState_UnkVirtualFunc14__Q22cf12CBattleStateFv(void* self, unsigned long idx) {
     return (char*)&((cf::CBattleStateEntry*)((u8*)self + 0x8))[idx];

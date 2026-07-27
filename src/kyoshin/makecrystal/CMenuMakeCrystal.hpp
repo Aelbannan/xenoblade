@@ -19,5 +19,8 @@ public:
     void Term();
     void Move();
     void cbRenderBefore();
-    CMenuMakeCrystal();
+
+    // IScnRender vtable this-adjusting thunks
+    void func_802124F4();
+    void func_802124FC();
 };

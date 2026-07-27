@@ -27,27 +27,16 @@ void func_80272560(){}
 
 void func_80272694(){}
 
-// Forward declarations for member functions called by adjustor thunks
-// (used via direct function pointer to guarantee tail-call match).
-void cbRenderBefore__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self);
-void __dt__19CMenuKizunaTalkListFv(CMenuKizunaTalkList* self, int deletionFlag);
 // IScnRender vtable adjustor thunk for cbRenderBefore.
 // When IScnRender virtual functions dispatch through IScnRender*,
 // 'this' points to the IScnRender subobject at offset +0x58 within
 // CMenuKizunaTalkList. This thunk adjusts it back and tail-calls the
 // real implementation.
-void func_802726E4(IScnRender* self) {
-    ((void(*)(CMenuKizunaTalkList*))cbRenderBefore__19CMenuKizunaTalkListFv)(
-        reinterpret_cast<CMenuKizunaTalkList*>(
-            reinterpret_cast<uintptr_t>(self) - 0x58));
+void CMenuKizunaTalkList::func_802726E4() {
+    cbRenderBefore();
 }
 
 // IScnRender vtable adjustor thunk for ~CMenuKizunaTalkList.
-// Same pointer adjustment as func_802726E4. r4 (deletion flag)
-// is passed through from the IScnRender vtable caller unchanged.
-// The single-arg function pointer cast avoids MWCC zeroing r4.
-void func_802726EC(IScnRender* self) {
-    ((void(*)(CMenuKizunaTalkList*))__dt__19CMenuKizunaTalkListFv)(
-        reinterpret_cast<CMenuKizunaTalkList*>(
-            reinterpret_cast<uintptr_t>(self) - 0x58));
+void CMenuKizunaTalkList::func_802726EC() {
+    this->~CMenuKizunaTalkList();
 }

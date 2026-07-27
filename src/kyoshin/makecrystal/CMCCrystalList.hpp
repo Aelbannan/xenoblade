@@ -4,6 +4,8 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/work/IWorkEvent.hpp"
 
+namespace nw4r { namespace lyt { class DrawInfo; } }
+
 // vtable at lbl_eu_80535F80
 extern "C" void* lbl_eu_80535F80[];
 
@@ -14,6 +16,10 @@ public:
     CMCCrystalList();
     virtual ~CMCCrystalList();
     virtual bool OnFileEvent(CEventFile* pEventFile);
+
+    u8 func_80222A50();
+    u8 func_80222A58();
+    void func_80222964(nw4r::lyt::DrawInfo* drawInfo);
 
     /* 0x00 */ // IWorkEvent base (vptr)
     /* 0x04 */ UnkClass_8045F564 mMemRegion1;

@@ -6,6 +6,7 @@ class CSLCur {
 public:
     CSLCur();
     void func_8028EA74();
+    void func_8028EEC0();
 
     // No vtable (no virtual functions)
     int mField0;    // 0x00
@@ -22,6 +23,9 @@ public:
     virtual ~CSaveLoad();
     void func_8028F23C();
     void OnFileEvent();
+
+    u8 func_8028F664();
+    u8 func_8028FEC4();
 
     // +0x00: vtable
     char _pad_04[0x11E - 0x04]; // 0x04-0x11D

@@ -12,9 +12,7 @@ int func_80113E1C() {
 u8 func_80113E24(void* pthis) {
     return *(u8*)((char*)pthis + 0x94);
 }
-void func_80113E2C(CMenuFade* self) {
-    *(u8*)((char*)self + 0x54) = 1;
-}
+// Converted to inline member function in header
 void __dt__9CMenuFadeFv(CMenuFade*);
 void func_80113E38(CMenuFade* p) {
     __dt__9CMenuFadeFv((CMenuFade*)((char*)p - 0x58));

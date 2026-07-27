@@ -26,6 +26,7 @@ public:
 
     void Init();
     void Move();
+    IWorkEvent* battleWorkEvent() { return static_cast<IWorkEvent*>(this); }
 
 private:
     // 0x00-0x54 CTTask

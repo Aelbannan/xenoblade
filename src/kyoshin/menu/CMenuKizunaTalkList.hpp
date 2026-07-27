@@ -15,5 +15,10 @@ public:
     void Term();
     void Move();
     void cbRenderBefore();
+
+    // IScnRender vtable this-adjusting thunks
+    void func_802726E4();
+    void func_802726EC();
+
     CMenuKizunaTalkList();
 };

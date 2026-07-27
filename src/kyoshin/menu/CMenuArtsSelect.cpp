@@ -13,21 +13,7 @@
 #include "decomp.h"
 #include <revolution/GX.h>
 
-void func_80104454(CMenuArtsSelect* self);
-void func_80105A34(CMenuArtsSelect* self);
-void func_80105D54(CMenuArtsSelect* self);
-void func_80106450(CMenuArtsSelect* self);
-void func_801065E4(CMenuArtsSelect* self);
-void func_80106900(CMenuArtsSelect* self);
-void func_80106C30(CMenuArtsSelect* self, s32 index);
-void func_80106EC8(CMenuArtsSelect* self, s32 index);
-void func_801071B8(CMenuArtsSelect* self, s32 index);
-void func_801072E0(CMenuArtsSelect* self);
-void func_80107580(CMenuArtsSelect* self);
-int func_80107970(CMenuArtsSelect* self, s32 index);
-int func_80107C54(CMenuArtsSelect* self, s32 index);
-void func_801080F8(CMenuArtsSelect* self);
-void func_80108994(CMenuArtsSelect*);
+
 extern "C" {
 void CMenuArtsSelect_clearArtsRef();
 void CMenuArtsSelect_releaseArtsRef(void* self, UnkArtsSelectRef* ref);
@@ -555,7 +541,7 @@ void CMenuArtsSelect::Init() {
     unk30C = 0;
     unk308 = 4;
 
-    func_80108994(this);
+    func_80108994();
     func_80139198(0);
     unk31C = func_801392C0();
 
@@ -712,7 +698,7 @@ after_bit21:
     DECOMP_ASM_INSN_END
 after_ce48:
 
-    func_801080F8(this);
+    func_801080F8();
 
     {
         u8 flag = func_8013BEB8();
@@ -748,9 +734,9 @@ after_ce48:
                 if (unk348 == 0) {
                     unk348 = 1;
                     unk328 = 4;
-                    func_80107580(this);
+                    func_80107580();
                     if (unk324 == 4) {
-                        func_801072E0(this);
+                        func_801072E0();
                     }
                 }
             } else {
@@ -763,7 +749,7 @@ after_ce48:
     case 0:
         unk308 |= 0x10u;
         if (func_8012FA5C() != 0) {
-            func_80107580(this);
+            func_80107580();
             func_80138078(0x42);
             unk298 = 1;
         }
@@ -784,7 +770,7 @@ after_ce48:
         }
         break;
     case 2:
-        func_80104454(this);
+        func_80104454();
         break;
     case 3:
         unk308 |= 0x90u;
@@ -810,7 +796,7 @@ after_ce48:
         }
         break;
     case 4:
-        func_80105A34(this);
+        func_80105A34();
         break;
     case 5:
         if (func_80110A70() != NULL) {
@@ -826,7 +812,7 @@ after_ce48:
         }
         break;
     case 6:
-        func_80105D54(this);
+        func_80105D54();
         break;
     case 7:
         if (func_80110A70() != NULL) {
@@ -843,7 +829,7 @@ after_ce48:
         }
         break;
     case 8:
-        func_80106450(this);
+        func_80106450();
         break;
     default:
         break;
@@ -860,7 +846,7 @@ after_ce48:
                 if (unk328 == 4) {
                     switch (static_cast<s32>(unk29C)) {
                     case 9:
-                        func_801065E4(this);
+                        func_801065E4();
                         break;
                     case 10:
                         unk308 |= 0x3u;
@@ -869,7 +855,7 @@ after_ce48:
                         }
                         break;
                     case 11:
-                        func_80106900(this);
+                        func_80106900();
                         break;
                     default:
                         break;
@@ -880,7 +866,7 @@ after_ce48:
                 for (s32 i = 0; i < 8; i++) {
                     switch (static_cast<s32>(unk2A0[i])) {
                     case 9:
-                        func_80106C30(this, i);
+                        func_80106C30(i);
                         break;
                     case 10: {
                         unk318 |= (one << i) | (one << (i + 9));
@@ -927,7 +913,7 @@ after_ce48:
                         break;
                     }
                     case 11:
-                        func_80106EC8(this, i);
+                        func_80106EC8(i);
                         break;
                     default:
                         break;
@@ -964,7 +950,7 @@ after_ce48:
                     u32 mask = (1u << i) | (1u << (i + 9));
                     unk310 &= ~mask;
                     if (unk200[nextIdx]->unkBB & 1) {
-                        if (func_80107C54(this, i) != 0) {
+                        if (func_80107C54(i) != 0) {
                             unk104[i]->SetAnimationEnable(unk14C[i], false);
                             unk104[i]->SetAnimationEnable(unk128[i], true);
                             unk128[i]->SetFrame(lbl_eu_80666F28);
@@ -988,7 +974,7 @@ after_ce48:
                     break;
                 }
                 case 0xe:
-                    func_801071B8(this, i);
+                    func_801071B8(i);
                     break;
                 case 0xf:
                     unk310 |= (1u << i) | (1u << (i + 9));
@@ -1003,7 +989,7 @@ after_ce48:
                 switch (static_cast<s32>(unk2E4[i])) {
                 case 0x10:
                     unk314 &= ~((1u << i) | (1u << (i + 9)));
-                    if (func_80107970(this, i) != 0) {
+                    if (func_80107970(i) != 0) {
                         unk2E4[i] = 0x11;
                     }
                     break;
@@ -1015,7 +1001,7 @@ after_ce48:
                     break;
                 case 0x12:
                     unk314 = (unk314 | (1u << i)) & ~(1u << (i + 9));
-                    if (func_80107970(this, i) == 0) {
+                    if (func_80107970(i) == 0) {
                         unk2E4[i] = 0x13;
                     }
                     break;
@@ -1244,21 +1230,21 @@ extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self) {
 void func_80104210(){}
 void func_8010433C(){}
 void func_801043BC(){}
-void func_80104454(CMenuArtsSelect* self){}
-void func_80105A34(CMenuArtsSelect* self){}
-void func_80105D54(CMenuArtsSelect* self){}
-void func_80106450(CMenuArtsSelect* self){}
-void func_801065E4(CMenuArtsSelect* self){}
-void func_80106900(CMenuArtsSelect* self){}
-void func_80106C30(CMenuArtsSelect* self, s32 index){}
-void func_80106EC8(CMenuArtsSelect* self, s32 index){}
-void func_801071B8(CMenuArtsSelect* self, s32 index){}
-void func_801072E0(CMenuArtsSelect* self){}
-void func_80107580(CMenuArtsSelect* self){}
+void CMenuArtsSelect::func_80104454(){}
+void CMenuArtsSelect::func_80105A34(){}
+void CMenuArtsSelect::func_80105D54(){}
+void CMenuArtsSelect::func_80106450(){}
+void CMenuArtsSelect::func_801065E4(){}
+void CMenuArtsSelect::func_80106900(){}
+void CMenuArtsSelect::func_80106C30(s32 index){}
+void CMenuArtsSelect::func_80106EC8(s32 index){}
+void CMenuArtsSelect::func_801071B8(s32 index){}
+void CMenuArtsSelect::func_801072E0(){}
+void CMenuArtsSelect::func_80107580(){}
 void func_8010784C(){}
-int func_80107970(CMenuArtsSelect* self, s32 index){ return 0; }
-int func_80107C54(CMenuArtsSelect* self, s32 index){ return 0; }
-void func_801080F8(CMenuArtsSelect* self){}
+int CMenuArtsSelect::func_80107970(s32 index){ return 0; }
+int CMenuArtsSelect::func_80107C54(s32 index){ return 0; }
+void CMenuArtsSelect::func_801080F8(){}
 void func_801086D0(){}
 void func_801088CC(){}
-void func_80108994(CMenuArtsSelect*){}
+void CMenuArtsSelect::func_80108994(){}

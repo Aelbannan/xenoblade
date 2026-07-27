@@ -20,6 +20,10 @@ public:
     void Move();
     void cbRenderBefore();
 
+    void thunk_IWorkEvent_dtor();
+    void thunk_IScnRender_cbRenderBefore();
+    void thunk_IScnRender_dtor();
+
     // TODO: add fields
 };
 
@@ -27,6 +31,11 @@ class CPcSelectCursor01 {
 public:
     virtual ~CPcSelectCursor01();
 
+    void cursorInit();
+    u8 cursorGetAnimFrame();
+
+    u8 mState;
+    u8 mAnimFrame;
     // TODO: add fields
 };
 

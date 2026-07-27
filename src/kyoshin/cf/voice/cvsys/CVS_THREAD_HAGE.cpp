@@ -17,6 +17,6 @@ void func_802A71D4(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; HAGE subclass returns 0xF0 (240).
-extern "C" int func_802A724C(CVS_THREAD_HAGE* self) {
-    return CVS_THREAD_HAGE::BUFFER_SIZE;
+int CVS_THREAD_HAGE::blank1() {
+    return BUFFER_SIZE;
 }

@@ -16,8 +16,8 @@ void func_802A7614(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; HP subclass returns 0xD2 (210).
-int func_802A766C(CVS_THREAD_HP* self) {
-    return CVS_THREAD_HP::BUFFER_SIZE;
+int CVS_THREAD_HP::blank1() {
+    return BUFFER_SIZE;
 }
 
 void func_802A7674(){}

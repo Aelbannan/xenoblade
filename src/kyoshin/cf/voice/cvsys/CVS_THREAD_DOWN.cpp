@@ -13,4 +13,4 @@ void func_802A5E0C(){}
 
 void func_802A5E54(){}
 
-extern "C" int func_802A5ECC(CVS_THREAD* self) { return 240; }
+// Converted to inline member function in header

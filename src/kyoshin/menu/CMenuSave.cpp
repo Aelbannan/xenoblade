@@ -38,16 +38,13 @@ void func_8028E530(){}
 void func_8028E768(){}
 
 /// Adjusting thunk: called when IScnRender subobject (at CMenuSave+0x58)
-/// receives cbRenderBefore. Adjusts this back to full CMenuSave*.
-void func_8028E7B8(IScnRender* self) {
-    ((void(*)(CMenuSave*))cbRenderBefore__9CMenuSaveFv)(
-        static_cast<CMenuSave*>(self));
+/// receives cbRenderBefore.
+void CMenuSave::func_8028E7B8() {
+    cbRenderBefore();
 }
 
 /// Adjusting destructor thunk: called when IScnRender subobject (at CMenuSave+0x58)
-/// receives ~CMenuSave. The delete flag is passed through unchanged.
-extern "C" void func_8028E7C0(IScnRender* self, int dtorFlag) {
-    ((void(*)(CMenuSave*, int))__dt__9CMenuSaveFv)(
-        static_cast<CMenuSave*>(self),
-        dtorFlag);
+/// receives ~CMenuSave.
+void CMenuSave::func_8028E7C0() {
+    this->~CMenuSave();
 }

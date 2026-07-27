@@ -15,9 +15,7 @@ void func_8021A840(){}
 
 void func_8021A860(){}
 
-u8 func_8021A8EC(CMCCrystalInfo* self) {
-    return self->mIsActive;
-}
+// Converted to inline member function in header
 
 void func_8021A8F4(){}
 

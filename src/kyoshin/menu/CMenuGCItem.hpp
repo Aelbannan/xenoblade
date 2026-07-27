@@ -31,6 +31,10 @@ public:
     // IScnRender override
     void cbRenderBefore();
 
+    // IScnRender vtable this-adjusting thunks
+    void func_802B0F08();
+    void func_802B0F10();
+
     // Fields (partial)
     // Inherited: CProcess (0x00-0x57)
     // IScnRender at 0x58
@@ -41,24 +45,3 @@ public:
     u8 mArg;                                          // 0x4AC5
     CMenuGCItem();
 };
-
-// IScnRender vtable this-adjusting thunk for cbRenderBefore.
-//
-// IScnRender is a non-primary base at offset 0x58 within CMenuGCItem.
-// The thunk converts the subobject pointer (IScnRender*) back to the enclosing
-// CMenuGCItem* via offset adjustment before forwarding to the real override.
-// The function-pointer cast prevents MWCC from null-checking the static_cast
-// chain (which would add a cmpwi/beq that the retail thunk does not have).
-//
-// Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuGCItemFv
-extern "C" void func_802B0F08(IScnRender* self);
-
-// IScnRender vtable this-adjusting thunk for ~CMenuGCItem.
-//
-// Same adjustment as func_802B0F08 but forwards to the destructor.
-// r4 (the MWCC deletion flag) is preserved from the caller because the cast
-// to void(*)(CMenuGCItem*) declares only one parameter, leaving r4 unmodified
-// in the tail call.
-//
-// Retail: subi r3, r3, 0x58; b __dt__11CMenuGCItemFv
-extern "C" void func_802B0F10(IScnRender* self);

@@ -17,8 +17,8 @@ void func_802B01B0(){}
 void func_802B0248(){}
 
 // Virtual override of blank1(): returns buffer size for BATTLE_BEGIN thread.
-int func_802B033C(CVS_THREAD_BATTLE_BEGIN* self) {
-    return CVS_THREAD_BATTLE_BEGIN::BUFFER_SIZE;
+int CVS_THREAD_BATTLE_BEGIN::blank1() {
+    return BUFFER_SIZE;
 }
 
 void func_802B0344(){}

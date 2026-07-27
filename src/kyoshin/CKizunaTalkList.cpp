@@ -4,9 +4,7 @@
 #include "kyoshin/CKizunaTalkList.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
-u8 func_8027355C(CKizunaTalkList* self) {
-    return self->mNeedsRebuild;
-}
+// Converted to inline member function in header
 
 void __ct__CKizunaTalkList(){}
 

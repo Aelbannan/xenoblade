@@ -102,9 +102,9 @@ void func_80231648(){}
 
 void func_802316F8(){}
 
-void func_80231848(CMenuArtsSet* self, void* src){
-    self->mField44 = *static_cast<float*>(src);
-    self->mField48 = *static_cast<float*>(static_cast<char*>(src) + 4);
+void CMenuArtsSet::func_80231848(void* src){
+    mField44 = *static_cast<float*>(src);
+    mField48 = *static_cast<float*>(static_cast<char*>(src) + 4);
 }
 
 void func_8023185C(){}
@@ -177,14 +177,14 @@ void func_80233760(){}
 
 void func_8023380C(){}
 
-u8 func_80233880(CMenuArtsSet* self) { return self->mField31; }
+u8 CMenuArtsSet::func_80233880() { return mField31; }
 
 void func_80233888(){}
 
 void func_8023390C(){}
 
 void func_80235F50(void* self);
-void func_80233968(CMenuArtsSet* self) { func_80235F50(self->mSubObj74); }
+void CMenuArtsSet::func_80233968() { func_80235F50(mSubObj74); }
 
 void func_80233970(){}
 
@@ -210,9 +210,9 @@ void func_80234844(){}
 
 void func_80234928(){}
 
-void func_802349F8(CMenuArtsSet* self, u8 val) { self->mField139 = val; }
+void CMenuArtsSet::func_802349F8(u8 val) { mField139 = val; }
 
-void func_80234A00(CMenuArtsSet* self) { func_80231320(self->mSubObj148); }
+void CMenuArtsSet::func_80234A00() { func_80231320(mSubObj148); }
 
 void func_80234A08(){}
 

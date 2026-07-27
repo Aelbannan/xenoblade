@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CEquipItemBox.hpp"
 
-extern "C" u8 func_802865A0(CEquipItemBox* self) { return self->unk_40; }
+u8 CEquipItemBox::func_802865A0() { return unk_40; }
 
 
 
@@ -126,21 +126,21 @@ extern "C" void func_80286454(){}
 extern "C" void func_8028652C(){}
 
 
-extern "C" u8 func_802865A8(CEquipItemBox* self) { return self->unk_43; }
+u8 CEquipItemBox::func_802865A8() { return unk_43; }
 
 extern "C" void func_802865B0(){}
 
 extern "C" int CSysWin_getUnk34(void*);
 extern "C" int func_801D3320(void*);
 
-extern "C" int func_80286650(CEquipItemBox* self) {
-    if (CSysWin_getUnk34(self->_padSysWin1) != 0) {
+int CEquipItemBox::func_80286650() {
+    if (CSysWin_getUnk34(_padSysWin1) != 0) {
         return 1;
     }
-    return func_801D3320(self->_padSortMenu);
+    return func_801D3320(_padSortMenu);
 }
 
-extern "C" u8 func_80286698(CEquipItemBox* self) { return self->unk_375; }
+u8 CEquipItemBox::func_80286698() { return unk_375; }
 
 extern "C" void func_802866A0(){}
 
@@ -170,13 +170,13 @@ extern "C" void func_80287D58(){}
 
 extern "C" void func_80287DB4(){}
 
-extern "C" u8 func_80287EE8(CEquipItemBox* self) {
-    u8 val = self->unk_1fe;
-    self->unk_1fe = 0;
+u8 CEquipItemBox::func_80287EE8() {
+    u8 val = unk_1fe;
+    unk_1fe = 0;
     return val;
 }
 
-extern "C" void func_80287EFC(CEquipItemBox* self, u32 val) { self->unk_20c = val; }
+void CEquipItemBox::func_80287EFC(u32 val) { unk_20c = val; }
 
 extern "C" void func_80287F04(){}
 
@@ -222,10 +222,10 @@ extern "C" void func_80289CC0(){}
 
 extern "C" void func_80289E70(){}
 
-extern "C" void func_8028A07C(CEquipItemBox* self) {
-    memset(self->unk_36c, 0, 6);
-    self->unk_372 = 0;
-    self->unk_373 = 0;
+void CEquipItemBox::func_8028A07C() {
+    memset(unk_36c, 0, 6);
+    unk_372 = 0;
+    unk_373 = 0;
 }
 
 extern "C" void func_8028A0C0(){}

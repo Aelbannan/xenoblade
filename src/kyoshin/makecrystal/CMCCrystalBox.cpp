@@ -22,16 +22,16 @@ struct CMCCrystalBoxParam {
     s16 m4;
     u8 m6;
     u8 m7;
-};
 
-void initCrystalBoxParam_80213E04(CMCCrystalBoxParam* self, s16 a, s16 b)
-{
-    self->m0 = a;
-    self->m2 = b;
-    self->m4 = 0;
-    self->m6 = 0;
-    self->m7 = 0;
-}
+    void initCrystalBoxParam_80213E04(s16 a, s16 b)
+    {
+        m0 = a;
+        m2 = b;
+        m4 = 0;
+        m6 = 0;
+        m7 = 0;
+    }
+};
 
 void copyCrystalBoxParam_80213E20(CMCCrystalBoxParam *dst, const CMCCrystalBoxParam *src) {
     unsigned short *d16 = (unsigned short*)dst;

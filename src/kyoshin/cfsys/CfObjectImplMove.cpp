@@ -42,8 +42,8 @@ void func_800CD460(){}
 
 void func_800BE824(void*, unsigned int);
 
-void func_800CD5C0(CfObjectImplMoveData* self, unsigned int a, unsigned int b) {
-    CfObjectImplMoveSubObj* inner = (CfObjectImplMoveSubObj*)self->mSubObj;
+void CfObjectImplMoveData::func_800CD5C0(unsigned int a, unsigned int b) {
+    CfObjectImplMoveSubObj* inner = (CfObjectImplMoveSubObj*)this->mSubObj;
     if (a == inner->mSomeId) {
         func_800BE824(inner, b);
     }
@@ -77,7 +77,8 @@ void func_800CF064(){}
 
 void func_800CF810(){}
 
-void func_800CFFA0(unsigned int* self, unsigned int* param) {
+void cf::CfObjectImplMove::func_800CFFA0(unsigned int* param) {
+    unsigned int* self = reinterpret_cast<unsigned int*>(this);
     if (param == (unsigned int*)self[7]) {
         param[44] = 0;
         self[7] = 0;
@@ -85,6 +86,6 @@ void func_800CFFA0(unsigned int* self, unsigned int* param) {
 }
 
 extern "C" void __dt__Q22cf16CfObjectImplMoveFv(void* self);
-void func_800CFFBC(char* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplMoveFv)(self - 0xc); }
+void cf::CfObjectImplMove::func_800CFFBC() { __dt__Q22cf16CfObjectImplMoveFv(this); }
 
-void func_800CFFC4(char* self) { ((void(*)(void*))__dt__Q22cf16CfObjectImplMoveFv)(self - 0x10); }
+void cf::CfObjectImplMove::func_800CFFC4() { __dt__Q22cf16CfObjectImplMoveFv(this); }

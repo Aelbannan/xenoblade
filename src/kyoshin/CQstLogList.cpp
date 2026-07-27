@@ -6,7 +6,7 @@
 
 void __ct__11CQstLogListFv() {}
 
-u8 func_80227CCC(CQstLogList* self) { return self->mSortEnabled; }
+u8 CQstLogList::func_80227CCC() { return mSortEnabled; }
 
 void func_80227994(){}
 
@@ -17,7 +17,7 @@ void func_80227994(){}
 
 
 
-u8 func_80227CD4(CQstLogList* self) { return self->mSortDescending; }
+u8 CQstLogList::func_80227CD4() { return mSortDescending; }
 
 
 

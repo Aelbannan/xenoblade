@@ -36,6 +36,11 @@ public:
 
     CfScript mScripts[3]; // 0x00, 0x58, 0xB0
     void func_80068B20();
+    void func_80068B58(const char* name);
+    void func_80068B94(const char* name);
+    void func_80068BC0();
+    void func_80068BF4();
+    void func_80068C28();
     void func_800694B0();
     void func_8006953C();
 };

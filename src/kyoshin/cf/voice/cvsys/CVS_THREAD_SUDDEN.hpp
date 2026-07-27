@@ -9,4 +9,6 @@
  * rather than a full voice processing allocation.
  */
 class CVS_THREAD_SUDDEN : public CVS_THREAD {
+public:
+	int blank1() override;
 };

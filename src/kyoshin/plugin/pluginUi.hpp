@@ -7,9 +7,17 @@
 #include <types.h>
 #include "monolib/vm/yvm2.h"
 
+// Flag context block passed to some plugin callbacks; flags at offset 8.
+struct UiFlags {
+    u32 _00; // 0x0
+    u32 _04; // 0x4
+    u32 flags; // 0x8
+
+    bool func_800459FC(u32 mask) const;
+};
+
 extern "C" {
 
-bool func_800459FC(const unsigned int* self, unsigned int mask);
 void pluginUiRegist();
 
 void winTalk();

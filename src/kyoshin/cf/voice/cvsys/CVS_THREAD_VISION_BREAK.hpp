@@ -8,4 +8,5 @@ class CVS_THREAD_VISION_BREAK : public CVS_THREAD {
 public:
     // Size of the thread-local buffer in bytes.
     static const int BUFFER_SIZE = 0x0F;
+    int func_802A95FC() { return BUFFER_SIZE; }
 };

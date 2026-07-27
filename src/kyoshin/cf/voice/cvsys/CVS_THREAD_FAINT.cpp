@@ -17,8 +17,8 @@ void func_802A6D74(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; FAINT subclass returns 0xF0 (240).
-int func_802A6DEC(CVS_THREAD_FAINT* self) {
-    return CVS_THREAD_FAINT::BUFFER_SIZE;
+int CVS_THREAD_FAINT::blank1() {
+    return BUFFER_SIZE;
 }
 
 void func_802A6DF4(){}

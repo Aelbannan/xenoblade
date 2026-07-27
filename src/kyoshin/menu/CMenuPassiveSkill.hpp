@@ -25,13 +25,6 @@ extern "C" void func_80263D8C();
 extern "C" void func_80263DE8();
 extern "C" void func_80263E4C();
 
-// Adjusted-this thunks.
-// These are called through a secondary base vtable entry at offset +0x58
-// within CMenuPassiveSkill (IScnRender interface). They adjust this back
-// to the full object before tail-calling the actual implementation.
-extern "C" void func_80263EAC(IScnRender* self);
-extern "C" void func_80263EB4(IScnRender* self);
-
 class CMenuPassiveSkill : public CProcess, public IScnRender {
 public:
     CMenuPassiveSkill();
@@ -40,6 +33,10 @@ public:
     virtual void Term();
     virtual void Move();
     void cbRenderBefore();
+
+    // IScnRender vtable this-adjusting thunks
+    void func_80263EAC();
+    void func_80263EB4();
 
     // TODO: add fields
 };

@@ -11,6 +11,8 @@ namespace cf {
  * multiple voice threads together (e.g. multi-part battle voices).
  */
 class CVS_THREAD_CHAIN : public CVS_THREAD {
+public:
+    int func_802A5A0C() { return 1; }
 };
 
 } // namespace cf

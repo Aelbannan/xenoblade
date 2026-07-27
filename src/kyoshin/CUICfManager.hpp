@@ -127,9 +127,7 @@ public:
     void Init();
     void Term();
     void Move();
-    // func_80133324__12CUICfManagerFv is a free function below (retail Fv-mangled
-    // member that actually reads r4/r5/r6 event args; see CUICfManager.cpp).
-    friend void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+
 
     // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
     u16 getFlags() const {
@@ -197,4 +195,6 @@ private:
     void func_80135FC4();
     void func_80135FCC();
     void func_80135FD4();
+    void func_80133324(int id, int a1, int a2);
+    static IWorkEvent* cfWorkEvent();
 }; // size = 0xC94

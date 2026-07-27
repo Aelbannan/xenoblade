@@ -12,7 +12,7 @@ void func_802A5934(){}
 
 void func_802A598C(){}
 
-int func_802A5A0C(cf::CVS_THREAD_CHAIN* self) { return 1; }
+// Converted to inline member function in header
 
 void func_802A5A14(){}
 

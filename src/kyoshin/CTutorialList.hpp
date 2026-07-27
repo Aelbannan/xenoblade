@@ -32,6 +32,9 @@ public:
     virtual ~CTutorialList();
     void OnFileEvent();
 
+    u8 func_802AD300();
+    u8 func_802AD984();
+
     // TODO: add fields
 };
 

@@ -19,7 +19,7 @@ extern "C" void* __dt__Q22cf15CfObjectImplNpcFv(void* self, int deleteFlag) {
     return self;
 }
 
-extern "C" u8* func_800CA924(cf::CfObjectImplNpc* self) { return self->mUnk_0x68; }
+u8* cf::CfObjectImplNpc::func_800CA924() { return this->mUnk_0x68; }
 
 void func_800CA92C() {}
 
@@ -27,6 +27,6 @@ void func_800CA930() {}
 
 void func_800CA934() {}
 
-extern "C" void func_800CA938(char* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplNpcFv)(self - 0xc); }
+void cf::CfObjectImplNpc::func_800CA938() { __dt__Q22cf15CfObjectImplNpcFv(this, 0); }
 
-extern "C" void func_800CA940(char* self) { ((void(*)(void*))__dt__Q22cf15CfObjectImplNpcFv)(self - 0x10); }
+void cf::CfObjectImplNpc::func_800CA940() { __dt__Q22cf15CfObjectImplNpcFv(this, 0); }

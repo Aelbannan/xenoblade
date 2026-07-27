@@ -4,11 +4,14 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cfsys/CfObjectImplWalker.hpp"
+namespace cf {
+    void* CfObjectImplWalker::func_800C22C4() { return (void*)((u8*)this + 0x68); }
+    u32 CfObjectImplWalker::func_800C5970() { return *(u32*)((u8*)this + 0x380); }
+}
+
 void func_800C1F44(){}
 
 void func_800C1FB8(){}
-
-void* func_800C22C4(cf::CfObjectImplWalker* self) { return (void*)((u8*)self + 0x68); }
 
 void func_800C22CC(){}
 
@@ -54,8 +57,6 @@ extern "C" void* __dt__Q22cf18CfObjectImplWalkerFv(void* self, int deleteFlag) {
 }
 
 void func_800C596C(void) {}
-
-u32 func_800C5970(cf::CfObjectImplWalker* self) { return *(u32*)((u8*)self + 0x380); }
 
 extern "C" void func_800C6EC0(void* self);
 void func_800C5978(char* self) { ((void(*)(void*))func_800C6EC0)(self - 0xc); }

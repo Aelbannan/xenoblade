@@ -24,10 +24,6 @@ extern "C" void func_8018B420();
 extern "C" void func_8018B470();
 extern "C" void func_8018B658();
 
-// Adjusting thunks (virtual dispatch from secondary base at offset 0x58)
-extern "C" void func_8018B6A8(IScnRender* self);
-extern "C" void func_8018B6B0(IScnRender* self);
-
 class CMenuShopSell : public CProcess, public IScnRender {
 public:
     CMenuShopSell();
@@ -36,6 +32,10 @@ public:
     virtual void Term();
     virtual void Move();
     void cbRenderBefore();
+
+    // IScnRender vtable this-adjusting thunks
+    void func_8018B6A8();
+    void func_8018B6B0();
 
     // TODO: add fields
 };

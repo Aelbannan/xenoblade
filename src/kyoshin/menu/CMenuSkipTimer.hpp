@@ -27,11 +27,14 @@ public:
     void Move();
     void cbRenderBefore();
 
+    // IScnRender vtable this-adjusting thunks
+    void func_8029F098();
+    void func_8029F0A0();
+
     // --- member fields ---
     u32 mParam;                    // 0x5C
     u8 mBgTexData[0x20];           // 0x60 — CBgTex placeholder
     u8 mHelpData[0x38];            // 0x80 — CTitleAHelp placeholder
     u8 mTimerData[0x98];           // 0xB8 — CSkipTimer placeholder
     u8 mFlag3;                     // 0x150
-    CMenuSkipTimer();
 };

@@ -6,10 +6,10 @@
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
 void __ct__CModelDispMakeCrystal(){}
 
-void initCrystalSubStruct(CModelDispMakeCrystal* self) {
-    *(unsigned long*)self = 0;
-    *(unsigned long*)((char*)self + 4) = 0;
-    ((unsigned char*)self)[8] = 0;
+void CModelDispMakeCrystal::initCrystalSubStruct() {
+    *(unsigned long*)this = 0;
+    *(unsigned long*)((char*)this + 4) = 0;
+    ((unsigned char*)this)[8] = 0;
 }
 
 void func_8021C4F0(){}
@@ -26,13 +26,13 @@ void func_8021C8B0(){}
 
 void func_8021C928(){}
 
-u8 getCrystalStateA(CModelDispMakeCrystal* self) { return reinterpret_cast<CModelDispMakeCrystalFull*>(self)->field_BE8; }
+u8 CModelDispMakeCrystal::getCrystalStateA() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_BE8; }
 
 void func_8021CA3C(){}
 
-u8 getCrystalStateB(CModelDispMakeCrystal* self) { return reinterpret_cast<CModelDispMakeCrystalFull*>(self)->field_2DC3; }
+u8 CModelDispMakeCrystal::getCrystalStateB() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DC3; }
 
-u8 getCrystalStateC(CModelDispMakeCrystal* self) { return reinterpret_cast<CModelDispMakeCrystalFull*>(self)->field_2DD2; }
+u8 CModelDispMakeCrystal::getCrystalStateC() { return reinterpret_cast<CModelDispMakeCrystalFull*>(this)->field_2DD2; }
 
 void func_8021CB20(){}
 
@@ -56,7 +56,7 @@ void func_8021D564(){}
 
 void func_8021D6B4(){}
 
-void setCrystalPosEntry(CModelDispMakeCrystal* self, unsigned short index, short a, short b)
+void CModelDispMakeCrystal::setCrystalPosEntry(unsigned short index, short a, short b)
 {
     struct Entry {
         char _pad0[4];
@@ -65,7 +65,7 @@ void setCrystalPosEntry(CModelDispMakeCrystal* self, unsigned short index, short
         char _pad8;
         unsigned char flag;
     };
-    Entry* entry = (Entry*)((char*)self + ((unsigned int)index << 3));
+    Entry* entry = (Entry*)((char*)this + ((unsigned int)index << 3));
     entry->x = a;
     entry->y = b;
     entry->flag = 1;
@@ -165,7 +165,7 @@ void CModelDispMakeCrystal::OnFileEvent() {}
 
 void func_80221B90(){}
 
-void setCrystalCursor(CModelDispMakeCrystal* self, u32 val) { *(u32*)((u8*)self + 0xE1C) = val; }
+void CModelDispMakeCrystal::setCrystalCursor(u32 val) { *(u32*)((u8*)this + 0xE1C) = val; }
 
 void func_80221CD0(){}
 
@@ -179,11 +179,11 @@ void initCrystalData(unsigned char* p) {
     p[5] = 0;
 }
 
-void destroyCrystalDispThunk4(CModelDispMakeCrystal* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x4); }
+void CModelDispMakeCrystal::destroyCrystalDispThunk4() { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)this - 0x4); }
 
-void releaseCrystalDispThunk(CModelDispMakeCrystal* self) { ((void(*)(void*))func_80221D58)((char*)self - 0x8); }
+void CModelDispMakeCrystal::releaseCrystalDispThunk() { ((void(*)(void*))func_80221D58)((char*)this - 0x8); }
 
-void destroyCrystalDispThunk8(CModelDispMakeCrystal* self) { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)self - 0x8); }
+void CModelDispMakeCrystal::destroyCrystalDispThunk8() { ((void(*)(void*))__dt__21CModelDispMakeCrystalFv)((char*)this - 0x8); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_80221DDC(){}

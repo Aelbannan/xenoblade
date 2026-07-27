@@ -13,6 +13,7 @@ struct CREvtModel;
 class CREvtModel {
 public:
     CREvtModel();
+    int func_801731AC() { return 0; }
 
     // TODO: add fields
 };

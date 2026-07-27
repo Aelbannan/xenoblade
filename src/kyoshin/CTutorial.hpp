@@ -17,6 +17,15 @@ public:
     virtual ~CTutorial();
     void OnFileEvent();
 
-    // TODO: add fields
+    u8 func_8029ACAC();
+    u8 func_8029ACB4();
+    u8 func_8029ACBC();
+
+    // layout after vtable ptr (4 bytes):
+    u8 _pad04[0x46 - 4];     // 0x04-0x45
+    u8 field_46;              // 0x46
+    u8 field_47;              // 0x47
+    u8 _pad48[0x52 - 0x48];   // 0x48-0x51
+    u8 field_52;              // 0x52
 };
 

@@ -34,16 +34,12 @@ void func_8018B658(){}
 
 // Adjusting thunk: upcasts from secondary base (at offset +0x58 within CMenuShopSell)
 // to the full object, then tail-calls cbRenderBefore.
-// NOTE: Function-pointer call prevents MWCC from inlining the empty stub.
-void func_8018B6A8(IScnRender* self) {
-    ((void(*)(void*))cbRenderBefore__13CMenuShopSellFv)(
-        static_cast<CMenuShopSell*>(self));
+void CMenuShopSell::func_8018B6A8() {
+    cbRenderBefore();
 }
 
 // Adjusting thunk: upcasts from secondary base (at offset +0x58 within CMenuShopSell)
 // to the full object, then tail-calls the destructor.
-// NOTE: Function-pointer call prevents MWCC from inlining the empty stub.
-void func_8018B6B0(IScnRender* self) {
-    ((void(*)(void*))__dt__13CMenuShopSellFv)(
-        static_cast<CMenuShopSell*>(self));
+void CMenuShopSell::func_8018B6B0() {
+    this->~CMenuShopSell();
 }

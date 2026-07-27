@@ -13,4 +13,4 @@ void func_802A8D08(){}
 void func_802A8D60(){}
 
 // Virtual override of blank1(): returns 1 for SUDDEN thread (minimal buffer flag).
-extern "C" int func_802A8DE0(CVS_THREAD_SUDDEN* self) { return 1; }
+int CVS_THREAD_SUDDEN::blank1() { return 1; }

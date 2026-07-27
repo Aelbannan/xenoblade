@@ -146,12 +146,11 @@ public:
     // 0x838
     f32 unk838;
 
+    CMenuEnemyState(void* scn);
     virtual ~CMenuEnemyState();
     void Init();
     void Term();
 };
-
-extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* scn);
 
 class CPcSelectCursor {
 public:

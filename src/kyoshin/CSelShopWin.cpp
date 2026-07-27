@@ -5,14 +5,14 @@
 
 /* Returns whether the shop window has finished loading resources
    and is ready for interaction. (C-linkage: func_8022C8D0) */
-u8 func_8022C8D0(CSelShopWin* self) {
-    return self->mIsLoaded;
+u8 CSelShopWin::func_8022C8D0() {
+    return mIsLoaded;
 }
 
 /* Returns whether a show/hide animation is currently active.
    (C-linkage: func_8022C8D8) */
-extern "C" u8 func_8022C8D8(CSelShopWin* self) {
-    return self->mAnimActive;
+u8 CSelShopWin::func_8022C8D8() {
+    return mAnimActive;
 }
 
 void func_8022CA20(){}

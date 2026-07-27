@@ -12,4 +12,6 @@ class CVS_THREAD_HAGE : public CVS_THREAD {
 public:
     // Size of the thread-local voice buffer in bytes.
     static const int BUFFER_SIZE = 0xF0;
+
+    int blank1() override;
 };

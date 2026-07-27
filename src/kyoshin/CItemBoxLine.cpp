@@ -53,13 +53,13 @@ void func_801ED97C(){}
 
 void func_801EDA08(){}
 
-void func_801EDA4C(unsigned char* self, unsigned char val) {
-    unsigned char n = self[0x63];
+void CItemBoxLine::func_801EDA4C(unsigned char val) {
+    unsigned char n = reinterpret_cast<unsigned char*>(this)[0x63];
     if (n >= 9) {
         return;
     }
-    self[0x5a + n] = val;
-    self[0x63] = n + 1;
+    reinterpret_cast<unsigned char*>(this)[0x5a + n] = val;
+    reinterpret_cast<unsigned char*>(this)[0x63] = n + 1;
 }
 
 void func_801EDA6C(){}
@@ -81,9 +81,8 @@ void func_801EE788(){}
 u8 func_801EECC0(void* self) { return static_cast<CItemBoxLine*>(self)->unk39E; }
 
 void func_801EC3B0(void*, unsigned int);
-void func_801EECC8(char* self) {
-    auto* obj = reinterpret_cast<CItemBoxLine*>(self);
-    func_801EC3B0(&obj->unk3A4, (unsigned char)(obj->unk38C + obj->unk38E));
+void CItemBoxLine::func_801EECC8() {
+    func_801EC3B0(&unk3A4, (unsigned char)(unk38C + unk38E));
 }
 
 void func_801D2E4C(void* self);

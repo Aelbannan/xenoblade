@@ -44,17 +44,17 @@ void func_80193810(){}
 
 void func_8019397C(){}
 
-void func_80193A88(CfActorAccessors* obj, int enable) { if (enable) obj->mFlags1E |= 0x400; else obj->mFlags1E &= ~0x400; }
+void CfActorAccessors::func_80193A88(int enable) { if (enable) mFlags1E |= 0x400; else mFlags1E &= ~0x400; }
 
 void func_80193AB0(){}
 
-u32 func_80193B04(CfActorAccessors* self) { return self->mField94; }
+u32 CfActorAccessors::func_80193B04() { return mField94; }
 
 void func_80193B0C(){}
 
 void func_80193C74(){}
 
-u16 func_80193CC8(CfActorAccessors* self) { return self->mField9E; }
+u16 CfActorAccessors::func_80193CC8() { return mField9E; }
 
 void func_80193CD0(){}
 
@@ -74,7 +74,7 @@ void func_80194D5C(){}
 
 void func_8019514C(){}
 
-u32 func_80195284(CfActorAccessors* self) { return (self->mFlags1E >> 10) & 0x1u; }
+u32 CfActorAccessors::func_80195284() { return (mFlags1E >> 10) & 0x1u; }
 
 void func_80195290(){}
 
@@ -84,21 +84,21 @@ void func_80195384(){}
 
 void func_801953E8(){}
 
-u32 func_80195AC0(CfActorAccessors* self) { return (self->mFlags1E >> 3) & 0x1u; }
+u32 CfActorAccessors::func_80195AC0() { return (mFlags1E >> 3) & 0x1u; }
 
-void func_80195ACC(CfActorAccessors* self, float val) { self->mField8C = val; }
+void CfActorAccessors::func_80195ACC(float val) { mField8C = val; }
 
-void func_80195AD4(CfObjectPcExt* self, u16 val) { self->mField45C4 = val; }
+void CfObjectPcExt::func_80195AD4(u16 val) { mField45C4 = val; }
 
-void func_80195ADC(CfObjectPcExt* self, u16 val) { self->mField45C8 = val; }
+void CfObjectPcExt::func_80195ADC(u16 val) { mField45C8 = val; }
 
-u16 func_80195AE4(CfObjectPcExt* self) { return self->mField45C6; }
+u16 CfObjectPcExt::func_80195AE4() { return mField45C6; }
 
-void* func_80195AEC(CfActorAccessors* self) { return &self->mField30; }
+void* CfActorAccessors::func_80195AEC() { return &mField30; }
 
-void* func_80195AF4(CfObjectPcExt* self) { return (void*)((u8*)self + 0x60c); }
+void* CfObjectPcExt::func_80195AF4() { return (void*)((u8*)this + 0x60c); }
 
-void func_80195AFC(CfPartyInfo* self, u8 val) { self->field_2D = val; }
+void CfPartyInfo::func_80195AFC(u8 val) { field_2D = val; }
 
 void func_80195B04(){}
 
@@ -166,26 +166,26 @@ void func_80198524(){}
 
 void func_801986CC(){}
 
-void func_80198710(CfPartyInfo* r3, void* r4, float f1, int r5, int r6, float f2, float f3) {
+void CfPartyInfo::func_80198710(void* r4, float f1, int r5, int r6, float f2, float f3) {
     int r8 = *(int*)((char*)r4 + 0);
     int r7 = *(int*)((char*)r4 + 4);
     int r0 = *(int*)((char*)r4 + 8);
-    r3->field_00 = r8;
-    r3->field_04 = r7;
-    r3->field_08 = r0;
-    r3->field_18 = f1;
-    r3->field_0C = r5;
-    r3->field_14 = r6;
-    r3->field_1C = f2;
-    r3->field_20 = f3;
+    field_00 = r8;
+    field_04 = r7;
+    field_08 = r0;
+    field_18 = f1;
+    field_0C = r5;
+    field_14 = r6;
+    field_1C = f2;
+    field_20 = f3;
     if (r6 <= 0) {
-        r3->field_14 = 1;
+        field_14 = 1;
     }
     extern float lbl_eu_80667B28;
-    r3->field_28 = lbl_eu_80667B28;
-    r3->field_2C = 0;
-    r3->field_2D = 1;
-    r3->field_2E = 0;
+    field_28 = lbl_eu_80667B28;
+    field_2C = 0;
+    field_2D = 1;
+    field_2E = 0;
 }
 
 void func_8019876C(){}

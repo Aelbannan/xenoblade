@@ -16,6 +16,6 @@ void func_802A9B0C(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; VISION_TELL subclass returns 0x32 (50).
-extern "C" int func_802A9B84(CVS_THREAD_VISION_TELL* self) {
-    return CVS_THREAD_VISION_TELL::BUFFER_SIZE;
+int CVS_THREAD_VISION_TELL::blank1() {
+    return BUFFER_SIZE;
 }

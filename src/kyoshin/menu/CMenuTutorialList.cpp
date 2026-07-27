@@ -43,12 +43,10 @@ void func_802ACB50(){}
 // the subobject within the full object).  Each thunk adjusts 'this' back by
 // -0x58 so the real CMenuTutorialList implementation receives the correct pointer.
 
-void func_802ACBCC(IScnRender* self) {
-    ((void(*)(CMenuTutorialList*))cbRenderBefore__17CMenuTutorialListFv)(
-        static_cast<CMenuTutorialList*>(self));
+void CMenuTutorialList::func_802ACBCC() {
+    cbRenderBefore();
 }
 
-void func_802ACBD4(IScnRender* self) {
-    ((void(*)(CMenuTutorialList*))__dt__17CMenuTutorialListFv)(
-        static_cast<CMenuTutorialList*>(self));
+void CMenuTutorialList::func_802ACBD4() {
+    this->~CMenuTutorialList();
 }

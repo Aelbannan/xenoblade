@@ -2,21 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-
-// Local type definitions for IResInfo resource entries
-struct ResEntry {
-    u8 _00[4];
-    u8 data[4];      // 0x04 - returned by lookup functions
-    u32 id;           // 0x08
-    u8 _0C[0x2A];    // 0x0C - 0x35
-    u8 value;         // 0x36
-    u8 _37[5];        // 0x37 - 0x3B
-};
-
-struct ResContainer {
-    u8 _00[0x14DC];
-    ResEntry table[0x28]; // 0x14DC - 40 entries
-};
+#include "kyoshin/cf/IResInfo.hpp"
 
 void func_80065F24(){}
 
@@ -144,8 +130,8 @@ void func_800685C8(){}
 
 void func_8006861C(){}
 
-u8* findResEntry(ResContainer* self, u32 id, u32* outIndex, u32* outValue) {
-    ResEntry* entry = self->table;
+u8* ResContainer::findResEntry(u32 id, u32* outIndex, u32* outValue) {
+    ResEntry* entry = table;
     u32 index = 0x59;
     *outIndex = 0;
     *outValue = (u32)-1;

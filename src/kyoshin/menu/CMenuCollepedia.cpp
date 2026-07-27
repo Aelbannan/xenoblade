@@ -37,31 +37,20 @@ void func_80253128(){}
  * IScnRender vtable this-adjusting thunk for cbRenderBefore.
  *
  * IScnRender is a non-primary base at offset 0x58 within CMenuCollepedia.
- * The thunk converts the subobject pointer (IScnRender*) back to the enclosing
- * CMenuCollepedia* via integer-offset adjustment before forwarding to the
- * real override. The function-pointer cast prevents MWCC from null-checking
- * the static_cast chain (which would add a cmpwi/beq that the retail thunk
- * does not have).
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__15CMenuCollepediaFv
  */
-void func_80253188(IScnRender* self) {
-    ((void(*)(CMenuCollepedia*))cbRenderBefore__15CMenuCollepediaFv)(
-        static_cast<CMenuCollepedia*>(self));
+void CMenuCollepedia::func_80253188() {
+    cbRenderBefore();
 }
 
 /**
  * IScnRender vtable this-adjusting thunk for destructor.
  *
- * Same adjustment as func_80253188: converts IScnRender* (at offset 0x58)
- * back to CMenuCollepedia* and forwards to ~CMenuCollepedia(). r4 (the
- * MWCC deletion flag) is preserved from the caller because the cast to
- * void(*)(CMenuCollepedia*) declares only one parameter, leaving r4
- * unmodified in the tail call.
+ * Same adjustment as func_80253188.
  *
  * Retail: subi r3, r3, 0x58; b __dt__15CMenuCollepediaFv
  */
-void func_80253190(IScnRender* self){
-    ((void(*)(CMenuCollepedia*))__dt__15CMenuCollepediaFv)(
-        static_cast<CMenuCollepedia*>(self));
+void CMenuCollepedia::func_80253190() {
+    this->~CMenuCollepedia();
 }

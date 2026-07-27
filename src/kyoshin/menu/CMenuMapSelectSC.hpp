@@ -14,5 +14,10 @@ public:
     virtual void Term();
     virtual void Move();
     void cbRenderBefore();
+
+    // IScnRender vtable this-adjusting thunks
+    void func_80251DE8();
+    void func_80251DF0();
+
     CMenuMapSelectSC();
 };

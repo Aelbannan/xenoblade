@@ -111,11 +111,9 @@ extern const f32 lbl_eu_80666FEC;
 extern const f32 lbl_eu_80667004;
 }
 
-extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* scn) {
+CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
     // NV decl order targets retail homes: r31=this, r30=zero, r29=scn.
-    CMenuEnemyState* thisPtr;
     u32 zero;
-    void* scnArg;
     CMenuEnemyCtorProcess* process;
     u8* ptmfBase;
     char* vtFinal;
@@ -128,9 +126,7 @@ extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* s
     u8 tmp[0x48];
     u32 copy;
 
-    thisPtr = self;
-    scnArg = scn;
-    process = reinterpret_cast<CMenuEnemyCtorProcess*>(thisPtr);
+    process = reinterpret_cast<CMenuEnemyCtorProcess*>(this);
     __ct__8CProcessFv(reinterpret_cast<CProcess*>(process));
     ptmfBase = reinterpret_cast<u8*>(__ptmf_null);
     process->vtable = lbl_eu_8052BF70;
@@ -148,30 +144,30 @@ extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* s
     ptmfWord2 = *reinterpret_cast<u32*>(ptmfBase + 8);
     process->callbacks[5] = ptmfWord2;
     zero = 0;
-    thisPtr->unk54 = 0;
-    thisPtr->unk55 = 0;
+    unk54 = 0;
+    unk55 = 0;
     process->vtable = vtFinal;
-    thisPtr->vtPtr1 = vtFinal + 0x24;
-    thisPtr->vtPtr2 = vtFinal + 0xac;
-    thisPtr->unk60 = scnArg;
+    vtPtr1 = vtFinal + 0x24;
+    vtPtr2 = vtFinal + 0xac;
+    unk60 = scn;
 
-    __ct__17UnkClass_8045F564Fv(thisPtr->unk64);
+    __ct__17UnkClass_8045F564Fv(unk64);
 
-    thisPtr->unk74 = NULL;
-    panel = thisPtr->panels;
+    unk74 = NULL;
+    panel = panels;
     panelMarker = lbl_eu_80666FEC;
-    panelEnd = &thisPtr->panels[24];
-    thisPtr->unk78 = NULL;
-    thisPtr->field7C = zero;
-    thisPtr->field80 = zero;
-    thisPtr->field84 = zero;
-    thisPtr->field88 = zero;
-    thisPtr->field8C = zero;
-    thisPtr->field90 = zero;
-    thisPtr->field94 = zero;
-    thisPtr->field98 = zero;
-    thisPtr->field9C = zero;
-    thisPtr->fieldA0 = zero;
+    panelEnd = &panels[24];
+    unk78 = NULL;
+    field7C = zero;
+    field80 = zero;
+    field84 = zero;
+    field88 = zero;
+    field8C = zero;
+    field90 = zero;
+    field94 = zero;
+    field98 = zero;
+    field9C = zero;
+    fieldA0 = zero;
 
     // do-while + live panelEnd matches retail fall-into-body cmplw/blt shape.
     // panelEnd/one r0/r3 Chaitin soft-cap — keep iterating in high-level C.
@@ -206,63 +202,63 @@ extern "C" CMenuEnemyState* __ct__CMenuEnemyState(CMenuEnemyState* self, void* s
     } while (panel < panelEnd);
 
     zero = 0;
-    thisPtr->field7C4 = 0;
-    thisPtr->field7C8 = panelMarker;
-    thisPtr->field7CC = panelMarker;
-    thisPtr->field7D0 = panelMarker;
-    thisPtr->field7D4 = zero;
-    thisPtr->field7D8 = panelMarker;
-    thisPtr->field7DC = zero;
-    thisPtr->field7E0 = zero;
+    field7C4 = 0;
+    field7C8 = panelMarker;
+    field7CC = panelMarker;
+    field7D0 = panelMarker;
+    field7D4 = zero;
+    field7D8 = panelMarker;
+    field7DC = zero;
+    field7E0 = zero;
 
-    __ct__CPcSelectCursor(&thisPtr->selectCursor);
+    __ct__CPcSelectCursor(&selectCursor);
 
-    thisPtr->field82C = zero;
-    thisPtr->unk830 = zero;
-    thisPtr->unk834 = 0;
-    thisPtr->unk838 = lbl_eu_80667004;
+    field82C = zero;
+    unk830 = zero;
+    unk834 = 0;
+    unk838 = lbl_eu_80667004;
 
     __ct__CPcSelectCursor(tmp);
     {
         CPcSelectCursorLayout* tmpSel = reinterpret_cast<CPcSelectCursorLayout*>(tmp);
         copy = tmpSel->field04;
-        thisPtr->selectCursor.field04 = copy;
+        selectCursor.field04 = copy;
         copy = tmpSel->field08;
-        thisPtr->selectCursor.field08 = copy;
+        selectCursor.field08 = copy;
         copy = tmpSel->field0C;
-        thisPtr->selectCursor.field0C = copy;
+        selectCursor.field0C = copy;
         copy = tmpSel->field10;
-        thisPtr->selectCursor.field10 = copy;
+        selectCursor.field10 = copy;
         copy = tmpSel->field14;
-        thisPtr->selectCursor.field14 = copy;
+        selectCursor.field14 = copy;
         copy = tmpSel->field18;
-        thisPtr->selectCursor.field18 = copy;
+        selectCursor.field18 = copy;
         copy = tmpSel->layout1C;
-        thisPtr->selectCursor.layout1C = copy;
+        selectCursor.layout1C = copy;
         copy = tmpSel->anim20;
-        thisPtr->selectCursor.anim20 = copy;
+        selectCursor.anim20 = copy;
         copy = tmpSel->anim24;
-        thisPtr->selectCursor.anim24 = copy;
+        selectCursor.anim24 = copy;
         copy = tmpSel->field28;
-        thisPtr->selectCursor.field28 = copy;
+        selectCursor.field28 = copy;
         copy = tmpSel->field2C;
-        thisPtr->selectCursor.field2C = copy;
+        selectCursor.field2C = copy;
         copy = tmpSel->field30;
-        thisPtr->selectCursor.field30 = copy;
+        selectCursor.field30 = copy;
         copy = tmpSel->field34;
-        thisPtr->selectCursor.field34 = copy;
+        selectCursor.field34 = copy;
         copy = tmpSel->field38;
-        thisPtr->selectCursor.field38 = copy;
+        selectCursor.field38 = copy;
         copy = tmpSel->field3C;
-        thisPtr->selectCursor.field3C = copy;
-        thisPtr->selectCursor.byte40 = tmpSel->byte40;
-        thisPtr->selectCursor.byte41 = tmpSel->byte41;
+        selectCursor.field3C = copy;
+        selectCursor.byte40 = tmpSel->byte40;
+        selectCursor.byte41 = tmpSel->byte41;
         copy = tmpSel->field44;
-        thisPtr->selectCursor.field44 = copy;
+        selectCursor.field44 = copy;
     }
     __dt__17UnkClass_8045F564Fv(tmp + 0x08, -1);
 
-    return thisPtr;
+    return this;
 }
 
 extern "C" {

@@ -121,8 +121,8 @@ int CTaskGame_stubReturnZero_80043024(void* self) { return 0x0; }
 void CTaskGame_stub_80043310(){}
 void CTaskGame_stub_8004335C(){}
 bool CTaskGame_stubReturnTrue_800433A8() { return true; }
-void CTaskGame_setFlag_200(CTaskGame* self, bool enabled, unsigned int mode) {
-    unsigned int flags = self->unk68;
+void CTaskGame::setFlag_200(bool enabled, unsigned int mode) {
+    unsigned int flags = unk68;
     flags &= ~0x100u;
     if (enabled) flags |= 0x200u;
     else flags &= ~0x200u;
@@ -130,33 +130,33 @@ void CTaskGame_setFlag_200(CTaskGame* self, bool enabled, unsigned int mode) {
         if (mode == 1u) flags |= 0x20000u;
         else if (mode == 2u) flags |= 0x40000u;
     }
-    self->unk68 = flags;
+    unk68 = flags;
 }
-void CTaskGame_setFlag_400(CTaskGame* self, int enabled, unsigned int mode, unsigned int value) {
-    unsigned int flags = self->unk68;
+void CTaskGame::setFlag_400(int enabled, unsigned int mode, unsigned int value) {
+    unsigned int flags = unk68;
     flags &= ~0x100u;
-    self->unk68 = flags;
+    unk68 = flags;
     if (enabled != 0) {
         flags |= 0x400u;
-        self->unk68 = flags;
+        unk68 = flags;
     } else {
         flags &= ~0x400u;
-        self->unk68 = flags;
+        unk68 = flags;
     }
     if (enabled != 0)
         return;
     if (mode == 0) {
-        flags = self->unk68;
+        flags = unk68;
         flags |= 0x4000u;
-        self->unk68 = flags;
+        unk68 = flags;
         return;
     }
     if (mode != 5 && mode != 3)
         return;
-    self->unkFC = value;
-    flags = self->unk68;
+    unkFC = value;
+    flags = unk68;
     flags |= 0x8000u;
-    self->unk68 = flags;
+    unk68 = flags;
 }
 void CTaskGame_setFlag_80000(CTaskGame* this_, int arg1, int arg2, unsigned int arg3) {
     unsigned int flags = this_->unk68;
@@ -179,30 +179,30 @@ void CTaskGame_setFlag_800(CTaskGame* this_, int enabled, int unused, unsigned i
     this_->unk68 = flags;
     this_->unkFC = value;
 }
-void CTaskGame_setFlag_100000(CTaskGame* self, int enabled, int unused, unsigned int value) {
-    unsigned int flags = self->unk68;
+void CTaskGame::setFlag_100000(int enabled, int unused, unsigned int value) {
+    unsigned int flags = unk68;
     flags &= ~0x00000100u;
-    self->unk68 = flags;
+    unk68 = flags;
     if (enabled != 0) {
         flags |= 0x00100000u;
-        self->unk68 = flags;
+        unk68 = flags;
     } else {
         flags &= ~0x00100000u;
-        self->unk68 = flags;
+        unk68 = flags;
     }
-    self->unkFC = value;
+    unkFC = value;
 }
 void CTaskGame_stub_8004350C(){}
-void CTaskGame_setFlag_1000000(CTaskGame* self, int enabled) {
-    unsigned int value = self->unk68;
+void CTaskGame::setFlag_1000000(int enabled) {
+    unsigned int value = unk68;
     value &= ~0x00000100u;
-    self->unk68 = value;
+    unk68 = value;
     if (enabled != 0) {
         value |= 0x01000000u;
-        self->unk68 = value;
+        unk68 = value;
     } else {
         value &= ~0x01000000u;
-        self->unk68 = value;
+        unk68 = value;
     }
 }
 void CTaskGame_stub_80043564(){}
@@ -225,13 +225,13 @@ struct CTaskGameFlag1000Object {
     volatile u8 flagEA;
 };
 
-void CTaskGame_setFlag_1000(CTaskGame* self, int value) {
-    unsigned int flags = self->unk68;
+void CTaskGame::setFlag_1000(int value) {
+    unsigned int flags = unk68;
     if ((flags & 0x2000) != 0 && value == 1) return;
-    void* object = reinterpret_cast<void*>(self->unkF0);
-    self->unkF4 = static_cast<u32>(value);
+    void* object = reinterpret_cast<void*>(unkF0);
+    unkF4 = static_cast<u32>(value);
     flags |= 0x1000;
-    self->unk68 = flags;
+    unk68 = flags;
     if (object != nullptr) {
         static_cast<CTaskGameFlag1000Object*>(object)->flagEA = 1;
     }

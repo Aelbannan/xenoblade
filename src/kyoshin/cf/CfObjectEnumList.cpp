@@ -4,6 +4,21 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CfObjectEnumList.hpp"
+
+namespace cf {
+    void* CfObjEnumList::func_800F6E98(int index) {
+        return *static_cast<void**>(mPtrArray[index]);
+    }
+
+    void* CfObjEnumList::func_800F6EAC(unsigned long idx) {
+        return static_cast<void*>(static_cast<void**>(mPtrArray[idx])[1]);
+    }
+
+    void* CfObjEnumList::func_800F6EC0(int index) {
+        return mPtrArray[index];
+    }
+}
+
 void __ct__cf_CfObjEnumList(){}
 
 void func_800F49F8(){}
@@ -15,18 +30,6 @@ void func_800F4B5C(){}
 void func_800F6D50(){}
 
 void func_800F6E08(){}
-
-void* func_800F6E98(cf::CfObjEnumList* self, int index) {
-    return *static_cast<void**>(self->mPtrArray[index]);
-}
-
-void* func_800F6EAC(cf::CfObjEnumList* self, unsigned long idx) {
-    return static_cast<void*>(static_cast<void**>(self->mPtrArray[idx])[1]);
-}
-
-void* func_800F6EC0(cf::CfObjEnumList* self, int index) {
-    return self->mPtrArray[index];
-}
 
 void func_800F6ED0(){}
 

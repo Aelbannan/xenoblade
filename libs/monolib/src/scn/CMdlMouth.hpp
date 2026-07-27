@@ -7,6 +7,6 @@ public:
     CMdlMouth();
     virtual ~CMdlMouth();
 
-    // TODO: add fields
+    u8 _04[0x28];
+    f32 value2C;
 };
-

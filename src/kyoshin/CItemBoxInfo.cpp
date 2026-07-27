@@ -2,31 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-
-struct CItemBoxInfoState {
-    u8 _00[0x30];
-    void* resource;
-    void* layout;
-    u8 _38[0x52];
-    u8 active;
-    u8 _8B[5];
-    u32 state;
-    u8 current;
-    u8 visible;
-    u8 _9A[0x26];
-    s16 values[12];
-};
-
-struct CItemBoxInfo {
-    CItemBoxInfoState state;
-    void OnFileEvent();
-};
-
-struct CItemBoxInfo2 {
-    CItemBoxInfoState state;
-    ~CItemBoxInfo2();
-    void OnFileEvent();
-};
+#include "kyoshin/CItemBoxInfo.hpp"
 
 void resetCItemBox() {}
 
@@ -37,15 +13,15 @@ void resetCItemBox() {}
 
 
 
-u8 getItemBoxState(CItemBoxInfo* self) {
-    return self->state.current;
+u8 CItemBoxInfo::getItemBoxState() {
+    return state.current;
 }
 
 
-void advanceItemBoxState(CItemBoxInfo* self) {
-    if (self->state.state == 3) {
-        self->state.state = 4;
-        self->state.visible = 0;
+void CItemBoxInfo::advanceItemBoxState() {
+    if (state.state == 3) {
+        state.state = 4;
+        state.visible = 0;
     }
 }
 
@@ -93,9 +69,9 @@ void func_801D6394(){}
 
 void func_801D69FC(){}
 
-void setItemBoxIndex(CItemBoxInfo* self, unsigned char index, short value) {
+void CItemBoxInfo::setItemBoxIndex(unsigned char index, short value) {
     if (index >= 12) return;
-    self->state.values[index] = value;
+    state.values[index] = value;
 }
 
 void func_801D77BC(){}
@@ -122,30 +98,25 @@ void func_801D8B60(){}
 
 void func_801D8C0C(){}
 
-void tryActivateItemBox(CItemBoxInfo* arg) {
-    if (arg->state.layout == 0) return;
-    if (arg->state.resource == 0) return;
-    arg->state.current = 1;
-    arg->state.active = 1;
+void CItemBoxInfo::tryActivateItemBox() {
+    if (state.layout == 0) return;
+    if (state.resource == 0) return;
+    state.current = 1;
+    state.active = 1;
 }
 
 void func_801D8E34(){}
 
-struct CItemBoxInfoEntry {
-    u16 itemId;
-    u16 _02;
-    u32 value;
-    u8 state;
-};
+
 
 void copyItemBoxEntry(CItemBoxInfoEntry* dst, const CItemBoxInfoEntry* src) {
     *dst = *src;
 }
 
-void setItemBoxEntry(CItemBoxInfoEntry* self, u16 r4, u32 r5, u8 r6) {
-    self->itemId = r4;
-    self->value = r5;
-    self->state = r6;
+void CItemBoxInfoEntry::setItemBoxEntry(u16 r4, u32 r5, u8 r6) {
+    itemId = r4;
+    value = r5;
+    state = r6;
 }
 
 void func_801DF4E0(){}
@@ -177,24 +148,24 @@ void func_801E1348(){}
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; } }
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
-void drawItemBox2Layout(CItemBoxInfo2* self, nw4r::lyt::DrawInfo* drawInfo) {
-    if (self->state.active != 0) {
-        func_80137038((nw4r::lyt::Layout*)self->state.layout, drawInfo, 0, 1);
+void CItemBoxInfo2::drawItemBox2Layout(nw4r::lyt::DrawInfo* drawInfo) {
+    if (state.active != 0) {
+        func_80137038((nw4r::lyt::Layout*)state.layout, drawInfo, 0, 1);
     }
 }
 
 void func_801E13F8(){}
 
-u8 getItemBox2State(CItemBoxInfo2* self) {
-    return self->state.current;
+u8 CItemBoxInfo2::getItemBox2State() {
+    return state.current;
 }
 
 void func_801E1498(){}
 
-void advanceItemBox2State(CItemBoxInfo2* self) {
-    if (self->state.state == 3) {
-        self->state.state = 4;
-        self->state.visible = 0;
+void CItemBoxInfo2::advanceItemBox2State() {
+    if (state.state == 3) {
+        state.state = 4;
+        state.visible = 0;
     }
 }
 
@@ -256,16 +227,16 @@ void func_801E4390(){}
 
 void func_801E43BC(){}
 
-typedef CItemBoxInfoEntry ItemBoxInfoCopy;
+
 
 void copyItemBoxCopy(ItemBoxInfoCopy* dst, const ItemBoxInfoCopy* src) {
     *dst = *src;
 }
 
-void setItemBoxCopy(ItemBoxInfoCopy* self, unsigned short a, unsigned int b, unsigned char c) {
-    self->itemId = a;
-    self->value = b;
-    self->state = c;
+void CItemBoxInfoEntry::setItemBoxCopy(unsigned short a, unsigned int b, unsigned char c) {
+    itemId = a;
+    value = b;
+    state = c;
 }
 
 void func_801E9190(){}

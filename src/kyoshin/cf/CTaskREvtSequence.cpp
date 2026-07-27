@@ -4,6 +4,16 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CTaskREvtSequence.hpp"
+
+namespace cf {
+    u32 CTaskREvtSequence::func_8016A354() { return field_0x20; }
+
+    void CTaskREvtSequence::OnFileEvent() {
+        extern void func_8016ABA8(void*);
+        ((void(*)(void*))func_8016ABA8)((char*)this - 0x54);
+    }
+}
+
 void __ct__cf_CTaskREvtSequence(){}
 
 void __dt__801682AC(){}
@@ -70,8 +80,6 @@ void func_8016A24C(){}
 
 void func_8016A27C(){}
 
-u32 func_8016A354(cf::CTaskREvtSequence* self) { return self->field_0x20; }
-
 void func_8016A35C(){}
 
 void func_8016A378(){}
@@ -135,8 +143,6 @@ void func_8016C6EC(){}
 void func_8016C720(){}
 
 void func_eu_8016DA48(){}
-
-void OnFileEvent__17CTaskREvtSequenceFP10CEventFile(cf::CTaskREvtSequence* self) { ((void(*)(void*))func_8016ABA8)((char*)self - 0x54); }
 
 void func_8016C7D8(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x54); }
 

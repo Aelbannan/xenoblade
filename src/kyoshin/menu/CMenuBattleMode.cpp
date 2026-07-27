@@ -48,14 +48,9 @@ void CMenuBattleMode::Init() {
     mLayoutMem.func_8045F810();
 }
 
-// Thunk for ~CMenuBattleMode accessed via IWorkEvent vtable (offset +0x58).
-// Adjusts 'this' from the IWorkEvent subobject back to CMenuBattleMode,
-// then tail-calls the real destructor.
-extern "C" void func_801A048C(IWorkEvent* self) {
+void CMenuBattleMode::func_801A048C() {
     extern void __dt__15CMenuBattleModeFv(CMenuBattleMode*);
-    return __dt__15CMenuBattleModeFv(
-        reinterpret_cast<CMenuBattleMode*>(
-            reinterpret_cast<uintptr_t>(self) - 0x58));
+    return __dt__15CMenuBattleModeFv(this);
 }
 extern void cbRenderBefore__15CMenuBattleModeFv();
 void func_801A0494(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuBattleModeFv)((char*)self - 0x5c); }

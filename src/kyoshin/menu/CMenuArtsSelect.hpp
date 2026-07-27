@@ -29,6 +29,22 @@ public:
     void Move();
     void cbRenderBefore();
 
+    void func_80104454();
+    void func_80105A34();
+    void func_80105D54();
+    void func_80106450();
+    void func_801065E4();
+    void func_80106900();
+    void func_80106C30(s32 index);
+    void func_80106EC8(s32 index);
+    void func_801071B8(s32 index);
+    void func_801072E0();
+    void func_80107580();
+    int func_80107970(s32 index);
+    int func_80107C54(s32 index);
+    void func_801080F8();
+    void func_80108994();
+
     // Process base (CProcess): CDoubleListNode + vtable@0x10 + child list + flags@0x38.
     u8 unk00[0x10];
     void* vtable; // 0x10

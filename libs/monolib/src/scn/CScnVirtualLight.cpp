@@ -2,18 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "libs/monolib/src/scn/CScnVirtualLight.hpp"
 
 void func_80492030(void) {}
 
-void func_80492030(void) {}
 
-void func_80492030(void) {}
 
-void func_80492030(void) {}
 
-void func_80492030(void) {}
 
-void func_80492030(void) {}
 
 void func_80492158(void) {}
 
@@ -21,25 +17,20 @@ void func_8049215C(void){}
 
 void func_80492168(void){}
 
-void func_80492030(void) {}
 
-void func_80492030(void) {}
 
 void func_8049239C(void){}
 
-void func_80492030(void) {}
 
-void func_80492030(void) {}
 
-void func_80492030(void) {}
 
 void func_804929C0(){}
 
 void func_80492A50(void){}
 
-void func_80492A5C(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+void func_80492A5C(void* self, u32 val) { ((CScnVirtualLightData*)self)->value00 = val; }
 
-u32 func_80492A64(void* self){ return *(u32*)((u8*)self + 0); }
+u32 func_80492A64(void* self){ return ((CScnVirtualLightData*)self)->value00; }
 
 void func_80492A70(){}
 
@@ -77,7 +68,7 @@ void func_80492E08(){}
 
 void func_804930BC(){}
 
-void func_80493140(void* self, float val) { *(float*)((u8*)self + 0x14) = val; }
+void func_80493140(void* self, float val) { ((CScnVirtualLightData*)self)->value14 = val; }
 
 void func_80493148(){}
 
@@ -97,11 +88,11 @@ void func_804933AC(){}
 
 void func_8049347C(){}
 
-u32 func_80493574(void* self) { return *(u32*)((u8*)self + 0x2c); }
+u32 func_80493574(void* self) { return ((CScnVirtualLightData*)self)->value2C; }
 
 void func_8049357C(){}
 
-u32 func_80493588(void* self){ return *(u32*)((u8*)self + 0); }
+u32 func_80493588(void* self){ return ((CScnVirtualLightData*)self)->value00; }
 
 void func_80493594(){}
 
@@ -114,7 +105,7 @@ void func_804936AC(){}
 extern void func_8049B158();
 void func_80493B78(void* self){ func_8049B158(); }
 
-u32 func_80493B80(void* self) { return *(u32*)((u8*)self + 0x68); }
+u32 func_80493B80(void* self) { return ((CScnVirtualLightData*)self)->value68; }
 
 void func_80493B88(){}
 
@@ -125,62 +116,57 @@ void func_80493BA8(){}
 void func_80493BB8(){}
 
 void func_8004B3D8(void* self);
-void func_80493BC4(void* self){ ((void(*)(void*))func_8004B3D8)((char*)self + 0x30); }
+void func_80493BC4(void* self){ ((void(*)(void*))func_8004B3D8)((u8*)self + 0x30); }
 
 void func_80493BCC(){}
 
-void* func_80493C00(void* self) { return (void*)((u8*)self + 0x4); }
+void* func_80493C00(void* self) { return &((CScnVirtualLightData*)self)->_04; }
 
 void func_80493C08(){}
 
-float func_80493C18(void* self) { return *(float*)((u8*)self + 0x3c); }
+float func_80493C18(void* self) { return ((CScnVirtualLightData*)self)->value3C; }
 
 void func_80493C20(){}
 
 void func_80493C30(){}
 
-float func_80493EC0(void* self) { return *(float*)((u8*)self + 0xd4); }
-
-struct CScnVirtualLightState {
-    u8 _00[0xD0];
-    u8 enabled;
-};
+float func_80493EC0(void* self) { return ((CScnVirtualLightData*)self)->valueD4; }
 
 u8 func_80493EC8(void* self) {
-    return ((CScnVirtualLightState*)self)->enabled;
+    return ((CScnVirtualLightData*)self)->enabled;
 }
 
-void* func_80493ED0(void* self) { return (void*)((u8*)self + 0x14); }
+void* func_80493ED0(void* self) { return &((CScnVirtualLightData*)self)->value14; }
 
-u32 func_80493ED8(void* self) { return *(u32*)((u8*)self + 0x8); }
+u32 func_80493ED8(void* self) { return ((CScnVirtualLightData*)self)->value08; }
 
-u32 func_80493EE0(void* self) { return *(u32*)((u8*)self + 0x64); }
+u32 func_80493EE0(void* self) { return ((CScnVirtualLightData*)self)->value64; }
 
 void func_80493EE8(void){}
 
-u32 func_80493EF4(void* self) { return *(u32*)((u8*)self + 0x480); }
+u32 func_80493EF4(void* self) { return ((CScnVirtualLightData*)self)->value480; }
 
 void* func_80493EFC(void* self){ return 0; }
 
 void func_80493F08(){}
 
-float func_804940E0(void* self) { return *(float*)((u8*)self + 0x34); }
+float func_804940E0(void* self) { return ((CScnVirtualLightData*)self)->value34; }
 
-float func_804940E8(void* self) { return *(float*)((u8*)self + 0x38); }
+float func_804940E8(void* self) { return ((CScnVirtualLightData*)self)->value38; }
 
 extern "C" void* func_804940F0(void* self) { return (void*)((u8*)self + 0x34); }
 
-extern "C" float func_804940F8(void* self) { return *(float*)((u8*)self + 0x40); }
+extern "C" float func_804940F8(void* self) { return ((CScnVirtualLightData*)self)->value40; }
 
-extern "C" float func_80494100(void* self) { return *(float*)((u8*)self + 0x40); }
+extern "C" float func_80494100(void* self) { return ((CScnVirtualLightData*)self)->value40; }
 
-extern "C" float func_80494108(void* self) { return *(float*)((u8*)self + 0x44); }
+extern "C" float func_80494108(void* self) { return ((CScnVirtualLightData*)self)->value44; }
 
 extern "C" void* func_80494110(void* self) { return (void*)((u8*)self + 0x34); }
 
-extern "C" float func_80494118(void* self) { return *(float*)((u8*)self + 0x4c); }
+extern "C" float func_80494118(void* self) { return ((CScnVirtualLightData*)self)->value4C; }
 
-extern "C" float func_80494120(void* self) { return *(float*)((u8*)self + 0x48); }
+extern "C" float func_80494120(void* self) { return ((CScnVirtualLightData*)self)->value48; }
 
 void func_80494128(){}
 

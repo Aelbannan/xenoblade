@@ -7,10 +7,10 @@ extern "C" void func_8009D018(void* owner, u32 flag);
 extern "C" void func_8013DB6C(u32 mode, u32 param, u32 a, u32 b);
 extern "C" void func_8029A658();
 
-cf::CHelp::CHelp(cf::CHelp* self, void* owner, u32 param) {
-    self->mOwner = owner;
-    self->mVtbl = &lbl_eu_8053B3A0;
-    self->mParam = param;
+cf::CHelp::CHelp(void* owner, u32 param) {
+    this->mOwner = owner;
+    this->mVtbl = &lbl_eu_8053B3A0;
+    this->mParam = param;
 }
 
 namespace cf {
@@ -33,15 +33,15 @@ extern "C" void func_802B7C64() {
     func_8029A658();
 }
 
-extern "C" void func_802B7C68(cf::CHelp* self) {
-    func_8013DB6C(3, self->mParam, 0, 0);
-    func_8009D018(self->mOwner, 1);
+void cf::CHelp::func_802B7C68() {
+    func_8013DB6C(3, this->mParam, 0, 0);
+    func_8009D018(this->mOwner, 1);
 }
 
-u32 cf::CHelpSwitch::func_802B7CBC(cf::CHelpSwitch* self, u32 flag) {
+u32 cf::CHelpSwitch::func_802B7CBC(u32 flag) {
     u32 result = 0;
-    u32 prev = self->mFlag;
-    self->mFlag = static_cast<u8>(flag);
+    u32 prev = this->mFlag;
+    this->mFlag = static_cast<u8>(flag);
     if (prev == 0) {
         if (flag != 0) {
             result = 1;
@@ -50,8 +50,8 @@ u32 cf::CHelpSwitch::func_802B7CBC(cf::CHelpSwitch* self, u32 flag) {
     return result;
 }
 
-u32 cf::CHelpSwitch::func_802B7CE4(cf::CHelpSwitch* self, u8 flag) {
-    u8 prev = self->mFlag;
-    self->mFlag = flag;
+u32 cf::CHelpSwitch::func_802B7CE4(u8 flag) {
+    u8 prev = this->mFlag;
+    this->mFlag = flag;
     return prev != flag;
 }

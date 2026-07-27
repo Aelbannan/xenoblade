@@ -48,6 +48,9 @@ struct CfCamFollow {
     u16 unk254;
     u16 unk256;
     u16 unk258;
+
+    void clearUnk04Bits(unsigned int mask);
+    unsigned int getBit26_0x4EC();
 };
 
 } // namespace cf
@@ -58,6 +61,7 @@ namespace cf {
 class CfCam {
 public:
     virtual ~CfCam();
+    float getUnk4FC();
 
     // TODO: add fields
 };

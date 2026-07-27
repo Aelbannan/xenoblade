@@ -3,31 +3,31 @@
 
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
 
-u8 func_80208358(CItemBoxGridSubMenu* self) {
-    return self->mIsVisible;
+u8 CItemBoxGridSubMenu::func_80208358() {
+    return mIsVisible;
 }
 
-u8 func_80208360(CItemBoxGridSubMenu* self) {
-    return self->mIsOpened;
+u8 CItemBoxGridSubMenu::func_80208360() {
+    return mIsOpened;
 }
 
-void func_802083CC(unsigned char* self) {
-    if (self[0x22] != 2)
+void CItemBoxGridSubMenu::func_802083CC() {
+    if (mAnimState != 2)
         return;
 
-    switch (self[0x23]) {
+    switch (mSubState) {
     case 1:
-        self[0x24] = 0;
+        mSelectedIdx = 0;
         break;
     case 2:
-        self[0x24] = (unsigned char)(self[0x24] - 1);
-        if ((signed char)self[0x24] < 0)
-            self[0x24] = 1;
+        mSelectedIdx = (unsigned char)(mSelectedIdx - 1);
+        if ((signed char)mSelectedIdx < 0)
+            mSelectedIdx = 1;
         break;
     case 3:
-        self[0x24] = (unsigned char)(self[0x24] - 1);
-        if ((signed char)self[0x24] < 0)
-            self[0x24] = 2;
+        mSelectedIdx = (unsigned char)(mSelectedIdx - 1);
+        if ((signed char)mSelectedIdx < 0)
+            mSelectedIdx = 2;
         break;
     }
 }

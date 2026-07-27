@@ -17,6 +17,6 @@ void func_802A9278(){}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; TENSION_UP subclass returns 0x82 (130).
-extern "C" int func_802A92D0(CVS_THREAD_TENSION_UP* self) {
-    return CVS_THREAD_TENSION_UP::BUFFER_SIZE;
+int CVS_THREAD_TENSION_UP::blank1() {
+    return BUFFER_SIZE;
 }

@@ -32,29 +32,20 @@ void func_8029A8D4(){}
  * IScnRender vtable this-adjusting thunk for cbRenderBefore.
  *
  * IScnRender is a non-primary base at offset 0x58 within CMenuTutorial.
- * This thunk converts the subobject pointer (IScnRender*) back to the
- * enclosing CMenuTutorial* via offset adjustment before forwarding to
- * the real override.
- * Uses uintptr_t arithmetic to avoid C++ pointer arithmetic rules.
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__13CMenuTutorialFv
  */
-void func_8029A924(IScnRender* self) {
-    ((void(*)(CMenuTutorial*))cbRenderBefore__13CMenuTutorialFv)(
-        static_cast<CMenuTutorial*>(self));
+void CMenuTutorial::func_8029A924() {
+    cbRenderBefore();
 }
 
 /**
  * IScnRender vtable this-adjusting thunk for ~CMenuTutorial.
  *
  * Same adjustment as func_8029A924 but forwards to the destructor.
- * The function-pointer type declares only one parameter (CMenuTutorial*),
- * so r4 (the MWCC deletion flag) is preserved from the caller through
- * the tail call without modification.
  *
  * Retail: subi r3, r3, 0x58; b __dt__13CMenuTutorialFv
  */
-void func_8029A92C(IScnRender* self){
-    ((void(*)(CMenuTutorial*))__dt__13CMenuTutorialFv)(
-        static_cast<CMenuTutorial*>(self));
+void CMenuTutorial::func_8029A92C() {
+    this->~CMenuTutorial();
 }

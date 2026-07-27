@@ -43,4 +43,7 @@ struct CScrollBar {
     CScrollBar(u8 direction);
     ~CScrollBar();
     bool OnFileEvent(CEventFile* pEventFile);
+
+    u8 isVisible();
+    u8 func_801F3668();
 };

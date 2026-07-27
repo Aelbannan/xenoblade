@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSaveLoad.hpp"
 
-u8 func_8028F664(CSaveLoad* self) { return self->mField123; }
+u8 CSaveLoad::func_8028F664() { return mField123; }
 
 void CSLCur::func_8028EA74() {}
 
@@ -45,10 +45,10 @@ void func_8028EDF8(){}
 
 void func_8028EE68(){}
 
-void func_8028EEC0(CSLCur* self) {
-    self->mFieldC = 1;
-    self->mFieldD = 1;
-    self->mFieldE = 0;
+void CSLCur::func_8028EEC0() {
+    mFieldC = 1;
+    mFieldD = 1;
+    mFieldE = 0;
 }
 
 void func_8028EED8(){}
@@ -90,7 +90,7 @@ void func_8028FC18(){}
 
 void func_8028FE50(){}
 
-u8 func_8028FEC4(CSaveLoad* self) { return self->mField12A; }
+u8 CSaveLoad::func_8028FEC4() { return mField12A; }
 
 void func_8028FECC(){}
 

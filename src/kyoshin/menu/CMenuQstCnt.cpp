@@ -11,6 +11,14 @@ struct QstEntry {
     unsigned char f4;
     unsigned char f5;
     unsigned char f6;
+
+    void setQstEntry(short a, short b, unsigned char c, unsigned char d, unsigned char e) {
+        f0 = a;
+        f2 = b;
+        f4 = c;
+        f5 = d;
+        f6 = e;
+    }
 };
 
 struct QstInfo {
@@ -30,14 +38,7 @@ void cbRenderBefore__11CMenuQstCntFv();
 
 void __ct__CMenuQstCnt(){}
 
-void setQstEntry(QstEntry* self, short a, short b, unsigned char c, unsigned char d, unsigned char e)
-{
-    self->f0 = a;
-    self->f2 = b;
-    self->f4 = c;
-    self->f5 = d;
-    self->f6 = e;
-}
+// Converted to inline member function in struct
 
 void copyQstEntry(QstEntry* dst, const QstEntry* src) {
     dst->f0 = src->f0;

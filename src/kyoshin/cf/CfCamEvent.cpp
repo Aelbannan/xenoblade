@@ -13,7 +13,7 @@ extern char lbl_eu_80527108[];
 extern char lbl_eu_805270D8[];
 }
 
-extern "C" char** CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self) {
+char** cf::CfCamEvent::initCamIntfInstances() {
     if (!lbl_eu_80663DB0) {
         lbl_eu_80663DB4 = lbl_eu_80527130;
         lbl_eu_80663DB0 = 1;
@@ -27,7 +27,7 @@ extern "C" char** CfCamEvent_initCamIntfInstances(cf::CfCamEvent* self) {
         lbl_eu_80663DC0 = 1;
     }
 
-    s32 type = self->unk8;
+    s32 type = unk8;
     char** result = &lbl_eu_80663DBC;
     if (type == 8) {
         return &lbl_eu_80663DBC;

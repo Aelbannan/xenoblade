@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CTutorialList.hpp"
 
-u8 func_802AD300(CTutorialList* self) { return self->mInitialized; }
+u8 CTutorialList::func_802AD300() { return mInitialized; }
 
 
 
@@ -37,7 +37,7 @@ void func_802AD854(void){}
 void func_802AD858(){}
 
 u8 func_801D3320(void* self);
-u8 func_802AD984(CTutorialList* self) { return func_801D3320(&self->mSortMenu); }
+u8 CTutorialList::func_802AD984() { return func_801D3320(&mSortMenu); }
 
 void func_802AD98C(){}
 

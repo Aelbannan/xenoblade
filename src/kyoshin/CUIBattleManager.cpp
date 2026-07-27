@@ -380,11 +380,11 @@ after_bit10:
         if (cf::CfGameManager::getPlayer(0) != NULL) {
             if (mFileArtsElemDone == NULL) {
                 mFileArtsElem =
-                    CDeviceFile::readFile(mHeap, lbl_eu_804FFF2C + 0xa, battleWorkEvent(this), 0, 0);
+                    CDeviceFile::readFile(mHeap, lbl_eu_804FFF2C + 0xa, battleWorkEvent(), 0, 0);
             }
             if (mFileArtsSysDone == NULL) {
                 mFileArtsSys =
-                    CDeviceFile::readFile(mHeap, lbl_eu_804FFF2C + 0x24, battleWorkEvent(this), 0, 0);
+                    CDeviceFile::readFile(mHeap, lbl_eu_804FFF2C + 0x24, battleWorkEvent(), 0, 0);
             }
 
             n = 0;
@@ -402,11 +402,11 @@ after_bit10:
                         }
                         sprintf(pathBuf178, lbl_eu_804FFF2C + 0x3d, (unsigned)faceId);
                         mFileArtsPc[n] =
-                            CDeviceFile::readFile(mHeap, pathBuf178, battleWorkEvent(this), 0, 0);
+                            CDeviceFile::readFile(mHeap, pathBuf178, battleWorkEvent(), 0, 0);
                     }
                     sprintf(pathBufF8, lbl_eu_804FFF2C + 0x59, partyId);
                     mFileFacePc[n] =
-                        CDeviceFile::readFile(mHeap, pathBufF8, battleWorkEvent(this), 0, 0);
+                        CDeviceFile::readFile(mHeap, pathBufF8, battleWorkEvent(), 0, 0);
                 }
             }
             unkE9 = 1;

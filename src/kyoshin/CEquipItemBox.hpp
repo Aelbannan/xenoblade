@@ -23,6 +23,14 @@ struct CEquipItemBox {
     ~CEquipItemBox();
     void OnFileEvent();
 
+    u8 func_802865A0();
+    u8 func_802865A8();
+    int func_80286650();
+    u8 func_80286698();
+    u8 func_80287EE8();
+    void func_80287EFC(u32 val);
+    void func_8028A07C();
+
     void* mVtbl;            // 0x00
 
     // +0x04: UnkClass_8045F564 mMemRegion1 (0x10 bytes)
@@ -76,26 +84,5 @@ struct CEquipItemBox {
     u8 unk_37c;             // 0x37C
 };
 
-/* Returns byte at offset 0x40 */
-u8 getEquipItemBoxUnk40(CEquipItemBox* self);
-
-/* Returns byte at offset 0x43 */
-u8 getEquipItemBoxUnk43(CEquipItemBox* self);
-
 /* Copy 8-byte CEquipItemData struct from src to dst */
 void copyEquipItemData(CEquipItemData* dst, const CEquipItemData* src);
-
-/* Check CSysWin state at 0x17C; fallback to CSortMenu at 0x8C */
-int checkEquipItemBoxSysWin(CEquipItemBox* self);
-
-/* Returns byte at offset 0x375 */
-u8 getEquipItemBoxUnk375(CEquipItemBox* self);
-
-/* Read and clear byte at offset 0x1FE */
-u8 popEquipItemBoxUnk1FE(CEquipItemBox* self);
-
-/* Write u32 at offset 0x20C */
-void setEquipItemBoxUnk20C(CEquipItemBox* self, u32 val);
-
-/* Reset fields at 0x36C-0x373 */
-void resetEquipItemBoxFields(CEquipItemBox* self);

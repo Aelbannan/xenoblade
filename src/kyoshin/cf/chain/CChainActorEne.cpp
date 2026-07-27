@@ -28,13 +28,14 @@ void func_802816FC(){}
 
 void func_8028183C(){}
 
-// Tail-calls func_802A0AA0 with &self->mChainEffect, forwarding remaining arguments
-void func_802818D4(cf::CChainActorEne* self) {
-    func_802A0AA0(&self->mChainEffect);
+// Tail-calls func_802A0AA0 with &this->mChainEffect, forwarding remaining arguments
+void cf::CChainActorEne::func_802818D4() {
+    extern void func_802A0AA0(cf::CChainEffect* effect);
+    func_802A0AA0(&this->mChainEffect);
 }
 
 // Returns whether the enemy chain actor is valid/active
-s32 func_802818DC(cf::CChainActorEne* self) {
+s32 cf::CChainActorEne::func_802818DC() {
     return 1;
 }
 

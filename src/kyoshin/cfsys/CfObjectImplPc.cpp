@@ -40,7 +40,7 @@ void func_800CEA34(void*);
 
 void func_800CA274(void* self, int value)
 {
-    CfObjectImplPcSubObj* sub = static_cast<CfObjectImplPcData*>(self)->mSubObj;
+    CfObjectImplPcSubObj* sub = static_cast<CfObjectImplPcSubObj*>(static_cast<CfObjectImplPcData*>(self)->mSubObj);
     if (sub->mSomeValue != 0 && value != 0) {
         sub->mSomeValue = value;
     }

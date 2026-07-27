@@ -6,6 +6,11 @@
 #include "kyoshin/cf/CfObjectEnumList.hpp"
 
 namespace cf {
+    class CfObjectSelectorObj {
+    public:
+        virtual ~CfObjectSelectorObj();
+    };
+
     void* CfObjEnumList::func_800F6E98(int index) {
         return *static_cast<void**>(mPtrArray[index]);
     }

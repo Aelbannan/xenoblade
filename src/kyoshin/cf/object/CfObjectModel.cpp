@@ -8,7 +8,7 @@ cf::CfObjectModel::CfObjectModel() {}
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc2() {}
 
-void cf::CfObjectModel::~CfObjectModel() {}
+cf::CfObjectModel::~CfObjectModel() {}
 
 void __dt__800BAA24(){}
 

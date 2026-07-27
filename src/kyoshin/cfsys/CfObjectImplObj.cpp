@@ -16,7 +16,11 @@ void func_800CA58C(void) {}
 
 void func_800CA590(){}
 
-void cf::CfObjectImplObj::~CfObjectImplObj() {}
+cf::CfObjectImplObj::~CfObjectImplObj() {}
+
+extern "C" void __dt__Q22cf15CfObjectImplObjFv(void* self) {
+    static_cast<cf::CfObjectImplObj*>(self)->~CfObjectImplObj();
+}
 
 void func_800CEE28(void* self);
 void func_800CA6CC(void* self) { ((void(*)(void*))func_800CEE28)((char*)self - 0xc); }

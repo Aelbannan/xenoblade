@@ -4,6 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlAct.hpp"
+
+namespace cf { class CAttackParam { public: void CAttackParam_UnkVirtualFunc4(); }; }
+
 void __ct__800D10DC(){}
 
 void func_800D11B0(){}

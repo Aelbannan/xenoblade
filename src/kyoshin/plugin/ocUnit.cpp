@@ -40,7 +40,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc37() { }
 
 void func_8003C480(){}
 
-void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, void* src) {
+extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);

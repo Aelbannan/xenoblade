@@ -188,7 +188,7 @@ void CfObjectMove_nullsub_21(){}
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc23() {}
 
-void cf::CfObject::func_800BE898() {}
+void cf::CfObject::func_800BE898(int, u32, float, float) {}
 
 void CfObjectMove_nullsub_22(){}
 

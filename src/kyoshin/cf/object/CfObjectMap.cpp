@@ -68,4 +68,4 @@ void cf::CfObjectModel::CfObject_UnkVirtualFunc30() {
 
 extern "C" void func_800BA764__Q22cf11CfObjectMapFv() {}
 
-void cf::CfObjectMap::~CfObjectMap() {}
+cf::CfObjectMap::~CfObjectMap() {}

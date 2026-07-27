@@ -40,6 +40,10 @@ public:
 class UnkClass_800B0AD8 {
 public:
     UnkClass_800B0AD8();
+    void clearCounters();
+    u32 getCount();
+    u32 getSize();
+    void* getRingElem(u32 index);
     u8 unk0[0xAF8];                // 0x00
     UnkClass_800B0AD8* unkAF8;     // 0xAF8
     u32 unkAFC;                     // 0xAFC
@@ -53,6 +57,30 @@ public:
     UnkClass_805764CC();
     ~UnkClass_805764CC() {}
     static UnkClass_805764CC* func_800B07E8();
+
+    u32 get_u32_18();
+    u32 get_u32_04();
+    u32 get_u32_74();
+    u32 get_u32_70();
+    u32 get_u32_380();
+    u32 get_u32_98();
+    u32 get_u32_620();
+    u16 get_u16_45C0();
+    void appendToBuffer(void* other);
+    void clear_380();
+    void clear_700();
+    void fwdTo_2DB0(int param);
+    void fwdTo_99EC(int param);
+    void maskField_6C(u32 mask, int enable);
+    void set_float_730(float val);
+    void set_u16_738(u16 val);
+    void set_u32_00(u32 val);
+    void set_u32_720(u32 val);
+    void set_u32_734(u32 val);
+    void set_u8_73A(u8 a, u8 b);
+    void* getNull();
+    void* getPtr_1A8();
+    void* getPtr_720();
     
     // 0x20 - 0xB27
     UnkClass_800B0AD8 field_0x20;

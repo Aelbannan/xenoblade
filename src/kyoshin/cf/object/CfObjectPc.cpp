@@ -2,10 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectPc.hpp"
+
+namespace cf { class CfObjectPoint { public: void func_800C1244(); }; }
 
 cf::CfObjectPc::CfObjectPc() {}
 
-void cf::CfObjectPc::~CfObjectPc() {}
+cf::CfObjectPc::~CfObjectPc() {}
 
 void func_800BFDE0(){}
 
@@ -16,6 +19,38 @@ void cf::CfObjectPc::func_800BFFEC() {}
 void cf::CfObjectPc::func_800C0080() {}
 
 void cf::CfObjectPc::func_800C00C0() {}
+
+extern "C" void func_800C00C0__Q22cf10CfObjectPcFv(void* self) {
+    static_cast<cf::CfObjectPc*>(self)->func_800C00C0();
+}
+
+extern "C" void func_800C0080__Q22cf10CfObjectPcFv(void* self) {
+    static_cast<cf::CfObjectPc*>(self)->func_800C0080();
+}
+
+extern "C" void func_800BFF20__Q22cf10CfObjectPcFv(void* self) {
+    static_cast<cf::CfObjectPc*>(self)->func_800BFF20();
+}
+
+extern "C" void func_800BFFEC__Q22cf10CfObjectPcFv(void* self) {
+    static_cast<cf::CfObjectPc*>(self)->func_800BFFEC();
+}
+
+extern "C" void func_800C0524__Q22cf10CfObjectPcFv(void* self) {
+    static_cast<cf::CfObjectPc*>(self)->func_800C0524();
+}
+
+extern "C" void func_800C11CC__Q22cf10CfObjectPcFv(void* self) {
+    static_cast<cf::CfObjectPc*>(self)->func_800C11CC();
+}
+
+extern "C" void __dt__Q22cf10CfObjectPcFv(void* self) {
+    static_cast<cf::CfObjectPc*>(self)->~CfObjectPc();
+}
+
+extern "C" void func_800C02EC__Q22cf10CfObjectPcFv(void* self) {
+    static_cast<cf::CfObjectPc*>(self)->func_800C02EC();
+}
 
 void cf::CfObjectPc::func_800C0174() {}
 

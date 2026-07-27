@@ -3,7 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-void cf::CfObjectPoint::~CfObjectPoint() {}
+namespace cf { class CfObjectPoint { public: virtual ~CfObjectPoint(); void func_800C1324(); void func_800C136C(); void func_800C1444(); void func_800C14CC(); void func_800C1638(); void func_800C1658(); void func_800C16F4(); void func_800C171C(); }; }
+
+cf::CfObjectPoint::~CfObjectPoint() {}
 
 void cf::CfObjectPoint::func_800C1324() {}
 

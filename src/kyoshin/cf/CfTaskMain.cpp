@@ -4,7 +4,12 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CfTaskMain.hpp"
-void cf::CfTaskMain::~CfTaskMain() {}
+// Manually-named destructor wrapper for __dt__Q22cf10CfTaskMainFv
+extern "C" void __dt__Q22cf10CfTaskMainFv(void* self) {
+    static_cast<cf::CfTaskMain*>(self)->~CfTaskMain();
+}
+
+cf::CfTaskMain::~CfTaskMain() {}
 
 void Init__Q22cf10CfTaskMainFv() {}
 

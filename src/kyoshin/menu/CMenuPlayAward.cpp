@@ -49,7 +49,7 @@ void func_80270AD8(){}
 
 void* func_80270AEC(void* self, int param) {
     if (param >= 256) return 0;
-    auto menu = static_cast<CMenuPlayAward*>(self);
+    CMenuPlayAward* menu = static_cast<CMenuPlayAward*>(self);
     return (void*)((unsigned char*)menu + (menu->mPageIndex << 11) + ((param & 0xFF) << 3));
 }
 

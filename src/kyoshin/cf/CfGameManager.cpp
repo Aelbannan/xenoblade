@@ -3,7 +3,12 @@
 
 #include "monolib/core/CPadManager.hpp"
 
-void cf::CfGameManager::~CfGameManager();
+// destructor defined inline in CfGameManager.hpp
+// Manually-named destructor wrapper for __dt__Q22cf13CfGameManagerFv
+extern "C" void __dt__Q22cf13CfGameManagerFv(void* self) {
+    static_cast<cf::CfGameManager*>(self)->~CfGameManager();
+}
+
 extern "C" {
 u32 lbl_eu_80661BC8;
 cf::CfPadData lbl_eu_80571500;

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 
 #include "kyoshin/cf/CfCamEvent_1.hpp"
 void func_80074F4C(){}
@@ -38,7 +39,7 @@ void func_80076CE4(){}
 
 void func_80076D8C(){}
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc129() {}
+cf::CActorParam_UnkStruct1* cf::CActorParam::CActorParam_UnkVirtualFunc129() { return nullptr; }
 
 void func_80076F88(){}
 

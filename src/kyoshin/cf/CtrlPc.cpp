@@ -8,7 +8,7 @@
 #include "kyoshin/cf/object/CActorParam.hpp"
 void __ct__cf_CtrlPad(){}
 
-void cf::CtrlRemote::~CtrlRemote() {}
+cf::CtrlRemote::~CtrlRemote() {}
 
 void func_80096974(){}
 
@@ -32,11 +32,11 @@ u32 cf::CtrlPc::testBit10() { return (mPadFlags >> 10) & 0x1u; }
 u32 cf::CtrlPc::testBit9() { return (mPadFlags >> 9) & 0x1u; }
 u32 cf::CtrlPc::testBit8() { return (mPadFlags >> 8) & 0x1u; }
 
-void cf::CtrlPad::~CtrlPad() {}
+cf::CtrlPad::~CtrlPad() {}
 
 void __ct__cf_CtrlPc(){}
 
-void cf::CtrlPc::~CtrlPc() {}
+cf::CtrlPc::~CtrlPc() {}
 
 void func_80097134(){}
 

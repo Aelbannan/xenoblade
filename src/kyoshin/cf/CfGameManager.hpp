@@ -9,10 +9,11 @@ class CView;
 /* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
 or due to being in separate files, but compiled together in one file (unity compilation). For now,
 to make things simpler, everything exists in a single class. */
+#include "kyoshin/cf/object/CfObjectMove.hpp"
+
 namespace cf{
     class CfPadData;
     class CfObjectMove;
-
     //unofficial name
     class CfGameManager{
     public:
@@ -79,16 +80,16 @@ namespace cf{
         static CScnNw4r* spScene;
     void func_8007C0F8();
     void func_8007C140();
-    void func_8007C188();
+    void func_8007C188(unsigned long flags);
     void func_8007C198();
     void func_8007C2F4();
     void func_8007C344();
     void func_8007C360();
     void func_8007C374();
     void func_8007C4B4();
-    virtual ~CfGameManager();
+    virtual ~CfGameManager() {}
     void func_8007C5B8();
-    void func_8007C6B4();
+    cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
     void func_8007C6C0();
     void func_8007C8C8();
     void func_8007CBC8();
@@ -97,7 +98,7 @@ namespace cf{
     void func_8007CDA8();
     void func_8007CE94();
     void func_8007CF64() const;
-    void func_8007D190();
+    void func_8007D190(unsigned long flags);
     void func_8007D1A0();
     void func_8007D794();
     void func_8007D7A4();

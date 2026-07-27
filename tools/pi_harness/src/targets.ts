@@ -118,6 +118,67 @@ export function loadUnmatchedTargets(
   return loadUnitTargets(repoRoot, region, unit, false);
 }
 
+/** Per-TU match summary. */
+export interface UnitSummary {
+  unit: string;
+  total: number;
+  matched: number;
+  remaining: number;
+}
+
+export type UnitOrder = "most-remaining" | "least-remaining" | "alphabetical";
+
+/**
+ * Scan all function-kind targets grouped by unit and return per-TU match
+ * summaries. Only units with at least one function-kind target are included.
+ * Ordered by `order` (default: most-remaining first).
+ */
+export function loadAllUnitSummaries(
+  repoRoot: string,
+  region: string,
+  order: UnitOrder = "most-remaining",
+): UnitSummary[] {
+  const accepted = new Set(["FULL_MATCH", "EQUIVALENT_MATCH"]);
+  const map = new Map<string, { total: number; matched: number }>();
+
+  for (const raw of readTargetsFile(repoRoot)) {
+    if (raw.kind !== undefined && raw.kind !== null && raw.kind !== "function") continue;
+    if (raw.region !== undefined && raw.region !== null && raw.region !== region) continue;
+    const unit = raw.unit ?? "unknown";
+    let entry = map.get(unit);
+    if (!entry) {
+      entry = { total: 0, matched: 0 };
+      map.set(unit, entry);
+    }
+    entry.total++;
+    if (accepted.has(raw.status)) entry.matched++;
+  }
+
+  const summaries: UnitSummary[] = [];
+  for (const [unit, counts] of map) {
+    if (counts.total === 0) continue;
+    summaries.push({
+      unit,
+      total: counts.total,
+      matched: counts.matched,
+      remaining: counts.total - counts.matched,
+    });
+  }
+
+  switch (order) {
+    case "most-remaining":
+      summaries.sort((a, b) => b.remaining - a.remaining || a.unit.localeCompare(b.unit));
+      break;
+    case "least-remaining":
+      summaries.sort((a, b) => a.remaining - b.remaining || a.unit.localeCompare(b.unit));
+      break;
+    case "alphabetical":
+      summaries.sort((a, b) => a.unit.localeCompare(b.unit));
+      break;
+  }
+  return summaries;
+}
+
 /** Ids of targets currently claimed by `owner` (for stale-claim cleanup). */
 export function findClaimsByOwner(repoRoot: string, owner: string): string[] {
   const ids: string[] = [];

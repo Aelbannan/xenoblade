@@ -93,7 +93,9 @@ namespace cf {
     void CfObject_UnkVirtualFunc43();
     void CfObject_UnkVirtualFunc45();
     void CfObject_UnkVirtualFunc70();
-    float CfObject_UnkVirtualFunc60();
+    void CfObject_UnkVirtualFunc50();
+    void CfObject_UnkVirtualFunc51();
+    void CfObject_UnkVirtualFunc60();
     void CfObject_UnkVirtualFunc29(float value);
     void setMoveSpeed(float value);
     void resetMoveSpeed();

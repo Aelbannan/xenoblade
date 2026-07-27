@@ -2,20 +2,19 @@
 
 #include "monolib/nand/CNBanner.hpp"
 
+extern "C" void func_eu_802B11C0();
+
 class CNandData {
 public:
     CNBanner mNandBanner;
 
     CNandData() : mNandBanner() {
-        mNandBanner.func_804F52F8(scNandTitleText);
-        mNandBanner.func_804F5304(scNandDescriptionText);
-        mNandBanner.func_804F5310(scNandBannerFilename);
-        mNandBanner.func_804F531C(sNandIconTextureFilenames, sNandIconTextureSomething);
-        mNandBanner.unkC &= ~0x10;
     }
 
     ~CNandData(){
     }
+
+    friend void func_eu_802B11C0();
 
 private:
     static const char* scNandTitleText;

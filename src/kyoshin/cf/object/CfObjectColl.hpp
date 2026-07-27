@@ -3,6 +3,16 @@
 #include <types.h>
 namespace cf {
 
+class CfObjectColl {
+public:
+    virtual ~CfObjectColl();
+    void func_800AB3EC();
+    void func_800AB498();
+    void func_800AB57C();
+    void func_800AB798();
+    void func_800AB7A8();
+};
+
 class CfObject {
 public:
     void CfObject_UnkVirtualFunc67();

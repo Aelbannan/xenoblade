@@ -207,14 +207,14 @@ u32 func_800AA714(const char* path) {
     ml::FixStr<64> nameBuf;
     nameBuf = filePtr;
 
-    int extLen = nameBuf.mLength;
+    int extLen = nameBuf.size();
     int extOff;
     if (extLen == 0) {
         extOff = -1;
     } else {
         int dotLen = strlen(lbl_eu_80661A40);
-        char* p = &nameBuf.mString[0x5F + extLen];
-        char* pEnd = &nameBuf.mString[0x5F];
+        char* p = const_cast<char*>(nameBuf.c_str()) + 0x5F + extLen;
+        char* pEnd = const_cast<char*>(nameBuf.c_str()) + 0x5F;
         while (p != pEnd) {
             if (strncmp(p, lbl_eu_80661A40, dotLen) == 0) {
                 extOff = (int)(p - nameBuf.mString);

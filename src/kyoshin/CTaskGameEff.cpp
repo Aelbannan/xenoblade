@@ -13,7 +13,7 @@ void __dt___reslist_base_CScn(){}
 
 void __dt__reslist_CScn(){}
 
-void CTaskGameEff::~CTaskGameEff() {}
+CTaskGameEff::~CTaskGameEff() {}
 
 bool func_80044DF4() { return false; }
 

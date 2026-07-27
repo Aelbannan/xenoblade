@@ -13,7 +13,7 @@ void func_8003BD7C(){}
 
 void func_8003C044(){}
 
-bool cf::CfObject::CfObject_UnkVirtualFunc23() { return false; }
+void cf::CfObject::CfObject_UnkVirtualFunc23() { }
 
 void func_8003C0D0(){}
 
@@ -21,14 +21,14 @@ void func_8003C154(){}
 
 void func_8003C1D8(){}
 
-float cf::CfObject::CfObject_UnkVirtualFunc34() {
+void cf::CfObject::CfObject_UnkVirtualFunc34() {
     float f = *(float*)((char*)this + 0x4c);
-    return f * 0.019592438f;
+    f = f * 0.019592438f;
 }
 
 void func_8003C260(){}
 
-bool cf::CObjectParam::CObjectParam_UnkVirtualFunc2() { return false; }
+void cf::CObjectParam::CObjectParam_UnkVirtualFunc2() { }
 
 void func_8003C2F4(){}
 
@@ -36,7 +36,7 @@ void func_8003C354(){}
 
 void func_8003C3D0(){}
 
-bool cf::CActorParam::CActorParam_UnkVirtualFunc37() { return false; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc37() { }
 
 void func_8003C480(){}
 
@@ -61,7 +61,7 @@ void cf::CfObject::CfObject_UnkVirtualFunc30() {
     func(this);
 }
 
-bool cf::CfObject::CfObject_UnkVirtualFunc29() { return false; }
+void cf::CfObject::CfObject_UnkVirtualFunc29() { }
 
 void func_8003C78C(){}
 
@@ -102,7 +102,7 @@ void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv() {}
 
 void func_8003CD6C(){}
 
-bool cf::CfObject::CfObject_UnkVirtualFunc50() { return false; }
+void cf::CfObject::CfObject_UnkVirtualFunc50() { }
 
 void func_8003CDE0(){}
 
@@ -126,7 +126,7 @@ void func_8003D5DC(){}
 
 void isTalk(){}
 
-bool cf::CObjectState::CObjectState_UnkVirtualFunc11() { return false; }
+void cf::CObjectState::CObjectState_UnkVirtualFunc11() { }
 
 void onEvent(){}
 

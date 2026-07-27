@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/object/CfObjectMap.hpp"
 
 void cf::CfObjectMap::func_800B9A70() {}
 

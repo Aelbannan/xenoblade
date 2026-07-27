@@ -67,7 +67,7 @@ void addParty(){}
 
 void makeParty(){}
 
-bool cf::CfObject::CfObject_UnkVirtualFunc31() { return false; }
+void cf::CfObject::CfObject_UnkVirtualFunc31() { }
 
 void makeGuestParty(){}
 

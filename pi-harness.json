@@ -1,6 +1,6 @@
 {
-  "matchModel": { "provider": "opencode", "model": "opencode-go/deepseek-v4-flash", "thinkingLevel": "high" },
-  "cleanupModel": { "provider": "opencode", "model": "opencode-go/deepseek-v4-flash", "thinkingLevel": "high" },
+  "matchModel": { "provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "thinkingLevel": "high" },
+  "cleanupModel": { "provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "thinkingLevel": "high" },
   "batchSize": 5,
   "maxParallelTUs": 2,
   "maxBatchRetries": 2,

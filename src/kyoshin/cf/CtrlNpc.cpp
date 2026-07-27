@@ -88,4 +88,4 @@ extern "C" int func_8009684C(void* self) { return 1; }
 
 extern "C" int func_80096854(void* self) { return 0; }
 
-void cf::CtrlNpc::~CtrlNpc() {}
+cf::CtrlNpc::~CtrlNpc() {}

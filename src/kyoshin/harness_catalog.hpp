@@ -13,3 +13,4 @@
 #include "monolib/vm/yvm2.h"
 #include "kyoshin/code_801862C0.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/CTaskGameEff.hpp"

@@ -23,7 +23,7 @@ bool func_8005871C(){ return false; }
 
 bool func_80058724(){ return false; }
 
-void CTaskEnvironment::~CTaskEnvironment() {}
+CTaskEnvironment::~CTaskEnvironment() {}
 
 bool getGlobalSda() { return false; }
 

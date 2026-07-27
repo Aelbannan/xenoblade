@@ -84,13 +84,13 @@ void cf::CfScript::update() {
     mFlags |= 0x20;
 }
 
-void CfScript::OnFileEvent() {}
+void cf::CfScript::OnFileEvent() {}
 
-void cf::CfScriptManager::getInstance() {}
+cf::CfScriptManager* cf::CfScriptManager::getInstance() { return nullptr; }
 
 void __ct__cf_CfScript(){}
 
-void cf::CfScript::~CfScript() {}
+cf::CfScript::~CfScript() {}
 
 void cf::CfScriptManager::init() {}
 

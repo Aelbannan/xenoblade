@@ -116,7 +116,7 @@ extern "C" float PSVECMag(const float* v);
 extern "C" float cfCam_vecMag(const float* v) { return PSVECMag(v); }
 void func_8006BB04(){}
 extern "C" void cfCam_setOrClearUnk04Bits(void* r3, int r4, int r5) {
-    auto self = static_cast<cf::CfCamFollow*>(r3);
+    cf::CfCamFollow* self = static_cast<cf::CfCamFollow*>(r3);
     if (r5) {
         self->unk04 |= r4;
     } else {
@@ -149,7 +149,7 @@ extern "C" void cfCam_setField1E0AndGlobal(void* ptr, float f) {
     static_cast<cf::CfCamFollow*>(ptr)->unk1E0 = f;
 }
 extern "C" void cfCam_setOrClearUnk1D4Bits(void* obj, unsigned int bits, int set_flag) {
-    auto self = static_cast<cf::CfCamFollow*>(obj);
+    cf::CfCamFollow* self = static_cast<cf::CfCamFollow*>(obj);
     if (set_flag != 0)
         self->unk1D4 |= bits;
     else

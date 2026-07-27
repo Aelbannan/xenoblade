@@ -13,30 +13,33 @@ This repository is a **private/downstream** Xenoblade Chronicles Wii decompilati
 
 ## Quick commands
 
+**Always use `.venv/bin/python3`**, not the system `python3`. The venv has Python 3.13.6;
+the system Python (3.9.6) will fail on modern syntax used in project tools.
+
 ```bash
 cp tools/coop/coop.example.json coop.json   # first time only
-python3 tools/coop/run.py status
-python3 tools/coop/run.py targets validate
-python3 tools/coop/run.py targets status
-python3 tools/coop/run.py targets show <target-id>
-python3 tools/coop/run.py targets brief <target-id>
-python3 tools/coop/run.py targets sync-calls
-python3 tools/coop/run.py targets recertify --bottom-up --dry-run
-python3 tools/coop/run.py harness --selection ready --include-catalog --dry-run
-python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
-python3 tools/coop/batch-cycle.py <target-id> [<target-id> ...] \
+.venv/bin/python3 tools/coop/run.py status
+.venv/bin/python3 tools/coop/run.py targets validate
+.venv/bin/python3 tools/coop/run.py targets status
+.venv/bin/python3 tools/coop/run.py targets show <target-id>
+.venv/bin/python3 tools/coop/run.py targets brief <target-id>
+.venv/bin/python3 tools/coop/run.py targets sync-calls
+.venv/bin/python3 tools/coop/run.py targets recertify --bottom-up --dry-run
+.venv/bin/python3 tools/coop/run.py harness --selection ready --include-catalog --dry-run
+.venv/bin/python3 tools/coop/run.py cycle <target-id> --hypothesis "..." --next-change "..."
+.venv/bin/python3 tools/coop/batch-cycle.py <target-id> [<target-id> ...] \
     --hypothesis-map map.json            # mass-cycle after matching
-python3 tools/coop/batch-cycle.py <target-id> \
+.venv/bin/python3 tools/coop/batch-cycle.py <target-id> \
     --default-hypothesis "..." --default-next-change "..." \
     --summary sum.json                   # with structured report
-python3 tools/llm_decomp/run.py solve <target-id> --dry-run   # conversational match session
-python3 tools/llm_decomp/run.py solve <target-id>
-python3 tools/llm_decomp/run.py pipeline --tu kyoshin/CGame   # whole-TU pipeline
-python3 tools/llm_decomp/run.py pipeline --number 4 --dry-run # auto-select TUs
-python3 tools/llm_decomp/run.py reconcile                     # restore after crashes
-python3 tools/llm_decomp/run.py show-config                   # effective llm-decomp.json
-python3 tools/coop/run.py atlas index --vectors   # Decomp Atlas catalog
-python3 tools/coop/run.py atlas serve             # http://127.0.0.1:8765
+.venv/bin/python3 tools/llm_decomp/run.py solve <target-id> --dry-run   # conversational match session
+.venv/bin/python3 tools/llm_decomp/run.py solve <target-id>
+.venv/bin/python3 tools/llm_decomp/run.py pipeline --tu kyoshin/CGame   # whole-TU pipeline
+.venv/bin/python3 tools/llm_decomp/run.py pipeline --number 4 --dry-run # auto-select TUs
+.venv/bin/python3 tools/llm_decomp/run.py reconcile                     # restore after crashes
+.venv/bin/python3 tools/llm_decomp/run.py show-config                   # effective llm-decomp.json
+.venv/bin/python3 tools/coop/run.py atlas index --vectors   # Decomp Atlas catalog
+.venv/bin/python3 tools/coop/run.py atlas serve             # http://127.0.0.1:8765
 
 # pi-harness: TU-level batch matching with pi SDK agents (tools/pi_harness)
 cd tools/pi_harness && npm install                # first time only

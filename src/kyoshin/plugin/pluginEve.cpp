@@ -38,9 +38,8 @@ void fadeWait(){}
 
 void checkEvent(){}
 
-{
 extern u32 lbl_eu_80663E28;
-}
+
 int clearEventSkip() {
     lbl_eu_80663E28 &= ~0x100000;
     return 0;

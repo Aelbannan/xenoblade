@@ -12,7 +12,7 @@ extern "C" void Term__17CTaskGameEffAfterFv() {}
 
 extern "C" void Init__17CTaskGameEffAfterFv() {}
 
-void CTaskGameEffAfter::~CTaskGameEffAfter() {}
+CTaskGameEffAfter::~CTaskGameEffAfter() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.

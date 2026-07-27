@@ -26,6 +26,23 @@ int CNandData::sNandIconTextureSomething[] = {
     0
 };
 
-CNandData CNandData::sInstance = CNandData();
+// Forward declarations for functions in CErrMes unit that return BDAT strings
+const char* func_eu_802B14A4();
+const char* func_eu_802B14BC();
 
-void func_eu_802B11C0(){}
+CNandData CNandData::sInstance;
+
+// Initializes the NAND banner with title, description, icon filenames, and icon counts.
+// Clears the banner's bit 0x10 flag after setup.
+extern "C" void func_eu_802B11C0()
+{
+    const char* title = func_eu_802B14A4();
+    CNandData::sInstance.mNandBanner.func_804F52F8(title);
+
+    const char* desc = func_eu_802B14BC();
+    CNandData::sInstance.mNandBanner.func_804F5304(desc);
+
+    CNandData::sInstance.mNandBanner.func_804F5310(CNandData::scNandBannerFilename);
+    CNandData::sInstance.mNandBanner.func_804F531C(CNandData::sNandIconTextureFilenames, CNandData::sNandIconTextureSomething);
+    CNandData::sInstance.mNandBanner.unkC &= ~0x10;
+}

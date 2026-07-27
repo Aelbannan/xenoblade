@@ -30,6 +30,13 @@ struct CfRes_65818 {
 
 namespace cf {
 
+class CfRes {
+public:
+    CfRes();
+    ~CfRes();
+    void OnFileEvent();
+};
+
 class CfResTask {
 public:
     virtual ~CfResTask();

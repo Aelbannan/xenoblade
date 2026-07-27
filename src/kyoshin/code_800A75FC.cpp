@@ -84,7 +84,7 @@ void func_800A9134(){}
 
 void func_800A92F8(){}
 
-char lbl_eu_80572B78[];
+extern char lbl_eu_80572B78[];
 void func_800A37CC(void*, void*);
 
 void func_800A9344(void* p)

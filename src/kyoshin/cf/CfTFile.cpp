@@ -19,7 +19,7 @@ void func_80069C28(){}
 
 void func_80069C78(){}
 
-void CfTFile::OnFileEvent() {}
+void cf::CfTFile::OnFileEvent(CEventFile* pEventFile) {}
 
 cf::CfTFile* __dt__Q22cf7CfTFileFv(cf::CfTFile* obj, int flag) {
     if (obj != nullptr && flag > 0) {

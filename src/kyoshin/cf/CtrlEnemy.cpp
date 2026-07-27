@@ -4,6 +4,8 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CtrlEnemy.hpp"
+#include "kyoshin/cf/CtrlAct.hpp"
+#include "kyoshin/cf/object/CfObjectMove.hpp"
 
 namespace cf {
 class CtrlBase;
@@ -25,7 +27,7 @@ void CtrlEnemy_UnkFunc_8008772C(){}
 
 void CtrlEnemy_UnkFunc_800877A8(){}
 
-float cf::CfObjectMove::CfObject_UnkVirtualFunc60() { return *(float*)((u8*)this + 0x6ec); }
+void cf::CfObjectMove::CfObject_UnkVirtualFunc60() { *(float*)((u8*)this + 0x6ec); }
 
 void CtrlEnemy_UnkFunc_80087EEC(){}
 

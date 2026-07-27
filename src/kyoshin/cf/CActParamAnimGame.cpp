@@ -7,7 +7,7 @@ void __ct__8005A3FC(){}
 
 cf::CActParamAnimGame::CActParamAnimGame() {}
 
-void cf::CActParamAnimGame::~CActParamAnimGame() {}
+cf::CActParamAnimGame::~CActParamAnimGame() {}
 
 void cf::CActParamAnimGame::func_8005A524() {}
 
@@ -56,7 +56,7 @@ bool func_8005DAE4__Q22cf17CActParamAnimGame(void* self) {
 
 void cf::CActParamAnimGame::func_8005DB1C() {}
 
-bool cf::CActorParam::CActorParam_UnkVirtualFunc38() { return false; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc38() { }
 
 void cf::CActParamAnimGame::func_8005DC30() {}
 

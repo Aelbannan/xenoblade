@@ -231,7 +231,7 @@ void* CActParamAnim::getEffObj() {
 }
 
 void CActParamAnim::clearEffObj() {
-    auto* full = reinterpret_cast<CActParamAnimFull*>(this);
+    CActParamAnimFull* full = reinterpret_cast<CActParamAnimFull*>(this);
     full->mEffByte0 = 0;
     full->mEffByte1 = 0;
     *(int *)((char *)this + 0x4c0) = 0;

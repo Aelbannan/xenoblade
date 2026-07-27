@@ -4,11 +4,19 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/object/CfObjectColl.hpp"
+
+namespace cf {
+class CfObjectPoint {
+public:
+    void func_800AC604();
+};
+} // namespace cf
+
 void func_800AB3D0(){}
 
 void cf::CfObjectColl::func_800AB3EC() {}
 
-void cf::CfObjectColl::~CfObjectColl() {}
+cf::CfObjectColl::~CfObjectColl() {}
 
 void cf::CfObjectColl::func_800AB498() {}
 

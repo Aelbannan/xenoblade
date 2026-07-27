@@ -1,4 +1,5 @@
 #include "types.h"
+#include "kyoshin/cf/CfCollCylinderImpl.hpp"
 
 void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* this_ptr, void* r4, void* r5, float f1);
 void func_800A5B18(void* a, void* b, void* c, float f1, float f2);
@@ -58,7 +59,7 @@ void func_800AB010(void* r3, void* r4){
 
 void func_800AB248(void* r3, void* r4, void* r5, void* r6, float f1){
     float threshold = 0.01f;
-    auto* impl = static_cast<cf::CfCollCylinderImpl*>(r4);
+    cf::CfCollCylinderImpl* impl = static_cast<cf::CfCollCylinderImpl*>(r4);
     float heightDiff = impl->mEnd.y - impl->mStart.y;
 
     if (f1 < threshold) {

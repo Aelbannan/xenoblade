@@ -3,6 +3,16 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+namespace cf {
+class CfDebugDrawManager {
+public:
+    void renderSphere();
+    void renderCylinder();
+    void renderCapsule();
+    // TODO: add fields
+};
+} // namespace cf
+
 void func_800A3B24(){}
 
 void func_800A3C48(){}
@@ -53,6 +63,8 @@ void func_800A7094(){}
 
 void func_800A72E0(){}
 
-void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* self) { renderCylinder__Q22cf18CfDebugDrawManagerFb(); }
+void renderCylinder__Q22cf18CfDebugDrawManagerFv(void* self) { static_cast<cf::CfDebugDrawManager*>(self)->renderCylinder(); }
 
-void cf::CfDebugDrawManager::renderCapsule() { renderCylinder__Q22cf18CfDebugDrawManagerFb(); }
+extern "C" void renderCylinder__Q22cf18CfDebugDrawManagerFb(void* self, bool b) { static_cast<cf::CfDebugDrawManager*>(self)->renderCylinder(); }
+
+void cf::CfDebugDrawManager::renderCapsule() { renderCylinder__Q22cf18CfDebugDrawManagerFb(this, false); }

@@ -239,6 +239,9 @@ void CTaskGame::setFlag_1000(int value) {
 void CTaskGame_setF8(CTaskGame* obj, int val) {
     obj->unkF8 = val;
 }
+void CTaskGame_setFlag_1000(CTaskGame* obj) {
+    obj->setFlag_1000(1);
+}
 int CTaskGame_checkUnkD8() {
     extern CTaskGame* lbl_eu_80663D18;
     extern int func_80459AA4__7CLibCriFv(unsigned int arg);

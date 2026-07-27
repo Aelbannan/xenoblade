@@ -3,8 +3,14 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+class CMcaFile {
+public:
+    CMcaFile();
+    ~CMcaFile();
+};
+
 void __ct__CMcaFile(){}
 
-void CMcaFile::~CMcaFile() {}
+CMcaFile::~CMcaFile() {}
 
 void func_800584B8(){}

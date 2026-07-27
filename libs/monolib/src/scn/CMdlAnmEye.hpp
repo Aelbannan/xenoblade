@@ -7,6 +7,6 @@ public:
     CMdlAnmEye();
     virtual ~CMdlAnmEye();
 
-    // TODO: add fields
+    u8 _04[0x28];
+    u32 value2C;
 };
-

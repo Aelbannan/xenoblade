@@ -6,6 +6,8 @@ class CScnItemId {
 public:
     virtual ~CScnItemId();
 
-    // TODO: add fields
+    u8 _04[0x08];
+    void* subObject;
+    u8 _10[0x40];
+    u32 value50;
 };
-

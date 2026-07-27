@@ -7,6 +7,6 @@ public:
     CScnFogMan();
     virtual ~CScnFogMan();
 
-    // TODO: add fields
+    u32 unk04;
+    u32 value08;
 };
-

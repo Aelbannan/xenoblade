@@ -7,6 +7,12 @@ public:
     CSortMenu();
     virtual ~CSortMenu();
     void OnFileEvent();
+    u8 func_801D3320();
+    u8 func_801D3328();
+    void func_801D3518(int value);
+    u8 func_801D37F4();
+    u8 func_801D3808();
+    u8 func_801D3810();
 
     u8 _00[0x28];
     u8 field_0x28;

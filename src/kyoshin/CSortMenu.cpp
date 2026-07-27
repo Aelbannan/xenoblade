@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSortMenu.hpp"
 
-u8 func_801D3320(CSortMenu* self) { return self->field_0x28; }
+u8 CSortMenu::func_801D3320() { return field_0x28; }
 
 
 
@@ -13,7 +13,7 @@ u8 func_801D3320(CSortMenu* self) { return self->field_0x28; }
 
 
 
-u8 func_801D3328(CSortMenu* self) { return self->field_0x2B; }
+u8 CSortMenu::func_801D3328() { return field_0x2B; }
 
 
 
@@ -22,11 +22,11 @@ void func_801D3454(){}
 
 void func_801D350C(void){}
 
-void func_801D3518(CSortMenu* this_, int value) {
-    unsigned char count = this_->field_0xEC;
+void CSortMenu::func_801D3518(int value) {
+    unsigned char count = field_0xEC;
     if (count >= 32) return;
-    this_->mArray[count] = value;
-    this_->field_0xEC = count + 1;
+    mArray[count] = value;
+    field_0xEC = count + 1;
 }
 
 void func_801D353C(){}
@@ -39,13 +39,13 @@ void func_801D3724(){}
 
 void func_801D377C(){}
 
-u8 func_801D37F4(CSortMenu* self) {
-    return self->field_0xED + self->field_0xEE;
+u8 CSortMenu::func_801D37F4() {
+    return field_0xED + field_0xEE;
 }
 
-u8 func_801D3808(CSortMenu* self) { return self->field_0xED; }
+u8 CSortMenu::func_801D3808() { return field_0xED; }
 
-u8 func_801D3810(CSortMenu* self) { return self->field_0xEE; }
+u8 CSortMenu::func_801D3810() { return field_0xEE; }
 
 void func_801D3818(){}
 

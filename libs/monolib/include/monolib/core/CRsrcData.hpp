@@ -14,6 +14,7 @@ public:
     virtual bool wkStandbyLogout();
 
     void destruct(int arg);
+    void build(void* parent, const char* name, void* arg2, void* data, u32 length, bool flag);
     bool releaseCache(const void* data);
     void setRsrcFile(const char* name, void* path, void* data, u32 length, bool flag);
     int isSameName(const char* name) const;

@@ -4,9 +4,8 @@
 #include "monolib/util/MemManager.hpp"
 
 // size: 0x4E8
-class CRsrcData : public CWorkThread {
+class __declspec(novtable) CRsrcData : public CWorkThread {
 public:
-    CRsrcData(const char* pName, CWorkThread* pParent);
     virtual ~CRsrcData();
 
     virtual void wkUpdate();
@@ -14,7 +13,6 @@ public:
     virtual bool wkStandbyLogout();
 
     void destruct(int arg);
-    void build(void* parent, const char* name, void* arg2, void* data, u32 length, bool flag);
     bool releaseCache(const void* data);
     void setRsrcFile(const char* name, void* path, void* data, u32 length, bool flag);
     int isSameName(const char* name) const;

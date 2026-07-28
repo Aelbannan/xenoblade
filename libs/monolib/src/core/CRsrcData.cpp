@@ -10,39 +10,44 @@ extern "C" {
 bool hasChild__FP11CWorkThread(CWorkThread* pThread);
 // Work-thread display name pool: "CRsrcData" (not empty string).
 char lbl_eu_80522534[];
+char lbl_eu_8056B360[];
 mtl::ALLOC_HANDLE getWorkMem__17CWorkThreadSystemFv();
 void* allocate__Q23mtl10MemManagerFUlUl(u32 size, mtl::ALLOC_HANDLE handle);
 void entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(CWorkThread* ths, CWorkThread* parent,
                                                          bool prepend);
 void setRsrcFile__9CRsrcDataFPCcPvPvUlb(CRsrcData* ths, const char* name, void* path, void* data,
                                         u32 length, bool flag);
-// Pre-postprocess ctor name; reloc rename maps this to retail __ct__CRsrcData.
-CRsrcData* __ct__9CRsrcDataFPCcP11CWorkThread(CRsrcData* ths, const char* name,
-                                              CWorkThread* parent);
+CRsrcData* __ct__CRsrcData(CRsrcData* ths, const char* name, CWorkThread* parent);
+CWorkThread* __ct__11CWorkThreadFPCcP11CWorkThreadi(CWorkThread* ths, const char* name,
+                                                    CWorkThread* parent, int capacity);
 }
 
-CRsrcData::CRsrcData(const char* pName, CWorkThread* pParent)
-    : CWorkThread(pName, pParent, 0) {
-    mName[0] = 0;
-    mNameLength = 0;
-    mAltPath[0] = 0;
-    mAltPathLength = 0;
-    mPath[0] = 0;
-    mPathLength = 0;
-    mCacheData = nullptr;
-    mCacheLength = 0;
-    mRefCount = 0;
-    mFlags4DC = 0;
-    unk4E0 = 0;
-    unk4E2 = 0;
-    unk4E4 = 0;
-    mType = THREAD_CRSRCDATA;
+extern "C" CRsrcData* __ct__CRsrcData(CRsrcData* self, const char* pName,
+                                          CWorkThread* pParent) {
+    __ct__11CWorkThreadFPCcP11CWorkThreadi(self, pName, pParent, 0);
+    *(void**)self = lbl_eu_8056B360;
+    self->mName[0] = 0;
+    self->mNameLength = 0;
+    self->mAltPath[0] = 0;
+    self->mAltPathLength = 0;
+    self->mPath[0] = 0;
+    self->mPathLength = 0;
+    self->mCacheData = nullptr;
+    self->mCacheLength = 0;
+    self->mRefCount = 0;
+    self->mFlags4DC = 0;
+    self->unk4E0 = 0;
+    self->unk4E2 = 0;
+    self->unk4E4 = 0;
+    self->mType = CWorkThread::THREAD_CRSRCDATA;
+    return self;
 }
 
 #pragma optimize_for_size on
 CRsrcData::~CRsrcData() {
     // MWCC virtual dtors already null-check `this`; an extra guard adds a dead beq.
     void* cache = mCacheData;
+    *(void**)this = lbl_eu_8056B360;
 
     if (cache != nullptr) {
         mtl::MemManager::deallocate(cache);
@@ -106,7 +111,7 @@ void CRsrcData::setRsrcFile(const char* name, void* path, void* data, u32 length
 }
 
 // Retail symbol is void-returning build__9CRsrcDataFPvPCcPvPvUlb (no C++ static twin).
-void CRsrcData::build(void* parent, const char* name, void* arg2, void* data,
+extern "C" void build__9CRsrcDataFPvPCcPvPvUlb(void* parent, const char* name, void* arg2, void* data,
                                                  u32 length, bool flag) {
     const char* threadName;
     mtl::ALLOC_HANDLE handle;
@@ -117,9 +122,8 @@ void CRsrcData::build(void* parent, const char* name, void* arg2, void* data,
     rsrc = static_cast<CRsrcData*>(allocate__Q23mtl10MemManagerFUlUl(0x4E8, handle));
 
     if (rsrc != nullptr) {
-        // Explicit ctor (not placement new) - avoids MWCC's extra null check.
-        rsrc = __ct__9CRsrcDataFPCcP11CWorkThread(rsrc, threadName,
-                                                  static_cast<CWorkThread*>(parent));
+        // Explicit retail-named constructor entry point.
+        rsrc = __ct__CRsrcData(rsrc, threadName, static_cast<CWorkThread*>(parent));
     }
 
     entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(rsrc, static_cast<CWorkThread*>(parent),

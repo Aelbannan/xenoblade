@@ -282,6 +282,8 @@ Metrowerks often passes **extra arguments in registers** even on `…Fv` symbol 
 
 **Explicit retail-name entry points:** A symbol such as `releaseCacheLocal__5CRsrcFPCv` may have a shortened retail name while its actual ABI still receives `CWorkThread* parent, const void* data`. Define the high-level function as `extern "C" bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* data)` rather than as a `CRsrc` member. A C++ member definition emits `releaseCacheLocal__5CRsrcFP11CWorkThreadPCv`, leaving the retail-named caller unresolved. The same pattern applies to `isExistFile__5CRsrcFPCcPPvPUi` and `isExistDataLocal__5CRsrcFPCv`; the suffix is the preserved retail symbol name, not a reliable complete parameter list. Verified in `libs/monolib/src/core/CRsrc.cpp`: all three sizes and instructions match retail.
 
+**Retail-owned vtable data:** Some split TUs contain only a class's `.text`; the retail vtable/RTTI is supplied by a data object. Marking such a class `__declspec(novtable)` prevents MWCC from adding `.data`, `.rodata`, and RTTI to the TU. If the retail constructor/destructor writes the vtable pointer, assign the known retail vtable label explicitly in those high-level functions. `CRsrcData` then has only `.text`/exception sections, an exact `0x42C` text budget, and no linker-generated duplicate metadata.
+
 When a vtable / data table already references the shortened `…Fv` name (common for help/switch helpers), keep the retail symbol via `extern "C"` and take the extra args on that entry point, e.g. `func_802B7CBC__Q22cf11CHelpSwitchFv(self, u32 flag)`.
 
 ### cf::CHelp layout (manual iface at +0x8)

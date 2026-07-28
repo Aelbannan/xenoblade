@@ -1,6 +1,7 @@
 #pragma once
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
+#include "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp"
 
 /**
  * CVS_THREAD_TENSION_UP - voice thread for tension-up audio events.
@@ -10,8 +11,11 @@
  */
 class CVS_THREAD_TENSION_UP : public CVS_THREAD {
 public:
-    // Size of the thread-local voice buffer in bytes.
     static const int BUFFER_SIZE = 0x82;
+
+    CVoiceHandle* field_0x20;  // 0x20: back-pointer to owning manager
+    s32 field_0x24;            // 0x24: thread index
+    u8 field_0x28;             // 0x28: flag (0 = normal, 1 = reversed)
 
     int blank1() override;
 };

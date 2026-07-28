@@ -1592,12 +1592,11 @@ namespace ml{
             }
         }
 
-    private:
-        char mString[N];
-        int mLength;
+    // public for compatibility
+    char mString[N];
+    int mLength;
 
-    public:
-        static const int npos = -1;
+    static const int npos = -1;
     };
 
 }
@@ -1682,10 +1681,11 @@ namespace mtl {
         u8 padding[32 - 0x12]; //0x12
 
         u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+            return reinterpret_cast<u8*>(this + 1);
         }
         u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
+            u8* blockEnd = reinterpret_cast<u8*>(this + 1);
+            return blockEnd + (size - sizeof(MemBlock));
         }
 
         u32 getDataSize() const {
@@ -12737,6 +12737,8 @@ public:
     static void renderView();
     static CView* getFullScreenView();
     static CView* getView(WORK_ID id);
+    void func_80442B54(void* a, void* b, void* c);
+    void func_80442C68();
 
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
@@ -12768,8 +12770,10 @@ public:
 
 class CEventFile {
 public:
-    BOOL unk0;
-    CFileHandle* mFileHandle; //0x4
+    BOOL unk0;                 //0x0
+    CFileHandle* mFileHandle;  //0x4
+    u8 _pad08[0x0C];           //0x8-0x13
+    u32 field_14;              //0x14
 
     void* getFileDataPtr();
 };
@@ -16359,7 +16363,12 @@ public:
     s16 unk5A; // 0x5A - unused trailing padding; satisfies 0x5C sizeof
 };
 
-extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
+extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16& rect, const CViewFrame* r4);
+
+inline void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4) {
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(rect, r4);
+}
 /* end "monolib/core/CViewFrame.hpp" */
 /* "libs/monolib/include/monolib/core/CView.hpp" line 7 "monolib/core/CViewRectData.hpp" */
 #pragma once
@@ -16562,7 +16571,7 @@ struct CProc_UnkStruct1 {
     void* unkC;
 };
 //size: 0x1ec
-class CProc : public CWorkThread {
+class __declspec(novtable) CProc : public CWorkThread {
 public:
     CProc(const char* pName, CWorkThread* pParent, s16 capacity);
     virtual ~CProc();
@@ -234019,7 +234028,7 @@ CProc* pssGetRoot__5CProcFP5CProc(CProc* proc);
 CView* getView__8CDesktopFv();
 CDesktop* getInstance__8CDesktopFv();
 GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
-void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, CViewFrame* frame);
+void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16& rect, const CViewFrame* frame);
 void renderView__5CViewFv(CView* view);
 }
 
@@ -234192,9 +234201,11 @@ bool CViewRoot::isInitialized() {
 
 extern "C" void func_8044B298__8CGXCacheFv(void* self, void* a, void* b, void* c);
 
+struct PoolPair { u32 w0; u32 w1; };
+
 // Retail symbol is FPvPv but call sites pass three rect pointers (r3/r4/r5).
 // Inline three ring pushes (divw/mullw/subf shape) with instance reloads.
-extern "C" void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c) {
+void CViewRoot::func_80442B54(void* a, void* b, void* c) {
     CViewRoot* root;
     u32 index;
     u32 used;
@@ -234213,59 +234224,57 @@ extern "C" void func_80442B54__9CViewRootFPvPv(void* a, void* b, void* c) {
     }
 
     savedB = b;
-    w0 = ((u32*)a)[0];
-    w1 = ((u32*)a)[1];
+    w0 = ((PoolPair*)a)->w0;
+    w1 = ((PoolPair*)a)->w1;
     index = *(u32*)&root->mPool0.mList;
     used = root->mPool0.mUsed;
     cap = (u32)root->mPool0.mCapacity;
-    base = (u32*)root->mPool0.mStartNodePtr;
-    sum = index + used;
-    slot = sum - (sum / cap) * cap;
-    p = (u32*)((u8*)base + (slot << 3));
-    p[0] = w0;
-    p[1] = w1;
+    {
+        PoolPair* pairBase = reinterpret_cast<PoolPair*>(root->mPool0.mStartNodePtr);
+        u32 pairSlot = (index + used) % cap;
+        pairBase[pairSlot].w0 = w0;
+        pairBase[pairSlot].w1 = w1;
+    }
     root->mPool0.mUsed = used + 1;
 
     root = lbl_eu_806655D0;
-    w0 = ((u32*)savedB)[0];
-    w1 = ((u32*)savedB)[1];
+    w0 = ((PoolPair*)savedB)->w0;
+    w1 = ((PoolPair*)savedB)->w1;
     index = *(u32*)&root->mPool1.mList;
     used = root->mPool1.mUsed;
     cap = (u32)root->mPool1.mCapacity;
-    base = (u32*)root->mPool1.mStartNodePtr;
-    sum = index + used;
-    slot = sum - (sum / cap) * cap;
-    p = (u32*)((u8*)base + (slot << 3));
-    p[0] = w0;
-    p[1] = w1;
+    {
+        PoolPair* pairBase = reinterpret_cast<PoolPair*>(root->mPool1.mStartNodePtr);
+        u32 pairSlot = (index + used) % cap;
+        pairBase[pairSlot].w0 = w0;
+        pairBase[pairSlot].w1 = w1;
+    }
     root->mPool1.mUsed = used + 1;
 
     root = lbl_eu_806655D0;
-    w0 = ((u32*)c)[0];
-    w1 = ((u32*)c)[1];
+    w0 = ((PoolPair*)c)->w0;
+    w1 = ((PoolPair*)c)->w1;
     index = *(u32*)&root->mPool2.mList;
     used = root->mPool2.mUsed;
     cap = (u32)root->mPool2.mCapacity;
-    base = (u32*)root->mPool2.mStartNodePtr;
-    sum = index + used;
-    slot = sum - (sum / cap) * cap;
-    p = (u32*)((u8*)base + (slot << 3));
-    p[0] = w0;
-    p[1] = w1;
+    {
+        PoolPair* pairBase = reinterpret_cast<PoolPair*>(root->mPool2.mStartNodePtr);
+        u32 pairSlot = (index + used) % cap;
+        pairBase[pairSlot].w0 = w0;
+        pairBase[pairSlot].w1 = w1;
+    }
     root->mPool2.mUsed = used + 1;
 
     func_8044B298__8CGXCacheFv(CDeviceGX::getCacheInstance(), 0, 0, 0);
 }
 
-static u32* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
-    u32 index = *(u32*)&pool->mList;
-    u32 cap = (u32)pool->mCapacity;
-    u32* base = (u32*)pool->mStartNodePtr;
-    u32 slot = (index + logicalIndex) % cap;
-    return (u32*)((u8*)base + slot * 8);
+static PoolPair* poolPairAt(CViewRootPool* pool, u32 logicalIndex) {
+    PoolPair* base = reinterpret_cast<PoolPair*>(pool->mStartNodePtr);
+    u32 slot = (*(u32*)&pool->mList + logicalIndex) % (u32)pool->mCapacity;
+    return &base[slot];
 }
 
-extern "C" void func_80442C68__9CViewRootFv() {
+void CViewRoot::func_80442C68() {
     CViewRoot* root = lbl_eu_806655D0;
     if (root == nullptr) {
         return;
@@ -234479,7 +234488,7 @@ CView* CViewRoot::getFullScreenView() {
             return childView;
         }
 
-        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&frameOffset, &childView->mFrame);
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(frameOffset, &childView->mFrame);
 
         posSumY = childView->mFrame.mContentX + frameOffset.mPos.x;
         posSumX = childView->mFrame.mContentY + frameOffset.mPos.y;

@@ -1,17 +1,14 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/voice/cvsys/CVS_THREAD_EHP
-// Replace stubs with high-level C/C++ during decomp.
+// CVS_THREAD_EHP: Voice thread for EHP (Emergency HP recovery) sequences.
+// Five matched functions: completion callback, voice removal, slot-rotation
+// advance, slot-2 play, and the standalone EHP voice selector.
 
-/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp" line 4 "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" */
 #pragma once
 
-/**
- * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
- *
- * Pulls recovered VM / script-helper headers only. Plugin units with their own
- * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
- */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" line 2 "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+#pragma once
 
-/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -719,640 +716,343 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-/* "src/kyoshin/harness_catalog.hpp" line 10 "cstring" */
-#ifndef MSL_CPP_CSTRING_H
-#define MSL_CPP_CSTRING_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
-#ifndef MSL_STRING_H
-#define MSL_STRING_H
 
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
-/* end "types.h" */
+class CVS_THREAD{
+public:
+    u32* unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+    CVS_THREAD();
 
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-#ifndef _MSL_STRING_API_H
-#define _MSL_STRING_API_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* __memrchr(const void* src, int val, size_t n);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-#ifndef _EXTRAS_H
-#define _EXTRAS_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int stricmp(const char*, const char*);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
-
-char* strcat(char*, const char*);
-char* strncat(char*, const char*, size_t);
-
-int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, size_t);
-
-char* strchr(const char*, int);
-char* strstr(const char*, const char*);
-
-size_t strlen(const char*);
-
-void* memmove(void*, const void*, size_t);
-int memcmp(const void*, const void*, size_t);
-void* memchr(const void*, int, size_t);
-
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* dest, int val, size_t count);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "string.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::__memrchr;
-using ::memchr;
-using ::memcmp;
-using ::memcpy;
-using ::memmove;
-using ::memset;
-using ::strcat;
-using ::strchr;
-using ::strcmp;
-using ::strcpy;
-using ::stricmp;
-using ::strlen;
-using ::strncat;
-using ::strncmp;
-using ::strncpy;
-using ::strstr;
-} // namespace std
-
-#endif
-#endif
-/* end "cstring" */
-
-/* "src/kyoshin/harness_catalog.hpp" line 12 "monolib/vm/yvm2.h" */
-#pragma once
-
-/* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/vm/yvm2.h" line 3 "monolib/vm/yvm_types.h" */
-#pragma once
-
-/* "libs/monolib/include/monolib/vm/yvm_types.h" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/vm/yvm_types.h" line 3 "monolib/vm/sb_types.h" */
-#pragma once
-
-//Types/defines for SB script files.
-
-/* "libs/monolib/include/monolib/vm/sb_types.h" line 4 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//Minimum supported SB version
-#define SB_MIN_VERSION 2
-
-enum SBFlags{
-    SB_FLAG_LOADED    = 1 << 0, //Stored in the runtime flag byte (offset 0x7)
-    SB_FLAG_ENCRYPTED = 1 << 1  //Stored in the normal flag byte (offset 0x6)
+    //Virtual table (0x1c)
+    virtual void func_802A3B50();
+    virtual void func_802A3BEC();
+    virtual int blank1();
+    virtual void func_802A1EA0();
+    virtual void func_802A3740();
+    virtual int blank2();
+    int func_802A5ECC() { return 240; }
 };
 
-typedef struct SBSectionHeader{
-    int entriesOffset;  //0x0
-    int entries; //0x4
-    int offsetSize;  //0x8
-} SBSectionHeader;
-
-typedef struct SBHeader{
-    char magic[4];                      //0x0
-    u8 version;                         //0x4
-    u8 unk5; //unused?
-    u8 flags;                           //0x6
-    /* Reserved by the VM as a place to store various flags during runtime. Only the first bit
-    (for the loaded flag) gets used, however. */
-    u8 vmFlags;                         //0x7
-    SBSectionHeader* codeOfs;            //0x8
-    SBSectionHeader* idPoolOfs;          //0xC
-    SBSectionHeader* intPoolOfs;         //0x10
-    SBSectionHeader* fixedPoolOfs;       //0x14
-    SBSectionHeader* stringPoolOfs;      //0x18
-    SBSectionHeader* functionPoolOfs;    //0x1C
-    SBSectionHeader* pluginImportsOfs;   //0x20
-    SBSectionHeader* ocImportsOfs;       //0x24
-    SBSectionHeader* functionImportsOfs; //0x28
-    SBSectionHeader* staticVarsOfs;      //0x2C
-    SBSectionHeader* localPoolOfs;       //0x30
-    SBSectionHeader* sysAtrPoolOfs;      //0x34
-    SBSectionHeader* usrAtrPoolOfs;      //0x38
-    SBSectionHeader* debugSymbolsOfs;    //0x3C
-} SBHeader;
-
-//Section specific structs
-
-//Function pool
-
-typedef struct FunctionPoolEntry{
-    u16 unk0;
-    s16 unk2;
-    u16 unk4;
-    u8 unk8[0xC - 0x8];
-    u32 unkC;
-    u8 unk10[0x14 - 0x10];
-} FunctionPoolEntry;
-
-//Plugin imports
-
-typedef struct PluginImportEntry{
-    u16 unk0;
-    u16 unk2;
-} PluginImportEntry;
-
-//OC imports
-
-typedef struct OCImportEntry{
-    u16 unk0;
-} OCImportEntry;
-
-//Function imports
-
-typedef struct FunctionImportEntry{
-    u16 unk0;
-    u16 unk2;
-} FunctionImportEntry;
-
-//Static vars
-
-typedef struct StaticVarsEntry{
-    u32 unk0;
-    u32 unk4;
-} StaticVarsEntry;
-
-//Local pool
-
-typedef struct LocalPoolEntry{
-    u32 unk0;
-    u32 unk4;
-} LocalPoolEntry;
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/sb_types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-//Misc constants
-
-#define MAX_PACKAGES 8 //Max number of packages (scripts) at once
-#define MAX_PLUGINS 48
-#define MAX_OCS 48
-#define MAX_THREADS 16
-#define MAX_BREAKPOINTS 4
-#define MAX_STACK_ENTRIES 128
-
-#define VMC_MAX 96 //Max number of opcodes
-
-typedef struct VMArg{
-    u8 type; //0x0
-    u16 unk2;
-    union {
-        void* pointerVal;
-        u32 uintVal;
-        int intVal;   
-    } value; //0x4
-} VMArg;
-
-typedef struct VMReg{
-    int pc; //0x0
-    int sp; //0x4
-    int unk8; //0x8
-    int exception; //0xC
-    int unk10; //0x10
-} VMReg;
-
-typedef struct _sVMThread{
-    VMReg reg; //0x0
-    VMArg unk14[2];
-    s16 unk24;
-    u8 unk26[2];
-    u32 unk28;
-    s16 unk2C;
-    u8 unk2E[2];
-    SBHeader* scriptData; //0x30
-    u8* codeData; //0x34
-    StaticVarsEntry* staticVarsEntries; //0x38
-    VMArg* stack; //0x3C
-    u32 unk40;
-    u32 id; //0x44
-    int unk48;
-    BOOL waitMode; //0x4C
-    u32 wkIdx; //0x50
-    u32 unk54;
-    u8 unk58[0x60 - 0x58];
-} VMThread;
-
-//Forward declaration
-struct OCData;
-
-typedef int (*PluginFunc)(VMThread* pThread);
-typedef int (*OCCtorFunc)(VMThread* pThread, void* r4, int r5);
-typedef int (*OCSelectorFunc)(VMThread* pThread, int r4);
-typedef void (*OCGetSetFunc)(VMThread* pThread, int r4, struct OCData* data);
-
-typedef struct PluginFuncData{
-    const char* name; //0x0
-    PluginFunc func; //0x4
-} PluginFuncData;
-
-typedef struct OCProperty{
-    const char* name; //0x0
-    OCGetSetFunc getFunc; //0x4
-    OCGetSetFunc setFunc; //0x8
-    int nameLength; //0xC
-} OCProperty;
-
-typedef struct OCSelector{
-    const char* name; //0x0
-    OCSelectorFunc func; //0x4
-    int nameLength; //0x8
-} OCSelector;
-
-typedef struct OCData{
-    const char* name; //0x0
-    OCCtorFunc ctor; //0x4
-    OCProperty* properties; //0x8
-    OCSelector* selectors; //0xC
-} OCData;
-
-typedef struct VMPackage{
-    SBHeader* scriptDataPtr; //0x0
-    u32 unk4;
-} VMPackage;
-
-typedef struct VMPlugin{
-    char* unk0;
-    PluginFuncData* unk4;
-} VMPlugin;
-
-typedef struct VMOC{
-    OCData* unk0;
-} VMOC;
-
-typedef struct VMBreakpoint{
-    u8 unk0[0xC];
-} VMBreakpoint;
-
-typedef struct VMState{
-    VMPackage packages[MAX_PACKAGES]; //0x0
-    VMThread* activeThread; //0x40
-    u32 nextThreadId; //0x44
-    VMThread* unk48[MAX_THREADS]; //0x48
-    VMThread threads[MAX_THREADS]; //0x88
-    VMArg threadStacks[MAX_THREADS][MAX_STACK_ENTRIES]; //0x688
-    VMPlugin plugins[MAX_PLUGINS]; //0x4688
-    VMOC ocs[MAX_OCS]; //0x4808
-    OCData* builtinOC; //0x48C8
-    //Unused debug data (based on info from XCX)
-    BOOL debMode; //0x48CC
-    u8 unk48D0[0xC];
-    VMBreakpoint bps[MAX_BREAKPOINTS]; //0x48DC
-} VMState;
-
-//Enums
-
-typedef enum VMCResult{
-    VMC_RESULT_0,
-    VMC_RESULT_1,
-    VMC_RESULT_2,
-    VMC_RESULT_3
-} VMCResult;
-
-typedef enum VMCOpcodeType{
-    VMC_OP_NOP,
-    VMC_OP_CONST_0,
-    VMC_OP_CONST_1,
-    VMC_OP_CONST_2,
-    VMC_OP_CONST_3,
-    VMC_OP_CONST_4,
-    VMC_OP_CONST_I,
-    VMC_OP_CONST_I_W,
-    VMC_OP_POOL_INT,
-    VMC_OP_POOL_INT_W,
-    VMC_OP_POOL_FIXED,
-    VMC_OP_POOL_FIXED_W,
-    VMC_OP_POOL_STR,
-    VMC_OP_POOL_STR_W,
-    VMC_OP_LD,
-    VMC_OP_ST,
-    VMC_OP_LD_ARG,
-    VMC_OP_ST_ARG,
-    VMC_OP_ST_ARG_OMIT,
-    VMC_OP_LD_0,
-    VMC_OP_LD_1,
-    VMC_OP_LD_2,
-    VMC_OP_LD_3,
-    VMC_OP_ST_0,
-    VMC_OP_ST_1,
-    VMC_OP_ST_2,
-    VMC_OP_ST_3,
-    VMC_OP_LD_ARG_0,
-    VMC_OP_LD_ARG_1,
-    VMC_OP_LD_ARG_2,
-    VMC_OP_LD_ARG_3,
-    VMC_OP_ST_ARG_0,
-    VMC_OP_ST_ARG_1,
-    VMC_OP_ST_ARG_2,
-    VMC_OP_ST_ARG_3,
-    VMC_OP_LD_STATIC,
-    VMC_OP_LD_STATIC_W,
-    VMC_OP_ST_STATIC,
-    VMC_OP_ST_STATIC_W,
-    VMC_OP_LD_AR,
-    VMC_OP_ST_AR,
-    VMC_OP_LD_NIL,
-    VMC_OP_LD_TRUE,
-    VMC_OP_LD_FALSE,
-    VMC_OP_LD_FUNC,
-    VMC_OP_LD_FUNC_W,
-    VMC_OP_LD_PLUGIN,
-    VMC_OP_LD_PLUGIN_W,
-    VMC_OP_LD_FUNC_FAR,
-    VMC_OP_LD_FUNC_FAR_W,
-    VMC_OP_MINUS,
-    VMC_OP_NOT,
-    VMC_OP_L_NOT,
-    VMC_OP_ADD,
-    VMC_OP_SUB,
-    VMC_OP_MUL,
-    VMC_OP_DIV,
-    VMC_OP_MOD,
-    VMC_OP_OR,
-    VMC_OP_AND,
-    VMC_OP_R_SHIFT,
-    VMC_OP_L_SHIFT,
-    VMC_OP_EQ,
-    VMC_OP_NE,
-    VMC_OP_GT,
-    VMC_OP_LT,
-    VMC_OP_GE,
-    VMC_OP_LE,
-    VMC_OP_L_OR,
-    VMC_OP_L_AND,
-    VMC_OP_JMP,
-    VMC_OP_JPF,
-    VMC_OP_CALL,
-    VMC_OP_CALL_W,
-    VMC_OP_CALL_IND,
-    VMC_OP_RET,
-    VMC_OP_NEXT,
-    VMC_OP_PLUGIN,
-    VMC_OP_PLUGIN_W,
-    VMC_OP_CALL_FAR,
-    VMC_OP_CALL_FAR_W,
-    VMC_OP_GET_OC,
-    VMC_OP_GET_OC_W,
-    VMC_OP_GETTER,
-    VMC_OP_GETTER_W,
-    VMC_OP_SETTER,
-    VMC_OP_SETTER_W,
-    VMC_OP_SEND,
-    VMC_OP_SEND_W,
-    VMC_OP_TYPEOF,
-    VMC_OP_SIZEOF,
-    VMC_OP_SWITCH,
-    VMC_OP_INC,
-    VMC_OP_DEC,
-    VMC_OP_EXIT,
-    VMC_OP_BP //Breakpoint
-} VMCOpcodeType;
-
-typedef enum _VMTypes {
-    VM_TYPE_NIL,
-    VM_TYPE_TRUE,
-    VM_TYPE_FALSE,
-    VM_TYPE_INT,
-    VM_TYPE_FIXED,
-    VM_TYPE_STRING,
-    VM_TYPE_ARRAY,
-    VM_TYPE_FUNCTION,
-    VM_TYPE_PLUGIN,
-    VM_TYPE_OC,
-    VM_TYPE_SYS,
-
-    VM_MAX_TYPE = 11
-} VMTypes;
-
-typedef enum VMException {
-    VM_EXCEPTION_NONE,
-    VM_EXCEPTION_PLUGIN,
-    VM_EXCEPTION_OC,
-    VM_EXCEPTION_DIV_BY_ZERO,
-    VM_EXCEPTION_INVALID_ARRAY,
-    VM_EXCEPTION_INDEX_OOB,
-    VM_EXCEPTION_MATH_INVALID_ARG,
-    VM_EXCEPTION_CALC_INVALID_ARG,
-    VM_EXCEPTION_8,
-    VM_EXCEPTION_JPF_INVALID_ARG,
-    VM_EXCEPTION_CALLIND_INVALID_ARG,
-    VM_EXCEPTION_INVALID_OC,
-    VM_EXCEPTION_SEND_ERROR,
-    VM_EXCEPTION_INVALID_PROPERTY,
-    VM_EXCEPTION_INVALID_GETSET_FUNC
-} VMException;
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/yvm_types.h" */
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void vmInit();
-BOOL vmLink(u8* pData);
-BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
-void vmStart(u8* pData);
-
-VMThread* vmThreadCreate(SBHeader* pData, u32 r4);
-void vmThreadStart(VMThread* pThread, u32 r4);
-BOOL vmThreadEnd(u32 r3);
-BOOL vmThreadIsAlive(u32 r3);
-BOOL vmThreadSleep(u32 r3);
-BOOL vmThreadWakeup(u32 r3);
-void vmThreadSleepAll(u8* pScriptData);
-void vmThreadWakeupAll(u8* pScriptData);
-BOOL vmThreadIsFinish(u8* pScriptData);
-BOOL vmThreadGetOC(VMThread* pThread, int r4, u32* outId);
-
-VMArg* vmArgPtrGet(VMThread* pThread, int r4);
-BOOL vmArgOmitChk(VMThread* pThread, int r4);
-BOOL vmArgBoolGet(u32 r3, VMArg* r4);
-int vmArgIntGet(u32 r3, VMArg* r4);
-int vmArgFixedGet(u32 r3, VMArg* r4);
-const char* vmArgStringGet(u32 r3, VMArg* r4);
-u32 vmArgFunctionGet(u32 r3, VMArg* r4);
-void* vmArgArrayGet(u32 r3, VMArg* r4);
-void* vmArgOCGet(u32 r3, VMArg* r4);
-u32 vmDataGet(VMThread* pThread, int startIndex, int length);
-
-void vmRetValSet(VMThread* pThread, VMArg* pArg);
-void* vmOCPropertyGet(VMThread* pThread);
-void vmWaitModeSet(VMThread* pThread);
-u32 vmWkIdxGet(VMThread* pThread);
-void vmWkIdxSet(VMThread* pThread, u32 r4);
-u32* vmWkGet(VMThread* pThread, u32 r4);
-
-void vmPluginExceptionThrow(VMThread* pThread);
-void vmOCExceptionThrow(VMThread* pThread);
-DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
-void vmExceptionThrow(VMThread* pThread, u32 exception);
-
-const char* vmIdPoolGet(SBHeader* data, u32 no);
-int vmIntPoolGet(SBHeader* data, u32 no);
-int vmFixedPoolGet(SBHeader* data, u32 no);
-void* vmStringPoolGet(SBHeader* data, u32 no);
-void* vmLocalPoolGet(SBHeader* data, u32 no);
-void* vmFunctionPoolGet(SBHeader* data, u32 no);
-u16* vmSysAtrPoolGet(SBHeader* data, u32 no);
-u16* vmUsrAtrPoolGet(SBHeader* data, u32 no);
-
-u32 vmSysAtrSearch(SBHeader* data, u32 no);
-u32 vmPluginSearch(const char* param1, const char* param2);
-u32 vmOCSearch(const char* pName);
-u32 vmPropertySearch(OCData* pOC, const char* pName);
-u32 vmSelectorSearch(OCData* pOC, const char* pName);
-u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName);
-
-void encodeScramble(u8* data);
-int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6);
-
-void vmArgErr();
-void vmHalt();
-
-#ifdef __cplusplus
-}
-#endif
-/* end "monolib/vm/yvm2.h" */
-/* "src/kyoshin/harness_catalog.hpp" line 13 "kyoshin/code_801862C0.hpp" */
+extern void func_802A35A0(u32* destPtr);
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" line 3 "kyoshin/cf/voice/CCharVoice.hpp" */
 #pragma once
+
+/* "src/kyoshin/cf/voice/CCharVoice.hpp" line 2 "types.h" */
+/* end "types.h" */
 
 /**
- * Script / OC instance helpers (unit kyoshin/code_801862C0).
- * Names are still placeholder ``func_*`` until symbol recovery; signatures
- * match observed call sites in plugin TUs (VMThread in, OC object out).
+ * CCharVoice -- single character voice playback instance.
+ *
+ * Each instance manages a voice file path and interacts with the sound
+ * system to play/stop/update character voices.  The owner object decides
+ * which voice profile (normal vs battle) is used.
+ *
+ * N.B.  The class is NOT declared with virtual functions even though it
+ * has a vtable pointer at offset 0x3C.  The vtable (lbl_eu_805398B0) is
+ * set up as assembly data and assigned manually in the constructor so
+ * that the C-linkage symbol name __ct__CCharVoice is used (no C++
+ * namespace mangling).
+ *
+ * Field layout (total size 0x40 = 64 bytes):
+ *   0x00  mOwner            parent/owner object
+ *   0x04  mVoiceId          current voice ID
+ *   0x08  mPriorityCheck    priority value for play-through gate
+ *   0x0C  mSoundHandle      handle from archive-voice sound system
+ *   0x10  mFileName[0x20]   voice file path buffer (32 bytes)
+ *   0x30  mFileNameLen      strlen of mFileName
+ *   0x34  mField34          offset into mFileName for digit formatting
+ *   0x38  mBattleSndHandle  sound handle for battle-voice path
+ *   0x3C  mVtable           pointer to lbl_eu_805398B0 (vtable)
  */
+struct CCharVoice {
+    void* mOwner;            // 0x00
+    s32   mVoiceId;          // 0x04
+    s32   mPriorityCheck;    // 0x08
+    s32   mSoundHandle;      // 0x0C
+    char  mFileName[0x20];  // 0x10
+    u32   mFileNameLen;      // 0x30
+    s32   mField34;          // 0x34
+    u16   mBattleSndHandle;  // 0x38
+    // 2 bytes padding to 0x3C
+    void* mVtable;           // 0x3C -- vtable pointer
 
-/* "src/kyoshin/code_801862C0.hpp" line 8 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/code_801862C0.hpp" line 9 "monolib/vm/yvm2.h" */
-/* end "monolib/vm/yvm2.h" */
+    void func_802A0B8C(void* owner);
+    void func_802A0E08();
+    void func_802A0FE8();
+    bool func_802A109C(float volume, int priority, int voiceId);
+    void func_802A1304();
+};
+/* end "kyoshin/cf/voice/CCharVoice.hpp" */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+struct CVoiceHandle;
 
-void* func_801862C0(VMThread* pThread);
-void* func_801862E0(void* p);
-void* func_801863F4(void* p);
-void* func_80186460(void* p);
-void* func_80186474(void* p);
-void* func_801864DC(void* pObj, int slot);
-void* func_80186664(void* p);
-void* func_801866F0(void* p);
-void* func_80186A70(void* p);
-void* func_80186BC8(void* p);
-void* func_80186C7C(void* p);
-void* func_80186D20(void* p);
-
-#ifdef __cplusplus
-}
-#endif
-/* end "kyoshin/code_801862C0.hpp" */
-/* "src/kyoshin/harness_catalog.hpp" line 14 "kyoshin/plugin/ocBdat.hpp" */
-#pragma once
-
-/* "src/kyoshin/plugin/ocBdat.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
-/* end "monolib/vm/yvm2.h" */
-
-void* getFP(const char* pName);
-
-// Utility class for handling bdat files.
-class CBdat {
+// CVS_THREAD_EHP: Voice thread for EHP (Emergency HP recovery) sequences.
+// Object size 0x48 (72 bytes). The buffer-size virtual (func_802A6818, the
+// CVS_THREAD::blank1 slot) returns 0xB4 (180). The EHP vtable
+// (lbl_eu_80539B2C) is assigned manually by the factory __ct__802A5ED4.
+//
+// Field layout (base CVS_THREAD occupies 0x00-0x1F, vtable at 0x1C):
+//   0x20  field_0x20   voice handle slot 1 (owner1)
+//   0x24  field_0x24   voice handle slot 2 (owner2)
+//   0x28  field_0x28   third constructor parameter
+//   0x2C  field_0x2c   voice handle array (3 slots)
+//   0x38  field_0x38   current rotating index
+//   0x3C  field_0x3c   slot count / wrap bound (index range 0..field_0x3c)
+//   0x40  field_0x40   stop/target index (triggers playback virtual)
+//   0x44  field_0x44   direction flag (0 = forward, nonzero = backward)
+class CVS_THREAD_EHP : public CVS_THREAD {
 public:
-    static void* func_8003AA34();
-    static void* func_8003AA50();
-    static void* func_8003AA78(u32, void*);
-    static void func_8003AA8C(u32 val);
-    static void* getFP(const char* pName) { return ::getFP(pName); }
-    static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u32 func_8003B1EC(void* pData);
-    static u32 func_8003B41C(void* pData);
+    static const int BUFFER_SIZE = 0xB4;
+
+    CVoiceHandle* field_0x20;    // 0x20: voice handle slot 1
+    CVoiceHandle* field_0x24;    // 0x24: voice handle slot 2
+    s32 field_0x28;              // 0x28: third constructor parameter
+    CVoiceHandle* field_0x2c[3]; // 0x2C: voice handle slots
+    s32 field_0x38;              // 0x38: current rotating index
+    s32 field_0x3c;              // 0x3C: slot count / wrap bound
+    s32 field_0x40;              // 0x40: stop/target index
+    u8 field_0x44;               // 0x44: direction flag
 };
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// Forward declaration of a polymorphic sub-object reached through a voice
+// handle (CVoiceHandle+0x04). Only the vtable pointer at offset 0 is used.
+struct CVSubObj {
+    void** vtable;               // 0x00: vtable pointer
+};
 
-void ocBdatRegist();
+// Voice-handle type. The actual CCharVoice is embedded at offset 0x3E9C
+// within the handle allocation (0x3E9C bytes of handle data + CCharVoice).
+// Code biases a handle pointer by 0x3E9C to reach the embedded CCharVoice.
+struct CVoiceHandle {
+    void** vtable;               // 0x00: vtable pointer
+    CVSubObj* field_0x04;        // 0x04: sub-object pointer (used by func_802A6820)
+    u8 _pad[0x3E9C - 0x08];      // 0x08-0x3E9B: handle data
+    CCharVoice voice;            // 0x3E9C: the actual voice object
+};
 
-#ifdef __cplusplus
+// Sibling TU functions (unmangled global symbols).
+int func_802A3E88(CVS_THREAD* self);
+void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
+int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
+CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
+CVoiceHandle* func_802A330C(int size, int align);
+int func_80174C98(CVoiceHandle* handle, u32* value, int arg);
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp" line 5 "monolib/math/Random.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/Random.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace ml{
+    namespace math{
+        void mtInit(u32 seed);
+        int mtRand();
+        int mtRand(int max);
+        int mtRand(int min,int max);
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Random.hpp" */
+
+// Init-data tables (3 u32s each: {0, -1, callback}). Each slot state carries
+// a {field_0, field_4, callback} triple that the rotation function copies into
+// unk0/unk4/unk8 when the rotating index is not at the stop index.
+extern "C" u32 lbl_eu_80539B14[3]; // {0, -1, func_802A6408}
+extern "C" u32 lbl_eu_80539B20[3]; // {0, -1, func_802A6718}
+
+// Virtual method override: returns the buffer size for this thread type.
+// Matches CVS_THREAD::blank1 slot in vtable; EHP subclass returns 0xB4 (180).
+int func_802A6818() {
+    return 0xB4;
 }
-#endif
-/* end "kyoshin/plugin/ocBdat.hpp" */
-/* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" void __ct__802A5ED4() {}
+// ── Target 1: us-802a8e4c (func_802A6718) ──────────────────────────────────
+// Completion callback: if no active voice is playing, invoke the
+// playback-start virtual (CVS_THREAD::func_802A3B50, vtable slot 0).
+void func_802A6718(CVS_THREAD_EHP* self) {
+    if (func_802A3E88(self) == 0) {
+        self->func_802A3B50();
+    }
+}
 
-extern "C" void func_802A617C() {}
+// ── Target 2: us-802a8e94 (func_802A6760) ──────────────────────────────────
+// Remove a voice from all slots by matching its embedded CCharVoice pointer.
+// A CVoiceHandle stores the CCharVoice at offset 0x3E9C, so a non-null handle
+// is biased by 0x3E9C before comparing against the incoming voice pointer.
+void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
+    func_802A3BEC(self, voicePtr);
 
-extern "C" void func_802A6408() {}
+    // Slot 0x20
+    CVoiceHandle* handle = self->field_0x20;
+    CCharVoice* biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
 
-extern "C" void func_802A658C() {}
+    // Slot 0x24
+    handle = self->field_0x24;
+    biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x24 = NULL;
+    }
 
-extern "C" void func_802A6650() {}
+    // Rotating slots 0x2C..0x34 (count in field_0x3c)
+    for (int i = 0; i < self->field_0x3c; i++) {
+        handle = self->field_0x2c[i];
+        biased = (CCharVoice*)handle;
+        if (handle != NULL) {
+            biased = &handle->voice;
+        }
+        if (biased == voicePtr) {
+            self->field_0x2c[i] = NULL;
+        }
+    }
+}
 
-extern "C" void func_802A6718() {}
+// ── Target 3: us-802a8cc0 (func_802A658C) ──────────────────────────────────
+// Advance the rotating index (field_0x38) forward or backward depending on the
+// direction flag (field_0x44), wrapping at the bounds (0..field_0x3c). When the
+// index lands on the stop index (field_0x40), the playback-start virtual is
+// invoked; otherwise the slot-state triple is reloaded from lbl_eu_80539B14.
+void func_802A658C(CVS_THREAD_EHP* self) {
+    if (func_802A3E88(self) != 0) {
+        return;
+    }
 
-extern "C" void func_802A6760() {}
+    if (self->field_0x44 == 0) {
+        // Forward: increment, wrap to 0 once past the bound.
+        int newIdx = self->field_0x38 + 1;
+        self->field_0x38 = newIdx;
+        if (self->field_0x3c < newIdx) {
+            self->field_0x38 = 0;
+        }
+    } else {
+        // Backward: decrement, wrap to bound-1 on underflow.
+        int newIdx = self->field_0x38 - 1;
+        self->field_0x38 = newIdx;
+        if (newIdx < 0) {
+            self->field_0x38 = self->field_0x3c - 1;
+        }
+    }
 
-extern "C" int func_802A6818(void* self) { return 180; }
+    if (self->field_0x38 == self->field_0x40) {
+        self->func_802A3B50();
+    } else {
+        // Reload slot-state triple {field_0, field_4, callback}.
+        self->unk4 = lbl_eu_80539B14[1];
+        self->unk0 = (u32*)lbl_eu_80539B14[0];
+        self->unk8 = lbl_eu_80539B14[2];
+    }
+}
 
-extern "C" void func_802A6820() {}
+// ── Target 4: us-802a8d84 (func_802A6650) ──────────────────────────────────
+// Play function for slot 2. Reloads the slot-state triple from lbl_eu_80539B20,
+// finds a free voice handle (excluding slot 2's own handle), and if that handle
+// is inactive plays a random voice ID (mtRand(2) + 0x51D). On any failure the
+// playback-start virtual is invoked as a fallback.
+void func_802A6650(CVS_THREAD_EHP* self) {
+    if (func_802A3E88(self) != 0) {
+        return;
+    }
 
-extern "C" void func_802A6958() {}
+    // Reload slot-state triple {field_0, field_4, callback}.
+    self->unk4 = lbl_eu_80539B20[1];
+    self->unk0 = (u32*)lbl_eu_80539B20[0];
+    self->unk8 = lbl_eu_80539B20[2];
+
+    CVoiceHandle* handle = func_802A7998(self->field_0x24);
+    if (handle != NULL) {
+        // is-active check via the handle's vtable (offset 0x2BC).
+        typedef int (*IsActiveFunc)(CVoiceHandle*);
+        IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
+        if (isActive(handle) == 0) {
+            // Voice is not active -- play a random voice ID.
+            CCharVoice* voicePtr = (CCharVoice*)handle;
+            if (handle != NULL) {
+                voicePtr = &handle->voice;
+            }
+            int voiceId = ml::math::mtRand(2) + 0x51D;
+            if (func_802A3C44(self, voicePtr, voiceId) != 0) {
+                return;
+            }
+        }
+    }
+
+    // Fallback: invoke the playback-start virtual.
+    self->func_802A3B50();
+}
+
+// ── Target 5: us-802a8f54 (func_802A6820) ──────────────────────────────────
+// Standalone EHP voice selector. Given two party-slot indices (a, b), it picks
+// a voice ID based on their relationship, allocates a 0xAA-byte buffer, and
+// plays the voice on the currently free handle. Returns 0 in all paths.
+int func_802A6820(int a, int b) {
+    if (a == b) {
+        return 0;
+    }
+
+    CVoiceHandle* handle = func_802A7998((CVoiceHandle*)0);
+    if (handle == NULL) {
+        return 0;
+    }
+
+    // Skip if the current voice is still active.
+    typedef int (*IsActiveFunc)(CVoiceHandle*);
+    IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
+    if (isActive(handle) != 0) {
+        return 0;
+    }
+
+    // Read a u32 value from the handle's sub-object (vtable offset 0x30) and
+    // gate the selection on a category check (func_80174C98).
+    CVSubObj* subobj = handle->field_0x04;
+    typedef u32* (*GetPtrFunc)(CVSubObj*);
+    GetPtrFunc getPtr = (GetPtrFunc)subobj->vtable[0x30 / 4];
+    u32* result = getPtr(subobj);
+    u32 value = *result;
+    if (func_80174C98(handle, &value, 0x803) == 0) {
+        return 0;
+    }
+
+    // Choose the voice ID from the relationship between a and b.
+    if (b < a && a >= 2) {
+        b = ml::math::mtRand(2) + 0x6A5;
+    } else if (a < b && a == 1) {
+        b = 0x6A7;
+    } else {
+        return 0;
+    }
+
+    // Allocate the 0xAA-byte playback buffer.
+    if (func_802A330C(0xAA, 1) == NULL) {
+        return 0;
+    }
+
+    // Play the selected voice on the (biased) handle.
+    CCharVoice* voicePtr = (CCharVoice*)handle;
+    if (handle != NULL) {
+        voicePtr = &handle->voice;
+    }
+    func_802A3D54(voicePtr, b, 0xAA);
+    return 0;
+}
+
+// Stubs for functions not yet decompiled in this TU.
+void __ct__802A5ED4() {}
+void func_802A617C() {}
+void func_802A6408() {}
+void func_802A6958() {}

@@ -298,6 +298,12 @@ void AnimateIndTexSRT(Material* pMaterial, const res::AnimationInfo* pAnimInfo,
     }
 }
 
+inline void SetAnimationLink_(AnimationLink* pLink, AnimTransform* pAnimTrans,
+                              u16 idx) {
+    *detail::ConvertOffsToPtr<AnimTransform*>(pLink, 8) = pAnimTrans;
+    *detail::ConvertOffsToPtr<u16>(pLink, 12) = idx;
+}
+
 } // namespace
 
 namespace nw4hbm {
@@ -381,23 +387,23 @@ void AnimTransformBasic::Bind(Pane* pPane, bool recursive) {
         detail::ConvertOffsToPtr<u32>(mpRes, mpRes->animContOffsetsOffset);
 
     for (u16 i = 0; i < mpRes->animContNum; i++) {
-        const res::AnimationContent& rContent =
-            *detail::ConvertOffsToPtr<res::AnimationContent>(
+        const res::AnimationContent* pContent =
+            detail::ConvertOffsToPtr<res::AnimationContent>(
                 mpRes, pContentOffsetTbl[i]);
 
-        if (rContent.type == res::AnimationContent::ANIMTYPE_PANE) {
-            Pane* pResult = pPane->FindPaneByName(rContent.name, recursive);
+        if (pContent->type == res::AnimationContent::ANIMTYPE_PANE) {
+            Pane* pResult = pPane->FindPaneByName(pContent->name, recursive);
 
             if (pResult != NULL) {
-                mAnimLinkAry[i].Set(this, i, false);
+                SetAnimationLink_(&mAnimLinkAry[i], this, i);
                 pResult->AddAnimationLink(&mAnimLinkAry[i]);
             }
         } else /* res::AnimationContent::ANIMTYPE_MATERIAL */ {
             Material* pResult =
-                pPane->FindMaterialByName(rContent.name, recursive);
+                pPane->FindMaterialByName(pContent->name, recursive);
 
             if (pResult != NULL) {
-                mAnimLinkAry[i].Set(this, i, false);
+                SetAnimationLink_(&mAnimLinkAry[i], this, i);
                 pResult->AddAnimationLink(&mAnimLinkAry[i]);
             }
         }
@@ -409,14 +415,14 @@ void AnimTransformBasic::Bind(Material* pMaterial) {
         detail::ConvertOffsToPtr<u32>(mpRes, mpRes->animContOffsetsOffset);
 
     for (u16 i = 0; i < mpRes->animContNum; i++) {
-        const res::AnimationContent& rContent =
-            *detail::ConvertOffsToPtr<res::AnimationContent>(
+        const res::AnimationContent* pContent =
+            detail::ConvertOffsToPtr<res::AnimationContent>(
                 mpRes, pContentOffsetTbl[i]);
 
-        if (rContent.type == res::AnimationContent::ANIMTYPE_MATERIAL &&
-            detail::EqualsMaterialName(pMaterial->GetName(), rContent.name)) {
+        if (pContent->type == res::AnimationContent::ANIMTYPE_MATERIAL &&
+            detail::EqualsMaterialName(pMaterial->GetName(), pContent->name)) {
 
-            mAnimLinkAry[i].Set(this, i, false);
+            SetAnimationLink_(&mAnimLinkAry[i], this, i);
             pMaterial->AddAnimationLink(&mAnimLinkAry[i]);
         }
     }

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for RVL_SDK/src/revolution/hbm/seq
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/RVL_SDK/src/revolution/hbm/seq.c" line 4 "harness_catalog.h" */
+/* "libs/RVL_SDK/src/revolution/hbm/seq.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**

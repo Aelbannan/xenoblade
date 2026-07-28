@@ -3,34 +3,291 @@
 
 #include <harness_catalog.h>
 
-void mwPlyEntryFname() {}
+/* ---- Shared types for the Sofdec movie player (MWSFDPLY) ---- */
 
-void mwPlyStartSeamless() {}
+typedef struct LscHandle LscHandle;
+typedef struct MwsfplySjArg MwsfplySjArg;
+typedef struct MwsfplyCbObj MwsfplyCbObj;
 
-void mwPlySetSeamlessLp() {}
+/* Object held in MWSFDPLY::field_0x500; its vtable exposes a method at 0x14. */
+typedef struct MwsfplyCbVtable {
+    u8 pad_0x00[0x14];
+    void (*method)(MwsfplyCbObj* self);
+} MwsfplyCbVtable;
+
+struct MwsfplyCbObj {
+    const MwsfplyCbVtable* vtable;
+};
+
+/* MWSFDPLY movie-player handle. Partial layout covering the fields touched by
+ * the seamless-loop / entry helpers in this TU. */
+typedef struct MWSFDPLY {
+    u32 field_0x0;            /* enable flag (MWSFD_IsEnableHndl) */
+    u32 field_0x4;            /* error/status code */
+    u32 field_0x8;            /* mode (compared to 0xa) */
+    u8 field_0xc[0x58];       /* 0x0c..0x63 */
+    LscHandle* field_0x64;    /* LSC stream handle */
+    u8 field_0x68[0x28];      /* 0x68..0x8f */
+    s8 field_0x90;            /* link-stm flag */
+    u8 field_0x91;            /* link-stm auto-restore flag */
+    u8 field_0x92[0x2];       /* 0x92..0x93 */
+    u32 field_0x94;           /* entry counter */
+    u8 field_0x98[0x450];     /* 0x98..0x4e7 */
+    char* field_0x4e8;        /* recorded file-name buffer */
+    u8 field_0x4ec[0x14];     /* 0x4ec..0x4ff */
+    MwsfplyCbObj* field_0x500;
+    MwsfplySjArg* field_0x504;
+    u8 field_0x508[0x130];    /* 0x508..0x637 */
+    u32 field_0x638;
+    u32 field_0x63c;
+    u32 field_0x640;
+    u32 field_0x644;
+    u32 field_0x648;
+    u32 field_0x64c;
+    u8 field_0x650[0x8];      /* 0x650..0x657 */
+    u32 field_0x658;
+    u32 field_0x65c;
+} MWSFDPLY;
+
+/* ---- SVM trace callback infrastructure ----
+ * lbl_eu_805FF3A0 is a global pointer to an optional trace object whose
+ * vtable exposes a "trace" method at offset 0x24. Each instrumented helper
+ * records its arguments into a per-function trace record (lbl_eu_80566*) and
+ * invokes the callback on entry (sub-record at +0x04) and exit (+0x6c). */
+
+typedef struct TraceCb TraceCb;
+
+typedef struct TraceCbVtable {
+    u8 pad_0x00[0x24];
+    void (*trace)(TraceCb* self, u32* rec);
+} TraceCbVtable;
+
+struct TraceCb {
+    const TraceCbVtable* vtable;
+};
+
+typedef struct TraceRec TraceRec;
+struct TraceRec {
+    const char* name;        /* 0x00 */
+    u32 field_0x04;          /* 0x04 (entry sub-record) */
+    u32 field_0x08;          /* 0x08 */
+    u32 self;                /* 0x0c (MWSFDPLY* stored as u32) */
+    u32 field_0x10;          /* 0x10 */
+    u32 field_0x14;          /* 0x14 */
+    u32 arg;                 /* 0x18 (argument pointer stored as u32) */
+    u8 pad_0x1c[0x50];       /* 0x1c..0x6b */
+    u32 field_0x6c;          /* 0x6c (exit sub-record) */
+    u8 pad_0x70[0x64];       /* 0x70..0xd3 */
+};
+
+extern TraceCb* lbl_eu_805FF3A0;
+extern TraceRec lbl_eu_805665D0;
+extern TraceRec lbl_eu_805666A4;
+extern TraceRec lbl_eu_8056684C;
+
+/* ---- External symbols / helpers ---- */
+
+extern const char lbl_eu_80519B90[];
+
+s32 MWSFD_IsEnableHndl(MWSFDPLY* self);
+void MWSFSVM_Error(const char* message, ...);
+void MWSFPLY_RecordFname(MWSFDPLY* player, const char* name);
+void MWSFPLY_SetFlowLimit(MWSFDPLY* player);
+void MWSFCRE_SetSupplySj(MWSFDPLY* player);
+void mwPlyStartSj(MWSFDPLY* self, MwsfplySjArg* arg);
+void mwPlyStartSeamless(MWSFDPLY* self);
+
+void LSC_SetLpFlg(LscHandle* handle, s32 flag);
+void LSC_Start(LscHandle* handle);
+void LSC_Stop(LscHandle* handle);
+s32 LSC_EntryFname(LscHandle* handle, const char* fname);
+void LSC_EntryFileRange(LscHandle* handle, const char* fname, s32 a, s32 b, s32 c);
+
+/* ---- Target implementations ---- */
+
+/* Link another stream to the player. When the existing link flag is already
+ * "linked" (1) and the new request clears it (0), set the auto-restore flag
+ * before overwriting the link flag. */
+void mwPlyLinkStm(MWSFDPLY* self, s32 linkStm) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519B90 + 0xb4);
+        return;
+    }
+    if (self->field_0x90 == 1 && linkStm == 0) {
+        self->field_0x91 = 1;
+    }
+    self->field_0x90 = (u8)linkStm;
+}
+
+/* Set the seamless-loop flag on the LSC stream, surrounded by SVM trace
+ * enter/exit callbacks. */
+void mwPlySetSeamlessLp(MWSFDPLY* self, s32 lpFlag) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
+        return;
+    }
+    {
+        TraceCb* cb = lbl_eu_805FF3A0;
+        if (cb != NULL) {
+            lbl_eu_8056684C.self = (u32)self;
+            lbl_eu_8056684C.arg = (u32)&lpFlag;
+            cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+        }
+    }
+    LSC_SetLpFlg(self->field_0x64, lpFlag);
+    {
+        TraceCb* cb = lbl_eu_805FF3A0;
+        if (cb != NULL) {
+            cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+        }
+    }
+}
+
+/* Begin seamless playback: trace entry, re-arm the link flag, kick off the
+ * Sj/flow/decode pipeline, invoke the optional supply callback, and trace
+ * exit. The second enable check only guards the link-flag store and falls
+ * through to the rest of the pipeline on failure. */
+void mwPlyStartSeamless(MWSFDPLY* self) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519B90 + 0x84);
+        return;
+    }
+    {
+        TraceCb* cb = lbl_eu_805FF3A0;
+        if (cb != NULL) {
+            lbl_eu_805666A4.self = (u32)self;
+            cb->vtable->trace(cb, &lbl_eu_805666A4.field_0x04);
+        }
+    }
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519B90 + 0xb4);
+    } else {
+        self->field_0x90 = 1;
+    }
+    mwPlyStartSj(self, self->field_0x504);
+    MWSFPLY_SetFlowLimit(self);
+    LSC_Start(self->field_0x64);
+    {
+        MwsfplyCbObj* cb = self->field_0x500;
+        if (cb != NULL) {
+            cb->vtable->method(cb);
+        }
+    }
+    MWSFCRE_SetSupplySj(self);
+    self->field_0x638 = 0;
+    {
+        TraceCb* cb = lbl_eu_805FF3A0;
+        if (cb != NULL) {
+            cb->vtable->trace(cb, &lbl_eu_805666A4.field_0x6c);
+        }
+    }
+}
+
+/* Register a file name with the LSC stream. Skips the actual entry while the
+ * player is in mode 0xa, otherwise hands the name to LSC and bumps the entry
+ * counter on success or records an error on failure. */
+void mwPlyEntryFname(MWSFDPLY* self, const char* fname) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519B90);
+        return;
+    }
+    if (fname == NULL) {
+        MWSFSVM_Error(lbl_eu_80519B90 + 0x2d);
+        return;
+    }
+    {
+        TraceCb* cb = lbl_eu_805FF3A0;
+        if (cb != NULL) {
+            lbl_eu_805665D0.self = (u32)self;
+            lbl_eu_805665D0.arg = (u32)fname;
+            cb->vtable->trace(cb, &lbl_eu_805665D0.field_0x04);
+        }
+    }
+    if (self->field_0x8 != 0xa) {
+        if (LSC_EntryFname(self->field_0x64, fname) < 0) {
+            self->field_0x4 = 4;
+            MWSFSVM_Error(lbl_eu_80519B90 + 0x55);
+        } else {
+            self->field_0x94 += 1;
+        }
+    }
+    {
+        TraceCb* cb = lbl_eu_805FF3A0;
+        if (cb != NULL) {
+            cb->vtable->trace(cb, &lbl_eu_805665D0.field_0x6c);
+        }
+    }
+}
+
+/* Start a seamless looping range playback: record the file name, stop the
+ * current stream, (optionally) enter the file range, arm the loop flag, then
+ * delegate to mwPlyStartSeamless. Finally publish the range parameters. */
+void mwPlyStartFnameRangeLp(MWSFDPLY* self, const char* fname, s32 arg5, s32 arg6) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519B90 + 0x27a);
+        return;
+    }
+    MWSFPLY_RecordFname(self, fname);
+    LSC_Stop(self->field_0x64);
+    {
+        const char* recorded = self->field_0x4e8;
+        if (MWSFD_IsEnableHndl(self) != 1) {
+            MWSFSVM_Error(lbl_eu_80519B90 + 0x249);
+        } else {
+            LSC_EntryFileRange(self->field_0x64, recorded, 0, arg5, arg6);
+        }
+    }
+    {
+        s32 lpFlag = 1;
+        if (MWSFD_IsEnableHndl(self) != 1) {
+            MWSFSVM_Error(lbl_eu_80519B90 + 0xde);
+        } else {
+            TraceCb* cb = lbl_eu_805FF3A0;
+            if (cb != NULL) {
+                lbl_eu_8056684C.self = (u32)self;
+                lbl_eu_8056684C.arg = (u32)&lpFlag;
+                cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x04);
+            }
+            LSC_SetLpFlg(self->field_0x64, lpFlag);
+            cb = lbl_eu_805FF3A0;
+            if (cb != NULL) {
+                cb->vtable->trace(cb, &lbl_eu_8056684C.field_0x6c);
+            }
+        }
+    }
+    mwPlyStartSeamless(self);
+    {
+        u32 prev = self->field_0x644;
+        self->field_0x648 = 3;
+        self->field_0x658 = arg5;
+        self->field_0x65c = arg6;
+        self->field_0x640 = 1;
+        if (prev == 0) {
+            self->field_0x64c = 1;
+        }
+    }
+}
+
+/* ---- Non-target stubs preserved from the scaffold ---- */
 
 void mwPlyStartFnameLp() {}
 
-void mwPlyStartFnameRangeLp() {}
-
 int MWSFLSC_IsFsStatErr(void) { extern int LSC_GetStat(void); return (LSC_GetStat() == 3) ? 1 : 0; }
 
-void LSC_SetFlowLimit(void* a);
-void MWSFLSC_SetFlowLimit(void* self) {
-    void* obj = *(void**)((u8*)self + 0x64);
+void LSC_SetFlowLimit(LscHandle* a);
+void MWSFLSC_SetFlowLimit(MWSFDPLY* self) {
+    LscHandle* obj = self->field_0x64;
     if (obj != NULL) {
         LSC_SetFlowLimit(obj);
     }
 }
 
-void LSC_Pause(void* a);
-void MWSFLSC_Pause(void* self) {
-    void* obj = *(void**)((u8*)self + 0x64);
+void LSC_Pause(LscHandle* a);
+void MWSFLSC_Pause(MWSFDPLY* self) {
+    LscHandle* obj = self->field_0x64;
     if (obj != NULL) {
         LSC_Pause(obj);
     }
 }
-
-void mwPlyLinkStm() {}
 
 void mwPlyExecInfiniteLoopHandle() {}

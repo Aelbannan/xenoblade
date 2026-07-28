@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_hds
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_hds.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_hds.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**

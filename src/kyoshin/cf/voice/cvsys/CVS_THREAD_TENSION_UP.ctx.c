@@ -1,17 +1,15 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP
-// Replace stubs with high-level C/C++ during decomp.
+// CVS_THREAD_TENSION_UP: Voice thread for tension-up audio events.
+// FULL_MATCH: func_802A92D0 -- buffer-size getter (virtual method override).
+// 5 matched functions: completion callback, voice removal, constructor,
+// update function, and voice-select + play function.
 
-/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp" line 5 "kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.hpp" */
 #pragma once
 
-/**
- * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
- *
- * Pulls recovered VM / script-helper headers only. Plugin units with their own
- * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
- */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.hpp" line 2 "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+#pragma once
 
-/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -719,6 +717,550 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
+
+class CVS_THREAD{
+public:
+    u32* unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+
+    CVS_THREAD();
+
+    //Virtual table (0x1c)
+    virtual void func_802A3B50();
+    virtual void func_802A3BEC();
+    virtual int blank1();
+    virtual void func_802A1EA0();
+    virtual void func_802A3740();
+    virtual int blank2();
+    int func_802A5ECC() { return 240; }
+};
+
+extern void func_802A35A0(u32* destPtr);
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.hpp" line 3 "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" line 2 "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" line 3 "kyoshin/cf/voice/CCharVoice.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/voice/CCharVoice.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/**
+ * CCharVoice -- single character voice playback instance.
+ *
+ * Each instance manages a voice file path and interacts with the sound
+ * system to play/stop/update character voices.  The owner object decides
+ * which voice profile (normal vs battle) is used.
+ *
+ * N.B.  The class is NOT declared with virtual functions even though it
+ * has a vtable pointer at offset 0x3C.  The vtable (lbl_eu_805398B0) is
+ * set up as assembly data and assigned manually in the constructor so
+ * that the C-linkage symbol name __ct__CCharVoice is used (no C++
+ * namespace mangling).
+ *
+ * Field layout (total size 0x40 = 64 bytes):
+ *   0x00  mOwner            parent/owner object
+ *   0x04  mVoiceId          current voice ID
+ *   0x08  mPriorityCheck    priority value for play-through gate
+ *   0x0C  mSoundHandle      handle from archive-voice sound system
+ *   0x10  mFileName[0x20]   voice file path buffer (32 bytes)
+ *   0x30  mFileNameLen      strlen of mFileName
+ *   0x34  mField34          offset into mFileName for digit formatting
+ *   0x38  mBattleSndHandle  sound handle for battle-voice path
+ *   0x3C  mVtable           pointer to lbl_eu_805398B0 (vtable)
+ */
+struct CCharVoice {
+    void* mOwner;            // 0x00
+    s32   mVoiceId;          // 0x04
+    s32   mPriorityCheck;    // 0x08
+    s32   mSoundHandle;      // 0x0C
+    char  mFileName[0x20];  // 0x10
+    u32   mFileNameLen;      // 0x30
+    s32   mField34;          // 0x34
+    u16   mBattleSndHandle;  // 0x38
+    // 2 bytes padding to 0x3C
+    void* mVtable;           // 0x3C -- vtable pointer
+
+    void func_802A0B8C(void* owner);
+    void func_802A0E08();
+    void func_802A0FE8();
+    bool func_802A109C(float volume, int priority, int voiceId);
+    void func_802A1304();
+};
+/* end "kyoshin/cf/voice/CCharVoice.hpp" */
+
+struct CVoiceHandle;
+
+// CVS_THREAD_EHP: Voice thread for EHP (Emergency HP recovery) sequences.
+// Object size 0x48 (72 bytes). The buffer-size virtual (func_802A6818, the
+// CVS_THREAD::blank1 slot) returns 0xB4 (180). The EHP vtable
+// (lbl_eu_80539B2C) is assigned manually by the factory __ct__802A5ED4.
+//
+// Field layout (base CVS_THREAD occupies 0x00-0x1F, vtable at 0x1C):
+//   0x20  field_0x20   voice handle slot 1 (owner1)
+//   0x24  field_0x24   voice handle slot 2 (owner2)
+//   0x28  field_0x28   third constructor parameter
+//   0x2C  field_0x2c   voice handle array (3 slots)
+//   0x38  field_0x38   current rotating index
+//   0x3C  field_0x3c   slot count / wrap bound (index range 0..field_0x3c)
+//   0x40  field_0x40   stop/target index (triggers playback virtual)
+//   0x44  field_0x44   direction flag (0 = forward, nonzero = backward)
+class CVS_THREAD_EHP : public CVS_THREAD {
+public:
+    static const int BUFFER_SIZE = 0xB4;
+
+    CVoiceHandle* field_0x20;    // 0x20: voice handle slot 1
+    CVoiceHandle* field_0x24;    // 0x24: voice handle slot 2
+    s32 field_0x28;              // 0x28: third constructor parameter
+    CVoiceHandle* field_0x2c[3]; // 0x2C: voice handle slots
+    s32 field_0x38;              // 0x38: current rotating index
+    s32 field_0x3c;              // 0x3C: slot count / wrap bound
+    s32 field_0x40;              // 0x40: stop/target index
+    u8 field_0x44;               // 0x44: direction flag
+};
+
+// Forward declaration of a polymorphic sub-object reached through a voice
+// handle (CVoiceHandle+0x04). Only the vtable pointer at offset 0 is used.
+struct CVSubObj {
+    void** vtable;               // 0x00: vtable pointer
+};
+
+// Voice-handle type. The actual CCharVoice is embedded at offset 0x3E9C
+// within the handle allocation (0x3E9C bytes of handle data + CCharVoice).
+// Code biases a handle pointer by 0x3E9C to reach the embedded CCharVoice.
+struct CVoiceHandle {
+    void** vtable;               // 0x00: vtable pointer
+    CVSubObj* field_0x04;        // 0x04: sub-object pointer (used by func_802A6820)
+    u8 _pad[0x3E9C - 0x08];      // 0x08-0x3E9B: handle data
+    CCharVoice voice;            // 0x3E9C: the actual voice object
+};
+
+// Sibling TU functions (unmangled global symbols).
+int func_802A3E88(CVS_THREAD* self);
+void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
+int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
+CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
+CVoiceHandle* func_802A330C(int size, int align);
+int func_80174C98(CVoiceHandle* handle, u32* value, int arg);
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" */
+
+/**
+ * CVS_THREAD_TENSION_UP - voice thread for tension-up audio events.
+ *
+ * Inherits from CVS_THREAD and returns a smaller thread-local buffer
+ * (130 bytes) compared to other variants like BUF (260) or FAINT (240).
+ */
+class CVS_THREAD_TENSION_UP : public CVS_THREAD {
+public:
+    static const int BUFFER_SIZE = 0x82;
+
+    CVoiceHandle* field_0x20;  // 0x20: back-pointer to owning manager
+    s32 field_0x24;            // 0x24: thread index
+    u8 field_0x28;             // 0x28: flag (0 = normal, 1 = reversed)
+
+    int blank1() override;
+};
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp" line 6 "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" */
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp" line 7 "kyoshin/cf/CfGameManager.hpp" */
+#pragma once
+
+/* "include/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CPad;
+class CScnNw4r;
+class CView;
+
+/* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
+or due to being in separate files, but compiled together in one file (unity compilation). For now,
+to make things simpler, everything exists in a single class. */
+namespace cf{
+    class CfPadData;
+    class CfObjectMove;
+    //unofficial name
+    class CfGameManager{
+    public:
+        CfGameManager();
+
+        static CfGameManager* getInstance();
+        static CfGameManager* init(CScnNw4r* spSene, CView* pView, bool arg3);
+
+        static void func_80086B5C(int arg1, int arg2, int arg3);
+        static void enablePadFlags(u32 enableFlags, bool enable);
+        static bool func_8007E1B4();
+        static void func_8007E218();
+        static void func_8007E514(int, int, char const*, int, int);
+        static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
+        static UNKWORD func_800829B8();
+        static u32 getCurrentPadChannel();
+        static UNKTYPE* func_80083298();
+        static CfObjectMove* getPlayer(int playerIndex);
+        static u32 getEnabledInputFlags();
+        static bool func_80086F9C(s16);
+        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
+        static CPad* getPad(int r3);
+        static void setPad(int r3, CPad* pPad, u32 r5);
+        static CfPadData* getCfPadData();
+        static CPad* getCurrentPad();
+
+        static bool checkUnkFlag(int bit){
+            return sUnkFlags & (1 << bit);
+        }
+
+        static void setUnkFlag(int bit, bool state){
+            if(state == true) sUnkFlags |= (1 << bit);
+            else sUnkFlags &= ~(1 << bit);
+        }
+
+        u32 unk0;
+        u32 unk4;
+        u32 unk8;
+        u8 unkC[0x28 - 0xC];
+        u8 unk28;
+        u8 unk29[0x68 - 0x29];
+        u32 unk68;
+        u8 unk6C;
+        u8 unk6D[3];          // 0x6D-0x6F
+        u32 unk70;             // 0x70-0x73
+        u8 unk74[8];           // 0x74-0x7B
+        u32 unk7C;
+        u8 unk80[0x8C - 0x80];
+        u32 unk8C;
+        u32 unk90;
+        //between CObjectParam - CfObjectMove
+        //likely player character object array, seems to always store pointers
+        //to CfObjectPc objects except pointing at the 4th vtable
+        CfObjectMove* unk94[3];
+        u32 unkA0;
+        u32 unkA4;
+        u32 unkA8;
+        u32 unkAC;
+        u32 unkB0;
+        u32 unkB4;
+
+        static u32 sUnkFlags;
+        static CScnNw4r* spScene;
+public:
+    void func_8007C0F8();
+    void func_8007C140();
+    void func_8007C188(unsigned long flags);
+    void func_8007C198();
+    void func_8007C2F4();
+    void func_8007C344();
+    void func_8007C360();
+    void func_8007C374();
+    void func_8007C4B4();
+    virtual ~CfGameManager() {}
+    void func_8007C5B8();
+    cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
+    void func_8007C6C0();
+    void func_8007C8C8();
+    void func_8007CBC8();
+    void func_8007CBD4();
+    void func_8007CBEC();
+    void func_8007CDA8();
+    void func_8007CE94();
+    void func_8007CF64() const;
+    void func_8007D190(unsigned long flags);
+    void func_8007D1A0();
+    void func_8007D794();
+    void func_8007D7A4();
+    void func_8007D834();
+    void func_8007D84C();
+    void func_8007DA00();
+    void func_8007DA0C();
+    void func_8007DCA8();
+    void func_8007DCB8();
+    void func_8007DE94();
+    void func_8007DECC();
+    void func_8007E030();
+    void func_8007E038();
+    void func_8007E0C8();
+    void func_8007E0D0();
+    void func_8007E4CC();
+    void func_8007E4DC();
+    void func_8007E864();
+    void func_8007E908();
+    void func_8007E960();
+    void func_8007E9CC();
+    void func_8007EEE0();
+    void func_8007EEF0();
+    void func_8007EEF8();
+    void func_8007EF04();
+    void func_8007EF44();
+    void func_8007EF48();
+    void func_8007EF4C();
+    void func_8007F044();
+    void func_8007F054();
+    void func_8007F0A4();
+    void func_8007F0AC();
+    void func_8007F0C4();
+    void func_8007F114();
+    void func_8007F11C();
+    void func_8007F1FC();
+    void func_8007F830();
+    void func_8007F8B8();
+    void func_8007F8C0();
+    void func_8007F8D0();
+    void func_8007F8DC();
+    void func_8007F8F4();
+    void func_8007F900();
+    void func_8007F91C();
+    void func_8007F990();
+    void func_8007F9AC();
+    void func_8007F9B4();
+    void func_8007F9BC();
+    void func_8007F9C4();
+    void func_8007FBFC();
+    void func_8007FC2C();
+    void func_8007FC5C();
+    void func_8007FD00();
+    void func_8007FD8C();
+    void func_8007FE18();
+    void func_8007FE1C();
+    void func_8007FE20();
+    void func_8007FE24();
+    void func_8007FE2C();
+    void func_8007FECC();
+    void func_8007FF6C();
+    void func_8008064C();
+    void func_800807BC();
+    void func_80080888();
+    void func_80080E20();
+    void func_80080E28();
+    void func_80080E30();
+    void func_80080E44();
+    void func_80080EE4();
+    void func_80080F40();
+    void func_80080F44();
+    void func_80080F48();
+    void func_80081258();
+    void func_80081264();
+    void func_8008126C();
+    void func_80081274();
+    void func_8008127C();
+    void func_80081284();
+    void func_8008128C();
+    void func_80081294();
+    void func_8008129C();
+    void func_800812A4();
+    void func_800812AC();
+    void func_800812B4();
+    void func_800812BC();
+    void func_800812C4();
+    void func_800812CC();
+    void func_800812D4();
+    void func_800812DC();
+    void func_800812E4();
+    void func_800812EC();
+    void func_800812F4();
+    void func_80081318();
+    void func_80081330();
+    void func_80081338();
+    void func_80081340();
+    void func_80081348();
+    void func_80081350();
+    void func_80081358();
+    void func_80081694();
+    void func_800817A8();
+    void func_800817B0();
+    void func_800817BC();
+    void func_80081874();
+    void func_8008187C();
+    void func_80081900();
+    void func_80081988();
+    void func_80081990();
+    void func_80081A24();
+    void func_80081A40();
+    void func_80081CA0();
+    void func_80081CB0();
+    void func_80081CB8();
+    void func_80081CBC();
+    void func_80081D2C();
+    void func_80081D88();
+    void func_80081D8C();
+    void func_80081DD8();
+    void func_80081E90();
+    void func_80081F28();
+    void func_80081F90();
+    void func_80082008();
+    void func_80082060();
+    void func_80082088();
+    void func_80082104();
+    void func_8008212C();
+    void func_800821F8();
+    void func_8008221C();
+    void func_80082254();
+    void func_80082258();
+    void func_8008228C();
+    void func_800822FC();
+    void func_80082354();
+    void func_8008235C();
+    void func_800823A4();
+    void func_80082418();
+    void func_800824FC();
+    void func_80082544();
+    void func_80082568();
+    void func_80082614();
+    void func_8008261C();
+    void func_80082680();
+    void func_80082694();
+    void func_8008269C();
+    void func_800826F0();
+    void func_80082768();
+    void func_80082770();
+    void func_800827A8();
+    void func_800827E4();
+    void func_80082834();
+    void func_800828DC();
+    void func_80082900();
+    void func_80082940();
+    void func_8008294C();
+    void func_80082A0C();
+    void func_80082A7C();
+    void func_80082B38();
+    void func_80082C48();
+    void func_80082D90();
+    void func_80082E50();
+    void func_80082EC0();
+    void func_80082EC4();
+    void func_80082F2C();
+    void func_80082FCC();
+    void func_80082FE4();
+    void func_80083100();
+    void func_8008310C();
+    void func_80083118();
+    void func_80083284();
+    void func_80083290();
+    void func_800832BC();
+    void func_80083304();
+    void func_80083328();
+    void func_80083458();
+    void func_80083460();
+    void func_80083468();
+    void func_80083470();
+    void func_80083538();
+    void func_80083544();
+    void func_80083550();
+    void func_80083560();
+    void func_800835FC();
+    void func_8008360C();
+    void func_80083718();
+    void func_8008372C();
+    void func_80083878();
+    void func_80083888();
+    void func_800838F4();
+    void func_80083C70();
+    void func_80083C78();
+    void func_80083CC8();
+    void func_80083CD8();
+    void func_80083D50();
+    void func_80083D70();
+    void func_80083DEC();
+    void func_80083EA4();
+    void func_80083F28();
+    void func_8008402C();
+    void func_8008413C();
+    void func_80084654();
+    void func_80084A00();
+    void func_80084AD4();
+    void func_80084B68();
+    void func_80084BAC();
+    void func_80084BF4();
+    void func_80084C10();
+    void func_80084CA4();
+    void func_80084F50();
+    void func_80085220();
+    void func_80085248();
+    void func_80085334();
+    void func_800853C8();
+    void func_8008566C();
+    void func_80085838();
+    void func_80085840();
+    void func_8008585C();
+    void func_80085878();
+    void func_800858B8();
+    void func_80085978();
+    void func_80085E58();
+    void func_80085FB8();
+    void func_800862D0();
+    void func_800863F4();
+    void func_80086490();
+    void func_800865E8();
+    void func_800866A0();
+    void func_8008670C();
+    void func_80086778();
+    void func_80086B04();
+    void func_80086B08();
+    void func_80086B0C();
+    void func_80086B10();
+    void func_80086B14();
+    void func_80086B18();
+    void func_80086B1C();
+    void func_80086B24();
+    void func_80086B2C();
+    void func_80086B34();
+    void func_80086B3C();
+    void func_80086B44();
+    void func_80086B48();
+    void func_80086D90();
+    void func_80086D94();
+    void func_80086D98();
+    void func_80086D9C();
+    void func_80086DA0();
+    void func_80086DA4();
+    void func_80086DA8();
+    void func_80086DAC();
+    void func_80086DB0();
+    void func_80086DB4();
+    void func_80086DBC();
+    void func_80086E6C();
+    void func_80087244();
+    void func_80087250();
+    void func_80087280();
+    void func_80087330();
+    void func_80087334();
+    void func_80087348();
+    void func_80087364();
+    void func_80087378();
+    void func_80087390();
+    void func_800873AC();
+    void func_800873C8();
+    void func_800873D4();
+    void func_800873E8();
+    void func_800873FC();
+    void func_80087410();
+    void func_80087424();
+    void func_8008742C();
+    void func_8008743C();
+    void func_80087448();
+    }; //size = 0xB8
+} // namespace cf
+/* end "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_TENSION_UP.cpp" line 8 "kyoshin/harness_catalog.hpp" */
+#pragma once
+
+/**
+ * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
+ *
+ * Pulls recovered VM / script-helper headers only. Plugin units with their own
+ * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
+ */
+
+/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* end "types.h" */
 /* "src/kyoshin/harness_catalog.hpp" line 10 "cstring" */
 #ifndef MSL_CPP_CSTRING_H
 #define MSL_CPP_CSTRING_H
@@ -1312,6 +1854,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,16 +1932,245 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" void __ct__802A8DE8() {}
+// Forward declarations for external functions not yet in headers.
+extern char* func_802A34E4(int size);
+extern void __ct__cf_CVS_THREAD();
+extern int func_802A77E8(CVoiceHandle* handle);
+extern int func_802A7B90(CVoiceHandle* handle, CVoiceHandle* owner);
 
-extern "C" void func_802A8EEC() {}
+// The voice manager/factory object. The flags field at offset 0x3F00
+// controls thread construction (bit 1 = TENSION_UP factory active).
+struct CVoiceFactory {
+    char _pad[0x3F00];
+    u32 flags;
+};
 
-extern "C" void func_802A9030() {}
+// Init-data tables (3 u32s each: {field_0, field_4, callback}).
+extern "C" u32 lbl_eu_80539D20[3];
+extern "C" u32 lbl_eu_80539D2C[3];
+extern "C" u32 lbl_eu_80539D38[3];
+extern "C" u32 lbl_eu_80539D44;  // vtable for CVS_THREAD_TENSION_UP
 
-extern "C" void func_802A9230() {}
+// ── Target 1: us-802ab968 (func_802A9230) ──────────────────────────────────
+// Completion callback: if no active voice is playing, invoke the
+// playback-start virtual (CVS_THREAD::func_802A3B50, vtable slot 2).
+void func_802A9230(CVS_THREAD_TENSION_UP* self) {
+    if (func_802A3E88(self) == 0) {
+        self->func_802A3B50();
+    }
+}
 
-extern "C" void func_802A9278() {}
+// ── Target 2: us-802ab9b0 (func_802A9278) ──────────────────────────────────
+// Remove a voice by matching its embedded CCharVoice pointer against the
+// single slot (field_0x20). A CVoiceHandle stores the CCharVoice at offset
+// 0x3E9C, so a non-null handle is biased by 0x3E9C before comparing.
+void func_802A9278(CVS_THREAD_TENSION_UP* self, CCharVoice* voicePtr) {
+    func_802A3BEC(self, voicePtr);
 
-extern "C" int func_802A92D0(void* self) { return 130; }
+    CVoiceHandle* handle = self->field_0x20;
+    CCharVoice* biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
+}
+
+// ── Target 3: us-802ab51c (__ct__802A8DE8) ─────────────────────────────────
+// Factory constructor for CVS_THREAD_TENSION_UP.
+// Takes a factory/manager pointer and a thread index (must be >= 3).
+// Allocates a buffer and the thread object, constructs the base,
+// sets vtable/fields, copies init data, returns the object (or NULL).
+CVS_THREAD_TENSION_UP* __ct__802A8DE8(CVoiceFactory* factory, int index) {
+    if ((factory->flags & 0x2) == 0) {
+        return NULL;
+    }
+    if (index < 3) {
+        return NULL;
+    }
+    if (func_802A330C(0x82, 1) == NULL) {
+        return NULL;
+    }
+    CVS_THREAD_TENSION_UP* obj = (CVS_THREAD_TENSION_UP*)func_802A34E4(0x2c);
+    if (obj == NULL) {
+        return NULL;
+    }
+    __ct__cf_CVS_THREAD();
+
+    // Set the vtable for this subclass.
+    obj->unk0 = (u32*)&lbl_eu_80539D44;
+
+    // Set fields.
+    obj->field_0x20 = (CVoiceHandle*)factory;
+    obj->field_0x24 = index;
+    obj->field_0x28 = 0;
+
+    // Copy the slot-state init data triple into the object's first 3 u32s.
+    obj->unk4 = lbl_eu_80539D20[1];
+    obj->unk0 = (u32*)lbl_eu_80539D20[0];
+    obj->unk8 = lbl_eu_80539D20[2];
+
+    return obj;
+}
+
+// ── Target 4: us-802ab628 (func_802A8EEC) ──────────────────────────────────
+// Update function: reloads the slot-state triple, checks voice state,
+// plays appropriate voice ID (0x5DE standard or 0x5DD reversed).
+void func_802A8EEC(CVS_THREAD_TENSION_UP* self) {
+    self->unk4 = lbl_eu_80539D2C[1];
+    self->unk0 = (u32*)lbl_eu_80539D2C[0];
+    self->unk8 = lbl_eu_80539D2C[2];
+
+    CVoiceHandle* handle = self->field_0x20;
+    if (handle != NULL) {
+        typedef int (*IsActiveFunc)(CVoiceHandle*);
+        IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
+        if (isActive(handle) != 0) {
+            goto fallback;
+        }
+    }
+
+    if (self->field_0x24 == 4) {
+        self->field_0x28 = 0;
+        CVoiceHandle* h = self->field_0x20;
+        CCharVoice* voicePtr = (CCharVoice*)h;
+        if (h != NULL) {
+            voicePtr = &h->voice;
+        }
+        if (func_802A3C44(self, voicePtr, 0x5DE) != 0) {
+            return;
+        }
+    }
+
+    if (self->field_0x24 == 3) {
+        int ownerState = func_802A77E8(self->field_0x20);
+        int isThird;
+        if (ownerState == 4) {
+            isThird = (cf::CfGameManager::func_800822F4() < 4) ? 1 : 0;
+        } else {
+            isThird = 0;
+        }
+
+        if (isThird != 0) {
+            self->field_0x28 = 0;
+            CVoiceHandle* h = self->field_0x20;
+            CCharVoice* voicePtr = (CCharVoice*)h;
+            if (h != NULL) {
+                voicePtr = &h->voice;
+            }
+            if (func_802A3C44(self, voicePtr, 0x5DE) != 0) {
+                return;
+            }
+        } else {
+            self->field_0x28 = 1;
+            CVoiceHandle* h = self->field_0x20;
+            CCharVoice* voicePtr = (CCharVoice*)h;
+            if (h != NULL) {
+                voicePtr = &h->voice;
+            }
+            if (func_802A3C44(self, voicePtr, 0x5DD) != 0) {
+                return;
+            }
+        }
+    }
+
+fallback:
+    self->func_802A3B50();
+}
+
+// ── Target 5: us-802ab784 (func_802A9030) ──────────────────────────────────
+// Voice-select and play function. Reloads slot-state, finds a free handle,
+// selects voice ID based on owner state and flag.
+void func_802A9030(CVS_THREAD_TENSION_UP* self) {
+    if (func_802A3E88(self) != 0) {
+        return;
+    }
+
+    self->unk4 = lbl_eu_80539D38[1];
+    self->unk0 = (u32*)lbl_eu_80539D38[0];
+    self->unk8 = lbl_eu_80539D38[2];
+
+    CVoiceHandle* handle = func_802A7998(self->field_0x20);
+    if (handle == NULL) {
+        goto fallback;
+    }
+
+    int voiceId;
+    int ownerState = func_802A77E8(self->field_0x20);
+    switch (ownerState) {
+    case 1:
+        voiceId = (self->field_0x28 != 0) ? 0x5DF : 0x5E6;
+        break;
+    case 2:
+        voiceId = (self->field_0x28 != 0) ? 0x5E0 : 0x5E7;
+        break;
+    case 3:
+        voiceId = (self->field_0x28 != 0) ? 0x5E1 : 0x5E8;
+        break;
+    case 4:
+        voiceId = (self->field_0x28 != 0) ? 0x5E2 : 0x5E9;
+        break;
+    case 5:
+        voiceId = (self->field_0x28 != 0) ? 0x5E3 : 0x5EA;
+        break;
+    case 6:
+        voiceId = (self->field_0x28 != 0) ? 0x5E4 : 0x5EB;
+        break;
+    case 7:
+        voiceId = (self->field_0x28 != 0) ? 0x5E5 : 0x5EC;
+        break;
+    default:
+        voiceId = -1;
+        break;
+    }
+
+    if (voiceId == 0x5E4 && func_802A7B90(handle, self->field_0x20) != 0) {
+        voiceId = 0x89F;
+    }
+    if (voiceId == 0x5EB && func_802A7B90(handle, self->field_0x20) != 0) {
+        voiceId = 0x451;
+    }
+
+    if (voiceId > 0) {
+        CVoiceHandle* h = handle;
+        CCharVoice* voicePtr = (CCharVoice*)h;
+        if (h != NULL) {
+            voicePtr = &h->voice;
+        }
+        if (func_802A3C44(self, voicePtr, voiceId) != 0) {
+            return;
+        }
+    }
+
+fallback:
+    self->func_802A3B50();
+}
+
+// Virtual method override: returns the buffer size for this thread type.
+// Matches CVS_THREAD::blank1 slot in vtable; TENSION_UP subclass returns 0x82 (130).
+int CVS_THREAD_TENSION_UP::blank1() {
+    return BUFFER_SIZE;
+}

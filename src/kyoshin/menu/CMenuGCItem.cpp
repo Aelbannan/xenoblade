@@ -4,6 +4,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+void __ct__CMenuGCItem(){}
+
 void CMenuGCItem::~CMenuGCItem() {}
 
 void CMenuGCItem::Init() {}
@@ -14,21 +16,22 @@ void CMenuGCItem::Move() {}
 
 void CMenuGCItem::cbRenderBefore() {}
 
-void __ct__CMenuGCItem(){}
+void func_8029BB24(){}
 
-unsigned long func_802B0D10(){
-    unsigned long v = *(unsigned long*)(lbl_eu_80664C00);
-    return !!v;
-}
+void func_8029BBA0(){}
 
-void func_802B0D24(){}
+void func_8029BBB0(){}
+
+void func_8029BC28(){}
+
+void func_8029BC78(){}
+
+void func_8029BE7C(){}
 
 /**
  * IScnRender vtable this-adjusting thunk for cbRenderBefore.
  *
  * IScnRender is a non-primary base at offset 0x58 within CMenuGCItem.
- * Adjusts the subobject pointer back to CMenuGCItem* before forwarding
- * to the real cbRenderBefore override.
  *
  * Retail: subi r3, r3, 0x58; b cbRenderBefore__11CMenuGCItemFv
  */

@@ -1,0 +1,17 @@
+{
+  "matchModel": { "provider": "openrouter", "model": "z-ai/glm-5.2", "thinkingLevel": "high" },
+  "cleanupModel": { "provider": "openrouter", "model": "z-ai/glm-5.2", "thinkingLevel": "high" },
+  "batchSize": 5,
+  "maxParallelTUs": 4,
+  "maxBatchRetries": 2,
+  "singletonRetry": true,
+  "maxTokens": 99000000,
+  "singletonMinSize": 5000,
+  "maxBriefChars": 128000,
+  "maxBatchMinutes": 45,
+  "maxRePrompts": 5,
+  "maxStuckRePrompts": 10,
+  "region": "us",
+  "sessionDir": "build/pi-harness/ab-test/glm-5.2",
+  "ledgerPath": "build/pi-harness/ab-test/glm-5.2/ledger.jsonl"
+}

@@ -4,9 +4,10 @@
 
 extern "C" {
 extern const char lbl_eu_80522500[]; // "(View)"
-extern float lbl_eu_8066A278; // 0.6f
 extern char lbl_eu_8056B1E0[];
-void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
+extern float lbl_eu_8066A278; // 0.6f
+void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect,
+                                                                   const CViewFrame* frame);
 }
 
 CProc::CProc(const char* pName, CWorkThread* pParent, s16 capacity) :
@@ -85,20 +86,21 @@ bool CProc::pssDetachView(WORK_ID id){
 }
 
 struct PssCreateWalkFrame {
-    void* volatile size0;
-    void* volatile size4;
-    void* volatile size8;
-    void* volatile sizeC;
-    void* volatile front1;
-    void* volatile size2_0;
-    void* volatile size2_4;
-    void* volatile size2_8;
-    void* volatile size2_C;
-    void* volatile front2;
-    void* volatile child0;
-    void* volatile child4;
-    void* volatile child8;
-    void* volatile childC;
+    // Keep the two list walks typed; these are iterator state, not untyped storage.
+    _reslist_node<WORK_ID>* volatile size0;
+    _reslist_node<WORK_ID>* volatile size4;
+    _reslist_node<WORK_ID>* volatile size8;
+    _reslist_node<WORK_ID>* volatile sizeC;
+    _reslist_node<WORK_ID>* volatile front1;
+    _reslist_node<WORK_ID>* volatile size2_0;
+    _reslist_node<WORK_ID>* volatile size2_4;
+    _reslist_node<WORK_ID>* volatile size2_8;
+    _reslist_node<WORK_ID>* volatile size2_C;
+    _reslist_node<WORK_ID>* volatile front2;
+    _reslist_node<CWorkThread*>* volatile child0;
+    _reslist_node<CWorkThread*>* volatile child4;
+    _reslist_node<CWorkThread*>* volatile child8;
+    _reslist_node<CWorkThread*>* volatile childC;
     ml::CRect16 frameOffset;
     ml::CRect16 clientRect;
 };

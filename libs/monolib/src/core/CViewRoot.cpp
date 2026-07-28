@@ -29,7 +29,7 @@ CProc* pssGetRoot__5CProcFP5CProc(CProc* proc);
 CView* getView__8CDesktopFv();
 CDesktop* getInstance__8CDesktopFv();
 GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
-void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, CViewFrame* frame);
+void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
 void renderView__5CViewFv(CView* view);
 }
 
@@ -556,22 +556,29 @@ void CViewRoot::renderView() {
     }
 }
 
+static inline void initViewRootPool(CViewRootPool* pool) {
+    pool->mCapacity = 32;
+    pool->mStartNodePtr = &pool->mSentinel;
+    pool->mUsed = 0;
+    pool->mList = nullptr;
+}
+
 CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     const char* name;
     CWorkThread* parent;
     mtl::ALLOC_HANDLE handle;
     CViewRoot* root;
     void* rootVt;
+    _reslist_node<WORK_ID>* historySentinel;
+    _reslist_node<CWorkThread*>* pool2Sentinel;
+    _reslist_node<CWorkThread*>* pool1Sentinel;
+    u32 poolCapacity;
     void* histVtTemp;
     void* histVtFinal;
     u32 zero;
-    u32 poolCapacity;
     _reslist_node<CWorkThread*>* pool0Sentinel;
-    _reslist_node<CWorkThread*>* pool1Sentinel;
-    _reslist_node<CWorkThread*>* pool2Sentinel;
-    _reslist_node<WORK_ID>* historySentinel;
     void* histList;
-    u32 loopCount;
+    int historyIndex;
 
     name = lbl_eu_8052266C;
     parent = pParent;
@@ -590,25 +597,11 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
 
     poolCapacity = 0x20;
     histVtFinal = lbl_eu_8056B280;
-    root->mPool0.mCapacity = poolCapacity;
-    pool0Sentinel = &root->mPool0.mSentinel;
     zero = 0;
-    pool1Sentinel = &root->mPool1.mSentinel;
-    root->mPool0.mStartNodePtr = pool0Sentinel;
-    pool2Sentinel = &root->mPool2.mSentinel;
     historySentinel = &root->mViewHistory.mStartNode;
-    root->mPool0.mUsed = zero;
-    root->mPool0.mList = (_reslist_node<CWorkThread*>*)zero;
-
-    root->mPool1.mCapacity = poolCapacity;
-    root->mPool1.mStartNodePtr = pool1Sentinel;
-    root->mPool1.mUsed = zero;
-    root->mPool1.mList = (_reslist_node<CWorkThread*>*)zero;
-
-    root->mPool2.mCapacity = poolCapacity;
-    root->mPool2.mStartNodePtr = pool2Sentinel;
-    root->mPool2.mUsed = zero;
-    root->mPool2.mList = (_reslist_node<CWorkThread*>*)zero;
+    initViewRootPool(&root->mPool0);
+    initViewRootPool(&root->mPool1);
+    initViewRootPool(&root->mPool2);
 
     *(void**)&root->mViewHistory = histVtTemp;
     root->mViewHistory.mList = (_reslist_node<WORK_ID>*)zero;
@@ -628,30 +621,9 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     root->mType = THREAD_CVIEWROOT;
 
     histList = allocate_array__Q23mtl10MemManagerFUlUl(0x600, root->mAllocHandle);
-    loopCount = 8;
     root->mViewHistory.mList = (_reslist_node<WORK_ID>*)histList;
-    goto create_clear_test;
-
-create_clear_loop:
-    {
-        _reslist_node<WORK_ID>* nodeBase =
-            root->mViewHistory.mList + (8 - loopCount) * 16;
-        for (int i = 0; i < 8; ++i) {
-            nodeBase[i].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        }
-    }
-    {
-        _reslist_node<WORK_ID>* nodeBase =
-            root->mViewHistory.mList + (8 - loopCount) * 16 + 8;
-        for (int i = 0; i < 8; ++i) {
-            nodeBase[i].mNext = reinterpret_cast<_reslist_node<WORK_ID>*>(zero);
-        }
-    }
-    loopCount--;
-
-create_clear_test:
-    if (loopCount != 0) {
-        goto create_clear_loop;
+    for (historyIndex = 0; historyIndex < 128; historyIndex++) {
+        root->mViewHistory.mList[historyIndex].mNext = nullptr;
     }
 
     root->mViewHistory.mCapacity = 0x80;

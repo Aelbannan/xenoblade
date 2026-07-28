@@ -1,19 +1,193 @@
 // CVS_THREAD_HAGE: Voice thread variant for "Hage" (bald/bare) audio.
 // FULL_MATCH: func_802A724C -- buffer-size getter (virtual method override).
-// Remaining functions are NOT_STARTED harness stubs.
 
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD_HAGE.hpp"
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/math/Random.hpp"
 
-void __ct__802A6E84(){}
+// Forward declarations for sibling TU functions.
+extern "C" {
+    int func_802A3E88(CVS_THREAD* self);
+    void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
+    int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+    int func_802A77E8(CVoiceHandle* handle);
+    int func_802A7850(int iter);
+    int func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
+    CVS_THREAD_HAGE* func_802A330C(int size, int align);
+    u8* func_802A34E4(int size);
+    void __ct__cf_CVS_THREAD(CVS_THREAD_HAGE* self);
+}
 
-void func_802A6F8C(){}
+// Init data tables for slot states (3 u32s each).
+extern "C" u32 lbl_eu_80539BA8[3];
+extern "C" u32 lbl_eu_80539BB4[3];
+extern "C" u32 lbl_eu_80539BC0[3];
 
-void func_802A70C8(){}
+// Vtable for CVS_THREAD_HAGE (0x1C = 28 bytes = 7 entries).
+extern "C" u32 lbl_eu_80539BCC[7];
 
-void func_802A718C(){}
+// ── Target 1: us-802a98c0 (func_802A718C) ──────────────────────────────────
+// Completion callback: if no active voice, call the playback-start virtual.
+void func_802A718C(CVS_THREAD_HAGE* self) {
+    if (func_802A3E88(self) == 0) {
+        self->func_802A3B50();
+    }
+}
 
-void func_802A71D4(){}
+// ── Target 2: us-802a9908 (func_802A71D4) ──────────────────────────────────
+// Remove a voice from the slots by matching its embedded CCharVoice pointer.
+void func_802A71D4(CVS_THREAD_HAGE* self, CCharVoice* voicePtr) {
+    func_802A3BEC(self, voicePtr);
+
+    // Slot 0x20: load handle, bias if non-null, compare with voicePtr
+    CVoiceHandle* handle = self->field_0x20;
+    CCharVoice* biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
+
+    // Slot 0x24: same pattern
+    handle = self->field_0x24;
+    biased = (CCharVoice*)handle;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x24 = NULL;
+    }
+}
+
+// ── Target 3: us-802a97fc (func_802A70C8) ──────────────────────────────────
+// Advance/play function for voice slot 2 (field_0x24).
+// Copies init data from lbl_eu_80539BC0 to fields 0x00-0x08, checks if
+// the voice is still active (vtable method at offset 0x2BC), and if
+// inactive, plays a random voice ID (mtRand(2) + 0xC27).
+void func_802A70C8(CVS_THREAD_HAGE* self) {
+    if (func_802A3E88(self) == 0) {
+        // Use pointer increment to force lwzu pattern (load with update)
+        const u32* p = lbl_eu_80539BC0;
+        u32 v0 = *p++;
+        CVoiceHandle* handle = self->field_0x24;
+        self->unk4 = *p++;
+        self->unk0 = (u32*)v0;
+        self->unk8 = *p;
+
+        if (handle != NULL) {
+            // Call vtable method at offset 0x2BC (is-active check)
+            typedef int (*CheckFunc)(CVoiceHandle*);
+            CheckFunc checkFunc = (CheckFunc)handle->vtable[0x2BC / 4];
+            if (checkFunc(handle) == 0) {
+                // Voice is not active -- try to play a random voice
+                // Use conditional bias pattern to match retail (no else branch)
+                CVoiceHandle* tmpHandle = self->field_0x24;
+                CCharVoice* voicePtr = (CCharVoice*)tmpHandle;
+                if (tmpHandle != NULL) {
+                    voicePtr = &tmpHandle->voice;
+                }
+                int voiceId = ml::math::mtRand(2);
+                voiceId += 0xC27;
+                if (func_802A3C44(self, voicePtr, voiceId) == 0) {
+                    // Playback failed -- call completion callback
+                    self->func_802A3B50();
+                }
+            }
+        }
+    }
+}
+
+// ── Target 4: us-802a95b8 (__ct__802A6E84) ──────────────────────────────────
+// Factory/constructor for CVS_THREAD_HAGE. Takes two owner objects (with a
+// field at offset 0x3F00 that must have bit 1 set), allocates a handle
+// (0xF0 bytes, discarded) and the object itself (0x28 bytes), calls the
+// base constructor, sets vtable/owner fields, and copies init data from
+// lbl_eu_80539BA8.
+CVS_THREAD_HAGE* __ct__802A6E84(CVS_THREAD_HAGE* owner1, CVS_THREAD_HAGE* owner2) {
+    // Both owners must have their 0x3F00 field's bit 1 set
+    if (!(((u32*)owner1)[0x3F00 / 4] & 2)) return NULL;
+    if (!(((u32*)owner2)[0x3F00 / 4] & 2)) return NULL;
+
+    // Allocate handle buffer (0xF0 bytes, discarded)
+    CVS_THREAD_HAGE* handleBuf = func_802A330C(0xF0, 1);
+    if (handleBuf == NULL) return NULL;
+
+    // Allocate the actual CVS_THREAD_HAGE object
+    CVS_THREAD_HAGE* self = (CVS_THREAD_HAGE*)func_802A34E4(0x28);
+    if (self == NULL) return NULL;
+
+    // Base constructor (takes just this, no second param)
+    __ct__cf_CVS_THREAD(self);
+
+    // Set vtable at offset 0x1C (right after the CVS_THREAD base fields)
+    ((u32*)self)[7] = (u32)lbl_eu_80539BCC;
+    self->field_0x20 = (CVoiceHandle*)owner1;
+    self->field_0x24 = (CVoiceHandle*)owner2;
+
+    // Copy init data from global table using a single base pointer
+    const u32* base = lbl_eu_80539BA8;
+    self->unk0 = (u32*)base[0];
+    self->unk4 = base[1];
+    self->unk8 = base[2];
+
+    return self;
+}
+
+// ── Target 5: us-802a96c0 (func_802A6F8C) ──────────────────────────────────
+// Advance/play function for voice slot 1 (field_0x20). Uses a weighted
+// random selection: mtRand(4) picks between three specific voice IDs
+// (0xC24, 0xC25, 0xC26) or a dynamic ID based on the slot 2 iterator
+// (iter + 0xC1C) if the iterator check and slot conflict check both pass.
+// Retries until a voice ID is selected, then plays via func_802A3C44.
+void func_802A6F8C(CVS_THREAD_HAGE* self) {
+    // Copy init data using pointer increment to force lwzu pattern
+    const u32* p = lbl_eu_80539BB4;
+    u32 v0 = *p++;
+    self->unk4 = *p++;
+    self->unk0 = (u32*)v0;
+    self->unk8 = *p;
+
+    // Both slots must be populated
+    if (self->field_0x20 == NULL) return;
+    if (self->field_0x24 == NULL) return;
+
+    // Check if slot 1 voice is still active
+    typedef int (*CheckFunc)(CVoiceHandle*);
+    CheckFunc checkFunc = (CheckFunc)self->field_0x20->vtable[0x2BC / 4];
+    if (checkFunc(self->field_0x20) != 0) return;
+
+    // Get voice iterator from slot 2 handle
+    int iter = func_802A77E8(self->field_0x24);
+    int voiceId = -1;
+
+    // Loop until a voice ID is selected
+    while (voiceId == -1) {
+        switch (ml::math::mtRand(4)) {
+        default: // 0 -- dynamic voice selection
+            if (func_802A7850(iter) != 0 &&
+                func_802A7B90(self->field_0x20, self->field_0x24) == 0) {
+                voiceId = iter + 0xC1C;
+            }
+            break;
+        case 1:
+            voiceId = 0xC24;
+            break;
+        case 2:
+            voiceId = 0xC25;
+            break;
+        case 3:
+            voiceId = 0xC26;
+            break;
+        }
+    }
+
+    // Try to play the selected voice
+    if (func_802A3C44(self, &self->field_0x20->voice, voiceId) == 0) {
+        // Playback failed -- call completion callback
+        self->func_802A3B50();
+    }
+}
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; HAGE subclass returns 0xF0 (240).

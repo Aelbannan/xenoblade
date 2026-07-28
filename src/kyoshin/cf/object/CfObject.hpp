@@ -4,6 +4,10 @@
 #include "kyoshin/cf/object/CObjectParam.hpp"
 
 namespace cf {
+    struct CfObjectSub54 {
+        u8 field_0x0[0xC];
+    };
+
     //min size: 0x70
     class CfObject : public CObjectParam {
     public:
@@ -60,12 +64,12 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc50();     //0x118
         virtual void CfObject_UnkVirtualFunc51();     //0x11C
         virtual void CfObject_UnkVirtualFunc52();     //0x120
-        virtual void CfObject_UnkVirtualFunc53();     //0x124
+        virtual CfObject* CfObject_UnkVirtualFunc53(); //0x124
         virtual void CfObject_UnkVirtualFunc54();     //0x128
         virtual void CfObject_UnkVirtualFunc55();     //0x12C
-        virtual void CfObject_UnkVirtualFunc56();     //0x130
+        virtual float CfObject_UnkVirtualFunc56();     //0x130
         virtual void CfObject_UnkVirtualFunc57();     //0x134
-        virtual void CfObject_UnkVirtualFunc58();     //0x138
+        virtual u32* CfObject_UnkVirtualFunc58();     //0x138
         virtual void CfObject_UnkVirtualFunc59();     //0x13C
         virtual void CfObject_UnkVirtualFunc60();     //0x140
         virtual void CfObject_UnkVirtualFunc61();     //0x144
@@ -87,12 +91,13 @@ namespace cf {
 
 
         //0x0: vtable
-        //0x0-38: CObjectParam
+        // CObjectParam currently ends at 0x28.
+        u8 field_0x28[0x10];
         void* mSubObj38;          // 0x38-0x3B
         u8 _pad3C[0x4C - 0x3C];   // 0x3C-0x4B
         u32 mField4C;             // 0x4C-0x4F (also read as float)
         u8 _pad50[0x54 - 0x50];   // 0x50-0x53
-        u8 mSubObj54[0x60 - 0x54]; // 0x54-0x5F
+        CfObjectSub54 mSubObj54;     // 0x54-0x5F
         float mFloat60;            // 0x60-0x63
         u32 unk64;                  // 0x64-0x67
         u32 mFlags68;               // 0x68-0x6B

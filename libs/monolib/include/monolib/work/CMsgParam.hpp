@@ -40,6 +40,16 @@ public:
         field7 = r4;
     }
 
+    CMsgParam(u32 r4, u32* beforeLast){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        *beforeLast = 0;
+        field7 = r4;
+    }
+
     virtual ~CMsgParam(){
         clear();
     }

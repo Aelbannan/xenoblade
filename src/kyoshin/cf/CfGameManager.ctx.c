@@ -1,7 +1,7 @@
 /* "src/kyoshin/cf/CfGameManager.cpp" line 0 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
-/* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* "include/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -713,14 +713,20 @@ typedef int BOOL;
 class CPad;
 class CScnNw4r;
 class CView;
+class UnkClass_80186D20;
+
+struct CfGameManagerData1C {
+    u8 field_0x0[0xC];
+};
 
 /* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
 or due to being in separate files, but compiled together in one file (unity compilation). For now,
 to make things simpler, everything exists in a single class. */
 namespace cf{
     class CfPadData;
+    class CfObject;
+    struct CfObjectSub54;
     class CfObjectMove;
-
     //unofficial name
     class CfGameManager{
     public:
@@ -736,14 +742,15 @@ namespace cf{
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
         static UNKWORD func_800822F4();
-        static UNKWORD func_800829B8();
+        static bool func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
         static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
-        static bool func_80086F9C(s16);
-        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
-        static CPad* getPad(int r3);
+        static bool func_80086F9C();
+        static bool func_80086F9C(s16) { return func_80086F9C(); }
+        static void setCurrentPadPtr(const CPad* pad, u32 channel);
+        static CPad* getPad(int channel);
         static void setPad(int r3, CPad* pPad, u32 r5);
         static CfPadData* getCfPadData();
         static CPad* getCurrentPad();
@@ -758,14 +765,19 @@ namespace cf{
         }
 
         u32 unk0;
-        u32 unk4;
-        u32 unk8;
-        u8 unkC[0x28 - 0xC];
+        CfObject* field_0x4;
+        u32 mObjectFlags;
+        u8 field_0xC[0xC];
+        u16 field_0x18;
+        u8 field_0x1A[2];
+        CfGameManagerData1C field_0x1C;
         u8 unk28;
         u8 unk29[0x68 - 0x29];
         u32 unk68;
         u8 unk6C;
-        u8 unk6D[0x7C - 0x6D];
+        u8 unk6D[3];          // 0x6D-0x6F
+        u32 unk70;             // 0x70-0x73
+        u8 unk74[8];           // 0x74-0x7B
         u32 unk7C;
         u8 unk80[0x8C - 0x80];
         u32 unk8C;
@@ -775,7 +787,7 @@ namespace cf{
         //to CfObjectPc objects except pointing at the 4th vtable
         CfObjectMove* unk94[3];
         u32 unkA0;
-        u32 unkA4;
+        UnkClass_80186D20* field_0xA4;
         u32 unkA8;
         u32 unkAC;
         u32 unkB0;
@@ -783,9 +795,302 @@ namespace cf{
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
+public:
+    void func_8007C0F8();
+    void func_8007C140();
+    void func_8007C188(unsigned long flags);
+    void func_8007C198();
+    void func_8007C2F4();
+    void func_8007C344();
+    void func_8007C360();
+    void func_8007C374();
+    void func_8007C4B4();
+    virtual ~CfGameManager() {}
+    void func_8007C5B8();
+    cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
+    void func_8007C6C0();
+    void func_8007C8C8();
+    bool func_8007CBC8();
+    void func_8007CBD4();
+    void func_8007CBEC();
+    void func_8007CDA8();
+    void func_8007CE94();
+    void func_8007CF64() const;
+    void func_8007D190(unsigned long flags);
+    void func_8007D1A0();
+    void func_8007D794();
+    void func_8007D7A4();
+    void func_8007D834();
+    void func_8007D84C();
+    void func_8007DA00();
+    void func_8007DA0C();
+    void func_8007DCA8();
+    void func_8007DCB8();
+    void func_8007DE94();
+    void func_8007DECC();
+    u16 func_8007E030();
+    void func_8007E038();
+    CfObject** func_8007E0C8();
+    void func_8007E0D0();
+    void func_8007E4CC();
+    void func_8007E4DC();
+    void func_8007E864();
+    void func_8007E908();
+    void func_8007E960();
+    void func_8007E9CC();
+    void func_8007EEE0();
+    void func_8007EEF0();
+    void func_8007EEF8();
+    void func_8007EF04();
+    void func_8007EF44();
+    void func_8007EF48();
+    void func_8007EF4C();
+    void func_8007F044();
+    void func_8007F054();
+    void func_8007F0A4();
+    void func_8007F0AC();
+    void func_8007F0C4();
+    void func_8007F114();
+    void func_8007F11C();
+    void func_8007F1FC();
+    void func_8007F830();
+    void func_8007F8B8();
+    void func_8007F8C0();
+    void func_8007F8D0();
+    void func_8007F8DC();
+    void func_8007F8F4();
+    void func_8007F900();
+    bool func_8007F91C();
+    void func_8007F990();
+    void func_8007F9AC();
+    void func_8007F9B4();
+    void func_8007F9BC();
+    void func_8007F9C4();
+    void func_8007FBFC();
+    void func_8007FC2C();
+    void func_8007FC5C();
+    void func_8007FD00();
+    void func_8007FD8C();
+    void func_8007FE18();
+    void func_8007FE1C();
+    void func_8007FE20();
+    void func_8007FE24();
+    void func_8007FE2C();
+    void func_8007FECC();
+    void func_8007FF6C();
+    void func_8008064C();
+    void func_800807BC();
+    void func_80080888();
+    void func_80080E20();
+    void func_80080E28();
+    void func_80080E30();
+    void func_80080E44();
+    void func_80080EE4();
+    void func_80080F40();
+    void func_80080F44();
+    void func_80080F48();
+    void func_80081258();
+    void func_80081264();
+    void func_8008126C();
+    void func_80081274();
+    void func_8008127C();
+    void func_80081284();
+    void func_8008128C();
+    void func_80081294();
+    void func_8008129C();
+    void func_800812A4();
+    void func_800812AC();
+    void func_800812B4();
+    void func_800812BC();
+    void func_800812C4();
+    void func_800812CC();
+    void func_800812D4();
+    void func_800812DC();
+    void func_800812E4();
+    void func_800812EC();
+    void func_800812F4();
+    void func_80081318();
+    void func_80081330();
+    void func_80081338();
+    void func_80081340();
+    void func_80081348();
+    void func_80081350();
+    void func_80081358();
+    void func_80081694();
+    void func_800817A8();
+    void func_800817B0();
+    void func_800817BC();
+    void func_80081874();
+    void func_8008187C();
+    void func_80081900();
+    void func_80081988();
+    void func_80081990();
+    void func_80081A24();
+    void func_80081A40();
+    void func_80081CA0();
+    void func_80081CB0();
+    void func_80081CB8();
+    void func_80081CBC();
+    void func_80081D2C();
+    void func_80081D88();
+    void func_80081D8C();
+    void func_80081DD8();
+    void func_80081E90();
+    void func_80081F28();
+    void func_80081F90();
+    void func_80082008();
+    void func_80082060();
+    void func_80082088();
+    void func_80082104();
+    void func_8008212C();
+    void func_800821F8();
+    void func_8008221C();
+    void func_80082254();
+    void func_80082258();
+    void func_8008228C();
+    void func_800822FC();
+    void func_80082354();
+    void func_8008235C();
+    void func_800823A4();
+    void func_80082418();
+    void func_800824FC();
+    void func_80082544();
+    void func_80082568();
+    void func_80082614();
+    void func_8008261C();
+    bool func_80082680();
+    void func_80082694();
+    void func_8008269C();
+    void func_800826F0();
+    void func_80082768();
+    void func_80082770();
+    void func_800827A8();
+    void func_800827E4();
+    void func_80082834();
+    void func_800828DC();
+    void func_80082900();
+    void func_80082940();
+    void func_8008294C();
+    void func_80082A0C();
+    void func_80082A7C();
+    void func_80082B38();
+    void func_80082C48();
+    void func_80082D90();
+    void func_80082E50();
+    void func_80082EC0();
+    void func_80082EC4();
+    void func_80082F2C();
+    void func_80082FCC();
+    void func_80082FE4();
+    void func_80083100();
+    void func_8008310C();
+    void func_80083118();
+    void func_80083284();
+    void func_80083290();
+    void func_800832BC();
+    void func_80083304();
+    void func_80083328();
+    void func_80083458();
+    void func_80083460();
+    void func_80083468();
+    void func_80083470();
+    bool func_80083538();
+    bool func_80083544();
+    void func_80083550();
+    void func_80083560();
+    void func_800835FC();
+    void func_8008360C();
+    void func_80083718();
+    void func_8008372C();
+    void func_80083878();
+    void func_80083888();
+    void func_800838F4();
+    void func_80083C70();
+    void func_80083C78();
+    void func_80083CC8();
+    void func_80083CD8();
+    void func_80083D50();
+    void func_80083D70();
+    void func_80083DEC();
+    void func_80083EA4();
+    void func_80083F28();
+    void func_8008402C();
+    void func_8008413C();
+    void func_80084654();
+    void func_80084A00();
+    void func_80084AD4();
+    void func_80084B68();
+    void func_80084BAC();
+    bool func_80084BF4();
+    void func_80084C10();
+    void func_80084CA4();
+    void func_80084F50();
+    void func_80085220();
+    void func_80085248();
+    void func_80085334();
+    void func_800853C8();
+    void func_8008566C();
+    void func_80085838();
+    bool func_80085840();
+    bool func_8008585C();
+    void func_80085878();
+    void func_800858B8();
+    void func_80085978();
+    void func_80085E58();
+    void func_80085FB8();
+    void func_800862D0();
+    void func_800863F4();
+    void func_80086490();
+    void func_800865E8();
+    void func_800866A0();
+    void func_8008670C();
+    void func_80086778();
+    void func_80086B04();
+    void func_80086B08();
+    void func_80086B0C();
+    void func_80086B10();
+    void func_80086B14();
+    void func_80086B18();
+    void func_80086B1C();
+    void func_80086B24();
+    void func_80086B2C();
+    void func_80086B34();
+    void func_80086B3C();
+    void func_80086B44();
+    void func_80086B48();
+    void func_80086D90();
+    void func_80086D94();
+    void func_80086D98();
+    void func_80086D9C();
+    void func_80086DA0();
+    void func_80086DA4();
+    void func_80086DA8();
+    void func_80086DAC();
+    void func_80086DB0();
+    void func_80086DB4();
+    void func_80086DBC();
+    void func_80086E6C();
+    bool func_80087244();
+    bool func_80087250();
+    void func_80087280();
+    void func_80087330();
+    void func_80087334();
+    void func_80087348();
+    void func_80087364();
+    void func_80087378();
+    void func_80087390();
+    void func_800873AC();
+    CfObjectSub54* func_800873C8();
+    void func_800873D4();
+    void func_800873E8();
+    void func_800873FC();
+    void func_80087410();
+    u32 func_80087424();
+    void func_8008742C();
+    void func_8008743C();
+    void func_80087448();
     }; //size = 0xB8
-
-} //namespace cf
+} // namespace cf
 /* end "kyoshin/cf/CfGameManager.hpp" */
 /* "src/kyoshin/cf/CfGameManager.cpp" line 1 "kyoshin/cf/CfPadData.hpp" */
 #pragma once
@@ -853,8 +1158,10 @@ class CWorkThread;
 
 class CEventFile {
 public:
-    BOOL unk0;
-    CFileHandle* mFileHandle; //0x4
+    BOOL unk0;                 //0x0
+    CFileHandle* mFileHandle;  //0x4
+    u8 _pad08[0x0C];           //0x8-0x13
+    u32 field_14;              //0x14
 
     void* getFileDataPtr();
 };
@@ -10943,12 +11250,11 @@ namespace ml{
             }
         }
 
-    private:
-        char mString[N];
-        int mLength;
+    // public for compatibility
+    char mString[N];
+    int mLength;
 
-    public:
-        static const int npos = -1;
+    static const int npos = -1;
     };
 
 }
@@ -11275,10 +11581,11 @@ namespace mtl {
         u8 padding[32 - 0x12]; //0x12
 
         u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+            return reinterpret_cast<u8*>(this + 1);
         }
         u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
+            u8* blockEnd = reinterpret_cast<u8*>(this + 1);
+            return blockEnd + (size - sizeof(MemBlock));
         }
 
         u32 getDataSize() const {
@@ -12425,6 +12732,16 @@ public:
         field7 = r4;
     }
 
+    CMsgParam(u32 r4, u32* beforeLast){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        *beforeLast = 0;
+        field7 = r4;
+    }
+
     virtual ~CMsgParam(){
         clear();
     }
@@ -13451,7 +13768,7 @@ struct CProc_UnkStruct1 {
     void* unkC;
 };
 //size: 0x1ec
-class CProc : public CWorkThread {
+class __declspec(novtable) CProc : public CWorkThread {
 public:
     CProc(const char* pName, CWorkThread* pParent, s16 capacity);
     virtual ~CProc();
@@ -16569,7 +16886,12 @@ public:
     s16 unk5A; // 0x5A - unused trailing padding; satisfies 0x5C sizeof
 };
 
-extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
+extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16* rect, const CViewFrame* r4);
+
+inline void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4) {
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&rect, r4);
+}
 /* end "monolib/core/CViewFrame.hpp" */
 /* "libs/monolib/include/monolib/core/CView.hpp" line 7 "monolib/core/CViewRectData.hpp" */
 #pragma once
@@ -233752,9 +234074,8 @@ bool isExistData__5CRsrcFPCv(const void* data);
 /* end "monolib/util/MemManager.hpp" */
 
 // size: 0x4E8
-class CRsrcData : public CWorkThread {
+class __declspec(novtable) CRsrcData : public CWorkThread {
 public:
-    CRsrcData(const char* pName, CWorkThread* pParent);
     virtual ~CRsrcData();
 
     virtual void wkUpdate();
@@ -233867,6 +234188,8 @@ public:
     static void renderView();
     static CView* getFullScreenView();
     static CView* getView(WORK_ID id);
+    void func_80442B54(void* a, void* b, void* c);
+    void func_80442C68();
 
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
@@ -233899,9 +234222,10249 @@ namespace cf{
     };
 }
 /* end "kyoshin/cf/CfPadData.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 2 "kyoshin/cf/CfPadTask.hpp" */
+#pragma once
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 3 "monolib/core/CPadManager.hpp" */
+/* "src/kyoshin/cf/CfPadTask.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/CfPadTask.hpp" line 3 "kyoshin/cf/CfPadData.hpp" */
+/* end "kyoshin/cf/CfPadData.hpp" */
+/* "src/kyoshin/cf/CfPadTask.hpp" line 4 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+/* "src/kyoshin/cf/CfPadTask.hpp" line 5 "monolib/core.hpp" */
+/* end "monolib/core.hpp" */
+/* "src/kyoshin/cf/CfPadTask.hpp" line 6 "monolib/lib.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib.hpp" line 2 "monolib/lib/CLib.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/CLib.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/lib/CLib.hpp" line 3 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/lib/CLib.hpp" line 4 "monolib/work/CWorkSystem.hpp" */
+/* end "monolib/work/CWorkSystem.hpp" */
+
+class CLib : public CWorkThread {
+public:
+    CLib(const char* pName, CWorkThread* pParent);
+    ~CLib();
+
+    DECL_WORKTHREAD_CREATE(CLib);
+
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    static CLib* getInstance();
+
+    static bool isInitialized();
+    void createLibs();
+    static CLib* create();
+
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    u32 unk1C4;
+private:
+    static const int MAX_CHILD = 8;
+
+    static CLib* spInstance;
+};
+/* end "monolib/lib/CLib.hpp" */
+/* "libs/monolib/include/monolib/lib.hpp" line 3 "monolib/lib/CLibCri.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/CLibCri.hpp" line 2 "monolib/device/CDeviceVICb.hpp" */
+/* end "monolib/device/CDeviceVICb.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibCri.hpp" line 3 "monolib/work/CWorkUtil.hpp" */
+/* end "monolib/work/CWorkUtil.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibCri.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibCri.hpp" line 5 "monolib/util/CErrorWii.hpp" */
+/* end "monolib/util/CErrorWii.hpp" */
+
+//size: 0x1d0
+class CLibCri : public CWorkThread, public CDeviceVICb, public IErrorWii {
+public:
+    CLibCri(const char* pName, CWorkThread* pParent);
+    static CLibCri* getInstance();
+    virtual void errorWiiCB();
+    static void func_80459A80();
+
+    static inline CLibCri* create(const char* pName, CWorkThread* pParent){
+        CLibCri* lib = new (CWorkThreadSystem::getWorkMem()) CLibCri(pName, pParent);
+        CWorkUtil::entryWork(lib, pParent, false);
+        return lib;
+    }
+
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    //0x1c4-1c8: CDeviceVICb
+    //0x1c8-1cc: UnkClass_80447FDC
+    u32 unk1D0;
+};
+/* end "monolib/lib/CLibCri.hpp" */
+/* "libs/monolib/include/monolib/lib.hpp" line 4 "monolib/lib/CLibG3d.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/CLibG3d.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/lib/CLibG3d.hpp" line 3 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CLibG3d : public CWorkThread {
+public:
+    CLibG3d(const char* pName, CWorkThread* pParent);
+
+    DECL_WORKTHREAD_CREATE(CLibG3d);
+
+    static bool isInitialized();
+    static CLibG3d* getInstance();
+
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    u32 unk1C4;
+};
+/* end "monolib/lib/CLibG3d.hpp" */
+/* "libs/monolib/include/monolib/lib.hpp" line 5 "monolib/lib/CLibHbm.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 5 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 6 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 7 "revolution/TPL.h" */
+/**
+ * References: YAGCD, BrawlBox
+ */
+
+#ifndef RVL_SDK_PUBLIC_TPL_H
+#define RVL_SDK_PUBLIC_TPL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/TPL.h" line 10 "revolution/TPL/TPL.h" */
+/* end "revolution/TPL/TPL.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/TPL.h" */
+/* "libs/monolib/include/monolib/lib/CLibHbm.hpp" line 8 "revolution/HBM.h" */
+#ifndef RVL_SDK_PUBLIC_HBM_H
+#define RVL_SDK_PUBLIC_HBM_H
+
+/* "libs/RVL_SDK/include/revolution/HBM.h" line 3 "revolution/HBM/HBMApi.h" */
+#ifndef HOME_BUTTON_MINI_LIB_API_H
+#define HOME_BUTTON_MINI_LIB_API_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/HBM/HBMApi.h" line 6 "revolution/HBM/HBMTypes.h" */
+#ifndef HOME_BUTTON_MINI_LIB_TYPES_H
+#define HOME_BUTTON_MINI_LIB_TYPES_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/HBM/HBMTypes.h" line 6 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/HBM/HBMTypes.h" line 8 "revolution/KPAD.h" */
+/* end "revolution/KPAD.h" */
+/* "libs/RVL_SDK/include/revolution/HBM/HBMTypes.h" line 9 "revolution/MEM.h" */
+#ifndef RVL_SDK_PUBLIC_MEM_H
+#define RVL_SDK_PUBLIC_MEM_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/MEM.h" line 6 "revolution/MEM/mem_allocator.h" */
+#ifndef RVL_SDK_MEM_ALLOCATOR_H
+#define RVL_SDK_MEM_ALLOCATOR_H
+/* "libs/RVL_SDK/include/revolution/MEM/mem_allocator.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct MEMAllocator;
+typedef struct MEMiHeapHead;
+
+typedef void* (*MEMAllocatorAllocFunc)(struct MEMAllocator* allocator, u32 size);
+typedef void (*MEMAllocatorFreeFunc)(struct MEMAllocator* allocator, void* block);
+
+typedef struct MEMAllocatorFuncs {
+    MEMAllocatorAllocFunc allocFunc; // at 0x0
+    MEMAllocatorFreeFunc freeFunc;   // at 0x4
+} MEMAllocatorFuncs;
+
+typedef struct MEMAllocator {
+    const MEMAllocatorFuncs* funcs; // at 0x0
+    struct MEMiHeapHead* heap;             // at 0x4
+    u32 heapParam1;                 // at 0x8
+    u32 heapParam2;                 // at 0xC
+} MEMAllocator;
+
+void* MEMAllocFromAllocator(MEMAllocator* allocator, u32 size);
+void MEMFreeToAllocator(MEMAllocator* allocator, void* block);
+
+void MEMInitAllocatorForExpHeap(MEMAllocator* allocator, struct MEMiHeapHead* heap,
+                                s32 align);
+void MEMInitAllocatorForFrmHeap(MEMAllocator* allocator, struct MEMiHeapHead* heap,
+                                s32 align);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MEM/mem_allocator.h" */
+/* "libs/RVL_SDK/include/revolution/MEM.h" line 7 "revolution/MEM/mem_expHeap.h" */
+#ifndef RVL_SDK_MEM_EXP_HEAP_H
+#define RVL_SDK_MEM_EXP_HEAP_H
+/* "libs/RVL_SDK/include/revolution/MEM/mem_expHeap.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define MEM_EXP_HEAP_MIN_SIZE                                                  \
+    (sizeof(MEMiHeapHead) + sizeof(MEMiExpHeapHead) +                          \
+     sizeof(MEMiExpHeapMBlock) + 4)
+
+// Forward declarations
+typedef struct MEMiHeapHead;
+
+typedef enum {
+    MEM_EXP_HEAP_ALLOC_FAST, //!< When allocating memory blocks, take the first
+                             //!< usable found block rather than trying to
+                             //!< find a more optimal block
+} MEMiExpHeapAllocMode;
+
+typedef struct MEMiExpHeapMBlock {
+    u16 state; // at 0x0
+    union {
+        u16 settings;
+        struct {
+            u16 allocDir : 1;
+            u16 align : 7;
+            u16 group : 8;
+        };
+    }; // at 0x2
+    u32 size;                       // at 0x4
+    struct MEMiExpHeapMBlock* prev; // at 0x8
+    struct MEMiExpHeapMBlock* next; // at 0xC
+} MEMiExpHeapMBlock;
+
+typedef struct MEMiExpHeapMBlockList {
+    MEMiExpHeapMBlock* head; // at 0x0
+    MEMiExpHeapMBlock* tail; // at 0x4
+} MEMiExpHeapMBlockList;
+
+// Placed in heap after base heap head
+typedef struct MEMiExpHeapHead {
+    MEMiExpHeapMBlockList freeMBlocks; // at 0x0
+    MEMiExpHeapMBlockList usedMBlocks; // at 0x8
+    u16 group;                         // at 0x10
+    union {
+        u16 SHORT_0x12;
+        struct {
+            u16 SHORT_0x12_0_13 : 14;
+            u16 useMarginOfAlign : 1;
+            u16 allocMode : 1;
+        };
+    }; // at 0x12
+} MEMiExpHeapHead;
+
+struct MEMiHeapHead* MEMCreateExpHeapEx(void* start, u32 size, u16 opt);
+struct MEMiHeapHead* MEMDestroyExpHeap(struct MEMiHeapHead* heap);
+void* MEMAllocFromExpHeapEx(struct MEMiHeapHead* heap, u32 size, s32 align);
+u32 MEMResizeForMBlockExpHeap(struct MEMiHeapHead* heap, void* memBlock, u32 size);
+void MEMFreeToExpHeap(struct MEMiHeapHead* heap, void* memBlock);
+u32 MEMGetAllocatableSizeForExpHeapEx(struct MEMiHeapHead* heap, s32 align);
+u32 MEMAdjustExpHeap(struct MEMiHeapHead* heap);
+
+static struct MEMiHeapHead* MEMCreateExpHeap(void* start, u32 size) {
+    return MEMCreateExpHeapEx(start, size, 0);
+}
+
+static void* MEMAllocFromExpHeap(struct MEMiHeapHead* heap, u32 size) {
+    return MEMAllocFromExpHeapEx(heap, size, 4);
+}
+
+static u32 MEMGetAllocatableSizeForExpHeap(struct MEMiHeapHead* heap) {
+    return MEMGetAllocatableSizeForExpHeapEx(heap, 4);
+}
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MEM/mem_expHeap.h" */
+/* "libs/RVL_SDK/include/revolution/MEM.h" line 8 "revolution/MEM/mem_frameHeap.h" */
+#ifndef RVL_SDK_MEM_FRAME_HEAP_H
+#define RVL_SDK_MEM_FRAME_HEAP_H
+/* "libs/RVL_SDK/include/revolution/MEM/mem_frameHeap.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define MEM_FRM_HEAP_MIN_SIZE (sizeof(MEMiHeapHead) + sizeof(MEMiFrmHeapHead))
+
+// Forward declarations
+typedef struct MEMiHeapHead;
+
+// Specify how to free memory
+typedef enum {
+    MEM_FRM_HEAP_FREE_TO_HEAD = (1 << 0),
+    MEM_FRM_HEAP_FREE_TO_TAIL = (1 << 1),
+    MEM_FRM_HEAP_FREE_ALL =
+        MEM_FRM_HEAP_FREE_TO_HEAD | MEM_FRM_HEAP_FREE_TO_TAIL
+} MEMiFrmFreeFlag;
+
+typedef struct MEMiFrmHeapState {
+    u32 id;                        // at 0x0
+    u8* head;                      // at 0x4
+    u8* tail;                      // at 0x8
+    struct MEMiFrmHeapState* next; // at 0xC
+} MEMiFrmHeapState;
+
+// Placed in heap after base heap head
+typedef struct MEMiFrmHeapHead {
+    u8* head;                 // at 0x0
+    u8* tail;                 // at 0x4
+    MEMiFrmHeapState* states; // at 0x8
+} MEMiFrmHeapHead;
+
+struct MEMiHeapHead* MEMCreateFrmHeapEx(void* start, u32 size, u16 opt);
+struct MEMiHeapHead* MEMDestroyFrmHeap(struct MEMiHeapHead* heap);
+void* MEMAllocFromFrmHeapEx(struct MEMiHeapHead* heap, u32 size, s32 align);
+void MEMFreeToFrmHeap(struct MEMiHeapHead* heap, u32 flags);
+u32 MEMGetAllocatableSizeForFrmHeapEx(struct MEMiHeapHead* heap, s32 align);
+BOOL MEMRecordStateForFrmHeap(struct MEMiHeapHead* heap, u32 id);
+BOOL MEMFreeByStateToFrmHeap(struct MEMiHeapHead* heap, u32 id);
+u32 MEMAdjustFrmHeap(struct MEMiHeapHead* heap);
+u32 MEMResizeForMBlockFrmHeap(struct MEMiHeapHead* heap, void* memBlock, u32 size);
+
+static struct MEMiHeapHead* MEMCreateFrmHeap(void* start, u32 size) {
+    return MEMCreateFrmHeapEx(start, size, 0);
+}
+
+static void* MEMAllocFromFrmHeap(struct MEMiHeapHead* heap, u32 size) {
+    return MEMAllocFromFrmHeapEx(heap, size, 4);
+}
+
+static u32 MEMGetAllocatableSizeForFrmHeap(struct MEMiHeapHead* heap) {
+    return MEMGetAllocatableSizeForFrmHeapEx(heap, 4);
+}
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MEM/mem_frameHeap.h" */
+/* "libs/RVL_SDK/include/revolution/MEM.h" line 9 "revolution/MEM/mem_heapCommon.h" */
+#ifndef RVL_SDK_MEM_HEAP_COMMON_H
+#define RVL_SDK_MEM_HEAP_COMMON_H
+/* "libs/RVL_SDK/include/revolution/MEM/mem_heapCommon.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/MEM/mem_heapCommon.h" line 4 "revolution/MEM/mem_list.h" */
+#ifndef RVL_SDK_MEM_LIST_H
+#define RVL_SDK_MEM_LIST_H
+/* "libs/RVL_SDK/include/revolution/MEM/mem_list.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct MEMList {
+    void* head; // at 0x0
+    void* tail; // at 0x4
+    u16 length; // at 0x8
+    u16 offset; // at 0xA
+} MEMList;
+
+typedef struct MEMLink {
+    void* prev; // at 0x0
+    void* next; // at 0x4
+} MEMLink;
+
+void MEMInitList(MEMList* list, u16 offset);
+void MEMAppendListObject(MEMList* list, void* object);
+void MEMRemoveListObject(MEMList* list, void* object);
+void* MEMGetNextListObject(MEMList* list, void* object);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MEM/mem_list.h" */
+
+/* "libs/RVL_SDK/include/revolution/MEM/mem_heapCommon.h" line 6 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+
+/* "libs/RVL_SDK/include/revolution/MEM/mem_heapCommon.h" line 8 "string.h" */
+/* end "string.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    MEM_HEAP_OPT_CLEAR_ALLOC = (1 << 0),
+    MEM_HEAP_OPT_DEBUG_FILL = (1 << 1),
+    MEM_HEAP_OPT_CAN_LOCK = (1 << 2)
+} MEMHeapOpt;
+
+typedef struct MEMiHeapHead {
+    u32 magic;     // at 0x0
+    MEMLink link;  // at 0x4
+    MEMList list;  // at 0xC
+    u8* start;     // at 0x18
+    u8* end;       // at 0x1C
+    OSMutex mutex; // at 0x20
+
+    union {
+        u32 attribute;
+        struct {
+            u32 attribute_0_24 : 24;
+            u32 opt : 8;
+        };
+    }; // at 0x38
+} MEMiHeapHead;
+
+void MEMiInitHeapHead(MEMiHeapHead* heap, u32 magic, void* start, void* end,
+                      u16 opt);
+void MEMiFinalizeHeap(MEMiHeapHead* heap);
+MEMiHeapHead* MEMFindContainHeap(const void* memBlock);
+
+static uintptr_t GetUIntPtr(const void* p) {
+    return (uintptr_t)p;
+}
+
+static int ComparePtr(const void* p0, const void* p1) {
+    return (const u8*)p0 - (const u8*)p1;
+}
+
+static void* AddU32ToPtr(const void* p, u32 ofs) {
+    return (void*)(GetUIntPtr(p) + ofs);
+}
+
+static void* SubU32ToPtr(const void* p, u32 ofs) {
+    return (void*)(GetUIntPtr(p) - ofs);
+}
+
+static const void* AddU32ToCPtr(const void* p, u32 ofs) {
+    return (const void*)(GetUIntPtr(p) + ofs);
+}
+
+static const void* SubU32ToCPtr(const void* p, u32 ofs) {
+    return (const void*)(GetUIntPtr(p) - ofs);
+}
+
+static s32 GetOffsetFromPtr(const void* start, const void* end) {
+    return GetUIntPtr(end) - GetUIntPtr(start);
+}
+
+static u16 GetOptForHeap(const MEMiHeapHead* heap) {
+    return heap->opt;
+}
+
+static void SetOptForHeap(MEMiHeapHead* heap, u16 opt) {
+    heap->opt = (u8)opt;
+}
+
+static void LockHeap(MEMiHeapHead* heap) {
+    if (GetOptForHeap(heap) & MEM_HEAP_OPT_CAN_LOCK) {
+        OSLockMutex(&heap->mutex);
+    }
+}
+
+static void UnlockHeap(MEMiHeapHead* heap) {
+    if (GetOptForHeap(heap) & MEM_HEAP_OPT_CAN_LOCK) {
+        OSUnlockMutex(&heap->mutex);
+    }
+}
+
+static void FillAllocMemory(MEMiHeapHead* heap, void* memBlock, u32 size) {
+    if (GetOptForHeap(heap) & MEM_HEAP_OPT_CLEAR_ALLOC) {
+        memset(memBlock, 0, size);
+    }
+}
+
+static s32 MEMGetHeapTotalSize(const MEMiHeapHead* heap) {
+    return GetOffsetFromPtr(heap, heap->end);
+}
+
+static void* MEMGetHeapEndAddress(const MEMiHeapHead* heap) {
+    return heap->end;
+}
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MEM/mem_heapCommon.h" */
+/* "libs/RVL_SDK/include/revolution/MEM.h" line 10 "revolution/MEM/mem_list.h" */
+/* end "revolution/MEM/mem_list.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MEM.h" */
+/* "libs/RVL_SDK/include/revolution/HBM/HBMTypes.h" line 10 "revolution/WPAD.h" */
+/**
+ * References: WiiBrew
+ */
+
+#ifndef RVL_SDK_PUBLIC_WPAD_H
+#define RVL_SDK_PUBLIC_WPAD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/WPAD.h" line 10 "revolution/WPAD/WPAD.h" */
+/* end "revolution/WPAD/WPAD.h" */
+/* "libs/RVL_SDK/include/revolution/WPAD.h" line 11 "revolution/WPAD/WPADInternal.h" */
+/* end "revolution/WPAD/WPADInternal.h" */
+/* "libs/RVL_SDK/include/revolution/WPAD.h" line 12 "revolution/WPAD/debug_msg.h" */
+/* end "revolution/WPAD/debug_msg.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/WPAD.h" */
+
+typedef enum HBMSelectBtnNum {
+    HBM_SELECT_NULL = -1,
+
+    HBM_SELECT_HOMEBTN,
+    HBM_SELECT_BTN1,
+    HBM_SELECT_BTN2,
+    HBM_SELECT_BTN3,
+    HBM_SELECT_BTN4,
+
+    HBM_SELECT_MAX
+} HBMSelectBtnNum;
+
+typedef enum HBMSoundEvent {
+    HBM_SOUND_INIT,
+    HBM_SOUND_POST_INIT,
+    HBM_SOUND_GOTO_MENU,
+    HBM_SOUND_RETURN_APP,
+    HBM_SOUND_STOP,
+    HBM_SOUND_PLAY,
+} HBMSoundEvent;
+
+// Maps to the HomeButtonSe.brsar sound ID
+typedef enum HBMSound {
+    /* 0x00 */ HBM_SE_HOME_BUTTON,
+    /* 0x01 */ HBM_SE_RETURN_APP,
+    /* 0x02 */ HBM_SE_GOTO_MENU,
+    /* 0x03 */ HBM_SE_RESET_APP,
+    /* 0x04 */ HBM_SE_FOCUS,
+    /* 0x05 */ HBM_SE_SELECT,
+    /* 0x06 */ HBM_SE_CANCEL,
+    /* 0x07 */ HBM_SE_OPEN_CONTROLLER,
+    /* 0x08 */ HBM_SE_CLOSE_CONTROLLER,
+    /* 0x09 */ HBM_SE_VOLUME_PLUS,
+    /* 0x0A */ HBM_SE_VOLUME_MINUS,
+    /* 0x0B */ HBM_SE_VOLUME_PLUS_LIMIT,
+    /* 0x0C */ HBM_SE_VOLUME_MINUS_LIMIT,
+    /* 0x0D */ HBM_SE_NOTHING_DONE,
+    /* 0x0E */ HBM_SE_VIBE_ON,
+    /* 0x0F */ HBM_SE_VIBE_OFF,
+    /* 0x10 */ HBM_SE_START_CONNECT_WINDOW,
+    /* 0x11 */ HBM_SE_CONNECTED,
+    /* 0x12 */ HBM_SE_CONNECTED2,
+    /* 0x13 */ HBM_SE_CONNECTED3,
+    /* 0x14 */ HBM_SE_CONNECTED4,
+    /* 0x15 */ HBM_SE_END_CONNECT_WINDOW
+} HBMSound;
+
+// Maps to the SpeakerSe.arc sound ID
+typedef enum HBMSpeakerSound {
+    /* 0x00 */ HBM_SPK_SE_VOLUME,
+    /* 0x01 */ HBM_SPK_SE_CONNECT1,
+    /* 0x02 */ HBM_SPK_SE_CONNECT2,
+    /* 0x03 */ HBM_SPK_SE_CONNECT3,
+    /* 0x04 */ HBM_SPK_SE_CONNECT4,
+} HBMSpeakerSound;
+
+typedef int (*HBMSoundCallback)(int event, int arg);
+
+typedef struct HBMDataInfo {
+    void* layoutBuf;                 // at 0x0
+    void* spkSeBuf;                  // at 0x4
+    void* msgBuf;                    // at 0x8
+    void* configBuf;                 // at 0xC
+    void* mem;                       // at 0x10
+    HBMSoundCallback sound_callback; // at 0x14
+    BOOL backFlag;                   // at 0x18
+    int region;                      // at 0x1C
+    BOOL cursor;                     // at 0x20
+    BOOL messageFlag;                // at 0x24
+    u32 configBufSize;               // at 0x28
+    u32 memSize;                     // at 0x2C
+    f32 frameDelta;                  // at 0x30
+    Vec2 adjust;                     // at 0x34
+    MEMAllocator* pAllocator;        // at 0x3C
+} HBMDataInfo;
+
+typedef struct HBMKPadData {
+    KPADStatus* kpad; // at 0x0
+    Vec2 pos;         // at 0x4
+    u32 use_devtype;  // at 0xC
+} HBMKPadData;
+
+typedef struct HBMControllerData {
+    HBMKPadData wiiCon[WPAD_MAX_CONTROLLERS]; // at 0x0
+} HBMControllerData;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/HBM/HBMTypes.h" */
+
+void HBMCreate(const HBMDataInfo* pHBInfo);
+void HBMCreateSound(void* soundData, void* memBuf, u32 memSize);
+void HBMInit();
+
+void HBMDelete();
+void HBMDeleteSound();
+
+void HBMUpdateSound();
+
+HBMSelectBtnNum HBMCalc(const HBMControllerData* pController);
+void HBMDraw();
+
+void HBMSetAdjustFlag(BOOL flag);
+void HBMStartBlackOut();
+void HBMSetBlackOutColor(u8 r, u8 g, u8 b);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/HBM/HBMApi.h" */
+/* "libs/RVL_SDK/include/revolution/HBM.h" line 4 "revolution/HBM/HBMTypes.h" */
+/* end "revolution/HBM/HBMTypes.h" */
+
+#endif
+/* end "revolution/HBM.h" */
+
+class IHBMCallback {
+public:
+    virtual ~IHBMCallback(){}
+    virtual void onInitHbm();
+    virtual void onDeleteHbm();
+};
+
+//size: 0x268
+class CLibHbm : public CWorkThread {
+public:
+    CLibHbm(const char* pName, CWorkThread* pParent);
+    ~CLibHbm();
+
+    DECL_WORKTHREAD_CREATE(CLibHbm);
+
+    static bool isInitialized();
+    static CLibHbm* getInstance();
+
+    virtual void wkUpdate();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+    virtual bool OnFileEvent(CEventFile* pFile);
+
+    static void setCurrentWpadChannel(int channel);
+    static void func_8045D470(bool r3);
+    static bool func_8045D478();
+    static void loadTplImage(void* pTplData);
+    static void removeTplImage();
+    static void addCallback(IHBMCallback* r3);
+    static void removeCallback(IHBMCallback* r3);
+    static void func_8045D5C8(bool r3);
+    void destroy();
+    static bool isHbmMemPointerValid();
+    static bool checkFlag6();
+    static void loadHbmArcFile();
+    static void initHbm();
+    static void deleteHbm();
+    static bool isHbmControlInitialized();
+    static bool func_8045DE00();
+    static void renderHbmstopIcon();
+    static inline void initHbmInfoStruct();
+
+    void setState(int state){
+        mState = state;
+        if(spHbmstopTplData == nullptr){
+            mState = STATE_NEG1;
+        }
+    }
+
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    mtl::ALLOC_HANDLE mHandle; //0x1C4
+    int unk1C8; //0x1C8
+    void* mpLayoutBuf; //0x1CC
+    void* mpSpkSeBuf; //0x1D0
+    void* mpHbmSeBuf; //0x1D4
+    void* mpMsgBuf; //0x1D8
+    void* mpConfigBuf; //0x1DC
+    UNKTYPE* mpHbmMem; //0x1E0
+    UNKTYPE* mpHbmSndMem; //0x1E4
+    UNKTYPE* unk1E8; //0x1E8
+    HBMDataInfo unk1EC; //0x1EC
+    u16 mFlags; //0x22C
+    CFileHandle* mpHbmArcFileHandle; //0x230
+    u32 mConfigBufSize; //0x234
+    mtl::fixed_vector<IHBMCallback*, 8> unk238; //0x238
+    float unk25C; //0x25C
+    int mState; //0x260
+    bool unk264; //0x264
+    bool unk265; //0x265
+
+private:
+    enum State{
+        STATE_NEG1 = -1,
+        STATE_0,
+        STATE_1,
+        STATE_2,
+        STATE_3
+    };
+
+    static const int MAX_CHILD = 1;
+    static const int HBM_MEM_SIZE = 0x80000;
+    static const int HBM_SND_MEM_SIZE = 100096;
+
+    static CLibHbm* spInstance;
+
+    static bool lbl_80667FD4;
+    static TPLPalette* spHbmstopTplData;
+    static bool lbl_80667FDC;
+    static bool lbl_80667FDD;
+    static int sCurWpadChannel;
+    static GXTexObj sTplTexObj;
+};
+/* end "monolib/lib/CLibHbm.hpp" */
+/* "libs/monolib/include/monolib/lib.hpp" line 6 "monolib/lib/CLibHbmControl.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/CLibHbmControl.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/lib/CLibHbmControl.hpp" line 3 "monolib/core/CProc.hpp" */
+/* end "monolib/core/CProc.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibHbmControl.hpp" line 4 "revolution/HBM.h" */
+/* end "revolution/HBM.h" */
+
+class CLibHbmControl : public CProc {
+public:
+    CLibHbmControl(const char* pName, CWorkThread* pParent);
+    ~CLibHbmControl();
+
+    DECL_WORKTHREAD_CREATE(CLibHbmControl);
+
+    static CLibHbmControl* create();
+    static CLibHbmControl* getInstance();
+    static bool isActive();
+    static bool isInitialized();
+
+    virtual void wkUpdate();
+    virtual void wkRender();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    //0x0: vtable
+    //0x0-1ec: CProc
+    HBMControllerData mHBMControllerData; //0x1EC
+    u32 mHbmPhase;   //0x22C: state machine phase (0=load arc, 1=wait filesys, 2=init HBM, 3=active)
+    int mWaitTimer;  //0x230: countdown timer, set to 210 in phase 0, decremented in phase 1
+    u32 mUnused;     //0x234: reserved, never accessed
+private:
+    static const int MAX_CHILD = 8;
+
+    static CLibHbmControl* spInstance;
+};
+/* end "monolib/lib/CLibHbmControl.hpp" */
+/* "libs/monolib/include/monolib/lib.hpp" line 7 "monolib/lib/CLibLayout.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/CLibLayout.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/lib/CLibLayout.hpp" line 3 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibLayout.hpp" line 4 "nw4r/lyt/lyt_arcResourceAccessor.h" */
+#ifndef NW4R_LYT_ARC_RESOURCE_ACCESSOR_H
+#define NW4R_LYT_ARC_RESOURCE_ACCESSOR_H
+/* "libs/nw4r/include/nw4r/lyt/lyt_arcResourceAccessor.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/lyt/lyt_arcResourceAccessor.h" line 4 "nw4r/lyt/lyt_resourceAccessor.h" */
+#ifndef NW4R_LYT_RESOURCE_ACCESSOR_H
+#define NW4R_LYT_RESOURCE_ACCESSOR_H
+/* "libs/nw4r/include/nw4r/lyt/lyt_resourceAccessor.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/lyt/lyt_resourceAccessor.h" line 4 "nw4r/ut.h" */
+#ifndef NW4R_PUBLIC_UT_H
+#define NW4R_PUBLIC_UT_H
+
+/* "libs/nw4r/include/nw4r/ut.h" line 3 "nw4r/ut/ut_CharStrmReader.h" */
+#ifndef NW4R_UT_CHAR_STRM_READER_H
+#define NW4R_UT_CHAR_STRM_READER_H
+/* "libs/nw4r/include/nw4r/ut/ut_CharStrmReader.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace ut {
+
+class CharStrmReader {
+public:
+    typedef u16 (CharStrmReader::*ReadFunc)();
+
+public:
+    explicit CharStrmReader(ReadFunc pFunc)
+        : mCharStrm(NULL), mReadFunc(pFunc) {}
+
+    ~CharStrmReader() {}
+
+    u16 ReadNextCharUTF8();
+    u16 ReadNextCharUTF16();
+    u16 ReadNextCharCP1252();
+    u16 ReadNextCharSJIS();
+
+    u16 Next() {
+        return (this->*mReadFunc)();
+    }
+
+    const void* GetCurrentPos() const {
+        return mCharStrm;
+    }
+
+    void Set(const char* pStrm) {
+        mCharStrm = pStrm;
+    }
+    void Set(const wchar_t* pStrm) {
+        mCharStrm = pStrm;
+    }
+
+private:
+    template <typename T> T GetChar(int offset) const {
+        return static_cast<const T*>(mCharStrm)[offset];
+    }
+
+    template <typename T> void StepStrm(int offset) {
+        static_cast<const T*>(mCharStrm) += offset;
+    }
+
+private:
+    const void* mCharStrm; // at 0x0
+    ReadFunc mReadFunc;    // at 0x4
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_CharStrmReader.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 4 "nw4r/ut/ut_CharWriter.h" */
+#ifndef NW4R_UT_CHAR_WRITER_H
+#define NW4R_UT_CHAR_WRITER_H
+/* "libs/nw4r/include/nw4r/ut/ut_CharWriter.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_CharWriter.h" line 4 "nw4r/ut/ut_Color.h" */
+#ifndef NW4R_UT_COLOR_H
+#define NW4R_UT_COLOR_H
+/* "libs/nw4r/include/nw4r/ut/ut_Color.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_Color.h" line 4 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace ut {
+
+struct Color : public GXColor {
+public:
+    Color() {
+        *this = WHITE;
+    }
+    Color(u32 color) {
+        *this = color;
+    }
+    Color(int red, int green, int blue, int alpha) {
+        Set(red, green, blue, alpha);
+    }
+    Color(const GXColor& rColor) {
+        *this = rColor;
+    }
+
+    ~Color() {}
+
+    void Set(int red, int green, int blue, int alpha) {
+        r = red;
+        g = green;
+        b = blue;
+        a = alpha;
+    }
+
+    Color& operator=(u32 color) {
+        ToU32ref() = color;
+        return *this;
+    }
+    Color& operator=(const GXColor& rColor) {
+        *this = *reinterpret_cast<const u32*>(&rColor);
+        return *this;
+    }
+
+    Color operator|(u32 color) const {
+        return Color(ToU32() | color);
+    }
+    Color operator&(u32 color) const {
+        return Color(ToU32() & color);
+    }
+
+    u32& ToU32ref() {
+        return *reinterpret_cast<u32*>(this);
+    }
+    const u32& ToU32ref() const {
+        return *reinterpret_cast<const u32*>(this);
+    }
+
+    u32 ToU32() const {
+        return ToU32ref();
+    }
+
+    operator u32() const {
+        return ToU32ref();
+    }
+
+    // clang-format off
+    static const u32 RED   = 0xFF0000FF;
+    static const u32 GREEN = 0x00FF00FF;
+    static const u32 BLUE  = 0x0000FFFF;
+
+    static const u32 CYAN    = 0x00FFFFFF;
+    static const u32 MAGENTA = 0xFF00FFFF;
+    static const u32 YELLOW  = 0xFFFF00FF;
+
+    static const u32 BLACK = 0x000000FF;
+    static const u32 GRAY  = 0x808080FF;
+    static const u32 WHITE = 0xFFFFFFFF;
+
+    static const u32 ELEMENT_MIN = 0x00000000;
+    static const u32 ELEMENT_MAX = 0xFFFFFFFF;
+    // clang-format on
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_Color.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_CharWriter.h" line 6 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_CharWriter.h" line 8 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace ut {
+
+// Forward declarations
+class Font;
+struct Glyph;
+
+class CharWriter {
+public:
+    enum GradationMode {
+        GRADMODE_NONE,
+        GRADMODE_H,
+        GRADMODE_V,
+
+        GRADMODE_MAX
+    };
+
+public:
+    CharWriter();
+    ~CharWriter();
+
+    void SetupGX();
+    void EnableLinearFilter(bool atSmall, bool atLarge);
+    f32 Print(u16 ch);
+
+    void SetColorMapping(Color min, Color max) {
+        mColorMapping.min = min;
+        mColorMapping.max = max;
+    }
+
+    void ResetColorMapping() {
+        SetColorMapping(DEFAULT_COLOR_MAPPING_MIN, DEFAULT_COLOR_MAPPING_MAX);
+    }
+
+    void SetTextColor(Color start) {
+        mTextColor.start = start;
+        UpdateVertexColor();
+    }
+
+    void SetTextColor(Color start, Color end) {
+        mTextColor.start = start;
+        mTextColor.end = end;
+        UpdateVertexColor();
+    }
+
+    void SetGradationMode(GradationMode mode) {
+        mTextColor.gradationMode = mode;
+        UpdateVertexColor();
+    }
+
+    f32 GetScaleH() const {
+        return mScale.x;
+    }
+    f32 GetScaleV() const {
+        return mScale.y;
+    }
+
+    void SetScale(f32 x, f32 y) {
+        mScale.x = x;
+        mScale.y = y;
+    }
+
+    f32 GetCursorX() const {
+        return mCursorPos.x;
+    }
+    void SetCursorX(f32 x) {
+        mCursorPos.x = x;
+    }
+
+    f32 GetCursorY() const {
+        return mCursorPos.y;
+    }
+    void SetCursorY(f32 y) {
+        mCursorPos.y = y;
+    }
+
+    void SetCursor(f32 x, f32 y) {
+        mCursorPos.x = x;
+        mCursorPos.y = y;
+    }
+    void SetCursor(f32 x, f32 y, f32 z) {
+        mCursorPos.x = x;
+        mCursorPos.y = y;
+        mCursorPos.z = z;
+    }
+
+    void MoveCursorX(f32 dx) {
+        mCursorPos.x += dx;
+    }
+    void MoveCursorY(f32 dy) {
+        mCursorPos.y += dy;
+    }
+
+    void SetAlpha(u8 alpha) {
+        mAlpha = alpha;
+        UpdateVertexColor();
+    }
+    u8 GetAlpha() const {
+        return mAlpha;
+    }
+
+    void EnableFixedWidth(bool enable) {
+        mIsWidthFixed = enable;
+    }
+    bool IsWidthFixed() const {
+        return mIsWidthFixed;
+    }
+
+    void SetFixedWidth(f32 width) {
+        mFixedWidth = width;
+    }
+    f32 GetFixedWidth() const {
+        return mFixedWidth;
+    }
+
+    void SetFont(const Font& rFont) {
+        mFont = &rFont;
+    }
+    const Font* GetFont() const {
+        return mFont;
+    }
+
+    void SetFontSize(f32 width, f32 height);
+    void SetFontSize(f32 height);
+
+    f32 GetFontWidth() const;
+    f32 GetFontHeight() const;
+    f32 GetFontAscent() const;
+    f32 GetFontDescent() const;
+
+private:
+    struct ColorMapping {
+        Color min; // at 0x0
+        Color max; // at 0x4
+    };
+
+    struct VertexColor {
+        Color lu; // at 0x0
+        Color ru; // at 0x4
+        Color ld; // at 0x8
+        Color rd; // at 0xC
+    };
+
+    struct TextColor {
+        Color start;                 // at 0x0
+        Color end;                   // at 0x4
+        GradationMode gradationMode; // at 0x8
+    };
+
+    struct TextureFilter {
+        GXTexFilter atSmall; // at 0x0
+        GXTexFilter atLarge; // at 0x4
+
+        bool operator!=(const TextureFilter& rOther) const {
+            return atSmall != rOther.atSmall || atLarge != rOther.atLarge;
+        }
+    };
+
+    struct LoadingTexture {
+        GXTexMapID slot;      // at 0x0
+        void* texture;        // at 0x4
+        TextureFilter filter; // at 0x8
+
+        bool operator!=(const LoadingTexture& rOther) const {
+            return slot != rOther.slot || texture != rOther.texture ||
+                   filter != rOther.filter;
+        }
+
+        void Reset() {
+            slot = GX_TEXMAP_NULL;
+            texture = NULL;
+        }
+    };
+
+    static const u32 DEFAULT_COLOR_MAPPING_MIN = 0x00000000;
+    static const u32 DEFAULT_COLOR_MAPPING_MAX = 0xFFFFFFFF;
+
+private:
+    static void SetupVertexFormat();
+    static void SetupGXDefault();
+    static void SetupGXWithColorMapping(Color min, Color max);
+    static void SetupGXForI();
+    static void SetupGXForRGBA();
+
+    void UpdateVertexColor();
+
+    void DrawGlyph(const Glyph& glyph);
+    void PrintGlyph(f32 x, f32 y, f32 z, const Glyph& rGlyph);
+
+    void LoadTexture(const Glyph& rGlyph, GXTexMapID slot);
+    void ResetTextureCache() {
+        mLoadingTexture.Reset();
+    }
+
+private:
+    ColorMapping mColorMapping;   // at 0x0
+    VertexColor mVertexColor;     // at 0x8
+    TextColor mTextColor;         // at 0x18
+    math::VEC2 mScale;            // at 0x24
+    math::VEC3 mCursorPos;        // at 0x2C
+    TextureFilter mFilter;        // at 0x38
+    u8 PADDING_0x40[0x42 - 0x40]; // at 0x40
+    u8 mAlpha;                    // at 0x42
+    bool mIsWidthFixed;           // at 0x43
+    f32 mFixedWidth;              // at 0x44
+    const Font* mFont;            // at 0x48
+
+    static LoadingTexture mLoadingTexture;
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_CharWriter.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 5 "nw4r/ut/ut_Color.h" */
+/* end "nw4r/ut/ut_Color.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 6 "nw4r/ut/ut_DvdFileStream.h" */
+#ifndef NW4R_UT_DVD_FILE_STREAM_H
+#define NW4R_UT_DVD_FILE_STREAM_H
+/* "libs/nw4r/include/nw4r/ut/ut_DvdFileStream.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_DvdFileStream.h" line 4 "nw4r/ut/ut_FileStream.h" */
+#ifndef NW4R_UT_FILE_STREAM_H
+#define NW4R_UT_FILE_STREAM_H
+/* "libs/nw4r/include/nw4r/ut/ut_FileStream.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_FileStream.h" line 4 "nw4r/ut/ut_IOStream.h" */
+#ifndef NW4R_UT_IO_STREAM_H
+#define NW4R_UT_IO_STREAM_H
+/* "libs/nw4r/include/nw4r/ut/ut_IOStream.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_IOStream.h" line 4 "nw4r/ut/ut_RuntimeTypeInfo.h" */
+#ifndef NW4R_UT_RUNTIME_TYPE_INFO_H
+#define NW4R_UT_RUNTIME_TYPE_INFO_H
+/* "libs/nw4r/include/nw4r/ut/ut_RuntimeTypeInfo.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace ut {
+namespace detail {
+
+/******************************************************************************
+ *
+ * RuntimeTypeInfo
+ *
+ ******************************************************************************/
+struct RuntimeTypeInfo {
+    explicit RuntimeTypeInfo(const RuntimeTypeInfo* pBase)
+        : mParentTypeInfo(pBase) {}
+
+    bool IsDerivedFrom(const RuntimeTypeInfo* pInfo) const {
+        for (const RuntimeTypeInfo* pIt = this; pIt != NULL;
+             pIt = pIt->mParentTypeInfo) {
+
+            if (pIt == pInfo) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    const RuntimeTypeInfo* mParentTypeInfo; // at 0x0
+};
+
+template <typename T>
+inline const RuntimeTypeInfo* GetTypeInfoFromPtr_(T* /* pPtr */) {
+    return &T::typeInfo;
+}
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * DynamicCast
+ *
+ ******************************************************************************/
+template <typename TDerived, typename TBase>
+inline TDerived DynamicCast(TBase* pPtr) {
+    const detail::RuntimeTypeInfo* pDerivedTypeInfo =
+        detail::GetTypeInfoFromPtr_(static_cast<TDerived>(NULL));
+
+    // Downcast only if possible
+    if (pPtr->GetRuntimeTypeInfo()->IsDerivedFrom(pDerivedTypeInfo)) {
+        return static_cast<TDerived>(pPtr);
+    }
+
+    return NULL;
+}
+
+} // namespace ut
+} // namespace nw4r
+
+/******************************************************************************
+ *
+ * Macros
+ *
+ ******************************************************************************/
+/**
+ * Declare type RTTI and accessor function.
+ */
+#define NW4R_UT_RTTI_DECL(T)                                                   \
+    virtual const nw4r::ut::detail::RuntimeTypeInfo* GetRuntimeTypeInfo()      \
+        const {                                                                \
+        return &typeInfo;                                                      \
+    }                                                                          \
+                                                                               \
+    static nw4r::ut::detail::RuntimeTypeInfo typeInfo;
+
+/**
+ * Define type RTTI (base type).
+ */
+#define NW4R_UT_RTTI_DEF_BASE(T)                                               \
+    nw4r::ut::detail::RuntimeTypeInfo T::typeInfo(NULL)
+
+/**
+ * Define type RTTI (derived type).
+ */
+#define NW4R_UT_RTTI_DEF_DERIVED(T, BASE)                                      \
+    nw4r::ut::detail::RuntimeTypeInfo T::typeInfo(&BASE::typeInfo)
+
+#endif
+/* end "nw4r/ut/ut_RuntimeTypeInfo.h" */
+
+namespace nw4r {
+namespace ut {
+
+extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
+
+class IOStream {
+public:
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
+
+    typedef void (*StreamCallback)(s32 result, IOStream* pStream,
+                                   void* pCallbackArg);
+
+public:
+    IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
+    virtual ~IOStream(); // at 0xC
+
+    virtual void Close() = 0; // at 0x10
+
+    virtual s32 Read(void* pDst, u32 size) = 0; // at 0x14
+    virtual bool ReadAsync(void* pDst, u32 size, StreamCallback pCallback,
+                           void* pCallbackArg); // at 0x18
+
+    virtual bool Write(const void* pSrc, u32 size); // at 0x1C
+    virtual bool WriteAsync(const void* pSrc, u32 size,
+                            StreamCallback pCallback,
+                            void* pCallbackArg); // at 0x20
+
+    virtual bool IsBusy() const; // at 0x24
+
+    virtual bool CanAsync() const = 0; // at 0x28
+    virtual bool CanRead() const = 0;  // at 0x2C
+    virtual bool CanWrite() const = 0; // at 0x30
+
+    virtual u32 GetOffsetAlign() const; // at 0x34
+    virtual u32 GetSizeAlign() const; // at 0x38
+    virtual u32 GetBufferAlign() const; // at 0x3C
+
+    bool IsAvailable() const {
+        return mAvailable;
+    }
+
+protected:
+    bool mAvailable;          // at 0x4
+    s32 mAsyncResult;         // at 0x8
+    StreamCallback mCallback; // at 0xC
+    void* mArg;               // at 0x10
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_IOStream.h" */
+
+namespace nw4r {
+namespace ut {
+
+extern "C" detail::RuntimeTypeInfo lbl_eu_80665548;
+
+class FileStream : public IOStream {
+public:
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
+        return &lbl_eu_80665548;
+    }
+
+    enum SeekOrigin { SEEK_ORIGIN_BEG, SEEK_ORIGIN_CUR, SEEK_ORIGIN_END };
+
+public:
+    FileStream() {}
+    virtual ~FileStream() {} // at 0xC
+
+    virtual u32 GetSize() const = 0; // at 0x40
+
+    virtual void Seek(s32 offset, u32 origin); // at 0x44
+
+    virtual void Cancel(); // at 0x48
+    virtual bool CancelAsync(StreamCallback pCallback,
+                             void* pCallbackArg); // at 0x4C
+
+    virtual bool CanSeek() const = 0;   // at 0x50
+    virtual bool CanCancel() const = 0; // at 0x54
+
+    virtual u32 Tell() const = 0; // at 0x58
+
+protected:
+    class FilePosition {
+    public:
+        FilePosition() : mFileSize(0), mPosition(0) {}
+
+        u32 GetFileSize() const {
+            return mFileSize;
+        }
+        void SetFileSize(u32 size) {
+            mFileSize = size;
+        }
+
+        u32 Tell() const {
+            return mPosition;
+        }
+
+        u32 Skip(s32 offset);
+        u32 Append(s32 offset);
+        void Seek(s32 offset, u32 origin);
+
+    private:
+        u32 mFileSize; // at 0x0
+        u32 mPosition; // at 0x4
+    };
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_FileStream.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_DvdFileStream.h" line 6 "revolution/DVD.h" */
+/**
+ * References: WiiBrew, YAGCD
+ */
+
+#ifndef RVL_SDK_PUBLIC_DVD_H
+#define RVL_SDK_PUBLIC_DVD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/DVD.h" line 10 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/DVD.h" line 11 "revolution/DVD/dvd_broadway.h" */
+#ifndef RVL_SDK_DVD_BROADWAY_H
+#define RVL_SDK_DVD_BROADWAY_H
+/* "libs/RVL_SDK/include/revolution/DVD/dvd_broadway.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define DVD_LOW_OFFSET(x) ((x) >> 2)
+#define DVD_LOW_SPEED(x) (((x) & 3) << 16)
+
+// Forward declarations
+typedef struct DVDDiskID;
+typedef struct DVDDriveInfo;
+typedef struct ESTicket;
+typedef struct ESTicketView;
+typedef struct ESTitleMeta;
+typedef struct OSAlarm;
+typedef struct DVDVideoReportKey;
+
+typedef enum {
+    DVD_INTTYPE_TC = (1 << 0),   // Transaction callback?
+    DVD_INTTYPE_DE = (1 << 1),   // Drive error
+    DVD_INTTYPE_CVR = (1 << 2),  // Something with DVD cover
+    DVD_INTTYPE_BR = (1 << 3),   // Break requested
+    DVD_INTTYPE_TIME = (1 << 4), // Time out
+    DVD_INTTYPE_SERR = (1 << 5), // Security error
+    DVD_INTTYPE_VERR = (1 << 6), // Verify error
+    DVD_INTTYPE_ARGS = (1 << 7), // Bad arguments
+} DVDLowIntType;
+
+// DICVR - DI Cover Register (via DVDLowGetCoverRegister)
+#define DVD_DICVR_CVR (1 << 0)
+#define DVD_DICVR_CVRINTMASK (1 << 1)
+#define DVD_DICVR_CVRINT (1 << 2)
+
+typedef void (*DVDLowCallback)(u32 intType);
+
+BOOL DVDLowInit(void);
+BOOL DVDLowReadDiskID(struct DVDDiskID* out, DVDLowCallback callback);
+//BOOL DVDLowOpenPartition(u32 offset, const ESTicket* ticket, u32 certsSize,
+//                         const void* certs, ESTitleMeta* tmd,
+//                         DVDLowCallback callback);
+BOOL DVDLowOpenPartitionWithTmdAndTicketView(const u32, const struct ESTicketView* const, const u32,
+                                             const struct ESTitleMeta* const, const u32, const u8* const,
+                                             DVDLowCallback);
+BOOL DVDLowGetNoDiscBufferSizes(const u32 offset, u32* numTmdBytes, u32* numCertBytes, DVDLowCallback callback);
+BOOL DVDLowGetNoDiscOpenPartitionParams(const u32 offset, struct ESTicket* eTicket, u32* numTmdBytes,
+                                        struct ESTitleMeta* tmd, u32* numCertBytes, u8* certificates, u32* dataWordOffset,
+                                        u8* h3HashPtr, DVDLowCallback callback);
+BOOL DVDLowOpenPartition(const u32, const struct ESTicket* const, const u32,
+                         const u8* const, struct ESTitleMeta *, DVDLowCallback);
+BOOL DVDLowClosePartition(DVDLowCallback callback);
+BOOL DVDLowUnencryptedRead(void* dst, u32 size, u32 offset,
+                           DVDLowCallback callback);
+BOOL DVDLowStopMotor(BOOL eject, BOOL kill, DVDLowCallback callback);
+BOOL DVDLowInquiry(struct DVDDriveInfo* out, DVDLowCallback callback);
+BOOL DVDLowRequestError(DVDLowCallback callback);
+BOOL DVDLowSetSpinupFlag(BOOL enable);
+BOOL DVDLowReset(DVDLowCallback callback);
+BOOL DVDLowAudioBufferConfig(BOOL enable, u32 size, DVDLowCallback callback);
+BOOL DVDLowSetMaximumRotation(u32 speed, DVDLowCallback callback);
+BOOL DVDLowRead(void* dst, u32 size, u32 offset, DVDLowCallback callback);
+BOOL DVDLowSeek(u32 offset, DVDLowCallback callback);
+u32 DVDLowGetCoverRegister(void);
+BOOL DVDLowPrepareCoverRegister(DVDLowCallback callback);
+u32 DVDLowGetImmBufferReg(void);
+BOOL DVDLowUnmaskStatusInterrupts(void);
+BOOL DVDLowMaskCoverInterrupt(void);
+BOOL DVDLowClearCoverInterrupt(DVDLowCallback callback);
+BOOL __DVDLowTestAlarm(const struct OSAlarm* alarm);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/DVD/dvd_broadway.h" */
+/* "libs/RVL_SDK/include/revolution/DVD.h" line 12 "revolution/DVD/dvdDeviceError.h" */
+#ifndef RVL_SDK_DVD_DEVICE_ERROR_H
+#define RVL_SDK_DVD_DEVICE_ERROR_H
+/* "libs/RVL_SDK/include/revolution/DVD/dvdDeviceError.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+BOOL __DVDCheckDevice(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/DVD/dvdDeviceError.h" */
+/* "libs/RVL_SDK/include/revolution/DVD.h" line 13 "revolution/DVD/dvderror.h" */
+#ifndef RVL_SDK_DVD_ERROR_H
+#define RVL_SDK_DVD_ERROR_H
+/* "libs/RVL_SDK/include/revolution/DVD/dvderror.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void (*DVDErrorCallback)(s32 result, s32 arg1);
+
+#define DVD_ERROR_CMD_MAX 5
+
+typedef struct DVDErrorInfo {
+    char game[4]; // at 0x0
+    u8 disk;      // at 0x4
+    u8 version;   // at 0x5
+    u32 error;    // at 0x8
+    s32 sec;      // at 0xC
+    u32 disr;     // at 0x10
+    u32 dicr;     // at 0x14
+    u32 next;     // at 0x18
+
+    struct {
+        u32 command; // at 0x1C
+        u32 param1;  // at 0x20
+        u32 param2;  // at 0x24
+        u32 intType; // at 0x28
+        u32 tick;    // at 0x2C
+    } info[DVD_ERROR_CMD_MAX];
+} DVDErrorInfo;
+
+extern DVDErrorInfo __ErrorInfo;
+
+void __DVDStoreErrorCode(u32 error, DVDErrorCallback callback);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/DVD/dvderror.h" */
+/* "libs/RVL_SDK/include/revolution/DVD.h" line 14 "revolution/DVD/dvdfatal.h" */
+#ifndef RVL_SDK_DVD_FATAL_H
+#define RVL_SDK_DVD_FATAL_H
+/* "libs/RVL_SDK/include/revolution/DVD/dvdfatal.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void __DVDShowFatalMessage(void);
+BOOL DVDSetAutoFatalMessaging(BOOL enable);
+BOOL __DVDGetAutoFatalMessaging(void);
+void __DVDPrintFatalMessage(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/DVD/dvdfatal.h" */
+/* "libs/RVL_SDK/include/revolution/DVD.h" line 15 "revolution/DVD/dvdfs.h" */
+#ifndef RVL_SDK_DVD_FS_H
+#define RVL_SDK_DVD_FS_H
+/* "libs/RVL_SDK/include/revolution/DVD/dvdfs.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/DVD/dvdfs.h" line 4 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+
+/* "libs/RVL_SDK/include/revolution/DVD/dvdfs.h" line 6 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern OSThreadQueue __DVDThreadQueue;
+extern BOOL __DVDLongFileNameFlag;
+
+void __DVDFSInit(void);
+s32 DVDConvertPathToEntrynum(const char* path);
+BOOL DVDFastOpen(s32 entrynum, DVDFileInfo* info);
+BOOL DVDOpen(const char* path, DVDFileInfo* info);
+BOOL DVDClose(DVDFileInfo* info);
+BOOL DVDGetCurrentDir(char* buffer, u32 maxlen);
+BOOL DVDReadAsyncPrio(DVDFileInfo* info, void* dst, s32 size, s32 offset,
+                      DVDAsyncCallback callback, s32 prio);
+s32 DVDReadPrio(DVDFileInfo* info, void* dst, s32 size, s32 offset, s32 prio);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/DVD/dvdfs.h" */
+/* "libs/RVL_SDK/include/revolution/DVD.h" line 16 "revolution/DVD/dvdidutils.h" */
+#ifndef RVL_SDK_DVD_ID_UTILS_H
+#define RVL_SDK_DVD_ID_UTILS_H
+/* "libs/RVL_SDK/include/revolution/DVD/dvdidutils.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/DVD/dvdidutils.h" line 4 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+BOOL DVDCompareDiskID(const DVDDiskID* id1, const DVDDiskID* id2);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/DVD/dvdidutils.h" */
+/* "libs/RVL_SDK/include/revolution/DVD.h" line 17 "revolution/DVD/dvdqueue.h" */
+#ifndef RVL_SDK_DVD_QUEUE_H
+#define RVL_SDK_DVD_QUEUE_H
+/* "libs/RVL_SDK/include/revolution/DVD/dvdqueue.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/DVD/dvdqueue.h" line 4 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    DVD_PRIO_HIGHEST,
+    DVD_PRIO_HIGH,
+    DVD_PRIO_MEDIUM,
+    DVD_PRIO_LOW,
+
+    DVD_PRIO_MAX,
+} DVDQueuePriority;
+
+void __DVDClearWaitingQueue(void);
+BOOL __DVDPushWaitingQueue(s32 prio, DVDCommandBlock* block);
+DVDCommandBlock* __DVDPopWaitingQueue(void);
+BOOL __DVDCheckWaitingQueue(void);
+DVDCommandBlock* __DVDGetNextWaitingQueue(void);
+BOOL __DVDDequeueWaitingQueue(const DVDCommandBlock* block);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/DVD/dvdqueue.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/DVD.h" */
+
+namespace nw4r {
+namespace ut {
+
+class DvdFileStream : public FileStream {
+public:
+    NW4R_UT_RTTI_DECL(DvdFileStream);
+
+public:
+    explicit DvdFileStream(s32 entrynum);
+    DvdFileStream(const DVDFileInfo* pInfo, bool close);
+    virtual ~DvdFileStream(); // at 0xC
+
+    bool Open(s32 entrynum);
+    bool Open(const DVDFileInfo* pInfo, bool close);
+
+    void SetPriority(s32 priority) {
+        mPriority = priority;
+    }
+
+    virtual void Close(); // at 0x10
+
+    virtual s32 Read(void* pDst, u32 size); // at 0x14
+    virtual bool ReadAsync(void* pDst, u32 size, StreamCallback pCallback,
+                           void* pCallbackArg); // at 0x18
+
+    virtual s32 Peek(void* pDst, u32 size); // at 0x5C
+    virtual bool PeekAsync(void* pDst, u32 size, StreamCallback pCallback,
+                           void* pCallbackArg); // at 0x60
+
+    virtual void Seek(s32 offset, u32 origin); // at 0x44
+
+    virtual void Cancel(); // at 0x48
+    virtual bool CancelAsync(StreamCallback pCallback,
+                             void* pCallbackArg); // at 0x4C
+
+    virtual bool IsBusy() const {
+        return mIsBusy;
+    } // at 0x24
+
+    virtual u32 Tell() const {
+        return mFilePosition.Tell();
+    } // at 0x58
+    virtual u32 GetSize() const {
+        return mFilePosition.GetFileSize();
+    } // at 0x40
+
+    virtual bool CanAsync() const {
+        return true;
+    } // at 0x28
+    virtual bool CanSeek() const {
+        return true;
+    } // at 0x50
+    virtual bool CanRead() const {
+        return true;
+    } // at 0x2C
+    virtual bool CanWrite() const {
+        return false;
+    } // at 0x30
+    virtual bool CanCancel() const {
+        return true;
+    } // at 0x54
+
+    virtual u32 GetOffsetAlign() const {
+        return 4;
+    } // at 0x34
+    virtual u32 GetSizeAlign() const {
+        return 32;
+    } // at 0x38
+    virtual u32 GetBufferAlign() const {
+        return 32;
+    } // at 0x3C
+
+private:
+    struct DvdFileStreamInfo {
+        DVDFileInfo dvdInfo;   // at 0x0
+        DvdFileStream* stream; // at 0x3C
+    };
+
+private:
+    static void DvdAsyncCallback_(s32 result, DVDFileInfo* pInfo);
+    static void DvdCBAsyncCallback_(s32 result, DVDCommandBlock* pBlock);
+
+    void Initialize_();
+    u32 AdjustReadLength_(u32 len);
+
+private:
+    FilePosition mFilePosition;     // at 0x14
+    StreamCallback mCancelCallback; // at 0x1C
+    void* mCancelArg;               // at 0x20
+    volatile bool mIsCanceling;     // at 0x24
+    DvdFileStreamInfo mFileInfo;    // at 0x28
+    s32 mPriority;                  // at 0x68
+    volatile bool mIsBusy;          // at 0x6C
+    bool mCloseOnDestroyFlg;        // at 0x6D
+    bool mCloseEnableFlg;           // at 0x6E
+};
+
+} // namespace ut
+} // namespace nw4r
+#endif
+/* end "nw4r/ut/ut_DvdFileStream.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 7 "nw4r/ut/ut_DvdLockedFileStream.h" */
+#ifndef NW4R_UT_DVD_LOCKED_FILE_STREAM_H
+#define NW4R_UT_DVD_LOCKED_FILE_STREAM_H
+/* "libs/nw4r/include/nw4r/ut/ut_DvdLockedFileStream.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_DvdLockedFileStream.h" line 4 "nw4r/ut/ut_DvdFileStream.h" */
+/* end "nw4r/ut/ut_DvdFileStream.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_DvdLockedFileStream.h" line 6 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+
+namespace nw4r {
+namespace ut {
+
+class DvdLockedFileStream : public DvdFileStream {
+public:
+    NW4R_UT_RTTI_DECL(DvdLockedFileStream);
+
+public:
+    explicit DvdLockedFileStream(s32 entrynum);
+    DvdLockedFileStream(const DVDFileInfo* pInfo, bool close);
+    virtual ~DvdLockedFileStream(); // at 0xC
+
+    virtual s32 Read(void* pDst, u32 size); // at 0x14
+
+    virtual bool ReadAsync(void* /* pDst */, u32 /* size */,
+                           StreamCallback /* pCallback */,
+                           void* /* pCallbackArg */) {
+
+        return false;
+    } // at 0x18
+
+    virtual s32 Peek(void* pDst, u32 size); // at 0x5C
+
+    virtual bool PeekAsync(void* /* pDst */, u32 /* size */,
+                           StreamCallback /* pCallback */,
+                           void* /* pCallbackArg */) {
+
+        return false;
+    } // at 0x60
+
+    virtual bool CanAsync() const {
+        return false;
+    } // at 0x28
+
+private:
+    static void InitMutex_();
+
+private:
+    bool mCancelFlag; // at 0x6F
+
+    static bool sInitialized;
+    static OSMutex sMutex;
+};
+
+} // namespace ut
+} // namespace nw4r
+#endif
+/* end "nw4r/ut/ut_DvdLockedFileStream.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 8 "nw4r/ut/ut_FileStream.h" */
+/* end "nw4r/ut/ut_FileStream.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 9 "nw4r/ut/ut_Font.h" */
+#ifndef NW4R_UT_FONT_H
+#define NW4R_UT_FONT_H
+/* "libs/nw4r/include/nw4r/ut/ut_Font.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_Font.h" line 4 "nw4r/ut/ut_CharStrmReader.h" */
+/* end "nw4r/ut/ut_CharStrmReader.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_Font.h" line 6 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace ut {
+
+enum FontEncoding {
+    FONT_ENCODING_UTF8,
+    FONT_ENCODING_UTF16,
+    FONT_ENCODING_SJIS,
+    FONT_ENCODING_CP1252,
+
+    FONT_ENCODING_MAX
+};
+
+struct CharWidths {
+    s8 left;       // at 0x0
+    u8 glyphWidth; // at 0x1
+    s8 charWidth;  // at 0x2
+};
+
+struct Glyph {
+    void* pTexture;     // at 0x0
+    CharWidths widths;  // at 0x4
+    u8 height;          // at 0x7
+    GXTexFmt texFormat; // at 0x8
+    u16 texWidth;       // at 0xC
+    u16 texHeight;      // at 0xE
+    u16 cellX;          // at 0x10
+    u16 cellY;          // at 0x12
+};
+
+/******************************************************************************
+ *
+ * Font
+ *
+ ******************************************************************************/
+class Font {
+public:
+    enum Type { TYPE_NULL, TYPE_ROM, TYPE_RESOURCE, TYPE_PAIR };
+
+public:
+    Font() : mReadFunc(&CharStrmReader::ReadNextCharCP1252) {}
+    virtual ~Font() {} // at 0x8
+
+    virtual int GetWidth() const = 0;  // at 0xC
+    virtual int GetHeight() const = 0; // at 0x10
+
+    virtual int GetAscent() const = 0;      // at 0x14
+    virtual int GetDescent() const = 0;     // at 0x18
+    virtual int GetBaselinePos() const = 0; // at 0x1C
+
+    virtual int GetCellHeight() const = 0;   // at 0x20
+    virtual int GetCellWidth() const = 0;    // at 0x24
+    virtual int GetMaxCharWidth() const = 0; // at 0x28
+
+    virtual Type GetType() const = 0;              // at 0x2C
+    virtual GXTexFmt GetTextureFormat() const = 0; // at 0x30
+    virtual int GetLineFeed() const = 0;           // at 0x34
+
+    virtual CharWidths GetDefaultCharWidths() const = 0;              // at 0x38
+    virtual void SetDefaultCharWidths(const CharWidths& rWidths) = 0; // at 0x3C
+
+    virtual bool SetAlternateChar(u16 ch) = 0; // at 0x40
+    virtual void SetLineFeed(int lf) = 0;      // at 0x44
+
+    virtual int GetCharWidth(u16 ch) const = 0;             // at 0x48
+    virtual CharWidths GetCharWidths(u16 ch) const = 0;     // at 0x4C
+    virtual void GetGlyph(Glyph* pGlyph, u16 ch) const = 0; // at 0x50
+    virtual bool HasGlyph(u16 ch) const = 0;                // at 0x54
+    virtual FontEncoding GetEncoding() const = 0;           // at 0x58
+
+    void InitReaderFunc(FontEncoding encode);
+
+    CharStrmReader GetCharStrmReader() const {
+        return CharStrmReader(mReadFunc);
+    }
+
+private:
+    CharStrmReader::ReadFunc mReadFunc; // at 0x4
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_Font.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 10 "nw4r/ut/ut_IOStream.h" */
+/* end "nw4r/ut/ut_IOStream.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 11 "nw4r/ut/ut_LinkList.h" */
+#ifndef NW4R_UT_LINK_LIST_H
+#define NW4R_UT_LINK_LIST_H
+/* "libs/nw4r/include/nw4r/ut/ut_LinkList.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_LinkList.h" line 4 "nw4r/ut/ut_NonCopyable.h" */
+#ifndef NW4R_UT_NON_COPYABLE_H
+#define NW4R_UT_NON_COPYABLE_H
+/* "libs/nw4r/include/nw4r/ut/ut_NonCopyable.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace ut {
+namespace {
+
+class NonCopyable {
+protected:
+    NonCopyable() {}
+    NonCopyable(const NonCopyable& /* rOther */) {}
+    ~NonCopyable() {}
+};
+
+} // namespace
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_NonCopyable.h" */
+
+namespace nw4r {
+namespace ut {
+
+// Forward declarations
+namespace detail {
+class LinkListImpl;
+} // namespace detail
+
+/******************************************************************************
+ *
+ * Linked list node
+ *
+ ******************************************************************************/
+class LinkListNode : private NonCopyable {
+    friend class detail::LinkListImpl;
+
+public:
+    LinkListNode() {}
+
+    void Init() {
+        mNext = NULL;
+        mPrev = NULL;
+    }
+
+    LinkListNode* GetNext() const {
+        return mNext;
+    }
+    LinkListNode* GetPrev() const {
+        return mPrev;
+    }
+
+private:
+    LinkListNode* mNext; // at 0x0
+    LinkListNode* mPrev; // at 0x4
+};
+
+namespace detail {
+
+/******************************************************************************
+ *
+ * Linked list implementation
+ *
+ ******************************************************************************/
+class LinkListImpl : private NonCopyable {
+public:
+    // Forward declarations
+    class ConstIterator;
+
+    /******************************************************************************
+     * Iterator implementation
+     ******************************************************************************/
+    class Iterator {
+        friend class LinkListImpl;
+        friend class ConstIterator;
+
+    public:
+        Iterator() : mNode(NULL) {}
+        explicit Iterator(LinkListNode* pNode) : mNode(pNode) {}
+
+        Iterator& operator++() {
+            mNode = mNode->GetNext();
+            return *this;
+        }
+
+        Iterator& operator--() {
+            mNode = mNode->GetPrev();
+            return *this;
+        }
+
+        LinkListNode* operator->() const {
+            return mNode;
+        }
+
+        friend bool operator==(LinkListImpl::Iterator lhs,
+                               LinkListImpl::Iterator rhs) {
+            return lhs.mNode == rhs.mNode;
+        }
+
+    private:
+        LinkListNode* mNode; // at 0x0
+    };
+
+    /******************************************************************************
+     * Iterator implementation (const-view)
+     ******************************************************************************/
+    class ConstIterator {
+        friend class LinkListImpl;
+
+    public:
+        explicit ConstIterator(Iterator it) : mNode(it.mNode) {}
+
+        ConstIterator& operator++() {
+            mNode = mNode->GetNext();
+            return *this;
+        }
+
+        ConstIterator& operator--() {
+            mNode = mNode->GetPrev();
+            return *this;
+        }
+
+        const LinkListNode* operator->() const {
+            return mNode;
+        }
+
+        friend bool operator==(LinkListImpl::ConstIterator lhs,
+                               LinkListImpl::ConstIterator rhs) {
+            return lhs.mNode == rhs.mNode;
+        }
+
+    private:
+        LinkListNode* mNode; // at 0x0
+    };
+
+protected:
+    static Iterator GetIteratorFromPointer(LinkListNode* pNode) {
+        return Iterator(pNode);
+    }
+
+    LinkListImpl() {
+        Initialize_();
+    }
+    ~LinkListImpl();
+
+    Iterator GetBeginIter() {
+        return Iterator(mNode.GetNext());
+    }
+    Iterator GetEndIter() {
+        return Iterator(&mNode);
+    }
+
+    Iterator Insert(Iterator it, LinkListNode* pNode);
+
+    Iterator Erase(Iterator it);
+    Iterator Erase(LinkListNode* pNode);
+    Iterator Erase(Iterator begin, Iterator end);
+
+public:
+    u32 GetSize() const {
+        return mSize;
+    }
+    bool IsEmpty() const {
+        return mSize == 0;
+    }
+
+    void PopFront() {
+        Erase(GetBeginIter());
+    }
+    void PopBack() {
+        Erase(--GetEndIter());
+    }
+
+    void Clear();
+
+private:
+    void Initialize_() {
+        mSize = 0;
+        mNode.mNext = &mNode;
+        mNode.mPrev = &mNode;
+    }
+
+private:
+    u32 mSize;          // at 0x0
+    LinkListNode mNode; // at 0x4
+};
+
+/******************************************************************************
+ *
+ * Reverse iterator
+ *
+ ******************************************************************************/
+template <typename TIter> class ReverseIterator {
+public:
+    explicit ReverseIterator(TIter it) : mCurrent(it) {}
+
+    TIter GetBase() const {
+        return mCurrent;
+    }
+
+    ReverseIterator& operator++() {
+        --mCurrent;
+        return *this;
+    }
+
+    const typename TIter::TElem* operator->() const {
+        return &this->operator*();
+    }
+
+    typename TIter::TElem& operator*() const {
+        TIter it = mCurrent;
+        return *--it;
+    }
+
+    friend bool operator==(const ReverseIterator& rLhs,
+                           const ReverseIterator& rRhs) {
+        return rLhs.mCurrent == rRhs.mCurrent;
+    }
+
+    friend bool operator!=(const ReverseIterator& rLhs,
+                           const ReverseIterator& rRhs) {
+        return !(rLhs.mCurrent == rRhs.mCurrent);
+    }
+
+private:
+    TIter mCurrent; // at 0x0
+};
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * Templated linked list
+ *
+ ******************************************************************************/
+template <typename T, int Ofs> class LinkList : public detail::LinkListImpl {
+public:
+    // Forward declarations
+    class ConstIterator;
+
+    /******************************************************************************
+     * Templated iterator
+     ******************************************************************************/
+    class Iterator {
+        friend class LinkList;
+        friend class ConstIterator;
+
+    public:
+        // Element type must be visible to ReverseIterator
+        typedef T TElem;
+
+    public:
+        Iterator() : mIterator(NULL) {}
+        explicit Iterator(LinkListImpl::Iterator it) : mIterator(it) {}
+
+        Iterator& operator++() {
+            ++mIterator;
+            return *this;
+        }
+
+        Iterator& operator--() {
+            --mIterator;
+            return *this;
+        }
+
+        Iterator operator++(int) {
+            Iterator ret = *this;
+            ++*this;
+            return ret;
+        }
+
+        T* operator->() const {
+            return GetPointerFromNode(mIterator.operator->());
+        }
+
+        T& operator*() const {
+            return *this->operator->();
+        }
+
+        friend bool operator==(Iterator lhs, Iterator rhs) {
+            return lhs.mIterator == rhs.mIterator;
+        }
+
+        friend bool operator!=(Iterator lhs, Iterator rhs) {
+            return !(lhs == rhs);
+        }
+
+    private:
+        LinkListImpl::Iterator mIterator; // at 0x0
+    };
+
+    /******************************************************************************
+     * Templated iterator (const-view)
+     ******************************************************************************/
+    class ConstIterator {
+        friend class LinkList;
+
+    public:
+        // Element type must be visible to ReverseIterator
+        typedef T TElem;
+
+    public:
+        explicit ConstIterator(LinkListImpl::Iterator it) : mIterator(it) {}
+        explicit ConstIterator(Iterator it) : mIterator(it.mIterator) {}
+
+        ConstIterator& operator++() {
+            ++mIterator;
+            return *this;
+        }
+
+        ConstIterator& operator--() {
+            --mIterator;
+            return *this;
+        }
+
+        ConstIterator operator++(int) {
+            ConstIterator ret = *this;
+            ++*this;
+            return ret;
+        }
+
+        const T* operator->() const {
+            return GetPointerFromNode(mIterator.operator->());
+        }
+
+        const T& operator*() const {
+            return *this->operator->();
+        }
+
+        friend bool operator==(ConstIterator lhs, ConstIterator rhs) {
+            return lhs.mIterator == rhs.mIterator;
+        }
+
+        friend bool operator!=(ConstIterator lhs, ConstIterator rhs) {
+            return !(lhs == rhs);
+        }
+
+    private:
+        LinkListImpl::ConstIterator mIterator; // at 0x0
+    };
+
+public:
+    // Shorthand names for reverse iterator types
+    typedef detail::ReverseIterator<Iterator> RevIterator;
+    typedef detail::ReverseIterator<ConstIterator> ConstRevIterator;
+
+public:
+    LinkList() {}
+
+    Iterator GetBeginIter() {
+        return Iterator(LinkListImpl::GetBeginIter());
+    }
+    ConstIterator GetBeginIter() const {
+        return ConstIterator(const_cast<LinkList*>(this)->GetBeginIter());
+    }
+    RevIterator GetBeginReverseIter() {
+        return RevIterator(GetBeginIter());
+    }
+    ConstRevIterator GetBeginReverseIter() const {
+        return ConstRevIterator(GetBeginIter());
+    }
+
+    Iterator GetEndIter() {
+        return Iterator(LinkListImpl::GetEndIter());
+    }
+    ConstIterator GetEndIter() const {
+        return ConstIterator(const_cast<LinkList*>(this)->GetEndIter());
+    }
+    RevIterator GetEndReverseIter() {
+        return RevIterator(GetEndIter());
+    }
+    ConstRevIterator GetEndReverseIter() const {
+        return ConstRevIterator(GetEndIter());
+    }
+
+    Iterator Insert(Iterator it, T* pElem) {
+        return Iterator(
+            LinkListImpl::Insert(it.mIterator, GetNodeFromPointer(pElem)));
+    }
+
+    Iterator Erase(T* pElem) {
+        return Iterator(LinkListImpl::Erase(GetNodeFromPointer(pElem)));
+    }
+    Iterator Erase(Iterator it) {
+        return Iterator(LinkListImpl::Erase(it.mIterator));
+    }
+
+    void PushBack(T* pElem) {
+        Insert(GetEndIter(), pElem);
+    }
+
+    T& GetFront() {
+        return *GetBeginIter();
+    }
+    const T& GetFront() const {
+        return *GetBeginIter();
+    }
+
+    T& GetBack() {
+        return *--GetEndIter();
+    }
+    const T& GetBack() const {
+        return *--GetEndIter();
+    }
+
+    static Iterator GetIteratorFromPointer(T* pElem) {
+        return GetIteratorFromPointer(GetNodeFromPointer(pElem));
+    }
+
+    static Iterator GetIteratorFromPointer(LinkListNode* pNode) {
+        return Iterator(LinkListImpl::GetIteratorFromPointer(pNode));
+    }
+
+    static LinkListNode* GetNodeFromPointer(T* pElem) {
+        return reinterpret_cast<LinkListNode*>(reinterpret_cast<char*>(pElem) +
+                                               Ofs);
+    }
+
+    static T* GetPointerFromNode(LinkListNode* pNode) {
+        return reinterpret_cast<T*>(reinterpret_cast<char*>(pNode) - Ofs);
+    }
+
+    static const T* GetPointerFromNode(const LinkListNode* pNode) {
+        return reinterpret_cast<const T*>(reinterpret_cast<const char*>(pNode) -
+                                          Ofs);
+    }
+};
+
+} // namespace ut
+} // namespace nw4r
+
+/******************************************************************************
+ *
+ * Macros
+ *
+ ******************************************************************************/
+/**
+ * Declare typedef for linked-list specialization.
+ */
+#define NW4R_UT_LINKLIST_TYPEDEF_DECL(T)                                       \
+    typedef nw4r::ut::LinkList<T, offsetof(T, node)> T##List;
+
+/**
+ * Declare typedef for linked-list specialization.
+ *
+ * Use the specified link node (name suffix) for classes with multiple nodes.
+ */
+#define NW4R_UT_LINKLIST_TYPEDEF_DECL_EX(T, SUFFIX)                            \
+    typedef nw4r::ut::LinkList<T, offsetof(T, node##SUFFIX)> T##SUFFIX##List;
+
+/**
+ * Declare a member LinkListNode for use with the typedef.
+ */
+#define NW4R_UT_LINKLIST_NODE_DECL() nw4r::ut::LinkListNode node
+
+/**
+ * Declare a member LinkListNode for use with the typedef.
+ *
+ * Use the specified link node (name suffix) for classes with multiple nodes.
+ */
+#define NW4R_UT_LINKLIST_NODE_DECL_EX(SUFFIX)                                  \
+    nw4r::ut::LinkListNode node##SUFFIX
+
+/**
+ * Explicitly instantiate a linked list specialization.
+ * (RESERVED FOR MATCHING DECOMP HACKS)
+ */
+#if !defined(NONMATCHING)
+#define NW4R_UT_LINKLIST_TYPEDEF_FORCE(T)                                      \
+    template struct nw4r::ut::LinkList<T, offsetof(T, node)>
+#else
+#define NW4R_UT_LINKLIST_TYPEDEF_FORCE(T)
+#endif
+
+/**
+ * Linked-list for-each macro.
+ *
+ * @param NAME Element name
+ * @param LIST Reference to list
+ * @param ... Statement(s) to execute
+ */
+#define NW4R_UT_LINKLIST_FOREACH(NAME, LIST, ...)                              \
+    {                                                                          \
+        typedef DECLTYPE((LIST).GetBeginIter()) IterType;                      \
+                                                                               \
+        for (IterType NAME = (LIST).GetBeginIter();                            \
+             NAME != (LIST).GetEndIter(); ++NAME) {                            \
+                                                                               \
+            __VA_ARGS__;                                                       \
+        }                                                                      \
+    }
+
+/**
+ * List for-each macro, with robust iteration.
+ *
+ * @param NAME Element name
+ * @param LIST Reference to list
+ * @param ... Statement(s) to execute
+ */
+#define NW4R_UT_LINKLIST_FOREACH_SAFE(NAME, LIST, ...)                         \
+    {                                                                          \
+        typedef DECLTYPE((LIST).GetBeginIter()) IterType;                      \
+                                                                               \
+        for (IterType __impl__ = (LIST).GetBeginIter();                        \
+             __impl__ != (LIST).GetEndIter();) {                               \
+                                                                               \
+            IterType NAME = __impl__++;                                        \
+            __VA_ARGS__;                                                       \
+        }                                                                      \
+    }
+
+#endif
+/* end "nw4r/ut/ut_LinkList.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 12 "nw4r/ut/ut_LockedCache.h" */
+#ifndef NW4R_UT_LOCKED_CACHE_H
+#define NW4R_UT_LOCKED_CACHE_H
+/* "libs/nw4r/include/nw4r/ut/ut_LockedCache.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_LockedCache.h" line 4 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+
+namespace nw4r {
+namespace ut {
+namespace LC {
+
+void Enable();
+void Disable();
+
+bool Lock();
+void Unlock();
+
+void LoadBlocks(void* pDst, void* pSrc, u32 blocks);
+void StoreBlocks(void* pDst, void* pSrc, u32 blocks);
+void StoreData(void* pDst, void* pSrc, u32 size);
+
+inline void* GetBase() {
+    return reinterpret_cast<void*>(OS_CACHE_BASE);
+}
+
+inline void QueueWait(u32 len) {
+    LCQueueWait(len);
+}
+
+inline void QueueWaitEx(u32 len) {
+    while (LCQueueLength() != len) {
+        OSYieldThread();
+    }
+}
+
+} // namespace LC
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_LockedCache.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 13 "nw4r/ut/ut_NandFileStream.h" */
+#ifndef NW4R_UT_NAND_FILE_STREAM_H
+#define NW4R_UT_NAND_FILE_STREAM_H
+/* "libs/nw4r/include/nw4r/ut/ut_NandFileStream.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_NandFileStream.h" line 4 "nw4r/ut/ut_FileStream.h" */
+/* end "nw4r/ut/ut_FileStream.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_NandFileStream.h" line 6 "revolution/NAND.h" */
+/**
+ * References: WiiBrew
+ */
+
+#ifndef RVL_SDK_PUBLIC_NAND_H
+#define RVL_SDK_PUBLIC_NAND_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/NAND.h" line 10 "revolution/NAND/NANDCheck.h" */
+#ifndef RVL_SDK_NAND_CHECK_H
+#define RVL_SDK_NAND_CHECK_H
+/* "libs/RVL_SDK/include/revolution/NAND/NANDCheck.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/NAND/NANDCheck.h" line 4 "revolution/NAND/nand.h" */
+#ifndef RVL_SDK_NAND_H
+#define RVL_SDK_NAND_H
+/* "libs/RVL_SDK/include/revolution/NAND/nand.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/NAND/nand.h" line 4 "revolution/FS.h" */
+/**
+ * References: WiiBrew
+ */
+
+#ifndef RVL_SDK_PUBLIC_FS_H
+#define RVL_SDK_PUBLIC_FS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/FS.h" line 10 "revolution/FS/fs.h" */
+#ifndef RVL_SDK_FS_H
+#define RVL_SDK_FS_H
+/* "libs/RVL_SDK/include/revolution/FS/fs.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/FS/fs.h" line 4 "revolution/IPC.h" */
+/**
+ * References: WiiBrew, Dolphin Emulator, fail0verflow
+ */
+
+#ifndef RVL_SDK_PUBLIC_IPC_H
+#define RVL_SDK_PUBLIC_IPC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 10 "revolution/IPC/ipcMain.h" */
+#ifndef RVL_SDK_IPC_MAIN_H
+#define RVL_SDK_IPC_MAIN_H
+/* "libs/RVL_SDK/include/revolution/IPC/ipcMain.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/IPC/ipcMain.h" line 4 "revolution/IPC/ipcHardware.h" */
+#ifndef RVL_SDK_IPC_HARDWARE_H
+#define RVL_SDK_IPC_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/IPC/ipcHardware.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * IPC hardware registers
+ */
+volatile u32 DECL_HW_REGS(IPC_PPC) DECL_ADDRESS(0xCD000000);
+volatile u32 DECL_HW_REGS(IPC) DECL_ADDRESS(0xCD800000);
+
+/**
+ * Hardware register indexes
+ */
+// clang-format off
+#define LIST_OF_REGS                                                           \
+    X(IPC_PPCMSG,      0xCD000000)                                             \
+    X(IPC_PPCCTRL,     0xCD000004)                                             \
+    X(IPC_ARMMSG,      0xCD000008)                                             \
+    X(IPC_ARMCTRL,     0xCD00000C)                                             \
+    X(TIMER,           0xCD000010)                                             \
+    X(ALARM,           0xCD000014)                                             \
+    X(PPCIRQFLAG,      0xCD000030)                                             \
+    X(PPCIRQMASK,      0xCD000034)                                             \
+    X(ARMIRQFLAG,      0xCD000038)                                             \
+    X(ARMIRQMASK,      0xCD00003C)                                             \
+    X(MEMMIRR,         0xCD000060)                                             \
+    X(AHBPROT,         0xCD000064)                                             \
+    X(EXICTRL,         0xCD000070)                                             \
+    X(GPIO1BOUT,       0xCD0000C0)                                             \
+    X(GPIO1BDIR,       0xCD0000C4)                                             \
+    X(GPIO1BIN,        0xCD0000C8)                                             \
+    X(GPIO1BINTLVL,    0xCD0000CC)                                             \
+    X(GPIO1BINTFLAG,   0xCD0000D0)                                             \
+    X(GPIO1BINTENABLE, 0xCD0000D4)                                             \
+    X(GPIO1BINMIR,     0xCD0000D8)                                             \
+    X(GPIO1ENABLE,     0xCD0000DC)                                             \
+    X(GPIO1OUT,        0xCD0000E0)                                             \
+    X(GPIO1DIR,        0xCD0000E4)                                             \
+    X(GPIO1IN,         0xCD0000E8)                                             \
+    X(GPIO1INTLVL,     0xCD0000EC)                                             \
+    X(GPIO1INTFLAG,    0xCD0000F0)                                             \
+    X(GPIO1INTENABLE,  0xCD0000F4)                                             \
+    X(GPIO1INMIR,      0xCD0000F8)                                             \
+    X(GPIO1OWNER,      0xCD0000FC)                                             \
+    X(DIFLAGS,         0xCD000180)                                             \
+    X(RESETS,          0xCD000194)                                             \
+    X(CLOCKS,          0xCD0001B4)                                             \
+    X(GPIO2OUT,        0xCD0001C8)                                             \
+    X(GPIO2DIR,        0xCD0001CC)                                             \
+    X(GPIO2IN,         0xCD0001D0)                                             \
+    X(OTPCMD,          0xCD0001EC)                                             \
+    X(OTPDATA,         0xCD0001F0)                                             \
+    X(VERSION,         0xCD000214)
+// clang-format on
+
+/**
+ * Hardware register indexes (IPC)
+ */
+#define X(NAME, ADDR) IPC_##NAME = (ADDR - 0xCD000000) / 4,
+typedef enum { LIST_OF_REGS } IPCHwReg;
+#undef X
+
+/**
+ * Hardware register indexes (ACR)
+ */
+#define X(NAME, ADDR) ACR_##NAME = (ADDR - 0xCD000000),
+typedef enum { LIST_OF_REGS } ACRHwReg;
+#undef X
+
+/**
+ * GPIO register flags
+ */
+typedef enum {
+    GPIO_POWER = (1 << 0),
+    GPIO_SHUTDOWN = (1 << 1),
+    GPIO_FAN = (1 << 2),
+    GPIO_DCDC = (1 << 3),
+    GPIO_DISPIN = (1 << 4),
+    GPIO_SLOTLED = (1 << 5),
+    GPIO_EJECTBTN = (1 << 6),
+    GPIO_SLOTIN = (1 << 7),
+    GPIO_SENSORBAR = (1 << 8),
+    GPIO_DOEJECT = (1 << 9),
+    GPIO_EEP_CS = (1 << 10),
+    GPIO_EEP_CLK = (1 << 11),
+    GPIO_EEP_MOSI = (1 << 12),
+    GPIO_EEP_MISO = (1 << 13),
+    GPIO_AVE_SCL = (1 << 14),
+    GPIO_AVE_SDA = (1 << 15),
+    GPIO_DEBUG0 = (1 << 16),
+    GPIO_DEBUG1 = (1 << 17),
+    GPIO_DEBUG2 = (1 << 18),
+    GPIO_DEBUG3 = (1 << 19),
+    GPIO_DEBUG4 = (1 << 20),
+    GPIO_DEBUG5 = (1 << 21),
+    GPIO_DEBUG6 = (1 << 22),
+    GPIO_DEBUG7 = (1 << 23),
+} GPIOFlag;
+
+#undef LIST_OF_REGS
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/ipcHardware.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+inline u32 ACRReadReg(u32 reg) {
+    return IPC_PPC_HW_REGS[reg / 4];
+}
+
+inline void ACRWriteReg(u32 reg, u32 val) {
+    IPC_PPC_HW_REGS[reg / 4] = val;
+}
+
+void IPCInit(void);
+void IPCReInit(void);
+u32 IPCReadReg(s32 index);
+void IPCWriteReg(s32 index, u32 value);
+void* IPCGetBufferHi(void);
+void* IPCGetBufferLo(void);
+void IPCSetBufferLo(void* lo);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/ipcMain.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 11 "revolution/IPC/ipcProfile.h" */
+#ifndef RVL_SDK_IPC_PROFILE_H
+#define RVL_SDK_IPC_PROFILE_H
+/* "libs/RVL_SDK/include/revolution/IPC/ipcProfile.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/IPC/ipcProfile.h" line 4 "revolution/IPC/ipcclt.h" */
+#ifndef RVL_SDK_IPC_CLT_H
+#define RVL_SDK_IPC_CLT_H
+/* "libs/RVL_SDK/include/revolution/IPC/ipcclt.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/IPC/ipcclt.h" line 4 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    IPC_RESULT_FATAL_ERROR = -119,
+    IPC_RESULT_BUSY,
+    IPC_RESULT_NOTEMPTY = -115,
+    IPC_RESULT_ECC_CRIT,
+    IPC_RESULT_OPENFD = -111,
+    IPC_RESULT_MAXFD = -109,
+    IPC_RESULT_MAXBLOCKS,
+    IPC_RESULT_MAXFILES,
+    IPC_RESULT_NOEXISTS,
+    IPC_RESULT_EXISTS,
+    IPC_RESULT_CORRUPT = -103,
+    IPC_RESULT_ACCESS,
+    IPC_RESULT_INVALID,
+
+    IPC_RESULT_ALLOC_FAILED = -22,
+    IPC_RESULT_ECC_CRIT_INTERNAL = -12,
+    IPC_RESULT_BUSY_INTERNAL = -8,
+    IPC_RESULT_NOEXISTS_INTERNAL = -6,
+    IPC_RESULT_CONN_MAX_INTERNAL = -5,
+    IPC_RESULT_INVALID_INTERNAL = -4,
+    IPC_RESULT_EXISTS_INTERNAL = -2,
+    IPC_RESULT_ACCESS_INTERNAL = -1,
+
+    IPC_RESULT_OK = 0
+} IPCResult;
+
+typedef enum {
+    IPC_REQ_NONE,
+    IPC_REQ_OPEN,
+    IPC_REQ_CLOSE,
+    IPC_REQ_READ,
+    IPC_REQ_WRITE,
+    IPC_REQ_SEEK,
+    IPC_REQ_IOCTL,
+    IPC_REQ_IOCTLV
+} IPCRequestType;
+
+typedef enum {
+    // Ioctl
+    IPC_IOCTL_GET_NAND_STATS = 2,
+    IPC_IOCTL_CREATE_DIR = 3,
+    IPC_IOCTL_READ_DIR = 4,
+    IPC_IOCTL_GET_ATTR = 6,
+    IPC_IOCTL_DELETE_PATH = 7,
+    IPC_IOCTL_RENAME_PATH = 8,
+    IPC_IOCTL_CREATE_FILE = 9,
+    IPC_IOCTL_GET_FILE_STATS = 11,
+    IPC_IOCTL_SHUTDOWN_FS = 13,
+    IPC_IOCTL_REG_STM_EVENT = 0x1000,
+    IPC_IOCTL_HOT_RESET = 0x2001,
+    IPC_IOCTL_SHUTDOWN_TO_SBY = 0x2003,
+    IPC_IOCTL_UNREG_STM_EVENT = 0x3002,
+    IPC_IOCTL_SET_VI_DIM = 0x5001,
+    IPC_IOCTL_SET_IDLE_LED_MODE = 0x6002,
+
+    // Ioctlv
+    IPC_IOCTLV_LAUNCH_TITLE = 8,
+    IPC_IOCTLV_GET_USAGE = 12,
+    IPC_IOCTLV_GET_NUM_TICKET_VIEWS = 18,
+    IPC_IOCTLV_GET_TICKET_VIEWS = 19,
+    IPC_IOCTLV_GET_DATA_DIR = 29,
+    IPC_IOCTLV_GET_TITLE_ID = 32,
+} IPCIoctlType;
+
+typedef enum {
+    IPC_OPEN_NONE = 0,
+    IPC_OPEN_READ = (1 << 0),
+    IPC_OPEN_WRITE = (1 << 1),
+    IPC_OPEN_RW = IPC_OPEN_READ | IPC_OPEN_WRITE
+} IPCOpenMode;
+
+typedef enum {
+    IPC_SEEK_BEG,
+    IPC_SEEK_CUR,
+    IPC_SEEK_END,
+} IPCSeekMode;
+
+typedef s32 (*IPCAsyncCallback)(s32 result, void* arg);
+
+typedef struct IPCIOVector {
+    void* base; // at 0x0
+    u32 length; // at 0x4
+} IPCIOVector;
+
+typedef struct IPCOpenArgs {
+    const char* path; // at 0x0
+    IPCOpenMode mode; // at 0x4
+} IPCOpenArgs;
+
+typedef struct IPCReadWriteArgs {
+    void* data; // at 0x0
+    u32 length; // at 0x4
+} IPCReadWriteArgs;
+
+typedef struct IPCSeekArgs {
+    s32 offset;       // at 0x0
+    IPCSeekMode mode; // at 0x4
+} IPCSeekArgs;
+
+typedef struct IPCIoctlArgs {
+    s32 type;    // at 0x0
+    void* in;    // at 0x4
+    s32 inSize;  // at 0x8
+    void* out;   // at 0xC
+    s32 outSize; // at 0x10
+} IPCIoctlArgs;
+
+typedef struct IPCIoctlvArgs {
+    s32 type;             // at 0x0
+    u32 inCount;          // at 0x4
+    u32 outCount;         // at 0x8
+    IPCIOVector* vectors; // at 0xC
+} IPCIoctlvArgs;
+
+typedef struct IPCRequest {
+    IPCRequestType type; // at 0x0
+    s32 ret;             // at 0x4
+    s32 fd;              // at 0x8
+    union {
+        IPCOpenArgs open;
+        IPCReadWriteArgs rw;
+        IPCSeekArgs seek;
+        IPCIoctlArgs ioctl;
+        IPCIoctlvArgs ioctlv;
+    }; // at 0xC
+} IPCRequest;
+
+typedef struct IPCRequestEx {
+    IPCRequest base;           // at 0x0
+    IPCAsyncCallback callback; // at 0x20
+    void* callbackArg;         // at 0x24
+    BOOL reboot;               // at 0x28
+    OSThreadQueue queue;       // at 0x2C
+    char padding[64 - 0x34];
+} IPCRequestEx;
+
+s32 IPCCltInit(void);
+s32 IPCCltReInit(void);
+s32 IOS_OpenAsync(const char* path, IPCOpenMode mode, IPCAsyncCallback callback,
+                  void* callbackArg);
+s32 IOS_Open(const char* path, IPCOpenMode mode);
+s32 IOS_CloseAsync(s32 fd, IPCAsyncCallback callback, void* callbackArg);
+s32 IOS_Close(s32 fd);
+s32 IOS_ReadAsync(s32 fd, void* buf, s32 len, IPCAsyncCallback callback,
+                  void* callbackArg);
+s32 IOS_Read(s32 fd, void* buf, s32 len);
+s32 IOS_WriteAsync(s32 fd, const void* buf, s32 len, IPCAsyncCallback callback,
+                   void* callbackArg);
+s32 IOS_Write(s32 fd, const void* buf, s32 len);
+s32 IOS_SeekAsync(s32 fd, s32 offset, IPCSeekMode mode,
+                  IPCAsyncCallback callback, void* callbackArg);
+s32 IOS_Seek(s32 fd, s32 offset, IPCSeekMode mode);
+s32 IOS_IoctlAsync(s32 fd, s32 type, void* in, s32 inSize, void* out,
+                   s32 outSize, IPCAsyncCallback callback, void* callbackArg);
+s32 IOS_Ioctl(s32 fd, s32 type, void* in, s32 inSize, void* out, s32 outSize);
+s32 IOS_IoctlvAsync(s32 fd, s32 type, s32 inCount, s32 outCount,
+                    IPCIOVector* vectors, IPCAsyncCallback callback,
+                    void* callbackArg);
+s32 IOS_Ioctlv(s32 fd, s32 type, s32 inCount, s32 outCount,
+               IPCIOVector* vectors);
+s32 IOS_IoctlvReboot(s32 fd, s32 type, s32 inCount, s32 outCount,
+                     IPCIOVector* vectors);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/ipcclt.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void IPCiProfInit(void);
+void IPCiProfQueueReq(IPCRequestEx* req, s32 fd);
+void IPCiProfAck(void);
+void IPCiProfReply(IPCRequestEx* req, s32 fd);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/ipcProfile.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 12 "revolution/IPC/ipcclt.h" */
+/* end "revolution/IPC/ipcclt.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 13 "revolution/IPC/memory.h" */
+#ifndef RVL_SDK_IPC_MEMORY_H
+#define RVL_SDK_IPC_MEMORY_H
+/* "libs/RVL_SDK/include/revolution/IPC/memory.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+s32 iosCreateHeap(void* base, u32 size);
+void* iosAllocAligned(s32 handle, u32 size, u32 align);
+s32 iosFree(s32 handle, void* block);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/memory.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define FS_MAX_PATH 64
+
+typedef void (*FSAsyncCallback)(s32 result, void* arg);
+
+typedef struct FSStats {
+    char UNK_0x0[0x1C];
+} FSStats;
+
+// Could be more fields, but not larger than 32B
+typedef struct FSFileStats {
+    u32 length;   // at 0x0
+    u32 position; // at 0x4
+} FSFileStats ALIGN(32);
+
+s32 ISFS_OpenLib(void);
+s32 ISFS_CreateDir(const char* path, u32 attr, u32 ownerPerm, u32 groupPerm,
+                   u32 otherPerm);
+s32 ISFS_CreateDirAsync(const char* path, u32 attr, u32 ownerPerm,
+                        u32 groupPerm, u32 otherPerm, FSAsyncCallback callback,
+                        void* callbackArg);
+s32 ISFS_ReadDir(const char* path, char* filesOut, u32* fileCountOut);
+s32 ISFS_ReadDirAsync(const char* path, char* filesOut, u32* fileCountOut,
+                      FSAsyncCallback callback, void* callbackArg);
+s32 ISFS_GetAttr(const char* path, u32* ownerIdOut, u16* groupIdOut,
+                 u32* attrOut, u32* ownerPermOut, u32* groupPermOut,
+                 u32* otherPermOut);
+s32 ISFS_GetAttrAsync(const char* path, u32* ownerIdOut, u16* groupIdOut,
+                      u32* attrOut, u32* ownerPermOut, u32* groupPermOut,
+                      u32* otherPermOut, FSAsyncCallback callback,
+                      void* callbackArg);
+s32 ISFS_Delete(const char* path);
+s32 ISFS_DeleteAsync(const char* path, FSAsyncCallback callback,
+                     void* callbackArg);
+s32 ISFS_Rename(const char* from, const char* to);
+s32 ISFS_RenameAsync(const char* from, const char* to, FSAsyncCallback callback,
+                     void* callbackArg);
+s32 ISFS_GetUsage(const char* path, s32* blockCountOut, s32* fileCountOut);
+s32 ISFS_CreateFile(const char* path, u32 attr, u32 ownerPerm, u32 groupPerm,
+                    u32 otherPerm);
+s32 ISFS_CreateFileAsync(const char* path, u32 attr, u32 ownerPerm,
+                         u32 groupPerm, u32 otherPerm, FSAsyncCallback callback,
+                         void* callbackArg);
+s32 ISFS_Open(const char* path, IPCOpenMode mode);
+s32 ISFS_OpenAsync(const char* path, IPCOpenMode mode, FSAsyncCallback callback,
+                   void* callbackArg);
+s32 ISFS_GetFileStats(s32 fd, FSFileStats* statsOut);
+s32 ISFS_GetFileStatsAsync(s32 fd, FSFileStats* statsOut,
+                           FSAsyncCallback callback, void* callbackArg);
+s32 ISFS_Seek(s32 fd, s32 offset, IPCSeekMode mode);
+s32 ISFS_SeekAsync(s32 fd, s32 offset, IPCSeekMode mode,
+                   FSAsyncCallback callback, void* callbackArg);
+s32 ISFS_Read(s32 fd, void* dst, s32 len);
+s32 ISFS_ReadAsync(s32 fd, void* dst, s32 len, FSAsyncCallback callback,
+                   void* callbackArg);
+s32 ISFS_Write(s32 fd, const void* src, s32 len);
+s32 ISFS_WriteAsync(s32 fd, const void* src, s32 len, FSAsyncCallback callback,
+                    void* callbackArg);
+s32 ISFS_Close(s32 fd);
+s32 ISFS_CloseAsync(s32 fd, FSAsyncCallback callback, void* callbackArg);
+s32 ISFS_ShutdownAsync(FSAsyncCallback callback, void* callbackArg);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/FS/fs.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/FS.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define NAND_BANNER_TITLE_MAX 32
+#define NAND_BANNER_ICON_MAX_FRAME 8
+
+// Forward declarations
+struct NANDCommandBlock;
+
+typedef enum {
+    NAND_RESULT_FATAL_ERROR = -128,
+    NAND_RESULT_UNKNOWN = -64,
+
+    NAND_RESULT_MAXDEPTH = -16,
+    NAND_RESULT_AUTHENTICATION,
+    NAND_RESULT_OPENFD,
+    NAND_RESULT_NOTEMPTY,
+    NAND_RESULT_NOEXISTS,
+    NAND_RESULT_MAXFILES,
+    NAND_RESULT_MAXFD,
+    NAND_RESULT_MAXBLOCKS,
+    NAND_RESULT_INVALID,
+
+    NAND_RESULT_EXISTS = -6,
+    NAND_RESULT_ECC_CRIT,
+    NAND_RESULT_CORRUPT,
+    NAND_RESULT_BUSY,
+    NAND_RESULT_ALLOC_FAILED,
+    NAND_RESULT_ACCESS,
+
+    NAND_RESULT_OK,
+} NANDResult;
+
+typedef enum {
+    NAND_SEEK_BEG,
+    NAND_SEEK_CUR,
+    NAND_SEEK_END,
+} NANDSeekMode;
+
+typedef enum {
+    NAND_ACCESS_NONE,
+    NAND_ACCESS_READ,
+    NAND_ACCESS_WRITE,
+    NAND_ACCESS_RW
+} NANDAccessType;
+
+typedef enum {
+    NAND_FILE_TYPE_NONE,
+    NAND_FILE_TYPE_FILE,
+    NAND_FILE_TYPE_DIR,
+} NANDFileType;
+
+typedef enum {
+    // Read/write by owner
+    NAND_PERM_RUSR = (NAND_ACCESS_READ << 4),
+    NAND_PERM_WUSR = (NAND_ACCESS_WRITE << 4),
+    // Read/write by group
+    NAND_PERM_RGRP = (NAND_ACCESS_READ << 2),
+    NAND_PERM_WGRP = (NAND_ACCESS_WRITE << 2),
+    // Read/write by other
+    NAND_PERM_ROTH = (NAND_ACCESS_READ << 0),
+    NAND_PERM_WOTH = (NAND_ACCESS_WRITE << 0),
+    // Read/write by all
+    NAND_PERM_RALL = NAND_PERM_RUSR | NAND_PERM_RGRP | NAND_PERM_ROTH,
+    NAND_PERM_WALL = NAND_PERM_WUSR | NAND_PERM_WGRP | NAND_PERM_WOTH,
+    NAND_PERM_RWALL = NAND_PERM_RALL | NAND_PERM_WALL
+} NANDPermission;
+
+typedef void (*NANDAsyncCallback)(s32 result, struct NANDCommandBlock* block);
+
+typedef struct NANDStatus {
+    u32 ownerId; // at 0x0
+    u16 groupId; // at 0x4
+    u8 attr;     // at 0x6
+    u8 perm;     // at 0x7
+} NANDStatus;
+
+typedef struct NANDFileInfo {
+    s32 fd;                     // at 0x0
+    s32 tempFd;                 // at 0x4
+    char openPath[FS_MAX_PATH]; // at 0x8
+    char tempPath[FS_MAX_PATH]; // at 0x48
+    u8 access;                  // at 0x88
+    u8 stage;                   // at 0x89
+    u8 mark;                    // at 0x8A
+} NANDFileInfo;
+
+typedef struct NANDCommandBlock {
+    void* userData;             // at 0x0
+    NANDAsyncCallback callback; // at 0x4
+    NANDFileInfo* info;         // at 0x8
+    void* bytes;                // at 0xC
+    void* inodes;               // at 0x10
+    NANDStatus* status;         // at 0x14
+    u32 ownerId;                // at 0x18
+    u16 groupId;                // at 0x1C
+    u8 nextStage;               // at 0x1E
+    u32 attr;                   // at 0x20
+    u32 ownerPerm;              // at 0x24
+    u32 groupPerm;              // at 0x28
+    u32 otherPerm;              // at 0x2C
+    u32 dirFileCount;           // at 0x30
+    char path[FS_MAX_PATH];     // at 0x34
+    u32* length;                // at 0x74
+    u32* position;              // at 0x78
+    s32 state;                  // at 0x7C
+    void* buffer;               // at 0x80
+    u32 bufferSize;             // at 0x84
+    u8* type;                   // at 0x88
+    u32 uniqueNo;               // at 0x8C
+    u32 reqBlocks;              // at 0x90
+    u32 reqInodes;              // at 0x94
+    u32* answer;                // at 0x98
+    u32 homeBlocks;             // at 0x9C
+    u32 homeInodes;             // at 0xA0
+    u32 userBlocks;             // at 0xA4
+    u32 userInodes;             // at 0xA8
+    u32 workBlocks;             // at 0xAC
+    u32 workInodes;             // at 0xB0
+    const char** dir;           // at 0xB4
+    u32 unkB8; //TODO: necessary so that OSPlayRecord's bss is correct. might be fake?
+} NANDCommandBlock;
+
+typedef struct NANDBanner {
+    u32 magic;                                          // at 0x0
+    u32 flags;                                          // at 0x4
+    u16 iconSpeed;                                      // at 0x8
+    u8 reserved[0x20 - 0xA];                            // at 0xA
+    wchar_t title[NAND_BANNER_TITLE_MAX];               // at 0x20
+    wchar_t subtitle[NAND_BANNER_TITLE_MAX];            // at 0x60
+    u8 bannerTexture[0x6000];                           // at 0xA0
+    u8 iconTexture[0x1200][NAND_BANNER_ICON_MAX_FRAME]; // at 0x60A0
+} NANDBanner;
+
+s32 NANDCreate(const char* path, u8 perm, u8 attr);
+s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
+                    NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr);
+s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
+                           NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDDelete(const char* path);
+s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
+                    NANDCommandBlock* block);
+s32 NANDPrivateDelete(const char* path);
+s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,
+                           NANDCommandBlock* block);
+
+s32 NANDRead(NANDFileInfo* info, void* buf, u32 len);
+s32 NANDReadAsync(NANDFileInfo* info, void* buf, u32 len,
+                  NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDWrite(NANDFileInfo* info, const void* buf, u32 len);
+s32 NANDWriteAsync(NANDFileInfo* info, const void* buf, u32 len,
+                   NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDSeek(NANDFileInfo* info, s32 offset, NANDSeekMode whence);
+s32 NANDSeekAsync(NANDFileInfo* info, s32 offset, NANDSeekMode whence,
+                  NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDReadDirAsync(const char* path, char* nameList, u32* num,
+                     NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDCreateDirAsync(const char* path, u8 perm, u8 attr,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDPrivateCreateDir(const char* path, u8 perm, u8 attr);
+s32 NANDPrivateCreateDirAsync(const char* path, u8 perm, u8 attr,
+                              NANDAsyncCallback callback,
+                              NANDCommandBlock* block);
+
+s32 NANDMove(const char* from, const char* to);
+s32 NANDMoveAsync(const char* from, const char* to, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
+
+s32 NANDGetLength(NANDFileInfo* info, u32* length);
+s32 NANDGetLengthAsync(NANDFileInfo* info, u32* lengthOut,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
+
+s32 NANDGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatusAsync(const char* path, NANDStatus* status,
+                              NANDAsyncCallback callback,
+                              NANDCommandBlock* block);
+
+void NANDSetUserData(NANDCommandBlock* block, void* data);
+void* NANDGetUserData(NANDCommandBlock* block);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/NAND/nand.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    NAND_CHECK_TOO_MANY_APP_BLOCKS = (1 << 0),
+    NAND_CHECK_TOO_MANY_APP_FILES = (1 << 1),
+    NAND_CHECK_TOO_MANY_USER_BLOCKS = (1 << 2),
+    NAND_CHECK_TOO_MANY_USER_FILES = (1 << 3),
+} NANDCheckFlags;
+
+s32 NANDCheck(u32 neededBlocks, u32 neededFiles, u32* answer);
+s32 NANDCheckAsync(u32 neededBlocks, u32 neededFiles, u32* answer,
+                   NANDAsyncCallback callback, NANDCommandBlock* block);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/NAND/NANDCheck.h" */
+/* "libs/RVL_SDK/include/revolution/NAND.h" line 11 "revolution/NAND/NANDCore.h" */
+#ifndef RVL_SDK_NAND_CORE_H
+#define RVL_SDK_NAND_CORE_H
+/* "libs/RVL_SDK/include/revolution/NAND/NANDCore.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/NAND/NANDCore.h" line 4 "revolution/NAND/nand.h" */
+/* end "revolution/NAND/nand.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void nandRemoveTailToken(char* newp, const char* oldp);
+void nandGetHeadToken(char* head, char* rest, const char* path);
+void nandGetRelativeName(char* name, const char* path);
+void nandConvertPath(char* abs, const char* dir, const char* rel);
+BOOL nandIsPrivatePath(const char* path);
+BOOL nandIsUnderPrivatePath(const char* path);
+BOOL nandIsInitialized(void);
+s32 nandConvertErrorCode(s32 result);
+void nandGenerateAbsPath(char* abs, const char* rel);
+s32 NANDInit(void);
+s32 NANDGetHomeDir(char* out);
+s32 nandChangeDir(const char* path, NANDCommandBlock* block, BOOL async,
+                  BOOL priv);
+void nandChangeDirCallback(s32 result, void* arg);
+s32 NANDChangeDirAsync(const char* path, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
+void nandCallback(s32 result, void* arg);
+s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
+                BOOL priv);
+void nandGetTypeCallback(s32 result, void* arg);
+BOOL nandOnShutdown(BOOL final, u32 event);
+void nandShutdownCallback(s32 result, void* arg);
+s32 NANDPrivateGetTypeAsync(const char* path, u8* type,
+                            NANDAsyncCallback callback,
+                            NANDCommandBlock* block);
+const char* nandGetHomeDir(void);
+void NANDInitBanner(NANDBanner* banner, u32 flags, const wchar_t* title,
+                    const wchar_t* subtitle);
+
+/* Absent from Xenoblade retail NANDCore.o; see NANDOpenClose.c extras. */
+void nandGetParentDirectory(char* dir, const char* path);
+s32 NANDGetCurrentDir(char* out);
+s32 NANDGetType(const char* path, u8* type);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/NAND/NANDCore.h" */
+/* "libs/RVL_SDK/include/revolution/NAND.h" line 12 "revolution/NAND/NANDOpenClose.h" */
+#ifndef RVL_SDK_NAND_OPEN_CLOSE_H
+#define RVL_SDK_NAND_OPEN_CLOSE_H
+/* "libs/RVL_SDK/include/revolution/NAND/NANDOpenClose.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/NAND/NANDOpenClose.h" line 4 "revolution/NAND/nand.h" */
+/* end "revolution/NAND/nand.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+s32 NANDOpen(const char* path, NANDFileInfo* info, u8 mode);
+s32 NANDPrivateOpen(const char* path, NANDFileInfo* info, u8 mode);
+s32 NANDOpenAsync(const char* path, NANDFileInfo* info, u8 mode,
+                  NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDPrivateOpenAsync(const char* path, NANDFileInfo* info, u8 mode,
+                         NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDClose(NANDFileInfo* info);
+s32 NANDCloseAsync(NANDFileInfo* info, NANDAsyncCallback callback,
+                   NANDCommandBlock* block);
+
+s32 NANDPrivateSafeOpenAsync(const char* path, NANDFileInfo* info, u8 access,
+                             void* buffer, u32 bufferSize,
+                             NANDAsyncCallback callback,
+                             NANDCommandBlock* block);
+s32 NANDSafeCloseAsync(NANDFileInfo* info, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/NAND/NANDOpenClose.h" */
+/* "libs/RVL_SDK/include/revolution/NAND.h" line 13 "revolution/NAND/nand.h" */
+/* end "revolution/NAND/nand.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/NAND.h" */
+
+namespace nw4r {
+namespace ut {
+
+class NandFileStream : public FileStream {
+public:
+    NW4R_UT_RTTI_DECL(NandFileStream);
+
+public:
+    NandFileStream(const char* pPath, u32 mode);
+    NandFileStream(const NANDFileInfo* pInfo, u32 mode, bool enableClose);
+    virtual ~NandFileStream(); // at 0xC
+
+    bool Open(const char* pPath, u32 mode);
+    bool Open(const NANDFileInfo* pInfo, u32 mode, bool enableClose)
+        DECOMP_DONT_INLINE;
+
+    virtual void Close(); // at 0x10
+
+    virtual s32 Read(void* pDst, u32 size); // at 0x14
+    virtual bool ReadAsync(void* pDst, u32 size, StreamCallback pCallback,
+                           void* pCallbackArg); // at 0x18
+
+    virtual bool Write(const void* pSrc, u32 size); // at 0x1C
+    virtual bool WriteAsync(const void* pSrc, u32 size,
+                            StreamCallback pCallback,
+                            void* pCallbackArg); // at 0x20
+
+    virtual void Seek(s32 offset, u32 origin); // at 0x44
+
+    virtual bool IsBusy() const {
+        return mIsBusy;
+    } // at 0x24
+
+    virtual u32 Tell() const {
+        return mFilePosition.Tell();
+    } // at 0x58
+    virtual u32 GetSize() const {
+        return mFilePosition.GetFileSize();
+    } // at 0x40
+
+    virtual bool CanAsync() const {
+        return true;
+    } // at 0x28
+    virtual bool CanSeek() const {
+        return true;
+    } // at 0x50
+    virtual bool CanRead() const {
+        return mCanRead;
+    } // at 0x2C
+    virtual bool CanWrite() const {
+        return mCanWrite;
+    } // at 0x30
+    virtual bool CanCancel() const {
+        return false;
+    } // at 0x54
+
+    virtual u32 GetOffsetAlign() const {
+        return 1;
+    } // at 0x34
+    virtual u32 GetSizeAlign() const {
+        return 32;
+    } // at 0x38
+    virtual u32 GetBufferAlign() const {
+        return 32;
+    } // at 0x3C
+
+private:
+    struct NandFileStreamInfo {
+        NANDCommandBlock nandBlock; // at 0x0
+        NANDFileInfo nandInfo;      // at 0xB8
+        NandFileStream* stream;     // at 0x144
+    };
+
+private:
+    static void NandAsyncCallback_(s32 result, NANDCommandBlock* pBlock);
+
+    void Initialize_();
+
+private:
+    FilePosition mFilePosition;   // at 0x14
+    NandFileStreamInfo mFileInfo; // at 0x1C
+    bool mCanRead;                // at 0x164
+    bool mCanWrite;               // at 0x165
+    volatile bool mIsBusy;        // at 0x166
+    bool mCloseOnDestroyFlg;      // at 0x167
+    bool mCloseEnableFlg;         // at 0x168
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_NandFileStream.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 14 "nw4r/ut/ut_NonCopyable.h" */
+/* end "nw4r/ut/ut_NonCopyable.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 15 "nw4r/ut/ut_Rect.h" */
+#ifndef NW4R_UT_RECT_H
+#define NW4R_UT_RECT_H
+/* "libs/nw4r/include/nw4r/ut/ut_Rect.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_Rect.h" line 4 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+namespace nw4r {
+namespace ut {
+
+struct Rect {
+    f32 left;   // at 0x0
+    f32 top;    // at 0x4
+    f32 right;  // at 0x8
+    f32 bottom; // at 0xC
+
+    Rect() : left(0.0f), top(0.0f), right(0.0f), bottom(0.0f) {}
+    Rect(f32 l, f32 t, f32 r, f32 b) : left(l), top(t), right(r), bottom(b) {}
+    ~Rect() {}
+
+    void SetWidth(f32 width) {
+        right = left + width;
+    }
+    f32 GetWidth() const {
+        return right - left;
+    }
+
+    void SetHeight(f32 height) {
+        bottom = top + height;
+    }
+    f32 GetHeight() const {
+        return bottom - top;
+    }
+
+    void Normalize() {
+        f32 l = left;
+        f32 t = top;
+        f32 r = right;
+        f32 b = bottom;
+
+        left = math::FSelect(r - l, l, r);   // min(r, l)
+        right = math::FSelect(r - l, r, l);  // max(r, l)
+        top = math::FSelect(b - t, t, b);    // min(b, t)
+        bottom = math::FSelect(b - t, b, t); // max(b, t)
+    }
+
+    void MoveTo(f32 x, f32 y) {
+        right = x + GetWidth();
+        left = x;
+        bottom = y + GetHeight();
+        top = y;
+    }
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_Rect.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 16 "nw4r/ut/ut_ResFont.h" */
+#ifndef NW4R_UT_RES_FONT_H
+#define NW4R_UT_RES_FONT_H
+/* "libs/nw4r/include/nw4r/ut/ut_ResFont.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_ResFont.h" line 4 "nw4r/ut/ut_ResFontBase.h" */
+#ifndef NW4R_UT_RES_FONT_BASE_H
+#define NW4R_UT_RES_FONT_BASE_H
+/* "libs/nw4r/include/nw4r/ut/ut_ResFontBase.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_ResFontBase.h" line 4 "nw4r/ut/ut_Font.h" */
+/* end "nw4r/ut/ut_Font.h" */
+
+namespace nw4r {
+namespace ut {
+
+enum FontMapMethod {
+    FONT_MAPMETHOD_DIRECT,
+    FONT_MAPMETHOD_TABLE,
+    FONT_MAPMETHOD_SCAN
+};
+
+struct FontTextureGlyph {
+    u8 cellWidth;    // at 0x0
+    u8 cellHeight;   // at 0x1
+    s8 baselinePos;  // at 0x2
+    u8 maxCharWidth; // at 0x3
+    u32 sheetSize;   // at 0x4
+    u16 sheetNum;    // at 0x8
+    u16 sheetFormat; // at 0xA
+    u16 sheetRow;    // at 0xC
+    u16 sheetLine;   // at 0xE
+    u16 sheetWidth;  // at 0x10
+    u16 sheetHeight; // at 0x12
+    u8* sheetImage;  // at 0x14
+};
+
+struct FontWidth {
+    u16 indexBegin;          // at 0x0
+    u16 indexEnd;            // at 0x2
+    FontWidth* pNext;        // at 0x4
+    CharWidths widthTable[]; // at 0x8
+};
+
+struct FontCodeMap {
+    u16 ccodeBegin;     // at 0x0
+    u16 ccodeEnd;       // at 0x2
+    u16 mappingMethod;  // at 0x4
+    u16 reserved;       // at 0x6
+    FontCodeMap* pNext; // at 0x8
+    u16 mapInfo[];      // at 0xC
+};
+
+struct FontInformation {
+    u8 fontType;              // at 0x0
+    s8 linefeed;              // at 0x1
+    u16 alterCharIndex;       // at 0x2
+    CharWidths defaultWidth;  // at 0x4
+    u8 encoding;              // at 0x7
+    FontTextureGlyph* pGlyph; // at 0x8
+    FontWidth* pWidth;        // at 0xC
+    FontCodeMap* pMap;        // at 0x10
+    u8 height;                // at 0x14
+    u8 width;                 // at 0x15
+    u8 ascent;                // at 0x16
+};
+
+namespace detail {
+
+/******************************************************************************
+ *
+ * ResFontBase
+ *
+ ******************************************************************************/
+class ResFontBase : public Font {
+public:
+    static const u16 GLYPH_INDEX_NOT_FOUND = 0xFFFF;
+
+public:
+    ResFontBase();
+    virtual ~ResFontBase(); // at 0x8
+
+    virtual int GetWidth() const;  // at 0xC
+    virtual int GetHeight() const; // at 0x10
+
+    virtual int GetAscent() const;      // at 0x14
+    virtual int GetDescent() const;     // at 0x18
+    virtual int GetBaselinePos() const; // at 0x1C
+
+    virtual int GetCellHeight() const;   // at 0x20
+    virtual int GetCellWidth() const;    // at 0x24
+    virtual int GetMaxCharWidth() const; // at 0x28
+
+    virtual Type GetType() const;              // at 0x2C
+    virtual GXTexFmt GetTextureFormat() const; // at 0x30
+    virtual int GetLineFeed() const;           // at 0x34
+
+    virtual CharWidths GetDefaultCharWidths() const;              // at 0x38
+    virtual void SetDefaultCharWidths(const CharWidths& rWidths); // at 0x3C
+
+    virtual bool SetAlternateChar(u16 ch); // at 0x40
+    virtual void SetLineFeed(int lf);      // at 0x44
+
+    virtual int GetCharWidth(u16 ch) const;             // at 0x48
+    virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
+    virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
+    virtual bool HasGlyph(u16 ch) const;                // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
+
+protected:
+    bool IsManaging(const void* pBuffer) const {
+        return mResource == pBuffer;
+    }
+
+    void SetResourceBuffer(void* pBuffer, FontInformation* pInfo);
+    void* RemoveResourceBuffer();
+
+private:
+    u16 GetGlyphIndex(u16 ch) const;
+
+    u16 FindGlyphIndex(u16 ch) const;
+    u16 FindGlyphIndex(const FontCodeMap* pMap, u16 ch) const;
+
+    const CharWidths& GetCharWidthsFromIndex(u16 index) const;
+    const CharWidths& GetCharWidthsFromIndex(const FontWidth* pWidth,
+                                             u16 index) const;
+
+    void GetGlyphFromIndex(Glyph* pGlyph, u16 index) const;
+
+private:
+    void* mResource;            // at 0x10
+    FontInformation* mFontInfo; // at 0x14
+    mutable u16 mLastCharCode;  // at 0x18
+    mutable u16 mLastGlyphIndex;// at 0x1A
+};
+
+} // namespace detail
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_ResFontBase.h" */
+
+namespace nw4r {
+namespace ut {
+
+// Forward declarations
+struct BinaryFileHeader;
+
+class ResFont : public detail::ResFontBase {
+public:
+    ResFont();
+    virtual ~ResFont(); // at 0x8
+
+    bool SetResource(void* pBuffer);
+
+private:
+    static FontInformation* Rebuild(BinaryFileHeader* pHeader);
+
+private:
+    static const u32 SIGNATURE = FOURCC('R', 'F', 'N', 'T');
+    static const u32 SIGNATURE_UNPACKED = FOURCC('R', 'F', 'N', 'U');
+
+    static const u32 SIGNATURE_FONTINFO = FOURCC('F', 'I', 'N', 'F');
+    static const u32 SIGNATURE_TEXGLYPH = FOURCC('T', 'G', 'L', 'P');
+    static const u32 SIGNATURE_CHARWIDTH = FOURCC('C', 'W', 'D', 'H');
+    static const u32 SIGNATURE_CHARMAP = FOURCC('C', 'M', 'A', 'P');
+
+    // TODO(kiwi) Which block is this?
+    static const u32 SIGNATURE_GLGR = FOURCC('G', 'L', 'G', 'R');
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_ResFont.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 17 "nw4r/ut/ut_ResFontBase.h" */
+/* end "nw4r/ut/ut_ResFontBase.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 18 "nw4r/ut/ut_RomFont.h" */
+#ifndef NW4R_UT_ROM_FONT_H
+#define NW4R_UT_ROM_FONT_H
+/* "libs/nw4r/include/nw4r/ut/ut_RomFont.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_RomFont.h" line 4 "nw4r/ut/ut_Font.h" */
+/* end "nw4r/ut/ut_Font.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_RomFont.h" line 6 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+
+namespace nw4r {
+namespace ut {
+
+class RomFont : public Font {
+public:
+    RomFont();
+    virtual ~RomFont(); // at 0x8
+
+    virtual int GetWidth() const;  // at 0xC
+    virtual int GetHeight() const; // at 0x10
+
+    virtual int GetAscent() const;      // at 0x14
+    virtual int GetDescent() const;     // at 0x18
+    virtual int GetBaselinePos() const; // at 0x1C
+
+    virtual int GetCellHeight() const;   // at 0x20
+    virtual int GetCellWidth() const;    // at 0x24
+    virtual int GetMaxCharWidth() const; // at 0x28
+
+    virtual Type GetType() const;              // at 0x2C
+    virtual GXTexFmt GetTextureFormat() const; // at 0x30
+    virtual int GetLineFeed() const;           // at 0x34
+
+    virtual CharWidths GetDefaultCharWidths() const;              // at 0x38
+    virtual void SetDefaultCharWidths(const CharWidths& rWidths); // at 0x3C
+
+    virtual bool SetAlternateChar(u16 ch); // at 0x40
+    virtual void SetLineFeed(int lf);      // at 0x44
+
+    virtual int GetCharWidth(u16 ch) const;             // at 0x48
+    virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
+    virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
+
+    u32 GetRequireBufferSize();
+    bool Load(void* pBuffer);
+    void* Unload();
+
+private:
+    static const int CHAR_PTR_BUFFER_SIZE = 4;
+
+private:
+    void MakeCharPtr(char* pBuffer, u16 ch) const;
+    u16 HandleUndefinedChar(u16 ch) const;
+
+private:
+    OSFontHeader* mFontHeader; // at 0x10
+    CharWidths mDefaultWidths; // at 0x14
+    u16 mAlternateChar;        // at 0x18
+
+    static u16 mFontEncode;
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_RomFont.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 19 "nw4r/ut/ut_RuntimeTypeInfo.h" */
+/* end "nw4r/ut/ut_RuntimeTypeInfo.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 20 "nw4r/ut/ut_TagProcessor.h" */
+#ifndef NW4R_UT_TAG_PROCESSOR_H
+#define NW4R_UT_TAG_PROCESSOR_H
+/* "libs/nw4r/include/nw4r/ut/ut_TagProcessor.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_TagProcessor.h" line 4 "nw4r/ut/ut_TagProcessorBase.h" */
+#ifndef NW4R_UT_TAG_PROCESSOR_BASE_H
+#define NW4R_UT_TAG_PROCESSOR_BASE_H
+/* "libs/nw4r/include/nw4r/ut/ut_TagProcessorBase.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace ut {
+
+// Forward declarations
+struct Rect;
+template <typename T> class TextWriterBase;
+
+/******************************************************************************
+ *
+ * PrintContext
+ *
+ ******************************************************************************/
+template <typename T> struct PrintContext {
+    enum Flags {
+        FLAGS_CHARSPACE = (1 << 0),
+    };
+
+    TextWriterBase<T>* writer; // at 0x0
+    const T* str;              // at 0x4
+    f32 x;                     // at 0x8
+    f32 y;                     // at 0xC
+    u32 flags;                 // at 0x10
+};
+
+/******************************************************************************
+ *
+ * TagProcessorBase
+ *
+ ******************************************************************************/
+template <typename T> class TagProcessorBase {
+public:
+    typedef PrintContext<T> ContextType;
+
+    enum Operation {
+        OPERATION_DEFAULT,
+        OPERATION_NO_CHAR_SPACE,
+        OPERATION_CHAR_SPACE,
+        OPERATION_NEXT_LINE,
+        OPERATION_END_DRAW
+    };
+
+public:
+    TagProcessorBase();
+    virtual ~TagProcessorBase(); // at 0x8
+
+    virtual Operation Process(u16 ch, ContextType* pCtx); // at 0xC
+    virtual Operation CalcRect(Rect* pRect, u16 ch,
+                               ContextType* pCtx); // at 0x10
+
+private:
+    void ProcessTab(ContextType* pCtx);
+    void ProcessLinefeed(ContextType* pCtx);
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_TagProcessorBase.h" */
+
+namespace nw4r {
+namespace ut {
+
+typedef TagProcessorBase<char> TagProcessor;
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_TagProcessor.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 21 "nw4r/ut/ut_TagProcessorBase.h" */
+/* end "nw4r/ut/ut_TagProcessorBase.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 22 "nw4r/ut/ut_TextWriter.h" */
+#ifndef NW4R_UT_TEXT_WRITER_H
+#define NW4R_UT_TEXT_WRITER_H
+/* "libs/nw4r/include/nw4r/ut/ut_TextWriter.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_TextWriter.h" line 4 "nw4r/ut/ut_TextWriterBase.h" */
+#ifndef NW4R_UT_TEXT_WRITER_BASE_H
+#define NW4R_UT_TEXT_WRITER_BASE_H
+/* "libs/nw4r/include/nw4r/ut/ut_TextWriterBase.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_TextWriterBase.h" line 4 "nw4r/ut/ut_CharWriter.h" */
+/* end "nw4r/ut/ut_CharWriter.h" */
+/* "libs/nw4r/include/nw4r/ut/ut_TextWriterBase.h" line 5 "nw4r/ut/ut_TagProcessorBase.h" */
+/* end "nw4r/ut/ut_TagProcessorBase.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_TextWriterBase.h" line 7 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_TextWriterBase.h" line 9 "cstdio" */
+/* end "cstdio" */
+/* "libs/nw4r/include/nw4r/ut/ut_TextWriterBase.h" line 10 "cwchar" */
+#ifndef MSL_CPP_CWCHAR_H
+#define MSL_CPP_CWCHAR_H
+/* "libs/PowerPC_EABI_Support/include/stl/cwchar" line 2 "wchar.h" */
+/* end "wchar.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::swprintf;
+using ::vswprintf;
+using ::wcscat;
+using ::wcschr;
+using ::wcscmp;
+using ::wcscpy;
+using ::wcslen;
+using ::wcsncpy;
+} // namespace std
+
+#endif
+#endif
+/* end "cwchar" */
+
+namespace nw4r {
+namespace ut {
+
+template <typename T> class TextWriterBase : public CharWriter {
+public:
+    typedef TagProcessorBase<T> TagProcessorType;
+
+public:
+    enum DrawFlag {
+        // Align text lines
+        DRAWFLAG_ALIGN_TEXT_BASELINE = 0,
+        DRAWFLAG_ALIGN_TEXT_CENTER = (1 << 0),
+        DRAWFLAG_ALIGN_TEXT_RIGHT = (1 << 1),
+
+        // Align text block (horizontal)
+        DRAWFLAG_ALIGN_H_BASELINE = 0,
+        DRAWFLAG_ALIGN_H_CENTER = (1 << 4),
+        DRAWFLAG_ALIGN_H_RIGHT = (1 << 5),
+
+        // Align text block (vertical)
+        DRAWFLAG_ALIGN_V_BASELINE = 0,
+        DRAWFLAG_ALIGN_V_CENTER = (1 << 8),
+        DRAWFLAG_ALIGN_V_TOP = (1 << 9),
+
+        // Mask constants
+        DRAWFLAG_MASK_ALIGN_TEXT = DRAWFLAG_ALIGN_TEXT_BASELINE |
+                                   DRAWFLAG_ALIGN_TEXT_CENTER |
+                                   DRAWFLAG_ALIGN_TEXT_RIGHT,
+
+        DRAWFLAG_MASK_ALIGN_H = DRAWFLAG_ALIGN_H_BASELINE |
+                                DRAWFLAG_ALIGN_H_CENTER |
+                                DRAWFLAG_ALIGN_H_RIGHT,
+
+        DRAWFLAG_MASK_ALIGN_V = DRAWFLAG_ALIGN_V_BASELINE |
+                                DRAWFLAG_ALIGN_V_CENTER | DRAWFLAG_ALIGN_V_TOP,
+    };
+
+public:
+    TextWriterBase();
+    ~TextWriterBase();
+
+    f32 GetWidthLimit() const {
+        return mWidthLimit;
+    }
+    void SetWidthLimit(f32 limit) {
+        mWidthLimit = limit;
+    }
+    void ResetWidthLimit() {
+        mWidthLimit = NW4R_MATH_FLT_MAX;
+    }
+
+    f32 GetCharSpace() const {
+        return mCharSpace;
+    }
+    void SetCharSpace(f32 space) {
+        mCharSpace = space;
+    }
+
+    f32 GetLineSpace() const {
+        return mLineSpace;
+    }
+    void SetLineSpace(f32 space) {
+        mLineSpace = space;
+    }
+
+    int GetTabWidth() const {
+        return mTabWidth;
+    }
+    void SetTabWidth(int width) {
+        mTabWidth = width;
+    }
+
+    u32 GetDrawFlag() const {
+        return mDrawFlag;
+    }
+    void SetDrawFlag(u32 flag) {
+        mDrawFlag = flag;
+    }
+
+    TagProcessorBase<T>* GetTagProcessor() const {
+        return mTagProcessor;
+    }
+    void SetTagProcessor(TagProcessorBase<T>* pProcessor) {
+        mTagProcessor = pProcessor;
+    }
+    void ResetTagProcessor() {
+        mTagProcessor = &mDefaultTagProcessor;
+    }
+
+    f32 GetLineHeight() const;
+
+    f32 CalcLineWidth(const T* pStr, int len);
+    f32 CalcStringWidth(const T* pStr, int len) const;
+    void CalcStringRect(Rect* pRect, const T* pStr, int len) const;
+
+    int VSNPrintf(T* buffer, u32 count, const T* pStr, std::va_list args);
+    f32 VPrintf(const T* pStr, std::va_list args);
+    f32 Print(const T* pStr, int len);
+    f32 PrintMutable(const T* pStr, int len);
+
+    static T* GetBuffer() {
+        return mFormatBuffer;
+    }
+    static T* SetBuffer(T* pBuffer, u32 size) {
+        T* pOldBuffer = mFormatBuffer;
+        mFormatBuffer = pBuffer;
+        mFormatBufferSize = size;
+        return pOldBuffer;
+    }
+
+    static u32 GetBufferSize() {
+        return mFormatBufferSize;
+    }
+
+private:
+    static const int DEFAULT_FORMAT_BUFFER_SIZE = 256;
+
+    static const u32 DRAWFLAG_MASK_ALL = DRAWFLAG_MASK_ALIGN_TEXT |
+                                         DRAWFLAG_MASK_ALIGN_H |
+                                         DRAWFLAG_MASK_ALIGN_V;
+
+private:
+    bool IsDrawFlagSet(u32 mask, u32 flag) const {
+        return (mDrawFlag & mask) == flag;
+    }
+
+    bool CalcLineRectImpl(Rect* pRect, const T** ppStr, int len);
+    void CalcStringRectImpl(Rect* pRect, const T* pStr, int len);
+
+    f32 PrintImpl(const T* pStr, int len, bool bMutable);
+    f32 AdjustCursor(f32* pX, f32* pY, const T* pStr, int len);
+
+private:
+    f32 mWidthLimit;                    // at 0x4C
+    f32 mCharSpace;                     // at 0x50
+    f32 mLineSpace;                     // at 0x54
+    int mTabWidth;                      // at 0x58
+    u32 mDrawFlag;                      // at 0x5C
+    TagProcessorBase<T>* mTagProcessor; // at 0x60
+
+    static T* mFormatBuffer;
+    static u32 mFormatBufferSize;
+    static TagProcessorBase<T> mDefaultTagProcessor;
+};
+
+template <>
+inline int TextWriterBase<char>::VSNPrintf(char* pBuffer, u32 count,
+                                           const char* pStr,
+                                           std::va_list args) {
+
+    return std::vsnprintf(pBuffer, count, pStr, args);
+}
+
+template <>
+inline int TextWriterBase<wchar_t>::VSNPrintf(wchar_t* pBuffer, u32 count,
+                                              const wchar_t* pStr,
+                                              std::va_list args) {
+
+    return std::vswprintf(pBuffer, count, pStr, args);
+}
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_TextWriterBase.h" */
+
+namespace nw4r {
+namespace ut {
+
+typedef TextWriterBase<char> TextWriter;
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_TextWriter.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 23 "nw4r/ut/ut_TextWriterBase.h" */
+/* end "nw4r/ut/ut_TextWriterBase.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 24 "nw4r/ut/ut_WideTagProcessor.h" */
+#ifndef NW4R_UT_WIDE_TAG_PROCESSOR_H
+#define NW4R_UT_WIDE_TAG_PROCESSOR_H
+/* "libs/nw4r/include/nw4r/ut/ut_WideTagProcessor.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_WideTagProcessor.h" line 4 "nw4r/ut/ut_TagProcessorBase.h" */
+/* end "nw4r/ut/ut_TagProcessorBase.h" */
+
+namespace nw4r {
+namespace ut {
+
+typedef TagProcessorBase<wchar_t> WideTagProcessor;
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_WideTagProcessor.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 25 "nw4r/ut/ut_WideTextWriter.h" */
+#ifndef NW4R_UT_WIDE_TEXT_WRITER_H
+#define NW4R_UT_WIDE_TEXT_WRITER_H
+/* "libs/nw4r/include/nw4r/ut/ut_WideTextWriter.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_WideTextWriter.h" line 4 "nw4r/ut/ut_TextWriterBase.h" */
+/* end "nw4r/ut/ut_TextWriterBase.h" */
+
+namespace nw4r {
+namespace ut {
+
+typedef TextWriterBase<wchar_t> WideTextWriter;
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_WideTextWriter.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 26 "nw4r/ut/ut_algorithm.h" */
+#ifndef NW4R_UT_ALGORITHM_H
+#define NW4R_UT_ALGORITHM_H
+/* "libs/nw4r/include/nw4r/ut/ut_algorithm.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace ut {
+namespace {
+
+/******************************************************************************
+ *
+ * Value operations
+ *
+ ******************************************************************************/
+template <typename T> inline T Max(T t1, T t2) {
+    return (t1 < t2) ? t2 : t1;
+}
+
+template <typename T> inline T Min(T t1, T t2) {
+    return (t1 > t2) ? t2 : t1;
+}
+
+template <typename T> inline T Clamp(T value, T min, T max) {
+    return value > max ? max : (value < min ? min : value);
+}
+
+template <typename T> inline T Abs(T x) {
+    // Static cast needed to break abs optimization
+    return x < 0 ? static_cast<T>(-x) : static_cast<T>(x);
+}
+
+template <> f32 inline Abs(register f32 x) {
+    register f32 ax;
+
+    ASM (
+        fabs ax, x
+    )
+
+    return ax;
+}
+
+/******************************************************************************
+ *
+ * Bit operations
+ *
+ ******************************************************************************/
+template <typename T> inline T BitExtract(T bits, int pos, int len) {
+    T mask = (1 << len) - 1;
+    return (bits >> pos) & mask;
+}
+
+template <typename T> inline bool TestBit(T t, int pos) {
+    return BitExtract<T>(t, sizeof(T), pos);
+}
+
+/******************************************************************************
+ *
+ * Pointer arithmetic
+ *
+ ******************************************************************************/
+inline u32 GetIntPtr(const void* pPtr) {
+    return reinterpret_cast<u32>(pPtr);
+}
+
+template <typename T>
+inline const void* AddOffsetToPtr(const void* pBase, T offset) {
+    return reinterpret_cast<const void*>(GetIntPtr(pBase) + offset);
+}
+template <typename T> inline void* AddOffsetToPtr(void* pBase, T offset) {
+    return reinterpret_cast<void*>(GetIntPtr(pBase) + offset);
+}
+
+inline s32 GetOffsetFromPtr(const void* pStart, const void* pEnd) {
+    return static_cast<s32>(GetIntPtr(pEnd) - GetIntPtr(pStart));
+}
+
+inline int ComparePtr(const void* pPtr1, const void* pPtr2) {
+    return static_cast<int>(GetIntPtr(pPtr1) - GetIntPtr(pPtr2));
+}
+
+/******************************************************************************
+ *
+ * Rounding
+ *
+ ******************************************************************************/
+template <typename T> inline T RoundUp(T t, unsigned int alignment) {
+    return (alignment + t - 1) & ~(alignment - 1);
+}
+
+template <typename T> inline void* RoundUp(T* pPtr, unsigned int alignment) {
+    u32 value = reinterpret_cast<u32>(pPtr);
+    u32 rounded = (alignment + value - 1) & ~(alignment - 1);
+    return reinterpret_cast<void*>(rounded);
+}
+
+template <typename T> inline T RoundDown(T t, unsigned int alignment) {
+    return t & ~(alignment - 1);
+}
+
+template <typename T> inline void* RoundDown(T* pPtr, unsigned int alignment) {
+    u32 value = reinterpret_cast<u32>(pPtr);
+    u32 rounded = value & ~(alignment - 1);
+    return reinterpret_cast<void*>(rounded);
+}
+
+} // namespace
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_algorithm.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 27 "nw4r/ut/ut_binaryFileFormat.h" */
+#ifndef NW4R_UT_BINARY_FILE_FORMAT_H
+#define NW4R_UT_BINARY_FILE_FORMAT_H
+/* "libs/nw4r/include/nw4r/ut/ut_binaryFileFormat.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace ut {
+
+struct BinaryBlockHeader {
+    u32 kind; // at 0x0
+    u32 size; // at 0x4
+};
+
+struct BinaryFileHeader {
+    u32 signature;  // at 0x0
+    u16 byteOrder;  // at 0x4
+    u16 version;    // at 0x6
+    u32 fileSize;   // at 0x8
+    u16 headerSize; // at 0xC
+    u16 dataBlocks; // at 0xE
+};
+
+bool IsValidBinaryFile(const BinaryFileHeader* pHeader, u32 signature,
+                       u16 version, u16 minBlocks);
+bool IsReverseEndianBinaryFile(const BinaryFileHeader* pHeader);
+BinaryBlockHeader* GetNextBinaryBlockHeader(BinaryFileHeader* pHeader,
+                                            BinaryBlockHeader* pBlockHeader);
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_binaryFileFormat.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 28 "nw4r/ut/ut_list.h" */
+#ifndef NW4R_UT_LIST_H
+#define NW4R_UT_LIST_H
+/* "libs/nw4r/include/nw4r/ut/ut_list.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace ut {
+
+struct List {
+    void* headObject; // at 0x0
+    void* tailObject; // at 0x4
+    u16 numObjects;   // at 0x8
+    u16 offset;       // at 0xA
+};
+
+struct Link {
+    void* prevObject; // at 0x0
+    void* nextObject; // at 0x4
+};
+
+void List_Init(List* pList, u16 offset);
+
+void List_Append(List* pList, void* pObject);
+void List_Prepend(List* pList, void* pObject);
+
+void List_Insert(List* pList, void* pTarget, void* pObject);
+void List_Remove(List* pList, void* pObject);
+
+void* List_GetNext(const List* pList, const void* pObject);
+inline const void* List_GetNextConst(const List* pList, const void* pObject) {
+    return List_GetNext(pList, pObject);
+}
+
+void* List_GetPrev(const List* pList, const void* pObject);
+inline const void* List_GetPrevConst(const List* pList, const void* pObject) {
+    return List_GetPrev(pList, pObject);
+}
+
+void* List_GetNth(const List* pList, u16 n);
+inline const void* List_GetNthConst(const List* pList, u16 n) {
+    return List_GetNth(pList, n);
+}
+
+inline void* List_GetFirst(const List* pList) {
+    return List_GetNext(pList, NULL);
+}
+inline const void* List_GetFirstConst(const List* pList) {
+    return List_GetFirst(pList);
+}
+
+inline void* List_GetLast(const List* pList) {
+    return List_GetPrev(pList, NULL);
+}
+inline const void* List_GetLastConst(const List* pList) {
+    return List_GetLast(pList);
+}
+
+inline u16 List_GetSize(const List* pList) {
+    return pList->numObjects;
+}
+
+/******************************************************************************
+ *
+ * Macros
+ *
+ ******************************************************************************/
+/**
+ * Declares a member Link.
+ */
+#define NW4R_UT_LIST_LINK_DECL() nw4r::ut::Link link
+
+/**
+ * Initializes a List object for use with the specified type.
+ *
+ * @param LIST Reference to list
+ * @param T List element type
+ */
+#define NW4R_UT_LIST_INIT(LIST, T)                                             \
+    nw4r::ut::List_Init(&(LIST), offsetof(T, link))
+
+/**
+ * Gets the underlying Link within the specified object.
+ *
+ * @param LIST Reference to list
+ * @param OBJ Pointer to list object
+ */
+#define NW4R_UT_LIST_GET_LINK(LIST, OBJ)                                       \
+    reinterpret_cast<nw4r::ut::Link*>((u8*)(OBJ) + (LIST).offset)
+
+/**
+ * List for-each macro.
+ *
+ * @param TYPE Element type
+ * @param NAME Element name
+ * @param LIST Reference to list
+ * @param ... Statement(s) to execute
+ */
+#define NW4R_UT_LIST_FOREACH(TYPE, NAME, LIST, ...)                            \
+    {                                                                          \
+        TYPE* NAME = NULL;                                                     \
+                                                                               \
+        while ((NAME = static_cast<TYPE*>(                                     \
+                    nw4r::ut::List_GetNext(&(LIST), NAME))) != NULL) {         \
+                                                                               \
+            __VA_ARGS__;                                                       \
+        }                                                                      \
+    }
+/**
+ * List for-each macro (reverse order).
+ *
+ * @param TYPE Element type
+ * @param NAME Element name
+ * @param LIST Reference to list
+ * @param ... Statement(s) to execute
+ */
+#define NW4R_UT_LIST_FOREACH_REV(TYPE, NAME, LIST, ...)                        \
+    {                                                                          \
+        TYPE* NAME = NULL;                                                     \
+                                                                               \
+        while ((NAME = static_cast<TYPE*>(                                     \
+                    nw4r::ut::List_GetPrev(&(LIST), NAME))) != NULL) {         \
+                                                                               \
+            __VA_ARGS__;                                                       \
+        }                                                                      \
+    }
+
+/**
+ * List for-each macro, with robust iteration.
+ *
+ * @param TYPE Element type
+ * @param NAME Element name
+ * @param LIST Reference to list
+ * @param ... Statement(s) to execute
+ */
+#define NW4R_UT_LIST_FOREACH_SAFE(TYPE, NAME, LIST, ...)                       \
+    {                                                                          \
+        TYPE* NAME;                                                            \
+        TYPE* __next__;                                                        \
+                                                                               \
+        for (NAME = static_cast<TYPE*>(nw4r::ut::List_GetFirst(&(LIST)));      \
+             NAME != NULL; NAME = __next__) {                                  \
+                                                                               \
+            __next__ =                                                         \
+                static_cast<TYPE*>(nw4r::ut::List_GetNext(&(LIST), NAME));     \
+                                                                               \
+            __VA_ARGS__;                                                       \
+        }                                                                      \
+    }
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_list.h" */
+/* "libs/nw4r/include/nw4r/ut.h" line 29 "nw4r/ut/ut_lock.h" */
+#ifndef NW4R_UT_LOCK_H
+#define NW4R_UT_LOCK_H
+/* "libs/nw4r/include/nw4r/ut/ut_lock.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_lock.h" line 4 "nw4r/ut/ut_NonCopyable.h" */
+/* end "nw4r/ut/ut_NonCopyable.h" */
+
+/* "libs/nw4r/include/nw4r/ut/ut_lock.h" line 6 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+
+namespace nw4r {
+namespace ut {
+namespace detail {
+
+/******************************************************************************
+ *
+ * Mutex lock functions
+ *
+ ******************************************************************************/
+inline void Lock(OSMutex& rMutex) {
+    OSLockMutex(&rMutex);
+}
+inline void Unlock(OSMutex& rMutex) {
+    OSUnlockMutex(&rMutex);
+}
+
+/******************************************************************************
+ *
+ * AutoLock
+ *
+ ******************************************************************************/
+template <typename T> class AutoLock : private NonCopyable {
+public:
+    explicit AutoLock(T& rLockObj) : mLockObj(rLockObj) {
+        Lock(mLockObj);
+    }
+    ~AutoLock() {
+        Unlock(mLockObj);
+    }
+
+private:
+    T& mLockObj; // at 0x0
+};
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * AutoInterruptLock
+ *
+ ******************************************************************************/
+class AutoInterruptLock : private NonCopyable {
+public:
+    AutoInterruptLock() : mOldState(OSDisableInterrupts()) {}
+    ~AutoInterruptLock() {
+        OSRestoreInterrupts(mOldState);
+    }
+
+private:
+    BOOL mOldState; // at 0x0
+};
+
+} // namespace ut
+} // namespace nw4r
+
+#endif
+/* end "nw4r/ut/ut_lock.h" */
+
+#endif
+/* end "nw4r/ut.h" */
+
+namespace nw4r {
+namespace lyt {
+
+class ResourceAccessor {
+public:
+    ResourceAccessor();
+    virtual ~ResourceAccessor(); // at 0x8
+
+    virtual void* GetResource(u32 type, const char* pName,
+                              u32* pSize) = 0; // at 0xC
+
+    virtual ut::Font* GetFont(const char* pName); // at 0x10
+};
+
+} // namespace lyt
+} // namespace nw4r
+
+#endif
+/* end "nw4r/lyt/lyt_resourceAccessor.h" */
+
+/* "libs/nw4r/include/nw4r/lyt/lyt_arcResourceAccessor.h" line 6 "nw4r/ut.h" */
+/* end "nw4r/ut.h" */
+
+/* "libs/nw4r/include/nw4r/lyt/lyt_arcResourceAccessor.h" line 8 "revolution/ARC.h" */
+/* end "revolution/ARC.h" */
+
+namespace nw4r {
+namespace lyt {
+
+/******************************************************************************
+ *
+ * FontRefLink
+ *
+ ******************************************************************************/
+class FontRefLink {
+public:
+    const char* GetFontName() const {
+        return mFontName;
+    }
+
+    ut::Font* GetFont() const {
+        return mpFont;
+    }
+
+public:
+    NW4R_UT_LINKLIST_NODE_DECL(); // at 0x0
+
+protected:
+    static const int FONTNAMEBUF_MAX = 128;
+
+protected:
+    char mFontName[FONTNAMEBUF_MAX]; // at 0x8
+    ut::Font* mpFont;                // at 0x88
+};
+
+NW4R_UT_LINKLIST_TYPEDEF_DECL(FontRefLink);
+
+/******************************************************************************
+ *
+ * ArcResourceAccessor
+ *
+ ******************************************************************************/
+class ArcResourceAccessor : public ResourceAccessor {
+public:
+    static const u32 RES_TYPE_NAME = 0;
+    static const u32 RES_TYPE_ANIMATION = FOURCC('a', 'n', 'i', 'm');
+    static const u32 RES_TYPE_LAYOUT = FOURCC('b', 'l', 'y', 't');
+    static const u32 RES_TYPE_FONT = FOURCC('f', 'o', 'n', 't');
+    static const u32 RES_TYPE_TEXTURE = FOURCC('t', 'i', 'm', 'g');
+
+public:
+    ArcResourceAccessor();
+
+    virtual void* GetResource(u32 type, const char* pName,
+                              u32* pSize); // at 0xC
+
+    virtual ut::Font* GetFont(const char* pName); // at 0x10
+
+    bool Attach(void* pArchive, const char* pRootDir);
+    void* Detach();
+
+    bool IsAttached() const {
+        return mArcBuf != NULL;
+    }
+
+protected:
+    static const int ROOTPATH_MAX = 128;
+
+protected:
+    ARCHandle mArcHandle;           // at 0x4
+    void* mArcBuf;                  // at 0x20
+    FontRefLinkList mFontList;      // at 0x24
+    char mResRootDir[ROOTPATH_MAX]; // at 0x30
+};
+
+} // namespace lyt
+} // namespace nw4r
+
+#endif
+/* end "nw4r/lyt/lyt_arcResourceAccessor.h" */
+
+class CLibLayout : public CWorkThread {
+public:
+    CLibLayout(const char* pName, CWorkThread* pParent);
+
+    DECL_WORKTHREAD_CREATE(CLibLayout);
+
+    static bool isInitialized();
+    static CLibLayout* getInstance();
+    static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
+
+    virtual void wkUpdate() override;  //0x88
+
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    u32 unk1C4;                       // 0x1C4: unknown field
+    u8 unk1C8[0x2C0 - 0x1C8];        // 0x1C8-2C0: unknown trailing data
+};
+/* end "monolib/lib/CLibLayout.hpp" */
+/* "libs/monolib/include/monolib/lib.hpp" line 8 "monolib/lib/CLibStaticData.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/CLibStaticData.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/lib/CLibStaticData.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibStaticData.hpp" line 4 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/lib/CLibStaticData.hpp" line 5 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+typedef void (*StaticDataCallback)(void* pData, u32 length);
+
+enum MemHandleType {
+    HANDLE_MEM1,
+    HANDLE_MEM2,
+    HANDLE_STATIC
+};
+
+struct StaticDataHandle {
+    void* data; //0x0
+    u32 unk4;
+};
+
+struct StaticArcFileData {
+    const char* mName; //0x0
+    const char* mPath; //0x4
+    MemHandleType mHandleType; //0x8
+    StaticDataCallback mFileLoadedCallback; //0xC
+    StaticDataCallback mFileUnloadedCallback; //0x10
+};
+
+class CLibStaticData : public CWorkThread {
+public:
+    class CItem : public IWorkEvent {
+    public:
+        CItem(StaticArcFileData* arcFileData); //Calls the static data callbacks
+        virtual ~CItem();
+        virtual bool OnFileEvent(CEventFile* pEventFile);
+
+            inline mtl::ALLOC_HANDLE getMemHandle(){
+        mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+        MemHandleType type = mFileData->mHandleType;
+        if(type == HANDLE_MEM1){
+            handle = mtl::MemManager::getHandleMEM1();
+        }else if(type == HANDLE_STATIC){
+            handle = mtl::MemManager::getHandleStatic();
+        }
+        return handle;
+        }
+
+        //0x0: vtable
+        StaticArcFileData* mFileData; //0x4
+        CFileHandle* mFileHandle; //0x8
+        void* mData; //0xC
+        u32 mLength; //0x10
+        bool unk14;
+    };
+
+    CLibStaticData(const char* pName, CWorkThread* pParent);
+    virtual ~CLibStaticData();
+
+    DECL_WORKTHREAD_CREATE(CLibStaticData);
+
+    static CLibStaticData* getInstance();
+    static bool isInitialized();
+    static void saveStaticFileArray(StaticArcFileData*);
+    static bool getStaticFileData(const char* pName, StaticDataHandle* pHandle, u32* r5);
+
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+
+    //0x0: vtable
+    //0x0-1C4: CWorkThread
+    int mState; //0x1C4
+    resvector<CItem*> mItems; //0x1C8
+
+private:
+    enum State{
+        STATE_0,
+        STATE_1,
+        STATE_2
+    };
+
+    static const int MAX_ITEMS = 16;
+    static const int MAX_CHILD = 0;
+
+    static CLibStaticData* spInstance;
+    static StaticArcFileData* sStaticArcFileListPtr;
+};
+/* end "monolib/lib/CLibStaticData.hpp" */
+/* "libs/monolib/include/monolib/lib.hpp" line 9 "monolib/lib/CLibVM.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/CLibVM.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/lib/CLibVM.hpp" line 3 "monolib/work/CWorkThread.hpp" */
+/* end "monolib/work/CWorkThread.hpp" */
+
+class CLibVM : public CWorkThread {
+public:
+    CLibVM(const char* pName, CWorkThread* pParent);
+
+    DECL_WORKTHREAD_CREATE(CLibVM);
+
+    static bool isInitialized();
+    static CLibVM* getInstance();
+
+    static void setCallbacks(void (*callback1)(), void (*callback2)());
+
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    u32 unk1C4;
+
+    static CLibVM* spInstance;
+};
+/* end "monolib/lib/CLibVM.hpp" */
+/* "libs/monolib/include/monolib/lib.hpp" line 10 "monolib/lib/UnkClass_8045F564.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/UnkClass_8045F564.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class UnkClass_8045F564{
+public:
+    int unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+
+    UnkClass_8045F564();
+    ~UnkClass_8045F564();
+
+    
+    void createRegion(int, int, const char*, int);
+    void func_8045F778();
+    void func_8045F810();
+};
+
+class Class_8045F858{
+public:
+    void* unk0;
+    u32 unk4;
+
+    Class_8045F858(UnkClass_8045F564* unkClass);
+    ~Class_8045F858();
+};
+/* end "monolib/lib/UnkClass_8045F564.hpp" */
+/* end "monolib/lib.hpp" */
+/* "src/kyoshin/cf/CfPadTask.hpp" line 7 "revolution/WPAD.h" */
+/**
+ * References: WiiBrew
+ */
+
+#ifndef RVL_SDK_PUBLIC_WPAD_H
+#define RVL_SDK_PUBLIC_WPAD_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/WPAD.h" line 10 "revolution/WPAD/WPAD.h" */
+/* end "revolution/WPAD/WPAD.h" */
+/* "libs/RVL_SDK/include/revolution/WPAD.h" line 11 "revolution/WPAD/WPADInternal.h" */
+/* end "revolution/WPAD/WPADInternal.h" */
+/* "libs/RVL_SDK/include/revolution/WPAD.h" line 12 "revolution/WPAD/debug_msg.h" */
+/* end "revolution/WPAD/debug_msg.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/WPAD.h" */
+
+namespace cf {
+
+    class CfPadTask : public CTTask<CfPadTask>, public IGameException, public IHBMCallback {
+    public:
+        // Inline so create's placement-new inlines ctor; retail has no __ct__Q22cf9CfPadTaskFv.
+        CfPadTask() : CTTask<CfPadTask>(), mFrameCounter(0) {
+            CLibHbm::addCallback(this);
+            sInputDisableTimer = 0;
+            sButtonDisableTimer = 0;
+        }
+        virtual ~CfPadTask();
+
+        virtual void Init();
+        virtual void Move();
+        virtual void Term();
+        
+        virtual bool gameExceptionCB(u32 unusedArg);
+        virtual void onInitHbm();
+        virtual void onDeleteHbm();
+
+        static CfPadTask* create(CProcess* pParent);
+
+        bool update();
+        int checkForControllerError(bool noError);
+
+        void copyInputFlag(CPad* pPad, u32 srcFlag, u32 dstFlag);
+        static void func_801C1B94(float f1);
+        static bool func_801C1BC0();
+        static void func_801C1BD8(float f1);
+        void updateCfPadData(CfPadData* padData, const CPad* pad);
+        static u32 getWiimoteBattery();
+        static u32 getDetectedPadType() { return lbl_80666D3C; }
+        static void wpadGetInfoCallback(s32 chan, s32 result);
+
+        bool isWpadChannel(u32 channel) const {
+            return channel <= WPAD_MAX_CONTROLLERS - 1;
+        }
+
+        //0x0: vtable 1 (CTTask)
+        //0x0-54: CTTask
+        //0x54: vtable 2 (IGameException)
+        //0x58: vtable 3 (IHBMCallback)
+        int mErrorFrameCount; //0x5C
+        int mNoErrorFrameCount; //0x60
+        int mFrameCounter; //0x64
+
+    private:
+        enum ControllerError{
+            ERROR_NONE,
+            ERROR_WIIMOTE_DISCONNECTED,
+            ERROR_NUNCHUCK_DISCONNECTED,
+            ERROR_CLASSIC_CONTROLLER_DISCONNECTED,
+            ERROR_NO_EXTENSION
+        };
+
+        enum PadExtension{
+            PAD_EXT_INVALID,
+            PAD_EXT_NUNCHUCK,
+            PAD_EXT_CLASSIC_CONTROLLER,
+            PAD_EXT_NONE
+        };
+
+        static const int MAX_ERROR_FRAMES = 9;
+
+        static u8 sMainPadExtension;
+        static u8 sDpadDisableTimer;
+        static bool sMainPadIsGCController;
+        static u8 sWpadDisconnectTimer;
+
+        static u32 sWiimoteBattery;
+        static u32 lbl_80666D3C;
+        static u32 sMainPadType;
+        static float sInputDisableTimer;
+        static float sButtonDisableTimer;
+
+        static u32 sMainPadChannel;
+
+        static WPADInfo sWpadInfo;
+
+        static CfPadTask* spInstance;
+    };
+
+    // Thunk symbols present in object (@84@gameExceptionCB, @88@onDeleteHbm, @88@onInitHbm);
+    // Declared manually — MWCC does not accept @ in identifiers.
+}
+
+/* end "kyoshin/cf/CfPadTask.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 3 "kyoshin/cf/IResInfo.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/IResInfo.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+struct ResEntry {
+    u8 _00[4];
+    u8 data[4];      // 0x04 - returned by lookup functions
+    u32 id;           // 0x08
+    u8 _0C[0x2A];    // 0x0C - 0x35
+    u8 value;         // 0x36
+    u8 _37[5];        // 0x37 - 0x3B
+};
+
+struct ResContainer {
+    u8 _00[0x14DC];
+    ResEntry table[0x28]; // 0x14DC - 40 entries
+
+    u8* findResEntry(u32 id, u32* outIndex, u32* outValue);
+};
+
+char* getEntryPtrGrid(char* self, int a, int b);
+void clearWordFlag(u32* self, u32 mask);
+bool testResInfoFlag(u32 flags);
+/* end "kyoshin/cf/IResInfo.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 4 "kyoshin/cf/object/CfObject.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CfObject.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/object/CfObject.hpp" line 3 "kyoshin/cf/object/CObjectParam.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CObjectParam.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/object/CObjectParam.hpp" line 3 "kyoshin/cf/object/CObjectState.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CObjectState.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+    //min size: 0x10
+    class CObjectState {
+    public:
+        virtual void CObjectState_UnkVirtualFunc1();  //0x8
+        virtual void CObjectState_UnkVirtualFunc2();  //0xC
+        virtual void CObjectState_UnkVirtualFunc3();  //0x10
+        virtual void CObjectState_UnkVirtualFunc4();  //0x14
+        virtual void CObjectState_UnkVirtualFunc5();  //0x18
+        virtual void CObjectState_UnkVirtualFunc6();  //0x1C
+        virtual void CObjectState_UnkVirtualFunc7();  //0x20
+        virtual void CObjectState_UnkVirtualFunc8();  //0x24
+        virtual void CObjectState_UnkVirtualFunc9();  //0x28
+        virtual void CObjectState_UnkVirtualFunc10(); //0x2C
+        virtual void CObjectState_UnkVirtualFunc11(); //0x30
+        virtual void* CObjectState_UnkVirtualFunc12(); //0x34
+        virtual void CObjectState_UnkVirtualFunc13(); //0x38
+
+        //0x0: vtable
+        u32 unk4;          // 0x04
+        u32 unk8;          // 0x08
+        u32 unkC;          // 0x0C
+    };
+}
+/* end "kyoshin/cf/object/CObjectState.hpp" */
+
+namespace cf {
+    //min size: 0x38
+    class CObjectParam : public CObjectState {
+    public:
+        virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
+        virtual void CObjectParam_UnkVirtualFunc2(); //0x40
+        virtual int CObjectParam_UnkVirtualFunc3(); //0x44
+        virtual void CObjectParam_UnkVirtualFunc4(); //0x48
+        virtual BOOL CObjectParam_UnkVirtualFunc5(); //0x4C
+        virtual void CObjectParam_UnkVirtualFunc6(); //0x50
+
+        //0x0: vtable
+        //0x0-10: CObjectState
+        void* mPtr10;          // 0x10-0x13 (pointer stored at offset 0x10)
+        u8 unk14[0x20 - 0x14]; // 0x14-0x2F
+        u32 field_30;          // 0x30  — checked for non-zero by UnkVirtualFunc3
+        u8  unk34[4];          // 0x34..0x37  (remainder of old unk10_3[0x28])
+    };
+}
+/* end "kyoshin/cf/object/CObjectParam.hpp" */
+
+namespace cf {
+    struct CfObjectSub54 {
+        u8 field_0x0[0xC];
+    };
+
+    //min size: 0x70
+    class CfObject : public CObjectParam {
+    public:
+        //vtable 1 (CfObject)
+        virtual ~CfObject();                      //0x54
+        virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
+        virtual void CfObject_UnkVirtualFunc3();      //0x5C
+        virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
+        virtual void CfObject_UnkVirtualFunc5();      //0x64
+        virtual void CfObject_UnkVirtualFunc6();      //0x68
+        virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
+        virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
+        virtual void CfObject_UnkVirtualFunc9();      //0x74
+        virtual void CfObject_UnkVirtualFunc10();     //0x78
+        virtual void CfObject_UnkVirtualFunc11();     //0x7C
+        virtual void CfObject_UnkVirtualFunc12();     //0x80
+        virtual void CfObject_UnkVirtualFunc13();     //0x84
+        virtual void CfObject_UnkVirtualFunc14();     //0x88
+        virtual void CfObject_UnkVirtualFunc15();     //0x8C
+        virtual void CfObject_UnkVirtualFunc16();     //0x90
+        virtual void CfObject_UnkVirtualFunc17();     //0x94
+        virtual void CfObject_UnkVirtualFunc18();     //0x98
+        virtual void CfObject_UnkVirtualFunc19();     //0x9C
+        virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
+        virtual void CfObject_UnkVirtualFunc21();     //0xA4
+        virtual void CfObject_UnkVirtualFunc22();     //0xA8
+        virtual void CfObject_UnkVirtualFunc23();     //0xAC
+        virtual void CfObject_UnkVirtualFunc24();     //0xB0
+        virtual void CfObject_UnkVirtualFunc25();     //0xB4
+        virtual void CfObject_UnkVirtualFunc26();     //0xB8
+        virtual void CfObject_UnkVirtualFunc27();     //0xBC
+        virtual void CfObject_UnkVirtualFunc28();     //0xC0
+        virtual void CfObject_UnkVirtualFunc29();     //0xC4
+        virtual void CfObject_UnkVirtualFunc30();     //0xC8
+        virtual void CfObject_UnkVirtualFunc31();     //0xCC
+        virtual void CfObject_UnkVirtualFunc32();     //0xD0
+        virtual void CfObject_UnkVirtualFunc33();     //0xD4
+        virtual void CfObject_UnkVirtualFunc34();     //0xD8
+        virtual void CfObject_UnkVirtualFunc35();     //0xDC
+        virtual void CfObject_UnkVirtualFunc36();     //0xE0
+        virtual void CfObject_UnkVirtualFunc37();     //0xE4
+        virtual void CfObject_UnkVirtualFunc38();     //0xE8
+        virtual void CfObject_UnkVirtualFunc39();     //0xEC
+        virtual void CfObject_UnkVirtualFunc40();     //0xF0
+        virtual void CfObject_UnkVirtualFunc41();     //0xF4
+        virtual void CfObject_UnkVirtualFunc42();     //0xF8
+        virtual void CfObject_UnkVirtualFunc43();     //0xFC
+        virtual void CfObject_UnkVirtualFunc44();     //0x100
+        virtual void CfObject_UnkVirtualFunc45();     //0x104
+        virtual void CfObject_UnkVirtualFunc46();     //0x108
+        virtual void CfObject_UnkVirtualFunc47();     //0x10C
+        virtual void CfObject_UnkVirtualFunc48();     //0x110
+        virtual void CfObject_UnkVirtualFunc49();     //0x114
+        virtual void CfObject_UnkVirtualFunc50();     //0x118
+        virtual void CfObject_UnkVirtualFunc51();     //0x11C
+        virtual void CfObject_UnkVirtualFunc52();     //0x120
+        virtual CfObject* CfObject_UnkVirtualFunc53(); //0x124
+        virtual void CfObject_UnkVirtualFunc54();     //0x128
+        virtual void CfObject_UnkVirtualFunc55();     //0x12C
+        virtual float CfObject_UnkVirtualFunc56();     //0x130
+        virtual void CfObject_UnkVirtualFunc57();     //0x134
+        virtual u32* CfObject_UnkVirtualFunc58();     //0x138
+        virtual void CfObject_UnkVirtualFunc59();     //0x13C
+        virtual void CfObject_UnkVirtualFunc60();     //0x140
+        virtual void CfObject_UnkVirtualFunc61();     //0x144
+        virtual void CfObject_UnkVirtualFunc62();     //0x148
+        virtual void CfObject_UnkVirtualFunc63();     //0x14C
+        virtual void CfObject_UnkVirtualFunc64();     //0x150
+        virtual void CfObject_UnkVirtualFunc65();     //0x154
+        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
+        virtual void CfObject_UnkVirtualFunc67();     //0x15C
+        virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
+        virtual void CfObject_UnkVirtualFunc69();     //0x164
+        virtual void CfObject_UnkVirtualFunc70();     //0x168
+        virtual void CfObject_UnkVirtualFunc71();     //0x16C
+        virtual void CfObject_UnkVirtualFunc72();     //0x170
+        virtual void CfObject_UnkVirtualFunc73();     //0x174
+
+        //not sure if belongs here? (can be in any class from CObjectState to CfObjectMove)
+        void func_800BE898(int, u32, float, float);
+
+
+        //0x0: vtable
+        // CObjectParam currently ends at 0x28.
+        u8 field_0x28[0x10];
+        void* mSubObj38;          // 0x38-0x3B
+        u8 _pad3C[0x4C - 0x3C];   // 0x3C-0x4B
+        u32 mField4C;             // 0x4C-0x4F (also read as float)
+        u8 _pad50[0x54 - 0x50];   // 0x50-0x53
+        CfObjectSub54 mSubObj54;     // 0x54-0x5F
+        float mFloat60;            // 0x60-0x63
+        u32 unk64;                  // 0x64-0x67
+        u32 mFlags68;               // 0x68-0x6B
+        u8 _pad6C[0x70 - 0x6C];    // 0x6C-0x6F
+    };
+}
+/* end "kyoshin/cf/object/CfObject.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 5 "kyoshin/cf/object/CActorParam.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 3 "kyoshin/cf/object/CDebugState.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CDebugState.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+    class CDebugState {
+
+    };
+}
+/* end "kyoshin/cf/object/CDebugState.hpp" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 4 "kyoshin/cf/object/CBattleState.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CBattleState.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+    // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
+    // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
+    // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
+    struct CBattleStateEntry {
+        u32 unk00; // 0x00
+        u32 unk04; // 0x04
+        u32 unk08; // 0x08
+        u16 unk0C; // 0x0C - id; also bit index into CBattleState::unk15AC
+        s32 unk10; // 0x10 - clamped value
+        s16 unk14; // 0x14
+        s16 unk16; // 0x16
+        s16 unk18; // 0x18 - lower clamp bound (0 == no lower clamp)
+        s16 unk1A; // 0x1A
+        f32 unk1C; // 0x1C
+        f32 unk20; // 0x20
+        f32 unk24; // 0x24
+        f32 unk28; // 0x28
+        u16 unk2C; // 0x2C
+        u16 unk2E; // 0x2E
+        u32 unk30; // 0x30
+    };
+
+    // size: 0x15DC
+    class CBattleState {
+    public:
+        virtual void CBattleState_UnkVirtualFunc1();  //0x8
+        virtual void CBattleState_UnkVirtualFunc2();  //0xC
+        virtual int CBattleState_UnkVirtualFunc3();  //0x10
+        virtual void CBattleState_UnkVirtualFunc4();  //0x14
+        virtual void CBattleState_UnkVirtualFunc5();  //0x18
+        virtual void CBattleState_UnkVirtualFunc6();  //0x1C
+        virtual void CBattleState_UnkVirtualFunc7();  //0x20
+        virtual void CBattleState_UnkVirtualFunc8();  //0x24
+        virtual void CBattleState_UnkVirtualFunc9();  //0x28
+        virtual void CBattleState_UnkVirtualFunc10(); //0x2C
+        virtual void CBattleState_UnkVirtualFunc11(); //0x30
+        virtual void CBattleState_UnkVirtualFunc12(); //0x34
+        virtual void CBattleState_UnkVirtualFunc13(); //0x38
+        virtual void CBattleState_UnkVirtualFunc14(); //0x3C
+        virtual void CBattleState_UnkVirtualFunc15(); //0x40
+        virtual void CBattleState_UnkVirtualFunc16(); //0x44
+        virtual void CBattleState_UnkVirtualFunc17(); //0x48
+        virtual void CBattleState_UnkVirtualFunc18(); //0x4C
+        virtual void CBattleState_UnkVirtualFunc19(); //0x50
+        virtual void CBattleState_UnkVirtualFunc20(); //0x54
+        virtual void CBattleState_UnkVirtualFunc21(); //0x58
+        virtual void CBattleState_UnkVirtualFunc22(); //0x5C
+        virtual void CBattleState_UnkVirtualFunc23(); //0x60
+        virtual void CBattleState_UnkVirtualFunc24(); //0x64
+        virtual void CBattleState_UnkVirtualFunc25(); //0x68
+        virtual void CBattleState_UnkVirtualFunc26(); //0x6C
+        virtual void CBattleState_UnkVirtualFunc27(); //0x70
+        virtual void CBattleState_UnkVirtualFunc28(); //0x74
+        virtual void CBattleState_UnkVirtualFunc29(); //0x78
+        virtual void CBattleState_UnkVirtualFunc30(); //0x7C
+        virtual void CBattleState_UnkVirtualFunc31(); //0x80
+        virtual void CBattleState_UnkVirtualFunc32(); //0x84
+        virtual void CBattleState_UnkVirtualFunc33(); //0x88
+
+        CBattleState();
+
+        u16 unk4;
+        u16 unk6;
+        u8 unk8[0x1520];
+        u8 unk1528[4];
+        u8 unk152C[0x80];
+        u8 unk15AC[0x15DC - 0x15AC];
+    };
+}
+
+namespace cf {
+    struct CBattleStateSrcEntry;
+}
+/* end "kyoshin/cf/object/CBattleState.hpp" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CActorState.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+    class CActorState {
+    public:
+        virtual void CActorState_UnkVirtualFunc1(); //0x8
+
+        CActorState(UNKTYPE* r4){
+            unk4 = r4;
+        }
+
+        UNKTYPE* unk4;
+    };
+}
+/* end "kyoshin/cf/object/CActorState.hpp" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 6 "kyoshin/cf/CArtsSet.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/CArtsSet.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/CArtsSet.hpp" line 3 "cstring" */
+/* end "cstring" */
+
+namespace cf {
+    
+    //size: 0x88
+    class CAttackParam {
+    public:
+        u8 unk0;
+        u8 unk4[0x20 - 0x4];
+        u32 unk20;
+        u32 unk24;
+        u16 unk28;
+        u8 unk2A;
+        u8 unk2B;
+        float unk2C;
+        float unk30;
+        u16 unk34;
+        u16 unk36;
+        u8 unk38[4];
+        u16 unk3C;
+        u8 unk3E;
+        u8 unk3F;
+        u16 unk40;
+        u8 unk42;
+        u8 unk43;
+        u8 unk44;
+        u16 unk46;
+        u16 unk48;
+        u16 unk4A;
+        u16 unk4C;
+        float unk50;
+        float unk54;
+        u16 unk58;
+        u16 unk5A;
+        u16 unk5C;
+        u16 unk5E;
+        float unk60;
+        u16 unk64;
+        u8 unk66;
+        u8 unk67;
+        u16 unk68;
+        u16 unk6A;
+        u8 unk6C[5];
+        u8 unk71;
+        u16 unk72;
+        u16 unk74;
+        u8 unk76;
+        u8 unk77;
+        u32 unk78;
+        float unk7C;
+        float unk80;
+
+        CAttackParam();
+
+        virtual void CAttackParam_UnkVirtualFunc1(){
+            unk0 = 0;
+            unk20 = 0;
+            unk24 = 0;
+            unk28 = 0;
+            unk2A = 1;
+            unk2B = 0;
+            unk2C = 0;
+            unk30 = 0;
+            unk34 = 0;
+            unk36 = 0;
+            unk3C = 0;
+            unk3E = 0;
+            unk40 = 0;
+            unk42 = 0;
+            unk43 = 0;
+            unk44 = 0;
+            unk46 = 0;
+            unk48 = 0;
+            unk4A = 0;
+            unk4C = 0;
+            unk50 = 0;
+            unk54 = 0;
+            unk58 = 0;
+            unk5A = 0;
+            unk5C = 0;
+            unk5E = 0;
+            unk60 = 0;
+            unk64 = 0;
+            unk66 = 0;
+            unk67 = 0;
+            unk68 = 0;
+            unk6A = 0;
+            unk72 = 0;
+            unk74 = 0;
+            unk77 = 0;
+            unk7C = 0;
+            unk80 = 0;  
+
+            std::memset(unk38, 0, sizeof(unk38));
+            std::memset(unk6C, 0, sizeof(unk6C));
+        }
+        virtual u8 CAttackParam_UnkVirtualFunc2();
+        virtual void CAttackParam_UnkVirtualFunc3(u8 r4);
+        virtual void CAttackParam_UnkVirtualFunc4();
+    };
+
+    struct _sAttackSet {
+    };
+
+    //size: 0x334
+    class CAttackSet : _sAttackSet {
+    public:
+        CAttackSet(){}
+        virtual void func_80153E88();
+        
+        //0x0: vtable
+        CAttackParam mAttackParams[6]; //0x4
+    };
+
+    //size: 0x8C
+    class CArtsParam : public CAttackParam {
+    public:
+        UNKTYPE* unk88;
+
+        CArtsParam();
+        virtual void CArtsParam_UnkVirtualFunc1();
+        virtual u8 CArtsParam_UnkVirtualFunc2();
+        virtual void CArtsParam_UnkVirtualFunc3(u8 r4);
+    };
+
+    //size: 0x38
+    struct _sArtsSet {
+        union {
+            struct {
+                u16 unk0;
+                u8 unk2[2];
+                u8 unk4[0x30];
+            };
+            u16 mArtsSlotData[24];
+        };
+
+        _sArtsSet();
+        virtual void _sArtsSet_UnkVirtualFunc1(){
+            unk0 = 0;
+            std::memset(unk4, 0, sizeof(unk4));
+        }
+    };
+
+    //size: 0xD58
+    class CArtsSet : _sArtsSet {
+    public:
+        CArtsSet(){}
+        virtual void CArtsSet_UnkVirtualFunc1();
+
+        void setArtsSlotRC(unsigned short value, unsigned int row, unsigned int index);
+        unsigned short getArtsSlotRC(int index, int subindex);
+        void setArtsSlotByIdx(unsigned short value, int index);
+        void* getArtsParamRC(int index460, int index8c);
+        void* getArtsParamRC2(int index1, int index2);
+        void* getArtsParamByIdx(int index);
+
+        //0x0: vtable
+        //0x0-38: _sArtsSet
+        CArtsParam mArtsParams[24]; //0x38
+    };
+};
+/* end "kyoshin/cf/CArtsSet.hpp" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 7 "cstring" */
+/* end "cstring" */
+
+namespace cf {
+
+    //size: 0x7C
+    struct CActorParam_UnkStruct2 {
+        u8 unk0[0x40];
+        u16 unk40;
+        u8 unk42[0x78 - 0x42];
+        u32 unk78;
+    };
+
+    //might be fake?
+    struct CActorParam_UnkStruct6 {
+        CActorParam_UnkStruct6(){
+            unk0 = 0;
+        }
+    
+        u8 unk0;
+    };
+
+    struct CActorParam_Bitflags {
+        CActorParam_Bitflags(){
+            flags = 0;
+        }
+
+        u32 flags;
+    };
+
+    //size: 0xBC
+    struct CActorParam_UnkStruct1 {
+        CActorParam_UnkStruct1() {
+            init();
+        }
+
+        void init(){
+            unk0 = 0;
+            unk4 = 0;
+            unk48 = 0;
+            unk4C = -1;
+            unk50 = 0;
+            unk54 = 0;
+            unk58 = 0;
+            unk5C = 0;
+            unk60 = 0;
+            unk64 = 0;
+            unk7C = 0;
+            unk80 = 0;
+            unkB8 = 0;
+            unk68 = 0;
+            unk6C = 0;
+            unk70 = 0;
+            unk72 = 0;
+            std::memset(unk8, 0, sizeof(unk8));
+            std::memset(unk84, 0, sizeof(unk84));
+            mFlagsArray[0].flags = 0;
+            mFlagsArray[1].flags = 0;
+        }
+
+        u32 unk0;
+        u32 unk4;
+        u8 unk8[0x40];
+        u32 unk48;
+        int unk4C;
+        CActorParam_UnkStruct2* unk50;
+        float unk54;
+        float unk58;
+        float unk5C;
+        float unk60;
+        float unk64;
+        float unk68;
+        float unk6C;
+        u16 unk70;
+        u16 unk72;
+        CActorParam_Bitflags mFlagsArray[2]; //0x74
+        u32 unk7C;
+        u16 unk80;
+        u8 unk82[2];
+        u8 unk84[0x34];
+        u32 unkB8;
+
+        enum Flags_74 {
+            FLAG_BIT_0 = (1 << 0),
+            FLAG_BIT_1 = (1 << 1),
+            FLAG_BIT_2 = (1 << 2),
+            FLAG_BIT_3 = (1 << 3),
+            FLAG_BIT_4 = (1 << 4),
+            FLAG_BIT_5 = (1 << 5),
+            FLAG_BIT_6 = (1 << 6),
+            FLAG_BIT_7 = (1 << 7),
+            FLAG_BIT_8 = (1 << 8),
+            FLAG_BIT_9 = (1 << 9),
+            FLAG_BIT_10 = (1 << 10),
+            FLAG_BIT_11 = (1 << 11),
+            FLAG_BIT_12 = (1 << 12),
+            FLAG_BIT_13 = (1 << 13),
+            FLAG_BIT_14 = (1 << 14),
+            FLAG_BIT_15 = (1 << 15),
+            FLAG_BIT_16 = (1 << 16),
+            FLAG_BIT_17 = (1 << 17),
+            FLAG_BIT_18 = (1 << 18),
+            FLAG_BIT_19 = (1 << 19),
+            FLAG_BIT_20 = (1 << 20),
+            FLAG_BIT_21 = (1 << 21),
+            FLAG_BIT_22 = (1 << 22),
+            FLAG_BIT_23 = (1 << 23),
+            FLAG_BIT_24 = (1 << 24),
+            FLAG_BIT_25 = (1 << 25),
+            FLAG_BIT_26 = (1 << 26),
+            FLAG_BIT_27 = (1 << 27),
+            FLAG_BIT_28 = (1 << 28),
+            FLAG_BIT_29 = (1 << 29),
+            FLAG_BIT_30 = (1 << 30),
+            FLAG_BIT_31 = (1 << 31),
+        };
+    };
+
+    //size: 0x52
+    struct CActorParam_UnkStruct4 {
+        CActorParam_UnkStruct4() {
+            std::memset(this, 0, sizeof(*this)); //wtf??
+        }
+
+        u8 unk0[0x4E];
+        CActorParam_UnkStruct6 unk4E[4];
+    };
+
+    //TODO: related to above struct?
+    //size: 0x78
+    struct CActorParam_UnkStruct3 {
+        CActorParam_UnkStruct3() {
+            unk74 = 0;
+
+            std::memset(this, 0, sizeof(*this)); //wtf??
+
+            unk5C = 1.0f;
+            unk38 = 5;
+            unk3A = 5;
+        }
+
+        u8 unk0[0x38];
+        u16 unk38;
+        u16 unk3A;
+        u8 unk3C[0x44 - 0x3C];
+        float unk44;
+        u8 unk48[4];
+        float unk4C;
+        u8 unk50[0x5C - 0x50];
+        float unk5C;
+        u8 unk60[0x70 - 0x60];
+        CActorParam_UnkStruct6 unk70[4];
+        u32 unk74;
+    };
+
+    //size: 0x18
+    struct CActorParam_UnkStruct5 {
+        CActorParam_UnkStruct5(){
+            std::memset(this, 0, sizeof(*this)); //wtf??
+        }
+
+        void init(){
+            unk14 = 0;
+            unk4 = 0;
+            unk0 = 0;
+            unkC = 0;
+            unk8 = 0;
+            unk10 = 0;
+        }
+
+        float unk0;
+        float unk4;
+        float unk8;
+        float unkC;
+        float unk10;
+        u32 unk14;
+    };
+
+    //size: 0x3384
+    class CActorParam : public CActorState, public CBattleState, public CDebugState {
+    public:
+        CActorParam(UNKTYPE* r4, UNKTYPE* r5);
+    #pragma region vtable
+        virtual void CActorParam_UnkVirtualFunc1();   //0x98
+        virtual void CActorParam_UnkVirtualFunc2();   //0x9C
+        virtual void CActorParam_UnkVirtualFunc3();   //0xA0
+        virtual void CActorParam_UnkVirtualFunc4();   //0xA4
+        virtual void CActorParam_UnkVirtualFunc5();   //0xA8
+        virtual void CActorParam_UnkVirtualFunc6();   //0xAC
+        virtual void CActorParam_UnkVirtualFunc7();   //0xB0
+        virtual void CActorParam_UnkVirtualFunc8();   //0xB4
+        virtual void CActorParam_UnkVirtualFunc9();   //0xB8
+        virtual void CActorParam_UnkVirtualFunc10();  //0xBC
+        virtual void CActorParam_UnkVirtualFunc11();  //0xC0
+        virtual void CActorParam_UnkVirtualFunc12();  //0xC4
+        virtual void CActorParam_UnkVirtualFunc13();  //0xC8
+        virtual void CActorParam_UnkVirtualFunc14(u8 val);  //0xCC
+        virtual void CActorParam_UnkVirtualFunc15();  //0xD0
+        virtual void CActorParam_UnkVirtualFunc16(float val);  //0xD4
+        virtual void CActorParam_UnkVirtualFunc17();  //0xD8
+        virtual void CActorParam_UnkVirtualFunc18();  //0xDC
+        virtual u32 CActorParam_UnkVirtualFunc19();  //0xE0
+        virtual void CActorParam_UnkVirtualFunc20();  //0xE4
+        virtual void CActorParam_UnkVirtualFunc21();  //0xE8
+        virtual void CActorParam_UnkVirtualFunc22();  //0xEC
+        virtual void CActorParam_UnkVirtualFunc23();  //0xF0
+        virtual void CActorParam_UnkVirtualFunc24();  //0xF4
+        virtual void CActorParam_UnkVirtualFunc25();  //0xF8
+        virtual u32 CActorParam_UnkVirtualFunc26();  //0xFC
+        virtual void CActorParam_UnkVirtualFunc27();  //0x100
+        virtual void CActorParam_UnkVirtualFunc28();  //0x104
+        virtual u32 CActorParam_UnkVirtualFunc29();  //0x108
+        virtual void CActorParam_UnkVirtualFunc30();  //0x10C
+        virtual void CActorParam_UnkVirtualFunc31();  //0x110
+        virtual void CActorParam_UnkVirtualFunc32();  //0x114
+        virtual void CActorParam_UnkVirtualFunc33(float val);  //0x118
+        virtual void CActorParam_UnkVirtualFunc34();  //0x11C
+        virtual void CActorParam_UnkVirtualFunc35();  //0x120
+        virtual void CActorParam_UnkVirtualFunc36();  //0x124
+        virtual void CActorParam_UnkVirtualFunc37();  //0x128
+        virtual void CActorParam_UnkVirtualFunc38();  //0x12C
+        virtual void CActorParam_UnkVirtualFunc39();  //0x130
+        virtual void CActorParam_UnkVirtualFunc40();  //0x134
+        virtual void CActorParam_UnkVirtualFunc41();  //0x138
+        virtual void CActorParam_UnkVirtualFunc42();  //0x13C
+        virtual void CActorParam_UnkVirtualFunc43();  //0x140
+        virtual void CActorParam_UnkVirtualFunc44();  //0x144
+        virtual void CActorParam_UnkVirtualFunc45();  //0x148
+        virtual void CActorParam_UnkVirtualFunc46();  //0x14C
+        virtual void CActorParam_UnkVirtualFunc47();  //0x150
+        virtual void CActorParam_UnkVirtualFunc48();  //0x154
+        virtual void CActorParam_UnkVirtualFunc49();  //0x158
+        virtual void CActorParam_UnkVirtualFunc50();  //0x15C
+        virtual void CActorParam_UnkVirtualFunc51();  //0x160
+        virtual void CActorParam_UnkVirtualFunc52();  //0x164
+        virtual void CActorParam_UnkVirtualFunc53();  //0x168
+        virtual void CActorParam_UnkVirtualFunc54();  //0x16C
+        virtual void CActorParam_UnkVirtualFunc55(u16 val);  //0x170
+        virtual void CActorParam_UnkVirtualFunc56();  //0x174
+        virtual void CActorParam_UnkVirtualFunc57();  //0x178
+        virtual void CActorParam_UnkVirtualFunc58();  //0x17C
+        virtual void CActorParam_UnkVirtualFunc59();  //0x180
+        virtual void CActorParam_UnkVirtualFunc60();  //0x184
+        virtual void CActorParam_UnkVirtualFunc61(u16 val);  //0x188
+        virtual void CActorParam_UnkVirtualFunc62();  //0x18C
+        virtual void CActorParam_UnkVirtualFunc63();  //0x190
+        virtual void CActorParam_UnkVirtualFunc64();  //0x194
+        virtual void CActorParam_UnkVirtualFunc65(float val);  //0x198
+        virtual void CActorParam_UnkVirtualFunc66();  //0x19C
+        virtual void CActorParam_UnkVirtualFunc67();  //0x1A0
+        virtual void CActorParam_UnkVirtualFunc68(float val);  //0x1A4
+        virtual void CActorParam_UnkVirtualFunc69();  //0x1A8
+        virtual void CActorParam_UnkVirtualFunc70();  //0x1AC
+        virtual void CActorParam_UnkVirtualFunc71();  //0x1B0
+        virtual void CActorParam_UnkVirtualFunc72();  //0x1B4
+        virtual void CActorParam_UnkVirtualFunc73();  //0x1B8
+        virtual void CActorParam_UnkVirtualFunc74(float val);  //0x1BC
+        virtual void CActorParam_UnkVirtualFunc75();  //0x1C0
+        virtual void* CActorParam_UnkVirtualFunc76();  //0x1C4
+        virtual void CActorParam_UnkVirtualFunc77();  //0x1C8
+        virtual void CActorParam_UnkVirtualFunc78();  //0x1CC
+        virtual void CActorParam_UnkVirtualFunc79();  //0x1D0
+        virtual void CActorParam_UnkVirtualFunc80();  //0x1D4
+        virtual void CActorParam_UnkVirtualFunc81(u32 val);  //0x1D8
+        virtual void CActorParam_UnkVirtualFunc82(u32 addend);  //0x1DC
+        virtual void CActorParam_UnkVirtualFunc83(u32 addend);  //0x1E0
+        virtual void CActorParam_UnkVirtualFunc84();  //0x1E4
+        virtual u32 CActorParam_UnkVirtualFunc85();  //0x1E8
+        virtual void CActorParam_UnkVirtualFunc86();  //0x1EC
+        virtual void CActorParam_UnkVirtualFunc87();  //0x1F0
+        virtual void CActorParam_UnkVirtualFunc88();  //0x1F4
+        virtual void CActorParam_UnkVirtualFunc89();  //0x1F8
+        virtual void CActorParam_UnkVirtualFunc90(u32 addend);  //0x1FC
+        virtual void CActorParam_UnkVirtualFunc91();  //0x200
+        virtual void CActorParam_UnkVirtualFunc92();  //0x204
+        virtual void CActorParam_UnkVirtualFunc93();  //0x208
+        virtual void* CActorParam_UnkVirtualFunc94();  //0x20C
+        virtual void CActorParam_UnkVirtualFunc95();  //0x210
+        virtual void CActorParam_UnkVirtualFunc96();  //0x214
+        virtual void CActorParam_UnkVirtualFunc97();  //0x218
+        virtual void CActorParam_UnkVirtualFunc98();  //0x21C
+        virtual void CActorParam_UnkVirtualFunc99();  //0x220
+        virtual void* CActorParam_UnkVirtualFunc100(); //0x224
+        virtual void CActorParam_UnkVirtualFunc101(); //0x228
+        virtual void CActorParam_UnkVirtualFunc102(); //0x22C
+        virtual void CActorParam_UnkVirtualFunc103(); //0x230
+        virtual void CActorParam_UnkVirtualFunc104(); //0x234
+        virtual void CActorParam_UnkVirtualFunc105(); //0x238
+        virtual void CActorParam_UnkVirtualFunc106(); //0x23C
+        virtual void CActorParam_UnkVirtualFunc107(); //0x240
+        virtual void CActorParam_UnkVirtualFunc108(); //0x244
+        virtual void CActorParam_UnkVirtualFunc109(); //0x248
+        virtual void CActorParam_UnkVirtualFunc110(); //0x24C
+        virtual void CActorParam_UnkVirtualFunc111(); //0x250
+        virtual void CActorParam_UnkVirtualFunc112(); //0x254
+        virtual u32* CActorParam_UnkVirtualFunc113(); //0x258
+        virtual void CActorParam_UnkVirtualFunc114(); //0x25C
+        virtual bool CActorParam_UnkVirtualFunc115(); //0x260
+        virtual void CActorParam_UnkVirtualFunc116(float val); //0x264
+        virtual float* CActorParam_UnkVirtualFunc117(); //0x268
+        virtual void CActorParam_UnkVirtualFunc118(); //0x26C
+        virtual float* CActorParam_UnkVirtualFunc119(); //0x270
+        virtual void CActorParam_UnkVirtualFunc120(); //0x274
+        virtual void CActorParam_UnkVirtualFunc121(); //0x278
+        virtual void* CActorParam_UnkVirtualFunc122(); //0x27C
+        virtual void CActorParam_UnkVirtualFunc123(); //0x280
+        virtual void CActorParam_UnkVirtualFunc124(); //0x284
+        virtual void* CActorParam_UnkVirtualFunc125(); //0x288
+        virtual void CActorParam_UnkVirtualFunc126(); //0x28C
+        virtual void CActorParam_UnkVirtualFunc127(); //0x290
+        virtual void CActorParam_UnkVirtualFunc128(); //0x294
+        virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
+        virtual void CActorParam_UnkVirtualFunc130(); //0x29C
+        virtual void CActorParam_UnkVirtualFunc131(); //0x2A0
+        virtual void CActorParam_UnkVirtualFunc132(); //0x2A4
+        virtual void CActorParam_UnkVirtualFunc133(); //0x2A8
+        virtual void CActorParam_UnkVirtualFunc134(); //0x2AC
+        virtual void CActorParam_UnkVirtualFunc135(); //0x2B0
+        virtual void CActorParam_UnkVirtualFunc136(); //0x2B4
+        virtual void CActorParam_UnkVirtualFunc137(); //0x2B8
+        virtual bool CActorParam_UnkVirtualFunc138(); //0x2BC
+        virtual void CActorParam_UnkVirtualFunc139(); //0x2C0
+        virtual void CActorParam_UnkVirtualFunc140(); //0x2C4
+        virtual void CActorParam_UnkVirtualFunc141(); //0x2C8
+        virtual void CActorParam_UnkVirtualFunc142(); //0x2CC
+        virtual void CActorParam_UnkVirtualFunc143(); //0x2D0
+        virtual void CActorParam_UnkVirtualFunc144(); //0x2D4
+        virtual void CActorParam_UnkVirtualFunc145(); //0x2D8
+        virtual void CActorParam_UnkVirtualFunc146(); //0x2DC
+        virtual void CActorParam_UnkVirtualFunc147(); //0x2E0
+        virtual void CActorParam_UnkVirtualFunc148(); //0x2E4
+        virtual void CActorParam_UnkVirtualFunc149(); //0x2E8
+        virtual void CActorParam_UnkVirtualFunc150(); //0x2EC
+        virtual void CActorParam_UnkVirtualFunc151(); //0x2F0
+        virtual void* CActorParam_UnkVirtualFunc152(); //0x2F4
+        virtual void CActorParam_UnkVirtualFunc153(); //0x2F8
+        virtual void CActorParam_UnkVirtualFunc154(); //0x2FC
+        virtual void CActorParam_UnkVirtualFunc155(); //0x300
+        virtual void CActorParam_UnkVirtualFunc156(); //0x304
+        virtual void CActorParam_UnkVirtualFunc157(); //0x308
+        virtual void CActorParam_UnkVirtualFunc158(); //0x30C
+        virtual void CActorParam_UnkVirtualFunc159(); //0x310
+        virtual void CActorParam_UnkVirtualFunc160(); //0x314
+        virtual void CActorParam_UnkVirtualFunc161(); //0x318
+        virtual void CActorParam_UnkVirtualFunc162(); //0x31C
+        virtual void CActorParam_UnkVirtualFunc163(); //0x320
+        virtual void CActorParam_UnkVirtualFunc164(); //0x324
+        virtual void* CActorParam_UnkVirtualFunc165(); //0x328
+        virtual void CActorParam_UnkVirtualFunc166(); //0x32C
+        virtual void CActorParam_UnkVirtualFunc167(); //0x330
+        virtual void CActorParam_UnkVirtualFunc168(); //0x334
+        virtual void CActorParam_UnkVirtualFunc169(); //0x338
+        virtual void CActorParam_UnkVirtualFunc170(); //0x33C
+        virtual void CActorParam_UnkVirtualFunc171(); //0x340
+        virtual void CActorParam_UnkVirtualFunc172(); //0x344
+        virtual void CActorParam_UnkVirtualFunc173(); //0x348
+        virtual void CActorParam_UnkVirtualFunc174(); //0x34C
+        virtual void CActorParam_UnkVirtualFunc175(); //0x350
+        virtual void CActorParam_UnkVirtualFunc176(); //0x354
+        virtual void CActorParam_UnkVirtualFunc177(); //0x358
+        virtual void CActorParam_UnkVirtualFunc178(); //0x35C
+        virtual void CActorParam_UnkVirtualFunc179(); //0x360
+        virtual void CActorParam_UnkVirtualFunc180(); //0x364
+        virtual void CActorParam_UnkVirtualFunc181(); //0x368
+    #pragma endregion
+
+        UNKTYPE* unk15DC;
+        UNKTYPE* unk15E0;
+        u32 unk15E4;
+        float unk15E8;
+        u32 unk15EC;
+        u32 unk15F0;
+        u8 unk15F4[4];        // 0x15F4
+        float unk15F8;         // 0x15F8
+        float unk15FC;
+        u32 unk1600;
+        u32 unk1604;
+        u32 unk1608;
+        u16 unk160C;
+        u16 unk160E;
+        float unk1610;
+        u16 unk1614;
+        u16 unk1616;
+        float unk1618;
+        u32 unk161C;
+        float unk1620;
+        float unk1624;
+        u8 unk1628;
+        u8 unk1629;
+        u8 unk162A;
+        u8 unk162B;
+        u8 unk162C;
+        float unk1630;
+        u32 unk1634;
+        u32 unk1638;
+        u32 unk163C;
+        u32 unk1640;
+        u32 unk1644;
+        u16 unk1648;
+        u16 unk164A;
+        u16 unk164C;
+        u8 unk164E[2];
+        CActorParam_UnkStruct3 unk1650;
+        CActorParam_UnkStruct3 unk16C8;
+        CActorParam_UnkStruct4 unk1740;
+        CActorParam_UnkStruct4 unk1792;
+        CActorParam_UnkStruct3 unk17E4;
+        CActorParam_UnkStruct3 unk185C;
+        CActorParam_UnkStruct4 unk18D4;
+        u8 unk1926[2]; //filler?
+        CActorParam_UnkStruct5 unk1928[8];
+        CArtsSet mArtsSet; //0x19E8
+        u8 unk2740[0xC];
+        CAttackSet mAttackSet; //0x274C
+        u32 unk2A80; //probably not here
+        CActorParam_UnkStruct1 unk2A84[10];
+        CActorParam_UnkStruct1 unk31DC;
+        CActorParam_UnkStruct1 unk3298;
+        u8 unk3354;
+        u8 unk3355[3]; //padding?
+        u16 unk3358;
+        u16 unk335A;
+        u8 unk335C[5];
+        u8 unk3361[3]; //padding?
+        float unk3364;
+        float unk3368;
+        u32 unk336C;
+        u32 unk3370;
+        u32 unk3374;
+        u8 unk3378[4];
+        float unk337C;
+    CActorParam();
+    void CBattleState_UnkVirtualFunc18();
+    void CBattleState_UnkVirtualFunc17();
+    int CBattleState_UnkVirtualFunc3();
+    void CBattleState_UnkVirtualFunc2();
+    };
+
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc19() { return unk15EC; }
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc29() { return *(u32*)&unk17E4; }
+inline u32* cf::CActorParam::CActorParam_UnkVirtualFunc113() { return &unk161C; }
+inline bool cf::CActorParam::CActorParam_UnkVirtualFunc115() { return !!unk1628; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc117() { return &unk1620; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc119() { return &unk1624; }
+inline void* cf::CActorParam::CActorParam_UnkVirtualFunc122() { return &mArtsSet; }
+}
+/* end "kyoshin/cf/object/CActorParam.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 6 "kyoshin/cf/object/CObjectParam.hpp" */
+/* end "kyoshin/cf/object/CObjectParam.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 7 "kyoshin/cf/object/CfObjectMove.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CfObjectMove.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/object/CfObjectMove.hpp" line 3 "kyoshin/cf/object/CfObjectModel.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CfObjectModel.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/object/CfObjectModel.hpp" line 3 "kyoshin/cf/object/CfObject.hpp" */
+/* end "kyoshin/cf/object/CfObject.hpp" */
+
+namespace cf {
+    //min size: 0xbe
+    class CfObjectModel : public CfObject {
+    public:
+        //vtable 1 (CfObject)
+        virtual ~CfObjectModel();
+        //vtable 1 (CfObjectModel)
+        virtual void CfObjectModel_UnkVirtualFunc1();  //0x178
+        virtual void CfObjectModel_UnkVirtualFunc2();  //0x17C
+        virtual void CfObjectModel_UnkVirtualFunc3();  //0x180
+        virtual void CfObjectModel_UnkVirtualFunc4();  //0x184
+        virtual void CfObjectModel_UnkVirtualFunc5();  //0x188
+        virtual void CfObjectModel_UnkVirtualFunc6();  //0x18C
+        virtual void CfObjectModel_UnkVirtualFunc7();  //0x190
+        virtual void CfObjectModel_UnkVirtualFunc8();  //0x194
+        virtual void CfObjectModel_UnkVirtualFunc9();  //0x198
+        virtual void CfObjectModel_UnkVirtualFunc10(); //0x19C
+        virtual void CfObjectModel_UnkVirtualFunc11(); //0x1A0
+        virtual void CfObjectModel_UnkVirtualFunc12(); //0x1A4
+        virtual void CfObjectModel_UnkVirtualFunc13(); //0x1A8
+        virtual void CfObjectModel_UnkVirtualFunc14(); //0x1AC
+        virtual void CfObjectModel_UnkVirtualFunc15(); //0x1B0
+        virtual void CfObjectModel_UnkVirtualFunc16(); //0x1B4
+        virtual void CfObjectModel_UnkVirtualFunc17(); //0x1B8
+        virtual void CfObjectModel_UnkVirtualFunc18(); //0x1BC
+        virtual void CfObjectModel_UnkVirtualFunc19(); //0x1C0
+        virtual void CfObjectModel_UnkVirtualFunc20(); //0x1C4
+
+        //0x0: vtable
+        // CfObject ends at 0x70.
+        u8 field_0x70[0x1C];
+        u16 unk8C_3;
+        u16 field_0x8E;
+        u8 field_0x90[0x20]; // 0x90-0xAF
+        void* mSubObjB0;      // 0xB0-0xB3
+        u8 unkB4[0xBD - 0xB4]; // 0xB4-0xBC
+        u8 field_BD;          // 0xBD
+    CfObjectModel();
+    void CfObject_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc6();
+    void CfObject_UnkVirtualFunc8();
+    void CfObject_UnkVirtualFunc63();
+    void CfObject_UnkVirtualFunc19();
+    void CfObject_UnkVirtualFunc22();
+    void CfObject_UnkVirtualFunc20();
+    void CfObject_UnkVirtualFunc23();
+    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc29();
+    void CfObject_UnkVirtualFunc32();
+    void CfObject_UnkVirtualFunc34();
+    void CfObject_UnkVirtualFunc33();
+    void CfObject_UnkVirtualFunc30();
+    float CfObject_UnkVirtualFunc56();
+    void CfObject_UnkVirtualFunc52();
+    CfObject* CfObject_UnkVirtualFunc53();
+    void CfObject_UnkVirtualFunc54();
+    void CfObject_UnkVirtualFunc55();
+    void CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc66();
+    void CfObject_UnkVirtualFunc67();
+    void CfObject_UnkVirtualFunc70();
+    void CfObject_UnkVirtualFunc69();
+    void CfObject_UnkVirtualFunc68();
+    void CfObject_UnkVirtualFunc24();
+    void CfObject_UnkVirtualFunc28();
+    void CfObject_UnkVirtualFunc31();
+    void CfObject_UnkVirtualFunc35();
+    void CfObject_UnkVirtualFunc36();
+    void CfObject_UnkVirtualFunc72();
+    };
+}
+
+/* end "kyoshin/cf/object/CfObjectModel.hpp" */
+
+namespace cf {
+    //min size: 0x715
+    class CfObjectMove : public CfObjectModel {
+    public:
+        CfObjectMove();
+        //vtable 1 (CfObject)
+        virtual ~CfObjectMove();
+        //vtable 1 (CfObjectMove)
+        virtual void CfObjectMove_UnkVirtualFunc1();  //0x1C8
+        virtual void CfObjectMove_UnkVirtualFunc2();  //0x1CC
+        virtual void CfObjectMove_UnkVirtualFunc3();  //0x1D0
+        virtual void CfObjectMove_UnkVirtualFunc4();  //0x1D4
+        virtual void CfObjectMove_UnkVirtualFunc5();  //0x1D8
+        virtual void CfObjectMove_UnkVirtualFunc6();  //0x1DC
+        virtual void CfObjectMove_UnkVirtualFunc7();  //0x1E0
+        virtual void CfObjectMove_UnkVirtualFunc8();  //0x1E4
+        virtual void CfObjectMove_UnkVirtualFunc9();  //0x1E8
+        virtual void CfObjectMove_UnkVirtualFunc10(); //0x1EC
+        virtual void CfObjectMove_UnkVirtualFunc11(); //0x1F0
+        virtual void CfObjectMove_UnkVirtualFunc12(); //0x1F4
+        virtual void CfObjectMove_UnkVirtualFunc13(); //0x1F8
+        virtual void CfObjectMove_UnkVirtualFunc14(); //0x1FC
+        virtual void CfObjectMove_UnkVirtualFunc15(); //0x200
+        virtual void CfObjectMove_UnkVirtualFunc16(); //0x204
+        virtual void CfObjectMove_UnkVirtualFunc17(); //0x208
+        virtual void CfObjectMove_UnkVirtualFunc18(); //0x20C
+        virtual void CfObjectMove_UnkVirtualFunc19(); //0x210
+        virtual void CfObjectMove_UnkVirtualFunc20(); //0x214
+        virtual void CfObjectMove_UnkVirtualFunc21(); //0x218
+        virtual void CfObjectMove_UnkVirtualFunc22(); //0x21C
+        virtual void CfObjectMove_UnkVirtualFunc23(); //0x220
+
+        //0x0: vtable
+        //0x0-BE: CfObjectModel
+        // Field layout starting at offset 0xBE:
+        u8 _BE[6];              // 0xBE-0xC3
+        void* mTargetC4;         // 0xC4-0xC7
+        u8 _C8[0x544];           // 0xC8-0x60B
+        u8 _60C_region[0xB4];   // 0x60C-0x6BF
+        void* mTarget6C0;         // 0x6C0-0x6C3
+        u8 _6C4[5];              // 0x6C4-0x6C8
+        u8 mFlags6C9;             // 0x6C9
+        u8 _6CA[0x26];           // 0x6CA-0x6EF
+        float mMoveSpeed;         // 0x6F0-0x6F3
+        u8 _6F4[0x21];           // 0x6F4-0x714
+        u8 unk715[3];            // 0x715-0x717
+    void CfObject_UnkVirtualFunc4();
+    void CfObject_UnkVirtualFunc7();
+    void CfObject_UnkVirtualFunc6();
+    void CfObjectModel_UnkVirtualFunc1();
+    void CfObjectModel_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc5();
+    void CfObject_UnkVirtualFunc46();
+    void CfObject_UnkVirtualFunc47();
+    void CfObject_UnkVirtualFunc49();
+    void CfObject_UnkVirtualFunc64();
+    void CfObject_UnkVirtualFunc65();
+    void CfObject_UnkVirtualFunc19();
+    void CfObject_UnkVirtualFunc22();
+    void CfObject_UnkVirtualFunc25();
+    void CfObject_UnkVirtualFunc26();
+    void CfObject_UnkVirtualFunc23();
+    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc30();
+    void CfObject_UnkVirtualFunc32();
+    void CfObject_UnkVirtualFunc33();
+    void CfObject_UnkVirtualFunc13();
+    void CfObject_UnkVirtualFunc57();
+    void CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc14();
+    void CfObject_UnkVirtualFunc15();
+    void CfObject_UnkVirtualFunc16();
+    void CfObject_UnkVirtualFunc17();
+    void CfObjectModel_UnkVirtualFunc18();
+    void CfObject_UnkVirtualFunc9();
+    void CfObject_UnkVirtualFunc10();
+    void CfObject_UnkVirtualFunc61();
+    void CfObject_UnkVirtualFunc62();
+    void CfObject_UnkVirtualFunc12();
+    void CfObject_UnkVirtualFunc66();
+    void CfObjectModel_UnkVirtualFunc19();
+    void CfObjectModel_UnkVirtualFunc6();
+    void CfObject_UnkVirtualFunc37();
+    void CfObject_UnkVirtualFunc38();
+    void CfObject_UnkVirtualFunc39();
+    void CfObject_UnkVirtualFunc40();
+    void CfObject_UnkVirtualFunc42();
+    void CfObject_UnkVirtualFunc43();
+    void CfObject_UnkVirtualFunc45();
+    void CfObject_UnkVirtualFunc70();
+    void CfObject_UnkVirtualFunc50();
+    void CfObject_UnkVirtualFunc51();
+    void CfObject_UnkVirtualFunc60();
+    void CfObject_UnkVirtualFunc29(float value);
+    void setMoveSpeed(float value);
+    void resetMoveSpeed();
+    void updatePos();
+    void* getUnk54();
+    int getSubState();
+    void freeSub();
+    void setSubFieldC(unsigned short val);
+    int getSubFieldA();
+    void setSubFieldA(unsigned short val);
+    int getSubFieldE();
+    void setSubFieldE(unsigned short val);
+    void virtCall10();
+    int nullsub_25();
+    int nullsub_26();
+    int nullsub_27();
+    int nullsub_28();
+    int isActive();
+    void setBit6c9(unsigned long bit);
+    cf::CfObjectMove* testFlag8();
+    };
+}
+
+/* end "kyoshin/cf/object/CfObjectMove.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 8 "kyoshin/cf/object/CfObjectMap.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CfObjectMap.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/object/CfObjectMap.hpp" line 3 "kyoshin/cf/object/CfObjectModel.hpp" */
+/* end "kyoshin/cf/object/CfObjectModel.hpp" */
+
+namespace cf {
+    //size: 0x2F50
+    class CfObjectMap : public CfObjectModel {
+    public:
+        //0x0: vtable
+        //0x0-BE: CfObjectModel
+        u8 unkBE[0x2E92];
+    void func_800B9A70();
+    void func_800B9AB4();
+    void func_800B9B78();
+    void func_800B9E3C(unsigned long v);
+    void func_800BA610();
+    void func_800BA66C();
+    virtual ~CfObjectMap();
+    bool func_8007D814();
+    void func_800B9C64();
+    void func_800BA650();
+    void func_800BA764();
+    };
+} // namespace cf
+
+/* end "kyoshin/cf/object/CfObjectMap.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 9 "kyoshin/code_801862C0.hpp" */
+#pragma once
+
+/**
+ * Script / OC instance helpers (unit kyoshin/code_801862C0).
+ * Names are still placeholder ``func_*`` until symbol recovery; signatures
+ * match observed call sites in plugin TUs (VMThread in, OC object out).
+ */
+
+/* "src/kyoshin/code_801862C0.hpp" line 8 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/code_801862C0.hpp" line 9 "monolib/vm/yvm2.h" */
+#pragma once
+
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 3 "monolib/vm/yvm_types.h" */
+#pragma once
+
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 3 "monolib/vm/sb_types.h" */
+#pragma once
+
+//Types/defines for SB script files.
+
+/* "libs/monolib/include/monolib/vm/sb_types.h" line 4 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Minimum supported SB version
+#define SB_MIN_VERSION 2
+
+enum SBFlags{
+    SB_FLAG_LOADED    = 1 << 0, //Stored in the runtime flag byte (offset 0x7)
+    SB_FLAG_ENCRYPTED = 1 << 1  //Stored in the normal flag byte (offset 0x6)
+};
+
+typedef struct SBSectionHeader{
+    int entriesOffset;  //0x0
+    int entries; //0x4
+    int offsetSize;  //0x8
+} SBSectionHeader;
+
+typedef struct SBHeader{
+    char magic[4];                      //0x0
+    u8 version;                         //0x4
+    u8 unk5; //unused?
+    u8 flags;                           //0x6
+    /* Reserved by the VM as a place to store various flags during runtime. Only the first bit
+    (for the loaded flag) gets used, however. */
+    u8 vmFlags;                         //0x7
+    SBSectionHeader* codeOfs;            //0x8
+    SBSectionHeader* idPoolOfs;          //0xC
+    SBSectionHeader* intPoolOfs;         //0x10
+    SBSectionHeader* fixedPoolOfs;       //0x14
+    SBSectionHeader* stringPoolOfs;      //0x18
+    SBSectionHeader* functionPoolOfs;    //0x1C
+    SBSectionHeader* pluginImportsOfs;   //0x20
+    SBSectionHeader* ocImportsOfs;       //0x24
+    SBSectionHeader* functionImportsOfs; //0x28
+    SBSectionHeader* staticVarsOfs;      //0x2C
+    SBSectionHeader* localPoolOfs;       //0x30
+    SBSectionHeader* sysAtrPoolOfs;      //0x34
+    SBSectionHeader* usrAtrPoolOfs;      //0x38
+    SBSectionHeader* debugSymbolsOfs;    //0x3C
+} SBHeader;
+
+//Section specific structs
+
+//Function pool
+
+typedef struct FunctionPoolEntry{
+    u16 unk0;
+    s16 unk2;
+    u16 unk4;
+    u8 unk8[0xC - 0x8];
+    u32 unkC;
+    u8 unk10[0x14 - 0x10];
+} FunctionPoolEntry;
+
+//Plugin imports
+
+typedef struct PluginImportEntry{
+    u16 unk0;
+    u16 unk2;
+} PluginImportEntry;
+
+//OC imports
+
+typedef struct OCImportEntry{
+    u16 unk0;
+} OCImportEntry;
+
+//Function imports
+
+typedef struct FunctionImportEntry{
+    u16 unk0;
+    u16 unk2;
+} FunctionImportEntry;
+
+//Static vars
+
+typedef struct StaticVarsEntry{
+    u32 unk0;
+    u32 unk4;
+} StaticVarsEntry;
+
+//Local pool
+
+typedef struct LocalPoolEntry{
+    u32 unk0;
+    u32 unk4;
+} LocalPoolEntry;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/sb_types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Misc constants
+
+#define MAX_PACKAGES 8 //Max number of packages (scripts) at once
+#define MAX_PLUGINS 48
+#define MAX_OCS 48
+#define MAX_THREADS 16
+#define MAX_BREAKPOINTS 4
+#define MAX_STACK_ENTRIES 128
+
+#define VMC_MAX 96 //Max number of opcodes
+
+typedef struct VMArg{
+    u8 type; //0x0
+    u16 unk2;
+    union {
+        void* pointerVal;
+        u32 uintVal;
+        int intVal;   
+    } value; //0x4
+} VMArg;
+
+typedef struct VMReg{
+    int pc; //0x0
+    int sp; //0x4
+    int unk8; //0x8
+    int exception; //0xC
+    int unk10; //0x10
+} VMReg;
+
+typedef struct _sVMThread{
+    VMReg reg; //0x0
+    VMArg unk14[2];
+    s16 unk24;
+    u8 unk26[2];
+    u32 unk28;
+    s16 unk2C;
+    u8 unk2E[2];
+    SBHeader* scriptData; //0x30
+    u8* codeData; //0x34
+    StaticVarsEntry* staticVarsEntries; //0x38
+    VMArg* stack; //0x3C
+    u32 unk40;
+    u32 id; //0x44
+    int unk48;
+    BOOL waitMode; //0x4C
+    u32 wkIdx; //0x50
+    u32 unk54;
+    u8 unk58[0x60 - 0x58];
+} VMThread;
+
+//Forward declaration
+struct OCData;
+
+typedef int (*PluginFunc)(VMThread* pThread);
+typedef int (*OCCtorFunc)(VMThread* pThread, void* r4, int r5);
+typedef int (*OCSelectorFunc)(VMThread* pThread, int r4);
+typedef void (*OCGetSetFunc)(VMThread* pThread, int r4, struct OCData* data);
+
+typedef struct PluginFuncData{
+    const char* name; //0x0
+    PluginFunc func; //0x4
+} PluginFuncData;
+
+typedef struct OCProperty{
+    const char* name; //0x0
+    OCGetSetFunc getFunc; //0x4
+    OCGetSetFunc setFunc; //0x8
+    int nameLength; //0xC
+} OCProperty;
+
+typedef struct OCSelector{
+    const char* name; //0x0
+    OCSelectorFunc func; //0x4
+    int nameLength; //0x8
+} OCSelector;
+
+typedef struct OCData{
+    const char* name; //0x0
+    OCCtorFunc ctor; //0x4
+    OCProperty* properties; //0x8
+    OCSelector* selectors; //0xC
+} OCData;
+
+typedef struct VMPackage{
+    SBHeader* scriptDataPtr; //0x0
+    u32 unk4;
+} VMPackage;
+
+typedef struct VMPlugin{
+    char* unk0;
+    PluginFuncData* unk4;
+} VMPlugin;
+
+typedef struct VMOC{
+    OCData* unk0;
+} VMOC;
+
+typedef struct VMBreakpoint{
+    u8 unk0[0xC];
+} VMBreakpoint;
+
+typedef struct VMState{
+    VMPackage packages[MAX_PACKAGES]; //0x0
+    VMThread* activeThread; //0x40
+    u32 nextThreadId; //0x44
+    VMThread* unk48[MAX_THREADS]; //0x48
+    VMThread threads[MAX_THREADS]; //0x88
+    VMArg threadStacks[MAX_THREADS][MAX_STACK_ENTRIES]; //0x688
+    VMPlugin plugins[MAX_PLUGINS]; //0x4688
+    VMOC ocs[MAX_OCS]; //0x4808
+    OCData* builtinOC; //0x48C8
+    //Unused debug data (based on info from XCX)
+    BOOL debMode; //0x48CC
+    u8 unk48D0[0xC];
+    VMBreakpoint bps[MAX_BREAKPOINTS]; //0x48DC
+} VMState;
+
+//Enums
+
+typedef enum VMCResult{
+    VMC_RESULT_0,
+    VMC_RESULT_1,
+    VMC_RESULT_2,
+    VMC_RESULT_3
+} VMCResult;
+
+typedef enum VMCOpcodeType{
+    VMC_OP_NOP,
+    VMC_OP_CONST_0,
+    VMC_OP_CONST_1,
+    VMC_OP_CONST_2,
+    VMC_OP_CONST_3,
+    VMC_OP_CONST_4,
+    VMC_OP_CONST_I,
+    VMC_OP_CONST_I_W,
+    VMC_OP_POOL_INT,
+    VMC_OP_POOL_INT_W,
+    VMC_OP_POOL_FIXED,
+    VMC_OP_POOL_FIXED_W,
+    VMC_OP_POOL_STR,
+    VMC_OP_POOL_STR_W,
+    VMC_OP_LD,
+    VMC_OP_ST,
+    VMC_OP_LD_ARG,
+    VMC_OP_ST_ARG,
+    VMC_OP_ST_ARG_OMIT,
+    VMC_OP_LD_0,
+    VMC_OP_LD_1,
+    VMC_OP_LD_2,
+    VMC_OP_LD_3,
+    VMC_OP_ST_0,
+    VMC_OP_ST_1,
+    VMC_OP_ST_2,
+    VMC_OP_ST_3,
+    VMC_OP_LD_ARG_0,
+    VMC_OP_LD_ARG_1,
+    VMC_OP_LD_ARG_2,
+    VMC_OP_LD_ARG_3,
+    VMC_OP_ST_ARG_0,
+    VMC_OP_ST_ARG_1,
+    VMC_OP_ST_ARG_2,
+    VMC_OP_ST_ARG_3,
+    VMC_OP_LD_STATIC,
+    VMC_OP_LD_STATIC_W,
+    VMC_OP_ST_STATIC,
+    VMC_OP_ST_STATIC_W,
+    VMC_OP_LD_AR,
+    VMC_OP_ST_AR,
+    VMC_OP_LD_NIL,
+    VMC_OP_LD_TRUE,
+    VMC_OP_LD_FALSE,
+    VMC_OP_LD_FUNC,
+    VMC_OP_LD_FUNC_W,
+    VMC_OP_LD_PLUGIN,
+    VMC_OP_LD_PLUGIN_W,
+    VMC_OP_LD_FUNC_FAR,
+    VMC_OP_LD_FUNC_FAR_W,
+    VMC_OP_MINUS,
+    VMC_OP_NOT,
+    VMC_OP_L_NOT,
+    VMC_OP_ADD,
+    VMC_OP_SUB,
+    VMC_OP_MUL,
+    VMC_OP_DIV,
+    VMC_OP_MOD,
+    VMC_OP_OR,
+    VMC_OP_AND,
+    VMC_OP_R_SHIFT,
+    VMC_OP_L_SHIFT,
+    VMC_OP_EQ,
+    VMC_OP_NE,
+    VMC_OP_GT,
+    VMC_OP_LT,
+    VMC_OP_GE,
+    VMC_OP_LE,
+    VMC_OP_L_OR,
+    VMC_OP_L_AND,
+    VMC_OP_JMP,
+    VMC_OP_JPF,
+    VMC_OP_CALL,
+    VMC_OP_CALL_W,
+    VMC_OP_CALL_IND,
+    VMC_OP_RET,
+    VMC_OP_NEXT,
+    VMC_OP_PLUGIN,
+    VMC_OP_PLUGIN_W,
+    VMC_OP_CALL_FAR,
+    VMC_OP_CALL_FAR_W,
+    VMC_OP_GET_OC,
+    VMC_OP_GET_OC_W,
+    VMC_OP_GETTER,
+    VMC_OP_GETTER_W,
+    VMC_OP_SETTER,
+    VMC_OP_SETTER_W,
+    VMC_OP_SEND,
+    VMC_OP_SEND_W,
+    VMC_OP_TYPEOF,
+    VMC_OP_SIZEOF,
+    VMC_OP_SWITCH,
+    VMC_OP_INC,
+    VMC_OP_DEC,
+    VMC_OP_EXIT,
+    VMC_OP_BP //Breakpoint
+} VMCOpcodeType;
+
+typedef enum _VMTypes {
+    VM_TYPE_NIL,
+    VM_TYPE_TRUE,
+    VM_TYPE_FALSE,
+    VM_TYPE_INT,
+    VM_TYPE_FIXED,
+    VM_TYPE_STRING,
+    VM_TYPE_ARRAY,
+    VM_TYPE_FUNCTION,
+    VM_TYPE_PLUGIN,
+    VM_TYPE_OC,
+    VM_TYPE_SYS,
+
+    VM_MAX_TYPE = 11
+} VMTypes;
+
+typedef enum VMException {
+    VM_EXCEPTION_NONE,
+    VM_EXCEPTION_PLUGIN,
+    VM_EXCEPTION_OC,
+    VM_EXCEPTION_DIV_BY_ZERO,
+    VM_EXCEPTION_INVALID_ARRAY,
+    VM_EXCEPTION_INDEX_OOB,
+    VM_EXCEPTION_MATH_INVALID_ARG,
+    VM_EXCEPTION_CALC_INVALID_ARG,
+    VM_EXCEPTION_8,
+    VM_EXCEPTION_JPF_INVALID_ARG,
+    VM_EXCEPTION_CALLIND_INVALID_ARG,
+    VM_EXCEPTION_INVALID_OC,
+    VM_EXCEPTION_SEND_ERROR,
+    VM_EXCEPTION_INVALID_PROPERTY,
+    VM_EXCEPTION_INVALID_GETSET_FUNC
+} VMException;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm_types.h" */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void vmInit();
+BOOL vmLink(u8* pData);
+BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
+void vmStart(u8* pData);
+
+VMThread* vmThreadCreate(SBHeader* pData, u32 r4);
+void vmThreadStart(VMThread* pThread, u32 r4);
+BOOL vmThreadEnd(u32 r3);
+BOOL vmThreadIsAlive(u32 r3);
+BOOL vmThreadSleep(u32 r3);
+BOOL vmThreadWakeup(u32 r3);
+void vmThreadSleepAll(u8* pScriptData);
+void vmThreadWakeupAll(u8* pScriptData);
+BOOL vmThreadIsFinish(u8* pScriptData);
+BOOL vmThreadGetOC(VMThread* pThread, int r4, u32* outId);
+
+VMArg* vmArgPtrGet(VMThread* pThread, int r4);
+BOOL vmArgOmitChk(VMThread* pThread, int r4);
+BOOL vmArgBoolGet(u32 r3, VMArg* r4);
+int vmArgIntGet(u32 r3, VMArg* r4);
+int vmArgFixedGet(u32 r3, VMArg* r4);
+const char* vmArgStringGet(u32 r3, VMArg* r4);
+u32 vmArgFunctionGet(u32 r3, VMArg* r4);
+void* vmArgArrayGet(u32 r3, VMArg* r4);
+void* vmArgOCGet(u32 r3, VMArg* r4);
+u32 vmDataGet(VMThread* pThread, int startIndex, int length);
+
+void vmRetValSet(VMThread* pThread, VMArg* pArg);
+void* vmOCPropertyGet(VMThread* pThread);
+void vmWaitModeSet(VMThread* pThread);
+u32 vmWkIdxGet(VMThread* pThread);
+void vmWkIdxSet(VMThread* pThread, u32 r4);
+u32* vmWkGet(VMThread* pThread, u32 r4);
+
+void vmPluginExceptionThrow(VMThread* pThread);
+void vmOCExceptionThrow(VMThread* pThread);
+DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
+void vmExceptionThrow(VMThread* pThread, u32 exception);
+
+const char* vmIdPoolGet(SBHeader* data, u32 no);
+int vmIntPoolGet(SBHeader* data, u32 no);
+int vmFixedPoolGet(SBHeader* data, u32 no);
+void* vmStringPoolGet(SBHeader* data, u32 no);
+void* vmLocalPoolGet(SBHeader* data, u32 no);
+void* vmFunctionPoolGet(SBHeader* data, u32 no);
+u16* vmSysAtrPoolGet(SBHeader* data, u32 no);
+u16* vmUsrAtrPoolGet(SBHeader* data, u32 no);
+
+u32 vmSysAtrSearch(SBHeader* data, u32 no);
+u32 vmPluginSearch(const char* param1, const char* param2);
+u32 vmOCSearch(const char* pName);
+u32 vmPropertySearch(OCData* pOC, const char* pName);
+u32 vmSelectorSearch(OCData* pOC, const char* pName);
+u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName);
+
+void encodeScramble(u8* data);
+int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6);
+
+void vmArgErr();
+void vmHalt();
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm2.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* func_801862C0(VMThread* pThread);
+void* func_801862E0(void* p);
+void* func_801863F4(void* p);
+void* func_80186460(void* p);
+void* func_80186474(void* p);
+void* func_801864DC(void* pObj, int slot);
+void* func_80186664(void* p);
+void* func_801866F0(void* p);
+void* func_80186A70(void* p);
+void* func_80186BC8(void* p);
+void* func_80186C7C(void* p);
+void* func_80186D20(void* p);
+
+#ifdef __cplusplus
+}
+#endif
+/* end "kyoshin/code_801862C0.hpp" */
+
+/* "src/kyoshin/cf/CfGameManager.cpp" line 11 "monolib/core/CPadManager.hpp" */
 /* end "monolib/core/CPadManager.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 12 "monolib/scn/CScn.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+
+struct ScnRenderCB {
+    IScnRender* cb; //0x0
+    u32 prio; //0x4
+    u8 flag; //0x8
+}; // size = 0xC
+
+// Camera-work blob at CScn+0x68 (CScnCameraMan-related); Draw reads +0x34 via lwz+extsh.
+struct UnkScn68 {
+    u8 unk00[0x34];
+    s32 unk34; //0x34
+};
+
+// Object at CScn+0x8C; Draw calls vf+0x18 / vf+0x1C (RTTI vtable).
+struct UnkScn8C {
+    virtual ~UnkScn8C() {}
+    virtual void vf0C() = 0;
+    virtual void vf10() = 0;
+    virtual void vf14() = 0;
+    virtual void vf18() = 0;
+    virtual void vf1C() = 0;
+};
+
+// IScnRender draw callback shape: vt+0xC(cb, scn).
+struct IScnRenderDraw {
+    virtual ~IScnRenderDraw() {}
+    virtual void onRender(CScn* scn) = 0;
+};
+
+class CScn : public CTTask<CScn>, public IWorkEvent{
+public:
+    void addRenderCB(IScnRender* cb, u32 prio, u32 flag);
+    void removeRenderCB(IScnRender* cb);
+    virtual void Draw();
+
+    //0x000: vtable 1 (CTTask)
+    //0x000-054: CTTask
+    //0x054: vtable 2 (IWorkEvent)
+    u8 unk58[0x68 - 0x058]; //0x058
+    UnkScn68* mCamWork; //0x068
+    u8 unk6C[0x8C - 0x06C]; //0x06C
+    UnkScn8C* mUnk8C; //0x08C
+    u8 unk90[0x0B4 - 0x090]; //0x090
+    ICulling* unkB4; //0x0B4
+    u32 unkB8; //0x0B8
+    ScnRenderCB mRenderCBs[64]; //0x0BC
+    u32 mRenderCBCount; //0x3BC
+    char unk3C0[0x3E4 - 0x3C0]; //0x3C0
+    u8 unk_3E4; //0x3E4
+    u8 unk_3E5; //0x3E5
+    u8 unk_3E6; //0x3E6
+    u8 unk_3E7; //0x3E7
+    u8 unk_3E8; //0x3E8
+    u8 unk_3E9; //0x3E9
+    u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
+}; // size = 0x3EC
+/* end "monolib/scn/CScn.hpp" */
+
+// destructor defined inline in CfGameManager.hpp
+// Manually-named destructor wrapper for __dt__Q22cf13CfGameManagerFv
+extern "C" void __dt__Q22cf13CfGameManagerFv(void* self) {
+    static_cast<cf::CfGameManager*>(self)->~CfGameManager();
+}
+
+namespace {
+
+struct BdatTextEntry {
+    char text[0x20];
+    u32 textLength;
+    char secondaryText[0x20];
+    u32 secondaryTextLength;
+    float value;
+    u8 enabled;
+    u8 padding[3];
+};
+
+} // namespace
 
 extern "C" {
 u32 lbl_eu_80661BC8;
@@ -233911,21 +244474,69 @@ cf::CfGameManager lbl_eu_80571758;
 u8 lbl_eu_80571748[0x10];
 CPad* lbl_eu_80663E0C;
 CPad lbl_eu_80570D40[8];
-u32 lbl_eu_80663E14;
+CScn* lbl_eu_80663E14;
 u32 lbl_eu_80663E60;
 u32 lbl_eu_80663E64;
 u32 lbl_eu_80663E24;
 u32 lbl_eu_80663E28;
+u32 lbl_eu_80663DF8;
+s16 lbl_eu_80663E3C;
+u8 lbl_eu_80663E5C;
+float lbl_eu_80663E58;
+float lbl_eu_80663E68;
+s16 lbl_eu_80661BCC;
+float lbl_eu_80666498;
+float lbl_eu_8066649C;
+BdatTextEntry lbl_eu_80571658[2];
+BdatTextEntry lbl_eu_805716F8;
 
 // symbols.txt: Fv, but callers leave the index in r4 (see getPlayer).
 cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots, int index);
 
 void __ct__Q22cf13CfGameManagerFv(cf::CfGameManager* self);
-void __dt__Q22cf13CfGameManagerFv();
+
 void* __register_global_object(void* object, void* destructor, void* registration);
+void func_80189424(float value);
 }
 
+class ResourceHandle;
+extern "C" ResourceHandle* func_8009CF8C(u32 resourceId);
+extern "C" void func_8009D790(CfGameManagerData1C* data);
+extern "C" float func_80496288(CScn* scene);
+extern "C" bool func_80496044(CScn* scene);
+extern "C" bool func_804960A8(CScn* scene);
+extern const float lbl_eu_8066A208;
+
 namespace cf {
+
+void CfGameManager::func_8007C140() {
+    if (this == nullptr) {
+        lbl_eu_80663E24 |= 8;
+    }
+
+    lbl_eu_80663E28 &= ~8;
+    lbl_eu_80663E3C = 0;
+    lbl_eu_80663E68 = lbl_eu_80666498;
+    lbl_eu_80663E5C = 0;
+    lbl_eu_80663E58 = lbl_eu_80666498;
+    lbl_eu_80661BCC = -1;
+    func_80189424(lbl_eu_8066649C);
+}
+
+void CfGameManager::func_8007C0F8() {
+    lbl_eu_80571658[0].text[0] = 0;
+    lbl_eu_80571658[0].textLength = 0;
+    lbl_eu_80571658[0].secondaryText[0] = 0;
+    lbl_eu_80571658[0].secondaryTextLength = 0;
+    lbl_eu_80571658[1].text[0] = 0;
+    lbl_eu_80571658[1].textLength = 0;
+    lbl_eu_80571658[1].secondaryText[0] = 0;
+    lbl_eu_80571658[1].secondaryTextLength = 0;
+    lbl_eu_805716F8.text[0] = 0;
+    lbl_eu_805716F8.textLength = 0;
+    lbl_eu_805716F8.secondaryText[0] = 0;
+    lbl_eu_805716F8.secondaryTextLength = 0;
+}
 
 CfGameManager::CfGameManager() {
     unk28 = 0;
@@ -233934,7 +244545,7 @@ CfGameManager::CfGameManager() {
     unk7C = 0;
     unk8C = 0;
     unkA0 = 0;
-    unkA4 = 0;
+    field_0xA4 = 0;
     unkA8 = 0;
     unkAC = 0;
     unkB0 = 0;
@@ -233945,8 +244556,8 @@ CfGameManager::CfGameManager() {
     lbl_eu_80663E24 = 0;
     lbl_eu_80663E28 = 0;
     unk0 = 0;
-    unk4 = 0;
-    unk8 = 0;
+    field_0x4 = 0;
+    mObjectFlags = 0;
 }
 
 #pragma dont_inline on
@@ -233992,36 +244603,24 @@ CfObjectMove* CfGameManager::getPlayer(int playerIndex) {
 } // namespace cf
 
 #pragma dont_inline on
-extern "C" cf::CfObjectMove** func_8007C6B4__Q22cf13CfGameManagerFv(cf::CfObjectMove** slots,
+cf::CfObjectMove** cf::CfGameManager::func_8007C6B4(cf::CfObjectMove** slots,
                                                                     int index) {
     return &slots[index];
 }
 #pragma dont_inline off
 
-extern "C" void func_8007C188__Q22cf13CfGameManagerFv(unsigned long flags) {
-    extern unsigned long lbl_eu_80663E24;
-    lbl_eu_80663E24 |= flags;
-}
+void cf::CfGameManager::func_8007C188(unsigned long flags) {}
 
-extern "C" void func_8007D190__Q22cf13CfGameManagerFv(unsigned long flags) {
-    extern unsigned long lbl_eu_80663E24;
-    lbl_eu_80663E24 &= ~flags;
-}
+void cf::CfGameManager::func_8007D190(unsigned long flags) {}
 
-extern "C" void func_8007D794__Q22cf13CfGameManagerFv(void* self) {
-    *(unsigned char*)self = 0;
-    *(unsigned long*)((char*)self + 0x20) = 0;
-}
+void cf::CfGameManager::func_8007D794() {}
 
-extern "C" void func_8007E1B4__Q22cf13CfGameManagerFv() {}
-extern "C" void func_8007E218__Q22cf13CfGameManagerFv() {}
-extern "C" void func_8007F930__Q22cf13CfGameManagerFv() {}
-extern "C" void* func_80083298__Q22cf13CfGameManagerFv() {
-    extern void* getInstance__Q22cf13CfGameManagerFv();
-    return *(void**)((char*)getInstance__Q22cf13CfGameManagerFv() + 0x90);
-}
+bool cf::CfGameManager::func_8007E1B4() { return false; }
+void cf::CfGameManager::func_8007E218() {}
+void cf::CfGameManager::func_8007F930(bool arg1) {}
+UNKTYPE* cf::CfGameManager::func_80083298() { return nullptr; }
 extern "C" void func_800B76CC();
-extern "C" void func_eu_800874CC() { func_800B76CC(); }
+void func_eu_800874CC(){ func_800B76CC(); }
 extern "C" void func_800B76F4();
 
 extern "C" void func_eu_800874D0()
@@ -234030,7 +244629,7 @@ extern "C" void func_eu_800874D0()
 }
 extern "C" void func_800B781C(void);
 
-extern "C" void func_eu_800874D4(void) {
+void func_eu_800874D4(void){
     func_800B781C();
 }
 extern "C" void func_800B7854();
@@ -234039,435 +244638,433 @@ extern "C" void func_eu_800874D8()
 {
     func_800B7854();
 }
-extern "C" void func_80086B5C__Q22cf13CfGameManagerFv() {}
-extern "C" void enablePadFlags__Q22cf13CfGameManagerFUlb() {}
-extern "C" void getEnabledInputFlags__Q22cf13CfGameManagerFv() {}
-extern "C" void func_80086F9C__Q22cf13CfGameManagerFv() {}
-extern "C" void getPad__Q22cf13CfGameManagerFi(int) {}
-extern "C" void setPad__Q22cf13CfGameManagerFv() {}
-extern "C" void setCurrentPadPtr__Q22cf13CfGameManagerFPC4CPadUl() {}
-extern "C" void func_80087588() {}
-extern "C" void func_8007EF48__Q22cf13CfGameManagerFv() {}
-extern "C" void func_8007FE18__Q22cf13CfGameManagerFv() {}
-extern "C" void func_8007FE1C__Q22cf13CfGameManagerFv() {}
-extern "C" void func_8007FE20__Q22cf13CfGameManagerFv() {}
-extern "C" int func_8007F0A4__Q22cf13CfGameManagerFv() { return 0; }
-extern "C" int func_8007F114__Q22cf13CfGameManagerFv() { return 0; }
-extern "C" int func_8007FE24__Q22cf13CfGameManagerFv() { return 0; }
-extern "C" int CfObject_UnkVirtualFunc53__Q22cf8CfObjectFv() { return 0; }
-extern "C" int CfObject_UnkVirtualFunc58__Q22cf8CfObjectFv() { return 0; }
+void cf::CfGameManager::func_80086B5C(int arg1, int arg2, int arg3) {}
+void cf::CfGameManager::enablePadFlags(u32 inputFlags, bool enable) {
+    u32 enabledFlags = lbl_eu_80663DF8 & ~inputFlags;
+    if (enable) {
+        enabledFlags = lbl_eu_80663DF8 | inputFlags;
+    }
+    lbl_eu_80663DF8 = enabledFlags;
+
+    if (lbl_eu_80663E0C == nullptr) {
+        return;
+    }
+    if (enable) {
+        return;
+    }
+
+    lbl_eu_80663E0C->mPressedButtonFlags &= enabledFlags;
+    lbl_eu_80663E0C->mTurboPressButtonFlags &= enabledFlags;
+    lbl_eu_80663E0C->mReleasedButtonFlags &= enabledFlags;
+    lbl_eu_80663E0C->mHeldButtonFlags &= enabledFlags;
+    lbl_eu_80663E0C->mLongHoldButtonFlags &= enabledFlags;
+    lbl_eu_80663E0C->mShortPressButtonFlags &= enabledFlags;
+    lbl_eu_80571500.mPressedButtonFlags &= enabledFlags;
+    lbl_eu_80571500.mTurboPressButtonFlags &= enabledFlags;
+}
+u32 cf::CfGameManager::getEnabledInputFlags() { return 0; }
+bool cf::CfGameManager::func_80086F9C() {
+    return CfPadTask::getDetectedPadType() == PAD_TYPE_CLASSIC;
+}
+CPad* cf::CfGameManager::getPad(int channel) {
+    return &lbl_eu_80570D40[channel & 7];
+}
+void cf::CfGameManager::setPad(int r3, CPad* pPad, u32 r5) {}
+void cf::CfGameManager::setCurrentPadPtr(const CPad* pad, u32 channel) {
+    if (pad != nullptr && lbl_eu_80661BC8 != 0xFFFFFFFF && lbl_eu_80661BC8 != channel) {
+        return;
+    }
+
+    lbl_eu_80663E0C = const_cast<CPad*>(pad);
+}
+void func_80087588(){}
+extern u16 lbl_eu_80664772;
+bool cf::CfGameManager::func_80085840() {
+    if (lbl_eu_80663E14 == nullptr) {
+        return true;
+    }
+    return func_80496044(lbl_eu_80663E14);
+}
+
+bool cf::CfGameManager::func_8008585C() {
+    if (lbl_eu_80663E14 == nullptr) {
+        return false;
+    }
+    return func_804960A8(lbl_eu_80663E14);
+}
+
+bool cf::CfGameManager::func_80084BF4() {
+    return (lbl_eu_80663E24 & 0x48000) != 0;
+}
+
+bool cf::CfGameManager::func_800829B8() {
+    if (testResInfoFlag(0x04000000)) {
+        return false;
+    }
+
+    getInstance();
+    return func_80496288(lbl_eu_80663E14) <= lbl_eu_8066A208;
+}
+
+bool cf::CfGameManager::func_80082680() {
+    return lbl_eu_80664772 != 0;
+}
+
+bool cf::CfGameManager::func_8007F91C() {
+    return lbl_eu_80663E3C > 0;
+}
+
+u16 cf::CfGameManager::func_8007E030() {
+    return field_0x18;
+}
+
+cf::CfObject** cf::CfGameManager::func_8007E0C8() {
+    return &field_0x4;
+}
+
+void cf::CfGameManager::func_80087334() {
+    field_0x4->CfObject_UnkVirtualFunc52();
+}
+
+void cf::CfGameManager::func_80087348() {
+    field_0x4->CfObject_UnkVirtualFunc53();
+}
+
+void cf::CfGameManager::func_80087364() {
+    field_0x4->CfObject_UnkVirtualFunc48();
+}
+
+void cf::CfGameManager::func_80087378() {
+    field_0x4->CfObject_UnkVirtualFunc46();
+}
+
+void cf::CfGameManager::func_80087390() {
+    field_0x4->CfObject_UnkVirtualFunc56();
+}
+
+void cf::CfGameManager::func_800873AC() {
+    field_0x4->CfObject_UnkVirtualFunc58();
+}
+
+void cf::CfGameManager::func_800873D4() {
+    field_0x4->CfObject_UnkVirtualFunc31();
+}
+
+void cf::CfGameManager::func_800873E8() {
+    field_0x4->CfObject_UnkVirtualFunc29();
+}
+
+void cf::CfGameManager::func_800873FC() {
+    field_0x4->CfObject_UnkVirtualFunc23();
+}
+
+void cf::CfGameManager::func_80087410() {
+    field_0x4->CfObject_UnkVirtualFunc19();
+}
+
+void cf::CfGameManager::func_8007EEF0() {
+    func_8009D790(&field_0x1C);
+}
+
+bool cf::CfObjectMap::func_8007D814() {
+    return field_0x8E >= 2;
+}
+
+void cf::CfGameManager::func_8007D834() {
+    if (lbl_eu_80663E24 & 0x1000) {
+        func_80186D20(field_0xA4);
+    }
+}
+
+void cf::CfObject::CfObject_UnkVirtualFunc33() {
+    CfObject_UnkVirtualFunc32();
+}
+
+void cf::CfGameManager::func_80083550() {
+    lbl_eu_80663E24 |= 0x10;
+}
+
+void cf::CfGameManager::func_800835FC() {
+    lbl_eu_80663E24 |= 0x20;
+}
+
+void cf::CfGameManager::func_80083878() {
+    lbl_eu_80663E24 |= 0x40;
+}
+
+void cf::CfGameManager::func_80083CC8() {
+    lbl_eu_80663E24 &= ~0x20;
+}
+
+bool cf::CfGameManager::func_80087250() {
+    return func_8009CF8C(0x3508) != nullptr;
+}
+
+void cf::CfGameManager::func_8007C4B4() {}
+void cf::CfGameManager::func_8007EF44() {}
+void cf::CfGameManager::func_80087330() {}
+void cf::CfObject::CfObject_UnkVirtualFunc46() {}
+void cf::CfObject::CfObject_UnkVirtualFunc47() {}
+
+void cf::CfGameManager::func_8007EF48() {}
+void cf::CfGameManager::func_8007FE18() {}
+void cf::CfGameManager::func_8007FE1C() {}
+void cf::CfGameManager::func_8007FE20() {}
+void cf::CfGameManager::func_8007F0A4() {}
+void cf::CfGameManager::func_8007F114() {}
+void cf::CfGameManager::func_8007FE24() {}
+cf::CfObject* cf::CfObject::CfObject_UnkVirtualFunc53() {
+    return nullptr;
+}
+extern u32 lbl_eu_80661BC0;
+u32* cf::CfObject::CfObject_UnkVirtualFunc58() {
+    return &lbl_eu_80661BC0;
+}
 // lwz getters — return global vars
 extern u32 lbl_eu_80664188;
-extern "C" int func_80083458__Q22cf13CfGameManagerFv() { return lbl_eu_80664188; }
+void cf::CfGameManager::func_80083458() {}
 extern u32 lbl_eu_80664184;
-extern "C" int func_80083460__Q22cf13CfGameManagerFv() { return lbl_eu_80664184; }
-extern "C" int func_80086B1C__Q22cf13CfGameManagerFv() { return lbl_eu_80664184; }
+void cf::CfGameManager::func_80083460() {}
+void cf::CfGameManager::func_80086B1C() {}
 extern u32 lbl_eu_8066409C;
-extern "C" int func_80086B24__Q22cf13CfGameManagerFv() { return lbl_eu_8066409C; }
+void cf::CfGameManager::func_80086B24() {}
 extern u32 lbl_eu_806640A8;
-extern "C" int func_80086B2C__Q22cf13CfGameManagerFv() { return lbl_eu_806640A8; }
+void cf::CfGameManager::func_80086B2C() {}
 extern u32 lbl_eu_806640A4;
-extern "C" int func_80086B34__Q22cf13CfGameManagerFv() { return lbl_eu_806640A4; }
+void cf::CfGameManager::func_80086B34() {}
 extern u32 lbl_eu_806640F4;
-extern "C" int func_80086B3C__Q22cf13CfGameManagerFv() { return lbl_eu_806640F4; }
+void cf::CfGameManager::func_80086B3C() {}
 extern u32 lbl_eu_80663D90;
-extern "C" int func_80086DB4__Q22cf13CfGameManagerFv() { return lbl_eu_80663D90; }
+void cf::CfGameManager::func_80086DB4() {}
 extern u8 lbl_eu_80663E34;
-extern "C" u8 func_8007F9BC__Q22cf13CfGameManagerFv() { return lbl_eu_80663E34; }
+void cf::CfGameManager::func_8007F9BC() {}
 extern u8 lbl_eu_80663E5D;
-extern "C" u8 func_80080E20__Q22cf13CfGameManagerFv() { return lbl_eu_80663E5D; }
+void cf::CfGameManager::func_80080E20() {}
 extern u8 lbl_eu_8066476D;
-extern "C" u8 func_80080E28__Q22cf13CfGameManagerFv() { return lbl_eu_8066476D; }
+void cf::CfGameManager::func_80080E28() {}
 extern "C" u32 lbl_eu_8065FC18[];
-extern "C" void* func_8007DA00__Q22cf13CfGameManagerFv() { return (void*)lbl_eu_8065FC18; }
+void cf::CfGameManager::func_8007DA00() {}
 
 extern "C" void func_800B985C();
-extern "C" void func_80080F40__Q22cf13CfGameManagerFv() {
-    func_800B985C();
-}
+void cf::CfGameManager::func_80080F40() {}
 
-extern "C" void func_80080F44__Q22cf13CfGameManagerFv() {
-    extern void func_800B9404(void);
-    func_800B9404();
-}
+void cf::CfGameManager::func_80080F44() {}
 
-extern "C" void func_80081CB8__Q22cf13CfGameManagerFv() {
-    extern void func_800B9548(void);
-    func_800B9548();
-}
+void cf::CfGameManager::func_80081CB8() {}
 
-extern "C" void func_80081D88__Q22cf13CfGameManagerFv() {
-    extern void func_800B97A0(void);
-    func_800B97A0();
-}
+void cf::CfGameManager::func_80081D88() {}
 
-extern "C" void func_80082254__Q22cf13CfGameManagerFv() {
-    extern void func_800B93D0(void);
-    func_800B93D0();
-}
+void cf::CfGameManager::func_80082254() {}
 
-extern "C" void func_80082EC0__Q22cf13CfGameManagerFv() {
-    extern void func_8026178C(void);
-    func_8026178C();
-}
+void cf::CfGameManager::func_80082EC0() {}
 
 extern "C" void func_800B6BA4__Fv();
-extern "C" void func_80086B04__Q22cf13CfGameManagerFv() {
-    func_800B6BA4__Fv();
-}
+void cf::CfGameManager::func_80086B04() {}
 
 extern "C" void func_800B6BC8();
-extern "C" void func_80086B08__Q22cf13CfGameManagerFv() {
-    func_800B6BC8();
-}
+void cf::CfGameManager::func_80086B08() {}
 
 extern "C" void func_800B6BEC();
-extern "C" void func_80086B0C__Q22cf13CfGameManagerFv() {
-    func_800B6BEC();
-}
+void cf::CfGameManager::func_80086B0C() {}
 
 extern "C" void func_800B6C10();
-extern "C" void func_80086B10__Q22cf13CfGameManagerFv() {
-    func_800B6C10();
-}
+void cf::CfGameManager::func_80086B10() {}
 
 extern "C" void func_800B6C34();
-extern "C" void func_80086B14__Q22cf13CfGameManagerFv() {
-    func_800B6C34();
-}
+void cf::CfGameManager::func_80086B14() {}
 
 extern "C" void func_800B8920();
-extern "C" void func_80086B18__Q22cf13CfGameManagerFv() {
-    func_800B8920();
-}
+void cf::CfGameManager::func_80086B18() {}
 
 extern "C" void func_80141B54();
-extern "C" void func_80086B44__Q22cf13CfGameManagerFv() {
-    func_80141B54();
-}
+void cf::CfGameManager::func_80086B44() {}
 
 extern "C" void func_80069EA0();
-extern "C" void func_80086B48__Q22cf13CfGameManagerFv() {
-    func_80069EA0();
-}
+void cf::CfGameManager::func_80086B48() {}
 
 extern "C" void func_8006A12C();
-extern "C" void func_80086D90__Q22cf13CfGameManagerFv() {
-    func_8006A12C();
-}
+void cf::CfGameManager::func_80086D90() {}
 
 extern "C" void func_8006A1A0();
-extern "C" void func_80086D94__Q22cf13CfGameManagerFv() {
-    func_8006A1A0();
-}
+void cf::CfGameManager::func_80086D94() {}
 
 extern "C" void func_8006A234();
-extern "C" void func_80086D98__Q22cf13CfGameManagerFv() {
-    func_8006A234();
-}
+void cf::CfGameManager::func_80086D98() {}
 
 extern "C" void func_8006A2E0();
-extern "C" void func_80086D9C__Q22cf13CfGameManagerFv() {
-    func_8006A2E0();
-}
+void cf::CfGameManager::func_80086D9C() {}
 
 extern "C" void func_8006A33C();
-extern "C" void func_80086DA0__Q22cf13CfGameManagerFv() {
-    func_8006A33C();
-}
+void cf::CfGameManager::func_80086DA0() {}
 
 extern "C" void func_8006A37C();
-extern "C" void func_80086DA4__Q22cf13CfGameManagerFv() {
-    func_8006A37C();
-}
+void cf::CfGameManager::func_80086DA4() {}
 
 extern "C" void func_8006A3BC();
-extern "C" void func_80086DA8__Q22cf13CfGameManagerFv() {
-    func_8006A3BC();
-}
+void cf::CfGameManager::func_80086DA8() {}
 
 extern "C" void func_8006A3FC();
-extern "C" void func_80086DAC__Q22cf13CfGameManagerFv() {
-    func_8006A3FC();
-}
+void cf::CfGameManager::func_80086DAC() {}
 
 extern "C" void func_8006A404();
-extern "C" void func_80086DB0__Q22cf13CfGameManagerFv() {
-    func_8006A404();
-}
+void cf::CfGameManager::func_80086DB0() {}
 
 extern "C" void func_8006A6D0();
-extern "C" void func_80086DBC__Q22cf13CfGameManagerFv() {
-    func_8006A6D0();
-}
+void cf::CfGameManager::func_80086DBC() {}
 
-extern "C" u16 func_8007F8B8__Q22cf13CfGameManagerFv(void* self) {
-    return *(u16*)((u8*)self + 0x8c);
-}
+void cf::CfGameManager::func_8007F8B8() {}
 
 extern u16 lbl_eu_80663E3A;
-extern "C" u16 func_8007F9AC__Q22cf13CfGameManagerFv() {
-    return lbl_eu_80663E3A;
-}
+void cf::CfGameManager::func_8007F9AC() {}
 
 extern u16 lbl_eu_80663E3A;
-extern "C" void func_8007F9B4__Q22cf13CfGameManagerFv(u16 val) {
-    lbl_eu_80663E3A = val;
-}
+void cf::CfGameManager::func_8007F9B4() {}
 
-extern "C" void func_80081264__Q22cf13CfGameManagerFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0x4) = val;
-}
+void cf::CfGameManager::func_80081264() {}
 
 extern "C" void func_8009E120(u32, u32);
-extern "C" void func_8008126C__Q22cf13CfGameManagerFv(u32 self) {
-    func_8009E120(self, 0);
-}
+void cf::CfGameManager::func_8008126C() {}
 
-extern "C" void func_80081274__Q22cf13CfGameManagerFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0x8) = val;
-}
+void cf::CfGameManager::func_80081274() {}
 
 extern "C" void func_8009E120(u32, u32);
-extern "C" void func_8008127C__Q22cf13CfGameManagerFv(u32 self) {
-    func_8009E120(self, 1);
-}
+void cf::CfGameManager::func_8008127C() {}
 
-extern "C" void func_80081284__Q22cf13CfGameManagerFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0x10) = val;
-}
+void cf::CfGameManager::func_80081284() {}
 
 extern "C" void func_8009E120(u32, u32);
-extern "C" void func_8008128C__Q22cf13CfGameManagerFv(u32 self) {
-    func_8009E120(self, 2);
-}
+void cf::CfGameManager::func_8008128C() {}
 
-extern "C" void func_80081294__Q22cf13CfGameManagerFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0xc) = val;
-}
+void cf::CfGameManager::func_80081294() {}
 
 extern "C" void func_8009E120(u32, u32);
-extern "C" void func_8008129C__Q22cf13CfGameManagerFv(u32 self) {
-    func_8009E120(self, 3);
-}
+void cf::CfGameManager::func_8008129C() {}
 
-extern "C" void func_800812A4__Q22cf13CfGameManagerFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0x14) = val;
-}
+void cf::CfGameManager::func_800812A4() {}
 
 extern "C" void func_8009E120(u32, u32);
-extern "C" void func_800812AC__Q22cf13CfGameManagerFv(u32 self) {
-    func_8009E120(self, 4);
-}
+void cf::CfGameManager::func_800812AC() {}
 
-extern "C" u16 func_800812B4__Q22cf13CfGameManagerFv(void* self) {
-    return *(u16*)((u8*)self + 0xe);
-}
+void cf::CfGameManager::func_800812B4() {}
 
-extern "C" u16 func_800812BC__Q22cf13CfGameManagerFv(void* self) {
-    return *(u16*)((u8*)self + 0x10);
-}
+void cf::CfGameManager::func_800812BC() {}
 
-extern "C" u16 func_800812C4__Q22cf13CfGameManagerFv(void* self) {
-    return *(u16*)((u8*)self + 0x12);
-}
+void cf::CfGameManager::func_800812C4() {}
 
-extern "C" u16 func_800812CC__Q22cf13CfGameManagerFv(void* self) {
-    return *(u16*)((u8*)self + 0x14);
-}
+void cf::CfGameManager::func_800812CC() {}
 
-extern "C" u16 func_800812D4__Q22cf13CfGameManagerFv(void* self) {
-    return *(u16*)((u8*)self + 0x16);
-}
+void cf::CfGameManager::func_800812D4() {}
 
 extern "C" void func_8009E120(u32, u32);
-extern "C" void func_800812DC__Q22cf13CfGameManagerFv(u32 self) {
-    func_8009E120(self, 5);
-}
+void cf::CfGameManager::func_800812DC() {}
 
-extern "C" u16 func_800812E4__Q22cf13CfGameManagerFv(void* self) {
-    return *(u16*)((u8*)self + 0xc);
-}
+void cf::CfGameManager::func_800812E4() {}
 
-extern "C" void func_800812EC__Q22cf13CfGameManagerFv(void* self, u16 val) {
-    *(u16*)((u8*)self + 0x24) = val;
-}
+void cf::CfGameManager::func_800812EC() {}
 
-extern "C" void func_800812F4__Q22cf13CfGameManagerFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0x0) = val;
-}
+void cf::CfGameManager::func_800812F4() {}
 
-extern "C" void func_80081330__Q22cf13CfGameManagerFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0x18) = val;
-}
+void cf::CfGameManager::func_80081330() {}
 
-extern "C" void func_80081338__Q22cf13CfGameManagerFv(void* self, u16 val) {
-    *(u16*)((u8*)self + 0x20) = val;
-}
+void cf::CfGameManager::func_80081338() {}
 
-extern "C" void func_80081340__Q22cf13CfGameManagerFv(void* self, u16 val) {
-    *(u16*)((u8*)self + 0x22) = val;
-}
+void cf::CfGameManager::func_80081340() {}
 
-extern "C" void func_80081348__Q22cf13CfGameManagerFv(void* self, u16 val) {
-    *(u16*)((u8*)self + 0x1c) = val;
-}
+void cf::CfGameManager::func_80081348() {}
 
-extern "C" void func_80081350__Q22cf13CfGameManagerFv(void* self, u16 val) {
-    *(u16*)((u8*)self + 0x1e) = val;
-}
+void cf::CfGameManager::func_80081350() {}
 
-extern "C" u32 func_800817A8__Q22cf13CfGameManagerFv(void* self) {
-    return *(u32*)((u8*)self + 0x8);
-}
+void cf::CfGameManager::func_800817A8() {}
 
-extern "C" void func_80081874__Q22cf13CfGameManagerFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0x64) = val;
-}
+void cf::CfGameManager::func_80081874() {}
 
-extern "C" void func_80081988__Q22cf13CfGameManagerFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0xa8) = val;
-}
+void cf::CfGameManager::func_80081988() {}
 
-extern "C" void func_80081CB0__Q22cf13CfGameManagerFv(void* self, u16 val) {
-    *(u16*)((u8*)self + 0x8c) = val;
-}
+void cf::CfGameManager::func_80081CB0() {}
 
-extern "C" void func_8009CF8C(u32);
-extern "C" void func_800822F4__Q22cf13CfGameManagerFv() {
-    func_8009CF8C(0x20);
-}
+UNKWORD cf::CfGameManager::func_800822F4() { return 0; }
 
-extern "C" void func_8009CF8C(u32);
-extern "C" void func_80082354__Q22cf13CfGameManagerFv(u32 self) {
-    func_8009CF8C(self + 0x220);
-}
+void cf::CfGameManager::func_80082354() {}
+void cf::CfGameManager::func_80082614() {}
+void cf::CfGameManager::func_80082694() {}
 
-extern "C" void func_8009CF8C(u32);
-extern "C" void func_80082614__Q22cf13CfGameManagerFv(u32 self) {
-    func_8009CF8C(self + 0x312c);
-}
+void cf::CfGameManager::func_80082768() {}
 
-extern "C" void func_8009CF8C(u32);
-extern "C" void func_80082694__Q22cf13CfGameManagerFv(u32 self) {
-    func_8009CF8C(self + 0x40);
-}
-
-extern "C" u32 func_80082768__Q22cf13CfGameManagerFv(void* self) {
-    return *(u32*)((u8*)self + 0x48);
-}
-
-extern "C" s16 func_80083290__Q22cf13CfGameManagerFv(void* self) {
-    return *(s16*)((u8*)self + 0x532);
-}
+void cf::CfGameManager::func_80083290() {}
 
 extern u8 lbl_eu_80664298;
-extern "C" void func_80083468__Q22cf13CfGameManagerFv(u8 val) {
-    lbl_eu_80664298 = val;
-}
+void cf::CfGameManager::func_80083468() {}
 
-extern "C" void* func_80083C70__Q22cf13CfGameManagerFv(void* self) {
-    return (u8*)self + 0x219c;
-}
+void cf::CfGameManager::func_80083C70() {}
 
-extern u32 lbl_eu_80663E14;
 extern "C" void func_80496034(u32);
-extern "C" void func_80085838__Q22cf13CfGameManagerFv() {
-    func_80496034(lbl_eu_80663E14);
-}
+void cf::CfGameManager::func_80085838() {}
 
-extern "C" float CfObject_UnkVirtualFunc56__Q22cf8CfObjectFv() {
-    extern float lbl_eu_80666498;
+float cf::CfObject::CfObject_UnkVirtualFunc56() {
     return lbl_eu_80666498;
 }
 
-extern "C" u32 func_80087424__Q22cf13CfGameManagerFv(void* self) {
-    return *(u32*)((u8*)self + 0x8);
+u32 cf::CfGameManager::func_80087424() {
+    return mObjectFlags;
 }
 
 extern u32 lbl_eu_80663E24;
-extern "C" u32 func_8007CBC8__Q22cf13CfGameManagerFv() {
-    return (lbl_eu_80663E24 >> 7) & 1;
+bool cf::CfGameManager::func_8007CBC8() {
+    return (lbl_eu_80663E24 & 0x80) != 0;
 }
 
-extern "C" u32 func_8007EEF8__Q22cf13CfGameManagerFv(void* self) {
-    return *(u32*)((u8*)self + 0x0) >> 20;
-}
+void cf::CfGameManager::func_8007EEF8() {}
 
-extern "C" void* func_8007F8D0__Q22cf13CfGameManagerFv(void* self) {
-    return (u8*)*(u32**)((u8*)self + 0x0) + 0x8;
-}
+void cf::CfGameManager::func_8007F8D0() {}
 
-extern "C" void func_8007F8F4__Q22cf13CfGameManagerFv(void* self, void* src) {
-    *(u32*)((u8*)self + 0x0) = *(u32*)((u8*)src + 0x4);
-}
+void cf::CfGameManager::func_8007F8F4() {}
 
 extern void __fill_mem(void*, int, int);
-extern "C" void func_80081258__Q22cf13CfGameManagerFv(void* self) {
-    __fill_mem(self, 0, 0x28);
-}
+void cf::CfGameManager::func_80081258() {}
 
 extern u32 lbl_eu_80663E24;
-extern "C" u32 func_800817B0__Q22cf13CfGameManagerFv(void* self) {
-    return (*(u32*)((u8*)self + 0x82c) >> 2) & 1;
-}
+void cf::CfGameManager::func_800817B0() {}
 
 extern "C" void func_80141C6C(void*, void*);
-extern "C" void func_80082940__Q22cf13CfGameManagerFv(void* self, void* a, void* b) {
-    func_80141C6C(a, b);
-}
+void cf::CfGameManager::func_80082940() {}
 
-extern "C" u32 func_80083100__Q22cf13CfGameManagerFv(void* self) {
-    u32 val = *(u32*)((u8*)self + 0x4ec);
-    return (val >> 16) & 1;
-}
+void cf::CfGameManager::func_80083100() {}
 
-extern "C" u32 func_8008310C__Q22cf13CfGameManagerFv(void* self) {
-    u32 val = *(u32*)((u8*)self + 0x4ec);
-    return (val >> 7) & 1;
-}
+void cf::CfGameManager::func_8008310C() {}
 
-extern "C" u32 func_80083284__Q22cf13CfGameManagerFv(void* self) {
-    u32 val = *(u32*)((u8*)self + 0x4ec);
-    return (val >> 20) & 1;
-}
+void cf::CfGameManager::func_80083284() {}
 
-extern "C" void CObjectParam_UnkVirtualFunc4__Q22cf12CObjectParamFv(void* self) {
-    *(u32*)((u8*)self + 0x34) = 0;
+void cf::CObjectParam::CObjectParam_UnkVirtualFunc4() {
 }
 
 extern u32 lbl_eu_80663E24;
-extern "C" u32 func_80083538__Q22cf13CfGameManagerFv() {
-    return (lbl_eu_80663E24 >> 5) & 1;
+bool cf::CfGameManager::func_80083538() {
+    return (lbl_eu_80663E24 & 0x20) != 0;
 }
 
-extern u32 lbl_eu_80663E24;
-extern "C" u32 func_80083544__Q22cf13CfGameManagerFv() {
-    return (lbl_eu_80663E24 >> 4) & 1;
+bool cf::CfGameManager::func_80083544() {
+    return (lbl_eu_80663E24 & 0x10) != 0;
 }
 
 extern u32 lbl_eu_80663E28;
-extern "C" u32 func_80087244__Q22cf13CfGameManagerFv() {
-    return (lbl_eu_80663E28 >> 20) & 1;
+bool cf::CfGameManager::func_80087244() {
+    return (lbl_eu_80663E28 & 0x100000) != 0;
 }
 
-extern "C" void* func_800873C8__Q22cf13CfGameManagerFv(void* self) {
-    return (u8*)*(u32*)((u8*)self + 0x4) + 0x54;
+cf::CfObjectSub54* cf::CfGameManager::func_800873C8() {
+    return &field_0x4->mSubObj54;
 }
 
-extern "C" void func_8008743C__Q22cf13CfGameManagerFv(void* self) {
-    *(u32*)((u8*)self + 0x8) = 0;
+void cf::CfGameManager::func_8008743C() {
+    mObjectFlags = 0;
 }
 
-extern "C" void CActorParam_UnkVirtualFunc89__Q22cf11CActorParamFv(void* self, u32 val) {
-    *(u32*)((u8*)self + 0x1608) = val;
+void cf::CActorParam::CActorParam_UnkVirtualFunc89() {
 }
 
-extern "C" u32 CActorParam_UnkVirtualFunc91__Q22cf11CActorParamFv(void* self) {
-    return *(u32*)((u8*)self + 0x1608);
+void cf::CActorParam::CActorParam_UnkVirtualFunc91() {
 }
 
-extern "C" u32 CActorParam_UnkVirtualFunc127__Q22cf11CActorParamFv(void* self) {
-    return *(u32*)((u8*)self + 0x15E0);
+void cf::CActorParam::CActorParam_UnkVirtualFunc127() {
 }
 

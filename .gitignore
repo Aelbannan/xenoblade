@@ -47,6 +47,8 @@ tools/coop/targets.json.lock
 *.d
 *.ctx.c
 .pi/workflows/cleanup-tus/
-.pi/workflows/index.json
+.pi/workflows/
+.pi/workflow-runtime/
+.pi/workflow-subagents/
 tools/pi_harness/node_modules/
 .envrc

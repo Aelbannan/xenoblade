@@ -385,7 +385,50 @@ UNIT_RULES: dict[str, UnitRules] = {
         # PLAN.md §17.6.
         
     ),
+    "MemManager.o": UnitRules(
+        # MWCC emits these inline/accessor and ABI-wrapper bodies although the
+        # retail MemManager split does not contain them. They are unreferenced
+        # by the retained split functions.
+        exact_renames=(
+            ("lbl_eu_80653EE0", "sRegionBuffer__Q23mtl10MemManager"),
+        ),
+        drop_text_symbols=(
+            "getRegion__Q23mtl10MemManagerFUl",
+            "getMaxBlock__Q23mtl10MemManagerFUl",
+            "empty__Q23mtl10MemManagerFUl",
+            "getMEM1MaxSize__Q33mtl10MemManager9MemRegionFv",
+            "getMEM2MaxSize__Q33mtl10MemManager9MemRegionFv",
+            "isOptimalAlloc__Q23mtl10MemManagerFv",
+            "setHandleMEM1__Q23mtl10MemManagerFUl",
+            "setHandleMEM2__Q23mtl10MemManagerFUl",
+            "setHandleStatic__Q23mtl10MemManagerFUl",
+            "__dt__Q33mtl10MemManager9MemRegionFv__Fv",
+            "__dl__FPv__Fv",
+            "__dla__FPv__Fv",
+        ),
+    ),
     "CViewRoot.o": UnitRules(),
+    "CWorkThread.o": UnitRules(
+        # Retail strips this TU's class-static/vtable names to address labels.
+        exact_renames=(
+            ("__vt__11CWorkThread", "lbl_eu_8056B110"),
+            ("__vt__29_reslist_base<P11CWorkThread>", "lbl_eu_8056B1D4"),
+            ("__vt__23reslist<P11CWorkThread>", "lbl_eu_8056B1BC"),
+            ("__vt__12CMsgParam<8>", "lbl_eu_8056B1B0"),
+            ("sAllocHandle__17CWorkThreadSystem", "lbl_eu_8066351C"),
+        ),
+    ),
+    "CWorkThreadSystem.o": UnitRules(
+        # Retail names this TU's static storage by stripped address labels.
+        # The MWCC class-static names resolve to the same objects/addresses.
+        exact_renames=(
+            ("scRegionName__17CWorkThreadSystem", "lbl_eu_80663518"),
+            ("sAllocHandle__17CWorkThreadSystem", "lbl_eu_8066351C"),
+            ("sMemAvailable__17CWorkThreadSystem", "lbl_eu_80665590"),
+            ("sAllocFlags__17CWorkThreadSystem", "lbl_eu_80665594"),
+            ("sWorkThreads__17CWorkThreadSystem", "lbl_eu_80665598"),
+        ),
+    ),
     "CViewFrame.o": UnitRules(
         # render: three Chaitin register-color cascades after high-level C++
         # reached exact control flow, calls, stack frame, and size. Semantics are

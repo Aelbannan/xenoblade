@@ -12321,6 +12321,16 @@ public:
         field7 = r4;
     }
 
+    CMsgParam(u32 r4, u32* beforeLast){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        *beforeLast = 0;
+        field7 = r4;
+    }
+
     virtual ~CMsgParam(){
         clear();
     }
@@ -16364,10 +16374,10 @@ public:
 };
 
 extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
-    ml::CRect16& rect, const CViewFrame* r4);
+    ml::CRect16* rect, const CViewFrame* r4);
 
 inline void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4) {
-    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(rect, r4);
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&rect, r4);
 }
 /* end "monolib/core/CViewFrame.hpp" */
 /* "libs/monolib/include/monolib/core/CView.hpp" line 7 "monolib/core/CViewRectData.hpp" */
@@ -234028,7 +234038,7 @@ CProc* pssGetRoot__5CProcFP5CProc(CProc* proc);
 CView* getView__8CDesktopFv();
 CDesktop* getInstance__8CDesktopFv();
 GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
-void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16& rect, const CViewFrame* frame);
+void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
 void renderView__5CViewFv(CView* view);
 }
 
@@ -234488,7 +234498,7 @@ CView* CViewRoot::getFullScreenView() {
             return childView;
         }
 
-        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(frameOffset, &childView->mFrame);
+        getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&frameOffset, &childView->mFrame);
 
         posSumY = childView->mFrame.mContentX + frameOffset.mPos.x;
         posSumX = childView->mFrame.mContentY + frameOffset.mPos.y;
@@ -234561,18 +234571,16 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     mtl::ALLOC_HANDLE handle;
     CViewRoot* root;
     void* rootVt;
+    _reslist_node<WORK_ID>* historySentinel;
+    _reslist_node<CWorkThread*>* pool2Sentinel;
+    _reslist_node<CWorkThread*>* pool1Sentinel;
+    u32 poolCapacity;
     void* histVtTemp;
     void* histVtFinal;
     u32 zero;
-    u32 poolCapacity;
     _reslist_node<CWorkThread*>* pool0Sentinel;
-    _reslist_node<CWorkThread*>* pool1Sentinel;
-    _reslist_node<CWorkThread*>* pool2Sentinel;
-    _reslist_node<WORK_ID>* historySentinel;
     void* histList;
-    u32 loopCount;
-    u32 addrOffset;
-    u8* clearRow;
+    int historyIndex;
 
     name = lbl_eu_8052266C;
     parent = pParent;
@@ -234629,50 +234637,9 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     root->mType = THREAD_CVIEWROOT;
 
     histList = allocate_array__Q23mtl10MemManagerFUlUl(0x600, root->mAllocHandle);
-    loopCount = 8;
     root->mViewHistory.mList = (_reslist_node<WORK_ID>*)histList;
-    addrOffset = 0;
-    goto create_clear_test;
-
-create_clear_loop:
-    *(u32*)((u8*)root->mViewHistory.mList + addrOffset) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0xC) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x18) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x24) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x30) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x3C) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x48) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    addrOffset += 0x60;
-    *(u32*)(clearRow + 0x54) = zero;
-
-    *(u32*)((u8*)root->mViewHistory.mList + addrOffset) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0xC) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x18) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x24) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x30) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x3C) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    *(u32*)(clearRow + 0x48) = zero;
-    clearRow = (u8*)root->mViewHistory.mList + addrOffset;
-    addrOffset += 0x60;
-    *(u32*)(clearRow + 0x54) = zero;
-    loopCount--;
-
-create_clear_test:
-    if (loopCount != 0) {
-        goto create_clear_loop;
+    for (historyIndex = 0; historyIndex < 128; historyIndex++) {
+        root->mViewHistory.mList[historyIndex].mNext = nullptr;
     }
 
     root->mViewHistory.mCapacity = 0x80;

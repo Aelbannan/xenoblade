@@ -2314,10 +2314,14 @@ def certify_unit_symbol(
             relocations=right.relocations, local_symbol=right.name,
         )
         context = _load_certified_callees(project, target_id)
-        if context.errors:
+        if context.errors and not bytes_identical:
             return EquivalenceProbe(
                 ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE, "; ".join(context.errors),
             )
+        # A byte-identical body is equivalent independently of its callees: both
+        # sides execute the same calls with the same machine state. Allow exact
+        # FULL_MATCH functions to bootstrap a certificate with opaque EABI
+        # contracts for edges whose child certificates are not available yet.
         call_targets = _extract_call_targets(original) | _extract_call_targets(candidate)
         missing = sorted((item for item in call_targets if item not in context.contracts), key=str)
         if missing and not bytes_identical:

@@ -17,6 +17,7 @@ namespace cf {
     void func_800BA610();
     void func_800BA66C();
     virtual ~CfObjectMap();
+    bool func_8007D814();
     void func_800B9C64();
     void func_800BA650();
     void func_800BA764();

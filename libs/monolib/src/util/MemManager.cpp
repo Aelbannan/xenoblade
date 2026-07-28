@@ -7,6 +7,8 @@
 // Retail SDA slot for MemManager::sHandleMEM2 (getHandleMEM2 / setHandleMEM2).
 extern "C" {
 mtl::ALLOC_HANDLE lbl_eu_8066350C;
+mtl::RawArray<mtl::MemManager::MemRegion, mtl::MAX_ALLOC_REGION> lbl_eu_80653EE0;
+bool lbl_eu_8066557C;
 }
 
 namespace mtl {
@@ -119,16 +121,12 @@ Optionally a buffer can be passed in to specify where the allocation
 should reside.
 */
 void* MemManager::MemRegion::allocateImpl(MemBlock* block, void* buffer, u32 size, int align) {
-    u8* blockBytes = reinterpret_cast<u8*>(block);
-
     /* Validate the buffer before doing anything.
     If the user didn't specify a buffer, we try to use the block. */
     if (buffer != nullptr) {
-        u8* bufferBytes = reinterpret_cast<u8*>(buffer);
-
         //Can't use buffer because it contains this block
         if (block->getStartAddr() > buffer ||
-            block->getEndAddr() < bufferBytes + size) {
+            block->getEndAddr() < reinterpret_cast<u8*>(buffer) + size) {
             return nullptr;
         }
     } else {
@@ -139,7 +137,7 @@ void* MemManager::MemRegion::allocateImpl(MemBlock* block, void* buffer, u32 siz
 
         //Align address to specified amount
         if (misalign != 0) {
-            start = blockBytes + align +
+            start = reinterpret_cast<u8*>(block) + align +
                 sizeof(MemBlock) - misalign;
         }
 
@@ -158,7 +156,7 @@ void* MemManager::MemRegion::allocateImpl(MemBlock* block, void* buffer, u32 siz
         MemBlock* targetBlock;
 
         //The block owns the user buffer
-        if (blockBytes +
+        if (reinterpret_cast<u8*>(block) +
             sizeof(MemBlock) + MemBlock::MIN_SIZE > buffer) {
             targetBlock = block;
         } 
@@ -170,8 +168,8 @@ void* MemManager::MemRegion::allocateImpl(MemBlock* block, void* buffer, u32 siz
 
             //Input (host) block owns everything up to the buffer address
             u32 newSize = block->size;
-            u8* targetBlockBytes = reinterpret_cast<u8*>(targetBlock);
-            u32 hostSize = targetBlockBytes - blockBytes;
+            u32 hostSize = reinterpret_cast<u8*>(targetBlock) -
+                reinterpret_cast<u8*>(block);
 
             block->size = hostSize;
             newSize -= hostSize;
@@ -220,7 +218,7 @@ void* MemManager::MemRegion::allocateImpl(MemBlock* block, void* buffer, u32 siz
     which first involves creating a new block header. */
     else {
         MemBlock* afterBlock = reinterpret_cast<MemBlock*>(
-            blockBytes + blockSize);
+            reinterpret_cast<u8*>(block) + blockSize);
 
         std::memcpy(afterBlock, block, sizeof(MemBlock));
         afterBlock->size -= blockSize;
@@ -269,7 +267,7 @@ void* MemManager::MemRegion::allocateImpl(MemBlock* block, void* buffer, u32 siz
     //Move the header if we created an aligned one
     if (offset != 0) {
         MemBlock* alignedBlock = reinterpret_cast<MemBlock*>(
-            blockBytes + offset);
+            reinterpret_cast<u8*>(block) + offset);
 
         std::memmove(alignedBlock, block, sizeof(MemBlock));
         block = alignedBlock;
@@ -357,10 +355,8 @@ MemBlock* MemManager::MemRegion::coalesceRecursive(MemBlock* block) {
 
     if (block->prev != nullptr) {
         //Blocks must be contiguous in memory
-        u8* blockBytes = reinterpret_cast<u8*>(block);
-        u8* prevBytes = reinterpret_cast<u8*>(prev);
-        if (blockBytes ==
-            prevBytes + prev->size) {
+        if (reinterpret_cast<u8*>(block) ==
+            reinterpret_cast<u8*>(prev) + prev->size) {
 
             //Previous block takes ownership
             prev->size += block->size;
@@ -483,16 +479,13 @@ void MemManager::initialize() {
 
     //Why assume that it starts from 0x80000000?
     void* mem1RegionLo = OSGetMEM1ArenaLo();
-    u8* baseAddr = reinterpret_cast<u8*>(0x80000000);
-    u8* mem1MaxBytes = baseAddr + MemRegion::getMEM1MaxSize();
-    void* mem1RegionMax = mem1MaxBytes;
+    void* mem1RegionMax = (u8*)0x80000000 + MemRegion::getMEM1MaxSize();
     
     (void)OSGetMEM1ArenaHi(); //unused
 
-    u8* mem1LoBytes = reinterpret_cast<u8*>(mem1RegionLo);
-    u32 mem1RegionSize = mem1MaxBytes - mem1LoBytes;
+    u32 mem1RegionSize = (u8*)mem1RegionMax - (u8*)mem1RegionLo;
     if (mem1RegionMax < mem1RegionLo) {
-        mem1RegionSize = mem1LoBytes - mem1MaxBytes;
+        mem1RegionSize = (u8*)mem1RegionLo - (u8*)mem1RegionMax;
     }
 
     //Remaining program region %x / maximum %x
@@ -508,15 +501,12 @@ void MemManager::initialize() {
 
     (void)OSGetMEM2ArenaHi(); //unused
 
-    u8* mem1HiBytes = reinterpret_cast<u8*>(OSGetMEM1ArenaHi());
     sHandleMEM1 = create(mem1RegionLo,
-        mem1HiBytes - mem1MaxBytes, scRegionNameMEM1);
+        (u8*)OSGetMEM1ArenaHi() - (u8*)mem1RegionMax, scRegionNameMEM1);
 
     // Retail SDA slot is lbl_eu_8066350C (same as getHandleMEM2 / setHandleMEM2).
-    u8* mem2EndBytes = reinterpret_cast<u8*>(MEM2_REGION_END);
-    u8* mem2LoBytes = reinterpret_cast<u8*>(OSGetMEM2ArenaLo());
     lbl_eu_8066350C = create(OSGetMEM2ArenaLo(),
-        mem2EndBytes - mem2LoBytes, scRegionNameMEM2);
+        (u8*)MEM2_REGION_END - (u8*)OSGetMEM2ArenaLo(), scRegionNameMEM2);
 }
 #pragma global_optimizer reset
 
@@ -747,6 +737,7 @@ void* MemManager::allocate_head(ALLOC_HANDLE handle, u32 size, int align) {
 Allocates memory from the tail (or end) of the region indicated by 'handle'.
 The buffer's size and alignment can be configured.
 */
+#pragma optimize_for_size on
 void* MemManager::allocate_tail(ALLOC_HANDLE handle, u32 size, int align) {
     MemRegion* region = getRegion(handle);
     void* buffer = nullptr;
@@ -760,6 +751,7 @@ void* MemManager::allocate_tail(ALLOC_HANDLE handle, u32 size, int align) {
     //Setup the block header in this custom buffer
     return region->allocate(buffer, size, align);
 }
+#pragma optimize_for_size reset
 
 DECOMP_INLINE bool MemManager::deallocateImpl(void* p) {
     if (p == nullptr) {
@@ -824,7 +816,7 @@ bool MemManager::deallocate(void* p) {
 Gets a pointer to the memory region indicated by 'handle'.
 */
 MemManager::MemRegion* MemManager::getRegion(ALLOC_HANDLE handle) {
-    return sRegionArray[ALLOC_HANDLE_REGION(handle)];
+    return lbl_eu_80653EE0[ALLOC_HANDLE_REGION(handle)];
 }
 
 /*
@@ -882,8 +874,7 @@ MemBlock* MemManager::getTailBuffer(MemRegion* region, u32 size, int align, void
 
         /* Aligning from the tail now means we start from
         the back of the parent MemBlock. */
-        u8* itBytes = reinterpret_cast<u8*>(it);
-        u8* blockData = itBytes + it->size - size;
+        u8* blockData = reinterpret_cast<u8*>(it) + it->size - size;
 
         //Work backwards to align the address
         u32 misalign = reinterpret_cast<u32>(blockData) % align;
@@ -1012,7 +1003,7 @@ void MemManager::func_80434A4C(bool value) {
 Tests whether optimal memory allocation is enabled.
 */
 bool MemManager::isOptimalAlloc() {
-    return sIsOptimalAlloc;
+    return lbl_eu_8066557C;
 }
 
 /*
@@ -1040,6 +1031,7 @@ void* MemManager::allocate_array(u32 size, ALLOC_HANDLE handle) {
 Allocates aligned object memory from the specified region.
 Specify negative alignment to perform a tail allocation.
 */
+#pragma optimize_for_size on
 void* MemManager::allocate_ex(u32 size, ALLOC_HANDLE handle, int align) {
     if (align < 0) {
         return allocate_tail(handle, size, -align);
@@ -1047,11 +1039,13 @@ void* MemManager::allocate_ex(u32 size, ALLOC_HANDLE handle, int align) {
 
     return allocate_head(handle, size, align);
 }
+#pragma optimize_for_size reset
 
 /*
 Allocates aligned array memory from the specified region.
 Specify negative alignment to perform a tail allocation.
 */
+#pragma optimize_for_size on
 void* MemManager::allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align) {
     if (align < 0) {
         return allocate_tail(handle, size, -align);
@@ -1059,6 +1053,7 @@ void* MemManager::allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align) {
 
     return allocate_head(handle, size, align);
 }
+#pragma optimize_for_size reset
 
 } // namespace mtl
 
@@ -1079,8 +1074,3 @@ void operator delete[](void* p) {
 }
 
 #pragma ecplusplus off
-
-void __dt__Q33mtl10MemManager9MemRegionFv(){}
-extern "C" int __nw__FUl() { return 0; }
-void __dl__FPv(){}
-void __dla__FPv(){}

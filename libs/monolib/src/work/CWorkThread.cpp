@@ -8,8 +8,7 @@ CWorkThread::CWorkThread(const char* pName, CWorkThread* pParent, int capacity)
       mType(THREAD_CWORKTHREAD),
       mParent(pParent),
       mFlags(0),
-      mMsgQueue(0),
-      unk1BC(0),
+      mMsgQueue(0, &unk1BC),
       mExceptionWorkID(INVALID_WORK_ID){
 
     mAllocHandle = CWorkThreadSystem::sAllocHandle;

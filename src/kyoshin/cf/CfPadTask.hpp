@@ -38,6 +38,7 @@ namespace cf {
         static void func_801C1BD8(float f1);
         void updateCfPadData(CfPadData* padData, const CPad* pad);
         static u32 getWiimoteBattery();
+        static u32 getDetectedPadType() { return lbl_80666D3C; }
         static void wpadGetInfoCallback(s32 chan, s32 result);
 
         bool isWpadChannel(u32 channel) const {

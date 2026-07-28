@@ -5,12 +5,19 @@
 class CPad;
 class CScnNw4r;
 class CView;
+class UnkClass_80186D20;
+
+struct CfGameManagerData1C {
+    u8 field_0x0[0xC];
+};
 
 /* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
 or due to being in separate files, but compiled together in one file (unity compilation). For now,
 to make things simpler, everything exists in a single class. */
 namespace cf{
     class CfPadData;
+    class CfObject;
+    struct CfObjectSub54;
     class CfObjectMove;
     //unofficial name
     class CfGameManager{
@@ -27,14 +34,15 @@ namespace cf{
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
         static UNKWORD func_800822F4();
-        static UNKWORD func_800829B8();
+        static bool func_800829B8();
         static u32 getCurrentPadChannel();
         static UNKTYPE* func_80083298();
         static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
-        static bool func_80086F9C(s16);
-        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
-        static CPad* getPad(int r3);
+        static bool func_80086F9C();
+        static bool func_80086F9C(s16) { return func_80086F9C(); }
+        static void setCurrentPadPtr(const CPad* pad, u32 channel);
+        static CPad* getPad(int channel);
         static void setPad(int r3, CPad* pPad, u32 r5);
         static CfPadData* getCfPadData();
         static CPad* getCurrentPad();
@@ -49,9 +57,12 @@ namespace cf{
         }
 
         u32 unk0;
-        u32 unk4;
-        u32 unk8;
-        u8 unkC[0x28 - 0xC];
+        CfObject* field_0x4;
+        u32 mObjectFlags;
+        u8 field_0xC[0xC];
+        u16 field_0x18;
+        u8 field_0x1A[2];
+        CfGameManagerData1C field_0x1C;
         u8 unk28;
         u8 unk29[0x68 - 0x29];
         u32 unk68;
@@ -68,7 +79,7 @@ namespace cf{
         //to CfObjectPc objects except pointing at the 4th vtable
         CfObjectMove* unk94[3];
         u32 unkA0;
-        u32 unkA4;
+        UnkClass_80186D20* field_0xA4;
         u32 unkA8;
         u32 unkAC;
         u32 unkB0;
@@ -91,7 +102,7 @@ public:
     cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
     void func_8007C6C0();
     void func_8007C8C8();
-    void func_8007CBC8();
+    bool func_8007CBC8();
     void func_8007CBD4();
     void func_8007CBEC();
     void func_8007CDA8();
@@ -109,9 +120,9 @@ public:
     void func_8007DCB8();
     void func_8007DE94();
     void func_8007DECC();
-    void func_8007E030();
+    u16 func_8007E030();
     void func_8007E038();
-    void func_8007E0C8();
+    CfObject** func_8007E0C8();
     void func_8007E0D0();
     void func_8007E4CC();
     void func_8007E4DC();
@@ -141,7 +152,7 @@ public:
     void func_8007F8DC();
     void func_8007F8F4();
     void func_8007F900();
-    void func_8007F91C();
+    bool func_8007F91C();
     void func_8007F990();
     void func_8007F9AC();
     void func_8007F9B4();
@@ -239,7 +250,7 @@ public:
     void func_80082568();
     void func_80082614();
     void func_8008261C();
-    void func_80082680();
+    bool func_80082680();
     void func_80082694();
     void func_8008269C();
     void func_800826F0();
@@ -275,8 +286,8 @@ public:
     void func_80083460();
     void func_80083468();
     void func_80083470();
-    void func_80083538();
-    void func_80083544();
+    bool func_80083538();
+    bool func_80083544();
     void func_80083550();
     void func_80083560();
     void func_800835FC();
@@ -302,7 +313,7 @@ public:
     void func_80084AD4();
     void func_80084B68();
     void func_80084BAC();
-    void func_80084BF4();
+    bool func_80084BF4();
     void func_80084C10();
     void func_80084CA4();
     void func_80084F50();
@@ -312,8 +323,8 @@ public:
     void func_800853C8();
     void func_8008566C();
     void func_80085838();
-    void func_80085840();
-    void func_8008585C();
+    bool func_80085840();
+    bool func_8008585C();
     void func_80085878();
     void func_800858B8();
     void func_80085978();
@@ -351,8 +362,8 @@ public:
     void func_80086DB4();
     void func_80086DBC();
     void func_80086E6C();
-    void func_80087244();
-    void func_80087250();
+    bool func_80087244();
+    bool func_80087250();
     void func_80087280();
     void func_80087330();
     void func_80087334();
@@ -361,12 +372,12 @@ public:
     void func_80087378();
     void func_80087390();
     void func_800873AC();
-    void func_800873C8();
+    CfObjectSub54* func_800873C8();
     void func_800873D4();
     void func_800873E8();
     void func_800873FC();
     void func_80087410();
-    void func_80087424();
+    u32 func_80087424();
     void func_8008742C();
     void func_8008743C();
     void func_80087448();

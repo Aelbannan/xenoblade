@@ -32,10 +32,11 @@ namespace cf {
         virtual void CfObjectModel_UnkVirtualFunc20(); //0x1C4
 
         //0x0: vtable
-        //0x0-70: CfObject
-        u8 unk70_3[0x1C];
+        // CfObject ends at 0x70.
+        u8 field_0x70[0x1C];
         u16 unk8C_3;
-        u8 unk8E[0x22];      // 0x8E-0xAF
+        u16 field_0x8E;
+        u8 field_0x90[0x20]; // 0x90-0xAF
         void* mSubObjB0;      // 0xB0-0xB3
         u8 unkB4[0xBD - 0xB4]; // 0xB4-0xBC
         u8 field_BD;          // 0xBD
@@ -54,9 +55,9 @@ namespace cf {
     void CfObject_UnkVirtualFunc34();
     void CfObject_UnkVirtualFunc33();
     void CfObject_UnkVirtualFunc30();
-    void CfObject_UnkVirtualFunc56();
+    float CfObject_UnkVirtualFunc56();
     void CfObject_UnkVirtualFunc52();
-    void CfObject_UnkVirtualFunc53();
+    CfObject* CfObject_UnkVirtualFunc53();
     void CfObject_UnkVirtualFunc54();
     void CfObject_UnkVirtualFunc55();
     void CObjectParam_UnkVirtualFunc2();

@@ -177,31 +177,6 @@ for obj_path, symbols in _sinit_targets.items():
         globalize_symbols(obj_path, symbols)
 
 # ---------------------------------------------------------------------------
-# 4b. MWCC C++ linkage fixes for Runtime exception support.
-# ---------------------------------------------------------------------------
-
-_gecko_exception = SRC_DIR / "PowerPC_EABI_Support" / "src" / "Runtime" / "Gecko_ExceptionPPC.o"
-if _gecko_exception.exists():
-    # __unregister_fragment: defined as C++ (mangled __FUi) in NMWException.cp
-    # but __init_cpp_exceptions.o references the C-linkage name.
-    rename_symbol(
-        _gecko_exception,
-        "__unregister_fragment__FUi",
-        "__unregister_fragment",
-    )
-
-_nmwexception = SRC_DIR / "PowerPC_EABI_Support" / "src" / "Runtime" / "NMWException.o"
-if _nmwexception.exists():
-    # __throw_catch_compare: defined without extern "C" in NMWException.cp
-    # so it gets C++ mangling (__FPCcPCcPi), but Gecko_ExceptionPPC.cp calls it
-    # via an extern "C" header declaration expecting the unmangled name.
-    rename_symbol(
-        _nmwexception,
-        "__throw_catch_compare__FPCcPCcPi",
-        "__throw_catch_compare",
-    )
-
-# ---------------------------------------------------------------------------
 # 5. Additional localize / globalize rules discovered during linking.
 #    Extend as needed when new multiply-defined or undefined errors appear.
 #    Each entry should eventually be solved at the source/splits level.

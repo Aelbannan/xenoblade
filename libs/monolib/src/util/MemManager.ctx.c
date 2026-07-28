@@ -10775,12 +10775,11 @@ namespace ml{
             }
         }
 
-    private:
-        char mString[N];
-        int mLength;
+    // public for compatibility
+    char mString[N];
+    int mLength;
 
-    public:
-        static const int npos = -1;
+    static const int npos = -1;
     };
 
 }
@@ -11107,10 +11106,11 @@ namespace mtl {
         u8 padding[32 - 0x12]; //0x12
 
         u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+            return reinterpret_cast<u8*>(this + 1);
         }
         u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
+            u8* blockEnd = reinterpret_cast<u8*>(this + 1);
+            return blockEnd + (size - sizeof(MemBlock));
         }
 
         u32 getDataSize() const {
@@ -12851,6 +12851,8 @@ using ::tanf;
 // Retail SDA slot for MemManager::sHandleMEM2 (getHandleMEM2 / setHandleMEM2).
 extern "C" {
 mtl::ALLOC_HANDLE lbl_eu_8066350C;
+mtl::RawArray<mtl::MemManager::MemRegion, mtl::MAX_ALLOC_REGION> lbl_eu_80653EE0;
+bool lbl_eu_8066557C;
 }
 
 namespace mtl {
@@ -13579,6 +13581,7 @@ void* MemManager::allocate_head(ALLOC_HANDLE handle, u32 size, int align) {
 Allocates memory from the tail (or end) of the region indicated by 'handle'.
 The buffer's size and alignment can be configured.
 */
+#pragma optimize_for_size on
 void* MemManager::allocate_tail(ALLOC_HANDLE handle, u32 size, int align) {
     MemRegion* region = getRegion(handle);
     void* buffer = nullptr;
@@ -13592,6 +13595,7 @@ void* MemManager::allocate_tail(ALLOC_HANDLE handle, u32 size, int align) {
     //Setup the block header in this custom buffer
     return region->allocate(buffer, size, align);
 }
+#pragma optimize_for_size reset
 
 DECOMP_INLINE bool MemManager::deallocateImpl(void* p) {
     if (p == nullptr) {
@@ -13656,7 +13660,7 @@ bool MemManager::deallocate(void* p) {
 Gets a pointer to the memory region indicated by 'handle'.
 */
 MemManager::MemRegion* MemManager::getRegion(ALLOC_HANDLE handle) {
-    return sRegionArray[ALLOC_HANDLE_REGION(handle)];
+    return lbl_eu_80653EE0[ALLOC_HANDLE_REGION(handle)];
 }
 
 /*
@@ -13843,7 +13847,7 @@ void MemManager::func_80434A4C(bool value) {
 Tests whether optimal memory allocation is enabled.
 */
 bool MemManager::isOptimalAlloc() {
-    return sIsOptimalAlloc;
+    return lbl_eu_8066557C;
 }
 
 /*
@@ -13871,6 +13875,7 @@ void* MemManager::allocate_array(u32 size, ALLOC_HANDLE handle) {
 Allocates aligned object memory from the specified region.
 Specify negative alignment to perform a tail allocation.
 */
+#pragma optimize_for_size on
 void* MemManager::allocate_ex(u32 size, ALLOC_HANDLE handle, int align) {
     if (align < 0) {
         return allocate_tail(handle, size, -align);
@@ -13878,11 +13883,13 @@ void* MemManager::allocate_ex(u32 size, ALLOC_HANDLE handle, int align) {
 
     return allocate_head(handle, size, align);
 }
+#pragma optimize_for_size reset
 
 /*
 Allocates aligned array memory from the specified region.
 Specify negative alignment to perform a tail allocation.
 */
+#pragma optimize_for_size on
 void* MemManager::allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align) {
     if (align < 0) {
         return allocate_tail(handle, size, -align);
@@ -13890,6 +13897,7 @@ void* MemManager::allocate_array_ex(u32 size, ALLOC_HANDLE handle, int align) {
 
     return allocate_head(handle, size, align);
 }
+#pragma optimize_for_size reset
 
 } // namespace mtl
 
@@ -13910,8 +13918,3 @@ void operator delete[](void* p) {
 }
 
 #pragma ecplusplus off
-
-extern "C" void __dt__Q33mtl10MemManager9MemRegionFv() {}
-extern "C" int __nw__FUl() { return 0; }
-extern "C" void __dl__FPv() {}
-extern "C" void __dla__FPv() {}

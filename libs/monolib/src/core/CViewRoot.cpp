@@ -556,13 +556,6 @@ void CViewRoot::renderView() {
     }
 }
 
-static inline void initViewRootPool(CViewRootPool* pool) {
-    pool->mCapacity = 32;
-    pool->mStartNodePtr = &pool->mSentinel;
-    pool->mUsed = 0;
-    pool->mList = nullptr;
-}
-
 CViewRoot* CViewRoot::create(CWorkThread* pParent) {
     const char* name;
     CWorkThread* parent;
@@ -597,11 +590,25 @@ CViewRoot* CViewRoot::create(CWorkThread* pParent) {
 
     poolCapacity = 0x20;
     histVtFinal = lbl_eu_8056B280;
+    root->mPool0.mCapacity = poolCapacity;
+    pool0Sentinel = &root->mPool0.mSentinel;
     zero = 0;
+    pool1Sentinel = &root->mPool1.mSentinel;
+    root->mPool0.mStartNodePtr = pool0Sentinel;
+    pool2Sentinel = &root->mPool2.mSentinel;
     historySentinel = &root->mViewHistory.mStartNode;
-    initViewRootPool(&root->mPool0);
-    initViewRootPool(&root->mPool1);
-    initViewRootPool(&root->mPool2);
+    root->mPool0.mUsed = zero;
+    root->mPool0.mList = (_reslist_node<CWorkThread*>*)zero;
+
+    root->mPool1.mCapacity = poolCapacity;
+    root->mPool1.mStartNodePtr = pool1Sentinel;
+    root->mPool1.mUsed = zero;
+    root->mPool1.mList = (_reslist_node<CWorkThread*>*)zero;
+
+    root->mPool2.mCapacity = poolCapacity;
+    root->mPool2.mStartNodePtr = pool2Sentinel;
+    root->mPool2.mUsed = zero;
+    root->mPool2.mList = (_reslist_node<CWorkThread*>*)zero;
 
     *(void**)&root->mViewHistory = histVtTemp;
     root->mViewHistory.mList = (_reslist_node<WORK_ID>*)zero;

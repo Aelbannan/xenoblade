@@ -37,7 +37,7 @@ CRsrcData* CRsrc::convertToRsrcData(CWorkThread* pThread) {
 
 #pragma optimize_for_size on
 #pragma dont_inline on
-bool CRsrc::releaseCacheLocal(CWorkThread* parent, const void* data) {
+extern "C" bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* data) {
     _reslist_node<CWorkThread*>* node;
 
     // Retail: seed next from head->mNext, bottom-tested with per-iter lwz 0x60(parent).
@@ -73,7 +73,7 @@ bool CRsrc::entry(void* parent, const char* name, void* arg2, void* data, u32 le
 }
 #pragma dont_inline off
 
-bool CRsrc::isExistFile(CWorkThread* parent, const char* name, void** outData,
+extern "C" bool isExistFile__5CRsrcFPCcPPvPUi(CWorkThread* parent, const char* name, void** outData,
                                               u32* outLength) {
     _reslist_node<CWorkThread*>* node;
     CRsrcData* rsrcData;
@@ -142,7 +142,7 @@ check:
 
 #pragma optimize_for_size on
 #pragma dont_inline on
-bool CRsrc::releaseCache(const void* data) {
+extern "C" bool releaseCache__5CRsrcFPCv(const void* data) {
     CRsrcData** listBase;
     s16 index;
 
@@ -162,7 +162,7 @@ check:
     return false;
 }
 
-bool CRsrc::isExistData(const void* data) {
+extern "C" bool isExistData__5CRsrcFPCv(const void* data) {
     CRsrcData** listBase;
     s16 index;
 
@@ -186,7 +186,7 @@ check:
 
 #pragma optimize_for_size on
 #pragma dont_inline on
-bool CRsrc::isExistDataLocal(CWorkThread* parent, const void* data) {
+extern "C" bool isExistDataLocal__5CRsrcFPCv(CWorkThread* parent, const void* data) {
     _reslist_node<CWorkThread*>* node;
     CRsrcData* rsrcData;
     int flag;

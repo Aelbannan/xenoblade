@@ -280,6 +280,8 @@ Object(Matching, "monolib/src/core/CViewRectDataCore.cpp"),  # was NonMatching
 
 Metrowerks often passes **extra arguments in registers** even on `…Fv` symbol names. Express as **normal C++ parameters** (`const ml::CPnt16&`, etc.). `symbols.txt` must use the mangling MWCC actually emits (e.g. `…FRCQ22ml6CPnt16`), not shortened `…Fv` placeholders.
 
+**Explicit retail-name entry points:** A symbol such as `releaseCacheLocal__5CRsrcFPCv` may have a shortened retail name while its actual ABI still receives `CWorkThread* parent, const void* data`. Define the high-level function as `extern "C" bool releaseCacheLocal__5CRsrcFPCv(CWorkThread* parent, const void* data)` rather than as a `CRsrc` member. A C++ member definition emits `releaseCacheLocal__5CRsrcFP11CWorkThreadPCv`, leaving the retail-named caller unresolved. The same pattern applies to `isExistFile__5CRsrcFPCcPPvPUi` and `isExistDataLocal__5CRsrcFPCv`; the suffix is the preserved retail symbol name, not a reliable complete parameter list. Verified in `libs/monolib/src/core/CRsrc.cpp`: all three sizes and instructions match retail.
+
 When a vtable / data table already references the shortened `…Fv` name (common for help/switch helpers), keep the retail symbol via `extern "C"` and take the extra args on that entry point, e.g. `func_802B7CBC__Q22cf11CHelpSwitchFv(self, u32 flag)`.
 
 ### cf::CHelp layout (manual iface at +0x8)

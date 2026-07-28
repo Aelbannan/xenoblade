@@ -12,7 +12,7 @@ struct CProc_UnkStruct1 {
     void* unkC;
 };
 //size: 0x1ec
-class CProc : public CWorkThread {
+class __declspec(novtable) CProc : public CWorkThread {
 public:
     CProc(const char* pName, CWorkThread* pParent, s16 capacity);
     virtual ~CProc();

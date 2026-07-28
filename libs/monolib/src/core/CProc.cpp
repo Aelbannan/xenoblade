@@ -5,12 +5,14 @@
 extern "C" {
 extern const char lbl_eu_80522500[]; // "(View)"
 extern float lbl_eu_8066A278; // 0.6f
-void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, CViewFrame* frame);
+extern char lbl_eu_8056B1E0[];
+void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(ml::CRect16* rect, const CViewFrame* frame);
 }
 
 CProc::CProc(const char* pName, CWorkThread* pParent, s16 capacity) :
 CWorkThread(pName, pParent, capacity),
 unk1E4(mtl::INVALID_HANDLE){
+    *(char**)this = lbl_eu_8056B1E0;
     unk1E8 = 2;
     mType = THREAD_CPROC;
     mViewIDList.reserve(mAllocHandle, 16);

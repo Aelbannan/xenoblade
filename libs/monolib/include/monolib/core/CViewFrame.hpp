@@ -42,4 +42,9 @@ public:
     s16 unk5A; // 0x5A - unused trailing padding; satisfies 0x5C sizeof
 };
 
-extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
+extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16* rect, const CViewFrame* r4);
+
+inline void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4) {
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&rect, r4);
+}

@@ -86,20 +86,15 @@ void CAIAction_UnkVirtualFunc1__Q22cf9CAIActionFv(cf::CAIAction* self,
         cf::CAIActionSlot* dst =
             (cf::CAIActionSlot*)((u8*)outB->buffer + ((u32)outIdx << 5));
 
-        {
-            u32 t8 = src->unk08;
-            u32 t4 = src->unk04;
-            dst->unk04 = t4;
-            dst->unk08 = t8;
-        }
+        dst->unk00 = src->unk00;
+        dst->unk08 = src->unk08;
+        dst->unk04 = src->unk04;
         dst->unk0C = src->unk0C;
         dst->unk10 = src->unk10;
         dst->unk12 = src->unk12;
         dst->unk14 = src->unk14;
         dst->unk18 = src->unk18;
         dst->unk1C = src->unk1C;
-
-        *(u32*)dst = src->unk00;
 
         outB->unk208 = outB->unk208 + 1;
     }

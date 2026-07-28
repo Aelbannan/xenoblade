@@ -1141,9 +1141,15 @@ def _build_equivalence_certificate(
     otherwise hangs certify and blocks the ACCEPTED frontier.
     """
     if skip_semantic_validation:
-        reads: list[str] = []
-        writes: list[str] = []
-        invalid_reasons: list[str] = []
+        # Exact bytes prove refinement, but the synthesized summary must remain
+        # conservative. An empty summary incorrectly models return registers
+        # (notably allocator r3) as preserved and can make parent memory-layout
+        # premises unsatisfiable. Use the opaque EABI effect envelope until a
+        # narrower validated summary is available.
+        declared = CalleeContract.opaque_eabi()
+        reads = sorted(declared.reads)
+        writes = sorted(declared.writes - _EABI_NONVOLATILE_EFFECTS)
+        invalid_reasons = sorted(declared.invalid_reasons)
     else:
         declared = CalleeContract.opaque_eabi()
         validations = [

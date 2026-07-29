@@ -21,9 +21,9 @@ int func_80185760(VMThread* pThread) {
 // pluginTime getter: returns the value from CfGameManager::func_80086DA0() masked to u16 as an int.
 int func_801857A8(VMThread* pThread) {
     VMArg result;
-    result.type = VM_TYPE_INT;
     u16 val = (u16)cf::CfGameManager::func_80086DA0();
     result.value.uintVal = val;
+    result.type = VM_TYPE_INT;
     vmRetValSet(pThread, &result);
     return 1;
 }

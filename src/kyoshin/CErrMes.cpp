@@ -74,9 +74,9 @@ extern "C" void* func_eu_802B14EC(void) { return lbl_eu_8053A478; }
 void func_eu_802B14F8(int param) {
     // Loop 1: set byte 6 = '/' in all 7 entries of each group (skipping last of 8)
     for (int i = 0; i < 7; i++) {
-        ((CErrMesTextObj*)lbl_eu_8053A438)[i].field_0x06 = '/';
-        ((CErrMesTextObj*)lbl_eu_8053A458)[i].field_0x06 = '/';
-        ((CErrMesTextObj*)lbl_eu_8053A478)[i].field_0x06 = '/';
+        lbl_eu_8053A438[i]->field_0x06 = '/';
+        lbl_eu_8053A458[i]->field_0x06 = '/';
+        ((CErrMesTextObj*)lbl_eu_8053A478[i])->field_0x06 = '/';
     }
 
     // Choose language chars: en or jp
@@ -91,18 +91,18 @@ void func_eu_802B14F8(int param) {
     // Track whether group 2 values changed compared to what was already there.
     bool changed = false;
     for (int i = 1; i < 7; i++) {
-        CErrMesTextObj* p1 = &((CErrMesTextObj*)lbl_eu_8053A438)[i];
+        CErrMesTextObj* p1 = lbl_eu_8053A438[i];
         p1->field_0x04 = c1;
         p1->field_0x05 = c2;
 
-        CErrMesTextObj* p2 = &((CErrMesTextObj*)lbl_eu_8053A458)[i];
+        CErrMesTextObj* p2 = lbl_eu_8053A458[i];
         if ((u8)p2->field_0x04 != c1 || (u8)p2->field_0x05 != c2) {
             changed = true;
         }
         p2->field_0x04 = c1;
         p2->field_0x05 = c2;
 
-        CErrMesTextObj* p3 = &((CErrMesTextObj*)lbl_eu_8053A478)[i];
+        CErrMesTextObj* p3 = (CErrMesTextObj*)lbl_eu_8053A478[i];
         p3->field_0x04 = c1;
         p3->field_0x05 = c2;
     }

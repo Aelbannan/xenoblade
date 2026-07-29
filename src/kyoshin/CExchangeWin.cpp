@@ -97,25 +97,17 @@ extern "C" void func_8022CF2C(CExchangeWin* self) {
 // mLayout->Animate(0) when field_24 is set. Dispatches to func_8022D1F8
 // for _26==1 (entering) and func_8022D244 for _26==3 (exiting).
 extern "C" void func_8022CF7C(CExchangeWin* self) {
-    s32 state;
-
     if (self->field_24 == 0) {
         return;
     }
-    state = self->_26;
-    if (state == 1) {
-        goto call_d1f8;
+    switch (self->_26) {
+    case 1:
+        func_8022D1F8(self);
+        break;
+    case 3:
+        func_8022D244(self);
+        break;
     }
-    if (state == 3) {
-        goto call_d244;
-    }
-    goto animate;
-call_d1f8:
-    func_8022D1F8(self);
-    goto animate;
-call_d244:
-    func_8022D244(self);
-animate:
     self->mLayout->Animate(0);
 }
 

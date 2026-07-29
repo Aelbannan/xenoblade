@@ -217,6 +217,8 @@ void func_8024830C(void* self, void* arg2) {
     extern void func_80141DC4(f32*);
     extern void func_801361E8(const char*, const char*, u32);
     extern u32 lbl_eu_80664184;
+    extern u8 lbl_eu_8050B798;
+    extern u32 lbl_eu_806640A8;
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f32 lbl_eu_8066877C;

@@ -162,8 +162,8 @@ void CItemBoxGridSubMenu::func_80208838() {
 
 // func_80208844 — check opening animation completion
 void CItemBoxGridSubMenu::func_80208844() {
-    float f = lbl_eu_8066831C;
-    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(mAnimDefault, f)) {
+    nw4r::lyt::AnimTransform* anim = mAnimDefault;
+    if (func_80137444__FPQ34nw4r3lyt13AnimTransformf(anim, lbl_eu_8066831C)) {
         mAnimState = 2;
         mIsOpened = 1;
     }
@@ -171,8 +171,8 @@ void CItemBoxGridSubMenu::func_80208844() {
 
 // func_80208890 — check closing animation completion
 void CItemBoxGridSubMenu::func_80208890() {
-    float f = lbl_eu_8066831C;
-    if (func_80137510(mAnimDefault, f)) {
+    nw4r::lyt::AnimTransform* anim = mAnimDefault;
+    if (func_80137510(anim, lbl_eu_8066831C)) {
         mAnimState = 0;
         mIsOpened = 1;
         mIsVisible = 0;

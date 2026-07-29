@@ -1417,6 +1417,8 @@ public:
 /* "src/kyoshin/CMainMenu.hpp" line 2 "types.h" */
 /* end "types.h" */
 
+class CFileHandle;
+
 class CMainMenu {
 public:
     CMainMenu();
@@ -1431,8 +1433,10 @@ public:
     u32 field_0x3C;
     u32 field_0x40;
     u32 field_0x44;
-    u8 _48[0x74 - 0x48];
-    u32 field_0x74;
+    u8 _48[0x58 - 0x48];
+    u32 mIWorkEventVtbl;        // 0x58 — IWorkEvent vtable (raw, see MWCC_REFERENCE)
+    u8 _5C[0x74 - 0x5C];
+    CFileHandle* field_0x74;    // 0x74 — file handle from CDeviceFile::readFile
 
     void OnFileEvent();
 };
@@ -1479,117 +1483,75 @@ public:
     s8 field_0x5A;
 };
 /* end "kyoshin/CArtsInfo.hpp" */
-extern "C" void __dt__9CMainMenuFv();
-extern "C" void cbRenderBefore__9CMainMenuFv();
-extern "C" void __ct__800FF300();
-
-// CBaseCur base destructor (defined in kyoshin/CCur.cpp)
-extern "C" void __dt__8CBaseCurFv(void*, int);
-
-// Destructor for CBaseCur-derived class at vtable 0x800FEA30.
-// Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
-// conditionally operator delete, return this.
-void* __dt__800FEA30(void* _this, int flags) {
-    if (_this) {
-        __dt__8CBaseCurFv(_this, 0);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
-
-u32 func_800FEDF8(void) {
-    extern u32 lbl_eu_80663F18;
-    return lbl_eu_80663F18;
-}
-
-
-
-
-
-
-
-
-
-extern u32 lbl_eu_8052BDF4[];
-
-// Copies 3 words from static data lbl_eu_8052BDF4 to fields at 0x3C/0x40/0x44,
-// guarded by field_0x74 to ensure one-shot initialization.
-extern "C" void func_800FEF20(CMainMenu* self) {
-    if (self->field_0x74 != 0) {
-        return;
-    }
-    u32 v0 = lbl_eu_8052BDF4[0];
-    self->field_0x40 = lbl_eu_8052BDF4[1];
-    self->field_0x3C = v0;
-    self->field_0x44 = lbl_eu_8052BDF4[2];
-}
-
-void func_800FEF4C(){}
-
-void __ct__800FF300(void* self){}
-
-void CMainMenu::cbRenderBefore() {}
-
-void func_800FF6BC(){}
-
-extern u32 lbl_eu_80663F18;
-
-// Declare the mangled symbol to prevent IPA from inlining the stub.
-extern "C" int func_800FF778__9CMainMenuFv();
-
-// Returns 1 if func_800FF778() is non-zero, else booleanizes lbl_eu_80663F18.
-extern "C" u32 func_800FF738(CMainMenu* self) {
-    if (func_800FF778__9CMainMenuFv() != 0) {
-        return 1;
-    }
-    return lbl_eu_80663F18 != 0 ? 1 : 0;
-}
-
-int CMainMenu::func_800FF778() {
-    // TODO: decompile
-    return 0;
-}
-
-void func_800FF8B0(){}
-
-extern "C" void func_800FF914(CArtsInfo* self) {
-    self->field_0x54 = 1;
-}
-
-void func_800FF920(){}
-
-void func_80100E14(){}
-
-void func_801010B8(){}
-
-void func_801018F4(){}
-
-void func_80101A88(){}
-
-void func_80101BF8(){}
-
-void OnFileEvent__9CMainMenuFP10CEventFile(void* self) { ((void(*)(void*))__ct__800FF300)((char*)self - 0x58); }
-
-void func_80102008(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x58); }
-
-void func_80102010(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((char*)self - 0x5c); }
-
-extern "C" void func_80102018(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x5c); }
-
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
-// Layout: inherits CProcess (0x00-0x3C), adds mMoveFunc at 0x3C and mDrawFunc at 0x48.
-// Size: 0x54.
-
-/* "src/kyoshin/CMainMenu.cpp" line 111 "monolib/work/CProcess.hpp" */
+/* "src/kyoshin/CMainMenu.cpp" line 6 "monolib/device/CDeviceFile.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/work/CProcess.hpp" line 2 "types.h" */
+/* "libs/monolib/include/monolib/device/CDeviceFile.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "libs/monolib/include/monolib/work/CProcess.hpp" line 3 "monolib/util.hpp" */
+
+/* "libs/monolib/include/monolib/device/CDeviceFile.hpp" line 4 "monolib/device/CDeviceBase.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 3 "monolib/work/CWorkThread.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 4 "monolib/work/CMsgParam.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
+#pragma once
+
+//List of forward declarations for commonly used classes.
+
+//Core
+class CView;
+class CException;
+
+//Device
+class CFileHandle;
+class CDeviceFileJob;
+
+//Math
+namespace ml {
+    struct CPnt16;
+    struct CRect16;
+    struct CVec3;
+    struct CVec4;
+    struct CCol3;
+    struct CCol4;
+    struct CMat34;
+    struct CFrustum;
+} //namespace ml
+
+//Scene
+class CScn;
+class CScnNw4r;
+class IScnRender;
+class ICulling;
+
+//Util
+class CChildListNode;
+
+//Work
+class CEventFile;
+class CProcess;
+class CProc;
+class CWorkThread;
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/util.hpp" line 2 "monolib/util/BoolUtils.hpp" */
@@ -12128,94 +12090,6 @@ template <typename T> T* PtrSingleton<T>::spInstance;
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 3 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
-#pragma once
-
-//List of forward declarations for commonly used classes.
-
-//Core
-class CView;
-class CException;
-
-//Device
-class CFileHandle;
-class CDeviceFileJob;
-
-//Math
-namespace ml {
-    struct CPnt16;
-    struct CRect16;
-    struct CVec3;
-    struct CVec4;
-    struct CCol3;
-    struct CCol4;
-    struct CMat34;
-    struct CFrustum;
-} //namespace ml
-
-//Scene
-class CScn;
-class CScnNw4r;
-class IScnRender;
-class ICulling;
-
-//Util
-class CChildListNode;
-
-//Work
-class CEventFile;
-class CProcess;
-class CProc;
-class CWorkThread;
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
-/* end "monolib/util.hpp" */
-
-/*
-Handle to a work memory region
-*/
-typedef u32 WORK_ID;
-static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
-
-class CWorkThreadSystem{
-    friend class CWorkThread;
-
-public:
-    static void initialize();
-    static void destroy();
-
-    static WORK_ID allocWID(CWorkThread* thread);
-    static void freeWID(WORK_ID wid){
-        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
-        sWorkThreads[wid] = nullptr;
-    }
-
-    static mtl::ALLOC_HANDLE getWorkMem();
-
-private:
-    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
-
-    //Highest allowed work ID
-    static const WORK_ID MAX_WORK_ID = 2048;
-    //One registration bit flag per work ID
-    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
-
-    static const char* scRegionName;
-    static BOOL sMemAvailable;
-
-    //Handle for all work memory allocations
-    static mtl::ALLOC_HANDLE sAllocHandle;
-
-    //Work thread registration flags, by ID
-    static u32* sAllocFlags;
-
-    //Registered work threads, by ID
-    static CWorkThread** sWorkThreads;
-};
 /* end "monolib/work/CWorkThreadSystem.hpp" */
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 5 "algorithm" */
 #ifndef MSL_CPP_ALGORITHM_H
@@ -13064,6 +12938,686 @@ namespace ml{
 /* end "monolib/util.hpp" */
 
 /*
+Handle to a work memory region
+*/
+typedef u32 WORK_ID;
+static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
+
+class CWorkThreadSystem{
+    friend class CWorkThread;
+
+public:
+    static void initialize();
+    static void destroy();
+
+    static WORK_ID allocWID(CWorkThread* thread);
+    static void freeWID(WORK_ID wid){
+        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
+        sWorkThreads[wid] = nullptr;
+    }
+
+    static mtl::ALLOC_HANDLE getWorkMem();
+
+private:
+    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
+
+    //Highest allowed work ID
+    static const WORK_ID MAX_WORK_ID = 2048;
+    //One registration bit flag per work ID
+    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
+
+    static const char* scRegionName;
+    static BOOL sMemAvailable;
+
+    //Handle for all work memory allocations
+    static mtl::ALLOC_HANDLE sAllocHandle;
+
+    //Work thread registration flags, by ID
+    static u32* sAllocFlags;
+
+    //Registered work threads, by ID
+    static CWorkThread** sWorkThreads;
+};
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+
+//Message param entry format:
+//0x0: message id
+//0x4: work ID
+//0x8: address
+//0xC: code address
+//0x10: value
+//0x14: address
+//0x18: address
+//0x1C: address
+//0x20: address (pointer to string?)
+struct CMsgParamEntry{
+    u32 command; //0x0
+    WORK_ID wid; //0x4
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+    u32 unk1C;
+    u16 unk20;
+    u8 unk22;
+    u8 unk23;
+};
+
+template <int N>
+class CMsgParam{
+public:
+    CMsgParam(u32 r4){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        field7 = r4;
+    }
+
+    CMsgParam(u32 r4, u32* beforeLast){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        *beforeLast = 0;
+        field7 = r4;
+    }
+
+    virtual ~CMsgParam(){
+        clear();
+    }
+
+    void clear(){
+        mSize = 0;
+        mFront = 0;
+    }
+
+    bool empty() const{
+        return mSize == 0;
+    }
+
+    u32 size() const{
+        return mSize;
+    }
+
+    const CMsgParamEntry& front() const{
+        return mArrayPtr[mFront % mCapacity];
+    }
+
+    void enqueue(u32 msg){
+        volatile CMsgParamEntry entry;
+        u32 wid = entry.wid;
+        u32 value8 = entry.unk8;
+        u32 valueC = entry.unkC;
+        u32 value10 = entry.unk10;
+        u32 value14 = entry.unk14;
+        u32 value18 = entry.unk18;
+        u32 value1C = entry.unk1C;
+        u16 value20 = entry.unk20;
+        u8 value22 = entry.unk22;
+        int index = (int)(mFront + mSize) % (int)mCapacity;
+        u8* dst = reinterpret_cast<u8*>(mArrayPtr);
+
+        *reinterpret_cast<u32*>(dst += index * sizeof(CMsgParamEntry)) = msg;
+        *reinterpret_cast<u32*>(dst + 0x4) = wid;
+        *reinterpret_cast<u32*>(dst + 0x8) = value8;
+        *reinterpret_cast<u32*>(dst + 0xC) = valueC;
+        *reinterpret_cast<u32*>(dst + 0x10) = value10;
+        *reinterpret_cast<u32*>(dst + 0x14) = value14;
+        *reinterpret_cast<u32*>(dst + 0x18) = value18;
+        *reinterpret_cast<u32*>(dst + 0x1C) = value1C;
+        *reinterpret_cast<u16*>(dst + 0x20) = value20;
+        *(dst + 0x22) = value22;
+        *(dst + 0x23) = 0;
+
+        mSize++;
+        field6 = mSize - 1;
+    }
+
+    CMsgParamEntry& last(){
+        return mArrayPtr[(mFront + field6) % mCapacity];
+    }
+
+    void pop(){
+        mSize--;
+        mFront = (mFront + 1) % mCapacity;
+    }
+
+    int find(u32 msg) const{
+        for(int i = 0; i < mSize; i++){
+            if(mArrayPtr[(mFront + i) % mCapacity].command == msg){
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
+private:
+    //0x0: vtable
+    CMsgParamEntry mEntries[N]; //0x4
+    CMsgParamEntry* mArrayPtr; //N*0x24 + 0x4
+    u32 mFront; //N*0x24 + 0x8
+    u32 mSize; //N*0x24 + 0xC
+    u32 mCapacity; //N*0x24 + 0x10
+    u32 field6; //N*0x24 + 0x14
+    u32 field7; //N*0x24 + 0x18
+};
+/* end "monolib/work/CMsgParam.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 5 "monolib/work/IWorkEvent.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+
+/* Interface for work events, which provides a set of 32 event handler functions that
+get triggered when a certain event happens (such as when loading a file for OnFileEvent).
+Deriving classes can override any of these functions to run their own code when the
+corresponding event happens.
+
+Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
+being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
+out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
+with no apparent calls to the other 3 (possibly debug only).
+
+In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
+with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
+events being unused as well.
+
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
+class IWorkEvent {
+public:
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
+};
+/* end "monolib/work/IWorkEvent.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 7 "monolib/work/CWorkUtil.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkUtil.hpp" line 2 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkUtil.hpp" line 3 "monolib/work/UnkStruct_80438AF0.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/UnkStruct_80438AF0.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+struct UnkStruct_80438AF0_3 {};
+
+struct UnkStruct_80438AF0_2 {
+    UnkStruct_80438AF0_3* unk0;
+};
+
+struct UnkStruct_80438AF0 {
+    char unk0[0x4];
+    UnkStruct_80438AF0_2* unk4;
+};
+/* end "monolib/work/UnkStruct_80438AF0.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkUtil.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
+
+class CWorkUtil{
+public:
+    static UnkStruct_80438AF0_3* func_80438AF0(UnkStruct_80438AF0* arg0);
+    static CWorkThread* getWorkThread(WORK_ID wid);
+    static void dispTree(const CWorkThread* pThread, int indent = 0);
+    static void entryWork(CWorkThread* pChild, CWorkThread* pParent, bool prepend);
+};
+
+//Possibly member of CWorkThread?
+extern bool hasChild(CWorkThread* pThread);
+/* end "monolib/work/CWorkUtil.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 8 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+//size: 0x1C4
+class CWorkThread : public IWorkEvent{
+public:
+    /* Enum used to keep track of the type of this work thread, which is useful when
+     casting from a generic instance of CWorkThread. Most classes inheriting from
+     CWorkThread have a unique value reserved, but not all do. If a custom value
+     isn't set, derived classes will default to the value for CWorkThread.
+     
+     Special type ranges:
+     23-47: CProc inheriting classes
+     48-52: CView inheriting classes
+    */
+    enum ThreadType{
+        //Work classes
+        THREAD_CWORKTHREAD = 0,
+        THREAD_CWORKCONTROL = 1,
+        THREAD_CWORKSYSTEM = 2,
+        THREAD_03 = 3,
+        THREAD_04 = 4,
+        THREAD_05 = 5,
+        THREAD_CWORKSYSTEMCACHE = 6,
+        THREAD_CWORKSYSTEMPACK = 7,
+        THREAD_08 = 8,
+        THREAD_09 = 9,
+        THREAD_CDEVICE = 10,
+        //CLib classes
+        THREAD_CLIB = 11,
+        THREAD_CLIBG3D = 12,
+        THREAD_CLIBHBM = 13,
+        THREAD_CLIBLAYOUT = 14,
+        THREAD_CLIBCRI = 15,
+        THREAD_CLIBCRIMOVIEPLAY = 16,
+        THREAD_CLIBCRISTREAMINGPLAY = 17,
+        THREAD_CLIBVM = 18,
+        THREAD_CLIBSTATICDATA = 19,
+        THREAD_20 = 20,
+        //Root classes
+        THREAD_CPROCROOT = 21,
+        THREAD_CVIEWROOT = 22,
+        //CProc inheriting classes
+        THREAD_CPROC = 23,
+        THREAD_CDESKTOP = 24,
+        THREAD_CEXCEPTION = 25,
+        THREAD_CLIBHBMCONTROL = 45,
+        THREAD_CPROC_MAX = 47,
+        //CView inheriting classes
+        THREAD_CVIEW = 48,
+        THREAD_CVIEW_MAX = 53,
+        THREAD_CRSRCDATA = 56,
+        THREAD_CSCRIPTCODE = 59,
+        //Misc device classes
+        THREAD_CDEVICEFONTLAYER = 63,
+        THREAD_CDEVICEFONTLOADER = 64,
+        THREAD_CDEVICEFILEJOB = 65,
+        THREAD_CDEVICEFILEJOBREADDVD = 68
+    };
+
+    enum EVT{
+        EVT_NONE,
+        EVT_1,
+        EVT_EXCEPTION,
+        EVT_3,
+        EVT_4,
+        EVT_PAUSE,
+        EVT_UNPAUSE,
+        EVT_7,
+        EVT_8,
+        EVT_9,
+        EVT_APPEXCEPTION_ON,
+        EVT_APPEXCEPTION_OFF,
+    };
+
+    enum ThreadFlags{
+        THREAD_FLAG_NO_EVENT = 1 << 0,
+        THREAD_FLAG_EVT1 = 1 << 1,
+        THREAD_FLAG_2 = 1 << 2,
+        THREAD_FLAG_3 = 1 << 3,
+        THREAD_FLAG_EXCEPTION = 1 << 4,
+        THREAD_FLAG_EVT3 = 1 << 5,
+        THREAD_FLAG_EVT4 = 1 << 6,
+        THREAD_FLAG_PAUSE = 1 << 7,
+        THREAD_FLAG_EVT9 = 1 << 8,
+        THREAD_FLAG_EVT7 = 1 << 9,
+        THREAD_FLAG_APPEXCEPTION = 1 << 10,
+    };
+
+    enum ThreadState{
+        THREAD_STATE_NONE,
+        THREAD_STATE_INIT,
+        THREAD_STATE_LOGIN,
+        THREAD_STATE_RUN,
+        THREAD_STATE_LOGOUT,
+        THREAD_STATE_SHUTDOWN,
+    };
+
+public:
+    CWorkThread(const char* pName, CWorkThread* pParent, int capacity);
+    virtual ~CWorkThread();
+    virtual void wkUpdate();                           //0x88
+    virtual void wkRender(){}                          //0x8C
+    virtual void wkRenderAfter(){}                     //0x90
+    virtual bool wkStandbyLogin();                     //0x94
+    virtual bool wkStandbyLogout();                    //0x98
+    virtual bool wkStandbyExceptionRetry(WORK_ID wid){ //0x9C
+        return true;
+    }
+
+    void wkReplaceHasChild(int capacity);
+    void wkEntryChild(CWorkThread* pChild, bool prepend);
+    void wkRemoveChild(CWorkThread* pChild);
+
+    void wkSetEvent(EVT evt);
+    void wkSetEventChild(EVT evt);
+
+    bool wkCheckTimeout(u32 arg0, bool arg1, const char* pMessage);
+    bool wkIsCurrent() const;
+    void func_804385CC(u32);
+
+    void wkTimeoutInit();
+    void wkStandby();
+
+    static CWorkThread* getWorkThread(WORK_ID wid);
+    CWorkThread* getWorkThread(const char* name);
+
+    CWorkThread* wkGetChild(){
+        return mChildren.front();
+    }
+    CWorkThread* wkGetChild() const {
+        return mChildren.front();
+    }
+
+    bool isRunning() const;
+
+    bool isException() const {
+        return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;
+    }
+
+    bool isEvent3() const {
+        return checkFlag(THREAD_FLAG_EVT3) ? true : mMsgQueue.find(EVT_3) >= 0;
+    }
+    
+    bool isNoEvent() const {
+        return checkFlag(THREAD_FLAG_NO_EVENT);
+    }
+
+    bool isPaused() const {
+        return checkFlag(THREAD_FLAG_PAUSE) && checkFlag(THREAD_FLAG_EVT4);
+    }
+
+    bool isEvent7() const {
+        return checkFlag(THREAD_FLAG_EVT7) && !checkFlag(THREAD_FLAG_EVT9);
+    }
+
+    bool isAppException() const {
+        return checkFlag(THREAD_FLAG_APPEXCEPTION);
+    }
+
+    bool checkFlag(ThreadFlags flag) const {
+        return mFlags & flag;
+    }
+
+    bool hasSingleChild() const {
+        return mChildren.size() == 1;
+    }
+
+    //0x0: vtable
+    ml::FixStr<64> mName;            //0x4
+    ThreadState mState;              //0x48
+    WORK_ID mWorkID;                 //0x4C
+    ThreadType mType;                //0x50
+    mtl::ALLOC_HANDLE mAllocHandle;  //0x54
+    CWorkThread* mParent;            //0x58
+    reslist<CWorkThread*> mChildren; //0x5C
+    u32 mFlags;                      //0x7C
+    CMsgParam<8> mMsgQueue;          //0x80
+    u32 unk1BC;
+    WORK_ID mExceptionWorkID; //0x1C0
+
+private:
+    bool wkStandbyInit();
+    bool wkStandbyRun();
+    bool wkStandbyShutdown();
+};
+
+//Utility macros b/c i don't wanna type this out every time
+//TODO: improve these macros
+
+#define DECL_WORKTHREAD_CREATE(class)                                            \
+    static class* create(const char* pName, CWorkThread* pParent){               \
+        WORK_ID id = CWorkThreadSystem::getWorkMem();                            \
+        class* threadClass = new (id) class(pName, pParent);                     \
+        CWorkUtil::entryWork(threadClass, pParent, false);                       \
+        return threadClass;                                                      \
+    }                                                                            \
+
+#define CREATE_WORKTHREAD(class, parent) class::create(#class, parent);
+/* end "monolib/work/CWorkThread.hpp" */
+/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 4 "monolib/work/CWorkUtil.hpp" */
+/* end "monolib/work/CWorkUtil.hpp" */
+
+//size: 0x1C8
+class CDeviceBase : public CWorkThread {
+public:
+    enum DEVICE_BASE_FLAGS{
+        FLAG_CREATED = (1 << 0)
+    };
+
+    CDeviceBase(const char* pName, CWorkThread* pParent, int capacity) : CWorkThread(pName, pParent, capacity) {
+        mFlags = 0;
+    }
+    virtual ~CDeviceBase();
+
+    inline void CDeviceBase_inline1(CWorkThread* pWorkThread){
+        CWorkUtil::entryWork(this, pWorkThread, false);
+        mFlags |= FLAG_CREATED;
+    }
+
+    inline bool CDeviceBase_inline2() const {
+        return mFlags & FLAG_CREATED;
+    }
+
+    //0x0: vtable
+    //0x0-1c4: CWorkThread
+    u32 mFlags; //0x1C4
+};
+/* end "monolib/device/CDeviceBase.hpp" */
+/* "libs/monolib/include/monolib/device/CDeviceFile.hpp" line 5 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/device/CDeviceFile.hpp" line 6 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+//size: 0x1f0
+class CDeviceFile : public CDeviceBase {
+public:
+    CDeviceFile(const char* pName, CWorkThread* pParent);
+    static CDeviceFile* getInstance();
+
+    DECL_WORKTHREAD_CREATE(CDeviceFile);
+
+    static bool isInitialized();
+    static bool func_8044E768();
+
+    static CFileHandle* readFile(mtl::ALLOC_HANDLE allocHandle, const char* pPath, IWorkEvent* pWorkEvent, int r6, int r7);
+    static CFileHandle* readCommonArchiveFile(mtl::ALLOC_HANDLE allocHandle, const char* pPath, IWorkEvent* pWorkEvent, int r6, int r7);
+    static int getFileSize(const char* pPath);
+
+    static void removeFileJob(CDeviceFileJob* pJob);
+    static void cancel(CFileHandle* pFileHandle);
+    static void func_8044F154(CFileHandle* pFileHandle, int);
+    static void setHandleFlag1(CFileHandle* pFileHandle);
+    static void setHandleFlag2(CFileHandle* pFileHandle);
+
+    //0x0: vtable
+    //0x0-1c8: CDeviceBase
+    u8 unk1C8[0x1F0 - 0x1C8];
+};
+/* end "monolib/device/CDeviceFile.hpp" */
+/* "src/kyoshin/CMainMenu.cpp" line 7 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+/* "src/kyoshin/CMainMenu.cpp" line 8 "monolib/work/IWorkEvent.hpp" */
+/* end "monolib/work/IWorkEvent.hpp" */
+extern "C" void __dt__9CMainMenuFv();
+extern "C" void cbRenderBefore__9CMainMenuFv();
+extern "C" void __ct__800FF300();
+
+// CBaseCur base destructor (defined in kyoshin/CCur.cpp)
+extern "C" void __dt__8CBaseCurFv(void*, int);
+// CProcess base destructor
+extern "C" void __dt__8CProcessFv(void*, int);
+
+// Destructor for CBaseCur-derived class at vtable 0x800FEA30.
+// Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
+// conditionally operator delete, return this.
+void* __dt__800FEA30(void* _this, int flags) {
+    if (_this) {
+        __dt__8CBaseCurFv(_this, 0);
+        if (flags > 0) {
+            operator delete(_this);
+        }
+    }
+    return _this;
+}
+
+u32 func_800FEDF8(void) {
+    extern u32 lbl_eu_80663F18;
+    return lbl_eu_80663F18;
+}
+
+// Destructor for CProcess-derived class at vtable 0x800FED0C.
+// The nested null-check reproduces MWCC's D2-inlined-into-D1 pattern
+// (D2 has its own null guard, preserved when inlined).
+void* __dt__800FED0C(void* _this, int flags) {
+    if (_this) {
+        if (_this) {
+            __dt__8CProcessFv(_this, 0);
+        }
+        if (flags > 0) {
+            operator delete(_this);
+        }
+    }
+    return _this;
+}
+
+
+
+
+
+
+
+
+
+extern u32 lbl_eu_8052BDF4[];
+
+// Copies 3 words from static data lbl_eu_8052BDF4 to fields at 0x3C/0x40/0x44,
+// guarded by field_0x74 to ensure one-shot initialization.
+extern "C" void func_800FEF20(CMainMenu* self) {
+    if (self->field_0x74 != 0) {
+        return;
+    }
+    u32 v0 = lbl_eu_8052BDF4[0];
+    self->field_0x40 = lbl_eu_8052BDF4[1];
+    self->field_0x3C = v0;
+    self->field_0x44 = lbl_eu_8052BDF4[2];
+}
+
+void func_800FEF4C(){}
+
+void __ct__800FF300(void* self){}
+
+void CMainMenu::cbRenderBefore() {}
+
+void func_800FF6BC(){}
+
+extern u32 lbl_eu_80663F18;
+
+// Declare the mangled symbol to prevent IPA from inlining the stub.
+extern "C" int func_800FF778__9CMainMenuFv();
+
+// Returns 1 if func_800FF778() is non-zero, else booleanizes lbl_eu_80663F18.
+extern "C" u32 func_800FF738(CMainMenu* self) {
+    if (func_800FF778__9CMainMenuFv() != 0) {
+        return 1;
+    }
+    return lbl_eu_80663F18 != 0 ? 1 : 0;
+}
+
+int CMainMenu::func_800FF778() {
+    // TODO: decompile
+    return 0;
+}
+
+void func_800FF8B0(){}
+
+// CMainMenu::Init — loads the menu layout file via CDeviceFile::readFile.
+// The IWorkEvent at offset 0x58 receives OnFileEvent when the load completes.
+extern u32 lbl_eu_80661DC0;
+
+void CMainMenu::Init() {
+    // Get IWorkEvent pointer at offset 0x58 (NULL-safe: if this is NULL, workEvent stays NULL)
+    void* workEvent = this;
+    if (this) {
+        workEvent = (char*)this + 0x58;
+    }
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    field_0x74 = CDeviceFile::readFile(handle, (const char*)lbl_eu_80661DC0, (IWorkEvent*)workEvent, 0, 0);
+}
+
+extern "C" void func_800FF914(CArtsInfo* self) {
+    self->field_0x54 = 1;
+}
+
+void func_800FF920(){}
+
+void func_80100E14(){}
+
+void func_801010B8(){}
+
+void func_801018F4(){}
+
+void func_80101A88(){}
+
+void func_80101BF8(){}
+
+void OnFileEvent__9CMainMenuFP10CEventFile(void* self) { ((void(*)(void*))__ct__800FF300)((char*)self - 0x58); }
+
+void func_80102008(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x58); }
+
+void func_80102010(void* self) { ((void(*)(void*))cbRenderBefore__9CMainMenuFv)((char*)self - 0x5c); }
+
+extern "C" void func_80102018(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)((char*)self - 0x5c); }
+
+// --- hard-symbol stubs (scaffold_hard_symbols) ---
+// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
+// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
+// Layout: inherits CProcess (0x00-0x3C), adds mMoveFunc at 0x3C and mDrawFunc at 0x48.
+// Size: 0x54.
+
+/* "src/kyoshin/CMainMenu.cpp" line 145 "monolib/work/CProcess.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CProcess.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CProcess.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+/*
 Instance of a game task.
 
 Processes can contain child sub-processes,
@@ -13183,4 +13737,9 @@ void CTTask<IUICf>::Draw() {
     if (mDrawFunc) {
         (this->*mDrawFunc)();
     }
+}
+
+// Standard MWCC virtual dtor: empty body, compiler emits base dtor call + D1 wrapper
+template<>
+CTTask<IUICf>::~CTTask() {
 }

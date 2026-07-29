@@ -11,7 +11,6 @@ public:
     void Move();
     void cbRenderBefore();
 
-    /* 0x00 */ void* mVtable;
     /* 0x04 */ u8 _pad04[0x74 - 0x04];
     /* 0x74 */ u8 mMemRegion[0x10];               // UnkClass_8045F564 scratch region
     /* 0x84 */ u8 _pad84[0x124 - 0x84];

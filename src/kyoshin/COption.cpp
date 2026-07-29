@@ -31,10 +31,10 @@ void func_8029C66C(){}
 // Returns field_0x2A only when the scrollbar is visible and
 // the syswin is ready; otherwise returns 0.
 u8 func_8029C734(COptionFull* self) {
-    if (!CScrollBar_isVisible(self->mScrollBar)) {
+    if (!CScrollBar_isVisible((CScrollBar*)self->mScrollBar)) {
         return 0;
     }
-    if (!CSysWin_isReady(self->mSysWin)) {
+    if (!CSysWin_isReady((CSysWinFull*)self->mSysWin)) {
         return 0;
     }
     return self->field_0x2A;

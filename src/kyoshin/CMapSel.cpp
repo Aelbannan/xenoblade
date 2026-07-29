@@ -71,18 +71,6 @@ u8 func_80243A9C(void* self){
 
 void func_80243ABC(){}
 
-// Transitions the widget to state 3 (closing): waits for anim transform 2
-// to complete, then sets state=3/flag=1, shows the CBaseCur at +0x74,
-// and runs post-close setup via func_80244020.
-void func_80243B88(CMapSelFull* self) {
-    if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform2, lbl_eu_8066873C)) {
-        self->mState = 3;
-        self->mFlag33 = 1;
-        func_801D216C(self->_74, 1);
-        func_80244020(self);
-    }
-}
-
 void func_80243BE8(){}
 
 void func_80243C6C(){}
@@ -101,9 +89,22 @@ void func_80243ED8(){}
 void func_80243FC4(CMapSelFull* self) {
     float f = lbl_eu_8066873C;
     self->field_0xAF = 1;
-    self->field_0xB0 = f;
     nw4r::lyt::Layout* l = (nw4r::lyt::Layout*)self->mLayout;
+    self->field_0xB0 = f;
     func_80124270(l->GetRootPane()->FindPaneByName(&lbl_eu_8050B4A8[0x66], 1), 0);
+}
+
+// Transitions the widget to state 3 (closing): waits for anim transform 2
+// to complete, then sets state=3/flag=1, shows the CBaseCur at +0x74,
+// and runs post-close setup via func_80244020.
+void func_80243B88(CMapSelFull* self) {
+    float f = lbl_eu_8066873C;
+    if (func_80137444((nw4r::lyt::AnimTransform*)self->mAnimTransform2, f)) {
+        self->mState = 3;
+        self->mFlag33 = 1;
+        func_801D216C(self->_74, 1);
+        func_80244020(self);
+    }
 }
 
 void func_80244020(){}

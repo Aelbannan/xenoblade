@@ -2,10 +2,62 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <revolution/OS.h>
+#include <revolution/VI/vi.h>
 
-void ADXM_WaitVsync(void) {}
+// Forward declarations for functions defined in other TUs
+extern void ADXM_ShutdownThrd(void);
+extern void ADXMNG_SetFramework(u32 val);
+extern void ADXMNG_CallMainServerFunctions(void);
+extern void SVM_ExecSvrFs(void);
 
-void ADXM_ExecMain(void) {}
+// Base struct for the ADXM framework state at lbl_eu_805F3A50.
+// Accessed by adxm_safe_proc, adxm_fs_proc, and adxm_unlock.
+struct AdxmBase {
+    u32 field_0x00;
+    u32 field_0x04;
+    u32 field_0x08;
+    u32 field_0x0C;
+    u32 field_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u32 field_0x1C;
+    u32 field_0x20;
+    u32 field_0x24;
+    u32 field_0x28;
+    u32 field_0x2C;
+    u32 field_0x30;
+    u32 field_0x34;
+    u32 field_0x38;
+    u32 field_0x3C;
+    s32 field_0x40;  // lock count (decremented in adxm_unlock)
+    u32 field_0x44;
+    s32 field_0x48;  // incremented in adxm_safe_proc
+    u32 field_0x4C;
+    s32 field_0x50;  // incremented in adxm_fs_proc
+    u32 field_0x54;
+    u32 field_0x58;
+    u32 field_0x5C;
+    u32 field_0x60;
+    u32 field_0x64;
+    u32 field_0x68;
+    u32 field_0x6C;
+    u32 field_0x70;
+    s32 field_0x74;  // thread priority
+    OSThread field_0x78;  // thread struct (suspended in adxm_unlock)
+    u32 field_0x390[(0x9D0 - 0x390) / 4];
+    s32 field_0x9D0;  // flag checked in adxm_safe_proc
+    s32 field_0x9D4;  // flag set in adxm_safe_proc
+    u32 field_0x9D8;
+    u32 field_0x9DC;
+    s32 field_0x9E0;  // flag checked in adxm_fs_proc
+    s32 field_0x9E4;  // flag set in adxm_fs_proc
+};
+extern struct AdxmBase lbl_eu_805F3A50;
+
+void ADXM_WaitVsync(void) { VIWaitForRetrace(); }
+
+void ADXM_ExecMain(void) { ADXMNG_CallMainServerFunctions(); }
 
 void ADXM_Lock(void) { SVM_Lock(); }
 
@@ -13,22 +65,37 @@ void ADXM_Unlock(void) { SVM_Unlock(); }
 
 void adxm_lock() {}
 
-void adxm_unlock() {}
+void adxm_unlock(void) {
+    struct AdxmBase* base = &lbl_eu_805F3A50;
+    base->field_0x40 -= 1;
+    if (base->field_0x40 == 0) {
+        OSThread* currThread = OSGetCurrentThread();
+        OSSuspendThread(&base->field_0x78);
+        OSSetThreadPriority(currThread, base->field_0x74);
+    }
+}
 
 void adxm_goto_mwidle_border() {}
 
 void adxm_safe_proc(void) {
-    extern int lbl_eu_805F3A50[];
-    int *base = (int *)lbl_eu_805F3A50;
-    while (*(int *)((char *)base + 0x9d0) == 1) {
-        (*(int *)((char *)base + 0x48))++;
+    struct AdxmBase* base = &lbl_eu_805F3A50;
+    while (base->field_0x9D0 == 1) {
+        base->field_0x48 += 1;
     }
-    *(int *)((char *)base + 0x9d4) = 1;
+    base->field_0x9D4 = 1;
 }
 
 void adxm_vsync_proc() {}
 
-void adxm_fs_proc() {}
+void adxm_fs_proc(void) {
+    struct AdxmBase* base = &lbl_eu_805F3A50;
+    while (base->field_0x9E0 == 1) {
+        VIWaitForRetrace();
+        base->field_0x50 += 1;
+        SVM_ExecSvrFs();
+    }
+    base->field_0x9E4 = 1;
+}
 
 void adxm_mwidle_proc() {}
 
@@ -43,8 +110,19 @@ u32 ADXM_IsSetupThrd(void) {
     return (lbl_eu_805F3A54 != 0) ? 1 : 0;
 }
 
-void ADXM_ShutdownThrd() {}
+extern u32 lbl_eu_805FDD9C;
+s32 ADXM_ShutdownFramework(void) {
+    u32 state = lbl_eu_805FDD9C;
+    s32 result = 1;
+    if (state == 0 || state == 2) {
+        ADXM_ShutdownThrd();
+    } else if (state == 1) {
+        // already in shutdown state, skip
+    } else {
+        result = 0;
+    }
+    ADXMNG_SetFramework(-1);
+    return result;
+}
 
 void ADXM_SetupFramework() {}
-
-void ADXM_ShutdownFramework() {}

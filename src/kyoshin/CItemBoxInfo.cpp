@@ -84,7 +84,17 @@ void func_801D4154(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo) {
     }
 }
 
-void func_801D4A2C(){}
+void func_80127BD8(void*, float*);
+
+void func_801D4A2C(void* sub) {
+    float f = -0.0f;
+    for (int i = 0; i < 12; i++) {
+        ((s16*)sub)[i] = 0;
+        float temp[3] = {f, f, f};
+        func_80127BD8((u8*)sub + 0x18 + i * 0xC, temp);
+    }
+}
+
 void func_801D4B3C(){}
 void func_801D4C3C(){}
 void func_801D4C9C(){}

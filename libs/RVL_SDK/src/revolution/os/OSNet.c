@@ -19,7 +19,6 @@ void __OSInitNet(void) {
     s32 error;
     OSIOSRev rev;
 
-    //REXInit();
     __OSGetIOSRev(&rev);
 
     if (rev.idLo <= 4 || rev.idLo == 9) {
@@ -27,23 +26,19 @@ void __OSInitNet(void) {
     }
 
     error = NWC24iPrepareShutdown();
-    if (error != 0) {
-        if (error < 0) {
-            OSReport("Failed to register network shutdown function. %d\n", error);
-        }
-
-        error = NWC24SuspendScheduler();
-        if (error < 0) {
-            OSReport("Failed to suspend the WiiConnect24 scheduler. %d\n", error);
-        }
+    if (error < 0) {
+        OSReport("Failed to register network shutdown function. %d\n", error);
     }
 
-    if(!__OSInIPL){
+    error = NWC24SuspendScheduler();
+    if (error < 0) {
+        OSReport("Failed to suspend the WiiConnect24 scheduler. %d\n", error);
+    }
+
+    if (!__OSInIPL) {
         error = NWC24iSynchronizeRtcCounter(FALSE);
         if (error != 0) {
-            OSReport(
-                "Failed to synchronize time with network resource managers. %d\n",
-                error);
+            OSReport("Failed to synchronize time with network resource managers. %d\n", error);
         }
     }
 }
@@ -57,6 +52,8 @@ void REXInit(){
 }
 
 static BOOL NWC24Shutdown_(BOOL final, u32 event);
+static s32 CallbackAsyncIpc(s32 result, void* arg);
+NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut);
 static s32 NWC24iOpenResourceManager_(const char* funcName, const char* path, s32* resultPtr, IPCOpenMode mode);
 static s32 NWC24iIoctlResourceManager_(const char* funcName, s32 fd, s32 type, void* in, s32 inSize, void* out, s32 outSize);
 static s32 NWC24iIoctlResourceManagerAsync_(const char* funcName, s32 fd, s32 type, void* in, s32 inSize, void* out, s32 outSize, void* callbackArg);
@@ -83,20 +80,28 @@ DECL_WEAK NWC24Err NWC24iPrepareShutdown(){
     return result;
 }
 
-static s32 GetRTC(s32* destPtr);
-static s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2);
+s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2);
 
-DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val){
-    s32 result;
+DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) {
+    s32 status;
+    u32 bias;
+    s64 time;
     s32 rtc;
     
-    result = GetRTC(&rtc);
-    
-    if (result != 0) {
-        return result;
-    }else{
-        return NWC24iSetRtcCounter_(rtc, val != FALSE);
+    while (TRUE) {
+        status = SCCheckStatus();
+        if (status == 2) {
+            return -1;
+        }
+        if (status == 0) {
+            break;
+        }
     }
+    
+    bias = SCGetCounterBias();
+    time = OSGetTime();
+    rtc = OS_TICKS_TO_SEC(time) - bias;
+    return NWC24iSetRtcCounter_(rtc, val != FALSE);
 }
 
 DECL_WEAK s32 NWC24SuspendScheduler(){
@@ -146,14 +151,18 @@ DECL_WEAK s32 NWC24ResumeScheduler(){
     return iVar1;
 }
 
-static NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut){
-    s32 uVar1;
+NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut) {
     static s32 shtBuffer[8] ALIGN(32);
     static s32 shtResult[8] ALIGN(32);
     
     shtBuffer[0] = param_1;
-    uVar1 = NWC24iIoctlResourceManagerAsync_(__FUNCTION__, nwc24ShtFd, 0x28, shtBuffer, 0x20, shtResult, 0x20, resultOut);
-    return uVar1;
+    
+    if (IOS_IoctlAsync(nwc24ShtFd, 0x28, shtBuffer, 0x20, shtResult, 0x20, CallbackAsyncIpc, resultOut) < 0) {
+        return -42;
+    }
+    
+    NWC24iIsRequestPending = TRUE;
+    return 0;
 }
 
 static BOOL NWC24iIsAsyncRequestPending_();
@@ -193,7 +202,7 @@ static BOOL NWC24Shutdown_(BOOL final, u32 event){
     return FALSE;
 }
 
-static s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE {
+s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) {
     s32 result;
     s32 iVar2;
     s32 ipcResult;
@@ -283,22 +292,4 @@ static s32 CheckCallingStatus(const char* funcName){
     else return 0;
 }
 
-static s32 GetRTC(s32* destPtr) {
-    s64 time;
-    u32 bias;
-    u32 status;
 
-    while(TRUE){
-        status = SCCheckStatus();
-    
-        if (status == 2) {
-            return -1;
-        }
-        if (status == 0) {
-            bias = SCGetCounterBias();
-            time = OSGetTime();
-            *destPtr = OS_TICKS_TO_SEC(time) - bias;
-            return 0;
-        }
-    }
-}

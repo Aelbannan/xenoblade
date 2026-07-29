@@ -1,5 +1,6 @@
 #include "monolib/util.hpp"
 #include "monolib/work.hpp"
+#include <nw4r/db/db_assert.h>
 #include <revolution/BASE.h>
 #include <revolution/OS.h>
 #include <revolution/VI.h>
@@ -7,11 +8,13 @@
 CErrorWii* CErrorWii::spInstance;
 bool CErrorWii::sPowerCallbackCalled;
 bool CErrorWii::sResetCallbackCalled;
+bool CErrorWii::sUnkFlag;
 
 CErrorWii::CErrorWii() {
     spInstance = this;
     sPowerCallbackCalled = false;
     sResetCallbackCalled = false;
+    sUnkFlag = false;
     OSSetPowerCallback(powerCallback);
     OSSetResetCallback(resetCallback);
 }
@@ -147,6 +150,21 @@ down, etc...), but all such potential code was removed for release, including th
 at the end (or some other way of stopping any more code from running). As a result,
 any calls to OSPanic will effectively do nothing, and the game will continue to run instead of
 properly halting. It shouldn't ever get called though, so it's fine, right? :) */
+namespace nw4r {
+namespace db {
+
+void Panic(const char* file, int line, const char* fmt, ...) {
+    char buffer[4120];
+    va_list args;
+    va_start(args, fmt);
+    int len = vsprintf(buffer, fmt, args);
+    va_end(args);
+    sprintf(buffer + len, " in \"%s\" on line %d.\n", file, line);
+}
+
+} // namespace db
+} // namespace nw4r
+
 void OSPanic(const char *file, int line, const char *msg, ...){
     u32 depth;
     u32* sp;

@@ -191,17 +191,19 @@ u8 func_801C6690(CItemBoxGridFull* self, u16 idx) {
 // Lookup a byte from a 10-byte-entry table indexed by (field_2804 * 0x1e + idx).
 // Returns byte at offset 7 within the entry, or 0 if out of bounds.
 u8 func_801C6708(CItemBoxGridFull* self, u16 idx) {
-    s16 offset = (s8)self->field_2804 * 0x1e + idx;
+    s32 tmp = (s8)self->field_2804 * 0x1e + idx;
+    u32 offset = (u32)(u16)tmp;
     if (offset >= 0x400) return 0;
     return ((u8*)self)[offset * 0xa + 7];
 }
 
-// Same as func_801C6708 but returns byte at offset 8 within each entry.
 u8 func_801C673C(CItemBoxGridFull* self, u16 idx) {
-    s16 offset = (s8)self->field_2804 * 0x1e + idx;
+    s32 tmp = (s8)self->field_2804 * 0x1e + idx;
+    u32 offset = (u32)(u16)tmp;
     if (offset >= 0x400) return 0;
     return ((u8*)self)[offset * 0xa + 8];
 }
+
 
 // Toggle an entry's flag based on category cap.
 void func_801C6770(CItemBoxGridFull* self, u16 idx) {
@@ -364,7 +366,8 @@ void func_801CB0FC(){}
 // Get field depending on window state.
 u8 func_801CB184(void* self) {
     if (CSysWin_getUnk34((u8*)self + 0x4e8)) return 0;
-    if (*(u32*)((u8*)self + 0x58) != 3) return 0;
+    s32 state = *(s32*)((u8*)self + 0x58);
+    if (state != 3) return 0;
     return ((u8*)self)[0x542];
 }
 
@@ -443,7 +446,8 @@ void func_801CDB94(void* self, u32 val) {
 // Get field depending on obj state.
 u8 func_801CDBE0(void* self) {
     if (!func_8022D09C((u8*)self + 0x440)) return 0;
-    if (*(u32*)((u8*)self + 0x58) != 3) return 0;
+    s32 state = *(s32*)((u8*)self + 0x58);
+    if (state != 3) return 0;
     return ((u8*)self)[0x52c];
 }
 
@@ -603,3 +607,4 @@ void OnFileEvent__12CItemBoxGridFP10CEventFile(){}
 void sinit_801D1E30(){}
 
 extern u8 lbl_eu_805347F8[];
+

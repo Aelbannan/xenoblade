@@ -46,4 +46,5 @@ private:
     static CErrorWii* spInstance;
     static bool sPowerCallbackCalled;
     static bool sResetCallbackCalled;
+    static bool sUnkFlag;
 };

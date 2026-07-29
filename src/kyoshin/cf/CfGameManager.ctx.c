@@ -10622,6 +10622,7 @@ private:
     static CErrorWii* spInstance;
     static bool sPowerCallbackCalled;
     static bool sResetCallbackCalled;
+    static bool sUnkFlag;
 };
 /* end "monolib/util/CErrorWii.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 6 "monolib/util/CPathUtil.hpp" */
@@ -251965,7 +251966,11 @@ extern "C" void func_800832BC__Q22cf13CfGameManagerFv(u16* first, u16* second) {
 }
 
 extern "C" char lbl_eu_804FB824[];
-class Unk8187CData;
+class Unk8187CData {
+public:
+    u8 field_0x0[0xA8];
+    u32 field_0xA8;
+};
 extern "C" u32 func_eu_80065640(u32 first, u32 second, u32 third, u32 fourth);
 extern "C" Unk8187CData* func_80080F40__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                                  u32 third);
@@ -251978,6 +251983,26 @@ extern "C" Unk8187CData* func_8008187C__Q22cf13CfGameManagerFv(u32 value) {
         func_80080F40__Q22cf13CfGameManagerFv(packedId, resource, 0);
     if (result != nullptr) {
         func_80081874__Q22cf13CfGameManagerFv(result, 0x400020);
+    }
+    return result;
+}
+
+#pragma dont_inline on
+extern "C" void func_80081988__Q22cf13CfGameManagerFv(Unk8187CData* data, u32 value) {
+    data->field_0xA8 = value;
+}
+#pragma dont_inline reset
+
+extern "C" Unk8187CData* func_80081900__Q22cf13CfGameManagerFv(u32 first,
+                                                                 u32 value,
+                                                                 u32 resource) {
+    Unk8187CData* result = nullptr;
+    if (resource != 0 && value != 0) {
+        cf::CfGameManager::getInstance();
+        result = func_80080F40__Q22cf13CfGameManagerFv(resource, first, 0);
+        if (result != nullptr) {
+            func_80081988__Q22cf13CfGameManagerFv(result, value);
+        }
     }
     return result;
 }
@@ -252873,7 +252898,6 @@ void cf::CfGameManager::func_800817A8() {}
 
 void cf::CfGameManager::func_80081874() {}
 
-void cf::CfGameManager::func_80081988() {}
 
 void cf::CfGameManager::func_80081CB0() {}
 

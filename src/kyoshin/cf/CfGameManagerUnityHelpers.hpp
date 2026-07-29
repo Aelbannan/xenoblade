@@ -184,10 +184,17 @@ extern "C" void func_80080E30__Q22cf13CfGameManagerFv(Unk82FCCData* data, u32 ma
 }
 
 extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 second,
-                                                        u32 third, u32 fourth);
+                                                        u32 third, u32 fourth, float value);
+extern "C" void func_80135568(u32 value);
+extern "C" void func_80083D70__Q22cf13CfGameManagerFv(u32 first, u32 second,
+                                                        u32 third, u32 fourth,
+                                                        float value) {
+    func_80135568(0);
+    func_800838F4__Q22cf13CfGameManagerFv(1, first, second, third, fourth, value);
+}
 extern "C" void func_80083D50__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
-                                                        u32 fourth) {
-    func_800838F4__Q22cf13CfGameManagerFv(0, first, second, third, fourth);
+                                                        u32 fourth, float value) {
+    func_800838F4__Q22cf13CfGameManagerFv(0, first, second, third, fourth, value);
 }
 
 extern "C" UnkClass_8009EC9C* func_8009EC9C(u16 index);
@@ -212,6 +219,17 @@ extern "C" BdatTextEntry* func_8007C2F4__Q22cf13CfGameManagerFv(BdatTextEntry* e
 }
 #pragma dont_inline reset
 
+extern "C" BdatTextEntry* func_80083CD8__Q22cf13CfGameManagerFv(
+    BdatTextEntry* destination, const BdatTextEntry* source) {
+    destination->textLength = strlen(source->text);
+    strcpy(destination->text, source->text);
+    destination->secondaryTextLength = strlen(source->secondaryText);
+    strcpy(destination->secondaryText, source->secondaryText);
+    destination->value = source->value;
+    destination->enabled = source->enabled;
+    return destination;
+}
+
 extern "C" bool func_80083C78__Q22cf13CfGameManagerFv(const UnkFloat4* first,
                                                         const UnkFloat4* second) {
     bool equal = false;
@@ -231,7 +249,11 @@ extern "C" void func_800832BC__Q22cf13CfGameManagerFv(u16* first, u16* second) {
 }
 
 extern "C" char lbl_eu_804FB824[];
-class Unk8187CData;
+class Unk8187CData {
+public:
+    u8 field_0x0[0xA8];
+    u32 field_0xA8;
+};
 extern "C" u32 func_eu_80065640(u32 first, u32 second, u32 third, u32 fourth);
 extern "C" Unk8187CData* func_80080F40__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                                  u32 third);
@@ -244,6 +266,26 @@ extern "C" Unk8187CData* func_8008187C__Q22cf13CfGameManagerFv(u32 value) {
         func_80080F40__Q22cf13CfGameManagerFv(packedId, resource, 0);
     if (result != nullptr) {
         func_80081874__Q22cf13CfGameManagerFv(result, 0x400020);
+    }
+    return result;
+}
+
+#pragma dont_inline on
+extern "C" void func_80081988__Q22cf13CfGameManagerFv(Unk8187CData* data, u32 value) {
+    data->field_0xA8 = value;
+}
+#pragma dont_inline reset
+
+extern "C" Unk8187CData* func_80081900__Q22cf13CfGameManagerFv(u32 first,
+                                                                 u32 value,
+                                                                 u32 resource) {
+    Unk8187CData* result = nullptr;
+    if (resource != 0 && value != 0) {
+        cf::CfGameManager::getInstance();
+        result = func_80080F40__Q22cf13CfGameManagerFv(resource, first, 0);
+        if (result != nullptr) {
+            func_80081988__Q22cf13CfGameManagerFv(result, value);
+        }
     }
     return result;
 }

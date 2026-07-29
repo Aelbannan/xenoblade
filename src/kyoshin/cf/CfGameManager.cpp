@@ -780,7 +780,6 @@ void cf::CfGameManager::func_800817A8() {}
 
 void cf::CfGameManager::func_80081874() {}
 
-void cf::CfGameManager::func_80081988() {}
 
 void cf::CfGameManager::func_80081CB0() {}
 

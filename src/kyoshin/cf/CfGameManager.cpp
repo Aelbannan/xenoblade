@@ -139,9 +139,11 @@ extern const float lbl_eu_8066650C;
 extern const float lbl_eu_80666510;
 extern const float lbl_eu_80666548;
 
+#pragma dont_inline on
 extern "C" u32 func_8007DCA8__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     return (first << 27) | (second << 20);
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" void func_8007E4CC__Q22cf13CfGameManagerFv(u32 mask) {

@@ -586,6 +586,19 @@ void* __dt__13CArtsBookItemFv(void* self, int mode) {
     return self;
 }
 
+void func_801C4BB4(){}
+// Add id to list if not already present and capacity check passes.
+void func_801C5158(void* self, u32 id) {
+    if (func_801C51BC(self, id)) return;
+    if ((func_801392E4(id) & 0xFFFF) == 12) return;
+    u16 count = *(u16*)((u8*)self + 0x804);
+    *(u16*)((u8*)self + 4 + count * 2) = (u16)id;
+    *(u16*)((u8*)self + 0x804) = count + 1;
+}
+void func_801C5254(){}
+void func_801C53D8(){}
+void OnFileEvent__12CItemBoxGridFP10CEventFile(){}
+
 void sinit_801D1E30(){}
 
 extern u8 lbl_eu_805347F8[];

@@ -142,7 +142,6 @@ void func_801D4174(CItemBoxInfo* info) {
     func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion2);
 }
 
-void func_801D40C4(){}
 
 
 void func_80137924(void*, void*, void*, void*);
@@ -231,6 +230,43 @@ void func_801D62F8(void* arr, u32 index, const void* color) {
     }
     __as__11_GXColorS10FRC11_GXColorS10((u8*)arr + index * 8 + 0x10, color);
 }
+void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+void func_80137924(void*, void*, void*, void*);
+void func_801D4C9C(CItemBoxInfo*);
+void func_801D4D64(CItemBoxInfo*);
+void func_801E17EC(CItemBoxInfo2*);
+void func_801E1868(CItemBoxInfo2*);
+void func_801E18B4(CItemBoxInfo2*);
+void func_801E1930(CItemBoxInfo2*);
+
+void func_801D40C4(CItemBoxInfo* info) {
+    if (info->state.active != 0) {
+        switch (info->state.state) {
+            case 1: func_801D4C9C(info); break;
+            case 2: func_801D4D18(info); break;
+            case 4: func_801D4D64(info); break;
+            case 5: func_801D4DE0(info); break;
+        }
+        void* layout = info->state.layout;
+        void** vtable = *(void***)layout;
+        ((void(*)(void*, u32))vtable[14])(layout, 0);
+    }
+}
+
+void func_801E1348(CItemBoxInfo2* info) {
+    if (info->state.active != 0) {
+        switch (info->state.state) {
+            case 1: func_801E17EC(info); break;
+            case 2: func_801E1868(info); break;
+            case 4: func_801E18B4(info); break;
+            case 5: func_801E1930(info); break;
+        }
+        void* layout = info->state.layout;
+        void** vtable = *(void***)layout;
+        ((void(*)(void*, u32))vtable[14])(layout, 0);
+    }
+}
+
 void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) {
     ((s16*)dst)[0] = ((s16*)src)[0];
     ((s16*)dst)[1] = ((s16*)src)[1];
@@ -368,7 +404,6 @@ void func_801E12E0(CItemBoxInfo2* info) {
     info->state.fileHandle2 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0xa6], info, 0, 0);
 }
 
-void func_801E1348(){}
 
 void CItemBoxInfo2::drawItemBox2Layout(nw4r::lyt::DrawInfo* drawInfo) {
     if (state.active != 0) {

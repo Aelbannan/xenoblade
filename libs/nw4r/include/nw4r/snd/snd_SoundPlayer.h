@@ -122,9 +122,7 @@ private:
     f32 mUnk0x30;                               // at 0x30
     int mOutputLineFlag;                        // at 0x34
     f32 mMainOutVolume;                         // at 0x38
-    bool mOutputLineFlagEnable;                 // at 0x3C
-    bool mUsePlayerHeap;                        // at 0x3D
-    u8 mPad0x3E[2];                             // at 0x3E
+    int mOutputLineFlagEnable;                  // at 0x3C
     f32 mUnk0x40;                               // at 0x40
     f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x44
     f32 mUnk0x54;                               // at 0x54

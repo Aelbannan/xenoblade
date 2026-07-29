@@ -365,7 +365,7 @@ void RemoteSpeaker::IntervalAlarmHandler(OSAlarm* pAlarm, OSContext* pCtx) {
 #pragma unused(pCtx)
 
     BOOL old = OSDisableInterrupts();
-    RemoteSpeaker* p = static_cast<RemoteSpeaker*>(OSGetAlarmUserData(pAlarm));
+    RemoteSpeaker* p = (RemoteSpeaker*)OSGetAlarmUserData(pAlarm);
 
     if (p->mContinueFlag) {
         OSCancelAlarm(&p->mContinueAlarm);

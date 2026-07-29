@@ -42,6 +42,8 @@ extern u32 func_8022DB6C(void*);
 extern void advanceItemBoxState__FP12CItemBoxInfo(void*);
 extern void func_801EB410(void*, int);
 extern void func_801EB0D4(void*);
+extern void func_801D0328(void*);
+extern void func_801D0950(void*);
 extern void func_801D05D4(void*, int);
 extern void func_801CFF28(void*);
 extern void func_80138078__FUl(u32);
@@ -583,7 +585,23 @@ u8 CItemBoxGrid::GetField52D() { return reinterpret_cast<CItemBoxGridFull*>(this
 
 void func_801CDC40(){}
 
-void func_801CDEE8(){}
+// Check conditions and update state.
+void func_801CDEE8(void* self) {
+    u8* p = (u8*)self;
+    if (*(u32*)(p + 0x58) != 3) return;
+    if (p[0x528]) return;
+    if (p[0x525] == 0xFF) return;
+    if (CSysWin_getUnk34(p + 0x4ac)) return;
+    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (func_80208358(p + 0x418)) return;
+    if (func_8022DB6C(p + 0x468)) return;
+    if (func_801D3320(p + 0xe8)) return;
+    if (p[0x544]) return;
+    p[0x525] = 0xFF;
+    func_801D0950(self);
+    func_801D0328(self);
+    func_80138078__FUl(2);
+}
 
 void func_801CDFB4(){}
 

@@ -245743,7 +245743,7 @@ public:
 
     void initSound();
     void updateSound();
-    //void playSound(nw4hbm::snd::SoundArchivePlayer* pPlayer, int id);
+    void playSound(int id);
 
     void soundOn();
     void soundOff(int msec);
@@ -246823,7 +246823,6 @@ RemoteSpk::~RemoteSpk() {
     }
 }
 
-/*
 void RemoteSpk::Start() {
     if (!available) {
         return;
@@ -246831,15 +246830,17 @@ void RemoteSpk::Start() {
 
     OSCreateAlarm(&speakerAlarm);
 
-    OSSetPeriodicAlarm(
-        &speakerAlarm, //
-        OSGetTime(),   //
-        OS_NSEC_TO_TICKS(
-            nw4hbm::snd::detail::RemoteSpeakerManager::SPEAKER_ALARM_PERIOD_NSEC),
-        &UpdateSpeaker //
-    );
+    OSSetPeriodicAlarm(&speakerAlarm, OSGetTime(), OS_NSEC_TO_TICKS(6666667),
+                       &UpdateSpeaker);
+
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        OSCreateAlarm(&info[i].alarm);
+        info[i].in_pcm = NULL;
+        info[i].seId = -1;
+        info[i].first = true;
+        info[i].playReady = true;
+    }
 }
-*/
 
 void RemoteSpk::Stop() {
     OSCancelAlarm(&speakerAlarm);

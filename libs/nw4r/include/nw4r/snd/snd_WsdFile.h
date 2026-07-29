@@ -39,7 +39,8 @@ struct NoteInfo {
     u8 decay;                                  // at 0x5
     u8 sustain;                                // at 0x6
     u8 release;                                // at 0x7
-    u16 hold;                                  // at 0x8
+    u8 hold;                                   // at 0x8
+    u8 PADDING_0x9;                            // at 0x9
     u16 PADDING_0xA;                           // at 0xA
     u8 originalKey;                            // at 0xC
     u8 volume;                                 // at 0xD
@@ -108,6 +109,7 @@ struct WaveSoundInfo {
 struct WaveSoundNoteInfo {
     s32 waveIndex;  // at 0x0
     u8 attack;      // at 0x4
+    u8 hold;        // at 0x5
     u8 decay;       // at 0x6
     u8 sustain;     // at 0x7
     u8 release;     // at 0x8
@@ -131,6 +133,8 @@ public:
     bool ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const;
     bool ReadWaveSoundNoteInfo(WaveSoundNoteInfo* pSoundNoteInfo, int id,
                                int note) const;
+    bool ReadWaveInfo(int id, WaveInfo* pWaveInfo,
+                      const void* pWaveAddr) const;
     bool ReadWaveParam(int id, WaveData* pWaveData,
                        const void* pWaveAddr) const;
 

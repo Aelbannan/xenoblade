@@ -23,18 +23,12 @@ const volatile f32 EnvGenerator::VOLUME_INIT = VOLUME_MIN_DB;
 extern const f32 attackTable[128];
 
 EnvGenerator::EnvGenerator() {
-    mHold = 0;
-    mAttack = attackTable[127];
-    mDecay = 65535.0f;
-    mSustain = 127;
-    mRelease = 65535.0f;
-    mValue = 10.0f * VOLUME_INIT;
-    mStatus = STATUS_ATTACK;
+    Init(VOLUME_INIT);
 }
 
 void EnvGenerator::Init(f32 db) {
+    SetAttack(127);
     mHold = 0;
-    mAttack = attackTable[127];
     mDecay = 65535.0f;
     mSustain = 127;
     mRelease = 65535.0f;

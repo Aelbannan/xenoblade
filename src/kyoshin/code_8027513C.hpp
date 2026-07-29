@@ -36,16 +36,15 @@ struct CfObjectEffLayout {
 };
 
 // Forward declarations for callees
-void func_800CFFA0(void* self);
+void func_800CFFA0(u8* self);
 
 // Base type for camera control instances returned by initCamControlInstances.
-// Vtable index 4 (offset 0x10) is the method invoked by func_802751F8.
+// MWCC adds typeinfo + deleting-dtor overhead (2 entries), so source index 2
+// maps to actual vtable offset 0x10 (index 4).
 class ICamControlBase {
 public:
     virtual ~ICamControlBase();
     virtual void vfunc_04() = 0;
-    virtual void vfunc_08() = 0;
-    virtual void vfunc_0C() = 0;
     virtual void vfunc_10(class UnkCode8027513C* self) = 0;
 };
 

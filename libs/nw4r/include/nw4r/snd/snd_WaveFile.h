@@ -20,6 +20,8 @@ namespace WaveFile {
 
 enum Format { FORMAT_PCM8, FORMAT_PCM16, FORMAT_ADPCM };
 
+}; // namespace WaveFile
+
 struct WaveInfo {
     u8 format;                  // at 0x0
     u8 loopFlag;                // at 0x1
@@ -45,7 +47,13 @@ struct WaveChannelInfo {
     u32 reserved;          // at 0x18
 };
 
-}; // namespace WaveFile
+struct FileHeader {
+    ut::BinaryFileHeader fileHeader; // at 0x0
+    u32 infoBlockOffset;              // at 0x10
+    u32 infoBlockSize;                // at 0x14
+    u32 dataBlockOffset;              // at 0x18
+    u32 dataBlockSize;                // at 0x1C
+};
 
 /******************************************************************************
  *
@@ -73,16 +81,19 @@ struct WaveData {
 
 class WaveFileReader {
 public:
-    explicit WaveFileReader(const WaveFile::WaveInfo* pWaveInfo);
+    explicit WaveFileReader(const WaveInfo* pWaveInfo);
+    explicit WaveFileReader(const FileHeader* pFileHeader);
 
     bool ReadWaveParam(WaveData* pWaveData, const void* pWaveAddr) const;
-    void* GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
+    bool ReadWaveInfo(WaveInfo* pWaveInfo,
+                      const void* pWaveAddr) const;
+    void* GetWaveDataAddress(const WaveChannelInfo* info,
                               const void* addr) const;
 
     static AxVoice::Format GetAxVoiceFormatFromWaveFileFormat(u32 format);
 
 private:
-    const WaveFile::WaveInfo* mWaveInfo; // at 0x0
+    const WaveInfo* mWaveInfo; // at 0x0
 };
 
 class WaveArchiveReader {

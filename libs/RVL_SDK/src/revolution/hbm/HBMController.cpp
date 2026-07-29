@@ -5,15 +5,16 @@
 #include <revolution/PAD.h>
 #include <revolution/WPAD.h>
 
-extern "C" void WPADSetCallbackByKPAD(void (*callback)(void));
+extern "C" void* WPADIsUsedCallbackByKPAD();
+extern "C" void WPADSetCallbackByKPAD(void* callback);
 
 namespace homebutton {
 
 bool Controller::sBatteryFlag[WPAD_MAX_CONTROLLERS];
-bool Controller::sSetInfoAsync[WPAD_MAX_CONTROLLERS];
 OSAlarm Controller::sAlarm[WPAD_MAX_CONTROLLERS];
 OSAlarm Controller::sAlarmSoundOff[WPAD_MAX_CONTROLLERS];
 Controller* Controller::sThis[WPAD_MAX_CONTROLLERS];
+bool Controller::sSetInfoAsync[WPAD_MAX_CONTROLLERS];
 
 void Controller::wpadConnectCallback(s32 chan, s32 result) {
     switch (result) {
@@ -46,15 +47,31 @@ void Controller::wpadConnectCallback(s32 chan, s32 result) {
 }
 
 void Controller::wpadExtensionCallback(s32 chan, s32 result) {
-    switch (result) {
-    case WPAD_DEV_UNKNOWN: {
-        sThis[chan]->soundOff(1000);
-        break;
-    }
+    Controller* ctrl = sThis[chan];
+
+    if (ctrl == NULL) {
+        return;
     }
 
-    if (sThis[chan]->mOldExtensionCallback != NULL) {
-        sThis[chan]->mOldExtensionCallback(chan, result);
+    if (result == WPAD_DEV_UNKNOWN) {
+        s32 ctrlChan = ctrl->mHBController.chan;
+
+        if (WPADIsSpeakerEnabled(ctrlChan)) {
+            WPADControlSpeaker(ctrlChan, WPAD_SPEAKER_MUTE, NULL);
+
+            OSSetAlarmUserData(&sAlarmSoundOff[ctrlChan],
+                               reinterpret_cast<void*>(ctrlChan));
+            OSCancelAlarm(&sAlarmSoundOff[ctrlChan]);
+            OSSetAlarm(&sAlarmSoundOff[ctrlChan], OS_MSEC_TO_TICKS(1000),
+                       soundOnCallback);
+
+            ctrl->mSoundOffFlag = true;
+        }
+    }
+
+    ctrl = sThis[chan];
+    if (ctrl->mOldExtensionCallback != NULL) {
+        ctrl->mOldExtensionCallback(chan, result);
     }
 }
 
@@ -80,6 +97,7 @@ Controller::Controller(int chan, RemoteSpk* pSpk) {
         OSCreateAlarm(&sAlarm[chan]);
         OSCreateAlarm(&sAlarmSoundOff[chan]);
         sThis[chan] = this;
+        sSetInfoAsync[chan] = false;
     }
 }
 
@@ -93,24 +111,26 @@ Controller::~Controller() {
 void Controller::initCallback() {
     s32 type;
 
+    void* prev = WPADIsUsedCallbackByKPAD();
+    WPADSetCallbackByKPAD(NULL);
+
     mOldConnectCallback =
-        WPADSetConnectCallback(mHBController.chan, &wpadConnectCallback);
+        WPADSetConnectCallback(mHBController.chan, wpadConnectCallback);
+
+    WPADSetCallbackByKPAD(prev);
+
+    mOldExtensionCallback =
+        WPADSetExtensionCallback(mHBController.chan, wpadExtensionCallback);
 
     mRumbleFlag = true;
 
     switch (WPADProbe(mHBController.chan, &type)) {
-    case WPAD_ERR_OK: {
-        mOldExtensionCallback = WPADSetExtensionCallback(
-            mHBController.chan, &wpadExtensionCallback);
-
+    case WPAD_ERR_OK:
         mCallbackFlag = true;
         break;
-    }
-
-    case WPAD_ERR_NO_CONTROLLER: {
+    case WPAD_ERR_NO_CONTROLLER:
         mCallbackFlag = false;
         break;
-    }
     }
 }
 
@@ -118,7 +138,7 @@ void Controller::clearCallback() {
     WPADControlSpeaker(mHBController.chan, WPAD_SPEAKER_ON, NULL);
     WPADSetCallbackByKPAD(NULL);
     WPADSetConnectCallback(mHBController.chan, mOldConnectCallback);
-    WPADSetCallbackByKPAD((void (*)(void))1);
+    WPADSetCallbackByKPAD((void*)1);
     WPADSetExtensionCallback(mHBController.chan, mOldExtensionCallback);
 }
 
@@ -196,14 +216,14 @@ f32 Controller::getSpeakerVol() const {
 }
 
 
-//void Controller::playSound(nw4hbm::snd::SoundArchivePlayer* /* pPlayer */,
-/*
-                           int id) {
+void Controller::playSound(int id) {
     if (mSoundOffFlag) {
         return;
     }
 
-    getRemoteSpk()->Play(getChan(), id, getSpeakerVol() * HBM_MAX_VOLUME);
+    // HBM_MAX_VOLUME (10.0f) scaled by speaker volume, cast to s8 for WPAD
+    s8 vol = (int)(10.0f * getSpeakerVol());
+    getRemoteSpk()->Play(getChan(), id, vol);
 
     if (WPADIsSpeakerEnabled(getChan())) {
         if (!mCheckSoundTimeFlag) {
@@ -214,7 +234,6 @@ f32 Controller::getSpeakerVol() const {
         mCheckSoundIntervalFlag = false;
     }
 }
-*/
 
 bool Controller::isPlayingSound() const {
     return getRemoteSpk()->isPlaying(getChan());
@@ -288,14 +307,19 @@ void Controller::stopMotor() {
 
 s32 Controller::getInfoAsync(WPADInfo* pInfo) {
     if (getChan() >= WPAD_MAX_CONTROLLERS) {
-        return WPAD_ERR_COMMUNICATION_ERROR;
+        return -2;
     }
 
     if (isPlayingSound() || isRumbling()) {
-        return WPAD_ERR_COMMUNICATION_ERROR;
+        return -2;
     }
 
-    return WPADGetInfoAsync(getChan(), pInfo, &ControllerCallback);
+    s32 chan = getChan();
+    if (chan < WPAD_MAX_CONTROLLERS) {
+        sSetInfoAsync[chan] = true;
+    }
+
+    return WPADGetInfoAsync(chan, pInfo, ControllerCallback);
 }
 
 void Controller::ControllerCallback(s32 chan, s32 result) {

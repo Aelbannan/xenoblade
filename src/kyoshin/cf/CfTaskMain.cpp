@@ -6,6 +6,14 @@
 // Raw constructor symbols used to construct base classes in-place
 extern "C" void __ct__8CProcessFv(void* self);
 
+// CfGameManager methods called by CfTaskMain — no CfGameManager.hpp exists
+// in the writable scope, so these are declared here with C linkage to match
+// the retail symbol names exactly.
+extern "C" void func_8007F9C4__Q22cf13CfGameManagerFv(void);
+extern "C" void func_8007FBFC__Q22cf13CfGameManagerFv(void);
+extern "C" void func_8007FC2C__Q22cf13CfGameManagerFv(void);
+extern "C" unsigned long lbl_eu_80663E28;
+
 namespace cf {
 
 // Complete object destructor.
@@ -18,19 +26,15 @@ void CfTaskMain::Init() {}
 void CfTaskMain::Term() {}
 
 void CfTaskMain::Move() {
-    extern void func_8007F9C4__Q22cf13CfGameManagerFv(void);
-    extern unsigned long lbl_eu_80663E28;
     if ((lbl_eu_80663E28 & 0x4000) != 0) return;
     func_8007F9C4__Q22cf13CfGameManagerFv();
 }
 
 void CfTaskMain::Draw() {
-    extern void func_8007FBFC__Q22cf13CfGameManagerFv(void);
     func_8007FBFC__Q22cf13CfGameManagerFv();
 }
 
 void CfTaskMain::Tail() {
-    extern void func_8007FC2C__Q22cf13CfGameManagerFv(void);
     func_8007FC2C__Q22cf13CfGameManagerFv();
 }
 

@@ -14,6 +14,8 @@ VoiceManager& VoiceManager::GetInstance() {
 
 VoiceManager::VoiceManager() : mInitialized(false) {}
 
+VoiceManager::~VoiceManager() {}
+
 u32 VoiceManager::GetRequiredMemSize() {
     return AXGetMaxVoices() * sizeof(Voice);
 }
@@ -115,15 +117,16 @@ void VoiceManager::UpdateAllVoices() {
 void VoiceManager::NotifyVoiceUpdate() {
     BOOL enabled = OSDisableInterrupts();
 
-    ut::LinkListNode* pEnd = reinterpret_cast<ut::LinkListNode*>(
-        reinterpret_cast<u8*>(this) + 0x8);
-    ut::LinkListNode* pNode = pEnd->GetNext();
+    ut::LinkListNode* pNode;
+    ut::LinkListNode* pEnd =
+        reinterpret_cast<ut::LinkListNode*>(reinterpret_cast<u8*>(this) + 0x8);
+    pNode = pEnd->GetNext();
 
     while (pNode != pEnd) {
-        Voice* pVoice =
-            reinterpret_cast<Voice*>(reinterpret_cast<u8*>(pNode) - 0x11C);
+        ut::LinkListNode* pCurr = pNode;
         pNode = pNode->GetNext();
-        pVoice->ResetDelta();
+        reinterpret_cast<Voice*>(reinterpret_cast<u8*>(pCurr) - 0x11C)
+            ->ResetDelta();
     }
 
     OSRestoreInterrupts(enabled);

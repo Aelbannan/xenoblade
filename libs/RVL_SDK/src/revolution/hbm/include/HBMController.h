@@ -68,7 +68,7 @@ public:
 
     void initSound();
     void updateSound();
-    //void playSound(nw4hbm::snd::SoundArchivePlayer* pPlayer, int id);
+    void playSound(int id);
 
     void soundOn();
     void soundOff(int msec);
@@ -87,10 +87,10 @@ private:
 
 private:
     static bool sBatteryFlag[WPAD_MAX_CONTROLLERS];
-    static bool sSetInfoAsync[WPAD_MAX_CONTROLLERS];
     static OSAlarm sAlarm[WPAD_MAX_CONTROLLERS];
     static OSAlarm sAlarmSoundOff[WPAD_MAX_CONTROLLERS];
     static Controller* sThis[WPAD_MAX_CONTROLLERS];
+    static bool sSetInfoAsync[WPAD_MAX_CONTROLLERS];
 
     HBController mHBController;                  // at 0x0
     //nw4hbm::snd::SoundHandle mSoundHandle;       // at 0x4

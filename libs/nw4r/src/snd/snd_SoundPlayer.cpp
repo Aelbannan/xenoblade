@@ -1,5 +1,5 @@
-#include <nw4r/snd.h>
-#include <nw4r/ut.h>
+#include <nw4r/snd/snd_SoundPlayer.h>
+#include <nw4r/snd/snd_SoundThread.h>
 
 namespace nw4r {
 namespace snd {
@@ -12,8 +12,7 @@ SoundPlayer::SoundPlayer() {
     mUnk0x30 = 0.0f;
     mOutputLineFlag = OUTPUT_LINE_MAIN;
     mMainOutVolume = 1.0f;
-    mOutputLineFlagEnable = false;
-    mUsePlayerHeap = false;
+    mOutputLineFlagEnable = 0;
     mUnk0x40 = 0.0f;
     mUnk0x54 = 0.0f;
 

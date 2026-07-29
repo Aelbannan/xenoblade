@@ -5,6 +5,8 @@
 #include <criware/cri_adxf.h>
 #include <cstring>
 
+extern const char lbl_eu_80524714[];
+
 CPackItem::CPackItem(const char* name, int partitionId) :
 mBaseName(),
 mPkbFilename(),
@@ -16,6 +18,7 @@ mFileHashTable(nullptr),
 mFileIds(nullptr),
 mFileDataOffsets(nullptr),
 mAdxPartitionId(partitionId),
+field_0x68(0),
 mAhxAdxBuffer(nullptr),
 mLoadState(LOAD_STATE_NOT_LOADED),
 mFileReadFailed(0),
@@ -23,8 +26,9 @@ mPackHeaderExternal(0),
 mIsAhxAdxFile(false),
 mWorkPackDataPtr(0),
 mWorkPackDataSize(0) {
-    //Check if the file is a adx/ahx pack file from the filename
-    if(std::strstr(name, "adx") != nullptr || std::strstr(name, "ahx") != nullptr){
+    // Check if the file is an adx/ahx pack file from the filename.
+    // Retail uses a shared string table at lbl_eu_80524714 + 0x8 ("adx") and +0xC ("ahx").
+    if(std::strstr(name, lbl_eu_80524714 + 8) != nullptr || std::strstr(name, lbl_eu_80524714 + 0xC) != nullptr){
         mIsAhxAdxFile = true;
     }
 }
@@ -38,8 +42,15 @@ CPackItem::~CPackItem(){
         mPackHeader = nullptr;
     }
 
-    DELETE_OBJ(mPackHeader);
-    DELETE_OBJ(mAhxAdxBuffer);
+    if(mPackHeader != nullptr){
+        mtl::MemManager::deallocate(mPackHeader);
+        mPackHeader = nullptr;
+    }
+
+    if(mAhxAdxBuffer != nullptr){
+        mtl::MemManager::deallocate(mAhxAdxBuffer);
+        mAhxAdxBuffer = nullptr;
+    }
 }
 
 /* Main update tick for pack file loading state machine.

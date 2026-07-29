@@ -154,6 +154,7 @@ void CGame::wkRender() {
 // @param wide true = 16:9 content, false = 4:3 content with letterbox borders
 void CGame::func_800395F4(bool wide) {
     CGame* self;
+    s32 height;
 
     self = spInstance;
     if (self == nullptr) {
@@ -166,15 +167,15 @@ void CGame::func_800395F4(bool wide) {
     if (!wide) {
         // Letterbox: visible height = efbHeight - 2*mLetterboxBorder.
         // mLetterboxBorder is shifted left by 1 (= *2) to account for both top and bottom.
-        s32 height = (s16)((u16)CDeviceVI::getRenderModeObj()->efbHeight
+        height = (s16)((u16)CDeviceVI::getRenderModeObj()->efbHeight
             - ((u32)(u16)spInstance->mLetterboxBorder << 1));
         setViewRect(self->mView, 0, (s16)((u16)self->mLetterboxBorder - 1),
             CDeviceVI::getRenderModeObj()->fbWidth, (s16)height);
     } else {
         // Full 16:9 viewport; using spInstance directly to match retail regalloc.
-        s16 height = CDeviceVI::getRenderModeObj()->efbHeight;
+        height = (s16)CDeviceVI::getRenderModeObj()->efbHeight;
         setViewRect(spInstance->mView, 0, 0,
-            CDeviceVI::getRenderModeObj()->fbWidth, height);
+            CDeviceVI::getRenderModeObj()->fbWidth, (s16)height);
     }
 }
 

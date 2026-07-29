@@ -900,20 +900,6 @@ namespace cf {
 
     };
 }
-
-// Opaque battle-object layout for field access at known offsets.
-// CChainActor::unk0 points to an instance of this (or CfObjectActor).
-struct CChainBattleObj {
-    u32 field_0x00;             // 0x00
-    u32 field_0x04;             // 0x04: pointer to subobject with vtable
-    u32 field_0x08;             // 0x08: subobject start (has vtable, used with func_80148778)
-    u8  pad_0x0C[0x3E90];       // 0x0C
-    u32 field_0x3E9C;           // 0x3E9C: CfObjectMove vtable pointer
-    u8  pad_0x3EA0[0x608];      // 0x3EA0
-    u32 field_0x44A8;           // 0x44A8: passed to func_804B1DC0
-    u8  pad_0x44AC[0xAE];       // 0x44AC
-    u16 field_0x455A;           // 0x455A: chain gauge display value
-};
 /* end "kyoshin/cf/chain/CChainActorPc.hpp" */
 
 namespace cf { class CBattleManager; class CfObjectMove; class CfGameManager; class CChain; }
@@ -927,18 +913,19 @@ extern "C" void CChain_setFieldAndClear(void*, int);
 // Forward decl: cf::CfGameManager::getPlayer(int)
 namespace cf { class CfGameManager { public: static cf::CfObjectMove* getPlayer(int); }; }
 
-void func_80282020(){}
+// Prepares arguments for func_802A0950: passes &mChainEffect, arg2, 0xAA, this,
+// arg3, and a branchless non-zero→0x5F conversion of arg4.
+void func_80282020(cf::CChainActorPc* self, int arg2, int arg3, int arg4) {
+    func_802A0950(&self->mChainEffect, arg2, 0xAA, (int)self, arg3, arg4 ? 0x5F : 0);
+}
 int func_802A0804(int, int);
+void func_80276CAC(u32, u32, u32);
 extern "C" void func_802A08F4(void*);
 extern "C" void func_802A0904(void*);
 extern "C" void func_80279DC0(void*);
 extern "C" int func_80148778(void*, int);
 extern "C" int func_8027A024(void*, void*);
 extern "C" int* func_8009ECB0();
-int func_80174C98(void*, u32*, int);
-void func_80279B34();
-int func_80282380(cf::CChainActorPc*);
-void func_804B1DC0(void*, int);
 
 int func_80282048(int arg) {
     return func_802A0804(0xb3, arg);
@@ -963,7 +950,12 @@ int func_80282174(void* self) {
 bool func_802A0AA0(void*);
 bool func_8028245C(void* self) { return func_802A0AA0((void*)((char*)self + 0x74)); }
 bool func_80282464() { return true; }
-void func_8028246C(){}
+// Virtual dispatch through manually managed vtable at offset 0x70.
+// Loads vtable entry 18 (offset 0x48) and tail-calls it with self and *arg.
+void func_8028246C(cf::CChainActorPc* self, u32* arg) {
+    void (*vfunc)(cf::CChainActorPc*, u32) = ((void(**)(cf::CChainActorPc*, u32))self->mVTable)[18];
+    vfunc(self, *arg);
+}
 int func_80282480(void*, void* p) {
     return ((*(int*)((char*)p + 0x3f00) >> 1) & 1);
 }
@@ -971,114 +963,25 @@ void func_80277154();
 void func_8028248C() {
     func_80277154();
 }
-void func_80282490(){}
+// Reorders arguments and conditionally dereferences arg3 before tail-calling func_80276CAC.
+void func_80282490(cf::CChainActorPc* self, u32 arg2, u32* arg3) {
+    func_80276CAC(arg2, self->unk0, arg3 ? *arg3 : 0);
+}
 
 // Resets chain state (setFieldAndClear) and clears the chain effect.
 extern "C" void func_80281924(cf::CChainActorPc* self, int val) {
     CChain_setFieldAndClear(self, val);
     func_802A08F4(&self->mChainEffect);
 }
-// sdata2 float constants used in chain gauge calculations
-extern "C" float lbl_eu_80668AE8;
-extern "C" float lbl_eu_80668AEC;
-
-// Main update function called each frame for player chain actors.
-// Handles chain state transitions (5=arts selection, 6=execution),
-// vtable-driven checks, and chain gauge UI updates.
-void func_80281958(cf::CChainActorPc* self) {
-    CChainBattleObj* obj;
-
-    func_80279B34();
-
-    if (self->unk6C & 1) {
-        u32* vt = (u32*)self->mVTable;
-        if (((int(*)(cf::CChainActorPc*))vt[16])(self) != 0) {
-            if (((int(*)(cf::CChainActorPc*))vt[26])(self) == 0) {
-                int arg = func_80282380(self);
-                ((void(*)(cf::CChainActorPc*, int))vt[27])(self, arg);
-            }
-        }
-
-        if (((int(*)(cf::CChainActorPc*))vt[22])(self) == 5) {
-            obj = (CChainBattleObj*)self->unk0;
-            if (func_80148778(&obj->field_0x08, 0xf0) != 0) {
-                if (func_80148778(&obj->field_0x08, 0xf0) != 0) {
-                    u32* subVt = (u32*)obj->field_0x08;
-                    ((void(*)(void*, int))subVt[8])(&obj->field_0x08, 0xf0);
-                }
-            }
-            if (func_80148778(&obj->field_0x08, 0xf1) != 0) {
-                if (func_80148778(&obj->field_0x08, 0xf1) != 0) {
-                    u32* subVt = (u32*)obj->field_0x08;
-                    ((void(*)(void*, int))subVt[8])(&obj->field_0x08, 0xf1);
-                }
-            }
-
-            {
-                u32* f4 = (u32*)obj->field_0x04;
-                u32* p = ((u32*(*)(u32*))((u32*)f4[0])[12])(f4);
-                u32 v = *p;
-                if (func_80174C98(obj, &v, 11) != 0) {
-                    p = ((u32*(*)(u32*))((u32*)f4[0])[12])(f4);
-                    v = *p;
-                    if (func_80174C98(obj, &v, 11) != 0) {
-                        ((void(*)(u32*, int))((u32*)f4[0])[8])(f4, 11);
-                    }
-                }
-            }
-
-            {
-                float f1 = ((float(*)(void*))((u32*)obj)[86])(obj);
-                float f2 = ((float(*)(void*))((u32*)obj)[87])(obj);
-                if (f2 >= f1) {
-                    f2 -= lbl_eu_80668AE8;
-                    ((void(*)(void*, float))((u32*)obj)[84])(obj, f2);
-                }
-            }
-        }
-
-        if (((int(*)(cf::CChainActorPc*))vt[22])(self) == 6) {
-            obj = (CChainBattleObj*)self->unk0;
-            if (func_80148778(&obj->field_0x08, 0xf8) != 0) {
-                if (func_80148778(&obj->field_0x08, 0xf8) != 0) {
-                    u32* subVt = (u32*)obj->field_0x08;
-                    ((void(*)(void*, int))subVt[8])(&obj->field_0x08, 0xf8);
-                }
-            }
-        }
-
-        obj = (CChainBattleObj*)self->unk0;
-        {
-            u32* f4 = (u32*)obj->field_0x04;
-            u32* p = ((u32*(*)(u32*))((u32*)f4[0])[12])(f4);
-            u32 v = *p;
-            if (func_80174C98(obj, &v, 6) != 0) {
-                obj->field_0x455A = 0xec;
-            } else {
-                obj->field_0x455A = 0x64;
-            }
-        }
-    }
-
-    if ((self->unk6C & 1) || (self->unk6C & 2)) {
-        obj = (CChainBattleObj*)self->unk0;
-        {
-            u32* moveVt = (u32*)obj->field_0x3E9C;
-            float gaugeVal = ((float(*)(void*))moveVt[35])(&obj->field_0x3E9C);
-            if (gaugeVal > lbl_eu_80668AEC) {
-                func_804B1DC0(&obj->field_0x44A8, 1);
-            } else {
-                func_804B1DC0(&obj->field_0x44A8, 0);
-            }
-        }
-    }
-}
+void func_80281958(){}
 // Resets the chain effect and calls func_80279DC0 on this actor.
 extern "C" void func_80281CB8(cf::CChainActorPc* self) {
     func_802A0904(&self->mChainEffect);
     func_80279DC0(self);
 }
 void func_80281CF0(){}
+// Retail symbol: func_804B1DC0
+extern "C" void func_804B1DC0(void*, int);
 // Retail symbol: func_80279F6C
 extern "C" void func_80279F6C(void*, int);
 
@@ -1131,3 +1034,4 @@ extern "C" int func_80282100(cf::CChainActorPc* self) {
 }
 void func_802821E0(){}
 void func_802822F8(){}
+void func_80282380(){}

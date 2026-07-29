@@ -4,8 +4,26 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-WaveFileReader::WaveFileReader(const WaveFile::WaveInfo* pWaveInfo)
+WaveFileReader::WaveFileReader(const WaveInfo* pWaveInfo)
     : mWaveInfo(pWaveInfo) {}
+
+WaveFileReader::WaveFileReader(const FileHeader* pFileHeader)
+    : mWaveInfo(NULL) {
+    if (pFileHeader != NULL) {
+        mWaveInfo = static_cast<const WaveInfo*>(
+            ut::AddOffsetToPtr(pFileHeader, pFileHeader->infoBlockOffset));
+    }
+}
+
+bool WaveFileReader::ReadWaveInfo(WaveInfo* pWaveInfo,
+                                   const void* pWaveAddr) const {
+    if (mWaveInfo == NULL) {
+        return false;
+    }
+
+    *pWaveInfo = *mWaveInfo;
+    return true;
+}
 
 bool WaveFileReader::ReadWaveParam(WaveData* pWaveData,
                                    const void* pWaveAddr) const {
@@ -29,8 +47,8 @@ bool WaveFileReader::ReadWaveParam(WaveData* pWaveData,
     for (int i = 0; i < mWaveInfo->numChannels; i++) {
         ChannelParam& rParam = pWaveData->channelParam[i];
 
-        const WaveFile::WaveChannelInfo* pChannelInfo =
-            reinterpret_cast<const WaveFile::WaveChannelInfo*>(
+        const WaveChannelInfo* pChannelInfo =
+            reinterpret_cast<const WaveChannelInfo*>(
                 ut::AddOffsetToPtr(mWaveInfo, pInfoOffsetTable[i]));
 
         rParam.volumeFrontLeft = pChannelInfo->volumeFrontLeft;
@@ -53,14 +71,14 @@ bool WaveFileReader::ReadWaveParam(WaveData* pWaveData,
     return true;
 }
 
-void* WaveFileReader::GetWaveDataAddress(const WaveFile::WaveChannelInfo* info,
+void* WaveFileReader::GetWaveDataAddress(const WaveChannelInfo* info,
                                            const void* addr) const {
     const void* dataAddr = addr;
     if (dataAddr == NULL) {
         dataAddr = mWaveInfo;
     }
     
-    const WaveFile::WaveInfo* wi = mWaveInfo;
+    const WaveInfo* wi = mWaveInfo;
     u32 dtype = wi->dataType;
     const u8* result;
     

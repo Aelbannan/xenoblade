@@ -5,9 +5,25 @@
 
 void __ct__CTaskGameEff(){}
 
-void __dt__80044BB0(){}
+// --- Target 2: us-80045150 ---
+// Standard MWCC virtual destructor: null-check, conditional __dl, return this
+extern void __dl__FPv(void*);
+void* __dt__80044BB0(void* self, int mode) {
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
-void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(){}
+// --- Target 3: us-800451e0 ---
+// Destructor for nested class CTaskGameEff::CEffRenderHighPrio
+void* __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(
+    CTaskGameEff::CEffRenderHighPrio* self, int mode) {
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void __dt___reslist_base_CScn(){}
 
@@ -49,26 +65,18 @@ void func_800453EC(){}
 
 
 
-// This-adjusting thunk: called through a vtable where 'this' is 0x54 bytes past
-// the CTaskGameEff subobject. Adjusts this back and tail-calls cbRenderBefore.
-void func_80045540(CTaskGameEff* self) {
-    cbRenderBefore__12CTaskGameEffFv();
-    (void)self;
-}
+bool func_80045540(){ return false; }
 
-// This-adjusting thunk for destructor: same -0x54 adjustment, passes flag through.
-void func_80045548(CTaskGameEff* self, int flag) {
-    __dt__12CTaskGameEffFv(self, flag);
-}
+bool func_80045548(){ return false; }
 
-// This-adjusting thunk: -0x58 adjustment, calls func_80045044.
-void func_80045550(CTaskGameEff* self, void* param) {
-    func_80045044(self, param);
-}
+bool func_80045550(){ return false; }
 
-// This-adjusting thunk for destructor: -0x58 adjustment, passes flag through.
-void func_80045558(CTaskGameEff* self, int flag) {
-    __dt__12CTaskGameEffFv(self, flag);
+// --- Target 1: us-80045af8 ---
+// This-adjusting thunk: takes a pointer to offset +0x58 within CTaskGameEff,
+// adjusts back to the CTaskGameEff* base, and tail-calls its destructor.
+extern void* __dt__12CTaskGameEffFv(CTaskGameEff*, int);
+void* func_80045558(u8* p, int flag) {
+    return __dt__12CTaskGameEffFv((CTaskGameEff*)(p - 0x58), flag);
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

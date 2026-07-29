@@ -18,7 +18,7 @@ struct PackHeader {
     u64 mFileHashTable[];         // 0x78
 };
 
-//size: 0x88
+//size: 0x8C
 class CPackItem : public IWorkEvent {
 public:
     CPackItem(const char* name, int partitionId);
@@ -52,15 +52,16 @@ public:
     u16* mFileIds;                   // 0x5C - per-file ID table (indexed by hash entry)
     u32* mFileDataOffsets;           // 0x60 - per-file data offset or partition ID table
     int mAdxPartitionId;             // 0x64
-    u8* mAhxAdxBuffer;               // 0x68 - work buffer for ADX/AHX load
-    u32 mHashLowerHalf;              // 0x6C
-    u32 mHashUpperHalf;              // 0x70
-    LoadState mLoadState;            // 0x74
-    u8 mFileReadFailed;              // 0x78 - set when async file read errors
-    u8 mPackHeaderExternal;          // 0x79 - set when pack header owned by work system
-    bool mIsAhxAdxFile;              // 0x7A
-    u8 unk7B;                        // 0x7B - padding
-    u32 mWorkPackDataPtr;            // 0x7C - pack data pointer from work system
-    u32 mWorkPackDataSize;           // 0x80 - pack data size from work system
-    const char* mFilePath;           // 0x84 - full path to the pack file
+    u32 field_0x68;                  // 0x68
+    u8* mAhxAdxBuffer;               // 0x6C - work buffer for ADX/AHX load
+    u32 mHashLowerHalf;              // 0x70
+    u32 mHashUpperHalf;              // 0x74
+    LoadState mLoadState;            // 0x78
+    u8 mFileReadFailed;              // 0x7C - set when async file read errors
+    u8 mPackHeaderExternal;          // 0x7D - set when pack header owned by work system
+    bool mIsAhxAdxFile;              // 0x7E
+    u8 unk7F;                        // 0x7F - padding
+    u32 mWorkPackDataPtr;            // 0x80 - pack data pointer from work system
+    u32 mWorkPackDataSize;           // 0x84 - pack data size from work system
+    const char* mFilePath;           // 0x88 - full path to the pack file
 };

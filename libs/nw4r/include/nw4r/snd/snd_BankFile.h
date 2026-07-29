@@ -48,7 +48,7 @@ struct IndexTable {
 };
 
 typedef Util::DataRef<void, InstParam, RangeTable, IndexTable> DataRegion;
-typedef Util::DataRef<WaveFile::WaveInfo> WaveRegion;
+typedef Util::DataRef<WaveInfo> WaveRegion;
 
 struct Header {
     ut::BinaryFileHeader fileHeader; // at 0x0

@@ -706,33 +706,64 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
+/* "src/kyoshin/cf/CfCollSphereImpl.cpp" line 1 "kyoshin/cf/CfCollSphereImpl.hpp" */
+#pragma once
 
-// renderSphere: member of cf::CfDebugDrawManager.
-// Stub declares Fv but retail passes a float in f1.
-extern "C" void renderSphere__Q22cf18CfDebugDrawManagerFv(void* self, float val);
+/* "src/kyoshin/cf/CfCollSphereImpl.hpp" line 2 "types.h" */
+/* end "types.h" */
 
-// func_800A5738: defined in kyoshin/code_800A3B24.
-extern "C" void func_800A5738(void* a, void* b, float val, void* c);
+namespace cf {
+
+// Forward declaration
+class CfDebugDrawManager;
+
+// Collision sphere shape implementation.
+// Layout offsets derived from CfCollSphereImpl.s.
+struct CfCollSphereImpl {
+    u8 pad_00[0xB8];    // 0x00: vtable + unknown fields
+    float mRadius;      // 0xB8: sphere radius
+};
+
+} // namespace cf
+/* end "kyoshin/cf/CfCollSphereImpl.hpp" */
+
+namespace cf {
+class CfDebugDrawManager;  // forward declaration
+}
+
+// cf::CfDebugDrawManager::renderSphere(float radius)
+// Stub declaration — actual definition is in code_800A3B24.cpp
+void renderSphere__Q22cf18CfDebugDrawManagerFv(cf::CfDebugDrawManager* self, float radius);
+
+// func_800A5738: collision query helper (defined in code_800A3B24.cpp)
+void func_800A5738(u8* a, cf::CfDebugDrawManager* b, float radius, u8* c);
 
 // func_800AAD28: debug draw for sphere collision shape.
-// Reads field at shape+0xB8, converts to unsigned, calls shape's vfunc at
-// vtable offset 0xAC to get the draw manager, then calls renderSphere.
-extern "C" void func_800AAD28(void* r3, void* r4) {
-    float fval = *(float*)((char*)r4 + 0xB8);
+// Reads the sphere radius, converts to unsigned int and back to float,
+// then calls renderSphere on the debug draw manager.
+void func_800AAD28(u8* /*unused*/, cf::CfCollSphereImpl* shape) {
+    float fval = shape->mRadius;
     unsigned int uval = (unsigned int)fval;
-    void** vtbl = *(void***)r4;
-    void* mgr = ((void*(*)(void*))vtbl[0xAC / 4])(r4);
+
+    // Call virtual function at vtable offset 0xAC to get the debug draw manager
+    void** vtbl = *(void***)shape;
+    cf::CfDebugDrawManager* mgr = ((cf::CfDebugDrawManager*(*)(cf::CfCollSphereImpl*))vtbl[0xAC / 4])(shape);
+
     float result = (float)uval;
     renderSphere__Q22cf18CfDebugDrawManagerFv(mgr, result);
 }
 
-// func_800AAD94: same sphere debug draw but passes extra parameters through
-// to func_800A5738.
-extern "C" void func_800AAD94(void* r3, void* r4, void* r5, void* r6) {
-    float fval = *(float*)((char*)r4 + 0xB8);
+// func_800AAD94: sphere collision query with offset radius.
+// Reads the sphere radius, converts to unsigned int and back to float,
+// then calls func_800A5738 with the debug draw manager and extra parameters.
+void func_800AAD94(u8* /*unused*/, cf::CfCollSphereImpl* shape, u8* a, u8* c) {
+    float fval = shape->mRadius;
     unsigned int uval = (unsigned int)fval;
-    void** vtbl = *(void***)r4;
-    void* mgr = ((void*(*)(void*))vtbl[0xAC / 4])(r4);
+
+    // Call virtual function at vtable offset 0xAC to get the debug draw manager
+    void** vtbl = *(void***)shape;
+    cf::CfDebugDrawManager* mgr = ((cf::CfDebugDrawManager*(*)(cf::CfCollSphereImpl*))vtbl[0xAC / 4])(shape);
+
     float result = (float)uval;
-    func_800A5738(r5, mgr, result, r6);
+    func_800A5738(a, mgr, result, c);
 }

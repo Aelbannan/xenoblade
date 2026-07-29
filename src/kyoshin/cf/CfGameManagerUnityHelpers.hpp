@@ -483,7 +483,7 @@ extern "C" void func_8007F0C4__Q22cf13CfGameManagerFv(u32 first, u32 second) {
 }
 
 extern "C" u32 func_8009CF8C(u32 resourceId);
-extern "C" void func_8009D018(u32 resourceId, u32 value);
+extern "C" void func_8009D018(...);
 extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second);
 extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     s32 index = func_80082418__Q22cf13CfGameManagerFv(first, second);
@@ -561,6 +561,13 @@ extern "C" void func_8008261C__Q22cf13CfGameManagerFv(u32 value, bool enable) {
         if (!func_80082680__Q22cf13CfGameManagerFv()) {
             func_8009D018(value + 0x312C, enable);
         }
+    }
+}
+
+extern "C" void func_8008269C__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* manager, u32 value) {
+    if (value <= 0xFFFF && !func_80082680__Q22cf13CfGameManagerFv()) {
+        func_8009D018(&manager->field_0x40, value);
     }
 }
 
@@ -810,7 +817,6 @@ extern "C" bool func_8007E908__Q22cf13CfGameManagerFv(u32 value) {
 }
 
 extern "C" u32 lbl_eu_80661BC4;
-extern "C" void func_8009D018(u32 resourceId, u32 value);
 extern "C" bool func_8007E1B4__Q22cf13CfGameManagerFv();
 extern "C" void func_800822FC__Q22cf13CfGameManagerFv(u32 value, bool makeCurrent) {
     func_8009D018(0x20, value);

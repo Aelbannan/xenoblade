@@ -98,29 +98,30 @@ void CWorkRoot::standbyWork(CWorkThread* pThread, bool arg1){
         }
     }
 
-    //Remove all child threads in the shutdown state
-    do{
+    // Remove all child threads that are in the shutdown state;
+    // restart the scan from the beginning after each removal.
+    do {
+        // Declaration order controls register allocation:
+        // sentinel(r3), node(r4), foundShutdownThread(r5).
+        _reslist_node<CWorkThread*>* sentinel = pThread->mChildren.mStartNodePtr;
+        _reslist_node<CWorkThread*>* node = sentinel->mNext;
         bool foundShutdownThread = false;
         
-        for(reslist<CWorkThread*>::iterator it = children->begin(); it != children->end(); it++){
-            CWorkThread* childThread = *it;
-            if(childThread->mState == CWorkThread::THREAD_STATE_SHUTDOWN){
-                /* Instead of returning here and going through the list again, why not just keep the
-                next entry in the list for after the current entry gets removed to continue from? */
+        while (node != sentinel) {
+            CWorkThread* childThread = node->mItem;
+            if (childThread->mState == CWorkThread::THREAD_STATE_SHUTDOWN) {
                 pThread->wkRemoveChild(childThread);
-                if(childThread != nullptr){
+                if (childThread != nullptr) {
                     delete childThread;
-                    childThread = nullptr;
                 }
-
                 foundShutdownThread = true;
                 break;
             }
+            node = node->mNext;
         }
-
-        //If a thread not in the shutdown state was found, return
-        if(!foundShutdownThread) break;
-    }while(true);
+        
+        if (!foundShutdownThread) break;
+    } while (true);
 }
 
 void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
@@ -145,24 +146,44 @@ void CWorkRoot::updateWork(CWorkThread* pThread, bool arg1){
 
 void CWorkRoot::standbyWork(){
     CWorkRootThread* thread = CWorkRootThread::getInstance();
-    //Clear both thread lists
-    while(thread->mThreadList1.size() > 0){
-        //TODO: can these be changed to use front?
-        CWorkThread* list2Front;
-        CWorkThread* list1Front = *thread->mThreadList1.begin();
-        list2Front = *thread->mThreadList2.begin();
-
+    _reslist_node<CWorkThread*>* iter;
+    int count;
+    _reslist_node<CWorkThread*>* sentinel;
+    _reslist_node<CWorkThread*>* firstNode;
+    
+    // Multi-exit loop: count items at the bottom, process at the top.
+    // Entry jumps to the count check; body falls through to recount.
+    goto check;
+    
+body:
+    {
+        // Declare list2Front first (gets r29) and list1Front second (gets r30)
+        // to match retail register allocation.
+        CWorkThread* list2Front = thread->mThreadList2.mStartNodePtr->mNext->mItem;
+        CWorkThread* list1Front = firstNode->mItem;
+        
         thread->mThreadList1.pop_front();
         thread->mThreadList2.pop_front();
-
-        if(list1Front->isRunning() && list2Front->isRunning()){
+        
+        if (list1Front->isRunning() && list2Front->isRunning()) {
             list1Front->mParent->wkRemoveChild(list1Front);
             list2Front->mParent = list1Front;
         }
     }
-
-    thread->mThreadList1.clear();
-    thread->mThreadList2.clear();
+    
+check:
+    sentinel = thread->mThreadList1.mStartNodePtr;
+    firstNode = sentinel->mNext;
+    iter = firstNode;
+    count = 0;
+    while (iter != sentinel) {
+        iter = iter->mNext;
+        count++;
+    }
+    if (count != 0) goto body;
+    
+    thread->mThreadList1.clearList();
+    thread->mThreadList2.clearList();
     standbyWork(CWorkRootThread::getInstance(), false);
 }
 

@@ -1458,13 +1458,37 @@ void func_800453EC(){}
 
 
 
-bool func_80045540(){ return false; }
+// extern "C" declaration needed to reference the destructor's linker symbol
+// directly (the C++ identifier __dt__12CTaskGameEffFv is not exposed by the
+// ~CTaskGameEff definition). Declaration only — definition is elsewhere.
+extern "C" void __dt__12CTaskGameEffFv(CTaskGameEff*, int);
 
-bool func_80045548(){ return false; }
+// This-adjusting thunk: called through a vtable where 'this' is 0x54 bytes past
+// the CTaskGameEff subobject. Adjusts this back and tail-calls cbRenderBefore.
+// cbRenderBefore ignores its 'this' arg (loads a global), but the thunk still
+// mechanically adjusts the register before the tail call.
+// Uses a function-pointer cast to force MWCC to pass the adjusted pointer in r3
+// without conflicting with cbRenderBefore's local definition (which takes no args).
+void func_80045540(u8* self) {
+    ((void (*)(CTaskGameEff*))cbRenderBefore__12CTaskGameEffFv)(
+        (CTaskGameEff*)(self - 0x54));
+}
 
-bool func_80045550(){ return false; }
+// This-adjusting thunk for destructor: same -0x54 adjustment, passes flag through.
+void func_80045548(u8* self, int flag) {
+    __dt__12CTaskGameEffFv((CTaskGameEff*)(self - 0x54), flag);
+}
 
-bool func_80045558(){ return false; }
+// This-adjusting thunk: -0x58 adjustment, calls func_80045044.
+void func_80045550(u8* self, u8* param) {
+    ((void (*)(CTaskGameEff*, u8*))func_80045044)(
+        (CTaskGameEff*)(self - 0x58), param);
+}
+
+// This-adjusting thunk for destructor: -0x58 adjustment, passes flag through.
+void func_80045558(u8* self, int flag) {
+    __dt__12CTaskGameEffFv((CTaskGameEff*)(self - 0x58), flag);
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.

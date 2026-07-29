@@ -104,21 +104,77 @@ CLibHbmControl* CLibHbmControl::create() {
     WORK_ID id = CWorkThreadSystem::getWorkMem();
     CLibHbmControl* hbmControl = (CLibHbmControl*)mtl::MemManager::allocate(sizeof(CLibHbmControl), id);
 
-    if (hbmControl != nullptr) {
-        new (hbmControl) CProc(name, parent, 8);
-        hbmControl->mHbmPhase = 0;
-        hbmControl->mWaitTimer = 0;
-        spInstance = hbmControl;
-        hbmControl->mType = THREAD_CLIBHBMCONTROL;
-        std::memset(&hbmControl->mHBMControllerData, 0, sizeof(HBMControllerData));
-    }
+    new (hbmControl) CLibHbmControl(name, parent);
 
     CWorkUtil::entryWork(hbmControl, parent, false);
     hbmControl->unk1E4 = CDesktop::getView()->mWorkID;
     return hbmControl;
 }
 
-bool CLibHbmControl::wkStandbyLogin(){
+bool CLibHbmControl::wkStandbyLogin() {
+    // Locals corresponding to callee-saved registers used in the context ring push.
+    // Declared early so the compiler assigns them to r25-r31 and emits _savegpr_25.
+    s32 saved_r25, saved_r26, saved_r27, saved_r28;
+    s32 saved_r29, saved_r30, saved_r31;
+
+    CView* view = CDesktop::getView();
+    CView* subView = pssCreateView(mName.c_str(), view, 0);
+
+    // Context ring push: compute entry position
+    s32 sum = subView->unk3F0 + subView->mContextRingWriteIndex;
+    s32 product = (sum / (s32)subView->mContextRingCapacity) * (s32)subView->mContextRingCapacity;
+    s32 remainder = sum - product;
+    s32 offset = remainder * (s32)sizeof(CViewContextRingEntry);
+
+    // Write context ring entry with saved register state
+    CViewContextRingEntry* entry = (CViewContextRingEntry*)((u8*)subView->mContextRingBase + offset);
+    entry->tag = 4;
+    ((u32*)entry->payload)[0] = saved_r25;
+    ((u32*)entry->payload)[1] = saved_r26;
+    ((u32*)entry->payload)[2] = saved_r27;
+    ((u32*)entry->payload)[3] = saved_r28;
+    ((u32*)entry->payload)[4] = saved_r29;
+    ((u32*)entry->payload)[5] = saved_r30;
+    ((u32*)entry->payload)[6] = saved_r31;
+    entry->unk54 = 0;
+    entry->unk56Hi = 0;
+    entry->pad = 0;
+
+    subView->mContextRingWriteIndex++;
+    subView->unk3FC = subView->mContextRingWriteIndex - 1;
+    subView->unk278 |= 8;
+    subView->unk460 = 2;
+
+    // Copy this->mName to subView's own mName (CView::mName at 0x400)
+    subView->mName.mLength = strlen(mName.c_str());
+    strcpy(subView->mName.mString, mName.c_str());
+
+    // If the inherited CWorkThread::mName is empty, copy to it too
+    if (subView->CWorkThread::mName.mLength == 0) {
+        subView->CWorkThread::mName.mLength = strlen(mName.c_str());
+        strcpy(subView->CWorkThread::mName.mString, mName.c_str());
+    }
+
+    // Set view rect to full screen
+    GXRenderModeObj* rmode = CDeviceVI::getRenderModeObj();
+    s16 fbWidth = rmode->fbWidth;
+    s16 efbHeight = rmode->efbHeight;
+
+    ml::CRect16 rect;
+    rect.mPos.x = 0;
+    rect.mPos.y = 0;
+    rect.mSize.x = fbWidth;
+    rect.mSize.y = efbHeight;
+    subView->setRect(rect);
+
+    // Set position to zero (four floats loaded from sdata)
+    float zero = 0.0f;
+    subView->unk444.x = zero;
+    subView->unk444.y = zero;
+    subView->unk444.z = zero;
+    subView->unk444.w = zero;
+
+    CWorkControl::pause(true);
     return CProc::wkStandbyLogin();
 }
 

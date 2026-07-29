@@ -192,7 +192,7 @@ bool BankFileReader::ReadWaveParam(WaveData* pData, int waveIndex,
     const BankFile::WaveRegion* pRef =
         &mWaveBlock->waveInfoTable.items[waveIndex];
 
-    const WaveFile::WaveInfo* pInfo =
+    const WaveInfo* pInfo =
         Util::GetDataRefAddress0(*pRef, &mWaveBlock->waveInfoTable);
 
     if (pInfo == NULL) {

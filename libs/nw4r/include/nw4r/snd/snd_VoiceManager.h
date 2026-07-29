@@ -18,6 +18,8 @@ public:
 public:
     static VoiceManager& GetInstance();
 
+    ~VoiceManager();
+
     u32 GetRequiredMemSize();
     u32 GetRequiredMemSize(int numVoices);
 

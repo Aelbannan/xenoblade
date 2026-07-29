@@ -17,12 +17,11 @@ void CMenuFade::Draw() {
 
 void CMenuFade::Term() {
     CDeviceVI::waitForDrawDone();
-    // IScnRender vtable lives at offset 0x5c — pass the raw address
-    mScn->removeRenderCB((IScnRender*)((u8*)this + 0x5c));
+    mScn->removeRenderCB(this);
     if (mLayout) {
         delete mLayout;
+        mLayout = 0;
     }
-    mLayout = 0;
     mLayoutMem.func_8045F778();
     lbl_eu_80663FA0 = 0;
 }

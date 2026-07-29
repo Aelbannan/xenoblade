@@ -111,6 +111,16 @@ Retail prologue builds scale with field `stfs` of SDA 0/1, then **`MTX34RotXYZFI
 
 `EQUIVALENT_MATCH` blocked on retail callees: `MTX34RotXYZFIdx` (`us-8040d584`, COMPILES) and `CPlane::set` 3-arg (`us-804398b8`, ~79% HIGH_MATCH soft-cap) plus missing/stale v45 certs on FULL_MATCH math helpers. Keep high-level C++; **no** `insn_patches`.
 
+## CViewRoot::create — five-value Chaitin color cycle (US)
+
+Exact size `0x21C`. Best ~**99.4%** CODE_MATCH: natural 128-node reserve loop is exact, residual 14 words are one five-value Chaitin color cycle in the pool-init region (0x54–0xD0). Register mapping: retail `r5`↔decomp `r9`, `r6`↔`r5`, `r7`↔`r6`, `r8`↔`r7`, `r9`↔`r8`. Retail keeps `histVtTemp` in r6 and spills `pool0Sentinel` to r0 (temporary); decomp keeps `pool0Sentinel` in r5 and spills `histVtTemp`.
+
+**Ruled out:** declaration order changes (6 permutations), assignment order changes, inlining `pool0Sentinel`, `volatile` qualifiers, `#pragma optimize_for_size`. Chaitin allocator not responsive to any high-level reshape — same interference graph produces same coloring regardless of source structure.
+
+**SMT proof status:** All 6 direct callees are FULL_MATCH with tight semantic certificates (reads/writes derived from instruction effects, not opaque EABI). SMT proof times out at 15 min (`ppc-eabi` + `ram-only-bus-projection` + `object-base-mem1`) — function too complex (170 insns + 6 calls + 128-iter loop). `EQUIVALENT_MATCH` requires the compositional SMT proof to complete.
+
+**Path forward:** (1) Wait for SMT solver improvements / increased timeout budget. (2) Match `wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT` (us-8043a888) so `entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb` can get a tight contract. (3) Accept as CODE_MATCH soft-cap. Keep high-level C++; **no** `insn_patches` (prohibited by §17.6).
+
 ## CMenuEnemyState::Move — `_savegpr_20` vs `_savegpr_22` (US)
 
 Retail size `0x9B8` (decomp peak `0x984`). Frame `-0xe0` / f28–f31 OK.

@@ -237,12 +237,67 @@ void CTaskGameCf::finishExit() {
     *(u32*)((u8*)this + 0x54) |= 2;
 }
 
-    CTaskGameCf* CTaskGameCf::create(CProcess* pParent, int arg2){
-        CTaskGameCf* task = new(CWorkThreadSystem::getWorkMem()) CTaskGameCf(pParent, arg2);
-        task->Regist(pParent, false);
-        return task;
-    }
-
 } //namespace cf
 
-void __ct__cf_CTaskGameCf(){}
+// Forward declarations
+extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2);
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
+extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
+extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
+
+extern const u32 lbl_eu_80525B9C[];
+extern const u32 lbl_eu_80525B54[];
+extern const u32 __ptmf_null[3];
+
+extern "C" void __ct__8CProcessFv(CProcess*);
+
+extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2) {
+    __ct__8CProcessFv(pThis);
+    
+    u32* p = reinterpret_cast<u32*>(pThis);
+    
+    // Set CTTask<CTaskGameCf> vtable
+    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B9C[0]);
+    
+    // Load PTMF null as a 3-word struct and copy to both PTMF slots
+    const u32* nullPt = &__ptmf_null[0];
+    // mMoveFunc at 0x3C (word 15), mDrawFunc at 0x48 (word 18)
+    p[0xF] = nullPt[0];
+    p[0x10] = nullPt[1];
+    p[0x11] = nullPt[2];
+    p[0x12] = nullPt[0];
+    p[0x13] = nullPt[1];
+    p[0x14] = nullPt[2];
+    
+    // Set CTaskGameCf vtable (overwrites CTTask vtable)
+    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B54[0]);
+    
+    pThis->unk_54 = 0;
+    pThis->pTaskGame = reinterpret_cast<CTaskGame*>(pParent);
+    pThis->unk_5C = 1;
+    pThis->unk_5E = 1;
+    pThis->unk_60 = 16;
+    pThis->unk_62 = 0;
+    pThis->unk_64.mString[0] = 0;
+    pThis->unk_64.mLength = 0;
+    
+    if (arg2) {
+        pThis->unk_54 = 8;
+    } else {
+        pThis->unk_54 = 0;
+    }
+    
+    return pThis;
+}
+
+extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2) {
+    u32 handle = getWorkMem__17CWorkThreadSystemFv();
+    cf::CTaskGameCf* task = (cf::CTaskGameCf*)allocate__Q23mtl10MemManagerFUlUl(0x90, handle);
+
+    if (task != nullptr) {
+        task = __ct__cf_CTaskGameCf(task, pParent, arg2);
+    }
+
+    Regist__8CProcessFP8CProcessb(task, pParent, false);
+    return task;
+}

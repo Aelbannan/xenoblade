@@ -36,45 +36,48 @@ void func_804C0454(void* self, int value){
 // type 2 (specular): calls InitSpecularDir
 // type 4 (directional): calls InitLightDir
 void CLight::func_804C0484(const float* dir) {
-    unk1C.y = dir[0];
-    unk1C.z = dir[1];
+    unk20 = dir[0];
+    unk24 = dir[1];
     unk28 = dir[2];
 
     switch (unk34) {
     case 1: {
         float scale = 1.0f;
-        unk4.x = unk1C.y * scale;
-        unk4.y = unk1C.z * scale;
+        unk4.x = unk20 * scale;
+        unk4.y = unk24 * scale;
         unk4.z = unk28 * scale;
         mpLightObj->InitLightPos(unk4.x, unk4.y, unk4.z);
         break;
     }
     case 2:
-        mpLightObj->InitSpecularDir(unk1C.y, unk1C.z, unk28);
+        mpLightObj->InitSpecularDir(unk20, unk24, unk28);
         break;
     case 4:
-        mpLightObj->InitLightDir(unk1C.y, unk1C.z, unk28);
+        mpLightObj->InitLightDir(unk20, unk24, unk28);
         break;
     }
 }
 void func_804C0570(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-#include <cstring>
-
 // lbl_eu_8066AFC0 = 255.0f used in color float-to-byte conversion
 extern f32 lbl_eu_8066AFC0;
 
+// Copies a 4-float color into the light, scales RGB by intensity,
+// converts to GXColor bytes, and applies via InitLightColor.
 void CLight::func_804C07F0(const f32* color) {
-    // Copy the 4-component color into this light's fields (16 bytes)
-    memcpy(&unk10, color, 16);
+    // Copy 4 color components as words (matches retail lwz/stw)
+    *(u32*)&unk10.x = *(const u32*)&color[0];
+    *(u32*)&unk10.y = *(const u32*)&color[1];
+    *(u32*)&unk10.z = *(const u32*)&color[2];
+    *(u32*)&unk1C_x = *(const u32*)&color[3];
 
-    // Load intensity and color from this, scale to 0-255 byte range
+    // Scale RGB by intensity, then by 255.0f for byte conversion
     f32 intensity = unk38;
     f32 r = unk10.x * intensity * lbl_eu_8066AFC0;
     f32 g = unk10.y * intensity * lbl_eu_8066AFC0;
     f32 b = unk10.z * intensity * lbl_eu_8066AFC0;
-    f32 a = unk1C.x * lbl_eu_8066AFC0;
+    f32 a = unk1C_x * lbl_eu_8066AFC0;
 
     GXColor col;
     col.r = (u8)(s32)r;
@@ -117,7 +120,7 @@ void CLight::func_804C09E8(GXLightObj* outLight, const Mtx matrix) {
 
     if (unk34 == 4) {
         // Transform the direction vector by the matrix
-        CVec3 dir(unk1C.y, unk1C.z, unk28);
+        CVec3 dir(unk20, unk24, unk28);
         nw4r::math::VEC3TransformNormal((nw4r::math::VEC3*)&temp, (const nw4r::math::MTX34*)matrix, (const nw4r::math::VEC3*)&dir);
         if (temp.x * temp.x + temp.y * temp.y + temp.z * temp.z == 0.0f) {
             temp = CVec3::zero;

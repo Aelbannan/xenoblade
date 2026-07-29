@@ -38,6 +38,10 @@ void func_80139C98(u32);
 extern void* lbl_eu_806645A8;
 extern void* lbl_eu_806645B0;
 void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
+void func_801D8B08(CItemBoxInfo*);
+void func_801D85D8(CItemBoxInfo*);
+void func_801E3918(CItemBoxInfo2*);
+void func_801D59C0(u32*, void*, void*);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F8;
@@ -279,7 +283,7 @@ void func_801D5274(void* out, u16 arg2, void* arg3) {
 }
 void func_801D5564(){}
 
-void func_801D59C0(u32* out, void* arg2) {
+void func_801D59C0(u32* out, void* arg2, void* arg3) {
     u32 v0 = func_801392E4(arg2);
     u16 v2 = func_80139358((u32)arg2);
     u8 r1 = func_801361E8(lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x214], v2);
@@ -390,7 +394,15 @@ void CItemBoxInfo::setItemBoxIndex(unsigned char index, short value) {
 
 void func_801D77BC(){}
 void func_801D79F8(){}
-void func_801D8058(){}
+void func_801D8058(CItemBoxInfo* info, u16 arg2) {
+    func_801D8B08(info);
+    func_801D85D8(info);
+    u32 buf[4];
+    func_801D59C0(buf, info, (void*)arg2);
+    void* layout = info->state.layout;
+    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x48f], (char*)buf[0], 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x49b], (char*)buf[3], 0);
+}
 void func_801D80EC(){}
 void func_801D8318(){}
 void func_801D85D8(CItemBoxInfo* info) {
@@ -824,7 +836,15 @@ void func_801E2928(){}
 void func_801E2C5C(){}
 void func_801E2FEC(){}
 void func_801E3228(){}
-void func_801E3730(){}
+void func_801E3730(CItemBoxInfo2* info, u16 arg2) {
+    func_801D8B08((CItemBoxInfo*)info);
+    func_801E3918(info);
+    u32 buf[4];
+    func_801D59C0(buf, info, (void*)arg2);
+    void* layout = *(void**)((u8*)info + 0x34);
+    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x48f], (char*)buf[0], 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x49b], (char*)buf[3], 0);
+}
 void func_801E37C4(){}
 void func_801E3918(CItemBoxInfo2* info) {
     void* layout = *(void**)((u8*)info + 0x34);

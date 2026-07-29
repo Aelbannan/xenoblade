@@ -8,7 +8,7 @@
 class CLight {
 public:
     CLight();
-    virtual ~CLight(){}
+    ~CLight(){}
 
     void func_804C0484(const float* dir);
     void func_804C07F0(const f32* color);

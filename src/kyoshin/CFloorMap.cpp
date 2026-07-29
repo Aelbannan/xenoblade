@@ -127,11 +127,10 @@ void func_8024F55C(void* self) {
     extern void func_801D216C(void*, int);
     extern void func_8022B8E4(void*);
     extern void func_80138078(unsigned long);
-    CFloorMapFull* full = (CFloorMapFull*)self;
-    if (full->field_58 && CSysWin_isActive((char*)self + 0xB8)) {
+    if (*(u8*)((u8*)self + 0x58) && CSysWin_isActive((char*)self + 0xB8)) {
         func_801D216C((char*)self + 0xA0, 0);
         func_8022B8E4((char*)self + 0xB8);
-        full->field_58 = 0;
+        *(u8*)((u8*)self + 0x58) = 0;
         func_80138078(6);
     }
 }

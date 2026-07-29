@@ -89,15 +89,41 @@ extern "C" void func_80102018(void* self) { ((void(*)(void*))__dt__9CMainMenuFv)
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
 // Do not include monolib/work/CTTask.hpp here — its inline methods collide.
+// Layout: inherits CProcess (0x00-0x3C), adds mMoveFunc at 0x3C and mDrawFunc at 0x48.
+// Size: 0x54.
+
+#include "monolib/work/CProcess.hpp"
+
+class IUICf;
+
 template <typename T>
-class CTTask {
+class CTTask : public CProcess {
 public:
+    typedef void (CProcess::*MoveFunc)();
+    typedef void (CProcess::*DrawFunc)();
+
     CTTask();
     virtual ~CTTask();
     virtual void Move();
     virtual void Draw();
+
+protected:
+    MoveFunc mMoveFunc;  // 0x3C — pointer-to-member-function (12 bytes)
+    DrawFunc mDrawFunc;  // 0x48 — pointer-to-member-function (12 bytes)
 };
 
-class IUICf;
-template<> void CTTask<IUICf>::Move() {}
-template<> void CTTask<IUICf>::Draw() {}
+// CTTask<IUICf>::Move — test PTMF at +0x3C, call if non-null
+template<>
+void CTTask<IUICf>::Move() {
+    if (mMoveFunc) {
+        (this->*mMoveFunc)();
+    }
+}
+
+// CTTask<IUICf>::Draw — test PTMF at +0x48, call if non-null
+template<>
+void CTTask<IUICf>::Draw() {
+    if (mDrawFunc) {
+        (this->*mDrawFunc)();
+    }
+}

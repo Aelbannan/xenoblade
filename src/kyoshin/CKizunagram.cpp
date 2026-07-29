@@ -31,7 +31,7 @@ void func_80258F9C(){}
 
 void func_80259098(){}
 
-void func_80259228(){}
+void func_80259228(void* subobj) {}
 
 void func_80259280(){}
 
@@ -170,7 +170,11 @@ void func_8025CBCC(){}
 
 void func_8025CC70(){}
 
-void func_8025CC88(){}
+void func_8025CC88(CKizunagram* self) {
+    if (self->field_0x62 == 0) return;
+    self->field_0x39 = 2;
+    func_80259228(reinterpret_cast<u8*>(self) + 0x68);
+}
 
 void func_8025CCA8(){}
 

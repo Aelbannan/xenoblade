@@ -44,25 +44,9 @@ extern "C" void func_8022D1F8(CExchangeWinFull* self) {
     }
 }
 
-void func_8022D244(CExchangeWinFull* self) {
-    float f = lbl_eu_80668610;
-    u32 r = func_80137510(self->mAnimTransform, f);
-    if (r) {
-        self->_26 = 0;
-        self->field_27 = 1;
-        self->field_24 = 0;
-    }
-}
+void func_8022D244(){}
 
 void CExchangeWin::OnFileEvent() {}
-
-CExchangeWin::~CExchangeWin() {}
-
-// Helper struct for layout sub-object at mLayout+0x10 (vtable dispatch target)
-struct LayoutSubObj {
-    u8 _00[0x10];
-    u8* subObj;  // 0x10
-};
 
 // Stub functions needed by CItemBoxGrid
 extern "C" void func_8022D0D0(void* self) {
@@ -76,15 +60,18 @@ extern "C" void func_8022D0D0(void* self) {
 }
 extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
     char buf[64];
-    CExchangeWinFull* s = (CExchangeWinFull*)src;
-    LayoutSubObj* lso = (LayoutSubObj*)s->mLayout;
-    u8* pane = lso->subObj;
-    u8* r1 = (u8*)((void*(*)(void*, char*, int))((void**)*(u32*)pane)[0x3C / 4])((void*)pane, buf, 1);
-    lso = (LayoutSubObj*)s->mLayout;
-    pane = lso->subObj;
-    u8* r2 = (u8*)((void*(*)(void*, char*, int))((void**)*(u32*)pane)[0x3C / 4])((void*)pane, (char*)&lbl_eu_8050A740[0x25], 1);
-    lso = (LayoutSubObj*)s->mLayout;
-    func_80137924(dst, r1, r2, lso->subObj);
+    sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
+    u32 obj = *(u32*)((u8*)src + 0x1c);
+    u32 sub = *(u32*)(obj + 0x10);
+    void** vtbl = *(void***)sub;
+    void* r1 = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])((void*)sub, buf, 1);
+    u32 obj2 = *(u32*)((u8*)src + 0x1c);
+    u32 sub2 = *(u32*)(obj2 + 0x10);
+    void** vtbl2 = *(void***)sub2;
+    void* r2 = ((void*(*)(void*, char*, int))vtbl2[0x3C / 4])((void*)sub2, (char*)&lbl_eu_8050A740[0x25], 1);
+    u32 obj3 = *(u32*)((u8*)src + 0x1c);
+    u32 sub3 = *(u32*)(obj3 + 0x10);
+    func_80137924(dst, r1, r2, (void*)sub3);
 }
 extern "C" void func_8022CF2C(CExchangeWinFull* self) {
     self->mFileHandle = CDeviceFile::readFile(
@@ -106,11 +93,4 @@ extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
         return;
     }
     func_80137038(s->mLayout, drawInfo, 0, 1);
-}
-
-// Sets two text fields on the layout: one at string offset 0x34 with param2,
-// and one at string offset 0x41 with param3.
-void func_8022D19C(CExchangeWinFull* self, char* param2, char* param3) {
-    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x34], param2, 0);
-    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x41], param3, 0);
 }

@@ -96,11 +96,17 @@ void CLibHbmControl::wkRender(){
     
 }
 
-CLibHbmControl* CLibHbmControl::create(){
-    CLibHbmControl* hbmControl = CREATE_WORKTHREAD(CLibHbmControl, CLibHbm::getInstance());
+CLibHbmControl* CLibHbmControl::create() {
+    CLibHbm* parent = CLibHbm::getInstance();
+    WORK_ID id = CWorkThreadSystem::getWorkMem();
+    CLibHbmControl* hbmControl = (CLibHbmControl*)mtl::MemManager::allocate(sizeof(CLibHbmControl), id);
 
+    if (hbmControl != nullptr) {
+        new (hbmControl) CLibHbmControl("CLibHbmControl", parent);
+    }
+
+    CWorkUtil::entryWork(hbmControl, parent, false);
     hbmControl->unk1E4 = CDesktop::getView()->mWorkID;
-
     return hbmControl;
 }
 
@@ -109,6 +115,11 @@ bool CLibHbmControl::wkStandbyLogin(){
 }
 
 
-bool CLibHbmControl::wkStandbyLogout(){
-    return CProc::wkStandbyLogout();
+bool CLibHbmControl::wkStandbyLogout() {
+    if (mChildren.empty()) {
+        CLibHbm::deleteHbm();
+        CWorkControl::pause(false);
+        return CProc::wkStandbyLogout();
+    }
+    return false;
 }

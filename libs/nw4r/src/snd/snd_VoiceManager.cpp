@@ -115,17 +115,13 @@ void VoiceManager::UpdateAllVoices() {
 void VoiceManager::NotifyVoiceUpdate() {
     BOOL enabled = OSDisableInterrupts();
 
-    ut::detail::LinkListImpl& listImpl =
-        static_cast<ut::detail::LinkListImpl&>(mPrioVoiceList);
+    VoiceList::Iterator it = mPrioVoiceList.GetBeginIter();
+    VoiceList::Iterator end = mPrioVoiceList.GetEndIter();
 
-    ut::LinkListNode* pNode = listImpl.GetBeginIter().operator->();
-    ut::LinkListNode* pEnd = listImpl.GetEndIter().operator->();
-
-    while (pNode != pEnd) {
-        Voice* pVoice =
-            reinterpret_cast<Voice*>(reinterpret_cast<u8*>(pNode) - 0x11C);
-        pNode = pNode->GetNext();
-        pVoice->ResetDelta();
+    while (it != end) {
+        Voice& rVoice = *it;
+        ++it;
+        rVoice.ResetDelta();
     }
 
     OSRestoreInterrupts(enabled);

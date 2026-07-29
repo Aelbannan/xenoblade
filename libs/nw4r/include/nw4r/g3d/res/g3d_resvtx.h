@@ -243,6 +243,13 @@ struct ResVtxFurPosData {
 class ResVtxFurPos : public ResCommon<ResVtxFurPosData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResVtxFurPos);
+
+    void Init() {
+        DCStore(false);
+    }
+
+    void SetArray(unsigned short idx);
+    void DCStore(bool sync);
 };
 
 /******************************************************************************
@@ -262,6 +269,12 @@ struct ResVtxFurVecData {
 class ResVtxFurVec : ResCommon<ResVtxFurVecData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResVtxFurVec);
+
+    void Init() {
+        DCStore(false);
+    }
+
+    void DCStore(bool sync);
 };
 
 } // namespace g3d

@@ -160,5 +160,59 @@ void ResVtxTexCoord::DCStore(bool sync) {
     }
 }
 
+/******************************************************************************
+ *
+ * ResVtxFurVec DCStore
+ *
+ ******************************************************************************/
+void ResVtxFurVec::DCStore(bool sync) {
+    void* pBase = &ref();
+    u32 size = ref().size;
+
+    if (sync) {
+        DC::StoreRange(pBase, size);
+    } else {
+        DC::StoreRangeNoSync(pBase, size);
+    }
+}
+
+/******************************************************************************
+ *
+ * ResVtxFurPos DCStore
+ *
+ ******************************************************************************/
+void ResVtxFurPos::DCStore(bool sync) {
+    void* pBase = &ref();
+    u32 size = ref().size;
+
+    if (sync) {
+        DC::StoreRange(pBase, size);
+    } else {
+        DC::StoreRangeNoSync(pBase, size);
+    }
+}
+
+/******************************************************************************
+ *
+ * ResVtxFurPos SetArray
+ *
+ ******************************************************************************/
+void ResVtxFurPos::SetArray(unsigned short idx) {
+    if (!IsValid()) {
+        return;
+    }
+
+    ResVtxFurPosData& r = ref();
+    void* pData;
+
+    if (r.toFurPosArray != 0 && idx < r.numLayer && idx >= 0) {
+        pData = (u8*)&r + r.toFurPosArray + idx * r.ofsLayer;
+    } else {
+        pData = NULL;
+    }
+
+    GXSetArray(GX_VA_POS, pData, r.stride);
+}
+
 } // namespace g3d
 } // namespace nw4r

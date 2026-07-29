@@ -21,15 +21,23 @@ const s16
 const volatile f32 EnvGenerator::VOLUME_INIT = VOLUME_MIN_DB;
 
 EnvGenerator::EnvGenerator() {
-    Init();
+    mHold = 0;
+    mAttack = 0.0f;
+    mDecay = 65535.0f;
+    mSustain = 127;
+    mRelease = 65535.0f;
+    mValue = 10.0f * VOLUME_INIT;
+    mStatus = STATUS_ATTACK;
 }
 
 void EnvGenerator::Init(f32 db) {
-    SetAttack(ATTACK_INIT);
-    SetDecay(DECAY_INIT);
-    SetSustain(SUSTAIN_INIT);
-    SetRelease(RELEASE_INIT);
-    Reset(db);
+    mHold = 0;
+    mAttack = 0.0f;
+    mDecay = 65535.0f;
+    mSustain = 127;
+    mRelease = 65535.0f;
+    mValue = 10.0f * db;
+    mStatus = STATUS_ATTACK;
 }
 
 void EnvGenerator::Reset(f32 db) {
@@ -149,8 +157,10 @@ int EnvGenerator::CalcDecibelSquare(int scale) {
     return DecibelSquareTable[scale];
 }
 
+void EnvGenerator::SetHold(int hold) {
+    mHold = ((hold + 1) * (hold + 1)) / 4;
+}
+
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-void SetHold__Q44nw4r3snd6detail12EnvGeneratorFi(int){}

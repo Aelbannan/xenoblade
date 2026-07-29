@@ -29,6 +29,7 @@ public:
     void SetDecay(int decay);
     void SetSustain(int sustain);
     void SetRelease(int release);
+    void SetHold(int hold);
 
 private:
     static const int DECIBEL_SQUARE_TABLE_SIZE = 128;
@@ -50,6 +51,7 @@ private:
     f32 mRelease;   // at 0xC
     f32 mAttack;    // at 0x10
     u8 mSustain;    // at 0x14
+    s16 mHold;      // at 0x16
 
     static const s16 DecibelSquareTable[DECIBEL_SQUARE_TABLE_SIZE];
 };

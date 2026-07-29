@@ -26,3 +26,14 @@ public:
     s16 field_0x78;
 };
 
+// Helper to access fields of CfObjectEff that aren't yet named in its header.
+// CfObjectEff has padding _padA8[0xC0-0xA8]; offset 0xB0 is an unnamed u32.
+struct CfObjectEffLayout {
+    u8 _00[0xB0];
+    u32 field_0xB0;
+};
+
+// Forward declarations for callees
+void func_800CFFA0(void* self);
+void* initCamControlInstances();
+

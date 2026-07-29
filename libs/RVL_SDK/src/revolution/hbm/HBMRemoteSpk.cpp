@@ -165,6 +165,10 @@ void RemoteSpk::Start() {
 
 void RemoteSpk::Stop() {
     OSCancelAlarm(&speakerAlarm);
+
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        OSCancelAlarm(&info[i].alarm);
+    }
 }
 
 void RemoteSpk::DelaySpeakerOnCallback(OSAlarm* pAlarm,
@@ -281,10 +285,34 @@ bool RemoteSpk::isPlayReady(s32 chan) const {
     return info[chan].playReady != false;
 }
 
-} // namespace homebutton
+void RemoteSpk::SpeakerOffCallback(s32 chan, s32 result) {
+    // TODO: decompile
+}
+
+void RemoteSpk::DelaySpeakerOffCallback(OSAlarm* pAlarm,
+                                        OSContext* /* pContext */) {
+    s32 chan = reinterpret_cast<s32>(OSGetAlarmUserData(pAlarm));
+    WPADControlSpeaker(chan, WPAD_SPEAKER_PLAY, &SpeakerOffCallback);
+}
+
+void RemoteSpk::Disconnect(s32 chan) {
+    if (!available) {
+        return;
+    }
+
+    WPADControlSpeaker(chan, WPAD_SPEAKER_ON, &SpeakerOnCallback);
+
+    ChanInfo& rInfo = info[chan];
+    rInfo.wencinfo.xn = 0;
+    rInfo.wencinfo.dl = 0;
+    rInfo.wencinfo.qn = 0;
+    rInfo.wencinfo.dn = 0;
+    rInfo.wencinfo.dlh = 0;
+    rInfo.wencinfo.dlq = 0;
+    rInfo.first = true;
+    rInfo.playReady = false;
+}
 
 } // namespace homebutton
 
-void DelaySpeakerOffCallback__Q210homebutton9RemoteSpkFP7OSAlarmP9OSContext(){}
-void SpeakerOffCallback__Q210homebutton9RemoteSpkFll(){}
-void Disconnect__Q210homebutton9RemoteSpkFl(){}
+} // namespace homebutton

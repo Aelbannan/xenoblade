@@ -1,10 +1,30 @@
 #include "kyoshin/menu/CMenuFade.hpp"
+#include "monolib/device/CDeviceVI.hpp"
+
+extern int lbl_eu_80663FA0;
 
 CMenuFade::CMenuFade(){
 
 }
 
-extern int lbl_eu_80663FA0;
+CMenuFade::~CMenuFade() {
+
+}
+
+void CMenuFade::Draw() {
+
+}
+
+void CMenuFade::Term() {
+    CDeviceVI::waitForDrawDone();
+    mScn->removeRenderCB(this);
+    if (mLayout) {
+        delete mLayout;
+    }
+    mLayout = 0;
+    mLayoutMem.func_8045F778();
+    lbl_eu_80663FA0 = 0;
+}
 
 int func_80113E1C() {
     return lbl_eu_80663FA0;

@@ -10104,6 +10104,7 @@ private:
     static CErrorWii* spInstance;
     static bool sPowerCallbackCalled;
     static bool sResetCallbackCalled;
+    static bool sUnkFlag;
 };
 /* end "monolib/util/CErrorWii.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 6 "monolib/util/CPathUtil.hpp" */
@@ -10617,9 +10618,7 @@ namespace ml{
 
     template <size_t N>
     struct FixStr{
-        FixStr(){
-            clear();
-        }
+        FixStr();
 
         //probably fake
         FixStr(bool initialize){
@@ -10780,26 +10779,41 @@ namespace ml{
             }
         }
 
-    private:
-        char mString[N];
-        int mLength;
+    // public for compatibility
+    char mString[N];
+    int mLength;
 
-    public:
-        static const int npos = -1;
+    static const int npos = -1;
     };
+
+#pragma dont_inline on
+    template <size_t N>
+    FixStr<N>::FixStr(){
+        clear();
+    }
+#pragma dont_inline reset
 
 }
 /* end "monolib/util/FixStr.hpp" */
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -11103,10 +11117,11 @@ namespace mtl {
         u8 padding[32 - 0x12]; //0x12
 
         u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+            return reinterpret_cast<u8*>(this + 1);
         }
         u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
+            u8* blockEnd = reinterpret_cast<u8*>(this + 1);
+            return blockEnd + (size - sizeof(MemBlock));
         }
 
         u32 getDataSize() const {
@@ -12284,8 +12299,10 @@ namespace ml{
 
 class CEventFile {
 public:
-    BOOL unk0;
-    CFileHandle* mFileHandle; //0x4
+    BOOL unk0;                 //0x0
+    CFileHandle* mFileHandle;  //0x4
+    u8 _pad08[0x0C];           //0x8-0x13
+    u32 field_14;              //0x14
 
     void* getFileDataPtr();
 };
@@ -12332,6 +12349,16 @@ public:
         mSize = 0;
         mFront = 0;
         field6 = 0;
+        field7 = r4;
+    }
+
+    CMsgParam(u32 r4, u32* beforeLast){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        *beforeLast = 0;
         field7 = r4;
     }
 
@@ -12947,6 +12974,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */
@@ -13360,7 +13388,7 @@ struct CProc_UnkStruct1 {
     void* unkC;
 };
 //size: 0x1ec
-class CProc : public CWorkThread {
+class __declspec(novtable) CProc : public CWorkThread {
 public:
     CProc(const char* pName, CWorkThread* pParent, s16 capacity);
     virtual ~CProc();
@@ -16455,27 +16483,35 @@ class CViewFrame {
 public:
     bool render();
     void detachRenderWork(CWorkThread* pThread);
+    void CView_UnkVirtualFunc1();
+    void CView_UnkVirtualFunc8();
+    void CView_UnkVirtualFunc9();
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
     ml::CCol4 mFrameColor; // 0x8
     ml::CCol4 mColor18; // 0x18
     ml::CCol4 mColor28; // 0x28
-    u32 unk38; // 0x38 — render flags / mode bits (1=border expand, 2=split)
-    float unk3C; // 0x3C — possibly padding or unused alignment filler
-    float unk40; // 0x40 — unused alignment padding to align mBorder siblings
-    float unk44; // 0x44 — unused alignment padding
-    float unk48; // 0x48 — unused alignment padding
-    float unk4C; // 0x4C — unused alignment padding
-    s16 unk50; // 0x50 — unused padding
-    s16 unk52; // 0x52 — unused padding
-    s16 mContentX; // 0x54 — client-area origin X (pixels from frame left edge to content)
-    s16 mContentY; // 0x56 — client-area origin Y (pixels from frame top edge to content)
-    s16 mBorder; // 0x58 — frame border thickness in pixels (used for expand/split sizing)
-    s16 unk5A; // 0x5A — unused trailing padding; satisfies 0x5C sizeof
+    u32 unk38; // 0x38 - render flags / mode bits (1=border expand, 2=split)
+    float unk3C; // 0x3C - possibly padding or unused alignment filler
+    float unk40; // 0x40 - unused alignment padding to align mBorder siblings
+    float unk44; // 0x44 - unused alignment padding
+    float unk48; // 0x48 - unused alignment padding
+    float unk4C; // 0x4C - unused alignment padding
+    s16 unk50; // 0x50 - unused padding
+    s16 unk52; // 0x52 - unused padding
+    s16 mContentX; // 0x54 - client-area origin X (pixels from frame left edge to content)
+    s16 mContentY; // 0x56 - client-area origin Y (pixels from frame top edge to content)
+    s16 mBorder; // 0x58 - frame border thickness in pixels (used for expand/split sizing)
+    s16 unk5A; // 0x5A - unused trailing padding; satisfies 0x5C sizeof
 };
 
-extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
+extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16* rect, const CViewFrame* r4);
+
+inline void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4) {
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&rect, r4);
+}
 /* end "monolib/core/CViewFrame.hpp" */
 /* "libs/monolib/include/monolib/core/CView.hpp" line 7 "monolib/core/CViewRectData.hpp" */
 #pragma once
@@ -16503,13 +16539,28 @@ public:
     s16 mInsetBottom;          // offset 0x12 - bottom inset
 };
 /* end "monolib/core/CViewRectData.hpp" */
+/* "libs/monolib/include/monolib/core/CView.hpp" line 8 "monolib/core/CFontLayer.hpp" */
+#pragma once
 
-//size: 0x4
+/* "libs/monolib/include/monolib/core/CFontLayer.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Forward declaration for tail-call target
+class CDeviceFont;
+
+/// Font layer base class (size 0x4: vtable pointer only).
+/// CView inherits from this via multiple inheritance.
 class CFontLayer {
 public:
     CFontLayer();
     virtual ~CFontLayer();
+
+    /// Flush pending font rendering state.
+    /// Delegates to CDeviceFont internally; the int parameter is passed
+    /// through to the device layer but may be unused depending on context.
+    void fontFlush(int channel);
 };
+/* end "monolib/core/CFontLayer.hpp" */
 
 // Context ring slot written by setCurrent (0x24 bytes).
 struct CViewContextRingEntry {
@@ -17199,31 +17250,32 @@ public:
 /* end "monolib/util.hpp" */
 
 struct PackHeader {
-    u32 unk0; //always 00FE1200
-    u32 unk4; //always 00000002
-    u32 mFileHashTableOffset; //0x8
-    u32 mPkhFilesize; //0xC
-    u32 mFiles; //0x10
-    char mFilename[32]; //0x14
-    u32 mHashValTableLength; //0x34
-    u8 mHashValTable[0x40]; //0x38
-    //might be a struct?
-    u64 mFileHashTable[]; //0x78
+    u32 mMagic;                   // 0x00 - always 0x00FE1200
+    u32 mVersion;                 // 0x04 - always 0x00000002
+    u32 mFileHashTableOffset;     // 0x08
+    u32 mPkhFilesize;             // 0x0C - total pkh file size
+    u32 mFiles;                   // 0x10 - number of files in pack
+    char mFilename[32];           // 0x14 - pack filename
+    u32 mHashValTableLength;      // 0x34 - length of hash value table
+    u8 mHashValTable[0x40];       // 0x38 - bit-position table for hash calculation
+    // Hash table: array of u64 pairs (lower, upper) at 0x78
+    // Followed by u16 file IDs, then optionally u32 file data offsets
+    u64 mFileHashTable[];         // 0x78
 };
 
 //size: 0x88
 class CPackItem : public IWorkEvent {
 public:
-    CPackItem(const char* name, UNKWORD r5);
+    CPackItem(const char* name, int partitionId);
     virtual ~CPackItem();
     virtual bool OnFileEvent(CEventFile* pEventFile);
 
     void update();
-    bool func_804DE78C(const char* filename, char** r5, u32* r6, u32* r7, u32* r8);
+    bool lookupFile(const char* filename, char** outPkbPath, u32* outEntryId, u32* outIndex, u32* outFileId);
     int findHashIndex(int startIndex, int endIndex);
     bool isNotLoaded();
     bool calculatePackFileHash(const char* filename);
-    void func_804DE948();
+    void setupHashTable();
 
     enum LoadState {
         LOAD_STATE_NOT_LOADED,
@@ -17236,26 +17288,26 @@ public:
     //0x0: vtable
     //0x0-4: IWorkEvent
 
-    ml::FixStr<32> unk4;
-    ml::FixStr<32> mPkbFilename; //0x28
-    CFileHandle* mFileHandle; //0x4C
-    PackHeader* mPackHeader; //0x50
-    const char* unk54;
-    u64* mFileHashTable; //0x58
-    u16* unk5C; //0x5C
-    u32* unk60; //0x60
-    int mAdxPartitionId; //0x64
-    void* mAhxAdxDataPtr; //0x68
-    u32 mHashLowerHalf; //0x6C
-    u32 mHashUpperHalf; //0x70
-    LoadState mLoadState; //0x74
-    u8 unk78;
-    u8 unk79;
-    bool mIsAhxAdxFile; //0x7A
-    u8 unk7B; //filler?
-    u32 unk7C;
-    u32 unk80;
-    const char* unk84;
+    ml::FixStr<32> mBaseName;       // 0x04 - filename without path or extension
+    ml::FixStr<32> mPkbFilename;     // 0x28 - pkb archive path
+    CFileHandle* mFileHandle;        // 0x4C
+    PackHeader* mPackHeader;         // 0x50
+    const char* mArchiveName;        // 0x54 - archive name from constructor
+    u64* mFileHashTable;             // 0x58
+    u16* mFileIds;                   // 0x5C - per-file ID table (indexed by hash entry)
+    u32* mFileDataOffsets;           // 0x60 - per-file data offset or partition ID table
+    int mAdxPartitionId;             // 0x64
+    u8* mAhxAdxBuffer;               // 0x68 - work buffer for ADX/AHX load
+    u32 mHashLowerHalf;              // 0x6C
+    u32 mHashUpperHalf;              // 0x70
+    LoadState mLoadState;            // 0x74
+    u8 mFileReadFailed;              // 0x78 - set when async file read errors
+    u8 mPackHeaderExternal;          // 0x79 - set when pack header owned by work system
+    bool mIsAhxAdxFile;              // 0x7A
+    u8 unk7B;                        // 0x7B - padding
+    u32 mWorkPackDataPtr;            // 0x7C - pack data pointer from work system
+    u32 mWorkPackDataSize;           // 0x80 - pack data size from work system
+    const char* mFilePath;           // 0x84 - full path to the pack file
 };
 /* end "monolib/core/CPackItem.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 7 "monolib/core/CPadManager.hpp" */
@@ -17329,7 +17381,7 @@ public:
     virtual ~CDeviceVICb();
     virtual void viBeforeDrawDone(){}
     virtual void viAfterDrawDone(){}
-    virtual void viBeginFrame(){}
+    virtual void viBeginFrame();
 };
 /* end "monolib/device/CDeviceVICb.hpp" */
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 5 "monolib/util.hpp" */
@@ -73092,20 +73144,27 @@ typedef struct
 } tBTM_ESCO_INFO;
 
 /* Define the structure used for SCO Management
-*/
+ * NOTE: Retail Wii layout differs from Broadcom SDK — the structure
+ * is flattened with ESCO fields inlined rather than nested.
+ */
 typedef struct
 {
-    tBTM_ESCO_INFO   esco;              /* Current settings             */
-#if BTM_SCO_HCI_INCLUDED == TRUE
-    BUFFER_Q         xmit_data_q;       /* SCO data transmitting queue  */
-#endif
-    tBTM_SCO_CB     *p_conn_cb;         /* Callback for when connected  */
-    tBTM_SCO_CB     *p_disc_cb;         /* Callback for when disconnect */
-    UINT16           state;             /* The state of the SCO link    */
-    UINT16           hci_handle;        /* HCI Handle                   */
-    BOOLEAN          is_orig;           /* TRUE if the originator       */
-    BOOLEAN          rem_bd_known;      /* TRUE if remote BD addr known */
-
+    /* 0x00 */ tBTM_SCO_CB     *p_conn_cb;         /* Callback for when connected  */
+    /* 0x04 */ tBTM_SCO_CB     *p_disc_cb;         /* Callback for when disconnect */
+    /* 0x08 */ UINT16           state;             /* The state of the SCO link    */
+    /* 0x0A */ UINT16           hci_handle;        /* HCI Handle                   */
+    /* 0x0C */ BOOLEAN          is_orig;           /* TRUE if the originator       */
+    /* 0x0D */ BOOLEAN          rem_bd_known;      /* TRUE if remote BD addr known */
+    /* 0x10 */ tBTM_ESCO_CBACK *p_esco_cback;     /* Callback for eSCO events     */
+    /* 0x14 */ tBTM_ESCO_PARAMS esco_setup;        /* eSCO setup parameters        */
+    /* 0x24 */ UINT16           rx_pkt_len;        /* eSCO data: rx packet length  */
+    /* 0x26 */ UINT16           tx_pkt_len;        /* eSCO data: tx packet length  */
+    /* 0x28 */ BD_ADDR          bd_addr;           /* eSCO data: remote BD addr    */
+    /* 0x2E */ UINT8            link_type;         /* eSCO data: link type         */
+    /* 0x2F */ UINT8            tx_interval;       /* eSCO data: tx interval       */
+    /* 0x30 */ UINT8            retrans_window;    /* eSCO data: retrans window    */
+    /* 0x31 */ UINT8            air_mode;          /* eSCO data: air mode          */
+    /* 0x32 */ UINT8            hci_status;        /* eSCO data: HCI status        */
 } tSCO_CONN;
 
 /* SCO Management control block */
@@ -73116,10 +73175,11 @@ typedef struct
     tBTM_SCO_DATA_CB     *p_data_cb;        /* Callback for SCO data over HCI */
     UINT32               xmit_window_size; /* Total SCO window in bytes  */
 #endif
-    tSCO_CONN            sco_db[BTM_MAX_SCO_LINKS];
-    tBTM_ESCO_PARAMS     def_esco_parms;
+    /* NOTE: Retail layout uses 3 entries regardless of BTM_MAX_SCO_LINKS */
+    tSCO_CONN            sco_db[3];
     BD_ADDR              xfer_addr;
     UINT16               sco_disc_reason;
+    tBTM_ESCO_PARAMS     def_esco_parms;
     BOOLEAN              esco_supported;    /* TRUE if 1.2 cntlr AND supports eSCO links */
     tBTM_SCO_TYPE        desired_sco_mode;
     tBTM_SCO_TYPE        xfer_sco_type;
@@ -231024,11 +231084,7761 @@ L2C_API extern void L2CA_BypassSFrame (UINT16 cid, UINT8 count);
 /* "libs/RVL_SDK/include/revolution/BTE/rvl/uusb_ppc.h" line 2 "types.h" */
 /* end "types.h" */
 
+/* "libs/RVL_SDK/include/revolution/BTE/rvl/uusb_ppc.h" line 4 "revolution/bte/gki/common/gki.h" */
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#ifndef GKI_H
+#define GKI_H
+
+
+/* Include platform-specific over-rides */
+#if (defined(NFC_STANDALONE) && (NFC_STANDALONE == TRUE))
+/* "libs/RVL_SDK/include/revolution/bte/gki/common/gki.h" line 25 "revolution/BTE/include/gki_target.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Add #defines for RVL target
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#ifndef GKI_TARGET_H
+#define GKI_TARGET_H
+
+/**
+ * Modifications for decomp
+ */
+#define GKI_MAX_TASKS               8
+#define GKI_NUM_TIMERS              2
+#define GKI_DELAY_STOP_SYS_TICK     0
+#define GKI_BUF1_SIZE               128
+#define GKI_BUF3_SIZE               1800
+#define GKI_BUF3_MAX                30
+#define GKI_BUF4_SIZE               8192
+#define GKI_BUF4_MAX                9
+#define GKI_NUM_FIXED_BUF_POOLS     5
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfff0
+#define GKI_NUM_TOTAL_BUF_POOLS     9
+
+// RVL version didn't have A2DP?
+#define GKI_PPC_TASK 2
+
+
+/* Operating System Selection */
+#ifndef BTE_SIM_APP
+#define _GKI_ARM
+#define _GKI_STANDALONE
+#else
+#define _BT_WIN32
+#endif
+
+/* define prefix for exporting APIs from libraries */
+#define EXPORT_API
+
+#ifndef BTE_BSE_WRAPPER
+#ifdef  BTE_SIM_APP
+#undef  EXPORT_API
+#define EXPORT_API  __declspec(dllexport)
+#endif
+#endif
+
+#define GKI_API EXPORT_API
+#define UDRV_API EXPORT_API
+
+#ifndef GKI_DEBUG
+#define GKI_DEBUG FALSE
+#endif
+
+
+#if defined (GKI_DEBUG) && (GKI_DEBUG == TRUE)
+#define GKI_TRACE(fmt, ...)     ALOGI ("%s: " fmt, __FUNCTION__, ## __VA_ARGS__)
+#else
+#define GKI_TRACE(fmt, ...)
+#endif
+
+/******************************************************************************
+**
+** Task configuration
+**
+******************************************************************************/
+
+/* Definitions of task IDs for inter-task messaging */
+#ifndef BTU_TASK
+#define BTU_TASK                0
+#endif
+
+#ifndef BTIF_TASK
+#define BTIF_TASK               1
+#endif
+
+#ifndef A2DP_MEDIA_TASK
+#define A2DP_MEDIA_TASK         2
+#endif
+
+/* The number of GKI tasks in the software system. */
+#ifndef GKI_MAX_TASKS
+#define GKI_MAX_TASKS               3
+#endif
+
+/******************************************************************************
+**
+** Timer configuration
+**
+******************************************************************************/
+
+/* The number of GKI timers in the software system. */
+#ifndef GKI_NUM_TIMERS
+#define GKI_NUM_TIMERS              3
+#endif
+
+/* A conversion value for translating ticks to calculate GKI timer.  */
+#ifndef TICKS_PER_SEC
+#define TICKS_PER_SEC               100
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+#ifndef GKI_MS_TO_TICKS
+#define GKI_MS_TO_TICKS(x)   ((x) / (1000 / TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_SECS_TO_TICKS
+#define GKI_SECS_TO_TICKS(x)   ((x) * (TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_TICKS_TO_MS
+#define GKI_TICKS_TO_MS(x)   ((x) * 1000 / TICKS_PER_SEC)
+#endif
+
+#ifndef GKI_TICKS_TO_SECS
+#define GKI_TICKS_TO_SECS(x)   ((x) / TICKS_PER_SEC)
+#endif
+
+
+
+/* TICK per second from OS (OS dependent change this macro accordingly to various OS) */
+#ifndef OS_TICKS_PER_SEC
+#define OS_TICKS_PER_SEC               1000
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+
+#ifndef GKI_OS_TICKS_TO_MS
+#define GKI_OS_TICKS_TO_MS(x)   ((x) * 1000 / OS_TICKS_PER_SEC)
+#endif
+
+
+#ifndef GKI_OS_TICKS_TO_SECS
+#define GKI_OS_TICKS_TO_SECS(x)   ((x) / OS_TICKS_PER_SEC))
+#endif
+
+
+/* delay in ticks before stopping system tick. */
+#ifndef GKI_DELAY_STOP_SYS_TICK
+#define GKI_DELAY_STOP_SYS_TICK     10
+#endif
+
+/* Option to guarantee no preemption during timer expiration (most system don't need this) */
+#ifndef GKI_TIMER_LIST_NOPREEMPT
+#define GKI_TIMER_LIST_NOPREEMPT    FALSE
+#endif
+
+/******************************************************************************
+**
+** Buffer configuration
+**
+******************************************************************************/
+
+/* TRUE if GKI uses dynamic buffers. */
+#ifndef GKI_USE_DYNAMIC_BUFFERS
+#define GKI_USE_DYNAMIC_BUFFERS     FALSE
+#endif
+
+/* The size of the buffers in pool 0. */
+#ifndef GKI_BUF0_SIZE
+#define GKI_BUF0_SIZE               64
+#endif
+
+/* The number of buffers in buffer pool 0. */
+#ifndef GKI_BUF0_MAX
+#define GKI_BUF0_MAX                48
+#endif
+
+/* The ID of buffer pool 0. */
+#ifndef GKI_POOL_ID_0
+#define GKI_POOL_ID_0               0
+#endif
+
+/* The size of the buffers in pool 1. */
+#ifndef GKI_BUF1_SIZE
+#define GKI_BUF1_SIZE               288
+#endif
+
+/* The number of buffers in buffer pool 1. */
+#ifndef GKI_BUF1_MAX
+#define GKI_BUF1_MAX                26
+#endif
+
+/* The ID of buffer pool 1. */
+#ifndef GKI_POOL_ID_1
+#define GKI_POOL_ID_1               1
+#endif
+
+/* The size of the buffers in pool 2. */
+#ifndef GKI_BUF2_SIZE
+#define GKI_BUF2_SIZE               660
+#endif
+
+/* The number of buffers in buffer pool 2. */
+#ifndef GKI_BUF2_MAX
+#define GKI_BUF2_MAX                45
+#endif
+
+/* The ID of buffer pool 2. */
+#ifndef GKI_POOL_ID_2
+#define GKI_POOL_ID_2               2
+#endif
+
+/* The size of the buffers in pool 3. */
+#ifndef GKI_BUF3_SIZE
+#define GKI_BUF3_SIZE               (4096+16)
+#endif
+
+/* The number of buffers in buffer pool 3. */
+#ifndef GKI_BUF3_MAX
+#define GKI_BUF3_MAX                200
+#endif
+
+/* The ID of buffer pool 3. */
+#ifndef GKI_POOL_ID_3
+#define GKI_POOL_ID_3               3
+#endif
+
+/* The size of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE
+#define GKI_MAX_BUF_SIZE            GKI_BUF3_SIZE
+#endif
+
+/* The pool ID of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE_POOL_ID
+#define GKI_MAX_BUF_SIZE_POOL_ID    GKI_POOL_ID_3
+#endif
+
+/* RESERVED buffer pool for OBX */
+/* Ideally there should be 1 buffer for each instance for RX data, and some number
+of TX buffers based on active instances. OBX will only use these if packet size
+requires it. In most cases the large packets are used in only one direction so
+the other direction will use smaller buffers.
+Devices with small amount of RAM should limit the number of active obex objects.
+*/
+/* The size of the buffers in pool 4. */
+#ifndef GKI_BUF4_SIZE
+#define GKI_BUF4_SIZE               (8080+26)
+#endif
+
+/* The number of buffers in buffer pool 4. */
+#ifndef GKI_BUF4_MAX
+#define GKI_BUF4_MAX                (OBX_NUM_SERVERS + OBX_NUM_CLIENTS)
+#endif
+
+/* The ID of buffer pool 4. */
+#ifndef GKI_POOL_ID_4
+#define GKI_POOL_ID_4               4
+#endif
+
+/* The number of fixed GKI buffer pools.
+eL2CAP requires Pool ID 5
+If BTM_SCO_HCI_INCLUDED is FALSE, Pool ID 6 is unnecessary, otherwise set to 7
+If BTA_HL_INCLUDED is FALSE then Pool ID 7 is uncessary and set the following to 7, otherwise set to 8
+If BLE_INCLUDED is FALSE then Pool ID 8 is uncessary and set the following to 8, otherwise set to 9
+POOL_ID 9 is a public pool meant for large buffer needs such as SDP_DB
+*/
+// btla-specific ++
+#ifndef GKI_NUM_FIXED_BUF_POOLS
+#define GKI_NUM_FIXED_BUF_POOLS     10
+#endif
+
+/* The buffer pool usage mask. */
+#ifndef GKI_DEF_BUFPOOL_PERM_MASK
+/* Setting POOL_ID 9 as a public pool meant for large buffers such as SDP_DB */
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfdf0
+#endif
+// btla-specific --
+
+/* The number of fixed and dynamic buffer pools */
+#ifndef GKI_NUM_TOTAL_BUF_POOLS
+#define GKI_NUM_TOTAL_BUF_POOLS     10
+#endif
+
+/* The following is intended to be a reserved pool for L2CAP
+Flow control and retransmissions and intentionally kept out
+of order */
+
+/* The number of buffers in buffer pool 5. */
+#ifndef GKI_BUF5_MAX
+#define GKI_BUF5_MAX                64
+#endif
+
+/* The ID of buffer pool 5. */
+#ifndef GKI_POOL_ID_5
+#define GKI_POOL_ID_5               5
+#endif
+
+/* The size of the buffers in pool 5
+** Special pool used by l2cap retransmissions only.  This size based on segment
+** that will fit into both DH5 and 2-DH3 packet types after accounting for GKI
+** header.  13 bytes of max headers allows us a 339 payload max. (in btui_app.txt)
+** Note: 748 used for insight scriptwrapper with CAT-2 scripts.
+*/
+#ifndef GKI_BUF5_SIZE
+#define GKI_BUF5_SIZE               748
+#endif
+
+/* The buffer corruption check flag. */
+#ifndef GKI_ENABLE_BUF_CORRUPTION_CHECK
+#define GKI_ENABLE_BUF_CORRUPTION_CHECK TRUE
+#endif
+
+/* The GKI severe error macro. */
+#ifndef GKI_SEVERE
+#define GKI_SEVERE(code)
+#endif
+
+/* TRUE if GKI includes debug functionality. */
+#ifndef GKI_DEBUG
+#define GKI_DEBUG                   FALSE
+#endif
+
+/* Maximum number of exceptions logged. */
+#ifndef GKI_MAX_EXCEPTION
+#define GKI_MAX_EXCEPTION           8
+#endif
+
+/* Maximum number of chars stored for each exception message. */
+#ifndef GKI_MAX_EXCEPTION_MSGLEN
+#define GKI_MAX_EXCEPTION_MSGLEN    64
+#endif
+
+#ifndef GKI_SEND_MSG_FROM_ISR
+#define GKI_SEND_MSG_FROM_ISR    FALSE
+#endif
+
+
+/* The following is intended to be a reserved pool for SCO
+over HCI data and intentionally kept out of order */
+
+/* The ID of buffer pool 6. */
+#ifndef GKI_POOL_ID_6
+#define GKI_POOL_ID_6               6
+#endif
+
+/* The size of the buffers in pool 6,
+  BUF_SIZE = max SCO data 255 + sizeof(BT_HDR) = 8 + SCO packet header 3 + padding 2 = 268 */
+#ifndef GKI_BUF6_SIZE
+#define GKI_BUF6_SIZE               268
+#endif
+
+/* The number of buffers in buffer pool 6. */
+#ifndef GKI_BUF6_MAX
+#define GKI_BUF6_MAX                60
+#endif
+
+
+/* The following pool is a dedicated pool for HDP
+   If a shared pool is more desirable then
+   1. set BTA_HL_LRG_DATA_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size is larger than 9472
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 7 is not needed
+*/
+
+/* The ID of buffer pool 7. */
+#ifndef GKI_POOL_ID_7
+#define GKI_POOL_ID_7               7
+#endif
+
+/* The size of the buffers in pool 7 */
+#ifndef GKI_BUF7_SIZE
+#define GKI_BUF7_SIZE               9472
+#endif
+
+/* The number of buffers in buffer pool 7. */
+#ifndef GKI_BUF7_MAX
+#define GKI_BUF7_MAX                2
+#endif
+
+/* The following pool is a dedicated pool for GATT
+   If a shared pool is more desirable then
+   1. set GATT_DB_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size fit a common GATT database needs
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 8 is not needed
+*/
+
+/* The ID of buffer pool 8. */
+#ifndef GKI_POOL_ID_8
+#define GKI_POOL_ID_8               8
+#endif
+
+/* The size of the buffers in pool 8 */
+#ifndef GKI_BUF8_SIZE
+#define GKI_BUF8_SIZE               128
+#endif
+
+/* The number of buffers in buffer pool 8. */
+#ifndef GKI_BUF8_MAX
+#define GKI_BUF8_MAX                30
+#endif
+
+// btla-specific ++
+/* The following pool is  meant for large allocations such as SDP_DB */
+#ifndef GKI_POOL_ID_9
+#define GKI_POOL_ID_9              9
+#endif
+
+#ifndef GKI_BUF9_SIZE
+#define GKI_BUF9_SIZE            8192
+#endif
+
+#ifndef GKI_BUF9_MAX
+#define GKI_BUF9_MAX           5
+#endif
+// btla-specific --
+
+/* GKI Trace Macros */
+#define GKI_TRACE_0(m)                          LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m)
+#define GKI_TRACE_1(m,p1)                       LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1)
+#define GKI_TRACE_2(m,p1,p2)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2)
+#define GKI_TRACE_3(m,p1,p2,p3)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3)
+#define GKI_TRACE_4(m,p1,p2,p3,p4)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4)
+#define GKI_TRACE_5(m,p1,p2,p3,p4,p5)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_6(m,p1,p2,p3,p4,p5,p6)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5,p6)
+
+#define GKI_TRACE_ERROR_0(m)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m)
+#define GKI_TRACE_ERROR_1(m,p1)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1)
+#define GKI_TRACE_ERROR_2(m,p1,p2)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2)
+#define GKI_TRACE_ERROR_3(m,p1,p2,p3)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3)
+#define GKI_TRACE_ERROR_4(m,p1,p2,p3,p4)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4)
+#define GKI_TRACE_ERROR_5(m,p1,p2,p3,p4,p5)     LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_ERROR_6(m,p1,p2,p3,p4,p5,p6)  LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5,p6)
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+EXPORT_API extern void LogMsg (UINT32 trace_set_mask, const char *fmt_str, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* GKI_TARGET_H */
+/* end "revolution/BTE/include/gki_target.h" */
+#else
+    /* For non-nfc_standalone, include Bluetooth definitions */
+/* "libs/RVL_SDK/include/revolution/bte/gki/common/gki.h" line 28 "revolution/BTE/include/bt_target.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Add #defines for RVL target
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef BT_TARGET_H
+#define BT_TARGET_H
+
+/**
+ * Modifications for decomp
+ */
+#ifdef REVOLUTION
+
+#define HAS_NO_BDROID_BUILDCFG
+
+#define RFCOMM_INCLUDED         TRUE
+#define GAP_INCLUDED            TRUE
+#define HID_DEV_INCLUDED        TRUE
+#define HID_HOST_INCLUDED       TRUE
+#define BNEP_INCLUDED           FALSE
+#define A2D_INCLUDED            FALSE
+#define AVRC_INCLUDED           FALSE
+#define PAN_INCLUDED            FALSE
+
+#define BTA_AG_INCLUDED         FALSE
+#define BTA_PAN_INCLUDED        FALSE
+#define BTA_FS_INCLUDED         FALSE
+#define BTA_AR_INCLUDED         FALSE
+#define BTA_AV_INCLUDED         FALSE
+
+#define BT_USE_TRACES           TRUE
+
+#define BTM_SSR_INCLUDED        FALSE
+#define BTM_EIR_SERVER_INCLUDED FALSE
+
+#define ANDROID_APP_INCLUDED    FALSE
+#define ANDROID_USE_LOGCAT      FALSE
+#define LINUX_GKI_INCLUDED      FALSE
+
+#define BTM_BUSY_LEVEL_CHANGE_INCLUDED FALSE
+
+#define BTA_DM_COD              {0x40, 0x02, 0x04}
+#define BTA_SYS_TIMER_PERIOD    1000
+
+#endif
+
+#ifndef BUILDCFG
+#define BUILDCFG
+#endif
+/* "libs/RVL_SDK/include/revolution/BTE/include/bt_target.h" line 76 "revolution/BTE/gki/platform/data_types.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Move from ulinux/ to platform/
+ *      - Add #include for RVL types (include/types.h)
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/gki/platform/data_types.h" line 36 "types.h" */
+/* end "types.h" */
+
+typedef unsigned char   UINT8;
+typedef unsigned short  UINT16;
+typedef unsigned long   UINT32;
+typedef signed   long   INT32;
+typedef signed   char   INT8;
+typedef signed   short  INT16;
+typedef unsigned char   BOOLEAN;
+
+
+typedef UINT32          TIME_STAMP;
+
+#ifndef TRUE
+#define TRUE   (!FALSE)
+#endif
+
+typedef unsigned char   UBYTE;
+
+#ifdef __arm
+#define PACKED  __packed
+#define INLINE  __inline
+#else
+#define PACKED
+#define INLINE
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN FALSE
+#endif
+
+#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
+#define UINT16_HI_BYTE(x)       ((x) >> 8)
+
+
+#define BCM_STRCAT_S(x1,x2,x3)      strcat((x1),(x3))
+#define BCM_STRNCAT_S(x1,x2,x3,x4)  strncat((x1),(x3),(x4))
+#define BCM_STRCPY_S(x1,x2,x3)      strcpy((x1),(x3))
+#define BCM_STRNCPY_S(x1,x2,x3,x4)  strncpy((x1),(x3),(x4))
+
+
+
+#endif
+/* end "revolution/BTE/gki/platform/data_types.h" */
+
+
+#ifndef BTIF_HSAG_SERVICE_NAME
+#define BTIF_HSAG_SERVICE_NAME  ("Headset Gateway")
+#endif
+
+#ifndef BTIF_HFAG_SERVICE_NAME
+#define BTIF_HFAG_SERVICE_NAME  ("Handsfree Gateway")
+#endif
+
+/* Include common GKI definitions used by this platform */
+/* "libs/RVL_SDK/include/revolution/BTE/include/bt_target.h" line 88 "revolution/BTE/include/gki_target.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Add #defines for RVL target
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#ifndef GKI_TARGET_H
+#define GKI_TARGET_H
+
+/**
+ * Modifications for decomp
+ */
+#define GKI_MAX_TASKS               8
+#define GKI_NUM_TIMERS              2
+#define GKI_DELAY_STOP_SYS_TICK     0
+#define GKI_BUF1_SIZE               128
+#define GKI_BUF3_SIZE               1800
+#define GKI_BUF3_MAX                30
+#define GKI_BUF4_SIZE               8192
+#define GKI_BUF4_MAX                9
+#define GKI_NUM_FIXED_BUF_POOLS     5
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfff0
+#define GKI_NUM_TOTAL_BUF_POOLS     9
+
+// RVL version didn't have A2DP?
+#define GKI_PPC_TASK 2
+
+
+/* Operating System Selection */
+#ifndef BTE_SIM_APP
+#define _GKI_ARM
+#define _GKI_STANDALONE
+#else
+#define _BT_WIN32
+#endif
+
+/* define prefix for exporting APIs from libraries */
+#define EXPORT_API
+
+#ifndef BTE_BSE_WRAPPER
+#ifdef  BTE_SIM_APP
+#undef  EXPORT_API
+#define EXPORT_API  __declspec(dllexport)
+#endif
+#endif
+
+#define GKI_API EXPORT_API
+#define UDRV_API EXPORT_API
+
+#ifndef GKI_DEBUG
+#define GKI_DEBUG FALSE
+#endif
+
+
+#if defined (GKI_DEBUG) && (GKI_DEBUG == TRUE)
+#define GKI_TRACE(fmt, ...)     ALOGI ("%s: " fmt, __FUNCTION__, ## __VA_ARGS__)
+#else
+#define GKI_TRACE(fmt, ...)
+#endif
+
+/******************************************************************************
+**
+** Task configuration
+**
+******************************************************************************/
+
+/* Definitions of task IDs for inter-task messaging */
+#ifndef BTU_TASK
+#define BTU_TASK                0
+#endif
+
+#ifndef BTIF_TASK
+#define BTIF_TASK               1
+#endif
+
+#ifndef A2DP_MEDIA_TASK
+#define A2DP_MEDIA_TASK         2
+#endif
+
+/* The number of GKI tasks in the software system. */
+#ifndef GKI_MAX_TASKS
+#define GKI_MAX_TASKS               3
+#endif
+
+/******************************************************************************
+**
+** Timer configuration
+**
+******************************************************************************/
+
+/* The number of GKI timers in the software system. */
+#ifndef GKI_NUM_TIMERS
+#define GKI_NUM_TIMERS              3
+#endif
+
+/* A conversion value for translating ticks to calculate GKI timer.  */
+#ifndef TICKS_PER_SEC
+#define TICKS_PER_SEC               100
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+#ifndef GKI_MS_TO_TICKS
+#define GKI_MS_TO_TICKS(x)   ((x) / (1000 / TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_SECS_TO_TICKS
+#define GKI_SECS_TO_TICKS(x)   ((x) * (TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_TICKS_TO_MS
+#define GKI_TICKS_TO_MS(x)   ((x) * 1000 / TICKS_PER_SEC)
+#endif
+
+#ifndef GKI_TICKS_TO_SECS
+#define GKI_TICKS_TO_SECS(x)   ((x) / TICKS_PER_SEC)
+#endif
+
+
+
+/* TICK per second from OS (OS dependent change this macro accordingly to various OS) */
+#ifndef OS_TICKS_PER_SEC
+#define OS_TICKS_PER_SEC               1000
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+
+#ifndef GKI_OS_TICKS_TO_MS
+#define GKI_OS_TICKS_TO_MS(x)   ((x) * 1000 / OS_TICKS_PER_SEC)
+#endif
+
+
+#ifndef GKI_OS_TICKS_TO_SECS
+#define GKI_OS_TICKS_TO_SECS(x)   ((x) / OS_TICKS_PER_SEC))
+#endif
+
+
+/* delay in ticks before stopping system tick. */
+#ifndef GKI_DELAY_STOP_SYS_TICK
+#define GKI_DELAY_STOP_SYS_TICK     10
+#endif
+
+/* Option to guarantee no preemption during timer expiration (most system don't need this) */
+#ifndef GKI_TIMER_LIST_NOPREEMPT
+#define GKI_TIMER_LIST_NOPREEMPT    FALSE
+#endif
+
+/******************************************************************************
+**
+** Buffer configuration
+**
+******************************************************************************/
+
+/* TRUE if GKI uses dynamic buffers. */
+#ifndef GKI_USE_DYNAMIC_BUFFERS
+#define GKI_USE_DYNAMIC_BUFFERS     FALSE
+#endif
+
+/* The size of the buffers in pool 0. */
+#ifndef GKI_BUF0_SIZE
+#define GKI_BUF0_SIZE               64
+#endif
+
+/* The number of buffers in buffer pool 0. */
+#ifndef GKI_BUF0_MAX
+#define GKI_BUF0_MAX                48
+#endif
+
+/* The ID of buffer pool 0. */
+#ifndef GKI_POOL_ID_0
+#define GKI_POOL_ID_0               0
+#endif
+
+/* The size of the buffers in pool 1. */
+#ifndef GKI_BUF1_SIZE
+#define GKI_BUF1_SIZE               288
+#endif
+
+/* The number of buffers in buffer pool 1. */
+#ifndef GKI_BUF1_MAX
+#define GKI_BUF1_MAX                26
+#endif
+
+/* The ID of buffer pool 1. */
+#ifndef GKI_POOL_ID_1
+#define GKI_POOL_ID_1               1
+#endif
+
+/* The size of the buffers in pool 2. */
+#ifndef GKI_BUF2_SIZE
+#define GKI_BUF2_SIZE               660
+#endif
+
+/* The number of buffers in buffer pool 2. */
+#ifndef GKI_BUF2_MAX
+#define GKI_BUF2_MAX                45
+#endif
+
+/* The ID of buffer pool 2. */
+#ifndef GKI_POOL_ID_2
+#define GKI_POOL_ID_2               2
+#endif
+
+/* The size of the buffers in pool 3. */
+#ifndef GKI_BUF3_SIZE
+#define GKI_BUF3_SIZE               (4096+16)
+#endif
+
+/* The number of buffers in buffer pool 3. */
+#ifndef GKI_BUF3_MAX
+#define GKI_BUF3_MAX                200
+#endif
+
+/* The ID of buffer pool 3. */
+#ifndef GKI_POOL_ID_3
+#define GKI_POOL_ID_3               3
+#endif
+
+/* The size of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE
+#define GKI_MAX_BUF_SIZE            GKI_BUF3_SIZE
+#endif
+
+/* The pool ID of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE_POOL_ID
+#define GKI_MAX_BUF_SIZE_POOL_ID    GKI_POOL_ID_3
+#endif
+
+/* RESERVED buffer pool for OBX */
+/* Ideally there should be 1 buffer for each instance for RX data, and some number
+of TX buffers based on active instances. OBX will only use these if packet size
+requires it. In most cases the large packets are used in only one direction so
+the other direction will use smaller buffers.
+Devices with small amount of RAM should limit the number of active obex objects.
+*/
+/* The size of the buffers in pool 4. */
+#ifndef GKI_BUF4_SIZE
+#define GKI_BUF4_SIZE               (8080+26)
+#endif
+
+/* The number of buffers in buffer pool 4. */
+#ifndef GKI_BUF4_MAX
+#define GKI_BUF4_MAX                (OBX_NUM_SERVERS + OBX_NUM_CLIENTS)
+#endif
+
+/* The ID of buffer pool 4. */
+#ifndef GKI_POOL_ID_4
+#define GKI_POOL_ID_4               4
+#endif
+
+/* The number of fixed GKI buffer pools.
+eL2CAP requires Pool ID 5
+If BTM_SCO_HCI_INCLUDED is FALSE, Pool ID 6 is unnecessary, otherwise set to 7
+If BTA_HL_INCLUDED is FALSE then Pool ID 7 is uncessary and set the following to 7, otherwise set to 8
+If BLE_INCLUDED is FALSE then Pool ID 8 is uncessary and set the following to 8, otherwise set to 9
+POOL_ID 9 is a public pool meant for large buffer needs such as SDP_DB
+*/
+// btla-specific ++
+#ifndef GKI_NUM_FIXED_BUF_POOLS
+#define GKI_NUM_FIXED_BUF_POOLS     10
+#endif
+
+/* The buffer pool usage mask. */
+#ifndef GKI_DEF_BUFPOOL_PERM_MASK
+/* Setting POOL_ID 9 as a public pool meant for large buffers such as SDP_DB */
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfdf0
+#endif
+// btla-specific --
+
+/* The number of fixed and dynamic buffer pools */
+#ifndef GKI_NUM_TOTAL_BUF_POOLS
+#define GKI_NUM_TOTAL_BUF_POOLS     10
+#endif
+
+/* The following is intended to be a reserved pool for L2CAP
+Flow control and retransmissions and intentionally kept out
+of order */
+
+/* The number of buffers in buffer pool 5. */
+#ifndef GKI_BUF5_MAX
+#define GKI_BUF5_MAX                64
+#endif
+
+/* The ID of buffer pool 5. */
+#ifndef GKI_POOL_ID_5
+#define GKI_POOL_ID_5               5
+#endif
+
+/* The size of the buffers in pool 5
+** Special pool used by l2cap retransmissions only.  This size based on segment
+** that will fit into both DH5 and 2-DH3 packet types after accounting for GKI
+** header.  13 bytes of max headers allows us a 339 payload max. (in btui_app.txt)
+** Note: 748 used for insight scriptwrapper with CAT-2 scripts.
+*/
+#ifndef GKI_BUF5_SIZE
+#define GKI_BUF5_SIZE               748
+#endif
+
+/* The buffer corruption check flag. */
+#ifndef GKI_ENABLE_BUF_CORRUPTION_CHECK
+#define GKI_ENABLE_BUF_CORRUPTION_CHECK TRUE
+#endif
+
+/* The GKI severe error macro. */
+#ifndef GKI_SEVERE
+#define GKI_SEVERE(code)
+#endif
+
+/* TRUE if GKI includes debug functionality. */
+#ifndef GKI_DEBUG
+#define GKI_DEBUG                   FALSE
+#endif
+
+/* Maximum number of exceptions logged. */
+#ifndef GKI_MAX_EXCEPTION
+#define GKI_MAX_EXCEPTION           8
+#endif
+
+/* Maximum number of chars stored for each exception message. */
+#ifndef GKI_MAX_EXCEPTION_MSGLEN
+#define GKI_MAX_EXCEPTION_MSGLEN    64
+#endif
+
+#ifndef GKI_SEND_MSG_FROM_ISR
+#define GKI_SEND_MSG_FROM_ISR    FALSE
+#endif
+
+
+/* The following is intended to be a reserved pool for SCO
+over HCI data and intentionally kept out of order */
+
+/* The ID of buffer pool 6. */
+#ifndef GKI_POOL_ID_6
+#define GKI_POOL_ID_6               6
+#endif
+
+/* The size of the buffers in pool 6,
+  BUF_SIZE = max SCO data 255 + sizeof(BT_HDR) = 8 + SCO packet header 3 + padding 2 = 268 */
+#ifndef GKI_BUF6_SIZE
+#define GKI_BUF6_SIZE               268
+#endif
+
+/* The number of buffers in buffer pool 6. */
+#ifndef GKI_BUF6_MAX
+#define GKI_BUF6_MAX                60
+#endif
+
+
+/* The following pool is a dedicated pool for HDP
+   If a shared pool is more desirable then
+   1. set BTA_HL_LRG_DATA_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size is larger than 9472
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 7 is not needed
+*/
+
+/* The ID of buffer pool 7. */
+#ifndef GKI_POOL_ID_7
+#define GKI_POOL_ID_7               7
+#endif
+
+/* The size of the buffers in pool 7 */
+#ifndef GKI_BUF7_SIZE
+#define GKI_BUF7_SIZE               9472
+#endif
+
+/* The number of buffers in buffer pool 7. */
+#ifndef GKI_BUF7_MAX
+#define GKI_BUF7_MAX                2
+#endif
+
+/* The following pool is a dedicated pool for GATT
+   If a shared pool is more desirable then
+   1. set GATT_DB_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size fit a common GATT database needs
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 8 is not needed
+*/
+
+/* The ID of buffer pool 8. */
+#ifndef GKI_POOL_ID_8
+#define GKI_POOL_ID_8               8
+#endif
+
+/* The size of the buffers in pool 8 */
+#ifndef GKI_BUF8_SIZE
+#define GKI_BUF8_SIZE               128
+#endif
+
+/* The number of buffers in buffer pool 8. */
+#ifndef GKI_BUF8_MAX
+#define GKI_BUF8_MAX                30
+#endif
+
+// btla-specific ++
+/* The following pool is  meant for large allocations such as SDP_DB */
+#ifndef GKI_POOL_ID_9
+#define GKI_POOL_ID_9              9
+#endif
+
+#ifndef GKI_BUF9_SIZE
+#define GKI_BUF9_SIZE            8192
+#endif
+
+#ifndef GKI_BUF9_MAX
+#define GKI_BUF9_MAX           5
+#endif
+// btla-specific --
+
+/* GKI Trace Macros */
+#define GKI_TRACE_0(m)                          LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m)
+#define GKI_TRACE_1(m,p1)                       LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1)
+#define GKI_TRACE_2(m,p1,p2)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2)
+#define GKI_TRACE_3(m,p1,p2,p3)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3)
+#define GKI_TRACE_4(m,p1,p2,p3,p4)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4)
+#define GKI_TRACE_5(m,p1,p2,p3,p4,p5)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_6(m,p1,p2,p3,p4,p5,p6)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5,p6)
+
+#define GKI_TRACE_ERROR_0(m)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m)
+#define GKI_TRACE_ERROR_1(m,p1)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1)
+#define GKI_TRACE_ERROR_2(m,p1,p2)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2)
+#define GKI_TRACE_ERROR_3(m,p1,p2,p3)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3)
+#define GKI_TRACE_ERROR_4(m,p1,p2,p3,p4)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4)
+#define GKI_TRACE_ERROR_5(m,p1,p2,p3,p4,p5)     LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_ERROR_6(m,p1,p2,p3,p4,p5,p6)  LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5,p6)
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+EXPORT_API extern void LogMsg (UINT32 trace_set_mask, const char *fmt_str, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* GKI_TARGET_H */
+/* end "revolution/BTE/include/gki_target.h" */
+
+/* "libs/RVL_SDK/include/revolution/BTE/include/bt_target.h" line 90 "revolution/BTE/stack/include/bt_types.h" */
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef BT_TYPES_H
+#define BT_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 23 "revolution/BTE/gki/platform/data_types.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Move from ulinux/ to platform/
+ *      - Add #include for RVL types (include/types.h)
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/gki/platform/data_types.h" line 36 "types.h" */
+/* end "types.h" */
+
+typedef unsigned char   UINT8;
+typedef unsigned short  UINT16;
+typedef unsigned long   UINT32;
+typedef signed   long   INT32;
+typedef signed   char   INT8;
+typedef signed   short  INT16;
+typedef unsigned char   BOOLEAN;
+
+
+typedef UINT32          TIME_STAMP;
+
+#ifndef TRUE
+#define TRUE   (!FALSE)
+#endif
+
+typedef unsigned char   UBYTE;
+
+#ifdef __arm
+#define PACKED  __packed
+#define INLINE  __inline
+#else
+#define PACKED
+#define INLINE
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN FALSE
+#endif
+
+#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
+#define UINT16_HI_BYTE(x)       ((x) >> 8)
+
+
+#define BCM_STRCAT_S(x1,x2,x3)      strcat((x1),(x3))
+#define BCM_STRNCAT_S(x1,x2,x3,x4)  strncat((x1),(x3),(x4))
+#define BCM_STRCPY_S(x1,x2,x3)      strcpy((x1),(x3))
+#define BCM_STRNCPY_S(x1,x2,x3,x4)  strncpy((x1),(x3),(x4))
+
+
+
+#endif
+/* end "revolution/BTE/gki/platform/data_types.h" */
+
+#ifdef _WIN32
+#ifdef BLUESTACK_TESTER
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 27 "bte_stack_entry.h" */
+/* end "bte_stack_entry.h" */
+#endif
+#endif
+
+/* READ WELL !!
+**
+** This section defines global events. These are events that cross layers.
+** Any event that passes between layers MUST be one of these events. Tasks
+** can use their own events internally, but a FUNDAMENTAL design issue is
+** that global events MUST be one of these events defined below.
+**
+** The convention used is the the event name contains the layer that the
+** event is going to.
+*/
+#define BT_EVT_MASK                 0xFF00
+#define BT_SUB_EVT_MASK             0x00FF
+                                                /* To Bluetooth Upper Layers        */
+                                                /************************************/
+#define BT_EVT_TO_BTU_L2C_EVT       0x0900      /* L2CAP event */
+#define BT_EVT_TO_BTU_HCI_EVT       0x1000      /* HCI Event                        */
+#define BT_EVT_TO_BTU_HCI_BR_EDR_EVT (0x0000 | BT_EVT_TO_BTU_HCI_EVT)      /* event from BR/EDR controller */
+#define BT_EVT_TO_BTU_HCI_AMP1_EVT   (0x0001 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 1 controller */
+#define BT_EVT_TO_BTU_HCI_AMP2_EVT   (0x0002 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 2 controller */
+#define BT_EVT_TO_BTU_HCI_AMP3_EVT   (0x0003 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 3 controller */
+
+#define BT_EVT_TO_BTU_HCI_ACL       0x1100      /* ACL Data from HCI                */
+#define BT_EVT_TO_BTU_HCI_SCO       0x1200      /* SCO Data from HCI                */
+#define BT_EVT_TO_BTU_HCIT_ERR      0x1300      /* HCI Transport Error              */
+
+#define BT_EVT_TO_BTU_SP_EVT        0x1400      /* Serial Port Event                */
+#define BT_EVT_TO_BTU_SP_DATA       0x1500      /* Serial Port Data                 */
+
+#define BT_EVT_TO_BTU_HCI_CMD       0x1600      /* HCI command from upper layer     */
+
+
+#define BT_EVT_TO_BTU_L2C_SEG_XMIT  0x1900      /* L2CAP segment(s) transmitted     */
+
+#define BT_EVT_PROXY_INCOMING_MSG   0x1A00      /* BlueStackTester event: incoming message from target */
+
+#define BT_EVT_BTSIM                0x1B00      /* Insight BTSIM event */
+#define BT_EVT_BTISE                0x1C00      /* Insight Script Engine event */
+
+                                                /* To LM                            */
+                                                /************************************/
+#define BT_EVT_TO_LM_HCI_CMD        0x2000      /* HCI Command                      */
+#define BT_EVT_TO_LM_HCI_ACL        0x2100      /* HCI ACL Data                     */
+#define BT_EVT_TO_LM_HCI_SCO        0x2200      /* HCI SCO Data                     */
+#define BT_EVT_TO_LM_HCIT_ERR       0x2300      /* HCI Transport Error              */
+#define BT_EVT_TO_LM_LC_EVT         0x2400      /* LC event                         */
+#define BT_EVT_TO_LM_LC_LMP         0x2500      /* LC Received LMP command frame    */
+#define BT_EVT_TO_LM_LC_ACL         0x2600      /* LC Received ACL data             */
+#define BT_EVT_TO_LM_LC_SCO         0x2700      /* LC Received SCO data  (not used) */
+#define BT_EVT_TO_LM_LC_ACL_TX      0x2800      /* LMP data transmit complete       */
+#define BT_EVT_TO_LM_LC_LMPC_TX     0x2900      /* LMP Command transmit complete    */
+#define BT_EVT_TO_LM_LOCAL_ACL_LB   0x2a00      /* Data to be locally loopbacked    */
+#define BT_EVT_TO_LM_HCI_ACL_ACK    0x2b00      /* HCI ACL Data ack      (not used) */
+#define BT_EVT_TO_LM_DIAG           0x2c00      /* LM Diagnostics commands          */
+
+
+#define BT_EVT_TO_BTM_CMDS          0x2f00
+#define BT_EVT_TO_BTM_PM_MDCHG_EVT (0x0001 | BT_EVT_TO_BTM_CMDS)
+
+#define BT_EVT_TO_TCS_CMDS          0x3000
+
+#define BT_EVT_TO_OBX_CL_MSG        0x3100
+#define BT_EVT_TO_OBX_SR_MSG        0x3200
+
+#define BT_EVT_TO_CTP_CMDS          0x3300
+
+/* Obex Over L2CAP */
+#define BT_EVT_TO_OBX_CL_L2C_MSG    0x3400
+#define BT_EVT_TO_OBX_SR_L2C_MSG    0x3500
+
+/* ftp events */
+#define BT_EVT_TO_FTP_SRVR_CMDS     0x3800
+#define BT_EVT_TO_FTP_CLNT_CMDS     0x3900
+
+#define BT_EVT_TO_BTU_SAP           0x3a00       /* SIM Access Profile events */
+
+/* opp events */
+#define BT_EVT_TO_OPP_SRVR_CMDS     0x3b00
+#define BT_EVT_TO_OPP_CLNT_CMDS     0x3c00
+
+/* gap events */
+#define BT_EVT_TO_GAP_MSG           0x3d00
+
+/* start timer */
+#define BT_EVT_TO_START_TIMER       0x3e00
+
+/* start quick timer */
+#define BT_EVT_TO_START_QUICK_TIMER 0x3f00
+
+
+/* for NFC                          */
+                                                /************************************/
+#define BT_EVT_TO_NFC_NCI           0x4000      /* NCI Command, Notification or Data*/
+#define BT_EVT_TO_NFC_INIT          0x4100      /* Initialization message */
+#define BT_EVT_TO_LLCP_ECHO         0x4200      /* LLCP Echo Service */
+#define BT_EVT_TO_LLCP_SOCKET       0x4300      /* LLCP over TCP/IP */
+#define BT_EVT_TO_NCI_LP            0x4400      /* Low power */
+#define BT_EVT_TO_NFC_ERR           0x4500      /* Error notification to NFC Task */
+
+#define BT_EVT_TO_NFCCSIM_NCI       0x4a00      /* events to NFCC simulation (NCI packets) */
+
+/* HCISU Events */
+
+#define BT_EVT_HCISU                0x5000
+
+// btla-specific ++
+#define BT_EVT_TO_HCISU_RECONFIG_EVT            (0x0001 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_UPDATE_BAUDRATE_EVT     (0x0002 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ENABLE_EVT           (0x0003 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_DISABLE_EVT          (0x0004 | BT_EVT_HCISU)
+// btla-specific --
+#define BT_EVT_TO_HCISU_LP_APP_SLEEPING_EVT     (0x0005 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ALLOW_BT_SLEEP_EVT   (0x0006 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_WAKEUP_HOST_EVT      (0x0007 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_RCV_H4IBSS_EVT       (0x0008 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_H5_RESET_EVT            (0x0009 | BT_EVT_HCISU)
+#define BT_EVT_HCISU_START_QUICK_TIMER          (0x000a | BT_EVT_HCISU)
+
+#define BT_EVT_DATA_TO_AMP_1        0x5100
+#define BT_EVT_DATA_TO_AMP_15       0x5f00
+
+/* HSP Events */
+
+#define BT_EVT_BTU_HSP2             0x6000
+
+#define BT_EVT_TO_BTU_HSP2_EVT     (0x0001 | BT_EVT_BTU_HSP2)
+
+/* BPP Events */
+#define BT_EVT_TO_BPP_PR_CMDS       0x6100      /* Printer Events */
+#define BT_EVT_TO_BPP_SND_CMDS      0x6200      /* BPP Sender Events */
+
+/* BIP Events */
+#define BT_EVT_TO_BIP_CMDS          0x6300
+
+/* HCRP Events */
+
+#define BT_EVT_BTU_HCRP             0x7000
+
+#define BT_EVT_TO_BTU_HCRP_EVT     (0x0001 | BT_EVT_BTU_HCRP)
+#define BT_EVT_TO_BTU_HCRPM_EVT    (0x0002 | BT_EVT_BTU_HCRP)
+
+
+#define BT_EVT_BTU_HFP              0x8000
+#define BT_EVT_TO_BTU_HFP_EVT      (0x0001 | BT_EVT_BTU_HFP)
+
+#define BT_EVT_BTU_IPC_EVT          0x9000
+#define BT_EVT_BTU_IPC_LOGMSG_EVT  (0x0000 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_ACL_EVT     (0x0001 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTU_EVT     (0x0002 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_EVT     (0x0003 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_MSG_EVT (0x0004 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTM_EVT     (0x0005 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_AVDT_EVT    (0x0006 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_SLIP_EVT    (0x0007 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_MGMT_EVT    (0x0008 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTTRC_EVT   (0x0009 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BURST_EVT   (0x000A | BT_EVT_BTU_IPC_EVT)
+
+
+/* BTIF Events */
+#define BT_EVT_BTIF                 0xA000
+#define BT_EVT_CONTEXT_SWITCH_EVT  (0x0001 | BT_EVT_BTIF)
+
+#define BT_EVT_TRIGGER_STACK_INIT   EVENT_MASK(APPL_EVT_0)
+
+
+/* Define the header of each buffer used in the Bluetooth stack.
+*/
+typedef struct
+{
+    UINT16          event;
+    UINT16          len;
+    UINT16          offset;
+    UINT16          layer_specific;
+} BT_HDR;
+
+#define BT_HDR_SIZE (sizeof (BT_HDR))
+
+#define BT_PSM_SDP                      0x0001
+#define BT_PSM_RFCOMM                   0x0003
+#define BT_PSM_TCS                      0x0005
+#define BT_PSM_CTP                      0x0007
+#define BT_PSM_BNEP                     0x000F
+#define BT_PSM_HIDC                     0x0011
+#define BT_PSM_HIDI                     0x0013
+#define BT_PSM_UPNP                     0x0015
+#define BT_PSM_AVCTP                    0x0017
+#define BT_PSM_AVDTP                    0x0019
+#define BT_PSM_AVCTP_13                 0x001B /* Advanced Control - Browsing */
+#define BT_PSM_UDI_CP                   0x001D /* Unrestricted Digital Information Profile C-Plane  */
+#define BT_PSM_ATT                      0x001F /* Attribute Protocol  */
+
+
+/* These macros extract the HCI opcodes from a buffer
+*/
+#define HCI_GET_CMD_HDR_OPCODE(p)    (UINT16)((*((UINT8 *)((p) + 1) + p->offset) + \
+                                              (*((UINT8 *)((p) + 1) + p->offset + 1) << 8)))
+#define HCI_GET_CMD_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 2))
+
+#define HCI_GET_EVT_HDR_OPCODE(p)    (UINT8)(*((UINT8 *)((p) + 1) + p->offset))
+#define HCI_GET_EVT_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 1))
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Little Endian format).
+*/
+#define UINT32_TO_STREAM(p, u32) {*(p)++ = (UINT8)(u32); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 24);}
+#define UINT24_TO_STREAM(p, u24) {*(p)++ = (UINT8)(u24); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)((u24) >> 16);}
+#define UINT16_TO_STREAM(p, u16) {*(p)++ = (UINT8)(u16); *(p)++ = (UINT8)((u16) >> 8);}
+#define UINT8_TO_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define INT8_TO_STREAM(p, u8)    {*(p)++ = (INT8)(u8);}
+#define ARRAY32_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 32;           ijk++) *(p)++ = (UINT8) a[31 - ijk];}
+#define ARRAY16_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 16;           ijk++) *(p)++ = (UINT8) a[15 - ijk];}
+#define ARRAY8_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < 8;            ijk++) *(p)++ = (UINT8) a[7 - ijk];}
+#define BDADDR_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < BD_ADDR_LEN;  ijk++) *(p)++ = (UINT8) a[BD_ADDR_LEN - 1 - ijk];}
+#define LAP_TO_STREAM(p, a)      {register int ijk; for (ijk = 0; ijk < LAP_LEN;      ijk++) *(p)++ = (UINT8) a[LAP_LEN - 1 - ijk];}
+#define DEVCLASS_TO_STREAM(p, a) {register int ijk; for (ijk = 0; ijk < DEV_CLASS_LEN;ijk++) *(p)++ = (UINT8) a[DEV_CLASS_LEN - 1 - ijk];}
+#define ARRAY_TO_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len;        ijk++) *(p)++ = (UINT8) a[ijk];}
+#define REVERSE_ARRAY_TO_STREAM(p, a, len)  {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[len - 1 - ijk];}
+
+#define STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define STREAM_TO_UINT16(u16, p) {u16 = ((UINT16)(*(p)) + (((UINT16)(*((p) + 1))) << 8)); (p) += 2;}
+#define STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) ); (p) += 3;}
+#define STREAM_TO_UINT32(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) + ((((UINT32)(*((p) + 3)))) << 24)); (p) += 4;}
+#define STREAM_TO_BDADDR(a, p)   {register int ijk; register UINT8 *pbda = (UINT8 *)a + BD_ADDR_LEN - 1; for (ijk = 0; ijk < BD_ADDR_LEN; ijk++) *pbda-- = *p++;}
+#define STREAM_TO_ARRAY32(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 31; for (ijk = 0; ijk < 32; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY16(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 15; for (ijk = 0; ijk < 16; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY8(a, p)   {register int ijk; register UINT8 *_pa = (UINT8 *)a + 7; for (ijk = 0; ijk < 8; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_DEVCLASS(a, p) {register int ijk; register UINT8 *_pa = (UINT8 *)a + DEV_CLASS_LEN - 1; for (ijk = 0; ijk < DEV_CLASS_LEN; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_LAP(a, p)      {register int ijk; register UINT8 *plap = (UINT8 *)a + LAP_LEN - 1; for (ijk = 0; ijk < LAP_LEN; ijk++) *plap-- = *p++;}
+#define STREAM_TO_ARRAY(a, p, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+#define REVERSE_STREAM_TO_ARRAY(a, p, len) {register int ijk; register UINT8 *_pa = (UINT8 *)a + len - 1; for (ijk = 0; ijk < len; ijk++) *_pa-- = *p++;}
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Little Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)(u32); *((UINT8 *)(p)+1) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+3) = (UINT8)((u32) >> 24);}
+#define UINT24_TO_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)(u24); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u24) >> 16);}
+#define UINT16_TO_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)(u16); *((UINT8 *)(p)+1) = (UINT8)((u16) >> 8);}
+#define UINT8_TO_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Big Endian format)
+*/
+#define UINT32_TO_BE_STREAM(p, u32) {*(p)++ = (UINT8)((u32) >> 24);  *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)(u32); }
+#define UINT24_TO_BE_STREAM(p, u24) {*(p)++ = (UINT8)((u24) >> 16); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)(u24);}
+#define UINT16_TO_BE_STREAM(p, u16) {*(p)++ = (UINT8)((u16) >> 8); *(p)++ = (UINT8)(u16);}
+#define UINT8_TO_BE_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define ARRAY_TO_BE_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[ijk];}
+
+#define BE_STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define BE_STREAM_TO_UINT16(u16, p) {u16 = (UINT16)(((UINT16)(*(p)) << 8) + (UINT16)(*((p) + 1))); (p) += 2;}
+#define BE_STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*((p) + 2))) + ((UINT32)(*((p) + 1)) << 8) + ((UINT32)(*(p)) << 16)); (p) += 3;}
+#define BE_STREAM_TO_UINT32(u32, p) {u32 = ((UINT32)(*((p) + 3)) + ((UINT32)(*((p) + 2)) << 8) + ((UINT32)(*((p) + 1)) << 16) + ((UINT32)(*(p)) << 24)); (p) += 4;}
+#define BE_STREAM_TO_ARRAY(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Big Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_BE_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)((u32) >> 24);  *((UINT8 *)(p)+1) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+3) = (UINT8)(u32); }
+#define UINT24_TO_BE_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)((u24) >> 16); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)(u24);}
+#define UINT16_TO_BE_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)((u16) >> 8); *((UINT8 *)(p)+1) = (UINT8)(u16);}
+#define UINT8_TO_BE_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/* Common Bluetooth field definitions */
+#define BD_ADDR_LEN     6                   /* Device address length */
+typedef UINT8 BD_ADDR[BD_ADDR_LEN];         /* Device address */
+typedef UINT8 *BD_ADDR_PTR;                 /* Pointer to Device Address */
+
+#define AMP_KEY_TYPE_GAMP       0
+#define AMP_KEY_TYPE_WIFI       1
+#define AMP_KEY_TYPE_UWB        2
+typedef UINT8 tAMP_KEY_TYPE;
+
+#define BT_OCTET8_LEN    8
+typedef UINT8 BT_OCTET8[BT_OCTET8_LEN];   /* octet array: size 16 */
+
+#define LINK_KEY_LEN    16
+typedef UINT8 LINK_KEY[LINK_KEY_LEN];       /* Link Key */
+
+#define AMP_LINK_KEY_LEN        32
+typedef UINT8 AMP_LINK_KEY[AMP_LINK_KEY_LEN];   /* Dedicated AMP and GAMP Link Keys */
+
+#define BT_OCTET16_LEN    16
+typedef UINT8 BT_OCTET16[BT_OCTET16_LEN];   /* octet array: size 16 */
+
+#define PIN_CODE_LEN    16
+typedef UINT8 PIN_CODE[PIN_CODE_LEN];       /* Pin Code (upto 128 bits) MSB is 0 */
+typedef UINT8 *PIN_CODE_PTR;                /* Pointer to Pin Code */
+
+#define DEV_CLASS_LEN   3
+typedef UINT8 DEV_CLASS[DEV_CLASS_LEN];     /* Device class */
+typedef UINT8 *DEV_CLASS_PTR;               /* Pointer to Device class */
+
+#define EXT_INQ_RESP_LEN   3
+typedef UINT8 EXT_INQ_RESP[EXT_INQ_RESP_LEN];/* Extended Inquiry Response */
+typedef UINT8 *EXT_INQ_RESP_PTR;             /* Pointer to Extended Inquiry Response */
+
+#define BD_NAME_LEN     248
+typedef UINT8 BD_NAME[BD_NAME_LEN];         /* Device name */
+typedef UINT8 *BD_NAME_PTR;                 /* Pointer to Device name */
+
+#define BD_FEATURES_LEN 8
+typedef UINT8 BD_FEATURES[BD_FEATURES_LEN]; /* LMP features supported by device */
+
+#define BT_EVENT_MASK_LEN  8
+typedef UINT8 BT_EVENT_MASK[BT_EVENT_MASK_LEN];   /* Event Mask */
+
+#define LAP_LEN         3
+typedef UINT8 LAP[LAP_LEN];                 /* IAC as passed to Inquiry (LAP) */
+typedef UINT8 INQ_LAP[LAP_LEN];             /* IAC as passed to Inquiry (LAP) */
+
+#define RAND_NUM_LEN    16
+typedef UINT8 RAND_NUM[RAND_NUM_LEN];
+
+#define ACO_LEN         12
+typedef UINT8 ACO[ACO_LEN];                 /* Authenticated ciphering offset */
+
+#define COF_LEN         12
+typedef UINT8 COF[COF_LEN];                 /* ciphering offset number */
+
+typedef struct {
+    UINT8               qos_flags;          /* TBD */
+    UINT8               service_type;       /* see below */
+    UINT32              token_rate;         /* bytes/second */
+    UINT32              token_bucket_size;  /* bytes */
+    UINT32              peak_bandwidth;     /* bytes/second */
+    UINT32              latency;            /* microseconds */
+    UINT32              delay_variation;    /* microseconds */
+} FLOW_SPEC;
+
+/* Values for service_type */
+#define NO_TRAFFIC      0
+#define BEST_EFFORT     1
+#define GUARANTEED      2
+
+/* Service class of the CoD */
+#define SERV_CLASS_NETWORKING               (1 << 1)
+#define SERV_CLASS_RENDERING                (1 << 2)
+#define SERV_CLASS_CAPTURING                (1 << 3)
+#define SERV_CLASS_OBJECT_TRANSFER          (1 << 4)
+#define SERV_CLASS_OBJECT_AUDIO             (1 << 5)
+#define SERV_CLASS_OBJECT_TELEPHONY         (1 << 6)
+#define SERV_CLASS_OBJECT_INFORMATION       (1 << 7)
+
+/* Second byte */
+#define SERV_CLASS_LIMITED_DISC_MODE        (0x20)
+
+/* Field size definitions. Note that byte lengths are rounded up. */
+#define ACCESS_CODE_BIT_LEN             72
+#define ACCESS_CODE_BYTE_LEN            9
+#define SHORTENED_ACCESS_CODE_BIT_LEN   68
+
+typedef UINT8 ACCESS_CODE[ACCESS_CODE_BYTE_LEN];
+
+#define SYNTH_TX                1           /* want synth code to TRANSMIT at this freq */
+#define SYNTH_RX                2           /* want synth code to RECEIVE at this freq */
+
+#define SYNC_REPS 1             /* repeats of sync word transmitted to start of burst */
+
+/* Bluetooth CLK27 */
+#define BT_CLK27            (2 << 26)
+
+/* Bluetooth CLK12 is 1.28 sec */
+#define BT_CLK12_TO_MS(x)    ((x) * 1280)
+#define BT_MS_TO_CLK12(x)    ((x) / 1280)
+#define BT_CLK12_TO_SLOTS(x) ((x) << 11)
+
+/* Bluetooth CLK is 0.625 msec */
+#define BT_CLK_TO_MS(x)      (((x) * 5 + 3) / 8)
+#define BT_MS_TO_CLK(x)      (((x) * 8 + 2) / 5)
+
+#define BT_CLK_TO_MICROSECS(x)  (((x) * 5000 + 3) / 8)
+#define BT_MICROSECS_TO_CLK(x)  (((x) * 8 + 2499) / 5000)
+
+/* Maximum UUID size - 16 bytes, and structure to hold any type of UUID. */
+#define MAX_UUID_SIZE              16
+typedef struct
+{
+#define LEN_UUID_16     2
+#define LEN_UUID_32     4
+#define LEN_UUID_128    16
+
+    UINT16          len;
+
+    union
+    {
+        UINT16      uuid16;
+        UINT32      uuid32;
+        UINT8       uuid128[MAX_UUID_SIZE];
+    } uu;
+
+} tBT_UUID;
+
+#define BT_EIR_FLAGS_TYPE                   0x01
+#define BT_EIR_MORE_16BITS_UUID_TYPE        0x02
+#define BT_EIR_COMPLETE_16BITS_UUID_TYPE    0x03
+#define BT_EIR_MORE_32BITS_UUID_TYPE        0x04
+#define BT_EIR_COMPLETE_32BITS_UUID_TYPE    0x05
+#define BT_EIR_MORE_128BITS_UUID_TYPE       0x06
+#define BT_EIR_COMPLETE_128BITS_UUID_TYPE   0x07
+#define BT_EIR_SHORTENED_LOCAL_NAME_TYPE    0x08
+#define BT_EIR_COMPLETE_LOCAL_NAME_TYPE     0x09
+#define BT_EIR_TX_POWER_LEVEL_TYPE          0x0A
+#define BT_EIR_OOB_BD_ADDR_TYPE             0x0C
+#define BT_EIR_OOB_COD_TYPE                 0x0D
+#define BT_EIR_OOB_SSP_HASH_C_TYPE          0x0E
+#define BT_EIR_OOB_SSP_RAND_R_TYPE          0x0F
+#define BT_EIR_MANUFACTURER_SPECIFIC_TYPE   0xFF
+
+#define BT_OOB_COD_SIZE            3
+#define BT_OOB_HASH_C_SIZE         16
+#define BT_OOB_RAND_R_SIZE         16
+
+/* Broadcom proprietary UUIDs and reserved PSMs
+**
+** The lowest 4 bytes byte of the UUID or GUID depends on the feature. Typically,
+** the value of those bytes will be the PSM or SCN, but it is up to the features.
+*/
+#define BRCM_PROPRIETARY_UUID_BASE  0xDA, 0x23, 0x41, 0x02, 0xA3, 0xBB, 0xC1, 0x71, 0xBA, 0x09, 0x6f, 0x21
+#define BRCM_PROPRIETARY_GUID_BASE  0xda23, 0x4102, 0xa3, 0xbb, 0xc1, 0x71, 0xba, 0x09, 0x6f, 0x21
+
+/* We will not allocate a PSM in the reserved range to 3rd party apps
+*/
+#define BRCM_RESERVED_PSM_START	    0x5AE1
+#define BRCM_RESERVED_PSM_END	    0x5AFF
+
+#define BRCM_UTILITY_SERVICE_PSM    0x5AE1
+#define BRCM_MATCHER_PSM            0x5AE3
+
+/* Connection statistics
+*/
+
+/* Structure to hold connection stats */
+#ifndef BT_CONN_STATS_DEFINED
+#define BT_CONN_STATS_DEFINED
+
+/* These bits are used in the bIsConnected field */
+#define BT_CONNECTED_USING_BREDR   1
+#define BT_CONNECTED_USING_AMP     2
+
+typedef struct
+{
+    UINT32   is_connected;
+    INT32    rssi;
+    UINT32   bytes_sent;
+    UINT32   bytes_rcvd;
+    UINT32   duration;
+} tBT_CONN_STATS;
+
+#endif
+
+
+/*****************************************************************************
+**                          Low Energy definitions
+**
+** Address types
+*/
+#define BLE_ADDR_PUBLIC         0x00
+#define BLE_ADDR_RANDOM         0x01
+#define BLE_ADDR_TYPE_MASK      (BLE_ADDR_RANDOM | BLE_ADDR_PUBLIC)
+typedef UINT8 tBLE_ADDR_TYPE;
+
+#define BLE_ADDR_IS_STATIC(x)   ((x[0] & 0xC0) == 0xC0)
+
+typedef struct
+{
+    tBLE_ADDR_TYPE      type;
+    BD_ADDR             bda;
+} tBLE_BD_ADDR;
+
+/* Device Types
+*/
+#define BT_DEVICE_TYPE_BREDR   0x01
+#define BT_DEVICE_TYPE_BLE     0x02
+#define BT_DEVICE_TYPE_DUMO    0x03
+typedef UINT8 tBT_DEVICE_TYPE;
+/*****************************************************************************/
+
+
+/* Define trace levels */
+#define BT_TRACE_LEVEL_NONE    0          /* No trace messages to be generated    */
+#define BT_TRACE_LEVEL_ERROR   1          /* Error condition trace messages       */
+#define BT_TRACE_LEVEL_WARNING 2          /* Warning condition trace messages     */
+#define BT_TRACE_LEVEL_API     3          /* API traces                           */
+#define BT_TRACE_LEVEL_EVENT   4          /* Debug messages for events            */
+#define BT_TRACE_LEVEL_DEBUG   5          /* Full debug messages                  */
+#define BT_TRACE_LEVEL_VERBOSE 6          /* Verbose debug messages               */
+
+#define MAX_TRACE_LEVEL        6
+
+
+/* Define New Trace Type Definition */
+/* TRACE_CTRL_TYPE                  0x^^000000*/
+#define TRACE_CTRL_MASK             0xff000000
+#define TRACE_GET_CTRL(x)           ((((UINT32)(x)) & TRACE_CTRL_MASK) >> 24)
+
+#define TRACE_CTRL_GENERAL          0x00000000
+#define TRACE_CTRL_STR_RESOURCE     0x01000000
+#define TRACE_CTRL_SEQ_FLOW         0x02000000
+#define TRACE_CTRL_MAX_NUM          3
+
+/* LAYER SPECIFIC                   0x00^^0000*/
+#define TRACE_LAYER_MASK            0x00ff0000
+#define TRACE_GET_LAYER(x)          ((((UINT32)(x)) & TRACE_LAYER_MASK) >> 16)
+
+#define TRACE_LAYER_NONE            0x00000000
+#define TRACE_LAYER_USB             0x00010000
+#define TRACE_LAYER_SERIAL          0x00020000
+#define TRACE_LAYER_SOCKET          0x00030000
+#define TRACE_LAYER_RS232           0x00040000
+#define TRACE_LAYER_TRANS_MAX_NUM   5
+#define TRACE_LAYER_TRANS_ALL       0x007f0000
+#define TRACE_LAYER_LC              0x00050000
+#define TRACE_LAYER_LM              0x00060000
+#define TRACE_LAYER_HCI             0x00070000
+#define TRACE_LAYER_L2CAP           0x00080000
+#define TRACE_LAYER_RFCOMM          0x00090000
+#define TRACE_LAYER_SDP             0x000a0000
+#define TRACE_LAYER_TCS             0x000b0000
+#define TRACE_LAYER_OBEX            0x000c0000
+#define TRACE_LAYER_BTM             0x000d0000
+#define TRACE_LAYER_GAP             0x000e0000
+#define TRACE_LAYER_DUN             0x000f0000
+#define TRACE_LAYER_GOEP            0x00100000
+#define TRACE_LAYER_ICP             0x00110000
+#define TRACE_LAYER_HSP2            0x00120000
+#define TRACE_LAYER_SPP             0x00130000
+#define TRACE_LAYER_CTP             0x00140000
+#define TRACE_LAYER_BPP             0x00150000
+#define TRACE_LAYER_HCRP            0x00160000
+#define TRACE_LAYER_FTP             0x00170000
+#define TRACE_LAYER_OPP             0x00180000
+#define TRACE_LAYER_BTU             0x00190000
+#define TRACE_LAYER_GKI             0x001a0000
+#define TRACE_LAYER_BNEP            0x001b0000
+#define TRACE_LAYER_PAN             0x001c0000
+#define TRACE_LAYER_HFP             0x001d0000
+#define TRACE_LAYER_HID             0x001e0000
+#define TRACE_LAYER_BIP             0x001f0000
+#define TRACE_LAYER_AVP             0x00200000
+#define TRACE_LAYER_A2D             0x00210000
+#define TRACE_LAYER_SAP             0x00220000
+#define TRACE_LAYER_AMP             0x00230000
+#define TRACE_LAYER_MCA             0x00240000
+#define TRACE_LAYER_ATT             0x00250000
+#define TRACE_LAYER_SMP             0x00260000
+#define TRACE_LAYER_NFC             0x00270000
+#define TRACE_LAYER_NCI             0x00280000
+#define TRACE_LAYER_IDEP            0x00290000
+#define TRACE_LAYER_NDEP            0x002a0000
+#define TRACE_LAYER_LLCP            0x002b0000
+#define TRACE_LAYER_RW              0x002c0000
+#define TRACE_LAYER_CE              0x002d0000
+#define TRACE_LAYER_SNEP            0x002e0000
+#define TRACE_LAYER_NDEF            0x002f0000
+#define TRACE_LAYER_NFA             0x00300000
+
+#define TRACE_LAYER_MAX_NUM         0x0031
+
+
+/* TRACE_ORIGINATOR                 0x0000^^00*/
+#define TRACE_ORG_MASK              0x0000ff00
+#define TRACE_GET_ORG(x)            ((((UINT32)(x)) & TRACE_ORG_MASK) >> 8)
+
+#define TRACE_ORG_STACK             0x00000000
+#define TRACE_ORG_HCI_TRANS         0x00000100
+#define TRACE_ORG_PROTO_DISP        0x00000200
+#define TRACE_ORG_RPC               0x00000300
+#define TRACE_ORG_GKI               0x00000400
+#define TRACE_ORG_APPL              0x00000500
+#define TRACE_ORG_SCR_WRAPPER       0x00000600
+#define TRACE_ORG_SCR_ENGINE        0x00000700
+#define TRACE_ORG_USER_SCR          0x00000800
+#define TRACE_ORG_TESTER            0x00000900
+#define TRACE_ORG_MAX_NUM           10          /* 32-bit mask; must be < 32 */
+#define TRACE_LITE_ORG_MAX_NUM		6
+#define TRACE_ORG_ALL               0x03ff
+#define TRACE_ORG_RPC_TRANS         0x04
+
+#define TRACE_ORG_REG               0x00000909
+#define TRACE_ORG_REG_SUCCESS       0x0000090a
+
+/* TRACE_TYPE                       0x000000^^*/
+#define TRACE_TYPE_MASK             0x000000ff
+#define TRACE_GET_TYPE(x)           (((UINT32)(x)) & TRACE_TYPE_MASK)
+
+#define TRACE_TYPE_ERROR            0x00000000
+#define TRACE_TYPE_WARNING          0x00000001
+#define TRACE_TYPE_API              0x00000002
+#define TRACE_TYPE_EVENT            0x00000003
+#define TRACE_TYPE_DEBUG            0x00000004
+#define TRACE_TYPE_STACK_ONLY_MAX   TRACE_TYPE_DEBUG
+#define TRACE_TYPE_TX               0x00000005
+#define TRACE_TYPE_RX               0x00000006
+#define TRACE_TYPE_DEBUG_ASSERT     0x00000007
+#define TRACE_TYPE_GENERIC          0x00000008
+#define TRACE_TYPE_REG              0x00000009
+#define TRACE_TYPE_REG_SUCCESS      0x0000000a
+#define TRACE_TYPE_CMD_TX           0x0000000b
+#define TRACE_TYPE_EVT_TX           0x0000000c
+#define TRACE_TYPE_ACL_TX           0x0000000d
+#define TRACE_TYPE_CMD_RX           0x0000000e
+#define TRACE_TYPE_EVT_RX           0x0000000f
+#define TRACE_TYPE_ACL_RX           0x00000010
+#define TRACE_TYPE_TARGET_TRACE     0x00000011
+#define TRACE_TYPE_SCO_TX           0x00000012
+#define TRACE_TYPE_SCO_RX           0x00000013
+
+
+#define TRACE_TYPE_MAX_NUM          20
+#define TRACE_TYPE_ALL              0xffff
+
+/* Define color for script type */
+#define SCR_COLOR_DEFAULT       0
+#define SCR_COLOR_TYPE_COMMENT  1
+#define SCR_COLOR_TYPE_COMMAND  2
+#define SCR_COLOR_TYPE_EVENT    3
+#define SCR_COLOR_TYPE_SELECT   4
+
+/* Define protocol trace flag values */
+#define SCR_PROTO_TRACE_HCI_SUMMARY 0x00000001
+#define SCR_PROTO_TRACE_HCI_DATA    0x00000002
+#define SCR_PROTO_TRACE_L2CAP       0x00000004
+#define SCR_PROTO_TRACE_RFCOMM      0x00000008
+#define SCR_PROTO_TRACE_SDP         0x00000010
+#define SCR_PROTO_TRACE_TCS         0x00000020
+#define SCR_PROTO_TRACE_OBEX        0x00000040
+#define SCR_PROTO_TRACE_OAPP        0x00000080 /* OBEX Application Profile */
+#define SCR_PROTO_TRACE_AMP         0x00000100
+#define SCR_PROTO_TRACE_BNEP        0x00000200
+#define SCR_PROTO_TRACE_AVP         0x00000400
+#define SCR_PROTO_TRACE_MCA         0x00000800
+#define SCR_PROTO_TRACE_ATT         0x00001000
+#define SCR_PROTO_TRACE_SMP         0x00002000
+#define SCR_PROTO_TRACE_NCI         0x00004000
+#define SCR_PROTO_TRACE_DEP         0x00008000
+#define SCR_PROTO_TRACE_LLCP        0x00010000
+#define SCR_PROTO_TRACE_NDEF        0x00020000
+#define SCR_PROTO_TRACE_TAGS        0x00040000
+#define SCR_PROTO_TRACE_ALL         0x0007ffff
+#define SCR_PROTO_TRACE_HCI_LOGGING_VSE 0x0800 /* Brcm vs event for logmsg and protocol traces */
+
+#define MAX_SCRIPT_TYPE             5
+
+#define TCS_PSM_INTERCOM        5
+#define TCS_PSM_CORDLESS        7
+#define BT_PSM_BNEP             0x000F
+/* Define PSMs HID uses */
+#define HID_PSM_CONTROL         0x0011
+#define HID_PSM_INTERRUPT       0x0013
+
+/* Define a function for logging */
+typedef void (BT_LOG_FUNC) (int trace_type, const char *fmt_str, ...);
+
+#endif
+/* end "revolution/BTE/stack/include/bt_types.h" */
+
+
+//------------------Added from Bluedroid buildcfg.h---------------------
+#ifndef UNV_INCLUDED
+#define UNV_INCLUDED FALSE
+#endif
+
+#ifndef GATT_PTS
+#define GATT_PTS FALSE
+#endif
+
+#ifndef L2CAP_INCLUDED
+#define L2CAP_INCLUDED TRUE
+#endif
+
+#ifndef L2CAP_EXTFEA_SUPPORTED_MASK
+#define L2CAP_EXTFEA_SUPPORTED_MASK (L2CAP_EXTFEA_ENH_RETRANS | L2CAP_EXTFEA_STREAM_MODE | L2CAP_EXTFEA_NO_CRC | L2CAP_EXTFEA_FIXED_CHNLS)
+#endif
+
+#ifndef BTUI_OPS_FORMATS
+#define BTUI_OPS_FORMATS (BTA_OP_VCARD21_MASK | BTA_OP_ANY_MASK)
+#endif
+
+#ifndef BTA_RFC_MTU_SIZE
+#define BTA_RFC_MTU_SIZE (L2CAP_MTU_SIZE-L2CAP_MIN_OFFSET-RFCOMM_DATA_OVERHEAD)
+#endif
+
+#ifndef BTA_DUN_MTU
+#define BTA_DUN_MTU BTA_RFC_MTU_SIZE
+#endif
+
+#ifndef BTA_SPP_MTU
+#define BTA_SPP_MTU BTA_RFC_MTU_SIZE
+#endif
+
+#ifndef BTA_FAX_MTU
+#define BTA_FAX_MTU BTA_RFC_MTU_SIZE
+#endif
+
+#ifndef SDP_RAW_PDU_INCLUDED
+#define SDP_RAW_PDU_INCLUDED  TRUE
+#endif
+
+#ifndef GATTS_APPU_USE_GATT_TRACE
+#define GATTS_APPU_USE_GATT_TRACE FALSE
+#endif
+
+#ifndef SMP_HOST_ENCRYPT_INCLUDED
+#define SMP_HOST_ENCRYPT_INCLUDED FALSE
+#endif
+
+#ifndef SAP_INCLUDED
+#define SAP_INCLUDED FALSE
+#endif
+
+#ifndef SBC_NO_PCM_CPY_OPTION
+#define SBC_NO_PCM_CPY_OPTION FALSE
+#endif
+
+#ifndef SBC_IPAQ_OPT
+#define SBC_IPAQ_OPT FALSE
+#endif
+
+#ifndef SBC_IS_64_MULT_IN_QUANTIZER
+#define SBC_IS_64_MULT_IN_QUANTIZER FALSE
+#endif
+
+#ifndef BTA_INCLUDED
+#define BTA_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AG_INCLUDED
+#define BTA_AG_INCLUDED  TRUE
+#endif
+
+#ifndef BTA_CT_INCLUDED
+#define BTA_CT_INCLUDED  FALSE
+#endif
+
+#ifndef BTA_CG_INCLUDED
+#define BTA_CG_INCLUDED  FALSE
+#endif
+
+#ifndef BTA_DG_INCLUDED
+#define BTA_DG_INCLUDED  FALSE
+#endif
+
+#ifndef BTA_FT_INCLUDED
+#define BTA_FT_INCLUDED FALSE
+#endif
+
+#ifndef BTA_OP_INCLUDED
+#define BTA_OP_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PR_INCLUDED
+#define BTA_PR_INCLUDED FALSE
+#endif
+
+#ifndef BTA_SS_INCLUDED
+#define BTA_SS_INCLUDED FALSE
+#endif
+
+#ifndef BTA_DM_INCLUDED
+#define BTA_DM_INCLUDED TRUE
+#endif
+
+
+#ifndef BTA_DI_INCLUDED
+#define BTA_DI_INCLUDED FALSE
+#endif
+
+#ifndef BTA_BI_INCLUDED
+#define BTA_BI_INCLUDED FALSE
+#endif
+
+#ifndef BTA_SC_INCLUDED
+#define BTA_SC_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PAN_INCLUDED
+#define BTA_PAN_INCLUDED TRUE
+#endif
+
+#ifndef BTA_FS_INCLUDED
+#define BTA_FS_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AC_INCLUDED
+#define BTA_AC_INCLUDED FALSE
+#endif
+
+#ifndef BTA_HD_INCLUDED
+#define BTA_HD_INCLUDED FALSE
+#endif
+
+#ifndef BTA_HH_INCLUDED
+#define BTA_HH_INCLUDED TRUE
+#endif
+
+#ifndef BTA_HH_ROLE
+#define BTA_HH_ROLE BTA_MASTER_ROLE_PREF
+#endif
+
+#ifndef BTA_AR_INCLUDED
+#define BTA_AR_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AV_INCLUDED
+#define BTA_AV_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AV_VDP_INCLUDED
+#define BTA_AV_VDP_INCLUDED FALSE
+#endif
+
+#ifndef BTA_AVK_INCLUDED
+#define BTA_AVK_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PBS_INCLUDED
+#define BTA_PBS_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PBC_INCLUDED
+#define BTA_PBC_INCLUDED FALSE
+#endif
+
+#ifndef BTA_FM_INCLUDED
+#define BTA_FM_INCLUDED FALSE
+#endif
+
+#ifndef BTA_FM_DEBUG
+#define BTA_FM_DEBUG FALSE
+#endif
+
+#ifndef BTA_FMTX_INCLUDED
+#define BTA_FMTX_INCLUDED FALSE
+#endif
+
+#ifndef BTA_FMTX_DEBUG
+#define BTA_FMTX_DEBUG FALSE
+#endif
+
+#ifndef BTA_FMTX_FMRX_SWITCH_WORKAROUND
+#define BTA_FMTX_FMRX_SWITCH_WORKAROUND FALSE
+#endif
+
+#ifndef BTA_FMTX_US_FCC_RULES
+#define BTA_FMTX_US_FCC_RULES FALSE
+#endif
+
+#ifndef BTA_HS_INCLUDED
+#define BTA_HS_INCLUDED FALSE
+#endif
+
+#ifndef BTA_MSE_INCLUDED
+#define BTA_MSE_INCLUDED FALSE
+#endif
+
+#ifndef BTA_MCE_INCLUDED
+#define BTA_MCE_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PLAYBACK_INCLUDED
+#define BTA_PLAYBACK_INCLUDED FALSE
+#endif
+
+#ifndef BTA_SSR_INCLUDED
+#define BTA_SSR_INCLUDED FALSE
+#endif
+
+#ifndef BTA_JV_INCLUDED
+#define BTA_JV_INCLUDED FALSE
+#endif
+
+#ifndef BTA_GATT_INCLUDED
+#define BTA_GATT_INCLUDED FALSE
+#endif
+
+#ifndef BTA_DISABLE_DELAY
+#define BTA_DISABLE_DELAY 200 /* in milliseconds */
+#endif
+
+#ifndef RPC_TRACE_ONLY
+#define RPC_TRACE_ONLY  FALSE
+#endif
+
+#ifndef ANDROID_APP_INCLUDED
+#define ANDROID_APP_INCLUDED  TRUE
+#endif
+
+#ifndef ANDROID_USE_LOGCAT
+#define ANDROID_USE_LOGCAT  TRUE
+#endif
+
+#ifndef LINUX_GKI_INCLUDED
+#define LINUX_GKI_INCLUDED  TRUE
+#endif
+
+#ifndef BTA_SYS_TIMER_PERIOD
+#define BTA_SYS_TIMER_PERIOD  100
+#endif
+
+#ifndef GKI_SHUTDOWN_EVT
+#define GKI_SHUTDOWN_EVT  APPL_EVT_7
+#endif
+
+#ifndef GKI_PTHREAD_JOINABLE
+#define GKI_PTHREAD_JOINABLE  TRUE
+#endif
+
+#ifndef LINUX_DRV_INCLUDED
+#define LINUX_DRV_INCLUDED  TRUE
+#endif
+
+#ifndef LINUX_OS
+#define LINUX_OS  TRUE
+#endif
+
+#ifndef BTM_APP_DEV_INIT
+#define BTM_APP_DEV_INIT  bte_main_post_reset_init
+#endif
+
+#ifndef SBC_FOR_EMBEDDED_LINUX
+#define SBC_FOR_EMBEDDED_LINUX TRUE
+#endif
+
+#ifndef BTA_DM_REMOTE_DEVICE_NAME_LENGTH
+#define BTA_DM_REMOTE_DEVICE_NAME_LENGTH 248
+#endif
+
+#ifndef AVDT_VERSION
+#define AVDT_VERSION  0x0102
+#endif
+
+#ifndef BTA_AG_AT_MAX_LEN
+#define BTA_AG_AT_MAX_LEN  512
+#endif
+
+#ifndef BTA_AVRCP_FF_RW_SUPPORT
+#define BTA_AVRCP_FF_RW_SUPPORT TRUE
+#endif
+
+#ifndef BTA_AG_SCO_PKT_TYPES
+#define BTA_AG_SCO_PKT_TYPES  (BTM_SCO_LINK_ONLY_MASK | BTM_SCO_PKT_TYPES_MASK_EV3 |  BTM_SCO_PKT_TYPES_MASK_NO_3_EV3 | BTM_SCO_PKT_TYPES_MASK_NO_2_EV5 | BTM_SCO_PKT_TYPES_MASK_NO_3_EV5)
+#endif
+
+#ifndef BTA_AV_MAX_A2DP_MTU
+#define BTA_AV_MAX_A2DP_MTU  668
+#endif
+
+#ifndef BTA_AV_RET_TOUT
+#define BTA_AV_RET_TOUT 15
+#endif
+
+#ifndef PORCHE_PAIRING_CONFLICT
+#define PORCHE_PAIRING_CONFLICT  TRUE
+#endif
+
+#ifndef BTA_AV_CO_CP_SCMS_T
+#define BTA_AV_CO_CP_SCMS_T  FALSE
+#endif
+
+#ifndef AVDT_CONNECT_CP_ONLY
+#define AVDT_CONNECT_CP_ONLY  FALSE
+#endif
+
+#ifndef BT_TRACE_PROTOCOL
+#define BT_TRACE_PROTOCOL  TRUE
+#endif
+
+#ifndef BT_USE_TRACES
+#define BT_USE_TRACES  TRUE
+#endif
+
+#ifndef BT_TRACE_BTIF
+#define BT_TRACE_BTIF  TRUE
+#endif
+
+#ifndef BTTRC_INCLUDED
+#define BTTRC_INCLUDED  FALSE
+#endif
+
+#ifndef BT_TRACE_VERBOSE
+#define BT_TRACE_VERBOSE  FALSE
+#endif
+
+#ifndef BTTRC_PARSER_INCLUDED
+#define BTTRC_PARSER_INCLUDED  FALSE
+#endif
+
+#ifndef MAX_TRACE_RAM_SIZE
+#define MAX_TRACE_RAM_SIZE  10000
+#endif
+
+#ifndef OBX_INITIAL_TRACE_LEVEL
+#define OBX_INITIAL_TRACE_LEVEL  BT_TRACE_LEVEL_ERROR
+#endif
+
+#ifndef PBAP_ZERO_VCARD_IN_DB
+#define PBAP_ZERO_VCARD_IN_DB  FALSE
+#endif
+
+#ifndef BTA_DM_SDP_DB_SIZE
+#define BTA_DM_SDP_DB_SIZE  8000
+#endif
+
+#ifndef FTS_REJECT_INVALID_OBEX_SET_PATH_REQ
+#define FTS_REJECT_INVALID_OBEX_SET_PATH_REQ FALSE
+#endif
+
+#ifndef HL_INCLUDED
+#define HL_INCLUDED  TRUE
+#endif
+
+#ifndef NO_GKI_RUN_RETURN
+#define NO_GKI_RUN_RETURN  TRUE
+#endif
+
+#ifndef AG_VOICE_SETTINGS
+#define AG_VOICE_SETTINGS  HCI_DEFAULT_VOICE_SETTINGS
+#endif
+
+#ifndef BTIF_DM_OOB_TEST
+#define BTIF_DM_OOB_TEST  TRUE
+#endif
+//------------------End added from Bluedroid buildcfg.h---------------------
+
+
+
+/* #define BYPASS_AVDATATRACE */
+
+/******************************************************************************
+**
+** Platform-Specific
+**
+******************************************************************************/
+
+/* API macros for simulator */
+
+#define BTAPI
+
+#ifndef BTE_BSE_WRAPPER
+#ifdef  BTE_SIM_APP
+#undef  BTAPI
+#define BTAPI         __declspec(dllexport)
+#endif
+#endif
+
+#define BT_API          BTAPI
+#define BTU_API         BTAPI
+#define A2D_API         BTAPI
+#define VDP_API         BTAPI
+#define AVDT_API        BTAPI
+#define AVCT_API        BTAPI
+#define AVRC_API        BTAPI
+#define BIP_API         BTAPI
+#define BNEP_API        BTAPI
+#define BPP_API         BTAPI
+#define BTM_API         BTAPI
+#define CTP_API         BTAPI
+#define DUN_API         BTAPI
+#define FTP_API         BTAPI
+#define GAP_API         BTAPI
+#define GOEP_API        BTAPI
+#define HCI_API         BTAPI
+#define HCRP_API        BTAPI
+#define HID_API         BTAPI
+#define HFP_API         BTAPI
+#define HSP2_API        BTAPI
+#define ICP_API         BTAPI
+#define L2C_API         BTAPI
+#define OBX_API         BTAPI
+#define OPP_API         BTAPI
+#define PAN_API         BTAPI
+#define RFC_API         BTAPI
+#define RPC_API         BTAPI
+#define SDP_API         BTAPI
+#define SPP_API         BTAPI
+#define TCS_API         BTAPI
+#define XML_API         BTAPI
+#define BTA_API         BTAPI
+#define SBC_API         BTAPI
+#define MCE_API         BTAPI
+#define MCA_API         BTAPI
+#define GATT_API        BTAPI
+#define SMP_API         BTAPI
+
+
+/******************************************************************************
+**
+** GKI Buffer Pools
+**
+******************************************************************************/
+
+/* Receives HCI events from the lower-layer. */
+#ifndef HCI_CMD_POOL_ID
+#define HCI_CMD_POOL_ID             GKI_POOL_ID_2
+#endif
+
+#ifndef HCI_CMD_POOL_BUF_SIZE
+#define HCI_CMD_POOL_BUF_SIZE       GKI_BUF2_SIZE
+#endif
+
+/* Receives ACL data packets from thelower-layer. */
+#ifndef HCI_ACL_POOL_ID
+#define HCI_ACL_POOL_ID             GKI_POOL_ID_3
+#endif
+
+#ifndef HCI_ACL_POOL_BUF_SIZE
+#define HCI_ACL_POOL_BUF_SIZE       GKI_BUF3_SIZE
+#endif
+
+/* Maximum number of buffers available for ACL receive data. */
+#ifndef HCI_ACL_BUF_MAX
+#define HCI_ACL_BUF_MAX             GKI_BUF3_MAX
+#endif
+
+/* Receives SCO data packets from the lower-layer. */
+#ifndef HCI_SCO_POOL_ID
+#define HCI_SCO_POOL_ID             GKI_POOL_ID_6
+#endif
+
+/* Not used. */
+#ifndef HCI_DATA_DESCR_POOL_ID
+#define HCI_DATA_DESCR_POOL_ID      GKI_POOL_ID_0
+#endif
+
+/* Sends SDP data packets. */
+#ifndef SDP_POOL_ID
+#define SDP_POOL_ID                 3
+#endif
+
+/* Sends RFCOMM command packets. */
+#ifndef RFCOMM_CMD_POOL_ID
+#define RFCOMM_CMD_POOL_ID          GKI_POOL_ID_2
+#endif
+
+#ifndef RFCOMM_CMD_POOL_BUF_SIZE
+#define RFCOMM_CMD_POOL_BUF_SIZE    GKI_BUF2_SIZE
+#endif
+
+/* Sends RFCOMM data packets. */
+#ifndef RFCOMM_DATA_POOL_ID
+#define RFCOMM_DATA_POOL_ID         GKI_POOL_ID_3
+#endif
+
+#ifndef RFCOMM_DATA_POOL_BUF_SIZE
+#define RFCOMM_DATA_POOL_BUF_SIZE   GKI_BUF3_SIZE
+#endif
+
+/* Sends L2CAP packets to the peer and HCI messages to the controller. */
+#ifndef L2CAP_CMD_POOL_ID
+#define L2CAP_CMD_POOL_ID           GKI_POOL_ID_2
+#endif
+
+/* Sends L2CAP segmented packets in ERTM mode */
+#ifndef L2CAP_FCR_TX_POOL_ID
+#define L2CAP_FCR_TX_POOL_ID        HCI_ACL_POOL_ID
+#endif
+
+/* Receives L2CAP segmented packets in ERTM mode */
+#ifndef L2CAP_FCR_RX_POOL_ID
+#define L2CAP_FCR_RX_POOL_ID        HCI_ACL_POOL_ID
+#endif
+
+/* Used by BTM when it sends HCI commands to the controller. */
+#ifndef BTM_CMD_POOL_ID
+#define BTM_CMD_POOL_ID             GKI_POOL_ID_2
+#endif
+
+/* Sends TCS messages. */
+#ifndef TCS_MSG_POOL_ID
+#define TCS_MSG_POOL_ID             GKI_POOL_ID_2
+#endif
+
+#ifndef OBX_CMD_POOL_SIZE
+#define OBX_CMD_POOL_SIZE           GKI_BUF2_SIZE
+#endif
+
+#ifndef OBX_LRG_DATA_POOL_SIZE
+#define OBX_LRG_DATA_POOL_SIZE      GKI_BUF4_SIZE
+#endif
+
+#ifndef OBX_LRG_DATA_POOL_ID
+#define OBX_LRG_DATA_POOL_ID        GKI_POOL_ID_4
+#endif
+
+/* Used for CTP discovery database. */
+#ifndef CTP_SDP_DB_POOL_ID
+#define CTP_SDP_DB_POOL_ID          GKI_POOL_ID_3
+#endif
+
+/* Used for CTP data exchange feature. */
+#ifndef CTP_DATA_EXCHG_POOL_ID
+#define CTP_DATA_EXCHG_POOL_ID      GKI_POOL_ID_2
+#endif
+
+/* Used to send data to L2CAP. */
+#ifndef GAP_DATA_POOL_ID
+#define GAP_DATA_POOL_ID            GKI_POOL_ID_3
+#endif
+
+/* Used for SPP inquiry and discovery databases. */
+#ifndef SPP_DB_POOL_ID
+#define SPP_DB_POOL_ID              GKI_POOL_ID_3
+#endif
+
+#ifndef SPP_DB_SIZE
+#define SPP_DB_SIZE                 GKI_BUF3_SIZE
+#endif
+
+/* HCRP protocol and internal commands. */
+#ifndef HCRP_CMD_POOL_ID
+#define HCRP_CMD_POOL_ID            GKI_POOL_ID_2
+#endif
+
+#ifndef HCRP_CMD_POOL_SIZE
+#define HCRP_CMD_POOL_SIZE          GKI_BUF2_SIZE
+#endif
+
+#ifndef BIP_EVT_POOL_SIZE
+#define BIP_EVT_POOL_SIZE           GKI_BUF3_SIZE
+#endif
+
+#ifndef BIP_DB_SIZE
+#define BIP_DB_SIZE                 GKI_BUF3_SIZE
+#endif
+
+
+/* BNEP data and protocol messages. */
+#ifndef BNEP_POOL_ID
+#define BNEP_POOL_ID                GKI_POOL_ID_3
+#endif
+
+/* RPC pool for temporary trace message buffers. */
+#ifndef RPC_SCRATCH_POOL_ID
+#define RPC_SCRATCH_POOL_ID         GKI_POOL_ID_2
+#endif
+
+/* RPC scratch buffer size (not related to RPC_SCRATCH_POOL_ID) */
+#ifndef RPC_SCRATCH_BUF_SIZE
+#define RPC_SCRATCH_BUF_SIZE        GKI_BUF3_SIZE
+#endif
+
+/* RPC pool for protocol messages */
+#ifndef RPC_MSG_POOL_ID
+#define RPC_MSG_POOL_ID             GKI_POOL_ID_3
+#endif
+
+#ifndef RPC_MSG_POOL_SIZE
+#define RPC_MSG_POOL_SIZE           GKI_BUF3_SIZE
+#endif
+
+/* AVDTP pool for protocol messages */
+#ifndef AVDT_CMD_POOL_ID
+#define AVDT_CMD_POOL_ID            GKI_POOL_ID_2
+#endif
+
+/* AVDTP pool size for media packets in case of fragmentation */
+#ifndef AVDT_DATA_POOL_SIZE
+#define AVDT_DATA_POOL_SIZE         GKI_BUF3_SIZE
+#endif
+
+#ifndef PAN_POOL_ID
+#define PAN_POOL_ID                 GKI_POOL_ID_3
+#endif
+
+/* UNV pool for read/write serialization */
+#ifndef UNV_MSG_POOL_ID
+#define UNV_MSG_POOL_ID             GKI_POOL_ID_2
+#endif
+
+#ifndef UNV_MSG_POOL_SIZE
+#define UNV_MSG_POOL_SIZE           GKI_BUF2_SIZE
+#endif
+
+/* AVCTP pool for protocol messages */
+#ifndef AVCT_CMD_POOL_ID
+#define AVCT_CMD_POOL_ID            GKI_POOL_ID_1
+#endif
+
+#ifndef AVCT_META_CMD_POOL_ID
+#define AVCT_META_CMD_POOL_ID       GKI_POOL_ID_2
+#endif
+
+/* AVRCP pool for protocol messages */
+#ifndef AVRC_CMD_POOL_ID
+#define AVRC_CMD_POOL_ID            GKI_POOL_ID_1
+#endif
+
+/* AVRCP pool size for protocol messages */
+#ifndef AVRC_CMD_POOL_SIZE
+#define AVRC_CMD_POOL_SIZE          GKI_BUF1_SIZE
+#endif
+
+/* AVRCP Metadata pool for protocol messages */
+#ifndef AVRC_META_CMD_POOL_ID
+#define AVRC_META_CMD_POOL_ID       GKI_POOL_ID_2
+#endif
+
+/* AVRCP Metadata pool size for protocol messages */
+#ifndef AVRC_META_CMD_POOL_SIZE
+#define AVRC_META_CMD_POOL_SIZE     GKI_BUF2_SIZE
+#endif
+
+
+/* AVRCP buffer size for browsing channel messages */
+#ifndef AVRC_BROWSE_POOL_SIZE
+#define AVRC_BROWSE_POOL_SIZE     GKI_MAX_BUF_SIZE
+#endif
+
+/*  HDP buffer size for the Pulse Oximeter  */
+#ifndef BTA_HL_LRG_DATA_POOL_SIZE
+#define BTA_HL_LRG_DATA_POOL_SIZE      GKI_BUF7_SIZE
+#endif
+
+#ifndef BTA_HL_LRG_DATA_POOL_ID
+#define BTA_HL_LRG_DATA_POOL_ID        GKI_POOL_ID_7
+#endif
+
+/* GATT Server Database pool ID */
+#ifndef GATT_DB_POOL_ID
+#define GATT_DB_POOL_ID                 GKI_POOL_ID_8
+#endif
+
+/******************************************************************************
+**
+** Lower Layer Interface
+**
+******************************************************************************/
+
+/* Sends ACL data received over HCI to the upper stack. */
+#ifndef HCI_ACL_DATA_TO_UPPER
+#define HCI_ACL_DATA_TO_UPPER(p)    {((BT_HDR *)p)->event = BT_EVT_TO_BTU_HCI_ACL; GKI_send_msg (BTU_TASK, BTU_HCI_RCV_MBOX, p);}
+#endif
+
+/* Sends SCO data received over HCI to the upper stack. */
+#ifndef HCI_SCO_DATA_TO_UPPER
+#define HCI_SCO_DATA_TO_UPPER(p)    {((BT_HDR *)p)->event = BT_EVT_TO_BTU_HCI_SCO; GKI_send_msg (BTU_TASK, BTU_HCI_RCV_MBOX, p);}
+#endif
+
+/* Sends an HCI event received over HCI to theupper stack. */
+#ifndef HCI_EVT_TO_UPPER
+#define HCI_EVT_TO_UPPER(p)         {((BT_HDR *)p)->event = BT_EVT_TO_BTU_HCI_EVT; GKI_send_msg (BTU_TASK, BTU_HCI_RCV_MBOX, p);}
+#endif
+
+/* Macro for allocating buffer for HCI commands */
+#ifndef HCI_GET_CMD_BUF
+#if (!defined(HCI_USE_VARIABLE_SIZE_CMD_BUF) || (HCI_USE_VARIABLE_SIZE_CMD_BUF == FALSE))
+/* Allocate fixed-size buffer from HCI_CMD_POOL (default case) */
+#define HCI_GET_CMD_BUF(paramlen)    ((BT_HDR *)GKI_getpoolbuf (HCI_CMD_POOL_ID))
+#else
+/* Allocate smallest possible buffer (for platforms with limited RAM) */
+#define HCI_GET_CMD_BUF(paramlen)    ((BT_HDR *)GKI_getbuf ((UINT16)(BT_HDR_SIZE + HCIC_PREAMBLE_SIZE + (paramlen))))
+#endif
+#endif  /* HCI_GET_CMD_BUF */
+
+/******************************************************************************
+**
+** HCI Services (H4)
+**
+******************************************************************************/
+#ifndef HCISU_H4_INCLUDED
+#define HCISU_H4_INCLUDED               TRUE
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+BT_API extern void bte_main_hci_send (BT_HDR *p_msg, UINT16 event);
+#if (HCISU_H4_INCLUDED == TRUE)
+BT_API extern void bte_main_lpm_allow_bt_device_sleep(void);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+/* Sends ACL data received from the upper stack to the BD/EDR HCI transport. */
+#ifndef HCI_ACL_DATA_TO_LOWER
+#define HCI_ACL_DATA_TO_LOWER(p)    bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_HCI_ACL);
+#endif
+
+#ifndef HCI_BLE_ACL_DATA_TO_LOWER
+#define HCI_BLE_ACL_DATA_TO_LOWER(p)    bte_main_hci_send((BT_HDR *)(p), (UINT16)(BT_EVT_TO_LM_HCI_ACL|LOCAL_BLE_CONTROLLER_ID));
+#endif
+
+/* Sends SCO data received from the upper stack to the HCI transport. */
+#ifndef HCI_SCO_DATA_TO_LOWER
+#define HCI_SCO_DATA_TO_LOWER(p)    bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_HCI_SCO);
+#endif
+
+/* Sends an HCI command received from the upper stack to the BD/EDR HCI transport. */
+#ifndef HCI_CMD_TO_LOWER
+#define HCI_CMD_TO_LOWER(p)         bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_HCI_CMD);
+#endif
+
+/* Sends an LM Diagnosic command received from the upper stack to the HCI transport. */
+#ifndef HCI_LM_DIAG_TO_LOWER
+#define HCI_LM_DIAG_TO_LOWER(p)     bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_DIAG);
+#endif
+
+/* Send HCISU a message to allow BT sleep */
+#ifndef HCI_LP_ALLOW_BT_DEVICE_SLEEP
+#define HCI_LP_ALLOW_BT_DEVICE_SLEEP()       bte_main_lpm_allow_bt_device_sleep()
+#endif
+
+/* If nonzero, the upper-layer sends at most this number of HCI commands to the lower-layer. */
+#ifndef HCI_MAX_SIMUL_CMDS
+#define HCI_MAX_SIMUL_CMDS          0
+#endif
+
+/* Timeout for receiving response to HCI command */
+#ifndef BTU_CMD_CMPL_TIMEOUT
+#define BTU_CMD_CMPL_TIMEOUT        8
+#endif
+
+/* If TRUE, BTU task will check HCISU again when HCI command timer expires */
+#ifndef BTU_CMD_CMPL_TOUT_DOUBLE_CHECK
+#define BTU_CMD_CMPL_TOUT_DOUBLE_CHECK      FALSE
+#endif
+
+/* Use 2 second for low-resolution systems, override to 1 for high-resolution systems */
+#ifndef BT_1SEC_TIMEOUT
+#define BT_1SEC_TIMEOUT             (2)
+#endif
+
+/* Quick Timer */
+/* if L2CAP_FCR_INCLUDED is TRUE then it should have 100 millisecond resolution */
+/* if none of them is included then QUICK_TIMER_TICKS_PER_SEC is set to 0 to exclude quick timer */
+#ifndef QUICK_TIMER_TICKS_PER_SEC
+#define QUICK_TIMER_TICKS_PER_SEC   10       /* 10ms timer */
+#endif
+
+/******************************************************************************
+**
+** BTM
+**
+******************************************************************************/
+/* if set to TRUE, stack will automatically send an HCI reset at start-up. To be
+set to FALSE for advanced start-up / shut-down procedures using USER_HW_ENABLE_API
+and USER_HW_DISABLE_API macros */
+#ifndef BTM_AUTOMATIC_HCI_RESET
+#define BTM_AUTOMATIC_HCI_RESET      FALSE
+#endif
+
+/* Include BTM Discovery database and code. */
+#ifndef BTM_DISCOVERY_INCLUDED
+#define BTM_DISCOVERY_INCLUDED      TRUE
+#endif
+
+/* Include inquiry code. */
+#ifndef BTM_INQUIRY_INCLUDED
+#define BTM_INQUIRY_INCLUDED        TRUE
+#endif
+
+/* Cancel Inquiry on incoming SSP */
+#ifndef BTM_NO_SSP_ON_INQUIRY
+#define BTM_NO_SSP_ON_INQUIRY       FALSE
+#endif
+
+/* Include periodic inquiry code (used when BTM_INQUIRY_INCLUDED is TRUE). */
+#ifndef BTM_PERIODIC_INQ_INCLUDED
+#define BTM_PERIODIC_INQ_INCLUDED   TRUE
+#endif
+
+/* Include security authorization code */
+#ifndef BTM_AUTHORIZATION_INCLUDED
+#define BTM_AUTHORIZATION_INCLUDED  TRUE
+#endif
+
+/* Includes SCO if TRUE */
+#ifndef BTM_SCO_INCLUDED
+#define BTM_SCO_INCLUDED            TRUE       /* TRUE includes SCO code */
+#endif
+
+/* Includes SCO if TRUE */
+#ifndef BTM_SCO_HCI_INCLUDED
+#define BTM_SCO_HCI_INCLUDED            FALSE       /* TRUE includes SCO over HCI code */
+#endif
+
+/* Includes WBS if TRUE */
+#ifndef BTM_WBS_INCLUDED
+#define BTM_WBS_INCLUDED            FALSE       /* TRUE includes WBS code */
+#endif
+
+/* Includes PCM2 support if TRUE */
+#ifndef BTM_PCM2_INCLUDED
+#define BTM_PCM2_INCLUDED           FALSE
+#endif
+
+/*  This is used to work around a controller bug that doesn't like Disconnect
+**  issued while there is a role switch in progress
+*/
+#ifndef BTM_DISC_DURING_RS
+#define BTM_DISC_DURING_RS TRUE
+#endif
+
+/**************************
+** Initial SCO TX credit
+*************************/
+/* max TX SCO data packet size */
+#ifndef BTM_SCO_DATA_SIZE_MAX
+#define BTM_SCO_DATA_SIZE_MAX       240
+#endif
+
+/* maximum BTM buffering capacity */
+#ifndef BTM_SCO_MAX_BUF_CAP
+#define BTM_SCO_MAX_BUF_CAP     (BTM_SCO_INIT_XMIT_CREDIT * 4)
+#endif
+
+/* The size in bytes of the BTM inquiry database. */
+#ifndef BTM_INQ_DB_SIZE
+#define BTM_INQ_DB_SIZE             40
+#endif
+
+/* This is set to enable automatic periodic inquiry at startup. */
+#ifndef BTM_ENABLE_AUTO_INQUIRY
+#define BTM_ENABLE_AUTO_INQUIRY     FALSE
+#endif
+
+/* This is set to always try to acquire the remote device name. */
+#ifndef BTM_INQ_GET_REMOTE_NAME
+#define BTM_INQ_GET_REMOTE_NAME     FALSE
+#endif
+
+/* The inquiry duration in 1.28 second units when auto inquiry is enabled. */
+#ifndef BTM_DEFAULT_INQ_DUR
+#define BTM_DEFAULT_INQ_DUR         5
+#endif
+
+/* The inquiry mode when auto inquiry is enabled. */
+#ifndef BTM_DEFAULT_INQ_MODE
+#define BTM_DEFAULT_INQ_MODE        BTM_GENERAL_INQUIRY
+#endif
+
+/* The default periodic inquiry maximum delay when auto inquiry is enabled, in 1.28 second units. */
+#ifndef BTM_DEFAULT_INQ_MAX_DELAY
+#define BTM_DEFAULT_INQ_MAX_DELAY   30
+#endif
+
+/* The default periodic inquiry minimum delay when auto inquiry is enabled, in 1.28 second units. */
+#ifndef BTM_DEFAULT_INQ_MIN_DELAY
+#define BTM_DEFAULT_INQ_MIN_DELAY   20
+#endif
+
+/* The maximum age of entries in inquiry database in seconds ('0' disables feature). */
+#ifndef BTM_INQ_MAX_AGE
+#define BTM_INQ_MAX_AGE             0
+#endif
+
+/* The maximum age of entries in inquiry database based on inquiry response failure ('0' disables feature). */
+#ifndef BTM_INQ_AGE_BY_COUNT
+#define BTM_INQ_AGE_BY_COUNT        0
+#endif
+
+/* TRUE if controller does not support inquiry event filtering. */
+#ifndef BTM_BYPASS_EVENT_FILTERING
+#define BTM_BYPASS_EVENT_FILTERING  FALSE
+#endif
+
+/* TRUE if inquiry filtering is desired from BTM. */
+#ifndef BTM_USE_INQ_RESULTS_FILTER
+#define BTM_USE_INQ_RESULTS_FILTER  TRUE
+#endif
+
+/* The default scan mode */
+#ifndef BTM_DEFAULT_SCAN_TYPE
+#define BTM_DEFAULT_SCAN_TYPE       BTM_SCAN_TYPE_INTERLACED
+#endif
+
+/* Should connections to unknown devices be allowed when not discoverable? */
+#ifndef BTM_ALLOW_CONN_IF_NONDISCOVER
+#define BTM_ALLOW_CONN_IF_NONDISCOVER   TRUE
+#endif
+
+/* When connectable mode is set to TRUE, the device will respond to paging. */
+#ifndef BTM_IS_CONNECTABLE
+#define BTM_IS_CONNECTABLE          FALSE
+#endif
+
+/* Sets the Page_Scan_Window:  the length of time that the device is performing a page scan. */
+#ifndef BTM_DEFAULT_CONN_WINDOW
+#define BTM_DEFAULT_CONN_WINDOW     0x0012
+#endif
+
+/* Sets the Page_Scan_Activity:  the interval between the start of two consecutive page scans. */
+#ifndef BTM_DEFAULT_CONN_INTERVAL
+#define BTM_DEFAULT_CONN_INTERVAL   0x0800
+#endif
+
+/* This is set to automatically perform inquiry scan on startup. */
+#ifndef BTM_IS_DISCOVERABLE
+#define BTM_IS_DISCOVERABLE         FALSE
+#endif
+
+/* When automatic inquiry scan is enabled, this sets the discovery mode. */
+#ifndef BTM_DEFAULT_DISC_MODE
+#define BTM_DEFAULT_DISC_MODE       BTM_GENERAL_DISCOVERABLE
+#endif
+
+/* When automatic inquiry scan is enabled, this sets the inquiry scan window. */
+#ifndef BTM_DEFAULT_DISC_WINDOW
+#define BTM_DEFAULT_DISC_WINDOW     0x0012
+#endif
+
+/* When automatic inquiry scan is enabled, this sets the inquiry scan interval. */
+#ifndef BTM_DEFAULT_DISC_INTERVAL
+#define BTM_DEFAULT_DISC_INTERVAL   0x0800
+#endif
+
+/* Sets the period, in seconds, to automatically perform service discovery. */
+#ifndef BTM_AUTO_DISCOVERY_PERIOD
+#define BTM_AUTO_DISCOVERY_PERIOD   0
+#endif
+
+/* The size in bytes of the BTM discovery database (if discovery is included). */
+#ifndef BTM_DISCOVERY_DB_SIZE
+#define BTM_DISCOVERY_DB_SIZE       4000
+#endif
+
+/* Number of milliseconds to delay BTU task startup upon device initialization. */
+#ifndef BTU_STARTUP_DELAY
+#define BTU_STARTUP_DELAY           0
+#endif
+
+/* Whether BTA is included in BTU task. */
+#ifndef BTU_BTA_INCLUDED
+#define BTU_BTA_INCLUDED            TRUE
+#endif
+
+/* Number of seconds to wait to send an HCI Reset command upon device initialization. */
+#ifndef BTM_FIRST_RESET_DELAY
+#define BTM_FIRST_RESET_DELAY       0
+#endif
+
+/* The number of seconds to wait for controller module to reset after issuing an HCI Reset command. */
+#ifndef BTM_AFTER_RESET_TIMEOUT
+#define BTM_AFTER_RESET_TIMEOUT     0
+#endif
+
+/* Default class of device
+* {SERVICE_CLASS, MAJOR_CLASS, MINOR_CLASS}
+*
+* SERVICE_CLASS:0x5A (Bit17 -Networking,Bit19 - Capturing,Bit20 -Object Transfer,Bit22 -Telephony)
+* MAJOR_CLASS:0x02 - PHONE
+* MINOR_CLASS:0x0C - SMART_PHONE
+*
+*/
+#ifndef BTA_DM_COD
+#define BTA_DM_COD {0x5A, 0x02, 0x0C}
+#endif
+
+/* The number of SCO links. */
+#ifndef BTM_MAX_SCO_LINKS
+#define BTM_MAX_SCO_LINKS           2
+#endif
+
+/* The preferred type of SCO links (2-eSCO, 0-SCO). */
+#ifndef BTM_DEFAULT_SCO_MODE
+#define BTM_DEFAULT_SCO_MODE        2
+#endif
+
+/* The number of security records for peer devices. */
+#ifndef BTM_SEC_MAX_DEVICE_RECORDS
+#define BTM_SEC_MAX_DEVICE_RECORDS  100
+#endif
+
+/* The number of security records for services. */
+#ifndef BTM_SEC_MAX_SERVICE_RECORDS
+#define BTM_SEC_MAX_SERVICE_RECORDS 32
+#endif
+
+/* If True, force a retrieval of remote device name for each bond in case it's changed */
+#ifndef BTM_SEC_FORCE_RNR_FOR_DBOND
+#define BTM_SEC_FORCE_RNR_FOR_DBOND  FALSE
+#endif
+
+/* Maximum device name length used in btm database. */
+#ifndef BTM_MAX_REM_BD_NAME_LEN
+#define BTM_MAX_REM_BD_NAME_LEN     248
+#endif
+
+/* Maximum local device name length stored btm database.
+  '0' disables storage of the local name in BTM */
+#ifndef BTM_MAX_LOC_BD_NAME_LEN
+#define BTM_MAX_LOC_BD_NAME_LEN     248
+#endif
+
+/* TRUE if default string is used, FALSE if device name is set in the application */
+#ifndef BTM_USE_DEF_LOCAL_NAME
+#define BTM_USE_DEF_LOCAL_NAME      TRUE
+#endif
+
+/* Fixed Default String (Ignored if BTM_USE_DEF_LOCAL_NAME is FALSE) */
+#ifndef BTM_DEF_LOCAL_NAME
+#define BTM_DEF_LOCAL_NAME      ""
+#endif
+
+/* Maximum service name stored with security authorization (0 if not needed) */
+#ifndef BTM_SEC_SERVICE_NAME_LEN
+#define BTM_SEC_SERVICE_NAME_LEN    BT_MAX_SERVICE_NAME_LEN
+#endif
+
+/* Maximum number of pending security callback */
+#ifndef BTM_SEC_MAX_CALLBACKS
+#define BTM_SEC_MAX_CALLBACKS       7
+#endif
+
+/* Maximum length of the service name. */
+#ifndef BT_MAX_SERVICE_NAME_LEN
+#define BT_MAX_SERVICE_NAME_LEN     21
+#endif
+
+/* ACL buffer size in HCI Host Buffer Size command. */
+#ifndef BTM_ACL_BUF_SIZE
+#define BTM_ACL_BUF_SIZE            0
+#endif
+
+/* This is set to use the BTM power manager. */
+#ifndef BTM_PWR_MGR_INCLUDED
+#define BTM_PWR_MGR_INCLUDED        TRUE
+#endif
+
+/* The maximum number of clients that can register with the power manager. */
+#ifndef BTM_MAX_PM_RECORDS
+#define BTM_MAX_PM_RECORDS          2
+#endif
+
+/* This is set to show debug trace messages for the power manager. */
+#ifndef BTM_PM_DEBUG
+#define BTM_PM_DEBUG                FALSE
+#endif
+
+/* This is set to TRUE if link is to be unparked due to BTM_CreateSCO API. */
+#ifndef BTM_SCO_WAKE_PARKED_LINK
+#define BTM_SCO_WAKE_PARKED_LINK    TRUE
+#endif
+
+/* May be set to the the name of a function used for vendor specific chip initialization */
+#ifndef BTM_APP_DEV_INIT
+/* #define BTM_APP_DEV_INIT         myInitFunction() */
+#endif
+
+/* This is set to TRUE if the busy level change event is desired. (replace ACL change event) */
+#ifndef BTM_BUSY_LEVEL_CHANGE_INCLUDED
+#define BTM_BUSY_LEVEL_CHANGE_INCLUDED  TRUE
+#endif
+
+/* If the user does not respond to security process requests within this many seconds,
+ * a negative response would be sent automatically.
+ * It's recommended to use a value between 30 and OBX_TIMEOUT_VALUE
+ * 30 is LMP response timeout value */
+#ifndef BTM_SEC_TIMEOUT_VALUE
+#define BTM_SEC_TIMEOUT_VALUE           35
+#endif
+
+/* Maximum number of callbacks that can be registered using BTM_RegisterForVSEvents */
+#ifndef BTM_MAX_VSE_CALLBACKS
+#define BTM_MAX_VSE_CALLBACKS           3
+#endif
+
+/* Number of streams for dual stack */
+#ifndef BTM_SYNC_INFO_NUM_STR
+#define BTM_SYNC_INFO_NUM_STR           2
+#endif
+
+/* Number of streams for dual stack in BT Controller */
+#ifndef BTM_SYNC_INFO_NUM_STR_BTC
+#define BTM_SYNC_INFO_NUM_STR_BTC       2
+#endif
+
+/******************************************
+**    Lisbon Features
+*******************************************/
+/* This is set to TRUE if the server Extended Inquiry Response feature is desired. */
+/* server sends EIR to client */
+#ifndef BTM_EIR_SERVER_INCLUDED
+#define BTM_EIR_SERVER_INCLUDED         TRUE
+#endif
+
+/* This is set to TRUE if the client Extended Inquiry Response feature is desired. */
+/* client inquiry to server */
+#ifndef BTM_EIR_CLIENT_INCLUDED
+#define BTM_EIR_CLIENT_INCLUDED         TRUE
+#endif
+
+/* This is set to TRUE if the FEC is required for EIR packet. */
+#ifndef BTM_EIR_DEFAULT_FEC_REQUIRED
+#define BTM_EIR_DEFAULT_FEC_REQUIRED    TRUE
+#endif
+
+/* User defined UUID look up table */
+#ifndef BTM_EIR_UUID_LKUP_TBL
+#endif
+
+/* The IO capability of the local device (for Simple Pairing) */
+#ifndef BTM_LOCAL_IO_CAPS
+#define BTM_LOCAL_IO_CAPS               BTM_IO_CAP_IO
+#endif
+
+/* The default MITM Protection Requirement (for Simple Pairing)
+ * Possible values are BTM_AUTH_SP_YES or BTM_AUTH_SP_NO */
+#ifndef BTM_DEFAULT_AUTH_REQ
+#define BTM_DEFAULT_AUTH_REQ            BTM_AUTH_SP_NO
+#endif
+
+/* The default MITM Protection Requirement for dedicated bonding using Simple Pairing
+ * Possible values are BTM_AUTH_AP_YES or BTM_AUTH_AP_NO */
+#ifndef BTM_DEFAULT_DD_AUTH_REQ
+#define BTM_DEFAULT_DD_AUTH_REQ            BTM_AUTH_AP_YES
+#endif
+
+/* Include Out-of-Band implementation for Simple Pairing */
+#ifndef BTM_OOB_INCLUDED
+#define BTM_OOB_INCLUDED                TRUE
+#endif
+
+/* TRUE to include Sniff Subrating */
+#ifndef BTM_SSR_INCLUDED
+#define BTM_SSR_INCLUDED                TRUE
+#endif
+
+/*************************
+** End of Lisbon Features
+**************************/
+
+/* Used for conformance testing ONLY */
+#ifndef BTM_BLE_CONFORMANCE_TESTING
+#define BTM_BLE_CONFORMANCE_TESTING           FALSE
+#endif
+
+
+/******************************************************************************
+**
+** L2CAP
+**
+******************************************************************************/
+
+/* Flow control and retransmission mode */
+
+#ifndef L2CAP_FCR_INCLUDED
+#define L2CAP_FCR_INCLUDED TRUE
+#endif
+
+/* The maximum number of simultaneous links that L2CAP can support. */
+#ifndef MAX_ACL_CONNECTIONS
+#define MAX_L2CAP_LINKS             7
+#else
+#define MAX_L2CAP_LINKS             MAX_ACL_CONNECTIONS
+#endif
+
+/* The maximum number of simultaneous channels that L2CAP can support. */
+#ifndef MAX_L2CAP_CHANNELS
+#define MAX_L2CAP_CHANNELS          10
+#endif
+
+/* The maximum number of simultaneous applications that can register with L2CAP. */
+#ifndef MAX_L2CAP_CLIENTS
+#define MAX_L2CAP_CLIENTS           15
+#endif
+
+/* The number of seconds of link inactivity before a link is disconnected. */
+#ifndef L2CAP_LINK_INACTIVITY_TOUT
+#define L2CAP_LINK_INACTIVITY_TOUT  4
+#endif
+
+/* The number of seconds of link inactivity after bonding before a link is disconnected. */
+#ifndef L2CAP_BONDING_TIMEOUT
+#define L2CAP_BONDING_TIMEOUT       3
+#endif
+
+/* The time from the HCI connection complete to disconnect if no channel is established. */
+#ifndef L2CAP_LINK_STARTUP_TOUT
+#define L2CAP_LINK_STARTUP_TOUT     60
+#endif
+
+/* The L2CAP MTU; must be in accord with the HCI ACL pool size. */
+#ifndef L2CAP_MTU_SIZE
+#define L2CAP_MTU_SIZE              1691
+#endif
+
+/* The L2CAP MPS over Bluetooth; must be in accord with the FCR tx pool size and ACL down buffer size. */
+#ifndef L2CAP_MPS_OVER_BR_EDR
+#define L2CAP_MPS_OVER_BR_EDR       1010
+#endif
+
+/* This is set to enable host flow control. */
+#ifndef L2CAP_HOST_FLOW_CTRL
+#define L2CAP_HOST_FLOW_CTRL        FALSE
+#endif
+
+/* If host flow control enabled, this is the number of buffers the controller can have unacknowledged. */
+#ifndef L2CAP_HOST_FC_ACL_BUFS
+#define L2CAP_HOST_FC_ACL_BUFS      20
+#endif
+
+/* The percentage of the queue size allowed before a congestion event is sent to the L2CAP client (typically 120%). */
+#ifndef L2CAP_FWD_CONG_THRESH
+#define L2CAP_FWD_CONG_THRESH       120
+#endif
+
+/* This is set to enable L2CAP to  take the ACL link out of park mode when ACL data is to be sent. */
+#ifndef L2CAP_WAKE_PARKED_LINK
+#define L2CAP_WAKE_PARKED_LINK      TRUE
+#endif
+
+/* Whether link wants to be the master or the slave. */
+#ifndef L2CAP_DESIRED_LINK_ROLE
+#define L2CAP_DESIRED_LINK_ROLE     HCI_ROLE_SLAVE
+#endif
+
+/* Include Non-Flushable Packet Boundary Flag feature of Lisbon */
+#ifndef L2CAP_NON_FLUSHABLE_PB_INCLUDED
+#define L2CAP_NON_FLUSHABLE_PB_INCLUDED     TRUE
+#endif
+
+/* Minimum number of ACL credit for high priority link */
+#ifndef L2CAP_HIGH_PRI_MIN_XMIT_QUOTA
+#define L2CAP_HIGH_PRI_MIN_XMIT_QUOTA       4
+#endif
+
+/* used for monitoring HCI ACL credit management */
+#ifndef L2CAP_HCI_FLOW_CONTROL_DEBUG
+#define L2CAP_HCI_FLOW_CONTROL_DEBUG        TRUE
+#endif
+
+/* Used for calculating transmit buffers off of */
+#ifndef L2CAP_NUM_XMIT_BUFFS
+#define L2CAP_NUM_XMIT_BUFFS                HCI_ACL_BUF_MAX
+#endif
+
+/* Unicast Connectionless Data */
+#ifndef L2CAP_UCD_INCLUDED
+#define L2CAP_UCD_INCLUDED                  FALSE
+#endif
+
+/* Unicast Connectionless Data MTU */
+#ifndef L2CAP_UCD_MTU
+#define L2CAP_UCD_MTU                       L2CAP_MTU_SIZE
+#endif
+
+/* Unicast Connectionless Data Idle Timeout */
+#ifndef L2CAP_UCD_IDLE_TIMEOUT
+#define L2CAP_UCD_IDLE_TIMEOUT              2
+#endif
+
+/* Unicast Connectionless Data Idle Timeout */
+#ifndef L2CAP_UCD_CH_PRIORITY
+#define L2CAP_UCD_CH_PRIORITY               L2CAP_CHNL_PRIORITY_MEDIUM
+#endif
+
+/* Max clients on Unicast Connectionless Data */
+#ifndef L2CAP_MAX_UCD_CLIENTS
+#define L2CAP_MAX_UCD_CLIENTS               5
+#endif
+
+/* Used for features using fixed channels; set to zero if no fixed channels supported (BLE, etc.) */
+/* Excluding L2CAP signaling channel and UCD */
+#ifndef L2CAP_NUM_FIXED_CHNLS
+#define L2CAP_NUM_FIXED_CHNLS               4
+#endif
+
+/* First fixed channel supported */
+#ifndef L2CAP_FIRST_FIXED_CHNL
+#define L2CAP_FIRST_FIXED_CHNL              3
+#endif
+
+#ifndef L2CAP_LAST_FIXED_CHNL
+#define L2CAP_LAST_FIXED_CHNL           (L2CAP_FIRST_FIXED_CHNL + L2CAP_NUM_FIXED_CHNLS - 1)
+#endif
+
+/* Round Robin service channels in link */
+#ifndef L2CAP_ROUND_ROBIN_CHANNEL_SERVICE
+#define L2CAP_ROUND_ROBIN_CHANNEL_SERVICE   TRUE
+#endif
+
+/* Used for calculating transmit buffers off of */
+#ifndef L2CAP_NUM_XMIT_BUFFS
+#define L2CAP_NUM_XMIT_BUFFS                HCI_ACL_BUF_MAX
+#endif
+
+/* Used for features using fixed channels; set to zero if no fixed channels supported (BLE, etc.) */
+#ifndef L2CAP_NUM_FIXED_CHNLS
+#define L2CAP_NUM_FIXED_CHNLS               1
+#endif
+
+/* First fixed channel supported */
+#ifndef L2CAP_FIRST_FIXED_CHNL
+#define L2CAP_FIRST_FIXED_CHNL              3
+#endif
+
+#ifndef L2CAP_LAST_FIXED_CHNL
+#define L2CAP_LAST_FIXED_CHNL           (L2CAP_FIRST_FIXED_CHNL + L2CAP_NUM_FIXED_CHNLS - 1)
+#endif
+
+/* used for monitoring eL2CAP data flow */
+#ifndef L2CAP_ERTM_STATS
+#define L2CAP_ERTM_STATS                    FALSE
+#endif
+
+/* USED FOR FCR TEST ONLY:  When TRUE generates bad tx and rx packets */
+#ifndef L2CAP_CORRUPT_ERTM_PKTS
+#define L2CAP_CORRUPT_ERTM_PKTS             FALSE
+#endif
+
+/* Used for conformance testing ONLY:  When TRUE lets scriptwrapper overwrite info response */
+#ifndef L2CAP_CONFORMANCE_TESTING
+#define L2CAP_CONFORMANCE_TESTING           FALSE
+#endif
+
+
+#ifndef TIMER_PARAM_TYPE
+#ifdef  WIN2000
+#define TIMER_PARAM_TYPE    void *
+#else
+#define TIMER_PARAM_TYPE    UINT32
+#endif
+#endif
+
+/******************************************************************************
+**
+** BLE
+**
+******************************************************************************/
+
+#ifndef BLE_INCLUDED
+#define BLE_INCLUDED            FALSE
+#endif
+
+#ifndef LOCAL_BLE_CONTROLLER_ID
+#define LOCAL_BLE_CONTROLLER_ID         (1)
+#endif
+
+/******************************************************************************
+**
+** ATT/GATT Protocol/Profile Settings
+**
+******************************************************************************/
+#ifndef ATT_INCLUDED
+#define ATT_INCLUDED         FALSE
+#endif
+
+#ifndef ATT_DEBUG
+#define ATT_DEBUG           FALSE
+#endif
+
+#ifndef GATT_SERVER_ENABLED
+#define GATT_SERVER_ENABLED          FALSE
+#endif
+
+#ifndef GATT_CLIENT_ENABLED
+#define GATT_CLIENT_ENABLED          FALSE
+#endif
+
+#ifndef GATT_MAX_SR_PROFILES
+#define GATT_MAX_SR_PROFILES        32 /* max is 32 */
+#endif
+
+#ifndef GATT_MAX_APPS
+#define GATT_MAX_APPS            10 /* note: 2 apps used internally GATT and GAP */
+#endif
+
+#ifndef GATT_MAX_CL_PROFILES
+#define GATT_MAX_CL_PROFILES        4
+#endif
+
+#ifndef GATT_MAX_PHY_CHANNEL
+#define GATT_MAX_PHY_CHANNEL        4
+#endif
+
+/* Used for conformance testing ONLY */
+#ifndef GATT_CONFORMANCE_TESTING
+#define GATT_CONFORMANCE_TESTING           FALSE
+#endif
+
+/* number of background connection device allowence, ideally to be the same as WL size
+*/
+#ifndef GATT_MAX_BG_CONN_DEV
+#define GATT_MAX_BG_CONN_DEV        32
+#endif
+
+/******************************************************************************
+**
+** SMP
+**
+******************************************************************************/
+#ifndef SMP_INCLUDED
+#define SMP_INCLUDED         FALSE
+#endif
+
+#ifndef SMP_DEBUG
+#define SMP_DEBUG            FALSE
+#endif
+
+#ifndef SMP_DEFAULT_AUTH_REQ
+#define SMP_DEFAULT_AUTH_REQ    SMP_AUTH_NB_ENC_ONLY
+#endif
+
+#ifndef SMP_MAX_ENC_KEY_SIZE
+#define SMP_MAX_ENC_KEY_SIZE    16
+#endif
+
+#ifndef SMP_MIN_ENC_KEY_SIZE
+#define SMP_MIN_ENC_KEY_SIZE    7
+#endif
+
+/* Used for conformance testing ONLY */
+#ifndef SMP_CONFORMANCE_TESTING
+#define SMP_CONFORMANCE_TESTING           FALSE
+#endif
+
+/******************************************************************************
+**
+** SDP
+**
+******************************************************************************/
+
+/* This is set to enable SDP server functionality. */
+#ifndef SDP_SERVER_ENABLED
+#define SDP_SERVER_ENABLED          TRUE
+#endif
+
+/* The maximum number of SDP records the server can support. */
+#ifndef SDP_MAX_RECORDS
+#define SDP_MAX_RECORDS             20
+#endif
+
+/* The maximum number of attributes in each record. */
+#ifndef SDP_MAX_REC_ATTR
+//#if defined(HID_DEV_INCLUDED) && (HID_DEV_INCLUDED==TRUE)
+#define SDP_MAX_REC_ATTR            25
+//#else
+//#define SDP_MAX_REC_ATTR            13
+//#endif
+#endif
+
+#ifndef SDP_MAX_PAD_LEN
+#define SDP_MAX_PAD_LEN             600
+#endif
+
+/* The maximum length, in bytes, of an attribute. */
+#ifndef SDP_MAX_ATTR_LEN
+//#if defined(HID_DEV_INCLUDED) && (HID_DEV_INCLUDED==TRUE)
+//#define SDP_MAX_ATTR_LEN            80
+//#else
+//#define SDP_MAX_ATTR_LEN            100
+//#endif
+#define SDP_MAX_ATTR_LEN            400
+#endif
+
+/* The maximum number of attribute filters supported by SDP databases. */
+#ifndef SDP_MAX_ATTR_FILTERS
+#define SDP_MAX_ATTR_FILTERS        15
+#endif
+
+/* The maximum number of UUID filters supported by SDP databases. */
+#ifndef SDP_MAX_UUID_FILTERS
+#define SDP_MAX_UUID_FILTERS        3
+#endif
+
+/* This is set to enable SDP client functionality. */
+#ifndef SDP_CLIENT_ENABLED
+#define SDP_CLIENT_ENABLED          TRUE
+#endif
+
+/* The maximum number of record handles retrieved in a search. */
+#ifndef SDP_MAX_DISC_SERVER_RECS
+#define SDP_MAX_DISC_SERVER_RECS    21
+#endif
+
+/* The size of a scratchpad buffer, in bytes, for storing the response to an attribute request. */
+#ifndef SDP_MAX_LIST_BYTE_COUNT
+#define SDP_MAX_LIST_BYTE_COUNT     4096
+#endif
+
+/* The maximum number of parameters in an SDP protocol element. */
+#ifndef SDP_MAX_PROTOCOL_PARAMS
+#define SDP_MAX_PROTOCOL_PARAMS     2
+#endif
+
+/* The maximum number of simultaneous client and server connections. */
+#ifndef SDP_MAX_CONNECTIONS
+#define SDP_MAX_CONNECTIONS         4
+#endif
+
+/* The MTU size for the L2CAP configuration. */
+#ifndef SDP_MTU_SIZE
+#define SDP_MTU_SIZE                256
+#endif
+
+/* The flush timeout for the L2CAP configuration. */
+#ifndef SDP_FLUSH_TO
+#define SDP_FLUSH_TO                0xFFFF
+#endif
+
+/* The name for security authorization. */
+#ifndef SDP_SERVICE_NAME
+#define SDP_SERVICE_NAME            "Service Discovery"
+#endif
+
+/* The security level for BTM. */
+#ifndef SDP_SECURITY_LEVEL
+#define SDP_SECURITY_LEVEL          BTM_SEC_NONE
+#endif
+
+/* Device identification feature. */
+#ifndef SDP_DI_INCLUDED
+#define SDP_DI_INCLUDED             TRUE
+#endif
+
+/******************************************************************************
+**
+** RFCOMM
+**
+******************************************************************************/
+
+#ifndef RFCOMM_INCLUDED
+#define RFCOMM_INCLUDED             TRUE
+#endif
+
+/* The maximum number of ports supported. */
+#ifndef MAX_RFC_PORTS
+#define MAX_RFC_PORTS               30
+#endif
+
+/* The maximum simultaneous links to different devices. */
+#ifndef MAX_ACL_CONNECTIONS
+#define MAX_BD_CONNECTIONS          7
+#else
+#define MAX_BD_CONNECTIONS          MAX_ACL_CONNECTIONS
+#endif
+
+/* The port receive queue low watermark level, in bytes. */
+#ifndef PORT_RX_LOW_WM
+#define PORT_RX_LOW_WM              (BTA_RFC_MTU_SIZE * PORT_RX_BUF_LOW_WM)
+#endif
+
+/* The port receive queue high watermark level, in bytes. */
+#ifndef PORT_RX_HIGH_WM
+#define PORT_RX_HIGH_WM             (BTA_RFC_MTU_SIZE * PORT_RX_BUF_HIGH_WM)
+#endif
+
+/* The port receive queue critical watermark level, in bytes. */
+#ifndef PORT_RX_CRITICAL_WM
+#define PORT_RX_CRITICAL_WM         (BTA_RFC_MTU_SIZE * PORT_RX_BUF_CRITICAL_WM)
+#endif
+
+/* The port receive queue low watermark level, in number of buffers. */
+#ifndef PORT_RX_BUF_LOW_WM
+#define PORT_RX_BUF_LOW_WM          4
+#endif
+
+/* The port receive queue high watermark level, in number of buffers. */
+#ifndef PORT_RX_BUF_HIGH_WM
+#define PORT_RX_BUF_HIGH_WM         10
+#endif
+
+/* The port receive queue critical watermark level, in number of buffers. */
+#ifndef PORT_RX_BUF_CRITICAL_WM
+#define PORT_RX_BUF_CRITICAL_WM     15
+#endif
+
+/* The port transmit queue high watermark level, in bytes. */
+#ifndef PORT_TX_HIGH_WM
+#define PORT_TX_HIGH_WM             (BTA_RFC_MTU_SIZE * PORT_TX_BUF_HIGH_WM)
+#endif
+
+/* The port transmit queue critical watermark level, in bytes. */
+#ifndef PORT_TX_CRITICAL_WM
+#define PORT_TX_CRITICAL_WM         (BTA_RFC_MTU_SIZE * PORT_TX_BUF_CRITICAL_WM)
+#endif
+
+/* The port transmit queue high watermark level, in number of buffers. */
+#ifndef PORT_TX_BUF_HIGH_WM
+#define PORT_TX_BUF_HIGH_WM         10
+#endif
+
+/* The port transmit queue high watermark level, in number of buffers. */
+#ifndef PORT_TX_BUF_CRITICAL_WM
+#define PORT_TX_BUF_CRITICAL_WM     15
+#endif
+
+/* The RFCOMM multiplexer preferred flow control mechanism. */
+#ifndef PORT_FC_DEFAULT
+#define PORT_FC_DEFAULT             PORT_FC_CREDIT
+#endif
+
+/* The maximum number of credits receiver sends to peer when using credit-based flow control. */
+#ifndef PORT_CREDIT_RX_MAX
+#define PORT_CREDIT_RX_MAX          16
+#endif
+
+/* The credit low watermark level. */
+#ifndef PORT_CREDIT_RX_LOW
+#define PORT_CREDIT_RX_LOW          8
+#endif
+
+/* Test code allowing l2cap FEC on RFCOMM.*/
+#ifndef PORT_ENABLE_L2CAP_FCR_TEST
+#define PORT_ENABLE_L2CAP_FCR_TEST  FALSE
+#endif
+
+/* if application like BTA, Java or script test engine is running on other than BTU thread, */
+/* PORT_SCHEDULE_LOCK shall be defined as GKI_sched_lock() or GKI_disable() */
+#ifndef PORT_SCHEDULE_LOCK
+#define PORT_SCHEDULE_LOCK          GKI_disable()
+#endif
+
+/* if application like BTA, Java or script test engine is running on other than BTU thread, */
+/* PORT_SCHEDULE_LOCK shall be defined as GKI_sched_unlock() or GKI_enable() */
+#ifndef PORT_SCHEDULE_UNLOCK
+#define PORT_SCHEDULE_UNLOCK        GKI_enable()
+#endif
+
+/******************************************************************************
+**
+** TCS
+**
+******************************************************************************/
+
+#ifndef TCS_INCLUDED
+#define TCS_INCLUDED                FALSE
+#endif
+
+/* If set to TRUE, gives lean TCS state machine configuration. */
+#ifndef TCS_LEAN
+#define TCS_LEAN                    FALSE
+#endif
+
+/* To include/exclude point-to-multipoint broadcast SETUP configuration. */
+#ifndef TCS_BCST_SETUP_INCLUDED
+#define TCS_BCST_SETUP_INCLUDED     TRUE
+#endif
+
+/* To include/exclude supplementary services. */
+#ifndef TCS_SUPP_SVCS_INCLUDED
+#define TCS_SUPP_SVCS_INCLUDED      TRUE
+#endif
+
+/* To include/exclude WUG master role. */
+#ifndef TCS_WUG_MASTER_INCLUDED
+#define TCS_WUG_MASTER_INCLUDED     TRUE
+#endif
+
+/* To include/exclude WUG member role. */
+#ifndef TCS_WUG_MEMBER_INCLUDED
+#define TCS_WUG_MEMBER_INCLUDED     TRUE
+#endif
+
+/* Maximum number of WUG members. */
+#ifndef TCS_MAX_WUG_MEMBERS
+#define TCS_MAX_WUG_MEMBERS         7
+#endif
+
+/* Broadcom specific acknowledgement message to ensure fast and robust operation of WUG FIMA procedure. */
+#ifndef TCS_WUG_LISTEN_ACPT_ACK_INCLUDED
+#define TCS_WUG_LISTEN_ACPT_ACK_INCLUDED TRUE
+#endif
+
+/* The number of simultaneous calls supported. */
+#ifndef TCS_MAX_NUM_SIMUL_CALLS
+#define TCS_MAX_NUM_SIMUL_CALLS     3
+#endif
+
+/* The number of devices the device can connect to. */
+#ifndef TCS_MAX_NUM_ACL_CONNS
+#define TCS_MAX_NUM_ACL_CONNS       7
+#endif
+
+/* The maximum length, in bytes, of the company specific information element. */
+#ifndef TCS_MAX_CO_SPEC_LEN
+#define TCS_MAX_CO_SPEC_LEN         40
+#endif
+
+/* The maximum length, in bytes, of the audio control information element . */
+#ifndef TCS_MAX_AUDIO_CTL_LEN
+#define TCS_MAX_AUDIO_CTL_LEN       40
+#endif
+
+/* (Dis)allow EDR ESCO */
+#ifndef TCS_AUDIO_USE_ESCO_EDR
+#define TCS_AUDIO_USE_ESCO_EDR      FALSE
+#endif
+
+/******************************************************************************
+**
+** OBX
+**
+******************************************************************************/
+#ifndef OBX_INCLUDED
+#define OBX_INCLUDED               FALSE
+#endif
+
+#ifndef OBX_CLIENT_INCLUDED
+#define OBX_CLIENT_INCLUDED        TRUE
+#endif
+
+#ifndef OBX_SERVER_INCLUDED
+#define OBX_SERVER_INCLUDED        TRUE
+#endif
+
+/* TRUE to include OBEX authentication/MD5 code */
+#ifndef OBX_MD5_INCLUDED
+#define OBX_MD5_INCLUDED           TRUE
+#endif
+
+/* TRUE to include OBEX authentication/MD5 test code */
+#ifndef OBX_MD5_TEST_INCLUDED
+#define OBX_MD5_TEST_INCLUDED       FALSE
+#endif
+
+/* TRUE to include OBEX 1.4 enhancement (including Obex Over L2CAP) */
+#ifndef OBX_14_INCLUDED
+#define OBX_14_INCLUDED             FALSE
+#endif
+/* MD5 code is required to use OBEX 1.4 features (Reliable session) */
+#if (OBX_MD5_INCLUDED == FALSE)
+#undef OBX_14_INCLUDED
+#define OBX_14_INCLUDED             FALSE
+#endif
+
+/* L2CAP FCR/eRTM mode is required to use OBEX Over L2CAP */
+#if (L2CAP_FCR_INCLUDED == FALSE)
+#undef OBX_14_INCLUDED
+#define OBX_14_INCLUDED             FALSE
+#endif
+
+/* The timeout value (in seconds) for reliable sessions to remain in suspend. 0xFFFFFFFF for no timeout event. */
+#ifndef OBX_SESS_TIMEOUT_VALUE
+#define OBX_SESS_TIMEOUT_VALUE      600
+#endif
+
+/* The idle timeout value. 0 for no timeout event. */
+#ifndef OBX_TIMEOUT_VALUE
+#define OBX_TIMEOUT_VALUE           60
+#endif
+
+/* Timeout value used for disconnect */
+#ifndef OBX_DISC_TOUT_VALUE
+#define OBX_DISC_TOUT_VALUE         5
+#endif
+
+/* The maximum number of registered servers. */
+#ifndef OBX_NUM_SERVERS
+#define OBX_NUM_SERVERS             12
+#endif
+
+/* The maximum number of sessions per registered server. */
+#ifndef OBX_MAX_SR_SESSION
+#define OBX_MAX_SR_SESSION          4
+#endif
+
+/* The maximum number of sessions for all registered servers.
+ * (must be equal or bigger than OBX_NUM_SERVERS) */
+#ifndef OBX_NUM_SR_SESSIONS
+#define OBX_NUM_SR_SESSIONS         26
+#endif
+
+/* The maximum number of sessions per registered server.
+ * must be less than MAX_BD_CONNECTIONS */
+#ifndef OBX_MAX_SR_SESSION
+#define OBX_MAX_SR_SESSION          4
+#endif
+
+/* The maximum number of suspended sessions per registered servers. */
+#ifndef OBX_MAX_SUSPEND_SESSIONS
+#define OBX_MAX_SUSPEND_SESSIONS    4
+#endif
+
+/* The maximum number of active clients. */
+#ifndef OBX_NUM_CLIENTS
+#define OBX_NUM_CLIENTS             8
+#endif
+
+/* The maximum length of OBEX target header.*/
+#ifndef OBX_MAX_TARGET_LEN
+#define OBX_MAX_TARGET_LEN          16
+#endif
+
+/* The maximum length of authentication challenge realm.*/
+#ifndef OBX_MAX_REALM_LEN
+#define OBX_MAX_REALM_LEN           30
+#endif
+
+/* The maximum of GKI buffer queued at OBX before flow control L2CAP */
+#ifndef OBX_MAX_RX_QUEUE_COUNT
+#define OBX_MAX_RX_QUEUE_COUNT      3
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+   Pool ID where to reassemble the SDU.
+   This Pool will allow buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef OBX_USER_RX_POOL_ID
+#define OBX_USER_RX_POOL_ID     OBX_LRG_DATA_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+   Pool ID where to hold the SDU.
+   This Pool will allow buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef OBX_USER_TX_POOL_ID
+#define OBX_USER_TX_POOL_ID     OBX_LRG_DATA_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+GKI Buffer Pool ID used to hold MPS segments during SDU reassembly
+*/
+#ifndef OBX_FCR_RX_POOL_ID
+#define OBX_FCR_RX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+GKI Buffer Pool ID used to hold MPS segments used in (re)transmissions.
+L2CAP_DEFAULT_ERM_POOL_ID is specified to use the HCI ACL data pool.
+Note:  This pool needs to have enough buffers to hold two times the window size negotiated
+ in the L2CA_SetFCROptions (2 * tx_win_size)  to allow for retransmissions.
+ The size of each buffer must be able to hold the maximum MPS segment size passed in
+ L2CA_SetFCROptions plus BT_HDR (8) + HCI preamble (4) + L2CAP_MIN_OFFSET (11 - as of BT 2.1 + EDR Spec).
+*/
+#ifndef OBX_FCR_TX_POOL_ID
+#define OBX_FCR_TX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Size of the transmission window when using enhanced retransmission mode. Not used
+in basic and streaming modes. Range: 1 - 63
+*/
+#ifndef OBX_FCR_OPT_TX_WINDOW_SIZE_BR_EDR
+#define OBX_FCR_OPT_TX_WINDOW_SIZE_BR_EDR       20
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Number of transmission attempts for a single I-Frame before taking
+Down the connection. Used In ERTM mode only. Value is Ignored in basic and
+Streaming modes.
+Range: 0, 1-0xFF
+0 - infinite retransmissions
+1 - single transmission
+*/
+#ifndef OBX_FCR_OPT_MAX_TX_B4_DISCNT
+#define OBX_FCR_OPT_MAX_TX_B4_DISCNT    20
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Retransmission Timeout
+Range: Minimum 2000 (2 secs) on BR/EDR when supporting PBF.
+ */
+#ifndef OBX_FCR_OPT_RETX_TOUT
+#define OBX_FCR_OPT_RETX_TOUT           2000
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Monitor Timeout
+Range: Minimum 12000 (12 secs) on BR/EDR when supporting PBF.
+*/
+#ifndef OBX_FCR_OPT_MONITOR_TOUT
+#define OBX_FCR_OPT_MONITOR_TOUT        12000
+#endif
+
+/******************************************************************************
+**
+** BNEP
+**
+******************************************************************************/
+
+#ifndef BNEP_INCLUDED
+#define BNEP_INCLUDED               TRUE
+#endif
+
+/* Protocol filtering is an optional feature. Bydefault it will be turned on */
+#ifndef BNEP_SUPPORTS_PROT_FILTERS
+#define BNEP_SUPPORTS_PROT_FILTERS          TRUE
+#endif
+
+/* Multicast filtering is an optional feature. Bydefault it will be turned on */
+#ifndef BNEP_SUPPORTS_MULTI_FILTERS
+#define BNEP_SUPPORTS_MULTI_FILTERS         TRUE
+#endif
+
+/* BNEP status API call is used mainly to get the L2CAP handle */
+#ifndef BNEP_SUPPORTS_STATUS_API
+#define BNEP_SUPPORTS_STATUS_API            TRUE
+#endif
+
+/* This is just a debug function */
+#ifndef BNEP_SUPPORTS_DEBUG_DUMP
+#define BNEP_SUPPORTS_DEBUG_DUMP            TRUE
+#endif
+
+#ifndef BNEP_SUPPORTS_ALL_UUID_LENGTHS
+#define BNEP_SUPPORTS_ALL_UUID_LENGTHS      TRUE    /* Otherwise it will support only 16bit UUIDs */
+#endif
+
+/*
+** When BNEP connection changes roles after the connection is established
+** we will do an authentication check again on the new role
+*/
+#ifndef BNEP_DO_AUTH_FOR_ROLE_SWITCH
+#define BNEP_DO_AUTH_FOR_ROLE_SWITCH        TRUE
+#endif
+
+
+/* Maximum number of protocol filters supported. */
+#ifndef BNEP_MAX_PROT_FILTERS
+#define BNEP_MAX_PROT_FILTERS       5
+#endif
+
+/* Maximum number of multicast filters supported. */
+#ifndef BNEP_MAX_MULTI_FILTERS
+#define BNEP_MAX_MULTI_FILTERS      5
+#endif
+
+/* Minimum MTU size. */
+#ifndef BNEP_MIN_MTU_SIZE
+#define BNEP_MIN_MTU_SIZE           L2CAP_MTU_SIZE
+#endif
+
+/* Preferred MTU size. */
+#ifndef BNEP_MTU_SIZE
+#define BNEP_MTU_SIZE               BNEP_MIN_MTU_SIZE
+#endif
+
+/* Maximum size of user data, in bytes.  */
+#ifndef BNEP_MAX_USER_DATA_SIZE
+#define BNEP_MAX_USER_DATA_SIZE     1500
+#endif
+
+/* Maximum number of buffers allowed in transmit data queue. */
+#ifndef BNEP_MAX_XMITQ_DEPTH
+#define BNEP_MAX_XMITQ_DEPTH        20
+#endif
+
+/* Maximum number BNEP of connections supported. */
+#ifndef BNEP_MAX_CONNECTIONS
+#define BNEP_MAX_CONNECTIONS        7
+#endif
+
+
+/******************************************************************************
+**
+** AVDTP
+**
+******************************************************************************/
+
+#ifndef AVDT_INCLUDED
+#define AVDT_INCLUDED               TRUE
+#endif
+
+/* Include reporting capability in AVDTP */
+#ifndef AVDT_REPORTING
+#define AVDT_REPORTING              TRUE
+#endif
+
+/* Include multiplexing capability in AVDTP */
+#ifndef AVDT_MULTIPLEXING
+#define AVDT_MULTIPLEXING           TRUE
+#endif
+
+/* Number of simultaneous links to different peer devices. */
+#ifndef AVDT_NUM_LINKS
+#define AVDT_NUM_LINKS              2
+#endif
+
+/* Number of simultaneous stream endpoints. */
+#ifndef AVDT_NUM_SEPS
+#define AVDT_NUM_SEPS               3
+#endif
+
+/* Number of transport channels setup per media stream(audio or video) */
+#ifndef AVDT_NUM_CHANNELS
+
+#if AVDT_REPORTING == TRUE
+/* signaling, media and reporting channels */
+#define AVDT_NUM_CHANNELS   3
+#else
+/* signaling and media channels */
+#define AVDT_NUM_CHANNELS   2
+#endif
+
+#endif
+
+/* Number of transport channels setup by AVDT for all media streams
+ * AVDT_NUM_CHANNELS * Number of simultaneous streams.
+ */
+#ifndef AVDT_NUM_TC_TBL
+#define AVDT_NUM_TC_TBL             6
+#endif
+
+
+/* Maximum size in bytes of the codec capabilities information element. */
+#ifndef AVDT_CODEC_SIZE
+#define AVDT_CODEC_SIZE             10
+#endif
+
+/* Maximum size in bytes of the content protection information element. */
+#ifndef AVDT_PROTECT_SIZE
+#define AVDT_PROTECT_SIZE           90
+#endif
+
+/* Maximum number of GKI buffers in the fragment queue (for video frames).
+ * Must be less than the number of buffers in the buffer pool of size AVDT_DATA_POOL_SIZE */
+#ifndef AVDT_MAX_FRAG_COUNT
+#define AVDT_MAX_FRAG_COUNT         15
+#endif
+
+/******************************************************************************
+**
+** PAN
+**
+******************************************************************************/
+
+#ifndef PAN_INCLUDED
+#define PAN_INCLUDED                     TRUE
+#endif
+
+/* This will enable the PANU role */
+#ifndef PAN_SUPPORTS_ROLE_PANU
+#define PAN_SUPPORTS_ROLE_PANU              TRUE
+#endif
+
+/* This will enable the GN role */
+#ifndef PAN_SUPPORTS_ROLE_GN
+#define PAN_SUPPORTS_ROLE_GN                TRUE
+#endif
+
+/* This will enable the NAP role */
+#ifndef PAN_SUPPORTS_ROLE_NAP
+#define PAN_SUPPORTS_ROLE_NAP               TRUE
+#endif
+
+/* This is just for debugging purposes */
+#ifndef PAN_SUPPORTS_DEBUG_DUMP
+#define PAN_SUPPORTS_DEBUG_DUMP             TRUE
+#endif
+
+
+/* Maximum number of PAN connections allowed */
+#ifndef MAX_PAN_CONNS
+#define MAX_PAN_CONNS                    7
+#endif
+
+/* Default service name for NAP role */
+#ifndef PAN_NAP_DEFAULT_SERVICE_NAME
+#define PAN_NAP_DEFAULT_SERVICE_NAME    "Network Access Point Service"
+#endif
+
+/* Default service name for GN role */
+#ifndef PAN_GN_DEFAULT_SERVICE_NAME
+#define PAN_GN_DEFAULT_SERVICE_NAME     "Group Network Service"
+#endif
+
+/* Default service name for PANU role */
+#ifndef PAN_PANU_DEFAULT_SERVICE_NAME
+#define PAN_PANU_DEFAULT_SERVICE_NAME   "PAN User Service"
+#endif
+
+/* Default description for NAP role service */
+#ifndef PAN_NAP_DEFAULT_DESCRIPTION
+#define PAN_NAP_DEFAULT_DESCRIPTION     "NAP"
+#endif
+
+/* Default description for GN role service */
+#ifndef PAN_GN_DEFAULT_DESCRIPTION
+#define PAN_GN_DEFAULT_DESCRIPTION      "GN"
+#endif
+
+/* Default description for PANU role service */
+#ifndef PAN_PANU_DEFAULT_DESCRIPTION
+#define PAN_PANU_DEFAULT_DESCRIPTION    "PANU"
+#endif
+
+/* Default Security level for PANU role. */
+#ifndef PAN_PANU_SECURITY_LEVEL
+#define PAN_PANU_SECURITY_LEVEL          0
+#endif
+
+/* Default Security level for GN role. */
+#ifndef PAN_GN_SECURITY_LEVEL
+#define PAN_GN_SECURITY_LEVEL            0
+#endif
+
+/* Default Security level for NAP role. */
+#ifndef PAN_NAP_SECURITY_LEVEL
+#define PAN_NAP_SECURITY_LEVEL           0
+#endif
+
+
+
+
+/******************************************************************************
+**
+** GAP
+**
+******************************************************************************/
+
+#ifndef GAP_INCLUDED
+#define GAP_INCLUDED                FALSE
+#endif
+
+/* This is set to enable use of GAP L2CAP connections. */
+#ifndef GAP_CONN_INCLUDED
+#define GAP_CONN_INCLUDED           TRUE
+#endif
+
+/* This is set to enable posting event for data write */
+#ifndef GAP_CONN_POST_EVT_INCLUDED
+#define GAP_CONN_POST_EVT_INCLUDED  FALSE
+#endif
+
+/* The maximum number of simultaneous GAP L2CAP connections. */
+#ifndef GAP_MAX_CONNECTIONS
+#define GAP_MAX_CONNECTIONS         8
+#endif
+
+/******************************************************************************
+**
+** CTP
+**
+******************************************************************************/
+
+#ifndef CTP_INCLUDED
+#define CTP_INCLUDED                FALSE
+#endif
+
+/* To include CTP gateway functionality or not. */
+#ifndef CTP_GW_INCLUDED
+#define CTP_GW_INCLUDED             TRUE
+#endif
+
+/* The number of terminals supported. */
+#ifndef CTP_MAX_NUM_TLS
+#define CTP_MAX_NUM_TLS             7
+#endif
+
+/* If the controller can not support sniff mode when the SCO is up, set this to FALSE. */
+#ifndef CTP_USE_SNIFF_ON_SCO
+#define CTP_USE_SNIFF_ON_SCO        FALSE
+#endif
+
+/* When ACL link between TL and GW is idle for more than this amount of seconds, the ACL may be put to low power mode. */
+#ifndef CTP_TL_IDLE_TIMEOUT
+#define CTP_TL_IDLE_TIMEOUT         90
+#endif
+
+/* To include CTP terminal functionality or not. */
+#ifndef CTP_TL_INCLUDED
+#define CTP_TL_INCLUDED             TRUE
+#endif
+
+/* To include CTP device discovery functionality or not. */
+#ifndef CTP_DISCOVERY_INCLUDED
+#define CTP_DISCOVERY_INCLUDED      TRUE
+#endif
+
+/* set to TRUE for controllers that do not support multi-point */
+#ifndef CTP_TL_WAIT_DISC
+#define CTP_TL_WAIT_DISC            TRUE
+#endif
+
+/* The CTP inquiry database size. */
+#ifndef CTP_INQ_DB_SIZE
+#define CTP_INQ_DB_SIZE             CTP_DISC_REC_SIZE
+#endif
+
+/* The CTP discovery record size. */
+#ifndef CTP_DISC_REC_SIZE
+#define CTP_DISC_REC_SIZE           60
+#endif
+
+/* CTP TL would try to re-establish L2CAP channel after channel is disconnected for this amount of seconds. */
+#ifndef CTP_GUARD_LINK_LOST
+#define CTP_GUARD_LINK_LOST         1
+#endif
+
+/* The link policy bitmap. */
+#ifndef CTP_DEFAULT_LINK_POLICY
+#define CTP_DEFAULT_LINK_POLICY     0x000F
+#endif
+
+/* The minimum period interval used for the sniff and park modes. */
+#ifndef CTP_DEF_LOWPWR_MIN_PERIOD
+#define CTP_DEF_LOWPWR_MIN_PERIOD   0x100
+#endif
+
+/* The maximum period interval used for the sniff and park modes. */
+#ifndef CTP_DEF_LOWPWR_MAX_PERIOD
+#define CTP_DEF_LOWPWR_MAX_PERIOD   0x1E0
+#endif
+
+/* The number of baseband receive slot sniff attempts. */
+#ifndef CTP_DEF_LOWPWR_ATTEMPT
+#define CTP_DEF_LOWPWR_ATTEMPT      0x200
+#endif
+
+/* The number of baseband receive slots for sniff timeout. */
+#ifndef CTP_DEF_LOWPWR_TIMEOUT
+#define CTP_DEF_LOWPWR_TIMEOUT      0x200
+#endif
+
+/* This is set if CTP is to use park mode. */
+#ifndef CTP_PARK_INCLUDED
+#define CTP_PARK_INCLUDED           TRUE
+#endif
+
+/* This is set if CTP is to use sniff mode. */
+#ifndef CTP_SNIFF_INCLUDED
+#define CTP_SNIFF_INCLUDED          TRUE
+#endif
+
+/* To include CTP data exchange functionality or not. */
+#ifndef CTP_DATA_EXCHG_FEATURE
+#define CTP_DATA_EXCHG_FEATURE      FALSE
+#endif
+
+/* To include CTP GW intercom functionality or not. */
+#ifndef CTP_GW_INTERCOM_FEATURE
+#define CTP_GW_INTERCOM_FEATURE     FALSE
+#endif
+
+/* The MTU size for L2CAP channel. */
+#ifndef CTP_MTU_SIZE
+#define CTP_MTU_SIZE                200
+#endif
+
+/* The L2CAP PSM for the data exchange feature. */
+#ifndef CTP_DATA_EXCHG_PSM
+#define CTP_DATA_EXCHG_PSM          13
+#endif
+
+/* The flush timeout for L2CAP channels. */
+#ifndef CTP_FLUSH_TO
+#define CTP_FLUSH_TO                0xFFFF
+#endif
+
+/* The default service name for CTP. */
+#ifndef CTP_DEFAULT_SERVICE_NAME
+#define CTP_DEFAULT_SERVICE_NAME    "Cordless Telephony"
+#endif
+
+/* The CTP security level. */
+#ifndef CTP_SECURITY_LEVEL
+#define CTP_SECURITY_LEVEL          (BTM_SEC_IN_AUTHORIZE | BTM_SEC_IN_AUTHENTICATE | BTM_SEC_IN_ENCRYPT)
+#endif
+
+/* The number of lines to the external network. */
+#ifndef CTP_MAX_LINES
+#define CTP_MAX_LINES               1
+#endif
+
+/* Test if the number of resources in TCS is consistent with CTP setting. */
+#ifndef CTP_TEST_FULL_TCS
+#define CTP_TEST_FULL_TCS           TRUE
+#endif
+
+/* The default inquiry mode. */
+#ifndef CTP_DEFAULT_INQUIRY_MODE
+#define CTP_DEFAULT_INQUIRY_MODE    BTM_GENERAL_INQUIRY
+#endif
+
+/* The default inquiry duration. */
+#ifndef CTP_DEFAULT_INQ_DURATION
+#define CTP_DEFAULT_INQ_DURATION    4
+#endif
+
+/* The maximum number of inquiry responses. */
+#ifndef CTP_DEFAULT_INQ_MAX_RESP
+#define CTP_DEFAULT_INQ_MAX_RESP    3
+#endif
+
+/* When TL does not create another L2CAP channel within this period of time GW declares that it's "Connected Limited". */
+#ifndef CTP_TL_CONN_TIMEOUT
+#define CTP_TL_CONN_TIMEOUT         5
+#endif
+
+/* The delay for ACL to completely disconnect (for intercom) before sending the connect request to GW. */
+#ifndef CTP_RECONNECT_DELAY
+#define CTP_RECONNECT_DELAY         5
+#endif
+
+/* How many times to retry connection when it has failed. */
+#ifndef CTP_RETRY_ON_CONN_ERR
+#define CTP_RETRY_ON_CONN_ERR       5
+#endif
+
+/******************************************************************************
+**
+** ICP
+**
+******************************************************************************/
+
+#ifndef ICP_INCLUDED
+#define ICP_INCLUDED                FALSE
+#endif
+
+/* The ICP default MTU. */
+#ifndef ICP_MTU_SIZE
+#define ICP_MTU_SIZE                100
+#endif
+
+/* The ICP security level. */
+#ifndef ICP_SECURITY_LEVEL
+#define ICP_SECURITY_LEVEL          BTM_SEC_NONE
+#endif
+
+/* The default service name for ICP. */
+#ifndef ICP_DEFAULT_SERVICE_NAME
+#define ICP_DEFAULT_SERVICE_NAME    "Intercom"
+#endif
+
+/* The flush timeout for L2CAP channels. */
+#ifndef ICP_FLUSH_TO
+#define ICP_FLUSH_TO                0xFFFF
+#endif
+
+/******************************************************************************
+**
+** SPP
+**
+******************************************************************************/
+
+#ifndef SPP_INCLUDED
+#define SPP_INCLUDED                FALSE
+#endif
+
+/* The SPP default MTU. */
+#ifndef SPP_DEFAULT_MTU
+#define SPP_DEFAULT_MTU             127
+#endif
+
+/* The interval, in seconds, that a client tries to reconnect to a service. */
+#ifndef SPP_RETRY_CONN_INTERVAL
+#define SPP_RETRY_CONN_INTERVAL     1
+#endif
+
+/* The SPP discoverable mode: limited or general. */
+#ifndef SPP_DISCOVERABLE_MODE
+#define SPP_DISCOVERABLE_MODE       BTM_GENERAL_DISCOVERABLE
+#endif
+
+/* The maximum number of inquiry results returned in by inquiry procedure. */
+#ifndef SPP_DEF_INQ_MAX_RESP
+#define SPP_DEF_INQ_MAX_RESP        10
+#endif
+
+/* The SPP discovery record size. */
+#ifndef SPP_DISC_REC_SIZE
+#define SPP_DISC_REC_SIZE           60
+#endif
+
+#ifndef SPP_MAX_RECS_PER_DEVICE
+#define SPP_MAX_RECS_PER_DEVICE     (SPP_DB_SIZE / SPP_DISC_REC_SIZE)
+#endif
+
+/* Inquiry duration in 1.28 second units. */
+#ifndef SPP_DEF_INQ_DURATION
+#define SPP_DEF_INQ_DURATION        9
+#endif
+
+/* keep the raw data received from SDP server in database. */
+#ifndef SDP_RAW_DATA_INCLUDED
+#define SDP_RAW_DATA_INCLUDED       TRUE
+#endif
+
+/* TRUE, to allow JV to create L2CAP connection on SDP PSM. */
+#ifndef SDP_FOR_JV_INCLUDED
+#define SDP_FOR_JV_INCLUDED         FALSE
+#endif
+
+/* Inquiry duration in 1.28 second units. */
+#ifndef SDP_DEBUG
+#define SDP_DEBUG                   TRUE
+#endif
+
+/******************************************************************************
+**
+** HSP2, HFP
+**
+******************************************************************************/
+
+#ifndef HSP2_INCLUDED
+#define HSP2_INCLUDED               FALSE
+#endif
+
+/* Include the ability to perform inquiry for peer devices. */
+#ifndef HSP2_INQUIRY_INCLUDED
+#define HSP2_INQUIRY_INCLUDED       TRUE
+#endif
+
+/* Include Audio Gateway specific code. */
+#ifndef HSP2_AG_INCLUDED
+#define HSP2_AG_INCLUDED            TRUE
+#endif
+
+/* Include Headset Specific Code. */
+#ifndef HSP2_HS_INCLUDED
+#define HSP2_HS_INCLUDED            TRUE
+#endif
+
+/* Include the ability to open an SCO connection for In-Band Ringing. */
+#ifndef HSP2_IB_RING_INCLUDED
+#define HSP2_IB_RING_INCLUDED       TRUE
+#endif
+
+/* Include the ability to repeat a ring. */
+#ifndef HSP2_AG_REPEAT_RING
+#define HSP2_AG_REPEAT_RING         TRUE
+#endif
+
+#ifndef HSP2_APP_CLOSES_ON_CKPD
+#define HSP2_APP_CLOSES_ON_CKPD     FALSE
+#endif
+
+
+/* Include the ability to park a connection. */
+#ifndef HSP2_PARK_INCLUDED
+#define HSP2_PARK_INCLUDED          TRUE
+#endif
+
+/* Include HSP State Machine debug trace messages. */
+#ifndef HSP2_FSM_DEBUG
+#define HSP2_FSM_DEBUG              TRUE
+#endif
+
+/* The Module's Inquiry Scan Window. */
+#ifndef HSP2_INQ_SCAN_WINDOW
+#define HSP2_INQ_SCAN_WINDOW        0
+#endif
+
+/* The Module's Inquiry Scan Interval. */
+#ifndef HSP2_INQ_SCAN_INTERVAL
+#define HSP2_INQ_SCAN_INTERVAL      0
+#endif
+
+/* The Module's Page Scan Interval. */
+#ifndef HSP2_PAGE_SCAN_INTERVAL
+#define HSP2_PAGE_SCAN_INTERVAL     0
+#endif
+
+/* The Module's Page Scan Window. */
+#ifndef HSP2_PAGE_SCAN_WINDOW
+#define HSP2_PAGE_SCAN_WINDOW       0
+#endif
+
+/* The Park Mode's Minimum Beacon Period. */
+#ifndef HSP2_BEACON_MIN_PERIOD
+#define HSP2_BEACON_MIN_PERIOD      450
+#endif
+
+/* The Park Mode's Maximum Beacon Period. */
+#ifndef HSP2_BEACON_MAX_PERIOD
+#define HSP2_BEACON_MAX_PERIOD      500
+#endif
+
+/* The duration of the inquiry in seconds. */
+#ifndef HSP2_INQ_DURATION
+#define HSP2_INQ_DURATION           4
+#endif
+
+/* Maximum number of peer responses during an inquiry. */
+#ifndef HSP2_INQ_MAX_NUM_RESPS
+#define HSP2_INQ_MAX_NUM_RESPS      3
+#endif
+
+/* Maximum number of times to retry an inquiry prior to failure. */
+#ifndef HSP2_MAX_INQ_RETRY
+#define HSP2_MAX_INQ_RETRY          6
+#endif
+
+/* Maximum number of times to retry an RFCOMM connection prior to failure. */
+#ifndef HSP2_MAX_CONN_RETRY
+#define HSP2_MAX_CONN_RETRY         3
+#endif
+
+/* If the connect request failed for authentication reasons, do not retry */
+#ifndef HSP2_NO_RETRY_ON_AUTH_FAIL
+#define HSP2_NO_RETRY_ON_AUTH_FAIL  TRUE
+#endif
+
+/* Maximum number of characters in an HSP2 device name. */
+#ifndef HSP2_MAX_NAME_LEN
+#define HSP2_MAX_NAME_LEN           32
+#endif
+
+/* The minimum speaker and/or microphone gain setting. */
+#ifndef HSP2_MIN_GAIN
+#define HSP2_MIN_GAIN               0
+#endif
+
+/* The maximum speaker and/or microphone setting. */
+#ifndef HSP2_MAX_GAIN
+#define HSP2_MAX_GAIN               15
+#endif
+
+/* The default value to send on an AT+CKPD. */
+#ifndef HSP2_KEYPRESS_DEFAULT
+#define HSP2_KEYPRESS_DEFAULT       200
+#endif
+
+/* Maximum amount a data that can be received per RFCOMM frame. */
+#ifndef HSP2_MAX_RFC_READ_LEN
+#define HSP2_MAX_RFC_READ_LEN       128
+#endif
+
+/* The time in seconds to wait for completion of a partial AT command or response from the peer. */
+#ifndef HSP2_AT_TO_INTERVAL
+#define HSP2_AT_TO_INTERVAL         30
+#endif
+
+/* The time to wait before repeating a ring to a peer Headset. */
+#ifndef HSP2_REPEAT_RING_TO
+#define HSP2_REPEAT_RING_TO         4
+#endif
+
+/* Time to wait for a response for an AT command */
+#ifndef HSP2_AT_RSP_TO
+#define HSP2_AT_RSP_TO              20
+#endif
+
+/* SCO packet type(s) to use (bitmask: see spec), 0 - device default (recommended) */
+#ifndef HSP2_SCO_PKT_TYPES
+#define HSP2_SCO_PKT_TYPES          ((UINT16)0x0000)
+#endif
+
+/* The default settings of the SCO voice link. */
+#ifndef HSP2_DEFAULT_VOICE_SETTINGS
+#define HSP2_DEFAULT_VOICE_SETTINGS (HCI_INP_CODING_LINEAR | HCI_INP_DATA_FMT_2S_COMPLEMENT | HCI_INP_SAMPLE_SIZE_16BIT | HCI_AIR_CODING_FORMAT_CVSD)
+#endif
+
+#ifndef HSP2_MAX_AT_CMD_LENGTH
+#define HSP2_MAX_AT_CMD_LENGTH       16
+#endif
+
+#ifndef HSP2_MAX_AT_VAL_LENGTH
+#if (defined(HFP_INCLUDED) && HFP_INCLUDED == TRUE)
+#define HSP2_MAX_AT_VAL_LENGTH       310
+#else
+#define HSP2_MAX_AT_VAL_LENGTH       5
+#endif
+#endif
+
+
+#ifndef HSP2_SDP_DB_SIZE
+#define HSP2_SDP_DB_SIZE             300
+#endif
+
+
+/******************************************************************************
+**
+** HFP
+**
+******************************************************************************/
+
+#ifndef HFP_INCLUDED
+#define HFP_INCLUDED                FALSE
+#endif
+
+/* Include Audio Gateway specific code. */
+#ifndef HFP_AG_INCLUDED
+#define HFP_AG_INCLUDED             TRUE
+#endif
+
+/* Include Hand Free Specific Code. */
+#ifndef HFP_HF_INCLUDED
+#define HFP_HF_INCLUDED             TRUE
+#endif
+
+/* Use AT interface instead of full blown API */
+#ifndef AT_INTERFACE
+#define AT_INTERFACE            FALSE
+#endif
+
+/* HFP Manages SCO establishement for various procedures */
+#ifndef HFP_SCO_MGMT_INCLUDED
+#define HFP_SCO_MGMT_INCLUDED             TRUE
+#endif
+
+/* CCAP compliant features and behavior desired */
+#ifndef CCAP_COMPLIANCE
+#define CCAP_COMPLIANCE             TRUE
+#endif
+
+/* Caller ID string, part of +CLIP result code */
+#ifndef HFP_MAX_CLIP_INFO
+#define HFP_MAX_CLIP_INFO             45
+#endif
+
+#ifndef HFP_RPT_PEER_INFO_INCLUDED
+#define HFP_RPT_PEER_INFO_INCLUDED  TRUE  /* Reporting of peer features enabled */
+#endif
+
+/******************************************************************************
+**
+** HID
+**
+******************************************************************************/
+
+/* HID Device Role Included */
+#ifndef HID_DEV_INCLUDED
+#define HID_DEV_INCLUDED             FALSE
+#endif
+
+#ifndef HID_DEV_PM_INCLUDED
+#define HID_DEV_PM_INCLUDED         TRUE
+#endif
+
+/* The HID Device is a virtual cable */
+#ifndef HID_DEV_VIRTUAL_CABLE
+#define HID_DEV_VIRTUAL_CABLE       TRUE
+#endif
+
+/* The HID device initiates the reconnections */
+#ifndef HID_DEV_RECONN_INITIATE
+#define HID_DEV_RECONN_INITIATE     TRUE
+#endif
+
+/* THe HID device is normally connectable */
+#ifndef HID_DEV_NORMALLY_CONN
+#define HID_DEV_NORMALLY_CONN       FALSE
+#endif
+
+/* The device is battery powered */
+#ifndef HID_DEV_BATTERY_POW
+#define HID_DEV_BATTERY_POW         TRUE
+#endif
+
+/* Device is capable of waking up the host */
+#ifndef HID_DEV_REMOTE_WAKE
+#define HID_DEV_REMOTE_WAKE         TRUE
+#endif
+
+/* Device needs host to close SDP channel after SDP is over */
+#ifndef HID_DEV_SDP_DISABLE
+#define HID_DEV_SDP_DISABLE         TRUE
+#endif
+
+#ifndef HID_DEV_MTU_SIZE
+#define HID_DEV_MTU_SIZE                 64
+#endif
+
+#ifndef HID_DEV_FLUSH_TO
+#define HID_DEV_FLUSH_TO                 0xffff
+#endif
+
+#ifndef HID_DEV_PAGE_SCAN_WIN
+#define HID_DEV_PAGE_SCAN_WIN       (0)
+#endif
+
+#ifndef HID_DEV_PAGE_SCAN_INT
+#define HID_DEV_PAGE_SCAN_INT       (0)
+#endif
+
+#ifndef HID_DEV_MAX_CONN_RETRY
+#define HID_DEV_MAX_CONN_RETRY      (15)
+#endif
+
+#ifndef HID_DEV_REPAGE_WIN
+#define HID_DEV_REPAGE_WIN          (1)
+#endif
+
+#ifndef HID_DEV_SVC_NAME
+#define HID_DEV_SVC_NAME            "HID"
+#endif
+
+#ifndef HID_DEV_SVC_DESCR
+#define HID_DEV_SVC_DESCR           "3-button mouse and keyboard"
+#endif
+
+#ifndef HID_DEV_PROVIDER_NAME
+#define HID_DEV_PROVIDER_NAME       "Widcomm"
+#endif
+
+#ifndef HID_DEV_REL_NUM
+#define HID_DEV_REL_NUM             0x0100
+#endif
+
+#ifndef HID_DEV_PARSER_VER
+#define HID_DEV_PARSER_VER          0x0111
+#endif
+
+#ifndef HID_DEV_SUBCLASS
+#define HID_DEV_SUBCLASS            COD_MINOR_POINTING
+#endif
+
+#ifndef HID_DEV_COUNTRY_CODE
+#define HID_DEV_COUNTRY_CODE        0x33
+#endif
+
+#ifndef HID_DEV_SUP_TOUT
+#define HID_DEV_SUP_TOUT            0x8000
+#endif
+
+#ifndef HID_DEV_NUM_LANGS
+#define HID_DEV_NUM_LANGS           1
+#endif
+
+#ifndef HID_DEV_INACT_TIMEOUT
+#define HID_DEV_INACT_TIMEOUT       60
+#endif
+
+#ifndef HID_DEV_BUSY_MODE_PARAMS
+#define HID_DEV_BUSY_MODE_PARAMS    { 320, 160, 10, 20, HCI_MODE_ACTIVE }
+#endif
+
+#ifndef HID_DEV_IDLE_MODE_PARAMS
+#define HID_DEV_IDLE_MODE_PARAMS    { 320, 160, 10, 20, HCI_MODE_SNIFF }
+#endif
+
+#ifndef HID_DEV_SUSP_MODE_PARAMS
+#define HID_DEV_SUSP_MODE_PARAMS    { 640, 320,  0,    0, HCI_MODE_PARK }
+#endif
+
+#ifndef HID_DEV_MAX_DESCRIPTOR_SIZE
+#define HID_DEV_MAX_DESCRIPTOR_SIZE      128     /* Max descriptor size          */
+#endif
+
+#ifndef HID_DEV_LANGUAGELIST
+#define HID_DEV_LANGUAGELIST             {0x35, 0x06, 0x09, 0x04, 0x09, 0x09, 0x01, 0x00}
+#endif
+
+#ifndef HID_DEV_LINK_SUPERVISION_TO
+#define HID_DEV_LINK_SUPERVISION_TO      0x8000
+#endif
+
+#ifndef HID_CONTROL_POOL_ID
+#define HID_CONTROL_POOL_ID             2
+#endif
+
+#ifndef HID_INTERRUPT_POOL_ID
+#define HID_INTERRUPT_POOL_ID           2
+#endif
+
+/*************************************************************************
+** Definitions for Both HID-Host & Device
+*/
+#ifndef HID_MAX_SVC_NAME_LEN
+#define HID_MAX_SVC_NAME_LEN  32
+#endif
+
+#ifndef HID_MAX_SVC_DESCR_LEN
+#define HID_MAX_SVC_DESCR_LEN 32
+#endif
+
+#ifndef HID_MAX_PROV_NAME_LEN
+#define HID_MAX_PROV_NAME_LEN 32
+#endif
+
+/*************************************************************************
+** Definitions for HID-Host
+*/
+#ifndef  HID_HOST_INCLUDED
+#define HID_HOST_INCLUDED           TRUE
+#endif
+
+#ifndef HID_HOST_MAX_DEVICES
+#define HID_HOST_MAX_DEVICES        7
+#endif
+
+#ifndef HID_HOST_MTU
+#define HID_HOST_MTU                640
+#endif
+
+#ifndef HID_HOST_FLUSH_TO
+#define HID_HOST_FLUSH_TO                 0xffff
+#endif
+
+#ifndef HID_HOST_MAX_CONN_RETRY
+#define HID_HOST_MAX_CONN_RETRY     (3)
+#endif
+
+#ifndef HID_HOST_REPAGE_WIN
+#define HID_HOST_REPAGE_WIN          (2)
+#endif
+
+
+/******************************************************************************
+**
+** DUN and FAX
+**
+******************************************************************************/
+
+#ifndef DUN_INCLUDED
+#define DUN_INCLUDED                FALSE
+#endif
+
+
+/******************************************************************************
+**
+** GOEP
+**
+******************************************************************************/
+
+#ifndef GOEP_INCLUDED
+#define GOEP_INCLUDED               FALSE
+#endif
+
+/* This is set to enable GOEP non-blocking file system access functions. */
+#ifndef GOEP_FS_INCLUDED
+#define GOEP_FS_INCLUDED        FALSE
+#endif
+
+/* GOEP authentication key size. */
+#ifndef GOEP_MAX_AUTH_KEY_SIZE
+#define GOEP_MAX_AUTH_KEY_SIZE      16
+#endif
+
+/* Maximum size of the realm authentication string. */
+#ifndef GOEP_MAX_AUTH_REALM_SIZE
+#define GOEP_MAX_AUTH_REALM_SIZE    16
+#endif
+
+/* Realm Character Set */
+#ifndef GOEP_REALM_CHARSET
+#define GOEP_REALM_CHARSET          0       /* ASCII */
+#endif
+
+/* This is set to the maximum length of path name allowed in the system (_MAX_PATH). */
+#ifndef GOEP_MAX_PATH_SIZE
+#define GOEP_MAX_PATH_SIZE          255
+#endif
+
+/* Specifies whether or not client's user id is required during obex authentication */
+#ifndef GOEP_SERVER_USERID_REQUIRED
+#define GOEP_SERVER_USERID_REQUIRED FALSE
+#endif
+
+/* This is set to the maximum length of file name allowed in the system (_MAX_FNAME). */
+#ifndef GOEP_MAX_FILE_SIZE
+#define GOEP_MAX_FILE_SIZE          128
+#endif
+
+/* Character used as path separator */
+#ifndef GOEP_PATH_SEPARATOR
+#define GOEP_PATH_SEPARATOR         ((char) 0x5c)   /* 0x2f ('/'), or 0x5c ('\') */
+#endif
+
+/******************************************************************************
+**
+** OPP
+**
+******************************************************************************/
+
+#ifndef OPP_INCLUDED
+#define OPP_INCLUDED                FALSE
+#endif
+
+/* This is set to enable OPP client capabilities. */
+#ifndef OPP_CLIENT_INCLUDED
+#define OPP_CLIENT_INCLUDED         FALSE
+#endif
+
+/* This is set to enable OPP server capabilities. */
+#ifndef OPP_SERVER_INCLUDED
+#define OPP_SERVER_INCLUDED         FALSE
+#endif
+
+/* if the optional formating functions are to be included or not */
+#ifndef OPP_FORMAT_INCLUDED
+#define OPP_FORMAT_INCLUDED         FALSE
+#endif
+
+/* Maximum number of client sessions allowed by server */
+#ifndef OPP_MAX_SRVR_SESS
+#define OPP_MAX_SRVR_SESS           3
+#endif
+
+/******************************************************************************
+**
+** FTP
+**
+******************************************************************************/
+
+#ifndef FTP_INCLUDED
+#define FTP_INCLUDED                FALSE
+#endif
+
+/* This is set to enable FTP client capabilities. */
+#ifndef FTP_CLIENT_INCLUDED
+#define FTP_CLIENT_INCLUDED         TRUE
+#endif
+
+/* This is set to enable FTP server capabilities. */
+#ifndef FTP_SERVER_INCLUDED
+#define FTP_SERVER_INCLUDED         TRUE
+#endif
+
+/******************************************************************************
+**
+** XML Parser
+**
+******************************************************************************/
+
+#ifndef XML_STACK_SIZE
+#define XML_STACK_SIZE             7
+#endif
+
+/******************************************************************************
+**
+** BPP Printer
+**
+******************************************************************************/
+#ifndef BPP_DEBUG
+#define BPP_DEBUG            FALSE
+#endif
+
+#ifndef BPP_INCLUDED
+#define BPP_INCLUDED                FALSE
+#endif
+
+#ifndef BPP_SND_INCLUDED
+#define BPP_SND_INCLUDED            FALSE
+#endif
+
+/* Maximum number of senders allowed to connect simultaneously
+** The maximum is 6 or (OBX_NUM_SERVERS / 2), whichever is smaller
+*/
+#ifndef BPP_PR_MAX_CON
+#define BPP_PR_MAX_CON         3
+#endif
+
+/* Service Name. maximum length: 248
+#ifndef BPP_SERVICE_NAME
+#define BPP_SERVICE_NAME            "Basic Printing"
+#endif
+ */
+/* Document Format Supported. ASCII comma-delimited list of MIME type:version string
+#ifndef BPP_DOC_FORMAT_SUPPORTED
+#define BPP_DOC_FORMAT_SUPPORTED    "application/vnd.pwg-xhtml-print:1.0,application/vnd.hp-PCL:5E,application/PDF"
+#endif
+
+#ifndef BPP_DOC_FORMAT_SUPPORTED_LEN
+#define BPP_DOC_FORMAT_SUPPORTED_LEN    77
+#endif
+ */
+/* Character repertoires.
+#ifndef BPP_CHARACTER_REPERTOIRES
+#define BPP_CHARACTER_REPERTOIRES {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01}
+#endif
+ */
+/* XHTML formats.
+#ifndef BPP_XHTML_PRINT_FORMATS
+#define BPP_XHTML_PRINT_FORMATS     "image/gif:89A,image/jpeg"
+#endif
+
+#ifndef BPP_XHTML_PRINT_FORMATS_LEN
+#define BPP_XHTML_PRINT_FORMATS_LEN 24
+#endif
+ */
+/* Color supported.
+#ifndef BPP_COLOR_SUPORTED
+#define BPP_COLOR_SUPORTED          FALSE
+#endif
+ */
+/* 1284 ID string. First 2 bytes are the length.
+#ifndef BPP_1284ID
+#define BPP_1284ID                  "\x00\x48MANUFACTURER:ACME Manufacturing;COMMAND SET:PCL,MPL;MODEL:LaserBeam \?;"
+#endif
+
+#ifndef BPP_1284ID_LEN
+#define BPP_1284ID_LEN              72
+#endif
+ */
+/* Printer name.
+#ifndef BPP_PRINTER_NAME
+#define BPP_PRINTER_NAME            "My Printer"
+#endif
+
+#ifndef BPP_PRINTER_NAME_LEN
+#define BPP_PRINTER_NAME_LEN        10
+#endif
+ */
+
+/* Printer location.
+#ifndef BPP_PRINTER_LOCATION
+#define BPP_PRINTER_LOCATION        "Hotel Lobby"
+#endif
+
+#ifndef BPP_PRINTER_LOCATION_LEN
+#define BPP_PRINTER_LOCATION_LEN    11
+#endif
+ */
+/* Duplex printing supported.
+#ifndef BPP_DUPLEX_SUPPORTED
+#define BPP_DUPLEX_SUPPORTED        TRUE
+#endif
+ */
+
+/* Media types supported.
+#ifndef BPP_MEDIA_TYPES_SUPPORTED
+#define BPP_MEDIA_TYPES_SUPPORTED   "stationary,continuous-long,photographic-high-gloss,cardstock"
+#endif
+
+#ifndef BPP_MEDIA_TYPES_SUPPORTED_LEN
+#define BPP_MEDIA_TYPES_SUPPORTED_LEN   60
+#endif
+ */
+/* Maximum media with supported.
+#ifndef BPP_MAX_MEDIA_WIDTH
+#define BPP_MAX_MEDIA_WIDTH         205
+#endif
+ */
+/* Maximum media length supported.
+#ifndef BPP_MAX_MEDIA_LENGTH
+#define BPP_MAX_MEDIA_LENGTH        285
+#endif
+ */
+/* the maximum string len for the media size of medium loaded */
+#ifndef BPP_MEDIA_SIZE_LEN
+#define BPP_MEDIA_SIZE_LEN          33
+#endif
+
+/* Debug Trace the SOAP object, if TRUE */
+#ifndef BPP_TRACE_XML
+#define BPP_TRACE_XML               TRUE
+#endif
+
+/* in case that the SOAP object does not all come in one OBEX packet,
+ * this size of data may be kept in the BPP control block for continuing parsing.
+ * The maximum is the size of the biggest GKI buffer (GKI_MAX_BUF_SIZE) */
+#ifndef BPP_SOAP_KEEP_SIZE
+#define BPP_SOAP_KEEP_SIZE          200
+#endif
+
+
+/******************************************************************************
+**
+** BIP
+**
+******************************************************************************/
+#ifndef BIP_INCLUDED
+#define BIP_INCLUDED                FALSE
+#endif
+
+/* TRUE to include imaging initiator */
+#ifndef BIP_INITR_INCLUDED
+#define BIP_INITR_INCLUDED          FALSE
+#endif
+
+/* TRUE to include imaging responder */
+#ifndef BIP_RSPDR_INCLUDED
+#define BIP_RSPDR_INCLUDED          FALSE
+#endif
+
+/* TRUE to include image push feature */
+#ifndef BIP_PUSH_INCLUDED
+#define BIP_PUSH_INCLUDED           TRUE
+#endif
+
+/* TRUE to include image pull feature */
+#ifndef BIP_PULL_INCLUDED
+#define BIP_PULL_INCLUDED           TRUE
+#endif
+
+/* TRUE to include advanced image printing feature */
+#ifndef BIP_PRINTING_INCLUDED
+#define BIP_PRINTING_INCLUDED       TRUE
+#endif
+
+/* TRUE to include automatic archive feature */
+#ifndef BIP_ARCHIVE_INCLUDED
+#define BIP_ARCHIVE_INCLUDED        TRUE
+#endif
+
+/* TRUE to include remote camera feature */
+#ifndef BIP_CAMERA_INCLUDED
+#define BIP_CAMERA_INCLUDED         TRUE
+#endif
+
+/* TRUE to include remote display feature */
+#ifndef BIP_DISPLAY_INCLUDED
+#define BIP_DISPLAY_INCLUDED        TRUE
+#endif
+
+/* TRUE to include sanity check code for API functions */
+#ifndef BIP_SANITY_CHECKS
+#define BIP_SANITY_CHECKS           TRUE
+#endif
+
+/* TRUE to show the received XML object in trace for conformance tests */
+#ifndef BIP_TRACE_XML
+#define BIP_TRACE_XML               TRUE
+#endif
+
+/* in case that the received XML object is not complete, the XML parser state machine needs
+ * to keep a copy of the data from the last '<'
+ * This macro specifies the maximun amount of data for this purpose */
+#ifndef BIP_XML_CARRY_OVER_LEN
+#define BIP_XML_CARRY_OVER_LEN      100
+#endif
+
+/* minimum 4, maximum is 255. The value should be set to the maximum size of encoding string + 1. JPEG2000.
+ * If vendor specific format is supported, it might be bigger than 9 */
+#ifndef BIP_IMG_ENCODE_SIZE
+#define BIP_IMG_ENCODE_SIZE         9
+#endif
+
+/* MIME type: text/plain */
+#ifndef BIP_TYPE_SIZE
+#define BIP_TYPE_SIZE               20
+#endif
+
+/* example: iso-8895-1 */
+#ifndef BIP_CHARSET_SIZE
+#define BIP_CHARSET_SIZE            10
+#endif
+
+/* friendly name */
+#ifndef BIP_FNAME_SIZE
+#define BIP_FNAME_SIZE              20
+#endif
+
+/* service name */
+#ifndef BIP_SNAME_SIZE
+#define BIP_SNAME_SIZE              60
+#endif
+
+/* temporary storage file name(for file system access, may include path) */
+#ifndef BIP_TEMP_NAME_SIZE
+#define BIP_TEMP_NAME_SIZE          200
+#endif
+
+/* image file name */
+#ifndef BIP_IMG_NAME_SIZE
+#define BIP_IMG_NAME_SIZE           200
+#endif
+
+/* attachment file name */
+#ifndef BIP_ATT_NAME_SIZE
+#define BIP_ATT_NAME_SIZE           200
+#endif
+
+/* object (image, attachment, thumbnail) file name (may be used for file system) */
+#ifndef BIP_OBJ_NAME_SIZE
+#define BIP_OBJ_NAME_SIZE           200
+#endif
+
+
+
+/******************************************************************************
+**
+** HCRP
+**
+******************************************************************************/
+
+#ifndef HCRP_INCLUDED
+#define HCRP_INCLUDED               FALSE
+#endif
+
+/* This is set to enable server. */
+#ifndef HCRP_SERVER_INCLUDED
+#define HCRP_SERVER_INCLUDED       FALSE
+#endif
+
+/* This is set to enable client. */
+#ifndef HCRP_CLIENT_INCLUDED
+#define HCRP_CLIENT_INCLUDED        FALSE
+#endif
+
+/* TRUE enables the notification option of the profile. */
+#ifndef HCRP_NOTIFICATION_INCLUDED
+#define HCRP_NOTIFICATION_INCLUDED  TRUE
+#endif
+
+/* TRUE enables the vendor specific option of the profile. */
+#ifndef HCRP_VENDOR_SPEC_INCLUDED
+#define HCRP_VENDOR_SPEC_INCLUDED   TRUE
+#endif
+
+/* TRUE enables state machine traces. */
+#ifndef HCRP_FSM_DEBUG
+#define HCRP_FSM_DEBUG              FALSE
+#endif
+
+/* TRUE enables protocol message traces. */
+#ifndef HCRP_PROTO_DEBUG
+#define HCRP_PROTO_DEBUG            FALSE
+#endif
+
+/* Maximum length used to store the service name (Minimum 1). */
+#ifndef HCRP_MAX_SERVICE_NAME_LEN
+#define HCRP_MAX_SERVICE_NAME_LEN   32
+#endif
+
+/* Maximum length used to store the device name (Minimum 1). */
+#ifndef HCRP_MAX_DEVICE_NAME_LEN
+#define HCRP_MAX_DEVICE_NAME_LEN    32
+#endif
+
+/* Maximum length of device location (Minimum 1) */
+#ifndef HCRP_MAX_DEVICE_LOC_LEN
+#define HCRP_MAX_DEVICE_LOC_LEN     32
+#endif
+
+/* Maximum length used to store the friendly name (Minimum 1). */
+#ifndef HCRP_MAX_FRIENDLY_NAME_LEN
+#define HCRP_MAX_FRIENDLY_NAME_LEN  32
+#endif
+
+/* Maximum length used to store the 1284 id string (Minimum 2 byte length field). */
+#ifndef HCRP_MAX_SDP_1284_ID_LEN
+#define HCRP_MAX_SDP_1284_ID_LEN    128
+#endif
+
+/* Maximum length for parameters to be processed for vendor specific commands. */
+#ifndef HCRP_MAX_VEND_SPEC_LEN
+#define HCRP_MAX_VEND_SPEC_LEN      4
+#endif
+
+/* Number of seconds to wait for 2nd GAP to open. */
+#ifndef HCRP_OPEN_CHAN_TOUT
+#define HCRP_OPEN_CHAN_TOUT         5
+#endif
+
+/* Number of seconds to wait for 2nd GAP to close. */
+#ifndef HCRP_CLOSE_CHAN_TOUT
+#define HCRP_CLOSE_CHAN_TOUT        3
+#endif
+
+/* Number of seconds to wait for the application to respond to a protocol request. */
+#ifndef HCRP_APPL_RSP_TOUT
+#define HCRP_APPL_RSP_TOUT          5
+#endif
+
+/* Number of seconds to wait for the peer device to respond to a protocol request. */
+#ifndef HCRP_CMD_RSP_TOUT
+#define HCRP_CMD_RSP_TOUT           7
+#endif
+
+/* Number of seconds between subsequent credit requests to the server when the send watermark has been exceeded. */
+#ifndef HCRP_CREDIT_REQ_UPDATES
+#define HCRP_CREDIT_REQ_UPDATES     1
+#endif
+
+/* Maximum number of results to return in a HCRP_FindServices search. */
+#ifndef HCRP_MAX_SEARCH_RESULTS
+#define HCRP_MAX_SEARCH_RESULTS     1
+#endif
+
+/* Maximum number of bytes to be reserved for searching for the client's notification record. */
+#ifndef HCRP_MAX_NOTIF_DISC_BUF
+#define HCRP_MAX_NOTIF_DISC_BUF     300
+#endif
+
+/* Maximum number of clients the server will allow to be registered for notifications. */
+#ifndef HCRP_MAX_NOTIF_CLIENTS
+#define HCRP_MAX_NOTIF_CLIENTS      3
+#endif
+
+/* Spec says minimum of two notification retries. */
+#ifndef HCRP_NOTIF_NUM_RETRIES
+#define HCRP_NOTIF_NUM_RETRIES      4
+#endif
+
+/*************************************************************************
+** Definitions for Multi-Client Server HCRP
+** Note: Many of the above HCRP definitions are also used
+** Maximum number of clients allowed to connect simultaneously
+** Must be less than ((GAP_MAX_CONNECTIONS - 1) / 2)
+*/
+#ifndef HCRPM_MAX_CLIENTS
+#define HCRPM_MAX_CLIENTS           3
+#endif
+
+
+/******************************************************************************
+**
+** PAN
+**
+******************************************************************************/
+
+#ifndef PAN_INCLUDED
+#define PAN_INCLUDED                FALSE
+#endif
+
+
+/******************************************************************************
+**
+** SAP
+**
+******************************************************************************/
+
+#ifndef SAP_SERVER_INCLUDED
+#define SAP_SERVER_INCLUDED         FALSE
+#endif
+
+
+/*************************************************************************
+ * A2DP Definitions
+ */
+#ifndef A2D_INCLUDED
+#define A2D_INCLUDED            TRUE
+#endif
+
+/* TRUE to include SBC utility functions */
+#ifndef A2D_SBC_INCLUDED
+#define A2D_SBC_INCLUDED        A2D_INCLUDED
+#endif
+
+/* TRUE to include MPEG-1,2 (mp3) utility functions */
+#ifndef A2D_M12_INCLUDED
+#define A2D_M12_INCLUDED        A2D_INCLUDED
+#endif
+
+/* TRUE to include MPEG-2,4 (aac) utility functions */
+#ifndef A2D_M24_INCLUDED
+#define A2D_M24_INCLUDED        A2D_INCLUDED
+#endif
+
+/******************************************************************************
+**
+** AVCTP
+**
+******************************************************************************/
+
+#ifndef AVCT_INCLUDED
+#define AVCT_INCLUDED               TRUE
+#endif
+
+/* Number of simultaneous ACL links to different peer devices. */
+#ifndef AVCT_NUM_LINKS
+#define AVCT_NUM_LINKS              2
+#endif
+
+/* Number of simultaneous AVCTP connections. */
+#ifndef AVCT_NUM_CONN
+#define AVCT_NUM_CONN               3
+#endif
+
+/* Pool ID where to reassemble the SDU.
+   This Pool allows buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef AVCT_BR_USER_RX_POOL_ID
+#define AVCT_BR_USER_RX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/* Pool ID where to hold the SDU.
+   This Pool allows buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef AVCT_BR_USER_TX_POOL_ID
+#define AVCT_BR_USER_TX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments during SDU reassembly
+*/
+#ifndef AVCT_BR_FCR_RX_POOL_ID
+#define AVCT_BR_FCR_RX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments used in (re)transmissions.
+L2CAP_DEFAULT_ERM_POOL_ID is specified to use the HCI ACL data pool.
+Note:  This pool needs to have enough buffers to hold two times the window size negotiated
+ in the tL2CAP_FCR_OPTIONS (2 * tx_win_size)  to allow for retransmissions.
+ The size of each buffer must be able to hold the maximum MPS segment size passed in
+ tL2CAP_FCR_OPTIONS plus BT_HDR (8) + HCI preamble (4) + L2CAP_MIN_OFFSET (11 - as of BT 2.1 + EDR Spec).
+*/
+#ifndef AVCT_BR_FCR_TX_POOL_ID
+#define AVCT_BR_FCR_TX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* AVCTP Browsing channel FCR Option:
+Size of the transmission window when using enhanced retransmission mode. Not used
+in basic and streaming modes. Range: 1 - 63
+*/
+#ifndef AVCT_BR_FCR_OPT_TX_WINDOW_SIZE
+#define AVCT_BR_FCR_OPT_TX_WINDOW_SIZE      10
+#endif
+
+/* AVCTP Browsing channel FCR Option:
+Number of transmission attempts for a single I-Frame before taking
+Down the connection. Used In ERTM mode only. Value is Ignored in basic and
+Streaming modes.
+Range: 0, 1-0xFF
+0 - infinite retransmissions
+1 - single transmission
+*/
+#ifndef AVCT_BR_FCR_OPT_MAX_TX_B4_DISCNT
+#define AVCT_BR_FCR_OPT_MAX_TX_B4_DISCNT    20
+#endif
+
+/* AVCTP Browsing channel FCR Option: Retransmission Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost I-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 2000 (2 secs) when supporting PBF.
+ */
+#ifndef AVCT_BR_FCR_OPT_RETX_TOUT
+#define AVCT_BR_FCR_OPT_RETX_TOUT           2000
+#endif
+
+/* AVCTP Browsing channel FCR Option: Monitor Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost S-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 12000 (12 secs) when supporting PBF.
+*/
+#ifndef AVCT_BR_FCR_OPT_MONITOR_TOUT
+#define AVCT_BR_FCR_OPT_MONITOR_TOUT        12000
+#endif
+
+/******************************************************************************
+**
+** AVRCP
+**
+******************************************************************************/
+
+#ifndef AVRC_INCLUDED
+#define AVRC_INCLUDED               TRUE
+#endif
+
+/******************************************************************************
+**
+** MCAP
+**
+******************************************************************************/
+#ifndef MCA_INCLUDED
+#define MCA_INCLUDED                FALSE
+#endif
+
+/* TRUE to support Clock Synchronization OpCodes */
+#ifndef MCA_SYNC_INCLUDED
+#define MCA_SYNC_INCLUDED           FALSE
+#endif
+
+/* The MTU size for the L2CAP configuration on control channel. 48 is the minimal */
+#ifndef MCA_CTRL_MTU
+#define MCA_CTRL_MTU    60
+#endif
+
+/* The maximum number of registered MCAP instances. */
+#ifndef MCA_NUM_REGS
+#define MCA_NUM_REGS    3
+#endif
+
+/* The maximum number of control channels (to difference devices) per registered MCAP instances. */
+#ifndef MCA_NUM_LINKS
+#define MCA_NUM_LINKS   3
+#endif
+
+/* The maximum number of MDEP (including HDP echo) per registered MCAP instances. */
+#ifndef MCA_NUM_DEPS
+#define MCA_NUM_DEPS    3
+#endif
+
+/* The maximum number of MDL link per control channel. */
+#ifndef MCA_NUM_MDLS
+#define MCA_NUM_MDLS    4
+#endif
+
+/* Pool ID where to reassemble the SDU. */
+#ifndef MCA_USER_RX_POOL_ID
+#define MCA_USER_RX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/* Pool ID where to hold the SDU. */
+#ifndef MCA_USER_TX_POOL_ID
+#define MCA_USER_TX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments during SDU reassembly
+*/
+#ifndef MCA_FCR_RX_POOL_ID
+#define MCA_FCR_RX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments used in (re)transmissions.
+L2CAP_DEFAULT_ERM_POOL_ID is specified to use the HCI ACL data pool.
+Note:  This pool needs to have enough buffers to hold two times the window size negotiated
+ in the tL2CAP_FCR_OPTIONS (2 * tx_win_size)  to allow for retransmissions.
+ The size of each buffer must be able to hold the maximum MPS segment size passed in
+ tL2CAP_FCR_OPTIONS plus BT_HDR (8) + HCI preamble (4) + L2CAP_MIN_OFFSET (11 - as of BT 2.1 + EDR Spec).
+*/
+#ifndef MCA_FCR_TX_POOL_ID
+#define MCA_FCR_TX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* MCAP control channel FCR Option:
+Size of the transmission window when using enhanced retransmission mode.
+1 is defined by HDP specification for control channel.
+*/
+#ifndef MCA_FCR_OPT_TX_WINDOW_SIZE
+#define MCA_FCR_OPT_TX_WINDOW_SIZE      1
+#endif
+
+/* MCAP control channel FCR Option:
+Number of transmission attempts for a single I-Frame before taking
+Down the connection. Used In ERTM mode only. Value is Ignored in basic and
+Streaming modes.
+Range: 0, 1-0xFF
+0 - infinite retransmissions
+1 - single transmission
+*/
+#ifndef MCA_FCR_OPT_MAX_TX_B4_DISCNT
+#define MCA_FCR_OPT_MAX_TX_B4_DISCNT    20
+#endif
+
+/* MCAP control channel FCR Option: Retransmission Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost I-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 2000 (2 secs) when supporting PBF.
+ */
+#ifndef MCA_FCR_OPT_RETX_TOUT
+#define MCA_FCR_OPT_RETX_TOUT           2000
+#endif
+
+/* MCAP control channel FCR Option: Monitor Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost S-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 12000 (12 secs) when supporting PBF.
+*/
+#ifndef MCA_FCR_OPT_MONITOR_TOUT
+#define MCA_FCR_OPT_MONITOR_TOUT        12000
+#endif
+
+/* MCAP control channel FCR Option: Maximum PDU payload size.
+The maximum number of payload octets that the local device can receive in a single PDU.
+*/
+#ifndef MCA_FCR_OPT_MPS_SIZE
+#define MCA_FCR_OPT_MPS_SIZE            1000
+#endif
+
+/* Shared transport */
+#ifndef NFC_SHARED_TRANSPORT_ENABLED
+#define NFC_SHARED_TRANSPORT_ENABLED    FALSE
+#endif
+
+/******************************************************************************
+**
+** SER
+**
+******************************************************************************/
+
+#ifndef SER_INCLUDED
+#define SER_INCLUDED                FALSE
+#endif
+
+/* Task which runs the serial application. */
+#ifndef SER_TASK
+#define SER_TASK                    BTE_APPL_TASK
+#endif
+
+/* Mailbox used by serial application. */
+#ifndef SER_MBOX
+#define SER_MBOX                    TASK_MBOX_1
+#endif
+
+/* Mailbox mask. */
+#ifndef SER_MBOX_MASK
+#define SER_MBOX_MASK               TASK_MBOX_1_EVT_MASK
+#endif
+
+/* TX path application event. */
+#ifndef SER_TX_PATH_APPL_EVT
+#define SER_TX_PATH_APPL_EVT        EVENT_MASK(APPL_EVT_3)
+#endif
+
+/* RX path application event. */
+#ifndef SER_RX_PATH_APPL_EVT
+#define SER_RX_PATH_APPL_EVT        EVENT_MASK(APPL_EVT_4)
+#endif
+
+/******************************************************************************
+**
+** Sleep Mode (Low Power Mode)
+**
+******************************************************************************/
+
+#ifndef HCILP_INCLUDED
+#define HCILP_INCLUDED                  TRUE
+#endif
+
+/******************************************************************************
+**
+** RPC
+**
+******************************************************************************/
+
+#ifndef RPC_INCLUDED
+#define RPC_INCLUDED                FALSE
+#endif
+
+/* RPCT task mailbox ID for messages coming from rpcgen code. */
+#ifndef RPCT_MBOX
+#define RPCT_MBOX                   TASK_MBOX_0
+#endif
+
+/* RPCT task event for mailbox. */
+#ifndef RPCT_RPC_MBOX_EVT
+#define RPCT_RPC_MBOX_EVT           TASK_MBOX_0_EVT_MASK
+#endif
+
+/* RPCT task event from driver indicating RX data is ready. */
+#ifndef RPCT_RX_READY_EVT
+#define RPCT_RX_READY_EVT           APPL_EVT_0
+#endif
+
+/* RPCT task event from driver indicating data TX is done. */
+#ifndef RPCT_TX_DONE_EVT
+#define RPCT_TX_DONE_EVT            APPL_EVT_1
+#endif
+
+/* RPCT task event indicating data is in the circular buffer. */
+#ifndef RPCT_UCBUF_EVT
+#define RPCT_UCBUF_EVT              APPL_EVT_2
+#endif
+
+/* Task ID of RPCGEN task. */
+#ifndef RPCGEN_TASK
+#define RPCGEN_TASK                 BTU_TASK
+#endif
+
+/* RPCGEN task event for messages coming from RPCT. */
+#ifndef RPCGEN_MSG_EVT
+#define RPCGEN_MSG_EVT              TASK_MBOX_1_EVT_MASK
+#endif
+
+#ifndef RPCGEN_MSG_MBOX
+#define RPCGEN_MSG_MBOX             TASK_MBOX_1
+#endif
+
+/* Size of circular buffer used to store diagnostic messages. */
+#ifndef RPCT_UCBUF_SIZE
+#define RPCT_UCBUF_SIZE             2000
+#endif
+
+/******************************************************************************
+**
+** SAP - Sample applications
+**
+******************************************************************************/
+
+#ifndef MMI_INCLUDED
+#define MMI_INCLUDED                FALSE
+#endif
+
+/******************************************************************************
+**
+** APPL - Application Task
+**
+******************************************************************************/
+/* When TRUE indicates that an application task is to be run */
+#ifndef APPL_INCLUDED
+#define APPL_INCLUDED                TRUE
+#endif
+
+/* When TRUE remote terminal code included (RPC MUST be included) */
+#ifndef RSI_INCLUDED
+#define RSI_INCLUDED                TRUE
+#endif
+
+
+
+#define L2CAP_FEATURE_REQ_ID      73
+#define L2CAP_FEATURE_RSP_ID     173
+
+
+#define L2CAP_ENHANCED_FEATURES   0
+
+
+/******************************************************************************
+**
+** BTA
+**
+******************************************************************************/
+/* BTA EIR canned UUID list (default is dynamic) */
+#ifndef BTA_EIR_CANNED_UUID_LIST
+#define BTA_EIR_CANNED_UUID_LIST FALSE
+#endif
+
+/* Number of supported customer UUID in EIR */
+#ifndef BTA_EIR_SERVER_NUM_CUSTOM_UUID
+#define BTA_EIR_SERVER_NUM_CUSTOM_UUID     8
+#endif
+
+/* CHLD override for bluedroid */
+#ifndef BTA_AG_CHLD_VAL_ECC
+#define BTA_AG_CHLD_VAL_ECC  "(0,1,1x,2,2x,3)"
+#endif
+
+#ifndef BTA_AG_CHLD_VAL
+#define BTA_AG_CHLD_VAL  "(0,1,2,3)"
+#endif
+
+/* Set the CIND to match HFP 1.5 */
+#ifndef BTA_AG_CIND_INFO
+#define BTA_AG_CIND_INFO "(\"call\",(0,1)),(\"callsetup\",(0-3)),(\"service\",(0-1)),(\"signal\",(0-5)),(\"roam\",(0,1)),(\"battchg\",(0-5)),(\"callheld\",(0-2))"
+#endif
+
+
+/******************************************************************************
+**
+** BTE
+**
+******************************************************************************/
+#ifndef BTE_PLATFORM_IDLE
+#define BTE_PLATFORM_IDLE
+#endif
+
+#ifndef BTE_IDLE_TASK_INCLUDED
+#define BTE_IDLE_TASK_INCLUDED FALSE
+#endif
+
+#ifndef BTE_PLATFORM_INITHW
+#define BTE_PLATFORM_INITHW
+#endif
+
+#ifndef BTE_BTA_CODE_INCLUDED
+#define BTE_BTA_CODE_INCLUDED FALSE
+#endif
+
+/******************************************************************************
+**
+** BTTRC
+**
+******************************************************************************/
+/* Whether to parse and display traces-> Platform specific implementation */
+#ifndef BTTRC_DISP
+#define BTTRC_DISP        BTTRC_DispOnInsight
+#endif
+
+#endif /* BT_TARGET_H */
+/* end "revolution/BTE/include/bt_target.h" */
+#endif
+
+
+
+/* "libs/RVL_SDK/include/revolution/bte/gki/common/gki.h" line 33 "revolution/BTE/stack/include/bt_types.h" */
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef BT_TYPES_H
+#define BT_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 23 "revolution/BTE/gki/platform/data_types.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Move from ulinux/ to platform/
+ *      - Add #include for RVL types (include/types.h)
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/gki/platform/data_types.h" line 36 "types.h" */
+/* end "types.h" */
+
+typedef unsigned char   UINT8;
+typedef unsigned short  UINT16;
+typedef unsigned long   UINT32;
+typedef signed   long   INT32;
+typedef signed   char   INT8;
+typedef signed   short  INT16;
+typedef unsigned char   BOOLEAN;
+
+
+typedef UINT32          TIME_STAMP;
+
+#ifndef TRUE
+#define TRUE   (!FALSE)
+#endif
+
+typedef unsigned char   UBYTE;
+
+#ifdef __arm
+#define PACKED  __packed
+#define INLINE  __inline
+#else
+#define PACKED
+#define INLINE
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN FALSE
+#endif
+
+#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
+#define UINT16_HI_BYTE(x)       ((x) >> 8)
+
+
+#define BCM_STRCAT_S(x1,x2,x3)      strcat((x1),(x3))
+#define BCM_STRNCAT_S(x1,x2,x3,x4)  strncat((x1),(x3),(x4))
+#define BCM_STRCPY_S(x1,x2,x3)      strcpy((x1),(x3))
+#define BCM_STRNCPY_S(x1,x2,x3,x4)  strncpy((x1),(x3),(x4))
+
+
+
+#endif
+/* end "revolution/BTE/gki/platform/data_types.h" */
+
+#ifdef _WIN32
+#ifdef BLUESTACK_TESTER
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 27 "bte_stack_entry.h" */
+/* end "bte_stack_entry.h" */
+#endif
+#endif
+
+/* READ WELL !!
+**
+** This section defines global events. These are events that cross layers.
+** Any event that passes between layers MUST be one of these events. Tasks
+** can use their own events internally, but a FUNDAMENTAL design issue is
+** that global events MUST be one of these events defined below.
+**
+** The convention used is the the event name contains the layer that the
+** event is going to.
+*/
+#define BT_EVT_MASK                 0xFF00
+#define BT_SUB_EVT_MASK             0x00FF
+                                                /* To Bluetooth Upper Layers        */
+                                                /************************************/
+#define BT_EVT_TO_BTU_L2C_EVT       0x0900      /* L2CAP event */
+#define BT_EVT_TO_BTU_HCI_EVT       0x1000      /* HCI Event                        */
+#define BT_EVT_TO_BTU_HCI_BR_EDR_EVT (0x0000 | BT_EVT_TO_BTU_HCI_EVT)      /* event from BR/EDR controller */
+#define BT_EVT_TO_BTU_HCI_AMP1_EVT   (0x0001 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 1 controller */
+#define BT_EVT_TO_BTU_HCI_AMP2_EVT   (0x0002 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 2 controller */
+#define BT_EVT_TO_BTU_HCI_AMP3_EVT   (0x0003 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 3 controller */
+
+#define BT_EVT_TO_BTU_HCI_ACL       0x1100      /* ACL Data from HCI                */
+#define BT_EVT_TO_BTU_HCI_SCO       0x1200      /* SCO Data from HCI                */
+#define BT_EVT_TO_BTU_HCIT_ERR      0x1300      /* HCI Transport Error              */
+
+#define BT_EVT_TO_BTU_SP_EVT        0x1400      /* Serial Port Event                */
+#define BT_EVT_TO_BTU_SP_DATA       0x1500      /* Serial Port Data                 */
+
+#define BT_EVT_TO_BTU_HCI_CMD       0x1600      /* HCI command from upper layer     */
+
+
+#define BT_EVT_TO_BTU_L2C_SEG_XMIT  0x1900      /* L2CAP segment(s) transmitted     */
+
+#define BT_EVT_PROXY_INCOMING_MSG   0x1A00      /* BlueStackTester event: incoming message from target */
+
+#define BT_EVT_BTSIM                0x1B00      /* Insight BTSIM event */
+#define BT_EVT_BTISE                0x1C00      /* Insight Script Engine event */
+
+                                                /* To LM                            */
+                                                /************************************/
+#define BT_EVT_TO_LM_HCI_CMD        0x2000      /* HCI Command                      */
+#define BT_EVT_TO_LM_HCI_ACL        0x2100      /* HCI ACL Data                     */
+#define BT_EVT_TO_LM_HCI_SCO        0x2200      /* HCI SCO Data                     */
+#define BT_EVT_TO_LM_HCIT_ERR       0x2300      /* HCI Transport Error              */
+#define BT_EVT_TO_LM_LC_EVT         0x2400      /* LC event                         */
+#define BT_EVT_TO_LM_LC_LMP         0x2500      /* LC Received LMP command frame    */
+#define BT_EVT_TO_LM_LC_ACL         0x2600      /* LC Received ACL data             */
+#define BT_EVT_TO_LM_LC_SCO         0x2700      /* LC Received SCO data  (not used) */
+#define BT_EVT_TO_LM_LC_ACL_TX      0x2800      /* LMP data transmit complete       */
+#define BT_EVT_TO_LM_LC_LMPC_TX     0x2900      /* LMP Command transmit complete    */
+#define BT_EVT_TO_LM_LOCAL_ACL_LB   0x2a00      /* Data to be locally loopbacked    */
+#define BT_EVT_TO_LM_HCI_ACL_ACK    0x2b00      /* HCI ACL Data ack      (not used) */
+#define BT_EVT_TO_LM_DIAG           0x2c00      /* LM Diagnostics commands          */
+
+
+#define BT_EVT_TO_BTM_CMDS          0x2f00
+#define BT_EVT_TO_BTM_PM_MDCHG_EVT (0x0001 | BT_EVT_TO_BTM_CMDS)
+
+#define BT_EVT_TO_TCS_CMDS          0x3000
+
+#define BT_EVT_TO_OBX_CL_MSG        0x3100
+#define BT_EVT_TO_OBX_SR_MSG        0x3200
+
+#define BT_EVT_TO_CTP_CMDS          0x3300
+
+/* Obex Over L2CAP */
+#define BT_EVT_TO_OBX_CL_L2C_MSG    0x3400
+#define BT_EVT_TO_OBX_SR_L2C_MSG    0x3500
+
+/* ftp events */
+#define BT_EVT_TO_FTP_SRVR_CMDS     0x3800
+#define BT_EVT_TO_FTP_CLNT_CMDS     0x3900
+
+#define BT_EVT_TO_BTU_SAP           0x3a00       /* SIM Access Profile events */
+
+/* opp events */
+#define BT_EVT_TO_OPP_SRVR_CMDS     0x3b00
+#define BT_EVT_TO_OPP_CLNT_CMDS     0x3c00
+
+/* gap events */
+#define BT_EVT_TO_GAP_MSG           0x3d00
+
+/* start timer */
+#define BT_EVT_TO_START_TIMER       0x3e00
+
+/* start quick timer */
+#define BT_EVT_TO_START_QUICK_TIMER 0x3f00
+
+
+/* for NFC                          */
+                                                /************************************/
+#define BT_EVT_TO_NFC_NCI           0x4000      /* NCI Command, Notification or Data*/
+#define BT_EVT_TO_NFC_INIT          0x4100      /* Initialization message */
+#define BT_EVT_TO_LLCP_ECHO         0x4200      /* LLCP Echo Service */
+#define BT_EVT_TO_LLCP_SOCKET       0x4300      /* LLCP over TCP/IP */
+#define BT_EVT_TO_NCI_LP            0x4400      /* Low power */
+#define BT_EVT_TO_NFC_ERR           0x4500      /* Error notification to NFC Task */
+
+#define BT_EVT_TO_NFCCSIM_NCI       0x4a00      /* events to NFCC simulation (NCI packets) */
+
+/* HCISU Events */
+
+#define BT_EVT_HCISU                0x5000
+
+// btla-specific ++
+#define BT_EVT_TO_HCISU_RECONFIG_EVT            (0x0001 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_UPDATE_BAUDRATE_EVT     (0x0002 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ENABLE_EVT           (0x0003 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_DISABLE_EVT          (0x0004 | BT_EVT_HCISU)
+// btla-specific --
+#define BT_EVT_TO_HCISU_LP_APP_SLEEPING_EVT     (0x0005 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ALLOW_BT_SLEEP_EVT   (0x0006 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_WAKEUP_HOST_EVT      (0x0007 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_RCV_H4IBSS_EVT       (0x0008 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_H5_RESET_EVT            (0x0009 | BT_EVT_HCISU)
+#define BT_EVT_HCISU_START_QUICK_TIMER          (0x000a | BT_EVT_HCISU)
+
+#define BT_EVT_DATA_TO_AMP_1        0x5100
+#define BT_EVT_DATA_TO_AMP_15       0x5f00
+
+/* HSP Events */
+
+#define BT_EVT_BTU_HSP2             0x6000
+
+#define BT_EVT_TO_BTU_HSP2_EVT     (0x0001 | BT_EVT_BTU_HSP2)
+
+/* BPP Events */
+#define BT_EVT_TO_BPP_PR_CMDS       0x6100      /* Printer Events */
+#define BT_EVT_TO_BPP_SND_CMDS      0x6200      /* BPP Sender Events */
+
+/* BIP Events */
+#define BT_EVT_TO_BIP_CMDS          0x6300
+
+/* HCRP Events */
+
+#define BT_EVT_BTU_HCRP             0x7000
+
+#define BT_EVT_TO_BTU_HCRP_EVT     (0x0001 | BT_EVT_BTU_HCRP)
+#define BT_EVT_TO_BTU_HCRPM_EVT    (0x0002 | BT_EVT_BTU_HCRP)
+
+
+#define BT_EVT_BTU_HFP              0x8000
+#define BT_EVT_TO_BTU_HFP_EVT      (0x0001 | BT_EVT_BTU_HFP)
+
+#define BT_EVT_BTU_IPC_EVT          0x9000
+#define BT_EVT_BTU_IPC_LOGMSG_EVT  (0x0000 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_ACL_EVT     (0x0001 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTU_EVT     (0x0002 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_EVT     (0x0003 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_MSG_EVT (0x0004 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTM_EVT     (0x0005 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_AVDT_EVT    (0x0006 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_SLIP_EVT    (0x0007 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_MGMT_EVT    (0x0008 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTTRC_EVT   (0x0009 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BURST_EVT   (0x000A | BT_EVT_BTU_IPC_EVT)
+
+
+/* BTIF Events */
+#define BT_EVT_BTIF                 0xA000
+#define BT_EVT_CONTEXT_SWITCH_EVT  (0x0001 | BT_EVT_BTIF)
+
+#define BT_EVT_TRIGGER_STACK_INIT   EVENT_MASK(APPL_EVT_0)
+
+
+/* Define the header of each buffer used in the Bluetooth stack.
+*/
+typedef struct
+{
+    UINT16          event;
+    UINT16          len;
+    UINT16          offset;
+    UINT16          layer_specific;
+} BT_HDR;
+
+#define BT_HDR_SIZE (sizeof (BT_HDR))
+
+#define BT_PSM_SDP                      0x0001
+#define BT_PSM_RFCOMM                   0x0003
+#define BT_PSM_TCS                      0x0005
+#define BT_PSM_CTP                      0x0007
+#define BT_PSM_BNEP                     0x000F
+#define BT_PSM_HIDC                     0x0011
+#define BT_PSM_HIDI                     0x0013
+#define BT_PSM_UPNP                     0x0015
+#define BT_PSM_AVCTP                    0x0017
+#define BT_PSM_AVDTP                    0x0019
+#define BT_PSM_AVCTP_13                 0x001B /* Advanced Control - Browsing */
+#define BT_PSM_UDI_CP                   0x001D /* Unrestricted Digital Information Profile C-Plane  */
+#define BT_PSM_ATT                      0x001F /* Attribute Protocol  */
+
+
+/* These macros extract the HCI opcodes from a buffer
+*/
+#define HCI_GET_CMD_HDR_OPCODE(p)    (UINT16)((*((UINT8 *)((p) + 1) + p->offset) + \
+                                              (*((UINT8 *)((p) + 1) + p->offset + 1) << 8)))
+#define HCI_GET_CMD_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 2))
+
+#define HCI_GET_EVT_HDR_OPCODE(p)    (UINT8)(*((UINT8 *)((p) + 1) + p->offset))
+#define HCI_GET_EVT_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 1))
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Little Endian format).
+*/
+#define UINT32_TO_STREAM(p, u32) {*(p)++ = (UINT8)(u32); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 24);}
+#define UINT24_TO_STREAM(p, u24) {*(p)++ = (UINT8)(u24); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)((u24) >> 16);}
+#define UINT16_TO_STREAM(p, u16) {*(p)++ = (UINT8)(u16); *(p)++ = (UINT8)((u16) >> 8);}
+#define UINT8_TO_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define INT8_TO_STREAM(p, u8)    {*(p)++ = (INT8)(u8);}
+#define ARRAY32_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 32;           ijk++) *(p)++ = (UINT8) a[31 - ijk];}
+#define ARRAY16_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 16;           ijk++) *(p)++ = (UINT8) a[15 - ijk];}
+#define ARRAY8_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < 8;            ijk++) *(p)++ = (UINT8) a[7 - ijk];}
+#define BDADDR_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < BD_ADDR_LEN;  ijk++) *(p)++ = (UINT8) a[BD_ADDR_LEN - 1 - ijk];}
+#define LAP_TO_STREAM(p, a)      {register int ijk; for (ijk = 0; ijk < LAP_LEN;      ijk++) *(p)++ = (UINT8) a[LAP_LEN - 1 - ijk];}
+#define DEVCLASS_TO_STREAM(p, a) {register int ijk; for (ijk = 0; ijk < DEV_CLASS_LEN;ijk++) *(p)++ = (UINT8) a[DEV_CLASS_LEN - 1 - ijk];}
+#define ARRAY_TO_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len;        ijk++) *(p)++ = (UINT8) a[ijk];}
+#define REVERSE_ARRAY_TO_STREAM(p, a, len)  {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[len - 1 - ijk];}
+
+#define STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define STREAM_TO_UINT16(u16, p) {u16 = ((UINT16)(*(p)) + (((UINT16)(*((p) + 1))) << 8)); (p) += 2;}
+#define STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) ); (p) += 3;}
+#define STREAM_TO_UINT32(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) + ((((UINT32)(*((p) + 3)))) << 24)); (p) += 4;}
+#define STREAM_TO_BDADDR(a, p)   {register int ijk; register UINT8 *pbda = (UINT8 *)a + BD_ADDR_LEN - 1; for (ijk = 0; ijk < BD_ADDR_LEN; ijk++) *pbda-- = *p++;}
+#define STREAM_TO_ARRAY32(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 31; for (ijk = 0; ijk < 32; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY16(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 15; for (ijk = 0; ijk < 16; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY8(a, p)   {register int ijk; register UINT8 *_pa = (UINT8 *)a + 7; for (ijk = 0; ijk < 8; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_DEVCLASS(a, p) {register int ijk; register UINT8 *_pa = (UINT8 *)a + DEV_CLASS_LEN - 1; for (ijk = 0; ijk < DEV_CLASS_LEN; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_LAP(a, p)      {register int ijk; register UINT8 *plap = (UINT8 *)a + LAP_LEN - 1; for (ijk = 0; ijk < LAP_LEN; ijk++) *plap-- = *p++;}
+#define STREAM_TO_ARRAY(a, p, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+#define REVERSE_STREAM_TO_ARRAY(a, p, len) {register int ijk; register UINT8 *_pa = (UINT8 *)a + len - 1; for (ijk = 0; ijk < len; ijk++) *_pa-- = *p++;}
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Little Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)(u32); *((UINT8 *)(p)+1) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+3) = (UINT8)((u32) >> 24);}
+#define UINT24_TO_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)(u24); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u24) >> 16);}
+#define UINT16_TO_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)(u16); *((UINT8 *)(p)+1) = (UINT8)((u16) >> 8);}
+#define UINT8_TO_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Big Endian format)
+*/
+#define UINT32_TO_BE_STREAM(p, u32) {*(p)++ = (UINT8)((u32) >> 24);  *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)(u32); }
+#define UINT24_TO_BE_STREAM(p, u24) {*(p)++ = (UINT8)((u24) >> 16); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)(u24);}
+#define UINT16_TO_BE_STREAM(p, u16) {*(p)++ = (UINT8)((u16) >> 8); *(p)++ = (UINT8)(u16);}
+#define UINT8_TO_BE_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define ARRAY_TO_BE_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[ijk];}
+
+#define BE_STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define BE_STREAM_TO_UINT16(u16, p) {u16 = (UINT16)(((UINT16)(*(p)) << 8) + (UINT16)(*((p) + 1))); (p) += 2;}
+#define BE_STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*((p) + 2))) + ((UINT32)(*((p) + 1)) << 8) + ((UINT32)(*(p)) << 16)); (p) += 3;}
+#define BE_STREAM_TO_UINT32(u32, p) {u32 = ((UINT32)(*((p) + 3)) + ((UINT32)(*((p) + 2)) << 8) + ((UINT32)(*((p) + 1)) << 16) + ((UINT32)(*(p)) << 24)); (p) += 4;}
+#define BE_STREAM_TO_ARRAY(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Big Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_BE_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)((u32) >> 24);  *((UINT8 *)(p)+1) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+3) = (UINT8)(u32); }
+#define UINT24_TO_BE_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)((u24) >> 16); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)(u24);}
+#define UINT16_TO_BE_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)((u16) >> 8); *((UINT8 *)(p)+1) = (UINT8)(u16);}
+#define UINT8_TO_BE_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/* Common Bluetooth field definitions */
+#define BD_ADDR_LEN     6                   /* Device address length */
+typedef UINT8 BD_ADDR[BD_ADDR_LEN];         /* Device address */
+typedef UINT8 *BD_ADDR_PTR;                 /* Pointer to Device Address */
+
+#define AMP_KEY_TYPE_GAMP       0
+#define AMP_KEY_TYPE_WIFI       1
+#define AMP_KEY_TYPE_UWB        2
+typedef UINT8 tAMP_KEY_TYPE;
+
+#define BT_OCTET8_LEN    8
+typedef UINT8 BT_OCTET8[BT_OCTET8_LEN];   /* octet array: size 16 */
+
+#define LINK_KEY_LEN    16
+typedef UINT8 LINK_KEY[LINK_KEY_LEN];       /* Link Key */
+
+#define AMP_LINK_KEY_LEN        32
+typedef UINT8 AMP_LINK_KEY[AMP_LINK_KEY_LEN];   /* Dedicated AMP and GAMP Link Keys */
+
+#define BT_OCTET16_LEN    16
+typedef UINT8 BT_OCTET16[BT_OCTET16_LEN];   /* octet array: size 16 */
+
+#define PIN_CODE_LEN    16
+typedef UINT8 PIN_CODE[PIN_CODE_LEN];       /* Pin Code (upto 128 bits) MSB is 0 */
+typedef UINT8 *PIN_CODE_PTR;                /* Pointer to Pin Code */
+
+#define DEV_CLASS_LEN   3
+typedef UINT8 DEV_CLASS[DEV_CLASS_LEN];     /* Device class */
+typedef UINT8 *DEV_CLASS_PTR;               /* Pointer to Device class */
+
+#define EXT_INQ_RESP_LEN   3
+typedef UINT8 EXT_INQ_RESP[EXT_INQ_RESP_LEN];/* Extended Inquiry Response */
+typedef UINT8 *EXT_INQ_RESP_PTR;             /* Pointer to Extended Inquiry Response */
+
+#define BD_NAME_LEN     248
+typedef UINT8 BD_NAME[BD_NAME_LEN];         /* Device name */
+typedef UINT8 *BD_NAME_PTR;                 /* Pointer to Device name */
+
+#define BD_FEATURES_LEN 8
+typedef UINT8 BD_FEATURES[BD_FEATURES_LEN]; /* LMP features supported by device */
+
+#define BT_EVENT_MASK_LEN  8
+typedef UINT8 BT_EVENT_MASK[BT_EVENT_MASK_LEN];   /* Event Mask */
+
+#define LAP_LEN         3
+typedef UINT8 LAP[LAP_LEN];                 /* IAC as passed to Inquiry (LAP) */
+typedef UINT8 INQ_LAP[LAP_LEN];             /* IAC as passed to Inquiry (LAP) */
+
+#define RAND_NUM_LEN    16
+typedef UINT8 RAND_NUM[RAND_NUM_LEN];
+
+#define ACO_LEN         12
+typedef UINT8 ACO[ACO_LEN];                 /* Authenticated ciphering offset */
+
+#define COF_LEN         12
+typedef UINT8 COF[COF_LEN];                 /* ciphering offset number */
+
+typedef struct {
+    UINT8               qos_flags;          /* TBD */
+    UINT8               service_type;       /* see below */
+    UINT32              token_rate;         /* bytes/second */
+    UINT32              token_bucket_size;  /* bytes */
+    UINT32              peak_bandwidth;     /* bytes/second */
+    UINT32              latency;            /* microseconds */
+    UINT32              delay_variation;    /* microseconds */
+} FLOW_SPEC;
+
+/* Values for service_type */
+#define NO_TRAFFIC      0
+#define BEST_EFFORT     1
+#define GUARANTEED      2
+
+/* Service class of the CoD */
+#define SERV_CLASS_NETWORKING               (1 << 1)
+#define SERV_CLASS_RENDERING                (1 << 2)
+#define SERV_CLASS_CAPTURING                (1 << 3)
+#define SERV_CLASS_OBJECT_TRANSFER          (1 << 4)
+#define SERV_CLASS_OBJECT_AUDIO             (1 << 5)
+#define SERV_CLASS_OBJECT_TELEPHONY         (1 << 6)
+#define SERV_CLASS_OBJECT_INFORMATION       (1 << 7)
+
+/* Second byte */
+#define SERV_CLASS_LIMITED_DISC_MODE        (0x20)
+
+/* Field size definitions. Note that byte lengths are rounded up. */
+#define ACCESS_CODE_BIT_LEN             72
+#define ACCESS_CODE_BYTE_LEN            9
+#define SHORTENED_ACCESS_CODE_BIT_LEN   68
+
+typedef UINT8 ACCESS_CODE[ACCESS_CODE_BYTE_LEN];
+
+#define SYNTH_TX                1           /* want synth code to TRANSMIT at this freq */
+#define SYNTH_RX                2           /* want synth code to RECEIVE at this freq */
+
+#define SYNC_REPS 1             /* repeats of sync word transmitted to start of burst */
+
+/* Bluetooth CLK27 */
+#define BT_CLK27            (2 << 26)
+
+/* Bluetooth CLK12 is 1.28 sec */
+#define BT_CLK12_TO_MS(x)    ((x) * 1280)
+#define BT_MS_TO_CLK12(x)    ((x) / 1280)
+#define BT_CLK12_TO_SLOTS(x) ((x) << 11)
+
+/* Bluetooth CLK is 0.625 msec */
+#define BT_CLK_TO_MS(x)      (((x) * 5 + 3) / 8)
+#define BT_MS_TO_CLK(x)      (((x) * 8 + 2) / 5)
+
+#define BT_CLK_TO_MICROSECS(x)  (((x) * 5000 + 3) / 8)
+#define BT_MICROSECS_TO_CLK(x)  (((x) * 8 + 2499) / 5000)
+
+/* Maximum UUID size - 16 bytes, and structure to hold any type of UUID. */
+#define MAX_UUID_SIZE              16
+typedef struct
+{
+#define LEN_UUID_16     2
+#define LEN_UUID_32     4
+#define LEN_UUID_128    16
+
+    UINT16          len;
+
+    union
+    {
+        UINT16      uuid16;
+        UINT32      uuid32;
+        UINT8       uuid128[MAX_UUID_SIZE];
+    } uu;
+
+} tBT_UUID;
+
+#define BT_EIR_FLAGS_TYPE                   0x01
+#define BT_EIR_MORE_16BITS_UUID_TYPE        0x02
+#define BT_EIR_COMPLETE_16BITS_UUID_TYPE    0x03
+#define BT_EIR_MORE_32BITS_UUID_TYPE        0x04
+#define BT_EIR_COMPLETE_32BITS_UUID_TYPE    0x05
+#define BT_EIR_MORE_128BITS_UUID_TYPE       0x06
+#define BT_EIR_COMPLETE_128BITS_UUID_TYPE   0x07
+#define BT_EIR_SHORTENED_LOCAL_NAME_TYPE    0x08
+#define BT_EIR_COMPLETE_LOCAL_NAME_TYPE     0x09
+#define BT_EIR_TX_POWER_LEVEL_TYPE          0x0A
+#define BT_EIR_OOB_BD_ADDR_TYPE             0x0C
+#define BT_EIR_OOB_COD_TYPE                 0x0D
+#define BT_EIR_OOB_SSP_HASH_C_TYPE          0x0E
+#define BT_EIR_OOB_SSP_RAND_R_TYPE          0x0F
+#define BT_EIR_MANUFACTURER_SPECIFIC_TYPE   0xFF
+
+#define BT_OOB_COD_SIZE            3
+#define BT_OOB_HASH_C_SIZE         16
+#define BT_OOB_RAND_R_SIZE         16
+
+/* Broadcom proprietary UUIDs and reserved PSMs
+**
+** The lowest 4 bytes byte of the UUID or GUID depends on the feature. Typically,
+** the value of those bytes will be the PSM or SCN, but it is up to the features.
+*/
+#define BRCM_PROPRIETARY_UUID_BASE  0xDA, 0x23, 0x41, 0x02, 0xA3, 0xBB, 0xC1, 0x71, 0xBA, 0x09, 0x6f, 0x21
+#define BRCM_PROPRIETARY_GUID_BASE  0xda23, 0x4102, 0xa3, 0xbb, 0xc1, 0x71, 0xba, 0x09, 0x6f, 0x21
+
+/* We will not allocate a PSM in the reserved range to 3rd party apps
+*/
+#define BRCM_RESERVED_PSM_START	    0x5AE1
+#define BRCM_RESERVED_PSM_END	    0x5AFF
+
+#define BRCM_UTILITY_SERVICE_PSM    0x5AE1
+#define BRCM_MATCHER_PSM            0x5AE3
+
+/* Connection statistics
+*/
+
+/* Structure to hold connection stats */
+#ifndef BT_CONN_STATS_DEFINED
+#define BT_CONN_STATS_DEFINED
+
+/* These bits are used in the bIsConnected field */
+#define BT_CONNECTED_USING_BREDR   1
+#define BT_CONNECTED_USING_AMP     2
+
+typedef struct
+{
+    UINT32   is_connected;
+    INT32    rssi;
+    UINT32   bytes_sent;
+    UINT32   bytes_rcvd;
+    UINT32   duration;
+} tBT_CONN_STATS;
+
+#endif
+
+
+/*****************************************************************************
+**                          Low Energy definitions
+**
+** Address types
+*/
+#define BLE_ADDR_PUBLIC         0x00
+#define BLE_ADDR_RANDOM         0x01
+#define BLE_ADDR_TYPE_MASK      (BLE_ADDR_RANDOM | BLE_ADDR_PUBLIC)
+typedef UINT8 tBLE_ADDR_TYPE;
+
+#define BLE_ADDR_IS_STATIC(x)   ((x[0] & 0xC0) == 0xC0)
+
+typedef struct
+{
+    tBLE_ADDR_TYPE      type;
+    BD_ADDR             bda;
+} tBLE_BD_ADDR;
+
+/* Device Types
+*/
+#define BT_DEVICE_TYPE_BREDR   0x01
+#define BT_DEVICE_TYPE_BLE     0x02
+#define BT_DEVICE_TYPE_DUMO    0x03
+typedef UINT8 tBT_DEVICE_TYPE;
+/*****************************************************************************/
+
+
+/* Define trace levels */
+#define BT_TRACE_LEVEL_NONE    0          /* No trace messages to be generated    */
+#define BT_TRACE_LEVEL_ERROR   1          /* Error condition trace messages       */
+#define BT_TRACE_LEVEL_WARNING 2          /* Warning condition trace messages     */
+#define BT_TRACE_LEVEL_API     3          /* API traces                           */
+#define BT_TRACE_LEVEL_EVENT   4          /* Debug messages for events            */
+#define BT_TRACE_LEVEL_DEBUG   5          /* Full debug messages                  */
+#define BT_TRACE_LEVEL_VERBOSE 6          /* Verbose debug messages               */
+
+#define MAX_TRACE_LEVEL        6
+
+
+/* Define New Trace Type Definition */
+/* TRACE_CTRL_TYPE                  0x^^000000*/
+#define TRACE_CTRL_MASK             0xff000000
+#define TRACE_GET_CTRL(x)           ((((UINT32)(x)) & TRACE_CTRL_MASK) >> 24)
+
+#define TRACE_CTRL_GENERAL          0x00000000
+#define TRACE_CTRL_STR_RESOURCE     0x01000000
+#define TRACE_CTRL_SEQ_FLOW         0x02000000
+#define TRACE_CTRL_MAX_NUM          3
+
+/* LAYER SPECIFIC                   0x00^^0000*/
+#define TRACE_LAYER_MASK            0x00ff0000
+#define TRACE_GET_LAYER(x)          ((((UINT32)(x)) & TRACE_LAYER_MASK) >> 16)
+
+#define TRACE_LAYER_NONE            0x00000000
+#define TRACE_LAYER_USB             0x00010000
+#define TRACE_LAYER_SERIAL          0x00020000
+#define TRACE_LAYER_SOCKET          0x00030000
+#define TRACE_LAYER_RS232           0x00040000
+#define TRACE_LAYER_TRANS_MAX_NUM   5
+#define TRACE_LAYER_TRANS_ALL       0x007f0000
+#define TRACE_LAYER_LC              0x00050000
+#define TRACE_LAYER_LM              0x00060000
+#define TRACE_LAYER_HCI             0x00070000
+#define TRACE_LAYER_L2CAP           0x00080000
+#define TRACE_LAYER_RFCOMM          0x00090000
+#define TRACE_LAYER_SDP             0x000a0000
+#define TRACE_LAYER_TCS             0x000b0000
+#define TRACE_LAYER_OBEX            0x000c0000
+#define TRACE_LAYER_BTM             0x000d0000
+#define TRACE_LAYER_GAP             0x000e0000
+#define TRACE_LAYER_DUN             0x000f0000
+#define TRACE_LAYER_GOEP            0x00100000
+#define TRACE_LAYER_ICP             0x00110000
+#define TRACE_LAYER_HSP2            0x00120000
+#define TRACE_LAYER_SPP             0x00130000
+#define TRACE_LAYER_CTP             0x00140000
+#define TRACE_LAYER_BPP             0x00150000
+#define TRACE_LAYER_HCRP            0x00160000
+#define TRACE_LAYER_FTP             0x00170000
+#define TRACE_LAYER_OPP             0x00180000
+#define TRACE_LAYER_BTU             0x00190000
+#define TRACE_LAYER_GKI             0x001a0000
+#define TRACE_LAYER_BNEP            0x001b0000
+#define TRACE_LAYER_PAN             0x001c0000
+#define TRACE_LAYER_HFP             0x001d0000
+#define TRACE_LAYER_HID             0x001e0000
+#define TRACE_LAYER_BIP             0x001f0000
+#define TRACE_LAYER_AVP             0x00200000
+#define TRACE_LAYER_A2D             0x00210000
+#define TRACE_LAYER_SAP             0x00220000
+#define TRACE_LAYER_AMP             0x00230000
+#define TRACE_LAYER_MCA             0x00240000
+#define TRACE_LAYER_ATT             0x00250000
+#define TRACE_LAYER_SMP             0x00260000
+#define TRACE_LAYER_NFC             0x00270000
+#define TRACE_LAYER_NCI             0x00280000
+#define TRACE_LAYER_IDEP            0x00290000
+#define TRACE_LAYER_NDEP            0x002a0000
+#define TRACE_LAYER_LLCP            0x002b0000
+#define TRACE_LAYER_RW              0x002c0000
+#define TRACE_LAYER_CE              0x002d0000
+#define TRACE_LAYER_SNEP            0x002e0000
+#define TRACE_LAYER_NDEF            0x002f0000
+#define TRACE_LAYER_NFA             0x00300000
+
+#define TRACE_LAYER_MAX_NUM         0x0031
+
+
+/* TRACE_ORIGINATOR                 0x0000^^00*/
+#define TRACE_ORG_MASK              0x0000ff00
+#define TRACE_GET_ORG(x)            ((((UINT32)(x)) & TRACE_ORG_MASK) >> 8)
+
+#define TRACE_ORG_STACK             0x00000000
+#define TRACE_ORG_HCI_TRANS         0x00000100
+#define TRACE_ORG_PROTO_DISP        0x00000200
+#define TRACE_ORG_RPC               0x00000300
+#define TRACE_ORG_GKI               0x00000400
+#define TRACE_ORG_APPL              0x00000500
+#define TRACE_ORG_SCR_WRAPPER       0x00000600
+#define TRACE_ORG_SCR_ENGINE        0x00000700
+#define TRACE_ORG_USER_SCR          0x00000800
+#define TRACE_ORG_TESTER            0x00000900
+#define TRACE_ORG_MAX_NUM           10          /* 32-bit mask; must be < 32 */
+#define TRACE_LITE_ORG_MAX_NUM		6
+#define TRACE_ORG_ALL               0x03ff
+#define TRACE_ORG_RPC_TRANS         0x04
+
+#define TRACE_ORG_REG               0x00000909
+#define TRACE_ORG_REG_SUCCESS       0x0000090a
+
+/* TRACE_TYPE                       0x000000^^*/
+#define TRACE_TYPE_MASK             0x000000ff
+#define TRACE_GET_TYPE(x)           (((UINT32)(x)) & TRACE_TYPE_MASK)
+
+#define TRACE_TYPE_ERROR            0x00000000
+#define TRACE_TYPE_WARNING          0x00000001
+#define TRACE_TYPE_API              0x00000002
+#define TRACE_TYPE_EVENT            0x00000003
+#define TRACE_TYPE_DEBUG            0x00000004
+#define TRACE_TYPE_STACK_ONLY_MAX   TRACE_TYPE_DEBUG
+#define TRACE_TYPE_TX               0x00000005
+#define TRACE_TYPE_RX               0x00000006
+#define TRACE_TYPE_DEBUG_ASSERT     0x00000007
+#define TRACE_TYPE_GENERIC          0x00000008
+#define TRACE_TYPE_REG              0x00000009
+#define TRACE_TYPE_REG_SUCCESS      0x0000000a
+#define TRACE_TYPE_CMD_TX           0x0000000b
+#define TRACE_TYPE_EVT_TX           0x0000000c
+#define TRACE_TYPE_ACL_TX           0x0000000d
+#define TRACE_TYPE_CMD_RX           0x0000000e
+#define TRACE_TYPE_EVT_RX           0x0000000f
+#define TRACE_TYPE_ACL_RX           0x00000010
+#define TRACE_TYPE_TARGET_TRACE     0x00000011
+#define TRACE_TYPE_SCO_TX           0x00000012
+#define TRACE_TYPE_SCO_RX           0x00000013
+
+
+#define TRACE_TYPE_MAX_NUM          20
+#define TRACE_TYPE_ALL              0xffff
+
+/* Define color for script type */
+#define SCR_COLOR_DEFAULT       0
+#define SCR_COLOR_TYPE_COMMENT  1
+#define SCR_COLOR_TYPE_COMMAND  2
+#define SCR_COLOR_TYPE_EVENT    3
+#define SCR_COLOR_TYPE_SELECT   4
+
+/* Define protocol trace flag values */
+#define SCR_PROTO_TRACE_HCI_SUMMARY 0x00000001
+#define SCR_PROTO_TRACE_HCI_DATA    0x00000002
+#define SCR_PROTO_TRACE_L2CAP       0x00000004
+#define SCR_PROTO_TRACE_RFCOMM      0x00000008
+#define SCR_PROTO_TRACE_SDP         0x00000010
+#define SCR_PROTO_TRACE_TCS         0x00000020
+#define SCR_PROTO_TRACE_OBEX        0x00000040
+#define SCR_PROTO_TRACE_OAPP        0x00000080 /* OBEX Application Profile */
+#define SCR_PROTO_TRACE_AMP         0x00000100
+#define SCR_PROTO_TRACE_BNEP        0x00000200
+#define SCR_PROTO_TRACE_AVP         0x00000400
+#define SCR_PROTO_TRACE_MCA         0x00000800
+#define SCR_PROTO_TRACE_ATT         0x00001000
+#define SCR_PROTO_TRACE_SMP         0x00002000
+#define SCR_PROTO_TRACE_NCI         0x00004000
+#define SCR_PROTO_TRACE_DEP         0x00008000
+#define SCR_PROTO_TRACE_LLCP        0x00010000
+#define SCR_PROTO_TRACE_NDEF        0x00020000
+#define SCR_PROTO_TRACE_TAGS        0x00040000
+#define SCR_PROTO_TRACE_ALL         0x0007ffff
+#define SCR_PROTO_TRACE_HCI_LOGGING_VSE 0x0800 /* Brcm vs event for logmsg and protocol traces */
+
+#define MAX_SCRIPT_TYPE             5
+
+#define TCS_PSM_INTERCOM        5
+#define TCS_PSM_CORDLESS        7
+#define BT_PSM_BNEP             0x000F
+/* Define PSMs HID uses */
+#define HID_PSM_CONTROL         0x0011
+#define HID_PSM_INTERRUPT       0x0013
+
+/* Define a function for logging */
+typedef void (BT_LOG_FUNC) (int trace_type, const char *fmt_str, ...);
+
+#endif
+/* end "revolution/BTE/stack/include/bt_types.h" */
+
+/* Error codes */
+#define GKI_SUCCESS         0x00
+#define GKI_FAILURE         0x01
+#define GKI_INVALID_TASK    0xF0
+#define GKI_INVALID_POOL    0xFF
+
+
+/************************************************************************
+** Mailbox definitions. Each task has 4 mailboxes that are used to
+** send buffers to the task.
+*/
+#define TASK_MBOX_0    0
+#define TASK_MBOX_1    1
+#define TASK_MBOX_2    2
+#define TASK_MBOX_3    3
+
+#define NUM_TASK_MBOX  4
+
+/************************************************************************
+** Event definitions.
+**
+** There are 4 reserved events used to signal messages rcvd in task mailboxes.
+** There are 4 reserved events used to signal timeout events.
+** There are 8 general purpose events available for applications.
+*/
+#define MAX_EVENTS              16
+
+#define TASK_MBOX_0_EVT_MASK   0x0001
+#define TASK_MBOX_1_EVT_MASK   0x0002
+#define TASK_MBOX_2_EVT_MASK   0x0004
+#define TASK_MBOX_3_EVT_MASK   0x0008
+
+
+#define TIMER_0             0
+#define TIMER_1             1
+#define TIMER_2             2
+#define TIMER_3             3
+
+#define TIMER_0_EVT_MASK    0x0010
+#define TIMER_1_EVT_MASK    0x0020
+#define TIMER_2_EVT_MASK    0x0040
+#define TIMER_3_EVT_MASK    0x0080
+
+#define APPL_EVT_0          8
+#define APPL_EVT_1          9
+#define APPL_EVT_2          10
+#define APPL_EVT_3          11
+#define APPL_EVT_4          12
+#define APPL_EVT_5          13
+#define APPL_EVT_6          14
+#define APPL_EVT_7          15
+
+#define EVENT_MASK(evt)       ((UINT16)(0x0001 << (evt)))
+
+/************************************************************************
+**  Max Time Queue
+**/
+#ifndef GKI_MAX_TIMER_QUEUES
+#define GKI_MAX_TIMER_QUEUES    3
+#endif
+
+/************************************************************************
+**  Macro to determine the pool buffer size based on the GKI POOL ID at compile time.
+**  Pool IDs index from 0 to GKI_NUM_FIXED_BUF_POOLS - 1
+*/
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 1)
+
+#ifndef GKI_POOL_ID_0
+#define GKI_POOL_ID_0                0
+#endif /* ifndef GKI_POOL_ID_0 */
+
+#ifndef GKI_BUF0_SIZE
+#define GKI_BUF0_SIZE                0
+#endif /* ifndef GKI_BUF0_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 1 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 2)
+
+#ifndef GKI_POOL_ID_1
+#define GKI_POOL_ID_1                0
+#endif /* ifndef GKI_POOL_ID_1 */
+
+#ifndef GKI_BUF1_SIZE
+#define GKI_BUF1_SIZE                0
+#endif /* ifndef GKI_BUF1_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 2 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 3)
+
+#ifndef GKI_POOL_ID_2
+#define GKI_POOL_ID_2                0
+#endif /* ifndef GKI_POOL_ID_2 */
+
+#ifndef GKI_BUF2_SIZE
+#define GKI_BUF2_SIZE                0
+#endif /* ifndef GKI_BUF2_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 3 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 4)
+
+#ifndef GKI_POOL_ID_3
+#define GKI_POOL_ID_3                0
+#endif /* ifndef GKI_POOL_ID_4 */
+
+#ifndef GKI_BUF3_SIZE
+#define GKI_BUF3_SIZE                0
+#endif /* ifndef GKI_BUF3_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 4 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 5)
+
+#ifndef GKI_POOL_ID_4
+#define GKI_POOL_ID_4                0
+#endif /* ifndef GKI_POOL_ID_4 */
+
+#ifndef GKI_BUF4_SIZE
+#define GKI_BUF4_SIZE                0
+#endif /* ifndef GKI_BUF4_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 5 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 6)
+
+#ifndef GKI_POOL_ID_5
+#define GKI_POOL_ID_5                0
+#endif /* ifndef GKI_POOL_ID_5 */
+
+#ifndef GKI_BUF5_SIZE
+#define GKI_BUF5_SIZE                0
+#endif /* ifndef GKI_BUF5_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 6 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 7)
+
+#ifndef GKI_POOL_ID_6
+#define GKI_POOL_ID_6                0
+#endif /* ifndef GKI_POOL_ID_6 */
+
+#ifndef GKI_BUF6_SIZE
+#define GKI_BUF6_SIZE                0
+#endif /* ifndef GKI_BUF6_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 7 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 8)
+
+#ifndef GKI_POOL_ID_7
+#define GKI_POOL_ID_7                0
+#endif /* ifndef GKI_POOL_ID_7 */
+
+#ifndef GKI_BUF7_SIZE
+#define GKI_BUF7_SIZE                0
+#endif /* ifndef GKI_BUF7_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 8 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 9)
+
+#ifndef GKI_POOL_ID_8
+#define GKI_POOL_ID_8                0
+#endif /* ifndef GKI_POOL_ID_8 */
+
+#ifndef GKI_BUF8_SIZE
+#define GKI_BUF8_SIZE                0
+#endif /* ifndef GKI_BUF8_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 9 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 10)
+
+#ifndef GKI_POOL_ID_9
+#define GKI_POOL_ID_9                0
+#endif /* ifndef GKI_POOL_ID_9 */
+
+#ifndef GKI_BUF9_SIZE
+#define GKI_BUF9_SIZE                0
+#endif /* ifndef GKI_BUF9_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 10 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 11)
+
+#ifndef GKI_POOL_ID_10
+#define GKI_POOL_ID_10                0
+#endif /* ifndef GKI_POOL_ID_10 */
+
+#ifndef GKI_BUF10_SIZE
+#define GKI_BUF10_SIZE                0
+#endif /* ifndef GKI_BUF10_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 11 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 12)
+
+#ifndef GKI_POOL_ID_11
+#define GKI_POOL_ID_11                0
+#endif /* ifndef GKI_POOL_ID_11 */
+
+#ifndef GKI_BUF11_SIZE
+#define GKI_BUF11_SIZE                0
+#endif /* ifndef GKI_BUF11_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 12 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 13)
+
+#ifndef GKI_POOL_ID_12
+#define GKI_POOL_ID_12                0
+#endif /* ifndef GKI_POOL_ID_12 */
+
+#ifndef GKI_BUF12_SIZE
+#define GKI_BUF12_SIZE                0
+#endif /* ifndef GKI_BUF12_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 13 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 14)
+
+#ifndef GKI_POOL_ID_13
+#define GKI_POOL_ID_13                0
+#endif /* ifndef GKI_POOL_ID_13 */
+
+#ifndef GKI_BUF13_SIZE
+#define GKI_BUF13_SIZE                0
+#endif /* ifndef GKI_BUF13_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 14 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 15)
+
+#ifndef GKI_POOL_ID_14
+#define GKI_POOL_ID_14                0
+#endif /* ifndef GKI_POOL_ID_14 */
+
+#ifndef GKI_BUF14_SIZE
+#define GKI_BUF14_SIZE                0
+#endif /* ifndef GKI_BUF14_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 15 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 16)
+
+#ifndef GKI_POOL_ID_15
+#define GKI_POOL_ID_15                0
+#endif /* ifndef GKI_POOL_ID_15 */
+
+#ifndef GKI_BUF15_SIZE
+#define GKI_BUF15_SIZE                0
+#endif /* ifndef GKI_BUF15_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 16 */
+
+
+/* Timer list entry callback type
+*/
+typedef void (TIMER_CBACK)(void *p_tle);
+#ifndef TIMER_PARAM_TYPE
+#ifdef  WIN2000
+#define TIMER_PARAM_TYPE    void *
+#else
+#define TIMER_PARAM_TYPE    UINT32
+#endif
+#endif
+/* Define a timer list entry
+*/
+typedef struct _tle
+{
+    struct _tle  *p_next;
+    struct _tle  *p_prev;
+    TIMER_CBACK  *p_cback;
+    INT32         ticks;
+    TIMER_PARAM_TYPE   param;
+    UINT16        event;
+    UINT8         in_use;
+} TIMER_LIST_ENT;
+
+/* Define a timer list queue
+*/
+typedef struct
+{
+    TIMER_LIST_ENT   *p_first;
+    TIMER_LIST_ENT   *p_last;
+    INT32             last_ticks;
+} TIMER_LIST_Q;
+
+
+/***********************************************************************
+** This queue is a general purpose buffer queue, for application use.
+*/
+typedef struct
+{
+    void    *p_first;
+    void    *p_last;
+    UINT16   count;
+} BUFFER_Q;
+
+#define GKI_IS_QUEUE_EMPTY(p_q) ((p_q)->count == 0)
+
+/* Task constants
+*/
+#ifndef TASKPTR
+typedef void (*TASKPTR)(UINT32);
+#endif
+
+
+#define GKI_PUBLIC_POOL         0       /* General pool accessible to GKI_getbuf() */
+#define GKI_RESTRICTED_POOL     1       /* Inaccessible pool to GKI_getbuf() */
+
+/***********************************************************************
+** Function prototypes
+*/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Task management
+*/
+GKI_API extern UINT8   GKI_create_task (TASKPTR, UINT8, INT8 *, UINT16 *, UINT16);
+GKI_API extern void    GKI_destroy_task(UINT8 task_id);
+GKI_API extern void    GKI_task_self_cleanup(UINT8 task_id);
+GKI_API extern void    GKI_exit_task(UINT8);
+GKI_API extern UINT8   GKI_get_taskid(void);
+GKI_API extern void    GKI_init(void);
+GKI_API extern void    GKI_shutdown(void);
+GKI_API extern INT8   *GKI_map_taskname(UINT8);
+GKI_API extern UINT8   GKI_resume_task(UINT8);
+GKI_API extern void    GKI_run(void *);
+GKI_API extern void    GKI_freeze(void);
+GKI_API extern void    GKI_stop(void);
+GKI_API extern UINT8   GKI_suspend_task(UINT8);
+GKI_API extern UINT8   GKI_is_task_running(UINT8);
+
+/* memory management
+*/
+GKI_API extern void GKI_shiftdown (UINT8 *p_mem, UINT32 len, UINT32 shift_amount);
+GKI_API extern void GKI_shiftup (UINT8 *p_dest, UINT8 *p_src, UINT32 len);
+
+/* To send buffers and events between tasks
+*/
+GKI_API extern UINT8   GKI_isend_event (UINT8, UINT16);
+GKI_API extern void   *GKI_read_mbox  (UINT8);
+GKI_API extern void    GKI_send_msg   (UINT8, UINT8, void *);
+GKI_API extern UINT8   GKI_send_event (UINT8, UINT16);
+
+
+/* To get and release buffers, change owner and get size
+*/
+GKI_API extern void    GKI_change_buf_owner (void *, UINT8);
+GKI_API extern UINT8   GKI_create_pool (UINT16, UINT16, UINT8, void *);
+GKI_API extern void    GKI_delete_pool (UINT8);
+GKI_API extern void   *GKI_find_buf_start (void *);
+GKI_API extern void    GKI_freebuf (void *);
+GKI_API extern void   *GKI_getbuf (UINT16);
+GKI_API extern UINT16  GKI_get_buf_size (void *);
+GKI_API extern void   *GKI_getpoolbuf (UINT8);
+GKI_API extern UINT16  GKI_poolfreecount (UINT8);
+GKI_API extern UINT16  GKI_poolutilization (UINT8);
+GKI_API extern void    GKI_register_mempool (void *p_mem);
+GKI_API extern UINT8   GKI_set_pool_permission(UINT8, UINT8);
+
+
+/* User buffer queue management
+*/
+GKI_API extern void   *GKI_dequeue  (BUFFER_Q *);
+GKI_API extern void    GKI_enqueue (BUFFER_Q *, void *);
+GKI_API extern void    GKI_enqueue_head (BUFFER_Q *, void *);
+GKI_API extern void   *GKI_getfirst (BUFFER_Q *);
+GKI_API extern void   *GKI_getnext (void *);
+GKI_API extern void    GKI_init_q (BUFFER_Q *);
+GKI_API extern BOOLEAN GKI_queue_is_empty(BUFFER_Q *);
+GKI_API extern void   *GKI_remove_from_queue (BUFFER_Q *, void *);
+GKI_API extern UINT16  GKI_get_pool_bufsize (UINT8);
+
+/* Timer management
+*/
+GKI_API extern void    GKI_add_to_timer_list (TIMER_LIST_Q *, TIMER_LIST_ENT  *);
+GKI_API extern void    GKI_delay(UINT32);
+GKI_API extern UINT32  GKI_get_tick_count(void);
+GKI_API extern INT8   *GKI_get_time_stamp(INT8 *);
+GKI_API extern void    GKI_init_timer_list (TIMER_LIST_Q *);
+GKI_API extern void    GKI_init_timer_list_entry (TIMER_LIST_ENT  *);
+GKI_API extern INT32   GKI_ready_to_sleep (void);
+GKI_API extern void    GKI_remove_from_timer_list (TIMER_LIST_Q *, TIMER_LIST_ENT  *);
+GKI_API extern void    GKI_start_timer(UINT8, INT32, BOOLEAN);
+GKI_API extern void    GKI_stop_timer (UINT8);
+GKI_API extern void    GKI_timer_update(INT32);
+GKI_API extern UINT16  GKI_update_timer_list (TIMER_LIST_Q *, INT32);
+GKI_API extern UINT16  GKI_wait(UINT16, UINT32);
+
+/* Start and Stop system time tick callback
+ * true for start system tick if time queue is not empty
+ * false to stop system tick if time queue is empty
+*/
+typedef void (SYSTEM_TICK_CBACK)(BOOLEAN);
+
+/* Time queue management for system ticks
+*/
+GKI_API extern BOOLEAN GKI_timer_queue_empty (void);
+GKI_API extern void    GKI_timer_queue_register_callback(SYSTEM_TICK_CBACK *);
+
+/* Disable Interrupts, Enable Interrupts
+*/
+GKI_API extern void    GKI_enable(void);
+GKI_API extern void    GKI_disable(void);
+GKI_API extern void    GKI_sched_lock(void);
+GKI_API extern void    GKI_sched_unlock(void);
+
+/* Allocate (Free) memory from an OS
+*/
+GKI_API extern void     *GKI_os_malloc (UINT32);
+GKI_API extern void      GKI_os_free (void *);
+
+/* os timer operation */
+GKI_API extern UINT32 GKI_get_os_tick_count(void);
+
+/* Exception handling
+*/
+GKI_API extern void    GKI_exception (UINT16, char *);
+
+#if GKI_DEBUG == TRUE
+GKI_API extern void    GKI_PrintBufferUsage(UINT8 *p_num_pools, UINT16 *p_cur_used);
+GKI_API extern void    GKI_PrintBuffer(void);
+GKI_API extern void    GKI_print_task(void);
+#else
+#undef GKI_PrintBufferUsage
+#define GKI_PrintBuffer() NULL
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif
+/* end "revolution/bte/gki/common/gki.h" */
+/* "libs/RVL_SDK/include/revolution/BTE/rvl/uusb_ppc.h" line 5 "revolution/usb/usb.h" */
+#ifndef RVL_SDK_USB_H
+#define RVL_SDK_USB_H
+/* "libs/RVL_SDK/include/revolution/usb/usb.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/usb/usb.h" line 4 "revolution/IPC.h" */
+/**
+ * References: WiiBrew, Dolphin Emulator, fail0verflow
+ */
+
+#ifndef RVL_SDK_PUBLIC_IPC_H
+#define RVL_SDK_PUBLIC_IPC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 10 "revolution/IPC/ipcMain.h" */
+#ifndef RVL_SDK_IPC_MAIN_H
+#define RVL_SDK_IPC_MAIN_H
+/* "libs/RVL_SDK/include/revolution/IPC/ipcMain.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/IPC/ipcMain.h" line 4 "revolution/IPC/ipcHardware.h" */
+#ifndef RVL_SDK_IPC_HARDWARE_H
+#define RVL_SDK_IPC_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/IPC/ipcHardware.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * IPC hardware registers
+ */
+volatile u32 DECL_HW_REGS(IPC_PPC) DECL_ADDRESS(0xCD000000);
+volatile u32 DECL_HW_REGS(IPC) DECL_ADDRESS(0xCD800000);
+
+/**
+ * Hardware register indexes
+ */
+// clang-format off
+#define LIST_OF_REGS                                                           \
+    X(IPC_PPCMSG,      0xCD000000)                                             \
+    X(IPC_PPCCTRL,     0xCD000004)                                             \
+    X(IPC_ARMMSG,      0xCD000008)                                             \
+    X(IPC_ARMCTRL,     0xCD00000C)                                             \
+    X(TIMER,           0xCD000010)                                             \
+    X(ALARM,           0xCD000014)                                             \
+    X(PPCIRQFLAG,      0xCD000030)                                             \
+    X(PPCIRQMASK,      0xCD000034)                                             \
+    X(ARMIRQFLAG,      0xCD000038)                                             \
+    X(ARMIRQMASK,      0xCD00003C)                                             \
+    X(MEMMIRR,         0xCD000060)                                             \
+    X(AHBPROT,         0xCD000064)                                             \
+    X(EXICTRL,         0xCD000070)                                             \
+    X(GPIO1BOUT,       0xCD0000C0)                                             \
+    X(GPIO1BDIR,       0xCD0000C4)                                             \
+    X(GPIO1BIN,        0xCD0000C8)                                             \
+    X(GPIO1BINTLVL,    0xCD0000CC)                                             \
+    X(GPIO1BINTFLAG,   0xCD0000D0)                                             \
+    X(GPIO1BINTENABLE, 0xCD0000D4)                                             \
+    X(GPIO1BINMIR,     0xCD0000D8)                                             \
+    X(GPIO1ENABLE,     0xCD0000DC)                                             \
+    X(GPIO1OUT,        0xCD0000E0)                                             \
+    X(GPIO1DIR,        0xCD0000E4)                                             \
+    X(GPIO1IN,         0xCD0000E8)                                             \
+    X(GPIO1INTLVL,     0xCD0000EC)                                             \
+    X(GPIO1INTFLAG,    0xCD0000F0)                                             \
+    X(GPIO1INTENABLE,  0xCD0000F4)                                             \
+    X(GPIO1INMIR,      0xCD0000F8)                                             \
+    X(GPIO1OWNER,      0xCD0000FC)                                             \
+    X(DIFLAGS,         0xCD000180)                                             \
+    X(RESETS,          0xCD000194)                                             \
+    X(CLOCKS,          0xCD0001B4)                                             \
+    X(GPIO2OUT,        0xCD0001C8)                                             \
+    X(GPIO2DIR,        0xCD0001CC)                                             \
+    X(GPIO2IN,         0xCD0001D0)                                             \
+    X(OTPCMD,          0xCD0001EC)                                             \
+    X(OTPDATA,         0xCD0001F0)                                             \
+    X(VERSION,         0xCD000214)
+// clang-format on
+
+/**
+ * Hardware register indexes (IPC)
+ */
+#define X(NAME, ADDR) IPC_##NAME = (ADDR - 0xCD000000) / 4,
+typedef enum { LIST_OF_REGS } IPCHwReg;
+#undef X
+
+/**
+ * Hardware register indexes (ACR)
+ */
+#define X(NAME, ADDR) ACR_##NAME = (ADDR - 0xCD000000),
+typedef enum { LIST_OF_REGS } ACRHwReg;
+#undef X
+
+/**
+ * GPIO register flags
+ */
+typedef enum {
+    GPIO_POWER = (1 << 0),
+    GPIO_SHUTDOWN = (1 << 1),
+    GPIO_FAN = (1 << 2),
+    GPIO_DCDC = (1 << 3),
+    GPIO_DISPIN = (1 << 4),
+    GPIO_SLOTLED = (1 << 5),
+    GPIO_EJECTBTN = (1 << 6),
+    GPIO_SLOTIN = (1 << 7),
+    GPIO_SENSORBAR = (1 << 8),
+    GPIO_DOEJECT = (1 << 9),
+    GPIO_EEP_CS = (1 << 10),
+    GPIO_EEP_CLK = (1 << 11),
+    GPIO_EEP_MOSI = (1 << 12),
+    GPIO_EEP_MISO = (1 << 13),
+    GPIO_AVE_SCL = (1 << 14),
+    GPIO_AVE_SDA = (1 << 15),
+    GPIO_DEBUG0 = (1 << 16),
+    GPIO_DEBUG1 = (1 << 17),
+    GPIO_DEBUG2 = (1 << 18),
+    GPIO_DEBUG3 = (1 << 19),
+    GPIO_DEBUG4 = (1 << 20),
+    GPIO_DEBUG5 = (1 << 21),
+    GPIO_DEBUG6 = (1 << 22),
+    GPIO_DEBUG7 = (1 << 23),
+} GPIOFlag;
+
+#undef LIST_OF_REGS
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/ipcHardware.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+inline u32 ACRReadReg(u32 reg) {
+    return IPC_PPC_HW_REGS[reg / 4];
+}
+
+inline void ACRWriteReg(u32 reg, u32 val) {
+    IPC_PPC_HW_REGS[reg / 4] = val;
+}
+
+void IPCInit(void);
+void IPCReInit(void);
+u32 IPCReadReg(s32 index);
+void IPCWriteReg(s32 index, u32 value);
+void* IPCGetBufferHi(void);
+void* IPCGetBufferLo(void);
+void IPCSetBufferLo(void* lo);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/ipcMain.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 11 "revolution/IPC/ipcProfile.h" */
+#ifndef RVL_SDK_IPC_PROFILE_H
+#define RVL_SDK_IPC_PROFILE_H
+/* "libs/RVL_SDK/include/revolution/IPC/ipcProfile.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/IPC/ipcProfile.h" line 4 "revolution/IPC/ipcclt.h" */
+#ifndef RVL_SDK_IPC_CLT_H
+#define RVL_SDK_IPC_CLT_H
+/* "libs/RVL_SDK/include/revolution/IPC/ipcclt.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/IPC/ipcclt.h" line 4 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    IPC_RESULT_FATAL_ERROR = -119,
+    IPC_RESULT_BUSY,
+    IPC_RESULT_NOTEMPTY = -115,
+    IPC_RESULT_ECC_CRIT,
+    IPC_RESULT_OPENFD = -111,
+    IPC_RESULT_MAXFD = -109,
+    IPC_RESULT_MAXBLOCKS,
+    IPC_RESULT_MAXFILES,
+    IPC_RESULT_NOEXISTS,
+    IPC_RESULT_EXISTS,
+    IPC_RESULT_CORRUPT = -103,
+    IPC_RESULT_ACCESS,
+    IPC_RESULT_INVALID,
+
+    IPC_RESULT_ALLOC_FAILED = -22,
+    IPC_RESULT_ECC_CRIT_INTERNAL = -12,
+    IPC_RESULT_BUSY_INTERNAL = -8,
+    IPC_RESULT_NOEXISTS_INTERNAL = -6,
+    IPC_RESULT_CONN_MAX_INTERNAL = -5,
+    IPC_RESULT_INVALID_INTERNAL = -4,
+    IPC_RESULT_EXISTS_INTERNAL = -2,
+    IPC_RESULT_ACCESS_INTERNAL = -1,
+
+    IPC_RESULT_OK = 0
+} IPCResult;
+
+typedef enum {
+    IPC_REQ_NONE,
+    IPC_REQ_OPEN,
+    IPC_REQ_CLOSE,
+    IPC_REQ_READ,
+    IPC_REQ_WRITE,
+    IPC_REQ_SEEK,
+    IPC_REQ_IOCTL,
+    IPC_REQ_IOCTLV
+} IPCRequestType;
+
+typedef enum {
+    // Ioctl
+    IPC_IOCTL_GET_NAND_STATS = 2,
+    IPC_IOCTL_CREATE_DIR = 3,
+    IPC_IOCTL_READ_DIR = 4,
+    IPC_IOCTL_GET_ATTR = 6,
+    IPC_IOCTL_DELETE_PATH = 7,
+    IPC_IOCTL_RENAME_PATH = 8,
+    IPC_IOCTL_CREATE_FILE = 9,
+    IPC_IOCTL_GET_FILE_STATS = 11,
+    IPC_IOCTL_SHUTDOWN_FS = 13,
+    IPC_IOCTL_REG_STM_EVENT = 0x1000,
+    IPC_IOCTL_HOT_RESET = 0x2001,
+    IPC_IOCTL_SHUTDOWN_TO_SBY = 0x2003,
+    IPC_IOCTL_UNREG_STM_EVENT = 0x3002,
+    IPC_IOCTL_SET_VI_DIM = 0x5001,
+    IPC_IOCTL_SET_IDLE_LED_MODE = 0x6002,
+
+    // Ioctlv
+    IPC_IOCTLV_LAUNCH_TITLE = 8,
+    IPC_IOCTLV_GET_USAGE = 12,
+    IPC_IOCTLV_GET_NUM_TICKET_VIEWS = 18,
+    IPC_IOCTLV_GET_TICKET_VIEWS = 19,
+    IPC_IOCTLV_GET_DATA_DIR = 29,
+    IPC_IOCTLV_GET_TITLE_ID = 32,
+} IPCIoctlType;
+
+typedef enum {
+    IPC_OPEN_NONE = 0,
+    IPC_OPEN_READ = (1 << 0),
+    IPC_OPEN_WRITE = (1 << 1),
+    IPC_OPEN_RW = IPC_OPEN_READ | IPC_OPEN_WRITE
+} IPCOpenMode;
+
+typedef enum {
+    IPC_SEEK_BEG,
+    IPC_SEEK_CUR,
+    IPC_SEEK_END,
+} IPCSeekMode;
+
+typedef s32 (*IPCAsyncCallback)(s32 result, void* arg);
+
+typedef struct IPCIOVector {
+    void* base; // at 0x0
+    u32 length; // at 0x4
+} IPCIOVector;
+
+typedef struct IPCOpenArgs {
+    const char* path; // at 0x0
+    IPCOpenMode mode; // at 0x4
+} IPCOpenArgs;
+
+typedef struct IPCReadWriteArgs {
+    void* data; // at 0x0
+    u32 length; // at 0x4
+} IPCReadWriteArgs;
+
+typedef struct IPCSeekArgs {
+    s32 offset;       // at 0x0
+    IPCSeekMode mode; // at 0x4
+} IPCSeekArgs;
+
+typedef struct IPCIoctlArgs {
+    s32 type;    // at 0x0
+    void* in;    // at 0x4
+    s32 inSize;  // at 0x8
+    void* out;   // at 0xC
+    s32 outSize; // at 0x10
+} IPCIoctlArgs;
+
+typedef struct IPCIoctlvArgs {
+    s32 type;             // at 0x0
+    u32 inCount;          // at 0x4
+    u32 outCount;         // at 0x8
+    IPCIOVector* vectors; // at 0xC
+} IPCIoctlvArgs;
+
+typedef struct IPCRequest {
+    IPCRequestType type; // at 0x0
+    s32 ret;             // at 0x4
+    s32 fd;              // at 0x8
+    union {
+        IPCOpenArgs open;
+        IPCReadWriteArgs rw;
+        IPCSeekArgs seek;
+        IPCIoctlArgs ioctl;
+        IPCIoctlvArgs ioctlv;
+    }; // at 0xC
+} IPCRequest;
+
+typedef struct IPCRequestEx {
+    IPCRequest base;           // at 0x0
+    IPCAsyncCallback callback; // at 0x20
+    void* callbackArg;         // at 0x24
+    BOOL reboot;               // at 0x28
+    OSThreadQueue queue;       // at 0x2C
+    char padding[64 - 0x34];
+} IPCRequestEx;
+
+s32 IPCCltInit(void);
+s32 IPCCltReInit(void);
+s32 IOS_OpenAsync(const char* path, IPCOpenMode mode, IPCAsyncCallback callback,
+                  void* callbackArg);
+s32 IOS_Open(const char* path, IPCOpenMode mode);
+s32 IOS_CloseAsync(s32 fd, IPCAsyncCallback callback, void* callbackArg);
+s32 IOS_Close(s32 fd);
+s32 IOS_ReadAsync(s32 fd, void* buf, s32 len, IPCAsyncCallback callback,
+                  void* callbackArg);
+s32 IOS_Read(s32 fd, void* buf, s32 len);
+s32 IOS_WriteAsync(s32 fd, const void* buf, s32 len, IPCAsyncCallback callback,
+                   void* callbackArg);
+s32 IOS_Write(s32 fd, const void* buf, s32 len);
+s32 IOS_SeekAsync(s32 fd, s32 offset, IPCSeekMode mode,
+                  IPCAsyncCallback callback, void* callbackArg);
+s32 IOS_Seek(s32 fd, s32 offset, IPCSeekMode mode);
+s32 IOS_IoctlAsync(s32 fd, s32 type, void* in, s32 inSize, void* out,
+                   s32 outSize, IPCAsyncCallback callback, void* callbackArg);
+s32 IOS_Ioctl(s32 fd, s32 type, void* in, s32 inSize, void* out, s32 outSize);
+s32 IOS_IoctlvAsync(s32 fd, s32 type, s32 inCount, s32 outCount,
+                    IPCIOVector* vectors, IPCAsyncCallback callback,
+                    void* callbackArg);
+s32 IOS_Ioctlv(s32 fd, s32 type, s32 inCount, s32 outCount,
+               IPCIOVector* vectors);
+s32 IOS_IoctlvReboot(s32 fd, s32 type, s32 inCount, s32 outCount,
+                     IPCIOVector* vectors);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/ipcclt.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void IPCiProfInit(void);
+void IPCiProfQueueReq(IPCRequestEx* req, s32 fd);
+void IPCiProfAck(void);
+void IPCiProfReply(IPCRequestEx* req, s32 fd);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/ipcProfile.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 12 "revolution/IPC/ipcclt.h" */
+/* end "revolution/IPC/ipcclt.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 13 "revolution/IPC/memory.h" */
+#ifndef RVL_SDK_IPC_MEMORY_H
+#define RVL_SDK_IPC_MEMORY_H
+/* "libs/RVL_SDK/include/revolution/IPC/memory.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+s32 iosCreateHeap(void* base, u32 size);
+void* iosAllocAligned(s32 handle, u32 size, u32 align);
+s32 iosFree(s32 handle, void* block);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC/memory.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void (*USBCallback)(IPCResult result, void* arg);
+typedef void (*USBISOCallback)(IPCResult result, void* arg1, void* arg2);
+
+IPCResult IUSB_OpenLib(void);
+IPCResult IUSB_CloseLib(void);
+IPCResult IUSB_OpenDeviceIds(const char* interface, u16 vid, u16 pid,
+                             IPCResult* resultOut);
+IPCResult IUSB_CloseDeviceAsync(s32 fd, USBCallback callback,
+                                void* callbackArg);
+IPCResult IUSB_ReadIntrMsgAsync(s32 fd, u32 endpoint, u32 length, void* buffer,
+                                USBCallback callback, void* callbackArg);
+IPCResult IUSB_ReadBlkMsgAsync(s32 fd, u32 endpoint, u32 length, void* buffer,
+                               USBCallback callback, void* callbackArg);
+IPCResult IUSB_WriteBlkMsgAsync(s32 fd, u32 endpoint, u32 length,
+                                const void* buffer, USBCallback callback,
+                                void* callbackArg);
+IPCResult IUSB_WriteCtrlMsgAsync(s32 fd, u8 requestType, u8 request, u16 value,
+                                 u16 index, u16 length, void* buffer,
+                                 USBCallback callback, void* callbackArg);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/usb/usb.h" */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 u32 __ntd_get_allocated_mem_size(void);
+
+/* UUSB private control block (retail global `usb`, size 0x4C).
+ * Field names are recovered where semantics are understood; unknown
+ * members keep `field_0xNN` offsets. */
+typedef struct tUUSB_CB {
+    s32 fd;                       /* 0x00 device file descriptor */
+    u8 field_0x04[0xC];          /* 0x04 unused in matched functions */
+    u8 field_0x10;                /* 0x10 endpoint (intr/bulk ctrl) */
+    u8 field_0x11;                /* 0x11 endpoint */
+    u8 field_0x12;                /* 0x12 endpoint */
+    u8 field_0x13;                /* 0x13 endpoint */
+    u32 vid;                      /* 0x14 USB vendor id */
+    u32 pid;                      /* 0x18 USB product id */
+    u8 pool_id_intr;             /* 0x1C intr read pool id */
+    u8 pool_id_bulk;             /* 0x1D bulk read pool id */
+    u8 field_0x1E[2];            /* 0x1E */
+    void (*close_cb)(int reason, s8 result); /* 0x20 upper-layer close notify */
+    u32 close_cb_arg;            /* 0x24 close callback argument */
+    u8 trace_state;             /* 0x28 trace init state */
+    u8 state;                    /* 0x29 UUSB state machine */
+    u8 field_0x2A;              /* 0x2A */
+    u8 field_0x2B;              /* 0x2B read-restart flag */
+    BUFFER_Q bulk_write_q;       /* 0x2C bulk write buffer queue */
+    u8 bulk_pending;            /* 0x38 outstanding bulk writes */
+    u8 field_0x39[3];           /* 0x39 */
+    BUFFER_Q ctrl_write_q;       /* 0x3C ctrl write buffer queue */
+    u8 ctrl_pending;            /* 0x48 outstanding ctrl writes */
+    u8 field_0x49[3];           /* 0x49 */
+} tUUSB_CB;
+
+/* UUSB state values (usb.state). */
+enum {
+    UUSB_STATE_IDLE = 0,
+    UUSB_STATE_OPEN = 2,
+    UUSB_STATE_READY = 4,
+    UUSB_STATE_CLOSED = 5,
+};
+
+/* Close notification reason passed to tUUSB_CB.close_cb. */
+#define UUSB_CLOSE_REASON_CLOSED 4
+
+/* Global control block and trace flags (retail linker names). */
+extern tUUSB_CB usb;
+extern u8 uusb_g_usb_devid_found;
+extern u8 uusb_g_trace_state_initialized;
+extern u32 wait4hci;
+
+/* Public UUSB API. */
+void UUSB_Register(void* cb_arg);
+void UUSB_Open(s32 fd, void (*close_cb)(int reason, s8 result));
+s32 UUSB_Read(void);
+s32 UUSB_Write(s32 type, void* data, u16 length);
+void UUSB_Close(void);
+void UUSB_Unregister(void);
+
+/* USB close completion callback (IUSB_CloseDeviceAsync). */
+void uusb_CloseDeviceCB(IPCResult result, void* arg);
+void uusb_ReadIntrDataCB(IPCResult result, void* arg);
+void uusb_ReadBulkDataCB(IPCResult result, void* arg);
+void uusb_WriteCtrlDataCB(IPCResult result, void* arg);
+void uusb_WriteBulkDataCB(IPCResult result, void* arg);
 
 #ifdef __cplusplus
 }
@@ -233642,9 +241452,8 @@ bool isExistData__5CRsrcFPCv(const void* data);
 /* end "monolib/util/MemManager.hpp" */
 
 // size: 0x4E8
-class CRsrcData : public CWorkThread {
+class __declspec(novtable) CRsrcData : public CWorkThread {
 public:
-    CRsrcData(const char* pName, CWorkThread* pParent);
     virtual ~CRsrcData();
 
     virtual void wkUpdate();
@@ -233757,6 +241566,8 @@ public:
     static void renderView();
     static CView* getFullScreenView();
     static CView* getView(WORK_ID id);
+    void func_80442B54(void* a, void* b, void* c);
+    void func_80442C68();
 
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
@@ -234885,16 +242696,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -237516,726 +245325,12 @@ extern "C" {
 #endif
 
 /* "libs/RVL_SDK/include/revolution/IPC.h" line 10 "revolution/IPC/ipcMain.h" */
-#ifndef RVL_SDK_IPC_MAIN_H
-#define RVL_SDK_IPC_MAIN_H
-/* "libs/RVL_SDK/include/revolution/IPC/ipcMain.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/IPC/ipcMain.h" line 4 "revolution/IPC/ipcHardware.h" */
-#ifndef RVL_SDK_IPC_HARDWARE_H
-#define RVL_SDK_IPC_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/IPC/ipcHardware.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * IPC hardware registers
- */
-volatile u32 DECL_HW_REGS(IPC_PPC) DECL_ADDRESS(0xCD000000);
-volatile u32 DECL_HW_REGS(IPC) DECL_ADDRESS(0xCD800000);
-
-/**
- * Hardware register indexes
- */
-// clang-format off
-#define LIST_OF_REGS                                                           \
-    X(IPC_PPCMSG,      0xCD000000)                                             \
-    X(IPC_PPCCTRL,     0xCD000004)                                             \
-    X(IPC_ARMMSG,      0xCD000008)                                             \
-    X(IPC_ARMCTRL,     0xCD00000C)                                             \
-    X(TIMER,           0xCD000010)                                             \
-    X(ALARM,           0xCD000014)                                             \
-    X(PPCIRQFLAG,      0xCD000030)                                             \
-    X(PPCIRQMASK,      0xCD000034)                                             \
-    X(ARMIRQFLAG,      0xCD000038)                                             \
-    X(ARMIRQMASK,      0xCD00003C)                                             \
-    X(MEMMIRR,         0xCD000060)                                             \
-    X(AHBPROT,         0xCD000064)                                             \
-    X(EXICTRL,         0xCD000070)                                             \
-    X(GPIO1BOUT,       0xCD0000C0)                                             \
-    X(GPIO1BDIR,       0xCD0000C4)                                             \
-    X(GPIO1BIN,        0xCD0000C8)                                             \
-    X(GPIO1BINTLVL,    0xCD0000CC)                                             \
-    X(GPIO1BINTFLAG,   0xCD0000D0)                                             \
-    X(GPIO1BINTENABLE, 0xCD0000D4)                                             \
-    X(GPIO1BINMIR,     0xCD0000D8)                                             \
-    X(GPIO1ENABLE,     0xCD0000DC)                                             \
-    X(GPIO1OUT,        0xCD0000E0)                                             \
-    X(GPIO1DIR,        0xCD0000E4)                                             \
-    X(GPIO1IN,         0xCD0000E8)                                             \
-    X(GPIO1INTLVL,     0xCD0000EC)                                             \
-    X(GPIO1INTFLAG,    0xCD0000F0)                                             \
-    X(GPIO1INTENABLE,  0xCD0000F4)                                             \
-    X(GPIO1INMIR,      0xCD0000F8)                                             \
-    X(GPIO1OWNER,      0xCD0000FC)                                             \
-    X(DIFLAGS,         0xCD000180)                                             \
-    X(RESETS,          0xCD000194)                                             \
-    X(CLOCKS,          0xCD0001B4)                                             \
-    X(GPIO2OUT,        0xCD0001C8)                                             \
-    X(GPIO2DIR,        0xCD0001CC)                                             \
-    X(GPIO2IN,         0xCD0001D0)                                             \
-    X(OTPCMD,          0xCD0001EC)                                             \
-    X(OTPDATA,         0xCD0001F0)                                             \
-    X(VERSION,         0xCD000214)
-// clang-format on
-
-/**
- * Hardware register indexes (IPC)
- */
-#define X(NAME, ADDR) IPC_##NAME = (ADDR - 0xCD000000) / 4,
-typedef enum { LIST_OF_REGS } IPCHwReg;
-#undef X
-
-/**
- * Hardware register indexes (ACR)
- */
-#define X(NAME, ADDR) ACR_##NAME = (ADDR - 0xCD000000),
-typedef enum { LIST_OF_REGS } ACRHwReg;
-#undef X
-
-/**
- * GPIO register flags
- */
-typedef enum {
-    GPIO_POWER = (1 << 0),
-    GPIO_SHUTDOWN = (1 << 1),
-    GPIO_FAN = (1 << 2),
-    GPIO_DCDC = (1 << 3),
-    GPIO_DISPIN = (1 << 4),
-    GPIO_SLOTLED = (1 << 5),
-    GPIO_EJECTBTN = (1 << 6),
-    GPIO_SLOTIN = (1 << 7),
-    GPIO_SENSORBAR = (1 << 8),
-    GPIO_DOEJECT = (1 << 9),
-    GPIO_EEP_CS = (1 << 10),
-    GPIO_EEP_CLK = (1 << 11),
-    GPIO_EEP_MOSI = (1 << 12),
-    GPIO_EEP_MISO = (1 << 13),
-    GPIO_AVE_SCL = (1 << 14),
-    GPIO_AVE_SDA = (1 << 15),
-    GPIO_DEBUG0 = (1 << 16),
-    GPIO_DEBUG1 = (1 << 17),
-    GPIO_DEBUG2 = (1 << 18),
-    GPIO_DEBUG3 = (1 << 19),
-    GPIO_DEBUG4 = (1 << 20),
-    GPIO_DEBUG5 = (1 << 21),
-    GPIO_DEBUG6 = (1 << 22),
-    GPIO_DEBUG7 = (1 << 23),
-} GPIOFlag;
-
-#undef LIST_OF_REGS
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/IPC/ipcHardware.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-inline u32 ACRReadReg(u32 reg) {
-    return IPC_PPC_HW_REGS[reg / 4];
-}
-
-inline void ACRWriteReg(u32 reg, u32 val) {
-    IPC_PPC_HW_REGS[reg / 4] = val;
-}
-
-void IPCInit(void);
-void IPCReInit(void);
-u32 IPCReadReg(s32 index);
-void IPCWriteReg(s32 index, u32 value);
-void* IPCGetBufferHi(void);
-void* IPCGetBufferLo(void);
-void IPCSetBufferLo(void* lo);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/IPC/ipcMain.h" */
 /* "libs/RVL_SDK/include/revolution/IPC.h" line 11 "revolution/IPC/ipcProfile.h" */
-#ifndef RVL_SDK_IPC_PROFILE_H
-#define RVL_SDK_IPC_PROFILE_H
-/* "libs/RVL_SDK/include/revolution/IPC/ipcProfile.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/IPC/ipcProfile.h" line 4 "revolution/IPC/ipcclt.h" */
-#ifndef RVL_SDK_IPC_CLT_H
-#define RVL_SDK_IPC_CLT_H
-/* "libs/RVL_SDK/include/revolution/IPC/ipcclt.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/IPC/ipcclt.h" line 4 "revolution/OS.h" */
-/**
- * References: YAGCD, WiiBrew, Dolphin Emulator
- */
-
-#ifndef RVL_SDK_PUBLIC_OS_H
-#define RVL_SDK_PUBLIC_OS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
-/* end "revolution/OS/OS.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
-/* end "revolution/OS/OSAlarm.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
-/* end "revolution/OS/OSAlloc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
-/* end "revolution/OS/OSArena.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
-/* end "revolution/OS/OSAudioSystem.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
-/* end "revolution/OS/OSCache.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
-/* end "revolution/OS/OSContext.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
-/* end "revolution/OS/OSCrc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
-/* end "revolution/OS/OSError.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
-/* end "revolution/OS/OSExec.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
-/* end "revolution/OS/OSFastCast.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
-/* end "revolution/OS/OSFatal.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
-/* end "revolution/OS/OSFont.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap4.html#sec4
- * https://www.gc-forever.com/yagcd/chap13.html#sec13
- * https://wiibrew.org/wiki/Memory_map
- */
-
-#ifndef RVL_SDK_OS_HARDWARE_H
-#define RVL_SDK_OS_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
-/* end "revolution/DVD/dvd.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Forward declarations
-typedef struct OSContext;
-typedef struct OSExecParams;
-
-// Derive offsets for use with OSAddress functions
-#define __DEF_ADDR_OFFSETS(name, addr)                                         \
-    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
-    static const u32 OS_CACHED_##name = (addr);                                \
-    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
-
-// Define a global variable in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name DECL_ADDRESS(addr);                                         \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define a global array in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name arr DECL_ADDRESS(addr);                                     \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define an global variable in the hardware-register range.
-#define OS_DEF_HW_REG(type, name, addr)                                        \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name : (addr);
-
-typedef enum {
-    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
-    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
-} OSBootMagic;
-
-typedef struct OSBootInfo {
-    DVDDiskID diskID; // at 0x0
-    u32 bootMagic;    // at 0x20
-    u32 aplVersion;   // at 0x24
-    u32 physMemSize;  // at 0x28
-    u32 consoleType;  // at 0x2C
-    void* arenaLo;    // at 0x30
-    void* arenaHi;    // at 0x34
-    void* fstStart;   // at 0x38
-    u32 fstSize;      // at 0x3C
-} OSBootInfo;
-
-typedef struct OSDebugInterface {
-    BOOL usingDebugger;    // at 0x0
-    u32 exceptionMask;     // at 0x4
-    void* exceptionHook;   // at 0x8
-    void* exceptionHookLR; // at 0xC
-} OSDebugInterface;
-
-typedef struct OSBI2 {
-    u32 dbgMonitorSize;   // at 0x0
-    u32 simulatedMemSize; // at 0x4
-    u32 argumentOfs;      // at 0x8
-    u32 debugFlag;        // at 0xC
-    u32 trackLocation;    // at 0x10
-    u32 trackSize;        // at 0x14
-    u32 countryCode;      // at 0x18
-    u32 WORD_0x1C;
-    u32 lastInsert;
-    u32 padSpec;            // at 0x24
-    u32 totalTextDataLimit; // at 0x28
-    u32 simulatedMem2Size;  // at 0x2C
-} OSBI2;
-
-/**
- * 0x80000000 - 0x80000100
- */
-// clang-format off
-OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
-OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
-OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
-OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
-OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
-OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
-OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
-OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
-OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
-OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
-OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
-OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
-OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
-// clang-format on
-
-/**
- * 0x80003000 - 0x80003F00
- */
-// clang-format off
-OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
-OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
-OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
-OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
-OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
-OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
-OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
-OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
-OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
-OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
-OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
-OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
-OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
-OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
-OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
-OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
-OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
-OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
-OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
-OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
-OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
-OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
-OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
-OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
-OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
-OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
-OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
-OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
-// clang-format on
-
-/**
- * PI hardware globals
- */
-volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
-typedef enum {
-    PI_INTSR,    //!< 0xCC003000
-    PI_INTMR,    //!< 0xCC003004
-    PI_REG_0x8,  //!< 0xCC003008
-    PI_REG_0xC,  //!< 0xCC00300C
-    PI_REG_0x10, //!< 0xCC003010
-    PI_REG_0x14, //!< 0xCC003014
-    PI_REG_0x18, //!< 0xCC003018
-    PI_REG_0x1C, //!< 0xCC00301C
-    PI_REG_0x20, //!< 0xCC003020
-    PI_RESET,    //!< 0xCC003024
-    // . . .
-} PIHwReg;
-
-// INTSR - Interrupt Cause Register
-#define PI_INTSR_ERROR (1 << 0)
-#define PI_INTSR_RSW (1 << 1)
-#define PI_INTSR_DI (1 << 2)
-#define PI_INTSR_SI (1 << 3)
-#define PI_INTSR_EXI (1 << 4)
-#define PI_INTSR_AI (1 << 5)
-#define PI_INTSR_DSP (1 << 6)
-#define PI_INTSR_MEM (1 << 7)
-#define PI_INTSR_VI (1 << 8)
-#define PI_INTSR_PE_TOKEN (1 << 9)
-#define PI_INTSR_PE_FINISH (1 << 10)
-#define PI_INTSR_CP (1 << 11)
-#define PI_INTSR_DEBUG (1 << 12)
-#define PI_INTSR_HSP (1 << 13)
-#define PI_INTSR_ACR (1 << 14)
-#define PI_INTSR_RSWST (1 << 16)
-
-// INTMR - Interrupt Mask Register
-#define PI_INTMR_ERROR (1 << 0)
-#define PI_INTMR_RSW (1 << 1)
-#define PI_INTMR_DI (1 << 2)
-#define PI_INTMR_SI (1 << 3)
-#define PI_INTMR_EXI (1 << 4)
-#define PI_INTMR_AI (1 << 5)
-#define PI_INTMR_DSP (1 << 6)
-#define PI_INTMR_MEM (1 << 7)
-#define PI_INTMR_VI (1 << 8)
-#define PI_INTMR_PE_TOKEN (1 << 9)
-#define PI_INTMR_PE_FINISH (1 << 10)
-#define PI_INTMR_CP (1 << 11)
-#define PI_INTMR_DEBUG (1 << 12)
-#define PI_INTMR_HSP (1 << 13)
-#define PI_INTMR_ACR (1 << 14)
-
-/**
- * MI hardware registers
- */
-volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
-typedef enum {
-    MI_PAGE_MEM0_H, //!< 0xCC004000
-    MI_PAGE_MEM0_L, //!< 0xCC004002
-    MI_PAGE_MEM1_H, //!< 0xCC004004
-    MI_PAGE_MEM1_L, //!< 0xCC004006
-    MI_PAGE_MEM2_H, //!< 0xCC004008
-    MI_PAGE_MEM2_L, //!< 0xCC00400A
-    MI_PAGE_MEM3_H, //!< 0xCC00400C
-    MI_PAGE_MEM3_L, //!< 0xCC00400E
-    MI_PROT_MEM0,   //!< 0xCC004010
-    MI_PROT_MEM1,   //!< 0xCC004012
-    MI_PROT_MEM2,   //!< 0xCC004014
-    MI_PROT_MEM3,   //!< 0xCC004016
-    MI_REG_0x18,    //!< 0xCC004018
-    MI_REG_0x1A,    //!< 0xCC00401A
-    MI_INTMR,       //!< 0xCC00401C
-    MI_INTSR,       //!< 0xCC00401E
-    MI_REG_0x20,    //!< 0xCC004020
-    MI_ADDRLO,      //!< 0xCC004022
-    MI_ADDRHI,      //!< 0xCC004024
-    MI_REG_0x26,    //!< 0xCC004026
-    MI_REG_0x28,    //!< 0xCC004028
-    // . . .
-} MIHwReg;
-
-// INTMR - Interrupt Mask Register
-#define MI_INTMR_MEM0 (1 << 0)
-#define MI_INTMR_MEM1 (1 << 1)
-#define MI_INTMR_MEM2 (1 << 2)
-#define MI_INTMR_MEM3 (1 << 3)
-#define MI_INTMR_ADDR (1 << 4)
-
-// INTSR - Interrupt Cause Register
-#define MI_INTSR_MEM0 (1 << 0)
-#define MI_INTSR_MEM1 (1 << 1)
-#define MI_INTSR_MEM2 (1 << 2)
-#define MI_INTSR_MEM3 (1 << 3)
-#define MI_INTSR_ADDR (1 << 4)
-
-/**
- * DI hardware registers
- */
-volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
-typedef enum {
-    DI_DMA_ADDR = 5, // !< 0xCD006014
-    DI_CONFIG = 9,   // !< 0xCD006024
-} DIHwReg;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSHardware.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
-/* end "revolution/OS/OSInterrupt.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
-/* end "revolution/OS/OSIpc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
-/* end "revolution/OS/OSLink.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
-/* end "revolution/OS/OSMemory.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
-/* end "revolution/OS/OSMessage.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
-/* end "revolution/OS/OSMutex.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
-/* end "revolution/OS/OSNet.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
-/* end "revolution/OS/OSPlayRecord.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
-/* end "revolution/OS/OSPlayTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
-/* end "revolution/OS/OSReset.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
-/* end "revolution/OS/OSRtc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
-/* end "revolution/OS/OSSerial.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
-/* end "revolution/OS/OSStateFlags.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
-/* end "revolution/OS/OSStateTM.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
-/* end "revolution/OS/OSSync.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
-/* end "revolution/OS/OSTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
-/* end "revolution/OS/OSUtf.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
-/* end "revolution/OS/__ppc_eabi_init.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef enum {
-    IPC_RESULT_FATAL_ERROR = -119,
-    IPC_RESULT_BUSY,
-    IPC_RESULT_NOTEMPTY = -115,
-    IPC_RESULT_ECC_CRIT,
-    IPC_RESULT_OPENFD = -111,
-    IPC_RESULT_MAXFD = -109,
-    IPC_RESULT_MAXBLOCKS,
-    IPC_RESULT_MAXFILES,
-    IPC_RESULT_NOEXISTS,
-    IPC_RESULT_EXISTS,
-    IPC_RESULT_CORRUPT = -103,
-    IPC_RESULT_ACCESS,
-    IPC_RESULT_INVALID,
-
-    IPC_RESULT_ALLOC_FAILED = -22,
-    IPC_RESULT_ECC_CRIT_INTERNAL = -12,
-    IPC_RESULT_BUSY_INTERNAL = -8,
-    IPC_RESULT_NOEXISTS_INTERNAL = -6,
-    IPC_RESULT_CONN_MAX_INTERNAL = -5,
-    IPC_RESULT_INVALID_INTERNAL = -4,
-    IPC_RESULT_EXISTS_INTERNAL = -2,
-    IPC_RESULT_ACCESS_INTERNAL = -1,
-
-    IPC_RESULT_OK = 0
-} IPCResult;
-
-typedef enum {
-    IPC_REQ_NONE,
-    IPC_REQ_OPEN,
-    IPC_REQ_CLOSE,
-    IPC_REQ_READ,
-    IPC_REQ_WRITE,
-    IPC_REQ_SEEK,
-    IPC_REQ_IOCTL,
-    IPC_REQ_IOCTLV
-} IPCRequestType;
-
-typedef enum {
-    // Ioctl
-    IPC_IOCTL_GET_NAND_STATS = 2,
-    IPC_IOCTL_CREATE_DIR = 3,
-    IPC_IOCTL_READ_DIR = 4,
-    IPC_IOCTL_GET_ATTR = 6,
-    IPC_IOCTL_DELETE_PATH = 7,
-    IPC_IOCTL_RENAME_PATH = 8,
-    IPC_IOCTL_CREATE_FILE = 9,
-    IPC_IOCTL_GET_FILE_STATS = 11,
-    IPC_IOCTL_SHUTDOWN_FS = 13,
-    IPC_IOCTL_REG_STM_EVENT = 0x1000,
-    IPC_IOCTL_HOT_RESET = 0x2001,
-    IPC_IOCTL_SHUTDOWN_TO_SBY = 0x2003,
-    IPC_IOCTL_UNREG_STM_EVENT = 0x3002,
-    IPC_IOCTL_SET_VI_DIM = 0x5001,
-    IPC_IOCTL_SET_IDLE_LED_MODE = 0x6002,
-
-    // Ioctlv
-    IPC_IOCTLV_LAUNCH_TITLE = 8,
-    IPC_IOCTLV_GET_USAGE = 12,
-    IPC_IOCTLV_GET_NUM_TICKET_VIEWS = 18,
-    IPC_IOCTLV_GET_TICKET_VIEWS = 19,
-    IPC_IOCTLV_GET_DATA_DIR = 29,
-    IPC_IOCTLV_GET_TITLE_ID = 32,
-} IPCIoctlType;
-
-typedef enum {
-    IPC_OPEN_NONE = 0,
-    IPC_OPEN_READ = (1 << 0),
-    IPC_OPEN_WRITE = (1 << 1),
-    IPC_OPEN_RW = IPC_OPEN_READ | IPC_OPEN_WRITE
-} IPCOpenMode;
-
-typedef enum {
-    IPC_SEEK_BEG,
-    IPC_SEEK_CUR,
-    IPC_SEEK_END,
-} IPCSeekMode;
-
-typedef s32 (*IPCAsyncCallback)(s32 result, void* arg);
-
-typedef struct IPCIOVector {
-    void* base; // at 0x0
-    u32 length; // at 0x4
-} IPCIOVector;
-
-typedef struct IPCOpenArgs {
-    const char* path; // at 0x0
-    IPCOpenMode mode; // at 0x4
-} IPCOpenArgs;
-
-typedef struct IPCReadWriteArgs {
-    void* data; // at 0x0
-    u32 length; // at 0x4
-} IPCReadWriteArgs;
-
-typedef struct IPCSeekArgs {
-    s32 offset;       // at 0x0
-    IPCSeekMode mode; // at 0x4
-} IPCSeekArgs;
-
-typedef struct IPCIoctlArgs {
-    s32 type;    // at 0x0
-    void* in;    // at 0x4
-    s32 inSize;  // at 0x8
-    void* out;   // at 0xC
-    s32 outSize; // at 0x10
-} IPCIoctlArgs;
-
-typedef struct IPCIoctlvArgs {
-    s32 type;             // at 0x0
-    u32 inCount;          // at 0x4
-    u32 outCount;         // at 0x8
-    IPCIOVector* vectors; // at 0xC
-} IPCIoctlvArgs;
-
-typedef struct IPCRequest {
-    IPCRequestType type; // at 0x0
-    s32 ret;             // at 0x4
-    s32 fd;              // at 0x8
-    union {
-        IPCOpenArgs open;
-        IPCReadWriteArgs rw;
-        IPCSeekArgs seek;
-        IPCIoctlArgs ioctl;
-        IPCIoctlvArgs ioctlv;
-    }; // at 0xC
-} IPCRequest;
-
-typedef struct IPCRequestEx {
-    IPCRequest base;           // at 0x0
-    IPCAsyncCallback callback; // at 0x20
-    void* callbackArg;         // at 0x24
-    BOOL reboot;               // at 0x28
-    OSThreadQueue queue;       // at 0x2C
-    char padding[64 - 0x34];
-} IPCRequestEx;
-
-s32 IPCCltInit(void);
-s32 IPCCltReInit(void);
-s32 IOS_OpenAsync(const char* path, IPCOpenMode mode, IPCAsyncCallback callback,
-                  void* callbackArg);
-s32 IOS_Open(const char* path, IPCOpenMode mode);
-s32 IOS_CloseAsync(s32 fd, IPCAsyncCallback callback, void* callbackArg);
-s32 IOS_Close(s32 fd);
-s32 IOS_ReadAsync(s32 fd, void* buf, s32 len, IPCAsyncCallback callback,
-                  void* callbackArg);
-s32 IOS_Read(s32 fd, void* buf, s32 len);
-s32 IOS_WriteAsync(s32 fd, const void* buf, s32 len, IPCAsyncCallback callback,
-                   void* callbackArg);
-s32 IOS_Write(s32 fd, const void* buf, s32 len);
-s32 IOS_SeekAsync(s32 fd, s32 offset, IPCSeekMode mode,
-                  IPCAsyncCallback callback, void* callbackArg);
-s32 IOS_Seek(s32 fd, s32 offset, IPCSeekMode mode);
-s32 IOS_IoctlAsync(s32 fd, s32 type, void* in, s32 inSize, void* out,
-                   s32 outSize, IPCAsyncCallback callback, void* callbackArg);
-s32 IOS_Ioctl(s32 fd, s32 type, void* in, s32 inSize, void* out, s32 outSize);
-s32 IOS_IoctlvAsync(s32 fd, s32 type, s32 inCount, s32 outCount,
-                    IPCIOVector* vectors, IPCAsyncCallback callback,
-                    void* callbackArg);
-s32 IOS_Ioctlv(s32 fd, s32 type, s32 inCount, s32 outCount,
-               IPCIOVector* vectors);
-s32 IOS_IoctlvReboot(s32 fd, s32 type, s32 inCount, s32 outCount,
-                     IPCIOVector* vectors);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/IPC/ipcclt.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void IPCiProfInit(void);
-void IPCiProfQueueReq(IPCRequestEx* req, s32 fd);
-void IPCiProfAck(void);
-void IPCiProfReply(IPCRequestEx* req, s32 fd);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/IPC/ipcProfile.h" */
 /* "libs/RVL_SDK/include/revolution/IPC.h" line 12 "revolution/IPC/ipcclt.h" */
 /* end "revolution/IPC/ipcclt.h" */
 /* "libs/RVL_SDK/include/revolution/IPC.h" line 13 "revolution/IPC/memory.h" */
-#ifndef RVL_SDK_IPC_MEMORY_H
-#define RVL_SDK_IPC_MEMORY_H
-/* "libs/RVL_SDK/include/revolution/IPC/memory.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-s32 iosCreateHeap(void* base, u32 size);
-void* iosAllocAligned(s32 handle, u32 size, u32 align);
-s32 iosFree(s32 handle, void* block);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/IPC/memory.h" */
 
 #ifdef __cplusplus
@@ -239369,10 +246464,12 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -240978,10 +248075,12 @@ namespace detail {
  * Pointer operations
  *
  ******************************************************************************/
-template <typename T> T* ConvertOffsToPtr(void* pBase, u32 offset) {
+// Use unsigned int (not u32) to match retail name mangling (Ui vs Ul).
+// On PowerPC both are 32-bit with identical ABI.
+template <typename T> T* ConvertOffsToPtr(void* pBase, unsigned int offset) {
     return reinterpret_cast<T*>(reinterpret_cast<u8*>(pBase) + offset);
 }
-template <typename T> const T* ConvertOffsToPtr(const void* pBase, u32 offset) {
+template <typename T> const T* ConvertOffsToPtr(const void* pBase, unsigned int offset) {
     return reinterpret_cast<const T*>(reinterpret_cast<const u8*>(pBase) +
                                       offset);
 }
@@ -245379,6 +252478,13 @@ namespace cf{
         char unk054[0x1F8 - 0x054]; //0x054
 
         static CTaskREvent* spInstance;
+    virtual ~CTaskREvent();
+    void Init();
+    void Term();
+    void Move();
+    void Draw();
+    void cbRenderBefore();
+    void OnFileEvent();
     }; //size = 0x1F8
 } //namespace cf
 /* end "kyoshin/cf/CTaskREvent.hpp" */
@@ -245452,11 +252558,13 @@ namespace cf {
         virtual void CObjectState_UnkVirtualFunc9();  //0x28
         virtual void CObjectState_UnkVirtualFunc10(); //0x2C
         virtual void CObjectState_UnkVirtualFunc11(); //0x30
-        virtual void CObjectState_UnkVirtualFunc12(); //0x34
+        virtual void* CObjectState_UnkVirtualFunc12(); //0x34
         virtual void CObjectState_UnkVirtualFunc13(); //0x38
 
         //0x0: vtable
-        u8 unk4_3[0xC];
+        u32 unk4;          // 0x04
+        u32 unk8;          // 0x08
+        u32 unkC;          // 0x0C
     };
 }
 /* end "kyoshin/cf/object/CObjectState.hpp" */
@@ -245467,32 +252575,40 @@ namespace cf {
     public:
         virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
         virtual void CObjectParam_UnkVirtualFunc2(); //0x40
-        virtual void CObjectParam_UnkVirtualFunc3(); //0x44
+        virtual int CObjectParam_UnkVirtualFunc3(); //0x44
         virtual void CObjectParam_UnkVirtualFunc4(); //0x48
         virtual BOOL CObjectParam_UnkVirtualFunc5(); //0x4C
         virtual void CObjectParam_UnkVirtualFunc6(); //0x50
 
         //0x0: vtable
         //0x0-10: CObjectState
-        u8 unk10_3[0x28];
+        void* mPtr10;          // 0x10-0x13 (pointer stored at offset 0x10)
+        u8 unk14[0x20 - 0x14]; // 0x14-0x2F
+        u32 field_30;          // 0x30  — checked for non-zero by UnkVirtualFunc3
+        u8  unk34[4];          // 0x34..0x37  (remainder of old unk10_3[0x28])
     };
 }
 /* end "kyoshin/cf/object/CObjectParam.hpp" */
 
 namespace cf {
+    class UnkClass_80082D90;
+    struct CfObjectSub54 {
+        u8 field_0x0[0xC];
+    };
+
     //min size: 0x70
     class CfObject : public CObjectParam {
     public:
         //vtable 1 (CfObject)
         virtual ~CfObject();                      //0x54
         virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
-        virtual void CfObject_UnkVirtualFunc3();      //0x5C
+        virtual void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
         virtual void CfObject_UnkVirtualFunc5();      //0x64
         virtual void CfObject_UnkVirtualFunc6();      //0x68
         virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
         virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
-        virtual void CfObject_UnkVirtualFunc9();      //0x74
+        virtual bool CfObject_UnkVirtualFunc9();      //0x74
         virtual void CfObject_UnkVirtualFunc10();     //0x78
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
         virtual void CfObject_UnkVirtualFunc12();     //0x80
@@ -245503,10 +252619,10 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc17();     //0x94
         virtual void CfObject_UnkVirtualFunc18();     //0x98
         virtual void CfObject_UnkVirtualFunc19();     //0x9C
-        virtual void CfObject_UnkVirtualFunc20();     //0xA0
+        virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
         virtual void CfObject_UnkVirtualFunc21();     //0xA4
         virtual void CfObject_UnkVirtualFunc22();     //0xA8
-        virtual void CfObject_UnkVirtualFunc23();     //0xAC
+        virtual u32 CfObject_UnkVirtualFunc23();      //0xAC
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
         virtual void CfObject_UnkVirtualFunc25();     //0xB4
         virtual void CfObject_UnkVirtualFunc26();     //0xB8
@@ -245536,12 +252652,12 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc50();     //0x118
         virtual void CfObject_UnkVirtualFunc51();     //0x11C
         virtual void CfObject_UnkVirtualFunc52();     //0x120
-        virtual void CfObject_UnkVirtualFunc53();     //0x124
+        virtual CfObject* CfObject_UnkVirtualFunc53(); //0x124
         virtual void CfObject_UnkVirtualFunc54();     //0x128
         virtual void CfObject_UnkVirtualFunc55();     //0x12C
-        virtual void CfObject_UnkVirtualFunc56();     //0x130
+        virtual float CfObject_UnkVirtualFunc56();     //0x130
         virtual void CfObject_UnkVirtualFunc57();     //0x134
-        virtual void CfObject_UnkVirtualFunc58();     //0x138
+        virtual u32* CfObject_UnkVirtualFunc58();     //0x138
         virtual void CfObject_UnkVirtualFunc59();     //0x13C
         virtual void CfObject_UnkVirtualFunc60();     //0x140
         virtual void CfObject_UnkVirtualFunc61();     //0x144
@@ -245553,7 +252669,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
-        virtual void CfObject_UnkVirtualFunc70();     //0x168
+        virtual void CfObject_UnkVirtualFunc70(float value); //0x168
         virtual void CfObject_UnkVirtualFunc71();     //0x16C
         virtual void CfObject_UnkVirtualFunc72();     //0x170
         virtual void CfObject_UnkVirtualFunc73();     //0x174
@@ -245563,10 +252679,17 @@ namespace cf {
 
 
         //0x0: vtable
-        //0x0-38: CObjectParam
-        u8 unk38_3[0x64 - 0x38];
-        u32 unk64;
-        u8 unk68[0x70 - 0x68];
+        // CObjectParam currently ends at 0x28.
+        u8 field_0x28[0x10];
+        void* mSubObj38;          // 0x38-0x3B
+        u8 _pad3C[0x4C - 0x3C];   // 0x3C-0x4B
+        float mField4C;           // 0x4C-0x4F
+        u8 _pad50[0x54 - 0x50];   // 0x50-0x53
+        CfObjectSub54 mSubObj54;     // 0x54-0x5F
+        float mFloat60;            // 0x60-0x63
+        u32 unk64;                  // 0x64-0x67
+        u32 mFlags68;               // 0x68-0x6B
+        u8 _pad6C[0x70 - 0x6C];    // 0x6C-0x6F
     };
 }
 /* end "kyoshin/cf/object/CfObject.hpp" */
@@ -245600,12 +252723,50 @@ namespace cf {
         virtual void CfObjectModel_UnkVirtualFunc20(); //0x1C4
 
         //0x0: vtable
-        //0x0-70: CfObject
-        u8 unk70_3[0x1C];
+        // CfObject ends at 0x70.
+        u8 field_0x70[0x1C];
         u16 unk8C_3;
-        u8 unk8E_3[0x30];
+        u16 field_0x8E;
+        u8 field_0x90[0x20]; // 0x90-0xAF
+        void* mSubObjB0;      // 0xB0-0xB3
+        u8 unkB4[0xBC - 0xB4]; // 0xB4-0xBB
+        u8 field_BC;          // 0xBC
+        u8 field_BD;          // 0xBD
+    CfObjectModel();
+    void CfObject_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc6();
+    void CfObject_UnkVirtualFunc8();
+    void CfObject_UnkVirtualFunc63();
+    void CfObject_UnkVirtualFunc19();
+    void CfObject_UnkVirtualFunc22();
+    void CfObject_UnkVirtualFunc20();
+    u32 CfObject_UnkVirtualFunc23();
+    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc29();
+    void CfObject_UnkVirtualFunc32();
+    void CfObject_UnkVirtualFunc34();
+    void CfObject_UnkVirtualFunc33();
+    void CfObject_UnkVirtualFunc30();
+    float CfObject_UnkVirtualFunc56();
+    void CfObject_UnkVirtualFunc52();
+    CfObject* CfObject_UnkVirtualFunc53();
+    void CfObject_UnkVirtualFunc54();
+    void CfObject_UnkVirtualFunc55();
+    void CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc66();
+    void CfObject_UnkVirtualFunc67();
+    void CfObject_UnkVirtualFunc70(float value);
+    void CfObject_UnkVirtualFunc69();
+    void CfObject_UnkVirtualFunc68();
+    void CfObject_UnkVirtualFunc24();
+    void CfObject_UnkVirtualFunc28();
+    void CfObject_UnkVirtualFunc31();
+    void CfObject_UnkVirtualFunc35();
+    void CfObject_UnkVirtualFunc36();
+    void CfObject_UnkVirtualFunc72();
     };
 }
+
 /* end "kyoshin/cf/object/CfObjectModel.hpp" */
 
 namespace cf {
@@ -245642,10 +252803,88 @@ namespace cf {
 
         //0x0: vtable
         //0x0-BE: CfObjectModel
-        u8 unkBE_3[0x657];
-        u8 unk715[3]; //might not belong here
+        // Field layout starting at offset 0xBE:
+        u8 _BE[6];              // 0xBE-0xC3
+        void* mTargetC4;         // 0xC4-0xC7
+        u8 _C8[0x544];           // 0xC8-0x60B
+        u8 _60C_region[0xB4];   // 0x60C-0x6BF
+        void* mTarget6C0;         // 0x6C0-0x6C3
+        u8 _6C4[5];              // 0x6C4-0x6C8
+        u8 mFlags6C9;             // 0x6C9
+        u8 _6CA[0x26];           // 0x6CA-0x6EF
+        float mMoveSpeed;         // 0x6F0-0x6F3
+        u8 _6F4[0x21];           // 0x6F4-0x714
+        u8 unk715[3];            // 0x715-0x717
+    void CfObject_UnkVirtualFunc4();
+    void CfObject_UnkVirtualFunc7();
+    void CfObject_UnkVirtualFunc6();
+    void CfObjectModel_UnkVirtualFunc1();
+    void CfObjectModel_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc5();
+    void CfObject_UnkVirtualFunc46();
+    void CfObject_UnkVirtualFunc47();
+    void CfObject_UnkVirtualFunc49();
+    void CfObject_UnkVirtualFunc64();
+    void CfObject_UnkVirtualFunc65();
+    void CfObject_UnkVirtualFunc19();
+    void CfObject_UnkVirtualFunc22();
+    void CfObject_UnkVirtualFunc25();
+    void CfObject_UnkVirtualFunc26();
+    u32 CfObject_UnkVirtualFunc23();
+    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc30();
+    void CfObject_UnkVirtualFunc32();
+    void CfObject_UnkVirtualFunc33();
+    void CfObject_UnkVirtualFunc13();
+    void CfObject_UnkVirtualFunc57();
+    void CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc14();
+    void CfObject_UnkVirtualFunc15();
+    void CfObject_UnkVirtualFunc16();
+    void CfObject_UnkVirtualFunc17();
+    void CfObjectModel_UnkVirtualFunc18();
+    bool CfObject_UnkVirtualFunc9();
+    void CfObject_UnkVirtualFunc10();
+    void CfObject_UnkVirtualFunc61();
+    void CfObject_UnkVirtualFunc62();
+    void CfObject_UnkVirtualFunc12();
+    void CfObject_UnkVirtualFunc66();
+    void CfObjectModel_UnkVirtualFunc19();
+    void CfObjectModel_UnkVirtualFunc6();
+    void CfObject_UnkVirtualFunc37();
+    void CfObject_UnkVirtualFunc38();
+    void CfObject_UnkVirtualFunc39();
+    void CfObject_UnkVirtualFunc40();
+    void CfObject_UnkVirtualFunc42();
+    void CfObject_UnkVirtualFunc43();
+    void CfObject_UnkVirtualFunc45();
+    void CfObject_UnkVirtualFunc70(float value);
+    void CfObject_UnkVirtualFunc50();
+    void CfObject_UnkVirtualFunc51();
+    void CfObject_UnkVirtualFunc60();
+    void CfObject_UnkVirtualFunc29(float value);
+    void setMoveSpeed(float value);
+    void resetMoveSpeed();
+    void updatePos();
+    void* getUnk54();
+    int getSubState();
+    void freeSub();
+    void setSubFieldC(unsigned short val);
+    int getSubFieldA();
+    void setSubFieldA(unsigned short val);
+    int getSubFieldE();
+    void setSubFieldE(unsigned short val);
+    void virtCall10();
+    int nullsub_25();
+    int nullsub_26();
+    int nullsub_27();
+    int nullsub_28();
+    int isActive();
+    void setBit6c9(unsigned long bit);
+    cf::CfObjectMove* testFlag8();
     };
 }
+
 /* end "kyoshin/cf/object/CfObjectMove.hpp" */
 /* "src/kyoshin/cf/object/CfObjectActor.hpp" line 4 "kyoshin/cf/object/CAIAction.hpp" */
 #pragma once
@@ -245681,6 +252920,7 @@ struct CAIActionExport {
 class CAIAction {
 public:
     CAIAction();
+    ~CAIAction();
 
     // Declared Fv for vtable; body is extern "C" with outA/outB args
     virtual void CAIAction_UnkVirtualFunc1(); // 0x8
@@ -245720,6 +252960,14 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 
 extern void func_8014A86C(void*);
 extern void func_8014A8F8();
+extern UNKTYPE* func_800B708C(BOOL);
+extern UNKTYPE* func_8016FE34();
+
+struct CAIActionQuery;
+struct CAIActionEnumHolder;
+void func_80043D90(CAIActionEnumHolder*);
+void __dt__80043E88(CAIActionEnumHolder*, s32);
+void* func_80150828(cf::CAIAction*, CAIActionQuery*);
 /* end "kyoshin/cf/object/CAIAction.hpp" */
 /* "src/kyoshin/cf/object/CfObjectActor.hpp" line 5 "kyoshin/cf/object/CActorParam.hpp" */
 #pragma once
@@ -245745,6 +252993,8 @@ namespace cf {
 /* end "types.h" */
 
 namespace cf {
+    class UnkClass_CActorParam15E0;
+
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
     // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
@@ -245772,7 +253022,7 @@ namespace cf {
     public:
         virtual void CBattleState_UnkVirtualFunc1();  //0x8
         virtual void CBattleState_UnkVirtualFunc2();  //0xC
-        virtual void CBattleState_UnkVirtualFunc3();  //0x10
+        virtual int CBattleState_UnkVirtualFunc3();  //0x10
         virtual void CBattleState_UnkVirtualFunc4();  //0x14
         virtual void CBattleState_UnkVirtualFunc5();  //0x18
         virtual void CBattleState_UnkVirtualFunc6();  //0x1C
@@ -245811,43 +253061,14 @@ namespace cf {
         u8 unk8[0x1520];
         u8 unk1528[4];
         u8 unk152C[0x80];
-        u8 unk15AC[0x15DC - 0x15AC];
+        u8 unk15AC[0x15D8 - 0x15AC];
+        UnkClass_CActorParam15E0* field_0x15D8;
     };
 }
-
-// symbols.txt mangles Fv; retail leaves the arg entry in r4 (same pattern
-// as cf::CAIAction's UnkVirtualFunc1/2).
-extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg);
-
-// symbols.txt mangles Fv; retail leaves the caller's mask in r4 (same ABI
-// pattern as CBattleState_UnkVirtualFunc6).
-extern "C" void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 mask);
-
-// symbols.txt mangles Fv; retail leaves the id in r4 (same fake-Fv ABI as
-// UnkVirtualFunc6 above).
-extern "C" int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 id);
 
 namespace cf {
     struct CBattleStateSrcEntry;
 }
-
-// symbols.txt mangles Fv; retail leaves the source table pointer in r4
-// (same ABI pattern as UnkVirtualFunc6 above).
-extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, const cf::CBattleStateSrcEntry* src);
-
-// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
-// ABI as UnkVirtualFunc6 above).
-extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* entry);
-
-// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
-// ABI as UnkVirtualFunc6/8). Matches on unk2E, then clears matching slots.
-extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg);
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 /* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
 #pragma once
@@ -245895,7 +253116,7 @@ namespace cf {
         u8 unk38[4];
         u16 unk3C;
         u8 unk3E;
-        u8 unk3F; //padding?
+        u8 unk3F;
         u16 unk40;
         u8 unk42;
         u8 unk43;
@@ -245917,19 +253138,18 @@ namespace cf {
         u16 unk68;
         u16 unk6A;
         u8 unk6C[5];
-        u8 unk71; //filler?
+        u8 unk71;
         u16 unk72;
         u16 unk74;
-        u8 unk76; //filler?
+        u8 unk76;
         u8 unk77;
         u32 unk78;
         float unk7C;
         float unk80;
-        //0x84: vtable
 
         CAttackParam();
 
-        virtual void CAttackParam_UnkVirtualFunc1(){ //0x8
+        virtual void CAttackParam_UnkVirtualFunc1(){
             unk0 = 0;
             unk20 = 0;
             unk24 = 0;
@@ -245971,10 +253191,9 @@ namespace cf {
             std::memset(unk38, 0, sizeof(unk38));
             std::memset(unk6C, 0, sizeof(unk6C));
         }
-        virtual u8 CAttackParam_UnkVirtualFunc2(); //0xC
-        virtual void CAttackParam_UnkVirtualFunc3(u8 r4); //0x10
-        virtual void CAttackParam_UnkVirtualFunc4(); //0x14
-
+        virtual u8 CAttackParam_UnkVirtualFunc2();
+        virtual void CAttackParam_UnkVirtualFunc3(u8 r4);
+        virtual void CAttackParam_UnkVirtualFunc4();
     };
 
     struct _sAttackSet {
@@ -245993,8 +253212,6 @@ namespace cf {
     //size: 0x8C
     class CArtsParam : public CAttackParam {
     public:
-        //0x0: vtable
-        //0x0-0x88: CAttackParam
         UNKTYPE* unk88;
 
         CArtsParam();
@@ -246005,13 +253222,17 @@ namespace cf {
 
     //size: 0x38
     struct _sArtsSet {
-        u16 unk0;
-        u8 unk2[2];
-        u8 unk4[0x30];
-        //0x34: vtable
+        union {
+            struct {
+                u16 unk0;
+                u8 unk2[2];
+                u8 unk4[0x30];
+            };
+            u16 mArtsSlotData[24];
+        };
 
         _sArtsSet();
-        virtual void _sArtsSet_UnkVirtualFunc1(){ //0x8
+        virtual void _sArtsSet_UnkVirtualFunc1(){
             unk0 = 0;
             std::memset(unk4, 0, sizeof(unk4));
         }
@@ -246021,7 +253242,14 @@ namespace cf {
     class CArtsSet : _sArtsSet {
     public:
         CArtsSet(){}
-        virtual void CArtsSet_UnkVirtualFunc1(); //0x8
+        virtual void CArtsSet_UnkVirtualFunc1();
+
+        void setArtsSlotRC(unsigned short value, unsigned int row, unsigned int index);
+        unsigned short getArtsSlotRC(int index, int subindex);
+        void setArtsSlotByIdx(unsigned short value, int index);
+        void* getArtsParamRC(int index460, int index8c);
+        void* getArtsParamRC2(int index1, int index2);
+        void* getArtsParamByIdx(int index);
 
         //0x0: vtable
         //0x0-38: _sArtsSet
@@ -246033,6 +253261,8 @@ namespace cf {
 /* end "cstring" */
 
 namespace cf {
+
+    class UnkClass_CActorParam15E0;
 
     //size: 0x7C
     struct CActorParam_UnkStruct2 {
@@ -246225,26 +253455,26 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc11();  //0xC0
         virtual void CActorParam_UnkVirtualFunc12();  //0xC4
         virtual void CActorParam_UnkVirtualFunc13();  //0xC8
-        virtual void CActorParam_UnkVirtualFunc14();  //0xCC
+        virtual void CActorParam_UnkVirtualFunc14(u8 val);  //0xCC
         virtual void CActorParam_UnkVirtualFunc15();  //0xD0
-        virtual void CActorParam_UnkVirtualFunc16();  //0xD4
+        virtual void CActorParam_UnkVirtualFunc16(float val);  //0xD4
         virtual void CActorParam_UnkVirtualFunc17();  //0xD8
         virtual void CActorParam_UnkVirtualFunc18();  //0xDC
-        virtual int CActorParam_UnkVirtualFunc19();  //0xE0
+        virtual u32 CActorParam_UnkVirtualFunc19();  //0xE0
         virtual void CActorParam_UnkVirtualFunc20();  //0xE4
         virtual void CActorParam_UnkVirtualFunc21();  //0xE8
         virtual void CActorParam_UnkVirtualFunc22();  //0xEC
         virtual void CActorParam_UnkVirtualFunc23();  //0xF0
         virtual void CActorParam_UnkVirtualFunc24();  //0xF4
         virtual void CActorParam_UnkVirtualFunc25();  //0xF8
-        virtual void CActorParam_UnkVirtualFunc26();  //0xFC
+        virtual u32 CActorParam_UnkVirtualFunc26();  //0xFC
         virtual void CActorParam_UnkVirtualFunc27();  //0x100
         virtual void CActorParam_UnkVirtualFunc28();  //0x104
-        virtual void CActorParam_UnkVirtualFunc29();  //0x108
+        virtual u32 CActorParam_UnkVirtualFunc29();  //0x108
         virtual void CActorParam_UnkVirtualFunc30();  //0x10C
         virtual void CActorParam_UnkVirtualFunc31();  //0x110
         virtual void CActorParam_UnkVirtualFunc32();  //0x114
-        virtual void CActorParam_UnkVirtualFunc33();  //0x118
+        virtual void CActorParam_UnkVirtualFunc33(float val);  //0x118
         virtual void CActorParam_UnkVirtualFunc34();  //0x11C
         virtual void CActorParam_UnkVirtualFunc35();  //0x120
         virtual void CActorParam_UnkVirtualFunc36();  //0x124
@@ -246266,52 +253496,52 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc52();  //0x164
         virtual void CActorParam_UnkVirtualFunc53();  //0x168
         virtual void CActorParam_UnkVirtualFunc54();  //0x16C
-        virtual void CActorParam_UnkVirtualFunc55();  //0x170
+        virtual void CActorParam_UnkVirtualFunc55(u16 val);  //0x170
         virtual void CActorParam_UnkVirtualFunc56();  //0x174
         virtual void CActorParam_UnkVirtualFunc57();  //0x178
         virtual void CActorParam_UnkVirtualFunc58();  //0x17C
         virtual void CActorParam_UnkVirtualFunc59();  //0x180
         virtual void CActorParam_UnkVirtualFunc60();  //0x184
-        virtual void CActorParam_UnkVirtualFunc61();  //0x188
+        virtual void CActorParam_UnkVirtualFunc61(u16 val);  //0x188
         virtual void CActorParam_UnkVirtualFunc62();  //0x18C
         virtual void CActorParam_UnkVirtualFunc63();  //0x190
         virtual void CActorParam_UnkVirtualFunc64();  //0x194
-        virtual void CActorParam_UnkVirtualFunc65();  //0x198
+        virtual void CActorParam_UnkVirtualFunc65(float val);  //0x198
         virtual void CActorParam_UnkVirtualFunc66();  //0x19C
         virtual void CActorParam_UnkVirtualFunc67();  //0x1A0
-        virtual void CActorParam_UnkVirtualFunc68();  //0x1A4
+        virtual void CActorParam_UnkVirtualFunc68(float val);  //0x1A4
         virtual void CActorParam_UnkVirtualFunc69();  //0x1A8
         virtual void CActorParam_UnkVirtualFunc70();  //0x1AC
         virtual void CActorParam_UnkVirtualFunc71();  //0x1B0
         virtual void CActorParam_UnkVirtualFunc72();  //0x1B4
         virtual void CActorParam_UnkVirtualFunc73();  //0x1B8
-        virtual void CActorParam_UnkVirtualFunc74();  //0x1BC
+        virtual void CActorParam_UnkVirtualFunc74(float val);  //0x1BC
         virtual void CActorParam_UnkVirtualFunc75();  //0x1C0
-        virtual void CActorParam_UnkVirtualFunc76();  //0x1C4
+        virtual void* CActorParam_UnkVirtualFunc76();  //0x1C4
         virtual void CActorParam_UnkVirtualFunc77();  //0x1C8
         virtual void CActorParam_UnkVirtualFunc78();  //0x1CC
         virtual void CActorParam_UnkVirtualFunc79();  //0x1D0
         virtual void CActorParam_UnkVirtualFunc80();  //0x1D4
-        virtual void CActorParam_UnkVirtualFunc81();  //0x1D8
-        virtual void CActorParam_UnkVirtualFunc82();  //0x1DC
-        virtual void CActorParam_UnkVirtualFunc83();  //0x1E0
+        virtual void CActorParam_UnkVirtualFunc81(u32 val);  //0x1D8
+        virtual void CActorParam_UnkVirtualFunc82(u32 addend);  //0x1DC
+        virtual void CActorParam_UnkVirtualFunc83(u32 addend);  //0x1E0
         virtual void CActorParam_UnkVirtualFunc84();  //0x1E4
-        virtual void CActorParam_UnkVirtualFunc85();  //0x1E8
+        virtual u32 CActorParam_UnkVirtualFunc85();  //0x1E8
         virtual void CActorParam_UnkVirtualFunc86();  //0x1EC
         virtual void CActorParam_UnkVirtualFunc87();  //0x1F0
         virtual void CActorParam_UnkVirtualFunc88();  //0x1F4
         virtual void CActorParam_UnkVirtualFunc89();  //0x1F8
-        virtual void CActorParam_UnkVirtualFunc90();  //0x1FC
+        virtual void CActorParam_UnkVirtualFunc90(u32 addend);  //0x1FC
         virtual void CActorParam_UnkVirtualFunc91();  //0x200
         virtual void CActorParam_UnkVirtualFunc92();  //0x204
         virtual void CActorParam_UnkVirtualFunc93();  //0x208
-        virtual void CActorParam_UnkVirtualFunc94();  //0x20C
+        virtual void* CActorParam_UnkVirtualFunc94();  //0x20C
         virtual void CActorParam_UnkVirtualFunc95();  //0x210
         virtual void CActorParam_UnkVirtualFunc96();  //0x214
         virtual void CActorParam_UnkVirtualFunc97();  //0x218
         virtual void CActorParam_UnkVirtualFunc98();  //0x21C
         virtual void CActorParam_UnkVirtualFunc99();  //0x220
-        virtual void CActorParam_UnkVirtualFunc100(); //0x224
+        virtual void* CActorParam_UnkVirtualFunc100(); //0x224
         virtual void CActorParam_UnkVirtualFunc101(); //0x228
         virtual void CActorParam_UnkVirtualFunc102(); //0x22C
         virtual void CActorParam_UnkVirtualFunc103(); //0x230
@@ -246324,21 +253554,21 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc110(); //0x24C
         virtual void CActorParam_UnkVirtualFunc111(); //0x250
         virtual void CActorParam_UnkVirtualFunc112(); //0x254
-        virtual void CActorParam_UnkVirtualFunc113(); //0x258
+        virtual u32* CActorParam_UnkVirtualFunc113(); //0x258
         virtual void CActorParam_UnkVirtualFunc114(); //0x25C
-        virtual void CActorParam_UnkVirtualFunc115(); //0x260
-        virtual void CActorParam_UnkVirtualFunc116(); //0x264
-        virtual void CActorParam_UnkVirtualFunc117(); //0x268
+        virtual bool CActorParam_UnkVirtualFunc115(); //0x260
+        virtual void CActorParam_UnkVirtualFunc116(float val); //0x264
+        virtual float* CActorParam_UnkVirtualFunc117(); //0x268
         virtual void CActorParam_UnkVirtualFunc118(); //0x26C
-        virtual void CActorParam_UnkVirtualFunc119(); //0x270
+        virtual float* CActorParam_UnkVirtualFunc119(); //0x270
         virtual void CActorParam_UnkVirtualFunc120(); //0x274
         virtual void CActorParam_UnkVirtualFunc121(); //0x278
-        virtual void CActorParam_UnkVirtualFunc122(); //0x27C
+        virtual void* CActorParam_UnkVirtualFunc122(); //0x27C
         virtual void CActorParam_UnkVirtualFunc123(); //0x280
         virtual void CActorParam_UnkVirtualFunc124(); //0x284
-        virtual void CActorParam_UnkVirtualFunc125(); //0x288
+        virtual void* CActorParam_UnkVirtualFunc125(); //0x288
         virtual void CActorParam_UnkVirtualFunc126(); //0x28C
-        virtual void CActorParam_UnkVirtualFunc127(); //0x290
+        virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127(); //0x290
         virtual void CActorParam_UnkVirtualFunc128(); //0x294
         virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
         virtual void CActorParam_UnkVirtualFunc130(); //0x29C
@@ -246363,7 +253593,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc149(); //0x2E8
         virtual void CActorParam_UnkVirtualFunc150(); //0x2EC
         virtual void CActorParam_UnkVirtualFunc151(); //0x2F0
-        virtual void CActorParam_UnkVirtualFunc152(); //0x2F4
+        virtual void* CActorParam_UnkVirtualFunc152(); //0x2F4
         virtual void CActorParam_UnkVirtualFunc153(); //0x2F8
         virtual void CActorParam_UnkVirtualFunc154(); //0x2FC
         virtual void CActorParam_UnkVirtualFunc155(); //0x300
@@ -246376,7 +253606,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc162(); //0x31C
         virtual void CActorParam_UnkVirtualFunc163(); //0x320
         virtual void CActorParam_UnkVirtualFunc164(); //0x324
-        virtual void CActorParam_UnkVirtualFunc165(); //0x328
+        virtual void* CActorParam_UnkVirtualFunc165(); //0x328
         virtual void CActorParam_UnkVirtualFunc166(); //0x32C
         virtual void CActorParam_UnkVirtualFunc167(); //0x330
         virtual void CActorParam_UnkVirtualFunc168(); //0x334
@@ -246396,12 +253626,13 @@ namespace cf {
     #pragma endregion
 
         UNKTYPE* unk15DC;
-        UNKTYPE* unk15E0;
+        UnkClass_CActorParam15E0* unk15E0;
         u32 unk15E4;
         float unk15E8;
         u32 unk15EC;
         u32 unk15F0;
-        u8 unk15F4[8];
+        u8 unk15F4[4];        // 0x15F4
+        float unk15F8;         // 0x15F8
         float unk15FC;
         u32 unk1600;
         u32 unk1604;
@@ -246459,7 +253690,20 @@ namespace cf {
         u32 unk3374;
         u8 unk3378[4];
         float unk337C;
+    CActorParam();
+    void CBattleState_UnkVirtualFunc18();
+    void CBattleState_UnkVirtualFunc17();
+    int CBattleState_UnkVirtualFunc3();
+    void CBattleState_UnkVirtualFunc2();
     };
+
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc19() { return unk15EC; }
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc29() { return *(u32*)&unk17E4; }
+inline u32* cf::CActorParam::CActorParam_UnkVirtualFunc113() { return &unk161C; }
+inline bool cf::CActorParam::CActorParam_UnkVirtualFunc115() { return !!unk1628; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc117() { return &unk1620; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc119() { return &unk1624; }
+inline void* cf::CActorParam::CActorParam_UnkVirtualFunc122() { return &mArtsSet; }
 }
 /* end "kyoshin/cf/object/CActorParam.hpp" */
 
@@ -246479,7 +253723,7 @@ namespace cf {
         virtual void CfObjectActor_UnkVirtualFunc8();  //0x5BC
         virtual void CfObjectActor_UnkVirtualFunc9();  //0x5C0
         virtual void CfObjectActor_UnkVirtualFunc10(); //0x5C4
-        virtual void CfObjectActor_UnkVirtualFunc11(); //0x5C8
+        virtual void CfObjectActor_UnkVirtualFunc11(void* arg); //0x5C8
         virtual void CfObjectActor_UnkVirtualFunc12(); //0x5CC
         virtual void CfObjectActor_UnkVirtualFunc13(); //0x5D0
 
@@ -246490,6 +253734,19 @@ namespace cf {
         //0x3e9c: vtable 3
         //0x3e9c-45b4: CfObjectMove
         u8 unk45B4[0x8];
+    void CActorParam_UnkVirtualFunc1();
+    void CActorParam_UnkVirtualFunc140();
+    void CActorParam_UnkVirtualFunc179();
+    void CActorParam_UnkVirtualFunc180();
+    void CActorParam_UnkVirtualFunc33();
+    void CActorParam_UnkVirtualFunc35();
+    void CActorParam_UnkVirtualFunc34();
+    void CActorParam_UnkVirtualFunc54();
+    void CActorParam_UnkVirtualFunc60();
+    void CActorParam_UnkVirtualFunc4();
+    void CActorParam_UnkVirtualFunc21();
+    void CActorParam_UnkVirtualFunc23();
+    void func_801725DC();
     };
 }
 /* end "kyoshin/cf/object/CfObjectActor.hpp" */
@@ -246544,14 +253801,13 @@ namespace cf {
     public:
         u8 unk0[0x60];
         bool unk60; //0x60
-        //0x64: vtable
+        u8 _pad61[3];
+        u32 mVTable; //0x64: vtable pointer (manually managed, non-standard ABI)
 
         CChainTemp(){
             std::memset(unk0, 0, sizeof(unk0));
             unk60 = false;
         }
-        virtual ~CChainTemp(){}
-        virtual void CChainTemp_UnkVirtualFunc1(); //0
     };
 }
 /* end "kyoshin/cf/chain/CChainTemp.hpp" */
@@ -246589,23 +253845,27 @@ namespace cf {
         u32 unk8;
     };
 }
+
+extern "C" void func_802A0950(cf::CChainEffect*, int, int, int, int, int);
 /* end "kyoshin/cf/chain/CChainEffect.hpp" */
 /* "src/kyoshin/cf/chain/CChainActor.hpp" line 5 "cstring" */
 /* end "cstring" */
 
 namespace cf {
     //size: 0x80
+    // Vtable at 0x70 is manually managed; no implicit C++ vtable at 0x00.
     class CChainActor {
     public:
         u32 unk0;
-        CChainTemp mChainTemp; //0x4?
-        u16 unk6C;
-        //0x70: vtable
+        CChainTemp mChainTemp; //0x4
+        u16 unk6C;              //0x6C
+        u8 _pad6E[2];           //0x6E
+        u32 mVTable;            //0x70: vtable pointer (manually managed, non-standard ABI)
 
         CChainActor() : unk6C(0) {
             unk0 = 0;
         }
-        virtual ~CChainActor();
+        ~CChainActor();
 
         CChainEffect mChainEffect; //0x74
     };
@@ -246630,16 +253890,10 @@ namespace cf {
     class CChainActorEne : public CChainActor {
     public:
         // No additional members beyond CChainActor
-        // Class methods use extern "C" linkage to match retail symbol names
+        void func_802818D4();
+        s32 func_802818DC();
     };
 }
-
-// Forwarding: passes &self->mChainEffect to func_802A0AA0
-// Returns whether the effect matches the given parameter
-extern "C" void func_802818D4(cf::CChainActorEne* self);
-
-// Returns whether this enemy chain actor is active
-extern "C" s32 func_802818DC(cf::CChainActorEne* self);
 
 /* end "kyoshin/cf/chain/CChainActorEne.hpp" */
 
@@ -246753,6 +254007,13 @@ namespace cf {
 
         virtual ~CChainChance(){}
 
+        void func_8027C098() {
+            mChainCount = 0;
+            mField08 = 0;
+            mField0A = 0;
+            mField0C = 0;
+        }
+
         u8 unk14[4];          //0x14
     };
 }
@@ -246799,7 +254060,6 @@ struct CChainCombo {
     CChainGauge mGauge; // 0xC - chain gauge pair
     void* mVtbl;        // 0x14 - lbl_eu_80538994
 
-    CChainCombo();
     void func1();
 };
 
@@ -246818,6 +254078,18 @@ namespace cf {
         CChain();
         ~CChain(){}
         void func_8027728C();
+        int getZero_78E04();
+        bool chkActorList();
+        static u16 getChainCount();
+        void setFieldAndClear(int val);
+        int getZero_A584();
+        int getZero_A9D0();
+        int getZero_A9D8();
+        int getZero_A9E0();
+        int getZero_A9EC();
+        int getZero_A9F4();
+        int getZero_A9FC();
+        int getZero_AA04();
 
         u8 unk0[0x18];
         CChainActorList mChainActorList; //0x18
@@ -247005,14 +254277,16 @@ namespace cf{
         virtual ~CBattleManager(); //0x8
         virtual void FactoryEvent2(); //0x10
         virtual void func_80085220(u32 r4, u32 r5); //0x1C
-        virtual void func_800E2584(); //0x20
+        virtual void func_800E2584(u32 mask); //0x20
         virtual void func_800F42A0(); //0x24
         virtual void func_800885F0(); //0x28
         virtual void func_800EA410(); //0x2C
         virtual void func_800EA420(); //0x30
-        virtual void func_800EA460(); //0x34
+        virtual void func_800EA460(float a, float b, unsigned long c); //0x34
         virtual void func_800EA470(); //0x38
         virtual void func_800EA998(); //0x3C
+
+        void* func_800EA444();
 
         static CBattleManager* getInstance();
         static void func_800D9190();
@@ -247043,24 +254317,100 @@ namespace cf{
         static CBattleManager* spInstance;
     };
 }
+
+// --- Standalone function access structs (CBattleManager.cpp) ---
+
+// Intrusive linked-list node: +0x00 = next, +0x08 = data ptr
+struct SimpleListNode {
+    SimpleListNode* next;
+    void* data;
+};
+
+// Return layout of func_8009EC9C (accessed at +0x1C, cast_int_arith L63/L80)
+struct UnkStruct_8009EC9C_Ret {
+    u8 pad_00[0x1C];
+    u8 unk1C;
+};
+
+// Layout for func_800EA384 self: list sentinel ptr at +0x08
+struct Func800EA384_Self {
+    u8 pad_00[0x08];
+    SimpleListNode* listHead;
+};
+
+// Layout for func_800F4004 this_: list sentinel ptr at +0x48
+struct Func800F4004_Self {
+    u8 pad_00[0x48];
+    SimpleListNode* listHead;
+};
 /* end "kyoshin/cf/CBattleManager.hpp" */
 /* "src/kyoshin/CGame.cpp" line 3 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
-/* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* "include/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
 /* end "types.h" */
 
 class CPad;
 class CScnNw4r;
 class CView;
+class UnkClass_80186D20;
+class CfCamEventManager;
+class UnkClass_800821F8;
+class UnkClass_80085334;
+class UnkClass_8007E864;
+class CSysWinBuff;
+
+struct CfGameManagerData1C {
+    u8 field_0x0[0xC];
+};
+
+struct UnkClass_80083298SubF0 {
+    u8 field_0x0;
+};
+
+class UnkClass_80083298 {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual void vfunc_0x58();
+    virtual void vfunc_0x5C();
+    virtual void vfunc_0x60();
+    virtual void vfunc_0x64();
+    virtual void vfunc_0x68();
+    virtual void vfunc_0x6C();
+    virtual void vfunc_0x70();
+    virtual u32 vfunc_0x74();
+
+    u8 field_0x4[0xEC];
+    UnkClass_80083298SubF0 field_0xF0;
+};
 
 /* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
 or due to being in separate files, but compiled together in one file (unity compilation). For now,
 to make things simpler, everything exists in a single class. */
 namespace cf{
     class CfPadData;
+    class CfObject;
+    struct CfObjectSub54;
     class CfObjectMove;
-
     //unofficial name
     class CfGameManager{
     public:
@@ -247076,14 +254426,15 @@ namespace cf{
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
         static UNKWORD func_800822F4();
-        static UNKWORD func_800829B8();
+        static bool func_800829B8();
         static u32 getCurrentPadChannel();
-        static UNKTYPE* func_80083298();
-        static CfObjectMove* func_80082D54(int playerIndex);
+        static UnkClass_80083298* func_80083298();
+        static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
-        static bool func_80086F9C(s16);
-        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
-        static CPad* getPad(int r3);
+        static bool func_80086F9C();
+        static bool func_80086F9C(s16) { return func_80086F9C(); }
+        static void setCurrentPadPtr(const CPad* pad, u32 channel);
+        static CPad* getPad(int channel);
         static void setPad(int r3, CPad* pPad, u32 r5);
         static CfPadData* getCfPadData();
         static CPad* getCurrentPad();
@@ -247098,34 +254449,339 @@ namespace cf{
         }
 
         u32 unk0;
-        u32 unk4;
-        u32 unk8;
-        u8 unkC[0x28 - 0xC];
+        CfObject* field_0x4;
+        u32 mObjectFlags;
+        u8 field_0xC[0xC];
+        u16 field_0x18;
+        u8 field_0x1A[2];
+        CfGameManagerData1C field_0x1C;
         u8 unk28;
-        u8 unk29[0x68 - 0x29];
+        u8 unk29[0x40 - 0x29];
+        u16* field_0x40;
+        s32 field_0x44;
+        s32 field_0x48;
+        s32 field_0x4C;
+        u8 field_0x50[0x18];
         u32 unk68;
         u8 unk6C;
-        u8 unk6D[0x7C - 0x6D];
+        u8 unk6D[3];          // 0x6D-0x6F
+        u32 unk70;             // 0x70-0x73
+        u8 unk74[8];           // 0x74-0x7B
         u32 unk7C;
-        u8 unk80[0x8C - 0x80];
-        u32 unk8C;
-        u32 unk90;
+        u8 unk80[0x86 - 0x80];
+        u16 field_0x86;
+        u8 field_0x88[0x8C - 0x88];
+        s32 unk8C;
+        UnkClass_80083298* unk90;
         //between CObjectParam - CfObjectMove
         //likely player character object array, seems to always store pointers
         //to CfObjectPc objects except pointing at the 4th vtable
         CfObjectMove* unk94[3];
         u32 unkA0;
-        u32 unkA4;
-        u32 unkA8;
-        u32 unkAC;
-        u32 unkB0;
-        u32 unkB4;
+        UnkClass_80186D20* field_0xA4;
+        UnkClass_8007E864* unkA8;
+        UnkClass_80085334* unkAC;
+        UnkClass_800821F8* unkB0;
+        CfCamEventManager* unkB4;
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
+public:
+    void func_8007C0F8();
+    void func_8007C140();
+    void func_8007C188(unsigned long flags);
+    void func_8007C198();
+    void func_8007C2F4();
+    void func_8007C344();
+    void func_8007C360();
+    void func_8007C374();
+    void func_8007C4B4();
+    virtual ~CfGameManager() {}
+    void func_8007C5B8();
+    cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
+    void func_8007C6C0();
+    void func_8007C8C8();
+    bool func_8007CBC8();
+    void func_8007CBD4();
+    void func_8007CBEC();
+    void func_8007CDA8();
+    void func_8007CE94();
+    void func_8007CF64() const;
+    void func_8007D190(unsigned long flags);
+    void func_8007D1A0();
+    void func_8007D794();
+    void func_8007D7A4();
+    void func_8007D834();
+    void func_8007D84C();
+    void func_8007DA00();
+    void func_8007DA0C();
+    void func_8007DCA8();
+    void func_8007DCB8();
+    void func_8007DE94();
+    void func_8007DECC();
+    u16 func_8007E030();
+    void func_8007E038();
+    CfObject** func_8007E0C8();
+    void func_8007E0D0();
+    void func_8007E4CC();
+    void func_8007E4DC();
+    void func_8007E864();
+    void func_8007E908();
+    void func_8007E960();
+    void func_8007E9CC();
+    void func_8007EEE0();
+    void func_8007EEF0();
+    void func_8007EEF8();
+    void func_8007EF04();
+    void func_8007EF44();
+    void func_8007EF48();
+    void func_8007EF4C();
+    void func_8007F044();
+    void func_8007F054();
+    void func_8007F0A4();
+    void func_8007F0AC();
+    void func_8007F0C4();
+    void func_8007F114();
+    void func_8007F11C();
+    void func_8007F1FC();
+    void func_8007F830();
+    void func_8007F8B8();
+    void func_8007F8C0();
+    void func_8007F8D0();
+    void func_8007F8DC();
+    void func_8007F8F4();
+    void func_8007F900();
+    bool func_8007F91C();
+    void func_8007F990();
+    void func_8007F9AC();
+    void func_8007F9B4();
+    void func_8007F9BC();
+    void func_8007F9C4();
+    void func_8007FBFC();
+    void func_8007FC2C();
+    void func_8007FC5C();
+    void func_8007FD00();
+    void func_8007FD8C();
+    void func_8007FE18();
+    void func_8007FE1C();
+    void func_8007FE20();
+    void func_8007FE24();
+    void func_8007FE2C();
+    void func_8007FECC();
+    void func_8007FF6C();
+    void func_8008064C();
+    void func_800807BC();
+    void func_80080888();
+    void func_80080E20();
+    void func_80080E28();
+    void func_80080E30();
+    void func_80080E44();
+    void func_80080EE4();
+    void func_80080F40();
+    void func_80080F44();
+    void func_80080F48();
+    void func_80081258();
+    void func_80081264();
+    void func_8008126C();
+    void func_80081274();
+    void func_8008127C();
+    void func_80081284();
+    void func_8008128C();
+    void func_80081294();
+    void func_8008129C();
+    void func_800812A4();
+    void func_800812AC();
+    void func_800812B4();
+    void func_800812BC();
+    void func_800812C4();
+    void func_800812CC();
+    void func_800812D4();
+    void func_800812DC();
+    void func_800812E4();
+    void func_800812EC();
+    void func_800812F4();
+    void func_80081318();
+    void func_80081330();
+    void func_80081338();
+    void func_80081340();
+    void func_80081348();
+    void func_80081350();
+    void func_80081358();
+    void func_80081694();
+    void func_800817A8();
+    void func_800817B0();
+    void func_800817BC();
+    void func_80081874();
+    void func_8008187C();
+    void func_80081900();
+    void func_80081988();
+    void func_80081990();
+    void func_80081A24();
+    void func_80081A40();
+    void func_80081CA0();
+    void func_80081CB0();
+    void func_80081CB8();
+    void func_80081CBC();
+    void func_80081D2C();
+    void func_80081D88();
+    void func_80081D8C();
+    void func_80081DD8();
+    void func_80081E90();
+    void func_80081F28();
+    void func_80081F90();
+    void func_80082008();
+    void func_80082060();
+    void func_80082088();
+    bool func_80082104();
+    void func_8008212C();
+    UnkClass_800821F8* func_800821F8();
+    CfObject* func_8008221C();
+    void func_80082254();
+    void func_80082258();
+    void func_8008228C();
+    void func_800822FC();
+    void func_80082354();
+    void func_8008235C();
+    void func_800823A4();
+    void func_80082418();
+    void func_800824FC();
+    void func_80082544();
+    void func_80082568();
+    void func_80082614();
+    void func_8008261C();
+    bool func_80082680();
+    void func_80082694();
+    void func_8008269C();
+    void func_800826F0();
+    void func_80082768();
+    u16 func_80082770();
+    void func_800827A8();
+    void func_800827E4();
+    void func_80082834();
+    u32 func_800828DC();
+    u32 func_80082900();
+    void func_80082940();
+    void func_8008294C();
+    void func_80082A0C();
+    void func_80082A7C();
+    void func_80082B38();
+    void func_80082C48();
+    void func_80082D90();
+    void func_80082E50();
+    void func_80082EC0();
+    void func_80082EC4();
+    void func_80082F2C();
+    void func_80082FCC();
+    void func_80082FE4();
+    void func_80083100();
+    void func_8008310C();
+    void func_80083118();
+    void func_80083284();
+    void func_80083290();
+    void func_800832BC();
+    void func_80083304();
+    void func_80083328();
+    void func_80083458();
+    void func_80083460();
+    void func_80083468();
+    void func_80083470();
+    bool func_80083538();
+    bool func_80083544();
+    void func_80083550();
+    void func_80083560();
+    void func_800835FC();
+    void func_8008360C();
+    void func_80083718();
+    void func_8008372C();
+    void func_80083878();
+    void func_80083888();
+    void func_800838F4();
+    void func_80083C70();
+    void func_80083C78();
+    void func_80083CC8();
+    void func_80083CD8();
+    void func_80083D50();
+    void func_80083D70();
+    void func_80083DEC();
+    void func_80083EA4();
+    void func_80083F28();
+    void func_8008402C();
+    void func_8008413C();
+    void func_80084654();
+    void func_80084A00();
+    void func_80084AD4();
+    bool func_80084B68();
+    bool func_80084BAC();
+    bool func_80084BF4();
+    void func_80084C10();
+    void func_80084CA4();
+    void func_80084F50();
+    void func_80085220();
+    void func_80085248();
+    void func_80085334();
+    void func_800853C8();
+    void func_8008566C();
+    void func_80085838();
+    bool func_80085840();
+    bool func_8008585C();
+    void func_80085878();
+    void func_800858B8();
+    void func_80085978();
+    void func_80085E58();
+    void func_80085FB8();
+    void func_800862D0();
+    void func_800863F4();
+    void func_80086490();
+    void func_800865E8();
+    void func_800866A0();
+    void func_8008670C();
+    void func_80086778();
+    void func_80086B04();
+    void func_80086B08();
+    void func_80086B0C();
+    void func_80086B10();
+    void func_80086B14();
+    void func_80086B18();
+    void func_80086B1C();
+    void func_80086B24();
+    void func_80086B2C();
+    void func_80086B34();
+    void func_80086B3C();
+    void func_80086B44();
+    void func_80086B48();
+    void func_80086D90();
+    void func_80086D94();
+    void func_80086D98();
+    void func_80086D9C();
+    void func_80086DA0();
+    void func_80086DA4();
+    void func_80086DA8();
+    void func_80086DAC();
+    void func_80086DB0();
+    void func_80086DB4();
+    void func_80086DBC();
+    void func_80086E6C();
+    bool func_80087244();
+    bool func_80087250();
+    void func_80087280();
+    void func_80087330();
+    void func_80087334();
+    void func_80087348();
+    void func_80087364();
+    void func_80087378();
+    void func_80087390();
+    void func_800873AC();
+    CfObjectSub54* func_800873C8();
+    void func_800873D4();
+    void func_800873E8();
+    void func_800873FC();
+    void func_80087410();
+    u32 func_80087424();
+    void func_8008742C();
+    void func_8008743C();
+    void func_80087448();
     }; //size = 0xB8
-
-} //namespace cf
+} // namespace cf
 /* end "kyoshin/cf/CfGameManager.hpp" */
 /* "src/kyoshin/CGame.cpp" line 4 "kyoshin/CTaskGame.hpp" */
 #pragma once
@@ -247145,6 +254801,4835 @@ namespace cf{
 /* end "types.h" */
 /* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
 /* end "monolib/math.hpp" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 4 "nw4r/g3d/g3d_light.h" */
+#ifndef NW4R_G3D_LIGHT_H
+#define NW4R_G3D_LIGHT_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 4 "nw4r/g3d/g3d_state.h" */
+#ifndef NW4R_G3D_STATE_H
+#define NW4R_G3D_STATE_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 4 "nw4r/g3d/g3d_camera.h" */
+#ifndef NW4R_G3D_CAMERA_H
+#define NW4R_G3D_CAMERA_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+#ifndef NW4R_G3D_RES_RES_COMMON_H
+#define NW4R_G3D_RES_RES_COMMON_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 4 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+/******************************************************************************
+ *
+ * Macros
+ *
+ ******************************************************************************/
+
+/**
+ * Define ResName pascal string for file resource groups.
+ */
+#define NW4R_G3D_RESFILE_NAME_DEF(VAR, STR)                                    \
+    nw4r::g3d::ResNameData27 ResNameData_##VAR ALIGN(32) = {sizeof(STR) - 1,   \
+                                                            STR}
+
+/**
+ * Similar to "ofs_to_obj" but accounting for the additional -4 offset.
+ * Debug builds show this behavior was not achieved through a function.
+ */
+#define NW4R_G3D_OFS_TO_RESNAME(BASE, OFS)                                     \
+    nw4r::g3d::ResName((char*)(BASE) + (OFS) - sizeof(u32))
+
+/**
+ * Define common functions for resource classes.
+ * @note Hides ResCommon::ref, why did they do this???
+ */
+#define NW4R_G3D_RESOURCE_FUNC_DEF(T)                                          \
+    NW4R_G3D_RESOURCE_FUNC_DEF_IMPL(T, T##Data)
+#define NW4R_G3D_RESOURCE_FUNC_DEF_EX(TCLS, TDATA)                             \
+    NW4R_G3D_RESOURCE_FUNC_DEF_IMPL(TCLS, TDATA)
+
+#define NW4R_G3D_RESOURCE_FUNC_DEF_IMPL(TCLS, TDATA)                           \
+    explicit TCLS(void* pData = NULL) : nw4r::g3d::ResCommon<TDATA>(pData) {}  \
+                                                                               \
+    TDATA& ref() {                                                             \
+        return *ptr();                                                         \
+    }                                                                          \
+                                                                               \
+    const TDATA& ref() const {                                                 \
+        return *ptr();                                                         \
+    }                                                                          \
+                                                                               \
+    bool operator==(const TCLS& rOther) const {                                \
+        return ptr() == rOther.ptr();                                          \
+    }                                                                          \
+                                                                               \
+    bool operator!=(const TCLS& rOther) const {                                \
+        return ptr() != rOther.ptr();                                          \
+    }
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * Common resource wrapper
+ *
+ ******************************************************************************/
+template <typename T> class ResCommon {
+public:
+    explicit ResCommon(void* pData) : mpData(static_cast<T*>(pData)) {}
+
+    explicit ResCommon(const void* pData)
+        : mpData(static_cast<const T*>(pData)) {}
+
+    bool IsValid() const {
+        return mpData != NULL;
+    }
+
+    T* ptr() {
+        return mpData;
+    }
+    const T* ptr() const {
+        return mpData;
+    }
+
+    T& ref() {
+        return *mpData;
+    }
+    const T& ref() const {
+        return *mpData;
+    }
+
+    template <typename TTo> TTo* ofs_to_ptr_raw(s32 ofs) {
+        return reinterpret_cast<TTo*>((char*)mpData + ofs);
+    }
+    template <typename TTo> const TTo* ofs_to_ptr_raw(s32 ofs) const {
+        return reinterpret_cast<const TTo*>((char*)mpData + ofs);
+    }
+
+    template <typename TTo> TTo* ofs_to_ptr(s32 ofs) {
+        u8* pPtr = reinterpret_cast<u8*>(mpData);
+
+        if (ofs != 0) {
+            return reinterpret_cast<TTo*>(pPtr + ofs);
+        }
+
+        return NULL;
+    }
+    template <typename TTo> const TTo* ofs_to_ptr(s32 ofs) const {
+        const u8* pPtr = reinterpret_cast<const u8*>(mpData);
+
+        if (ofs != 0) {
+            return reinterpret_cast<const TTo*>(pPtr + ofs);
+        }
+
+        return NULL;
+    }
+
+    template <typename TTo> TTo ofs_to_obj(s32 ofs) {
+        u8* pPtr = reinterpret_cast<u8*>(mpData);
+
+        if (ofs != 0) {
+            return TTo(pPtr + ofs);
+        }
+
+        return TTo(NULL);
+    }
+    template <typename TTo> const TTo ofs_to_obj(s32 ofs) const {
+        const u8* pPtr = reinterpret_cast<const u8*>(mpData);
+
+        if (ofs != 0) {
+            return TTo(const_cast<u8*>(pPtr + ofs));
+        }
+
+        return TTo(NULL);
+    }
+
+private:
+    T* mpData;
+};
+
+/**
+ * Header for resource data structures.
+ */
+struct ResBlockHeaderData {
+    char kind[4]; // at 0x0
+    u32 size;     // at 0x4
+};
+
+/**
+ * Name for file resource groups.
+ */
+struct ResNameData27 {
+    u32 len;                    // at 0x0
+    char str[32 - sizeof(u32)]; // at 0x4
+};
+
+/******************************************************************************
+ *
+ * Named resource
+ *
+ ******************************************************************************/
+struct ResNameData {
+    u32 len;     // at 0x0
+    char str[4]; // at 0x4
+};
+
+class ResName : public ResCommon<const ResNameData> {
+public:
+    explicit ResName(const void* pData) : ResCommon(pData) {}
+
+    u32 GetLength() const {
+        return ref().len;
+    }
+
+    const char* GetName() const {
+        return ref().str;
+    }
+
+    bool operator==(const ResName rhs) const;
+};
+
+/******************************************************************************
+ *
+ * Generic display list
+ *
+ ******************************************************************************/
+struct ResTagDLData {
+    u32 bufSize; // at 0x0
+    u32 cmdSize; // at 0x4
+    s32 toDL;    // at 0x8
+};
+
+class ResTagDL : public ResCommon<ResTagDLData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTagDL);
+
+    u32 GetBufSize() const {
+        return ref().bufSize;
+    }
+
+    u32 GetCmdSize() const {
+        return ref().cmdSize;
+    }
+
+    u8* GetDL() {
+        return const_cast<u8*>(ofs_to_ptr<u8>(ref().toDL));
+    }
+    const u8* GetDL() const {
+        return ofs_to_ptr<u8>(ref().toDL);
+    }
+};
+
+/******************************************************************************
+ *
+ * Model bytecode
+ *
+ ******************************************************************************/
+namespace ResByteCodeData {
+
+enum OpCode {
+    NOOP,   // No operation
+    END,    // End of bytecode
+    CALC,   // Calculate matrix
+    WEIGHT, // Apply weighting
+    DRAW,   // Draw polygon
+    EVPMTX, // Envelope matrix
+    MTXDUP  // Duplicate matrix
+};
+
+// CALC opcode layout
+struct CalcParams {
+    u8 opcode;        // at 0x0
+    u8 nodeIdHi;      // at 0x1
+    u8 nodeIdLo;      // at 0x2
+    u8 parentMtxIdHi; // at 0x1
+    u8 parentMtxIdLo; // at 0x2
+};
+
+// WEIGHT opcode layout
+struct WeightParams {
+    u8 opcode;      // at 0x0
+    u8 tgtIdHi;     // at 0x1
+    u8 tgtIdLo;     // at 0x2
+    u8 numBlendMtx; // at 0x3
+};
+// WEIGHT opcode layout - weighting entry
+struct WeightEntry {
+    u8 mtxIdHi;  // at 0x0
+    u8 mtxIdLo;  // at 0x1
+    u8 fWeight0; // at 0x2
+    u8 fWeight1; // at 0x3
+    u8 fWeight2; // at 0x4
+    u8 fWeight3; // at 0x5
+};
+
+// DRAW opcode layout
+struct DrawParams {
+    u8 opcode;   // at 0x0
+    u8 matIdHi;  // at 0x3
+    u8 matIdLo;  // at 0x4
+    u8 shpIdHi;  // at 0x1
+    u8 shpIdLo;  // at 0x2
+    u8 nodeIdHi; // at 0x5
+    u8 nodeIdLo; // at 0x6
+    u8 priority; // at 0x7
+};
+
+// EVPMTX opcode layout
+struct EvpMtxParams {
+    u8 opcode;   // at 0x0
+    u8 mtxIdHi;  // at 0x1
+    u8 mtxIdLo;  // at 0x2
+    u8 nodeIdHi; // at 0x1
+    u8 nodeIdLo; // at 0x2
+};
+
+// MTXDUP opcode layout
+struct MtxDupParams {
+    u8 opcode;      // at 0x0
+    u8 toMtxIdHi;   // at 0x1
+    u8 toMtxIdLo;   // at 0x2
+    u8 fromMtxIdHi; // at 0x1
+    u8 fromMtxIdLo; // at 0x2
+};
+
+} // namespace ResByteCodeData
+
+namespace detail {
+
+/******************************************************************************
+ *
+ * Primitive read/write
+ *
+ ******************************************************************************/
+inline u8 ResRead_u8(const u8* pPtr) {
+    return *pPtr;
+}
+
+inline u32 ResRead_u32(const u8* pPtr) {
+    u32 value = ResRead_u8(pPtr++) << 24;
+    value |= ResRead_u8(pPtr++) << 16;
+    value |= ResRead_u8(pPtr++) << 8;
+    value |= ResRead_u8(pPtr++) << 0;
+    return value;
+}
+
+inline void ResWrite_u8(u8* pPtr, u8 data) {
+    *pPtr = data;
+}
+
+inline void ResWrite_u16(u8* pPtr, u16 data) {
+    ResWrite_u8(pPtr++, data >> 8);
+    ResWrite_u8(pPtr++, data >> 0);
+}
+
+inline void ResWrite_u32(u8* pPtr, u32 data) {
+    ResWrite_u8(pPtr++, data >> 24);
+    ResWrite_u8(pPtr++, data >> 16);
+    ResWrite_u8(pPtr++, data >> 8);
+    ResWrite_u8(pPtr++, data >> 0);
+}
+
+/******************************************************************************
+ *
+ * GX Blitting Processor (BP)
+ *
+ ******************************************************************************/
+inline void ResReadBPCmd(const u8* pPtr, u32* pOut) {
+    // Skip over FIFO command byte
+    *pOut = ResRead_u32(pPtr + 1);
+}
+
+void ResWriteBPCmd(u8* pPtr, u32 reg);
+void ResWriteBPCmd(u8* pPtr, u32 reg, u32 mask);
+void ResWriteSSMask(u8* pPtr, u32 value);
+
+/******************************************************************************
+ *
+ * GX Command Processor (CP)
+ *
+ ******************************************************************************/
+inline void ResReadCPCmd(const u8* pPtr, u32* pOut) {
+    // Skip over FIFO command byte + addr byte
+    *pOut = ResRead_u32(pPtr + 2);
+}
+
+void ResWriteCPCmd(u8* pPtr, u8 addr, u32 value);
+
+/******************************************************************************
+ *
+ * GX Transform Unit (XF)
+ *
+ ******************************************************************************/
+inline void ResReadXFCmd(const u8* pPtr, u32* pOut) {
+    // Skip over FIFO command byte + size short + addr short
+    *pOut = ResRead_u32(pPtr + 5);
+}
+
+void ResWriteXFCmd(u8* pPtr, u16 addr, u32 value);
+
+/******************************************************************************
+ *
+ * Utility functions
+ *
+ ******************************************************************************/
+inline GXColor GetRGBA(u8 r, u8 g, u8 b, u8 a) {
+    return (GXColor){r, g, b, a};
+}
+inline GXColorS10 GetRGBAS10(s16 r, s16 g, s16 b, s16 a) {
+    return (GXColorS10){r, g, b, a};
+}
+
+} // namespace detail
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 6 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 8 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct CameraData {
+    enum Flag {
+        FLAG_CAM_LOOKAT = (1 << 0),
+        FLAG_CAM_ROTATE = (1 << 1),
+        FLAG_CAM_AIM = (1 << 2),
+        FLAG_CAM_MTX_READY = (1 << 3),
+
+        FLAG_PROJ_FRUSTUM = (1 << 4),
+        FLAG_PROJ_PERSP = (1 << 5),
+        FLAG_PROJ_ORTHO = (1 << 6),
+        FLAG_PROJ_MTX_READY = (1 << 7),
+
+        FLAG_VI_ODD_FIELD = (1 << 8),
+    };
+
+    math::MTX34 cameraMtx;     // at 0x0
+    math::MTX44 projMtx;       // at 0x30
+    u32 flags;                 // at 0x70
+    math::VEC3 cameraPos;      // at 0x74
+    math::VEC3 cameraUp;       // at 0x80
+    math::VEC3 cameraTarget;   // at 0x8C
+    math::VEC3 cameraRotate;   // at 0x98
+    f32 cameraTwist;           // at 0xA4
+    GXProjectionType projType; // at 0xA8
+    f32 projFovy;              // at 0xAC
+    f32 projAspect;            // at 0xB0
+    f32 projNear;              // at 0xB4
+    f32 projFar;               // at 0xB8
+    f32 projTop;               // at 0xBC
+    f32 projBottom;            // at 0xC0
+    f32 projLeft;              // at 0xC4
+    f32 projRight;             // at 0xC8
+    f32 lightScaleS;           // at 0xCC
+    f32 lightScaleT;           // at 0xD0
+    f32 lightTransS;           // at 0xD4
+    f32 lightTransT;           // at 0xD8
+    math::VEC2 viewportOrigin; // at 0xDC
+    math::VEC2 viewportSize;   // at 0xE4
+    f32 viewportNear;          // at 0xEC
+    f32 viewportFar;           // at 0xF0
+    u32 scissorX;              // at 0xF4
+    u32 scissorY;              // at 0xF8
+    u32 scissorWidth;          // at 0xFC
+    u32 scissorHeight;         // at 0x100
+    s32 scissorOffsetX;        // at 0x104
+    s32 scissorOffsetY;        // at 0x108
+};
+
+class Camera : public ResCommon<CameraData> {
+public:
+    enum PostureType { POSTURE_LOOKAT, POSTURE_ROTATE, POSTURE_AIM };
+
+    struct PostureInfo {
+        PostureType tp;          // at 0x0
+        math::VEC3 cameraUp;     // at 0x4
+        math::VEC3 cameraTarget; // at 0x10
+        math::VEC3 cameraRotate; // at 0x1C
+        f32 cameraTwist;         // at 0x28
+    };
+
+public:
+    explicit Camera(CameraData* pData);
+
+    void Init();
+    void Init(u16 efbWidth, u16 efbHeight, u16 xfbWidth, u16 xfbHeight,
+              u16 viWidth, u16 viHeight);
+
+    void SetPosition(f32 x, f32 y, f32 z);
+    void SetPosition(const math::VEC3& rPos);
+
+    void SetPosture(const PostureInfo& rInfo);
+    void SetCameraMtxDirectly(const math::MTX34& rMtx);
+    void SetPerspective(f32 fovy, f32 aspect, f32 near, f32 far);
+    void SetOrtho(f32 top, f32 bottom, f32 left, f32 right, f32 near, f32 far);
+    void SetProjectionMtxDirectly(const math::MTX44* pMtx);
+
+    void SetScissor(u32 x, u32 y, u32 width, u32 height);
+    void SetScissorBoxOffset(s32 ox, s32 oy);
+
+    void SetViewport(f32 x, f32 y, f32 width, f32 height);
+    void SetViewportZRange(f32 near, f32 far);
+    void GetViewport(f32* pX, f32* pY, f32* pWidth, f32* pHeight, f32* pNear,
+                     f32* pFar) const;
+
+    void GetCameraMtx(math::MTX34* pMtx) const;
+    void GetProjectionMtx(math::MTX44* pMtx) const;
+    void GetProjectionTexMtx(math::MTX34* pMtx) const;
+    void GetEnvironmentTexMtx(math::MTX34* pMtx) const;
+
+    void GXSetViewport() const;
+    void GXSetProjection() const;
+    void GXSetScissor() const;
+    void GXSetScissorBoxOffset() const;
+
+    GXProjectionType GetProjectionType() const {
+        return ref().projType;
+    }
+
+private:
+    void UpdateCameraMtx() const;
+    void UpdateProjectionMtx() const;
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_camera.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 5 "nw4r/g3d/g3d_fog.h" */
+#ifndef NW4R_G3D_FOG_H
+#define NW4R_G3D_FOG_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 6 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 7 "nw4r/ut.h" */
+/* end "nw4r/ut.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_fog.h" line 9 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct FogData {
+    GXFogType type;         // at 0x0
+    f32 startz;             // at 0x4
+    f32 endz;               // at 0x8
+    f32 nearz;              // at 0xC
+    f32 farz;               // at 0x10
+    GXColor color;          // at 0x14
+    GXBool adjEnable;       // at 0x18
+    u8 PADDING_0x19;        // at 0x19
+    u16 adjCenter;          // at 0x1A
+    GXFogAdjTable adjTable; // at 0x1C
+};
+
+class Fog : public ResCommon<FogData> {
+public:
+    explicit Fog(FogData* pData);
+
+    void Init();
+    Fog CopyTo(void* pDst) const;
+
+    void SetFogRangeAdjParam(u16 width, u16 center,
+                             const math::MTX44& rProjMtx);
+    void SetGP() const;
+
+    void SetFogType(GXFogType type) {
+        if (!IsValid()) {
+            return;
+        }
+
+        ref().type = type;
+    }
+
+    void SetZ(f32 startZ, f32 endZ) {
+        if (!IsValid()) {
+            return;
+        }
+
+        FogData& r = ref();
+
+        r.startz = startZ;
+        r.endz = endZ;
+    }
+
+    void SetNearFar(f32 nearZ, f32 farZ) {
+        if (!IsValid()) {
+            return;
+        }
+
+        FogData& r = ref();
+
+        r.nearz = nearZ;
+        r.farz = farZ;
+    }
+
+    void SetFogColor(GXColor color) {
+        if (!IsValid()) {
+            return;
+        }
+
+        ref().color = color;
+    }
+
+    void GetFog(GXFogType* type, f32* startz, f32* endz,
+                f32* nearz, f32* farz, GXColor* color);
+
+    bool IsFogRangeAdjEnable() const {
+        return IsValid() && ref().adjEnable == TRUE;
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_fog.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 6 "nw4r/g3d/res/g3d_resmat.h" */
+#ifndef NW4R_G3D_RES_RES_MAT_H
+#define NW4R_G3D_RES_RES_MAT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 4 "nw4r/g3d/res/g3d_resanmtexsrt.h" */
+#ifndef NW4R_G3D_RES_RES_ANM_TEX_SRT_H
+#define NW4R_G3D_RES_RES_ANM_TEX_SRT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 4 "nw4r/g3d/res/g3d_resanm.h" */
+#ifndef NW4R_G3D_RES_RES_ANM_H
+#define NW4R_G3D_RES_RES_ANM_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanm.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * ResKeyFrame
+ *
+ ******************************************************************************/
+struct ResKeyFrameData {
+    f32 frame; // at 0x0
+    f32 value; // at 0x4
+    f32 slope; // at 0x8
+};
+
+struct ResKeyFrameAnmData {
+    u16 numKeyFrame;              // at 0x0
+    u8 PADDING_0x2[0x4 - 0x2];    // at 0x2
+    f32 invKeyFrameRange;         // at 0x4
+    ResKeyFrameData keyFrames[1]; // at 0x8
+};
+
+namespace detail {
+
+f32 GetResKeyFrameAnmResult(const ResKeyFrameAnmData* pData, f32 frame);
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * ResAnm
+ *
+ ******************************************************************************/
+enum AnmPolicy { ANM_POLICY_ONETIME, ANM_POLICY_LOOP, ANM_POLICY_MAX };
+
+union ResAnmData {
+    f32 constValue;           // at 0x0
+    s32 toResKeyFrameAnmData; // at 0x0
+};
+
+namespace detail {
+
+inline f32 GetResAnmResult(const ResAnmData* pData, f32 frame, bool constant) {
+    if (constant) {
+        return pData->constValue;
+    }
+
+    const ResKeyFrameAnmData* pFrameData =
+        reinterpret_cast<const ResKeyFrameAnmData*>(
+            reinterpret_cast<const char*>(pData) + pData->toResKeyFrameAnmData);
+
+    return GetResKeyFrameAnmResult(pFrameData, frame);
+}
+
+template <typename T> inline f32 ClipFrame(const T& rInfo, f32 frame) {
+    if (frame <= 0.0f) {
+        return 0.0f;
+    }
+
+    if (rInfo.numFrame <= frame) {
+        return rInfo.numFrame;
+    }
+
+    return frame;
+}
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * ResColorAnm
+ *
+ ******************************************************************************/
+union ResColorAnmData {
+    u32 constValue;              // at 0x0
+    s32 toResColorAnmFramesData; // at 0x0
+};
+struct ResColorAnmFramesData {
+    u32 frameColors[1]; // at 0x0
+};
+
+namespace detail {
+
+u32 GetResColorAnmResult(const ResColorAnmFramesData* pData, f32 frame);
+
+inline u32 GetResColorAnmResult(const ResColorAnmData* pData, f32 frame,
+                                bool constant) {
+    if (constant) {
+        return pData->constValue;
+    }
+
+    const ResColorAnmFramesData* pFrameData =
+        reinterpret_cast<const ResColorAnmFramesData*>(
+            reinterpret_cast<const char*>(pData) +
+            pData->toResColorAnmFramesData);
+
+    return GetResColorAnmResult(pFrameData, frame);
+}
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * ResBoolAnm
+ *
+ ******************************************************************************/
+union ResBoolAnmData {
+    s32 toResBoolAnmFramesData; // at 0x0
+};
+struct ResBoolAnmFramesData {
+    u32 boolBits[1]; // at 0x0
+};
+
+namespace detail {
+
+inline bool GetResBoolAnmFramesResult(const ResBoolAnmFramesData* pData,
+                                      int frame) {
+    const u32* pBits = pData->boolBits;
+    u32 index = static_cast<u32>(frame);
+
+    u32 wordIdx = index / 32;
+    u32 bitIdx = index % 32;
+
+    u32 targetBit = (1U << 31) >> bitIdx;
+    u32 bitWord = pBits[wordIdx];
+
+    return bitWord & targetBit;
+}
+
+inline bool GetResBoolAnmResult(const ResBoolAnmData* pData, int frame) {
+    const ResBoolAnmFramesData* pFrameData =
+        reinterpret_cast<const ResBoolAnmFramesData*>(
+            reinterpret_cast<const char*>(pData) +
+            pData->toResBoolAnmFramesData);
+
+    return GetResBoolAnmFramesResult(pFrameData, frame);
+}
+
+} // namespace detail
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resanm.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resanmtexsrt.h" line 6 "nw4r/g3d/res/g3d_resdict.h" */
+#ifndef NW4R_G3D_RES_RES_DICT_H
+#define NW4R_G3D_RES_RES_DICT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resdict.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resdict.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct ResDicNodeData {
+    u16 ref;       // at 0x0
+    u16 flag;      // at 0x2
+    u16 idxLeft;   // at 0x4
+    u16 idxRight;  // at 0x6
+    s32 ofsString; // at 0x8
+    s32 ofsData;   // at 0xC
+};
+
+struct ResDicData {
+    u32 size;               // at 0x0
+    u32 numData;            // at 0x4
+    ResDicNodeData data[1]; // at 0x8
+};
+
+class ResDic : public ResCommon<ResDicData> {
+public:
+    static const s32 NOT_FOUND = -1;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResDic);
+
+    void* operator[](const char* pName) const;
+    void* operator[](const ResName name) const;
+    void* operator[](int idx) const {
+        if (IsValid()) {
+            return const_cast<void*>(
+                ofs_to_ptr<void>(ref().data[idx + 1].ofsData));
+        }
+
+        return NULL;
+    }
+
+    s32 GetIndex(const char* s) const;
+    s32 GetIndex(const ResName name) const;
+
+    u32 GetNumData() const {
+        if (IsValid()) {
+            return ptr()->numData;
+        }
+
+        return 0;
+    }
+
+private:
+    ResDicNodeData* Get(const ResName name) const;
+    ResDicNodeData* Get(const char* pName, u32 len) const;
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resdict.h" */
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * Common types
+ *
+ ******************************************************************************/
+struct ResAnmTexSrtDataTypedef {
+    static const int NUM_OF_MAT_TEX_MTX = 8;
+    static const int NUM_OF_IND_TEX_MTX = 3;
+    static const int NUM_OF_TEX_MTX = NUM_OF_MAT_TEX_MTX + NUM_OF_IND_TEX_MTX;
+};
+
+struct TexSrtTypedef {
+    enum TexMatrixMode {
+        TEXMATRIXMODE_MAYA,
+        TEXMATRIXMODE_XSI,
+        TEXMATRIXMODE_3DSMAX
+    };
+};
+
+/******************************************************************************
+ *
+ * TexSrtAnmResult
+ *
+ ******************************************************************************/
+struct TexSrt : TexSrtTypedef {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+        FLAG_SCALE_ONE = (1 << 1),
+        FLAG_ROT_ZERO = (1 << 2),
+        FLAG_TRANS_ZERO = (1 << 3),
+
+        FLAGSET_IDENTITY = (1 << 0) | (1 << 1) | (1 << 2) | (1 << 3),
+        NUM_OF_FLAGS = 4
+    };
+
+    f32 Su; // at 0x0
+    f32 Sv; // at 0x4
+    f32 R;  // at 0x8
+    f32 Tu; // at 0xC
+    f32 Tv; // at 0x10
+};
+
+struct TexSrtAnmResult : ResAnmTexSrtDataTypedef, TexSrtTypedef {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+        FLAG_SCALE_ONE = (1 << 1),
+        FLAG_ROT_ZERO = (1 << 2),
+        FLAG_TRANS_ZERO = (1 << 3),
+
+        // Four bits in 'flags' for each animation
+        NUM_OF_FLAGS = 4
+    };
+
+    u32 flags;                  // at 0x0
+    u32 indFlags;               // at 0x4
+    TexMatrixMode texMtxMode;   // at 0x8
+    TexSrt srt[NUM_OF_TEX_MTX]; // at 0xC
+};
+
+/******************************************************************************
+ *
+ * ResAnmTexSrt
+ *
+ ******************************************************************************/
+struct ResAnmTexSrtTexData {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+        FLAG_SCALE_ONE = (1 << 1),
+        FLAG_ROT_ZERO = (1 << 2),
+        FLAG_TRANS_ZERO = (1 << 3),
+
+        FLAG_SCALE_UNIFORM = (1 << 4),
+        FLAG_SCALE_U_CONST = (1 << 5),
+        FLAG_SCALE_V_CONST = (1 << 6),
+
+        FLAG_ROT_CONST = (1 << 7),
+        FLAG_TRANS_U_CONST = (1 << 8),
+        FLAG_TRANS_V_CONST = (1 << 9),
+    };
+
+    u32 flags;          // at 0x0
+    ResAnmData anms[1]; // at 0x4
+};
+
+struct ResAnmTexSrtMatData : ResAnmTexSrtDataTypedef {
+    enum Flag {
+        FLAG_ANM_EXISTS = (1 << 0),
+
+        NUM_OF_FLAGS = 1
+    };
+
+    s32 name;                     // at 0x0
+    u32 flags;                    // at 0x4
+    u32 indFlags;                 // at 0x8
+    s32 toResAnmTexSrtTexData[1]; // at 0xC
+};
+
+struct ResAnmTexSrtInfoData : TexSrtTypedef {
+    u16 numFrame;             // at 0x0
+    u16 numMaterial;          // at 0x2
+    TexMatrixMode texMtxMode; // at 0x4
+    AnmPolicy policy;         // at 0x8
+};
+
+struct ResAnmTexSrtData {
+    ResBlockHeaderData header; // at 0x0
+    u32 revision;              // at 0x8
+    s32 toResFileData;         // at 0xC
+    s32 toTexSrtDataDic;       // at 0x10
+    s32 toResUserData;         // at 0x14
+    s32 name;                  // at 0x18
+    s32 original_path;         // at 0x1C
+    ResAnmTexSrtInfoData info; // at 0x20
+};
+
+class ResAnmTexSrt : public ResCommon<ResAnmTexSrtData> {
+public:
+    static const u32 SIGNATURE = FOURCC('S', 'R', 'T', '0');
+    static const int REVISION = 5;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResAnmTexSrt);
+
+    u32 GetRevision() const {
+        return ref().revision;
+    }
+
+    bool CheckRevision() const {
+        return GetRevision() == REVISION;
+    }
+
+    void GetAnmResult(TexSrtAnmResult* pResult, u32 idx, f32 frame) const;
+
+    const ResAnmTexSrtMatData* GetMatAnm(int idx) const {
+        return static_cast<ResAnmTexSrtMatData*>(
+            ofs_to_obj<ResDic>(ref().toTexSrtDataDic)[idx]);
+    }
+    const ResAnmTexSrtMatData* GetMatAnm(u32 idx) const {
+        return static_cast<ResAnmTexSrtMatData*>(
+            ofs_to_obj<ResDic>(ref().toTexSrtDataDic)[idx]);
+    }
+
+    int GetNumFrame() const {
+        return ref().info.numFrame;
+    }
+
+    int GetNumMaterial() const {
+        return ref().info.numMaterial;
+    }
+
+    AnmPolicy GetAnmPolicy() const {
+        return ref().info.policy;
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resanmtexsrt.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 6 "nw4r/g3d/res/g3d_respltt.h" */
+#ifndef NW4R_G3D_RES_RES_PLTT_H
+#define NW4R_G3D_RES_RES_PLTT_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 3 "decomp.h" */
+/**
+ * Codewarrior tricks for matching decomp
+ * (Macros generate prototypes to satisfy -requireprotos)
+ */
+
+#ifndef DECOMP_H
+#define DECOMP_H
+
+/* "include/decomp.h" line 8 "macros.h" */
+/**
+ * Common macros
+ */
+
+#ifndef MACROS_H
+#define MACROS_H
+
+/******************************************************************************
+ *
+ * Strings
+ *
+ ******************************************************************************/
+
+// Stringify expression
+#define __STR(x) #x
+#define STR(x) __STR(x)
+
+// Concatenate strings
+#define __CONCAT(x, y) x##y
+#define CONCAT(x, y) __CONCAT(x, y)
+
+// Multi-character character constants
+// clang-format off
+#define TWOCC(c0, c1)                                                          \
+    (u32)((c0 & 0xFF) << 8  | (c1 & 0xFF))
+#define THREECC(c0, c1, c2)                                                    \
+    (u32)((c0 & 0xFF) << 16 | (c1 & 0xFF) << 8  | (c2 & 0xFF))
+#define FOURCC(c0, c1, c2, c3)                                                 \
+    (u32)((c0 & 0xFF) << 24 | (c1 & 0xFF) << 16 | (c2 & 0xFF) << 8 | (c3 & 0xFF))
+// clang-format on
+
+/******************************************************************************
+ *
+ * Arithmetic
+ *
+ ******************************************************************************/
+
+// Min/max expression
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+
+// Clamp to a range
+#define CLAMP(low, high, x)                                                    \
+    ((x) > (high) ? (high) : ((x) < (low) ? (low) : (x)))
+
+// Round up value
+#define ROUND_UP(x, align) (((x) + (align) - 1) & (-(align)))
+#define ROUND_UP_PTR(x, align)                                                 \
+    ((void*)((((u32)(x)) + (align) - 1) & (~((align) - 1))))
+
+// Round down value
+#define ROUND_DOWN(x, align) ((x) & (-(align)))
+#define ROUND_DOWN_PTR(x, align) ((void*)(((u32)(x)) & (~((align) - 1))))
+
+// Distance between pointers
+#define PTR_DISTANCE(start, end) ((u8*)(end) - (u8*)(start))
+
+/******************************************************************************
+ *
+ * Arrays
+ *
+ ******************************************************************************/
+
+// Size of compile-time arrays
+#define ARRAY_SIZE(x) (sizeof((x)) / sizeof((x)[0]))
+#define LENGTHOF(x) ARRAY_SIZE(x)
+
+// Declare an array of hardware registers
+#define DECL_HW_REGS(NAME) FLEXIBLE_ARRAY(NAME##_HW_REGS)
+
+/******************************************************************************
+ *
+ * Intrinsics
+ *
+ ******************************************************************************/
+
+// Memory clear intrinsic
+#define MEMCLR(x) __memclr((x), sizeof(*(x)))
+
+/******************************************************************************
+ *
+ * Attributes
+ *
+ ******************************************************************************/
+
+// Alignment attribute
+#define ALIGN(x) __attribute__((aligned(x)))
+
+// Place a symbol in a specific ELF section
+#define DECL_SECTION(x) __declspec(section x)
+
+// Give a symbol weak linkage
+#define DECL_WEAK __declspec(weak)
+
+#endif
+/* end "macros.h" */
+
+// Compile without matching hacks.
+#if defined(NONMATCHING) || defined(COMPAT_ANY)
+#define DECOMP_FORCEACTIVE(module, ...)
+#define DECOMP_FORCELITERAL(module, ...)
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)
+#define DECOMP_INLINE
+#define DECOMP_DONT_INLINE
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) ((value) << (rot))
+#define DECOMP_PPC_SHL1_U32(value) ((value) << 1)
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+// Compile with matching hacks.
+// (This version of CW does not support pragmas inside macros.)
+#else
+// Force reference specific data
+#define DECOMP_FORCEACTIVE(module, ...)                                        \
+    void fake_function(...);                                                   \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void);                          \
+    void CONCAT(FORCEACTIVE##module, __LINE__)(void) {                         \
+        fake_function(__VA_ARGS__);                                            \
+    }
+
+// Force literal ordering, such as floats in sdata2
+#define DECOMP_FORCELITERAL(module, ...)                                       \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void);                         \
+    void CONCAT(FORCELITERAL##module, __LINE__)(void) {                        \
+        (__VA_ARGS__);                                                         \
+    }
+
+// Force reference destructor
+#define DECOMP_FORCEACTIVE_DTOR(module, cls)                                   \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void);                       \
+    void CONCAT(FORCEDTOR##module##cls, __LINE__)(void) {                      \
+        cls dummy;                                                             \
+        dummy.~cls();                                                          \
+    }
+
+#define DECOMP_INLINE inline
+#define DECOMP_DONT_INLINE __attribute__((never_inline))
+
+/**
+ * MWCC PPC rotate-mask intrinsics (PLAN.md section 17.6).
+ * Same builtin family as SDK __rlwimi / __rlwinm; counts as high-level C, not asm.
+ */
+#define DECOMP_PPC_RLWINM(value, rot, mb, me) __rlwinm((value), (rot), (mb), (me))
+/** slwi expansion: rlwinm rD,rA,1,0,30 */
+#define DECOMP_PPC_SHL1_U32(value) DECOMP_PPC_RLWINM((value), 1, 0, 30)
+
+/**
+ * Markers for single-instruction asm carve-out (PLAN.md section 17.6).
+ * Place MWCC asm { } between BEGIN and END; log policy_exception in attempts.jsonl.
+ */
+#define DECOMP_ASM_INSN_BEGIN
+#define DECOMP_ASM_INSN_END
+
+#endif
+
+#endif
+/* end "decomp.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_respltt.h" line 7 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct ResPlttData {
+    ResBlockHeaderData header; // at 0x0
+    u32 revision;              // at 0x8
+    s32 toResFileData;         // at 0xC
+    s32 toPlttData;            // at 0x10
+    s32 name;                  // at 0x14
+    GXTlutFmt fmt;             // at 0x18
+    u16 numEntries;            // at 0x1C
+    u16 PADDING_0x1E;          // at 0x1E
+    s32 original_path;         // at 0x20
+    s32 toResUserData;         // at 0x24
+};
+
+class ResPltt : public ResCommon<ResPlttData> {
+public:
+    static const u32 SIGNATURE = FOURCC('P', 'L', 'T', '0');
+    static const int REVISION = 1;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResPltt);
+
+    void Init() {
+        DCStore(false);
+    }
+
+    u32 GetRevision() const {
+        return ref().revision;
+    }
+
+    bool CheckRevision() const DECOMP_DONT_INLINE {
+        return GetRevision() == REVISION;
+    }
+
+    void DCStore(bool sync);
+
+    u16* GetPlttData() {
+        ResPlttData& r = ref();
+
+        // clang-format off
+        return r.toPlttData != 0
+            ? reinterpret_cast<u16*>(reinterpret_cast<u8*>(&r) + r.toPlttData)
+            : NULL;
+        // clang-format on
+    }
+
+    const u16* GetPlttData() const {
+        const ResPlttData& r = ref();
+
+        // clang-format off
+        return r.toPlttData != 0
+            ? reinterpret_cast<const u16*>(reinterpret_cast<const u8*>(&r) + r.toPlttData)
+            : NULL;
+        // clang-format on
+    }
+
+    GXTlutFmt GetFmt() const {
+        return ref().fmt;
+    }
+
+    u32 GetNumEntries() const {
+        return ref().numEntries;
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_respltt.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 7 "nw4r/g3d/res/g3d_restev.h" */
+#ifndef NW4R_G3D_RES_RES_TEV_H
+#define NW4R_G3D_RES_RES_TEV_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restev.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restev.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restev.h" line 6 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+// TODO(kiwi) Why?
+static const int TEV_STAGES_PER_DL = 2;
+
+struct ResTevCommonDL {
+    union {
+        struct {
+            u8 swapModeTable[GX_MAX_TEVSWAP][GX_BP_CMD_SZ * 4]; // at 0x0
+            u8 indTexOrder[1][GX_BP_CMD_SZ];                    // at 0x50
+            u8 PADDING_0x55[0x60 - 0x55];                       // at 0x55
+        } dl;
+
+        u8 data[0x60]; // at 0x0
+    };
+};
+
+struct ResTevVariableDL {
+    union {
+        struct {
+            u8 tevKonstantSel[GX_BP_CMD_SZ * 2];                  // at 0x0
+            u8 tevOrder[GX_BP_CMD_SZ];                            // at 0xA
+            u8 tevColorCalc[TEV_STAGES_PER_DL][GX_BP_CMD_SZ];     // at 0xF
+            u8 alphaCalcAndSwap[TEV_STAGES_PER_DL][GX_BP_CMD_SZ]; // at 0x19
+            u8 tevIndirect[TEV_STAGES_PER_DL][GX_BP_CMD_SZ];      // at 0x23
+            u8 PADDING_0x2D[0x30 - 0x2D];                         // at 0x2D
+        } dl;
+
+        u8 data[0x30]; // at 0x0
+    };
+};
+
+struct ResTevDL {
+    union {
+        struct {
+            ResTevCommonDL common; // at 0x0
+            ResTevVariableDL
+                var[GX_MAX_TEVSTAGE / TEV_STAGES_PER_DL]; // at 0x60
+        } dl;
+
+        u8 data[0x1E0]; // at 0x0
+    };
+};
+
+struct ResTevData {
+    u32 size;                               // at 0x0
+    s32 toResMdlData;                       // at 0x4
+    u32 id;                                 // at 0x8
+    u8 nStages;                             // at 0xC
+    u8 PADDING_0xD[0x10 - 0xD];             // at 0xD
+    u8 texCoordToTexMapID[GX_MAX_TEXCOORD]; // at 0x10
+    u8 PADDING_0x18[0x20 - 0x18];           // at 0x18
+    ResTevDL dl;                            // at 0x20
+};
+
+class ResTev : public ResCommon<ResTevData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTev);
+
+    bool GXGetTevSwapModeTable(GXTevSwapSel swap, GXTevColorChan* pR,
+                               GXTevColorChan* pG, GXTevColorChan* pB,
+                               GXTevColorChan* pA) const;
+    void GXSetTevSwapModeTable(GXTevSwapSel swap, GXTevColorChan r,
+                               GXTevColorChan g, GXTevColorChan b,
+                               GXTevColorChan a);
+
+    bool GXGetTevOrder(GXTevStageID stage, GXTexCoordID* pCoord,
+                       GXTexMapID* pMap, GXChannelID* pChannel) const;
+
+    void GXSetTevColorIn(GXTevStageID stage, GXTevColorArg a, GXTevColorArg b,
+                         GXTevColorArg c, GXTevColorArg d);
+
+    void CallDisplayList(bool sync) const;
+
+    ResTev CopyTo(void* pDst);
+
+    void DCStore(bool sync);
+
+    u8 GetNumTevStages() const {
+        return ref().nStages;
+    }
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_restev.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 8 "nw4r/g3d/res/g3d_restex.h" */
+#ifndef NW4R_G3D_RES_RES_TEX_H
+#define NW4R_G3D_RES_RES_TEX_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restex.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restex.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_restex.h" line 6 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+struct ResTexData {
+    enum Flag {
+        FLAG_CIFMT = (1 << 0),
+    };
+
+    ResBlockHeaderData header; // at 0x0
+    u32 revision;              // at 0x8
+    s32 toResFileData;         // at 0xC
+    s32 toTexData;             // at 0x10
+    s32 name;                  // at 0x14
+    u32 flag;                  // at 0x18
+    u16 width;                 // at 0x1C
+    u16 height;                // at 0x1E
+    union {
+        GXTexFmt fmt;
+        GXCITexFmt cifmt;
+    }; // at 0x20
+    u32 mipmap_level;  // at 0x24
+    f32 min_lod;       // at 0x28
+    f32 max_lod;       // at 0x2C
+    s32 original_path; // at 0x30
+    s32 toResUserData; // at 0x34
+};
+
+class ResTex : public ResCommon<ResTexData> {
+public:
+    static const u32 SIGNATURE = FOURCC('T', 'E', 'X', '0');
+    static const int REVISION = 1;
+
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTex);
+
+    void Init();
+
+    u32 GetRevision() const {
+        return ref().revision;
+    }
+
+    bool CheckRevision() const DECOMP_DONT_INLINE {
+        return GetRevision() == REVISION;
+    }
+
+    bool GetTexObjParam(void** ppTexData, u16* pWidth, u16* pHeight,
+                        GXTexFmt* pFormat, f32* pMinLod, f32* pMaxLod,
+                        GXBool* pMipMap) const;
+
+    bool GetTexObjCIParam(void** ppTexData, u16* pWidth, u16* pHeight,
+                          GXCITexFmt* pFormatCI, f32* pMinLod, f32* pMaxLod,
+                          GXBool* pMipMap) const;
+
+    bool IsCIFmt() const {
+        return ref().flag & ResTexData::FLAG_CIFMT;
+    }
+
+    u16 GetWidth() const {
+        return ref().width;
+    }
+    u16 GetHeight() const {
+        return ref().height;
+    }
+
+    const void* GetTexData() const {
+        return ofs_to_ptr<void>(ref().toTexData);
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_restex.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 10 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_resmat.h" line 12 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+// Forward declarations
+class ResFile;
+class ResMdl;
+
+/******************************************************************************
+ *
+ * ResGenMode
+ *
+ ******************************************************************************/
+struct ResGenModeData {
+    u8 nTexGens;         // at 0x0
+    u8 nChans;           // at 0x1
+    u8 nTevs;            // at 0x2
+    u8 nInds;            // at 0x3
+    GXCullMode cullMode; // at 0x4
+};
+
+class ResGenMode : public ResCommon<ResGenModeData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResGenMode);
+
+    ResGenMode CopyTo(void* pDst) const;
+
+    void GXSetNumTexGens(u8 num);
+    void GXSetNumChans(u8 num);
+    void GXSetNumTevStages(u8 num);
+    void GXSetNumIndStages(u8 num);
+    void GXSetCullMode(GXCullMode mode);
+
+    u8 GXGetNumTexGens() const {
+        return IsValid() ? ptr()->nTexGens : 0;
+    }
+
+    u8 GXGetNumChans() const {
+        return IsValid() ? ptr()->nChans : 0;
+    }
+
+    u8 GXGetNumTevStages() const {
+        return IsValid() ? ptr()->nTevs : 0;
+    }
+
+    u8 GXGetNumIndStages() const {
+        return IsValid() ? ptr()->nInds : 0;
+    }
+
+    GXCullMode GXGetCullMode() const {
+        return IsValid() ? ptr()->cullMode : GX_CULL_ALL;
+    }
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatMisc
+ *
+ ******************************************************************************/
+struct ResMatMiscData {
+    enum IndirectMethod {
+        WARP,
+        NORMAL_MAP,
+        NORMAL_MAP_SPECULAR,
+        FUR,
+
+        _RESERVED0,
+        _RESERVED1,
+
+        USER0,
+        USER1,
+
+        NUM_OF_INDIRECT_METHOD,
+    };
+
+    GXBool zCompLoc;                       // at 0x0
+    s8 light_set_idx;                      // at 0x1
+    s8 fog_idx;                            // at 0x2
+    u8 PADDING_0x3;                        // at 0x3
+    u8 indirect_method[GX_ITM_2 + 1];      // at 0x4
+    s8 normal_map_ref_light[GX_ITM_2 + 1]; // at 0x8
+};
+
+class ResMatMisc : public ResCommon<ResMatMiscData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResMatMisc);
+
+    ResMatMisc CopyTo(void* pDst) const;
+
+    GXBool GXGetZCompLoc() const;
+    int GetLightSetIdx() const;
+    int GetFogIdx() const;
+
+    void GetIndirectTexMtxCalcMethod(GXIndTexMtxID id,
+                                     ResMatMiscData::IndirectMethod* pMethod,
+                                     s8* pLightRef);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatTexCoordGen
+ *
+ ******************************************************************************/
+struct ResTexCoordGenDL {
+    union {
+        struct {
+            u8 texCoordGen[GX_MAX_TEXCOORD][GX_XF_CMD_SZ * 2]; // at 0x0
+            u8 PADDING_0x90[0xA0 - 0x90];                      // at 0x90
+        } dl;
+
+        u8 data[0xA0];
+    };
+};
+
+class ResMatTexCoordGen : public ResCommon<ResTexCoordGenDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatTexCoordGen, ResTexCoordGenDL);
+
+    void DCStore(bool sync);
+    ResMatTexCoordGen CopyTo(void* pDst) const;
+
+    void CallDisplayList(u8 numGens, bool sync) const;
+
+    bool GXGetTexCoordGen2(GXTexCoordID id, GXTexGenType* pFunc,
+                           GXTexGenSrc* pParam, GXBool* pNormalize,
+                           u32* pPostMtx) const;
+    void GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType func,
+                           GXTexGenSrc param, GXBool normalize, u32 postMtx);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResTexObj
+ *
+ ******************************************************************************/
+struct ResTexObjData {
+    u32 flagUsedTexMapID;           // at 0x0
+    GXTexObj texObj[GX_MAX_TEXMAP]; // at 0x4
+};
+
+class ResTexObj : public ResCommon<ResTexObjData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTexObj);
+
+    ResTexObj CopyTo(void* pDst) const;
+
+    const GXTexObj* GetTexObj(GXTexMapID id) const;
+    GXTexObj* GetTexObj(GXTexMapID id);
+
+    bool IsValidTexObj(GXTexMapID id) const;
+
+    void Validate(GXTexMapID id);
+    void Invalidate(GXTexMapID id);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResTlutObj
+ *
+ ******************************************************************************/
+struct ResTlutObjData {
+    u32 flagUsedTlutID;                     // at 0x0
+    GXTlutObj tlutObj[GX_TLUT8 - GX_TLUT0]; // at 0x4
+};
+
+class ResTlutObj : public ResCommon<ResTlutObjData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTlutObj);
+
+    ResTlutObj CopyTo(void* pDst) const;
+
+    const GXTlutObj* GetTlut(GXTlut tlut) const;
+    GXTlutObj* GetTlut(GXTlut tlut);
+
+    bool IsValidTlut(GXTlut tlut) const;
+
+    void Validate(GXTlut tlut);
+    void Invalidate(GXTlut tlut);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResTexSrt
+ *
+ ******************************************************************************/
+struct TexMtxEffect : TexSrtTypedef {
+    enum Flag {
+        FLAG_IDENT = (1 << 0),
+    };
+
+    s8 ref_camera;          // at 0x0
+    s8 ref_light;           // at 0x1
+    u8 map_mode;            // at 0x2
+    u8 misc_flag;           // at 0x3
+    math::_MTX34 effectMtx; // at 0x4
+};
+
+struct ResTexSrtData : TexSrtTypedef {
+    static const int NUM_OF_TEXTURE = 8;
+
+    u32 flag;                            // at 0x0
+    TexMatrixMode texMtxMode;            // at 0x4
+    TexSrt texSrt[NUM_OF_TEXTURE];       // at 0x8
+    TexMtxEffect effect[NUM_OF_TEXTURE]; // at 0xA8
+};
+
+class ResTexSrt : public ResCommon<ResTexSrtData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTexSrt);
+
+    ResTexSrt CopyTo(void* pDst) const;
+
+    bool GetEffectMtx(u32 id, math::MTX34* pMtx) const;
+    bool SetEffectMtx(u32 id, const math::MTX34* pMtx);
+
+    bool GetMapMode(u32 id, u32* pMode, int* pCamRef, int* pLightRef) const;
+    bool SetMapMode(u32 id, u32 mode, int camRef, int lightRef);
+
+    TexSrt::Flag GetTexSrtFlag(u32 id) const {
+        return static_cast<TexSrt::Flag>(
+            (ref().flag >> id * TexSrt::NUM_OF_FLAGS) &
+            (TexSrt::FLAG_ANM_EXISTS | TexSrt::FLAG_SCALE_ONE |
+             TexSrt::FLAG_ROT_ZERO | TexSrt::FLAG_TRANS_ZERO));
+    }
+
+    bool IsExist(u32 id) const {
+        if (IsValid()) {
+            return ptr()->flag & (1 << id * TexSrt::NUM_OF_FLAGS);
+        } else {
+            return false;
+        }
+    }
+
+    bool IsIdentity(u32 id) const {
+        return (((ref().flag >> id * TexSrt::NUM_OF_FLAGS) &
+                 TexSrt::FLAGSET_IDENTITY) == TexSrt::FLAGSET_IDENTITY) &&
+               (ref().effect[id].misc_flag & TexMtxEffect::FLAG_IDENT);
+    }
+
+    TexSrtTypedef::TexMatrixMode GetTexMtxMode() const {
+        return ref().texMtxMode;
+    }
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatChan
+ *
+ ******************************************************************************/
+struct Chan {
+    enum Flag {
+        FLAG_MAT_COLOR_ENABLE = (1 << 0),
+        FLAG_MAT_ALPHA_ENABLE = (1 << 1),
+
+        FLAG_AMB_COLOR_ENABLE = (1 << 2),
+        FLAG_AMB_ALPHA_ENABLE = (1 << 3),
+
+        FLAG_CTRL_COLOR_ENABLE = (1 << 4),
+        FLAG_CTRL_ALPHA_ENABLE = (1 << 5),
+    };
+
+    u32 flag;           // at 0x0
+    GXColor matColor;   // at 0x4
+    GXColor ambColor;   // at 0x8
+    u32 paramChanCtrlC; // at 0xC
+    u32 paramChanCtrlA; // at 0x10
+};
+
+struct ResChanData {
+    Chan chan[2]; // at 0x0
+};
+
+class ResMatChan : public ResCommon<ResChanData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatChan, ResChanData);
+
+    ResMatChan CopyTo(void* pDst) const;
+
+    bool GXGetChanMatColor(GXChannelID id, GXColor* pColor) const;
+    void GXSetChanMatColor(GXChannelID id, GXColor color);
+
+    bool GXGetChanAmbColor(GXChannelID id, GXColor* pColor) const;
+    void GXSetChanAmbColor(GXChannelID id, GXColor color);
+
+    bool GXGetChanCtrl(GXChannelID id, GXBool* pEnable, GXColorSrc* pAmbSrc,
+                       GXColorSrc* pMatSrc, GXLightID* pLightMask,
+                       GXDiffuseFn* pDiffuseFn, GXAttnFn* pAttnFn) const;
+    void GXSetChanCtrl(GXChannelID id, GXBool enable, GXColorSrc ambSrc,
+                       GXColorSrc matSrc, GXLightID lightMask,
+                       GXDiffuseFn diffuseFn, GXAttnFn attnFn);
+
+    void EndEdit() {}
+};
+
+/******************************************************************************
+ *
+ * ResMatPix
+ *
+ ******************************************************************************/
+struct ResPixDL {
+    union {
+        struct {
+            u8 alphaCompare[GX_BP_CMD_SZ];  // at 0x0
+            u8 zMode[GX_BP_CMD_SZ];         // at 0x5
+            u8 blendMode[GX_BP_CMD_SZ * 2]; // at 0xA
+            u8 setDstAlpha[GX_BP_CMD_SZ];   // at 0x14
+            u8 PADDING_0x19[32 - 0x19];     // at 0x19
+        } dl;
+
+        u8 data[32]; // at 0x0
+    };
+};
+
+class ResMatPix : public ResCommon<ResPixDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatPix, ResPixDL);
+
+    void DCStore(bool sync);
+    ResMatPix CopyTo(void* pDst) const;
+
+    void CallDisplayList(bool sync) const;
+
+    bool GXGetAlphaCompare(GXCompare* pComp0, u8* pRef0, GXAlphaOp* pLogic,
+                           GXCompare* pComp1, u8* pRef1) const;
+    void GXSetAlphaCompare(GXCompare comp0, u8 ref0, GXAlphaOp logic,
+                           GXCompare comp1, u8 ref1);
+
+    bool GXGetZMode(GXBool* pTest, GXCompare* pCompare, GXBool* pUpdate) const;
+    void GXSetZMode(GXBool test, GXCompare compare, GXBool update);
+
+    bool GXGetBlendMode(GXBlendMode* pMode, GXBlendFactor* pSrcFactor,
+                        GXBlendFactor* pDstFactor, GXLogicOp* pLogic) const;
+    void GXSetBlendMode(GXBlendMode mode, GXBlendFactor srcFactor,
+                        GXBlendFactor dstFactor, GXLogicOp logic);
+
+    bool GXGetDstAlpha(GXBool* pEnable, u8* pAlpha) const;
+    void GXSetDstAlpha(GXBool enable, u8 alpha);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResMatTevColor
+ *
+ ******************************************************************************/
+struct ResTevColorDL {
+    union {
+        struct {
+            u8 tevColor[GX_MAX_TEVREG - GX_TEVREG0][GX_BP_CMD_SZ * 4]; // at 0x0
+            u8 PADDING_0x3C[64 - 0x3C];                    // at 0x3C
+            u8 tevKColor[GX_MAX_KCOLOR][GX_BP_CMD_SZ * 2]; // at 0x40
+            u8 PADDING_0x68[128 - 0x68];                   // at 0x68
+        } dl;
+
+        u8 data[128];
+    };
+};
+
+class ResMatTevColor : public ResCommon<ResTevColorDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatTevColor, ResTevColorDL);
+
+    void DCStore(bool sync);
+    ResMatTevColor CopyTo(void* pDst) const;
+
+    void CallDisplayList(bool sync) const;
+
+    bool GXGetTevColor(GXTevRegID id, GXColor* pColor) const;
+    void GXSetTevColor(GXTevRegID id, GXColor color);
+
+    bool GXGetTevColorS10(GXTevRegID id, GXColorS10* pColor) const;
+    void GXSetTevColorS10(GXTevRegID id, GXColorS10 color);
+
+    bool GXGetTevKColor(GXTevKColorID id, GXColor* pColor) const;
+    void GXSetTevKColor(GXTevKColorID id, GXColor color);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResMatIndMtxAndScale
+ *
+ ******************************************************************************/
+struct ResIndMtxAndScaleDL {
+    union {
+        struct {
+            u8 indTexCoordScale[2][GX_BP_CMD_SZ]; // at 0x0
+            u8 indTexMtx0[GX_BP_CMD_SZ * 3];      // at 0xA
+            u8 PADDING_0x19[32 - 0x19];           // at 0x19
+            u8 indTexMtx1[GX_BP_CMD_SZ * 3];      // at 0x20
+            u8 indTexMtx2[GX_BP_CMD_SZ * 3];      // at 0x2F
+            u8 PADDING_0x3E[64 - 0x3E];           // at 0x3E
+        } dl;
+
+        u8 data[64]; // at 0x0
+    };
+};
+
+class ResMatIndMtxAndScale : public ResCommon<ResIndMtxAndScaleDL> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF_EX(ResMatIndMtxAndScale, ResIndMtxAndScaleDL);
+
+    void DCStore(bool sync);
+    ResMatIndMtxAndScale CopyTo(void* pDst) const;
+
+    void CallDisplayList(u8 indNum, bool sync) const;
+
+    bool GXGetIndTexMtx(GXIndTexMtxID id, math::MTX34* pMtx) const;
+    void GXSetIndTexMtx(GXIndTexMtxID id, const math::MTX34& rMtx, s8 scaleExp);
+
+    void EndEdit() {
+        DCStore(false);
+    }
+};
+
+/******************************************************************************
+ *
+ * ResTexPlttInfo
+ *
+ ******************************************************************************/
+struct ResTexPlttInfoData {
+    s32 nameTex;            // at 0x0
+    s32 namePltt;           // at 0x4
+    ResTexData* pTexData;   // at 0x8
+    ResPlttData* pPlttData; // at 0xC
+    GXTexMapID mapID;       // at 0x10
+    GXTlut tlutID;          // at 0x14
+    GXTexWrapMode wrap_s;   // at 0x18
+    GXTexWrapMode wrap_t;   // at 0x1C
+    GXTexFilter min_filt;   // at 0x20
+    GXTexFilter mag_filt;   // at 0x24
+    f32 lod_bias;           // at 0x28
+    GXAnisotropy max_aniso; // at 0x2C
+    bool bias_clamp;        // at 0x30
+    bool do_edge_lod;       // at 0x31
+    u8 PADDING_0x32;        // at 0x32
+    u8 PADDING_0x33;        // at 0x33
+};
+
+class ResTexPlttInfo : public ResCommon<ResTexPlttInfoData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResTexPlttInfo);
+
+    bool Bind(const ResFile file, ResTexObj texObj, ResTlutObj tlutObj);
+    void Release(ResTexObj texObj, ResTlutObj tlutObj);
+
+    ResName GetTexResName() const {
+        const ResTexPlttInfoData& r = ref();
+
+        if (r.nameTex != 0) {
+            return NW4R_G3D_OFS_TO_RESNAME(&r, r.nameTex);
+        }
+
+        return ResName(NULL);
+    }
+
+    ResName GetPlttResName() const {
+        const ResTexPlttInfoData& r = ref();
+
+        if (r.namePltt != 0) {
+            return NW4R_G3D_OFS_TO_RESNAME(&r, r.namePltt);
+        }
+
+        return ResName(NULL);
+    }
+
+    bool IsCIFmt() const {
+        return ref().namePltt != 0;
+    }
+
+private:
+    void BindTex_(const ResTex tex, ResTexObj texObj);
+    void BindPltt_(const ResPltt pltt, ResTlutObj tlutObj);
+};
+
+/******************************************************************************
+ *
+ * ResMat
+ *
+ ******************************************************************************/
+struct ResMatDLData {
+    ResPixDL dlPix;                       // at 0x0
+    ResTevColorDL dlTevColor;             // at 0x20
+    ResIndMtxAndScaleDL dlIndMtxAndScale; // at 0xA0
+    ResTexCoordGenDL dlTexCoordGen;       // at 0xE0
+};
+
+struct ResMatData {
+    u32 size;                   // at 0x0
+    s32 toResMdlData;           // at 0x4
+    s32 name;                   // at 0x8
+    u32 id;                     // at 0xC
+    u32 flag;                   // at 0x10
+    ResGenModeData genMode;     // at 0x14
+    ResMatMiscData misc;        // at 0x1C
+    s32 toResTevData;           // at 0x28
+    u32 numResTexPlttInfo;      // at 0x2C
+    s32 toResTexPlttInfo;       // at 0x30
+    s32 toResMatFurData;        // at 0x34
+    s32 toResUserData;          // at 0x38
+    s32 toResMatDLData;         // at 0x3C
+    ResTexObjData texObjData;   // at 0x140
+    ResTlutObjData tlutObjData; // at 0x1A4
+    ResTexSrtData texSrtData;   // at 0x3EC
+    ResChanData chan;           // at 0x3F0
+};
+
+class ResMat : public ResCommon<ResMatData> {
+public:
+    NW4R_G3D_RESOURCE_FUNC_DEF(ResMat);
+
+    void Init();
+
+    bool Bind(const ResFile file);
+    void Release();
+
+    ResMdl GetParent();
+
+    u32 GetID() const {
+        return ref().id;
+    }
+
+    ResGenMode GetResGenMode() {
+        return ResGenMode(&ref().genMode);
+    }
+
+    ResMatMisc GetResMatMisc() {
+        return ResMatMisc(&ref().misc);
+    }
+
+    ResTev GetResTev();
+    ResTev GetResTev() const;
+
+    u32 GetNumResTexPlttInfo() const {
+        return ref().numResTexPlttInfo;
+    }
+
+    ResTexPlttInfo GetResTexPlttInfo(u32 id) {
+        ResTexPlttInfoData* pData =
+            ofs_to_ptr<ResTexPlttInfoData>(ref().toResTexPlttInfo);
+
+        return ResTexPlttInfo(&pData[id]);
+    }
+
+    ResMatDLData* GetResMatDLData() {
+        return ofs_to_ptr<ResMatDLData>(ref().toResMatDLData);
+    }
+
+    ResMatPix GetResMatPix() {
+        return ResMatPix(&GetResMatDLData()->dlPix);
+    }
+
+    ResMatTevColor GetResMatTevColor() {
+        return ResMatTevColor(&GetResMatDLData()->dlTevColor);
+    }
+
+    ResMatIndMtxAndScale GetResMatIndMtxAndScale() {
+        return ResMatIndMtxAndScale(&GetResMatDLData()->dlIndMtxAndScale);
+    }
+
+    ResMatTexCoordGen GetResMatTexCoordGen() {
+        return ResMatTexCoordGen(&GetResMatDLData()->dlTexCoordGen);
+    }
+
+    ResTlutObj GetResTlutObj() {
+        return ResTlutObj(&ref().tlutObjData);
+    }
+
+    ResTexObj GetResTexObj() {
+        return ResTexObj(&ref().texObjData);
+    }
+
+    ResTexSrt GetResTexSrt() {
+        return ResTexSrt(&ref().texSrtData);
+    }
+
+    ResMatChan GetResMatChan() {
+        return ResMatChan(&ref().chan);
+    }
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/res/g3d_resmat.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 8 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 10 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+// Forward declarations
+struct AmbLightObj;
+class LightObj;
+class LightSetting;
+class ResShp;
+
+namespace detail {
+
+/******************************************************************************
+ *
+ * ScnDependentMtxFunc
+ *
+ ******************************************************************************/
+namespace ScnDependentMtxFunc {
+
+void EnvironmentMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+void ProjectionMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+void EnvironmentSpecularMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+void DefaultMapping(math::MTX34* pMtx, s8 camRef, s8 lightRef);
+
+} // namespace ScnDependentMtxFunc
+} // namespace detail
+
+/******************************************************************************
+ *
+ * G3DState
+ *
+ ******************************************************************************/
+namespace G3DState {
+
+static const int NUM_LIGHT = 128;
+static const int NUM_LIGHT_SET = 128;
+
+static const int NUM_LIGHT_IN_LIGHT_SET = 8;
+
+static const int NUM_CAMERA = 32;
+static const int NUM_FOG = 32;
+
+static const int NUM_SCNDEPENDENT_TEXMTX_FUNCTYPE = 256;
+
+enum InvalidateFlag {
+    INVALIDATE_SYNCGX = 0,
+    INVALIDATE_TEX = (1 << 0),
+    INVALIDATE_TLUT = (1 << 1),
+    INVALIDATE_TEV = (1 << 2),
+    INVALIDATE_GENMODE = (1 << 3),
+    INVALIDATE_SHP = (1 << 4),
+    INVALIDATE_CURRMTX = (1 << 5),
+    INVALIDATE_TEXMTX = (1 << 6),
+    INVALIDATE_MISC = (1 << 7),
+    INVALIDATE_FOG = (1 << 8),
+    INVALIDATE_LIGHT = (1 << 9),
+    INVALIDATE_POSMTX = (1 << 10),
+
+    INVALIDATE_ALL = INVALIDATE_TEX | INVALIDATE_TLUT | INVALIDATE_TEV |
+                     INVALIDATE_GENMODE | INVALIDATE_SHP | INVALIDATE_CURRMTX |
+                     INVALIDATE_TEXMTX | INVALIDATE_MISC | INVALIDATE_FOG |
+                     INVALIDATE_LIGHT | INVALIDATE_POSMTX
+};
+
+enum ScnDependentTexMtxFuncType {
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_TEXCOORD,
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_NRM,
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_POS,
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_COLOR,
+
+    MAX_SCNDEPENDENT_TEXMTX_FUNCTYPE,
+
+    SCNDEPENDENT_TEXMTX_FUNCTYPE_TEXMTX_NOT_EXIST =
+        SCNDEPENDENT_TEXMTX_FUNCTYPE_SRC_TEXCOORD,
+};
+
+typedef void (*ScnDependentTexMtxFuncPtr)(math::MTX34* pMtx, s8 camRef,
+                                          s8 lightRef);
+
+/******************************************************************************
+ *
+ * IndTexMtxInfo
+ *
+ ******************************************************************************/
+struct IndTexMtxInfo {
+    u32 flag;                                        // at 0x0
+    math::MTX34 offset_mtx[GX_ITM_2 - GX_ITM_0 + 1]; // at 0x4
+
+    IndTexMtxInfo() : flag(0) {}
+    explicit IndTexMtxInfo(const ResMatIndMtxAndScale ind);
+
+    void FifoSend() const;
+    void SetMtx(GXIndTexMtxID id, const math::MTX34& rMtx);
+};
+
+/******************************************************************************
+ *
+ * IndMtxOp
+ *
+ ******************************************************************************/
+class IndMtxOp {
+public:
+    virtual void operator()(IndTexMtxInfo* pInfo) = 0; // at 0x8
+
+    virtual ~IndMtxOp() {}    // at 0xC
+    virtual void Reset() = 0; // at 0x10
+
+    virtual void
+    SetNrmMapMtx(GXIndTexMtxID id, const math::VEC3* pLightVec,
+                 const math::MTX34* pNrmMtx,
+                 ResMatMiscData::IndirectMethod method) = 0; // at 0x14
+};
+
+/******************************************************************************
+ *
+ * IndMtxOpStd
+ *
+ ******************************************************************************/
+class IndMtxOpStd : public IndMtxOp {
+public:
+    IndMtxOpStd();
+
+    virtual void operator()(IndTexMtxInfo* pInfo); // at 0x8
+
+    virtual ~IndMtxOpStd() {} // at 0xC
+    virtual void Reset();     // at 0x10
+
+    virtual void SetNrmMapMtx(GXIndTexMtxID id, const math::VEC3* pLightVec,
+                              const math::MTX34* pNrmMtx,
+                              ResMatMiscData::IndirectMethod method); // at 0x14
+
+private:
+    bool mIsValidMtx[GX_ITM_2 - GX_ITM_0 + 1];    // at 0x4
+    u8 PADDING_0x7;                               // at 0x7
+    math::MTX34 mIndMtx[GX_ITM_2 - GX_ITM_0 + 1]; // at 0x8
+};
+
+/******************************************************************************
+ *
+ * Functions
+ *
+ ******************************************************************************/
+void LoadResMatMisc(const ResMatMisc misc);
+void LoadResTexObj(const ResTexObj texObj);
+void LoadResTlutObj(const ResTlutObj tlutObj);
+void LoadResGenMode(const ResGenMode mode);
+void LoadResTev(const ResTev tev);
+void LoadResMatPix(const ResMatPix pix);
+void LoadResMatTevColor(const ResMatTevColor color);
+void LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind);
+void LoadResMatIndMtxAndScale(const ResMatIndMtxAndScale ind, IndMtxOp& rOp);
+void LoadResMatChan(const ResMatChan chan, u32 maskDiffColor, u32 maskDiffAlpha,
+                    u32 maskSpecColor, u32 maskSpecAlpha, GXColor amb,
+                    bool lightOff);
+void LoadResMatTexCoordGen(const ResMatTexCoordGen gen);
+void LoadResTexSrt(const ResTexSrt srt);
+void LoadResShpPrePrimitive(const ResShp shp);
+void LoadResShpPrimitive(const ResShp shp, const math::MTX34* pViewPos,
+                         const math::MTX34* pViewNrm);
+
+void SetViewPosNrmMtxArray(const math::MTX34* pViewPosMtxArray,
+                           const math::MTX33* pViewNrmMtxArray,
+                           const math::MTX34* pViewEnvTexMtxArray);
+const math::MTX33* GetViewNrmMtxPtr(u32 id);
+
+void SetScnDependentTexMtxFunc(u32 id, ScnDependentTexMtxFuncPtr func,
+                               ScnDependentTexMtxFuncType type);
+bool GetScnDependentTexMtxFunc(u32 id, ScnDependentTexMtxFuncPtr* pFunc,
+                               ScnDependentTexMtxFuncType* pType);
+
+IndMtxOp* GetIndMtxOp();
+
+void SetFog(const Fog fog, int id);
+void LoadFog(int id);
+
+void SetLightSetting(const LightSetting& rSetting);
+const LightObj* GetLightObj(int id);
+void LoadLightSet(int id, u32* pDiffColorMask, u32* pDiffAlphaMask,
+                  u32* pSpecColorMask, u32* pSpecAlphaMask, AmbLightObj* pAmb);
+void LoadLightSet(int id, u32* pDiffMask, u32* pSpecMask, AmbLightObj* pAmb);
+
+void SetCameraProjMtx(const Camera& rCam, int id, bool view);
+const math::MTX34* GetCameraMtxPtr();
+const math::MTX34* GetInvCameraMtxPtr();
+const math::MTX34* GetCameraMtxPtr(int id);
+const math::MTX34* GetProjectionTexMtxPtr();
+const math::MTX34* GetProjectionTexMtxPtr(int id);
+const math::MTX34* GetEnvironmentTexMtxPtr();
+
+void SetRenderModeObj(const GXRenderModeObj& rObj);
+const GXRenderModeObj* GetRenderModeObj();
+
+void Invalidate(u32 flag = INVALIDATE_ALL);
+
+} // namespace G3DState
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_state.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 5 "nw4r/g3d/res/g3d_rescommon.h" */
+/* end "nw4r/g3d/res/g3d_rescommon.h" */
+
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 7 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+
+namespace nw4r {
+namespace g3d {
+
+/******************************************************************************
+ *
+ * LightObj
+ *
+ ******************************************************************************/
+class LightObj {
+public:
+    LightObj(const LightObj& rLightObj);
+    LightObj() : mFlag(0) {}
+    ~LightObj() {}
+
+    LightObj& operator=(const LightObj& rOther);
+    bool operator!=(const LightObj& rOther) const;
+
+    operator GXLightObj*() {
+        return &mObj;
+    }
+    operator const GXLightObj*() const {
+        return &mObj;
+    }
+
+    void Clear();
+
+    void InitLightColor(GXColor color);
+    void InitLightPos(f32 x, f32 y, f32 z);
+    void InitLightDir(f32 nx, f32 ny, f32 nz);
+    void InitLightSpot(f32 cutoff, GXSpotFn spotFn);
+    void InitLightAttnA(f32 aa, f32 ab, f32 ac);
+    void InitLightDistAttn(f32 distance, f32 brightness,
+                           GXDistAttnFn distAttnFn);
+    void InitLightAttnK(f32 ka, f32 kb, f32 kc);
+    void InitSpecularDir(f32 nx, f32 ny, f32 nz);
+    void InitLightShininess(f32 shininess);
+
+    void GetLightPos(math::VEC3* pPos) const;
+    void GetLightDir(math::VEC3* pDir) const;
+
+    void ApplyViewMtx(const math::MTX34& rCamera);
+
+    void Enable() {
+        mFlag |= FLAG_ENABLE_LIGHT;
+    }
+    void Disable() {
+        mFlag &= ~FLAG_ENABLE_LIGHT;
+    }
+
+    bool IsEnable() const {
+        return (mFlag & FLAG_ENABLE_LIGHT) ? true : false;
+    }
+
+    bool IsSpotLight() const {
+        return (mFlag & FLAG_SPOT) ? true : false;
+    }
+    bool IsSpecularLight() const {
+        return (mFlag & FLAG_SPECULAR) ? true : false;
+    }
+    bool IsSpecularDir() const {
+        return (mFlag & FLAG_SPECULAR_DIR) ? true : false;
+    }
+
+    bool IsColorEnable() const {
+        return !(mFlag & FLAG_DISABLE_COLOR);
+    }
+    void DisableColor() {
+        mFlag |= FLAG_DISABLE_COLOR;
+    }
+
+    bool IsAlphaEnable() const {
+        return !(mFlag & FLAG_DISABLE_ALPHA);
+    }
+    void DisableAlpha() {
+        mFlag |= FLAG_DISABLE_ALPHA;
+    }
+
+    bool IsDiffuseLight() const {
+        return !IsSpotLight() && !IsSpecularLight();
+    }
+
+private:
+    enum LightObjFlag {
+        FLAG_SPOT = (1 << 0),
+        FLAG_SPECULAR = (1 << 1),
+        FLAG_ENABLE_LIGHT = (1 << 2),
+        FLAG_SPECULAR_DIR = (1 << 3),
+        FLAG_DISABLE_COLOR = (1 << 4),
+        FLAG_DISABLE_ALPHA = (1 << 5)
+    };
+
+private:
+    u32 mFlag;       // at 0x0
+    GXLightObj mObj; // at 0x4
+};
+
+/******************************************************************************
+ *
+ * LightSet
+ *
+ ******************************************************************************/
+struct LightSetData {
+    static const int IDX_INVALID_LIGHT = -1;
+
+    s8 idxLight[G3DState::NUM_LIGHT_IN_LIGHT_SET]; // at 0x0
+    s8 idxAmbLight;                                // at 0x8
+    u8 PADDING_0x9[0xC - 0X9];                     // at 0x9
+};
+
+class LightSet {
+public:
+    LightSet(LightSetting* pSetting, LightSetData* pData)
+        : mpSetting(pSetting), mpLightSetData(pData) {}
+    ~LightSet() {}
+
+    bool IsValid() const {
+        return mpSetting != NULL && mpLightSetData != NULL;
+    }
+
+    LightObj* GetLightObj(u32 lightIdx);
+    AmbLightObj* GetAmbLightObj();
+
+    bool SelectLightObj(u32 lightIdx, int lightObjIdx);
+    bool SelectAmbLightObj(int lightObjIdx);
+
+private:
+    LightSetting* mpSetting;      // at 0x0
+    LightSetData* mpLightSetData; // at 0x4
+};
+
+/******************************************************************************
+ *
+ * LightSetting
+ *
+ ******************************************************************************/
+struct AmbLightObj {
+    u8 r, g, b, a;
+};
+
+class LightSetting {
+public:
+    LightSetting(LightObj* pLightObjArray, AmbLightObj* pAmbLightObjArray,
+                 u32 numLight, LightSetData* pLightSetDataArray,
+                 u32 numLightSet);
+    ~LightSetting() {}
+
+    bool Import(const LightSetting& rSetting);
+    void ApplyViewMtx(const math::MTX34& rCamera, u32 numLight);
+
+    u32 GetNumLightObj() const {
+        return mNumLight;
+    }
+    u32 GetNumLightSet() const {
+        return mNumLightSet;
+    }
+
+    LightObj* GetLightObjArray() const {
+        return mpLightObjArray;
+    }
+    AmbLightObj* GetAmbLightObjArray() const {
+        return mpAmbLightObjArray;
+    }
+
+    LightSet GetLightSet(int idx) {
+        if (idx < mNumLightSet && idx >= 0) {
+            return LightSet(this, &mpLightSetDataArray[idx]);
+        }
+
+        return LightSet(this, NULL);
+    }
+
+private:
+    u16 mNumLight;                     // at 0x0
+    u16 mNumLightSet;                  // at 0x2
+    LightObj* mpLightObjArray;         // at 0x4
+    AmbLightObj* mpAmbLightObjArray;   // at 0x8
+    LightSetData* mpLightSetDataArray; // at 0xC
+};
+
+} // namespace g3d
+} // namespace nw4r
+
+#endif
+/* end "nw4r/g3d/g3d_light.h" */
 
 class CLight{
 public:
@@ -247155,8 +259640,8 @@ public:
     ml::CVec3 unk10;
     ml::CVec3 unk1C;
     float unk28;
-    u32 unk2C;
-    u32 unk30;
+    nw4r::g3d::LightObj* mpLightObj;
+    u32 mFlags;
     u32 unk34;
     float unk38;
     float unk3C;
@@ -247343,6 +259828,7 @@ public:
 
     static CTaskGame* getInstance();
     static u32 func_800404F0();
+    static u32 isUnk68Bit13Set();
     virtual void Init();
 
     void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);
@@ -247351,8 +259837,16 @@ public:
     void func_80042720();
     static bool func_8004368C();
     static CTaskGame* create(CView* pView, CWorkThread* pThread, int r5);
+    s32 callStubReturnZero_800436A8();
 
     virtual void Term();
+    void stub_80040A3C();
+    void stub_80042720();
+    void setFlag_200(bool enabled, unsigned int mode);
+    void setFlag_400(int enabled, unsigned int mode, unsigned int value);
+    void setFlag_100000(int enabled, int unused, unsigned int value);
+    void setFlag_1000000(int enabled);
+    void setFlag_1000(int value);
     virtual void ITitleMenu__UnkVirtualFunc1();
     virtual void IErrMesWinSel__UnkVirtualFunc1();
     virtual bool gameExceptionCB(u32 r4);
@@ -247418,6 +259912,10 @@ public:
 
 protected:
     static CTaskGame* spInstance;
+    CTaskGame();
+    void cbRenderBefore();
+    void OnFileEvent();
+    void Draw();
 };
 /* end "kyoshin/CTaskGame.hpp" */
 /* "src/kyoshin/CGame.cpp" line 5 "kyoshin/code_80135FDC.hpp" */
@@ -247503,6 +260001,7 @@ char* func_80138F78(u16);
 void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
+extern "C" u8 code80135FDC_getByte_621F0();
 /* end "kyoshin/code_80135FDC.hpp" */
 /* "src/kyoshin/CGame.cpp" line 6 "monolib/lib.hpp" */
 #pragma once
@@ -248207,7 +260706,7 @@ public:
 
     static CLibHbmControl* create();
     static CLibHbmControl* getInstance();
-    static bool func_8045E530();
+    static bool isActive();
     static bool isInitialized();
 
     virtual void wkUpdate();
@@ -248218,9 +260717,9 @@ public:
     //0x0: vtable
     //0x0-1ec: CProc
     HBMControllerData mHBMControllerData; //0x1EC
-    u32 unk22C;
-    int unk230;
-    u32 unk234;
+    u32 mHbmPhase;   //0x22C: state machine phase (0=load arc, 1=wait filesys, 2=init HBM, 3=active)
+    int mWaitTimer;  //0x230: countdown timer, set to 210 in phase 0, decremented in phase 1
+    u32 mUnused;     //0x234: reserved, never accessed
 private:
     static const int MAX_CHILD = 8;
 
@@ -248247,10 +260746,12 @@ public:
     static CLibLayout* getInstance();
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
 
+    virtual void wkUpdate() override;  //0x88
+
     //0x0: vtable
     //0x0-1c4: CWorkThread
-    u32 unk1C4;
-    u8 unk1C8[0x2C0 - 0x1C8];
+    u32 unk1C4;                       // 0x1C4: unknown field
+    u8 unk1C8[0x2C0 - 0x1C8];        // 0x1C8-2C0: unknown trailing data
 };
 /* end "monolib/lib/CLibLayout.hpp" */
 /* "libs/monolib/include/monolib/lib.hpp" line 8 "monolib/lib/CLibStaticData.hpp" */
@@ -248367,6 +260868,8 @@ public:
     //0x0: vtable
     //0x0-1c4: CWorkThread
     u32 unk1C4;
+
+    static CLibVM* spInstance;
 };
 /* end "monolib/lib/CLibVM.hpp" */
 /* "libs/monolib/include/monolib/lib.hpp" line 10 "monolib/lib/UnkClass_8045F564.hpp" */
@@ -248963,6 +261466,9 @@ public:
 /* "libs/monolib/include/monolib/device/CDeviceFileJob.hpp" line 4 "monolib/device/CFileHandle.hpp" */
 /* end "monolib/device/CFileHandle.hpp" */
 
+// Forward declaration for the parameter type of cancel overload
+struct CDeviceFileJob_UnkStruct1;
+
 //Base class for jobs carried out by CDeviceFile.
 class CDeviceFileJob : public CWorkThread {
 public:
@@ -248971,7 +261477,7 @@ public:
     virtual ~CDeviceFileJob(){}
     virtual bool CDeviceFileJob_UnkVirtualFunc1(){ return false; }
     virtual bool cancel(const char* pFilename);
-    virtual bool cancel(CFileHandle* pHandle){ return false; }
+    virtual bool cancel(CDeviceFileJob_UnkStruct1* pStruct){ return false; }
 
     inline const char* getFilename(){
         return mHandle->mName.c_str();
@@ -248982,13 +261488,13 @@ public:
     }
 
     //0x0: vtable
-    //0x0-1C4: CWorkThread
-    CFileHandle* mHandle; //0x1C4
-    u8 unk1C8; //FixStr<64>?
-    u8 unk1C9[0x208 - 0x1C9];
-    u32 unk208;
-    u32 unk20C;
-    u8 unk210;
+    //0x0-1C4: CWorkThread (parent class)
+    CFileHandle* mHandle; //0x1C4 -- file handle for the current job
+    u8 unk1C8; //0x1C8 -- unknown byte field (possibly FixStr-related)
+    u8 unk1C9[0x208 - 0x1C9]; //padding
+    u32 unk208; //0x208 -- unknown status field
+    u32 unk20C; //0x20C -- unknown status field
+    u8 unk210; //0x210 -- unknown byte flag
 };
 /* end "monolib/device/CDeviceFileJob.hpp" */
 /* "libs/monolib/include/monolib/device.hpp" line 8 "monolib/device/CDeviceFileJobReadDvd.hpp" */
@@ -249071,6 +261577,9 @@ public:
     // CMCEffCrystal::func_80224CE4
     // CTitleAHelp::OnFileEvent
     static void* func_80452C10(u32, nw4r::lyt::Layout*);
+
+    /// Flush font rendering state.
+    void func_80452CF8();
 
     DECL_WORKTHREAD_CREATE(CDeviceFont);
 

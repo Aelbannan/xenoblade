@@ -32,6 +32,9 @@ extern u32 getItemBoxState__FP12CItemBoxInfo(void*);
 extern u32 func_801EB018(void*);
 extern u32 func_8022D08C(void*);
 extern u32 CSysWin_isReady(void*);
+void* __dt__13CArtsBookItemFv(void* self, int mode);
+void* __dt__11CVisionItemFv(void* self, int mode);
+void* __dt__10CQuestItemFv(void* self, int mode);
 extern u32 func_801EB020(void*);
 extern u32 func_80208358(void*);
 extern u32 func_8022D094(void*);
@@ -83,7 +86,17 @@ void func_801C562C(void* dst, void* src) {
     d[8] = v7;
 }
 
-void __dt__801C5670(){}
+// Destructor for the main grid container.
+void* __dt__801C5670(void* self, int mode) {
+    u8* p = (u8*)self;
+    if (!self) return self;
+    extern u32 lbl_eu_80664514;
+    lbl_eu_80664514 = 0;
+    __dt__13CArtsBookItemFv(p + 0x3cb8, 0xFFFFFFFF);
+    __dt__11CVisionItemFv(p + 0x34b0, 0xFFFFFFFF);
+    if (mode > 0) __dl__FPv(self);
+    return self;
+}
 
 void func_801C56D8(){}
 

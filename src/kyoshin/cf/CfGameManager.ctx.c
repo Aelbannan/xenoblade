@@ -251908,12 +251908,23 @@ struct Unk87588TypedData {
     UnkWordFloat field_0x48;
 };
 
-class UnkClass_8009EC9C;
+class UnkClass_8009EC9C {
+public:
+    u8 field_0x0[0x18];
+    u16 textId_0x18;
+};
 class UnkClass_800AA714;
 class UnkClass_8009ECB0 {
 public:
     u32 field_0x0;
-    s32 entries_0x4[7];
+    union {
+        s32 entries_0x4[7];
+        struct {
+            u8 field_0x4[0x14];
+            u16 textId_0x18;
+            u8 field_0x1A[6];
+        };
+    };
 };
 class UnkClass_800821F8;
 
@@ -252108,7 +252119,7 @@ extern "C" void func_80083D50__Q22cf13CfGameManagerFv(u32 first, u32 second, u32
 }
 
 extern "C" UnkClass_8009EC9C* func_8009EC9C(u16 index);
-extern "C" void func_8009E120(UnkClass_8009EC9C* object, u16 value);
+extern "C" const void* func_8009E120(UnkClass_8009EC9C* object, u16 value);
 extern "C" void func_8007DE94__Q22cf13CfGameManagerFv(u32 index, u32 value) {
     func_8009E120(func_8009EC9C(index), value);
 }
@@ -252455,8 +252466,43 @@ extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value) {
 }
 
 extern "C" UnkClass_8009ECB0* func_8009ECB0();
-extern "C" u32 func_8007DECC__Q22cf13CfGameManagerFv(u32 value, const s32* data,
-                                                       u32 size);
+extern "C" s32 func_80063560(s32 value, u32 second, u32 third);
+extern "C" void func_80062928(s32 destination, const void* source, u32 size);
+extern "C" const void* func_801422A8__Q22cf6CfBdatFUl(u32 textId);
+extern "C" void func_8006398C(u32 value);
+extern "C" bool func_8007DECC__Q22cf13CfGameManagerFv(s32 value, s32* current,
+                                                        u32 size) {
+    bool changed = false;
+    if (value > 0) {
+        UnkClass_8009EC9C* data = func_8009EC9C(static_cast<u16>(value));
+        s32 destination = func_80063560(value, 0, 0);
+        if (destination >= 0 && destination != *current) {
+            func_8009E120(func_8009EC9C(static_cast<u16>(value)), 0);
+            func_80062928(destination,
+                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 0),
+                          size);
+            func_80062928(destination,
+                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 1),
+                          size);
+            func_80062928(destination,
+                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 2),
+                          size);
+            func_80062928(destination,
+                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 3),
+                          size);
+            func_80062928(destination,
+                          func_8009E120(func_8009EC9C(static_cast<u16>(value)), 4),
+                          size);
+            func_80062928(destination,
+                          func_801422A8__Q22cf6CfBdatFUl(data->textId_0x18), size);
+            *current = destination;
+            changed = true;
+        } else if (destination >= 0 && destination == *current) {
+            func_8006398C(0);
+        }
+    }
+    return changed;
+}
 extern "C" u32 func_8007E038__Q22cf13CfGameManagerFv(u32 value, bool searchEntries) {
     if (searchEntries) {
         UnkClass_8009ECB0* data = func_8009ECB0();

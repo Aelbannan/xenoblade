@@ -58,6 +58,12 @@ private:
 
     static void SpeakerPlayCallback(s32 chan, s32 result);
     static void DelaySpeakerPlayCallback(OSAlarm* pAlarm, OSContext* pContext);
+
+    static void SpeakerOffCallback(s32 chan, s32 result);
+    static void DelaySpeakerOffCallback(OSAlarm* pAlarm, OSContext* pContext);
+
+public:
+    void Disconnect(s32 chan);
 };
 
 } // namespace homebutton

@@ -44,7 +44,11 @@ int func_80282174(void* self) {
 bool func_802A0AA0(void*);
 bool func_8028245C(void* self) { return func_802A0AA0((void*)((char*)self + 0x74)); }
 bool func_80282464() { return true; }
-void func_8028246C(){}
+// Virtual dispatch through manually managed vtable at offset 0x70.
+// Loads vtable entry 18 (offset 0x48) and tail-calls it with self and *arg.
+void func_8028246C(cf::CChainActorPc* self, void* arg) {
+    (*(void(**)(cf::CChainActorPc*, void*))((u32*)self->mVTable + 18))(self, *(void**)arg);
+}
 int func_80282480(void*, void* p) {
     return ((*(int*)((char*)p + 0x3f00) >> 1) & 1);
 }

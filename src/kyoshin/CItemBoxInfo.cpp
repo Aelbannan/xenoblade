@@ -29,6 +29,8 @@ u32 func_801392E4(void*);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F8;
+void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
+void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
@@ -211,8 +213,19 @@ void func_801D59C0(u32* out, void* arg2) {
 void func_801D5AA0(){}
 void func_801D5C38(){}
 void func_801D5DA4(){}
-void func_801D62F8(){}
-void __as__11_GXColorS10FRC11_GXColorS10(){}
+
+void func_801D62F8(void* arr, u32 index, const void* color) {
+    if (index >= 3) {
+        Panic__Q24nw4r2dbFPCciPCce("file", 0x8f, "message");
+    }
+    __as__11_GXColorS10FRC11_GXColorS10((u8*)arr + index * 8 + 0x10, color);
+}
+void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) {
+    ((s16*)dst)[0] = ((s16*)src)[0];
+    ((s16*)dst)[1] = ((s16*)src)[1];
+    ((s16*)dst)[2] = ((s16*)src)[2];
+    ((s16*)dst)[3] = ((s16*)src)[3];
+}
 void func_801D6394(){}
 void func_801D69FC(){}
 

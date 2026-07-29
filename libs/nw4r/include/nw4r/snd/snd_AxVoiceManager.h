@@ -17,6 +17,7 @@ public:
 public:
     static AxVoiceManager& GetInstance();
 
+    u32 GetRequiredMemSize(int numVoices);
     u32 GetRequiredMemSize();
     void Setup(void* pBuffer, u32 size);
     void Shutdown();
@@ -27,6 +28,9 @@ public:
 
     void ReserveForFreeAxVoice(AxVoice* pVoice);
     void FreeAllReservedAxVoice();
+
+public:
+    ~AxVoiceManager();
 
 private:
     AxVoiceManager();
@@ -40,7 +44,7 @@ private:
     AxVoiceList mFreeVoiceList;         // at 0xC
     AxVoiceList mFreeReservedVoiceList; // at 0x18
     bool mInitialized;                  // at 0x24
-    int mVoiceCount;                    // at 0x28
+    u32 mVoiceCount;                    // at 0x28
 };
 
 } // namespace detail

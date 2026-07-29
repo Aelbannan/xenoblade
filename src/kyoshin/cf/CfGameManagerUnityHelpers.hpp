@@ -107,27 +107,32 @@ extern "C" void func_80087448__Q22cf13CfGameManagerFv(UnkFlags8Data* data, u32 m
     else data->flags_0x8 &= ~mask;
 }
 
-extern "C" void func_8007F930__Q22cf13CfGameManagerFv(bool enabled) {
+extern "C" u64 func_8007F930__Q22cf13CfGameManagerFv(u32 enabled) {
     if (enabled) {
         lbl_eu_80663E24 |= 0x20000;
     } else {
         lbl_eu_80663E24 &= ~0x20000;
     }
 
+    u32 secondaryFlags = lbl_eu_80663E28;
     if (enabled) {
-        lbl_eu_80663E28 |= 0x1000000;
+        secondaryFlags |= 0x1000000;
     } else {
-        lbl_eu_80663E28 &= ~0x1000000;
+        secondaryFlags &= ~0x1000000;
     }
+    lbl_eu_80663E28 = secondaryFlags;
 
     if (enabled) {
         u32 value = 0;
         value |= 0x200000;
         value |= 0x310;
         lbl_eu_80663DF8 = value;
-    } else {
-        lbl_eu_80663DF8 |= 0xFFFFFFFF;
+        return (static_cast<u64>(enabled) << 32) | secondaryFlags;
     }
+
+    u32 oldValue = lbl_eu_80663DF8;
+    lbl_eu_80663DF8 = oldValue | 0xFFFFFFFF;
+    return (static_cast<u64>(oldValue) << 32) | secondaryFlags;
 }
 
 extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(UnkLinkedNode** destination,

@@ -33,9 +33,9 @@ static SIMain Si = {SI_CHAN_NONE};
 static u32 Type[SI_MAX_CHAN] = {SI_ERROR_NOREP, SI_ERROR_NOREP, SI_ERROR_NOREP,
                                 SI_ERROR_NOREP};
 
-SIPacket Packet[SI_MAX_CHAN];
-s64 XferTime[SI_MAX_CHAN];
-s64 TypeTime[SI_MAX_CHAN];
+static SIPacket Packet[SI_MAX_CHAN];
+static volatile s64 XferTime[SI_MAX_CHAN];
+static s64 TypeTime[SI_MAX_CHAN];
 SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
 BOOL InputBufferValid[SI_MAX_CHAN];
 u32 InputBuffer[SI_MAX_CHAN][2];

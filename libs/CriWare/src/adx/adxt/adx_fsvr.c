@@ -32,7 +32,9 @@ struct ADXT_FsSvrGlobals {
     struct ADXT_FsSvrCallbackParam* post_arg;             // 0x14
 };
 
-#define ADXT_FSVR_GLOBALS ((struct ADXT_FsSvrGlobals*)0x805E26B0)
+// Declare the global struct at the retail address so the compiler emits
+// @ha/@l relocations matching the retail lis/addi sequence.
+extern struct ADXT_FsSvrGlobals lbl_eu_805E26B0;
 
 // Wrapper that enters/leaves the ADX critical section around adxt_ExecFsSvr.
 void ADXT_ExecFsSvr() {
@@ -46,33 +48,35 @@ void ADXT_ExecFsSvr() {
 // sequences through ADX subsystem servers (STM, F) with state updates, then
 // invokes an optional post-callback and resets state to 0.
 void adxt_ExecFsSvr() {
+    struct ADXT_FsSvrGlobals* globals = &lbl_eu_805E26B0;
+
     ADXCRS_Lock();
-    if (ADXT_FSVR_GLOBALS->state != 0) {
+    if (globals->state != 0) {
         ADXCRS_Unlock();
         return;
     }
-    ADXT_FSVR_GLOBALS->state = 1;
+    globals->state = 1;
     ADXCRS_Unlock();
 
-    if (ADXT_FSVR_GLOBALS->pre_callback) {
-        ADXT_FSVR_GLOBALS->pre_callback(ADXT_FSVR_GLOBALS->pre_arg);
+    if (globals->pre_callback) {
+        globals->pre_callback(globals->pre_arg);
     }
 
-    ADXT_FSVR_GLOBALS->state = 3;
+    globals->state = 3;
     ADXSTM_ExecFsSvr();
-    ADXT_FSVR_GLOBALS->state = 4;
+    globals->state = 4;
     ADXSTM_ExecServer();
-    ADXT_FSVR_GLOBALS->state = 5;
+    globals->state = 5;
     ADXF_ExecServer();
-    ADXT_FSVR_GLOBALS->state = 6;
+    globals->state = 6;
     ADXSTM_ExecServer();
-    ADXT_FSVR_GLOBALS->state = 7;
+    globals->state = 7;
     ADXSTM_ExecFsSvr();
-    ADXT_FSVR_GLOBALS->state = 9;
+    globals->state = 9;
     ADXSTM_ExecFsIdle();
 
-    ADXT_FSVR_GLOBALS->state = 0;
-    if (ADXT_FSVR_GLOBALS->post_callback) {
-        ADXT_FSVR_GLOBALS->post_callback(ADXT_FSVR_GLOBALS->post_arg);
+    globals->state = 0;
+    if (globals->post_callback) {
+        globals->post_callback(globals->post_arg);
     }
 }

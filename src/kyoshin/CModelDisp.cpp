@@ -31,9 +31,8 @@ CModelDisp* func_801FBEB8(CModelDisp* self) {
 void func_801FC2B4(CModelDisp*, void**);
 void func_801FC0C4(CModelDisp* self) {
     u32 i;
-    for (i = 0; i < 3; i++) {
-        CModelDispSub* sub = (CModelDispSub*)((u8*)self + (u8)i * 0xFF0);
-        func_801FC2B4(self, &sub->mpController);
+    for (i = 0; i < 3; ++i) {
+        func_801FC2B4(self, &((CModelDispSub*)((u8*)self + (u8)i * 0xFF0))->mpController);
     }
 }
 

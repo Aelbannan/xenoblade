@@ -1243,6 +1243,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -5859,6 +5860,9 @@ typedef struct _GXFifoObjImpl {
     void* writePtr;    // at 0x18
     u32 count;         // at 0x1C
     u8 wrap;           // at 0x20
+    u8 bind_cpu;       // at 0x21
+    u8 bind_gp;        // at 0x22
+    u8 pad;            // at 0x23
 } GXFifoObjImpl;
 
 typedef struct _GXLightObjImpl {
@@ -5879,20 +5883,49 @@ typedef struct _GXLightObjImpl {
 } GXLightObjImpl;
 
 typedef struct _GXTexObjImpl {
-    u8 todo;
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    void* userData;
+    GXTexFmt fmt;
+    u32 tlutName;
+    u16 loadCnt;
+    u8 loadFmt;
+    u8 flags;
 } GXTexObjImpl;
 
 typedef struct _GXTlutObjImpl {
-    u8 todo;
+    u32 tlut;
+    u32 loadTlut0;
+    u16 numEntries;
 } GXTlutObjImpl;
 
 typedef struct _GXTexRegionImpl {
-    u8 todo;
+    u32 image1;
+    u32 image2;
+    u16 sizeEven;
+    u16 sizeOdd;
+    u8 is32bMipmap;
+    u8 isCached;
 } GXTexRegionImpl;
 
 typedef struct _GXTlutRegionImpl {
-    u8 todo;
+    u32 loadTlut1;
+    GXTlutObjImpl tlutObj;
 } GXTlutRegionImpl;
+
+#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
+
+#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
+    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
+    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
+
+#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
+
+#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
+
+#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
 
 #ifdef __cplusplus
 }
@@ -10107,7 +10140,95 @@ typedef enum {
 
 /* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 4 "revolution/GX/GXFifo.h" */
 /* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTexture.h" */
+#ifndef RVL_SDK_GX_TEXTURE_H
+#define RVL_SDK_GX_TEXTURE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
+GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
+
+GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
+GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
+
+typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
+                                            GXTexMapID map);
+
+typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
+
+void __GXSetSUTexRegs(void);
+
+void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
+                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
+void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
+                    GXTexWrapMode, GXBool, u32);
+void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
+                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
+                     GXBool do_edge_lod, GXAnisotropy max_aniso);
+
+void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
+                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
+                       f32* lodBias, GXBool* biasClampEnable,
+                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
+
+GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
+GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
+
+u16 GXGetTexObjWidth(const GXTexObj* obj);
+u16 GXGetTexObjHeight(const GXTexObj* obj);
+GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
+GXBool GXGetTexObjMipMap(const GXTexObj* obj);
+
+void GXLoadTexObj(const GXTexObj*, GXTexMapID);
+
+void GXInitTexObjTlut(GXTexObj*, u32);
+u32 GXGetTexObjTlut(GXTexObj*);
+
+void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
+
+void GXLoadTlut(GXTlutObj*, u32);
+
+void GXInvalidateTexAll(void);
+
+void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
+                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
+
+void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
+
+GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
+GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
+
+void GXInitTexObjWrapMode(GXTexObj*, GXTexWrapMode, GXTexWrapMode);
+void GXInitTexObjFilter(GXTexObj*, GXTexFilter, GXTexFilter);
+void GXInitTexObjUserData(GXTexObj*, void*);
+void* GXGetTexObjUserData(GXTexObj*);
+void GXLoadTexObjPreLoaded(GXTexObj*, GXTexRegion*, GXTexMapID);
+
+void __GetImageTileCount(GXTexFmt, u16, u16, u32*, u32*, u32*);
+void __SetSURegs(u32, u32);
+void __GXSetTmemConfig(u32);
+
+u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
+                       u8 max_lod);
+
+void GXSetTexCoordScaleManually(GXTexCoordID, GXBool, u16, u16);
+void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 6 "revolution/GX/GXTransform.h" */
 #ifndef RVL_SDK_GX_TRANSFORM_H
 #define RVL_SDK_GX_TRANSFORM_H
 /* "libs/RVL_SDK/include/revolution/GX/GXTransform.h" line 2 "types.h" */
@@ -10178,38 +10299,57 @@ typedef struct _GXData {
     u16 vlim;      // at 0x6
     u32 cpCtrlReg; // at 0x8
     u32 cpStatReg; // at 0xC
-    char UNK_0x10[0x4];
-    u32 vcdLoReg;            // at 0x14
-    u32 vcdHiReg;            // at 0x18
+    u32 cpClrReg;  // at 0x10
+    u32 vcdLoReg;  // at 0x14
+    u32 vcdHiReg;  // at 0x18
     u32 vatA[GX_MAX_VTXFMT]; // at 0x1C
     u32 vatB[GX_MAX_VTXFMT]; // at 0x3C
     u32 vatC[GX_MAX_VTXFMT]; // at 0x5C
     u32 linePtWidth;         // at 0x7C
     u32 matrixIndex0;        // at 0x80
     u32 matrixIndex1;        // at 0x84
-    char UNK_0x88[0xA8 - 0x88];
-    GXColor ambColors[2];             // at 0xA8
-    GXColor matColors[2];             // at 0xB0
-    u32 colorControl[4];              // at 0xB8
+    u32 indexBase[4];        // at 0x88
+    u32 indexStride[4];      // at 0x98
+    GXColor ambColors[2];    // at 0xA8
+    GXColor matColors[2];    // at 0xB0
+    u32 colorControl[4];     // at 0xB8
     u32 texRegs[GX_MAX_TEXCOORD];     // at 0xC8
     u32 dualTexRegs[GX_MAX_TEXCOORD]; // at 0xE8
-    u32 txcRegs[GX_MAX_TEXCOORD];     // at 0x108
-    char UNK_0x128[0x148 - 0x128];
+    union {
+        u32 txcRegs[GX_MAX_TEXCOORD]; // at 0x108 (legacy name)
+        u32 suTs0[GX_MAX_TEXCOORD];
+    };
+    u32 suTs1[GX_MAX_TEXCOORD]; // at 0x128
     u32 scissorTL; // at 0x148
     u32 scissorBR; // at 0x14C
-    char UNK_0x150[0x170 - 0x150];
+    u32 tref[8];   // at 0x150
     u32 ras1_iref; // at 0x170
     u32 ind_imask; // at 0x174
     u32 ras1_ss0;  // at 0x178
     u32 ras1_ss1;  // at 0x17C
-    char UNK_0x180[0x220 - 0x180];
+    u32 tevc[16];  // at 0x180
+    u32 teva[16];  // at 0x1C0
+    u32 tevKsel[8]; // at 0x200
     u32 blendMode; // at 0x220
     u32 dstAlpha;  // at 0x224
     u32 zMode;     // at 0x228
     u32 zControl;  // at 0x22C
-    char UNK_0x230[0x254 - 0x230];
+    u32 cpDispSrc;    // at 0x230
+    u32 cpDispSize;   // at 0x234
+    u32 cpDispStride; // at 0x238
+    u32 cpDisp;       // at 0x23C
+    u32 cpTexSrc;     // at 0x240
+    u32 cpTexSize;    // at 0x244
+    u32 cpTexStride;  // at 0x248
+    u32 cpTex;        // at 0x24C
+    GXBool cpTexZ;    // at 0x250
     u32 genMode; // at 0x254
-    char UNK_0x258[0x520 - 0x258];
+    GXTexRegion TexRegions0[8]; // at 0x258
+    GXTexRegion TexRegions1[8];
+    GXTexRegion TexRegions2[8];
+    GXTlutRegion TlutRegions[20];
+    GXTexRegionCallback texRegionCallback;
+    GXTlutRegionCallback tlutRegionCallback;
     GXAttrType normalType;          // at 0x520
     GXBool normal;                  // at 0x524
     GXBool binormal;                // at 0x525
@@ -10228,7 +10368,11 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5EC - 0x564];
+    u32 tImage0[8];  // at 0x564
+    u32 tMode0[8];   // at 0x584
+    u32 texmapId[16]; // at 0x5A4
+    u32 tcsManEnab;   // at 0x5E4
+    u32 tevTcEnab;    // at 0x5E8
     GXPerf0 perf0; // at 0x5EC
     GXPerf1 perf1; // at 0x5F0
     u32 perfSel;   // at 0x5F4
@@ -10243,6 +10387,11 @@ extern GXData* const __GXData;
 
 // I hate typing this name out
 #define gxdt __GXData
+
+extern const char* __GXVersion;
+
+void __GXInitRevisionBits(void);
+void __GXInitGX(void);
 
 GXFifoObj* GXInit(void*, u32);
 
@@ -10414,83 +10563,6 @@ void GXSetNumTevStages(u8);
 #endif
 /* end "revolution/GX/GXTev.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-#ifndef RVL_SDK_GX_TEXTURE_H
-#define RVL_SDK_GX_TEXTURE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
-GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
-
-GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
-GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
-
-typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
-                                            GXTexMapID map);
-
-typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
-
-void __GXSetSUTexRegs(void);
-
-void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
-                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
-void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
-                    GXTexWrapMode, GXBool, u32);
-void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
-                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
-                     GXBool do_edge_lod, GXAnisotropy max_aniso);
-
-void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
-                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
-                       f32* lodBias, GXBool* biasClampEnable,
-                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
-
-GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
-GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
-
-u16 GXGetTexObjWidth(const GXTexObj* obj);
-u16 GXGetTexObjHeight(const GXTexObj* obj);
-GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
-GXBool GXGetTexObjMipMap(const GXTexObj* obj);
-
-void GXLoadTexObj(const GXTexObj*, GXTexMapID);
-
-void GXInitTexObjTlut(GXTexObj*, u32);
-u32 GXGetTexObjTlut(GXTexObj*);
-
-void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
-
-void GXLoadTlut(GXTlutObj*, u32);
-
-void GXInvalidateTexAll(void);
-
-void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
-                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
-
-void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
-
-GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
-GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
-
-u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
-                       u8 max_lod);
-
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/GX/GXTexture.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
 /* end "revolution/GX/GXTransform.h" */
@@ -13324,6 +13396,103 @@ using ::wcsncpy;
 #endif
 #endif
 /* end "cwchar" */
+/* "libs/RVL_SDK/src/revolution/hbm/include/nw4hbm/ut/ut_TextWriterBase.h" line 11 "cstring" */
+#ifndef MSL_CPP_CSTRING_H
+#define MSL_CPP_CSTRING_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "string.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::__memrchr;
+using ::memchr;
+using ::memcmp;
+using ::memcpy;
+using ::memmove;
+using ::memset;
+using ::strcat;
+using ::strchr;
+using ::strcmp;
+using ::strcpy;
+using ::stricmp;
+using ::strlen;
+using ::strncat;
+using ::strncmp;
+using ::strncpy;
+using ::strstr;
+} // namespace std
+
+#endif
+#endif
+/* end "cstring" */
 
 namespace nw4hbm {
 namespace ut {
@@ -13366,53 +13535,24 @@ public:
     TextWriterBase();
     ~TextWriterBase();
 
-    f32 GetWidthLimit() const {
-        return mWidthLimit;
-    }
-    void SetWidthLimit(f32 limit) {
-        mWidthLimit = limit;
-    }
-    void ResetWidthLimit() {
-        mWidthLimit = NW4R_MATH_FLT_MAX;
-    }
+    f32 GetWidthLimit() const;
+    void SetWidthLimit(f32 limit);
+    void ResetWidthLimit();
 
-    f32 GetCharSpace() const {
-        return mCharSpace;
-    }
-    void SetCharSpace(f32 space) {
-        mCharSpace = space;
-    }
+    f32 GetCharSpace() const;
+    void SetCharSpace(f32 space);
 
-    f32 GetLineSpace() const {
-        return mLineSpace;
-    }
-    void SetLineSpace(f32 space) {
-        mLineSpace = space;
-    }
+    f32 GetLineSpace() const;
+    void SetLineSpace(f32 space);
 
     int GetTabWidth() const;
-    /*
-    int GetTabWidth() const {
-        return mTabWidth;
-    }
-    */
-    void SetTabWidth(int width) {
-        mTabWidth = width;
-    }
+    void SetTabWidth(int width);
 
-    u32 GetDrawFlag() const {
-        return mDrawFlag;
-    }
-    void SetDrawFlag(u32 flag) {
-        mDrawFlag = flag;
-    }
+    u32 GetDrawFlag() const;
+    void SetDrawFlag(u32 flag);
 
-    TagProcessorBase<T>* GetTagProcessor() const {
-        return mTagProcessor;
-    }
-    void SetTagProcessor(TagProcessorBase<T>* pProcessor) {
-        mTagProcessor = pProcessor;
-    }
+    TagProcessorBase<T>* GetTagProcessor() const;
+    void SetTagProcessor(TagProcessorBase<T>* pProcessor);
     void ResetTagProcessor() {
         mTagProcessor = &mDefaultTagProcessor;
     }
@@ -13423,7 +13563,8 @@ public:
     f32 CalcStringWidth(const T* pStr, int len) const;
     void CalcStringRect(Rect* pRect, const T* pStr, int len) const;
 
-    int VSNPrintf(T* buffer, u32 count, const T* pStr, std::va_list args);
+    static int VSNPrintf(T* buffer, u32 count, const T* pStr, std::va_list args);
+    static int StrLen(const T* pStr);
     f32 VPrintf(const T* pStr, std::va_list args);
     f32 Print(const T* pStr, int len);
     f32 PrintMutable(const T* pStr, int len);
@@ -13474,20 +13615,20 @@ private:
 };
 
 template <>
-inline int TextWriterBase<char>::VSNPrintf(char* pBuffer, u32 count,
-                                           const char* pStr,
-                                           std::va_list args) {
-
-    return std::vsnprintf(pBuffer, count, pStr, args);
-}
+int TextWriterBase<char>::VSNPrintf(char* pBuffer, u32 count,
+                                    const char* pStr,
+                                    std::va_list args);
 
 template <>
-inline int TextWriterBase<wchar_t>::VSNPrintf(wchar_t* pBuffer, u32 count,
-                                              const wchar_t* pStr,
-                                              std::va_list args) {
+int TextWriterBase<wchar_t>::VSNPrintf(wchar_t* pBuffer, u32 count,
+                                       const wchar_t* pStr,
+                                       std::va_list args);
 
-    return std::vswprintf(pBuffer, count, pStr, args);
-}
+template <>
+int TextWriterBase<char>::StrLen(const char* pStr);
+
+template <>
+int TextWriterBase<wchar_t>::StrLen(const wchar_t* pStr);
 
 } // namespace ut
 } // namespace nw4hbm
@@ -15706,6 +15847,7 @@ private:
         BIT_VISIBLE,
         BIT_INFLUENCED_ALPHA,
         BIT_LOCATION_ADJUST,
+        BIT_USER_ALLOCATED,
     };
 
     // Need the typedef before the class definition is complete
@@ -15750,10 +15892,10 @@ public:
     virtual void
     SetAnimationEnable(AnimTransform* pAnimTrans, bool enable, bool recursive); // at 0x58
     
-    virtual u8 GetMaterialNum() const; // at 0x5C
-    virtual Material* GetMaterial() const;       // at 0x60
-    virtual Material* GetMaterial(u32 index) const;  // at 0x64
-    virtual void LoadMtx(const DrawInfo& rInfo); // at 0x68
+    u8 GetMaterialNum() const;
+    virtual Material* GetMaterial() const;           // at 0x5C
+    Material* GetMaterial(u32 index) const;
+    virtual void LoadMtx(const DrawInfo& rInfo);     // at 0x60
 
     void AppendChild(Pane* pChild);
     void PrependChild(Pane* pChild);
@@ -15882,7 +16024,7 @@ public:
     void SetUserData(const char* pUserData);
 
     bool IsUserAllocated() const {
-        return mbUserAllocated;
+        return detail::TestBit(mFlag, BIT_USER_ALLOCATED);
     }
 
 protected:
@@ -15904,14 +16046,10 @@ protected:
     u8 mAlpha;        // at 0xB8
     u8 mGlbAlpha;     // at 0xB9
     u8 mBasePosition; // at 0xBA
-    u8 unkBB[0xCF - 0xBB];
     u8 mFlag;         // at 0xBB
 
-    char mName[NW4R_LYT_RES_NAME_LEN + 1];          // at 0xBC
-    char mUserData[NW4R_LYT_PANE_USERDATA_LEN + 1]; // at 0xCD
-
-    bool mbUserAllocated; // at 0xD6
-    u8 mPadding;          // at 0xD7
+    char mName[NW4R_LYT_RES_NAME_LEN];          // at 0xBC
+    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xCD
 
 protected:
     void InsertChild(PaneList::Iterator next, Pane* pChild);
@@ -16802,74 +16940,6 @@ typedef enum {
 /* end "revolution/OS.h" */
 
 /* "libs/RVL_SDK/include/revolution/MEM/mem_heapCommon.h" line 8 "string.h" */
-#ifndef MSL_STRING_H
-#define MSL_STRING_H
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-#ifndef _MSL_STRING_API_H
-#define _MSL_STRING_API_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* __memrchr(const void* src, int val, size_t n);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-#ifndef _EXTRAS_H
-#define _EXTRAS_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int stricmp(const char*, const char*);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
-
-char* strcat(char*, const char*);
-char* strncat(char*, const char*, size_t);
-
-int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, size_t);
-
-char* strchr(const char*, int);
-char* strstr(const char*, const char*);
-
-size_t strlen(const char*);
-
-void* memmove(void*, const void*, size_t);
-int memcmp(const void*, const void*, size_t);
-void* memchr(const void*, int, size_t);
-
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* dest, int val, size_t count);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "string.h" */
 #ifdef __cplusplus
 extern "C" {
@@ -18540,6 +18610,7 @@ public:
     void SetTextureNoWrap(u8 idx, const TexMap& rTexMap) {
         GetTexMapAry()[idx].SetNoWrap(rTexMap);
     }
+    void SetTexture(u8 idx, const GXTexObj& rTexObj);
 
     const TexSRT& GetTexSRT(u32 idx) const {
         return GetTexSRTAry()[idx];
@@ -18631,6 +18702,324 @@ Size GetTextureSize(Material* pMaterial, u8 idx);
 /* end "nw4hbm/lyt/lyt_common.h" */
 /* "libs/RVL_SDK/src/revolution/hbm/include/nw4hbm/lyt/lyt_picture.h" line 5 "nw4hbm/lyt/lyt_pane.h" */
 /* end "nw4hbm/lyt/lyt_pane.h" */
+/* "libs/RVL_SDK/src/revolution/hbm/include/nw4hbm/lyt/lyt_picture.h" line 6 "revolution/GX.h" */
+/**
+ * References: YAGCD, Dolphin Emulator, publicly available patents
+ */
+
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+/* end "revolution/GX/GXFifo.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
+/* end "revolution/GX/GXFrameBuf.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
+/* end "revolution/GX/GXGeometry.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
+/* end "revolution/GX/GXHardwareBP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
+/* end "revolution/GX/GXHardwareCP.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
+/* end "revolution/GX/GXHardwareXF.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
+/* end "revolution/GX/GXInit.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
+/* end "revolution/GX/GXLight.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
+/* end "revolution/GX/GXMisc.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
+/* end "revolution/GX/GXPixel.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
+/* end "revolution/GX/GXTev.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
+/* end "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
+/* end "revolution/GX/GXVert.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX.h" */
+/* "libs/RVL_SDK/src/revolution/hbm/include/nw4hbm/lyt/lyt_picture.h" line 7 "revolution/TPL.h" */
+/**
+ * References: YAGCD, BrawlBox
+ */
+
+#ifndef RVL_SDK_PUBLIC_TPL_H
+#define RVL_SDK_PUBLIC_TPL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/TPL.h" line 10 "revolution/TPL/TPL.h" */
+/* end "revolution/TPL/TPL.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/TPL.h" */
 
 namespace nw4hbm {
 namespace lyt {
@@ -18638,6 +19027,10 @@ namespace lyt {
 // Forward declarations
 struct ResBlockSet;
 class TexMap;
+
+namespace detail {
+void InitGXTexObjFromTPL(GXTexObj* pTexObj, TPLPalette* pPalette, u32 id);
+}
 
 namespace res {
 
@@ -18682,7 +19075,9 @@ public:
     virtual u8 GetVtxColorElement(u32 idx) const;       // at 0x34
     virtual void SetVtxColorElement(u32 idx, u8 value); // at 0x38
 
-    virtual void Append(const TexMap& rTexMap); // at 0x74
+    virtual void Append(TPLPalette* pPalette);   // at 0x64
+    virtual void Append(const GXTexObj& rTexObj); // at 0x68
+    void Append(const TexMap& rTexMap);           // at 0x6C
 
 protected:
     ut::Color mVtxColors[VERTEXCOLOR_MAX]; // at 0xD4
@@ -19403,33 +19798,6 @@ typedef enum {
 /* end "revolution/MTX.h" */
 
 /* "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp" line 7 "cstring" */
-#ifndef MSL_CPP_CSTRING_H
-#define MSL_CPP_CSTRING_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
-/* end "string.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::__memrchr;
-using ::memchr;
-using ::memcmp;
-using ::memcpy;
-using ::memmove;
-using ::memset;
-using ::strcat;
-using ::strchr;
-using ::strcmp;
-using ::strcpy;
-using ::stricmp;
-using ::strlen;
-using ::strncat;
-using ::strncmp;
-using ::strncpy;
-using ::strstr;
-} // namespace std
-
-#endif
-#endif
 /* end "cstring" */
 
 /******************************************************************************
@@ -19513,7 +19881,6 @@ Pane::Pane(const res::Pane* pRes) {
 void Pane::Init() {
     mpParent = NULL;
     mpMaterial = NULL;
-    mbUserAllocated = false;
     mpExtUserDataList = NULL;
 }
 

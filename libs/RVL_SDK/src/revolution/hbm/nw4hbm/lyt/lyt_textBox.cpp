@@ -14,6 +14,15 @@ namespace {
 using namespace nw4hbm;
 using namespace nw4hbm::lyt;
 
+// Forward declarations for local template helpers
+template <typename T>
+int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                     const T* pStr, int len, f32 width, bool* pHasNextLine);
+
+template <typename T>
+void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                        const T* pStr, int len, f32 width);
+
 inline u8 ClampColor(s16 value) {
     return value < 0 ? 0 : (value > 255 ? 255 : value);
 }
@@ -24,6 +33,64 @@ ut::Color GetColor(const GXColorS10& rColor16) {
 
     return ut::Color(color8);
 }
+
+#pragma push
+#pragma auto_inline off
+
+template <typename T>
+int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                     const T* pStr, int len, f32 width, bool* pHasNextLine) {
+    // TODO: full implementation needed for matching
+    *pHasNextLine = false;
+    return len;
+}
+
+template <typename T>
+void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                        const T* pStr, int len, f32 width) {
+    pRect->left = 0.0f;
+    pRect->right = 0.0f;
+    pRect->top = 0.0f;
+    pRect->bottom = 0.0f;
+
+    pWriter->SetCursor(0.0f, 0.0f);
+
+    do {
+        ut::Rect r;
+        bool hasNextLine;
+
+        int consumed =
+            CalcLineRectImpl(&r, pWriter, pStr, len, width, &hasNextLine);
+
+        if (hasNextLine) {
+            CalcLineRectImpl(&r, pWriter, L"\n", 1, width, &hasNextLine);
+        }
+
+        pStr += consumed;
+        len -= consumed;
+
+        if (r.left < pRect->left) {
+            pRect->left = r.left;
+        }
+        if (r.top < pRect->top) {
+            pRect->top = r.top;
+        }
+        if (r.right > pRect->right) {
+            pRect->right = r.right;
+        }
+        if (r.bottom > pRect->bottom) {
+            pRect->bottom = r.bottom;
+        }
+    } while (len > 0);
+}
+
+template int CalcLineRectImpl<wchar_t>(ut::Rect*, ut::TextWriterBase<wchar_t>*,
+                                        const wchar_t*, int, f32, bool*);
+template void CalcStringRectImpl<wchar_t>(ut::Rect*,
+                                           ut::TextWriterBase<wchar_t>*,
+                                           const wchar_t*, int, f32);
+
+#pragma pop
 
 } // namespace
 

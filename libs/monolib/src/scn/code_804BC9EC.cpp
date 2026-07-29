@@ -2,6 +2,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <monolib/scn/code_804BC9EC.hpp>
+
+// Forward declaration — not yet declared in the shared header
+void func_804B7E0C(ScnResData* self);
 
 extern u32 lbl_eu_80665968;
 int func_804BC9EC__Fv(void* self) { return (int)(intptr_t)&lbl_eu_80665968; }

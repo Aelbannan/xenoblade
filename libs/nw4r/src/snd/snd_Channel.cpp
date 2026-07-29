@@ -321,6 +321,11 @@ void Channel::SetSweepParam(f32 pitch, int time, bool autoUpdate) {
     mSweepCounter = 0;
 }
 
+void Channel::SetBiquadFilter(int type, f32 value) {
+    mBiquadFilterType = type;
+    mBiquadFilterValue = value;
+}
+
 f32 Channel::GetSweepValue() const {
     if (mSweepPitch == 0.0f) {
         return 0.0f;
@@ -415,16 +420,3 @@ void Channel::FreeChannel(Channel* pChannel) {
 } // namespace nw4r
 
 void NoteOff__Q44nw4r3snd6detail7ChannelFv(){}
-
-namespace nw4r {
-namespace snd {
-namespace detail {
-
-void Channel::SetBiquadFilter(int type, f32 value) {
-    mBiquadFilterType = type;
-    mBiquadFilterValue = value;
-}
-
-} // namespace detail
-} // namespace snd
-} // namespace nw4r

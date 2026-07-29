@@ -264,8 +264,8 @@ void InitGXTexObjFromTPL(GXTexObj* pTexObj, TPLPalette* pTpl, u32 idx) {
     pHeader = pDesc->textureHeader;
     f32 minLod = static_cast<f32>(pHeader->minLOD);
     GXTexFilter minFilt = pHeader->minFilter;
-    f32 maxLod = static_cast<f32>(pHeader->maxLOD);
     GXTexFilter magFilt = pHeader->magFilter;
+    f32 maxLod = static_cast<f32>(pHeader->maxLOD);
     f32 lodBias = pHeader->LODBias;
     GXBool edgeLOD = pHeader->edgeLODEnable;
 

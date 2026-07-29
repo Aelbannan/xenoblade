@@ -2101,15 +2101,18 @@ void func_801C56D8() { }
 
 // Search for a matching short id in an array, return 1 if found.
 int func_801C51BC(void* obj, u32 id) {
-    u16 count = *(u16*)((u8*)obj + 0x804);
-    u16 i = 0;
+    u16 count;
+    u16 i;
+    u16 val;
+    count = *(u16*)((u8*)obj + 0x804);
+    i = 0;
     goto check;
-    do {
-        u16 v = *(u16*)((u8*)obj + 4 + i * 2);
-        if (v == (u16)id) return 1;
-        i++;
-    check:;
-    } while (i < count);
+loop:
+    val = *(u16*)((u8*)obj + (i * 2 + 4));
+    if (val == (u16)id) return 1;
+    i++;
+check:
+    if (i < count) goto loop;
     return 0;
 }
 

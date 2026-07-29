@@ -39,6 +39,12 @@ void CVS_THREAD::func_802A3B50(){
 
 }
 
+// ── func_802A3BEC (vmethod[1]) ────────────────────────────────────────────
+// Checks whether the active voice handle at unk10 matches voicePtr.
+// If so, stops the voice via func_800BE924 and clears both unk10
+// and unk14.  The redundant inner voice != 0 guard mirrors the
+// retail MWCC codegen pattern for the && short-circuit.
+
 void CVS_THREAD::func_802A3BEC(CCharVoice* voicePtr) {
     u32 voice = unk10;
     if (voice != 0 && voice == (unsigned int)voicePtr) {
@@ -56,6 +62,10 @@ void func_802A3C44(){
 
 void func_802A3D54(){
 }
+
+// ── func_802A3E28 ─────────────────────────────────────────────────────────
+// Stops any active voice at unk10, then clears unk10 to 0 and sets
+// unk14 to -1 unconditionally.
 
 void CVS_THREAD::func_802A3E28() {
     if (unk10 != 0) {

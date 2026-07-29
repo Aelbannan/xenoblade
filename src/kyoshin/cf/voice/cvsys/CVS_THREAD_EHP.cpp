@@ -87,13 +87,12 @@ void func_802A658C(CVS_THREAD_EHP* self) {
     // (larger block) is the if-body and the vtable call is the else-body.
     if (self->field_0x38 != self->field_0x40) {
         // Reload slot-state triple {unk0, unk4, unk8} from init table.
-        // Retail interleaves loads/stores: load [0] (lwzu), load [1],
-        // store [1], store [0], load [2], store [2].
-        // Accessing the global directly (no intermediate pointer) lets
-        // MWCC form the base with lis+lwzu for the first element.
-        u32 v0 = lbl_eu_80539B14[0];
+        // Retail loads [0] with lwzu (forming the base address),
+        // then loads [1], stores [1], stores [0], loads [2], stores [2].
+        // Using *array (pointer deref) for the first element often
+        // triggers MWCC's lis+lwzu global-access pattern.
         self->unk4 = lbl_eu_80539B14[1];
-        self->unk0 = (u32*)v0;
+        self->unk0 = (u32*)*lbl_eu_80539B14;
         self->unk8 = lbl_eu_80539B14[2];
     } else {
         self->func_802A3B50();

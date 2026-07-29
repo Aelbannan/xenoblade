@@ -2,9 +2,6 @@
 
 #include "kyoshin/CUICfManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
-
-extern "C" void func_80139A18();
-
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceFont.hpp"
@@ -18,6 +15,14 @@ extern "C" void func_80139A18();
 
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+void func_80139A18();
+#ifdef __cplusplus
+}
+#endif
 
 bool CTitleAHelp_isPaneVisible(const void*);
 void CTitleAHelp_setGXColor(GXColorS10*, s16, s16, s16, s16);

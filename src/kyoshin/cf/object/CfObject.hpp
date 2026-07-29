@@ -95,7 +95,7 @@ namespace cf {
         u8 field_0x28[0x10];
         void* mSubObj38;          // 0x38-0x3B
         u8 _pad3C[0x4C - 0x3C];   // 0x3C-0x4B
-        u32 mField4C;             // 0x4C-0x4F (also read as float)
+        float mField4C;           // 0x4C-0x4F
         u8 _pad50[0x54 - 0x50];   // 0x50-0x53
         CfObjectSub54 mSubObj54;     // 0x54-0x5F
         float mFloat60;            // 0x60-0x63

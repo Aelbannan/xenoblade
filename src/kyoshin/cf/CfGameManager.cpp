@@ -12,6 +12,7 @@
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/scn/CScn.hpp"
+#include <string.h>
 
 // destructor defined inline in CfGameManager.hpp
 // Manually-named destructor wrapper for __dt__Q22cf13CfGameManagerFv
@@ -112,8 +113,7 @@ void* __register_global_object(void* object, void* destructor, void* registratio
 void func_80189424(float value);
 }
 
-class ResourceHandle;
-extern "C" ResourceHandle* func_8009CF8C(u32 resourceId);
+extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void func_8009D790(CfGameManagerData1C* data);
 extern "C" void func_800B9340();
 extern "C" void func_800B9364();
@@ -143,9 +143,11 @@ extern "C" u32 func_8007DCA8__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     return (first << 27) | (second << 20);
 }
 
+#pragma dont_inline on
 extern "C" void func_8007E4CC__Q22cf13CfGameManagerFv(u32 mask) {
     lbl_eu_80663E24 &= ~mask;
 }
+#pragma dont_inline reset
 
 extern "C" u16 func_8007EEE0__Q22cf13CfGameManagerFv(const UnkEEE0Data* data, u16 index) {
     return data->entries_0x2[index];
@@ -197,6 +199,8 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
         *value = maximum;
     }
 }
+
+#include "kyoshin/cf/CfGameManagerUnityHelpers.hpp"
 
 namespace cf {
 
@@ -306,7 +310,17 @@ void cf::CfGameManager::func_8007D190(unsigned long flags) {}
 
 void cf::CfGameManager::func_8007D794() {}
 
-bool cf::CfGameManager::func_8007E1B4() { return false; }
+#pragma dont_inline on
+bool cf::CfGameManager::func_8007E1B4() {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    return (lbl_eu_80663E24 & 0x10000) != 0;
+}
+#pragma dont_inline reset
 void cf::CfGameManager::func_8007E218() {}
 void cf::CfGameManager::func_8007F930(bool arg1) {}
 #pragma dont_inline on
@@ -535,7 +549,7 @@ bool cf::CfGameManager::func_80082104() {
     return func_80079DBC(getInstance()->unkB4);
 }
 
-u32 cf::CfGameManager::func_800821F8() {
+UnkClass_800821F8* cf::CfGameManager::func_800821F8() {
     return getInstance()->unkB0;
 }
 
@@ -590,7 +604,7 @@ void cf::CfGameManager::func_80083CC8() {
 }
 
 bool cf::CfGameManager::func_80087250() {
-    return func_8009CF8C(0x3508) != nullptr;
+    return func_8009CF8C(0x3508) != 0;
 }
 
 void cf::CfGameManager::func_8007C4B4() {}
@@ -638,7 +652,6 @@ void cf::CfGameManager::func_80080E28() {}
 extern "C" u32 lbl_eu_8065FC18[];
 void cf::CfGameManager::func_8007DA00() {}
 
-extern "C" void func_800B985C();
 void cf::CfGameManager::func_80080F40() {}
 
 void cf::CfGameManager::func_80080F44() {}
@@ -715,27 +728,22 @@ void cf::CfGameManager::func_8007F9B4() {}
 
 void cf::CfGameManager::func_80081264() {}
 
-extern "C" void func_8009E120(u32, u32);
 void cf::CfGameManager::func_8008126C() {}
 
 void cf::CfGameManager::func_80081274() {}
 
-extern "C" void func_8009E120(u32, u32);
 void cf::CfGameManager::func_8008127C() {}
 
 void cf::CfGameManager::func_80081284() {}
 
-extern "C" void func_8009E120(u32, u32);
 void cf::CfGameManager::func_8008128C() {}
 
 void cf::CfGameManager::func_80081294() {}
 
-extern "C" void func_8009E120(u32, u32);
 void cf::CfGameManager::func_8008129C() {}
 
 void cf::CfGameManager::func_800812A4() {}
 
-extern "C" void func_8009E120(u32, u32);
 void cf::CfGameManager::func_800812AC() {}
 
 void cf::CfGameManager::func_800812B4() {}
@@ -748,7 +756,6 @@ void cf::CfGameManager::func_800812CC() {}
 
 void cf::CfGameManager::func_800812D4() {}
 
-extern "C" void func_8009E120(u32, u32);
 void cf::CfGameManager::func_800812DC() {}
 
 void cf::CfGameManager::func_800812E4() {}
@@ -777,11 +784,9 @@ void cf::CfGameManager::func_80081CB0() {}
 
 UNKWORD cf::CfGameManager::func_800822F4() { return 0; }
 
-void cf::CfGameManager::func_80082354() {}
 void cf::CfGameManager::func_80082614() {}
 void cf::CfGameManager::func_80082694() {}
 
-void cf::CfGameManager::func_80082768() {}
 
 void cf::CfGameManager::func_80083290() {}
 
@@ -813,7 +818,6 @@ void cf::CfGameManager::func_8007F8D0() {}
 void cf::CfGameManager::func_8007F8F4() {}
 
 extern void __fill_mem(void*, int, int);
-void cf::CfGameManager::func_80081258() {}
 
 extern u32 lbl_eu_80663E24;
 void cf::CfGameManager::func_800817B0() {}

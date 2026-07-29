@@ -7,6 +7,7 @@ class CScnNw4r;
 class CView;
 class UnkClass_80186D20;
 class CfCamEventManager;
+class UnkClass_800821F8;
 class CSysWinBuff;
 
 struct CfGameManagerData1C {
@@ -128,7 +129,7 @@ namespace cf{
         UnkClass_80186D20* field_0xA4;
         u32 unkA8;
         u32 unkAC;
-        u32 unkB0;
+        UnkClass_800821F8* unkB0;
         CfCamEventManager* unkB4;
 
         static u32 sUnkFlags;
@@ -281,7 +282,7 @@ public:
     void func_80082088();
     bool func_80082104();
     void func_8008212C();
-    u32 func_800821F8();
+    UnkClass_800821F8* func_800821F8();
     CfObject* func_8008221C();
     void func_80082254();
     void func_80082258();

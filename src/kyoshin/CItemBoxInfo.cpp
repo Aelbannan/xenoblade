@@ -316,13 +316,11 @@ void func_801D5564(void* out, void* unused, void* data, void* arg3) {
     u16 v1 = func_801392E4(data);
     u16 v2 = func_80139358((u32)data);
     void* inst = CItem_initItemImplInstances(arg3);
-    void** vt = *(void***)inst;
-    u8 r = ((u8(*)(void*, void*))vt[2])(inst, arg3);
+    u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, arg3);
     func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
     char* s1 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
     char* s2 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0);
     void* inst2 = CItem_initItemImplInstances(arg3);
-    void** vt2 = *(void***)inst2;
     for (u32 i = 0; i < 3; i++) {
         char buf[0x20];
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i);
@@ -382,21 +380,18 @@ void func_801D5C38(void* out, void* unused, void* data, void* arg3) {
     u16 v1 = func_801392E4(data);
     u16 v2 = func_80139358((u32)data);
     void* inst = CItem_initItemImplInstances(arg3);
-    void** vt = *(void***)inst;
-    u8 r = ((u8(*)(void*, void*))vt[2])(inst, arg3);
+    u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, arg3);
     char* s = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
     ((u32*)out)[0] = (u32)s;
     ((u8*)out)[4] = 0;
     for (int i = 0; i < 3; i++) {
         void* inst2 = CItem_initItemImplInstances(arg3);
-        void** vt2 = *(void***)inst2;
-        u16 count = ((u16(*)(void*, void*, u32))vt2[19])(inst2, arg3, i);
+        u16 count = ((u16(*)(void*, void*, u32))(*(void***)inst2)[19])(inst2, arg3, i);
         if (count <= 0) continue;
         char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
         ((u32*)((u8*)out + 8))[i] = (u32)t;
         void* inst3 = CItem_initItemImplInstances(arg3);
-        void** vt3 = *(void***)inst3;
-        u8 val = ((u8(*)(void*, void*, u32))vt3[25])(inst3, arg3, i);
+        u8 val = ((u8(*)(void*, void*, u32))(*(void***)inst3)[25])(inst3, arg3, i);
         ((u8*)out)[i + 0x1C] = val;
     }
 }
@@ -844,8 +839,7 @@ void func_801DFFB8(void* a, void* b, void* c, void* d) {
         void* r = func_80157C4C(val);
         if (r != NULL && *(u32*)r != 0) {
             void* inst = CItem_initItemImplInstances(r);
-            void** vt = *(void***)inst;
-            ((void(*)(void*, void*))vt[2])(inst, r);
+            ((void(*)(void*, void*))(*(void***)inst)[2])(inst, r);
         }
     }
 }
@@ -1024,10 +1018,9 @@ void func_801E174C(void* arg0, CItemBoxInfo2* info, u32 arg2) {
     char buf[0x20];
     sprintf(buf, (char*)&lbl_eu_805063BC[0x161], arg2 + 1);
     void* layout = info->state.layout;
-    void* child = *(void**)((u8*)layout + 0x10);
-    void** vtable = *(void***)child;
-    void* r1 = ((void*(*)(void*, const char*, u32))vtable[15])(child, (char*)&lbl_eu_805063BC[0x16e], 1);
-    void* r2 = ((void*(*)(void*, const char*, u32))vtable[15])(child, buf, 1);
+    nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10);
+    void* r1 = child->FindPaneByName((char*)&lbl_eu_805063BC[0x16e], true);
+    void* r2 = child->FindPaneByName(buf, true);
     func_80137924(arg0, r2, r1, child);
 }
 
@@ -1048,10 +1041,8 @@ void func_801E1868(CItemBoxInfo2* info) {
 
 void func_801E18B4(CItemBoxInfo2* info) {
     if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
-        void* layout = info->state.layout;
-        void** vtable = *(void***)layout;
-        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform2, 0);
-        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform1, 1);
+        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
+        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
         info->state.state = 5;
     }
 }
@@ -1132,13 +1123,11 @@ void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
     u16 v1 = func_801392E4(data);
     u16 v2 = func_80139358((u32)data);
     void* inst = CItem_initItemImplInstances(arg3);
-    void** vt = *(void***)inst;
-    u8 r = ((u8(*)(void*, void*))vt[2])(inst, arg3);
+    u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, arg3);
     func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
     char* s1 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
     char* s2 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0);
     void* inst2 = CItem_initItemImplInstances(arg3);
-    void** vt2 = *(void***)inst2;
     for (u32 i = 0; i < 3; i++) {
         char buf[0x20];
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i);
@@ -1200,21 +1189,18 @@ void func_801E27D0(void* out, void* arg2) {
     u16 v1 = func_801392E4(arg2);
     u16 v2 = func_80139358((u32)arg2);
     void* inst = CItem_initItemImplInstances(arg2);
-    void** vt = *(void***)inst;
-    u8 r = ((u8(*)(void*, void*))vt[2])(inst, arg2);
+    u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, arg2);
     char* s = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
     ((u32*)out)[0] = 0;
     ((u8*)out)[4] = 0;
     for (u32 i = 0; i < 3; i++) {
         void* inst2 = CItem_initItemImplInstances(arg2);
-        void** vt2 = *(void***)inst2;
-        u16 count = ((u16(*)(void*, void*, u32))vt2[19])(inst2, arg2, i);
+        u16 count = ((u16(*)(void*, void*, u32))(*(void***)inst2)[19])(inst2, arg2, i);
         if (count == 0) continue;
         char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
         ((u32*)((u8*)out + 8))[i * 4] = (u32)t;
         void* inst3 = CItem_initItemImplInstances(arg2);
-        void** vt3 = *(void***)inst3;
-        u8 val = ((u8(*)(void*, void*, u32))vt3[25])(inst3, arg2, i);
+        u8 val = ((u8(*)(void*, void*, u32))(*(void***)inst3)[25])(inst3, arg2, i);
         ((u8*)out)[i + 0x1C] = val;
     }
 }
@@ -1343,9 +1329,7 @@ void func_801E3DE4(CItemBoxInfo2* info) {
         int index = i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
         void* layout = *(void**)((u8*)info + 0x34);
-        void* child = *(void**)((u8*)layout + 0x10);
-        void** vtable = *(void***)child;
-        void* r = ((void*(*)(void*, const char*, u32))vtable[15])(child, buf, 1);
+        void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10))->FindPaneByName(buf, true);
         func_80124270(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
         func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);

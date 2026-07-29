@@ -137,6 +137,16 @@ void func_8024F55C(void* self) {
 }
 
 extern "C" char lbl_eu_8050BEA8[];
+extern u32 lbl_eu_8066479C;
+extern u32 func_8003B1EC(u32);
+
+extern u32 lbl_eu_80664184;
+extern u8 lbl_eu_80664798;
+extern u16 lbl_eu_8050B798[];
+extern f64 lbl_eu_80668770;
+extern void* getPlayer__Q22cf13CfGameManagerFi(int);
+extern s16 func_80136330(u32, const char*, u32);
+extern void func_80141DC4(f32*);
 
 typedef void* (*VFuncPtr)(void*, const char*, u32);
 
@@ -150,8 +160,6 @@ void func_8024F5C4(void* self, u32 arg2) {
 }
 
 unsigned char func_8024F630(void) {
-    extern unsigned int lbl_eu_8066479C;
-    extern int func_8003B1EC(unsigned int);
     return (unsigned char)func_8003B1EC(lbl_eu_8066479C);
 }
 
@@ -205,7 +213,32 @@ u32 func_8024F784(void* self) {
 
 void func_8024F7CC(){}
 
-void func_8024FB78(){}
+u32 func_8024FB78() {
+    volatile f64 magic = lbl_eu_80668770;
+    if ((lbl_eu_80664184 & 0xFF) == lbl_eu_80664798) {
+        if (!lbl_eu_8066479C) return 0;
+        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+        if (!player) return 0;
+        u32 count = func_8003B1EC(lbl_eu_8066479C);
+        for (u32 i = 1; i <= count; i++) {
+            s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+            f32* pos = (f32*)((void*(*)(void*))(*(void***)player)[0xAC])(player);
+            if ((f32)(s32)val > pos[1]) return i;
+        }
+    } else {
+        if (!lbl_eu_8066479C) return 0;
+        u16 threshold = lbl_eu_8050B798[lbl_eu_80664798];
+        if (!threshold) return 0;
+        f32 buf[3];
+        func_80141DC4(buf);
+        u32 count = func_8003B1EC(lbl_eu_8066479C);
+        for (u32 i = 1; i <= count; i++) {
+            s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+            if ((f32)(s32)val > buf[1]) return i;
+        }
+    }
+    return 0;
+}
 
 void CFloorMap::OnFileEvent() const {}
 

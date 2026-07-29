@@ -481,8 +481,9 @@ extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
 extern "C" void func_80086490__Q22cf13CfGameManagerFv() {
     lbl_eu_80663E24 &= ~0x2000000;
     func_800B06C8();
+    u32 enabledFlags;
     CPad* pad = lbl_eu_80663E0C;
-    u32 enabledFlags = lbl_eu_80663DF8 & ~0x600230;
+    enabledFlags = lbl_eu_80663DF8 & ~0x600230;
     lbl_eu_80663DF8 = enabledFlags;
     if (pad != nullptr) {
         pad->mPressedButtonFlags &= enabledFlags;
@@ -891,8 +892,10 @@ extern "C" BdatTextEntry* func_80083CD8__Q22cf13CfGameManagerFv(
     strcpy(destination->text, source->text);
     destination->secondaryTextLength = strlen(source->secondaryText);
     strcpy(destination->secondaryText, source->secondaryText);
-    destination->value = source->value;
-    destination->enabled = source->enabled;
+    volatile float* destinationValue = &destination->value;
+    const volatile u8* sourceEnabled = &source->enabled;
+    *destinationValue = source->value;
+    destination->enabled = *sourceEnabled;
     return destination;
 }
 
@@ -1527,9 +1530,42 @@ extern "C" cf::UnkClass_80082D90* func_80082D90__Q22cf13CfGameManagerFv() {
 }
 #pragma dont_inline reset
 
+extern "C" u8 lbl_eu_8052A558[];
 extern "C" u8 lbl_eu_8052A7E8[];
 extern "C" u8 lbl_eu_8052FE68[];
 extern "C" void __ct__CCharEffect(void* effect);
+#pragma dont_inline on
+extern "C" Unk80338Object* __ct__80080254(Unk80338Object* self) {
+    Unk80338Object* result = self;
+    u32 zero = 0;
+    self->field_0x4 = zero;
+    self->field_0x8 = zero;
+    self->vtable_0x0 = lbl_eu_8052AC98;
+    self->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    self->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    self->field_0x14 = zero;
+    self->field_0x18 = zero;
+    self->field_0x1C = zero;
+    __ct__CCharVoice(&self->voice_0x28);
+    result->vtable_0x0 = lbl_eu_8052A7E8;
+    result->vtable_0xC = &lbl_eu_8052A7E8[0xB4];
+    result->vtable_0x10 = &lbl_eu_8052A7E8[0xC4];
+    UnkCharEffect304* effect = &result->effect_0x68;
+    __ct__CCharEffect(effect);
+    result->field_0x36C = zero;
+    effect->vtable_0x0 = lbl_eu_8052FE68;
+    result->field_0x370 = zero;
+    result->field_0x374 = zero;
+    effect->field_0x300 = zero;
+    result->field_0x378 = zero;
+    result->field_0x37C = zero;
+    result->vtable_0x0 = lbl_eu_8052A558;
+    result->vtable_0xC = &lbl_eu_8052A558[0xB4];
+    result->vtable_0x10 = &lbl_eu_8052A558[0xC4];
+    return result;
+}
+#pragma dont_inline reset
+
 #pragma dont_inline on
 extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
     Unk80338Object* result = self;
@@ -2266,7 +2302,8 @@ extern "C" u32 func_80084C10__Q22cf13CfGameManagerFv() {
         lbl_eu_80663E70 = 1;
     }
     cf::CfGameManager* manager = &lbl_eu_80571758;
-    if (lbl_eu_80663E24 & 0x40) {
+    u32 checkFlags = lbl_eu_80663E24;
+    if (checkFlags & 0x40) {
         func_80068D14();
         func_800B4278(func_800B07E8__Fv(), 0x10000000);
         u32 flags = lbl_eu_80663E24;

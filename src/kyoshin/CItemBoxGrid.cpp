@@ -33,9 +33,9 @@ extern u32 getItemBoxState__FP12CItemBoxInfo(void*);
 extern u32 func_801EB018(void*);
 extern u32 func_8022D08C(void*);
 extern u32 CSysWin_isReady(void*);
-extern "C" void* __dt__13CArtsBookItemFv(void* self, int mode);
-extern "C" void* __dt__11CVisionItemFv(void* self, int mode);
-extern "C" void* __dt__10CQuestItemFv(void* self, int mode);
+void* __dt__13CArtsBookItemFv(void* self, int mode);
+void* __dt__11CVisionItemFv(void* self, int mode);
+void* __dt__10CQuestItemFv(void* self, int mode);
 extern u32 func_801EB020(void*);
 extern u32 func_80208358(void*);
 extern u32 func_8022D094(void*);
@@ -170,10 +170,10 @@ extern "C" void func_801C562C(void*, char*);
 extern "C" u8 func_801C67F8(CItemBoxGridFull* self);
 extern "C" u8 func_801C6840(CItemBoxGridFull* self);
 
-extern "C" u8 GetField61(void* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_61; }
+u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(self)->field_61; }
 
 // Constructor for sub-item grid.
-extern "C" void* __ct__801C5514(void* self) {
+void* __ct__801C5514(void* self) {
     u8* p = (u8*)self;
     u32 i;
     // Initialize entry array
@@ -242,7 +242,7 @@ void func_801C562C(void* dst, void* src) {
 }
 
 // Destructor for the main grid container.
-extern "C" void* __dt__801C5670(void* self, int mode) {
+void* __dt__801C5670(void* self, int mode) {
     u8* p = (u8*)self;
     if (!self) return self;
     lbl_eu_80664514 = 0;
@@ -321,8 +321,7 @@ extern "C" long func_801C6158(double f) {
 extern "C" void func_801C618C() { }
 
 // Lookup entry, check category; return word >> 20 or 0.
-extern "C" u32 func_801C62AC(void* self, u32 idx) {
-    CItemBoxGridFull* s = (CItemBoxGridFull*)self;
+u32 func_801C62AC(CItemBoxGridFull* self, u16 idx) {
     s8 base = (s8)s->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
     if (offset >= s->field_2800) return 0;
@@ -333,7 +332,7 @@ extern "C" u32 func_801C62AC(void* self, u32 idx) {
 }
 
 // Lookup entry, check category; return obj ptr or 0.
-extern "C" void* func_801C631C(void* self, u32 idx) {
+void* func_801C631C(CItemBoxGridFull* self, u16 idx) {
     s8 base = (s8)self->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
     if (offset >= self->field_2800) return 0;
@@ -488,8 +487,8 @@ extern "C" void func_801C6770(CItemBoxGridFull* self, u16 idx) {
 }
 
 // Count entries with non-zero byte at offset 8 in a 10-byte stride array.
-extern "C" u8 func_801C67F8(void* self) {
-    u16 count = ((CItemBoxGridFull*)self)->field_2800;
+u8 func_801C67F8(CItemBoxGridFull* self) {
+    u16 count = self->field_2800;
     u16 i;
     u16 result = 0;
     for (i = 0; i < count; i++) {
@@ -1323,9 +1322,9 @@ extern "C" u32 func_801CA110(void* self, void* entry) {
     return 0;
 }
 
-extern "C" void __ct__CItemBoxGrid() { }
+void __ct__CItemBoxGrid() { }
 
-extern "C" void __dt__12CItemBoxGridFv() { }
+void __dt__12CItemBoxGridFv() { }
 
 extern "C" void func_801CAA6C() { }
 
@@ -1366,7 +1365,7 @@ extern "C" u8 func_801CB184(void* self) {
     return ((u8*)self)[0x542];
 }
 
-extern "C" u8 GetField549(void* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_549; }
+u8 CItemBoxGrid::GetField549() { return reinterpret_cast<CItemBoxGridFull*>(self)->field_549; }
 
 // Check if any sub-system is active.
 extern "C" u32 func_801CB1E4(void* self) {
@@ -1435,7 +1434,7 @@ extern "C" void func_801CB480(void* self) {
     p[0x6f] = 0;
 }
 
-extern "C" void PushToList(void* self, unsigned char val) {
+void CItemBoxGrid::PushToList(, unsigned char val) {
     unsigned char count = reinterpret_cast<unsigned char*>(this)[0x6e];
     if (count >= 0xc) {
         return;
@@ -1569,7 +1568,7 @@ extern "C" u8 func_801CDBE0(void* self) {
     return ((u8*)self)[0x52c];
 }
 
-extern "C" u8 GetField52D(void* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_52D; }
+u8 CItemBoxGrid::GetField52D() { return reinterpret_cast<CItemBoxGridFull*>(self)->field_52D; }
 
 extern "C" void func_801CDC40() { }
 
@@ -1868,21 +1867,21 @@ extern "C" void func_801D1F9C(short* dst, unsigned long val) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CArtsBookItem constructor
-extern "C" void __ct__CArtsBookItem(void* self) {
+void __ct__CArtsBookItem(void* self) {
     u8* vtable;
     // vtable setup
     *(u16*)((u8*)self + 0x804) = 0;
 }
 // Standard MWCC virtual destructor
-extern "C" void* __dt__10CQuestItemFv(void* self, int mode) {
+void* __dt__10CQuestItemFv(void* self, int mode) {
     if (self && mode > 0) __dl__FPv(self);
     return self;
 }
-extern "C" void* __dt__11CVisionItemFv(void* self, int mode) {
+void* __dt__11CVisionItemFv(void* self, int mode) {
     if (self && mode > 0) __dl__FPv(self);
     return self;
 }
-extern "C" void* __dt__13CArtsBookItemFv(void* self, int mode) {
+void* __dt__13CArtsBookItemFv(void* self, int mode) {
     if (self && mode > 0) __dl__FPv(self);
     return self;
 }

@@ -40,6 +40,8 @@ extern void* lbl_eu_806645B0;
 void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
 void func_801D8B08(CItemBoxInfo*);
 void func_801D85D8(CItemBoxInfo*);
+void func_801D8930(CItemBoxInfo*);
+void func_801D5AA0(CItemBoxInfo*, u16, void*);
 void func_801E3918(CItemBoxInfo2*);
 void func_80137B44(nw4r::lyt::Layout*, const char*, u32);
 void func_801D62F8(void*, u32, const void*);
@@ -421,7 +423,29 @@ void CItemBoxInfo::setItemBoxIndex(unsigned char index, short value) {
     state.values[index] = value;
 }
 
-void func_801D77BC(){}
+void func_801D77BC(CItemBoxInfo* info) {
+    func_801D8930(info);
+    func_801D85D8(info);
+    u32 buf[2];
+    func_801D5AA0(info, 0, (void*)0);
+    void* layout = info->state.layout;
+    char* base = (char*)&lbl_eu_805063BC;
+    char tmp[0x20];
+    u32 max = func_801392C0();
+    for (u32 i = 0; i < max; i++) {
+        sprintf(tmp, base + 0x303, i + 1);
+        func_80136B4C((nw4r::lyt::Layout*)layout, tmp, base + 0x2aa, 0);
+        func_80137B44((nw4r::lyt::Layout*)layout, tmp, 0x777777ff);
+        void* child = *(void**)((u8*)layout + 0x10);
+        void** vt = *(void***)child;
+        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, tmp, 1);
+        if (pane != NULL) {
+            for (u32 j = 0; j < 2; j++) {
+                func_801D62F8((u8*)pane + 0x10, j, tmp);
+            }
+        }
+    }
+}
 void func_801D79F8(){}
 void func_801D8058(CItemBoxInfo* info, u16 arg2) {
     func_801D8B08(info);
@@ -639,7 +663,19 @@ u32 func_801DFE48(void* global, u16 arg2, void* arg3) {
     }
     return result;
 }
-void func_801DFFB8(){}
+void func_801DFFB8(void* a, void* b, void* c, void* d) {
+    void* lookup = func_8009EC9C(0);
+    for (int i = 0; i < 12; i++) {
+        s16 val = *(s16*)((u8*)lookup + 0x26 + i * 2);
+        if (val == -1) continue;
+        void* r = func_80157C4C(val);
+        if (r != NULL && *(u32*)r != 0) {
+            void* inst = CItem_initItemImplInstances(r);
+            void** vt = *(void***)inst;
+            ((void(*)(void*, void*))vt[2])(inst, r);
+        }
+    }
+}
 
 bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
     return false;

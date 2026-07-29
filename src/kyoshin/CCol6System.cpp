@@ -2,8 +2,6 @@
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
 #include "kyoshin/CCol6CheckBat.hpp"
-#include "kyoshin/CCol6Invite.hpp"
-#include "kyoshin/CCol6System.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 // Singleton instance (retail: lbl_eu_80664230).

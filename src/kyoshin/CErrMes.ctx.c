@@ -1295,27 +1295,24 @@ extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 
 void func_eu_802B14F8(){}
 
-// Forward declaration: bdat file pointer type used in getBdatStringColumnValue
 class BdatFilePointer;
-const char* getBdatStringColumnValue(BdatFilePointer*, const char*, int);
 extern BdatFilePointer* lbl_eu_80664BF8;
 extern u8 lbl_eu_80513420[];
-
 extern "C" void func_eu_802B133C() {
-    getBdatStringColumnValue(lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
+    CBdat::getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
 }
 
-// Tail-calls getBdatStringColumnValue with index=3
-void func_eu_802B136C() {
-    getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 3);
+// Tail-calls getBdatStringColumnValue with index=6
+void func_eu_802B13B4() {
+    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 6);
 }
 
-// Tail-calls getBdatStringColumnValue with index=4
-void func_eu_802B1384() {
-    getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 4);
+// Tail-calls getBdatStringColumnValue with index=7
+void func_eu_802B13CC() {
+    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 7);
 }
 
-// Tail-calls getBdatStringColumnValue with index=5
-void func_eu_802B139C() {
-    getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 5);
+// Tail-calls getBdatStringColumnValue with index=8
+void func_eu_802B13E4() {
+    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 8);
 }

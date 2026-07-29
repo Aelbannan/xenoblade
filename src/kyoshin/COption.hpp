@@ -10,7 +10,12 @@ class CCur19 : public CBaseCur {
 public:
     CCur19(nw4r::lyt::ArcResourceAccessor* arcResAcc);
 
-    // TODO: add fields
+    // CBaseCur: 0x00-0x15
+    u8 _16[0x20 - 0x16];                         // +0x16
+    nw4r::lyt::AnimTransform* mpAnimTrans2;      // +0x20
+    nw4r::lyt::AnimTransform* mpAnimTrans3;      // +0x24
+    u8 _28;                                       // +0x28
+    u8 mState;                                    // +0x29
 };
 
 // Full object layout for COption (used by C-linkage accessors)

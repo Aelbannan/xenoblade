@@ -20,19 +20,18 @@ u32 func_800FEDF8(void) {
 
 
 
-struct UnkData_8052BDF4 {
-    u32 word0;
-    u32 word1;
-    u32 word2;
-};
-extern UnkData_8052BDF4 lbl_eu_8052BDF4;
+extern u32 lbl_eu_8052BDF4[];
 
+// Copies 3 words from static data lbl_eu_8052BDF4 to fields at 0x3C/0x40/0x44,
+// guarded by field_0x74 to ensure one-shot initialization.
 extern "C" void func_800FEF20(CMainMenu* self) {
-    if (self->field_0x74 == 0) {
-        self->field_0x40 = lbl_eu_8052BDF4.word1;
-        self->field_0x3C = lbl_eu_8052BDF4.word0;
-        self->field_0x44 = lbl_eu_8052BDF4.word2;
+    if (self->field_0x74 != 0) {
+        return;
     }
+    u32 v0 = lbl_eu_8052BDF4[0];
+    self->field_0x40 = lbl_eu_8052BDF4[1];
+    self->field_0x3C = v0;
+    self->field_0x44 = lbl_eu_8052BDF4[2];
 }
 
 void func_800FEF4C(){}
@@ -43,9 +42,20 @@ void CMainMenu::cbRenderBefore() {}
 
 void func_800FF6BC(){}
 
-void func_800FF738(){}
+extern u32 lbl_eu_80663F18;
 
-void CMainMenu::func_800FF778() {}
+extern "C" u32 func_800FF738(CMainMenu* self) {
+    if (self->func_800FF778() != 0) {
+        return 1;
+    }
+    return lbl_eu_80663F18 != 0 ? 1 : 0;
+}
+
+int CMainMenu::func_800FF778() {
+    // TODO: decompile
+    volatile int ret = 0;
+    return ret;
+}
 
 void func_800FF8B0(){}
 

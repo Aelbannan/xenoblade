@@ -44,9 +44,22 @@ extern "C" void func_8022D1F8(CExchangeWinFull* self) {
     }
 }
 
-void func_8022D244(){}
+extern "C" void func_8022D244(CExchangeWinFull* self) {
+    float f = lbl_eu_80668610;
+    u32 r = func_80137510(self->mAnimTransform, f);
+    if (r) {
+        self->_26 = 0;
+        self->field_27 = 1;
+        self->field_24 = 0;
+    }
+}
 
 void CExchangeWin::OnFileEvent() {}
+
+CExchangeWin::~CExchangeWin() {
+    // mMemRegion destructor called automatically by compiler
+    // null-check and conditional delete handled by MWCC virtual dtor ABI
+}
 
 // Stub functions needed by CItemBoxGrid
 extern "C" void func_8022D0D0(void* self) {
@@ -93,4 +106,12 @@ extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
         return;
     }
     func_80137038(s->mLayout, drawInfo, 0, 1);
+}
+
+// Sets two text fields on the layout: one at string offset 0x34 with param2,
+// and one at string offset 0x41 with param3.
+extern "C" void func_8022D19C(CExchangeWinFull* self, char* param2, char* param3) {
+    nw4r::lyt::Layout* layout = self->mLayout;
+    func_80136B4C(layout, (char*)&lbl_eu_8050A740[0x34], param2, 0);
+    func_80136B4C(layout, (char*)&lbl_eu_8050A740[0x41], param3, 0);
 }

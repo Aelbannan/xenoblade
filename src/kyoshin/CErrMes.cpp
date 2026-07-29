@@ -35,7 +35,7 @@ void* func_eu_802B14D4(void){ return 0; }
 
 void* func_eu_802B14E0(void){ return 0; }
 
-extern u32 lbl_eu_8053A478[];
+u32 lbl_eu_8053A478[];
 extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 
 void func_eu_802B14F8(){}
@@ -45,19 +45,4 @@ extern u32 lbl_eu_80664BF8;
 extern u8 lbl_eu_80513420[];
 extern "C" void func_eu_802B133C() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
-}
-
-// Tail-calls getBdatStringColumnValue with index=6
-void func_eu_802B13B4() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 6);
-}
-
-// Tail-calls getBdatStringColumnValue with index=7
-void func_eu_802B13CC() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 7);
-}
-
-// Tail-calls getBdatStringColumnValue with index=8
-void func_eu_802B13E4() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 8);
 }

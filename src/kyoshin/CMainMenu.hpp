@@ -9,7 +9,7 @@ public:
     void Init();
     void Term();
     void cbRenderBefore();
-    void func_800FF778();
+    int func_800FF778();
 
     // vtable pointer at 0x00 (implicit)
     u8 _04[0x3C - 0x04];

@@ -65,26 +65,50 @@ int COccCulling::addFrustum(const CVec3& pos, const CVec3& rot, const CVec3& sca
 }
 
 void COccCulling::setFrustum(CCullFrustum* pFrustum){
-    float xScale = pFrustum->mScale.x;
-    float yScale = pFrustum->mScale.y;
+    // Build scale matrix manually: diag(scaleX, scaleY, 1.0f)
+    float zScale = lbl_eu_80667C88;
+    float sx = pFrustum->mScale.x;
+    float sy = pFrustum->mScale.y;
+    pFrustum->mMat.m[0][0] = sx;
+    pFrustum->mMat.m[0][1] = 0.0f;
+    pFrustum->mMat.m[0][2] = 0.0f;
+    pFrustum->mMat.m[0][3] = 0.0f;
+    pFrustum->mMat.m[1][0] = 0.0f;
+    pFrustum->mMat.m[1][1] = sy;
+    pFrustum->mMat.m[1][2] = 0.0f;
+    pFrustum->mMat.m[1][3] = 0.0f;
+    pFrustum->mMat.m[2][0] = 0.0f;
+    pFrustum->mMat.m[2][1] = 0.0f;
+    pFrustum->mMat.m[2][2] = zScale;
+    pFrustum->mMat.m[2][3] = 0.0f;
+
+    // Convert rotation angles from radians to FIdx format, then build rotation matrix
     CMat34 rotMat;
-    // z-scale via SDA 1.0f (lbl_eu_80667C88)
-    pFrustum->mMat.setScale(CVec3(xScale, yScale, lbl_eu_80667C88));
-    rotMat.setRotXYZ(pFrustum->mRot);
+    float radToFidx = lbl_eu_80667C90;
+    float fz = radToFidx * pFrustum->mRot.z;
+    float fy = radToFidx * pFrustum->mRot.y;
+    float fx = radToFidx * pFrustum->mRot.x;
+    nw4r::math::MTX34RotXYZFIdx(rotMat, fx, fy, fz);
 
-    CMat34::mul(rotMat, pFrustum->mMat, pFrustum->mMat);
+    // Concatenate: mMat = rotMat * mMat (rotation × scale)
+    PSMTXConcat(rotMat.mtx, pFrustum->mMat.mtx, pFrustum->mMat.mtx);
 
-    pFrustum->mMat.addTranslation(pFrustum->mPos);
+    // Apply translation
+    pFrustum->mMat.m[0][3] += pFrustum->mPos.x;
+    pFrustum->mMat.m[1][3] += pFrustum->mPos.y;
+    pFrustum->mMat.m[2][3] += pFrustum->mPos.z;
+
     pFrustum->mMat.invert(&pFrustum->mMatInv);
 
-    pFrustum->mDir.x = lbl_eu_80667C8C;
-    pFrustum->mDir.y = lbl_eu_80667C8C;
-    pFrustum->mDir.z = lbl_eu_80667C88;
+    // Compute direction vector (0, 0, 1) transformed by matrix
+    pFrustum->mDir.x = 0.0f;
+    pFrustum->mDir.y = 0.0f;
+    pFrustum->mDir.z = 1.0f;
     nw4r::math::VEC3TransformNormal(pFrustum->mDir, pFrustum->mMat, pFrustum->mDir);
     pFrustum->mDir.normalizeSub();
 
-    pFrustum->unk124 = lbl_eu_80667C8C;
-    pFrustum->unk128 = lbl_eu_80667C8C;
+    pFrustum->unk124 = 0.0f;
+    pFrustum->unk128 = 0.0f;
 
     for(int i = 0; i < ARRAY_SIZE(sPlaneCoords); i++){
         pFrustum->mMat.mul(pFrustum->unk90[i], sPlaneCoords[i]);
@@ -96,6 +120,7 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
         }
     }
 
+    // Finalize far plane distance with sqrt
     pFrustum->unk128 = math::sqrt(pFrustum->unk128);
 
     if(pFrustum->mFlags & CCullFrustum::FLAGS_01){

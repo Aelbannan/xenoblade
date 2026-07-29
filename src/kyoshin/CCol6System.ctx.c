@@ -1178,6 +1178,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -10112,6 +10113,7 @@ private:
     static CErrorWii* spInstance;
     static bool sPowerCallbackCalled;
     static bool sResetCallbackCalled;
+    static bool sUnkFlag;
 };
 /* end "monolib/util/CErrorWii.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 6 "monolib/util/CPathUtil.hpp" */
@@ -10625,9 +10627,7 @@ namespace ml{
 
     template <size_t N>
     struct FixStr{
-        FixStr(){
-            clear();
-        }
+        FixStr();
 
         //probably fake
         FixStr(bool initialize){
@@ -10788,13 +10788,19 @@ namespace ml{
             }
         }
 
-    private:
-        char mString[N];
-        int mLength;
+    // public for compatibility
+    char mString[N];
+    int mLength;
 
-    public:
-        static const int npos = -1;
+    static const int npos = -1;
     };
+
+#pragma dont_inline on
+    template <size_t N>
+    FixStr<N>::FixStr(){
+        clear();
+    }
+#pragma dont_inline reset
 
 }
 /* end "monolib/util/FixStr.hpp" */
@@ -11120,10 +11126,11 @@ namespace mtl {
         u8 padding[32 - 0x12]; //0x12
 
         u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+            return reinterpret_cast<u8*>(this + 1);
         }
         u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
+            u8* blockEnd = reinterpret_cast<u8*>(this + 1);
+            return blockEnd + (size - sizeof(MemBlock));
         }
 
         u32 getDataSize() const {
@@ -12401,7 +12408,86 @@ public:
 // Singleton instance pointer (lbl_eu_80664230 in retail).
 extern CCol6CheckBat* gCol6CheckBat;
 /* end "kyoshin/CCol6CheckBat.hpp" */
-/* "src/kyoshin/CCol6System.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CCol6System.cpp" line 4 "kyoshin/CCol6Invite.hpp" */
+#pragma once
+
+/* "src/kyoshin/CCol6Invite.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/CCol6Invite.hpp" line 3 "monolib/work/CProcess.hpp" */
+/* end "monolib/work/CProcess.hpp" */
+
+/*
+  Collision-6 invite process. Singleton managed by CCol6System.
+  Inherits CProcess for work-thread lifecycle (Init/Term/Move/Draw).
+  Size 0x78 bytes.
+*/
+class CCol6Invite : public CProcess {
+public:
+    static CCol6Invite* Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
+    virtual ~CCol6Invite();
+
+    // CProcess overrides
+    void Init() override;
+    void Term() override;
+    void Move() override;
+    void Draw() override;
+
+    /* 0x3C */ u8 mCallbackA[12]; // pointer-to-member-function null (3 words)
+    /* 0x48 */ u8 mCallbackB[12]; // pointer-to-member-function null (3 words)
+    /* 0x54 */ u32 mField54;      // init 0
+    /* 0x58 */ u32 mField58;      // init 0
+    /* 0x5C */ u32 mField5C;      // init 0
+    /* 0x60 */ s32 mIndex;        // init -1
+    /* 0x64 */ u8 mFlag64;        // byte flag, init 0
+    /* 0x65 */ u8 mFlag65;        // byte flag, init 0
+    /* 0x66 */ u8 mFlag66;        // byte flag, init 0
+    /* 0x67 */ u8 mActive;        // byte flag, init 1
+    /* 0x68 */ u32 mField68;      // init 0
+    /* 0x6C */ u32 mField6C;      // vtable-like ptr, init lbl_eu_8052FF3C + 0x24
+    /* 0x70 */ u16 mArg2;         // from r4
+    /* 0x72 */ u8 mArg3;          // from r5
+    /* 0x73 */ u8 mArg4;          // from r6
+    /* 0x74 */ u8 mField74;       // init 0
+};
+
+// Singleton instance pointer (lbl_eu_8066423C in retail).
+extern CCol6Invite* gCol6Invite;
+
+// Standalone string formatting helper.
+void func_eu_801651A0(char* buffer, const char* format, ...);
+/* end "kyoshin/CCol6Invite.hpp" */
+/* "src/kyoshin/CCol6System.cpp" line 5 "kyoshin/CCol6System.hpp" */
+#pragma once
+
+/* "src/kyoshin/CCol6System.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CCol6Hint {
+public:
+    CCol6Hint();
+    virtual ~CCol6Hint();
+    void Init();
+    void Term();
+    void Move();
+    void cbRenderBefore();
+
+    // TODO: add fields
+};
+
+class CCol6System {
+public:
+    CCol6System();
+    virtual ~CCol6System();
+    void Init();
+    void Term();
+    void Move();
+    void cbRenderBefore();
+
+    // TODO: add fields
+};
+
+/* end "kyoshin/CCol6System.hpp" */
+/* "src/kyoshin/CCol6System.cpp" line 6 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -12911,6 +12997,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -12934,17 +13075,37 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
 // Singleton instance (retail: lbl_eu_80664230).
 CCol6CheckBat* gCol6CheckBat;
 
-extern "C" int lbl_eu_80664230;
-extern "C" int lbl_eu_80664234;
-extern "C" int lbl_eu_80664238;
-extern "C" int lbl_eu_8066235C;
+int lbl_eu_80664230;
+int lbl_eu_80664234;
+int lbl_eu_80664238;
+int lbl_eu_8066235C;
 
-extern "C" void func_8015D0B8() {
+void func_8015D0B8() {
     lbl_eu_80664230 = 0;
     lbl_eu_80664234 = 0;
     lbl_eu_80664238 = 0;
@@ -12965,86 +13126,83 @@ void CCol6CheckBat::Term() {
 // CCol6CheckBat::Move() - update tick (stub pending decomp).
 void CCol6CheckBat::Move() {}
 
-extern "C" void __ct__CCol6CheckBat() {}
+void __ct__CCol6CheckBat(){}
 
-extern "C" void func_8015D310() {}
+void func_8015D310(){}
 
-extern "C" void func_8015D3A0() {}
+void func_8015D3A0(){}
 
-extern "C" void __ct__CCol6Hint() {}
+void __ct__CCol6Hint(){}
 
-extern "C" void __dt__9CCol6HintFv() {}
+CCol6Hint::~CCol6Hint() {}
 
-extern "C" void Init__9CCol6HintFv() {}
+void CCol6Hint::Init() {}
 
-extern "C" void Term__9CCol6HintFv() {}
+void CCol6Hint::Term() {}
 
-extern "C" void Move__9CCol6HintFv() {}
+void CCol6Hint::Move() {}
 
-extern "C" void func_8015DB08() {}
+void func_8015DB08(){}
 
-extern "C" void cbRenderBefore__9CCol6HintFv() {}
+void CCol6Hint::cbRenderBefore() {}
 
-extern "C" void func_8015DCD0() {}
+void func_8015DCD0(){}
 
-extern "C" void func_8015DD4C() {}
+void func_8015DD4C(){}
 
-extern "C" void func_8015E0BC() {}
+void func_8015E0BC(){}
 
-extern "C" void __ct__CCol6System() {}
+void __ct__CCol6System(){}
 
-extern "C" void __dt__11CCol6SystemFv() {}
+CCol6System::~CCol6System() {}
 
-extern "C" void Init__11CCol6SystemFv() {}
+void CCol6System::Init() {}
 
-extern "C" void Term__11CCol6SystemFv() {}
+void CCol6System::Term() {}
 
-extern "C" void Move__11CCol6SystemFv() {}
+void CCol6System::Move() {}
 
-extern "C" void func_80160118() {}
+void func_80160118(){}
 
-extern "C" void cbRenderBefore__11CCol6SystemFv() {}
+void CCol6System::cbRenderBefore() {}
 
-extern "C" void func_801602F4() {}
+void func_801602F4(){}
 
-extern "C" void func_80160370() {}
+void func_80160370(){}
 
-extern "C" void func_80160A6C() {}
+void func_80160A6C(){}
 
-extern "C" void func_80160EE4() {}
+void func_80160EE4(){}
 
-extern "C" void func_80161024() {}
+void func_80161024(){}
 
-extern "C" void func_80161178() {}
+void func_80161178(){}
 
-extern "C" void func_8016169C() {}
+void func_8016169C(){}
 
-extern "C" void func_80161C5C() {}
+void func_80161C5C(){}
 
-extern "C" void func_80162000() {}
+void func_80162000(){}
 
-extern "C" void func_80162C40() {}
+void func_80162C40(){}
 
-extern "C" void func_80162DB4() {}
+void func_80162DB4(){}
 
-extern "C" void func_80162EF8() {}
+void func_80162EF8(){}
 
-extern "C" void func_80163614() {}
+void func_80163614(){}
 
-extern "C" void func_8016378C() {}
+void func_8016378C(){}
 
-extern "C" void func_801638C0() {}
+void func_801638C0(){}
 
-extern "C" void func_80163AF4() {}
+void func_80163AF4(){}
 
-extern "C" void __dt__11CCol6InviteFv() {}
+CCol6Invite::~CCol6Invite() {}
 
-extern "C" void Init__11CCol6InviteFv() {}
+void CCol6Invite::Init() {}
 
 extern u32 lbl_eu_8066423C;
-extern "C" void Term__11CCol6InviteFv(void* self) {
-    *((u8*)self + 0x67) = 0;
-    lbl_eu_8066423C = 0;
-}
 
-extern "C" void Move__11CCol6InviteFv() {}
+
+void CCol6Invite::Move() {}

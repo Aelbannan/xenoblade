@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CKizunagram
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CKizunagram.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CKizunagram.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,9 +1390,84 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CKizunagram.cpp" line 4 "kyoshin/CKizunagram.hpp" */
+#pragma once
 
-extern "C" void func_8025C870() {}
+/* "src/kyoshin/CKizunagram.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CKizunaRadar {
+public:
+    CKizunaRadar();
+    virtual ~CKizunaRadar();
+
+    // TODO: add fields
+};
+
+class CKizunaCur {
+public:
+    CKizunaCur();
+    virtual ~CKizunaCur();
+
+    // TODO: add fields
+};
+
+class CKizunaLine {
+public:
+    CKizunaLine();
+    virtual ~CKizunaLine();
+
+    // TODO: add fields
+};
+
+class CKizunaInfo {
+public:
+    CKizunaInfo();
+    virtual ~CKizunaInfo();
+
+    // TODO: add fields
+};
+
+class CKizunagram {
+public:
+    CKizunagram();
+    virtual ~CKizunagram();
+    void OnFileEvent();
+
+    u8 _04[0x34 - 0x04];
+    u8 field_0x34;
+    u16 field_0x36;
+    float field_0x38;
+    u8 _3C[0x8C - 0x3C];
+    u8 field_8C; // 0x8C
+    u8 _8D[0xDD - 0x8D];
+    u8 field_0xDD;
+};
+
+/* end "kyoshin/CKizunagram.hpp" */
+
+void func_8025C870() {}
 
 
 
@@ -1348,109 +1478,115 @@ extern "C" void func_8025C870() {}
 
 
 
-extern "C" void func_80257F9C() {}
+void func_80257F9C(){}
 
-extern "C" void __ct__CKizunaLine() {}
+void __ct__CKizunaLine(){}
 
-extern "C" void __dt__11CKizunaLineFv() {}
+CKizunaLine::~CKizunaLine() {}
 
-extern "C" void func_802580CC() {}
+void func_802580CC(){}
 
-extern "C" void func_80258F5C() {}
+void func_80258F5C(){}
 
-extern "C" void func_80258F80() {}
-
-extern "C" void func_80258F9C() {}
-
-extern "C" void func_80259098() {}
-
-extern "C" void func_80259228() {}
-
-extern "C" void func_80259280() {}
-
-extern "C" void func_802592D8() {}
-
-extern "C" void func_80259344() {}
-
-extern "C" void func_80259394() {}
-
-extern "C" void func_8025949C() {}
-
-extern "C" void func_80259820() {}
-
-extern "C" void func_80259AF4(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
-
-extern "C" void func_80259B18() {}
-
-extern "C" void func_80259C5C() {}
-
-extern "C" void func_80259D44() {}
-
-extern "C" void func_80259DE8() {}
-
-extern "C" void func_8025A11C() {}
-
-extern "C" void func_8025AA38() {}
-
-extern "C" void func_8025AAE0() {}
-
-extern "C" void func_8025AB04() {}
-
-extern "C" void func_8025AB84() {}
-
-extern float lbl_eu_80668828[];
-extern "C" void func_8025AC04(void* self) {
-    *(u8*)((u8*)self + 0x34) = 0;
-    *(u16*)((u8*)self + 0x36) = 0;
-    *(float*)((u8*)self + 0x38) = lbl_eu_80668828[0];
+/* Scales each float pair by its first element (paired-single kernel) */
+void func_80258F80(float* dst, const float* src) {
+    dst[0] = src[0] * src[0];
+    dst[1] = src[1] * src[0];
+    dst[2] = src[2] * src[2];
+    dst[3] = src[3] * src[2];
 }
 
-extern "C" void func_8025AC1C() {}
+void func_80258F9C(){}
 
-extern "C" void func_8025B5D4(unsigned char* dst, const unsigned char* src) {
+void func_80259098(){}
+
+void func_80259228(){}
+
+void func_80259280(){}
+
+void func_802592D8(){}
+
+void func_80259344(){}
+
+void func_80259394(){}
+
+void func_8025949C(){}
+
+void func_80259820(){}
+
+void CKizunagram_copyShortString(char* dest, const char* src) { dest[0] = src[0]; dest[1] = src[1]; dest[2] = src[2]; dest[3] = 0; }
+
+void func_80259B18(){}
+
+void func_80259C5C(){}
+
+void func_80259D44(){}
+
+void func_80259DE8(){}
+
+void func_8025A11C(){}
+
+void func_8025AA38(){}
+
+void func_8025AAE0(){}
+
+void func_8025AB04(){}
+
+void func_8025AB84(){}
+
+extern "C" const float lbl_eu_80668828;
+void func_8025AC04(CKizunagram* self) {
+    self->field_0x34 = 0;
+    self->field_0x36 = 0;
+    self->field_0x38 = lbl_eu_80668828;
+}
+
+void func_8025AC1C(){}
+
+void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
     dst[3] = 0;
 }
 
-extern "C" void __ct__CKizunaInfo() {}
+void __ct__CKizunaInfo(){}
 
-extern "C" void __dt__11CKizunaInfoFv() {}
+CKizunaInfo::~CKizunaInfo() {}
 
-extern "C" void func_8025B670() {}
+void func_8025B670(){}
 
-extern "C" void func_8025B870() {}
+void func_8025B870(){}
 
-extern "C" void func_8025B900() {}
+void func_8025B900(){}
 
-extern "C" void func_8025B958() {}
+void func_8025B958(){}
 
-extern "C" void func_8025B9C8() {}
+void func_8025B9C8(){}
 
-extern "C" void func_8025BA38() {}
+void func_8025BA38(){}
 
-extern "C" void func_8025C16C() {}
+void func_8025C16C(){}
 
-extern "C" void func_8025C21C() {}
+void func_8025C21C(){}
 
-extern "C" void func_8025C298() {}
+void func_8025C298(){}
 
-extern "C" void func_8025C348() {}
+void func_8025C348(){}
 
-extern "C" void __ct__CKizunagram() {}
+void __ct__CKizunagram(){}
 
-extern "C" void __dt__11CKizunagramFv() {}
+CKizunagram::~CKizunagram() {}
 
-extern "C" void func_8025C510() {}
+void func_8025C510(){}
 
-extern "C" void func_8025C580() {}
+void func_8025C580(){}
 
-extern "C" void func_8025C61C() {}
+void func_8025C61C(){}
 
-extern "C" void func_8025C6F0() {}
+void func_8025C6F0(){}
 
-extern "C" unsigned char func_8025C770(void* this_ptr) {
+unsigned char CKizunagram_getField7E(void* this_ptr) {
     if (*(unsigned char*)((unsigned char*)this_ptr + 0x7e) != 0) {
         return *(unsigned char*)((unsigned char*)this_ptr + 0x3b);
     } else {
@@ -1458,7 +1594,7 @@ extern "C" unsigned char func_8025C770(void* this_ptr) {
     }
 }
 
-extern "C" unsigned char func_8025C78C(void* arg1)
+unsigned char CKizunagram_checkFields(void* arg1)
 {
     if (*(unsigned char*)((char*)arg1 + 0x61) == 0)
         return 0;
@@ -1469,45 +1605,55 @@ extern "C" unsigned char func_8025C78C(void* arg1)
     return 0;
 }
 
-extern "C" void func_8025C7D0() {}
+void func_8025C7D0(){}
 
-extern "C" void func_8025C7FC() {}
+void func_8025C7FC(){}
 
 
-extern "C" void func_8025C874() {}
+void func_8025C874(){}
 
-extern "C" void func_8025C904() {}
+void func_8025C904(){}
 
-extern "C" void func_8025C994() {}
+void func_8025C994(){}
 
-extern "C" void func_8025CA24() {}
+void func_8025CA24(){}
 
-extern "C" void func_8025CAB4() {}
+void func_8025CAB4(){}
 
-extern "C" void func_8025CAE4() {}
+void func_8025CAE4(){}
 
-extern "C" void func_8025CB50() {}
+void func_8025CB50(){}
 
-extern "C" int func_8025CBBC(void* self) { return 0; }
+int CKizunagram_stub(void* self) { return 0; }
 
-extern "C" u8 func_8025CBC4(void* self) { return ((u8*)self)[0x8C]; }
+struct CKizunagramState {
+    u8 _00[0x8C];
+    u8 field8C;
+};
 
-extern "C" void func_8025CBCC() {}
+u8 CKizunagram_getField8C(void* self) {
+    return ((CKizunagramState*)self)->field8C;
+}
 
-extern "C" void func_8025CC70() {}
+void func_8025CBCC(){}
 
-extern "C" void func_8025CC88() {}
+/* Toggles field_0xDD: 0->1, 1->0, anything else->1 */
+void func_8025CC70(CKizunagram* self) {
+    self->field_0xDD = (self->field_0xDD ^ 1) ? 1 : 0;
+}
 
-extern "C" void func_8025CCA8() {}
+void func_8025CC88(){}
 
-extern "C" void func_8025CCF8(void* arg) {
+void func_8025CCA8(){}
+
+void CKizunagram_setField39(void* arg) {
     unsigned char* ptr = (unsigned char*)arg;
     if (ptr[0x62] != 0) {
         ptr[0x39] = 5;
     }
 }
 
-extern "C" void func_8025CD10(void* self) {
+void CKizunagram_resetState(void* self) {
     uint8_t* b = static_cast<uint8_t*>(self);
     if (!b[0x61]) return;
     if (!b[0x7d]) return;
@@ -1516,17 +1662,17 @@ extern "C" void func_8025CD10(void* self) {
     b[0x38] = 0;
 }
 
-extern "C" void func_8025CD40() {}
+void func_8025CD40(){}
 
-extern "C" void func_8025CE00() {}
+void func_8025CE00(){}
 
-extern "C" void func_8025CE78() {}
+void func_8025CE78(){}
 
-extern "C" void func_8025CF1C() {}
+void func_8025CF1C(){}
 
-extern "C" void func_8025CF40() {}
+void func_8025CF40(){}
 
-extern "C" void OnFileEvent__11CKizunagramFP10CEventFile() {}
+void CKizunagram::OnFileEvent() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_8025D304() {}
+void sinit_8025D304(){}

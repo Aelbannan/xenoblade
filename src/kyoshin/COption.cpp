@@ -50,11 +50,27 @@ void func_8029CF7C(){}
 
 void func_8029D054(){}
 
-void func_8029D0C0(){}
+// External nw4r animation helpers
+int func_80137444(nw4r::lyt::AnimTransform*, float);
+int func_80137510(nw4r::lyt::AnimTransform*, float);
+
+// Called when AnimTransform at +0x20 finishes its animation
+void func_8029D0C0(CCur19* self) {
+    if (func_80137444(self->mpAnimTrans2, 1.0f)) {
+        self->mState = 2;
+        func_8029E1CC(self);
+    }
+}
 
 void func_8029D10C(){}
 
-void func_8029D178(){}
+// Called when AnimTransform at +0x24 finishes its animation
+void func_8029D178(CCur19* self) {
+    if (func_80137510(self->mpAnimTrans3, 1.0f)) {
+        self->mState = 5;
+        func_8029E144(self);
+    }
+}
 
 void func_8029D1C4(){}
 
@@ -82,9 +98,9 @@ void func_8029D990(){}
 
 void func_8029DD6C(){}
 
-void func_8029E144(){}
+void func_8029E144(CCur19* self){}
 
-void func_8029E1CC(){}
+void func_8029E1CC(CCur19* self){}
 
 void func_8029E254(){}
 

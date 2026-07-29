@@ -7,6 +7,9 @@
 // Retail SDA 1.0f -- used by inlined CCullFrustum::init (addFrustum reloc match).
 extern "C" const float lbl_eu_80667C88;
 
+// Retail SDA RAD_TO_FIDX (128.0f / PI) -- used by setFrustum rotation.
+extern "C" const float lbl_eu_80667C90;
+
 //Some type of view frustum?
 struct CCullFrustum{
     enum Flags{

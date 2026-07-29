@@ -249953,7 +249953,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
         virtual void CfObject_UnkVirtualFunc21();     //0xA4
         virtual void CfObject_UnkVirtualFunc22();     //0xA8
-        virtual void CfObject_UnkVirtualFunc23();     //0xAC
+        virtual u32 CfObject_UnkVirtualFunc23();      //0xAC
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
         virtual void CfObject_UnkVirtualFunc25();     //0xB4
         virtual void CfObject_UnkVirtualFunc26();     //0xB8
@@ -250822,7 +250822,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc19();
     void CfObject_UnkVirtualFunc22();
     void CfObject_UnkVirtualFunc20();
-    void CfObject_UnkVirtualFunc23();
+    u32 CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27();
     void CfObject_UnkVirtualFunc29();
     void CfObject_UnkVirtualFunc32();
@@ -250912,7 +250912,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc22();
     void CfObject_UnkVirtualFunc25();
     void CfObject_UnkVirtualFunc26();
-    void CfObject_UnkVirtualFunc23();
+    u32 CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27();
     void CfObject_UnkVirtualFunc30();
     void CfObject_UnkVirtualFunc32();
@@ -251938,6 +251938,68 @@ extern "C" void func_80080E30__Q22cf13CfGameManagerFv(cf::CfObject* data, u32 ma
 extern const float lbl_eu_80666538;
 extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
 extern "C" void func_8007FD00__Q22cf13CfGameManagerFv(u32 value);
+class UnkClass_800817BC;
+extern const float lbl_eu_806664A0;
+extern "C" UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(u32 value,
+                                                                      u32 index);
+extern "C" void func_800ACF78(UnkClass_800817BC* object, cf::CfObjectMove* player,
+                                u32 value);
+extern "C" void func_801BFDE8(u32 mode, u32 value, u32 playerValue, float first,
+                                float second);
+extern "C" void func_800BC3D8(cf::CfObjectMove* player, float value);
+extern const float lbl_eu_80666564;
+extern "C" void func_800ACC28(UnkClass_800817BC* object, float first, float second);
+extern "C" void func_800BC4A0(cf::CfObjectMove* player);
+extern "C" void func_8008402C__Q22cf13CfGameManagerFv(u32 objectValue,
+                                                        bool triggerFirstPlayer,
+                                                        float value) {
+    for (s32 i = 0; i < 3; ++i) {
+        cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
+        if (player != nullptr) {
+            if (objectValue != 0) {
+                UnkClass_800817BC* object =
+                    func_800817BC__Q22cf13CfGameManagerFv(objectValue, 0);
+                if (object != nullptr) {
+                    func_800ACC28(object, lbl_eu_80666564, lbl_eu_8066649C);
+                    func_800ACF78(object, player, 0);
+                }
+            }
+            if (triggerFirstPlayer && i == 0) {
+                u32 playerValue = player->CfObject_UnkVirtualFunc23();
+                func_801BFDE8(1, triggerFirstPlayer, playerValue,
+                              lbl_eu_8066649C, lbl_eu_806664A0);
+            }
+            func_800BC4A0(player);
+            player->CfObject_UnkVirtualFunc70(lbl_eu_8066649C);
+            func_800BC3B0(player, value);
+        }
+    }
+}
+
+extern "C" void func_80083F28__Q22cf13CfGameManagerFv(u32 objectValue,
+                                                        bool triggerFirstPlayer,
+                                                        float value) {
+    for (s32 i = 0; i < 3; ++i) {
+        cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
+        if (player != nullptr) {
+            if (objectValue != 0) {
+                UnkClass_800817BC* object =
+                    func_800817BC__Q22cf13CfGameManagerFv(objectValue, 0);
+                if (object != nullptr) {
+                    func_800ACF78(object, player, 0);
+                }
+            }
+            if (triggerFirstPlayer && i == 0) {
+                u32 playerValue = player->CfObject_UnkVirtualFunc23();
+                func_801BFDE8(1, triggerFirstPlayer, playerValue,
+                              lbl_eu_8066649C, lbl_eu_806664A0);
+            }
+            player->CfObject_UnkVirtualFunc70(lbl_eu_80666498);
+            func_800BC3D8(player, value);
+        }
+    }
+}
+
 extern "C" void func_80083EA4__Q22cf13CfGameManagerFv() {
     for (s32 i = 0; i < 3; ++i) {
         cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);

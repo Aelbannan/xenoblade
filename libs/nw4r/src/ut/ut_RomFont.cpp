@@ -254,17 +254,7 @@ void* RomFont::Unload() {
 }
 
 bool RomFont::HasGlyph(u16 ch) const {
-    switch (mFontEncode) {
-    case 0:
-        if (ch < 0x20) {
-            return false;
-        }
-        if (ch > 0xFF) {
-            return false;
-        }
-        return true;
-
-    case 1: {
+    if (mFontEncode == 1) {
         bool valid = false;
 
         if (ch <= 0xFF) {
@@ -289,9 +279,19 @@ bool RomFont::HasGlyph(u16 ch) const {
         return false;
     }
 
-    default:
+    if (mFontEncode >= 1) {
         return false;
     }
+
+    // mFontEncode == 0 (CP1252)
+    if (ch < 0x20) {
+        return false;
+    }
+    if (ch > 0xFF) {
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace ut

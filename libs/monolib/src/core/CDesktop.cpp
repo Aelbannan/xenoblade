@@ -47,8 +47,7 @@ CDesktopException* CDesktop::getException(){
 }
 
 void CDesktop::wkUpdate(){
-    bool _ = CLibHbm::isHbmControlInitialized();
-    (void)_;
+    CLibHbm::isHbmControlInitialized();
 }
 
 void CDesktop::wkRender(){

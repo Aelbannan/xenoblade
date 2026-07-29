@@ -256,6 +256,8 @@ s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE {
     return result;
 }
 
+#pragma pop
+
 static s32 NWC24iOpenResourceManager_(const char* funcName, const char* path, s32* resultPtr, IPCOpenMode mode){
     if(resultPtr == NULL){
         return -3;
@@ -316,8 +318,6 @@ static s32 CheckCallingStatus(const char* funcName){
     if (OSGetCurrentThread() == NULL) return -1;
     else return 0;
 }
-
-#pragma pop
 
 NWC24Err NWC24iPrepareShutdown(void) DECOMP_DONT_INLINE;
 s32 NWC24SuspendScheduler(void) DECOMP_DONT_INLINE;

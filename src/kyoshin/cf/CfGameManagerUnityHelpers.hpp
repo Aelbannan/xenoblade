@@ -252,7 +252,7 @@ extern "C" void func_80080E30__Q22cf13CfGameManagerFv(cf::CfObject* data, u32 ma
 
 extern const float lbl_eu_80666538;
 extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
-extern "C" void func_8007FD00__Q22cf13CfGameManagerFv(u32 value);
+extern "C" bool func_8007FD00__Q22cf13CfGameManagerFv(u32 value);
 class UnkClass_800817BC;
 extern const float lbl_eu_806664A0;
 extern "C" UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(u32 value,
@@ -776,6 +776,69 @@ extern "C" void func_800866A0__Q22cf13CfGameManagerFv() {
 extern "C" void func_8006349C();
 extern "C" void func_80061870(UnkClass_80085334* object, u32 mode, u16 value,
                                 u32 fourth, u32 fifth, u32 sixth);
+extern "C" VoiceSource* func_800B76F4();
+extern "C" VoiceSource* func_800B7854(VoiceSource* source);
+extern "C" void func_800BEE1C(VoiceSource* source, bool enabled);
+extern "C" void func_8007FE2C__Q22cf13CfGameManagerFv() {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    lbl_eu_80663E28 |= 4;
+    VoiceSource* source = func_800B76F4();
+    while (source != nullptr) {
+        if ((source->flags_0x64 & ~1) != 0) {
+            func_800BEE1C(source, true);
+        }
+        source = func_800B7854(source);
+    }
+}
+
+extern "C" void func_8007FECC__Q22cf13CfGameManagerFv() {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    lbl_eu_80663E28 &= ~4;
+    VoiceSource* source = func_800B76F4();
+    while (source != nullptr) {
+        if ((source->flags_0x64 & ~1) != 0) {
+            func_800BEE1C(source, false);
+        }
+        source = func_800B7854(source);
+    }
+}
+
+extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
+extern "C" bool func_80061E8C(UnkClass_80085334* object, u32 mode);
+extern "C" bool func_8007FD00__Q22cf13CfGameManagerFv(u32 mode) {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    return lbl_eu_80571758.unkAC != nullptr
+               ? func_80061D2C(lbl_eu_80571758.unkAC, mode)
+               : false;
+}
+
+extern "C" bool func_8007FD8C__Q22cf13CfGameManagerFv(u32 mode) {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    return lbl_eu_80571758.unkAC != nullptr
+               ? func_80061E8C(lbl_eu_80571758.unkAC, mode)
+               : false;
+}
+
 extern "C" VoiceList* func_800B6BA0();
 extern "C" VoiceAction* func_8016FE34(VoiceSource* source);
 extern "C" void func_80084AD4__Q22cf13CfGameManagerFv(u32 mask) {
@@ -794,7 +857,6 @@ extern "C" void func_80084AD4__Q22cf13CfGameManagerFv(u32 mask) {
     }
 }
 
-extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
 extern "C" void func_8008566C__Q22cf13CfGameManagerFv(u32 mode,
                                                         const UnkFloat4* value,
                                                         u32 third);

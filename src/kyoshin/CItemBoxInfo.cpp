@@ -304,7 +304,9 @@ u32 func_801DFDC0(void* dummy, u32 arg1, void* arg2) {
 void func_801DFE48(){}
 void func_801DFFB8(){}
 
-void CItemBoxInfo::OnFileEvent() {}
+bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
+    return false;
+}
 
 CItemBoxInfo::~CItemBoxInfo() {}
 
@@ -488,7 +490,9 @@ u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
 void func_801E9774(){}
 void func_801E98E4(){}
 
-void CItemBoxInfo2::OnFileEvent() {}
+bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
+    return false;
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_801EABC4(){}

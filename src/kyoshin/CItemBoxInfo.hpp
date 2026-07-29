@@ -3,6 +3,8 @@
 #include <types.h>
 #include "monolib/lib/UnkClass_8045F564.hpp"
 
+class CEventFile;
+
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
 struct CItemBoxInfoState {
@@ -29,7 +31,7 @@ struct CItemBoxInfoState {
 struct CItemBoxInfo {
     CItemBoxInfoState state;
     ~CItemBoxInfo();
-    void OnFileEvent();
+    bool OnFileEvent(CEventFile*);
 
     u8 getItemBoxState();
     void advanceItemBoxState();
@@ -40,7 +42,7 @@ struct CItemBoxInfo {
 struct CItemBoxInfo2 {
     CItemBoxInfoState state;
     ~CItemBoxInfo2();
-    void OnFileEvent();
+    bool OnFileEvent(CEventFile*);
 
     void drawItemBox2Layout(nw4r::lyt::DrawInfo* drawInfo);
     u8 getItemBox2State();

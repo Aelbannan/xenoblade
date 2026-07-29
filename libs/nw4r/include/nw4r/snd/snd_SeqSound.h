@@ -111,16 +111,17 @@ private:
                                           void* pCallbackArg);
 
 private:
-    SeqPlayer mSeqPlayer;                     // at 0xD8
-    SeqSoundHandle* mTempSpecialHandle;       // at 0x1F4
-    SoundInstanceManager<SeqSound>* mManager; // at 0x1F8
+    SeqPlayer mSeqPlayer;                     // at 0x10C
+    u8 mPad0x288[8];                          // at 0x288
+    SeqSoundHandle* mTempSpecialHandle;       // at 0x290
+    SoundInstanceManager<SeqSound>* mManager; // at 0x294
 
-    s32 mSeqOffset;                         // at 0x1FC
-    SeqPlayer::OffsetType mStartOffsetType; // at 0x200
-    int mStartOffset;                       // at 0x204
+    s32 mSeqOffset;                         // at 0x298
+    SeqPlayer::OffsetType mStartOffsetType; // at 0x29C
+    int mStartOffset;                       // at 0x2A0
 
-    bool mLoadingFlag;           // at 0x208
-    volatile bool mPreparedFlag; // at 0x209
+    bool mLoadingFlag;           // at 0x2A4
+    volatile bool mPreparedFlag; // at 0x2A5
 
     ut::FileStream* mFileStream;                     // at 0x20C
     char mFileStreamBuffer[FILE_STREAM_BUFFER_SIZE]; // at 0x210

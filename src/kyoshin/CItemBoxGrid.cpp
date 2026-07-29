@@ -258,12 +258,14 @@ void func_801C56D8() { }
 // Search for a matching short id in an array, return 1 if found.
 int func_801C51BC(void* obj, u32 id) {
     u16 count = *(u16*)((u8*)obj + 0x804);
-    u16 i;
-    for (i = 0; i < count; i++) {
-        if (*(u16*)((u8*)obj + 4 + i * 2) == (u16)id) {
-            return 1;
-        }
-    }
+    u16 i = 0;
+    goto check;
+    do {
+        u16 v = *(u16*)((u8*)obj + 4 + i * 2);
+        if (v == (u16)id) return 1;
+        i++;
+    check:;
+    } while (i < count);
     return 0;
 }
 
@@ -1487,10 +1489,8 @@ unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
 void func_801CB9D8(u32* dst, void* src, u32 idx) {
     if (idx >= 12) return;
     u8* entry = (u8*)src + idx * 12;
-    u32 v0 = *(u32*)(entry + 0x18);
-    u32 v1 = *(u32*)(entry + 0x1c);
-    *(u32*)((u8*)dst + 4) = v1;
-    *(u32*)((u8*)dst + 0) = v0;
+    *(u32*)((u8*)dst + 4) = *(u32*)(entry + 0x1c);
+    *(u32*)((u8*)dst + 0) = *(u32*)(entry + 0x18);
     *(u32*)((u8*)dst + 8) = *(u32*)(entry + 0x20);
 }
 

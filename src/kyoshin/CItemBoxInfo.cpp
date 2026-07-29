@@ -376,24 +376,36 @@ void func_801D5AA0(CItemBoxInfo* info, u16 arg2, void* arg3) {
     ((u8*)info)[8] = flag2;
 }
 void func_801D5C38(void* out, void* unused, void* data, void* arg3) {
-    if (arg3 == NULL) return;
+    void* item = arg3 ? arg3 : NULL;
     u16 v1 = func_801392E4(data);
     u16 v2 = func_80139358((u32)data);
-    void* inst = CItem_initItemImplInstances(arg3);
-    u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, arg3);
+    void* inst = CItem_initItemImplInstances(item);
+    u8 r = ((u8(*)(void*, void*))(*(void***)inst)[2])(inst, item);
+    u8 buf[0x30];
+    buf[0] = r;
     char* s = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
-    ((u32*)out)[0] = (u32)s;
-    ((u8*)out)[4] = 0;
-    for (int i = 0; i < 3; i++) {
-        void* inst2 = CItem_initItemImplInstances(arg3);
-        u16 count = ((u16(*)(void*, void*, u32))(*(void***)inst2)[19])(inst2, arg3, i);
-        if (count <= 0) continue;
-        char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
-        ((u32*)((u8*)out + 8))[i] = (u32)t;
-        void* inst3 = CItem_initItemImplInstances(arg3);
-        u8 val = ((u8(*)(void*, void*, u32))(*(void***)inst3)[25])(inst3, arg3, i);
-        ((u8*)out)[i + 0x1C] = val;
+    ((u32*)(buf + 4))[0] = (u32)s;
+    u8 count = 0;
+    buf[0x21] = 0;
+    for (u32 i = 0; i < 4; i++) {
+        void* inst2 = CItem_initItemImplInstances(item);
+        u16 n = ((u16(*)(void*, void*, u32))(*(void***)inst2)[19])(inst2, item, i);
+        if (n > 0) {
+            char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
+            ((u32*)(buf + 8))[count] = (u32)t;
+            void* inst3 = CItem_initItemImplInstances(item);
+            u8 val = ((u8(*)(void*, void*, u32))(*(void***)inst3)[25])(inst3, item, i);
+            buf[0x1C + count] = val;
+            ((u16*)(buf + 0x22))[count] = n;
+            count++;
+        }
     }
+    u32* dst = (u32*)((u8*)out - 4);
+    u32* src = (u32*)(buf + 4);
+    for (int i = 0; i < 5; i++) {
+        *++dst = *++src;
+    }
+    *++dst = *++src;
 }
 void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     func_801D8318(info);

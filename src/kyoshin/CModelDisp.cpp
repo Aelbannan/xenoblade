@@ -3,12 +3,47 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CModelDisp.hpp"
+#include "kyoshin/cf/CActParamAnimGame.hpp"
 
 // Forward declarations for cross-TU calls
 void* func_8004B9B8(void* self);
 void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
 
+// Mangled ctor/dtor symbols for __construct_array
+extern "C" {
+void __ct__Q22cf17CActParamAnimGameFv(void*);
+void __dt__Q22cf17CActParamAnimGameFv(void*, int);
+void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
+}
+
+// Constructs CActParamAnimGame sub-objects: a single instance at +0xC
+// and an array of 2 at +0x550 (element size 0x53C), then returns self.
+CModelDisp* func_801FBEB8(CModelDisp* self) {
+    new ((u8*)self + 0xC) cf::CActParamAnimGame();
+    __construct_array((u8*)self + 0x550,
+                      (void*)__ct__Q22cf17CActParamAnimGameFv,
+                      (void*)__dt__Q22cf17CActParamAnimGameFv,
+                      0x53C, 2);
+    return self;
+}
+
+// Iterates 3 sub-objects and calls func_801FC2B4 with the mpController pointer.
+void func_801FC2B4(CModelDisp*, void**);
+void func_801FC0C4(CModelDisp* self) {
+    for (int i = 0; i < 3; i++) {
+        CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
+        func_801FC2B4(self, &sub->mpController);
+    }
+}
+
 u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
+
+// When field_2FD8 is 2, advances state to 3 and clears field_2FE4.
+void func_801FC13C(CModelDisp* self) {
+    if (self->field_2FD8 != 2) return;
+    self->field_2FD8 = 3;
+    self->field_2FE4 = 0;
+}
 
 // Advances field_2FE0 by 1.0 each call. When it reaches 5.0, decrements
 // field_2FDC by 0.2 (clamped to 0.0) and calls each sub-object's vmethod.
@@ -38,7 +73,7 @@ void func_801FC15C(CModelDisp* self) {
 
 void func_801FC218(){}
 
-void func_801FC2B4(){}
+void func_801FC2B4(CModelDisp*, void**){}
 
 void func_801FC3B0(){}
 

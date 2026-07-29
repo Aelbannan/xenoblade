@@ -242,9 +242,34 @@ void ResMdl::Terminate() {
     }
 }
 
+/******************************************************************************
+ *
+ * GetParent
+ *
+ ******************************************************************************/
+ResFile ResMdl::GetParent() {
+    return ofs_to_obj<ResFile>(ref().toResFileData);
+}
+
+/******************************************************************************
+ *
+ * GetResVtxFurPos
+ *
+ ******************************************************************************/
+ResVtxFurPos ResMdl::GetResVtxFurPos(int idx) const {
+    return ResVtxFurPos(
+        ofs_to_obj<ResDic>(ref().toResVtxFurPosDic)[idx]);
+}
+
+/******************************************************************************
+ *
+ * GetResTev
+ *
+ ******************************************************************************/
+ResTev ResMdl::GetResTev(u32 idx) const {
+    return ResTev(
+        ofs_to_obj<ResDic>(ref().toResTevDic)[idx]);
+}
+
 } // namespace g3d
 } // namespace nw4r
-
-void GetParent__Q34nw4r3g3d6ResMdlFv(){}
-void GetResVtxFurPos__Q34nw4r3g3d6ResMdlCFi(int){}
-void GetResTev__Q34nw4r3g3d6ResMdlCFUl(){}

@@ -148,8 +148,7 @@ void func_8024F5C4(void* self, u32 arg2) {
     void* obj = *(void**)((u8*)ptr + 0x10);
     VFuncPtr* vt = *(VFuncPtr**)obj;
     void* result = vt[15](obj, (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
-    volatile u8* p = (volatile u8*)result + 0xBB;
-    *p = (*p & 0x7F) | (u8)arg2;
+    *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0x7F) | (u8)arg2;
 }
 
 unsigned char func_8024F630(void) {

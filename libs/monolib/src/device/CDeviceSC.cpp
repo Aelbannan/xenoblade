@@ -32,6 +32,9 @@ bool CDeviceSC::isSoundModeMono(){
 }
 
 u8 CDeviceSC::getLanguage(){
+    if(spInstance == nullptr){
+        return SCGetLanguage();
+    }
     return spInstance->mLanguage;
 }
 
@@ -65,4 +68,6 @@ bool CDeviceSC::wkStandbyLogout(){
     return false;
 }
 
-void func_eu_8044A600(){}
+bool func_eu_8044A600(){
+    return SCGetLanguage() == 0;
+}

@@ -7,12 +7,16 @@
 #include <nw4r/g3d/res/g3d_resmat.h>
 #include <nw4r/g3d/res/g3d_resnode.h>
 #include <nw4r/g3d/res/g3d_resshp.h>
+#include <nw4r/g3d/res/g3d_restev.h>
 #include <nw4r/g3d/res/g3d_resvtx.h>
 
 #include <nw4r/math.h>
 
 namespace nw4r {
 namespace g3d {
+
+// Forward declaration to avoid circular dependency with g3d_resfile.h
+class ResFile;
 
 /******************************************************************************
  *
@@ -170,7 +174,10 @@ public:
     ResVtxTexCoord GetResVtxTexCoord(int idx) const;
     u32 GetResVtxTexCoordNumEntries() const;
 
+    ResFile GetParent();
+
     ResVtxFurPos GetResVtxFurPos(int idx) const;
+    ResTev GetResTev(u32 idx) const;
 
     ResMat GetResMat(const char* pName) const;
     ResMat GetResMat(const ResName name) const;

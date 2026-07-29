@@ -288,12 +288,15 @@ static void GetTypeCallback(s32 chan, u32 status) {
     // TypeTime[chan] = __OSGetSystemTime();
 }
 
-// TODO
 u32 SIGetType(s32 chan) {
-    ;
+    // TODO: full implementation
+    TypeTime[chan] = __OSGetSystemTime();
+    return 0;
 }
 
-void SISetCommand() {}
+void SISetCommand(s32 chan, u32 command) {
+    SI_HW_REGS[chan * 3] = command;
+}
 void SITransferCommands() {
     *(volatile u32*)0xCD006438 = 0x80000000;
 }

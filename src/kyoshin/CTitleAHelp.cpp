@@ -16,11 +16,19 @@
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
 
+bool CTitleAHelp_isPaneVisible(const void*);
+void CTitleAHelp_setGXColor(GXColorS10*, s16, s16, s16, s16);
+
 static GXColorS10 lbl_80666D58; //light orange
 static GXColorS10 lbl_80666D60;
 
 static GXColorS10 lbl_80666D68; //light blue
 static GXColorS10 lbl_80666D70;
+
+extern GXColorS10 lbl_eu_80664468;
+extern GXColorS10 lbl_eu_80664470;
+extern GXColorS10 lbl_eu_80664478;
+extern GXColorS10 lbl_eu_80664480;
 
 static u16 lbl_80537618[120][7]; //unsure of this lbl, it seems to work, could be a struct tho
 
@@ -93,7 +101,7 @@ u8 CTitleAHelp::isVisible() {
 u8 CTitleAHelp::isIdle() { return unk36; }
 
 void CTitleAHelp::func_801C412C() {
-    if (unk2c != 0) {
+    if (unk2c == 0) {
         unk2c = 1;
         unk36 = 0;
     }
@@ -245,11 +253,11 @@ void CTitleAHelp::setVisible(u8 arg) {
 }
 
 void CTitleAHelp::func_801C4744() {
-    func_80139A18(mLayout, "txt_tit", &lbl_80666D58, &lbl_80666D60);
+    func_80139A18(mLayout, "txt_tit", &lbl_eu_80664468, &lbl_eu_80664470);
 }
 
 void CTitleAHelp::func_801C4760() {
-    func_80139A18(mLayout, "txt_tit", &lbl_80666D68, &lbl_80666D70);
+    func_80139A18(mLayout, "txt_tit", &lbl_eu_80664478, &lbl_eu_80664480);
 }
 
 void CTitleAHelp::showIn() {

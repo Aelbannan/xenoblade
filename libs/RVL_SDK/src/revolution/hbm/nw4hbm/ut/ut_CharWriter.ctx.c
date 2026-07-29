@@ -13516,48 +13516,24 @@ public:
     TextWriterBase();
     ~TextWriterBase();
 
-    f32 GetWidthLimit() const {
-        return mWidthLimit;
-    }
-    void SetWidthLimit(f32 limit) {
-        mWidthLimit = limit;
-    }
-    void ResetWidthLimit() {
-        mWidthLimit = NW4R_MATH_FLT_MAX;
-    }
+    f32 GetWidthLimit() const;
+    void SetWidthLimit(f32 limit);
+    void ResetWidthLimit();
 
-    f32 GetCharSpace() const {
-        return *(f32*)((u8*)this + 76);
-    }
-    void SetCharSpace(f32 space) {
-        mCharSpace = space;
-    }
+    f32 GetCharSpace() const;
+    void SetCharSpace(f32 space);
 
-    f32 GetLineSpace() const {
-        return mLineSpace;
-    }
-    void SetLineSpace(f32 space) {
-        mLineSpace = space;
-    }
+    f32 GetLineSpace() const;
+    void SetLineSpace(f32 space);
 
     int GetTabWidth() const;
-    void SetTabWidth(int width) {
-        mTabWidth = width;
-    }
+    void SetTabWidth(int width);
 
-    u32 GetDrawFlag() const {
-        return mDrawFlag;
-    }
-    void SetDrawFlag(u32 flag) {
-        mDrawFlag = flag;
-    }
+    u32 GetDrawFlag() const;
+    void SetDrawFlag(u32 flag);
 
-    TagProcessorBase<T>* GetTagProcessor() const {
-        return mTagProcessor;
-    }
-    void SetTagProcessor(TagProcessorBase<T>* pProcessor) {
-        mTagProcessor = pProcessor;
-    }
+    TagProcessorBase<T>* GetTagProcessor() const;
+    void SetTagProcessor(TagProcessorBase<T>* pProcessor);
     void ResetTagProcessor() {
         mTagProcessor = &mDefaultTagProcessor;
     }

@@ -2,6 +2,11 @@
 #define CMdlMaterial_HPP
 
 #include <types.h>
+#include <nw4r/g3d/res/g3d_resmdl.h>
+
+namespace nw4r { namespace g3d { class ScnMdl; } }
+
+class CMdlModelOwner;
 
 /**
  * CMdlMaterial — model material descriptor.
@@ -15,15 +20,27 @@ class CMdlMaterial {
 public:
     virtual ~CMdlMaterial();
 
-    /* 0x04 */ u32 field_0x04;
-    /* 0x08 */ void* buffer;       // Dynamically allocated array (delete[]'d in sub-dtor)
+    /* 0x04 */ CMdlModelOwner* owner;
+    /* 0x08 */ void* buffer;
     /* 0x0C */ u32 field_0x0C;
-    /* 0x10 */ u8 flag_0x10;       // Controls buffer ownership: 0 = owned (delete[]), non-0 = unowned
+    /* 0x10 */ u8 flag_0x10;
     /* 0x11 */ u8 pad_0x11[3];
-    /* 0x14 */ s32 field_0x14;     // Initialized to -1
-    /* 0x18 */ u8 pad_0x18[0x18]; // Gap to 0x30
+    /* 0x14 */ s32 field_0x14;
+    /* 0x18 */ u8 pad_0x18[0x10];
+    /* 0x28 */ u8 byteArray[8];
     /* 0x30 */ u32 field_0x30;
     /* 0x34 */ u32 field_0x34;
+};
+
+// Container that owns a CMdlMaterial at offset 0x16C8.
+// Fields below are only those accessed by CMdlMaterial member functions.
+struct CMdlModelOwner {
+    u8 pad_0x0000[0x146C];
+    /* 0x146C */ nw4r::g3d::ResMdl resMdl;
+    u8 pad_0x1470[0xC];
+    /* 0x147C */ nw4r::g3d::ScnMdl* scnMdl;
+    u8 pad_0x1480[0x16DC - 0x1480];
+    /* 0x16DC */ s32 targetQuotient;
 };
 
 #endif // CMdlMaterial_HPP

@@ -18,4 +18,6 @@ ScnResData* func_804B80A4(ScnResData* self, int index);
 void func_804B8078(ScnResData* self, int index);
 void func_804B80CC(ScnResData* self);
 void func_804B7804(ScnResData* self);
+void func_804BC9A0(ScnResData*);
+void func_804B7DD4(ScnResData*);
 }

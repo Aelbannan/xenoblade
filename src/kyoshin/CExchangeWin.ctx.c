@@ -1411,7 +1411,386 @@ public:
 
 /* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
-/* "src/kyoshin/CExchangeWin.cpp" line 4 "kyoshin/CExchangeWin.hpp" */
+/* "src/kyoshin/CExchangeWin.cpp" line 4 "stdio.h" */
+#ifndef MSL_STDIO_H
+#define MSL_STDIO_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 3 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 8 "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+#ifndef STDIO_API_H
+#define STDIO_API_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 4 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+#ifndef _MSL_COMMON_FILE_STRUC_H
+#define _MSL_COMMON_FILE_STRUC_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" line 2 "types.h" */
+/* end "types.h" */
+
+typedef unsigned long __file_handle;
+typedef unsigned long fpos_t;
+typedef struct _FILE _FILE, *P_FILE;
+
+#define __ungetc_buffer_size 2
+
+enum __file_kinds {
+    __closed_file,
+    __disk_file,
+    __console_file,
+    __unavailable_file
+};
+
+enum __open_modes {
+    __must_exist,
+    __create_if_necessary,
+    __create_or_truncate
+};
+
+enum __file_orientation {
+    __unoriented,
+    __char_oriented,
+    __wide_oriented
+};
+
+enum __io_modes {
+    __read = 1,
+    __write = 2,
+    __read_write = 3,
+    __append = 4
+};
+
+typedef struct __file_modes {
+    u32 open_mode : 2;
+    u32 io_mode : 3;
+    u32 buffer_mode : 2;
+    u32 file_kind : 3;
+
+#ifdef _MSL_WIDE_CHAR
+    u32 file_orientation : 2;
+#endif /* _MSL_WIDE_CHAR */
+
+    u32 binary_io : 1;
+} __file_modes;
+
+enum __io_states {
+    __neutral,
+    __writing,
+    __reading,
+    __rereading
+};
+
+typedef struct __file_state {
+    u32 io_state : 3;
+    u32 free_buffer : 1;
+    u8 eof;
+    u8 error;
+} __file_state;
+
+typedef void* __ref_con;
+typedef void (*__idle_proc)(void);
+typedef int (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __ref_con ref_con);
+typedef int (*__io_proc)(__file_handle file, u8* buff, size_t* count, __ref_con ref_con);
+typedef int (*__close_proc)(__file_handle file);
+
+struct _FILE {
+    __file_handle handle;                           // _00
+    __file_modes mode;                              // _04
+    __file_state state;                              // _08
+    u8 is_dynamically_allowed;                      // _0C
+    u8 char_buffer;                                 // _0D
+    u8 char_buffer_overflow;                        // _0E
+    u8 ungetc_buffer[__ungetc_buffer_size];         // _0F
+    wchar_t ungetwc_buffer[__ungetc_buffer_size];   // _12
+    u32 position;                                   // _18
+    u8* buffer;                                   // _1C
+    u32 buffer_size;                                // _20
+    u8* buffer_ptr;                               // _24
+    u32 buffer_len;                                 // _28
+    u32 buffer_alignment;                           // _2C
+    u32 saved_buffer_len;                           // _30
+    u32 buffer_pos;                                 // _34
+    __pos_proc position_proc;                       // _38
+    __io_proc read_proc;                            // _3C
+    __io_proc write_proc;                           // _40
+    __close_proc close_proc;                        // _44
+    __ref_con ref_con;                              // _48
+    _FILE* next_file_struct;                        // _4C
+};
+
+typedef struct _FILE FILE;
+
+
+#define _IONBF 0
+#define _IOLBF 1
+#define _IOFBF 2
+
+// define standard C file pointer location names
+#define SEEK_SET (0)
+#define SEEK_CUR (1)
+#define SEEK_END (2)
+
+#define stdin &(__files[0])
+#define stdout &(__files[1])
+#define stderr &(__files[2])
+
+#define _STATIC_FILES 4
+
+extern FILE __files[];
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 5 "wchar.h" */
+#ifndef MSL_WCHAR_H
+#define MSL_WCHAR_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+#ifndef _WCHAR_IO_H
+#define _WCHAR_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fwide(FILE* stream, int mode);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+#ifndef MSL_WCSTOUL_H
+#define MSL_WCSTOUL_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" line 3 "types.h" */
+/* end "types.h" */
+
+
+unsigned long __wcstoul(int, int, wint_t (*wReadProc)(void*, wint_t, int), void*, int*, int*, int*);
+//__wcstoull
+//wcstoul
+//wcstoull
+long wcstol(const wchar_t*, wchar_t**, int);
+//wcstoll
+//watoi
+//watol
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+#ifndef MSL_WMEM_H
+#define MSL_WMEM_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" line 3 "types.h" */
+/* end "types.h" */
+
+wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n);
+wchar_t* wmemchr(wchar_t* s, wchar_t c, int n);
+void* memmove(void*, const void*, size_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+#ifndef MSL_WPRINTF_H
+#define MSL_WPRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 4 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 5 "stdio.h" */
+/* end "stdio.h" */
+
+//wprintf
+//wprintf_s
+//fwprintf
+//fwprintf_s
+//vwprintf
+//vwprintf_s
+//vfwprintf
+//vfwprintf_s
+int swprintf(wchar_t*, size_t, const wchar_t*, ...);
+//swprintf_s
+//snwprintf_s
+int vswprintf(wchar_t*, size_t, const wchar_t*, va_list);
+//vswprintf_s
+//vsnwprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 13 "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+#ifndef MSL_WSTRING_H
+#define MSL_WSTRING_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" line 3 "types.h" */
+/* end "types.h" */
+
+size_t wcslen(const wchar_t*);
+wchar_t* wcscpy(wchar_t*, const wchar_t*);
+wchar_t* wcsncpy(wchar_t*, const wchar_t*, size_t);
+wchar_t* wcscat(wchar_t*, const wchar_t*);
+int wcscmp(const wchar_t*, const wchar_t*);
+wchar_t* wcschr(const wchar_t*, wchar_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "wchar.h" */
+
+enum __ReadProcActions {
+    __GetAChar,
+    __UngetAChar,
+    __TestForError
+};
+
+enum __WReadProcActions
+{
+    __GetAwChar,
+    __UngetAwChar,
+    __TestForwcsError
+};
+
+typedef struct {
+    char* CharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __OutStrCtrl;
+
+typedef struct{
+    char* NextChar;
+    int NullCharDetected;
+} __InStrCtrl;
+
+typedef struct {
+    wchar_t * wCharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __wOutStrCtrl;
+
+typedef struct {
+    wchar_t * wNextChar;
+    int    wNullCharDetected;
+} __wInStrCtrl;
+
+//__fread
+size_t __fwrite(const void *pPtr, size_t memb_size, size_t num_memb, FILE *file);
+int __StringRead(void *, int, int);
+wint_t __wStringRead(void*, wint_t, int);
+
+#endif // STDIO_API_H
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+#ifndef MSL_FILE_POS_H
+#define MSL_FILE_POS_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+int fseek(FILE* stream, u32 offset, int whence);
+int _fseek(FILE* stream, u32 offset, int whence);
+int ftell(FILE* stream);
+int _ftell(FILE* stream);
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+#ifndef MSL_FILE_IO_H
+#define MSL_FILE_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fclose(FILE* file);
+int fflush(FILE* file);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+#ifndef MSL_PRINTF_H
+#define MSL_PRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+
+//printf
+//printf_s
+int fprintf(FILE*, const char* format, ...);
+//fprintf_s
+int vprintf(const char*, va_list);
+//vprintf_s
+//vfprintf
+//vfprintf_s
+int vsnprintf(char*, size_t, const char*, va_list);
+//vsnprintf_s
+int vsprintf(char*, const char*, va_list);
+//vsprintf_s
+int snprintf(char*, size_t, const char*, ...);
+//snprintf_s
+int sprintf(char*, const char*, ...);
+//sprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+#ifndef MSL_SCANF_H
+#define MSL_SCANF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+
+//fscanf
+//fscanf_s
+//vscanf
+//scanf
+//scanf_s
+//vfscanf
+//vfscanf_s
+int vsscanf(const char*, const char*, va_list);
+//vsscanf_s
+int sscanf(const char*, const char*, ...);
+//sscanf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "stdio.h" */
+/* "src/kyoshin/CExchangeWin.cpp" line 5 "kyoshin/CExchangeWin.hpp" */
 #pragma once
 
 /* "src/kyoshin/CExchangeWin.hpp" line 2 "types.h" */
@@ -1436,6 +1815,8 @@ public:
 };
 
 /* end "kyoshin/CExchangeWin.hpp" */
+extern const char lbl_eu_8050A740[];
+extern void func_80137924(void*, void*, void*, void*);
 
 extern "C" u8 func_8022D08C(void* self) { return ((CExchangeWinFull*)self)->field_25; }
 
@@ -1445,9 +1826,9 @@ extern "C" u8 func_8022D08C(void* self) { return ((CExchangeWinFull*)self)->fiel
 
 
 
-u8 func_8022D094(void* self) { return static_cast<CExchangeWinFull*>(self)->field_24; }
+extern "C" u8 func_8022D094(void* self) { return ((CExchangeWinFull*)self)->field_24; }
 
-extern "C" u8 func_8022D09C(void* self) { return static_cast<CExchangeWinFull*>(self)->field_27; }
+extern "C" u8 func_8022D09C(void* self) { return ((CExchangeWinFull*)self)->field_27; }
 
 
 
@@ -1461,7 +1842,21 @@ void CExchangeWin::OnFileEvent() {}
 
 // Stub functions needed by CItemBoxGrid
 extern "C" void func_8022D0D0(void* self) { }
-extern "C" void func_8022D0F8(void* dst, void* src, u8 val) { }
+extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
+    char buf[64];
+    sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
+    u32 obj = *(u32*)((u8*)src + 0x1c);
+    u32 sub = *(u32*)(obj + 0x10);
+    void** vtbl = *(void***)sub;
+    void* r1 = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])((void*)sub, buf, 1);
+    u32 obj2 = *(u32*)((u8*)src + 0x1c);
+    u32 sub2 = *(u32*)(obj2 + 0x10);
+    void** vtbl2 = *(void***)sub2;
+    void* r2 = ((void*(*)(void*, char*, int))vtbl2[0x3C / 4])((void*)sub2, (char*)&lbl_eu_8050A740[0x25], 1);
+    u32 obj3 = *(u32*)((u8*)src + 0x1c);
+    u32 sub3 = *(u32*)(obj3 + 0x10);
+    func_80137924(dst, r1, r2, (void*)sub3);
+}
 extern "C" void func_8022CF2C(void* self) { }
 extern "C" void func_8022CF7C(void* self) { }
 extern "C" void func_8022CFEC(void* self) { }

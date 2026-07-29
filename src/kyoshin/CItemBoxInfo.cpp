@@ -182,14 +182,17 @@ void func_801D4054(CItemBoxInfo* info) {
 void func_801D4174(CItemBoxInfo* info) {
     func_801390E0__FPP11CFileHandle(&info->state.fileHandle1);
     func_801390E0__FPP11CFileHandle(&info->state.fileHandle2);
+    void* layout = info->state.layout;
     info->state.active = 0;
-    if (info->state.layout != 0) {
-        ((nw4r::lyt::Layout*)info->state.layout)->~Layout();
+    if (layout != 0) {
+        if (layout != 0) {
+            (*(void(**)(void*, u32))(*(void***)layout + 2))(layout, 1);
+        }
         info->state.layout = 0;
     }
     info->state.animTransform1 = 0;
     info->state.animTransform2 = 0;
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.arcResourceAccessor);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.arcResourceAccessor);
     func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.resource);
     info->state.arcResourceAccessor = 0;
     info->state.resource = 0;
@@ -1057,14 +1060,17 @@ void CItemBoxInfo2::drawItemBox2Layout(nw4r::lyt::DrawInfo* drawInfo) {
 void func_801E13F8(CItemBoxInfo2* info) {
     func_801390E0__FPP11CFileHandle(&info->state.fileHandle1);
     func_801390E0__FPP11CFileHandle(&info->state.fileHandle2);
+    void* layout = info->state.layout;
     info->state.active = 0;
-    if (info->state.layout != 0) {
-        ((nw4r::lyt::Layout*)info->state.layout)->~Layout();
+    if (layout != 0) {
+        if (layout != 0) {
+            (*(void(**)(void*, u32))(*(void***)layout + 2))(layout, 1);
+        }
         info->state.layout = 0;
     }
     info->state.animTransform1 = 0;
     info->state.animTransform2 = 0;
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.arcResourceAccessor);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.arcResourceAccessor);
     func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.resource);
     info->state.arcResourceAccessor = 0;
     info->state.resource = 0;
@@ -1356,9 +1362,10 @@ void func_801E3730(CItemBoxInfo2* info, u16 arg2) {
     func_801E3918(info);
     u32 buf[4];
     func_801D59C0(buf, info, (void*)arg2);
+    u32 v0 = buf[0], v1 = buf[1], v2 = buf[2], v3 = buf[3];
     void* layout = *(void**)((u8*)info + 0x34);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x48f], (char*)buf[0], 0);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x49b], (char*)buf[3], 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x48f], (char*)v1, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x49b], (char*)v3, 0);
 }
 void func_801E37C4(CItemBoxInfo2* info) {
     func_801E40E8(info);

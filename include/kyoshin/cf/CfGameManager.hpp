@@ -6,9 +6,50 @@ class CPad;
 class CScnNw4r;
 class CView;
 class UnkClass_80186D20;
+class CfCamEventManager;
+class CSysWinBuff;
 
 struct CfGameManagerData1C {
     u8 field_0x0[0xC];
+};
+
+struct UnkClass_80083298SubF0 {
+    u8 field_0x0;
+};
+
+class UnkClass_80083298 {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual void vfunc_0x58();
+    virtual void vfunc_0x5C();
+    virtual void vfunc_0x60();
+    virtual void vfunc_0x64();
+    virtual void vfunc_0x68();
+    virtual void vfunc_0x6C();
+    virtual void vfunc_0x70();
+    virtual u32 vfunc_0x74();
+
+    u8 field_0x4[0xEC];
+    UnkClass_80083298SubF0 field_0xF0;
 };
 
 /* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
@@ -36,7 +77,7 @@ namespace cf{
         static UNKWORD func_800822F4();
         static bool func_800829B8();
         static u32 getCurrentPadChannel();
-        static UNKTYPE* func_80083298();
+        static UnkClass_80083298* func_80083298();
         static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
         static bool func_80086F9C();
@@ -64,7 +105,12 @@ namespace cf{
         u8 field_0x1A[2];
         CfGameManagerData1C field_0x1C;
         u8 unk28;
-        u8 unk29[0x68 - 0x29];
+        u8 unk29[0x40 - 0x29];
+        u16* field_0x40;
+        s32 field_0x44;
+        s32 field_0x48;
+        s32 field_0x4C;
+        u8 field_0x50[0x18];
         u32 unk68;
         u8 unk6C;
         u8 unk6D[3];          // 0x6D-0x6F
@@ -73,7 +119,7 @@ namespace cf{
         u32 unk7C;
         u8 unk80[0x8C - 0x80];
         u32 unk8C;
-        u32 unk90;
+        UnkClass_80083298* unk90;
         //between CObjectParam - CfObjectMove
         //likely player character object array, seems to always store pointers
         //to CfObjectPc objects except pointing at the 4th vtable
@@ -83,7 +129,7 @@ namespace cf{
         u32 unkA8;
         u32 unkAC;
         u32 unkB0;
-        u32 unkB4;
+        CfCamEventManager* unkB4;
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
@@ -233,10 +279,10 @@ public:
     void func_80082008();
     void func_80082060();
     void func_80082088();
-    void func_80082104();
+    bool func_80082104();
     void func_8008212C();
-    void func_800821F8();
-    void func_8008221C();
+    u32 func_800821F8();
+    CfObject* func_8008221C();
     void func_80082254();
     void func_80082258();
     void func_8008228C();
@@ -255,12 +301,12 @@ public:
     void func_8008269C();
     void func_800826F0();
     void func_80082768();
-    void func_80082770();
+    u16 func_80082770();
     void func_800827A8();
     void func_800827E4();
     void func_80082834();
-    void func_800828DC();
-    void func_80082900();
+    u32 func_800828DC();
+    u32 func_80082900();
     void func_80082940();
     void func_8008294C();
     void func_80082A0C();
@@ -311,8 +357,8 @@ public:
     void func_80084654();
     void func_80084A00();
     void func_80084AD4();
-    void func_80084B68();
-    void func_80084BAC();
+    bool func_80084B68();
+    bool func_80084BAC();
     bool func_80084BF4();
     void func_80084C10();
     void func_80084CA4();

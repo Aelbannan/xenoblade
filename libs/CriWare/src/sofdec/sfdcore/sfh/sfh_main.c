@@ -4,13 +4,45 @@
 #include <harness_catalog.h>
 
 extern u32 lbl_eu_80619BE8;
+
+/* SFH runtime context — 0x18 bytes */
+typedef struct SFHContext {
+    u32 active;       /* 0x00: set to 1 when created */
+    u32 field_0x04;   /* 0x04: arg0 from SFH_Create */
+    u32 field_0x08;   /* 0x08: arg1 from SFH_Create */
+    u8  field_0x0C[0x0C]; /* 0x0C-0x17: remainder */
+} SFHContext;
+
 void SFH_Init(void) {
     lbl_eu_80619BE8++;
 }
 
-void SFH_Create() {}
+SFHContext* SFH_Create(u32 arg0, s32 arg1, SFHContext* ctx) {
+    SFHContext* result;
+    SFHContext* c;
+    s32 a1;
+    u32 a0;
 
-void SFH_Destroy(void) {}
+    result = NULL;
+    a1 = arg1;
+    c = ctx;
+    a0 = arg0;
+    if (c != NULL) {
+        memset(c, 0, sizeof(SFHContext));
+        if (a1 >= 0x800) {
+            memset(c, 0, sizeof(SFHContext));
+            c->active = 1;
+            c->field_0x04 = a0;
+            result = c;
+            c->field_0x08 = a1;
+        }
+    }
+    return result;
+}
+
+void SFH_Destroy(SFHContext* ctx) {
+    memset(ctx, 0, sizeof(SFHContext));
+}
 
 void SFH_IsSfdHeader() {}
 
@@ -162,8 +194,12 @@ u32 VER1_AnlyDiffTime(void* buf);
 u32 VER2_AnlyDiffTime(void* buf);
 u32 SFH_AnlyDiffTime(void* buf) {
     s32 ver = *(s32*)((u8*)buf + 0x10);
-    if (ver < 0xC8) return VER1_AnlyDiffTime(buf);
-    if (ver < 0x12C) return VER2_AnlyDiffTime(buf);
+    if (ver < 0xC8) {
+        return 0;
+    }
+    if (ver < 0x12C) {
+        return VER2_AnlyDiffTime(buf);
+    }
     return 0;
 }
 

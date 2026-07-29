@@ -1194,7 +1194,7 @@ extern OcThreadListHdr lbl_eu_805704C8;
 extern OcThreadListHdr lbl_eu_80570538;
 }
 
-extern "C" int thread(VMThread* pThread) { return 0; }
+int thread(VMThread* pThread){ return 0; }
 
 extern "C" int start_8003A784(VMThread* pThread, u32 r4) {
     vmThreadStart(pThread, r4);
@@ -1234,11 +1234,11 @@ extern "C" void ocThreadRegist() {
     vmOCRegist(&lbl_eu_80524C60);
 }
 
-extern "C" OcThreadListHdr* func_8003A4E0() {
+OcThreadListHdr* func_8003A4E0(){
     return &lbl_eu_805704C8;
 }
 
-extern "C" OcThreadListHdr* func_8003A4EC() {
+OcThreadListHdr* func_8003A4EC(){
     return &lbl_eu_80570538;
 }
 

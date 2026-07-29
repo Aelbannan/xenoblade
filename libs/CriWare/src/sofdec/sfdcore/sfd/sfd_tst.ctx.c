@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_tst
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tst.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -723,24 +723,36 @@ void SFTST_Create() {}
 void SFTST_SetTstFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 
 void SFTST_SetTolerance(void* self, s32* param) {
-    *(u32*)((u8*)self + 0x138) = param[0];
-    *(u32*)((u8*)self + 0x13c) = param[1];
-    *(u32*)((u8*)self + 0x140) = param[2];
-    *(u32*)((u8*)self + 0x144) = param[3];
+    s32 v0 = param[0];
+    s32 v1 = param[1];
+    *(u32*)((u8*)self + 0x13c) = v1;
+    *(u32*)((u8*)self + 0x138) = v0;
+    s32 v2 = param[2];
+    s32 v3 = param[3];
+    *(u32*)((u8*)self + 0x144) = v3;
+    *(u32*)((u8*)self + 0x140) = v2;
 }
 
 void SFTST_SetExcessErr(void* self, s32* param) {
-    *(u32*)((u8*)self + 0x148) = param[0];
-    *(u32*)((u8*)self + 0x14c) = param[1];
-    *(u32*)((u8*)self + 0x150) = param[2];
-    *(u32*)((u8*)self + 0x154) = param[3];
+    s32 v0 = param[0];
+    s32 v1 = param[1];
+    *(u32*)((u8*)self + 0x14c) = v1;
+    *(u32*)((u8*)self + 0x148) = v0;
+    s32 v2 = param[2];
+    s32 v3 = param[3];
+    *(u32*)((u8*)self + 0x154) = v3;
+    *(u32*)((u8*)self + 0x150) = v2;
 }
 
 void SFTST_SetAdjStart(void* self, s32* param) {
-    *(u32*)((u8*)self + 0x158) = param[0];
-    *(u32*)((u8*)self + 0x15c) = param[1];
-    *(u32*)((u8*)self + 0x160) = param[2];
-    *(u32*)((u8*)self + 0x164) = param[3];
+    s32 v0 = param[0];
+    s32 v1 = param[1];
+    *(u32*)((u8*)self + 0x15c) = v1;
+    *(u32*)((u8*)self + 0x158) = v0;
+    s32 v2 = param[2];
+    s32 v3 = param[3];
+    *(u32*)((u8*)self + 0x164) = v3;
+    *(u32*)((u8*)self + 0x160) = v2;
 }
 
 void SFTST_SetAdjPoff(void* self, s32* param) {

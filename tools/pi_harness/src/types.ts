@@ -18,14 +18,14 @@ export interface HarnessConfig {
   maxBatchRetries: number;
   singletonEnabled: boolean;
   rebatchEnabled: boolean;
-  /** Global budget for total rebatch sessions across all small-target
+  /** Per-TU budget for total rebatch sessions across all small-target
    *  groups. Once exhausted, remaining targets route to singletons
    *  (or get skipped). 0 = no rebatch attempts. */
   maxRebatchAttempts: number;
   /** Max output tokens per session (0 = model default, no override). */
   maxTokens: number;
-  /** Targets with retail ASM smaller than this (bytes) go to rebatch
-   *  instead of singleton retries. 0 = all use singletons. */
+  /** Targets with retail binary size smaller than this (bytes) go to
+   *  rebatch instead of singleton retries. 0 = all use singletons. */
   singletonMinSize: number;
   maxBriefChars: number;
   maxBatchMinutes: number;

@@ -8,31 +8,47 @@ void SFTST_Create() {}
 void SFTST_SetTstFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
 
 void SFTST_SetTolerance(void* self, s32* param) {
-    *(u32*)((u8*)self + 0x138) = param[0];
-    *(u32*)((u8*)self + 0x13c) = param[1];
-    *(u32*)((u8*)self + 0x140) = param[2];
-    *(u32*)((u8*)self + 0x144) = param[3];
+    s32 v0 = param[0];
+    s32 v1 = param[1];
+    *(u32*)((u8*)self + 0x13c) = v1;
+    *(u32*)((u8*)self + 0x138) = v0;
+    s32 v2 = param[2];
+    s32 v3 = param[3];
+    *(u32*)((u8*)self + 0x144) = v3;
+    *(u32*)((u8*)self + 0x140) = v2;
 }
 
 void SFTST_SetExcessErr(void* self, s32* param) {
-    *(u32*)((u8*)self + 0x148) = param[0];
-    *(u32*)((u8*)self + 0x14c) = param[1];
-    *(u32*)((u8*)self + 0x150) = param[2];
-    *(u32*)((u8*)self + 0x154) = param[3];
+    s32 v0 = param[0];
+    s32 v1 = param[1];
+    *(u32*)((u8*)self + 0x14c) = v1;
+    *(u32*)((u8*)self + 0x148) = v0;
+    s32 v2 = param[2];
+    s32 v3 = param[3];
+    *(u32*)((u8*)self + 0x154) = v3;
+    *(u32*)((u8*)self + 0x150) = v2;
 }
 
 void SFTST_SetAdjStart(void* self, s32* param) {
-    *(u32*)((u8*)self + 0x158) = param[0];
-    *(u32*)((u8*)self + 0x15c) = param[1];
-    *(u32*)((u8*)self + 0x160) = param[2];
-    *(u32*)((u8*)self + 0x164) = param[3];
+    s32 v0 = param[0];
+    s32 v1 = param[1];
+    *(u32*)((u8*)self + 0x15c) = v1;
+    *(u32*)((u8*)self + 0x158) = v0;
+    s32 v2 = param[2];
+    s32 v3 = param[3];
+    *(u32*)((u8*)self + 0x164) = v3;
+    *(u32*)((u8*)self + 0x160) = v2;
 }
 
 void SFTST_SetAdjPoff(void* self, s32* param) {
-    *(u32*)((u8*)self + 0x168) = param[0];
-    *(u32*)((u8*)self + 0x16c) = param[1];
-    *(u32*)((u8*)self + 0x170) = param[2];
-    *(u32*)((u8*)self + 0x174) = param[3];
+    s32 v0 = param[0];
+    s32 v1 = param[1];
+    *(u32*)((u8*)self + 0x16c) = v1;
+    *(u32*)((u8*)self + 0x168) = v0;
+    s32 v2 = param[2];
+    s32 v3 = param[3];
+    *(u32*)((u8*)self + 0x174) = v3;
+    *(u32*)((u8*)self + 0x170) = v2;
 }
 
 void SFTST_SetMovaveRange(void* self, s32 val) {
@@ -45,13 +61,59 @@ void SFTST_Pause(void* self, u32 val) { *(u32*)((u8*)self + 0x4) = val; }
 
 void SFTST_SetAdjFlg(void* self, u32 val) { *(u32*)((u8*)self + 0xc) = val; }
 
-void SFTST_GoNextFrame() {}
+void SFTST_GoNextFrame(void* self, s32* param) {
+    if (*(u32*)((u8*)self + 0xc) == 0) {
+        s32 a_hi = *(s32*)((u8*)self + 0x134);
+        s32 a_lo = *(s32*)((u8*)self + 0x130);
+        s32 b_hi = param[1];
+        s32 b_lo = param[0];
+        s32 d_hi = param[3];
+        s32 d_lo = param[2];
+
+        s64 val_a = ((s64)a_hi << 32) | (u32)a_lo;
+        s64 val_b = ((s64)b_hi << 32) | (u32)b_lo;
+        s64 val_d = ((s64)d_hi << 32) | (u32)d_lo;
+        s64 result = (val_a * val_b) / val_d;
+
+        *(u32*)((u8*)self + 0x12c) += (s32)(u32)result;
+        *(u32*)((u8*)self + 0x128) += (s32)(u32)(result >> 32);
+    }
+}
 
 void SFTST_SetSpeed(void* self, u32 a, u32 b) {
     *(u32*)((u8*)self + 0x198) = a;
     *(u32*)((u8*)self + 0x19c) = b;
 }
 
-void SFTST_Calc() {}
+static void sftst_CalcSub(void* self, s32* param, void* arg5, s32* out);
 
-void sftst_CalcSub() {}
+void SFTST_Calc(void* self, s32* param, void* arg5, s32* out) {
+    s32 speed_a = *(s32*)((u8*)self + 0x198);
+    s32 speed_b = *(s32*)((u8*)self + 0x19c);
+
+    if (speed_a == speed_b) {
+        sftst_CalcSub(self, param, arg5, out);
+    } else {
+        s32 local_param[4];
+        s32 result[4];
+
+        local_param[0] = param[0];
+        local_param[1] = param[1];
+
+        s64 val = ((s64)param[3] << 32) | (u32)param[2];
+        s64 div = ((s64)(speed_b >> 31) << 32) | (u32)speed_b;
+        s64 quot = (val * (s64)(s32)speed_a) / div;
+
+        local_param[2] = (s32)(u32)(quot >> 32);
+        local_param[3] = (s32)(u32)quot;
+
+        sftst_CalcSub(self, local_param, arg5, result);
+
+        out[0] = result[0];
+        out[1] = result[1];
+        out[2] = param[2];
+        out[3] = param[3];
+    }
+}
+
+void sftst_CalcSub(void* self, s32* param, void* arg5, s32* out) {}

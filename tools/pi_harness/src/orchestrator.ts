@@ -16,6 +16,7 @@
  */
 
 import { execFileSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ModelRuntime } from "@earendil-works/pi-coding-agent";
 import type {
@@ -54,8 +55,6 @@ const OWNER = `pi-harness-${process.pid}`;
 function findOrphanedClaims(repoRoot: string): Array<{ id: string; owner: string }> {
   const orphaned: Array<{ id: string; owner: string }> = [];
   try {
-    const { readFileSync } = require("node:fs");
-    const { join } = require("node:path");
     const targetsPath = join(repoRoot, "tools", "coop", "targets.json");
     const raw = JSON.parse(readFileSync(targetsPath, "utf-8"));
     const targets = raw.targets ?? [];
@@ -638,16 +637,16 @@ async function runOneTu(
     });
     await releaseBatch(repoRoot, config, currentIds);
 
+    // Store per-target carryover for failed targets BEFORE clearing.
+    const failedIds = batchResults.filter((r) => !r.accepted).map((r) => r.targetId);
+    firstPassFailed.push(...failedIds);
+    for (const id of failedIds) {
+      targetCarryover.set(id, carryover);
+    }
+
     // Clear carryover on success — don't leak stale failure text to subsequent batches
     if (acceptedCount > 0) {
       carryover = "";
-    }
-
-    const failedIds = batchResults.filter((r) => !r.accepted).map((r) => r.targetId);
-    firstPassFailed.push(...failedIds);
-    // Store carryover for failed targets
-    for (const id of failedIds) {
-      targetCarryover.set(id, carryover);
     }
   }
 
@@ -661,11 +660,9 @@ async function runOneTu(
       if (!target) continue;
 
       if (config.singletonMinSize > 0) {
-        // Rebuild brief to check size
-        const targetTargets = targets.filter((t) => t.id === fid);
-        const { briefs: targetBriefs } = buildBriefs(repoRoot, targetTargets);
-        const b = targetBriefs.find((x: { targetId: string }) => x.targetId === fid);
-        if (b && b.retailAsm.length < config.singletonMinSize) {
+        // Route small targets to rebatch pool based on retail binary size.
+        const targetSize = target.size ?? 0;
+        if (targetSize > 0 && targetSize < config.singletonMinSize) {
           smallRetryPool.push(fid);
           continue;
         }
@@ -688,14 +685,15 @@ async function runOneTu(
   }
 
   // ── Re-batch phase for small failed targets ─────────────────────
-  if (smallRetryPool.length > 0) {
-    const effectiveMaxRebatch = config.maxRebatchAttempts > 0
-      ? config.maxRebatchAttempts
-      : config.maxBatchRetries;
-    const rebatchSkipped = await runRebatchPhase(
+  if (smallRetryPool.length > 0 && !dryRun) {
+    const { skipped: rebatchSkipped, targetCarryover: rebatchCarryover } = await runRebatchPhase(
       repoRoot, unit, config, modelRuntime, sanitized,
-      smallRetryPool, targets, carryover, effectiveMaxRebatch,
+      smallRetryPool, targets, carryover, config.maxRebatchAttempts,
     );
+    // Merge rebatch carryover into the main map for singleton routing.
+    for (const [id, fb] of rebatchCarryover) {
+      targetCarryover.set(id, fb);
+    }
     // Route targets that rebatch didn't process (disabled, budget
     // exhausted, or failed) to singletons or skip.
     for (const fid of rebatchSkipped) {
@@ -738,43 +736,46 @@ async function runOneTu(
 // ─────────────────────────────────────────────────────────────────────
 
 /**
- * Run rebatch phase for small failed targets with a global session budget.
+ * Run rebatch phase for small failed targets with a per-TU session budget.
  *
- * @param globalMaxAttempts Total rebatch sessions allowed across all groups.
- * @returns Target IDs that were NOT rebatched (budget exhausted, disabled,
- *          or failed). The caller should route these to singletons or skip.
+ * @param maxAttempts Per-TU rebatch session budget. 0 = no rebatch attempts.
+ * @returns Skipped target IDs and per-target carryover for singleton routing.
  */
 async function runRebatchPhase(
   repoRoot: string, unit: string, config: HarnessConfig,
   modelRuntime: ModelRuntime, sanitized: string,
   smallRetryPool: string[], targets: Target[], carryover: string,
-  globalMaxAttempts: number,
-): Promise<string[]> {
+  maxAttempts: number,
+): Promise<{ skipped: string[]; targetCarryover: Map<string, string> }> {
   const uniqueSmall = [...new Set(smallRetryPool)];
+  const targetCarryover = new Map<string, string>();
 
   if (!config.rebatchEnabled) {
     console.log(`[pi-harness] ${unit}: rebatch disabled — ${uniqueSmall.length} small target(s) routed to singletons`);
-    return uniqueSmall;
+    return { skipped: uniqueSmall, targetCarryover };
   }
 
-  if (globalMaxAttempts <= 0) {
+  if (maxAttempts <= 0) {
     console.log(`[pi-harness] ${unit}: rebatch budget is 0 — ${uniqueSmall.length} small target(s) routed to singletons`);
-    return uniqueSmall;
+    return { skipped: uniqueSmall, targetCarryover };
   }
 
   console.log(
     `[pi-harness] ${unit}: re-batching ${uniqueSmall.length} small target(s) ` +
-    `(below ${config.singletonMinSize} bytes, budget: ${globalMaxAttempts} session(s))`,
+    `(below ${config.singletonMinSize} bytes, budget: ${maxAttempts} session(s))`,
   );
 
   const smallTargets = targets.filter((t) => uniqueSmall.includes(t.id));
   let sharedCarryover = carryover;
-  let rebatchBudget = globalMaxAttempts;
+  let rebatchBudget = maxAttempts;
   const skipped: string[] = [];
 
   for (let rbIdx = 0; rbIdx < uniqueSmall.length; rbIdx += config.batchSize) {
     if (rebatchBudget <= 0) {
       // Budget exhausted — remaining targets go to caller.
+      for (const id of uniqueSmall.slice(rbIdx)) {
+        targetCarryover.set(id, sharedCarryover);
+      }
       skipped.push(...uniqueSmall.slice(rbIdx));
       break;
     }
@@ -793,12 +794,9 @@ async function runRebatchPhase(
       repoRoot,
       rbTargets.filter((t) => !rbMissing.includes(t.id)),
     );
-    const rbSnapshot = await snapshotUnit(repoRoot, unit, writable);
     let rbCurrent = rbFiltered;
 
     while (rbCurrent.length > 0 && rebatchBudget > 0) {
-      rebatchBudget--;
-
       const brief = buildBatchBrief({
         targets: rbBriefs, unit, writable, carryover: sharedCarryover,
         maxChars: config.maxBriefChars, pythonBin: config.pythonBin,
@@ -808,13 +806,14 @@ async function runRebatchPhase(
         brief, unit, targetIds: rbCurrent, pythonBin: config.pythonBin,
       });
 
-      let snapshot: Snapshot | null = rbSnapshot;
+      let snapshot: Snapshot | null = null;
       let attemptError: string | null = null;
       let batchResults: Awaited<ReturnType<typeof runBatchCycle>> | null = null;
 
       try {
         await claimBatch(repoRoot, config, rbCurrent);
         snapshot = await snapshotUnit(repoRoot, unit, writable);
+        rebatchBudget--; // Only decrement after claim+snapshot succeed.
 
         const rbTargetSymbols = new Map(rbTargets.map(t => [t.id, t.symbol]));
         const verify = makeVerifyCallback({
@@ -857,6 +856,7 @@ async function runRebatchPhase(
             ?? verify.lastFeedback()
             ?? `${sessionResult.outcome} after ${sessionResult.rePromptsUsed} re-prompt(s)`;
           sharedCarryover = `Previous re-batch session failed (${sessionResult.outcome}). ${rejectionReason}`;
+          for (const id of rbCurrent) targetCarryover.set(id, sharedCarryover);
 
           appendLedger(repoRoot, config.ledgerPath, {
             ts: new Date().toISOString(), event: "batch-session-exhausted", tu: unit,
@@ -876,14 +876,21 @@ async function runRebatchPhase(
         if (usage) {
           logUsage(repoRoot, config, unit, `rebatch-${rbIdx}`, usage, false);
         }
+        // Error before session ran — restore budget.
+        if (batchResults === null && attemptError !== null) {
+          rebatchBudget++;
+        }
       }
 
       if (attemptError !== null && batchResults === null) {
         let recoveryOutput = "";
-        if (rbSnapshot) {
+        if (snapshot) {
           const recovery = await buildUnit(repoRoot, config.pythonBin, config.region, unit);
           recoveryOutput = recovery.output;
-          if (!recovery.ok) await restoreSnapshot(repoRoot, rbSnapshot);
+          if (!recovery.ok) await restoreSnapshot(repoRoot, snapshot);
+        } else {
+          // Snapshot not taken yet — restore pre-loop state.
+          await restoreSnapshot(repoRoot, await snapshotUnit(repoRoot, unit, writable));
         }
         appendLedger(repoRoot, config.ledgerPath, {
           ts: new Date().toISOString(), event: "batch-error", tu: unit,
@@ -891,12 +898,14 @@ async function runRebatchPhase(
         });
         await releaseBatch(repoRoot, config, rbCurrent);
         sharedCarryover = `Previous re-batch attempt failed unexpectedly:\n${attemptError}\n${recoveryOutput}`;
+        for (const id of rbCurrent) targetCarryover.set(id, sharedCarryover);
         continue;
       }
 
       if (batchResults === null) {
         await releaseBatch(repoRoot, config, rbCurrent);
         sharedCarryover = "Previous re-batch attempt produced no results.";
+        for (const id of rbCurrent) targetCarryover.set(id, sharedCarryover);
         continue;
       }
 
@@ -914,24 +923,35 @@ async function runRebatchPhase(
       await releaseBatch(repoRoot, config, rbCurrent);
 
       // Failed targets get routed to singletons by the caller.
+      // Store carryover so singletons know why rebatch failed.
       const rbFailed = batchResults.filter((r) => !r.accepted).map((r) => r.targetId);
+      for (const id of rbFailed) targetCarryover.set(id, sharedCarryover);
       skipped.push(...rbFailed);
 
       rbCurrent = [];
     }
 
     if (rbCurrent.length > 0) {
+      for (const id of rbCurrent) targetCarryover.set(id, sharedCarryover);
       skipped.push(...rbCurrent);
     }
   }
 
   if (skipped.length > 0) {
+    appendLedger(repoRoot, config.ledgerPath, {
+      ts: new Date().toISOString(), event: "rebatch-skipped", tu: unit,
+      detail: {
+        skippedIds: skipped,
+        reason: rebatchBudget <= 0 ? "budget-exhausted" : "session-failed",
+        rebatchBudgetRemaining: rebatchBudget,
+      },
+    });
     console.log(
       `[pi-harness] ${unit}: ${skipped.length} target(s) skipped by rebatch (budget remaining: ${rebatchBudget})`,
     );
   }
 
-  return skipped;
+  return { skipped, targetCarryover };
 }
 
 // ─────────────────────────────────────────────────────────────────────

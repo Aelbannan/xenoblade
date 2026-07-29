@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/std/cri_crw_std
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/std/cri_crw_std.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/std/cri_crw_std.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -724,9 +724,15 @@ char* criCrw_GetVersion(void) {
     return lbl_eu_805FDDA0 = lbl_eu_80519750;
 }
 
-void CRICRW_Strcpy(void) {}
+char* strcpy(char*, const char*);
+char* CRICRW_Strcpy(char* dst, const char* ignored, const char* src) {
+    return strcpy(dst, src);
+}
 
-void CRICRW_Strncpy(void) {}
+char* strncpy(char* dest, const char* src, size_t n);
+char* CRICRW_Strncpy(char* dst, const char* ignored, const char* src, size_t n) {
+    return strncpy(dst, src, n);
+}
 
 // mr r4, r5; b strcat — copies 3rd arg to 2nd and calls strcat
 char* strcat(char*, const char*);
@@ -739,7 +745,11 @@ char* CRICRW_Strncat(char* dest, void* ignored, const char* src, size_t n) {
     return strncat(dest, src, n);
 }
 
-void CRICRW_Sprintf() {}
+int CRICRW_Sprintf(char* s, void* ignored, const char* fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    return vsprintf(s, fmt, ap);
+}
 
 int vsprintf(char* s, const char* fmt, va_list ap);
 int CRICRW_Vsprintf(char* s, void* ignored, const char* fmt, va_list ap) {

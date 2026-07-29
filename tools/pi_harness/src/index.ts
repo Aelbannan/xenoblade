@@ -223,7 +223,7 @@ async function main(): Promise<void> {
   process.stderr.write(`  maxRetries:     ${effectiveConfig.maxBatchRetries}\n`);
   process.stderr.write(`  singletonEnabled: ${effectiveConfig.singletonEnabled}\n`);
   process.stderr.write(`  rebatchEnabled: ${effectiveConfig.rebatchEnabled}\n`);
-  process.stderr.write(`  maxRebatchAttempts: ${effectiveConfig.maxRebatchAttempts === 0 ? `off (uses maxBatchRetries)` : effectiveConfig.maxRebatchAttempts}\n`);
+  process.stderr.write(`  maxRebatchAttempts: ${effectiveConfig.maxRebatchAttempts === 0 ? `off` : effectiveConfig.maxRebatchAttempts}\n`);
   process.stderr.write(`  maxTokens:      ${effectiveConfig.maxTokens === 0 ? "unlimited (model default)" : effectiveConfig.maxTokens}\n`);
   process.stderr.write(`  singletonMinSize: ${effectiveConfig.singletonMinSize === 0 ? "off (all use singletons)" : effectiveConfig.singletonMinSize + " bytes"}\n`);
   process.stderr.write(`  maxTimeoutRePrompts:   ${effectiveConfig.maxTimeoutRePrompts} (in-session continuation, 0=off)\n`);

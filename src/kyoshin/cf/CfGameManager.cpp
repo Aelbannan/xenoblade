@@ -10,6 +10,7 @@
 #include "kyoshin/code_801862C0.hpp"
 
 #include "monolib/core/CPadManager.hpp"
+#include "monolib/core/CView.hpp"
 #include "monolib/scn/CScn.hpp"
 
 // destructor defined inline in CfGameManager.hpp
@@ -30,6 +31,51 @@ struct BdatTextEntry {
     u8 padding[3];
 };
 
+struct Unk87588Data {
+    u8 field_0x0;
+    u8 field_0x1[0x1F];
+    u32 field_0x20;
+    u8 field_0x24;
+    u8 field_0x25[0x1F];
+    u32 field_0x44;
+    float field_0x48;
+};
+
+struct UnkEEE0Data {
+    u16 field_0x0;
+    u16 entries_0x2[1];
+};
+
+struct UnkF044Data {
+    u8 field_0x0[0x888];
+    u32 field_0x888[1];
+};
+
+struct UnkF8C0Node {
+    u32 field_0x0;
+};
+
+struct UnkF8C0Source {
+    u32 field_0x0;
+    UnkF8C0Node* field_0x4;
+};
+
+struct Unk81CA0Data {
+    u8 field_0x0[0x6D0];
+    u16 field_0x6D0;
+};
+
+struct UnkF0ACData {
+    u8 field_0x0[4];
+    u16 field_0x4_bits : 15;
+    u16 flag_0x4 : 1;
+};
+
+struct Unk82FCCData {
+    u8 field_0x0[0x68];
+    u32 flags_0x68;
+};
+
 } // namespace
 
 extern "C" {
@@ -41,6 +87,7 @@ u8 lbl_eu_80571748[0x10];
 CPad* lbl_eu_80663E0C;
 CPad lbl_eu_80570D40[8];
 CScn* lbl_eu_80663E14;
+CView* lbl_eu_80663E10;
 u32 lbl_eu_80663E60;
 u32 lbl_eu_80663E64;
 u32 lbl_eu_80663E24;
@@ -68,10 +115,88 @@ void func_80189424(float value);
 class ResourceHandle;
 extern "C" ResourceHandle* func_8009CF8C(u32 resourceId);
 extern "C" void func_8009D790(CfGameManagerData1C* data);
+extern "C" void func_800B9340();
+extern "C" void func_800B9364();
+extern "C" void func_80079B34(CfCamEventManager* manager);
+extern "C" bool func_80079DBC(CfCamEventManager* manager);
+extern "C" cf::CfObject* func_8006E5A4(CfCamEventManager* manager);
+extern "C" bool func_80068E44(u32 flag);
+extern "C" bool func_800B45A0();
+extern "C" void func_80141B20(cf::CfGameManager* manager);
+extern "C" void func_800B1E2C(cf::CfGameManager* manager);
+extern "C" void func_8047BDA0__17UnkClass_8047BB54Fv(UnkClass_80083298SubF0* subobject);
+extern "C" bool func_800FF778__9CMainMenuFv();
+extern "C" CSysWinBuff* getInstance__11CSysWinBuffFv();
+extern "C" bool isInitialized__10CMenuPauseFv();
 extern "C" float func_80496288(CScn* scene);
 extern "C" bool func_80496044(CScn* scene);
 extern "C" bool func_804960A8(CScn* scene);
+extern "C" void func_80189510(float value);
+extern "C" void func_801895F4(float value);
+extern void func_801BFFAC(float value, float fadeTime);
 extern const float lbl_eu_8066A208;
+extern const float lbl_eu_8066650C;
+extern const float lbl_eu_80666510;
+extern const float lbl_eu_80666548;
+
+extern "C" u32 func_8007DCA8__Q22cf13CfGameManagerFv(u32 first, u32 second) {
+    return (first << 27) | (second << 20);
+}
+
+extern "C" void func_8007E4CC__Q22cf13CfGameManagerFv(u32 mask) {
+    lbl_eu_80663E24 &= ~mask;
+}
+
+extern "C" u16 func_8007EEE0__Q22cf13CfGameManagerFv(const UnkEEE0Data* data, u16 index) {
+    return data->entries_0x2[index];
+}
+
+extern "C" u32 func_8007F044__Q22cf13CfGameManagerFv(const UnkF044Data* data, u32 index) {
+    return data->field_0x888[index];
+}
+
+extern "C" void func_8007F8C0__Q22cf13CfGameManagerFv(UnkF8C0Node* destination,
+                                                        const UnkF8C0Source* source) {
+    destination->field_0x0 = source->field_0x4->field_0x0;
+}
+
+extern "C" void func_80081CA0__Q22cf13CfGameManagerFv(Unk81CA0Data* data, u16 index,
+                                                        u32 offset) {
+    data->field_0x6D0 = offset + index * 16;
+}
+
+extern "C" bool func_8007CBD4__Q22cf13CfGameManagerFv(u32 mask) {
+    return (lbl_eu_80663E24 & mask) != 0;
+}
+
+extern "C" bool func_8007F0AC__Q22cf13CfGameManagerFv(const UnkF0ACData* data) {
+    return data->flag_0x4 != 0;
+}
+
+extern "C" bool func_80082FCC__Q22cf13CfGameManagerFv(const Unk82FCCData* data, u32 mask) {
+    return (data->flags_0x68 & mask) != 0;
+}
+
+extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u32* second) {
+    return *first != *second;
+}
+
+extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
+    if (enable) {
+        lbl_eu_80663E28 |= mask;
+    } else {
+        lbl_eu_80663E28 &= ~mask;
+    }
+}
+
+extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
+                                                        s32 maximum) {
+    if (*value < minimum) {
+        *value = minimum;
+    } else if (*value > maximum) {
+        *value = maximum;
+    }
+}
 
 namespace cf {
 
@@ -184,7 +309,11 @@ void cf::CfGameManager::func_8007D794() {}
 bool cf::CfGameManager::func_8007E1B4() { return false; }
 void cf::CfGameManager::func_8007E218() {}
 void cf::CfGameManager::func_8007F930(bool arg1) {}
-UNKTYPE* cf::CfGameManager::func_80083298() { return nullptr; }
+#pragma dont_inline on
+UnkClass_80083298* cf::CfGameManager::func_80083298() {
+    return getInstance()->unk90;
+}
+#pragma dont_inline reset
 extern "C" void func_800B76CC();
 void func_eu_800874CC(){ func_800B76CC(); }
 extern "C" void func_800B76F4();
@@ -228,7 +357,15 @@ void cf::CfGameManager::enablePadFlags(u32 inputFlags, bool enable) {
     lbl_eu_80571500.mPressedButtonFlags &= enabledFlags;
     lbl_eu_80571500.mTurboPressButtonFlags &= enabledFlags;
 }
-u32 cf::CfGameManager::getEnabledInputFlags() { return 0; }
+u32 cf::CfGameManager::getEnabledInputFlags() {
+    if (func_800829B8()) {
+        if (func_800FF778__9CMainMenuFv() || getInstance__11CSysWinBuffFv() != nullptr ||
+            isInitialized__10CMenuPauseFv()) {
+            return 0xFFFFFFFF;
+        }
+    }
+    return lbl_eu_80663DF8;
+}
 bool cf::CfGameManager::func_80086F9C() {
     return CfPadTask::getDetectedPadType() == PAD_TYPE_CLASSIC;
 }
@@ -243,7 +380,13 @@ void cf::CfGameManager::setCurrentPadPtr(const CPad* pad, u32 channel) {
 
     lbl_eu_80663E0C = const_cast<CPad*>(pad);
 }
-void func_80087588(){}
+extern "C" void func_80087588(Unk87588Data* data) {
+    data->field_0x0 = 0;
+    data->field_0x20 = 0;
+    data->field_0x24 = 0;
+    data->field_0x44 = 0;
+    data->field_0x48 = lbl_eu_80666548;
+}
 extern u16 lbl_eu_80664772;
 bool cf::CfGameManager::func_80085840() {
     if (lbl_eu_80663E14 == nullptr) {
@@ -259,10 +402,27 @@ bool cf::CfGameManager::func_8008585C() {
     return func_804960A8(lbl_eu_80663E14);
 }
 
+bool cf::CfGameManager::func_80084B68() {
+    if ((lbl_eu_80663E24 & 0x8000) != 0 && !func_80068E44(0x20)) {
+        return false;
+    }
+    return func_800B45A0();
+}
+
+bool cf::CfGameManager::func_80084BAC() {
+    if ((lbl_eu_80663E24 & 0x48000) != 0) {
+        if (func_80068E44(0x20)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 bool cf::CfGameManager::func_80084BF4() {
     return (lbl_eu_80663E24 & 0x48000) != 0;
 }
 
+#pragma dont_inline on
 bool cf::CfGameManager::func_800829B8() {
     if (testResInfoFlag(0x04000000)) {
         return false;
@@ -271,6 +431,7 @@ bool cf::CfGameManager::func_800829B8() {
     getInstance();
     return func_80496288(lbl_eu_80663E14) <= lbl_eu_8066A208;
 }
+#pragma dont_inline reset
 
 bool cf::CfGameManager::func_80082680() {
     return lbl_eu_80664772 != 0;
@@ -326,6 +487,72 @@ void cf::CfGameManager::func_800873FC() {
 
 void cf::CfGameManager::func_80087410() {
     field_0x4->CfObject_UnkVirtualFunc19();
+}
+
+void cf::CfGameManager::func_80082258() {
+    func_80141B20(this);
+    func_800B1E2C(this);
+}
+
+void cf::CfGameManager::func_80085878() {
+    if (func_80083298() != nullptr && &func_80083298()->field_0xF0 != nullptr) {
+        func_8047BDA0__17UnkClass_8047BB54Fv(&func_80083298()->field_0xF0);
+    }
+}
+
+u32 cf::CfGameManager::func_80082900() {
+    UnkClass_80083298* object = func_80083298();
+    return object != nullptr ? object->vfunc_0x74() : 0;
+}
+
+void cf::CfGameManager::func_80083304() {
+    getInstance()->func_8007C8C8();
+}
+
+void cf::CfGameManager::func_8007FBFC() {
+    if (CView::getCurrentView() == lbl_eu_80663E10) {
+        func_800B9340();
+    }
+}
+
+void cf::CfGameManager::func_8007FC2C() {
+    if (CView::getCurrentView() == lbl_eu_80663E10) {
+        func_800B9364();
+    }
+}
+
+void cf::CfGameManager::func_8007E4DC() {
+    func_801BFFAC(lbl_eu_8066650C, lbl_eu_8066649C);
+    func_80189510(lbl_eu_80666510);
+    func_801895F4(lbl_eu_8066649C);
+}
+
+void cf::CfGameManager::func_80082060() {
+    func_80079B34(getInstance()->unkB4);
+}
+
+bool cf::CfGameManager::func_80082104() {
+    return func_80079DBC(getInstance()->unkB4);
+}
+
+u32 cf::CfGameManager::func_800821F8() {
+    return getInstance()->unkB0;
+}
+
+cf::CfObject* cf::CfGameManager::func_8008221C() {
+    CfCamEventManager* manager = getInstance()->unkB4;
+    return manager != nullptr ? func_8006E5A4(manager) : nullptr;
+}
+
+u16 cf::CfGameManager::func_80082770() {
+    s32 oldIndex = field_0x44;
+    field_0x48--;
+    field_0x44 = (oldIndex + 1) % field_0x4C;
+    return field_0x40[oldIndex];
+}
+
+u32 cf::CfGameManager::func_800828DC() {
+    return getInstance()->unkA0;
 }
 
 void cf::CfGameManager::func_8007EEF0() {

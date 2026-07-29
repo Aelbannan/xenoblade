@@ -1,6 +1,6 @@
 {
-  "matchModel": { "provider": "deepseek", "model": "deepseek-v4-pro", "thinkingLevel": "high" },
-  "cleanupModel": { "provider": "deepseek", "model": "deepseek-v4-pro", "thinkingLevel": "high" },
+  "matchModel": { "provider": "deepseek", "model": "deepseek-v4-pro", "thinkingLevel": "off" },
+  "cleanupModel": { "provider": "deepseek", "model": "deepseek-v4-pro", "thinkingLevel": "off" },
   "batchSize": 3,
   "maxParallelTUs": 1,
   "maxBatchRetries": 2,

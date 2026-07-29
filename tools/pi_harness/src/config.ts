@@ -25,7 +25,7 @@ function defaultConfig(): HarnessConfig {
     maxBatchRetries: 2,
     singletonEnabled: true,
     rebatchEnabled: true,
-    maxRebatchAttempts: 0, // 0 = use maxBatchRetries as fallback
+    maxRebatchAttempts: 0, // 0 = no rebatch attempts
     maxTokens: 0,
     singletonMinSize: 0,
     maxBriefChars: 80_000,
@@ -72,8 +72,13 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
     }
 
     // Backwards compat: map deprecated keys.
-    if ("singletonRetry" in raw && !("singletonEnabled" in raw)) {
-      raw.singletonEnabled = raw.singletonRetry;
+    if ("singletonRetry" in raw) {
+      if (!("singletonEnabled" in raw)) {
+        process.stderr.write("[pi-harness] config: 'singletonRetry' is deprecated, use 'singletonEnabled'\n");
+        raw.singletonEnabled = raw.singletonRetry;
+      } else {
+        process.stderr.write("[pi-harness] config: 'singletonRetry' ignored (both old and new keys present)\n");
+      }
     }
 
     for (const [key, value] of Object.entries(raw)) {
@@ -151,6 +156,17 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   }
   validateModel(config.matchModel, "matchModel");
   validateModel(config.cleanupModel, "cleanupModel");
+
+  // Cross-field warnings (non-fatal).
+  if (config.rebatchEnabled && config.singletonMinSize === 0) {
+    process.stderr.write("[pi-harness] config: rebatchEnabled=true but singletonMinSize=0 — no target qualifies as small, rebatch will never run\n");
+  }
+  if (!config.rebatchEnabled && config.maxRebatchAttempts > 0) {
+    process.stderr.write("[pi-harness] config: rebatchEnabled=false but maxRebatchAttempts>0 — budget will be ignored\n");
+  }
+  if (!config.singletonEnabled && !config.rebatchEnabled) {
+    process.stderr.write("[pi-harness] config: both singletonEnabled and rebatchEnabled are false — all failed targets will be skipped\n");
+  }
 
   return config;
 }

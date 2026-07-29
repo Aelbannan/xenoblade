@@ -8,7 +8,7 @@
   "rebatchEnabled": true,
   "maxRebatchAttempts": 0,
   "maxTokens": 0,
-  "singletonMinSize": 0,
+  "singletonMinSize": 500,
   "maxBriefChars": 80000,
   "maxBatchMinutes": 45,
   "maxTimeoutRePrompts": 3,

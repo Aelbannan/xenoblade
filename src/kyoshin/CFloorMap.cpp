@@ -203,7 +203,103 @@ u32 func_8024F784(void* self) {
     return CSysWin_getUnk34(p + 0xF4);
 }
 
-void func_8024F7CC(){}
+void func_8024F7CC(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern int sprintf(char*, const char*, ...);
+    extern void func_8024B4CC(void*, void*);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_806687BC;
+
+    u8* p = (u8*)self;
+    if (!p[0x5D]) return;
+    p[0x5D] = 0;
+    if (*(u32*)(p + 0x2C)) return;
+    if (p[0x41] != 1) return;
+    if (!p[0x208]) return;
+    if (CSysWin_getUnk34(p + 0xB8)) return;
+    if (CSysWin_getUnk34(p + 0xF4)) return;
+    if (p[0x58]) return;
+
+    s8 idx0 = (s8)p[0x205];
+    u32 offset = idx0 * 0x30C;
+    u8* ptr = p + offset;
+    if (!*(u8*)(ptr + 0x514)) return;
+
+    s8 idx1 = (s8)p[0x206];
+    u16 val;
+    if (idx1 < 0) {
+        val = 0;
+    } else {
+        s8 idx2 = (s8)p[0x207];
+        val = *(u16*)(ptr + (idx2 + idx1) * 0x18 + 0x214);
+    }
+    if (!val) return;
+
+    f32 pos1[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+    f32 pos2[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+    f32 pos3[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+    f32 pos4[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_8050BEA8[0x2EB]);
+
+    void* data = *(void**)(p + 0x140);
+    void* obj = *(void**)((u8*)data + 0x10);
+    VFuncPtr* vtable = *(VFuncPtr**)obj;
+    void* result = vtable[15](obj, buf, 1);
+    if (!result) goto done;
+
+    void* target = *(void**)((u8*)data + 0x10);
+    void* node = result;
+    if (node && *(void**)((u8*)node + 0x10) != target) {
+        // Traverse linked list to find matching node
+        void* next = *(void**)((u8*)node + 0x0C);
+        if (next && *(void**)((u8*)next + 0x10) != target) {
+            void* next2 = *(void**)((u8*)next + 0x0C);
+            if (next2 && *(void**)((u8*)next2 + 0x10) != target) {
+                // Copy Vec3 from next2
+                pos1[0] = *(f32*)((u8*)next2 + 0x2C);
+                pos1[1] = *(f32*)((u8*)next2 + 0x30);
+                pos1[2] = *(f32*)((u8*)next2 + 0x34);
+                void* next3 = *(void**)((u8*)next2 + 0x0C);
+                if (next3) {
+                    func_8024B4CC(pos2, pos1);
+                    pos3[0] = *(f32*)((u8*)next3 + 0x2C);
+                    pos3[1] = *(f32*)((u8*)next3 + 0x30);
+                    pos3[2] = *(f32*)((u8*)next3 + 0x34);
+                }
+            }
+            // Copy Vec3 from next
+            pos2[0] = *(f32*)((u8*)next + 0x2C);
+            pos2[1] = *(f32*)((u8*)next + 0x30);
+            pos2[2] = *(f32*)((u8*)next + 0x34);
+        }
+        // Copy Vec3 from node
+        pos3[0] = *(f32*)((u8*)node + 0x2C);
+        pos3[1] = *(f32*)((u8*)node + 0x30);
+        pos3[2] = *(f32*)((u8*)node + 0x34);
+    }
+
+    // Accumulate positions
+    pos1[0] += pos3[0]; pos1[1] += pos3[1]; pos1[2] += pos3[2];
+    pos2[0] += pos1[0]; pos2[1] += pos1[1]; pos2[2] += pos1[2];
+
+    // Second vtable call
+    void* result2 = vtable[15](obj, &lbl_eu_8050BEA8[0x136], 1);
+    if (result2) {
+        f32 scale = *(f32*)((u8*)result2 + 0x44);
+        pos2[0] *= scale;
+        pos1[0] += *(f32*)((u8*)data + 0x2C);
+        pos1[1] += *(f32*)((u8*)data + 0x30);
+        pos1[2] += *(f32*)((u8*)data + 0x34);
+    }
+
+done:
+    *(f32*)(p + 0x54) = lbl_eu_806687BC;
+    p[0x41] = 2;
+    *(f32*)(p + 0x4C) = pos2[0] / lbl_eu_806687BC;
+    *(f32*)(p + 0x50) = pos2[1] / lbl_eu_806687BC;
+}
 
 void func_8024FB78(){}
 

@@ -19536,9 +19536,113 @@ void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
 template <typename T>
 int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
                      const T* pStr, int len, f32 width, bool* pHasNextLine) {
-    // TODO: full implementation needed for matching
+    // Context must be set up first to match register allocation order
+    typename ut::TextWriterBase<T>::TagProcessorType::ContextType context = {};
+    context.writer = pWriter;
+    context.str = pStr;
+
+    // Get font for character reader
+    ut::CharStrmReader reader = pWriter->GetFont()->GetCharStrmReader();
+
+    f32 cursorX = 0.0f;
+    bool charSpace = false;
+    const T* pPrevStream = NULL;
+
+    // Initialize rect (left/right before GetLineHeight calls)
+    pRect->left = 0.0f;
+    pRect->right = 0.0f;
+    pRect->top = ut::Min(0.0f, pWriter->GetLineHeight());
+    pRect->bottom = ut::Max(0.0f, pWriter->GetLineHeight());
+
     *pHasNextLine = false;
-    return len;
+
+    reader.Set(pStr);
+
+    ut::Rect prevRect = *pRect;
+    u16 ch = reader.Next();
+
+    while (static_cast<const T*>(reader.GetCurrentPos()) - pStr <= len) {
+        if (static_cast<s32>(ch) < 0x20) {
+            // Control character: let tag processor handle it
+            ut::Rect r(cursorX, 0.0f, 0.0f, 0.0f);
+            context.str = static_cast<const T*>(reader.GetCurrentPos());
+            context.flags = charSpace ? 0
+                                      : ut::PrintContext<T>::FLAGS_CHARSPACE;
+
+            pWriter->SetCursorX(cursorX);
+
+            typename ut::TagProcessorBase<T>::Operation oper =
+                pWriter->GetTagProcessor()->CalcRect(&r, ch, &context);
+
+            reader.Set(context.str);
+
+            // Expand rect to encompass tag rect
+            pRect->left = ut::Min(pRect->left, r.left);
+            pRect->top = ut::Min(pRect->top, r.top);
+            pRect->right = ut::Max(pRect->right, r.right);
+            pRect->bottom = ut::Max(pRect->bottom, r.bottom);
+
+            cursorX = pWriter->GetCursorX();
+
+            // Check width limit
+            if (pRect->right - pRect->left > width) {
+                *pHasNextLine = true;
+                break;
+            }
+
+            if (oper == ut::TagProcessorBase<T>::OPERATION_END_DRAW) {
+                return len;
+            }
+
+            if (oper == ut::TagProcessorBase<T>::OPERATION_NO_CHAR_SPACE) {
+                charSpace = false;
+            } else if (oper ==
+                       ut::TagProcessorBase<T>::OPERATION_CHAR_SPACE) {
+                charSpace = true;
+            } else if (oper ==
+                       ut::TagProcessorBase<T>::OPERATION_NEXT_LINE) {
+                break;
+            }
+        } else {
+            // Regular character: calculate width and advance cursor
+            if (charSpace) {
+                cursorX += pWriter->GetCharSpace();
+            }
+
+            charSpace = true;
+
+            if (pWriter->IsWidthFixed()) {
+                cursorX += pWriter->GetFixedWidth();
+            } else {
+                cursorX +=
+                    pWriter->GetFont()->GetCharWidth(ch) * pWriter->GetScaleH();
+            }
+
+            // Expand rect to encompass this character position
+            pRect->left = ut::Min(pRect->left, cursorX);
+            pRect->right = ut::Max(pRect->right, cursorX);
+
+            // Check width limit
+            if (pRect->right - pRect->left > width) {
+                *pHasNextLine = true;
+                break;
+            }
+        }
+
+        // Save state for potential rollback, then read next character
+        pPrevStream = static_cast<const T*>(reader.GetCurrentPos());
+        ch = reader.Next();
+        prevRect = *pRect;
+    }
+
+    // If line was broken by width limit, roll back to previous character
+    if (*pHasNextLine && pPrevStream != NULL) {
+        *pRect = prevRect;
+        return static_cast<int>(pPrevStream - pStr);
+    }
+
+    return static_cast<int>(static_cast<const T*>(reader.GetCurrentPos()) -
+                            pStr);
 }
 
 template <typename T>

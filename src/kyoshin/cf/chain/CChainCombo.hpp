@@ -26,6 +26,9 @@ extern "C" void func_802AA338__Fv();
 // Retail vtable lbl_eu_80538994 lives in split1 (dtor only); not emitted here.
 extern "C" void* lbl_eu_80538994[];
 
+// 3-entry table indexed by probability thresholds in func_80293EEC.
+extern "C" int lbl_eu_80538988[3];
+
 namespace cf {
 
 /* Chain arts combo tracker. Size 0x18.
@@ -45,7 +48,20 @@ struct CChainCombo {
 
 } // namespace cf
 
-// Opaque objects that only expose a C++-style vptr at +0 (forces r12-style loads).
+// Object returned by CActorParam_UnkVirtualFunc132 (vtable[0x2A4]).
+// Has a pointer at +0x50 to an arts category struct.
+struct CChainCombo_ArtsCategoryHolder {
+    u8 pad[0x50];
+    struct CChainCombo_ArtsCategory* mArtsCategory; // 0x50
+};
+
+// Object with arts category byte at +0x3E.
+struct CChainCombo_ArtsCategory {
+    u8 pad[0x3e];
+    u8 mArtsCategory; // 0x3e
+};
+
+// Opaque object that only exposes a C++-style vptr at +0 (forces r12-style loads).
 struct CChainVObj {
     void** mVtbl;
 };

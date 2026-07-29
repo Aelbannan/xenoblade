@@ -75,9 +75,11 @@ asm ui32 __TRK_get_MSR(){
     blr
 }
 
+#pragma dont_inline on
 void __TRK_set_MSR(ui32 val) {
     asm("mtmsr %0" : : "r"(val));
 }
+#pragma dont_inline reset
 
 //unused
 asm ui32 __TRK_get_PVR(){
@@ -237,10 +239,10 @@ DSError TRKValidMemory32(const void* addr, size_t length, ValidMemoryOptions rea
 //This is a certified metrowerks moment
 #include "PowerPC_EABI_Support/MetroTRK/ppc_mem.h"
 
-static void TRK_ppc_memcpy(void* dest, const void* src, int n, ui32 destMSR, ui32 srcMSR) {
+static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR) {
     ui32 savedMSR;
-    ui8* srcPtr = (ui8*)src;
-    ui8* destPtr = (ui8*)dest;
+    ui8* srcPtr = src;
+    ui8* destPtr = dest;
 
     savedMSR = __TRK_get_MSR();
 

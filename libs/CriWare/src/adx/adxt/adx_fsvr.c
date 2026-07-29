@@ -47,9 +47,6 @@ void ADXT_ExecFsSvr() {
 // sequences through ADX subsystem servers (STM, F) with state updates, then
 // invokes an optional post-callback and resets state to 0.
 void adxt_ExecFsSvr() {
-    // Taking the address of the extern symbol forces the compiler to materialize
-    // the base address once; the callee-saved register allocation then caches it
-    // across function calls, matching the retail r31 pattern.
     struct ADXT_FsSvrGlobals* globals = &lbl_eu_805E26B0;
 
     ADXCRS_Lock();

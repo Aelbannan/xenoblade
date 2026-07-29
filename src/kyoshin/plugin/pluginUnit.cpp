@@ -32,6 +32,12 @@ extern "C" {
     // this block (matching the unmangled retail symbols).
     int getPcHpRate(VMThread* pThread);
     int getEneHpRate(VMThread* pThread);
+
+    // Forward declarations for arts/battle-state plugin commands.
+    int onPcArtsAttack(VMThread* pThread);
+    int setEneBtlState(VMThread* pThread);
+    int onEneArtsAttack(VMThread* pThread);
+    int setPcBtlState(VMThread* pThread);
 }
 
 void pluginUnitRegist() {
@@ -217,10 +223,273 @@ int getEneHpRate(VMThread* pThread) {
     vmRetValSet(pThread, &result);
     return 1;
 }
-void setPcBtlState(){}
-void setEneBtlState(){}
-void onPcArtsAttack(){}
-void onEneArtsAttack(){}
+/// Script command: check whether the PC actor with the given id is currently
+/// performing an arts attack matching the given arts type. Returns 1 if the
+/// actor is attacking with the specified arts, 2 otherwise. The check queries
+/// the actor's arts-state sub-object (at offset 4) via func_80174C98 with
+/// selector 0xa, then compares the matched entry's field_0x77 byte against
+/// the provided arts type.
+int onPcArtsAttack(VMThread* pThread) {
+    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int artsType = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+
+    void* actor = func_800B8B94(id);
+
+    VMArg result;
+    result.type = VM_TYPE_INT;
+    result.value.intVal = 2;  // default: not matching
+
+    // Gate on game-manager flag 0x400.
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04(0x400) != 0) {
+        vmRetValSet(pThread, &result);
+        return 1;
+    }
+    if (actor == nullptr) {
+        vmRetValSet(pThread, &result);
+        return 1;
+    }
+
+    // Access the arts-state sub-object at offset 4 of the actor.
+    void* subObj = *(reinterpret_cast<void**>(reinterpret_cast<u8*>(actor) + 4));
+
+    // Try selector 0xa against the sub-object's vtable[13] (offset 0x34) value.
+    void** subVtable = *reinterpret_cast<void***>(subObj);
+    auto subFunc0x34 = reinterpret_cast<u32* (*)(void*)>(subVtable[0x34 / 4]);
+    u32 val = *subFunc0x34(subObj);
+
+    bool matched = false;
+    if (func_80174C98(actor, &val, 0xa) != 0) {
+        matched = true;
+    } else {
+        // Fall back to vtable[12] (offset 0x30) value.
+        auto subFunc0x30 = reinterpret_cast<u32* (*)(void*)>(subVtable[0x30 / 4]);
+        val = *subFunc0x30(subObj);
+        if (func_80174C98(actor, &val, 0xa) != 0) {
+            matched = true;
+        }
+    }
+
+    if (matched) {
+        // Retrieve the actor's CActorParam_UnkStruct1 via vtable[102] (0x298).
+        CActorParam* actorParam = reinterpret_cast<CActorParam*>(actor);
+        CActorParam_UnkStruct1* unk1 = actorParam->CActorParam_UnkVirtualFunc129();
+        if (unk1 != nullptr && unk1->unk50 != nullptr) {
+            // Compare byte at offset 0x77 of unk50 against the requested arts type.
+            CActorParam_UnkStruct2* unk2 =
+                reinterpret_cast<CActorParam_UnkStruct2*>(unk1->unk50);
+            if (unk2->unk42[0x77 - 0x42] == static_cast<u8>(artsType)) {
+                result.value.intVal = 1;
+            }
+        }
+    }
+
+    vmRetValSet(pThread, &result);
+    return 1;
+}
+
+/// Script command: set a battle-state entry on an enemy actor. Resolves the
+/// actor by id (arg 2) via func_800B8C78 (ENE list lookup), then populates a
+/// CBattleStateEntry struct from the remaining optional arguments and
+/// dispatches it to CBattleManager::func_800EC8FC.
+int setEneBtlState(VMThread* pThread) {
+    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int state = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+
+    // Optional arguments with defaults of 0.
+    int arg4 = 0;
+    if (vmArgOmitChk(pThread, 3) == 0) {
+        arg4 = vmArgIntGet(4, vmArgPtrGet(pThread, 3));
+    }
+    int arg5 = 0;
+    int arg6 = 0;
+    int arg7 = 0;
+    int nextIdx = 4;
+    if (vmArgOmitChk(pThread, nextIdx) == 0) {
+        arg5 = vmArgIntGet(nextIdx + 1, vmArgPtrGet(pThread, nextIdx));
+        nextIdx++;
+    }
+    if (vmArgOmitChk(pThread, nextIdx) == 0) {
+        arg6 = vmArgIntGet(nextIdx + 1, vmArgPtrGet(pThread, nextIdx));
+        nextIdx++;
+    }
+    if (vmArgOmitChk(pThread, nextIdx) == 0) {
+        arg7 = vmArgIntGet(nextIdx + 1, vmArgPtrGet(pThread, nextIdx));
+        nextIdx++;
+    }
+
+    void* actor = func_800B8C78(id);
+    if (actor == nullptr) {
+        return 0;
+    }
+
+    // Build the CBattleStateEntry struct on the stack.
+    CBattleStateEntry entry;
+    memset(&entry, 0, sizeof(entry));
+    entry.unk00 = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(actor) + 0x3f10);
+    entry.unk14 = static_cast<s16>(state);
+    entry.unk10 = arg5;
+    entry.unk16 = static_cast<s16>(arg6);
+    entry.unk1C = static_cast<f32>(arg4);
+    entry.unk20 = static_cast<f32>(arg7);
+
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    func_800EC8FC(bm, actor, &entry, 0);
+    return 0;
+}
+
+/// Script command: check whether the enemy actor with the given id is
+/// performing an arts attack matching the given arts type. Mirrors
+/// onPcArtsAttack but resolves the actor via func_800B8C78 (ENE list lookup)
+/// and includes extra mode-based logic that checks the battle manager's
+/// current target.
+int onEneArtsAttack(VMThread* pThread) {
+    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int artsType = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+
+    // Optional mode argument (default 0).
+    int mode = 0;
+    if (vmArgOmitChk(pThread, 3) == 0) {
+        mode = vmArgIntGet(4, vmArgPtrGet(pThread, 3));
+    }
+
+    void* actor = func_800B8C78(id);
+
+    VMArg result;
+    result.type = VM_TYPE_INT;
+    result.value.intVal = 2;  // default: not matching
+
+    // Gate on game-manager flag 0x400.
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04(0x400) != 0) {
+        vmRetValSet(pThread, &result);
+        return 1;
+    }
+    if (actor == nullptr) {
+        vmRetValSet(pThread, &result);
+        return 1;
+    }
+
+    // Access the arts-state sub-object at offset 4 of the actor.
+    void* subObj = *(reinterpret_cast<void**>(reinterpret_cast<u8*>(actor) + 4));
+
+    void** subVtable = *reinterpret_cast<void***>(subObj);
+    auto subFunc0x34 = reinterpret_cast<u32* (*)(void*)>(subVtable[0x34 / 4]);
+    u32 val = *subFunc0x34(subObj);
+
+    bool matched = false;
+    if (func_80174C98(actor, &val, 0xa) != 0) {
+        matched = true;
+    } else {
+        auto subFunc0x30 = reinterpret_cast<u32* (*)(void*)>(subVtable[0x30 / 4]);
+        val = *subFunc0x30(subObj);
+        if (func_80174C98(actor, &val, 0xa) != 0) {
+            matched = true;
+        }
+    }
+
+    if (matched) {
+        CActorParam* actorParam = reinterpret_cast<CActorParam*>(actor);
+        CActorParam_UnkStruct1* unk1 = actorParam->CActorParam_UnkVirtualFunc129();
+        if (unk1 != nullptr && unk1->unk50 != nullptr) {
+            CActorParam_UnkStruct2* unk2 =
+                reinterpret_cast<CActorParam_UnkStruct2*>(unk1->unk50);
+            if (unk2->unk42[0x77 - 0x42] == static_cast<u8>(artsType)) {
+                // Mode-based target check.
+                if (mode == 1) {
+                    // Mode 1: check if battle manager's current target sub-object
+                    // matches unk50.
+                    void* bmTarget = cf::CBattleManager::getInstance()->func_800EA444();
+                    if (bmTarget != nullptr) {
+                        CfCode800F42AC* bmTargetObj =
+                            reinterpret_cast<CfCode800F42AC*>(bmTarget);
+                        if (func_800F477C(bmTargetObj) == unk1->unk50) {
+                            result.value.intVal = 1;
+                        }
+                    }
+                } else if (mode == 2) {
+                    // Mode 2: same as mode 1 but also requires bit 17 of
+                    // bmTarget+0x824 to be set.
+                    void* bmTarget = cf::CBattleManager::getInstance()->func_800EA444();
+                    if (bmTarget != nullptr) {
+                        CfCode800F42AC* bmTargetObj =
+                            reinterpret_cast<CfCode800F42AC*>(bmTarget);
+                        if (func_800F477C(bmTargetObj) == unk1->unk50) {
+                            u32 bmFlags = *reinterpret_cast<u32*>(
+                                reinterpret_cast<u8*>(bmTarget) + 0x824);
+                            if (bmFlags & (1u << 17)) {
+                                result.value.intVal = 1;
+                            }
+                        }
+                    }
+                } else {
+                    // Mode 0 (or any other): no target check needed.
+                    result.value.intVal = 1;
+                }
+            }
+        }
+    }
+
+    vmRetValSet(pThread, &result);
+    return 1;
+}
+
+/// Script command: set a battle-state entry on a player character actor.
+/// Resolves the actor by id (arg 2) via func_800B8B94 (PC list lookup),
+/// then populates a CBattleStateEntry struct and dispatches it to
+/// CBattleManager::func_800EC8FC. When state == 0xce, the unk18 field is
+/// forced to 0xa.
+int setPcBtlState(VMThread* pThread) {
+    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int state = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+
+    // Optional arguments with defaults of 0.
+    int arg4 = 0;
+    if (vmArgOmitChk(pThread, 3) == 0) {
+        arg4 = vmArgIntGet(4, vmArgPtrGet(pThread, 3));
+    }
+    int arg5 = 0;
+    int arg6 = 0;
+    int arg7 = 0;
+    int nextIdx = 4;
+    if (vmArgOmitChk(pThread, nextIdx) == 0) {
+        arg5 = vmArgIntGet(nextIdx + 1, vmArgPtrGet(pThread, nextIdx));
+        nextIdx++;
+    }
+    if (vmArgOmitChk(pThread, nextIdx) == 0) {
+        arg6 = vmArgIntGet(nextIdx + 1, vmArgPtrGet(pThread, nextIdx));
+        nextIdx++;
+    }
+    if (vmArgOmitChk(pThread, nextIdx) == 0) {
+        arg7 = vmArgIntGet(nextIdx + 1, vmArgPtrGet(pThread, nextIdx));
+        nextIdx++;
+    }
+
+    void* actor = func_800B8B94(id);
+    if (actor == nullptr) {
+        return 0;
+    }
+
+    // Build the CBattleStateEntry struct on the stack.
+    CBattleStateEntry entry;
+    memset(&entry, 0, sizeof(entry));
+    entry.unk00 = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(actor) + 0x3f10);
+    entry.unk14 = static_cast<s16>(state);
+    entry.unk16 = static_cast<s16>(arg6);
+    entry.unk1C = static_cast<f32>(arg4);
+    entry.unk20 = static_cast<f32>(arg7);
+
+    // Special case: when state == 0xce, force unk18 to 0xa.
+    if (state == 0xce) {
+        entry.unk10 = 0xa;
+    } else {
+        entry.unk10 = arg5;
+    }
+
+    cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+    func_800EC8FC(bm, actor, &entry, 0);
+    return 0;
+}
 
 // Script command: clear a battle-state flag on an enemy actor. Resolves the
 // actor by id (arg 2) and, if the actor exists, dispatches the clear to the

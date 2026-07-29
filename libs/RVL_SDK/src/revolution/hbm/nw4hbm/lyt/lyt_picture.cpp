@@ -103,7 +103,9 @@ void Picture::SetTexCoordNum(u8 num) {
 }
 
 void Picture::SetTexCoord(u32 idx, const detail::TexCoord coord) {
-    mTexCoordAry.SetCoord(idx, coord);
+    for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
+        mTexCoordAry.GetArray()[idx][i] = coord[i];
+    }
 }
 
 ut::Color Picture::GetVtxColor(u32 idx) const {

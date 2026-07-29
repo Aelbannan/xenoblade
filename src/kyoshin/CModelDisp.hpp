@@ -2,10 +2,6 @@
 
 #include <types.h>
 
-namespace cf {
-class CActParamAnimGame;
-}
-
 // Sub-object struct within CModelDisp, stride 0xFF0
 struct CModelDispSub {
     u8 _00[0x08];
@@ -26,9 +22,9 @@ struct CModelDispSub {
 class CModelDisp {
 public:
     CModelDisp();
-    virtual ~CModelDisp();
+    ~CModelDisp();
 
-    u8 _pad0[0x2FD4];
+    u8 _pad0[0x2FD8];
     u8 field_2FD8;          // 0x2FD8
     u8 _pad2FD9[0x2FDC - 0x2FD9];
     f32 field_2FDC;         // 0x2FDC - display alpha/transition value

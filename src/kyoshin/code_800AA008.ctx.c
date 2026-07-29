@@ -12286,7 +12286,7 @@ u32 func_800AA2E8(u32 a, u32 b, u32 c);
 u32 func_800AA300(u32 a, u32 b, u32 c);
 void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-ml::FixStr<64>* func_800AA5C0(u32 packed);
+void func_800AA5C0();
 u32 func_800AA600(const char* str);
 u32 func_800AA714(const char* path);
 void sinit_800AABBC();
@@ -12337,63 +12337,65 @@ void func_800AA008(ml::FixStr<64>& buf, int type, u32 arg1, u32 arg2, u32 arg3) 
         sprintf(tmp, &lbl_eu_804FC044[0x12]);
         break;
     case 3:
-    case 4:
         sprintf(tmp, &lbl_eu_804FC044[0x17]);
         break;
-    case 5:
+    case 4:
         sprintf(tmp, &lbl_eu_804FC044[0x17], arg2, arg3);
         break;
-    case 6:
+    case 5:
         sprintf(tmp, &lbl_eu_804FC044[0x20]);
         break;
-    case 7:
+    case 6:
         sprintf(tmp, &lbl_eu_804FC044[0x2D]);
         break;
-    default:
-        if ((type) == 8) {
-            sprintf(tmp, &lbl_eu_804FC044[0x36]);
+    case 7:
+        sprintf(tmp, &lbl_eu_804FC044[0x36]);
+        break;
+    case 8:
+        if (arg3 != 0) {
+            sprintf(tmp, &lbl_eu_804FC044[0]);
         } else {
-            if (arg3 != 0) {
-                sprintf(tmp, &lbl_eu_804FC044[0]);
-            } else {
-                sprintf(tmp, &lbl_eu_804FC044[0x36]);
-            }
+            sprintf(tmp, &lbl_eu_804FC044[0x36]);
         }
         break;
     }
 
-    buf += tmp;
+    int len = strlen(tmp);
+    strcat(buf.mString, tmp);
+    buf.mLength += len;
 }
 
 int func_800AA1B4(const char* str, int digitCount, int* out) {
-    int ret = 0;
-    *out = ret;
-    if (str == nullptr) goto end;
-    ret = 1;
+    *out = 0;
+    if (str == nullptr) return 0;
 
-    if (digitCount != 1) goto check2;
-    *out = str[0] - '0';
-    goto end;
-
-check2:
-    if (digitCount != 2) goto check3;
-    *out = (str[0] - '0') * 10 + str[1] - '0';
-    goto end;
-
-check3:
-    if (digitCount != 3) goto check4;
-    *out = (str[0] - '0') * 100 + (str[1] - '0') * 10 + str[2] - '0';
-    goto end;
-
-check4:
-    if (digitCount != 4) goto fail;
-    *out = (str[2] - '0') * 10 + (str[0] - '0') * 1000 + (str[1] - '0') * 100 + str[3] - '0';
-    goto end;
-
-fail:
-    ret = 0;
-end:
-    return ret;
+    switch (digitCount) {
+    case 1:
+        *out = str[0] - '0';
+        break;
+    case 2: {
+        int val = (str[0] - '0') * 10;
+        val += str[1] - '0';
+        *out = val;
+        break;
+    }
+    case 3: {
+        int val = (str[0] - '0') * 100;
+        val += (str[1] - '0') * 10;
+        val += str[2] - '0';
+        *out = val;
+        break;
+    }
+    case 4: {
+        int val = (str[0] - '0') * 1000;
+        val += (str[1] - '0') * 100;
+        val += (str[2] - '0') * 10;
+        val += str[3] - '0';
+        *out = val;
+        break;
+    }
+    }
+    return 1;
 }
 
 u32 func_800AA2BC(u32 a, u32 b) {
@@ -12422,7 +12424,8 @@ void func_800AA318(u32 packedToken, u32* outEntryId, u32* outParam1, u32* outPar
 }
 
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag) {
-    buf.clear();
+    buf.mString[0] = '\0';
+    buf.mLength = 0;
 
     if (packed == 0) return 0;
 
@@ -12431,65 +12434,84 @@ int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFla
     u32 field2 = (packed >> 10) & 0x3FF;
     u32 field3 = packed & 0x3FF;
 
-    const FormatEntry* entry = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0) + id;
-    u32 idx = id;
-
+    const FormatEntry* table = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0);
+    const FormatEntry* entry = &table[id];
+    u32 counter = id;
     int result = 0;
-    while (idx < 0x1F) {
+
+    for (; counter < 0x1F; entry++, counter++) {
         if (entry->id == id) {
             if (prefixFlag != 0) {
-                buf = entry->template_;
+                int len = strlen(entry->template_);
+                buf.mLength = len;
+                strcpy(buf.mString, entry->template_);
             }
 
-            buf += entry->name;
+            int nameLen = strlen(entry->name);
+            strcat(buf.mString, entry->name);
+            buf.mLength += nameLen;
 
             func_800AA008(buf, entry->formatType, field1, field2, field3);
 
             if (suffixFlag != 0) {
                 if (id == 1 || id == 0x1D) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id - 2 <= 4) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id - 7 <= 4) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id == 0x1C) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id - 0xC <= 5) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id == 0x1E) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id - 0x12 <= 4) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 }
             }
 
             result = 1;
         }
-        entry++;
-        idx++;
     }
 
     return result;
 }
 
-ml::FixStr<64>* func_800AA5C0(u32 packed) {
-    func_800AA33C(*(ml::FixStr<64>*)lbl_eu_80572C80, packed, 0, 1);
-    return (ml::FixStr<64>*)lbl_eu_80572C80;
+void func_800AA5C0() {
+    func_800AA33C(*(ml::FixStr<64>*)lbl_eu_80572C80, (u32)0, 0, 1);
 }
 
 u32 func_800AA600(const char* str) {
-    if (str == nullptr) return 0;
-
-    const u32* table = reinterpret_cast<const u32*>(lbl_eu_805283B0);
-    const FormatEntry* entry = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0) + 1;
-    for (int i = 0; i < 10; i++) {
-        if (str[0] == entry[0].name[0] && str[1] == entry[0].name[1])
-            return table[(entry[0].name[1] & 0xF0) / 4];
-        if (str[0] == entry[1].name[0] && str[1] == entry[1].name[1])
-            return table[(entry[1].name[1] & 0xF0) / 4];
-        if (str[0] == entry[2].name[0] && str[1] == entry[2].name[1])
-            return table[(entry[2].name[1] & 0xF0) / 4];
-        entry += 3;
+    if (str != NULL) {
+        const FormatEntry* entry = &reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[1];
+        int idx = 1;
+        for (int i = 0; i < 10; i++) {
+            if (str[0] == entry[0].name[0] && str[1] == entry[0].name[1])
+                return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
+            idx++;
+            if (str[0] == entry[1].name[0] && str[1] == entry[1].name[1])
+                return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
+            idx++;
+            if (str[0] == entry[2].name[0] && str[1] == entry[2].name[1])
+                return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
+            idx++;
+            entry += 3;
+        }
     }
     return 0;
 }

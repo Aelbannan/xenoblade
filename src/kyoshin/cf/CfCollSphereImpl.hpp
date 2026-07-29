@@ -12,6 +12,10 @@ class CfDebugDrawManager;
 struct CfCollSphereImpl {
     u8 pad_00[0xB8];    // 0x00: vtable + unknown fields
     float mRadius;      // 0xB8: sphere radius
+
+    // Vtable function at offset 0xAC: returns opaque draw-data pointer
+    // for debug rendering.
+    u8* getDrawData();
 };
 
 } // namespace cf

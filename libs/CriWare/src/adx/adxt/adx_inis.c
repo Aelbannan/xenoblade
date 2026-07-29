@@ -3,12 +3,12 @@
 
 #include <harness_catalog.h>
 #include <string.h>
-#include "adx_inis.hpp"
+#include <adx/adxt/adx_inis.hpp>
 
 // Forward declarations for SVM functions
-s32 SVM_SetCbSvrIdWithString(s32 id, s32 arg, void (*cb)(void), s32 arg2,
+s32 SVM_SetCbSvrIdWithString(s32 id, s32 arg, int (*cb)(void), s32 arg2,
                              const char* str);
-s32 SVM_SetCbSvrWithString(s32 id, void (*cb)(void), s32 arg, const char* str);
+s32 SVM_SetCbSvrWithString(s32 id, int (*cb)(void), s32 arg, const char* str);
 void SVM_DelCbSvr(s32 id, s32 arg);
 void SVM_CallErr1(const char* str);
 void SVM_Init(void);
@@ -36,23 +36,26 @@ void ADXF_Init(void);
 void ADXF_Finish(void);
 void ADXRNA_Init(void);
 void ADXRNA_Finish(void);
-void ADXRNA_EntryErrFunc(void* cb, void* ctx);
+void ADXRNA_EntryErrFunc(void (*cb)(void*, void*), void* ctx);
 void LSC_Init(void);
 void LSC_Finish(void);
-void LSC_EntryErrFunc(void* cb, void* ctx);
+void LSC_EntryErrFunc(void (*cb)(void*, void*), void* ctx);
 void ADXT_DestroyAll(void);
 void ADXT_Destroy(ADXT_Tsvr* hndl);
 void ADXT_SetDefSvrFreq(s32 freq);
 char* criCrw_GetVersion(void);
+void ADXT_ExecServer(void);
+void ADXT_ExecLscSvr(void);
+void ADXT_ExecFsSvr(void);
 
 // Callback for ADXRNA error handling.
-// Ignores ctx, forwards the error param to ADXERR_CallErrFunc1_.
+// Forwards the error param to ADXERR_CallErrFunc1_; ctx is unused.
 void adxini_rnaerr_cbfn(void* ctx, void* param) {
     ADXERR_CallErrFunc1_(param);
 }
 
 // Callback for LSC error handling.
-// Ignores ctx, forwards the error param to ADXERR_CallErrFunc1_.
+// Forwards the error param to ADXERR_CallErrFunc1_; ctx is unused.
 void adxini_lscerr_cbfn(void* ctx, void* param) {
     ADXERR_CallErrFunc1_(param);
 }
@@ -125,6 +128,9 @@ void ADXT_Init(void) {
 // Tears down all ADX subsystems when refcount reaches zero.
 void ADXT_Finish(void) {
     struct AdxInisContext* ctx = &lbl_eu_805E26C8;
+    const char* str;
+    struct AdxInisHandle* hndl;
+    s32 i;
 
     // If refcount is already zero, report error and return.
     if (ctx->refcount == 0) {
@@ -158,11 +164,13 @@ void ADXT_Finish(void) {
     ADXCRS_Finish();
 
     // Destroy any active handles that remain in the array.
-    for (s32 i = 0; i < 16; i++) {
-        struct AdxInisHandle* hndl = &ctx->handles[i];
+    str = lbl_eu_80516010;
+    hndl = ctx->handles;
+    for (i = 0; i < 16; i++) {
         if (hndl->flag != 0) {
-            SVM_CallErr1(lbl_eu_80516010 + 0x7e);
+            SVM_CallErr1(str + 0x7e);
             ADXT_Destroy((ADXT_Tsvr*)hndl);
         }
+        hndl++;
     }
 }

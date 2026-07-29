@@ -3,13 +3,12 @@
 #include <monolib/math/Random.hpp>
 
 // Forward declarations for functions called by the two decompiled functions.
-// func_800B708C is declared in CAIAction.hpp (included transitively).
 extern "C" void func_8013EAB0();
-extern "C" void* func_8016FE34(void*);
 extern "C" void func_802A07F4(int, void*);
 
-// 3-entry table indexed by probability thresholds in func_80293EEC.
-extern "C" int lbl_eu_80538988[3];
+// Function pointer type for CfObjectModel_UnkVirtualFunc4 (vtable[0x184]).
+// Header declares it with no args, but retail passes an int.
+typedef void (*CfObjectModel_UnkVirtualFunc4_t)(cf::CfObjectModel*, int);
 
 namespace cf{
     CChainCombo::CChainCombo(){
@@ -30,29 +29,11 @@ namespace cf{
     }
 }
 
-// Object returned by CActorParam_UnkVirtualFunc132 (vtable[0x2a4]).
-struct CChainCombo_ArtsCategoryHolder {
-    u8 pad[0x50];
-    void* mArtsCategoryPtr; // 0x50
-};
-
-// Object with arts category byte at +0x3e.
-struct CChainCombo_ArtsCategory {
-    u8 pad[0x3e];
-    u8 mArtsCategory; // 0x3e
-};
-
-// Sub-object at actor+0x3e9c (CfObjectMove base, vtable 3).
-struct CChainCombo_MoveBase {
-    void** mVtbl;
-};
-
 void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     // Call vtable[0x2a4] on actor, get a pointer to a sub-object.
     CChainCombo_ArtsCategoryHolder* holder =
         (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_UnkVirtualFunc132();
-    CChainCombo_ArtsCategory* category =
-        (CChainCombo_ArtsCategory*)holder->mArtsCategoryPtr;
+    CChainCombo_ArtsCategory* category = holder->mArtsCategory;
     int newArtsType = category->mArtsCategory;
 
     // Reset combo count if arts type changed (but not to/from 8).
@@ -83,13 +64,12 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
         return;
     }
 
-    // Call vtable[0x4c] on the sub-object at actor+0x3e9c.
-    CChainCombo_MoveBase* moveBase = (CChainCombo_MoveBase*)((u8*)actor + 0x3e9c);
-    int (*vfunc)(void*) = (int (*)(void*))moveBase->mVtbl[0x4c / 4];
-    int result = vfunc(moveBase);
+    // Call vtable[0x4c] (CObjectParam_UnkVirtualFunc5) on the CfObjectMove sub-object at actor+0x3e9c.
+    cf::CfObjectMove* moveObj = (cf::CfObjectMove*)((u8*)actor + 0x3e9c);
+    func_800B708C(moveObj->CObjectParam_UnkVirtualFunc5());
 
-    void* obj = func_8016FE34(func_800B708C((BOOL)result));
-    if (obj == nullptr) {
+    CChainVObj* vobj = (CChainVObj*)func_8016FE34();
+    if (vobj == nullptr) {
         self->mPending = false;
         return;
     }
@@ -105,11 +85,10 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
         value = lbl_eu_80538988[2];
     }
 
-    // Call vtable[0x184] on the object.
-    CChainVObj* vobj = (CChainVObj*)obj;
-    void (*vfunc2)(void*, int) = (void (*)(void*, int))vobj->mVtbl[0x184 / 4];
-    vfunc2(vobj, value);
-    func_802A07F4(0xbf, obj);
+    // Call vtable[0x184] (CfObjectModel_UnkVirtualFunc4) on the object.
+    CfObjectModel_UnkVirtualFunc4_t func = (CfObjectModel_UnkVirtualFunc4_t)vobj->mVtbl[0x184 / 4];
+    func((cf::CfObjectModel*)vobj, value);
+    func_802A07F4(0xbf, vobj);
 
     self->mPending = false;
 }

@@ -744,41 +744,179 @@ void func_804B7D9C(int, int);
 void func_804B7DD4(ScnResData*);
 }
 /* end "monolib/scn/code_804BC9EC.hpp" */
+/* "libs/monolib/src/scn/code_804BC9EC.cpp" line 5 "PowerPC_EABI_Support/Runtime/NMWException.h" */
+#ifndef _NMWEXCEPTION
+#define _NMWEXCEPTION
 
-// Forward declaration — not yet declared in the shared header
-void func_804B7E0C(ScnResData* self);
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/Runtime/NMWException.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/Runtime/NMWException.h" line 4 "PowerPC_EABI_Support/Runtime/__ppc_eabi_linker.h" */
+#ifndef __PPC_EABI_LINKER
+#define __PPC_EABI_LINKER
+
+__declspec(section ".init") extern char _stack_addr[];
+__declspec(section ".init") extern char _stack_end[];
+__declspec(section ".init") extern char _heap_addr[];
+__declspec(section ".init") extern char _heap_end[];
+
+__declspec(section ".init") extern const char _fextabindex_rom[];
+__declspec(section ".init") extern char _fextabindex[];
+__declspec(section ".init") extern char _eextabindex[];
+
+__declspec(section ".init") extern char _SDA_BASE_[];
+__declspec(section ".init") extern char _SDA2_BASE_[];
+
+typedef struct __rom_copy_info {
+  char* rom;
+  char* addr;
+  unsigned int size;
+} __rom_copy_info;
+
+__declspec(section ".init") extern __rom_copy_info _rom_copy_info[];
+
+typedef struct __bss_init_info {
+  char* addr;
+  unsigned int size;
+} __bss_init_info;
+
+__declspec(section ".init") extern __bss_init_info _bss_init_info[];
+
+typedef struct __eti_init_info {
+  void* eti_start;
+  void* eti_end;
+  void* code_start;
+  unsigned long code_size;
+} __eti_init_info;
+
+__declspec(section ".init") extern __eti_init_info _eti_init_info[];
+
+
+__declspec(section ".init") extern const char _f_init_rom[];
+__declspec(section ".init") extern char _f_init[];
+__declspec(section ".init") extern char _e_init[];
+
+__declspec(section ".init") extern const char _f_text_rom[];
+__declspec(section ".init") extern char _f_text[];
+__declspec(section ".init") extern char _e_text[];
+
+__declspec(section ".init") extern const char _f_rodata_rom[];
+__declspec(section ".init") extern char _f_rodata[];
+__declspec(section ".init") extern char _e_rodata[];
+
+__declspec(section ".init") extern const char _fextab_rom[];
+__declspec(section ".init") extern char _fextab[];
+__declspec(section ".init") extern char _eextab[];
+
+__declspec(section ".init") extern const char _f_data_rom[];
+__declspec(section ".init") extern char _f_data[];
+__declspec(section ".init") extern char _e_data[];
+
+__declspec(section ".init") extern char _f_bss[];
+__declspec(section ".init") extern char _e_bss[];
+
+__declspec(section ".init") extern const char _f_sdata_rom[];
+__declspec(section ".init") extern char _f_sdata[];
+__declspec(section ".init") extern char _e_sdata[];
+
+__declspec(section ".init") extern char _f_sbss[];
+__declspec(section ".init") extern char _e_sbss[];
+
+__declspec(section ".init") extern const char _f_sdata2_rom[];
+__declspec(section ".init") extern char _f_sdata2[];
+__declspec(section ".init") extern char _e_sdata2[];
+
+__declspec(section ".init") extern char _f_sbss2[];
+__declspec(section ".init") extern char _e_sbss2[];
+
+__declspec(section ".init") extern const char _f_PPC_EMB_sdata0_rom[];
+__declspec(section ".init") extern char _f_PPC_EMB_sdata0[];
+__declspec(section ".init") extern char _e_PPC_EMB_sdata0[];
+
+__declspec(section ".init") extern char _f_PPC_EMB_sbss0[];
+__declspec(section ".init") extern char _e_PPC_EMB_sbss0[];
+
+
+#endif // __PPC_EABI_LINKER
+/* end "PowerPC_EABI_Support/Runtime/__ppc_eabi_linker.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef short vbase_ctor_arg_type;
+typedef char local_cond_type;
+
+typedef struct CatchInfo {
+    void* location;
+    void* typeinfo;
+    void* dtor;
+    void* sublocation;
+    long pointercopy;
+    void* stacktop;
+} CatchInfo;
+
+typedef struct DestructorChain {
+  struct DestructorChain* next;
+  void* destructor;
+  void* object;
+} DestructorChain;
+
+extern void* __register_global_object(void* object, void* destructor, void* registration);
+extern void __destroy_global_chain(void);
+
+extern void __end__catch(CatchInfo* catchinfo);
+extern void __throw(char* throwtype, void* location, void* dtor);
+extern void __unexpected(CatchInfo* catchinfo);
+
+extern int __register_fragment(struct __eti_init_info* info, char* TOC);
+
+#ifdef __cplusplus
+}
+#endif
+
+// Defined in Gecko_ExceptionPPC.cp with C++ linkage; callers and the
+// definition must agree on the mangled name.
+void __unregister_fragment(unsigned int fragmentID);
+
+#endif // _NMWEXCEPTION
+/* end "PowerPC_EABI_Support/Runtime/NMWException.h" */
 
 extern u32 lbl_eu_80665968;
+extern "C" void __dt__804BD8E8();
+extern u8 lbl_eu_8065F418[0x10];
 int func_804BC9EC__Fv(void* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 
 void func_804BC9F4__FPvUl(){}
 
 void func_804BCC10(){}
 
-void func_804BCC1C__FPv(){}
+void func_804BCC1C(void* p) {
+    *(u32*)p = 0;
+    func_804B7804(&lbl_eu_8065F32C);
+}
 
 void func_804BCC30(){}
 
 void func_804BCC3C(){}
 
-// Tail-calls func_804B7E0C with the global ScnResData, discarding caller's first arg
-void func_804BCC48(ScnResData*) {
-    func_804B7E0C(&lbl_eu_8065F32C);
-}
+void func_804BCC48(){}
 
-// Tail-calls func_804B80A4 with the global ScnResData, forwarding the index arg
-ScnResData* func_804BCC54(ScnResData*, int index) {
-    return func_804B80A4(&lbl_eu_8065F32C, index);
-}
+void func_804BCC54(){}
 
-// Tail-calls func_804B8078 with the global ScnResData, forwarding the index arg
-void func_804BCC60(ScnResData*, int index) {
-    func_804B8078(&lbl_eu_8065F32C, index);
-}
+void func_804BCC60(){}
 
-void func_804BCC6C(){}
+void func_804BCC6C() {
+    func_804B80CC(&lbl_eu_8065F32C);
+}
 
 void func_804BCC78(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_804BD8A0(){}
+void sinit_804BD8A0() {
+    lbl_eu_80665968 = 0;
+    func_804B7804(&lbl_eu_8065F32C);
+    void* const obj = &lbl_eu_80665968;
+    void* const dtor = (void*)&__dt__804BD8E8;
+    void* const reg = &lbl_eu_8065F418;
+    __register_global_object(obj, dtor, reg);
+}

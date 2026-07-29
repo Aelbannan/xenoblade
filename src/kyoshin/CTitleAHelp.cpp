@@ -15,10 +15,6 @@
 
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
-bool CTitleAHelp_isPaneVisible(const void*);
-void CTitleAHelp_setGXColor(GXColorS10*, s16, s16, s16, s16);
-
-static const char string_pad[] = "_";
 
 static GXColorS10 lbl_80666D58; //light orange
 static GXColorS10 lbl_80666D60;
@@ -28,19 +24,27 @@ static GXColorS10 lbl_80666D70;
 
 static u16 lbl_80537618[120][7]; //unsure of this lbl, it seems to work, could be a struct tho
 
-CTitleAHelp::CTitleAHelp(char* arg1, u8 arg2)
-    : mFileHandle(nullptr),
-      mArcResourceAccessor(nullptr),
-      mLayout(nullptr),
-      mAnimTrans20(nullptr),
-      mAnimTrans24(nullptr),
-      unk28(0),
-      unk2c(nullptr),
-      mName(arg1),
-      unk34(arg2),
-      unk35(0),
-      unk36(1),
-      unk37(0) {}
+// Retail constructor symbol (extern "C" to avoid MWCC mangling to __ct__11CTitleAHelpFPcUc)
+extern "C" CTitleAHelp* __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2) {
+    extern void* lbl_eu_80534500[];
+    extern void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+
+    *(const void**)self = lbl_eu_80534500;
+    __ct__17UnkClass_8045F564Fv(&self->unk4);
+    self->mFileHandle = nullptr;
+    self->mArcResourceAccessor = nullptr;
+    self->mLayout = nullptr;
+    self->mAnimTrans20 = nullptr;
+    self->mAnimTrans24 = nullptr;
+    self->unk28 = 0;
+    self->unk2c = 0;
+    self->mName = arg1;
+    self->unk34 = arg2;
+    self->unk35 = 0;
+    self->unk36 = 1;
+    self->unk37 = 0;
+    return self;
+}
 
 CTitleAHelp::~CTitleAHelp() {}
 
@@ -50,20 +54,20 @@ void CTitleAHelp::CTitleAHelp_load() {
     CDeviceFile::setHandleFlag1(mFileHandle);
 }
 
-void CTitleAHelp::update() {
+void CTitleAHelp::func_801C3FF0() {
     if(unk28 == 0) return;
     switch(unk2c) {
         case 1:
-            showIn();
+            func_801C477C();
             break;
         case 2:
-            onShowInComplete();
+            func_801C47F8();
             break;
         case 4:
-            showOut();
+            func_801C484C();
             break;
         case 5:
-            onShowOutComplete();
+            func_801C48E0();
             break;
         default:
             break;
@@ -71,13 +75,13 @@ void CTitleAHelp::update() {
     mLayout->Animate(0);
 }
 
-void CTitleAHelp::draw(nw4r::lyt::DrawInfo* drawInfo) {
+void CTitleAHelp::func_801C4080(nw4r::lyt::DrawInfo* drawInfo) {
     if (unk28 == 0)
         return;
     func_80137038(mLayout, drawInfo, 0, 1);
 }
 
-void CTitleAHelp::release() {
+void CTitleAHelp::func_801C40A0() {
     func_801390E0(&mFileHandle);
     unk28 = 0;
     if(mLayout != nullptr) {
@@ -88,9 +92,9 @@ void CTitleAHelp::release() {
     unk4.func_8045F778();
 }
 
-u8 CTitleAHelp::isLoaded() { return unk35; }
+u8 CTitleAHelp::func_801C4114() { return unk35; }
 
-u8 CTitleAHelp::isVisible() {
+u8 CTitleAHelp::func_801C411C() {
 	return unk28;
 }
 
@@ -103,21 +107,21 @@ void CTitleAHelp::func_801C412C() {
     }
 }
 
-void CTitleAHelp_startClose(CTitleAHelp* pThis) {
-    if (pThis->unk2c == 3) {
-        pThis->unk2c = 4;
-        pThis->unk36 = 0;
+void CTitleAHelp::func_801C414C() {
+    if (unk2c == 3) {
+        unk2c = 4;
+        unk36 = 0;
     }
 }
 
-void CTitleAHelp::cancelClose() {
+void CTitleAHelp::func_801C416C() {
     if(unk37 != 0 && unk2c == 4) {
         unk2c = 2;
         unk36 = 0;
     }
 }
 
-void CTitleAHelp::requestClose() {
+void CTitleAHelp::func_801C4198() {
     if(unk2c == 3) {
         unk2c = 4;
         unk36 = 0;
@@ -182,7 +186,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         sprintf(buffer3, "txt_hlp%02d", (u8)i);
         nw4r::lyt::Pane* aPane = mLayout->GetRootPane()->FindPaneByName(buffer3, true);
 
-        if(CTitleAHelp_isPaneVisible(aPane) == 0) return;
+        if(func_801C4648(aPane) == 0) return;
         if((u8)i == 0) {
             nw4r::math::VEC3* translate = (nw4r::math::VEC3*)&aPane->GetTranslate();
             copyVEC3(&oldVec, translate);
@@ -214,7 +218,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         if((u8)i < 5) {
             sprintf(buffer3, "txt_hlp%02d", (u8)i + 1);
             selectedPane = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buffer3, true);
-            if(CTitleAHelp_isPaneVisible(selectedPane) == 0) return;
+            if(func_801C4648(selectedPane) == 0) return;
 
             const wchar_t* text = ((nw4r::lyt::TextBox*)selectedPane)->GetString();
             wchar_t firstChar = text[0];
@@ -244,7 +248,7 @@ void CTitleAHelp::func_801C46DC(u32 arg) {
     func_80124270(pane, arg);
 }
 
-void CTitleAHelp::setVisible(u8 arg) {
+void CTitleAHelp::func_801C473C(u8 arg) {
     unk28 = arg;
 }
 
@@ -256,7 +260,7 @@ void CTitleAHelp::func_801C4760() {
     func_80139A18(mLayout, "txt_tit", &lbl_80666D68, &lbl_80666D70);
 }
 
-void CTitleAHelp::showIn() {
+void CTitleAHelp::func_801C477C() {
     if(func_80137444(mAnimTrans20, 1.0f)) {
         mLayout->SetAnimationEnable(mAnimTrans20, 0);
         mLayout->SetAnimationEnable(mAnimTrans24, 1);
@@ -264,7 +268,7 @@ void CTitleAHelp::showIn() {
     }
 }
 
-void CTitleAHelp::onShowInComplete() {
+void CTitleAHelp::func_801C47F8() {
     if(func_80137444(mAnimTrans24, 1.0f)) {
         unk2c = 3;
         unk36 = 1;
@@ -272,7 +276,7 @@ void CTitleAHelp::onShowInComplete() {
     }
 }
 
-void CTitleAHelp::showOut() {
+void CTitleAHelp::func_801C484C() {
     if(func_80137510(mAnimTrans24, 1.0f)) {
         if(unk37 == 0) {
             mLayout->SetAnimationEnable(mAnimTrans24, 0);
@@ -284,7 +288,7 @@ void CTitleAHelp::showOut() {
     }
 }
 
-void CTitleAHelp::onShowOutComplete() {
+void CTitleAHelp::func_801C48E0() {
     if(func_80137510(mAnimTrans20, 1.0f)) {
         unk2c = 0;
         unk36 = 1;
@@ -309,8 +313,10 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
 
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
 
-        void* something = CDeviceFont::func_80452C10(1, mLayout);
-        u32 result = 0; //something -> someCall at 0x24
+        void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
+        void** vtable = *(void***)fontObj;
+        u32 (*slot9)(void*) = (u32 (*)(void*))vtable[0x24 / 4];
+        u32 result = slot9(fontObj);
 
         func_8013676C(rootPane, result);
 
@@ -338,24 +344,24 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
  * Utility functions
  *
  ******************************************************************************/
-bool CTitleAHelp_isPaneVisible(const void* self) {
-    const uint8_t* bytes = static_cast<const uint8_t*>(self);
+bool func_801C4648(nw4r::lyt::Pane* self) {
+    const u8* bytes = reinterpret_cast<const u8*>(self);
     return (bytes[0xBB] & 1) != 0;
 }
 
 void sinit_801C4AE4() {
-    CTitleAHelp_setGXColor(&lbl_80666D58, 0xa8, 0x52, 0x08, 0x00);
-    CTitleAHelp_setGXColor(&lbl_80666D60, 0xa8, 0x52, 0x08, 0xff);
+    func_801C4B60(&lbl_80666D58, 0xa8, 0x52, 0x08, 0x00);
+    func_801C4B60(&lbl_80666D60, 0xa8, 0x52, 0x08, 0xff);
 
-    CTitleAHelp_setGXColor(&lbl_80666D68, 0x05, 0x80, 0xa6, 0x00);
-    CTitleAHelp_setGXColor(&lbl_80666D70, 0x05, 0x80, 0xa6, 0xff);
+    func_801C4B60(&lbl_80666D68, 0x05, 0x80, 0xa6, 0x00);
+    func_801C4B60(&lbl_80666D70, 0x05, 0x80, 0xa6, 0xff);
 }
 
-void CTitleAHelp_setGXColor(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
+void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
     color->a = a;
     color->b = b;
     color->g = g;
     color->r = r;
 }
 
-void __ct__CTitleAHelp(){}
+

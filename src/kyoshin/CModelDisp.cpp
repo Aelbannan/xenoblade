@@ -3,55 +3,80 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CModelDisp.hpp"
-#include "kyoshin/cf/CActParamAnimGame.hpp"
-#include "PowerPC_EABI_Support/Runtime/MWCPlusLib.h"
+#include <PowerPC_EABI_Support/Runtime/MWCPlusLib.h>
 
 // Forward declarations for cross-TU calls
 void* func_8004B9B8(void* self);
 void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
 
-namespace {
-// Helper to get the constructor function pointer (MWCC extension).
-inline ConstructorDestructor getCtor() {
-    return (ConstructorDestructor)&cf::CActParamAnimGame::CActParamAnimGame;
-}
-inline ConstructorDestructor getDtor() {
-    return (ConstructorDestructor)&cf::CActParamAnimGame::~CActParamAnimGame;
-}
-}
-
-// Constructs CActParamAnimGame sub-objects: a single instance at +0xC
-// and an array of 2 at +0x550 (element size 0x53C), then returns self.
-CModelDisp* func_801FBEB8(CModelDisp* self) {
-    CModelDispSub* sub = (CModelDispSub*)self;
-    new (&sub->_0C) cf::CActParamAnimGame();
-    __construct_array(&sub->mSubObj[0x53C],
-                      getCtor(),
-                      getDtor(),
-                      0x53C, 2);
-    return self;
-}
-
-// Iterates 3 sub-objects and calls func_801FC2B4 with the mpController pointer.
-void func_801FC2B4(CModelDisp*, void**);
-void func_801FC0C4(CModelDisp* self) {
-    u32 i;
-    for (i = 0; i < 3; ++i) {
-        func_801FC2B4(self, &((CModelDispSub*)((u8*)self + (u8)i * 0xFF0))->mpController);
-    }
-}
-
 u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
-
-// When field_2FD8 is 2, advances state to 3 and clears field_2FE4.
-void func_801FC13C(CModelDisp* self) {
-    if (self->field_2FD8 != 2) return;
-    self->field_2FD8 = 3;
-    self->field_2FE4 = 0;
-}
 
 // Advances field_2FE0 by 1.0 each call. When it reaches 5.0, decrements
 // field_2FDC by 0.2 (clamped to 0.0) and calls each sub-object's vmethod.
+
+// Forward declarations for functions called within this TU
+void func_801FC15C(CModelDisp* self);
+void func_801FC218(CModelDisp* self);
+void func_801FC3B0(CModelDisp* self);
+void func_801FCAC8(CModelDisp* self);
+
+// Forward declaration for the sub-object destructor (address-based symbol).
+extern "C" void* __dt__801FBF0C(void* self, int deleting);
+
+// ---------------------------------------------------------------------------
+// Address-based destructor for embedded sub-objects (CModelDispSub).
+// Called by CModelDisp::~CModelDisp via __destroy_arr and also directly.
+// Destroys 1+2 cf::CActParamAnimGame sub-objects at offsets 0xC and 0x550.
+// ---------------------------------------------------------------------------
+extern "C" void* __dt__801FBF0C(void* self, int deleting) {
+    if (self != nullptr) {
+        extern void __dt__Q22cf17CActParamAnimGameFv(void*, int);
+
+        // Destroy array of 2 CActParamAnimGame at offset 0x550 (each 0x53C)
+        __destroy_arr((u8*)self + 0x550, (ConstructorDestructor*)&__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
+
+        // Destroy single CActParamAnimGame at offset 0xC (complete destructor call)
+        __dt__Q22cf17CActParamAnimGameFv((u8*)self + 0xC, -1);
+
+        if (deleting > 0) {
+            extern void __dl__FPv(void*);
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+
+// ---------------------------------------------------------------------------
+// CModelDisp virtual destructor.
+// Destroys the 3 embedded CModelDispSub sub-objects (0xFF0 bytes each, starting
+// at offset 0x8). Compiler emits null-check and flags-based delete wrapper.
+// ---------------------------------------------------------------------------
+CModelDisp::~CModelDisp() {
+    CModelDispSub* subs = (CModelDispSub*)((u8*)this + 0x8);
+    ConstructorDestructor* dtor = (ConstructorDestructor*)&__dt__801FBF0C;
+    __destroy_arr(subs, dtor, 0xFF0, 3);
+}
+
+// ---------------------------------------------------------------------------
+// State machine dispatcher for CModelDisp. Reads field_2FD8 to select the
+// active mode (0=idle, 1=alpha-transition, 2=some-state, 3=another-state)
+// and calls the corresponding handler function(s).
+// ---------------------------------------------------------------------------
+void func_801FC060(CModelDisp* self) {
+    switch (self->field_2FD8) {
+    case 1:
+        func_801FC15C(self);
+        break;
+    case 2:
+        func_801FC3B0(self);
+        func_801FCAC8(self);
+        break;
+    case 3:
+        func_801FC218(self);
+        break;
+    }
+}
+
 void func_801FC15C(CModelDisp* self) {
     self->field_2FE0 += 1.0f;
     if (self->field_2FE0 >= 5.0f) {
@@ -76,15 +101,19 @@ void func_801FC15C(CModelDisp* self) {
     }
 }
 
-void func_801FC218(){}
+#pragma auto_inline off
+void func_801FC218(CModelDisp* self) {}
 
-__declspec(noinline) void func_801FC2B4(CModelDisp*, void**){}
+void func_801FC2B4(){}
 
-void func_801FC3B0(){}
+void func_801FC3B0(CModelDisp* self) {}
+#pragma auto_inline on
 
 int func_801FCAC0(void* self) { return 0; }
 
-void func_801FCAC8(){}
+#pragma auto_inline off
+void func_801FCAC8(CModelDisp* self) {}
+#pragma auto_inline on
 
 void func_801FCB4C(){}
 

@@ -1034,6 +1034,28 @@ typedef struct MessageBuffer {
     ui8 fData[kMessageBufferSize]; //0xC
 } MessageBuffer;
 
+/*
+Message body overlay for command-specific fields within MessageBuffer::fData.
+Offsets are relative to fData[0] (i.e. absolute offset 0xC within MessageBuffer).
+*/
+typedef struct TRKMsgBody {
+    ui8 pad_00[4];   // 0x00-0x03
+    ui8 command;      // 0x04
+    ui8 pad_05[3];   // 0x05-0x07
+    ui8 options;      // 0x08
+    ui8 pad_09[3];   // 0x09-0x0B
+    union {
+        ui16 param1;        // 0x0C-0x0D (length, firstRegister, stepCount)
+        ui8 count;           // 0x0C (step count, single byte)
+    };
+    ui8 pad_0E[2];   // 0x0E-0x0F
+    union {
+        ui32 param2;            // 0x10-0x13 (start, rangeStart)
+        ui16 lastRegister;      // 0x10-0x11
+    };
+    ui32 param3;       // 0x14-0x17 (rangeEnd; register data follows)
+} TRKMsgBody;
+
 
 DSError TRK_InitializeMessageBuffers();
 DSError TRK_GetFreeBuffer(int*, MessageBuffer**);
@@ -2174,6 +2196,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -3051,6 +3074,71 @@ typedef enum _GXProjectionType {
     GX_PERSPECTIVE,
     GX_ORTHOGRAPHIC
 } GXProjectionType;
+
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
 
 typedef enum _GXSpotFn {
     GX_SP_OFF,
@@ -4367,12 +4455,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -5767,29 +5858,30 @@ static void ppc_writebyte1(ui8* ptr, ui8 val){
 #endif
 /* end "PowerPC_EABI_Support/MetroTRK/ppc_mem.h" */
 
-static void TRK_ppc_memcpy(void* dest, const void* src, int n, ui32 param_4, ui32 param_5){
-    ui32 msr;
-    ui8* srcTemp = (ui8*)src;
-    ui8* destTemp = (ui8*)dest;
+static void TRK_ppc_memcpy(void* dest, const void* src, int n, ui32 destMSR, ui32 srcMSR) {
+    ui32 savedMSR;
+    ui8* srcPtr = (ui8*)src;
+    ui8* destPtr = (ui8*)dest;
 
-    msr = __TRK_get_MSR(); //save the original MSR value
+    savedMSR = __TRK_get_MSR();
 
-    while(n != 0) {
-        ui8 val;
-        __TRK_set_MSR(param_5);
-        val = ppc_readbyte1(srcTemp);
-        asm{sync}
+    while (n != 0) {
+        ui8 byteVal;
 
-        __TRK_set_MSR(param_4);
-        ppc_writebyte1(destTemp, val);
-        asm{sync}
+        __TRK_set_MSR(srcMSR);
+        byteVal = ppc_readbyte1(srcPtr);
+        __sync();
 
-        srcTemp++;
-        destTemp++;
+        __TRK_set_MSR(destMSR);
+        ppc_writebyte1(destPtr, byteVal);
+        __sync();
+
+        srcPtr++;
+        destPtr++;
         n--;
     }
 
-    __TRK_set_MSR(msr); //restore MSR to its original value
+    __TRK_set_MSR(savedMSR);
 }
 
 DSError TRKTargetAccessMemory(void *data, void* start, size_t *length, MemoryAccessOptions accessOptions,bool read){

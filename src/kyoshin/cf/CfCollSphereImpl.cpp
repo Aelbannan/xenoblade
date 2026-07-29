@@ -1,30 +1,33 @@
+// CfCollSphereImpl: debug-draw functions for sphere collision shapes.
+// Matches CfCollSphereImpl.s (us).
+
 #include "types.h"
 #include "kyoshin/cf/CfCollSphereImpl.hpp"
 
-// renderSphere: member of cf::CfDebugDrawManager.
-// Retail passes (manager, float_radius) despite the Fv mangling.
-void renderSphere__Q22cf18CfDebugDrawManagerFv(void* self, float val);
+// renderSphere: global function wrapping CfDebugDrawManager::renderSphere.
+// Retail passes (draw_data, radius) despite the Fv mangling.
+void renderSphere__Q22cf18CfDebugDrawManagerFv(u8* drawData, float radius);
 
 // func_800A5738: defined in kyoshin/code_800A3B24.
-void func_800A5738(void* a, void* b, float val, void* c);
+void func_800A5738(u8* a, u8* drawData, float radius, u8* b);
 
 // func_800AAD28: debug draw for sphere collision shape.
 // Reads mRadius, converts float->unsigned->float (preserving bit pattern),
 // calls vfunc at vtable offset 0xAC to get draw data, then calls renderSphere.
-// The vtable load colors as r4 (MWCC) vs retail r12 -- a known Chaitin
-// allocation difference that does not affect EQUIVALENT_MATCH.
 void func_800AAD28(void* /*unused*/, cf::CfCollSphereImpl* shape) {
     u32 uval = static_cast<u32>(shape->mRadius);
-    void** vtbl = *reinterpret_cast<void***>(shape);
-    void* data = reinterpret_cast<void*(*)(void*)>(vtbl[0xAC / 4])(shape);
-    renderSphere__Q22cf18CfDebugDrawManagerFv(data, static_cast<float>(uval));
+    u8* drawData = reinterpret_cast<u8* (*)(cf::CfCollSphereImpl*)>(
+        reinterpret_cast<uptr_t*>(shape)[0xAC / 4])(shape);
+    float radius = static_cast<float>(uval);
+    renderSphere__Q22cf18CfDebugDrawManagerFv(drawData, radius);
 }
 
 // func_800AAD94: same sphere debug draw but passes extra parameters through
 // to func_800A5738.
-void func_800AAD94(void* /*unused*/, cf::CfCollSphereImpl* shape, void* a, void* b) {
+void func_800AAD94(void* /*unused*/, cf::CfCollSphereImpl* shape, u8* a, u8* b) {
     u32 uval = static_cast<u32>(shape->mRadius);
-    void** vtbl = *reinterpret_cast<void***>(shape);
-    void* data = reinterpret_cast<void*(*)(void*)>(vtbl[0xAC / 4])(shape);
-    func_800A5738(a, data, static_cast<float>(uval), b);
+    u8* drawData = reinterpret_cast<u8* (*)(cf::CfCollSphereImpl*)>(
+        reinterpret_cast<uptr_t*>(shape)[0xAC / 4])(shape);
+    float radius = static_cast<float>(uval);
+    func_800A5738(a, drawData, radius, b);
 }

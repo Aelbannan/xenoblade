@@ -13,6 +13,8 @@ ChannelManager& ChannelManager::GetInstance() {
 
 ChannelManager::ChannelManager() : mInitialized(false), mChannelCount(0) {}
 
+ChannelManager::~ChannelManager() {}
+
 u32 ChannelManager::GetRequiredMemSize() {
     return (AXGetMaxVoices() + VOICE_MARGIN) * sizeof(Channel);
 }
@@ -267,15 +269,31 @@ void Channel::Start(const WaveData& rData, int length, u32 offset) {
     mEnvelope.Reset();
     mSweepCounter = 0;
 
-    mVoice->Setup(rData, offset);
-    mVoice->Start();
+    field_0xF0->Setup(rData, offset);
+    field_0xF0->Start();
     mActiveFlag = true;
 }
 
 void Channel::Release() {
     if (mEnvelope.GetStatus() != EnvGenerator::STATUS_RELEASE) {
-        if (mVoice != NULL && !mReleasePriorityFixFlag) {
-            mVoice->SetPriority(PRIORITY_RELEASE);
+        if (field_0xF0 != NULL && !mReleasePriorityFixFlag) {
+            field_0xF0->SetPriority(PRIORITY_RELEASE);
+        }
+
+        mEnvelope.SetStatus(EnvGenerator::STATUS_RELEASE);
+    }
+
+    mPauseFlag = false;
+}
+
+void Channel::NoteOff() {
+    if (field_0x3A) {
+        return;
+    }
+
+    if (mEnvelope.GetStatus() != EnvGenerator::STATUS_RELEASE) {
+        if (field_0xF0 != NULL && !mReleasePriorityFixFlag) {
+            field_0xF0->SetPriority(PRIORITY_RELEASE);
         }
 
         mEnvelope.SetStatus(EnvGenerator::STATUS_RELEASE);
@@ -411,12 +429,12 @@ void Channel::FreeChannel(Channel* pChannel) {
         return;
     }
 
-    pChannel->mCallback = NULL;
     pChannel->mCallbackData = 0;
+    pChannel->mVoice = NULL;
 }
 
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
 
-void NoteOff__Q44nw4r3snd6detail7ChannelFv(){}
+

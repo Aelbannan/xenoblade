@@ -217,8 +217,8 @@ void func_801D4174(CItemBoxInfo* info) {
     }
     info->state.animTransform1 = 0;
     info->state.animTransform2 = 0;
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.arcResourceAccessor);
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.resource);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.arcResourceAccessor);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.resource);
     info->state.arcResourceAccessor = 0;
     info->state.resource = 0;
     func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion1);
@@ -1205,8 +1205,8 @@ void func_801E13F8(CItemBoxInfo2* info) {
     }
     info->state.animTransform1 = 0;
     info->state.animTransform2 = 0;
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.arcResourceAccessor);
-    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.resource);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.arcResourceAccessor);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.resource);
     info->state.arcResourceAccessor = 0;
     info->state.resource = 0;
     func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion1);

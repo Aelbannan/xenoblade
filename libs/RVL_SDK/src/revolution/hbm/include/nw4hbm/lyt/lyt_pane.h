@@ -285,8 +285,8 @@ protected:
 
     u8 mAlpha;        // at 0xCD
     u8 mGlbAlpha;     // at 0xCE
-    u8 mBasePosition; // at 0xCF
-    u8 mFlag;         // at 0xD0
+    u8 mFlag;         // at 0xCF
+    u8 mBasePosition; // at 0xD0
 
     char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xD1
 

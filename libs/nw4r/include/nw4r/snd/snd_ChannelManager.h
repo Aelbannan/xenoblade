@@ -29,6 +29,7 @@ public:
 
 private:
     ChannelManager();
+    ~ChannelManager();
 
     Channel* Alloc();
     void Free(Channel* pChannel);

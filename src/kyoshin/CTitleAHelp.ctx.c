@@ -27509,45 +27509,35 @@ public:
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-void func_80139A18();
-#ifdef __cplusplus
-}
-#endif
-
-bool CTitleAHelp_isPaneVisible(const void*);
-void CTitleAHelp_setGXColor(GXColorS10*, s16, s16, s16, s16);
-
 static GXColorS10 lbl_80666D58; //light orange
 static GXColorS10 lbl_80666D60;
 
 static GXColorS10 lbl_80666D68; //light blue
 static GXColorS10 lbl_80666D70;
 
-extern GXColorS10 lbl_eu_80664468;
-extern GXColorS10 lbl_eu_80664470;
-extern GXColorS10 lbl_eu_80664478;
-extern GXColorS10 lbl_eu_80664480;
-
-extern "C" char lbl_eu_805054BC[];
-
 static u16 lbl_80537618[120][7]; //unsure of this lbl, it seems to work, could be a struct tho
 
-CTitleAHelp::CTitleAHelp(char* arg1, u8 arg2)
-    : mFileHandle(nullptr),
-      mArcResourceAccessor(nullptr),
-      mLayout(nullptr),
-      mAnimTrans20(nullptr),
-      mAnimTrans24(nullptr),
-      unk28(0),
-      unk2c(nullptr),
-      mName(arg1),
-      unk34(arg2),
-      unk35(0),
-      unk36(1),
-      unk37(0) {}
+// Retail constructor symbol (extern "C" to avoid MWCC mangling to __ct__11CTitleAHelpFPcUc)
+extern "C" CTitleAHelp* __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2) {
+    extern void* lbl_eu_80534500[];
+    extern void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+
+    *(const void**)self = lbl_eu_80534500;
+    __ct__17UnkClass_8045F564Fv(&self->unk4);
+    self->mFileHandle = nullptr;
+    self->mArcResourceAccessor = nullptr;
+    self->mLayout = nullptr;
+    self->mAnimTrans20 = nullptr;
+    self->mAnimTrans24 = nullptr;
+    self->unk28 = 0;
+    self->unk2c = 0;
+    self->mName = arg1;
+    self->unk34 = arg2;
+    self->unk35 = 0;
+    self->unk36 = 1;
+    self->unk37 = 0;
+    return self;
+}
 
 CTitleAHelp::~CTitleAHelp() {}
 
@@ -27604,16 +27594,16 @@ u8 CTitleAHelp::func_801C411C() {
 u8 CTitleAHelp::isIdle() { return unk36; }
 
 void CTitleAHelp::func_801C412C() {
-    if (unk2c == 0) {
+    if (unk2c != 0) {
         unk2c = 1;
         unk36 = 0;
     }
 }
 
-void CTitleAHelp_startClose(CTitleAHelp* pThis) {
-    if (pThis->unk2c == 3) {
-        pThis->unk2c = 4;
-        pThis->unk36 = 0;
+void CTitleAHelp::func_801C414C() {
+    if (unk2c == 3) {
+        unk2c = 4;
+        unk36 = 0;
     }
 }
 
@@ -27689,7 +27679,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         sprintf(buffer3, "txt_hlp%02d", (u8)i);
         nw4r::lyt::Pane* aPane = mLayout->GetRootPane()->FindPaneByName(buffer3, true);
 
-        if(CTitleAHelp_isPaneVisible(aPane) == 0) return;
+        if(func_801C4648(aPane) == 0) return;
         if((u8)i == 0) {
             nw4r::math::VEC3* translate = (nw4r::math::VEC3*)&aPane->GetTranslate();
             copyVEC3(&oldVec, translate);
@@ -27721,7 +27711,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         if((u8)i < 5) {
             sprintf(buffer3, "txt_hlp%02d", (u8)i + 1);
             selectedPane = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buffer3, true);
-            if(CTitleAHelp_isPaneVisible(selectedPane) == 0) return;
+            if(func_801C4648(selectedPane) == 0) return;
 
             const wchar_t* text = ((nw4r::lyt::TextBox*)selectedPane)->GetString();
             wchar_t firstChar = text[0];
@@ -27756,11 +27746,11 @@ void CTitleAHelp::func_801C473C(u8 arg) {
 }
 
 void CTitleAHelp::func_801C4744() {
-    func_80139A18(mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664468, &lbl_eu_80664470);
+    func_80139A18(mLayout, "txt_tit", &lbl_80666D58, &lbl_80666D60);
 }
 
 void CTitleAHelp::func_801C4760() {
-    func_80139A18(mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
+    func_80139A18(mLayout, "txt_tit", &lbl_80666D68, &lbl_80666D70);
 }
 
 void CTitleAHelp::func_801C477C() {
@@ -27816,8 +27806,10 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
 
         nw4r::lyt::Pane* rootPane = mLayout->GetRootPane();
 
-        void* something = CDeviceFont::func_80452C10(1, mLayout);
-        u32 result = 0; //something -> someCall at 0x24
+        void* fontObj = CDeviceFont::func_80452C10(1, mLayout);
+        void** vtable = *(void***)fontObj;
+        u32 (*slot9)(void*) = (u32 (*)(void*))vtable[0x24 / 4];
+        u32 result = slot9(fontObj);
 
         func_8013676C(rootPane, result);
 
@@ -27845,24 +27837,24 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
  * Utility functions
  *
  ******************************************************************************/
-bool CTitleAHelp_isPaneVisible(const void* self) {
-    const uint8_t* bytes = static_cast<const uint8_t*>(self);
+bool func_801C4648(nw4r::lyt::Pane* self) {
+    const u8* bytes = reinterpret_cast<const u8*>(self);
     return (bytes[0xBB] & 1) != 0;
 }
 
 void sinit_801C4AE4() {
-    CTitleAHelp_setGXColor(&lbl_80666D58, 0xa8, 0x52, 0x08, 0x00);
-    CTitleAHelp_setGXColor(&lbl_80666D60, 0xa8, 0x52, 0x08, 0xff);
+    func_801C4B60(&lbl_80666D58, 0xa8, 0x52, 0x08, 0x00);
+    func_801C4B60(&lbl_80666D60, 0xa8, 0x52, 0x08, 0xff);
 
-    CTitleAHelp_setGXColor(&lbl_80666D68, 0x05, 0x80, 0xa6, 0x00);
-    CTitleAHelp_setGXColor(&lbl_80666D70, 0x05, 0x80, 0xa6, 0xff);
+    func_801C4B60(&lbl_80666D68, 0x05, 0x80, 0xa6, 0x00);
+    func_801C4B60(&lbl_80666D70, 0x05, 0x80, 0xa6, 0xff);
 }
 
-void CTitleAHelp_setGXColor(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
+void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
     color->a = a;
     color->b = b;
     color->g = g;
     color->r = r;
 }
 
-void __ct__CTitleAHelp(){}
+

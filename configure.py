@@ -1133,7 +1133,7 @@ config.libs = [
                 "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_arcResourceAccessor.cpp",
                 mw_version = "Wii/1.0a" if sdk_hbm_version > 20090303 else sdk_hbm_compiler), # Only matches on 1.0a in EU/US
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_bounding.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp"),
+            Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp"),
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_drawInfo.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_group.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp"),

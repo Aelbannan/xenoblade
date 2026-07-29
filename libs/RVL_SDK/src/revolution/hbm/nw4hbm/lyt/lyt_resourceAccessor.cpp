@@ -86,7 +86,7 @@ void GroupContainer::AppendGroup(Group* pGroup) {
 
 Group* GroupContainer::FindGroupByName(const char* pName) {
     NW4R_UT_LINKLIST_FOREACH (it, mGroupList, {
-        if (detail::EqualsResName(it->GetName(), pName)) {
+        if (detail::EqualsPaneName(it->GetName(), pName)) {
             return &*it;
         }
     })

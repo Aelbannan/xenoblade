@@ -186,7 +186,7 @@ void Pane::SetVtxColorElement(u32 idx, u8 value) {
 }
 
 Pane* Pane::FindPaneByName(const char* pName, bool recursive) {
-    if (detail::EqualsResName(mName, pName)) {
+    if (detail::EqualsPaneName(mName, pName)) {
         return this;
     }
 
@@ -316,7 +316,7 @@ void Pane::AnimateSelf(u32 option) {
         }
 
         AnimTransform* pAnimTrans = it->GetAnimTransform();
-        pAnimTrans->Animate(it->GetIndex(), this);
+        pAnimTrans->Animate(it->GetIndex(), static_cast<Pane*>(this));
     })
 
     if (IsVisible() || !(option & ANIMOPTION_SKIP_INVISIBLE)) {
@@ -351,13 +351,13 @@ void Pane::UnbindAnimationSelf(AnimTransform* pAnimTrans) {
     AnimationLinkList::Iterator it = mAnimList.GetBeginIter();
 
     while (it != mAnimList.GetEndIter()) {
-        AnimationLinkList::Iterator currIt = it;
+        AnimationLink* pLink = &*it;
 
         ++it;
 
-        if (pAnimTrans == NULL || currIt->GetAnimTransform() == pAnimTrans) {
-            mAnimList.Erase(currIt);
-            currIt->Reset();
+        if (pAnimTrans == NULL || pLink->GetAnimTransform() == pAnimTrans) {
+            mAnimList.Erase(pLink);
+            pLink->Reset();
         }
     }
 }

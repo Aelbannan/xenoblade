@@ -36,12 +36,14 @@ static u32 Type[SI_MAX_CHAN] = {SI_ERROR_NOREP, SI_ERROR_NOREP, SI_ERROR_NOREP,
 static SIPacket Packet[SI_MAX_CHAN];
 static s64 XferTime[SI_MAX_CHAN];
 static s64 TypeTime[SI_MAX_CHAN];
-static SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
 static BOOL InputBufferValid[SI_MAX_CHAN];
 static u32 InputBuffer[SI_MAX_CHAN][2];
 static OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
 static u32 InputBufferVcount[SI_MAX_CHAN];
 static OSAlarm Alarm[SI_MAX_CHAN];
+static u32 cmdFixDevice[SI_MAX_CHAN];
+static SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
+static u32 __PADFixBits;
 
 static void SIClearTCInterrupt(void) {
     u32 csr = SI_HW_REGS[SI_SICOMSCR];
@@ -52,7 +54,7 @@ static void SIClearTCInterrupt(void) {
     SI_HW_REGS[SI_SICOMSCR] = csr;
 }
 
-static u32 CompleteTransfer(void) {
+u32 CompleteTransfer(void) {
     u32 i;
     u32 sr;
     u8* dst;
@@ -279,20 +281,115 @@ BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
     return TRUE;
 }
 
-// TODO
 static void GetTypeCallback(s32 chan, u32 status) {
-    // static u32 cmdFixDevice[SI_MAX_CHAN];
+    u32 type;
+    u32 chanBit;
+    u32 fix;
+    u32 id;
+    u32 cmd;
+    s32 i;
 
-    // Type[chan] &= ~SI_ERROR_BUSY;
-    // Type[chan] |= status;
-    // TypeTime[chan] = __OSGetSystemTime();
+    Type[chan] &= ~SI_ERROR_BUSY;
+    Type[chan] |= status;
+    TypeTime[chan] = __OSGetSystemTime();
+    type = Type[chan];
+    chanBit = 0x80000000 >> chan;
+    fix = __PADFixBits & chanBit;
+    __PADFixBits &= ~chanBit;
+
+    if ((status & 0xF) || (type & 0x18000000) != 0x08000000 ||
+        !(type & 0x80000000) || (type & 0x04000000)) {
+        OSSetWirelessID(chan, 0);
+        type = Type[chan];
+        for (i = 0; i < SI_MAX_TYPE; i++) {
+            SICallback cb = TypeCallback[i][chan];
+            if (cb != NULL) {
+                TypeCallback[i][chan] = NULL;
+                cb(chan, type);
+            }
+        }
+        return;
+    }
+
+    id = OSGetWirelessID(chan) << 8;
+
+    if (fix && (id & 0x00100000)) {
+        cmd = (id & 0xCFFF00) | 0x4E100000;
+        Type[chan] = SI_ERROR_BUSY;
+        SITransfer(chan, &cmdFixDevice[chan], 3, &Type[chan], 3,
+                   GetTypeCallback, 0);
+        cmdFixDevice[chan] = cmd;
+        return;
+    }
+
+    if (type & 0x00100000) {
+        if ((id & 0xCFFF00) != (type & 0xCFFF00)) {
+            if (!(id & 0x00100000)) {
+                id = (type & 0xCFFF00) | 0x00100000;
+                OSSetWirelessID(chan, (u16)(id >> 8));
+            }
+            cmd = 0x4E000000 | id;
+            Type[chan] = SI_ERROR_BUSY;
+            SITransfer(chan, &cmdFixDevice[chan], 3, &Type[chan], 3,
+                       GetTypeCallback, 0);
+            cmdFixDevice[chan] = cmd;
+            return;
+        }
+    } else if (type & 0x40000000) {
+        id = (type & 0xCFFF00) | 0x00100000;
+        OSSetWirelessID(chan, (u16)(id >> 8));
+        cmd = 0x4E000000 | id;
+        Type[chan] = SI_ERROR_BUSY;
+        SITransfer(chan, &cmdFixDevice[chan], 3, &Type[chan], 3,
+                   GetTypeCallback, 0);
+        cmdFixDevice[chan] = cmd;
+        return;
+    } else {
+        OSSetWirelessID(chan, 0);
+    }
+
+    type = Type[chan];
+    for (i = 0; i < SI_MAX_TYPE; i++) {
+        SICallback cb = TypeCallback[i][chan];
+        if (cb != NULL) {
+            TypeCallback[i][chan] = NULL;
+            cb(chan, type);
+        }
+    }
 }
 
 u32 SIGetType(s32 chan) {
-    // TODO: full implementation
-    // Read volatile register to prevent call elimination by IPA
-    (void)SI_HW_REGS[SI_SICOMSCR];
-    return 0;
+    static u32 cmdTypeAndStatus;
+    BOOL enabled;
+    u32 type;
+    s64 diff;
+
+    enabled = OSDisableInterrupts();
+    type = Type[chan];
+    diff = __OSGetSystemTime() - TypeTime[chan];
+
+    if (Si.poll & (0x80 >> chan)) {
+        if (type != SI_ERROR_NOREP) {
+            TypeTime[chan] = __OSGetSystemTime();
+            OSRestoreInterrupts(enabled);
+            return type;
+        }
+        Type[chan] = SI_ERROR_BUSY;
+        type = SI_ERROR_BUSY;
+    } else if (OS_MSEC_TO_TICKS(50) > diff && type != SI_ERROR_NOREP) {
+        OSRestoreInterrupts(enabled);
+        return type;
+    } else if (OS_MSEC_TO_TICKS(75) > diff) {
+        Type[chan] = SI_ERROR_BUSY;
+    } else {
+        type = Type[chan] = SI_ERROR_BUSY;
+    }
+
+    TypeTime[chan] = __OSGetSystemTime();
+    SITransfer(chan, &cmdTypeAndStatus, 1, &Type[chan], 3, GetTypeCallback,
+               OS_USEC_TO_TICKS(65));
+    OSRestoreInterrupts(enabled);
+    return type;
 }
 
 void SISetCommand(s32 chan, u32 command) {

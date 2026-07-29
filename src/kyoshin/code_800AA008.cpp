@@ -42,32 +42,32 @@ void func_800AA008(ml::FixStr<64>& buf, int type, u32 arg1, u32 arg2, u32 arg3) 
         sprintf(tmp, &lbl_eu_804FC044[0x12]);
         break;
     case 3:
-    case 4:
         sprintf(tmp, &lbl_eu_804FC044[0x17]);
         break;
-    case 5:
+    case 4:
         sprintf(tmp, &lbl_eu_804FC044[0x17], arg2, arg3);
         break;
-    case 6:
+    case 5:
         sprintf(tmp, &lbl_eu_804FC044[0x20]);
         break;
-    case 7:
+    case 6:
         sprintf(tmp, &lbl_eu_804FC044[0x2D]);
         break;
-    default:
-        if ((type) == 8) {
-            sprintf(tmp, &lbl_eu_804FC044[0x36]);
+    case 7:
+        sprintf(tmp, &lbl_eu_804FC044[0x36]);
+        break;
+    case 8:
+        if (arg3 != 0) {
+            sprintf(tmp, &lbl_eu_804FC044[0]);
         } else {
-            if (arg3 != 0) {
-                sprintf(tmp, &lbl_eu_804FC044[0]);
-            } else {
-                sprintf(tmp, &lbl_eu_804FC044[0x36]);
-            }
+            sprintf(tmp, &lbl_eu_804FC044[0x36]);
         }
         break;
     }
 
-    buf += tmp;
+    int len = strlen(tmp);
+    strcat(buf.mString, tmp);
+    buf.mLength += len;
 }
 
 int func_800AA1B4(const char* str, int digitCount, int* out) {
@@ -129,7 +129,8 @@ void func_800AA318(u32 packedToken, u32* outEntryId, u32* outParam1, u32* outPar
 }
 
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag) {
-    buf.clear();
+    buf.mString[0] = '\0';
+    buf.mLength = 0;
 
     if (packed == 0) return 0;
 
@@ -138,42 +139,61 @@ int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFla
     u32 field2 = (packed >> 10) & 0x3FF;
     u32 field3 = packed & 0x3FF;
 
-    const FormatEntry* entry = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0) + id;
-    u32 idx = id;
-
+    const FormatEntry* table = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0);
+    const FormatEntry* entry = &table[id];
+    u32 counter = id;
     int result = 0;
-    while (idx < 0x1F) {
+
+    while (counter < 0x1F) {
         if (entry->id == id) {
             if (prefixFlag != 0) {
-                buf = entry->template_;
+                int len = strlen(entry->template_);
+                buf.mLength = len;
+                strcpy(buf.mString, entry->template_);
             }
 
-            buf += entry->name;
+            int nameLen = strlen(entry->name);
+            strcat(buf.mString, entry->name);
+            buf.mLength += nameLen;
 
             func_800AA008(buf, entry->formatType, field1, field2, field3);
 
             if (suffixFlag != 0) {
                 if (id == 1 || id == 0x1D) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id - 2 <= 4) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id - 7 <= 4) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id == 0x1C) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id - 0xC <= 5) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id == 0x1E) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 } else if (id - 0x12 <= 4) {
-                    buf += entry->suffix;
+                    int sufLen = strlen(entry->suffix);
+                    strcat(buf.mString, entry->suffix);
+                    buf.mLength += sufLen;
                 }
             }
 
             result = 1;
         }
         entry++;
-        idx++;
+        counter++;
     }
 
     return result;
@@ -184,23 +204,27 @@ void func_800AA5C0() {
 }
 
 u32 func_800AA600(const char* str) {
-    if (str == NULL) return 0;
+    const FormatEntry* entry;
+    int idx;
 
-    const FormatEntry* table = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0);
-    int idx = 1;
-    const FormatEntry* entry = &table[1];
+    if (str == NULL) goto ret0;
+
+    entry = &reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[1];
+    idx = 1;
     for (int i = 0; i < 10; i++) {
         if (str[0] == entry[0].name[0] && str[1] == entry[0].name[1])
-            return table[idx].id;
+            return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
         idx++;
         if (str[0] == entry[1].name[0] && str[1] == entry[1].name[1])
-            return table[idx].id;
+            return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
         idx++;
         if (str[0] == entry[2].name[0] && str[1] == entry[2].name[1])
-            return table[idx].id;
+            return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
         idx++;
         entry += 3;
     }
+
+ret0:
     return 0;
 }
 

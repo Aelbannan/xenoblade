@@ -1417,6 +1417,16 @@ public:
 /* "src/kyoshin/CModelDisp.hpp" line 2 "types.h" */
 /* end "types.h" */
 
+namespace cf {
+class CActParamAnimGame;
+}
+
+// Mangled ctor/dtor used by func_801FBEB8 for sub-object init
+extern "C" {
+void __ct__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*);
+void __dt__Q22cf17CActParamAnimGameFv(cf::CActParamAnimGame*, int);
+}
+
 // Sub-object struct within CModelDisp, stride 0xFF0
 struct CModelDispSub {
     u8 _00[0x08];
@@ -2219,25 +2229,59 @@ public:
 
 } // namespace cf
 /* end "kyoshin/cf/CActParamAnimGame.hpp" */
+/* "src/kyoshin/CModelDisp.cpp" line 6 "PowerPC_EABI_Support/Runtime/MWCPlusLib.h" */
+#ifndef _RUNTIME_MWCPLUSLIB_H
+#define _RUNTIME_MWCPLUSLIB_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/Runtime/MWCPlusLib.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define CTORARG_TYPE int
+#define CTORARG_PARTIAL (0)
+#define CTORARG_COMPLETE (1)
+
+#define CTORCALL_COMPLETE(ctor, objptr) (((void (*)(void*, CTORARG_TYPE))ctor)(objptr, CTORARG_COMPLETE))
+
+#define DTORARG_TYPE int
+
+#define DTORCALL_COMPLETE(dtor, objptr) (((void (*)(void*, DTORARG_TYPE))dtor)(objptr, -1))
+#define DTORCALL_PARTIAL(dtor,objptr) (((void (*)(void*, DTORARG_TYPE))dtor)(objptr, 0))
+
+
+typedef void* ConstructorDestructor;
+
+
+extern void __construct_array(void* ptr, ConstructorDestructor ctor, ConstructorDestructor dtor, size_t size, size_t n);
+extern void __destroy_arr(void* block, ConstructorDestructor* dtor, size_t size, size_t n);
+extern void* __construct_new_array(void* block, ConstructorDestructor ctor, ConstructorDestructor dtor_arg, size_t size, size_t n);
+extern void __destroy_new_array(void* block, ConstructorDestructor dtor);
+extern void __destroy_new_array2();
+extern void __destroy_new_array3();
+
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/Runtime/MWCPlusLib.h" */
 
 // Forward declarations for cross-TU calls
 void* func_8004B9B8(void* self);
 void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
 
-// Mangled ctor/dtor symbols for __construct_array
-extern "C" {
-void __ct__Q22cf17CActParamAnimGameFv(void*);
-void __dt__Q22cf17CActParamAnimGameFv(void*, int);
-void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
-}
-
 // Constructs CActParamAnimGame sub-objects: a single instance at +0xC
 // and an array of 2 at +0x550 (element size 0x53C), then returns self.
 CModelDisp* func_801FBEB8(CModelDisp* self) {
-    __ct__Q22cf17CActParamAnimGameFv((u8*)self + 0xC);
-    __construct_array((u8*)self + 0x550,
-                      (void*)__ct__Q22cf17CActParamAnimGameFv,
-                      (void*)__dt__Q22cf17CActParamAnimGameFv,
+    CModelDispSub* sub = (CModelDispSub*)self;
+    __ct__Q22cf17CActParamAnimGameFv((cf::CActParamAnimGame*)&sub->_0C);
+    __construct_array(&sub->mSubObj[0x53C],
+                      (ConstructorDestructor)__ct__Q22cf17CActParamAnimGameFv,
+                      (ConstructorDestructor)__dt__Q22cf17CActParamAnimGameFv,
                       0x53C, 2);
     return self;
 }
@@ -2288,10 +2332,7 @@ void func_801FC15C(CModelDisp* self) {
 
 void func_801FC218(){}
 
-#pragma push
-#pragma auto_inline off
-void func_801FC2B4(CModelDisp*, void**){}
-#pragma pop
+__declspec(noinline) void func_801FC2B4(CModelDisp*, void**){}
 
 void func_801FC3B0(){}
 

@@ -1529,6 +1529,7 @@ namespace cf {
 /* end "kyoshin/cf/object/CObjectParam.hpp" */
 
 namespace cf {
+    class UnkClass_80082D90;
     struct CfObjectSub54 {
         u8 field_0x0[0xC];
     };
@@ -1539,13 +1540,13 @@ namespace cf {
         //vtable 1 (CfObject)
         virtual ~CfObject();                      //0x54
         virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
-        virtual void CfObject_UnkVirtualFunc3();      //0x5C
+        virtual void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
         virtual void CfObject_UnkVirtualFunc5();      //0x64
         virtual void CfObject_UnkVirtualFunc6();      //0x68
         virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
         virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
-        virtual void CfObject_UnkVirtualFunc9();      //0x74
+        virtual bool CfObject_UnkVirtualFunc9();      //0x74
         virtual void CfObject_UnkVirtualFunc10();     //0x78
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
         virtual void CfObject_UnkVirtualFunc12();     //0x80
@@ -1559,17 +1560,17 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
         virtual void CfObject_UnkVirtualFunc21();     //0xA4
         virtual void CfObject_UnkVirtualFunc22();     //0xA8
-        virtual void CfObject_UnkVirtualFunc23();     //0xAC
+        virtual u32 CfObject_UnkVirtualFunc23();      //0xAC
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
         virtual void CfObject_UnkVirtualFunc25();     //0xB4
-        virtual void CfObject_UnkVirtualFunc26();     //0xB8
+        virtual void CfObject_UnkVirtualFunc26(u32 value, float amount); //0xB8
         virtual void CfObject_UnkVirtualFunc27();     //0xBC
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
         virtual void CfObject_UnkVirtualFunc29();     //0xC4
         virtual void CfObject_UnkVirtualFunc30();     //0xC8
         virtual void CfObject_UnkVirtualFunc31();     //0xCC
         virtual void CfObject_UnkVirtualFunc32();     //0xD0
-        virtual void CfObject_UnkVirtualFunc33();     //0xD4
+        virtual void CfObject_UnkVirtualFunc33(float amount); //0xD4
         virtual void CfObject_UnkVirtualFunc34();     //0xD8
         virtual void CfObject_UnkVirtualFunc35();     //0xDC
         virtual void CfObject_UnkVirtualFunc36();     //0xE0
@@ -1606,7 +1607,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
-        virtual void CfObject_UnkVirtualFunc70();     //0x168
+        virtual void CfObject_UnkVirtualFunc70(float value); //0x168
         virtual void CfObject_UnkVirtualFunc71();     //0x16C
         virtual void CfObject_UnkVirtualFunc72();     //0x170
         virtual void CfObject_UnkVirtualFunc73();     //0x174
@@ -1620,7 +1621,7 @@ namespace cf {
         u8 field_0x28[0x10];
         void* mSubObj38;          // 0x38-0x3B
         u8 _pad3C[0x4C - 0x3C];   // 0x3C-0x4B
-        u32 mField4C;             // 0x4C-0x4F (also read as float)
+        float mField4C;           // 0x4C-0x4F
         u8 _pad50[0x54 - 0x50];   // 0x50-0x53
         CfObjectSub54 mSubObj54;     // 0x54-0x5F
         float mFloat60;            // 0x60-0x63
@@ -1677,12 +1678,12 @@ namespace cf {
     void CfObject_UnkVirtualFunc19();
     void CfObject_UnkVirtualFunc22();
     void CfObject_UnkVirtualFunc20();
-    void CfObject_UnkVirtualFunc23();
+    u32 CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27();
     void CfObject_UnkVirtualFunc29();
     void CfObject_UnkVirtualFunc32();
     void CfObject_UnkVirtualFunc34();
-    void CfObject_UnkVirtualFunc33();
+    void CfObject_UnkVirtualFunc33(float amount);
     void CfObject_UnkVirtualFunc30();
     float CfObject_UnkVirtualFunc56();
     void CfObject_UnkVirtualFunc52();
@@ -1692,7 +1693,7 @@ namespace cf {
     void CObjectParam_UnkVirtualFunc2();
     void CfObject_UnkVirtualFunc66();
     void CfObject_UnkVirtualFunc67();
-    void CfObject_UnkVirtualFunc70();
+    void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc69();
     void CfObject_UnkVirtualFunc68();
     void CfObject_UnkVirtualFunc24();
@@ -1766,12 +1767,12 @@ namespace cf {
     void CfObject_UnkVirtualFunc19();
     void CfObject_UnkVirtualFunc22();
     void CfObject_UnkVirtualFunc25();
-    void CfObject_UnkVirtualFunc26();
-    void CfObject_UnkVirtualFunc23();
+    void CfObject_UnkVirtualFunc26(u32 value, float amount);
+    u32 CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27();
     void CfObject_UnkVirtualFunc30();
     void CfObject_UnkVirtualFunc32();
-    void CfObject_UnkVirtualFunc33();
+    void CfObject_UnkVirtualFunc33(float amount);
     void CfObject_UnkVirtualFunc13();
     void CfObject_UnkVirtualFunc57();
     void CObjectParam_UnkVirtualFunc2();
@@ -1780,7 +1781,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc16();
     void CfObject_UnkVirtualFunc17();
     void CfObjectModel_UnkVirtualFunc18();
-    void CfObject_UnkVirtualFunc9();
+    bool CfObject_UnkVirtualFunc9();
     void CfObject_UnkVirtualFunc10();
     void CfObject_UnkVirtualFunc61();
     void CfObject_UnkVirtualFunc62();
@@ -1795,7 +1796,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc42();
     void CfObject_UnkVirtualFunc43();
     void CfObject_UnkVirtualFunc45();
-    void CfObject_UnkVirtualFunc70();
+    void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc50();
     void CfObject_UnkVirtualFunc51();
     void CfObject_UnkVirtualFunc60();
@@ -1897,6 +1898,14 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 
 extern void func_8014A86C(void*);
 extern void func_8014A8F8();
+extern UNKTYPE* func_800B708C(BOOL);
+extern UNKTYPE* func_8016FE34();
+
+struct CAIActionQuery;
+struct CAIActionEnumHolder;
+void func_80043D90(CAIActionEnumHolder*);
+void __dt__80043E88(CAIActionEnumHolder*, s32);
+void* func_80150828(cf::CAIAction*, CAIActionQuery*);
 /* end "kyoshin/cf/object/CAIAction.hpp" */
 /* "src/kyoshin/cf/object/CfObjectActor.hpp" line 5 "kyoshin/cf/object/CActorParam.hpp" */
 #pragma once
@@ -1922,6 +1931,8 @@ namespace cf {
 /* end "types.h" */
 
 namespace cf {
+    class UnkClass_CActorParam15E0;
+
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
     // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
@@ -1988,7 +1999,8 @@ namespace cf {
         u8 unk8[0x1520];
         u8 unk1528[4];
         u8 unk152C[0x80];
-        u8 unk15AC[0x15DC - 0x15AC];
+        u8 unk15AC[0x15D8 - 0x15AC];
+        UnkClass_CActorParam15E0* field_0x15D8;
     };
 }
 
@@ -2282,6 +2294,8 @@ namespace cf {
 /* end "cstring" */
 
 namespace cf {
+
+    class UnkClass_CActorParam15E0;
 
     //size: 0x7C
     struct CActorParam_UnkStruct2 {
@@ -2587,12 +2601,12 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc124(); //0x284
         virtual void* CActorParam_UnkVirtualFunc125(); //0x288
         virtual void CActorParam_UnkVirtualFunc126(); //0x28C
-        virtual void CActorParam_UnkVirtualFunc127(); //0x290
+        virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127(); //0x290
         virtual void CActorParam_UnkVirtualFunc128(); //0x294
         virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
         virtual void CActorParam_UnkVirtualFunc130(); //0x29C
         virtual void CActorParam_UnkVirtualFunc131(); //0x2A0
-        virtual void CActorParam_UnkVirtualFunc132(); //0x2A4
+        virtual void* CActorParam_UnkVirtualFunc132(); //0x2A4
         virtual void CActorParam_UnkVirtualFunc133(); //0x2A8
         virtual void CActorParam_UnkVirtualFunc134(); //0x2AC
         virtual void CActorParam_UnkVirtualFunc135(); //0x2B0
@@ -2645,7 +2659,7 @@ namespace cf {
     #pragma endregion
 
         UNKTYPE* unk15DC;
-        UNKTYPE* unk15E0;
+        UnkClass_CActorParam15E0* unk15E0;
         u32 unk15E4;
         float unk15E8;
         u32 unk15EC;
@@ -2820,14 +2834,13 @@ namespace cf {
     public:
         u8 unk0[0x60];
         bool unk60; //0x60
-        //0x64: vtable
+        u8 _pad61[3];
+        u32 mVTable; //0x64: vtable pointer (manually managed, non-standard ABI)
 
         CChainTemp(){
             std::memset(unk0, 0, sizeof(unk0));
             unk60 = false;
         }
-        virtual ~CChainTemp(){}
-        virtual void CChainTemp_UnkVirtualFunc1(); //0
     };
 }
 /* end "kyoshin/cf/chain/CChainTemp.hpp" */
@@ -2865,23 +2878,27 @@ namespace cf {
         u32 unk8;
     };
 }
+
+extern "C" void func_802A0950(cf::CChainEffect*, int, int, int, int, int);
 /* end "kyoshin/cf/chain/CChainEffect.hpp" */
 /* "src/kyoshin/cf/chain/CChainActor.hpp" line 5 "cstring" */
 /* end "cstring" */
 
 namespace cf {
     //size: 0x80
+    // Vtable at 0x70 is manually managed; no implicit C++ vtable at 0x00.
     class CChainActor {
     public:
         u32 unk0;
-        CChainTemp mChainTemp; //0x4?
-        u16 unk6C;
-        //0x70: vtable
+        CChainTemp mChainTemp; //0x4
+        u16 unk6C;              //0x6C
+        u8 _pad6E[2];           //0x6E
+        u32 mVTable;            //0x70: vtable pointer (manually managed, non-standard ABI)
 
         CChainActor() : unk6C(0) {
             unk0 = 0;
         }
-        virtual ~CChainActor();
+        ~CChainActor();
 
         CChainEffect mChainEffect; //0x74
     };
@@ -3386,6 +3403,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -12320,6 +12338,7 @@ private:
     static CErrorWii* spInstance;
     static bool sPowerCallbackCalled;
     static bool sResetCallbackCalled;
+    static bool sUnkFlag;
 };
 /* end "monolib/util/CErrorWii.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 6 "monolib/util/CPathUtil.hpp" */
@@ -12738,9 +12757,7 @@ namespace ml{
 
     template <size_t N>
     struct FixStr{
-        FixStr(){
-            clear();
-        }
+        FixStr();
 
         //probably fake
         FixStr(bool initialize){
@@ -12907,6 +12924,13 @@ namespace ml{
 
     static const int npos = -1;
     };
+
+#pragma dont_inline on
+    template <size_t N>
+    FixStr<N>::FixStr(){
+        clear();
+    }
+#pragma dont_inline reset
 
 }
 /* end "monolib/util/FixStr.hpp" */
@@ -14520,6 +14544,7 @@ struct CChainGauge {
 // type is not void*.  The gauges these operate on live at CChainCombo+0xC.
 extern "C" void func_80294824__FPv(cf::CChainGauge* gauge);
 extern "C" void func_80294834__FPv(cf::CChainGauge* gauge);
+extern "C" void func_80294844(cf::CChainGauge* gauge, float value);
 
 // Resets/respawns chain combo state (CMenuBattleChain.cpp).
 extern "C" void func_802AA338__Fv();
@@ -14540,6 +14565,7 @@ struct CChainCombo {
     CChainGauge mGauge; // 0xC - chain gauge pair
     void* mVtbl;        // 0x14 - lbl_eu_80538994
 
+    CChainCombo();
     void func1();
 };
 

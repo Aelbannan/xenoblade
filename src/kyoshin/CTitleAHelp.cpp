@@ -2,6 +2,9 @@
 
 #include "kyoshin/CUICfManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+
+extern "C" void func_80139A18();
+
 #include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/device/CDeviceFont.hpp"

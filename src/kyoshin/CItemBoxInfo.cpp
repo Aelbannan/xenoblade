@@ -930,17 +930,69 @@ u32 func_801DFE48(void* global, u16 arg2, void* arg3) {
     }
     return result;
 }
-void func_801DFFB8(void* a, void* b, void* c, void* d) {
-    void* lookup = func_8009EC9C(0);
-    for (int i = 0; i < 12; i++) {
-        s16 val = *(s16*)((u8*)lookup + 0x26 + i * 2);
-        if (val == -1) continue;
-        void* r = func_80157C4C(val);
-        if (r != NULL && *(u32*)r != 0) {
-            void* inst = CItem_initItemImplInstances(r);
-            ((void(*)(void*, void*))(*(void***)inst)[2])(inst, r);
+u32 func_801DFFB8(void* unused, u16 lookup_key, void* arg3, void* unused2) {
+    void* lookup = func_8009EC9C(lookup_key);
+    s16 ids[6];
+    u8 bytes[6];
+    ids[0] = *(s16*)((u8*)lookup + 0x1C);
+    ids[1] = *(s16*)((u8*)lookup + 0x1E);
+    ids[2] = *(s16*)((u8*)lookup + 0x20);
+    ids[3] = *(s16*)((u8*)lookup + 0x22);
+    ids[4] = *(s16*)((u8*)lookup + 0x24);
+    ids[5] = *(s16*)((u8*)lookup + 0x26);
+    bytes[0] = *(u8*)((u8*)lookup + 0x8);
+    bytes[1] = *(u8*)((u8*)lookup + 0x9);
+    bytes[2] = *(u8*)((u8*)lookup + 0xA);
+    bytes[3] = *(u8*)((u8*)lookup + 0xB);
+    bytes[4] = *(u8*)((u8*)lookup + 0xC);
+    bytes[5] = *(u8*)((u8*)lookup + 0xD);
+    for (u32 i = 0; i < 6; i++) {
+        s16 id = ids[i];
+        if (id != -1) {
+            void* item = func_80157C4C(bytes[i]);
+            if (arg3 != NULL && (*(u32*)arg3 >> 16 & 0xF) == bytes[i]) item = arg3;
+            if (item != NULL && *(u32*)item != 0) {
+                void* inst = CItem_initItemImplInstances(item);
+                u8 count = ((u8(*)(void*, void*))(*(void***)inst)[12])(inst, item);
+                for (u32 j = 0; j < count; j++) {
+                    void* inst2 = CItem_initItemImplInstances(item);
+                    s16 v = ((s16(*)(void*, void*, u32))(*(void***)inst2)[16])(inst2, item, j);
+                    if (v != -1) {
+                        void* r = func_80157C4C(3);
+                        if (r != NULL && *(u32*)r != 0) return 0;
+                    } else {
+                        void* inst3 = CItem_initItemImplInstances(item);
+                        void* sub = ((void*(*)(void*, void*, u32))(*(void***)inst3)[11])(inst3, item, j);
+                        if (sub != NULL && (*(u16*)((u8*)sub + 4) >> 4) != 0) return 0;
+                    }
+                }
+            }
+        } else {
+            if (arg3 != NULL) {
+                u8 b = bytes[i];
+                if ((*(u32*)arg3 >> 16 & 0xF) == b) {
+                    void* item = arg3;
+                    if (item != NULL && *(u32*)item != 0) {
+                        void* inst = CItem_initItemImplInstances(item);
+                        u8 count = ((u8(*)(void*, void*))(*(void***)inst)[12])(inst, item);
+                        for (u32 j = 0; j < count; j++) {
+                            void* inst2 = CItem_initItemImplInstances(item);
+                            s16 v = ((s16(*)(void*, void*, u32))(*(void***)inst2)[16])(inst2, item, j);
+                            if (v != -1) {
+                                void* r = func_80157C4C(3);
+                                if (r != NULL && *(u32*)r != 0) return 0;
+                            } else {
+                                void* inst3 = CItem_initItemImplInstances(item);
+                                void* sub = ((void*(*)(void*, void*, u32))(*(void***)inst3)[11])(inst3, item, j);
+                                if (sub != NULL && (*(u16*)((u8*)sub + 4) >> 4) != 0) return 0;
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
+    return 1;
 }
 
 bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
@@ -1778,20 +1830,24 @@ void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     if (val == 4) {
         func_801D8E34(info, arg2, arg3, arg4);
     }
-    u16 id = arg3 ? (*(u16*)arg3 >> 20) : 0;
-    if (val == 4) id = arg2;
-    u8 r = func_801392E4((void*)(u32)id);
-    if (arg3 != NULL) {
-        if (func_801C6E90(arg3) != 0 || func_801D4AB0(arg3) == 0) {
+    void* item = arg3 ? arg3 : NULL;
+    u16 id = item ? (*(u32*)item >> 20) : 0;
+    u16 id_final = arg2;
+    if (val != 4) id_final = id;
+    u8 r = (u8)(u32)func_801392E4((void*)(u32)id_final);
+    if (item != NULL) {
+        if (func_801C6E90(item) != 0 || func_801D4AB0(item) == 0) {
             r = 9;
         }
     }
-    if (r <= 8 && r >= 4) {
-        func_801D6394(info, id, arg3, arg4);
+    if (r - 4 <= 4) {
+        func_801D6394(info, id_final, arg3, arg4);
     } else if (r == 2) {
-        func_801D5DA4(info, id, arg3, arg4);
+        if (val <= 2) arg4 = -1;
+        func_801D5DA4(info, id_final, arg3, arg4);
     } else if (r == 3) {
-        func_801D79F8(info, id, arg3, arg4);
+        if (val <= 2) arg4 = -1;
+        func_801D79F8(info, id_final, arg3, arg4);
     } else if (r == 9 || r == 10 || r == 13) {
         func_801D80EC(info);
     }

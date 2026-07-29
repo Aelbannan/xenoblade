@@ -131,6 +131,7 @@ public:
 
     void UpdateSweep(int count);
     void SetSweepParam(f32 pitch, int time, bool autoUpdate);
+    void SetBiquadFilter(int type, f32 value);
     f32 GetSweepValue() const;
 
     void SetInitVolume(f32 volume) {
@@ -202,36 +203,46 @@ private:
     bool mPauseFlag;              // at 0x31
     bool mActiveFlag;             // at 0x32
     bool mAllocFlag;              // at 0x33
-    bool mAutoSweep;              // at 0x34
+    u8 field_0x34;                // at 0x34
     bool mReleasePriorityFixFlag; // at 0x35
 
-    f32 mUserVolume;      // at 0x38
-    f32 mUserPitchRatio;  // at 0x3C
-    f32 mUserPan;         // at 0x40
-    f32 mUserSurroundPan; // at 0x44
-    f32 mUserLpfFreq;     // at 0x48
+    // at 0x36
+    u8 field_0x36;
+    u8 field_0x37;
+    bool mAutoSweep;              // at 0x38
+    u8 field_0x39;                // at 0x39
+    u8 field_0x3A;                // at 0x3A
+    u8 mBiquadFilterType;         // at 0x3B
 
-    int mRemoteFilter;   // at 0x4C
-    int mOutputLineFlag; // at 0x50
+    f32 mUserVolume;      // at 0x3C
+    f32 mUserPitchRatio;  // at 0x40
+    f32 mUserPan;         // at 0x44
+    f32 mUserSurroundPan; // at 0x48
+    f32 mUserLpfFreq;     // at 0x4C
 
-    f32 mMainOutVolume;       // at 0x54
-    f32 mMainSend;            // at 0x58
-    f32 mFxSend[AUX_BUS_NUM]; // at 0x5C
+    int mRemoteFilter;   // at 0x50
+    int mOutputLineFlag; // at 0x54
 
-    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x68
-    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x78
-    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x88
+    f32 mBiquadFilterValue;     // at 0x58
+    f32 mMainOutVolume;         // at 0x5C
+    f32 mMainSend;              // at 0x60
+    f32 mFxSend[AUX_BUS_NUM];   // at 0x64
 
-    f32 mUserPitch;    // at 0x98
-    f32 mSweepPitch;   // at 0x9C
-    int mSweepCounter; // at 0xA0
-    int mSweepLength;  // at 0xA4
+    f32 mRemoteOutVolume[WPAD_MAX_CONTROLLERS]; // at 0x70
+    f32 mRemoteSend[WPAD_MAX_CONTROLLERS];      // at 0x80
+    f32 mRemoteFxSend[WPAD_MAX_CONTROLLERS];    // at 0x90
 
-    f32 mInitVolume;                   // at 0xA8
-    f32 mInitPan;                      // at 0xAC
-    f32 mInitSurroundPan;              // at 0xB0
-    f32 mTune;                         // at 0xB4
-    MoveValue<u8, u16> mSilenceVolume; // at 0xB8
+    f32 mUserPitch;    // at 0xA0
+    u32 field_0xA4;    // at 0xA4
+    f32 mSweepPitch;   // at 0xA8
+    int mSweepCounter; // at 0xAC
+    int mSweepLength;  // at 0xB0
+
+    f32 mInitVolume;                   // at 0xB4
+    f32 mInitPan;                      // at 0xB8
+    f32 mInitSurroundPan;              // at 0xBC
+    f32 mTune;                         // at 0xC0
+    MoveValue<u8, u16> mSilenceVolume; // at 0xC4
 
     int mKey;         // at 0xC0
     int mOriginalKey; // at 0xC4

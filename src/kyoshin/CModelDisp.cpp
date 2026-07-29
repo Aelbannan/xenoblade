@@ -30,7 +30,8 @@ CModelDisp* func_801FBEB8(CModelDisp* self) {
 // Iterates 3 sub-objects and calls func_801FC2B4 with the mpController pointer.
 void func_801FC2B4(CModelDisp*, void**);
 void func_801FC0C4(CModelDisp* self) {
-    for (int i = 0; i < 3; i++) {
+    u32 i;
+    for (i = 0; i < 3; i++) {
         CModelDispSub* sub = (CModelDispSub*)((u8*)self + (u8)i * 0xFF0);
         func_801FC2B4(self, &sub->mpController);
     }

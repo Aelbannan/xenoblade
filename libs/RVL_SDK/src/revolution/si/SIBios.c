@@ -33,15 +33,15 @@ static SIMain Si = {SI_CHAN_NONE};
 static u32 Type[SI_MAX_CHAN] = {SI_ERROR_NOREP, SI_ERROR_NOREP, SI_ERROR_NOREP,
                                 SI_ERROR_NOREP};
 
-static SIPacket Packet[SI_MAX_CHAN];
-static s64 XferTime[SI_MAX_CHAN];
-static s64 TypeTime[SI_MAX_CHAN];
-static SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
-static BOOL InputBufferValid[SI_MAX_CHAN];
-static u32 InputBuffer[SI_MAX_CHAN][2];
-static OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
-static u32 InputBufferVcount[SI_MAX_CHAN];
-static OSAlarm Alarm[SI_MAX_CHAN];
+SIPacket Packet[SI_MAX_CHAN];
+s64 XferTime[SI_MAX_CHAN];
+s64 TypeTime[SI_MAX_CHAN];
+SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
+BOOL InputBufferValid[SI_MAX_CHAN];
+u32 InputBuffer[SI_MAX_CHAN][2];
+OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
+u32 InputBufferVcount[SI_MAX_CHAN];
+OSAlarm Alarm[SI_MAX_CHAN];
 
 static void SIClearTCInterrupt(void) {
     u32 csr = SI_HW_REGS[SI_SICOMSCR];

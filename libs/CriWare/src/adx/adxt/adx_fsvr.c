@@ -12,6 +12,8 @@ void ADXSTM_ExecFsSvr(void);
 void ADXSTM_ExecServer(void);
 void ADXSTM_ExecFsIdle(void);
 void ADXF_ExecServer(void);
+void ADXT_ExecFsSvr(void);
+void adxt_ExecFsSvr(void);
 
 // Opaque callback parameter type (layout unknown)
 struct ADXT_FsSvrCallbackParam {

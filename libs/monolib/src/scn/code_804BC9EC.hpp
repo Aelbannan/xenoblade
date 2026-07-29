@@ -14,6 +14,7 @@ struct ScnResData {
 extern ScnResData lbl_eu_8065F32C;
 
 extern "C" {
+void func_804B7E0C(ScnResData* self);
 ScnResData* func_804B80A4(ScnResData* self, int index);
 void func_804B8078(ScnResData* self, int index);
 }

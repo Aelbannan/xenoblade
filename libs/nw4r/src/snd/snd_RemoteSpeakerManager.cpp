@@ -12,6 +12,12 @@ RemoteSpeakerManager& RemoteSpeakerManager::GetInstance() {
     return instance;
 }
 
+RemoteSpeakerManager::RemoteSpeakerManager() : mInitialized(false) {
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        mSpeaker[i].SetChannelIndex(i);
+    }
+}
+
 RemoteSpeaker& RemoteSpeakerManager::GetRemoteSpeaker(int idx) {
     return mSpeaker[idx];
 }

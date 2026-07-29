@@ -16,11 +16,20 @@ void func_804BCC30(){}
 
 void func_804BCC3C(){}
 
-void func_804BCC48(){}
+// Tail-calls func_804B7E0C with the global ScnResData, discarding caller's first arg
+void func_804BCC48(ScnResData*) {
+    func_804B7E0C(&lbl_eu_8065F32C);
+}
 
-void func_804BCC54(){}
+// Tail-calls func_804B80A4 with the global ScnResData, forwarding the index arg
+ScnResData* func_804BCC54(ScnResData*, int index) {
+    return func_804B80A4(&lbl_eu_8065F32C, index);
+}
 
-void func_804BCC60(){}
+// Tail-calls func_804B8078 with the global ScnResData, forwarding the index arg
+void func_804BCC60(ScnResData*, int index) {
+    func_804B8078(&lbl_eu_8065F32C, index);
+}
 
 void func_804BCC6C(){}
 

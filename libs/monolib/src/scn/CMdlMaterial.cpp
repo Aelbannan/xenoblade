@@ -65,26 +65,21 @@ u32 func_804E5FD4(CMdlMaterial* self, f32* rgb) {
     color.a = 0xFF;
 
     CMdlModelOwner* owner = self->owner;
-    nw4r::g3d::ResMdl& resMdl = owner->resMdl;
     nw4r::g3d::ScnMdl* scnMdl = owner->scnMdl;
 
-    u32 numEntries = resMdl.GetResMatNumEntries();
-
-    for (u32 i = 0; i < numEntries; i++) {
-        nw4r::g3d::ResMat resMat = resMdl.GetResMat(i);
+    for (u32 i = 0; i < owner->resMdl.GetResMatNumEntries(); i++) {
+        nw4r::g3d::ResMat resMat = owner->resMdl.GetResMat(i);
         if (!resMat.ptr()) {
             NW4R_PANIC("GetResMat returned null for index %u", i);
         }
 
-        u32 matId = resMat.GetID();
+        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(scnMdl, resMat.GetID());
+        nw4r::g3d::ResMatChan chan = matAccess.GetResMatChan(false);
 
-        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(scnMdl, matId);
-        nw4r::g3d::ResMatChan resMatChan = matAccess.GetResMatChan(false);
-
-        resMatChan.GXSetChanAmbColor(GX_COLOR0, color);
-        resMatChan.GXSetChanAmbColor(GX_ALPHA0, color);
-        resMatChan.GXSetChanAmbColor(GX_COLOR1, color);
-        resMatChan.GXSetChanAmbColor(GX_ALPHA1, color);
+        chan.GXSetChanAmbColor(GX_COLOR0, color);
+        chan.GXSetChanAmbColor(GX_ALPHA0, color);
+        chan.GXSetChanAmbColor(GX_COLOR1, color);
+        chan.GXSetChanAmbColor(GX_ALPHA1, color);
     }
 
     return 1;
@@ -105,28 +100,26 @@ u32 func_804E6358(CMdlMaterial* self) {
     }
 
     CMdlModelOwner* owner = self->owner;
-    nw4r::g3d::ResMdl& resMdl = owner->resMdl;
     nw4r::g3d::ScnMdl* scnMdl = owner->scnMdl;
+    int offs = 0;
 
-    u32 numEntries = resMdl.GetResMatNumEntries();
-    GXColor* colorBuf = (GXColor*)self->buffer;
-
-    for (u32 i = 0; i < numEntries; i++) {
-        nw4r::g3d::ResMat resMat = resMdl.GetResMat(i);
+    for (u32 i = 0; i < owner->resMdl.GetResMatNumEntries(); i++) {
+        nw4r::g3d::ResMat resMat = owner->resMdl.GetResMat(i);
         if (!resMat.ptr()) {
             NW4R_PANIC("GetResMat returned null for index %u", i);
         }
 
-        u32 matId = resMat.GetID();
+        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(scnMdl, resMat.GetID());
+        nw4r::g3d::ResMatChan chan = matAccess.GetResMatChan(false);
 
-        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(scnMdl, matId);
-        nw4r::g3d::ResMatChan resMatChan = matAccess.GetResMatChan(false);
-
-        GXColor* colors = colorBuf + i * 4;
-        resMatChan.GXSetChanAmbColor(GX_COLOR0, colors[0]);
-        resMatChan.GXSetChanAmbColor(GX_ALPHA0, colors[1]);
-        resMatChan.GXSetChanAmbColor(GX_COLOR1, colors[2]);
-        resMatChan.GXSetChanAmbColor(GX_ALPHA1, colors[3]);
+        chan.GXSetChanAmbColor(GX_COLOR0, *(GXColor*)((u8*)self->buffer + offs));
+        offs += 4;
+        chan.GXSetChanAmbColor(GX_ALPHA0, *(GXColor*)((u8*)self->buffer + offs));
+        offs += 4;
+        chan.GXSetChanAmbColor(GX_COLOR1, *(GXColor*)((u8*)self->buffer + offs));
+        offs += 4;
+        chan.GXSetChanAmbColor(GX_ALPHA1, *(GXColor*)((u8*)self->buffer + offs));
+        offs += 4;
     }
 
     return 1;

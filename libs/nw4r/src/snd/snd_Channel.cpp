@@ -17,6 +17,10 @@ u32 ChannelManager::GetRequiredMemSize() {
     return (AXGetMaxVoices() + VOICE_MARGIN) * sizeof(Channel);
 }
 
+u32 ChannelManager::GetRequiredMemSize(int channelCount) {
+    return (channelCount + 1) * 256;
+}
+
 void ChannelManager::Setup(void* pWork, u32 workSize) {
     ut::AutoInterruptLock lock;
 
@@ -411,4 +415,16 @@ void Channel::FreeChannel(Channel* pChannel) {
 } // namespace nw4r
 
 void NoteOff__Q44nw4r3snd6detail7ChannelFv(){}
-void SetBiquadFilter__Q44nw4r3snd6detail7ChannelFif(int, float){}
+
+namespace nw4r {
+namespace snd {
+namespace detail {
+
+void Channel::SetBiquadFilter(int type, f32 value) {
+    mBiquadFilterType = type;
+    mBiquadFilterValue = value;
+}
+
+} // namespace detail
+} // namespace snd
+} // namespace nw4r

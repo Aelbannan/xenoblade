@@ -15,11 +15,11 @@ class SeqPlayer;
 class MmlParser {
 public:
     enum SeqArgType {
-        SEQ_ARG_U8,
-        SEQ_ARG_S16,
-        SEQ_ARG_VMIDI,
-        SEQ_ARG_RANDOM,
-        SEQ_ARG_VARIABLE
+        SEQ_ARG_U8 = 1,
+        SEQ_ARG_S16 = 2,
+        SEQ_ARG_VMIDI = 3,
+        SEQ_ARG_RANDOM = 4,
+        SEQ_ARG_VARIABLE = 5
     };
 
     static const int CALL_STACK_MAX_DEPTH = 3;

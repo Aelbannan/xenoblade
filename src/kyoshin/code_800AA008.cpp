@@ -71,10 +71,8 @@ void func_800AA008(ml::FixStr<64>& buf, int type, u32 arg1, u32 arg2, u32 arg3) 
 }
 
 int func_800AA1B4(const char* str, int digitCount, int* out) {
-    int ret;
-
-    *out = 0;
-    ret = 0;
+    int ret = 0;
+    *out = ret;
     if (str == nullptr) goto end;
     ret = 1;
 

@@ -260,10 +260,17 @@ void InitGXTexObjFromTPL(GXTexObj* pTexObj, TPLPalette* pTpl, u32 idx) {
                      pHeader->wrapT, mipmap);
     }
 
-    GXInitTexObjLOD(pTexObj, pHeader->minFilter, pHeader->magFilter,
-                    static_cast<f32>(pHeader->minLOD),
-                    static_cast<f32>(pHeader->maxLOD), pHeader->LODBias, false,
-                    pHeader->edgeLODEnable, GX_ANISO_1);
+    // Set up LOD — reload header pointer since r9 clobbered by GXInitTexObj*
+    pHeader = pDesc->textureHeader;
+    f32 minLod = static_cast<f32>(pHeader->minLOD);
+    GXTexFilter minFilt = pHeader->minFilter;
+    f32 maxLod = static_cast<f32>(pHeader->maxLOD);
+    GXTexFilter magFilt = pHeader->magFilter;
+    f32 lodBias = pHeader->LODBias;
+    GXBool edgeLOD = pHeader->edgeLODEnable;
+
+    GXInitTexObjLOD(pTexObj, minFilt, magFilt, minLod, maxLod, lodBias, false,
+                    edgeLOD, GX_ANISO_1);
 }
 
 } // namespace detail

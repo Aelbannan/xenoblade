@@ -178,9 +178,11 @@ extern "C" bool func_8007F0AC__Q22cf13CfGameManagerFv(const UnkF0ACData* data) {
     return data->flag_0x4 != 0;
 }
 
+#pragma dont_inline on
 extern "C" bool func_80082FCC__Q22cf13CfGameManagerFv(const cf::CfObject* data, u32 mask) {
     return (data->mFlags68 & mask) != 0;
 }
+#pragma dont_inline reset
 
 extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u32* second) {
     return *first != *second;

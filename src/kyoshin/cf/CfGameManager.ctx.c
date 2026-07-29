@@ -249939,7 +249939,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc6();      //0x68
         virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
         virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
-        virtual void CfObject_UnkVirtualFunc9();      //0x74
+        virtual bool CfObject_UnkVirtualFunc9();      //0x74
         virtual void CfObject_UnkVirtualFunc10();     //0x78
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
         virtual void CfObject_UnkVirtualFunc12();     //0x80
@@ -250925,7 +250925,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc16();
     void CfObject_UnkVirtualFunc17();
     void CfObjectModel_UnkVirtualFunc18();
-    void CfObject_UnkVirtualFunc9();
+    bool CfObject_UnkVirtualFunc9();
     void CfObject_UnkVirtualFunc10();
     void CfObject_UnkVirtualFunc61();
     void CfObject_UnkVirtualFunc62();
@@ -251716,9 +251716,11 @@ extern "C" bool func_8007F0AC__Q22cf13CfGameManagerFv(const UnkF0ACData* data) {
     return data->flag_0x4 != 0;
 }
 
-extern "C" bool func_80082FCC__Q22cf13CfGameManagerFv(const Unk82FCCData* data, u32 mask) {
-    return (data->flags_0x68 & mask) != 0;
+#pragma dont_inline on
+extern "C" bool func_80082FCC__Q22cf13CfGameManagerFv(const cf::CfObject* data, u32 mask) {
+    return (data->mFlags68 & mask) != 0;
 }
+#pragma dont_inline reset
 
 extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u32* second) {
     return *first != *second;
@@ -251741,7 +251743,7 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
     }
 }
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 205 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 207 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 
 union UnkWordFloat {
@@ -252436,6 +252438,23 @@ extern "C" u32 func_80082EC4__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value)
         }
     }
     return 0;
+}
+
+extern "C" bool func_8006C670(cf::CfObjectMove* player);
+extern "C" bool func_80082F2C__Q22cf13CfGameManagerFv(s32 playerIndex,
+                                                        bool requireFlag) {
+    bool result = false;
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(playerIndex);
+    if (player != nullptr && player->CfObject_UnkVirtualFunc9()) {
+        if (requireFlag &&
+            !func_80082FCC__Q22cf13CfGameManagerFv(player, 0x100000)) {
+            return false;
+        }
+        if (func_8006C670(player)) {
+            result = true;
+        }
+    }
+    return result;
 }
 
 extern "C" void func_80082A7C__Q22cf13CfGameManagerFv(cf::CfObjectMove* object) {

@@ -254,52 +254,25 @@ void* RomFont::Unload() {
 }
 
 bool RomFont::HasGlyph(u16 ch) const {
-    int encode = mFontEncode;
-    bool ret;
-
-    if (encode == 1) {
-        // SJIS half-width
-        ret = false;
-
-        if (ch <= 0xFF) {
-            if (ch >= 0x20 && ch <= 0x7E) {
-                ret = true;
-            } else if (ch >= 0xA1 && ch <= 0xDF) {
-                ret = true;
-            }
-        }
-
-        if (ret) {
+    switch (mFontEncode) {
+    case 0:
+        if (ch >= 0x20 && ch <= 0xFF) {
             return true;
         }
+        return false;
 
-        // SJIS full-width
-        {
-            u8 hi = ch >> 8;
-            u8 lo = ch & 0xFF;
-
-            ret = false;
-
-            if (hi >= 0x81 && hi <= 0x98 && lo >= 0x40 && lo <= 0xFC) {
-                ret = true;
-            }
-        }
-
-        if (ret) {
+    case 1:
+        if (IsSJISHalfWidthChar(ch)) {
             return true;
         }
-
+        if (IsSJISFullWidthChar(ch)) {
+            return true;
+        }
         return false;
-    } else if (encode > 1) {
+
+    default:
         return false;
     }
-
-    // CP1252 (encode == 0)
-    if (ch >= 0x20 && ch <= 0xFF) {
-        return true;
-    }
-
-    return false;
 }
 
 } // namespace ut

@@ -129,10 +129,10 @@ public:
     virtual void
     SetAnimationEnable(AnimTransform* pAnimTrans, bool enable, bool recursive); // at 0x58
     
-    virtual u8 GetMaterialNum() const; // at 0x5C
-    virtual Material* GetMaterial() const;       // at 0x60
-    virtual Material* GetMaterial(u32 index) const;  // at 0x64
-    virtual void LoadMtx(const DrawInfo& rInfo); // at 0x68
+    u8 GetMaterialNum() const;
+    virtual Material* GetMaterial() const;           // at 0x5C
+    Material* GetMaterial(u32 index) const;
+    virtual void LoadMtx(const DrawInfo& rInfo);     // at 0x60
 
     void AppendChild(Pane* pChild);
     void PrependChild(Pane* pChild);

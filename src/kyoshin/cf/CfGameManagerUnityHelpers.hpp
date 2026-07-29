@@ -366,6 +366,53 @@ public:
     u16 value_0x8C;
 };
 
+class PlayerVirtualInterface : public Unk80EE4Data {
+public:
+    virtual void vfunc_0x110();
+    virtual void vfunc_0x114();
+    virtual void vfunc_0x118();
+    virtual void vfunc_0x11C();
+    virtual void vfunc_0x120();
+    virtual void vfunc_0x124();
+    virtual void vfunc_0x128();
+    virtual void vfunc_0x12C();
+    virtual void vfunc_0x130();
+    virtual void vfunc_0x134();
+    virtual void vfunc_0x138();
+    virtual void vfunc_0x13C();
+    virtual void vfunc_0x140();
+    virtual void vfunc_0x144();
+    virtual void vfunc_0x148();
+    virtual void vfunc_0x14C();
+    virtual void vfunc_0x150();
+    virtual void vfunc_0x154();
+    virtual void vfunc_0x158(u32 value);
+};
+
+struct PlayerObjectContainer : public ItemContainerPrefix,
+                               public PlayerVirtualInterface {
+};
+
+extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758,
+                                 __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    for (s32 i = 0; i < 3; ++i) {
+        cf::CfObjectMove* player = lbl_eu_80571758.unk94[i];
+        if (player != nullptr && (player->unk64 & 2) != 0) {
+            PlayerVirtualInterface* interfaceObject =
+                reinterpret_cast<PlayerVirtualInterface*>(player);
+            PlayerObjectContainer* object =
+                static_cast<PlayerObjectContainer*>(interfaceObject);
+            object->vfunc_0x158(value);
+        }
+    }
+}
+
 struct Unk866A0Data {
     u32 field_0x0;
     u32 field_0x4;

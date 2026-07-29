@@ -634,12 +634,8 @@ void func_801D8930(CItemBoxInfo* info) {
         sprintf(buf, base + 0x303, idx);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         sprintf(buf, base + 0x161, idx);
-        void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10))->FindPaneByName(buf, true);
         if (pane != NULL) {
-            void** pvt = *(void***)pane;
-            u16 count = ((u16(*)(void*))pvt[26])(pane);
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);
             }

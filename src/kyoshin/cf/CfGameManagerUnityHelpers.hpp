@@ -81,28 +81,6 @@ struct ItemListSubobject {
     u32 field_0x0;
 };
 
-struct PlayerObjectContainer : public ItemContainerPrefix,
-                               public cf::CfObjectMove {
-};
-
-extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
-    if (!lbl_eu_80663E70) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758,
-                                 __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
-    }
-    for (s32 i = 0; i < 3; ++i) {
-        cf::CfObjectMove* player = lbl_eu_80571758.unk94[i];
-        if (player != nullptr && (player->unk64 & 2) != 0) {
-            PlayerObjectContainer* object =
-                static_cast<PlayerObjectContainer*>(player);
-            object->CfObject_UnkVirtualFunc66(value);
-        }
-    }
-}
-
 struct ItemListObject : public ItemContainerPrefix, public ItemListSubobject {
     u8 field_0x3EA0[0x88];
     u16 itemId_0x3F28;

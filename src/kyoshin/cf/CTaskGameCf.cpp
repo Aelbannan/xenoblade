@@ -185,8 +185,10 @@ void CTaskGameCf::func_800444FC(){
 
         CDeviceVI::func_804483DC(Class_80296898::getInstance()->mFrameCount - 1);
 
-        if(unk_54 & 1){
-            unk_54 &= ~1u;
+        if(!(unk_54 & 1)){
+            return;
+        }
+        unk_54 &= ~1u;
 
             if(CTaskEnvironment::getInstance()){
                 CTaskEnvironment::getInstance()->SetRemove();

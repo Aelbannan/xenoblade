@@ -52,10 +52,11 @@ f32 EnvGenerator::GetValue() const {
 void EnvGenerator::Update(int msec) {
     switch (mStatus) {
     case STATUS_ATTACK: {
+        if (msec <= 0) {
+            return;
+        }
+
         do {
-            if (msec-- <= 0) {
-                return;
-            }
             mValue = mValue * mAttack;
             if (mValue > -(1.0f / 32.0f)) {
                 mValue = 0.0f;
@@ -63,6 +64,7 @@ void EnvGenerator::Update(int msec) {
                 mHoldCounter = mHold;
                 return;
             }
+            msec--;
         } while (msec > 0);
         break;
     }

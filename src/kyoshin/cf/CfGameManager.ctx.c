@@ -252261,7 +252261,28 @@ union ResourceDestination {
 };
 extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void func_8009D018(u32 destination, u32 value);
-extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second);
+struct ResourceIndexTable {
+    s8 values[8][8];
+};
+extern "C" const ResourceIndexTable lbl_eu_804FB7B0;
+#pragma dont_inline on
+extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second) {
+    ResourceIndexTable table = lbl_eu_804FB7B0;
+    if (first < 1) {
+        return -1;
+    }
+    if (first > 8) {
+        return -1;
+    }
+    if (second < 1) {
+        return -1;
+    }
+    if (second > 8) {
+        return -1;
+    }
+    return table.values[first - 1][second - 1];
+}
+#pragma dont_inline reset
 extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second);
 extern "C" void func_8013DB6C(u32 first, u32 second, s32 third, s32 fourth);
 extern "C" void func_80082568__Q22cf13CfGameManagerFv(

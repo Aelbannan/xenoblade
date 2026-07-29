@@ -40,5 +40,5 @@ public:
     virtual void vfunc_1C(UnkCode8027513C* self) = 0;
 };
 
-ICamControlBase* initCamControlInstances();
+extern "C" ICamControlBase* initCamControlInstances();
 

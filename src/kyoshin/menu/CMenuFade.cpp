@@ -119,6 +119,7 @@ void func_80113E48(void* arg0) {
 }
 
 void CMenuFade::cbRenderBefore() {
+    // Skip rendering when game is paused or menu fade is suppressed
     if (CTaskGame::getInstance()->func_800426F0()) {
         return;
     }

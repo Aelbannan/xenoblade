@@ -4,8 +4,8 @@
 #include "monolib/work.hpp"
 #include "monolib/device.hpp"
 #include <revolution/WPAD.h>
-#include <revolution/mtx/mtx44.h>
-#include <revolution/os/OSFastCast.h>
+#include "revolution/mtx/mtx44.h"
+#include "revolution/os/OSFastCast.h"
 #include <cstring>
 
 // Extern retail data symbols (sdata2 float constants)
@@ -23,9 +23,19 @@ extern float lbl_eu_8066A598;
 extern float lbl_eu_8066A59C;
 extern float lbl_eu_8066A5A0;
 
+// Layout of the data returned by func_eu_80449F30 (points to CPad + 0x24)
+struct PadInputData {
+    u32 buttonFlags;   // 0x00 — d-pad direction in low nibble
+    u8 _pad0[0x38];    // 0x04
+    float stickX;      // 0x3C — analog stick X (maps to CPad::mLStickXRaw)
+    float stickY;      // 0x40 — analog stick Y (maps to CPad::mLStickYRaw)
+    u8 _pad1[0x54];    // 0x44
+    s8 dpdValid;       // 0x98 — d-pad valid flag (maps to CPad::mWpadData.mDpdValidFg)
+};
+
 // Extern retail function stubs
 void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect16* rect, CView* view);
-void* func_eu_80449F30(int index);
+PadInputData* func_eu_80449F30(int index);
 void callExitFunc__11CWorkSystemFv();
 
 CLibHbmControl::CLibHbmControl(const char* pName, CWorkThread* pParent) : CProc(pName, pParent, MAX_CHILD),
@@ -65,28 +75,10 @@ void CLibHbmControl::wkUpdate(){
             break;
         case 1: {
             CDeviceFileCri* cri = CDeviceFileCri::getInstance();
-            int found;
 
-            // Check if exception flag (bit 4 / THREAD_FLAG_EXCEPTION) is set
-            if (*(u32*)((u8*)cri + 0x7C) & 0x10) {
-                found = 1;
-            } else {
-                // Search request queue for an entry with type == 2
-                s32 count = *(s32*)((u8*)cri + 0x1AC);
-                s32 cursor = *(s32*)((u8*)cri + 0x1A8);
-                s32 mod = *(s32*)((u8*)cri + 0x1B0);
-                u32* array = *(u32**)((u8*)cri + 0x1A4);
-                s32 foundIdx = -1;
-
-                for (s32 i = 0; i < count; i++) {
-                    s32 idx = (cursor + i) % mod;
-                    if (array[idx * (0x24 / sizeof(u32))] == 2) {
-                        foundIdx = i;
-                        break;
-                    }
-                }
-                found = (foundIdx != -1) ? 1 : 0;
-            }
+            // Skip timer if exception flag set or a type-2 request is queued
+            int found = (cri->mFlags & 0x10) ? 1 :
+                        (cri->mMsgQueue.find(2) >= 0) ? 1 : 0;
 
             if (!found) {
                 if (--mWaitTimer <= 0) {
@@ -115,15 +107,15 @@ void CLibHbmControl::wkUpdate(){
             float analogScale = lbl_eu_8066A584;
 
             for (int i = 0; i < 4; i++) {
-                u8* ctrlData = (u8*)&mHBMControllerData + i * sizeof(HBMKPadData);
+                HBMKPadData* ctrl = &mHBMControllerData.wiiCon[i];
 
                 // Get WPAD status and extract the device type
                 CWpadStatus* wpadStatus = CDeviceRemotePad::getWpadStatus(i);
                 u8 devType = wpadStatus->dev_type;
 
                 // Init controller data: clear kpad, store dev_type as use_devtype
-                *(u32*)(ctrlData + 0) = 0;
-                *(u32*)(ctrlData + 0xC) = devType;
+                ctrl->kpad = NULL;
+                ctrl->use_devtype = devType;
 
                 // Skip if not connected
                 if (!CDeviceRemotePad::isConnected(i)) continue;
@@ -133,15 +125,15 @@ void CLibHbmControl::wkUpdate(){
 
                 // Re-get wpadStatus and store as kpad
                 wpadStatus = CDeviceRemotePad::getWpadStatus(i);
-                *(u32*)(ctrlData + 0) = (u32)wpadStatus;
+                ctrl->kpad = wpadStatus;
 
                 // Get pad data for button/analog processing
-                u8* padRaw = (u8*)func_eu_80449F30(i);
+                PadInputData* pad = func_eu_80449F30(i);
                 bool changed = false;
 
                 if (devType == 2) {
                     // D-pad directional input handling
-                    u32 dir = *(u32*)padRaw & 0xF;
+                    u32 dir = pad->buttonFlags & 0xF;
 
                     if (dir != 0) {
                         float f1 = zero;
@@ -164,50 +156,49 @@ void CLibHbmControl::wkUpdate(){
                         }
 
                         // Clamp and apply X delta
-                        float newX = f1 + *(float*)(ctrlData + 4);
+                        float newX = f1 + ctrl->pos.x;
                         if (newX > clampMax) newX = clampMax;
                         else if (newX < clampMin) newX = clampMin;
-                        *(float*)(ctrlData + 4) = newX;
+                        ctrl->pos.x = newX;
 
                         // Clamp and apply Y delta
-                        float newY = f2 + *(float*)(ctrlData + 8);
+                        float newY = f2 + ctrl->pos.y;
                         if (newY > clampMax) newY = clampMax;
                         else if (newY < clampMin) newY = clampMin;
-                        *(float*)(ctrlData + 8) = newY;
+                        ctrl->pos.y = newY;
 
                         changed = true;
                     }
                 }
 
                 // Analog stick handling (if not zero)
-                float stickX = *(float*)(padRaw + 0x60);
-                float stickY = *(float*)(padRaw + 0x64);
+                float stickX = pad->stickX;
+                float stickY = pad->stickY;
 
                 if (stickX != zero || stickY != zero) {
                     stickX *= analogScale;
                     stickY *= analogScale;
 
                     // Apply X
-                    float newX = stickX + *(float*)(ctrlData + 4);
+                    float newX = stickX + ctrl->pos.x;
                     if (newX > clampMax) newX = clampMax;
                     else if (newX < clampMin) newX = clampMin;
-                    *(float*)(ctrlData + 4) = newX;
+                    ctrl->pos.x = newX;
 
                     // Apply Y (subtract because screen Y is inverted)
-                    float newY = *(float*)(ctrlData + 8) - stickY;
+                    float newY = ctrl->pos.y - stickY;
                     if (newY > clampMax) newY = clampMax;
                     else if (newY < clampMin) newY = clampMin;
-                    *(float*)(ctrlData + 8) = newY;
+                    ctrl->pos.y = newY;
 
                     changed = true;
                 }
 
                 // Fallback: if nothing changed and dpd valid, copy from wpadStatus pos
                 if (!changed) {
-                    s8 dpdValid = *(s8*)(padRaw + 0xBC);
-                    if (dpdValid > 0) {
-                        *(float*)(ctrlData + 4) = wpadStatus->pos.x;
-                        *(float*)(ctrlData + 8) = wpadStatus->pos.y;
+                    if (pad->dpdValid > 0) {
+                        ctrl->pos.x = wpadStatus->pos.x;
+                        ctrl->pos.y = wpadStatus->pos.y;
                     }
                 }
             }

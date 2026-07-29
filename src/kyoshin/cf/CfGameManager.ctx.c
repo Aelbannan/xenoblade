@@ -251838,30 +251838,32 @@ extern "C" void func_80087448__Q22cf13CfGameManagerFv(UnkFlags8Data* data, u32 m
     else data->flags_0x8 &= ~mask;
 }
 
-extern "C" u32 func_8007F930__Q22cf13CfGameManagerFv(u32 enabled) {
+extern "C" u64 func_8007F930__Q22cf13CfGameManagerFv(u32 enabled) {
     if (enabled) {
         lbl_eu_80663E24 |= 0x20000;
     } else {
         lbl_eu_80663E24 &= ~0x20000;
     }
 
+    u32 secondaryFlags = lbl_eu_80663E28;
     if (enabled) {
-        lbl_eu_80663E28 |= 0x1000000;
+        secondaryFlags |= 0x1000000;
     } else {
-        lbl_eu_80663E28 &= ~0x1000000;
+        secondaryFlags &= ~0x1000000;
     }
+    lbl_eu_80663E28 = secondaryFlags;
 
     if (enabled) {
         u32 value = 0;
         value |= 0x200000;
         value |= 0x310;
         lbl_eu_80663DF8 = value;
-        return enabled;
+        return (static_cast<u64>(enabled) << 32) | secondaryFlags;
     }
 
     u32 oldValue = lbl_eu_80663DF8;
     lbl_eu_80663DF8 = oldValue | 0xFFFFFFFF;
-    return oldValue;
+    return (static_cast<u64>(oldValue) << 32) | secondaryFlags;
 }
 
 extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(UnkLinkedNode** destination,
@@ -251974,6 +251976,7 @@ extern "C" void func_8007F0C4__Q22cf13CfGameManagerFv(u32 first, u32 second) {
 }
 
 extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" void func_8009D018(u32 resourceId, u32 value);
 extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second);
 extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     s32 index = func_80082418__Q22cf13CfGameManagerFv(first, second);
@@ -251988,6 +251991,19 @@ extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second) {
 
 extern "C" bool func_8008235C__Q22cf13CfGameManagerFv(u32 bit) {
     return (func_8009CF8C(0x108) & (1U << bit)) != 0;
+}
+extern "C" bool func_800823A4__Q22cf13CfGameManagerFv(u32 bit, bool enable) {
+    u32 flags = func_8009CF8C(0x108);
+    u32 mask = 1U << bit;
+    bool changed = false;
+    if (enable) {
+        changed = (flags & mask) == 0;
+        flags |= mask;
+    } else {
+        flags &= ~mask;
+    }
+    func_8009D018(0x108, flags);
+    return changed;
 }
 extern "C" u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId) {
     return func_8009CF8C(resourceId + 0x220);
@@ -252058,17 +252074,35 @@ extern "C" void func_80081D2C__Q22cf13CfGameManagerFv(u32 first, u32 second, u32
 
 extern "C" u32 func_80078C08(CfCamEventManager* manager, u32 first, u32 second,
                                u32 third, u32 fourth, u32 fifth);
+extern "C" u32 func_80078D08(CfCamEventManager* manager, u32 first, u32 second,
+                               u32 third, u32 fourth, u32 fifth, float value);
 extern "C" u32 func_80082008__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
                                                        u32 fourth, u32 fifth) {
     return func_80078C08(cf::CfGameManager::getInstance()->unkB4, first, second, third,
                          fourth, fifth);
 }
 
-extern "C" UnkClass_800821F8* func_800784A0(u32 first, u32 second, u32 third, u32 fourth,
-                                             u32 fifth, u32 sixth, u32 seventh);
-extern "C" void func_80081F28__Q22cf13CfGameManagerFv(u32 first, u32 second) {
+extern "C" u32 func_80082088__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
+                                                       u32 fourth, float value) {
+    return func_80078D08(cf::CfGameManager::getInstance()->unkB4, first, second, third,
+                         fourth, 0, value);
+}
+
+extern "C" UnkClass_800821F8* func_800784A0(u32 first, cf::CfObjectMove* second,
+                                             u32 third, u32 fourth, u32 fifth,
+                                             u32 sixth, u32 seventh);
+extern "C" void func_80081F28__Q22cf13CfGameManagerFv(u32 first,
+                                                       cf::CfObjectMove* second) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
     manager->unkB0 = func_800784A0(first, second, 0, 0, 0, 0, 0);
+}
+
+extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 first, u32 third) {
+    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+    cf::CfObjectMove** slot =
+        func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    cf::CfObjectMove* player = *slot;
+    manager->unkB0 = func_800784A0(first, player, third, 0, 0, 0, 0);
 }
 
 extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value) {

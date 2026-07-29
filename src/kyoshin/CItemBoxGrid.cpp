@@ -494,6 +494,21 @@ void func_801D1F9C(short* dst, unsigned long val) {
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
+void __ct__CArtsBookItem(){}
+// Standard MWCC virtual destructor
+void* __dt__10CQuestItemFv(void* self, int mode) {
+    if (self && mode > 0) __dl__FPv(self);
+    return self;
+}
+void* __dt__11CVisionItemFv(void* self, int mode) {
+    if (self && mode > 0) __dl__FPv(self);
+    return self;
+}
+void* __dt__13CArtsBookItemFv(void* self, int mode) {
+    if (self && mode > 0) __dl__FPv(self);
+    return self;
+}
+
 void sinit_801D1E30(){}
 
 extern u8 lbl_eu_805347F8[];

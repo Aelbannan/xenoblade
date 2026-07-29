@@ -343,17 +343,35 @@ extern "C" void func_80081D2C__Q22cf13CfGameManagerFv(u32 first, u32 second, u32
 
 extern "C" u32 func_80078C08(CfCamEventManager* manager, u32 first, u32 second,
                                u32 third, u32 fourth, u32 fifth);
+extern "C" u32 func_80078D08(CfCamEventManager* manager, u32 first, u32 second,
+                               u32 third, u32 fourth, u32 fifth, float value);
 extern "C" u32 func_80082008__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
                                                        u32 fourth, u32 fifth) {
     return func_80078C08(cf::CfGameManager::getInstance()->unkB4, first, second, third,
                          fourth, fifth);
 }
 
-extern "C" UnkClass_800821F8* func_800784A0(u32 first, u32 second, u32 third, u32 fourth,
-                                             u32 fifth, u32 sixth, u32 seventh);
-extern "C" void func_80081F28__Q22cf13CfGameManagerFv(u32 first, u32 second) {
+extern "C" u32 func_80082088__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
+                                                       u32 fourth, float value) {
+    return func_80078D08(cf::CfGameManager::getInstance()->unkB4, first, second, third,
+                         fourth, 0, value);
+}
+
+extern "C" UnkClass_800821F8* func_800784A0(u32 first, cf::CfObjectMove* second,
+                                             u32 third, u32 fourth, u32 fifth,
+                                             u32 sixth, u32 seventh);
+extern "C" void func_80081F28__Q22cf13CfGameManagerFv(u32 first,
+                                                       cf::CfObjectMove* second) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
     manager->unkB0 = func_800784A0(first, second, 0, 0, 0, 0, 0);
+}
+
+extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 first, u32 third) {
+    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+    cf::CfObjectMove** slot =
+        func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    cf::CfObjectMove* player = *slot;
+    manager->unkB0 = func_800784A0(first, player, third, 0, 0, 0, 0);
 }
 
 extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value) {

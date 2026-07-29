@@ -145,7 +145,21 @@ void func_801D8A88(CItemBoxInfo* info) {
                   &lbl_eu_805063BC[0x2aa], 0);
 }
 
-void func_801D8B60(){}
+void func_801D8B60(CItemBoxInfo* info) {
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
+                  &lbl_eu_805063BC[0x4a7],
+                  &lbl_eu_805063BC[0x2aa], 0);
+    for (int i = 0; i < 4; i++) {
+        char buf[0x20];
+        sprintf(buf, &lbl_eu_805063BC[0x4b3], i + 0x1f);
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf,
+                      &lbl_eu_805063BC[0x2aa], 0);
+        sprintf(buf, &lbl_eu_805063BC[0x4c0], i + 0x1f);
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf,
+                      &lbl_eu_805063BC[0x2aa], 0);
+    }
+}
+
 void func_801D8B08(CItemBoxInfo* info) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x48f],

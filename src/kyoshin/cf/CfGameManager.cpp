@@ -198,6 +198,7 @@ extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
 }
 #pragma dont_inline reset
 
+#pragma dont_inline on
 extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
                                                         s32 maximum) {
     if (*value < minimum) {
@@ -206,6 +207,7 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
         *value = maximum;
     }
 }
+#pragma dont_inline reset
 
 #include "kyoshin/cf/CfGameManagerUnityHelpers.hpp"
 

@@ -16,12 +16,12 @@ RemoteSpeaker::RemoteSpeaker()
       mEnableFlag(false),
       mFirstEncodeFlag(false),
       mValidCallbackFlag(false),
-      mCommandBusyFlag(false),
-      mForceResumeFlag(false),
-      mState(STATE_INVALID),
-      mUserCommand(COMMAND_NONE),
-      mInternalCommand(COMMAND_NONE),
-      mWpadCallback(NULL) {
+      mCommandBusyFlag(false) {
+
+    mState = STATE_INVALID;
+    mUserCommand = COMMAND_NONE;
+    mInternalCommand = COMMAND_NONE;
+    mWpadCallback = NULL;
 
     OSCreateAlarm(&mContinueAlarm);
     OSSetAlarmUserData(&mContinueAlarm, this);
@@ -155,7 +155,7 @@ void RemoteSpeaker::UpdateStreamData(const s16* pRmtSamples) {
     bool playFlag = true;
     bool silentFlag = mEnableFlag ? IsAllSampleZero(pRmtSamples) : true;
 
-    if (silentFlag || mForceResumeFlag) {
+    if (silentFlag) {
         playFlag = false;
     }
 
@@ -163,52 +163,64 @@ void RemoteSpeaker::UpdateStreamData(const s16* pRmtSamples) {
     bool lastFlag = mPlayFlag && !playFlag;
 
     if (playFlag) {
-        ut::AutoInterruptLock lock;
+        BOOL enabled = OSDisableInterrupts();
 
         if (!WPADCanSendStreamData(mChannelIndex)) {
+            OSRestoreInterrupts(enabled);
             return;
         }
 
-        u32 wencMode = !mFirstEncodeFlag ? WENC_FLAG_USER_INFO : 0;
+        u32 wencMode = !mFirstEncodeFlag;
         mFirstEncodeFlag = false;
 
         u8 adpcmBuffer[SAMPLES_PER_ENCODED_PACKET];
         WENCGetEncodeData(&mEncodeInfo, wencMode, pRmtSamples,
                           SAMPLES_PER_AUDIO_PACKET, adpcmBuffer);
 
-        s32 result = WPADSendStreamData(mChannelIndex, adpcmBuffer,
-                                        SAMPLES_PER_ENCODED_PACKET);
-        if (result != WPAD_ERR_OK) {
-            mInternalCommand = COMMAND_SPEAKER_ON;
+        if (WPADSendStreamData(mChannelIndex, adpcmBuffer,
+                               SAMPLES_PER_ENCODED_PACKET) != WPAD_ERR_OK) {
             mState = STATE_INVALID;
-            InitParam();
-
+            mInternalCommand = COMMAND_SPEAKER_ON;
+            mPlayFlag = false;
+            mEnableFlag = false;
+            OSCancelAlarm(&mContinueAlarm);
+            mContinueFlag = false;
+            OSCancelAlarm(&mIntervalAlarm);
+            mIntervalFlag = false;
+            mContinueFlag = false;
+            mPlayFlag = false;
+            mEnableFlag = true;
+            mIntervalFlag = false;
+            OSRestoreInterrupts(enabled);
             return;
         }
+
+        OSRestoreInterrupts(enabled);
     }
 
     if (firstFlag) {
-        ut::AutoInterruptLock lock;
+        BOOL enabled = OSDisableInterrupts();
 
         if (!mContinueFlag) {
             OSSetAlarm(&mContinueAlarm,
                        OS_SEC_TO_TICKS(CONTINUOUS_PLAY_INTERVAL_MINUTES * 60LL),
                        ContinueAlarmHandler);
-
             mContinueBeginTime = OSGetTime();
             mContinueFlag = true;
         }
 
         OSCancelAlarm(&mIntervalAlarm);
         mIntervalFlag = false;
+        OSRestoreInterrupts(enabled);
     }
 
     if (lastFlag) {
-        ut::AutoInterruptLock lock;
+        BOOL enabled = OSDisableInterrupts();
 
         mIntervalFlag = true;
         OSCancelAlarm(&mIntervalAlarm);
         OSSetAlarm(&mIntervalAlarm, OS_SEC_TO_TICKS(1LL), IntervalAlarmHandler);
+        OSRestoreInterrupts(enabled);
     }
 
     mPlayFlag = playFlag;

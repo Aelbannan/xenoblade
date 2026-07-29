@@ -2,27 +2,13 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/work/CProcess.hpp"
 
 void __ct__CTaskGameEff(){}
 
-// --- Target 2: us-80045150 ---
-// Standard MWCC virtual destructor: null-check, conditional delete, return this
-u8* __dt__80044BB0(u8* self, int mode) {
-    if (self && mode > 0) {
-        operator delete(self);
-    }
-    return self;
-}
+void __dt__80044BB0(){}
 
-// --- Target 3: us-800451e0 ---
-// Destructor for nested class CTaskGameEff::CEffRenderHighPrio
-CTaskGameEff::CEffRenderHighPrio* __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(
-    CTaskGameEff::CEffRenderHighPrio* self, int mode) {
-    if (self && mode > 0) {
-        operator delete(self);
-    }
-    return self;
-}
+void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(){}
 
 void __dt___reslist_base_CScn(){}
 
@@ -70,27 +56,53 @@ bool func_80045548(){ return false; }
 
 bool func_80045550(){ return false; }
 
-// --- Target 1: us-80045af8 ---
-// This-adjusting thunk: takes a pointer to offset +0x58 within CTaskGameEff,
-// adjusts back to the CTaskGameEff* base, and tail-calls its destructor.
-extern u8* __dt__12CTaskGameEffFv(CTaskGameEff*, int);
-u8* func_80045558(u8* p, int flag) {
-    return __dt__12CTaskGameEffFv((CTaskGameEff*)(p - 0x58), flag);
-}
+bool func_80045558(){ return false; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
 // Do not include monolib/work/CTTask.hpp here — its inline methods collide.
+class CTaskGameEff;
+
 template <typename T>
-class CTTask {
+class CTTask : public CProcess {
 public:
+    typedef void (CProcess::*MoveFunc)();
+    typedef void (CProcess::*DrawFunc)();
+
     CTTask();
     virtual ~CTTask();
     virtual void Move();
     virtual void Draw();
+
+protected:
+    MoveFunc mMoveFunc;  // 0x3C — pointer-to-member-function (12 bytes)
+    DrawFunc mDrawFunc;  // 0x48 — pointer-to-member-function (12 bytes)
 };
 
-class CTaskGameEff;
-template<> CTTask<CTaskGameEff>::~CTTask() {}
-template<> void CTTask<CTaskGameEff>::Move() {}
-template<> void CTTask<CTaskGameEff>::Draw() {}
+// CTTask<CTaskGameEff> constructor — out-of-line
+template<>
+CTTask<CTaskGameEff>::CTTask() : mMoveFunc(nullptr), mDrawFunc(nullptr) {}
+
+// CTTask<CTaskGameEff>::~CTTask — dtor body is empty; compiler emits:
+//   null check → CProcess::~CProcess(this, 0) → conditional operator delete
+// #pragma optimize_for_size on keeps stmw r30 instead of individual stw.
+#pragma optimize_for_size on
+template<>
+CTTask<CTaskGameEff>::~CTTask() {}
+#pragma optimize_for_size off
+
+// CTTask<CTaskGameEff>::Move — test PTMF at +0x3C, call if non-null
+template<>
+void CTTask<CTaskGameEff>::Move() {
+    if (mMoveFunc) {
+        (this->*mMoveFunc)();
+    }
+}
+
+// CTTask<CTaskGameEff>::Draw — test PTMF at +0x48, call if non-null
+template<>
+void CTTask<CTaskGameEff>::Draw() {
+    if (mDrawFunc) {
+        (this->*mDrawFunc)();
+    }
+}

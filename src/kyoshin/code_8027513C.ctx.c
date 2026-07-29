@@ -1452,7 +1452,7 @@ struct CfObjectEffLayout {
 };
 
 // Forward declarations for callees
-void func_800CFFA0(void* self);
+void func_800CFFA0(u8* self);
 
 // Base type for camera control instances returned by initCamControlInstances.
 // MWCC adds typeinfo + deleting-dtor overhead (2 entries), so source index 2
@@ -1512,7 +1512,7 @@ void func_8027594C(UnkCode8027513C* self, CfObjectEff* eff) {
         reinterpret_cast<CfObjectEffLayout*>(eff)->field_0xB0 = 0;
         self->field_0x74 = nullptr;
     }
-    func_800CFFA0(self);
+    func_800CFFA0((u8*)self);
 }
 
 // If field_0x74 is set and field_0x78 differs from arg, notify the child
@@ -1533,7 +1533,7 @@ cf::CfObjectImplTbox::~CfObjectImplTbox() {}
 
 void func_802759B0(void* self) { ((cf::CfObjectImplTbox*)((u8*)self - 0xc))->~CfObjectImplTbox(); }
 
-void func_802759B8(void* self) { func_8027594C((UnkCode8027513C*)((u8*)self - 0x10), nullptr); }
+void func_802759B8(u8* self) { func_8027594C((UnkCode8027513C*)(self - 0x10), nullptr); }
 
 // Initialize camera control instances and call their setup method with self
 void func_802751F8(UnkCode8027513C* self) {

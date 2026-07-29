@@ -17354,7 +17354,7 @@ struct PackHeader {
     u64 mFileHashTable[];         // 0x78
 };
 
-//size: 0x88
+//size: 0x8C
 class CPackItem : public IWorkEvent {
 public:
     CPackItem(const char* name, int partitionId);
@@ -17388,17 +17388,18 @@ public:
     u16* mFileIds;                   // 0x5C - per-file ID table (indexed by hash entry)
     u32* mFileDataOffsets;           // 0x60 - per-file data offset or partition ID table
     int mAdxPartitionId;             // 0x64
-    u8* mAhxAdxBuffer;               // 0x68 - work buffer for ADX/AHX load
-    u32 mHashLowerHalf;              // 0x6C
-    u32 mHashUpperHalf;              // 0x70
-    LoadState mLoadState;            // 0x74
-    u8 mFileReadFailed;              // 0x78 - set when async file read errors
-    u8 mPackHeaderExternal;          // 0x79 - set when pack header owned by work system
-    bool mIsAhxAdxFile;              // 0x7A
-    u8 unk7B;                        // 0x7B - padding
-    u32 mWorkPackDataPtr;            // 0x7C - pack data pointer from work system
-    u32 mWorkPackDataSize;           // 0x80 - pack data size from work system
-    const char* mFilePath;           // 0x84 - full path to the pack file
+    u32 field_0x68;                  // 0x68
+    u8* mAhxAdxBuffer;               // 0x6C - work buffer for ADX/AHX load
+    u32 mHashLowerHalf;              // 0x70
+    u32 mHashUpperHalf;              // 0x74
+    LoadState mLoadState;            // 0x78
+    u8 mFileReadFailed;              // 0x7C - set when async file read errors
+    u8 mPackHeaderExternal;          // 0x7D - set when pack header owned by work system
+    bool mIsAhxAdxFile;              // 0x7E
+    u8 unk7F;                        // 0x7F - padding
+    u32 mWorkPackDataPtr;            // 0x80 - pack data pointer from work system
+    u32 mWorkPackDataSize;           // 0x84 - pack data size from work system
+    const char* mFilePath;           // 0x88 - full path to the pack file
 };
 /* end "monolib/core/CPackItem.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 7 "monolib/core/CPadManager.hpp" */
@@ -258905,12 +258906,71 @@ void CTaskGameCf::finishExit() {
     *(u32*)((u8*)this + 0x54) |= 2;
 }
 
-    CTaskGameCf* CTaskGameCf::create(CProcess* pParent, int arg2){
-        CTaskGameCf* task = new(CWorkThreadSystem::getWorkMem()) CTaskGameCf(pParent, arg2);
-        task->Regist(pParent, false);
-        return task;
-    }
-
 } //namespace cf
 
-void __ct__cf_CTaskGameCf(){}
+// Forward declarations
+extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2);
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
+extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
+extern "C" void Regist__8CProcessFP8CProcessb(CProcess* self, CProcess* parent, bool insertTop);
+
+extern const u32 lbl_eu_80525B9C[];
+extern const u32 lbl_eu_80525B54[];
+extern const u32 __ptmf_null[3];
+
+extern "C" void __ct__8CProcessFv(CProcess*);
+
+extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2) {
+    __ct__8CProcessFv(pThis);
+    
+    u32* p = reinterpret_cast<u32*>(pThis);
+    const u32* nullPt = &__ptmf_null[0];
+    
+    // Set CTTask<CTaskGameCf> vtable
+    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B9C[0]);
+    
+    // Copy PTMF null to mMoveFunc (0x3C) in retail store order: 0x40, 0x3C, 0x44
+    // Then mDrawFunc (0x48) in same order: 0x4C, 0x48, 0x50
+    u32 w0 = nullPt[0];
+    u32 w1 = nullPt[1];
+    p[0x10] = w1;  // store word 1 to 0x40
+    p[0xF] = w0;   // store word 0 to 0x3C
+    p[0x11] = nullPt[2]; // store word 2 to 0x44
+    // Reload for second PTMF
+    w0 = nullPt[0];
+    w1 = nullPt[1];
+    p[0x13] = w1;  // store word 1 to 0x4C
+    p[0x12] = w0;  // store word 0 to 0x48
+    p[0x14] = nullPt[2]; // store word 2 to 0x50
+    
+    // Set CTaskGameCf vtable (overwrites CTTask vtable)
+    p[4] = reinterpret_cast<u32>(&lbl_eu_80525B54[0]);
+    
+    pThis->unk_54 = 0;
+    pThis->pTaskGame = reinterpret_cast<CTaskGame*>(pParent);
+    pThis->unk_5C = 1;
+    pThis->unk_5E = 1;
+    pThis->unk_60 = 16;
+    pThis->unk_62 = 0;
+    pThis->unk_64.mString[0] = 0;
+    pThis->unk_64.mLength = 0;
+    
+    if (arg2 == 0) goto zero_case;
+    pThis->unk_54 = 8;
+    return pThis;
+zero_case:
+    pThis->unk_54 = 0;
+    return pThis;
+}
+
+extern "C" cf::CTaskGameCf* create__Q22cf11CTaskGameCfFv(CProcess* pParent, int arg2) {
+    u32 handle = getWorkMem__17CWorkThreadSystemFv();
+    cf::CTaskGameCf* task = (cf::CTaskGameCf*)allocate__Q23mtl10MemManagerFUlUl(0x90, handle);
+
+    if (task != nullptr) {
+        task = __ct__cf_CTaskGameCf(task, pParent, arg2);
+    }
+
+    Regist__8CProcessFP8CProcessb(task, pParent, false);
+    return task;
+}

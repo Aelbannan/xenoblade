@@ -6,6 +6,12 @@
 #include <cstring>
 
 extern const char lbl_eu_80524714[];
+extern u32 lbl_eu_80663BC8;
+extern const char lbl_eu_806623C0[];
+extern "C" void func_8044F400__11CDeviceFileFP11CFileHandleUl(CFileHandle*, u32);
+extern "C" void func_eu_804520D0(char*);
+extern "C" void func_eu_804521A8(s8);
+extern "C" void func_eu_804521B0();
 
 CPackItem::CPackItem(const char* name, int partitionId) :
 mBaseName(),
@@ -64,18 +70,50 @@ void CPackItem::update(){
             mPackHeader = (PackHeader*)mWorkPackDataPtr;
             setupHashTable();
         }else{
-            mFileHandle = CDeviceFile::readFile(mtl::MemManager::getHandleMEM2(), mFilePath, this, 0, 0);
+            if((s32)field_0x68 >= 0){
+                func_eu_804521A8(field_0x68);
+            }
+            
+            mFileHandle = CDeviceFile::readFile(lbl_eu_80663BC8, mFilePath, this, 0, 0);
+            func_8044F400__11CDeviceFileFP11CFileHandleUl(mFileHandle, mtl::MemManager::getHandleMEM2());
+            
+            if((s32)field_0x68 >= 0){
+                func_eu_804521B0();
+            }
         }
 
-        //TODO: What did they do here? They likely didnt have a constructor like this to skip
-        //initialization, but using a raw buffer feels wrong
-        ml::FixStr<64> tempString = ml::FixStr<64>(false); //0x2C
-
+        // Extract base name (without path or extension)
+        ml::FixStr<64> tempString = ml::FixStr<64>(false);
         ml::CPathUtil::getNoPathExtName(tempString, mFilePath);
         mBaseName = tempString.c_str();
+
+        // Copy full path, strip extension manually, then append ".pkb"
         mPkbFilename = mFilePath;
-        ml::CPathUtil::removeExt(mPkbFilename);
-        mPkbFilename += ".pkb";
+
+        // Manual extension strip to match retail codegen (rfind + local buffer)
+        char localBuf[32];
+        localBuf[0] = '\0';
+        int localLen = 0;
+        {
+            int dotPos = mPkbFilename.rfind(lbl_eu_806623C0, -1);
+
+            if((u32)(dotPos + 1) > 1){
+                if(mPkbFilename.mLength != 0){
+                    if(dotPos == -1){
+                        dotPos = mPkbFilename.mLength;
+                    }
+                    strncpy(localBuf, mPkbFilename.mString, dotPos);
+                    localBuf[dotPos] = '\0';
+                    localLen = strlen(localBuf);
+                }
+
+                mPkbFilename = localBuf;
+            }
+        }
+
+        mPkbFilename += lbl_eu_80524714 + 0x10;
+        func_eu_804520D0(mPkbFilename.mString);
+
         mLoadState = LOAD_STATE_OPENED_PKH_FILE;
     }else if(mLoadState == LOAD_STATE_OPENED_PKH_FILE){
         if(mFileReadFailed != 0){
@@ -86,9 +124,9 @@ void CPackItem::update(){
         if(mPackHeader == nullptr) return;
 
         if(mIsAhxAdxFile){
-            if(CWorkSystemPack::func_804DDFBC((u32)this) == false) return;
-            u32 bufferSize = ROUND_DOWN((mPackHeader->mFiles + 1)*2 + 0x11a, 4); //TODO: figure out the corresponding Criware struct here.
-            mAhxAdxBuffer = (u8*)mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), bufferSize, 4);
+            if(CWorkSystemPack::func_804DDFBC((u32)this) == 0) return;
+            u32 bufferSize = ((mPackHeader->mFiles + 1) * 2 + 0x11a) & ~3;
+            mAhxAdxBuffer = (u8*)mtl::MemManager::allocate_head(CWorkThreadSystem::getWorkMem(), bufferSize, 4);
             ADXF_LoadPartitionNw(mAdxPartitionId, mPkbFilename.c_str(), nullptr, mAhxAdxBuffer);
             mLoadState = LOAD_STATE_LOADING_AHX_ADX_FILE;
         }else{

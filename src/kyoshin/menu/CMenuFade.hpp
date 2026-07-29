@@ -44,7 +44,7 @@ public:
     CScn* mScn;                                 // 0x60
     UnkClass_8045F564 mLayoutMem;               // 0x64
     nw4r::lyt::Layout* mLayout;                 // 0x74
-    u32 field_0x78;                             // 0x78
+    nw4r::lyt::AnimTransform* field_0x78;       // 0x78
     f32 field_0x7C;                             // 0x7C
     f32 field_0x80;                             // 0x80
     f32 field_0x84;                             // 0x84

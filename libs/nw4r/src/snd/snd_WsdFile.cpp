@@ -45,7 +45,7 @@ bool WsdFileReader::ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const {
     const WsdFile::WsdInfo* pWsdInfo =
         Util::GetDataRefAddress0(pWsd->refWsdInfo, &mDataBlock->wsdCount);
 
-    if (mHeader->fileHeader.version >= NW4R_VERSION(1, 2)) {
+    if (mHeader->fileHeader.version == NW4R_VERSION(1, 2)) {
         pSoundInfo->pitch = pWsdInfo->pitch;
         pSoundInfo->pan = pWsdInfo->pan;
         pSoundInfo->surroundPan = pWsdInfo->surroundPan;
@@ -53,7 +53,7 @@ bool WsdFileReader::ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const {
         pSoundInfo->fxSendB = pWsdInfo->fxSendB;
         pSoundInfo->fxSendC = pWsdInfo->fxSendC;
         pSoundInfo->mainSend = pWsdInfo->mainSend;
-    } else if (mHeader->fileHeader.version >= NW4R_VERSION(1, 1)) {
+    } else if (mHeader->fileHeader.version == NW4R_VERSION(1, 1)) {
         pSoundInfo->pitch = pWsdInfo->pitch;
         pSoundInfo->pan = pWsdInfo->pan;
         pSoundInfo->surroundPan = pWsdInfo->surroundPan;
@@ -108,20 +108,20 @@ bool WsdFileReader::ReadWaveSoundNoteInfo(WaveSoundNoteInfo* pSoundNoteInfo,
 
 bool WsdFileReader::ReadWaveParam(int id, WaveData* pWaveData,
                                   const void* pWaveAddr) const {
-    const WaveInfo* pWaveInfo;
+    const WaveFile::WaveInfo* pWaveInfo;
 
     if (mHeader->fileHeader.version == NW4R_VERSION(1, 0)) {
         const WsdFile::WaveBlockOld* pWaveBlockOld =
             reinterpret_cast<const WsdFile::WaveBlockOld*>(mWaveBlock);
 
-        pWaveInfo = static_cast<const WaveInfo*>(
+        pWaveInfo = static_cast<const WaveFile::WaveInfo*>(
             ut::AddOffsetToPtr(pWaveBlockOld, pWaveBlockOld->offsetTable[id]));
     } else {
         if (id >= mWaveBlock->waveCount) {
             return false;
         }
 
-        pWaveInfo = static_cast<const WaveInfo*>(
+        pWaveInfo = static_cast<const WaveFile::WaveInfo*>(
             ut::AddOffsetToPtr(mWaveBlock, mWaveBlock->offsetTable[id]));
     }
 

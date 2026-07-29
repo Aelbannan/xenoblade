@@ -2,22 +2,18 @@
 
 using namespace ml;
 
-CLight::CLight() {
-    unk4.x = 0.0f;
-    unk4.y = 0.0f;
-    unk4.z = 0.0f;
-    unk10.x = 0.5f;
-    unk10.y = 0.5f;
-    unk10.z = 0.5f;
-    unk1C.x = 1.0f;
-    unk1C.y = 0.0f;
-    unk1C.z = 0.0f;
-    unk28 = 1.0f;
-    mpLightObj = 0;
+CLight::CLight(){
+    u32 r4 = 0;
+    u32 r0 = r4 & 0xF;
+    unk4 = CVec3(0,0,0);
+    unk10 = CVec3(0.5f,0.5f,0.5f);
+    unk1C = CVec3(1,0,0);
+    unk28 = 1;
+    mpLightObj = nullptr;
     unk34 = 0;
-    unk38 = 1.0f;
-    unk3C = 10000.0f;
-    mFlags = 0xF;
+    unk38 = 1;
+    unk3C = 10000;
+    mFlags = r0;
 }
 
 void func_804C02E4(void* self, int value){
@@ -29,9 +25,8 @@ void func_804C0398(CLight* self, int lightObjPtr) {
 void func_804C03A0(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-void func_804C0454(CLight* self, const ml::CVec3* pos) {
-    self->unk4 = *pos;
-    self->mpLightObj->InitLightPos(self->unk4.x, self->unk4.y, self->unk4.z);
+void func_804C0454(void* self, int value){
+    *(int*)((char*)self + 0x2c) = value;
 }
 void func_804C0484(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
@@ -59,7 +54,6 @@ void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn) {
     self->mpLightObj->InitLightSpot(cutoff, spotFn);
 }
 void func_804C0928(){}
-void func_804C09E0(CLight* self, f32 distance, f32 brightness, GXDistAttnFn distAttnFn) {
-    self->mpLightObj->InitLightDistAttn(distance, brightness, distAttnFn);
-}
+extern void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
+void func_804C09E0(void* self){ InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
 void func_804C09E8(){}

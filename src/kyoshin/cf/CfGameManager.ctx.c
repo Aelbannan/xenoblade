@@ -251742,6 +251742,7 @@ extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
 }
 #pragma dont_inline reset
 
+#pragma dont_inline on
 extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
                                                         s32 maximum) {
     if (*value < minimum) {
@@ -251750,8 +251751,9 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
         *value = maximum;
     }
 }
+#pragma dont_inline reset
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 209 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 211 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 
 namespace ml {
@@ -252068,7 +252070,7 @@ extern "C" void func_8008402C__Q22cf13CfGameManagerFv(u32 objectValue,
 }
 
 extern "C" void func_80083F28__Q22cf13CfGameManagerFv(u32 objectValue,
-                                                        bool triggerFirstPlayer,
+                                                        u32 triggerFirstPlayer,
                                                         float value) {
     for (s32 i = 0; i < 3; ++i) {
         cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
@@ -252115,6 +252117,23 @@ extern "C" void func_80083D70__Q22cf13CfGameManagerFv(u32 first, u32 second,
 extern "C" void func_80083D50__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
                                                         u32 fourth, float value) {
     func_800838F4__Q22cf13CfGameManagerFv(0, first, second, third, fourth, value);
+}
+extern "C" void func_8007C188__Q22cf13CfGameManagerFv(u32 mask);
+extern "C" float lbl_eu_8066653C;
+extern "C" u16 lbl_eu_80663E48[2];
+extern "C" u16 lbl_eu_80663E4C[2];
+extern "C" void func_80083DEC__Q22cf13CfGameManagerFv(
+    u32 first, u32 second, u32 third, u32 fourth, u32 fifth, u32 sixth,
+    u32 seventh, u32 eighth, float value) {
+    func_80135568(0);
+    cf::CfGameManager::getInstance();
+    lbl_eu_80663E48[1] = seventh;
+    lbl_eu_80663E48[0] = fifth;
+    lbl_eu_80663E4C[0] = sixth;
+    lbl_eu_80663E4C[1] = eighth;
+    func_800838F4__Q22cf13CfGameManagerFv(2, first, second, third, fourth, value);
+    func_8007C188__Q22cf13CfGameManagerFv(0x80000);
+    func_80083F28__Q22cf13CfGameManagerFv(fifth, sixth, lbl_eu_8066653C);
 }
 
 extern "C" UnkClass_8009EC9C* func_8009EC9C(u16 index);
@@ -252243,6 +252262,28 @@ union ResourceDestination {
 extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void func_8009D018(u32 destination, u32 value);
 extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second);
+extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second);
+extern "C" void func_8013DB6C(u32 first, u32 second, s32 third, s32 fourth);
+extern "C" void func_80082568__Q22cf13CfGameManagerFv(
+    s32 first, s32 second, s32 increment) {
+    s32 value = func_800824FC__Q22cf13CfGameManagerFv(first, second);
+    if (value == -1) {
+        return;
+    }
+    s32 index = func_80082418__Q22cf13CfGameManagerFv(first, second);
+    if (index == -1) {
+        return;
+    }
+    if (index >= 22) {
+        return;
+    }
+    value += increment;
+    func_80082544__Q22cf13CfGameManagerFv(0, &value, 5000);
+    func_8009D018(index + 0x28, value);
+    func_8013DB6C(5, 0, index, increment);
+}
+
+#pragma dont_inline on
 extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     s32 index = func_80082418__Q22cf13CfGameManagerFv(first, second);
     if (index == -1) {
@@ -252253,6 +252294,7 @@ extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     }
     return func_8009CF8C(index + 40);
 }
+#pragma dont_inline reset
 
 extern "C" bool func_8008235C__Q22cf13CfGameManagerFv(u32 bit) {
     return (func_8009CF8C(0x108) & (1U << bit)) != 0;
@@ -252598,6 +252640,24 @@ extern "C" void func_8008294C__Q22cf13CfGameManagerFv(bool enable) {
 
 extern "C" BdatTextEntry lbl_eu_80571628;
 extern "C" bool func_80087244__Q22cf13CfGameManagerFv();
+class UnkClass_80113E1C;
+extern "C" UnkClass_80113E1C* func_80113E1C();
+extern "C" void func_80113E2C(UnkClass_80113E1C* object);
+extern "C" void func_80164A50(ml::FixStr<64>* text, u32 second, u32 third);
+extern "C" void func_800863F4__Q22cf13CfGameManagerFv(const char* name) {
+    lbl_eu_80571628.textLength = std::strlen(name);
+    std::strcpy(lbl_eu_80571628.text, name);
+    if ((lbl_eu_80663E28 & 0x100000) == 0) {
+        if (func_80113E1C() != nullptr) {
+            func_80113E2C(func_80113E1C());
+        }
+        ml::FixStr<64> text(false);
+        text.clear();
+        text.format(&lbl_eu_804FB824[0xE9], name);
+        func_80164A50(&text, 0, 0);
+    }
+}
+
 extern "C" bool func_80068B60(const char* text);
 extern "C" void func_80068C04();
 extern "C" void func_80083888__Q22cf13CfGameManagerFv(const char* text) {
@@ -252625,7 +252685,7 @@ extern "C" void func_800866A0__Q22cf13CfGameManagerFv() {
 }
 
 extern "C" void func_8006349C();
-extern "C" void func_80061870(UnkClass_80085334* object, u32 mode, u16 value,
+extern "C" u32 func_80061870(UnkClass_80085334* object, u32 mode, u32 value,
                                 u32 fourth, u32 fifth, u32 sixth);
 extern "C" VoiceSource* func_800B76F4();
 extern "C" VoiceSource* func_800B7854(VoiceSource* source);
@@ -252662,6 +252722,24 @@ extern "C" void func_8007FECC__Q22cf13CfGameManagerFv() {
         }
         source = func_800B7854(source);
     }
+}
+
+extern "C" u32 func_8007FC5C__Q22cf13CfGameManagerFv(
+    u32 first, u32 second, u32 third, u32 fourth, u32 fifth) {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    u32 result;
+    if (lbl_eu_80571758.unkAC == nullptr) {
+        result = 0;
+    } else {
+        result = func_80061870(lbl_eu_80571758.unkAC, first, second, third,
+                              fourth, fifth);
+    }
+    return result;
 }
 
 extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);

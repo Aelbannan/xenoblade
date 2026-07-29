@@ -9,8 +9,12 @@
 #include <cstring>
 
 // Extern retail data symbols (sdata2 float constants)
+extern float lbl_eu_8066A570;
+extern float lbl_eu_8066A574;
 extern float lbl_eu_8066A578;
 extern float lbl_eu_8066A57C;
+extern float lbl_eu_8066A580;
+extern float lbl_eu_8066A584;
 extern float lbl_eu_8066A588;
 extern float lbl_eu_8066A58C;
 extern float lbl_eu_8066A590;
@@ -21,6 +25,8 @@ extern float lbl_eu_8066A5A0;
 
 // Extern retail function stubs
 void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect16* rect, CView* view);
+void* func_eu_80449F30(int index);
+void callExitFunc__11CWorkSystemFv();
 
 CLibHbmControl::CLibHbmControl(const char* pName, CWorkThread* pParent) : CProc(pName, pParent, MAX_CHILD),
 mHbmPhase(0),
@@ -57,54 +63,177 @@ void CLibHbmControl::wkUpdate(){
             mWaitTimer = 0xD2;
             mHbmPhase++;
             break;
-        case 1:
-            if(!CDeviceFileCri::getInstance()->isException()){
-                mWaitTimer--;
-                if(mWaitTimer <= 0){
-                    wkSetEvent(EVT_NONE);
-                }
+        case 1: {
+            CDeviceFileCri* cri = CDeviceFileCri::getInstance();
+            int found;
 
-                break;
+            // Check if exception flag (bit 4 / THREAD_FLAG_EXCEPTION) is set
+            if (*(u32*)((u8*)cri + 0x7C) & 0x10) {
+                found = 1;
+            } else {
+                // Search request queue for an entry with type == 2
+                s32 count = *(s32*)((u8*)cri + 0x1AC);
+                s32 cursor = *(s32*)((u8*)cri + 0x1A8);
+                s32 mod = *(s32*)((u8*)cri + 0x1B0);
+                u32* array = *(u32**)((u8*)cri + 0x1A4);
+                s32 foundIdx = -1;
+
+                for (s32 i = 0; i < count; i++) {
+                    s32 idx = (cursor + i) % mod;
+                    if (array[idx * (0x24 / sizeof(u32))] == 2) {
+                        foundIdx = i;
+                        break;
+                    }
+                }
+                found = (foundIdx != -1) ? 1 : 0;
             }
 
-            wkSetEvent(EVT_NONE);
+            if (!found) {
+                if (--mWaitTimer <= 0) {
+                    wkSetEvent(EVT_NONE);
+                }
+            }
 
-            if(CLibHbm::checkFlag6()){
+            if (CLibHbm::checkFlag6()) {
                 mHbmPhase = 0;
-            }else if(CLibHbm::isHbmMemPointerValid()){
+            } else if (CLibHbm::isHbmMemPointerValid()) {
                 mHbmPhase++;
             }
             break;
+        }
         case 2:
             CLibHbm::initHbm();
             mHbmPhase++;
             break;
-        case 3:
-            for(int i = 0; i < WPAD_MAX_CONTROLLERS; i++){
-                CWpadStatus* wpadStatus = CDeviceRemotePad::getWpadStatus(i);
+        case 3: {
+            // Constants loaded from sdata2
+            float clampMax = lbl_eu_8066A57C;
+            float clampMin = lbl_eu_8066A580;
+            float stickSens = lbl_eu_8066A570;
+            float diagFactor = lbl_eu_8066A574;
+            float zero = lbl_eu_8066A578;
+            float analogScale = lbl_eu_8066A584;
 
+            for (int i = 0; i < 4; i++) {
+                u8* ctrlData = (u8*)&mHBMControllerData + i * sizeof(HBMKPadData);
+
+                // Get WPAD status and extract the status byte at offset 0x5C
+                CWpadStatus* wpadStatus = CDeviceRemotePad::getWpadStatus(i);
+                u8 statusByte = *(u8*)((u8*)wpadStatus + 0x5C);
+
+                // Init controller data: clear kpad, store status byte as devtype
+                *(u32*)(ctrlData + 0) = 0;           // kpad = NULL
+                *(u32*)(ctrlData + 0xC) = statusByte; // use_devtype
+
+                // Skip if not connected
+                if (!CDeviceRemotePad::isConnected(i)) continue;
+
+                // Only process status byte values <= 2 or == 0xFB
+                if (statusByte > 2 && statusByte != 0xFB) continue;
+
+                // Re-get wpadStatus and store as kpad
+                wpadStatus = CDeviceRemotePad::getWpadStatus(i);
+                *(u32*)(ctrlData + 0) = (u32)wpadStatus; // kpad = wpadStatus
+
+                // Get pad data for button/analog processing
+                void* padData = func_eu_80449F30(i);
+                bool changed = false;
+
+                if (statusByte == 2) {
+                    // D-pad directional input handling
+                    u32 dir = *(u32*)padData & 0xF;
+
+                    if (dir != 0) {
+                        float f1 = 0.0f; // X axis delta
+                        float f2 = 0.0f; // Y axis delta
+                        float diagSpeed = diagFactor * stickSens;
+
+                        if (dir <= 9) {
+                            switch (dir) {
+                                case 0: f1 = -stickSens; break;
+                                case 1: f1 = stickSens; break;
+                                case 2: f2 = -stickSens; break;
+                                case 3: f2 = stickSens; break;
+                                case 4: f1 = -diagSpeed; f2 = f1; break;
+                                case 5: f1 = diagSpeed; f2 = -diagSpeed; break;
+                                case 6: f2 = diagSpeed; f1 = -diagSpeed; break;
+                                case 7: f1 = diagSpeed; f2 = diagSpeed; break;
+                                case 8: f1 = -diagSpeed; break;
+                                case 9: f1 = diagSpeed; f2 = diagSpeed; break;
+                            }
+                        }
+
+                        // Clamp and apply X delta
+                        float newX = f1 + *(float*)(ctrlData + 4);
+                        if (newX > clampMax) newX = clampMax;
+                        else if (newX < clampMin) newX = clampMin;
+                        *(float*)(ctrlData + 4) = newX;
+
+                        // Clamp and apply Y delta
+                        float newY = f2 + *(float*)(ctrlData + 8);
+                        if (newY > clampMax) newY = clampMax;
+                        else if (newY < clampMin) newY = clampMin;
+                        *(float*)(ctrlData + 8) = newY;
+
+                        changed = true;
+                    }
+                }
+
+                // Analog stick handling (if not zero)
+                if (*(float*)((u8*)padData + 0x60) != zero ||
+                    *(float*)((u8*)padData + 0x64) != zero) {
+
+                    float stickX = *(float*)((u8*)padData + 0x60) * analogScale;
+                    float stickY = *(float*)((u8*)padData + 0x64) * analogScale;
+
+                    // Apply X
+                    float newX = stickX + *(float*)(ctrlData + 4);
+                    if (newX > clampMax) newX = clampMax;
+                    else if (newX < clampMin) newX = clampMin;
+                    *(float*)(ctrlData + 4) = newX;
+
+                    // Apply Y (subtract because screen Y is inverted)
+                    float newY = *(float*)(ctrlData + 8) - stickY;
+                    if (newY > clampMax) newY = clampMax;
+                    else if (newY < clampMin) newY = clampMin;
+                    *(float*)(ctrlData + 8) = newY;
+
+                    changed = true;
+                }
+
+                // Fallback: if nothing changed and dpd valid, copy from wpadStatus raw data
+                if (!changed) {
+                    s8 dpdValid = *(s8*)((u8*)padData + 0xBC);
+                    if (dpdValid > 0) {
+                        *(float*)(ctrlData + 4) = *(float*)((u8*)wpadStatus + 0x20);
+                        *(float*)(ctrlData + 8) = *(float*)((u8*)wpadStatus + 0x24);
+                    }
+                }
+            }
+
+            HBMUpdateSound();
+
+            int result = HBMCalc(&mHBMControllerData);
+
+            if (result == 0) {
+                wkSetEvent(EVT_NONE);
+            } else if (result == 1) {
+                callExitFunc__11CWorkSystemFv();
+                VISetBlack(1);
+                VIFlush();
+                VIWaitForRetrace();
+                VIWaitForRetrace();
+                OSReturnToMenu();
+            } else if (result == 2) {
+                callExitFunc__11CWorkSystemFv();
+                VISetBlack(1);
+                VIFlush();
+                VIWaitForRetrace();
+                VIWaitForRetrace();
+                OSRestart(0);
             }
             break;
-        default:
-            break;
-    }
-
-    HBMUpdateSound();
-
-    HBMSelectBtnNum selectBtnNum = HBMCalc(&mHBMControllerData);
-
-    switch(selectBtnNum){
-        case HBM_SELECT_HOMEBTN:
-            wkSetEvent(EVT_NONE);
-            break;
-        case HBM_SELECT_BTN1:
-            returnToWiiMenu(false);
-            break;
-        case HBM_SELECT_BTN2:
-            resetGame(false);
-            break;
-        default:
-            break;
+        }
     }
 }
 
@@ -117,7 +246,7 @@ void CLibHbmControl::wkRender(){
     draw.func_80456570(0);
     draw.func_8045657C(0);
 
-    // Set white vertex color (r,g,b = 1.0, alpha from sdata2)
+    // Set white vertex color (r,g,b from lbl_eu_8066A578, alpha from lbl_eu_8066A588)
     ml::CCol4 col;
     col.r = lbl_eu_8066A578;
     col.g = lbl_eu_8066A578;
@@ -136,11 +265,14 @@ void CLibHbmControl::wkRender(){
 
     draw.end();
 
-    // If HBM is active (phase 3), set up GX and render the HBM
-    if (CLibHbmControl::isActive()) {
+    // If HBM is active (phase == 3), set up GX and render the HBM
+    // Compute active flag so MWCC emits cntlzw for ==3 and matches the
+    // retail fallthrough (spInstance==0 → active=0) pattern
+    int active = (spInstance == 0) ? 0 : (spInstance->mHbmPhase == 3);
+    if (active) {
         GXClearVtxDesc();
         GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_POS, GX_POS_XY, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_CLR0, GX_CLR_RGB, GX_RGB8, 0);
         GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
         GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
         GXSetNumChans(1);
@@ -150,28 +282,32 @@ void CLibHbmControl::wkRender(){
         GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
         GXSetBlendMode(GX_BM_NONE, GX_BL_ZERO, GX_BL_ZERO, GX_LO_CLEAR);
         GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
-        GXSetCurrentMtx(GX_PNMTX0);
+        GXSetCurrentMtx(3);
 
-        // Build orthographic projection matrix
-        GXRenderModeObj* rmode = CDeviceVI::getRenderModeObj();
         Mtx44 mtx;
 
-        if (CDeviceVI::isWideAspectRatio()) {
-            float f7 = (float)rmode->efbHeight / lbl_eu_8066A59C;
-            C_MTXOrtho(mtx,
-                       lbl_eu_8066A590 * lbl_eu_8066A57C,
-                       lbl_eu_8066A590 * (-lbl_eu_8066A57C),
-                       lbl_eu_8066A5A0 * (-f7),
-                       lbl_eu_8066A5A0 * f7,
-                       lbl_eu_8066A578,
-                       lbl_eu_8066A598);
-        } else {
-            float f7 = lbl_eu_8066A598 / lbl_eu_8066A58C;
+        // Build orthographic projection — standard aspect path first (ASM fallthrough),
+        // then wide path (ASM branch target). Both paths compute ratio = viWidth / divisor.
+        if (!CDeviceVI::isWideAspectRatio()) {
+            GXRenderModeObj* rmode = CDeviceVI::getRenderModeObj();
+            float viWidth_f = (float)rmode->viWidth;
+            float f7 = viWidth_f / lbl_eu_8066A58C;
             C_MTXOrtho(mtx,
                        lbl_eu_8066A590 * lbl_eu_8066A57C,
                        lbl_eu_8066A590 * (-lbl_eu_8066A57C),
                        lbl_eu_8066A594 * (-f7),
                        lbl_eu_8066A594 * f7,
+                       lbl_eu_8066A578,
+                       lbl_eu_8066A598);
+        } else {
+            GXRenderModeObj* rmode = CDeviceVI::getRenderModeObj();
+            float viWidth_f = (float)rmode->viWidth;
+            float f7 = viWidth_f / lbl_eu_8066A59C;
+            C_MTXOrtho(mtx,
+                       lbl_eu_8066A590 * lbl_eu_8066A57C,
+                       lbl_eu_8066A590 * (-lbl_eu_8066A57C),
+                       lbl_eu_8066A5A0 * (-f7),
+                       lbl_eu_8066A5A0 * f7,
                        lbl_eu_8066A578,
                        lbl_eu_8066A598);
         }

@@ -610,7 +610,7 @@ void cf::CfGameManager::func_8007D834() {
     }
 }
 
-void cf::CfObject::CfObject_UnkVirtualFunc33() {
+void cf::CfObject::CfObject_UnkVirtualFunc33(float amount) {
     CfObject_UnkVirtualFunc32();
 }
 

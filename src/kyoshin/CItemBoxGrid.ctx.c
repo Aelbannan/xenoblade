@@ -2306,15 +2306,19 @@ u8 func_801C6690(CItemBoxGridFull* self, u16 idx) {
 u8 func_801C6708(CItemBoxGridFull* self, u16 idx) {
     s32 tmp = (s8)self->field_2804 * 0x1e + idx;
     u32 offset = (u32)(u16)tmp;
-    if (offset >= 0x400) return 0;
-    return ((u8*)self)[offset * 0xa + 7];
+    if (offset < 0x400) {
+        return ((u8*)self)[offset * 0xa + 7];
+    }
+    return 0;
 }
 
 u8 func_801C673C(CItemBoxGridFull* self, u16 idx) {
     s32 tmp = (s8)self->field_2804 * 0x1e + idx;
     u32 offset = (u32)(u16)tmp;
-    if (offset >= 0x400) return 0;
-    return ((u8*)self)[offset * 0xa + 8];
+    if (offset < 0x400) {
+        return ((u8*)self)[offset * 0xa + 8];
+    }
+    return 0;
 }
 
 
@@ -2386,7 +2390,7 @@ void func_801C6A44() { }
 // Check if an object has type 9 (extracted from vtable bits) and subtype 2.
 int func_801C6E90(void* obj) {
     u32 w = *(u32*)obj;
-    u32 type = (w >> 12) & 0xF;
+    u32 type = (w >> 16) & 0xF;
     int result = 0;
     if (type == 9) {
         u8 sub = *(u8*)((u8*)obj + 7) & 3;
@@ -3577,11 +3581,12 @@ void func_801CEB3C(void* self) {
         func_801D0950(self);
     } else {
         u8 idx = p[0x6f];
-        u8 cat = *(u8*)((u8*)self + idx + 0x62);
-        if (cat > 9) {
-            func_801EB410(p + 0x3e4, 1);
-        } else {
+        u8 cat = *(u8*)((u8*)self + (s8)idx + 0x62);
+        u32 diff = cat - 2;
+        if (diff <= 7) {
             func_801EB410(p + 0x3e4, 0);
+        } else {
+            func_801EB410(p + 0x3e4, 1);
         }
         func_801EB0D4(p + 0x3e4);
         *(u32*)(p + 0x58) = 0x18;

@@ -643,9 +643,33 @@ extern "C" void func_80081A24__Q22cf13CfGameManagerFv(u32 value) {
 
 extern "C" UnkClass_800821F8* func_80078B60(CfCamEventManager* manager, u32 mode,
                                              u32 value);
+#pragma dont_inline on
 extern "C" void func_80081D8C__Q22cf13CfGameManagerFv(u32 value) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
     manager->unkB0 = func_80078B60(manager->unkB4, 0, value);
+}
+#pragma dont_inline reset
+
+extern "C" float lbl_eu_8066654C;
+extern "C" u16 lbl_eu_80663E40;
+extern "C" cf::CfObjectMove* func_8007FF6C__Q22cf13CfGameManagerFv(
+    u16 objectId, u32 value, u32 unused, float amount);
+extern "C" u32 func_8007FC5C__Q22cf13CfGameManagerFv(
+    u32 first, u32 second, u32 third, u32 fourth, u32 fifth);
+extern "C" cf::CfObjectMove* func_800807BC__Q22cf13CfGameManagerFv(
+    u32 value, float amount) {
+    cf::CfGameManager::getInstance();
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+    if (player != nullptr) {
+        player->CfObject_UnkVirtualFunc26(value, lbl_eu_8066654C);
+        player->CfObject_UnkVirtualFunc33(amount);
+        return player;
+    }
+    cf::CfObjectMove* object = func_8007FF6C__Q22cf13CfGameManagerFv(
+        lbl_eu_80663E40, value, 0, amount);
+    func_80081D8C__Q22cf13CfGameManagerFv(reinterpret_cast<u32>(object));
+    func_8007FC5C__Q22cf13CfGameManagerFv(4, 0, 0, 0, 0);
+    return object;
 }
 
 extern "C" CItemImplInstances* CItem_initItemImplInstances();
@@ -1400,6 +1424,7 @@ extern "C" void func_8007FECC__Q22cf13CfGameManagerFv() {
     }
 }
 
+#pragma dont_inline on
 extern "C" u32 func_8007FC5C__Q22cf13CfGameManagerFv(
     u32 first, u32 second, u32 third, u32 fourth, u32 fifth) {
     if (!lbl_eu_80663E70) {
@@ -1417,6 +1442,7 @@ extern "C" u32 func_8007FC5C__Q22cf13CfGameManagerFv(
     }
     return result;
 }
+#pragma dont_inline reset
 
 extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
 extern "C" bool func_80061E8C(UnkClass_80085334* object, u32 mode);

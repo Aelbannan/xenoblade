@@ -71,7 +71,7 @@ bool isValid() { return false; }
 
 void func_8003C84C(){}
 
-void cf::CfObject::CfObject_UnkVirtualFunc26() {}
+void cf::CfObject::CfObject_UnkVirtualFunc26(u32 value, float amount) {}
 
 void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);

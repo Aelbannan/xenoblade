@@ -138,14 +138,15 @@ void func_8024F55C(void* self) {
 
 extern "C" char lbl_eu_8050BEA8[];
 
+typedef void* (*VFuncPtr)(void*, const char*, u32);
+
 void func_8024F5C4(void* self, u32 arg2) {
     void* ptr = *(void**)((u8*)self + 0x32D4);
     if (!ptr) return;
     void* obj = *(void**)((u8*)ptr + 0x10);
-    void* result = ((void*(*)(void*, const char*, u32))(*(void***)obj)[15])(obj, (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
-    u8* p = (u8*)result + 0xBB;
-    *p &= 0x7F;
-    *p |= (u8)arg2;
+    VFuncPtr* vt = *(VFuncPtr**)obj;
+    void* result = vt[15](obj, (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
+    *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0x7F) | (u8)arg2;
 }
 
 unsigned char func_8024F630(void) {
@@ -154,7 +155,16 @@ unsigned char func_8024F630(void) {
     return (unsigned char)func_8003B1EC(lbl_eu_8066479C);
 }
 
-void func_8024F658(){}
+void func_8024F658(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    u8* p = (u8*)self;
+    if (p[0x58]) return;
+    if (CSysWin_getUnk34(p + 0xB8)) return;
+    if (CSysWin_getUnk34(p + 0xF4)) return;
+    u8 val = p[0x208];
+    u32 result = __cntlzw(val);
+    p[0x208] = result >> 5;
+}
 
 u8 func_8024F6BC(void* self) {
     CFloorMapFull* full = static_cast<CFloorMapFull*>(self);
@@ -164,7 +174,18 @@ u8 func_8024F6BC(void* self) {
 
 u8 func_8024F6D8(void* self) { return static_cast<CFloorMapFull*>(self)->field_208; }
 
-void func_8024F6E0(){}
+u32 func_8024F6E0(void* self) {
+    s8 idx1 = *(s8*)((u8*)self + 0x206);
+    u32 result = 0;
+    if (idx1 >= 0) {
+        s8 idx0 = *(s8*)((u8*)self + 0x205);
+        s8 idx2 = *(s8*)((u8*)self + 0x207);
+        u32 offset = idx0 * 0x30C + (idx2 + idx1) * 0x18;
+        u16 val = *(u16*)((u8*)self + offset + 0x214);
+        result = val != 0 ? 1 : 0;
+    }
+    return result;
+}
 
 void func_8024F72C(){}
 

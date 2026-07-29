@@ -54,7 +54,7 @@ extern "C" int CfObjectModel_UnkVirtualFunc5__Q22cf13CfObjectModelFv(void* self)
 
 extern "C" int CfObjectModel_UnkVirtualFunc4__Q22cf13CfObjectModelFv(void* self) { return 0; }
 
-void cf::CfObjectModel::CfObject_UnkVirtualFunc33() {
+void cf::CfObjectModel::CfObject_UnkVirtualFunc33(float amount) {
     void** vtable = *(void***)this;
     void (*func)(void*) = (void (*)(void*))vtable[0xd0 / 4];
     func(this);

@@ -288,7 +288,13 @@ u32 func_801E92B8(void* dummy, u8 arg1) {
 }
 
 u32 func_801361E8(void*, char*, u32);
+char* func_80136190(char*, char*, u32);
+char* func_8013639C(void*, char*, u16);
 u16 func_80139358(u32);
+u32 func_801392E4(void*);
+extern void* lbl_eu_80664104;
+extern void* lbl_eu_806640A8;
+extern void* lbl_eu_806640F8;
 extern void* lbl_eu_806640F8;
 
 u32 func_801DFDC0(void* dummy, u32 arg1, void* arg2) {

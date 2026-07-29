@@ -706,17 +706,18 @@ extern "C" u32 func_8007E038__Q22cf13CfGameManagerFv(u32 value, bool searchEntri
         UnkClass_8009ECB0* data = func_8009ECB0();
         s32* entry = &data->entries_0x4[0];
         for (u32 i = 0; i < 7; ++i, ++entry) {
-            if (*entry != static_cast<s32>(value)) {
-                continue;
+            if (*entry == static_cast<s32>(value)) {
+                s32 fallback = -1;
+                return func_8007DECC__Q22cf13CfGameManagerFv(
+                    value, &fallback, sizeof(fallback));
             }
-            s32 fallback = -1;
-            return func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback,
-                                                         sizeof(fallback));
         }
-        return 0;
+    } else {
+        s32 fallback = -1;
+        return func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback,
+                                                     sizeof(fallback));
     }
-    s32 fallback = -1;
-    return func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback, sizeof(fallback));
+    return 0;
 }
 
 extern "C" bool func_8009E344(UnkClass_8009ECB0* object, u32 value, s32* firstOut,

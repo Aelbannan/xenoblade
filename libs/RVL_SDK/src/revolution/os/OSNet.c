@@ -15,6 +15,10 @@ static BOOL NWC24iIsRequestPending;
 
 void REXInit();
 
+DECL_WEAK NWC24Err NWC24iPrepareShutdown(void) DECOMP_DONT_INLINE;
+DECL_WEAK s32 NWC24SuspendScheduler(void) DECOMP_DONT_INLINE;
+DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE;
+
 void __OSInitNet(void) {
     s32 error;
     OSIOSRev rev;
@@ -82,7 +86,7 @@ DECL_WEAK NWC24Err NWC24iPrepareShutdown(){
 
 s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE;
 
-DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) {
+DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE {
     s32 result;
     s32 rtc;
     

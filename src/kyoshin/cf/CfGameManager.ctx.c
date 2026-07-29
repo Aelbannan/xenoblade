@@ -717,6 +717,7 @@ class UnkClass_80186D20;
 class CfCamEventManager;
 class UnkClass_800821F8;
 class UnkClass_80085334;
+class UnkClass_8007E864;
 class CSysWinBuff;
 
 struct CfGameManagerData1C {
@@ -836,7 +837,7 @@ namespace cf{
         CfObjectMove* unk94[3];
         u32 unkA0;
         UnkClass_80186D20* field_0xA4;
-        u32 unkA8;
+        UnkClass_8007E864* unkA8;
         UnkClass_80085334* unkAC;
         UnkClass_800821F8* unkB0;
         CfCamEventManager* unkB4;
@@ -252216,6 +252217,24 @@ extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 first, u32 third) {
         func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
     cf::CfObjectMove* player = *slot;
     manager->unkB0 = func_800784A0(first, player, third, 0, 0, 0, 0);
+}
+
+extern "C" void loadMapBdatFileDataPointers__Q22cf6CfBdatFii(u32 first, u32 second);
+extern "C" void func_8008228C__Q22cf13CfGameManagerFv(u32 first, u32 second);
+extern "C" void func_801AA04C(UnkClass_8007E864* object);
+extern "C" void func_8007E864__Q22cf13CfGameManagerFv(u32 first, u32 second) {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    cf::CfGameManager* manager = &lbl_eu_80571758;
+    loadMapBdatFileDataPointers__Q22cf6CfBdatFii(first, second);
+    func_8008228C__Q22cf13CfGameManagerFv(first, second);
+    if (manager->unkA8 != nullptr) {
+        func_801AA04C(manager->unkA8);
+    }
 }
 
 extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value) {

@@ -12,6 +12,7 @@
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/scn/CScn.hpp"
+#include "monolib/util/FixStr.hpp"
 #include <string.h>
 
 // destructor defined inline in CfGameManager.hpp

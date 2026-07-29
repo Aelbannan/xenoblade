@@ -118,7 +118,9 @@ s32 ADXM_ShutdownFramework(void) {
         ADXM_ShutdownThrd();
     } else if (state == 2) {
         ADXM_ShutdownThrd();
-    } else if (state != 1) {
+    } else if (state == 1) {
+        // result stays 1
+    } else {
         result = 0;
     }
     ADXMNG_SetFramework(-1);

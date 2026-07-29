@@ -16,6 +16,8 @@ void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 void* func_8009EC9C(u16);
 u32 func_8026178C(void*, u32);
 u32 func_8025FB10(void*, u32);
+void func_80124270(void*, void*);
+void func_80127BD8(void*, float*);
 
 void resetCItemBox() {}
 
@@ -96,7 +98,14 @@ void func_801D4A2C(void* sub) {
 }
 
 void func_801D4B3C(){}
-void func_801D4C3C(){}
+
+void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
+    if (info->state.layout == 0) return;
+    void* child = *(void**)((u8*)info->state.layout + 0x10);
+    void* result = ((void*(*)(void*, const char*, u32))(*(void***)child)[15])(child, &lbl_eu_805063BC[0x193], 1);
+    func_80124270(result, arg2);
+}
+
 void func_801D4C9C(){}
 
 void func_801D4D18(CItemBoxInfo* info) {

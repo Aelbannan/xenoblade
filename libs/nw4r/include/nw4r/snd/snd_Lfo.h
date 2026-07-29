@@ -31,6 +31,8 @@ struct LfoParam {
  *
  ******************************************************************************/
 class Lfo {
+    friend class Channel;
+
 public:
     Lfo() : mDelayCounter(0), mCounter(0.0f) {}
 

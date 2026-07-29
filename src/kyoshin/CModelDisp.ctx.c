@@ -1420,30 +1420,32 @@ public:
 // Sub-object struct within CModelDisp, stride 0xFF0
 struct CModelDispSub {
     u8 _00[0x08];
-    u8* mpController;               // 0x08 - pointer to controller (vcalled)
+    void* mpController;             // 0x08 - pointer to controller (vcalled)
     u8 _0C[0x08];
-    u8 mSubObj[0x53C];              // 0x14 - sub-object region (base for getNextChainObj)
-    u32 field_0x550;                // 0x550 - counter, set to 150 after init
-    u8 _554[0x4];                   // 0x554 - padding
+    u8 mSubObj[0x544];              // 0x14 - sub-object region (base for getNextChainObj)
     u8 mBuffer[0x4B4];              // 0x558 - buffer region (base for func_8004B9D4)
-    u8* mResultA;                   // 0xA0C - getNextChainObj result
+    void* mResultA;                 // 0xA0C - getNextChainObj result
     u8 _A10[0x84];
     u8 mBuffer2[0x4B4];             // 0xA94 - second buffer region (base for func_8004B9D4)
-    u8* mResultB;                   // 0xF48 - getNextChainObj result
+    void* mResultB;                 // 0xF48 - getNextChainObj result
     u8 _F4C[0x84];
     u32 mFlagFD0;                   // 0xFD0 - flag
     u32 mFlagFD4;                   // 0xFD4 - flag
     u8 _FD8[0x18];                  // padding to 0xFF0
 };
 
+// Opaque parameter struct for func_801FCDB4; field at 0x3A0 holds match value
+struct CModelDispParam {
+    u8 _00[0x3A0];
+    u32 field_0x3A0;
+};
+
 class CModelDisp {
 public:
     CModelDisp();
-    ~CModelDisp();
+    virtual ~CModelDisp();
 
-    u8* field_0x04;              // 0x04 - pointer (CScn*)
-    u8 mSubObjects[0x2FD0];      // 0x08 - embedded CModelDispSub array (3 x 0xFF0)
-    u8 _padEnd[4];               // 0x2FD8
+    u8 _pad0[0x2FD4];       // 0x0004 (after vtable at 0x0000)
     u8 field_2FD8;          // 0x2FD8
     u8 _pad2FD9[0x2FDC - 0x2FD9];
     f32 field_2FDC;         // 0x2FDC - display alpha/transition value
@@ -1452,128 +1454,16 @@ public:
 };
 
 /* end "kyoshin/CModelDisp.hpp" */
-/* "src/kyoshin/CModelDisp.cpp" line 5 "PowerPC_EABI_Support/Runtime/MWCPlusLib.h" */
-#ifndef _RUNTIME_MWCPLUSLIB_H
-#define _RUNTIME_MWCPLUSLIB_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/Runtime/MWCPlusLib.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define CTORARG_TYPE int
-#define CTORARG_PARTIAL (0)
-#define CTORARG_COMPLETE (1)
-
-#define CTORCALL_COMPLETE(ctor, objptr) (((void (*)(void*, CTORARG_TYPE))ctor)(objptr, CTORARG_COMPLETE))
-
-#define DTORARG_TYPE int
-
-#define DTORCALL_COMPLETE(dtor, objptr) (((void (*)(void*, DTORARG_TYPE))dtor)(objptr, -1))
-#define DTORCALL_PARTIAL(dtor,objptr) (((void (*)(void*, DTORARG_TYPE))dtor)(objptr, 0))
-
-
-typedef void* ConstructorDestructor;
-
-
-extern void __construct_array(void* ptr, ConstructorDestructor ctor, ConstructorDestructor dtor, size_t size, size_t n);
-extern void __destroy_arr(void* block, ConstructorDestructor* dtor, size_t size, size_t n);
-extern void* __construct_new_array(void* block, ConstructorDestructor ctor, ConstructorDestructor dtor_arg, size_t size, size_t n);
-extern void __destroy_new_array(void* block, ConstructorDestructor dtor);
-extern void __destroy_new_array2();
-extern void __destroy_new_array3();
-
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif
-/* end "PowerPC_EABI_Support/Runtime/MWCPlusLib.h" */
 
 // Forward declarations for cross-TU calls
-u8* func_8004B9B8(u8* self);
-void func_8004B9D4(u8* self, int a2, int a3, int a4, int a5);
-void func_8004CF00(u8* self);
-u8* func_80496264(u8* obj, int index);
-u8* func_8004B60C(u8* self, f32 x, f32 y, f32 z);
-void func_8049EFF8(u8* a1, u8* a2, u8* a3, f32 a4);
-
-// sdata2 float constants
-extern f32 lbl_eu_806681E8;
-extern f32 lbl_eu_806681EC;
-extern f32 lbl_eu_806681F0;
-extern f32 lbl_eu_806681F4;
-extern f32 lbl_eu_806681F8;
+void* func_8004B9B8(void* self);
+void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
+int func_800BBC04(int arg);
 
 u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 
 // Advances field_2FE0 by 1.0 each call. When it reaches 5.0, decrements
 // field_2FDC by 0.2 (clamped to 0.0) and calls each sub-object's vmethod.
-
-// Forward declarations for functions called within this TU
-void func_801FC15C(CModelDisp* self);
-void func_801FC218(CModelDisp* self);
-void func_801FC3B0(CModelDisp* self);
-void func_801FCAC8(CModelDisp* self);
-
-// Forward declaration for the sub-object destructor (address-based symbol).
-u8* __dt__801FBF0C(CModelDispSub* self, int deleting);
-
-// ---------------------------------------------------------------------------
-// Address-based destructor for embedded sub-objects (CModelDispSub).
-// Called by CModelDisp::~CModelDisp via __destroy_arr and also directly.
-// Destroys 1+2 cf::CActParamAnimGame sub-objects at offsets 0xC and 0x550.
-// ---------------------------------------------------------------------------
-u8* __dt__801FBF0C(CModelDispSub* self, int deleting) {
-    if (self != nullptr) {
-        extern void __dt__Q22cf17CActParamAnimGameFv(u8*, int);
-
-        // Destroy array of 2 CActParamAnimGame at offset 0x550 (each 0x53C)
-        __destroy_arr(&self->field_0x550, (ConstructorDestructor*)&__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
-
-        // Destroy single CActParamAnimGame at offset 0xC (complete destructor call)
-        __dt__Q22cf17CActParamAnimGameFv(self->_0C, -1);
-
-        if (deleting > 0) {
-            extern void __dl__FPv(u8*);
-            __dl__FPv((u8*)self);
-        }
-    }
-    return (u8*)self;
-}
-
-// ---------------------------------------------------------------------------
-// CModelDisp virtual destructor.
-// Destroys the 3 embedded CModelDispSub sub-objects (0xFF0 bytes each, starting
-// at offset 0x8). Compiler emits null-check and flags-based delete wrapper.
-// ---------------------------------------------------------------------------
-CModelDisp::~CModelDisp() {
-    __destroy_arr(this->mSubObjects, (ConstructorDestructor*)&__dt__801FBF0C, 0xFF0, 3);
-}
-
-// ---------------------------------------------------------------------------
-// State machine dispatcher for CModelDisp. Reads field_2FD8 to select the
-// active mode (0=idle, 1=alpha-transition, 2=some-state, 3=another-state)
-// and calls the corresponding handler function(s).
-// ---------------------------------------------------------------------------
-void func_801FC060(CModelDisp* self) {
-    switch (self->field_2FD8) {
-    case 1:
-        func_801FC15C(self);
-        break;
-    case 2:
-        func_801FC3B0(self);
-        func_801FCAC8(self);
-        break;
-    case 3:
-        func_801FC218(self);
-        break;
-    }
-}
-
 void func_801FC15C(CModelDisp* self) {
     self->field_2FE0 += 1.0f;
     if (self->field_2FE0 >= 5.0f) {
@@ -1585,116 +1475,68 @@ void func_801FC15C(CModelDisp* self) {
         }
 
         // Iterate over 3 sub-objects and call vmethod on controller pointer
-        for (int i = 0; i < 3; i++) {
+        for (u8 i = 0; i < 3; i++) {
             CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
             void* ctrl = sub->mpController;
             if (ctrl != NULL) {
                 // vcall: vtable[0x48/4 = 18] — takes field_2FDC as float arg
                 typedef void (*VMethod48)(void*, f32);
-                VMethod48* vtbl = *(VMethod48**)ctrl;
-                vtbl[18](ctrl, self->field_2FDC);
+                (*(VMethod48**)ctrl)[18](ctrl, self->field_2FDC);
             }
         }
     }
 }
 
-void func_801FC218(CModelDisp* self) {
-    u32 i;
-
-    self->field_2FDC += lbl_eu_806681F8;
-    if (self->field_2FDC > lbl_eu_806681E8) {
-        self->field_2FDC = lbl_eu_806681E8;
-        self->field_2FD8 = 0;
-        self->field_2FE4 = 1;
-    }
-
-    i = 0;
-    while (i < 3) {
-        u8* sub = (u8*)self + (u32)((u8)i) * 0xFF0;
-        u8* ctrl = *(u8**)(sub + 8);
-        if (ctrl != NULL) {
-            typedef void (*VMethod48)(u8*, f32);
-            typedef VMethod48* VTable;
-            ((VTable*)ctrl)[0][18](ctrl, self->field_2FDC);
-        }
-        i++;
-    }
-}
+void func_801FC218(){}
 
 void func_801FC2B4(){}
 
-void func_801FC3B0(CModelDisp* self) {}
+void func_801FC3B0(){}
 
 int func_801FCAC0(void* self) { return 0; }
 
-void func_801FCAC8(CModelDisp* self) {
-    u32 i;
-    u32 counter;
-    CModelDispSub* sub;
+void func_801FCAC8(){}
 
-    i = 0;
-    counter = 150;
-    sub = (CModelDispSub*)self;
-    while (i < 3) {
-        if (sub->mpController == NULL) goto next;
-        if (sub->field_0x550 > 0) goto skip;
-        func_8004B9D4(sub->mSubObj, 1, 0, -1, 0);
-        sub->field_0x550 = counter;
-skip:
-        func_8004CF00(sub->mSubObj);
-next:
-        i++;
-        sub++;
-    }
+// Dispatches vtable calls on a sub-object controller when flags are set
+// and func_800BBC04 returns positive for the given action.
+void func_801FCB4C(CModelDisp* self, int flags, int subIdx, int action, int ptrIdx) {
+    if (flags == 0) return;
+    if (func_800BBC04(action) <= 0) return;
+
+    CModelDispSub* sub = (CModelDispSub*)((u8*)self + subIdx * 0xFF0);
+    // ptrIdx selects between the two adjacent flag u32s at 0xFD0/0xFD4
+    u32 flag = (&sub->mFlagFD0)[ptrIdx];
+    if (flag == 0) return;
+
+    // vcall: vtable[50] — takes controller only
+    typedef void (*VMethod50)(void*);
+    (*(VMethod50**)sub->mpController)[50](sub->mpController);
+
+    // vcall: vtable[49] — takes controller, flag, action, 0
+    typedef void (*VMethod49)(void*, u32, int, int);
+    (*(VMethod49**)sub->mpController)[49](sub->mpController, flag, action, 0);
 }
-
-void func_801FCB4C(){}
 
 int func_801FCBEC(void* self) { return 0; }
 
 void func_801FCBF4(){}
 
-void func_801FBFD8(CModelDisp* self) {
-    u8* pose;
-    u8 temp1[12];
-    u8 temp2[12];
-    u8* t1;
-    u8* t2;
-
-    pose = func_80496264(self->field_0x04, -1);
-
-    t1 = func_8004B60C(temp1, lbl_eu_806681EC, lbl_eu_806681E8, lbl_eu_806681EC);
-    t2 = func_8004B60C(temp2, lbl_eu_806681EC, lbl_eu_806681F0, lbl_eu_806681F4);
-
-    func_8049EFF8(pose, t2, t1, lbl_eu_806681EC);
-
-    func_801FC3B0(self);
-}
-
 // Scans sub-objects for one whose mpController matches param's field_0x3A0,
-// then dispatches getNextChainObj / setParam calls for active slots.
-void func_801FCDB4(CModelDisp* self, u8* param, int r5) {
-    u32 matchVal = *(u32*)(param + 0x3A0);
-
-    for (int i = 0; i < 3; i++) {
+// then dispatches getNextChainObj / setParam calls for active flag slots.
+void func_801FCDB4(CModelDisp* self, CModelDispParam* param, int arg5) {
+    for (u8 i = 0; i < 3; i++) {
         CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
-        if ((u32)sub->mpController != matchVal) {
-            continue;
+        if ((u32)sub->mpController == param->field_0x3A0) {
+            if (sub->mFlagFD0 != 0) {
+                sub->mResultA = func_8004B9B8(sub->mSubObj);
+                func_8004B9D4(sub->mBuffer, arg5, 0, -1, 0);
+            }
+            if (sub->mFlagFD4 != 0) {
+                sub->mResultB = func_8004B9B8(sub->mSubObj);
+                func_8004B9D4(sub->mBuffer2, arg5, 0, -1, 0);
+            }
+            break;
         }
-
-        if (sub->mFlagFD0 != 0) {
-            u8* result = func_8004B9B8(sub->mSubObj);
-            sub->mResultA = result;
-            func_8004B9D4(sub->mBuffer, r5, 0, -1, 0);
-        }
-
-        if (sub->mFlagFD4 != 0) {
-            u8* result2 = func_8004B9B8(sub->mSubObj);
-            sub->mResultB = result2;
-            func_8004B9D4(sub->mBuffer2, r5, 0, -1, 0);
-        }
-
-        break;
     }
 }
 

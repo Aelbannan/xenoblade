@@ -16395,7 +16395,7 @@ public:
     void SetUserData(const char* pUserData);
 
     bool IsUserAllocated() const {
-        return detail::TestBit(mFlag, BIT_USER_ALLOCATED);
+        return mUserAllocated;
     }
 
 protected:
@@ -16412,16 +16412,14 @@ protected:
     math::MTX34 mMtx;    // at 0x54
     math::MTX34 mGlbMtx; // at 0x84
     
-    char mName[NW4R_LYT_RES_NAME_LEN + 1];     // at 0xB4
-
-    char mpExtUserDataList[4]; // at 0xC5
-
-    u8 mAlpha;        // at 0xC9
-    u8 mGlbAlpha;     // at 0xCA
-    u8 mFlag;         // at 0xCB
-    u8 mBasePosition; // at 0xCC
-
-    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xCD
+    char mName[NW4R_LYT_RES_NAME_LEN];              // at 0xB4
+    char mUserData[NW4R_LYT_PANE_USERDATA_LEN];     // at 0xC4
+    u8 mBasePosition;  // at 0xCC
+    u8 mAlpha;         // at 0xCD
+    u8 mGlbAlpha;      // at 0xCE
+    u8 mFlag;          // at 0xCF
+    u8 mUserAllocated; // at 0xD0
+    char mpExtUserDataList[4]; // at 0xD1
 
 protected:
     void InsertChild(PaneList::Iterator next, Pane* pChild);
@@ -18685,10 +18683,10 @@ protected:
     detail::BitGXNums mGXMemNum; // at 0x3C
     void* mpGXMem;               // at 0x40
 
-    char mName[NW4R_LYT_MATERIAL_NAME_LEN + 1]; // at 0x44
-    bool mbUserAllocated;                       // at 0x59
+    char mName[NW4R_LYT_RES_NAME_LEN]; // at 0x44
+    bool mbUserAllocated;              // at 0x54
 
-    u8 PADDING_0x5A[0x5C - 0x5A]; // at 0x5A
+    u8 PADDING_0x55[0x5C - 0x55]; // at 0x55
 
 private:
     void Init();
@@ -19881,12 +19879,14 @@ Pane::Pane() {
 }
 
 Pane::Pane(const res::Pane* pRes) {
-    Init();
+    mpParent = NULL;
+    mpMaterial = NULL;
+    mUserAllocated = false;
 
     mBasePosition = pRes->basePosition;
 
-    SetName(pRes->name);
-    SetUserData(pRes->userData);
+    std::strncpy(mName, pRes->name, NW4R_LYT_RES_NAME_LEN);
+    std::strncpy(mUserData, pRes->userData, NW4R_LYT_PANE_USERDATA_LEN);
 
     mTranslate = pRes->translate;
     mRotate = pRes->rotate;
@@ -19901,6 +19901,7 @@ Pane::Pane(const res::Pane* pRes) {
 void Pane::Init() {
     mpParent = NULL;
     mpMaterial = NULL;
+    mUserAllocated = false;
     std::memset(mpExtUserDataList, 0, sizeof(mpExtUserDataList));
 }
 
@@ -19909,25 +19910,25 @@ Pane::~Pane() {
         mChildList.Erase(it);
 
         if (!it->IsUserAllocated()) {
-            Layout::DeleteObj(&*it);
+            it->~Pane();
+            Layout::FreeMemory(&*it);
         }
     })
 
     UnbindAnimationSelf(NULL);
 
     if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
-        Layout::DeleteObj(mpMaterial);
+        mpMaterial->~Material();
+        Layout::FreeMemory(mpMaterial);
     }
 }
 
 void Pane::SetName(const char* pName) {
     std::strncpy(mName, pName, NW4R_LYT_RES_NAME_LEN);
-    mName[NW4R_LYT_RES_NAME_LEN] = '\0';
 }
 
 void Pane::SetUserData(const char* pUserData) {
     std::strncpy(mUserData, pUserData, NW4R_LYT_PANE_USERDATA_LEN);
-    mUserData[NW4R_LYT_PANE_USERDATA_LEN] = '\0';
 }
 
 void Pane::AppendChild(Pane* pChild) {
@@ -20120,8 +20121,46 @@ void Pane::Draw(const DrawInfo& rInfo) {
 }
 
 void Pane::DrawSelf(const DrawInfo& rInfo) {
-#pragma unused(rInfo)
-    // Debug draw stripped out
+    if (mpParent == NULL) {
+        return;
+    }
+    if (!rInfo.IsDebugDrawMode()) {
+        return;
+    }
+
+    LoadMtx(rInfo);
+
+    // Debug draw: outline the pane bounds with a green line
+    ut::Color color(0x00FF00FFu);
+
+    f32 x = 0.0f;
+    f32 y = 0.0f;
+
+    switch (mBasePosition % HORIZONTALPOSITION_MAX) {
+    case HORIZONTALPOSITION_CENTER:
+        x = -mSize.width * 0.5f;
+        break;
+    case HORIZONTALPOSITION_RIGHT:
+        x = -mSize.width;
+        break;
+    default:
+        x = 0.0f;
+        break;
+    }
+
+    switch (mBasePosition / HORIZONTALPOSITION_MAX) {
+    case VERTICALPOSITION_CENTER:
+        y = -mSize.height * 0.5f;
+        break;
+    case VERTICALPOSITION_BOTTOM:
+        y = -mSize.height;
+        break;
+    default:
+        y = 0.0f;
+        break;
+    }
+
+    detail::DrawLine(math::VEC2(x, y), mSize, color);
 }
 
 void Pane::Animate(u32 option) {

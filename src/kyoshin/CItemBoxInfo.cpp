@@ -474,8 +474,8 @@ void func_801E1868(CItemBoxInfo2*);
 void func_801E18B4(CItemBoxInfo2*);
 void func_801E1930(CItemBoxInfo2*);
 void __ct__17UnkClass_8045F564Fv(void*);
-extern void* lbl_eu_80534B28;
-extern void* lbl_eu_80534A90;
+extern u32 lbl_eu_80534B28;
+extern u32 lbl_eu_80534A90;
 void func_801D3FF0(void*);
 void __dl__FPv(void*);
 

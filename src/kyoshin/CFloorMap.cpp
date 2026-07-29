@@ -146,8 +146,8 @@ void func_8024F5C4(void* self, u32 arg2) {
     void* ptr = *(void**)((u8*)self + 0x32D4);
     if (!ptr) return;
     void* obj = *(void**)((u8*)ptr + 0x10);
-    void** vtable = *(void***)obj;
-    void* result = (*(VFuncPtr**)vtable)[15](obj, &lbl_eu_8050BEA8[0xEE], 1);
+    VFuncPtr* vt = *(VFuncPtr**)obj;
+    void* result = vt[15](obj, (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
     *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0x7F) | (u8)arg2;
 }
 

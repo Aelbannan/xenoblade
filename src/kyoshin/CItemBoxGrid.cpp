@@ -222,24 +222,7 @@ void SetEntry9Bytes(unsigned char* p, unsigned short a, unsigned char b, unsigne
 
 // Copy a 9-byte entry from src to dst.
 void func_801C562C(void* dst, void* src) {
-    u8* d = (u8*)dst;
-    u8* s = (u8*)src;
-    short v0 = *(short*)(s + 0);
-    u8 v1 = s[2];
-    u8 v2 = s[3];
-    u8 v3 = s[4];
-    u8 v4 = s[5];
-    u8 v5 = s[6];
-    u8 v6 = s[7];
-    u8 v7 = s[8];
-    *(short*)(d + 0) = v0;
-    d[2] = v1;
-    d[3] = v2;
-    d[4] = v3;
-    d[5] = v4;
-    d[6] = v5;
-    d[7] = v6;
-    d[8] = v7;
+    CopyEntry9Bytes((char*)dst, (const char*)src);
 }
 
 // Destructor for the main grid container.

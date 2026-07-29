@@ -94,8 +94,24 @@ void CPackItem::update(){
         // Copy full path, strip extension, then append ".pkb"
         mPkbFilename = mFilePath;
 
-        // Find last '.' and truncate extension if found
-        dotPos = mPkbFilename.rfind(lbl_eu_806623C0, -1);
+        // Find last '.' — inlined with register reuse to match retail codegen
+        {
+            int len = mPkbFilename.mLength;
+            if(len != 0){
+                int strLen = strlen(lbl_eu_806623C0);
+                char* p = mPkbFilename.mString + len - 1;
+                char* end = mPkbFilename.mString - 1;
+                while(p != end){
+                    if(strncmp(p, lbl_eu_806623C0, strLen) == 0){
+                        dotPos = p - mPkbFilename.mString;
+                        goto found;
+                    }
+                    p--;
+                }
+            }
+            dotPos = -1;
+        }
+        found:
 
         if((u32)(dotPos + 1) > 1){
             localBuf[0] = '\0';

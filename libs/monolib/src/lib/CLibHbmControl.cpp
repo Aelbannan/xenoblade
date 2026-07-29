@@ -117,35 +117,35 @@ void CLibHbmControl::wkUpdate(){
             for (int i = 0; i < 4; i++) {
                 u8* ctrlData = (u8*)&mHBMControllerData + i * sizeof(HBMKPadData);
 
-                // Get WPAD status and extract the status byte at offset 0x5C
+                // Get WPAD status and extract the device type
                 CWpadStatus* wpadStatus = CDeviceRemotePad::getWpadStatus(i);
-                u8 statusByte = *(u8*)((u8*)wpadStatus + 0x5C);
+                u8 devType = wpadStatus->dev_type;
 
-                // Init controller data: clear kpad, store status byte as devtype
-                *(u32*)(ctrlData + 0) = 0;           // kpad = NULL
-                *(u32*)(ctrlData + 0xC) = statusByte; // use_devtype
+                // Init controller data: clear kpad, store dev_type as use_devtype
+                *(u32*)(ctrlData + 0) = 0;
+                *(u32*)(ctrlData + 0xC) = devType;
 
                 // Skip if not connected
                 if (!CDeviceRemotePad::isConnected(i)) continue;
 
-                // Only process status byte values <= 2 or == 0xFB
-                if (statusByte > 2 && statusByte != 0xFB) continue;
+                // Only process Wiimote-only (0/1/2) or 0xFB status
+                if (devType > 2 && devType != 0xFB) continue;
 
                 // Re-get wpadStatus and store as kpad
                 wpadStatus = CDeviceRemotePad::getWpadStatus(i);
-                *(u32*)(ctrlData + 0) = (u32)wpadStatus; // kpad = wpadStatus
+                *(u32*)(ctrlData + 0) = (u32)wpadStatus;
 
                 // Get pad data for button/analog processing
-                void* padData = func_eu_80449F30(i);
+                u8* padRaw = (u8*)func_eu_80449F30(i);
                 bool changed = false;
 
-                if (statusByte == 2) {
+                if (devType == 2) {
                     // D-pad directional input handling
-                    u32 dir = *(u32*)padData & 0xF;
+                    u32 dir = *(u32*)padRaw & 0xF;
 
                     if (dir != 0) {
-                        float f1 = 0.0f; // X axis delta
-                        float f2 = 0.0f; // Y axis delta
+                        float f1 = zero;
+                        float f2 = zero;
                         float diagSpeed = diagFactor * stickSens;
 
                         if (dir <= 9) {
@@ -180,11 +180,12 @@ void CLibHbmControl::wkUpdate(){
                 }
 
                 // Analog stick handling (if not zero)
-                if (*(float*)((u8*)padData + 0x60) != zero ||
-                    *(float*)((u8*)padData + 0x64) != zero) {
+                float stickX = *(float*)(padRaw + 0x60);
+                float stickY = *(float*)(padRaw + 0x64);
 
-                    float stickX = *(float*)((u8*)padData + 0x60) * analogScale;
-                    float stickY = *(float*)((u8*)padData + 0x64) * analogScale;
+                if (stickX != zero || stickY != zero) {
+                    stickX *= analogScale;
+                    stickY *= analogScale;
 
                     // Apply X
                     float newX = stickX + *(float*)(ctrlData + 4);
@@ -201,12 +202,12 @@ void CLibHbmControl::wkUpdate(){
                     changed = true;
                 }
 
-                // Fallback: if nothing changed and dpd valid, copy from wpadStatus raw data
+                // Fallback: if nothing changed and dpd valid, copy from wpadStatus pos
                 if (!changed) {
-                    s8 dpdValid = *(s8*)((u8*)padData + 0xBC);
+                    s8 dpdValid = *(s8*)(padRaw + 0xBC);
                     if (dpdValid > 0) {
-                        *(float*)(ctrlData + 4) = *(float*)((u8*)wpadStatus + 0x20);
-                        *(float*)(ctrlData + 8) = *(float*)((u8*)wpadStatus + 0x24);
+                        *(float*)(ctrlData + 4) = wpadStatus->pos.x;
+                        *(float*)(ctrlData + 8) = wpadStatus->pos.y;
                     }
                 }
             }

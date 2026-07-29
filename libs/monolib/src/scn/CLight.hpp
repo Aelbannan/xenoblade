@@ -8,4 +8,3 @@ public:
 
     // TODO: add fields
 };
-

@@ -152,9 +152,10 @@ void RemoteSpeaker::UpdateStreamData(const s16* pRmtSamples) {
         return;
     }
 
-    bool playFlag = true;
+    BOOL enabled;
     bool firstFlag;
     bool lastFlag;
+    bool playFlag = true;
     bool silentFlag = mEnableFlag ? IsAllSampleZero(pRmtSamples) : true;
 
     if (silentFlag) {
@@ -165,7 +166,7 @@ void RemoteSpeaker::UpdateStreamData(const s16* pRmtSamples) {
     lastFlag = mPlayFlag && !playFlag;
 
     if (playFlag) {
-        BOOL enabled = OSDisableInterrupts();
+        enabled = OSDisableInterrupts();
 
         if (!WPADCanSendStreamData(mChannelIndex)) {
             OSRestoreInterrupts(enabled);
@@ -201,7 +202,7 @@ void RemoteSpeaker::UpdateStreamData(const s16* pRmtSamples) {
     }
 
     if (firstFlag) {
-        BOOL enabled = OSDisableInterrupts();
+        enabled = OSDisableInterrupts();
 
         if (!mContinueFlag) {
             OSSetAlarm(&mContinueAlarm,
@@ -217,7 +218,7 @@ void RemoteSpeaker::UpdateStreamData(const s16* pRmtSamples) {
     }
 
     if (lastFlag) {
-        BOOL enabled = OSDisableInterrupts();
+        enabled = OSDisableInterrupts();
 
         mIntervalFlag = true;
         OSCancelAlarm(&mIntervalAlarm);

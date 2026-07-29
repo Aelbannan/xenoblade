@@ -164,13 +164,10 @@ int func_802821E0(cf::CChainActorPc* self) {
 // pass, dispatches to the object selector with type 0x80000003.
 void func_802822F8(cf::CChainActorPc* self, int arg) {
     u32 moveBase = self->unk0 + 0x3e9c;
-    void** moveVtbl = *(void***)moveBase;
-    void (*vfunc)(u32) = (void(*)(u32))moveVtbl[20];
-    vfunc(moveBase);
+    ((void(*)(u32))(*(void***)moveBase)[20])(moveBase);
 
     // Check whether the actor is active (vfunc16 returns non-zero)
-    int (*checkFunc)(cf::CChainActorPc*) = (int(*)(cf::CChainActorPc*))((void**)self->mVTable)[16];
-    if (checkFunc(self) != 0 && arg != 0) {
+    if (((int(*)(cf::CChainActorPc*))((void**)self->mVTable)[16])(self) != 0 && arg != 0) {
         cf::CfObjectSelectorObj* sel = func_800FE68C();
         func_800FE6A4(sel, 0x80000003, 0, arg);
     }

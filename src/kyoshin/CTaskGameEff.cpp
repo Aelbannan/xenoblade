@@ -3,8 +3,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/work/CProcess.hpp"
-#include "monolib/scn/CScn.hpp"
-#include "kyoshin/code_800B06A4.hpp"
 
 void __ct__CTaskGameEff(){}
 

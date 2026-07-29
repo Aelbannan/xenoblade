@@ -1396,6 +1396,25 @@ void ocBdatRegist();
 /* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
 /* end "types.h" */
 
+class CScn;
+
+// Minimal reslist template for CTaskGameEff destructor emission.
+// The full definition in monolib/util/reslist.hpp stores T by value
+// (illegal for abstract CScn); retail uses a padding-based layout.
+template <typename T>
+class _reslist_base {
+public:
+    virtual ~_reslist_base();
+    char _pad[0x1F];
+};
+
+template <typename T>
+class reslist : public _reslist_base<T> {
+public:
+    virtual ~reslist();
+    char _pad2[0x20 - sizeof(_reslist_base<T>)];
+};
+
 class CTaskGameEff {
 public:
     CTaskGameEff();
@@ -1442,26 +1461,18 @@ public:
     s16 field_0x78;
 };
 
-// Helper to access fields of CfObjectEff that aren't yet named in its header.
-// Avoids needing the complete CfObjectEff type for matching.
-struct CfObjectEffLayout {
-    u8 _00[0x68];
-    u32 mFlags68;       // 0x68 - CfObject::mFlags68
-    u8 _6C[0xB0 - 0x6C];
-    u32 field_0xB0;     // 0xB0 - unnamed field in CfObjectEff::_padA8
-};
-
-// Forward declarations for callees
-void func_800CFFA0(u8* self);
-
-// Base type for camera control instances returned by initCamControlInstances.
-// MWCC adds typeinfo + deleting-dtor overhead (2 entries), so source index 2
-// maps to actual vtable offset 0x10 (index 4).
+// Camera control instance base type returned by initCamControlInstances.
+// With RTTI on, the typeinfo pointer occupies vtable slot 0; the complete
+// destructor pair occupies slots 1-2. Subsequent virtual methods start at
+// slot 3 (offset 0x0C).
 class ICamControlBase {
 public:
     virtual ~ICamControlBase();
     virtual void vfunc_04() = 0;
-    virtual void vfunc_10(class UnkCode8027513C* self) = 0;
+    virtual void vfunc_10(UnkCode8027513C* self) = 0;
+    virtual void vfunc_14(UnkCode8027513C* self) = 0;
+    virtual void vfunc_18(UnkCode8027513C* self) = 0;
+    virtual void vfunc_1C(UnkCode8027513C* self) = 0;
 };
 
 ICamControlBase* initCamControlInstances();
@@ -1494,26 +1505,11 @@ void func_80275808(UnkCode8027513C* ptr) {
     ptr->field_0x78 = 0;
 }
 
-// If field_0x74 is set, clear its 0xB0 field, mark its mFlags68 with 0x40, and detach
-void func_80275824(UnkCode8027513C* self) {
-    CfObjectEff* eff = self->field_0x74;
-    if (eff == nullptr) return;
-    reinterpret_cast<CfObjectEffLayout*>(eff)->field_0xB0 = 0;
-    // Reload from self->field_0x74 in case the store above aliased with self
-    reinterpret_cast<CfObjectEffLayout*>(self->field_0x74)->mFlags68 |= 0x40;
-    self->field_0x74 = nullptr;
-}
+void func_80275824(){}
 
 void func_80275850(){}
 
-// If eff matches the currently attached effect object, clear both sides and tail-call func_800CFFA0
-void func_8027594C(UnkCode8027513C* self, CfObjectEff* eff) {
-    if (eff == self->field_0x74) {
-        reinterpret_cast<CfObjectEffLayout*>(eff)->field_0xB0 = 0;
-        self->field_0x74 = nullptr;
-    }
-    func_800CFFA0((u8*)self);
-}
+void func_8027594C(void* self){}
 
 // If field_0x74 is set and field_0x78 differs from arg, notify the child
 // effect via func_800ACC14 and cache the new value
@@ -1526,19 +1522,30 @@ void func_802753F8(UnkCode8027513C* self, s16 arg) {
     }
 }
 
-ICamControlBase::~ICamControlBase() {}
-
 cf::CfObjectImplTbox::~CfObjectImplTbox() {}
 
+ICamControlBase::~ICamControlBase() {}
+
+// Thunk: calls initCamControlInstances()->vfunc_14(self)
+void func_80275238(UnkCode8027513C* self) {
+    ICamControlBase* cam = initCamControlInstances();
+    cam->vfunc_14(self);
+}
+
+// Thunk: calls initCamControlInstances()->vfunc_18(self)
+void func_80275278(UnkCode8027513C* self) {
+    ICamControlBase* cam = initCamControlInstances();
+    cam->vfunc_18(self);
+}
+
+// Thunk: calls initCamControlInstances()->vfunc_1C(self)
+void func_802752B8(UnkCode8027513C* self) {
+    ICamControlBase* cam = initCamControlInstances();
+    cam->vfunc_1C(self);
+}
 
 void func_802759B0(void* self) { ((cf::CfObjectImplTbox*)((u8*)self - 0xc))->~CfObjectImplTbox(); }
 
-void func_802759B8(u8* self) { func_8027594C((UnkCode8027513C*)(self - 0x10), nullptr); }
-
-// Initialize camera control instances and call their setup method with self
-void func_802751F8(UnkCode8027513C* self) {
-    ICamControlBase* cam = initCamControlInstances();
-    cam->vfunc_10(self);
-}
+void func_802759B8(void* self) { func_8027594C((u8*)self - 0x10); }
 
 void func_802759C0(void* self) { ((cf::CfObjectImplTbox*)((u8*)self - 0x10))->~CfObjectImplTbox(); }

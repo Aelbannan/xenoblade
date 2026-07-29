@@ -14,6 +14,8 @@
 #include "kyoshin/code_80296898.hpp"
 #include "monolib/device/CDeviceVI.hpp"
 
+extern "C" void func_eu_8006B238();
+
 namespace cf{
     CTaskGameCf* CTaskGameCf::spInstance;
 
@@ -183,8 +185,8 @@ void CTaskGameCf::func_800444FC(){
 
         CDeviceVI::func_804483DC(Class_80296898::getInstance()->mFrameCount - 1);
 
-        if(chkUnk54(0)){
-            setUnk54(0, false);
+        if(unk_54 & 1){
+            unk_54 &= ~1u;
 
             if(CTaskEnvironment::getInstance()){
                 CTaskEnvironment::getInstance()->SetRemove();
@@ -241,7 +243,6 @@ void CTaskGameCf::finishExit() {
 } //namespace cf
 
 // Forward declarations
-extern "C" void func_eu_8006B238();
 extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2);
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 extern "C" u32 getWorkMem__17CWorkThreadSystemFv();

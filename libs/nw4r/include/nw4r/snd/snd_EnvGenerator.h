@@ -8,7 +8,7 @@ namespace detail {
 
 class EnvGenerator {
 public:
-    enum Status { STATUS_ATTACK, STATUS_DECAY, STATUS_SUSTAIN, STATUS_RELEASE };
+    enum Status { STATUS_ATTACK, STATUS_HOLD, STATUS_DECAY, STATUS_SUSTAIN, STATUS_RELEASE };
 
 public:
     EnvGenerator();
@@ -50,8 +50,9 @@ private:
     f32 mDecay;     // at 0x8
     f32 mRelease;   // at 0xC
     f32 mAttack;    // at 0x10
-    u8 mSustain;    // at 0x14
-    s16 mHold;      // at 0x16
+    u8 mSustain;       // at 0x14
+    s16 mHold;         // at 0x16
+    u16 mHoldCounter;  // at 0x18
 
     static const s16 DecibelSquareTable[DECIBEL_SQUARE_TABLE_SIZE];
 };

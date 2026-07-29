@@ -43,10 +43,40 @@ extern void advanceItemBoxState__FP12CItemBoxInfo(void*);
 extern void func_801EB410(void*, int);
 extern void func_801EB0D4(void*);
 extern void func_801D0328(void*);
+extern void func_801CFFEC(void*);
 extern void func_801D0950(void*);
 extern void func_801D05D4(void*, int);
 extern void func_801CFF28(void*);
 extern void func_80138078__FUl(u32);
+extern u32 func_8015780C(void*);
+extern u32 func_801D3328(void*);
+extern void func_801D3454(void*);
+extern void func_801D3620(void*);
+extern void func_801D3698(void*);
+extern void func_801D3724(void*);
+extern void func_801D377C(void*);
+extern void func_801D3408(void*);
+extern u32 func_801EB028(void*);
+extern u32 func_801EB064(void*);
+extern u32 func_801EB04C(void*);
+extern u32 func_801EB218(void*);
+extern u32 func_801EB314(void*);
+extern void func_801EB178(void*);
+extern void func_8020844C(void*);
+extern void func_802083A4(void*);
+extern void func_80208838(void*);
+extern void func_8022E3A8(void*);
+extern void func_8022E490(void*);
+extern void func_8022E2F8(void*);
+extern void func_8022E3AC(void*);
+extern void func_8022E488(void*);
+extern void func_8022DD68(void*);
+extern void func_8022D0D0(void*);
+extern void func_8022B8E4(void*);
+extern u32 func_801D47D4(void*);
+extern u32 func_801D421C(void*);
+extern void func_801D4C3C(void*);
+extern u32 func_801D4260(void*);
 u8 func_801C67F8(CItemBoxGridFull* self);
 u8 func_801C6840(CItemBoxGridFull* self);
 
@@ -389,7 +419,17 @@ int func_801C6E90(void* obj) {
     return result;
 }
 
-void func_801C6EC0(){}
+// Check entry state.
+u32 func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
+    u8* p = (u8*)self;
+    s8 base = (s8)p[0x2804];
+    u16 offset = (u16)(base * 0x1e + idx);
+    u16 count = *(u16*)(p + 0x2800);
+    if (offset >= count) return 0;
+    void* obj = func_80157C4C(p[0x2802], *(s16*)(p + offset * 10));
+    if (!obj) return 0;
+    return func_8015780C(obj);
+}
 
 void func_801C7730(){}
 
@@ -408,7 +448,42 @@ void func_801C7958(){}
 
 void func_801C7C7C(){}
 
-void func_801C7EF0(){}
+// Sort entries with item instance comparison.
+void func_801C7EF0(CItemBoxGridFull* self, u32 mode) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            s16 v1 = *(s16*)e1;
+            s16 v2 = *(s16*)e2;
+            void* obj1 = func_80157C4C(self->field_2802, v1);
+            void* obj2 = func_80157C4C(self->field_2802, v2);
+            if (!obj1 || !obj2) continue;
+            // Compare based on mode
+            u32 cmp = 0;
+            if (mode == 3) {
+                cmp = CItem_initItemImplInstances(obj2) > CItem_initItemImplInstances(obj1);
+            } else {
+                u16 w1 = *(u16*)((u8*)obj1 + 4);
+                u16 w2 = *(u16*)((u8*)obj2 + 4);
+                cmp = w1 > w2;
+            }
+            if (!cmp) continue;
+            // Swap using CopyEntry9Bytes / func_801C562C
+            char tmp[9];
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes((char*)e1, (const char*)e2);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
 // Bubble sort entries by byte comparison.
 void func_801C81D0(CItemBoxGridFull* self) {
@@ -899,9 +974,53 @@ void func_801CBDE8(){}
 void func_801CC0EC(){}
 
 // Grid state update with conditions.
-void func_801CC3F4(){}
+// Grid state update.
+void func_801CC3F4(void* self) {
+    u8* p = (u8*)self;
+    if (func_801D3320(p + 0xe8)) return;
+    if (p[0x528]) return;
+    if (CSysWin_getUnk34(p + 0x4ac)) return;
+    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (func_80208358(p + 0x418)) return;
+    if (func_8022DB6C(p + 0x468)) return;
+    // Inline func_801C5EF4 for sub-struct at offset 0x54c
+    u8* sub = p + 0x54c;
+    u8 idx = sub[0x2804] + 1;
+    sub[0x2804] = idx;
+    if ((s8)idx >= (s8)sub[0x2803]) sub[0x2804] = 0;
+    // LookupIndexedByte for sub
+    u8 val;
+    s8 off = (s8)sub[0x2804];
+    if (off < 0x400) val = sub[off + 0x28a5]; else val = 0;
+    if ((s8)p[0x525] < (s8)val) p[0x525] = val - 1;
+    func_801CFFEC(self);
+    func_801D0328(self);
+    u8 f = sub[0x2803] ? sub[0x2803] : 1;
+    if (f != 1) func_80138078__FUl(0xa);
+}
 
-void func_801CC4E8(){}
+// Grid state update (decrement variant).
+void func_801CC4E8(void* self) {
+    u8* p = (u8*)self;
+    if (func_801D3320(p + 0xe8)) return;
+    if (p[0x528]) return;
+    if (CSysWin_getUnk34(p + 0x4ac)) return;
+    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (func_80208358(p + 0x418)) return;
+    if (func_8022DB6C(p + 0x468)) return;
+    u8* sub = p + 0x54c;
+    u8 idx = sub[0x2804] - 1;
+    sub[0x2804] = idx;
+    if ((s8)idx < 0) sub[0x2804] = sub[0x2803] - 1;
+    u8 val;
+    s8 off = (s8)sub[0x2804];
+    if (off < 0x400) val = sub[off + 0x28a5]; else val = 0;
+    if ((s8)p[0x525] < (s8)val) p[0x525] = val - 1;
+    func_801CFFEC(self);
+    func_801D0328(self);
+    u8 f = sub[0x2803] ? sub[0x2803] : 1;
+    if (f != 1) func_80138078__FUl(0xa);
+}
 
 void func_801CC5DC(){}
 
@@ -1111,9 +1230,9 @@ void func_801CFD2C(){}
 
 void func_801CFF28(){}
 
-void func_801CFFEC(){}
+void func_801CFFEC(void* self){}
 
-void func_801D0328(){}
+void func_801D0328(void* self){}
 
 void func_801D05D4(){}
 

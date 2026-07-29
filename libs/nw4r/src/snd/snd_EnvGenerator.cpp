@@ -52,33 +52,44 @@ f32 EnvGenerator::GetValue() const {
 void EnvGenerator::Update(int msec) {
     switch (mStatus) {
     case STATUS_ATTACK: {
-        while (msec > 0) {
-            mValue *= mAttack;
-            msec--;
-
+        do {
+            if (msec-- <= 0) {
+                return;
+            }
+            mValue = mValue * mAttack;
             if (mValue > -(1.0f / 32.0f)) {
                 mValue = 0.0f;
-                mStatus = STATUS_DECAY;
+                mStatus = STATUS_HOLD;
+                mHoldCounter = mHold;
+                return;
             }
+        } while (msec > 0);
+        break;
+    }
+
+    case STATUS_HOLD: {
+        if (msec < mHoldCounter) {
+            mHoldCounter -= msec;
+        } else {
+            msec -= mHoldCounter;
+            mHoldCounter = 0;
+            mStatus = STATUS_DECAY;
         }
 
         if (mStatus != STATUS_DECAY) {
             break;
         }
-
         // FALLTHROUGH
     }
 
     case STATUS_DECAY: {
-        f32 decay = CalcDecibelSquare(mSustain);
-        mValue -= mDecay * msec;
+        mValue -= mDecay * (f32)msec;
+        f32 target = (f32)DecibelSquareTable[mSustain];
 
-        if (mValue > decay) {
-            break;
+        if (mValue < target) {
+            mValue = target;
+            mStatus = STATUS_SUSTAIN;
         }
-
-        mValue = decay;
-        mStatus = STATUS_SUSTAIN;
         break;
     }
 
@@ -87,7 +98,7 @@ void EnvGenerator::Update(int msec) {
     }
 
     case STATUS_RELEASE: {
-        mValue -= mRelease * msec;
+        mValue -= mRelease * (f32)msec;
         break;
     }
     }

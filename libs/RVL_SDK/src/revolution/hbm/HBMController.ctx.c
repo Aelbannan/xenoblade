@@ -246776,7 +246776,7 @@ extern "C" {
 
 extern "C" void* WPADIsUsedCallbackByKPAD();
 extern "C" void WPADSetCallbackByKPAD(void* callback);
-extern "C" s32 WPADGetRadioSensitivity(s32 chan);
+s32 WPADGetRadioSensitivity(s32 chan);
 
 namespace homebutton {
 

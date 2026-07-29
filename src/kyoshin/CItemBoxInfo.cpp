@@ -240,6 +240,10 @@ void func_801E17EC(CItemBoxInfo2*);
 void func_801E1868(CItemBoxInfo2*);
 void func_801E18B4(CItemBoxInfo2*);
 void func_801E1930(CItemBoxInfo2*);
+void __ct__17UnkClass_8045F564Fv(void*);
+extern void* lbl_eu_80534B28;
+void func_801D3FF0(void*);
+void __dl__FPv(void*);
 
 void func_801D40C4(CItemBoxInfo* info) {
     if (info->state.active != 0) {
@@ -393,11 +397,57 @@ bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
     return false;
 }
 
-CItemBoxInfo::~CItemBoxInfo() {}
+CItemBoxInfo* __ct__CItemBoxInfo(CItemBoxInfo* info, u8 arg2, u16 arg3) {
+    *(void**)info = (void*)&lbl_eu_80534B28;
+    __ct__17UnkClass_8045F564Fv((u8*)info + 0x4);
+    __ct__17UnkClass_8045F564Fv((u8*)info + 0x14);
+    for (int i = 0; i < 27; i++) *(u32*)((u8*)info + 0x24 + i * 4) = 0;
+    *(u8*)((u8*)info + 0x90) = 0;
+    *(u32*)((u8*)info + 0x94) = 0;
+    *(u8*)((u8*)info + 0x98) = 0;
+    *(u8*)((u8*)info + 0x99) = 1;
+    *(u8*)((u8*)info + 0x9A) = arg2;
+    *(u16*)((u8*)info + 0xAC) = arg3;
+    *(u8*)((u8*)info + 0xAE) = 0;
+    func_801D3FF0((u8*)info + 0xB0);
+    return info;
+}
 
-void __ct__CItemBoxInfo2(){}
+CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, u32 flags) {
+    if (info != NULL) {
+        func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x14);
+        func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x4);
+        if ((s32)flags > 0) __dl__FPv(info);
+    }
+    return info;
+}
 
-CItemBoxInfo2::~CItemBoxInfo2() {}
+void func_801D3FF0(void*) {}
+
+CItemBoxInfo2* __ct__CItemBoxInfo2(CItemBoxInfo2* info, u8 arg2, u16 arg3) {
+    *(void**)info = (void*)&lbl_eu_80534B28;
+    __ct__17UnkClass_8045F564Fv((u8*)info + 0x4);
+    __ct__17UnkClass_8045F564Fv((u8*)info + 0x14);
+    for (int i = 0; i < 27; i++) *(u32*)((u8*)info + 0x24 + i * 4) = 0;
+    *(u8*)((u8*)info + 0x90) = 0;
+    *(u32*)((u8*)info + 0x94) = 0;
+    *(u8*)((u8*)info + 0x98) = 0;
+    *(u8*)((u8*)info + 0x99) = 1;
+    *(u8*)((u8*)info + 0x9A) = arg2;
+    *(u16*)((u8*)info + 0xAC) = arg3;
+    *(u8*)((u8*)info + 0xAE) = 0;
+    func_801D3FF0((u8*)info + 0xB0);
+    return info;
+}
+
+CItemBoxInfo2* __dt__13CItemBoxInfo2Fv(CItemBoxInfo2* info, u32 flags) {
+    if (info != NULL) {
+        func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x14);
+        func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x4);
+        if ((s32)flags > 0) __dl__FPv(info);
+    }
+    return info;
+}
 
 void func_801E12E0(CItemBoxInfo2* info) {
     u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();

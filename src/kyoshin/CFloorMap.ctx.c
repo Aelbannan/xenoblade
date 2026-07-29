@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CFloorMap
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CFloorMap.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CFloorMap.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,9 +1390,48 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CScn;
+
+// Minimal reslist template for CTaskGameEff destructor emission.
+// The full definition in monolib/util/reslist.hpp stores T by value
+// (illegal for abstract CScn); retail uses a padding-based layout.
+template <typename T>
+class _reslist_base {
+public:
+    virtual ~_reslist_base();
+    char _pad[0x1F];
+};
+
+template <typename T>
+class reslist : public _reslist_base<T> {
+public:
+    virtual ~reslist();
+    char _pad2[0x20 - sizeof(_reslist_base<T>)];
+};
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" u8 func_8024CE60(void* self) { return ((u8*)self)[0x40]; }
+u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
 
 
@@ -1348,140 +1442,140 @@ extern "C" u8 func_8024CE60(void* self) { return ((u8*)self)[0x40]; }
 
 
 
-extern "C" void func_80245450() {}
+void func_80245450(){}
 
-extern "C" void func_802455F0() {}
+void func_802455F0(){}
 
-extern "C" void func_8024577C() {}
+void func_8024577C(){}
 
-extern "C" void func_80245950() {}
+void func_80245950(){}
 
-extern "C" void func_80245DF8() {}
+void func_80245DF8(){}
 
-extern "C" void func_80246200() {}
+void func_80246200(){}
 
-extern "C" void __dt__802462F0() {}
+void __dt__802462F0(){}
 
-extern "C" void func_80246330() {}
+void func_80246330(){}
 
-extern "C" void __dt__802468C8() {}
+void __dt__802468C8(){}
 
-extern "C" void func_80246908() {}
+void func_80246908(){}
 
-extern "C" void func_80247490() {}
+void func_80247490(){}
 
-extern "C" void func_8024808C() {}
+void func_8024808C(){}
 
-extern "C" void func_8024830C() {}
+void func_8024830C(){}
 
-extern "C" void func_80248558() {}
+void func_80248558(){}
 
-extern "C" void func_80248920() {}
+void func_80248920(){}
 
-extern "C" void func_80248A6C() {}
+void func_80248A6C(){}
 
-extern "C" void func_80248ED8() {}
+void func_80248ED8(){}
 
-extern "C" void func_80249344() {}
+void func_80249344(){}
 
-extern "C" void func_802497B0() {}
+void func_802497B0(){}
 
-extern "C" void func_80249C1C() {}
+void func_80249C1C(){}
 
-extern "C" void func_8024A448() {}
+void func_8024A448(){}
 
-extern "C" void func_8024A748() {}
+void func_8024A748(){}
 
-extern "C" void func_8024AEEC() {}
+void func_8024AEEC(){}
 
-extern "C" void func_8024B234() {}
+void func_8024B234(){}
 
-extern "C" void func_8024B4CC() {}
+void func_8024B4CC(){}
 
-extern "C" void __dt__8024B6B8() {}
+void __dt__8024B6B8(){}
 
-extern "C" void func_8024B6F8() {}
+void func_8024B6F8(){}
 
-extern "C" void __dt__8024B894() {}
+void __dt__8024B894(){}
 
-extern "C" void __ct__CFloorMap() {}
+void __ct__CFloorMap(){}
 
-extern "C" void __dt__9CFloorMapFv() {}
+void CFloorMap::~CFloorMap() const {}
 
-extern "C" void func_8024BE1C() {}
+void func_8024BE1C(){}
 
-extern "C" void func_8024C104() {}
+void func_8024C104(){}
 
-extern "C" void func_8024C1FC() {}
+void func_8024C1FC(){}
 
-extern "C" void func_8024C8F8() {}
+void func_8024C8F8(){}
 
-extern "C" void func_8024CB94() {}
+void func_8024CB94(){}
 
-extern "C" void func_8024CE1C() {}
+void func_8024CE1C(){}
 
 
-extern "C" void func_8024CE68() {}
+void func_8024CE68(){}
 
-extern "C" void func_8024D23C() {}
+void func_8024D23C(){}
 
-extern "C" void func_8024D614() {}
+void func_8024D614(){}
 
-extern "C" void func_8024DA0C() {}
+void func_8024DA0C(){}
 
-extern "C" void func_8024DE08() {}
+void func_8024DE08(){}
 
-extern "C" void func_8024E2BC() {}
+void func_8024E2BC(){}
 
-extern "C" void func_8024E650() {}
+void func_8024E650(){}
 
-extern "C" void func_8024E828() {}
+void func_8024E828(){}
 
-extern "C" void func_8024EA00() {}
+void func_8024EA00(){}
 
-extern "C" void func_8024EC24() {}
+void func_8024EC24(){}
 
-extern "C" void func_8024EE50() {}
+void func_8024EE50(){}
 
-extern "C" void func_8024F1FC() {}
+void func_8024F1FC(){}
 
-extern "C" u32 func_8024F538(void* self) {
+u32 func_8024F538(void* self) {
     u8 val = *(u8*)((u8*)self + 0x41);
     u32 result = __cntlzw(val - 2);
     return result >> 5;
 }
 
-extern "C" u16 func_8024F54C(void* self) { return *(u16*)((u8*)self + 0x5A); }
+u16 func_8024F54C(void* self) { return *(u16*)((u8*)self + 0x5A); }
 
-extern "C" u8 func_8024F554(void* self) { return ((u8*)self)[0x58]; }
+u8 func_8024F554(void* self) { return static_cast<CFloorMapFull*>(self)->field_58; }
 
-extern "C" void func_8024F55C() {}
+void func_8024F55C(){}
 
-extern "C" void func_8024F5C4() {}
+void func_8024F5C4(){}
 
-extern "C" unsigned char func_8024F630(void) {
+unsigned char func_8024F630(void) {
     extern unsigned int lbl_eu_8066479C;
     extern int func_8003B1EC(unsigned int);
     return (unsigned char)func_8003B1EC(lbl_eu_8066479C);
 }
 
-extern "C" void func_8024F658() {}
+void func_8024F658(){}
 
-extern "C" void func_8024F6BC() {}
+void func_8024F6BC(){}
 
-extern "C" u8 func_8024F6D8(void* self) { return ((u8*)self)[0x208]; }
+u8 func_8024F6D8(void* self) { return static_cast<CFloorMapFull*>(self)->field_208; }
 
-extern "C" void func_8024F6E0() {}
+void func_8024F6E0(){}
 
-extern "C" void func_8024F72C() {}
+void func_8024F72C(){}
 
-extern "C" void func_8024F784() {}
+void func_8024F784(){}
 
-extern "C" void func_8024F7CC() {}
+void func_8024F7CC(){}
 
-extern "C" void func_8024FB78() {}
+void func_8024FB78(){}
 
-extern "C" void OnFileEvent__9CFloorMapFP10CEventFile() {}
+void CFloorMap::OnFileEvent() const {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_80250CB4() {}
+void sinit_80250CB4(){}

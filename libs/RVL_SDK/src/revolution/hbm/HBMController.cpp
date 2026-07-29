@@ -7,7 +7,6 @@
 
 extern "C" void* WPADIsUsedCallbackByKPAD();
 extern "C" void WPADSetCallbackByKPAD(void* callback);
-extern "C" s32 WPADGetRadioSensitivity(s32 chan);
 
 namespace homebutton {
 
@@ -18,28 +17,31 @@ Controller* Controller::sThis[WPAD_MAX_CONTROLLERS];
 bool Controller::sSetInfoAsync[WPAD_MAX_CONTROLLERS];
 
 void Controller::wpadConnectCallback(s32 chan, s32 result) {
-    if (sThis[chan] == NULL) {
-        return;
-    }
-
-    if (result == WPAD_ERR_OK) {
+    switch (result) {
+    case WPAD_ERR_OK: {
         if (!sThis[chan]->mCallbackFlag) {
-            WPADSetExtensionCallback(chan, wpadExtensionCallback);
+            sThis[chan]->mOldExtensionCallback =
+                WPADSetExtensionCallback(chan, &wpadExtensionCallback);
+
             sThis[chan]->mCallbackFlag = true;
         }
 
         WPADControlSpeaker(chan, WPAD_SPEAKER_OFF, NULL);
+        break;
     }
 
-    if (result == WPAD_ERR_NO_CONTROLLER) {
+    case WPAD_ERR_NO_CONTROLLER: {
         WPADSetExtensionCallback(chan, sThis[chan]->mOldExtensionCallback);
+        sThis[chan]->mOldExtensionCallback = NULL;
+
         sThis[chan]->mCallbackFlag = false;
         sThis[chan]->mCheckSoundTimeFlag = false;
         sThis[chan]->mCheckSoundIntervalFlag = false;
+        break;
+    }
     }
 
-    if (sThis[chan]->mOldConnectCallback != NULL &&
-        sThis[chan]->mOldConnectCallback != wpadConnectCallback) {
+    if (sThis[chan]->mOldConnectCallback != NULL) {
         sThis[chan]->mOldConnectCallback(chan, result);
     }
 }
@@ -344,81 +346,6 @@ void Controller::clrBatteryFlag() {
     sBatteryFlag[getChan()] = false;
 }
 
-void Controller::updateSound() {
-    s32 chan = mHBController.chan;
-
-    if (remotespk->isPlaying(chan)) {
-        if (mCheckSoundTimeFlag) {
-            u32 bus;
-            u32 ticksPerMs;
-            s64 now;
-            s32 elapsed;
-
-            mCheckSoundIntervalFlag = false;
-
-            bus = OS_BUS_CLOCK_SPEED;
-            ticksPerMs = (u32)(((u64)0x10624DD3 * (u64)(bus >> 2)) >> 38);
-            now = OSGetTime();
-            elapsed =
-                (s32)((u32)(now >> 32) - (u32)(mPlaySoundTime >> 32)) /
-                (s32)ticksPerMs;
-
-            if (elapsed >= 480000) {
-                mCheckSoundTimeFlag = false;
-                mCheckSoundIntervalFlag = false;
-
-                if (WPADIsSpeakerEnabled(chan)) {
-                    WPADControlSpeaker(chan, WPAD_SPEAKER_MUTE, NULL);
-                    OSSetAlarmUserData(&sAlarmSoundOff[chan],
-                                       reinterpret_cast<void*>(chan));
-                    OSCancelAlarm(&sAlarmSoundOff[chan]);
-                    OSSetAlarm(&sAlarmSoundOff[chan],
-                               ticksPerMs * 1000, soundOnCallback);
-                    mSoundOffFlag = true;
-                }
-            }
-        }
-
-        if (!mSoundOffFlag) {
-            u32 radio = WPADGetRadioSensitivity(chan);
-
-            if (radio <= 85) {
-                if (WPADIsSpeakerEnabled(chan)) {
-                    u32 bus = OS_BUS_CLOCK_SPEED;
-                    u32 ticksPerMs =
-                        (u32)(((u64)0x10624DD3 * (u64)(bus >> 2)) >> 38);
-
-                    WPADControlSpeaker(chan, WPAD_SPEAKER_MUTE, NULL);
-                    OSSetAlarmUserData(&sAlarmSoundOff[chan],
-                                       reinterpret_cast<void*>(chan));
-                    OSCancelAlarm(&sAlarmSoundOff[chan]);
-                    OSSetAlarm(&sAlarmSoundOff[chan], ticksPerMs * 1000,
-                               soundOnCallback);
-                    mSoundOffFlag = true;
-                }
-            }
-        }
-    } else {
-        if (mCheckSoundTimeFlag) {
-            if (!mCheckSoundIntervalFlag) {
-                mStopSoundTime = OSGetTime();
-                mCheckSoundIntervalFlag = true;
-            } else {
-                u32 bus = OS_BUS_CLOCK_SPEED;
-                u32 ticksPerMs =
-                    (u32)(((u64)0x10624DD3 * (u64)(bus >> 2)) >> 38);
-                s64 now = OSGetTime();
-                s32 elapsed =
-                    (s32)((u32)(now >> 32) - (u32)(mStopSoundTime >> 32)) /
-                    (s32)ticksPerMs;
-
-                if (elapsed >= 1000) {
-                    mCheckSoundTimeFlag = false;
-                    mCheckSoundIntervalFlag = false;
-                }
-            }
-        }
-    }
-}
-
 } // namespace homebutton
+
+void updateSound__Q210homebutton10ControllerFv(){}

@@ -31,52 +31,42 @@ extern void __ct__17UnkClass_8045F564Fv(void*);
 
 extern const f32 lbl_eu_80667058;    // 0.0f
 extern const f32 lbl_eu_8066705C;    // 1.0f
-extern const f64 lbl_eu_80667068;    // 4503599627370496.0 (u32→f32 magic)
+extern const f64 lbl_eu_80667068;    // 4503599627370496.0 (u32->f32 magic)
+extern char lbl_eu_804FDEA8[];
 }
 
+// ============================================================================
+// Constructor
+// ============================================================================
 CMenuFade::CMenuFade(CScn* pScn, int p5, int p6, float f1, float f2, float f3) {
-    // Manual construction following the retail codegen — vtable/PTMF
-    // initialization must match the exact sequence for byte-identical output.
-    u8* self = reinterpret_cast<u8*>(this);
+    u8* s = reinterpret_cast<u8*>(this);
 
-    // CProcess base constructor
     __ct__8CProcessFv(this);
 
-    // Intermediate vtable (CTTask<IUICf> level)
-    reinterpret_cast<u32*>(self)[0x10 / 4] = reinterpret_cast<u32>(lbl_eu_8052BF70);
+    reinterpret_cast<u32*>(s)[0x10 / 4] = reinterpret_cast<u32>(lbl_eu_8052BF70);
 
-    // Copy __ptmf_null to PTMF slots at 0x3C and 0x48 (12 bytes each)
     u32 ptmf0 = reinterpret_cast<const u32*>(__ptmf_null)[0];
     u32 ptmf1 = reinterpret_cast<const u32*>(__ptmf_null)[1];
     u32 ptmf2 = reinterpret_cast<const u32*>(__ptmf_null)[2];
-    reinterpret_cast<u32*>(self)[0x3C / 4] = ptmf0;
-    reinterpret_cast<u32*>(self)[0x40 / 4] = ptmf1;
-    reinterpret_cast<u32*>(self)[0x44 / 4] = ptmf2;
-    reinterpret_cast<u32*>(self)[0x48 / 4] = ptmf0;
-    reinterpret_cast<u32*>(self)[0x4C / 4] = ptmf1;
-    reinterpret_cast<u32*>(self)[0x50 / 4] = ptmf2;
+    reinterpret_cast<u32*>(s)[0x3C / 4] = ptmf0;
+    reinterpret_cast<u32*>(s)[0x40 / 4] = ptmf1;
+    reinterpret_cast<u32*>(s)[0x44 / 4] = ptmf2;
+    reinterpret_cast<u32*>(s)[0x48 / 4] = ptmf0;
+    reinterpret_cast<u32*>(s)[0x4C / 4] = ptmf1;
+    reinterpret_cast<u32*>(s)[0x50 / 4] = ptmf2;
 
-    // Zero the CMenuFadeBase fields
     field_0x54 = 0;
     pad55[0] = 0;
 
-    // Final vtable (CMenuFade)
     u32 vtFinal = reinterpret_cast<u32>(lbl_eu_8052C540);
-    reinterpret_cast<u32*>(self)[0x10 / 4] = vtFinal;
-
-    // IWorkEvent vtable at 0x58 (offset +0x24 within CMenuFade vtable)
+    reinterpret_cast<u32*>(s)[0x10 / 4] = vtFinal;
     mIWorkEventVtbl = vtFinal + 0x24;
+    reinterpret_cast<u32*>(s)[0x5C / 4] = vtFinal + 0xAC;
 
-    // IScnRender vtable at 0x5c (offset +0xAC within CMenuFade vtable)
-    reinterpret_cast<u32*>(self)[0x5C / 4] = vtFinal + 0xAC;
-
-    // Store constructor parameters
     mScn = pScn;
 
-    // Construct mLayoutMem in-place (at this+0x64)
     __ct__17UnkClass_8045F564Fv(&mLayoutMem);
 
-    // Initialize remaining fields
     mLayout = nullptr;
     field_0x78 = 0;
     field_0x7C = 0.0f;
@@ -132,9 +122,7 @@ void CMenuFade::cbRenderBefore() {
     if (CTaskGame::getInstance()->func_800426F0()) {
         return;
     }
-    // __builtin_expect(..., 0) tells MWCC the render path is unlikely,
-    // which pushes it out-of-line (beq + b pattern instead of bne).
-    if (__builtin_expect((lbl_eu_80663E28 & 0x00200000) == 0, 0)) {
+    if ((lbl_eu_80663E28 & 0x00200000) == 0) {
         GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
         nw4r::lyt::DrawInfo drawInfo;
         func_80137250(&drawInfo);
@@ -142,12 +130,12 @@ void CMenuFade::cbRenderBefore() {
     }
 }
 
-CMenuFade* func_80113C84(CProcess* parent, CScn* pScn, int p5, int p6, float f1, float f2, float f3) {
-    extern char lbl_eu_804FDEA8[];
-
+extern "C" void* func_80113C84(
+    CProcess* parent, CScn* pScn, int p5, int p6,
+    float f1, float f2, float f3)
+{
     CMenuFade* fade = lbl_eu_80663FA0;
     if (fade != nullptr) {
-        // Already exists — update the existing instance
         u16 frameSize = fade->field_0x78->GetFrameSize();
         f32 frameSizeF = (f32)frameSize;
         fade->field_0x88 = (f3 >= lbl_eu_80667058) ? (frameSizeF / f3) : lbl_eu_8066705C;
@@ -165,7 +153,6 @@ CMenuFade* func_80113C84(CProcess* parent, CScn* pScn, int p5, int p6, float f1,
         return nullptr;
     }
 
-    // Allocate and construct a new CMenuFade
     void* mem = mtl::MemManager::allocate(sizeof(CMenuFade), CWorkThreadSystem::getWorkMem());
     if (mem != nullptr) {
         fade = new (mem) CMenuFade(pScn, p5, p6, f1, f2, f3);

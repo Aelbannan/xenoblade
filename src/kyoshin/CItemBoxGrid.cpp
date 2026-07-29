@@ -510,14 +510,11 @@ u8 func_801C67F8(CItemBoxGridFull* self) {
 u8 func_801C6840(CItemBoxGridFull* self) {
     u8 cat = self->field_2802;
     u32 d = cat - 4;
-    if (d <= 4) goto ret30;
-    if (cat == 2) goto ret30;
-    if (cat == 0xb) {
-        return 0x3c;
-    }
+    if (d <= 4) return 0x1e;
+    s8 signed_cat = (s8)cat;
+    if (signed_cat == 2) return 0x1e;
+    if (signed_cat == 11) return 0x3c;
     return 0;
-ret30:
-    return 0x1e;
 }
 
 int LookupIndexedByte(char* obj) {

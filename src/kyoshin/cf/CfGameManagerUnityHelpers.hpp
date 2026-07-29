@@ -333,7 +333,7 @@ public:
     virtual void vfunc_0x9C();
     virtual void vfunc_0xA0();
     virtual void vfunc_0xA4();
-    virtual void vfunc_0xA8();
+    virtual void vfunc_0xA8(bool enable);
     virtual void vfunc_0xAC();
     virtual void vfunc_0xB0();
     virtual void vfunc_0xB4();
@@ -452,6 +452,12 @@ extern "C" bool func_80082FE4__Q22cf13CfGameManagerFv() {
     return result;
 }
 
+extern "C" ItemListManager* func_800B6BA4__Fv();
+extern "C" void func_800B06C8();
+extern "C" void func_800620F0();
+extern "C" void func_8016FC0C(bool enable);
+extern "C" Unk80EE4Data* func_800BFC68__FPQ22cf12CfObjectMove(
+    ItemListSubobject* object);
 extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
@@ -470,6 +476,38 @@ extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
             object->vfunc_0x158(value);
         }
     }
+}
+
+extern "C" void func_80086490__Q22cf13CfGameManagerFv() {
+    lbl_eu_80663E24 &= ~0x2000000;
+    func_800B06C8();
+    u32 enabledFlags = lbl_eu_80663DF8;
+    enabledFlags &= ~0x600230;
+    lbl_eu_80663DF8 = enabledFlags;
+    if (lbl_eu_80663E0C != nullptr) {
+        lbl_eu_80663E0C->mPressedButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mTurboPressButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mReleasedButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mHeldButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mLongHoldButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mShortPressButtonFlags &= enabledFlags;
+        lbl_eu_80571500.mPressedButtonFlags &= enabledFlags;
+        lbl_eu_80571500.mTurboPressButtonFlags &= enabledFlags;
+    }
+    func_800620F0();
+    func_8016FC0C(true);
+    ItemListManager* manager = func_800B6BA4__Fv();
+    ItemListNode* node = manager->sentinel->next;
+    while (node != manager->sentinel) {
+        Unk80EE4Data* object =
+            func_800BFC68__FPQ22cf12CfObjectMove(node->object);
+        if (object != nullptr) {
+            object->vfunc_0xA8(true);
+            object->vfunc_0xB8();
+        }
+        node = node->next;
+    }
+    lbl_eu_80663E28 &= ~8;
 }
 
 struct Unk866A0Data {
@@ -2093,7 +2131,7 @@ extern "C" void func_80084CA4__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                         u32 third, bool enable);
 extern "C" u32 CfRes_packThreeFields(u32 first, u32 second, u32 third);
 extern "C" u32 CfRes_callFunc_67E78(u32 value);
-extern "C" void func_800620F0(u32 value);
+extern "C" void func_800620F0();
 extern "C" void func_800835FC__Q22cf13CfGameManagerFv();
 extern "C" void func_80083470__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                         bool special) {
@@ -2122,7 +2160,8 @@ extern "C" void func_80083560__Q22cf13CfGameManagerFv(u32 first, u32 second,
     }
     u32 packed = CfRes_packThreeFields(first, second, third);
     if (lbl_eu_80663E30 != 0 && lbl_eu_80663E30 != packed) {
-        func_800620F0(CfRes_callFunc_67E78(packed));
+        CfRes_callFunc_67E78(packed);
+        func_800620F0();
     }
     lbl_eu_80663E30 = packed;
     func_800835FC__Q22cf13CfGameManagerFv();

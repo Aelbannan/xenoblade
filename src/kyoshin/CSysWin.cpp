@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CSysWin.hpp"
 
 u8 CSysWin_isReady(void* self) { return static_cast<CSysWinFull*>(self)->field_28; }
 

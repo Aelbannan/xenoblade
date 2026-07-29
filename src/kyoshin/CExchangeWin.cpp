@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CExchangeWin.hpp"
 
 u8 func_8022D08C(void* self) { return static_cast<CExchangeWinFull*>(self)->field_25; }
 

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CCur
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CCur.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CCur.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,8 +1390,28 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
-/* "src/kyoshin/CCur.cpp" line 5 "kyoshin/CBaseCur.hpp" */
+/* "src/kyoshin/CCur.cpp" line 4 "kyoshin/CBaseCur.hpp" */
 #pragma once
 
 /*
@@ -12470,16 +12545,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -14163,7 +14236,7 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() {}
+    LinkListNode() { Init(); }
 
     void Init() {
         mNext = NULL;
@@ -16959,6 +17032,7 @@ public:
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -18963,10 +19037,12 @@ namespace detail {
  * Pointer operations
  *
  ******************************************************************************/
-template <typename T> T* ConvertOffsToPtr(void* pBase, u32 offset) {
+// Use unsigned int (not u32) to match retail name mangling (Ui vs Ul).
+// On PowerPC both are 32-bit with identical ABI.
+template <typename T> T* ConvertOffsToPtr(void* pBase, unsigned int offset) {
     return reinterpret_cast<T*>(reinterpret_cast<u8*>(pBase) + offset);
 }
-template <typename T> const T* ConvertOffsToPtr(const void* pBase, u32 offset) {
+template <typename T> const T* ConvertOffsToPtr(const void* pBase, unsigned int offset) {
     return reinterpret_cast<const T*>(reinterpret_cast<const u8*>(pBase) +
                                       offset);
 }
@@ -23681,94 +23757,99 @@ public:
 };
 /* end "kyoshin/CBaseCur.hpp" */
 
+// Forward declarations for CCur classes used in stubs
+
 /* Sets the visible flag on a CBaseCur cursor widget. */
-extern "C" void func_801D216C(CBaseCur* pCur, u8 val) { pCur->mVisible = val; }
+void func_801D216C(CBaseCur* pCur, u8 val) { pCur->mVisible = val; }
 
 
 
 
 
-extern "C" void func_801D2144__8CBaseCurFv(void) {}
+void func_801D2144(void) {}
 
 
 
-extern "C" void func_801D2174(void) {}
+void func_801D2174(void){}
 
 
-extern "C" void func_801D21CC() {}
+void func_801D21CC(){}
 
-extern "C" void func_801D2264() {}
+void func_801D2264(){}
 
-extern "C" void __ct__CCur07() {}
+void __ct__CCur07(){}
 
-extern "C" void __dt__6CCur07Fv() {}
+void __dt__6CCur07Fv() {}
 
-extern "C" void func_801D2378__6CCur07Fv() {}
+void func_virt___dt__6CCur07Fv() {}
 
-extern "C" void __ct__CCur09() {}
+void __ct__CCur09(){}
 
-extern "C" void __dt__6CCur09Fv() {}
+void __dt__6CCur09Fv() {}
 
-extern "C" void func_801D2478__6CCur09Fv() {}
+void func_virt___dt__6CCur09Fv() { }
 
-extern "C" void func_801D24E8() {}
+void func_801D24E8(){}
 
-extern "C" void __ct__CCur11() {}
+void __ct__CCur11(){}
 
-extern "C" void __dt__6CCur11Fv() {}
+void __dt__6CCur11Fv() {}
 
-extern "C" void func_801D25EC__6CCur11Fv() {}
+void func_virt___dt__6CCur11Fv() { }
 
-extern "C" void func_801D2670() {}
+void func_801D2670(){}
 
-extern "C" void __ct__CCur14() {}
+void __ct__CCur14(){}
 
-extern "C" void __dt__6CCur14Fv() {}
+void __dt__6CCur14Fv() {}
 
-extern "C" void func_801D2778__6CCur14Fv() {}
+void func_virt___dt__6CCur14Fv() { }
 
-extern "C" void __ct__CCur15() {}
+void __ct__CCur15(){}
 
-extern "C" void __dt__6CCur15Fv() {}
+void __dt__6CCur15Fv() {}
 
-extern "C" void func_801D2878__6CCur15Fv() {}
+void func_virt___dt__6CCur15Fv() { }
 
-extern "C" void __ct__CCur16() {}
+void __ct__CCur16(){}
 
-extern "C" void __dt__6CCur16Fv() {}
+void __dt__6CCur16Fv() {}
 
-extern "C" void func_801D2978__6CCur16Fv() {}
+void func_virt___dt__6CCur16Fv() { }
 
-extern "C" void __ct__CCur18() {}
+void __ct__CCur18(){}
 
-extern "C" void __dt__6CCur18Fv() {}
+void __dt__6CCur18Fv() {}
 
-extern "C" void func_801D2A78__6CCur18Fv() {}
+void func_virt___dt__6CCur18Fv() { }
 
-extern "C" void __ct__CCur22() {}
+void __ct__CCur22(){}
 
-extern "C" void __dt__6CCur22Fv() {}
+void __dt__6CCur22Fv() {}
 
-extern "C" void func_801D2B78__6CCur22Fv() {}
+void func_virt___dt__6CCur22Fv() { }
 
-extern "C" void func_801D2BFC() {}
+void func_801D2BFC(){}
 
-extern "C" void func_801D2C80() {}
+void func_801D2C80(){}
 
-extern "C" void func_801D2CF4() {}
+void func_801D2CF4(){}
 
-extern "C" void __ct__CSubCur() {}
+void __ct__CSubCur(){}
 
-extern "C" void __dt__7CSubCurFv() {}
+void __dt__6CSubCurFv() {}
 
-extern "C" void func_801D2DC8__7CSubCurFv() {}
+void func_virt___dt__6CSubCurFv() { }
 
-extern "C" void func_801D2E4C() {}
+void func_801D2E4C(){}
 
-extern "C" void func_801D2ED8() {}
+void func_801D2ED8(){}
 
-extern "C" void func_801D2150(void* self, void* src) {
-    *(float*)((u8*)self + 0x2C) = *(float*)src;
-    *(float*)((u8*)self + 0x30) = *(float*)((u8*)src + 4);
-    *(float*)((u8*)self + 0x34) = *(float*)((u8*)src + 8);
+void func_801D2150(void* self, void* src){
+    float f0 = *(float*)src;
+    float f1 = *(float*)((u8*)src + 4);
+    float f2 = *(float*)((u8*)src + 8);
+    *(float*)((u8*)self + 0x2C) = f0;
+    *(float*)((u8*)self + 0x30) = f1;
+    *(float*)((u8*)self + 0x34) = f2;
 }

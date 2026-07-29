@@ -3333,12 +3333,14 @@ unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
 }
 
 // Copy 3 words (12 bytes) from a 12-byte-entry array at index idx.
-void func_801CB9D8(u32* dst, u32* src, int idx) {
+void func_801CB9D8(u32* dst, void* src, u32 idx) {
     if (idx >= 12) return;
-    u32* entry = src + idx * 3; // each entry is 12 bytes = 3 words
-    dst[0] = entry[6];          // offset 0x18
-    dst[1] = entry[7];          // offset 0x1C
-    dst[2] = entry[8];          // offset 0x20
+    u8* entry = (u8*)src + idx * 12;
+    u32 v0 = *(u32*)(entry + 0x18);
+    u32 v1 = *(u32*)(entry + 0x1c);
+    *(u32*)((u8*)dst + 4) = v1;
+    *(u32*)((u8*)dst + 0) = v0;
+    *(u32*)((u8*)dst + 8) = *(u32*)(entry + 0x20);
 }
 
 void func_801CBA04() { }

@@ -184,8 +184,7 @@ void func_801D4174(CItemBoxInfo* info) {
     func_801390E0__FPP11CFileHandle(&info->state.fileHandle2);
     info->state.active = 0;
     if (info->state.layout != 0) {
-        void** vtable = *(void***)info->state.layout;
-        ((void(*)(void*, u32))vtable[2])(info->state.layout, 1);
+        ((nw4r::lyt::Layout*)info->state.layout)->~Layout();
         info->state.layout = 0;
     }
     info->state.animTransform1 = 0;
@@ -977,8 +976,7 @@ void func_801E13F8(CItemBoxInfo2* info) {
     func_801390E0__FPP11CFileHandle(&info->state.fileHandle2);
     info->state.active = 0;
     if (info->state.layout != 0) {
-        void** vtable = *(void***)info->state.layout;
-        ((void(*)(void*, u32))vtable[2])(info->state.layout, 1);
+        ((nw4r::lyt::Layout*)info->state.layout)->~Layout();
         info->state.layout = 0;
     }
     info->state.animTransform1 = 0;

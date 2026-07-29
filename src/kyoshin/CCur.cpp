@@ -4,6 +4,8 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CBaseCur.hpp"
 
+// Forward declarations for CCur classes used in stubs
+
 /* Sets the visible flag on a CBaseCur cursor widget. */
 void func_801D216C(CBaseCur* pCur, u8 val) { pCur->mVisible = val; }
 
@@ -11,7 +13,7 @@ void func_801D216C(CBaseCur* pCur, u8 val) { pCur->mVisible = val; }
 
 
 
-void CBaseCur::func_801D2144(void) {}
+void func_801D2144(void) {}
 
 
 
@@ -24,55 +26,55 @@ void func_801D2264(){}
 
 void __ct__CCur07(){}
 
-void CCur07::~CCur07() {}
+void __dt__6CCur07Fv() {}
 
-void CCur07::func_801D2378() {}
+void func_virt___dt__6CCur07Fv() {}
 
 void __ct__CCur09(){}
 
-void CCur09::~CCur09() {}
+void __dt__6CCur09Fv() {}
 
-void CCur09::func_801D2478() {}
+void func_virt___dt__6CCur09Fv() { }
 
 void func_801D24E8(){}
 
 void __ct__CCur11(){}
 
-void CCur11::~CCur11() {}
+void __dt__6CCur11Fv() {}
 
-void CCur11::func_801D25EC() {}
+void func_virt___dt__6CCur11Fv() { }
 
 void func_801D2670(){}
 
 void __ct__CCur14(){}
 
-void CCur14::~CCur14() {}
+void __dt__6CCur14Fv() {}
 
-void CCur14::func_801D2778() {}
+void func_virt___dt__6CCur14Fv() { }
 
 void __ct__CCur15(){}
 
-void CCur15::~CCur15() {}
+void __dt__6CCur15Fv() {}
 
-void CCur15::func_801D2878() {}
+void func_virt___dt__6CCur15Fv() { }
 
 void __ct__CCur16(){}
 
-void CCur16::~CCur16() {}
+void __dt__6CCur16Fv() {}
 
-void CCur16::func_801D2978() {}
+void func_virt___dt__6CCur16Fv() { }
 
 void __ct__CCur18(){}
 
-void CCur18::~CCur18() {}
+void __dt__6CCur18Fv() {}
 
-void CCur18::func_801D2A78() {}
+void func_virt___dt__6CCur18Fv() { }
 
 void __ct__CCur22(){}
 
-void CCur22::~CCur22() {}
+void __dt__6CCur22Fv() {}
 
-void CCur22::func_801D2B78() {}
+void func_virt___dt__6CCur22Fv() { }
 
 void func_801D2BFC(){}
 
@@ -82,9 +84,9 @@ void func_801D2CF4(){}
 
 void __ct__CSubCur(){}
 
-void CSubCur::~CSubCur() {}
+void __dt__6CSubCurFv() {}
 
-void CSubCur::func_801D2DC8() {}
+void func_virt___dt__6CSubCurFv() { }
 
 void func_801D2E4C(){}
 

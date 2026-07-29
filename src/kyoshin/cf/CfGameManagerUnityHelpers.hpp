@@ -975,6 +975,8 @@ static inline Unk814BCObject* initializeUnk814Base(Unk814BCObject* base) {
     return base;
 }
 #pragma dont_inline on
+extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self);
+#pragma dont_inline reset
 extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self) {
     Unk814BCObject* result = self;
     Unk814BCObject* base = initializeUnk814Base(result);
@@ -986,7 +988,6 @@ extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self) {
     effect->vtable_0x0 = lbl_eu_8052FE08;
     return result;
 }
-#pragma dont_inline reset
 
 extern "C" u32 func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);

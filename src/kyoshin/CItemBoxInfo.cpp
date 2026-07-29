@@ -50,6 +50,7 @@ extern void* lbl_eu_806640F8;
 extern void* lbl_eu_806640D8;
 extern void* lbl_eu_80506330;
 u32 getLanguage__9CDeviceSCFv();
+void* CItem_initItemImplInstances(void*);
 extern void* lbl_eu_80664110;
 void func_801D1F9C(void*, u32);
 void func_801C4B60(void*, u32, u32, u32, u32);
@@ -858,7 +859,28 @@ void func_801E2638(CItemBoxInfo2* info, u16 arg2, void* arg3) {
     ((u32*)info)[1] = 0;
     ((u8*)info)[8] = flag2;
 }
-void func_801E27D0(){}
+void func_801E27D0(void* out, void* arg2) {
+    u16 v1 = func_801392E4(arg2);
+    u16 v2 = func_80139358((u32)arg2);
+    void* inst = CItem_initItemImplInstances(arg2);
+    void** vt = *(void***)inst;
+    u8 r = ((u8(*)(void*, void*))vt[2])(inst, arg2);
+    char* s = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
+    ((u32*)out)[0] = 0;
+    ((u8*)out)[4] = 0;
+    for (u32 i = 0; i < 3; i++) {
+        void* inst2 = CItem_initItemImplInstances(arg2);
+        void** vt2 = *(void***)inst2;
+        u16 count = ((u16(*)(void*, void*, u32))vt2[19])(inst2, arg2, i);
+        if (count == 0) continue;
+        char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
+        ((u32*)((u8*)out + 8))[i * 4] = (u32)t;
+        void* inst3 = CItem_initItemImplInstances(arg2);
+        void** vt3 = *(void***)inst3;
+        u8 val = ((u8(*)(void*, void*, u32))vt3[25])(inst3, arg2, i);
+        ((u8*)out)[i + 0x1C] = val;
+    }
+}
 void func_801E2928(){}
 void func_801E2C5C(){}
 void func_801E2FEC(){}

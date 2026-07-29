@@ -170,7 +170,7 @@ extern "C" void func_801C562C(void*, char*);
 extern "C" u8 func_801C67F8(CItemBoxGridFull* self);
 extern "C" u8 func_801C6840(CItemBoxGridFull* self);
 
-extern "C" u8 GetField61(CItemBoxGrid* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_61; }
+extern "C" u8 GetField61(void* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_61; }
 
 // Constructor for sub-item grid.
 void* __ct__801C5514(void* self) {
@@ -1365,7 +1365,7 @@ extern "C" u8 func_801CB184(void* self) {
     return ((u8*)self)[0x542];
 }
 
-extern "C" u8 GetField549(CItemBoxGrid* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_549; }
+extern "C" u8 GetField549(void* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_549; }
 
 // Check if any sub-system is active.
 extern "C" u32 func_801CB1E4(void* self) {
@@ -1434,7 +1434,7 @@ extern "C" void func_801CB480(void* self) {
     p[0x6f] = 0;
 }
 
-extern "C" void PushToList(CItemBoxGrid* self, unsigned char val) {
+extern "C" void PushToList(void* self, unsigned char val) {
     unsigned char count = reinterpret_cast<unsigned char*>(this)[0x6e];
     if (count >= 0xc) {
         return;
@@ -1475,7 +1475,7 @@ extern "C" void func_801CB56C(void* self) {
 
 extern "C" void func_801CB5F0() { }
 
-unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
+extern "C" unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
     if (i < 12) {
         return p[i];
     }
@@ -1568,7 +1568,7 @@ extern "C" u8 func_801CDBE0(void* self) {
     return ((u8*)self)[0x52c];
 }
 
-extern "C" u8 GetField52D(CItemBoxGrid* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_52D; }
+extern "C" u8 GetField52D(void* self) { return reinterpret_cast<CItemBoxGridFull*>(self)->field_52D; }
 
 extern "C" void func_801CDC40() { }
 
@@ -1897,7 +1897,7 @@ void func_801C5158(void* self, u32 id) {
 }
 extern "C" void func_801C5254() { }
 extern "C" void func_801C53D8() { }
-void OnFileEvent__12CItemBoxGridFP10CEventFile() { }
+extern "C" void OnFileEvent__12CItemBoxGridFP10CEventFile() { }
 
 // Static initialization of color table entries.
 extern "C" void sinit_801D1E30(void) {

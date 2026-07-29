@@ -50,6 +50,25 @@ void func_802753F8(UnkCode8027513C* self, s16 arg) {
 
 cf::CfObjectImplTbox::~CfObjectImplTbox() {}
 
+ICamControlBase::~ICamControlBase() {}
+
+// Thunk: calls initCamControlInstances()->vfunc_20(self)
+void func_802752F8(UnkCode8027513C* self) {
+    ICamControlBase* cam = initCamControlInstances();
+    cam->vfunc_20(self);
+}
+
+// Thunk: calls initCamControlInstances()->vfunc_24(self)
+void func_80275338(UnkCode8027513C* self) {
+    ICamControlBase* cam = initCamControlInstances();
+    cam->vfunc_24(self);
+}
+
+// Thunk: calls initCamControlInstances()->vfunc_28(self)
+void func_80275378(UnkCode8027513C* self) {
+    ICamControlBase* cam = initCamControlInstances();
+    cam->vfunc_28(self);
+}
 
 void func_802759B0(void* self) { ((cf::CfObjectImplTbox*)((u8*)self - 0xc))->~CfObjectImplTbox(); }
 

@@ -74,7 +74,7 @@ void CPackItem::update(){
             setupHashTable();
         }else{
             if((s32)field_0x68 >= 0){
-                func_eu_804521A8((u8)field_0x68);
+                func_eu_804521A8(field_0x68);
             }
             
             mFileHandle = CDeviceFile::readFile(lbl_eu_80663BC8, mFilePath, this, 0, 0);

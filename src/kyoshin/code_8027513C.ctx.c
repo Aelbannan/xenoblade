@@ -1396,25 +1396,6 @@ void ocBdatRegist();
 /* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
 /* end "types.h" */
 
-class CScn;
-
-// Minimal reslist template for CTaskGameEff destructor emission.
-// The full definition in monolib/util/reslist.hpp stores T by value
-// (illegal for abstract CScn); retail uses a padding-based layout.
-template <typename T>
-class _reslist_base {
-public:
-    virtual ~_reslist_base();
-    char _pad[0x1F];
-};
-
-template <typename T>
-class reslist : public _reslist_base<T> {
-public:
-    virtual ~reslist();
-    char _pad2[0x20 - sizeof(_reslist_base<T>)];
-};
-
 class CTaskGameEff {
 public:
     CTaskGameEff();
@@ -1450,16 +1431,7 @@ public:
 
 class CfObjectEff;
 
-// TODO: identify real class name; contains embedded cf::CfObjectImplTbox subobjects
-class UnkCode8027513C {
-public:
-    u8 _00[0x1C];
-    int field_0x1C;
-    int field_0x20;
-    u8 _24[0x74 - 0x24];
-    CfObjectEff* field_0x74;
-    s16 field_0x78;
-};
+class UnkCode8027513C;
 
 // Camera control instance base type returned by initCamControlInstances.
 // With RTTI on, the typeinfo pointer occupies vtable slot 0; the complete
@@ -1473,9 +1445,23 @@ public:
     virtual void vfunc_14(UnkCode8027513C* self) = 0;
     virtual void vfunc_18(UnkCode8027513C* self) = 0;
     virtual void vfunc_1C(UnkCode8027513C* self) = 0;
+    virtual void vfunc_20(UnkCode8027513C* self) = 0;
+    virtual void vfunc_24(UnkCode8027513C* self) = 0;
+    virtual void vfunc_28(UnkCode8027513C* self) = 0;
 };
 
-extern "C" ICamControlBase* initCamControlInstances();
+ICamControlBase* initCamControlInstances();
+
+// TODO: identify real class name; contains embedded cf::CfObjectImplTbox subobjects
+class UnkCode8027513C {
+public:
+    u8 _00[0x1C];
+    int field_0x1C;
+    int field_0x20;
+    u8 _24[0x74 - 0x24];
+    CfObjectEff* field_0x74;
+    s16 field_0x78;
+};
 
 /* end "kyoshin/code_8027513C.hpp" */
 
@@ -1526,22 +1512,22 @@ cf::CfObjectImplTbox::~CfObjectImplTbox() {}
 
 ICamControlBase::~ICamControlBase() {}
 
-// Thunk: calls initCamControlInstances()->vfunc_14(self)
-void func_80275238(UnkCode8027513C* self) {
+// Thunk: calls initCamControlInstances()->vfunc_20(self)
+void func_802752F8(UnkCode8027513C* self) {
     ICamControlBase* cam = initCamControlInstances();
-    cam->vfunc_14(self);
+    cam->vfunc_20(self);
 }
 
-// Thunk: calls initCamControlInstances()->vfunc_18(self)
-void func_80275278(UnkCode8027513C* self) {
+// Thunk: calls initCamControlInstances()->vfunc_24(self)
+void func_80275338(UnkCode8027513C* self) {
     ICamControlBase* cam = initCamControlInstances();
-    cam->vfunc_18(self);
+    cam->vfunc_24(self);
 }
 
-// Thunk: calls initCamControlInstances()->vfunc_1C(self)
-void func_802752B8(UnkCode8027513C* self) {
+// Thunk: calls initCamControlInstances()->vfunc_28(self)
+void func_80275378(UnkCode8027513C* self) {
     ICamControlBase* cam = initCamControlInstances();
-    cam->vfunc_1C(self);
+    cam->vfunc_28(self);
 }
 
 void func_802759B0(void* self) { ((cf::CfObjectImplTbox*)((u8*)self - 0xc))->~CfObjectImplTbox(); }

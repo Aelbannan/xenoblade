@@ -10,8 +10,25 @@ void __dt__80044BB0(){}
 
 void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(){}
 
-template <> _reslist_base<CScn>::~_reslist_base() {}
-template <> reslist<CScn>::~reslist() {}
+// Base destructor stub (not in batch targets, keep for linking)
+void __dt___reslist_base_CScn(){}
+
+// Forward-declare base destructor with MWCC ABI signature (this, flags)
+void* __dt___reslist_base_CScn(void* _this, int flags);
+
+// reslist<CScn> destructor — standard MWCC virtual dtor pattern.
+// #pragma optimize_for_size on keeps stmw r30 instead of individual stw
+// (same pattern as CTTask<CTaskGameEff>::~CTTask below).
+#pragma optimize_for_size on
+void* __dt__reslist_CScn(void* _this, int flags) {
+    if (!_this) return _this;
+    __dt___reslist_base_CScn(_this, 0);
+    if (flags > 0) {
+        operator delete(_this);
+    }
+    return _this;
+}
+#pragma optimize_for_size off
 
 CTaskGameEff::~CTaskGameEff() {}
 

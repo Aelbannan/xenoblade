@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CFloorMap.hpp"
 
 u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
@@ -72,7 +73,7 @@ void __dt__8024B894(){}
 
 void __ct__CFloorMap(){}
 
-void CFloorMap::~CFloorMap() const {}
+CFloorMap::~CFloorMap() {}
 
 void func_8024BE1C(){}
 
@@ -133,7 +134,11 @@ unsigned char func_8024F630(void) {
 
 void func_8024F658(){}
 
-void func_8024F6BC(){}
+u8 func_8024F6BC(void* self) {
+    CFloorMapFull* full = static_cast<CFloorMapFull*>(self);
+    if (full->field_58) return 0;
+    return full->field_208;
+}
 
 u8 func_8024F6D8(void* self) { return static_cast<CFloorMapFull*>(self)->field_208; }
 

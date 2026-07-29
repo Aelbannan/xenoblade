@@ -27,13 +27,14 @@ char* func_8013639C(void*, char*);
 u16 func_80139358(u32);
 u32 func_801392E4(void*);
 void* func_80157C4C(u32);
-void* func_801392B4(u32);
-void* func_801392C0();
-void* func_8013600C(void*, void*, u32);
-void* func_800A32BC(u16);
+u32 func_801392B4(u32);
+u32 func_801392C0();
+u8 func_8013600C(void*, void*, u32);
+u32 func_800A32BC();
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F8;
+extern void* lbl_eu_80664110;
 void func_801D1F9C(void*, u32);
 void func_801C4B60(void*, u32, u32, u32, u32);
 void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
@@ -227,7 +228,33 @@ void func_801D59C0(u32* out, void* arg2) {
     out[3] = (u32)r4;
 }
 
-void func_801D5AA0(){}
+void func_801D5AA0(CItemBoxInfo* info, u16 arg2, void* arg3) {
+    void* global = lbl_eu_80664110;
+    u16 v1 = func_801392E4(arg3);
+    u16 v2 = func_80139358((u32)arg3);
+    u8 flag1 = func_801361E8(global, (char*)&lbl_eu_805063BC[0x22b], v2);
+    u8 count = func_801361E8(global, (char*)&lbl_eu_805063BC[0x237], v2);
+    u8 arr[4] = {flag1, 0, 0, 0};
+    u32 max = func_801392C0();
+    for (u32 i = 0; i < max; i++) {
+        u8 a = func_801392B4(i);
+        arr[i + 1] = (a != count ? 1 : 0);
+    }
+    u8 r5 = func_801361E8(global, (char*)&lbl_eu_805063BC[0x23f], v2);
+    u8 val = func_8013600C((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], r5);
+    void* lookup = func_8009EC9C(count);
+    u8 cat = func_800A32BC();
+    u8* entry = (u8*)lookup + cat * 0x49 + val * 2;
+    u8 flag2 = 0;
+    switch (arr[0]) {
+        case 1: if (entry[0xE8] != 0) flag2 = 1; break;
+        case 2: if ((entry[0xE9] >> 0) & 1) flag2 = 1; break;
+        case 3: if ((entry[0xE9] >> 1) & 1) flag2 = 1; break;
+    }
+    ((u32*)info)[0] = (arr[0]) | (arr[1] << 8) | (arr[2] << 16) | (arr[3] << 24);
+    ((u32*)info)[1] = 0;
+    ((u8*)info)[8] = flag2;
+}
 void func_801D5C38(){}
 void func_801D5DA4(){}
 
@@ -599,7 +626,33 @@ void func_801E2558(u32* out, void* arg2) {
     out[3] = (u32)r4;
 }
 
-void func_801E2638(){}
+void func_801E2638(CItemBoxInfo2* info, u16 arg2, void* arg3) {
+    void* global = lbl_eu_80664110;
+    u16 v1 = func_801392E4(arg3);
+    u16 v2 = func_80139358((u32)arg3);
+    u8 flag1 = func_801361E8(global, (char*)&lbl_eu_805063BC[0x22b], v2);
+    u8 count = func_801361E8(global, (char*)&lbl_eu_805063BC[0x237], v2);
+    u8 arr[4] = {flag1, 0, 0, 0};
+    u32 max = func_801392C0();
+    for (u32 i = 0; i < max; i++) {
+        u8 a = func_801392B4(i);
+        arr[i + 1] = (a != count ? 1 : 0);
+    }
+    u8 r5 = func_801361E8(global, (char*)&lbl_eu_805063BC[0x23f], v2);
+    u8 val = func_8013600C((char*)&lbl_eu_805063BC[0x248], (char*)&lbl_eu_805063BC[0x250], r5);
+    void* lookup = func_8009EC9C(count);
+    u8 cat = func_800A32BC();
+    u8* entry = (u8*)lookup + cat * 0x49 + val * 2;
+    u8 flag2 = 0;
+    switch (arr[0]) {
+        case 1: if (entry[0xE8] != 0) flag2 = 1; break;
+        case 2: if ((entry[0xE9] >> 0) & 1) flag2 = 1; break;
+        case 3: if ((entry[0xE9] >> 1) & 1) flag2 = 1; break;
+    }
+    ((u32*)info)[0] = (arr[0]) | (arr[1] << 8) | (arr[2] << 16) | (arr[3] << 24);
+    ((u32*)info)[1] = 0;
+    ((u8*)info)[8] = flag2;
+}
 void func_801E27D0(){}
 void func_801E2928(){}
 void func_801E2C5C(){}

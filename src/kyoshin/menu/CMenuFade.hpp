@@ -31,7 +31,7 @@ public:
 
 class CMenuFade : public CMenuFadeBase, public IScnRender {
 public:
-    CMenuFade(CScn* pScn, int p5, int p6, float f1, float f2, float f3);
+    CMenuFade();
     virtual ~CMenuFade();
     void Init();
     void Term();
@@ -44,14 +44,4 @@ public:
     CScn* mScn;                                 // 0x60
     UnkClass_8045F564 mLayoutMem;               // 0x64
     nw4r::lyt::Layout* mLayout;                 // 0x74
-    nw4r::lyt::AnimTransform* field_0x78;       // 0x78
-    f32 field_0x7C;                             // 0x7C
-    f32 field_0x80;                             // 0x80
-    f32 field_0x84;                             // 0x84
-    f32 field_0x88;                             // 0x88
-    u32 field_0x8C;                             // 0x8C
-    u32 field_0x90;                             // 0x90
-    u8 field_0x94;                              // 0x94
-    u8 pad_0x95[3];                             // 0x95-0x97
-    u32 field_0x98;                             // 0x98
 };

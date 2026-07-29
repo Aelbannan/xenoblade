@@ -614,6 +614,11 @@ void cf::CfObject::CfObject_UnkVirtualFunc33(float amount) {
     CfObject_UnkVirtualFunc32();
 }
 
+extern "C" void CfObject_UnkVirtualFunc33__Q22cf8CfObjectFv(
+    cf::CfObject* object) {
+    object->CfObject_UnkVirtualFunc32();
+}
+
 #pragma dont_inline on
 void cf::CfGameManager::func_80083550() {
     lbl_eu_80663E24 |= 0x10;

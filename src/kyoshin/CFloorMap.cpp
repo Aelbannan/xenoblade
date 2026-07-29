@@ -176,15 +176,12 @@ u8 func_8024F6D8(void* self) { return static_cast<CFloorMapFull*>(self)->field_2
 
 u32 func_8024F6E0(void* self) {
     s8 idx1 = *(s8*)((u8*)self + 0x206);
-    u32 result = 0;
-    if (idx1 >= 0) {
-        s8 idx0 = *(s8*)((u8*)self + 0x205);
-        s8 idx2 = *(s8*)((u8*)self + 0x207);
-        u32 offset = idx0 * 0x30C + (idx2 + idx1) * 0x18;
-        u16 val = *(u16*)((u8*)self + offset + 0x214);
-        result = val != 0 ? 1 : 0;
-    }
-    return result;
+    if (idx1 < 0) return 0;
+    s8 idx0 = *(s8*)((u8*)self + 0x205);
+    s8 idx2 = *(s8*)((u8*)self + 0x207);
+    u32 offset = idx0 * 0x30C + (idx2 + idx1) * 0x18;
+    u16 val = *(u16*)((u8*)self + offset + 0x214);
+    return val != 0 ? 1 : 0;
 }
 
 void func_8024F72C(){}

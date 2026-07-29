@@ -905,9 +905,9 @@ public:
     void func_8007F11C();
     void func_8007F1FC();
     void func_8007F830();
-    void func_8007F8B8();
+    u16 func_8007F8B8();
     void func_8007F8C0();
-    void func_8007F8D0();
+    void** func_8007F8D0();
     void func_8007F8DC();
     void func_8007F8F4();
     void func_8007F900();
@@ -249962,14 +249962,14 @@ namespace cf {
         virtual u32 CfObject_UnkVirtualFunc23();      //0xAC
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
         virtual void CfObject_UnkVirtualFunc25();     //0xB4
-        virtual void CfObject_UnkVirtualFunc26();     //0xB8
+        virtual void CfObject_UnkVirtualFunc26(u32 value, float amount); //0xB8
         virtual void CfObject_UnkVirtualFunc27();     //0xBC
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
         virtual void CfObject_UnkVirtualFunc29();     //0xC4
         virtual void CfObject_UnkVirtualFunc30();     //0xC8
         virtual void CfObject_UnkVirtualFunc31();     //0xCC
         virtual void CfObject_UnkVirtualFunc32();     //0xD0
-        virtual void CfObject_UnkVirtualFunc33();     //0xD4
+        virtual void CfObject_UnkVirtualFunc33(float amount); //0xD4
         virtual void CfObject_UnkVirtualFunc34();     //0xD8
         virtual void CfObject_UnkVirtualFunc35();     //0xDC
         virtual void CfObject_UnkVirtualFunc36();     //0xE0
@@ -250833,7 +250833,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc29();
     void CfObject_UnkVirtualFunc32();
     void CfObject_UnkVirtualFunc34();
-    void CfObject_UnkVirtualFunc33();
+    void CfObject_UnkVirtualFunc33(float amount);
     void CfObject_UnkVirtualFunc30();
     float CfObject_UnkVirtualFunc56();
     void CfObject_UnkVirtualFunc52();
@@ -250917,12 +250917,12 @@ namespace cf {
     void CfObject_UnkVirtualFunc19();
     void CfObject_UnkVirtualFunc22();
     void CfObject_UnkVirtualFunc25();
-    void CfObject_UnkVirtualFunc26();
+    void CfObject_UnkVirtualFunc26(u32 value, float amount);
     u32 CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27();
     void CfObject_UnkVirtualFunc30();
     void CfObject_UnkVirtualFunc32();
-    void CfObject_UnkVirtualFunc33();
+    void CfObject_UnkVirtualFunc33(float amount);
     void CfObject_UnkVirtualFunc13();
     void CfObject_UnkVirtualFunc57();
     void CObjectParam_UnkVirtualFunc2();
@@ -251856,6 +251856,11 @@ struct ItemListObject : public ItemContainerPrefix, public ItemListSubobject {
     u16 itemId_0x3F28;
 };
 
+struct ItemListEntryView {
+    u8 field_0x0[0x8C];
+    u16 itemId_0x8C;
+};
+
 struct ItemListNode {
     ItemListNode* next;
     u32 field_0x4;
@@ -252451,9 +252456,33 @@ extern "C" void func_80081A24__Q22cf13CfGameManagerFv(u32 value) {
 
 extern "C" UnkClass_800821F8* func_80078B60(CfCamEventManager* manager, u32 mode,
                                              u32 value);
+#pragma dont_inline on
 extern "C" void func_80081D8C__Q22cf13CfGameManagerFv(u32 value) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
     manager->unkB0 = func_80078B60(manager->unkB4, 0, value);
+}
+#pragma dont_inline reset
+
+extern "C" float lbl_eu_8066654C;
+extern "C" u16 lbl_eu_80663E40;
+extern "C" cf::CfObjectMove* func_8007FF6C__Q22cf13CfGameManagerFv(
+    u16 objectId, u32 value, u32 unused, float amount);
+extern "C" u32 func_8007FC5C__Q22cf13CfGameManagerFv(
+    u32 first, u32 second, u32 third, u32 fourth, u32 fifth);
+extern "C" cf::CfObjectMove* func_800807BC__Q22cf13CfGameManagerFv(
+    u32 value, float amount) {
+    cf::CfGameManager::getInstance();
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+    if (player != nullptr) {
+        player->CfObject_UnkVirtualFunc26(value, lbl_eu_8066654C);
+        player->CfObject_UnkVirtualFunc33(amount);
+        return player;
+    }
+    cf::CfObjectMove* object = func_8007FF6C__Q22cf13CfGameManagerFv(
+        lbl_eu_80663E40, value, 0, amount);
+    func_80081D8C__Q22cf13CfGameManagerFv(reinterpret_cast<u32>(object));
+    func_8007FC5C__Q22cf13CfGameManagerFv(4, 0, 0, 0, 0);
+    return object;
 }
 
 extern "C" CItemImplInstances* CItem_initItemImplInstances();
@@ -252760,8 +252789,12 @@ extern "C" void func_8007F8C0__Q22cf13CfGameManagerFv(
 extern "C" ItemListSubobject** func_8007F8D0__Q22cf13CfGameManagerFv(
     UnkF8C0Node* iterator);
 extern "C" u16 func_8007F8B8__Q22cf13CfGameManagerFv(ItemListSubobject* object);
+#pragma dont_inline on
 extern "C" void func_8007F8F4__Q22cf13CfGameManagerFv(
-    UnkF8C0Node* destination, const ItemListManager* source);
+    UnkF8C0Node* destination, const ItemListManager* source) {
+    destination->field_0x0 = reinterpret_cast<u32>(source->sentinel);
+}
+#pragma dont_inline reset
 extern "C" u16 lbl_eu_80663E40;
 extern "C" ItemListManager* func_800B6BA4__Fv();
 extern "C" void func_800C01D4(ItemListObject* object, void* destination,
@@ -253204,6 +253237,7 @@ extern "C" void func_8007FECC__Q22cf13CfGameManagerFv() {
     }
 }
 
+#pragma dont_inline on
 extern "C" u32 func_8007FC5C__Q22cf13CfGameManagerFv(
     u32 first, u32 second, u32 third, u32 fourth, u32 fifth) {
     if (!lbl_eu_80663E70) {
@@ -253221,6 +253255,7 @@ extern "C" u32 func_8007FC5C__Q22cf13CfGameManagerFv(
     }
     return result;
 }
+#pragma dont_inline reset
 
 extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
 extern "C" bool func_80061E8C(UnkClass_80085334* object, u32 mode);
@@ -253957,7 +253992,7 @@ void cf::CfGameManager::func_8007D834() {
     }
 }
 
-void cf::CfObject::CfObject_UnkVirtualFunc33() {
+void cf::CfObject::CfObject_UnkVirtualFunc33(float amount) {
     CfObject_UnkVirtualFunc32();
 }
 
@@ -254097,7 +254132,10 @@ void cf::CfGameManager::func_80086DB0() {}
 u32 cf::CfGameManager::func_80086DBC() { return 0; }
 
 #pragma dont_inline on
-void cf::CfGameManager::func_8007F8B8() {}
+u16 cf::CfGameManager::func_8007F8B8() {
+    ItemListEntryView* object = reinterpret_cast<ItemListEntryView*>(this);
+    return object->itemId_0x8C;
+}
 #pragma dont_inline reset
 
 extern u16 lbl_eu_80663E3A;
@@ -254195,9 +254233,12 @@ bool cf::CfGameManager::func_8007CBC8() {
 void cf::CfGameManager::func_8007EEF8() {}
 
 #pragma dont_inline on
-void cf::CfGameManager::func_8007F8D0() {}
+void** cf::CfGameManager::func_8007F8D0() {
+    UnkF8C0Node* iterator = reinterpret_cast<UnkF8C0Node*>(this);
+    ItemListNode* node = reinterpret_cast<ItemListNode*>(iterator->field_0x0);
+    return reinterpret_cast<void**>(&node->object);
+}
 
-void cf::CfGameManager::func_8007F8F4() {}
 #pragma dont_inline reset
 
 extern void __fill_mem(void*, int, int);

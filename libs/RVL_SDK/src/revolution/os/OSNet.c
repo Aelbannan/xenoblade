@@ -87,7 +87,7 @@ DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) {
     s32 rtc;
     
     while (TRUE) {
-        s32 status = SCCheckStatus();
+        u32 status = SCCheckStatus();
         if (status == 2) {
             result = -1;
             goto check_result;
@@ -105,10 +105,10 @@ DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) {
     result = 0;
     
 check_result:
-    if (result == 0) {
-        return NWC24iSetRtcCounter_(rtc, val != FALSE);
+    if (result != 0) {
+        return result;
     }
-    return result;
+    return NWC24iSetRtcCounter_(rtc, val != FALSE);
 }
 
 DECL_WEAK s32 NWC24SuspendScheduler(){

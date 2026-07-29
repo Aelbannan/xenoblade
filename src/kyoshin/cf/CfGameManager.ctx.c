@@ -251938,12 +251938,14 @@ extern "C" void func_8007DE94__Q22cf13CfGameManagerFv(u32 index, u32 value) {
     func_8009E120(func_8009EC9C(index), value);
 }
 
+#pragma dont_inline on
 extern "C" void func_800827A8__Q22cf13CfGameManagerFv(cf::CfGameManager* manager,
                                                         const u16* value) {
     s32 index = (manager->field_0x44 + manager->field_0x48) % manager->field_0x4C;
     manager->field_0x40[index] = *value;
     manager->field_0x48++;
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" BdatTextEntry* func_8007C2F4__Q22cf13CfGameManagerFv(BdatTextEntry* entry,
@@ -252123,6 +252125,18 @@ extern "C" s32 func_80082768__Q22cf13CfGameManagerFv(const cf::CfGameManager* qu
 extern "C" u16 func_80082770__Q22cf13CfGameManagerFv(cf::CfGameManager* queue);
 extern "C" void func_8008261C__Q22cf13CfGameManagerFv(u32 value, bool enable);
 extern "C" cf::CfGameManager lbl_eu_80570CF0;
+extern "C" bool func_80082614__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value) {
+    if (!func_80082614__Q22cf13CfGameManagerFv(value)) {
+        if (static_cast<u32>(func_80082768__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0)) >= 32) {
+            u16 removed = func_80082770__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0);
+            func_8008261C__Q22cf13CfGameManagerFv(removed, true);
+        }
+        u16 queued = static_cast<u16>(value);
+        func_800827A8__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0, &queued);
+    }
+}
+
 extern "C" void func_800827E4__Q22cf13CfGameManagerFv() {
     while (func_80082768__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0) != 0) {
         u16 value = func_80082770__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0);

@@ -9,6 +9,7 @@ class UnkClass_80186D20;
 class CfCamEventManager;
 class UnkClass_800821F8;
 class UnkClass_80085334;
+class UnkClass_8007E864;
 class CSysWinBuff;
 
 struct CfGameManagerData1C {
@@ -128,7 +129,7 @@ namespace cf{
         CfObjectMove* unk94[3];
         u32 unkA0;
         UnkClass_80186D20* field_0xA4;
-        u32 unkA8;
+        UnkClass_8007E864* unkA8;
         UnkClass_80085334* unkAC;
         UnkClass_800821F8* unkB0;
         CfCamEventManager* unkB4;

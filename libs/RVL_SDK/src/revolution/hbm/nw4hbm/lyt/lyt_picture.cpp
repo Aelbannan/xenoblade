@@ -107,9 +107,9 @@ void Picture::SetVtxColor(u32 idx, ut::Color color) {
 }
 
 u8 Picture::GetVtxColorElement(u32 idx) const {
-    // Access the vertex color array as a byte array,
-    // using bitwise split to compute byte offset within the Color array.
-    return reinterpret_cast<const u8*>(mVtxColors)[idx];
+    // Split index into word-offset and byte-offset to match retail pattern.
+    const u8* base = reinterpret_cast<const u8*>(mVtxColors);
+    return base[(idx & ~3u) + (idx & 3u)];
 }
 
 void Picture::SetVtxColorElement(u32 idx, u8 value) {

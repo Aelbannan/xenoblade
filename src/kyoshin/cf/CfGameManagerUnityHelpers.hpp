@@ -393,7 +393,7 @@ extern "C" cf::CfGameManager lbl_eu_80570CF0;
 extern "C" bool func_80082614__Q22cf13CfGameManagerFv(u32 value);
 extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32 value) {
     if (!func_80082614__Q22cf13CfGameManagerFv(value)) {
-        if (func_80082768__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0) >= 32) {
+        if (static_cast<u32>(func_80082768__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0)) >= 32) {
             u16 removed = func_80082770__Q22cf13CfGameManagerFv(&lbl_eu_80570CF0);
             func_8008261C__Q22cf13CfGameManagerFv(removed, true);
         }
@@ -481,6 +481,23 @@ extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 first, u32 third) {
         func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
     cf::CfObjectMove* player = *slot;
     manager->unkB0 = func_800784A0(first, player, third, 0, 0, 0, 0);
+}
+
+extern "C" void loadMapBdatFileDataPointers__Q22cf6CfBdatFii(u32 first, u32 second);
+extern "C" void func_8008228C__Q22cf13CfGameManagerFv(u32 first, u32 second);
+extern "C" void func_801AA04C(UnkClass_8007E864* object);
+extern "C" void func_8007E864__Q22cf13CfGameManagerFv(u32 first, u32 second) {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    loadMapBdatFileDataPointers__Q22cf6CfBdatFii(first, second);
+    func_8008228C__Q22cf13CfGameManagerFv(first, second);
+    if (lbl_eu_80571758.unkA8 != nullptr) {
+        func_801AA04C(lbl_eu_80571758.unkA8);
+    }
 }
 
 extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value) {

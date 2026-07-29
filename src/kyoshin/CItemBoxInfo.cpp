@@ -111,7 +111,15 @@ void func_801D8318(){}
 void func_801D85D8(){}
 void func_801D885C(){}
 void func_801D8930(){}
-void func_801D8A88(){}
+void func_801D8A88(CItemBoxInfo* info) {
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
+                  &lbl_eu_805063BC[0x45a],
+                  &lbl_eu_805063BC[0x2aa], 0);
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
+                  &lbl_eu_805063BC[0x466],
+                  &lbl_eu_805063BC[0x2aa], 0);
+}
+
 void func_801D8B60(){}
 void func_801D8B08(CItemBoxInfo* info) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
@@ -208,7 +216,15 @@ void func_801E3918(){}
 void func_801E3B9C(){}
 void func_801E3DE4(){}
 void func_801E3EB8(){}
-void func_801E4010(){}
+void func_801E4010(CItemBoxInfo2* info) {
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
+                  &lbl_eu_805063BC[0x45a],
+                  &lbl_eu_805063BC[0x2aa], 0);
+    func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
+                  &lbl_eu_805063BC[0x466],
+                  &lbl_eu_805063BC[0x2aa], 0);
+}
+
 void func_801E4090(CItemBoxInfo2* info) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x48f],

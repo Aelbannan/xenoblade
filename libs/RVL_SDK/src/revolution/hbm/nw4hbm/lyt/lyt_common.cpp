@@ -27,12 +27,13 @@ bool EqualsMaterialName(const char* pLhs, const char* pRhs) {
 }
 
 bool TestFileHeader(const res::BinaryFileHeader& rHeader) {
-    return rHeader.byteOrder == NW4R_BYTEORDER_BIG;
+    return rHeader.byteOrder == 0xFEFF && rHeader.version == 8;
 }
 
 bool TestFileHeader(const res::BinaryFileHeader& rHeader, u32 signature) {
     return GetSignatureInt(rHeader.signature) == signature &&
-           TestFileHeader(rHeader);
+           rHeader.byteOrder == 0xFEFF &&
+           rHeader.version == 8;
 }
 
 /******************************************************************************

@@ -88,7 +88,6 @@ Pane::Pane(const res::Pane* pRes) {
 void Pane::Init() {
     mpParent = NULL;
     mpMaterial = NULL;
-    mbUserAllocated = false;
     mpExtUserDataList = NULL;
 }
 

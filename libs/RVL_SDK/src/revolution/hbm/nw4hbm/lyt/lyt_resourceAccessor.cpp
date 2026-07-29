@@ -8,6 +8,21 @@ namespace lyt {
 
 /******************************************************************************
  *
+ * ResourceAccessor
+ *
+ ******************************************************************************/
+ResourceAccessor::ResourceAccessor() {}
+
+ResourceAccessor::~ResourceAccessor() {}
+
+ut::Font* ResourceAccessor::GetFont(const char* /*pName*/) {
+    return NULL;
+}
+
+
+
+/******************************************************************************
+ *
  * Group
  *
  ******************************************************************************/
@@ -82,4 +97,3 @@ Group* GroupContainer::FindGroupByName(const char* pName) {
 } // namespace lyt
 } // namespace nw4hbm
 
-extern "C" int GetFont__Q36nw4hbm3lyt16ResourceAccessorFPCc(void* self) { return 0x0; }

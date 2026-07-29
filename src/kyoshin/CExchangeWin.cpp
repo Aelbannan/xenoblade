@@ -25,3 +25,10 @@ void func_8022D1F8(){}
 void func_8022D244(){}
 
 void CExchangeWin::OnFileEvent() {}
+
+// Stub functions needed by CItemBoxGrid
+extern "C" void func_8022D0D0(void* self) { }
+extern "C" void func_8022D0F8(void* dst, void* src, u8 val) { }
+extern "C" void func_8022CF2C(void* self) { }
+extern "C" void func_8022CF7C(void* self) { }
+extern "C" void func_8022CFEC(void* self) { }

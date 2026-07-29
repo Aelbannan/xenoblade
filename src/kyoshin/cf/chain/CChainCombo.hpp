@@ -18,6 +18,7 @@ struct CChainGauge {
 // type is not void*.  The gauges these operate on live at CChainCombo+0xC.
 extern "C" void func_80294824__FPv(cf::CChainGauge* gauge);
 extern "C" void func_80294834__FPv(cf::CChainGauge* gauge);
+extern "C" void func_80294844(cf::CChainGauge* gauge, float value);
 
 // Resets/respawns chain combo state (CMenuBattleChain.cpp).
 extern "C" void func_802AA338__Fv();
@@ -38,6 +39,7 @@ struct CChainCombo {
     CChainGauge mGauge; // 0xC - chain gauge pair
     void* mVtbl;        // 0x14 - lbl_eu_80538994
 
+    CChainCombo();
     void func1();
 };
 

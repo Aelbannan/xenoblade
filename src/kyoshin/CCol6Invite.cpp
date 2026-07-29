@@ -1,32 +1,102 @@
-// Auto-scaffolded catalog TU for kyoshin/CCol6Invite
-// Replace stubs with high-level C/C++ during decomp.
+// Decompiled code for kyoshin/CCol6Invite
 
-#include "kyoshin/harness_catalog.hpp"
-extern "C" void __dt__13CCol6CheckBatFv(void* self);
+#include "kyoshin/CCol6Invite.hpp"
+#include <stdio.h>
+#include <string.h>
+#include <stdarg.h>
 
-void CCol6CheckBat_destructorAdjust(void* self) { ((void(*)(void*))__dt__13CCol6CheckBatFv)((char*)self - 0x6c); }
+// External functions
+extern "C" {
+    // Returns pool ID from global variable (r13 - 0x6364).
+    u32 sub_80439F4C();
+    // operator new(size, pool) - allocates from pool.
+    void* operator_new_804373F4(u32 size, u32 pool);
+    // CProcess constructor.
+    void __ct__8CProcessFv(CProcess* proc);
+    // CProcess::Regist
+    void Regist__8CProcessFP8CProcessb(CProcess* proc, CProcess* parent, bool insertTop);
+}
 
-extern "C" void func_8015DB08(void* self);
-extern "C" void OnFileEvent__9CCol6HintFP10CEventFile(void* self) { ((void(*)(void*))func_8015DB08)((char*)self - 0x6c); }
+// Singleton instance pointer (lbl_eu_8066423C in retail).
+CCol6Invite* gCol6Invite;
 
-extern "C" void __dt__9CCol6HintFv(void* self);
-void CCol6Hint_destructorAdjust(void* self) { ((void(*)(void*))__dt__9CCol6HintFv)((char*)self - 0x6c); }
+// Symbols from data sections
+extern u32 lbl_eu_8052FF3C;  // vtable for CCol6Invite
+extern u32 lbl_eu_8052D238;  // temporary vtable
+extern u8 __ptmf_null[12];   // null pointer-to-member-function (lbl_eu_805139E8)
 
-extern "C" void cbRenderBefore__9CCol6HintFv(void* self);
-void CCol6Hint_cbRenderBeforeAdjust(void* self) { ((void(*)(void*))cbRenderBefore__9CCol6HintFv)((char*)self - 0x70); }
+// Factory function for CCol6Invite singleton.
+// Returns the singleton instance, or NULL if already created.
+CCol6Invite* CCol6Invite::CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
+    // Check if singleton already exists.
+    if (gCol6Invite != nullptr) {
+        return nullptr;
+    }
 
-void CCol6Hint_destructorAdjust2(void* self) { ((void(*)(void*))__dt__9CCol6HintFv)((char*)self - 0x70); }
+    // Get pool ID and allocate.
+    u32 pool = sub_80439F4C();
+    CCol6Invite* obj = (CCol6Invite*)operator_new_804373F4(0x78, pool);
+    if (obj == nullptr) {
+        return nullptr;
+    }
 
-extern "C" void func_80160118(void* self);
-extern "C" void OnFileEvent__11CCol6SystemFP10CEventFile(void* self) { ((void(*)(void*))func_80160118)((char*)self - 0x6c); }
+    // Call CProcess constructor.
+    __ct__8CProcessFv(obj);
 
-extern "C" void __dt__11CCol6SystemFv(void* self);
-void CCol6System_destructorAdjust(void* self) { ((void(*)(void*))__dt__11CCol6SystemFv)((char*)self - 0x6c); }
+    // Set temporary vtable.
+    *(u32*)((u8*)obj + 0x10) = lbl_eu_8052D238;
 
-extern "C" void cbRenderBefore__11CCol6SystemFv(void* self);
-void CCol6System_cbRenderBeforeAdjust(void* self) { ((void(*)(void*))cbRenderBefore__11CCol6SystemFv)((char*)self - 0x70); }
+    // Initialize callback fields from __ptmf_null (all zeros).
+    memcpy((u8*)obj + 0x3C, __ptmf_null, 12);
+    memcpy((u8*)obj + 0x48, __ptmf_null, 12);
 
-void CCol6System_destructorAdjust2(void* self) { ((void(*)(void*))__dt__11CCol6SystemFv)((char*)self - 0x70); }
+    // Initialize remaining fields.
+    *(u32*)((u8*)obj + 0x54) = 0;
+    *(u32*)((u8*)obj + 0x58) = 0;
+    *(u32*)((u8*)obj + 0x5C) = 0;
+    *(s32*)((u8*)obj + 0x60) = -1;
+    *(u8*)((u8*)obj + 0x64) = 0;
+    *(u8*)((u8*)obj + 0x65) = 0;
+    *(u8*)((u8*)obj + 0x66) = 0;
+    *(u8*)((u8*)obj + 0x67) = 1;
+    *(u32*)((u8*)obj + 0x68) = 0;
 
-extern "C" void __dt__11CCol6InviteFv(void* self);
-void CCol6Invite_destructorAdjust(void* self) { ((void(*)(void*))__dt__11CCol6InviteFv)((char*)self - 0x6c); }
+    // Set final vtable and field at 0x6C.
+    *(u32*)((u8*)obj + 0x10) = lbl_eu_8052FF3C;
+    *(u32*)((u8*)obj + 0x6C) = lbl_eu_8052FF3C + 0x24;
+
+    // Store arguments.
+    *(u16*)((u8*)obj + 0x70) = arg2;
+    *(u8*)((u8*)obj + 0x72) = arg3;
+    *(u8*)((u8*)obj + 0x73) = arg4;
+    *(u8*)((u8*)obj + 0x74) = 0;
+
+    // Store singleton.
+    gCol6Invite = obj;
+
+    // Register with parent.
+    Regist__8CProcessFP8CProcessb(obj, parent, false);
+
+    return gCol6Invite;
+}
+
+// Destructor stub.
+CCol6Invite::~CCol6Invite() {}
+
+// CProcess overrides (stubs).
+void CCol6Invite::Init() {}
+void CCol6Invite::Term() {}
+void CCol6Invite::Move() {}
+void CCol6Invite::Draw() {}
+
+// Standalone string formatting helper.
+// Formats a string into buffer, stores length at buffer+0x100.
+void func_eu_801651A0(char* buffer, const char* format, ...) {
+    char buf[0x100];
+    va_list va;
+    va_start(va, format);
+    vsnprintf(buf, 0x100, format, va);
+    va_end(va);
+    *(u32*)(buffer + 0x100) = strlen(buf);
+    strcpy(buffer, buf);
+}

@@ -1,6 +1,15 @@
 #include "kyoshin/cf/chain/CChainCombo.hpp"
 #include "kyoshin/cf/object/CfObjectActor.hpp"
-#include <ml_math.h>
+#include <monolib/math/Random.hpp>
+
+// Forward declarations for functions called by the two decompiled functions.
+// func_800B708C is declared in CAIAction.hpp (included transitively).
+extern "C" void func_8013EAB0();
+extern "C" void* func_8016FE34(void*);
+extern "C" void func_802A07F4(int, void*);
+
+// 3-entry table indexed by probability thresholds in func_80293EEC.
+extern "C" int lbl_eu_80538988[3];
 
 namespace cf{
     CChainCombo::CChainCombo(){
@@ -11,7 +20,7 @@ namespace cf{
         func_80294834__FPv(&mGauge);
         func_802AA338__Fv();
     }
-    
+
     void CChainCombo::func1(){
         mArtsType = 0;
         mComboCount = 0;
@@ -21,23 +30,30 @@ namespace cf{
     }
 }
 
-// Arts category byte loaded from the actor's sub-object.
+// Object returned by CActorParam_UnkVirtualFunc132 (vtable[0x2a4]).
+struct CChainCombo_ArtsCategoryHolder {
+    u8 pad[0x50];
+    void* mArtsCategoryPtr; // 0x50
+};
+
+// Object with arts category byte at +0x3e.
 struct CChainCombo_ArtsCategory {
     u8 pad[0x3e];
     u8 mArtsCategory; // 0x3e
 };
 
-// Sub-object at actor+0x50 that holds the arts category.
-struct CChainCombo_ArtsCategoryHolder {
-    u8 pad[0x50];
-    CChainCombo_ArtsCategory* mArtsCategoryPtr; // 0x50
+// Sub-object at actor+0x3e9c (CfObjectMove base, vtable 3).
+struct CChainCombo_MoveBase {
+    void** mVtbl;
 };
 
 void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
-    // Virtual call at vtable[0x2a4] returns a pointer to a sub-object.
+    // Call vtable[0x2a4] on actor, get a pointer to a sub-object.
     CChainCombo_ArtsCategoryHolder* holder =
         (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_UnkVirtualFunc132();
-    u8 newArtsType = holder->mArtsCategoryPtr->mArtsCategory;
+    CChainCombo_ArtsCategory* category =
+        (CChainCombo_ArtsCategory*)holder->mArtsCategoryPtr;
+    u8 newArtsType = category->mArtsCategory;
 
     // Reset combo count if arts type changed (but not to/from 8).
     int oldArtsType = self->mArtsType;
@@ -65,12 +81,16 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     if (!self->mPending) {
+        self->mPending = false;
         return;
     }
 
-    // Virtual call on the sub-object at actor+0x3e9c (vtable[0x4c]).
-    int result = actor->field_0x3e9c->vtable[0x4c](actor->field_0x3e9c);
-    void* obj = func_800B708C(func_8016FE34(result));
+    // Call vtable[0x4c] on the sub-object at actor+0x3e9c.
+    CChainCombo_MoveBase* moveBase = (CChainCombo_MoveBase*)((u8*)actor + 0x3e9c);
+    int (*vfunc)(void*) = (int (*)(void*))moveBase->mVtbl[0x4c / 4];
+    int result = vfunc(moveBase);
+
+    void* obj = func_8016FE34(func_800B708C((BOOL)result));
     if (obj == nullptr) {
         self->mPending = false;
         return;
@@ -78,18 +98,19 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 
     // Random selection from a 3-entry table based on probability thresholds.
     int rand = ml::math::mtRand(100);
-    int entry;
+    int value;
     if (rand < 5) {
-        entry = 0;
+        value = lbl_eu_80538988[0];
     } else if (rand < 25) {
-        entry = 1;
+        value = lbl_eu_80538988[1];
     } else {
-        entry = 2;
+        value = lbl_eu_80538988[2];
     }
-    int value = lbl_eu_80538988[entry];
 
-    // Virtual call at vtable[0x184] on the object.
-    obj->vtable[0x184](obj, value);
+    // Call vtable[0x184] on the object.
+    CChainVObj* vobj = (CChainVObj*)obj;
+    void (*vfunc2)(void*, int) = (void (*)(void*, int))vobj->mVtbl[0x184 / 4];
+    vfunc2(vobj, value);
     func_802A07F4(0xbf, obj);
 
     self->mPending = false;

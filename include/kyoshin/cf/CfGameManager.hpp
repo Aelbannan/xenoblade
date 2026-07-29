@@ -405,13 +405,13 @@ public:
     void func_80086D94();
     void func_80086D98();
     void func_80086D9C();
-    void func_80086DA0();
+    u32 func_80086DA0();
     void func_80086DA4();
     void func_80086DA8();
     void func_80086DAC();
     void func_80086DB0();
     void func_80086DB4();
-    void func_80086DBC();
+    u32 func_80086DBC();
     void func_80086E6C();
     bool func_80087244();
     bool func_80087250();

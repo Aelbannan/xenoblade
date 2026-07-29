@@ -1,8 +1,8 @@
 #pragma once
 
 #include <types.h>
-#include <nw4r/g3d/g3d_light.h>
-#include <nw4r/math/math_types.h>
+#include "nw4r/g3d/g3d_light.h"
+#include "nw4r/math/math_types.h"
 #include "monolib/math/CVec3.hpp"
 
 class CLight {
@@ -23,7 +23,7 @@ public:
     f32 unk28;                          // 0x28 - direction.z
     nw4r::g3d::LightObj* mpLightObj;    // 0x2C
     u32 unk30;                          // 0x30 - padding
-    u32 unk34;                          // 0x34 - light type
+    s32 unk34;                          // 0x34 - light type
     f32 unk38;                          // 0x38 - intensity
     f32 unk3C;                          // 0x3C - attenuation end
 };

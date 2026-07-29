@@ -8,7 +8,9 @@ struct CItemBoxInfoState {
     u8 _00[0x30];
     void* resource;
     void* layout;
-    u8 _38[0x58];
+    void* animTransform1;   // 0x38 - nw4r::lyt::AnimTransform
+    void* animTransform2;   // 0x3C - nw4r::lyt::AnimTransform
+    u8 _40[0x50];
     u8 active;
     u8 _91[3];
     s32 state;

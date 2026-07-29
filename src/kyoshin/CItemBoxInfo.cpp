@@ -5,10 +5,12 @@
 #include "kyoshin/CItemBoxInfo.hpp"
 
 // --- Forward declarations ---
-namespace nw4r { namespace lyt { class Layout; class DrawInfo; } }
+namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
 extern "C" char lbl_eu_805063BC[];
 void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 void func_80136910(nw4r::lyt::Layout*, const char*, u8);
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 int sprintf(char*, const char*, ...);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
@@ -83,9 +85,23 @@ void func_801D4A2C(){}
 void func_801D4B3C(){}
 void func_801D4C3C(){}
 void func_801D4C9C(){}
-void func_801D4D18(){}
+
+void func_801D4D18(CItemBoxInfo* info) {
+    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
+        info->state.state = 3;
+        info->state.visible = 1;
+    }
+}
+
 void func_801D4D64(){}
-void func_801D4DE0(){}
+
+void func_801D4DE0(CItemBoxInfo* info) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
+        info->state.visible = 1;
+        info->state.state = 0;
+    }
+}
+
 void func_801D4E2C(){}
 void func_801D5274(){}
 void func_801D5564(){}
@@ -197,9 +213,23 @@ void func_801E16F0(CItemBoxInfo2* info, char* arg1, char* arg2) {
 }
 void func_801E174C(){}
 void func_801E17EC(){}
-void func_801E1868(){}
+
+void func_801E1868(CItemBoxInfo2* info) {
+    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
+        info->state.state = 3;
+        info->state.visible = 1;
+    }
+}
+
 void func_801E18B4(){}
-void func_801E1930(){}
+
+void func_801E1930(CItemBoxInfo2* info) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
+        info->state.visible = 1;
+        info->state.state = 0;
+    }
+}
+
 void func_801E197C(){}
 void func_801E1E0C(){}
 void func_801E20FC(){}

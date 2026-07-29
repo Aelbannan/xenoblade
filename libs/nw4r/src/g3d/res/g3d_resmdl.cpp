@@ -39,7 +39,7 @@ u32 ResMdl::GetResNodeNumEntries() const {
 
 /******************************************************************************
  *
- * RexVtxPos
+ * ResVtxPos
  *
  ******************************************************************************/
 ResVtxPos ResMdl::GetResVtxPos(int idx) const {
@@ -95,6 +95,10 @@ u32 ResMdl::GetResVtxClrNumEntries() const {
  ******************************************************************************/
 ResVtxTexCoord ResMdl::GetResVtxTexCoord(int idx) const {
     return ResVtxTexCoord(ofs_to_obj<ResDic>(ref().toResVtxTexCoordDic)[idx]);
+}
+
+inline u32 ResMdl::GetResVtxTexCoordNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResVtxTexCoordDic).GetNumData();
 }
 
 /******************************************************************************
@@ -249,6 +253,24 @@ ResFile ResMdl::GetParent() {
 ResVtxFurPos ResMdl::GetResVtxFurPos(int idx) const {
     return ResVtxFurPos(
         ofs_to_obj<ResDic>(ref().toResVtxFurPosDic)[idx]);
+}
+
+/******************************************************************************
+ *
+ * GetResVtxFurVec
+ *
+ ******************************************************************************/
+inline ResVtxFurVec ResMdl::GetResVtxFurVec(int idx) const {
+    return ResVtxFurVec(
+        ofs_to_obj<ResDic>(ref().toResVtxFurVecDic)[idx]);
+}
+
+inline u32 ResMdl::GetResVtxFurVecNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResVtxFurVecDic).GetNumData();
+}
+
+inline u32 ResMdl::GetResVtxFurPosNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResVtxFurPosDic).GetNumData();
 }
 
 /******************************************************************************

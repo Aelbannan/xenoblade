@@ -149,9 +149,6 @@ private:
     s32 ReadVar(const u8** ppData) const;
     s32 ReadArg(const u8** ppData, SeqPlayer* pPlayer, SeqTrack* pTrack,
                 SeqArgType type) const;
-    static const u8* ParseAllocTrack(const void* pBuffer, u32 offset,
-                                     u32* pSize);
-
 private:
     static bool mPrintVarEnabledFlag;
 };

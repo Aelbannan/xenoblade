@@ -15,6 +15,8 @@ unk1CD(0){
     SCInit();
 }
 
+CDeviceBase::~CDeviceBase() {}
+
 CDeviceSC::~CDeviceSC(){
     spInstance = nullptr;
 }

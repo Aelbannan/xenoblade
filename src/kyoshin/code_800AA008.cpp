@@ -92,7 +92,7 @@ check3:
 
 check4:
     if (digitCount != 4) goto fail;
-    *out = (str[0] - '0') * 1000 + (str[1] - '0') * 100 + (str[2] - '0') * 10 + str[3] - '0';
+    *out = (str[2] - '0') * 10 + (str[0] - '0') * 1000 + (str[1] - '0') * 100 + str[3] - '0';
     goto end;
 
 fail:

@@ -85,13 +85,14 @@ void func_802A658C(CVS_THREAD_EHP* self) {
     // (larger block) is the if-body and the vtable call is the else-body.
     if (self->field_0x38 != self->field_0x40) {
         // Reload slot-state triple {unk0, unk4, unk8} from init table.
-        // Retail uses lis+lwzu for the first-element load to form the
-        // base address.  We load [0] first into a local so MWCC has
-        // the best chance of using the same lis+lwzu pattern.
-        u32 v0 = lbl_eu_80539B14[0];
-        self->unk4 = lbl_eu_80539B14[1];
-        self->unk0 = (u32*)v0;
-        self->unk8 = lbl_eu_80539B14[2];
+        // Retail loads [0] via lis+lwzu (value in r3, address in r4),
+        // then [1], stores [1], stores [0], loads [2], stores [2].
+        struct Init { u32 f0, f4, f8; };
+        u32 a = ((const Init*)lbl_eu_80539B14)->f0;
+        u32 b = ((const Init*)lbl_eu_80539B14)->f4;
+        self->unk4 = b;
+        self->unk0 = (u32*)a;
+        self->unk8 = ((const Init*)lbl_eu_80539B14)->f8;
     } else {
         self->func_802A3B50();
     }

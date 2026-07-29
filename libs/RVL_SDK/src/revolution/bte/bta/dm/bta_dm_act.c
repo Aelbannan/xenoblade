@@ -23,8 +23,7 @@ struct bta_dm_search_cb_t {
     bta_dm_search_cback_t p_search_cback; /* offset 0x00 */
     unsigned char _pad4[0x10];           /* offset 0x04-0x13 */
     void *p_sdp_db;                     /* offset 0x14 */
-    unsigned short state;                /* offset 0x18 */
-    unsigned char _pad1a[0x06];         /* offset 0x1a-0x1f */
+    unsigned char _pad18[0x08];         /* offset 0x18-0x1f */
     char peer_name[0x20];               /* offset 0x20 */
     unsigned char _pad40[0x34];         /* offset 0x40-0x73 */
     void *p_search_queue;               /* offset 0x74 */

@@ -33,17 +33,15 @@ static SIMain Si = {SI_CHAN_NONE};
 static u32 Type[SI_MAX_CHAN] = {SI_ERROR_NOREP, SI_ERROR_NOREP, SI_ERROR_NOREP,
                                 SI_ERROR_NOREP};
 
-static struct {
-    SIPacket Packet[SI_MAX_CHAN];
-    s64 XferTime[SI_MAX_CHAN];
-    s64 TypeTime[SI_MAX_CHAN];
-    SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
-    BOOL InputBufferValid[SI_MAX_CHAN];
-    u32 InputBuffer[SI_MAX_CHAN][2];
-    OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
-    u32 InputBufferVcount[SI_MAX_CHAN];
-    OSAlarm Alarm[SI_MAX_CHAN];
-} si_data;
+static SIPacket Packet[SI_MAX_CHAN];
+static s64 XferTime[SI_MAX_CHAN];
+static s64 TypeTime[SI_MAX_CHAN];
+static SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
+static BOOL InputBufferValid[SI_MAX_CHAN];
+static u32 InputBuffer[SI_MAX_CHAN][2];
+static OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
+static u32 InputBufferVcount[SI_MAX_CHAN];
+static OSAlarm Alarm[SI_MAX_CHAN];
 
 static void SIClearTCInterrupt(void) {
     u32 csr = SI_HW_REGS[SI_SICOMSCR];
@@ -65,7 +63,7 @@ static u32 CompleteTransfer(void) {
     SIClearTCInterrupt();
 
     if (Si.chan != SI_CHAN_NONE) {
-        si_data.XferTime[Si.chan] = __OSGetSystemTime();
+        XferTime[Si.chan] = __OSGetSystemTime();
 
         dst = (u8*)Si.inAddr;
 
@@ -96,7 +94,7 @@ static u32 CompleteTransfer(void) {
                 sr = SI_COLL;
             }
         } else {
-            si_data.TypeTime[Si.chan] = __OSGetSystemTime();
+            TypeTime[Si.chan] = __OSGetSystemTime();
             sr = 0;
         }
 
@@ -120,8 +118,8 @@ void SIInit(void) {
 
     OSRegisterVersion(__SIVersion);
 
-    si_data.Packet[SI_CHAN_0].chan = si_data.Packet[SI_CHAN_1].chan = si_data.Packet[SI_CHAN_2].chan =
-        si_data.Packet[SI_CHAN_3].chan = SI_CHAN_NONE;
+    Packet[SI_CHAN_0].chan = Packet[SI_CHAN_1].chan = Packet[SI_CHAN_2].chan =
+        Packet[SI_CHAN_3].chan = SI_CHAN_NONE;
 
     Si.poll = 0;
     SISetSamplingRate(0);
@@ -233,8 +231,8 @@ static void AlarmHandler(OSAlarm* alarm, OSContext* ctx) {
     s32 chan;
     SIPacket* packet;
 
-    chan = alarm - si_data.Alarm;
-    packet = &si_data.Packet[chan];
+    chan = alarm - Alarm;
+    packet = &Packet[chan];
 
     if (packet->chan != SI_CHAN_NONE) {
         if (__SITransfer(packet->chan, packet->outAddr, packet->outSize,
@@ -251,7 +249,7 @@ BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
     s64 start;
     s64 fire;
 
-    packet = &si_data.Packet[chan];
+    packet = &Packet[chan];
     enabled = OSDisableInterrupts();
 
     if (packet->chan != SI_CHAN_NONE || Si.chan == chan) {
@@ -260,10 +258,10 @@ BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
     }
 
     start = __OSGetSystemTime();
-    fire = wait == 0 ? start : wait + si_data.XferTime[chan];
+    fire = wait == 0 ? start : wait + XferTime[chan];
 
     if (start < fire) {
-        OSSetAlarm(&si_data.Alarm[chan], fire - start, AlarmHandler);
+        OSSetAlarm(&Alarm[chan], fire - start, AlarmHandler);
     } else if (__SITransfer(chan, outAddr, outSize, inAddr, inSize, callback)) {
         OSRestoreInterrupts(enabled);
         return TRUE;

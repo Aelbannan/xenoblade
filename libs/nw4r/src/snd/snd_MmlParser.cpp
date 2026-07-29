@@ -743,24 +743,24 @@ volatile s16* MmlParser::GetVariablePtr(SeqPlayer* pPlayer, SeqTrack* pTrack,
     return NULL;
 }
 
-const u8* MmlParser::ParseAllocTrack(const void* pBuffer, u32 offset,
-                                     u32* pSize) {
-    const u8* pBase = static_cast<const u8*>(pBuffer);
-    const u8* pCmd = &pBase[offset];
-    u8 firstByte = *pCmd;
+} // namespace detail
+} // namespace snd
+} // namespace nw4r
 
-    if (firstByte != MML_ALLOCTRACK) {
+extern "C" u32
+ParseAllocTrack__Q44nw4r3snd6detail9MmlParserFPCvUlPUl(const void* pBuffer,
+                                                        u32 offset,
+                                                        u32* pSize) {
+    const u8* pCmd = static_cast<const u8*>(pBuffer) + offset;
+
+    if (*pCmd != 0xFE) {
         *pSize = 1;
-        return pBase;
+        return offset;
     }
 
     u32 size = pCmd[1];
     size <<= 8;
     size |= pCmd[2];
     *pSize = size;
-    return pBase + 3;
+    return offset + 3;
 }
-
-} // namespace detail
-} // namespace snd
-} // namespace nw4r

@@ -295,7 +295,26 @@ void func_801D5274(void* out, u16 arg2, void* arg3) {
         }
     }
 }
-void func_801D5564(){}
+void func_801D5564(void* out, void* unused, void* data, void* arg3) {
+    if (arg3 == NULL) return;
+    u16 v1 = func_801392E4(data);
+    u16 v2 = func_80139358((u32)data);
+    void* inst = CItem_initItemImplInstances(arg3);
+    void** vt = *(void***)inst;
+    u8 r = ((u8(*)(void*, void*))vt[2])(inst, arg3);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    char* s1 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
+    char* s2 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0);
+    void* inst2 = CItem_initItemImplInstances(arg3);
+    void** vt2 = *(void***)inst2;
+    for (u32 i = 0; i < 3; i++) {
+        char buf[0x20];
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i);
+        func_801361E8(lbl_eu_806640F8, buf, v2);
+        char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
+        ((u32*)((u8*)out + 0xC))[i] = (u32)t;
+    }
+}
 
 void func_801D59C0(u32* out, void* arg2, void* arg3) {
     u32 v0 = func_801392E4(arg2);
@@ -604,8 +623,27 @@ void CItemBoxInfoEntry::setItemBoxEntry(u16 r4, u32 r5, u8 r6) {
 
 void func_801DF4E0(){}
 void func_801DF578(){}
-void func_801DF610(void* a, void* b, u32 c, void* d) {}
-void func_801DF988(void* a, void* b, void* c, void* d) {}
+void func_801DF610(void* a, void* b, u32 c, void* d) {
+    void* lookup = func_8009EC9C(c);
+    for (int i = 0; i < 12; i++) {
+        s16 v = *(s16*)((u8*)lookup + 0x26 + i * 2);
+        if (v == -1) continue;
+        void* r = func_80157C4C(v);
+        if (r != NULL && *(u32*)r != 0) {
+            void* inst = CItem_initItemImplInstances(r);
+        }
+    }
+}
+
+void func_801DF988(void* a, void* b, void* c, void* d) {
+    void* lookup = func_8009EC9C(0);
+    for (int i = 0; i < 12; i++) {
+        void* r = func_80157C4C(i);
+        if (r != NULL && *(u32*)r != 0) {
+            void* inst = CItem_initItemImplInstances(r);
+        }
+    }
+}
 u32 func_801DFD60(u16 arg1, u32 arg2) {
     void* obj = (u8*)func_8009EC9C(arg1) + 0x3534;
     u32 result = 0;
@@ -901,7 +939,29 @@ void func_801E1E0C(void* out, u16 arg2, void* arg3) {
         }
     }
 }
-void func_801E20FC(){}
+void func_801E20FC(void* out, void* unused, void* data, void* arg3) {
+    if (arg3 == NULL) return;
+    u16 v1 = func_801392E4(data);
+    u16 v2 = func_80139358((u32)data);
+    void* inst = CItem_initItemImplInstances(arg3);
+    void** vt = *(void***)inst;
+    u8 r = ((u8(*)(void*, void*))vt[2])(inst, arg3);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    char* s1 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0x1e - (r - 1));
+    char* s2 = func_80136190((char*)&lbl_eu_805063BC[0x130], (char*)&lbl_eu_805063BC[0x139], 0);
+    void* inst2 = CItem_initItemImplInstances(arg3);
+    void** vt2 = *(void***)inst2;
+    for (u32 i = 0; i < 3; i++) {
+        char buf[0x20];
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i + 1);
+        func_801361E8(lbl_eu_806640F8, buf, v2);
+        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+        char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
+        ((u32*)((u8*)out + 0xC))[i] = (u32)t;
+        u8 lang = getLanguage__9CDeviceSCFv();
+    }
+}
 
 void func_801E2558(u32* out, void* arg2) {
     u32 v0 = func_801392E4(arg2);

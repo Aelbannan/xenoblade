@@ -43,6 +43,11 @@ struct ItemListObject : public ItemContainerPrefix, public ItemListSubobject {
     u16 itemId_0x3F28;
 };
 
+struct ItemListEntryView {
+    u8 field_0x0[0x8C];
+    u16 itemId_0x8C;
+};
+
 struct ItemListNode {
     ItemListNode* next;
     u32 field_0x4;
@@ -360,11 +365,14 @@ extern "C" void func_8007F930__Q22cf13CfGameManagerFv(bool enabled) {
     }
 }
 
-extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(UnkLinkedNode** destination,
-                                                        UnkLinkedNode** source) {
-    *destination = *source;
-    *source = (*source)->next;
+#pragma dont_inline on
+extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(
+    UnkF8C0Node* destination, UnkF8C0Node* source, u32 unused) {
+    destination->field_0x0 = source->field_0x0;
+    ItemListNode* node = reinterpret_cast<ItemListNode*>(source->field_0x0);
+    source->field_0x0 = reinterpret_cast<u32>(node->next);
 }
+#pragma dont_inline reset
 
 extern "C" u32 func_80081318__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third) {
     return 0x38000000 | (first << 20) | (second << 10) | third;
@@ -939,21 +947,17 @@ extern "C" Unk81B80Object* __ct__80081B80(Unk81B80Object* self) {
     return self;
 }
 
-struct ItemListIterator {
-    ItemListNode* node;
-};
-
 extern "C" void func_8007F8C0__Q22cf13CfGameManagerFv(
-    ItemListIterator* destination, const ItemListManager* source);
+    UnkF8C0Node* destination, const UnkF8C0Source* source);
 extern "C" ItemListSubobject** func_8007F8D0__Q22cf13CfGameManagerFv(
-    ItemListIterator* iterator);
+    UnkF8C0Node* iterator);
 extern "C" u16 func_8007F8B8__Q22cf13CfGameManagerFv(ItemListSubobject* object);
-extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(
-    ItemListIterator* destination, ItemListIterator* source, u32 unused);
+#pragma dont_inline on
 extern "C" void func_8007F8F4__Q22cf13CfGameManagerFv(
-    ItemListIterator* destination, const ItemListManager* source);
-extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(
-    const ItemListIterator* first, const ItemListIterator* second);
+    UnkF8C0Node* destination, const ItemListManager* source) {
+    destination->field_0x0 = reinterpret_cast<u32>(source->sentinel);
+}
+#pragma dont_inline reset
 extern "C" u16 lbl_eu_80663E40;
 extern "C" ItemListManager* func_800B6BA4__Fv();
 extern "C" void func_800C01D4(ItemListObject* object, void* destination,
@@ -975,27 +979,27 @@ extern "C" void func_8007F830__Q22cf13CfGameManagerFv(void* destination,
     __ct__8009ED08(destination, itemId);
 }
 
-extern "C" cf::CfObjectMove* func_80082D90__Q22cf13CfGameManagerFv() {
+extern "C" cf::UnkClass_80082D90* func_80082D90__Q22cf13CfGameManagerFv() {
     cf::CfGameManager* gameManager = cf::CfGameManager::getInstance();
     ItemListManager* itemManager = func_800B6BA4__Fv();
-    ItemListIterator iterator;
-    func_8007F8C0__Q22cf13CfGameManagerFv(&iterator, itemManager);
-    while (true) {
-        ItemListIterator end;
-        func_8007F8F4__Q22cf13CfGameManagerFv(&end, itemManager);
-        if (!func_8007F900__Q22cf13CfGameManagerFv(&iterator, &end)) {
-            break;
-        }
+    UnkF8C0Node iterator;
+    func_8007F8C0__Q22cf13CfGameManagerFv(
+        &iterator, reinterpret_cast<const UnkF8C0Source*>(itemManager));
+    UnkF8C0Node previous;
+    UnkF8C0Node end;
+    while ((func_8007F8F4__Q22cf13CfGameManagerFv(&end, itemManager),
+            func_8007F900__Q22cf13CfGameManagerFv(
+                &iterator.field_0x0, &end.field_0x0))) {
         ItemListSubobject* object =
             *func_8007F8D0__Q22cf13CfGameManagerFv(&iterator);
         if (lbl_eu_80663E40 ==
             func_8007F8B8__Q22cf13CfGameManagerFv(object)) {
-            return reinterpret_cast<cf::CfObjectMove*>(object);
+            return reinterpret_cast<cf::UnkClass_80082D90*>(object);
         }
-        ItemListIterator previous;
         func_8007F8DC__Q22cf13CfGameManagerFv(&previous, &iterator, 0);
     }
-    return *func_8007C6B4__Q22cf13CfGameManagerFv(gameManager->unk94, 0);
+    return reinterpret_cast<cf::UnkClass_80082D90*>(
+        *func_8007C6B4__Q22cf13CfGameManagerFv(gameManager->unk94, 0));
 }
 
 extern "C" u8 lbl_eu_8052AA28[];

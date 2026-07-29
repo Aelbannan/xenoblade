@@ -197,9 +197,9 @@ public:
     void func_8007F11C();
     void func_8007F1FC();
     void func_8007F830();
-    void func_8007F8B8();
+    u16 func_8007F8B8();
     void func_8007F8C0();
-    void func_8007F8D0();
+    void** func_8007F8D0();
     void func_8007F8DC();
     void func_8007F8F4();
     void func_8007F900();

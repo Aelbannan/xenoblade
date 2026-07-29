@@ -1855,11 +1855,11 @@ extern int func_8022DB74(void*);
 extern void __dl__FPv(void*);
 extern void* func_801394D4(u32);
 extern void func_801D4AE0(void*, int, void*);
-extern void func_801CFF28(void*);
+extern "C" void func_801CFF28(void*);
 extern int CSysWin_isActive(void*);
 extern int CSysWin_getUnk34(void*);
 extern void func_801D216C(void*, int);
-extern void func_801D0950(void*);
+extern "C" void func_801D0950(void*);
 extern u32 func_80137510(u32, float);
 extern void* func_80157C4C(u8, s16);
 extern u32 func_801392E4(u32);
@@ -1887,9 +1887,9 @@ extern u32 func_8022DB6C(void*);
 extern void advanceItemBoxState__FP12CItemBoxInfo(void*);
 extern void func_801EB410(void*, int);
 extern void func_801EB0D4(void*);
-extern void func_801D0328(void*);
-extern void func_801CFFEC(void*);
-extern void func_801D05D4(void*, int);
+extern "C" void func_801D0328(void*);
+extern "C" void func_801CFFEC(void*);
+extern "C" void func_801D05D4(void*, int);
 extern void func_80138078__FUl(u32);
 extern u32 func_8015780C(void*);
 extern u32 func_801D3328(void*);
@@ -1928,7 +1928,7 @@ extern u32 func_8003B1EC(u32);
 extern u32 func_8009CF8C(u32);
 extern u32 func_80139A18(void*);
 extern void func_80136190(void*, u32, u32);
-extern void func_801C5158(void*, u32);
+extern "C" void func_801C5158(void*, u32);
 extern u32 func_801392B4(void*);
 extern u32 func_801393CC(void*);
 extern u32 func_8026178C(void*);
@@ -1938,14 +1938,14 @@ extern u32 func_8009EC9C(u32);
 extern u32 func_800A082C(void);
 extern u32 code80135FDC_getByte_64077(void*);
 extern void func_801C4B60(void*, u8, u8, u8, u8);
-extern void func_801D1F9C(void*, u32);
-extern u32 func_801C62AC(void*, u32);
+extern "C" void func_801D1F9C(void*, u32);
+extern "C" u32 func_801C62AC(void*, u32);
 extern u32 func_801C631C(void*, u32);
 extern u16 ArrayGet12(u8);
-extern int func_801C6E90(void*);
+extern "C" int func_801C6E90(void*);
 extern u32 func_801D4260(void*, u8);
-extern void func_801D0BD8(void*);
-extern void func_801CFD2C(void*);
+extern "C" void func_801D0BD8(void*);
+extern "C" void func_801CFD2C(void*);
 extern const float lbl_eu_80667F40;
 extern const float lbl_eu_80667F48;
 extern const float lbl_eu_80667F80;
@@ -2002,17 +2002,17 @@ extern const char lbl_eu_8050566C[];
 extern u32 lbl_eu_80664514;
 extern char lbl_eu_806640F4[];
 extern u32 func_80157C20(u8);
-extern void func_801CE390(void*);
-extern float func_801C9F88(void*, void*);
+extern "C" void func_801CE390(void*);
+extern "C" float func_801C9F88(void*, void*);
 extern u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
-extern void CopyEntry9Bytes(char*, const char*);
-extern void __ct__CVisionItem(void*);
+extern "C" void CopyEntry9Bytes(char*, const char*);
+extern "C" void __ct__CVisionItem(void*);
 extern void __ct__CArtsBookItem(void*);
-extern void SetEntry9Bytes(unsigned char*, unsigned short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);
-extern void func_801C562C(void*, char*);
+extern "C" void SetEntry9Bytes(unsigned char*, unsigned short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);
+extern "C" void func_801C562C(void*, char*);
 
-u8 func_801C67F8(CItemBoxGridFull* self);
-u8 func_801C6840(CItemBoxGridFull* self);
+extern "C" u8 func_801C67F8(CItemBoxGridFull* self);
+extern "C" u8 func_801C6840(CItemBoxGridFull* self);
 
 u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_61; }
 
@@ -3497,7 +3497,7 @@ void func_801CE2F8(void* self) {
     *(u32*)(p + 0x58) = 5;
 }
 
-void func_801CE390() { }
+void func_801CE390(void* self) { }
 
 void func_801CE3E8() { }
 
@@ -3697,7 +3697,6 @@ u32 func_801D12D4(void* self, void* entry) {
     return 1;
 }
 
-void CItemBoxGrid::OnFileEvent() {}
 
 void CopyVec4s(short* dst, const short* src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
 
@@ -3711,7 +3710,7 @@ void func_801D1F9C(short* dst, unsigned long val) {
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CArtsBookItem constructor
-void __ct__CArtsBookItem(CArtsBookItem* self) {
+void __ct__CArtsBookItem(void* self) {
     u8* vtable;
     // vtable setup
     *(u16*)((u8*)self + 0x804) = 0;

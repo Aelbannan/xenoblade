@@ -163,10 +163,12 @@ extern "C" u32 func_8007F044__Q22cf13CfGameManagerFv(const UnkF044Data* data, u3
 }
 #pragma dont_inline reset
 
+#pragma dont_inline on
 extern "C" void func_8007F8C0__Q22cf13CfGameManagerFv(UnkF8C0Node* destination,
                                                         const UnkF8C0Source* source) {
     destination->field_0x0 = source->field_0x4->field_0x0;
 }
+#pragma dont_inline reset
 
 extern "C" void func_80081CA0__Q22cf13CfGameManagerFv(Unk81CA0Data* data, u16 index,
                                                         u32 offset) {
@@ -189,9 +191,11 @@ extern "C" bool func_80082FCC__Q22cf13CfGameManagerFv(const cf::CfObject* data, 
 }
 #pragma dont_inline reset
 
+#pragma dont_inline on
 extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u32* second) {
     return *first != *second;
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
@@ -745,7 +749,12 @@ void cf::CfGameManager::func_80086DB0() {}
 
 u32 cf::CfGameManager::func_80086DBC() { return 0; }
 
-void cf::CfGameManager::func_8007F8B8() {}
+#pragma dont_inline on
+u16 cf::CfGameManager::func_8007F8B8() {
+    ItemListEntryView* object = reinterpret_cast<ItemListEntryView*>(this);
+    return object->itemId_0x8C;
+}
+#pragma dont_inline reset
 
 extern u16 lbl_eu_80663E3A;
 void cf::CfGameManager::func_8007F9AC() {}
@@ -841,9 +850,14 @@ bool cf::CfGameManager::func_8007CBC8() {
 
 void cf::CfGameManager::func_8007EEF8() {}
 
-void cf::CfGameManager::func_8007F8D0() {}
+#pragma dont_inline on
+void** cf::CfGameManager::func_8007F8D0() {
+    UnkF8C0Node* iterator = reinterpret_cast<UnkF8C0Node*>(this);
+    ItemListNode* node = reinterpret_cast<ItemListNode*>(iterator->field_0x0);
+    return reinterpret_cast<void**>(&node->object);
+}
 
-void cf::CfGameManager::func_8007F8F4() {}
+#pragma dont_inline reset
 
 extern void __fill_mem(void*, int, int);
 

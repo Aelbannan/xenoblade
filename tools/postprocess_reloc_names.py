@@ -564,7 +564,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             "__dt__Q54nw4r3snd6detail11SoundThread8AutoLockFv",
         ),
     ),
-}
 
     "CItemBoxGrid.o": UnitRules(
         exact_renames=(
@@ -692,8 +691,19 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("func_801D12D4__FPvPv", "func_801D12D4"),
             ("func_801D1F9C__FPsUl", "func_801D1F9C"),
             ("sinit_801D1E30__Fv", "sinit_801D1E30"),
+            ("OnFileEvent__12CItemBoxGridFP10CEventFile__Fv", "OnFileEvent__12CItemBoxGridFP10CEventFile"),
+            ("__ct__801C5514__FPv", "__ct__801C5514"),
+            ("__ct__CArtsBookItem__FPv", "__ct__CArtsBookItem"),
+            ("__ct__CItemBoxGrid__Fv", "__ct__CItemBoxGrid"),
+            ("__dt__10CQuestItemFv__FPvi", "__dt__10CQuestItemFv"),
+            ("__dt__11CVisionItemFv__FPvi", "__dt__11CVisionItemFv"),
+            ("__dt__12CItemBoxGridFv__Fv", "__dt__12CItemBoxGridFv"),
+            ("__dt__13CArtsBookItemFv__FPvi", "__dt__13CArtsBookItemFv"),
+            ("__dt__801C5670__FPvi", "__dt__801C5670"),
         ),
     ),
+}
+
 
 
 def _ppc_addr16_ha(addr: int) -> int:

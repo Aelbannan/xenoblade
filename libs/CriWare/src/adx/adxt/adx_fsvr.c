@@ -47,33 +47,35 @@ void ADXT_ExecFsSvr() {
 // sequences through ADX subsystem servers (STM, F) with state updates, then
 // invokes an optional post-callback and resets state to 0.
 void adxt_ExecFsSvr() {
+    struct ADXT_FsSvrGlobals* const globals = &lbl_eu_805E26B0;
+
     ADXCRS_Lock();
-    if (lbl_eu_805E26B0.state != 0) {
+    if (globals->state != 0) {
         ADXCRS_Unlock();
         return;
     }
-    lbl_eu_805E26B0.state = 1;
+    globals->state = 1;
     ADXCRS_Unlock();
 
-    if (lbl_eu_805E26B0.pre_callback) {
-        lbl_eu_805E26B0.pre_callback(lbl_eu_805E26B0.pre_arg);
+    if (globals->pre_callback) {
+        globals->pre_callback(globals->pre_arg);
     }
 
-    lbl_eu_805E26B0.state = 3;
+    globals->state = 3;
     ADXSTM_ExecFsSvr();
-    lbl_eu_805E26B0.state = 4;
+    globals->state = 4;
     ADXSTM_ExecServer();
-    lbl_eu_805E26B0.state = 5;
+    globals->state = 5;
     ADXF_ExecServer();
-    lbl_eu_805E26B0.state = 6;
+    globals->state = 6;
     ADXSTM_ExecServer();
-    lbl_eu_805E26B0.state = 7;
+    globals->state = 7;
     ADXSTM_ExecFsSvr();
-    lbl_eu_805E26B0.state = 9;
+    globals->state = 9;
     ADXSTM_ExecFsIdle();
 
-    lbl_eu_805E26B0.state = 0;
-    if (lbl_eu_805E26B0.post_callback) {
-        lbl_eu_805E26B0.post_callback(lbl_eu_805E26B0.post_arg);
+    globals->state = 0;
+    if (globals->post_callback) {
+        globals->post_callback(globals->post_arg);
     }
 }

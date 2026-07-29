@@ -123,10 +123,12 @@ void func_802A6650(CVS_THREAD_EHP* self) {
         typedef int (*VtableFunc)(CVoiceHandle*);
         VtableFunc isActive = (VtableFunc)handle->vtable[0x2BC / 4];
         if (isActive(handle) == 0) {
-            // Bias handle pointer to reach the embedded CCharVoice at +0x3E9C.
-            CCharVoice* voicePtr = (CCharVoice*)handle;
+            // Bias handle pointer to reach the embedded CCharVoice.
+            CCharVoice* voicePtr;
             if (handle != NULL) {
                 voicePtr = &handle->voice;
+            } else {
+                voicePtr = NULL;
             }
 
             int voiceId = ml::math::mtRand(2) + 0x51D;
@@ -191,7 +193,7 @@ int func_802A6820(int a, int b) {
         return 0;
     }
 
-    // Bias handle pointer to reach the embedded CCharVoice at +0x3E9C.
+    // Bias handle pointer to reach the embedded CCharVoice.
     CCharVoice* voicePtr;
     if (handle != NULL) {
         voicePtr = &handle->voice;
@@ -233,17 +235,16 @@ int func_802A6958(CVoiceHandle* arg) {
     CVoiceHandleList* list = func_800B6BC8();
     CVoiceHandleListNode* node = list->end->next;
     while (node != list->end) {
-        // The list stores pointers biased by +0x3E9C (pointing to the
-        // embedded CCharVoice, not the CVoiceHandle base).  Recover the
-        // CVoiceHandle by subtracting the offset.
-        u8* raw = (u8*)node->value;
+        // The list stores pointers to the embedded CCharVoice (at
+        // offset voice within CVoiceHandle).  Recover the containing
+        // CVoiceHandle via offsetof.
         CVoiceHandle* handle;
-        if (raw != NULL) {
-            handle = (CVoiceHandle*)(raw - 0x3E9C);
+        if (node->value != NULL) {
+            handle = (CVoiceHandle*)((char*)node->value
+                - offsetof(CVoiceHandle, voice));
         } else {
             handle = NULL;
         }
-
         // is-active check on the recovered handle.
         {
             typedef int (*VtableFunc)(CVoiceHandle*);
@@ -279,7 +280,7 @@ int func_802A6958(CVoiceHandle* arg) {
         return 0;
     }
 
-    // Bias arg to get the embedded CCharVoice at +0x3E9C.
+    // Bias arg to get the embedded CCharVoice.
     CCharVoice* voicePtr;
     if (arg != NULL) {
         voicePtr = &arg->voice;

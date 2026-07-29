@@ -10,6 +10,8 @@ using namespace ml;
 
 CDeviceVI* CDeviceVI::spInstance;
 
+extern "C" GXRenderModeObj lbl_eu_8056BE38;
+
 const VIGamma CDeviceVI::gammaLevels[] = {
     VI_GM_0_1,
     VI_GM_0_2,
@@ -106,7 +108,8 @@ unk2AC(0),
 mNewVisPerFrame(0),
 unk2B5(1),
 mTargetFramerate(TARGET_FRAMERATE),
-mSecPerFrame(MS_PER_FRAME) {
+mSecPerFrame(MS_PER_FRAME),
+unk2C0(0) {
     spInstance = this;
     unk2A0.set(0,0);
     mtl::ALLOC_HANDLE handle = sUseStaticHandle ? mtl::MemManager::getHandleStatic() : CDevice::getDevSys1Handle();
@@ -315,35 +318,69 @@ inline void CDeviceVI::unkInline3(u32 index, u32 val){
 }
 
 bool CDeviceVI::updateMainRenderModeStruct(){
-    if(checkFlag(VI_FLAG_3)){
-        GXAdjustForOverscan(&mBaseRenderMode, &mMainRenderMode, unk2A0.x, unk2A0.y);
-        VIConfigure(&mMainRenderMode);
-
-        setFlag(VI_FLAG_3, false);
-        mViXOrigin = mMainRenderMode.viXOrigin;
-        mViYOrigin = mMainRenderMode.viYOrigin;
-        mViWidth = mMainRenderMode.viWidth;
-        mViHeight = mMainRenderMode.viHeight;
-        unk29C = (((mMainRenderMode.fbWidth + 15) & 0xFFF0) * mMainRenderMode.xfbHeight) * 2;
-        unkInline3(0, (u32)mXfbBuffersPtr);
-
-        for(u32 i = 1; i < unk284; i++){
-            u32 temp1 = unk29C;
-            u32 temp = (u32)mFrameBufferPtrArray[i - 1];
-            unkInline3(i, temp + temp1);
-        }
-
-        setNextFrameBuffer();
-        setFlag(VI_FLAG_2, false);
-
-        VIFlush();
-        VIWaitForRetrace();
-        VIWaitForRetrace();
-
-        return true;
+    if (!(mViFlags & 8)) {
+        return false;
     }
 
-    return false;
+    u32 temp = unk2C0 & 0xF;
+
+    if (VIGetTvFormat() != VI_TVFORMAT_PAL || temp == 2) {
+        GXAdjustForOverscan(&mBaseRenderMode, &mMainRenderMode, unk2A0.x, unk2A0.y);
+    } else {
+        memcpy(&mMainRenderMode, &lbl_eu_8056BE38, sizeof(GXRenderModeObj));
+    }
+
+    VIWaitForRetrace();
+    VIConfigure(&mMainRenderMode);
+    VIFlush();
+    VIWaitForRetrace();
+    VIWaitForRetrace();
+
+    u16 fbWidth = mMainRenderMode.fbWidth;
+    u32 xfbBuf = (u32)mXfbBuffersPtr;
+    u16 xfbHeight = mMainRenderMode.xfbHeight;
+    u16 viXOrigin = mMainRenderMode.viXOrigin;
+    u32 alignedWidth = (fbWidth + 15) & 0xFFF0;
+    u32 xfbSize = alignedWidth * xfbHeight;
+    u32 flags = mViFlags;
+    u16 viYOrigin = mMainRenderMode.viYOrigin;
+    u32 lowBits = xfbBuf & 0x1F;
+    u32 newFlags = flags & ~8;
+    u16 viWidth = mMainRenderMode.viWidth;
+    u16 viHeight = mMainRenderMode.viHeight;
+    u32 xfbSize2 = xfbSize * 2;
+
+    mViFlags = newFlags;
+    mViXOrigin = viXOrigin;
+    mViYOrigin = viYOrigin;
+    mViWidth = viWidth;
+    mViHeight = viHeight;
+    unk29C = xfbSize2;
+
+    u32 addr = xfbBuf;
+    if (lowBits != 0) {
+        addr = xfbBuf + 32 - lowBits;
+    }
+    mFrameBufferPtrArray[0] = (void*)addr;
+
+    for (u32 i = 1; i < unk284; i++) {
+        u32 prev = (u32)mFrameBufferPtrArray[i - 1];
+        u32 next = prev + unk29C;
+        u32 nextLow = next & 0x1F;
+        if (nextLow != 0) {
+            next = next + 32 - nextLow;
+        }
+        mFrameBufferPtrArray[i] = (void*)next;
+    }
+
+    VISetNextFrameBuffer(mFrameBufferPtrArray[unk294]);
+    mViFlags &= ~4;
+
+    VIFlush();
+    VIWaitForRetrace();
+    VIWaitForRetrace();
+
+    return true;
 }
 
 void CDeviceVI::wkUpdate(){

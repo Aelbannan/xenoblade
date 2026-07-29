@@ -12439,7 +12439,7 @@ int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFla
     u32 counter = id;
     int result = 0;
 
-    for (; counter < 0x1F; entry++, counter++) {
+    while (counter < 0x1F) {
         if (entry->id == id) {
             if (prefixFlag != 0) {
                 int len = strlen(entry->template_);
@@ -12487,6 +12487,8 @@ int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFla
 
             result = 1;
         }
+        entry++;
+        counter++;
     }
 
     return result;
@@ -12496,6 +12498,9 @@ void func_800AA5C0() {
     func_800AA33C(*(ml::FixStr<64>*)lbl_eu_80572C80, (u32)0, 0, 1);
 }
 
+// Compare the first two characters of str against each FormatEntry's 2-char name.
+// Returns the matching entry's id field (u16 zero-extended to u32), or 0 if no match.
+// Loop is unrolled 3x to match retail codegen; scans entries 1 through 30.
 u32 func_800AA600(const char* str) {
     if (str != NULL) {
         const FormatEntry* entry = &reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[1];

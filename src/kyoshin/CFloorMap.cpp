@@ -77,7 +77,6 @@ CFloorMap::~CFloorMap() {}
 
 void func_8024BE1C(){}
 
-void func_8024C104(){}
 
 void func_8024C1FC(){}
 
@@ -145,8 +144,42 @@ void func_8024F55C(void* self) {
 extern "C" char lbl_eu_8050BEA8[];
 extern u32 lbl_eu_8066479C;
 extern u32 func_8003B1EC(u32);
+extern u32 lbl_eu_8050BDF8[];
+extern u8 lbl_eu_80664798;
 
 typedef void* (*VFuncPtr)(void*, const char*, u32);
+u32 getHandleMEM2__Q23mtl10MemManagerFv();
+void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
+void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
+int func_800A9D90();
+void func_801F34F4(void*);
+
+void func_8024C104(void* self) {
+    u8* p = (u8*)self;
+    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    *(void**)(p + 0x24) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_8050BEA8[0x4e7], self, 0, 0);
+    u32 handle2 = func_800A9D90();
+    *(void**)(p + 0x30) = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(handle2, &lbl_eu_8050BEA8[0x4fc], self, 0, 0);
+    u32 buffer[29];
+    u32* dst = &buffer[1];
+    u32* src = lbl_eu_8050BDF8;
+    buffer[0] = 0;
+    int count = 14;
+    do {
+        *dst++ = *src++;
+        *dst++ = *src++;
+    } while (--count);
+    handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u8 idx = lbl_eu_80664798;
+    *(void**)(p + 0x28) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, (char*)buffer[idx], self, 0, 0);
+    func_801F34F4(p + 0x60);
+    typedef void (*VoidVFuncPtr)(void*);
+    VoidVFuncPtr* vt = *(VoidVFuncPtr**)(p + 0xB8);
+    vt[0x20](p + 0xB8);
+    vt = *(VoidVFuncPtr**)(p + 0xF4);
+    vt[0x20](p + 0xF4);
+}
+
 
 void func_8024F5C4(void* self, u32 arg2) {
     void* ptr = *(void**)((u8*)self + 0x32D4);

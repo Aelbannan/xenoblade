@@ -102,6 +102,7 @@ public:
     u8 unk2B6[2]; //padding?
     u32 mTargetFramerate; //0x2B8
     float mSecPerFrame; //0x2BC
+    u32 unk2C0; //0x2C0
 
     //General screen dimensions
     static const int SCREEN_WIDTH = 640;

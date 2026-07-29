@@ -5675,9 +5675,11 @@ asm ui32 __TRK_get_MSR(){
     blr
 }
 
+#pragma dont_inline on
 void __TRK_set_MSR(ui32 val) {
     asm("mtmsr %0" : : "r"(val));
 }
+#pragma dont_inline reset
 
 //unused
 asm ui32 __TRK_get_PVR(){
@@ -5835,7 +5837,7 @@ DSError TRKValidMemory32(const void* addr, size_t length, ValidMemoryOptions rea
 }
 
 //This is a certified metrowerks moment
-/* "libs/PowerPC_EABI_Support/src/MetroTRK/targimpl.c" line 237 "PowerPC_EABI_Support/MetroTRK/ppc_mem.h" */
+/* "libs/PowerPC_EABI_Support/src/MetroTRK/targimpl.c" line 239 "PowerPC_EABI_Support/MetroTRK/ppc_mem.h" */
 #ifndef TRK_PPC_MEM_H
 #define TRK_PPC_MEM_H
 
@@ -5858,10 +5860,10 @@ static void ppc_writebyte1(ui8* ptr, ui8 val){
 #endif
 /* end "PowerPC_EABI_Support/MetroTRK/ppc_mem.h" */
 
-static void TRK_ppc_memcpy(void* dest, const void* src, int n, ui32 destMSR, ui32 srcMSR) {
+static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR) {
     ui32 savedMSR;
-    ui8* srcPtr = (ui8*)src;
-    ui8* destPtr = (ui8*)dest;
+    ui8* srcPtr = src;
+    ui8* destPtr = dest;
 
     savedMSR = __TRK_get_MSR();
 

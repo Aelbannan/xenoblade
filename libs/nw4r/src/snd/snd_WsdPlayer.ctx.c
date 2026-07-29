@@ -244013,7 +244013,7 @@ namespace snd {
 namespace detail {
 
 // Forward declarations
-struct WaveData;
+struct WaveInfo;
 
 class Channel {
 public:
@@ -244038,6 +244038,7 @@ public:
     void Update(bool periodic);
     void Start(const WaveData& rData, int length, u32 offset);
     void Release();
+    void NoteOff();
     void Stop();
 
     void SetAttack(int attack) {
@@ -244247,8 +244248,12 @@ private:
     Voice* mVoice;      // at 0xE4
     Channel* mNextLink; // at 0xE8
 
+    u32 field_0xEC; // at 0xEC
+    Voice* field_0xF0; // at 0xF0
+    u32 field_0xF4; // at 0xF4
+
 public:
-    NW4R_UT_LINKLIST_NODE_DECL(); // at 0xEC
+    NW4R_UT_LINKLIST_NODE_DECL(); // at 0xF8
 };
 
 NW4R_UT_LINKLIST_TYPEDEF_DECL(Channel);
@@ -244964,6 +244969,7 @@ public:
 
 private:
     ChannelManager();
+    ~ChannelManager();
 
     Channel* Alloc();
     void Free(Channel* pChannel);

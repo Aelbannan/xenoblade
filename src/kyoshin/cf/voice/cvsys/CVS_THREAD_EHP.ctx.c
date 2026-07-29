@@ -909,28 +909,36 @@ void func_802A6718(CVS_THREAD_EHP* self) {
 void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
-    // Loop counter declared first — influences regalloc order so the
-    // base pointer for array indexing lands in r5 (retail) not r4.
-    int i;
-
-    // Slot 0x20: bias to embedded CCharVoice at +0x3E9C via &handle->voice.
+    // Slot 0x20
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* biased = (CCharVoice*)handle;
-    if (handle) biased = &handle->voice;
-    if (biased == voicePtr) self->field_0x20 = NULL;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
 
     // Slot 0x24
     handle = self->field_0x24;
     biased = (CCharVoice*)handle;
-    if (handle) biased = &handle->voice;
-    if (biased == voicePtr) self->field_0x24 = NULL;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x24 = NULL;
+    }
 
-    // Rotating slots 0x2C..0x34 (count in field_0x3c).
-    for (i = 0; i < self->field_0x3c; i++) {
+    // Rotating slots 0x2C..0x34 (count in field_0x3c)
+    for (int i = 0; i < self->field_0x3c; i++) {
         handle = self->field_0x2c[i];
         biased = (CCharVoice*)handle;
-        if (handle) biased = &handle->voice;
-        if (biased == voicePtr) self->field_0x2c[i] = NULL;
+        if (handle != NULL) {
+            biased = &handle->voice;
+        }
+        if (biased == voicePtr) {
+            self->field_0x2c[i] = NULL;
+        }
     }
 }
 
@@ -944,40 +952,29 @@ void func_802A658C(CVS_THREAD_EHP* self) {
         return;
     }
 
-    // Advance the rotating index forward or backward, wrapping at bounds.
     if (self->field_0x44 == 0) {
-        // Forward: increment, wrap to 0 if past bound.
-        self->field_0x38++;
-        if (self->field_0x3c < self->field_0x38) {
+        // Forward: increment, wrap to 0 once past the bound.
+        int newIdx = self->field_0x38 + 1;
+        self->field_0x38 = newIdx;
+        if (self->field_0x3c < newIdx) {
             self->field_0x38 = 0;
         }
     } else {
         // Backward: decrement, wrap to bound-1 on underflow.
-        self->field_0x38--;
-        if (self->field_0x38 < 0) {
+        int newIdx = self->field_0x38 - 1;
+        self->field_0x38 = newIdx;
+        if (newIdx < 0) {
             self->field_0x38 = self->field_0x3c - 1;
         }
     }
 
-    // Branch layout in retail: beq to vtable-call, fall-through for lbl copy.
-    // To get the same layout we invert the condition so the lbl copy
-    // (larger block) is the if-body and the vtable call is the else-body.
-    if (self->field_0x38 != self->field_0x40) {
-        // Reload slot-state triple {unk0, unk4, unk8} from init table.
-        // Retail loads [0] via lis+lwzu (value in r3, address in r4),
-        // then [1], stores [1], stores [0], loads [2], stores [2].
-        // Declaring 'a' before 'p' pushes the base pointer to r4 and
-        // the first loaded value to r3, matching the retail regalloc.
-        struct Init { u32 f0, f4, f8; };
-        u32 a;
-        const Init* p = (const Init*)lbl_eu_80539B14;
-        a = p->f0;
-        u32 b = p->f4;
-        self->unk4 = b;
-        self->unk0 = (u32*)a;
-        self->unk8 = p->f8;
-    } else {
+    if (self->field_0x38 == self->field_0x40) {
         self->func_802A3B50();
+    } else {
+        // Reload slot-state triple {field_0, field_4, callback}.
+        self->unk4 = lbl_eu_80539B14[1];
+        self->unk0 = (u32*)lbl_eu_80539B14[0];
+        self->unk8 = lbl_eu_80539B14[2];
     }
 }
 
@@ -999,14 +996,16 @@ void func_802A6650(CVS_THREAD_EHP* self) {
     CVoiceHandle* handle = func_802A7998(self->field_0x24);
     if (handle != NULL) {
         // is-active check via the handle's vtable (offset 0x2BC).
-        typedef int (*IsActiveFunc)(CVoiceHandle*);
-        IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
+        typedef int (*VtableFunc)(CVoiceHandle*);
+        VtableFunc isActive = (VtableFunc)handle->vtable[0x2BC / 4];
         if (isActive(handle) == 0) {
-            // Voice is not active -- play a random voice ID.
-            CCharVoice* voicePtr = (CCharVoice*)handle;
+            // Bias handle pointer in place to reach the embedded
+            // CCharVoice at +0x3E9C, reusing the register.
             if (handle != NULL) {
-                voicePtr = &handle->voice;
+                handle = (CVoiceHandle*)((u8*)handle + 0x3E9C);
             }
+            CCharVoice* voicePtr = (CCharVoice*)handle;
+
             int voiceId = ml::math::mtRand(2) + 0x51D;
             if (func_802A3C44(self, voicePtr, voiceId) != 0) {
                 return;
@@ -1027,30 +1026,35 @@ int func_802A6820(int a, int b) {
         return 0;
     }
 
-    CVoiceHandle* handle = func_802A7998((CVoiceHandle*)0);
+    CVoiceHandle* handle = func_802A7998(NULL);
     if (handle == NULL) {
         return 0;
     }
 
-    // Skip if the current voice is still active.
-    typedef int (*IsActiveFunc)(CVoiceHandle*);
-    IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
-    if (isActive(handle) != 0) {
-        return 0;
+    // is-active check via the handle's vtable (offset 0x2BC).
+    {
+        typedef int (*VtableFunc)(CVoiceHandle*);
+        VtableFunc isActive = (VtableFunc)handle->vtable[0x2BC / 4];
+        if (isActive(handle) != 0) {
+            return 0;
+        }
     }
 
-    // Read a u32 value from the handle's sub-object (vtable offset 0x30) and
-    // gate the selection on a category check (func_80174C98).
+    // Read a u32 value from the handle's sub-object (vtable offset 0x30)
+    // and check a category flag via func_80174C98.
     CVSubObj* subobj = handle->field_0x04;
-    typedef u32* (*GetPtrFunc)(CVSubObj*);
-    GetPtrFunc getPtr = (GetPtrFunc)subobj->vtable[0x30 / 4];
-    u32* result = getPtr(subobj);
-    u32 value = *result;
-    if (func_80174C98(handle, &value, 0x803) == 0) {
-        return 0;
+    {
+        typedef u32* (*GetValueFunc)(CVSubObj*);
+        GetValueFunc getValue = (GetValueFunc)subobj->vtable[0x30 / 4];
+        u32* p = getValue(subobj);
+        u32 value = *p;
+        if (func_80174C98(handle, &value, 0x803) == 0) {
+            return 0;
+        }
     }
 
     // Choose the voice ID from the relationship between a and b.
+    // r30 holds b and is later reused for the selected voice ID.
     if (b < a && a >= 2) {
         b = ml::math::mtRand(2) + 0x6A5;
     } else if (a < b && a == 1) {
@@ -1064,11 +1068,13 @@ int func_802A6820(int a, int b) {
         return 0;
     }
 
-    // Play the selected voice on the (biased) handle.
-    CCharVoice* voicePtr = (CCharVoice*)handle;
+    // Bias handle pointer in place to reach the embedded CCharVoice
+    // at +0x3E9C, reusing the register.
     if (handle != NULL) {
-        voicePtr = &handle->voice;
+        handle = (CVoiceHandle*)((u8*)handle + 0x3E9C);
     }
+    CCharVoice* voicePtr = (CCharVoice*)handle;
+
     func_802A3D54(voicePtr, b, 0xAA);
     return 0;
 }
@@ -1077,4 +1083,82 @@ int func_802A6820(int a, int b) {
 void __ct__802A5ED4() {}
 void func_802A617C() {}
 void func_802A6408() {}
-void func_802A6958() {}
+
+// ── Target 3: us-802a908c (func_802A6958) ──────────────────────────────────
+// Voice play function.  Checks a manager flag (field_0x3f08 bit 16), then
+// scans the global voice-handle list for an inactive handle whose category
+// matches (func_80174C98 with 0x803).  On success allocates 0x28 bytes and
+// plays voice ID 0xA8D on the original handle's embedded CCharVoice.
+int func_802A6958(CVoiceHandle* arg) {
+    int found = 0;
+
+    // Test bit 16 (0x10000) of the manager flag.
+    if (!(arg->field_0x3f08 & 0x10000)) {
+        return 0;
+    }
+
+    // is-active check via the handle's vtable (offset 0x2BC).
+    {
+        typedef int (*VtableFunc)(CVoiceHandle*);
+        VtableFunc isActive = (VtableFunc)arg->vtable[0x2BC / 4];
+        if (isActive(arg) != 0) {
+            return 0;
+        }
+    }
+
+    CVoiceHandleList* list = func_800B6BC8();
+    CVoiceHandleListNode* node = list->end->next;
+    while (node != list->end) {
+        // The list stores pointers biased by +0x3E9C (pointing to the
+        // embedded CCharVoice, not the CVoiceHandle base).  Recover the
+        // CVoiceHandle by subtracting the offset in place.
+        u8* raw = (u8*)node->value;
+        if (raw != NULL) {
+            raw = raw - 0x3E9C;
+        }
+        CVoiceHandle* handle = (CVoiceHandle*)raw;
+        // is-active check on the recovered handle.
+        {
+            typedef int (*VtableFunc)(CVoiceHandle*);
+            VtableFunc isActive = (VtableFunc)handle->vtable[0x2BC / 4];
+            if (isActive(handle) == 0) {
+                // Check category via the sub-object at field_0x04.
+                CVSubObj* subobj = handle->field_0x04;
+                typedef u32* (*GetValueFunc)(CVSubObj*);
+                GetValueFunc getValue =
+                    (GetValueFunc)subobj->vtable[0x30 / 4];
+                u32* p = getValue(subobj);
+                u32 value = *p;
+                if (func_80174C98(handle, &value, 0x803) != 0) {
+                    found = 1;
+                    break;
+                }
+            }
+        }
+
+        node = node->next;
+    }
+
+    if (found == 0) {
+        return 0;
+    }
+
+    // Allocate 0x28 bytes.
+    if (func_802A330C(0x28, 1) == NULL) {
+        return 0;
+    }
+
+    if (func_802A7FE4(arg) != 0) {
+        return 0;
+    }
+
+    // Bias arg in place to get the embedded CCharVoice at +0x3E9C,
+    // reusing the same register for the cast to avoid a copy.
+    if (arg != NULL) {
+        arg = (CVoiceHandle*)((u8*)arg + 0x3E9C);
+    }
+    CCharVoice* voicePtr = (CCharVoice*)arg;
+
+    func_802A3D54(voicePtr, 0xA8D, 0x28);
+    return 0;
+}

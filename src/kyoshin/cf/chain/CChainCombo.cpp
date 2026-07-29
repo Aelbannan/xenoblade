@@ -35,9 +35,10 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
         (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_UnkVirtualFunc132();
     CChainCombo_ArtsCategory* category = holder->mArtsCategory;
     int newArtsType = category->mArtsCategory;
+    int oldArtsType = self->mArtsType;
 
     // Reset combo count if arts type changed (but not to/from 8).
-    int resetCombo = self->mArtsType;
+    int resetCombo = oldArtsType;
     if (newArtsType == 8) {
         resetCombo = 0;
     } else if (resetCombo == 8) {
@@ -59,36 +60,29 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 }
 
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
-    if (!self->mPending) {
-        self->mPending = false;
-        return;
+    if (self->mPending) {
+        // Call vtable[0x4c] (CObjectParam_UnkVirtualFunc5) on the CfObjectMove sub-object at actor+0x3e9c.
+        cf::CfObjectMove* moveObj = (cf::CfObjectMove*)((u8*)actor + 0x3e9c);
+        func_800B708C(moveObj->CObjectParam_UnkVirtualFunc5());
+
+        CChainVObj* vobj = (CChainVObj*)func_8016FE34();
+        if (vobj != nullptr) {
+            // Random selection from a 3-entry table based on probability thresholds.
+            int rand = ml::math::mtRand(100);
+            int value;
+            if (rand < 5) {
+                value = lbl_eu_80538988[0];
+            } else if (rand < 25) {
+                value = lbl_eu_80538988[1];
+            } else {
+                value = lbl_eu_80538988[2];
+            }
+
+            // Call vtable[0x184] (CfObjectModel_UnkVirtualFunc4) on the object.
+            CfObjectModel_UnkVirtualFunc4_t func = (CfObjectModel_UnkVirtualFunc4_t)vobj->mVtbl[0x184 / 4];
+            func((cf::CfObjectModel*)vobj, value);
+            func_802A07F4(0xbf, vobj);
+        }
     }
-
-    // Call vtable[0x4c] (CObjectParam_UnkVirtualFunc5) on the CfObjectMove sub-object at actor+0x3e9c.
-    cf::CfObjectMove* moveObj = (cf::CfObjectMove*)((u8*)actor + 0x3e9c);
-    func_800B708C(moveObj->CObjectParam_UnkVirtualFunc5());
-
-    CChainVObj* vobj = (CChainVObj*)func_8016FE34();
-    if (vobj == nullptr) {
-        self->mPending = false;
-        return;
-    }
-
-    // Random selection from a 3-entry table based on probability thresholds.
-    int rand = ml::math::mtRand(100);
-    int value;
-    if (rand < 5) {
-        value = lbl_eu_80538988[0];
-    } else if (rand < 25) {
-        value = lbl_eu_80538988[1];
-    } else {
-        value = lbl_eu_80538988[2];
-    }
-
-    // Call vtable[0x184] (CfObjectModel_UnkVirtualFunc4) on the object.
-    CfObjectModel_UnkVirtualFunc4_t func = (CfObjectModel_UnkVirtualFunc4_t)vobj->mVtbl[0x184 / 4];
-    func((cf::CfObjectModel*)vobj, value);
-    func_802A07F4(0xbf, vobj);
-
     self->mPending = false;
 }

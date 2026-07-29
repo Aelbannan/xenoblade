@@ -261,7 +261,10 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
     LoadMtx(rInfo);
 
     ut::WideTextWriter writer;
-    ut::Rect rect = GetTextDrawRect(&writer);
+    writer.SetFont(*mpFont);
+    writer.SetFontSize(mFontSize.width, mFontSize.height);
+    writer.SetLineSpace(mLineSpace);
+    writer.SetCharSpace(mCharSpace);
 
     ut::Color top =
         detail::MultipleAlpha(mTextColors[TEXTCOLOR_TOP], mGlbAlpha);
@@ -272,14 +275,123 @@ void TextBox::DrawSelf(const DrawInfo& rInfo) {
                                           : ut::CharWriter::GRADMODE_NONE);
     writer.SetTextColor(top, bottom);
 
-    ut::Color min = GetColor(mpMaterial->GetTevColor(TEVCOLOR_REG0));
-    ut::Color max = GetColor(mpMaterial->GetTevColor(TEVCOLOR_REG1));
+    // Clamp TEV colors (GXColorS10 s16→u8) for color mapping
+    GXColorS10 tev0 = mpMaterial->GetTevColor(TEVCOLOR_REG0);
+    GXColorS10 tev1 = mpMaterial->GetTevColor(TEVCOLOR_REG1);
 
-    writer.SetColorMapping(min, max);
+    GXColor tev0Clamped = {
+        ClampColor(tev0.r), ClampColor(tev0.g),
+        ClampColor(tev0.b), ClampColor(tev0.a)};
+    GXColor tev1Clamped = {
+        ClampColor(tev1.r), ClampColor(tev1.g),
+        ClampColor(tev1.b), ClampColor(tev1.a)};
+
+    writer.SetColorMapping(ut::Color(tev0Clamped), ut::Color(tev1Clamped));
+
+    if (mpTagProcessor != NULL) {
+        writer.SetTagProcessor(mpTagProcessor);
+    }
+
     writer.SetupGX();
 
+    // Calculate the text bounding rect
+    ut::Rect rect;
+    rect.left = 0.0f;
+    rect.top = 0.0f;
+    rect.right = 0.0f;
+    rect.bottom = 0.0f;
+
+    writer.SetCursor(0.0f, 0.0f);
+
+    ut::WideTextWriter rectWriter = writer;
+    CalcStringRectImpl(&rect, &rectWriter, mTextBuf, mTextLen, mSize.width);
+
+    // Align rect within the pane using text position flags
+    math::VEC2 pos = GetVtxPos();
+
+    f32 magH;
+    {
+        u8 hPos = GetTextPositionH();
+        if (hPos == HORIZONTALPOSITION_CENTER) {
+            magH = 0.5f;
+        } else if (hPos == HORIZONTALPOSITION_RIGHT) {
+            magH = 1.0f;
+        } else {
+            magH = 0.0f;
+        }
+    }
+    f32 magV;
+    {
+        u8 vPos = GetTextPositionV();
+        if (vPos == VERTICALPOSITION_CENTER) {
+            magV = 0.5f;
+        } else if (vPos == VERTICALPOSITION_BOTTOM) {
+            magV = 1.0f;
+        } else {
+            magV = 0.0f;
+        }
+    }
+
+    f32 textWidth = rect.right - rect.left;
+    f32 textHeight = rect.bottom - rect.top;
+
+    f32 offsetX = pos.x + (mSize.width - textWidth) * magH;
+    f32 offsetY = pos.y + (mSize.height - textHeight) * magV;
+
+    rect.left = offsetX;
+    rect.top = offsetY;
+    rect.right = offsetX + textWidth;
+    rect.bottom = offsetY + textHeight;
+
+    // Per-line horizontal alignment factor (recomputed same way)
+    f32 lineMagH;
+    {
+        u8 hPos = GetTextPositionH();
+        if (hPos == HORIZONTALPOSITION_CENTER) {
+            lineMagH = 0.5f;
+        } else if (hPos == HORIZONTALPOSITION_RIGHT) {
+            lineMagH = 1.0f;
+        } else {
+            lineMagH = 0.0f;
+        }
+    }
+
+    f32 totalWidth = rect.right - rect.left;
+
     writer.SetCursor(rect.left, rect.top);
-    writer.Print(mTextBuf, mTextLen);
+
+    int remaining = mTextLen;
+    const wchar_t* pStr = mTextBuf;
+
+    while (remaining > 0) {
+        ut::Rect lineRect;
+        lineRect.left = 0.0f;
+        lineRect.top = 0.0f;
+        lineRect.right = 0.0f;
+        lineRect.bottom = 0.0f;
+
+        ut::WideTextWriter lineWriter = writer;
+        lineWriter.SetCursor(0.0f, 0.0f);
+
+        bool hasNextLine;
+        int consumed = CalcLineRectImpl(&lineRect, &lineWriter, pStr,
+                                        remaining, mSize.width, &hasNextLine);
+
+        f32 lineWidth = lineRect.right - lineRect.left;
+
+        // Per-line horizontal alignment
+        f32 x = rect.left + (totalWidth - lineWidth) * lineMagH;
+        writer.SetCursorX(x);
+
+        writer.Print(pStr, consumed);
+
+        if (hasNextLine) {
+            writer.Print(L"\n", 1);
+        }
+
+        pStr += consumed;
+        remaining -= consumed;
+    }
 }
 
 u16 TextBox::GetStringBufferLength() const {

@@ -191,13 +191,18 @@ Pane* Pane::FindPaneByName(const char* pName, bool recursive) {
     }
 
     if (recursive) {
-        NW4R_UT_LINKLIST_FOREACH (it, mChildList, {
-            Pane* pResult = it->FindPaneByName(pName, recursive);
+        PaneList::Iterator it = mChildList.GetBeginIter();
+        PaneList::Iterator itEnd = mChildList.GetEndIter();
+
+        while (it != itEnd) {
+            Pane* pResult = it->FindPaneByName(pName, true);
 
             if (pResult != NULL) {
                 return pResult;
             }
-        })
+
+            ++it;
+        }
     }
 
     return NULL;
@@ -211,13 +216,18 @@ Material* Pane::FindMaterialByName(const char* pName, bool recursive) {
     }
 
     if (recursive) {
-        NW4R_UT_LINKLIST_FOREACH (it, mChildList, {
-            Material* pResult = it->FindMaterialByName(pName, recursive);
+        PaneList::Iterator it = mChildList.GetBeginIter();
+        PaneList::Iterator itEnd = mChildList.GetEndIter();
+
+        while (it != itEnd) {
+            Material* pResult = it->FindMaterialByName(pName, true);
 
             if (pResult != NULL) {
                 return pResult;
             }
-        })
+
+            ++it;
+        }
     }
 
     return NULL;

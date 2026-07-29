@@ -188,7 +188,7 @@ bool WsdPlayer::StartChannel(const WsdCallback* pCallback, u32 callbackArg) {
     pChannel->SetRelease(waveSoundNoteInfo.release);
     pChannel->SetReleasePriorityFix(mReleasePriorityFixFlag);
 
-    pChannel->Start(*reinterpret_cast<const WaveInfo*>(&waveData), -1, startSample);
+    pChannel->Start(waveData, -1, startSample);
     mChannel = pChannel;
     mWavePlayFlag = true;
 

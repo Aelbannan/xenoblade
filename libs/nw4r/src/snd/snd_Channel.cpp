@@ -303,24 +303,30 @@ void Channel::NoteOff() {
 }
 
 void Channel::Stop() {
-    if (mVoice == NULL) {
+    if (field_0xF0 == NULL) {
         return;
     }
 
-    mVoice->Stop();
-    mVoice->Free();
-    mVoice = NULL;
+    field_0xF0->Stop();
+    field_0xF0->Free();
 
+    field_0xF0 = NULL;
     mPauseFlag = false;
     mActiveFlag = false;
+
+    if (mCallbackData != 0) {
+        reinterpret_cast<ChannelCallback>(mCallbackData)(
+            this, CALLBACK_STATUS_STOPPED, reinterpret_cast<u32>(mVoice));
+    }
+
+    if (mNextLink != NULL) {
+        reinterpret_cast<DisposeCallback*>(mNextLink)
+            ->InvalidateData(reinterpret_cast<const void*>(field_0xEC), NULL);
+    }
 
     if (mAllocFlag) {
         mAllocFlag = false;
         ChannelManager::GetInstance().Free(this);
-    }
-
-    if (mCallback != NULL) {
-        mCallback(this, CALLBACK_STATUS_STOPPED, mCallbackData);
     }
 }
 

@@ -105,8 +105,10 @@ void RemoteSpeaker::Update() {
         return;
     }
 
-    SpeakerCommand command =
-        mUserCommand != COMMAND_NONE ? mUserCommand : mInternalCommand;
+    SpeakerCommand command = mUserCommand;
+    if (command == COMMAND_NONE) {
+        command = mInternalCommand;
+    }
 
     mUserCommand = COMMAND_NONE;
     mInternalCommand = COMMAND_NONE;
@@ -356,26 +358,24 @@ void RemoteSpeaker::NotifyCallback(s32 chan, s32 result) {
 void RemoteSpeaker::ContinueAlarmHandler(OSAlarm* pAlarm, OSContext* pCtx) {
 #pragma unused(pCtx)
 
-    ut::AutoInterruptLock lock;
-    RemoteSpeaker* p = static_cast<RemoteSpeaker*>(OSGetAlarmUserData(pAlarm));
-
-    p->mForceResumeFlag = true;
-    p->mContinueFlag = false;
+    BOOL old = OSDisableInterrupts();
+    OSGetAlarmUserData(pAlarm);
+    OSRestoreInterrupts(old);
 }
 
 void RemoteSpeaker::IntervalAlarmHandler(OSAlarm* pAlarm, OSContext* pCtx) {
 #pragma unused(pCtx)
 
-    ut::AutoInterruptLock lock;
+    BOOL old = OSDisableInterrupts();
     RemoteSpeaker* p = static_cast<RemoteSpeaker*>(OSGetAlarmUserData(pAlarm));
 
-    if (p->mIntervalFlag) {
+    if (p->mContinueFlag) {
         OSCancelAlarm(&p->mContinueAlarm);
         p->mForceResumeFlag = false;
-        p->mContinueFlag = false;
     }
 
-    p->mIntervalFlag = false;
+    p->mContinueFlag = false;
+    OSRestoreInterrupts(old);
 }
 
 } // namespace snd

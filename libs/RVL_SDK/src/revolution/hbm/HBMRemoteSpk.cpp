@@ -309,6 +309,9 @@ void RemoteSpk::Disconnect(s32 chan) {
     rInfo.wencinfo.dn = 0;
     rInfo.wencinfo.dlh = 0;
     rInfo.wencinfo.dlq = 0;
+    for (int i = 0; i < 8; i++) {
+        rInfo.wencinfo.padding[i] = 0;
+    }
     rInfo.first = true;
     rInfo.playReady = false;
 }

@@ -12379,11 +12379,8 @@ private:
 */
 class CCol6Invite : public CProcess {
 public:
-    CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
+    CCol6Invite() {}
     virtual ~CCol6Invite();
-
-    // Factory: allocates from work memory, constructs, registers with parent.
-    static CCol6Invite* create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
 
     // CProcess overrides
     void Init() override;
@@ -12409,6 +12406,9 @@ public:
     /* 0x74 */ u8 mField74;       // init 0
 };
 
+// Factory function for CCol6Invite singleton (free function pattern).
+CCol6Invite* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
+
 // Singleton instance pointer (lbl_eu_8066423C in retail).
 extern CCol6Invite* gCol6Invite;
 
@@ -12432,13 +12432,13 @@ void func_eu_801651A0(char* buffer, const char* format, ...);
 // Singleton instance pointer (lbl_eu_8066423C in retail).
 CCol6Invite* gCol6Invite;
 
-// Raw constructor for CProcess base (abstract class, must use C-linkage ctor).
-extern "C" void __ct__8CProcessFv(void* self);
+// Raw constructor for CProcess base (abstract class).
+void __ct__8CProcessFv(CProcess* self);
 
 // Vtable symbols (declared as opaque byte arrays).
 extern "C" u8 lbl_eu_8052FF3C[];  // CCol6Invite primary vtable
 extern "C" u8 lbl_eu_8052D238[];  // temporary vtable used during construction
-extern "C" const u8 __ptmf_null[12];  // null pointer-to-member-function (all zeros)
+extern const u32 __ptmf_null[3];  // null pointer-to-member-function (all zeros)
 
 // Helper struct to access the vtable pointer at offset 0x10 (after CDoubleListNode).
 struct CProcessBase {
@@ -12458,7 +12458,7 @@ struct CCol6InviteMsgBuf {
 // RetailASM: checks gCol6Invite first, allocates 0x78 bytes from work memory,
 // constructs CProcess base, sets temporary vtable, zeros callbacks, initializes
 // all fields, sets final vtable + secondary vtable ptr at 0x6C, then calls Regist.
-__attribute__((noinline)) void* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
+CCol6Invite* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
     CCol6Invite* obj;
     u32* ptmf;
     u32 ptmfWord1;
@@ -12509,7 +12509,7 @@ __attribute__((noinline)) void* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8
         ((u32*)obj)[4] = (u32)lbl_eu_8052FF3C;  // offset 0x10
 
         // Set secondary vtable pointer: lbl_eu_8052FF3C + 0x24.
-        ((u32*)obj)[27] = (u32)lbl_eu_8052FF3C + 0x24;  // mField6C
+        obj->mField6C = (u32)lbl_eu_8052FF3C + 0x24;
 
         // Store constructor arguments.
         ((u16*)obj)[0x38] = arg2;  // mArg2 at 0x70

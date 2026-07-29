@@ -9,10 +9,7 @@ struct CFloorMapFull {
     u8 field_41;
     u8 _42[0x58 - 0x42];
     u8 field_58;
-    u8 field_5D;
-    u8 _5E[0x140 - 0x5E];
-    void* field_140;
-    u8 _144[0x208 - 0x144];
+    u8 _59[0x208 - 0x59];
     u8 field_208;
 };
 

@@ -23921,7 +23921,7 @@ public:
     ml::CVec3 unk4;
     ml::CVec3 unk10;
     ml::CVec3 unk1C;
-    float unk28;
+    u32 unk28;
     nw4r::g3d::LightObj* mpLightObj;
     u32 mFlags;
     u32 unk34;
@@ -23932,36 +23932,61 @@ public:
 
 using namespace ml;
 
-CLight::CLight() {
-    unk4.x = 0.0f;
-    unk4.y = 0.0f;
-    unk4.z = 0.0f;
-    unk10.x = 0.5f;
-    unk10.y = 0.5f;
-    unk10.z = 0.5f;
-    unk1C.x = 1.0f;
-    unk1C.y = 0.0f;
-    unk1C.z = 0.0f;
-    unk28 = 1.0f;
-    mpLightObj = 0;
+CLight::CLight(){
+    u32 r4 = 0;
+    u32 r0 = r4 & 0xF;
+    unk4 = CVec3(0,0,0);
+    unk10 = CVec3(0.5f,0.5f,0.5f);
+    unk1C = CVec3(1,0,0);
+    unk28 = 1;
+    mpLightObj = nullptr;
     unk34 = 0;
-    unk38 = 1.0f;
-    unk3C = 10000.0f;
-    mFlags = 0xF;
+    unk38 = 1;
+    unk3C = 10000;
+    mFlags = r0;
 }
 
-void func_804C02E4(void* self, int value){
-    *(int*)((char*)self + 0x2c) = value;
+CLight* func_804C02E4(CLight* self, const CLight* other) {
+    self->unk4 = other->unk4;
+    self->unk10 = other->unk10;
+    self->unk1C = other->unk1C;
+    self->unk28 = other->unk28;
+    self->mFlags = other->mFlags;
+    self->unk34 = other->unk34;
+    self->unk38 = other->unk38;
+    *self->mpLightObj = *other->mpLightObj;
+    self->unk3C = other->unk3C;
+    return self;
 }
+
 void func_804C0398(CLight* self, int lightObjPtr) {
     self->mpLightObj = (nw4r::g3d::LightObj*)lightObjPtr;
 }
-void func_804C03A0(void* self, int value){
-    *(int*)((char*)self + 0x2c) = value;
+
+// Initialises the backing LightObj according to the light type (param r4),
+// which is also stored into unk34. Type 0 disables the light, type 1 sets
+// attnA and attnK, type 3 sets attnA only.
+void func_804C03A0(CLight* self, int type) {
+    self->unk34 = type;
+    self->mpLightObj->Clear();
+
+    switch ((int)self->unk34) {
+    case 1:
+        self->mpLightObj->InitLightAttnA(1.0f, 0.0f, 0.0f);
+        self->mpLightObj->InitLightAttnK(1.0f, 0.0f, 0.0f);
+        break;
+    case 3:
+        self->mpLightObj->InitLightAttnA(1.0f, 0.0f, 0.0f);
+        break;
+    case 0:
+        self->mpLightObj->Disable();
+        self->mFlags &= ~0x10000;
+        break;
+    }
 }
-void func_804C0454(CLight* self, const ml::CVec3* pos) {
-    self->unk4 = *pos;
-    self->mpLightObj->InitLightPos(self->unk4.x, self->unk4.y, self->unk4.z);
+
+void func_804C0454(void* self, int value){
+    *(int*)((char*)self + 0x2c) = value;
 }
 void func_804C0484(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
@@ -23988,8 +24013,29 @@ void func_804C08C8(CLight* self, int enable) {
 void func_804C0920(CLight* self, float cutoff, _GXSpotFn spotFn) {
     self->mpLightObj->InitLightSpot(cutoff, spotFn);
 }
-void func_804C0928(){}
-void func_804C09E0(CLight* self, f32 distance, f32 brightness, GXDistAttnFn distAttnFn) {
-    self->mpLightObj->InitLightDistAttn(distance, brightness, distAttnFn);
+
+// Scales the light colour by an intensity factor, stores the result into
+// unk38 and a local CVec3, then builds an 8-bit GXColor from the scaled
+// RGB plus the direction's x-component as alpha and forwards it to the
+// backing LightObj.
+void func_804C0928(CLight* self, float intensity) {
+    self->unk38 = intensity;
+
+    CVec3 scaled;
+    GXColor color;
+
+    scaled.x = self->unk10.x * intensity;
+    scaled.y = self->unk10.y * intensity;
+    scaled.z = self->unk10.z * intensity;
+
+    color.r = (u8)(int)(scaled.x * 255.0f);
+    color.g = (u8)(int)(scaled.y * 255.0f);
+    color.b = (u8)(int)(scaled.z * 255.0f);
+    color.a = (u8)(int)(self->unk1C.x * 255.0f);
+
+    self->mpLightObj->InitLightColor(color);
 }
+
+extern void InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(void*, float, float, int);
+void func_804C09E0(void* self){ InitLightDistAttn__Q34nw4r3g3d8LightObjFff13_GXDistAttnFn(*(void**)((char*)self + 0x2c), 0.0f, 0.0f, 0); }
 void func_804C09E8(){}

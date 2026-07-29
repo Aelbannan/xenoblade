@@ -122,7 +122,20 @@ u16 func_8024F54C(void* self) { return *(u16*)((u8*)self + 0x5A); }
 
 u8 func_8024F554(void* self) { return static_cast<CFloorMapFull*>(self)->field_58; }
 
-void func_8024F55C(){}
+void func_8024F55C(void* self) {
+    extern bool CSysWin_isActive(void*);
+    extern void func_801D216C(void*, int);
+    extern void func_8022B8E4(void*);
+    extern void func_80138078(unsigned long);
+    u8* p = (u8*)self;
+    u8* p1 = p + 0xB8;
+    if (p[0x58] && CSysWin_isActive(p1)) {
+        func_801D216C(p + 0xA0, 0);
+        func_8022B8E4(p1);
+        p[0x58] = 0;
+        func_80138078(6);
+    }
+}
 
 void func_8024F5C4(){}
 

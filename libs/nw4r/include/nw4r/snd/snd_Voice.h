@@ -160,9 +160,9 @@ private:
     bool mIsPause;    // at 0xAF
     bool mIsPausing;  // at 0xB0
 
-    u8 mSyncFlag;                               // at 0xB1
-    u8 mRemoteFilter;                           // at 0xB2
-    u8 mBiquadType;                             // at 0xB3
+    u16 mSyncFlag;                              // at 0xB2
+    u8 mRemoteFilter;                           // at 0xB4
+    u8 mBiquadType;                             // at 0xB5
     int mPriority;                              // at 0xB4
     f32 mPan;                                   // at 0xB8
     f32 mSurroundPan;                           // at 0xBC

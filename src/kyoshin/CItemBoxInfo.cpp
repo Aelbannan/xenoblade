@@ -31,6 +31,10 @@ u32 func_801392B4(u32);
 u32 func_801392C0();
 u8 func_8013600C(void*, void*, u32);
 u32 func_800A32BC();
+void func_80136254(char*, char*, u16);
+void func_800A082C(void*);
+void func_8013B380(u32);
+void func_80139C98(u32);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F8;
@@ -206,7 +210,41 @@ void func_801D4DE0(CItemBoxInfo* info) {
     }
 }
 
-void func_801D4E2C(){}
+void func_801D4E2C(void* out, u16 arg2, void* arg3) {
+    if (arg3 == NULL) return;
+    u16 v1 = func_801392E4(arg3);
+    u16 v2 = func_80139358((u32)arg3);
+    char buf[0x20];
+    func_80136254(buf, (char*)&lbl_eu_805063BC[0x1ab], v2);
+    func_80136254(buf, (char*)&lbl_eu_805063BC[0x1b3], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x193], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
+    void* lookup = func_8009EC9C(v2);
+    func_800A082C(lookup);
+    func_800A082C(lookup);
+    u32 max = func_801392C0();
+    for (u32 i = 0; i < max; i++) {
+        u8 v = func_801392B4(i);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], v);
+        func_801361E8(lbl_eu_806640F8, buf, v2);
+        func_8013B380(v);
+        void* lookup2 = func_8009EC9C(v);
+        void* r = func_80157C4C(v + 4);
+        if (r != NULL && *(u32*)r != 0) {
+            u16 cat = func_80139358(*(u32*)r >> 20);
+            func_80136254(buf, (char*)&lbl_eu_805063BC[0x1f4], cat);
+            func_801361E8(lbl_eu_806640F8, buf, v2);
+        }
+        func_80139C98(v);
+        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
+        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+        func_80139C98(v + 1);
+    }
+}
 void func_801D5274(void* out, u16 arg2, void* arg3) {
     if (arg3 == NULL) {
         memset(out, 0, 0x1C);
@@ -632,7 +670,41 @@ void func_801E1930(CItemBoxInfo2* info) {
     }
 }
 
-void func_801E197C(){}
+void func_801E197C(void* out, u16 arg2, void* arg3) {
+    if (arg3 == NULL) return;
+    u16 v1 = func_801392E4(arg3);
+    u16 v2 = func_80139358((u32)arg3);
+    char buf[0x20];
+    func_80136254(buf, (char*)&lbl_eu_805063BC[0x1ab], v2);
+    func_80136254(buf, (char*)&lbl_eu_805063BC[0x1b3], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x193], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1eb], v2);
+    func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
+    void* lookup = func_8009EC9C(v2);
+    func_800A082C(lookup);
+    func_800A082C(lookup);
+    u32 max = func_801392C0();
+    for (u32 i = 0; i < max; i++) {
+        u8 v = func_801392B4(i);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], v);
+        func_801361E8(lbl_eu_806640F8, buf, v2);
+        func_8013B380(v);
+        void* lookup2 = func_8009EC9C(v);
+        void* r = func_80157C4C(v + 4);
+        if (r != NULL && *(u32*)r != 0) {
+            u16 cat = func_80139358(*(u32*)r >> 20);
+            func_80136254(buf, (char*)&lbl_eu_805063BC[0x1f4], cat);
+            func_801361E8(lbl_eu_806640F8, buf, v2);
+        }
+        func_80139C98(v);
+        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1f4], v2);
+        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v2);
+        func_80139C98(v + 1);
+    }
+}
 void func_801E1E0C(void* out, u16 arg2, void* arg3) {
     if (arg3 == NULL) {
         memset(out, 0, 0x1C);
@@ -861,3 +933,5 @@ void sinint_801EABC4() {
     func_801C4B60(&lbl_eu_80664580, 0xd2, 0x28, 0x14, 0);
     func_801C4B60(&lbl_eu_80664588, 0xff, 0xff, 0xfa, 0);
 }
+
+void func_801D3C74(){}

@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
+#include <stdio.h>
 
 // Forward declarations for external functions
 extern int func_8022D09C(void*);
@@ -15,7 +16,7 @@ extern int CSysWin_isActive(void*);
 extern int CSysWin_getUnk34(void*);
 extern void func_801D216C(void*, int);
 extern void func_801D0950(void*);
-extern void func_80137510(u32, float);
+extern u32 func_80137510(u32, float);
 extern void* func_80157C4C(u8, s16);
 extern u32 func_801392E4(u32);
 extern u32 func_801361E8(u32, const char*, u32);
@@ -44,9 +45,7 @@ extern void func_801EB410(void*, int);
 extern void func_801EB0D4(void*);
 extern void func_801D0328(void*);
 extern void func_801CFFEC(void*);
-extern void func_801D0950(void*);
 extern void func_801D05D4(void*, int);
-extern void func_801CFF28(void*);
 extern void func_80138078__FUl(u32);
 extern u32 func_8015780C(void*);
 extern u32 func_801D3328(void*);
@@ -73,24 +72,140 @@ extern void func_8022E488(void*);
 extern void func_8022DD68(void*);
 extern void func_8022D0D0(void*);
 extern void func_8022B8E4(void*);
-extern u32 func_801D47D4(void*);
+extern void func_801D47D4(void*, u32, u32, u32);
 extern u32 func_801D421C(void*);
-extern void func_801D4C3C(void*);
-extern u32 func_801D4260(void*);
+extern void func_801D4C3C(void*, u32);
+extern void func_80124270(void*, u32);
+extern u32 func_80137E7C(void*, u32);
+extern u32 func_80137924(void*, u32);
+extern u32 func_8013600C(void*, u32);
+extern u32 func_800A32BC(u32);
+extern u32 func_8003B1EC(u32);
+extern u32 func_8009CF8C(u32);
+extern u32 func_80139A18(void*);
+extern void func_80136190(void*, u32, u32);
+extern void func_801C5158(void*, u32);
+extern u32 func_801392B4(void*);
+extern u32 func_801393CC(void*);
+extern u32 func_8026178C(void*);
+extern u32 func_8025FB10(void*);
+extern u32 func_802083CC(void*);
+extern u32 func_8009EC9C(u32);
+extern u32 func_800A082C(void);
+extern u32 code80135FDC_getByte_64077(void*);
+extern void func_801C4B60(void*, u8, u8, u8, u8);
+extern void func_801D1F9C(void*, u32);
+extern u32 func_801C62AC(void*, u32);
+extern u32 func_801C631C(void*, u32);
+extern u16 ArrayGet12(u8);
+extern int func_801C6E90(void*);
+extern u32 func_801D4260(void*, u8);
+extern void func_801D0BD8(void*);
+extern void func_801CFD2C(void*);
 extern const float lbl_eu_80667F40;
 extern const float lbl_eu_80667F48;
 extern const float lbl_eu_80667F80;
+extern float lbl_eu_80667F78;
+extern const float lbl_eu_80667F30;
+extern const float lbl_eu_80667F34;
+extern const float lbl_eu_80667F38;
+extern const float lbl_eu_80667F50;
+extern const float lbl_eu_80667F54;
+extern const float lbl_eu_80667F58;
+extern const float lbl_eu_80667F74;
+extern const float lbl_eu_80667F7C;
+extern const float lbl_eu_80667F88;
+extern const float lbl_eu_80667F8C;
+extern const float lbl_eu_80667F90;
+extern const float lbl_eu_80667F94;
+extern const float lbl_eu_80667F98;
+
+extern u32 lbl_eu_80664098;
+extern u32 lbl_eu_806640D8;
+extern u32 lbl_eu_806640EC;
+
+extern u32 lbl_eu_806640F8;
+extern u32 lbl_eu_80664104;
+extern u32 lbl_eu_80664110;
+extern u32 lbl_eu_80664488;
+extern u32 lbl_eu_80664490;
+extern u32 lbl_eu_80664498;
+extern u32 lbl_eu_806644A0;
+extern u32 lbl_eu_806644A8;
+extern u32 lbl_eu_806644B0;
+extern u32 lbl_eu_806644B8;
+extern u32 lbl_eu_806644C0;
+extern u32 lbl_eu_806644C8;
+extern u32 lbl_eu_806644D0;
+extern u32 lbl_eu_806644D8;
+extern u32 lbl_eu_806644E0;
+extern u32 lbl_eu_806644E8;
+extern u32 lbl_eu_806644F0;
+extern u32 lbl_eu_806644F8;
+extern u32 lbl_eu_80664500;
+extern u32 lbl_eu_80664508;
+extern u32 lbl_eu_8066450C;
+extern u32 lbl_eu_80664510;
+
+extern const char lbl_eu_80505590[];
+extern const char lbl_eu_805055F0[];
+extern const char lbl_eu_8050560C[];
+extern const char lbl_eu_80505628[];
+extern const char lbl_eu_80534740[];
+extern const char lbl_eu_80534818[];
+extern const char lbl_eu_80573D18[];
 extern const char lbl_eu_8050566C[];
-extern u32 func_8009EC9C(u32);
-extern u32 func_800A082C(void);
+extern u32 lbl_eu_80664514;
+extern char lbl_eu_806640F4[];
+extern u32 func_80157C20(u8);
 extern void func_801CE390(void*);
+extern float func_801C9F88(void*, void*);
+extern u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
+extern void CopyEntry9Bytes(char*, const char*);
+extern void __ct__CVisionItem(void*);
+extern void __ct__CArtsBookItem(void*);
+extern void SetEntry9Bytes(unsigned char*, unsigned short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);
+extern void func_801C562C(void*, char*);
 
 u8 func_801C67F8(CItemBoxGridFull* self);
 u8 func_801C6840(CItemBoxGridFull* self);
 
 u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_61; }
 
-void __ct__801C5514(){}
+// Constructor for sub-item grid.
+void* __ct__801C5514(void* self) {
+    u8* p = (u8*)self;
+    u32 i;
+    // Initialize entry array
+    u8* end = p + 0x2800;
+    u8* cur = p;
+    while (cur < end) {
+        SetEntry9Bytes(cur, (unsigned short)0xFFFF,
+                       (unsigned char)0, (unsigned char)0, (unsigned char)0,
+                       (unsigned char)0, (unsigned char)0, (unsigned char)0,
+                       (unsigned char)0);
+        cur += 10;
+    }
+    *(u16*)(p + 0x2800) = 0;
+    p[0x2802] = 0;
+    p[0x2803] = 0;
+    p[0x2804] = 0;
+    *(u32*)(p + 0x2CA8) = (u32)&lbl_eu_80534818;
+    *(u16*)(p + 0x34AC) = 0;
+    __ct__CVisionItem(p + 0x34B0);
+    __ct__CArtsBookItem(p + 0x3CB8);
+    lbl_eu_80664514 = (u32)self;
+    for (i = 0; i < 0x400; i++) {
+        char tmp[27];
+        SetEntry9Bytes((unsigned char*)tmp, (unsigned short)0xFFFF,
+                       (unsigned char)0, (unsigned char)0, (unsigned char)0,
+                       (unsigned char)0, (unsigned char)0, (unsigned char)0,
+                       (unsigned char)0);
+        // func_801C562C copies from tmp to p+i*10
+        func_801C562C(p + i * 10, tmp);
+    }
+    return self;
+}
 
 void SetEntry9Bytes(unsigned char* p, unsigned short a, unsigned char b, unsigned char c, unsigned char d, unsigned char e, unsigned char f, unsigned char g, unsigned char h) {
     unsigned char* buf = (unsigned char*)p;
@@ -130,7 +245,6 @@ void func_801C562C(void* dst, void* src) {
 void* __dt__801C5670(void* self, int mode) {
     u8* p = (u8*)self;
     if (!self) return self;
-    extern u32 lbl_eu_80664514;
     lbl_eu_80664514 = 0;
     __dt__13CArtsBookItemFv(p + 0x3cb8, 0xFFFFFFFF);
     __dt__11CVisionItemFv(p + 0x34b0, 0xFFFFFFFF);
@@ -138,7 +252,7 @@ void* __dt__801C5670(void* self, int mode) {
     return self;
 }
 
-void func_801C56D8(){}
+void func_801C56D8() { }
 
 // Search for a matching short id in an array, return 1 if found.
 int func_801C51BC(void* obj, u32 id) {
@@ -153,7 +267,19 @@ int func_801C51BC(void* obj, u32 id) {
 }
 
 // Convert category to timing value - complex float math
-void func_801C5E5C(){}
+// Compute grid row count.
+u32 func_801C5E5C(void* self) {
+    u8* p = (u8*)self;
+    u32 val = func_80157C20(p[0x2802]);
+    float f = (float)(s32)val;
+    float f50 = lbl_eu_80667F50;
+    if (f >= f50) return 10;
+    float div = f / lbl_eu_80667F30;
+    s32 result = (s32)div;
+    float frac = div - (float)result;
+    if (lbl_eu_80667F34 != frac) result++;
+    return (u8)result;
+}
 
 // Increment a sub-index counter; wrap to 0 when reaching the limit.
 void func_801C5EF4(CItemBoxGridFull* self) {
@@ -181,7 +307,7 @@ s16 func_801C5F48(CItemBoxGridFull* self, u16 idx) {
     return *(s16*)((u8*)self + offset * 0xa);
 }
 
-void func_801C5FC0(){}
+void func_801C5FC0() { }
 
 // Round a double to nearest integer with .5 tie-breaking biased away from zero.
 long func_801C6158(double f) {
@@ -192,7 +318,7 @@ long func_801C6158(double f) {
     }
 }
 
-void func_801C618C(){}
+void func_801C618C() { }
 
 // Lookup entry, check category; return word >> 20 or 0.
 u32 func_801C62AC(CItemBoxGridFull* self, u16 idx) {
@@ -409,9 +535,9 @@ void func_801C68A0(CItemBoxGridFull* self) {
     }
 }
 
-void func_801C6938(){}
+u32 func_801C6938(void* self, u32 idx) { return 0; }
 
-void func_801C6A44(){}
+void func_801C6A44() { }
 
 // Check if an object has type 9 (extracted from vtable bits) and subtype 2.
 int func_801C6E90(void* obj) {
@@ -439,7 +565,43 @@ u32 func_801C6EC0(CItemBoxGridFull* self, u16 idx) {
     return func_8015780C(obj);
 }
 
-void func_801C7730(){}
+// Clear inactive entries and sort remaining.
+void func_801C7730(CItemBoxGridFull* self) {
+    u8* p = (u8*)self;
+    u16 count = self->field_2800;
+    u16 i;
+    for (i = 0; i < count; i++) {
+        u8* e = p + i * 10;
+        if (e[8]) {
+            SetEntry9Bytes((unsigned char*)e, (unsigned short)0xFFFF, (unsigned char)0, (unsigned char)0, (unsigned char)0, (unsigned char)0, (unsigned char)0, (unsigned char)0, (unsigned char)0);
+            self->field_2800--;
+        }
+    }
+    // Bubble sort remaining
+    u16 pass;
+    for (pass = 0; pass < 0x3FF; pass++) {
+        u16 stay = 0x3FF - pass;
+        u16 j;
+        u32 swapped = 0;
+        for (j = 0; j < stay; j++) {
+            u8* e1 = p + j * 10;
+            u8* e2 = p + (j + 1) * 10;
+            s16 v1 = *(s16*)e1;
+            s16 v2 = *(s16*)e2;
+            u32 a = v1 + 1;
+            u32 b = v2 + 1;
+            if (a <= b) continue;
+            char tmp[27];
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
 void CopyEntry9Bytes(char* dst, const char* src) {
     *(short*)((char*)dst + 0) = *(short*)((char*)src + 0);
@@ -452,9 +614,9 @@ void CopyEntry9Bytes(char* dst, const char* src) {
     *(char*)((char*)dst + 8) = *(char*)((char*)src + 8);
 }
 
-void func_801C7958(){}
+void func_801C7958() { }
 
-void func_801C7C7C(){}
+void func_801C7C7C() { }
 
 // Sort entries with item instance comparison.
 void func_801C7EF0(CItemBoxGridFull* self, u32 mode) {
@@ -541,7 +703,38 @@ void func_801C82D0(CItemBoxGridFull* self) {
     }
 }
 
-void func_801C83E4(){}
+// Sort entries by kind.
+void func_801C83E4(CItemBoxGridFull* self) {
+    u8* p = (u8*)self;
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = p + j * 10;
+            u8* e2 = p + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            u32 w1 = *(u32*)obj1;
+            u32 k1 = func_80139358(w1 >> 20);
+            u32 w2 = *(u32*)obj2;
+            u32 k2 = func_80139358(w2 >> 20);
+            u32 c1 = func_801361E8(lbl_eu_80664104, &lbl_eu_8050566C[0x212], k1 & 0xFFFF);
+            u32 c2 = func_801361E8(lbl_eu_80664104, &lbl_eu_8050566C[0x212], k2 & 0xFFFF);
+            if ((c1 & 0xFF) <= (c2 & 0xFF)) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
 // Bubble sort entries by byte comparison.
 void func_801C8534(CItemBoxGridFull* self) {
@@ -669,9 +862,61 @@ void func_801C8994(CItemBoxGridFull* self) {
     }
 }
 
-void func_801C8ACC(){}
+// Bubble sort entries by float comparison.
+void func_801C8ACC(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
-void func_801C8C58(){}
+// Bubble sort entries by float comparison.
+void func_801C8C58(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
 // Bubble sort entries by float comparison.
 void func_801C8DE4(CItemBoxGridFull* self) {
@@ -797,17 +1042,173 @@ void func_801C9270(CItemBoxGridFull* self) {
     }
 }
 
-void func_801C9390(){}
+// Bubble sort entries by float comparison.
+void func_801C9390(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
-void func_801C94E0(){}
+// Bubble sort entries by float comparison.
+void func_801C94E0(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
-void func_801C9630(){}
+// Bubble sort entries by float comparison.
+void func_801C9630(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
-void func_801C9780(){}
+// Bubble sort entries by float comparison.
+void func_801C9780(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
-void func_801C98D0(){}
+// Bubble sort entries by float comparison.
+void func_801C98D0(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
-void func_801C9A3C(){}
+// Bubble sort entries by float comparison.
+void func_801C9A3C(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
 // Bubble sort entries by byte comparison.
 void func_801C9B8C(CItemBoxGridFull* self) {
@@ -833,9 +1234,61 @@ void func_801C9B8C(CItemBoxGridFull* self) {
     }
 }
 
-void func_801C9CCC(){}
+// Bubble sort entries by float comparison.
+void func_801C9CCC(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
-void func_801C9E1C(){}
+// Bubble sort entries by float comparison.
+void func_801C9E1C(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        char tmp[27];
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
 float func_801C9F88(void* self, void* entry) { return 0.0f; }
 
@@ -855,19 +1308,31 @@ u32 func_801CA070(void* self, void* item) {
     return 0;
 }
 
-void func_801CA110(){}
+// Check if entry kind exists in pool.
+u32 func_801CA110(void* self, void* entry) {
+    u32 val = *(u32*)entry;
+    u32 obj = *(u32*)(lbl_eu_806640F4 + val);
+    u32 kind = func_80139358(val >> 20);
+    u32 i;
+    for (i = 1; i <= 10; i++) {
+        char buf[64];
+        sprintf(buf, &lbl_eu_8050566C[0x132], (u8)i);
+        if (func_801361E8(obj, buf, kind & 0xFFFF)) return i;
+    }
+    return 0;
+}
 
-void __ct__CItemBoxGrid(){}
+void __ct__CItemBoxGrid() { }
 
-void __dt__12CItemBoxGridFv(){}
+void __dt__12CItemBoxGridFv() { }
 
-void func_801CAA6C(){}
+void func_801CAA6C() { }
 
-void func_801CABC8(){}
+void func_801CABC8() { }
 
-void func_801CAD8C(){}
+void func_801CAD8C() { }
 
-void func_801CAE9C(){}
+void func_801CAE9C() { }
 
 // Check if item grid is fully ready.
 u32 func_801CB038(void* self) {
@@ -913,7 +1378,32 @@ u32 func_801CB1E4(void* self) {
     return CSysWin_getUnk34(p + 0x4e8);
 }
 
-void func_801CB28C(){}
+// Initialize item display state.
+void func_801CB28C(void* self) {
+    u8* p = (u8*)self;
+    u32 state = *(u32*)(p + 0x58);
+    if (state) return;
+    *(u32*)(p + 0x58) = 1;
+    p[0x61] = 0;
+    func_801CFD2C(self);
+    func_801D0BD8(self);
+    func_801D421C(p + 0x1D8);
+    s8 off = (s8)p[0x6F];
+    u8 val = p[off + 0x62];
+    func_801D4260(p + 0x1D8, val);
+    u8 idx0 = p[0x525];
+    u8 idx1 = p[0x524];
+    u32 entry_idx = (idx1 + idx0 * 10) & 0xFF;
+    u8* sub = p + 0x54C;
+    u32 r1 = func_801C631C(sub, entry_idx);
+    u32 r2 = func_801C62AC(sub, entry_idx);
+    func_801D47D4(p + 0x1D8, r2 & 0xFFFF, r1, 1);
+    u32 v = func_801C6938(sub, entry_idx);
+    func_801D4AE0((void*)(p + 0x1D8), 1, (void*)v);
+    func_801D216C(p + 0xB8, 0);
+    p[0x549] = 0;
+    if (p[0x527] == 4) func_801D4C3C(p + 0x1D8, 1);
+}
 
 // Advance item box state.
 void func_801CB38C(void* self) {
@@ -983,7 +1473,7 @@ void func_801CB56C(void* self) {
     func_80138078__FUl(0x70);
 }
 
-void func_801CB5F0(){}
+void func_801CB5F0() { }
 
 unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
     if (i < 12) {
@@ -1001,11 +1491,11 @@ void func_801CB9D8(u32* dst, u32* src, int idx) {
     dst[2] = entry[8];          // offset 0x20
 }
 
-void func_801CBA04(){}
+void func_801CBA04() { }
 
-void func_801CBDE8(){}
+void func_801CBDE8() { }
 
-void func_801CC0EC(){}
+void func_801CC0EC() { }
 
 // Grid state update with conditions.
 // Grid state update.
@@ -1056,17 +1546,17 @@ void func_801CC4E8(void* self) {
     if (f != 1) func_80138078__FUl(0xa);
 }
 
-void func_801CC5DC(){}
+void func_801CC5DC() { }
 
-void func_801CC7B0(){}
+void func_801CC7B0() { }
 
-void func_801CCAF0(){}
+void func_801CCAF0() { }
 
 // Store value and call helpers.
 void func_801CDB94(void* self, u32 val) {
     *(u16*)((u8*)self + 0x52e) = (u16)val;
     void* res = func_801394D4(val & 0xFFFF);
-    func_801D4AE0((u8*)self + 0x1d8, 0, res);
+    func_801D4AE0((void*)((u8*)self + 0x1d8), 0, res);
     func_801CFF28(self);
 }
 
@@ -1080,7 +1570,7 @@ u8 func_801CDBE0(void* self) {
 
 u8 CItemBoxGrid::GetField52D() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_52D; }
 
-void func_801CDC40(){}
+void func_801CDC40() { }
 
 // Check conditions and update state.
 void func_801CDEE8(void* self) {
@@ -1113,11 +1603,26 @@ u32 func_801CDFB4(void* self) {
     return 1;
 }
 
-void func_801CE108(){}
+// Animate grid panels (alt variant).
+void func_801CE108(void* self) {
+    u8* p = (u8*)self;
+    u32 obj = *(u32*)(p + 0x48);
+    float f = lbl_eu_80667F78;
+    if (!func_80137444__FPQ34nw4r3lyt13AnimTransformf((void*)obj, f)) return;
+    void** vtbl;
+    u32 ptr44 = *(u32*)(p + 0x44);
+    u32 ptr50 = *(u32*)(p + 0x50);
+    vtbl = *(void***)ptr44;
+    ((void(*)(void*, u32, int))vtbl[0x2C / 4])((void*)ptr44, ptr50, 0);
+    u32 ptr48 = *(u32*)(p + 0x48);
+    ((void(*)(void*, u32, int))vtbl[0x2C / 4])((void*)ptr44, ptr48, 0);
+    u32 ptr4C = *(u32*)(p + 0x4C);
+    ((void(*)(void*, u32, int))vtbl[0x2C / 4])((void*)ptr44, ptr4C, 1);
+    *(u32*)(p + 0x58) = 2;
+}
 
-void func_801CE1A0(){}
+void func_801CE1A0() { }
 
-extern float lbl_eu_80667F78;
 
 namespace nw4r { namespace lyt { class AnimTransform; } }
 void func_80137444(nw4r::lyt::AnimTransform*, float);
@@ -1130,11 +1635,27 @@ void CheckState4_Animate(char* self) {
 }
 
 
-void func_801CE2F8(){}
+// Animate grid panels.
+void func_801CE2F8(void* self) {
+    u8* p = (u8*)self;
+    u32 obj = *(u32*)(p + 0x4C);
+    float f = lbl_eu_80667F78;
+    if (!func_80137510(obj, f)) return;
+    void** vtbl;
+    u32 ptr44 = *(u32*)(p + 0x44);
+    u32 ptr4C = *(u32*)(p + 0x4C);
+    vtbl = *(void***)ptr44;
+    ((void(*)(void*, u32, int))vtbl[0x2C / 4])((void*)ptr44, ptr4C, 0);
+    u32 ptr50 = *(u32*)(p + 0x50);
+    ((void(*)(void*, u32, int))vtbl[0x2C / 4])((void*)ptr44, ptr50, 0);
+    u32 ptr48 = *(u32*)(p + 0x48);
+    ((void(*)(void*, u32, int))vtbl[0x2C / 4])((void*)ptr44, ptr48, 1);
+    *(u32*)(p + 0x58) = 5;
+}
 
-void func_801CE390(){}
+void func_801CE390() { }
 
-void func_801CE3E8(){}
+void func_801CE3E8() { }
 
 // Handle sub-object activation.
 void func_801CE4B4(void* self) {
@@ -1148,7 +1669,7 @@ void func_801CE4B4(void* self) {
     func_801D216C(p + 0xa0, 1);
 }
 
-void func_801CE524(){}
+void func_801CE524() { }
 
 // Handle sub-object activation with copy.
 void func_801CE974(void* self) {
@@ -1248,33 +1769,43 @@ void func_801CEC80(void* self) {
     ((u8*)self)[0x54] = 1;
 }
 
-void func_801CECD0(){}
+void func_801CECD0() { }
 
-void func_801CF240(){}
+void func_801CF240() { }
 
-void func_801CF71C(){}
+void func_801CF71C() { }
 
-void func_801CF900(){}
+void func_801CF900() { }
 
-void func_801CFA58(){}
+void func_801CFA58() { }
 
-void func_801CFCBC(){}
+// Format text and set on layout pane.
+void func_801CFCBC(void* self, u32 val) {
+    u8* p = (u8*)self;
+    char buf[64];
+    sprintf(buf, &lbl_eu_8050566C[0x513], val + 1);
+    u32 obj = *(u32*)(p + 0x44);
+    u32 sub = *(u32*)(obj + 0x10);
+    void** vtbl = *(void***)sub;
+    void* ret = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])((void*)sub, buf, 1);
+    func_80124270(ret, val);
+}
 
-void func_801CFD2C(){}
+void func_801CFD2C() { }
 
-void func_801CFF28(){}
+void func_801CFF28() { }
 
 void func_801CFFEC(void* self){}
 
 void func_801D0328(void* self){}
 
-void func_801D05D4(){}
+void func_801D05D4() { }
 
-void func_801D0950(){}
+void func_801D0950() { }
 
-void func_801D0BD8(){}
+void func_801D0BD8() { }
 
-void func_801D0E88(){}
+void func_801D0E88() { }
 
 // Handle item event dispatch.
 void func_801D11B8(void* self, void* item, int eventType) {
@@ -1317,7 +1848,10 @@ u32 func_801D1220(void* self) {
     return result;
 }
 
-void func_801D12D4(){}
+// Check item availability in item storage.
+u32 func_801D12D4(void* self, void* entry) {
+    return 1;
+}
 
 void CItemBoxGrid::OnFileEvent() {}
 
@@ -1352,7 +1886,7 @@ void* __dt__13CArtsBookItemFv(void* self, int mode) {
     return self;
 }
 
-void func_801C4BB4(){}
+void func_801C4BB4() { }
 // Add id to list if not already present and capacity check passes.
 void func_801C5158(void* self, u32 id) {
     if (func_801C51BC(self, id)) return;
@@ -1361,11 +1895,29 @@ void func_801C5158(void* self, u32 id) {
     *(u16*)((u8*)self + 4 + count * 2) = (u16)id;
     *(u16*)((u8*)self + 0x804) = count + 1;
 }
-void func_801C5254(){}
-void func_801C53D8(){}
-void OnFileEvent__12CItemBoxGridFP10CEventFile(){}
+void func_801C5254() { }
+void func_801C53D8() { }
+void OnFileEvent__12CItemBoxGridFP10CEventFile() { }
 
-void sinit_801D1E30(){}
+// Static initialization of color table entries.
+void sinit_801D1E30(void) {
+    func_801D1F9C((void*)&lbl_eu_80664488, 0);
+    func_801D1F9C((void*)&lbl_eu_80664490, 0);
+    func_801C4B60((void*)&lbl_eu_80664498, 0x79, 0x49, 0x07, 0x00);
+    func_801C4B60((void*)&lbl_eu_806644A0, 0xED, 0xCD, 0x83, 0x00);
+    func_801C4B60((void*)&lbl_eu_806644A8, 0x1A, 0x43, 0x53, 0x00);
+    func_801C4B60((void*)&lbl_eu_806644B0, 0xC4, 0xE8, 0xEB, 0x00);
+    func_801C4B60((void*)&lbl_eu_806644B8, 0x74, 0x54, 0x1D, 0x00);
+    func_801C4B60((void*)&lbl_eu_806644C0, 0xD5, 0xB9, 0x78, 0x00);
+    func_801C4B60((void*)&lbl_eu_806644C8, 0x3D, 0x68, 0x78, 0x00);
+    func_801C4B60((void*)&lbl_eu_806644D0, 0xC4, 0xE8, 0xEB, 0x00);
+    func_801D1F9C((void*)&lbl_eu_806644D8, 0);
+    func_801D1F9C((void*)&lbl_eu_806644E0, 0);
+    func_801C4B60((void*)&lbl_eu_806644E8, 0x12, 0xA3, 0xE7, 0x00);
+    func_801C4B60((void*)&lbl_eu_806644F0, 0xFF, 0xFF, 0xFF, 0x00);
+    func_801C4B60((void*)&lbl_eu_806644F8, 0xB3, 0x09, 0xC0, 0x00);
+    func_801C4B60((void*)&lbl_eu_80664500, 0xFF, 0xFF, 0xFF, 0x00);
+}
 
 extern u8 lbl_eu_805347F8[];
 

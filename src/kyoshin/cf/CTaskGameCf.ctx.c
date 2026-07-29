@@ -13259,6 +13259,8 @@ public:
 /* end "monolib/work/IWorkEvent.hpp" */
 /* end "monolib/work.hpp" */
 
+extern "C" void func_eu_8006B238();
+
 class CTaskGame;
 
 namespace cf{
@@ -252488,7 +252490,7 @@ public:
     ml::CVec3 unk4;
     ml::CVec3 unk10;
     ml::CVec3 unk1C;
-    float unk28;
+    u32 unk28;
     nw4r::g3d::LightObj* mpLightObj;
     u32 mFlags;
     u32 unk34;
@@ -258682,8 +258684,6 @@ void func_80296AE8(u8* src);
 /* end "kyoshin/code_80296898.hpp" */
 /* "src/kyoshin/cf/CTaskGameCf.cpp" line 14 "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device/CDeviceVI.hpp" */
-
-extern "C" void func_eu_8006B238();
 
 namespace cf{
     CTaskGameCf* CTaskGameCf::spInstance;

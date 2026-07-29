@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CCol6Invite
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CCol6Invite.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CCol6Invite.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,36 +1390,52 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
-
-extern "C" void func_801640D0(void* self) { ((void(*)(void*))__dt__13CCol6CheckBatFv)((char*)self - 0x6c); }
-
-extern "C" void func_801640D0(void* self) { ((void(*)(void*))__dt__13CCol6CheckBatFv)((char*)self - 0x6c); }
-
 extern "C" void __dt__13CCol6CheckBatFv(void* self);
-extern "C" void func_801640D0(void* self) { ((void(*)(void*))__dt__13CCol6CheckBatFv)((char*)self - 0x6c); }
+
+void CCol6CheckBat_destructorAdjust(void* self) { ((void(*)(void*))__dt__13CCol6CheckBatFv)((char*)self - 0x6c); }
 
 extern "C" void func_8015DB08(void* self);
 extern "C" void OnFileEvent__9CCol6HintFP10CEventFile(void* self) { ((void(*)(void*))func_8015DB08)((char*)self - 0x6c); }
 
 extern "C" void __dt__9CCol6HintFv(void* self);
-extern "C" void func_801640E0(void* self) { ((void(*)(void*))__dt__9CCol6HintFv)((char*)self - 0x6c); }
+void CCol6Hint_destructorAdjust(void* self) { ((void(*)(void*))__dt__9CCol6HintFv)((char*)self - 0x6c); }
 
 extern "C" void cbRenderBefore__9CCol6HintFv(void* self);
-extern "C" void func_801640E8(void* self) { ((void(*)(void*))cbRenderBefore__9CCol6HintFv)((char*)self - 0x70); }
+void CCol6Hint_cbRenderBeforeAdjust(void* self) { ((void(*)(void*))cbRenderBefore__9CCol6HintFv)((char*)self - 0x70); }
 
-extern "C" void func_801640F0(void* self) { ((void(*)(void*))__dt__9CCol6HintFv)((char*)self - 0x70); }
+void CCol6Hint_destructorAdjust2(void* self) { ((void(*)(void*))__dt__9CCol6HintFv)((char*)self - 0x70); }
 
 extern "C" void func_80160118(void* self);
 extern "C" void OnFileEvent__11CCol6SystemFP10CEventFile(void* self) { ((void(*)(void*))func_80160118)((char*)self - 0x6c); }
 
 extern "C" void __dt__11CCol6SystemFv(void* self);
-extern "C" void func_80164100(void* self) { ((void(*)(void*))__dt__11CCol6SystemFv)((char*)self - 0x6c); }
+void CCol6System_destructorAdjust(void* self) { ((void(*)(void*))__dt__11CCol6SystemFv)((char*)self - 0x6c); }
 
 extern "C" void cbRenderBefore__11CCol6SystemFv(void* self);
-extern "C" void func_80164108(void* self) { ((void(*)(void*))cbRenderBefore__11CCol6SystemFv)((char*)self - 0x70); }
+void CCol6System_cbRenderBeforeAdjust(void* self) { ((void(*)(void*))cbRenderBefore__11CCol6SystemFv)((char*)self - 0x70); }
 
-extern "C" void func_80164110(void* self) { ((void(*)(void*))__dt__11CCol6SystemFv)((char*)self - 0x70); }
+void CCol6System_destructorAdjust2(void* self) { ((void(*)(void*))__dt__11CCol6SystemFv)((char*)self - 0x70); }
 
 extern "C" void __dt__11CCol6InviteFv(void* self);
-extern "C" void func_80164118(void* self) { ((void(*)(void*))__dt__11CCol6InviteFv)((char*)self - 0x6c); }
+void CCol6Invite_destructorAdjust(void* self) { ((void(*)(void*))__dt__11CCol6InviteFv)((char*)self - 0x6c); }

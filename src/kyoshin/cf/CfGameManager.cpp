@@ -152,13 +152,15 @@ extern "C" void func_8007E4CC__Q22cf13CfGameManagerFv(u32 mask) {
 }
 #pragma dont_inline reset
 
-extern "C" u16 func_8007EEE0__Q22cf13CfGameManagerFv(const UnkEEE0Data* data, u16 index) {
+#pragma dont_inline on
+extern "C" u32 func_8007EEE0__Q22cf13CfGameManagerFv(const UnkEEE0Data* data, u16 index) {
     return data->entries_0x2[index];
 }
 
 extern "C" u32 func_8007F044__Q22cf13CfGameManagerFv(const UnkF044Data* data, u32 index) {
     return data->field_0x888[index];
 }
+#pragma dont_inline reset
 
 extern "C" void func_8007F8C0__Q22cf13CfGameManagerFv(UnkF8C0Node* destination,
                                                         const UnkF8C0Source* source) {
@@ -174,9 +176,11 @@ extern "C" bool func_8007CBD4__Q22cf13CfGameManagerFv(u32 mask) {
     return (lbl_eu_80663E24 & mask) != 0;
 }
 
+#pragma dont_inline on
 extern "C" bool func_8007F0AC__Q22cf13CfGameManagerFv(const UnkF0ACData* data) {
     return data->flag_0x4 != 0;
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" bool func_80082FCC__Q22cf13CfGameManagerFv(const cf::CfObject* data, u32 mask) {
@@ -565,9 +569,11 @@ bool cf::CfGameManager::func_80082104() {
     return func_80079DBC(getInstance()->unkB4);
 }
 
+#pragma dont_inline on
 UnkClass_800821F8* cf::CfGameManager::func_800821F8() {
     return getInstance()->unkB0;
 }
+#pragma dont_inline reset
 
 cf::CfObject* cf::CfGameManager::func_8008221C() {
     CfCamEventManager* manager = getInstance()->unkB4;

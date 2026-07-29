@@ -1,16 +1,32 @@
-// Auto-scaffolded catalog TU for kyoshin/plugin/pluginTime
-// Replace stubs with high-level C/C++ during decomp.
+// Decompiled functions for kyoshin/plugin/pluginTime.
 
-#include "kyoshin/harness_catalog.hpp"
-
-void func_80185760(){}
-
-void func_801857A8(){}
+#include "kyoshin/plugin/pluginTime.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/vm/yvm2.h"
 
 extern "C" {
 extern const char lbl_eu_80503818[];
 extern PluginFuncData lbl_eu_80532348[];
 }
-extern "C" void pluginTimeRegist() {
+
+// pluginTime getter: returns the value from CfGameManager::func_80086DBC() as an int.
+int func_80185760(VMThread* pThread) {
+    VMArg result;
+    result.type = VM_TYPE_INT;
+    result.value.uintVal = cf::CfGameManager::func_80086DBC();
+    vmRetValSet(pThread, &result);
+    return 1;
+}
+
+// pluginTime getter: returns the value from CfGameManager::func_80086DA0() masked to u16 as an int.
+int func_801857A8(VMThread* pThread) {
+    VMArg result;
+    result.type = VM_TYPE_INT;
+    result.value.uintVal = (u16)cf::CfGameManager::func_80086DA0();
+    vmRetValSet(pThread, &result);
+    return 1;
+}
+
+void pluginTimeRegist() {
     vmPluginRegist(lbl_eu_80503818, lbl_eu_80532348);
 }

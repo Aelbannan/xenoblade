@@ -3,6 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/work/CProcess.hpp"
+#include "monolib/device/CDeviceGX.hpp"
+#include "monolib/core/CViewRoot.hpp"
 
 void __ct__CTaskGameEff(){}
 
@@ -44,6 +46,10 @@ void CTaskGameEff::Term() {}
 void func_80044FBC__FUl(){}
 
 void func_804CBB60(void*);
+void func_804CBB84(void*, void*);
+void func_804CBE48(void*);
+void func_804CC104(void*);
+void func_804CBEE8(void*);
 extern u8 lbl_eu_8065FC18[];
 void cbRenderBefore__12CTaskGameEffFv() {
     func_804CBB60(lbl_eu_8065FC18);
@@ -59,7 +65,19 @@ void func_8004513C(){}
 
 void func_800451D8(){}
 
-void func_80045284(){}
+// Renders/updates effect resources via the global effect singleton at lbl_eu_8065FC18.
+// First parameter (this) is unused; second parameter is forwarded to func_804CBB84.
+// The cache/ViewRoot pair flushes GX state before and after the effect calls.
+void func_80045284(void* unused, void* param) {
+    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CViewRoot::func_80442DA8();
+    func_804CBB84(lbl_eu_8065FC18, param);
+    func_804CBE48(lbl_eu_8065FC18);
+    func_804CC104(lbl_eu_8065FC18);
+    func_804CBEE8(lbl_eu_8065FC18);
+    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CViewRoot::func_80442DA8();
+}
 
 void func_800452EC(){}
 

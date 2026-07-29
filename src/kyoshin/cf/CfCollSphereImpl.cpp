@@ -1,31 +1,27 @@
 #include "types.h"
+#include "kyoshin/cf/CfCollSphereImpl.hpp"
 
-// renderSphere: member of cf::CfDebugDrawManager.
-// Stub declares Fv but retail passes a float in f1.
-void renderSphere__Q22cf18CfDebugDrawManagerFv(void* self, float val);
+// cf::CfDebugDrawManager::renderSphere(float radius)
+// Renders a debug sphere with the given radius.
+void renderSphere__Q22cf18CfDebugDrawManagerFv(cf::CfDebugDrawManager* mgr, float radius);
 
-// func_800A5738: defined in kyoshin/code_800A3B24.
-void func_800A5738(void* a, void* b, float val, void* c);
+// func_800A5738: collision query helper defined in kyoshin/code_800A3B24.
+void func_800A5738(void* query, cf::CfDebugDrawManager* mgr, float radius, void* result);
 
-// func_800AAD28: debug draw for sphere collision shape.
-// Reads field at shape+0xB8, converts to unsigned, calls shape's vfunc at
-// vtable offset 0xAC to get the draw manager, then calls renderSphere.
-void func_800AAD28(void* r3, void* r4){
-    float fval = *(float*)((char*)r4 + 0xB8);
-    unsigned int uval = (unsigned int)fval;
-    void** vtbl = *(void***)r4;
-    void* mgr = ((void*(*)(void*))vtbl[0xAC / 4])(r4);
-    float result = (float)uval;
-    renderSphere__Q22cf18CfDebugDrawManagerFv(mgr, result);
+// Debug-draw the sphere collision shape.
+// r3 is unused; r4 is the sphere shape.
+void func_800AAD28(void* /*unused*/, cf::CfCollSphereImpl* shape) {
+    // Convert radius to unsigned int and back to float (MWCC __cvt_fp2unsigned pattern).
+    float radius = (float)(unsigned int)shape->mRadius;
+    cf::CfDebugDrawManager* mgr = shape->getDebugDrawManager();
+    renderSphere__Q22cf18CfDebugDrawManagerFv(mgr, radius);
 }
 
-// func_800AAD94: same sphere debug draw but passes extra parameters through
-// to func_800A5738.
-void func_800AAD94(void* r3, void* r4, void* r5, void* r6){
-    float fval = *(float*)((char*)r4 + 0xB8);
-    unsigned int uval = (unsigned int)fval;
-    void** vtbl = *(void***)r4;
-    void* mgr = ((void*(*)(void*))vtbl[0xAC / 4])(r4);
-    float result = (float)uval;
-    func_800A5738(r5, mgr, result, r6);
+// Pass sphere collision data to the collision query system.
+// r3 is unused; r4 is the sphere shape; r5/r6 pass through to func_800A5738.
+void func_800AAD94(void* /*unused*/, cf::CfCollSphereImpl* shape, void* query, void* result) {
+    // Convert radius to unsigned int and back to float (MWCC __cvt_fp2unsigned pattern).
+    float radius = (float)(unsigned int)shape->mRadius;
+    cf::CfDebugDrawManager* mgr = shape->getDebugDrawManager();
+    func_800A5738(query, mgr, radius, result);
 }

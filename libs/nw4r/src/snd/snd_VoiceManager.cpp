@@ -7,6 +7,12 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
+// Helper to access protected LinkListImpl members
+struct LinkListImplAccess : ut::detail::LinkListImpl {
+    using ut::detail::LinkListImpl::Erase;
+    using ut::detail::LinkListImpl::Insert;
+};
+
 VoiceManager& VoiceManager::GetInstance() {
     static VoiceManager instance;
     return instance;
@@ -29,13 +35,25 @@ void VoiceManager::Setup(void* pBuffer, u32 size) {
         return;
     }
 
-    u32 voices = size / sizeof(Voice);
+    u32 voices = size / 0x124;
     u8* pPtr = static_cast<u8*>(pBuffer);
 
     for (u32 i = 0; i < voices; i++) {
-        Voice* pVoice = new (pPtr) Voice();
-        mFreeVoiceList.PushBack(pVoice);
-        pPtr += sizeof(Voice);
+        Voice* pVoice = reinterpret_cast<Voice*>(pPtr);
+        if (pPtr != NULL) {
+            pVoice = new (pPtr) Voice();
+        }
+
+        // Insert at back of free list: node at pVoice + 0x11C
+        ut::LinkListNode* pNode = reinterpret_cast<ut::LinkListNode*>(
+            reinterpret_cast<u8*>(pVoice) + 0x11C);
+        ut::detail::LinkListImpl::Iterator it(
+            reinterpret_cast<ut::LinkListNode*>(
+                reinterpret_cast<u8*>(&mFreeVoiceList) + 0x4));
+        reinterpret_cast<LinkListImplAccess*>(&mFreeVoiceList)->Insert(
+            it, pNode);
+
+        pPtr += 0x124;
     }
 
     mInitialized = true;
@@ -99,19 +117,76 @@ Voice* VoiceManager::AllocVoice(int channels, int voices, int priority,
 }
 
 void VoiceManager::FreeVoice(Voice* pVoice) {
-    ut::AutoInterruptLock lock;
+    BOOL enabled = OSDisableInterrupts();
 
     DisposeCallbackManager::GetInstance().UnregisterDisposeCallback(pVoice);
-    RemoveVoiceList(pVoice);
+
+    BOOL enabled2 = OSDisableInterrupts();
+
+    // Compute node pointer using retail offset (0x11C within Voice)
+    ut::LinkListNode* pNode = reinterpret_cast<ut::LinkListNode*>(
+        reinterpret_cast<u8*>(pVoice) + 0x11C);
+
+    // Erase from priority list
+    reinterpret_cast<LinkListImplAccess*>(&mPrioVoiceList)->Erase(pNode);
+
+    // Insert at back of free list (before sentinel node)
+    ut::LinkListNode* pSentinel = reinterpret_cast<ut::LinkListNode*>(
+        reinterpret_cast<u8*>(&mFreeVoiceList) + 0x4);
+    ut::detail::LinkListImpl::Iterator it(pSentinel);
+    reinterpret_cast<LinkListImplAccess*>(&mFreeVoiceList)->Insert(it, pNode);
+
+    OSRestoreInterrupts(enabled2);
+    OSRestoreInterrupts(enabled);
 }
 
 void VoiceManager::UpdateAllVoices() {
-    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mPrioVoiceList, { it->StopFinished(); })
-    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mPrioVoiceList, { it->Calc(); })
+    // Save this into a local so it lives in a callee-saved register across the
+    // three passes (matches retail keeping this in r29).
+    u8* pBase = reinterpret_cast<u8*>(this);
 
-    ut::AutoInterruptLock lock;
+    ut::LinkListNode* pEnd;
+    ut::LinkListNode* pNode;
 
-    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mPrioVoiceList, { it->Update(); })
+    // First pass: StopFinished on all voices
+    pEnd = reinterpret_cast<ut::LinkListNode*>(pBase + 0x8);
+    pNode = pEnd->GetNext();
+
+    while (pNode != pEnd) {
+        ut::LinkListNode* pCurr = pNode;
+        pNode = pNode->GetNext();
+        reinterpret_cast<Voice*>(
+            reinterpret_cast<u8*>(pCurr) - 0x11C)->StopFinished();
+    }
+
+    // Second pass: Calc on all voices
+    pEnd = reinterpret_cast<ut::LinkListNode*>(pBase + 0x8);
+    pNode = pEnd->GetNext();
+
+    while (pNode != pEnd) {
+        ut::LinkListNode* pCurr = pNode;
+        pNode = pNode->GetNext();
+        reinterpret_cast<Voice*>(
+            reinterpret_cast<u8*>(pCurr) - 0x11C)->Calc();
+    }
+
+    // Third pass: Update on all voices with interrupts disabled.
+    // Compute sentinel BEFORE capturing the interrupt return value so the
+    // register allocation matches retail (lwzu pattern).
+    {
+        pEnd = reinterpret_cast<ut::LinkListNode*>(pBase + 0x8);
+        BOOL enabled = OSDisableInterrupts();
+        pNode = pEnd->GetNext();
+
+        while (pNode != pEnd) {
+            ut::LinkListNode* pCurr = pNode;
+            pNode = pNode->GetNext();
+            reinterpret_cast<Voice*>(
+                reinterpret_cast<u8*>(pCurr) - 0x11C)->Update();
+        }
+
+        OSRestoreInterrupts(enabled);
+    }
 }
 
 void VoiceManager::NotifyVoiceUpdate() {
@@ -179,13 +254,28 @@ void VoiceManager::UpdateEachVoicePriority(const VoiceList::Iterator& rBegin,
 }
 
 void VoiceManager::UpdateAllVoicesSync(u32 syncFlag) {
-    ut::AutoInterruptLock lock;
+    BOOL enabled = OSDisableInterrupts();
 
-    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mPrioVoiceList, {
-        if (it->mIsActive) {
-            it->mSyncFlag |= syncFlag;
+    // Traverse priority list manually, matching retail pattern
+    u8* pBase = reinterpret_cast<u8*>(&mPrioVoiceList);
+    ut::LinkListNode* pEnd = reinterpret_cast<ut::LinkListNode*>(pBase + 0x4);
+    ut::LinkListNode* pNode = pEnd->GetNext();
+
+    while (pNode != pEnd) {
+        ut::LinkListNode* pCurr = pNode;
+        pNode = pNode->GetNext();
+
+        // Get Voice* from node using retail offset (0x11C)
+        Voice* pVoice = reinterpret_cast<Voice*>(
+            reinterpret_cast<u8*>(pCurr) - 0x11C);
+
+        if (pVoice->mIsActive) {
+            // mSyncFlag accessed as u16 to match retail lhz/sth
+            pVoice->mSyncFlag |= syncFlag;
         }
-    })
+    }
+
+    OSRestoreInterrupts(enabled);
 }
 
 int VoiceManager::DropLowestPriorityVoice(int priority) {

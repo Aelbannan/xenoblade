@@ -4,9 +4,8 @@
 #include "kyoshin/help/CHelp.hpp"
 
 namespace cf {
-class CHelp_OpenPartyMenu : public CHelp {
+class CHelp_ClosePartyMenu : public CHelp {
 public:
-    bool func_802B84EC();
-    bool func_802B859C();
+    void func_802B8534();
 };
 } // namespace cf

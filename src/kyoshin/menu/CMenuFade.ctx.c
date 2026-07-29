@@ -26656,7 +26656,7 @@ public:
 
 class CMenuFade : public CMenuFadeBase, public IScnRender {
 public:
-    CMenuFade(CScn* pScn, int p5, int p6, float f1, float f2, float f3);
+    CMenuFade();
     virtual ~CMenuFade();
     void Init();
     void Term();
@@ -26669,23 +26669,38 @@ public:
     CScn* mScn;                                 // 0x60
     UnkClass_8045F564 mLayoutMem;               // 0x64
     nw4r::lyt::Layout* mLayout;                 // 0x74
-    nw4r::lyt::AnimTransform* field_0x78;       // 0x78
-    f32 field_0x7C;                             // 0x7C
-    f32 field_0x80;                             // 0x80
-    f32 field_0x84;                             // 0x84
-    f32 field_0x88;                             // 0x88
-    u32 field_0x8C;                             // 0x8C
-    u32 field_0x90;                             // 0x90
-    u8 field_0x94;                              // 0x94
-    u8 pad_0x95[3];                             // 0x95-0x97
-    u32 field_0x98;                             // 0x98
+    nw4r::lyt::AnimTransform* field_0x78;        // 0x78 — animation transform
+    f32 field_0x7C;                              // 0x7C — current animation frame
+    f32 field_0x80;                              // 0x80 — step/velocity for fade-in (case 0)
+    f32 field_0x84;                              // 0x84 — delay threshold (case 1)
+    f32 field_0x88;                              // 0x88 — step for fade-out (case 2)
+    s32 field_0x8C;                              // 0x8C — state: 0=fade-in, 1=hold, 2=fade-out
+    s32 field_0x90;                              // 0x90 — mode for state 1
+    u8 field_0x94;                               // 0x94 — flag
+    u8 pad_0x95[3];                              // 0x95-0x97
+    s32 field_0x98;                              // 0x98 — pane visibility mode
 };
 /* end "kyoshin/menu/CMenuFade.hpp" */
-
-/* "src/kyoshin/menu/CMenuFade.cpp" line 2 "kyoshin/code_80135FDC.hpp" */
+/* "src/kyoshin/menu/CMenuFade.cpp" line 1 "kyoshin/CUICfManager.hpp" */
 #pragma once
 
-/* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
+/* "src/kyoshin/CUICfManager.hpp" line 2 "kyoshin/cf/IFlagEvent.hpp" */
+#pragma once
+
+namespace cf{
+
+    class IFlagEvent{
+    public:
+        virtual ~IFlagEvent();
+
+        virtual void FlagEvent1(int arg1, int arg2, int arg3);
+        virtual void OnFileEvent(void* arg1);
+        virtual void FlagEvent3(int arg1, int arg2, int arg3);
+    };
+
+} //namespace cf
+/* end "kyoshin/cf/IFlagEvent.hpp" */
+/* "src/kyoshin/CUICfManager.hpp" line 3 "monolib/device/CFileHandle.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 2 "types.h" */
@@ -26734,6 +26749,211 @@ struct CFileHandle {
     }
 
 };
+/* end "monolib/device/CFileHandle.hpp" */
+/* "src/kyoshin/CUICfManager.hpp" line 4 "monolib/work.hpp" */
+/* end "monolib/work.hpp" */
+
+/* "src/kyoshin/CUICfManager.hpp" line 6 "nw4r/lyt.h" */
+/* end "nw4r/lyt.h" */
+/* "src/kyoshin/CUICfManager.hpp" line 7 "types.h" */
+/* end "types.h" */
+
+namespace nw4r {
+namespace ut {
+
+// Stub: retail size 0x3C; Destroy returns buffer for MemManager::deallocate.
+class PackedFont {
+public:
+    void* Destroy();
+
+private:
+    u8 unk[0x3C];
+};
+
+} // namespace ut
+} // namespace nw4r
+
+struct CUICfUnk144 {
+    u8 unk00[0x39];
+    u8 unk39; // 0x39
+};
+
+// Queue item type for CUICfManager::Move list walks (CProcess-sized prefix).
+struct CUICfMenuItem {
+    u8 unk00[0x39];
+    u8 unk39; // 0x39 - remove / SetRemove
+    u8 unk3A[0x54 - 0x3A];
+    u8 unk54; // 0x54
+    u8 unk55; // 0x55
+};
+
+struct CUICfInitBlock {
+    u32 unk00;
+    u16 unk04;
+    u8 unk06[0x34 - 6];
+};
+
+struct CUICfInitState {
+    u8 mode;
+    u8 state;
+    u8 unk02[2];
+};
+
+// Retail copy: lwz +0; paired +8/+4; lhz +0xC; lone lwz +0x0E; paired words from +0x12.
+// Trailing bytes split so MWCC pair-unrolls (one big u8[] → lwzu). Zeros via u16* overlay.
+#pragma pack(push, 1)
+struct CUICfInitTailChunk8 {
+    u8 b[8];
+};
+struct CUICfInitTailChunk40 {
+    u8 b[0x40];
+};
+struct CUICfInitTailChunk3E {
+    u8 b[0x3E];
+};
+struct CUICfInitTailChunk40View {
+    u8 b[0x40]; // assign view: 2-byte overhang past Tail (retail last lwz pair)
+};
+struct CUICfInitTail {
+    u32 unk00;                  // +0x00
+    CUICfInitTailChunk8 mid;    // +0x04..+0x0B (memcpy pair → +8/+4 loads)
+    u16 unk0C;                  // +0x0C
+    u32 unk0E;                  // +0x0E
+    CUICfInitTailChunk40 rest0; // +0x12
+    CUICfInitTailChunk3E rest1; // +0x52
+}; // size = 0x90
+#pragma pack(pop)
+
+// Forces retail stack contiguity: state, block0, blocks[3], tail.
+struct CUICfInitTemplates {
+    CUICfInitState state;
+    CUICfInitBlock block0;
+    CUICfInitBlock blocks[3];
+    CUICfInitTail tail;
+};
+
+// 0xC-byte pool node for func_80133324's event queue - same layout as
+// `_reslist_node<u32>` (mNext@0, mPrev@4, mItem@8). Empty slots have mNext==0.
+struct CUICfListNode {
+    CUICfListNode* next; // 0x0
+    CUICfListNode* prev; // 0x4
+    u32 item;            // 0x8
+};
+
+// 27-entry, 0-terminated id table copied onto the stack by func_80133324
+// (retail: sp+0x28..0x5D, matches lbl_eu_804FFFDC minus its trailing entry).
+struct CUICfIdTable {
+    u16 ids[27];
+};
+
+class CUICfManager;
+
+// Retail mangles this as a no-arg CUICfManager member (`Fv`) but the body
+// reads r4/r5/r6 as real event-dispatch arguments; declared extern "C" here
+// (before the class, so the in-class friend declaration below binds to this
+// same linkage) so its ABI is r3=<unused self>, r4=id, r5=a1, r6=a2.
+extern "C" void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+
+struct CUICfInitSlot {
+    u8 unk00[4];
+    u8 unk04;
+    u8 unk05;
+    u8 unk06[2];
+    CUICfInitBlock unk08;
+    CUICfInitBlock unk3C;
+    CUICfInitBlock unk70;
+    CUICfInitBlock unkA4;
+    CUICfInitTail unkD8;
+}; // size = 0x168
+
+class CUICfManager : public CTTask<CUICfManager>, public IWorkEvent, public cf::IFlagEvent {
+public:
+    static CUICfManager* getInstance() {
+        return spInstance;
+    }
+    static CUICfManager* create(CProcess* pParent, CScnNw4r* pScene, mtl::ALLOC_HANDLE mHandle);
+    static nw4r::lyt::ArcResourceAccessor* func_801355F4();
+    static int func_80135FDC();
+
+    void Init();
+    void Term();
+    void Move();
+
+
+    // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
+    u16 getFlags() const {
+        return mFlags;
+    }
+    void setTimeout30() {
+        unk120 = 30;
+    }
+    void setFlagState(bool value) {
+        if (value) {
+            mInitSlots[0].unk00[1] = 1;
+        } else {
+            mInitSlots[0].unk00[0] = 1;
+        }
+        mFlags = 0;
+    }
+    void* getArcResourceAccessor() const {
+        return mArcResourceAccessor;
+    }
+    void setFieldC8C(u8 value) {
+        unkC88[4] = value;
+    }
+    void* getPackedFont9C() { return &mPackedFont9C; }
+    void* getPackedFontD8() { return &mPackedFontD8; }
+    int prepareMenus() {
+        if (mArcResourceAccessor == 0) {
+            mFlags |= 0x4;
+            return 0;
+        }
+        mFlags &= 0xfffb;
+        mFlags |= 0x8 | 0x10 | 0x20 | 0x40 | 0x80;
+        return 0;
+    }
+
+private:
+    // 0x000-0x054 CTTask
+    // 0x054-0x058 IWorkEvent
+    // 0x058-0x05C cf::IFlagEvent
+    nw4r::lyt::ArcResourceAccessor* mArcResourceAccessor; // 0x05C
+    nw4r::ut::PackedFont mPackedFont60;                  // 0x060
+    nw4r::ut::PackedFont mPackedFont9C;                  // 0x09C
+    nw4r::ut::PackedFont mPackedFontD8;                  // 0x0D8
+    CFileHandle* mFileHandle;                            // 0x114
+    int unk118;                                          // 0x118
+    u32 unk11C;                                          // 0x11C
+    u32 unk120;                                          // 0x120 - Move countdown
+    u8 unk124[0x128 - 0x124];                            // 0x124
+    CUICfListNode* unk128;                               // 0x128 (event queue head)
+    u8 unk12C[0x138 - 0x12C];                            // 0x12C
+    CUICfListNode* unk138;                               // 0x138 (event node array)
+    int unk13C;                                          // 0x13C (event node array count)
+    u8 unk140[0x144 - 0x140];                            // 0x140
+    CUICfUnk144* unk144;                                 // 0x144
+    CUICfInitSlot mInitSlots[8];                         // 0x148
+    // Slot0.unk00[0]/[1] are manager-wide clear/mark flags (0x148/0x149).
+    u8 unkC88[8];                                        // 0xC88
+    u16 mFlags;                                          // 0xC90 - Move bitflags
+    u8 unkC92[2];                                        // 0xC92
+
+    static CUICfManager* spInstance;
+    CUICfManager();
+    virtual ~CUICfManager();
+    void OnFileEvent();
+    void func_80135FBC();
+    void func_80135FC4();
+    void func_80135FCC();
+    void func_80135FD4();
+    void func_80133324(int id, int a1, int a2);
+    static IWorkEvent* cfWorkEvent();
+}; // size = 0xC94
+/* end "kyoshin/CUICfManager.hpp" */
+/* "src/kyoshin/menu/CMenuFade.cpp" line 2 "kyoshin/code_80135FDC.hpp" */
+#pragma once
+
+/* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
 /* end "monolib/device/CFileHandle.hpp" */
 /* "src/kyoshin/code_80135FDC.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
 /* end "monolib/work/IWorkEvent.hpp" */
@@ -28617,312 +28837,10 @@ static const double MS_PER_FRAME = 1.0/CDeviceVI::TARGET_FRAMERATE;
 
 #define SECONDS_TO_FRAMES(n) (CDeviceVI::TARGET_FRAMERATE * n)
 /* end "monolib/device/CDeviceVI.hpp" */
-/* "src/kyoshin/menu/CMenuFade.cpp" line 4 "monolib/util/MemManager.hpp" */
+/* "src/kyoshin/menu/CMenuFade.cpp" line 4 "monolib/lib/UnkClass_8045F564.hpp" */
+/* end "monolib/lib/UnkClass_8045F564.hpp" */
+/* "src/kyoshin/menu/CMenuFade.cpp" line 5 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
-/* "src/kyoshin/menu/CMenuFade.cpp" line 5 "monolib/work/CProcess.hpp" */
-/* end "monolib/work/CProcess.hpp" */
-/* "src/kyoshin/menu/CMenuFade.cpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
-/* end "monolib/work/CWorkThreadSystem.hpp" */
-
-/* "src/kyoshin/menu/CMenuFade.cpp" line 8 "revolution/GX.h" */
-/**
- * References: YAGCD, Dolphin Emulator, publicly available patents
- */
-
-#ifndef RVL_SDK_PUBLIC_GX_H
-#define RVL_SDK_PUBLIC_GX_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
-/* end "revolution/GX/GXAttr.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
-/* end "revolution/GX/GXBump.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
-/* end "revolution/GX/GXDisplayList.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
-/* end "revolution/GX/GXDraw.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
-/* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 15 "revolution/GX/GXFrameBuf.h" */
-/* end "revolution/GX/GXFrameBuf.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 16 "revolution/GX/GXGeometry.h" */
-/* end "revolution/GX/GXGeometry.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 17 "revolution/GX/GXHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap8.html#sec8
- * https://www.gc-forever.com/yagcd/chap5.html#sec5
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
- * https://patents.google.com/patent/US6700586B1/en
- * https://patents.google.com/patent/US6639595B1/en
- * https://patents.google.com/patent/US7002591
- * https://patents.google.com/patent/US6697074
- */
-
-#ifndef RVL_SDK_GX_HARDWARE_H
-#define RVL_SDK_GX_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/************************************************************
- *
- *
- * GX FIFO
- *
- *
- ***********************************************************/
-
-/**
- * FIFO write/gather pipe
- */
-extern volatile union {
-    // 1-byte
-    char c;
-    unsigned char uc;
-    // 2-byte
-    short s;
-    unsigned short us;
-    // 4-byte
-    int i;
-    unsigned int ui;
-    void* p;
-    float f;
-} WGPIPE DECL_ADDRESS(0xCC008000);
-
-/**
- * FIFO commands
- */
-typedef enum {
-    GX_FIFO_CMD_NOOP = 0x00,
-
-    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
-    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
-    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
-
-    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
-    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
-    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
-    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
-
-    GX_FIFO_CMD_CALL_DL = 0x40,
-    GX_FIFO_CMD_INVAL_VTX = 0x48,
-
-    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
-    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
-    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
-    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
-    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
-} GXFifoCmd;
-
-/**
- * FIFO command sizes
- */
-#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
-#define GX_FIFO_CMD_DRAW_SIZE 3
-
-#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
-#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
-#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
-
-#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
-        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
-        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
-        WGPIPE.c = reg;                                                        \
-        WGPIPE.i = cmd;                                                        \
-    }
-
-#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
-
-/************************************************************
- *
- *
- * GX Blitting Processor (BP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into BP register
- */
-#define GX_BP_LOAD_REG(data)                                                   \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
-    WGPIPE.i = (data);
-
-/**
- * Set BP command opcode (first 8 bits)
- */
-#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
-
-#define GX_BP_OPCODE_SHIFT 24
-#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Command Processor (CP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into CP register
- */
-#define GX_CP_LOAD_REG(addr, data)                                             \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
-    WGPIPE.c = (addr);                                                         \
-    WGPIPE.i = (data);
-
-#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Transform Unit (XF)
- *
- *
- ***********************************************************/
-
-/**
- * XF memory
- */
-typedef enum {
-    GX_XF_MEM_POSMTX = 0x0000,
-    GX_XF_MEM_NRMMTX = 0x0400,
-    GX_XF_MEM_DUALTEXMTX = 0x0500,
-    GX_XF_MEM_LIGHTOBJ = 0x0600
-} GXXfMem;
-
-/**
- * Header for an XF register load
- */
-#define GX_XF_LOAD_REG_HDR(addr)                                               \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
-    WGPIPE.i = (addr);
-
-/**
- * Load immediate value into XF register
- */
-#define GX_XF_LOAD_REG(addr, data)                                             \
-    GX_XF_LOAD_REG_HDR(addr);                                                  \
-    WGPIPE.i = (data);
-
-#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
-
-/**
- * Load immediate values into multiple XF registers
- */
-#define GX_XF_LOAD_REGS(size, addr)                                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        cmd |= (addr);                                                         \
-        cmd |= (size) << 16;                                                   \
-        GX_XF_LOAD_REG_HDR(cmd);                                               \
-    }
-
-/**
- * Enums for Tex0-Tex7 register fields
- */
-typedef enum {
-    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
-    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
-} GXXfTexProj;
-
-typedef enum {
-    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
-    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
-} GXXfTexForm;
-
-typedef enum {
-    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
-    GX_XF_TG_BUMP,    // Texgen bump mapping
-
-    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                   // color0
-
-    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                  // color1
-} GXXfTexGen;
-
-/**
- * Misc. hardware enums
- */
-typedef enum {
-    GX_RAS_COLOR0A0,
-    GX_RAS_COLOR1A1,
-    GX_RAS_ALPHA_BUMP = 5,
-    GX_RAS_ALPHA_BUMPN,
-    GX_RAS_COLOR_ZERO,
-
-    GX_RAS_MAX_CHANNEL
-} GXRasChannelID;
-
-typedef enum {
-    GX_TEVREG_COLOR,
-    GX_TEVREG_KONST,
-} GXTevRegType;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXHardware.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 18 "revolution/GX/GXHardwareBP.h" */
-/* end "revolution/GX/GXHardwareBP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 19 "revolution/GX/GXHardwareCP.h" */
-/* end "revolution/GX/GXHardwareCP.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 20 "revolution/GX/GXHardwareXF.h" */
-/* end "revolution/GX/GXHardwareXF.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 21 "revolution/GX/GXInit.h" */
-/* end "revolution/GX/GXInit.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 22 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 23 "revolution/GX/GXLight.h" */
-/* end "revolution/GX/GXLight.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 24 "revolution/GX/GXMisc.h" */
-/* end "revolution/GX/GXMisc.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 25 "revolution/GX/GXPixel.h" */
-/* end "revolution/GX/GXPixel.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 26 "revolution/GX/GXTev.h" */
-/* end "revolution/GX/GXTev.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-/* end "revolution/GX/GXTexture.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
-/* end "revolution/GX/GXTransform.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 29 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 30 "revolution/GX/GXVert.h" */
-/* end "revolution/GX/GXVert.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX.h" */
 
 // Forward-declare CTaskGame to avoid pulling in the real IScnRender
 // (CMenuFade.hpp declares a local IScnRender without a destructor to
@@ -28930,80 +28848,20 @@ typedef enum {
 class CTaskGame {
 public:
     static CTaskGame* getInstance();
-    bool func_800426F0();
+    static bool func_800426F0();
 };
 
-// Layout helper from code_80135FDC (not yet declared in the header).
-void func_80137B44(nw4r::lyt::Layout* layout, const char* paneName, int value);
-
-// lbl_* reloc names — extern "C" for C linkage
-extern "C" {
+// lbl_* reloc names -- plain extern (symbol map handles linkage)
 extern u32 lbl_eu_80663E28;
 extern CMenuFade* lbl_eu_80663FA0;
-extern const u8 lbl_eu_8052BF70[];   // CTTask<IUICf> vtable
-extern const u8 lbl_eu_8052C540[];   // CMenuFade vtable
-extern const f32 lbl_eu_80667058;    // 0.0f
-extern const f32 lbl_eu_8066705C;    // 1.0f
-extern const f64 lbl_eu_80667068;    // 4503599627370496.0 (u32->f32 magic)
 extern char lbl_eu_804FDEA8[];
-}
+extern const f32 lbl_eu_80667060;
 
-// PTMF null block (variable — no mangling, safe outside extern "C")
-extern const u32 __ptmf_null[3];
+// Forward declaration for layout helper (not yet decompiled)
+void func_80137B44(nw4r::lyt::Layout* layout, const char* paneName, int value);
 
-// ============================================================================
-// Constructor
-// ============================================================================
-CMenuFade::CMenuFade(CScn* pScn, int p5, int p6, float f1, float f2, float f3) {
-    // CProcess base is constructed automatically via the member initializer
-    // list (implicit).  Vtable / PTMF initialization is done manually to
-    // follow the retail codegen sequence.
-    u8* s = reinterpret_cast<u8*>(this);
+CMenuFade::CMenuFade(){
 
-    // Intermediate vtable (CTTask<IUICf> level)
-    reinterpret_cast<u32*>(s)[0x10 / 4] = reinterpret_cast<u32>(lbl_eu_8052BF70);
-
-    // Copy __ptmf_null to PTMF slots at 0x3C and 0x48
-    u32 ptmf0 = __ptmf_null[0];
-    u32 ptmf1 = __ptmf_null[1];
-    u32 ptmf2 = __ptmf_null[2];
-    reinterpret_cast<u32*>(s)[0x3C / 4] = ptmf0;
-    reinterpret_cast<u32*>(s)[0x40 / 4] = ptmf1;
-    reinterpret_cast<u32*>(s)[0x44 / 4] = ptmf2;
-    reinterpret_cast<u32*>(s)[0x48 / 4] = ptmf0;
-    reinterpret_cast<u32*>(s)[0x4C / 4] = ptmf1;
-    reinterpret_cast<u32*>(s)[0x50 / 4] = ptmf2;
-
-    // Zero the CMenuFadeBase fields
-    field_0x54 = 0;
-    pad55[0] = 0;
-
-    // Final vtable (CMenuFade)
-    u32 vtFinal = reinterpret_cast<u32>(lbl_eu_8052C540);
-    reinterpret_cast<u32*>(s)[0x10 / 4] = vtFinal;
-
-    // IWorkEvent vtable at 0x58 (+0x24 within CMenuFade vtable)
-    mIWorkEventVtbl = vtFinal + 0x24;
-
-    // IScnRender vtable at 0x5c (+0xAC within CMenuFade vtable)
-    reinterpret_cast<u32*>(s)[0x5C / 4] = vtFinal + 0xAC;
-
-    // Store constructor parameters
-    mScn = pScn;
-
-    // mLayoutMem is default-constructed (compiler-generated)
-
-    // Initialize remaining fields
-    mLayout = nullptr;
-    field_0x78 = 0;
-    field_0x7C = 0.0f;
-    field_0x80 = f1;
-    field_0x84 = f2;
-    field_0x88 = f3;
-    field_0x8C = 0;
-    field_0x90 = p5;
-    field_0x94 = 1;
-    field_0x98 = p6;
 }
 
 CMenuFade::~CMenuFade() {
@@ -29012,6 +28870,127 @@ CMenuFade::~CMenuFade() {
 
 void CMenuFade::Draw() {
 
+}
+
+void CMenuFade::Move() {
+    // Skip when game is paused or non-interactive
+    CTaskGame::getInstance();
+    if (CTaskGame::func_800426F0()) {
+        return;
+    }
+
+    // Bit 10 (IBM) = bit 21 (standard): realtime event busy.
+    // `if (bit clear) { switch } else { return }` emits beq+switch; b return
+    // matching the retail two-branch pattern without inline asm.
+    if ((lbl_eu_80663E28 & (1u << 21)) == 0) {
+        switch (field_0x8C) {
+        case 0:
+            // Fade-in: advance frame by step, clamp to last frame when complete
+            field_0x7C += field_0x80;
+            if (field_0x7C >= static_cast<f32>(field_0x78->GetFrameSize())) {
+                // Clamp to last frame and transition to hold state
+                field_0x7C = static_cast<f32>(field_0x78->GetFrameSize() - 1);
+                field_0x8C = 1;
+            }
+            field_0x78->SetFrame(field_0x7C);
+            mLayout->Animate(0);
+            break;
+        case 1:
+            // Hold: if mode==1, increment frame by 1.0 each tick until threshold
+            if (field_0x90 == 1) {
+                field_0x7C += 1.0f;
+                if (field_0x7C >= field_0x84) {
+                    // Past threshold: clamp to last frame and start fade-out
+                    field_0x7C = static_cast<f32>(field_0x78->GetFrameSize() - 1);
+                    field_0x8C = 2;
+                }
+            } else {
+                field_0x94 = 0;
+            }
+            break;
+        case 2:
+            // Fade-out: decrease frame by step; when at 0, signal completion
+            field_0x7C -= field_0x88;
+            if (field_0x7C <= 0.0f) {
+                field_0x7C = 0.0f;
+                field_0x54 = 1;
+            }
+            field_0x78->SetFrame(field_0x7C);
+            mLayout->Animate(0);
+            break;
+        }
+    } else {
+        return;
+    }
+}
+
+void CMenuFade::Init() {
+    // Create layout memory region (0x4000 bytes from MEM2)
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    mLayoutMem.createRegion(handle, 0x4000, lbl_eu_804FDEA8, 0);
+
+    Class_8045F858 regionGuard(&mLayoutMem);
+
+    // Load layout from archive
+    nw4r::lyt::ArcResourceAccessor* acc = CUICfManager::func_801355F4();
+    func_80136E84(&mLayout, acc, lbl_eu_804FDEA8 + 0xA);
+
+    // Find animation transform
+    nw4r::lyt::ArcResourceAccessor* acc2 = CUICfManager::func_801355F4();
+    func_80136F08(mLayout, &field_0x78, acc2, lbl_eu_804FDEA8 + 0x18);
+
+    // Enable the animation
+    mLayout->SetAnimationEnable(field_0x78, true);
+
+    // Compute frameMax = (f32)GetFrameSize() once; reused across the three
+    // field computations below (retail keeps it in a single FPR).
+    f32 frameMax = static_cast<f32>(field_0x78->GetFrameSize());
+
+    // field_0x80: step for fade-in (case 0).  Default 1.0 if negative.
+    field_0x80 = (field_0x80 >= 0.0f) ? (frameMax / field_0x80) : 1.0f;
+
+    // field_0x84: delay threshold (case 1).  Default from lbl if negative.
+    if (field_0x84 < 0.0f) {
+        field_0x84 = lbl_eu_80667060;
+    }
+
+    // field_0x88: step for fade-out (case 2).  Default 1.0 if negative.
+    field_0x88 = (field_0x88 >= 0.0f) ? (frameMax / field_0x88) : 1.0f;
+
+    // Initialize frame based on initial mode (field_0x90)
+    switch (field_0x90) {
+    case 0:
+    case 1:
+        field_0x7C = 0.0f;
+        break;
+    case 2:
+        // Start at last frame (ready to fade out)
+        field_0x7C = static_cast<f32>(field_0x78->GetFrameSize() - 1);
+        break;
+    }
+
+    // Set pane visibility based on mode (field_0x98)
+    switch (field_0x98) {
+    case 0:
+        func_80137B44(mLayout, lbl_eu_804FDEA8 + 0x26, 0xFF);
+        break;
+    case 1:
+        func_80137B44(mLayout, lbl_eu_804FDEA8 + 0x26, -1);
+        break;
+    }
+
+    // Apply initial frame and animate
+    field_0x78->SetFrame(field_0x7C);
+    mLayout->Animate(0);
+
+    // Register render callback (IScnRender at offset 0x5c).
+    // The compiler generates the non-primary-base null-check/adjustment.
+    mScn->addRenderCB(this, 0xD, 0);
+
+    // Release layout memory region
+    mLayoutMem.func_8045F810();
+
+    // regionGuard destructor runs here
 }
 
 void CMenuFade::Term() {
@@ -29028,66 +29007,18 @@ void CMenuFade::Term() {
 int func_80113E1C() {
     return reinterpret_cast<int>(lbl_eu_80663FA0);
 }
-u8 func_80113E24(CMenuFade* pthis) {
-    return pthis->field_0x94;
+u8 func_80113E24(void* pthis) {
+    return *(u8*)((char*)pthis + 0x94);
 }
-
-// Thunks for IWorkEvent/IScnRender subobject adjustment
+// Converted to inline member function in header
 void __dt__9CMenuFadeFv(CMenuFade*);
 void func_80113E38(CMenuFade* p) {
-    __dt__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(reinterpret_cast<u8*>(p) - 0x58));
+    __dt__9CMenuFadeFv((CMenuFade*)((char*)p - 0x58));
 }
-void cbRenderBefore__9CMenuFadeFv(CMenuFade*);
-void func_80113E40(u8* self) {
-    cbRenderBefore__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(self - 0x5c));
-}
-void func_80113E48(u8* arg0) {
-    __dt__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(arg0 - 0x5C));
+void cbRenderBefore__9CMenuFadeFv(void* self);
+void func_80113E40(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuFadeFv)((char*)self - 0x5c); }
+void func_80113E48(void* arg0) {
+    __dt__9CMenuFadeFv((struct CMenuFade*)((char*)arg0 - 0x5C));
 }
 
-void CMenuFade::cbRenderBefore() {
-    // Skip rendering when game is paused or menu fade is suppressed
-    if (CTaskGame::getInstance()->func_800426F0()) {
-        return;
-    }
-    if ((lbl_eu_80663E28 & 0x00200000) == 0) {
-        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-        nw4r::lyt::DrawInfo drawInfo;
-        func_80137250(&drawInfo);
-        func_80137038(mLayout, &drawInfo, 0, 1);
-    }
-}
-
-CMenuFade* func_80113C84(
-    CProcess* parent, CScn* pScn, int p5, int p6,
-    float f1, float f2, float f3)
-{
-    CMenuFade* fade = lbl_eu_80663FA0;
-    if (fade != nullptr) {
-        u16 frameSize = fade->field_0x78->GetFrameSize();
-        f32 frameSizeF = (f32)frameSize;
-        fade->field_0x88 = (f3 >= lbl_eu_80667058) ? (frameSizeF / f3) : lbl_eu_8066705C;
-        fade->field_0x8C = 2;
-        fade->field_0x94 = 1;
-        fade->field_0x98 = p6;
-        switch (p6) {
-        case 0:
-            func_80137B44(fade->mLayout, lbl_eu_804FDEA8 + 0x26, 0xFF);
-            break;
-        case 1:
-            func_80137B44(fade->mLayout, lbl_eu_804FDEA8 + 0x26, -1);
-            break;
-        }
-        return nullptr;
-    }
-
-    u8* mem = static_cast<u8*>(mtl::MemManager::allocate(sizeof(CMenuFade), CWorkThreadSystem::getWorkMem()));
-    if (mem != nullptr) {
-        fade = new (mem) CMenuFade(pScn, p5, p6, f1, f2, f3);
-    } else {
-        fade = nullptr;
-    }
-    lbl_eu_80663FA0 = fade;
-    fade->Regist(parent, false);
-    return lbl_eu_80663FA0;
-}
+void func_80113C84(){}

@@ -902,7 +902,7 @@ namespace cf {
 }
 /* end "kyoshin/cf/chain/CChainActorPc.hpp" */
 
-namespace cf { class CBattleManager; class CfObjectMove; class CfGameManager; class CChain; class CfObjectSelectorObj; }
+namespace cf { class CBattleManager; class CfObjectMove; class CfGameManager; class CChain; }
 
 // Retail symbol: cf::CBattleManager::getInstance()
 cf::CBattleManager* getInstance__Q22cf14CBattleManagerFv();
@@ -921,34 +921,6 @@ extern "C" void func_80279DC0(void*);
 extern "C" int func_80148778(void*, int);
 extern "C" int func_8027A024(void*, void*);
 extern "C" int* func_8009ECB0();
-
-// Forward declarations for Target 1 (func_802822F8)
-cf::CfObjectSelectorObj* func_800FE68C();
-void func_800FE6A4(cf::CfObjectSelectorObj*, int, int, int);
-
-// Holder struct for func_80043D90 / func_80043F18 / __dt__80043E88
-struct ChainEnumHolder {
-    UNKTYPE* list;  // 0x0
-    u32 handle;     // 0x4
-};
-// Tail of the enumeration list struct, exposing the flag at offset 0x620
-struct EnumListTail {
-    u8 _pad[0x620];
-    int field_0x620;
-};
-
-// Forward declarations for Target 2 (func_80282380)
-void func_80043D90(ChainEnumHolder*);
-UNKTYPE* func_80043F18(ChainEnumHolder*);
-void __dt__80043E88(ChainEnumHolder*, int);
-void func_800F4A98(UNKTYPE*, int, int);
-void func_800F6ED0(UNKTYPE*, UNKTYPE*);
-UNKTYPE* func_800F6E08(UNKTYPE*);
-UNKTYPE* func_800B708C(BOOL);
-UNKTYPE* func_800AD860(UNKTYPE*);
-
-// Forward declaration for Target 3 (func_802821E0)
-int func_80174C98(UNKTYPE*, UNKTYPE*, int);
 
 int func_80282048(int arg) {
     return func_802A0804(0xb3, arg);
@@ -988,13 +960,162 @@ extern "C" void func_80281924(cf::CChainActorPc* self, int val) {
     CChain_setFieldAndClear(self, val);
     func_802A08F4(&self->mChainEffect);
 }
-void func_80281958(){}
+// Shared external declarations for func_80281958 and func_80281CF0
+extern "C" void func_804B1DC0(void*, int);
+extern "C" void func_80279B34(void*);
+extern "C" void* func_80282380(cf::CChainActorPc*);
+extern "C" int func_80174C98(void*, void*, int);
+extern "C" void func_80279E48(void*, int);
+extern f32 lbl_eu_80668AEC;
+extern f32 lbl_eu_80668AF0;
+extern f32 lbl_eu_80668AE8;
+
+// Main per-frame update for chain actor PC.
+// Checks actor state bits and vtable status to execute chain attack logic,
+// set field values, and update the chain UI indicator.
+// Main per-frame update for chain actor PC.
+// Uses multi-exit guard pattern to match retail control flow.
+extern "C" void func_80281958(cf::CChainActorPc* self) {
+    func_80279B34(self);
+    if (!(self->unk6C & 1)) goto tail_check;
+    if (((int(*)(void*))((void**)self->mVTable)[16])(self) == 0) goto state5_check;
+    if (((int(*)(void*))((void**)self->mVTable)[26])(self) != 0) goto state5_check;
+    ((void(*)(void*, void*))((void**)self->mVTable)[27])(self, func_80282380(self));
+state5_check:
+    if (((int(*)(void*))((void**)self->mVTable)[22])(self) != 5) goto state6_check;
+    if (func_80148778((void*)(self->unk0 + 8), 0xf0)) {
+        if (func_80148778((void*)(self->unk0 + 8), 0xf0)) {
+            ((void(*)(void*, int))(*(void***)(self->unk0 + 8))[8])((void*)(self->unk0 + 8), 0xf0);
+        }
+    }
+    if (func_80148778((void*)(self->unk0 + 8), 0xf1)) {
+        if (func_80148778((void*)(self->unk0 + 8), 0xf1)) {
+            ((void(*)(void*, int))(*(void***)(self->unk0 + 8))[8])((void*)(self->unk0 + 8), 0xf1);
+        }
+    }
+    {
+        void* obj = (void*)self->unk0;
+        void* sub = *(void**)((u8*)obj + 4);
+        int v = *(int*)((int(*)(void*))(*(void***)sub)[12])(sub);
+        if (func_80174C98(obj, &v, 0xb)) {
+            v = *(int*)((int(*)(void*))(*(void***)sub)[12])(sub);
+            if (func_80174C98(obj, &v, 0xb)) {
+                ((void(*)(void*, int))(*(void***)sub)[8])(sub, 0xb);
+            }
+        }
+    }
+    {
+        void* obj = (void*)self->unk0;
+        float f86 = ((float(*)(void*))(*(void***)obj)[86])(obj);
+        float f87 = ((float(*)(void*))(*(void***)obj)[87])(obj);
+        if (f87 <= f86) {
+            f87 = ((float(*)(void*))(*(void***)obj)[87])(obj);
+            ((void(*)(void*, float))(*(void***)obj)[84])(obj, f87 - lbl_eu_80668AE8);
+        }
+    }
+state6_check:
+    if (((int(*)(void*))((void**)self->mVTable)[22])(self) != 6) goto store_455a;
+    if (func_80148778((void*)(self->unk0 + 8), 0xf8)) {
+        if (func_80148778((void*)(self->unk0 + 8), 0xf8)) {
+            ((void(*)(void*, int))(*(void***)(self->unk0 + 8))[8])((void*)(self->unk0 + 8), 0xf8);
+        }
+    }
+store_455a:
+    {
+        void* obj = (void*)self->unk0;
+        void* sub = *(void**)((u8*)obj + 4);
+        int v = *(int*)((int(*)(void*))(*(void***)sub)[12])(sub);
+        if (func_80174C98(obj, &v, 6)) {
+            *(u16*)(self->unk0 + 0x455a) = 0xec;
+        } else {
+            *(u16*)(self->unk0 + 0x455a) = 0x64;
+        }
+    }
+tail_check:
+    if ((self->unk6C & 1) || (self->unk6C & 2)) {
+        float f1 = ((float(*)(void*))(*(void***)(self->unk0 + 0x3e9c))[35])((void*)(self->unk0 + 0x3e9c));
+        if (f1 > lbl_eu_80668AEC) {
+            func_804B1DC0((void*)(self->unk0 + 0x44a8), 1);
+        } else {
+            func_804B1DC0((void*)(self->unk0 + 0x44a8), 0);
+        }
+    }
+}
 // Resets the chain effect and calls func_80279DC0 on this actor.
 extern "C" void func_80281CB8(cf::CChainActorPc* self) {
     func_802A0904(&self->mChainEffect);
     func_80279DC0(self);
 }
-void func_80281CF0(){}
+// External declarations specific to func_80281CF0
+extern "C" void* func_8009EC9C(u16);
+extern "C" int func_800A32BC(void*);
+extern "C" u32 func_8025FB10(void*, u32);
+extern "C" void* func_800B6BA4();
+extern "C" float func_800D81A8(int, void*, int);
+
+// Processes chain actor damage/healing based on arg.
+// Multi-exit guard pattern:
+//   arg == bit  -> skip to end (call func_80279E48)
+//   arg == 0    -> healing/damage loop over all battle actors
+//   arg != 0    -> check battle-manager flag 0xeb; may trigger chain-end vfunc
+extern "C" void func_80281CF0(cf::CChainActorPc* self, int arg) {
+    u32 bit = self->unk6C & 1;
+    if ((u32)arg == bit) goto done;
+    if (arg == 0) goto arg0;
+    // arg != 0, arg != bit: check flag and vtable state
+    if (func_80148778((void*)(self->unk0 + 8), 0xeb) != 0) {
+        void* obj = (void*)(self->unk0 + 8);
+        void** vt = *(void***)(self->unk0 + 8);
+        ((void(*)(void*, int))vt[8])(obj, 0xeb);
+    }
+    int state = ((int(*)(void*))((void**)self->mVTable)[22])(self);
+    int cond;
+    if (state == 4) goto state4;
+    cond = 0;
+    goto check_cond;
+state4:
+    cond = (func_800A32BC(func_8009EC9C(4)) == 1);
+check_cond:
+    if (cond) {
+        void** vt = *(void***)(self->unk0);
+        ((void(*)(void*))vt[89])((void*)self->unk0);
+    }
+    goto done;
+arg0:
+    // arg == 0: healing/damage loop over all battle actors
+    *(u16*)(self->unk0 + 0x455a) = 100;
+    func_804B1DC0((void*)(self->unk0 + 0x44a8), 1);
+    void* unk0obj = (void*)self->unk0;
+    float f30;
+    if (((int(*)(void*))(*(void***)unk0obj)[164])(unk0obj) != 0) {
+        void* param = (void*)((int(*)(void*))(*(void***)unk0obj)[164])(unk0obj);
+        f30 = lbl_eu_80668AF0 * (float)(s16)func_8025FB10(param, 0x44);
+    } else {
+        f30 = lbl_eu_80668AEC;
+    }
+    if (lbl_eu_80668AEC < f30) {
+        if (((int(*)(void*))(*(void***)unk0obj)[175])(unk0obj) == 0) {
+            void* list = func_800B6BA4();
+            void* sentinel = *(void**)((u8*)list + 4);
+            void* node = *(void**)sentinel;
+            while (node != sentinel) {
+                void* actor = *(void**)((u8*)node + 8);
+                if (actor != 0) {
+                    actor = (void*)((u8*)actor - 0x3e9c);
+                }
+                if (((int(*)(void*))(*(void***)actor)[175])(actor) == 0) {
+                    getInstance__Q22cf14CBattleManagerFv();
+                    float f31 = func_800D81A8(0, actor, 0);
+                    float dmg = f30 * ((float(*)(void*))(*(void***)actor)[75])(actor);
+                    ((void(*)(void*, float))(*(void***)actor)[71])(actor, dmg * f31);
+                }
+                node = *(void**)node;
+            }
+        }
+    }
+done:
+    func_80279E48(self, arg);
+}
 // Retail symbol: func_804B1DC0
 extern "C" void func_804B1DC0(void*, int);
 // Retail symbol: func_80279F6C
@@ -1047,78 +1168,6 @@ extern "C" int func_80282100(cf::CChainActorPc* self) {
     if (value == config[3]) return 2;
     return 3;
 }
-// Checks multiple conditions to determine if the player can initiate a
-// chain attack from this actor. Returns 1 if chain-ready, 0 otherwise.
-int func_802821E0(cf::CChainActorPc* self) {
-    // vfunc22 must return exactly 5
-    if (((int(*)(cf::CChainActorPc*))((void**)self->mVTable)[22])(self) == 5) {
-        // Check battle-manager flags 0xf0 and 0xf1
-        if (func_80148778((UNKTYPE*)(self->unk0 + 8), 0xf0) != 0) return 1;
-        if (func_80148778((UNKTYPE*)(self->unk0 + 8), 0xf1) != 0) return 1;
-
-        // Call vfunc12 on sub-object at unk0+4, pass its field_0x0 to func_80174C98
-        u32 obj = self->unk0;
-        u32 subObj = *(u32*)(obj + 4);
-        u32 val = *(u32*)((UNKTYPE*(*)(u32))(*(void***)subObj)[12])(subObj);
-        if (func_80174C98((UNKTYPE*)obj, &val, 0xb) != 0) return 1;
-
-        // Float comparison: vfunc87 <= vfunc86 on the object at this->unk0
-        obj = self->unk0;
-        float f86 = ((float(*)(u32))(*(void***)obj)[86])(obj);
-        float f87 = ((float(*)(u32))(*(void***)obj)[87])(obj);
-        if (f87 <= f86) return 1;
-    }
-    return 0;
-}
-
-// Calls a vfunc on the CfObjectMove subobject (this->unk0 + 0x3e9c), checks
-// whether the actor is active via CChainActor vtable, then if both conditions
-// pass, dispatches to the object selector with type 0x80000003.
-void func_802822F8(cf::CChainActorPc* self, int arg) {
-    u32 moveBase = self->unk0 + 0x3e9c;
-    ((void(*)(u32))(*(void***)moveBase)[20])(moveBase);
-
-    // Check whether the actor is active (vfunc16 returns non-zero)
-    if (((int(*)(cf::CChainActorPc*))((void**)self->mVTable)[16])(self) != 0 && arg != 0) {
-        cf::CfObjectSelectorObj* sel = func_800FE68C();
-        func_800FE6A4(sel, 0x80000003, 0, arg);
-    }
-}
-
-// Enumerates objects of type 0x80000002 via a stack-allocated holder, calls
-// a vfunc at offset 0xac on the CfObjectMove subobject, then validates the
-// result through func_800F6ED0/func_800F6E08 and a null check on the returned
-// object. Returns the valid object or 0.
-UNKTYPE* func_80282380(cf::CChainActorPc* self) {
-    ChainEnumHolder holder;
-
-    func_80043D90(&holder);
-    UNKTYPE* list = func_80043F18(&holder);
-    func_800F4A98(list, 0x80000002, 0);
-
-    // Call vfunc at vtable offset 0xac on this->unk0 + 0x3e9c
-    u32 moveBase = self->unk0 + 0x3e9c;
-    void** moveVtbl = *(void***)moveBase;
-    UNKTYPE* (*vfunc)(u32) = (UNKTYPE* (*)(u32))moveVtbl[0xac / 4];
-    UNKTYPE* result = vfunc(moveBase);
-
-    list = func_80043F18(&holder);
-    func_800F6ED0(list, result);
-
-    list = func_80043F18(&holder);
-    if (((EnumListTail*)list)->field_0x620 == 0) {
-        __dt__80043E88(&holder, -1);
-        return 0;
-    }
-
-    list = func_80043F18(&holder);
-    result = func_800F6E08(list);
-    UNKTYPE* checked = func_800B708C((BOOL)(uintptr_t)result);
-    if (func_800AD860(checked) == 0) {
-        __dt__80043E88(&holder, -1);
-        return 0;
-    }
-
-    __dt__80043E88(&holder, -1);
-    return result;
-}
+void func_802821E0(){}
+void func_802822F8(){}
+void func_80282380(){}

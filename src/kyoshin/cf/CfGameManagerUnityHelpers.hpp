@@ -241,11 +241,59 @@ stateUpdated:
     func_801AA2A8(manager->unkA8);
 }
 
+extern "C" void func_8016EEB0(u32 object);
+extern "C" void func_801A9FC0(UnkClass_8007E864* object);
+extern "C" void func_80188774(u32 object);
+extern "C" void func_8018EFB4(UnkClass_80085334* object);
+extern "C" void func_800B93AC();
+extern "C" void func_800FE68C();
+extern "C" void __dt__800FDEF8();
+
 struct ResetVectorWords {
     u32 x;
     u32 y;
     u32 z;
 };
+
+extern "C" ResetVectorWords zero__Q22ml5CVec3;
+extern "C" cf::CfGameManager lbl_eu_80570CF0;
+extern "C" void func_8007C5B8__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* manager) {
+    lbl_eu_80663E24 &= 0x10000;
+    lbl_eu_80663E28 &= 0x200000;
+    lbl_eu_80570CF0.field_0x48 = 0;
+    lbl_eu_80570CF0.field_0x44 = 0;
+    manager->unk90 = nullptr;
+    if (manager->unkA0 != 0) {
+        func_8016EEB0(manager->unkA0);
+    }
+    if (manager->field_0xA4 != nullptr) {
+        func_80186664(manager->field_0xA4);
+    }
+    if (manager->unkA8 != nullptr) {
+        func_801A9FC0(manager->unkA8);
+    }
+    if (lbl_eu_80663E60 != 0) {
+        func_80188774(lbl_eu_80663E60);
+    }
+    manager->unkB0 = nullptr;
+    manager->unkB4 = nullptr;
+    manager->unk8C = 0;
+    memset(manager->unk94, 0, sizeof(manager->unk94));
+    const ResetVectorWords* zero = &zero__Q22ml5CVec3;
+    u32 x = zero->x;
+    UnkClass_80085334* object = manager->unkAC;
+    ResetVectorWords* destination =
+        reinterpret_cast<ResetVectorWords*>(&manager->field_0x18);
+    destination->y = zero->y;
+    destination->x = x;
+    destination->z = zero->z;
+    func_8018EFB4(object);
+    func_800B93AC();
+    func_800FE68C();
+    __dt__800FDEF8();
+    lbl_eu_80663DF8 |= 0xFFFFFFFF;
+}
 
 struct UnkReset28Data {
     u8 field_0x0[0x28];

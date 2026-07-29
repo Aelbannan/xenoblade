@@ -62,6 +62,8 @@ void func_801D62F8(void*, u32, const void*);
 void func_801D59C0(u32*, void*, void*);
 u32 func_801DFD60(void*, void*, u32);
 u32 func_801DF610(void*, void*, u32, void*);
+s32 func_801DF4E0(void*, void*, s32, void*);
+s32 func_801DF578(void*, void*, s32, void*);
 u32 func_801E92B8(void*, u8, u32);
 u32 func_801E9310(void*, void*, u32, void*);
 void func_801DF4B4(void*, void*);
@@ -73,6 +75,8 @@ extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F8;
 extern void* lbl_eu_806640D8;
 extern void* lbl_eu_80506330;
+extern float lbl_eu_80668040;
+extern float lbl_eu_80668010;
 u32 getLanguage__9CDeviceSCFv();
 void* CItem_initItemImplInstances(void*);
 u32 func_801393CC(void*);
@@ -746,12 +750,14 @@ void CItemBoxInfoEntry::setItemBoxEntry(u16 r4, u32 r5, u8 r6) {
     state = r6;
 }
 
-u32 func_801DF4E0(void* a, void* b, u32 c, void* d) {
-    return func_801DFD60(a, b, 0x2d) + func_801DF610(a, b, 0x52, d) + 0x64;
+s32 func_801DF4E0(void* a, void* b, s32 arg2, void* d) {
+    s32 sum = (s32)(func_801DFD60(a, b, 0x2d) + func_801DF610(a, b, 0x52, d) + 0x64);
+    return (s32)(lbl_eu_80668040 * (float)(arg2 * sum));
 }
 
-u32 func_801DF578(void* a, void* b, u32 c, void* d) {
-    return func_801DFD60(a, b, 0x2d) + func_801DF610(a, b, 0x53, d) + 0x64;
+s32 func_801DF578(void* a, void* b, s32 arg2, void* d) {
+    s32 sum = (s32)(func_801DFD60(a, b, 0x2d) + func_801DF610(a, b, 0x53, d) + 0x64);
+    return (s32)(lbl_eu_80668040 * (float)(arg2 * sum));
 }
 u32 func_801DF610(void* a, void* b, u32 c, void* d) {
     void* lookup = func_8009EC9C(c);

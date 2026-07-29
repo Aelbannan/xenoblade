@@ -61,49 +61,41 @@ __attribute__((noinline)) void* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8
         __ct__8CProcessFv(obj);
 
         // Set temporary vtable (used during field initialization).
-        vtTmp = (u32*)lbl_eu_8052D238;
-        ((u32*)obj)[4] = (u32)vtTmp;  // offset 0x10 / 4 = 4
+        ((u32*)obj)[4] = (u32)lbl_eu_8052D238;  // offset 0x10
 
         // Initialize callback fields from __ptmf_null (all zeros).
-        // Retail loads __ptmf_null addr once (r9), then loads word1, word0, word2
-        // and interleaves stores with field initializations.
+        // Retail loads __ptmf_null addr (r9), then loads word1, word0, word2
+        // and interleaves stores with other field initializations.
         ptmf = (u32*)__ptmf_null;
-        ptmfWord1 = ptmf[1];
-        vtFinal = (u32*)lbl_eu_8052FF3C;
-        ptmfWord0 = ptmf[0];
-        ((u32*)obj)[21] = 0;  // mField54 = 0
-        ((u32*)obj)[15] = ptmfWord0;  // mCallbackA[0]
-        ((u32*)obj)[22] = 0;  // mField58 = 0
-        ((u32*)obj)[16] = ptmfWord1;  // mCallbackA[1]
-        ((u32*)obj)[23] = 0;  // mField5C = 0
-        ptmfWord2 = ptmf[2];
-        ((u32*)obj)[17] = ptmfWord2;  // mCallbackA[2]
-        ptmfWord1 = ptmf[1];
-        ptmfWord0 = ptmf[0];
-        ((u32*)obj)[18] = ptmfWord0;  // mCallbackB[0]
-        ((u32*)obj)[19] = ptmfWord1;  // mCallbackB[1]
-        ptmfWord2 = ptmf[2];
-        ((u32*)obj)[20] = ptmfWord2;  // mCallbackB[2]
+        ((u32*)obj)[15] = ptmf[0];  // mCallbackA[0]
+        ((u32*)obj)[16] = ptmf[1];  // mCallbackA[1]
+        ((u32*)obj)[17] = ptmf[2];  // mCallbackA[2]
+        ((u32*)obj)[18] = ptmf[0];  // mCallbackB[0]
+        ((u32*)obj)[19] = ptmf[1];  // mCallbackB[1]
+        ((u32*)obj)[20] = ptmf[2];  // mCallbackB[2]
 
         // Initialize remaining fields to their defaults.
-        obj->mIndex = -1;
-        obj->mFlag64 = 0;
-        obj->mFlag65 = 0;
-        obj->mFlag66 = 0;
-        obj->mActive = 1;
-        obj->mField68 = 0;
+        ((u32*)obj)[21] = 0;  // mField54 = 0
+        ((u32*)obj)[22] = 0;  // mField58 = 0
+        ((u32*)obj)[23] = 0;  // mField5C = 0
+        ((u32*)obj)[24] = (u32)-1;  // mIndex = -1
+        ((u8*)obj)[0x64] = 0;  // mFlag64 = 0
+        ((u8*)obj)[0x65] = 0;  // mFlag65 = 0
+        ((u8*)obj)[0x66] = 0;  // mFlag66 = 0
+        ((u8*)obj)[0x67] = 1;  // mActive = 1
+        ((u32*)obj)[26] = 0;  // mField68 = 0
 
         // Set final CCol6Invite vtable.
-        ((u32*)obj)[4] = (u32)vtFinal;  // offset 0x10
+        ((u32*)obj)[4] = (u32)lbl_eu_8052FF3C;  // offset 0x10
 
         // Set secondary vtable pointer: lbl_eu_8052FF3C + 0x24.
-        obj->mField6C = (u32)vtFinal + 0x24;
+        ((u32*)obj)[27] = (u32)lbl_eu_8052FF3C + 0x24;  // mField6C
 
         // Store constructor arguments.
-        obj->mArg2 = arg2;
-        obj->mArg3 = arg3;
-        obj->mArg4 = arg4;
-        obj->mField74 = 0;
+        ((u16*)obj)[0x38] = arg2;  // mArg2 at 0x70
+        ((u8*)obj)[0x72] = arg3;   // mArg3
+        ((u8*)obj)[0x73] = arg4;   // mArg4
+        ((u8*)obj)[0x74] = 0;      // mField74 = 0
     }
 
     // Store singleton pointer (even if allocation failed).

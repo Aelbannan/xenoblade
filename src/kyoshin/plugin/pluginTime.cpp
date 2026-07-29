@@ -12,7 +12,7 @@ extern PluginFuncData lbl_eu_80532348[];
 // pluginTime getter: returns the value from CfGameManager::func_80086DBC() as an int.
 int func_80185760(VMThread* pThread) {
     VMArg result;
-    result.value.uintVal = cf::CfGameManager::func_80086DBC();
+    result.value.uintVal = cf::CfGameManager::getInstance()->func_80086DBC();
     result.type = VM_TYPE_INT;
     vmRetValSet(pThread, &result);
     return 1;
@@ -21,8 +21,8 @@ int func_80185760(VMThread* pThread) {
 // pluginTime getter: returns the value from CfGameManager::func_80086DA0() masked to u16 as an int.
 int func_801857A8(VMThread* pThread) {
     VMArg result;
+    result.value.uintVal = (u16)cf::CfGameManager::getInstance()->func_80086DA0();
     result.type = VM_TYPE_INT;
-    result.value.uintVal = (u16)cf::CfGameManager::func_80086DA0();
     vmRetValSet(pThread, &result);
     return 1;
 }

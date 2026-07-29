@@ -17,6 +17,7 @@ extern void func_801D216C(void*, int);
 extern void func_801D0950(void*);
 extern void func_80137510(u32, float);
 extern void* func_80157C4C(u8, s16);
+extern u32 func_801392E4(u32);
 u8 func_801C67F8(CItemBoxGridFull* self);
 u8 func_801C6840(CItemBoxGridFull* self);
 

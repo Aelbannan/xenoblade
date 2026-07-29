@@ -251668,9 +251668,11 @@ extern const float lbl_eu_8066650C;
 extern const float lbl_eu_80666510;
 extern const float lbl_eu_80666548;
 
+#pragma dont_inline on
 extern "C" u32 func_8007DCA8__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     return (first << 27) | (second << 20);
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" void func_8007E4CC__Q22cf13CfGameManagerFv(u32 mask) {
@@ -251729,7 +251731,7 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
     }
 }
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 202 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 204 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 
 union UnkWordFloat {
@@ -251858,32 +251860,24 @@ extern "C" void func_80087448__Q22cf13CfGameManagerFv(UnkFlags8Data* data, u32 m
     else data->flags_0x8 &= ~mask;
 }
 
-extern "C" u64 func_8007F930__Q22cf13CfGameManagerFv(u32 enabled) {
+extern "C" void func_8007F930__Q22cf13CfGameManagerFv(bool enabled) {
     if (enabled) {
         lbl_eu_80663E24 |= 0x20000;
     } else {
         lbl_eu_80663E24 &= ~0x20000;
     }
 
-    u32 secondaryFlags = lbl_eu_80663E28;
     if (enabled) {
-        secondaryFlags |= 0x1000000;
+        lbl_eu_80663E28 |= 0x1000000;
     } else {
-        secondaryFlags &= ~0x1000000;
+        lbl_eu_80663E28 &= ~0x1000000;
     }
-    lbl_eu_80663E28 = secondaryFlags;
 
     if (enabled) {
-        u32 value = 0;
-        value |= 0x200000;
-        value |= 0x310;
-        lbl_eu_80663DF8 = value;
-        return (static_cast<u64>(enabled) << 32) | secondaryFlags;
+        lbl_eu_80663DF8 = 0x200310;
+    } else {
+        lbl_eu_80663DF8 |= 0xFFFFFFFF;
     }
-
-    u32 oldValue = lbl_eu_80663DF8;
-    lbl_eu_80663DF8 = oldValue | 0xFFFFFFFF;
-    return (static_cast<u64>(oldValue) << 32) | secondaryFlags;
 }
 
 extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(UnkLinkedNode** destination,
@@ -251971,6 +251965,23 @@ extern "C" void func_800832BC__Q22cf13CfGameManagerFv(u16* first, u16* second) {
 }
 
 extern "C" char lbl_eu_804FB824[];
+class Unk8187CData;
+extern "C" u32 func_eu_80065640(u32 first, u32 second, u32 third, u32 fourth);
+extern "C" Unk8187CData* func_80080F40__Q22cf13CfGameManagerFv(u32 first, u32 second,
+                                                                 u32 third);
+extern "C" void func_80081874__Q22cf13CfGameManagerFv(Unk8187CData* data, u32 flags);
+extern "C" Unk8187CData* func_8008187C__Q22cf13CfGameManagerFv(u32 value) {
+    cf::CfGameManager::getInstance();
+    u32 packedId = func_8007DCA8__Q22cf13CfGameManagerFv(14, 1);
+    u32 resource = func_eu_80065640(14, 1, 0, value);
+    Unk8187CData* result =
+        func_80080F40__Q22cf13CfGameManagerFv(packedId, resource, 0);
+    if (result != nullptr) {
+        func_80081874__Q22cf13CfGameManagerFv(result, 0x400020);
+    }
+    return result;
+}
+
 extern "C" void func_80081358__Q22cf13CfGameManagerFv(const char* name, u32 value,
                                                         u32 third, u32 fourth);
 extern "C" void func_80081A24__Q22cf13CfGameManagerFv(u32 value) {

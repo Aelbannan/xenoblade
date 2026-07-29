@@ -1699,7 +1699,16 @@ void func_801CE2F8(void* self) {
     *(u32*)(p + 0x58) = 5;
 }
 
-void func_801CE390(void* self) { }
+void func_801CE390(void* self) {
+    u8* p = (u8*)self;
+    u32 obj = *(u32*)(p + 0x48);
+    float f = lbl_eu_80667F78;
+    if (func_80137510(obj, f)) {
+        p[0x61] = 1;
+        *(u32*)(p + 0x58) = 0;
+        func_801D216C(p + 0x70, 0);
+    }
+}
 
 extern "C" void func_801CE3E8(void* self) {
     u8* p = (u8*)self;

@@ -451,84 +451,51 @@ void CDeviceVI::waitForDrawDone(){
 }
 
 void CDeviceVI::endFrame(){
-    int exception;
-    u32 flags = spInstance->CWorkThread::mFlags;
-
-    if (flags & THREAD_FLAG_EXCEPTION) {
-        exception = true;
-    } else {
-        exception = (spInstance->mMsgQueue.find(2) >= 0);
-    }
-
-    int proceed = false;
-    if (!exception) {
-        int stateOK = (spInstance->mState == THREAD_STATE_LOGIN || spInstance->mState == THREAD_STATE_RUN);
-        if (stateOK) {
-            proceed = true;
-        }
-    }
-
-    if (!proceed) {
+    if(!spInstance->isRunning() || spInstance->isNoEvent() || CDeviceGX::getInstance() == nullptr){
         return;
     }
 
-    if (flags & THREAD_FLAG_NO_EVENT) {
-        return;
-    }
-
-    if (CDeviceGX::getInstance() == nullptr) {
-        return;
-    }
-
-    // Inlined BEFORE_DRAW_DONE callback loop — unkInline1 checks spInstance
-    // null and mViFlags bit 31; skip loop if either condition triggers
-    if (!unkInline1()) {
-        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
-        while (node != spInstance->mCallbackList.mStartNodePtr) {
-            node->mItem->viBeforeDrawDone();
-            node = node->mNext;
-        }
-    }
+    //Call the pre-draw done callback
+    //Nothing overrides this, so this does nothing
+    cb(CDeviceVICb::VI_CALLBACK_BEFORE_DRAW_DONE);
 
     CDeviceClock::onEndFrame();
 
-    // Inlined EFB copy
-    if (CDeviceGX::devicesInitialized()) {
-        CDeviceGX::copyEfb(spInstance->mFrameBufferPtrArray[spInstance->unk298]);
-    } else {
-        CDeviceGX::copyEfb(spInstance->mFrameBufferPtrArray[spInstance->unk294]);
+    //Copy the EFB to the current nonactive framebuffer, and wait until drawing is done
+    if(CDeviceGX::devicesInitialized()){
+        spInstance->copyEfb(spInstance->unk298);
+    }else{
+        spInstance->copyEfb(spInstance->unk294);
     }
 
-    // Inlined AFTER_DRAW_DONE callback loop
-    if (!unkInline1()) {
-        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
-        while (node != spInstance->mCallbackList.mStartNodePtr) {
-            node->mItem->viAfterDrawDone();
-            node = node->mNext;
+    //Call the post-draw done callback
+    cb(CDeviceVICb::VI_CALLBACK_AFTER_DRAW_DONE);
+
+    if(!checkFlag4()){
+        //Wait for remaining retraces
+        while(VIGetRetraceCount() - spInstance->unk2A4 < spInstance->mVisPerFrame - 1){
         }
     }
 
-    if (!(spInstance->mViFlags & 0x10)) {
-        while (VIGetRetraceCount() - spInstance->unk2A4 < spInstance->mVisPerFrame - 1) {
-        }
-    }
+    spInstance->setNextFrameBuffer();
 
-    VISetNextFrameBuffer(spInstance->mFrameBufferPtrArray[spInstance->unk294]);
-
+    //TODO: this feel like it should be an inline, but the instance accesses don't let it work :p
     spInstance->unk298 = spInstance->unk294;
 
-    if (++spInstance->unk294 >= spInstance->unk284) {
+    if(++spInstance->unk294 >= spInstance->unk284){
         spInstance->unk294 = 0;
     }
 
     VIFlush();
 
-    if (!(spInstance->mViFlags & 0x10)) {
+    if(!checkFlag4()){
         VIWaitForRetrace();
     }
 
+    //Also feels like an inline
     spInstance->unk2AC = VIGetRetraceCount() - spInstance->unk2A4;
     spInstance->unk2A4 = VIGetRetraceCount();
+
 }
 
 //This is meant to run code when preretrace happens, but it got stubbed for some reason.

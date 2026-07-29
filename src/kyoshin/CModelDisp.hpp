@@ -19,18 +19,12 @@ struct CModelDispSub {
     u8 _FD8[0x18];                  // padding to 0xFF0
 };
 
-// Opaque parameter struct for func_801FCDB4; field at 0x3A0 holds match value
-struct CModelDispParam {
-    u8 _00[0x3A0];
-    u32 field_0x3A0;
-};
-
 class CModelDisp {
 public:
     CModelDisp();
     virtual ~CModelDisp();
 
-    u8 _pad0[0x2FD4];       // 0x0004 (after vtable at 0x0000)
+    u8 _pad0[0x2FD8];
     u8 field_2FD8;          // 0x2FD8
     u8 _pad2FD9[0x2FDC - 0x2FD9];
     f32 field_2FDC;         // 0x2FDC - display alpha/transition value

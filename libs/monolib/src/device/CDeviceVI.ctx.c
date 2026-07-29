@@ -18073,7 +18073,6 @@ public:
         LinkListNode* mNode; // at 0x0
     };
 
-protected:
     static Iterator GetIteratorFromPointer(LinkListNode* pNode) {
         return Iterator(pNode);
     }
@@ -18095,6 +18094,8 @@ protected:
     Iterator Erase(Iterator it);
     Iterator Erase(LinkListNode* pNode);
     Iterator Erase(Iterator begin, Iterator end);
+
+protected:
 
 public:
     u32 GetSize() const {
@@ -252334,7 +252335,8 @@ void CDeviceVI::endFrame(){
         return;
     }
 
-    // Inlined BEFORE_DRAW_DONE callback loop
+    // Inlined BEFORE_DRAW_DONE callback loop — unkInline1 checks spInstance
+    // null and mViFlags bit 31; skip loop if either condition triggers
     if (!unkInline1()) {
         _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
         while (node != spInstance->mCallbackList.mStartNodePtr) {
@@ -252361,8 +252363,7 @@ void CDeviceVI::endFrame(){
         }
     }
 
-    // Wait for remaining retraces if VI_FLAG_4 (bit 4, PPC bit 27) is not set
-    if (!(spInstance->mViFlags & (1 << 4))) {
+    if (!(spInstance->mViFlags & 0x10)) {
         while (VIGetRetraceCount() - spInstance->unk2A4 < spInstance->mVisPerFrame - 1) {
         }
     }
@@ -252377,7 +252378,7 @@ void CDeviceVI::endFrame(){
 
     VIFlush();
 
-    if (!(spInstance->mViFlags & (1 << 4))) {
+    if (!(spInstance->mViFlags & 0x10)) {
         VIWaitForRetrace();
     }
 

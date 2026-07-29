@@ -7,7 +7,6 @@
 // Forward declarations for cross-TU calls
 void* func_8004B9B8(void* self);
 void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
-int func_800BBC04(int arg);
 
 u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 
@@ -24,13 +23,14 @@ void func_801FC15C(CModelDisp* self) {
         }
 
         // Iterate over 3 sub-objects and call vmethod on controller pointer
-        for (u8 i = 0; i < 3; i++) {
+        for (int i = 0; i < 3; i++) {
             CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
             void* ctrl = sub->mpController;
             if (ctrl != NULL) {
                 // vcall: vtable[0x48/4 = 18] — takes field_2FDC as float arg
                 typedef void (*VMethod48)(void*, f32);
-                (*(VMethod48**)ctrl)[18](ctrl, self->field_2FDC);
+                VMethod48* vtbl = *(VMethod48**)ctrl;
+                vtbl[18](ctrl, self->field_2FDC);
             }
         }
     }
@@ -46,46 +46,36 @@ int func_801FCAC0(void* self) { return 0; }
 
 void func_801FCAC8(){}
 
-// Dispatches vtable calls on a sub-object controller when flags are set
-// and func_800BBC04 returns positive for the given action.
-void func_801FCB4C(CModelDisp* self, int flags, int subIdx, int action, int ptrIdx) {
-    if (flags == 0) return;
-    if (func_800BBC04(action) <= 0) return;
-
-    CModelDispSub* sub = (CModelDispSub*)((u8*)self + subIdx * 0xFF0);
-    // ptrIdx selects between the two adjacent flag u32s at 0xFD0/0xFD4
-    u32 flag = (&sub->mFlagFD0)[ptrIdx];
-    if (flag == 0) return;
-
-    // vcall: vtable[50] — takes controller only
-    typedef void (*VMethod50)(void*);
-    (*(VMethod50**)sub->mpController)[50](sub->mpController);
-
-    // vcall: vtable[49] — takes controller, flag, action, 0
-    typedef void (*VMethod49)(void*, u32, int, int);
-    (*(VMethod49**)sub->mpController)[49](sub->mpController, flag, action, 0);
-}
+void func_801FCB4C(){}
 
 int func_801FCBEC(void* self) { return 0; }
 
 void func_801FCBF4(){}
 
 // Scans sub-objects for one whose mpController matches param's field_0x3A0,
-// then dispatches getNextChainObj / setParam calls for active flag slots.
-void func_801FCDB4(CModelDisp* self, CModelDispParam* param, int arg5) {
-    for (u8 i = 0; i < 3; i++) {
+// then dispatches getNextChainObj / setParam calls for active slots.
+void func_801FCDB4(CModelDisp* self, void* param, int r5) {
+    u32 matchVal = *(u32*)((u8*)param + 0x3A0);
+
+    for (int i = 0; i < 3; i++) {
         CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
-        if ((u32)sub->mpController == param->field_0x3A0) {
-            if (sub->mFlagFD0 != 0) {
-                sub->mResultA = func_8004B9B8(sub->mSubObj);
-                func_8004B9D4(sub->mBuffer, arg5, 0, -1, 0);
-            }
-            if (sub->mFlagFD4 != 0) {
-                sub->mResultB = func_8004B9B8(sub->mSubObj);
-                func_8004B9D4(sub->mBuffer2, arg5, 0, -1, 0);
-            }
-            break;
+        if ((u32)sub->mpController != matchVal) {
+            continue;
         }
+
+        if (sub->mFlagFD0 != 0) {
+            void* result = func_8004B9B8(sub->mSubObj);
+            sub->mResultA = result;
+            func_8004B9D4(sub->mBuffer, r5, 0, -1, 0);
+        }
+
+        if (sub->mFlagFD4 != 0) {
+            void* result2 = func_8004B9B8(sub->mSubObj);
+            sub->mResultB = result2;
+            func_8004B9D4(sub->mBuffer2, r5, 0, -1, 0);
+        }
+
+        break;
     }
 }
 

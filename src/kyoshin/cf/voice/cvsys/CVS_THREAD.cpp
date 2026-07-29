@@ -69,29 +69,28 @@ void func_802A4120(){}
 // voice line for tension, arts, chain-attack, revive, etc.
 
 int func_802A4430(CVoiceHandle* self) {
-    int isLeader;
-    u8* voicePtr;
-    int state;
-    int charType;
+    int isLeader = 1;
 
     // Leader check: bias handle to voice area at +0x3E9C, compare with
     // the player object.  If this voice belongs to the player, there is
     // a 1-in-3 chance of treating it as a non-leader voice.
-    voicePtr = (u8*)self;
-    isLeader = 1;
-    if (self != NULL) {
-        voicePtr = (u8*)self + 0x3E9C;
-    }
-    if (voicePtr == (u8*)cf::CfGameManager::getPlayer(0)) {
-        if (ml::math::mtRand(2) == 0) {
-            isLeader = 0;
+    {
+        u8* vp = (u8*)self;
+        if (self != NULL) {
+            vp = (u8*)self + 0x3E9C;
+        }
+        if (vp == (u8*)cf::CfGameManager::getPlayer(0)) {
+            if (ml::math::mtRand(2) == 0) {
+                isLeader = 0;
+            }
         }
     }
 
     // Get voice-thread state.
-    state = func_802A77E8(self);
+    int state = func_802A77E8(self);
 
     // Extract character type from pointer chain.
+    int charType;
     {
         UnkTarget* target = self->unkTarget;
         if (target != NULL) {

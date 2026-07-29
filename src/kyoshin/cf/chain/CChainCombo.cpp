@@ -33,10 +33,11 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     // Call vtable[0x2a4] on actor, get a pointer to a sub-object.
     CChainCombo_ArtsCategoryHolder* holder =
         (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_UnkVirtualFunc132();
+    CChainCombo_ArtsCategory* category = (CChainCombo_ArtsCategory*)holder->mArtsCategory;
     // Load old arts type first (while r3 still holds category ptr),
     // then load new arts type into r3.
     int oldArtsType = self->mArtsType;
-    int newArtsType = ((CChainCombo_ArtsCategory*)holder->mArtsCategory)->mArtsCategory;
+    int newArtsType = category->mArtsCategory;
 
     // Reset combo count if arts type changed (but not to/from 8).
     if (newArtsType == 8) {

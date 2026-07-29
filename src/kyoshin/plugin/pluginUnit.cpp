@@ -9,6 +9,7 @@
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
+#include "kyoshin/cf/code_800F42AC.hpp"
 
 // C-linkage retail symbols referenced by learnArts / clearPcBtlState.
 extern "C" {
@@ -29,6 +30,8 @@ extern "C" {
     void func_800EC8FC(cf::CBattleManager*, cf::CfObjectActor*,
                       cf::CBattleStateEntry*, int);
     int func_80174C98(cf::CfObjectActor*, u32*, int);
+    int func_8006EF04(int mask);
+    cf::CfUnknownSub* func_800F477C(cf::CfCode800F42AC* self);
 
     // 100.0f constant used by getPcHpRate / getEneHpRate (lives in .sdata2).
     extern const float lbl_eu_80668250;
@@ -519,7 +522,7 @@ int setPcBtlState(VMThread* pThread) {
 extern "C" int clearEneBtlState(VMThread* pThread) {
     int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
-    void* actor = func_800B8C78(id1);
+    cf::CfObjectActor* actor = func_800B8C78(id1);
     if (actor != nullptr) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         func_800F3958(bm, actor, id2);
@@ -537,11 +540,12 @@ extern "C" int clearEneBtlState(VMThread* pThread) {
 extern "C" int synchro(VMThread* pThread) {
     int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
-    void* dest = func_800B8C78(id1);
-    void* src = func_800B8C78(id2);
+    cf::CfObjectActor* dest = func_800B8C78(id1);
+    cf::CfObjectActor* src = func_800B8C78(id2);
     if (dest != nullptr && src != nullptr) {
-        u32 val = *(const u32*)((const u8*)src + 0x3F10);
-        *(u32*)((u8*)dest + 0x45B8) = val;
+        u32 val = *reinterpret_cast<const u32*>(
+            reinterpret_cast<const u8*>(src) + 0x3F10);
+        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(dest) + 0x45B8) = val;
     }
     return 0;
 }
@@ -559,9 +563,9 @@ extern "C" int learnArts(VMThread* pThread) {
     // `stw r3, 0x8(r1); lbz r3, 0x8(r1)` pattern; a plain `(u8)val` is
     // folded to `rlwinm r3, r3, 0, 24, 31` and the codegen regresses.
     u8 bytes[4];
-    *(u32*)bytes = val;
+    *reinterpret_cast<u32*>(bytes) = val;
     u8 byte = bytes[0];
-    void* actor = func_8009EC9C(byte);
+    cf::CfObjectActor* actor = func_8009EC9C(byte);
     func_800A18A4(actor, id);
     return 0;
 }
@@ -572,7 +576,7 @@ extern "C" int learnArts(VMThread* pThread) {
 extern "C" int clearPcBtlState(VMThread* pThread) {
     int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
-    void* actor = func_800B8B94(id1);
+    cf::CfObjectActor* actor = func_800B8B94(id1);
     if (actor != nullptr) {
         cf::CBattleManager* bm = cf::CBattleManager::getInstance();
         func_800F3958(bm, actor, id2);

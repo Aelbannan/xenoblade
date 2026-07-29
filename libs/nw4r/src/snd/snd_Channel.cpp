@@ -412,7 +412,7 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
                                ChannelCallback pCallback, u32 callbackArg) {
     ChannelManager& mgr = ChannelManager::GetInstance();
 
-    void* pMem = reinterpret_cast<PoolImpl*>(&mgr)->AllocImpl();
+    void* pMem = static_cast<PoolImpl*>(static_cast<void*>(&mgr))->AllocImpl();
     Channel* pChannel;
     if (pMem != NULL) {
         pChannel = static_cast<Channel*>(pMem);
@@ -421,9 +421,8 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
         new (&pChannel->mEnvelope) EnvGenerator();
         pChannel->mLfo.GetParam().Init();
 
-        // Zero Lfo::mDelayCounter (0x2C) and Lfo::mCounter (0x30)
-        reinterpret_cast<u32*>(reinterpret_cast<u8*>(pChannel) + 0x2C)[0] = 0;
-        reinterpret_cast<f32*>(reinterpret_cast<u8*>(pChannel) + 0x30)[0] = 0.0f;
+        pChannel->mLfo.mDelayCounter = 0;
+        pChannel->mLfo.mCounter = 0.0f;
         pChannel->mPauseFlag = false;
         pChannel->mActiveFlag = false;
         pChannel->mAllocFlag = false;
@@ -435,17 +434,16 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
         reinterpret_cast<u16*>(reinterpret_cast<u8*>(pChannel) + 0xC4)[0] = 0;
 
         pChannel->mVoice = NULL;
-
-        // Zero the link list node
-        reinterpret_cast<u32*>(reinterpret_cast<u8*>(pChannel) + 0xF8)[0] = 0;
-        reinterpret_cast<u32*>(reinterpret_cast<u8*>(pChannel) + 0xFC)[0] = 0;
+        // Zero the link list node at 0xF8
+        *(u32*)((u8*)pChannel + 0xF8) = 0;
+        *(u32*)((u8*)pChannel + 0xFC) = 0;
     } else {
         pChannel = NULL;
     }
 
     // Insert into ChannelManager's list (reached from both branches)
-    reinterpret_cast<ut::detail::LinkListImpl&>(mgr.mChannelList)
-        .Insert(reinterpret_cast<ut::detail::LinkListImpl&>(mgr.mChannelList).GetEndIter(),
+    static_cast<ut::detail::LinkListImpl&>(mgr.mChannelList)
+        .Insert(static_cast<ut::detail::LinkListImpl&>(mgr.mChannelList).GetEndIter(),
                 &pChannel->node);
 
     if (pChannel == NULL) {
@@ -460,9 +458,9 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
     if (pVoice == NULL) {
         // Trigger lazy init (guard check) before cleanup
         ChannelManager::GetInstance();
-        reinterpret_cast<ut::detail::LinkListImpl&>(mgr.mChannelList).Erase(&pChannel->node);
+        static_cast<ut::detail::LinkListImpl&>(mgr.mChannelList).Erase(&pChannel->node);
         if (pChannel != NULL) {
-            reinterpret_cast<PoolImpl*>(&mgr)->FreeImpl(pChannel);
+            static_cast<PoolImpl*>(static_cast<void*>(&mgr))->FreeImpl(pChannel);
         }
         return NULL;
     }

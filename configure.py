@@ -983,7 +983,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c"),
+            Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c"),

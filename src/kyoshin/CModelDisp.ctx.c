@@ -1456,6 +1456,7 @@ public:
 /* end "kyoshin/CModelDisp.hpp" */
 
 // Forward declarations for cross-TU calls
+struct CModelDispController;
 void* func_8004B9B8(void* self);
 void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
 int func_800BBC04(int arg);
@@ -1480,8 +1481,8 @@ void func_801FC15C(CModelDisp* self) {
             void* ctrl = sub->mpController;
             if (ctrl != NULL) {
                 // vcall: vtable[0x48/4 = 18] — takes field_2FDC as float arg
-                typedef void (*VMethod48)(void*, f32);
-                (*(VMethod48**)ctrl)[18](ctrl, self->field_2FDC);
+                typedef void (*VMethod48)(CModelDispController*, f32);
+                (*(VMethod48**)ctrl)[18]((CModelDispController*)ctrl, self->field_2FDC);
             }
         }
     }
@@ -1509,12 +1510,12 @@ void func_801FCB4C(CModelDisp* self, int flags, int subIdx, int action, int ptrI
     if (flag == 0) return;
 
     // vcall: vtable[50] — takes controller only
-    typedef void (*VMethod50)(void*);
-    (*(VMethod50**)sub->mpController)[50](sub->mpController);
+    typedef void (*VMethod50)(CModelDispController*);
+    (*(VMethod50**)sub->mpController)[50]((CModelDispController*)sub->mpController);
 
     // vcall: vtable[49] — takes controller, flag, action, 0
-    typedef void (*VMethod49)(void*, u32, int, int);
-    (*(VMethod49**)sub->mpController)[49](sub->mpController, flag, action, 0);
+    typedef void (*VMethod49)(CModelDispController*, u32, int, int);
+    (*(VMethod49**)sub->mpController)[49]((CModelDispController*)sub->mpController, flag, action, 0);
 }
 
 int func_801FCBEC(void* self) { return 0; }

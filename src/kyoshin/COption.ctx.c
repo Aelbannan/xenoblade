@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/COption
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/COption.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/COption.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,9 +1390,62 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/COption.cpp" line 4 "kyoshin/COption.hpp" */
+#pragma once
 
-extern "C" u8 func_8029C790(void* self) { return ((u8*)self)[0x2B]; }
+/* "src/kyoshin/COption.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CCur19 {
+public:
+    CCur19();
+
+    // TODO: add fields
+};
+
+// Full object layout for COption (used by C-linkage accessors)
+struct COptionFull {
+    u8 _00[0x2B];
+    u8 field_2B;
+    u8 _2C[0x30 - 0x2C];
+    u8 field_30;
+    u8 _31;
+    u8 field_32;
+};
+
+class COption {
+public:
+    COption();
+    virtual ~COption();
+    void OnFileEvent();
+
+    // TODO: add fields
+};
+
+/* end "kyoshin/COption.hpp" */
+
+u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
 
 
@@ -1348,82 +1456,126 @@ extern "C" u8 func_8029C790(void* self) { return ((u8*)self)[0x2B]; }
 
 
 
-extern "C" void func_8029C5C8() {}
+void func_8029C5C8(){}
 
-extern "C" void func_8029C66C() {}
+void func_8029C66C(){}
 
-extern "C" void func_8029C734() {}
+void func_8029C734(){}
 
 
-extern "C" u8 func_8029C798(void* self) { return ((u8*)self)[0x30]; }
+u8 func_8029C798(void* self) { return static_cast<COptionFull*>(self)->field_30; }
 
-extern "C" u8 func_8029C7A0(void* self) { return ((u8*)self)[0x32]; }
+u8 func_8029C7A0(void* self) { return static_cast<COptionFull*>(self)->field_32; }
 
-extern "C" void func_8029C7A8() {}
+void func_8029C7A8(){}
 
-extern "C" void func_8029C8C4() {}
+void func_8029C8C4(){}
 
-extern "C" void func_8029C9E8() {}
+void func_8029C9E8(){}
 
-extern "C" void func_8029CABC() {}
+void func_8029CABC(){}
 
-extern "C" void func_8029CB9C() {}
+void func_8029CB9C(){}
 
-extern "C" void func_8029CC30() {}
+void func_8029CC30(){}
 
-extern "C" void func_8029CC9C() {}
+void func_8029CC9C(){}
 
-extern "C" void func_8029CDB0() {}
+void func_8029CDB0(){}
 
-extern "C" void func_8029CF7C() {}
+void func_8029CF7C(){}
 
-extern "C" void func_8029D054() {}
+void func_8029D054(){}
 
-extern "C" void func_8029D0C0() {}
+void func_8029D0C0(){}
 
-extern "C" void func_8029D10C() {}
+void func_8029D10C(){}
 
-extern "C" void func_8029D178() {}
+void func_8029D178(){}
 
-extern "C" void func_8029D1C4() {}
+void func_8029D1C4(){}
 
-extern "C" void func_8029D210() {}
+void func_8029D210(){}
 
-extern "C" void func_8029D278() {}
+void func_8029D278(){}
 
-extern "C" void func_8029D2F0() {}
+void func_8029D2F0(){}
 
-extern "C" void func_8029D358() {}
+void func_8029D358(){}
 
-extern "C" void func_8029D3C0() {}
+void func_8029D3C0(){}
 
-extern "C" void func_8029D420() {}
+void func_8029D420(){}
 
-extern "C" void func_8029D634() {}
+// Reads a field from lbl_eu_80577308 based on val (0-20).
+// Full switch body not yet decompiled; dummy returns for unknown cases.
+u8 func_8029D634(COptionFull* self, u8 val) {
+    extern u8 lbl_eu_80577308[];
+    if (val > 20) return 0;
+    switch (val) {
+        case 0:  return lbl_eu_80577308[0x1C];
+        case 1: {
+            u8 v = lbl_eu_80577308[0x0F];
+            if (v == 8)  return 0;
+            if (v == 10) return 1;
+            if (v == 12) return 2;
+            if (v == 14) return 3;
+            if (v == 16) return 4;
+            return 0;
+        }
+        case 2:  return 0;
+        case 3:  return 0;
+        case 4:  return 0;
+        case 5:  return 0;
+        case 6:  return lbl_eu_80577308[0x20];
+        case 7:  return lbl_eu_80577308[0x21];
+        case 8:  return lbl_eu_80577308[0x23];
+        case 9:  return lbl_eu_80577308[0x22];
+        case 10: return lbl_eu_80577308[0x24];
+        case 11: return lbl_eu_80577308[0x25];
+        case 12: return lbl_eu_80577308[0x00];
+        case 13: return lbl_eu_80577308[0x01];
+        case 14: return lbl_eu_80577308[0x02];
+        case 15: return lbl_eu_80577308[0x03];
+        case 16: return 0;
+        case 17: return 0;
+        case 18: return 0;
+        case 19: return 0;
+        case 20: return 0;
+        default: return 0;
+    }
+}
 
-extern "C" void func_8029D7E8() {}
+u8 func_8029D7E8(COptionFull* self) {
+    return func_8029D634(self, (u8)(self->_2C[0] + self->_2C[1]));
+}
 
-extern "C" void func_8029D7FC() {}
+void func_8029D7FC(){}
 
-extern "C" void func_8029D96C() {}
+// Signed byte table lookup: reads two s8 fields, sums them,
+// and uses the result as an index into a global LUT.
+u8 func_8029D96C(COptionFull* self) {
+    extern u8 lbl_eu_8053948C[];
+    return lbl_eu_8053948C[(s8)self->_2C[0] + (s8)self->_2C[1]];
+}
 
-extern "C" void func_8029D990() {}
+void func_8029D990(){}
 
-extern "C" void func_8029DD6C() {}
+void func_8029DD6C(){}
 
-extern "C" void func_8029E144() {}
+void func_8029E144(){}
 
-extern "C" void func_8029E1CC() {}
+void func_8029E1CC(){}
 
-extern "C" void func_8029E254() {}
+void func_8029E254(){}
 
-extern "C" void func_8029E3F8() {}
+void func_8029E3F8(){}
 
-extern "C" void OnFileEvent__7COptionFP10CEventFile() {}
+void COption::OnFileEvent() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern void func_80296A04__FP14Class_80296898(void*);
 extern u8 lbl_eu_80577308[];
-extern "C" void sinit_8029E7D8() {
+void sinit_8029E7D8(){
     func_80296A04__FP14Class_80296898(lbl_eu_80577308);
 }

@@ -1,10 +1,14 @@
 #pragma once
 
 #include <types.h>
+#include "kyoshin/CBaseCur.hpp"
 
-class CCur19 {
+// Vtable symbol for CCur19 (6 entries, .data)
+extern "C" void* lbl_eu_805396D0[];
+
+class CCur19 : public CBaseCur {
 public:
-    CCur19();
+    CCur19(nw4r::lyt::ArcResourceAccessor* arcResAcc);
 
     // TODO: add fields
 };

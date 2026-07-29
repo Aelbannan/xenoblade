@@ -254295,6 +254295,39 @@ extern "C" void func_80083468__Q22cf13CfGameManagerFv(u32 value) {
 }
 #pragma dont_inline reset
 
+extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
+                                                        float value, u8 enabled) {
+    BdatTextEntry* base = &lbl_eu_805716F8;
+    base->value = value;
+    base->enabled = enabled;
+    if (first == 0) {
+        if (base->textLength != 0) {
+            base->text[0] = 0;
+            base->textLength = 0;
+            base->secondaryText[0] = 0;
+            base->secondaryTextLength = 0;
+            lbl_eu_80663E24 |= 8;
+        }
+        return;
+    }
+    BdatFilePointer* file = getFP__FPCc(lbl_eu_804FB824);
+    const char* val_a = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, first);
+    const char* val_b = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, second);
+    if (strcmp(base->text, val_a) != 0 || strcmp(base->secondaryText, val_b) != 0) {
+        lbl_eu_80663E24 |= 8;
+    }
+    strcpy(base->text, val_a);
+    base->textLength = strlen(val_a);
+    if (val_b != 0) {
+        strcpy(base->secondaryText, val_b);
+        base->secondaryTextLength = strlen(val_b);
+    } else {
+        base->secondaryText[0] = 0;
+        base->secondaryTextLength = 0;
+    }
+}
+
+
 
 /* end "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 

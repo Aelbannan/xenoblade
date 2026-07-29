@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CKizunagram.hpp"
 
 void func_8025C870() {}
 
@@ -18,13 +19,18 @@ void func_80257F9C(){}
 
 void __ct__CKizunaLine(){}
 
-void CKizunaLine::~CKizunaLine() {}
+CKizunaLine::~CKizunaLine() {}
 
 void func_802580CC(){}
 
 void func_80258F5C(){}
 
-void func_80258F80(){}
+void func_80258F80(float* dst, const float* src) {
+    dst[0] = src[0] * src[0];
+    dst[1] = src[1] * src[0];
+    dst[2] = src[2] * src[2];
+    dst[3] = src[3] * src[2];
+}
 
 void func_80258F9C(){}
 
@@ -64,11 +70,11 @@ void func_8025AB04(){}
 
 void func_8025AB84(){}
 
-extern float lbl_eu_80668828[];
+extern "C" const float lbl_eu_80668828;
 void func_8025AC04(CKizunagram* self) {
     self->field_0x34 = 0;
     self->field_0x36 = 0;
-    self->field_0x38 = lbl_eu_80668828[0];
+    self->field_0x38 = lbl_eu_80668828;
 }
 
 void func_8025AC1C(){}
@@ -82,7 +88,7 @@ void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
 
 void __ct__CKizunaInfo(){}
 
-void CKizunaInfo::~CKizunaInfo() {}
+CKizunaInfo::~CKizunaInfo() {}
 
 void func_8025B670(){}
 
@@ -106,7 +112,7 @@ void func_8025C348(){}
 
 void __ct__CKizunagram(){}
 
-void CKizunagram::~CKizunagram() {}
+CKizunagram::~CKizunagram() {}
 
 void func_8025C510(){}
 
@@ -167,7 +173,10 @@ u8 CKizunagram_getField8C(void* self) {
 
 void func_8025CBCC(){}
 
-void func_8025CC70(){}
+/* Toggles field_0xDD: 0->1, 1->0, anything else->1 */
+void func_8025CC70(CKizunagram* self) {
+    self->field_0xDD = (self->field_0xDD ^ 1) ? 1 : 0;
+}
 
 void func_8025CC88(){}
 

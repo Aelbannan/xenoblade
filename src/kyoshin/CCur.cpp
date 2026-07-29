@@ -9,20 +9,32 @@
 /* Sets the visible flag on a CBaseCur cursor widget. */
 extern "C" void func_801D216C(void* pCur, u8 val) { ((CBaseCur*)pCur)->mVisible = val; }
 
+/* Copy a VEC3 translation into a pane's translate field.
+   Used as a shared helper by cursor layout update paths. */
+DECOMP_DONT_INLINE void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans) {
+    pane->SetTranslate(*trans);
+}
 
+/* Forward: shared tail handler for cursor activation. */
+DECOMP_DONT_INLINE void func_801D2264(CBaseCur* cur);
 
+/* CBaseCur virtual: load root pane and forward translation.
+   extern "C" is used to match the retail symbol name exactly. */
+extern "C" void func_801D2144__8CBaseCurFv(CBaseCur* cur, const nw4r::math::VEC3* trans) {
+    func_801D2150(cur->mpLayout->GetRootPane(), trans);
+}
 
-
-void func_801D2144(void) {}
-
-
-
-void func_801D2174(void){}
+/* Activate cursor and hand off to the shared tail handler.
+   extern "C" used to match the retail symbol name exactly. */
+extern "C" void func_801D2174(CBaseCur* cur) {
+    cur->mActive = 1;
+    func_801D2264(cur);
+}
 
 
 void func_801D21CC(){}
 
-void func_801D2264(){}
+DECOMP_DONT_INLINE void func_801D2264(CBaseCur* cur){}
 
 void __ct__CCur07(){}
 
@@ -91,12 +103,3 @@ void func_virt___dt__6CSubCurFv() { }
 void func_801D2E4C(){}
 
 void func_801D2ED8(){}
-
-void func_801D2150(void* self, void* src){
-    float f0 = *(float*)src;
-    float f1 = *(float*)((u8*)src + 4);
-    float f2 = *(float*)((u8*)src + 8);
-    *(float*)((u8*)self + 0x2C) = f0;
-    *(float*)((u8*)self + 0x30) = f1;
-    *(float*)((u8*)self + 0x34) = f2;
-}

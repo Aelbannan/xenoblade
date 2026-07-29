@@ -161,9 +161,81 @@ void func_80246908(){}
 
 void func_80247490(){}
 
-void func_8024808C(){}
+void func_8024808C(void* self, void* arg2) {
+    extern void func_8003AA34();
+    extern void* getFP__FPCc(const char*);
+    extern u32 func_801361E8(const char*, const char*, u32);
+    extern u32 func_8009CF8C(u32);
+    extern void func_80141DC4(f32*);
+    extern s16 func_80136330(u32, const char*, u32);
+    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
+    extern u32 func_8003B1EC(u32);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_80668778;
+    extern f64 lbl_eu_80668788;
+    u8* p = (u8*)self;
+    func_8003AA34();
+    void* fp = getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
+    u8 map = func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], *(u32*)((u8*)arg2 + 0x10));
+    if (map != lbl_eu_80664798) return;
+    if (!func_8009CF8C(0x20C8)) return;
+    f32 buf[3];
+    func_80141DC4(buf);
+    u8 count = func_8003B1EC(fp);
+    u8 r26 = 0;
+    for (u8 i = 1; i <= count; i++) {
+        s16 val = func_80136330(fp, &lbl_eu_8050BEA8[0x15A], i);
+        if ((f32)(s16)val > buf[1]) {
+            if (i == p[0x0C]) { r26 = 1; break; }
+        }
+    }
+    if (r26) {
+        p[0x0A]++;
+    }
+}
 
-void func_8024830C(){}
+void func_8024830C(void* self, void* arg2) {
+    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
+    extern s16 func_80136330(u32, const char*, u32);
+    extern u32 func_8009CF8C(u32);
+    extern void func_80141DC4(f32*);
+    extern void func_801361E8(const char*, const char*, u32);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_80668778;
+    extern f32 lbl_eu_8066877C;
+    extern f64 lbl_eu_80668788;
+    u8* p = (u8*)self;
+    f32* result = (f32*)p;
+    result[0] = result[1] = result[2] = lbl_eu_80668764;
+    void* slot = *(void**)((u8*)arg2 + 0x00);
+    if (!slot) return;
+    if ((lbl_eu_80664184 & 0xFF) == lbl_eu_80664798) {
+        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+        if (!player) return;
+        void** vt = *(void***)player;
+        f32* pos = (f32*)((void*(*)(void*))vt[0xAC])(player);
+        result[0] = pos[0]; result[1] = pos[1]; result[2] = pos[2];
+    } else {
+        u16 idx = *(u16*)lbl_eu_8050B798;
+        if (!idx) return;
+        f32 buf[3];
+        func_80141DC4(buf);
+        result[0] = buf[0]; result[1] = buf[1]; result[2] = buf[2];
+    }
+    s16 val1 = func_80136330(*(u32*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+    s16 val2 = func_80136330(*(u32*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+    u8 region = func_801361E8(&lbl_eu_8050BEA8[0x1FE], &lbl_eu_8050BEA8[0x1F], lbl_eu_80664798);
+    result[0] += (f32)(s16)val1 / ((f32)(s32)region * lbl_eu_80668778);
+    result[1] -= (f32)(s16)val2 / ((f32)(s32)region * lbl_eu_80668778);
+    result[2] = lbl_eu_80668764;
+    if (*(void**)(p + 0x3108)) {
+        void* obj = *(void**)((u8*)*(void**)(p + 0x3108) + 0x10);
+        *(f32*)((u8*)obj + 0x2C) = result[0];
+        *(f32*)((u8*)obj + 0x30) = result[1];
+        *(f32*)((u8*)obj + 0x34) = result[2];
+    }
+    func_801F3850(*(void**)(p + 0x3134), (u16)(s16)p[0x0B]);
+}
 
 u32 func_80248558(void* self) {
     extern void Panic__Q24nw4r2dbFPCciPCce();
@@ -356,19 +428,268 @@ void func_8024D614(){}
 
 void func_8024DA0C(){}
 
-void func_8024DE08(){}
+void func_8024DE08(){}}
 
-void func_8024E2BC(){}
+void func_8024E2BC(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern void func_802455F0(void*);
+    extern int sprintf(char*, const char*, ...);
+    extern void func_8024B4CC(void*, void*, void*);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_806687BC;
+    u8* p = (u8*)self;
+    if (*(u32*)(p + 0x2C)) return;
+    if (!p[0x208]) return;
+    if (CSysWin_getUnk34(p + 0xF4)) return;
+    if (p[0x58]) return;
+    s8 idx0 = (s8)p[0x205];
+    u32 base = idx0 * 0x30C;
+    if (!*(u8*)(p + base + 0x514)) return;
+    func_802455F0(p + 0x1FC);
+    s8 idx1 = (s8)p[0x206];
+    u16 val = 0;
+    if (idx1 >= 0) {
+        s8 idx2 = (s8)p[0x207];
+        val = *(u16*)(p + base + (idx2 + idx1) * 0x18 + 0x214);
+    }
+    if (!val) return;
+    f32 pos[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_8050BEA8[0x2EB]);
+    void* data = *(void**)(p + 0x140);
+    void* obj = *(void**)((u8*)data + 0x10);
+    VFuncPtr* vtable = *(VFuncPtr**)obj;
+    void* result = vtable[15](obj, buf, 1);
+    if (result) {
+        void* target = *(void**)((u8*)data + 0x10);
+        void* node = result;
+        if (node && *(void**)((u8*)node + 0x10) != target) {
+            void* next = *(void**)((u8*)node + 0x0C);
+            if (next && *(void**)((u8*)next + 0x10) != target) {
+                void* next2 = *(void**)((u8*)next + 0x0C);
+                if (next2 && *(void**)((u8*)next2 + 0x10) != target) {
+                    f32 p1[3];
+                    func_8024B4CC(p1, data, next2);
+                    pos[0] += p1[0]; pos[1] += p1[1]; pos[2] += p1[2];
+                }
+                pos[0] += *(f32*)((u8*)next2 + 0x2C);
+                pos[1] += *(f32*)((u8*)next2 + 0x30);
+                pos[2] += *(f32*)((u8*)next2 + 0x34);
+            }
+            pos[0] += *(f32*)((u8*)next + 0x2C);
+            pos[1] += *(f32*)((u8*)next + 0x30);
+            pos[2] += *(f32*)((u8*)next + 0x34);
+        }
+        void* result2 = vtable[15](obj, &lbl_eu_8050BEA8[0x136], 1);
+        if (result2) {
+            f32 scale = *(f32*)((u8*)result2 + 0x44);
+            pos[0] *= scale;
+            pos[0] += *(f32*)((u8*)data + 0x2C);
+            pos[1] += *(f32*)((u8*)data + 0x30);
+            pos[2] += *(f32*)((u8*)data + 0x34);
+        }
+    }
+    *(f32*)(p + 0x54) = lbl_eu_806687BC;
+    p[0x41] = 2;
+    *(f32*)(p + 0x4C) = pos[0] / lbl_eu_806687BC;
+    *(f32*)(p + 0x50) = pos[1] / lbl_eu_806687BC;
+}
 
-void func_8024E650(){}
+void func_8024E650(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern void func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_806687A4;
+    extern f32 lbl_eu_806687A8;
+    u8* p = (u8*)self;
+    if (p[0x58]) goto done;
+    if (CSysWin_getUnk34(p + 0xB8)) goto done;
+    if (CSysWin_getUnk34(p + 0xF4)) goto done;
+    f32* pos = (f32*)(p + 0x44);
+    pos[1] -= lbl_eu_806687A8;
+    if (pos[1] < lbl_eu_806687A4) pos[1] = lbl_eu_806687A4;
+    for (int i = 0; i < 3; i++) {
+        void* slot = *(void**)(p + 0x130 + i * 8);
+        if (slot) {
+            void* obj = *(void**)((u8*)slot + 0x10);
+            *(f32*)((u8*)obj + 0x2C) = pos[0];
+            *(f32*)((u8*)obj + 0x30) = pos[1];
+            *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+        }
+    }
+    void* slot = *(void**)(p + 0x150);
+    if (slot) {
+        void* obj = *(void**)((u8*)slot + 0x10);
+        *(f32*)((u8*)obj + 0x2C) = pos[0];
+        *(f32*)((u8*)obj + 0x30) = pos[1];
+        *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+    }
+    for (u8 i = 0; i < p[0x1F0]; i++) {
+        void* s = *(void**)(p + 0x150 + i * 8);
+        if (s) {
+            void* obj = *(void**)((u8*)s + 0x10);
+            *(f32*)((u8*)obj + 0x2C) = pos[0];
+            *(f32*)((u8*)obj + 0x30) = pos[1];
+            *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+        }
+    }
+    func_80248558(p + 0x140);
+    func_8024577C(p + 0x1FC, *(u16*)(p + 0x5A));
+    p[0x5D] = 1;
+done:;
+}
 
-void func_8024E828(){}
+void func_8024E828(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern void func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_806687A8;
+    extern f32 lbl_eu_806687AC;
+    u8* p = (u8*)self;
+    if (p[0x58]) goto done;
+    if (CSysWin_getUnk34(p + 0xB8)) goto done;
+    if (CSysWin_getUnk34(p + 0xF4)) goto done;
+    f32* pos = (f32*)(p + 0x44);
+    pos[1] += lbl_eu_806687A8;
+    if (pos[1] > lbl_eu_806687AC) pos[1] = lbl_eu_806687AC;
+    for (int i = 0; i < 3; i++) {
+        void* slot = *(void**)(p + 0x130 + i * 8);
+        if (slot) {
+            void* obj = *(void**)((u8*)slot + 0x10);
+            *(f32*)((u8*)obj + 0x2C) = pos[0];
+            *(f32*)((u8*)obj + 0x30) = pos[1];
+            *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+        }
+    }
+    void* slot = *(void**)(p + 0x150);
+    if (slot) {
+        void* obj = *(void**)((u8*)slot + 0x10);
+        *(f32*)((u8*)obj + 0x2C) = pos[0];
+        *(f32*)((u8*)obj + 0x30) = pos[1];
+        *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+    }
+    for (u8 i = 0; i < p[0x1F0]; i++) {
+        void* s = *(void**)(p + 0x150 + i * 8);
+        if (s) {
+            void* obj = *(void**)((u8*)s + 0x10);
+            *(f32*)((u8*)obj + 0x2C) = pos[0];
+            *(f32*)((u8*)obj + 0x30) = pos[1];
+            *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+        }
+    }
+    func_80248558(p + 0x140);
+    func_8024577C(p + 0x1FC, *(u16*)(p + 0x5A));
+    p[0x5D] = 1;
+done:;
+}
 
-void func_8024EA00(){}
+void func_8024EA00(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern void func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    extern f32 lbl_eu_80668798;
+    extern f32 lbl_eu_806687A8;
+    extern f32 lbl_eu_806687B0;
+    extern f32 lbl_eu_806687B4;
+    extern f32 lbl_eu_80668764;
+    u8* p = (u8*)self;
+    if (p[0x58] || CSysWin_getUnk34(p + 0xB8) || CSysWin_getUnk34(p + 0xF4)) return;
+    void* slot = *(void**)(p + 0x130);
+    if (!slot) slot = 0;
+    void* obj = *(void**)((u8*)slot + 0x10);
+    VFuncPtr* vt = *(VFuncPtr**)obj;
+    void* result = vt[15](obj, &lbl_eu_8050BEA8[0x136], 1);
+    f32 f3 = lbl_eu_806687B0 * *(f32*)((u8*)result + 0x44) - lbl_eu_806687B4;
+    f32* pos = (f32*)(p + 0x44);
+    *pos += lbl_eu_806687A8;
+    f32 limit = lbl_eu_80668798 * f3;
+    if (*pos > limit) *pos = limit;
+    for (int i = 0; i < 3; i++) {
+        void* s = *(void**)(p + 0x130 + i * 8);
+        if (s) {
+            void* o = *(void**)((u8*)s + 0x10);
+            *(f32*)((u8*)o + 0x2C) = pos[0];
+            *(f32*)((u8*)o + 0x30) = pos[1];
+            *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+        }
+    }
+    void* s = *(void**)(p + 0x150);
+    if (s) {
+        void* o = *(void**)((u8*)s + 0x10);
+        *(f32*)((u8*)o + 0x2C) = pos[0];
+        *(f32*)((u8*)o + 0x30) = pos[1];
+        *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+    }
+    for (u8 i = 0; i < p[0x1F0]; i++) {
+        void* s2 = *(void**)(p + 0x150 + i * 8);
+        if (s2) {
+            void* o = *(void**)((u8*)s2 + 0x10);
+            *(f32*)((u8*)o + 0x2C) = pos[0];
+            *(f32*)((u8*)o + 0x30) = pos[1];
+            *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+        }
+    }
+    func_80248558(p + 0x140);
+    func_8024577C(p + 0x1FC, *(u16*)(p + 0x5A));
+    p[0x5D] = 1;
+}
 
-void func_8024EC24(){}
+void func_8024EC24(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern void func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    extern f32 lbl_eu_80668798;
+    extern f32 lbl_eu_806687A8;
+    extern f32 lbl_eu_806687B0;
+    extern f32 lbl_eu_806687B4;
+    extern f32 lbl_eu_806687B8;
+    extern f32 lbl_eu_80668764;
+    u8* p = (u8*)self;
+    if (p[0x58] || CSysWin_getUnk34(p + 0xB8) || CSysWin_getUnk34(p + 0xF4)) return;
+    void* slot = *(void**)(p + 0x130);
+    if (!slot) slot = 0;
+    void* obj = *(void**)((u8*)slot + 0x10);
+    VFuncPtr* vt = *(VFuncPtr**)obj;
+    void* result = vt[15](obj, &lbl_eu_8050BEA8[0x136], 1);
+    f32 f4 = lbl_eu_806687B0 * *(f32*)((u8*)result + 0x44) - lbl_eu_806687B4;
+    f32 f3 = lbl_eu_80668798 * f4;
+    f32* pos = (f32*)(p + 0x44);
+    *pos -= lbl_eu_806687A8;
+    f32 limit = lbl_eu_806687B8 * f3;
+    if (*pos < limit) *pos = limit;
+    for (int i = 0; i < 3; i++) {
+        void* s = *(void**)(p + 0x130 + i * 8);
+        if (s) {
+            void* o = *(void**)((u8*)s + 0x10);
+            *(f32*)((u8*)o + 0x2C) = pos[0];
+            *(f32*)((u8*)o + 0x30) = pos[1];
+            *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+        }
+    }
+    void* s = *(void**)(p + 0x150);
+    if (s) {
+        void* o = *(void**)((u8*)s + 0x10);
+        *(f32*)((u8*)o + 0x2C) = pos[0];
+        *(f32*)((u8*)o + 0x30) = pos[1];
+        *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+    }
+    for (u8 i = 0; i < p[0x1F0]; i++) {
+        void* s2 = *(void**)(p + 0x150 + i * 8);
+        if (s2) {
+            void* o = *(void**)((u8*)s2 + 0x10);
+            *(f32*)((u8*)o + 0x2C) = pos[0];
+            *(f32*)((u8*)o + 0x30) = pos[1];
+            *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+        }
+    }
+    func_80248558(p + 0x140);
+    func_8024577C(p + 0x1FC, *(u16*)(p + 0x5A));
+    p[0x5D] = 1;
+}
 
-void func_8024EE50(){}
+void func_8024EE50(){}}
 
 void func_8024F1FC(void* self, u32 arg2) {
     extern void func_8003AA34();
@@ -505,9 +826,109 @@ u32 func_8024F784(void* self) {
     return CSysWin_getUnk34(p + 0xF4);
 }
 
-void func_8024F7CC(){}
+void func_8024F7CC(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern int sprintf(char*, const char*, ...);
+    extern void func_8024B4CC(void*, void*, void*);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_806687BC;
+    extern void func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    u8* p = (u8*)self;
+    if (!p[0x5D]) return;
+    p[0x5D] = 0;
+    if (*(u32*)(p + 0x2C)) return;
+    if (p[0x41] != 1) return;
+    if (!p[0x208]) return;
+    if (CSysWin_getUnk34(p + 0xB8)) return;
+    if (CSysWin_getUnk34(p + 0xF4)) return;
+    if (p[0x58]) return;
+    s8 idx0 = (s8)p[0x205];
+    u32 base = idx0 * 0x30C;
+    if (!*(u8*)(p + base + 0x514)) return;
+    s8 idx1 = (s8)p[0x206];
+    u16 val = 0;
+    if (idx1 >= 0) {
+        s8 idx2 = (s8)p[0x207];
+        val = *(u16*)(p + base + (idx2 + idx1) * 0x18 + 0x214);
+    }
+    if (!val) return;
+    f32 pos[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_8050BEA8[0x2EB]);
+    void* data = *(void**)(p + 0x140);
+    void* obj = *(void**)((u8*)data + 0x10);
+    VFuncPtr* vtable = *(VFuncPtr**)obj;
+    void* result = vtable[15](obj, buf, 1);
+    if (result) {
+        void* target = *(void**)((u8*)data + 0x10);
+        void* node = result;
+        if (node && *(void**)((u8*)node + 0x10) != target) {
+            void* next = *(void**)((u8*)node + 0x0C);
+            if (next && *(void**)((u8*)next + 0x10) != target) {
+                void* next2 = *(void**)((u8*)next + 0x0C);
+                if (next2 && *(void**)((u8*)next2 + 0x10) != target) {
+                    f32 p1[3];
+                    func_8024B4CC(p1, data, next2);
+                    pos[0] += p1[0]; pos[1] += p1[1]; pos[2] += p1[2];
+                }
+                pos[0] += *(f32*)((u8*)next2 + 0x2C);
+                pos[1] += *(f32*)((u8*)next2 + 0x30);
+                pos[2] += *(f32*)((u8*)next2 + 0x34);
+            }
+            pos[0] += *(f32*)((u8*)next + 0x2C);
+            pos[1] += *(f32*)((u8*)next + 0x30);
+            pos[2] += *(f32*)((u8*)next + 0x34);
+        }
+        void* result2 = vtable[15](obj, &lbl_eu_8050BEA8[0x136], 1);
+        if (result2) {
+            f32 scale = *(f32*)((u8*)result2 + 0x44);
+            pos[0] *= scale;
+            pos[0] += *(f32*)((u8*)data + 0x2C);
+            pos[1] += *(f32*)((u8*)data + 0x30);
+            pos[2] += *(f32*)((u8*)data + 0x34);
+        }
+    }
+    *(f32*)(p + 0x54) = lbl_eu_806687BC;
+    p[0x41] = 2;
+    *(f32*)(p + 0x4C) = pos[0] / lbl_eu_806687BC;
+    *(f32*)(p + 0x50) = pos[1] / lbl_eu_806687BC;
+}
 
-void func_8024FB78(){}
+u32 func_8024FB78() {
+    extern u32 lbl_eu_80664184;
+    extern u8 lbl_eu_80664798;
+    extern u32 lbl_eu_8066479C;
+    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
+    extern u32 func_8003B1EC(u32);
+    extern s16 func_80136330(u32, const char*, u32);
+    extern void func_80141DC4(f32*);
+    extern f64 lbl_eu_80668770;
+    u32 result = 0;
+    if ((lbl_eu_80664184 & 0xFF) == lbl_eu_80664798) {
+        if (!lbl_eu_8066479C) return 0;
+        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+        if (!player) return 0;
+        void** vt = *(void***)player;
+        f32* pos = (f32*)((void*(*)(void*))vt[0xAC])(player);
+        f32 y = pos[1];
+        u32 count = func_8003B1EC(lbl_eu_8066479C);
+        for (u32 i = 1; i <= count; i++) {
+            s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+            if ((f32)(s16)val > y) return i;
+        }
+    } else {
+        if (!lbl_eu_8066479C) return 0;
+        f32 buf[3];
+        func_80141DC4(buf);
+        u32 count = func_8003B1EC(lbl_eu_8066479C);
+        for (u32 i = 1; i <= count; i++) {
+            s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+            if ((f32)(s16)val > buf[1]) return i;
+        }
+    }
+    return 0;
+}
 
 void CFloorMap::OnFileEvent() const {}
 

@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CMainMenu.hpp"
+#include "kyoshin/CArtsInfo.hpp"
 extern "C" void __dt__9CMainMenuFv();
 extern "C" void cbRenderBefore__9CMainMenuFv();
 extern "C" void __ct__800FF300();
@@ -19,7 +20,20 @@ u32 func_800FEDF8(void) {
 
 
 
-void func_800FEF20(){}
+struct UnkData_8052BDF4 {
+    u32 word0;
+    u32 word1;
+    u32 word2;
+};
+extern UnkData_8052BDF4 lbl_eu_8052BDF4;
+
+extern "C" void func_800FEF20(CMainMenu* self) {
+    if (self->field_0x74 == 0) {
+        self->field_0x40 = lbl_eu_8052BDF4.word1;
+        self->field_0x3C = lbl_eu_8052BDF4.word0;
+        self->field_0x44 = lbl_eu_8052BDF4.word2;
+    }
+}
 
 void func_800FEF4C(){}
 
@@ -35,7 +49,9 @@ void CMainMenu::func_800FF778() {}
 
 void func_800FF8B0(){}
 
-void func_800FF914(void){}
+extern "C" void func_800FF914(CArtsInfo* self) {
+    self->field_0x54 = 1;
+}
 
 void func_800FF920(){}
 

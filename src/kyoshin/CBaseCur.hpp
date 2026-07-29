@@ -31,6 +31,8 @@ extern "C" void* lbl_eu_805349A0[];
 
 class CBaseCur {
 public:
+    CBaseCur(nw4r::lyt::ArcResourceAccessor* arcResAcc);
+
     // Explicit vtable pointer (not relying on MWCC implicit generation)
     void* mVtable;                               // +0x00
     nw4r::lyt::ArcResourceAccessor* mArcResAcc;  // +0x04

@@ -1114,7 +1114,7 @@ CItemBoxInfo* __ct__CItemBoxInfo(CItemBoxInfo* info, u8 arg2, u16 arg3) {
     return info;
 }
 
-CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, s32 flags) {
+extern "C" CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, s32 flags) {
     if (info != NULL) {
         __dt__17UnkClass_8045F564Fv((u8*)info + 0x14, -1);
         __dt__17UnkClass_8045F564Fv((u8*)info + 0x4, -1);

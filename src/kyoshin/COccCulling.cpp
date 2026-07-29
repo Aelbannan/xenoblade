@@ -176,8 +176,7 @@ void COccCulling::func_801A1188(CCullFrustum* pFrustum){
 
     if(!(pFrustum->mFlags & CCullFrustum::FLAGS_01)){
         for(int i = 1; i < 6; i++){
-            CFrustum* r0 = unk24;
-            CPlane* plane = &r0->unk248[i];
+            CPlane* plane = &unk24->unk248[i];
 
             bool b = true;
 

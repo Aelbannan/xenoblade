@@ -43,7 +43,7 @@ void func_8015D3A0(){}
 
 void __ct__CCol6Hint(){}
 
-void CCol6Hint::~CCol6Hint() {}
+CCol6Hint::~CCol6Hint() {}
 
 void CCol6Hint::Init() {}
 
@@ -63,7 +63,7 @@ void func_8015E0BC(){}
 
 void __ct__CCol6System(){}
 
-void CCol6System::~CCol6System() {}
+CCol6System::~CCol6System() {}
 
 void CCol6System::Init() {}
 
@@ -107,7 +107,7 @@ void func_801638C0(){}
 
 void func_80163AF4(){}
 
-void CCol6Invite::~CCol6Invite() {}
+CCol6Invite::~CCol6Invite() {}
 
 void CCol6Invite::Init() {}
 

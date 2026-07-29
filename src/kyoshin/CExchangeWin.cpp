@@ -5,9 +5,12 @@
 #include <stdio.h>
 #include "kyoshin/CExchangeWin.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/util/MemManager.hpp"
 extern const char lbl_eu_8050A740[];
 extern void func_80137924(void*, void*, void*, void*);
 extern void func_80138078(u32);
+extern float lbl_eu_80668610;
 
 extern "C" u8 func_8022D08C(void* self) { return ((CExchangeWinFull*)self)->field_25; }
 
@@ -21,11 +24,25 @@ extern "C" u8 func_8022D094(void* self) { return ((CExchangeWinFull*)self)->fiel
 
 extern "C" u8 func_8022D09C(void* self) { return ((CExchangeWinFull*)self)->field_27; }
 
+// If _26 is already non-zero, do nothing; otherwise initialize state and fire event 0xd
+extern "C" void func_8022D0A4(CExchangeWinFull* self) {
+    if (self->_26 != 0) {
+        return;
+    }
+    self->_26 = 1;
+    self->field_27 = 0;
+    self->field_24 = 1;
+    func_80138078(0xd);
+}
 
-
-
-
-void func_8022D1F8(){}
+extern "C" void func_8022D1F8(CExchangeWinFull* self) {
+    float f = lbl_eu_80668610;
+    u32 r = func_80137444(self->mAnimTransform, f);
+    if (r) {
+        self->_26 = 2;
+        self->field_27 = 1;
+    }
+}
 
 void func_8022D244(){}
 
@@ -56,9 +73,18 @@ extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
     u32 sub3 = *(u32*)(obj3 + 0x10);
     func_80137924(dst, r1, r2, (void*)sub3);
 }
-extern "C" void func_8022CF2C(void* self) { }
+extern "C" void func_8022CF2C(CExchangeWinFull* self) {
+    self->mFileHandle = CDeviceFile::readFile(
+        mtl::MemManager::getHandleMEM2(),
+        lbl_eu_8050A740,
+        (IWorkEvent*)self,
+        0,
+        0
+    );
+    self->field_25 = 0;
+}
 extern "C" void func_8022CF7C(void* self) { }
-extern "C" void func_8022CFEC(void* self) {
+extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
     CExchangeWinFull* s = (CExchangeWinFull*)self;
     if (s->field_24 == 0) {
         return;
@@ -66,5 +92,5 @@ extern "C" void func_8022CFEC(void* self) {
     if (s->_26 == 0) {
         return;
     }
-    func_80137038(s->mLayout, NULL, 0, 1);
+    func_80137038(s->mLayout, drawInfo, 0, 1);
 }

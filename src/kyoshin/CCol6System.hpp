@@ -26,4 +26,3 @@ public:
     // TODO: add fields
 };
 
-SYNTAX_ERROR_HERE

@@ -46,5 +46,7 @@ public:
     float field_0x38;
     u8 _3C[0x8C - 0x3C];
     u8 field_8C; // 0x8C
+    u8 _8D[0xDD - 0x8D];
+    u8 field_0xDD;
 };
 

@@ -1179,6 +1179,61 @@ void vmHalt();
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1213,36 +1268,54 @@ void func_eu_802B1334() { CBdat::func_8003AA8C(6); }
 
 
 
-extern "C" void func_eu_802B13FC() {}
+void func_eu_802B13FC(){}
 
-extern "C" void func_eu_802B1414() {}
+void func_eu_802B1414(){}
 
-extern "C" void func_eu_802B142C() {}
+void func_eu_802B142C(){}
 
-extern "C" void func_eu_802B1444() {}
+void func_eu_802B1444(){}
 
-extern "C" void func_eu_802B145C() {}
+void func_eu_802B145C(){}
 
-extern "C" void func_eu_802B1474() {}
+void func_eu_802B1474(){}
 
-extern "C" void func_eu_802B148C() {}
+void func_eu_802B148C(){}
 
-extern "C" void func_eu_802B14A4() {}
+void func_eu_802B14A4(){}
 
-extern "C" void func_eu_802B14BC() {}
+void func_eu_802B14BC(){}
 
-extern "C" void* func_eu_802B14D4(void) { return 0; }
+void* func_eu_802B14D4(void){ return 0; }
 
-extern "C" void* func_eu_802B14E0(void) { return 0; }
+void* func_eu_802B14E0(void){ return 0; }
 
-extern "C" u32 lbl_eu_8053A478[];
+extern u32 lbl_eu_8053A478[];
 extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 
-extern "C" void func_eu_802B14F8() {}
+void func_eu_802B14F8(){}
 
-extern "C" void getBdatStringColumnValue(void*, void*, int);
-extern u32 lbl_eu_80664BF8;
+// Forward declaration: bdat file pointer type used in getBdatStringColumnValue
+class BdatFilePointer;
+const char* getBdatStringColumnValue(BdatFilePointer*, const char*, int);
+extern BdatFilePointer* lbl_eu_80664BF8;
 extern u8 lbl_eu_80513420[];
+
 extern "C" void func_eu_802B133C() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
+    getBdatStringColumnValue(lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
+}
+
+// Tail-calls getBdatStringColumnValue with index=3
+void func_eu_802B136C() {
+    getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 3);
+}
+
+// Tail-calls getBdatStringColumnValue with index=4
+void func_eu_802B1384() {
+    getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 4);
+}
+
+// Tail-calls getBdatStringColumnValue with index=5
+void func_eu_802B139C() {
+    getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 5);
 }

@@ -7,6 +7,23 @@
 extern "C" void __dt__9CMainMenuFv();
 extern "C" void cbRenderBefore__9CMainMenuFv();
 extern "C" void __ct__800FF300();
+
+// CBaseCur base destructor (defined in kyoshin/CCur.cpp)
+extern "C" void __dt__8CBaseCurFv(void*, int);
+
+// Destructor for CBaseCur-derived class at vtable 0x800FEA30.
+// Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
+// conditionally operator delete, return this.
+void* __dt__800FEA30(void* _this, int flags) {
+    if (_this) {
+        __dt__8CBaseCurFv(_this, 0);
+        if (flags > 0) {
+            operator delete(_this);
+        }
+    }
+    return _this;
+}
+
 u32 func_800FEDF8(void) {
     extern u32 lbl_eu_80663F18;
     return lbl_eu_80663F18;

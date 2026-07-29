@@ -38,7 +38,7 @@ extern "C" void func_801D2174(CBaseCur* cur) {
 
 /* CBaseCur constructor: initialises vtable, stores the arc resource
    accessor, and zeroes the remaining fields. */
-DECOMP_DONT_INLINE CBaseCur::CBaseCur(nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+CBaseCur::CBaseCur(nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     mVtable = lbl_eu_805349A0;
     mArcResAcc = arcResAcc;
     mpLayout = nullptr;

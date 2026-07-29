@@ -65,12 +65,14 @@ int COccCulling::addFrustum(const CVec3& pos, const CVec3& rot, const CVec3& sca
 }
 
 void COccCulling::setFrustum(CCullFrustum* pFrustum){
+    float xScale = pFrustum->mScale.x;
+    float yScale = pFrustum->mScale.y;
     CMat34 rotMat;
-    pFrustum->mMat.setScale(CVec3(pFrustum->mScale.x, pFrustum->mScale.y, lbl_eu_80667C88));
+    // z-scale via SDA 1.0f (lbl_eu_80667C88)
+    pFrustum->mMat.setScale(CVec3(xScale, yScale, lbl_eu_80667C88));
     rotMat.setRotXYZ(pFrustum->mRot);
 
-    // mMat = rotMat * mMat (rotation * scale) — retail PSMTXConcat(rotMat, mMat, mMat)
-    CMat34::mul(pFrustum->mMat, pFrustum->mMat, rotMat);
+    CMat34::mul(rotMat, pFrustum->mMat, pFrustum->mMat);
 
     pFrustum->mMat.addTranslation(pFrustum->mPos);
     pFrustum->mMat.invert(&pFrustum->mMatInv);
@@ -233,8 +235,16 @@ bool COccCulling::func_801A1444(const ml::CVec3& intersectPoint, float distance)
 bool COccCulling::func_801A1550(const CVec3& rayStartPos, const CVec3& rayEndPos, UNKWORD r6){
     CVec3 rayDir = rayEndPos - rayStartPos;
     
-    //Looks like the normalize inline but isn't?
-    if(rayDir.isZero()) return false;
+    // Inline zero check: retail uses two-int pattern with specific register allocation
+    int zeroResult = 0;
+    int xyZero = 0;
+    if(math::abs(rayDir.x) <= ml::epsilon && math::abs(rayDir.y) <= ml::epsilon){
+        xyZero = 1;
+    }
+    if(xyZero && math::abs(rayDir.z) <= ml::epsilon){
+        zeroResult = 1;
+    }
+    if(zeroResult) return false;
     rayDir.normalizeSub();
     
     //Iterate through all entries of the second list

@@ -133,6 +133,22 @@ void func_8024577C(void* self, u16 val) {
     }
 }
 
+void* __dt__80244724(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
+
+void* __dt__8024503C(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
+
 void func_80245950(){}
 
 void func_80245DF8(){}

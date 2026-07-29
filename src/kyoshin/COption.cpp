@@ -2,6 +2,14 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/COption.hpp"
+#include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/code_80135FDC.hpp"
+
+extern float lbl_eu_80668C10;
+
+extern "C" int CScrollBar_isVisible(void*);
+extern "C" u8 CSysWin_isReady(void*);
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
@@ -18,7 +26,17 @@ void func_8029C5C8(){}
 
 void func_8029C66C(){}
 
-void func_8029C734(){}
+// Returns field_0x2A only when the scrollbar is visible and
+// the syswin is ready; otherwise returns 0.
+u8 func_8029C734(COptionFull* self) {
+    if (!CScrollBar_isVisible(self->mScrollBar)) {
+        return 0;
+    }
+    if (!CSysWin_isReady(self->mSysWin)) {
+        return 0;
+    }
+    return self->field_0x2A;
+}
 
 
 u8 func_8029C798(void* self) { return static_cast<COptionFull*>(self)->field_30; }
@@ -51,7 +69,14 @@ void func_8029D10C(){}
 
 void func_8029D178(){}
 
-void func_8029D1C4(){}
+// Checks if an animation at field_0x20 has reached a target frame;
+// if so, resets field_0x29 and marks field_2B as active.
+void func_8029D1C4(COptionFull* self) {
+    if (func_80137510(self->field_0x20, lbl_eu_80668C10)) {
+        self->field_0x29 = 0;
+        self->field_2B = 1;
+    }
+}
 
 void func_8029D210(){}
 

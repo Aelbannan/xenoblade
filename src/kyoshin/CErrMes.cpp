@@ -3,7 +3,8 @@
 #include "kyoshin/CErrMes.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 
-extern u32 lbl_eu_80664BF8;
+class BdatFilePointer;
+extern BdatFilePointer* lbl_eu_80664BF8;
 extern u8 lbl_eu_80513420[];
 
 void func_eu_802B1334() { CBdat::func_8003AA8C(6); }
@@ -23,15 +24,15 @@ void func_eu_802B1414(){}
 void func_eu_802B142C(){}
 
 const char* func_eu_802B1444() {
-    return CBdat::getBdatStringColumnValue((void*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 13);
+    return CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 13);
 }
 
 const char* func_eu_802B145C() {
-    return CBdat::getBdatStringColumnValue((void*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 14);
+    return CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 14);
 }
 
 const char* func_eu_802B1474() {
-    return CBdat::getBdatStringColumnValue((void*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 15);
+    return CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 15);
 }
 
 void func_eu_802B148C(){}

@@ -1396,25 +1396,6 @@ void ocBdatRegist();
 /* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
 /* end "types.h" */
 
-class CScn;
-
-// Minimal reslist template for CTaskGameEff destructor emission.
-// The full definition in monolib/util/reslist.hpp stores T by value
-// (illegal for abstract CScn); retail uses a padding-based layout.
-template <typename T>
-class _reslist_base {
-public:
-    virtual ~_reslist_base();
-    char _pad[0x1F];
-};
-
-template <typename T>
-class reslist : public _reslist_base<T> {
-public:
-    virtual ~reslist();
-    char _pad2[0x20 - sizeof(_reslist_base<T>)];
-};
-
 class CTaskGameEff {
 public:
     CTaskGameEff();
@@ -1430,6 +1411,467 @@ public:
 
 /* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CFloorMap.cpp" line 4 "kyoshin/CFloorMap.hpp" */
+#pragma once
+
+/* "src/kyoshin/CFloorMap.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Full object layout for CFloorMap (used by C-linkage accessors)
+struct CFloorMapFull {
+    u8 _00[0x40];
+    u8 field_40;
+    u8 field_41;
+    u8 _42[0x58 - 0x42];
+    u8 field_58;
+    u8 _59[0x208 - 0x59];
+    u8 field_208;
+};
+
+class CFloorMap {
+public:
+    CFloorMap();
+    virtual ~CFloorMap();
+    void OnFileEvent() const;
+
+    // TODO: add fields
+};
+
+/* end "kyoshin/CFloorMap.hpp" */
+/* "src/kyoshin/CFloorMap.cpp" line 5 "cstdio" */
+#ifndef MSL_CPP_CSTDIO_H
+#define MSL_CPP_CSTDIO_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstdio" line 2 "stdio.h" */
+#ifndef MSL_STDIO_H
+#define MSL_STDIO_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 3 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 8 "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+#ifndef STDIO_API_H
+#define STDIO_API_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 4 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+#ifndef _MSL_COMMON_FILE_STRUC_H
+#define _MSL_COMMON_FILE_STRUC_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" line 2 "types.h" */
+/* end "types.h" */
+
+typedef unsigned long __file_handle;
+typedef unsigned long fpos_t;
+typedef struct _FILE _FILE, *P_FILE;
+
+#define __ungetc_buffer_size 2
+
+enum __file_kinds {
+    __closed_file,
+    __disk_file,
+    __console_file,
+    __unavailable_file
+};
+
+enum __open_modes {
+    __must_exist,
+    __create_if_necessary,
+    __create_or_truncate
+};
+
+enum __file_orientation {
+    __unoriented,
+    __char_oriented,
+    __wide_oriented
+};
+
+enum __io_modes {
+    __read = 1,
+    __write = 2,
+    __read_write = 3,
+    __append = 4
+};
+
+typedef struct __file_modes {
+    u32 open_mode : 2;
+    u32 io_mode : 3;
+    u32 buffer_mode : 2;
+    u32 file_kind : 3;
+
+#ifdef _MSL_WIDE_CHAR
+    u32 file_orientation : 2;
+#endif /* _MSL_WIDE_CHAR */
+
+    u32 binary_io : 1;
+} __file_modes;
+
+enum __io_states {
+    __neutral,
+    __writing,
+    __reading,
+    __rereading
+};
+
+typedef struct __file_state {
+    u32 io_state : 3;
+    u32 free_buffer : 1;
+    u8 eof;
+    u8 error;
+} __file_state;
+
+typedef void* __ref_con;
+typedef void (*__idle_proc)(void);
+typedef int (*__pos_proc)(__file_handle file, fpos_t* position, int mode, __ref_con ref_con);
+typedef int (*__io_proc)(__file_handle file, u8* buff, size_t* count, __ref_con ref_con);
+typedef int (*__close_proc)(__file_handle file);
+
+struct _FILE {
+    __file_handle handle;                           // _00
+    __file_modes mode;                              // _04
+    __file_state state;                              // _08
+    u8 is_dynamically_allowed;                      // _0C
+    u8 char_buffer;                                 // _0D
+    u8 char_buffer_overflow;                        // _0E
+    u8 ungetc_buffer[__ungetc_buffer_size];         // _0F
+    wchar_t ungetwc_buffer[__ungetc_buffer_size];   // _12
+    u32 position;                                   // _18
+    u8* buffer;                                   // _1C
+    u32 buffer_size;                                // _20
+    u8* buffer_ptr;                               // _24
+    u32 buffer_len;                                 // _28
+    u32 buffer_alignment;                           // _2C
+    u32 saved_buffer_len;                           // _30
+    u32 buffer_pos;                                 // _34
+    __pos_proc position_proc;                       // _38
+    __io_proc read_proc;                            // _3C
+    __io_proc write_proc;                           // _40
+    __close_proc close_proc;                        // _44
+    __ref_con ref_con;                              // _48
+    _FILE* next_file_struct;                        // _4C
+};
+
+typedef struct _FILE FILE;
+
+
+#define _IONBF 0
+#define _IOLBF 1
+#define _IOFBF 2
+
+// define standard C file pointer location names
+#define SEEK_SET (0)
+#define SEEK_CUR (1)
+#define SEEK_END (2)
+
+#define stdin &(__files[0])
+#define stdout &(__files[1])
+#define stderr &(__files[2])
+
+#define _STATIC_FILES 4
+
+extern FILE __files[];
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_struc.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" line 5 "wchar.h" */
+#ifndef MSL_WCHAR_H
+#define MSL_WCHAR_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+#ifndef _WCHAR_IO_H
+#define _WCHAR_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fwide(FILE* stream, int mode);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wchar_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+#ifndef MSL_WCSTOUL_H
+#define MSL_WCSTOUL_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" line 3 "types.h" */
+/* end "types.h" */
+
+
+unsigned long __wcstoul(int, int, wint_t (*wReadProc)(void*, wint_t, int), void*, int*, int*, int*);
+//__wcstoull
+//wcstoul
+//wcstoull
+long wcstol(const wchar_t*, wchar_t**, int);
+//wcstoll
+//watoi
+//watol
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wcstoul.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+#ifndef MSL_WMEM_H
+#define MSL_WMEM_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" line 3 "types.h" */
+/* end "types.h" */
+
+wchar_t* wmemcpy(wchar_t* dest, const wchar_t* src, size_t n);
+wchar_t* wmemchr(wchar_t* s, wchar_t c, int n);
+void* memmove(void*, const void*, size_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wmem.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+#ifndef MSL_WPRINTF_H
+#define MSL_WPRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 4 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" line 5 "stdio.h" */
+/* end "stdio.h" */
+
+//wprintf
+//wprintf_s
+//fwprintf
+//fwprintf_s
+//vwprintf
+//vwprintf_s
+//vfwprintf
+//vfwprintf_s
+int swprintf(wchar_t*, size_t, const wchar_t*, ...);
+//swprintf_s
+//snwprintf_s
+int vswprintf(wchar_t*, size_t, const wchar_t*, va_list);
+//vswprintf_s
+//vsnwprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wprintf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/wchar.h" line 13 "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+#ifndef MSL_WSTRING_H
+#define MSL_WSTRING_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" line 3 "types.h" */
+/* end "types.h" */
+
+size_t wcslen(const wchar_t*);
+wchar_t* wcscpy(wchar_t*, const wchar_t*);
+wchar_t* wcsncpy(wchar_t*, const wchar_t*, size_t);
+wchar_t* wcscat(wchar_t*, const wchar_t*);
+int wcscmp(const wchar_t*, const wchar_t*);
+wchar_t* wcschr(const wchar_t*, wchar_t);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/wstring.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "wchar.h" */
+
+enum __ReadProcActions {
+    __GetAChar,
+    __UngetAChar,
+    __TestForError
+};
+
+enum __WReadProcActions
+{
+    __GetAwChar,
+    __UngetAwChar,
+    __TestForwcsError
+};
+
+typedef struct {
+    char* CharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __OutStrCtrl;
+
+typedef struct{
+    char* NextChar;
+    int NullCharDetected;
+} __InStrCtrl;
+
+typedef struct {
+    wchar_t * wCharStr;
+    size_t MaxCharCount;
+    size_t CharsWritten;
+} __wOutStrCtrl;
+
+typedef struct {
+    wchar_t * wNextChar;
+    int    wNullCharDetected;
+} __wInStrCtrl;
+
+//__fread
+size_t __fwrite(const void *pPtr, size_t memb_size, size_t num_memb, FILE *file);
+int __StringRead(void *, int, int);
+wint_t __wStringRead(void*, wint_t, int);
+
+#endif // STDIO_API_H
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/stdio_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+#ifndef MSL_FILE_POS_H
+#define MSL_FILE_POS_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+int fseek(FILE* stream, u32 offset, int whence);
+int _fseek(FILE* stream, u32 offset, int whence);
+int ftell(FILE* stream);
+int _ftell(FILE* stream);
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/FILE_POS.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+#ifndef MSL_FILE_IO_H
+#define MSL_FILE_IO_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 3 "types.h" */
+/* end "types.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+int fclose(FILE* file);
+int fflush(FILE* file);
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/file_io.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 11 "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+#ifndef MSL_PRINTF_H
+#define MSL_PRINTF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" line 4 "stdio.h" */
+/* end "stdio.h" */
+
+
+//printf
+//printf_s
+int fprintf(FILE*, const char* format, ...);
+//fprintf_s
+int vprintf(const char*, va_list);
+//vprintf_s
+//vfprintf
+//vfprintf_s
+int vsnprintf(char*, size_t, const char*, va_list);
+//vsnprintf_s
+int vsprintf(char*, const char*, va_list);
+//vsprintf_s
+int snprintf(char*, size_t, const char*, ...);
+//snprintf_s
+int sprintf(char*, const char*, ...);
+//sprintf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/printf.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/stdio.h" line 12 "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+#ifndef MSL_SCANF_H
+#define MSL_SCANF_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" line 3 "stdarg.h" */
+/* end "stdarg.h" */
+
+//fscanf
+//fscanf_s
+//vscanf
+//scanf
+//scanf_s
+//vfscanf
+//vfscanf_s
+int vsscanf(const char*, const char*, va_list);
+//vsscanf_s
+int sscanf(const char*, const char*, ...);
+//sscanf_s
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/scanf.h" */
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "stdio.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::fclose;
+using ::fflush;
+using ::FILE;
+using ::ftell;
+using ::fwide;
+using ::snprintf;
+using ::sprintf;
+using ::sscanf;
+using ::vprintf;
+using ::vsnprintf;
+using ::vsprintf;
+} // namespace std
+
+#endif
+#endif
+/* end "cstdio" */
+
+extern "C" char lbl_eu_8050BEA8[];
+extern u32 lbl_eu_8066479C;
+extern u32 func_8003B1EC(u32);
+extern u32 lbl_eu_8050BDF8[];
+extern u8 lbl_eu_80664798;
+
+extern int CSysWin_getUnk34(void*);
+extern void func_80246200(void*);
+extern u32 func_80248558(void*);
+extern void func_8024577C(void*, u16);
+extern void func_801F3850(void*, u16);
+extern void func_801375A0(float*, void*);
+extern void func_80137C1C(void*, void*);
+extern void* func_80136190(const char*, const char*, const char*);
+extern void* func_801355F4();
+extern void* createPicture__10CLibLayoutFv();
+extern void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
+extern void* func_80137E7C(void*, const char*, const char*);
+extern u32 func_8009CF8C(u32);
+extern void func_80138078(u32);
+
+extern float lbl_eu_80668764;
+extern float lbl_eu_80668794;
+extern float lbl_eu_80668798;
+extern float lbl_eu_806687A4;
+extern float lbl_eu_806687A8;
+extern float lbl_eu_806687AC;
+extern float lbl_eu_806687B0;
+extern float lbl_eu_806687B4;
+extern float lbl_eu_806687B8;
+
+typedef void* (*VFuncPtr)(void*, const char*, u32);
 
 u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
@@ -1442,35 +1884,268 @@ u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_4
 
 
 
-void func_80245450(){}
+void func_80245450(void* self) {
+    extern void func_80246200(void*);
+    extern void func_80138078(u32);
+    u8* p = (u8*)self;
+    s8 idx0 = (s8)p[0x09];
+    u32 base = idx0 * 0x30C;
+    u8 count = *(u8*)(p + base + 0x318);
+    s8 idxA = (s8)p[0x0A];
+    s8 idxB = (s8)p[0x0B];
+    if (count >= 5) {
+        idxA++;
+        if (idxA >= 5) {
+            idxA = 4;
+            idxB++;
+            if (idxB > (s8)(count - 5)) {
+                idxA = 0;
+                idxB = 0;
+            }
+        }
+    } else {
+        idxA++;
+        if (idxA >= (s8)count) {
+            idxA = 0;
+            idxB = 0;
+        }
+    }
+    p[0x0A] = idxA;
+    p[0x0B] = idxB;
+    func_80246200(self);
+}
 
-void func_802455F0(){}
+void func_802455F0(void* self) {
+    extern void func_80246200(void*);
+    u8* p = (u8*)self;
+    s8 idx0 = (s8)p[0x09];
+    u32 base = idx0 * 0x30C;
+    u8 count = *(u8*)(p + base + 0x318);
+    if (count >= 5) {
+        p[0x0B] += 5;
+        if ((s8)p[0x0B] > (s8)count) {
+            p[0x0A] = p[0x0B] - count;
+            p[0x0B] = count;
+            if ((s8)p[0x0A] >= 5) {
+                p[0x0A] = 0;
+            }
+        }
+    } else {
+        p[0x0A] = count - 1;
+        p[0x0B] = 0;
+        if ((s8)p[0x0A] < 0) p[0x0A] = 0;
+    }
+    func_80246200(self);
+}
 
-void func_8024577C(){}
+void func_8024577C(void* self, u16 val) {
+    u8* p = (u8*)self;
+    if (!val) {
+        p[0x0A] = -1;
+        p[0x0B] = 0;
+        return;
+    }
+    s8 idx0 = (s8)p[0x09];
+    s8 idxA = (s8)p[0x0A];
+    s8 idxB = (s8)p[0x0B];
+    u32 base = idx0 * 0x30C;
+    u8 count = *(u8*)(p + base + 0x318);
+    for (u8 i = 0; i < count; i++) {
+        if (*(u16*)(p + base + i * 0x18 + 0x18) == val) {
+            if (i >= 5) {
+                p[0x0A] = 4;
+                p[0x0B] = i - 4;
+            } else {
+                p[0x0A] = i;
+                p[0x0B] = 0;
+            }
+            func_80246200(self);
+            if (idxA != (s8)p[0x0A] || idxB != (s8)p[0x0B]) {
+                func_80138078(1);
+            }
+            return;
+        }
+    }
+}
+
+void* __dt__80244724(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
+
+void* __dt__8024503C(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void func_80245950(){}
 
 void func_80245DF8(){}
 
-void func_80246200(){}
+void func_80246200(void* self){}
 
-void __dt__802462F0(){}
+void* __dt__802462F0(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void func_80246330(){}
 
-void __dt__802468C8(){}
+void* __dt__802468C8(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void func_80246908(){}
 
 void func_80247490(){}
 
-void func_8024808C(){}
+void func_8024808C(void* self, void* arg2) {
+    extern void func_8003AA34();
+    extern void* getFP__FPCc(const char*);
+    extern u32 func_801361E8(void*, char*, u32);
+    extern u32 func_8009CF8C(u32);
+    extern void func_80141DC4(f32*);
+    extern s16 func_80136330(u32, const char*, u32);
+    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
+    extern u32 func_8003B1EC(u32);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_80668778;
+    extern f64 lbl_eu_80668788;
+    u8* p = (u8*)self;
+    func_8003AA34();
+    void* fp = getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
+    u8 map = func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], *(u32*)((u8*)arg2 + 0x10));
+    if (map != lbl_eu_80664798) return;
+    if (!func_8009CF8C(0x20C8)) return;
+    f32 buf[3];
+    func_80141DC4(buf);
+    u8 count = func_8003B1EC((u32)fp);
+    u8 r26 = 0;
+    for (u8 i = 1; i <= count; i++) {
+        s16 val = func_80136330((u32)fp, &lbl_eu_8050BEA8[0x15A], i);
+        if ((f32)(s16)val > buf[1]) {
+            if (i == p[0x0C]) { r26 = 1; break; }
+        }
+    }
+    if (r26) {
+        p[0x0A]++;
+    }
+}
 
-void func_8024830C(){}
+void func_8024830C(void* self, void* arg2) {
+    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
+    extern s16 func_80136330(u32, const char*, u32);
+    extern u32 func_8009CF8C(u32);
+    extern void func_80141DC4(f32*);
+    extern u32 func_801361E8(const char*, const char*, u32);
+    extern u32 lbl_eu_80664184;
+    extern u32 lbl_eu_806640A8;
+    extern u8 lbl_eu_8050B798;
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_80668778;
+    extern f32 lbl_eu_8066877C;
+    extern f64 lbl_eu_80668788;
+    u8* p = (u8*)self;
+    f32* result = (f32*)p;
+    result[0] = result[1] = result[2] = lbl_eu_80668764;
+    void* slot = *(void**)((u8*)arg2 + 0x00);
+    if (!slot) return;
+    if ((lbl_eu_80664184 & 0xFF) == lbl_eu_80664798) {
+        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+        if (!player) return;
+        void** vt = *(void***)player;
+        f32* pos = (f32*)((void*(*)(void*))vt[0xAC])(player);
+        result[0] = pos[0]; result[1] = pos[1]; result[2] = pos[2];
+    } else {
+        u16 idx = *(u16*)lbl_eu_8050B798;
+        if (!idx) return;
+        f32 buf[3];
+        func_80141DC4(buf);
+        result[0] = buf[0]; result[1] = buf[1]; result[2] = buf[2];
+    }
+    s16 val1 = func_80136330(*(u32*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1E2], lbl_eu_80664798);
+    s16 val2 = func_80136330(*(u32*)lbl_eu_806640A8, &lbl_eu_8050BEA8[0x1F0], lbl_eu_80664798);
+    u8 region = func_801361E8(&lbl_eu_8050BEA8[0x1FE], &lbl_eu_8050BEA8[0x1F], lbl_eu_80664798);
+    result[0] += (f32)(s16)val1 / ((f32)(s32)region * lbl_eu_80668778);
+    result[1] -= (f32)(s16)val2 / ((f32)(s32)region * lbl_eu_80668778);
+    result[2] = lbl_eu_80668764;
+    if (*(void**)(p + 0x3108)) {
+        void* obj = *(void**)((u8*)*(void**)(p + 0x3108) + 0x10);
+        *(f32*)((u8*)obj + 0x2C) = result[0];
+        *(f32*)((u8*)obj + 0x30) = result[1];
+        *(f32*)((u8*)obj + 0x34) = result[2];
+    }
+    func_801F3850(*(void**)(p + 0x3134), (u16)(s16)p[0x0B]);
+}
 
-void func_80248558(){}
+u32 func_80248558(void* self) {
+    extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+    u8* p = (u8*)self;
+    void* data = *(void**)(p + 0x08);
+    if (!data) return 0;
+    void* obj = *(void**)((u8*)data + 0x10);
+    if (!obj) Panic__Q24nw4r2dbFPCciPCce(&lbl_eu_8050BEA8[0x26C], 0x23D, "", "");
+    void** vtable = *(void***)obj;
+    void* result = ((void*(*)(void*, const char*, u32))vtable[15])(obj, &lbl_eu_8050BEA8[0x26C], 1);
+    if (!result) return 0;
+    void* target = *(void**)((u8*)result + 0x14);
+    void* current = result;
+    while (current) {
+        void* cur_target = *(void**)((u8*)current + 0x10);
+        if (cur_target == target) break;
+        void* next = *(void**)((u8*)current + 0x0C);
+        if (!next) break;
+        current = next;
+    }
+    return current ? *(u32*)((u8*)current + 0x14) : 0;
+}
 
-void func_80248920(){}
+void* func_80248920(void* self, const char* name, float x, float y, void* arg5, const char* paneName) {
+    if (!name) return NULL;
+    if (!paneName) return NULL;
+
+    void* result = func_80136190(&lbl_eu_8050BEA8[0x2f6], &lbl_eu_8050BEA8[0x303], name);
+
+    char buf[48];
+    sprintf(buf, &lbl_eu_8050BEA8[0x30e], result);
+
+    void* accessor = func_801355F4();
+    typedef void* (*VFuncPtr4)(void*, u32, void*, u32);
+    VFuncPtr4* vt = *(VFuncPtr4**)accessor;
+    void* picture = vt[3](accessor, 0x74696d67, buf, 0);
+
+    if (!picture) return NULL;
+
+    void* pic = createPicture__10CLibLayoutFv();
+    SetName__Q34nw4r3lyt4PaneFPCc(pic, paneName);
+
+    *(float*)((u8*)pic + 0x2C) = x;
+    *(float*)((u8*)pic + 0x30) = y;
+    *(float*)((u8*)pic + 0x34) = lbl_eu_80668764;
+
+    func_80137C1C(pic, arg5);
+
+    u8* byte = (u8*)pic + 0xBB;
+    *byte = (*byte & 0x7F) | 0x01;
+
+    *(float*)((u8*)pic + 0x44) = lbl_eu_80668794;
+    *(float*)((u8*)pic + 0x48) = lbl_eu_80668794;
+
+    return pic;
+}
 
 void func_80248A6C(){}
 
@@ -1490,21 +2165,99 @@ void func_8024AEEC(){}
 
 void func_8024B234(){}
 
-void func_8024B4CC(){}
+void func_8024B4CC(void* result, void* data, void* node) {
+    extern f32 lbl_eu_80668764;
+    f32* r = (f32*)result;
+    r[0] = r[1] = r[2] = lbl_eu_80668764;
+    void* target = *(void**)((u8*)data + 0x10);
+    if (target == node || !node) return;
+    r[0] = *(f32*)((u8*)node + 0x2C);
+    r[1] = *(f32*)((u8*)node + 0x30);
+    r[2] = *(f32*)((u8*)node + 0x34);
+    void* next = *(void**)((u8*)node + 0x0C);
+    f32 temp[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+    if (target != next && next) {
+        temp[0] = *(f32*)((u8*)next + 0x2C);
+        temp[1] = *(f32*)((u8*)next + 0x30);
+        temp[2] = *(f32*)((u8*)next + 0x34);
+    }
+    void* next2 = next ? *(void**)((u8*)next + 0x0C) : 0;
+    if (target != next2 && next2) {
+        f32 local[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+        local[0] = *(f32*)((u8*)next2 + 0x2C);
+        local[1] = *(f32*)((u8*)next2 + 0x30);
+        local[2] = *(f32*)((u8*)next2 + 0x34);
+        void* next3 = *(void**)((u8*)next2 + 0x0C);
+        if (target != next3 && next3) {
+            f32 rec[3];
+            func_8024B4CC(rec, data, next3);
+            local[0] += rec[0]; local[1] += rec[1]; local[2] += rec[2];
+        }
+        temp[0] += local[0]; temp[1] += local[1]; temp[2] += local[2];
+    }
+    r[0] += temp[0]; r[1] += temp[1]; r[2] += temp[2];
+}
 
-void __dt__8024B6B8(){}
+void* __dt__8024B6B8(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
-void func_8024B6F8(){}
+void func_8024B6F8(void* self, void* arg2, u32 arg3, u32 arg4) {
+    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
+    extern u32 func_8009CF8C(u32);
+    extern s16 func_80136330(u32, const char*, u32);
+    extern s16 func_80137E7C(void*, void*, const char*, ...);
+    u8* p = (u8*)self;
+    if (!arg2 || !*(void**)p) return;
+    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    if (!player) return;
+    void* data = *(void**)p;
+    void* obj = *(void**)((u8*)data + 0x10);
+    void** vtable = *(void***)obj;
+    void* result = ((void*(*)(void*, void*, const char*, ...))vtable[1])(data, arg2, &lbl_eu_8050BEA8[0x47F]);
+    if (!result) return;
+    for (u32 i = 1; i <= arg3; i++) {
+        s16 val = func_80136330(*(u32*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x487], i);
+        if (val) {
+            u8* pBB = (u8*)result + 0xBB;
+            u8 bit = (i == arg4) ? 1 : 0;
+            *pBB = (*pBB & 0x7F) | bit;
+        }
+    }
+    if (arg4 == 0xC) {
+        if (result) {
+            u32 val = func_8009CF8C(0x20);
+            u8* pBB = (u8*)result + 0xBB;
+            *pBB = (*pBB & 0x7F) | ((__cntlzw(val ^ 0x166) >> 5) & 1);
+        }
+    } else if (arg4 == 5) {
+        if (result) {
+            u32 val = func_8009CF8C(0x20);
+            u8* pBB = (u8*)result + 0xBB;
+            u8 bit = ((val - 0x171) | (val ^ 0x171)) >> 31;
+            *pBB = (*pBB & 0x7F) | (bit & 1);
+        }
+    }
+}
 
-void __dt__8024B894(){}
+void* __dt__8024B894(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void __ct__CFloorMap(){}
 
-void CFloorMap::~CFloorMap() const {}
+CFloorMap::~CFloorMap() {}
 
 void func_8024BE1C(){}
 
-void func_8024C104(){}
 
 void func_8024C1FC(){}
 
@@ -1512,7 +2265,13 @@ void func_8024C8F8(){}
 
 void func_8024CB94(){}
 
-void func_8024CE1C(){}
+u8 func_8024CE1C(void* self) {
+    extern int CScrollBar_isVisible(void*);
+    if (CScrollBar_isVisible((u8*)self + 0x60)) {
+        return *(u8*)((u8*)self + 0x42);
+    }
+    return 0;
+}
 
 
 void func_8024CE68(){}
@@ -1525,19 +2284,282 @@ void func_8024DA0C(){}
 
 void func_8024DE08(){}
 
-void func_8024E2BC(){}
+void func_8024E2BC(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern void func_802455F0(void*);
+    extern int sprintf(char*, const char*, ...);
+    extern void func_8024B4CC(void*, void*, void*);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_806687BC;
+    u8* p = (u8*)self;
+    if (*(u32*)(p + 0x2C)) return;
+    if (!p[0x208]) return;
+    if (CSysWin_getUnk34(p + 0xF4)) return;
+    if (p[0x58]) return;
+    s8 idx0 = (s8)p[0x205];
+    u32 base = idx0 * 0x30C;
+    if (!*(u8*)(p + base + 0x514)) return;
+    func_802455F0(p + 0x1FC);
+    s8 idx1 = (s8)p[0x206];
+    u16 val = 0;
+    if (idx1 >= 0) {
+        s8 idx2 = (s8)p[0x207];
+        val = *(u16*)(p + base + (idx2 + idx1) * 0x18 + 0x214);
+    }
+    if (!val) return;
+    f32 pos[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_8050BEA8[0x2EB]);
+    void* data = *(void**)(p + 0x140);
+    void* obj = *(void**)((u8*)data + 0x10);
+    VFuncPtr* vtable = *(VFuncPtr**)obj;
+    void* result = vtable[15](obj, buf, 1);
+    if (result) {
+        void* target = *(void**)((u8*)data + 0x10);
+        void* node = result;
+        if (node && *(void**)((u8*)node + 0x10) != target) {
+            void* next = *(void**)((u8*)node + 0x0C);
+            if (next && *(void**)((u8*)next + 0x10) != target) {
+                void* next2 = *(void**)((u8*)next + 0x0C);
+                if (next2 && *(void**)((u8*)next2 + 0x10) != target) {
+                    f32 p1[3];
+                    func_8024B4CC(p1, data, next2);
+                    pos[0] += p1[0]; pos[1] += p1[1]; pos[2] += p1[2];
+                }
+                pos[0] += *(f32*)((u8*)next2 + 0x2C);
+                pos[1] += *(f32*)((u8*)next2 + 0x30);
+                pos[2] += *(f32*)((u8*)next2 + 0x34);
+            }
+            pos[0] += *(f32*)((u8*)next + 0x2C);
+            pos[1] += *(f32*)((u8*)next + 0x30);
+            pos[2] += *(f32*)((u8*)next + 0x34);
+        }
+        void* result2 = vtable[15](obj, &lbl_eu_8050BEA8[0x136], 1);
+        if (result2) {
+            f32 scale = *(f32*)((u8*)result2 + 0x44);
+            pos[0] *= scale;
+            pos[0] += *(f32*)((u8*)data + 0x2C);
+            pos[1] += *(f32*)((u8*)data + 0x30);
+            pos[2] += *(f32*)((u8*)data + 0x34);
+        }
+    }
+    *(f32*)(p + 0x54) = lbl_eu_806687BC;
+    p[0x41] = 2;
+    *(f32*)(p + 0x4C) = pos[0] / lbl_eu_806687BC;
+    *(f32*)(p + 0x50) = pos[1] / lbl_eu_806687BC;
+}
 
-void func_8024E650(){}
+void func_8024E650(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern u32 func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_806687A4;
+    extern f32 lbl_eu_806687A8;
+    u8* p = (u8*)self;
+    if (p[0x58]) goto done;
+    if (CSysWin_getUnk34(p + 0xB8)) goto done;
+    if (CSysWin_getUnk34(p + 0xF4)) goto done;
+    f32* pos = (f32*)(p + 0x44);
+    pos[1] -= lbl_eu_806687A8;
+    if (pos[1] < lbl_eu_806687A4) pos[1] = lbl_eu_806687A4;
+    for (int i = 0; i < 3; i++) {
+        void* slot = *(void**)(p + 0x130 + i * 8);
+        if (slot) {
+            void* obj = *(void**)((u8*)slot + 0x10);
+            *(f32*)((u8*)obj + 0x2C) = pos[0];
+            *(f32*)((u8*)obj + 0x30) = pos[1];
+            *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+        }
+    }
+    void* slot = *(void**)(p + 0x150);
+    if (slot) {
+        void* obj = *(void**)((u8*)slot + 0x10);
+        *(f32*)((u8*)obj + 0x2C) = pos[0];
+        *(f32*)((u8*)obj + 0x30) = pos[1];
+        *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+    }
+    for (u8 i = 0; i < p[0x1F0]; i++) {
+        void* s = *(void**)(p + 0x150 + i * 8);
+        if (s) {
+            void* obj = *(void**)((u8*)s + 0x10);
+            *(f32*)((u8*)obj + 0x2C) = pos[0];
+            *(f32*)((u8*)obj + 0x30) = pos[1];
+            *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+        }
+    }
+    func_80248558(p + 0x140);
+    func_8024577C(p + 0x1FC, *(u16*)(p + 0x5A));
+    p[0x5D] = 1;
+done:;
+}
 
-void func_8024E828(){}
+void func_8024E828(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern u32 func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_806687A8;
+    extern f32 lbl_eu_806687AC;
+    u8* p = (u8*)self;
+    if (p[0x58]) goto done;
+    if (CSysWin_getUnk34(p + 0xB8)) goto done;
+    if (CSysWin_getUnk34(p + 0xF4)) goto done;
+    f32* pos = (f32*)(p + 0x44);
+    pos[1] += lbl_eu_806687A8;
+    if (pos[1] > lbl_eu_806687AC) pos[1] = lbl_eu_806687AC;
+    for (int i = 0; i < 3; i++) {
+        void* slot = *(void**)(p + 0x130 + i * 8);
+        if (slot) {
+            void* obj = *(void**)((u8*)slot + 0x10);
+            *(f32*)((u8*)obj + 0x2C) = pos[0];
+            *(f32*)((u8*)obj + 0x30) = pos[1];
+            *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+        }
+    }
+    void* slot = *(void**)(p + 0x150);
+    if (slot) {
+        void* obj = *(void**)((u8*)slot + 0x10);
+        *(f32*)((u8*)obj + 0x2C) = pos[0];
+        *(f32*)((u8*)obj + 0x30) = pos[1];
+        *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+    }
+    for (u8 i = 0; i < p[0x1F0]; i++) {
+        void* s = *(void**)(p + 0x150 + i * 8);
+        if (s) {
+            void* obj = *(void**)((u8*)s + 0x10);
+            *(f32*)((u8*)obj + 0x2C) = pos[0];
+            *(f32*)((u8*)obj + 0x30) = pos[1];
+            *(f32*)((u8*)obj + 0x34) = lbl_eu_80668764;
+        }
+    }
+    func_80248558(p + 0x140);
+    func_8024577C(p + 0x1FC, *(u16*)(p + 0x5A));
+    p[0x5D] = 1;
+done:;
+}
 
-void func_8024EA00(){}
+void func_8024EA00(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern u32 func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    extern f32 lbl_eu_80668798;
+    extern f32 lbl_eu_806687A8;
+    extern f32 lbl_eu_806687B0;
+    extern f32 lbl_eu_806687B4;
+    extern f32 lbl_eu_80668764;
+    u8* p = (u8*)self;
+    if (p[0x58] || CSysWin_getUnk34(p + 0xB8) || CSysWin_getUnk34(p + 0xF4)) return;
+    void* slot = *(void**)(p + 0x130);
+    if (!slot) slot = 0;
+    void* obj = *(void**)((u8*)slot + 0x10);
+    VFuncPtr* vt = *(VFuncPtr**)obj;
+    void* result = vt[15](obj, &lbl_eu_8050BEA8[0x136], 1);
+    f32 f3 = lbl_eu_806687B0 * *(f32*)((u8*)result + 0x44) - lbl_eu_806687B4;
+    f32* pos = (f32*)(p + 0x44);
+    *pos += lbl_eu_806687A8;
+    f32 limit = lbl_eu_80668798 * f3;
+    if (*pos > limit) *pos = limit;
+    for (int i = 0; i < 3; i++) {
+        void* s = *(void**)(p + 0x130 + i * 8);
+        if (s) {
+            void* o = *(void**)((u8*)s + 0x10);
+            *(f32*)((u8*)o + 0x2C) = pos[0];
+            *(f32*)((u8*)o + 0x30) = pos[1];
+            *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+        }
+    }
+    void* s = *(void**)(p + 0x150);
+    if (s) {
+        void* o = *(void**)((u8*)s + 0x10);
+        *(f32*)((u8*)o + 0x2C) = pos[0];
+        *(f32*)((u8*)o + 0x30) = pos[1];
+        *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+    }
+    for (u8 i = 0; i < p[0x1F0]; i++) {
+        void* s2 = *(void**)(p + 0x150 + i * 8);
+        if (s2) {
+            void* o = *(void**)((u8*)s2 + 0x10);
+            *(f32*)((u8*)o + 0x2C) = pos[0];
+            *(f32*)((u8*)o + 0x30) = pos[1];
+            *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+        }
+    }
+    func_80248558(p + 0x140);
+    func_8024577C(p + 0x1FC, *(u16*)(p + 0x5A));
+    p[0x5D] = 1;
+}
 
-void func_8024EC24(){}
+void func_8024EC24(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern u32 func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    extern f32 lbl_eu_80668798;
+    extern f32 lbl_eu_806687A8;
+    extern f32 lbl_eu_806687B0;
+    extern f32 lbl_eu_806687B4;
+    extern f32 lbl_eu_806687B8;
+    extern f32 lbl_eu_80668764;
+    u8* p = (u8*)self;
+    if (p[0x58] || CSysWin_getUnk34(p + 0xB8) || CSysWin_getUnk34(p + 0xF4)) return;
+    void* slot = *(void**)(p + 0x130);
+    if (!slot) slot = 0;
+    void* obj = *(void**)((u8*)slot + 0x10);
+    VFuncPtr* vt = *(VFuncPtr**)obj;
+    void* result = vt[15](obj, &lbl_eu_8050BEA8[0x136], 1);
+    f32 f4 = lbl_eu_806687B0 * *(f32*)((u8*)result + 0x44) - lbl_eu_806687B4;
+    f32 f3 = lbl_eu_80668798 * f4;
+    f32* pos = (f32*)(p + 0x44);
+    *pos -= lbl_eu_806687A8;
+    f32 limit = lbl_eu_806687B8 * f3;
+    if (*pos < limit) *pos = limit;
+    for (int i = 0; i < 3; i++) {
+        void* s = *(void**)(p + 0x130 + i * 8);
+        if (s) {
+            void* o = *(void**)((u8*)s + 0x10);
+            *(f32*)((u8*)o + 0x2C) = pos[0];
+            *(f32*)((u8*)o + 0x30) = pos[1];
+            *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+        }
+    }
+    void* s = *(void**)(p + 0x150);
+    if (s) {
+        void* o = *(void**)((u8*)s + 0x10);
+        *(f32*)((u8*)o + 0x2C) = pos[0];
+        *(f32*)((u8*)o + 0x30) = pos[1];
+        *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+    }
+    for (u8 i = 0; i < p[0x1F0]; i++) {
+        void* s2 = *(void**)(p + 0x150 + i * 8);
+        if (s2) {
+            void* o = *(void**)((u8*)s2 + 0x10);
+            *(f32*)((u8*)o + 0x2C) = pos[0];
+            *(f32*)((u8*)o + 0x30) = pos[1];
+            *(f32*)((u8*)o + 0x34) = lbl_eu_80668764;
+        }
+    }
+    func_80248558(p + 0x140);
+    func_8024577C(p + 0x1FC, *(u16*)(p + 0x5A));
+    p[0x5D] = 1;
+}
 
 void func_8024EE50(){}
 
-void func_8024F1FC(){}
+void func_8024F1FC(void* self, u32 arg2) {
+    extern void func_8003AA34();
+    extern void* getFP__FPCc(const char*);
+    extern u8 lbl_eu_80664798;
+    lbl_eu_80664798 = (u8)arg2;
+    if (arg2 > 0x1C) return;
+    func_8003AA34();
+    u32 strs[] = {
+        0x524, 0x534, 0x544, 0x554, 0x564, 0x574, 0x584, 0x594,
+        0x5A4, 0x5B4, 0x5C4, 0x5D4, 0x5E4, 0x5F4, 0x604, 0x614,
+        0x624, 0x634, 0x634, 0x644, 0x654, 0x664, 0x674, 0x684,
+        0x634, 0x644, 0x654, 0x664
+    };
+    lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[strs[arg2]]);
+}
 
 u32 func_8024F538(void* self) {
     u8 val = *(u8*)((u8*)self + 0x41);
@@ -1549,33 +2571,237 @@ u16 func_8024F54C(void* self) { return *(u16*)((u8*)self + 0x5A); }
 
 u8 func_8024F554(void* self) { return static_cast<CFloorMapFull*>(self)->field_58; }
 
-void func_8024F55C(){}
+void func_8024F55C(void* self) {
+    extern int CSysWin_isActive(void*);
+    extern void func_801D216C(void*, int);
+    extern void func_8022B8E4(void*);
+    extern void func_80138078(unsigned long);
+    u8* p = (u8*)self;
+    if (p[0x58] && CSysWin_isActive(p + 0xB8)) {
+        func_801D216C(p + 0xA0, 0);
+        func_8022B8E4(p + 0xB8);
+        p[0x58] = 0;
+        func_80138078(6);
+    }
+}
 
-void func_8024F5C4(){}
+typedef void* (*VFuncPtr)(void*, const char*, u32);
+u32 getHandleMEM2__Q23mtl10MemManagerFv();
+void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
+void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, char const*, void*, int, int);
+int func_800A9D90();
+void func_801F34F4(void*);
+
+void func_8024C104(void* self) {
+    u8* p = (u8*)self;
+    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    *(void**)(p + 0x24) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_8050BEA8[0x4e7], self, 0, 0);
+    u32 handle2 = func_800A9D90();
+    *(void**)(p + 0x30) = readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(handle2, &lbl_eu_8050BEA8[0x4fc], self, 0, 0);
+    u32 buffer[29];
+    u32* dst = &buffer[1];
+    u32* src = lbl_eu_8050BDF8;
+    buffer[0] = 0;
+    int count = 14;
+    do {
+        *dst++ = *src++;
+        *dst++ = *src++;
+    } while (--count);
+    handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    u8 idx = lbl_eu_80664798;
+    *(void**)(p + 0x28) = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, (char*)buffer[idx], self, 0, 0);
+    func_801F34F4(p + 0x60);
+    typedef void (*VoidVFuncPtr)(void*);
+    VoidVFuncPtr* vt = *(VoidVFuncPtr**)(p + 0xB8);
+    vt[0x20](p + 0xB8);
+    vt = *(VoidVFuncPtr**)(p + 0xF4);
+    vt[0x20](p + 0xF4);
+}
+
+
+void func_8024F5C4(void* self, u32 arg2) {
+    void* ptr = *(void**)((u8*)self + 0x32D4);
+    if (!ptr) return;
+    void* obj = *(void**)((u8*)ptr + 0x10);
+    VFuncPtr* vt = *(VFuncPtr**)obj;
+    void* result = vt[15](obj, (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
+    *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0x7F) | (u8)arg2;
+}
 
 unsigned char func_8024F630(void) {
-    extern unsigned int lbl_eu_8066479C;
-    extern int func_8003B1EC(unsigned int);
     return (unsigned char)func_8003B1EC(lbl_eu_8066479C);
 }
 
-void func_8024F658(){}
+void func_8024F658(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    u8* p = (u8*)self;
+    if (p[0x58]) return;
+    if (CSysWin_getUnk34(p + 0xB8)) return;
+    if (CSysWin_getUnk34(p + 0xF4)) return;
+    u8 val = p[0x208];
+    u32 result = __cntlzw(val);
+    p[0x208] = result >> 5;
+}
 
-void func_8024F6BC(){}
+u8 func_8024F6BC(void* self) {
+    CFloorMapFull* full = static_cast<CFloorMapFull*>(self);
+    if (full->field_58) return 0;
+    return full->field_208;
+}
 
 u8 func_8024F6D8(void* self) { return static_cast<CFloorMapFull*>(self)->field_208; }
 
-void func_8024F6E0(){}
+u32 func_8024F6E0(void* self) {
+    s8 idx1 = *(s8*)((u8*)self + 0x206);
+    u16 val;
+    if (idx1 < 0) {
+        val = 0;
+    } else {
+        s8 idx0 = *(s8*)((u8*)self + 0x205);
+        s8 idx2 = *(s8*)((u8*)self + 0x207);
+        u32 offset = idx0 * 0x30C + (idx2 + idx1) * 0x18;
+        val = *(u16*)((u8*)self + offset + 0x214);
+    }
+    return val != 0 ? 1 : 0;
+}
 
-void func_8024F72C(){}
+void func_8024F72C(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    u8* p = (u8*)self;
+    if (CSysWin_getUnk34(p + 0xB8)) return;
+    if (CSysWin_getUnk34(p + 0xF4)) return;
+    p[0x333C] = (u32)__cntlzw(p[0x333C]) >> 5;
+}
 
-void func_8024F784(){}
+u32 func_8024F784(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    u8* p = (u8*)self;
+    if (CSysWin_getUnk34(p + 0xB8)) return 1;
+    return CSysWin_getUnk34(p + 0xF4);
+}
 
-void func_8024F7CC(){}
+void func_8024F7CC(void* self) {
+    extern int CSysWin_getUnk34(void*);
+    extern int sprintf(char*, const char*, ...);
+    extern void func_8024B4CC(void*, void*, void*);
+    extern f32 lbl_eu_80668764;
+    extern f32 lbl_eu_806687BC;
+    extern u32 func_80248558(void*);
+    extern void func_8024577C(void*, u16);
+    u8* p = (u8*)self;
+    if (!p[0x5D]) return;
+    p[0x5D] = 0;
+    if (*(u32*)(p + 0x2C)) return;
+    if (p[0x41] != 1) return;
+    if (!p[0x208]) return;
+    if (CSysWin_getUnk34(p + 0xB8)) return;
+    if (CSysWin_getUnk34(p + 0xF4)) return;
+    if (p[0x58]) return;
+    s8 idx0 = (s8)p[0x205];
+    u32 base = idx0 * 0x30C;
+    if (!*(u8*)(p + base + 0x514)) return;
+    s8 idx1 = (s8)p[0x206];
+    u16 val = 0;
+    if (idx1 >= 0) {
+        s8 idx2 = (s8)p[0x207];
+        val = *(u16*)(p + base + (idx2 + idx1) * 0x18 + 0x214);
+    }
+    if (!val) return;
+    f32 pos[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_8050BEA8[0x2EB]);
+    void* data = *(void**)(p + 0x140);
+    void* obj = *(void**)((u8*)data + 0x10);
+    VFuncPtr* vtable = *(VFuncPtr**)obj;
+    void* result = vtable[15](obj, buf, 1);
+    if (result) {
+        void* target = *(void**)((u8*)data + 0x10);
+        void* node = result;
+        if (node && *(void**)((u8*)node + 0x10) != target) {
+            void* next = *(void**)((u8*)node + 0x0C);
+            if (next && *(void**)((u8*)next + 0x10) != target) {
+                void* next2 = *(void**)((u8*)next + 0x0C);
+                if (next2 && *(void**)((u8*)next2 + 0x10) != target) {
+                    f32 p1[3];
+                    func_8024B4CC(p1, data, next2);
+                    pos[0] += p1[0]; pos[1] += p1[1]; pos[2] += p1[2];
+                }
+                pos[0] += *(f32*)((u8*)next2 + 0x2C);
+                pos[1] += *(f32*)((u8*)next2 + 0x30);
+                pos[2] += *(f32*)((u8*)next2 + 0x34);
+            }
+            pos[0] += *(f32*)((u8*)next + 0x2C);
+            pos[1] += *(f32*)((u8*)next + 0x30);
+            pos[2] += *(f32*)((u8*)next + 0x34);
+        }
+        void* result2 = vtable[15](obj, &lbl_eu_8050BEA8[0x136], 1);
+        if (result2) {
+            f32 scale = *(f32*)((u8*)result2 + 0x44);
+            pos[0] *= scale;
+            pos[0] += *(f32*)((u8*)data + 0x2C);
+            pos[1] += *(f32*)((u8*)data + 0x30);
+            pos[2] += *(f32*)((u8*)data + 0x34);
+        }
+    }
+    *(f32*)(p + 0x54) = lbl_eu_806687BC;
+    p[0x41] = 2;
+    *(f32*)(p + 0x4C) = pos[0] / lbl_eu_806687BC;
+    *(f32*)(p + 0x50) = pos[1] / lbl_eu_806687BC;
+}
 
-void func_8024FB78(){}
+u32 func_8024FB78() {
+    extern u32 lbl_eu_80664184;
+    extern u8 lbl_eu_80664798;
+    extern u32 lbl_eu_8066479C;
+    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
+    extern u32 func_8003B1EC(u32);
+    extern s16 func_80136330(u32, const char*, u32);
+    extern void func_80141DC4(f32*);
+    extern f64 lbl_eu_80668770;
+    u32 result = 0;
+    if ((lbl_eu_80664184 & 0xFF) == lbl_eu_80664798) {
+        if (!lbl_eu_8066479C) return 0;
+        void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+        if (!player) return 0;
+        void** vt = *(void***)player;
+        f32* pos = (f32*)((void*(*)(void*))vt[0xAC])(player);
+        f32 y = pos[1];
+        u32 count = func_8003B1EC(lbl_eu_8066479C);
+        for (u32 i = 1; i <= count; i++) {
+            s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+            if ((f32)(s16)val > y) return i;
+        }
+    } else {
+        if (!lbl_eu_8066479C) return 0;
+        f32 buf[3];
+        func_80141DC4(buf);
+        u32 count = func_8003B1EC(lbl_eu_8066479C);
+        for (u32 i = 1; i <= count; i++) {
+            s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
+            if ((f32)(s16)val > buf[1]) return i;
+        }
+    }
+    return 0;
+}
 
 void CFloorMap::OnFileEvent() const {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_80250CB4(){}
+void sinit_80250CB4() {
+    extern u16 lbl_eu_806647A0[];
+    extern u16 lbl_eu_806647A8[];
+    extern u16 lbl_eu_806647B0[];
+    extern u16 lbl_eu_806647B8[];
+    for (int i = 0; i < 4; i++) {
+        lbl_eu_806647A0[i] = 0xFF;
+        lbl_eu_806647A8[i] = 0xFF;
+    }
+    lbl_eu_806647B0[0] = 0xA0;
+    lbl_eu_806647B0[1] = 0x8C;
+    lbl_eu_806647B0[2] = 0x23;
+    lbl_eu_806647B0[3] = 0xFF;
+    lbl_eu_806647B8[0] = 0xD9;
+    lbl_eu_806647B8[1] = 0xC0;
+    lbl_eu_806647B8[2] = 0x43;
+    lbl_eu_806647B8[3] = 0xFF;
+}

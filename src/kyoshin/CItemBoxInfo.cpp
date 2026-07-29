@@ -948,9 +948,9 @@ u32 func_801DFD60(void* a, void* b, u32 arg2) {
     return result;
 }
 
-u32 func_801E9690(u16 arg1, u32 arg2) {
-    void* obj = (u8*)func_8009EC9C(arg1) + 0x3534;
+u32 func_801E9690(void* dummy, u32 arg1, u32 arg2) {
     u32 result = 0;
+    void* obj = (u8*)func_8009EC9C(arg1) + 0x3534;
     if (func_8026178C(obj, arg2) != 0) {
         result = func_8025FB10(obj, arg2);
     }

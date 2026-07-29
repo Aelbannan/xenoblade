@@ -1258,29 +1258,37 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 
+class BdatFilePointer;
+extern BdatFilePointer* lbl_eu_80664BF8;
+extern u8 lbl_eu_80513420[];
+
 void func_eu_802B1334() { CBdat::func_8003AA8C(6); }
 
-// BDAT data pointer and error-message string table (rodata + sbss).
-extern u8* lbl_eu_80664BF8;
-extern const char lbl_eu_80513420[];
 
-void func_eu_802B13FC() {
-    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, lbl_eu_80513420 + 9, 9);
+
+
+
+
+
+
+
+void func_eu_802B13FC(){}
+
+void func_eu_802B1414(){}
+
+void func_eu_802B142C(){}
+
+const char* func_eu_802B1444() {
+    return CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 13);
 }
 
-void func_eu_802B1414() {
-    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, lbl_eu_80513420 + 9, 10);
+const char* func_eu_802B145C() {
+    return CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 14);
 }
 
-void func_eu_802B142C() {
-    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, lbl_eu_80513420 + 9, 12);
+const char* func_eu_802B1474() {
+    return CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 15);
 }
-
-void func_eu_802B1444(){}
-
-void func_eu_802B145C(){}
-
-void func_eu_802B1474(){}
 
 void func_eu_802B148C(){}
 
@@ -1297,6 +1305,7 @@ extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 
 void func_eu_802B14F8(){}
 
+extern "C" void getBdatStringColumnValue(void*, void*, int);
 extern "C" void func_eu_802B133C() {
-    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, lbl_eu_80513420 + 9, 1);
+    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
 }

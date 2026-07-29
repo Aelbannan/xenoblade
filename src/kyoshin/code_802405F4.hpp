@@ -11,8 +11,7 @@ public:
     virtual void Init();
     virtual void Term();
     virtual void Move();
-    void cbRenderBefore();
+    virtual void cbRenderBefore();
 
     // TODO: add fields
 };
-

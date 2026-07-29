@@ -1,11 +1,15 @@
 #pragma once
 
 #include <types.h>
+#include "monolib/lib/UnkClass_8045F564.hpp"
 
 namespace nw4r { namespace lyt { class DrawInfo; } }
 
 struct CItemBoxInfoState {
-    u8 _00[0x30];
+    u8 _00[0x04];
+    UnkClass_8045F564 memRegion1;   // 0x04
+    UnkClass_8045F564 memRegion2;   // 0x14
+    u8 _24[0x0C];
     void* resource;
     void* layout;
     void* animTransform1;   // 0x38 - nw4r::lyt::AnimTransform
@@ -22,6 +26,7 @@ struct CItemBoxInfoState {
 
 struct CItemBoxInfo {
     CItemBoxInfoState state;
+    ~CItemBoxInfo();
     void OnFileEvent();
 
     u8 getItemBoxState();

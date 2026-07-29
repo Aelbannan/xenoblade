@@ -322,7 +322,7 @@ bool cf::CfGameManager::func_8007E1B4() {
 }
 #pragma dont_inline reset
 void cf::CfGameManager::func_8007E218() {}
-void cf::CfGameManager::func_8007F930(bool arg1) {}
+
 #pragma dont_inline on
 UnkClass_80083298* cf::CfGameManager::func_80083298() {
     return getInstance()->unk90;

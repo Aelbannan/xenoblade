@@ -107,6 +107,29 @@ extern "C" void func_80087448__Q22cf13CfGameManagerFv(UnkFlags8Data* data, u32 m
     else data->flags_0x8 &= ~mask;
 }
 
+extern "C" void func_8007F930__Q22cf13CfGameManagerFv(bool enabled) {
+    if (enabled) {
+        lbl_eu_80663E24 |= 0x20000;
+    } else {
+        lbl_eu_80663E24 &= ~0x20000;
+    }
+
+    if (enabled) {
+        lbl_eu_80663E28 |= 0x1000000;
+    } else {
+        lbl_eu_80663E28 &= ~0x1000000;
+    }
+
+    if (enabled) {
+        u32 value = 0;
+        value |= 0x200000;
+        value |= 0x310;
+        lbl_eu_80663DF8 = value;
+    } else {
+        lbl_eu_80663DF8 |= 0xFFFFFFFF;
+    }
+}
+
 extern "C" void func_8007F8DC__Q22cf13CfGameManagerFv(UnkLinkedNode** destination,
                                                         UnkLinkedNode** source) {
     *destination = *source;
@@ -217,6 +240,18 @@ extern "C" void func_8007F0C4__Q22cf13CfGameManagerFv(u32 first, u32 second) {
 }
 
 extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second);
+extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second) {
+    s32 index = func_80082418__Q22cf13CfGameManagerFv(first, second);
+    if (index == -1) {
+        return -1;
+    }
+    if (index >= 22) {
+        return -1;
+    }
+    return func_8009CF8C(index + 40);
+}
+
 extern "C" bool func_8008235C__Q22cf13CfGameManagerFv(u32 bit) {
     return (func_8009CF8C(0x108) & (1U << bit)) != 0;
 }

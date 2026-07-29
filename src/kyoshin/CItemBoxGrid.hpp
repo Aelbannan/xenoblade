@@ -32,6 +32,11 @@ struct CItemBoxGridFull {
     u8 field_52D;
     u8 _52E[0x549 - 0x52E];
     u8 field_549;
+    u8 _54A[0x2800 - 0x54A];
+    u16 field_2800;
+    u8 field_2802;
+    u8 field_2803;
+    u8 field_2804;
 };
 
 class CItemBoxGrid {

@@ -4,16 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxGrid.hpp"
 
+
+
 u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_61; }
-
-
-
-
-
-
-
-
-
 
 void __ct__801C5514(){}
 
@@ -35,17 +28,50 @@ void __dt__801C5670(){}
 
 void func_801C56D8(){}
 
+// Search for a matching short id in an array, return 1 if found.
+int func_801C51BC(void* obj, u32 id) {
+    u16 count = *(u16*)((u8*)obj + 0x804);
+    u16 i;
+    for (i = 0; i < count; i++) {
+        if (*(u16*)((u8*)obj + 4 + i * 2) == (u16)id) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 void func_801C5E5C(){}
 
-void func_801C5EF4(){}
+// Increment a sub-index counter; wrap to 0 when reaching the limit.
+void func_801C5EF4(CItemBoxGridFull* self) {
+    u8 idx = self->field_2804 + 1;
+    self->field_2804 = idx;
+    if ((s8)idx >= self->field_2803) {
+        self->field_2804 = 0;
+    }
+}
 
-void func_801C5F20(){}
+// Decrement a sub-index counter; borrow from the limit field when underflowing.
+void func_801C5F20(CItemBoxGridFull* self) {
+    u8 idx = self->field_2804 - 1;
+    self->field_2804 = idx;
+    if ((s8)idx < 0) {
+        self->field_2804 = self->field_2803 - 1;
+    }
+}
 
 void func_801C5F48(){}
 
 void func_801C5FC0(){}
 
-void func_801C6158(){}
+// Round a double to nearest integer with .5 tie-breaking biased away from zero.
+long func_801C6158(double f) {
+    if (f > 0.0) {
+        return (long)(f + 0.5);
+    } else {
+        return (long)(f - 0.5);
+    }
+}
 
 void func_801C618C(){}
 
@@ -63,15 +89,36 @@ void func_801C6618(){}
 
 void func_801C6690(){}
 
-void func_801C6708(){}
+// Lookup a byte from a 10-byte-entry table indexed by (field_2804 * 0x1e + idx).
+// Returns byte at offset 7 within the entry, or 0 if out of bounds.
+u8 func_801C6708(CItemBoxGridFull* self, u16 idx) {
+    s16 offset = (s8)self->field_2804 * 0x1e + idx;
+    if (offset >= 0x400) return 0;
+    return ((u8*)self)[offset * 0xa + 7];
+}
 
-void func_801C673C(){}
+// Same as func_801C6708 but returns byte at offset 8 within each entry.
+u8 func_801C673C(CItemBoxGridFull* self, u16 idx) {
+    s16 offset = (s8)self->field_2804 * 0x1e + idx;
+    if (offset >= 0x400) return 0;
+    return ((u8*)self)[offset * 0xa + 8];
+}
 
 void func_801C6770(){}
 
 void func_801C67F8(){}
 
-void func_801C6840(){}
+// Return a duration/stride value based on the category byte at offset 0x2802.
+u8 func_801C6840(CItemBoxGridFull* self) {
+    u8 cat = self->field_2802;
+    if (cat - 4 <= 4 || cat == 2) {
+        return 0x1e; // 30
+    }
+    if (cat == 0xb) {
+        return 0x3c; // 60
+    }
+    return 0;
+}
 
 int LookupIndexedByte(char* obj) {
     char off = *(signed char*)((char*)obj + 0x2804);
@@ -85,7 +132,19 @@ void func_801C6938(){}
 
 void func_801C6A44(){}
 
-void func_801C6E90(){}
+// Check if an object has type 9 (extracted from vtable bits) and subtype 2.
+int func_801C6E90(void* obj) {
+    u32 w = *(u32*)obj;
+    u32 type = (w >> 12) & 0xF;
+    int result = 0;
+    if (type == 9) {
+        u8 sub = *(u8*)((u8*)obj + 7) & 3;
+        if (sub == 2) {
+            result = 1;
+        }
+    }
+    return result;
+}
 
 void func_801C6EC0(){}
 
@@ -164,7 +223,7 @@ void func_801CA110(){}
 
 void __ct__CItemBoxGrid(){}
 
-void CItemBoxGrid::~CItemBoxGrid() {}
+void __dt__12CItemBoxGridFv(){}
 
 void func_801CAA6C(){}
 
@@ -213,7 +272,14 @@ unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
     return 0;
 }
 
-void func_801CB9D8(){}
+// Copy 3 words (12 bytes) from a 12-byte-entry array at index idx.
+void func_801CB9D8(u32* dst, u32* src, int idx) {
+    if (idx >= 12) return;
+    u32* entry = src + idx * 3; // each entry is 12 bytes = 3 words
+    dst[0] = entry[6];          // offset 0x18
+    dst[1] = entry[7];          // offset 0x1C
+    dst[2] = entry[8];          // offset 0x20
+}
 
 void func_801CBA04(){}
 
@@ -323,10 +389,15 @@ void CItemBoxGrid::OnFileEvent() {}
 
 void CopyVec4s(short* dst, const short* src) { dst[0] = src[0]; dst[1] = src[1]; dst[2] = src[2]; dst[3] = src[3]; }
 
-void func_801D1F9C(){}
+// Split a u32 into its four bytes, stored as shorts (big-endian order).
+void func_801D1F9C(short* dst, unsigned long val) {
+    dst[0] = (val >> 24) & 0xFF;
+    dst[1] = (val >> 16) & 0xFF;
+    dst[2] = (val >> 8) & 0xFF;
+    dst[3] = val & 0xFF;
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_801D1E30(){}
 
 extern u8 lbl_eu_805347F8[];
-

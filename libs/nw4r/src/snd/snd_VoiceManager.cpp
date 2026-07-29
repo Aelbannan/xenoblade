@@ -18,6 +18,10 @@ u32 VoiceManager::GetRequiredMemSize() {
     return AXGetMaxVoices() * sizeof(Voice);
 }
 
+u32 VoiceManager::GetRequiredMemSize(int numVoices) {
+    return numVoices * 0x124;
+}
+
 void VoiceManager::Setup(void* pBuffer, u32 size) {
     if (mInitialized) {
         return;
@@ -109,9 +113,22 @@ void VoiceManager::UpdateAllVoices() {
 }
 
 void VoiceManager::NotifyVoiceUpdate() {
-    ut::AutoInterruptLock lock;
+    BOOL enabled = OSDisableInterrupts();
 
-    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mPrioVoiceList, { it->ResetDelta(); })
+    ut::detail::LinkListImpl& listImpl =
+        static_cast<ut::detail::LinkListImpl&>(mPrioVoiceList);
+
+    ut::LinkListNode* pNode = listImpl.GetBeginIter().operator->();
+    ut::LinkListNode* pEnd = listImpl.GetEndIter().operator->();
+
+    while (pNode != pEnd) {
+        Voice* pVoice =
+            reinterpret_cast<Voice*>(reinterpret_cast<u8*>(pNode) - 0x11C);
+        pNode = pNode->GetNext();
+        pVoice->ResetDelta();
+    }
+
+    OSRestoreInterrupts(enabled);
 }
 
 void VoiceManager::AppendVoiceList(Voice* pVoice) {

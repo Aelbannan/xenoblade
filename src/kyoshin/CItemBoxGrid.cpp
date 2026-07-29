@@ -23,6 +23,22 @@ extern u32 func_80139358(u32);
 extern void* CItem_initItemImplInstances(void*);
 extern u32 func_801D3320(void*);
 extern void func_80158118(void*, u32);
+extern u32 func_80208360(void*);
+extern void func_80208760(void*, void*);
+extern void func_8022E498(void*, void*);
+extern void func_8022D0F8(void*, void*, u8);
+extern u32 func_801D32DC(void*);
+extern u32 getItemBoxState__FP12CItemBoxInfo(void*);
+extern u32 func_801EB018(void*);
+extern u32 func_8022D08C(void*);
+extern u32 CSysWin_isReady(void*);
+extern u32 func_801EB020(void*);
+extern u32 func_80208358(void*);
+extern u32 func_8022D094(void*);
+extern u32 func_8022DB6C(void*);
+extern void advanceItemBoxState__FP12CItemBoxInfo(void*);
+extern void func_801EB410(void*, int);
+extern void func_801EB0D4(void*);
 extern void func_801D05D4(void*, int);
 extern void func_801CFF28(void*);
 extern void func_80138078__FUl(u32);
@@ -404,7 +420,17 @@ void func_801CAD8C(){}
 
 void func_801CAE9C(){}
 
-void func_801CB038(){}
+// Check if item grid is fully ready.
+u32 func_801CB038(void* self) {
+    u8* p = (u8*)self;
+    if (!func_801D32DC(p + 0xe8)) return 0;
+    if (!getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) return 0;
+    if (!func_801EB018(p + 0x3e4)) return 0;
+    if (!func_8022D08C(p + 0x440)) return 0;
+    if (!CSysWin_isReady(p + 0x4ac)) return 0;
+    if (CSysWin_isReady(p + 0x4e8)) return p[0x60];
+    return 0;
+}
 
 
 // Check if item grid is active.
@@ -427,7 +453,16 @@ u8 func_801CB184(void* self) {
 
 u8 CItemBoxGrid::GetField549() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_549; }
 
-void func_801CB1E4(){}
+// Check if any sub-system is active.
+u32 func_801CB1E4(void* self) {
+    u8* p = (u8*)self;
+    if (func_801EB020(p + 0x3e4)) return 1;
+    if (func_80208358(p + 0x418)) return 1;
+    if (func_8022D094(p + 0x440)) return 1;
+    if (func_8022DB6C(p + 0x468)) return 1;
+    if (CSysWin_getUnk34(p + 0x4ac)) return 1;
+    return CSysWin_getUnk34(p + 0x4e8);
+}
 
 void func_801CB28C(){}
 
@@ -561,11 +596,31 @@ void func_801CE390(){}
 
 void func_801CE3E8(){}
 
-void func_801CE4B4(){}
+// Handle sub-object activation.
+void func_801CE4B4(void* self) {
+    u8* p = (u8*)self;
+    if (!func_80208360(p + 0x418)) return;
+    *(u32*)(p + 0x58) = 7;
+    u8 temp[16];
+    func_80208760(temp, p + 0x418);
+    void** vtbl = *(void***)(p + 0xa0);
+    ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
+    func_801D216C(p + 0xa0, 1);
+}
 
 void func_801CE524(){}
 
-void func_801CE974(){}
+// Handle sub-object activation with copy.
+void func_801CE974(void* self) {
+    u8* p = (u8*)self;
+    if (!func_8022D09C(p + 0x440)) return;
+    *(u32*)(p + 0x58) = 0xd;
+    func_801D216C(p + 0xa0, 1);
+    u8 temp[16];
+    func_8022D0F8(temp, p + 0x440, p[0x529]);
+    void** vtbl = *(void***)(p + 0xa0);
+    ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
+}
 
 // Check if sub-obj is active; set state to 3 and clear flag.
 void func_801CE9E8(void* self) {
@@ -576,7 +631,17 @@ void func_801CE9E8(void* self) {
     }
 }
 
-void func_801CEA30(){}
+// Handle sub-object activation (variant).
+void func_801CEA30(void* self) {
+    u8* p = (u8*)self;
+    if (!func_8022DB74(p + 0x468)) return;
+    *(u32*)(p + 0x58) = 0x10;
+    u8 temp[16];
+    func_8022E498(temp, p + 0x468);
+    void** vtbl = *(void***)(p + 0xd0);
+    ((void(*)(void*, void*))vtbl[4])(p + 0xd0, temp);
+    func_801D216C(p + 0xd0, 1);
+}
 
 // Check if sub-obj is active; set state to 3 and clear flag.
 void func_801CEAA0(void* self) {
@@ -597,7 +662,27 @@ void func_801CEAE8(void* self) {
     }
 }
 
-void func_801CEB3C(){}
+// Handle system window state change.
+void func_801CEB3C(void* self) {
+    u8* p = (u8*)self;
+    if (!CSysWin_isActive(p + 0x4ac)) return;
+    if ((s8)p[0x540]) {
+        *(u32*)(p + 0x58) = 3;
+        func_801D216C(p + 0x70, 1);
+        func_801D0950(self);
+    } else {
+        u8 idx = p[0x6f];
+        u8 cat = *(u8*)((u8*)self + idx + 0x62);
+        if (cat > 9) {
+            func_801EB410(p + 0x3e4, 1);
+        } else {
+            func_801EB410(p + 0x3e4, 0);
+        }
+        func_801EB0D4(p + 0x3e4);
+        *(u32*)(p + 0x58) = 0x18;
+        p[0x528] = 1;
+    }
+}
 
 // Handle system window activation.
 void func_801CEBF0(void* self) {

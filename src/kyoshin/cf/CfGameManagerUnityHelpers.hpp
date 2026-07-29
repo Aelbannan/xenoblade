@@ -1,5 +1,14 @@
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 
+namespace ml {
+#pragma dont_inline on
+template <>
+FixStr<64>::FixStr() {
+    clear();
+}
+#pragma dont_inline reset
+}
+
 union UnkWordFloat {
     u32 bits;
     float value;
@@ -929,13 +938,36 @@ extern "C" void func_8008670C__Q22cf13CfGameManagerFv() {
 }
 
 extern "C" u32 lbl_eu_80663E30;
+extern "C" bool CfRes_getE24Bit18();
+extern "C" bool CfRes_checkFlags_2000400();
 extern "C" bool func_80083538__Q22cf13CfGameManagerFv();
+extern "C" bool func_80083544__Q22cf13CfGameManagerFv();
+extern "C" void func_80083550__Q22cf13CfGameManagerFv();
 extern "C" void func_80084CA4__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                         u32 third, bool enable);
 extern "C" u32 CfRes_packThreeFields(u32 first, u32 second, u32 third);
 extern "C" u32 CfRes_callFunc_67E78(u32 value);
 extern "C" void func_800620F0(u32 value);
 extern "C" void func_800835FC__Q22cf13CfGameManagerFv();
+extern "C" void func_80083470__Q22cf13CfGameManagerFv(u32 first, u32 second,
+                                                        bool special) {
+    cf::CfGameManager::getInstance();
+    if (CfRes_getE24Bit18() || CfRes_checkFlags_2000400() ||
+        func_80083538__Q22cf13CfGameManagerFv()) {
+        return;
+    }
+    if (special && lbl_eu_80663E42 == 24 && lbl_eu_80663E44 == 1) {
+        return;
+    }
+    bool active = func_80083544__Q22cf13CfGameManagerFv();
+    if (!active || special) {
+        CfRes_callFunc_67E78(active);
+        func_80084CA4__Q22cf13CfGameManagerFv(first, second, 1, false);
+        func_8007F990__Q22cf13CfGameManagerFv(0x10000, special);
+    }
+    func_80083550__Q22cf13CfGameManagerFv();
+}
+
 extern "C" void func_80083560__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                         u32 third) {
     cf::CfGameManager::getInstance();

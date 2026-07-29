@@ -11139,9 +11139,7 @@ namespace ml{
 
     template <size_t N>
     struct FixStr{
-        FixStr(){
-            clear();
-        }
+        FixStr();
 
         //probably fake
         FixStr(bool initialize){
@@ -11308,6 +11306,13 @@ namespace ml{
 
     static const int npos = -1;
     };
+
+#pragma dont_inline on
+    template <size_t N>
+    FixStr<N>::FixStr(){
+        clear();
+    }
+#pragma dont_inline reset
 
 }
 /* end "monolib/util/FixStr.hpp" */
@@ -251728,6 +251733,7 @@ extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u3
     return *first != *second;
 }
 
+#pragma dont_inline on
 extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
     if (enable) {
         lbl_eu_80663E28 |= mask;
@@ -251735,6 +251741,7 @@ extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
         lbl_eu_80663E28 &= ~mask;
     }
 }
+#pragma dont_inline reset
 
 extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
                                                         s32 maximum) {
@@ -251745,8 +251752,17 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
     }
 }
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 207 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 209 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 // Typed helpers recovered from the original CfGameManager unity translation unit.
+
+namespace ml {
+#pragma dont_inline on
+template <>
+FixStr<64>::FixStr() {
+    clear();
+}
+#pragma dont_inline reset
+}
 
 union UnkWordFloat {
     u32 bits;
@@ -252677,13 +252693,36 @@ extern "C" void func_8008670C__Q22cf13CfGameManagerFv() {
 }
 
 extern "C" u32 lbl_eu_80663E30;
+extern "C" bool CfRes_getE24Bit18();
+extern "C" bool CfRes_checkFlags_2000400();
 extern "C" bool func_80083538__Q22cf13CfGameManagerFv();
+extern "C" bool func_80083544__Q22cf13CfGameManagerFv();
+extern "C" void func_80083550__Q22cf13CfGameManagerFv();
 extern "C" void func_80084CA4__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                         u32 third, bool enable);
 extern "C" u32 CfRes_packThreeFields(u32 first, u32 second, u32 third);
 extern "C" u32 CfRes_callFunc_67E78(u32 value);
 extern "C" void func_800620F0(u32 value);
 extern "C" void func_800835FC__Q22cf13CfGameManagerFv();
+extern "C" void func_80083470__Q22cf13CfGameManagerFv(u32 first, u32 second,
+                                                        bool special) {
+    cf::CfGameManager::getInstance();
+    if (CfRes_getE24Bit18() || CfRes_checkFlags_2000400() ||
+        func_80083538__Q22cf13CfGameManagerFv()) {
+        return;
+    }
+    if (special && lbl_eu_80663E42 == 24 && lbl_eu_80663E44 == 1) {
+        return;
+    }
+    bool active = func_80083544__Q22cf13CfGameManagerFv();
+    if (!active || special) {
+        CfRes_callFunc_67E78(active);
+        func_80084CA4__Q22cf13CfGameManagerFv(first, second, 1, false);
+        func_8007F990__Q22cf13CfGameManagerFv(0x10000, special);
+    }
+    func_80083550__Q22cf13CfGameManagerFv();
+}
+
 extern "C" void func_80083560__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                         u32 third) {
     cf::CfGameManager::getInstance();
@@ -253275,9 +253314,11 @@ void cf::CfObject::CfObject_UnkVirtualFunc33() {
     CfObject_UnkVirtualFunc32();
 }
 
+#pragma dont_inline on
 void cf::CfGameManager::func_80083550() {
     lbl_eu_80663E24 |= 0x10;
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 void cf::CfGameManager::func_800835FC() {
@@ -253528,6 +253569,7 @@ void cf::CObjectParam::CObjectParam_UnkVirtualFunc4() {
 }
 
 extern u32 lbl_eu_80663E24;
+#pragma dont_inline on
 bool cf::CfGameManager::func_80083538() {
     return (lbl_eu_80663E24 & 0x20) != 0;
 }
@@ -253535,6 +253577,7 @@ bool cf::CfGameManager::func_80083538() {
 bool cf::CfGameManager::func_80083544() {
     return (lbl_eu_80663E24 & 0x10) != 0;
 }
+#pragma dont_inline reset
 
 extern u32 lbl_eu_80663E28;
 bool cf::CfGameManager::func_80087244() {

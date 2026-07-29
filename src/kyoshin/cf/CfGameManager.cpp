@@ -188,6 +188,7 @@ extern "C" bool func_8007F900__Q22cf13CfGameManagerFv(const u32* first, const u3
     return *first != *second;
 }
 
+#pragma dont_inline on
 extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
     if (enable) {
         lbl_eu_80663E28 |= mask;
@@ -195,6 +196,7 @@ extern "C" void func_8007F990__Q22cf13CfGameManagerFv(u32 mask, bool enable) {
         lbl_eu_80663E28 &= ~mask;
     }
 }
+#pragma dont_inline reset
 
 extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
                                                         s32 maximum) {
@@ -599,9 +601,11 @@ void cf::CfObject::CfObject_UnkVirtualFunc33() {
     CfObject_UnkVirtualFunc32();
 }
 
+#pragma dont_inline on
 void cf::CfGameManager::func_80083550() {
     lbl_eu_80663E24 |= 0x10;
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 void cf::CfGameManager::func_800835FC() {
@@ -852,6 +856,7 @@ void cf::CObjectParam::CObjectParam_UnkVirtualFunc4() {
 }
 
 extern u32 lbl_eu_80663E24;
+#pragma dont_inline on
 bool cf::CfGameManager::func_80083538() {
     return (lbl_eu_80663E24 & 0x20) != 0;
 }
@@ -859,6 +864,7 @@ bool cf::CfGameManager::func_80083538() {
 bool cf::CfGameManager::func_80083544() {
     return (lbl_eu_80663E24 & 0x10) != 0;
 }
+#pragma dont_inline reset
 
 extern u32 lbl_eu_80663E28;
 bool cf::CfGameManager::func_80087244() {

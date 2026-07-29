@@ -7,9 +7,7 @@ namespace ml{
 
     template <size_t N>
     struct FixStr{
-        FixStr(){
-            clear();
-        }
+        FixStr();
 
         //probably fake
         FixStr(bool initialize){
@@ -176,5 +174,12 @@ namespace ml{
 
     static const int npos = -1;
     };
+
+#pragma dont_inline on
+    template <size_t N>
+    FixStr<N>::FixStr(){
+        clear();
+    }
+#pragma dont_inline reset
 
 }

@@ -53,8 +53,10 @@ void CDesktop::wkUpdate(){
 void CDesktop::wkRender(){
     CView* view = CViewRoot::getFullScreenView();
     if(view != nullptr){
-        CView* currentView = CView::getCurrentView();
-        (void)(view == currentView);
+        CView* current = CView::getCurrentView();
+        if(view == current){
+            return;
+        }
     }
 }
 

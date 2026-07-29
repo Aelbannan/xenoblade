@@ -56,10 +56,7 @@ extern "C" void func_8022D244(CExchangeWinFull* self) {
 
 void CExchangeWin::OnFileEvent() {}
 
-CExchangeWin::~CExchangeWin() {
-    // mMemRegion destructor called automatically by compiler
-    // null-check and conditional delete handled by MWCC virtual dtor ABI
-}
+CExchangeWin::~CExchangeWin() {}
 
 // Stub functions needed by CItemBoxGrid
 extern "C" void func_8022D0D0(void* self) {
@@ -71,21 +68,27 @@ extern "C" void func_8022D0D0(void* self) {
     s->field_27 = 0;
     func_80138078(0xe);
 }
+#pragma optimize_for_size on
 extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
-    char buf[64];
+    char buf[40];
+    typedef void* (*VtableFunc)(void*, const char*, int);
+
     sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
-    u32 obj = *(u32*)((u8*)src + 0x1c);
-    u32 sub = *(u32*)(obj + 0x10);
-    void** vtbl = *(void***)sub;
-    void* r1 = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])((void*)sub, buf, 1);
-    u32 obj2 = *(u32*)((u8*)src + 0x1c);
-    u32 sub2 = *(u32*)(obj2 + 0x10);
-    void** vtbl2 = *(void***)sub2;
-    void* r2 = ((void*(*)(void*, char*, int))vtbl2[0x3C / 4])((void*)sub2, (char*)&lbl_eu_8050A740[0x25], 1);
-    u32 obj3 = *(u32*)((u8*)src + 0x1c);
-    u32 sub3 = *(u32*)(obj3 + 0x10);
-    func_80137924(dst, r1, r2, (void*)sub3);
+
+    u32 tmp = *(u32*)((u8*)src + 0x1c);
+    void* pane = *(void**)(tmp + 0x10);
+    VtableFunc func1 = ((VtableFunc**)*(void**)pane)[0x3C/4];
+    void* res1 = func1(pane, buf, 1);
+
+    tmp = *(u32*)((u8*)src + 0x1c);
+    pane = *(void**)(tmp + 0x10);
+    VtableFunc func2 = ((VtableFunc**)*(void**)pane)[0x3C/4];
+    void* res2 = func2(pane, &lbl_eu_8050A740[0x25], 1);
+
+    tmp = *(u32*)((u8*)src + 0x1c);
+    func_80137924(dst, res1, res2, *(void**)(tmp + 0x10));
 }
+#pragma optimize_for_size off
 extern "C" void func_8022CF2C(CExchangeWinFull* self) {
     self->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(),
@@ -111,7 +114,7 @@ extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
 // Sets two text fields on the layout: one at string offset 0x34 with param2,
 // and one at string offset 0x41 with param3.
 extern "C" void func_8022D19C(CExchangeWinFull* self, char* param2, char* param3) {
-    nw4r::lyt::Layout* layout = self->mLayout;
-    func_80136B4C(layout, (char*)&lbl_eu_8050A740[0x34], param2, 0);
-    func_80136B4C(layout, (char*)&lbl_eu_8050A740[0x41], param3, 0);
+    const char* base = lbl_eu_8050A740;
+    func_80136B4C(self->mLayout, base + 0x34, param2, 0);
+    func_80136B4C(self->mLayout, base + 0x41, param3, 0);
 }

@@ -176,7 +176,8 @@ void func_8025CBCC(){}
 
 /* Toggles field_0xDD: 0->1, 1->0, anything else->1 */
 void func_8025CC70(CKizunagram* self) {
-    self->field_0xDD = (self->field_0xDD ^ 1) ? 1 : 0;
+    self->field_0xDD ^= 1;
+    self->field_0xDD = (self->field_0xDD != 0);
 }
 
 void func_8025CC88(){}

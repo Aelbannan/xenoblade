@@ -2,11 +2,13 @@
 // Submenu overlay widget for the item grid screen.
 
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
-#include "kyoshin/code_80135FDC.hpp"
 
 extern "C" void func_80138078__FUl(u32);
 extern void* lbl_eu_80535750[];
-extern void func_80137924(void*, void*, void*, void*);
+
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+extern "C" void func_80137924(void*, void*, void*, void*);
 
 void* __ct__CItemBoxGridSubMenu(void* self) {
     CItemBoxGridSubMenu* s = (CItemBoxGridSubMenu*)self;

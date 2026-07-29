@@ -72,8 +72,8 @@ void func_80243BE8(){}
 
 // Wait for anim transform 1 to finish, then reset to state 0 with flag set
 void func_80243C6C(CMapSel* self) {
-    float f = lbl_eu_8066873C;
-    if (func_80137510(self->mAnimTransform1, f) != 0) {
+    nw4r::lyt::AnimTransform* anim = self->mAnimTransform1;
+    if (func_80137510(anim, lbl_eu_8066873C)) {
         self->mFlag33 = 1;
         self->mState = 0;
     }

@@ -2452,37 +2452,6 @@ extern "C" void func_80083468__Q22cf13CfGameManagerFv(u32 value) {
 }
 #pragma dont_inline reset
 
-extern "C" Unk80EE4Data* func_80080E44__Q22cf13CfGameManagerFv(
-    const char* name, u32 arg2, u32 arg3, u32 arg4);
-extern "C" void func_80081A40__Q22cf13CfGameManagerFv(const char* name, u32 arg2,
-                                                        u32 arg3, u32 arg4) {
-    Unk80EE4Data* data = func_80080E44__Q22cf13CfGameManagerFv(name, arg2, arg3, arg4);
-    if (data == nullptr) {
-        return;
-    }
-    FixStr<32> resource;
-    func_8007D794(&resource);
-    format__Q22ml10FixStr<32>FPCce(&resource, lbl_eu_804FB824 + 0x8D, name, lbl_eu_80663E42, lbl_eu_80663E44);
-    func_8007C4B4(&resource);
-    func_80080EE4__Q22cf13CfGameManagerFv(data, name, arg2);
-    u32 pool = func_80061FFC();
-    void* obj = allocate__Q23mtl10MemManagerFUlUl(880, pool);
-    if (obj != nullptr) {
-        __ct__80081B80(obj);
-    }
-    data->vfunc_0x70(obj);
-    data->vfunc_0x10C(8);
-    func_80081CA0__Q22cf13CfGameManagerFv(data, arg3, arg4);
-    func_8007C4B4(&resource);
-    BdatFilePointer* file = getFP__FPCc(&resource);
-    u32 result = func_8003B41C(file);
-    func_8003B1EC(file);
-    if (arg2 < result || arg2 >= result + result) {
-        data->vfunc_0x48(1);
-    }
-    data->vfunc_0x48();
-}
-
 extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                         float value, u8 enabled) {
     BdatTextEntry* base = &lbl_eu_805716F8;

@@ -45,7 +45,7 @@ extern "C" void func_801D2174(CBaseCur* cur) {
 /* CBaseCur default constructor: initialises vtable to the base vtable,
    stores the arc resource accessor passed in r4, and zeroes the
    remaining fields. */
-DECOMP_DONT_INLINE extern "C" void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     _this->mVtable = lbl_eu_805349A0;
     _this->mArcResAcc = arcResAcc;
     _this->mpLayout = nullptr;
@@ -74,9 +74,10 @@ DECOMP_DONT_INLINE void func_801D2264(CBaseCur* cur){}
 
 /* CCur07 constructor: chains to CBaseCur base constructor then
    overrides the vtable pointer with the CCur07 vtable. */
-extern "C" void __ct__CCur07(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+extern "C" void* __ct__CCur07(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
     __ct__8CBaseCurFv(_this, arcResAcc);
     _this->mVtable = lbl_eu_80534978;
+    return _this;
 }
 
 void __dt__6CCur07Fv() {}

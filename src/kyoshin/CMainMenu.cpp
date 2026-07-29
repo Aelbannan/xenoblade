@@ -44,8 +44,12 @@ void func_800FF6BC(){}
 
 extern u32 lbl_eu_80663F18;
 
+// Declare the mangled symbol to prevent IPA from inlining the stub.
+extern "C" int func_800FF778__9CMainMenuFv();
+
+// Returns 1 if func_800FF778() is non-zero, else booleanizes lbl_eu_80663F18.
 extern "C" u32 func_800FF738(CMainMenu* self) {
-    if (self->func_800FF778() != 0) {
+    if (func_800FF778__9CMainMenuFv() != 0) {
         return 1;
     }
     return lbl_eu_80663F18 != 0 ? 1 : 0;
@@ -53,8 +57,7 @@ extern "C" u32 func_800FF738(CMainMenu* self) {
 
 int CMainMenu::func_800FF778() {
     // TODO: decompile
-    volatile int ret = 0;
-    return ret;
+    return 0;
 }
 
 void func_800FF8B0(){}

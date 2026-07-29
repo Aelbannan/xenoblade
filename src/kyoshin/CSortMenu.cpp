@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSortMenu.hpp"
 
-u8 CSortMenu::func_801D3320() { return field_0x28; }
+extern "C" u8 func_801D3320(void* self) { return ((CSortMenu*)self)->field_0x28; }
 
 
 
@@ -13,12 +13,12 @@ u8 CSortMenu::func_801D3320() { return field_0x28; }
 
 
 
-u8 CSortMenu::func_801D3328() { return field_0x2B; }
+extern "C" u8 func_801D3328(void* self) { return ((CSortMenu*)self)->field_0x2B; }
 
 
 
 
-void func_801D3454(){}
+extern "C" void func_801D3454(){}
 
 void func_801D350C(void){}
 
@@ -31,13 +31,13 @@ void CSortMenu::func_801D3518(int value) {
 
 void func_801D353C(){}
 
-void func_801D3620(){}
+extern "C" void func_801D3620(){}
 
-void func_801D3698(){}
+extern "C" void func_801D3698(){}
 
-void func_801D3724(){}
+extern "C" void func_801D3724(){}
 
-void func_801D377C(){}
+extern "C" void func_801D377C(){}
 
 u8 CSortMenu::func_801D37F4() {
     return field_0xED + field_0xEE;

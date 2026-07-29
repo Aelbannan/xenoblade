@@ -1,5 +1,5 @@
 {
-  "matchModel": { "provider": "longcat", "model": "LongCat-2.0", "thinkingLevel": "medium" },
+  "matchModel": { "provider": "longcat", "model": "LongCat-2.0", "thinkingLevel": "xhigh" },
   "cleanupModel": { "provider": "longcat", "model": "LongCat-2.0", "thinkingLevel": "off" },
   "batchSize": 5,
   "maxParallelTUs": 2,

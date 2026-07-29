@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CSortMenu
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CSortMenu.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CSortMenu.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,9 +1390,58 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CSortMenu.cpp" line 4 "kyoshin/CSortMenu.hpp" */
+#pragma once
 
-extern "C" u8 func_801D3320(void* self) { return ((u8*)self)[0x28]; }
+/* "src/kyoshin/CSortMenu.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CSortMenu {
+public:
+    CSortMenu();
+    virtual ~CSortMenu();
+    void OnFileEvent();
+    u8 func_801D3320();
+    u8 func_801D3328();
+    void func_801D3518(int value);
+    u8 func_801D37F4();
+    u8 func_801D3808();
+    u8 func_801D3810();
+
+    u8 _00[0x28];
+    u8 field_0x28;
+    u8 _29[0x2B - 0x29];
+    u8 field_0x2B;
+    u8 _2C[0x6C - 0x2C];
+    int mArray[32];    // 0x6C-0xEB (32 * 4 = 128 bytes)
+    u8 field_0xEC;     // count / flag
+    u8 field_0xED;
+    u8 field_0xEE;
+};
+/* end "kyoshin/CSortMenu.hpp" */
+
+extern "C" u8 func_801D3320(void* self) { return ((CSortMenu*)self)->field_0x28; }
 
 
 
@@ -1346,52 +1450,50 @@ extern "C" u8 func_801D3320(void* self) { return ((u8*)self)[0x28]; }
 
 
 
-extern "C" u8 func_801D3328(void* self) { return ((u8*)self)[0x2B]; }
+extern "C" u8 func_801D3328(void* self) { return ((CSortMenu*)self)->field_0x2B; }
 
 
 
 
-extern "C" void func_801D3454() {}
+extern "C" void func_801D3454(){}
 
-extern "C" void func_801D350C(void) {}
+void func_801D350C(void){}
 
-extern "C" void func_801D3518(void* this_, int value) {
-    unsigned char* countPtr = (unsigned char*)this_ + 0xec;
-    unsigned char count = *countPtr;
+void CSortMenu::func_801D3518(int value) {
+    unsigned char count = field_0xEC;
     if (count >= 32) return;
-    int* array = (int*)((char*)this_ + 0x6c);
-    array[count] = value;
-    *countPtr = count + 1;
+    mArray[count] = value;
+    field_0xEC = count + 1;
 }
 
-extern "C" void func_801D353C() {}
+void func_801D353C(){}
 
-extern "C" void func_801D3620() {}
+extern "C" void func_801D3620(){}
 
-extern "C" void func_801D3698() {}
+extern "C" void func_801D3698(){}
 
-extern "C" void func_801D3724() {}
+extern "C" void func_801D3724(){}
 
-extern "C" void func_801D377C() {}
+extern "C" void func_801D377C(){}
 
-extern "C" u8 func_801D37F4(void* self) {
-    return *(u8*)((u8*)self + 0xED) + *(u8*)((u8*)self + 0xEE);
+u8 CSortMenu::func_801D37F4() {
+    return field_0xED + field_0xEE;
 }
 
-extern "C" u8 func_801D3808(void* self) { return ((u8*)self)[0xED]; }
+u8 CSortMenu::func_801D3808() { return field_0xED; }
 
-extern "C" u8 func_801D3810(void* self) { return ((u8*)self)[0xEE]; }
+u8 CSortMenu::func_801D3810() { return field_0xEE; }
 
-extern "C" void func_801D3818() {}
+void func_801D3818(){}
 
-extern "C" void func_801D3878() {}
+void func_801D3878(){}
 
-extern "C" void func_801D390C() {}
+void func_801D390C(){}
 
-extern "C" void func_801D3958() {}
+void func_801D3958(){}
 
-extern "C" void func_801D39EC() {}
+void func_801D39EC(){}
 
-extern "C" void func_801D3A3C() {}
+void func_801D3A3C(){}
 
-extern "C" void OnFileEvent__9CSortMenuFP10CEventFile() {}
+void CSortMenu::OnFileEvent() {}

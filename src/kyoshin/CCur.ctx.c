@@ -23760,7 +23760,7 @@ public:
 // Forward declarations for CCur classes used in stubs
 
 /* Sets the visible flag on a CBaseCur cursor widget. */
-void func_801D216C(CBaseCur* pCur, u8 val) { pCur->mVisible = val; }
+extern "C" void func_801D216C(void* pCur, u8 val) { ((CBaseCur*)pCur)->mVisible = val; }
 
 
 

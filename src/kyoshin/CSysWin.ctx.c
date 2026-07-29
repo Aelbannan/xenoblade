@@ -1411,8 +1411,34 @@ public:
 
 /* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CSysWin.cpp" line 4 "kyoshin/CSysWin.hpp" */
+#pragma once
 
-u8 CSysWin_isReady(void* self) { return static_cast<CSysWinFull*>(self)->field_28; }
+/* "src/kyoshin/CSysWin.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Full object layout for CSysWin (used by C-linkage accessors)
+struct CSysWinFull {
+    u8 _00[0x28];
+    u8 field_28;
+    u8 _29[0x34 - 0x29];
+    u8 field_34;
+    u8 _35;
+    u8 field_36;
+};
+
+class CSysWin {
+public:
+    CSysWin();
+    virtual ~CSysWin();
+    void OnFileEvent();
+
+    // TODO: add fields
+};
+
+/* end "kyoshin/CSysWin.hpp" */
+
+extern "C" u8 CSysWin_isReady(void* self) { return ((CSysWinFull*)self)->field_28; }
 
 
 
@@ -1420,9 +1446,9 @@ u8 CSysWin_isReady(void* self) { return static_cast<CSysWinFull*>(self)->field_2
 
 
 
-u8 CSysWin_getUnk34(void* self) { return static_cast<CSysWinFull*>(self)->field_34; }
+extern "C" u8 CSysWin_getUnk34(void* self) { return ((CSysWinFull*)self)->field_34; }
 
-u8 CSysWin_isActive(void* self) { return static_cast<CSysWinFull*>(self)->field_36; }
+extern "C" u8 CSysWin_isActive(void* self) { return ((CSysWinFull*)self)->field_36; }
 
 
 
@@ -1442,4 +1468,4 @@ void func_8022C2F8(){}
 
 void func_8022C348(){}
 
-void CSysWin::OnFileEvent() {}
+extern "C" void OnFileEvent__7CSysWinFv() {}

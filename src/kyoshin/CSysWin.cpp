@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CSysWin.hpp"
 
-u8 CSysWin_isReady(void* self) { return static_cast<CSysWinFull*>(self)->field_28; }
+extern "C" u8 CSysWin_isReady(void* self) { return ((CSysWinFull*)self)->field_28; }
 
 
 
@@ -12,9 +12,9 @@ u8 CSysWin_isReady(void* self) { return static_cast<CSysWinFull*>(self)->field_2
 
 
 
-u8 CSysWin_getUnk34(void* self) { return static_cast<CSysWinFull*>(self)->field_34; }
+extern "C" u8 CSysWin_getUnk34(void* self) { return ((CSysWinFull*)self)->field_34; }
 
-u8 CSysWin_isActive(void* self) { return static_cast<CSysWinFull*>(self)->field_36; }
+extern "C" u8 CSysWin_isActive(void* self) { return ((CSysWinFull*)self)->field_36; }
 
 
 
@@ -34,4 +34,4 @@ void func_8022C2F8(){}
 
 void func_8022C348(){}
 
-void CSysWin::OnFileEvent() {}
+extern "C" void OnFileEvent__7CSysWinFv() {}

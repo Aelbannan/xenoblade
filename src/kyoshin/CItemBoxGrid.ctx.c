@@ -2068,22 +2068,22 @@ void SetEntry9Bytes(unsigned char* p, unsigned short a, unsigned char b, unsigne
 void func_801C562C(void* dst, void* src) {
     u8* d = (u8*)dst;
     u8* s = (u8*)src;
-    short v0 = *(short*)(s + 0);
-    u8 v1 = s[2];
-    u8 v2 = s[3];
-    u8 v3 = s[4];
-    u8 v4 = s[5];
-    u8 v5 = s[6];
-    u8 v6 = s[7];
-    u8 v7 = s[8];
-    *(short*)(d + 0) = v0;
-    d[2] = v1;
-    d[3] = v2;
-    d[4] = v3;
-    d[5] = v4;
-    d[6] = v5;
-    d[7] = v6;
-    d[8] = v7;
+    u8 b0 = s[2];
+    u8 b1 = s[3];
+    u8 b2 = s[4];
+    u8 b3 = s[5];
+    u8 b4 = s[6];
+    u8 b5 = s[7];
+    u8 b6 = s[8];
+    short h = *(short*)(s + 0);
+    *(short*)(d + 0) = h;
+    d[2] = b0;
+    d[3] = b1;
+    d[4] = b2;
+    d[5] = b3;
+    d[6] = b4;
+    d[7] = b5;
+    d[8] = b6;
 }
 
 // Destructor for the main grid container.
@@ -2102,12 +2102,14 @@ void func_801C56D8() { }
 // Search for a matching short id in an array, return 1 if found.
 int func_801C51BC(void* obj, u32 id) {
     u16 count = *(u16*)((u8*)obj + 0x804);
-    u16 i;
-    for (i = 0; i < count; i++) {
-        if (*(u16*)((u8*)obj + 4 + i * 2) == (u16)id) {
-            return 1;
-        }
-    }
+    u16 i = 0;
+    goto check;
+    do {
+        u16 v = *(u16*)((u8*)obj + 4 + i * 2);
+        if (v == (u16)id) return 1;
+        i++;
+    check:;
+    } while (i < count);
     return 0;
 }
 
@@ -2353,15 +2355,10 @@ u8 func_801C67F8(CItemBoxGridFull* self) {
 // Return a duration/stride value based on the category byte at offset 0x2802.
 u8 func_801C6840(CItemBoxGridFull* self) {
     u8 cat = self->field_2802;
-    u32 d = cat - 4;
-    if (d <= 4) goto ret30;
-    if (cat == 2) goto ret30;
-    if (cat == 0xb) {
-        return 0x3c;
-    }
+    if ((u32)(cat - 4) <= 4) return 0x1e;
+    if (cat == 2) return 0x1e;
+    if (cat == 11) return 0x3c;
     return 0;
-ret30:
-    return 0x1e;
 }
 
 int LookupIndexedByte(char* obj) {
@@ -3336,10 +3333,8 @@ unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
 void func_801CB9D8(u32* dst, void* src, u32 idx) {
     if (idx >= 12) return;
     u8* entry = (u8*)src + idx * 12;
-    u32 v0 = *(u32*)(entry + 0x18);
-    u32 v1 = *(u32*)(entry + 0x1c);
-    *(u32*)((u8*)dst + 4) = v1;
-    *(u32*)((u8*)dst + 0) = v0;
+    *(u32*)((u8*)dst + 4) = *(u32*)(entry + 0x1c);
+    *(u32*)((u8*)dst + 0) = *(u32*)(entry + 0x18);
     *(u32*)((u8*)dst + 8) = *(u32*)(entry + 0x20);
 }
 

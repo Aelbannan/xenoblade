@@ -603,7 +603,18 @@ void func_801CDEE8(void* self) {
     func_80138078__FUl(2);
 }
 
-void func_801CDFB4(){}
+// Check prerequisites and return result.
+u32 func_801CDFB4(void* self) {
+    u8* p = (u8*)self;
+    if (*(u32*)(p + 0x58) != 3) return 0;
+    if (func_801EB020(p + 0x3e4)) return 0;
+    if (func_80208358(p + 0x418)) return 0;
+    if (func_8022D094(p + 0x440)) return 0;
+    if (func_8022DB6C(p + 0x468)) return 0;
+    if (CSysWin_getUnk34(p + 0x4ac)) return 0;
+    if (CSysWin_getUnk34(p + 0x4e8)) return 0;
+    return 1;
+}
 
 void func_801CE108(){}
 

@@ -30,6 +30,8 @@ extern GXColorS10 lbl_eu_80664470;
 extern GXColorS10 lbl_eu_80664478;
 extern GXColorS10 lbl_eu_80664480;
 
+extern "C" char lbl_eu_805054BC[];
+
 static u16 lbl_80537618[120][7]; //unsure of this lbl, it seems to work, could be a struct tho
 
 CTitleAHelp::CTitleAHelp(char* arg1, u8 arg2)
@@ -253,11 +255,11 @@ void CTitleAHelp::setVisible(u8 arg) {
 }
 
 void CTitleAHelp::func_801C4744() {
-    func_80139A18(mLayout, "txt_tit", &lbl_eu_80664468, &lbl_eu_80664470);
+    func_80139A18(mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664468, &lbl_eu_80664470);
 }
 
 void CTitleAHelp::func_801C4760() {
-    func_80139A18(mLayout, "txt_tit", &lbl_eu_80664478, &lbl_eu_80664480);
+    func_80139A18(mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
 }
 
 void CTitleAHelp::showIn() {

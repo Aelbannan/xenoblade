@@ -31,7 +31,7 @@ u32 SISetXY(u32 lines, u32 times);
 void SISetCommand(s32 chan, u32 command);
 BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
                 SICallback callback, s64 wait);
-u32 SIGetType(s32 chan);
+u32 SIGetType(s32 chan) __attribute__((noinline));
 
 #ifdef __cplusplus
 }

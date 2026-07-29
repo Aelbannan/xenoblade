@@ -33,35 +33,30 @@ void func_802A6718(CVS_THREAD_EHP* self) {
 void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
-    // Slot 0x20
-    CVoiceHandle* handle = self->field_0x20;
-    CCharVoice* biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
+    // Slot 0x20: bias the handle to its embedded CCharVoice (at +0x3E9C)
+    // and clear the slot if the biased pointer matches voicePtr.
+    CVoiceHandle* h = self->field_0x20;
+    if (h) h = (CVoiceHandle*)((u8*)h + 0x3E9C);
+    if ((CCharVoice*)h == voicePtr) {
         self->field_0x20 = NULL;
     }
 
     // Slot 0x24
-    handle = self->field_0x24;
-    biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
+    h = self->field_0x24;
+    if (h) h = (CVoiceHandle*)((u8*)h + 0x3E9C);
+    if ((CCharVoice*)h == voicePtr) {
         self->field_0x24 = NULL;
     }
 
-    // Rotating slots 0x2C..0x34 (count in field_0x3c)
-    for (int i = 0; i < self->field_0x3c; i++) {
-        handle = self->field_0x2c[i];
-        biased = (CCharVoice*)handle;
-        if (handle != NULL) {
-            biased = &handle->voice;
-        }
-        if (biased == voicePtr) {
-            self->field_0x2c[i] = NULL;
+    // Rotating slots 0x2C..0x34 (count in field_0x3c).
+    // The retail loop walks a pointer through the array rather than
+    // indexing; we replicate that layout to get matching regalloc.
+    CVoiceHandle** slot = self->field_0x2c;
+    for (s32 i = 0; i < self->field_0x3c; i++, slot++) {
+        CVoiceHandle* t = *slot;
+        if (t) t = (CVoiceHandle*)((u8*)t + 0x3E9C);
+        if ((CCharVoice*)t == voicePtr) {
+            *slot = NULL;
         }
     }
 }
@@ -76,29 +71,35 @@ void func_802A658C(CVS_THREAD_EHP* self) {
         return;
     }
 
+    // Advance the rotating index forward or backward, wrapping at bounds.
     if (self->field_0x44 == 0) {
-        // Forward: increment, wrap to 0 once past the bound.
-        int newIdx = self->field_0x38 + 1;
-        self->field_0x38 = newIdx;
-        if (self->field_0x3c < newIdx) {
+        // Forward: increment, wrap to 0 if past bound.
+        self->field_0x38++;
+        if (self->field_0x3c < self->field_0x38) {
             self->field_0x38 = 0;
         }
     } else {
         // Backward: decrement, wrap to bound-1 on underflow.
-        int newIdx = self->field_0x38 - 1;
-        self->field_0x38 = newIdx;
-        if (newIdx < 0) {
+        self->field_0x38--;
+        if (self->field_0x38 < 0) {
             self->field_0x38 = self->field_0x3c - 1;
         }
     }
 
-    if (self->field_0x38 == self->field_0x40) {
-        self->func_802A3B50();
+    // Branch layout in retail: beq to vtable-call, fall-through for lbl copy.
+    // To get the same layout we invert the condition so the lbl copy
+    // (larger block) is the if-body and the vtable call is the else-body.
+    if (self->field_0x38 != self->field_0x40) {
+        // Reload slot-state triple {unk0, unk4, unk8} from init table.
+        // Retail interleaves loads/stores: load [0], load [1], store [1],
+        // store [0], load [2], store [2].
+        u32* tbl = lbl_eu_80539B14;
+        u32 v0 = tbl[0];
+        self->unk4 = tbl[1];
+        self->unk0 = (u32*)v0;
+        self->unk8 = tbl[2];
     } else {
-        // Reload slot-state triple {field_0, field_4, callback}.
-        self->unk4 = lbl_eu_80539B14[1];
-        self->unk0 = (u32*)lbl_eu_80539B14[0];
-        self->unk8 = lbl_eu_80539B14[2];
+        self->func_802A3B50();
     }
 }
 

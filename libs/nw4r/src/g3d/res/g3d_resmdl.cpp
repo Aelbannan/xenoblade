@@ -169,6 +169,11 @@ ResTexPlttInfo ResMdl::GetResTexPlttInfoOffsetFromTexName(int idx) const {
         ofs_to_obj<ResDic>(ref().toResTexNameToTexPlttInfoDic)[idx]);
 }
 
+ResTexPlttInfo ResMdl::GetResTexPlttInfoOffsetFromTexName(unsigned long idx) const {
+    return ResTexPlttInfo(
+        ofs_to_obj<ResDic>(ref().toResTexNameToTexPlttInfoDic)[idx]);
+}
+
 u32 ResMdl::GetResTexPlttInfoOffsetFromTexNameNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResTexNameToTexPlttInfoDic).GetNumData();
 }

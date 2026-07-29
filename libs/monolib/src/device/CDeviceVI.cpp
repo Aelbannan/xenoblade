@@ -185,7 +185,8 @@ u32 CDeviceVI::getVisPerFrame(){
 }
 
 bool CDeviceVI::entryCb(CDeviceVICb* entry){
-    spInstance->mCallbackList.push_back(entry);
+    reslist<CDeviceVICb*>& list = spInstance->mCallbackList;
+    list.push_back(entry);
     return true;
 }
 

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CItem
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/cf/CItem.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CItem.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,11 +1390,37 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" void func_80155660() {}
+// Forward declarations for item-related classes
+struct CItemInfo;
+struct CItemData;
+struct CItemParam;
+struct CItemExt;
 
-extern "C" int func_80155854(unsigned int param_1) {
+void func_80155660(){}
+
+int func_80155854(unsigned int param_1) {
     int result;
     if (param_1 < 0xC9) {
         if (param_1 < 0x65) {
@@ -1365,305 +1446,305 @@ extern "C" int func_80155854(unsigned int param_1) {
     return result;
 }
 
-extern "C" void func_801558B4() {}
+void func_801558B4(){}
 
-extern "C" void func_80155A00() {}
+void func_80155A00(){}
 
-extern "C" void func_80155AA0() {}
+void func_80155AA0(){}
 
-extern "C" void CItem_initItemImplInstances() {}
+void CItem_initItemImplInstances(){}
 
-extern "C" void func_80155CB4() {}
+void func_80155CB4(){}
 
-extern "C" void func_80155CC0(void* self, void* ptr, unsigned long val) {
-    unsigned long v = *(unsigned long*)ptr;
-    *(unsigned long*)ptr = __rlwimi(v, val, 2, 27, 29);
+void func_80155CC0(CItemData*, unsigned long* ptr, unsigned long val) {
+    unsigned long v = *ptr;
+    *ptr = __rlwimi(v, val, 2, 27, 29);
 }
 
-extern "C" void func_80155CD0() {}
+void func_80155CD0(){}
 
-extern "C" char* func_80155D28() {
+char* func_80155D28() {
     extern char lbl_eu_80501C58[];
     return lbl_eu_80501C58 + 0x63;
 }
 
-extern "C" char lbl_eu_806641B8[];
+extern char lbl_eu_806641B8[];
 
-extern "C" void func_80155D38() {}
+void func_80155D38(){}
 
-extern "C" void func_80155D48() {}
+void func_80155D48(){}
 
-extern "C" void func_80155DBC() {}
+void func_80155DBC(){}
 
-extern "C" void func_80155E30() {}
+void func_80155E30(){}
 
-extern "C" void func_80155EA4() {}
+void func_80155EA4(){}
 
-extern "C" void func_80155F34() {}
+void func_80155F34(){}
 
-extern "C" int func_80156038(void* self) { return 0; }
+int CItemInfo_getSize0(CItemInfo*) { return 0; }
 
-extern "C" int func_80156040(void* self) { return 0; }
+int CItemInfo_isEnabled0(CItemInfo*) { return 0; }
 
-extern "C" int func_80156048(void* self) { return 0; }
+int CItemInfo_getFlag0(CItemInfo*) { return 0; }
 
-extern "C" void func_80156050() {}
+void func_80156050(){}
 
-extern "C" void func_80156060() {}
+void func_80156060(){}
 
-extern "C" void func_80156164() {}
+void func_80156164(){}
 
-extern "C" void func_80156268() {}
+void func_80156268(){}
 
-extern "C" void func_801562DC() {}
+void func_801562DC(){}
 
-extern "C" void func_80156350() {}
+void func_80156350(){}
 
-extern "C" void func_8015650C() {}
+void func_8015650C(){}
 
-extern "C" void func_80156924() {}
+void func_80156924() {}
 
-extern "C" void func_80156928() {}
+void func_80156928() {}
 
-extern "C" u8 func_8015692C(u32 unused, void* obj) { return *(u8*)((char*)obj + 22); }
+u8 CItemInfo_getByte22(u32, CItemInfo* obj) { return *(u8*)((char*)obj + 22); }
 
-extern "C" void func_80156934() {}
+void func_80156934(){}
 
-extern "C" void func_80156BD8() {}
+void func_80156BD8() {}
 
-extern "C" u8 func_80156BDC(u32 unused, void* obj) { return *(u8*)((char*)obj + 22); }
+u8 CItemInfo_getByte22_dup1(u32, CItemInfo* obj) { return *(u8*)((char*)obj + 22); }
 
-extern "C" void func_80156BE4() {}
+void func_80156BE4(){}
 
-extern "C" u8 func_80156CF0(u32 unused, void* obj) { return *(u8*)((char*)obj + 22); }
+u8 CItemInfo_getByte22_dup2(u32, CItemInfo* obj) { return *(u8*)((char*)obj + 22); }
 
-extern "C" void func_80156CF8() {}
+void func_80156CF8(){}
 
-extern "C" void func_80156DAC() {}
+void func_80156DAC(){}
 
-extern "C" void func_80156ED4() {}
+void func_80156ED4(){}
 
-extern "C" void func_80156F0C() {}
+void func_80156F0C(){}
 
-extern "C" void func_80156F30() {}
+void func_80156F30(){}
 
-extern "C" void func_80156F54() {}
+void func_80156F54(){}
 
-extern "C" void func_80156FF8() {}
+void func_80156FF8(){}
 
-extern "C" void func_8015704C() {}
+void func_8015704C(){}
 
-extern "C" void func_801570A0() {}
+void func_801570A0(){}
 
-extern "C" void __dt__801570F0() {}
+void __dt__801570F0(){}
 
-extern "C" void __dt__80157150() {}
+void __dt__80157150(){}
 
-extern "C" void func_80157184() {}
+void func_80157184(){}
 
-extern "C" void func_801571A8() {}
+void func_801571A8(){}
 
-extern "C" void func_801571FC() {}
+void func_801571FC(){}
 
-extern "C" void func_8015720C() {}
+void func_8015720C(){}
 
-extern "C" void func_8015730C() {}
+void func_8015730C(){}
 
-extern "C" void func_801575B0() {}
+void func_801575B0(){}
 
-extern "C" void func_801576C8() {}
+void func_801576C8(){}
 
-extern "C" unsigned short func_8015780C(int index) {
+unsigned short func_8015780C(int index) {
     return ((unsigned short*)(lbl_eu_806641B8 + 0x120EC))[index];
 }
 
-extern "C" void func_80157824(int index, short value) {
+void func_80157824(int index, short value) {
     ((short*)((char*)lbl_eu_806641B8 + 0x120EC))[index] = value;
 }
 
-extern "C" void func_8015783C() {}
+void func_8015783C(){}
 
-extern "C" void func_80157948() {}
+void func_80157948(){}
 
-extern "C" void func_8015796C() {}
+void func_8015796C(){}
 
-extern "C" void func_801579A4() {}
+void func_801579A4(){}
 
-extern "C" void func_801579C4() {}
+extern "C" void func_801579C4(){}
 
-extern "C" void func_80157C20() {}
-
-extern "C" void func_80157C4C() {}
-
-extern "C" void func_80157CD0() {}
-
-extern "C" void func_80157D6C() {}
-
-extern "C" void func_80157F04() {}
-
-extern "C" void func_80157FDC() {}
-
-extern "C" void func_80158018() {}
-
-extern "C" void func_80158068() {}
-
-extern "C" void func_80158118() {}
-
-extern "C" void func_801582FC() {}
-
-extern "C" void func_80158300() {}
-
-extern "C" void func_801583DC() {}
-
-extern "C" void func_801583E0() {}
-
-extern "C" void func_80158420() {}
-
-extern "C" void func_801586CC() {}
-
-extern "C" void func_801586D0() {}
-
-extern "C" void func_801586D4() {}
-
-extern "C" void func_80158700() {}
-
-extern "C" void func_801587E8() {}
-
-extern "C" void func_80158894() {}
-
-extern "C" void func_801589A0() {}
-
-extern "C" void __dt__801589BC() {}
-
-extern "C" void func_80158AF4() {}
-
-extern "C" void func_80158E74() {}
-
-extern "C" void func_801591F4() {}
-
-extern "C" void func_801592EC() {}
-
-extern "C" void func_80159348() {}
-
-extern "C" void func_80159524() {}
-
-extern "C" void func_801599D4() {}
-
-extern "C" void func_80159B40() {}
-
-extern "C" void func_80159C04() {}
-
-extern "C" void func_80159D74() {}
-
-extern "C" void func_80159F6C() {}
-
-extern "C" void func_8015A054() {}
-
-extern "C" void func_8015A230() {}
-
-extern "C" void func_8015A234() {}
-
-extern "C" void func_8015A238() {}
-
-extern "C" void func_8015A3CC() {}
-
-extern "C" void func_8015A51C() {}
-
-extern "C" void func_8015A6AC() {}
-
-extern "C" void func_8015A7FC() {}
-
-extern "C" void func_8015A930() {}
-
-extern "C" void func_8015AAB4() {}
-
-extern "C" void func_8015ACAC() {}
-
-extern "C" void func_8015AE9C() {}
-
-extern "C" void func_8015AFA4() {}
-
-extern "C" {
-extern u8 lbl_eu_80573EEC[];
+extern "C" u32 func_80157C20(u8 arg) {
+    return 0;
 }
 
-extern "C" void func_8015B11C() {
+void func_80157C4C(){}
+
+void func_80157CD0(){}
+
+void func_80157D6C(){}
+
+void func_80157F04(){}
+
+void func_80157FDC(){}
+
+void func_80158018(){}
+
+void func_80158068(){}
+
+void func_80158118(){}
+
+void func_801582FC() {}
+
+void func_80158300(){}
+
+void func_801583DC() {}
+
+void func_801583E0(){}
+
+void func_80158420(){}
+
+void func_801586CC() {}
+
+void func_801586D0() {}
+
+void func_801586D4(){}
+
+void func_80158700(){}
+
+void func_801587E8(){}
+
+void func_80158894(){}
+
+void func_801589A0(){}
+
+void __dt__801589BC(){}
+
+void func_80158AF4(){}
+
+void func_80158E74(){}
+
+void func_801591F4(){}
+
+void func_801592EC(){}
+
+void func_80159348(){}
+
+void func_80159524(){}
+
+void func_801599D4(){}
+
+void func_80159B40(){}
+
+void func_80159C04(){}
+
+void func_80159D74(){}
+
+void func_80159F6C(){}
+
+void func_8015A054(){}
+
+void func_8015A230() {}
+
+void func_8015A234() {}
+
+void func_8015A238(){}
+
+void func_8015A3CC(){}
+
+void func_8015A51C(){}
+
+void func_8015A6AC(){}
+
+void func_8015A7FC(){}
+
+void func_8015A930(){}
+
+void func_8015AAB4(){}
+
+void func_8015ACAC(){}
+
+void func_8015AE9C(){}
+
+void func_8015AFA4(){}
+
+extern u8 lbl_eu_80573EEC[];
+
+void func_8015B11C() {
     *(u32*)(lbl_eu_80573EEC + 0xd0) = 0;
 }
 
-extern "C" void func_8015B130() {}
+void func_8015B130(){}
 
-extern "C" void func_8015B25C() {}
+void func_8015B25C(){}
 
-extern "C" int func_8015B3DC(void* self) { return 0; }
+int CItemData_isFalse0(CItemData*) { return 0; }
 
-extern "C" int func_8015B3E4(void* self) { return 1; }
+int CItemData_isTrue(CItemData*) { return 1; }
 
-extern "C" int func_8015B3EC(void* self) { return 0; }
+int CItemData_isFalse1(CItemData*) { return 0; }
 
-extern "C" int func_8015B3F4(void* self) { return 0; }
+int CItemData_isFalse2(CItemData*) { return 0; }
 
-extern "C" int func_8015B3FC(void* self) { return 0; }
+int CItemData_isFalse3(CItemData*) { return 0; }
 
-extern "C" void func_8015B404() {}
+void func_8015B404(){}
 
-extern "C" void func_8015B414() {}
+void func_8015B414(){}
 
-extern "C" void func_8015B420() {}
+void func_8015B420(){}
 
-extern "C" void func_8015B430() {}
+void func_8015B430(){}
 
-extern "C" u32 func_8015B440(u32 unused, void* obj) { return (*(u16*)((char*)obj + 12) >> 1) & 7; }
+u32 CItemParam_getCategory(u32, CItemParam* obj) { return (*(u16*)((char*)obj + 12) >> 1) & 7; }
 
-extern "C" u32 func_8015B44C(u32 unused, void* obj) { return (*(u16*)((char*)obj + 12) >> 4) & 0xFFF; }
+u32 CItemParam_getId(u32, CItemParam* obj) { return (*(u16*)((char*)obj + 12) >> 4) & 0xFFF; }
 
-extern "C" void* func_8015B458(u32 unused, void* obj) { return (void*)((char*)obj + 8); }
+void* CItemData_getBuffer(u32, CItemData* obj) { return (void*)((char*)obj + 8); }
 
-extern "C" u32 func_8015B460(u32 unused, void* obj) { return 1 - *(u8*)((char*)obj + 6); }
+u32 CItemData_getInvByte6(u32, CItemData* obj) { return 1 - *(u8*)((char*)obj + 6); }
 
-extern "C" void func_8015B46C() {}
+void func_8015B46C(){}
 
-extern "C" int func_8015B4B4(void* self) { return 16; }
+int CItemData_getSize16(CItemData*) { return 16; }
 
-extern "C" u32 func_8015B4BC(u32 unused, void* obj) { return (*(u32*)((char*)obj + 8) >> 7) & 7; }
+u32 CItemData_getBits7to9(u32, CItemData* obj) { return (*(u32*)((char*)obj + 8) >> 7) & 7; }
 
-extern "C" void func_8015B4C8() {}
+void func_8015B4C8(){}
 
-extern "C" u32 func_8015B4D8(u32 unused, void* obj) { return *(u8*)((char*)obj + 7) & 3; }
+u32 CItemData_getByte7Bits01(u32, CItemData* obj) { return *(u8*)((char*)obj + 7) & 3; }
 
-extern "C" void func_8015B4E4() {}
+void func_8015B4E4() {}
 
-extern "C" int func_8015B4E8(void* self) { return 0; }
+int CItemData_isFalse4(CItemData*) { return 0; }
 
-extern "C" void func_8015B4F0() {}
+void func_8015B4F0(){}
 
-extern "C" void func_8015B538() {}
+void func_8015B538() {}
 
-extern "C" int func_8015B53C(void* self) { return 0; }
+int CItemParam_isFalse0(CItemParam*) { return 0; }
 
-extern "C" int func_8015B544(void* self) { return 0; }
+int CItemParam_isFalse1(CItemParam*) { return 0; }
 
-extern "C" int func_8015B54C(void* self) { return 0; }
+int CItemParam_isFalse2(CItemParam*) { return 0; }
 
-extern "C" int func_8015B554(void* self) { return 0; }
+int CItemParam_isFalse3(CItemParam*) { return 0; }
 
-extern "C" u32 func_8015B55C(u32 unused, void* obj, u16 val) { *(u16*)((char*)obj + 16) = val; return unused; }
+u32 CItemParam_setField16(u32 unused, CItemParam* obj, u16 val) { *(u16*)((char*)obj + 16) = val; return unused; }
 
-extern "C" u16 func_8015B564(u32 unused, void* obj) { return *(u16*)((char*)obj + 16); }
+u16 CItemParam_getField16(u32, CItemParam* obj) { return *(u16*)((char*)obj + 16); }
 
-extern "C" void func_8015B56C() {}
+void func_8015B56C(){}
 
-extern "C" u32 func_8015B57C(u32 unused, void* obj) { return (*(u16*)((char*)obj + 24) >> 15) & 1; }
+u32 CItemParam_getField24Bit15(u32, CItemParam* obj) { return (*(u16*)((char*)obj + 24) >> 15) & 1; }
 
-extern "C" void func_8015B588() {}
+void func_8015B588(){}
 
-extern "C" u32 func_8015B598(u32 unused, void* obj) { return *(u16*)((char*)obj + 24) & 0x7FFF; }
+u32 CItemParam_getField24Mask(u32, CItemParam* obj) { return *(u16*)((char*)obj + 24) & 0x7FFF; }
 
-extern "C" void func_8015B5A4() {}
+void func_8015B5A4(){}
 
-extern "C" u32 func_8015B5B4(u32 unused, void* obj) { return *(u8*)((char*)obj + 7) & 3; }
+u32 CItemData_getByte7Bits01_dup(u32, CItemData* obj) { return *(u8*)((char*)obj + 7) & 3; }
 
-extern "C" u32 func_8015B5C0(u32 unused, void* obj) { return 1 - *(u8*)((char*)obj + 6); }
+u32 CItemData_getInvByte6_dup(u32, CItemData* obj) { return 1 - *(u8*)((char*)obj + 6); }
 
 extern "C" u8* func_8015B5CC(u32 unused, u8* obj, u32 idx, u8 val) {
     obj[idx + 18] = val;
@@ -1672,51 +1753,51 @@ extern "C" u8* func_8015B5CC(u32 unused, u8* obj, u32 idx, u8 val) {
 
 extern "C" u8 func_8015B5D8(u32 unused, u8* obj, u32 idx) { return obj[idx + 0x12]; }
 
-extern "C" void func_8015B5E4() {}
+void func_8015B5E4(){}
 
-extern "C" void func_8015B5F8() {}
+void func_8015B5F8(){}
 
-extern "C" void func_8015B60C() {}
+void func_8015B60C(){}
 
-extern "C" int func_8015B654(void* self) { return 28; }
+int CItemExt_getSize28(CItemExt*) { return 28; }
 
-extern "C" void func_8015B65C() {}
+void func_8015B65C(){}
 
-extern "C" u32 func_8015B6A8(u32 unused, void* obj) { return 1 - *(u8*)((char*)obj + 6); }
+u32 CItemData_getInvByte6_dup2(u32, CItemData* obj) { return 1 - *(u8*)((char*)obj + 6); }
 
-extern "C" void func_8015B6B4() {}
+void func_8015B6B4(){}
 
-extern "C" void func_8015B75C() {}
+void func_8015B75C(){}
 
-extern "C" void func_8015B86C() {}
+void func_8015B86C(){}
 
-extern "C" void func_8015B88C() {}
+void func_8015B88C(){}
 
-extern "C" u32 func_8015B8A0(u32 unused, void* obj, u8 val) { *(u8*)((char*)obj + 49) = val; return unused; }
+u32 CItemExt_setByte49(u32 unused, CItemExt* obj, u8 val) { *(u8*)((char*)obj + 49) = val; return unused; }
 
-extern "C" u8 func_8015B8A8(u32 unused, void* obj) { return *(u8*)((char*)obj + 49); }
+u8 CItemExt_getByte49(u32, CItemExt* obj) { return *(u8*)((char*)obj + 49); }
 
-extern "C" u32 func_8015B8B0(u32 unused, void* obj, u8 val) { *(u8*)((char*)obj + 48) = val; return unused; }
+u32 CItemExt_setByte48(u32 unused, CItemExt* obj, u8 val) { *(u8*)((char*)obj + 48) = val; return unused; }
 
-extern "C" u8 func_8015B8B8(u32 unused, void* obj) { return *(u8*)((char*)obj + 48); }
+u8 CItemExt_getByte48(u32, CItemExt* obj) { return *(u8*)((char*)obj + 48); }
 
-extern "C" void func_8015B8C0() {}
+void func_8015B8C0(){}
 
-extern "C" void func_8015B8D0() {}
+void func_8015B8D0(){}
 
-extern "C" int func_8015B918(void* self) { return 52; }
+int CItemExt_getSize52(CItemExt*) { return 52; }
 
-extern "C" u32 func_8015B920(u32 unused, void* obj) { return 99 - *(u8*)((char*)obj + 6); }
+u32 CItemExt_get99minusByte6(u32, CItemExt* obj) { return 99 - *(u8*)((char*)obj + 6); }
 
-extern "C" void func_8015B92C() {}
+void func_8015B92C(){}
 
-extern "C" int func_8015B974(void* self) { return 8; }
+int CItemExt_getSize8(CItemExt*) { return 8; }
 
-extern "C" u32 func_8015B97C(u32 unused, void* obj) { return 1 - *(u8*)((char*)obj + 6); }
+u32 CItemExt_getInvByte6(u32, CItemExt* obj) { return 1 - *(u8*)((char*)obj + 6); }
 
-extern "C" void func_8015B988() {}
+void func_8015B988(){}
 
-extern "C" int func_8015B9D0(void* self) { return 8; }
+int CItemExt_getSize8_dup(CItemExt*) { return 8; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_8015B9D8() {}
+void sinit_8015B9D8(){}

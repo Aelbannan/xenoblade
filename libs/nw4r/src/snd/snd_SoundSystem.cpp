@@ -10,17 +10,18 @@ NW4R_LIB_VERSION(SND, "Jun  8 2007", "11:17:15", "0x4199_60831");
 
 } // namespace
 
-namespace nw4r {
-namespace snd {
-
 // External symbols from BSS/SBSS
-extern "C" u8 lbl_eu_80638C40[0x16E00];
+extern "C" u8 lbl_eu_80638C40[];
 extern "C" bool lbl_eu_80665508;
 extern "C" int lbl_eu_8066550C;
 
 // Forward declaration for InitSeqPlayer (defined in snd_SeqPlayer.cpp)
-namespace detail {
 extern "C" void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv();
+
+namespace nw4r {
+namespace snd {
+
+namespace detail {
 inline void InitSeqPlayer() {
     InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv();
 }
@@ -49,11 +50,13 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
                                   u32 workSize) {
 #pragma unused(workSize)
 
-    if (sInitialized) {
+    if (lbl_eu_80665508) {
         return;
     }
 
-    sInitialized = true;
+    lbl_eu_80665508 = true;
+
+    OSRegisterVersion(NW4R_SND_Version_);
 
     detail::AxManager::GetInstance().Init();
 
@@ -87,34 +90,42 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
     detail::RemoteSpeakerManager::GetInstance().Setup();
 
     u8* pPtr = static_cast<u8*>(pWork);
-
-    void* pDvdThreadStack = pPtr;
     pPtr += rParam.dvdThreadStackSize;
 
-    void* pSoundThreadStack = pPtr;
+    u8* pSoundThreadStack = pPtr;
     pPtr += rParam.soundThreadStackSize;
 
-    void* pAxVoiceWork = pPtr;
-    pPtr += detail::AxVoiceManager::GetInstance().GetRequiredMemSize();
+    lbl_eu_8066550C = AXGetMaxVoices();
 
+    // AxVoiceManager: save pointer, advance after first GetRequiredMemSize,
+    // call again for setup size
+    u8* pAxVoiceWork = pPtr;
+    pPtr += detail::AxVoiceManager::GetInstance().GetRequiredMemSize(
+        lbl_eu_8066550C);
     detail::AxVoiceManager::GetInstance().Setup(
         pAxVoiceWork,
-        detail::AxVoiceManager::GetInstance().GetRequiredMemSize());
+        detail::AxVoiceManager::GetInstance().GetRequiredMemSize(
+            lbl_eu_8066550C));
 
-    void* pVoiceWork = pPtr;
-    pPtr += detail::VoiceManager::GetInstance().GetRequiredMemSize();
-
+    // VoiceManager: same pattern
+    u8* pVoiceWork = pPtr;
+    pPtr += detail::VoiceManager::GetInstance().GetRequiredMemSize(
+        lbl_eu_8066550C);
     detail::VoiceManager::GetInstance().Setup(
-        pVoiceWork, detail::VoiceManager::GetInstance().GetRequiredMemSize());
+        pVoiceWork,
+        detail::VoiceManager::GetInstance().GetRequiredMemSize(
+            lbl_eu_8066550C));
 
-    void* pChannelWork = pPtr;
-    pPtr += detail::ChannelManager::GetInstance().GetRequiredMemSize();
-
+    // ChannelManager: do NOT advance pPtr; use current pointer for Setup
+    detail::ChannelManager::GetInstance().GetRequiredMemSize();
     detail::ChannelManager::GetInstance().Setup(
-        pChannelWork,
+        pPtr,
         detail::ChannelManager::GetInstance().GetRequiredMemSize());
 
-    sTaskThread.Create(rParam.dvdThreadPriority, pDvdThreadStack,
+    // Initialize the sequence player subsystem before creating threads
+    detail::InitSeqPlayer();
+
+    sTaskThread.Create(rParam.dvdThreadPriority, pWork,
                        rParam.dvdThreadStackSize);
 
     detail::SoundThread::GetInstance().Create(rParam.soundThreadPriority,
@@ -123,7 +134,7 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
 }
 
 void SoundSystem::ShutdownSoundSystem() {
-    if (!sInitialized) {
+    if (!lbl_eu_80665508) {
         return;
     }
 
@@ -137,11 +148,11 @@ void SoundSystem::ShutdownSoundSystem() {
     detail::AxVoiceManager::GetInstance().Shutdown();
     detail::AxManager::GetInstance().Shutdown();
 
-    sInitialized = false;
+    lbl_eu_80665508 = false;
 }
 
 void SoundSystem::WaitForResetReady() {
-    if (!sInitialized) {
+    if (!lbl_eu_80665508) {
         return;
     }
 
@@ -157,7 +168,6 @@ void SoundSystem::WaitForResetReady() {
 } // namespace snd
 } // namespace nw4r
 
-extern "C" bool lbl_eu_80665508;
 bool IsInitializedSoundSystem__Q34nw4r3snd11SoundSystemFv() {
     return lbl_eu_80665508;
 }

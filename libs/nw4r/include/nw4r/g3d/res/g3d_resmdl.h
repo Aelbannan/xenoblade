@@ -191,6 +191,7 @@ public:
     u32 GetResShpNumEntries() const;
 
     ResTexPlttInfo GetResTexPlttInfoOffsetFromTexName(int idx) const;
+    ResTexPlttInfo GetResTexPlttInfoOffsetFromTexName(unsigned long idx) const;
     u32 GetResTexPlttInfoOffsetFromTexNameNumEntries() const;
 
     ResMdlInfo GetResMdlInfo() {

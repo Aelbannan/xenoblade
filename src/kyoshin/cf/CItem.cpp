@@ -161,9 +161,11 @@ void func_8015796C(){}
 
 void func_801579A4(){}
 
-void func_801579C4(){}
+extern "C" void func_801579C4(){}
 
-void func_80157C20(){}
+extern "C" u32 func_80157C20(u8 arg) {
+    return 0;
+}
 
 void func_80157C4C(){}
 

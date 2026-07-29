@@ -179,10 +179,9 @@ int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFla
     return result;
 }
 
-ml::FixStr<64>* func_800AA5C0(u32 packed) {
-    ml::FixStr<64>& buf = *(ml::FixStr<64>*)lbl_eu_80572C80;
-    func_800AA33C(buf, packed, 0, 1);
-    return &buf;
+void* func_800AA5C0(u32 packed) {
+    func_800AA33C(*(ml::FixStr<64>*)lbl_eu_80572C80, packed, 0, 1);
+    return (void*)lbl_eu_80572C80;
 }
 
 u32 func_800AA600(const char* str) {

@@ -27,7 +27,11 @@ public:
     void Shutdown();
 
 private:
-    RemoteSpeakerManager();
+    RemoteSpeakerManager() : mInitialized(false) {
+        for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+            mSpeaker[i].SetChannelIndex(i);
+        }
+    }
 
     static void RemoteSpeakerAlarmProc(OSAlarm* pAlarm, OSContext* pCtx);
 

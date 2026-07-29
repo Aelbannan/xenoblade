@@ -35,7 +35,7 @@ struct CCol6InviteMsgBuf {
 // RetailASM: checks gCol6Invite first, allocates 0x78 bytes from work memory,
 // constructs CProcess base, sets temporary vtable, zeros callbacks, initializes
 // all fields, sets final vtable + secondary vtable ptr at 0x6C, then calls Regist.
-CCol6Invite* CCol6Invite::CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
+CCol6Invite::CCol6Invite() {
     // Check if singleton already exists.
     if (gCol6Invite != nullptr) {
         return nullptr;

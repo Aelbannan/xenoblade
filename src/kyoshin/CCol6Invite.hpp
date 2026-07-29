@@ -10,8 +10,11 @@
 */
 class CCol6Invite : public CProcess {
 public:
-    CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
+    CCol6Invite();
     virtual ~CCol6Invite();
+
+    // Factory: allocates from work memory, constructs, registers with parent.
+    static CCol6Invite* create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
 
     // CProcess overrides
     void Init() override;

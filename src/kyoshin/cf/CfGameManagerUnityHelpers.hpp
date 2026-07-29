@@ -9,6 +9,22 @@ FixStr<64>::FixStr() {
 #pragma dont_inline reset
 }
 
+extern "C" void func_80086E6C__Q22cf13CfGameManagerFv(float amount) {
+    cf::CfPadTask::func_801C1BD8(amount);
+    if (lbl_eu_80663E0C != nullptr && amount > lbl_eu_80666498) {
+        u32 enabledFlags = lbl_eu_80663DF8;
+        enabledFlags &= ~0x6006F0;
+        lbl_eu_80663E0C->mPressedButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mTurboPressButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mReleasedButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mHeldButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mLongHoldButtonFlags &= enabledFlags;
+        lbl_eu_80663E0C->mShortPressButtonFlags &= enabledFlags;
+        lbl_eu_80571500.mPressedButtonFlags &= enabledFlags;
+        lbl_eu_80571500.mTurboPressButtonFlags &= enabledFlags;
+    }
+}
+
 extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
 
 union UnkWordFloat {

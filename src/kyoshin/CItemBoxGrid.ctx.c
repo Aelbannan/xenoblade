@@ -2323,6 +2323,7 @@ u8 func_801C673C(CItemBoxGridFull* self, u16 idx) {
 
 
 // Toggle an entry's flag based on category cap.
+// Toggle an entry's flag based on category cap.
 void func_801C6770(CItemBoxGridFull* self, u16 idx) {
     u16 offset = (u16)((s8)self->field_2804 * 0x1e + idx);
     if (offset >= 0x400) return;
@@ -2331,7 +2332,7 @@ void func_801C6770(CItemBoxGridFull* self, u16 idx) {
         u8 cap = func_801C6840(self);
         if (func_801C67F8(self) >= cap) return;
     }
-    entry[8] = entry[8] ? 0 : 1;
+    entry[8] ^= 1;
 }
 
 // Count entries with non-zero byte at offset 8 in a 10-byte stride array.

@@ -2,6 +2,18 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CKizunagram.hpp"
+
+// Forward declarations for callees used in func_8025CAB4
+static void func_8025CE00();
+static void func_8025CE78();
+static void func_8025CF1C();
+
+// Object with a dispatch byte at 0x3A — drives display state in CKizunagram
+struct UnkKizunaDisp {
+    u8 _00[0x3A];
+    u8 field_0x3A;
+};
 
 void func_8025C870() {}
 
@@ -16,9 +28,9 @@ void func_8025C870() {}
 
 void func_80257F9C(){}
 
-void __ct__CKizunaLine(){}
+CKizunaLine::CKizunaLine() {}
 
-void CKizunaLine::~CKizunaLine() {}
+CKizunaLine::~CKizunaLine() {}
 
 void func_802580CC(){}
 
@@ -56,6 +68,16 @@ void func_80259DE8(){}
 
 void func_8025A11C(){}
 
+CKizunaCur::CKizunaCur(nw4r::lyt::ArcResourceAccessor* accessor) {
+    mVtable = lbl_eu_805375FC;
+    mArcResAcc = accessor;
+    mField08 = 0;
+    mField0C = 0;
+    mField10 = 0;
+    mField11 = 1;
+    mField12 = 0;
+}
+
 void func_8025AA38(){}
 
 void func_8025AAE0(){}
@@ -80,9 +102,19 @@ void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[3] = 0;
 }
 
-void __ct__CKizunaInfo(){}
+CKizunaInfo::CKizunaInfo(nw4r::lyt::ArcResourceAccessor* accessor) {
+    mArcResAcc = accessor;
+    mVtable = lbl_eu_805375E4;
+    mField08 = 0;
+    mField0C = 0;
+    mField10 = 0;
+    mField14 = 0;
+    mField15 = 1;
+    mField16 = 1;
+    mField18 = 0;
+}
 
-void CKizunaInfo::~CKizunaInfo() {}
+CKizunaInfo::~CKizunaInfo() {}
 
 void func_8025B670(){}
 
@@ -104,9 +136,9 @@ void func_8025C298(){}
 
 void func_8025C348(){}
 
-void __ct__CKizunagram(){}
+CKizunagram::CKizunagram() {}
 
-void CKizunagram::~CKizunagram() {}
+CKizunagram::~CKizunagram() {}
 
 void func_8025C510(){}
 
@@ -148,7 +180,19 @@ void func_8025C994(){}
 
 void func_8025CA24(){}
 
-void func_8025CAB4(){}
+void func_8025CAB4(UnkKizunaDisp* self) {
+    switch (self->field_0x3A) {
+        case 0:
+            func_8025CE00();
+            return;
+        case 1:
+            func_8025CE78();
+            return;
+        case 2:
+            func_8025CF1C();
+            return;
+    }
+}
 
 void func_8025CAE4(){}
 

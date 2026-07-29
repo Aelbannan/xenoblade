@@ -86,7 +86,17 @@ void func_8015E0BC(){}
 
 void __ct__CCol6System(){}
 
-CCol6System::~CCol6System() {}
+extern "C" void __dt__7CSysWinFv(void*, int);
+extern "C" void __dt__6CCur18Fv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+
+CCol6System::~CCol6System() {
+    __dt__7CSysWinFv(mSysWin2, -1);
+    __dt__7CSysWinFv(mSysWin1, -1);
+    __dt__6CCur18Fv(mCur2, -1);
+    __dt__6CCur18Fv(mCur1, -1);
+    __dt__17UnkClass_8045F564Fv(mMemRegion, -1);
+}
 
 void CCol6System::Init() {}
 

@@ -67,16 +67,18 @@ void* __dt__800FED0C(void* _this, int flags) {
 // The addic. for CBaseCur and the nested CProcess null-checks are MWCC
 // D2-inlined-into-D1 artifacts.
 extern "C" void* __dt__9CMainMenuFv(CMainMenu* _this, int flags) {
-    if (_this != NULL) {
+    if (_this) {
         CBaseCur* subCur = (CBaseCur*)((char*)_this + 0xA8);
         __dt__7CSubCurFv(subCur, -1);
         CBaseCur* baseCur = (CBaseCur*)((char*)_this + 0x90);
-        if (baseCur != NULL) {
+        if (baseCur) {
             __dt__8CBaseCurFv(baseCur, 0);
         }
         __dt__17UnkClass_8045F564Fv((char*)_this + 0x60, -1);
-        if (_this != NULL) {
-            __dt__8CProcessFv(_this, 0);
+        if (_this) {
+            if (_this) {
+                __dt__8CProcessFv(_this, 0);
+            }
         }
         if (flags > 0) {
             operator delete(_this);

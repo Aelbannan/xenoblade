@@ -3,7 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CMapSel.hpp"
-#include "kyoshin/code_80135FDC.hpp"
+#include <nw4r/lyt.h>
 
 void __ct__CMapSel(){}
 
@@ -34,12 +34,13 @@ void func_802434A0(){}
 
 /* func_80243560 — Draw the map-select UI: layout, scrollbar, and cursor.
    Guards on field_0x30 (widget active) and mState (not uninitialized). */
+extern "C" void func_80137038(void*, void*, int, int);
 extern "C" void func_801F35B0(void*, nw4r::lyt::DrawInfo*);
 extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
 
 void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
     if (self->field_0x30 != 0 && self->mState != 0) {
-        func_80137038((nw4r::lyt::Layout*)self->mLayout, drawInfo, 0, 1);
+        func_80137038((void*)self->mLayout, drawInfo, 0, 1);
         func_801F35B0(self->mScrollBar, drawInfo);
         func_801D20B0(self->mCursor, drawInfo);
     }
@@ -74,7 +75,23 @@ void func_80243ABC(){}
 
 void func_80243B88(){}
 
-void func_80243BE8(){}
+/* func_80243BE8 — Poll animation completion on mAnimTransform2, then enable both
+   animations, set state to 5 (post-close cleanup), and notify the scrollbar. */
+extern "C" void func_801F369C(void*);
+extern "C" u32 func_80137510(void*, float);
+extern "C" float lbl_eu_8066873C;
+
+void func_80243BE8(CMapSel* self) {
+    /* Check if mAnimTransform2 has reached the target frame. */
+    if (func_80137510((void*)self->mAnimTransform2, lbl_eu_8066873C)) {
+        nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)self->mLayout;
+        /* Disable mAnimTransform2, enable mAnimTransform1. */
+        layout->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->mAnimTransform2, false);
+        layout->SetAnimationEnable((nw4r::lyt::AnimTransform*)self->mAnimTransform1, true);
+        self->mState = 5;
+        func_801F369C(self->mScrollBar);
+    }
+}
 
 void func_80243C6C(){}
 

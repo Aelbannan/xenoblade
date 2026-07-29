@@ -144,7 +144,10 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
             (char*)&lbl_eu_8050A740[0xf6], true);
         if (pane != nullptr) {
             TPLHeader* header = resource->descriptorArray->textureHeader;
-            pane->SetSize(nw4r::lyt::Size((f32)header->width, (f32)header->height));
+            nw4r::lyt::Size& size =
+                const_cast<nw4r::lyt::Size&>(pane->GetSize());
+            size.width = (f32)header->width;
+            size.height = (f32)header->height;
         }
     }
 

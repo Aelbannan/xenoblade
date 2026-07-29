@@ -1949,11 +1949,47 @@ void func_801D77A4(void* arr, u32 index, u16 value) {
 }
 
 void func_801D4260(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
-    void* layout = info->state.layout;
     char* base = (char*)&lbl_eu_805063BC;
-    for (int i = 0; i < 30; i++) {
-        func_80124270(layout, (void*)(u32)i);
-    }
+    void* layout = info->state.layout;
+    void* pane;
+    void* r12;
+    #define FP(_off, _a2) do { \
+        void* r3 = *(void**)((u8*)layout + 0x10); \
+        r12 = *(void**)((u8*)r3 + 0); \
+        r12 = *(void**)((u8*)r12 + 0x3C); \
+        pane = ((void*(*)(void*,char*,u32))r12)(r3, base + _off, 1); \
+        func_80124270(pane, (void*)(_a2)); \
+    } while(0)
+    FP(0xc2, 0x0);
+    FP(0xce, 0x0);
+    FP(0xda, 0x0);
+    FP(0xe6, 0x0);
+    FP(0xf2, 0x0);
+    FP(0xfe, 0x0);
+    FP(0x10b, 0x0);
+    FP(0x113, 0x0);
+    FP(0x121, 0x0);
+    FP(0xfe, 0x1);
+    FP(0x121, 0x1);
+    FP(0x113, 0x1);
+    FP(0xc2, 0x1);
+    FP(0x10b, 0x1);
+    FP(0xda, 0x1);
+    FP(0xc2, 0x1);
+    FP(0x10b, 0x1);
+    FP(0xce, 0x1);
+    FP(0xe6, 0x1);
+    FP(0xf2, 0x1);
+    FP(0x113, 0x1);
+    FP(0xc2, 0x1);
+    FP(0x10b, 0x1);
+    FP(0xda, 0x1);
+    FP(0xc2, 0x1);
+    FP(0x10b, 0x1);
+    FP(0xce, 0x1);
+    FP(0xe6, 0x1);
+    FP(0xf2, 0x1);
+    #undef FP
 }
 
 void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {

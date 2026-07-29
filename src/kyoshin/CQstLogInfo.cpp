@@ -4,22 +4,48 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQstLogInfo.hpp"
 
+extern float lbl_eu_80668590;
+extern u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+extern u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+
 u8 CQstLogInfo::func_802296D0() { return mField38; }
 
 u8 CQstLogInfo::func_802296D8() { return mField39; }
 
 void CQstLogInfo::func_80229768(u16 val) { mField3A = val; }
 
+// Target: us-8022b5a8 — func_80229770
+// If the animation at 0x24 finishes, transition to state 2.
+void CQstLogInfo::func_80229770() {
+    if (func_80137444(field_0x24, lbl_eu_80668590) != 0) {
+        field_0x34 = 2;
+        func_80229900();
+    }
+}
 
-void func_802297BC(){}
+// Target: us-8022b5f4 — func_802297BC
+// If the animation at 0x28 finishes, transition to state 3 and set field 0x39.
+void CQstLogInfo::func_802297BC() {
+    if (func_80137444(field_0x28, lbl_eu_80668590) != 0) {
+        field_0x34 = 3;
+        mField39 = 1;
+    }
+}
 
-void func_80229808(){}
+// Target: us-8022b640 — func_80229808
+// If the animation at 0x28 is done (via func_80137510), transition to state 5.
+void CQstLogInfo::func_80229808() {
+    if (func_80137510(field_0x28, lbl_eu_80668590) != 0) {
+        field_0x34 = 5;
+        func_802298A0();
+    }
+}
 
 void func_80229854(){}
 
-void func_802298A0(){}
+void CQstLogInfo::func_802298A0(){}
 
-void func_80229900(){}
+void CQstLogInfo::func_80229900(){}
 
 void func_80229960(){}
 

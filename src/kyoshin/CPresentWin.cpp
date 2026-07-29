@@ -68,7 +68,17 @@ void func_8022E698(){}
 
 void func_8022E744(){}
 
-void func_8022E7F0(){}
+void func_8022E7F0(CPresentWin* self) {
+    self->mDataCount = 0;
+    u8 count = code80135FDC_getByte_64077();
+    for (u8 i = 0; i < count; i++) {
+        u8 val = func_801392B4(i);
+        if (val <= 8) {
+            self->mDataArray[self->mDataCount] = val;
+            self->mDataCount++;
+        }
+    }
+}
 
 extern "C" u8 func_8022E868(void* self, u32 r4) {
     CPresentWin* p = static_cast<CPresentWin*>(self);

@@ -2,6 +2,7 @@
 // Submenu overlay widget for the item grid screen.
 
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
+#include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFont.hpp"
 
 extern "C" void func_80138078__FUl(u32);
@@ -18,27 +19,14 @@ extern "C" const float lbl_eu_8066830C; // 100.0f
 extern "C" const float lbl_eu_80668310; // -17.0f
 extern "C" const float lbl_eu_80668314; // 120.0f
 extern "C" const float lbl_eu_80668318; // -37.0f
-extern "C" const double lbl_eu_806682F8; // 4503599627370496.0 (for int-to-float)
+extern "C" const double lbl_eu_806682F8;
 
-// External functions (unmangled retail symbols)
-extern "C" void func_80136D74(void*, const char*, int);
-extern "C" char* func_80136190(char*, char*, u32);
-extern "C" void func_80127BC4(void*, const void*);
-extern "C" void func_80124288(void*, void*);
-extern "C" void code80135FDC_setVec3(float*, float, float, float);
-extern "C" void func_801D2150(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
-extern "C" void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-extern "C" void* func_80452C10(u32, nw4r::lyt::Layout*);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
-extern "C" u32 func_801355A0();
-extern "C" void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" u16 func_8013606C(char*, char*, u16);
-extern "C" void* func_80138F78(u16);
-extern "C" void* func_801355F4();
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
-extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+// Forward declarations for functions not in included headers
+void func_80136D74(char*, const char*, int);
+void func_80127BC4(char*, const char*);
+void func_80124288(char*, char*);
+void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
+void code80135FDC_setVec3(float*, float, float, float);
 
 void* __ct__CItemBoxGridSubMenu(void* self) {
     CItemBoxGridSubMenu* s = (CItemBoxGridSubMenu*)self;
@@ -132,20 +120,20 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
 
     mSubState = 1;
 
-    func_80136D74(mTxtBoxA, &lbl_eu_805084BC[0xb3], 0);
-    func_80136D74(mTxtBoxB, &lbl_eu_805084BC[0xb3], 0);
-    func_80136D74(mTxtBoxC, &lbl_eu_805084BC[0xb3], 0);
+    func_80136D74((char*)mTxtBoxA, &lbl_eu_805084BC[0xb3], 0);
+    func_80136D74((char*)mTxtBoxB, &lbl_eu_805084BC[0xb3], 0);
+    func_80136D74((char*)mTxtBoxC, &lbl_eu_805084BC[0xb3], 0);
 
     if (arg == 10) {
-        func_80136D74(mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
-        func_80136D74(mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
+        func_80136D74((char*)mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else if (arg == 13) {
-        func_80136D74(mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
-        func_80136D74(mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
+        func_80136D74((char*)mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else {
-        func_80136D74(mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
     }
 
     nw4r::lyt::Pane* pane1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xc2], true);
@@ -153,36 +141,39 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
 
     switch (mSubState) {
     case 1: {
-        float sz[2];
-        func_80127BC4(sz, (u8*)pane1 + 0x4c);
-        sz[1] = lbl_eu_80668300;
-        func_80124288(pane1, sz);
+        nw4r::lyt::Size sz = pane1->GetSize();
+        sz.height = lbl_eu_80668300;
+        pane1->SetSize(sz);
 
-        float v[3];
-        code80135FDC_setVec3(v, lbl_eu_80668304, lbl_eu_80668308, lbl_eu_80668304);
-        func_801D2150(pane2, (nw4r::math::VEC3*)v);
+        nw4r::math::VEC3 v;
+        v.x = lbl_eu_80668304;
+        v.y = lbl_eu_80668308;
+        v.z = lbl_eu_80668304;
+        func_801D2150(pane2, &v);
         break;
     }
     case 2: {
-        float sz[2];
-        func_80127BC4(sz, (u8*)pane1 + 0x4c);
-        sz[1] = lbl_eu_8066830C;
-        func_80124288(pane1, sz);
+        nw4r::lyt::Size sz = pane1->GetSize();
+        sz.height = lbl_eu_8066830C;
+        pane1->SetSize(sz);
 
-        float v[3];
-        code80135FDC_setVec3(v, lbl_eu_80668304, lbl_eu_80668310, lbl_eu_80668304);
-        func_801D2150(pane2, (nw4r::math::VEC3*)v);
+        nw4r::math::VEC3 v;
+        v.x = lbl_eu_80668304;
+        v.y = lbl_eu_80668310;
+        v.z = lbl_eu_80668304;
+        func_801D2150(pane2, &v);
         break;
     }
     case 3: {
-        float sz[2];
-        func_80127BC4(sz, (u8*)pane1 + 0x4c);
-        sz[1] = lbl_eu_80668314;
-        func_80124288(pane1, sz);
+        nw4r::lyt::Size sz = pane1->GetSize();
+        sz.height = lbl_eu_80668314;
+        pane1->SetSize(sz);
 
-        float v[3];
-        code80135FDC_setVec3(v, lbl_eu_80668304, lbl_eu_80668318, lbl_eu_80668304);
-        func_801D2150(pane2, (nw4r::math::VEC3*)v);
+        nw4r::math::VEC3 v;
+        v.x = lbl_eu_80668304;
+        v.y = lbl_eu_80668318;
+        v.z = lbl_eu_80668304;
+        func_801D2150(pane2, &v);
         break;
     }
     }
@@ -195,9 +186,9 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     func_80136E84(&self->mLayout, accessor, &lbl_eu_805084BC[0x00]);
     func_80136F08(self->mLayout, &self->mAnimDefault, accessor, &lbl_eu_805084BC[0x19]);
 
-    void* fontObj = CDeviceFont::func_80452C10(1, self->mLayout);
+    u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, self->mLayout);
     nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
-    u32 fontVal = (*(u32(*)(void*))(*(u32**)fontObj + 9))(fontObj);
+    u32 fontVal = (*(u32(*)(u8*))(*(u32**)fontObj + 9))(fontObj);
     func_8013676C(root, fontVal);
 
     u32 color = func_801355A0();
@@ -221,10 +212,10 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     const char* fileID = (gmVal == 0) ? &lbl_eu_805084BC[0xa0] : &lbl_eu_805084BC[0x97];
 
     u16 msgId = func_8013606C(&lbl_eu_805084BC[0x78], (char*)fileID, 0x2b);
-    void* tex = func_80138F78(msgId);
+    u8* tex = (u8*)func_80138F78(msgId);
 
-    void* sys = func_801355F4();
-    void* mat = (*(void*(*)(void*, u32, void*, u32))(*(u32**)sys + 3))(sys, 0x74696d67, tex, 0);
+    u8* sys = (u8*)func_801355F4();
+    u8* mat = (*(u8*(*)(u8*, u32, u8*, u32))(*(u32**)sys + 3))(sys, 0x74696d67, tex, 0);
     if (mat != NULL) {
         func_80137E7C(self->mLayout, &lbl_eu_805084BC[0xa9], mat);
 
@@ -232,10 +223,10 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
         u16 w = *(u16*)(*(u8**)mat + 8 + 2);
         u16 h = *(u16*)(*(u8**)mat + 8 + 0);
 
-        float fvars[2];
-        fvars[0] = (float)(int)w;
-        fvars[1] = (float)(int)h;
-        func_80124288(picPane, fvars);
+        nw4r::lyt::Size sz;
+        sz.width = (f32)(s32)w;
+        sz.height = (f32)(s32)h;
+        picPane->SetSize(sz);
     }
 }
 

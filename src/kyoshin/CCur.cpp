@@ -19,15 +19,10 @@ extern "C" void func_801D202C(CBaseCur* cur) {
     if (cur->mpLayout == NULL) {
         return;
     }
-    switch (cur->mActive) {
-    case 0:
+    if (cur->mActive == 0) {
         func_80137444(cur->mpAnimTrans0, 1.0f);
-        break;
-    case 1: {
-        void (**vt)(CBaseCur*) = (void (**)(CBaseCur*))cur->mVtable;
-        vt[5](cur);
-        break;
-    }
+    } else if (cur->mActive == 1) {
+        ((void (*)(CBaseCur*))((void**)cur->mVtable)[5])(cur);
     }
     cur->mpLayout->Animate(0);
 }

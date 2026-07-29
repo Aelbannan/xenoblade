@@ -17,7 +17,7 @@ void func_804E3B08(){}
 void func_804E3B6C(){}
 
 void func_804E3CCC(UnkStruct_804E36DC* self) {
-    self->field_0x0 &= 0xFFFF7FFF;
+    self->field_0x0 &= ~0x8000;
     func_804E536C();
 }
 

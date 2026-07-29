@@ -27,6 +27,24 @@ u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B;
 
 
 
+// Show pane "name1", hide pane "name2", then activate cursor.
+extern "C" void func_8029C03C(COption* self) {
+    nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_805103D8 + 0x50, true);
+    func_80124270(pane, 1);
+    pane = self->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_805103D8 + 0x5E, true);
+    func_80124270(pane, 0);
+    func_801D2174((CBaseCur*)self);
+}
+
+// Hide pane "name1", show pane "name2", then activate cursor.
+extern "C" void func_8029C0C4(COption* self) {
+    nw4r::lyt::Pane* pane = self->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_805103D8 + 0x50, true);
+    func_80124270(pane, 0);
+    pane = self->mpLayout->GetRootPane()->FindPaneByName(lbl_eu_805103D8 + 0x5E, true);
+    func_80124270(pane, 1);
+    func_801D2174((CBaseCur*)self);
+}
+
 void func_8029C5C8(){}
 
 void func_8029C66C(){}
@@ -62,13 +80,13 @@ void func_8029D0C0(){}
 
 // Check if an animation transform has finished; if so, finalize state
 // and activate sub-cursors before calling the shared tail handler.
-void COption::func_8029D10C() {
-    if (func_80137444(mAnimTransform24, lbl_eu_80668C10) != 0) {
-        field_0x29 = 3;
-        field_0x2B = 1;
-        func_801D216C(&mSubCur1, 1);
-        func_801D216C(&mSubCur2, 1);
-        func_8029E254(this);
+extern "C" void func_8029D10C(COption* self) {
+    if (func_80137444(self->mAnimTransform24, lbl_eu_80668C10) != 0) {
+        self->field_0x29 = 3;
+        self->field_0x2B = 1;
+        func_801D216C(&self->mSubCur1, 1);
+        func_801D216C(&self->mSubCur2, 1);
+        func_8029E254(self);
     }
 }
 

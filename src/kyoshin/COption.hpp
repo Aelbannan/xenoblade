@@ -26,9 +26,6 @@ public:
     COption();
     virtual ~COption();
     void OnFileEvent();
-    void func_8029D10C();
-    void func_8029C03C();
-    void func_8029C0C4();
 
     // Fields start after implicit vtable pointer (offset 0x04)
     nw4r::lyt::ArcResourceAccessor* mArcResAcc;  // 0x04

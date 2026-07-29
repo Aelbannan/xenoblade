@@ -251645,6 +251645,8 @@ private:
 /* "libs/monolib/src/core/CPackItem.cpp" line 5 "cstring" */
 /* end "cstring" */
 
+extern const char lbl_eu_80524714[];
+
 CPackItem::CPackItem(const char* name, int partitionId) :
 mBaseName(),
 mPkbFilename(),
@@ -251664,8 +251666,9 @@ mPackHeaderExternal(0),
 mIsAhxAdxFile(false),
 mWorkPackDataPtr(0),
 mWorkPackDataSize(0) {
-    //Check if the file is a adx/ahx pack file from the filename
-    if(std::strstr(name, "adx") != nullptr || std::strstr(name, "ahx") != nullptr){
+    // Check if the file is an adx/ahx pack file from the filename.
+    // Retail uses a shared string table at lbl_eu_80524714 + 0x8 ("adx") and +0xC ("ahx").
+    if(std::strstr(name, lbl_eu_80524714 + 8) != nullptr || std::strstr(name, lbl_eu_80524714 + 0xC) != nullptr){
         mIsAhxAdxFile = true;
     }
 }

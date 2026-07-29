@@ -84,15 +84,10 @@ extern "C" void func_80281F38(cf::CChainActorPc* self, int arg) {
 // Checks preconditions before calling func_8027A024 to execute chain logic.
 // Returns 0 if the actor is inactive (vtable check) or if a battle-manager
 // flag 0xf8 is set on the unk0 object; otherwise delegates to func_8027A024.
-// Checks preconditions before calling func_8027A024 to execute chain logic.
-// Returns 0 if the actor is inactive (vtable check) or if a battle-manager
-// flag 0xf8 is set on the unk0 object; otherwise delegates to func_8027A024.
 int func_80281FA0(cf::CChainActorPc* self, void* arg) {
-    // Call vtable entry 29: check active/in-battle condition
-    {
-        int (*vfunc)(void*) = ((int(**)(void*))self->mVTable)[29];
-        if (vfunc(self) != 0) return 0;
-    }
+    // Call vtable entry 29: check some active/in-battle condition
+    int (*vfunc)(void*) = ((int(**)(void*))self->mVTable)[29];
+    if (vfunc(self) != 0) return 0;
     // Check battle-manager flag 0xf8 on this->unk0 + 8
     if (func_80148778((void*)(self->unk0 + 8), 0xf8) != 0) return 0;
     return func_8027A024(self, arg);

@@ -485,11 +485,9 @@ extern "C" void func_8007F0C4__Q22cf13CfGameManagerFv(u32 first, u32 second) {
 union ResourceDestination {
     u32 id;
     const void* pointer;
-    ResourceDestination(u32 value) : id(value) {}
-    ResourceDestination(const void* value) : pointer(value) {}
 };
 extern "C" u32 func_8009CF8C(u32 resourceId);
-extern "C" void func_8009D018(ResourceDestination destination, u32 value);
+extern "C" void func_8009D018(u32 destination, u32 value);
 extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second);
 extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     s32 index = func_80082418__Q22cf13CfGameManagerFv(first, second);
@@ -573,7 +571,7 @@ extern "C" void func_8008261C__Q22cf13CfGameManagerFv(u32 value, bool enable) {
 extern "C" void func_8008269C__Q22cf13CfGameManagerFv(
     cf::CfGameManager* manager, u32 value) {
     if (value <= 0xFFFF && !func_80082680__Q22cf13CfGameManagerFv()) {
-        func_8009D018(&manager->field_0x40, value);
+        func_8009D018(reinterpret_cast<u32>(&manager->field_0x40), value);
     }
 }
 

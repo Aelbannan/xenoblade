@@ -46,25 +46,29 @@ void RemoteSpk::UpdateSpeaker(OSAlarm* /* pAlarm */, OSContext* /* pContext */) 
 
             if (WPADCanSendStreamData(i)) {
                 int samples = (int)((u32)pInfo->length >> 1);
-                int encSize = samples <= 40 ? samples : 40;
-
-                s16* pDst = pcmBuffer;
+                int encSize = 40;
                 const s16* pSrc = pInfo->in_pcm;
+                s16* pDst = pcmBuffer;
+                s8 vol = pInfo->vol;
 
-                for (int j = 0; j < encSize; j++) {
-                    *pDst++ = static_cast<s16>(*pSrc++ * pInfo->vol / 10);
+                if (samples <= 40) {
+                    encSize = samples;
+                }
+
+                if (encSize != 0) {
+                    for (int j = encSize; j > 0; j--) {
+                        *pDst++ = static_cast<s16>(*pSrc++ * vol / 10);
+                    }
                 }
 
                 if (samples <= 40) {
-                    int zeroCount = 40 - samples;
-                    for (int j = 0; j < zeroCount; j++) {
+                    for (int j = 40 - samples; j > 0; j--) {
                         *pDst++ = 0;
                     }
                 }
 
-                WENCGetEncodeData(&pInfo->wencinfo,
-                                  pInfo->first ? 0 : WENC_FLAG_USER_INFO,
-                                  pcmBuffer, 40, adpcmBuffer);
+                WENCGetEncodeData(&pInfo->wencinfo, !pInfo->first, pcmBuffer,
+                                  40, adpcmBuffer);
                 WPADSendStreamData(i, adpcmBuffer, 20);
 
                 pInfo->first = false;

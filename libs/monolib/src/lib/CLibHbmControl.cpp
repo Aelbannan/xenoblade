@@ -4,7 +4,23 @@
 #include "monolib/work.hpp"
 #include "monolib/device.hpp"
 #include <revolution/WPAD.h>
+#include <revolution/mtx/mtx44.h>
+#include <revolution/os/OSFastCast.h>
 #include <cstring>
+
+// Extern retail data symbols (sdata2 float constants)
+extern float lbl_eu_8066A578;
+extern float lbl_eu_8066A57C;
+extern float lbl_eu_8066A588;
+extern float lbl_eu_8066A58C;
+extern float lbl_eu_8066A590;
+extern float lbl_eu_8066A594;
+extern float lbl_eu_8066A598;
+extern float lbl_eu_8066A59C;
+extern float lbl_eu_8066A5A0;
+
+// Extern retail function stubs
+void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect16* rect, CView* view);
 
 CLibHbmControl::CLibHbmControl(const char* pName, CWorkThread* pParent) : CProc(pName, pParent, MAX_CHILD),
 mHbmPhase(0),
@@ -93,7 +109,84 @@ void CLibHbmControl::wkUpdate(){
 }
 
 void CLibHbmControl::wkRender(){
-    
+    // Begin scene via CGXCache
+    CDeviceGX::getCacheInstance()->func_8044BE38();
+
+    // Set up CDrawGX for full-screen rect
+    CDrawGX draw;
+    draw.func_80456570(0);
+    draw.func_8045657C(0);
+
+    // Set white vertex color (r,g,b = 1.0, alpha from sdata2)
+    ml::CCol4 col;
+    col.r = lbl_eu_8066A578;
+    col.g = lbl_eu_8066A578;
+    col.b = lbl_eu_8066A578;
+    col.a = lbl_eu_8066A588;
+    draw.setCol(col);
+
+    // Begin drawing quads
+    draw.begin(9, 1);
+
+    // Get current view's screen rectangle and add it to draw
+    CView* view = CView::getCurrentView();
+    ml::CRect16 rect;
+    func_8043EA88__5CViewFRQ22ml5CRectP5CView(&rect, view);
+    draw.add(rect);
+
+    draw.end();
+
+    // If HBM is active (phase 3), set up GX and render the HBM
+    if (CLibHbmControl::isActive()) {
+        GXClearVtxDesc();
+        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_POS, GX_POS_XY, GX_F32, 0);
+        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_CLR0, GX_CLR_RGBA, GX_RGBA8, 0);
+        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
+        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
+        GXSetNumChans(1);
+        GXSetNumTexGens(0);
+        GXSetNumTevStages(1);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
+        GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
+        GXSetBlendMode(GX_BM_NONE, GX_BL_ZERO, GX_BL_ZERO, GX_LO_CLEAR);
+        GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
+        GXSetCurrentMtx(GX_PNMTX0);
+
+        // Build orthographic projection matrix
+        GXRenderModeObj* rmode = CDeviceVI::getRenderModeObj();
+        Mtx44 mtx;
+
+        if (CDeviceVI::isWideAspectRatio()) {
+            float f7 = (float)rmode->efbHeight / lbl_eu_8066A59C;
+            C_MTXOrtho(mtx,
+                       lbl_eu_8066A590 * lbl_eu_8066A57C,
+                       lbl_eu_8066A590 * (-lbl_eu_8066A57C),
+                       lbl_eu_8066A5A0 * (-f7),
+                       lbl_eu_8066A5A0 * f7,
+                       lbl_eu_8066A578,
+                       lbl_eu_8066A598);
+        } else {
+            float f7 = lbl_eu_8066A598 / lbl_eu_8066A58C;
+            C_MTXOrtho(mtx,
+                       lbl_eu_8066A590 * lbl_eu_8066A57C,
+                       lbl_eu_8066A590 * (-lbl_eu_8066A57C),
+                       lbl_eu_8066A594 * (-f7),
+                       lbl_eu_8066A594 * f7,
+                       lbl_eu_8066A578,
+                       lbl_eu_8066A598);
+        }
+
+        GXSetProjection(mtx, GX_ORTHOGRAPHIC);
+
+        // Initialize fast-cast GQRs for HBM's psq_* instructions
+        OSInitFastCast();
+
+        HBMDraw();
+    }
+
+    // End scene
+    CDeviceGX::getCacheInstance()->func_8044BE38();
+    CViewRoot::func_80442DA8();
 }
 
 static const char sCLibHbmControlName[] = "CLibHbmControl";

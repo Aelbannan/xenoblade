@@ -26,7 +26,7 @@ void CfTaskMain::Init() {}
 void CfTaskMain::Term() {}
 
 void CfTaskMain::Move() {
-    if ((lbl_eu_80663E28 & 0x4000) != 0) return;
+    if ((lbl_eu_80663E28 & 0x400) != 0) return;
     func_8007F9C4__Q22cf13CfGameManagerFv();
 }
 

@@ -1403,6 +1403,12 @@ public:
     void Init();
     void Term();
 
+    // Nested class at offset 0x58 (size and layout unknown)
+    class CEffRenderHighPrio {
+    public:
+        ~CEffRenderHighPrio();
+    };
+
     // TODO: add fields
     void Move();
     void cbRenderBefore();
@@ -1414,9 +1420,25 @@ public:
 
 void __ct__CTaskGameEff(){}
 
-void __dt__80044BB0(){}
+// --- Target 2: us-80045150 ---
+// Standard MWCC virtual destructor: null-check, conditional __dl, return this
+extern void __dl__FPv(void*);
+void* __dt__80044BB0(void* self, int mode) {
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
-void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(){}
+// --- Target 3: us-800451e0 ---
+// Destructor for nested class CTaskGameEff::CEffRenderHighPrio
+void* __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(
+    CTaskGameEff::CEffRenderHighPrio* self, int mode) {
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void __dt___reslist_base_CScn(){}
 
@@ -1458,36 +1480,18 @@ void func_800453EC(){}
 
 
 
-// extern "C" declaration needed to reference the destructor's linker symbol
-// directly (the C++ identifier __dt__12CTaskGameEffFv is not exposed by the
-// ~CTaskGameEff definition). Declaration only — definition is elsewhere.
-extern "C" void __dt__12CTaskGameEffFv(CTaskGameEff*, int);
+bool func_80045540(){ return false; }
 
-// This-adjusting thunk: called through a vtable where 'this' is 0x54 bytes past
-// the CTaskGameEff subobject. Adjusts this back and tail-calls cbRenderBefore.
-// cbRenderBefore ignores its 'this' arg (loads a global), but the thunk still
-// mechanically adjusts the register before the tail call.
-// Uses a function-pointer cast to force MWCC to pass the adjusted pointer in r3
-// without conflicting with cbRenderBefore's local definition (which takes no args).
-void func_80045540(u8* self) {
-    ((void (*)(CTaskGameEff*))cbRenderBefore__12CTaskGameEffFv)(
-        (CTaskGameEff*)(self - 0x54));
-}
+bool func_80045548(){ return false; }
 
-// This-adjusting thunk for destructor: same -0x54 adjustment, passes flag through.
-void func_80045548(u8* self, int flag) {
-    __dt__12CTaskGameEffFv((CTaskGameEff*)(self - 0x54), flag);
-}
+bool func_80045550(){ return false; }
 
-// This-adjusting thunk: -0x58 adjustment, calls func_80045044.
-void func_80045550(u8* self, u8* param) {
-    ((void (*)(CTaskGameEff*, u8*))func_80045044)(
-        (CTaskGameEff*)(self - 0x58), param);
-}
-
-// This-adjusting thunk for destructor: -0x58 adjustment, passes flag through.
-void func_80045558(u8* self, int flag) {
-    __dt__12CTaskGameEffFv((CTaskGameEff*)(self - 0x58), flag);
+// --- Target 1: us-80045af8 ---
+// This-adjusting thunk: takes a pointer to offset +0x58 within CTaskGameEff,
+// adjusts back to the CTaskGameEff* base, and tail-calls its destructor.
+extern void* __dt__12CTaskGameEffFv(CTaskGameEff*, int);
+void* func_80045558(u8* p, int flag) {
+    return __dt__12CTaskGameEffFv((CTaskGameEff*)(p - 0x58), flag);
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---

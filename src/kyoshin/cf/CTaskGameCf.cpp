@@ -255,19 +255,24 @@ extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProces
     __ct__8CProcessFv(pThis);
     
     u32* p = reinterpret_cast<u32*>(pThis);
+    const u32* nullPt = &__ptmf_null[0];
     
     // Set CTTask<CTaskGameCf> vtable
     p[4] = reinterpret_cast<u32>(&lbl_eu_80525B9C[0]);
     
-    // Load PTMF null as a 3-word struct and copy to both PTMF slots
-    const u32* nullPt = &__ptmf_null[0];
-    // mMoveFunc at 0x3C (word 15), mDrawFunc at 0x48 (word 18)
-    p[0xF] = nullPt[0];
-    p[0x10] = nullPt[1];
-    p[0x11] = nullPt[2];
-    p[0x12] = nullPt[0];
-    p[0x13] = nullPt[1];
-    p[0x14] = nullPt[2];
+    // Copy PTMF null to mMoveFunc (0x3C) in retail store order: 0x40, 0x3C, 0x44
+    // Then mDrawFunc (0x48) in same order: 0x4C, 0x48, 0x50
+    u32 w0 = nullPt[0];
+    u32 w1 = nullPt[1];
+    p[0x10] = w1;  // store word 1 to 0x40
+    p[0xF] = w0;   // store word 0 to 0x3C
+    p[0x11] = nullPt[2]; // store word 2 to 0x44
+    // Reload for second PTMF
+    w0 = nullPt[0];
+    w1 = nullPt[1];
+    p[0x13] = w1;  // store word 1 to 0x4C
+    p[0x12] = w0;  // store word 0 to 0x48
+    p[0x14] = nullPt[2]; // store word 2 to 0x50
     
     // Set CTaskGameCf vtable (overwrites CTTask vtable)
     p[4] = reinterpret_cast<u32>(&lbl_eu_80525B54[0]);
@@ -281,12 +286,11 @@ extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProces
     pThis->unk_64.mString[0] = 0;
     pThis->unk_64.mLength = 0;
     
-    if (arg2) {
-        pThis->unk_54 = 8;
-    } else {
-        pThis->unk_54 = 0;
-    }
-    
+    if (arg2 == 0) goto zero_case;
+    pThis->unk_54 = 8;
+    return pThis;
+zero_case:
+    pThis->unk_54 = 0;
     return pThis;
 }
 

@@ -6,21 +6,20 @@
 void __ct__CTaskGameEff(){}
 
 // --- Target 2: us-80045150 ---
-// Standard MWCC virtual destructor: null-check, conditional __dl, return this
-extern void __dl__FPv(void*);
-void* __dt__80044BB0(void* self, int mode) {
+// Standard MWCC virtual destructor: null-check, conditional delete, return this
+u8* __dt__80044BB0(u8* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
 
 // --- Target 3: us-800451e0 ---
 // Destructor for nested class CTaskGameEff::CEffRenderHighPrio
-void* __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(
+CTaskGameEff::CEffRenderHighPrio* __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(
     CTaskGameEff::CEffRenderHighPrio* self, int mode) {
     if (self && mode > 0) {
-        __dl__FPv(self);
+        operator delete(self);
     }
     return self;
 }
@@ -74,8 +73,8 @@ bool func_80045550(){ return false; }
 // --- Target 1: us-80045af8 ---
 // This-adjusting thunk: takes a pointer to offset +0x58 within CTaskGameEff,
 // adjusts back to the CTaskGameEff* base, and tail-calls its destructor.
-extern void* __dt__12CTaskGameEffFv(CTaskGameEff*, int);
-void* func_80045558(u8* p, int flag) {
+extern u8* __dt__12CTaskGameEffFv(CTaskGameEff*, int);
+u8* func_80045558(u8* p, int flag) {
     return __dt__12CTaskGameEffFv((CTaskGameEff*)(p - 0x58), flag);
 }
 

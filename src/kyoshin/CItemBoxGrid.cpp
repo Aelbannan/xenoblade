@@ -419,7 +419,21 @@ void func_801C9E1C(){}
 
 void func_801C9F88(){}
 
-void func_801CA070(){}
+// Check item slots for first valid entry.
+u32 func_801CA070(void* self, void* item) {
+    void* inst = CItem_initItemImplInstances(item);
+    void** vtbl = *(void***)inst;
+    u16 count = (u16)((u32(*)(void*, void*))vtbl[12])(inst, item);
+    u32 i;
+    for (i = 0; i < count; i++) {
+        void* inst2 = CItem_initItemImplInstances(item);
+        void** vtbl2 = *(void***)inst2;
+        void* obj = ((void*(*)(void*, void*, u32))vtbl2[11])(inst2, item, i);
+        if (!obj) continue;
+        if (*(u16*)((u8*)obj + 4) & 1) return 1;
+    }
+    return 0;
+}
 
 void func_801CA110(){}
 
@@ -481,7 +495,25 @@ u32 func_801CB1E4(void* self) {
 
 void func_801CB28C(){}
 
-void func_801CB38C(){}
+// Advance item box state.
+void func_801CB38C(void* self) {
+    u8* p = (u8*)self;
+    if (*(u32*)(p + 0x58) != 3) return;
+    if (func_801D3320(p + 0xe8)) return;
+    *(u32*)(p + 0x58) = 4;
+    void* obj = (void*)*(u32*)(p + 0x44);
+    void** vtbl = *(void***)obj;
+    ((void(*)(void*, void*, int))vtbl[11])(obj, (void*)*(u32*)(p + 0x50), 0);
+    ((void(*)(void*, void*, int))vtbl[11])(obj, (void*)*(u32*)(p + 0x48), 0);
+    ((void(*)(void*, void*, int))vtbl[11])(obj, (void*)*(u32*)(p + 0x4c), 1);
+    p[0x61] = 0;
+    func_801D216C(p + 0x70, 0);
+    func_801D216C(p + 0x88, 0);
+    func_801D216C(p + 0xd0, 0);
+    func_801D216C(p + 0xb8, 0);
+    advanceItemBoxState__FP12CItemBoxInfo(p + 0x1d8);
+    if (!p[0x52c]) func_80138078__FUl(6);
+}
 
 // Clear a 14-byte region (list/array init).
 void func_801CB480(void* self) {
@@ -631,6 +663,7 @@ void CheckState4_Animate(char* self) {
     }
     func_80137444(*(nw4r::lyt::AnimTransform**)((char*)self + 0x50), lbl_eu_80667F78);
 }
+
 
 void func_801CE2F8(){}
 

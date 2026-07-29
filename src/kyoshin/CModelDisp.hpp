@@ -24,7 +24,7 @@ public:
     CModelDisp();
     virtual ~CModelDisp();
 
-    u8 _pad0[0x2FD8];
+    u8 _pad0[0x2FD4];
     u8 field_2FD8;          // 0x2FD8
     u8 _pad2FD9[0x2FDC - 0x2FD9];
     f32 field_2FDC;         // 0x2FDC - display alpha/transition value

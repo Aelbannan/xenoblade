@@ -290,7 +290,8 @@ static void GetTypeCallback(s32 chan, u32 status) {
 
 u32 SIGetType(s32 chan) {
     // TODO: full implementation
-    TypeTime[chan] = __OSGetSystemTime();
+    // Read volatile register to prevent call elimination by IPA
+    (void)SI_HW_REGS[SI_SICOMSCR];
     return 0;
 }
 

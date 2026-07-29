@@ -19,7 +19,7 @@ void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
 // Constructs CActParamAnimGame sub-objects: a single instance at +0xC
 // and an array of 2 at +0x550 (element size 0x53C), then returns self.
 CModelDisp* func_801FBEB8(CModelDisp* self) {
-    new ((u8*)self + 0xC) cf::CActParamAnimGame();
+    __ct__Q22cf17CActParamAnimGameFv((u8*)self + 0xC);
     __construct_array((u8*)self + 0x550,
                       (void*)__ct__Q22cf17CActParamAnimGameFv,
                       (void*)__dt__Q22cf17CActParamAnimGameFv,
@@ -73,7 +73,10 @@ void func_801FC15C(CModelDisp* self) {
 
 void func_801FC218(){}
 
+#pragma push
+#pragma auto_inline off
 void func_801FC2B4(CModelDisp*, void**){}
+#pragma pop
 
 void func_801FC3B0(){}
 

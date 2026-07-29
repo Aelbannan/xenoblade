@@ -45,7 +45,7 @@ TexCoordAry::TexCoordAry() : mCap(0), mNum(0), mpData(NULL) {}
 
 void TexCoordAry::Free() {
     if (mpData != NULL) {
-        Layout::DeleteObj(mpData);
+        Layout::FreeMemory(mpData);
         mpData = NULL;
         mCap = 0;
         mNum = 0;

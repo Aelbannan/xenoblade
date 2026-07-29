@@ -85,7 +85,13 @@ void func_8024C8F8(){}
 
 void func_8024CB94(){}
 
-void func_8024CE1C(){}
+u8 func_8024CE1C(void* self) {
+    extern int CScrollBar_isVisible(void*);
+    if (CScrollBar_isVisible((u8*)self + 0x60)) {
+        return *(u8*)((u8*)self + 0x42);
+    }
+    return 0;
+}
 
 
 void func_8024CE68(){}

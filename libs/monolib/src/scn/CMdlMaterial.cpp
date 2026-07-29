@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 #include "libs/monolib/src/scn/CMdlMaterial.hpp"
+#include <nw4r/g3d/g3d_scnmdl.h>
+#include <nw4r/db/db_assert.h>
 
 // CMdlMaterial::~CMdlMaterial() — D0 deleting destructor.
 // Body is empty; MWCC generates the conditional operator delete via the r4 flag.
@@ -36,10 +38,114 @@ extern "C" void __dt__804E5DE0(MdlSub* arg) {
 
 void func_804E5E38(){}
 
-void func_804E5FD4(){}
+// Forward declaration: dispatches func_804E5E38 on the CMdlMaterial
+// embedded at +0x16C8 of the owner. Second arg is passed but unused.
+void func_80488C20(CMdlModelOwner* owner, void* arg2);
+
+// ---------------------------------------------------------------------------
+// func_804E5FD4 — Apply a uniform ambient colour derived from float RGB.
+//
+// Scales a float [0,1] RGB triplet to byte [0,255] RGBA (alpha=255),
+// then sets the same ambient colour on all 4 GX channels of every material.
+// ---------------------------------------------------------------------------
+u32 func_804E5FD4(CMdlMaterial* self, f32* rgb) {
+    if (!self->buffer) {
+        return 0;
+    }
+
+    // Scale float [0-1] to byte [0-255], alpha = 0xFF
+    f32 r = 255.0f * rgb[0];
+    f32 g = 255.0f * rgb[1];
+    f32 b = 255.0f * rgb[2];
+
+    GXColor color;
+    color.r = (u8)(s32)r;
+    color.g = (u8)(s32)g;
+    color.b = (u8)(s32)b;
+    color.a = 0xFF;
+
+    CMdlModelOwner* owner = self->owner;
+    nw4r::g3d::ResMdl& resMdl = owner->resMdl;
+    nw4r::g3d::ScnMdl* scnMdl = owner->scnMdl;
+
+    u32 numEntries = resMdl.GetResMatNumEntries();
+
+    for (u32 i = 0; i < numEntries; i++) {
+        nw4r::g3d::ResMat resMat = resMdl.GetResMat(i);
+        if (!resMat.ptr()) {
+            NW4R_PANIC("GetResMat returned null for index %u", i);
+        }
+
+        u32 matId = resMat.GetID();
+
+        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(scnMdl, matId);
+        nw4r::g3d::ResMatChan resMatChan = matAccess.GetResMatChan(false);
+
+        resMatChan.GXSetChanAmbColor(GX_COLOR0, color);
+        resMatChan.GXSetChanAmbColor(GX_ALPHA0, color);
+        resMatChan.GXSetChanAmbColor(GX_COLOR1, color);
+        resMatChan.GXSetChanAmbColor(GX_ALPHA1, color);
+    }
+
+    return 1;
+}
 
 void func_804E6158(){}
 
-void func_804E6358(){}
+// ---------------------------------------------------------------------------
+// func_804E6358 — Apply per-material ambient channel colours from buffer.
+//
+// For each material in the ResMdl, reads 4 GXColor values from this->buffer
+// (one group of 4 per material) and pushes them into channels 0/2/1/3
+// (GX_COLOR0, GX_ALPHA0, GX_COLOR1, GX_ALPHA1).
+// ---------------------------------------------------------------------------
+u32 func_804E6358(CMdlMaterial* self) {
+    if (!self->buffer) {
+        return 0;
+    }
 
-void func_804E64B0(){}
+    CMdlModelOwner* owner = self->owner;
+    nw4r::g3d::ResMdl& resMdl = owner->resMdl;
+    nw4r::g3d::ScnMdl* scnMdl = owner->scnMdl;
+
+    u32 numEntries = resMdl.GetResMatNumEntries();
+    GXColor* colorBuf = (GXColor*)self->buffer;
+
+    for (u32 i = 0; i < numEntries; i++) {
+        nw4r::g3d::ResMat resMat = resMdl.GetResMat(i);
+        if (!resMat.ptr()) {
+            NW4R_PANIC("GetResMat returned null for index %u", i);
+        }
+
+        u32 matId = resMat.GetID();
+
+        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(scnMdl, matId);
+        nw4r::g3d::ResMatChan resMatChan = matAccess.GetResMatChan(false);
+
+        GXColor* colors = colorBuf + i * 4;
+        resMatChan.GXSetChanAmbColor(GX_COLOR0, colors[0]);
+        resMatChan.GXSetChanAmbColor(GX_ALPHA0, colors[1]);
+        resMatChan.GXSetChanAmbColor(GX_COLOR1, colors[2]);
+        resMatChan.GXSetChanAmbColor(GX_ALPHA1, colors[3]);
+    }
+
+    return 1;
+}
+
+// ---------------------------------------------------------------------------
+// func_804E64B0 — Scan the inline byte array and dispatch on quotient match.
+//
+// For each byte b at byteArray[i] (i = 0 .. field_0x30-1), computes
+// quotient = b / 10.  If it matches owner->targetQuotient, dispatches
+// func_804E5E38 on the embedded CMdlMaterial at +0x16C8 via func_80488C20.
+// ---------------------------------------------------------------------------
+void func_804E64B0(CMdlMaterial* self, void* arg2, CMdlModelOwner* owner) {
+    for (u32 i = 0; i < self->field_0x30; i++) {
+        s32 byteVal = self->byteArray[i];
+        s32 quotient = byteVal / 10;
+        s32 remainder = byteVal % 10;
+        if ((u32)quotient == (u32)owner->targetQuotient) {
+            func_80488C20(owner, arg2);
+        }
+    }
+}

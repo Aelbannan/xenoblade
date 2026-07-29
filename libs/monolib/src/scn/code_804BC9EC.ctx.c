@@ -739,6 +739,9 @@ ScnResData* func_804B80A4(ScnResData* self, int index);
 void func_804B8078(ScnResData* self, int index);
 void func_804B80CC(ScnResData* self);
 void func_804B7804(ScnResData* self);
+void func_804BC9A0(ScnResData*);
+void func_804B7D9C(int, int);
+void func_804B7DD4(ScnResData*);
 }
 /* end "monolib/scn/code_804BC9EC.hpp" */
 
@@ -747,16 +750,19 @@ int func_804BC9EC__Fv(void* self) { return (int)(intptr_t)&lbl_eu_80665968; }
 
 void func_804BC9F4__FPvUl(){}
 
-void func_804BCC10(){}
-
-void func_804BCC1C__FPv(ScnResData* arg) {
-    *(u32*)&arg->field_0x00[0] = 0;
-    func_804B7804(&lbl_eu_8065F32C);
+void func_804BCC10() {
+    func_804BC9A0(&lbl_eu_8065F32C);
 }
 
-void func_804BCC30(){}
+void func_804BCC1C__FPv(){}
 
-void func_804BCC3C(){}
+void func_804BCC30(int, int bit_index) {
+    func_804B7D9C((int)&lbl_eu_8065F32C, bit_index);
+}
+
+void func_804BCC3C() {
+    func_804B7DD4(&lbl_eu_8065F32C);
+}
 
 void func_804BCC48(){}
 
@@ -764,9 +770,7 @@ void func_804BCC54(){}
 
 void func_804BCC60(){}
 
-void func_804BCC6C() {
-    func_804B80CC(&lbl_eu_8065F32C);
-}
+void func_804BCC6C(){}
 
 void func_804BCC78(){}
 

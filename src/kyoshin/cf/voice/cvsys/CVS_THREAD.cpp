@@ -40,13 +40,12 @@ void CVS_THREAD::func_802A3B50(){
 }
 
 void CVS_THREAD::func_802A3BEC(CCharVoice* voicePtr) {
-    if (unk10 != 0) {
-        if (unk10 == (u32)voicePtr) {
-            func_800BE924((void*)unk10);
-            unk10 = 0;
-            unk14 = (u32)-1;
-        }
+    if (unk10 == 0 || unk10 != (u32)voicePtr) {
+        return;
     }
+    func_800BE924((void*)unk10);
+    unk10 = 0;
+    unk14 = (u32)-1;
 }
 
 void func_802A3C44(){

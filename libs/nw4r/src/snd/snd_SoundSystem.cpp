@@ -8,34 +8,34 @@ namespace {
 
 NW4R_LIB_VERSION(SND, "Jun  8 2007", "11:17:15", "0x4199_60831");
 
-static bool sInitialized = false;
-
 } // namespace
 
 namespace nw4r {
 namespace snd {
 
+// External symbols from BSS/SBSS
+extern "C" u8 lbl_eu_80638C40[0x16E00];
+extern "C" bool lbl_eu_80665508;
+extern "C" int lbl_eu_8066550C;
+
+// Forward declaration for InitSeqPlayer (defined in snd_SeqPlayer.cpp)
+namespace detail {
+extern "C" void InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv();
+inline void InitSeqPlayer() {
+    InitSeqPlayer__Q44nw4r3snd6detail9SeqPlayerFv();
+}
+} // namespace detail
+
 detail::TaskThread SoundSystem::sTaskThread;
 
 void SoundSystem::InitSoundSystem(s32 soundThreadPriority,
                                   s32 dvdThreadPriority) {
-    const int defaultWorkSize = DEFAULT_SOUND_THREAD_STACK_SIZE +
-                                DEFAULT_DVD_THREAD_STACK_SIZE +
-                                detail::AxVoiceManager::WORK_SIZE_MAX +
-                                detail::VoiceManager::WORK_SIZE_MAX +
-                                detail::ChannelManager::WORK_SIZE_MAX;
-
-    static u8 defaultSoundSystemWork[defaultWorkSize] ALIGN(32);
-
-    OSRegisterVersion(NW4R_SND_Version_);
-
     SoundSystemParam param;
     param.soundThreadPriority = soundThreadPriority;
+    param.soundThreadStackSize = 0x4000;
     param.dvdThreadPriority = dvdThreadPriority;
-
-    // @bug This function ignores the specified buffer size
-    InitSoundSystem(param, defaultSoundSystemWork,
-                    sizeof(defaultSoundSystemWork));
+    param.dvdThreadStackSize = 0x4000;
+    InitSoundSystem(param, lbl_eu_80638C40, 0x16E00);
 }
 
 u32 SoundSystem::GetRequiredMemSize(const SoundSystemParam& rParam) {

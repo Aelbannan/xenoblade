@@ -153,14 +153,16 @@ void RemoteSpeaker::UpdateStreamData(const s16* pRmtSamples) {
     }
 
     bool playFlag = true;
+    bool firstFlag;
+    bool lastFlag;
     bool silentFlag = mEnableFlag ? IsAllSampleZero(pRmtSamples) : true;
 
     if (silentFlag) {
         playFlag = false;
     }
 
-    bool firstFlag = !mPlayFlag && playFlag;
-    bool lastFlag = mPlayFlag && !playFlag;
+    firstFlag = !mPlayFlag && playFlag;
+    lastFlag = mPlayFlag && !playFlag;
 
     if (playFlag) {
         BOOL enabled = OSDisableInterrupts();

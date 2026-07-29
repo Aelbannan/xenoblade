@@ -241,6 +241,7 @@ void CTaskGameCf::finishExit() {
 } //namespace cf
 
 // Forward declarations
+extern "C" void func_eu_8006B238();
 extern "C" cf::CTaskGameCf* __ct__cf_CTaskGameCf(cf::CTaskGameCf* pThis, CProcess* pParent, int arg2);
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 extern "C" u32 getWorkMem__17CWorkThreadSystemFv();

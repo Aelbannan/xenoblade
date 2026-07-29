@@ -63,7 +63,6 @@ CPackItem::~CPackItem(){
    Transitions through: NOT_LOADED → OPENED_PKH_FILE → (LOADING_AHX_ADX_FILE) → LOADED */
 void CPackItem::update(){
     char localBuf[32];
-    localBuf[0] = '\0';
     int localLen;
     int dotPos;
 
@@ -95,25 +94,13 @@ void CPackItem::update(){
         // Copy full path, strip extension, then append ".pkb"
         mPkbFilename = mFilePath;
 
-        // Find last '.' in mPkbFilename (inlined rfind for matching)
-        dotPos = -1;
-        int len = mPkbFilename.mLength;
-        if(len != 0){
-            int dotLen = strlen(lbl_eu_806623C0);
-            char* p = mPkbFilename.mString + len - 1;
-            char* end = mPkbFilename.mString - 1;
-            while(p != end){
-                if(strncmp(p, lbl_eu_806623C0, dotLen) == 0){
-                    dotPos = p - mPkbFilename.mString;
-                    break;
-                }
-                p--;
-            }
-        }
+        // Find last '.' and truncate extension if found
+        dotPos = mPkbFilename.rfind(lbl_eu_806623C0, -1);
 
-        // Truncate at extension if found
         if((u32)(dotPos + 1) > 1){
+            localBuf[0] = '\0';
             localLen = 0;
+
             if(mPkbFilename.mLength != 0){
                 if(dotPos == -1){
                     dotPos = mPkbFilename.mLength;

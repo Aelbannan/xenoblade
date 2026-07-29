@@ -23,8 +23,27 @@ struct UnkReset28Data {
     u8 field_0x0[0x28];
 };
 
-struct Unk80EE4Data {
-    u8 field_0x0[0x78];
+class Unk80EE4Data {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+
+    u8 field_0x4[0x74];
     char text_0x78[0x10];
     u32 textLength_0x88;
     u16 value_0x8C;
@@ -330,6 +349,17 @@ extern "C" void func_80080EE4__Q22cf13CfGameManagerFv(Unk80EE4Data* data,
     data->textLength_0x88 = strlen(text);
     strcpy(data->text_0x78, text);
     data->value_0x8C = value;
+}
+
+extern "C" Unk80EE4Data* func_800B9548();
+extern "C" Unk80EE4Data* func_80081CBC__Q22cf13CfGameManagerFv(const char* text,
+                                                                 u16 value) {
+    Unk80EE4Data* data = func_800B9548();
+    if (data != nullptr) {
+        func_80080EE4__Q22cf13CfGameManagerFv(data, text, value);
+        data->vfunc_0x48();
+    }
+    return data;
 }
 
 extern "C" UnkClass_800AA714* func_800AA714(u32 value);

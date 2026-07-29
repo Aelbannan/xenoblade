@@ -16,6 +16,7 @@ extern int CSysWin_getUnk34(void*);
 extern void func_801D216C(void*, int);
 extern void func_801D0950(void*);
 extern void func_80137510(u32, float);
+extern void* func_80157C4C(u8, s16);
 
 u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_61; }
 
@@ -91,7 +92,13 @@ void func_801C5F20(CItemBoxGridFull* self) {
     }
 }
 
-void func_801C5F48(){}
+// Lookup entry in 10-byte stride table; return stored short or -1.
+s16 func_801C5F48(CItemBoxGridFull* self, u16 idx) {
+    s8 base = (s8)self->field_2804;
+    u16 offset = (u16)(base * 0x1e + idx);
+    if (offset >= self->field_2800) return -1;
+    return *(s16*)((u8*)self + offset * 0xa);
+}
 
 void func_801C5FC0(){}
 
@@ -112,13 +119,53 @@ void func_801C631C(){}
 
 void func_801C6388(){}
 
-void func_801C6528(){}
+// Lookup entry, check category; return byte at offset 2 or 0.
+u8 func_801C6528(CItemBoxGridFull* self, u16 idx) {
+    s8 base = (s8)self->field_2804;
+    u16 offset = (u16)(base * 0x1e + idx);
+    if (offset >= self->field_2800) return 0;
+    void* entry = (u8*)self + offset * 0xa;
+    s16 val = *(s16*)entry;
+    void* obj = func_80157C4C(self->field_2802, val);
+    if (!obj || !*(u32*)obj) return 0;
+    return ((u8*)entry)[2];
+}
 
-void func_801C65A0(){}
+// Lookup entry, check category; return byte at offset 4 or 0.
+u8 func_801C65A0(CItemBoxGridFull* self, u16 idx) {
+    s8 base = (s8)self->field_2804;
+    u16 offset = (u16)(base * 0x1e + idx);
+    if (offset >= self->field_2800) return 0;
+    void* entry = (u8*)self + offset * 0xa;
+    s16 val = *(s16*)entry;
+    void* obj = func_80157C4C(self->field_2802, val);
+    if (!obj || !*(u32*)obj) return 0;
+    return ((u8*)entry)[4];
+}
 
-void func_801C6618(){}
+// Lookup entry, check category; return byte at offset 5 or 0.
+u8 func_801C6618(CItemBoxGridFull* self, u16 idx) {
+    s8 base = (s8)self->field_2804;
+    u16 offset = (u16)(base * 0x1e + idx);
+    if (offset >= self->field_2800) return 0;
+    void* entry = (u8*)self + offset * 0xa;
+    s16 val = *(s16*)entry;
+    void* obj = func_80157C4C(self->field_2802, val);
+    if (!obj || !*(u32*)obj) return 0;
+    return ((u8*)entry)[5];
+}
 
-void func_801C6690(){}
+// Lookup entry, check category; return byte at offset 3 or 0.
+u8 func_801C6690(CItemBoxGridFull* self, u16 idx) {
+    s8 base = (s8)self->field_2804;
+    u16 offset = (u16)(base * 0x1e + idx);
+    if (offset >= self->field_2800) return 0;
+    void* entry = (u8*)self + offset * 0xa;
+    s16 val = *(s16*)entry;
+    void* obj = func_80157C4C(self->field_2802, val);
+    if (!obj || !*(u32*)obj) return 0;
+    return ((u8*)entry)[3];
+}
 
 // Lookup a byte from a 10-byte-entry table indexed by (field_2804 * 0x1e + idx).
 // Returns byte at offset 7 within the entry, or 0 if out of bounds.

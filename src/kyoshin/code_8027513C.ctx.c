@@ -1475,7 +1475,7 @@ public:
     virtual void vfunc_1C(UnkCode8027513C* self) = 0;
 };
 
-ICamControlBase* initCamControlInstances();
+extern "C" ICamControlBase* initCamControlInstances();
 
 /* end "kyoshin/code_8027513C.hpp" */
 

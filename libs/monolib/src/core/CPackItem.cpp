@@ -62,8 +62,7 @@ CPackItem::~CPackItem(){
 /* Main update tick for pack file loading state machine.
    Transitions through: NOT_LOADED → OPENED_PKH_FILE → (LOADING_AHX_ADX_FILE) → LOADED */
 void CPackItem::update(){
-    char localBuf[32];
-    int localLen;
+    ml::FixStr<32> localStr(false);
     int dotPos;
 
     if(mLoadState == LOAD_STATE_NOT_LOADED){
@@ -94,39 +93,23 @@ void CPackItem::update(){
         // Copy full path, strip extension, then append ".pkb"
         mPkbFilename = mFilePath;
 
-        // Find last '.' — inlined with register reuse to match retail codegen
-        {
-            int len = mPkbFilename.mLength;
-            if(len != 0){
-                int strLen = strlen(lbl_eu_806623C0);
-                char* p = mPkbFilename.mString + len - 1;
-                char* end = mPkbFilename.mString - 1;
-                while(p != end){
-                    if(strncmp(p, lbl_eu_806623C0, strLen) == 0){
-                        dotPos = p - mPkbFilename.mString;
-                        goto found;
-                    }
-                    p--;
-                }
-            }
-            dotPos = -1;
-        }
-        found:
+        // Find last '.' in the filename
+        dotPos = mPkbFilename.rfind(lbl_eu_806623C0, -1);
 
+        // Truncate at extension if found
         if((u32)(dotPos + 1) > 1){
-            localBuf[0] = '\0';
-            localLen = 0;
+            localStr.clear();
 
             if(mPkbFilename.mLength != 0){
                 if(dotPos == -1){
                     dotPos = mPkbFilename.mLength;
                 }
-                strncpy(localBuf, mPkbFilename.mString, dotPos);
-                localBuf[dotPos] = '\0';
-                localLen = strlen(localBuf);
+                strncpy(localStr.mString, mPkbFilename.mString, dotPos);
+                localStr.mString[dotPos] = '\0';
+                localStr.mLength = strlen(localStr.mString);
             }
 
-            mPkbFilename = localBuf;
+            mPkbFilename = localStr;
         }
 
         mPkbFilename += lbl_eu_80524714 + 0x10;

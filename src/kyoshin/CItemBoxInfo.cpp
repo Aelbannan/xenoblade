@@ -26,6 +26,7 @@ char* func_80136190(char*, char*, u32);
 char* func_8013639C(void*, char*);
 u16 func_80139358(u32);
 u32 func_801392E4(void*);
+void* func_80157C4C(u32);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F8;
@@ -390,7 +391,35 @@ u32 func_801DFDC0(void* dummy, u32 arg1, void* arg2) {
     u8 result = func_801361E8(global, buf, r5);
     return (result != 0);
 }
-void func_801DFE48(){}
+u32 func_801DFE48(void* global, u16 arg2, void* arg3) {
+    if (global == NULL) return 0;
+    u16 v1 = arg3 ? (u16)func_801392E4(arg3) : 0;
+    u16 v2 = arg3 ? func_80139358((u32)arg3) : 0;
+    void* lookup = func_8009EC9C(arg2);
+    u32 result = 0;
+    for (u32 i = 4; i <= 8; i++) {
+        if (i == v1) continue;
+        s16 val = -1;
+        switch (i) {
+            case 4: val = *(s16*)((u8*)lookup + 0x1C); break;
+            case 5: val = *(s16*)((u8*)lookup + 0x1E); break;
+            case 6: val = *(s16*)((u8*)lookup + 0x20); break;
+            case 7: val = *(s16*)((u8*)lookup + 0x22); break;
+            case 8: val = *(s16*)((u8*)lookup + 0x24); break;
+        }
+        if (val == -1) continue;
+        void* r = func_80157C4C(i);
+        if (r == NULL) continue;
+        u32 v = *(u32*)r;
+        if (v == 0) continue;
+        u16 cat = func_80139358(v >> 20);
+        result += (u8)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], cat);
+    }
+    if (arg3 != NULL) {
+        result += (u8)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    }
+    return result;
+}
 void func_801DFFB8(){}
 
 bool CItemBoxInfo::OnFileEvent(CEventFile* file) {
@@ -650,7 +679,35 @@ u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
     u8 result = func_801361E8(global, buf, r5);
     return (result != 0);
 }
-void func_801E9774(){}
+u32 func_801E9774(void* global, u16 arg2, void* arg3) {
+    if (global == NULL) return 0;
+    u16 v1 = arg3 ? func_801392E4(arg3) : 0;
+    u16 v2 = arg3 ? func_80139358((u32)arg3) : 0;
+    void* lookup = func_8009EC9C(arg2);
+    u32 result = 0;
+    for (u32 i = 4; i <= 8; i++) {
+        if (i == v1) continue;
+        s16 val = -1;
+        switch (i) {
+            case 4: val = *(s16*)((u8*)lookup + 0x1C); break;
+            case 5: val = *(s16*)((u8*)lookup + 0x1E); break;
+            case 6: val = *(s16*)((u8*)lookup + 0x20); break;
+            case 7: val = *(s16*)((u8*)lookup + 0x22); break;
+            case 8: val = *(s16*)((u8*)lookup + 0x24); break;
+        }
+        if (val == -1) continue;
+        void* r = func_80157C4C(i);
+        if (r == NULL) continue;
+        u32 v = *(u32*)r;
+        if (v == 0) continue;
+        u16 cat = func_80139358(v >> 20);
+        result += (u8)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], cat);
+    }
+    if (arg3 != NULL) {
+        result += (u8)func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v2);
+    }
+    return result;
+}
 void func_801E98E4(){}
 
 bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {

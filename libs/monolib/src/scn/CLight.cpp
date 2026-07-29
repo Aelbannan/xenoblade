@@ -16,28 +16,31 @@ CLight::CLight(){
     mFlags = r0;
 }
 
-void func_804C02E4(CLight* self, const CLight* other) {
+CLight* func_804C02E4(CLight* self, const CLight* other) {
     self->unk4 = other->unk4;
     self->unk10 = other->unk10;
     self->unk1C = other->unk1C;
     self->unk28 = other->unk28;
+    *self->mpLightObj = *other->mpLightObj;
     self->mFlags = other->mFlags;
     self->unk34 = other->unk34;
     self->unk38 = other->unk38;
-    *self->mpLightObj = *other->mpLightObj;
     self->unk3C = other->unk3C;
+    return self;
 }
 
 void func_804C0398(CLight* self, int lightObjPtr) {
     self->mpLightObj = (nw4r::g3d::LightObj*)lightObjPtr;
 }
 
-// Sets the light type from unk34 and initialises the backing LightObj
-// with the corresponding attenuation/spot parameters.
-void func_804C03A0(CLight* self) {
+// Initialises the backing LightObj according to the light type (param r4),
+// which is also stored into unk34. Type 0 disables the light, type 1 sets
+// attnA and attnK, type 3 sets attnA only.
+void func_804C03A0(CLight* self, int type) {
+    self->unk34 = type;
     self->mpLightObj->Clear();
 
-    switch (self->unk34) {
+    switch (type) {
     case 1:
         self->mpLightObj->InitLightAttnA(1.0f, 0.0f, 0.0f);
         self->mpLightObj->InitLightAttnK(1.0f, 0.0f, 0.0f);

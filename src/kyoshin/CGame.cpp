@@ -38,11 +38,7 @@ CGame* CGame::spInstance;
 static FixStr<64> lbl_80573C80;
 nw4r::lyt::Layout* CGame::lbl_80666604;
 nw4r::lyt::ArcResourceAccessor* CGame::sArcResourceAccessor;
-#ifdef VERSION_US
-const char* CGame::scViewName = "XENOBLADE";
-#else
 const char* CGame::scViewName = "巨神"; //"Bionis"
-#endif
 CGameRestart* CGameRestart::spInstance;
 
 CGame::CGame(const char* pName, CWorkThread* pParent) :

@@ -190,7 +190,7 @@ void CTaskGameCf::func_800444FC(){
         }
         unk_54 &= ~1u;
 
-            if(CTaskEnvironment::getInstance()){
+        if(CTaskEnvironment::getInstance()){
                 CTaskEnvironment::getInstance()->SetRemove();
             }
 
@@ -210,7 +210,6 @@ void CTaskGameCf::func_800444FC(){
             CUIBattleManager::func_8012F87C(0);
             CTaskREvent::getInstance()->SetRemove();
             mMoveFunc = &CTaskGameCf::beginExit;
-        }
     }
 
 void CTaskGameCf::beginExit() {

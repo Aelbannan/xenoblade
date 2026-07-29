@@ -26,19 +26,3 @@ public:
     s16 field_0x78;
 };
 
-// Camera control instance base type returned by initCamControlInstances.
-// With RTTI on, the typeinfo pointer occupies vtable slot 0; the complete
-// destructor pair occupies slots 1-2. Subsequent virtual methods start at
-// slot 3 (offset 0x0C).
-class ICamControlBase {
-public:
-    virtual ~ICamControlBase();
-    virtual void vfunc_04() = 0;
-    virtual void vfunc_10(UnkCode8027513C* self) = 0;
-    virtual void vfunc_14(UnkCode8027513C* self) = 0;
-    virtual void vfunc_18(UnkCode8027513C* self) = 0;
-    virtual void vfunc_1C(UnkCode8027513C* self) = 0;
-};
-
-extern "C" ICamControlBase* initCamControlInstances();
-

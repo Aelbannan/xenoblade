@@ -926,18 +926,29 @@ extern "C" int* func_8009ECB0();
 cf::CfObjectSelectorObj* func_800FE68C();
 void func_800FE6A4(cf::CfObjectSelectorObj*, int, int, int);
 
+// Holder struct for func_80043D90 / func_80043F18 / __dt__80043E88
+struct ChainEnumHolder {
+    UNKTYPE* list;  // 0x0
+    u32 handle;     // 0x4
+};
+// Tail of the enumeration list struct, exposing the flag at offset 0x620
+struct EnumListTail {
+    u8 _pad[0x620];
+    int field_0x620;
+};
+
 // Forward declarations for Target 2 (func_80282380)
-void func_80043D90(void*);
-void* func_80043F18(void*);
-void __dt__80043E88(void*, int);
-void func_800F4A98(void*, int, int);
-void func_800F6ED0(void*, void*);
-void* func_800F6E08(void*);
-void* func_800B708C(int);
-void* func_800AD860(void*);
+void func_80043D90(ChainEnumHolder*);
+UNKTYPE* func_80043F18(ChainEnumHolder*);
+void __dt__80043E88(ChainEnumHolder*, int);
+void func_800F4A98(UNKTYPE*, int, int);
+void func_800F6ED0(UNKTYPE*, UNKTYPE*);
+UNKTYPE* func_800F6E08(UNKTYPE*);
+UNKTYPE* func_800B708C(BOOL);
+UNKTYPE* func_800AD860(UNKTYPE*);
 
 // Forward declaration for Target 3 (func_802821E0)
-int func_80174C98(void*, void*, int);
+int func_80174C98(UNKTYPE*, UNKTYPE*, int);
 
 int func_80282048(int arg) {
     return func_802A0804(0xb3, arg);
@@ -1042,14 +1053,14 @@ int func_802821E0(cf::CChainActorPc* self) {
     // vfunc22 must return exactly 5
     if (((int(*)(cf::CChainActorPc*))((void**)self->mVTable)[22])(self) == 5) {
         // Check battle-manager flags 0xf0 and 0xf1
-        if (func_80148778((void*)(self->unk0 + 8), 0xf0) != 0) return 1;
-        if (func_80148778((void*)(self->unk0 + 8), 0xf1) != 0) return 1;
+        if (func_80148778((UNKTYPE*)(self->unk0 + 8), 0xf0) != 0) return 1;
+        if (func_80148778((UNKTYPE*)(self->unk0 + 8), 0xf1) != 0) return 1;
 
         // Call vfunc12 on sub-object at unk0+4, pass its field_0x0 to func_80174C98
         u32 obj = self->unk0;
         u32 subObj = *(u32*)(obj + 4);
-        u32 val = *(u32*)((void*(*)(u32))(*(void***)subObj)[12])(subObj);
-        if (func_80174C98((void*)obj, &val, 0xb) != 0) return 1;
+        u32 val = *(u32*)((UNKTYPE*(*)(u32))(*(void***)subObj)[12])(subObj);
+        if (func_80174C98((UNKTYPE*)obj, &val, 0xb) != 0) return 1;
 
         // Float comparison: vfunc87 <= vfunc86 on the object at this->unk0
         obj = self->unk0;
@@ -1078,34 +1089,31 @@ void func_802822F8(cf::CChainActorPc* self, int arg) {
 // a vfunc at offset 0xac on the CfObjectMove subobject, then validates the
 // result through func_800F6ED0/func_800F6E08 and a null check on the returned
 // object. Returns the valid object or 0.
-void* func_80282380(cf::CChainActorPc* self) {
-    struct Holder {
-        void* list;
-        u32 handle;
-    } holder;
+UNKTYPE* func_80282380(cf::CChainActorPc* self) {
+    ChainEnumHolder holder;
 
     func_80043D90(&holder);
-    void* list = func_80043F18(&holder);
+    UNKTYPE* list = func_80043F18(&holder);
     func_800F4A98(list, 0x80000002, 0);
 
     // Call vfunc at vtable offset 0xac on this->unk0 + 0x3e9c
     u32 moveBase = self->unk0 + 0x3e9c;
     void** moveVtbl = *(void***)moveBase;
-    void* (*vfunc)(u32) = (void* (*)(u32))moveVtbl[0xac / 4];
-    void* result = vfunc(moveBase);
+    UNKTYPE* (*vfunc)(u32) = (UNKTYPE* (*)(u32))moveVtbl[0xac / 4];
+    UNKTYPE* result = vfunc(moveBase);
 
     list = func_80043F18(&holder);
     func_800F6ED0(list, result);
 
     list = func_80043F18(&holder);
-    if (*(int*)((u8*)list + 0x620) == 0) {
+    if (((EnumListTail*)list)->field_0x620 == 0) {
         __dt__80043E88(&holder, -1);
         return 0;
     }
 
     list = func_80043F18(&holder);
     result = func_800F6E08(list);
-    void* checked = func_800B708C((int)(uintptr_t)result);
+    UNKTYPE* checked = func_800B708C((BOOL)(uintptr_t)result);
     if (func_800AD860(checked) == 0) {
         __dt__80043E88(&holder, -1);
         return 0;

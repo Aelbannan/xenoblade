@@ -425,6 +425,8 @@ config.libs = [
         "cflags": cflags_game,
         "progress_category": "game",
         "objects": [
+            # CGame.cpp code matches both JP and US (100% functions).
+            # Data is 87.5% for US due to section padding differences; only JP data is fully matched.
             Object(MatchingFor("jp"), "kyoshin/CGame.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(MatchingFor("jp"), "kyoshin/main.cpp"),
             Object(MatchingFor("jp", "us"), "kyoshin/plugin/pluginDeb.cpp"),

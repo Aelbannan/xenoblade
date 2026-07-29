@@ -4,39 +4,7 @@
 #include "monolib/work.hpp"
 #include "monolib/device.hpp"
 #include <revolution/WPAD.h>
-#include "revolution/mtx/mtx44.h"
-#include "revolution/os/OSFastCast.h"
 #include <cstring>
-
-// Extern retail data symbols (sdata2 float constants)
-extern float lbl_eu_8066A570;
-extern float lbl_eu_8066A574;
-extern float lbl_eu_8066A578;
-extern float lbl_eu_8066A57C;
-extern float lbl_eu_8066A580;
-extern float lbl_eu_8066A584;
-extern float lbl_eu_8066A588;
-extern float lbl_eu_8066A58C;
-extern float lbl_eu_8066A590;
-extern float lbl_eu_8066A594;
-extern float lbl_eu_8066A598;
-extern float lbl_eu_8066A59C;
-extern float lbl_eu_8066A5A0;
-
-// Layout of the data returned by func_eu_80449F30 (points to CPad + 0x24)
-struct PadInputData {
-    u32 buttonFlags;   // 0x00 — d-pad direction in low nibble
-    u8 _pad0[0x38];    // 0x04
-    float stickX;      // 0x3C — analog stick X (maps to CPad::mLStickXRaw)
-    float stickY;      // 0x40 — analog stick Y (maps to CPad::mLStickYRaw)
-    u8 _pad1[0x54];    // 0x44
-    s8 dpdValid;       // 0x98 — d-pad valid flag (maps to CPad::mWpadData.mDpdValidFg)
-};
-
-// Extern retail function stubs
-void func_8043EA88__5CViewFRQ22ml5CRectP5CView(ml::CRect16* rect, CView* view);
-PadInputData* func_eu_80449F30(int index);
-void callExitFunc__11CWorkSystemFv();
 
 CLibHbmControl::CLibHbmControl(const char* pName, CWorkThread* pParent) : CProc(pName, pParent, MAX_CHILD),
 mHbmPhase(0),
@@ -73,248 +41,59 @@ void CLibHbmControl::wkUpdate(){
             mWaitTimer = 0xD2;
             mHbmPhase++;
             break;
-        case 1: {
-            CDeviceFileCri* cri = CDeviceFileCri::getInstance();
-
-            // Skip timer if exception flag set or a type-2 request is queued
-            int found = (cri->mFlags & 0x10) ? 1 :
-                        (cri->mMsgQueue.find(2) >= 0) ? 1 : 0;
-
-            if (!found) {
-                if (--mWaitTimer <= 0) {
+        case 1:
+            if(!CDeviceFileCri::getInstance()->isException()){
+                mWaitTimer--;
+                if(mWaitTimer <= 0){
                     wkSetEvent(EVT_NONE);
                 }
+
+                break;
             }
 
-            if (CLibHbm::checkFlag6()) {
+            wkSetEvent(EVT_NONE);
+
+            if(CLibHbm::checkFlag6()){
                 mHbmPhase = 0;
-            } else if (CLibHbm::isHbmMemPointerValid()) {
+            }else if(CLibHbm::isHbmMemPointerValid()){
                 mHbmPhase++;
             }
             break;
-        }
         case 2:
             CLibHbm::initHbm();
             mHbmPhase++;
             break;
-        case 3: {
-            // Constants loaded from sdata2
-            float clampMax = lbl_eu_8066A57C;
-            float clampMin = lbl_eu_8066A580;
-            float stickSens = lbl_eu_8066A570;
-            float diagFactor = lbl_eu_8066A574;
-            float zero = lbl_eu_8066A578;
-            float analogScale = lbl_eu_8066A584;
-
-            for (int i = 0; i < 4; i++) {
-                HBMKPadData* ctrl = &mHBMControllerData.wiiCon[i];
-
-                // Get WPAD status and extract the device type
+        case 3:
+            for(int i = 0; i < WPAD_MAX_CONTROLLERS; i++){
                 CWpadStatus* wpadStatus = CDeviceRemotePad::getWpadStatus(i);
-                u8 devType = wpadStatus->dev_type;
 
-                // Init controller data: clear kpad, store dev_type as use_devtype
-                ctrl->kpad = NULL;
-                ctrl->use_devtype = devType;
-
-                // Skip if not connected
-                if (!CDeviceRemotePad::isConnected(i)) continue;
-
-                // Only process Wiimote-only (0/1/2) or 0xFB status
-                if (devType > 2 && devType != 0xFB) continue;
-
-                // Re-get wpadStatus and store as kpad
-                wpadStatus = CDeviceRemotePad::getWpadStatus(i);
-                ctrl->kpad = wpadStatus;
-
-                // Get pad data for button/analog processing
-                PadInputData* pad = func_eu_80449F30(i);
-                bool changed = false;
-
-                if (devType == 2) {
-                    // D-pad directional input handling
-                    u32 dir = pad->buttonFlags & 0xF;
-
-                    if (dir != 0) {
-                        float f1 = zero;
-                        float f2 = zero;
-                        float diagSpeed = diagFactor * stickSens;
-
-                        if (dir <= 9) {
-                            switch (dir) {
-                                case 0: f1 = -stickSens; break;
-                                case 1: f1 = stickSens; break;
-                                case 2: f2 = -stickSens; break;
-                                case 3: f2 = stickSens; break;
-                                case 4: f1 = -diagSpeed; f2 = f1; break;
-                                case 5: f1 = diagSpeed; f2 = -diagSpeed; break;
-                                case 6: f2 = diagSpeed; f1 = -diagSpeed; break;
-                                case 7: f1 = diagSpeed; f2 = diagSpeed; break;
-                                case 8: f1 = -diagSpeed; break;
-                                case 9: f1 = diagSpeed; f2 = diagSpeed; break;
-                            }
-                        }
-
-                        // Clamp and apply X delta
-                        float newX = f1 + ctrl->pos.x;
-                        if (newX > clampMax) newX = clampMax;
-                        else if (newX < clampMin) newX = clampMin;
-                        ctrl->pos.x = newX;
-
-                        // Clamp and apply Y delta
-                        float newY = f2 + ctrl->pos.y;
-                        if (newY > clampMax) newY = clampMax;
-                        else if (newY < clampMin) newY = clampMin;
-                        ctrl->pos.y = newY;
-
-                        changed = true;
-                    }
-                }
-
-                // Analog stick handling (if not zero)
-                float stickX = pad->stickX;
-                float stickY = pad->stickY;
-
-                if (stickX != zero || stickY != zero) {
-                    stickX *= analogScale;
-                    stickY *= analogScale;
-
-                    // Apply X
-                    float newX = stickX + ctrl->pos.x;
-                    if (newX > clampMax) newX = clampMax;
-                    else if (newX < clampMin) newX = clampMin;
-                    ctrl->pos.x = newX;
-
-                    // Apply Y (subtract because screen Y is inverted)
-                    float newY = ctrl->pos.y - stickY;
-                    if (newY > clampMax) newY = clampMax;
-                    else if (newY < clampMin) newY = clampMin;
-                    ctrl->pos.y = newY;
-
-                    changed = true;
-                }
-
-                // Fallback: if nothing changed and dpd valid, copy from wpadStatus pos
-                if (!changed) {
-                    if (pad->dpdValid > 0) {
-                        ctrl->pos.x = wpadStatus->pos.x;
-                        ctrl->pos.y = wpadStatus->pos.y;
-                    }
-                }
-            }
-
-            HBMUpdateSound();
-
-            int result = HBMCalc(&mHBMControllerData);
-
-            if (result == 0) {
-                wkSetEvent(EVT_NONE);
-            } else if (result == 1) {
-                callExitFunc__11CWorkSystemFv();
-                VISetBlack(1);
-                VIFlush();
-                VIWaitForRetrace();
-                VIWaitForRetrace();
-                OSReturnToMenu();
-            } else if (result == 2) {
-                callExitFunc__11CWorkSystemFv();
-                VISetBlack(1);
-                VIFlush();
-                VIWaitForRetrace();
-                VIWaitForRetrace();
-                OSRestart(0);
             }
             break;
-        }
+        default:
+            break;
+    }
+
+    HBMUpdateSound();
+
+    HBMSelectBtnNum selectBtnNum = HBMCalc(&mHBMControllerData);
+
+    switch(selectBtnNum){
+        case HBM_SELECT_HOMEBTN:
+            wkSetEvent(EVT_NONE);
+            break;
+        case HBM_SELECT_BTN1:
+            returnToWiiMenu(false);
+            break;
+        case HBM_SELECT_BTN2:
+            resetGame(false);
+            break;
+        default:
+            break;
     }
 }
 
 void CLibHbmControl::wkRender(){
-    // Begin scene via CGXCache
-    CDeviceGX::getCacheInstance()->func_8044BE38();
-
-    // Set up CDrawGX for full-screen rect
-    CDrawGX draw;
-    draw.func_80456570(0);
-    draw.func_8045657C(0);
-
-    // Set white vertex color (r,g,b from lbl_eu_8066A578, alpha from lbl_eu_8066A588)
-    ml::CCol4 col;
-    col.r = lbl_eu_8066A578;
-    col.g = lbl_eu_8066A578;
-    col.b = lbl_eu_8066A578;
-    col.a = lbl_eu_8066A588;
-    draw.setCol(col);
-
-    // Begin drawing quads
-    draw.begin(9, 1);
-
-    // Get current view's screen rectangle and add it to draw
-    CView* view = CView::getCurrentView();
-    ml::CRect16 rect;
-    func_8043EA88__5CViewFRQ22ml5CRectP5CView(&rect, view);
-    draw.add(rect);
-
-    draw.end();
-
-    // If HBM is active (phase == 3), set up GX and render the HBM
-    // Compute active flag so MWCC emits cntlzw for ==3 and matches the
-    // retail fallthrough (spInstance==0 → active=0) pattern
-    int active = (spInstance == 0) ? 0 : (spInstance->mHbmPhase == 3);
-    if (active) {
-        GXClearVtxDesc();
-        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_POS, GX_POS_XY, GX_F32, 0);
-        GXSetVtxAttrFmt(GX_VTXFMT4, GX_VA_CLR0, GX_CLR_RGB, GX_RGB8, 0);
-        GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_CLR0, GX_DIRECT);
-        GXSetNumChans(1);
-        GXSetNumTexGens(0);
-        GXSetNumTevStages(1);
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD_NULL, GX_TEXMAP_NULL, GX_COLOR0A0);
-        GXSetTevOp(GX_TEVSTAGE0, GX_PASSCLR);
-        GXSetBlendMode(GX_BM_NONE, GX_BL_ZERO, GX_BL_ZERO, GX_LO_CLEAR);
-        GXSetZMode(GX_TRUE, GX_LEQUAL, GX_TRUE);
-        GXSetCurrentMtx(3);
-
-        Mtx44 mtx;
-
-        // Build orthographic projection — standard aspect path first (ASM fallthrough),
-        // then wide path (ASM branch target). Both paths compute ratio = viWidth / divisor.
-        if (!CDeviceVI::isWideAspectRatio()) {
-            GXRenderModeObj* rmode = CDeviceVI::getRenderModeObj();
-            float viWidth_f = (float)rmode->viWidth;
-            float f7 = viWidth_f / lbl_eu_8066A58C;
-            C_MTXOrtho(mtx,
-                       lbl_eu_8066A590 * lbl_eu_8066A57C,
-                       lbl_eu_8066A590 * (-lbl_eu_8066A57C),
-                       lbl_eu_8066A594 * (-f7),
-                       lbl_eu_8066A594 * f7,
-                       lbl_eu_8066A578,
-                       lbl_eu_8066A598);
-        } else {
-            GXRenderModeObj* rmode = CDeviceVI::getRenderModeObj();
-            float viWidth_f = (float)rmode->viWidth;
-            float f7 = viWidth_f / lbl_eu_8066A59C;
-            C_MTXOrtho(mtx,
-                       lbl_eu_8066A590 * lbl_eu_8066A57C,
-                       lbl_eu_8066A590 * (-lbl_eu_8066A57C),
-                       lbl_eu_8066A5A0 * (-f7),
-                       lbl_eu_8066A5A0 * f7,
-                       lbl_eu_8066A578,
-                       lbl_eu_8066A598);
-        }
-
-        GXSetProjection(mtx, GX_ORTHOGRAPHIC);
-
-        // Initialize fast-cast GQRs for HBM's psq_* instructions
-        OSInitFastCast();
-
-        HBMDraw();
-    }
-
-    // End scene
-    CDeviceGX::getCacheInstance()->func_8044BE38();
-    CViewRoot::func_80442DA8();
+    
 }
 
 static const char sCLibHbmControlName[] = "CLibHbmControl";

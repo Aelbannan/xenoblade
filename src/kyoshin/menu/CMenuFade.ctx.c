@@ -26656,7 +26656,7 @@ public:
 
 class CMenuFade : public CMenuFadeBase, public IScnRender {
 public:
-    CMenuFade();
+    CMenuFade(CScn* pScn, int p5, int p6, float f1, float f2, float f3);
     virtual ~CMenuFade();
     void Init();
     void Term();
@@ -26669,9 +26669,105 @@ public:
     CScn* mScn;                                 // 0x60
     UnkClass_8045F564 mLayoutMem;               // 0x64
     nw4r::lyt::Layout* mLayout;                 // 0x74
+    nw4r::lyt::AnimTransform* field_0x78;       // 0x78
+    f32 field_0x7C;                             // 0x7C
+    f32 field_0x80;                             // 0x80
+    f32 field_0x84;                             // 0x84
+    f32 field_0x88;                             // 0x88
+    u32 field_0x8C;                             // 0x8C
+    u32 field_0x90;                             // 0x90
+    u8 field_0x94;                              // 0x94
+    u8 pad_0x95[3];                             // 0x95-0x97
+    u32 field_0x98;                             // 0x98
 };
 /* end "kyoshin/menu/CMenuFade.hpp" */
-/* "src/kyoshin/menu/CMenuFade.cpp" line 1 "monolib/device/CDeviceVI.hpp" */
+
+/* "src/kyoshin/menu/CMenuFade.cpp" line 2 "kyoshin/code_80135FDC.hpp" */
+#pragma once
+
+/* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 3 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+enum CBM {
+    CBM_0,
+    CBM_1,
+    CBM_2,
+    CBM_3,
+    CBM_4,
+    CBM_5
+};
+
+struct CFileHandle {
+    int unk0;
+    void* mData; //0x4
+    u8 unk8[0x10 - 0x8];
+    int unk10;
+    u32 unk14;
+    u8 unk18[0x3C - 0x18];
+    u32 mLength; //0x3C
+    u8 unk40[0x5C - 0x40];
+    ml::FixStr<32> mName; //0x5C
+    u8 unk80[0x160 - 0x80];
+    u32 unk160;
+
+    void call(CBM cbm);
+    bool checkExistRsrc(CBM cbm);
+    UNKTYPE* getRsrc();
+
+    inline void* getData(){
+        void* r31 = mData;
+        mData = nullptr;
+        return r31;
+    }
+
+    inline bool unkInline2() const {
+        return unk10 != 0 && unk10 == mLength;
+    }
+
+    inline u32 getLength() const {
+        return mLength;
+    }
+
+};
+/* end "monolib/device/CFileHandle.hpp" */
+/* "src/kyoshin/code_80135FDC.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
+/* end "monolib/work/IWorkEvent.hpp" */
+
+/* "src/kyoshin/code_80135FDC.hpp" line 5 "revolution/gx/GXTypes.h" */
+/* end "revolution/gx/GXTypes.h" */
+
+/* "src/kyoshin/code_80135FDC.hpp" line 7 "nw4r/lyt.h" */
+/* end "nw4r/lyt.h" */
+
+u16 func_8013606C(char*, char*, u16);
+char* func_80136190(char*, char*, u32);
+u32 func_801361E8(void*, char*, u32);
+char* func_8013639C(void*, char*, u16);
+void func_8013676C(nw4r::lyt::Pane*, u32);
+void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+void func_80136910(nw4r::lyt::Layout*, char*, u8);
+void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
+void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void func_80137038(nw4r::lyt::Layout* pLayout, nw4r::lyt::DrawInfo* pDrawInfo, int r5, int r6);
+void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+u8 func_801372B4(u32);
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
+char* func_80138F78(u16);
+void func_801390E0(CFileHandle**);
+void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
+extern "C" u8 code80135FDC_getByte_621F0();
+/* end "kyoshin/code_80135FDC.hpp" */
+/* "src/kyoshin/menu/CMenuFade.cpp" line 3 "monolib/device/CDeviceVI.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 2 "types.h" */
@@ -28521,11 +28617,85 @@ static const double MS_PER_FRAME = 1.0/CDeviceVI::TARGET_FRAMERATE;
 
 #define SECONDS_TO_FRAMES(n) (CDeviceVI::TARGET_FRAMERATE * n)
 /* end "monolib/device/CDeviceVI.hpp" */
+/* "src/kyoshin/menu/CMenuFade.cpp" line 4 "monolib/util/MemManager.hpp" */
+/* end "monolib/util/MemManager.hpp" */
+/* "src/kyoshin/menu/CMenuFade.cpp" line 5 "monolib/work/CProcess.hpp" */
+/* end "monolib/work/CProcess.hpp" */
+/* "src/kyoshin/menu/CMenuFade.cpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
+/* end "monolib/work/CWorkThreadSystem.hpp" */
 
-extern int lbl_eu_80663FA0;
+/* "src/kyoshin/menu/CMenuFade.cpp" line 8 "revolution/gx/GXPixel.h" */
+/* end "revolution/gx/GXPixel.h" */
 
-CMenuFade::CMenuFade(){
+// Forward-declare CTaskGame to avoid pulling in the real IScnRender
+// (CMenuFade.hpp declares a local IScnRender without a destructor to
+// control codegen; the real one would conflict).
+class CTaskGame {
+public:
+    static CTaskGame* getInstance();
+    bool func_800426F0();
+};
 
+// Layout helper from code_80135FDC (not yet declared in the header).
+void func_80137B44(nw4r::lyt::Layout* layout, const char* paneName, int value);
+
+extern "C" {
+extern u32 lbl_eu_80663E28;
+extern CMenuFade* lbl_eu_80663FA0;
+extern const u8 lbl_eu_8052BF70[];   // CTTask<IUICf> vtable
+extern const u8 lbl_eu_8052C540[];   // CMenuFade vtable
+extern const u8 __ptmf_null[12];     // null pointer-to-member-function
+extern void __ct__8CProcessFv(void*);
+extern void __ct__17UnkClass_8045F564Fv(void*);
+
+extern const f32 lbl_eu_80667058;    // 0.0f
+extern const f32 lbl_eu_8066705C;    // 1.0f
+extern const f64 lbl_eu_80667068;    // 4503599627370496.0 (u32->f32 magic)
+extern char lbl_eu_804FDEA8[];
+}
+
+// ============================================================================
+// Constructor
+// ============================================================================
+CMenuFade::CMenuFade(CScn* pScn, int p5, int p6, float f1, float f2, float f3) {
+    u8* s = reinterpret_cast<u8*>(this);
+
+    __ct__8CProcessFv(this);
+
+    reinterpret_cast<u32*>(s)[0x10 / 4] = reinterpret_cast<u32>(lbl_eu_8052BF70);
+
+    u32 ptmf0 = reinterpret_cast<const u32*>(__ptmf_null)[0];
+    u32 ptmf1 = reinterpret_cast<const u32*>(__ptmf_null)[1];
+    u32 ptmf2 = reinterpret_cast<const u32*>(__ptmf_null)[2];
+    reinterpret_cast<u32*>(s)[0x3C / 4] = ptmf0;
+    reinterpret_cast<u32*>(s)[0x40 / 4] = ptmf1;
+    reinterpret_cast<u32*>(s)[0x44 / 4] = ptmf2;
+    reinterpret_cast<u32*>(s)[0x48 / 4] = ptmf0;
+    reinterpret_cast<u32*>(s)[0x4C / 4] = ptmf1;
+    reinterpret_cast<u32*>(s)[0x50 / 4] = ptmf2;
+
+    field_0x54 = 0;
+    pad55[0] = 0;
+
+    u32 vtFinal = reinterpret_cast<u32>(lbl_eu_8052C540);
+    reinterpret_cast<u32*>(s)[0x10 / 4] = vtFinal;
+    mIWorkEventVtbl = vtFinal + 0x24;
+    reinterpret_cast<u32*>(s)[0x5C / 4] = vtFinal + 0xAC;
+
+    mScn = pScn;
+
+    __ct__17UnkClass_8045F564Fv(&mLayoutMem);
+
+    mLayout = nullptr;
+    field_0x78 = 0;
+    field_0x7C = 0.0f;
+    field_0x80 = f1;
+    field_0x84 = f2;
+    field_0x88 = f3;
+    field_0x8C = 0;
+    field_0x90 = p5;
+    field_0x94 = 1;
+    field_0x98 = p6;
 }
 
 CMenuFade::~CMenuFade() {
@@ -28548,20 +28718,68 @@ void CMenuFade::Term() {
 }
 
 int func_80113E1C() {
-    return lbl_eu_80663FA0;
+    return reinterpret_cast<int>(lbl_eu_80663FA0);
 }
 u8 func_80113E24(void* pthis) {
-    return *(u8*)((char*)pthis + 0x94);
-}
-// Converted to inline member function in header
-void __dt__9CMenuFadeFv(CMenuFade*);
-void func_80113E38(CMenuFade* p) {
-    __dt__9CMenuFadeFv((CMenuFade*)((char*)p - 0x58));
-}
-void cbRenderBefore__9CMenuFadeFv(void* self);
-void func_80113E40(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuFadeFv)((char*)self - 0x5c); }
-void func_80113E48(void* arg0) {
-    __dt__9CMenuFadeFv((struct CMenuFade*)((char*)arg0 - 0x5C));
+    return reinterpret_cast<CMenuFade*>(pthis)->field_0x94;
 }
 
-void func_80113C84(){}
+// Thunks for IWorkEvent/IScnRender subobject adjustment
+void __dt__9CMenuFadeFv(CMenuFade*);
+void func_80113E38(CMenuFade* p) {
+    __dt__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(reinterpret_cast<u8*>(p) - 0x58));
+}
+void cbRenderBefore__9CMenuFadeFv(CMenuFade*);
+void func_80113E40(void* self) {
+    cbRenderBefore__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(reinterpret_cast<u8*>(self) - 0x5c));
+}
+void func_80113E48(void* arg0) {
+    __dt__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(reinterpret_cast<u8*>(arg0) - 0x5C));
+}
+
+void CMenuFade::cbRenderBefore() {
+    // Skip rendering when game is paused or menu fade is suppressed
+    if (CTaskGame::getInstance()->func_800426F0()) {
+        return;
+    }
+    if ((lbl_eu_80663E28 & 0x00200000) == 0) {
+        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+        nw4r::lyt::DrawInfo drawInfo;
+        func_80137250(&drawInfo);
+        func_80137038(mLayout, &drawInfo, 0, 1);
+    }
+}
+
+extern "C" void* func_80113C84(
+    CProcess* parent, CScn* pScn, int p5, int p6,
+    float f1, float f2, float f3)
+{
+    CMenuFade* fade = lbl_eu_80663FA0;
+    if (fade != nullptr) {
+        u16 frameSize = fade->field_0x78->GetFrameSize();
+        f32 frameSizeF = (f32)frameSize;
+        fade->field_0x88 = (f3 >= lbl_eu_80667058) ? (frameSizeF / f3) : lbl_eu_8066705C;
+        fade->field_0x8C = 2;
+        fade->field_0x94 = 1;
+        fade->field_0x98 = p6;
+        switch (p6) {
+        case 0:
+            func_80137B44(fade->mLayout, lbl_eu_804FDEA8 + 0x26, 0xFF);
+            break;
+        case 1:
+            func_80137B44(fade->mLayout, lbl_eu_804FDEA8 + 0x26, -1);
+            break;
+        }
+        return nullptr;
+    }
+
+    void* mem = mtl::MemManager::allocate(sizeof(CMenuFade), CWorkThreadSystem::getWorkMem());
+    if (mem != nullptr) {
+        fade = new (mem) CMenuFade(pScn, p5, p6, f1, f2, f3);
+    } else {
+        fade = nullptr;
+    }
+    lbl_eu_80663FA0 = fade;
+    fade->Regist(parent, false);
+    return lbl_eu_80663FA0;
+}

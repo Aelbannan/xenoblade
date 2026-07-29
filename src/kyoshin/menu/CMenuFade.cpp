@@ -6,7 +6,7 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
 
-#include <revolution/gx/GXPixel.h>
+#include <revolution/GX.h>
 
 // Forward-declare CTaskGame to avoid pulling in the real IScnRender
 // (CMenuFade.hpp declares a local IScnRender without a destructor to
@@ -20,20 +20,22 @@ public:
 // Layout helper from code_80135FDC (not yet declared in the header).
 void func_80137B44(nw4r::lyt::Layout* layout, const char* paneName, int value);
 
+// lbl_* reloc names kept in extern "C" as allowed
+// Non-lbl symbols declared with proper types outside extern "C"
 extern "C" {
 extern u32 lbl_eu_80663E28;
 extern CMenuFade* lbl_eu_80663FA0;
 extern const u8 lbl_eu_8052BF70[];   // CTTask<IUICf> vtable
 extern const u8 lbl_eu_8052C540[];   // CMenuFade vtable
 extern const u8 __ptmf_null[12];     // null pointer-to-member-function
-extern void __ct__8CProcessFv(void*);
-extern void __ct__17UnkClass_8045F564Fv(void*);
-
 extern const f32 lbl_eu_80667058;    // 0.0f
 extern const f32 lbl_eu_8066705C;    // 1.0f
 extern const f64 lbl_eu_80667068;    // 4503599627370496.0 (u32->f32 magic)
 extern char lbl_eu_804FDEA8[];
 }
+
+extern void __ct__8CProcessFv(CProcess*);
+extern void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 
 // ============================================================================
 // Constructor
@@ -101,8 +103,8 @@ void CMenuFade::Term() {
 int func_80113E1C() {
     return reinterpret_cast<int>(lbl_eu_80663FA0);
 }
-u8 func_80113E24(void* pthis) {
-    return reinterpret_cast<CMenuFade*>(pthis)->field_0x94;
+u8 func_80113E24(CMenuFade* pthis) {
+    return pthis->field_0x94;
 }
 
 // Thunks for IWorkEvent/IScnRender subobject adjustment
@@ -111,11 +113,11 @@ void func_80113E38(CMenuFade* p) {
     __dt__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(reinterpret_cast<u8*>(p) - 0x58));
 }
 void cbRenderBefore__9CMenuFadeFv(CMenuFade*);
-void func_80113E40(void* self) {
-    cbRenderBefore__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(reinterpret_cast<u8*>(self) - 0x5c));
+void func_80113E40(u8* self) {
+    cbRenderBefore__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(self - 0x5c));
 }
-void func_80113E48(void* arg0) {
-    __dt__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(reinterpret_cast<u8*>(arg0) - 0x5C));
+void func_80113E48(u8* arg0) {
+    __dt__9CMenuFadeFv(reinterpret_cast<CMenuFade*>(arg0 - 0x5C));
 }
 
 void CMenuFade::cbRenderBefore() {
@@ -131,7 +133,7 @@ void CMenuFade::cbRenderBefore() {
     }
 }
 
-extern "C" void* func_80113C84(
+CMenuFade* func_80113C84(
     CProcess* parent, CScn* pScn, int p5, int p6,
     float f1, float f2, float f3)
 {
@@ -154,7 +156,7 @@ extern "C" void* func_80113C84(
         return nullptr;
     }
 
-    void* mem = mtl::MemManager::allocate(sizeof(CMenuFade), CWorkThreadSystem::getWorkMem());
+    u8* mem = static_cast<u8*>(mtl::MemManager::allocate(sizeof(CMenuFade), CWorkThreadSystem::getWorkMem()));
     if (mem != nullptr) {
         fade = new (mem) CMenuFade(pScn, p5, p6, f1, f2, f3);
     } else {

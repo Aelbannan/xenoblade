@@ -5,10 +5,9 @@
 #include "kyoshin/cf/object/CfObjectPc.hpp"
 
 extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
+extern "C" void* func_8016FE34(void* source);
 extern "C" u32 func_80174C98(void* actor, u32* outVal, u32 flags);
-
-// func_800B708C is declared in CfObjectPc.hpp (included transitively).
-// func_800BF324 converts a CObjectParam pointer to a CActorParam pointer.
+extern "C" u32 func_8009CF8C(u32 resourceId);
 extern "C" void* func_800BF324(void* objParam);
 
 namespace cf {
@@ -20,19 +19,17 @@ void CHelp_Talk::func_802B86BC() {
 }
 
 // Evaluate whether the talk help condition is satisfied.
-// Checks voice action state, then dispatches to the virtual slot 8 handler.
-// If that returns true and the voice is active, performs additional validation
-// against the player's current target.
 bool CHelp_Talk::func_802B86F0() {
     // Get the current voice action for player 0
     void* voiceAction = func_8016FE34(CfGameManager::getPlayer(0));
 
     bool voiceActive = false;
     if (voiceAction != nullptr) {
-        // Read a u32 via virtual call on voiceAction->field_0x4, slot 0x30
-        void** subVt = *reinterpret_cast<void***>(reinterpret_cast<u8*>(voiceAction) + 4);
+        // Access sub-object at voiceAction+4, call its vtable[0x30/4], deref result
+        void* sub = *reinterpret_cast<void**>(reinterpret_cast<u8*>(voiceAction) + 4);
+        void** subVt = *reinterpret_cast<void***>(sub);
         u32 localVal = *reinterpret_cast<u32*>(
-            reinterpret_cast<void* (*)(void*)>(subVt[0x30 / 4])(voiceAction));
+            reinterpret_cast<void* (*)(void*)>(subVt[0x30 / 4])(sub));
 
         // Query a property of the voice action
         if (func_80174C98(voiceAction, &localVal, 1) != 0) {
@@ -55,19 +52,14 @@ bool CHelp_Talk::func_802B86F0() {
 
     // If field_0x10 is set, validate against the player's target
     if (field_0x10 != 0) {
-        void* targetObj = nullptr;
         void* targetResult = func_8016FE34(CfGameManager::getPlayer(0));
+        void* targetObj = nullptr;
         if (targetResult != nullptr) {
-            // Access CObjectParam at retail offset 0x3E9C via layout shim
-            struct RetailLayout {
-                u8 pad[0x3E9C];
-                cf::CObjectParam objectParam;
-            };
-            RetailLayout* retail = reinterpret_cast<RetailLayout*>(targetResult);
-            targetObj = reinterpret_cast<void* (*)(cf::CObjectParam*)>(
-                reinterpret_cast<void***>(&retail->objectParam)[0][0x4C / 4])(&retail->objectParam);
-            targetObj = func_800B708C(reinterpret_cast<BOOL>(targetObj));
-            targetObj = func_800BF324(targetObj);
+            // Access CObjectParam vtable at retail offset 0x3E9C
+            u8* base = reinterpret_cast<u8*>(targetResult) + 0x3E9C;
+            void** vt = *reinterpret_cast<void***>(base);
+            BOOL paramResult = reinterpret_cast<BOOL (*)(void*)>(vt[0x4C / 4])(base);
+            targetObj = func_800BF324(func_800B708C(paramResult));
         }
 
         // Compare field_0x10 against the target's field_0x8C (u16)
@@ -80,25 +72,20 @@ bool CHelp_Talk::func_802B86F0() {
     }
 
     // If state is still set and field_0x14 is nonzero, check a global flag
-    if (field_0x16 && field_0x14) {
-        // func_8009CF8C(0x7D0) returns a u32; nonzero result clears state
+    if (field_0x16 != 0 && field_0x14 != 0) {
+        // func_8009CF8C(0x7D0) returns a u32; nonzero result sets state to 1
         field_0x16 = (func_8009CF8C(0x7D0) != 0) ? 1 : 0;
     }
 
     // If state is still set and field_0x15 is nonzero, check actor substate
-    if (field_0x16 && field_0x15) {
+    if (field_0x16 != 0 && field_0x15 != 0) {
         void* actorResult = func_8016FE34(CfGameManager::getPlayer(0));
         bool substateOk = false;
         if (actorResult != nullptr) {
-            struct RetailLayout {
-                u8 pad[0x3E9C];
-                cf::CObjectParam objectParam;
-            };
-            RetailLayout* retail = reinterpret_cast<RetailLayout*>(actorResult);
-            void* actor = reinterpret_cast<void* (*)(cf::CObjectParam*)>(
-                reinterpret_cast<void***>(&retail->objectParam)[0][0x4C / 4])(&retail->objectParam);
-            actor = func_800B708C(reinterpret_cast<BOOL>(actor));
-            actor = func_800BF324(actor);
+            u8* base = reinterpret_cast<u8*>(actorResult) + 0x3E9C;
+            void** vt = *reinterpret_cast<void***>(base);
+            BOOL paramResult = reinterpret_cast<BOOL (*)(void*)>(vt[0x4C / 4])(base);
+            void* actor = func_800BF324(func_800B708C(paramResult));
             if (actor != nullptr) {
                 // Virtual call at slot 0x228 to get substate; check if == 3
                 void** actorVt = *reinterpret_cast<void***>(actor);

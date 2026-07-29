@@ -891,7 +891,7 @@ public:
     void func_8007E9CC();
     void func_8007EEE0();
     void func_8007EEF0();
-    void func_8007EEF8();
+    u32 func_8007EEF8();
     void func_8007EF04();
     void func_8007EF44();
     void func_8007EF48();
@@ -1113,13 +1113,13 @@ public:
     void func_80086D94();
     void func_80086D98();
     void func_80086D9C();
-    u32 func_80086DA0();
+    static u32 func_80086DA0();
     void func_80086DA4();
     void func_80086DA8();
     void func_80086DAC();
     void func_80086DB0();
     void func_80086DB4();
-    u32 func_80086DBC();
+    static u32 func_80086DBC();
     void func_80086E6C();
     bool func_80087244();
     bool func_80087250();
@@ -250002,7 +250002,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_UnkVirtualFunc64();     //0x150
         virtual void CfObject_UnkVirtualFunc65();     //0x154
-        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
+        virtual void CfObject_UnkVirtualFunc66(u32 value) = 0; //0x158
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
@@ -250841,7 +250841,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc54();
     void CfObject_UnkVirtualFunc55();
     void CObjectParam_UnkVirtualFunc2();
-    void CfObject_UnkVirtualFunc66();
+    void CfObject_UnkVirtualFunc66(u32 value);
     void CfObject_UnkVirtualFunc67();
     void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc69();
@@ -250936,7 +250936,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc61();
     void CfObject_UnkVirtualFunc62();
     void CfObject_UnkVirtualFunc12();
-    void CfObject_UnkVirtualFunc66();
+    void CfObject_UnkVirtualFunc66(u32 value);
     void CfObjectModel_UnkVirtualFunc19();
     void CfObjectModel_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc37();
@@ -251896,6 +251896,28 @@ struct ItemListSubobject {
     u32 field_0x0;
 };
 
+struct PlayerObjectContainer : public ItemContainerPrefix,
+                               public cf::CfObjectMove {
+};
+
+extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758,
+                                 __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    for (s32 i = 0; i < 3; ++i) {
+        cf::CfObjectMove* player = lbl_eu_80571758.unk94[i];
+        if (player != nullptr && (player->unk64 & 2) != 0) {
+            PlayerObjectContainer* object =
+                static_cast<PlayerObjectContainer*>(player);
+            object->CfObject_UnkVirtualFunc66(value);
+        }
+    }
+}
+
 struct ItemListObject : public ItemContainerPrefix, public ItemListSubobject {
     u8 field_0x3EA0[0x88];
     u16 itemId_0x3F28;
@@ -251919,7 +251941,27 @@ struct ItemListManager {
 
 struct UnkCharEffect304 {
     void* vtable_0x0;
-    u8 field_0x4[0x300];
+    u8 field_0x4[0x2FC];
+    u32 field_0x300;
+};
+
+struct Unk80338Object {
+    void* vtable_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    void* vtable_0xC;
+    void* vtable_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u32 field_0x1C;
+    u8 field_0x20[8];
+    CCharVoice voice_0x28;
+    UnkCharEffect304 effect_0x68;
+    u32 field_0x36C;
+    u32 field_0x370;
+    u32 field_0x374;
+    u32 field_0x378;
+    u32 field_0x37C;
 };
 
 struct Unk814BCObject {
@@ -251951,6 +251993,68 @@ struct Unk81B80Object {
     u8 effect_0x6C[0x300];
     u32 field_0x36C;
 };
+
+struct PlayerStateCDA8 {
+    u8 field_0x0[0x4EC];
+    u32 flags_0x4EC;
+};
+
+struct PlayerCDA8View {
+    u8 field_0x0[0xC4];
+    PlayerStateCDA8* state_0xC4;
+};
+
+struct SceneStateCDA8 {
+    u32 flags_0x0;
+};
+
+struct SceneCDA8View {
+    u8 field_0x0[0x7C];
+    SceneStateCDA8* state_0x7C;
+};
+
+extern "C" s32 lbl_eu_80663E00;
+extern "C" u8 lbl_eu_80663E34;
+extern "C" bool func_80082F2C__Q22cf13CfGameManagerFv(
+    s32 playerIndex, bool requireFlag);
+extern "C" bool func_8007BAE4();
+extern "C" void func_801AA2A8(UnkClass_8007E864* object);
+extern "C" void func_8007CDA8__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* manager) {
+    if ((lbl_eu_80663E24 & 0x1000) == 0) {
+        return;
+    }
+    if (!func_80082F2C__Q22cf13CfGameManagerFv(0, false)) {
+        return;
+    }
+    if (cf::CfGameManager::func_800829B8() &&
+        func_800FF778__9CMainMenuFv()) {
+        lbl_eu_80663E00 = 15;
+        return;
+    }
+    if (lbl_eu_80663E00 > 0) {
+        --lbl_eu_80663E00;
+    } else {
+        cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+        PlayerStateCDA8* state =
+            reinterpret_cast<PlayerCDA8View*>(player)->state_0xC4;
+        if (state != nullptr) {
+            if ((lbl_eu_80663E24 & 0x40000) != 0 || func_8007BAE4()) {
+                SceneStateCDA8* sceneState =
+                    reinterpret_cast<SceneCDA8View*>(lbl_eu_80663E14)
+                        ->state_0x7C;
+                if (sceneState != nullptr) {
+                    lbl_eu_80663E34 = (sceneState->flags_0x0 >> 2) & 1;
+                    goto stateUpdated;
+                }
+            }
+            lbl_eu_80663E34 = (state->flags_0x4EC >> 23) & 1;
+stateUpdated:
+            ;
+        }
+    }
+    func_801AA2A8(manager->unkA8);
+}
 
 struct UnkReset28Data {
     u8 field_0x0[0x28];
@@ -252548,6 +252652,7 @@ extern "C" void func_801421C4(u16 value);
 extern "C" CfGameManagerData1C* func_8007EEF0__Q22cf13CfGameManagerFv(
     UnkClass_8009EC9C* data, u32 index);
 extern "C" bool func_8007F0AC__Q22cf13CfGameManagerFv(const UnkF0ACData* data);
+#pragma dont_inline on
 extern "C" void func_8007EF4C__Q22cf13CfGameManagerFv(u16 dataId) {
     UnkClass_8009EC9C* data = func_8009EC9C(dataId);
     u32 total = 0;
@@ -252574,6 +252679,37 @@ extern "C" void func_8007EF4C__Q22cf13CfGameManagerFv(u16 dataId) {
             if (item != nullptr && !func_8007F0AC__Q22cf13CfGameManagerFv(item)) {
                 func_8007F0C4__Q22cf13CfGameManagerFv(
                     reinterpret_cast<u32>(group), j);
+            }
+        }
+    }
+}
+#pragma dont_inline reset
+
+extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value);
+extern "C" bool func_801575B0(u16 dataId, u32 mappedIndex);
+extern "C" cf::CfGameManager* func_8015783C(u32 mappedIndex, u16 dataId,
+                                              u32 slot);
+extern "C" s8* func_80157948(u16 dataId, u32 slot);
+extern "C" u32 func_8007EEF8__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* packed);
+extern "C" void func_8007F11C__Q22cf13CfGameManagerFv() {
+    for (u16 dataId = 1; dataId <= 13; ++dataId) {
+        func_8007EF4C__Q22cf13CfGameManagerFv(dataId);
+    }
+    for (u16 dataId = 1; dataId <= 11; ++dataId) {
+        func_8009EC9C(dataId);
+        for (s32 index = 0; index <= 5; ++index) {
+            if (func_801575B0(
+                    dataId, func_8007E960__Q22cf13CfGameManagerFv(index))) {
+                cf::CfGameManager* packed = func_8015783C(
+                    func_8007E960__Q22cf13CfGameManagerFv(index), dataId, 0);
+                func_801421C4(static_cast<u16>(
+                    func_8007EEF8__Q22cf13CfGameManagerFv(packed)));
+            }
+        }
+        for (s32 slot = 0; slot < 8; ++slot) {
+            if (*func_80157948(dataId, slot) > 0) {
+                func_8015783C(3, dataId, slot);
             }
         }
     }
@@ -252884,6 +253020,39 @@ extern "C" cf::UnkClass_80082D90* func_80082D90__Q22cf13CfGameManagerFv() {
         *func_8007C6B4__Q22cf13CfGameManagerFv(gameManager->unk94, 0));
 }
 
+extern "C" u8 lbl_eu_8052A7E8[];
+extern "C" u8 lbl_eu_8052FE68[];
+extern "C" void __ct__CCharEffect(void* effect);
+#pragma dont_inline on
+extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
+    Unk80338Object* result = self;
+    Unk80338Object* base = result;
+    u32 zero = 0;
+    base->field_0x4 = zero;
+    base->field_0x8 = zero;
+    base->vtable_0x0 = lbl_eu_8052AC98;
+    base->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    base->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    base->field_0x14 = zero;
+    base->field_0x18 = zero;
+    base->field_0x1C = zero;
+    __ct__CCharVoice(&base->voice_0x28);
+    result->vtable_0x0 = lbl_eu_8052A7E8;
+    result->vtable_0xC = &lbl_eu_8052A7E8[0xB4];
+    result->vtable_0x10 = &lbl_eu_8052A7E8[0xC4];
+    UnkCharEffect304* effect = &result->effect_0x68;
+    __ct__CCharEffect(effect);
+    result->field_0x36C = zero;
+    effect->vtable_0x0 = lbl_eu_8052FE68;
+    result->field_0x370 = zero;
+    result->field_0x374 = zero;
+    effect->field_0x300 = zero;
+    result->field_0x378 = zero;
+    result->field_0x37C = zero;
+    return result;
+}
+#pragma dont_inline reset
+
 extern "C" u8 lbl_eu_8052AA28[];
 extern "C" u8 lbl_eu_8052FE08[];
 extern "C" void __ct__CCharEffect(void* effect);
@@ -253062,6 +253231,7 @@ extern "C" void func_8007E864__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     }
 }
 
+#pragma dont_inline on
 extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value) {
     u32 result = 0;
     switch (value) {
@@ -253074,6 +253244,7 @@ extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value) {
     }
     return result;
 }
+#pragma dont_inline reset
 
 extern "C" UnkClass_8009ECB0* func_8009ECB0();
 extern "C" s32 func_80063560(s32 value, u32 second, u32 third);
@@ -253500,6 +253671,7 @@ extern "C" u32 func_80082EC4__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value)
 }
 
 extern "C" bool func_8006C670(cf::CfObjectMove* player);
+#pragma dont_inline on
 extern "C" bool func_80082F2C__Q22cf13CfGameManagerFv(s32 playerIndex,
                                                         bool requireFlag) {
     bool result = false;
@@ -253515,6 +253687,7 @@ extern "C" bool func_80082F2C__Q22cf13CfGameManagerFv(s32 playerIndex,
     }
     return result;
 }
+#pragma dont_inline reset
 
 extern "C" void func_80082A7C__Q22cf13CfGameManagerFv(cf::CfObjectMove* object) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
@@ -254280,7 +254453,12 @@ bool cf::CfGameManager::func_8007CBC8() {
     return (lbl_eu_80663E24 & 0x80) != 0;
 }
 
-void cf::CfGameManager::func_8007EEF8() {}
+#pragma dont_inline on
+u32 cf::CfGameManager::func_8007EEF8() {
+    const u32* packed = reinterpret_cast<const u32*>(this);
+    return *packed >> 20;
+}
+#pragma dont_inline reset
 
 #pragma dont_inline on
 void** cf::CfGameManager::func_8007F8D0() {

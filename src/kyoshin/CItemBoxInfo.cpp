@@ -431,6 +431,7 @@ void func_801E18B4(CItemBoxInfo2*);
 void func_801E1930(CItemBoxInfo2*);
 void __ct__17UnkClass_8045F564Fv(void*);
 extern void* lbl_eu_80534B28;
+extern void* lbl_eu_80534A90;
 void func_801D3FF0(void*);
 void __dl__FPv(void*);
 
@@ -862,7 +863,33 @@ CItemBoxInfo* __ct__CItemBoxInfo(CItemBoxInfo* info, u8 arg2, u16 arg3) {
     *(void**)info = (void*)&lbl_eu_80534B28;
     __ct__17UnkClass_8045F564Fv((u8*)info + 0x4);
     __ct__17UnkClass_8045F564Fv((u8*)info + 0x14);
-    for (int i = 0; i < 27; i++) *(u32*)((u8*)info + 0x24 + i * 4) = 0;
+    *(u32*)((u8*)info + 0x24) = 0;
+    *(u32*)((u8*)info + 0x28) = 0;
+    *(u32*)((u8*)info + 0x2C) = 0;
+    *(u32*)((u8*)info + 0x30) = 0;
+    *(u32*)((u8*)info + 0x34) = 0;
+    *(u32*)((u8*)info + 0x38) = 0;
+    *(u32*)((u8*)info + 0x3C) = 0;
+    *(u32*)((u8*)info + 0x40) = 0;
+    *(u32*)((u8*)info + 0x44) = 0;
+    *(u32*)((u8*)info + 0x48) = 0;
+    *(u32*)((u8*)info + 0x4C) = 0;
+    *(u32*)((u8*)info + 0x50) = 0;
+    *(u32*)((u8*)info + 0x54) = 0;
+    *(u32*)((u8*)info + 0x58) = 0;
+    *(u32*)((u8*)info + 0x5C) = 0;
+    *(u32*)((u8*)info + 0x60) = 0;
+    *(u32*)((u8*)info + 0x64) = 0;
+    *(u32*)((u8*)info + 0x68) = 0;
+    *(u32*)((u8*)info + 0x6C) = 0;
+    *(u32*)((u8*)info + 0x70) = 0;
+    *(u32*)((u8*)info + 0x74) = 0;
+    *(u32*)((u8*)info + 0x78) = 0;
+    *(u32*)((u8*)info + 0x7C) = 0;
+    *(u32*)((u8*)info + 0x80) = 0;
+    *(u32*)((u8*)info + 0x84) = 0;
+    *(u32*)((u8*)info + 0x88) = 0;
+    *(u32*)((u8*)info + 0x8C) = 0;
     *(u8*)((u8*)info + 0x90) = 0;
     *(u32*)((u8*)info + 0x94) = 0;
     *(u8*)((u8*)info + 0x98) = 0;
@@ -878,7 +905,7 @@ CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, u32 flags) {
     if (info != NULL) {
         func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x14);
         func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x4);
-        if ((s32)flags > 0) __dl__FPv(info);
+        if (flags > 0) __dl__FPv(info);
     }
     return info;
 }
@@ -886,17 +913,42 @@ CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, u32 flags) {
 void func_801D3FF0(void*) {}
 
 CItemBoxInfo2* __ct__CItemBoxInfo2(CItemBoxInfo2* info, u8 arg2, u16 arg3) {
-    *(void**)info = (void*)&lbl_eu_80534B28;
+    *(void**)info = (void*)&lbl_eu_80534A90;
     __ct__17UnkClass_8045F564Fv((u8*)info + 0x4);
     __ct__17UnkClass_8045F564Fv((u8*)info + 0x14);
-    for (int i = 0; i < 27; i++) *(u32*)((u8*)info + 0x24 + i * 4) = 0;
+    *(u32*)((u8*)info + 0x24) = 0;
+    *(u32*)((u8*)info + 0x28) = 0;
+    *(u32*)((u8*)info + 0x2C) = 0;
+    *(u32*)((u8*)info + 0x30) = 0;
+    *(u32*)((u8*)info + 0x34) = 0;
+    *(u32*)((u8*)info + 0x38) = 0;
+    *(u32*)((u8*)info + 0x3C) = 0;
+    *(u32*)((u8*)info + 0x40) = 0;
+    *(u32*)((u8*)info + 0x44) = 0;
+    *(u32*)((u8*)info + 0x48) = 0;
+    *(u32*)((u8*)info + 0x4C) = 0;
+    *(u32*)((u8*)info + 0x50) = 0;
+    *(u32*)((u8*)info + 0x54) = 0;
+    *(u32*)((u8*)info + 0x58) = 0;
+    *(u32*)((u8*)info + 0x5C) = 0;
+    *(u32*)((u8*)info + 0x60) = 0;
+    *(u32*)((u8*)info + 0x64) = 0;
+    *(u32*)((u8*)info + 0x68) = 0;
+    *(u32*)((u8*)info + 0x6C) = 0;
+    *(u32*)((u8*)info + 0x70) = 0;
+    *(u32*)((u8*)info + 0x74) = 0;
+    *(u32*)((u8*)info + 0x78) = 0;
+    *(u32*)((u8*)info + 0x7C) = 0;
+    *(u32*)((u8*)info + 0x80) = 0;
+    *(u32*)((u8*)info + 0x84) = 0;
+    *(u32*)((u8*)info + 0x88) = 0;
+    *(u32*)((u8*)info + 0x8C) = 0;
     *(u8*)((u8*)info + 0x90) = 0;
     *(u32*)((u8*)info + 0x94) = 0;
     *(u8*)((u8*)info + 0x98) = 0;
     *(u8*)((u8*)info + 0x99) = 1;
     *(u8*)((u8*)info + 0x9A) = arg2;
     *(u16*)((u8*)info + 0xAC) = arg3;
-    *(u8*)((u8*)info + 0xAE) = 0;
     func_801D3FF0((u8*)info + 0xB0);
     return info;
 }
@@ -905,7 +957,7 @@ CItemBoxInfo2* __dt__13CItemBoxInfo2Fv(CItemBoxInfo2* info, u32 flags) {
     if (info != NULL) {
         func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x14);
         func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x4);
-        if ((s32)flags > 0) __dl__FPv(info);
+        if (flags > 0) __dl__FPv(info);
     }
     return info;
 }

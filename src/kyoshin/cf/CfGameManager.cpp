@@ -855,7 +855,12 @@ bool cf::CfGameManager::func_8007CBC8() {
     return (lbl_eu_80663E24 & 0x80) != 0;
 }
 
-void cf::CfGameManager::func_8007EEF8() {}
+#pragma dont_inline on
+u32 cf::CfGameManager::func_8007EEF8() {
+    const u32* packed = reinterpret_cast<const u32*>(this);
+    return *packed >> 20;
+}
+#pragma dont_inline reset
 
 #pragma dont_inline on
 void** cf::CfGameManager::func_8007F8D0() {

@@ -38,14 +38,22 @@ struct CCol6InviteMsgBuf {
 // RetailASM: checks gCol6Invite first, allocates 0x78 bytes from work memory,
 // constructs CProcess base, sets temporary vtable, zeros callbacks, initializes
 // all fields, sets final vtable + secondary vtable ptr at 0x6C, then calls Regist.
-void* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
+__attribute__((noinline)) void* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
+    CCol6Invite* obj;
+    u32* ptmf;
+    u32 ptmfWord1;
+    u32 ptmfWord0;
+    u32 ptmfWord2;
+    u32* vtFinal;
+    u32* vtTmp;
+
     // Check if singleton already exists.
     if (gCol6Invite != nullptr) {
         return nullptr;
     }
 
     // Allocate from work memory pool.
-    CCol6Invite* obj = static_cast<CCol6Invite*>(
+    obj = static_cast<CCol6Invite*>(
         mtl::MemManager::allocate(0x78, CWorkThreadSystem::getWorkMem()));
 
     if (obj != nullptr) {
@@ -53,24 +61,31 @@ void* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
         __ct__8CProcessFv(obj);
 
         // Set temporary vtable (used during field initialization).
-        reinterpret_cast<CProcessBase*>(obj)->vtable = lbl_eu_8052D238;
+        vtTmp = (u32*)lbl_eu_8052D238;
+        ((u32*)obj)[4] = (u32)vtTmp;  // offset 0x10 / 4 = 4
 
         // Initialize callback fields from __ptmf_null (all zeros).
-        // Retail copies word 1, word 0, word 2 to mCallbackA, then word 1, word 0, word 2 to mCallbackB.
-        u32 ptmfWord1 = ((u32*)__ptmf_null)[1];
-        u32 ptmfWord0 = ((u32*)__ptmf_null)[0];
-        u32 ptmfWord2 = ((u32*)__ptmf_null)[2];
-        ((u32*)obj->mCallbackA)[0] = ptmfWord0;
-        ((u32*)obj->mCallbackA)[1] = ptmfWord1;
-        ((u32*)obj->mCallbackA)[2] = ptmfWord2;
-        ((u32*)obj->mCallbackB)[0] = ptmfWord0;
-        ((u32*)obj->mCallbackB)[1] = ptmfWord1;
-        ((u32*)obj->mCallbackB)[2] = ptmfWord2;
+        // Retail loads __ptmf_null addr once (r9), then loads word1, word0, word2
+        // and interleaves stores with field initializations.
+        ptmf = (u32*)__ptmf_null;
+        ptmfWord1 = ptmf[1];
+        vtFinal = (u32*)lbl_eu_8052FF3C;
+        ptmfWord0 = ptmf[0];
+        ((u32*)obj)[21] = 0;  // mField54 = 0
+        ((u32*)obj)[15] = ptmfWord0;  // mCallbackA[0]
+        ((u32*)obj)[22] = 0;  // mField58 = 0
+        ((u32*)obj)[16] = ptmfWord1;  // mCallbackA[1]
+        ((u32*)obj)[23] = 0;  // mField5C = 0
+        ptmfWord2 = ptmf[2];
+        ((u32*)obj)[17] = ptmfWord2;  // mCallbackA[2]
+        ptmfWord1 = ptmf[1];
+        ptmfWord0 = ptmf[0];
+        ((u32*)obj)[18] = ptmfWord0;  // mCallbackB[0]
+        ((u32*)obj)[19] = ptmfWord1;  // mCallbackB[1]
+        ptmfWord2 = ptmf[2];
+        ((u32*)obj)[20] = ptmfWord2;  // mCallbackB[2]
 
         // Initialize remaining fields to their defaults.
-        obj->mField54 = 0;
-        obj->mField58 = 0;
-        obj->mField5C = 0;
         obj->mIndex = -1;
         obj->mFlag64 = 0;
         obj->mFlag65 = 0;
@@ -79,10 +94,10 @@ void* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
         obj->mField68 = 0;
 
         // Set final CCol6Invite vtable.
-        reinterpret_cast<CProcessBase*>(obj)->vtable = lbl_eu_8052FF3C;
+        ((u32*)obj)[4] = (u32)vtFinal;  // offset 0x10
 
         // Set secondary vtable pointer: lbl_eu_8052FF3C + 0x24.
-        obj->mField6C = reinterpret_cast<u32>(lbl_eu_8052FF3C + 0x24);
+        obj->mField6C = (u32)vtFinal + 0x24;
 
         // Store constructor arguments.
         obj->mArg2 = arg2;

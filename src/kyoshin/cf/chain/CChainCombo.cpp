@@ -53,18 +53,20 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
         (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_UnkVirtualFunc132();
     CChainCombo_ArtsCategory* category =
         (CChainCombo_ArtsCategory*)holder->mArtsCategoryPtr;
+    // Load old arts type between the two category loads (load-use delay slot).
+    int oldArtsType = self->mArtsType;
     int newArtsType = category->mArtsCategory;
 
     // Reset combo count if arts type changed (but not to/from 8).
-    int resetCombo = self->mArtsType;
+    // Reuse oldArtsType as the result variable to match retail register allocation.
     if (newArtsType == 8) {
-        resetCombo = 0;
-    } else if (resetCombo == 8) {
-        resetCombo = 0;
+        oldArtsType = 0;
+    } else if (oldArtsType == 8) {
+        oldArtsType = 0;
     } else {
-        resetCombo = ((resetCombo - newArtsType) | (newArtsType - resetCombo)) >> 31;
+        oldArtsType = ((oldArtsType - newArtsType) | (newArtsType - oldArtsType)) >> 31;
     }
-    if (resetCombo != 0) {
+    if (oldArtsType != 0) {
         self->mComboCount = 0;
     }
 
@@ -78,38 +80,32 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 }
 
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
-    if (!self->mPending) {
-        self->mPending = false;
-        return;
+    // mPending guard at top; single stb at bottom matches retail structure.
+    if (self->mPending) {
+        // Call vtable[0x4c] on the sub-object at actor+0x3e9c.
+        CChainCombo_MoveBase* moveBase = (CChainCombo_MoveBase*)((u8*)actor + 0x3e9c);
+        int (*vfunc)(void*) = (int (*)(void*))moveBase->mVtbl[0x4c / 4];
+        int result = vfunc(moveBase);
+
+        void* obj = func_8016FE34(func_800B708C((BOOL)result));
+        if (obj != nullptr) {
+            // Random selection from a 3-entry table based on probability thresholds.
+            int rand = ml::math::mtRand(100);
+            int value;
+            if (rand < 5) {
+                value = lbl_eu_80538988[0];
+            } else if (rand < 25) {
+                value = lbl_eu_80538988[1];
+            } else {
+                value = lbl_eu_80538988[2];
+            }
+
+            // Call vtable[0x184] on the object.
+            CChainVObj* vobj = (CChainVObj*)obj;
+            void (*vfunc2)(void*, int) = (void (*)(void*, int))vobj->mVtbl[0x184 / 4];
+            vfunc2(vobj, value);
+            func_802A07F4(0xbf, obj);
+        }
     }
-
-    // Call vtable[0x4c] on the sub-object at actor+0x3e9c.
-    CChainCombo_MoveBase* moveBase = (CChainCombo_MoveBase*)((u8*)actor + 0x3e9c);
-    int (*vfunc)(void*) = (int (*)(void*))moveBase->mVtbl[0x4c / 4];
-    int result = vfunc(moveBase);
-
-    void* obj = func_8016FE34(func_800B708C((BOOL)result));
-    if (obj == nullptr) {
-        self->mPending = false;
-        return;
-    }
-
-    // Random selection from a 3-entry table based on probability thresholds.
-    int rand = ml::math::mtRand(100);
-    int value;
-    if (rand < 5) {
-        value = lbl_eu_80538988[0];
-    } else if (rand < 25) {
-        value = lbl_eu_80538988[1];
-    } else {
-        value = lbl_eu_80538988[2];
-    }
-
-    // Call vtable[0x184] on the object.
-    CChainVObj* vobj = (CChainVObj*)obj;
-    void (*vfunc2)(void*, int) = (void (*)(void*, int))vobj->mVtbl[0x184 / 4];
-    vfunc2(vobj, value);
-    func_802A07F4(0xbf, obj);
-
     self->mPending = false;
 }

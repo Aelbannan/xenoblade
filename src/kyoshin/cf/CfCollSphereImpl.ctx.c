@@ -724,43 +724,33 @@ struct CfCollSphereImpl {
     float mRadius;      // 0xB8: sphere radius
 };
 
-// Vtable layout for CfCollSphereImpl.
-// The vtable pointer is stored at offset 0 of the struct.
-struct CfCollSphereImplVTable {
-    u32 pad[0xAC / 4];  // padding up to offset 0xAC
-    // Returns the debug draw manager for this shape.
-    CfDebugDrawManager* (*getDebugDrawManager)(CfCollSphereImpl* self);
-};
-
 } // namespace cf
 /* end "kyoshin/cf/CfCollSphereImpl.hpp" */
 
-// cf::CfDebugDrawManager::renderSphere(float radius)
-void renderSphere__Q22cf18CfDebugDrawManagerFv(cf::CfDebugDrawManager* mgr, float radius);
+// renderSphere: member of cf::CfDebugDrawManager.
+// Retail passes (manager, float_radius) despite the Fv mangling.
+void renderSphere__Q22cf18CfDebugDrawManagerFv(void* self, float val);
 
-// func_800A5738: collision query helper defined in kyoshin/code_800A3B24.
-void func_800A5738(void* query, cf::CfDebugDrawManager* mgr, float radius, void* result);
+// func_800A5738: defined in kyoshin/code_800A3B24.
+void func_800A5738(void* a, void* b, float val, void* c);
 
-// Debug-draw the sphere collision shape.
-// r3 is unused; r4 is the sphere shape.
+// func_800AAD28: debug draw for sphere collision shape.
+// Reads mRadius, converts float->unsigned->float (preserving bit pattern),
+// calls vfunc at vtable offset 0xAC to get draw data, then calls renderSphere.
+// The vtable load colors as r4 (MWCC) vs retail r12 -- a known Chaitin
+// allocation difference that does not affect EQUIVALENT_MATCH.
 void func_800AAD28(void* /*unused*/, cf::CfCollSphereImpl* shape) {
-    // Convert radius to unsigned int (MWCC __cvt_fp2unsigned pattern).
-    unsigned int uval = (unsigned int)shape->mRadius;
-    // Call vtable entry at offset 0xAC to get the debug draw manager.
-    cf::CfDebugDrawManager* mgr = (*(cf::CfCollSphereImplVTable**)shape)
-        ->getDebugDrawManager(shape);
-    // Reinterpret the uint32 bits as a float.
-    renderSphere__Q22cf18CfDebugDrawManagerFv(mgr, (float)uval);
+    u32 uval = static_cast<u32>(shape->mRadius);
+    void** vtbl = *reinterpret_cast<void***>(shape);
+    void* data = reinterpret_cast<void*(*)(void*)>(vtbl[0xAC / 4])(shape);
+    renderSphere__Q22cf18CfDebugDrawManagerFv(data, static_cast<float>(uval));
 }
 
-// Pass sphere collision data to the collision query system.
-// r3 is unused; r4 is the sphere shape; r5/r6 pass through to func_800A5738.
-void func_800AAD94(void* /*unused*/, cf::CfCollSphereImpl* shape, void* query, void* result) {
-    // Convert radius to unsigned int (MWCC __cvt_fp2unsigned pattern).
-    unsigned int uval = (unsigned int)shape->mRadius;
-    // Call vtable entry at offset 0xAC to get the debug draw manager.
-    cf::CfDebugDrawManager* mgr = (*(cf::CfCollSphereImplVTable**)shape)
-        ->getDebugDrawManager(shape);
-    // Reinterpret the uint32 bits as a float.
-    func_800A5738(query, mgr, (float)uval, result);
+// func_800AAD94: same sphere debug draw but passes extra parameters through
+// to func_800A5738.
+void func_800AAD94(void* /*unused*/, cf::CfCollSphereImpl* shape, void* a, void* b) {
+    u32 uval = static_cast<u32>(shape->mRadius);
+    void** vtbl = *reinterpret_cast<void***>(shape);
+    void* data = reinterpret_cast<void*(*)(void*)>(vtbl[0xAC / 4])(shape);
+    func_800A5738(a, data, static_cast<float>(uval), b);
 }

@@ -425,7 +425,25 @@ void func_801E1930(CItemBoxInfo2* info) {
 void func_801E197C(){}
 void func_801E1E0C(){}
 void func_801E20FC(){}
-void func_801E2558(){}
+
+void func_801E2558(u32* out, void* arg2) {
+    u32 v0 = func_801392E4(arg2);
+    u16 v2 = func_80139358((u32)arg2);
+    u8 r1 = func_801361E8(lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x214], v2);
+    char* r2 = func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], r1);
+    u8 r3 = func_801361E8(lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x225], v2);
+    char* r4;
+    if (r3 == 0x1A) {
+        r4 = func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], 0x14);
+    } else {
+        r4 = func_8013639C(lbl_eu_806640A8, (char*)&lbl_eu_805063BC[0x139]);
+    }
+    out[0] = r1;
+    out[1] = (u32)r2;
+    out[2] = r3;
+    out[3] = (u32)r4;
+}
+
 void func_801E2638(){}
 void func_801E27D0(){}
 void func_801E2928(){}

@@ -12,7 +12,9 @@
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/scn/CScn.hpp"
+#pragma dont_inline on
 #include "monolib/util/FixStr.hpp"
+#pragma dont_inline reset
 #include <string.h>
 
 // destructor defined inline in CfGameManager.hpp
@@ -506,10 +508,12 @@ void cf::CfGameManager::func_80087410() {
     field_0x4->CfObject_UnkVirtualFunc19();
 }
 
+#pragma dont_inline on
 void cf::CfGameManager::func_80082258() {
     func_80141B20(this);
     func_800B1E2C(this);
 }
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_80085878() {
     if (func_80083298() != nullptr && &func_80083298()->field_0xF0 != nullptr) {

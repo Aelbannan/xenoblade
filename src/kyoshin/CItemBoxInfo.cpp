@@ -106,7 +106,15 @@ void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
     func_80124270(result, arg2);
 }
 
-void func_801D4C9C(){}
+void func_801D4C9C(CItemBoxInfo* info) {
+    if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
+        void* layout = info->state.layout;
+        void** vtable = *(void***)layout;
+        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform1, 0);
+        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform2, 1);
+        info->state.state = 2;
+    }
+}
 
 void func_801D4D18(CItemBoxInfo* info) {
     if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {

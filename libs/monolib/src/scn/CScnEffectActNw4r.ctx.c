@@ -6,7 +6,7 @@
 /* "libs/monolib/src/scn/CScnEffectActNw4r.cpp" line 4 "libs/monolib/src/scn/CScnItemModel.hpp" */
 /* end "libs/monolib/src/scn/CScnItemModel.hpp" */
 
-// Forward declarations for retail functions defined in CScnItemModel.cpp
+// Forward declarations for retail functions defined in other TUs
 bool func_80495E60(CScnItemModel* self);
 void func_80484E5C(CScnItemModel* self);
 void func_804838DC(CScnItemModel* self);
@@ -28,9 +28,9 @@ void func_8049BEB4(CScnEffectActNw4r* self) {
     func_804838DC(self->field_0x4);
 }
 
-// Thunk: load field_0x4 and tail-call
-void func_8049BEE4(CScnEffectActNw4r* self) {
-    func_8048315C(self->field_0x4);
+// Thunk: load field_0x4 and tail-call (forwards void* return)
+void* func_8049BEE4(CScnEffectActNw4r* self) {
+    return func_8048315C(self->field_0x4);
 }
 
 void func_8049BEEC(){}

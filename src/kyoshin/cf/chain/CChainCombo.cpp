@@ -56,14 +56,13 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     int newArtsType = category->mArtsCategory;
 
     // Reset combo count if arts type changed (but not to/from 8).
-    int oldArtsType = self->mArtsType;
-    int resetCombo;
+    int resetCombo = self->mArtsType;
     if (newArtsType == 8) {
         resetCombo = 0;
-    } else if (oldArtsType == 8) {
+    } else if (resetCombo == 8) {
         resetCombo = 0;
     } else {
-        resetCombo = ((oldArtsType - newArtsType) | (newArtsType - oldArtsType)) >> 31;
+        resetCombo = ((resetCombo - newArtsType) | (newArtsType - resetCombo)) >> 31;
     }
     if (resetCombo != 0) {
         self->mComboCount = 0;

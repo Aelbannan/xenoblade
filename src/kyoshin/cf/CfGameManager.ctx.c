@@ -251863,6 +251863,25 @@ struct ItemListManager {
     ItemListNode* sentinel;
 };
 
+struct UnkCharEffect304 {
+    void* vtable_0x0;
+    u8 field_0x4[0x300];
+};
+
+struct Unk814BCObject {
+    void* vtable_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    void* vtable_0xC;
+    void* vtable_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u32 field_0x1C;
+    u8 field_0x20[8];
+    CCharVoice voice_0x28;
+    UnkCharEffect304 effect_0x68;
+};
+
 struct Unk81B80Object {
     void* vtable_0x0;
     u32 field_0x4;
@@ -252749,9 +252768,45 @@ extern "C" void func_8007F830__Q22cf13CfGameManagerFv(void* destination,
     __ct__8009ED08(destination, itemId);
 }
 
+extern "C" u8 lbl_eu_8052AA28[];
+extern "C" u8 lbl_eu_8052FE08[];
+extern "C" void __ct__CCharEffect(void* effect);
+static inline Unk814BCObject* initializeUnk814Base(Unk814BCObject* base) {
+    base->field_0x4 = 0;
+    base->field_0x8 = 0;
+    base->vtable_0x0 = lbl_eu_8052AC98;
+    base->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    base->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    base->field_0x14 = 0;
+    base->field_0x18 = 0;
+    base->field_0x1C = 0;
+    __ct__CCharVoice(&base->voice_0x28);
+    return base;
+}
+#pragma dont_inline on
+extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self) {
+    Unk814BCObject* result = self;
+    self->field_0x4 = 0;
+    self->field_0x8 = 0;
+    self->vtable_0x0 = lbl_eu_8052AC98;
+    self->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    self->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    self->field_0x14 = 0;
+    self->field_0x18 = 0;
+    self->field_0x1C = 0;
+    __ct__CCharVoice(&self->voice_0x28);
+    result->vtable_0x0 = lbl_eu_8052AA28;
+    result->vtable_0xC = &lbl_eu_8052AA28[0xB4];
+    result->vtable_0x10 = &lbl_eu_8052AA28[0xC4];
+    UnkCharEffect304* effect = &result->effect_0x68;
+    __ct__CCharEffect(effect);
+    effect->vtable_0x0 = lbl_eu_8052FE08;
+    return result;
+}
+#pragma dont_inline reset
+
 extern "C" u32 func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
-extern "C" void* __ct__800814BC(void* memory);
 extern "C" Unk80EE4Data* func_80081990__Q22cf13CfGameManagerFv(
     const char* name, u16 index) {
     Unk80EE4Data* data = func_80080E44__Q22cf13CfGameManagerFv(name, index);
@@ -252759,7 +252814,7 @@ extern "C" Unk80EE4Data* func_80081990__Q22cf13CfGameManagerFv(
     void* memory = allocate__Q23mtl10MemManagerFUlUl(0x36C, heap);
     void* object = memory;
     if (memory != nullptr) {
-        object = __ct__800814BC(memory);
+        object = __ct__800814BC(static_cast<Unk814BCObject*>(memory));
     }
     data->vfunc_0x70(object);
     data->vfunc_0x10C(9);

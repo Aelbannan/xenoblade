@@ -1,17 +1,7 @@
-// Auto-scaffolded catalog TU for kyoshin/help/CHelp_LearnArts
-// Replace stubs with high-level C/C++ during decomp.
-
-/* "src/kyoshin/help/CHelp_LearnArts.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/help/CHelp_LearnArts.cpp" line 0 "kyoshin/help/CHelp_LearnArts.hpp" */
 #pragma once
 
-/**
- * Umbrella for auto-scaffolded kyoshin catalog TUs that lack a unit header.
- *
- * Pulls recovered VM / script-helper headers only. Plugin units with their own
- * header (ocUnit.hpp, ocBuiltin.hpp, …) should include that instead.
- */
-
-/* "src/kyoshin/harness_catalog.hpp" line 9 "types.h" */
+/* "src/kyoshin/help/CHelp_LearnArts.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -719,105 +709,503 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-/* "src/kyoshin/harness_catalog.hpp" line 10 "cstring" */
-#ifndef MSL_CPP_CSTRING_H
-#define MSL_CPP_CSTRING_H
-/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
-#ifndef MSL_STRING_H
-#define MSL_STRING_H
+/* "src/kyoshin/help/CHelp_LearnArts.hpp" line 3 "kyoshin/help/CHelp.hpp" */
+#pragma once
 
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* "src/kyoshin/help/CHelp.hpp" line 2 "types.h" */
 /* end "types.h" */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+namespace cf {
 
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-#ifndef _MSL_STRING_API_H
-#define _MSL_STRING_API_H
+// Manual interface table at CHelp+0x8 (not a C++ vptr at +0).
+struct CHelpVtbl {
+    void* mSlots[8]; // +0x00..+0x1C
+};
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+// Retail ctor writes: owner@0, param@4, vtbl@8. Base size is 0xC.
+// Construction uses retail symbol __ct__Q22cf5CHelpFv(self, owner, param).
+class CHelp {
+public:
+    void CHelp_UnkVirtualFunc2();
+    void func_802B7C68();
 
-void* __memrchr(const void* src, int val, size_t n);
+    void* mOwner; // 0x0
+    u32 mParam; // 0x4 (low byte used by UnkVirtualFunc2)
+    CHelpVtbl* mVtbl; // 0x8
+    CHelp(void* owner, u32 param);
+};
 
-#ifdef __cplusplus
-}
-#endif
+// Flag helper sharing the CHelp prefix; flag byte at +0xC.
+// CBC/CE4 keep Fv symbols via extern "C" in CHelp.cpp (arg in r4).
+class CHelpSwitch : public CHelp {
+public:
+    void func_802B7CB0();
 
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
-#ifndef _EXTRAS_H
-#define _EXTRAS_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+    u8 mFlag; // 0xC
+    u32 func_802B7CBC(u32 flag);
+    u32 func_802B7CE4(u8 flag);
+};
+
+} // namespace cf
+/* end "kyoshin/help/CHelp.hpp" */
+
+namespace cf {
+// size: 0xF
+class CHelp_LearnArts : public CHelp {
+public:
+    bool func_802B8398();
+    void func_802B84E0();
+
+    s16 mWpnTypeCount; // 0xC
+    u8 mLearnArtsFlag; // 0xE
+};
+} // namespace cf
+/* end "kyoshin/help/CHelp_LearnArts.hpp" */
+/* "src/kyoshin/help/CHelp_LearnArts.cpp" line 1 "kyoshin/cf/CfGameManager.hpp" */
+#pragma once
+
+/* "include/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
 /* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
 
-int stricmp(const char*, const char*);
+class CPad;
+class CScnNw4r;
+class CView;
+class UnkClass_80186D20;
+class CfCamEventManager;
+class UnkClass_800821F8;
+class UnkClass_80085334;
+class UnkClass_8007E864;
+class CSysWinBuff;
 
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+struct CfGameManagerData1C {
+    u8 field_0x0[0xC];
+};
 
-char* strcpy(char*, const char*);
-char* strncpy(char*, const char*, size_t);
+struct UnkClass_80083298SubF0 {
+    u8 field_0x0;
+};
 
-char* strcat(char*, const char*);
-char* strncat(char*, const char*, size_t);
+class UnkClass_80083298 {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual void vfunc_0x58();
+    virtual void vfunc_0x5C();
+    virtual void vfunc_0x60();
+    virtual void vfunc_0x64();
+    virtual void vfunc_0x68();
+    virtual void vfunc_0x6C();
+    virtual void vfunc_0x70();
+    virtual u32 vfunc_0x74();
 
-int strcmp(const char*, const char*);
-int strncmp(const char*, const char*, size_t);
+    u8 field_0x4[0xEC];
+    UnkClass_80083298SubF0 field_0xF0;
+};
 
-char* strchr(const char*, int);
-char* strstr(const char*, const char*);
+/* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
+or due to being in separate files, but compiled together in one file (unity compilation). For now,
+to make things simpler, everything exists in a single class. */
+namespace cf{
+    class CfPadData;
+    class CfObject;
+    struct CfObjectSub54;
+    class CfObjectMove;
+    //unofficial name
+    class CfGameManager{
+    public:
+        CfGameManager();
 
-size_t strlen(const char*);
+        static CfGameManager* getInstance();
+        static CfGameManager* init(CScnNw4r* spSene, CView* pView, bool arg3);
 
-void* memmove(void*, const void*, size_t);
-int memcmp(const void*, const void*, size_t);
-void* memchr(const void*, int, size_t);
+        static void func_80086B5C(int arg1, int arg2, int arg3);
+        static void enablePadFlags(u32 enableFlags, bool enable);
+        static bool func_8007E1B4();
+        static void func_8007E218();
+        static void func_8007E514(int, int, char const*, int, int);
+        static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
+        static bool func_800829B8();
+        static u32 getCurrentPadChannel();
+        static UnkClass_80083298* func_80083298();
+        static CfObjectMove* getPlayer(int playerIndex);
+        static u32 getEnabledInputFlags();
+        static bool func_80086F9C();
+        static bool func_80086F9C(s16) { return func_80086F9C(); }
+        static void setCurrentPadPtr(const CPad* pad, u32 channel);
+        static CPad* getPad(int channel);
+        static void setPad(int r3, CPad* pPad, u32 r5);
+        static CfPadData* getCfPadData();
+        static CPad* getCurrentPad();
 
-void* memcpy(void* dest, const void* src, size_t n);
-void* memset(void* dest, int val, size_t count);
+        static bool checkUnkFlag(int bit){
+            return sUnkFlags & (1 << bit);
+        }
 
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "string.h" */
-#ifdef __cplusplus
+        static void setUnkFlag(int bit, bool state){
+            if(state == true) sUnkFlags |= (1 << bit);
+            else sUnkFlags &= ~(1 << bit);
+        }
 
-namespace std {
-using ::__memrchr;
-using ::memchr;
-using ::memcmp;
-using ::memcpy;
-using ::memmove;
-using ::memset;
-using ::strcat;
-using ::strchr;
-using ::strcmp;
-using ::strcpy;
-using ::stricmp;
-using ::strlen;
-using ::strncat;
-using ::strncmp;
-using ::strncpy;
-using ::strstr;
-} // namespace std
+        u32 unk0;
+        CfObject* field_0x4;
+        u32 mObjectFlags;
+        u8 field_0xC[0xC];
+        u16 field_0x18;
+        u8 field_0x1A[2];
+        CfGameManagerData1C field_0x1C;
+        u8 unk28;
+        u8 unk29[0x40 - 0x29];
+        u16* field_0x40;
+        s32 field_0x44;
+        s32 field_0x48;
+        s32 field_0x4C;
+        u8 field_0x50[0x18];
+        u32 unk68;
+        u8 unk6C;
+        u8 unk6D[3];          // 0x6D-0x6F
+        u32 unk70;             // 0x70-0x73
+        u8 unk74[8];           // 0x74-0x7B
+        u32 unk7C;
+        u8 unk80[0x86 - 0x80];
+        u16 field_0x86;
+        u8 field_0x88[0x8C - 0x88];
+        s32 unk8C;
+        UnkClass_80083298* unk90;
+        //between CObjectParam - CfObjectMove
+        //likely player character object array, seems to always store pointers
+        //to CfObjectPc objects except pointing at the 4th vtable
+        CfObjectMove* unk94[3];
+        u32 unkA0;
+        UnkClass_80186D20* field_0xA4;
+        UnkClass_8007E864* unkA8;
+        UnkClass_80085334* unkAC;
+        UnkClass_800821F8* unkB0;
+        CfCamEventManager* unkB4;
 
-#endif
-#endif
-/* end "cstring" */
+        static u32 sUnkFlags;
+        static CScnNw4r* spScene;
+public:
+    void func_8007C0F8();
+    void func_8007C140();
+    void func_8007C188(unsigned long flags);
+    void func_8007C198();
+    void func_8007C2F4();
+    void func_8007C344();
+    void func_8007C360();
+    void func_8007C374();
+    void func_8007C4B4();
+    virtual ~CfGameManager() {}
+    void func_8007C5B8();
+    cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
+    void func_8007C6C0();
+    void func_8007C8C8();
+    bool func_8007CBC8();
+    void func_8007CBD4();
+    void func_8007CBEC();
+    void func_8007CDA8();
+    void func_8007CE94();
+    void func_8007CF64() const;
+    void func_8007D190(unsigned long flags);
+    void func_8007D1A0();
+    void func_8007D794();
+    void func_8007D7A4();
+    void func_8007D834();
+    void func_8007D84C();
+    void func_8007DA00();
+    void func_8007DA0C();
+    void func_8007DCA8();
+    void func_8007DCB8();
+    void func_8007DE94();
+    void func_8007DECC();
+    u16 func_8007E030();
+    void func_8007E038();
+    CfObject** func_8007E0C8();
+    void func_8007E0D0();
+    void func_8007E4CC();
+    void func_8007E4DC();
+    void func_8007E864();
+    void func_8007E908();
+    void func_8007E960();
+    void func_8007E9CC();
+    void func_8007EEE0();
+    void func_8007EEF0();
+    void func_8007EEF8();
+    void func_8007EF04();
+    void func_8007EF44();
+    void func_8007EF48();
+    void func_8007EF4C();
+    void func_8007F044();
+    void func_8007F054();
+    void func_8007F0A4();
+    void func_8007F0AC();
+    void func_8007F0C4();
+    void func_8007F114();
+    void func_8007F11C();
+    void func_8007F1FC();
+    void func_8007F830();
+    void func_8007F8B8();
+    void func_8007F8C0();
+    void func_8007F8D0();
+    void func_8007F8DC();
+    void func_8007F8F4();
+    void func_8007F900();
+    bool func_8007F91C();
+    void func_8007F990();
+    void func_8007F9AC();
+    void func_8007F9B4();
+    void func_8007F9BC();
+    void func_8007F9C4();
+    void func_8007FBFC();
+    void func_8007FC2C();
+    void func_8007FC5C();
+    void func_8007FD00();
+    void func_8007FD8C();
+    void func_8007FE18();
+    void func_8007FE1C();
+    void func_8007FE20();
+    void func_8007FE24();
+    void func_8007FE2C();
+    void func_8007FECC();
+    void func_8007FF6C();
+    void func_8008064C();
+    void func_800807BC();
+    void func_80080888();
+    void func_80080E20();
+    void func_80080E28();
+    void func_80080E30();
+    void func_80080E44();
+    void func_80080EE4();
+    void func_80080F40();
+    void func_80080F44();
+    void func_80080F48();
+    void func_80081258();
+    void func_80081264();
+    void func_8008126C();
+    void func_80081274();
+    void func_8008127C();
+    void func_80081284();
+    void func_8008128C();
+    void func_80081294();
+    void func_8008129C();
+    void func_800812A4();
+    void func_800812AC();
+    void func_800812B4();
+    void func_800812BC();
+    void func_800812C4();
+    void func_800812CC();
+    void func_800812D4();
+    void func_800812DC();
+    void func_800812E4();
+    void func_800812EC();
+    void func_800812F4();
+    void func_80081318();
+    void func_80081330();
+    void func_80081338();
+    void func_80081340();
+    void func_80081348();
+    void func_80081350();
+    void func_80081358();
+    void func_80081694();
+    void func_800817A8();
+    void func_800817B0();
+    void func_800817BC();
+    void func_80081874();
+    void func_8008187C();
+    void func_80081900();
+    void func_80081988();
+    void func_80081990();
+    void func_80081A24();
+    void func_80081A40();
+    void func_80081CA0();
+    void func_80081CB0();
+    void func_80081CB8();
+    void func_80081CBC();
+    void func_80081D2C();
+    void func_80081D88();
+    void func_80081D8C();
+    void func_80081DD8();
+    void func_80081E90();
+    void func_80081F28();
+    void func_80081F90();
+    void func_80082008();
+    void func_80082060();
+    void func_80082088();
+    bool func_80082104();
+    void func_8008212C();
+    UnkClass_800821F8* func_800821F8();
+    CfObject* func_8008221C();
+    void func_80082254();
+    void func_80082258();
+    void func_8008228C();
+    void func_800822FC();
+    void func_80082354();
+    void func_8008235C();
+    void func_800823A4();
+    void func_80082418();
+    void func_800824FC();
+    void func_80082544();
+    void func_80082568();
+    void func_80082614();
+    void func_8008261C();
+    bool func_80082680();
+    void func_80082694();
+    void func_8008269C();
+    void func_800826F0();
+    void func_80082768();
+    u16 func_80082770();
+    void func_800827A8();
+    void func_800827E4();
+    void func_80082834();
+    u32 func_800828DC();
+    u32 func_80082900();
+    void func_80082940();
+    void func_8008294C();
+    void func_80082A0C();
+    void func_80082A7C();
+    void func_80082B38();
+    void func_80082C48();
+    void func_80082D90();
+    void func_80082E50();
+    void func_80082EC0();
+    void func_80082EC4();
+    void func_80082F2C();
+    void func_80082FCC();
+    void func_80082FE4();
+    void func_80083100();
+    void func_8008310C();
+    void func_80083118();
+    void func_80083284();
+    void func_80083290();
+    void func_800832BC();
+    void func_80083304();
+    void func_80083328();
+    void func_80083458();
+    void func_80083460();
+    void func_80083468();
+    void func_80083470();
+    bool func_80083538();
+    bool func_80083544();
+    void func_80083550();
+    void func_80083560();
+    void func_800835FC();
+    void func_8008360C();
+    void func_80083718();
+    void func_8008372C();
+    void func_80083878();
+    void func_80083888();
+    void func_800838F4();
+    void func_80083C70();
+    void func_80083C78();
+    void func_80083CC8();
+    void func_80083CD8();
+    void func_80083D50();
+    void func_80083D70();
+    void func_80083DEC();
+    void func_80083EA4();
+    void func_80083F28();
+    void func_8008402C();
+    void func_8008413C();
+    void func_80084654();
+    void func_80084A00();
+    void func_80084AD4();
+    bool func_80084B68();
+    bool func_80084BAC();
+    bool func_80084BF4();
+    void func_80084C10();
+    void func_80084CA4();
+    void func_80084F50();
+    void func_80085220();
+    void func_80085248();
+    void func_80085334();
+    void func_800853C8();
+    void func_8008566C();
+    void func_80085838();
+    bool func_80085840();
+    bool func_8008585C();
+    void func_80085878();
+    void func_800858B8();
+    void func_80085978();
+    void func_80085E58();
+    void func_80085FB8();
+    void func_800862D0();
+    void func_800863F4();
+    void func_80086490();
+    void func_800865E8();
+    void func_800866A0();
+    void func_8008670C();
+    void func_80086778();
+    void func_80086B04();
+    void func_80086B08();
+    void func_80086B0C();
+    void func_80086B10();
+    void func_80086B14();
+    void func_80086B18();
+    void func_80086B1C();
+    void func_80086B24();
+    void func_80086B2C();
+    void func_80086B34();
+    void func_80086B3C();
+    void func_80086B44();
+    void func_80086B48();
+    void func_80086D90();
+    void func_80086D94();
+    void func_80086D98();
+    void func_80086D9C();
+    u32 func_80086DA0();
+    void func_80086DA4();
+    void func_80086DA8();
+    void func_80086DAC();
+    void func_80086DB0();
+    void func_80086DB4();
+    u32 func_80086DBC();
+    void func_80086E6C();
+    bool func_80087244();
+    bool func_80087250();
+    void func_80087280();
+    void func_80087330();
+    void func_80087334();
+    void func_80087348();
+    void func_80087364();
+    void func_80087378();
+    void func_80087390();
+    void func_800873AC();
+    CfObjectSub54* func_800873C8();
+    void func_800873D4();
+    void func_800873E8();
+    void func_800873FC();
+    void func_80087410();
+    u32 func_80087424();
+    void func_8008742C();
+    void func_8008743C();
+    void func_80087448();
+    }; //size = 0xB8
+} // namespace cf
+/* end "kyoshin/cf/CfGameManager.hpp" */
+/* "src/kyoshin/help/CHelp_LearnArts.cpp" line 2 "kyoshin/plugin/ocBdat.hpp" */
+#pragma once
 
-/* "src/kyoshin/harness_catalog.hpp" line 12 "monolib/vm/yvm2.h" */
+/* "src/kyoshin/plugin/ocBdat.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
 #pragma once
 
 /* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
@@ -1267,50 +1655,63 @@ void vmHalt();
 }
 #endif
 /* end "monolib/vm/yvm2.h" */
-/* "src/kyoshin/harness_catalog.hpp" line 13 "kyoshin/code_801862C0.hpp" */
-#pragma once
-
-/**
- * Script / OC instance helpers (unit kyoshin/code_801862C0).
- * Names are still placeholder ``func_*`` until symbol recovery; signatures
- * match observed call sites in plugin TUs (VMThread in, OC object out).
- */
-
-/* "src/kyoshin/code_801862C0.hpp" line 8 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/code_801862C0.hpp" line 9 "monolib/vm/yvm2.h" */
-/* end "monolib/vm/yvm2.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* func_801862C0(VMThread* pThread);
-void* func_801862E0(void* p);
-void* func_801863F4(void* p);
-void* func_80186460(void* p);
-void* func_80186474(void* p);
-void* func_801864DC(void* pObj, int slot);
-void* func_80186664(void* p);
-void* func_801866F0(void* p);
-void* func_80186A70(void* p);
-void* func_80186BC8(void* p);
-void* func_80186C7C(void* p);
-void* func_80186D20(void* p);
-
-#ifdef __cplusplus
-}
-#endif
-/* end "kyoshin/code_801862C0.hpp" */
-/* "src/kyoshin/harness_catalog.hpp" line 14 "kyoshin/plugin/ocBdat.hpp" */
-#pragma once
-
-/* "src/kyoshin/plugin/ocBdat.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
-/* end "monolib/vm/yvm2.h" */
 
 void* getFP(const char* pName);
+
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
 
 // Utility class for handling bdat files.
 class CBdat {
@@ -1335,8 +1736,63 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
-/* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" void func_802B8398__Q22cf15CHelp_LearnArtsFv() {}
+struct CHelpFlagBag {
+    u8 pad[0x16];
+    u8 mLearnArtsFlag; // +0x16
+};
 
-extern "C" void func_802B84E0__Q22cf15CHelp_LearnArtsFv(void) {}
+extern "C" CHelpFlagBag* lbl_eu_80664A10;
+extern "C" void* lbl_eu_806640F4;
+extern "C" UNKWORD func_80122450();
+extern "C" u8 func_8012246C();
+extern "C" u32 func_801B481C();
+extern "C" void* func_8009EC9C(u16 index);
+extern "C" bool func_801F9268(unsigned char* p, int i, int j);
+
+namespace cf {
+bool CHelp_LearnArts::func_802B8398() {
+    if (cf::CfGameManager::func_800829B8()) {
+        return false;
+    }
+    if (lbl_eu_80664A10->mLearnArtsFlag == 0) {
+        return false;
+    }
+    if (func_80122450() != 0) {
+        mLearnArtsFlag = func_8012246C();
+        return false;
+    }
+    if (func_801B481C() != 0) {
+        mLearnArtsFlag = 0;
+        return false;
+    }
+    if (mLearnArtsFlag != 0) {
+        return false;
+    }
+    lbl_eu_80664A10->mLearnArtsFlag = 0;
+    const char* columnName = "wpn_type";
+    s16 threshold = mWpnTypeCount;
+    for (s16 character = 1; character <= 12; character++) {
+        void* charData = func_8009EC9C((u16)character);
+        u16 wpnType = *(u16*)((u8*)charData + 0xC);
+        const char* strResult = CBdat::getBdatStringColumnValue(lbl_eu_806640F4, columnName, wpnType);
+        u8 byteVal = (u8)(u32)strResult;
+        u8* artsBase = (u8*)charData + 0xE8;
+        int bound = (character == 1) ? 8 : 16;
+        int counter = 0;
+        for (int j = 0; j < bound; j++) {
+            if (func_801F9268(artsBase, byteVal, j)) {
+                counter++;
+            }
+        }
+        if (threshold > counter) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void CHelp_LearnArts::func_802B84E0() {
+    mLearnArtsFlag = 0;
+}
+} // namespace cf

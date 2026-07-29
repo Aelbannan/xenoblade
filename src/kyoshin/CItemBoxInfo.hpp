@@ -11,7 +11,7 @@ struct CItemBoxInfoState {
     UnkClass_8045F564 memRegion2;   // 0x14
     void* fileHandle1;              // 0x24 - CFileHandle
     void* fileHandle2;              // 0x28 - CFileHandle
-    u8 _2C[0x04];
+    void* arcResourceAccessor;     // 0x2C - nw4r::lyt::ArcResourceAccessor
     void* resource;
     void* layout;
     void* animTransform1;   // 0x38 - nw4r::lyt::AnimTransform

@@ -49,7 +49,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc19();
     void CfObject_UnkVirtualFunc22();
     void CfObject_UnkVirtualFunc20();
-    void CfObject_UnkVirtualFunc23();
+    u32 CfObject_UnkVirtualFunc23();
     void CfObject_UnkVirtualFunc27();
     void CfObject_UnkVirtualFunc29();
     void CfObject_UnkVirtualFunc32();
@@ -64,7 +64,7 @@ namespace cf {
     void CObjectParam_UnkVirtualFunc2();
     void CfObject_UnkVirtualFunc66();
     void CfObject_UnkVirtualFunc67();
-    void CfObject_UnkVirtualFunc70();
+    void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc69();
     void CfObject_UnkVirtualFunc68();
     void CfObject_UnkVirtualFunc24();

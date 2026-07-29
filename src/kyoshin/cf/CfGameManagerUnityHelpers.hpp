@@ -183,8 +183,25 @@ extern "C" void CfObject_UnkVirtualFunc32__Q22cf8CfObjectFv(cf::CfObject* object
     object->mField4C = value * lbl_eu_8066A210;
 }
 
-extern "C" void func_80080E30__Q22cf13CfGameManagerFv(Unk82FCCData* data, u32 mask) {
-    data->flags_0x68 &= ~(mask & ~0x40000000);
+#pragma dont_inline on
+extern "C" void func_80080E30__Q22cf13CfGameManagerFv(cf::CfObject* data, u32 mask) {
+    data->mFlags68 &= ~(mask & ~0x40000000);
+}
+#pragma dont_inline reset
+
+extern const float lbl_eu_80666538;
+extern "C" void func_800BC3B0(cf::CfObjectMove* player, float value);
+extern "C" void func_8007FD00__Q22cf13CfGameManagerFv(u32 value);
+extern "C" void func_80083EA4__Q22cf13CfGameManagerFv() {
+    for (s32 i = 0; i < 3; ++i) {
+        cf::CfObjectMove* player = cf::CfGameManager::getPlayer(i);
+        if (player != nullptr) {
+            func_80080E30__Q22cf13CfGameManagerFv(player, 0x10000000);
+            player->CfObject_UnkVirtualFunc70(lbl_eu_8066649C);
+            func_800BC3B0(player, lbl_eu_80666538);
+        }
+    }
+    func_8007FD00__Q22cf13CfGameManagerFv(28);
 }
 
 extern "C" void func_800838F4__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 second,

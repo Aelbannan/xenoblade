@@ -317,7 +317,7 @@ void cf::CfObjectMove::setBit6c9(unsigned long bit) {
     mFlags6C9 = __rlwimi(val, bit, 0, 31, 31);
 }
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc70() {}
+void cf::CfObjectMove::CfObject_UnkVirtualFunc70(float value) {}
 
 cf::CfObjectMove* cf::CfObjectMove::testFlag8() {
     if (this != NULL && (unk64 & 8) != 0) {

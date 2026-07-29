@@ -121,7 +121,7 @@ void cf::CfObjectModel::CfObject_UnkVirtualFunc66() {}
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc67() {}
 
-void cf::CfObjectModel::CfObject_UnkVirtualFunc70() {}
+void cf::CfObjectModel::CfObject_UnkVirtualFunc70(float value) {}
 
 void CfObject_UnkVirtualFunc72__Q22cf13CfObjectModelFv(void* self, float val) { *(float*)((u8*)self + 0xa4) = val; }
 

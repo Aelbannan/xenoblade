@@ -256,19 +256,38 @@ void* RomFont::Unload() {
 bool RomFont::HasGlyph(u16 ch) const {
     switch (mFontEncode) {
     case 0:
-        if (ch >= 0x20 && ch <= 0xFF) {
-            return true;
+        if (ch < 0x20) {
+            return false;
         }
-        return false;
+        if (ch > 0xFF) {
+            return false;
+        }
+        return true;
 
-    case 1:
-        if (IsSJISHalfWidthChar(ch)) {
+    case 1: {
+        bool valid = false;
+
+        if (ch <= 0xFF) {
+            if (ch >= 0x20 && ch <= 0x7E) {
+                valid = true;
+            } else if (ch >= 0xA1 && ch <= 0xDF) {
+                valid = true;
+            }
+        }
+
+        if (valid) {
             return true;
         }
-        if (IsSJISFullWidthChar(ch)) {
+
+        u8 hi = ch >> 8;
+        u8 lo = ch & 0xFF;
+
+        if (hi >= 0x81 && hi <= 0x98 && lo >= 0x40 && lo <= 0xFC) {
             return true;
         }
+
         return false;
+    }
 
     default:
         return false;

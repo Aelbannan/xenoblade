@@ -35,7 +35,7 @@ public:
     void CfObject_UnkVirtualFunc73();
     void CfObject_UnkVirtualFunc72();
     void CfObject_UnkVirtualFunc71();
-    void CfObject_UnkVirtualFunc70();
+    void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc69();
     void CfObject_UnkVirtualFunc62();
     void CfObject_UnkVirtualFunc61();

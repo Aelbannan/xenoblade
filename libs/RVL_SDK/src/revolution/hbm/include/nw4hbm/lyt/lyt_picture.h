@@ -63,7 +63,7 @@ public:
 
     virtual void Append(TPLPalette* pPalette);   // at 0x64
     virtual void Append(const GXTexObj& rTexObj); // at 0x68
-    virtual void Append(const TexMap& rTexMap);   // at 0x74
+    void Append(const TexMap& rTexMap);           // at 0x6C
 
 protected:
     ut::Color mVtxColors[VERTEXCOLOR_MAX]; // at 0xD4

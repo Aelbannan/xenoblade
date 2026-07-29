@@ -18,6 +18,10 @@ u32 func_8026178C(void*, u32);
 u32 func_8025FB10(void*, u32);
 void func_80124270(void*, void*);
 void func_80127BD8(void*, float*);
+void func_801390E0__FPP11CFileHandle(void*);
+void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
+void func_8045F778__17UnkClass_8045F564Fv(void*);
+
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
 void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
@@ -109,6 +113,25 @@ void func_801D4054(CItemBoxInfo* info) {
     info->state.fileHandle2 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0xa6], info, 0, 0);
     setHandleFlag1__11CDeviceFileFP11CFileHandle(info->state.fileHandle2);
 }
+void func_801D4174(CItemBoxInfo* info) {
+    func_801390E0__FPP11CFileHandle(&info->state.fileHandle1);
+    func_801390E0__FPP11CFileHandle(&info->state.fileHandle2);
+    info->state.active = 0;
+    if (info->state.layout != 0) {
+        void** vtable = *(void***)info->state.layout;
+        ((void(*)(void*, u32))vtable[2])(info->state.layout, 1);
+        info->state.layout = 0;
+    }
+    info->state.animTransform1 = 0;
+    info->state.animTransform2 = 0;
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.arcResourceAccessor);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.resource);
+    info->state.arcResourceAccessor = 0;
+    info->state.resource = 0;
+    func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion1);
+    func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion2);
+}
+
 void func_801D40C4(){}
 
 
@@ -304,7 +327,24 @@ void CItemBoxInfo2::drawItemBox2Layout(nw4r::lyt::DrawInfo* drawInfo) {
     }
 }
 
-void func_801E13F8(){}
+void func_801E13F8(CItemBoxInfo2* info) {
+    func_801390E0__FPP11CFileHandle(&info->state.fileHandle1);
+    func_801390E0__FPP11CFileHandle(&info->state.fileHandle2);
+    info->state.active = 0;
+    if (info->state.layout != 0) {
+        void** vtable = *(void***)info->state.layout;
+        ((void(*)(void*, u32))vtable[2])(info->state.layout, 1);
+        info->state.layout = 0;
+    }
+    info->state.animTransform1 = 0;
+    info->state.animTransform2 = 0;
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(info->state.arcResourceAccessor);
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(&info->state.resource);
+    info->state.arcResourceAccessor = 0;
+    info->state.resource = 0;
+    func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion1);
+    func_8045F778__17UnkClass_8045F564Fv(&info->state.memRegion2);
+}
 
 u8 CItemBoxInfo2::getItemBox2State() {
     return state.current;

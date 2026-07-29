@@ -20,6 +20,7 @@ extern void* func_80157C4C(u8, s16);
 extern u32 func_801392E4(u32);
 extern u32 func_801361E8(u32, const char*, u32);
 extern u32 func_80139358(u32);
+extern void* CItem_initItemImplInstances(void*);
 u8 func_801C67F8(CItemBoxGridFull* self);
 u8 func_801C6840(CItemBoxGridFull* self);
 
@@ -254,7 +255,20 @@ int LookupIndexedByte(char* obj) {
     return *(unsigned char*)((char*)obj + off + 0x28a5);
 }
 
-void func_801C68A0(){}
+// Iterate entries and init item instances.
+void func_801C68A0(CItemBoxGridFull* self) {
+    u32 i;
+    for (i = 0; i < self->field_2800; i++) {
+        u8* entry = (u8*)self + i * 10;
+        if (entry[8] != 0) continue;
+        s16 val = *(s16*)entry;
+        void* obj = func_80157C4C(self->field_2802, val);
+        if (!obj || !*(u32*)obj) continue;
+        void* inst = CItem_initItemImplInstances(obj);
+        void** vtbl = *(void***)inst;
+        ((void(*)(void*, void*))vtbl[4])(inst, obj);
+    }
+}
 
 void func_801C6938(){}
 
@@ -309,7 +323,31 @@ void func_801C87CC(){}
 
 void func_801C88B0(){}
 
-void func_801C8994(){}
+// Bubble-sort entries using item comparison.
+void func_801C8994(CItemBoxGridFull* self) {
+    u32 i;
+    for (i = 0; i < self->field_2800 - 1; i++) {
+        u32 j;
+        int swapped = 0;
+        u32 limit = self->field_2800 - 1 - i;
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            s16 val1 = *(s16*)e1;
+            s16 val2 = *(s16*)e2;
+            void* obj1 = func_80157C4C(self->field_2802, val1);
+            void* obj2 = func_80157C4C(self->field_2802, val2);
+            u16 w1 = *(u16*)((u8*)obj1 + 4);
+            u16 w2 = *(u16*)((u8*)obj2 + 4);
+            if (w1 <= w2) continue;
+            // Swap entries
+            u8 tmp[9];
+            // CopyEntry9Bytes
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
 void func_801C8ACC(){}
 

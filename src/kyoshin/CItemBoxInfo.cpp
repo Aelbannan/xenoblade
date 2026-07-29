@@ -21,6 +21,14 @@ void func_80127BD8(void*, float*);
 void func_801390E0__FPP11CFileHandle(void*);
 void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(void*);
 void func_8045F778__17UnkClass_8045F564Fv(void*);
+u32 func_801361E8(void*, char*, u32);
+char* func_80136190(char*, char*, u32);
+char* func_8013639C(void*, char*);
+u16 func_80139358(u32);
+u32 func_801392E4(void*);
+extern void* lbl_eu_80664104;
+extern void* lbl_eu_806640A8;
+extern void* lbl_eu_806640F8;
 
 u32 getHandleMEM2__Q23mtl10MemManagerFv();
 void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
@@ -181,7 +189,25 @@ void func_801D4DE0(CItemBoxInfo* info) {
 void func_801D4E2C(){}
 void func_801D5274(){}
 void func_801D5564(){}
-void func_801D59C0(){}
+
+void func_801D59C0(u32* out, void* arg2) {
+    u32 v0 = func_801392E4(arg2);
+    u16 v2 = func_80139358((u32)arg2);
+    u8 r1 = func_801361E8(lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x214], v2);
+    char* r2 = func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], r1);
+    u8 r3 = func_801361E8(lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x225], v2);
+    char* r4;
+    if (r3 == 0x1A) {
+        r4 = func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], 0x14);
+    } else {
+        r4 = func_8013639C(lbl_eu_806640A8, (char*)&lbl_eu_805063BC[0x139]);
+    }
+    out[0] = r1;
+    out[1] = (u32)r2;
+    out[2] = r3;
+    out[3] = (u32)r4;
+}
+
 void func_801D5AA0(){}
 void func_801D5C38(){}
 void func_801D5DA4(){}
@@ -287,15 +313,6 @@ u32 func_801E92B8(void* dummy, u8 arg1) {
     return 0;
 }
 
-u32 func_801361E8(void*, char*, u32);
-char* func_80136190(char*, char*, u32);
-char* func_8013639C(void*, char*, u16);
-u16 func_80139358(u32);
-u32 func_801392E4(void*);
-extern void* lbl_eu_80664104;
-extern void* lbl_eu_806640A8;
-extern void* lbl_eu_806640F8;
-extern void* lbl_eu_806640F8;
 
 u32 func_801DFDC0(void* dummy, u32 arg1, void* arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;

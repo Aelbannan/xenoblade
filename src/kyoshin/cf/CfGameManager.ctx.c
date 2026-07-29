@@ -251764,6 +251764,8 @@ FixStr<64>::FixStr() {
 #pragma dont_inline reset
 }
 
+extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
+
 union UnkWordFloat {
     u32 bits;
     float value;
@@ -252295,7 +252297,6 @@ extern "C" s32 func_80082768__Q22cf13CfGameManagerFv(const cf::CfGameManager* qu
     return queue->field_0x48;
 }
 #pragma dont_inline reset
-extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
 extern "C" bool func_80087250__Q22cf13CfGameManagerFv();
 extern "C" bool func_80082680__Q22cf13CfGameManagerFv();
 extern "C" void func_8008261C__Q22cf13CfGameManagerFv(u32 value, bool enable) {
@@ -252461,17 +252462,48 @@ extern "C" u32 func_8007E038__Q22cf13CfGameManagerFv(u32 value, bool searchEntri
         UnkClass_8009ECB0* data = func_8009ECB0();
         s32* entry = &data->entries_0x4[0];
         for (u32 i = 0; i < 7; ++i, ++entry) {
-            if (*entry != static_cast<s32>(value)) {
-                continue;
+            if (*entry == static_cast<s32>(value)) {
+                s32 fallback = -1;
+                return func_8007DECC__Q22cf13CfGameManagerFv(
+                    value, &fallback, sizeof(fallback));
             }
-            s32 fallback = -1;
-            return func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback,
-                                                         sizeof(fallback));
         }
-        return 0;
+    } else {
+        s32 fallback = -1;
+        return func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback,
+                                                     sizeof(fallback));
     }
+    return 0;
+}
+
+extern "C" u32 func_800822F4__Q22cf13CfGameManagerFv();
+extern "C" void func_8007E0D0__Q22cf13CfGameManagerFv(bool alternate) {
+    UnkClass_8009ECB0* data = func_8009ECB0();
+    s32* entry = &data->entries_0x4[0];
+    s32 start = 0;
+    u32 size = 4;
+    if (alternate || (lbl_eu_80663E24 & 0x400000) != 0) {
+        start = 3;
+        size = 6;
+    }
+    lbl_eu_80663E28 &= ~0x8000;
     s32 fallback = -1;
-    return func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback, sizeof(fallback));
+    u32 count = func_800822F4__Q22cf13CfGameManagerFv();
+    entry += start;
+    for (s32 i = start; i < 7; ++i, ++entry) {
+        s32 value = *entry;
+        if (value > 0) {
+            if (value <= 13) {
+                if (value == 3 && count >= 42) {
+                    continue;
+                }
+                if (value == 8 && count < 42) {
+                    continue;
+                }
+                func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback, size);
+            }
+        }
+    }
 }
 
 extern "C" bool func_8009E344(UnkClass_8009ECB0* object, u32 value, s32* firstOut,

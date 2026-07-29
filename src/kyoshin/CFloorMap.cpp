@@ -164,7 +164,7 @@ void func_80247490(){}
 void func_8024808C(void* self, void* arg2) {
     extern void func_8003AA34();
     extern void* getFP__FPCc(const char*);
-    extern u32 func_801361E8(const char*, const char*, u32);
+    extern u32 func_801361E8(void*, char*, u32);
     extern u32 func_8009CF8C(u32);
     extern void func_80141DC4(f32*);
     extern s16 func_80136330(u32, const char*, u32);
@@ -181,10 +181,10 @@ void func_8024808C(void* self, void* arg2) {
     if (!func_8009CF8C(0x20C8)) return;
     f32 buf[3];
     func_80141DC4(buf);
-    u8 count = func_8003B1EC(fp);
+    u8 count = func_8003B1EC((u32)fp);
     u8 r26 = 0;
     for (u8 i = 1; i <= count; i++) {
-        s16 val = func_80136330(fp, &lbl_eu_8050BEA8[0x15A], i);
+        s16 val = func_80136330((u32)fp, &lbl_eu_8050BEA8[0x15A], i);
         if ((f32)(s16)val > buf[1]) {
             if (i == p[0x0C]) { r26 = 1; break; }
         }
@@ -199,7 +199,10 @@ void func_8024830C(void* self, void* arg2) {
     extern s16 func_80136330(u32, const char*, u32);
     extern u32 func_8009CF8C(u32);
     extern void func_80141DC4(f32*);
-    extern void func_801361E8(const char*, const char*, u32);
+    extern u32 func_801361E8(const char*, const char*, u32);
+    extern u32 lbl_eu_80664184;
+    extern u32 lbl_eu_806640A8;
+    extern u8 lbl_eu_8050B798;
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f32 lbl_eu_8066877C;
@@ -704,7 +707,7 @@ void func_8024F1FC(void* self, u32 arg2) {
         0x624, 0x634, 0x634, 0x644, 0x654, 0x664, 0x674, 0x684,
         0x634, 0x644, 0x654, 0x664
     };
-    lbl_eu_8066479C = getFP__FPCc(&lbl_eu_8050BEA8[strs[arg2]]);
+    lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[strs[arg2]]);
 }
 
 u32 func_8024F538(void* self) {

@@ -1,10 +1,10 @@
 // Auto-scaffolded catalog TU for kyoshin/CCol6System
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
-/* "src/kyoshin/CCol6System.cpp" line 3 "kyoshin/CCol6CheckBat.hpp" */
+/* "src/kyoshin/CCol6System.cpp" line 3 "kyoshin/CCol6System.hpp" */
 #pragma once
 
-/* "src/kyoshin/CCol6CheckBat.hpp" line 2 "types.h" */
+/* "src/kyoshin/CCol6System.hpp" line 2 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -711,6 +711,11 @@ enum { FALSE, TRUE };
 typedef int BOOL;
 
 #endif
+/* end "types.h" */
+/* "src/kyoshin/CCol6System.hpp" line 3 "kyoshin/CCol6CheckBat.hpp" */
+#pragma once
+
+/* "src/kyoshin/CCol6CheckBat.hpp" line 2 "types.h" */
 /* end "types.h" */
 /* "src/kyoshin/CCol6CheckBat.hpp" line 3 "monolib/work/CProcess.hpp" */
 #pragma once
@@ -12408,7 +12413,7 @@ public:
 // Singleton instance pointer (lbl_eu_80664230 in retail).
 extern CCol6CheckBat* gCol6CheckBat;
 /* end "kyoshin/CCol6CheckBat.hpp" */
-/* "src/kyoshin/CCol6System.cpp" line 4 "kyoshin/CCol6Invite.hpp" */
+/* "src/kyoshin/CCol6System.hpp" line 4 "kyoshin/CCol6Invite.hpp" */
 #pragma once
 
 /* "src/kyoshin/CCol6Invite.hpp" line 2 "types.h" */
@@ -12456,11 +12461,6 @@ extern CCol6Invite* gCol6Invite;
 // Standalone string formatting helper.
 void func_eu_801651A0(char* buffer, const char* format, ...);
 /* end "kyoshin/CCol6Invite.hpp" */
-/* "src/kyoshin/CCol6System.cpp" line 5 "kyoshin/CCol6System.hpp" */
-#pragma once
-
-/* "src/kyoshin/CCol6System.hpp" line 2 "types.h" */
-/* end "types.h" */
 
 class CCol6Hint {
 public:
@@ -12485,9 +12485,8 @@ public:
 
     // TODO: add fields
 };
-
 /* end "kyoshin/CCol6System.hpp" */
-/* "src/kyoshin/CCol6System.cpp" line 6 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CCol6System.cpp" line 4 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**

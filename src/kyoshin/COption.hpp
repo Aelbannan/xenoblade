@@ -1,21 +1,12 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/CBaseCur.hpp"
 
-// Vtable symbol for CCur19 (6 entries, .data)
-extern "C" void* lbl_eu_805396D0[];
-
-class CCur19 : public CBaseCur {
+class CCur19 {
 public:
-    CCur19(nw4r::lyt::ArcResourceAccessor* arcResAcc);
+    CCur19();
 
-    // CBaseCur: 0x00-0x15
-    u8 _16[0x20 - 0x16];                         // +0x16
-    nw4r::lyt::AnimTransform* mpAnimTrans2;      // +0x20
-    nw4r::lyt::AnimTransform* mpAnimTrans3;      // +0x24
-    u8 _28;                                       // +0x28
-    u8 mState;                                    // +0x29
+    // TODO: add fields
 };
 
 // Full object layout for COption (used by C-linkage accessors)

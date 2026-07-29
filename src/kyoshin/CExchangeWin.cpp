@@ -77,12 +77,12 @@ extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
 
     u32 tmp = *(u32*)((u8*)src + 0x1c);
     void* pane = *(void**)(tmp + 0x10);
-    VtableFunc func1 = ((VtableFunc**)*(void**)pane)[0x3C/4];
+    VtableFunc func1 = ((VtableFunc*)*(void**)pane)[0x3C/4];
     void* res1 = func1(pane, buf, 1);
 
     tmp = *(u32*)((u8*)src + 0x1c);
     pane = *(void**)(tmp + 0x10);
-    VtableFunc func2 = ((VtableFunc**)*(void**)pane)[0x3C/4];
+    VtableFunc func2 = ((VtableFunc*)*(void**)pane)[0x3C/4];
     void* res2 = func2(pane, &lbl_eu_8050A740[0x25], 1);
 
     tmp = *(u32*)((u8*)src + 0x1c);
@@ -114,7 +114,6 @@ extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
 // Sets two text fields on the layout: one at string offset 0x34 with param2,
 // and one at string offset 0x41 with param3.
 extern "C" void func_8022D19C(CExchangeWinFull* self, char* param2, char* param3) {
-    const char* base = lbl_eu_8050A740;
-    func_80136B4C(self->mLayout, base + 0x34, param2, 0);
-    func_80136B4C(self->mLayout, base + 0x41, param3, 0);
+    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x34], param2, 0);
+    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x41], param3, 0);
 }

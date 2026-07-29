@@ -1454,6 +1454,7 @@ public:
     CKizunagram();
     virtual ~CKizunagram();
     void OnFileEvent();
+    void func_8025CC70();
 
     u8 _04[0x34 - 0x04];
     u8 field_0x34;
@@ -1638,8 +1639,8 @@ u8 CKizunagram_getField8C(void* self) {
 void func_8025CBCC(){}
 
 /* Toggles field_0xDD: 0->1, 1->0, anything else->1 */
-void func_8025CC70(CKizunagram* self) {
-    self->field_0xDD = (self->field_0xDD ^ 1) ? 1 : 0;
+void CKizunagram::func_8025CC70() {
+    field_0xDD = (field_0xDD ^ 1) ? 1 : 0;
 }
 
 void func_8025CC88(){}

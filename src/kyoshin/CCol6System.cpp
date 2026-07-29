@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CCol6System
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
-#include "kyoshin/CCol6System.hpp"
+#include "kyoshin/CCol6CheckBat.hpp"
 #include "kyoshin/harness_catalog.hpp"
 
 // Singleton instance (retail: lbl_eu_80664230).
@@ -41,7 +41,7 @@ void func_8015D3A0(){}
 
 void __ct__CCol6Hint(){}
 
-CCol6Hint::~CCol6Hint() {}
+void CCol6Hint::~CCol6Hint() {}
 
 void CCol6Hint::Init() {}
 
@@ -61,7 +61,7 @@ void func_8015E0BC(){}
 
 void __ct__CCol6System(){}
 
-CCol6System::~CCol6System() {}
+void CCol6System::~CCol6System() {}
 
 void CCol6System::Init() {}
 
@@ -105,7 +105,7 @@ void func_801638C0(){}
 
 void func_80163AF4(){}
 
-CCol6Invite::~CCol6Invite() {}
+void CCol6Invite::~CCol6Invite() {}
 
 void CCol6Invite::Init() {}
 

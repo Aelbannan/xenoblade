@@ -2,16 +2,6 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/COption.hpp"
-
-// CBaseCur default constructor (not yet declared in CBaseCur.hpp).
-// Despite the Fv suffix, retail takes ArcResourceAccessor* in r4.
-extern "C" void __ct__8CBaseCurFv(CBaseCur* self, nw4r::lyt::ArcResourceAccessor* arcResAcc);
-
-CCur19::CCur19(nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(this, arcResAcc);
-    mVtable = lbl_eu_805396D0;
-}
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
@@ -55,29 +45,11 @@ void func_8029CF7C(){}
 
 void func_8029D054(){}
 
-// External nw4r animation helpers
-int func_80137444(nw4r::lyt::AnimTransform*, float);
-int func_80137510(nw4r::lyt::AnimTransform*, float);
-void func_8029E1CC(CCur19* self);
-void func_8029E144(CCur19* self);
-
-// Called when AnimTransform at +0x20 finishes its animation
-void func_8029D0C0(CCur19* self) {
-    if (func_80137444(self->mpAnimTrans2, 1.0f)) {
-        self->mState = 2;
-        func_8029E1CC(self);
-    }
-}
+void func_8029D0C0(){}
 
 void func_8029D10C(){}
 
-// Called when AnimTransform at +0x24 finishes its animation
-void func_8029D178(CCur19* self) {
-    if (func_80137510(self->mpAnimTrans3, 1.0f)) {
-        self->mState = 5;
-        func_8029E144(self);
-    }
-}
+void func_8029D178(){}
 
 void func_8029D1C4(){}
 
@@ -105,9 +77,9 @@ void func_8029D990(){}
 
 void func_8029DD6C(){}
 
-void func_8029E144(CCur19* self){}
+void func_8029E144(){}
 
-void func_8029E1CC(CCur19* self){}
+void func_8029E1CC(){}
 
 void func_8029E254(){}
 

@@ -6,10 +6,6 @@
 extern "C" void func_80138078__FUl(u32);
 extern void* lbl_eu_80535750[];
 
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_80137924(void*, void*, void*, void*);
-
 void* __ct__CItemBoxGridSubMenu(void* self) {
     CItemBoxGridSubMenu* s = (CItemBoxGridSubMenu*)self;
     s->mVtbl = lbl_eu_80535750;
@@ -77,33 +73,15 @@ void func_8020844C(){}
 
 void func_802084D4(){}
 
-void func_80208760(CItemBoxGridSubMenu* self, CItemBoxGridSubMenu* other) {
-    nw4r::lyt::TextBox* boxes[3];
-    boxes[0] = other->mTxtBoxA;
-    boxes[1] = other->mTxtBoxB;
-    boxes[2] = other->mTxtBoxC;
-    func_80137924(self, boxes[other->mSelectedIdx], other->mRootPane,
-                  other->mLayout->GetRootPane());
-}
+void func_80208760(){}
 
 void func_802087B8(){}
 
 void func_80208838(void){}
 
-void CItemBoxGridSubMenu::func_80208844() {
-    if (func_80137444(mAnimDefault, 1.0f) != 0) {
-        mAnimState = 2;
-        mIsOpened = 1;
-    }
-}
+void func_80208844(){}
 
-void CItemBoxGridSubMenu::func_80208890() {
-    if (func_80137510(mAnimDefault, 1.0f) != 0) {
-        mAnimState = 0;
-        mIsOpened = 1;
-        mIsVisible = 0;
-    }
-}
+void func_80208890(){}
 
 extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
 void func_802082D0(void* self){

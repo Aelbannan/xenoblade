@@ -1260,19 +1260,21 @@ void ocBdatRegist();
 
 void func_eu_802B1334() { CBdat::func_8003AA8C(6); }
 
+// BDAT data pointer and error-message string table (rodata + sbss).
+extern u8* lbl_eu_80664BF8;
+extern const char lbl_eu_80513420[];
 
+void func_eu_802B13FC() {
+    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, lbl_eu_80513420 + 9, 9);
+}
 
+void func_eu_802B1414() {
+    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, lbl_eu_80513420 + 9, 10);
+}
 
-
-
-
-
-
-void func_eu_802B13FC(){}
-
-void func_eu_802B1414(){}
-
-void func_eu_802B142C(){}
+void func_eu_802B142C() {
+    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, lbl_eu_80513420 + 9, 12);
+}
 
 void func_eu_802B1444(){}
 
@@ -1295,24 +1297,6 @@ extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 
 void func_eu_802B14F8(){}
 
-class BdatFilePointer;
-extern BdatFilePointer* lbl_eu_80664BF8;
-extern u8 lbl_eu_80513420[];
 extern "C" void func_eu_802B133C() {
-    CBdat::getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
-}
-
-// Tail-calls getBdatStringColumnValue with index=6
-void func_eu_802B13B4() {
-    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 6);
-}
-
-// Tail-calls getBdatStringColumnValue with index=7
-void func_eu_802B13CC() {
-    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 7);
-}
-
-// Tail-calls getBdatStringColumnValue with index=8
-void func_eu_802B13E4() {
-    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 8);
+    CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, lbl_eu_80513420 + 9, 1);
 }

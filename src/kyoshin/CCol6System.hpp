@@ -1,8 +1,17 @@
 #pragma once
 
 #include <types.h>
-#include "kyoshin/CCol6CheckBat.hpp"
-#include "kyoshin/CCol6Invite.hpp"
+
+class CCol6CheckBat {
+public:
+    virtual ~CCol6CheckBat();
+    CCol6CheckBat();
+    void Term();
+    void Move();
+
+    // TODO: add fields
+    void Init();
+};
 
 class CCol6Hint {
 public:
@@ -27,3 +36,14 @@ public:
 
     // TODO: add fields
 };
+
+class CCol6Invite {
+public:
+    virtual ~CCol6Invite();
+    void Init();
+    void Move();
+
+    // TODO: add fields
+    void Term();
+};
+

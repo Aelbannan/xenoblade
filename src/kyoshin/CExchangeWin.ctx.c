@@ -23721,6 +23721,37 @@ protected:
 
 #endif
 /* end "nw4r/lyt.h" */
+/* "src/kyoshin/CExchangeWin.hpp" line 4 "monolib/lib/UnkClass_8045F564.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/UnkClass_8045F564.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class UnkClass_8045F564{
+public:
+    int unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+
+    UnkClass_8045F564();
+    ~UnkClass_8045F564();
+
+    
+    void createRegion(int, int, const char*, int);
+    void func_8045F778();
+    void func_8045F810();
+};
+
+class Class_8045F858{
+public:
+    void* unk0;
+    u32 unk4;
+
+    Class_8045F858(UnkClass_8045F564* unkClass);
+    ~Class_8045F858();
+};
+/* end "monolib/lib/UnkClass_8045F564.hpp" */
 
 class CFileHandle;
 
@@ -23743,7 +23774,15 @@ public:
     virtual ~CExchangeWin();
     void OnFileEvent();
 
-    // TODO: add fields
+    UnkClass_8045F564 mMemRegion;            // 0x04
+    CFileHandle* mFileHandle;                // 0x14
+    u8 _18[0x1C - 0x18];
+    nw4r::lyt::Layout* mLayout;              // 0x1C
+    nw4r::lyt::AnimTransform* mAnimTransform; // 0x20
+    u8 field_24;                              // 0x24
+    u8 field_25;                              // 0x25
+    u8 _26;                                   // 0x26
+    u8 field_27;                              // 0x27
 };
 
 /* end "kyoshin/CExchangeWin.hpp" */
@@ -26831,9 +26870,19 @@ extern "C" void func_8022D1F8(CExchangeWinFull* self) {
     }
 }
 
-void func_8022D244(){}
+extern "C" void func_8022D244(CExchangeWinFull* self) {
+    float f = lbl_eu_80668610;
+    u32 r = func_80137510(self->mAnimTransform, f);
+    if (r) {
+        self->_26 = 0;
+        self->field_27 = 1;
+        self->field_24 = 0;
+    }
+}
 
 void CExchangeWin::OnFileEvent() {}
+
+CExchangeWin::~CExchangeWin() {}
 
 // Stub functions needed by CItemBoxGrid
 extern "C" void func_8022D0D0(void* self) {
@@ -26845,21 +26894,27 @@ extern "C" void func_8022D0D0(void* self) {
     s->field_27 = 0;
     func_80138078(0xe);
 }
+#pragma optimize_for_size on
 extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
-    char buf[64];
+    char buf[40];
+    typedef void* (*VtableFunc)(void*, const char*, int);
+
     sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
-    u32 obj = *(u32*)((u8*)src + 0x1c);
-    u32 sub = *(u32*)(obj + 0x10);
-    void** vtbl = *(void***)sub;
-    void* r1 = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])((void*)sub, buf, 1);
-    u32 obj2 = *(u32*)((u8*)src + 0x1c);
-    u32 sub2 = *(u32*)(obj2 + 0x10);
-    void** vtbl2 = *(void***)sub2;
-    void* r2 = ((void*(*)(void*, char*, int))vtbl2[0x3C / 4])((void*)sub2, (char*)&lbl_eu_8050A740[0x25], 1);
-    u32 obj3 = *(u32*)((u8*)src + 0x1c);
-    u32 sub3 = *(u32*)(obj3 + 0x10);
-    func_80137924(dst, r1, r2, (void*)sub3);
+
+    u32 tmp = *(u32*)((u8*)src + 0x1c);
+    void* pane = *(void**)(tmp + 0x10);
+    VtableFunc func1 = ((VtableFunc*)*(void**)pane)[0x3C/4];
+    void* res1 = func1(pane, buf, 1);
+
+    tmp = *(u32*)((u8*)src + 0x1c);
+    pane = *(void**)(tmp + 0x10);
+    VtableFunc func2 = ((VtableFunc*)*(void**)pane)[0x3C/4];
+    void* res2 = func2(pane, &lbl_eu_8050A740[0x25], 1);
+
+    tmp = *(u32*)((u8*)src + 0x1c);
+    func_80137924(dst, res1, res2, *(void**)(tmp + 0x10));
 }
+#pragma optimize_for_size off
 extern "C" void func_8022CF2C(CExchangeWinFull* self) {
     self->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(),
@@ -26880,4 +26935,11 @@ extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
         return;
     }
     func_80137038(s->mLayout, drawInfo, 0, 1);
+}
+
+// Sets two text fields on the layout: one at string offset 0x34 with param2,
+// and one at string offset 0x41 with param3.
+extern "C" void func_8022D19C(CExchangeWinFull* self, char* param2, char* param3) {
+    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x34], param2, 0);
+    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x41], param3, 0);
 }

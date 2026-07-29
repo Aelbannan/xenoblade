@@ -19,11 +19,17 @@ void func_eu_802B1414(){}
 
 void func_eu_802B142C(){}
 
-void func_eu_802B1444(){}
+const char* func_eu_802B1444() {
+    return CBdat::getBdatStringColumnValue((void*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 13);
+}
 
-void func_eu_802B145C(){}
+const char* func_eu_802B145C() {
+    return CBdat::getBdatStringColumnValue((void*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 14);
+}
 
-void func_eu_802B1474(){}
+const char* func_eu_802B1474() {
+    return CBdat::getBdatStringColumnValue((void*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 15);
+}
 
 void func_eu_802B148C(){}
 

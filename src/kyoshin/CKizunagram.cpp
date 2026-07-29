@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CKizunagram.hpp"
 
 void func_8025C870() {}
 
@@ -16,9 +17,9 @@ void func_8025C870() {}
 
 void func_80257F9C(){}
 
-void __ct__CKizunaLine(){}
+CKizunaLine::CKizunaLine() {}
 
-void CKizunaLine::~CKizunaLine() {}
+CKizunaLine::~CKizunaLine() {}
 
 void func_802580CC(){}
 
@@ -80,9 +81,9 @@ void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[3] = 0;
 }
 
-void __ct__CKizunaInfo(){}
+CKizunaInfo::CKizunaInfo() {}
 
-void CKizunaInfo::~CKizunaInfo() {}
+CKizunaInfo::~CKizunaInfo() {}
 
 void func_8025B670(){}
 
@@ -104,9 +105,9 @@ void func_8025C298(){}
 
 void func_8025C348(){}
 
-void __ct__CKizunagram(){}
+CKizunagram::CKizunagram() {}
 
-void CKizunagram::~CKizunagram() {}
+CKizunagram::~CKizunagram() {}
 
 void func_8025C510(){}
 

@@ -6,7 +6,7 @@
 #include "kyoshin/code_80135FDC.hpp"
 
 // Vtable for CCur07 (set by constructor after base ctor runs)
-extern "C" void* lbl_eu_80534978[];
+extern "C" int lbl_eu_80534978[];
 
 // CCur07: cursor widget 07. Overrides the base vtable with its own.
 class CCur07 : public CBaseCur {
@@ -42,23 +42,22 @@ extern "C" void func_801D2174(CBaseCur* cur) {
 }
 
 
-/* CBaseCur default constructor: initialises vtable to the base vtable,
-   stores the arc resource accessor passed in r4, and zeroes the
-   remaining fields. */
-extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    _this->mVtable = lbl_eu_805349A0;
-    _this->mArcResAcc = arcResAcc;
-    _this->mpLayout = nullptr;
-    _this->mpAnimTrans0 = nullptr;
-    _this->mpAnimTrans1 = nullptr;
-    _this->mActive = 0;
-    _this->mVisible = 0;
+/* CBaseCur constructor: initialises vtable, stores the arc resource
+   accessor, and zeroes the remaining fields. */
+CBaseCur::CBaseCur(nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    mVtable = lbl_eu_805349A0;
+    mArcResAcc = arcResAcc;
+    mpLayout = nullptr;
+    mpAnimTrans0 = nullptr;
+    mpAnimTrans1 = nullptr;
+    mActive = 0;
+    mVisible = 0;
 }
 
 /* func_801D20B0: Draw the cursor layout if it is loaded and visible.
    Checks for null layout and hidden flag before forwarding to the
    shared nw4r layout draw helper. */
-extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo) {
+void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo) {
     if (cur->mpLayout == 0) {
         return;
     }
@@ -72,12 +71,16 @@ void func_801D21CC(){}
 
 DECOMP_DONT_INLINE void func_801D2264(CBaseCur* cur){}
 
+/* CCur07: cursor widget 07. Overrides the base vtable with its own. */
+class CCur07 : public CBaseCur {
+public:
+    CCur07(nw4r::lyt::ArcResourceAccessor* arcResAcc);
+};
+
 /* CCur07 constructor: chains to CBaseCur base constructor then
    overrides the vtable pointer with the CCur07 vtable. */
-extern "C" void* __ct__CCur07(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    __ct__8CBaseCurFv(_this, arcResAcc);
-    _this->mVtable = lbl_eu_80534978;
-    return _this;
+CCur07::CCur07(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {
+    mVtable = lbl_eu_80534978;
 }
 
 void __dt__6CCur07Fv() {}

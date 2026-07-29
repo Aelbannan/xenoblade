@@ -3645,8 +3645,7 @@ void func_801CE974(void* self) {
     func_801D216C(p + 0xa0, 1);
     u8 temp[16];
     func_8022D0F8(temp, p + 0x440, p[0x529]);
-    void** vtbl = *(void***)(p + 0xa0);
-    ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
+    ((void(*)(void*, void*))(*(void***)(p + 0xa0))[4])(p + 0xa0, temp);
 }
 
 // Check if sub-obj is active; set state to 3 and clear flag.

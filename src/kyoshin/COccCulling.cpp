@@ -65,14 +65,11 @@ int COccCulling::addFrustum(const CVec3& pos, const CVec3& rot, const CVec3& sca
 }
 
 void COccCulling::setFrustum(CCullFrustum* pFrustum){
-    float xScale = pFrustum->mScale.x;
-    float yScale = pFrustum->mScale.y;
     CMat34 rotMat;
-    // z-scale via SDA 1.0f (lbl_eu_80667C88)
-    pFrustum->mMat.setScale(CVec3(xScale, yScale, lbl_eu_80667C88));
+    pFrustum->mMat.setScale(CVec3(pFrustum->mScale.x, pFrustum->mScale.y, lbl_eu_80667C88));
     rotMat.setRotXYZ(pFrustum->mRot);
 
-    // mMat = rotMat * mMat (rotation * scale)
+    // mMat = rotMat * mMat (rotation * scale) — retail PSMTXConcat(rotMat, mMat, mMat)
     CMat34::mul(pFrustum->mMat, pFrustum->mMat, rotMat);
 
     pFrustum->mMat.addTranslation(pFrustum->mPos);

@@ -138,13 +138,14 @@ void func_8024F55C(void* self) {
 
 extern "C" char lbl_eu_8050BEA8[];
 
-void func_8024F5C4(void* self, u8 arg2) {
+void func_8024F5C4(void* self, u32 arg2) {
     void* ptr = *(void**)((u8*)self + 0x32D4);
     if (!ptr) return;
     void* obj = *(void**)((u8*)ptr + 0x10);
-    void** vtable = *(void***)obj;
-    void* result = ((void*(*)(void*, const char*, u32))vtable[15])(obj, &lbl_eu_8050BEA8[0xEE], 1);
-    *(u8*)((u8*)result + 0xBB) = (*(u8*)((u8*)result + 0xBB) & 0x7F) | arg2;
+    void* result = ((void*(*)(void*, const char*, u32))(*(void***)obj)[15])(obj, (char*)&lbl_eu_8050BEA8 + 0xEE, 1);
+    u8* p = (u8*)result + 0xBB;
+    *p &= 0x7F;
+    *p |= (u8)arg2;
 }
 
 unsigned char func_8024F630(void) {

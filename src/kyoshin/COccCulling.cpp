@@ -176,7 +176,8 @@ void COccCulling::func_801A1188(CCullFrustum* pFrustum){
 
     if(!(pFrustum->mFlags & CCullFrustum::FLAGS_01)){
         for(int i = 1; i < 6; i++){
-            CPlane* plane = &unk24->unk248[i];
+            CFrustum* r0 = unk24;
+            CPlane* plane = &r0->unk248[i];
 
             bool b = true;
 
@@ -235,16 +236,8 @@ bool COccCulling::func_801A1444(const ml::CVec3& intersectPoint, float distance)
 bool COccCulling::func_801A1550(const CVec3& rayStartPos, const CVec3& rayEndPos, UNKWORD r6){
     CVec3 rayDir = rayEndPos - rayStartPos;
     
-    // Inline zero check: retail uses two-int pattern with specific register allocation
-    int zeroResult = 0;
-    int xyZero = 0;
-    if(math::abs(rayDir.x) <= ml::epsilon && math::abs(rayDir.y) <= ml::epsilon){
-        xyZero = 1;
-    }
-    if(xyZero && math::abs(rayDir.z) <= ml::epsilon){
-        zeroResult = 1;
-    }
-    if(zeroResult) return false;
+    //Looks like the normalize inline but isn't?
+    if(rayDir.isZero()) return false;
     rayDir.normalizeSub();
     
     //Iterate through all entries of the second list

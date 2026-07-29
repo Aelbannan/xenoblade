@@ -8,6 +8,11 @@
 // Vtable for CCur07 (set by constructor after base ctor runs)
 extern "C" int lbl_eu_80534978[];
 
+// Vtable symbols for CCur09, CCur11, CCur14 constructors
+extern "C" void* lbl_eu_80534950[];
+extern "C" void* lbl_eu_80534928[];
+extern "C" void* lbl_eu_80534900[];
+
 // Forward declarations for CCur classes used in stubs
 
 /* Sets the visible flag on a CBaseCur cursor widget. */
@@ -36,22 +41,23 @@ extern "C" void func_801D2174(CBaseCur* cur) {
 }
 
 
-/* CBaseCur constructor: initialises vtable, stores the arc resource
-   accessor, and zeroes the remaining fields. */
-CBaseCur::CBaseCur(nw4r::lyt::ArcResourceAccessor* arcResAcc) {
-    mVtable = lbl_eu_805349A0;
-    mArcResAcc = arcResAcc;
-    mpLayout = nullptr;
-    mpAnimTrans0 = nullptr;
-    mpAnimTrans1 = nullptr;
-    mActive = 0;
-    mVisible = 0;
+/* CBaseCur default constructor: initialises vtable to the base vtable,
+   stores the arc resource accessor passed in r4, and zeroes the
+   remaining fields. */
+extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    _this->mVtable = lbl_eu_805349A0;
+    _this->mArcResAcc = arcResAcc;
+    _this->mpLayout = nullptr;
+    _this->mpAnimTrans0 = nullptr;
+    _this->mpAnimTrans1 = nullptr;
+    _this->mActive = 0;
+    _this->mVisible = 0;
 }
 
 /* func_801D20B0: Draw the cursor layout if it is loaded and visible.
    Checks for null layout and hidden flag before forwarding to the
    shared nw4r layout draw helper. */
-void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo) {
+extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo) {
     if (cur->mpLayout == 0) {
         return;
     }
@@ -65,23 +71,24 @@ void func_801D21CC(){}
 
 DECOMP_DONT_INLINE void func_801D2264(CBaseCur* cur){}
 
-/* CCur07: cursor widget 07. Overrides the base vtable with its own. */
-class CCur07 : public CBaseCur {
-public:
-    CCur07(nw4r::lyt::ArcResourceAccessor* arcResAcc);
-};
-
 /* CCur07 constructor: chains to CBaseCur base constructor then
    overrides the vtable pointer with the CCur07 vtable. */
-CCur07::CCur07(nw4r::lyt::ArcResourceAccessor* arcResAcc) : CBaseCur(arcResAcc) {
-    mVtable = lbl_eu_80534978;
+extern "C" CBaseCur* __ct__CCur07(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    __ct__8CBaseCurFv(_this, arcResAcc);
+    _this->mVtable = lbl_eu_80534978;
+    return _this;
 }
 
 void __dt__6CCur07Fv() {}
 
 void func_virt___dt__6CCur07Fv() {}
 
-void __ct__CCur09(){}
+/* CCur09 constructor: chains to CBaseCur then sets the CCur09 vtable. */
+extern "C" CBaseCur* __ct__CCur09(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    __ct__8CBaseCurFv(_this, arcResAcc);
+    _this->mVtable = lbl_eu_80534950;
+    return _this;
+}
 
 void __dt__6CCur09Fv() {}
 
@@ -89,7 +96,12 @@ void func_virt___dt__6CCur09Fv() { }
 
 void func_801D24E8(){}
 
-void __ct__CCur11(){}
+/* CCur11 constructor: chains to CBaseCur then sets the CCur11 vtable. */
+extern "C" CBaseCur* __ct__CCur11(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    __ct__8CBaseCurFv(_this, arcResAcc);
+    _this->mVtable = lbl_eu_80534928;
+    return _this;
+}
 
 void __dt__6CCur11Fv() {}
 
@@ -97,7 +109,12 @@ void func_virt___dt__6CCur11Fv() { }
 
 void func_801D2670(){}
 
-void __ct__CCur14(){}
+/* CCur14 constructor: chains to CBaseCur then sets the CCur14 vtable. */
+extern "C" CBaseCur* __ct__CCur14(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    __ct__8CBaseCurFv(_this, arcResAcc);
+    _this->mVtable = lbl_eu_80534900;
+    return _this;
+}
 
 void __dt__6CCur14Fv() {}
 

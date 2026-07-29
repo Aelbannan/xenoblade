@@ -3,8 +3,8 @@
 #include "kyoshin/CErrMes.hpp"
 #include "kyoshin/plugin/ocBdat.hpp"
 
-class BdatFilePointer;
-extern BdatFilePointer* lbl_eu_80664BF8;
+extern "C" void getBdatStringColumnValue(void*, void*, int);
+extern u32 lbl_eu_80664BF8;
 extern u8 lbl_eu_80513420[];
 
 void func_eu_802B1334() { CBdat::func_8003AA8C(6); }
@@ -23,23 +23,23 @@ void func_eu_802B1414(){}
 
 void func_eu_802B142C(){}
 
-const char* func_eu_802B1444() {
-    return CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 13);
+void func_eu_802B1444(){}
+
+void func_eu_802B145C(){}
+
+void func_eu_802B1474(){}
+
+void func_eu_802B148C() {
+    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 0x10);
 }
 
-const char* func_eu_802B145C() {
-    return CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 14);
+void func_eu_802B14A4() {
+    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 0x13);
 }
 
-const char* func_eu_802B1474() {
-    return CBdat::getBdatStringColumnValue(lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 15);
+void func_eu_802B14BC() {
+    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 0x14);
 }
-
-void func_eu_802B148C(){}
-
-void func_eu_802B14A4(){}
-
-void func_eu_802B14BC(){}
 
 void* func_eu_802B14D4(void){ return 0; }
 
@@ -51,6 +51,8 @@ extern "C" void* func_eu_802B14EC(void) { return (void*)lbl_eu_8053A478; }
 void func_eu_802B14F8(){}
 
 extern "C" void getBdatStringColumnValue(void*, void*, int);
+extern u32 lbl_eu_80664BF8;
+extern u8 lbl_eu_80513420[];
 extern "C" void func_eu_802B133C() {
     getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 1);
 }

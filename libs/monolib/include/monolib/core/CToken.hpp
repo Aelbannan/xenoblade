@@ -9,7 +9,7 @@ public:
 
     u32 func_8043A8D8();
     void func_8043AA1C();
-    void func_8043AA68(char* pOutBuffer, const char* pName, int bufferLen);
+    void func_8043AA68(char* pOutBuffer, int bufferLen, const char* pName);
     void func_8043AB14();
     void func_8043ABD4();
 

@@ -31,7 +31,14 @@ void func_80258F9C(){}
 
 void func_80259098(){}
 
-void func_80259228(void* subobj) {}
+#pragma push
+#pragma auto_inline off
+void func_80259228(void* subobj) {
+    u8* b = static_cast<u8*>(subobj);
+    b[0x14] = 1;
+    b[0x15] = 0;
+}
+#pragma pop
 
 void func_80259280(){}
 
@@ -172,7 +179,7 @@ void func_8025CC70(){}
 
 void func_8025CC88(CKizunagram* self) {
     if (self->field_0x62 == 0) return;
-    self->field_0x39 = 2;
+    self->_38[1] = 2;
     func_80259228(reinterpret_cast<u8*>(self) + 0x68);
 }
 

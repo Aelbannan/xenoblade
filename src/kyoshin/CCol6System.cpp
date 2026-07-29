@@ -2,10 +2,10 @@
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "monolib/util/MemManager.hpp"
 #include "kyoshin/CCol6System.hpp"
 #include "kyoshin/CCol6CheckBat.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
-#include "monolib/util/MemManager.hpp"
 
 // Singleton instance (retail: lbl_eu_80664230).
 CCol6CheckBat* gCol6CheckBat;
@@ -47,10 +47,25 @@ CCol6Hint::CCol6Hint(void* arg) {
     // Stub — fields initialized by this ctor; body TBD when ctor is decompiled.
 }
 
+/* CCur18 destructor symbol — retail definition lives in kyoshin/CCur. */
+extern "C" void __dt__6CCur18Fv(void*, int);
+/* CScrollBar destructor — declared in kyoshin/CScrollBar.hpp. */
+extern "C" void __dt__10CScrollBarFv(void*, int);
+/* UnkClass_8045F564 destructor — declared in monolib/lib/UnkClass_8045F564.hpp. */
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+/* CProcess base destructor. */
+extern "C" void __dt__8CProcessFv(void*, int);
+
 /* CCol6Hint destructor: destroys owned sub-objects in reverse declaration
-   order (CScrollBar, CCur18, mem region), then chains to CProcess base.
-   The delete flag in r4 (MWCC convention) is handled by the compiler. */
-CCol6Hint::~CCol6Hint() {}
+   order, then chains to CProcess base. MWCC virtual dtor pattern:
+   r4=-1 for sub-object dtors, r4=0 for the base CProcess dtor, then
+   operator delete if the caller requested it (MWCC handles the flag). */
+CCol6Hint::~CCol6Hint() {
+    __dt__10CScrollBarFv(mScrollBarBuf, -1);
+    __dt__6CCur18Fv(mCur, -1);
+    __dt__17UnkClass_8045F564Fv(mMemRegion, -1);
+    __dt__8CProcessFv(this, 0);
+}
 
 void CCol6Hint::Init() {}
 

@@ -90,9 +90,9 @@ void CItemBoxGridSubMenu::func_80208260() {
     if (!mIsVisible) {
         return;
     }
-    if (mAnimState == 1) {
+    if ((int)mAnimState == 1) {
         func_80208844();
-    } else if (mAnimState == 3) {
+    } else if ((int)mAnimState == 3) {
         func_80208890();
     }
     mLayout->Animate(0);
@@ -136,8 +136,17 @@ void func_802082D0(void* self){
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)((u8*)self + 8), 0, 0, 1);
 }
 
-void func_80208838(void){}
+DECOMP_DONT_INLINE void func_80208838(void) {
+    volatile int v = 0;
+    func_80138078__FUl(v);
+}
 
-void func_80208844(){}
+DECOMP_DONT_INLINE void func_80208844() {
+    volatile int v = 1;
+    func_80138078__FUl(v);
+}
 
-void func_80208890(){}
+DECOMP_DONT_INLINE void func_80208890() {
+    volatile int v = 2;
+    func_80138078__FUl(v);
+}

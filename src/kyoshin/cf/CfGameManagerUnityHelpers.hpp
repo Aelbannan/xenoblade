@@ -2486,5 +2486,3 @@ extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
 
 
 
-
-

@@ -87,7 +87,7 @@ void CToken::func_8043AA1C() {
     }
 }
 
-void CToken::func_8043AA68(char* pOutBuffer, const char* pName, int bufferLen) {
+void CToken::func_8043AA68(char* pOutBuffer, int bufferLen, const char* pName) {
     // Looks up a name in the attribute string table.
     // If found, writes the matching index byte to pOutBuffer.
     // If not found, copies the original name and null-terminates at the name's length.

@@ -4,27 +4,6 @@
 #include "monolib/work/CProcess.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "kyoshin/CScrollBar.hpp"
-#include "kyoshin/CBaseCur.hpp"
-
-class CCol6CheckBat {
-public:
-    virtual ~CCol6CheckBat();
-    CCol6CheckBat();
-    void Term();
-    void Move();
-
-    // TODO: add fields
-    void Init();
-};
-
-/* CCur18: cursor widget 18 (0x18 bytes). Extends CBaseCur by 2 bytes.
-   No standalone header yet; minimal declaration for CCol6Hint layout. */
-class CCur18 : public CBaseCur {
-public:
-    CCur18(void*);
-    virtual ~CCur18();
-    u8 _pad18[2]; // 0x16 -> 0x18
-};
 
 class CCol6Hint : public CProcess {
 public:
@@ -36,10 +15,10 @@ public:
     void cbRenderBefore();
 
     /* 0x3C */ u8 _pad3C[0x74 - 0x3C];
-    /* 0x74 */ UnkClass_8045F564 mMemRegion; // layout scratch region
+    /* 0x74 */ u8 mMemRegion[0x10];               // UnkClass_8045F564 scratch region
     /* 0x84 */ u8 _pad84[0x124 - 0x84];
-    /* 0x124 */ CCur18 mCur; // cursor widget
-    /* 0x13C */ CScrollBar mScrollBar; // scroll bar widget
+    /* 0x124 */ u8 mCur[0x18];                      // CCur18 cursor widget
+    /* 0x13C */ u8 mScrollBarBuf[0x40];             // CScrollBar widget (0x40 bytes)
 };
 
 class CCol6System : public CProcess {

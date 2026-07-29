@@ -3,7 +3,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/COption.hpp"
-#include "kyoshin/CBaseCur.hpp"
 #include "kyoshin/code_80135FDC.hpp"
 
 extern float lbl_eu_80668C10;
@@ -72,7 +71,8 @@ void func_8029D178(){}
 // Checks if an animation at field_0x20 has reached a target frame;
 // if so, resets field_0x29 and marks field_2B as active.
 void func_8029D1C4(COptionFull* self) {
-    if (func_80137510(self->field_0x20, lbl_eu_80668C10)) {
+    u32 r = func_80137510(self->field_0x20, lbl_eu_80668C10);
+    if (r) {
         self->field_0x29 = 0;
         self->field_2B = 1;
     }

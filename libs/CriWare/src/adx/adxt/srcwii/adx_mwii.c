@@ -114,14 +114,16 @@ extern s32 lbl_eu_805FDD9C;
 s32 ADXM_ShutdownFramework(void) {
     s32 result = 1;
     s32 state = lbl_eu_805FDD9C;
-    if (state == 0) {
+    switch (state) {
+    case 0:
+    case 2:
         ADXM_ShutdownThrd();
-    } else if (state == 2) {
-        ADXM_ShutdownThrd();
-    } else if (state == 1) {
-        // result stays 1
-    } else {
+        break;
+    case 1:
+        break;
+    default:
         result = 0;
+        break;
     }
     ADXMNG_SetFramework(-1);
     return result;

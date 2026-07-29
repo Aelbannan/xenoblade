@@ -18,6 +18,8 @@ extern void func_801D0950(void*);
 extern void func_80137510(u32, float);
 extern void* func_80157C4C(u8, s16);
 extern u32 func_801392E4(u32);
+extern u32 func_801361E8(u32, const char*, u32);
+extern u32 func_80139358(u32);
 u8 func_801C67F8(CItemBoxGridFull* self);
 u8 func_801C6840(CItemBoxGridFull* self);
 
@@ -75,6 +77,7 @@ int func_801C51BC(void* obj, u32 id) {
     return 0;
 }
 
+// Convert category to timing value - complex float math
 void func_801C5E5C(){}
 
 // Increment a sub-index counter; wrap to 0 when reaching the limit.

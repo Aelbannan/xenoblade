@@ -9,6 +9,8 @@
 
 namespace cf {
 
+    class UnkClass_CActorParam15E0;
+
     //size: 0x7C
     struct CActorParam_UnkStruct2 {
         u8 unk0[0x40];
@@ -313,7 +315,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc124(); //0x284
         virtual void* CActorParam_UnkVirtualFunc125(); //0x288
         virtual void CActorParam_UnkVirtualFunc126(); //0x28C
-        virtual void CActorParam_UnkVirtualFunc127(); //0x290
+        virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127(); //0x290
         virtual void CActorParam_UnkVirtualFunc128(); //0x294
         virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
         virtual void CActorParam_UnkVirtualFunc130(); //0x29C
@@ -371,7 +373,7 @@ namespace cf {
     #pragma endregion
 
         UNKTYPE* unk15DC;
-        UNKTYPE* unk15E0;
+        UnkClass_CActorParam15E0* unk15E0;
         u32 unk15E4;
         float unk15E8;
         u32 unk15EC;

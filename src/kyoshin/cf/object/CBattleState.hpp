@@ -3,6 +3,8 @@
 #include <types.h>
 
 namespace cf {
+    class UnkClass_CActorParam15E0;
+
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
     // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
@@ -69,7 +71,8 @@ namespace cf {
         u8 unk8[0x1520];
         u8 unk1528[4];
         u8 unk152C[0x80];
-        u8 unk15AC[0x15DC - 0x15AC];
+        u8 unk15AC[0x15D8 - 0x15AC];
+        UnkClass_CActorParam15E0* field_0x15D8;
     };
 }
 

@@ -116,6 +116,42 @@ void Picture::SetVtxColorElement(u32 idx, u8 value) {
     detail::SetVtxColorElement(mVtxColors, idx, value);
 }
 
+void Picture::Append(TPLPalette* pPalette) {
+    GXTexObj texObj;
+    detail::InitGXTexObjFromTPL(&texObj, pPalette, 0);
+    Append(texObj);
+}
+
+void Picture::Append(const GXTexObj& rTexObj) {
+    if (mpMaterial->GetTextureNum() >= mpMaterial->GetTextureCap() ||
+        mpMaterial->GetTextureNum() >= mpMaterial->GetTexCoordGenCap()) {
+        return;
+    }
+
+    u8 idx = mpMaterial->GetTextureNum();
+
+    mpMaterial->SetTextureNum(idx + 1);
+
+    // Inline Material::SetTexture(idx, rTexObj) since the GXTexObj overload
+    // doesn't exist yet in the Material header.
+    TexMap* pTexMapAry = mpMaterial->GetTexMapAry();
+    const u8* src = reinterpret_cast<const u8*>(&rTexObj);
+    u8* dst = reinterpret_cast<u8*>(&pTexMapAry[idx]);
+    for (int i = 0; i < 32; i++) {
+        dst[i] = src[i];
+    }
+    GXInitTexObjUserData(reinterpret_cast<GXTexObj*>(&pTexMapAry[idx]), NULL);
+
+    mpMaterial->SetTexCoordGenNum(mpMaterial->GetTextureNum());
+    mpMaterial->SetTexCoordGen(idx, TexCoordGen());
+
+    SetTexCoordNum(mpMaterial->GetTextureNum());
+
+    if (mSize == Size(0.0f, 0.0f) && mpMaterial->GetTextureNum() == 1) {
+        mSize = detail::GetTextureSize(mpMaterial, 0);
+    }
+}
+
 void Picture::DrawSelf(const DrawInfo& rInfo) {
     if (mpMaterial == NULL) {
         return;

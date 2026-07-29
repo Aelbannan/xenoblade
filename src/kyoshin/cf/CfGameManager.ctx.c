@@ -249922,6 +249922,7 @@ namespace cf {
 /* end "kyoshin/cf/object/CObjectParam.hpp" */
 
 namespace cf {
+    class UnkClass_80082D90;
     struct CfObjectSub54 {
         u8 field_0x0[0xC];
     };
@@ -249932,7 +249933,7 @@ namespace cf {
         //vtable 1 (CfObject)
         virtual ~CfObject();                      //0x54
         virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
-        virtual void CfObject_UnkVirtualFunc3();      //0x5C
+        virtual void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
         virtual void CfObject_UnkVirtualFunc5();      //0x64
         virtual void CfObject_UnkVirtualFunc6();      //0x68
@@ -250047,6 +250048,8 @@ namespace cf {
 /* end "types.h" */
 
 namespace cf {
+    class UnkClass_CActorParam15E0;
+
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
     // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
@@ -250113,7 +250116,8 @@ namespace cf {
         u8 unk8[0x1520];
         u8 unk1528[4];
         u8 unk152C[0x80];
-        u8 unk15AC[0x15DC - 0x15AC];
+        u8 unk15AC[0x15D8 - 0x15AC];
+        UnkClass_CActorParam15E0* field_0x15D8;
     };
 }
 
@@ -250312,6 +250316,8 @@ namespace cf {
 /* end "cstring" */
 
 namespace cf {
+
+    class UnkClass_CActorParam15E0;
 
     //size: 0x7C
     struct CActorParam_UnkStruct2 {
@@ -250617,7 +250623,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc124(); //0x284
         virtual void* CActorParam_UnkVirtualFunc125(); //0x288
         virtual void CActorParam_UnkVirtualFunc126(); //0x28C
-        virtual void CActorParam_UnkVirtualFunc127(); //0x290
+        virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127(); //0x290
         virtual void CActorParam_UnkVirtualFunc128(); //0x294
         virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
         virtual void CActorParam_UnkVirtualFunc130(); //0x29C
@@ -250675,7 +250681,7 @@ namespace cf {
     #pragma endregion
 
         UNKTYPE* unk15DC;
-        UNKTYPE* unk15E0;
+        UnkClass_CActorParam15E0* unk15E0;
         u32 unk15E4;
         float unk15E8;
         u32 unk15EC;
@@ -251542,7 +251548,9 @@ public:
     u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
 }; // size = 0x3EC
 /* end "monolib/scn/CScn.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 14 "string.h" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 14 "monolib/util/FixStr.hpp" */
+/* end "monolib/util/FixStr.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 15 "string.h" */
 /* end "string.h" */
 
 // destructor defined inline in CfGameManager.hpp
@@ -251733,7 +251741,7 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
     }
 }
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 204 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 205 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 
 union UnkWordFloat {
@@ -251819,7 +251827,11 @@ struct Unk87588TypedData {
 
 class UnkClass_8009EC9C;
 class UnkClass_800AA714;
-class UnkClass_8009ECB0;
+class UnkClass_8009ECB0 {
+public:
+    u32 field_0x0;
+    s32 entries_0x4[7];
+};
 class UnkClass_800821F8;
 
 class CItemImplInstances {
@@ -252220,7 +252232,13 @@ extern "C" void func_80081F90__Q22cf13CfGameManagerFv(u32 first, u32 third) {
 }
 
 extern "C" void loadMapBdatFileDataPointers__Q22cf6CfBdatFii(u32 first, u32 second);
-extern "C" void func_8008228C__Q22cf13CfGameManagerFv(u32 first, u32 second);
+extern "C" cf::CfGameManager* CfRes_stub_63ACC(ml::FixStr<64>* text);
+extern "C" void func_8008228C__Q22cf13CfGameManagerFv(u32 first, u32 second) {
+    ml::FixStr<64> text;
+    text.format(&lbl_eu_804FB824[0x98], first, second);
+    cf::CfGameManager* manager = CfRes_stub_63ACC(&text);
+    manager->func_80082258();
+}
 extern "C" void func_801AA04C(UnkClass_8007E864* object);
 extern "C" void func_8007E864__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     if (!lbl_eu_80663E70) {
@@ -252251,6 +252269,26 @@ extern "C" u32 func_8007E960__Q22cf13CfGameManagerFv(u32 value) {
 }
 
 extern "C" UnkClass_8009ECB0* func_8009ECB0();
+extern "C" u32 func_8007DECC__Q22cf13CfGameManagerFv(u32 value, const s32* data,
+                                                       u32 size);
+extern "C" u32 func_8007E038__Q22cf13CfGameManagerFv(u32 value, bool searchEntries) {
+    if (searchEntries) {
+        UnkClass_8009ECB0* data = func_8009ECB0();
+        s32* entry = &data->entries_0x4[0];
+        for (u32 i = 0; i < 7; ++i, ++entry) {
+            if (*entry != static_cast<s32>(value)) {
+                continue;
+            }
+            s32 fallback = -1;
+            return func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback,
+                                                         sizeof(fallback));
+        }
+        return 0;
+    }
+    s32 fallback = -1;
+    return func_8007DECC__Q22cf13CfGameManagerFv(value, &fallback, sizeof(fallback));
+}
+
 extern "C" bool func_8009E344(UnkClass_8009ECB0* object, u32 value, s32* firstOut,
                                 s32* secondOut);
 extern "C" bool func_8007E908__Q22cf13CfGameManagerFv(u32 value) {
@@ -252339,6 +252377,96 @@ extern "C" void func_8008670C__Q22cf13CfGameManagerFv() {
     }
     lbl_eu_80663E24 &= ~0x400;
     func_8006349C();
+}
+
+extern "C" u32 lbl_eu_80663E30;
+extern "C" bool func_80083538__Q22cf13CfGameManagerFv();
+extern "C" void func_80084CA4__Q22cf13CfGameManagerFv(u32 first, u32 second,
+                                                        u32 third, bool enable);
+extern "C" u32 CfRes_packThreeFields(u32 first, u32 second, u32 third);
+extern "C" u32 CfRes_callFunc_67E78(u32 value);
+extern "C" void func_800620F0(u32 value);
+extern "C" void func_800835FC__Q22cf13CfGameManagerFv();
+extern "C" void func_80083560__Q22cf13CfGameManagerFv(u32 first, u32 second,
+                                                        u32 third) {
+    cf::CfGameManager::getInstance();
+    if (!func_80083538__Q22cf13CfGameManagerFv()) {
+        func_80084CA4__Q22cf13CfGameManagerFv(first, second, third, true);
+    }
+    u32 packed = CfRes_packThreeFields(first, second, third);
+    if (lbl_eu_80663E30 != 0 && lbl_eu_80663E30 != packed) {
+        func_800620F0(CfRes_callFunc_67E78(packed));
+    }
+    lbl_eu_80663E30 = packed;
+    func_800835FC__Q22cf13CfGameManagerFv();
+}
+
+struct CfPlayerExtraData {
+    u8 field_0x0[0xB14];
+};
+
+class CfPlayerComposite : public cf::CActorParam,
+                          public CfPlayerExtraData,
+                          public cf::CfObjectMove {};
+
+extern "C" u32 func_80082EC0__Q22cf13CfGameManagerFv(
+    cf::UnkClass_CActorParam15E0* data, u32 value);
+extern "C" u32 func_8025FB10(cf::UnkClass_CActorParam15E0* data, u32 value);
+extern "C" u32 func_80082E50__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value) {
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(playerIndex);
+    CfPlayerComposite* composite = static_cast<CfPlayerComposite*>(player);
+    if (composite != nullptr) {
+        cf::UnkClass_CActorParam15E0* data =
+            composite->CActorParam_UnkVirtualFunc127();
+        if (data != nullptr) {
+            return func_80082EC0__Q22cf13CfGameManagerFv(data, value);
+        }
+    }
+    return 0;
+}
+
+extern "C" u32 func_80082EC4__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value) {
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(playerIndex);
+    CfPlayerComposite* composite = static_cast<CfPlayerComposite*>(player);
+    if (composite != nullptr) {
+        cf::UnkClass_CActorParam15E0* data =
+            composite->CActorParam_UnkVirtualFunc127();
+        if (data != nullptr) {
+            return func_8025FB10(data, value);
+        }
+    }
+    return 0;
+}
+
+extern "C" void func_80082A7C__Q22cf13CfGameManagerFv(cf::CfObjectMove* object) {
+    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+    cf::CfObjectMove* oldFirst =
+        *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    if (*func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0) != object) {
+        *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0) = object;
+        for (s32 i = 1; i < 3; ++i) {
+            if (object ==
+                *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, i)) {
+                *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, i) = oldFirst;
+                break;
+            }
+        }
+    }
+}
+
+extern "C" CfCamEventManager* func_8006E59C();
+extern "C" cf::UnkClass_80082D90* func_80082D90__Q22cf13CfGameManagerFv();
+extern "C" void func_80082A0C__Q22cf13CfGameManagerFv() {
+    CfCamEventManager* cameraManager = func_8006E59C();
+    if (cameraManager != nullptr) {
+        cf::UnkClass_80082D90* data = func_80082D90__Q22cf13CfGameManagerFv();
+        if (data != nullptr) {
+            cf::CfObject* object = func_8006E5A4(cameraManager);
+            if (object != nullptr) {
+                object->CfObject_UnkVirtualFunc3(data);
+            }
+        }
+    }
 }
 
 extern "C" void func_800B9404(UnkClass_80083298* object);
@@ -252462,9 +252590,11 @@ CPad* CfGameManager::getCurrentPad() {
     return &lbl_eu_80570D40[channel & 7];
 }
 
+#pragma dont_inline on
 CfObjectMove* CfGameManager::getPlayer(int playerIndex) {
     return *func_8007C6B4__Q22cf13CfGameManagerFv(getInstance()->unk94, playerIndex);
 }
+#pragma dont_inline reset
 
 } // namespace cf
 
@@ -252674,10 +252804,12 @@ void cf::CfGameManager::func_80087410() {
     field_0x4->CfObject_UnkVirtualFunc19();
 }
 
+#pragma dont_inline on
 void cf::CfGameManager::func_80082258() {
     func_80141B20(this);
     func_800B1E2C(this);
 }
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_80085878() {
     if (func_80083298() != nullptr && &func_80083298()->field_0xF0 != nullptr) {
@@ -252762,9 +252894,11 @@ void cf::CfGameManager::func_80083550() {
     lbl_eu_80663E24 |= 0x10;
 }
 
+#pragma dont_inline on
 void cf::CfGameManager::func_800835FC() {
     lbl_eu_80663E24 |= 0x20;
 }
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_80083878() {
     lbl_eu_80663E24 |= 0x40;
@@ -253032,6 +253166,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc89() {
 void cf::CActorParam::CActorParam_UnkVirtualFunc91() {
 }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc127() {
+cf::UnkClass_CActorParam15E0* cf::CActorParam::CActorParam_UnkVirtualFunc127() {
+    return field_0x15D8;
 }
 

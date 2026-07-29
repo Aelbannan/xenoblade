@@ -3,7 +3,17 @@
 #include <types.h>
 namespace cf {
 
-class CfObjectColl {
+class CfObjectPoint {
+public:
+    virtual ~CfObjectPoint();
+    void func_800C1638();
+    int func_800AC604();
+
+    u8 pad04[0x68 - 0x4];
+    u32 field_0x68;
+};
+
+class CfObjectColl : public CfObjectPoint {
 public:
     virtual ~CfObjectColl();
     void func_800AB3EC();
@@ -17,10 +27,11 @@ class CfObject {
 public:
     void CfObject_UnkVirtualFunc67();
     void CfObject_UnkVirtualFunc65();
-    void CfObject_UnkVirtualFunc11();
+    int CfObject_UnkVirtualFunc11();
     void CfObject_UnkVirtualFunc10();
 
-    // TODO: add fields
+    u8 pad04[0x6C - 0x4];
+    u32 field_0x6C;
     void CfObject_UnkVirtualFunc73();
     void CfObject_UnkVirtualFunc72();
     void CfObject_UnkVirtualFunc71();

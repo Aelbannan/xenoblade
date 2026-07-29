@@ -4,6 +4,8 @@
 
 #include <nw4hbm/lyt/lyt_common.h>
 #include <nw4hbm/lyt/lyt_pane.h>
+#include <revolution/GX.h>
+#include <revolution/TPL.h>
 
 namespace nw4hbm {
 namespace lyt {
@@ -11,6 +13,10 @@ namespace lyt {
 // Forward declarations
 struct ResBlockSet;
 class TexMap;
+
+namespace detail {
+void InitGXTexObjFromTPL(GXTexObj* pTexObj, TPLPalette* pPalette, u32 id);
+}
 
 namespace res {
 
@@ -55,7 +61,9 @@ public:
     virtual u8 GetVtxColorElement(u32 idx) const;       // at 0x34
     virtual void SetVtxColorElement(u32 idx, u8 value); // at 0x38
 
-    virtual void Append(const TexMap& rTexMap); // at 0x74
+    virtual void Append(TPLPalette* pPalette);   // at 0x64
+    virtual void Append(const GXTexObj& rTexObj); // at 0x68
+    virtual void Append(const TexMap& rTexMap);   // at 0x74
 
 protected:
     ut::Color mVtxColors[VERTEXCOLOR_MAX]; // at 0xD4

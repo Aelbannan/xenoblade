@@ -15,46 +15,6 @@ static BOOL NWC24iIsRequestPending;
 
 void REXInit();
 
-DECL_WEAK NWC24Err NWC24iPrepareShutdown(void) DECOMP_DONT_INLINE;
-DECL_WEAK s32 NWC24SuspendScheduler(void) DECOMP_DONT_INLINE;
-DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE;
-
-void __OSInitNet(void) {
-    s32 error;
-    OSIOSRev rev;
-
-    __OSGetIOSRev(&rev);
-
-    if (rev.idLo <= 4 || rev.idLo == 9) {
-        return;
-    }
-
-    error = NWC24iPrepareShutdown();
-    if (error < 0) {
-        OSReport("Failed to register network shutdown function. %d\n", error);
-    }
-
-    error = NWC24SuspendScheduler();
-    if (error < 0) {
-        OSReport("Failed to suspend the WiiConnect24 scheduler. %d\n", error);
-    }
-
-    if (!__OSInIPL) {
-        error = NWC24iSynchronizeRtcCounter(FALSE);
-        if (error != 0) {
-            OSReport("Failed to synchronize time with network resource managers. %d\n", error);
-        }
-    }
-}
-
-//unused
-void __OSSyncTimeWithNetRM(){
-    NWC24iSynchronizeRtcCounter(FALSE);
-}
-
-void REXInit(){
-}
-
 static BOOL NWC24Shutdown_(BOOL final, u32 event);
 static s32 CallbackAsyncIpc(s32 result, void* arg);
 NWC24Err NWC24iRequestShutdown(u32 param_1, NWC24Err* resultOut);
@@ -65,7 +25,10 @@ static s32 NWC24iCloseResourceManager_(const char* funcName, s32 fd);
 static s32 NWC24iCloseResourceManagerAsync_(const char* funcName, s32 fd, void* callbackArg);
 static s32 CheckCallingStatus(const char* funcName);
 
-DECL_WEAK NWC24Err NWC24iPrepareShutdown(){
+#pragma push
+#pragma auto_inline off
+
+NWC24Err NWC24iPrepareShutdown() DECOMP_DONT_INLINE {
     s32 result;
     
     result = 0;
@@ -86,7 +49,7 @@ DECL_WEAK NWC24Err NWC24iPrepareShutdown(){
 
 s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE;
 
-DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE {
+NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE {
     s32 result;
     s32 rtc;
     
@@ -115,7 +78,7 @@ check_result:
     return NWC24iSetRtcCounter_(rtc, val != FALSE);
 }
 
-DECL_WEAK s32 NWC24SuspendScheduler(){
+s32 NWC24SuspendScheduler() DECOMP_DONT_INLINE {
     int iVar1;
     int iVar2;
     s32 local_18;
@@ -137,6 +100,8 @@ DECL_WEAK s32 NWC24SuspendScheduler(){
     }
     return iVar1;
 }
+
+#pragma pop
 
 //unused
 DECL_WEAK s32 NWC24ResumeScheduler(){
@@ -303,4 +268,43 @@ static s32 CheckCallingStatus(const char* funcName){
     else return 0;
 }
 
+NWC24Err NWC24iPrepareShutdown(void) DECOMP_DONT_INLINE;
+s32 NWC24SuspendScheduler(void) DECOMP_DONT_INLINE;
+NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) DECOMP_DONT_INLINE;
 
+void __OSInitNet(void) {
+    s32 error;
+    OSIOSRev rev;
+
+    __OSGetIOSRev(&rev);
+
+    if (rev.idLo <= 4 || rev.idLo == 9) {
+        return;
+    }
+
+    error = NWC24iPrepareShutdown();
+    if (error != 0) {
+        if (error < 0) {
+            OSReport("Failed to register network shutdown function. %d\n", error);
+        }
+        error = NWC24SuspendScheduler();
+        if (error < 0) {
+            OSReport("Failed to suspend the WiiConnect24 scheduler. %d\n", error);
+        }
+    }
+
+    if (!__OSInIPL) {
+        error = NWC24iSynchronizeRtcCounter(FALSE);
+        if (error != 0) {
+            OSReport("Failed to synchronize time with network resource managers. %d\n", error);
+        }
+    }
+}
+
+//unused
+void __OSSyncTimeWithNetRM(){
+    NWC24iSynchronizeRtcCounter(FALSE);
+}
+
+void REXInit(){
+}

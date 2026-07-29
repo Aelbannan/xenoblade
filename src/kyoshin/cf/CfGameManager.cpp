@@ -12,9 +12,7 @@
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/core/CView.hpp"
 #include "monolib/scn/CScn.hpp"
-#pragma dont_inline on
 #include "monolib/util/FixStr.hpp"
-#pragma dont_inline reset
 #include <string.h>
 
 // destructor defined inline in CfGameManager.hpp
@@ -296,9 +294,11 @@ CPad* CfGameManager::getCurrentPad() {
     return &lbl_eu_80570D40[channel & 7];
 }
 
+#pragma dont_inline on
 CfObjectMove* CfGameManager::getPlayer(int playerIndex) {
     return *func_8007C6B4__Q22cf13CfGameManagerFv(getInstance()->unk94, playerIndex);
 }
+#pragma dont_inline reset
 
 } // namespace cf
 
@@ -598,9 +598,11 @@ void cf::CfGameManager::func_80083550() {
     lbl_eu_80663E24 |= 0x10;
 }
 
+#pragma dont_inline on
 void cf::CfGameManager::func_800835FC() {
     lbl_eu_80663E24 |= 0x20;
 }
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_80083878() {
     lbl_eu_80663E24 |= 0x40;
@@ -868,6 +870,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc89() {
 void cf::CActorParam::CActorParam_UnkVirtualFunc91() {
 }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc127() {
+cf::UnkClass_CActorParam15E0* cf::CActorParam::CActorParam_UnkVirtualFunc127() {
+    return field_0x15D8;
 }
 

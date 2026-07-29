@@ -18,6 +18,9 @@ u32 func_8026178C(void*, u32);
 u32 func_8025FB10(void*, u32);
 void func_80124270(void*, void*);
 void func_80127BD8(void*, float*);
+u32 getHandleMEM2__Q23mtl10MemManagerFv();
+void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+void setHandleFlag1__11CDeviceFileFP11CFileHandle(void*);
 
 void resetCItemBox() {}
 
@@ -96,6 +99,18 @@ void func_801D4A2C(void* sub) {
         func_80127BD8((u8*)sub + 0x18 + i * 0xC, temp);
     }
 }
+
+
+void func_801D4054(CItemBoxInfo* info) {
+    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    info->state.fileHandle1 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0x8e], info, 0, 0);
+    setHandleFlag1__11CDeviceFileFP11CFileHandle(info->state.fileHandle1);
+    handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    info->state.fileHandle2 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0xa6], info, 0, 0);
+    setHandleFlag1__11CDeviceFileFP11CFileHandle(info->state.fileHandle2);
+}
+void func_801D40C4(){}
+
 
 void func_801D4B3C(){}
 
@@ -266,7 +281,13 @@ void __ct__CItemBoxInfo2(){}
 
 CItemBoxInfo2::~CItemBoxInfo2() {}
 
-void func_801E12E0(){}
+void func_801E12E0(CItemBoxInfo2* info) {
+    u32 handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    info->state.fileHandle1 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0x8e], info, 0, 0);
+    handle = getHandleMEM2__Q23mtl10MemManagerFv();
+    info->state.fileHandle2 = readFile__11CDeviceFileFUlPCcP10IWorkEventii(handle, &lbl_eu_805063BC[0xa6], info, 0, 0);
+}
+
 void func_801E1348(){}
 
 void CItemBoxInfo2::drawItemBox2Layout(nw4r::lyt::DrawInfo* drawInfo) {

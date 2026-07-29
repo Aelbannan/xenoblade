@@ -4,6 +4,7 @@
 #include "kyoshin/cf/object/CObjectParam.hpp"
 
 namespace cf {
+    class UnkClass_80082D90;
     struct CfObjectSub54 {
         u8 field_0x0[0xC];
     };
@@ -14,7 +15,7 @@ namespace cf {
         //vtable 1 (CfObject)
         virtual ~CfObject();                      //0x54
         virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
-        virtual void CfObject_UnkVirtualFunc3();      //0x5C
+        virtual void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
         virtual void CfObject_UnkVirtualFunc5();      //0x64
         virtual void CfObject_UnkVirtualFunc6();      //0x68

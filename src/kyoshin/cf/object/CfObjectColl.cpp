@@ -5,12 +5,7 @@
 
 #include "kyoshin/cf/object/CfObjectColl.hpp"
 
-namespace cf {
-class CfObjectPoint {
-public:
-    void func_800AC604();
-};
-} // namespace cf
+
 
 void func_800AB3D0(){}
 
@@ -22,7 +17,9 @@ void cf::CfObjectColl::func_800AB498() {}
 
 void CfObjectColl_initCollImplInstances(){}
 
-void cf::CfObjectColl::func_800AB57C(void) {}
+void cf::CfObjectColl::func_800AB57C() {
+    func_800C1638();
+}
 
 void func_800AB580(){}
 
@@ -157,7 +154,9 @@ extern "C" int CfObject_UnkVirtualFunc13__Q22cf8CfObjectFv(void* self) { return 
 
 extern "C" void CfObject_UnkVirtualFunc12__Q22cf8CfObjectFv() {}
 
-void cf::CfObject::CfObject_UnkVirtualFunc11() {}
+int cf::CfObject::CfObject_UnkVirtualFunc11() {
+    return field_0x6C & 1;
+}
 
 void cf::CfObject::CfObject_UnkVirtualFunc10() {
     void** vtable = *(void***)this;
@@ -167,7 +166,9 @@ void cf::CfObject::CfObject_UnkVirtualFunc10() {
 
 extern "C" void CfObject_UnkVirtualFunc5__Q22cf8CfObjectFv() {}
 
-void cf::CfObjectPoint::func_800AC604() {}
+int cf::CfObjectPoint::func_800AC604() {
+    return (field_0x68 >> 20) & 1;
+}
 
 extern "C" void* func_800AC610(void* param_1) {
     if (param_1 != NULL && (*(unsigned int*)((char*)param_1 + 0x64) & 0x20)) {

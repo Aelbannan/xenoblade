@@ -128,7 +128,13 @@ bool RomFont::SetAlternateChar(u16 ch) {
     const u16 prev = mAlternateChar;
     mAlternateChar = 0xFFFF;
 
-    u16 undef = HandleUndefinedChar(ch);
+    u16 undef;
+    if (HasGlyph(ch)) {
+        undef = ch;
+    } else {
+        undef = mAlternateChar;
+    }
+
     if (undef != 0xFFFF) {
         mAlternateChar = ch;
         return true;
@@ -146,9 +152,18 @@ int RomFont::GetCharWidth(u16 ch) const {
     u32 width;
     char buffer[CHAR_PTR_BUFFER_SIZE];
 
-    MakeCharPtr(buffer, ch);
-    OSGetFontWidth(buffer, &width);
+    u16 c = HasGlyph(ch) ? ch : mAlternateChar;
 
+    if ((c >> 8) == 0) {
+        buffer[0] = c & 0xFF;
+        buffer[1] = '\0';
+    } else {
+        buffer[0] = c >> 8;
+        buffer[1] = c & 0xFF;
+        buffer[2] = '\0';
+    }
+
+    OSGetFontWidth(buffer, &width);
     return width;
 }
 
@@ -238,7 +253,54 @@ void* RomFont::Unload() {
     return pPrev;
 }
 
+bool RomFont::HasGlyph(u16 ch) const {
+    int encode = mFontEncode;
+    bool ret;
+
+    if (encode == 1) {
+        // SJIS half-width
+        ret = false;
+
+        if (ch <= 0xFF) {
+            if (ch >= 0x20 && ch <= 0x7E) {
+                ret = true;
+            } else if (ch >= 0xA1 && ch <= 0xDF) {
+                ret = true;
+            }
+        }
+
+        if (ret) {
+            return true;
+        }
+
+        // SJIS full-width
+        {
+            u8 hi = ch >> 8;
+            u8 lo = ch & 0xFF;
+
+            ret = false;
+
+            if (hi >= 0x81 && hi <= 0x98 && lo >= 0x40 && lo <= 0xFC) {
+                ret = true;
+            }
+        }
+
+        if (ret) {
+            return true;
+        }
+
+        return false;
+    } else if (encode > 1) {
+        return false;
+    }
+
+    // CP1252 (encode == 0)
+    if (ch >= 0x20 && ch <= 0xFF) {
+        return true;
+    }
+
+    return false;
+}
+
 } // namespace ut
 } // namespace nw4r
-
-bool HasGlyph__Q34nw4r2ut7RomFontCFUs(unsigned short){ return false; }

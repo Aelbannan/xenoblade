@@ -16,15 +16,19 @@ extern "C" void __dl__FPv(void*);
    byte-exact: null-check, member dtors in reverse-declaration order, then
    conditional delete if flags > 0. */
 extern "C" void* __dt__7CMapSelFv(CMapSel* _this, int flags) {
-    if (_this != 0) {
-        __dt__6CCur18Fv(_this->mCursor, -1);
-        __dt__10CScrollBarFv(_this->mScrollBar, -1);
-        __dt__17UnkClass_8045F564Fv(_this->mMemRegion, -1);
-        if (flags > 0) {
-            __dl__FPv(_this);
+    /* Pre-load locals to encourage MWCC to save this+flags as a consecutive pair
+       (stmw r30, 8(sp)) rather than separate stw instructions. */
+    CMapSel* thiz = _this;
+    int flg = flags;
+    if (thiz != 0) {
+        __dt__6CCur18Fv(thiz->mCursor, -1);
+        __dt__10CScrollBarFv(thiz->mScrollBar, -1);
+        __dt__17UnkClass_8045F564Fv(thiz->mMemRegion, -1);
+        if (flg > 0) {
+            __dl__FPv(thiz);
         }
     }
-    return _this;
+    return thiz;
 }
 
 void func_8024343C(){}

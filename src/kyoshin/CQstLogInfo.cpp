@@ -3,9 +3,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CQstLogInfo.hpp"
-#include "kyoshin/code_80135FDC.hpp"
-
-extern void func_80138078(u32);
 
 u8 CQstLogInfo::func_802296D0() { return mField38; }
 
@@ -20,18 +17,9 @@ void func_80229808(){}
 
 void func_80229854(){}
 
-#pragma push
-#pragma auto_inline off
-void CQstLogInfo::func_802298A0(){
-    // Prevent call elimination
-    mUnk20 = mUnk20;
-}
+void func_802298A0(){}
 
-void CQstLogInfo::func_80229900(){
-    // Prevent call elimination
-    mUnk20 = mUnk20;
-}
-#pragma pop
+void func_80229900(){}
 
 void func_80229960(){}
 
@@ -49,23 +37,8 @@ void func_8022AFF8(){}
 
 void CQstLogInfo::OnFileEvent() {}
 
-void CQstLogInfo::func_80229600(nw4r::lyt::DrawInfo* drawInfo){
+extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
+void CQstLogInfo::func_80229600(){
     if (mUnk30 == 0) return;
-    func_80137038(mUnk20, drawInfo, 0, 1);
-}
-
-void CQstLogInfo::func_802296E0(){
-    if (mUnk34 != 0) return;
-    mUnk34 = 1;
-    mField39 = 0;
-    func_802298A0();
-    func_80138078(0x6d);
-}
-
-void CQstLogInfo::func_80229724(){
-    if (mUnk34 != 3) return;
-    mUnk34 = 4;
-    mField39 = 0;
-    func_80229900();
-    func_80138078(6);
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(mUnk20, 0, 0, 1);
 }

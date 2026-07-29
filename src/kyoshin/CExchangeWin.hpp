@@ -16,7 +16,7 @@ extern "C" void* lbl_eu_80536640[];
 class CExchangeWin {
 public:
     ~CExchangeWin();
-    void OnFileEvent(CEventFile* pEventFile);
+    bool OnFileEvent(CEventFile* pEventFile);
 
     void* mVtbl;                                  // 0x00
     UnkClass_8045F564 mMemRegion;                 // 0x04

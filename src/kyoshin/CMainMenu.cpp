@@ -13,9 +13,11 @@
 #include <nw4r/lyt/lyt_layout.h>
 #include <nw4r/lyt/lyt_pane.h>
 #include <nw4r/math/math_types.h>
-extern "C" void __dt__9CMainMenuFv();
 extern "C" void cbRenderBefore__9CMainMenuFv();
 extern "C" void __ct__800FF300();
+
+// CBaseCur shared helpers (defined in CCur.cpp)
+extern void func_801D21CC(CBaseCur* cur);
 
 // CBaseCur base destructor (defined in kyoshin/CCur.cpp)
 extern "C" void __dt__8CBaseCurFv(void*, int);

@@ -41,21 +41,21 @@ extern "C" u32 lbl_eu_80667540;
 extern "C" u8 lbl_eu_80667544;
 
 int func_8015D310() {
-    union {
-        struct {
-            u32 w;
-            u8 b;
-        };
-        u8 bytes[5];
+    u32 w = lbl_eu_80667540;
+    u8 b = lbl_eu_80667544;
+    struct {
+        u32 w;
+        u8 b;
     } data;
-    data.w = lbl_eu_80667540;
-    data.b = lbl_eu_80667544;
+    data.w = w;
+    data.b = b;
 
     u8 result = func_8009CF8C(0x7fc);
+    u8* thresholds = (u8*)&data;
 
     for (u32 i = 0; i < 5; i++) {
         u8 idx = (u8)i;
-        if (result >= data.bytes[idx] && func_8009CF8C(idx + 0x804) == 0) {
+        if (result >= thresholds[idx] && func_8009CF8C(idx + 0x804) == 0) {
             return 1;
         }
     }

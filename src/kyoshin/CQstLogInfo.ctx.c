@@ -23732,9 +23732,6 @@ public:
     void func_80229600(nw4r::lyt::DrawInfo* drawInfo);
     void func_802296E0();
     void func_80229724();
-    void func_802298A0();
-    void func_80229900();
-
     // +0x00: vtable (implicit)
     u8 _04[0x20 - 0x04];              // 0x04-0x1F
     nw4r::lyt::Layout* mUnk20;        // 0x20
@@ -23746,6 +23743,9 @@ public:
     u8 mField39;                       // 0x39
     u16 mField3A;                      // 0x3A
 };
+
+void func_802298A0(CQstLogInfo*);
+void func_80229900(CQstLogInfo*);
 /* end "kyoshin/CQstLogInfo.hpp" */
 /* "src/kyoshin/CQstLogInfo.cpp" line 5 "kyoshin/code_80135FDC.hpp" */
 #pragma once
@@ -26355,19 +26355,6 @@ void func_80229808(){}
 
 void func_80229854(){}
 
-#pragma push
-#pragma auto_inline off
-void CQstLogInfo::func_802298A0(){
-    // Prevent call elimination
-    mUnk20 = mUnk20;
-}
-
-void CQstLogInfo::func_80229900(){
-    // Prevent call elimination
-    mUnk20 = mUnk20;
-}
-#pragma pop
-
 void func_80229960(){}
 
 void func_80229A0C(){}
@@ -26393,7 +26380,7 @@ void CQstLogInfo::func_802296E0(){
     if (mUnk34 != 0) return;
     mUnk34 = 1;
     mField39 = 0;
-    func_802298A0();
+    func_802298A0(this);
     func_80138078(0x6d);
 }
 
@@ -26401,6 +26388,6 @@ void CQstLogInfo::func_80229724(){
     if (mUnk34 != 3) return;
     mUnk34 = 4;
     mField39 = 0;
-    func_80229900();
+    func_80229900(this);
     func_80138078(6);
 }

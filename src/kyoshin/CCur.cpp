@@ -308,6 +308,15 @@ void func_virt___dt__6CCur22Fv() { }
 
 void func_801D2BFC(){}
 
+/* Show or hide named sub-panes (nul_curs06s/l, nul_curs07s/l)
+   by index. Used for cursor visibility control per menu page. */
+static const char* sPaneNames[] = {
+    "nul_curs06s",
+    "nul_curs06l",
+    "nul_curs07s",
+    "nul_curs07l",
+};
+
 /* func_801D2C80: Position a cursor pane by index.
    index 4 targets the root pane directly; indices 0-3 look up
    named sub-panes (nul_curs06s/l, nul_curs07s/l) and position them.
@@ -320,15 +329,6 @@ extern "C" void func_801D2C80(CBaseCur* cur, const nw4r::math::VEC3* trans, u8 i
         func_801D2150(pane, trans);
     }
 }
-
-/* Show or hide named sub-panes (nul_curs06s/l, nul_curs07s/l)
-   by index. Used for cursor visibility control per menu page. */
-static const char* sPaneNames[] = {
-    "nul_curs06s",
-    "nul_curs06l",
-    "nul_curs07s",
-    "nul_curs07l",
-};
 
 extern "C" void func_801D2CF4(CBaseCur* cur, u8 index) {
     if (index >= 4) {

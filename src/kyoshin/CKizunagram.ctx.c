@@ -1465,9 +1465,13 @@ public:
     u8 field_0x39;  // 0x39
     u8 _3A[2];      // 0x3A - 0x3B
     u8 field_0x3C;  // 0x3C
-    u8 _3D[0x4F];   // 0x3D - 0x8B
+    u8 _3D[0xF];    // 0x3D - 0x4B
+    u8 field_0x4C;  // 0x4C - subobject passed to func_8025B958
+    u8 _4D[0x3F];   // 0x4D - 0x8B
     u8 field_8C;    // 0x8C
-    u8 _8D[0x30];   // 0x8D - 0xBC
+    u8 _8D[0x1F];   // 0x8D - 0xAB
+    u8 field_0xAC;  // 0xAC - subobject passed to func_80257F9C
+    u8 _AD[0x10];   // 0xAD - 0xBC
     u8 field_0xBD;  // 0xBD
 };
 
@@ -1484,7 +1488,7 @@ void func_8025C870() {}
 
 
 
-void func_80257F9C(void*, int);
+void func_80257F9C(u8*, int);
 
 void __ct__CKizunaLine(){}
 
@@ -1535,12 +1539,12 @@ void func_8025AB04(){}
 void func_8025AB84(){}
 
 extern float lbl_eu_80668828[];
-extern "C" void* lbl_eu_80537608[];
+extern "C" u32 lbl_eu_80537608[];
 
-void __ct__CKizunaRadar(CKizunaRadar* self, int r4) {
-    void* vt = lbl_eu_80537608;
-    self->field_0x04 = r4;
-    *(void**)self = vt;
+void __ct__CKizunaRadar(CKizunaRadar* self, int vbaseFlag) {
+    u32* vt = lbl_eu_80537608;
+    self->field_0x04 = vbaseFlag;
+    *(u32*)self = (u32)vt;
     self->field_0x08 = 0;
     self->field_0x0C = 0;
     self->field_0x10 = 0;
@@ -1573,7 +1577,7 @@ void func_8025B870(){}
 
 void func_8025B900(){}
 
-void func_8025B958(void*);
+void func_8025B958(u8*);
 
 void func_8025B9C8(){}
 
@@ -1623,7 +1627,7 @@ void func_8025C7D0(CKizunagram* self) {
     self->field_0x39 = 1;
     self->field_0x3C = 0;
     self->field_0x38 = 1;
-    func_8025B958((u8*)self + 0x4C);
+    func_8025B958(&self->field_0x4C);
 }
 
 void func_8025C7FC(){}
@@ -1686,9 +1690,9 @@ void func_8025CE78(){}
 
 void func_8025CF1C(CKizunagram* self) {
     if (self->field_8C != 0) {
-        func_80257F9C((u8*)self + 0xAC, 1);
+        func_80257F9C(&self->field_0xAC, 1);
     } else {
-        func_80257F9C((u8*)self + 0xAC, 0);
+        func_80257F9C(&self->field_0xAC, 0);
     }
 }
 

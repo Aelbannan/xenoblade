@@ -189,7 +189,7 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
 }
 
 // Initialization function: loads layout, resources, finds panes
-extern "C" void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor) {
+void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor) {
     self->mAccessor = accessor;
 
     func_80136E84(&self->mLayout, accessor, &lbl_eu_805084BC[0x00]);

@@ -70,10 +70,22 @@ void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
         len -= consumed;
 
         // Expand the output rect to encompass this line's rect
-        pRect->left = pRect->left > r.left ? r.left : pRect->left;
-        pRect->top = pRect->top > r.top ? r.top : pRect->top;
-        pRect->right = pRect->right < r.right ? r.right : pRect->right;
-        pRect->bottom = pRect->bottom < r.bottom ? r.bottom : pRect->bottom;
+        {
+            f32 newLeft = r.left;
+            pRect->left = pRect->left > newLeft ? newLeft : pRect->left;
+        }
+        {
+            f32 newTop = r.top;
+            pRect->top = pRect->top > newTop ? newTop : pRect->top;
+        }
+        {
+            f32 newRight = r.right;
+            pRect->right = pRect->right < newRight ? newRight : pRect->right;
+        }
+        {
+            f32 newBottom = r.bottom;
+            pRect->bottom = pRect->bottom < newBottom ? newBottom : pRect->bottom;
+        }
     } while (len > 0);
 }
 

@@ -348,7 +348,18 @@ void Pane::UnbindAnimationSelf(AnimTransform* pAnimTrans) {
         mpMaterial->UnbindAnimation(pAnimTrans);
     }
 
-    detail::UnbindAnimationLink(&mAnimList, pAnimTrans);
+    AnimationLinkList::Iterator it = mAnimList.GetBeginIter();
+
+    while (it != mAnimList.GetEndIter()) {
+        AnimationLink* pLink = &*it;
+
+        ++it;
+
+        if (pAnimTrans == NULL || pLink->GetAnimTransform() == pAnimTrans) {
+            mAnimList.Erase(pLink);
+            pLink->Reset();
+        }
+    }
 }
 
 void Pane::AddAnimationLink(AnimationLink* pAnimLink) {

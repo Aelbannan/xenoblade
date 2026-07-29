@@ -48,10 +48,13 @@ void ADXT_ExecFsSvr() {
 // sequences through ADX subsystem servers (STM, F) with state updates, then
 // invokes an optional post-callback and resets state to 0.
 void adxt_ExecFsSvr() {
+    // Load base address into a callee-saved register early so the compiler
+    // caches it across function calls (matching retail r31 usage).
     struct ADXT_FsSvrGlobals* globals = &lbl_eu_805E26B0;
+    s32 state = globals->state;
 
     ADXCRS_Lock();
-    if (globals->state != 0) {
+    if (state != 0) {
         ADXCRS_Unlock();
         return;
     }

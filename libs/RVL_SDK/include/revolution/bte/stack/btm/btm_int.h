@@ -338,20 +338,27 @@ typedef struct
 } tBTM_ESCO_INFO;
 
 /* Define the structure used for SCO Management
-*/
+ * NOTE: Retail Wii layout differs from Broadcom SDK — the structure
+ * is flattened with ESCO fields inlined rather than nested.
+ */
 typedef struct
 {
-    tBTM_ESCO_INFO   esco;              /* Current settings             */
-#if BTM_SCO_HCI_INCLUDED == TRUE
-    BUFFER_Q         xmit_data_q;       /* SCO data transmitting queue  */
-#endif
-    tBTM_SCO_CB     *p_conn_cb;         /* Callback for when connected  */
-    tBTM_SCO_CB     *p_disc_cb;         /* Callback for when disconnect */
-    UINT16           state;             /* The state of the SCO link    */
-    UINT16           hci_handle;        /* HCI Handle                   */
-    BOOLEAN          is_orig;           /* TRUE if the originator       */
-    BOOLEAN          rem_bd_known;      /* TRUE if remote BD addr known */
-
+    /* 0x00 */ tBTM_SCO_CB     *p_conn_cb;         /* Callback for when connected  */
+    /* 0x04 */ tBTM_SCO_CB     *p_disc_cb;         /* Callback for when disconnect */
+    /* 0x08 */ UINT16           state;             /* The state of the SCO link    */
+    /* 0x0A */ UINT16           hci_handle;        /* HCI Handle                   */
+    /* 0x0C */ BOOLEAN          is_orig;           /* TRUE if the originator       */
+    /* 0x0D */ BOOLEAN          rem_bd_known;      /* TRUE if remote BD addr known */
+    /* 0x10 */ tBTM_ESCO_CBACK *p_esco_cback;     /* Callback for eSCO events     */
+    /* 0x14 */ tBTM_ESCO_PARAMS esco_setup;        /* eSCO setup parameters        */
+    /* 0x24 */ UINT16           rx_pkt_len;        /* eSCO data: rx packet length  */
+    /* 0x26 */ UINT16           tx_pkt_len;        /* eSCO data: tx packet length  */
+    /* 0x28 */ BD_ADDR          bd_addr;           /* eSCO data: remote BD addr    */
+    /* 0x2E */ UINT8            link_type;         /* eSCO data: link type         */
+    /* 0x2F */ UINT8            tx_interval;       /* eSCO data: tx interval       */
+    /* 0x30 */ UINT8            retrans_window;    /* eSCO data: retrans window    */
+    /* 0x31 */ UINT8            air_mode;          /* eSCO data: air mode          */
+    /* 0x32 */ UINT8            hci_status;        /* eSCO data: HCI status        */
 } tSCO_CONN;
 
 /* SCO Management control block */
@@ -362,10 +369,11 @@ typedef struct
     tBTM_SCO_DATA_CB     *p_data_cb;        /* Callback for SCO data over HCI */
     UINT32               xmit_window_size; /* Total SCO window in bytes  */
 #endif
-    tSCO_CONN            sco_db[BTM_MAX_SCO_LINKS];
-    tBTM_ESCO_PARAMS     def_esco_parms;
+    /* NOTE: Retail layout uses 3 entries regardless of BTM_MAX_SCO_LINKS */
+    tSCO_CONN            sco_db[3];
     BD_ADDR              xfer_addr;
     UINT16               sco_disc_reason;
+    tBTM_ESCO_PARAMS     def_esco_parms;
     BOOLEAN              esco_supported;    /* TRUE if 1.2 cntlr AND supports eSCO links */
     tBTM_SCO_TYPE        desired_sco_mode;
     tBTM_SCO_TYPE        xfer_sco_type;

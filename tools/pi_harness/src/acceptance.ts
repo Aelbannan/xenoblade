@@ -213,6 +213,77 @@ export async function runBatchCycle(
 }
 
 // ─────────────────────────────────────────────────────────────────────
+//  Hexdiff (mismatch feedback for re-prompts)
+// ─────────────────────────────────────────────────────────────────────
+
+interface HexdiffJson {
+  mismatch_count?: number;
+  reg_mapping?: Record<string, string>;
+  instructions?: { match: boolean; retail_asm?: string; decomp_asm?: string }[];
+}
+
+/** Extract a compact, model-readable summary from hexdiff JSON output. */
+function extractHexdiffSummary(result: HexdiffJson): string {
+  const parts: string[] = [];
+  if (result.mismatch_count !== undefined) {
+    parts.push(`mismatch_count: ${result.mismatch_count}`);
+  }
+  if (result.reg_mapping && Object.keys(result.reg_mapping).length > 0) {
+    parts.push(`reg_mapping: ${JSON.stringify(result.reg_mapping)}`);
+  }
+  // Show up to 10 mismatched instructions
+  if (result.instructions) {
+    const mismatches = result.instructions.filter(i => !i.match);
+    const shown = mismatches.slice(0, 10);
+    if (shown.length > 0) {
+      parts.push(`mismatched instructions (showing ${shown.length}/${mismatches.length}):`);
+      for (const m of shown) {
+        parts.push(`  retail: ${m.retail_asm ?? "?"}`);
+        parts.push(`  decomp: ${m.decomp_asm ?? "?"}`);
+      }
+    }
+  }
+  return parts.join("\n") || "(no structured diff data)";
+}
+
+/**
+ * Run hexdiff for a single symbol and return a compact mismatch summary.
+ * Does NOT use build_lock.py — the object was just built by buildUnit/runBatchCycle.
+ * Uses --no-lock to avoid flock deadlock with any concurrent build.
+ *
+ * hexdiff exits 5 when there ARE mismatches (the useful case), so we
+ * parse stdout from the error object rather than treating non-zero as failure.
+ */
+export async function runHexdiff(
+  repoRoot: string,
+  python: string,
+  unit: string,
+  symbol: string,
+): Promise<{ ok: boolean; output: string; mismatchCount: number }> {
+  try {
+    const { stdout } = await execFilePromise(python, [
+      "tools/coop/hexdiff.py", unit, "--symbol", symbol, "--json", "--no-lock",
+    ], { cwd: repoRoot });
+    const result = JSON.parse(stdout) as HexdiffJson;
+    return { ok: true, output: extractHexdiffSummary(result), mismatchCount: result.mismatch_count ?? -1 };
+  } catch (err) {
+    // hexdiff exits 5 when there ARE mismatches — parse stdout from error.
+    const e = err as { stdout?: string; stderr?: string; code?: number; message?: string };
+    if (e.stdout) {
+      try {
+        const result = JSON.parse(e.stdout) as HexdiffJson;
+        return { ok: true, output: extractHexdiffSummary(result), mismatchCount: result.mismatch_count ?? -1 };
+      } catch {
+        // JSON parse failed — fall through to error path
+      }
+    }
+    const output = ((e.stdout ?? "") + (e.stderr ?? "") || e.message || String(err)).slice(-1000);
+    process.stderr.write(`[pi-harness] WARNING: hexdiff failed for ${unit} ${symbol}: ${output.slice(0, 200)}\n`);
+    return { ok: false, output, mismatchCount: -1 };
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
 //  Claims
 // ─────────────────────────────────────────────────────────────────────
 

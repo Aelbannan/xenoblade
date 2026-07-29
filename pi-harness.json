@@ -1,9 +1,10 @@
 {
-  "matchModel": { "provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "thinkingLevel": "high" },
-  "cleanupModel": { "provider": "openrouter", "model": "deepseek/deepseek-v4-flash", "thinkingLevel": "high" },
-  "batchSize": 5,
+  "matchModel": { "provider": "openrouter", "model": "minimax/minimax-m3", "thinkingLevel": "high" },
+  "cleanupModel": { "provider": "openrouter", "model": "minimax/minimax-m3", "thinkingLevel": "high" },
+  "batchSize": 2,
   "maxParallelTUs": 2,
   "maxBatchRetries": 2,
+  "maxNoMatchRePrompts": 1,
   "singletonRetry": true,
   "maxTokens": 99000000,
   "singletonMinSize": 5000,

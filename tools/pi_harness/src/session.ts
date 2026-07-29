@@ -12,6 +12,7 @@
 
 import { writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
+import * as undici from "undici";
 import {
   createAgentSession,
   ModelRuntime,
@@ -19,6 +20,29 @@ import {
   type AgentSession,
 } from "@earendil-works/pi-coding-agent";
 import type { ModelSpec, SessionUsage, VerifyResult } from "./types.js";
+
+// Configure HTTP dispatcher with 5-minute body/headers timeout.
+// Without this, undici uses Node.js defaults (no timeout), so HTTP
+// requests can hang indefinitely if the server stops responding.
+// This must be called once before any createAgentSession calls.
+const HTTP_TIMEOUT_MS = 300_000; // 5 min
+let httpDispatcherConfigured = false;
+function ensureHttpDispatcher(): void {
+  if (httpDispatcherConfigured) return;
+  httpDispatcherConfigured = true;
+  try {
+    const dispatcher = new undici.EnvHttpProxyAgent({
+      allowH2: false,
+      bodyTimeout: HTTP_TIMEOUT_MS,
+      headersTimeout: HTTP_TIMEOUT_MS,
+    });
+    undici.setGlobalDispatcher(dispatcher);
+  } catch (err) {
+    process.stderr.write(
+      `[session] WARNING: Failed to configure HTTP dispatcher: ${err instanceof Error ? err.message : String(err)}\n`,
+    );
+  }
+}
 
 export interface SessionRunResult {
   /** Concatenated text from the last assistant message. */
@@ -40,8 +64,8 @@ export interface SessionRunResult {
 }
 
 export interface MultiPromptOpts {
-  maxRePrompts: number;
-  maxStuckRePrompts: number;
+  maxTimeoutRePrompts: number;
+  maxNoMatchRePrompts: number;
   /** Called after each prompt round. Receives the latest final text,
    *  whether it timed out, and the re-prompt count so far (0 after
    *  initial prompt). Returns the next action. */
@@ -50,7 +74,7 @@ export interface MultiPromptOpts {
     timedOut: boolean,
     rePromptCount: number,
   ) => Promise<VerifyResult>;
-  /** Overall session deadline in minutes (default: timeoutMinutes * (1 + maxRePrompts)). */
+  /** Overall session deadline in minutes (default: timeoutMinutes * (1 + maxTimeoutRePrompts)). */
   totalTimeoutMinutes?: number;
 }
 
@@ -124,6 +148,9 @@ export async function runAgentSession(opts: {
   let transcriptContent = `# Session: ${label}\n\n`;
   await writeFile(transcriptPath, transcriptContent, "utf-8");
 
+  // Ensure HTTP dispatcher has proper timeouts before creating sessions.
+  ensureHttpDispatcher();
+
   const { session } = await createAgentSession({
     model,
     thinkingLevel: spec.thinkingLevel,
@@ -141,7 +168,38 @@ export async function runAgentSession(opts: {
       .catch(() => {});
   };
 
+  // Track session activity for dead-session detection.
+  let lastActivityTime = Date.now();
+  let lastAgentEnd: { timestamp: number; willRetry: boolean } | undefined;
+
   const unsubscribe = session.subscribe((event) => {
+    // Track activity on meaningful events.
+    if (event.type === "message_update" ||
+        event.type === "tool_execution_start" ||
+        event.type === "tool_execution_end" ||
+        event.type === "auto_retry_start") {
+      lastActivityTime = Date.now();
+    }
+
+    // Log SDK retry events.
+    if (event.type === "auto_retry_start") {
+      process.stderr.write(
+        `[session] ${label}: SDK retry ${event.attempt}/${event.maxAttempts}` +
+        ` (delay ${event.delayMs}ms): ${event.errorMessage}\n`,
+      );
+    }
+    if (event.type === "auto_retry_end") {
+      process.stderr.write(
+        `[session] ${label}: SDK retry ${event.attempt} ${event.success ? "succeeded" : "failed"}` +
+        (event.finalError ? `: ${event.finalError}` : "") + `\n`,
+      );
+    }
+
+    // Track agent_end for diagnostics.
+    if (event.type === "agent_end") {
+      lastAgentEnd = { timestamp: Date.now(), willRetry: event.willRetry };
+    }
+
     if (event.type === "message_update") {
       const msg = event.assistantMessageEvent;
       if (msg.type === "text_delta" || msg.type === "thinking_delta") {
@@ -159,10 +217,31 @@ export async function runAgentSession(opts: {
     }
   });
 
+  // Heartbeat monitor: detect dead sessions (no activity for 2+ minutes
+  // while the session should be working). Uses SDK state to avoid false
+  // positives during builds (session.isIdle) and compaction (session.isCompacting).
+  const SILENCE_THRESHOLD_MS = 120_000; // 2 minutes
+  let deadSessionReason: string | undefined;
+  const heartbeat = setInterval(() => {
+    const silenceMs = Date.now() - lastActivityTime;
+    if (silenceMs > SILENCE_THRESHOLD_MS) {
+      // Only flag as dead if session should be active (not idle, not compacting).
+      if (!session.isIdle && !session.isCompacting && session.retryAttempt === 0) {
+        deadSessionReason = `Silent for ${Math.round(silenceMs / 1000)}s, session not idle`;
+        process.stderr.write(`[session] ${label}: DEAD SESSION DETECTED — ${deadSessionReason}\n`);
+        session.abort().catch(() => {});
+      }
+    }
+  }, 15_000); // check every 15 seconds
+  if (heartbeat && typeof heartbeat === "object" && "unref" in heartbeat) {
+    heartbeat.unref();
+  }
+
   let disposed = false;
   const dispose = (): void => {
     if (disposed) return;
     disposed = true;
+    clearInterval(heartbeat);
     unsubscribe();
     session.dispose();
   };
@@ -170,8 +249,10 @@ export async function runAgentSession(opts: {
   try {
     // ── Single-prompt path (no multiPrompt provided) ──
     if (!multiPrompt) {
+      process.stderr.write(`[session] ${label}: starting single-prompt (timeout=${timeoutMinutes}min)\n`);
       const result = await runOnePrompt(session, prompt, timeoutMinutes);
       const usage = sumUsage(session.state.messages);
+      process.stderr.write(`[session] ${label}: completed single-prompt (timedOut=${result.timedOut})\n`);
       return {
         finalText: result.finalText,
         sessionFile: session.sessionFile,
@@ -182,7 +263,8 @@ export async function runAgentSession(opts: {
 
     // ── Multi-prompt path ──
     // Even when caps are 0, we enter this path so onVerify runs once.
-    const { maxRePrompts, maxStuckRePrompts, onVerify, totalTimeoutMinutes } = multiPrompt;
+    process.stderr.write(`[session] ${label}: starting multi-prompt (timeout=${timeoutMinutes}min, maxTimeoutRePrompts=${multiPrompt.maxTimeoutRePrompts})\n`);
+    const { maxTimeoutRePrompts, maxNoMatchRePrompts, onVerify, totalTimeoutMinutes } = multiPrompt;
     const overallDeadline =
       totalTimeoutMinutes && totalTimeoutMinutes > 0
         ? Date.now() + totalTimeoutMinutes * 60 * 1000
@@ -195,6 +277,7 @@ export async function runAgentSession(opts: {
     let lastRejection: string | undefined;
 
     // ── Initial prompt ──
+    process.stderr.write(`[session] ${label}: round 0 starting\n`);
     transcriptContent += `\n\n## Round 0 (initial)\n\n`;
     queueTranscriptWrite();
     const usageBefore = sumUsage(session.state.messages);
@@ -203,6 +286,7 @@ export async function runAgentSession(opts: {
     roundUsages.push(usageDelta(usageBefore, usageAfter));
     finalText = initialResult.finalText;
     timedOut = initialResult.timedOut;
+    process.stderr.write(`[session] ${label}: round 0 completed (timedOut=${timedOut})\n`);
 
     // ── Verify → re-prompt loop ──
     let lastVerifyResult: VerifyResult | null = null;
@@ -211,8 +295,10 @@ export async function runAgentSession(opts: {
       // onVerify is responsible for checking caps and returning fail
       // when exhausted. It receives timedOut + rePromptCount so it can
       // use the appropriate cap.
+      process.stderr.write(`[session] ${label}: verify round ${rePromptsUsed}\n`);
       const verifyResult = await onVerify(finalText, timedOut, rePromptsUsed);
       lastVerifyResult = verifyResult;
+      process.stderr.write(`[session] ${label}: verify result: ${verifyResult.action}\n`);
 
       if (verifyResult.action === "accept") {
         // Flush transcript before returning.
@@ -244,7 +330,7 @@ export async function runAgentSession(opts: {
       }
 
       // action === "re-prompt" — check budget and deadline
-      const effectiveMax = timedOut ? maxRePrompts : maxStuckRePrompts;
+      const effectiveMax = timedOut ? maxTimeoutRePrompts : maxNoMatchRePrompts;
       if (rePromptsUsed >= effectiveMax) {
         lastRejection = verifyResult.feedback;
         await transcriptQueue;
@@ -283,6 +369,7 @@ export async function runAgentSession(opts: {
         : timeoutMinutes;
 
       rePromptsUsed++;
+      process.stderr.write(`[session] ${label}: re-prompt ${rePromptsUsed} starting\n`);
       transcriptContent += `\n\n## Round ${rePromptsUsed} (re-prompt)\n\n`;
       queueTranscriptWrite();
 
@@ -296,6 +383,7 @@ export async function runAgentSession(opts: {
       roundUsages.push(usageDelta(roundUsageBefore, usageAfter));
       finalText = rePromptResult.finalText;
       timedOut = rePromptResult.timedOut;
+      process.stderr.write(`[session] ${label}: re-prompt ${rePromptsUsed} completed (timedOut=${timedOut})\n`);
     }
   } catch (err) {
     // Attach partial usage so the caller can ledger it even on failure.
@@ -349,15 +437,23 @@ async function runOnePrompt(
 
     const result = await Promise.race([promptPromise, timeoutPromise]);
     if (result === "timeout") {
-      // Let the aborted prompt settle, but with a hard deadline so a
-      // stuck abort cannot hang a worker forever.
+      // The HTTP stream may be stuck (server stopped responding).
+      // AbortSignal cannot interrupt a blocked stream read, so we
+      // need a hard deadline to prevent hanging indefinitely.
+      // After POST_ABORT_SETTLE_MS, we give up waiting and continue.
+      const hardDeadline = new Promise<undefined | string>((resolve) => {
+        const t = setTimeout(() => resolve("hard-timeout"), POST_ABORT_SETTLE_MS);
+        if (t && typeof t === "object" && "unref" in t) t.unref();
+      });
+      const settleResult = await Promise.race([promptPromise, hardDeadline]);
+      if (settleResult === "hard-timeout") {
+        process.stderr.write(`[session] Hard timeout after ${POST_ABORT_SETTLE_MS}ms — HTTP stream likely stuck\n`);
+      }
       try {
-        await Promise.race([
-          promptPromise,
-          new Promise<void>((r) => setTimeout(r, POST_ABORT_SETTLE_MS)),
-        ]);
+        // Try to abort again in case the stream became unstuck
+        session.abort().catch(() => {});
       } catch {
-        // expected — the prompt rejects after abort
+        // best-effort
       }
     }
 

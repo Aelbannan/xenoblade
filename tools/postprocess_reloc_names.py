@@ -111,65 +111,6 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("lbl_805512D4", 0x2C),
             ("s_fd", 0x8),
         ),
-        # Retail: addi r3,r31,0x100; li r0,0; stb r0,0xff(r3).
-        # MWCC:    li r0,0; stb r0,0x1ff(r31); addi r3,r31,0x100.
-        # titleID home: addi/stw r4 (not r6) so msg can use r6.
-        insn_patches=(
-            (
-                "asyncRoutine",
-                (
-                    (0x180, 0x38000000, 0x387F0100),
-                    (0x184, 0x981F01FF, 0x38000000),
-                    (0x188, 0x387F0100, 0x980300FF),
-                    (0x1EC, 0x38C10018, 0x38810018),  # addi r4,r1,0x18
-                    (0x218, 0x90C10010, 0x90810010),  # stw r4,0x10(r1)
-                ),
-            ),
-        ),
-        # Retail: addi r6,r31,0 at ~0x1FC then later stw r6,0x14(r1).
-        # MWCC peeps msg to stw r31; insert addi at retail point and retarget stw.
-        insert_insns=(
-            (
-                "asyncRoutine",
-                0x1FC,
-                (0x38DF0000,),  # addi r6,r31,0
-                0x387F0200,  # expect addi r3,r31,0x200
-                None,  # keep shifted addi; retarget stw r31→r6 below
-            ),
-        ),
-        # CRLF/WriteAsync + snprintf-arg schedule (post-insert offsets).
-        insn_patches_post=(
-            (
-                "asyncRoutine",
-                (
-                    # Rotate 0x200..0x21C to retail order (addi r3,0x200 after mulli).
-                    (0x200, 0x387F0200, 0x80E10058),
-                    (0x204, 0x80E10058, 0x54030FFE),
-                    (0x208, 0x54040FFE, 0x7C001A14),
-                    (0x20C, 0x7C002214, 0x90E1000C),
-                    (0x210, 0x90E1000C, 0x1C00003F),
-                    (0x214, 0x1C00003F, 0x387F0200),
-                    (0x218, 0x38A50000, 0x90810010),
-                    (0x21C, 0x90810010, 0x38A50000),
-                    # Swap: lwz r8,0x68(r1) <-> addi r6,r6,1
-                    (0x22C, 0x38C60001, 0x81010068),
-                    (0x230, 0x81010068, 0x38C60001),
-                    # CRLF / WriteAsync
-                    (0x260, 0x3800000D, 0x389F0200),
-                    (0x264, 0x981F02FE, 0x3860000D),
-                    (0x270, 0x981F02FF, 0x986400FE),
-                    (0x274, 0x389F0200, 0x38C60000),
-                    (0x278, 0x38C60000, 0x80600000),
-                    (0x280, 0x80600000, 0x980400FF),
-                ),
-            ),
-        ),
-        reloc_offset_moves=(
-            # Absolute .text (asyncRoutine @0x160).
-            (0x3DA, 0x3D6),  # async@l ADDR16_LO
-            (0x37A, 0x37E),  # lbl_805512D4 ADDR16_LO (fmt)
-            (0x3E0, 0x3D8),  # s_fd SDA21 (lwz after CRLF schedule fix)
-        ),
         # Retail .text ends with 0xC alignment padding after asyncRoutine.
         pad_text_size=0x5F0,
     ),

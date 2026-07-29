@@ -774,6 +774,35 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
   `-O4,p` prefers a shorter `mulhw` path (~0x20 smaller). Keep high-level
   `((s64)…>>24)` / 96-sample LFO semantics.
 
+## RVL BTE `btu_hcif` HCI event handlers (ogws donor, Wii/1.1 `-O4,p`)
+
+- Donor: `.tmp-donors/ogws/src/revolution/BTE/stack/btu/btu_hcif.c` (types/
+  macros in `include/revolution/BTE/stack/include/{bt_types,btm_api,hcimsgs}.h`).
+- **`btu_hcif_connection_request_evt`**: `FULL_MATCH` by writing the donor source
+  verbatim with the `STREAM_TO_BDADDR` / `STREAM_TO_DEVCLASS` / `STREAM_TO_UINT8`
+  macros. The macros store the HCI big-endian stream into the local `BD_ADDR`
+  (`UINT8[6]`) / `DEV_CLASS` (`UINT8[3]`) with the **index reversed**
+  (`a[BD_ADDR_LEN-1-ijk] = *p++`), which MWCC `-O4,p` fully unrolls into the
+  exact `lbz r0,0xN(r3); stb r0,0xM(r1)` byte-copy sequence. `link_type ==
+  HCI_LINK_TYPE_ACL` (0x01) routes to `btm_sec_conn_req(bda, dc)`, else
+  `btm_sco_conn_req(bda, dc, link_type)` — asm loads `link_type` into r5 and keeps
+  it there across the branch so the 3rd SCO arg reuses r5 for free.
+- **`btu_hcif_connection_comp_evt`** (`STREAM_TO_UINT16` for `handle` then
+  `HCID_GET_HANDLE(handle)` = `& 0x0FFF` = `clrlwi r30,r4,20`): `tBTM_ESCO_DATA`
+  layout that matters is **`bd_addr` at offset 4, total size 14** (0xe) —
+  `memset(&esco_data,0,14)` + `memcpy(esco_data.bd_addr, bda, 6)` + `btm_sco_
+  connected(status, bda, handle, &esco_data)`. SCO branch: `link_type != 1`.
+  Reaches `EQUIVALENT_MATCH` (3/55 instruction-ordering mismatches, identical
+  `.text` size) — the `handle` add (`add r4,r5,r4`) is scheduled before vs after
+  the first BD_ADDR `stb`; pure scheduler flip, SMT-equivalent. Could not be
+  forced to `FULL_MATCH` via macro/statement reordering (`-O4,p` heuristic).
+- Callee prototypes (other BTE TUs are stubs in this build) must match the
+  real signatures so `bl` arg-passing matches: `btm_sec_conn_req(BD_ADDR,DEV_
+  CLASS)`, `btm_sco_conn_req(BD_ADDR,DEV_CLASS,UINT8)`, `btm_sec_connected
+  (BD_ADDR,UINT16,UINT8,UINT8)`, `btm_sco_connected(UINT8,BD_ADDR,UINT16,
+  tBTM_ESCO_DATA*)`, `l2c_link_hci_conn_comp(UINT8,UINT16,BD_ADDR)`. No `extern
+  "C"` needed — plain C prototypes in the `.c` suffice (file compiled as C).
+
 ## RVL AXFX ReverbStdExp schedule ceilings (Wii/1.1 `-O4,p`)
 
 - **`GetMemSize` (~45.7%)**: best high-level keeps the retail add chain
@@ -911,11 +940,31 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
   number. Stage 6: `n = atoi(...); fd = s_fd[0]; SeekAsync(fd, n*256, …)` for
   retail `mr r0,r3` before `slwi`. Do **not** hold `char* wbuf`/`line` across
   `snprintf`. Calendar field is `cal.month` in this tree.
-- **`asyncRoutine` soft-caps (FULL_MATCH via postprocess):** MWCC peeps
-  `base+0` msg to `stw r31,0x14(r1)` and folds null/CRLF stores through
-  `r31+imm`. Close with `tools/postprocess_reloc_names.py` `NANDLogging.o`
-  rules: null-store reorder + titleID `r4` homes, `insert_insns` for
-  `addi r6,r31,0`, snprintf/CRLF schedule patches, reloc moves, and
+- **`asyncRoutine` soft-caps (CODE_MATCH 95.4% after patch removal):** the
+  `.text` `insn_patches` / `insn_patches_post` / `insert_insns` /
+  `reloc_offset_moves` rules were removed (policy: no `.text` soft-cap
+  patches). Raw MWCC output is 178/289 instruction mismatches (fuzzy 95.4%,
+  objdiff realigns the one-instruction tail shift). Root causes, all in the
+  stage-5 block: (1) MWCC peeps `base+0` msg to `stw r31,0x14(r1)` — retail
+  has `addi r6,r31,0` + `stw r6,0x14(r1)` (the missing insn shifts the whole
+  tail by 4 bytes and steals titleID's `r4` home → `addi/stw r6`); (2)
+  rbuf NUL store folds to `stb r0,0x1ff(r31)` instead of
+  `addi r3,r31,0x100; li r0,0; stb r0,0xff(r3)`; (3) CRLF stores fold to
+  `stb r0,0x2fe/0x2ff(r31)` instead of keeping `line` in `r4`; (4) snprintf
+  arg-setup schedule. No source/flag/compiler variant closes these — ruled
+  out (mismatch counts): Petari-donor `prepareLine`/`callbackRoutine`
+  restructure (185–285; direct `s_rBuf` refs lose the `r31` basing entirely),
+  `#pragma scheduling off` (207), `#pragma peephole off` (181, forces r29),
+  `-O4,s` (202), `-opt noschedule` (207), `-opt nopeephole` (181),
+  `-inline off` / `-ipa off` / `-inline level=2` (178), Wii/1.0 (178),
+  Wii/1.0a & Wii/0x4201_127 (140 but only via an extra prologue `lis r5` —
+  still folds msg/CRLF), Wii/1.3 (178), GC/3.0a5.2 & GC/2.7 (147), dropping
+  the `z` hack (275, forces r29). **EQUIVALENT_MATCH is also structurally
+  blocked:** asyncRoutine calls `s_callback` through `bcctrl`
+  (`has_indirect_calls`), so the certified-callee gate always returns
+  `inconclusive_unvalidated_callee` (and all 11 callees are FULL_MATCH
+  without certificates). Only the cosmetic rules remain in
+  `tools/postprocess_reloc_names.py`: `exact_renames`, `symbol_sizes`,
   `pad_text_size=0x5F0`.
 
 ---

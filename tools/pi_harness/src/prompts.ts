@@ -18,7 +18,20 @@ export function buildBatchPrompt(opts: {
     `- For builds and diffs use ONLY: \`${pythonBin} tools/coop/hexdiff.py ${unit} --symbol <symbol> --json\`. A plain \`python3\` also works (the harness puts the repo venv on PATH).\n` +
     "- Do NOT run `cycle`, `batch-cycle`, `ninja`, or `configure.py` — the harness owns acceptance.\n" +
     "- NEVER revert using git (`git checkout`, `git reset`, `git restore`, etc.) — other agents share this branch.\n" +
-    "- Reminder: add comments to complicated code.\n"
+    "- Put new or updated struct/class/enum type definitions into the corresponding `.hpp` header file, not the `.cpp` source. If a type is only used by this TU, put it in the unit's own header; if it's shared, use the appropriate shared header.\n" +
+    "- Reminder: add comments to complicated code.\n" +
+    "\n## Tool call budget\n" +
+    "- Write code FIRST, then hexdiff to verify. Search only if stuck.\n" +
+    "- Maximum 5 grep/search commands per function — if you haven't found it after 3 searches, write your best guess and hexdiff it.\n" +
+    "- Do NOT search for the same symbol or pattern more than once.\n" +
+    "- Do NOT use `find`, `ls`, `nm`, `objdump`, or `readelf` — the brief already contains file locations and symbol info.\n" +
+    "- Prefer writing code based on the assembly provided over searching for existing implementations.\n" +
+    "\n## Anti-patterns (will cause lint rejection)\n\n" +
+    "- NEVER use `extern \"C\"` on new function definitions — the symbol map handles linking. Existing `extern \"C\"` stubs with `lbl_*` names are fine.\n" +
+    "- Remove existing `extern \"C\"` stubs whenever possible — replace with proper C++ declarations from the appropriate header.\n" +
+    "- NEVER use `void*` — use a proper struct/class pointer, or `u8*` for opaque buffers.\n" +
+    "- NEVER write `*(u32*)(ptr + 0xNN)` or similar cast+offset arithmetic — define a struct with `field_0xNN` members instead.\n" +
+    "- NEVER add new `#pragma` directives (except `#pragma once` in headers) — the build system handles compiler options.\n"
   );
 }
 

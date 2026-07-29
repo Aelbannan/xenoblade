@@ -1,9 +1,34 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
 
-CVS_THREAD::CVS_THREAD(){
-    unkC = 0;
-    unk10 = 0;
-    func_802A35A0(unk0); //Sets unk0 to something
+// ── Extern symbols ────────────────────────────────────────────────────────
+
+extern "C" {
+    extern u32 lbl_eu_80539910[];   // vtable for CVS_THREAD
+    extern void func_800BE924(void* voice);
+}
+
+// ── func_802A3E74 ─────────────────────────────────────────────────────────
+// If the thread has a non-null voice handle at unk10, stop it via the sound
+// system call func_800BE924.
+
+void func_802A3E74(CVS_THREAD* thread) {
+    if (thread->unk10 != 0) {
+        func_800BE924((void*)thread->unk10);
+    }
+}
+
+// ── __ct__cf_CVS_THREAD (constructor) ─────────────────────────────────────
+// Initialises a CVS_THREAD: stores the vtable at offset 0x1C, zeros unkC
+// and unk10, calls func_802A35A0(this) to obtain an ID stored in unk18,
+// and returns this.
+
+extern "C" CVS_THREAD* __ct__cf_CVS_THREAD(CVS_THREAD* self) {
+    // Store the vtable pointer at offset 0x1C.
+    *(u32*)((u8*)self + 0x1C) = (u32)&lbl_eu_80539910;
+    self->unkC = 0;
+    self->unk10 = 0;
+    self->unk18 = func_802A35A0((unsigned int)self);
+    return self;
 }
 
 void func_802A3ACC(){
@@ -28,9 +53,6 @@ void func_802A3D54(){
 void func_802A3E28(){
 }
 
-void func_802A3E74(){}
-
-void __ct__cf_CVS_THREAD(){}
 void func_802A3E88(){}
 void func_802A3EF0(){}
 void func_802A3FD4(){}

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/code_800A75FC
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/code_800A75FC.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/code_800A75FC.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,124 +1390,359 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" void __dt__800A75FC() {}
+// Forward declarations for external functions in other TUs
+void func_800A37CC(void*, void*);
+int func_800A3594(void*, int, int);
+int func_800A36A4(void*, int, int);
+u32 func_800A3998(void*);
+int func_800A39E8(void*, void*, void*, void*);
 
-extern "C" void func_800A76EC() {}
+// Structure for range data at lbl_eu_80572B38 (offset 0 = start, offset 0xC = size)
+struct RangeData {
+    u32 field_0x00;
+    u8 _pad_0x04[8];
+    u32 field_0x0C;
+};
 
-extern "C" void func_800A7CDC() {}
+// BSS symbols for the global singleton at lbl_eu_80572B94
+extern char lbl_eu_80572B94[];
+extern char lbl_eu_80572B88[];
+extern s8 lbl_eu_80663E98;
 
-extern "C" void func_800A7D9C() {}
 
-extern "C" void func_800A7EFC() {}
+void __dt__800A75FC(){}
 
-extern "C" void func_800A7FBC() {}
+void func_800A76EC(){}
 
-extern "C" void func_800A807C() {}
+void func_800A7CDC(){}
 
-extern "C" void func_800A813C() {}
+void func_800A7D9C(){}
 
-extern "C" void func_800A81FC() {}
+void func_800A7EFC(){}
 
-extern "C" void func_800A82BC() {}
+void func_800A7FBC(){}
 
-extern "C" void func_800A837C() {}
+void func_800A807C(){}
 
-extern "C" void func_800A843C() {}
+void func_800A813C(){}
 
-extern "C" void func_800A84FC() {}
+void func_800A81FC(){}
 
-extern "C" void func_800A85D8() {}
+void func_800A82BC(){}
 
-extern "C" void func_800A86AC() {}
+void func_800A837C(){}
 
-extern "C" void* func_800A86D8(unsigned int param1, unsigned int param2) {
-    extern void* lbl_eu_80528398[];
-    void* r4 = lbl_eu_80528398[param2];
+void func_800A843C(){}
+
+void func_800A84FC(){}
+
+void func_800A85D8(){}
+
+void* func_800A86AC(unsigned int param1, unsigned int param2) {
+    extern void* lbl_eu_805282A0[];
+    void* r4 = lbl_eu_805282A0[param2];
     if (param1 >= 0xe) {
         return *(void**)r4;
     }
     return ((void**)r4)[param1];
 }
 
-extern "C" void func_800A8704() {}
+void* func_800A86D8(unsigned int param1, unsigned int param2) {
+    extern void* lbl_eu_80528398[];
+    void** r4 = static_cast<void**>(lbl_eu_80528398[param2]);
+    if (param1 >= 0xe) {
+        return r4[0];
+    }
+    return r4[param1];
+}
 
-extern "C" void func_800A87E0() {}
+void func_800A8704(){}
 
-extern "C" void func_800A88C8() {}
+void func_800A87E0(){}
 
-extern "C" void func_800A89C0() {}
+void func_800A88C8(){}
 
-extern "C" void func_800A8AAC() {}
+void func_800A89C0(){}
 
-extern "C" void func_800A8B98() {}
+void func_800A8AAC(){}
 
-extern "C" void func_800A8BD8() {}
+int func_800A8B98(int param) {
+    if (param == 0) return 0;
+    if (param > 0) {
+        extern char lbl_eu_80572B38[];
+        return func_800A3594((void*)lbl_eu_80572B38, param, 0);
+    } else {
+        extern char lbl_eu_80572B38[];
+        return func_800A36A4((void*)lbl_eu_80572B38, -param, 0);
+    }
+}
 
-extern "C" void func_800A8C1C() {}
+int func_800A8BD8(u32 param) {
+    if (param == 0) return 0;
+    extern char lbl_eu_80572B38[];
+    u32 start = *(u32*)(lbl_eu_80572B38);
+    u32 size = *(u32*)(lbl_eu_80572B38 + 0xC);
+    u32 end = start + size;
+    int result = 0;
+    if (start <= param && param < end) {
+        result = 1;
+    }
+    return result;
+}
 
-extern "C" void func_800A8C68() {}
+int func_800A8C1C(void* p1, void* p2, void* p3) {
+    if (p1 == 0) return 0;
+    extern char lbl_eu_80572B38[];
+    func_800A39E8((void*)lbl_eu_80572B38, p1, p2, p3);
+    return 1;
+}
 
-extern "C" void func_800A8C84(void) {
+void func_800A8C68(void* p) {
+    if (p == 0) return;
+    extern char lbl_eu_80572B38[];
+    func_800A37CC((void*)lbl_eu_80572B38, p);
+}
+
+void func_800A8C84(void) {
     extern void func_800A3940(void*);
     extern char lbl_eu_80572B38[];
     func_800A3940((void*)lbl_eu_80572B38);
 }
 
-extern "C" void func_800A8C90() {}
+u32 func_800A8C90() {
+    extern char lbl_eu_80572B38[];
+    return func_800A3998((void*)lbl_eu_80572B38) / 774144;
+}
 
-extern "C" void func_800A8CD4() {}
+void func_800A8CD4(){}
 
-extern "C" u32 func_800A8DA4(void* self) { return 0; }
+u32 func_800A8DA4(){ return 0x500000; }
 
-extern "C" void func_800A8DAC() {}
+void func_800A8DAC(){}
 
-extern "C" void func_800A8E6C() {}
+void func_800A8E6C(){}
 
-extern "C" void func_800A9024() {}
+int func_800A9024(u32 param) {
+    if (param == 0) return 0;
+    extern char lbl_eu_80572B78[];
+    u32 start = *(u32*)(lbl_eu_80572B78);
+    u32 size = *(u32*)(lbl_eu_80572B78 + 0xC);
+    u32 end = start + size;
+    int result = 0;
+    if (start <= param && param < end) {
+        result = 1;
+    }
+    return result;
+}
 
-extern "C" void func_800A9068() {}
+void func_800A9068(){}
 
-extern "C" void func_800A9134() {}
+void func_800A9134(){}
 
-extern "C" void func_800A92F8() {}
+int func_800A92F8(void* p1, void* p2, void* p3) {
+    if (p1 == 0) return 0;
+    extern char lbl_eu_80572B78[];
+    func_800A39E8((void*)lbl_eu_80572B78, p1, p2, p3);
+    return 1;
+}
 
-extern "C" char lbl_eu_80572B78[];
-extern "C" void func_800A37CC(void*, void*);
+extern char lbl_eu_80572B78[];
+void func_800A37CC(void*, void*);
 
-extern "C" void func_800A9344(void* p)
+void func_800A9344(void* p)
 {
     if (p != 0) {
         func_800A37CC(lbl_eu_80572B78, p);
     }
 }
 
-extern "C" void func_800A9360() {}
+void func_800A9360(){}
 
-extern "C" void func_800A9444() {}
+void func_800A9444(){}
 
-extern "C" void func_800A9534() {}
+void func_800A9534(){}
 
-extern "C" void func_800A965C() {}
+void func_800A965C(){}
 
-extern "C" void func_800A9784() {}
+void func_800A9784(){}
 
-extern "C" void func_800A98A8() {}
+void func_800A98A8(){}
 
-extern "C" void func_800A99D0() {}
+void func_800A99D0(){}
 
-extern "C" void func_800A9A90() {}
+// --- Global singleton struct at lbl_eu_80572B94 (0xB4 bytes, BSS) ---
+struct GlobalStruct_80572B94 {
+    int field_0x00;   // -1
+    int field_0x04;   // -1
+    int field_0x08;   // -1
+    u8 _0C[4];
+    int field_0x10;   // 0
+    int field_0x14;   // 0
+    int field_0x18;   // 0
+    int field_0x1C;   // 0
+    int field_0x20;   // 0
+    u8 _24[0x34 - 0x24];
+    int field_0x34;   // 0
+    int field_0x38;   // 0
+    int field_0x3C;   // 0
+    int field_0x40;   // 0 (BSS)
+    int field_0x44;   // 0 (BSS)
+    u8 _48[0x50 - 0x48];
+    int field_0x50;   // 0
+    u8 _54[0x5C - 0x54];
+    u8 _5C[0x34];      // memset 0 (0x5C-0x90)
+    u8 _90[0xA0 - 0x90];
+    u8 _A0[0xC];       // memset 0 (0xA0-0xAC)
+    u8 _AC[0xB0 - 0xAC];
+    int field_0xB0;   // 0
+};
 
-extern "C" void func_800A9B50() {}
+void* memset(void*, int, unsigned long);
+void* __register_global_object(void* object, void* destructor, void* registration);
 
-extern "C" void func_800A9C10() {}
+int func_800A9A90() {
+    if (lbl_eu_80663E98 == 0) {
+        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(g->_A0, 0, 0xC);
+        memset(g->_5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x50;
+}
 
-extern "C" void func_800A9CD0() {}
+int func_800A9B50() {
+    if (lbl_eu_80663E98 == 0) {
+        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(g->_A0, 0, 0xC);
+        memset(g->_5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x38;
+}
 
-extern "C" void func_800A9D90() {}
+int func_800A9C10() {
+    if (lbl_eu_80663E98 == 0) {
+        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(g->_A0, 0, 0xC);
+        memset(g->_5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x3C;
+}
 
-extern "C" void func_800A9E50() {}
+int func_800A9CD0() {
+    if (lbl_eu_80663E98 == 0) {
+        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(g->_A0, 0, 0xC);
+        memset(g->_5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x40;
+}
+
+int func_800A9D90() {
+    if (lbl_eu_80663E98 == 0) {
+        GlobalStruct_80572B94* g = (GlobalStruct_80572B94*)lbl_eu_80572B94;
+        g->field_0x00 = -1;
+        g->field_0x04 = -1;
+        g->field_0x08 = -1;
+        g->field_0x10 = 0;
+        g->field_0x20 = 0;
+        g->field_0x14 = 0;
+        g->field_0x18 = 0;
+        g->field_0x1C = 0;
+        g->field_0x34 = 0;
+        g->field_0xB0 = 0;
+        g->field_0x38 = 0;
+        g->field_0x3C = 0;
+        g->field_0x50 = 0;
+        memset(g->_A0, 0, 0xC);
+        memset(g->_5C, 0, 0x34);
+        __register_global_object(g, (void*)__dt__800A75FC, (void*)lbl_eu_80572B88);
+        lbl_eu_80663E98 = 1;
+    }
+    return ((GlobalStruct_80572B94*)lbl_eu_80572B94)->field_0x44;
+}
+
+void func_800A9E50(){}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_800A9F40() {}
+void sinit_800A9F40(){}

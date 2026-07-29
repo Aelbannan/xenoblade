@@ -21,7 +21,7 @@ For day-to-day decomp workflow, start at [`AGENTS.md`](AGENTS.md) → [`.cursor/
 | Behaviour tests | [`tools/test/compare_behaviour/`](tools/test/compare_behaviour/) | Static/size checks plus optional real-PPC harnesses |
 | PPC equivalence | [`tools/ppc_equivalence/`](tools/ppc_equivalence/) | Capstone + Z3 semantic equivalence for supported straight-line blocks |
 | DOL opcode census | [`tools/dol_opcodes/`](tools/dol_opcodes/) | Match `main.dol` words against vendored [PPC750CL `isa.yaml`](https://github.com/riptl/ppc750cl/blob/master/isa.yaml); optional Capstone compare |
-| Reloc postprocess | [`tools/postprocess_reloc_names.py`](tools/postprocess_reloc_names.py) | Rename MWCC `@N` pools → retail `lbl_eu_*` |
+| ~~Reloc postprocess~~ | ~~[`tools/postprocess_reloc_names.py`](tools/postprocess_reloc_names.py)~~ | ~~Rename MWCC `@N` pools → retail `lbl_eu_*`~~ — deprecated; EQUIVALENT_MATCH is the bar, no binary patching allowed (PLAN.md §17.6) |
 | MWCC patterns | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) | Living matching reference |
 | Evidence | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) | Attempt log (JSONL) |
 | Claims | [`tools/coop/targets.json`](tools/coop/targets.json) | Current owner and exclusive edit scope (`targets claim/release`) |
@@ -247,17 +247,17 @@ Shared fixtures in `tools/ppc_equivalence/fixtures/` drive both Python
 
 ---
 
-## 6. Object / reloc postprocessing
+## 6. Object / reloc postprocessing (deprecated)
 
-MWCC emits TU-local `@N` float/double pools; retail uses stable `lbl_eu_*` names. objdiff CLI reports need aligned reloc **names** when instruction bytes already match (`PLAN.md` §17.6 / `docs/MWCC_REFERENCE.md`).
+**No longer approved.** EQUIVALENT_MATCH with SMT proof is the acceptance bar; object-file post-processing to patch instruction bytes, rename symbols, or manipulate section sizes is not allowed (PLAN.md §17.6).
+
+The following tools exist but should not be extended with new rules:
 
 | Tool | Role |
 |------|------|
-| [`tools/postprocess_reloc_names.py`](tools/postprocess_reloc_names.py) | Per-unit rules: pool content → retail name; exact renames; optional `.sdata2` unsigned int-to-double magic patch |
+| [`tools/postprocess_reloc_names.py`](tools/postprocess_reloc_names.py) | Per-unit rules: pool content → retail name; exact renames; `.sdata2` patches — **do not add new rules** |
 | [`tools/postprocess_mtrand_object.py`](tools/postprocess_mtrand_object.py) | Thin wrapper → `postprocess_reloc_names.py` |
-| [`tools/patch_mtrand_sdata2.py`](tools/patch_mtrand_sdata2.py) | Legacy / focused `.sdata2` low-word patch (`0` → `0x80000000`) for MTRand |
-
-Wired from the build for units that need it (notably `MTRand.o`). Prefer extending `UNIT_RULES` in `postprocess_reloc_names.py` over one-off scripts.
+| [`tools/patch_mtrand_sdata2.py`](tools/patch_mtrand_sdata2.py) | Legacy `.sdata2` low-word patch for MTRand |
 
 ---
 
@@ -339,7 +339,6 @@ When you add:
 
 - a new coop CLI subcommand → update §3  
 - a behaviour / PPC test → update §5 table and `compare_behaviour/README.md`  
-- a postprocess rule or tool → update §6  
 - a major policy change → update §1 and `AGENTS.md` / skill  
 
 Prefer linking into `README.md` sections inside each tool directory; keep **this file** as the fork-wide inventory.

@@ -1,0 +1,13 @@
+{
+  "matchModel": { "provider": "deepseek", "model": "deepseek-v4-pro", "thinkingLevel": "high" },
+  "cleanupModel": { "provider": "deepseek", "model": "deepseek-v4-pro", "thinkingLevel": "high" },
+  "batchSize": 2,
+  "maxParallelTUs": 1,
+  "maxBatchRetries": 2,
+  "singletonRetry": true,
+  "maxTokens": 1000000,
+  "singletonMinSize": 5000,
+  "maxTimeoutRePrompts": 3,
+  "maxNoMatchRePrompts": 1,
+  "pythonBin": ".venv/bin/python3"
+}

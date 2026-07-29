@@ -47,8 +47,24 @@ struct CVoiceHandle {
     CVSubObj* field_0x04;        // 0x04: sub-object pointer (used by func_802A6820)
     u8 _pad[0x3E9C - 0x08];      // 0x08-0x3E9B: handle data
     CCharVoice voice;            // 0x3E9C: the actual voice object
+    u8 _pad_after_voice[0x3F08 - 0x3EDC];
+    u32 field_0x3f08;            // manager flag tested by func_802A6958
 };
 
+// The global voice-handle list is a circular list.  The node's payload is
+// stored at +8; +0 is the next node and the list's +4 is its end marker.
+struct CVoiceHandleListNode {
+    CVoiceHandleListNode* next;
+    CVoiceHandleListNode* previous;
+    CVoiceHandle* value;
+};
+
+struct CVoiceHandleList {
+    CVoiceHandleListNode* head;
+    CVoiceHandleListNode* end;
+};
+
+extern "C" {
 // Sibling TU functions (unmangled global symbols).
 int func_802A3E88(CVS_THREAD* self);
 void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
@@ -57,3 +73,6 @@ int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
 CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
 CVoiceHandle* func_802A330C(int size, int align);
 int func_80174C98(CVoiceHandle* handle, u32* value, int arg);
+CVoiceHandleList* func_800B6BC8();
+int func_802A7FE4(CVoiceHandle* handle);
+}

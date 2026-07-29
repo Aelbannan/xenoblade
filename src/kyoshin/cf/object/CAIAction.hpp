@@ -70,3 +70,11 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 
 extern void func_8014A86C(void*);
 extern void func_8014A8F8();
+extern UNKTYPE* func_800B708C(BOOL);
+extern UNKTYPE* func_8016FE34();
+
+struct CAIActionQuery;
+struct CAIActionEnumHolder;
+void func_80043D90(CAIActionEnumHolder*);
+void __dt__80043E88(CAIActionEnumHolder*, s32);
+void* func_80150828(cf::CAIAction*, CAIActionQuery*);

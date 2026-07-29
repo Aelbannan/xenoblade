@@ -16,8 +16,12 @@ from __future__ import annotations
 
 import argparse
 import fcntl
+import json
+import os
+import signal
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Optional
 
@@ -629,17 +633,89 @@ def run(argv: list[str] | None = None) -> int:
             else:
                 lock_path = project.config.build_dir / ".hexdiff.lock"
                 lock_path.parent.mkdir(parents=True, exist_ok=True)
-                with open(lock_path, "w") as lock_fd:
+
+                # --- Lock acquisition (no unlink; same protocol as build_lock.py) ---
+                _STALE_TIMEOUT = 600   # seconds
+                _POLL_INTERVAL = 2     # seconds
+
+                def _pid_alive(pid: int) -> bool:
+                    if pid <= 0:
+                        return False
+                    try:
+                        os.kill(pid, 0)
+                        return True
+                    except OSError:
+                        return False
+
+                def _read_meta() -> dict | None:
+                    try:
+                        with open(lock_path) as f:
+                            data = json.load(f)
+                        if isinstance(data, dict) and isinstance(data.get("pid"), int):
+                            return data
+                    except (OSError, json.JSONDecodeError, ValueError):
+                        pass
+                    return None
+
+                def _write_meta(fd: int) -> None:
+                    meta = json.dumps({"pid": os.getpid(), "ts": time.monotonic()})
+                    os.ftruncate(fd, 0)
+                    os.lseek(fd, 0, os.SEEK_SET)
+                    os.write(fd, meta.encode())
+
+                def _try_kill_holder() -> bool:
+                    """Kill stuck holder. Returns True if caller should retry flock."""
+                    meta = _read_meta()
+                    if meta is None:
+                        return True
+                    pid = meta.get("pid", 0)
+                    ts = meta.get("ts", 0)
+                    age = time.monotonic() - ts
+                    if not _pid_alive(pid):
+                        return True
+                    if age > _STALE_TIMEOUT:
+                        print(f"hexdiff: holder PID {pid} alive for {age:.0f}s, sending SIGKILL...",
+                              file=sys.stderr, flush=True)
+                        try:
+                            os.kill(pid, signal.SIGKILL)
+                        except OSError:
+                            pass
+                        time.sleep(0.5)
+                        return True
+                    return False
+
+                # Open (or create) the lock file.  NEVER delete/unlink it.
+                lock_fd = os.open(str(lock_path), os.O_CREAT | os.O_RDWR)
+                wait_start = time.monotonic()
+                warned = False
+
+                while True:
                     try:
                         fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                        _write_meta(lock_fd)
+                        break
                     except OSError:
+                        pass
+
+                    if _try_kill_holder():
+                        try:
+                            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                            _write_meta(lock_fd)
+                            break
+                        except OSError:
+                            pass
+
+                    if not warned:
                         print(f"waiting for build lock ({lock_path})...",
                               file=sys.stderr, flush=True)
-                        fcntl.flock(lock_fd, fcntl.LOCK_EX)
-                    try:
-                        build_result = _run_build()
-                    finally:
-                        fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                        warned = True
+                    time.sleep(_POLL_INTERVAL)
+
+                try:
+                    build_result = _run_build()
+                finally:
+                    fcntl.flock(lock_fd, fcntl.LOCK_UN)
+                    os.close(lock_fd)
         except subprocess.TimeoutExpired:
             print(f"ERROR: build timed out after {args.build_timeout}s for {rel_path}",
                   file=sys.stderr)

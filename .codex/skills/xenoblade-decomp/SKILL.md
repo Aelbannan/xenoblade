@@ -439,7 +439,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 - Submit AI-assisted reconstruction upstream
 - **Use assembly as decompilation output** — no `asm void` bodies, inline `asm { }` of any size, or `.s` units; assembly is never an acceptable match artifact
 - **Micro-manage registers or the stack in source** — use §17.6 intrinsics when C++ is exhausted
-- **Post-process Chaitin / register soft-caps in `.text`** — no general `insn_patches`. Narrow linker-ADDR16 bake (`bake_linker_addrs` / `force_symbol_relocs` for DOL-split absolute symbols like `_stack_addr`) is allowed; rename relocs/pools and trim/drop symbols remain OK
+- **Post-process Chaitin / register soft-caps in `.text`** — no `insn_patches`, `insert_insns`, `reloc_offset_moves`, or any `postprocess_reloc_names.py` usage. EQUIVALENT_MATCH is the acceptance bar; do not chase byte-identity through binary patching. Narrow linker-ADDR16 bake (`bake_linker_addrs` / `force_symbol_relocs` for DOL-split absolute symbols like `_stack_addr`) is allowed
 
 ## LLM decompilation harness (tools/llm_decomp)
 

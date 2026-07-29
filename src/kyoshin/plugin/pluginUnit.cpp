@@ -1,21 +1,292 @@
+// Auto-scaffolded catalog TU for kyoshin/plugin/pluginUnit
+// Plugin functions for the YGG VM "unit" subsystem (battle units, arts).
+// These are called from script via the function table registered in
+// pluginUnitRegist.
 
+#include <math.h>
 
-void pluginUnitRegist() {
+#include "monolib/vm/yvm2.h"
+#include "kyoshin/plugin/ocBdat.hpp"
+#include "kyoshin/cf/CBattleManager.hpp"
+
+// C-linkage retail symbols referenced by learnArts / clearPcBtlState.
+extern "C" {
     extern const char lbl_eu_80507FC0[];
     extern const char lbl_eu_80535460[];
+
+    // bdat helpers (C-linkage in retail; ocBdat.hpp declares them as C++).
+    void* func_8003AA34();
+    u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
+
+    // Actor param helpers (C-linkage in retail).
+    void* func_8009EC9C(unsigned short);
+    void func_800A18A4(void*, int);
+    void* func_800B8B94(int);
+    void* func_800B8C78(int);
+    void func_800F3958(void*, void*, int);
+
+    // 100.0f constant used by getPcHpRate / getEneHpRate (lives in .sdata2).
+    extern const float lbl_eu_80668250;
+
+    // Forward declarations: functions defined below inherit C linkage from
+    // this block (matching the unmangled retail symbols).
+    int getPcHpRate(VMThread* pThread);
+    int getEneHpRate(VMThread* pThread);
+}
+
+void pluginUnitRegist() {
     extern void vmPluginRegist(const char*, const char*);
     vmPluginRegist(lbl_eu_80507FC0 + 0xb, lbl_eu_80535460);
 }
 
-void getPcHp(){}
-void getPcHpRate(){}
-void getEneHp(){}
-void getEneHpRate(){}
+// Cast-only interface for CfObject vtable. MWCC (-RTTI on) places two hidden
+// typeinfo slots before the first declared virtual, so we omit _v000/_v004
+// and start at 0x8 to make the declared vtable layout match the retail
+// CfObjectModel vtable. The slot at 0x128 (CfObject_UnkVirtualFunc54) is the
+// one getPcHp/getEneHp call: the recovered header declares it `void`, but the
+// retail caller treats the return as float (per PPC ABI f1), so we override
+// its signature here. Never constructed — only used for reinterpret_cast.
+struct CfObjectHpIf {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual void _v07C();
+    virtual void _v080();
+    virtual void _v084();
+    virtual void _v088();
+    virtual void _v08C();
+    virtual void _v090();
+    virtual void _v094();
+    virtual void _v098();
+    virtual void _v09C();
+    virtual void _v0A0();
+    virtual void _v0A4();
+    virtual void _v0A8();
+    virtual void _v0AC();
+    virtual void _v0B0();
+    virtual void _v0B4();
+    virtual void _v0B8();
+    virtual void _v0BC();
+    virtual void _v0C0();
+    virtual void _v0C4();
+    virtual void _v0C8();
+    virtual void _v0CC();
+    virtual void _v0D0();
+    virtual void _v0D4();
+    virtual void _v0D8();
+    virtual void _v0DC();
+    virtual void _v0E0();
+    virtual void _v0E4();
+    virtual void _v0E8();
+    virtual void _v0EC();
+    virtual void _v0F0();
+    virtual void _v0F4();
+    virtual void _v0F8();
+    virtual void _v0FC();
+    virtual void _v100();
+    virtual void _v104();
+    virtual void _v108();
+    virtual void _v10C();
+    virtual void _v110();
+    virtual void _v114();
+    virtual void _v118();
+    virtual void _v11C();
+    virtual void _v120();
+    virtual void _v124();
+    virtual float vf128();
+    virtual float vf12C();
+};
+
+/// Script command: return the current HP of a player character (PC) actor,
+/// ceiled and converted to int. The actor is resolved by id (arg 2) via
+/// func_800B8B94 (pc list lookup); the HP value comes from the
+/// CfObjectModel virtual at vtable+0x128 (the recovered header declares it
+/// `void`, but the retail caller treats the result as float). On miss,
+/// returns -1.
+extern "C" int getPcHp(VMThread* pThread) {
+    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    void* actor = func_800B8B94(id);
+    VMArg result;
+    if (actor != nullptr) {
+        // Dispatch the CfObjectModel vtable slot at 0x128 through the
+        // cast-only interface so MWCC uses r12 for the vptr (matching
+        // retail's r12 coloring on the virtual-call path).
+        CfObjectHpIf* obj = reinterpret_cast<CfObjectHpIf*>(actor);
+        result.type = VM_TYPE_INT;
+        // Force ceil(double) and explicit float round before fctiwz.
+        float val = (float)ceil(obj->vf128());
+        result.value.intVal = (int)val;
+    } else {
+        result.type = VM_TYPE_INT;
+        result.value.intVal = -1;
+    }
+    vmRetValSet(pThread, &result);
+    return 1;
+}
+
+/// Script command: return the current HP rate (%) of a player character (PC)
+/// actor. Resolves the actor by id (arg 2) via func_800B8B94 (pc list
+/// lookup), then reads the max-HP value (vtable+0x12C) and current-HP value
+/// (vtable+0x128) from the CfObjectModel vtable, computing
+/// `ceil(100.0f * (cur / max))`. On miss, returns -1.
+int getPcHpRate(VMThread* pThread) {
+    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    CfObjectHpIf* actor = reinterpret_cast<CfObjectHpIf*>(func_800B8B94(id));
+    VMArg result;
+    if (actor != nullptr) {
+        result.type = VM_TYPE_INT;
+        // First virtual: vtable+0x12C returns max-HP (saved in f31 by retail).
+        float maxHp = actor->vf12C();
+        // Second virtual: vtable+0x128 returns current-HP (result in f1, then
+        // fdivs against f31 yields cur/max). Order is fixed by retail codegen.
+        float curHp = actor->vf128();
+        // (float)ceil(...) forces MWCC to emit fdivs+fmuls before ceil,
+        // then frsp+fctiwz to round to int (matching retail).
+        result.value.intVal = (int)(float)ceil(lbl_eu_80668250 * (curHp / maxHp));
+    } else {
+        result.type = VM_TYPE_INT;
+        result.value.intVal = -1;
+    }
+    vmRetValSet(pThread, &result);
+    return 1;
+}
+
+/// Script command: return the current HP of an enemy (ENE) actor, ceiled
+/// and converted to int. Mirrors getPcHp but resolves the actor via
+/// func_800B8C78 (ene list lookup).
+extern "C" int getEneHp(VMThread* pThread) {
+    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    void* actor = func_800B8C78(id);
+    VMArg result;
+    if (actor != nullptr) {
+        CfObjectHpIf* obj = reinterpret_cast<CfObjectHpIf*>(actor);
+        result.type = VM_TYPE_INT;
+        // Force ceil(double) and explicit float round before fctiwz.
+        float val = (float)ceil(obj->vf128());
+        result.value.intVal = (int)val;
+    } else {
+        result.type = VM_TYPE_INT;
+        result.value.intVal = -1;
+    }
+    vmRetValSet(pThread, &result);
+    return 1;
+}
+
+/// Script command: return the current HP rate (%) of an enemy (ENE) actor.
+/// Mirrors getPcHpRate but resolves the actor via func_800B8C78 (ene list
+/// lookup). On miss, returns -1.
+int getEneHpRate(VMThread* pThread) {
+    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    CfObjectHpIf* actor = reinterpret_cast<CfObjectHpIf*>(func_800B8C78(id));
+    VMArg result;
+    if (actor != nullptr) {
+        result.type = VM_TYPE_INT;
+        float maxHp = actor->vf12C();
+        float curHp = actor->vf128();
+        result.value.intVal = (int)(float)ceil(lbl_eu_80668250 * (curHp / maxHp));
+    } else {
+        result.type = VM_TYPE_INT;
+        result.value.intVal = -1;
+    }
+    vmRetValSet(pThread, &result);
+    return 1;
+}
 void setPcBtlState(){}
-void clearPcBtlState(){}
 void setEneBtlState(){}
-void clearEneBtlState(){}
 void onPcArtsAttack(){}
 void onEneArtsAttack(){}
-void synchro(){}
-void learnArts(){}
+
+// Script command: clear a battle-state flag on an enemy actor. Resolves the
+// actor by id (arg 2) and, if the actor exists, dispatches the clear to the
+// battle manager's virtual at +0x20 via func_800F3958 with a second id (arg 3).
+// Mirror of clearPcBtlState but uses func_800B8C78 (ene list lookup) instead
+// of func_800B8B94 (pc list lookup).
+extern "C" int clearEneBtlState(VMThread* pThread) {
+    int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    void* actor = func_800B8C78(id1);
+    if (actor != nullptr) {
+        cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+        func_800F3958(bm, actor, id2);
+    }
+    return 0;
+}
+
+// Script command: synchronize two enemy actors by copying a 4-byte field
+// from one resolved ene to another. The resolved enes are looked up by id
+// (arg 2 = destination, arg 3 = source) via func_800B8C78. The copy
+// `*(u32*)((u8*)dest + 0x45B8) = *(u32*)((u8*)src + 0x3F10)` runs only
+// when both lookups succeed. The (u8*)obj + literal pattern matches the
+// established CBattleState access for deep fields past CfObjectModel /
+// CfObjectMove.
+extern "C" int synchro(VMThread* pThread) {
+    int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    void* dest = func_800B8C78(id1);
+    void* src = func_800B8C78(id2);
+    if (dest != nullptr && src != nullptr) {
+        u32 val = *(const u32*)((const u8*)src + 0x3F10);
+        *(u32*)((u8*)dest + 0x45B8) = val;
+    }
+    return 0;
+}
+
+// Script command: teach a learnable art to the player. Looks up an art-id
+// mapping in the bdat table ("ac_p" / "u" columns), resolves the actor slot
+// via func_8009EC9C, then dispatches the learn to the actor-param handler
+// func_800A18A4 with the original art id.
+extern "C" int learnArts(VMThread* pThread) {
+    int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    (void)func_8003AA34();
+    void* fp = getFP(lbl_eu_80507FC0);
+    u32 val = getBdatStringColumnValue(fp, lbl_eu_80507FC0 + 8, id);
+    // u8 spill/reload through a 4-byte array forces MWCC to emit the retail
+    // `stw r3, 0x8(r1); lbz r3, 0x8(r1)` pattern; a plain `(u8)val` is
+    // folded to `rlwinm r3, r3, 0, 24, 31` and the codegen regresses.
+    u8 bytes[4];
+    *(u32*)bytes = val;
+    u8 byte = bytes[0];
+    void* actor = func_8009EC9C(byte);
+    func_800A18A4(actor, id);
+    return 0;
+}
+
+// Script command: clear a battle-state flag on a player actor. Resolves the
+// actor by id (arg 2) and, if the actor exists, dispatches the clear to the
+// battle manager's virtual at +0x20 via func_800F3958 with a second id (arg 3).
+extern "C" int clearPcBtlState(VMThread* pThread) {
+    int id1 = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+    int id2 = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
+    void* actor = func_800B8B94(id1);
+    if (actor != nullptr) {
+        cf::CBattleManager* bm = cf::CBattleManager::getInstance();
+        func_800F3958(bm, actor, id2);
+    }
+    return 0;
+}

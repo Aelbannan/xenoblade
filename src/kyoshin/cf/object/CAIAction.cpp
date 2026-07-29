@@ -158,7 +158,48 @@ void func_8014A8F8__Fv() {}
 void func_8014AA10(void* obj, unsigned int value) {
     *(unsigned int*)((unsigned char*)obj + 0xB14) = value;
 }
-void func_8014AC38(){}
+
+// Appends a slot to the ring buffer, inserting before the current head
+// (decrementing unk210 with modulo wraparound). If an existing ring entry
+// already matches bytes [0x5..0xD] of `in`, returns 0 (duplicate); otherwise
+// stores the slot, increments unk214, sets bit 0x8 in the new slot's flags,
+// and returns 1.
+u32 func_8014AC38(cf::CAIAction* self, const cf::CAIActionSlot* in) {
+    u32 count = self->unk214;
+    for (u32 i = 0; i < count; i++) {
+        u32 ringIdx = (self->unk210 + i) % self->unk218;
+        const u8* sb = (const u8*)self->unk20C + (ringIdx << 5);
+        const u8* ib = (const u8*)in;
+        if (sb[0x5] != ib[0x5] || sb[0x6] != ib[0x6] || sb[0x7] != ib[0x7] ||
+            sb[0x8] != ib[0x8] || sb[0x9] != ib[0x9] || sb[0xA] != ib[0xA] ||
+            sb[0xB] != ib[0xB] || sb[0xC] != ib[0xC] || sb[0xD] != ib[0xD])
+            return 0;
+    }
+    // Decrement head with wraparound.
+    s32 newHead = (s32)self->unk210 - 1;
+    if (newHead < 0)
+        newHead += (s32)self->unk218;
+    self->unk210 = (u32)newHead;
+    cf::CAIActionSlot* dst =
+        (cf::CAIActionSlot*)((u8*)self->unk20C + (self->unk210 << 5));
+    dst->unk00 = in->unk00;
+    dst->unk04 = in->unk04;
+    dst->unk08 = in->unk08;
+    dst->unk0C = in->unk0C;
+    dst->unk10 = in->unk10;
+    dst->unk12 = in->unk12;
+    dst->unk14 = in->unk14;
+    dst->unk18 = in->unk18;
+    dst->unk1C = in->unk1C;
+    self->unk214 = self->unk214 + 1;
+    // Re-resolve the new slot pointer and OR bit 0x8 into its flags.
+    {
+        cf::CAIActionSlot* slot =
+            (cf::CAIActionSlot*)((u8*)self->unk20C + (self->unk210 << 5));
+        slot->unk10 = slot->unk10 | 0x8;
+    }
+    return 1;
+}
 void func_8014AE00(){}
 void func_8014B120(){}
 void* func_8014B2DC(void* p) {
@@ -200,7 +241,119 @@ void func_8014B7B0(){}
 void func_8014B8BC(){}
 void func_8014CE78(){}
 void func_8014E164(){}
-void func_80150618(){}
+// 0x20-byte query struct passed as the second arg to func_80150618.
+// Layout mirrors CAIActionSlot: byte at 0x6 (== 0x25 short-circuit), byte at
+// 0xD (mapped to a flag via (b+0xCB)&0xFF and ==0x3B), u16 flags at 0x10
+// (bit 0x400 set in two paths), pointer at 0x18 (dispatch), and u32 at 0x1C
+// (set to 6 when result is null).
+struct CAIActionQuery {
+    u32 unk00; // 0x00
+    u32 unk04; // 0x04
+    u32 unk08; // 0x08
+    u32 unk0C; // 0x0C
+    u16 unk10; // 0x10
+    s16 unk12; // 0x12
+    f32 unk14; // 0x14
+    u32 unk18; // 0x18
+    u32 unk1C; // 0x1C
+};
+
+// Stack-allocated 8-byte holder (list + handle) used by func_80043D90.
+struct CAIActionEnumHolder {
+    void* list;  // 0x0
+    u32 handle;  // 0x4
+};
+
+// Returns the result of dispatching the query through self's CfObjectMove
+// vtable (or the cached handle at 0x3f10), with bit 0x400 in the query's
+// flags set in two pre-dispatch paths.
+void* func_80150618(cf::CAIAction* self, CAIActionQuery* in) {
+    CAIActionEnumHolder holder;
+    void* result = 0;
+    u8* selfB14 = (u8*)self->unkB14;
+
+    func_80043D90(&holder);
+
+    u32 subObj = in->unk18;
+    if (subObj == 0 || *(u16*)((u8*)subObj + 0x3C) == 3) {
+        u8 byteD = (u8)(in->unk0C >> 24);
+        u8 sum = (u8)(byteD + 0xCB);
+        if (sum <= 2 || byteD == 0x3B)
+            in->unk10 = in->unk10 | 0x400;
+    } else if (*(u16*)((u8*)subObj + 0x3C) == 4) {
+        in->unk10 = in->unk10 | 0x400;
+    } else {
+        in->unk10 = in->unk10 | 0x400;
+    }
+
+    if ((u8)(in->unk04 >> 16) == 0x25) {
+        result = (void*)in->unk00;
+        __dt__80043E88(&holder, -1);
+        return result;
+    }
+
+    // func_80150828 returns the primary handle; on success one of the
+    // three sub-cases (0x1/0x2/0x3 by in->unk18->unk5C) refines it.
+    result = func_80150828(self, in);
+
+    u32 ref = in->unk18;
+    if (ref != 0) {
+        u16 which = *(u16*)((u8*)ref + 0x5C);
+        if (which == 1) {
+            if (result != 0) {
+                func_800B708C((BOOL)(uintptr_t)result);
+                void* obj = func_8016FE34();
+                if (obj == 0) {
+                    __dt__80043E88(&holder, -1);
+                    return 0;
+                }
+                u8* moveBase = selfB14 + 0x3e9c;
+                u32 flags64 = *(u32*)(moveBase + 0x64);
+                if ((flags64 & 0x20000000) != 0) {
+                    if ((*(u32*)((u8*)obj + 0x3f00) & 0x40000000) != 0)
+                        goto dispatched;
+                }
+                if ((flags64 & 0x40000000) != 0) {
+                    if ((*(u32*)((u8*)obj + 0x3f00) & 0x20000000) != 0)
+                        goto dispatched;
+                }
+                // vtable[0x4C] on the move base.
+                void* (*vt)(void*) = (void* (*)(void*))(*(u32*)((u8*)moveBase + 0x4C) ? 0 : 0);
+                (void)vt;
+                result = ((void* (*)(void*))(*(u32*)(*(u32*)moveBase) + 0x4C))(moveBase);
+            }
+        } else if (which == 2) {
+            void* v = *(void**)(selfB14 + 0x3f10);
+            if (result != v)
+                result = v;
+        } else if (which == 3) {
+            if (result != 0) {
+                func_800B708C((BOOL)(uintptr_t)result);
+                void* obj = func_8016FE34();
+                if (obj == 0) {
+                    __dt__80043E88(&holder, -1);
+                    return 0;
+                }
+                u32 flags3f00 = *(u32*)(selfB14 + 0x3f00);
+                if ((flags3f00 & 0x20000000) != 0) {
+                    if ((*(u32*)((u8*)obj + 0x3f00) & 0x20000000) != 0)
+                        goto dispatched;
+                }
+                if ((flags3f00 & 0x40000000) != 0) {
+                    if ((*(u32*)((u8*)obj + 0x3f00) & 0x40000000) != 0)
+                        goto dispatched;
+                }
+                result = *(void**)(selfB14 + 0x3f10);
+            }
+        }
+    }
+
+dispatched:
+    if (result == 0)
+        in->unk1C = 6;
+    __dt__80043E88(&holder, -1);
+    return result;
+}
 void func_80150828(){}
 void func_801522C4(){}
 void func_801537F0(){}

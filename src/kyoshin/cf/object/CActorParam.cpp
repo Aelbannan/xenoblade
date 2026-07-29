@@ -66,13 +66,27 @@ namespace cf {
     }
 }
 
-void cf::CActorParam::CActorParam_UnkVirtualFunc1() {}
+void cf::CActorParam::CActorParam_UnkVirtualFunc1() {
+    ((void (*)(void*))(*(void***)this->unk15DC)[0x10])(this->unk15DC);
+}
 int CActorParam_UnkVirtualFunc2__Q22cf11CActorParamFv(void* self) { return 0x0; }
-void cf::CActorParam::CActorParam_UnkVirtualFunc35() {}
+void cf::CActorParam::CActorParam_UnkVirtualFunc35() {
+    this->CActorParam_UnkVirtualFunc34();
+}
 void cf::CActorParam::CActorParam_UnkVirtualFunc54() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc60() {}
-void cf::CActorParam::CActorParam_UnkVirtualFunc40() {}
-void cf::CActorParam::CActorParam_UnkVirtualFunc46() {}
+void cf::CActorParam::CActorParam_UnkVirtualFunc40() {
+    // Virtual call: CActorParam_UnkVirtualFunc34(this, field_17F4)
+    typedef void (*VFunc34)(void*, float);
+    VFunc34 func = (VFunc34)(*(void***)this)[0x47];
+    func(this, *(float*)((u8*)this + 0x17F4));
+}
+void cf::CActorParam::CActorParam_UnkVirtualFunc46() {
+    // Virtual call: CActorParam_UnkVirtualFunc41(this, field_17F8)
+    typedef void (*VFunc41)(void*, float);
+    VFunc41 func = (VFunc41)(*(void***)this)[0x4F];
+    func(this, *(float*)((u8*)this + 0x17F8));
+}
 void cf::CActorParam::CActorParam_UnkVirtualFunc52() {}
 void CActorParam_UnkVirtualFunc58__Q22cf11CActorParamFv() {}
 void CActorParam_UnkVirtualFunc64__Q22cf11CActorParamFv() {}
@@ -110,7 +124,7 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc67() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc70() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc7() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc8() {}
-void cf::CActorParam::CActorParam_UnkVirtualFunc138() {}
+bool cf::CActorParam::CActorParam_UnkVirtualFunc138() { return false; }
 void cf::CActorParam::CActorParam_UnkVirtualFunc140() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc153() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc154() {}
@@ -123,12 +137,13 @@ void cf::CActorParam::CActorParam_UnkVirtualFunc135() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc136() {}
 void cf::CActorParam::CActorParam_UnkVirtualFunc137() {}
 
-void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv(); void CBattleState_UnkVirtualFunc18__Q22cf11CActorParamFv(){
-    CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv();
-}
-
 // BattleState thunks: adjust `this` by -8 and tail-call CActorParam methods.
 typedef void (*CActorFn)(void*);
+
+void CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv();
+void CBattleState_UnkVirtualFunc18__Q22cf11CActorParamFv(void* self) {
+    ((CActorFn)CActorParam_UnkVirtualFunc180__Q22cf11CActorParamFv)((void*)((char*)self - 8));
+}
 
 // us-80180170
 void CActorParam_UnkVirtualFunc179__Q22cf11CActorParamFv();

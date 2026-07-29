@@ -3,6 +3,7 @@
 #include "monolib/util.hpp"
 
 extern u32 func_800AA714(const char* pString);
+extern "C" const char lbl_eu_80500FA4[];
 
 using namespace ml;
 
@@ -285,7 +286,7 @@ void CfBdat::resetMapBdatFileDataPointers(){
         return 0;
     }
 
-const char* lbl_eu_8052E6F0[];
+extern "C" const char* lbl_eu_8052E6F0[];
 
 const char* CfBdat::func_801424A8(u16 index) {
     return lbl_eu_8052E6F0[index];
@@ -297,8 +298,8 @@ const char* CfBdat::func_801424A8(u16 index) {
         if(lbl_80666A6C == pEventFile->mFileHandle){
             if(pEventFile->unk0 == 1 && pEventFile->field_14 != 0){
                 CBdat::func_8003AA78(3, lbl_80666A70);
-                spMnuEveStartFileData = CBdat::getFP("MNU_eve_start");
-                spMnuEveTableFileData = CBdat::getFP("MNU_eve_table");
+                spMnuEveStartFileData = CBdat::getFP(&lbl_eu_80500FA4[0x3C1]);
+                spMnuEveTableFileData = CBdat::getFP(&lbl_eu_80500FA4[0x3CF]);
             }
             
             lbl_80666A6C = nullptr;

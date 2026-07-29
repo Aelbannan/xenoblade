@@ -17,3 +17,5 @@ namespace cf {
         u32 unk8;
     };
 }
+
+extern "C" void func_802A0950(cf::CChainEffect*, int, int, int, int, int);

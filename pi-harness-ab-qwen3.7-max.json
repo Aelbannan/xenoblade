@@ -1,0 +1,25 @@
+{
+  "batchSize": 2,
+  "maxParallelTUs": 1,
+  "maxBatchRetries": 2,
+  "singletonRetry": true,
+  "maxTokens": 99000000,
+  "singletonMinSize": 5000,
+  "maxBriefChars": 128000,
+  "maxBatchMinutes": 45,
+  "maxTimeoutRePrompts": 3,
+  "maxNoMatchRePrompts": 3,
+  "region": "us",
+  "matchModel": {
+    "provider": "openrouter",
+    "model": "qwen/qwen3.7-max",
+    "thinkingLevel": "high"
+  },
+  "cleanupModel": {
+    "provider": "openrouter",
+    "model": "qwen/qwen3.7-max",
+    "thinkingLevel": "high"
+  },
+  "sessionDir": "build/pi-harness/ab-test/qwen3.7-max",
+  "ledgerPath": "build/pi-harness/ab-test/qwen3.7-max/ledger.jsonl"
+}

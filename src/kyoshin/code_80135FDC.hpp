@@ -28,3 +28,4 @@ char* func_80138F78(u16);
 void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
+extern "C" u8 code80135FDC_getByte_621F0();

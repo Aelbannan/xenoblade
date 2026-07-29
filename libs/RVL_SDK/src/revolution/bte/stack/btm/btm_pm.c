@@ -23,8 +23,9 @@
  */
 
 /* Retail layout fixes:
- * - pm_reg_db has only 2 records (BTM_MAX=1); otherwise pend fields shift.
  * - BTM_SSR_INCLUDED off ⇒ tBTM_PM_MCB is 0x22 bytes (retail mulli stride).
+ * - btm_cb layout in this build differs from retail, so the PM functions below
+ *   access it through tBTM_CB_COMPAT, which matches the retail offsets.
  */
 #define BTM_MAX_PM_RECORDS 1
 #define BTM_SSR_INCLUDED   FALSE
@@ -55,6 +56,32 @@ enum {
     BTM_PM_GET_MD2 = 2,
     BTM_PM_GET_COMP = 3,
 };
+
+/* Local retail-layout view of the subset of btm_cb used by this unit.
+ * The global tBTM_CB layout in our headers does not match the retail binary,
+ * so we take &btm_cb and cast to this type when accessing PM/ACL fields.
+ * Offsets are taken from the retail code (see btm_pm_reset / btm_pm_sm_alloc).
+ */
+typedef struct {
+    UINT8 _pad0[0x3C];
+    BD_ADDR remote_addr;
+    UINT8 _pad1[0x11C - 0x3C - BD_ADDR_LEN];
+} tACL_CONN_COMPAT;
+
+typedef struct {
+    tBTM_PM_STATUS_CBACK* cback;
+    UINT8 mask;
+    UINT8 _pad[3];
+} tBTM_PM_RCB_COMPAT;
+
+typedef struct {
+    tACL_CONN_COMPAT acl_db[4];
+    UINT8 _u1[0x4CC - 4 * sizeof(tACL_CONN_COMPAT)];
+    tBTM_PM_MCB pm_mode_db[4];
+    tBTM_PM_RCB_COMPAT pm_reg_db[2];
+    UINT8 pm_pend_link;
+    UINT8 pm_pend_id;
+} tBTM_CB_COMPAT;
 
 /*******************************************************************************
  * local function declarations
@@ -175,25 +202,32 @@ tBTM_STATUS BTM_ReadPowerMode(BD_ADDR remote_bda, tBTM_PM_MODE* p_mode) {
 }
 
 void btm_pm_reset(void) {
-    int xx;
     tBTM_PM_STATUS_CBACK* cb = NULL;
 
-    if (btm_cb.pm_pend_id != BTM_PM_SET_ONLY_ID && btm_cb.pm_reg_db[btm_cb.pm_pend_id].mask & BTM_PM_REG_NOTIF) {
-        cb = btm_cb.pm_reg_db[btm_cb.pm_pend_id].cback;
+    /* Capture the callback for the party that has a pending request. */
+    if (((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_id != BTM_PM_SET_ONLY_ID &&
+        (((tBTM_CB_COMPAT*)&btm_cb)->pm_reg_db[((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_id].mask &
+         BTM_PM_REG_NOTIF)) {
+        cb = ((tBTM_CB_COMPAT*)&btm_cb)->pm_reg_db[((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_id].cback;
     }
 
-    btm_cb.pm_pend_link = MAX_L2CAP_LINKS;
+    /* Clear normal registration slot, reset pending link, then clear temp slot.
+     * Retail order/offsets are reproduced exactly. The invalid pending-link
+     * value in this build is 4. */
+    ((tBTM_CB_COMPAT*)&btm_cb)->pm_reg_db[0].mask = BTM_PM_REC_NOT_USED;
+    ((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_link = 4;
+    ((tBTM_CB_COMPAT*)&btm_cb)->pm_reg_db[1].mask = BTM_PM_REC_NOT_USED;
 
-    for (xx = 0; xx < BTM_MAX_PM_RECORDS; ++xx)
-        btm_cb.pm_reg_db[xx].mask = BTM_PM_REC_NOT_USED;
-
+    /* Notify that the pending command was aborted due to device reset.
+     * Retail uses status value 5 (BTM_PM_STS_PENDING). */
     if (cb) {
-        (*cb)(btm_cb.acl_db[btm_cb.pm_pend_link].remote_addr, BTM_PM_STS_ERROR, BTM_DEV_RESET, HCI_SUCCESS);
+        (*cb)(((tBTM_CB_COMPAT*)&btm_cb)->acl_db[((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_link].remote_addr,
+              BTM_PM_STS_PENDING, BTM_DEV_RESET, HCI_SUCCESS);
     }
 }
 
 void btm_pm_sm_alloc(UINT8 ind) {
-    tBTM_PM_MCB* p_db = &btm_cb.pm_mode_db[ind];
+    tBTM_PM_MCB* p_db = &((tBTM_CB_COMPAT*)&btm_cb)->pm_mode_db[ind];
     memset(p_db, 0, sizeof(*p_db));
     p_db->state = BTM_PM_ST_ACTIVE;
 }

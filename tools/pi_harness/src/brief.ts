@@ -3,7 +3,8 @@
 // Ported from tools/llm_decomp/brief.py + asm_listings.py, slimmed for pi.
 // ---------------------------------------------------------------------------
 
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, readdirSync } from "node:fs";
+import { join, dirname, basename } from "node:path";
 import type { TargetBrief } from "./types.js";
 
 // Objdiff/retail listings prefix each insn with `/* VA OFFSET BYTES */`.
@@ -75,6 +76,103 @@ export function truncateAsm(asm: string, maxChars: number): string {
   return "";
 }
 
+/**
+ * Find all related headers for a unit: the unit's own header, parent class
+ * headers, and shared struct headers in the same directory. Returns an array
+ * of { name, content } objects, limited to `maxChars` total.
+ */
+export function findRelatedHeaders(
+  repoRoot: string,
+  unit: string,
+  maxChars: number,
+): { name: string; content: string }[] {
+  const result: { name: string; content: string }[] = [];
+  const seen = new Set<string>();
+
+  // Resolve the unit's source directory
+  const unitParts = unit.split("/");
+  const srcDir = join(repoRoot, "src", ...unitParts.slice(0, -1));
+  const unitName = unitParts[unitParts.length - 1];
+
+  // 1. The unit's own header
+  const ownHeader = join(srcDir, unitName + ".hpp");
+  if (existsSync(ownHeader)) {
+    const content = readFileSync(ownHeader, "utf-8");
+    if (content.length > 0) {
+      result.push({ name: unitName + ".hpp", content });
+      seen.add(ownHeader);
+    }
+  }
+
+  // 2. Scan includes in the unit's header for local headers
+  function addIncludes(filePath: string, depth: number) {
+    if (depth > 3) return; // prevent infinite recursion
+    const content = readFileSync(filePath, "utf-8");
+    const includeRe = /#include\s+"([^"]+)"/g;
+    let match;
+    while ((match = includeRe.exec(content)) !== null) {
+      const incPath = match[1];
+      // Resolve relative to the file's directory or src/
+      const candidates = [
+        join(dirname(filePath), incPath),
+        join(repoRoot, "src", incPath),
+        join(repoRoot, "include", incPath),
+      ];
+      for (const candidate of candidates) {
+        if (existsSync(candidate) && !seen.has(candidate)) {
+          seen.add(candidate);
+          const incContent = readFileSync(candidate, "utf-8");
+          if (incContent.length > 0) {
+            result.push({ name: incPath, content: incContent });
+          }
+          // Recurse into included headers
+          addIncludes(candidate, depth + 1);
+          break;
+        }
+      }
+    }
+  }
+
+  if (existsSync(ownHeader)) {
+    addIncludes(ownHeader, 0);
+  }
+
+  // 3. Also scan for sibling headers in the same directory (e.g., shared
+  //    struct definitions like CVoiceHandle.hpp)
+  try {
+    const siblings = readdirSync(srcDir);
+    for (const sib of siblings) {
+      if (!sib.endsWith(".hpp") || seen.has(join(srcDir, sib))) continue;
+      // Only include small headers (< 2KB) to avoid bloating the brief
+      const sibPath = join(srcDir, sib);
+      const sibContent = readFileSync(sibPath, "utf-8");
+      if (sibContent.length > 0 && sibContent.length < 2048) {
+        result.push({ name: sib, content: sibContent });
+        seen.add(sibPath);
+      }
+    }
+  } catch {
+    // Directory might not exist
+  }
+
+  // 4. Truncate to maxChars
+  let total = 0;
+  const truncated: { name: string; content: string }[] = [];
+  for (const h of result) {
+    if (total + h.content.length > maxChars) {
+      const remaining = maxChars - total;
+      if (remaining > 200) {
+        truncated.push({ name: h.name, content: h.content.slice(0, remaining) + "\n... (truncated)" });
+      }
+      break;
+    }
+    truncated.push(h);
+    total += h.content.length;
+  }
+
+  return truncated;
+}
+
 function rulesSection(pythonBin: string): string {
   const rules = [
     "**High-level C/C++ only.** No `asm` blocks, no inline assembly, no register/stack manipulation, no codegen macros (`DECOMP_*`, `DECOMP_FORCE*`).",
@@ -107,8 +205,10 @@ export function buildBatchBrief(opts: {
   carryover?: string;
   maxChars: number;
   pythonBin: string;
+  repoRoot?: string;
+  headerBudget?: number;
 }): string {
-  const { targets: targetList, unit, writable, carryover, maxChars, pythonBin } = opts;
+  const { targets: targetList, unit, writable, carryover, maxChars, pythonBin, repoRoot, headerBudget } = opts;
   const n = targetList.length;
 
   const heading =
@@ -124,6 +224,23 @@ export function buildBatchBrief(opts: {
   let writableSection = "## Writable scope\n\n";
   for (const w of writable) writableSection += `- \`${w}\`\n`;
   writableSection += "\nEverything else is read-only. Read freely with the read/grep tools.\n\n";
+
+  // Include related headers as read-only reference
+  let headersSection = "";
+  if (repoRoot) {
+    const budget = headerBudget ?? 8000;
+    const headers = findRelatedHeaders(repoRoot, unit, budget);
+    if (headers.length > 0) {
+      headersSection = "## Type Context (read-only reference)\n\n";
+      headersSection +=
+        "The following headers define the struct layouts for this unit. " +
+        "Use them to understand field offsets and types — do NOT guess " +
+        "struct layouts from ASM when a header already defines them.\n\n";
+      for (const h of headers) {
+        headersSection += `### ${h.name}\n\n\`\`\`cpp\n${h.content}\n\`\`\`\n\n`;
+      }
+    }
+  }
 
   let carryoverSection = "";
   if (carryover && carryover.trim()) {
@@ -158,7 +275,7 @@ export function buildBatchBrief(opts: {
     );
   }
 
-  const fixed = heading + overview + writableSection + rulesSection(pythonBin) + carryoverSection + closing;
+  const fixed = heading + overview + writableSection + headersSection + rulesSection(pythonBin) + carryoverSection + closing;
   let overhead = 0;
   for (let i = 0; i < n; i++) overhead += targetBlock(i + 1, targetList[i], "").length;
 
@@ -178,5 +295,5 @@ export function buildBatchBrief(opts: {
   let blocks = "";
   for (let i = 0; i < n; i++) blocks += targetBlock(i + 1, targetList[i], bodies[i]);
 
-  return heading + overview + writableSection + blocks + rulesSection(pythonBin) + carryoverSection + closing;
+  return heading + overview + writableSection + headersSection + blocks + rulesSection(pythonBin) + carryoverSection + closing;
 }

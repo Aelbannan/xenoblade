@@ -9,8 +9,8 @@
   "singletonMinSize": 5000,
   "maxBriefChars": 128000,
   "maxBatchMinutes": 45,
-  "maxRePrompts": 5,
-  "maxStuckRePrompts": 10,
+  "maxTimeoutRePrompts": 5,
+  "maxNoMatchRePrompts": 10,
   "region": "us",
   "sessionDir": "build/pi-harness/ab-test/kimi-k2.7-code",
   "ledgerPath": "build/pi-harness/ab-test/kimi-k2.7-code/ledger.jsonl"

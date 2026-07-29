@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CModelDisp
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CModelDisp.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CModelDisp.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,37 +1390,166 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CModelDisp.cpp" line 4 "kyoshin/CModelDisp.hpp" */
+#pragma once
 
-extern "C" u8 func_801FC114(void* self) { return ((u8*)self)[0x2FE4]; }
+/* "src/kyoshin/CModelDisp.hpp" line 2 "types.h" */
+/* end "types.h" */
 
+// Sub-object controller interface.
+// With -RTTI on, vtable[0..1] are typeinfo; first virtual method starts at slot 2.
+// Key slots used: 0x48 (float arg), 0xC4 (void*,int,int args), 0xC8 (no args).
+struct CModelDispSubCtrl {
+    // Slots 2-17 (16 pads before slot 18 = byte offset 0x48)
+    virtual void _04() = 0;
+    virtual void _08() = 0;
+    virtual void _0C() = 0;
+    virtual void _10() = 0;
+    virtual void _14() = 0;
+    virtual void _18() = 0;
+    virtual void _1C() = 0;
+    virtual void _20() = 0;
+    virtual void _24() = 0;
+    virtual void _28() = 0;
+    virtual void _2C() = 0;
+    virtual void _30() = 0;
+    virtual void _34() = 0;
+    virtual void _38() = 0;
+    virtual void _3C() = 0;
+    virtual void _40() = 0;
+    // Slot 18 = byte offset 0x48
+    virtual void vmethod_48(float f) = 0;
+    // Slots 19-48 (30 pads to reach 0xC4 at slot 49)
+    virtual void _4C() = 0;
+    virtual void _50() = 0;
+    virtual void _54() = 0;
+    virtual void _58() = 0;
+    virtual void _5C() = 0;
+    virtual void _60() = 0;
+    virtual void _64() = 0;
+    virtual void _68() = 0;
+    virtual void _6C() = 0;
+    virtual void _70() = 0;
+    virtual void _74() = 0;
+    virtual void _78() = 0;
+    virtual void _7C() = 0;
+    virtual void _80() = 0;
+    virtual void _84() = 0;
+    virtual void _88() = 0;
+    virtual void _8C() = 0;
+    virtual void _90() = 0;
+    virtual void _94() = 0;
+    virtual void _98() = 0;
+    virtual void _9C() = 0;
+    virtual void _A0() = 0;
+    virtual void _A4() = 0;
+    virtual void _A8() = 0;
+    virtual void _AC() = 0;
+    virtual void _B0() = 0;
+    virtual void _B4() = 0;
+    virtual void _B8() = 0;
+    virtual void _BC() = 0;
+    virtual void _C0() = 0;
+    // Slot 49 = byte offset 0xC4
+    virtual void vmethod_C4(CModelDispSubCtrl* ptr, int action, int zero) = 0;
+    // Slot 50 = byte offset 0xC8
+    virtual void vmethod_C8() = 0;
+};
 
+// Sub-object embedded in CModelDisp at stride 0xFF0.
+// Each has a controller pointer at +0x08 and a pointer array at +0xFD0.
+struct CModelDispSub {
+    u8 _00[0x08];
+    CModelDispSubCtrl* controller; // +0x08
+    u8 _0C[0xFC4];
+    // pointer array starts at +0xFD0, accessed as field_0xFD0[i]
+    u8* field_0xFD0[1]; // +0xFD0 - variable-length pointer array
+};
 
+class CModelDisp {
+public:
+    CModelDisp();
+    virtual ~CModelDisp();
 
+    // vtable at +0x00 (4 bytes from virtual dtor) — padding shifted to compensate
+    u8 _pad0004[0x2FD8 - 4];
+    u8 field_2FD8; // 0x2FD8 (absolute from this)
+    u8 _pad2FD9[0x03];
+    float field_2FDC; // 0x2FDC (absolute from this)
+    u8 _pad2FE0[0x04];
+    u8 field_2FE4; // 0x2FE4 (absolute from this)
+};/* end "kyoshin/CModelDisp.hpp" */
 
+// Forward-declare retail symbol from CfObjectModel.cpp
+u32 func_800BBC04(int arg);
 
+u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 
+// func_801FC218: advances a timer and updates sub-object display state.
+void func_801FC218(CModelDisp* self) {
+    self->field_2FDC += 0.2f;
+    if (self->field_2FDC > 1.0f) {
+        self->field_2FDC = 1.0f;
+        self->field_2FD8 = 0;
+        self->field_2FE4 = 1;
+    }
 
+    u8 i;
+    for (i = 0; i < 3; i++) {
+        CModelDispSubCtrl* ctrl = ((CModelDispSub*)((u8*)self + (u32)i * 0xFF0))->controller;
+        if (ctrl != NULL) {
+            ctrl->vmethod_48(self->field_2FDC);
+        }
+    }
+}
 
+void func_801FC2B4(){}
 
+void func_801FC3B0(){}
 
-extern "C" void func_801FC218() {}
+int func_801FCAC0(void* self) { return 0; }
 
-extern "C" void func_801FC2B4() {}
+void func_801FCAC8(){}
 
-extern "C" void func_801FC3B0() {}
+// func_801FCB4C: dispatches sub-object controller calls based on action validation.
+void func_801FCB4C(CModelDisp* self, int flags, int subIdx, int action, int ptrIdx) {
+    CModelDispSub* sub = (CModelDispSub*)((u8*)self + subIdx * 0xFF0);
+    u8* ptr = sub->field_0xFD0[ptrIdx];
+    
+    if (flags == 0) return;
+    if (func_800BBC04(action) <= 0) return;
+    if (ptr == NULL) return;
 
-extern "C" int func_801FCAC0(void* self) { return 0; }
+    sub->controller->vmethod_C8();
+    sub->controller->vmethod_C4((CModelDispSubCtrl*)ptr, action, 0);
+}
 
-extern "C" void func_801FCAC8() {}
+int func_801FCBEC(void* self) { return 0; }
 
-extern "C" void func_801FCB4C() {}
+void func_801FCBF4(){}
 
-extern "C" int func_801FCBEC(void* self) { return 0; }
-
-extern "C" void func_801FCBF4() {}
-
-extern "C" void func_801FCDB4() {}
+void func_801FCDB4(){}
 
 extern "C" void func_801FC11C(void* self) {
     if (*(u8*)((u8*)self + 0x2FD8) != 0) return;

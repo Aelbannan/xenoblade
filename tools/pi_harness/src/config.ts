@@ -23,13 +23,15 @@ function defaultConfig(): HarnessConfig {
     batchSize: 5,
     maxParallelTUs: 2,
     maxBatchRetries: 2,
-    singletonRetry: true,
+    singletonEnabled: true,
+    rebatchEnabled: true,
+    maxRebatchAttempts: 0, // 0 = use maxBatchRetries as fallback
     maxTokens: 0,
     singletonMinSize: 0,
     maxBriefChars: 80_000,
     maxBatchMinutes: 60,
-    maxRePrompts: 3,
-    maxStuckRePrompts: 1,
+    maxTimeoutRePrompts: 3,
+    maxNoMatchRePrompts: 1,
     region: "us",
     sessionDir: "build/pi-harness/sessions",
     ledgerPath: "build/pi-harness/ledger.jsonl",
@@ -69,6 +71,11 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
       );
     }
 
+    // Backwards compat: map deprecated keys.
+    if ("singletonRetry" in raw && !("singletonEnabled" in raw)) {
+      raw.singletonEnabled = raw.singletonRetry;
+    }
+
     for (const [key, value] of Object.entries(raw)) {
       if (value === undefined || value === null) continue;
       if (key === "matchModel" || key === "cleanupModel") {
@@ -97,8 +104,14 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
       : resolve(repoRoot, config.pythonBin);
   }
 
-  if (typeof config.singletonRetry !== "boolean") {
-    throw new Error("config.singletonRetry must be a boolean");
+  if (typeof config.singletonEnabled !== "boolean") {
+    throw new Error("config.singletonEnabled must be a boolean");
+  }
+  if (typeof config.rebatchEnabled !== "boolean") {
+    throw new Error("config.rebatchEnabled must be a boolean");
+  }
+  if (!Number.isInteger(config.maxRebatchAttempts) || config.maxRebatchAttempts < 0) {
+    throw new Error("config.maxRebatchAttempts must be an integer >= 0");
   }
   if (typeof config.maxTokens !== "number" || config.maxTokens < 0 || !Number.isInteger(config.maxTokens)) {
     throw new Error("config.maxTokens must be an integer >= 0");
@@ -130,11 +143,11 @@ export function loadConfig(repoRoot: string, configPath?: string): HarnessConfig
   if (!(config.maxBatchMinutes > 0)) {
     throw new Error("config.maxBatchMinutes must be > 0");
   }
-  if (typeof config.maxRePrompts !== "number" || config.maxRePrompts < 0 || !Number.isInteger(config.maxRePrompts)) {
-    throw new Error("config.maxRePrompts must be an integer >= 0");
+  if (typeof config.maxTimeoutRePrompts !== "number" || config.maxTimeoutRePrompts < 0 || !Number.isInteger(config.maxTimeoutRePrompts)) {
+    throw new Error("config.maxTimeoutRePrompts must be an integer >= 0");
   }
-  if (typeof config.maxStuckRePrompts !== "number" || config.maxStuckRePrompts < 0 || !Number.isInteger(config.maxStuckRePrompts)) {
-    throw new Error("config.maxStuckRePrompts must be an integer >= 0");
+  if (typeof config.maxNoMatchRePrompts !== "number" || config.maxNoMatchRePrompts < 0 || !Number.isInteger(config.maxNoMatchRePrompts)) {
+    throw new Error("config.maxNoMatchRePrompts must be an integer >= 0");
   }
   validateModel(config.matchModel, "matchModel");
   validateModel(config.cleanupModel, "cleanupModel");

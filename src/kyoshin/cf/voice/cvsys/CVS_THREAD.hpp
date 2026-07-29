@@ -24,4 +24,4 @@ public:
     int func_802A5ECC() { return 240; }
 };
 
-extern void func_802A35A0(u32* destPtr);
+extern "C" unsigned int func_802A35A0(unsigned int value);

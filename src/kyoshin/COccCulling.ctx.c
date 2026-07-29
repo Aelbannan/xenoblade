@@ -10780,12 +10780,11 @@ namespace ml{
             }
         }
 
-    private:
-        char mString[N];
-        int mLength;
+    // public for compatibility
+    char mString[N];
+    int mLength;
 
-    public:
-        static const int npos = -1;
+    static const int npos = -1;
     };
 
 }
@@ -11112,10 +11111,11 @@ namespace mtl {
         u8 padding[32 - 0x12]; //0x12
 
         u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+            return reinterpret_cast<u8*>(this + 1);
         }
         u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
+            u8* blockEnd = reinterpret_cast<u8*>(this + 1);
+            return blockEnd + (size - sizeof(MemBlock));
         }
 
         u32 getDataSize() const {

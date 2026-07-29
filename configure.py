@@ -1860,7 +1860,25 @@ config.libs = [
             Object(NonMatching, "monolib/src/nand/CNBanner.cpp"),
             Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp"), #EU/US only
         ],
-    }
+    },
+    {
+        "lib": "retail_data",
+        "mw_version": config.linker_version,
+        "cflags": [],
+        "progress_category": "data",
+        "asm_dir": config.out_path() / "asm",
+        "objects": [
+            Object(Matching, "split1.s"),
+            Object(Matching, "criware_data.s"),
+            Object(Matching, "nw4r_data.s"),
+            Object(Matching, "monolibdata1.s"),
+            Object(Matching, "monolibdata1b.s"),
+            Object(Matching, "monolibdata1f.s"),
+            Object(Matching, "monolibdata1d.s"),
+            Object(Matching, "monolibdata1e.s"),
+            Object(Matching, "monolibdata2.s"),
+        ],
+    },
 ]
 
 
@@ -1891,6 +1909,7 @@ config.progress_categories = [
     ProgressCategory("criware", "Criware Code"),
     ProgressCategory("monolib", "Monolithlib Code"),
     ProgressCategory("nw4r", "NW4R Code"),
+    ProgressCategory("data", "Retail Data"),
 ]
 config.progress_each_module = args.verbose
 # Optional extra arguments to `objdiff-cli report generate`

@@ -221,11 +221,13 @@ async function main(): Promise<void> {
   process.stderr.write(`  batchSize:      ${effectiveConfig.batchSize}\n`);
   process.stderr.write(`  maxParallel:    ${effectiveConfig.maxParallelTUs}\n`);
   process.stderr.write(`  maxRetries:     ${effectiveConfig.maxBatchRetries}\n`);
-  process.stderr.write(`  singletonRetry: ${effectiveConfig.singletonRetry}\n`);
+  process.stderr.write(`  singletonEnabled: ${effectiveConfig.singletonEnabled}\n`);
+  process.stderr.write(`  rebatchEnabled: ${effectiveConfig.rebatchEnabled}\n`);
+  process.stderr.write(`  maxRebatchAttempts: ${effectiveConfig.maxRebatchAttempts === 0 ? `off (uses maxBatchRetries)` : effectiveConfig.maxRebatchAttempts}\n`);
   process.stderr.write(`  maxTokens:      ${effectiveConfig.maxTokens === 0 ? "unlimited (model default)" : effectiveConfig.maxTokens}\n`);
   process.stderr.write(`  singletonMinSize: ${effectiveConfig.singletonMinSize === 0 ? "off (all use singletons)" : effectiveConfig.singletonMinSize + " bytes"}\n`);
-  process.stderr.write(`  maxRePrompts:   ${effectiveConfig.maxRePrompts} (in-session continuation, 0=off)\n`);
-  process.stderr.write(`  maxStuckRePrompts: ${effectiveConfig.maxStuckRePrompts} (when model completed but code fails)\n`);
+  process.stderr.write(`  maxTimeoutRePrompts:   ${effectiveConfig.maxTimeoutRePrompts} (in-session continuation, 0=off)\n`);
+  process.stderr.write(`  maxNoMatchRePrompts: ${effectiveConfig.maxNoMatchRePrompts} (when model completed but code fails)\n`);
   process.stderr.write(`  pythonBin:      ${effectiveConfig.pythonBin}\n`);
   process.stderr.write(`  dryRun:         ${args.dryRun}\n`);
 
@@ -269,6 +271,19 @@ async function main(): Promise<void> {
 
   process.stderr.write("\n[pi-harness] Done.\n");
 }
+
+// Catch unhandled promise rejections that would otherwise crash silently.
+process.on("unhandledRejection", (reason, promise) => {
+  const msg = reason instanceof Error ? reason.message : String(reason);
+  console.error(`[pi-harness] Unhandled rejection: ${msg}`);
+  console.error(reason);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error(`[pi-harness] Uncaught exception: ${err.message}`);
+  console.error(err.stack);
+  process.exit(1);
+});
 
 main().catch((err) => {
   const msg = err instanceof Error ? err.message : String(err);

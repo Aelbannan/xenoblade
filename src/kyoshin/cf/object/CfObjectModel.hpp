@@ -38,7 +38,8 @@ namespace cf {
         u16 field_0x8E;
         u8 field_0x90[0x20]; // 0x90-0xAF
         void* mSubObjB0;      // 0xB0-0xB3
-        u8 unkB4[0xBD - 0xB4]; // 0xB4-0xBC
+        u8 unkB4[0xBC - 0xB4]; // 0xB4-0xBB
+        u8 field_BC;          // 0xBC
         u8 field_BD;          // 0xBD
     CfObjectModel();
     void CfObject_UnkVirtualFunc2();

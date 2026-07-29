@@ -1,0 +1,25 @@
+{
+  "batchSize": 2,
+  "maxParallelTUs": 1,
+  "maxBatchRetries": 2,
+  "singletonRetry": true,
+  "maxTokens": 1000000,
+  "singletonMinSize": 5000,
+  "maxBriefChars": 128000,
+  "maxBatchMinutes": 45,
+  "maxTimeoutRePrompts": 3,
+  "maxNoMatchRePrompts": 1,
+  "region": "us",
+  "matchModel": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4-pro",
+    "thinkingLevel": "high"
+  },
+  "cleanupModel": {
+    "provider": "openrouter",
+    "model": "deepseek/deepseek-v4-pro",
+    "thinkingLevel": "high"
+  },
+  "sessionDir": "build/pi-harness/ab-test-round2/deepseek-v4-pro-round2",
+  "ledgerPath": "build/pi-harness/ab-test-round2/deepseek-v4-pro-round2/ledger.jsonl"
+}

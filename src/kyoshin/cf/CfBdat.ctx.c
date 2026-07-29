@@ -758,8 +758,10 @@ class CWorkThread;
 
 class CEventFile {
 public:
-    BOOL unk0;
-    CFileHandle* mFileHandle; //0x4
+    BOOL unk0;                 //0x0
+    CFileHandle* mFileHandle;  //0x4
+    u8 _pad08[0x0C];           //0x8-0x13
+    u32 field_14;              //0x14
 
     void* getFileDataPtr();
 };
@@ -2116,6 +2118,71 @@ typedef enum _GXProjectionType {
     GX_ORTHOGRAPHIC
 } GXProjectionType;
 
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
+
 typedef enum _GXSpotFn {
     GX_SP_OFF,
     GX_SP_FLAT,
@@ -3431,12 +3498,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -4541,6 +4611,9 @@ typedef struct _GXFifoObjImpl {
     void* writePtr;    // at 0x18
     u32 count;         // at 0x1C
     u8 wrap;           // at 0x20
+    u8 bind_cpu;       // at 0x21
+    u8 bind_gp;        // at 0x22
+    u8 pad;            // at 0x23
 } GXFifoObjImpl;
 
 typedef struct _GXLightObjImpl {
@@ -4561,20 +4634,49 @@ typedef struct _GXLightObjImpl {
 } GXLightObjImpl;
 
 typedef struct _GXTexObjImpl {
-    u8 todo;
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    void* userData;
+    GXTexFmt fmt;
+    u32 tlutName;
+    u16 loadCnt;
+    u8 loadFmt;
+    u8 flags;
 } GXTexObjImpl;
 
 typedef struct _GXTlutObjImpl {
-    u8 todo;
+    u32 tlut;
+    u32 loadTlut0;
+    u16 numEntries;
 } GXTlutObjImpl;
 
 typedef struct _GXTexRegionImpl {
-    u8 todo;
+    u32 image1;
+    u32 image2;
+    u16 sizeEven;
+    u16 sizeOdd;
+    u8 is32bMipmap;
+    u8 isCached;
 } GXTexRegionImpl;
 
 typedef struct _GXTlutRegionImpl {
-    u8 todo;
+    u32 loadTlut1;
+    GXTlutObjImpl tlutObj;
 } GXTlutRegionImpl;
+
+#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
+
+#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
+    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
+    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
+
+#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
+
+#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
+
+#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
 
 #ifdef __cplusplus
 }
@@ -8789,7 +8891,95 @@ typedef enum {
 
 /* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 4 "revolution/GX/GXFifo.h" */
 /* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTexture.h" */
+#ifndef RVL_SDK_GX_TEXTURE_H
+#define RVL_SDK_GX_TEXTURE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
+GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
+
+GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
+GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
+
+typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
+                                            GXTexMapID map);
+
+typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
+
+void __GXSetSUTexRegs(void);
+
+void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
+                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
+void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
+                    GXTexWrapMode, GXBool, u32);
+void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
+                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
+                     GXBool do_edge_lod, GXAnisotropy max_aniso);
+
+void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
+                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
+                       f32* lodBias, GXBool* biasClampEnable,
+                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
+
+GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
+GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
+
+u16 GXGetTexObjWidth(const GXTexObj* obj);
+u16 GXGetTexObjHeight(const GXTexObj* obj);
+GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
+GXBool GXGetTexObjMipMap(const GXTexObj* obj);
+
+void GXLoadTexObj(const GXTexObj*, GXTexMapID);
+
+void GXInitTexObjTlut(GXTexObj*, u32);
+u32 GXGetTexObjTlut(GXTexObj*);
+
+void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
+
+void GXLoadTlut(GXTlutObj*, u32);
+
+void GXInvalidateTexAll(void);
+
+void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
+                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
+
+void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
+
+GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
+GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
+
+void GXInitTexObjWrapMode(GXTexObj*, GXTexWrapMode, GXTexWrapMode);
+void GXInitTexObjFilter(GXTexObj*, GXTexFilter, GXTexFilter);
+void GXInitTexObjUserData(GXTexObj*, void*);
+void* GXGetTexObjUserData(GXTexObj*);
+void GXLoadTexObjPreLoaded(GXTexObj*, GXTexRegion*, GXTexMapID);
+
+void __GetImageTileCount(GXTexFmt, u16, u16, u32*, u32*, u32*);
+void __SetSURegs(u32, u32);
+void __GXSetTmemConfig(u32);
+
+u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
+                       u8 max_lod);
+
+void GXSetTexCoordScaleManually(GXTexCoordID, GXBool, u16, u16);
+void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 6 "revolution/GX/GXTransform.h" */
 #ifndef RVL_SDK_GX_TRANSFORM_H
 #define RVL_SDK_GX_TRANSFORM_H
 /* "libs/RVL_SDK/include/revolution/GX/GXTransform.h" line 2 "types.h" */
@@ -9038,38 +9228,57 @@ typedef struct _GXData {
     u16 vlim;      // at 0x6
     u32 cpCtrlReg; // at 0x8
     u32 cpStatReg; // at 0xC
-    char UNK_0x10[0x4];
-    u32 vcdLoReg;            // at 0x14
-    u32 vcdHiReg;            // at 0x18
+    u32 cpClrReg;  // at 0x10
+    u32 vcdLoReg;  // at 0x14
+    u32 vcdHiReg;  // at 0x18
     u32 vatA[GX_MAX_VTXFMT]; // at 0x1C
     u32 vatB[GX_MAX_VTXFMT]; // at 0x3C
     u32 vatC[GX_MAX_VTXFMT]; // at 0x5C
     u32 linePtWidth;         // at 0x7C
     u32 matrixIndex0;        // at 0x80
     u32 matrixIndex1;        // at 0x84
-    char UNK_0x88[0xA8 - 0x88];
-    GXColor ambColors[2];             // at 0xA8
-    GXColor matColors[2];             // at 0xB0
-    u32 colorControl[4];              // at 0xB8
+    u32 indexBase[4];        // at 0x88
+    u32 indexStride[4];      // at 0x98
+    GXColor ambColors[2];    // at 0xA8
+    GXColor matColors[2];    // at 0xB0
+    u32 colorControl[4];     // at 0xB8
     u32 texRegs[GX_MAX_TEXCOORD];     // at 0xC8
     u32 dualTexRegs[GX_MAX_TEXCOORD]; // at 0xE8
-    u32 txcRegs[GX_MAX_TEXCOORD];     // at 0x108
-    char UNK_0x128[0x148 - 0x128];
+    union {
+        u32 txcRegs[GX_MAX_TEXCOORD]; // at 0x108 (legacy name)
+        u32 suTs0[GX_MAX_TEXCOORD];
+    };
+    u32 suTs1[GX_MAX_TEXCOORD]; // at 0x128
     u32 scissorTL; // at 0x148
     u32 scissorBR; // at 0x14C
-    char UNK_0x150[0x170 - 0x150];
+    u32 tref[8];   // at 0x150
     u32 ras1_iref; // at 0x170
     u32 ind_imask; // at 0x174
     u32 ras1_ss0;  // at 0x178
     u32 ras1_ss1;  // at 0x17C
-    char UNK_0x180[0x220 - 0x180];
+    u32 tevc[16];  // at 0x180
+    u32 teva[16];  // at 0x1C0
+    u32 tevKsel[8]; // at 0x200
     u32 blendMode; // at 0x220
     u32 dstAlpha;  // at 0x224
     u32 zMode;     // at 0x228
     u32 zControl;  // at 0x22C
-    char UNK_0x230[0x254 - 0x230];
+    u32 cpDispSrc;    // at 0x230
+    u32 cpDispSize;   // at 0x234
+    u32 cpDispStride; // at 0x238
+    u32 cpDisp;       // at 0x23C
+    u32 cpTexSrc;     // at 0x240
+    u32 cpTexSize;    // at 0x244
+    u32 cpTexStride;  // at 0x248
+    u32 cpTex;        // at 0x24C
+    GXBool cpTexZ;    // at 0x250
     u32 genMode; // at 0x254
-    char UNK_0x258[0x520 - 0x258];
+    GXTexRegion TexRegions0[8]; // at 0x258
+    GXTexRegion TexRegions1[8];
+    GXTexRegion TexRegions2[8];
+    GXTlutRegion TlutRegions[20];
+    GXTexRegionCallback texRegionCallback;
+    GXTlutRegionCallback tlutRegionCallback;
     GXAttrType normalType;          // at 0x520
     GXBool normal;                  // at 0x524
     GXBool binormal;                // at 0x525
@@ -9088,7 +9297,14 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5F8 - 0x564];
+    u32 tImage0[8];  // at 0x564
+    u32 tMode0[8];   // at 0x584
+    u32 texmapId[16]; // at 0x5A4
+    u32 tcsManEnab;   // at 0x5E4
+    u32 tevTcEnab;    // at 0x5E8
+    GXPerf0 perf0; // at 0x5EC
+    GXPerf1 perf1; // at 0x5F0
+    u32 perfSel;   // at 0x5F4
     GXBool dlistActive; // at 0x5F8
     GXBool dlistSave;   // at 0x5F9
     u8 BYTE_0x5FA;
@@ -9100,6 +9316,11 @@ extern GXData* const __GXData;
 
 // I hate typing this name out
 #define gxdt __GXData
+
+extern const char* __GXVersion;
+
+void __GXInitRevisionBits(void);
+void __GXInitGX(void);
 
 GXFifoObj* GXInit(void*, u32);
 
@@ -9271,83 +9492,6 @@ void GXSetNumTevStages(u8);
 #endif
 /* end "revolution/GX/GXTev.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-#ifndef RVL_SDK_GX_TEXTURE_H
-#define RVL_SDK_GX_TEXTURE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
-GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
-
-GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
-GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
-
-typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
-                                            GXTexMapID map);
-
-typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
-
-void __GXSetSUTexRegs(void);
-
-void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
-                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
-void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
-                    GXTexWrapMode, GXBool, u32);
-void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
-                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
-                     GXBool do_edge_lod, GXAnisotropy max_aniso);
-
-void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
-                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
-                       f32* lodBias, GXBool* biasClampEnable,
-                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
-
-GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
-GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
-
-u16 GXGetTexObjWidth(const GXTexObj* obj);
-u16 GXGetTexObjHeight(const GXTexObj* obj);
-GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
-GXBool GXGetTexObjMipMap(const GXTexObj* obj);
-
-void GXLoadTexObj(const GXTexObj*, GXTexMapID);
-
-void GXInitTexObjTlut(GXTexObj*, u32);
-u32 GXGetTexObjTlut(GXTexObj*);
-
-void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
-
-void GXLoadTlut(GXTlutObj*, u32);
-
-void GXInvalidateTexAll(void);
-
-void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
-                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
-
-void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
-
-GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
-GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
-
-u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
-                       u8 max_lod);
-
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/GX/GXTexture.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
 /* end "revolution/GX/GXTransform.h" */
@@ -10706,12 +10850,11 @@ namespace ml{
             }
         }
 
-    private:
-        char mString[N];
-        int mLength;
+    // public for compatibility
+    char mString[N];
+    int mLength;
 
-    public:
-        static const int npos = -1;
+    static const int npos = -1;
     };
 
 }
@@ -10719,13 +10862,22 @@ namespace ml{
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -11029,10 +11181,11 @@ namespace mtl {
         u8 padding[32 - 0x12]; //0x12
 
         u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+            return reinterpret_cast<u8*>(this + 1);
         }
         u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
+            u8* blockEnd = reinterpret_cast<u8*>(this + 1);
+            return blockEnd + (size - sizeof(MemBlock));
         }
 
         u32 getDataSize() const {
@@ -12179,6 +12332,16 @@ public:
         field7 = r4;
     }
 
+    CMsgParam(u32 r4, u32* beforeLast){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        *beforeLast = 0;
+        field7 = r4;
+    }
+
     virtual ~CMsgParam(){
         clear();
     }
@@ -12331,7 +12494,13 @@ public:
     
     static void Move();
     static void Draw();
-    static void Tail();
+    // Not present as OOL in retail CProcess.s; keep inline API for callers.
+    static void Tail() {
+        TChildListHeader<CProcess>& list = GetRootProcessList();
+        for (CProcess* proc = list.Begin(); proc != nullptr; proc = list.IterNext(proc)) {
+            TailImpl(proc);
+        }
+    }
 
     static TChildListHeader<CProcess>& GetFreeProcessList() {
         return sFreeProcessList;
@@ -12347,7 +12516,6 @@ private:
 
     static bool Remove(CProcess* proc);
 
-    static void DeleteList(TChildListHeader<CProcess>& list);
     static void DeleteImpl(CProcess* proc);
 
     static bool sIsInitialized;
@@ -12426,42 +12594,48 @@ with no apparent calls to the other 3 (possibly debug only).
 
 In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
-events being unused as well. */
+events being unused as well.
+
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
 class IWorkEvent {
 public:
-    virtual ~IWorkEvent(){}
-    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5){ return false; }
-    virtual bool OnFileEvent(CEventFile* pEventFile){ return false; }
-    virtual bool WorkEvent3(UNKTYPE* r4){ return false; }
-    virtual bool WorkEvent4(){ return false; }
-    virtual void OnPauseTrigger(bool paused){}
-    //Completely unused, but still left in...
-    virtual bool WorkEvent6(){ return false; }
-    virtual bool WorkEvent7(){ return false; }
-    virtual bool WorkEvent8(){ return false; }
-    virtual bool WorkEvent9(){ return false; }
-    virtual bool WorkEvent10(){ return false; }
-    virtual bool WorkEvent11(){ return false; }
-    virtual bool WorkEvent12(){ return false; }
-    virtual bool WorkEvent13(){ return false; }
-    virtual bool WorkEvent14(){ return false; }
-    virtual bool WorkEvent15(){ return false; }
-    virtual bool WorkEvent16(){ return false; }
-    virtual bool WorkEvent17(){ return false; }
-    virtual bool WorkEvent18(){ return false; }
-    virtual bool WorkEvent19(){ return false; }
-    virtual bool WorkEvent20(){ return false; }
-    virtual bool WorkEvent21(){ return false; }
-    virtual bool WorkEvent22(){ return false; }
-    virtual bool WorkEvent23(){ return false; }
-    virtual bool WorkEvent24(){ return false; }
-    virtual bool WorkEvent25(){ return false; }
-    virtual bool WorkEvent26(){ return false; }
-    virtual bool WorkEvent27(){ return false; }
-    virtual bool WorkEvent28(){ return false; }
-    virtual bool WorkEvent29(){ return false; }
-    virtual bool WorkEvent30(){ return false; }
-    virtual void WorkEvent31(){}
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
 };
 /* end "monolib/work/IWorkEvent.hpp" */
 /* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
@@ -12780,6 +12954,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */
@@ -13714,6 +13889,9 @@ struct CFileHandle {
 };
 /* end "monolib/device/CFileHandle.hpp" */
 
+// Forward declaration for the parameter type of cancel overload
+struct CDeviceFileJob_UnkStruct1;
+
 //Base class for jobs carried out by CDeviceFile.
 class CDeviceFileJob : public CWorkThread {
 public:
@@ -13722,7 +13900,7 @@ public:
     virtual ~CDeviceFileJob(){}
     virtual bool CDeviceFileJob_UnkVirtualFunc1(){ return false; }
     virtual bool cancel(const char* pFilename);
-    virtual bool cancel(CFileHandle* pHandle){ return false; }
+    virtual bool cancel(CDeviceFileJob_UnkStruct1* pStruct){ return false; }
 
     inline const char* getFilename(){
         return mHandle->mName.c_str();
@@ -13733,13 +13911,13 @@ public:
     }
 
     //0x0: vtable
-    //0x0-1C4: CWorkThread
-    CFileHandle* mHandle; //0x1C4
-    u8 unk1C8; //FixStr<64>?
-    u8 unk1C9[0x208 - 0x1C9];
-    u32 unk208;
-    u32 unk20C;
-    u8 unk210;
+    //0x0-1C4: CWorkThread (parent class)
+    CFileHandle* mHandle; //0x1C4 -- file handle for the current job
+    u8 unk1C8; //0x1C8 -- unknown byte field (possibly FixStr-related)
+    u8 unk1C9[0x208 - 0x1C9]; //padding
+    u32 unk208; //0x208 -- unknown status field
+    u32 unk20C; //0x20C -- unknown status field
+    u8 unk210; //0x210 -- unknown byte flag
 };
 /* end "monolib/device/CDeviceFileJob.hpp" */
 /* "libs/monolib/include/monolib/device.hpp" line 8 "monolib/device/CDeviceFileJobReadDvd.hpp" */
@@ -17226,16 +17404,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -18335,7 +18511,12 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() : mNext(NULL), mPrev(NULL) {}
+    LinkListNode() {}
+
+    void Init() {
+        mNext = NULL;
+        mPrev = NULL;
+    }
 
     LinkListNode* GetNext() const {
         return mNext;
@@ -20207,11 +20388,15 @@ typedef struct NANDBanner {
 } NANDBanner;
 
 s32 NANDCreate(const char* path, u8 perm, u8 attr);
+s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
+                    NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
                            NANDAsyncCallback callback, NANDCommandBlock* block);
 
 s32 NANDDelete(const char* path);
+s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
+                    NANDCommandBlock* block);
 s32 NANDPrivateDelete(const char* path);
 s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,
                            NANDCommandBlock* block);
@@ -20228,18 +20413,28 @@ s32 NANDSeek(NANDFileInfo* info, s32 offset, NANDSeekMode whence);
 s32 NANDSeekAsync(NANDFileInfo* info, s32 offset, NANDSeekMode whence,
                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
+s32 NANDReadDirAsync(const char* path, char* nameList, u32* num,
+                     NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDCreateDirAsync(const char* path, u8 perm, u8 attr,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreateDir(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateDirAsync(const char* path, u8 perm, u8 attr,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
 
 s32 NANDMove(const char* from, const char* to);
+s32 NANDMoveAsync(const char* from, const char* to, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetLength(NANDFileInfo* info, u32* length);
 s32 NANDGetLengthAsync(NANDFileInfo* info, u32* lengthOut,
                        NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatus(const char* path, NANDStatus* status);
 s32 NANDPrivateGetStatusAsync(const char* path, NANDStatus* status,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
@@ -20264,6 +20459,8 @@ typedef enum {
 } NANDCheckFlags;
 
 s32 NANDCheck(u32 neededBlocks, u32 neededFiles, u32* answer);
+s32 NANDCheckAsync(u32 neededBlocks, u32 neededFiles, u32* answer,
+                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
 #ifdef __cplusplus
 }
@@ -20286,25 +20483,35 @@ void nandRemoveTailToken(char* newp, const char* oldp);
 void nandGetHeadToken(char* head, char* rest, const char* path);
 void nandGetRelativeName(char* name, const char* path);
 void nandConvertPath(char* abs, const char* dir, const char* rel);
-BOOL nandIsRelativePath(const char* path);
 BOOL nandIsPrivatePath(const char* path);
 BOOL nandIsUnderPrivatePath(const char* path);
 BOOL nandIsInitialized(void);
-void nandReportErrorCode(s32 result) DECOMP_DONT_INLINE;
 s32 nandConvertErrorCode(s32 result);
 void nandGenerateAbsPath(char* abs, const char* rel);
-void nandGetParentDirectory(char* dir, const char* path);
 s32 NANDInit(void);
-s32 NANDGetCurrentDir(char* out);
 s32 NANDGetHomeDir(char* out);
+s32 nandChangeDir(const char* path, NANDCommandBlock* block, BOOL async,
+                  BOOL priv);
+void nandChangeDirCallback(s32 result, void* arg);
+s32 NANDChangeDirAsync(const char* path, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
 void nandCallback(s32 result, void* arg);
-s32 NANDGetType(const char* path, u8* type);
+s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
+                BOOL priv);
+void nandGetTypeCallback(s32 result, void* arg);
+BOOL nandOnShutdown(BOOL final, u32 event);
+void nandShutdownCallback(s32 result, void* arg);
 s32 NANDPrivateGetTypeAsync(const char* path, u8* type,
                             NANDAsyncCallback callback,
                             NANDCommandBlock* block);
 const char* nandGetHomeDir(void);
 void NANDInitBanner(NANDBanner* banner, u32 flags, const wchar_t* title,
                     const wchar_t* subtitle);
+
+/* Absent from Xenoblade retail NANDCore.o; see NANDOpenClose.c extras. */
+void nandGetParentDirectory(char* dir, const char* path);
+s32 NANDGetCurrentDir(char* out);
+s32 NANDGetType(const char* path, u8* type);
 
 #ifdef __cplusplus
 }
@@ -21095,10 +21302,12 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -22704,10 +22913,12 @@ namespace detail {
  * Pointer operations
  *
  ******************************************************************************/
-template <typename T> T* ConvertOffsToPtr(void* pBase, u32 offset) {
+// Use unsigned int (not u32) to match retail name mangling (Ui vs Ul).
+// On PowerPC both are 32-bit with identical ABI.
+template <typename T> T* ConvertOffsToPtr(void* pBase, unsigned int offset) {
     return reinterpret_cast<T*>(reinterpret_cast<u8*>(pBase) + offset);
 }
-template <typename T> const T* ConvertOffsToPtr(const void* pBase, u32 offset) {
+template <typename T> const T* ConvertOffsToPtr(const void* pBase, unsigned int offset) {
     return reinterpret_cast<const T*>(reinterpret_cast<const u8*>(pBase) +
                                       offset);
 }
@@ -23884,7 +24095,8 @@ typedef struct MEMiExpHeapHead {
     union {
         u16 SHORT_0x12;
         struct {
-            u16 SHORT_0x12_0_15 : 15;
+            u16 SHORT_0x12_0_13 : 14;
+            u16 useMarginOfAlign : 1;
             u16 allocMode : 1;
         };
     }; // at 0x12
@@ -24700,6 +24912,9 @@ public:
     // CTitleAHelp::OnFileEvent
     static void* func_80452C10(u32, nw4r::lyt::Layout*);
 
+    /// Flush font rendering state.
+    void func_80452CF8();
+
     DECL_WORKTHREAD_CREATE(CDeviceFont);
 
     //0x0: vtable
@@ -24745,7 +24960,7 @@ public:
     virtual ~CDeviceVICb();
     virtual void viBeforeDrawDone(){}
     virtual void viAfterDrawDone(){}
-    virtual void viBeginFrame(){}
+    virtual void viBeginFrame();
 };
 /* end "monolib/device/CDeviceVICb.hpp" */
 /* "libs/monolib/include/monolib/device/CDeviceGX.hpp" line 5 "monolib/device/CDeviceVI.hpp" */
@@ -81836,20 +82051,27 @@ typedef struct
 } tBTM_ESCO_INFO;
 
 /* Define the structure used for SCO Management
-*/
+ * NOTE: Retail Wii layout differs from Broadcom SDK — the structure
+ * is flattened with ESCO fields inlined rather than nested.
+ */
 typedef struct
 {
-    tBTM_ESCO_INFO   esco;              /* Current settings             */
-#if BTM_SCO_HCI_INCLUDED == TRUE
-    BUFFER_Q         xmit_data_q;       /* SCO data transmitting queue  */
-#endif
-    tBTM_SCO_CB     *p_conn_cb;         /* Callback for when connected  */
-    tBTM_SCO_CB     *p_disc_cb;         /* Callback for when disconnect */
-    UINT16           state;             /* The state of the SCO link    */
-    UINT16           hci_handle;        /* HCI Handle                   */
-    BOOLEAN          is_orig;           /* TRUE if the originator       */
-    BOOLEAN          rem_bd_known;      /* TRUE if remote BD addr known */
-
+    /* 0x00 */ tBTM_SCO_CB     *p_conn_cb;         /* Callback for when connected  */
+    /* 0x04 */ tBTM_SCO_CB     *p_disc_cb;         /* Callback for when disconnect */
+    /* 0x08 */ UINT16           state;             /* The state of the SCO link    */
+    /* 0x0A */ UINT16           hci_handle;        /* HCI Handle                   */
+    /* 0x0C */ BOOLEAN          is_orig;           /* TRUE if the originator       */
+    /* 0x0D */ BOOLEAN          rem_bd_known;      /* TRUE if remote BD addr known */
+    /* 0x10 */ tBTM_ESCO_CBACK *p_esco_cback;     /* Callback for eSCO events     */
+    /* 0x14 */ tBTM_ESCO_PARAMS esco_setup;        /* eSCO setup parameters        */
+    /* 0x24 */ UINT16           rx_pkt_len;        /* eSCO data: rx packet length  */
+    /* 0x26 */ UINT16           tx_pkt_len;        /* eSCO data: tx packet length  */
+    /* 0x28 */ BD_ADDR          bd_addr;           /* eSCO data: remote BD addr    */
+    /* 0x2E */ UINT8            link_type;         /* eSCO data: link type         */
+    /* 0x2F */ UINT8            tx_interval;       /* eSCO data: tx interval       */
+    /* 0x30 */ UINT8            retrans_window;    /* eSCO data: retrans window    */
+    /* 0x31 */ UINT8            air_mode;          /* eSCO data: air mode          */
+    /* 0x32 */ UINT8            hci_status;        /* eSCO data: HCI status        */
 } tSCO_CONN;
 
 /* SCO Management control block */
@@ -81860,10 +82082,11 @@ typedef struct
     tBTM_SCO_DATA_CB     *p_data_cb;        /* Callback for SCO data over HCI */
     UINT32               xmit_window_size; /* Total SCO window in bytes  */
 #endif
-    tSCO_CONN            sco_db[BTM_MAX_SCO_LINKS];
-    tBTM_ESCO_PARAMS     def_esco_parms;
+    /* NOTE: Retail layout uses 3 entries regardless of BTM_MAX_SCO_LINKS */
+    tSCO_CONN            sco_db[3];
     BD_ADDR              xfer_addr;
     UINT16               sco_disc_reason;
+    tBTM_ESCO_PARAMS     def_esco_parms;
     BOOLEAN              esco_supported;    /* TRUE if 1.2 cntlr AND supports eSCO links */
     tBTM_SCO_TYPE        desired_sco_mode;
     tBTM_SCO_TYPE        xfer_sco_type;
@@ -239768,11 +239991,7047 @@ L2C_API extern void L2CA_BypassSFrame (UINT16 cid, UINT8 count);
 /* "libs/RVL_SDK/include/revolution/BTE/rvl/uusb_ppc.h" line 2 "types.h" */
 /* end "types.h" */
 
+/* "libs/RVL_SDK/include/revolution/BTE/rvl/uusb_ppc.h" line 4 "revolution/bte/gki/common/gki.h" */
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#ifndef GKI_H
+#define GKI_H
+
+
+/* Include platform-specific over-rides */
+#if (defined(NFC_STANDALONE) && (NFC_STANDALONE == TRUE))
+/* "libs/RVL_SDK/include/revolution/bte/gki/common/gki.h" line 25 "revolution/BTE/include/gki_target.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Add #defines for RVL target
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#ifndef GKI_TARGET_H
+#define GKI_TARGET_H
+
+/**
+ * Modifications for decomp
+ */
+#define GKI_MAX_TASKS               8
+#define GKI_NUM_TIMERS              2
+#define GKI_DELAY_STOP_SYS_TICK     0
+#define GKI_BUF1_SIZE               128
+#define GKI_BUF3_SIZE               1800
+#define GKI_BUF3_MAX                30
+#define GKI_BUF4_SIZE               8192
+#define GKI_BUF4_MAX                9
+#define GKI_NUM_FIXED_BUF_POOLS     5
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfff0
+#define GKI_NUM_TOTAL_BUF_POOLS     9
+
+// RVL version didn't have A2DP?
+#define GKI_PPC_TASK 2
+
+
+/* Operating System Selection */
+#ifndef BTE_SIM_APP
+#define _GKI_ARM
+#define _GKI_STANDALONE
+#else
+#define _BT_WIN32
+#endif
+
+/* define prefix for exporting APIs from libraries */
+#define EXPORT_API
+
+#ifndef BTE_BSE_WRAPPER
+#ifdef  BTE_SIM_APP
+#undef  EXPORT_API
+#define EXPORT_API  __declspec(dllexport)
+#endif
+#endif
+
+#define GKI_API EXPORT_API
+#define UDRV_API EXPORT_API
+
+#ifndef GKI_DEBUG
+#define GKI_DEBUG FALSE
+#endif
+
+
+#if defined (GKI_DEBUG) && (GKI_DEBUG == TRUE)
+#define GKI_TRACE(fmt, ...)     ALOGI ("%s: " fmt, __FUNCTION__, ## __VA_ARGS__)
+#else
+#define GKI_TRACE(fmt, ...)
+#endif
+
+/******************************************************************************
+**
+** Task configuration
+**
+******************************************************************************/
+
+/* Definitions of task IDs for inter-task messaging */
+#ifndef BTU_TASK
+#define BTU_TASK                0
+#endif
+
+#ifndef BTIF_TASK
+#define BTIF_TASK               1
+#endif
+
+#ifndef A2DP_MEDIA_TASK
+#define A2DP_MEDIA_TASK         2
+#endif
+
+/* The number of GKI tasks in the software system. */
+#ifndef GKI_MAX_TASKS
+#define GKI_MAX_TASKS               3
+#endif
+
+/******************************************************************************
+**
+** Timer configuration
+**
+******************************************************************************/
+
+/* The number of GKI timers in the software system. */
+#ifndef GKI_NUM_TIMERS
+#define GKI_NUM_TIMERS              3
+#endif
+
+/* A conversion value for translating ticks to calculate GKI timer.  */
+#ifndef TICKS_PER_SEC
+#define TICKS_PER_SEC               100
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+#ifndef GKI_MS_TO_TICKS
+#define GKI_MS_TO_TICKS(x)   ((x) / (1000 / TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_SECS_TO_TICKS
+#define GKI_SECS_TO_TICKS(x)   ((x) * (TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_TICKS_TO_MS
+#define GKI_TICKS_TO_MS(x)   ((x) * 1000 / TICKS_PER_SEC)
+#endif
+
+#ifndef GKI_TICKS_TO_SECS
+#define GKI_TICKS_TO_SECS(x)   ((x) / TICKS_PER_SEC)
+#endif
+
+
+
+/* TICK per second from OS (OS dependent change this macro accordingly to various OS) */
+#ifndef OS_TICKS_PER_SEC
+#define OS_TICKS_PER_SEC               1000
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+
+#ifndef GKI_OS_TICKS_TO_MS
+#define GKI_OS_TICKS_TO_MS(x)   ((x) * 1000 / OS_TICKS_PER_SEC)
+#endif
+
+
+#ifndef GKI_OS_TICKS_TO_SECS
+#define GKI_OS_TICKS_TO_SECS(x)   ((x) / OS_TICKS_PER_SEC))
+#endif
+
+
+/* delay in ticks before stopping system tick. */
+#ifndef GKI_DELAY_STOP_SYS_TICK
+#define GKI_DELAY_STOP_SYS_TICK     10
+#endif
+
+/* Option to guarantee no preemption during timer expiration (most system don't need this) */
+#ifndef GKI_TIMER_LIST_NOPREEMPT
+#define GKI_TIMER_LIST_NOPREEMPT    FALSE
+#endif
+
+/******************************************************************************
+**
+** Buffer configuration
+**
+******************************************************************************/
+
+/* TRUE if GKI uses dynamic buffers. */
+#ifndef GKI_USE_DYNAMIC_BUFFERS
+#define GKI_USE_DYNAMIC_BUFFERS     FALSE
+#endif
+
+/* The size of the buffers in pool 0. */
+#ifndef GKI_BUF0_SIZE
+#define GKI_BUF0_SIZE               64
+#endif
+
+/* The number of buffers in buffer pool 0. */
+#ifndef GKI_BUF0_MAX
+#define GKI_BUF0_MAX                48
+#endif
+
+/* The ID of buffer pool 0. */
+#ifndef GKI_POOL_ID_0
+#define GKI_POOL_ID_0               0
+#endif
+
+/* The size of the buffers in pool 1. */
+#ifndef GKI_BUF1_SIZE
+#define GKI_BUF1_SIZE               288
+#endif
+
+/* The number of buffers in buffer pool 1. */
+#ifndef GKI_BUF1_MAX
+#define GKI_BUF1_MAX                26
+#endif
+
+/* The ID of buffer pool 1. */
+#ifndef GKI_POOL_ID_1
+#define GKI_POOL_ID_1               1
+#endif
+
+/* The size of the buffers in pool 2. */
+#ifndef GKI_BUF2_SIZE
+#define GKI_BUF2_SIZE               660
+#endif
+
+/* The number of buffers in buffer pool 2. */
+#ifndef GKI_BUF2_MAX
+#define GKI_BUF2_MAX                45
+#endif
+
+/* The ID of buffer pool 2. */
+#ifndef GKI_POOL_ID_2
+#define GKI_POOL_ID_2               2
+#endif
+
+/* The size of the buffers in pool 3. */
+#ifndef GKI_BUF3_SIZE
+#define GKI_BUF3_SIZE               (4096+16)
+#endif
+
+/* The number of buffers in buffer pool 3. */
+#ifndef GKI_BUF3_MAX
+#define GKI_BUF3_MAX                200
+#endif
+
+/* The ID of buffer pool 3. */
+#ifndef GKI_POOL_ID_3
+#define GKI_POOL_ID_3               3
+#endif
+
+/* The size of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE
+#define GKI_MAX_BUF_SIZE            GKI_BUF3_SIZE
+#endif
+
+/* The pool ID of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE_POOL_ID
+#define GKI_MAX_BUF_SIZE_POOL_ID    GKI_POOL_ID_3
+#endif
+
+/* RESERVED buffer pool for OBX */
+/* Ideally there should be 1 buffer for each instance for RX data, and some number
+of TX buffers based on active instances. OBX will only use these if packet size
+requires it. In most cases the large packets are used in only one direction so
+the other direction will use smaller buffers.
+Devices with small amount of RAM should limit the number of active obex objects.
+*/
+/* The size of the buffers in pool 4. */
+#ifndef GKI_BUF4_SIZE
+#define GKI_BUF4_SIZE               (8080+26)
+#endif
+
+/* The number of buffers in buffer pool 4. */
+#ifndef GKI_BUF4_MAX
+#define GKI_BUF4_MAX                (OBX_NUM_SERVERS + OBX_NUM_CLIENTS)
+#endif
+
+/* The ID of buffer pool 4. */
+#ifndef GKI_POOL_ID_4
+#define GKI_POOL_ID_4               4
+#endif
+
+/* The number of fixed GKI buffer pools.
+eL2CAP requires Pool ID 5
+If BTM_SCO_HCI_INCLUDED is FALSE, Pool ID 6 is unnecessary, otherwise set to 7
+If BTA_HL_INCLUDED is FALSE then Pool ID 7 is uncessary and set the following to 7, otherwise set to 8
+If BLE_INCLUDED is FALSE then Pool ID 8 is uncessary and set the following to 8, otherwise set to 9
+POOL_ID 9 is a public pool meant for large buffer needs such as SDP_DB
+*/
+// btla-specific ++
+#ifndef GKI_NUM_FIXED_BUF_POOLS
+#define GKI_NUM_FIXED_BUF_POOLS     10
+#endif
+
+/* The buffer pool usage mask. */
+#ifndef GKI_DEF_BUFPOOL_PERM_MASK
+/* Setting POOL_ID 9 as a public pool meant for large buffers such as SDP_DB */
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfdf0
+#endif
+// btla-specific --
+
+/* The number of fixed and dynamic buffer pools */
+#ifndef GKI_NUM_TOTAL_BUF_POOLS
+#define GKI_NUM_TOTAL_BUF_POOLS     10
+#endif
+
+/* The following is intended to be a reserved pool for L2CAP
+Flow control and retransmissions and intentionally kept out
+of order */
+
+/* The number of buffers in buffer pool 5. */
+#ifndef GKI_BUF5_MAX
+#define GKI_BUF5_MAX                64
+#endif
+
+/* The ID of buffer pool 5. */
+#ifndef GKI_POOL_ID_5
+#define GKI_POOL_ID_5               5
+#endif
+
+/* The size of the buffers in pool 5
+** Special pool used by l2cap retransmissions only.  This size based on segment
+** that will fit into both DH5 and 2-DH3 packet types after accounting for GKI
+** header.  13 bytes of max headers allows us a 339 payload max. (in btui_app.txt)
+** Note: 748 used for insight scriptwrapper with CAT-2 scripts.
+*/
+#ifndef GKI_BUF5_SIZE
+#define GKI_BUF5_SIZE               748
+#endif
+
+/* The buffer corruption check flag. */
+#ifndef GKI_ENABLE_BUF_CORRUPTION_CHECK
+#define GKI_ENABLE_BUF_CORRUPTION_CHECK TRUE
+#endif
+
+/* The GKI severe error macro. */
+#ifndef GKI_SEVERE
+#define GKI_SEVERE(code)
+#endif
+
+/* TRUE if GKI includes debug functionality. */
+#ifndef GKI_DEBUG
+#define GKI_DEBUG                   FALSE
+#endif
+
+/* Maximum number of exceptions logged. */
+#ifndef GKI_MAX_EXCEPTION
+#define GKI_MAX_EXCEPTION           8
+#endif
+
+/* Maximum number of chars stored for each exception message. */
+#ifndef GKI_MAX_EXCEPTION_MSGLEN
+#define GKI_MAX_EXCEPTION_MSGLEN    64
+#endif
+
+#ifndef GKI_SEND_MSG_FROM_ISR
+#define GKI_SEND_MSG_FROM_ISR    FALSE
+#endif
+
+
+/* The following is intended to be a reserved pool for SCO
+over HCI data and intentionally kept out of order */
+
+/* The ID of buffer pool 6. */
+#ifndef GKI_POOL_ID_6
+#define GKI_POOL_ID_6               6
+#endif
+
+/* The size of the buffers in pool 6,
+  BUF_SIZE = max SCO data 255 + sizeof(BT_HDR) = 8 + SCO packet header 3 + padding 2 = 268 */
+#ifndef GKI_BUF6_SIZE
+#define GKI_BUF6_SIZE               268
+#endif
+
+/* The number of buffers in buffer pool 6. */
+#ifndef GKI_BUF6_MAX
+#define GKI_BUF6_MAX                60
+#endif
+
+
+/* The following pool is a dedicated pool for HDP
+   If a shared pool is more desirable then
+   1. set BTA_HL_LRG_DATA_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size is larger than 9472
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 7 is not needed
+*/
+
+/* The ID of buffer pool 7. */
+#ifndef GKI_POOL_ID_7
+#define GKI_POOL_ID_7               7
+#endif
+
+/* The size of the buffers in pool 7 */
+#ifndef GKI_BUF7_SIZE
+#define GKI_BUF7_SIZE               9472
+#endif
+
+/* The number of buffers in buffer pool 7. */
+#ifndef GKI_BUF7_MAX
+#define GKI_BUF7_MAX                2
+#endif
+
+/* The following pool is a dedicated pool for GATT
+   If a shared pool is more desirable then
+   1. set GATT_DB_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size fit a common GATT database needs
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 8 is not needed
+*/
+
+/* The ID of buffer pool 8. */
+#ifndef GKI_POOL_ID_8
+#define GKI_POOL_ID_8               8
+#endif
+
+/* The size of the buffers in pool 8 */
+#ifndef GKI_BUF8_SIZE
+#define GKI_BUF8_SIZE               128
+#endif
+
+/* The number of buffers in buffer pool 8. */
+#ifndef GKI_BUF8_MAX
+#define GKI_BUF8_MAX                30
+#endif
+
+// btla-specific ++
+/* The following pool is  meant for large allocations such as SDP_DB */
+#ifndef GKI_POOL_ID_9
+#define GKI_POOL_ID_9              9
+#endif
+
+#ifndef GKI_BUF9_SIZE
+#define GKI_BUF9_SIZE            8192
+#endif
+
+#ifndef GKI_BUF9_MAX
+#define GKI_BUF9_MAX           5
+#endif
+// btla-specific --
+
+/* GKI Trace Macros */
+#define GKI_TRACE_0(m)                          LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m)
+#define GKI_TRACE_1(m,p1)                       LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1)
+#define GKI_TRACE_2(m,p1,p2)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2)
+#define GKI_TRACE_3(m,p1,p2,p3)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3)
+#define GKI_TRACE_4(m,p1,p2,p3,p4)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4)
+#define GKI_TRACE_5(m,p1,p2,p3,p4,p5)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_6(m,p1,p2,p3,p4,p5,p6)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5,p6)
+
+#define GKI_TRACE_ERROR_0(m)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m)
+#define GKI_TRACE_ERROR_1(m,p1)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1)
+#define GKI_TRACE_ERROR_2(m,p1,p2)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2)
+#define GKI_TRACE_ERROR_3(m,p1,p2,p3)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3)
+#define GKI_TRACE_ERROR_4(m,p1,p2,p3,p4)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4)
+#define GKI_TRACE_ERROR_5(m,p1,p2,p3,p4,p5)     LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_ERROR_6(m,p1,p2,p3,p4,p5,p6)  LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5,p6)
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+EXPORT_API extern void LogMsg (UINT32 trace_set_mask, const char *fmt_str, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* GKI_TARGET_H */
+/* end "revolution/BTE/include/gki_target.h" */
+#else
+    /* For non-nfc_standalone, include Bluetooth definitions */
+/* "libs/RVL_SDK/include/revolution/bte/gki/common/gki.h" line 28 "revolution/BTE/include/bt_target.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Add #defines for RVL target
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef BT_TARGET_H
+#define BT_TARGET_H
+
+/**
+ * Modifications for decomp
+ */
+#ifdef REVOLUTION
+
+#define HAS_NO_BDROID_BUILDCFG
+
+#define RFCOMM_INCLUDED         TRUE
+#define GAP_INCLUDED            TRUE
+#define HID_DEV_INCLUDED        TRUE
+#define HID_HOST_INCLUDED       TRUE
+#define BNEP_INCLUDED           FALSE
+#define A2D_INCLUDED            FALSE
+#define AVRC_INCLUDED           FALSE
+#define PAN_INCLUDED            FALSE
+
+#define BTA_AG_INCLUDED         FALSE
+#define BTA_PAN_INCLUDED        FALSE
+#define BTA_FS_INCLUDED         FALSE
+#define BTA_AR_INCLUDED         FALSE
+#define BTA_AV_INCLUDED         FALSE
+
+#define BT_USE_TRACES           TRUE
+
+#define BTM_SSR_INCLUDED        FALSE
+#define BTM_EIR_SERVER_INCLUDED FALSE
+
+#define ANDROID_APP_INCLUDED    FALSE
+#define ANDROID_USE_LOGCAT      FALSE
+#define LINUX_GKI_INCLUDED      FALSE
+
+#define BTM_BUSY_LEVEL_CHANGE_INCLUDED FALSE
+
+#define BTA_DM_COD              {0x40, 0x02, 0x04}
+#define BTA_SYS_TIMER_PERIOD    1000
+
+#endif
+
+#ifndef BUILDCFG
+#define BUILDCFG
+#endif
+/* "libs/RVL_SDK/include/revolution/BTE/include/bt_target.h" line 76 "revolution/BTE/gki/platform/data_types.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Move from ulinux/ to platform/
+ *      - Add #include for RVL types (include/types.h)
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/gki/platform/data_types.h" line 36 "types.h" */
+/* end "types.h" */
+
+typedef unsigned char   UINT8;
+typedef unsigned short  UINT16;
+typedef unsigned long   UINT32;
+typedef signed   long   INT32;
+typedef signed   char   INT8;
+typedef signed   short  INT16;
+typedef unsigned char   BOOLEAN;
+
+
+typedef UINT32          TIME_STAMP;
+
+#ifndef TRUE
+#define TRUE   (!FALSE)
+#endif
+
+typedef unsigned char   UBYTE;
+
+#ifdef __arm
+#define PACKED  __packed
+#define INLINE  __inline
+#else
+#define PACKED
+#define INLINE
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN FALSE
+#endif
+
+#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
+#define UINT16_HI_BYTE(x)       ((x) >> 8)
+
+
+#define BCM_STRCAT_S(x1,x2,x3)      strcat((x1),(x3))
+#define BCM_STRNCAT_S(x1,x2,x3,x4)  strncat((x1),(x3),(x4))
+#define BCM_STRCPY_S(x1,x2,x3)      strcpy((x1),(x3))
+#define BCM_STRNCPY_S(x1,x2,x3,x4)  strncpy((x1),(x3),(x4))
+
+
+
+#endif
+/* end "revolution/BTE/gki/platform/data_types.h" */
+
+
+#ifndef BTIF_HSAG_SERVICE_NAME
+#define BTIF_HSAG_SERVICE_NAME  ("Headset Gateway")
+#endif
+
+#ifndef BTIF_HFAG_SERVICE_NAME
+#define BTIF_HFAG_SERVICE_NAME  ("Handsfree Gateway")
+#endif
+
+/* Include common GKI definitions used by this platform */
+/* "libs/RVL_SDK/include/revolution/BTE/include/bt_target.h" line 88 "revolution/BTE/include/gki_target.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Add #defines for RVL target
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#ifndef GKI_TARGET_H
+#define GKI_TARGET_H
+
+/**
+ * Modifications for decomp
+ */
+#define GKI_MAX_TASKS               8
+#define GKI_NUM_TIMERS              2
+#define GKI_DELAY_STOP_SYS_TICK     0
+#define GKI_BUF1_SIZE               128
+#define GKI_BUF3_SIZE               1800
+#define GKI_BUF3_MAX                30
+#define GKI_BUF4_SIZE               8192
+#define GKI_BUF4_MAX                9
+#define GKI_NUM_FIXED_BUF_POOLS     5
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfff0
+#define GKI_NUM_TOTAL_BUF_POOLS     9
+
+// RVL version didn't have A2DP?
+#define GKI_PPC_TASK 2
+
+
+/* Operating System Selection */
+#ifndef BTE_SIM_APP
+#define _GKI_ARM
+#define _GKI_STANDALONE
+#else
+#define _BT_WIN32
+#endif
+
+/* define prefix for exporting APIs from libraries */
+#define EXPORT_API
+
+#ifndef BTE_BSE_WRAPPER
+#ifdef  BTE_SIM_APP
+#undef  EXPORT_API
+#define EXPORT_API  __declspec(dllexport)
+#endif
+#endif
+
+#define GKI_API EXPORT_API
+#define UDRV_API EXPORT_API
+
+#ifndef GKI_DEBUG
+#define GKI_DEBUG FALSE
+#endif
+
+
+#if defined (GKI_DEBUG) && (GKI_DEBUG == TRUE)
+#define GKI_TRACE(fmt, ...)     ALOGI ("%s: " fmt, __FUNCTION__, ## __VA_ARGS__)
+#else
+#define GKI_TRACE(fmt, ...)
+#endif
+
+/******************************************************************************
+**
+** Task configuration
+**
+******************************************************************************/
+
+/* Definitions of task IDs for inter-task messaging */
+#ifndef BTU_TASK
+#define BTU_TASK                0
+#endif
+
+#ifndef BTIF_TASK
+#define BTIF_TASK               1
+#endif
+
+#ifndef A2DP_MEDIA_TASK
+#define A2DP_MEDIA_TASK         2
+#endif
+
+/* The number of GKI tasks in the software system. */
+#ifndef GKI_MAX_TASKS
+#define GKI_MAX_TASKS               3
+#endif
+
+/******************************************************************************
+**
+** Timer configuration
+**
+******************************************************************************/
+
+/* The number of GKI timers in the software system. */
+#ifndef GKI_NUM_TIMERS
+#define GKI_NUM_TIMERS              3
+#endif
+
+/* A conversion value for translating ticks to calculate GKI timer.  */
+#ifndef TICKS_PER_SEC
+#define TICKS_PER_SEC               100
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+#ifndef GKI_MS_TO_TICKS
+#define GKI_MS_TO_TICKS(x)   ((x) / (1000 / TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_SECS_TO_TICKS
+#define GKI_SECS_TO_TICKS(x)   ((x) * (TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_TICKS_TO_MS
+#define GKI_TICKS_TO_MS(x)   ((x) * 1000 / TICKS_PER_SEC)
+#endif
+
+#ifndef GKI_TICKS_TO_SECS
+#define GKI_TICKS_TO_SECS(x)   ((x) / TICKS_PER_SEC)
+#endif
+
+
+
+/* TICK per second from OS (OS dependent change this macro accordingly to various OS) */
+#ifndef OS_TICKS_PER_SEC
+#define OS_TICKS_PER_SEC               1000
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+
+#ifndef GKI_OS_TICKS_TO_MS
+#define GKI_OS_TICKS_TO_MS(x)   ((x) * 1000 / OS_TICKS_PER_SEC)
+#endif
+
+
+#ifndef GKI_OS_TICKS_TO_SECS
+#define GKI_OS_TICKS_TO_SECS(x)   ((x) / OS_TICKS_PER_SEC))
+#endif
+
+
+/* delay in ticks before stopping system tick. */
+#ifndef GKI_DELAY_STOP_SYS_TICK
+#define GKI_DELAY_STOP_SYS_TICK     10
+#endif
+
+/* Option to guarantee no preemption during timer expiration (most system don't need this) */
+#ifndef GKI_TIMER_LIST_NOPREEMPT
+#define GKI_TIMER_LIST_NOPREEMPT    FALSE
+#endif
+
+/******************************************************************************
+**
+** Buffer configuration
+**
+******************************************************************************/
+
+/* TRUE if GKI uses dynamic buffers. */
+#ifndef GKI_USE_DYNAMIC_BUFFERS
+#define GKI_USE_DYNAMIC_BUFFERS     FALSE
+#endif
+
+/* The size of the buffers in pool 0. */
+#ifndef GKI_BUF0_SIZE
+#define GKI_BUF0_SIZE               64
+#endif
+
+/* The number of buffers in buffer pool 0. */
+#ifndef GKI_BUF0_MAX
+#define GKI_BUF0_MAX                48
+#endif
+
+/* The ID of buffer pool 0. */
+#ifndef GKI_POOL_ID_0
+#define GKI_POOL_ID_0               0
+#endif
+
+/* The size of the buffers in pool 1. */
+#ifndef GKI_BUF1_SIZE
+#define GKI_BUF1_SIZE               288
+#endif
+
+/* The number of buffers in buffer pool 1. */
+#ifndef GKI_BUF1_MAX
+#define GKI_BUF1_MAX                26
+#endif
+
+/* The ID of buffer pool 1. */
+#ifndef GKI_POOL_ID_1
+#define GKI_POOL_ID_1               1
+#endif
+
+/* The size of the buffers in pool 2. */
+#ifndef GKI_BUF2_SIZE
+#define GKI_BUF2_SIZE               660
+#endif
+
+/* The number of buffers in buffer pool 2. */
+#ifndef GKI_BUF2_MAX
+#define GKI_BUF2_MAX                45
+#endif
+
+/* The ID of buffer pool 2. */
+#ifndef GKI_POOL_ID_2
+#define GKI_POOL_ID_2               2
+#endif
+
+/* The size of the buffers in pool 3. */
+#ifndef GKI_BUF3_SIZE
+#define GKI_BUF3_SIZE               (4096+16)
+#endif
+
+/* The number of buffers in buffer pool 3. */
+#ifndef GKI_BUF3_MAX
+#define GKI_BUF3_MAX                200
+#endif
+
+/* The ID of buffer pool 3. */
+#ifndef GKI_POOL_ID_3
+#define GKI_POOL_ID_3               3
+#endif
+
+/* The size of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE
+#define GKI_MAX_BUF_SIZE            GKI_BUF3_SIZE
+#endif
+
+/* The pool ID of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE_POOL_ID
+#define GKI_MAX_BUF_SIZE_POOL_ID    GKI_POOL_ID_3
+#endif
+
+/* RESERVED buffer pool for OBX */
+/* Ideally there should be 1 buffer for each instance for RX data, and some number
+of TX buffers based on active instances. OBX will only use these if packet size
+requires it. In most cases the large packets are used in only one direction so
+the other direction will use smaller buffers.
+Devices with small amount of RAM should limit the number of active obex objects.
+*/
+/* The size of the buffers in pool 4. */
+#ifndef GKI_BUF4_SIZE
+#define GKI_BUF4_SIZE               (8080+26)
+#endif
+
+/* The number of buffers in buffer pool 4. */
+#ifndef GKI_BUF4_MAX
+#define GKI_BUF4_MAX                (OBX_NUM_SERVERS + OBX_NUM_CLIENTS)
+#endif
+
+/* The ID of buffer pool 4. */
+#ifndef GKI_POOL_ID_4
+#define GKI_POOL_ID_4               4
+#endif
+
+/* The number of fixed GKI buffer pools.
+eL2CAP requires Pool ID 5
+If BTM_SCO_HCI_INCLUDED is FALSE, Pool ID 6 is unnecessary, otherwise set to 7
+If BTA_HL_INCLUDED is FALSE then Pool ID 7 is uncessary and set the following to 7, otherwise set to 8
+If BLE_INCLUDED is FALSE then Pool ID 8 is uncessary and set the following to 8, otherwise set to 9
+POOL_ID 9 is a public pool meant for large buffer needs such as SDP_DB
+*/
+// btla-specific ++
+#ifndef GKI_NUM_FIXED_BUF_POOLS
+#define GKI_NUM_FIXED_BUF_POOLS     10
+#endif
+
+/* The buffer pool usage mask. */
+#ifndef GKI_DEF_BUFPOOL_PERM_MASK
+/* Setting POOL_ID 9 as a public pool meant for large buffers such as SDP_DB */
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfdf0
+#endif
+// btla-specific --
+
+/* The number of fixed and dynamic buffer pools */
+#ifndef GKI_NUM_TOTAL_BUF_POOLS
+#define GKI_NUM_TOTAL_BUF_POOLS     10
+#endif
+
+/* The following is intended to be a reserved pool for L2CAP
+Flow control and retransmissions and intentionally kept out
+of order */
+
+/* The number of buffers in buffer pool 5. */
+#ifndef GKI_BUF5_MAX
+#define GKI_BUF5_MAX                64
+#endif
+
+/* The ID of buffer pool 5. */
+#ifndef GKI_POOL_ID_5
+#define GKI_POOL_ID_5               5
+#endif
+
+/* The size of the buffers in pool 5
+** Special pool used by l2cap retransmissions only.  This size based on segment
+** that will fit into both DH5 and 2-DH3 packet types after accounting for GKI
+** header.  13 bytes of max headers allows us a 339 payload max. (in btui_app.txt)
+** Note: 748 used for insight scriptwrapper with CAT-2 scripts.
+*/
+#ifndef GKI_BUF5_SIZE
+#define GKI_BUF5_SIZE               748
+#endif
+
+/* The buffer corruption check flag. */
+#ifndef GKI_ENABLE_BUF_CORRUPTION_CHECK
+#define GKI_ENABLE_BUF_CORRUPTION_CHECK TRUE
+#endif
+
+/* The GKI severe error macro. */
+#ifndef GKI_SEVERE
+#define GKI_SEVERE(code)
+#endif
+
+/* TRUE if GKI includes debug functionality. */
+#ifndef GKI_DEBUG
+#define GKI_DEBUG                   FALSE
+#endif
+
+/* Maximum number of exceptions logged. */
+#ifndef GKI_MAX_EXCEPTION
+#define GKI_MAX_EXCEPTION           8
+#endif
+
+/* Maximum number of chars stored for each exception message. */
+#ifndef GKI_MAX_EXCEPTION_MSGLEN
+#define GKI_MAX_EXCEPTION_MSGLEN    64
+#endif
+
+#ifndef GKI_SEND_MSG_FROM_ISR
+#define GKI_SEND_MSG_FROM_ISR    FALSE
+#endif
+
+
+/* The following is intended to be a reserved pool for SCO
+over HCI data and intentionally kept out of order */
+
+/* The ID of buffer pool 6. */
+#ifndef GKI_POOL_ID_6
+#define GKI_POOL_ID_6               6
+#endif
+
+/* The size of the buffers in pool 6,
+  BUF_SIZE = max SCO data 255 + sizeof(BT_HDR) = 8 + SCO packet header 3 + padding 2 = 268 */
+#ifndef GKI_BUF6_SIZE
+#define GKI_BUF6_SIZE               268
+#endif
+
+/* The number of buffers in buffer pool 6. */
+#ifndef GKI_BUF6_MAX
+#define GKI_BUF6_MAX                60
+#endif
+
+
+/* The following pool is a dedicated pool for HDP
+   If a shared pool is more desirable then
+   1. set BTA_HL_LRG_DATA_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size is larger than 9472
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 7 is not needed
+*/
+
+/* The ID of buffer pool 7. */
+#ifndef GKI_POOL_ID_7
+#define GKI_POOL_ID_7               7
+#endif
+
+/* The size of the buffers in pool 7 */
+#ifndef GKI_BUF7_SIZE
+#define GKI_BUF7_SIZE               9472
+#endif
+
+/* The number of buffers in buffer pool 7. */
+#ifndef GKI_BUF7_MAX
+#define GKI_BUF7_MAX                2
+#endif
+
+/* The following pool is a dedicated pool for GATT
+   If a shared pool is more desirable then
+   1. set GATT_DB_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size fit a common GATT database needs
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 8 is not needed
+*/
+
+/* The ID of buffer pool 8. */
+#ifndef GKI_POOL_ID_8
+#define GKI_POOL_ID_8               8
+#endif
+
+/* The size of the buffers in pool 8 */
+#ifndef GKI_BUF8_SIZE
+#define GKI_BUF8_SIZE               128
+#endif
+
+/* The number of buffers in buffer pool 8. */
+#ifndef GKI_BUF8_MAX
+#define GKI_BUF8_MAX                30
+#endif
+
+// btla-specific ++
+/* The following pool is  meant for large allocations such as SDP_DB */
+#ifndef GKI_POOL_ID_9
+#define GKI_POOL_ID_9              9
+#endif
+
+#ifndef GKI_BUF9_SIZE
+#define GKI_BUF9_SIZE            8192
+#endif
+
+#ifndef GKI_BUF9_MAX
+#define GKI_BUF9_MAX           5
+#endif
+// btla-specific --
+
+/* GKI Trace Macros */
+#define GKI_TRACE_0(m)                          LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m)
+#define GKI_TRACE_1(m,p1)                       LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1)
+#define GKI_TRACE_2(m,p1,p2)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2)
+#define GKI_TRACE_3(m,p1,p2,p3)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3)
+#define GKI_TRACE_4(m,p1,p2,p3,p4)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4)
+#define GKI_TRACE_5(m,p1,p2,p3,p4,p5)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_6(m,p1,p2,p3,p4,p5,p6)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5,p6)
+
+#define GKI_TRACE_ERROR_0(m)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m)
+#define GKI_TRACE_ERROR_1(m,p1)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1)
+#define GKI_TRACE_ERROR_2(m,p1,p2)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2)
+#define GKI_TRACE_ERROR_3(m,p1,p2,p3)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3)
+#define GKI_TRACE_ERROR_4(m,p1,p2,p3,p4)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4)
+#define GKI_TRACE_ERROR_5(m,p1,p2,p3,p4,p5)     LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_ERROR_6(m,p1,p2,p3,p4,p5,p6)  LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5,p6)
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+EXPORT_API extern void LogMsg (UINT32 trace_set_mask, const char *fmt_str, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* GKI_TARGET_H */
+/* end "revolution/BTE/include/gki_target.h" */
+
+/* "libs/RVL_SDK/include/revolution/BTE/include/bt_target.h" line 90 "revolution/BTE/stack/include/bt_types.h" */
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef BT_TYPES_H
+#define BT_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 23 "revolution/BTE/gki/platform/data_types.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Move from ulinux/ to platform/
+ *      - Add #include for RVL types (include/types.h)
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/gki/platform/data_types.h" line 36 "types.h" */
+/* end "types.h" */
+
+typedef unsigned char   UINT8;
+typedef unsigned short  UINT16;
+typedef unsigned long   UINT32;
+typedef signed   long   INT32;
+typedef signed   char   INT8;
+typedef signed   short  INT16;
+typedef unsigned char   BOOLEAN;
+
+
+typedef UINT32          TIME_STAMP;
+
+#ifndef TRUE
+#define TRUE   (!FALSE)
+#endif
+
+typedef unsigned char   UBYTE;
+
+#ifdef __arm
+#define PACKED  __packed
+#define INLINE  __inline
+#else
+#define PACKED
+#define INLINE
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN FALSE
+#endif
+
+#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
+#define UINT16_HI_BYTE(x)       ((x) >> 8)
+
+
+#define BCM_STRCAT_S(x1,x2,x3)      strcat((x1),(x3))
+#define BCM_STRNCAT_S(x1,x2,x3,x4)  strncat((x1),(x3),(x4))
+#define BCM_STRCPY_S(x1,x2,x3)      strcpy((x1),(x3))
+#define BCM_STRNCPY_S(x1,x2,x3,x4)  strncpy((x1),(x3),(x4))
+
+
+
+#endif
+/* end "revolution/BTE/gki/platform/data_types.h" */
+
+#ifdef _WIN32
+#ifdef BLUESTACK_TESTER
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 27 "bte_stack_entry.h" */
+/* end "bte_stack_entry.h" */
+#endif
+#endif
+
+/* READ WELL !!
+**
+** This section defines global events. These are events that cross layers.
+** Any event that passes between layers MUST be one of these events. Tasks
+** can use their own events internally, but a FUNDAMENTAL design issue is
+** that global events MUST be one of these events defined below.
+**
+** The convention used is the the event name contains the layer that the
+** event is going to.
+*/
+#define BT_EVT_MASK                 0xFF00
+#define BT_SUB_EVT_MASK             0x00FF
+                                                /* To Bluetooth Upper Layers        */
+                                                /************************************/
+#define BT_EVT_TO_BTU_L2C_EVT       0x0900      /* L2CAP event */
+#define BT_EVT_TO_BTU_HCI_EVT       0x1000      /* HCI Event                        */
+#define BT_EVT_TO_BTU_HCI_BR_EDR_EVT (0x0000 | BT_EVT_TO_BTU_HCI_EVT)      /* event from BR/EDR controller */
+#define BT_EVT_TO_BTU_HCI_AMP1_EVT   (0x0001 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 1 controller */
+#define BT_EVT_TO_BTU_HCI_AMP2_EVT   (0x0002 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 2 controller */
+#define BT_EVT_TO_BTU_HCI_AMP3_EVT   (0x0003 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 3 controller */
+
+#define BT_EVT_TO_BTU_HCI_ACL       0x1100      /* ACL Data from HCI                */
+#define BT_EVT_TO_BTU_HCI_SCO       0x1200      /* SCO Data from HCI                */
+#define BT_EVT_TO_BTU_HCIT_ERR      0x1300      /* HCI Transport Error              */
+
+#define BT_EVT_TO_BTU_SP_EVT        0x1400      /* Serial Port Event                */
+#define BT_EVT_TO_BTU_SP_DATA       0x1500      /* Serial Port Data                 */
+
+#define BT_EVT_TO_BTU_HCI_CMD       0x1600      /* HCI command from upper layer     */
+
+
+#define BT_EVT_TO_BTU_L2C_SEG_XMIT  0x1900      /* L2CAP segment(s) transmitted     */
+
+#define BT_EVT_PROXY_INCOMING_MSG   0x1A00      /* BlueStackTester event: incoming message from target */
+
+#define BT_EVT_BTSIM                0x1B00      /* Insight BTSIM event */
+#define BT_EVT_BTISE                0x1C00      /* Insight Script Engine event */
+
+                                                /* To LM                            */
+                                                /************************************/
+#define BT_EVT_TO_LM_HCI_CMD        0x2000      /* HCI Command                      */
+#define BT_EVT_TO_LM_HCI_ACL        0x2100      /* HCI ACL Data                     */
+#define BT_EVT_TO_LM_HCI_SCO        0x2200      /* HCI SCO Data                     */
+#define BT_EVT_TO_LM_HCIT_ERR       0x2300      /* HCI Transport Error              */
+#define BT_EVT_TO_LM_LC_EVT         0x2400      /* LC event                         */
+#define BT_EVT_TO_LM_LC_LMP         0x2500      /* LC Received LMP command frame    */
+#define BT_EVT_TO_LM_LC_ACL         0x2600      /* LC Received ACL data             */
+#define BT_EVT_TO_LM_LC_SCO         0x2700      /* LC Received SCO data  (not used) */
+#define BT_EVT_TO_LM_LC_ACL_TX      0x2800      /* LMP data transmit complete       */
+#define BT_EVT_TO_LM_LC_LMPC_TX     0x2900      /* LMP Command transmit complete    */
+#define BT_EVT_TO_LM_LOCAL_ACL_LB   0x2a00      /* Data to be locally loopbacked    */
+#define BT_EVT_TO_LM_HCI_ACL_ACK    0x2b00      /* HCI ACL Data ack      (not used) */
+#define BT_EVT_TO_LM_DIAG           0x2c00      /* LM Diagnostics commands          */
+
+
+#define BT_EVT_TO_BTM_CMDS          0x2f00
+#define BT_EVT_TO_BTM_PM_MDCHG_EVT (0x0001 | BT_EVT_TO_BTM_CMDS)
+
+#define BT_EVT_TO_TCS_CMDS          0x3000
+
+#define BT_EVT_TO_OBX_CL_MSG        0x3100
+#define BT_EVT_TO_OBX_SR_MSG        0x3200
+
+#define BT_EVT_TO_CTP_CMDS          0x3300
+
+/* Obex Over L2CAP */
+#define BT_EVT_TO_OBX_CL_L2C_MSG    0x3400
+#define BT_EVT_TO_OBX_SR_L2C_MSG    0x3500
+
+/* ftp events */
+#define BT_EVT_TO_FTP_SRVR_CMDS     0x3800
+#define BT_EVT_TO_FTP_CLNT_CMDS     0x3900
+
+#define BT_EVT_TO_BTU_SAP           0x3a00       /* SIM Access Profile events */
+
+/* opp events */
+#define BT_EVT_TO_OPP_SRVR_CMDS     0x3b00
+#define BT_EVT_TO_OPP_CLNT_CMDS     0x3c00
+
+/* gap events */
+#define BT_EVT_TO_GAP_MSG           0x3d00
+
+/* start timer */
+#define BT_EVT_TO_START_TIMER       0x3e00
+
+/* start quick timer */
+#define BT_EVT_TO_START_QUICK_TIMER 0x3f00
+
+
+/* for NFC                          */
+                                                /************************************/
+#define BT_EVT_TO_NFC_NCI           0x4000      /* NCI Command, Notification or Data*/
+#define BT_EVT_TO_NFC_INIT          0x4100      /* Initialization message */
+#define BT_EVT_TO_LLCP_ECHO         0x4200      /* LLCP Echo Service */
+#define BT_EVT_TO_LLCP_SOCKET       0x4300      /* LLCP over TCP/IP */
+#define BT_EVT_TO_NCI_LP            0x4400      /* Low power */
+#define BT_EVT_TO_NFC_ERR           0x4500      /* Error notification to NFC Task */
+
+#define BT_EVT_TO_NFCCSIM_NCI       0x4a00      /* events to NFCC simulation (NCI packets) */
+
+/* HCISU Events */
+
+#define BT_EVT_HCISU                0x5000
+
+// btla-specific ++
+#define BT_EVT_TO_HCISU_RECONFIG_EVT            (0x0001 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_UPDATE_BAUDRATE_EVT     (0x0002 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ENABLE_EVT           (0x0003 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_DISABLE_EVT          (0x0004 | BT_EVT_HCISU)
+// btla-specific --
+#define BT_EVT_TO_HCISU_LP_APP_SLEEPING_EVT     (0x0005 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ALLOW_BT_SLEEP_EVT   (0x0006 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_WAKEUP_HOST_EVT      (0x0007 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_RCV_H4IBSS_EVT       (0x0008 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_H5_RESET_EVT            (0x0009 | BT_EVT_HCISU)
+#define BT_EVT_HCISU_START_QUICK_TIMER          (0x000a | BT_EVT_HCISU)
+
+#define BT_EVT_DATA_TO_AMP_1        0x5100
+#define BT_EVT_DATA_TO_AMP_15       0x5f00
+
+/* HSP Events */
+
+#define BT_EVT_BTU_HSP2             0x6000
+
+#define BT_EVT_TO_BTU_HSP2_EVT     (0x0001 | BT_EVT_BTU_HSP2)
+
+/* BPP Events */
+#define BT_EVT_TO_BPP_PR_CMDS       0x6100      /* Printer Events */
+#define BT_EVT_TO_BPP_SND_CMDS      0x6200      /* BPP Sender Events */
+
+/* BIP Events */
+#define BT_EVT_TO_BIP_CMDS          0x6300
+
+/* HCRP Events */
+
+#define BT_EVT_BTU_HCRP             0x7000
+
+#define BT_EVT_TO_BTU_HCRP_EVT     (0x0001 | BT_EVT_BTU_HCRP)
+#define BT_EVT_TO_BTU_HCRPM_EVT    (0x0002 | BT_EVT_BTU_HCRP)
+
+
+#define BT_EVT_BTU_HFP              0x8000
+#define BT_EVT_TO_BTU_HFP_EVT      (0x0001 | BT_EVT_BTU_HFP)
+
+#define BT_EVT_BTU_IPC_EVT          0x9000
+#define BT_EVT_BTU_IPC_LOGMSG_EVT  (0x0000 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_ACL_EVT     (0x0001 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTU_EVT     (0x0002 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_EVT     (0x0003 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_MSG_EVT (0x0004 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTM_EVT     (0x0005 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_AVDT_EVT    (0x0006 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_SLIP_EVT    (0x0007 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_MGMT_EVT    (0x0008 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTTRC_EVT   (0x0009 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BURST_EVT   (0x000A | BT_EVT_BTU_IPC_EVT)
+
+
+/* BTIF Events */
+#define BT_EVT_BTIF                 0xA000
+#define BT_EVT_CONTEXT_SWITCH_EVT  (0x0001 | BT_EVT_BTIF)
+
+#define BT_EVT_TRIGGER_STACK_INIT   EVENT_MASK(APPL_EVT_0)
+
+
+/* Define the header of each buffer used in the Bluetooth stack.
+*/
+typedef struct
+{
+    UINT16          event;
+    UINT16          len;
+    UINT16          offset;
+    UINT16          layer_specific;
+} BT_HDR;
+
+#define BT_HDR_SIZE (sizeof (BT_HDR))
+
+#define BT_PSM_SDP                      0x0001
+#define BT_PSM_RFCOMM                   0x0003
+#define BT_PSM_TCS                      0x0005
+#define BT_PSM_CTP                      0x0007
+#define BT_PSM_BNEP                     0x000F
+#define BT_PSM_HIDC                     0x0011
+#define BT_PSM_HIDI                     0x0013
+#define BT_PSM_UPNP                     0x0015
+#define BT_PSM_AVCTP                    0x0017
+#define BT_PSM_AVDTP                    0x0019
+#define BT_PSM_AVCTP_13                 0x001B /* Advanced Control - Browsing */
+#define BT_PSM_UDI_CP                   0x001D /* Unrestricted Digital Information Profile C-Plane  */
+#define BT_PSM_ATT                      0x001F /* Attribute Protocol  */
+
+
+/* These macros extract the HCI opcodes from a buffer
+*/
+#define HCI_GET_CMD_HDR_OPCODE(p)    (UINT16)((*((UINT8 *)((p) + 1) + p->offset) + \
+                                              (*((UINT8 *)((p) + 1) + p->offset + 1) << 8)))
+#define HCI_GET_CMD_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 2))
+
+#define HCI_GET_EVT_HDR_OPCODE(p)    (UINT8)(*((UINT8 *)((p) + 1) + p->offset))
+#define HCI_GET_EVT_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 1))
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Little Endian format).
+*/
+#define UINT32_TO_STREAM(p, u32) {*(p)++ = (UINT8)(u32); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 24);}
+#define UINT24_TO_STREAM(p, u24) {*(p)++ = (UINT8)(u24); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)((u24) >> 16);}
+#define UINT16_TO_STREAM(p, u16) {*(p)++ = (UINT8)(u16); *(p)++ = (UINT8)((u16) >> 8);}
+#define UINT8_TO_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define INT8_TO_STREAM(p, u8)    {*(p)++ = (INT8)(u8);}
+#define ARRAY32_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 32;           ijk++) *(p)++ = (UINT8) a[31 - ijk];}
+#define ARRAY16_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 16;           ijk++) *(p)++ = (UINT8) a[15 - ijk];}
+#define ARRAY8_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < 8;            ijk++) *(p)++ = (UINT8) a[7 - ijk];}
+#define BDADDR_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < BD_ADDR_LEN;  ijk++) *(p)++ = (UINT8) a[BD_ADDR_LEN - 1 - ijk];}
+#define LAP_TO_STREAM(p, a)      {register int ijk; for (ijk = 0; ijk < LAP_LEN;      ijk++) *(p)++ = (UINT8) a[LAP_LEN - 1 - ijk];}
+#define DEVCLASS_TO_STREAM(p, a) {register int ijk; for (ijk = 0; ijk < DEV_CLASS_LEN;ijk++) *(p)++ = (UINT8) a[DEV_CLASS_LEN - 1 - ijk];}
+#define ARRAY_TO_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len;        ijk++) *(p)++ = (UINT8) a[ijk];}
+#define REVERSE_ARRAY_TO_STREAM(p, a, len)  {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[len - 1 - ijk];}
+
+#define STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define STREAM_TO_UINT16(u16, p) {u16 = ((UINT16)(*(p)) + (((UINT16)(*((p) + 1))) << 8)); (p) += 2;}
+#define STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) ); (p) += 3;}
+#define STREAM_TO_UINT32(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) + ((((UINT32)(*((p) + 3)))) << 24)); (p) += 4;}
+#define STREAM_TO_BDADDR(a, p)   {register int ijk; register UINT8 *pbda = (UINT8 *)a + BD_ADDR_LEN - 1; for (ijk = 0; ijk < BD_ADDR_LEN; ijk++) *pbda-- = *p++;}
+#define STREAM_TO_ARRAY32(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 31; for (ijk = 0; ijk < 32; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY16(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 15; for (ijk = 0; ijk < 16; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY8(a, p)   {register int ijk; register UINT8 *_pa = (UINT8 *)a + 7; for (ijk = 0; ijk < 8; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_DEVCLASS(a, p) {register int ijk; register UINT8 *_pa = (UINT8 *)a + DEV_CLASS_LEN - 1; for (ijk = 0; ijk < DEV_CLASS_LEN; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_LAP(a, p)      {register int ijk; register UINT8 *plap = (UINT8 *)a + LAP_LEN - 1; for (ijk = 0; ijk < LAP_LEN; ijk++) *plap-- = *p++;}
+#define STREAM_TO_ARRAY(a, p, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+#define REVERSE_STREAM_TO_ARRAY(a, p, len) {register int ijk; register UINT8 *_pa = (UINT8 *)a + len - 1; for (ijk = 0; ijk < len; ijk++) *_pa-- = *p++;}
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Little Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)(u32); *((UINT8 *)(p)+1) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+3) = (UINT8)((u32) >> 24);}
+#define UINT24_TO_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)(u24); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u24) >> 16);}
+#define UINT16_TO_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)(u16); *((UINT8 *)(p)+1) = (UINT8)((u16) >> 8);}
+#define UINT8_TO_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Big Endian format)
+*/
+#define UINT32_TO_BE_STREAM(p, u32) {*(p)++ = (UINT8)((u32) >> 24);  *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)(u32); }
+#define UINT24_TO_BE_STREAM(p, u24) {*(p)++ = (UINT8)((u24) >> 16); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)(u24);}
+#define UINT16_TO_BE_STREAM(p, u16) {*(p)++ = (UINT8)((u16) >> 8); *(p)++ = (UINT8)(u16);}
+#define UINT8_TO_BE_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define ARRAY_TO_BE_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[ijk];}
+
+#define BE_STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define BE_STREAM_TO_UINT16(u16, p) {u16 = (UINT16)(((UINT16)(*(p)) << 8) + (UINT16)(*((p) + 1))); (p) += 2;}
+#define BE_STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*((p) + 2))) + ((UINT32)(*((p) + 1)) << 8) + ((UINT32)(*(p)) << 16)); (p) += 3;}
+#define BE_STREAM_TO_UINT32(u32, p) {u32 = ((UINT32)(*((p) + 3)) + ((UINT32)(*((p) + 2)) << 8) + ((UINT32)(*((p) + 1)) << 16) + ((UINT32)(*(p)) << 24)); (p) += 4;}
+#define BE_STREAM_TO_ARRAY(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Big Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_BE_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)((u32) >> 24);  *((UINT8 *)(p)+1) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+3) = (UINT8)(u32); }
+#define UINT24_TO_BE_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)((u24) >> 16); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)(u24);}
+#define UINT16_TO_BE_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)((u16) >> 8); *((UINT8 *)(p)+1) = (UINT8)(u16);}
+#define UINT8_TO_BE_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/* Common Bluetooth field definitions */
+#define BD_ADDR_LEN     6                   /* Device address length */
+typedef UINT8 BD_ADDR[BD_ADDR_LEN];         /* Device address */
+typedef UINT8 *BD_ADDR_PTR;                 /* Pointer to Device Address */
+
+#define AMP_KEY_TYPE_GAMP       0
+#define AMP_KEY_TYPE_WIFI       1
+#define AMP_KEY_TYPE_UWB        2
+typedef UINT8 tAMP_KEY_TYPE;
+
+#define BT_OCTET8_LEN    8
+typedef UINT8 BT_OCTET8[BT_OCTET8_LEN];   /* octet array: size 16 */
+
+#define LINK_KEY_LEN    16
+typedef UINT8 LINK_KEY[LINK_KEY_LEN];       /* Link Key */
+
+#define AMP_LINK_KEY_LEN        32
+typedef UINT8 AMP_LINK_KEY[AMP_LINK_KEY_LEN];   /* Dedicated AMP and GAMP Link Keys */
+
+#define BT_OCTET16_LEN    16
+typedef UINT8 BT_OCTET16[BT_OCTET16_LEN];   /* octet array: size 16 */
+
+#define PIN_CODE_LEN    16
+typedef UINT8 PIN_CODE[PIN_CODE_LEN];       /* Pin Code (upto 128 bits) MSB is 0 */
+typedef UINT8 *PIN_CODE_PTR;                /* Pointer to Pin Code */
+
+#define DEV_CLASS_LEN   3
+typedef UINT8 DEV_CLASS[DEV_CLASS_LEN];     /* Device class */
+typedef UINT8 *DEV_CLASS_PTR;               /* Pointer to Device class */
+
+#define EXT_INQ_RESP_LEN   3
+typedef UINT8 EXT_INQ_RESP[EXT_INQ_RESP_LEN];/* Extended Inquiry Response */
+typedef UINT8 *EXT_INQ_RESP_PTR;             /* Pointer to Extended Inquiry Response */
+
+#define BD_NAME_LEN     248
+typedef UINT8 BD_NAME[BD_NAME_LEN];         /* Device name */
+typedef UINT8 *BD_NAME_PTR;                 /* Pointer to Device name */
+
+#define BD_FEATURES_LEN 8
+typedef UINT8 BD_FEATURES[BD_FEATURES_LEN]; /* LMP features supported by device */
+
+#define BT_EVENT_MASK_LEN  8
+typedef UINT8 BT_EVENT_MASK[BT_EVENT_MASK_LEN];   /* Event Mask */
+
+#define LAP_LEN         3
+typedef UINT8 LAP[LAP_LEN];                 /* IAC as passed to Inquiry (LAP) */
+typedef UINT8 INQ_LAP[LAP_LEN];             /* IAC as passed to Inquiry (LAP) */
+
+#define RAND_NUM_LEN    16
+typedef UINT8 RAND_NUM[RAND_NUM_LEN];
+
+#define ACO_LEN         12
+typedef UINT8 ACO[ACO_LEN];                 /* Authenticated ciphering offset */
+
+#define COF_LEN         12
+typedef UINT8 COF[COF_LEN];                 /* ciphering offset number */
+
+typedef struct {
+    UINT8               qos_flags;          /* TBD */
+    UINT8               service_type;       /* see below */
+    UINT32              token_rate;         /* bytes/second */
+    UINT32              token_bucket_size;  /* bytes */
+    UINT32              peak_bandwidth;     /* bytes/second */
+    UINT32              latency;            /* microseconds */
+    UINT32              delay_variation;    /* microseconds */
+} FLOW_SPEC;
+
+/* Values for service_type */
+#define NO_TRAFFIC      0
+#define BEST_EFFORT     1
+#define GUARANTEED      2
+
+/* Service class of the CoD */
+#define SERV_CLASS_NETWORKING               (1 << 1)
+#define SERV_CLASS_RENDERING                (1 << 2)
+#define SERV_CLASS_CAPTURING                (1 << 3)
+#define SERV_CLASS_OBJECT_TRANSFER          (1 << 4)
+#define SERV_CLASS_OBJECT_AUDIO             (1 << 5)
+#define SERV_CLASS_OBJECT_TELEPHONY         (1 << 6)
+#define SERV_CLASS_OBJECT_INFORMATION       (1 << 7)
+
+/* Second byte */
+#define SERV_CLASS_LIMITED_DISC_MODE        (0x20)
+
+/* Field size definitions. Note that byte lengths are rounded up. */
+#define ACCESS_CODE_BIT_LEN             72
+#define ACCESS_CODE_BYTE_LEN            9
+#define SHORTENED_ACCESS_CODE_BIT_LEN   68
+
+typedef UINT8 ACCESS_CODE[ACCESS_CODE_BYTE_LEN];
+
+#define SYNTH_TX                1           /* want synth code to TRANSMIT at this freq */
+#define SYNTH_RX                2           /* want synth code to RECEIVE at this freq */
+
+#define SYNC_REPS 1             /* repeats of sync word transmitted to start of burst */
+
+/* Bluetooth CLK27 */
+#define BT_CLK27            (2 << 26)
+
+/* Bluetooth CLK12 is 1.28 sec */
+#define BT_CLK12_TO_MS(x)    ((x) * 1280)
+#define BT_MS_TO_CLK12(x)    ((x) / 1280)
+#define BT_CLK12_TO_SLOTS(x) ((x) << 11)
+
+/* Bluetooth CLK is 0.625 msec */
+#define BT_CLK_TO_MS(x)      (((x) * 5 + 3) / 8)
+#define BT_MS_TO_CLK(x)      (((x) * 8 + 2) / 5)
+
+#define BT_CLK_TO_MICROSECS(x)  (((x) * 5000 + 3) / 8)
+#define BT_MICROSECS_TO_CLK(x)  (((x) * 8 + 2499) / 5000)
+
+/* Maximum UUID size - 16 bytes, and structure to hold any type of UUID. */
+#define MAX_UUID_SIZE              16
+typedef struct
+{
+#define LEN_UUID_16     2
+#define LEN_UUID_32     4
+#define LEN_UUID_128    16
+
+    UINT16          len;
+
+    union
+    {
+        UINT16      uuid16;
+        UINT32      uuid32;
+        UINT8       uuid128[MAX_UUID_SIZE];
+    } uu;
+
+} tBT_UUID;
+
+#define BT_EIR_FLAGS_TYPE                   0x01
+#define BT_EIR_MORE_16BITS_UUID_TYPE        0x02
+#define BT_EIR_COMPLETE_16BITS_UUID_TYPE    0x03
+#define BT_EIR_MORE_32BITS_UUID_TYPE        0x04
+#define BT_EIR_COMPLETE_32BITS_UUID_TYPE    0x05
+#define BT_EIR_MORE_128BITS_UUID_TYPE       0x06
+#define BT_EIR_COMPLETE_128BITS_UUID_TYPE   0x07
+#define BT_EIR_SHORTENED_LOCAL_NAME_TYPE    0x08
+#define BT_EIR_COMPLETE_LOCAL_NAME_TYPE     0x09
+#define BT_EIR_TX_POWER_LEVEL_TYPE          0x0A
+#define BT_EIR_OOB_BD_ADDR_TYPE             0x0C
+#define BT_EIR_OOB_COD_TYPE                 0x0D
+#define BT_EIR_OOB_SSP_HASH_C_TYPE          0x0E
+#define BT_EIR_OOB_SSP_RAND_R_TYPE          0x0F
+#define BT_EIR_MANUFACTURER_SPECIFIC_TYPE   0xFF
+
+#define BT_OOB_COD_SIZE            3
+#define BT_OOB_HASH_C_SIZE         16
+#define BT_OOB_RAND_R_SIZE         16
+
+/* Broadcom proprietary UUIDs and reserved PSMs
+**
+** The lowest 4 bytes byte of the UUID or GUID depends on the feature. Typically,
+** the value of those bytes will be the PSM or SCN, but it is up to the features.
+*/
+#define BRCM_PROPRIETARY_UUID_BASE  0xDA, 0x23, 0x41, 0x02, 0xA3, 0xBB, 0xC1, 0x71, 0xBA, 0x09, 0x6f, 0x21
+#define BRCM_PROPRIETARY_GUID_BASE  0xda23, 0x4102, 0xa3, 0xbb, 0xc1, 0x71, 0xba, 0x09, 0x6f, 0x21
+
+/* We will not allocate a PSM in the reserved range to 3rd party apps
+*/
+#define BRCM_RESERVED_PSM_START	    0x5AE1
+#define BRCM_RESERVED_PSM_END	    0x5AFF
+
+#define BRCM_UTILITY_SERVICE_PSM    0x5AE1
+#define BRCM_MATCHER_PSM            0x5AE3
+
+/* Connection statistics
+*/
+
+/* Structure to hold connection stats */
+#ifndef BT_CONN_STATS_DEFINED
+#define BT_CONN_STATS_DEFINED
+
+/* These bits are used in the bIsConnected field */
+#define BT_CONNECTED_USING_BREDR   1
+#define BT_CONNECTED_USING_AMP     2
+
+typedef struct
+{
+    UINT32   is_connected;
+    INT32    rssi;
+    UINT32   bytes_sent;
+    UINT32   bytes_rcvd;
+    UINT32   duration;
+} tBT_CONN_STATS;
+
+#endif
+
+
+/*****************************************************************************
+**                          Low Energy definitions
+**
+** Address types
+*/
+#define BLE_ADDR_PUBLIC         0x00
+#define BLE_ADDR_RANDOM         0x01
+#define BLE_ADDR_TYPE_MASK      (BLE_ADDR_RANDOM | BLE_ADDR_PUBLIC)
+typedef UINT8 tBLE_ADDR_TYPE;
+
+#define BLE_ADDR_IS_STATIC(x)   ((x[0] & 0xC0) == 0xC0)
+
+typedef struct
+{
+    tBLE_ADDR_TYPE      type;
+    BD_ADDR             bda;
+} tBLE_BD_ADDR;
+
+/* Device Types
+*/
+#define BT_DEVICE_TYPE_BREDR   0x01
+#define BT_DEVICE_TYPE_BLE     0x02
+#define BT_DEVICE_TYPE_DUMO    0x03
+typedef UINT8 tBT_DEVICE_TYPE;
+/*****************************************************************************/
+
+
+/* Define trace levels */
+#define BT_TRACE_LEVEL_NONE    0          /* No trace messages to be generated    */
+#define BT_TRACE_LEVEL_ERROR   1          /* Error condition trace messages       */
+#define BT_TRACE_LEVEL_WARNING 2          /* Warning condition trace messages     */
+#define BT_TRACE_LEVEL_API     3          /* API traces                           */
+#define BT_TRACE_LEVEL_EVENT   4          /* Debug messages for events            */
+#define BT_TRACE_LEVEL_DEBUG   5          /* Full debug messages                  */
+#define BT_TRACE_LEVEL_VERBOSE 6          /* Verbose debug messages               */
+
+#define MAX_TRACE_LEVEL        6
+
+
+/* Define New Trace Type Definition */
+/* TRACE_CTRL_TYPE                  0x^^000000*/
+#define TRACE_CTRL_MASK             0xff000000
+#define TRACE_GET_CTRL(x)           ((((UINT32)(x)) & TRACE_CTRL_MASK) >> 24)
+
+#define TRACE_CTRL_GENERAL          0x00000000
+#define TRACE_CTRL_STR_RESOURCE     0x01000000
+#define TRACE_CTRL_SEQ_FLOW         0x02000000
+#define TRACE_CTRL_MAX_NUM          3
+
+/* LAYER SPECIFIC                   0x00^^0000*/
+#define TRACE_LAYER_MASK            0x00ff0000
+#define TRACE_GET_LAYER(x)          ((((UINT32)(x)) & TRACE_LAYER_MASK) >> 16)
+
+#define TRACE_LAYER_NONE            0x00000000
+#define TRACE_LAYER_USB             0x00010000
+#define TRACE_LAYER_SERIAL          0x00020000
+#define TRACE_LAYER_SOCKET          0x00030000
+#define TRACE_LAYER_RS232           0x00040000
+#define TRACE_LAYER_TRANS_MAX_NUM   5
+#define TRACE_LAYER_TRANS_ALL       0x007f0000
+#define TRACE_LAYER_LC              0x00050000
+#define TRACE_LAYER_LM              0x00060000
+#define TRACE_LAYER_HCI             0x00070000
+#define TRACE_LAYER_L2CAP           0x00080000
+#define TRACE_LAYER_RFCOMM          0x00090000
+#define TRACE_LAYER_SDP             0x000a0000
+#define TRACE_LAYER_TCS             0x000b0000
+#define TRACE_LAYER_OBEX            0x000c0000
+#define TRACE_LAYER_BTM             0x000d0000
+#define TRACE_LAYER_GAP             0x000e0000
+#define TRACE_LAYER_DUN             0x000f0000
+#define TRACE_LAYER_GOEP            0x00100000
+#define TRACE_LAYER_ICP             0x00110000
+#define TRACE_LAYER_HSP2            0x00120000
+#define TRACE_LAYER_SPP             0x00130000
+#define TRACE_LAYER_CTP             0x00140000
+#define TRACE_LAYER_BPP             0x00150000
+#define TRACE_LAYER_HCRP            0x00160000
+#define TRACE_LAYER_FTP             0x00170000
+#define TRACE_LAYER_OPP             0x00180000
+#define TRACE_LAYER_BTU             0x00190000
+#define TRACE_LAYER_GKI             0x001a0000
+#define TRACE_LAYER_BNEP            0x001b0000
+#define TRACE_LAYER_PAN             0x001c0000
+#define TRACE_LAYER_HFP             0x001d0000
+#define TRACE_LAYER_HID             0x001e0000
+#define TRACE_LAYER_BIP             0x001f0000
+#define TRACE_LAYER_AVP             0x00200000
+#define TRACE_LAYER_A2D             0x00210000
+#define TRACE_LAYER_SAP             0x00220000
+#define TRACE_LAYER_AMP             0x00230000
+#define TRACE_LAYER_MCA             0x00240000
+#define TRACE_LAYER_ATT             0x00250000
+#define TRACE_LAYER_SMP             0x00260000
+#define TRACE_LAYER_NFC             0x00270000
+#define TRACE_LAYER_NCI             0x00280000
+#define TRACE_LAYER_IDEP            0x00290000
+#define TRACE_LAYER_NDEP            0x002a0000
+#define TRACE_LAYER_LLCP            0x002b0000
+#define TRACE_LAYER_RW              0x002c0000
+#define TRACE_LAYER_CE              0x002d0000
+#define TRACE_LAYER_SNEP            0x002e0000
+#define TRACE_LAYER_NDEF            0x002f0000
+#define TRACE_LAYER_NFA             0x00300000
+
+#define TRACE_LAYER_MAX_NUM         0x0031
+
+
+/* TRACE_ORIGINATOR                 0x0000^^00*/
+#define TRACE_ORG_MASK              0x0000ff00
+#define TRACE_GET_ORG(x)            ((((UINT32)(x)) & TRACE_ORG_MASK) >> 8)
+
+#define TRACE_ORG_STACK             0x00000000
+#define TRACE_ORG_HCI_TRANS         0x00000100
+#define TRACE_ORG_PROTO_DISP        0x00000200
+#define TRACE_ORG_RPC               0x00000300
+#define TRACE_ORG_GKI               0x00000400
+#define TRACE_ORG_APPL              0x00000500
+#define TRACE_ORG_SCR_WRAPPER       0x00000600
+#define TRACE_ORG_SCR_ENGINE        0x00000700
+#define TRACE_ORG_USER_SCR          0x00000800
+#define TRACE_ORG_TESTER            0x00000900
+#define TRACE_ORG_MAX_NUM           10          /* 32-bit mask; must be < 32 */
+#define TRACE_LITE_ORG_MAX_NUM		6
+#define TRACE_ORG_ALL               0x03ff
+#define TRACE_ORG_RPC_TRANS         0x04
+
+#define TRACE_ORG_REG               0x00000909
+#define TRACE_ORG_REG_SUCCESS       0x0000090a
+
+/* TRACE_TYPE                       0x000000^^*/
+#define TRACE_TYPE_MASK             0x000000ff
+#define TRACE_GET_TYPE(x)           (((UINT32)(x)) & TRACE_TYPE_MASK)
+
+#define TRACE_TYPE_ERROR            0x00000000
+#define TRACE_TYPE_WARNING          0x00000001
+#define TRACE_TYPE_API              0x00000002
+#define TRACE_TYPE_EVENT            0x00000003
+#define TRACE_TYPE_DEBUG            0x00000004
+#define TRACE_TYPE_STACK_ONLY_MAX   TRACE_TYPE_DEBUG
+#define TRACE_TYPE_TX               0x00000005
+#define TRACE_TYPE_RX               0x00000006
+#define TRACE_TYPE_DEBUG_ASSERT     0x00000007
+#define TRACE_TYPE_GENERIC          0x00000008
+#define TRACE_TYPE_REG              0x00000009
+#define TRACE_TYPE_REG_SUCCESS      0x0000000a
+#define TRACE_TYPE_CMD_TX           0x0000000b
+#define TRACE_TYPE_EVT_TX           0x0000000c
+#define TRACE_TYPE_ACL_TX           0x0000000d
+#define TRACE_TYPE_CMD_RX           0x0000000e
+#define TRACE_TYPE_EVT_RX           0x0000000f
+#define TRACE_TYPE_ACL_RX           0x00000010
+#define TRACE_TYPE_TARGET_TRACE     0x00000011
+#define TRACE_TYPE_SCO_TX           0x00000012
+#define TRACE_TYPE_SCO_RX           0x00000013
+
+
+#define TRACE_TYPE_MAX_NUM          20
+#define TRACE_TYPE_ALL              0xffff
+
+/* Define color for script type */
+#define SCR_COLOR_DEFAULT       0
+#define SCR_COLOR_TYPE_COMMENT  1
+#define SCR_COLOR_TYPE_COMMAND  2
+#define SCR_COLOR_TYPE_EVENT    3
+#define SCR_COLOR_TYPE_SELECT   4
+
+/* Define protocol trace flag values */
+#define SCR_PROTO_TRACE_HCI_SUMMARY 0x00000001
+#define SCR_PROTO_TRACE_HCI_DATA    0x00000002
+#define SCR_PROTO_TRACE_L2CAP       0x00000004
+#define SCR_PROTO_TRACE_RFCOMM      0x00000008
+#define SCR_PROTO_TRACE_SDP         0x00000010
+#define SCR_PROTO_TRACE_TCS         0x00000020
+#define SCR_PROTO_TRACE_OBEX        0x00000040
+#define SCR_PROTO_TRACE_OAPP        0x00000080 /* OBEX Application Profile */
+#define SCR_PROTO_TRACE_AMP         0x00000100
+#define SCR_PROTO_TRACE_BNEP        0x00000200
+#define SCR_PROTO_TRACE_AVP         0x00000400
+#define SCR_PROTO_TRACE_MCA         0x00000800
+#define SCR_PROTO_TRACE_ATT         0x00001000
+#define SCR_PROTO_TRACE_SMP         0x00002000
+#define SCR_PROTO_TRACE_NCI         0x00004000
+#define SCR_PROTO_TRACE_DEP         0x00008000
+#define SCR_PROTO_TRACE_LLCP        0x00010000
+#define SCR_PROTO_TRACE_NDEF        0x00020000
+#define SCR_PROTO_TRACE_TAGS        0x00040000
+#define SCR_PROTO_TRACE_ALL         0x0007ffff
+#define SCR_PROTO_TRACE_HCI_LOGGING_VSE 0x0800 /* Brcm vs event for logmsg and protocol traces */
+
+#define MAX_SCRIPT_TYPE             5
+
+#define TCS_PSM_INTERCOM        5
+#define TCS_PSM_CORDLESS        7
+#define BT_PSM_BNEP             0x000F
+/* Define PSMs HID uses */
+#define HID_PSM_CONTROL         0x0011
+#define HID_PSM_INTERRUPT       0x0013
+
+/* Define a function for logging */
+typedef void (BT_LOG_FUNC) (int trace_type, const char *fmt_str, ...);
+
+#endif
+/* end "revolution/BTE/stack/include/bt_types.h" */
+
+
+//------------------Added from Bluedroid buildcfg.h---------------------
+#ifndef UNV_INCLUDED
+#define UNV_INCLUDED FALSE
+#endif
+
+#ifndef GATT_PTS
+#define GATT_PTS FALSE
+#endif
+
+#ifndef L2CAP_INCLUDED
+#define L2CAP_INCLUDED TRUE
+#endif
+
+#ifndef L2CAP_EXTFEA_SUPPORTED_MASK
+#define L2CAP_EXTFEA_SUPPORTED_MASK (L2CAP_EXTFEA_ENH_RETRANS | L2CAP_EXTFEA_STREAM_MODE | L2CAP_EXTFEA_NO_CRC | L2CAP_EXTFEA_FIXED_CHNLS)
+#endif
+
+#ifndef BTUI_OPS_FORMATS
+#define BTUI_OPS_FORMATS (BTA_OP_VCARD21_MASK | BTA_OP_ANY_MASK)
+#endif
+
+#ifndef BTA_RFC_MTU_SIZE
+#define BTA_RFC_MTU_SIZE (L2CAP_MTU_SIZE-L2CAP_MIN_OFFSET-RFCOMM_DATA_OVERHEAD)
+#endif
+
+#ifndef BTA_DUN_MTU
+#define BTA_DUN_MTU BTA_RFC_MTU_SIZE
+#endif
+
+#ifndef BTA_SPP_MTU
+#define BTA_SPP_MTU BTA_RFC_MTU_SIZE
+#endif
+
+#ifndef BTA_FAX_MTU
+#define BTA_FAX_MTU BTA_RFC_MTU_SIZE
+#endif
+
+#ifndef SDP_RAW_PDU_INCLUDED
+#define SDP_RAW_PDU_INCLUDED  TRUE
+#endif
+
+#ifndef GATTS_APPU_USE_GATT_TRACE
+#define GATTS_APPU_USE_GATT_TRACE FALSE
+#endif
+
+#ifndef SMP_HOST_ENCRYPT_INCLUDED
+#define SMP_HOST_ENCRYPT_INCLUDED FALSE
+#endif
+
+#ifndef SAP_INCLUDED
+#define SAP_INCLUDED FALSE
+#endif
+
+#ifndef SBC_NO_PCM_CPY_OPTION
+#define SBC_NO_PCM_CPY_OPTION FALSE
+#endif
+
+#ifndef SBC_IPAQ_OPT
+#define SBC_IPAQ_OPT FALSE
+#endif
+
+#ifndef SBC_IS_64_MULT_IN_QUANTIZER
+#define SBC_IS_64_MULT_IN_QUANTIZER FALSE
+#endif
+
+#ifndef BTA_INCLUDED
+#define BTA_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AG_INCLUDED
+#define BTA_AG_INCLUDED  TRUE
+#endif
+
+#ifndef BTA_CT_INCLUDED
+#define BTA_CT_INCLUDED  FALSE
+#endif
+
+#ifndef BTA_CG_INCLUDED
+#define BTA_CG_INCLUDED  FALSE
+#endif
+
+#ifndef BTA_DG_INCLUDED
+#define BTA_DG_INCLUDED  FALSE
+#endif
+
+#ifndef BTA_FT_INCLUDED
+#define BTA_FT_INCLUDED FALSE
+#endif
+
+#ifndef BTA_OP_INCLUDED
+#define BTA_OP_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PR_INCLUDED
+#define BTA_PR_INCLUDED FALSE
+#endif
+
+#ifndef BTA_SS_INCLUDED
+#define BTA_SS_INCLUDED FALSE
+#endif
+
+#ifndef BTA_DM_INCLUDED
+#define BTA_DM_INCLUDED TRUE
+#endif
+
+
+#ifndef BTA_DI_INCLUDED
+#define BTA_DI_INCLUDED FALSE
+#endif
+
+#ifndef BTA_BI_INCLUDED
+#define BTA_BI_INCLUDED FALSE
+#endif
+
+#ifndef BTA_SC_INCLUDED
+#define BTA_SC_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PAN_INCLUDED
+#define BTA_PAN_INCLUDED TRUE
+#endif
+
+#ifndef BTA_FS_INCLUDED
+#define BTA_FS_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AC_INCLUDED
+#define BTA_AC_INCLUDED FALSE
+#endif
+
+#ifndef BTA_HD_INCLUDED
+#define BTA_HD_INCLUDED FALSE
+#endif
+
+#ifndef BTA_HH_INCLUDED
+#define BTA_HH_INCLUDED TRUE
+#endif
+
+#ifndef BTA_HH_ROLE
+#define BTA_HH_ROLE BTA_MASTER_ROLE_PREF
+#endif
+
+#ifndef BTA_AR_INCLUDED
+#define BTA_AR_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AV_INCLUDED
+#define BTA_AV_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AV_VDP_INCLUDED
+#define BTA_AV_VDP_INCLUDED FALSE
+#endif
+
+#ifndef BTA_AVK_INCLUDED
+#define BTA_AVK_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PBS_INCLUDED
+#define BTA_PBS_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PBC_INCLUDED
+#define BTA_PBC_INCLUDED FALSE
+#endif
+
+#ifndef BTA_FM_INCLUDED
+#define BTA_FM_INCLUDED FALSE
+#endif
+
+#ifndef BTA_FM_DEBUG
+#define BTA_FM_DEBUG FALSE
+#endif
+
+#ifndef BTA_FMTX_INCLUDED
+#define BTA_FMTX_INCLUDED FALSE
+#endif
+
+#ifndef BTA_FMTX_DEBUG
+#define BTA_FMTX_DEBUG FALSE
+#endif
+
+#ifndef BTA_FMTX_FMRX_SWITCH_WORKAROUND
+#define BTA_FMTX_FMRX_SWITCH_WORKAROUND FALSE
+#endif
+
+#ifndef BTA_FMTX_US_FCC_RULES
+#define BTA_FMTX_US_FCC_RULES FALSE
+#endif
+
+#ifndef BTA_HS_INCLUDED
+#define BTA_HS_INCLUDED FALSE
+#endif
+
+#ifndef BTA_MSE_INCLUDED
+#define BTA_MSE_INCLUDED FALSE
+#endif
+
+#ifndef BTA_MCE_INCLUDED
+#define BTA_MCE_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PLAYBACK_INCLUDED
+#define BTA_PLAYBACK_INCLUDED FALSE
+#endif
+
+#ifndef BTA_SSR_INCLUDED
+#define BTA_SSR_INCLUDED FALSE
+#endif
+
+#ifndef BTA_JV_INCLUDED
+#define BTA_JV_INCLUDED FALSE
+#endif
+
+#ifndef BTA_GATT_INCLUDED
+#define BTA_GATT_INCLUDED FALSE
+#endif
+
+#ifndef BTA_DISABLE_DELAY
+#define BTA_DISABLE_DELAY 200 /* in milliseconds */
+#endif
+
+#ifndef RPC_TRACE_ONLY
+#define RPC_TRACE_ONLY  FALSE
+#endif
+
+#ifndef ANDROID_APP_INCLUDED
+#define ANDROID_APP_INCLUDED  TRUE
+#endif
+
+#ifndef ANDROID_USE_LOGCAT
+#define ANDROID_USE_LOGCAT  TRUE
+#endif
+
+#ifndef LINUX_GKI_INCLUDED
+#define LINUX_GKI_INCLUDED  TRUE
+#endif
+
+#ifndef BTA_SYS_TIMER_PERIOD
+#define BTA_SYS_TIMER_PERIOD  100
+#endif
+
+#ifndef GKI_SHUTDOWN_EVT
+#define GKI_SHUTDOWN_EVT  APPL_EVT_7
+#endif
+
+#ifndef GKI_PTHREAD_JOINABLE
+#define GKI_PTHREAD_JOINABLE  TRUE
+#endif
+
+#ifndef LINUX_DRV_INCLUDED
+#define LINUX_DRV_INCLUDED  TRUE
+#endif
+
+#ifndef LINUX_OS
+#define LINUX_OS  TRUE
+#endif
+
+#ifndef BTM_APP_DEV_INIT
+#define BTM_APP_DEV_INIT  bte_main_post_reset_init
+#endif
+
+#ifndef SBC_FOR_EMBEDDED_LINUX
+#define SBC_FOR_EMBEDDED_LINUX TRUE
+#endif
+
+#ifndef BTA_DM_REMOTE_DEVICE_NAME_LENGTH
+#define BTA_DM_REMOTE_DEVICE_NAME_LENGTH 248
+#endif
+
+#ifndef AVDT_VERSION
+#define AVDT_VERSION  0x0102
+#endif
+
+#ifndef BTA_AG_AT_MAX_LEN
+#define BTA_AG_AT_MAX_LEN  512
+#endif
+
+#ifndef BTA_AVRCP_FF_RW_SUPPORT
+#define BTA_AVRCP_FF_RW_SUPPORT TRUE
+#endif
+
+#ifndef BTA_AG_SCO_PKT_TYPES
+#define BTA_AG_SCO_PKT_TYPES  (BTM_SCO_LINK_ONLY_MASK | BTM_SCO_PKT_TYPES_MASK_EV3 |  BTM_SCO_PKT_TYPES_MASK_NO_3_EV3 | BTM_SCO_PKT_TYPES_MASK_NO_2_EV5 | BTM_SCO_PKT_TYPES_MASK_NO_3_EV5)
+#endif
+
+#ifndef BTA_AV_MAX_A2DP_MTU
+#define BTA_AV_MAX_A2DP_MTU  668
+#endif
+
+#ifndef BTA_AV_RET_TOUT
+#define BTA_AV_RET_TOUT 15
+#endif
+
+#ifndef PORCHE_PAIRING_CONFLICT
+#define PORCHE_PAIRING_CONFLICT  TRUE
+#endif
+
+#ifndef BTA_AV_CO_CP_SCMS_T
+#define BTA_AV_CO_CP_SCMS_T  FALSE
+#endif
+
+#ifndef AVDT_CONNECT_CP_ONLY
+#define AVDT_CONNECT_CP_ONLY  FALSE
+#endif
+
+#ifndef BT_TRACE_PROTOCOL
+#define BT_TRACE_PROTOCOL  TRUE
+#endif
+
+#ifndef BT_USE_TRACES
+#define BT_USE_TRACES  TRUE
+#endif
+
+#ifndef BT_TRACE_BTIF
+#define BT_TRACE_BTIF  TRUE
+#endif
+
+#ifndef BTTRC_INCLUDED
+#define BTTRC_INCLUDED  FALSE
+#endif
+
+#ifndef BT_TRACE_VERBOSE
+#define BT_TRACE_VERBOSE  FALSE
+#endif
+
+#ifndef BTTRC_PARSER_INCLUDED
+#define BTTRC_PARSER_INCLUDED  FALSE
+#endif
+
+#ifndef MAX_TRACE_RAM_SIZE
+#define MAX_TRACE_RAM_SIZE  10000
+#endif
+
+#ifndef OBX_INITIAL_TRACE_LEVEL
+#define OBX_INITIAL_TRACE_LEVEL  BT_TRACE_LEVEL_ERROR
+#endif
+
+#ifndef PBAP_ZERO_VCARD_IN_DB
+#define PBAP_ZERO_VCARD_IN_DB  FALSE
+#endif
+
+#ifndef BTA_DM_SDP_DB_SIZE
+#define BTA_DM_SDP_DB_SIZE  8000
+#endif
+
+#ifndef FTS_REJECT_INVALID_OBEX_SET_PATH_REQ
+#define FTS_REJECT_INVALID_OBEX_SET_PATH_REQ FALSE
+#endif
+
+#ifndef HL_INCLUDED
+#define HL_INCLUDED  TRUE
+#endif
+
+#ifndef NO_GKI_RUN_RETURN
+#define NO_GKI_RUN_RETURN  TRUE
+#endif
+
+#ifndef AG_VOICE_SETTINGS
+#define AG_VOICE_SETTINGS  HCI_DEFAULT_VOICE_SETTINGS
+#endif
+
+#ifndef BTIF_DM_OOB_TEST
+#define BTIF_DM_OOB_TEST  TRUE
+#endif
+//------------------End added from Bluedroid buildcfg.h---------------------
+
+
+
+/* #define BYPASS_AVDATATRACE */
+
+/******************************************************************************
+**
+** Platform-Specific
+**
+******************************************************************************/
+
+/* API macros for simulator */
+
+#define BTAPI
+
+#ifndef BTE_BSE_WRAPPER
+#ifdef  BTE_SIM_APP
+#undef  BTAPI
+#define BTAPI         __declspec(dllexport)
+#endif
+#endif
+
+#define BT_API          BTAPI
+#define BTU_API         BTAPI
+#define A2D_API         BTAPI
+#define VDP_API         BTAPI
+#define AVDT_API        BTAPI
+#define AVCT_API        BTAPI
+#define AVRC_API        BTAPI
+#define BIP_API         BTAPI
+#define BNEP_API        BTAPI
+#define BPP_API         BTAPI
+#define BTM_API         BTAPI
+#define CTP_API         BTAPI
+#define DUN_API         BTAPI
+#define FTP_API         BTAPI
+#define GAP_API         BTAPI
+#define GOEP_API        BTAPI
+#define HCI_API         BTAPI
+#define HCRP_API        BTAPI
+#define HID_API         BTAPI
+#define HFP_API         BTAPI
+#define HSP2_API        BTAPI
+#define ICP_API         BTAPI
+#define L2C_API         BTAPI
+#define OBX_API         BTAPI
+#define OPP_API         BTAPI
+#define PAN_API         BTAPI
+#define RFC_API         BTAPI
+#define RPC_API         BTAPI
+#define SDP_API         BTAPI
+#define SPP_API         BTAPI
+#define TCS_API         BTAPI
+#define XML_API         BTAPI
+#define BTA_API         BTAPI
+#define SBC_API         BTAPI
+#define MCE_API         BTAPI
+#define MCA_API         BTAPI
+#define GATT_API        BTAPI
+#define SMP_API         BTAPI
+
+
+/******************************************************************************
+**
+** GKI Buffer Pools
+**
+******************************************************************************/
+
+/* Receives HCI events from the lower-layer. */
+#ifndef HCI_CMD_POOL_ID
+#define HCI_CMD_POOL_ID             GKI_POOL_ID_2
+#endif
+
+#ifndef HCI_CMD_POOL_BUF_SIZE
+#define HCI_CMD_POOL_BUF_SIZE       GKI_BUF2_SIZE
+#endif
+
+/* Receives ACL data packets from thelower-layer. */
+#ifndef HCI_ACL_POOL_ID
+#define HCI_ACL_POOL_ID             GKI_POOL_ID_3
+#endif
+
+#ifndef HCI_ACL_POOL_BUF_SIZE
+#define HCI_ACL_POOL_BUF_SIZE       GKI_BUF3_SIZE
+#endif
+
+/* Maximum number of buffers available for ACL receive data. */
+#ifndef HCI_ACL_BUF_MAX
+#define HCI_ACL_BUF_MAX             GKI_BUF3_MAX
+#endif
+
+/* Receives SCO data packets from the lower-layer. */
+#ifndef HCI_SCO_POOL_ID
+#define HCI_SCO_POOL_ID             GKI_POOL_ID_6
+#endif
+
+/* Not used. */
+#ifndef HCI_DATA_DESCR_POOL_ID
+#define HCI_DATA_DESCR_POOL_ID      GKI_POOL_ID_0
+#endif
+
+/* Sends SDP data packets. */
+#ifndef SDP_POOL_ID
+#define SDP_POOL_ID                 3
+#endif
+
+/* Sends RFCOMM command packets. */
+#ifndef RFCOMM_CMD_POOL_ID
+#define RFCOMM_CMD_POOL_ID          GKI_POOL_ID_2
+#endif
+
+#ifndef RFCOMM_CMD_POOL_BUF_SIZE
+#define RFCOMM_CMD_POOL_BUF_SIZE    GKI_BUF2_SIZE
+#endif
+
+/* Sends RFCOMM data packets. */
+#ifndef RFCOMM_DATA_POOL_ID
+#define RFCOMM_DATA_POOL_ID         GKI_POOL_ID_3
+#endif
+
+#ifndef RFCOMM_DATA_POOL_BUF_SIZE
+#define RFCOMM_DATA_POOL_BUF_SIZE   GKI_BUF3_SIZE
+#endif
+
+/* Sends L2CAP packets to the peer and HCI messages to the controller. */
+#ifndef L2CAP_CMD_POOL_ID
+#define L2CAP_CMD_POOL_ID           GKI_POOL_ID_2
+#endif
+
+/* Sends L2CAP segmented packets in ERTM mode */
+#ifndef L2CAP_FCR_TX_POOL_ID
+#define L2CAP_FCR_TX_POOL_ID        HCI_ACL_POOL_ID
+#endif
+
+/* Receives L2CAP segmented packets in ERTM mode */
+#ifndef L2CAP_FCR_RX_POOL_ID
+#define L2CAP_FCR_RX_POOL_ID        HCI_ACL_POOL_ID
+#endif
+
+/* Used by BTM when it sends HCI commands to the controller. */
+#ifndef BTM_CMD_POOL_ID
+#define BTM_CMD_POOL_ID             GKI_POOL_ID_2
+#endif
+
+/* Sends TCS messages. */
+#ifndef TCS_MSG_POOL_ID
+#define TCS_MSG_POOL_ID             GKI_POOL_ID_2
+#endif
+
+#ifndef OBX_CMD_POOL_SIZE
+#define OBX_CMD_POOL_SIZE           GKI_BUF2_SIZE
+#endif
+
+#ifndef OBX_LRG_DATA_POOL_SIZE
+#define OBX_LRG_DATA_POOL_SIZE      GKI_BUF4_SIZE
+#endif
+
+#ifndef OBX_LRG_DATA_POOL_ID
+#define OBX_LRG_DATA_POOL_ID        GKI_POOL_ID_4
+#endif
+
+/* Used for CTP discovery database. */
+#ifndef CTP_SDP_DB_POOL_ID
+#define CTP_SDP_DB_POOL_ID          GKI_POOL_ID_3
+#endif
+
+/* Used for CTP data exchange feature. */
+#ifndef CTP_DATA_EXCHG_POOL_ID
+#define CTP_DATA_EXCHG_POOL_ID      GKI_POOL_ID_2
+#endif
+
+/* Used to send data to L2CAP. */
+#ifndef GAP_DATA_POOL_ID
+#define GAP_DATA_POOL_ID            GKI_POOL_ID_3
+#endif
+
+/* Used for SPP inquiry and discovery databases. */
+#ifndef SPP_DB_POOL_ID
+#define SPP_DB_POOL_ID              GKI_POOL_ID_3
+#endif
+
+#ifndef SPP_DB_SIZE
+#define SPP_DB_SIZE                 GKI_BUF3_SIZE
+#endif
+
+/* HCRP protocol and internal commands. */
+#ifndef HCRP_CMD_POOL_ID
+#define HCRP_CMD_POOL_ID            GKI_POOL_ID_2
+#endif
+
+#ifndef HCRP_CMD_POOL_SIZE
+#define HCRP_CMD_POOL_SIZE          GKI_BUF2_SIZE
+#endif
+
+#ifndef BIP_EVT_POOL_SIZE
+#define BIP_EVT_POOL_SIZE           GKI_BUF3_SIZE
+#endif
+
+#ifndef BIP_DB_SIZE
+#define BIP_DB_SIZE                 GKI_BUF3_SIZE
+#endif
+
+
+/* BNEP data and protocol messages. */
+#ifndef BNEP_POOL_ID
+#define BNEP_POOL_ID                GKI_POOL_ID_3
+#endif
+
+/* RPC pool for temporary trace message buffers. */
+#ifndef RPC_SCRATCH_POOL_ID
+#define RPC_SCRATCH_POOL_ID         GKI_POOL_ID_2
+#endif
+
+/* RPC scratch buffer size (not related to RPC_SCRATCH_POOL_ID) */
+#ifndef RPC_SCRATCH_BUF_SIZE
+#define RPC_SCRATCH_BUF_SIZE        GKI_BUF3_SIZE
+#endif
+
+/* RPC pool for protocol messages */
+#ifndef RPC_MSG_POOL_ID
+#define RPC_MSG_POOL_ID             GKI_POOL_ID_3
+#endif
+
+#ifndef RPC_MSG_POOL_SIZE
+#define RPC_MSG_POOL_SIZE           GKI_BUF3_SIZE
+#endif
+
+/* AVDTP pool for protocol messages */
+#ifndef AVDT_CMD_POOL_ID
+#define AVDT_CMD_POOL_ID            GKI_POOL_ID_2
+#endif
+
+/* AVDTP pool size for media packets in case of fragmentation */
+#ifndef AVDT_DATA_POOL_SIZE
+#define AVDT_DATA_POOL_SIZE         GKI_BUF3_SIZE
+#endif
+
+#ifndef PAN_POOL_ID
+#define PAN_POOL_ID                 GKI_POOL_ID_3
+#endif
+
+/* UNV pool for read/write serialization */
+#ifndef UNV_MSG_POOL_ID
+#define UNV_MSG_POOL_ID             GKI_POOL_ID_2
+#endif
+
+#ifndef UNV_MSG_POOL_SIZE
+#define UNV_MSG_POOL_SIZE           GKI_BUF2_SIZE
+#endif
+
+/* AVCTP pool for protocol messages */
+#ifndef AVCT_CMD_POOL_ID
+#define AVCT_CMD_POOL_ID            GKI_POOL_ID_1
+#endif
+
+#ifndef AVCT_META_CMD_POOL_ID
+#define AVCT_META_CMD_POOL_ID       GKI_POOL_ID_2
+#endif
+
+/* AVRCP pool for protocol messages */
+#ifndef AVRC_CMD_POOL_ID
+#define AVRC_CMD_POOL_ID            GKI_POOL_ID_1
+#endif
+
+/* AVRCP pool size for protocol messages */
+#ifndef AVRC_CMD_POOL_SIZE
+#define AVRC_CMD_POOL_SIZE          GKI_BUF1_SIZE
+#endif
+
+/* AVRCP Metadata pool for protocol messages */
+#ifndef AVRC_META_CMD_POOL_ID
+#define AVRC_META_CMD_POOL_ID       GKI_POOL_ID_2
+#endif
+
+/* AVRCP Metadata pool size for protocol messages */
+#ifndef AVRC_META_CMD_POOL_SIZE
+#define AVRC_META_CMD_POOL_SIZE     GKI_BUF2_SIZE
+#endif
+
+
+/* AVRCP buffer size for browsing channel messages */
+#ifndef AVRC_BROWSE_POOL_SIZE
+#define AVRC_BROWSE_POOL_SIZE     GKI_MAX_BUF_SIZE
+#endif
+
+/*  HDP buffer size for the Pulse Oximeter  */
+#ifndef BTA_HL_LRG_DATA_POOL_SIZE
+#define BTA_HL_LRG_DATA_POOL_SIZE      GKI_BUF7_SIZE
+#endif
+
+#ifndef BTA_HL_LRG_DATA_POOL_ID
+#define BTA_HL_LRG_DATA_POOL_ID        GKI_POOL_ID_7
+#endif
+
+/* GATT Server Database pool ID */
+#ifndef GATT_DB_POOL_ID
+#define GATT_DB_POOL_ID                 GKI_POOL_ID_8
+#endif
+
+/******************************************************************************
+**
+** Lower Layer Interface
+**
+******************************************************************************/
+
+/* Sends ACL data received over HCI to the upper stack. */
+#ifndef HCI_ACL_DATA_TO_UPPER
+#define HCI_ACL_DATA_TO_UPPER(p)    {((BT_HDR *)p)->event = BT_EVT_TO_BTU_HCI_ACL; GKI_send_msg (BTU_TASK, BTU_HCI_RCV_MBOX, p);}
+#endif
+
+/* Sends SCO data received over HCI to the upper stack. */
+#ifndef HCI_SCO_DATA_TO_UPPER
+#define HCI_SCO_DATA_TO_UPPER(p)    {((BT_HDR *)p)->event = BT_EVT_TO_BTU_HCI_SCO; GKI_send_msg (BTU_TASK, BTU_HCI_RCV_MBOX, p);}
+#endif
+
+/* Sends an HCI event received over HCI to theupper stack. */
+#ifndef HCI_EVT_TO_UPPER
+#define HCI_EVT_TO_UPPER(p)         {((BT_HDR *)p)->event = BT_EVT_TO_BTU_HCI_EVT; GKI_send_msg (BTU_TASK, BTU_HCI_RCV_MBOX, p);}
+#endif
+
+/* Macro for allocating buffer for HCI commands */
+#ifndef HCI_GET_CMD_BUF
+#if (!defined(HCI_USE_VARIABLE_SIZE_CMD_BUF) || (HCI_USE_VARIABLE_SIZE_CMD_BUF == FALSE))
+/* Allocate fixed-size buffer from HCI_CMD_POOL (default case) */
+#define HCI_GET_CMD_BUF(paramlen)    ((BT_HDR *)GKI_getpoolbuf (HCI_CMD_POOL_ID))
+#else
+/* Allocate smallest possible buffer (for platforms with limited RAM) */
+#define HCI_GET_CMD_BUF(paramlen)    ((BT_HDR *)GKI_getbuf ((UINT16)(BT_HDR_SIZE + HCIC_PREAMBLE_SIZE + (paramlen))))
+#endif
+#endif  /* HCI_GET_CMD_BUF */
+
+/******************************************************************************
+**
+** HCI Services (H4)
+**
+******************************************************************************/
+#ifndef HCISU_H4_INCLUDED
+#define HCISU_H4_INCLUDED               TRUE
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+BT_API extern void bte_main_hci_send (BT_HDR *p_msg, UINT16 event);
+#if (HCISU_H4_INCLUDED == TRUE)
+BT_API extern void bte_main_lpm_allow_bt_device_sleep(void);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+/* Sends ACL data received from the upper stack to the BD/EDR HCI transport. */
+#ifndef HCI_ACL_DATA_TO_LOWER
+#define HCI_ACL_DATA_TO_LOWER(p)    bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_HCI_ACL);
+#endif
+
+#ifndef HCI_BLE_ACL_DATA_TO_LOWER
+#define HCI_BLE_ACL_DATA_TO_LOWER(p)    bte_main_hci_send((BT_HDR *)(p), (UINT16)(BT_EVT_TO_LM_HCI_ACL|LOCAL_BLE_CONTROLLER_ID));
+#endif
+
+/* Sends SCO data received from the upper stack to the HCI transport. */
+#ifndef HCI_SCO_DATA_TO_LOWER
+#define HCI_SCO_DATA_TO_LOWER(p)    bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_HCI_SCO);
+#endif
+
+/* Sends an HCI command received from the upper stack to the BD/EDR HCI transport. */
+#ifndef HCI_CMD_TO_LOWER
+#define HCI_CMD_TO_LOWER(p)         bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_HCI_CMD);
+#endif
+
+/* Sends an LM Diagnosic command received from the upper stack to the HCI transport. */
+#ifndef HCI_LM_DIAG_TO_LOWER
+#define HCI_LM_DIAG_TO_LOWER(p)     bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_DIAG);
+#endif
+
+/* Send HCISU a message to allow BT sleep */
+#ifndef HCI_LP_ALLOW_BT_DEVICE_SLEEP
+#define HCI_LP_ALLOW_BT_DEVICE_SLEEP()       bte_main_lpm_allow_bt_device_sleep()
+#endif
+
+/* If nonzero, the upper-layer sends at most this number of HCI commands to the lower-layer. */
+#ifndef HCI_MAX_SIMUL_CMDS
+#define HCI_MAX_SIMUL_CMDS          0
+#endif
+
+/* Timeout for receiving response to HCI command */
+#ifndef BTU_CMD_CMPL_TIMEOUT
+#define BTU_CMD_CMPL_TIMEOUT        8
+#endif
+
+/* If TRUE, BTU task will check HCISU again when HCI command timer expires */
+#ifndef BTU_CMD_CMPL_TOUT_DOUBLE_CHECK
+#define BTU_CMD_CMPL_TOUT_DOUBLE_CHECK      FALSE
+#endif
+
+/* Use 2 second for low-resolution systems, override to 1 for high-resolution systems */
+#ifndef BT_1SEC_TIMEOUT
+#define BT_1SEC_TIMEOUT             (2)
+#endif
+
+/* Quick Timer */
+/* if L2CAP_FCR_INCLUDED is TRUE then it should have 100 millisecond resolution */
+/* if none of them is included then QUICK_TIMER_TICKS_PER_SEC is set to 0 to exclude quick timer */
+#ifndef QUICK_TIMER_TICKS_PER_SEC
+#define QUICK_TIMER_TICKS_PER_SEC   10       /* 10ms timer */
+#endif
+
+/******************************************************************************
+**
+** BTM
+**
+******************************************************************************/
+/* if set to TRUE, stack will automatically send an HCI reset at start-up. To be
+set to FALSE for advanced start-up / shut-down procedures using USER_HW_ENABLE_API
+and USER_HW_DISABLE_API macros */
+#ifndef BTM_AUTOMATIC_HCI_RESET
+#define BTM_AUTOMATIC_HCI_RESET      FALSE
+#endif
+
+/* Include BTM Discovery database and code. */
+#ifndef BTM_DISCOVERY_INCLUDED
+#define BTM_DISCOVERY_INCLUDED      TRUE
+#endif
+
+/* Include inquiry code. */
+#ifndef BTM_INQUIRY_INCLUDED
+#define BTM_INQUIRY_INCLUDED        TRUE
+#endif
+
+/* Cancel Inquiry on incoming SSP */
+#ifndef BTM_NO_SSP_ON_INQUIRY
+#define BTM_NO_SSP_ON_INQUIRY       FALSE
+#endif
+
+/* Include periodic inquiry code (used when BTM_INQUIRY_INCLUDED is TRUE). */
+#ifndef BTM_PERIODIC_INQ_INCLUDED
+#define BTM_PERIODIC_INQ_INCLUDED   TRUE
+#endif
+
+/* Include security authorization code */
+#ifndef BTM_AUTHORIZATION_INCLUDED
+#define BTM_AUTHORIZATION_INCLUDED  TRUE
+#endif
+
+/* Includes SCO if TRUE */
+#ifndef BTM_SCO_INCLUDED
+#define BTM_SCO_INCLUDED            TRUE       /* TRUE includes SCO code */
+#endif
+
+/* Includes SCO if TRUE */
+#ifndef BTM_SCO_HCI_INCLUDED
+#define BTM_SCO_HCI_INCLUDED            FALSE       /* TRUE includes SCO over HCI code */
+#endif
+
+/* Includes WBS if TRUE */
+#ifndef BTM_WBS_INCLUDED
+#define BTM_WBS_INCLUDED            FALSE       /* TRUE includes WBS code */
+#endif
+
+/* Includes PCM2 support if TRUE */
+#ifndef BTM_PCM2_INCLUDED
+#define BTM_PCM2_INCLUDED           FALSE
+#endif
+
+/*  This is used to work around a controller bug that doesn't like Disconnect
+**  issued while there is a role switch in progress
+*/
+#ifndef BTM_DISC_DURING_RS
+#define BTM_DISC_DURING_RS TRUE
+#endif
+
+/**************************
+** Initial SCO TX credit
+*************************/
+/* max TX SCO data packet size */
+#ifndef BTM_SCO_DATA_SIZE_MAX
+#define BTM_SCO_DATA_SIZE_MAX       240
+#endif
+
+/* maximum BTM buffering capacity */
+#ifndef BTM_SCO_MAX_BUF_CAP
+#define BTM_SCO_MAX_BUF_CAP     (BTM_SCO_INIT_XMIT_CREDIT * 4)
+#endif
+
+/* The size in bytes of the BTM inquiry database. */
+#ifndef BTM_INQ_DB_SIZE
+#define BTM_INQ_DB_SIZE             40
+#endif
+
+/* This is set to enable automatic periodic inquiry at startup. */
+#ifndef BTM_ENABLE_AUTO_INQUIRY
+#define BTM_ENABLE_AUTO_INQUIRY     FALSE
+#endif
+
+/* This is set to always try to acquire the remote device name. */
+#ifndef BTM_INQ_GET_REMOTE_NAME
+#define BTM_INQ_GET_REMOTE_NAME     FALSE
+#endif
+
+/* The inquiry duration in 1.28 second units when auto inquiry is enabled. */
+#ifndef BTM_DEFAULT_INQ_DUR
+#define BTM_DEFAULT_INQ_DUR         5
+#endif
+
+/* The inquiry mode when auto inquiry is enabled. */
+#ifndef BTM_DEFAULT_INQ_MODE
+#define BTM_DEFAULT_INQ_MODE        BTM_GENERAL_INQUIRY
+#endif
+
+/* The default periodic inquiry maximum delay when auto inquiry is enabled, in 1.28 second units. */
+#ifndef BTM_DEFAULT_INQ_MAX_DELAY
+#define BTM_DEFAULT_INQ_MAX_DELAY   30
+#endif
+
+/* The default periodic inquiry minimum delay when auto inquiry is enabled, in 1.28 second units. */
+#ifndef BTM_DEFAULT_INQ_MIN_DELAY
+#define BTM_DEFAULT_INQ_MIN_DELAY   20
+#endif
+
+/* The maximum age of entries in inquiry database in seconds ('0' disables feature). */
+#ifndef BTM_INQ_MAX_AGE
+#define BTM_INQ_MAX_AGE             0
+#endif
+
+/* The maximum age of entries in inquiry database based on inquiry response failure ('0' disables feature). */
+#ifndef BTM_INQ_AGE_BY_COUNT
+#define BTM_INQ_AGE_BY_COUNT        0
+#endif
+
+/* TRUE if controller does not support inquiry event filtering. */
+#ifndef BTM_BYPASS_EVENT_FILTERING
+#define BTM_BYPASS_EVENT_FILTERING  FALSE
+#endif
+
+/* TRUE if inquiry filtering is desired from BTM. */
+#ifndef BTM_USE_INQ_RESULTS_FILTER
+#define BTM_USE_INQ_RESULTS_FILTER  TRUE
+#endif
+
+/* The default scan mode */
+#ifndef BTM_DEFAULT_SCAN_TYPE
+#define BTM_DEFAULT_SCAN_TYPE       BTM_SCAN_TYPE_INTERLACED
+#endif
+
+/* Should connections to unknown devices be allowed when not discoverable? */
+#ifndef BTM_ALLOW_CONN_IF_NONDISCOVER
+#define BTM_ALLOW_CONN_IF_NONDISCOVER   TRUE
+#endif
+
+/* When connectable mode is set to TRUE, the device will respond to paging. */
+#ifndef BTM_IS_CONNECTABLE
+#define BTM_IS_CONNECTABLE          FALSE
+#endif
+
+/* Sets the Page_Scan_Window:  the length of time that the device is performing a page scan. */
+#ifndef BTM_DEFAULT_CONN_WINDOW
+#define BTM_DEFAULT_CONN_WINDOW     0x0012
+#endif
+
+/* Sets the Page_Scan_Activity:  the interval between the start of two consecutive page scans. */
+#ifndef BTM_DEFAULT_CONN_INTERVAL
+#define BTM_DEFAULT_CONN_INTERVAL   0x0800
+#endif
+
+/* This is set to automatically perform inquiry scan on startup. */
+#ifndef BTM_IS_DISCOVERABLE
+#define BTM_IS_DISCOVERABLE         FALSE
+#endif
+
+/* When automatic inquiry scan is enabled, this sets the discovery mode. */
+#ifndef BTM_DEFAULT_DISC_MODE
+#define BTM_DEFAULT_DISC_MODE       BTM_GENERAL_DISCOVERABLE
+#endif
+
+/* When automatic inquiry scan is enabled, this sets the inquiry scan window. */
+#ifndef BTM_DEFAULT_DISC_WINDOW
+#define BTM_DEFAULT_DISC_WINDOW     0x0012
+#endif
+
+/* When automatic inquiry scan is enabled, this sets the inquiry scan interval. */
+#ifndef BTM_DEFAULT_DISC_INTERVAL
+#define BTM_DEFAULT_DISC_INTERVAL   0x0800
+#endif
+
+/* Sets the period, in seconds, to automatically perform service discovery. */
+#ifndef BTM_AUTO_DISCOVERY_PERIOD
+#define BTM_AUTO_DISCOVERY_PERIOD   0
+#endif
+
+/* The size in bytes of the BTM discovery database (if discovery is included). */
+#ifndef BTM_DISCOVERY_DB_SIZE
+#define BTM_DISCOVERY_DB_SIZE       4000
+#endif
+
+/* Number of milliseconds to delay BTU task startup upon device initialization. */
+#ifndef BTU_STARTUP_DELAY
+#define BTU_STARTUP_DELAY           0
+#endif
+
+/* Whether BTA is included in BTU task. */
+#ifndef BTU_BTA_INCLUDED
+#define BTU_BTA_INCLUDED            TRUE
+#endif
+
+/* Number of seconds to wait to send an HCI Reset command upon device initialization. */
+#ifndef BTM_FIRST_RESET_DELAY
+#define BTM_FIRST_RESET_DELAY       0
+#endif
+
+/* The number of seconds to wait for controller module to reset after issuing an HCI Reset command. */
+#ifndef BTM_AFTER_RESET_TIMEOUT
+#define BTM_AFTER_RESET_TIMEOUT     0
+#endif
+
+/* Default class of device
+* {SERVICE_CLASS, MAJOR_CLASS, MINOR_CLASS}
+*
+* SERVICE_CLASS:0x5A (Bit17 -Networking,Bit19 - Capturing,Bit20 -Object Transfer,Bit22 -Telephony)
+* MAJOR_CLASS:0x02 - PHONE
+* MINOR_CLASS:0x0C - SMART_PHONE
+*
+*/
+#ifndef BTA_DM_COD
+#define BTA_DM_COD {0x5A, 0x02, 0x0C}
+#endif
+
+/* The number of SCO links. */
+#ifndef BTM_MAX_SCO_LINKS
+#define BTM_MAX_SCO_LINKS           2
+#endif
+
+/* The preferred type of SCO links (2-eSCO, 0-SCO). */
+#ifndef BTM_DEFAULT_SCO_MODE
+#define BTM_DEFAULT_SCO_MODE        2
+#endif
+
+/* The number of security records for peer devices. */
+#ifndef BTM_SEC_MAX_DEVICE_RECORDS
+#define BTM_SEC_MAX_DEVICE_RECORDS  100
+#endif
+
+/* The number of security records for services. */
+#ifndef BTM_SEC_MAX_SERVICE_RECORDS
+#define BTM_SEC_MAX_SERVICE_RECORDS 32
+#endif
+
+/* If True, force a retrieval of remote device name for each bond in case it's changed */
+#ifndef BTM_SEC_FORCE_RNR_FOR_DBOND
+#define BTM_SEC_FORCE_RNR_FOR_DBOND  FALSE
+#endif
+
+/* Maximum device name length used in btm database. */
+#ifndef BTM_MAX_REM_BD_NAME_LEN
+#define BTM_MAX_REM_BD_NAME_LEN     248
+#endif
+
+/* Maximum local device name length stored btm database.
+  '0' disables storage of the local name in BTM */
+#ifndef BTM_MAX_LOC_BD_NAME_LEN
+#define BTM_MAX_LOC_BD_NAME_LEN     248
+#endif
+
+/* TRUE if default string is used, FALSE if device name is set in the application */
+#ifndef BTM_USE_DEF_LOCAL_NAME
+#define BTM_USE_DEF_LOCAL_NAME      TRUE
+#endif
+
+/* Fixed Default String (Ignored if BTM_USE_DEF_LOCAL_NAME is FALSE) */
+#ifndef BTM_DEF_LOCAL_NAME
+#define BTM_DEF_LOCAL_NAME      ""
+#endif
+
+/* Maximum service name stored with security authorization (0 if not needed) */
+#ifndef BTM_SEC_SERVICE_NAME_LEN
+#define BTM_SEC_SERVICE_NAME_LEN    BT_MAX_SERVICE_NAME_LEN
+#endif
+
+/* Maximum number of pending security callback */
+#ifndef BTM_SEC_MAX_CALLBACKS
+#define BTM_SEC_MAX_CALLBACKS       7
+#endif
+
+/* Maximum length of the service name. */
+#ifndef BT_MAX_SERVICE_NAME_LEN
+#define BT_MAX_SERVICE_NAME_LEN     21
+#endif
+
+/* ACL buffer size in HCI Host Buffer Size command. */
+#ifndef BTM_ACL_BUF_SIZE
+#define BTM_ACL_BUF_SIZE            0
+#endif
+
+/* This is set to use the BTM power manager. */
+#ifndef BTM_PWR_MGR_INCLUDED
+#define BTM_PWR_MGR_INCLUDED        TRUE
+#endif
+
+/* The maximum number of clients that can register with the power manager. */
+#ifndef BTM_MAX_PM_RECORDS
+#define BTM_MAX_PM_RECORDS          2
+#endif
+
+/* This is set to show debug trace messages for the power manager. */
+#ifndef BTM_PM_DEBUG
+#define BTM_PM_DEBUG                FALSE
+#endif
+
+/* This is set to TRUE if link is to be unparked due to BTM_CreateSCO API. */
+#ifndef BTM_SCO_WAKE_PARKED_LINK
+#define BTM_SCO_WAKE_PARKED_LINK    TRUE
+#endif
+
+/* May be set to the the name of a function used for vendor specific chip initialization */
+#ifndef BTM_APP_DEV_INIT
+/* #define BTM_APP_DEV_INIT         myInitFunction() */
+#endif
+
+/* This is set to TRUE if the busy level change event is desired. (replace ACL change event) */
+#ifndef BTM_BUSY_LEVEL_CHANGE_INCLUDED
+#define BTM_BUSY_LEVEL_CHANGE_INCLUDED  TRUE
+#endif
+
+/* If the user does not respond to security process requests within this many seconds,
+ * a negative response would be sent automatically.
+ * It's recommended to use a value between 30 and OBX_TIMEOUT_VALUE
+ * 30 is LMP response timeout value */
+#ifndef BTM_SEC_TIMEOUT_VALUE
+#define BTM_SEC_TIMEOUT_VALUE           35
+#endif
+
+/* Maximum number of callbacks that can be registered using BTM_RegisterForVSEvents */
+#ifndef BTM_MAX_VSE_CALLBACKS
+#define BTM_MAX_VSE_CALLBACKS           3
+#endif
+
+/* Number of streams for dual stack */
+#ifndef BTM_SYNC_INFO_NUM_STR
+#define BTM_SYNC_INFO_NUM_STR           2
+#endif
+
+/* Number of streams for dual stack in BT Controller */
+#ifndef BTM_SYNC_INFO_NUM_STR_BTC
+#define BTM_SYNC_INFO_NUM_STR_BTC       2
+#endif
+
+/******************************************
+**    Lisbon Features
+*******************************************/
+/* This is set to TRUE if the server Extended Inquiry Response feature is desired. */
+/* server sends EIR to client */
+#ifndef BTM_EIR_SERVER_INCLUDED
+#define BTM_EIR_SERVER_INCLUDED         TRUE
+#endif
+
+/* This is set to TRUE if the client Extended Inquiry Response feature is desired. */
+/* client inquiry to server */
+#ifndef BTM_EIR_CLIENT_INCLUDED
+#define BTM_EIR_CLIENT_INCLUDED         TRUE
+#endif
+
+/* This is set to TRUE if the FEC is required for EIR packet. */
+#ifndef BTM_EIR_DEFAULT_FEC_REQUIRED
+#define BTM_EIR_DEFAULT_FEC_REQUIRED    TRUE
+#endif
+
+/* User defined UUID look up table */
+#ifndef BTM_EIR_UUID_LKUP_TBL
+#endif
+
+/* The IO capability of the local device (for Simple Pairing) */
+#ifndef BTM_LOCAL_IO_CAPS
+#define BTM_LOCAL_IO_CAPS               BTM_IO_CAP_IO
+#endif
+
+/* The default MITM Protection Requirement (for Simple Pairing)
+ * Possible values are BTM_AUTH_SP_YES or BTM_AUTH_SP_NO */
+#ifndef BTM_DEFAULT_AUTH_REQ
+#define BTM_DEFAULT_AUTH_REQ            BTM_AUTH_SP_NO
+#endif
+
+/* The default MITM Protection Requirement for dedicated bonding using Simple Pairing
+ * Possible values are BTM_AUTH_AP_YES or BTM_AUTH_AP_NO */
+#ifndef BTM_DEFAULT_DD_AUTH_REQ
+#define BTM_DEFAULT_DD_AUTH_REQ            BTM_AUTH_AP_YES
+#endif
+
+/* Include Out-of-Band implementation for Simple Pairing */
+#ifndef BTM_OOB_INCLUDED
+#define BTM_OOB_INCLUDED                TRUE
+#endif
+
+/* TRUE to include Sniff Subrating */
+#ifndef BTM_SSR_INCLUDED
+#define BTM_SSR_INCLUDED                TRUE
+#endif
+
+/*************************
+** End of Lisbon Features
+**************************/
+
+/* Used for conformance testing ONLY */
+#ifndef BTM_BLE_CONFORMANCE_TESTING
+#define BTM_BLE_CONFORMANCE_TESTING           FALSE
+#endif
+
+
+/******************************************************************************
+**
+** L2CAP
+**
+******************************************************************************/
+
+/* Flow control and retransmission mode */
+
+#ifndef L2CAP_FCR_INCLUDED
+#define L2CAP_FCR_INCLUDED TRUE
+#endif
+
+/* The maximum number of simultaneous links that L2CAP can support. */
+#ifndef MAX_ACL_CONNECTIONS
+#define MAX_L2CAP_LINKS             7
+#else
+#define MAX_L2CAP_LINKS             MAX_ACL_CONNECTIONS
+#endif
+
+/* The maximum number of simultaneous channels that L2CAP can support. */
+#ifndef MAX_L2CAP_CHANNELS
+#define MAX_L2CAP_CHANNELS          10
+#endif
+
+/* The maximum number of simultaneous applications that can register with L2CAP. */
+#ifndef MAX_L2CAP_CLIENTS
+#define MAX_L2CAP_CLIENTS           15
+#endif
+
+/* The number of seconds of link inactivity before a link is disconnected. */
+#ifndef L2CAP_LINK_INACTIVITY_TOUT
+#define L2CAP_LINK_INACTIVITY_TOUT  4
+#endif
+
+/* The number of seconds of link inactivity after bonding before a link is disconnected. */
+#ifndef L2CAP_BONDING_TIMEOUT
+#define L2CAP_BONDING_TIMEOUT       3
+#endif
+
+/* The time from the HCI connection complete to disconnect if no channel is established. */
+#ifndef L2CAP_LINK_STARTUP_TOUT
+#define L2CAP_LINK_STARTUP_TOUT     60
+#endif
+
+/* The L2CAP MTU; must be in accord with the HCI ACL pool size. */
+#ifndef L2CAP_MTU_SIZE
+#define L2CAP_MTU_SIZE              1691
+#endif
+
+/* The L2CAP MPS over Bluetooth; must be in accord with the FCR tx pool size and ACL down buffer size. */
+#ifndef L2CAP_MPS_OVER_BR_EDR
+#define L2CAP_MPS_OVER_BR_EDR       1010
+#endif
+
+/* This is set to enable host flow control. */
+#ifndef L2CAP_HOST_FLOW_CTRL
+#define L2CAP_HOST_FLOW_CTRL        FALSE
+#endif
+
+/* If host flow control enabled, this is the number of buffers the controller can have unacknowledged. */
+#ifndef L2CAP_HOST_FC_ACL_BUFS
+#define L2CAP_HOST_FC_ACL_BUFS      20
+#endif
+
+/* The percentage of the queue size allowed before a congestion event is sent to the L2CAP client (typically 120%). */
+#ifndef L2CAP_FWD_CONG_THRESH
+#define L2CAP_FWD_CONG_THRESH       120
+#endif
+
+/* This is set to enable L2CAP to  take the ACL link out of park mode when ACL data is to be sent. */
+#ifndef L2CAP_WAKE_PARKED_LINK
+#define L2CAP_WAKE_PARKED_LINK      TRUE
+#endif
+
+/* Whether link wants to be the master or the slave. */
+#ifndef L2CAP_DESIRED_LINK_ROLE
+#define L2CAP_DESIRED_LINK_ROLE     HCI_ROLE_SLAVE
+#endif
+
+/* Include Non-Flushable Packet Boundary Flag feature of Lisbon */
+#ifndef L2CAP_NON_FLUSHABLE_PB_INCLUDED
+#define L2CAP_NON_FLUSHABLE_PB_INCLUDED     TRUE
+#endif
+
+/* Minimum number of ACL credit for high priority link */
+#ifndef L2CAP_HIGH_PRI_MIN_XMIT_QUOTA
+#define L2CAP_HIGH_PRI_MIN_XMIT_QUOTA       4
+#endif
+
+/* used for monitoring HCI ACL credit management */
+#ifndef L2CAP_HCI_FLOW_CONTROL_DEBUG
+#define L2CAP_HCI_FLOW_CONTROL_DEBUG        TRUE
+#endif
+
+/* Used for calculating transmit buffers off of */
+#ifndef L2CAP_NUM_XMIT_BUFFS
+#define L2CAP_NUM_XMIT_BUFFS                HCI_ACL_BUF_MAX
+#endif
+
+/* Unicast Connectionless Data */
+#ifndef L2CAP_UCD_INCLUDED
+#define L2CAP_UCD_INCLUDED                  FALSE
+#endif
+
+/* Unicast Connectionless Data MTU */
+#ifndef L2CAP_UCD_MTU
+#define L2CAP_UCD_MTU                       L2CAP_MTU_SIZE
+#endif
+
+/* Unicast Connectionless Data Idle Timeout */
+#ifndef L2CAP_UCD_IDLE_TIMEOUT
+#define L2CAP_UCD_IDLE_TIMEOUT              2
+#endif
+
+/* Unicast Connectionless Data Idle Timeout */
+#ifndef L2CAP_UCD_CH_PRIORITY
+#define L2CAP_UCD_CH_PRIORITY               L2CAP_CHNL_PRIORITY_MEDIUM
+#endif
+
+/* Max clients on Unicast Connectionless Data */
+#ifndef L2CAP_MAX_UCD_CLIENTS
+#define L2CAP_MAX_UCD_CLIENTS               5
+#endif
+
+/* Used for features using fixed channels; set to zero if no fixed channels supported (BLE, etc.) */
+/* Excluding L2CAP signaling channel and UCD */
+#ifndef L2CAP_NUM_FIXED_CHNLS
+#define L2CAP_NUM_FIXED_CHNLS               4
+#endif
+
+/* First fixed channel supported */
+#ifndef L2CAP_FIRST_FIXED_CHNL
+#define L2CAP_FIRST_FIXED_CHNL              3
+#endif
+
+#ifndef L2CAP_LAST_FIXED_CHNL
+#define L2CAP_LAST_FIXED_CHNL           (L2CAP_FIRST_FIXED_CHNL + L2CAP_NUM_FIXED_CHNLS - 1)
+#endif
+
+/* Round Robin service channels in link */
+#ifndef L2CAP_ROUND_ROBIN_CHANNEL_SERVICE
+#define L2CAP_ROUND_ROBIN_CHANNEL_SERVICE   TRUE
+#endif
+
+/* Used for calculating transmit buffers off of */
+#ifndef L2CAP_NUM_XMIT_BUFFS
+#define L2CAP_NUM_XMIT_BUFFS                HCI_ACL_BUF_MAX
+#endif
+
+/* Used for features using fixed channels; set to zero if no fixed channels supported (BLE, etc.) */
+#ifndef L2CAP_NUM_FIXED_CHNLS
+#define L2CAP_NUM_FIXED_CHNLS               1
+#endif
+
+/* First fixed channel supported */
+#ifndef L2CAP_FIRST_FIXED_CHNL
+#define L2CAP_FIRST_FIXED_CHNL              3
+#endif
+
+#ifndef L2CAP_LAST_FIXED_CHNL
+#define L2CAP_LAST_FIXED_CHNL           (L2CAP_FIRST_FIXED_CHNL + L2CAP_NUM_FIXED_CHNLS - 1)
+#endif
+
+/* used for monitoring eL2CAP data flow */
+#ifndef L2CAP_ERTM_STATS
+#define L2CAP_ERTM_STATS                    FALSE
+#endif
+
+/* USED FOR FCR TEST ONLY:  When TRUE generates bad tx and rx packets */
+#ifndef L2CAP_CORRUPT_ERTM_PKTS
+#define L2CAP_CORRUPT_ERTM_PKTS             FALSE
+#endif
+
+/* Used for conformance testing ONLY:  When TRUE lets scriptwrapper overwrite info response */
+#ifndef L2CAP_CONFORMANCE_TESTING
+#define L2CAP_CONFORMANCE_TESTING           FALSE
+#endif
+
+
+#ifndef TIMER_PARAM_TYPE
+#ifdef  WIN2000
+#define TIMER_PARAM_TYPE    void *
+#else
+#define TIMER_PARAM_TYPE    UINT32
+#endif
+#endif
+
+/******************************************************************************
+**
+** BLE
+**
+******************************************************************************/
+
+#ifndef BLE_INCLUDED
+#define BLE_INCLUDED            FALSE
+#endif
+
+#ifndef LOCAL_BLE_CONTROLLER_ID
+#define LOCAL_BLE_CONTROLLER_ID         (1)
+#endif
+
+/******************************************************************************
+**
+** ATT/GATT Protocol/Profile Settings
+**
+******************************************************************************/
+#ifndef ATT_INCLUDED
+#define ATT_INCLUDED         FALSE
+#endif
+
+#ifndef ATT_DEBUG
+#define ATT_DEBUG           FALSE
+#endif
+
+#ifndef GATT_SERVER_ENABLED
+#define GATT_SERVER_ENABLED          FALSE
+#endif
+
+#ifndef GATT_CLIENT_ENABLED
+#define GATT_CLIENT_ENABLED          FALSE
+#endif
+
+#ifndef GATT_MAX_SR_PROFILES
+#define GATT_MAX_SR_PROFILES        32 /* max is 32 */
+#endif
+
+#ifndef GATT_MAX_APPS
+#define GATT_MAX_APPS            10 /* note: 2 apps used internally GATT and GAP */
+#endif
+
+#ifndef GATT_MAX_CL_PROFILES
+#define GATT_MAX_CL_PROFILES        4
+#endif
+
+#ifndef GATT_MAX_PHY_CHANNEL
+#define GATT_MAX_PHY_CHANNEL        4
+#endif
+
+/* Used for conformance testing ONLY */
+#ifndef GATT_CONFORMANCE_TESTING
+#define GATT_CONFORMANCE_TESTING           FALSE
+#endif
+
+/* number of background connection device allowence, ideally to be the same as WL size
+*/
+#ifndef GATT_MAX_BG_CONN_DEV
+#define GATT_MAX_BG_CONN_DEV        32
+#endif
+
+/******************************************************************************
+**
+** SMP
+**
+******************************************************************************/
+#ifndef SMP_INCLUDED
+#define SMP_INCLUDED         FALSE
+#endif
+
+#ifndef SMP_DEBUG
+#define SMP_DEBUG            FALSE
+#endif
+
+#ifndef SMP_DEFAULT_AUTH_REQ
+#define SMP_DEFAULT_AUTH_REQ    SMP_AUTH_NB_ENC_ONLY
+#endif
+
+#ifndef SMP_MAX_ENC_KEY_SIZE
+#define SMP_MAX_ENC_KEY_SIZE    16
+#endif
+
+#ifndef SMP_MIN_ENC_KEY_SIZE
+#define SMP_MIN_ENC_KEY_SIZE    7
+#endif
+
+/* Used for conformance testing ONLY */
+#ifndef SMP_CONFORMANCE_TESTING
+#define SMP_CONFORMANCE_TESTING           FALSE
+#endif
+
+/******************************************************************************
+**
+** SDP
+**
+******************************************************************************/
+
+/* This is set to enable SDP server functionality. */
+#ifndef SDP_SERVER_ENABLED
+#define SDP_SERVER_ENABLED          TRUE
+#endif
+
+/* The maximum number of SDP records the server can support. */
+#ifndef SDP_MAX_RECORDS
+#define SDP_MAX_RECORDS             20
+#endif
+
+/* The maximum number of attributes in each record. */
+#ifndef SDP_MAX_REC_ATTR
+//#if defined(HID_DEV_INCLUDED) && (HID_DEV_INCLUDED==TRUE)
+#define SDP_MAX_REC_ATTR            25
+//#else
+//#define SDP_MAX_REC_ATTR            13
+//#endif
+#endif
+
+#ifndef SDP_MAX_PAD_LEN
+#define SDP_MAX_PAD_LEN             600
+#endif
+
+/* The maximum length, in bytes, of an attribute. */
+#ifndef SDP_MAX_ATTR_LEN
+//#if defined(HID_DEV_INCLUDED) && (HID_DEV_INCLUDED==TRUE)
+//#define SDP_MAX_ATTR_LEN            80
+//#else
+//#define SDP_MAX_ATTR_LEN            100
+//#endif
+#define SDP_MAX_ATTR_LEN            400
+#endif
+
+/* The maximum number of attribute filters supported by SDP databases. */
+#ifndef SDP_MAX_ATTR_FILTERS
+#define SDP_MAX_ATTR_FILTERS        15
+#endif
+
+/* The maximum number of UUID filters supported by SDP databases. */
+#ifndef SDP_MAX_UUID_FILTERS
+#define SDP_MAX_UUID_FILTERS        3
+#endif
+
+/* This is set to enable SDP client functionality. */
+#ifndef SDP_CLIENT_ENABLED
+#define SDP_CLIENT_ENABLED          TRUE
+#endif
+
+/* The maximum number of record handles retrieved in a search. */
+#ifndef SDP_MAX_DISC_SERVER_RECS
+#define SDP_MAX_DISC_SERVER_RECS    21
+#endif
+
+/* The size of a scratchpad buffer, in bytes, for storing the response to an attribute request. */
+#ifndef SDP_MAX_LIST_BYTE_COUNT
+#define SDP_MAX_LIST_BYTE_COUNT     4096
+#endif
+
+/* The maximum number of parameters in an SDP protocol element. */
+#ifndef SDP_MAX_PROTOCOL_PARAMS
+#define SDP_MAX_PROTOCOL_PARAMS     2
+#endif
+
+/* The maximum number of simultaneous client and server connections. */
+#ifndef SDP_MAX_CONNECTIONS
+#define SDP_MAX_CONNECTIONS         4
+#endif
+
+/* The MTU size for the L2CAP configuration. */
+#ifndef SDP_MTU_SIZE
+#define SDP_MTU_SIZE                256
+#endif
+
+/* The flush timeout for the L2CAP configuration. */
+#ifndef SDP_FLUSH_TO
+#define SDP_FLUSH_TO                0xFFFF
+#endif
+
+/* The name for security authorization. */
+#ifndef SDP_SERVICE_NAME
+#define SDP_SERVICE_NAME            "Service Discovery"
+#endif
+
+/* The security level for BTM. */
+#ifndef SDP_SECURITY_LEVEL
+#define SDP_SECURITY_LEVEL          BTM_SEC_NONE
+#endif
+
+/* Device identification feature. */
+#ifndef SDP_DI_INCLUDED
+#define SDP_DI_INCLUDED             TRUE
+#endif
+
+/******************************************************************************
+**
+** RFCOMM
+**
+******************************************************************************/
+
+#ifndef RFCOMM_INCLUDED
+#define RFCOMM_INCLUDED             TRUE
+#endif
+
+/* The maximum number of ports supported. */
+#ifndef MAX_RFC_PORTS
+#define MAX_RFC_PORTS               30
+#endif
+
+/* The maximum simultaneous links to different devices. */
+#ifndef MAX_ACL_CONNECTIONS
+#define MAX_BD_CONNECTIONS          7
+#else
+#define MAX_BD_CONNECTIONS          MAX_ACL_CONNECTIONS
+#endif
+
+/* The port receive queue low watermark level, in bytes. */
+#ifndef PORT_RX_LOW_WM
+#define PORT_RX_LOW_WM              (BTA_RFC_MTU_SIZE * PORT_RX_BUF_LOW_WM)
+#endif
+
+/* The port receive queue high watermark level, in bytes. */
+#ifndef PORT_RX_HIGH_WM
+#define PORT_RX_HIGH_WM             (BTA_RFC_MTU_SIZE * PORT_RX_BUF_HIGH_WM)
+#endif
+
+/* The port receive queue critical watermark level, in bytes. */
+#ifndef PORT_RX_CRITICAL_WM
+#define PORT_RX_CRITICAL_WM         (BTA_RFC_MTU_SIZE * PORT_RX_BUF_CRITICAL_WM)
+#endif
+
+/* The port receive queue low watermark level, in number of buffers. */
+#ifndef PORT_RX_BUF_LOW_WM
+#define PORT_RX_BUF_LOW_WM          4
+#endif
+
+/* The port receive queue high watermark level, in number of buffers. */
+#ifndef PORT_RX_BUF_HIGH_WM
+#define PORT_RX_BUF_HIGH_WM         10
+#endif
+
+/* The port receive queue critical watermark level, in number of buffers. */
+#ifndef PORT_RX_BUF_CRITICAL_WM
+#define PORT_RX_BUF_CRITICAL_WM     15
+#endif
+
+/* The port transmit queue high watermark level, in bytes. */
+#ifndef PORT_TX_HIGH_WM
+#define PORT_TX_HIGH_WM             (BTA_RFC_MTU_SIZE * PORT_TX_BUF_HIGH_WM)
+#endif
+
+/* The port transmit queue critical watermark level, in bytes. */
+#ifndef PORT_TX_CRITICAL_WM
+#define PORT_TX_CRITICAL_WM         (BTA_RFC_MTU_SIZE * PORT_TX_BUF_CRITICAL_WM)
+#endif
+
+/* The port transmit queue high watermark level, in number of buffers. */
+#ifndef PORT_TX_BUF_HIGH_WM
+#define PORT_TX_BUF_HIGH_WM         10
+#endif
+
+/* The port transmit queue high watermark level, in number of buffers. */
+#ifndef PORT_TX_BUF_CRITICAL_WM
+#define PORT_TX_BUF_CRITICAL_WM     15
+#endif
+
+/* The RFCOMM multiplexer preferred flow control mechanism. */
+#ifndef PORT_FC_DEFAULT
+#define PORT_FC_DEFAULT             PORT_FC_CREDIT
+#endif
+
+/* The maximum number of credits receiver sends to peer when using credit-based flow control. */
+#ifndef PORT_CREDIT_RX_MAX
+#define PORT_CREDIT_RX_MAX          16
+#endif
+
+/* The credit low watermark level. */
+#ifndef PORT_CREDIT_RX_LOW
+#define PORT_CREDIT_RX_LOW          8
+#endif
+
+/* Test code allowing l2cap FEC on RFCOMM.*/
+#ifndef PORT_ENABLE_L2CAP_FCR_TEST
+#define PORT_ENABLE_L2CAP_FCR_TEST  FALSE
+#endif
+
+/* if application like BTA, Java or script test engine is running on other than BTU thread, */
+/* PORT_SCHEDULE_LOCK shall be defined as GKI_sched_lock() or GKI_disable() */
+#ifndef PORT_SCHEDULE_LOCK
+#define PORT_SCHEDULE_LOCK          GKI_disable()
+#endif
+
+/* if application like BTA, Java or script test engine is running on other than BTU thread, */
+/* PORT_SCHEDULE_LOCK shall be defined as GKI_sched_unlock() or GKI_enable() */
+#ifndef PORT_SCHEDULE_UNLOCK
+#define PORT_SCHEDULE_UNLOCK        GKI_enable()
+#endif
+
+/******************************************************************************
+**
+** TCS
+**
+******************************************************************************/
+
+#ifndef TCS_INCLUDED
+#define TCS_INCLUDED                FALSE
+#endif
+
+/* If set to TRUE, gives lean TCS state machine configuration. */
+#ifndef TCS_LEAN
+#define TCS_LEAN                    FALSE
+#endif
+
+/* To include/exclude point-to-multipoint broadcast SETUP configuration. */
+#ifndef TCS_BCST_SETUP_INCLUDED
+#define TCS_BCST_SETUP_INCLUDED     TRUE
+#endif
+
+/* To include/exclude supplementary services. */
+#ifndef TCS_SUPP_SVCS_INCLUDED
+#define TCS_SUPP_SVCS_INCLUDED      TRUE
+#endif
+
+/* To include/exclude WUG master role. */
+#ifndef TCS_WUG_MASTER_INCLUDED
+#define TCS_WUG_MASTER_INCLUDED     TRUE
+#endif
+
+/* To include/exclude WUG member role. */
+#ifndef TCS_WUG_MEMBER_INCLUDED
+#define TCS_WUG_MEMBER_INCLUDED     TRUE
+#endif
+
+/* Maximum number of WUG members. */
+#ifndef TCS_MAX_WUG_MEMBERS
+#define TCS_MAX_WUG_MEMBERS         7
+#endif
+
+/* Broadcom specific acknowledgement message to ensure fast and robust operation of WUG FIMA procedure. */
+#ifndef TCS_WUG_LISTEN_ACPT_ACK_INCLUDED
+#define TCS_WUG_LISTEN_ACPT_ACK_INCLUDED TRUE
+#endif
+
+/* The number of simultaneous calls supported. */
+#ifndef TCS_MAX_NUM_SIMUL_CALLS
+#define TCS_MAX_NUM_SIMUL_CALLS     3
+#endif
+
+/* The number of devices the device can connect to. */
+#ifndef TCS_MAX_NUM_ACL_CONNS
+#define TCS_MAX_NUM_ACL_CONNS       7
+#endif
+
+/* The maximum length, in bytes, of the company specific information element. */
+#ifndef TCS_MAX_CO_SPEC_LEN
+#define TCS_MAX_CO_SPEC_LEN         40
+#endif
+
+/* The maximum length, in bytes, of the audio control information element . */
+#ifndef TCS_MAX_AUDIO_CTL_LEN
+#define TCS_MAX_AUDIO_CTL_LEN       40
+#endif
+
+/* (Dis)allow EDR ESCO */
+#ifndef TCS_AUDIO_USE_ESCO_EDR
+#define TCS_AUDIO_USE_ESCO_EDR      FALSE
+#endif
+
+/******************************************************************************
+**
+** OBX
+**
+******************************************************************************/
+#ifndef OBX_INCLUDED
+#define OBX_INCLUDED               FALSE
+#endif
+
+#ifndef OBX_CLIENT_INCLUDED
+#define OBX_CLIENT_INCLUDED        TRUE
+#endif
+
+#ifndef OBX_SERVER_INCLUDED
+#define OBX_SERVER_INCLUDED        TRUE
+#endif
+
+/* TRUE to include OBEX authentication/MD5 code */
+#ifndef OBX_MD5_INCLUDED
+#define OBX_MD5_INCLUDED           TRUE
+#endif
+
+/* TRUE to include OBEX authentication/MD5 test code */
+#ifndef OBX_MD5_TEST_INCLUDED
+#define OBX_MD5_TEST_INCLUDED       FALSE
+#endif
+
+/* TRUE to include OBEX 1.4 enhancement (including Obex Over L2CAP) */
+#ifndef OBX_14_INCLUDED
+#define OBX_14_INCLUDED             FALSE
+#endif
+/* MD5 code is required to use OBEX 1.4 features (Reliable session) */
+#if (OBX_MD5_INCLUDED == FALSE)
+#undef OBX_14_INCLUDED
+#define OBX_14_INCLUDED             FALSE
+#endif
+
+/* L2CAP FCR/eRTM mode is required to use OBEX Over L2CAP */
+#if (L2CAP_FCR_INCLUDED == FALSE)
+#undef OBX_14_INCLUDED
+#define OBX_14_INCLUDED             FALSE
+#endif
+
+/* The timeout value (in seconds) for reliable sessions to remain in suspend. 0xFFFFFFFF for no timeout event. */
+#ifndef OBX_SESS_TIMEOUT_VALUE
+#define OBX_SESS_TIMEOUT_VALUE      600
+#endif
+
+/* The idle timeout value. 0 for no timeout event. */
+#ifndef OBX_TIMEOUT_VALUE
+#define OBX_TIMEOUT_VALUE           60
+#endif
+
+/* Timeout value used for disconnect */
+#ifndef OBX_DISC_TOUT_VALUE
+#define OBX_DISC_TOUT_VALUE         5
+#endif
+
+/* The maximum number of registered servers. */
+#ifndef OBX_NUM_SERVERS
+#define OBX_NUM_SERVERS             12
+#endif
+
+/* The maximum number of sessions per registered server. */
+#ifndef OBX_MAX_SR_SESSION
+#define OBX_MAX_SR_SESSION          4
+#endif
+
+/* The maximum number of sessions for all registered servers.
+ * (must be equal or bigger than OBX_NUM_SERVERS) */
+#ifndef OBX_NUM_SR_SESSIONS
+#define OBX_NUM_SR_SESSIONS         26
+#endif
+
+/* The maximum number of sessions per registered server.
+ * must be less than MAX_BD_CONNECTIONS */
+#ifndef OBX_MAX_SR_SESSION
+#define OBX_MAX_SR_SESSION          4
+#endif
+
+/* The maximum number of suspended sessions per registered servers. */
+#ifndef OBX_MAX_SUSPEND_SESSIONS
+#define OBX_MAX_SUSPEND_SESSIONS    4
+#endif
+
+/* The maximum number of active clients. */
+#ifndef OBX_NUM_CLIENTS
+#define OBX_NUM_CLIENTS             8
+#endif
+
+/* The maximum length of OBEX target header.*/
+#ifndef OBX_MAX_TARGET_LEN
+#define OBX_MAX_TARGET_LEN          16
+#endif
+
+/* The maximum length of authentication challenge realm.*/
+#ifndef OBX_MAX_REALM_LEN
+#define OBX_MAX_REALM_LEN           30
+#endif
+
+/* The maximum of GKI buffer queued at OBX before flow control L2CAP */
+#ifndef OBX_MAX_RX_QUEUE_COUNT
+#define OBX_MAX_RX_QUEUE_COUNT      3
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+   Pool ID where to reassemble the SDU.
+   This Pool will allow buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef OBX_USER_RX_POOL_ID
+#define OBX_USER_RX_POOL_ID     OBX_LRG_DATA_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+   Pool ID where to hold the SDU.
+   This Pool will allow buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef OBX_USER_TX_POOL_ID
+#define OBX_USER_TX_POOL_ID     OBX_LRG_DATA_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+GKI Buffer Pool ID used to hold MPS segments during SDU reassembly
+*/
+#ifndef OBX_FCR_RX_POOL_ID
+#define OBX_FCR_RX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+GKI Buffer Pool ID used to hold MPS segments used in (re)transmissions.
+L2CAP_DEFAULT_ERM_POOL_ID is specified to use the HCI ACL data pool.
+Note:  This pool needs to have enough buffers to hold two times the window size negotiated
+ in the L2CA_SetFCROptions (2 * tx_win_size)  to allow for retransmissions.
+ The size of each buffer must be able to hold the maximum MPS segment size passed in
+ L2CA_SetFCROptions plus BT_HDR (8) + HCI preamble (4) + L2CAP_MIN_OFFSET (11 - as of BT 2.1 + EDR Spec).
+*/
+#ifndef OBX_FCR_TX_POOL_ID
+#define OBX_FCR_TX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Size of the transmission window when using enhanced retransmission mode. Not used
+in basic and streaming modes. Range: 1 - 63
+*/
+#ifndef OBX_FCR_OPT_TX_WINDOW_SIZE_BR_EDR
+#define OBX_FCR_OPT_TX_WINDOW_SIZE_BR_EDR       20
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Number of transmission attempts for a single I-Frame before taking
+Down the connection. Used In ERTM mode only. Value is Ignored in basic and
+Streaming modes.
+Range: 0, 1-0xFF
+0 - infinite retransmissions
+1 - single transmission
+*/
+#ifndef OBX_FCR_OPT_MAX_TX_B4_DISCNT
+#define OBX_FCR_OPT_MAX_TX_B4_DISCNT    20
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Retransmission Timeout
+Range: Minimum 2000 (2 secs) on BR/EDR when supporting PBF.
+ */
+#ifndef OBX_FCR_OPT_RETX_TOUT
+#define OBX_FCR_OPT_RETX_TOUT           2000
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Monitor Timeout
+Range: Minimum 12000 (12 secs) on BR/EDR when supporting PBF.
+*/
+#ifndef OBX_FCR_OPT_MONITOR_TOUT
+#define OBX_FCR_OPT_MONITOR_TOUT        12000
+#endif
+
+/******************************************************************************
+**
+** BNEP
+**
+******************************************************************************/
+
+#ifndef BNEP_INCLUDED
+#define BNEP_INCLUDED               TRUE
+#endif
+
+/* Protocol filtering is an optional feature. Bydefault it will be turned on */
+#ifndef BNEP_SUPPORTS_PROT_FILTERS
+#define BNEP_SUPPORTS_PROT_FILTERS          TRUE
+#endif
+
+/* Multicast filtering is an optional feature. Bydefault it will be turned on */
+#ifndef BNEP_SUPPORTS_MULTI_FILTERS
+#define BNEP_SUPPORTS_MULTI_FILTERS         TRUE
+#endif
+
+/* BNEP status API call is used mainly to get the L2CAP handle */
+#ifndef BNEP_SUPPORTS_STATUS_API
+#define BNEP_SUPPORTS_STATUS_API            TRUE
+#endif
+
+/* This is just a debug function */
+#ifndef BNEP_SUPPORTS_DEBUG_DUMP
+#define BNEP_SUPPORTS_DEBUG_DUMP            TRUE
+#endif
+
+#ifndef BNEP_SUPPORTS_ALL_UUID_LENGTHS
+#define BNEP_SUPPORTS_ALL_UUID_LENGTHS      TRUE    /* Otherwise it will support only 16bit UUIDs */
+#endif
+
+/*
+** When BNEP connection changes roles after the connection is established
+** we will do an authentication check again on the new role
+*/
+#ifndef BNEP_DO_AUTH_FOR_ROLE_SWITCH
+#define BNEP_DO_AUTH_FOR_ROLE_SWITCH        TRUE
+#endif
+
+
+/* Maximum number of protocol filters supported. */
+#ifndef BNEP_MAX_PROT_FILTERS
+#define BNEP_MAX_PROT_FILTERS       5
+#endif
+
+/* Maximum number of multicast filters supported. */
+#ifndef BNEP_MAX_MULTI_FILTERS
+#define BNEP_MAX_MULTI_FILTERS      5
+#endif
+
+/* Minimum MTU size. */
+#ifndef BNEP_MIN_MTU_SIZE
+#define BNEP_MIN_MTU_SIZE           L2CAP_MTU_SIZE
+#endif
+
+/* Preferred MTU size. */
+#ifndef BNEP_MTU_SIZE
+#define BNEP_MTU_SIZE               BNEP_MIN_MTU_SIZE
+#endif
+
+/* Maximum size of user data, in bytes.  */
+#ifndef BNEP_MAX_USER_DATA_SIZE
+#define BNEP_MAX_USER_DATA_SIZE     1500
+#endif
+
+/* Maximum number of buffers allowed in transmit data queue. */
+#ifndef BNEP_MAX_XMITQ_DEPTH
+#define BNEP_MAX_XMITQ_DEPTH        20
+#endif
+
+/* Maximum number BNEP of connections supported. */
+#ifndef BNEP_MAX_CONNECTIONS
+#define BNEP_MAX_CONNECTIONS        7
+#endif
+
+
+/******************************************************************************
+**
+** AVDTP
+**
+******************************************************************************/
+
+#ifndef AVDT_INCLUDED
+#define AVDT_INCLUDED               TRUE
+#endif
+
+/* Include reporting capability in AVDTP */
+#ifndef AVDT_REPORTING
+#define AVDT_REPORTING              TRUE
+#endif
+
+/* Include multiplexing capability in AVDTP */
+#ifndef AVDT_MULTIPLEXING
+#define AVDT_MULTIPLEXING           TRUE
+#endif
+
+/* Number of simultaneous links to different peer devices. */
+#ifndef AVDT_NUM_LINKS
+#define AVDT_NUM_LINKS              2
+#endif
+
+/* Number of simultaneous stream endpoints. */
+#ifndef AVDT_NUM_SEPS
+#define AVDT_NUM_SEPS               3
+#endif
+
+/* Number of transport channels setup per media stream(audio or video) */
+#ifndef AVDT_NUM_CHANNELS
+
+#if AVDT_REPORTING == TRUE
+/* signaling, media and reporting channels */
+#define AVDT_NUM_CHANNELS   3
+#else
+/* signaling and media channels */
+#define AVDT_NUM_CHANNELS   2
+#endif
+
+#endif
+
+/* Number of transport channels setup by AVDT for all media streams
+ * AVDT_NUM_CHANNELS * Number of simultaneous streams.
+ */
+#ifndef AVDT_NUM_TC_TBL
+#define AVDT_NUM_TC_TBL             6
+#endif
+
+
+/* Maximum size in bytes of the codec capabilities information element. */
+#ifndef AVDT_CODEC_SIZE
+#define AVDT_CODEC_SIZE             10
+#endif
+
+/* Maximum size in bytes of the content protection information element. */
+#ifndef AVDT_PROTECT_SIZE
+#define AVDT_PROTECT_SIZE           90
+#endif
+
+/* Maximum number of GKI buffers in the fragment queue (for video frames).
+ * Must be less than the number of buffers in the buffer pool of size AVDT_DATA_POOL_SIZE */
+#ifndef AVDT_MAX_FRAG_COUNT
+#define AVDT_MAX_FRAG_COUNT         15
+#endif
+
+/******************************************************************************
+**
+** PAN
+**
+******************************************************************************/
+
+#ifndef PAN_INCLUDED
+#define PAN_INCLUDED                     TRUE
+#endif
+
+/* This will enable the PANU role */
+#ifndef PAN_SUPPORTS_ROLE_PANU
+#define PAN_SUPPORTS_ROLE_PANU              TRUE
+#endif
+
+/* This will enable the GN role */
+#ifndef PAN_SUPPORTS_ROLE_GN
+#define PAN_SUPPORTS_ROLE_GN                TRUE
+#endif
+
+/* This will enable the NAP role */
+#ifndef PAN_SUPPORTS_ROLE_NAP
+#define PAN_SUPPORTS_ROLE_NAP               TRUE
+#endif
+
+/* This is just for debugging purposes */
+#ifndef PAN_SUPPORTS_DEBUG_DUMP
+#define PAN_SUPPORTS_DEBUG_DUMP             TRUE
+#endif
+
+
+/* Maximum number of PAN connections allowed */
+#ifndef MAX_PAN_CONNS
+#define MAX_PAN_CONNS                    7
+#endif
+
+/* Default service name for NAP role */
+#ifndef PAN_NAP_DEFAULT_SERVICE_NAME
+#define PAN_NAP_DEFAULT_SERVICE_NAME    "Network Access Point Service"
+#endif
+
+/* Default service name for GN role */
+#ifndef PAN_GN_DEFAULT_SERVICE_NAME
+#define PAN_GN_DEFAULT_SERVICE_NAME     "Group Network Service"
+#endif
+
+/* Default service name for PANU role */
+#ifndef PAN_PANU_DEFAULT_SERVICE_NAME
+#define PAN_PANU_DEFAULT_SERVICE_NAME   "PAN User Service"
+#endif
+
+/* Default description for NAP role service */
+#ifndef PAN_NAP_DEFAULT_DESCRIPTION
+#define PAN_NAP_DEFAULT_DESCRIPTION     "NAP"
+#endif
+
+/* Default description for GN role service */
+#ifndef PAN_GN_DEFAULT_DESCRIPTION
+#define PAN_GN_DEFAULT_DESCRIPTION      "GN"
+#endif
+
+/* Default description for PANU role service */
+#ifndef PAN_PANU_DEFAULT_DESCRIPTION
+#define PAN_PANU_DEFAULT_DESCRIPTION    "PANU"
+#endif
+
+/* Default Security level for PANU role. */
+#ifndef PAN_PANU_SECURITY_LEVEL
+#define PAN_PANU_SECURITY_LEVEL          0
+#endif
+
+/* Default Security level for GN role. */
+#ifndef PAN_GN_SECURITY_LEVEL
+#define PAN_GN_SECURITY_LEVEL            0
+#endif
+
+/* Default Security level for NAP role. */
+#ifndef PAN_NAP_SECURITY_LEVEL
+#define PAN_NAP_SECURITY_LEVEL           0
+#endif
+
+
+
+
+/******************************************************************************
+**
+** GAP
+**
+******************************************************************************/
+
+#ifndef GAP_INCLUDED
+#define GAP_INCLUDED                FALSE
+#endif
+
+/* This is set to enable use of GAP L2CAP connections. */
+#ifndef GAP_CONN_INCLUDED
+#define GAP_CONN_INCLUDED           TRUE
+#endif
+
+/* This is set to enable posting event for data write */
+#ifndef GAP_CONN_POST_EVT_INCLUDED
+#define GAP_CONN_POST_EVT_INCLUDED  FALSE
+#endif
+
+/* The maximum number of simultaneous GAP L2CAP connections. */
+#ifndef GAP_MAX_CONNECTIONS
+#define GAP_MAX_CONNECTIONS         8
+#endif
+
+/******************************************************************************
+**
+** CTP
+**
+******************************************************************************/
+
+#ifndef CTP_INCLUDED
+#define CTP_INCLUDED                FALSE
+#endif
+
+/* To include CTP gateway functionality or not. */
+#ifndef CTP_GW_INCLUDED
+#define CTP_GW_INCLUDED             TRUE
+#endif
+
+/* The number of terminals supported. */
+#ifndef CTP_MAX_NUM_TLS
+#define CTP_MAX_NUM_TLS             7
+#endif
+
+/* If the controller can not support sniff mode when the SCO is up, set this to FALSE. */
+#ifndef CTP_USE_SNIFF_ON_SCO
+#define CTP_USE_SNIFF_ON_SCO        FALSE
+#endif
+
+/* When ACL link between TL and GW is idle for more than this amount of seconds, the ACL may be put to low power mode. */
+#ifndef CTP_TL_IDLE_TIMEOUT
+#define CTP_TL_IDLE_TIMEOUT         90
+#endif
+
+/* To include CTP terminal functionality or not. */
+#ifndef CTP_TL_INCLUDED
+#define CTP_TL_INCLUDED             TRUE
+#endif
+
+/* To include CTP device discovery functionality or not. */
+#ifndef CTP_DISCOVERY_INCLUDED
+#define CTP_DISCOVERY_INCLUDED      TRUE
+#endif
+
+/* set to TRUE for controllers that do not support multi-point */
+#ifndef CTP_TL_WAIT_DISC
+#define CTP_TL_WAIT_DISC            TRUE
+#endif
+
+/* The CTP inquiry database size. */
+#ifndef CTP_INQ_DB_SIZE
+#define CTP_INQ_DB_SIZE             CTP_DISC_REC_SIZE
+#endif
+
+/* The CTP discovery record size. */
+#ifndef CTP_DISC_REC_SIZE
+#define CTP_DISC_REC_SIZE           60
+#endif
+
+/* CTP TL would try to re-establish L2CAP channel after channel is disconnected for this amount of seconds. */
+#ifndef CTP_GUARD_LINK_LOST
+#define CTP_GUARD_LINK_LOST         1
+#endif
+
+/* The link policy bitmap. */
+#ifndef CTP_DEFAULT_LINK_POLICY
+#define CTP_DEFAULT_LINK_POLICY     0x000F
+#endif
+
+/* The minimum period interval used for the sniff and park modes. */
+#ifndef CTP_DEF_LOWPWR_MIN_PERIOD
+#define CTP_DEF_LOWPWR_MIN_PERIOD   0x100
+#endif
+
+/* The maximum period interval used for the sniff and park modes. */
+#ifndef CTP_DEF_LOWPWR_MAX_PERIOD
+#define CTP_DEF_LOWPWR_MAX_PERIOD   0x1E0
+#endif
+
+/* The number of baseband receive slot sniff attempts. */
+#ifndef CTP_DEF_LOWPWR_ATTEMPT
+#define CTP_DEF_LOWPWR_ATTEMPT      0x200
+#endif
+
+/* The number of baseband receive slots for sniff timeout. */
+#ifndef CTP_DEF_LOWPWR_TIMEOUT
+#define CTP_DEF_LOWPWR_TIMEOUT      0x200
+#endif
+
+/* This is set if CTP is to use park mode. */
+#ifndef CTP_PARK_INCLUDED
+#define CTP_PARK_INCLUDED           TRUE
+#endif
+
+/* This is set if CTP is to use sniff mode. */
+#ifndef CTP_SNIFF_INCLUDED
+#define CTP_SNIFF_INCLUDED          TRUE
+#endif
+
+/* To include CTP data exchange functionality or not. */
+#ifndef CTP_DATA_EXCHG_FEATURE
+#define CTP_DATA_EXCHG_FEATURE      FALSE
+#endif
+
+/* To include CTP GW intercom functionality or not. */
+#ifndef CTP_GW_INTERCOM_FEATURE
+#define CTP_GW_INTERCOM_FEATURE     FALSE
+#endif
+
+/* The MTU size for L2CAP channel. */
+#ifndef CTP_MTU_SIZE
+#define CTP_MTU_SIZE                200
+#endif
+
+/* The L2CAP PSM for the data exchange feature. */
+#ifndef CTP_DATA_EXCHG_PSM
+#define CTP_DATA_EXCHG_PSM          13
+#endif
+
+/* The flush timeout for L2CAP channels. */
+#ifndef CTP_FLUSH_TO
+#define CTP_FLUSH_TO                0xFFFF
+#endif
+
+/* The default service name for CTP. */
+#ifndef CTP_DEFAULT_SERVICE_NAME
+#define CTP_DEFAULT_SERVICE_NAME    "Cordless Telephony"
+#endif
+
+/* The CTP security level. */
+#ifndef CTP_SECURITY_LEVEL
+#define CTP_SECURITY_LEVEL          (BTM_SEC_IN_AUTHORIZE | BTM_SEC_IN_AUTHENTICATE | BTM_SEC_IN_ENCRYPT)
+#endif
+
+/* The number of lines to the external network. */
+#ifndef CTP_MAX_LINES
+#define CTP_MAX_LINES               1
+#endif
+
+/* Test if the number of resources in TCS is consistent with CTP setting. */
+#ifndef CTP_TEST_FULL_TCS
+#define CTP_TEST_FULL_TCS           TRUE
+#endif
+
+/* The default inquiry mode. */
+#ifndef CTP_DEFAULT_INQUIRY_MODE
+#define CTP_DEFAULT_INQUIRY_MODE    BTM_GENERAL_INQUIRY
+#endif
+
+/* The default inquiry duration. */
+#ifndef CTP_DEFAULT_INQ_DURATION
+#define CTP_DEFAULT_INQ_DURATION    4
+#endif
+
+/* The maximum number of inquiry responses. */
+#ifndef CTP_DEFAULT_INQ_MAX_RESP
+#define CTP_DEFAULT_INQ_MAX_RESP    3
+#endif
+
+/* When TL does not create another L2CAP channel within this period of time GW declares that it's "Connected Limited". */
+#ifndef CTP_TL_CONN_TIMEOUT
+#define CTP_TL_CONN_TIMEOUT         5
+#endif
+
+/* The delay for ACL to completely disconnect (for intercom) before sending the connect request to GW. */
+#ifndef CTP_RECONNECT_DELAY
+#define CTP_RECONNECT_DELAY         5
+#endif
+
+/* How many times to retry connection when it has failed. */
+#ifndef CTP_RETRY_ON_CONN_ERR
+#define CTP_RETRY_ON_CONN_ERR       5
+#endif
+
+/******************************************************************************
+**
+** ICP
+**
+******************************************************************************/
+
+#ifndef ICP_INCLUDED
+#define ICP_INCLUDED                FALSE
+#endif
+
+/* The ICP default MTU. */
+#ifndef ICP_MTU_SIZE
+#define ICP_MTU_SIZE                100
+#endif
+
+/* The ICP security level. */
+#ifndef ICP_SECURITY_LEVEL
+#define ICP_SECURITY_LEVEL          BTM_SEC_NONE
+#endif
+
+/* The default service name for ICP. */
+#ifndef ICP_DEFAULT_SERVICE_NAME
+#define ICP_DEFAULT_SERVICE_NAME    "Intercom"
+#endif
+
+/* The flush timeout for L2CAP channels. */
+#ifndef ICP_FLUSH_TO
+#define ICP_FLUSH_TO                0xFFFF
+#endif
+
+/******************************************************************************
+**
+** SPP
+**
+******************************************************************************/
+
+#ifndef SPP_INCLUDED
+#define SPP_INCLUDED                FALSE
+#endif
+
+/* The SPP default MTU. */
+#ifndef SPP_DEFAULT_MTU
+#define SPP_DEFAULT_MTU             127
+#endif
+
+/* The interval, in seconds, that a client tries to reconnect to a service. */
+#ifndef SPP_RETRY_CONN_INTERVAL
+#define SPP_RETRY_CONN_INTERVAL     1
+#endif
+
+/* The SPP discoverable mode: limited or general. */
+#ifndef SPP_DISCOVERABLE_MODE
+#define SPP_DISCOVERABLE_MODE       BTM_GENERAL_DISCOVERABLE
+#endif
+
+/* The maximum number of inquiry results returned in by inquiry procedure. */
+#ifndef SPP_DEF_INQ_MAX_RESP
+#define SPP_DEF_INQ_MAX_RESP        10
+#endif
+
+/* The SPP discovery record size. */
+#ifndef SPP_DISC_REC_SIZE
+#define SPP_DISC_REC_SIZE           60
+#endif
+
+#ifndef SPP_MAX_RECS_PER_DEVICE
+#define SPP_MAX_RECS_PER_DEVICE     (SPP_DB_SIZE / SPP_DISC_REC_SIZE)
+#endif
+
+/* Inquiry duration in 1.28 second units. */
+#ifndef SPP_DEF_INQ_DURATION
+#define SPP_DEF_INQ_DURATION        9
+#endif
+
+/* keep the raw data received from SDP server in database. */
+#ifndef SDP_RAW_DATA_INCLUDED
+#define SDP_RAW_DATA_INCLUDED       TRUE
+#endif
+
+/* TRUE, to allow JV to create L2CAP connection on SDP PSM. */
+#ifndef SDP_FOR_JV_INCLUDED
+#define SDP_FOR_JV_INCLUDED         FALSE
+#endif
+
+/* Inquiry duration in 1.28 second units. */
+#ifndef SDP_DEBUG
+#define SDP_DEBUG                   TRUE
+#endif
+
+/******************************************************************************
+**
+** HSP2, HFP
+**
+******************************************************************************/
+
+#ifndef HSP2_INCLUDED
+#define HSP2_INCLUDED               FALSE
+#endif
+
+/* Include the ability to perform inquiry for peer devices. */
+#ifndef HSP2_INQUIRY_INCLUDED
+#define HSP2_INQUIRY_INCLUDED       TRUE
+#endif
+
+/* Include Audio Gateway specific code. */
+#ifndef HSP2_AG_INCLUDED
+#define HSP2_AG_INCLUDED            TRUE
+#endif
+
+/* Include Headset Specific Code. */
+#ifndef HSP2_HS_INCLUDED
+#define HSP2_HS_INCLUDED            TRUE
+#endif
+
+/* Include the ability to open an SCO connection for In-Band Ringing. */
+#ifndef HSP2_IB_RING_INCLUDED
+#define HSP2_IB_RING_INCLUDED       TRUE
+#endif
+
+/* Include the ability to repeat a ring. */
+#ifndef HSP2_AG_REPEAT_RING
+#define HSP2_AG_REPEAT_RING         TRUE
+#endif
+
+#ifndef HSP2_APP_CLOSES_ON_CKPD
+#define HSP2_APP_CLOSES_ON_CKPD     FALSE
+#endif
+
+
+/* Include the ability to park a connection. */
+#ifndef HSP2_PARK_INCLUDED
+#define HSP2_PARK_INCLUDED          TRUE
+#endif
+
+/* Include HSP State Machine debug trace messages. */
+#ifndef HSP2_FSM_DEBUG
+#define HSP2_FSM_DEBUG              TRUE
+#endif
+
+/* The Module's Inquiry Scan Window. */
+#ifndef HSP2_INQ_SCAN_WINDOW
+#define HSP2_INQ_SCAN_WINDOW        0
+#endif
+
+/* The Module's Inquiry Scan Interval. */
+#ifndef HSP2_INQ_SCAN_INTERVAL
+#define HSP2_INQ_SCAN_INTERVAL      0
+#endif
+
+/* The Module's Page Scan Interval. */
+#ifndef HSP2_PAGE_SCAN_INTERVAL
+#define HSP2_PAGE_SCAN_INTERVAL     0
+#endif
+
+/* The Module's Page Scan Window. */
+#ifndef HSP2_PAGE_SCAN_WINDOW
+#define HSP2_PAGE_SCAN_WINDOW       0
+#endif
+
+/* The Park Mode's Minimum Beacon Period. */
+#ifndef HSP2_BEACON_MIN_PERIOD
+#define HSP2_BEACON_MIN_PERIOD      450
+#endif
+
+/* The Park Mode's Maximum Beacon Period. */
+#ifndef HSP2_BEACON_MAX_PERIOD
+#define HSP2_BEACON_MAX_PERIOD      500
+#endif
+
+/* The duration of the inquiry in seconds. */
+#ifndef HSP2_INQ_DURATION
+#define HSP2_INQ_DURATION           4
+#endif
+
+/* Maximum number of peer responses during an inquiry. */
+#ifndef HSP2_INQ_MAX_NUM_RESPS
+#define HSP2_INQ_MAX_NUM_RESPS      3
+#endif
+
+/* Maximum number of times to retry an inquiry prior to failure. */
+#ifndef HSP2_MAX_INQ_RETRY
+#define HSP2_MAX_INQ_RETRY          6
+#endif
+
+/* Maximum number of times to retry an RFCOMM connection prior to failure. */
+#ifndef HSP2_MAX_CONN_RETRY
+#define HSP2_MAX_CONN_RETRY         3
+#endif
+
+/* If the connect request failed for authentication reasons, do not retry */
+#ifndef HSP2_NO_RETRY_ON_AUTH_FAIL
+#define HSP2_NO_RETRY_ON_AUTH_FAIL  TRUE
+#endif
+
+/* Maximum number of characters in an HSP2 device name. */
+#ifndef HSP2_MAX_NAME_LEN
+#define HSP2_MAX_NAME_LEN           32
+#endif
+
+/* The minimum speaker and/or microphone gain setting. */
+#ifndef HSP2_MIN_GAIN
+#define HSP2_MIN_GAIN               0
+#endif
+
+/* The maximum speaker and/or microphone setting. */
+#ifndef HSP2_MAX_GAIN
+#define HSP2_MAX_GAIN               15
+#endif
+
+/* The default value to send on an AT+CKPD. */
+#ifndef HSP2_KEYPRESS_DEFAULT
+#define HSP2_KEYPRESS_DEFAULT       200
+#endif
+
+/* Maximum amount a data that can be received per RFCOMM frame. */
+#ifndef HSP2_MAX_RFC_READ_LEN
+#define HSP2_MAX_RFC_READ_LEN       128
+#endif
+
+/* The time in seconds to wait for completion of a partial AT command or response from the peer. */
+#ifndef HSP2_AT_TO_INTERVAL
+#define HSP2_AT_TO_INTERVAL         30
+#endif
+
+/* The time to wait before repeating a ring to a peer Headset. */
+#ifndef HSP2_REPEAT_RING_TO
+#define HSP2_REPEAT_RING_TO         4
+#endif
+
+/* Time to wait for a response for an AT command */
+#ifndef HSP2_AT_RSP_TO
+#define HSP2_AT_RSP_TO              20
+#endif
+
+/* SCO packet type(s) to use (bitmask: see spec), 0 - device default (recommended) */
+#ifndef HSP2_SCO_PKT_TYPES
+#define HSP2_SCO_PKT_TYPES          ((UINT16)0x0000)
+#endif
+
+/* The default settings of the SCO voice link. */
+#ifndef HSP2_DEFAULT_VOICE_SETTINGS
+#define HSP2_DEFAULT_VOICE_SETTINGS (HCI_INP_CODING_LINEAR | HCI_INP_DATA_FMT_2S_COMPLEMENT | HCI_INP_SAMPLE_SIZE_16BIT | HCI_AIR_CODING_FORMAT_CVSD)
+#endif
+
+#ifndef HSP2_MAX_AT_CMD_LENGTH
+#define HSP2_MAX_AT_CMD_LENGTH       16
+#endif
+
+#ifndef HSP2_MAX_AT_VAL_LENGTH
+#if (defined(HFP_INCLUDED) && HFP_INCLUDED == TRUE)
+#define HSP2_MAX_AT_VAL_LENGTH       310
+#else
+#define HSP2_MAX_AT_VAL_LENGTH       5
+#endif
+#endif
+
+
+#ifndef HSP2_SDP_DB_SIZE
+#define HSP2_SDP_DB_SIZE             300
+#endif
+
+
+/******************************************************************************
+**
+** HFP
+**
+******************************************************************************/
+
+#ifndef HFP_INCLUDED
+#define HFP_INCLUDED                FALSE
+#endif
+
+/* Include Audio Gateway specific code. */
+#ifndef HFP_AG_INCLUDED
+#define HFP_AG_INCLUDED             TRUE
+#endif
+
+/* Include Hand Free Specific Code. */
+#ifndef HFP_HF_INCLUDED
+#define HFP_HF_INCLUDED             TRUE
+#endif
+
+/* Use AT interface instead of full blown API */
+#ifndef AT_INTERFACE
+#define AT_INTERFACE            FALSE
+#endif
+
+/* HFP Manages SCO establishement for various procedures */
+#ifndef HFP_SCO_MGMT_INCLUDED
+#define HFP_SCO_MGMT_INCLUDED             TRUE
+#endif
+
+/* CCAP compliant features and behavior desired */
+#ifndef CCAP_COMPLIANCE
+#define CCAP_COMPLIANCE             TRUE
+#endif
+
+/* Caller ID string, part of +CLIP result code */
+#ifndef HFP_MAX_CLIP_INFO
+#define HFP_MAX_CLIP_INFO             45
+#endif
+
+#ifndef HFP_RPT_PEER_INFO_INCLUDED
+#define HFP_RPT_PEER_INFO_INCLUDED  TRUE  /* Reporting of peer features enabled */
+#endif
+
+/******************************************************************************
+**
+** HID
+**
+******************************************************************************/
+
+/* HID Device Role Included */
+#ifndef HID_DEV_INCLUDED
+#define HID_DEV_INCLUDED             FALSE
+#endif
+
+#ifndef HID_DEV_PM_INCLUDED
+#define HID_DEV_PM_INCLUDED         TRUE
+#endif
+
+/* The HID Device is a virtual cable */
+#ifndef HID_DEV_VIRTUAL_CABLE
+#define HID_DEV_VIRTUAL_CABLE       TRUE
+#endif
+
+/* The HID device initiates the reconnections */
+#ifndef HID_DEV_RECONN_INITIATE
+#define HID_DEV_RECONN_INITIATE     TRUE
+#endif
+
+/* THe HID device is normally connectable */
+#ifndef HID_DEV_NORMALLY_CONN
+#define HID_DEV_NORMALLY_CONN       FALSE
+#endif
+
+/* The device is battery powered */
+#ifndef HID_DEV_BATTERY_POW
+#define HID_DEV_BATTERY_POW         TRUE
+#endif
+
+/* Device is capable of waking up the host */
+#ifndef HID_DEV_REMOTE_WAKE
+#define HID_DEV_REMOTE_WAKE         TRUE
+#endif
+
+/* Device needs host to close SDP channel after SDP is over */
+#ifndef HID_DEV_SDP_DISABLE
+#define HID_DEV_SDP_DISABLE         TRUE
+#endif
+
+#ifndef HID_DEV_MTU_SIZE
+#define HID_DEV_MTU_SIZE                 64
+#endif
+
+#ifndef HID_DEV_FLUSH_TO
+#define HID_DEV_FLUSH_TO                 0xffff
+#endif
+
+#ifndef HID_DEV_PAGE_SCAN_WIN
+#define HID_DEV_PAGE_SCAN_WIN       (0)
+#endif
+
+#ifndef HID_DEV_PAGE_SCAN_INT
+#define HID_DEV_PAGE_SCAN_INT       (0)
+#endif
+
+#ifndef HID_DEV_MAX_CONN_RETRY
+#define HID_DEV_MAX_CONN_RETRY      (15)
+#endif
+
+#ifndef HID_DEV_REPAGE_WIN
+#define HID_DEV_REPAGE_WIN          (1)
+#endif
+
+#ifndef HID_DEV_SVC_NAME
+#define HID_DEV_SVC_NAME            "HID"
+#endif
+
+#ifndef HID_DEV_SVC_DESCR
+#define HID_DEV_SVC_DESCR           "3-button mouse and keyboard"
+#endif
+
+#ifndef HID_DEV_PROVIDER_NAME
+#define HID_DEV_PROVIDER_NAME       "Widcomm"
+#endif
+
+#ifndef HID_DEV_REL_NUM
+#define HID_DEV_REL_NUM             0x0100
+#endif
+
+#ifndef HID_DEV_PARSER_VER
+#define HID_DEV_PARSER_VER          0x0111
+#endif
+
+#ifndef HID_DEV_SUBCLASS
+#define HID_DEV_SUBCLASS            COD_MINOR_POINTING
+#endif
+
+#ifndef HID_DEV_COUNTRY_CODE
+#define HID_DEV_COUNTRY_CODE        0x33
+#endif
+
+#ifndef HID_DEV_SUP_TOUT
+#define HID_DEV_SUP_TOUT            0x8000
+#endif
+
+#ifndef HID_DEV_NUM_LANGS
+#define HID_DEV_NUM_LANGS           1
+#endif
+
+#ifndef HID_DEV_INACT_TIMEOUT
+#define HID_DEV_INACT_TIMEOUT       60
+#endif
+
+#ifndef HID_DEV_BUSY_MODE_PARAMS
+#define HID_DEV_BUSY_MODE_PARAMS    { 320, 160, 10, 20, HCI_MODE_ACTIVE }
+#endif
+
+#ifndef HID_DEV_IDLE_MODE_PARAMS
+#define HID_DEV_IDLE_MODE_PARAMS    { 320, 160, 10, 20, HCI_MODE_SNIFF }
+#endif
+
+#ifndef HID_DEV_SUSP_MODE_PARAMS
+#define HID_DEV_SUSP_MODE_PARAMS    { 640, 320,  0,    0, HCI_MODE_PARK }
+#endif
+
+#ifndef HID_DEV_MAX_DESCRIPTOR_SIZE
+#define HID_DEV_MAX_DESCRIPTOR_SIZE      128     /* Max descriptor size          */
+#endif
+
+#ifndef HID_DEV_LANGUAGELIST
+#define HID_DEV_LANGUAGELIST             {0x35, 0x06, 0x09, 0x04, 0x09, 0x09, 0x01, 0x00}
+#endif
+
+#ifndef HID_DEV_LINK_SUPERVISION_TO
+#define HID_DEV_LINK_SUPERVISION_TO      0x8000
+#endif
+
+#ifndef HID_CONTROL_POOL_ID
+#define HID_CONTROL_POOL_ID             2
+#endif
+
+#ifndef HID_INTERRUPT_POOL_ID
+#define HID_INTERRUPT_POOL_ID           2
+#endif
+
+/*************************************************************************
+** Definitions for Both HID-Host & Device
+*/
+#ifndef HID_MAX_SVC_NAME_LEN
+#define HID_MAX_SVC_NAME_LEN  32
+#endif
+
+#ifndef HID_MAX_SVC_DESCR_LEN
+#define HID_MAX_SVC_DESCR_LEN 32
+#endif
+
+#ifndef HID_MAX_PROV_NAME_LEN
+#define HID_MAX_PROV_NAME_LEN 32
+#endif
+
+/*************************************************************************
+** Definitions for HID-Host
+*/
+#ifndef  HID_HOST_INCLUDED
+#define HID_HOST_INCLUDED           TRUE
+#endif
+
+#ifndef HID_HOST_MAX_DEVICES
+#define HID_HOST_MAX_DEVICES        7
+#endif
+
+#ifndef HID_HOST_MTU
+#define HID_HOST_MTU                640
+#endif
+
+#ifndef HID_HOST_FLUSH_TO
+#define HID_HOST_FLUSH_TO                 0xffff
+#endif
+
+#ifndef HID_HOST_MAX_CONN_RETRY
+#define HID_HOST_MAX_CONN_RETRY     (3)
+#endif
+
+#ifndef HID_HOST_REPAGE_WIN
+#define HID_HOST_REPAGE_WIN          (2)
+#endif
+
+
+/******************************************************************************
+**
+** DUN and FAX
+**
+******************************************************************************/
+
+#ifndef DUN_INCLUDED
+#define DUN_INCLUDED                FALSE
+#endif
+
+
+/******************************************************************************
+**
+** GOEP
+**
+******************************************************************************/
+
+#ifndef GOEP_INCLUDED
+#define GOEP_INCLUDED               FALSE
+#endif
+
+/* This is set to enable GOEP non-blocking file system access functions. */
+#ifndef GOEP_FS_INCLUDED
+#define GOEP_FS_INCLUDED        FALSE
+#endif
+
+/* GOEP authentication key size. */
+#ifndef GOEP_MAX_AUTH_KEY_SIZE
+#define GOEP_MAX_AUTH_KEY_SIZE      16
+#endif
+
+/* Maximum size of the realm authentication string. */
+#ifndef GOEP_MAX_AUTH_REALM_SIZE
+#define GOEP_MAX_AUTH_REALM_SIZE    16
+#endif
+
+/* Realm Character Set */
+#ifndef GOEP_REALM_CHARSET
+#define GOEP_REALM_CHARSET          0       /* ASCII */
+#endif
+
+/* This is set to the maximum length of path name allowed in the system (_MAX_PATH). */
+#ifndef GOEP_MAX_PATH_SIZE
+#define GOEP_MAX_PATH_SIZE          255
+#endif
+
+/* Specifies whether or not client's user id is required during obex authentication */
+#ifndef GOEP_SERVER_USERID_REQUIRED
+#define GOEP_SERVER_USERID_REQUIRED FALSE
+#endif
+
+/* This is set to the maximum length of file name allowed in the system (_MAX_FNAME). */
+#ifndef GOEP_MAX_FILE_SIZE
+#define GOEP_MAX_FILE_SIZE          128
+#endif
+
+/* Character used as path separator */
+#ifndef GOEP_PATH_SEPARATOR
+#define GOEP_PATH_SEPARATOR         ((char) 0x5c)   /* 0x2f ('/'), or 0x5c ('\') */
+#endif
+
+/******************************************************************************
+**
+** OPP
+**
+******************************************************************************/
+
+#ifndef OPP_INCLUDED
+#define OPP_INCLUDED                FALSE
+#endif
+
+/* This is set to enable OPP client capabilities. */
+#ifndef OPP_CLIENT_INCLUDED
+#define OPP_CLIENT_INCLUDED         FALSE
+#endif
+
+/* This is set to enable OPP server capabilities. */
+#ifndef OPP_SERVER_INCLUDED
+#define OPP_SERVER_INCLUDED         FALSE
+#endif
+
+/* if the optional formating functions are to be included or not */
+#ifndef OPP_FORMAT_INCLUDED
+#define OPP_FORMAT_INCLUDED         FALSE
+#endif
+
+/* Maximum number of client sessions allowed by server */
+#ifndef OPP_MAX_SRVR_SESS
+#define OPP_MAX_SRVR_SESS           3
+#endif
+
+/******************************************************************************
+**
+** FTP
+**
+******************************************************************************/
+
+#ifndef FTP_INCLUDED
+#define FTP_INCLUDED                FALSE
+#endif
+
+/* This is set to enable FTP client capabilities. */
+#ifndef FTP_CLIENT_INCLUDED
+#define FTP_CLIENT_INCLUDED         TRUE
+#endif
+
+/* This is set to enable FTP server capabilities. */
+#ifndef FTP_SERVER_INCLUDED
+#define FTP_SERVER_INCLUDED         TRUE
+#endif
+
+/******************************************************************************
+**
+** XML Parser
+**
+******************************************************************************/
+
+#ifndef XML_STACK_SIZE
+#define XML_STACK_SIZE             7
+#endif
+
+/******************************************************************************
+**
+** BPP Printer
+**
+******************************************************************************/
+#ifndef BPP_DEBUG
+#define BPP_DEBUG            FALSE
+#endif
+
+#ifndef BPP_INCLUDED
+#define BPP_INCLUDED                FALSE
+#endif
+
+#ifndef BPP_SND_INCLUDED
+#define BPP_SND_INCLUDED            FALSE
+#endif
+
+/* Maximum number of senders allowed to connect simultaneously
+** The maximum is 6 or (OBX_NUM_SERVERS / 2), whichever is smaller
+*/
+#ifndef BPP_PR_MAX_CON
+#define BPP_PR_MAX_CON         3
+#endif
+
+/* Service Name. maximum length: 248
+#ifndef BPP_SERVICE_NAME
+#define BPP_SERVICE_NAME            "Basic Printing"
+#endif
+ */
+/* Document Format Supported. ASCII comma-delimited list of MIME type:version string
+#ifndef BPP_DOC_FORMAT_SUPPORTED
+#define BPP_DOC_FORMAT_SUPPORTED    "application/vnd.pwg-xhtml-print:1.0,application/vnd.hp-PCL:5E,application/PDF"
+#endif
+
+#ifndef BPP_DOC_FORMAT_SUPPORTED_LEN
+#define BPP_DOC_FORMAT_SUPPORTED_LEN    77
+#endif
+ */
+/* Character repertoires.
+#ifndef BPP_CHARACTER_REPERTOIRES
+#define BPP_CHARACTER_REPERTOIRES {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01}
+#endif
+ */
+/* XHTML formats.
+#ifndef BPP_XHTML_PRINT_FORMATS
+#define BPP_XHTML_PRINT_FORMATS     "image/gif:89A,image/jpeg"
+#endif
+
+#ifndef BPP_XHTML_PRINT_FORMATS_LEN
+#define BPP_XHTML_PRINT_FORMATS_LEN 24
+#endif
+ */
+/* Color supported.
+#ifndef BPP_COLOR_SUPORTED
+#define BPP_COLOR_SUPORTED          FALSE
+#endif
+ */
+/* 1284 ID string. First 2 bytes are the length.
+#ifndef BPP_1284ID
+#define BPP_1284ID                  "\x00\x48MANUFACTURER:ACME Manufacturing;COMMAND SET:PCL,MPL;MODEL:LaserBeam \?;"
+#endif
+
+#ifndef BPP_1284ID_LEN
+#define BPP_1284ID_LEN              72
+#endif
+ */
+/* Printer name.
+#ifndef BPP_PRINTER_NAME
+#define BPP_PRINTER_NAME            "My Printer"
+#endif
+
+#ifndef BPP_PRINTER_NAME_LEN
+#define BPP_PRINTER_NAME_LEN        10
+#endif
+ */
+
+/* Printer location.
+#ifndef BPP_PRINTER_LOCATION
+#define BPP_PRINTER_LOCATION        "Hotel Lobby"
+#endif
+
+#ifndef BPP_PRINTER_LOCATION_LEN
+#define BPP_PRINTER_LOCATION_LEN    11
+#endif
+ */
+/* Duplex printing supported.
+#ifndef BPP_DUPLEX_SUPPORTED
+#define BPP_DUPLEX_SUPPORTED        TRUE
+#endif
+ */
+
+/* Media types supported.
+#ifndef BPP_MEDIA_TYPES_SUPPORTED
+#define BPP_MEDIA_TYPES_SUPPORTED   "stationary,continuous-long,photographic-high-gloss,cardstock"
+#endif
+
+#ifndef BPP_MEDIA_TYPES_SUPPORTED_LEN
+#define BPP_MEDIA_TYPES_SUPPORTED_LEN   60
+#endif
+ */
+/* Maximum media with supported.
+#ifndef BPP_MAX_MEDIA_WIDTH
+#define BPP_MAX_MEDIA_WIDTH         205
+#endif
+ */
+/* Maximum media length supported.
+#ifndef BPP_MAX_MEDIA_LENGTH
+#define BPP_MAX_MEDIA_LENGTH        285
+#endif
+ */
+/* the maximum string len for the media size of medium loaded */
+#ifndef BPP_MEDIA_SIZE_LEN
+#define BPP_MEDIA_SIZE_LEN          33
+#endif
+
+/* Debug Trace the SOAP object, if TRUE */
+#ifndef BPP_TRACE_XML
+#define BPP_TRACE_XML               TRUE
+#endif
+
+/* in case that the SOAP object does not all come in one OBEX packet,
+ * this size of data may be kept in the BPP control block for continuing parsing.
+ * The maximum is the size of the biggest GKI buffer (GKI_MAX_BUF_SIZE) */
+#ifndef BPP_SOAP_KEEP_SIZE
+#define BPP_SOAP_KEEP_SIZE          200
+#endif
+
+
+/******************************************************************************
+**
+** BIP
+**
+******************************************************************************/
+#ifndef BIP_INCLUDED
+#define BIP_INCLUDED                FALSE
+#endif
+
+/* TRUE to include imaging initiator */
+#ifndef BIP_INITR_INCLUDED
+#define BIP_INITR_INCLUDED          FALSE
+#endif
+
+/* TRUE to include imaging responder */
+#ifndef BIP_RSPDR_INCLUDED
+#define BIP_RSPDR_INCLUDED          FALSE
+#endif
+
+/* TRUE to include image push feature */
+#ifndef BIP_PUSH_INCLUDED
+#define BIP_PUSH_INCLUDED           TRUE
+#endif
+
+/* TRUE to include image pull feature */
+#ifndef BIP_PULL_INCLUDED
+#define BIP_PULL_INCLUDED           TRUE
+#endif
+
+/* TRUE to include advanced image printing feature */
+#ifndef BIP_PRINTING_INCLUDED
+#define BIP_PRINTING_INCLUDED       TRUE
+#endif
+
+/* TRUE to include automatic archive feature */
+#ifndef BIP_ARCHIVE_INCLUDED
+#define BIP_ARCHIVE_INCLUDED        TRUE
+#endif
+
+/* TRUE to include remote camera feature */
+#ifndef BIP_CAMERA_INCLUDED
+#define BIP_CAMERA_INCLUDED         TRUE
+#endif
+
+/* TRUE to include remote display feature */
+#ifndef BIP_DISPLAY_INCLUDED
+#define BIP_DISPLAY_INCLUDED        TRUE
+#endif
+
+/* TRUE to include sanity check code for API functions */
+#ifndef BIP_SANITY_CHECKS
+#define BIP_SANITY_CHECKS           TRUE
+#endif
+
+/* TRUE to show the received XML object in trace for conformance tests */
+#ifndef BIP_TRACE_XML
+#define BIP_TRACE_XML               TRUE
+#endif
+
+/* in case that the received XML object is not complete, the XML parser state machine needs
+ * to keep a copy of the data from the last '<'
+ * This macro specifies the maximun amount of data for this purpose */
+#ifndef BIP_XML_CARRY_OVER_LEN
+#define BIP_XML_CARRY_OVER_LEN      100
+#endif
+
+/* minimum 4, maximum is 255. The value should be set to the maximum size of encoding string + 1. JPEG2000.
+ * If vendor specific format is supported, it might be bigger than 9 */
+#ifndef BIP_IMG_ENCODE_SIZE
+#define BIP_IMG_ENCODE_SIZE         9
+#endif
+
+/* MIME type: text/plain */
+#ifndef BIP_TYPE_SIZE
+#define BIP_TYPE_SIZE               20
+#endif
+
+/* example: iso-8895-1 */
+#ifndef BIP_CHARSET_SIZE
+#define BIP_CHARSET_SIZE            10
+#endif
+
+/* friendly name */
+#ifndef BIP_FNAME_SIZE
+#define BIP_FNAME_SIZE              20
+#endif
+
+/* service name */
+#ifndef BIP_SNAME_SIZE
+#define BIP_SNAME_SIZE              60
+#endif
+
+/* temporary storage file name(for file system access, may include path) */
+#ifndef BIP_TEMP_NAME_SIZE
+#define BIP_TEMP_NAME_SIZE          200
+#endif
+
+/* image file name */
+#ifndef BIP_IMG_NAME_SIZE
+#define BIP_IMG_NAME_SIZE           200
+#endif
+
+/* attachment file name */
+#ifndef BIP_ATT_NAME_SIZE
+#define BIP_ATT_NAME_SIZE           200
+#endif
+
+/* object (image, attachment, thumbnail) file name (may be used for file system) */
+#ifndef BIP_OBJ_NAME_SIZE
+#define BIP_OBJ_NAME_SIZE           200
+#endif
+
+
+
+/******************************************************************************
+**
+** HCRP
+**
+******************************************************************************/
+
+#ifndef HCRP_INCLUDED
+#define HCRP_INCLUDED               FALSE
+#endif
+
+/* This is set to enable server. */
+#ifndef HCRP_SERVER_INCLUDED
+#define HCRP_SERVER_INCLUDED       FALSE
+#endif
+
+/* This is set to enable client. */
+#ifndef HCRP_CLIENT_INCLUDED
+#define HCRP_CLIENT_INCLUDED        FALSE
+#endif
+
+/* TRUE enables the notification option of the profile. */
+#ifndef HCRP_NOTIFICATION_INCLUDED
+#define HCRP_NOTIFICATION_INCLUDED  TRUE
+#endif
+
+/* TRUE enables the vendor specific option of the profile. */
+#ifndef HCRP_VENDOR_SPEC_INCLUDED
+#define HCRP_VENDOR_SPEC_INCLUDED   TRUE
+#endif
+
+/* TRUE enables state machine traces. */
+#ifndef HCRP_FSM_DEBUG
+#define HCRP_FSM_DEBUG              FALSE
+#endif
+
+/* TRUE enables protocol message traces. */
+#ifndef HCRP_PROTO_DEBUG
+#define HCRP_PROTO_DEBUG            FALSE
+#endif
+
+/* Maximum length used to store the service name (Minimum 1). */
+#ifndef HCRP_MAX_SERVICE_NAME_LEN
+#define HCRP_MAX_SERVICE_NAME_LEN   32
+#endif
+
+/* Maximum length used to store the device name (Minimum 1). */
+#ifndef HCRP_MAX_DEVICE_NAME_LEN
+#define HCRP_MAX_DEVICE_NAME_LEN    32
+#endif
+
+/* Maximum length of device location (Minimum 1) */
+#ifndef HCRP_MAX_DEVICE_LOC_LEN
+#define HCRP_MAX_DEVICE_LOC_LEN     32
+#endif
+
+/* Maximum length used to store the friendly name (Minimum 1). */
+#ifndef HCRP_MAX_FRIENDLY_NAME_LEN
+#define HCRP_MAX_FRIENDLY_NAME_LEN  32
+#endif
+
+/* Maximum length used to store the 1284 id string (Minimum 2 byte length field). */
+#ifndef HCRP_MAX_SDP_1284_ID_LEN
+#define HCRP_MAX_SDP_1284_ID_LEN    128
+#endif
+
+/* Maximum length for parameters to be processed for vendor specific commands. */
+#ifndef HCRP_MAX_VEND_SPEC_LEN
+#define HCRP_MAX_VEND_SPEC_LEN      4
+#endif
+
+/* Number of seconds to wait for 2nd GAP to open. */
+#ifndef HCRP_OPEN_CHAN_TOUT
+#define HCRP_OPEN_CHAN_TOUT         5
+#endif
+
+/* Number of seconds to wait for 2nd GAP to close. */
+#ifndef HCRP_CLOSE_CHAN_TOUT
+#define HCRP_CLOSE_CHAN_TOUT        3
+#endif
+
+/* Number of seconds to wait for the application to respond to a protocol request. */
+#ifndef HCRP_APPL_RSP_TOUT
+#define HCRP_APPL_RSP_TOUT          5
+#endif
+
+/* Number of seconds to wait for the peer device to respond to a protocol request. */
+#ifndef HCRP_CMD_RSP_TOUT
+#define HCRP_CMD_RSP_TOUT           7
+#endif
+
+/* Number of seconds between subsequent credit requests to the server when the send watermark has been exceeded. */
+#ifndef HCRP_CREDIT_REQ_UPDATES
+#define HCRP_CREDIT_REQ_UPDATES     1
+#endif
+
+/* Maximum number of results to return in a HCRP_FindServices search. */
+#ifndef HCRP_MAX_SEARCH_RESULTS
+#define HCRP_MAX_SEARCH_RESULTS     1
+#endif
+
+/* Maximum number of bytes to be reserved for searching for the client's notification record. */
+#ifndef HCRP_MAX_NOTIF_DISC_BUF
+#define HCRP_MAX_NOTIF_DISC_BUF     300
+#endif
+
+/* Maximum number of clients the server will allow to be registered for notifications. */
+#ifndef HCRP_MAX_NOTIF_CLIENTS
+#define HCRP_MAX_NOTIF_CLIENTS      3
+#endif
+
+/* Spec says minimum of two notification retries. */
+#ifndef HCRP_NOTIF_NUM_RETRIES
+#define HCRP_NOTIF_NUM_RETRIES      4
+#endif
+
+/*************************************************************************
+** Definitions for Multi-Client Server HCRP
+** Note: Many of the above HCRP definitions are also used
+** Maximum number of clients allowed to connect simultaneously
+** Must be less than ((GAP_MAX_CONNECTIONS - 1) / 2)
+*/
+#ifndef HCRPM_MAX_CLIENTS
+#define HCRPM_MAX_CLIENTS           3
+#endif
+
+
+/******************************************************************************
+**
+** PAN
+**
+******************************************************************************/
+
+#ifndef PAN_INCLUDED
+#define PAN_INCLUDED                FALSE
+#endif
+
+
+/******************************************************************************
+**
+** SAP
+**
+******************************************************************************/
+
+#ifndef SAP_SERVER_INCLUDED
+#define SAP_SERVER_INCLUDED         FALSE
+#endif
+
+
+/*************************************************************************
+ * A2DP Definitions
+ */
+#ifndef A2D_INCLUDED
+#define A2D_INCLUDED            TRUE
+#endif
+
+/* TRUE to include SBC utility functions */
+#ifndef A2D_SBC_INCLUDED
+#define A2D_SBC_INCLUDED        A2D_INCLUDED
+#endif
+
+/* TRUE to include MPEG-1,2 (mp3) utility functions */
+#ifndef A2D_M12_INCLUDED
+#define A2D_M12_INCLUDED        A2D_INCLUDED
+#endif
+
+/* TRUE to include MPEG-2,4 (aac) utility functions */
+#ifndef A2D_M24_INCLUDED
+#define A2D_M24_INCLUDED        A2D_INCLUDED
+#endif
+
+/******************************************************************************
+**
+** AVCTP
+**
+******************************************************************************/
+
+#ifndef AVCT_INCLUDED
+#define AVCT_INCLUDED               TRUE
+#endif
+
+/* Number of simultaneous ACL links to different peer devices. */
+#ifndef AVCT_NUM_LINKS
+#define AVCT_NUM_LINKS              2
+#endif
+
+/* Number of simultaneous AVCTP connections. */
+#ifndef AVCT_NUM_CONN
+#define AVCT_NUM_CONN               3
+#endif
+
+/* Pool ID where to reassemble the SDU.
+   This Pool allows buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef AVCT_BR_USER_RX_POOL_ID
+#define AVCT_BR_USER_RX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/* Pool ID where to hold the SDU.
+   This Pool allows buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef AVCT_BR_USER_TX_POOL_ID
+#define AVCT_BR_USER_TX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments during SDU reassembly
+*/
+#ifndef AVCT_BR_FCR_RX_POOL_ID
+#define AVCT_BR_FCR_RX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments used in (re)transmissions.
+L2CAP_DEFAULT_ERM_POOL_ID is specified to use the HCI ACL data pool.
+Note:  This pool needs to have enough buffers to hold two times the window size negotiated
+ in the tL2CAP_FCR_OPTIONS (2 * tx_win_size)  to allow for retransmissions.
+ The size of each buffer must be able to hold the maximum MPS segment size passed in
+ tL2CAP_FCR_OPTIONS plus BT_HDR (8) + HCI preamble (4) + L2CAP_MIN_OFFSET (11 - as of BT 2.1 + EDR Spec).
+*/
+#ifndef AVCT_BR_FCR_TX_POOL_ID
+#define AVCT_BR_FCR_TX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* AVCTP Browsing channel FCR Option:
+Size of the transmission window when using enhanced retransmission mode. Not used
+in basic and streaming modes. Range: 1 - 63
+*/
+#ifndef AVCT_BR_FCR_OPT_TX_WINDOW_SIZE
+#define AVCT_BR_FCR_OPT_TX_WINDOW_SIZE      10
+#endif
+
+/* AVCTP Browsing channel FCR Option:
+Number of transmission attempts for a single I-Frame before taking
+Down the connection. Used In ERTM mode only. Value is Ignored in basic and
+Streaming modes.
+Range: 0, 1-0xFF
+0 - infinite retransmissions
+1 - single transmission
+*/
+#ifndef AVCT_BR_FCR_OPT_MAX_TX_B4_DISCNT
+#define AVCT_BR_FCR_OPT_MAX_TX_B4_DISCNT    20
+#endif
+
+/* AVCTP Browsing channel FCR Option: Retransmission Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost I-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 2000 (2 secs) when supporting PBF.
+ */
+#ifndef AVCT_BR_FCR_OPT_RETX_TOUT
+#define AVCT_BR_FCR_OPT_RETX_TOUT           2000
+#endif
+
+/* AVCTP Browsing channel FCR Option: Monitor Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost S-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 12000 (12 secs) when supporting PBF.
+*/
+#ifndef AVCT_BR_FCR_OPT_MONITOR_TOUT
+#define AVCT_BR_FCR_OPT_MONITOR_TOUT        12000
+#endif
+
+/******************************************************************************
+**
+** AVRCP
+**
+******************************************************************************/
+
+#ifndef AVRC_INCLUDED
+#define AVRC_INCLUDED               TRUE
+#endif
+
+/******************************************************************************
+**
+** MCAP
+**
+******************************************************************************/
+#ifndef MCA_INCLUDED
+#define MCA_INCLUDED                FALSE
+#endif
+
+/* TRUE to support Clock Synchronization OpCodes */
+#ifndef MCA_SYNC_INCLUDED
+#define MCA_SYNC_INCLUDED           FALSE
+#endif
+
+/* The MTU size for the L2CAP configuration on control channel. 48 is the minimal */
+#ifndef MCA_CTRL_MTU
+#define MCA_CTRL_MTU    60
+#endif
+
+/* The maximum number of registered MCAP instances. */
+#ifndef MCA_NUM_REGS
+#define MCA_NUM_REGS    3
+#endif
+
+/* The maximum number of control channels (to difference devices) per registered MCAP instances. */
+#ifndef MCA_NUM_LINKS
+#define MCA_NUM_LINKS   3
+#endif
+
+/* The maximum number of MDEP (including HDP echo) per registered MCAP instances. */
+#ifndef MCA_NUM_DEPS
+#define MCA_NUM_DEPS    3
+#endif
+
+/* The maximum number of MDL link per control channel. */
+#ifndef MCA_NUM_MDLS
+#define MCA_NUM_MDLS    4
+#endif
+
+/* Pool ID where to reassemble the SDU. */
+#ifndef MCA_USER_RX_POOL_ID
+#define MCA_USER_RX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/* Pool ID where to hold the SDU. */
+#ifndef MCA_USER_TX_POOL_ID
+#define MCA_USER_TX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments during SDU reassembly
+*/
+#ifndef MCA_FCR_RX_POOL_ID
+#define MCA_FCR_RX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments used in (re)transmissions.
+L2CAP_DEFAULT_ERM_POOL_ID is specified to use the HCI ACL data pool.
+Note:  This pool needs to have enough buffers to hold two times the window size negotiated
+ in the tL2CAP_FCR_OPTIONS (2 * tx_win_size)  to allow for retransmissions.
+ The size of each buffer must be able to hold the maximum MPS segment size passed in
+ tL2CAP_FCR_OPTIONS plus BT_HDR (8) + HCI preamble (4) + L2CAP_MIN_OFFSET (11 - as of BT 2.1 + EDR Spec).
+*/
+#ifndef MCA_FCR_TX_POOL_ID
+#define MCA_FCR_TX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* MCAP control channel FCR Option:
+Size of the transmission window when using enhanced retransmission mode.
+1 is defined by HDP specification for control channel.
+*/
+#ifndef MCA_FCR_OPT_TX_WINDOW_SIZE
+#define MCA_FCR_OPT_TX_WINDOW_SIZE      1
+#endif
+
+/* MCAP control channel FCR Option:
+Number of transmission attempts for a single I-Frame before taking
+Down the connection. Used In ERTM mode only. Value is Ignored in basic and
+Streaming modes.
+Range: 0, 1-0xFF
+0 - infinite retransmissions
+1 - single transmission
+*/
+#ifndef MCA_FCR_OPT_MAX_TX_B4_DISCNT
+#define MCA_FCR_OPT_MAX_TX_B4_DISCNT    20
+#endif
+
+/* MCAP control channel FCR Option: Retransmission Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost I-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 2000 (2 secs) when supporting PBF.
+ */
+#ifndef MCA_FCR_OPT_RETX_TOUT
+#define MCA_FCR_OPT_RETX_TOUT           2000
+#endif
+
+/* MCAP control channel FCR Option: Monitor Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost S-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 12000 (12 secs) when supporting PBF.
+*/
+#ifndef MCA_FCR_OPT_MONITOR_TOUT
+#define MCA_FCR_OPT_MONITOR_TOUT        12000
+#endif
+
+/* MCAP control channel FCR Option: Maximum PDU payload size.
+The maximum number of payload octets that the local device can receive in a single PDU.
+*/
+#ifndef MCA_FCR_OPT_MPS_SIZE
+#define MCA_FCR_OPT_MPS_SIZE            1000
+#endif
+
+/* Shared transport */
+#ifndef NFC_SHARED_TRANSPORT_ENABLED
+#define NFC_SHARED_TRANSPORT_ENABLED    FALSE
+#endif
+
+/******************************************************************************
+**
+** SER
+**
+******************************************************************************/
+
+#ifndef SER_INCLUDED
+#define SER_INCLUDED                FALSE
+#endif
+
+/* Task which runs the serial application. */
+#ifndef SER_TASK
+#define SER_TASK                    BTE_APPL_TASK
+#endif
+
+/* Mailbox used by serial application. */
+#ifndef SER_MBOX
+#define SER_MBOX                    TASK_MBOX_1
+#endif
+
+/* Mailbox mask. */
+#ifndef SER_MBOX_MASK
+#define SER_MBOX_MASK               TASK_MBOX_1_EVT_MASK
+#endif
+
+/* TX path application event. */
+#ifndef SER_TX_PATH_APPL_EVT
+#define SER_TX_PATH_APPL_EVT        EVENT_MASK(APPL_EVT_3)
+#endif
+
+/* RX path application event. */
+#ifndef SER_RX_PATH_APPL_EVT
+#define SER_RX_PATH_APPL_EVT        EVENT_MASK(APPL_EVT_4)
+#endif
+
+/******************************************************************************
+**
+** Sleep Mode (Low Power Mode)
+**
+******************************************************************************/
+
+#ifndef HCILP_INCLUDED
+#define HCILP_INCLUDED                  TRUE
+#endif
+
+/******************************************************************************
+**
+** RPC
+**
+******************************************************************************/
+
+#ifndef RPC_INCLUDED
+#define RPC_INCLUDED                FALSE
+#endif
+
+/* RPCT task mailbox ID for messages coming from rpcgen code. */
+#ifndef RPCT_MBOX
+#define RPCT_MBOX                   TASK_MBOX_0
+#endif
+
+/* RPCT task event for mailbox. */
+#ifndef RPCT_RPC_MBOX_EVT
+#define RPCT_RPC_MBOX_EVT           TASK_MBOX_0_EVT_MASK
+#endif
+
+/* RPCT task event from driver indicating RX data is ready. */
+#ifndef RPCT_RX_READY_EVT
+#define RPCT_RX_READY_EVT           APPL_EVT_0
+#endif
+
+/* RPCT task event from driver indicating data TX is done. */
+#ifndef RPCT_TX_DONE_EVT
+#define RPCT_TX_DONE_EVT            APPL_EVT_1
+#endif
+
+/* RPCT task event indicating data is in the circular buffer. */
+#ifndef RPCT_UCBUF_EVT
+#define RPCT_UCBUF_EVT              APPL_EVT_2
+#endif
+
+/* Task ID of RPCGEN task. */
+#ifndef RPCGEN_TASK
+#define RPCGEN_TASK                 BTU_TASK
+#endif
+
+/* RPCGEN task event for messages coming from RPCT. */
+#ifndef RPCGEN_MSG_EVT
+#define RPCGEN_MSG_EVT              TASK_MBOX_1_EVT_MASK
+#endif
+
+#ifndef RPCGEN_MSG_MBOX
+#define RPCGEN_MSG_MBOX             TASK_MBOX_1
+#endif
+
+/* Size of circular buffer used to store diagnostic messages. */
+#ifndef RPCT_UCBUF_SIZE
+#define RPCT_UCBUF_SIZE             2000
+#endif
+
+/******************************************************************************
+**
+** SAP - Sample applications
+**
+******************************************************************************/
+
+#ifndef MMI_INCLUDED
+#define MMI_INCLUDED                FALSE
+#endif
+
+/******************************************************************************
+**
+** APPL - Application Task
+**
+******************************************************************************/
+/* When TRUE indicates that an application task is to be run */
+#ifndef APPL_INCLUDED
+#define APPL_INCLUDED                TRUE
+#endif
+
+/* When TRUE remote terminal code included (RPC MUST be included) */
+#ifndef RSI_INCLUDED
+#define RSI_INCLUDED                TRUE
+#endif
+
+
+
+#define L2CAP_FEATURE_REQ_ID      73
+#define L2CAP_FEATURE_RSP_ID     173
+
+
+#define L2CAP_ENHANCED_FEATURES   0
+
+
+/******************************************************************************
+**
+** BTA
+**
+******************************************************************************/
+/* BTA EIR canned UUID list (default is dynamic) */
+#ifndef BTA_EIR_CANNED_UUID_LIST
+#define BTA_EIR_CANNED_UUID_LIST FALSE
+#endif
+
+/* Number of supported customer UUID in EIR */
+#ifndef BTA_EIR_SERVER_NUM_CUSTOM_UUID
+#define BTA_EIR_SERVER_NUM_CUSTOM_UUID     8
+#endif
+
+/* CHLD override for bluedroid */
+#ifndef BTA_AG_CHLD_VAL_ECC
+#define BTA_AG_CHLD_VAL_ECC  "(0,1,1x,2,2x,3)"
+#endif
+
+#ifndef BTA_AG_CHLD_VAL
+#define BTA_AG_CHLD_VAL  "(0,1,2,3)"
+#endif
+
+/* Set the CIND to match HFP 1.5 */
+#ifndef BTA_AG_CIND_INFO
+#define BTA_AG_CIND_INFO "(\"call\",(0,1)),(\"callsetup\",(0-3)),(\"service\",(0-1)),(\"signal\",(0-5)),(\"roam\",(0,1)),(\"battchg\",(0-5)),(\"callheld\",(0-2))"
+#endif
+
+
+/******************************************************************************
+**
+** BTE
+**
+******************************************************************************/
+#ifndef BTE_PLATFORM_IDLE
+#define BTE_PLATFORM_IDLE
+#endif
+
+#ifndef BTE_IDLE_TASK_INCLUDED
+#define BTE_IDLE_TASK_INCLUDED FALSE
+#endif
+
+#ifndef BTE_PLATFORM_INITHW
+#define BTE_PLATFORM_INITHW
+#endif
+
+#ifndef BTE_BTA_CODE_INCLUDED
+#define BTE_BTA_CODE_INCLUDED FALSE
+#endif
+
+/******************************************************************************
+**
+** BTTRC
+**
+******************************************************************************/
+/* Whether to parse and display traces-> Platform specific implementation */
+#ifndef BTTRC_DISP
+#define BTTRC_DISP        BTTRC_DispOnInsight
+#endif
+
+#endif /* BT_TARGET_H */
+/* end "revolution/BTE/include/bt_target.h" */
+#endif
+
+
+
+/* "libs/RVL_SDK/include/revolution/bte/gki/common/gki.h" line 33 "revolution/BTE/stack/include/bt_types.h" */
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef BT_TYPES_H
+#define BT_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 23 "revolution/BTE/gki/platform/data_types.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Move from ulinux/ to platform/
+ *      - Add #include for RVL types (include/types.h)
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/gki/platform/data_types.h" line 36 "types.h" */
+/* end "types.h" */
+
+typedef unsigned char   UINT8;
+typedef unsigned short  UINT16;
+typedef unsigned long   UINT32;
+typedef signed   long   INT32;
+typedef signed   char   INT8;
+typedef signed   short  INT16;
+typedef unsigned char   BOOLEAN;
+
+
+typedef UINT32          TIME_STAMP;
+
+#ifndef TRUE
+#define TRUE   (!FALSE)
+#endif
+
+typedef unsigned char   UBYTE;
+
+#ifdef __arm
+#define PACKED  __packed
+#define INLINE  __inline
+#else
+#define PACKED
+#define INLINE
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN FALSE
+#endif
+
+#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
+#define UINT16_HI_BYTE(x)       ((x) >> 8)
+
+
+#define BCM_STRCAT_S(x1,x2,x3)      strcat((x1),(x3))
+#define BCM_STRNCAT_S(x1,x2,x3,x4)  strncat((x1),(x3),(x4))
+#define BCM_STRCPY_S(x1,x2,x3)      strcpy((x1),(x3))
+#define BCM_STRNCPY_S(x1,x2,x3,x4)  strncpy((x1),(x3),(x4))
+
+
+
+#endif
+/* end "revolution/BTE/gki/platform/data_types.h" */
+
+#ifdef _WIN32
+#ifdef BLUESTACK_TESTER
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 27 "bte_stack_entry.h" */
+/* end "bte_stack_entry.h" */
+#endif
+#endif
+
+/* READ WELL !!
+**
+** This section defines global events. These are events that cross layers.
+** Any event that passes between layers MUST be one of these events. Tasks
+** can use their own events internally, but a FUNDAMENTAL design issue is
+** that global events MUST be one of these events defined below.
+**
+** The convention used is the the event name contains the layer that the
+** event is going to.
+*/
+#define BT_EVT_MASK                 0xFF00
+#define BT_SUB_EVT_MASK             0x00FF
+                                                /* To Bluetooth Upper Layers        */
+                                                /************************************/
+#define BT_EVT_TO_BTU_L2C_EVT       0x0900      /* L2CAP event */
+#define BT_EVT_TO_BTU_HCI_EVT       0x1000      /* HCI Event                        */
+#define BT_EVT_TO_BTU_HCI_BR_EDR_EVT (0x0000 | BT_EVT_TO_BTU_HCI_EVT)      /* event from BR/EDR controller */
+#define BT_EVT_TO_BTU_HCI_AMP1_EVT   (0x0001 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 1 controller */
+#define BT_EVT_TO_BTU_HCI_AMP2_EVT   (0x0002 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 2 controller */
+#define BT_EVT_TO_BTU_HCI_AMP3_EVT   (0x0003 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 3 controller */
+
+#define BT_EVT_TO_BTU_HCI_ACL       0x1100      /* ACL Data from HCI                */
+#define BT_EVT_TO_BTU_HCI_SCO       0x1200      /* SCO Data from HCI                */
+#define BT_EVT_TO_BTU_HCIT_ERR      0x1300      /* HCI Transport Error              */
+
+#define BT_EVT_TO_BTU_SP_EVT        0x1400      /* Serial Port Event                */
+#define BT_EVT_TO_BTU_SP_DATA       0x1500      /* Serial Port Data                 */
+
+#define BT_EVT_TO_BTU_HCI_CMD       0x1600      /* HCI command from upper layer     */
+
+
+#define BT_EVT_TO_BTU_L2C_SEG_XMIT  0x1900      /* L2CAP segment(s) transmitted     */
+
+#define BT_EVT_PROXY_INCOMING_MSG   0x1A00      /* BlueStackTester event: incoming message from target */
+
+#define BT_EVT_BTSIM                0x1B00      /* Insight BTSIM event */
+#define BT_EVT_BTISE                0x1C00      /* Insight Script Engine event */
+
+                                                /* To LM                            */
+                                                /************************************/
+#define BT_EVT_TO_LM_HCI_CMD        0x2000      /* HCI Command                      */
+#define BT_EVT_TO_LM_HCI_ACL        0x2100      /* HCI ACL Data                     */
+#define BT_EVT_TO_LM_HCI_SCO        0x2200      /* HCI SCO Data                     */
+#define BT_EVT_TO_LM_HCIT_ERR       0x2300      /* HCI Transport Error              */
+#define BT_EVT_TO_LM_LC_EVT         0x2400      /* LC event                         */
+#define BT_EVT_TO_LM_LC_LMP         0x2500      /* LC Received LMP command frame    */
+#define BT_EVT_TO_LM_LC_ACL         0x2600      /* LC Received ACL data             */
+#define BT_EVT_TO_LM_LC_SCO         0x2700      /* LC Received SCO data  (not used) */
+#define BT_EVT_TO_LM_LC_ACL_TX      0x2800      /* LMP data transmit complete       */
+#define BT_EVT_TO_LM_LC_LMPC_TX     0x2900      /* LMP Command transmit complete    */
+#define BT_EVT_TO_LM_LOCAL_ACL_LB   0x2a00      /* Data to be locally loopbacked    */
+#define BT_EVT_TO_LM_HCI_ACL_ACK    0x2b00      /* HCI ACL Data ack      (not used) */
+#define BT_EVT_TO_LM_DIAG           0x2c00      /* LM Diagnostics commands          */
+
+
+#define BT_EVT_TO_BTM_CMDS          0x2f00
+#define BT_EVT_TO_BTM_PM_MDCHG_EVT (0x0001 | BT_EVT_TO_BTM_CMDS)
+
+#define BT_EVT_TO_TCS_CMDS          0x3000
+
+#define BT_EVT_TO_OBX_CL_MSG        0x3100
+#define BT_EVT_TO_OBX_SR_MSG        0x3200
+
+#define BT_EVT_TO_CTP_CMDS          0x3300
+
+/* Obex Over L2CAP */
+#define BT_EVT_TO_OBX_CL_L2C_MSG    0x3400
+#define BT_EVT_TO_OBX_SR_L2C_MSG    0x3500
+
+/* ftp events */
+#define BT_EVT_TO_FTP_SRVR_CMDS     0x3800
+#define BT_EVT_TO_FTP_CLNT_CMDS     0x3900
+
+#define BT_EVT_TO_BTU_SAP           0x3a00       /* SIM Access Profile events */
+
+/* opp events */
+#define BT_EVT_TO_OPP_SRVR_CMDS     0x3b00
+#define BT_EVT_TO_OPP_CLNT_CMDS     0x3c00
+
+/* gap events */
+#define BT_EVT_TO_GAP_MSG           0x3d00
+
+/* start timer */
+#define BT_EVT_TO_START_TIMER       0x3e00
+
+/* start quick timer */
+#define BT_EVT_TO_START_QUICK_TIMER 0x3f00
+
+
+/* for NFC                          */
+                                                /************************************/
+#define BT_EVT_TO_NFC_NCI           0x4000      /* NCI Command, Notification or Data*/
+#define BT_EVT_TO_NFC_INIT          0x4100      /* Initialization message */
+#define BT_EVT_TO_LLCP_ECHO         0x4200      /* LLCP Echo Service */
+#define BT_EVT_TO_LLCP_SOCKET       0x4300      /* LLCP over TCP/IP */
+#define BT_EVT_TO_NCI_LP            0x4400      /* Low power */
+#define BT_EVT_TO_NFC_ERR           0x4500      /* Error notification to NFC Task */
+
+#define BT_EVT_TO_NFCCSIM_NCI       0x4a00      /* events to NFCC simulation (NCI packets) */
+
+/* HCISU Events */
+
+#define BT_EVT_HCISU                0x5000
+
+// btla-specific ++
+#define BT_EVT_TO_HCISU_RECONFIG_EVT            (0x0001 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_UPDATE_BAUDRATE_EVT     (0x0002 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ENABLE_EVT           (0x0003 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_DISABLE_EVT          (0x0004 | BT_EVT_HCISU)
+// btla-specific --
+#define BT_EVT_TO_HCISU_LP_APP_SLEEPING_EVT     (0x0005 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ALLOW_BT_SLEEP_EVT   (0x0006 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_WAKEUP_HOST_EVT      (0x0007 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_RCV_H4IBSS_EVT       (0x0008 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_H5_RESET_EVT            (0x0009 | BT_EVT_HCISU)
+#define BT_EVT_HCISU_START_QUICK_TIMER          (0x000a | BT_EVT_HCISU)
+
+#define BT_EVT_DATA_TO_AMP_1        0x5100
+#define BT_EVT_DATA_TO_AMP_15       0x5f00
+
+/* HSP Events */
+
+#define BT_EVT_BTU_HSP2             0x6000
+
+#define BT_EVT_TO_BTU_HSP2_EVT     (0x0001 | BT_EVT_BTU_HSP2)
+
+/* BPP Events */
+#define BT_EVT_TO_BPP_PR_CMDS       0x6100      /* Printer Events */
+#define BT_EVT_TO_BPP_SND_CMDS      0x6200      /* BPP Sender Events */
+
+/* BIP Events */
+#define BT_EVT_TO_BIP_CMDS          0x6300
+
+/* HCRP Events */
+
+#define BT_EVT_BTU_HCRP             0x7000
+
+#define BT_EVT_TO_BTU_HCRP_EVT     (0x0001 | BT_EVT_BTU_HCRP)
+#define BT_EVT_TO_BTU_HCRPM_EVT    (0x0002 | BT_EVT_BTU_HCRP)
+
+
+#define BT_EVT_BTU_HFP              0x8000
+#define BT_EVT_TO_BTU_HFP_EVT      (0x0001 | BT_EVT_BTU_HFP)
+
+#define BT_EVT_BTU_IPC_EVT          0x9000
+#define BT_EVT_BTU_IPC_LOGMSG_EVT  (0x0000 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_ACL_EVT     (0x0001 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTU_EVT     (0x0002 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_EVT     (0x0003 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_MSG_EVT (0x0004 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTM_EVT     (0x0005 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_AVDT_EVT    (0x0006 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_SLIP_EVT    (0x0007 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_MGMT_EVT    (0x0008 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTTRC_EVT   (0x0009 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BURST_EVT   (0x000A | BT_EVT_BTU_IPC_EVT)
+
+
+/* BTIF Events */
+#define BT_EVT_BTIF                 0xA000
+#define BT_EVT_CONTEXT_SWITCH_EVT  (0x0001 | BT_EVT_BTIF)
+
+#define BT_EVT_TRIGGER_STACK_INIT   EVENT_MASK(APPL_EVT_0)
+
+
+/* Define the header of each buffer used in the Bluetooth stack.
+*/
+typedef struct
+{
+    UINT16          event;
+    UINT16          len;
+    UINT16          offset;
+    UINT16          layer_specific;
+} BT_HDR;
+
+#define BT_HDR_SIZE (sizeof (BT_HDR))
+
+#define BT_PSM_SDP                      0x0001
+#define BT_PSM_RFCOMM                   0x0003
+#define BT_PSM_TCS                      0x0005
+#define BT_PSM_CTP                      0x0007
+#define BT_PSM_BNEP                     0x000F
+#define BT_PSM_HIDC                     0x0011
+#define BT_PSM_HIDI                     0x0013
+#define BT_PSM_UPNP                     0x0015
+#define BT_PSM_AVCTP                    0x0017
+#define BT_PSM_AVDTP                    0x0019
+#define BT_PSM_AVCTP_13                 0x001B /* Advanced Control - Browsing */
+#define BT_PSM_UDI_CP                   0x001D /* Unrestricted Digital Information Profile C-Plane  */
+#define BT_PSM_ATT                      0x001F /* Attribute Protocol  */
+
+
+/* These macros extract the HCI opcodes from a buffer
+*/
+#define HCI_GET_CMD_HDR_OPCODE(p)    (UINT16)((*((UINT8 *)((p) + 1) + p->offset) + \
+                                              (*((UINT8 *)((p) + 1) + p->offset + 1) << 8)))
+#define HCI_GET_CMD_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 2))
+
+#define HCI_GET_EVT_HDR_OPCODE(p)    (UINT8)(*((UINT8 *)((p) + 1) + p->offset))
+#define HCI_GET_EVT_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 1))
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Little Endian format).
+*/
+#define UINT32_TO_STREAM(p, u32) {*(p)++ = (UINT8)(u32); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 24);}
+#define UINT24_TO_STREAM(p, u24) {*(p)++ = (UINT8)(u24); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)((u24) >> 16);}
+#define UINT16_TO_STREAM(p, u16) {*(p)++ = (UINT8)(u16); *(p)++ = (UINT8)((u16) >> 8);}
+#define UINT8_TO_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define INT8_TO_STREAM(p, u8)    {*(p)++ = (INT8)(u8);}
+#define ARRAY32_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 32;           ijk++) *(p)++ = (UINT8) a[31 - ijk];}
+#define ARRAY16_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 16;           ijk++) *(p)++ = (UINT8) a[15 - ijk];}
+#define ARRAY8_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < 8;            ijk++) *(p)++ = (UINT8) a[7 - ijk];}
+#define BDADDR_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < BD_ADDR_LEN;  ijk++) *(p)++ = (UINT8) a[BD_ADDR_LEN - 1 - ijk];}
+#define LAP_TO_STREAM(p, a)      {register int ijk; for (ijk = 0; ijk < LAP_LEN;      ijk++) *(p)++ = (UINT8) a[LAP_LEN - 1 - ijk];}
+#define DEVCLASS_TO_STREAM(p, a) {register int ijk; for (ijk = 0; ijk < DEV_CLASS_LEN;ijk++) *(p)++ = (UINT8) a[DEV_CLASS_LEN - 1 - ijk];}
+#define ARRAY_TO_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len;        ijk++) *(p)++ = (UINT8) a[ijk];}
+#define REVERSE_ARRAY_TO_STREAM(p, a, len)  {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[len - 1 - ijk];}
+
+#define STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define STREAM_TO_UINT16(u16, p) {u16 = ((UINT16)(*(p)) + (((UINT16)(*((p) + 1))) << 8)); (p) += 2;}
+#define STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) ); (p) += 3;}
+#define STREAM_TO_UINT32(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) + ((((UINT32)(*((p) + 3)))) << 24)); (p) += 4;}
+#define STREAM_TO_BDADDR(a, p)   {register int ijk; register UINT8 *pbda = (UINT8 *)a + BD_ADDR_LEN - 1; for (ijk = 0; ijk < BD_ADDR_LEN; ijk++) *pbda-- = *p++;}
+#define STREAM_TO_ARRAY32(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 31; for (ijk = 0; ijk < 32; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY16(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 15; for (ijk = 0; ijk < 16; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY8(a, p)   {register int ijk; register UINT8 *_pa = (UINT8 *)a + 7; for (ijk = 0; ijk < 8; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_DEVCLASS(a, p) {register int ijk; register UINT8 *_pa = (UINT8 *)a + DEV_CLASS_LEN - 1; for (ijk = 0; ijk < DEV_CLASS_LEN; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_LAP(a, p)      {register int ijk; register UINT8 *plap = (UINT8 *)a + LAP_LEN - 1; for (ijk = 0; ijk < LAP_LEN; ijk++) *plap-- = *p++;}
+#define STREAM_TO_ARRAY(a, p, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+#define REVERSE_STREAM_TO_ARRAY(a, p, len) {register int ijk; register UINT8 *_pa = (UINT8 *)a + len - 1; for (ijk = 0; ijk < len; ijk++) *_pa-- = *p++;}
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Little Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)(u32); *((UINT8 *)(p)+1) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+3) = (UINT8)((u32) >> 24);}
+#define UINT24_TO_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)(u24); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u24) >> 16);}
+#define UINT16_TO_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)(u16); *((UINT8 *)(p)+1) = (UINT8)((u16) >> 8);}
+#define UINT8_TO_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Big Endian format)
+*/
+#define UINT32_TO_BE_STREAM(p, u32) {*(p)++ = (UINT8)((u32) >> 24);  *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)(u32); }
+#define UINT24_TO_BE_STREAM(p, u24) {*(p)++ = (UINT8)((u24) >> 16); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)(u24);}
+#define UINT16_TO_BE_STREAM(p, u16) {*(p)++ = (UINT8)((u16) >> 8); *(p)++ = (UINT8)(u16);}
+#define UINT8_TO_BE_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define ARRAY_TO_BE_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[ijk];}
+
+#define BE_STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define BE_STREAM_TO_UINT16(u16, p) {u16 = (UINT16)(((UINT16)(*(p)) << 8) + (UINT16)(*((p) + 1))); (p) += 2;}
+#define BE_STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*((p) + 2))) + ((UINT32)(*((p) + 1)) << 8) + ((UINT32)(*(p)) << 16)); (p) += 3;}
+#define BE_STREAM_TO_UINT32(u32, p) {u32 = ((UINT32)(*((p) + 3)) + ((UINT32)(*((p) + 2)) << 8) + ((UINT32)(*((p) + 1)) << 16) + ((UINT32)(*(p)) << 24)); (p) += 4;}
+#define BE_STREAM_TO_ARRAY(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Big Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_BE_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)((u32) >> 24);  *((UINT8 *)(p)+1) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+3) = (UINT8)(u32); }
+#define UINT24_TO_BE_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)((u24) >> 16); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)(u24);}
+#define UINT16_TO_BE_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)((u16) >> 8); *((UINT8 *)(p)+1) = (UINT8)(u16);}
+#define UINT8_TO_BE_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/* Common Bluetooth field definitions */
+#define BD_ADDR_LEN     6                   /* Device address length */
+typedef UINT8 BD_ADDR[BD_ADDR_LEN];         /* Device address */
+typedef UINT8 *BD_ADDR_PTR;                 /* Pointer to Device Address */
+
+#define AMP_KEY_TYPE_GAMP       0
+#define AMP_KEY_TYPE_WIFI       1
+#define AMP_KEY_TYPE_UWB        2
+typedef UINT8 tAMP_KEY_TYPE;
+
+#define BT_OCTET8_LEN    8
+typedef UINT8 BT_OCTET8[BT_OCTET8_LEN];   /* octet array: size 16 */
+
+#define LINK_KEY_LEN    16
+typedef UINT8 LINK_KEY[LINK_KEY_LEN];       /* Link Key */
+
+#define AMP_LINK_KEY_LEN        32
+typedef UINT8 AMP_LINK_KEY[AMP_LINK_KEY_LEN];   /* Dedicated AMP and GAMP Link Keys */
+
+#define BT_OCTET16_LEN    16
+typedef UINT8 BT_OCTET16[BT_OCTET16_LEN];   /* octet array: size 16 */
+
+#define PIN_CODE_LEN    16
+typedef UINT8 PIN_CODE[PIN_CODE_LEN];       /* Pin Code (upto 128 bits) MSB is 0 */
+typedef UINT8 *PIN_CODE_PTR;                /* Pointer to Pin Code */
+
+#define DEV_CLASS_LEN   3
+typedef UINT8 DEV_CLASS[DEV_CLASS_LEN];     /* Device class */
+typedef UINT8 *DEV_CLASS_PTR;               /* Pointer to Device class */
+
+#define EXT_INQ_RESP_LEN   3
+typedef UINT8 EXT_INQ_RESP[EXT_INQ_RESP_LEN];/* Extended Inquiry Response */
+typedef UINT8 *EXT_INQ_RESP_PTR;             /* Pointer to Extended Inquiry Response */
+
+#define BD_NAME_LEN     248
+typedef UINT8 BD_NAME[BD_NAME_LEN];         /* Device name */
+typedef UINT8 *BD_NAME_PTR;                 /* Pointer to Device name */
+
+#define BD_FEATURES_LEN 8
+typedef UINT8 BD_FEATURES[BD_FEATURES_LEN]; /* LMP features supported by device */
+
+#define BT_EVENT_MASK_LEN  8
+typedef UINT8 BT_EVENT_MASK[BT_EVENT_MASK_LEN];   /* Event Mask */
+
+#define LAP_LEN         3
+typedef UINT8 LAP[LAP_LEN];                 /* IAC as passed to Inquiry (LAP) */
+typedef UINT8 INQ_LAP[LAP_LEN];             /* IAC as passed to Inquiry (LAP) */
+
+#define RAND_NUM_LEN    16
+typedef UINT8 RAND_NUM[RAND_NUM_LEN];
+
+#define ACO_LEN         12
+typedef UINT8 ACO[ACO_LEN];                 /* Authenticated ciphering offset */
+
+#define COF_LEN         12
+typedef UINT8 COF[COF_LEN];                 /* ciphering offset number */
+
+typedef struct {
+    UINT8               qos_flags;          /* TBD */
+    UINT8               service_type;       /* see below */
+    UINT32              token_rate;         /* bytes/second */
+    UINT32              token_bucket_size;  /* bytes */
+    UINT32              peak_bandwidth;     /* bytes/second */
+    UINT32              latency;            /* microseconds */
+    UINT32              delay_variation;    /* microseconds */
+} FLOW_SPEC;
+
+/* Values for service_type */
+#define NO_TRAFFIC      0
+#define BEST_EFFORT     1
+#define GUARANTEED      2
+
+/* Service class of the CoD */
+#define SERV_CLASS_NETWORKING               (1 << 1)
+#define SERV_CLASS_RENDERING                (1 << 2)
+#define SERV_CLASS_CAPTURING                (1 << 3)
+#define SERV_CLASS_OBJECT_TRANSFER          (1 << 4)
+#define SERV_CLASS_OBJECT_AUDIO             (1 << 5)
+#define SERV_CLASS_OBJECT_TELEPHONY         (1 << 6)
+#define SERV_CLASS_OBJECT_INFORMATION       (1 << 7)
+
+/* Second byte */
+#define SERV_CLASS_LIMITED_DISC_MODE        (0x20)
+
+/* Field size definitions. Note that byte lengths are rounded up. */
+#define ACCESS_CODE_BIT_LEN             72
+#define ACCESS_CODE_BYTE_LEN            9
+#define SHORTENED_ACCESS_CODE_BIT_LEN   68
+
+typedef UINT8 ACCESS_CODE[ACCESS_CODE_BYTE_LEN];
+
+#define SYNTH_TX                1           /* want synth code to TRANSMIT at this freq */
+#define SYNTH_RX                2           /* want synth code to RECEIVE at this freq */
+
+#define SYNC_REPS 1             /* repeats of sync word transmitted to start of burst */
+
+/* Bluetooth CLK27 */
+#define BT_CLK27            (2 << 26)
+
+/* Bluetooth CLK12 is 1.28 sec */
+#define BT_CLK12_TO_MS(x)    ((x) * 1280)
+#define BT_MS_TO_CLK12(x)    ((x) / 1280)
+#define BT_CLK12_TO_SLOTS(x) ((x) << 11)
+
+/* Bluetooth CLK is 0.625 msec */
+#define BT_CLK_TO_MS(x)      (((x) * 5 + 3) / 8)
+#define BT_MS_TO_CLK(x)      (((x) * 8 + 2) / 5)
+
+#define BT_CLK_TO_MICROSECS(x)  (((x) * 5000 + 3) / 8)
+#define BT_MICROSECS_TO_CLK(x)  (((x) * 8 + 2499) / 5000)
+
+/* Maximum UUID size - 16 bytes, and structure to hold any type of UUID. */
+#define MAX_UUID_SIZE              16
+typedef struct
+{
+#define LEN_UUID_16     2
+#define LEN_UUID_32     4
+#define LEN_UUID_128    16
+
+    UINT16          len;
+
+    union
+    {
+        UINT16      uuid16;
+        UINT32      uuid32;
+        UINT8       uuid128[MAX_UUID_SIZE];
+    } uu;
+
+} tBT_UUID;
+
+#define BT_EIR_FLAGS_TYPE                   0x01
+#define BT_EIR_MORE_16BITS_UUID_TYPE        0x02
+#define BT_EIR_COMPLETE_16BITS_UUID_TYPE    0x03
+#define BT_EIR_MORE_32BITS_UUID_TYPE        0x04
+#define BT_EIR_COMPLETE_32BITS_UUID_TYPE    0x05
+#define BT_EIR_MORE_128BITS_UUID_TYPE       0x06
+#define BT_EIR_COMPLETE_128BITS_UUID_TYPE   0x07
+#define BT_EIR_SHORTENED_LOCAL_NAME_TYPE    0x08
+#define BT_EIR_COMPLETE_LOCAL_NAME_TYPE     0x09
+#define BT_EIR_TX_POWER_LEVEL_TYPE          0x0A
+#define BT_EIR_OOB_BD_ADDR_TYPE             0x0C
+#define BT_EIR_OOB_COD_TYPE                 0x0D
+#define BT_EIR_OOB_SSP_HASH_C_TYPE          0x0E
+#define BT_EIR_OOB_SSP_RAND_R_TYPE          0x0F
+#define BT_EIR_MANUFACTURER_SPECIFIC_TYPE   0xFF
+
+#define BT_OOB_COD_SIZE            3
+#define BT_OOB_HASH_C_SIZE         16
+#define BT_OOB_RAND_R_SIZE         16
+
+/* Broadcom proprietary UUIDs and reserved PSMs
+**
+** The lowest 4 bytes byte of the UUID or GUID depends on the feature. Typically,
+** the value of those bytes will be the PSM or SCN, but it is up to the features.
+*/
+#define BRCM_PROPRIETARY_UUID_BASE  0xDA, 0x23, 0x41, 0x02, 0xA3, 0xBB, 0xC1, 0x71, 0xBA, 0x09, 0x6f, 0x21
+#define BRCM_PROPRIETARY_GUID_BASE  0xda23, 0x4102, 0xa3, 0xbb, 0xc1, 0x71, 0xba, 0x09, 0x6f, 0x21
+
+/* We will not allocate a PSM in the reserved range to 3rd party apps
+*/
+#define BRCM_RESERVED_PSM_START	    0x5AE1
+#define BRCM_RESERVED_PSM_END	    0x5AFF
+
+#define BRCM_UTILITY_SERVICE_PSM    0x5AE1
+#define BRCM_MATCHER_PSM            0x5AE3
+
+/* Connection statistics
+*/
+
+/* Structure to hold connection stats */
+#ifndef BT_CONN_STATS_DEFINED
+#define BT_CONN_STATS_DEFINED
+
+/* These bits are used in the bIsConnected field */
+#define BT_CONNECTED_USING_BREDR   1
+#define BT_CONNECTED_USING_AMP     2
+
+typedef struct
+{
+    UINT32   is_connected;
+    INT32    rssi;
+    UINT32   bytes_sent;
+    UINT32   bytes_rcvd;
+    UINT32   duration;
+} tBT_CONN_STATS;
+
+#endif
+
+
+/*****************************************************************************
+**                          Low Energy definitions
+**
+** Address types
+*/
+#define BLE_ADDR_PUBLIC         0x00
+#define BLE_ADDR_RANDOM         0x01
+#define BLE_ADDR_TYPE_MASK      (BLE_ADDR_RANDOM | BLE_ADDR_PUBLIC)
+typedef UINT8 tBLE_ADDR_TYPE;
+
+#define BLE_ADDR_IS_STATIC(x)   ((x[0] & 0xC0) == 0xC0)
+
+typedef struct
+{
+    tBLE_ADDR_TYPE      type;
+    BD_ADDR             bda;
+} tBLE_BD_ADDR;
+
+/* Device Types
+*/
+#define BT_DEVICE_TYPE_BREDR   0x01
+#define BT_DEVICE_TYPE_BLE     0x02
+#define BT_DEVICE_TYPE_DUMO    0x03
+typedef UINT8 tBT_DEVICE_TYPE;
+/*****************************************************************************/
+
+
+/* Define trace levels */
+#define BT_TRACE_LEVEL_NONE    0          /* No trace messages to be generated    */
+#define BT_TRACE_LEVEL_ERROR   1          /* Error condition trace messages       */
+#define BT_TRACE_LEVEL_WARNING 2          /* Warning condition trace messages     */
+#define BT_TRACE_LEVEL_API     3          /* API traces                           */
+#define BT_TRACE_LEVEL_EVENT   4          /* Debug messages for events            */
+#define BT_TRACE_LEVEL_DEBUG   5          /* Full debug messages                  */
+#define BT_TRACE_LEVEL_VERBOSE 6          /* Verbose debug messages               */
+
+#define MAX_TRACE_LEVEL        6
+
+
+/* Define New Trace Type Definition */
+/* TRACE_CTRL_TYPE                  0x^^000000*/
+#define TRACE_CTRL_MASK             0xff000000
+#define TRACE_GET_CTRL(x)           ((((UINT32)(x)) & TRACE_CTRL_MASK) >> 24)
+
+#define TRACE_CTRL_GENERAL          0x00000000
+#define TRACE_CTRL_STR_RESOURCE     0x01000000
+#define TRACE_CTRL_SEQ_FLOW         0x02000000
+#define TRACE_CTRL_MAX_NUM          3
+
+/* LAYER SPECIFIC                   0x00^^0000*/
+#define TRACE_LAYER_MASK            0x00ff0000
+#define TRACE_GET_LAYER(x)          ((((UINT32)(x)) & TRACE_LAYER_MASK) >> 16)
+
+#define TRACE_LAYER_NONE            0x00000000
+#define TRACE_LAYER_USB             0x00010000
+#define TRACE_LAYER_SERIAL          0x00020000
+#define TRACE_LAYER_SOCKET          0x00030000
+#define TRACE_LAYER_RS232           0x00040000
+#define TRACE_LAYER_TRANS_MAX_NUM   5
+#define TRACE_LAYER_TRANS_ALL       0x007f0000
+#define TRACE_LAYER_LC              0x00050000
+#define TRACE_LAYER_LM              0x00060000
+#define TRACE_LAYER_HCI             0x00070000
+#define TRACE_LAYER_L2CAP           0x00080000
+#define TRACE_LAYER_RFCOMM          0x00090000
+#define TRACE_LAYER_SDP             0x000a0000
+#define TRACE_LAYER_TCS             0x000b0000
+#define TRACE_LAYER_OBEX            0x000c0000
+#define TRACE_LAYER_BTM             0x000d0000
+#define TRACE_LAYER_GAP             0x000e0000
+#define TRACE_LAYER_DUN             0x000f0000
+#define TRACE_LAYER_GOEP            0x00100000
+#define TRACE_LAYER_ICP             0x00110000
+#define TRACE_LAYER_HSP2            0x00120000
+#define TRACE_LAYER_SPP             0x00130000
+#define TRACE_LAYER_CTP             0x00140000
+#define TRACE_LAYER_BPP             0x00150000
+#define TRACE_LAYER_HCRP            0x00160000
+#define TRACE_LAYER_FTP             0x00170000
+#define TRACE_LAYER_OPP             0x00180000
+#define TRACE_LAYER_BTU             0x00190000
+#define TRACE_LAYER_GKI             0x001a0000
+#define TRACE_LAYER_BNEP            0x001b0000
+#define TRACE_LAYER_PAN             0x001c0000
+#define TRACE_LAYER_HFP             0x001d0000
+#define TRACE_LAYER_HID             0x001e0000
+#define TRACE_LAYER_BIP             0x001f0000
+#define TRACE_LAYER_AVP             0x00200000
+#define TRACE_LAYER_A2D             0x00210000
+#define TRACE_LAYER_SAP             0x00220000
+#define TRACE_LAYER_AMP             0x00230000
+#define TRACE_LAYER_MCA             0x00240000
+#define TRACE_LAYER_ATT             0x00250000
+#define TRACE_LAYER_SMP             0x00260000
+#define TRACE_LAYER_NFC             0x00270000
+#define TRACE_LAYER_NCI             0x00280000
+#define TRACE_LAYER_IDEP            0x00290000
+#define TRACE_LAYER_NDEP            0x002a0000
+#define TRACE_LAYER_LLCP            0x002b0000
+#define TRACE_LAYER_RW              0x002c0000
+#define TRACE_LAYER_CE              0x002d0000
+#define TRACE_LAYER_SNEP            0x002e0000
+#define TRACE_LAYER_NDEF            0x002f0000
+#define TRACE_LAYER_NFA             0x00300000
+
+#define TRACE_LAYER_MAX_NUM         0x0031
+
+
+/* TRACE_ORIGINATOR                 0x0000^^00*/
+#define TRACE_ORG_MASK              0x0000ff00
+#define TRACE_GET_ORG(x)            ((((UINT32)(x)) & TRACE_ORG_MASK) >> 8)
+
+#define TRACE_ORG_STACK             0x00000000
+#define TRACE_ORG_HCI_TRANS         0x00000100
+#define TRACE_ORG_PROTO_DISP        0x00000200
+#define TRACE_ORG_RPC               0x00000300
+#define TRACE_ORG_GKI               0x00000400
+#define TRACE_ORG_APPL              0x00000500
+#define TRACE_ORG_SCR_WRAPPER       0x00000600
+#define TRACE_ORG_SCR_ENGINE        0x00000700
+#define TRACE_ORG_USER_SCR          0x00000800
+#define TRACE_ORG_TESTER            0x00000900
+#define TRACE_ORG_MAX_NUM           10          /* 32-bit mask; must be < 32 */
+#define TRACE_LITE_ORG_MAX_NUM		6
+#define TRACE_ORG_ALL               0x03ff
+#define TRACE_ORG_RPC_TRANS         0x04
+
+#define TRACE_ORG_REG               0x00000909
+#define TRACE_ORG_REG_SUCCESS       0x0000090a
+
+/* TRACE_TYPE                       0x000000^^*/
+#define TRACE_TYPE_MASK             0x000000ff
+#define TRACE_GET_TYPE(x)           (((UINT32)(x)) & TRACE_TYPE_MASK)
+
+#define TRACE_TYPE_ERROR            0x00000000
+#define TRACE_TYPE_WARNING          0x00000001
+#define TRACE_TYPE_API              0x00000002
+#define TRACE_TYPE_EVENT            0x00000003
+#define TRACE_TYPE_DEBUG            0x00000004
+#define TRACE_TYPE_STACK_ONLY_MAX   TRACE_TYPE_DEBUG
+#define TRACE_TYPE_TX               0x00000005
+#define TRACE_TYPE_RX               0x00000006
+#define TRACE_TYPE_DEBUG_ASSERT     0x00000007
+#define TRACE_TYPE_GENERIC          0x00000008
+#define TRACE_TYPE_REG              0x00000009
+#define TRACE_TYPE_REG_SUCCESS      0x0000000a
+#define TRACE_TYPE_CMD_TX           0x0000000b
+#define TRACE_TYPE_EVT_TX           0x0000000c
+#define TRACE_TYPE_ACL_TX           0x0000000d
+#define TRACE_TYPE_CMD_RX           0x0000000e
+#define TRACE_TYPE_EVT_RX           0x0000000f
+#define TRACE_TYPE_ACL_RX           0x00000010
+#define TRACE_TYPE_TARGET_TRACE     0x00000011
+#define TRACE_TYPE_SCO_TX           0x00000012
+#define TRACE_TYPE_SCO_RX           0x00000013
+
+
+#define TRACE_TYPE_MAX_NUM          20
+#define TRACE_TYPE_ALL              0xffff
+
+/* Define color for script type */
+#define SCR_COLOR_DEFAULT       0
+#define SCR_COLOR_TYPE_COMMENT  1
+#define SCR_COLOR_TYPE_COMMAND  2
+#define SCR_COLOR_TYPE_EVENT    3
+#define SCR_COLOR_TYPE_SELECT   4
+
+/* Define protocol trace flag values */
+#define SCR_PROTO_TRACE_HCI_SUMMARY 0x00000001
+#define SCR_PROTO_TRACE_HCI_DATA    0x00000002
+#define SCR_PROTO_TRACE_L2CAP       0x00000004
+#define SCR_PROTO_TRACE_RFCOMM      0x00000008
+#define SCR_PROTO_TRACE_SDP         0x00000010
+#define SCR_PROTO_TRACE_TCS         0x00000020
+#define SCR_PROTO_TRACE_OBEX        0x00000040
+#define SCR_PROTO_TRACE_OAPP        0x00000080 /* OBEX Application Profile */
+#define SCR_PROTO_TRACE_AMP         0x00000100
+#define SCR_PROTO_TRACE_BNEP        0x00000200
+#define SCR_PROTO_TRACE_AVP         0x00000400
+#define SCR_PROTO_TRACE_MCA         0x00000800
+#define SCR_PROTO_TRACE_ATT         0x00001000
+#define SCR_PROTO_TRACE_SMP         0x00002000
+#define SCR_PROTO_TRACE_NCI         0x00004000
+#define SCR_PROTO_TRACE_DEP         0x00008000
+#define SCR_PROTO_TRACE_LLCP        0x00010000
+#define SCR_PROTO_TRACE_NDEF        0x00020000
+#define SCR_PROTO_TRACE_TAGS        0x00040000
+#define SCR_PROTO_TRACE_ALL         0x0007ffff
+#define SCR_PROTO_TRACE_HCI_LOGGING_VSE 0x0800 /* Brcm vs event for logmsg and protocol traces */
+
+#define MAX_SCRIPT_TYPE             5
+
+#define TCS_PSM_INTERCOM        5
+#define TCS_PSM_CORDLESS        7
+#define BT_PSM_BNEP             0x000F
+/* Define PSMs HID uses */
+#define HID_PSM_CONTROL         0x0011
+#define HID_PSM_INTERRUPT       0x0013
+
+/* Define a function for logging */
+typedef void (BT_LOG_FUNC) (int trace_type, const char *fmt_str, ...);
+
+#endif
+/* end "revolution/BTE/stack/include/bt_types.h" */
+
+/* Error codes */
+#define GKI_SUCCESS         0x00
+#define GKI_FAILURE         0x01
+#define GKI_INVALID_TASK    0xF0
+#define GKI_INVALID_POOL    0xFF
+
+
+/************************************************************************
+** Mailbox definitions. Each task has 4 mailboxes that are used to
+** send buffers to the task.
+*/
+#define TASK_MBOX_0    0
+#define TASK_MBOX_1    1
+#define TASK_MBOX_2    2
+#define TASK_MBOX_3    3
+
+#define NUM_TASK_MBOX  4
+
+/************************************************************************
+** Event definitions.
+**
+** There are 4 reserved events used to signal messages rcvd in task mailboxes.
+** There are 4 reserved events used to signal timeout events.
+** There are 8 general purpose events available for applications.
+*/
+#define MAX_EVENTS              16
+
+#define TASK_MBOX_0_EVT_MASK   0x0001
+#define TASK_MBOX_1_EVT_MASK   0x0002
+#define TASK_MBOX_2_EVT_MASK   0x0004
+#define TASK_MBOX_3_EVT_MASK   0x0008
+
+
+#define TIMER_0             0
+#define TIMER_1             1
+#define TIMER_2             2
+#define TIMER_3             3
+
+#define TIMER_0_EVT_MASK    0x0010
+#define TIMER_1_EVT_MASK    0x0020
+#define TIMER_2_EVT_MASK    0x0040
+#define TIMER_3_EVT_MASK    0x0080
+
+#define APPL_EVT_0          8
+#define APPL_EVT_1          9
+#define APPL_EVT_2          10
+#define APPL_EVT_3          11
+#define APPL_EVT_4          12
+#define APPL_EVT_5          13
+#define APPL_EVT_6          14
+#define APPL_EVT_7          15
+
+#define EVENT_MASK(evt)       ((UINT16)(0x0001 << (evt)))
+
+/************************************************************************
+**  Max Time Queue
+**/
+#ifndef GKI_MAX_TIMER_QUEUES
+#define GKI_MAX_TIMER_QUEUES    3
+#endif
+
+/************************************************************************
+**  Macro to determine the pool buffer size based on the GKI POOL ID at compile time.
+**  Pool IDs index from 0 to GKI_NUM_FIXED_BUF_POOLS - 1
+*/
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 1)
+
+#ifndef GKI_POOL_ID_0
+#define GKI_POOL_ID_0                0
+#endif /* ifndef GKI_POOL_ID_0 */
+
+#ifndef GKI_BUF0_SIZE
+#define GKI_BUF0_SIZE                0
+#endif /* ifndef GKI_BUF0_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 1 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 2)
+
+#ifndef GKI_POOL_ID_1
+#define GKI_POOL_ID_1                0
+#endif /* ifndef GKI_POOL_ID_1 */
+
+#ifndef GKI_BUF1_SIZE
+#define GKI_BUF1_SIZE                0
+#endif /* ifndef GKI_BUF1_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 2 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 3)
+
+#ifndef GKI_POOL_ID_2
+#define GKI_POOL_ID_2                0
+#endif /* ifndef GKI_POOL_ID_2 */
+
+#ifndef GKI_BUF2_SIZE
+#define GKI_BUF2_SIZE                0
+#endif /* ifndef GKI_BUF2_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 3 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 4)
+
+#ifndef GKI_POOL_ID_3
+#define GKI_POOL_ID_3                0
+#endif /* ifndef GKI_POOL_ID_4 */
+
+#ifndef GKI_BUF3_SIZE
+#define GKI_BUF3_SIZE                0
+#endif /* ifndef GKI_BUF3_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 4 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 5)
+
+#ifndef GKI_POOL_ID_4
+#define GKI_POOL_ID_4                0
+#endif /* ifndef GKI_POOL_ID_4 */
+
+#ifndef GKI_BUF4_SIZE
+#define GKI_BUF4_SIZE                0
+#endif /* ifndef GKI_BUF4_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 5 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 6)
+
+#ifndef GKI_POOL_ID_5
+#define GKI_POOL_ID_5                0
+#endif /* ifndef GKI_POOL_ID_5 */
+
+#ifndef GKI_BUF5_SIZE
+#define GKI_BUF5_SIZE                0
+#endif /* ifndef GKI_BUF5_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 6 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 7)
+
+#ifndef GKI_POOL_ID_6
+#define GKI_POOL_ID_6                0
+#endif /* ifndef GKI_POOL_ID_6 */
+
+#ifndef GKI_BUF6_SIZE
+#define GKI_BUF6_SIZE                0
+#endif /* ifndef GKI_BUF6_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 7 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 8)
+
+#ifndef GKI_POOL_ID_7
+#define GKI_POOL_ID_7                0
+#endif /* ifndef GKI_POOL_ID_7 */
+
+#ifndef GKI_BUF7_SIZE
+#define GKI_BUF7_SIZE                0
+#endif /* ifndef GKI_BUF7_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 8 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 9)
+
+#ifndef GKI_POOL_ID_8
+#define GKI_POOL_ID_8                0
+#endif /* ifndef GKI_POOL_ID_8 */
+
+#ifndef GKI_BUF8_SIZE
+#define GKI_BUF8_SIZE                0
+#endif /* ifndef GKI_BUF8_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 9 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 10)
+
+#ifndef GKI_POOL_ID_9
+#define GKI_POOL_ID_9                0
+#endif /* ifndef GKI_POOL_ID_9 */
+
+#ifndef GKI_BUF9_SIZE
+#define GKI_BUF9_SIZE                0
+#endif /* ifndef GKI_BUF9_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 10 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 11)
+
+#ifndef GKI_POOL_ID_10
+#define GKI_POOL_ID_10                0
+#endif /* ifndef GKI_POOL_ID_10 */
+
+#ifndef GKI_BUF10_SIZE
+#define GKI_BUF10_SIZE                0
+#endif /* ifndef GKI_BUF10_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 11 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 12)
+
+#ifndef GKI_POOL_ID_11
+#define GKI_POOL_ID_11                0
+#endif /* ifndef GKI_POOL_ID_11 */
+
+#ifndef GKI_BUF11_SIZE
+#define GKI_BUF11_SIZE                0
+#endif /* ifndef GKI_BUF11_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 12 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 13)
+
+#ifndef GKI_POOL_ID_12
+#define GKI_POOL_ID_12                0
+#endif /* ifndef GKI_POOL_ID_12 */
+
+#ifndef GKI_BUF12_SIZE
+#define GKI_BUF12_SIZE                0
+#endif /* ifndef GKI_BUF12_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 13 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 14)
+
+#ifndef GKI_POOL_ID_13
+#define GKI_POOL_ID_13                0
+#endif /* ifndef GKI_POOL_ID_13 */
+
+#ifndef GKI_BUF13_SIZE
+#define GKI_BUF13_SIZE                0
+#endif /* ifndef GKI_BUF13_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 14 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 15)
+
+#ifndef GKI_POOL_ID_14
+#define GKI_POOL_ID_14                0
+#endif /* ifndef GKI_POOL_ID_14 */
+
+#ifndef GKI_BUF14_SIZE
+#define GKI_BUF14_SIZE                0
+#endif /* ifndef GKI_BUF14_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 15 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 16)
+
+#ifndef GKI_POOL_ID_15
+#define GKI_POOL_ID_15                0
+#endif /* ifndef GKI_POOL_ID_15 */
+
+#ifndef GKI_BUF15_SIZE
+#define GKI_BUF15_SIZE                0
+#endif /* ifndef GKI_BUF15_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 16 */
+
+
+/* Timer list entry callback type
+*/
+typedef void (TIMER_CBACK)(void *p_tle);
+#ifndef TIMER_PARAM_TYPE
+#ifdef  WIN2000
+#define TIMER_PARAM_TYPE    void *
+#else
+#define TIMER_PARAM_TYPE    UINT32
+#endif
+#endif
+/* Define a timer list entry
+*/
+typedef struct _tle
+{
+    struct _tle  *p_next;
+    struct _tle  *p_prev;
+    TIMER_CBACK  *p_cback;
+    INT32         ticks;
+    TIMER_PARAM_TYPE   param;
+    UINT16        event;
+    UINT8         in_use;
+} TIMER_LIST_ENT;
+
+/* Define a timer list queue
+*/
+typedef struct
+{
+    TIMER_LIST_ENT   *p_first;
+    TIMER_LIST_ENT   *p_last;
+    INT32             last_ticks;
+} TIMER_LIST_Q;
+
+
+/***********************************************************************
+** This queue is a general purpose buffer queue, for application use.
+*/
+typedef struct
+{
+    void    *p_first;
+    void    *p_last;
+    UINT16   count;
+} BUFFER_Q;
+
+#define GKI_IS_QUEUE_EMPTY(p_q) ((p_q)->count == 0)
+
+/* Task constants
+*/
+#ifndef TASKPTR
+typedef void (*TASKPTR)(UINT32);
+#endif
+
+
+#define GKI_PUBLIC_POOL         0       /* General pool accessible to GKI_getbuf() */
+#define GKI_RESTRICTED_POOL     1       /* Inaccessible pool to GKI_getbuf() */
+
+/***********************************************************************
+** Function prototypes
+*/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Task management
+*/
+GKI_API extern UINT8   GKI_create_task (TASKPTR, UINT8, INT8 *, UINT16 *, UINT16);
+GKI_API extern void    GKI_destroy_task(UINT8 task_id);
+GKI_API extern void    GKI_task_self_cleanup(UINT8 task_id);
+GKI_API extern void    GKI_exit_task(UINT8);
+GKI_API extern UINT8   GKI_get_taskid(void);
+GKI_API extern void    GKI_init(void);
+GKI_API extern void    GKI_shutdown(void);
+GKI_API extern INT8   *GKI_map_taskname(UINT8);
+GKI_API extern UINT8   GKI_resume_task(UINT8);
+GKI_API extern void    GKI_run(void *);
+GKI_API extern void    GKI_freeze(void);
+GKI_API extern void    GKI_stop(void);
+GKI_API extern UINT8   GKI_suspend_task(UINT8);
+GKI_API extern UINT8   GKI_is_task_running(UINT8);
+
+/* memory management
+*/
+GKI_API extern void GKI_shiftdown (UINT8 *p_mem, UINT32 len, UINT32 shift_amount);
+GKI_API extern void GKI_shiftup (UINT8 *p_dest, UINT8 *p_src, UINT32 len);
+
+/* To send buffers and events between tasks
+*/
+GKI_API extern UINT8   GKI_isend_event (UINT8, UINT16);
+GKI_API extern void   *GKI_read_mbox  (UINT8);
+GKI_API extern void    GKI_send_msg   (UINT8, UINT8, void *);
+GKI_API extern UINT8   GKI_send_event (UINT8, UINT16);
+
+
+/* To get and release buffers, change owner and get size
+*/
+GKI_API extern void    GKI_change_buf_owner (void *, UINT8);
+GKI_API extern UINT8   GKI_create_pool (UINT16, UINT16, UINT8, void *);
+GKI_API extern void    GKI_delete_pool (UINT8);
+GKI_API extern void   *GKI_find_buf_start (void *);
+GKI_API extern void    GKI_freebuf (void *);
+GKI_API extern void   *GKI_getbuf (UINT16);
+GKI_API extern UINT16  GKI_get_buf_size (void *);
+GKI_API extern void   *GKI_getpoolbuf (UINT8);
+GKI_API extern UINT16  GKI_poolfreecount (UINT8);
+GKI_API extern UINT16  GKI_poolutilization (UINT8);
+GKI_API extern void    GKI_register_mempool (void *p_mem);
+GKI_API extern UINT8   GKI_set_pool_permission(UINT8, UINT8);
+
+
+/* User buffer queue management
+*/
+GKI_API extern void   *GKI_dequeue  (BUFFER_Q *);
+GKI_API extern void    GKI_enqueue (BUFFER_Q *, void *);
+GKI_API extern void    GKI_enqueue_head (BUFFER_Q *, void *);
+GKI_API extern void   *GKI_getfirst (BUFFER_Q *);
+GKI_API extern void   *GKI_getnext (void *);
+GKI_API extern void    GKI_init_q (BUFFER_Q *);
+GKI_API extern BOOLEAN GKI_queue_is_empty(BUFFER_Q *);
+GKI_API extern void   *GKI_remove_from_queue (BUFFER_Q *, void *);
+GKI_API extern UINT16  GKI_get_pool_bufsize (UINT8);
+
+/* Timer management
+*/
+GKI_API extern void    GKI_add_to_timer_list (TIMER_LIST_Q *, TIMER_LIST_ENT  *);
+GKI_API extern void    GKI_delay(UINT32);
+GKI_API extern UINT32  GKI_get_tick_count(void);
+GKI_API extern INT8   *GKI_get_time_stamp(INT8 *);
+GKI_API extern void    GKI_init_timer_list (TIMER_LIST_Q *);
+GKI_API extern void    GKI_init_timer_list_entry (TIMER_LIST_ENT  *);
+GKI_API extern INT32   GKI_ready_to_sleep (void);
+GKI_API extern void    GKI_remove_from_timer_list (TIMER_LIST_Q *, TIMER_LIST_ENT  *);
+GKI_API extern void    GKI_start_timer(UINT8, INT32, BOOLEAN);
+GKI_API extern void    GKI_stop_timer (UINT8);
+GKI_API extern void    GKI_timer_update(INT32);
+GKI_API extern UINT16  GKI_update_timer_list (TIMER_LIST_Q *, INT32);
+GKI_API extern UINT16  GKI_wait(UINT16, UINT32);
+
+/* Start and Stop system time tick callback
+ * true for start system tick if time queue is not empty
+ * false to stop system tick if time queue is empty
+*/
+typedef void (SYSTEM_TICK_CBACK)(BOOLEAN);
+
+/* Time queue management for system ticks
+*/
+GKI_API extern BOOLEAN GKI_timer_queue_empty (void);
+GKI_API extern void    GKI_timer_queue_register_callback(SYSTEM_TICK_CBACK *);
+
+/* Disable Interrupts, Enable Interrupts
+*/
+GKI_API extern void    GKI_enable(void);
+GKI_API extern void    GKI_disable(void);
+GKI_API extern void    GKI_sched_lock(void);
+GKI_API extern void    GKI_sched_unlock(void);
+
+/* Allocate (Free) memory from an OS
+*/
+GKI_API extern void     *GKI_os_malloc (UINT32);
+GKI_API extern void      GKI_os_free (void *);
+
+/* os timer operation */
+GKI_API extern UINT32 GKI_get_os_tick_count(void);
+
+/* Exception handling
+*/
+GKI_API extern void    GKI_exception (UINT16, char *);
+
+#if GKI_DEBUG == TRUE
+GKI_API extern void    GKI_PrintBufferUsage(UINT8 *p_num_pools, UINT16 *p_cur_used);
+GKI_API extern void    GKI_PrintBuffer(void);
+GKI_API extern void    GKI_print_task(void);
+#else
+#undef GKI_PrintBufferUsage
+#define GKI_PrintBuffer() NULL
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif
+/* end "revolution/bte/gki/common/gki.h" */
+/* "libs/RVL_SDK/include/revolution/BTE/rvl/uusb_ppc.h" line 5 "revolution/usb/usb.h" */
+#ifndef RVL_SDK_USB_H
+#define RVL_SDK_USB_H
+/* "libs/RVL_SDK/include/revolution/usb/usb.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/usb/usb.h" line 4 "revolution/IPC.h" */
+/**
+ * References: WiiBrew, Dolphin Emulator, fail0verflow
+ */
+
+#ifndef RVL_SDK_PUBLIC_IPC_H
+#define RVL_SDK_PUBLIC_IPC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 10 "revolution/IPC/ipcMain.h" */
+/* end "revolution/IPC/ipcMain.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 11 "revolution/IPC/ipcProfile.h" */
+/* end "revolution/IPC/ipcProfile.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 12 "revolution/IPC/ipcclt.h" */
+/* end "revolution/IPC/ipcclt.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 13 "revolution/IPC/memory.h" */
+/* end "revolution/IPC/memory.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void (*USBCallback)(IPCResult result, void* arg);
+typedef void (*USBISOCallback)(IPCResult result, void* arg1, void* arg2);
+
+IPCResult IUSB_OpenLib(void);
+IPCResult IUSB_CloseLib(void);
+IPCResult IUSB_OpenDeviceIds(const char* interface, u16 vid, u16 pid,
+                             IPCResult* resultOut);
+IPCResult IUSB_CloseDeviceAsync(s32 fd, USBCallback callback,
+                                void* callbackArg);
+IPCResult IUSB_ReadIntrMsgAsync(s32 fd, u32 endpoint, u32 length, void* buffer,
+                                USBCallback callback, void* callbackArg);
+IPCResult IUSB_ReadBlkMsgAsync(s32 fd, u32 endpoint, u32 length, void* buffer,
+                               USBCallback callback, void* callbackArg);
+IPCResult IUSB_WriteBlkMsgAsync(s32 fd, u32 endpoint, u32 length,
+                                const void* buffer, USBCallback callback,
+                                void* callbackArg);
+IPCResult IUSB_WriteCtrlMsgAsync(s32 fd, u8 requestType, u8 request, u16 value,
+                                 u16 index, u16 length, void* buffer,
+                                 USBCallback callback, void* callbackArg);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/usb/usb.h" */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 u32 __ntd_get_allocated_mem_size(void);
+
+/* UUSB private control block (retail global `usb`, size 0x4C).
+ * Field names are recovered where semantics are understood; unknown
+ * members keep `field_0xNN` offsets. */
+typedef struct tUUSB_CB {
+    s32 fd;                       /* 0x00 device file descriptor */
+    u8 field_0x04[0xC];          /* 0x04 unused in matched functions */
+    u8 field_0x10;                /* 0x10 endpoint (intr/bulk ctrl) */
+    u8 field_0x11;                /* 0x11 endpoint */
+    u8 field_0x12;                /* 0x12 endpoint */
+    u8 field_0x13;                /* 0x13 endpoint */
+    u32 vid;                      /* 0x14 USB vendor id */
+    u32 pid;                      /* 0x18 USB product id */
+    u8 pool_id_intr;             /* 0x1C intr read pool id */
+    u8 pool_id_bulk;             /* 0x1D bulk read pool id */
+    u8 field_0x1E[2];            /* 0x1E */
+    void (*close_cb)(int reason, s8 result); /* 0x20 upper-layer close notify */
+    u32 close_cb_arg;            /* 0x24 close callback argument */
+    u8 trace_state;             /* 0x28 trace init state */
+    u8 state;                    /* 0x29 UUSB state machine */
+    u8 field_0x2A;              /* 0x2A */
+    u8 field_0x2B;              /* 0x2B read-restart flag */
+    BUFFER_Q bulk_write_q;       /* 0x2C bulk write buffer queue */
+    u8 bulk_pending;            /* 0x38 outstanding bulk writes */
+    u8 field_0x39[3];           /* 0x39 */
+    BUFFER_Q ctrl_write_q;       /* 0x3C ctrl write buffer queue */
+    u8 ctrl_pending;            /* 0x48 outstanding ctrl writes */
+    u8 field_0x49[3];           /* 0x49 */
+} tUUSB_CB;
+
+/* UUSB state values (usb.state). */
+enum {
+    UUSB_STATE_IDLE = 0,
+    UUSB_STATE_OPEN = 2,
+    UUSB_STATE_READY = 4,
+    UUSB_STATE_CLOSED = 5,
+};
+
+/* Close notification reason passed to tUUSB_CB.close_cb. */
+#define UUSB_CLOSE_REASON_CLOSED 4
+
+/* Global control block and trace flags (retail linker names). */
+extern tUUSB_CB usb;
+extern u8 uusb_g_usb_devid_found;
+extern u8 uusb_g_trace_state_initialized;
+extern u32 wait4hci;
+
+/* Public UUSB API. */
+void UUSB_Register(void* cb_arg);
+void UUSB_Open(s32 fd, void (*close_cb)(int reason, s8 result));
+s32 UUSB_Read(void);
+s32 UUSB_Write(s32 type, void* data, u16 length);
+void UUSB_Close(void);
+void UUSB_Unregister(void);
+
+/* USB close completion callback (IUSB_CloseDeviceAsync). */
+void uusb_CloseDeviceCB(IPCResult result, void* arg);
+void uusb_ReadIntrDataCB(IPCResult result, void* arg);
+void uusb_ReadBulkDataCB(IPCResult result, void* arg);
+void uusb_WriteCtrlDataCB(IPCResult result, void* arg);
+void uusb_WriteBulkDataCB(IPCResult result, void* arg);
 
 #ifdef __cplusplus
 }
@@ -240081,8 +247340,6 @@ extern "C" {
 #define WUD_DEV_HANDLE_INVALID (-1)
 
 // Forward declarations
-typedef struct WUDDevInfo;
-
 typedef enum {
     WUD_LIB_STATUS_0,
     WUD_LIB_STATUS_1,
@@ -240119,7 +247376,6 @@ typedef BOOL (*WUDFreeFunc)(void* pBlock);
 typedef void (*WUDSyncDeviceCallback)(s32 result, s32 num);
 typedef void (*WUDClearDeviceCallback)(s32 result);
 
-typedef void (*WUDHidConnCallback)(UINT8 devHandle, u8 open);
 typedef void (*WUDHidRecvCallback)(UINT8 devHandle, UINT8* pReport, UINT16 len);
 
 typedef struct WUDDevInfo {
@@ -240136,6 +247392,8 @@ typedef struct WUDDevInfo {
     u8 UNK_0x5D[1];
     tBTA_HH_ATTR_MASK hhAttrMask; // at 0x5E
 } WUDDevInfo;
+
+typedef void (*WUDHidConnCallback)(WUDDevInfo* pInfo, u8 open);
 
 BOOL WUDInit(void);
 BOOL WUDIsBusy(void);
@@ -240223,7 +247481,7 @@ u8 _WUDGetLinkNumber(void);
 extern "C" {
 #endif
 
-void WUDHidHostCallback(tBTA_HH_EVT event, tBTA_HH* pData);
+void WUDiHidHostEventCallback(tBTA_HH_EVT event, tBTA_HH* pData);
 
 #ifdef __cplusplus
 }
@@ -240815,7 +248073,8 @@ typedef struct WUDCB {
     u16 bufferStatus1; // at 0x746
 } WUDCB;
 
-extern WUDCB _wcb;
+extern WUDCB __rvl_wudcb;
+#define _wcb __rvl_wudcb
 extern WUDDevInfo _work;
 
 extern SCBtDeviceInfoArray _scArray;
@@ -240823,6 +248082,13 @@ extern SCBtDeviceInfoArray _scArray;
 extern BD_ADDR_PTR _dev_handle_to_bda[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_queue_size[WUD_MAX_DEV_ENTRY];
 extern u16 _dev_handle_notack_num[WUD_MAX_DEV_ENTRY];
+
+WUDDevInfo* WUDiGetDiscoverDevice(void);
+void WUDiSetDevAddrForHandle(u8 handle, BD_ADDR_PTR addr);
+BD_ADDR_PTR WUDiGetDevAddrForHandle(u8 handle);
+void WUDiSetQueueSizeForHandle(u8 handle, u16 size);
+void WUDiSetNotAckNumForHandle(u8 handle, u16 notAckNum);
+int WUDIsLinkedWBC(void);
 
 #ifdef __cplusplus
 }
@@ -243243,24 +250509,544 @@ namespace cf{
 
 /* "src/kyoshin/plugin/ocBdat.hpp" line 2 "types.h" */
 /* end "types.h" */
+/* "src/kyoshin/plugin/ocBdat.hpp" line 3 "monolib/vm/yvm2.h" */
+#pragma once
 
-//Utility class for handling bdat files.
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/vm/yvm2.h" line 3 "monolib/vm/yvm_types.h" */
+#pragma once
+
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/vm/yvm_types.h" line 3 "monolib/vm/sb_types.h" */
+#pragma once
+
+//Types/defines for SB script files.
+
+/* "libs/monolib/include/monolib/vm/sb_types.h" line 4 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Minimum supported SB version
+#define SB_MIN_VERSION 2
+
+enum SBFlags{
+    SB_FLAG_LOADED    = 1 << 0, //Stored in the runtime flag byte (offset 0x7)
+    SB_FLAG_ENCRYPTED = 1 << 1  //Stored in the normal flag byte (offset 0x6)
+};
+
+typedef struct SBSectionHeader{
+    int entriesOffset;  //0x0
+    int entries; //0x4
+    int offsetSize;  //0x8
+} SBSectionHeader;
+
+typedef struct SBHeader{
+    char magic[4];                      //0x0
+    u8 version;                         //0x4
+    u8 unk5; //unused?
+    u8 flags;                           //0x6
+    /* Reserved by the VM as a place to store various flags during runtime. Only the first bit
+    (for the loaded flag) gets used, however. */
+    u8 vmFlags;                         //0x7
+    SBSectionHeader* codeOfs;            //0x8
+    SBSectionHeader* idPoolOfs;          //0xC
+    SBSectionHeader* intPoolOfs;         //0x10
+    SBSectionHeader* fixedPoolOfs;       //0x14
+    SBSectionHeader* stringPoolOfs;      //0x18
+    SBSectionHeader* functionPoolOfs;    //0x1C
+    SBSectionHeader* pluginImportsOfs;   //0x20
+    SBSectionHeader* ocImportsOfs;       //0x24
+    SBSectionHeader* functionImportsOfs; //0x28
+    SBSectionHeader* staticVarsOfs;      //0x2C
+    SBSectionHeader* localPoolOfs;       //0x30
+    SBSectionHeader* sysAtrPoolOfs;      //0x34
+    SBSectionHeader* usrAtrPoolOfs;      //0x38
+    SBSectionHeader* debugSymbolsOfs;    //0x3C
+} SBHeader;
+
+//Section specific structs
+
+//Function pool
+
+typedef struct FunctionPoolEntry{
+    u16 unk0;
+    s16 unk2;
+    u16 unk4;
+    u8 unk8[0xC - 0x8];
+    u32 unkC;
+    u8 unk10[0x14 - 0x10];
+} FunctionPoolEntry;
+
+//Plugin imports
+
+typedef struct PluginImportEntry{
+    u16 unk0;
+    u16 unk2;
+} PluginImportEntry;
+
+//OC imports
+
+typedef struct OCImportEntry{
+    u16 unk0;
+} OCImportEntry;
+
+//Function imports
+
+typedef struct FunctionImportEntry{
+    u16 unk0;
+    u16 unk2;
+} FunctionImportEntry;
+
+//Static vars
+
+typedef struct StaticVarsEntry{
+    u32 unk0;
+    u32 unk4;
+} StaticVarsEntry;
+
+//Local pool
+
+typedef struct LocalPoolEntry{
+    u32 unk0;
+    u32 unk4;
+} LocalPoolEntry;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/sb_types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+//Misc constants
+
+#define MAX_PACKAGES 8 //Max number of packages (scripts) at once
+#define MAX_PLUGINS 48
+#define MAX_OCS 48
+#define MAX_THREADS 16
+#define MAX_BREAKPOINTS 4
+#define MAX_STACK_ENTRIES 128
+
+#define VMC_MAX 96 //Max number of opcodes
+
+typedef struct VMArg{
+    u8 type; //0x0
+    u16 unk2;
+    union {
+        void* pointerVal;
+        u32 uintVal;
+        int intVal;   
+    } value; //0x4
+} VMArg;
+
+typedef struct VMReg{
+    int pc; //0x0
+    int sp; //0x4
+    int unk8; //0x8
+    int exception; //0xC
+    int unk10; //0x10
+} VMReg;
+
+typedef struct _sVMThread{
+    VMReg reg; //0x0
+    VMArg unk14[2];
+    s16 unk24;
+    u8 unk26[2];
+    u32 unk28;
+    s16 unk2C;
+    u8 unk2E[2];
+    SBHeader* scriptData; //0x30
+    u8* codeData; //0x34
+    StaticVarsEntry* staticVarsEntries; //0x38
+    VMArg* stack; //0x3C
+    u32 unk40;
+    u32 id; //0x44
+    int unk48;
+    BOOL waitMode; //0x4C
+    u32 wkIdx; //0x50
+    u32 unk54;
+    u8 unk58[0x60 - 0x58];
+} VMThread;
+
+//Forward declaration
+struct OCData;
+
+typedef int (*PluginFunc)(VMThread* pThread);
+typedef int (*OCCtorFunc)(VMThread* pThread, void* r4, int r5);
+typedef int (*OCSelectorFunc)(VMThread* pThread, int r4);
+typedef void (*OCGetSetFunc)(VMThread* pThread, int r4, struct OCData* data);
+
+typedef struct PluginFuncData{
+    const char* name; //0x0
+    PluginFunc func; //0x4
+} PluginFuncData;
+
+typedef struct OCProperty{
+    const char* name; //0x0
+    OCGetSetFunc getFunc; //0x4
+    OCGetSetFunc setFunc; //0x8
+    int nameLength; //0xC
+} OCProperty;
+
+typedef struct OCSelector{
+    const char* name; //0x0
+    OCSelectorFunc func; //0x4
+    int nameLength; //0x8
+} OCSelector;
+
+typedef struct OCData{
+    const char* name; //0x0
+    OCCtorFunc ctor; //0x4
+    OCProperty* properties; //0x8
+    OCSelector* selectors; //0xC
+} OCData;
+
+typedef struct VMPackage{
+    SBHeader* scriptDataPtr; //0x0
+    u32 unk4;
+} VMPackage;
+
+typedef struct VMPlugin{
+    char* unk0;
+    PluginFuncData* unk4;
+} VMPlugin;
+
+typedef struct VMOC{
+    OCData* unk0;
+} VMOC;
+
+typedef struct VMBreakpoint{
+    u8 unk0[0xC];
+} VMBreakpoint;
+
+typedef struct VMState{
+    VMPackage packages[MAX_PACKAGES]; //0x0
+    VMThread* activeThread; //0x40
+    u32 nextThreadId; //0x44
+    VMThread* unk48[MAX_THREADS]; //0x48
+    VMThread threads[MAX_THREADS]; //0x88
+    VMArg threadStacks[MAX_THREADS][MAX_STACK_ENTRIES]; //0x688
+    VMPlugin plugins[MAX_PLUGINS]; //0x4688
+    VMOC ocs[MAX_OCS]; //0x4808
+    OCData* builtinOC; //0x48C8
+    //Unused debug data (based on info from XCX)
+    BOOL debMode; //0x48CC
+    u8 unk48D0[0xC];
+    VMBreakpoint bps[MAX_BREAKPOINTS]; //0x48DC
+} VMState;
+
+//Enums
+
+typedef enum VMCResult{
+    VMC_RESULT_0,
+    VMC_RESULT_1,
+    VMC_RESULT_2,
+    VMC_RESULT_3
+} VMCResult;
+
+typedef enum VMCOpcodeType{
+    VMC_OP_NOP,
+    VMC_OP_CONST_0,
+    VMC_OP_CONST_1,
+    VMC_OP_CONST_2,
+    VMC_OP_CONST_3,
+    VMC_OP_CONST_4,
+    VMC_OP_CONST_I,
+    VMC_OP_CONST_I_W,
+    VMC_OP_POOL_INT,
+    VMC_OP_POOL_INT_W,
+    VMC_OP_POOL_FIXED,
+    VMC_OP_POOL_FIXED_W,
+    VMC_OP_POOL_STR,
+    VMC_OP_POOL_STR_W,
+    VMC_OP_LD,
+    VMC_OP_ST,
+    VMC_OP_LD_ARG,
+    VMC_OP_ST_ARG,
+    VMC_OP_ST_ARG_OMIT,
+    VMC_OP_LD_0,
+    VMC_OP_LD_1,
+    VMC_OP_LD_2,
+    VMC_OP_LD_3,
+    VMC_OP_ST_0,
+    VMC_OP_ST_1,
+    VMC_OP_ST_2,
+    VMC_OP_ST_3,
+    VMC_OP_LD_ARG_0,
+    VMC_OP_LD_ARG_1,
+    VMC_OP_LD_ARG_2,
+    VMC_OP_LD_ARG_3,
+    VMC_OP_ST_ARG_0,
+    VMC_OP_ST_ARG_1,
+    VMC_OP_ST_ARG_2,
+    VMC_OP_ST_ARG_3,
+    VMC_OP_LD_STATIC,
+    VMC_OP_LD_STATIC_W,
+    VMC_OP_ST_STATIC,
+    VMC_OP_ST_STATIC_W,
+    VMC_OP_LD_AR,
+    VMC_OP_ST_AR,
+    VMC_OP_LD_NIL,
+    VMC_OP_LD_TRUE,
+    VMC_OP_LD_FALSE,
+    VMC_OP_LD_FUNC,
+    VMC_OP_LD_FUNC_W,
+    VMC_OP_LD_PLUGIN,
+    VMC_OP_LD_PLUGIN_W,
+    VMC_OP_LD_FUNC_FAR,
+    VMC_OP_LD_FUNC_FAR_W,
+    VMC_OP_MINUS,
+    VMC_OP_NOT,
+    VMC_OP_L_NOT,
+    VMC_OP_ADD,
+    VMC_OP_SUB,
+    VMC_OP_MUL,
+    VMC_OP_DIV,
+    VMC_OP_MOD,
+    VMC_OP_OR,
+    VMC_OP_AND,
+    VMC_OP_R_SHIFT,
+    VMC_OP_L_SHIFT,
+    VMC_OP_EQ,
+    VMC_OP_NE,
+    VMC_OP_GT,
+    VMC_OP_LT,
+    VMC_OP_GE,
+    VMC_OP_LE,
+    VMC_OP_L_OR,
+    VMC_OP_L_AND,
+    VMC_OP_JMP,
+    VMC_OP_JPF,
+    VMC_OP_CALL,
+    VMC_OP_CALL_W,
+    VMC_OP_CALL_IND,
+    VMC_OP_RET,
+    VMC_OP_NEXT,
+    VMC_OP_PLUGIN,
+    VMC_OP_PLUGIN_W,
+    VMC_OP_CALL_FAR,
+    VMC_OP_CALL_FAR_W,
+    VMC_OP_GET_OC,
+    VMC_OP_GET_OC_W,
+    VMC_OP_GETTER,
+    VMC_OP_GETTER_W,
+    VMC_OP_SETTER,
+    VMC_OP_SETTER_W,
+    VMC_OP_SEND,
+    VMC_OP_SEND_W,
+    VMC_OP_TYPEOF,
+    VMC_OP_SIZEOF,
+    VMC_OP_SWITCH,
+    VMC_OP_INC,
+    VMC_OP_DEC,
+    VMC_OP_EXIT,
+    VMC_OP_BP //Breakpoint
+} VMCOpcodeType;
+
+typedef enum _VMTypes {
+    VM_TYPE_NIL,
+    VM_TYPE_TRUE,
+    VM_TYPE_FALSE,
+    VM_TYPE_INT,
+    VM_TYPE_FIXED,
+    VM_TYPE_STRING,
+    VM_TYPE_ARRAY,
+    VM_TYPE_FUNCTION,
+    VM_TYPE_PLUGIN,
+    VM_TYPE_OC,
+    VM_TYPE_SYS,
+
+    VM_MAX_TYPE = 11
+} VMTypes;
+
+typedef enum VMException {
+    VM_EXCEPTION_NONE,
+    VM_EXCEPTION_PLUGIN,
+    VM_EXCEPTION_OC,
+    VM_EXCEPTION_DIV_BY_ZERO,
+    VM_EXCEPTION_INVALID_ARRAY,
+    VM_EXCEPTION_INDEX_OOB,
+    VM_EXCEPTION_MATH_INVALID_ARG,
+    VM_EXCEPTION_CALC_INVALID_ARG,
+    VM_EXCEPTION_8,
+    VM_EXCEPTION_JPF_INVALID_ARG,
+    VM_EXCEPTION_CALLIND_INVALID_ARG,
+    VM_EXCEPTION_INVALID_OC,
+    VM_EXCEPTION_SEND_ERROR,
+    VM_EXCEPTION_INVALID_PROPERTY,
+    VM_EXCEPTION_INVALID_GETSET_FUNC
+} VMException;
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm_types.h" */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void vmInit();
+BOOL vmLink(u8* pData);
+BOOL vmPluginRegist(const char* name, PluginFuncData* plugin_funcs);
+void vmStart(u8* pData);
+
+VMThread* vmThreadCreate(SBHeader* pData, u32 r4);
+void vmThreadStart(VMThread* pThread, u32 r4);
+BOOL vmThreadEnd(u32 r3);
+BOOL vmThreadIsAlive(u32 r3);
+BOOL vmThreadSleep(u32 r3);
+BOOL vmThreadWakeup(u32 r3);
+void vmThreadSleepAll(u8* pScriptData);
+void vmThreadWakeupAll(u8* pScriptData);
+BOOL vmThreadIsFinish(u8* pScriptData);
+BOOL vmThreadGetOC(VMThread* pThread, int r4, u32* outId);
+
+VMArg* vmArgPtrGet(VMThread* pThread, int r4);
+BOOL vmArgOmitChk(VMThread* pThread, int r4);
+BOOL vmArgBoolGet(u32 r3, VMArg* r4);
+int vmArgIntGet(u32 r3, VMArg* r4);
+int vmArgFixedGet(u32 r3, VMArg* r4);
+const char* vmArgStringGet(u32 r3, VMArg* r4);
+u32 vmArgFunctionGet(u32 r3, VMArg* r4);
+void* vmArgArrayGet(u32 r3, VMArg* r4);
+void* vmArgOCGet(u32 r3, VMArg* r4);
+u32 vmDataGet(VMThread* pThread, int startIndex, int length);
+
+void vmRetValSet(VMThread* pThread, VMArg* pArg);
+void* vmOCPropertyGet(VMThread* pThread);
+void vmWaitModeSet(VMThread* pThread);
+u32 vmWkIdxGet(VMThread* pThread);
+void vmWkIdxSet(VMThread* pThread, u32 r4);
+u32* vmWkGet(VMThread* pThread, u32 r4);
+
+void vmPluginExceptionThrow(VMThread* pThread);
+void vmOCExceptionThrow(VMThread* pThread);
+DECOMP_DONT_INLINE void vmExceptionProc(VMThread* pThread);
+void vmExceptionThrow(VMThread* pThread, u32 exception);
+
+const char* vmIdPoolGet(SBHeader* data, u32 no);
+int vmIntPoolGet(SBHeader* data, u32 no);
+int vmFixedPoolGet(SBHeader* data, u32 no);
+void* vmStringPoolGet(SBHeader* data, u32 no);
+void* vmLocalPoolGet(SBHeader* data, u32 no);
+void* vmFunctionPoolGet(SBHeader* data, u32 no);
+u16* vmSysAtrPoolGet(SBHeader* data, u32 no);
+u16* vmUsrAtrPoolGet(SBHeader* data, u32 no);
+
+u32 vmSysAtrSearch(SBHeader* data, u32 no);
+u32 vmPluginSearch(const char* param1, const char* param2);
+u32 vmOCSearch(const char* pName);
+u32 vmPropertySearch(OCData* pOC, const char* pName);
+u32 vmSelectorSearch(OCData* pOC, const char* pName);
+u32 vmFuncFarSearch(const char* pPackageName, const char* pFuncName);
+
+void encodeScramble(u8* data);
+int vmc_call_entry(VMThread* pThread, u32 r4, s16 r5, u32 r6);
+
+void vmArgErr();
+void vmHalt();
+
+#ifdef __cplusplus
+}
+#endif
+/* end "monolib/vm/yvm2.h" */
+
+void* getFP(const char* pName);
+
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
+// Utility class for handling bdat files.
 class CBdat {
 public:
-    static void func_8003AA34();
-    static void func_8003AA50();
-    static void func_8003AA78(u32, void*);
+    static void* func_8003AA34();
+    static void* func_8003AA50();
+    static void* func_8003AA78(u32, void*);
     static void func_8003AA8C(u32 val);
-    static void* getFP(const char* pName);
+    static void* getFP(const char* pName) { return ::getFP(pName); }
     static const char* getBdatStringColumnValue(void* pData, const char* pColumnName, int index);
-    static u16 func_8003B1EC(void* pData);
-    static u16 func_8003B41C(void* pData);
+    static u32 func_8003B1EC(void* pData);
+    static u32 func_8003B41C(void* pData);
 };
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void ocBdatRegist();
+
+#ifdef __cplusplus
+}
+#endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 /* "src/kyoshin/cf/CfBdat.cpp" line 2 "monolib/util.hpp" */
 /* end "monolib/util.hpp" */
 
 extern u32 func_800AA714(const char* pString);
+extern "C" const char lbl_eu_80500FA4[];
+extern "C" const char* lbl_eu_8052E6F0[];
+extern u32 lbl_eu_806640A8;
 
 using namespace ml;
 
@@ -243543,8 +251329,6 @@ void CfBdat::resetMapBdatFileDataPointers(){
         return 0;
     }
 
-extern "C" const char* lbl_eu_8052E6F0[];
-
 const char* CfBdat::func_801424A8(u16 index) {
     return lbl_eu_8052E6F0[index];
 }
@@ -243553,7 +251337,7 @@ const char* CfBdat::func_801424A8(u16 index) {
         bool result = false;
 
         if(lbl_80666A6C == pEventFile->mFileHandle){
-            if(pEventFile->unk0 == 1 && *(u32*)((u32)pEventFile + 0x14) != 0){
+            if(pEventFile->unk0 == 1 && pEventFile->field_14 != 0){
                 CBdat::func_8003AA78(3, lbl_80666A70);
                 spMnuEveStartFileData = CBdat::getFP("MNU_eve_start");
                 spMnuEveTableFileData = CBdat::getFP("MNU_eve_table");
@@ -243566,4 +251350,43 @@ const char* CfBdat::func_801424A8(u16 index) {
         return result;
     }
 
+}
+
+void func_80141B54(){}
+void func_80141BA0(){}
+void func_80141C6C(){}
+
+// Decodes two packed sub-fields from a bdat string column on the global
+// lbl_eu_806640A8 table. *pOut0 receives the 7-bit field at bits [26:20] and
+// *pOut1 receives the 10-bit field at bits [19:10] of the parsed u32; the
+// return value is 1 if the parsed u32 was non-zero, 0 otherwise.
+u32 func_80141D48(u16* pOut0, u16* pOut1, u32 index){
+    CBdat::func_8003AA34();
+    u32 value = func_800AA714(CBdat::getBdatStringColumnValue(
+        (BdatHeader*)lbl_eu_806640A8,
+        &lbl_eu_80500FA4[0x34F],
+        index));
+    *pOut0 = (u16)((value >> 20) & 0x7F);
+    *pOut1 = (u16)((value >> 10) & 0x3FF);
+    return (value != 0) ? 1 : 0;
+}
+
+void func_80141DC4(){}
+void func_80141E90(){}
+void func_80141FE0(){}
+void func_80142074(){}
+void func_80142154(){}
+void func_8014235C(){}
+
+// Linear-scan lookup of pName in lbl_eu_8052E6F0[1..8]; returns the 1-based
+// index on match, or 0 if pName is null or not found.
+u32 func_80142428(const char* pName){
+    if(pName != nullptr){
+        for(u32 i = 1; i < 9; i++){
+            if(strcmp(pName, lbl_eu_8052E6F0[i]) == 0){
+                return i;
+            }
+        }
+    }
+    return 0;
 }

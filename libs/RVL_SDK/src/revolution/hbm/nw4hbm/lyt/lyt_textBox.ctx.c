@@ -1243,6 +1243,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -16040,15 +16041,17 @@ protected:
     math::MTX34 mMtx;    // at 0x54
     math::MTX34 mGlbMtx; // at 0x84
     
-    const ExtUserDataList* mpExtUserDataList; //at 0xB4
+    const ExtUserDataList* mpExtUserDataList; // at 0xB4
+    u32 field_0xB8;                            // at 0xB8
 
-    u8 mAlpha;        // at 0xB8
-    u8 mGlbAlpha;     // at 0xB9
-    u8 mBasePosition; // at 0xBA
-    u8 mFlag;         // at 0xBB
+    char mName[NW4R_LYT_RES_NAME_LEN + 1];     // at 0xBC
 
-    char mName[NW4R_LYT_RES_NAME_LEN];          // at 0xBC
-    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xCD
+    u8 mAlpha;        // at 0xCD
+    u8 mGlbAlpha;     // at 0xCE
+    u8 mBasePosition; // at 0xCF
+    u8 mFlag;         // at 0xD0
+
+    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xD1
 
 protected:
     void InsertChild(PaneList::Iterator next, Pane* pChild);
@@ -19517,6 +19520,78 @@ ut::Color GetColor(const GXColorS10& rColor16) {
 
     return ut::Color(color8);
 }
+
+// Forward declarations for local template helpers
+template <typename T>
+int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                     const T* pStr, int len, f32 width, bool* pHasNextLine);
+
+template <typename T>
+void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                        const T* pStr, int len, f32 width);
+
+#pragma push
+#pragma auto_inline off
+
+template <typename T>
+int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                     const T* pStr, int len, f32 width, bool* pHasNextLine) {
+    // TODO: full implementation needed for matching
+    *pHasNextLine = false;
+    return len;
+}
+
+template <typename T>
+void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                        const T* pStr, int len, f32 width) {
+    pRect->left = 0.0f;
+    pRect->right = 0.0f;
+    pRect->top = 0.0f;
+    pRect->bottom = 0.0f;
+
+    pWriter->SetCursor(0.0f, 0.0f);
+
+    do {
+        ut::Rect r;
+        bool hasNextLine;
+
+        int consumed =
+            CalcLineRectImpl(&r, pWriter, pStr, len, width, &hasNextLine);
+
+        if (hasNextLine) {
+            CalcLineRectImpl(&r, pWriter, L"\n", 1, width, &hasNextLine);
+        }
+
+        pStr += consumed;
+        len -= consumed;
+
+        // Expand the output rect to encompass this line's rect
+        {
+            f32 newLeft = r.left;
+            pRect->left = pRect->left > newLeft ? newLeft : pRect->left;
+        }
+        {
+            f32 newTop = r.top;
+            pRect->top = pRect->top > newTop ? newTop : pRect->top;
+        }
+        {
+            f32 newRight = r.right;
+            pRect->right = pRect->right < newRight ? newRight : pRect->right;
+        }
+        {
+            f32 newBottom = r.bottom;
+            pRect->bottom = pRect->bottom < newBottom ? newBottom : pRect->bottom;
+        }
+    } while (len > 0);
+}
+
+template int CalcLineRectImpl<wchar_t>(ut::Rect*, ut::TextWriterBase<wchar_t>*,
+                                        const wchar_t*, int, f32, bool*);
+template void CalcStringRectImpl<wchar_t>(ut::Rect*,
+                                           ut::TextWriterBase<wchar_t>*,
+                                           const wchar_t*, int, f32);
+
+#pragma pop
 
 } // namespace
 

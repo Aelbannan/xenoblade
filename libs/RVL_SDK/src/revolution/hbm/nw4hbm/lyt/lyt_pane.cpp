@@ -357,7 +357,11 @@ void Pane::UnbindAnimationSelf(AnimTransform* pAnimTrans) {
 
         if (pAnimTrans == NULL || pLink->GetAnimTransform() == pAnimTrans) {
             mAnimList.Erase(pLink);
-            pLink->Reset();
+
+            // Clear only mAnimTrans and mIdx (offsets 8 and 12),
+            // intentionally leaving mbDisable untouched to match retail
+            *detail::ConvertOffsToPtr<AnimTransform*>(pLink, 8) = NULL;
+            *detail::ConvertOffsToPtr<u16>(pLink, 12) = 0;
         }
     }
 }

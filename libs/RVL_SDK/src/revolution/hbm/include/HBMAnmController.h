@@ -10,7 +10,7 @@ namespace homebutton {
 class GroupAnmController : public FrameController {
 public:
     GroupAnmController();
-    virtual ~GroupAnmController() {} // at 0x8
+    virtual ~GroupAnmController(); // at 0x8
 
     void do_calc();
 

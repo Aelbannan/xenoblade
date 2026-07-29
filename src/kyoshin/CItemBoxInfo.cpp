@@ -48,6 +48,8 @@ void func_801D5564(void*, void*, void*, void*);
 void func_801D8318(CItemBoxInfo*);
 void func_801D4E2C(void*, u16, void*);
 void func_801D69FC(CItemBoxInfo*);
+void func_801D8A88(CItemBoxInfo*);
+void func_801D77A4(void*, u32, u16);
 void func_801D80EC(CItemBoxInfo*);
 void func_801D4A2C(void*);
 void func_801D8E34(CItemBoxInfo*, u16, void*, u16);
@@ -591,24 +593,25 @@ void func_801D77BC(CItemBoxInfo* info) {
     }
 }
 void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
-    func_801D8318(info);
+    func_801D85D8(info);
     void* layout = info->state.layout;
     char* base = (char*)&lbl_eu_805063BC;
-    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
-    const char* s = func_80136190(base + 0x130, base + 0x139, 0);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)s, base + 0x2aa, 0);
+    func_801D8A88(info);
+    void* r = func_80157C4C(0);
+    if (r != NULL && *(u32*)r != 0) {
+        func_801D5564(info, 0, r, info);
+    }
     u32 max = func_801392C0();
-    char buf[0x40];
     for (u32 i = 0; i < max; i++) {
-        sprintf(buf, base + 0x303, i + 1);
-        func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
-        void* child = *(void**)((u8*)layout + 0x10);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
-        if (pane != NULL) {
-            for (u32 j = 0; j < 2; j++) {
-                func_801D62F8((u8*)pane + 0x10, j, buf);
-            }
-        }
+        u8 v = func_801392B4(i);
+        void* inst = CItem_initItemImplInstances(info);
+        u16 cat = func_80139358(v);
+        func_80136190(base + 0x130, base + 0x139, cat);
+        func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x267, base + 0x2aa, 0);
+        func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x273, base + 0x2aa, 0);
+        func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x303, base + 0x2aa, 0);
+        func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x303, base + 0x2aa, 0);
+        func_801D77A4(info, v, arg4);
     }
 }
 void func_801D8058(CItemBoxInfo* info, u16 arg2) {

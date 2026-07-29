@@ -4,7 +4,7 @@
 
 extern "C" {
     extern u32 lbl_eu_80539910[];   // vtable for CVS_THREAD
-    extern void func_800BE924(u8* voice);
+    extern void func_800BE924(void* voice);
 }
 
 // ── func_802A3E74 ─────────────────────────────────────────────────────────
@@ -13,7 +13,7 @@ extern "C" {
 
 void func_802A3E74(CVS_THREAD* thread) {
     if (thread->unk10 != 0) {
-        func_800BE924((u8*)thread->unk10);
+        func_800BE924((void*)thread->unk10);
     }
 }
 
@@ -39,21 +39,8 @@ void CVS_THREAD::func_802A3B50(){
 
 }
 
-// ── func_802A3BEC (vmethod[1]) ────────────────────────────────────────────
-// Checks whether the active voice handle at unk10 matches voicePtr.
-// If so, stops the voice via func_800BE924 and clears both unk10
-// and unk14.  The redundant inner voice != 0 guard mirrors the
-// retail MWCC codegen pattern for the && short-circuit.
+void CVS_THREAD::func_802A3BEC(){
 
-void CVS_THREAD::func_802A3BEC(CCharVoice* voicePtr) {
-    u32 voice = unk10;
-    if (voice != 0 && voice == (unsigned int)voicePtr) {
-        if (voice != 0) {
-            func_800BE924((u8*)voice);
-        }
-        unk10 = 0;
-        unk14 = -1;
-    }
 }
 
 void func_802A3C44(){
@@ -63,16 +50,7 @@ void func_802A3C44(){
 void func_802A3D54(){
 }
 
-// ── func_802A3E28 ─────────────────────────────────────────────────────────
-// Stops any active voice at unk10, then clears unk10 to 0 and sets
-// unk14 to -1 unconditionally.
-
-void CVS_THREAD::func_802A3E28() {
-    if (unk10 != 0) {
-        func_800BE924((u8*)unk10);
-    }
-    unk10 = 0;
-    unk14 = (u32)-1;
+void func_802A3E28(){
 }
 
 void func_802A3E88(){}

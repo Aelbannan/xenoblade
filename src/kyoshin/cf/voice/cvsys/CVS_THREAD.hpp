@@ -2,8 +2,6 @@
 
 #include <types.h>
 
-struct CCharVoice;
-
 class CVS_THREAD{
 public:
     u32* unk0;
@@ -18,14 +16,12 @@ public:
 
     //Virtual table (0x1c)
     virtual void func_802A3B50();
-    virtual void func_802A3BEC(CCharVoice* voicePtr);
+    virtual void func_802A3BEC();
     virtual int blank1();
     virtual void func_802A1EA0();
     virtual void func_802A3740();
     virtual int blank2();
     int func_802A5ECC() { return 240; }
-
-    void func_802A3E28();
 };
 
 extern "C" unsigned int func_802A35A0(unsigned int value);

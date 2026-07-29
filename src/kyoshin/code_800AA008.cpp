@@ -184,17 +184,17 @@ void func_800AA5C0() {
 }
 
 u32 func_800AA600(const char* str) {
-    if (str == nullptr) return 0;
+    if (str == NULL) return 0;
 
-    const u32* table = reinterpret_cast<const u32*>(lbl_eu_805283B0);
-    const FormatEntry* entry = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0) + 1;
+    const FormatEntry* table = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0);
+    const FormatEntry* entry = &table[1];
     for (int i = 0; i < 10; i++) {
         if (str[0] == entry[0].name[0] && str[1] == entry[0].name[1])
-            return table[(entry[0].name[1] & 0xF0) / 4];
+            return entry[0].id;
         if (str[0] == entry[1].name[0] && str[1] == entry[1].name[1])
-            return table[(entry[1].name[1] & 0xF0) / 4];
+            return entry[1].id;
         if (str[0] == entry[2].name[0] && str[1] == entry[2].name[1])
-            return table[(entry[2].name[1] & 0xF0) / 4];
+            return entry[2].id;
         entry += 3;
     }
     return 0;

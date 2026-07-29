@@ -22,7 +22,8 @@ int func_80185760(VMThread* pThread) {
 int func_801857A8(VMThread* pThread) {
     VMArg result;
     result.type = VM_TYPE_INT;
-    result.value.uintVal = (u16)cf::CfGameManager::func_80086DA0();
+    u16 val = (u16)cf::CfGameManager::func_80086DA0();
+    result.value.uintVal = val;
     vmRetValSet(pThread, &result);
     return 1;
 }

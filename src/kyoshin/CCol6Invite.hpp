@@ -10,11 +10,8 @@
 */
 class CCol6Invite : public CProcess {
 public:
-    CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
+    CCol6Invite() {}
     virtual ~CCol6Invite();
-
-    // Factory: allocates from work memory, constructs, registers with parent.
-    static CCol6Invite* create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
 
     // CProcess overrides
     void Init() override;
@@ -39,6 +36,9 @@ public:
     /* 0x73 */ u8 mArg4;          // from r6
     /* 0x74 */ u8 mField74;       // init 0
 };
+
+// Factory function for CCol6Invite singleton (free function pattern).
+CCol6Invite* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
 
 // Singleton instance pointer (lbl_eu_8066423C in retail).
 extern CCol6Invite* gCol6Invite;

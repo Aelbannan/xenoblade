@@ -253027,6 +253027,39 @@ extern "C" void func_8007F8F4__Q22cf13CfGameManagerFv(
 }
 #pragma dont_inline reset
 extern "C" u16 lbl_eu_80663E40;
+extern "C" UnkClass_8009ECB0* func_8009ECB0();
+extern "C" s32* func_8007E0C8__Q22cf13CfGameManagerFv(
+    UnkClass_8009ECB0* data);
+extern "C" void func_80082B38__Q22cf13CfGameManagerFv() {
+    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+    func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    cf::CfObjectMove* oldPlayers[3];
+    oldPlayers[0] = *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    oldPlayers[1] = *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 1);
+    oldPlayers[2] = *func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 2);
+    UnkClass_8009ECB0* data = func_8009ECB0();
+    s32* requestedIds = func_8007E0C8__Q22cf13CfGameManagerFv(data);
+    for (s32 destination = 0; destination < 3; ++destination) {
+        if (requestedIds[destination] != 0) {
+            for (s32 source = 0; source < 3; ++source) {
+                cf::CfObjectMove* player = oldPlayers[source];
+                if (player != nullptr && requestedIds[destination] ==
+                                             func_8007F8B8__Q22cf13CfGameManagerFv(
+                                                 reinterpret_cast<ItemListSubobject*>(player))) {
+                    *func_8007C6B4__Q22cf13CfGameManagerFv(
+                        manager->unk94, destination) = oldPlayers[source];
+                    goto nextDestination;
+                }
+            }
+        } else {
+            *func_8007C6B4__Q22cf13CfGameManagerFv(
+                manager->unk94, destination) = nullptr;
+        }
+nextDestination:
+        ;
+    }
+}
+
 extern "C" ItemListManager* func_800B6BA4__Fv();
 extern "C" void func_800C01D4(ItemListObject* object, void* destination,
                                 u16 itemId);
@@ -254132,9 +254165,11 @@ u16 cf::CfGameManager::func_8007E030() {
     return field_0x18;
 }
 
+#pragma dont_inline on
 cf::CfObject** cf::CfGameManager::func_8007E0C8() {
     return &field_0x4;
 }
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_80087334() {
     field_0x4->CfObject_UnkVirtualFunc52();

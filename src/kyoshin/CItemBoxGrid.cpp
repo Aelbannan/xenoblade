@@ -17,6 +17,8 @@ extern void func_801D216C(void*, int);
 extern void func_801D0950(void*);
 extern void func_80137510(u32, float);
 extern void* func_80157C4C(u8, s16);
+u8 func_801C67F8(CItemBoxGridFull* self);
+u8 func_801C6840(CItemBoxGridFull* self);
 
 u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_61; }
 
@@ -113,9 +115,27 @@ long func_801C6158(double f) {
 
 void func_801C618C(){}
 
-void func_801C62AC(){}
+// Lookup entry, check category; return word >> 20 or 0.
+u32 func_801C62AC(CItemBoxGridFull* self, u16 idx) {
+    s8 base = (s8)self->field_2804;
+    u16 offset = (u16)(base * 0x1e + idx);
+    if (offset >= self->field_2800) return 0;
+    s16 val = *(s16*)((u8*)self + offset * 0xa);
+    void* obj = func_80157C4C(self->field_2802, val);
+    if (!obj || !*(u32*)obj) return 0;
+    return *(u32*)obj >> 20;
+}
 
-void func_801C631C(){}
+// Lookup entry, check category; return obj ptr or 0.
+void* func_801C631C(CItemBoxGridFull* self, u16 idx) {
+    s8 base = (s8)self->field_2804;
+    u16 offset = (u16)(base * 0x1e + idx);
+    if (offset >= self->field_2800) return 0;
+    s16 val = *(s16*)((u8*)self + offset * 0xa);
+    void* obj = func_80157C4C(self->field_2802, val);
+    if (!obj || !*(u32*)obj) return 0;
+    return obj;
+}
 
 void func_801C6388(){}
 
@@ -182,7 +202,17 @@ u8 func_801C673C(CItemBoxGridFull* self, u16 idx) {
     return ((u8*)self)[offset * 0xa + 8];
 }
 
-void func_801C6770(){}
+// Toggle an entry's flag based on category cap.
+void func_801C6770(CItemBoxGridFull* self, u16 idx) {
+    u16 offset = (u16)((s8)self->field_2804 * 0x1e + idx);
+    if (offset >= 0x400) return;
+    u8* entry = (u8*)self + offset * 0xa;
+    if (entry[8] == 0) {
+        u8 cap = func_801C6840(self);
+        if (func_801C67F8(self) >= cap) return;
+    }
+    entry[8] = entry[8] ? 0 : 1;
+}
 
 // Count entries with non-zero byte at offset 8 in a 10-byte stride array.
 u8 func_801C67F8(CItemBoxGridFull* self) {

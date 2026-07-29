@@ -344,12 +344,14 @@ extern "C" void func_800827E4__Q22cf13CfGameManagerFv() {
     }
 }
 
+#pragma dont_inline on
 extern "C" void func_80080EE4__Q22cf13CfGameManagerFv(Unk80EE4Data* data,
                                                         const char* text, u16 value) {
     data->textLength_0x88 = strlen(text);
     strcpy(data->text_0x78, text);
     data->value_0x8C = value;
 }
+#pragma dont_inline reset
 
 extern "C" Unk80EE4Data* func_800B9548();
 extern "C" Unk80EE4Data* func_80081CBC__Q22cf13CfGameManagerFv(const char* text,
@@ -390,6 +392,18 @@ extern "C" u32 func_80082088__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 
 extern "C" UnkClass_800821F8* func_800784A0(u32 first, cf::CfObjectMove* second,
                                              u32 third, u32 fourth, u32 fifth,
                                              u32 sixth, u32 seventh);
+extern "C" void func_80075540(CfCamEventManager* manager, u32 flag);
+extern "C" void func_80081E90__Q22cf13CfGameManagerFv(u32 third, u32 fourth,
+                                                       u32 seventh) {
+    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+    cf::CfObjectMove** slot =
+        func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    cf::CfObjectMove* player = *slot;
+    manager->unkB0 = func_800784A0(0, player, third, fourth, 0, 0, seventh);
+    func_80075540(manager->unkB4, 8);
+    func_80075540(manager->unkB4, 16);
+}
+
 extern "C" void func_80081F28__Q22cf13CfGameManagerFv(u32 first,
                                                        cf::CfObjectMove* second) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
@@ -482,6 +496,15 @@ extern "C" void func_800866A0__Q22cf13CfGameManagerFv() {
 }
 
 extern "C" void func_8006349C();
+extern "C" void func_80061870(UnkClass_80085334* object, u32 mode, u16 value,
+                                u32 fourth, u32 fifth, u32 sixth);
+extern "C" void func_80085334__Q22cf13CfGameManagerFv(u16 value) {
+    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+    if (manager->unkAC != nullptr) {
+        func_80061870(manager->unkAC, 6, value, 0, 0, 0);
+    }
+}
+
 extern "C" void func_8008670C__Q22cf13CfGameManagerFv() {
     if (!lbl_eu_80663E70) {
         __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);

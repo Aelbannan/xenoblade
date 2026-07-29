@@ -251754,8 +251754,27 @@ struct UnkReset28Data {
     u8 field_0x0[0x28];
 };
 
-struct Unk80EE4Data {
-    u8 field_0x0[0x78];
+class Unk80EE4Data {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+
+    u8 field_0x4[0x74];
     char text_0x78[0x10];
     u32 textLength_0x88;
     u16 value_0x8C;
@@ -252056,11 +252075,24 @@ extern "C" void func_800827E4__Q22cf13CfGameManagerFv() {
     }
 }
 
+#pragma dont_inline on
 extern "C" void func_80080EE4__Q22cf13CfGameManagerFv(Unk80EE4Data* data,
                                                         const char* text, u16 value) {
     data->textLength_0x88 = strlen(text);
     strcpy(data->text_0x78, text);
     data->value_0x8C = value;
+}
+#pragma dont_inline reset
+
+extern "C" Unk80EE4Data* func_800B9548();
+extern "C" Unk80EE4Data* func_80081CBC__Q22cf13CfGameManagerFv(const char* text,
+                                                                 u16 value) {
+    Unk80EE4Data* data = func_800B9548();
+    if (data != nullptr) {
+        func_80080EE4__Q22cf13CfGameManagerFv(data, text, value);
+        data->vfunc_0x48();
+    }
+    return data;
 }
 
 extern "C" UnkClass_800AA714* func_800AA714(u32 value);
@@ -252091,6 +252123,18 @@ extern "C" u32 func_80082088__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 
 extern "C" UnkClass_800821F8* func_800784A0(u32 first, cf::CfObjectMove* second,
                                              u32 third, u32 fourth, u32 fifth,
                                              u32 sixth, u32 seventh);
+extern "C" void func_80075540(CfCamEventManager* manager, u32 flag);
+extern "C" void func_80081E90__Q22cf13CfGameManagerFv(u32 third, u32 fourth,
+                                                       u32 seventh) {
+    cf::CfGameManager* manager = cf::CfGameManager::getInstance();
+    cf::CfObjectMove** slot =
+        func_8007C6B4__Q22cf13CfGameManagerFv(manager->unk94, 0);
+    cf::CfObjectMove* player = *slot;
+    manager->unkB0 = func_800784A0(0, player, third, fourth, 0, 0, seventh);
+    func_80075540(manager->unkB4, 8);
+    func_80075540(manager->unkB4, 16);
+}
+
 extern "C" void func_80081F28__Q22cf13CfGameManagerFv(u32 first,
                                                        cf::CfObjectMove* second) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();

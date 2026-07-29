@@ -3,6 +3,40 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CFloorMap.hpp"
+#include <cstdio>
+
+extern "C" char lbl_eu_8050BEA8[];
+extern u32 lbl_eu_8066479C;
+extern u32 func_8003B1EC(u32);
+extern u32 lbl_eu_8050BDF8[];
+extern u8 lbl_eu_80664798;
+
+extern int CSysWin_getUnk34(void*);
+extern void func_80246200(void*);
+extern u16 func_80248558(void*);
+extern void func_8024577C(void*, u16);
+extern void func_801F3850(void*, u16);
+extern void func_801375A0(float*, void*);
+extern void func_80137C1C(void*, void*);
+extern void* func_80136190(const char*, const char*, const char*);
+extern void* func_801355F4();
+extern void* createPicture__10CLibLayoutFv();
+extern void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
+extern void* func_80137E7C(void*, const char*, const char*);
+extern u32 func_8009CF8C(u32);
+extern void func_80138078(u32);
+
+extern float lbl_eu_80668764;
+extern float lbl_eu_80668794;
+extern float lbl_eu_80668798;
+extern float lbl_eu_806687A4;
+extern float lbl_eu_806687A8;
+extern float lbl_eu_806687AC;
+extern float lbl_eu_806687B0;
+extern float lbl_eu_806687B4;
+extern float lbl_eu_806687B8;
+
+typedef void* (*VFuncPtr)(void*, const char*, u32);
 
 u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
@@ -25,7 +59,7 @@ void func_80245950(){}
 
 void func_80245DF8(){}
 
-void func_80246200(){}
+void func_80246200(void* self){}
 
 void* __dt__802462F0(void* self, int mode) {
     extern void* __dl__FPv(void*);
@@ -55,7 +89,39 @@ void func_8024830C(){}
 
 void func_80248558(){}
 
-void func_80248920(){}
+void* func_80248920(void* self, const char* name, float x, float y, void* arg5, const char* paneName) {
+    if (!name) return NULL;
+    if (!paneName) return NULL;
+
+    void* result = func_80136190(&lbl_eu_8050BEA8[0x2f6], &lbl_eu_8050BEA8[0x303], name);
+
+    char buf[48];
+    sprintf(buf, &lbl_eu_8050BEA8[0x30e], result);
+
+    void* accessor = func_801355F4();
+    typedef void* (*VFuncPtr4)(void*, u32, void*, u32);
+    VFuncPtr4* vt = *(VFuncPtr4**)accessor;
+    void* picture = vt[3](accessor, 0x74696d67, buf, 0);
+
+    if (!picture) return NULL;
+
+    picture = createPicture__10CLibLayoutFv();
+    SetName__Q34nw4r3lyt4PaneFPCc(picture, paneName);
+
+    *(float*)((u8*)picture + 0x2C) = x;
+    *(float*)((u8*)picture + 0x30) = y;
+    *(float*)((u8*)picture + 0x34) = lbl_eu_80668764;
+
+    func_80137C1C(picture, arg5);
+
+    u8* byte = (u8*)picture + 0xBB;
+    *byte = (*byte & 0x7F) | 0x01;
+
+    *(float*)((u8*)picture + 0x44) = lbl_eu_80668794;
+    *(float*)((u8*)picture + 0x48) = lbl_eu_80668794;
+
+    return picture;
+}
 
 void func_80248A6C(){}
 
@@ -164,12 +230,6 @@ void func_8024F55C(void* self) {
         func_80138078(6);
     }
 }
-
-extern "C" char lbl_eu_8050BEA8[];
-extern u32 lbl_eu_8066479C;
-extern u32 func_8003B1EC(u32);
-extern u32 lbl_eu_8050BDF8[];
-extern u8 lbl_eu_80664798;
 
 typedef void* (*VFuncPtr)(void*, const char*, u32);
 u32 getHandleMEM2__Q23mtl10MemManagerFv();

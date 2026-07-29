@@ -30,7 +30,7 @@ struct LSC_StmEntry {
 };
 
 void LSC_Init() {
-    struct LSC_CriticalSection cs;
+    struct LSC_CriticalSection cs = lbl_eu_80518418;
     LSC_LockCrs(&cs);
     if (lbl_eu_805E7D38 == 0) {
         memset(lbl_eu_805E7D40, 0, 0x4700);

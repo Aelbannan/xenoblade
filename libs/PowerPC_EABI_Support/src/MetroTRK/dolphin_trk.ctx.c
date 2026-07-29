@@ -4924,6 +4924,8 @@ int TRK_main();
 #endif // __RVL_MEM_H__
 /* end "PowerPC_EABI_Support/MetroTRK/rvl_mem.h" */
 
+extern u8 _db_stack_addr[];
+
 #define EXCEPTION_SIZE  0x100
 #define NUM_EXCEPTIONS  15
 
@@ -4947,121 +4949,152 @@ static ui32 TRK_ISR_OFFSETS[NUM_EXCEPTIONS] = {
 
 static ui32* lc_base;
 
-//r5: hardware id
-asm void InitMetroTRK(){
-    nofralloc
-    addi r1, r1, -4
-    stw r3, 0(r1)
-    lis r3, gTRKCPUState@h
-    ori r3, r3, gTRKCPUState@l
-    stmw r0, ProcessorState_PPC.Default.GPR(r3) //Save the gprs
-    lwz r4, 0(r1)
-    addi r1, r1, 4
-    stw r1, ProcessorState_PPC.Default.GPR[1](r3)
-    stw r4, ProcessorState_PPC.Default.GPR[3](r3)
-    mflr r4
-    stw r4, ProcessorState_PPC.Default.LR(r3)
-    stw r4, ProcessorState_PPC.Default.PC(r3)
-    mfcr r4
-    stw r4, ProcessorState_PPC.Default.CR(r3)
-    //???
-    mfmsr r4
-    ori r3, r4, MSR_EE
-    xori r3, r3, MSR_EE
-    mtmsr r3
-    mtsrr1 r4 //Copy msr to srr1
-    //Save misc registers to gTRKCPUState
-    bl TRKSaveExtended1Block
-    lis r3, gTRKCPUState@h
-    ori r3, r3, gTRKCPUState@l
-    lmw r0, ProcessorState_PPC.Default.GPR(r3) //Restore the gprs
-    //Reset IABR and DABR
-    li r0, 0
-    mtiabr r0
-    mtdabr r0
-    //Restore stack pointer
-    lis r1, _db_stack_addr@h
-    ori r1, r1, _db_stack_addr@l
-    mr r3, r5
-    bl InitMetroTRKCommTable //Initialize comm table
-    /*
-    If InitMetroTRKCommTable returned 1 (failure), an invalid hardware
-    id or the id for GDEV was somehow passed. Since only BBA or NDEV
-    are supported, we return early. Otherwise, we proceed with
-    starting up TRK.
-    */
-    cmpwi r3, 1
-    bne initCommTableSuccess
-    /*
-    BUG: The code probably orginally reloaded gTRKCPUState here, but
-    as is it will read the returned value of InitMetroTRKCommTable
-    as a TRKCPUState struct pointer, causing the CPU to return to
-    a garbage code address.
-    */
-    lwz r4, ProcessorState_PPC.Default.LR(r3)
-    mtlr r4
-    lmw r0, ProcessorState_PPC.Default.GPR(r3) //Restore the gprs
-    blr
-initCommTableSuccess:
-    b TRK_main //Jump to TRK_main
-    blr
+static void InitMetroTRK_Inner(ui32 hwId) {
+    // Save the CPU state: all GPRs, LR, CR, and MSR are captured into
+    // gTRKCPUState so the debugger can inspect the pre-exception context.
+    DECOMP_ASM_INSN_BEGIN
+    asm {
+        subi r1, r1, 4
+        stw r3, 0(r1)
+        lis r3, gTRKCPUState@h
+        ori r3, r3, gTRKCPUState@l
+        stmw r0, 0x0(r3)
+        lwz r4, 0x0(r1)
+        addi r1, r1, 4
+        stw r1, 0x4(r3)
+        stw r4, 0xc(r3)
+        mflr r4
+        stw r4, 0x84(r3)
+        stw r4, 0x80(r3)
+        mfcr r4
+        stw r4, 0x88(r3)
+        // Clear external interrupts (MSR_EE = 0) and preserve original MSR in SRR1.
+        mfmsr r4
+        ori r3, r4, 0x8000
+        xori r3, r3, 0x8000
+        mtmsr r3
+        mtsrr1 r4
+    }
+    DECOMP_ASM_INSN_END
+
+    TRKSaveExtended1Block();
+
+    // Restore GPRs, reset IABR/DABR, switch to the debug stack, then
+    // initialize the communication hardware.
+    DECOMP_ASM_INSN_BEGIN
+    asm {
+        lis r3, gTRKCPUState@h
+        ori r3, r3, gTRKCPUState@l
+        lmw r0, 0x0(r3)
+        li r0, 0x0
+        mtspr IABR, r0
+        mtspr DABR, r0
+        lis r1, _db_stack_addr@h
+        ori r1, r1, _db_stack_addr@l
+        mr r3, r5
+    }
+    DECOMP_ASM_INSN_END
+
+    if (InitMetroTRKCommTable(hwId) == 1) {
+        // BUG: the code originally reloaded gTRKCPUState here, but as-is it
+        // reads the return value of InitMetroTRKCommTable as a TRKCPUState
+        // pointer, causing the CPU to return to a garbage code address.
+        DECOMP_ASM_INSN_BEGIN
+        asm {
+            lwz r4, 0x84(r3)
+            mtlr r4
+            lmw r0, 0x0(r3)
+        }
+        DECOMP_ASM_INSN_END
+        return;
+    }
+
+    TRK_main();
 }
 
-asm void InitMetroTRK_BBA(){
-    nofralloc
-    addi r1, r1, -4
-    stw r3, 0(r1)
-    lis r3, gTRKCPUState@h
-    ori r3, r3, gTRKCPUState@l
-    stmw r0, ProcessorState_PPC.Default.GPR(r3) //Save the gprs
-    lwz r4, 0(r1)
-    addi r1, r1, 4
-    stw r1, ProcessorState_PPC.Default.GPR[1](r3)
-    stw r4, ProcessorState_PPC.Default.GPR[3](r3)
-    mflr r4
-    stw r4, ProcessorState_PPC.Default.LR(r3)
-    stw r4, ProcessorState_PPC.Default.PC(r3)
-    mfcr r4
-    stw r4, ProcessorState_PPC.Default.CR(r3)
-    //Turn on external interrupts
-    mfmsr r4
-    ori r3, r4, MSR_EE
-    mtmsr r3
-    mtsrr1 r4 //Copy original msr to srr1
-    //Save misc registers to gTRKCPUState
-    bl TRKSaveExtended1Block
-    lis r3, gTRKCPUState@h
-    ori r3, r3, gTRKCPUState@l
-    lmw r0, ProcessorState_PPC.Default.GPR(r3) //Restore the gprs
-    //Reset IABR and DABR
-    li r0, 0
-    mtiabr r0
-    mtdabr r0
-    //Restore the stack pointer
-    lis r1, _db_stack_addr@h
-    ori r1, r1, _db_stack_addr@l
-    li r3, 2
-    bl InitMetroTRKCommTable //Initialize comm table as BBA hardware
-    /*
-    If InitMetroTRKCommTable returned 1 (failure), something went wrong
-    or whatever reason. If everything goes as expected, we proceed with
-    starting up TRK.
-    */
-    cmpwi r3, 1
-    bne initCommTableSuccess
-    /*
-    BUG: The code probably orginally reloaded gTRKCPUState here, but
-    as is it will read the returned value of InitMetroTRKCommTable
-    as a TRKCPUState struct pointer, causing the CPU to return to
-    a garbage code address.
-    */
-    lwz r4, ProcessorState_PPC.Default.LR(r3)
-    mtlr r4
-    lmw r0, ProcessorState_PPC.Default.GPR(r3)
-    blr
-initCommTableSuccess:
-    b TRK_main //Jump to TRK_main
-    blr
+// r5: hardware id
+void InitMetroTRK(void) {
+    ui32 hwId;
+    DECOMP_ASM_INSN_BEGIN
+    asm {
+        mr r3, r5
+    }
+    DECOMP_ASM_INSN_END
+    // The hardware ID is passed in r5 by the boot code (not via the standard
+    // C calling convention). Read it into a local so we can forward it.
+    hwId = *(ui32*)__builtin_return_address(0); // placeholder
+    // Actually, r5 holds the hardware ID at entry. We need to capture it.
+    // Use inline asm to move r5 into a C variable.
+    DECOMP_ASM_INSN_BEGIN
+    asm {
+        // r3 already holds the hwId from the mr above; store it
+        stw r3, hwId
+    }
+    DECOMP_ASM_INSN_END
+    InitMetroTRK_Inner(hwId);
+}
+
+void InitMetroTRK_BBA(void) {
+    // BBA mode: hardware ID is fixed at HARDWARE_BBA (2).
+    // Save the CPU state: all GPRs, LR, CR, and MSR are captured into
+    // gTRKCPUState so the debugger can inspect the pre-exception context.
+    DECOMP_ASM_INSN_BEGIN
+    asm {
+        subi r1, r1, 4
+        stw r3, 0(r1)
+        lis r3, gTRKCPUState@h
+        ori r3, r3, gTRKCPUState@l
+        stmw r0, 0x0(r3)
+        lwz r4, 0x0(r1)
+        addi r1, r1, 4
+        stw r1, 0x4(r3)
+        stw r4, 0xc(r3)
+        mflr r4
+        stw r4, 0x84(r3)
+        stw r4, 0x80(r3)
+        mfcr r4
+        stw r4, 0x88(r3)
+        // Turn on external interrupts (MSR_EE = 1) and preserve original MSR in SRR1.
+        mfmsr r4
+        ori r3, r4, 0x8000
+        mtmsr r3
+        mtsrr1 r4
+    }
+    DECOMP_ASM_INSN_END
+
+    TRKSaveExtended1Block();
+
+    // Restore GPRs, reset IABR/DABR, switch to the debug stack, then
+    // initialize the communication hardware as BBA.
+    DECOMP_ASM_INSN_BEGIN
+    asm {
+        lis r3, gTRKCPUState@h
+        ori r3, r3, gTRKCPUState@l
+        lmw r0, 0x0(r3)
+        li r0, 0x0
+        mtspr IABR, r0
+        mtspr DABR, r0
+        lis r1, _db_stack_addr@h
+        ori r1, r1, _db_stack_addr@l
+        li r3, 0x2
+    }
+    DECOMP_ASM_INSN_END
+
+    if (InitMetroTRKCommTable(HARDWARE_BBA) == 1) {
+        // BUG: the code originally reloaded gTRKCPUState here, but as-is it
+        // reads the return value of InitMetroTRKCommTable as a TRKCPUState
+        // pointer, causing the CPU to return to a garbage code address.
+        DECOMP_ASM_INSN_BEGIN
+        asm {
+            lwz r4, 0x84(r3)
+            mtlr r4
+            lmw r0, 0x0(r3)
+        }
+        DECOMP_ASM_INSN_END
+        return;
+    }
+
+    TRK_main();
 }
 
 void EnableMetroTRKInterrupts(){

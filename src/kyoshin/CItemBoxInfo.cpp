@@ -473,6 +473,7 @@ void func_801E17EC(CItemBoxInfo2*);
 void func_801E1868(CItemBoxInfo2*);
 void func_801E18B4(CItemBoxInfo2*);
 void func_801E1930(CItemBoxInfo2*);
+void __dt__17UnkClass_8045F564Fv(void*, s32);
 void __ct__17UnkClass_8045F564Fv(void*);
 extern u32 lbl_eu_80534B28;
 extern u32 lbl_eu_80534A90;
@@ -724,12 +725,12 @@ void func_801D8A88(CItemBoxInfo* info) {
 }
 
 void func_801D8B60(CItemBoxInfo* info) {
+    char buf[0x20];
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x4a7],
                   &lbl_eu_805063BC[0x2aa], 0);
     for (int i = 0; i < 4; i++) {
-        char buf[0x20];
-        sprintf(buf, &lbl_eu_805063BC[0x4b3], i + 0x1f);
+        sprintf(buf, &lbl_eu_805063BC[0x4b3], i * 2 + 0x1f);
         func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf,
                       &lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, &lbl_eu_805063BC[0x4c0], i + 0x1f);
@@ -1113,10 +1114,10 @@ CItemBoxInfo* __ct__CItemBoxInfo(CItemBoxInfo* info, u8 arg2, u16 arg3) {
     return info;
 }
 
-CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, u32 flags) {
+CItemBoxInfo* __dt__12CItemBoxInfoFv(CItemBoxInfo* info, s32 flags) {
     if (info != NULL) {
-        func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x14);
-        func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x4);
+        __dt__17UnkClass_8045F564Fv((u8*)info + 0x14, -1);
+        __dt__17UnkClass_8045F564Fv((u8*)info + 0x4, -1);
         if (flags > 0) __dl__FPv(info);
     }
     return info;
@@ -1165,10 +1166,10 @@ CItemBoxInfo2* __ct__CItemBoxInfo2(CItemBoxInfo2* info, u8 arg2, u16 arg3) {
     return info;
 }
 
-CItemBoxInfo2* __dt__13CItemBoxInfo2Fv(CItemBoxInfo2* info, u32 flags) {
+CItemBoxInfo2* __dt__13CItemBoxInfo2Fv(CItemBoxInfo2* info, s32 flags) {
     if (info != NULL) {
-        func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x14);
-        func_8045F778__17UnkClass_8045F564Fv((u8*)info + 0x4);
+        __dt__17UnkClass_8045F564Fv((u8*)info + 0x14, -1);
+        __dt__17UnkClass_8045F564Fv((u8*)info + 0x4, -1);
         if (flags > 0) __dl__FPv(info);
     }
     return info;
@@ -1653,12 +1654,12 @@ void func_801E4090(CItemBoxInfo2* info) {
                   &lbl_eu_805063BC[0x2aa], 0);
 }
 void func_801E40E8(CItemBoxInfo2* info) {
+    char buf[0x20];
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
                   &lbl_eu_805063BC[0x4a7],
                   &lbl_eu_805063BC[0x2aa], 0);
     for (int i = 0; i < 4; i++) {
-        char buf[0x20];
-        sprintf(buf, &lbl_eu_805063BC[0x4b3], i + 0x1f);
+        sprintf(buf, &lbl_eu_805063BC[0x4b3], i * 2 + 0x1f);
         func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf,
                       &lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, &lbl_eu_805063BC[0x4c0], i + 0x1f);

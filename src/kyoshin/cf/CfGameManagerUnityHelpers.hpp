@@ -2431,58 +2431,25 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
 
 extern "C" u32 lbl_eu_80663E50;
 extern "C" u32 lbl_eu_80663E04;
-extern "C" u32 lbl_eu_80664188;
-extern "C" u32 lbl_eu_80664184;
-extern "C" u8 lbl_eu_80664298;
+extern u32 lbl_eu_80664188;
+extern u32 lbl_eu_80664184;
+extern u8 lbl_eu_80664298;
+#pragma dont_inline on
 extern "C" u32 func_80083458__Q22cf13CfGameManagerFv() {
     return lbl_eu_80664188;
 }
+#pragma dont_inline reset
 
+#pragma dont_inline on
 extern "C" u32 func_80083460__Q22cf13CfGameManagerFv() {
     return lbl_eu_80664184;
 }
+#pragma dont_inline reset
 
+#pragma dont_inline on
 extern "C" void func_80083468__Q22cf13CfGameManagerFv(u32 value) {
     lbl_eu_80664298 = value;
 }
+#pragma dont_inline reset
 
-extern "C" void func_800862D0__Q22cf13CfGameManagerFv(u32 arg1, u32 arg2) {
-    func_800B94A0(0);
-    u32 flagsDF8 = lbl_eu_80663DF8;
-    flagsDF8 |= 0x600230;
-    lbl_eu_80663DF8 = flagsDF8;
-    func_800B06A4(lbl_eu_8066653C);
-    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
-    func_800B92FC(0);
-    CfRes_callFunc_68110(0);
-    if (lbl_eu_80663E70 == 0) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758,
-                                 __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
-    }
-    if (lbl_eu_80663E70 == 0) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758,
-                                 __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
-    }
-    lbl_eu_80571758.field_0x88 = arg1;
-    lbl_eu_80571758.field_0x8A = arg2;
-    if (lbl_eu_80663E70 == 0) {
-        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
-        __register_global_object(&lbl_eu_80571758,
-                                 __dt__Q22cf13CfGameManagerFv,
-                                 lbl_eu_80571748);
-        lbl_eu_80663E70 = 1;
-    }
-    if (lbl_eu_80571758.unkAC != nullptr) {
-        func_80061870(lbl_eu_80571758.unkAC, 19, 2, 0, 0, 0);
-    }
-    if (getUnk80664658()) {
-        getUnk80664658();
-        func_801F4CE4();
-    }
-}
+

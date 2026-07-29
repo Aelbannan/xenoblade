@@ -47,8 +47,7 @@ void CMenuFade::Init() {
     // Convert animation frame size to float (int-to-float via type-pun).
     // The float result is used in both the field_0x80 and field_0x88
     // computations below.
-    u16 frameSize = mAnimDefault->GetFrameSize();
-    float frameSizeF = (float)frameSize;
+    float frameSizeF = (float)mAnimDefault->GetFrameSize();
 
     // Compute per-frame durations: if the divisor is negative, use a
     // fallback constant instead of dividing.

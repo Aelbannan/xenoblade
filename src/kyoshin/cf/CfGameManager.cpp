@@ -695,9 +695,9 @@ u32* cf::CfObject::CfObject_UnkVirtualFunc58() {
 }
 // lwz getters — return global vars
 extern u32 lbl_eu_80664188;
-void cf::CfGameManager::func_80083458() {}
+u32 cf::CfGameManager::func_80083458() { return lbl_eu_80664188; }
 extern u32 lbl_eu_80664184;
-void cf::CfGameManager::func_80083460() {}
+u32 cf::CfGameManager::func_80083460() { return lbl_eu_80664184; }
 void cf::CfGameManager::func_80086B1C() {}
 extern u32 lbl_eu_8066409C;
 void cf::CfGameManager::func_80086B24() {}
@@ -712,21 +712,22 @@ void cf::CfGameManager::func_80086DB4() {}
 extern u8 lbl_eu_80663E34;
 void cf::CfGameManager::func_8007F9BC() {}
 extern u8 lbl_eu_80663E5D;
-void cf::CfGameManager::func_80080E20() {}
+u8 cf::CfGameManager::func_80080E20() { return lbl_eu_80663E5D; }
 extern u8 lbl_eu_8066476D;
-void cf::CfGameManager::func_80080E28() {}
+u8 cf::CfGameManager::func_80080E28() { return lbl_eu_8066476D; }
 extern "C" u32 lbl_eu_8065FC18[];
-void cf::CfGameManager::func_8007DA00() {}
+void* cf::CfGameManager::func_8007DA00() { return lbl_eu_8065FC18; }
 
 void cf::CfGameManager::func_80080F40() {}
 
 void cf::CfGameManager::func_80080F44() {}
 
-void cf::CfGameManager::func_80081CB8() {}
+void cf::CfGameManager::func_80081CB8() { func_800B9548(); }
 
 void cf::CfGameManager::func_80081D88() {}
 
-void cf::CfGameManager::func_80082254() {}
+extern "C" void func_800B93D0();
+void cf::CfGameManager::func_80082254() { func_800B93D0(); }
 
 void cf::CfGameManager::func_80082EC0() {}
 
@@ -861,7 +862,7 @@ void cf::CfGameManager::func_80082694() {}
 void cf::CfGameManager::func_80083290() {}
 
 extern u8 lbl_eu_80664298;
-void cf::CfGameManager::func_80083468() {}
+void cf::CfGameManager::func_80083468(u32 value) { lbl_eu_80664298 = value; }
 
 void cf::CfGameManager::func_80083C70() {}
 

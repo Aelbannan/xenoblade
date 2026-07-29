@@ -1889,11 +1889,18 @@ extern "C" void func_801EB410(void*, int);
 extern "C" void func_801EB0D4(void*);
 extern "C" void func_801D0328(void*);
 extern "C" void func_801CFFEC(void*);
+extern "C" void func_801D1220(void*);
+extern "C" char* func_801C6A44(void*, u16);
 extern "C" void func_801D05D4(void*, int);
 extern "C" void func_80138078__FUl(u32);
 extern "C" u32 func_8015780C(void*);
 extern "C" u32 func_801D3328(void*);
-extern "C" void func_801D3454(void*);
+extern "C" void func_801D3454(void*, void*);
+extern "C" void func_801D3430(void*, void*);
+extern "C" void func_801D353C(void*, u32);
+extern "C" void func_801D3330(void*);
+extern "C" u32 func_801D3C74(void*, u32);
+extern "C" void func_801D4BDC(void*, u32, u32);
 extern "C" void func_801D3620(void*);
 extern "C" void func_801D3698(void*);
 extern "C" void func_801D3724(void*);
@@ -1921,28 +1928,76 @@ extern "C" u32 func_801D421C(void*);
 extern "C" void func_801D4C3C(void*, u32);
 extern "C" void func_80124270(void*, u32);
 extern "C" u32 func_80137E7C(void*, u32);
-extern "C" u32 func_80137924(void*, u32);
+extern "C" u32 func_80137924(void*, void*, void*, u32);
 extern "C" u32 func_8013600C(void*, u32);
+extern "C" void func_80136B4C(void*, const char*, u32, u32);
+extern "C" void func_80136A1C(void*, const char*, void*, u32);
+extern "C" u32 func_8013639C(u32, const char*, u32);
 extern "C" u32 func_800A32BC(u32);
+extern "C" void copyVEC3(void*, void*);
 extern "C" u32 func_8003B1EC(u32);
 extern "C" u32 func_8009CF8C(u32);
+extern "C" void func_80043D90(void*);
+extern "C" void* func_80043F18(void*);
+extern "C" void func_800F4A98(void*, u32, u32);
+extern "C" void* func_800F6EC0(void*, u32);
+extern "C" void* func_800BFC68__FPQ22cf12CfObjectMove(void*);
+extern "C" void func_800BFDE0(void*, u32);
+extern "C" void func_80043E88(void*, int);
+extern "C" void func_8009E0A8(void*, int);
+extern "C" void func_8009E024(void*, int);
+extern "C" void func_8009E030(void*, int);
+extern "C" void func_8009E03C(void*, int);
+extern "C" void func_8009E048(void*, int);
+extern "C" void func_8009E054(void*, int);
 extern "C" u32 func_80139A18(void*, void*, void*, void*);
 extern "C" u32 func_80136190(void*, u32, u32);
 extern "C" void func_801C5158(void*, u32);
-extern "C" u32 func_801392B4(void*);
-extern "C" u32 func_801393CC(void*);
+extern "C" u32 func_801392B4(u32);
+extern "C" u32 func_801393CC(u32);
 extern "C" u32 func_8026178C(void*);
 extern "C" u32 func_8025FB10(void*);
 extern "C" u32 func_802083CC(void*);
 extern "C" u32 func_8009EC9C(u32);
 extern "C" u32 func_800A082C(void);
-extern "C" u32 code80135FDC_getByte_64077(void*);
+extern "C" u8 code80135FDC_getByte_64077();
 extern "C" void func_801C4B60(void*, u8, u8, u8, u8);
 extern "C" void func_801D1F9C(void*, u32);
 extern "C" u32 func_801C62AC(void*, u32);
 extern "C" u32 func_801C631C(void*, u32);
 extern "C" u16 ArrayGet12(u8);
 extern "C" void func_80136910(void*, const char*, u8);
+extern "C" char* func_eu_802B148C(void);
+extern "C" char* func_eu_802B1474(void);
+
+// Forward declarations for functions defined later in this file
+s32 func_801C7958(void* self, void* item);
+u32 func_801C7C7C(void* self, u32 id, void* item);
+u32 func_801C6938(void* self, u32 idx);
+u32 func_801C62AC(CItemBoxGridFull* self, u16 idx);
+void* func_801C631C(CItemBoxGridFull* self, u16 idx);
+s32 func_801C6388(CItemBoxGridFull* self, u16 idx);
+u8 func_801C6528(CItemBoxGridFull* self, u16 idx);
+u8 func_801C65A0(CItemBoxGridFull* self, u16 idx);
+u8 func_801C6618(CItemBoxGridFull* self, u16 idx);
+u8 func_801C6708(CItemBoxGridFull* self, u16 idx);
+u8 func_801C673C(CItemBoxGridFull* self, u16 idx);
+u8 func_801C67F8(CItemBoxGridFull* self);
+u8 func_801C6840(CItemBoxGridFull* self);
+u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx);
+u32 func_801C618C(void* self, u32 id, void* item, int r6);
+u32 func_801C6EC0(CItemBoxGridFull* self, u16 idx);
+int LookupIndexedByte(char* obj);
+void func_801CECD0(void* self, int r4, int r5);
+void func_801CF240(void* self, int r4, int r5);
+void func_801CF71C(void* self, int r4, int r5);
+void func_801CF900(void* self);
+void func_801CFCBC(void* self, u32 val);
+void func_801C56D8(void* self, int r4, int r5, int r6, int r7);
+u32 func_801C5E5C(void* self);
+char* func_801C6A44(void* self, u16 idx);
+extern "C" char* func_eu_802B148C(void);
+extern "C" char* func_eu_802B1474(void);
 extern "C" void func_8022B90C(void*, int);
 extern "C" void func_8022B9B4(void*, u32, int);
 extern "C" void func_8022BFC8(void*, int);
@@ -2012,13 +2067,50 @@ extern "C" void func_801CE390(void*);
 extern "C" float func_801C9F88(void*, void*);
 extern "C" u32 func_80137444__FPQ34nw4r3lyt13AnimTransformf(void*, float);
 extern "C" void CopyEntry9Bytes(char*, const char*);
+
+// Externs for func_801CAA6C and func_801CAE9C
+extern "C" void* getHandleMEM2__Q23mtl10MemManagerFv();
+extern "C" void* getHandleMEM1__Q23mtl10MemManagerFv();
+extern "C" u32 getMaxAllocSize__Q23mtl10MemManagerFUl(void*);
+extern "C" void deallocate__Q23mtl10MemManagerFPv(void*);
+extern "C" u32 func_80212480();
+extern "C" u32 func_800A9D90();
+extern "C" void* readFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+extern "C" void* readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii(u32, const char*, void*, int, int);
+
+// Externs for state dispatch functions
+extern "C" void func_801D4154(void*);
+extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
+extern "C" void func_801D20B0(void*, int);
+extern "C" void func_801D31F8(void*, int);
+extern "C" void func_802082D0(void*, int);
+extern "C" void func_8022CFEC(void*, int);
+extern "C" void func_8022B7C8(void*, int);
+extern "C" void func_8022DAD8(void*, int);
+extern "C" void func_801EAF7C(void*, int);
+extern "C" void func_801D202C(void*);
+extern "C" void func_801D3160(void*);
+extern "C" void func_801D40C4(void*);
+extern "C" void func_801EAED4(void*);
+extern "C" void func_80208260(void*);
+extern "C" void func_8022CF7C(void*);
+extern "C" void func_8022DA58(void*);
+extern "C" void func_8022B748(void*);
+extern "C" void func_801D3064(void*);
+extern "C" void func_801D4054(void*);
+extern "C" void func_801EAE8C(void*);
+extern "C" void func_8022CF2C(void*);
+extern "C" void func_801D3258(void*);
+extern "C" void func_801D4174(void*);
+extern "C" void func_801EAF9C(void*);
+extern "C" void func_802082F0(void*);
+extern "C" void func_8022D018(void*);
+extern "C" void func_8022DB04(void*);
+extern "C" u32 func_80136254(void*, const char*, u32);
 extern "C" void __ct__CVisionItem(void*);
 extern "C" void __ct__CArtsBookItem(void*);
 extern "C" void SetEntry9Bytes(unsigned char*, unsigned short, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char, unsigned char);
 extern "C" void func_801C562C(void*, char*);
-
-extern "C" u8 func_801C67F8(CItemBoxGridFull* self);
-extern "C" u8 func_801C6840(CItemBoxGridFull* self);
 
 u8 CItemBoxGrid::GetField61() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_61; }
 
@@ -2102,7 +2194,222 @@ void* __dt__801C5670(void* self, int mode) {
     return self;
 }
 
-void func_801C56D8(void* self, int r4, int r5, int r6, int r7) { }
+extern "C" u32 func_801576C8(u8);
+
+void func_801C56D8(CItemBoxGridFull* self, u8 cat, int r5, u16 r6, u16 r7) {
+    u8* p = (u8*)self;
+    u32 i;
+    p[0x2800] = 0;
+    *(u16*)(p + 0x2800) = 0;
+    // Init sub-objects
+    void** vtblVision = *(void***)(p + 0x34b0);
+    ((void(*)(void*))vtblVision[3])(p + 0x34b0);
+    void** vtblArts = *(void***)(p + 0x2ca8);
+    ((void(*)(void*))vtblArts[3])(p + 0x2ca8);
+    void** vtblBook = *(void***)(p + 0x3cb8);
+    ((void(*)(void*))vtblBook[3])(p + 0x3cb8);
+    // Init 0x400 entries with default values
+    u8 tmpBuf[10];
+    for (i = 0; i < 0x400; i++) {
+        SetEntry9Bytes(tmpBuf, (unsigned short)0xFFFF, 0, 0, 0, 0, 0, 0, 0);
+        func_801C562C(p + i * 10, tmpBuf);
+        p[i + 0x28a5] = 3;
+    }
+    u32 total = func_80157C20(cat);
+    // Read 24 bytes from lbl_eu_80505590 (6 category filter entries)
+    // This data is at lbl_eu_80505590, copied to local storage
+    u8 filterBuf[24];
+    {
+        const u8* src = (const u8*)&lbl_eu_80505590;
+        for (i = 0; i < 24; i++) filterBuf[i] = src[i];
+    }
+    u16 id;
+    for (id = 0; (u32)id < total; id++) {
+        void* item = func_80157C4C(cat, id);
+        if (!item) continue;
+        if (!*(u32*)item) continue;
+        if (r6) {
+            u32 v1 = func_801C618C((CItemBoxGridFull*)self, r6, 0, (int)r7);
+            u32 kind = (*(u32*)item) >> 20;
+            u32 v2 = func_801C618C((CItemBoxGridFull*)self, kind, item, (int)r7);
+            if (v1 > v2) continue;
+        }
+        u16 count = *(u16*)(p + 0x2800);
+        *(u16*)(p + count * 10) = id;
+        *(u16*)(p + 0x2800) = count + 1;
+        u8* entry = p + count * 10;
+        if (cat == 3) {
+            u8 filterCopy[24];
+            for (i = 0; i < 24; i++) filterCopy[i] = filterBuf[i];
+            u32 subCatIdx;
+            for (subCatIdx = 0; subCatIdx < 6; subCatIdx++) {
+                u8 subCat = filterCopy[subCatIdx * 4];
+                u32 sc = func_80157C20(subCat);
+                u16 subId;
+                for (subId = 0; (u32)subId < sc; subId++) {
+                    void* subItem = func_80157C4C(subCat, subId);
+                    if (!subItem) continue;
+                    if (!*(u32*)subItem) continue;
+                    void* inst = CItem_initItemImplInstances(subItem);
+                    void** vtbl = *(void***)inst;
+                    u16 numSlots = (u16)((u32(*)(void*, void*))vtbl[0xc])(inst, subItem);
+                    u32 slot;
+                    u8 matched = 0;
+                    u16 keptSubId = 0;
+                    for (slot = 0; slot < (u32)numSlots; slot++) {
+                        void* inst2 = CItem_initItemImplInstances(subItem);
+                        void** vtbl2 = *(void***)inst2;
+                        s16 equipId = (s16)((s32(*)(void*, void*, u32))vtbl2[0x10])(inst2, subItem, slot);
+                        if (equipId == -1) continue;
+                        if (equipId == (s16)id) {
+                            entry[2] = 2;
+                            keptSubId = (u16)subId;
+                            matched = 1;
+                            break;
+                        }
+                    }
+                    if (matched) {
+                        u8 partyIdx;
+                        for (partyIdx = 0; partyIdx < (u8)code80135FDC_getByte_64077(); partyIdx++) {
+                            u32 pn = func_801392B4(partyIdx);
+                            void* obj2 = func_8009EC9C(pn & 0xFF);
+                            s16 equipCheck = 0;
+                            switch (subCat) {
+                                case 2: equipCheck = *(s16*)((u8*)obj2 + 0x26); break;
+                                case 4: equipCheck = *(s16*)((u8*)obj2 + 0x1c); break;
+                                case 5: equipCheck = *(s16*)((u8*)obj2 + 0x1e); break;
+                                case 6: equipCheck = *(s16*)((u8*)obj2 + 0x20); break;
+                                case 7: equipCheck = *(s16*)((u8*)obj2 + 0x22); break;
+                                case 8: equipCheck = *(s16*)((u8*)obj2 + 0x24); break;
+                            }
+                            if (equipCheck == (s16)keptSubId) {
+                                entry[2] = 1;
+                                break;
+                            }
+                        }
+                        goto entry_done;
+                    }
+                }
+            }
+            goto entry_done;
+        }
+        if (cat >= 2 && cat <= 8) {
+            if (r5) {
+                u32 ownerTbl;
+                switch (cat) {
+                    case 2: ownerTbl = lbl_eu_806640F4; break;
+                    default: ownerTbl = lbl_eu_806640F8; break;
+                }
+                u32 kindId = (*(u32*)item) >> 20;
+                u32 shortKind = func_80139358(kindId);
+                char nameBuf[64];
+                const char* fmt = (cat == 2) ? &lbl_eu_8050566C[0x132] : &lbl_eu_8050566C[0x13d];
+                sprintf(nameBuf, fmt, r5);
+                if (!func_801361E8(ownerTbl, nameBuf, shortKind & 0xFFFF)) {
+                    *(s16*)entry = -1;
+                    count = *(u16*)(p + 0x2800);
+                    *(u16*)(p + 0x2800) = count - 1;
+                    goto check_next;
+                }
+            }
+            u8 partyIdx;
+            for (partyIdx = 0; partyIdx < (u8)code80135FDC_getByte_64077(); partyIdx++) {
+                u32 pn = func_801392B4(partyIdx);
+                void* obj3 = func_8009EC9C(pn & 0xFF);
+                s16 equipCheck = 0;
+                switch (cat) {
+                    case 2: equipCheck = *(s16*)((u8*)obj3 + 0x26); break;
+                    case 4: equipCheck = *(s16*)((u8*)obj3 + 0x1c); break;
+                    case 5: equipCheck = *(s16*)((u8*)obj3 + 0x1e); break;
+                    case 6: equipCheck = *(s16*)((u8*)obj3 + 0x20); break;
+                    case 7: equipCheck = *(s16*)((u8*)obj3 + 0x22); break;
+                    case 8: equipCheck = *(s16*)((u8*)obj3 + 0x24); break;
+                }
+                if (equipCheck == (s16)*(s16*)entry) {
+                    if ((pn & 0xFF) > 8) entry[3] = 1;
+                    entry[2] = 1;
+                    entry[8] = 1;
+                    goto entry_done;
+                }
+            }
+        }
+entry_done:
+        if (cat != 3 && cat != 9) {
+            if (!entry[3]) {
+                u32 kind2 = (*(u32*)item) >> 20;
+                u32 check = func_801361E8(lbl_eu_806640EC, &lbl_eu_8050566C[0x142], kind2);
+                u32 result = check;
+                u32 oneIfNonZero = (result != 0) ? 1 : 0;
+                entry[3] = (u8)oneIfNonZero;
+            }
+            u32 kind3 = (*(u32*)item) >> 20;
+            entry[5] = (u8)func_801C51BC(p + 0x34b0, kind3);
+            entry[4] = (u8)func_801C51BC(p + 0x2ca8, kind3);
+            if (cat == 0xd) {
+                u32 shortKind = func_80139358(kind3);
+                entry[6] = (u8)func_801C51BC(p + 0x3cb8, shortKind & 0xFFFF);
+            }
+        }
+check_next:;
+    }
+    // Update grid metadata
+    if (*(u8*)(p + 0x2802) != cat) {
+        u32 cnt = *(u16*)(p + 0x2800);
+        *(u8*)(p + 0x2802) = cat;
+        // Compute row count: cnt / 30, rounded up with tie-breaking
+        float fcnt = (float)(s32)cnt;
+        float f30 = lbl_eu_80667F30;
+        float fdiv = fcnt / f30;
+        int rows = (int)fdiv;
+        float frac = fdiv - (float)rows;
+        if (lbl_eu_80667F34 != frac) rows++;
+        if (!(u8)rows) rows = 1;
+        *(u8*)(p + 0x2803) = (u8)rows;
+        *(u8*)(p + 0x2804) = 0;
+    } else {
+        u32 cnt = *(u16*)(p + 0x2800);
+        float fcnt = (float)(s32)cnt;
+        float f30 = lbl_eu_80667F30;
+        float fdiv = fcnt / f30;
+        int rows = (int)fdiv;
+        float frac = fdiv - (float)rows;
+        if (lbl_eu_80667F34 != frac) rows++;
+        if (!(u8)rows) rows = 1;
+        *(u8*)(p + 0x2803) = (u8)rows;
+        if ((s8)*(u8*)(p + 0x2804) >= (s8)*(u8*)(p + 0x2803)) {
+            *(u8*)(p + 0x2804) = *(u8*)(p + 0x2803) - 1;
+        }
+    }
+    // For equipment/armor categories (2-8) or category 11: set overlay byte
+    u8 adjusted = (u8)(cat + 0xfe);
+    if (adjusted <= 6 || cat == 0xb) {
+        u32 cnt = func_80157C20(cat);
+        u32 base = func_801576C8(cat);
+        u32 last = cnt - 1;
+        u32 diff = cnt - base;
+        s32 start = (s32)(last);
+        u32 i2;
+        for (i2 = 0; i2 <= diff; i2++) {
+            p[start * 10 + 7] = 1;
+            start--;
+        }
+        // Compute some threshold
+        float fcnt2 = (float)(s32)cnt;
+        float fmul = lbl_eu_80667F38 * fcnt2;
+        int threshold = (int)fmul;
+        for (i2 = 0; ; i2++) {
+            int val = (i2 + 1) * 3;
+            int diff2 = threshold - val;
+            if (diff2 >= 0) {
+                p[i2 + 0x28a5] = (u8)diff2;
+            } else {
+                p[i2 + 0x28a5] = (u8)(diff2 + 3);
+                break;
+            }
+        }
+    }
+    func_801C6EC0((CItemBoxGridFull*)self);
+}
 
 // Search for a matching short id in an array, return 1 if found.
 int func_801C51BC(void* obj, u32 id) {
@@ -2162,7 +2469,43 @@ s16 func_801C5F48(CItemBoxGridFull* self, u16 idx) {
     return *(s16*)((u8*)self + offset * 0xa);
 }
 
-u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx) { return 0; }
+u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx) {
+    u8* p = (u8*)self;
+    s8 base = (s8)p[0x2804];
+    u16 offset = (u16)(base * 0x1e + idx);
+    if (offset >= *(u16*)(p + 0x2800)) return 0;
+
+    u8 cat = p[0x2802];
+    s16 val = *(s16*)(p + offset * 0xa);
+    void* obj = func_80157C4C(cat, val);
+    if (!obj || !*(u32*)obj) return 0;
+
+    u32 kind = *(u32*)obj >> 20;
+    func_801393CC(kind);
+    u16 type = (u16)func_801392E4(kind);
+    func_80139358(kind);
+    u32 price = func_801C7958(self, obj);
+
+    if (type == 0xB) {
+        price = (u32)((double)price * 0.5);
+    } else if (type != 0xD) {
+        price = (u32)((double)price * 0.1);
+    }
+
+    u32 basePrice = 0x64;
+    u8 partyCount = code80135FDC_getByte_64077();
+    u32 i;
+    for (i = 0; i < (u32)partyCount; i++) {
+        u32 member = func_801392B4((u8)i);
+        void* charData = (void*)func_8009EC9C((u32)(u8)member);
+        void* ptr = (void*)((u8*)charData + 0x3534);
+        if (func_8026178C(ptr, 0x93)) {
+            basePrice += func_8025FB10(ptr, 0x93);
+        }
+    }
+
+    return (u32)func_801C6158((double)(price * basePrice) * 0.01);
+}
 
 // Round a double to nearest integer with .5 tie-breaking biased away from zero.
 long func_801C6158(double f) {
@@ -2173,7 +2516,35 @@ long func_801C6158(double f) {
     }
 }
 
-u32 func_801C618C(void* self, u32 id, void* item, int r6) { return 0; }
+u32 func_801C618C(void* self, u32 id, void* item, int r6) {
+    u32 cat;
+    if (item) {
+        cat = *(u32*)item >> 20;
+    } else {
+        cat = id;
+    }
+    func_801393CC(cat);
+    func_801392E4(cat);
+    func_80139358(cat);
+    u32 result = func_801C7C7C(self, cat, item);
+
+    if (item) {
+        u32 base = 0x64;
+        u8 partyCount = code80135FDC_getByte_64077();
+        u32 i;
+        for (i = 0; i < (u32)partyCount; i++) {
+            u32 member = func_801392B4((u8)i);
+            void* charData = (void*)func_8009EC9C((u32)(u8)member);
+            void* ptr = (void*)((u8*)charData + 0x3534);
+            if (func_8026178C(ptr, 0x8f)) {
+                base += func_8025FB10(ptr, 0x8f);
+            }
+        }
+        result = (u32)func_801C6158((double)(result * base) * 0.01);
+    }
+
+    return result;
+}
 
 // Lookup entry, check category; return word >> 20 or 0.
 u32 func_801C62AC(CItemBoxGridFull* self, u16 idx) {
@@ -2390,7 +2761,33 @@ void func_801C68A0(CItemBoxGridFull* self) {
     }
 }
 
-u32 func_801C6938(void* self, u32 idx) { return 0; }
+u32 func_801C6938(void* self, u32 idx) {
+    u8* p = (u8*)self;
+    s8 base = (s8)p[0x2804];
+    u16 offset = (u16)(base * 0x1e + idx);
+    if (offset >= *(u16*)(p + 0x2800)) return 0;
+
+    u8 cat = p[0x2802];
+    s16 val = *(s16*)(p + offset * 0xa);
+    void* obj = func_80157C4C(cat, val);
+    if (!obj || !*(u32*)obj) return 0;
+
+    void* inst = CItem_initItemImplInstances(obj);
+    void** vtbl = *(void***)inst;
+    void* name = ((void*(*)(void*, void*))vtbl[8])(inst, obj);
+
+    sprintf((char*)(p + 0x2805), &lbl_eu_8050566C[0x14c], name);
+
+    if (p[0x2802] == 3) {
+        void* inst2 = CItem_initItemImplInstances(obj);
+        void** vtbl2 = *(void***)inst2;
+        u8 b = (u8)((u32(*)(void*, void*))vtbl2[2])(inst2, obj);
+        u32 r = func_80136190((u32)&lbl_eu_8050566C[0x14f], (u32)&lbl_eu_8050566C[0x158], (u32)(0x1e - (b - 1)));
+        sprintf((char*)(p + 0x2805), &lbl_eu_8050566C[0x15d], (char*)(p + 0x2805), r);
+    }
+
+    return (u32)(p + 0x2805);
+}
 
 char* func_801C6A44(void* self, u16 idx) { return 0; }
 
@@ -3181,13 +3578,245 @@ void* __ct__CItemBoxGrid(void* self) { return self; }
 
 void* __dt__12CItemBoxGridFv(void* self, int mode) { if (self && mode > 0) __dl__FPv(self); return self; }
 
-void func_801CAA6C(void* self, int r4) { }
+void func_801CAA6C(void* self, int r4) {
+    u8* p = (u8*)self;
+    void* allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
 
-void func_801CABC8(void* self, int r4) { }
+    if (func_80212480()) {
+        void* mem1 = getHandleMEM1__Q23mtl10MemManagerFv();
+        u32 maxSize = getMaxAllocSize__Q23mtl10MemManagerFUl(mem1);
+        if (maxSize >= 0x38000) {
+            allocHandle = mem1;
+        }
+    }
 
-void func_801CAD8C(void* self, int r4) { }
+    p[0x28] = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, &lbl_eu_8050566C[0x266], self, 0, 0);
 
-void func_801CAE9C(void* self, int r4) { }
+    allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
+    p[0x2c] = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, &lbl_eu_8050566C[0x27e], self, 0, 0);
+
+    if (p[0x543]) {
+        allocHandle = (void*)func_800A9D90();
+        p[0x30] = (u32)readCommonArchiveFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, &lbl_eu_8050566C[0x297], self, 0, 0);
+
+        allocHandle = getHandleMEM2__Q23mtl10MemManagerFv();
+        p[0x34] = (u32)readFile__11CDeviceFileFUlPCcP10IWorkEventii((u32)allocHandle, &lbl_eu_8050566C[0x2b4], self, 0, 0);
+    } else {
+        lbl_eu_80664508 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2d0]);
+        lbl_eu_8066450C = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2df]);
+        lbl_eu_80664510 = (u32)getFP__FPCc(&lbl_eu_8050566C[0x2ee]);
+    }
+
+    func_801D3064(p + 0xe8);
+    func_801D4054(p + 0x1d8);
+    func_801EAE8C(p + 0x3e4);
+
+    if (p[0x527] == 2) {
+        func_8022CF2C(p + 0x440);
+    }
+
+    {
+        void** vtbl = *(void***)(p + 0x4ac);
+        ((void(*)(void*))vtbl[0x22])(p + 0x4ac);
+    }
+    {
+        void** vtbl = *(void***)(p + 0x4e8);
+        ((void(*)(void*))vtbl[0x22])(p + 0x4e8);
+    }
+}
+
+void func_801CABC8(void* self, int r4) {
+    u8* p = (u8*)self;
+    if (!p[0x54]) return;
+    u32 state = *(u32*)(p + 0x58);
+    if (!state) return;
+
+    if (state <= 0x1a) {
+        switch (state) {
+        case 1:
+            func_801CE108(self);
+            break;
+        case 2:
+            func_801CE1A0(self);
+            break;
+        case 3:
+            CheckState4_Animate((char*)self);
+            break;
+        case 4:
+            func_801CE2F8(self);
+            break;
+        case 5:
+            func_801CE390(self);
+            break;
+        case 6:
+            if (func_801EB028(p + 0x3e4)) {
+                *(u32*)(p + 0x58) = 0x19;
+            }
+            break;
+        case 8:
+            func_801CE3E8(self);
+            break;
+        case 9:
+            func_801CE4B4(self);
+            break;
+        case 11:
+            func_801CE524(self);
+            break;
+        case 12:
+            if (func_801EB028(p + 0x3e4)) {
+                *(u32*)(p + 0x58) = 0xA;
+            }
+            break;
+        case 14:
+            if (func_801EB028(p + 0x3e4)) {
+                *(u32*)(p + 0x58) = 0x3;
+            }
+            break;
+        case 15:
+            func_801CE974(self);
+            break;
+        case 17:
+            func_801CE9E8(self);
+            break;
+        case 18:
+            func_801CEA30(self);
+            break;
+        case 20:
+            func_801CEAA0(self);
+            break;
+        case 21:
+            func_801CEAE8(self);
+            break;
+        case 23:
+            func_801CEB3C(self);
+            break;
+        case 24:
+            if (CSysWin_isActive(p + 0x4e8)) {
+                *(u32*)(p + 0x58) = 0x13;
+            }
+            break;
+        case 26:
+            func_801CEBF0(self);
+            break;
+        }
+    }
+
+    {
+        void* layout = *(void**)(p + 0x44);
+        void** lvtbl = *(void***)layout;
+        ((void(*)(void*, int))lvtbl[0xE])(layout, 0);
+    }
+
+    func_801D202C(p + 0x70);
+    func_801D202C(p + 0x88);
+    func_801D202C(p + 0xa0);
+    func_801D202C(p + 0xb8);
+    func_801D202C(p + 0xd0);
+    func_801D3160(p + 0xe8);
+    func_801D40C4(p + 0x1d8);
+    func_801EAED4(p + 0x3e4);
+    func_80208260(p + 0x418);
+    func_8022CF7C(p + 0x440);
+    func_8022DA58(p + 0x468);
+    func_8022B748(p + 0x4ac);
+    func_8022B748(p + 0x4e8);
+}
+
+void func_801CAD8C(void* self, int r4) {
+    u8* p = (u8*)self;
+    if (!p[0x54]) return;
+    if (!*(u32*)(p + 0x58)) return;
+
+    func_801D4154(p + 0x1d8);
+    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)(p + 0x44), (void*)r4, 0, 1);
+
+    u8 r = p[0x2d4f];
+    if (!r) r = 1;
+    if ((u32)r > 1) {
+        func_801D20B0(p + 0x88, r4);
+    }
+
+    func_801D31F8(p + 0xe8, r4);
+    func_802082D0(p + 0x418, r4);
+    func_8022CFEC(p + 0x440, r4);
+    func_8022B7C8(p + 0x4ac, r4);
+    func_8022B7C8(p + 0x4e8, r4);
+    func_8022DAD8(p + 0x468, r4);
+    func_801D20B0(p + 0xd0, r4);
+    func_801D20B0(p + 0x70, r4);
+    func_801D20B0(p + 0xa0, r4);
+    func_801D20B0(p + 0xb8, r4);
+    func_801EAF7C(p + 0x3e4, r4);
+}
+
+void func_801CAE9C(void* self, int r4) {
+    u8* p = (u8*)self;
+
+    if (p[0x543]) {
+        func_8003AA8C__5CBdatFUl(2);
+        func_8003AA8C__5CBdatFUl(5);
+    }
+
+    func_801390E0__FPP11CFileHandle((void**)(p + 0x28));
+    func_801390E0__FPP11CFileHandle((void**)(p + 0x2c));
+    func_801390E0__FPP11CFileHandle((void**)(p + 0x30));
+    func_801390E0__FPP11CFileHandle((void**)(p + 0x34));
+
+    void* ptr38 = *(void**)(p + 0x38);
+    p[0x54] = 0;
+    if (ptr38) {
+        deallocate__Q23mtl10MemManagerFPv(ptr38);
+        *(u32*)(p + 0x38) = 0;
+    }
+
+    if (*(void**)(p + 0x44)) {
+        void** vtbl = *(void***)(*(u32*)(p + 0x44));
+        ((void(*)(void*, int))vtbl[2])(*(void**)(p + 0x44), 1);
+        *(u32*)(p + 0x44) = 0;
+    }
+
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(*(void**)(p + 0x3c));
+    func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(*(void**)(p + 0x40));
+
+    if (*(void**)(p + 0x5c)) {
+        void** vtbl = *(void***)(*(u32*)(p + 0x5c));
+        ((void(*)(void*, int))vtbl[2])(*(void**)(p + 0x5c), 1);
+        *(u32*)(p + 0x5c) = 0;
+    }
+
+    func_8045F778__17UnkClass_8045F564Fv(p + 0x8);
+    func_8045F778__17UnkClass_8045F564Fv(p + 0x18);
+
+    {
+        void** vtbl = *(void***)(p + 0x70);
+        ((void(*)(void*))vtbl[3])(p + 0x70);
+    }
+    {
+        void** vtbl = *(void***)(p + 0x88);
+        ((void(*)(void*))vtbl[3])(p + 0x88);
+    }
+    {
+        void** vtbl = *(void***)(p + 0xa0);
+        ((void(*)(void*))vtbl[3])(p + 0xa0);
+    }
+    {
+        void** vtbl = *(void***)(p + 0xb8);
+        ((void(*)(void*))vtbl[3])(p + 0xb8);
+    }
+    {
+        void** vtbl = *(void***)(p + 0xd0);
+        ((void(*)(void*))vtbl[3])(p + 0xd0);
+    }
+
+    func_801D3258(p + 0xe8);
+    func_801D4174(p + 0x1d8);
+    func_801EAF9C(p + 0x3e4);
+    func_802082F0(p + 0x418);
+    func_8022D018(p + 0x440);
+    func_8022DB04(p + 0x468);
+    func_8022B7F4(p + 0x4ac);
+    func_8022B7F4(p + 0x4e8);
+}
 
 // Check if item grid is fully ready.
 u32 func_801CB038(void* self) {
@@ -3328,7 +3957,121 @@ void func_801CB56C(void* self) {
     func_80138078__FUl(0x70);
 }
 
-void func_801CB5F0(void* self) { }
+void func_801CB5F0(void* self) {
+    u8* p = (u8*)self;
+    if (p[0x542]) return;
+    if (CSysWin_getUnk34(p + 0x4ac)) {
+        if (CSysWin_isActive(p + 0x4ac)) {
+            s8 val = (s8)p[0x540] - 1;
+            p[0x540] = (u8)val;
+            if (val < 0) p[0x540] = 1;
+            func_801D0950(self);
+            func_80138078__FUl(1);
+        }
+        return;
+    }
+    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (func_80208358(p + 0x418)) {
+        if (func_80208360(p + 0x418)) {
+            func_802083CC(p + 0x418);
+            u8 temp[16];
+            func_80208760(temp, p + 0x418);
+            void** vtbl = *(void***)(p + 0xa0);
+            ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
+            func_80138078__FUl(1);
+        }
+        return;
+    }
+    if (func_8022DB6C(p + 0x468)) return;
+    if (func_801D3320(p + 0xe8)) {
+        if (func_801D3328(p + 0xe8)) {
+            func_801D3620(p + 0xe8);
+            u8 temp[16];
+            func_801D3454(temp, p + 0xe8);
+            void** vtbl = *(void***)(p + 0xa0);
+            ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
+            goto sound_and_return;
+        }
+        return;
+    }
+    if (p[0x544]) {
+        void* arr = p + 0x288;
+        s8 idx = (s8)p[0x546] - 1;
+        while (idx != (s8)p[0x546]) {
+            if (idx < 0) idx = 3;
+            if (ArrayGet12((const unsigned short*)arr, (u8)((s8)p[0x545] + idx))) {
+                p[0x546] = (u8)idx;
+                break;
+            }
+            idx--;
+        }
+        u8 combined = (u8)((s8)p[0x545] + (s8)p[0x546]);
+        u32 tmp[3];
+        func_801CB9D8(tmp, arr, combined);
+        void** vtbl = *(void***)(p + 0xa0);
+        ((void(*)(void*, void*))vtbl[4])(p + 0xa0, tmp);
+        goto sound_and_return;
+    }
+    if (p[0x528]) {
+        if (p[0x527] == 1) {
+            if (func_801EB028(p + 0x3e4)) {
+                u8* sub = p + 0x54c;
+                u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
+                u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
+                func_801392E4(kind & 0xFFFF);
+                s32 count = func_801C6388((CItemBoxGridFull*)sub, entry);
+                if ((s8)count > 0) {
+                    s8 val = (s8)p[0x529] + 1;
+                    p[0x529] = (u8)val;
+                    if (val > (s8)count) p[0x529] = 1;
+                }
+                func_801EB218(p + 0x3e4);
+                func_801EB04C(p + 0x3e4, p[0x529]);
+                u32 cost = func_801C5FC0((CItemBoxGridFull*)sub, entry);
+                u32 total = (s8)p[0x529] * cost;
+                func_801EB064(p + 0x3e4, total);
+                goto sound_and_return;
+            }
+            return;
+        } else if (p[0x527] == 2) {
+            if (func_8022D09C(p + 0x440)) {
+                s8 val = (s8)p[0x529] - 1;
+                p[0x529] = (u8)val;
+                if (val < 0) p[0x529] = 1;
+                u8 temp[16];
+                func_8022D0F8(temp, p + 0x440, p[0x529]);
+                void** vtbl = *(void***)(p + 0xa0);
+                ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
+                goto sound_and_return;
+            }
+            return;
+        }
+        goto sound_and_return;
+    }
+    if (p[0x527] == 4) {
+        s8 val = (s8)p[0x525] - 1;
+        p[0x525] = (u8)val;
+        if (val < -2) {
+            p[0x525] = (u8)(LookupIndexedByte((char*)self) - 1);
+        } else if (val < 0) {
+            p[0x525] = (u8)-2;
+        }
+        func_801D0950(self);
+        func_801D0328(self);
+        goto sound_and_return;
+    }
+    {
+        s8 val = (s8)p[0x525] - 1;
+        p[0x525] = (u8)val;
+        if (val < -1) {
+            p[0x525] = (u8)(LookupIndexedByte((char*)self) - 1);
+        }
+        func_801D0950(self);
+        func_801D0328(self);
+    }
+sound_and_return:
+    func_80138078__FUl(1);
+}
 
 unsigned short ArrayGet12(const unsigned short* p, unsigned char i) {
     if (i < 12) {
@@ -3346,11 +4089,279 @@ void func_801CB9D8(u32* dst, void* src, u32 idx) {
     *(u32*)((u8*)dst + 8) = *(u32*)(entry + 0x20);
 }
 
-void func_801CBA04(void* self) { }
+void func_801CBA04(void* self) {
+    u8* p = (u8*)self;
+    if (p[0x542]) return;
+    if (CSysWin_getUnk34(p + 0x4ac)) {
+        if (CSysWin_isActive(p + 0x4ac)) {
+            s8 val = (s8)p[0x540] + 1;
+            p[0x540] = (u8)val;
+            if (val > 1) p[0x540] = 0;
+            func_801D0950(self);
+            func_80138078__FUl(1);
+        }
+        return;
+    }
+    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (func_80208358(p + 0x418)) {
+        if (func_80208360(p + 0x418)) {
+            func_8020844C(p + 0x418);
+            u8 temp[16];
+            func_80208760(temp, p + 0x418);
+            void** vtbl = *(void***)(p + 0xa0);
+            ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
+            func_80138078__FUl(1);
+        }
+        return;
+    }
+    if (func_8022DB6C(p + 0x468)) return;
+    if (func_801D3320(p + 0xe8)) {
+        if (func_801D3328(p + 0xe8)) {
+            func_801D3698(p + 0xe8);
+            u8 temp[16];
+            func_801D3454(temp, p + 0xe8);
+            void** vtbl = *(void***)(p + 0xa0);
+            ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
+            goto sound_and_return2;
+        }
+        return;
+    }
+    if (p[0x544]) {
+        void* arr = p + 0x288;
+        s8 idx = (s8)p[0x546] + 1;
+        while (idx != (s8)p[0x546]) {
+            if (idx >= 4) idx = 0;
+            if (ArrayGet12((const unsigned short*)arr, (u8)((s8)p[0x545] + idx))) {
+                p[0x546] = (u8)idx;
+                break;
+            }
+            idx++;
+        }
+        u8 combined = (u8)((s8)p[0x545] + (s8)p[0x546]);
+        u32 tmp[3];
+        func_801CB9D8(tmp, arr, combined);
+        void** vtbl = *(void***)(p + 0xa0);
+        ((void(*)(void*, void*))vtbl[4])(p + 0xa0, tmp);
+        goto sound_and_return2;
+    }
+    if (p[0x528]) {
+        if (p[0x527] == 1) {
+            if (func_801EB028(p + 0x3e4)) {
+                u8* sub = p + 0x54c;
+                u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
+                u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
+                func_801392E4(kind & 0xFFFF);
+                s32 count = func_801C6388((CItemBoxGridFull*)sub, entry);
+                if ((s8)count > 0) {
+                    s8 val = (s8)p[0x529] - 1;
+                    p[0x529] = (u8)val;
+                    if (val < 1) p[0x529] = (u8)count;
+                }
+                func_801EB314(p + 0x3e4);
+                func_801EB04C(p + 0x3e4, p[0x529]);
+                u32 cost = func_801C5FC0((CItemBoxGridFull*)sub, entry);
+                u32 total = (s8)p[0x529] * cost;
+                func_801EB064(p + 0x3e4, total);
+                goto sound_and_return2;
+            }
+            return;
+        } else if (p[0x527] == 2) {
+            if (func_8022D09C(p + 0x440)) {
+                s8 val = (s8)p[0x529] + 1;
+                p[0x529] = (u8)val;
+                if (val > 1) p[0x529] = 0;
+                u8 temp[16];
+                func_8022D0F8(temp, p + 0x440, p[0x529]);
+                void** vtbl = *(void***)(p + 0xa0);
+                ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
+                goto sound_and_return2;
+            }
+            return;
+        }
+        goto sound_and_return2;
+    }
+    if (p[0x527] == 4) {
+        s8 val = (s8)p[0x525] + 1;
+        p[0x525] = (u8)val;
+        if (val == -1) {
+            p[0x525] = 0;
+        } else if (val >= 0) {
+            u8 max = (u8)LookupIndexedByte((char*)self);
+            if ((u8)val >= max) p[0x525] = (u8)-2;
+        }
+        func_801D0950(self);
+        func_801D0328(self);
+        goto sound_and_return2;
+    }
+    {
+        s8 val = (s8)p[0x525] + 1;
+        p[0x525] = (u8)val;
+        u8 max = (u8)LookupIndexedByte((char*)self);
+        if ((u8)val >= max) p[0x525] = (u8)-1;
+        func_801D0950(self);
+        func_801D0328(self);
+    }
+sound_and_return2:
+    func_80138078__FUl(1);
+}
 
-void func_801CBDE8(void* self) { }
+void func_801CBDE8(void* self) {
+    u8* p = (u8*)self;
+    if (p[0x542]) return;
+    if (CSysWin_getUnk34(p + 0x4ac)) return;
+    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (func_80208358(p + 0x418)) return;
+    if (func_8022DB6C(p + 0x468)) {
+        if (!func_8022DB74(p + 0x468)) return;
+        if (func_8022E490(p + 0x468)) return;
+        func_8022E3A8(p + 0x468);
+        func_80138078__FUl(1);
+        return;
+    }
+    if (p[0x528]) {
+        if (p[0x527] != 1) return;
+        if (!func_801EB028(p + 0x3e4)) return;
+        u8* sub = p + 0x54c;
+        u8 row = p[0x525];
+        u8 col = p[0x524];
+        u16 entry = (u8)(col + row * 10);
+        u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
+        func_801392E4(kind & 0xFFFF);
+        s32 chk = (s8)func_801C6388((CItemBoxGridFull*)sub, entry);
+        if (chk > 0) {
+            p[0x529] -= 10;
+            if ((s8)p[0x529] < 1) p[0x529] = 1;
+        }
+        func_801EB04C(p + 0x3e4, p[0x529]);
+        u32 v = func_801C5FC0((CItemBoxGridFull*)sub, entry);
+        func_801EB064(p + 0x3e4, (s8)p[0x529] * v);
+        func_80138078__FUl(1);
+        return;
+    }
+    if (func_801D3320(p + 0xe8)) {
+        if (!func_801D3328(p + 0xe8)) return;
+        func_801D3724(p + 0xe8);
+        u32 tmp[4];
+        func_801D3454(tmp, p + 0xe8);
+        void** vtbl = *(void***)(p + 0xa0);
+        ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, tmp);
+        func_80138078__FUl(1);
+        return;
+    }
+    if (p[0x544]) {
+        u8 cur = p[0x545];
+        s8 idx = (s8)(cur) - 1;
+        while (idx != (s8)cur) {
+            if ((s8)idx < 0) idx = 2;
+            u16 val = ArrayGet12((const u16*)(p + 0x288), (u8)(p[0x546] + (u8)idx * 4));
+            if (val) { p[0x545] = (u8)idx; break; }
+            idx--;
+        }
+        u32 buf[3];
+        func_801CB9D8(buf, p + 0x288, (u8)(p[0x546] + (s8)p[0x545] * 4));
+        void** vtbl = *(void***)(p + 0xa0);
+        ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, buf);
+        func_80138078__FUl(1);
+        return;
+    }
+    s8 row = (s8)p[0x525];
+    if (row == -2) return;
+    if (row == -1) {
+        func_801CB56C(self);
+        func_801D0950(self);
+        return;
+    }
+    if ((s8)p[0x524] == 0) {
+        p[0x524] = 9;
+        func_801CC4E8(self);
+        func_801D0950(self);
+    } else {
+        p[0x524]--;
+        if ((s8)p[0x524] < 0) p[0x524] = 9;
+        func_801D0950(self);
+        func_801D0328(self);
+    }
+    func_80138078__FUl(1);
+}
 
-void func_801CC0EC(void* self) { }
+void func_801CC0EC(void* self) {
+    u8* p = (u8*)self;
+    if (p[0x542]) return;
+    if (CSysWin_getUnk34(p + 0x4ac)) return;
+    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (func_80208358(p + 0x418)) return;
+    if (func_8022DB6C(p + 0x468)) {
+        if (!func_8022DB74(p + 0x468)) return;
+        if (func_8022E490(p + 0x468)) return;
+        func_8022E2F8(p + 0x468);
+        func_80138078__FUl(1);
+        return;
+    }
+    if (p[0x528]) {
+        if (p[0x527] != 1) return;
+        if (!func_801EB028(p + 0x3e4)) return;
+        u8* sub = p + 0x54c;
+        u8 row = p[0x525];
+        u8 col = p[0x524];
+        u16 entry = (u8)(col + row * 10);
+        u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
+        func_801392E4(kind & 0xFFFF);
+        s32 chk = (s8)func_801C6388((CItemBoxGridFull*)sub, entry);
+        if (chk > 0) {
+            p[0x529] += 10;
+            if ((s8)p[0x529] > chk) p[0x529] = (u8)chk;
+        }
+        func_801EB04C(p + 0x3e4, p[0x529]);
+        u32 v = func_801C5FC0((CItemBoxGridFull*)sub, entry);
+        func_801EB064(p + 0x3e4, (s8)p[0x529] * v);
+        func_80138078__FUl(1);
+        return;
+    }
+    if (func_801D3320(p + 0xe8)) {
+        if (!func_801D3328(p + 0xe8)) return;
+        func_801D377C(p + 0xe8);
+        u32 tmp[4];
+        func_801D3454(tmp, p + 0xe8);
+        void** vtbl = *(void***)(p + 0xa0);
+        ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, tmp);
+        func_80138078__FUl(1);
+        return;
+    }
+    if (p[0x544]) {
+        u8 cur = p[0x545];
+        s8 idx = (s8)(cur) + 1;
+        while (idx != (s8)cur) {
+            if ((s8)idx >= 3) idx = 0;
+            u16 val = ArrayGet12((const u16*)(p + 0x288), (u8)(p[0x546] + (u8)idx * 4));
+            if (val) { p[0x545] = (u8)idx; break; }
+            idx++;
+        }
+        u32 buf[3];
+        func_801CB9D8(buf, p + 0x288, (u8)(p[0x546] + (s8)p[0x545] * 4));
+        void** vtbl = *(void***)(p + 0xa0);
+        ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, buf);
+        func_80138078__FUl(1);
+        return;
+    }
+    s8 row = (s8)p[0x525];
+    if (row == -2) return;
+    if (row == -1) {
+        func_801CB4E4(self);
+        func_801D0950(self);
+        return;
+    }
+    if ((s8)p[0x524] == 9) {
+        p[0x524] = 0;
+        func_801CC3F4(self);
+        func_801D0950(self);
+    } else {
+        p[0x524]++;
+        if ((s8)p[0x524] >= 10) p[0x524] = 0;
+        func_801D0950(self);
+        func_801D0328(self);
+    }
+    func_80138078__FUl(1);
+}
 
 // Grid state update with conditions.
 // Grid state update.
@@ -3401,9 +4412,136 @@ void func_801CC4E8(void* self) {
     if (f != 1) func_80138078__FUl(0xa);
 }
 
-void func_801CC5DC(void* self) { }
+void func_801CC5DC(void* self) {
+    u8* p = (u8*)self;
+    if (p[0x542]) return;
+    if (p[0x528]) return;
+    if (CSysWin_getUnk34(p + 0x4ac)) return;
+    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    if (func_80208358(p + 0x418)) return;
+    if (func_8022DB6C(p + 0x468)) return;
+    if (p[0x544]) return;
+    if (func_801D3320(p + 0xe8)) {
+        if (!func_801D3328(p + 0xe8)) return;
+        func_801D0950(self);
+        func_801D216C(p + 0xa0, 0);
+        func_801D3408(p + 0xe8);
+        func_80138078__FUl(6);
+        return;
+    }
+    if (*(u32*)(p + 0x58) != 3) return;
+    if (!func_801D3328(p + 0xe8)) return;
+    void* obj = *(void**)(p + 0x44);
+    u32* subObj = *(u32**)(obj + 0x10);
+    void** vtbl = *(void***)subObj;
+    void* a = ((void*(*)(void*, const char*, int))vtbl[0x3c/4])(subObj, &lbl_eu_8050566C[0x301], 1);
+    void* b = ((void*(*)(void*, const char*, int))vtbl[0x3c/4])(subObj, &lbl_eu_8050566C[0x2f8], 1);
+    u32 result;
+    func_80137924(&result, b, a, (u32)subObj);
+    func_801D3430(p + 0xe8, &result);
+    func_801D353C(p + 0xe8, (u8)(p[0x547] + p[0x548]));
+    u32 tmp[4];
+    func_801D3454(tmp, p + 0xe8);
+    vtbl = *(void***)(p + 0xa0);
+    ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, tmp);
+    func_801D216C(p + 0xa0, 1);
+    func_801D216C(p + 0x70, 0);
+    func_801D216C(p + 0xb8, 0);
+    func_801D3330(p + 0xe8);
+    p[0x526] = 0;
+    func_80138078__FUl(2);
+}
 
-void func_801CC7B0(void* self) { }
+void func_801CC7B0(void* self, int r4) {
+    u8* p = (u8*)self;
+    if (CSysWin_getUnk34(p + 0x4ac)) {
+        if (!CSysWin_isActive(p + 0x4ac)) return;
+        func_8022B8E4(p + 0x4ac);
+        func_801D216C(p + 0xa0, 0);
+        p[0x540] = 1;
+        *(u32*)(p + 0x58) = 0x17;
+        return;
+    }
+    if (CSysWin_getUnk34(p + 0x4e8)) {
+        if (!CSysWin_isActive(p + 0x4e8)) return;
+        func_8022B8E4(p + 0x4e8);
+        func_801D216C(p + 0x70, 0);
+        *(u32*)(p + 0x58) = 0x14;
+        return;
+    }
+    if (func_80208358(p + 0x418)) {
+        if (!func_80208360(p + 0x418)) return;
+        func_801D0950(self);
+        func_801D216C(p + 0x70, 1);
+        func_801D216C(p + 0xa0, 0);
+        func_80208838(p + 0x418);
+        func_802083A4(p + 0x418);
+        *(u32*)(p + 0x58) = 8;
+        p[0x528] = 0;
+        if (!r4) func_80138078__FUl(6);
+        return;
+    }
+    if (func_8022DB6C(p + 0x468)) {
+        if (!func_8022DB74(p + 0x468)) return;
+        if (func_8022E490(p + 0x468)) {
+            func_8022DD68(p + 0x468);
+            *(u32*)(p + 0x58) = 0x11;
+            func_801D0950(self);
+            func_801D216C(p + 0x70, 1);
+            func_801D216C(p + 0xd0, 0);
+        } else if (func_8022E488(p + 0x468)) {
+            func_8022E3AC(p + 0x468);
+            u32 buf[4];
+            func_8022E498(buf, p + 0x468);
+            void** vtbl = *(void***)(p + 0xd0);
+            ((void(*)(void*, u32*))vtbl[4])(p + 0xd0, buf);
+        } else {
+            func_8022DD68(p + 0x468);
+            *(u32*)(p + 0x58) = 0x11;
+            func_801D0950(self);
+            func_801D216C(p + 0x70, 1);
+            func_801D216C(p + 0xd0, 0);
+        }
+        if (!r4) func_80138078__FUl(6);
+        return;
+    }
+    if (p[0x528]) {
+        if (p[0x527] == 1) {
+            if (!func_801EB028(p + 0x3e4)) return;
+            if (*(u32*)(p + 0x58) != 0x19) return;
+            func_801EB178(p + 0x3e4);
+            *(u32*)(p + 0x58) = 0x1a;
+        } else if (p[0x527] == 2) {
+            if (!func_8022D09C(p + 0x440)) return;
+            func_8022D0D0(p + 0x440);
+            *(u32*)(p + 0x58) = 0x0e;
+            func_801D216C(p + 0x70, 1);
+            func_801D216C(p + 0xa0, 0);
+            func_801D0950(self);
+        }
+        if (!r4) func_80138078__FUl(6);
+        return;
+    }
+    if (p[0x544]) {
+        p[0x544] = 0;
+        func_801D216C(p + 0x70, 1);
+        func_801D216C(p + 0xa0, 0);
+        if (!r4) func_80138078__FUl(6);
+        return;
+    }
+    if (func_801D3320(p + 0xe8)) {
+        if (!func_801D3328(p + 0xe8)) return;
+        func_801D0950(self);
+        func_801D216C(p + 0xa0, 0);
+        func_801D3408(p + 0xe8);
+    } else {
+        if (p[0x527] == 4) {
+            p[0x525] = (u8)-2;
+            func_801D0950(self);
+        }
+    }
+    if (!r4) func_80138078__FUl(6);
+}
 
 void func_801CCAF0(void* self) { }
 
@@ -3425,7 +4563,70 @@ u8 func_801CDBE0(void* self) {
 
 u8 CItemBoxGrid::GetField52D() { return reinterpret_cast<CItemBoxGridFull*>(this)->field_52D; }
 
-void func_801CDC40(void* self) { }
+void func_801CDC40(void* self) {
+    u8* p = (u8*)self;
+    if (p[0x528]) return;
+    if (CSysWin_getUnk34(p + 0x4ac)) return;
+    if (func_80208358(p + 0x418)) return;
+    if (func_8022DB6C(p + 0x468)) return;
+    if (func_801D3320(p + 0xe8)) return;
+    if (p[0x544]) {
+        if (CSysWin_getUnk34(p + 0x4e8)) {
+            if (!CSysWin_isActive(p + 0x4e8)) return;
+            func_8022B8E4(p + 0x4e8);
+            func_801D216C(p + 0x70, 0);
+            *(u32*)(p + 0x58) = 0x14;
+            return;
+        }
+        u16* list = (u16*)(p + 0x288);
+        u8 idx = (u8)(p[0x546] + (s8)p[0x545] * 4);
+        u16 val = ArrayGet12(list, idx);
+        if (!val) return;
+        *(u32*)(p + 0x58) = 0x12;
+        u8 bt = 0;
+        if (idx < 12) bt = p[0x288 + idx + 0xa8]; else bt = 0;
+        void* obj;
+        if (bt == 3) {
+            obj = (void*)func_801D3C74(list, idx);
+        } else {
+            obj = (void*)func_8013639C(*(u32*)(lbl_eu_80664510), &lbl_eu_8050566C[0x321], val & 0xFFFF);
+        }
+        func_8022B90C(p + 0x4e8, 0);
+        func_8022B9B4(p + 0x4e8, (u32)obj, 0);
+        func_8022BFC8(p + 0x4e8, 1);
+        func_8022B8B8(p + 0x4e8);
+        func_801D216C(p + 0xa0, 0);
+        return;
+    }
+    if (*(u32*)(p + 0x58) != 3) return;
+    if (CSysWin_getUnk34(p + 0x4e8)) return;
+    u16* list = (u16*)(p + 0x288);
+    int i;
+    u8 found = 0;
+    for (i = 0; i < 12; i++) {
+        if (list[i] != 0) {
+            p[0x288 + 0xd8] = (u8)i;
+            if (list[8] != 0) p[0x288 + 0xd8] = 8;
+            found = 1;
+            break;
+        }
+    }
+    if (found) {
+        u8 old = p[0x545];
+        p[0x544] = 1;
+        p[0x288 + 0xda] = p[0x288 + 0xd8];
+        p[0x545] = p[0x288 + 0xd8];
+        p[0x546] = p[0x545];
+        p[0x547] = old;
+        func_801D216C(p + 0x70, 0);
+        func_801D216C(p + 0xa0, 0);
+        u32 buf[3];
+        func_801CB9D8(buf, p + 0x288, (u8)(p[0x546] + (s8)p[0x545] * 4));
+        void** vtbl = *(void***)(p + 0xa0);
+        ((void(*)(void*, u32*))vtbl[4])(p + 0xa0, buf);
+        p[0x548] = 0;
+    }
+}
 
 // Check conditions and update state.
 void func_801CDEE8(void* self) {
@@ -3588,7 +4789,140 @@ void func_801CE4B4(void* self) {
     func_801D216C(p + 0xa0, 1);
 }
 
-void func_801CE524(void* self) { }
+extern "C" u32 func_8008235C(u32);
+extern "C" void func_800A18A4(void*, u8);
+extern "C" void func_8013B428__FUl(u32);
+extern "C" void func_8022E204(void*, u32);
+
+void func_801CE524(void* self) {
+    u8* p = (u8*)self;
+    if (!func_80208360(p + 0x418)) return;
+    *(u32*)(p + 0x58) = 3;
+    u32 result = func_802087B8(p + 0x418);
+    if ((result & 0xFF) != 2) {
+        if (p[0x541]) {
+            p[0x541] = 0;
+            *(u32*)(p + 0x58) = 0x12;
+            u32 msg = func_80136190((void*)&lbl_eu_8050566C[0x310], (u32)&lbl_eu_8050566C[0x158], 0x10);
+            func_8022B90C(p + 0x4e8, 0);
+            func_8022B9B4(p + 0x4e8, msg, 0);
+            func_8022BFC8(p + 0x4e8, 1);
+            func_8022B8B8(p + 0x4e8);
+            func_801D216C(p + 0x70, 0);
+        } else {
+            func_801D216C(p + 0x70, 1);
+        }
+        p[0x528] = 0;
+        return;
+    }
+    // result == 2 (confirmed)
+    u8 val = p[0x62 + (s8)p[0x6f]];
+    if (val == 0xa) {
+        u8* sub = p + 0x54c;
+        u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
+        u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
+        func_8022E204(p + 0x468, kind & 0xFFFF);
+        func_8022DB7C(p + 0x468);
+        *(u32*)(p + 0x58) = 0xf;
+        p[0x528] = 1;
+        return;
+    }
+    if (val == 0xd) {
+        u8* sub = p + 0x54c;
+        u8 entry = (u8)((s8)p[0x525] * 10 + (s8)p[0x524]);
+        u32 kind = func_801C62AC((CItemBoxGridFull*)sub, entry);
+        u32 kindId = kind & 0xFFFF;
+        func_801392E4(kindId);
+        u32 kindShort = func_80139358(kindId);
+        
+        u32 msgRes = lbl_eu_80664110;
+        u32 catVal = func_801361E8(msgRes, &lbl_eu_8050566C[0x109], kindShort & 0xFFFF);
+        u32 itemNameIdx = func_801361E8(msgRes, &lbl_eu_8050566C[0x115], kindShort & 0xFFFF);
+        u32 paramVal = func_801361E8(msgRes, &lbl_eu_8050566C[0x11d], kindShort & 0xFFFF);
+        
+        u32 dialogType = func_8013600C(&lbl_eu_8050566C[0x126], &lbl_eu_8050566C[0x12e], paramVal & 0xFF);
+        u32 confirmMsg = func_80136190(&lbl_eu_8050566C[0x126], &lbl_eu_8050566C[0x158], paramVal & 0xFF);
+        
+        u32 subtitleVisible = 0;
+        u32 showFull = 0;
+        
+        if (func_8008235C(itemNameIdx & 0xFF)) {
+            u32 obj = func_8009EC9C(itemNameIdx & 0xFF);
+            u32 someVal = func_800A32BC();
+            s8 cat = (s8)(catVal & 0xFF);
+            u8 itemCount = (u8)dialogType;
+            
+            u32 base = (someVal & 0xFF) * 0x49 + obj;
+            u32 idx = (itemCount & 0xFF) * 2;
+            void* dataPtr = (void*)(base + idx);
+            
+            if (cat == 1) {
+                u8 flag = *(u8*)((u8*)dataPtr + 0xe8);
+                if (flag) {
+                    confirmMsg = func_80136190(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x40);
+                } else {
+                    confirmMsg = func_80136190(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x39);
+                    subtitleVisible = 1;
+                    showFull = 1;
+                    func_800A18A4((void*)obj, paramVal & 0xFF);
+                }
+            } else if (cat == 2) {
+                u8 flag = *(u8*)((u8*)dataPtr + 0xe8);
+                if (flag) {
+                    u8 b = *(u8*)((u8*)dataPtr + 0xe9);
+                    if (!(b & 0x80)) {
+                        *(u8*)((u8*)dataPtr + 0xe9) = b | 0x80;
+                        confirmMsg = func_80136190(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x3a);
+                        subtitleVisible = 1;
+                        showFull = 1;
+                        func_8013B428__FUl(0x46);
+                    } else {
+                        confirmMsg = func_80136190(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x40);
+                    }
+                } else {
+                    confirmMsg = func_80136190(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x41);
+                }
+            } else if (cat == 3) {
+                u8 flag = *(u8*)((u8*)dataPtr + 0xe8);
+                if (flag) {
+                    u8 b = *(u8*)((u8*)dataPtr + 0xe9);
+                    if (!(b & 0x40)) {
+                        *(u8*)((u8*)dataPtr + 0xe9) = b | 0xc0;
+                        confirmMsg = func_80136190(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x3b);
+                        subtitleVisible = 1;
+                        showFull = 1;
+                        func_8013B428__FUl(0x46);
+                        func_8013B428__FUl(0x47);
+                    } else {
+                        confirmMsg = func_80136190(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x40);
+                    }
+                } else {
+                    confirmMsg = func_80136190(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x41);
+                }
+            }
+            
+            if (showFull) {
+                void* itemObj = func_801C631C((CItemBoxGridFull*)sub, entry);
+                s32 count = func_801C6388((CItemBoxGridFull*)sub, entry);
+                func_801D11B8(self, itemObj, (s8)count - 1);
+                func_801CFF28(self);
+            }
+        } else {
+            confirmMsg = func_80136190(&lbl_eu_8050566C[0x326], &lbl_eu_8050566C[0x158], 0x42);
+        }
+        
+        func_8022B90C(p + 0x4e8, subtitleVisible);
+        func_8022B9B4(p + 0x4e8, confirmMsg, 0);
+        func_8022BFC8(p + 0x4e8, 1);
+        func_8022B8B8(p + 0x4e8);
+        *(u32*)(p + 0x58) = 0x12;
+        p[0x528] = 0;
+        return;
+    }
+    // val != 0xa and val != 0xd
+    func_801D216C(p + 0x70, 1);
+    p[0x528] = 0;
+}
 
 // Handle sub-object activation with copy.
 void func_801CE974(void* self) {
@@ -3689,15 +5023,269 @@ void func_801CEC80(void* self) {
     ((u8*)self)[0x54] = 1;
 }
 
-void func_801CECD0(void* self, int r4, int r5) { }
+void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt) {
+    u32 msgId = 0;
+    u8* p = (u8*)self;
+    if (item) {
+        u32 type = (*(u32*)item >> 12) & 0xF;
+        if (type == 3) {
+            void* inst = CItem_initItemImplInstances(item);
+            void** vtbl = *(void***)inst;
+            u16 rarity = (u16)((u32(*)(void*, void*))vtbl[0x15])(inst, item);
+            u32 cat = func_801361E8(lbl_eu_806640D8, &lbl_eu_8050566C[0x331], rarity);
+            u8 c = (u8)(cat & 0xFF);
+            if (c == 4) msgId = 0x144;
+            else if (c == 5) msgId = 0x145;
+            else if (c == 6) msgId = 0x146;
+            else if (c == 7) msgId = 0x147;
+            else if (c == 8) msgId = 0x148;
+            else if (c == 9) msgId = 0x149;
+        } else if (type == 9) {
+            void* inst = CItem_initItemImplInstances(item);
+            void** vtbl = *(void***)inst;
+            u16 hasArts = (u16)((u32(*)(void*, void*))vtbl[0x20])(inst, item);
+            if (hasArts == 0) {
+                if (func_801C6E90(item)) {
+                    msgId = 0x155;
+                } else {
+                    u8 f7 = ((u8*)item)[7];
+                    u8 cat = (f7 >> 2) & 0x3F;
+                    if (cat == 4) msgId = 0x144;
+                    else if (cat == 5) msgId = 0x145;
+                    else if (cat == 6) msgId = 0x146;
+                    else if (cat == 7) msgId = 0x147;
+                    else if (cat == 8) msgId = 0x148;
+                    else if (cat == 9) msgId = 0x149;
+                }
+            } else {
+                void* inst2 = CItem_initItemImplInstances(item);
+                void** vtbl2 = *(void***)inst2;
+                u16 rarity = (u16)((u32(*)(void*, void*))vtbl2[2])(inst2, item);
+                if (rarity == 1) msgId = 0x19c;
+                else if (rarity == 2) msgId = 0x19b;
+                else if (rarity == 3) msgId = 0x19a;
+                else if (rarity == 4) msgId = 0x199;
+                else if (rarity == 5) msgId = 0x198;
+            }
+        }
+    }
+    if (!msgId) {
+        if (kind) {
+            u32 handled = func_80136254(lbl_eu_806640EC, &lbl_eu_8050566C[0x34d], kind);
+            handled &= 0xFFFF;
+            if (handled) {
+                msgId = func_80138F78(handled);
+            }
+        }
+        if (!msgId) {
+            u32 obj = *(u32*)(p + 0x3c);
+            void** vtbl = *(void***)obj;
+            msgId = (u32)((void*(*)(void*, u32, u32, u32))vtbl[3])(obj, 0x74696D67, &lbl_eu_8050566C[0x33a], 0);
+        }
+    }
+    if (bt) {
+        u8 listIdx = *(u8*)(p + 0x6f);
+        u8 val = *(u8*)(p + 0x62 + (s8)listIdx);
+        u32 obj2 = *(u32*)(p + 0x40);
+        void** vtbl2 = *(void***)obj2;
+        if (val == 3) {
+            msgId = (u32)((void*(*)(void*, u32, u32, u32))vtbl2[3])(obj2, 0x74696D67, &lbl_eu_8050566C[0x357], 0);
+        } else {
+            msgId = (u32)((void*(*)(void*, u32, u32, u32))vtbl2[3])(obj2, 0x74696D67, &lbl_eu_8050566C[0x36d], 0);
+        }
+    }
+    if (msgId) {
+        char buf[64];
+        sprintf(buf, &lbl_eu_8050566C[0x383], idx + 1);
+        u32 layout = *(u32*)(p + 0x44);
+        func_80137E7C(layout, buf, msgId);
+    }
+}
 
-void func_801CF240(void* self, int r4, int r5) { }
+void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
+    u32 msgId = 0;
+    u8* p = (u8*)self;
+    if (item) {
+        u32 type = (*(u32*)item >> 12) & 0xF;
+        if (type == 3) {
+            void* inst = CItem_initItemImplInstances(item);
+            void** vtbl = *(void***)inst;
+            u16 v = (u16)((u32(*)(void*, void*))vtbl[2])(inst, item);
+            if (v == 1) msgId = 0x197;
+            else if (v == 2) msgId = 0x196;
+            else if (v == 3) msgId = 0x195;
+            else if (v == 4) msgId = 0x194;
+            else if (v == 5) msgId = 0x193;
+            else if (v == 6) msgId = 0x192;
+        } else if (type == 9) {
+            void* inst = CItem_initItemImplInstances(item);
+            void** vtbl = *(void***)inst;
+            u16 hasArts = (u16)((u32(*)(void*, void*))vtbl[0x20])(inst, item);
+            if (hasArts == 0) {
+                u32 isSkill = func_801C6E90(item);
+                if (!isSkill) {
+                    u32 t2 = (*(u32*)item >> 12) & 0xF;
+                    u8 f7 = ((u8*)item)[7];
+                    u8 st = f7 & 3;
+                    if (t2 == 9 && st == 1) isSkill = 1;
+                }
+                if (isSkill) {
+                    // skill item - fall through to vtable[2] mapping
+                    void* inst2 = CItem_initItemImplInstances(item);
+                    void** vtbl2 = *(void***)inst2;
+                    u16 v = (u16)((u32(*)(void*, void*))vtbl2[2])(inst2, item);
+                    if (v == 1) msgId = 0x191;
+                    else if (v == 2) msgId = 0x190;
+                    else if (v == 3) msgId = 0x18f;
+                    else if (v == 4) msgId = 0x18e;
+                    else if (v == 5) msgId = 0x18d;
+                } else {
+                    // fallback to name lookup
+                }
+            } else {
+                // origin arts
+                void* inst2 = CItem_initItemImplInstances(item);
+                void** vtbl2 = *(void***)inst2;
+                u16 v = (u16)((u32(*)(void*, void*))vtbl2[2])(inst2, item);
+                if (v == 1) msgId = 0x19c;
+                else if (v == 2) msgId = 0x19b;
+                else if (v == 3) msgId = 0x19a;
+                else if (v == 4) msgId = 0x199;
+                else if (v == 5) msgId = 0x198;
+            }
+        }
+    }
+    if (!msgId) {
+        if (kind) {
+            u32 handled = func_80136254(lbl_eu_806640EC, &lbl_eu_8050566C[0x391], kind);
+            handled &= 0xFFFF;
+            if (handled) {
+                msgId = func_80138F78(handled);
+            }
+        }
+        if (msgId) {
+            u32 obj2 = *(u32*)(p + 0x40);
+            void** vtbl2 = *(void***)obj2;
+            msgId = (u32)((void*(*)(void*, u32, u32, u32))vtbl2[3])(obj2, 0x74696D67, msgId, 0);
+        }
+        if (!msgId) {
+            u32 obj = *(u32*)(p + 0x3c);
+            void** vtbl = *(void***)obj;
+            msgId = (u32)((void*(*)(void*, u32, u32, u32))vtbl[3])(obj, 0x74696D67, &lbl_eu_8050566C[0x33a], 0);
+        }
+        if (msgId) {
+            char buf[64];
+            sprintf(buf, &lbl_eu_8050566C[0x396], idx + 1);
+            u32 layout = *(u32*)(p + 0x44);
+            func_80137E7C(layout, buf, msgId);
+        }
+    } else {
+        if (msgId) {
+            u32 obj2 = *(u32*)(p + 0x40);
+            void** vtbl2 = *(void***)obj2;
+            msgId = (u32)((void*(*)(void*, u32, u32, u32))vtbl2[3])(obj2, 0x74696D67, msgId, 0);
+        }
+        if (!msgId) {
+            u32 obj = *(u32*)(p + 0x3c);
+            void** vtbl = *(void***)obj;
+            msgId = (u32)((void*(*)(void*, u32, u32, u32))vtbl[3])(obj, 0x74696D67, &lbl_eu_8050566C[0x33a], 0);
+        }
+        if (msgId) {
+            char buf[64];
+            sprintf(buf, &lbl_eu_8050566C[0x396], idx + 1);
+            u32 layout = *(u32*)(p + 0x44);
+            func_80137E7C(layout, buf, msgId);
+        }
+    }
+}
 
-void func_801CF71C(void* self, int r4, int r5) { }
+void func_801CF71C(void* self, int r4, int r5) {
+    // Asm shows 4 params: (self, int r4, void* r5, int r6)
+    // Called with r6=idx from func_801CFFEC
+    // Keeping existing stub signature; body omitted for now.
+}
 
-void func_801CF900(void* self) { }
+void func_801CF900(void* self, u32 r4, void* r5, void* r6, u32 r7) {
+    u8* p = (u8*)self;
+    char buf[0x20];
+    sprintf(buf, &lbl_eu_8050566C[0x3b0], r7 + 1);
 
-void func_801CFA58(void* self, int r4, int r5) { }
+    void* accessor = *(void**)(p + 0x3c);
+    void** vtbl = *(void***)accessor;
+    u32 tag = 0x74696D67; /* "img" */
+    void* pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, &lbl_eu_8050566C[0x33a], 0);
+
+    if (r4 == 1) {
+        accessor = *(void**)(p + 0x3c);
+        vtbl = *(void***)accessor;
+        pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, &lbl_eu_8050566C[0x3bb], 0);
+    } else if (r4 == 2) {
+        accessor = *(void**)(p + 0x3c);
+        vtbl = *(void***)accessor;
+        pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, &lbl_eu_8050566C[0x3cf], 0);
+    }
+
+    if (r6) {
+        accessor = *(void**)(p + 0x3c);
+        vtbl = *(void***)accessor;
+        pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, &lbl_eu_8050566C[0x3e3], 0);
+    }
+
+    if (r5) {
+        accessor = *(void**)(p + 0x3c);
+        vtbl = *(void***)accessor;
+        pane = ((void*(*)(void*, u32, const char*, int))vtbl[3])(accessor, tag, &lbl_eu_8050566C[0x3f7], 0);
+    }
+
+    if (pane) {
+        func_80137E7C(*(void**)(p + 0x44), (u32)buf);
+    }
+}
+
+void func_801CFA58(void* self, int r4, int r5) {
+    u8* p = (u8*)self;
+    int cat = r4;
+    int idx = r5;
+    char buf[64];
+    if (cat > 0 && cat <= 0xd) {
+        static const char* tabStrs[14];
+        tabStrs[0] = 0;
+        tabStrs[1] = &lbl_eu_8050566C[0x40b];
+        tabStrs[2] = &lbl_eu_8050566C[0x420];
+        tabStrs[3] = &lbl_eu_8050566C[0x435];
+        tabStrs[4] = &lbl_eu_8050566C[0x44a];
+        tabStrs[5] = &lbl_eu_8050566C[0x45f];
+        tabStrs[6] = &lbl_eu_8050566C[0x474];
+        tabStrs[7] = &lbl_eu_8050566C[0x489];
+        tabStrs[8] = &lbl_eu_8050566C[0x49e];
+        tabStrs[9] = &lbl_eu_8050566C[0x4b3];
+        tabStrs[10] = &lbl_eu_8050566C[0x4c8];
+        tabStrs[11] = &lbl_eu_8050566C[0x4dd];
+        tabStrs[12] = &lbl_eu_8050566C[0x4f2];
+        tabStrs[13] = &lbl_eu_8050566C[0x507];
+        if (cat >= 1 && cat <= 13) {
+            sprintf(buf, tabStrs[cat]);
+        }
+    }
+    if (cat == 0) {
+        // empty -- sprintf skipped, buf uninitialized
+    }
+    u32* layout = *(u32**)(p + 0x40);
+    u32* pane = *(u32**)(layout + 0x10);
+    void** vtbl = *(void***)pane;
+    void* ret = ((void*(*)(void*, char*, int))vtbl[3])(pane, buf, 0);
+    if (!ret) {
+        layout = *(u32**)(p + 0x3c);
+        pane = *(u32**)(layout + 0x10);
+        vtbl = *(void***)pane;
+        ret = ((void*(*)(void*, const char*, int))vtbl[3])(pane, &lbl_eu_8050566C[0x33a], 0);
+    }
+    if (ret) {
+        char tmp[64];
+        sprintf(tmp, &lbl_eu_8050566C[0x507], idx + 1);
+        func_80137E7C((void*)*(u32*)(p + 0x44), tmp, ret);
+    }
+}
 
 // Format text and set on layout pane.
 void func_801CFCBC(void* self, u32 val) {
@@ -3800,9 +5388,138 @@ extern "C" void func_801CFF28(void* self) {
     }
 }
 
-void func_801CFFEC(void* self) { }
+void func_801CFFEC(void* self) {
+    u8* p = (u8*)self;
+    CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+    u32 rows = func_801C5E5C(sub);
+    u32 r = rows & 0xFF;
+    if (r > 1) {
+        u32* layout = *(u32**)(p + 0x44);
+        u32* pane = *(u32**)(layout + 0x10);
+        void** vtbl = *(void***)pane;
+        void* ret = ((void*(*)(void*, const char*, int))vtbl[0x3c/4])(pane, &lbl_eu_8050566C[0x547], 1);
+        func_80124270(ret, 1);
+        int i;
+        for (i = 0; i < 10; i++) {
+            char buf[64];
+            sprintf(buf, &lbl_eu_8050566C[0x54e], i + 1);
+            u32* pane2 = *(u32**)(layout + 0x10);
+            void** vtbl2 = *(void***)pane2;
+            void* ret2 = ((void*(*)(void*, char*, int))vtbl2[0x3c/4])(pane2, buf, 1);
+            u32 hidden = (r - (u32)(u8)i) >> 31;
+            func_80124270(ret2, hidden);
+        }
+        u32* layout2 = *(u32**)(p + 0x44);
+        func_80136910__FPQ34nw4r3lyt6LayoutPcUc(layout2, &lbl_eu_8050566C[0x55d], (u8)(sub->field_2804 + 1));
+        u32* pane3 = *(u32**)(layout2 + 0x10);
+        void** vtbl3 = *(void***)pane3;
+        void* ret3 = ((void*(*)(void*, const char*, int))vtbl3[0x3c/4])(pane3, &lbl_eu_8050566C[0x566], 1);
+        float v[3];
+        v[0] = *(float*)(p + 0x534);
+        v[1] = *(float*)(p + 0x538);
+        v[2] = *(float*)(p + 0x53c);
+        float step = lbl_eu_80667F84;
+        float fRow = (float)(r - 1);
+        float fIdx = (float)(u8)(sub->field_2804);
+        float fNum = (float)(10 - r);
+        float offset = step * (fIdx + fNum);
+        v[0] += offset;
+        v[1] += offset;
+        v[2] += offset;
+        copyVEC3((float*)((u8*)ret3 + 0x2c), v);
+    } else {
+        u32* layout = *(u32**)(p + 0x44);
+        u32* pane = *(u32**)(layout + 0x10);
+        void** vtbl = *(void***)pane;
+        void* ret = ((void*(*)(void*, const char*, int))vtbl[0x3c/4])(pane, &lbl_eu_8050566C[0x547], 1);
+        func_80124270(ret, 0);
+    }
+    int i;
+    for (i = 0; i < 3; i++) {
+        char buf[64];
+        sprintf(buf, &lbl_eu_8050566C[0x574], i + 1);
+        u32* layout = *(u32**)(p + 0x44);
+        u32* pane = *(u32**)(layout + 0x10);
+        void** vtbl = *(void***)pane;
+        void* ret = ((void*(*)(void*, char*, int))vtbl[0x3c/4])(pane, buf, 1);
+        if (ret) {
+            u8 max = LookupIndexedByte((char*)sub);
+            u32 hidden = ((u32)(u8)i - (u32)max) >> 31;
+            func_80124270(ret, hidden);
+        }
+    }
+    u32 idx;
+    for (idx = 0; idx < 0x1e; idx++) {
+        u32 kind = func_801C62AC(sub, (u16)idx);
+        void* obj = func_801C631C(sub, (u16)idx);
+        u8 bt = func_801C6708(sub, (u16)idx);
+        func_801CECD0(self, kind & 0xFFFF, obj, (u16)idx, bt);
+        func_801CF240(self, kind & 0xFFFF, obj, (u16)idx);
+        s32 chk = func_801C6388(sub, (u16)idx);
+        func_801CF71C(self, (s8)chk, obj, idx);
+        u8 b5 = func_801C6618(sub, (u16)idx);
+        u8 b4 = func_801C65A0(sub, (u16)idx);
+        u8 b2 = func_801C6528(sub, (u16)idx);
+        func_801CF900(self, b2, b4, b5, (u16)idx);
+        u8 b7 = func_801C673C(sub, (u16)idx);
+        func_801CFCBC(self, b7, (u16)idx);
+    }
+}
 
-void func_801D0328(void* self){}
+void func_801D0328(void* self) {
+    u8* p = (u8*)self;
+    CItemBoxGridFull* sub = (CItemBoxGridFull*)(p + 0x54c);
+    s8 row = (s8)p[0x525];
+    u8 col = p[0x524];
+    u16 entry = (u16)(u8)(col + (u8)row * 10);
+    s8 idx = (s8)entry;
+    if (row == -1) {
+        u32 val = func_801D1220(self);
+        u32* layout = *(u32**)(p + 0x44);
+        func_80136B4C(layout, &lbl_eu_8050566C[0x581], val, 0);
+        func_80136B4C(layout, &lbl_eu_8050566C[0x58a], &lbl_eu_8050566C[0x3af], 0);
+    } else if (row == -2) {
+        u32* layout = *(u32**)(p + 0x44);
+        func_80136B4C(layout, &lbl_eu_8050566C[0x581], &lbl_eu_8050566C[0x3af], 0);
+        func_80136B4C(layout, &lbl_eu_8050566C[0x58a], &lbl_eu_8050566C[0x3af], 0);
+    } else {
+        u32 val = func_801C6938(sub, (u16)idx);
+        u32* layout = *(u32**)(p + 0x44);
+        func_80136B4C(layout, &lbl_eu_8050566C[0x581], val, 0);
+        char* str = func_801C6A44(sub, (u16)idx);
+        func_80136B4C(layout, &lbl_eu_8050566C[0x58a], str, *(u32*)(p + 0x5c));
+    }
+    u32 qty;
+    if (p[0x527] == 2) {
+        void* obj = func_801C631C(sub, (u16)idx);
+        u32 kind = func_801C62AC(sub, (u16)idx);
+        s32 chk = func_801C6388(sub, (u16)idx);
+        if ((s8)p[0x525] < 0) qty = 0;
+        else qty = func_801C618C(sub, kind & 0xFFFF, obj, *(u16*)(p + 0x52a));
+    } else {
+        if ((s8)p[0x525] < 0) qty = 0;
+        else qty = func_801C5FC0(sub, (u16)idx);
+    }
+    char buf[64];
+    sprintf(buf, &lbl_eu_8050566C[0x596], qty, func_80136190(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 3));
+    u32* layout = *(u32**)(p + 0x44);
+    func_80136A1C(layout, &lbl_eu_8050566C[0x59b], buf, 0);
+    if (getItemBoxState__FP12CItemBoxInfo(p + 0x1d8)) {
+        void* obj2;
+        u32 kind2;
+        if ((s8)p[0x525] < 0) { obj2 = 0; kind2 = 0; }
+        else {
+            obj2 = func_801C631C(sub, (u16)idx);
+            kind2 = func_801C62AC(sub, (u16)idx);
+        }
+        func_801D47D4(p + 0x1d8, kind2 & 0xFFFF, obj2, 1);
+        u32 val2;
+        if ((s8)p[0x525] < 0) val2 = 0;
+        else val2 = func_801C6938(sub, (u16)idx);
+        func_801D4AE0(p + 0x1d8, 1, (void*)val2);
+        func_801D4BDC(p + 0x1d8, func_801C67F8(sub), func_801C6840(sub));
+    }
+}
 
 extern "C" void func_801D05D4(void* self, int val) {
     u8* p = (u8*)self;
@@ -3898,7 +5615,117 @@ extern "C" void func_801D0950(void* self) { }
 
 extern "C" void func_801D0BD8(void* self) { }
 
-void func_801D0E88(void* self, int r4, int r5) { }
+void func_801D0E88(void* self, int r4, int r5) {
+    u8* p = (u8*)self;
+    u32 buf32 = *(u32*)(lbl_eu_80667F88);
+    u16 buf16 = *(u16*)(lbl_eu_80667F8C);
+    u8 cats[6];
+    *(u32*)cats = buf32;
+    *(u16*)(cats + 4) = buf16;
+    int found = 0;
+    int pass;
+    for (pass = 1; pass <= 8; pass++) {
+        void* obj = (void*)func_8009EC9C((u8)pass);
+        if (r4 == 3) {
+            found = 0;
+            int i, j;
+            for (i = 0; i < 6; i++) {
+                u8 cat = cats[i];
+                u16 count = func_80157C20(cat);
+                for (j = 0; j < (int)count; j++) {
+                    void* item = func_80157C4C(cat, (s16)j);
+                    if (!item) continue;
+                    if (!*(u32*)item) continue;
+                    void* inst = CItem_initItemImplInstances(item);
+                    void** vtbl = *(void***)inst;
+                    u8 num = (u8)((u32(*)(void*, void*))vtbl[0x30/4])(inst, item);
+                    int k;
+                    for (k = 0; k < (int)num; k++) {
+                        inst = CItem_initItemImplInstances(item);
+                        vtbl = *(void***)inst;
+                        s16 sv = (s16)((s32(*)(void*, void*, u32))vtbl[0x40/4])(inst, item, (u8)k);
+                        if (sv == -1) continue;
+                        if (sv == r5) {
+                            inst = CItem_initItemImplInstances(item);
+                            vtbl = *(void***)inst;
+                            ((void(*)(void*, void*, u32, s32))vtbl[0x44/4])(inst, item, (u8)k, -1);
+                            found = 1;
+                            goto func_801D0E88_break;
+                        }
+                    }
+                }
+                if (found) goto func_801D0E88_break;
+            }
+        } else if (r4 == 2) {
+            s16 v = *(s16*)((u8*)obj + 0x26);
+            if (v != -1 && v == (s16)r5) {
+                func_8009E0A8(obj, -1);
+                found = 1;
+            }
+        } else if (r4 == 4) {
+            s16 v = *(s16*)((u8*)obj + 0x1c);
+            if (v != -1 && v == (s16)r5) {
+                func_8009E024(obj, -1);
+                found = 1;
+            }
+        } else if (r4 == 5) {
+            s16 v = *(s16*)((u8*)obj + 0x1e);
+            if (v != -1 && v == (s16)r5) {
+                func_8009E030(obj, -1);
+                found = 1;
+            }
+        } else if (r4 == 6) {
+            s16 v = *(s16*)((u8*)obj + 0x20);
+            if (v != -1 && v == (s16)r5) {
+                func_8009E03C(obj, -1);
+                found = 1;
+            }
+        } else if (r4 == 7) {
+            s16 v = *(s16*)((u8*)obj + 0x22);
+            if (v != -1 && v == (s16)r5) {
+                func_8009E048(obj, -1);
+                found = 1;
+            }
+        } else if (r4 == 8) {
+            s16 v = *(s16*)((u8*)obj + 0x24);
+            if (v != -1 && v == (s16)r5) {
+                func_8009E054(obj, -1);
+                found = 1;
+            }
+        }
+        if (!found) {
+            u32 src[3];
+            src[0] = *(u32*)(lbl_eu_80505628);
+            src[1] = *(u32*)(lbl_eu_80505628 + 4);
+            src[2] = *(u32*)(lbl_eu_80505628 + 8);
+            u8 camCtx[0x630];
+            func_80043D90(camCtx);
+            int i;
+            for (i = 0; i < 3; i++) {
+                void* cam = (void*)func_80043F18(camCtx);
+                func_800F4A98(cam, src[i], 0);
+                cam = (void*)func_80043F18(camCtx);
+                if (*(u32*)((u8*)cam + 0x620) >= 1) {
+                    cam = (void*)func_80043F18(camCtx);
+                    u32* move = (u32*)func_800F6EC0(cam, 0);
+                    if (move && move[1]) {
+                        void* mv = func_800BFC68__FPQ22cf12CfObjectMove((void*)move[1]);
+                        u16 h = *(u16*)((u8*)mv + 0x3f28);
+                        if ((u32)(u8)pass == (u32)h) {
+                            func_800BFDE0(mv, 0);
+                            found = 1;
+                            break;
+                        }
+                    }
+                }
+            }
+            func_80043E88(camCtx, -1);
+        }
+        if (found) break;
+    }
+func_801D0E88_break:
+    ;
+}
 
 // Handle item event dispatch.
 void func_801D11B8(void* self, void* item, int eventType) {
@@ -3977,7 +5804,169 @@ void* __dt__13CArtsBookItemFv(void* self, int mode) {
     return self;
 }
 
-void func_801C4BB4(void* self) { }
+extern "C" u32 func_801380A0(u16);
+extern "C" u32 func_80138138(u16);
+extern "C" u32 func_801412D0(u16);
+extern "C" u32 func_80140854(void*, u32, u32);
+
+void func_801C4BB4(void* self) {
+    u8* p = (u8*)self;
+    *(u16*)(p + 0x804) = 0;
+    u16 cat;
+    for (cat = 1; cat < 0x1b; cat++) {
+        u32 start = func_801380A0(cat);
+        if (!(start & 0xFFFF)) continue;
+        u32 end = func_801380A0(cat + 1);
+        u16 id;
+        for (id = (u16)(start & 0xFFFF); (u32)id < (end & 0xFFFF); id++) {
+            u32 type = func_8009CF8C(id + 0x220);
+            if ((type & 0xFF) >= 0xFE) continue;
+            if ((type & 0xFF) == 0) continue;
+            if ((type & 0xFF) == 0xC8) continue;
+            u32 tblIdx = func_80138138(id);
+            void* nameTbl = *(void**)((u8*)&lbl_eu_80573D18 + (tblIdx & 0xFF) * 4);
+            u8 tp = type & 0xFF;
+            // Check main condition: does this item have a base name?
+            if (func_801361E8((u32)nameTbl, (u32)&lbl_eu_8050566C[tp == 1 ? 0 : (tp == 0x6f ? 0x32 : (tp == 0x79 ? 0x4b : (tp == 0x83 ? 0x64 : (tp == 0x70 ? 0x7d : (tp == 0x7a ? 0x96 : (tp == 0x84 ? 0xaf : 0xc8))))))], id) & 0xFF) {
+                // Check type-specific condition
+                u8 add = 0;
+                void* r28 = nameTbl;
+                if (tp == 1) {
+                    u32 r0 = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x0d], id) & 0xFF;
+                    u32 r23 = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0], id) & 0xFF;
+                    if (r0 == 2) {
+                        if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x1a], id) & 0xFFFF) {
+                            func_801C5158(self, id);
+                            add = 1;
+                        }
+                    }
+                    if (!add && r23 == 2) {
+                        if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x26], id) & 0xFFFF) {
+                            func_801C5158(self, id);
+                        }
+                    }
+                } else if (tp == 0x6f) {
+                    u32 r0 = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x32], id) & 0xFF;
+                    if (r0 == 2) {
+                        if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x3f], id) & 0xFFFF) {
+                            func_801C5158(self, id);
+                        }
+                    }
+                } else if (tp == 0x79) {
+                    u32 r0 = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x4b], id) & 0xFF;
+                    if (r0 == 2) {
+                        if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x58], id) & 0xFFFF) {
+                            func_801C5158(self, id);
+                        }
+                    }
+                } else if (tp == 0x83) {
+                    u32 r0 = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x64], id) & 0xFF;
+                    if (r0 == 2) {
+                        if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x71], id) & 0xFFFF) {
+                            func_801C5158(self, id);
+                        }
+                    }
+                } else if (tp == 0x70) {
+                    u32 r0 = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x7d], id) & 0xFF;
+                    if (r0 == 2) {
+                        if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x8a], id) & 0xFFFF) {
+                            func_801C5158(self, id);
+                        }
+                    }
+                } else if (tp == 0x7a) {
+                    u32 r0 = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x96], id) & 0xFF;
+                    if (r0 == 2) {
+                        if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0xa3], id) & 0xFFFF) {
+                            func_801C5158(self, id);
+                        }
+                    }
+                } else if (tp == 0x84) {
+                    u32 r0 = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0xaf], id) & 0xFF;
+                    if (r0 == 2) {
+                        if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0xbc], id) & 0xFFFF) {
+                            func_801C5158(self, id);
+                        }
+                    }
+                }
+            } else {
+                // Check "teach_type" string
+                u32 r0 = func_801361E8((u32)nameTbl, (u32)&lbl_eu_8050566C[0xc8], id) & 0xFF;
+                if (r0) {
+                    // Same type-specific check as above but different string offsets
+                    void* r28 = nameTbl;
+                    if (tp == 1) {
+                        u32 r0b = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x0d], id) & 0xFF;
+                        if (r0b == 2) {
+                            if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x1a], id) & 0xFFFF) {
+                                func_801C5158(self, id);
+                            }
+                        }
+                    } else if (tp == 0x6f) {
+                        u32 r0b = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x32], id) & 0xFF;
+                        if (r0b == 2) {
+                            if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x3f], id) & 0xFFFF) {
+                                func_801C5158(self, id);
+                            }
+                        }
+                    } else if (tp == 0x79) {
+                        u32 r0b = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x4b], id) & 0xFF;
+                        if (r0b == 2) {
+                            if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x58], id) & 0xFFFF) {
+                                func_801C5158(self, id);
+                            }
+                        }
+                    } else if (tp == 0x83) {
+                        u32 r0b = func_801361E8((u32)r28, (u32)&lbl_eu_8050566C[0x64], id) & 0xFF;
+                        if (r0b == 2) {
+                            if (func_80136254((u32)r28, (u32)&lbl_eu_8050566C[0x71], id) & 0xFFFF) {
+                                func_801C5158(self, id);
+                            }
+                        }
+                    }
+                } else {
+                    // Fallback: check ability slots
+                    void* obj = (void*)func_801412D0(id);
+                    // Check slot 0
+                    if (!func_80140854(obj, 0, 0)) {
+                        u32 r0b = func_801361E8((u32)nameTbl, (u32)&lbl_eu_8050566C[0x0d], id) & 0xFF;
+                        if (r0b == 2) {
+                            if (func_80136254((u32)nameTbl, (u32)&lbl_eu_8050566C[0x1a], id) & 0xFFFF) {
+                                func_801C5158(self, id);
+                            }
+                        }
+                    }
+                    // Check slot 1
+                    if (!func_80140854(obj, 0, 1)) {
+                        u32 r0b = func_801361E8((u32)nameTbl, (u32)&lbl_eu_8050566C[0x32], id) & 0xFF;
+                        if (r0b == 2) {
+                            if (func_80136254((u32)nameTbl, (u32)&lbl_eu_8050566C[0x3f], id) & 0xFFFF) {
+                                func_801C5158(self, id);
+                            }
+                        }
+                    }
+                    // Check slot 2
+                    if (!func_80140854(obj, 0, 2)) {
+                        u32 r0b = func_801361E8((u32)nameTbl, (u32)&lbl_eu_8050566C[0x4b], id) & 0xFF;
+                        if (r0b == 2) {
+                            if (func_80136254((u32)nameTbl, (u32)&lbl_eu_8050566C[0x58], id) & 0xFFFF) {
+                                func_801C5158(self, id);
+                            }
+                        }
+                    }
+                    // Check slot 3
+                    if (!func_80140854(obj, 0, 3)) {
+                        u32 r0b = func_801361E8((u32)nameTbl, (u32)&lbl_eu_8050566C[0x64], id) & 0xFF;
+                        if (r0b == 2) {
+                            if (func_80136254((u32)nameTbl, (u32)&lbl_eu_8050566C[0x71], id) & 0xFFFF) {
+                                func_801C5158(self, id);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 // Add id to list if not already present and capacity check passes.
 void func_801C5158(void* self, u32 id) {
     if (func_801C51BC(self, id)) return;
@@ -3986,8 +5975,71 @@ void func_801C5158(void* self, u32 id) {
     *(u16*)((u8*)self + 4 + count * 2) = (u16)id;
     *(u16*)((u8*)self + 0x804) = count + 1;
 }
-void func_801C5254(void* self) { }
-void func_801C53D8(void* self) { }
+void func_801C5254(void* self) {
+    u8* p = (u8*)self;
+    void* bdat = getFP__FPCc(&lbl_eu_8050566C[0xd5]);
+    if (!bdat) return;
+
+    u16 count = (u16)func_8003B1EC((u32)bdat);
+    u16 i;
+    for (i = 1; i <= count; i++) {
+        if (!func_8009CF8C((u32)(i + 0x2596))) continue;
+
+        u32 flag1 = func_80136254(bdat, &lbl_eu_8050566C[0xe2], (u32)i);
+        if (flag1) {
+            u32 val = func_8009CF8C((u32)((u16)flag1 + 0x220));
+            if (val < 0xFE) {
+                u32 limit = func_801361E8((u32)bdat, &lbl_eu_8050566C[0xea], (u32)i);
+                if ((u8)val > (u8)limit) continue;
+            }
+        } else {
+            u32 hasVal = func_801361E8((u32)bdat, &lbl_eu_8050566C[0xf3], (u32)i);
+            if (hasVal) {
+                u32 val2 = func_801361E8((u32)bdat, &lbl_eu_8050566C[0xfa], (u32)i);
+                u32 cap = func_8009CF8C((u32)((u8)hasVal + 0x7fc));
+                if ((u8)val2 > (u8)cap) continue;
+            }
+        }
+
+        u32 type = func_80136254(bdat, &lbl_eu_8050566C[0x102], (u32)i);
+        if (type) {
+            func_801C5158(self, (u32)(u16)type);
+        }
+    }
+}
+
+void func_801C53D8(void* self) {
+    u8* p = (u8*)self;
+    void* bdat = (void*)lbl_eu_80664110;
+    s32 count = func_8003B1EC((u32)bdat);
+    u8 i;
+    for (i = 1; i <= (u8)count; i++) {
+        u8 flag = (u8)func_801361E8((u32)bdat, &lbl_eu_8050566C[0x109], (u32)i);
+        u8 charId = (u8)func_801361E8((u32)bdat, &lbl_eu_8050566C[0x115], (u32)i);
+        u8 unk = (u8)func_801361E8((u32)bdat, &lbl_eu_8050566C[0x11d], (u32)i);
+
+        u32 r26 = func_8013600C((u32)&lbl_eu_8050566C[0x126], (u32)&lbl_eu_8050566C[0x12e], (u32)unk);
+
+        void* charData = (void*)func_8009EC9C((u32)charId);
+        u32 count2 = func_800A32BC();
+        u32 offset = (u32)((r26 & 0xFF) << 1);
+        char* ptr = (char*)((u8*)charData + count2 * 0x49 + offset);
+
+        if (flag == 1) {
+            if (ptr[0xe8]) {
+                func_801C5158(self, (u32)i);
+            }
+        } else if (flag == 2) {
+            if (ptr[0xe9] & 0x80) {
+                func_801C5158(self, (u32)i);
+            }
+        } else if (flag == 3) {
+            if (ptr[0xe9] & 0x40) {
+                func_801C5158(self, (u32)i);
+            }
+        }
+    }
+}
 void OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event) { }
 
 // Static initialization of color table entries.

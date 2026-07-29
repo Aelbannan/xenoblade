@@ -54,6 +54,8 @@ void pluginUnitRegist() {
     vmPluginRegist(lbl_eu_80507FC0 + 0xb, lbl_eu_80535460);
 }
 
+using namespace cf;
+
 // Cast-only interface for CfObject vtable. MWCC (-RTTI on) places two hidden
 // typeinfo slots before the first declared virtual, so we omit _v000/_v004
 // and start at 0x8 to make the declared vtable layout match the retail
@@ -422,7 +424,10 @@ int onEneArtsAttack(VMThread* pThread) {
                     if (bmTarget != nullptr) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);
-                        if (func_800F477C(bmTargetObj) == unk1->unk50) {
+                        // func_800F477C returns CfUnknownSub*; compare as
+                        // UnkStruct2* to match unk50's type.
+                        if (reinterpret_cast<CActorParam_UnkStruct2*>(
+                                func_800F477C(bmTargetObj)) == unk1->unk50) {
                             result.value.intVal = 1;
                         }
                     }
@@ -434,7 +439,8 @@ int onEneArtsAttack(VMThread* pThread) {
                     if (bmTarget != nullptr) {
                         CfCode800F42AC* bmTargetObj =
                             reinterpret_cast<CfCode800F42AC*>(bmTarget);
-                        if (func_800F477C(bmTargetObj) == unk1->unk50) {
+                        if (reinterpret_cast<CActorParam_UnkStruct2*>(
+                                func_800F477C(bmTargetObj)) == unk1->unk50) {
                             u32 bmFlags = *reinterpret_cast<u32*>(
                                 bmTarget + 0x824);
                             if (bmFlags & (1u << 17)) {

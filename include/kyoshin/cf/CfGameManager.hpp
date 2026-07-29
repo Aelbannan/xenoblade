@@ -165,7 +165,7 @@ public:
     void func_8007D7A4();
     void func_8007D834();
     void func_8007D84C();
-    void func_8007DA00();
+    void* func_8007DA00();
     void func_8007DA0C();
     void func_8007DCA8();
     void func_8007DCB8();
@@ -224,8 +224,8 @@ public:
     void func_8008064C();
     void func_800807BC();
     void func_80080888();
-    void func_80080E20();
-    void func_80080E28();
+    u8 func_80080E20();
+    u8 func_80080E28();
     void func_80080E30();
     void func_80080E44();
     void func_80080EE4();
@@ -333,9 +333,9 @@ public:
     void func_800832BC();
     void func_80083304();
     void func_80083328();
-    void func_80083458();
-    void func_80083460();
-    void func_80083468();
+    u32 func_80083458();
+    u32 func_80083460();
+    void func_80083468(u32 value);
     void func_80083470();
     bool func_80083538();
     bool func_80083544();

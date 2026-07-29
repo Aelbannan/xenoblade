@@ -140,12 +140,14 @@ void Channel::Update(bool periodic) {
     f32 volume = 1.0f;
     volume *= mInitVolume;
     volume *= mUserVolume;
-    volume *= mSilenceVolume.GetValue() / static_cast<f32>(SILENCE_VOLUME_MAX);
+    volume *=
+        static_cast<f32>(mSilenceVolume.GetValue()) / SILENCE_VOLUME_MAX;
 
     f32 veInitVolume = 1.0f;
     veInitVolume *= Util::CalcVolumeRatio(mEnvelope.GetValue());
     if (mLfoTarget == LFO_TARGET_VOLUME) {
-        veInitVolume *= Util::CalcVolumeRatio(VOLUME_MAX_DB * lfoValue);
+        veInitVolume *=
+            Util::CalcVolumeRatio(VOLUME_MAX_DB * lfoValue);
     }
 
     if (mEnvelope.GetStatus() == EnvGenerator::STATUS_RELEASE) {
@@ -161,7 +163,7 @@ void Channel::Update(bool periodic) {
     }
 
     f32 cent = 0.0f;
-    cent += mKey - mOriginalKey;
+    cent += static_cast<f32>(mKey - mOriginalKey);
     cent += GetSweepValue();
     cent += mUserPitch;
     if (mLfoTarget == LFO_TARGET_PITCH) {
@@ -172,7 +174,8 @@ void Channel::Update(bool periodic) {
     pitchRatio *= mTune;
     pitchRatio *= mUserPitchRatio;
 
-    f32 pitch = Util::CalcPitchRatio(Util::MICROTONE_MAX * cent);
+    f32 pitch =
+        Util::CalcPitchRatio(static_cast<int>(Util::MICROTONE_MAX * cent));
     pitch *= pitchRatio;
 
     f32 pan = 0.0f;
@@ -186,11 +189,10 @@ void Channel::Update(bool periodic) {
     surroundPan += mInitSurroundPan;
     surroundPan += mUserSurroundPan;
 
-    f32 lpfFreq = 1.0f;
+    f32 lpfFreq = 0.0f;
     lpfFreq += mUserLpfFreq;
 
-    int remoteFilter = 0;
-    remoteFilter += mRemoteFilter;
+    int remoteFilter = mRemoteFilter;
 
     f32 mainOutVolume = 1.0f;
     mainOutVolume *= mMainOutVolume;
@@ -232,7 +234,8 @@ void Channel::Update(bool periodic) {
     f32 veTargetVolume = 1.0f;
     veTargetVolume *= Util::CalcVolumeRatio(mEnvelope.GetValue());
     if (mLfoTarget == LFO_TARGET_VOLUME) {
-        veTargetVolume *= Util::CalcVolumeRatio(VOLUME_MAX_DB * nextLfoValue);
+        veTargetVolume *=
+            Util::CalcVolumeRatio(VOLUME_MAX_DB * nextLfoValue);
     }
 
     if (mVoice != NULL) {
@@ -256,8 +259,7 @@ void Channel::Update(bool periodic) {
         for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
             mVoice->SetRemoteOutVolume(i, remoteOutVolume[i]);
             mVoice->SetRemoteSend(i, remoteSend[i]);
-            // @bug Should use remoteFxSend
-            mVoice->SetRemoteFxSend(i, remoteSend[i]);
+            mVoice->SetRemoteFxSend(i, remoteFxSend[i]);
         }
     }
 }
@@ -412,11 +414,10 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
                                ChannelCallback pCallback, u32 callbackArg) {
     ChannelManager& mgr = ChannelManager::GetInstance();
 
-    void* pMem = ((PoolImpl*)&mgr)->AllocImpl();
+    void* p = ((PoolImpl*)&mgr)->AllocImpl();
     Channel* pChannel;
-    if (pMem != NULL) {
-        pChannel = static_cast<Channel*>(pMem);
-
+    if (p != NULL) {
+        pChannel = static_cast<Channel*>(p);
         // Manual in-place construction
         new (&pChannel->mEnvelope) EnvGenerator();
         pChannel->mLfo.GetParam().Init();
@@ -428,12 +429,13 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
         pChannel->mAllocFlag = false;
 
         // Zero the MoveValue<u8, u16> at 0xC0
-        reinterpret_cast<u8*>(pChannel)[0xC0] = 0;
-        reinterpret_cast<u8*>(pChannel)[0xC1] = 0;
-        reinterpret_cast<u16*>(reinterpret_cast<u8*>(pChannel) + 0xC2)[0] = 0;
-        reinterpret_cast<u16*>(reinterpret_cast<u8*>(pChannel) + 0xC4)[0] = 0;
+        *(u8*)((u8*)pChannel + 0xC0) = 0;
+        *(u8*)((u8*)pChannel + 0xC1) = 0;
+        *(u16*)((u8*)pChannel + 0xC2) = 0;
+        *(u16*)((u8*)pChannel + 0xC4) = 0;
 
         pChannel->mVoice = NULL;
+
         // Zero the link list node at 0xF8
         *(u32*)((u8*)pChannel + 0xF8) = 0;
         *(u32*)((u8*)pChannel + 0xFC) = 0;
@@ -442,10 +444,9 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
     }
 
     // Insert into ChannelManager's list (reached from both branches)
-    {
-        nw4r::ut::detail::LinkListImpl* pList = (nw4r::ut::detail::LinkListImpl*)((u8*)&mgr + 4);
-        pList->Insert(pList->GetEndIter(), &pChannel->node);
-    }
+    ((nw4r::ut::detail::LinkListImpl&)mgr.mChannelList)
+        .Insert(((nw4r::ut::detail::LinkListImpl&)mgr.mChannelList).GetEndIter(),
+                &pChannel->node);
 
     if (pChannel == NULL) {
         return NULL;
@@ -459,10 +460,7 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
     if (pVoice == NULL) {
         // Trigger lazy init (guard check) before cleanup
         ChannelManager::GetInstance();
-        {
-            nw4r::ut::detail::LinkListImpl* pList = (nw4r::ut::detail::LinkListImpl*)((u8*)&mgr + 4);
-            pList->Erase(&pChannel->node);
-        }
+        ((nw4r::ut::detail::LinkListImpl&)mgr.mChannelList).Erase(&pChannel->node);
         if (pChannel != NULL) {
             ((PoolImpl*)&mgr)->FreeImpl(pChannel);
         }

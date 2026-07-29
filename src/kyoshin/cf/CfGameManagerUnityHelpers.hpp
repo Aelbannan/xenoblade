@@ -481,11 +481,11 @@ extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
 extern "C" void func_80086490__Q22cf13CfGameManagerFv() {
     lbl_eu_80663E24 &= ~0x2000000;
     func_800B06C8();
-    u32 enabledFlags = lbl_eu_80663DF8;
-    enabledFlags &= ~0x600230;
+    CPad* pad = lbl_eu_80663E0C;
+    u32 enabledFlags = lbl_eu_80663DF8 & ~0x600230;
     lbl_eu_80663DF8 = enabledFlags;
-    if (lbl_eu_80663E0C != nullptr) {
-        lbl_eu_80663E0C->mPressedButtonFlags &= enabledFlags;
+    if (pad != nullptr) {
+        pad->mPressedButtonFlags &= enabledFlags;
         lbl_eu_80663E0C->mTurboPressButtonFlags &= enabledFlags;
         lbl_eu_80663E0C->mReleasedButtonFlags &= enabledFlags;
         lbl_eu_80663E0C->mHeldButtonFlags &= enabledFlags;
@@ -497,10 +497,10 @@ extern "C" void func_80086490__Q22cf13CfGameManagerFv() {
     func_800620F0();
     func_8016FC0C(true);
     ItemListManager* manager = func_800B6BA4__Fv();
+    Unk80EE4Data* object;
     ItemListNode* node = manager->sentinel->next;
     while (node != manager->sentinel) {
-        Unk80EE4Data* object =
-            func_800BFC68__FPQ22cf12CfObjectMove(node->object);
+        object = func_800BFC68__FPQ22cf12CfObjectMove(node->object);
         if (object != nullptr) {
             object->vfunc_0xA8(true);
             object->vfunc_0xB8();

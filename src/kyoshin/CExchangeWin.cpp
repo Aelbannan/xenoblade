@@ -15,8 +15,11 @@ extern float lbl_eu_80668610;
 
 // Constructor — defined as global function with __ct__ prefix to match
 // retail C-linkage symbol __ct__CExchangeWin (avoids 12-prefix mangling).
-void __ct__CExchangeWin(CExchangeWin* self) {
-    self->mMemRegion = UnkClass_8045F564();
+extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+
+CExchangeWin* __ct__CExchangeWin(CExchangeWin* self) {
+    self->mVtbl = lbl_eu_80536640;
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
     self->mFileHandle = nullptr;
     self->mAccessor = nullptr;
     self->mLayout = nullptr;
@@ -25,6 +28,7 @@ void __ct__CExchangeWin(CExchangeWin* self) {
     self->field_25 = 1;
     self->_26 = 0;
     self->field_27 = 1;
+    return self;
 }
 
 extern "C" u8 func_8022D08C(void* self) { return ((CExchangeWin*)self)->field_25; }
@@ -53,7 +57,7 @@ extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
     }
 }
 
-void func_8022D244(CExchangeWin* self) {}
+extern "C" __attribute__((noinline)) void func_8022D244(CExchangeWin* self) {}
 
 void CExchangeWin::OnFileEvent(CEventFile* pEventFile) {}
 
@@ -97,16 +101,16 @@ extern "C" void func_8022CF2C(CExchangeWin* self) {
 // mLayout->Animate(0) when field_24 is set. Dispatches to func_8022D1F8
 // for _26==1 (entering) and func_8022D244 for _26==3 (exiting).
 extern "C" void func_8022CF7C(CExchangeWin* self) {
+    s32 s;
+
     if (self->field_24 == 0) {
         return;
     }
-    switch (self->_26) {
-    case 1:
+    s = self->_26;
+    if (s == 1) {
         func_8022D1F8(self);
-        break;
-    case 3:
+    } else if (s == 3) {
         func_8022D244(self);
-        break;
     }
     self->mLayout->Animate(0);
 }

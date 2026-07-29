@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-class CCol6Hint {
+class __declspec(novtable) CCol6Hint {
 public:
     CCol6Hint(void*);
     virtual ~CCol6Hint();

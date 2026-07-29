@@ -55,25 +55,10 @@ public:
     void OnFileEvent();
 };
 
-// Extended layout for free-function accessors.
-// Mirrors the full wrapper object (CMenuMapSelect) at the offsets
-// accessed by free functions in this TU.
+// Extended layout for free-function accessors
 struct CMapSelFull {
-    u8 _00[0x14];                             // +0x00 to +0x13: IWorkEvent base + mMemRegion
-    u32 mFileHandle;                          // +0x14
-    u8 _18[0x24 - 0x18];                      // +0x18 to +0x23: mFileHandle2, mArcAccessor, mAllocatedMem
-    u32 mLayout;                              // +0x24
-    u32 mAnimTransform1;                      // +0x28
-    u32 mAnimTransform2;                      // +0x2C
-    u8 field_0x30;                            // +0x30
-    u8 mState;                                // +0x31
-    u8 field_0x32;                            // +0x32
-    u8 mFlag33;                               // +0x33
-    u8 _34[0x74 - 0x34];                      // +0x34 to +0x73: subobject for func_801F34F4
-    u8 _74[0x8C - 0x74];                      // +0x74 to +0x8B: CBaseCur-like subobject
-    s8 field_8C;                              // +0x8C: y coordinate
-    s8 field_8D;                              // +0x8D: x coordinate
-    u8 mGridData[0x21];                       // +0x8E: grid lookup (33 entries, up to 0xAE)
-    u8 field_0xAF;                            // +0xAF: loading/active flag
-    float field_0xB0;                         // +0xB0: animation progress value
+    u8 _00[0x8C];
+    s8 field_8C;  // y coordinate
+    s8 field_8D;  // x coordinate
+    u8 mGridData[128]; // grid lookup data starting at +0x8E
 };

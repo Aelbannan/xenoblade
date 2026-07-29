@@ -99,6 +99,7 @@ void func_801D4260(CItemBoxInfo*, u16, void*, u16);
 void func_801E14DC(CItemBoxInfo2*, u16, void*, u16);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
+extern void* func_801571FC();
 extern void* lbl_eu_806640F8;
 extern void* lbl_eu_806640D8;
 extern void* lbl_eu_80506330;
@@ -1955,32 +1956,51 @@ void func_801D4260(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
 }
 
 void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
+    nw4r::lyt::Layout* layout = (nw4r::lyt::Layout*)info->state.layout;
+    char* base = (char*)&lbl_eu_805063BC;
     func_801D4A2C((u8*)info + 0xB0);
-    u8 val = *(u8*)((u8*)info + 0x9A);
-    if (val == 4) {
+    u8 mode = *(u8*)((u8*)info + 0x9A);
+    if (mode == 4) {
         func_801D8E34(info, arg2, arg3, arg4);
     }
     void* item = arg3 ? arg3 : NULL;
-    u16 id = item ? (*(u32*)item >> 20) : 0;
-    u16 id_final = arg2;
-    if (val != 4) id_final = id;
-    u8 r = (u8)(u32)func_801392E4((void*)(u32)id_final);
+    u16 r29 = arg2;
+    if (item && mode == 4) {
+        r29 = *(u32*)item >> 20;
+    }
+    u8 r27 = (u8)func_801392E4((void*)(u32)r29);
     if (item != NULL) {
         if (func_801C6E90(item) != 0 || func_801D4AB0(item) == 0) {
-            r = 9;
+            r27 = 9;
         }
     }
-    if (r - 4 <= 4) {
-        func_801D6394(info, id_final, arg3, arg4);
-    } else if (r == 2) {
-        if (val <= 2) arg4 = -1;
-        func_801D5DA4(info, id_final, arg3, arg4);
-    } else if (r == 3) {
-        if (val <= 2) arg4 = -1;
-        func_801D79F8(info, id_final, arg3, arg4);
-    } else if (r == 9 || r == 10 || r == 13) {
+    u16 cond = (mode <= 2 && arg2 != 0) ? arg2 : (u16)-1;
+    if (r27 - 4 <= 4) {
+        func_801D6394(info, r29, arg3, cond);
+    } else if (r27 == 2) {
+        func_801D5DA4(info, r29, arg3, cond);
+    } else if (r27 == 3) {
+        func_801D79F8(info, r29, arg3, cond);
+    } else if (r27 == 9) {
         func_801D80EC(info);
+    } else if (r27 == 0xA) {
+        func_801D8058(info, r29);
+    } else if (r27 == 0xD) {
+        func_801D77BC(info);
+    } else {
+        func_801D8318(info);
+        func_801D85D8(info);
+        func_801D885C(info);
+        func_801D8930(info);
+        func_801D8A88(info);
+        func_801D8B08(info);
+        func_801D8B60(info);
     }
+    char* s = func_80136190(&lbl_eu_805063BC[0x130], &lbl_eu_805063BC[0x139], 3);
+    char buf[0x20];
+    buf[0] = 0;
+    *(u32*)(buf + 0x20) = 0;
+    func_80136B4C(layout, &lbl_eu_805063BC[0x143], buf, 0);
 }
 
 u8 func_801D4214(CItemBoxInfo* info) {

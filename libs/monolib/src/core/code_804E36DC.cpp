@@ -4,6 +4,10 @@
 #include <harness_catalog.h>
 #include "monolib/core/code_804E36DC.hpp"
 
+void func_804E536C();
+void func_804DF2F0(u32 r3, u32 r4);
+extern float lbl_eu_8066B2E4;
+
 void func_804E36DC(){}
 
 void func_804E39E8(){}
@@ -13,7 +17,7 @@ void func_804E3B08(){}
 void func_804E3B6C(){}
 
 void func_804E3CCC(UnkStruct_804E36DC* self) {
-    self->field_0x0 &= ~0x0001;
+    self->field_0x0 &= ~0x8000;
     func_804E536C();
 }
 

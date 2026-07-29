@@ -1153,11 +1153,8 @@ struct ResourceIndexTable {
 };
 extern "C" const ResourceIndexTable lbl_eu_804FB7B0;
 #pragma dont_inline on
-struct ResourceIndexTable {
-    s32 rows[7][2];
-};
 extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second) {
-    const ResourceIndexTable* table = &lbl_eu_804FB7B0;
+    ResourceIndexTable table = lbl_eu_804FB7B0;
     if (first < 1) {
         return -1;
     }
@@ -1170,7 +1167,7 @@ extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     if (second > 8) {
         return -1;
     }
-    return reinterpret_cast<const s8*>(table->rows)[first * 8 + second - 9];
+    return table.values[first - 1][second - 1];
 }
 #pragma dont_inline reset
 extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second);
@@ -2454,6 +2451,8 @@ extern "C" void func_80083468__Q22cf13CfGameManagerFv(u32 value) {
     lbl_eu_80664298 = value;
 }
 #pragma dont_inline reset
+
+
 
 extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                         float value, u8 enabled) {

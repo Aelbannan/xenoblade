@@ -15,20 +15,15 @@ void func_8025C870() {}
 
 
 
-void func_80257F9C(){}
+void func_80257F9C(void*, int) {}
 
-CKizunaLine::CKizunaLine() {}
+void __ct__CKizunaLine(){}
 
-CKizunaLine::~CKizunaLine() {}
+void CKizunaLine::~CKizunaLine() {}
 
 void func_802580CC(){}
 
-void func_80258F5C(float* dest, const float* a, const float* b) {
-    dest[0] = a[0] + b[0];
-    dest[1] = a[1] + b[1];
-    dest[2] = a[2] + b[2];
-    dest[3] = a[3] + b[3];
-}
+void func_80258F5C(){}
 
 void func_80258F80(){}
 
@@ -36,14 +31,7 @@ void func_80258F9C(){}
 
 void func_80259098(){}
 
-#pragma push
-#pragma auto_inline off
-void func_80259228(void* subobj) {
-    u8* b = static_cast<u8*>(subobj);
-    b[0x14] = 1;
-    b[0x15] = 0;
-}
-#pragma pop
+void func_80259228(){}
 
 void func_80259280(){}
 
@@ -71,15 +59,7 @@ void func_8025A11C(){}
 
 void func_8025AA38(){}
 
-extern float lbl_eu_80668828[];
-void func_8025AAE0(CKizunagram* self) {
-    u16 val = self->field_0x26;
-    if (val == 0) return;
-    float f = lbl_eu_80668828[0];
-    self->field_0x34 = 1;
-    self->field_0x36 = val;
-    *(float*)self->_38 = f;
-}
+void func_8025AAE0(){}
 
 void func_8025AB04(){}
 
@@ -101,9 +81,9 @@ void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[3] = 0;
 }
 
-CKizunaInfo::CKizunaInfo() {}
+void __ct__CKizunaInfo(){}
 
-CKizunaInfo::~CKizunaInfo() {}
+void CKizunaInfo::~CKizunaInfo() {}
 
 void func_8025B670(){}
 
@@ -125,9 +105,9 @@ void func_8025C298(){}
 
 void func_8025C348(){}
 
-CKizunagram::CKizunagram() {}
+void __ct__CKizunagram(){}
 
-CKizunagram::~CKizunagram() {}
+void CKizunagram::~CKizunagram() {}
 
 void func_8025C510(){}
 
@@ -190,11 +170,7 @@ void func_8025CBCC(){}
 
 void func_8025CC70(){}
 
-void func_8025CC88(CKizunagram* self) {
-    if (self->field_0x62 == 0) return;
-    self->_38[1] = 2;
-    func_80259228(reinterpret_cast<u8*>(self) + 0x68);
-}
+void func_8025CC88(){}
 
 void func_8025CCA8(){}
 
@@ -220,7 +196,9 @@ void func_8025CE00(){}
 
 void func_8025CE78(){}
 
-void func_8025CF1C(){}
+void func_8025CF1C(CKizunagram* self) {
+    func_80257F9C((u8*)self + 0xAC, self->field_8C != 0);
+}
 
 void func_8025CF40(){}
 

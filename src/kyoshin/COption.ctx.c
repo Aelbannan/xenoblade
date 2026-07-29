@@ -26394,12 +26394,139 @@ void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 extern "C" u8 code80135FDC_getByte_621F0();
 /* end "kyoshin/code_80135FDC.hpp" */
+/* "src/kyoshin/COption.cpp" line 6 "kyoshin/CScrollBar.hpp" */
+#pragma once
+
+/* "src/kyoshin/CScrollBar.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "src/kyoshin/CScrollBar.hpp" line 4 "monolib/lib/UnkClass_8045F564.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/lib/UnkClass_8045F564.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class UnkClass_8045F564{
+public:
+    int unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+
+    UnkClass_8045F564();
+    ~UnkClass_8045F564();
+
+    
+    void createRegion(int, int, const char*, int);
+    void func_8045F778();
+    void func_8045F810();
+};
+
+class Class_8045F858{
+public:
+    void* unk0;
+    u32 unk4;
+
+    Class_8045F858(UnkClass_8045F564* unkClass);
+    ~Class_8045F858();
+};
+/* end "monolib/lib/UnkClass_8045F564.hpp" */
+/* "src/kyoshin/CScrollBar.hpp" line 5 "monolib/device/CFileHandle.hpp" */
+/* end "monolib/device/CFileHandle.hpp" */
+/* "src/kyoshin/CScrollBar.hpp" line 6 "monolib/work/CEventFile.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+
+class CEventFile {
+public:
+    BOOL unk0;                 //0x0
+    CFileHandle* mFileHandle;  //0x4
+    u8 _pad08[0x0C];           //0x8-0x13
+    u32 field_14;              //0x14
+
+    void* getFileDataPtr();
+};
+/* end "monolib/work/CEventFile.hpp" */
+
+/* "src/kyoshin/CScrollBar.hpp" line 8 "nw4r/lyt.h" */
+/* end "nw4r/lyt.h" */
+
+// IWorkEvent-compatible vtable for CScrollBar (split1 .data).
+extern "C" void* lbl_eu_80534DD8[];
+
+/* Vertical/horizontal scroll bar widget. Layout-compatible with IWorkEvent
+(vptr @ +0) for CDeviceFile::readFile, but not a C++ IWorkEvent subclass
+(avoids emitting weak default stubs into this TU's .text).
+
+State machine (mState):
+  - 0: hidden / idle (not visible)
+  - 1: entering (animating in via mAnimOffset)
+  - 2: visible (scroll bar is shown, scroll active)
+  - 3: leaving (animating out)
+
+mActive is 1 when idle/complete, 0 during transitions. */
+struct CScrollBar {
+    void* mVtbl; // 0x0 - lbl_eu_80534DD8
+    UnkClass_8045F564 mMemRegion; // 0x4 - scratch region for layout build
+    CFileHandle* mFileHandle; // 0x14
+    nw4r::lyt::ArcResourceAccessor* mAccessor; // 0x18
+    nw4r::lyt::Layout* mLayout; // 0x1C
+    nw4r::lyt::AnimTransform* mAnimTransform; // 0x20
+    u8 mReady; // 0x24 - layout built and ready to draw
+    u8 mVisible; // 0x25 - display requested (triggers show animation)
+    u8 mState; // 0x26 - 0=hidden, 1=entering, 2=visible, 3=leaving
+    u8 mActive; // 0x27 - 1 when idle, 0 during transitions
+    f32 mAnimOffset; // 0x28 - scroll-in/out animation offset
+    f32 mScrollPosY; // 0x2C - Y position from layout
+    f32 mScrollRatio; // 0x30 - scroll position ratio (0.0-1.0)
+    f32 mThumbHeight; // 0x34 - visible thumb area height
+    f32 mContentHeight; // 0x38 - full content height
+    u8 mDirection; // 0x3C - 0=horizontal, 1=vertical (constructor param)
+
+    CScrollBar(u8 direction);
+    ~CScrollBar();
+    bool OnFileEvent(CEventFile* pEventFile);
+
+    u8 isVisible();
+    u8 func_801F3668();
+};
+/* end "kyoshin/CScrollBar.hpp" */
+/* "src/kyoshin/COption.cpp" line 7 "kyoshin/CSysWin.hpp" */
+#pragma once
+
+/* "src/kyoshin/CSysWin.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Full object layout for CSysWin (used by C-linkage accessors)
+struct CSysWinFull {
+    u8 _00[0x28];
+    u8 field_28;
+    u8 _29[0x34 - 0x29];
+    u8 field_34;
+    u8 _35;
+    u8 field_36;
+};
+
+class CSysWin {
+public:
+    CSysWin();
+    virtual ~CSysWin();
+    void OnFileEvent();
+
+    // TODO: add fields
+};
+
+/* end "kyoshin/CSysWin.hpp" */
 
 extern float lbl_eu_80668C10;
 
-extern "C" void __dt__8CBaseCurFv(void*, int);
-extern "C" int CScrollBar_isVisible(void*);
-extern "C" u32 CSysWin_isReady(void*);
+void __dt__8CBaseCurFv(CBaseCur*, int);
+int CScrollBar_isVisible(CScrollBar*);
+u32 CSysWin_isReady(CSysWinFull*);
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
@@ -26419,10 +26546,10 @@ void func_8029C66C(){}
 // Returns field_0x2A only when the scrollbar is visible and
 // the syswin is ready; otherwise returns 0.
 u8 func_8029C734(COptionFull* self) {
-    if (!CScrollBar_isVisible(self->mScrollBar)) {
+    if (!CScrollBar_isVisible((CScrollBar*)self->mScrollBar)) {
         return 0;
     }
-    if (!CSysWin_isReady(self->mSysWin)) {
+    if (!CSysWin_isReady((CSysWinFull*)self->mSysWin)) {
         return 0;
     }
     return self->field_0x2A;
@@ -26506,7 +26633,7 @@ void COption::OnFileEvent() {}
 // Complete object destructor for CCur19 (CBaseCur subclass).
 // Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
 // conditionally operator delete, return this.
-void* __dt__8029BF18(void* _this, int flags) {
+CCur19* __dt__8029BF18(CCur19* _this, int flags) {
     if (_this) {
         __dt__8CBaseCurFv(_this, 0);
         if (flags > 0) {

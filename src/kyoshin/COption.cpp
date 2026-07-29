@@ -3,15 +3,20 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/COption.hpp"
-#include "kyoshin/code_80135FDC.hpp"
-#include "kyoshin/CScrollBar.hpp"
-#include "kyoshin/CSysWin.hpp"
+#include "kyoshin/code_80296898.hpp"
 
-extern float lbl_eu_80668C10;
+// extern declarations for matched functions in other TUs
+// CSysWin_isActive returns the field_36 byte from CSysWinFull
+extern "C" int CSysWin_isActive(void*);
+// func_801D216C sets mVisible on a CBaseCur subobject
+extern "C" void func_801D216C(void*, int);
 
-void __dt__8CBaseCurFv(CBaseCur*, int);
-int CScrollBar_isVisible(CScrollBar*);
-u32 CSysWin_isReady(CSysWinFull*);
+// Global buffer for game config data
+extern u8 lbl_eu_80577308[];
+
+// Forward declarations for callees in this TU
+void func_8029D420(COption*);
+void func_8029E254(COption*);
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
@@ -28,17 +33,7 @@ void func_8029C5C8(){}
 
 void func_8029C66C(){}
 
-// Returns field_0x2A only when the scrollbar is visible and
-// the syswin is ready; otherwise returns 0.
-u8 func_8029C734(COptionFull* self) {
-    if (!CScrollBar_isVisible((CScrollBar*)self->mScrollBar)) {
-        return 0;
-    }
-    if (!CSysWin_isReady((CSysWinFull*)self->mSysWin)) {
-        return 0;
-    }
-    return self->field_0x2A;
-}
+void func_8029C734(){}
 
 
 u8 func_8029C798(void* self) { return static_cast<COptionFull*>(self)->field_30; }
@@ -71,27 +66,45 @@ void func_8029D10C(){}
 
 void func_8029D178(){}
 
-// Checks if an animation at field_0x20 has reached a target frame;
-// if so, resets field_0x29 and marks field_2B as active.
-void func_8029D1C4(COptionFull* self) {
-    float f = lbl_eu_80668C10;
-    if (func_80137510(self->field_0x20, f)) {
-        self->field_0x29 = 0;
-        self->field_2B = 1;
+void func_8029D1C4(){}
+
+// Called when the option menu transitions to a sub-state (CSysWin is active)
+void func_8029D210(COption* self) {
+    if (CSysWin_isActive(&self->syswin)) {
+        self->field_0x29 = 3;
+        self->field_0x2B = 1;
+        func_801D216C(&self->cur1, 0);
+        func_801D216C(&self->cur2, 1);
+        func_8029E254(self);
     }
 }
 
-void func_8029D210(){}
-
 void func_8029D278(){}
 
-void func_8029D2F0(){}
+// Similar to func_8029D210 but sets field_0x29 to 9 instead of 3
+void func_8029D2F0(COption* self) {
+    if (CSysWin_isActive(&self->syswin)) {
+        self->field_0x29 = 9;
+        self->field_0x2B = 1;
+        func_801D216C(&self->cur1, 0);
+        func_801D216C(&self->cur2, 1);
+        func_8029E254(self);
+    }
+}
 
 void func_8029D358(){}
 
-void func_8029D3C0(){}
+// Initializes the option menu by copying game config and activating
+void func_8029D3C0(COption* self) {
+    if (self->field_0x18 != 0) {
+        self->field_0x2A = 1;
+        self->field_0x28 = 1;
+        memcpy(lbl_eu_80577308, Class_80296898::getInstance(), 0x40);
+        func_8029D420(self);
+    }
+}
 
-void func_8029D420(){}
+void func_8029D420(COption*){}
 
 void func_8029D634(){}
 
@@ -109,28 +122,14 @@ void func_8029E144(){}
 
 void func_8029E1CC(){}
 
-void func_8029E254(){}
+void func_8029E254(COption*){}
 
 void func_8029E3F8(){}
 
 void COption::OnFileEvent() {}
 
-// Complete object destructor for CCur19 (CBaseCur subclass).
-// Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
-// conditionally operator delete, return this.
-CCur19* __dt__8029BF18(CCur19* _this, int flags) {
-    if (_this) {
-        __dt__8CBaseCurFv(_this, 0);
-        if (flags > 0) {
-            operator delete(_this);
-        }
-    }
-    return _this;
-}
-
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern void func_80296A04__FP14Class_80296898(void*);
-extern u8 lbl_eu_80577308[];
 void sinit_8029E7D8(){
     func_80296A04__FP14Class_80296898(lbl_eu_80577308);
 }

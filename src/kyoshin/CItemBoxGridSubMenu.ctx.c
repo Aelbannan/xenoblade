@@ -23116,6 +23116,12 @@ struct CItemBoxGridSubMenu {
     u8 func_80208360();
     void func_802083CC();
     void func_80208368();
+
+    void func_802082F0();
+    void func_80208260();
+    int func_802087B8();
+
+    void func_80208838();
     void func_80208844();
     void func_80208890();
 };
@@ -23124,9 +23130,12 @@ struct CItemBoxGridSubMenu {
 extern "C" void func_80138078__FUl(u32);
 extern void* lbl_eu_80535750[];
 
-u32 func_80137444(nw4r::lyt::AnimTransform*, float);
-extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
-extern "C" void func_80137924(void*, void*, void*, void*);
+// Extern: animation transform helper functions
+extern u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+extern u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+
+// Float constant from sdata2
+extern "C" float lbl_eu_8066831C;
 
 void* __ct__CItemBoxGridSubMenu(void* self) {
     CItemBoxGridSubMenu* s = (CItemBoxGridSubMenu*)self;
@@ -23191,40 +23200,102 @@ void CItemBoxGridSubMenu::func_80208368() {
     func_80138078__FUl(13);
 }
 
+// Target: us-8020a0d0 — func_802082F0
+// Cleanup: hides the submenu, destroys the layout, and nulls pointers.
+void CItemBoxGridSubMenu::func_802082F0() {
+    mIsVisible = 0;
+    if (mLayout) {
+        delete mLayout;
+        mLayout = NULL;
+    }
+    mAccessor = NULL;
+}
+
+// Target: us-8020a040 — func_80208260
+// Update: animates the layout based on anim state (opening/closing).
+void CItemBoxGridSubMenu::func_80208260() {
+    if (!mIsVisible) {
+        return;
+    }
+    switch ((int)mAnimState) {
+    case 1:
+        func_80208844();
+        break;
+    case 3:
+        func_80208890();
+        break;
+    }
+    mLayout->Animate(0);
+}
+
+// Target: us-8020a598 — func_802087B8
+// Returns action based on sub-state and selected index.
+int CItemBoxGridSubMenu::func_802087B8() {
+    int result;
+    int state = mSubState;
+    result = 0;
+    if (state == 1) goto set1a;
+    if (state == 2) goto chk2;
+    if (state == 3) goto chk3;
+    goto end;
+set1a:
+    result = 1;
+    goto end;
+chk2:
+    if (mSelectedIdx == 0) goto set2a;
+    if (mSelectedIdx == 1) goto set1b;
+    goto end;
+set2a:
+    result = 2;
+    goto end;
+set1b:
+    result = 1;
+    goto end;
+chk3:
+    if (mSelectedIdx == 0) goto set2b;
+    if (mSelectedIdx == 2) goto set1c;
+    goto end;
+set2b:
+    result = 2;
+    goto end;
+set1c:
+    result = 1;
+end:
+    return result;
+}
+
 void func_8020844C(){}
 
 void func_802084D4(){}
 
-void func_80208760(CItemBoxGridSubMenu* self, CItemBoxGridSubMenu* other) {
-    nw4r::lyt::TextBox* boxes[3];
-    boxes[0] = other->mTxtBoxA;
-    boxes[1] = other->mTxtBoxB;
-    boxes[2] = other->mTxtBoxC;
-    func_80137924(self, boxes[other->mSelectedIdx], other->mRootPane,
-                  other->mLayout->GetRootPane());
-}
-
-void func_802087B8(){}
-
-void func_80208838(void){}
-
-void CItemBoxGridSubMenu::func_80208844() {
-    if (func_80137444(mAnimDefault, 1.0f) != 0) {
-        mAnimState = 2;
-        mIsOpened = 1;
-    }
-}
-
-void CItemBoxGridSubMenu::func_80208890() {
-    if (func_80137510(mAnimDefault, 1.0f) != 0) {
-        mAnimState = 0;
-        mIsOpened = 1;
-        mIsVisible = 0;
-    }
-}
+void func_80208760(){}
 
 extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
 void func_802082D0(void* self){
     if (*(u8*)((u8*)self + 0x20) == 0) return;
     func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)((u8*)self + 8), 0, 0, 1);
+}
+
+// func_80208838 — reset selected index to none
+void CItemBoxGridSubMenu::func_80208838() {
+    mSelectedIdx = -1;
+}
+
+// func_80208844 — check opening animation completion
+__declspec(noinline) void CItemBoxGridSubMenu::func_80208844() {
+    nw4r::lyt::AnimTransform* anim = mAnimDefault;
+    if (func_80137444(anim, lbl_eu_8066831C)) {
+        mAnimState = 2;
+        mIsOpened = 1;
+    }
+}
+
+// func_80208890 — check closing animation completion
+__declspec(noinline) void CItemBoxGridSubMenu::func_80208890() {
+    nw4r::lyt::AnimTransform* anim = mAnimDefault;
+    if (func_80137510(anim, lbl_eu_8066831C)) {
+        mAnimState = 0;
+        mIsOpened = 1;
+        mIsVisible = 0;
+    }
 }

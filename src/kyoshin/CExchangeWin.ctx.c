@@ -23754,35 +23754,29 @@ public:
 /* end "monolib/lib/UnkClass_8045F564.hpp" */
 
 class CFileHandle;
+class CEventFile;
 
-// Full object layout for CExchangeWin (used by C-linkage accessors)
-struct CExchangeWinFull {
-    u8 _00[0x14];
-    CFileHandle* mFileHandle;                // 0x14
-    u8 _18[0x1C - 0x18];
-    nw4r::lyt::Layout* mLayout;              // 0x1C
-    nw4r::lyt::AnimTransform* mAnimTransform; // 0x20
-    u8 field_24;                              // 0x24
-    u8 field_25;                              // 0x25
-    u8 _26;                                   // 0x26
-    u8 field_27;                              // 0x27
-};
+// Vtable for CExchangeWin (split1 .data)
+extern "C" void* lbl_eu_80536640[];
 
+/* CExchangeWin — layout-compatible with IWorkEvent (vptr @ 0) for
+   CDeviceFile::readFile, but not a C++ IWorkEvent subclass.  Vtable is
+   provided by split1; the constructor stores it manually. */
 class CExchangeWin {
 public:
-    CExchangeWin();
-    virtual ~CExchangeWin();
-    void OnFileEvent();
+    ~CExchangeWin();
+    void OnFileEvent(CEventFile* pEventFile);
 
-    UnkClass_8045F564 mMemRegion;            // 0x04
-    CFileHandle* mFileHandle;                // 0x14
-    u8 _18[0x1C - 0x18];
-    nw4r::lyt::Layout* mLayout;              // 0x1C
-    nw4r::lyt::AnimTransform* mAnimTransform; // 0x20
-    u8 field_24;                              // 0x24
-    u8 field_25;                              // 0x25
-    u8 _26;                                   // 0x26
-    u8 field_27;                              // 0x27
+    void* mVtbl;                                  // 0x00
+    UnkClass_8045F564 mMemRegion;                 // 0x04
+    CFileHandle* mFileHandle;                      // 0x14
+    nw4r::lyt::ArcResourceAccessor* mAccessor;     // 0x18
+    nw4r::lyt::Layout* mLayout;                    // 0x1C
+    nw4r::lyt::AnimTransform* mAnimTransform;      // 0x20
+    u8 field_24;                                    // 0x24
+    u8 field_25;                                    // 0x25
+    u8 _26;                                         // 0x26
+    u8 field_27;                                    // 0x27
 };
 
 /* end "kyoshin/CExchangeWin.hpp" */
@@ -26833,25 +26827,55 @@ public:
 /* end "monolib/device/CDeviceFile.hpp" */
 /* "src/kyoshin/CExchangeWin.cpp" line 8 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
+/* "src/kyoshin/CExchangeWin.cpp" line 9 "monolib/work/CEventFile.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CEventFile.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+
+class CEventFile {
+public:
+    BOOL unk0;                 //0x0
+    CFileHandle* mFileHandle;  //0x4
+    u8 _pad08[0x0C];           //0x8-0x13
+    u32 field_14;              //0x14
+
+    void* getFileDataPtr();
+};
+/* end "monolib/work/CEventFile.hpp" */
 extern const char lbl_eu_8050A740[];
 extern void func_80137924(void*, void*, void*, void*);
 extern void func_80138078(u32);
 extern float lbl_eu_80668610;
 
-extern "C" u8 func_8022D08C(void* self) { return ((CExchangeWinFull*)self)->field_25; }
+// Constructor — defined as global function with __ct__ prefix to match
+// retail C-linkage symbol __ct__CExchangeWin (avoids 12-prefix mangling).
+extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 
+CExchangeWin* __ct__CExchangeWin(CExchangeWin* self) {
+    self->mVtbl = lbl_eu_80536640;
+    __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
+    self->mFileHandle = nullptr;
+    self->mAccessor = nullptr;
+    self->mLayout = nullptr;
+    self->mAnimTransform = nullptr;
+    self->field_24 = 0;
+    self->field_25 = 1;
+    self->_26 = 0;
+    self->field_27 = 1;
+    return self;
+}
 
+extern "C" u8 func_8022D08C(void* self) { return ((CExchangeWin*)self)->field_25; }
 
+extern "C" u8 func_8022D094(void* self) { return ((CExchangeWin*)self)->field_24; }
 
-
-
-
-extern "C" u8 func_8022D094(void* self) { return ((CExchangeWinFull*)self)->field_24; }
-
-extern "C" u8 func_8022D09C(void* self) { return ((CExchangeWinFull*)self)->field_27; }
+extern "C" u8 func_8022D09C(void* self) { return ((CExchangeWin*)self)->field_27; }
 
 // If _26 is already non-zero, do nothing; otherwise initialize state and fire event 0xd
-extern "C" void func_8022D0A4(CExchangeWinFull* self) {
+extern "C" void func_8022D0A4(CExchangeWin* self) {
     if (self->_26 != 0) {
         return;
     }
@@ -26861,7 +26885,7 @@ extern "C" void func_8022D0A4(CExchangeWinFull* self) {
     func_80138078(0xd);
 }
 
-extern "C" void func_8022D1F8(CExchangeWinFull* self) {
+extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
     float f = lbl_eu_80668610;
     u32 r = func_80137444(self->mAnimTransform, f);
     if (r) {
@@ -26870,29 +26894,13 @@ extern "C" void func_8022D1F8(CExchangeWinFull* self) {
     }
 }
 
-void func_8022D244(CExchangeWinFull* self) {
-    float f = lbl_eu_80668610;
-    u32 r = func_80137510(self->mAnimTransform, f);
-    if (r) {
-        self->_26 = 0;
-        self->field_27 = 1;
-        self->field_24 = 0;
-    }
-}
+extern "C" __attribute__((noinline)) void func_8022D244(CExchangeWin* self) {}
 
-void CExchangeWin::OnFileEvent() {}
-
-CExchangeWin::~CExchangeWin() {}
-
-// Helper struct for layout sub-object at mLayout+0x10 (vtable dispatch target)
-struct LayoutSubObj {
-    u8 _00[0x10];
-    u8* subObj;  // 0x10
-};
+void CExchangeWin::OnFileEvent(CEventFile* pEventFile) {}
 
 // Stub functions needed by CItemBoxGrid
 extern "C" void func_8022D0D0(void* self) {
-    CExchangeWinFull* s = (CExchangeWinFull*)self;
+    CExchangeWin* s = (CExchangeWin*)self;
     if (s->_26 != 2) {
         return;
     }
@@ -26902,17 +26910,20 @@ extern "C" void func_8022D0D0(void* self) {
 }
 extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
     char buf[64];
-    CExchangeWinFull* s = (CExchangeWinFull*)src;
-    LayoutSubObj* lso = (LayoutSubObj*)s->mLayout;
-    u8* pane = lso->subObj;
-    u8* r1 = (u8*)((void*(*)(void*, char*, int))((void**)*(u32*)pane)[0x3C / 4])((void*)pane, buf, 1);
-    lso = (LayoutSubObj*)s->mLayout;
-    pane = lso->subObj;
-    u8* r2 = (u8*)((void*(*)(void*, char*, int))((void**)*(u32*)pane)[0x3C / 4])((void*)pane, (char*)&lbl_eu_8050A740[0x25], 1);
-    lso = (LayoutSubObj*)s->mLayout;
-    func_80137924(dst, r1, r2, lso->subObj);
+    sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
+    u32 obj = *(u32*)((u8*)src + 0x1c);
+    u32 sub = *(u32*)(obj + 0x10);
+    void** vtbl = *(void***)sub;
+    void* r1 = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])((void*)sub, buf, 1);
+    u32 obj2 = *(u32*)((u8*)src + 0x1c);
+    u32 sub2 = *(u32*)(obj2 + 0x10);
+    void** vtbl2 = *(void***)sub2;
+    void* r2 = ((void*(*)(void*, char*, int))vtbl2[0x3C / 4])((void*)sub2, (char*)&lbl_eu_8050A740[0x25], 1);
+    u32 obj3 = *(u32*)((u8*)src + 0x1c);
+    u32 sub3 = *(u32*)(obj3 + 0x10);
+    func_80137924(dst, r1, r2, (void*)sub3);
 }
-extern "C" void func_8022CF2C(CExchangeWinFull* self) {
+extern "C" void func_8022CF2C(CExchangeWin* self) {
     self->mFileHandle = CDeviceFile::readFile(
         mtl::MemManager::getHandleMEM2(),
         lbl_eu_8050A740,
@@ -26922,9 +26933,27 @@ extern "C" void func_8022CF2C(CExchangeWinFull* self) {
     );
     self->field_25 = 0;
 }
-extern "C" void func_8022CF7C(void* self) { }
+
+// func_8022CF7C — update loop: drives animation state machine and calls
+// mLayout->Animate(0) when field_24 is set. Dispatches to func_8022D1F8
+// for _26==1 (entering) and func_8022D244 for _26==3 (exiting).
+extern "C" void func_8022CF7C(CExchangeWin* self) {
+    s32 s;
+
+    if (self->field_24 == 0) {
+        return;
+    }
+    s = self->_26;
+    if (s == 1) {
+        func_8022D1F8(self);
+    } else if (s == 3) {
+        func_8022D244(self);
+    }
+    self->mLayout->Animate(0);
+}
+
 extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
-    CExchangeWinFull* s = (CExchangeWinFull*)self;
+    CExchangeWin* s = (CExchangeWin*)self;
     if (s->field_24 == 0) {
         return;
     }
@@ -26934,9 +26963,15 @@ extern "C" void func_8022CFEC(void* self, nw4r::lyt::DrawInfo* drawInfo) {
     func_80137038(s->mLayout, drawInfo, 0, 1);
 }
 
-// Sets two text fields on the layout: one at string offset 0x34 with param2,
-// and one at string offset 0x41 with param3.
-void func_8022D19C(CExchangeWinFull* self, char* param2, char* param3) {
-    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x34], param2, 0);
-    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x41], param3, 0);
+// func_8022D018 — teardown: releases file handle, destroys the layout,
+// releases the arc resource accessor, and cleans up the memory region.
+extern "C" void func_8022D018(CExchangeWin* self) {
+    func_801390E0(&self->mFileHandle);
+    self->field_24 = 0;
+    if (self->mLayout != NULL) {
+        delete self->mLayout;
+        self->mLayout = NULL;
+    }
+    func_80139124(self->mAccessor);
+    self->mMemRegion.func_8045F778();
 }

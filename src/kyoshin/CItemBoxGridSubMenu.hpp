@@ -35,12 +35,5 @@ struct CItemBoxGridSubMenu {
     u8 func_80208360();
     void func_802083CC();
     void func_80208368();
-
-    void func_802082F0();
-    void func_80208260();
-    int func_802087B8();
-
-    void func_80208838();
-    void func_80208844();
-    void func_80208890();
+    void func_8020844C();
 };

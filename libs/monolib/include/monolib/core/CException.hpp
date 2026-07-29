@@ -30,7 +30,9 @@ public:
         return exception;
     }
 
-    u8 unk1C4[0x200 - 0x1C4];
+    u8 unk1C4[0x1F8 - 0x1C4];
+    float field_0x1F8;           // 0x1F8 - compared against 0.8f in func_80457C8C
+    u8 unk1FC[0x200 - 0x1FC];
     IGameException* mException; //0x200
     u32 unk204;
 };

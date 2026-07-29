@@ -1474,6 +1474,17 @@ public:
 
 /* end "kyoshin/CKizunagram.hpp" */
 
+// Sub-object embedded at CKizunagram+0x68; CBaseCur-compatible layout
+struct CKizunagramSubCur {
+    u8 _00[0x0C];
+    u8* animTrans0;     // 0x0C - nw4r::lyt::AnimTransform* (vtable dispatch)
+    u8* animTrans1;     // 0x10
+    u8 mActive;          // 0x14
+    u8 mVisible;         // 0x15
+    u8 _16[0x40 - 0x16];
+    f32 field_0x40;      // 0x40
+};
+
 void func_8025C870() {}
 
 
@@ -1493,6 +1504,8 @@ CKizunaLine::~CKizunaLine() {}
 
 void func_802580CC(){}
 
+extern float lbl_eu_80668828[];
+
 void func_80258F5C(float* dest, const float* a, const float* b) {
     dest[0] = a[0] + b[0];
     dest[1] = a[1] + b[1];
@@ -1506,14 +1519,16 @@ void func_80258F9C(){}
 
 void func_80259098(){}
 
-#pragma push
-#pragma auto_inline off
-void func_80259228(void* subobj) {
-    u8* b = static_cast<u8*>(subobj);
-    b[0x14] = 1;
-    b[0x15] = 0;
+void func_80259228(CKizunagramSubCur* subobj) __attribute__((noinline)) {
+    subobj->mActive = 1;
+    subobj->mVisible = 0;
+    // Virtual call: animTrans0->vtable[8](animTrans0, animTrans1)
+    u32* vt = *(u32**)subobj->animTrans0;
+    typedef void (*VFunc)(u8*, u8*);
+    VFunc method = (VFunc)vt[8];
+    method(subobj->animTrans0, subobj->animTrans1);
+    subobj->field_0x40 = lbl_eu_80668828[0];
 }
-#pragma pop
 
 void func_80259280(){}
 
@@ -1663,7 +1678,7 @@ void func_8025CC70(){}
 void func_8025CC88(CKizunagram* self) {
     if (self->field_0x62 == 0) return;
     self->_38[1] = 2;
-    func_80259228(reinterpret_cast<u8*>(self) + 0x68);
+    func_80259228(reinterpret_cast<CKizunagramSubCur*>(reinterpret_cast<u8*>(self) + 0x68));
 }
 
 void func_8025CCA8(){}

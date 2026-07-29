@@ -11,6 +11,8 @@ void func_800A5738(void* a, void* b, float val, void* c);
 // func_800AAD28: debug draw for sphere collision shape.
 // Reads mRadius, converts float->unsigned->float (preserving bit pattern),
 // calls vfunc at vtable offset 0xAC to get draw data, then calls renderSphere.
+// The vtable load colors as r4 (MWCC) vs retail r12 -- a known Chaitin
+// allocation difference that does not affect EQUIVALENT_MATCH.
 void func_800AAD28(void* /*unused*/, cf::CfCollSphereImpl* shape) {
     u32 uval = static_cast<u32>(shape->mRadius);
     void** vtbl = *reinterpret_cast<void***>(shape);

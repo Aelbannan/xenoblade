@@ -251767,9 +251767,11 @@ extern "C" void func_80081CA0__Q22cf13CfGameManagerFv(Unk81CA0Data* data, u16 in
     data->field_0x6D0 = offset + index * 16;
 }
 
+#pragma dont_inline on
 extern "C" bool func_8007CBD4__Q22cf13CfGameManagerFv(u32 mask) {
     return (lbl_eu_80663E24 & mask) != 0;
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" bool func_8007F0AC__Q22cf13CfGameManagerFv(const UnkF0ACData* data) {
@@ -251810,7 +251812,7 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
 }
 #pragma dont_inline reset
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 220 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 222 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 
 namespace ml {
@@ -251820,6 +251822,33 @@ FixStr<64>::FixStr() {
     clear();
 }
 #pragma dont_inline reset
+}
+
+extern "C" void func_8016EC58(u32 object);
+extern "C" bool func_8007CBD4__Q22cf13CfGameManagerFv(u32 mask);
+extern "C" void func_8007CE94__Q22cf13CfGameManagerFv() {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758,
+                                 __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    cf::CfGameManager* manager = &lbl_eu_80571758;
+    if (manager != nullptr) {
+        if (!lbl_eu_80663E70) {
+            __ct__Q22cf13CfGameManagerFv(manager);
+            __register_global_object(manager, __dt__Q22cf13CfGameManagerFv,
+                                     lbl_eu_80571748);
+            lbl_eu_80663E70 = 1;
+        }
+        if (func_8007CBD4__Q22cf13CfGameManagerFv(0x1000)) {
+            cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+            if (player != nullptr) {
+                func_8016EC58(player->CfObject_UnkVirtualFunc23());
+            }
+        }
+    }
 }
 
 extern "C" void func_80086E6C__Q22cf13CfGameManagerFv(float amount) {

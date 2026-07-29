@@ -9,6 +9,33 @@ FixStr<64>::FixStr() {
 #pragma dont_inline reset
 }
 
+extern "C" void func_8016EC58(u32 object);
+extern "C" bool func_8007CBD4__Q22cf13CfGameManagerFv(u32 mask);
+extern "C" void func_8007CE94__Q22cf13CfGameManagerFv() {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758,
+                                 __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    cf::CfGameManager* manager = &lbl_eu_80571758;
+    if (manager != nullptr) {
+        if (!lbl_eu_80663E70) {
+            __ct__Q22cf13CfGameManagerFv(manager);
+            __register_global_object(manager, __dt__Q22cf13CfGameManagerFv,
+                                     lbl_eu_80571748);
+            lbl_eu_80663E70 = 1;
+        }
+        if (func_8007CBD4__Q22cf13CfGameManagerFv(0x1000)) {
+            cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+            if (player != nullptr) {
+                func_8016EC58(player->CfObject_UnkVirtualFunc23());
+            }
+        }
+    }
+}
+
 extern "C" void func_80086E6C__Q22cf13CfGameManagerFv(float amount) {
     cf::CfPadTask::func_801C1BD8(amount);
     if (lbl_eu_80663E0C != nullptr && amount > lbl_eu_80666498) {
@@ -77,7 +104,27 @@ struct ItemListManager {
 
 struct UnkCharEffect304 {
     void* vtable_0x0;
-    u8 field_0x4[0x300];
+    u8 field_0x4[0x2FC];
+    u32 field_0x300;
+};
+
+struct Unk80338Object {
+    void* vtable_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    void* vtable_0xC;
+    void* vtable_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u32 field_0x1C;
+    u8 field_0x20[8];
+    CCharVoice voice_0x28;
+    UnkCharEffect304 effect_0x68;
+    u32 field_0x36C;
+    u32 field_0x370;
+    u32 field_0x374;
+    u32 field_0x378;
+    u32 field_0x37C;
 };
 
 struct Unk814BCObject {
@@ -1041,6 +1088,39 @@ extern "C" cf::UnkClass_80082D90* func_80082D90__Q22cf13CfGameManagerFv() {
     return reinterpret_cast<cf::UnkClass_80082D90*>(
         *func_8007C6B4__Q22cf13CfGameManagerFv(gameManager->unk94, 0));
 }
+
+extern "C" u8 lbl_eu_8052A7E8[];
+extern "C" u8 lbl_eu_8052FE68[];
+extern "C" void __ct__CCharEffect(void* effect);
+#pragma dont_inline on
+extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
+    Unk80338Object* result = self;
+    Unk80338Object* base = result;
+    u32 zero = 0;
+    base->field_0x4 = zero;
+    base->field_0x8 = zero;
+    base->vtable_0x0 = lbl_eu_8052AC98;
+    base->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    base->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    base->field_0x14 = zero;
+    base->field_0x18 = zero;
+    base->field_0x1C = zero;
+    __ct__CCharVoice(&base->voice_0x28);
+    result->vtable_0x0 = lbl_eu_8052A7E8;
+    result->vtable_0xC = &lbl_eu_8052A7E8[0xB4];
+    result->vtable_0x10 = &lbl_eu_8052A7E8[0xC4];
+    UnkCharEffect304* effect = &result->effect_0x68;
+    __ct__CCharEffect(effect);
+    result->field_0x36C = zero;
+    effect->vtable_0x0 = lbl_eu_8052FE68;
+    result->field_0x370 = zero;
+    result->field_0x374 = zero;
+    effect->field_0x300 = zero;
+    result->field_0x378 = zero;
+    result->field_0x37C = zero;
+    return result;
+}
+#pragma dont_inline reset
 
 extern "C" u8 lbl_eu_8052AA28[];
 extern "C" u8 lbl_eu_8052FE08[];

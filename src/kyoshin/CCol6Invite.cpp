@@ -12,6 +12,9 @@
 // Singleton instance pointer (lbl_eu_8066423C in retail).
 CCol6Invite* gCol6Invite;
 
+// Raw constructor for CProcess base (abstract class, must use C-linkage ctor).
+extern "C" void __ct__8CProcessFv(void* self);
+
 // Vtable symbols (declared as opaque byte arrays).
 extern "C" u8 lbl_eu_8052FF3C[];  // CCol6Invite primary vtable
 extern "C" u8 lbl_eu_8052D238[];  // temporary vtable used during construction
@@ -35,7 +38,7 @@ struct CCol6InviteMsgBuf {
 // RetailASM: checks gCol6Invite first, allocates 0x78 bytes from work memory,
 // constructs CProcess base, sets temporary vtable, zeros callbacks, initializes
 // all fields, sets final vtable + secondary vtable ptr at 0x6C, then calls Regist.
-CCol6Invite::CCol6Invite() {
+void* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
     // Check if singleton already exists.
     if (gCol6Invite != nullptr) {
         return nullptr;
@@ -47,14 +50,22 @@ CCol6Invite::CCol6Invite() {
 
     if (obj != nullptr) {
         // Construct CProcess base class in-place.
-        new (obj) CProcess();
+        __ct__8CProcessFv(obj);
 
         // Set temporary vtable (used during field initialization).
         reinterpret_cast<CProcessBase*>(obj)->vtable = lbl_eu_8052D238;
 
         // Initialize callback fields from __ptmf_null (all zeros).
-        memcpy(obj->mCallbackA, __ptmf_null, 12);
-        memcpy(obj->mCallbackB, __ptmf_null, 12);
+        // Retail copies word 1, word 0, word 2 to mCallbackA, then word 1, word 0, word 2 to mCallbackB.
+        u32 ptmfWord1 = ((u32*)__ptmf_null)[1];
+        u32 ptmfWord0 = ((u32*)__ptmf_null)[0];
+        u32 ptmfWord2 = ((u32*)__ptmf_null)[2];
+        ((u32*)obj->mCallbackA)[0] = ptmfWord0;
+        ((u32*)obj->mCallbackA)[1] = ptmfWord1;
+        ((u32*)obj->mCallbackA)[2] = ptmfWord2;
+        ((u32*)obj->mCallbackB)[0] = ptmfWord0;
+        ((u32*)obj->mCallbackB)[1] = ptmfWord1;
+        ((u32*)obj->mCallbackB)[2] = ptmfWord2;
 
         // Initialize remaining fields to their defaults.
         obj->mField54 = 0;

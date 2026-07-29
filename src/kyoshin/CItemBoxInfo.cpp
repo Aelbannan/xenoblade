@@ -1530,7 +1530,7 @@ extern void* lbl_eu_80664578;
 extern void* lbl_eu_80664580;
 extern void* lbl_eu_80664588;
 
-void sinint_801EABC4() {
+void sinit_801EABC4() {
     func_801D1F9C(&lbl_eu_80664518, 0);
     func_801D1F9C(&lbl_eu_80664520, 0);
     func_801C4B60(&lbl_eu_80664528, 0x25, 0x8a, 0xce, 0);
@@ -1653,4 +1653,28 @@ void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     } else if (r == 9 || r == 10 || r == 13) {
         func_801D80EC(info);
     }
+}
+
+u8 func_801D4214(CItemBoxInfo* info) {
+    return info->state.current;
+}
+
+u32 func_801D4240(CItemBoxInfo* info) {
+    return info->state.state == 3;
+}
+
+u32 func_801D8E08(CItemBoxInfo* info) {
+    return info->state.layout != NULL;
+}
+
+u8 func_801E13D8(CItemBoxInfo2* info) {
+    return *(u8*)((u8*)info + 0x90);
+}
+
+u8 func_801E1490(CItemBoxInfo2* info) {
+    return *(u8*)((u8*)info + 0x98);
+}
+
+u32 func_801E14BC(CItemBoxInfo2* info) {
+    return *(u32*)((u8*)info + 0x94) == 3;
 }

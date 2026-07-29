@@ -175,9 +175,11 @@ extern "C" void func_80081CA0__Q22cf13CfGameManagerFv(Unk81CA0Data* data, u16 in
     data->field_0x6D0 = offset + index * 16;
 }
 
+#pragma dont_inline on
 extern "C" bool func_8007CBD4__Q22cf13CfGameManagerFv(u32 mask) {
     return (lbl_eu_80663E24 & mask) != 0;
 }
+#pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" bool func_8007F0AC__Q22cf13CfGameManagerFv(const UnkF0ACData* data) {

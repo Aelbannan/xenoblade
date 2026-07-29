@@ -97,7 +97,7 @@ void cf::CfObjectMove::CfObject_UnkVirtualFunc25() {}
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc26() {}
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc23() {}
+u32 cf::CfObjectMove::CfObject_UnkVirtualFunc23() { return 0; }
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc27() {}
 

@@ -43,7 +43,7 @@ void cf::CfObject::CfObject_UnkVirtualFunc25() {}
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc20() {}
 
-void cf::CfObjectModel::CfObject_UnkVirtualFunc23() {}
+u32 cf::CfObjectModel::CfObject_UnkVirtualFunc23() { return 0; }
 
 void* CfObject_UnkVirtualFunc24__Q22cf13CfObjectModelFv(void* self) { void* p = *(void**)((u8*)self + 0x98); if (p != 0) { return (u8*)p + 0x310; } return (u8*)self + 0x3c; }
 

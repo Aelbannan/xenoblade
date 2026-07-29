@@ -33,7 +33,7 @@ void func_8024391C(){}
 void func_802439CC(){}
 
 u8 func_80243A9C(void* self){
-    auto* s = static_cast<CMapSelFull*>(self);
+    CMapSelFull* s = static_cast<CMapSelFull*>(self);
     s8 x = s->field_8D;
     s8 y = s->field_8C;
     return s->mGridData[x + y];

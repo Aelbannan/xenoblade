@@ -62,10 +62,9 @@ CCol6Hint::~CCol6Hint() {
     __dt__10CScrollBarFv(mScrollBarBuf, -1);
     __dt__6CCur18Fv(mCur, -1);
     __dt__17UnkClass_8045F564Fv(mMemRegion, -1);
-    if (this == 0) goto skip;
-    __dt__8CProcessFv(this, 0);
-skip:
-    ;
+    if (this) {
+        __dt__8CProcessFv(this, 0);
+    }
 }
 
 void CCol6Hint::Init() {}

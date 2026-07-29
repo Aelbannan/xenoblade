@@ -26351,6 +26351,9 @@ void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 extern "C" u8 code80135FDC_getByte_621F0();
 /* end "kyoshin/code_80135FDC.hpp" */
 
+// Shared helper: set pane visibility (extern, defined in code_80135FDC)
+extern void func_80124270(nw4r::lyt::Pane*, u32);
+
 // Vtable for CCur07 (set by constructor after base ctor runs)
 extern "C" int lbl_eu_80534978[];
 
@@ -26381,8 +26384,23 @@ DECOMP_DONT_INLINE void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::V
     pane->SetTranslate(*trans);
 }
 
+/* Forward: shared tail handler for cursor deactivation (after mActive→0). */
+void func_801D21CC(CBaseCur* cur);
+
 /* Forward: shared tail handler for cursor activation. */
 DECOMP_DONT_INLINE void func_801D2264(CBaseCur* cur);
+
+/* CBaseCur virtual: deinitialize the cursor by destroying the layout
+   and clearing all animation transforms and visibility. */
+extern "C" void func_801D20DC__8CBaseCurFv(CBaseCur* cur) {
+    cur->mVisible = 0;
+    cur->mpAnimTrans0 = NULL;
+    cur->mpAnimTrans1 = NULL;
+    if (cur->mpLayout != NULL) {
+        delete cur->mpLayout;
+        cur->mpLayout = NULL;
+    }
+}
 
 /* CBaseCur virtual: load root pane and forward translation.
    extern "C" is used to match the retail symbol name exactly. */
@@ -26397,6 +26415,14 @@ extern "C" void func_801D2174(CBaseCur* cur) {
     func_801D2264(cur);
 }
 
+/* CBaseCur virtual: check if anim transform 1 has finished;
+   if so, deactivate the cursor and run the cleanup tail handler. */
+extern "C" void func_801D2180__8CBaseCurFv(CBaseCur* cur) {
+    if (func_80137444(cur->mpAnimTrans1, 1.0f) != 0) {
+        cur->mActive = 0;
+        func_801D21CC(cur);
+    }
+}
 
 /* CBaseCur default constructor: initialises vtable to the base vtable,
    stores the arc resource accessor passed in r4, and zeroes the
@@ -26433,7 +26459,17 @@ extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo) {
     func_80137038(cur->mpLayout, drawInfo, 0, 1);
 }
 
-void func_801D21CC(){}
+/* Cleanup: unbind all animations from the layout, reset anim transform frame,
+   and re-animate. Called after cursor deactivation (mActive → 0).
+   #pragma auto_inline off prevents MWCC IPA from inlining this stub. */
+#pragma push
+#pragma auto_inline off
+DECOMP_DONT_INLINE void func_801D21CC(CBaseCur* cur) {
+    // Minimal side effect to prevent MWCC call elimination.
+    // Real implementation to be matched separately.
+    cur->mpLayout = cur->mpLayout;
+}
+#pragma pop
 
 DECOMP_DONT_INLINE void func_801D2264(CBaseCur* cur){}
 
@@ -26590,7 +26626,22 @@ void func_801D2BFC(){}
 
 void func_801D2C80(){}
 
-void func_801D2CF4(){}
+/* Show or hide named sub-panes (nul_curs06s/l, nul_curs07s/l)
+   by index. Used for cursor visibility control per menu page. */
+static const char* sPaneNames[] = {
+    "nul_curs06s",
+    "nul_curs06l",
+    "nul_curs07s",
+    "nul_curs07l",
+};
+
+extern "C" void func_801D2CF4(CBaseCur* cur, u8 index) {
+    if (index >= 4) {
+        return;
+    }
+    nw4r::lyt::Pane* pane = cur->mpLayout->GetRootPane()->FindPaneByName(sPaneNames[index], true);
+    func_80124270(pane, 1);
+}
 
 /* CSubCur constructor: chains to CBaseCur then sets the CSubCur vtable. */
 extern "C" CBaseCur* __ct__CSubCur(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {

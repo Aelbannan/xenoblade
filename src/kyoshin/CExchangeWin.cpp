@@ -72,19 +72,17 @@ extern "C" void func_8022D0D0(void* self) {
     func_80138078(0xe);
 }
 extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
-    char buf[64];
+    char buf[32];
+    CExchangeWin* win = (CExchangeWin*)src;
+
     sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
-    u32 obj = *(u32*)((u8*)src + 0x1c);
-    u32 sub = *(u32*)(obj + 0x10);
-    void** vtbl = *(void***)sub;
-    void* r1 = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])((void*)sub, buf, 1);
-    u32 obj2 = *(u32*)((u8*)src + 0x1c);
-    u32 sub2 = *(u32*)(obj2 + 0x10);
-    void** vtbl2 = *(void***)sub2;
-    void* r2 = ((void*(*)(void*, char*, int))vtbl2[0x3C / 4])((void*)sub2, (char*)&lbl_eu_8050A740[0x25], 1);
-    u32 obj3 = *(u32*)((u8*)src + 0x1c);
-    u32 sub3 = *(u32*)(obj3 + 0x10);
-    func_80137924(dst, r1, r2, (void*)sub3);
+
+    nw4r::lyt::Pane* pane1 =
+        win->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    nw4r::lyt::Pane* pane2 =
+        win->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A740[0x25], true);
+
+    func_80137924(dst, pane1, pane2, win->mLayout->GetRootPane());
 }
 extern "C" void func_8022CF2C(CExchangeWin* self) {
     self->mFileHandle = CDeviceFile::readFile(

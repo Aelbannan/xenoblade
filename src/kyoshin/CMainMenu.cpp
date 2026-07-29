@@ -89,30 +89,32 @@ void CMainMenu::cbRenderBefore() {}
 void CMainMenu::func_800FEB14(float* pos) {
     nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
     if (pane != NULL) {
-        pane->SetTranslate(nw4r::math::VEC3(pos[0], pos[1], pos[2]));
+        pane->SetSRTElement(0, pos[0]);
+        pane->SetSRTElement(1, pos[1]);
+        pane->SetSRTElement(2, pos[2]);
     }
 }
 
 extern u32 lbl_eu_80663F18;
 
+extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
+extern "C" void* __ct__CMainMenu(void* _this, void* param);
+
 // Creates the CMainMenu singleton: allocates 0xE4 bytes from work memory,
 // constructs with param, stores in lbl_eu_80663F18, and registers as a child
 // of the given CProcess. Returns NULL if already created.
-extern "C" CMainMenu* func_800FF6BC(CProcess* parent, void* param) {
+extern "C" void* func_800FF6BC(void* parent, void* param) {
     if (lbl_eu_80663F18 != 0) {
         return NULL;
     }
     mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
     void* mem = mtl::MemManager::allocate(0xe4, workMem);
-    CMainMenu* menu;
     if (mem != NULL) {
-        menu = new (mem) CMainMenu(param);
-    } else {
-        menu = NULL;
+        __ct__CMainMenu(mem, param);
     }
-    lbl_eu_80663F18 = (u32)menu;
-    menu->Regist(parent, false);
-    return (CMainMenu*)lbl_eu_80663F18;
+    lbl_eu_80663F18 = (u32)mem;
+    Regist__8CProcessFP8CProcessb(mem, parent, false);
+    return (void*)lbl_eu_80663F18;
 }
 
 extern u32 lbl_eu_80663F18;

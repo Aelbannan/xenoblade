@@ -13,7 +13,7 @@ extern u8 lbl_eu_80664798;
 
 extern int CSysWin_getUnk34(void*);
 extern void func_80246200(void*);
-extern u32 func_80248558(void*);
+extern u32 func_80248558(u8*);
 extern void func_8024577C(void*, u16);
 extern void func_801F3850(void*, u16);
 extern void func_801375A0(float*, void*);
@@ -139,16 +139,16 @@ void func_80245DF8(){}
 
 void func_80246200(void* self){}
 
-void* __dt__80244724(void* self, int mode) {
-    extern void* __dl__FPv(void*);
+u8* __dt__80244724(u8* self, int mode) {
+    extern u8* __dl__FPv(u8*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
     return self;
 }
 
-void* __dt__8024503C(void* self, int mode) {
-    extern void* __dl__FPv(void*);
+u8* __dt__8024503C(u8* self, int mode) {
+    extern u8* __dl__FPv(u8*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
@@ -185,7 +185,7 @@ void func_8024808C(void* self, void* arg2) {
     extern void func_80141DC4(f32*);
     extern s16 func_80136330(void*, const char*, u32);
     extern void* getPlayer__Q22cf13CfGameManagerFi(int);
-    extern u32 func_8003B1EC(void*);
+    extern u32 func_8003B1EC(u8*);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f64 lbl_eu_80668788;

@@ -15,11 +15,11 @@ void func_8025C870() {}
 
 
 
-void func_80257F9C(void*, int) {}
+void func_80257F9C(void*, int);
 
-// void __ct__CKizunaLine(){}
+void __ct__CKizunaLine(){}
 
-void CKizunaLine::~CKizunaLine() {}
+CKizunaLine::~CKizunaLine() {}
 
 void func_802580CC(){}
 
@@ -83,7 +83,7 @@ void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
 
 void __ct__CKizunaInfo(){}
 
-void CKizunaInfo::~CKizunaInfo() {}
+CKizunaInfo::~CKizunaInfo() {}
 
 void func_8025B670(){}
 
@@ -91,7 +91,7 @@ void func_8025B870(){}
 
 void func_8025B900(){}
 
-void func_8025B958(){}
+void func_8025B958(void*);
 
 void func_8025B9C8(){}
 
@@ -107,7 +107,7 @@ void func_8025C348(){}
 
 void __ct__CKizunagram(){}
 
-void CKizunagram::~CKizunagram() {}
+CKizunagram::~CKizunagram() {}
 
 void func_8025C510(){}
 
@@ -136,7 +136,13 @@ unsigned char CKizunagram_checkFields(void* arg1)
     return 0;
 }
 
-void func_8025C7D0(){}
+void func_8025C7D0(CKizunagram* self) {
+    if (self->field_0x39 != 0) return;
+    self->field_0x39 = 1;
+    self->field_0x3C = 0;
+    self->field_0x38 = 1;
+    func_8025B958((u8*)self + 0x4C);
+}
 
 void func_8025C7FC(){}
 
@@ -197,7 +203,11 @@ void func_8025CE00(){}
 void func_8025CE78(){}
 
 void func_8025CF1C(CKizunagram* self) {
-    func_80257F9C((u8*)self + 0xAC, self->field_8C != 0);
+    if (self->field_8C != 0) {
+        func_80257F9C((u8*)self + 0xAC, 1);
+    } else {
+        func_80257F9C((u8*)self + 0xAC, 0);
+    }
 }
 
 void func_8025CF40(){}

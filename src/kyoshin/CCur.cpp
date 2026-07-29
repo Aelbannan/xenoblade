@@ -41,10 +41,6 @@ DECOMP_DONT_INLINE void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::V
 /* Forward: shared tail handler for cursor deactivation (after mActive→0). */
 void func_801D21CC(CBaseCur* cur);
 
-/* Dummy volatile to prevent MWCC from eliminating func_801D21CC calls
-   before the real body is matched. */
-extern volatile int dummy_cur_guard;
-
 /* Forward: shared tail handler for cursor activation. */
 DECOMP_DONT_INLINE void func_801D2264(CBaseCur* cur);
 
@@ -118,12 +114,16 @@ extern "C" void func_801D20B0(CBaseCur* cur, nw4r::lyt::DrawInfo* drawInfo) {
 }
 
 /* Cleanup: unbind all animations from the layout, reset anim transform frame,
-   and re-animate. Called after cursor deactivation (mActive → 0). */
+   and re-animate. Called after cursor deactivation (mActive → 0).
+   #pragma auto_inline off prevents MWCC IPA from inlining this stub. */
+#pragma push
+#pragma auto_inline off
 DECOMP_DONT_INLINE void func_801D21CC(CBaseCur* cur) {
     // Minimal side effect to prevent MWCC call elimination.
     // Real implementation to be matched separately.
     cur->mpLayout = cur->mpLayout;
 }
+#pragma pop
 
 DECOMP_DONT_INLINE void func_801D2264(CBaseCur* cur){}
 

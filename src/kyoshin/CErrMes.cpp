@@ -68,23 +68,24 @@ extern "C" void* func_eu_802B14EC(void) { return &lbl_eu_8053A420[22]; }
 // param == 0 sets "en", otherwise "jp".  If values in group 2 changed,
 // triggers layout refresh callbacks.
 void func_eu_802B14F8(int param) {
-    // Use lbl_eu_8053A420 as base; groups start at indices 6, 14, 22
-    u32* base = lbl_eu_8053A420;
-    u8* pBase = (u8*)base;
-    u8* pGrp1 = pBase + 0x18;  // &base[6]
-    u8* pGrp2 = pBase + 0x38;  // &base[14]
-    u8* pGrp3 = pBase + 0x58;  // &base[22]
+    CErrMesTextObj** base = (CErrMesTextObj**)lbl_eu_8053A420;
+    const char* strBase = lbl_eu_80513420;
+
+    // Derive sub-group pointers from the single base
+    CErrMesTextObj** grp1 = &base[6];   // 7 entries at indices 6..12
+    CErrMesTextObj** grp2 = &base[14];  // 7 entries at indices 14..20
+    CErrMesTextObj** grp3 = &base[22];  // 7 entries at indices 22..28
 
     // Loop 1: set byte 6 = '/' in all 7 entries of each group
+    // Use goto-based loop to prevent MWCC -O4,p unrolling
     {
-        volatile int off = 0;
-        volatile int n = 7;
-        do {
-            ((CErrMesTextObj*)*(u32*)(pGrp1 + off))->field_0x06 = '/';
-            ((CErrMesTextObj*)*(u32*)(pGrp2 + off))->field_0x06 = '/';
-            ((CErrMesTextObj*)*(u32*)(pGrp3 + off))->field_0x06 = '/';
-            off += 4;
-        } while (--n > 0);
+        int i = 0;
+    loop1:
+        grp1[i]->field_0x06 = '/';
+        grp2[i]->field_0x06 = '/';
+        grp3[i]->field_0x06 = '/';
+        i++;
+        if (i < 7) goto loop1;
     }
 
     // Choose language chars: en or jp
@@ -95,36 +96,36 @@ void func_eu_802B14F8(int param) {
         c1 = 'j'; c2 = 'p';
     }
 
-    // Loop 2: set bytes 4,5 in entries 1-6 of each group (skip entry 0)
+    // Loop 2: set bytes 4,5 in entries 1-6 of each group (skip first)
     {
-        volatile int off = 4;
         int changed = 0;
-        volatile int n = 6;
-        do {
-            CErrMesTextObj* p1 = (CErrMesTextObj*)*(u32*)(pGrp1 + off);
+        int i = 1;
+    loop2:
+        {
+            CErrMesTextObj* p1 = grp1[i];
             p1->field_0x04 = c1;
             p1->field_0x05 = c2;
 
-            CErrMesTextObj* p2 = (CErrMesTextObj*)*(u32*)(pGrp2 + off);
+            CErrMesTextObj* p2 = grp2[i];
             if ((s8)p2->field_0x04 != (s8)c1 || (s8)p2->field_0x05 != (s8)c2) {
                 changed = 1;
             }
             p2->field_0x04 = c1;
             p2->field_0x05 = c2;
 
-            CErrMesTextObj* p3 = (CErrMesTextObj*)*(u32*)(pGrp3 + off);
+            CErrMesTextObj* p3 = grp3[i];
             p3->field_0x04 = c1;
             p3->field_0x05 = c2;
+        }
+        i++;
+        if (i < 7) goto loop2;
 
-            off += 4;
-        } while (--n > 0);
-
-        // If any values in group 2 actually changed, trigger layout updates
+        // If any values in group 2 changed, trigger layout updates
         if (changed) {
-            func_eu_804E2340(&lbl_eu_80513420[14]);
-            func_eu_804E2340(&lbl_eu_80513420[18]);
-            func_804DDE3C(&lbl_eu_80513420[22], param == 0);
-            func_804DDE3C(&lbl_eu_80513420[37], param == 0);
+            func_eu_804E2340(strBase + 14);
+            func_eu_804E2340(strBase + 18);
+            func_804DDE3C(strBase + 22, param == 0);
+            func_804DDE3C(strBase + 37, param == 0);
         }
     }
 }

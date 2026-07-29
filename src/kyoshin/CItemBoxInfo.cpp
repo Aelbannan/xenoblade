@@ -104,6 +104,7 @@ extern void* lbl_eu_806640F8;
 extern void* lbl_eu_806640D8;
 extern void* lbl_eu_80506330;
 extern float lbl_eu_80668040;
+extern float lbl_eu_8066800C;
 extern float lbl_eu_80668010;
 u32 getLanguage__9CDeviceSCFv();
 void* CItem_initItemImplInstances(void*);
@@ -188,7 +189,7 @@ void func_801D4154(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo) {
 void func_80127BD8(void*, float*);
 
 void func_801D4A2C(void* sub) {
-    float f = -0.0f;
+    float f = lbl_eu_8066800C;
     for (int i = 0; i < 12; i++) {
         ((s16*)sub)[i] = 0;
         float temp[3] = {f, f, f};

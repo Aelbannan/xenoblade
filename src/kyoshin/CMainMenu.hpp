@@ -33,7 +33,7 @@ public:
     u8 _5C[0x74 - 0x5C];                   // 0x5C-0x73
     CFileHandle* field_0x74;                 // 0x74 — file handle from CDeviceFile::readFile
     u8 _78[0xE0 - 0x78];                   // 0x78-0xDF
-    u32 field_0xE0;                          // 0xE0 — state (4/8 = active states)
+    s32 field_0xE0;                          // 0xE0 — state (4/8 = active states)
 
     void OnFileEvent();
 };

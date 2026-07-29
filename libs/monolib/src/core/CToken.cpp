@@ -32,51 +32,57 @@ CToken::~CToken() {
 }
 
 u32 CToken::func_8043A8D8() {
-    // Parses a hex string starting with "0x" prefix into a u32.
-    // Returns 0 if the string doesn't start with "0x" or has no valid hex digits.
-    const u8* str = reinterpret_cast<const u8*>(this);
+    // Parses a hex string (with "0x" prefix) into a u32.
+    // Reads bytes directly from the this pointer.
+    char* r3 = reinterpret_cast<char*>(this);
+    u32 r6 = 0;
+    int r7 = 2;
+    u32 r8 = 1;
+    char* r4;
+    u32 r0;
 
-    // Check for "0x" prefix
-    if (str[0] != '0' || str[1] != 'x') {
-        return 0;
-    }
+    if (r3[0] != '0') goto end;
+    if (r3[1] != 'x') goto end;
 
-    // Count consecutive hex digits after the "0x" prefix
-    int count = 2;
-    while (true) {
-        u8 c = str[count];
-        u8 digit = c - '0';
-        if (digit > 9) {
-            digit = c - 'a';
-            if (digit > 5) {
-                break;
+    r4 = r3 + 2;
+    do {
+        char r5 = *r4;
+        r0 = static_cast<u8>(r5 - '0');
+        if (r0 <= 9) {
+            r7++;
+            r4++;
+            continue;
+        }
+        r0 = static_cast<u8>(r5 - 'a');
+        if (r0 <= 5) {
+            r7++;
+            r4++;
+            continue;
+        }
+        break;
+    } while (1);
+
+    {
+        int r4i = r7 - 1;
+        r0 = r4i - 1;
+        r3 = r3 + r4i;
+        if (r4i < 2) goto end;
+        while (r0-- > 0) {
+            char r4c = *r3;
+            u32 digit;
+            if (static_cast<u8>(r4c - '0') <= 9) {
+                digit = r4c - '0';
+            } else {
+                digit = static_cast<s8>(r4c) - 0x57;
             }
+            r6 += digit * r8;
+            r8 *= 16;
+            r3--;
         }
-        count++;
     }
 
-    // Need at least one hex digit after "0x"
-    if (count < 3) {
-        return 0;
-    }
-
-    // Parse hex digits from right to left, accumulating the value
-    u32 result = 0;
-    u32 multiplier = 1;
-    const u8* cur = str + count - 1;
-    int remaining = count - 2;
-    while (remaining-- > 0) {
-        u8 c = *cur;
-        u8 digit = c - '0';
-        if (digit > 9) {
-            digit = c - 0x57;
-        }
-        result += digit * multiplier;
-        multiplier *= 16;
-        cur--;
-    }
-
-    return result;
+end:
+    return r6;
 }
 
 void CToken::func_8043AA1C() {

@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include "monolib/core/code_804E36DC.hpp"
 
 void func_804E36DC(){}
 
@@ -11,15 +12,40 @@ void func_804E3B08(){}
 
 void func_804E3B6C(){}
 
-void func_804E3CCC(){}
+void func_804E3CCC(UnkStruct_804E36DC* self) {
+    self->field_0x0 &= ~0x0001;
+    func_804E536C();
+}
 
-void func_804E3CDC(){}
+void func_804E3CDC(UnkStruct_804E36DC* self, float f1, float f2) {
+    extern "C" float lbl_eu_8066B2E4;
+    if (f1 == lbl_eu_8066B2E4) return;
+    if (f2 == lbl_eu_8066B2E4) return;
+    self->field_0x90 = f1;
+    self->field_0x94 = f2;
+}
 
-void func_804E3CFC(){}
+void func_804E3CFC(UnkStruct_804E36DC* self) {
+    func_804DF2F0(self->field_0xC, self->field_0x4);
+}
 
-void func_804E3D0C(){}
+void func_804E3D0C(UnkStruct_804E36DC* self, u32 value) {
+    for (int i = 0; i < 4; i++) {
+        if (self->field_0xDC[i] == 0) {
+            self->field_0xDC[i] = value;
+            return;
+        }
+    }
+}
 
-void func_804E3D48(){}
+void func_804E3D48(UnkStruct_804E36DC* self, u32 value) {
+    for (int i = 0; i < 4; i++) {
+        if (self->field_0xDC[i] == value) {
+            self->field_0xDC[i] = 0;
+            return;
+        }
+    }
+}
 
 void func_804E3D88(){}
 

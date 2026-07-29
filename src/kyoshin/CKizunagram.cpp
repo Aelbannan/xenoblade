@@ -23,7 +23,12 @@ CKizunaLine::~CKizunaLine() {}
 
 void func_802580CC(){}
 
-void func_80258F5C(){}
+void func_80258F5C(float* dest, const float* a, const float* b) {
+    dest[0] = a[0] + b[0];
+    dest[1] = a[1] + b[1];
+    dest[2] = a[2] + b[2];
+    dest[3] = a[3] + b[3];
+}
 
 void func_80258F80(){}
 
@@ -66,7 +71,15 @@ void func_8025A11C(){}
 
 void func_8025AA38(){}
 
-void func_8025AAE0(){}
+extern float lbl_eu_80668828[];
+void func_8025AAE0(CKizunagram* self) {
+    u16 val = self->field_0x26;
+    if (val == 0) return;
+    float f = lbl_eu_80668828[0];
+    self->field_0x34 = 1;
+    self->field_0x36 = val;
+    *(float*)self->_38 = f;
+}
 
 void func_8025AB04(){}
 

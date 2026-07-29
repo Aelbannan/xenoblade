@@ -64,7 +64,7 @@ void func_801E2C5C(CItemBoxInfo2*, u16, void*, u16);
 void func_801E37C4(CItemBoxInfo2*);
 void func_801E43BC(CItemBoxInfo2*, u16, void*, u16);
 void func_801E3228(CItemBoxInfo2*, u16, void*, u16);
-void func_801E3730(CItemBoxInfo2*, u16);
+void func_801E3730(CItemBoxInfo2*, u32);
 void func_801E27D0(void*, void*);
 void func_801E3918(CItemBoxInfo2*);
 void func_801E197C(void*, u16, void*);
@@ -615,7 +615,7 @@ void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
         func_801D77A4(info, v, arg4);
     }
 }
-void func_801D8058(CItemBoxInfo* info, u16 arg2) {
+void func_801D8058(CItemBoxInfo* info, u32 arg2) {
     func_801D8B08(info);
     func_801D85D8(info);
     u32 buf[4];
@@ -1527,7 +1527,7 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
         }
     }
 }
-void func_801E3730(CItemBoxInfo2* info, u16 arg2) {
+void func_801E3730(CItemBoxInfo2* info, u32 arg2) {
     func_801D8B08((CItemBoxInfo*)info);
     func_801E3918(info);
     u32 buf[4];

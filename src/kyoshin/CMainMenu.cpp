@@ -4,12 +4,17 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/CArtsInfo.hpp"
+#include "monolib/device/CDeviceFile.hpp"
+#include "monolib/util/MemManager.hpp"
+#include "monolib/work/IWorkEvent.hpp"
 extern "C" void __dt__9CMainMenuFv();
 extern "C" void cbRenderBefore__9CMainMenuFv();
 extern "C" void __ct__800FF300();
 
 // CBaseCur base destructor (defined in kyoshin/CCur.cpp)
 extern "C" void __dt__8CBaseCurFv(void*, int);
+// CProcess base destructor
+extern "C" void __dt__8CProcessFv(void*, int);
 
 // Destructor for CBaseCur-derived class at vtable 0x800FEA30.
 // Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
@@ -27,6 +32,21 @@ void* __dt__800FEA30(void* _this, int flags) {
 u32 func_800FEDF8(void) {
     extern u32 lbl_eu_80663F18;
     return lbl_eu_80663F18;
+}
+
+// Destructor for CProcess-derived class at vtable 0x800FED0C.
+// The nested null-check reproduces MWCC's D2-inlined-into-D1 pattern
+// (D2 has its own null guard, preserved when inlined).
+void* __dt__800FED0C(void* _this, int flags) {
+    if (_this) {
+        if (_this) {
+            __dt__8CProcessFv(_this, 0);
+        }
+        if (flags > 0) {
+            operator delete(_this);
+        }
+    }
+    return _this;
 }
 
 
@@ -78,6 +98,20 @@ int CMainMenu::func_800FF778() {
 }
 
 void func_800FF8B0(){}
+
+// CMainMenu::Init — loads the menu layout file via CDeviceFile::readFile.
+// The IWorkEvent at offset 0x58 receives OnFileEvent when the load completes.
+extern u32 lbl_eu_80661DC0;
+
+void CMainMenu::Init() {
+    // Get IWorkEvent pointer at offset 0x58 (NULL-safe: if this is NULL, workEvent stays NULL)
+    void* workEvent = this;
+    if (this) {
+        workEvent = (char*)this + 0x58;
+    }
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    field_0x74 = CDeviceFile::readFile(handle, (const char*)lbl_eu_80661DC0, (IWorkEvent*)workEvent, 0, 0);
+}
 
 extern "C" void func_800FF914(CArtsInfo* self) {
     self->field_0x54 = 1;
@@ -143,4 +177,9 @@ void CTTask<IUICf>::Draw() {
     if (mDrawFunc) {
         (this->*mDrawFunc)();
     }
+}
+
+// Standard MWCC virtual dtor: empty body, compiler emits base dtor call + D1 wrapper
+template<>
+CTTask<IUICf>::~CTTask() {
 }

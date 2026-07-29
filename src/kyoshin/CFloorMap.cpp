@@ -13,7 +13,7 @@ extern u8 lbl_eu_80664798;
 
 extern int CSysWin_getUnk34(void*);
 extern void func_80246200(void*);
-extern u32 func_80248558(void*);
+extern u16 func_80248558(void*);
 extern void func_8024577C(void*, u16);
 extern void func_801F3850(void*, u16);
 extern void func_801375A0(float*, void*);
@@ -133,6 +133,12 @@ void func_8024577C(void* self, u16 val) {
     }
 }
 
+void func_80245950(){}
+
+void func_80245DF8(){}
+
+void func_80246200(void* self){}
+
 void* __dt__80244724(void* self, int mode) {
     extern void* __dl__FPv(void*);
     if (self && mode > 0) {
@@ -148,12 +154,6 @@ void* __dt__8024503C(void* self, int mode) {
     }
     return self;
 }
-
-void func_80245950(){}
-
-void func_80245DF8(){}
-
-void func_80246200(void* self){}
 
 void* __dt__802462F0(void* self, int mode) {
     extern void* __dl__FPv(void*);
@@ -180,12 +180,12 @@ void func_80247490(){}
 void func_8024808C(void* self, void* arg2) {
     extern void func_8003AA34();
     extern void* getFP__FPCc(const char*);
-    extern u32 func_801361E8(void*, char*, u32);
+    extern u32 func_801361E8(void*, const char*, u32);
     extern u32 func_8009CF8C(u32);
     extern void func_80141DC4(f32*);
-    extern s16 func_80136330(u32, const char*, u32);
+    extern s16 func_80136330(void*, const char*, u32);
     extern void* getPlayer__Q22cf13CfGameManagerFi(int);
-    extern u32 func_8003B1EC(u32);
+    extern u32 func_8003B1EC(void*);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f64 lbl_eu_80668788;
@@ -197,10 +197,10 @@ void func_8024808C(void* self, void* arg2) {
     if (!func_8009CF8C(0x20C8)) return;
     f32 buf[3];
     func_80141DC4(buf);
-    u8 count = func_8003B1EC((u32)fp);
+    u8 count = func_8003B1EC(fp);
     u8 r26 = 0;
     for (u8 i = 1; i <= count; i++) {
-        s16 val = func_80136330((u32)fp, &lbl_eu_8050BEA8[0x15A], i);
+        s16 val = func_80136330(fp, &lbl_eu_8050BEA8[0x15A], i);
         if ((f32)(s16)val > buf[1]) {
             if (i == p[0x0C]) { r26 = 1; break; }
         }
@@ -215,10 +215,8 @@ void func_8024830C(void* self, void* arg2) {
     extern s16 func_80136330(u32, const char*, u32);
     extern u32 func_8009CF8C(u32);
     extern void func_80141DC4(f32*);
-    extern u32 func_801361E8(const char*, const char*, u32);
+    extern void func_801361E8(const char*, const char*, u32);
     extern u32 lbl_eu_80664184;
-    extern u32 lbl_eu_806640A8;
-    extern u8 lbl_eu_8050B798;
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f32 lbl_eu_8066877C;
@@ -257,7 +255,7 @@ void func_8024830C(void* self, void* arg2) {
 }
 
 u32 func_80248558(void* self) {
-    extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+    extern void Panic__Q24nw4r2dbFPCciPCce();
     u8* p = (u8*)self;
     void* data = *(void**)(p + 0x08);
     if (!data) return 0;
@@ -373,7 +371,7 @@ void* __dt__8024B6B8(void* self, int mode) {
 
 void func_8024B6F8(void* self, void* arg2, u32 arg3, u32 arg4) {
     extern void* getPlayer__Q22cf13CfGameManagerFi(int);
-    extern u32 func_8009CF8C(u32);
+    extern s32 func_8009CF8C(u32);
     extern s16 func_80136330(u32, const char*, u32);
     extern s16 func_80137E7C(void*, void*, const char*, ...);
     u8* p = (u8*)self;
@@ -447,7 +445,7 @@ void func_8024D614(){}
 
 void func_8024DA0C(){}
 
-void func_8024DE08(){}
+void func_8024DE08(){}}
 
 void func_8024E2BC(void* self) {
     extern int CSysWin_getUnk34(void*);
@@ -516,7 +514,7 @@ void func_8024E2BC(void* self) {
 
 void func_8024E650(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(void*);
+    extern void func_80248558(void*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_806687A4;
@@ -561,7 +559,7 @@ done:;
 
 void func_8024E828(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(void*);
+    extern void func_80248558(void*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_806687A8;
@@ -606,7 +604,7 @@ done:;
 
 void func_8024EA00(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(void*);
+    extern void func_80248558(void*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668798;
     extern f32 lbl_eu_806687A8;
@@ -657,7 +655,7 @@ void func_8024EA00(void* self) {
 
 void func_8024EC24(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(void*);
+    extern void func_80248558(void*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668798;
     extern f32 lbl_eu_806687A8;
@@ -708,7 +706,7 @@ void func_8024EC24(void* self) {
     p[0x5D] = 1;
 }
 
-void func_8024EE50(){}
+void func_8024EE50(){}}
 
 void func_8024F1FC(void* self, u32 arg2) {
     extern void func_8003AA34();
@@ -723,7 +721,7 @@ void func_8024F1FC(void* self, u32 arg2) {
         0x624, 0x634, 0x634, 0x644, 0x654, 0x664, 0x674, 0x684,
         0x634, 0x644, 0x654, 0x664
     };
-    lbl_eu_8066479C = (u32)getFP__FPCc(&lbl_eu_8050BEA8[strs[arg2]]);
+    lbl_eu_8066479C = getFP__FPCc(&lbl_eu_8050BEA8[strs[arg2]]);
 }
 
 u32 func_8024F538(void* self) {
@@ -851,7 +849,7 @@ void func_8024F7CC(void* self) {
     extern void func_8024B4CC(void*, void*, void*);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_806687BC;
-    extern u32 func_80248558(void*);
+    extern void func_80248558(void*);
     extern void func_8024577C(void*, u16);
     u8* p = (u8*)self;
     if (!p[0x5D]) return;

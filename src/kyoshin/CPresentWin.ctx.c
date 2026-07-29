@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CPresentWin
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CPresentWin.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CPresentWin.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,9 +1390,60 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CPresentWin.cpp" line 4 "kyoshin/CPresentWin.hpp" */
+#pragma once
 
-extern "C" u8 func_8022DB6C(void* self) { return ((u8*)self)[0x30]; }
+/* "src/kyoshin/CPresentWin.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CPresentWin {
+public:
+    CPresentWin();
+    virtual ~CPresentWin();
+
+    // +0x00: vtable
+    u8 _pad_04[0x30 - 0x04];  // 0x04-0x2F
+    u8 mField30;               // 0x30
+    u8 mField31;               // 0x31
+    u8 mField32;               // 0x32
+    u8 mField33;               // 0x33
+    u8 _pad_34[0x36 - 0x34];   // 0x34-0x35
+    u8 mField36;               // 0x36
+    u8 _pad_37[0x38 - 0x37];   // 0x37
+    u8 mField38;               // 0x38
+    u8 mDataArray[8];          // 0x39-0x40 (indexed by func_8022E868)
+    u8 mDataCount;             // 0x41
+};
+
+/* end "kyoshin/CPresentWin.hpp" */
+
+// Forward declarations
+u8 func_8022E868(CPresentWin* self, u32 index);
+void func_8022E698();
+void func_8022E744();
+
+u8 func_8022DB6C(CPresentWin* self) { return self->mField30; }
 
 
 
@@ -1345,47 +1451,75 @@ extern "C" u8 func_8022DB6C(void* self) { return ((u8*)self)[0x30]; }
 
 
 
-extern "C" u8 func_8022DB74(void* self) { return ((u8*)self)[0x38]; }
+u8 func_8022DB74(CPresentWin* self) { return self->mField38; }
 
 
 
-extern "C" void func_8022DD90() {}
+void func_8022DD90(){}
 
-extern "C" void func_8022E204() {}
+void func_8022E204(){}
 
-extern "C" void func_8022E254() {}
+void func_8022E254(CPresentWin* self) {
+    CPresentWin* p = self;
+    if (p->mField36) return;
+    if (p->mField31) {
+        s32 v = (s32)(s8)(p->mField33 - 1);
+        p->mField33 = (u8)v;
+        if (v < 0) p->mField33 = p->mDataCount - 1;
+        if ((s8)p->mField33 == (s8)p->mField32) {
+            s32 v2 = (s32)(s8)(p->mField33 - 1);
+            p->mField33 = (u8)v2;
+            if (v2 < 0) p->mField33 = p->mDataCount - 1;
+        }
+        func_8022E744();
+    } else {
+        s32 v = (s32)(s8)(p->mField32 - 1);
+        p->mField32 = (u8)v;
+        if (v < 0) p->mField32 = p->mDataCount - 1;
+        func_8022E698();
+    }
+}
 
-extern "C" void func_8022E2F8() {}
+void func_8022E2F8(){}
 
-extern "C" void func_8022E3A8(void) {}
+void func_8022E3A8(CPresentWin* self) {
+    func_8022E254(self);
+}
 
-extern "C" void func_8022E3AC() {}
+void func_8022E3AC(){}
 
-extern "C" u8 func_8022E488(void* self) { return ((u8*)self)[0x31]; }
+u8 func_8022E488(CPresentWin* self) { return self->mField31; }
 
-extern "C" u8 func_8022E490(void* self) { return ((u8*)self)[0x36]; }
+u8 func_8022E490(CPresentWin* self) { return self->mField36; }
 
-extern "C" void func_8022E498() {}
+void func_8022E498(){}
 
-extern "C" u8 func_8022E4FC(void* self) { return ((u8*)self)[0x32]; }
+u8 func_8022E4FC(CPresentWin* self) {
+    return func_8022E868(self, self->mField32);
+}
 
-extern "C" u8 func_8022E504(void* self) { return ((u8*)self)[0x33]; }
+u8 func_8022E504(CPresentWin* self) {
+    return func_8022E868(self, self->mField33);
+}
 
-extern "C" void func_8022E50C() {}
+void func_8022E50C(){}
 
-extern "C" void func_8022E558() {}
+void func_8022E558(){}
 
-extern "C" void func_8022E5B0() {}
+void func_8022E5B0(){}
 
-extern "C" void func_8022E698() {}
+void func_8022E698() {
+    func_8022E868(nullptr, 0);
+}
 
-extern "C" void func_8022E744() {}
+void func_8022E744() {
+    func_8022E868(nullptr, 0);
+}
 
-extern "C" void func_8022E7F0() {}
+void func_8022E7F0(){}
 
-extern "C" u8 func_8022E868(void* self, u32 r4) {
-    u8 limit = *(u8*)((u8*)self + 0x41);
-    if (r4 >= limit) return 0;
-    // Force add r3,r3,r4 by using (u8*)self as base
-    return *(u8*)((u8*)self + 0x39 + r4);
+__declspec(noinline) u8 func_8022E868(CPresentWin* self, u32 index) {
+    u8 limit = self->mDataCount;
+    if (index >= limit) return 0;
+    return self->mDataArray[index];
 }

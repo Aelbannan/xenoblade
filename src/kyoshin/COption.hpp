@@ -1,14 +1,13 @@
 #pragma once
 
 #include <types.h>
-#include <nw4r/lyt.h>
+#include "nw4r/lyt.h"
+#include "kyoshin/CBaseCur.hpp"
 
-class CBaseCur;
-
-class CCur19 {
+class CCur19 : public CBaseCur {
 public:
     CCur19();
-    virtual ~CCur19();
+    ~CCur19();
 
     // TODO: add fields
 };

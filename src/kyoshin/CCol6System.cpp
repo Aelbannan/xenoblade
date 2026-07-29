@@ -2,10 +2,8 @@
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-#include "monolib/util/MemManager.hpp"
 #include "kyoshin/CCol6System.hpp"
 #include "kyoshin/CCol6CheckBat.hpp"
-#include "monolib/work/CWorkThreadSystem.hpp"
 
 // Singleton instance (retail: lbl_eu_80664230).
 CCol6CheckBat* gCol6CheckBat;
@@ -77,18 +75,30 @@ void func_8015DB08(){}
 
 void CCol6Hint::cbRenderBefore() {}
 
+/* CCol6Hint constructor symbol — retail definition lives in this TU.
+   Returns this (in r3), matching MWCC ctor convention. */
+extern "C" void* __ct__CCol6Hint(void*, void*);
+/* CCol6System constructor symbol — retail definition lives in this TU. */
+extern "C" void* __ct__CCol6System(void*, void*);
+/* CProcess::Regist — registers a process as a child of parent. */
+extern "C" void Regist__8CProcessFP8CProcessb(void*, CProcess*, bool);
+/* mtl::MemManager::allocate — allocates from a memory region. */
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
+/* CWorkThreadSystem::getWorkMem — returns work memory handle. */
+extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
+
 /* Factory: creates the CCol6Hint singleton and registers it as a child
    of parent. Returns null if singleton already exists. */
-CCol6Hint* func_8015DCD0(CProcess* parent, void* arg) {
+void* func_8015DCD0(CProcess* parent, void* arg) {
     if (lbl_eu_80664234 != nullptr) {
         return nullptr;
     }
-    CCol6Hint* hint = (CCol6Hint*)mtl::MemManager::allocate(0x17c, CWorkThreadSystem::getWorkMem());
+    void* hint = allocate__Q23mtl10MemManagerFUlUl(0x17c, getWorkMem__17CWorkThreadSystemFv());
     if (hint != nullptr) {
-        hint = new (hint) CCol6Hint(arg);
+        hint = __ct__CCol6Hint(hint, arg);
     }
-    lbl_eu_80664234 = hint;
-    hint->Regist(parent, false);
+    lbl_eu_80664234 = (CCol6Hint*)hint;
+    Regist__8CProcessFP8CProcessb(hint, parent, false);
     return lbl_eu_80664234;
 }
 
@@ -98,7 +108,7 @@ void func_8015E0BC(){}
 
 void __ct__CCol6System(){}
 
-void CCol6System::~CCol6System() {}
+CCol6System::~CCol6System() {}
 
 void CCol6System::Init() {}
 
@@ -112,16 +122,16 @@ void CCol6System::cbRenderBefore() {}
 
 /* Factory: creates the CCol6System singleton and registers it as a child
    of parent. Returns null if singleton already exists. */
-CCol6System* func_801602F4(CProcess* parent, void* arg) {
+void* func_801602F4(CProcess* parent, void* arg) {
     if (lbl_eu_80664238 != nullptr) {
         return nullptr;
     }
-    CCol6System* sys = (CCol6System*)mtl::MemManager::allocate(0x240, CWorkThreadSystem::getWorkMem());
+    void* sys = allocate__Q23mtl10MemManagerFUlUl(0x240, getWorkMem__17CWorkThreadSystemFv());
     if (sys != nullptr) {
-        sys = new (sys) CCol6System(arg);
+        sys = __ct__CCol6System(sys, arg);
     }
-    lbl_eu_80664238 = sys;
-    sys->Regist(parent, false);
+    lbl_eu_80664238 = (CCol6System*)sys;
+    Regist__8CProcessFP8CProcessb(sys, parent, false);
     return lbl_eu_80664238;
 }
 
@@ -155,7 +165,7 @@ void func_801638C0(){}
 
 void func_80163AF4(){}
 
-void CCol6Invite::~CCol6Invite() {}
+CCol6Invite::~CCol6Invite() {}
 
 void CCol6Invite::Init() {}
 

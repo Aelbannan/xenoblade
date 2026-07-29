@@ -1454,16 +1454,22 @@ public:
     CKizunagram();
     virtual ~CKizunagram();
     void OnFileEvent();
-    void func_8025CC70();
 
-    u8 _04[0x34 - 0x04];
-    u8 field_0x34;
-    u16 field_0x36;
-    float field_0x38;
-    u8 _3C[0x8C - 0x3C];
-    u8 field_8C; // 0x8C
-    u8 _8D[0xDD - 0x8D];
-    u8 field_0xDD;
+    // vtable pointer at 0x00 (implicit)
+    u8 _04[0x26 - 0x04];
+    u16 field_0x26;         // 0x26
+    u8 _28[0x34 - 0x28];
+    u8 field_0x34;          // 0x34
+    u8 _35;
+    u16 field_0x36;         // 0x36
+    /* 0x38-0x3B: overlapped region -- accessed as both float and individual u8 fields */
+    u8 _38[4];              // 0x38-0x3B
+    u8 field_0x3C;          // 0x3C
+    u8 _3D[0x61 - 0x3D];
+    u8 field_0x61;          // 0x61
+    u8 field_0x62;          // 0x62
+    u8 _63[0xBE - 0x63];    // 0x63-0xBD (includes sub-object at 0x68)
+    u8 field_0xBE;          // 0xBE
 };
 
 /* end "kyoshin/CKizunagram.hpp" */
@@ -1481,27 +1487,33 @@ void func_8025C870() {}
 
 void func_80257F9C(){}
 
-void __ct__CKizunaLine(){}
+CKizunaLine::CKizunaLine() {}
 
 CKizunaLine::~CKizunaLine() {}
 
 void func_802580CC(){}
 
-void func_80258F5C(){}
-
-/* Scales each float pair by its first element (paired-single kernel) */
-void func_80258F80(float* dst, const float* src) {
-    dst[0] = src[0] * src[0];
-    dst[1] = src[1] * src[0];
-    dst[2] = src[2] * src[2];
-    dst[3] = src[3] * src[2];
+void func_80258F5C(float* dest, const float* a, const float* b) {
+    dest[0] = a[0] + b[0];
+    dest[1] = a[1] + b[1];
+    dest[2] = a[2] + b[2];
+    dest[3] = a[3] + b[3];
 }
+
+void func_80258F80(){}
 
 void func_80258F9C(){}
 
 void func_80259098(){}
 
-void func_80259228(){}
+#pragma push
+#pragma auto_inline off
+void func_80259228(void* subobj) {
+    u8* b = static_cast<u8*>(subobj);
+    b[0x14] = 1;
+    b[0x15] = 0;
+}
+#pragma pop
 
 void func_80259280(){}
 
@@ -1529,17 +1541,25 @@ void func_8025A11C(){}
 
 void func_8025AA38(){}
 
-void func_8025AAE0(){}
+extern float lbl_eu_80668828[];
+void func_8025AAE0(CKizunagram* self) {
+    u16 val = self->field_0x26;
+    if (val == 0) return;
+    float f = lbl_eu_80668828[0];
+    self->field_0x34 = 1;
+    self->field_0x36 = val;
+    *(float*)self->_38 = f;
+}
 
 void func_8025AB04(){}
 
 void func_8025AB84(){}
 
-extern "C" const float lbl_eu_80668828;
-void func_8025AC04(CKizunagram* self) {
-    self->field_0x34 = 0;
-    self->field_0x36 = 0;
-    self->field_0x38 = lbl_eu_80668828;
+extern float lbl_eu_80668828[];
+void CKizunagram_resetFields(void* self){
+    *(u8*)((u8*)self + 0x34) = 0;
+    *(u16*)((u8*)self + 0x36) = 0;
+    *(float*)((u8*)self + 0x38) = lbl_eu_80668828[0];
 }
 
 void func_8025AC1C(){}
@@ -1551,7 +1571,7 @@ void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[3] = 0;
 }
 
-void __ct__CKizunaInfo(){}
+CKizunaInfo::CKizunaInfo() {}
 
 CKizunaInfo::~CKizunaInfo() {}
 
@@ -1575,7 +1595,7 @@ void func_8025C298(){}
 
 void func_8025C348(){}
 
-void __ct__CKizunagram(){}
+CKizunagram::CKizunagram() {}
 
 CKizunagram::~CKizunagram() {}
 
@@ -1638,12 +1658,13 @@ u8 CKizunagram_getField8C(void* self) {
 
 void func_8025CBCC(){}
 
-/* Toggles field_0xDD: 0->1, 1->0, anything else->1 */
-void CKizunagram::func_8025CC70() {
-    field_0xDD = (field_0xDD ^ 1) ? 1 : 0;
-}
+void func_8025CC70(){}
 
-void func_8025CC88(){}
+void func_8025CC88(CKizunagram* self) {
+    if (self->field_0x62 == 0) return;
+    self->_38[1] = 2;
+    func_80259228(reinterpret_cast<u8*>(self) + 0x68);
+}
 
 void func_8025CCA8(){}
 

@@ -433,7 +433,7 @@ bool cf::CfGameManager::func_80086F9C() {
 CPad* cf::CfGameManager::getPad(int channel) {
     return &lbl_eu_80570D40[channel & 7];
 }
-void cf::CfGameManager::setPad(int r3, CPad* pPad, u32 r5) {}
+void cf::CfGameManager::setPad(int channel, CPad* pad, u32 arg3) {}
 void cf::CfGameManager::setCurrentPadPtr(const CPad* pad, u32 channel) {
     if (pad != nullptr && lbl_eu_80661BC8 != 0xFFFFFFFF && lbl_eu_80661BC8 != channel) {
         return;

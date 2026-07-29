@@ -5,7 +5,7 @@
 
 struct CColiProcTarget {
     u32 field_0x0;
-    u32 field_0x4;
+    u16 field_0x4;
     u16 field_0x6;
 };
 
@@ -38,11 +38,12 @@ extern "C" void func_804B25A4(CColiProc* self, CColiProcTarget* r4, u32 r5, u32 
 }
 
 // Returns true if field_0x0 is non-null and bit 0 of its u16 at offset 6 is set.
+// Both failure paths share a single return-0 tail to match retail branch layout.
 extern "C" bool func_804B2F80(CColiProc* self) {
-    if (self->field_0x0 == nullptr) {
-        return false;
+    if (self->field_0x0 != nullptr && (self->field_0x0->field_0x6 & 1)) {
+        return true;
     }
-    return (self->field_0x0->field_0x6 & 1) != 0;
+    return false;
 }
 
 // Returns bit 18 of field_0xC (extrwi extraction).

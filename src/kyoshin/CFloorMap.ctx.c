@@ -1848,7 +1848,7 @@ extern u8 lbl_eu_80664798;
 
 extern int CSysWin_getUnk34(void*);
 extern void func_80246200(void*);
-extern u32 func_80248558(void*);
+extern u32 func_80248558(u8*);
 extern void func_8024577C(void*, u16);
 extern void func_801F3850(void*, u16);
 extern void func_801375A0(float*, void*);
@@ -1968,16 +1968,16 @@ void func_8024577C(void* self, u16 val) {
     }
 }
 
-void* __dt__80244724(void* self, int mode) {
-    extern void* __dl__FPv(void*);
+u8* __dt__80244724(u8* self, int mode) {
+    extern u8* __dl__FPv(u8*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
     return self;
 }
 
-void* __dt__8024503C(void* self, int mode) {
-    extern void* __dl__FPv(void*);
+u8* __dt__8024503C(u8* self, int mode) {
+    extern u8* __dl__FPv(u8*);
     if (self && mode > 0) {
         __dl__FPv(self);
     }
@@ -2091,9 +2091,9 @@ void func_8024830C(void* self, void* arg2) {
     func_801F3850(*(void**)(p + 0x3134), (u16)(s16)p[0x0B]);
 }
 
-u32 func_80248558(void* self) {
+u32 func_80248558(u8* self) {
     extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-    u8* p = (u8*)self;
+    u8* p = self;
     void* data = *(void**)(p + 0x08);
     if (!data) return 0;
     void* obj = *(void**)((u8*)data + 0x10);
@@ -2351,7 +2351,7 @@ void func_8024E2BC(void* self) {
 
 void func_8024E650(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(void*);
+    extern u32 func_80248558(u8*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_806687A4;
@@ -2396,7 +2396,7 @@ done:;
 
 void func_8024E828(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(void*);
+    extern u32 func_80248558(u8*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_806687A8;
@@ -2441,7 +2441,7 @@ done:;
 
 void func_8024EA00(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(void*);
+    extern u32 func_80248558(u8*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668798;
     extern f32 lbl_eu_806687A8;
@@ -2492,7 +2492,7 @@ void func_8024EA00(void* self) {
 
 void func_8024EC24(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(void*);
+    extern u32 func_80248558(u8*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668798;
     extern f32 lbl_eu_806687A8;
@@ -2686,7 +2686,7 @@ void func_8024F7CC(void* self) {
     extern void func_8024B4CC(void*, void*, void*);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_806687BC;
-    extern u32 func_80248558(void*);
+    extern u32 func_80248558(u8*);
     extern void func_8024577C(void*, u16);
     u8* p = (u8*)self;
     if (!p[0x5D]) return;

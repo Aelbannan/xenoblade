@@ -1258,7 +1258,7 @@ void ocBdatRegist();
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
 
-extern "C" void getBdatStringColumnValue(void*, void*, int);
+class BdatFilePointer;
 extern u32 lbl_eu_80664BF8;
 extern u8 lbl_eu_80513420[];
 
@@ -1285,15 +1285,15 @@ void func_eu_802B145C(){}
 void func_eu_802B1474(){}
 
 void func_eu_802B148C() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 0x10);
+    CBdat::getBdatStringColumnValue((BdatFilePointer*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 0x10);
 }
 
 void func_eu_802B14A4() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 0x13);
+    CBdat::getBdatStringColumnValue((BdatFilePointer*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 0x13);
 }
 
 void func_eu_802B14BC() {
-    getBdatStringColumnValue((void*)lbl_eu_80664BF8, (char*)lbl_eu_80513420 + 9, 0x14);
+    CBdat::getBdatStringColumnValue((BdatFilePointer*)lbl_eu_80664BF8, (const char*)lbl_eu_80513420 + 9, 0x14);
 }
 
 void* func_eu_802B14D4(void){ return 0; }

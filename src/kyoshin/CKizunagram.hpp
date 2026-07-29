@@ -47,7 +47,7 @@ public:
     u8 field_0x34;          // 0x34
     u8 _35;
     u16 field_0x36;         // 0x36
-    /* 0x38-0x3B: overlapped region — accessed as both float and individual u8 fields */
+    /* 0x38-0x3B: overlapped region -- accessed as both float and individual u8 fields */
     u8 _38[4];              // 0x38-0x3B
     u8 field_0x3C;          // 0x3C
     u8 _3D[0x61 - 0x3D];

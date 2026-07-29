@@ -26359,6 +26359,17 @@ extern "C" void* lbl_eu_80534950[];
 extern "C" void* lbl_eu_80534928[];
 extern "C" void* lbl_eu_80534900[];
 
+// Vtable symbols for CCur15, CCur16, CCur18 constructors
+extern "C" void* lbl_eu_805348D8[];
+extern "C" void* lbl_eu_805348B0[];
+extern "C" void* lbl_eu_80534884[];
+
+// Vtable symbols for CCur22 and CSubCur constructors
+extern "C" void* lbl_eu_8053485C[];
+extern "C" void* lbl_eu_80534838[];
+
+extern "C" void __dl__FPv(void*);
+
 // Forward declarations for CCur classes used in stubs
 
 /* Sets the visible flag on a CBaseCur cursor widget. */
@@ -26400,6 +26411,15 @@ extern "C" DECOMP_DONT_INLINE void __ct__8CBaseCurFv(CBaseCur* _this, nw4r::lyt:
     _this->mVisible = 0;
 }
 
+/* CBaseCur destructor: frees the object if the flags parameter is > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__8CBaseCurFv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
+
 /* func_801D20B0: Draw the cursor layout if it is loaded and visible.
    Checks for null layout and hidden flag before forwarding to the
    shared nw4r layout draw helper. */
@@ -26425,7 +26445,14 @@ extern "C" CBaseCur* __ct__CCur07(CBaseCur* _this, nw4r::lyt::ArcResourceAccesso
     return _this;
 }
 
-void __dt__6CCur07Fv() {}
+/* CCur07 destructor: frees the object if flags > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__6CCur07Fv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
 
 void func_virt___dt__6CCur07Fv() {}
 
@@ -26436,7 +26463,14 @@ extern "C" CBaseCur* __ct__CCur09(CBaseCur* _this, nw4r::lyt::ArcResourceAccesso
     return _this;
 }
 
-void __dt__6CCur09Fv() {}
+/* CCur09 destructor: frees the object if flags > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__6CCur09Fv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
 
 void func_virt___dt__6CCur09Fv() { }
 
@@ -26449,7 +26483,14 @@ extern "C" CBaseCur* __ct__CCur11(CBaseCur* _this, nw4r::lyt::ArcResourceAccesso
     return _this;
 }
 
-void __dt__6CCur11Fv() {}
+/* CCur11 destructor: frees the object if flags > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__6CCur11Fv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
 
 void func_virt___dt__6CCur11Fv() { }
 
@@ -26462,31 +26503,86 @@ extern "C" CBaseCur* __ct__CCur14(CBaseCur* _this, nw4r::lyt::ArcResourceAccesso
     return _this;
 }
 
-void __dt__6CCur14Fv() {}
+/* CCur14 destructor: frees the object if flags > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__6CCur14Fv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
 
 void func_virt___dt__6CCur14Fv() { }
 
-void __ct__CCur15(){}
+/* CCur15 constructor: chains to CBaseCur then sets the CCur15 vtable. */
+extern "C" CBaseCur* __ct__CCur15(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    __ct__8CBaseCurFv(_this, arcResAcc);
+    _this->mVtable = lbl_eu_805348D8;
+    return _this;
+}
 
-void __dt__6CCur15Fv() {}
+/* CCur15 destructor: frees the object if flags > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__6CCur15Fv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
 
 void func_virt___dt__6CCur15Fv() { }
 
-void __ct__CCur16(){}
+/* CCur16 constructor: chains to CBaseCur then sets the CCur16 vtable. */
+extern "C" CBaseCur* __ct__CCur16(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    __ct__8CBaseCurFv(_this, arcResAcc);
+    _this->mVtable = lbl_eu_805348B0;
+    return _this;
+}
 
-void __dt__6CCur16Fv() {}
+/* CCur16 destructor: frees the object if flags > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__6CCur16Fv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
 
 void func_virt___dt__6CCur16Fv() { }
 
-void __ct__CCur18(){}
+/* CCur18 constructor: chains to CBaseCur then sets the CCur18 vtable. */
+extern "C" CBaseCur* __ct__CCur18(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    __ct__8CBaseCurFv(_this, arcResAcc);
+    _this->mVtable = lbl_eu_80534884;
+    return _this;
+}
 
-void __dt__6CCur18Fv() {}
+/* CCur18 destructor: frees the object if flags > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__6CCur18Fv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
 
 void func_virt___dt__6CCur18Fv() { }
 
-void __ct__CCur22(){}
+/* CCur22 constructor: chains to CBaseCur then sets the CCur22 vtable. */
+extern "C" CBaseCur* __ct__CCur22(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    __ct__8CBaseCurFv(_this, arcResAcc);
+    _this->mVtable = lbl_eu_8053485C;
+    return _this;
+}
 
-void __dt__6CCur22Fv() {}
+/* CCur22 destructor: frees the object if flags > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__6CCur22Fv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
 
 void func_virt___dt__6CCur22Fv() { }
 
@@ -26496,11 +26592,23 @@ void func_801D2C80(){}
 
 void func_801D2CF4(){}
 
-void __ct__CSubCur(){}
+/* CSubCur constructor: chains to CBaseCur then sets the CSubCur vtable. */
+extern "C" CBaseCur* __ct__CSubCur(CBaseCur* _this, nw4r::lyt::ArcResourceAccessor* arcResAcc) {
+    __ct__8CBaseCurFv(_this, arcResAcc);
+    _this->mVtable = lbl_eu_80534838;
+    return _this;
+}
 
-void __dt__6CSubCurFv() {}
+/* CSubCur destructor: frees the object if flags > 0.
+   Standard MWCC complete-object-destructor pattern. */
+extern "C" void* __dt__7CSubCurFv(CBaseCur* _this, int flags) {
+    if (_this != 0 && flags > 0) {
+        __dl__FPv(_this);
+    }
+    return _this;
+}
 
-void func_virt___dt__6CSubCurFv() { }
+void func_virt___dt__7CSubCurFv() { }
 
 void func_801D2E4C(){}
 

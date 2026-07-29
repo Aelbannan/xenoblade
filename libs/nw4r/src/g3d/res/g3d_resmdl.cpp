@@ -219,22 +219,32 @@ void ResMdl::Init() {
 
     u32 vtxPosNum = GetResVtxPosNumEntries();
     for (i = 0; i < vtxPosNum; i++) {
-        GetResVtxPos(i).Init();
+        GetResVtxPos(i).DCStore(false);
     }
 
     u32 vtxNrmNum = GetResVtxNrmNumEntries();
     for (i = 0; i < vtxNrmNum; i++) {
-        GetResVtxNrm(i).Init();
+        GetResVtxNrm(i).DCStore(false);
     }
 
     u32 vtxClrNum = GetResVtxClrNumEntries();
     for (i = 0; i < vtxClrNum; i++) {
-        GetResVtxClr(i).Init();
+        GetResVtxClr(i).DCStore(false);
     }
 
     u32 texCoordNum = GetResVtxTexCoordNumEntries();
     for (i = 0; i < texCoordNum; i++) {
-        GetResVtxTexCoord(i).Init();
+        GetResVtxTexCoord(i).DCStore(false);
+    }
+
+    u32 furVecNum = GetResVtxFurVecNumEntries();
+    for (i = 0; i < furVecNum; i++) {
+        GetResVtxFurVec(i).DCStore(false);
+    }
+
+    u32 furPosNum = GetResVtxFurPosNumEntries();
+    for (i = 0; i < furPosNum; i++) {
+        GetResVtxFurPos(i).DCStore(false);
     }
 }
 
@@ -264,6 +274,24 @@ ResFile ResMdl::GetParent() {
 ResVtxFurPos ResMdl::GetResVtxFurPos(int idx) const {
     return ResVtxFurPos(
         ofs_to_obj<ResDic>(ref().toResVtxFurPosDic)[idx]);
+}
+
+/******************************************************************************
+ *
+ * GetResVtxFurVec
+ *
+ ******************************************************************************/
+ResVtxFurVec ResMdl::GetResVtxFurVec(int idx) const {
+    return ResVtxFurVec(
+        ofs_to_obj<ResDic>(ref().toResVtxFurVecDic)[idx]);
+}
+
+u32 ResMdl::GetResVtxFurVecNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResVtxFurVecDic).GetNumData();
+}
+
+u32 ResMdl::GetResVtxFurPosNumEntries() const {
+    return ofs_to_obj<ResDic>(ref().toResVtxFurPosDic).GetNumData();
 }
 
 /******************************************************************************

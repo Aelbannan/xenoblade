@@ -252,7 +252,7 @@ BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
     packet = &Packet[chan];
     enabled = OSDisableInterrupts();
 
-    if (packet->chan != SI_CHAN_NONE || Si.chan == packet->chan) {
+    if (packet->chan != SI_CHAN_NONE || Si.chan == chan) {
         OSRestoreInterrupts(enabled);
         return FALSE;
     }

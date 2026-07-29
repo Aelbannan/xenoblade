@@ -799,42 +799,48 @@ with no apparent calls to the other 3 (possibly debug only).
 
 In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
 with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
-events being unused as well. */
+events being unused as well.
+
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
 class IWorkEvent {
 public:
-    virtual ~IWorkEvent(){}
-    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5){ return false; }
-    virtual bool OnFileEvent(CEventFile* pEventFile){ return false; }
-    virtual bool WorkEvent3(UNKTYPE* r4){ return false; }
-    virtual bool WorkEvent4(){ return false; }
-    virtual void OnPauseTrigger(bool paused){}
-    //Completely unused, but still left in...
-    virtual bool WorkEvent6(){ return false; }
-    virtual bool WorkEvent7(){ return false; }
-    virtual bool WorkEvent8(){ return false; }
-    virtual bool WorkEvent9(){ return false; }
-    virtual bool WorkEvent10(){ return false; }
-    virtual bool WorkEvent11(){ return false; }
-    virtual bool WorkEvent12(){ return false; }
-    virtual bool WorkEvent13(){ return false; }
-    virtual bool WorkEvent14(){ return false; }
-    virtual bool WorkEvent15(){ return false; }
-    virtual bool WorkEvent16(){ return false; }
-    virtual bool WorkEvent17(){ return false; }
-    virtual bool WorkEvent18(){ return false; }
-    virtual bool WorkEvent19(){ return false; }
-    virtual bool WorkEvent20(){ return false; }
-    virtual bool WorkEvent21(){ return false; }
-    virtual bool WorkEvent22(){ return false; }
-    virtual bool WorkEvent23(){ return false; }
-    virtual bool WorkEvent24(){ return false; }
-    virtual bool WorkEvent25(){ return false; }
-    virtual bool WorkEvent26(){ return false; }
-    virtual bool WorkEvent27(){ return false; }
-    virtual bool WorkEvent28(){ return false; }
-    virtual bool WorkEvent29(){ return false; }
-    virtual bool WorkEvent30(){ return false; }
-    virtual void WorkEvent31(){}
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
 };
 /* end "monolib/work/IWorkEvent.hpp" */
 /* "src/kyoshin/CTitleAHelp.hpp" line 6 "revolution/gx/GXTypes.h" */
@@ -1321,6 +1327,71 @@ typedef enum _GXProjectionType {
     GX_PERSPECTIVE,
     GX_ORTHOGRAPHIC
 } GXProjectionType;
+
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
 
 typedef enum _GXSpotFn {
     GX_SP_OFF,
@@ -3624,12 +3695,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -5991,6 +6065,9 @@ typedef struct _GXFifoObjImpl {
     void* writePtr;    // at 0x18
     u32 count;         // at 0x1C
     u8 wrap;           // at 0x20
+    u8 bind_cpu;       // at 0x21
+    u8 bind_gp;        // at 0x22
+    u8 pad;            // at 0x23
 } GXFifoObjImpl;
 
 typedef struct _GXLightObjImpl {
@@ -6011,20 +6088,49 @@ typedef struct _GXLightObjImpl {
 } GXLightObjImpl;
 
 typedef struct _GXTexObjImpl {
-    u8 todo;
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    void* userData;
+    GXTexFmt fmt;
+    u32 tlutName;
+    u16 loadCnt;
+    u8 loadFmt;
+    u8 flags;
 } GXTexObjImpl;
 
 typedef struct _GXTlutObjImpl {
-    u8 todo;
+    u32 tlut;
+    u32 loadTlut0;
+    u16 numEntries;
 } GXTlutObjImpl;
 
 typedef struct _GXTexRegionImpl {
-    u8 todo;
+    u32 image1;
+    u32 image2;
+    u16 sizeEven;
+    u16 sizeOdd;
+    u8 is32bMipmap;
+    u8 isCached;
 } GXTexRegionImpl;
 
 typedef struct _GXTlutRegionImpl {
-    u8 todo;
+    u32 loadTlut1;
+    GXTlutObjImpl tlutObj;
 } GXTlutRegionImpl;
+
+#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
+
+#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
+    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
+    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
+
+#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
+
+#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
+
+#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
 
 #ifdef __cplusplus
 }
@@ -10239,7 +10345,95 @@ typedef enum {
 
 /* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 4 "revolution/GX/GXFifo.h" */
 /* end "revolution/GX/GXFifo.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTransform.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 5 "revolution/GX/GXTexture.h" */
+#ifndef RVL_SDK_GX_TEXTURE_H
+#define RVL_SDK_GX_TEXTURE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
+/* end "revolution/GX/GXInternal.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
+GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
+
+GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
+GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
+
+typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
+                                            GXTexMapID map);
+
+typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
+
+void __GXSetSUTexRegs(void);
+
+void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
+                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
+void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
+                    GXTexWrapMode, GXBool, u32);
+void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
+                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
+                     GXBool do_edge_lod, GXAnisotropy max_aniso);
+
+void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
+                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
+                       f32* lodBias, GXBool* biasClampEnable,
+                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
+
+GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
+GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
+
+u16 GXGetTexObjWidth(const GXTexObj* obj);
+u16 GXGetTexObjHeight(const GXTexObj* obj);
+GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
+GXBool GXGetTexObjMipMap(const GXTexObj* obj);
+
+void GXLoadTexObj(const GXTexObj*, GXTexMapID);
+
+void GXInitTexObjTlut(GXTexObj*, u32);
+u32 GXGetTexObjTlut(GXTexObj*);
+
+void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
+
+void GXLoadTlut(GXTlutObj*, u32);
+
+void GXInvalidateTexAll(void);
+
+void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
+                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
+
+void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
+
+GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
+GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
+
+void GXInitTexObjWrapMode(GXTexObj*, GXTexWrapMode, GXTexWrapMode);
+void GXInitTexObjFilter(GXTexObj*, GXTexFilter, GXTexFilter);
+void GXInitTexObjUserData(GXTexObj*, void*);
+void* GXGetTexObjUserData(GXTexObj*);
+void GXLoadTexObjPreLoaded(GXTexObj*, GXTexRegion*, GXTexMapID);
+
+void __GetImageTileCount(GXTexFmt, u16, u16, u32*, u32*, u32*);
+void __SetSURegs(u32, u32);
+void __GXSetTmemConfig(u32);
+
+u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
+                       u8 max_lod);
+
+void GXSetTexCoordScaleManually(GXTexCoordID, GXBool, u16, u16);
+void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXTexture.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXInit.h" line 6 "revolution/GX/GXTransform.h" */
 #ifndef RVL_SDK_GX_TRANSFORM_H
 #define RVL_SDK_GX_TRANSFORM_H
 /* "libs/RVL_SDK/include/revolution/GX/GXTransform.h" line 2 "types.h" */
@@ -10310,38 +10504,57 @@ typedef struct _GXData {
     u16 vlim;      // at 0x6
     u32 cpCtrlReg; // at 0x8
     u32 cpStatReg; // at 0xC
-    char UNK_0x10[0x4];
-    u32 vcdLoReg;            // at 0x14
-    u32 vcdHiReg;            // at 0x18
+    u32 cpClrReg;  // at 0x10
+    u32 vcdLoReg;  // at 0x14
+    u32 vcdHiReg;  // at 0x18
     u32 vatA[GX_MAX_VTXFMT]; // at 0x1C
     u32 vatB[GX_MAX_VTXFMT]; // at 0x3C
     u32 vatC[GX_MAX_VTXFMT]; // at 0x5C
     u32 linePtWidth;         // at 0x7C
     u32 matrixIndex0;        // at 0x80
     u32 matrixIndex1;        // at 0x84
-    char UNK_0x88[0xA8 - 0x88];
-    GXColor ambColors[2];             // at 0xA8
-    GXColor matColors[2];             // at 0xB0
-    u32 colorControl[4];              // at 0xB8
+    u32 indexBase[4];        // at 0x88
+    u32 indexStride[4];      // at 0x98
+    GXColor ambColors[2];    // at 0xA8
+    GXColor matColors[2];    // at 0xB0
+    u32 colorControl[4];     // at 0xB8
     u32 texRegs[GX_MAX_TEXCOORD];     // at 0xC8
     u32 dualTexRegs[GX_MAX_TEXCOORD]; // at 0xE8
-    u32 txcRegs[GX_MAX_TEXCOORD];     // at 0x108
-    char UNK_0x128[0x148 - 0x128];
+    union {
+        u32 txcRegs[GX_MAX_TEXCOORD]; // at 0x108 (legacy name)
+        u32 suTs0[GX_MAX_TEXCOORD];
+    };
+    u32 suTs1[GX_MAX_TEXCOORD]; // at 0x128
     u32 scissorTL; // at 0x148
     u32 scissorBR; // at 0x14C
-    char UNK_0x150[0x170 - 0x150];
+    u32 tref[8];   // at 0x150
     u32 ras1_iref; // at 0x170
     u32 ind_imask; // at 0x174
     u32 ras1_ss0;  // at 0x178
     u32 ras1_ss1;  // at 0x17C
-    char UNK_0x180[0x220 - 0x180];
+    u32 tevc[16];  // at 0x180
+    u32 teva[16];  // at 0x1C0
+    u32 tevKsel[8]; // at 0x200
     u32 blendMode; // at 0x220
     u32 dstAlpha;  // at 0x224
     u32 zMode;     // at 0x228
     u32 zControl;  // at 0x22C
-    char UNK_0x230[0x254 - 0x230];
+    u32 cpDispSrc;    // at 0x230
+    u32 cpDispSize;   // at 0x234
+    u32 cpDispStride; // at 0x238
+    u32 cpDisp;       // at 0x23C
+    u32 cpTexSrc;     // at 0x240
+    u32 cpTexSize;    // at 0x244
+    u32 cpTexStride;  // at 0x248
+    u32 cpTex;        // at 0x24C
+    GXBool cpTexZ;    // at 0x250
     u32 genMode; // at 0x254
-    char UNK_0x258[0x520 - 0x258];
+    GXTexRegion TexRegions0[8]; // at 0x258
+    GXTexRegion TexRegions1[8];
+    GXTexRegion TexRegions2[8];
+    GXTlutRegion TlutRegions[20];
+    GXTexRegionCallback texRegionCallback;
+    GXTlutRegionCallback tlutRegionCallback;
     GXAttrType normalType;          // at 0x520
     GXBool normal;                  // at 0x524
     GXBool binormal;                // at 0x525
@@ -10360,7 +10573,14 @@ typedef struct _GXData {
     }; // at 0x544
     f32 offsetZ; // at 0x55C
     f32 scaleZ;  // at 0x560
-    char UNK_0x564[0x5F8 - 0x564];
+    u32 tImage0[8];  // at 0x564
+    u32 tMode0[8];   // at 0x584
+    u32 texmapId[16]; // at 0x5A4
+    u32 tcsManEnab;   // at 0x5E4
+    u32 tevTcEnab;    // at 0x5E8
+    GXPerf0 perf0; // at 0x5EC
+    GXPerf1 perf1; // at 0x5F0
+    u32 perfSel;   // at 0x5F4
     GXBool dlistActive; // at 0x5F8
     GXBool dlistSave;   // at 0x5F9
     u8 BYTE_0x5FA;
@@ -10372,6 +10592,11 @@ extern GXData* const __GXData;
 
 // I hate typing this name out
 #define gxdt __GXData
+
+extern const char* __GXVersion;
+
+void __GXInitRevisionBits(void);
+void __GXInitGX(void);
 
 GXFifoObj* GXInit(void*, u32);
 
@@ -10543,83 +10768,6 @@ void GXSetNumTevStages(u8);
 #endif
 /* end "revolution/GX/GXTev.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 27 "revolution/GX/GXTexture.h" */
-#ifndef RVL_SDK_GX_TEXTURE_H
-#define RVL_SDK_GX_TEXTURE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 4 "revolution/GX/GXInternal.h" */
-/* end "revolution/GX/GXInternal.h" */
-/* "libs/RVL_SDK/include/revolution/GX/GXTexture.h" line 5 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-GX_PUBLIC_STRUCT_DECL(GXTexObj, 32);
-GX_PUBLIC_STRUCT_DECL(GXTlutObj, 0x0C);
-
-GX_PUBLIC_STRUCT_DECL(GXTexRegion, 16);
-GX_PUBLIC_STRUCT_DECL(GXTlutRegion, 16);
-
-typedef GXTexRegion* (*GXTexRegionCallback)(const GXTexObj* pObj,
-                                            GXTexMapID map);
-
-typedef GXTlutRegion* (*GXTlutRegionCallback)(u32 id);
-
-void __GXSetSUTexRegs(void);
-
-void GXInitTexObj(GXTexObj* obj, void* image, u16 w, u16 h, GXTexFmt fmt,
-                  GXTexWrapMode wrap_s, GXTexWrapMode wrap_t, GXBool mipmap);
-void GXInitTexObjCI(GXTexObj*, void*, u16, u16, GXTexFmt, GXTexWrapMode,
-                    GXTexWrapMode, GXBool, u32);
-void GXInitTexObjLOD(GXTexObj* obj, GXTexFilter min_filt, GXTexFilter mag_filt,
-                     f32 min_lod, f32 max_lod, f32 lod_bias, GXBool bias_clamp,
-                     GXBool do_edge_lod, GXAnisotropy max_aniso);
-
-void GXGetTexObjLODAll(GXTexObj* obj, GXTexFilter* min_filt,
-                       GXTexFilter* mag_filt, f32* minLod, f32* maxLod,
-                       f32* lodBias, GXBool* biasClampEnable,
-                       GXBool* edgeLodEnable, GXAnisotropy* anisotropy);
-
-GXTexWrapMode GXGetTexObjWrapS(GXTexObj* obj);
-GXTexWrapMode GXGetTexObjWrapT(GXTexObj* obj);
-
-u16 GXGetTexObjWidth(const GXTexObj* obj);
-u16 GXGetTexObjHeight(const GXTexObj* obj);
-GXTexFmt GXGetTexObjFmt(const GXTexObj* obj);
-GXBool GXGetTexObjMipMap(const GXTexObj* obj);
-
-void GXLoadTexObj(const GXTexObj*, GXTexMapID);
-
-void GXInitTexObjTlut(GXTexObj*, u32);
-u32 GXGetTexObjTlut(GXTexObj*);
-
-void GXInitTlutObj(GXTlutObj*, void*, GXTlutFmt, u16);
-
-void GXLoadTlut(GXTlutObj*, u32);
-
-void GXInvalidateTexAll(void);
-
-void GXInitTexCacheRegion(GXTexRegion* pRegion, GXBool r4, u32 addrTMemEven,
-                          u32 sizeTMemEven, u32 addrTMemOdd, u32 sizeTMemOdd);
-
-void GXInitTlutRegion(GXTlutRegion* pRegion, u32 addrTMem, u32 sizeTMem);
-
-GXTexRegionCallback GXSetTexRegionCallback(GXTexRegionCallback callback);
-GXTlutRegionCallback GXSetTlutRegionCallback(GXTlutRegionCallback callback);
-
-u32 GXGetTexBufferSize(u16 width, u16 height, u32 format, GXBool mipmap,
-                       u8 max_lod);
-
-// TODO
-UNKTYPE GXSetTexCoordScaleManually(UNKWORD, UNKWORD, UNKWORD, UNKWORD);
-UNKTYPE GXSetTexCoordCylWrap(UNKWORD, UNKWORD, UNKWORD);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
 /* end "revolution/GX/GXTexture.h" */
 /* "libs/RVL_SDK/include/revolution/GX.h" line 28 "revolution/GX/GXTransform.h" */
 /* end "revolution/GX/GXTransform.h" */
@@ -11804,16 +11952,14 @@ extern "C" detail::RuntimeTypeInfo lbl_eu_80665540;
 
 class IOStream {
 public:
-    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const {
-        return &lbl_eu_80665540;
-    }
+    virtual const detail::RuntimeTypeInfo* GetRuntimeTypeInfo() const = 0;
 
     typedef void (*StreamCallback)(s32 result, IOStream* pStream,
                                    void* pCallbackArg);
 
 public:
     IOStream() : mAvailable(false), mCallback(NULL), mArg(NULL) {}
-    virtual ~IOStream() {} // at 0xC
+    virtual ~IOStream(); // at 0xC
 
     virtual void Close() = 0; // at 0x10
 
@@ -13497,7 +13643,12 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() : mNext(NULL), mPrev(NULL) {}
+    LinkListNode() { Init(); }
+
+    void Init() {
+        mNext = NULL;
+        mPrev = NULL;
+    }
 
     LinkListNode* GetNext() const {
         return mNext;
@@ -15369,11 +15520,15 @@ typedef struct NANDBanner {
 } NANDBanner;
 
 s32 NANDCreate(const char* path, u8 perm, u8 attr);
+s32 NANDCreateAsync(const char* path, u8 perm, u8 attr,
+                    NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreate(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateAsync(const char* path, u8 perm, u8 attr,
                            NANDAsyncCallback callback, NANDCommandBlock* block);
 
 s32 NANDDelete(const char* path);
+s32 NANDDeleteAsync(const char* path, NANDAsyncCallback callback,
+                    NANDCommandBlock* block);
 s32 NANDPrivateDelete(const char* path);
 s32 NANDPrivateDeleteAsync(const char* path, NANDAsyncCallback callback,
                            NANDCommandBlock* block);
@@ -15390,18 +15545,28 @@ s32 NANDSeek(NANDFileInfo* info, s32 offset, NANDSeekMode whence);
 s32 NANDSeekAsync(NANDFileInfo* info, s32 offset, NANDSeekMode whence,
                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
+s32 NANDReadDirAsync(const char* path, char* nameList, u32* num,
+                     NANDAsyncCallback callback, NANDCommandBlock* block);
+
+s32 NANDCreateDirAsync(const char* path, u8 perm, u8 attr,
+                       NANDAsyncCallback callback, NANDCommandBlock* block);
 s32 NANDPrivateCreateDir(const char* path, u8 perm, u8 attr);
 s32 NANDPrivateCreateDirAsync(const char* path, u8 perm, u8 attr,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
 
 s32 NANDMove(const char* from, const char* to);
+s32 NANDMoveAsync(const char* from, const char* to, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetLength(NANDFileInfo* info, u32* length);
 s32 NANDGetLengthAsync(NANDFileInfo* info, u32* lengthOut,
                        NANDAsyncCallback callback, NANDCommandBlock* block);
+s32 NANDTellAsync(NANDFileInfo* info, u32* pos, NANDAsyncCallback callback,
+                  NANDCommandBlock* block);
 
 s32 NANDGetStatus(const char* path, NANDStatus* status);
+s32 NANDPrivateGetStatus(const char* path, NANDStatus* status);
 s32 NANDPrivateGetStatusAsync(const char* path, NANDStatus* status,
                               NANDAsyncCallback callback,
                               NANDCommandBlock* block);
@@ -15426,6 +15591,8 @@ typedef enum {
 } NANDCheckFlags;
 
 s32 NANDCheck(u32 neededBlocks, u32 neededFiles, u32* answer);
+s32 NANDCheckAsync(u32 neededBlocks, u32 neededFiles, u32* answer,
+                   NANDAsyncCallback callback, NANDCommandBlock* block);
 
 #ifdef __cplusplus
 }
@@ -15448,25 +15615,35 @@ void nandRemoveTailToken(char* newp, const char* oldp);
 void nandGetHeadToken(char* head, char* rest, const char* path);
 void nandGetRelativeName(char* name, const char* path);
 void nandConvertPath(char* abs, const char* dir, const char* rel);
-BOOL nandIsRelativePath(const char* path);
 BOOL nandIsPrivatePath(const char* path);
 BOOL nandIsUnderPrivatePath(const char* path);
 BOOL nandIsInitialized(void);
-void nandReportErrorCode(s32 result) DECOMP_DONT_INLINE;
 s32 nandConvertErrorCode(s32 result);
 void nandGenerateAbsPath(char* abs, const char* rel);
-void nandGetParentDirectory(char* dir, const char* path);
 s32 NANDInit(void);
-s32 NANDGetCurrentDir(char* out);
 s32 NANDGetHomeDir(char* out);
+s32 nandChangeDir(const char* path, NANDCommandBlock* block, BOOL async,
+                  BOOL priv);
+void nandChangeDirCallback(s32 result, void* arg);
+s32 NANDChangeDirAsync(const char* path, NANDAsyncCallback callback,
+                       NANDCommandBlock* block);
 void nandCallback(s32 result, void* arg);
-s32 NANDGetType(const char* path, u8* type);
+s32 nandGetType(const char* path, u8* type, NANDCommandBlock* block, BOOL async,
+                BOOL priv);
+void nandGetTypeCallback(s32 result, void* arg);
+BOOL nandOnShutdown(BOOL final, u32 event);
+void nandShutdownCallback(s32 result, void* arg);
 s32 NANDPrivateGetTypeAsync(const char* path, u8* type,
                             NANDAsyncCallback callback,
                             NANDCommandBlock* block);
 const char* nandGetHomeDir(void);
 void NANDInitBanner(NANDBanner* banner, u32 flags, const wchar_t* title,
                     const wchar_t* subtitle);
+
+/* Absent from Xenoblade retail NANDCore.o; see NANDOpenClose.c extras. */
+void nandGetParentDirectory(char* dir, const char* path);
+s32 NANDGetCurrentDir(char* out);
+s32 NANDGetType(const char* path, u8* type);
 
 #ifdef __cplusplus
 }
@@ -16257,10 +16434,12 @@ public:
     virtual int GetCharWidth(u16 ch) const;             // at 0x48
     virtual CharWidths GetCharWidths(u16 ch) const;     // at 0x4C
     virtual void GetGlyph(Glyph* pGlyph, u16 ch) const; // at 0x50
-    virtual FontEncoding GetEncoding() const;           // at 0x54
+    virtual bool HasGlyph(u16 ch) const;               // at 0x54
+    virtual FontEncoding GetEncoding() const;           // at 0x58
 
     u32 GetRequireBufferSize();
     bool Load(void* pBuffer);
+    void* Unload();
 
 private:
     static const int CHAR_PTR_BUFFER_SIZE = 4;
@@ -18265,10 +18444,12 @@ namespace detail {
  * Pointer operations
  *
  ******************************************************************************/
-template <typename T> T* ConvertOffsToPtr(void* pBase, u32 offset) {
+// Use unsigned int (not u32) to match retail name mangling (Ui vs Ul).
+// On PowerPC both are 32-bit with identical ABI.
+template <typename T> T* ConvertOffsToPtr(void* pBase, unsigned int offset) {
     return reinterpret_cast<T*>(reinterpret_cast<u8*>(pBase) + offset);
 }
-template <typename T> const T* ConvertOffsToPtr(const void* pBase, u32 offset) {
+template <typename T> const T* ConvertOffsToPtr(const void* pBase, unsigned int offset) {
     return reinterpret_cast<const T*>(reinterpret_cast<const u8*>(pBase) +
                                       offset);
 }
@@ -20247,7 +20428,8 @@ typedef struct MEMiExpHeapHead {
     union {
         u16 SHORT_0x12;
         struct {
-            u16 SHORT_0x12_0_15 : 15;
+            u16 SHORT_0x12_0_13 : 14;
+            u16 useMarginOfAlign : 1;
             u16 allocMode : 1;
         };
     }; // at 0x12
@@ -21976,7 +22158,9 @@ private:
         u32 wrapS : 2;
         u32 wrapT : 2;
         u32 minFilter : 3;
-        u32 magFilter : 3;
+        // Retail Get(GXTexObj) LOD path: extrwi mag@12 (1), bias@13, edge@14, aniso@15 (2).
+        // magFilter is 1 bit here (GX_NEAR/GX_LINEAR); paletteFormat follows anisotropy.
+        u32 magFilter : 1;
         u32 biasClampEnable : 1;
         u32 edgeLODEnable : 1;
         u32 anisotropy : 2;
@@ -22748,12 +22932,8 @@ public:
     const ut::Font* GetFont() const;
     void SetFont(const ut::Font* pFont);
 
-    ut::Color GetTextColor(u32 idx) const {
-        return mTextColors[idx];
-    }
-    void SetTextColor(u32 idx, ut::Color color) {
-        mTextColors[idx] = color;
-    }
+    ut::Color GetTextColor(u32 idx) const;
+    void SetTextColor(u32 idx, ut::Color color);
 
     const Size& GetFontSize() const {
         return mFontSize;
@@ -23041,28 +23221,27 @@ public:
     CTitleAHelp(char*, u8);
     virtual ~CTitleAHelp();
     void CTitleAHelp_load();
-    void func_801C3FF0();
-    void func_801C4080(nw4r::lyt::DrawInfo*);
-    void func_801C40A0();
-    u8 func_801C4114();
-    u8 func_801C411C();
-    u8 func_801C4124();
+    void update();
+    void draw(nw4r::lyt::DrawInfo*);
+    void release();
+    u8 isLoaded();
+    u8 isVisible();
+    u8 isIdle();
     void func_801C412C();
-    void func_801C414C();
-    void func_801C416C();
-    void func_801C4198();
+    void cancelClose();
+    void requestClose();
     void func_801C41C0(char*);
     void func_801C41E8(u8);
     void func_801C4654(u32);
     void func_801C46B4(char*);
     void func_801C46DC(u32);
-    void func_801C473C(u8);
+    void setVisible(u8);
     void func_801C4744();
     void func_801C4760();
-    void func_801C477C();
-    void func_801C47F8();
-    void func_801C484C();
-    void func_801C48E0();
+    void showIn();
+    void onShowInComplete();
+    void showOut();
+    void onShowOutComplete();
     virtual bool OnFileEvent(CEventFile* pEventFile) override;
 
     UnkClass_8045F564 unk4;
@@ -23078,10 +23257,12 @@ public:
     u8 unk35;
     u8 unk36;
     u8 unk37;
+    CTitleAHelp();
 };
 
 bool func_801C4648(nw4r::lyt::Pane*);
 void func_801C4B60(GXColorS10*, s16, s16, s16, s16);
+void CTitleAHelp_startClose(CTitleAHelp*);
 /* end "kyoshin/CTitleAHelp.hpp" */
 
 /* "src/kyoshin/CTitleAHelp.cpp" line 2 "kyoshin/CUICfManager.hpp" */
@@ -24228,6 +24409,7 @@ private:
     static CErrorWii* spInstance;
     static bool sPowerCallbackCalled;
     static bool sResetCallbackCalled;
+    static bool sUnkFlag;
 };
 /* end "monolib/util/CErrorWii.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 6 "monolib/util/CPathUtil.hpp" */
@@ -24274,9 +24456,7 @@ namespace ml{
 
     template <size_t N>
     struct FixStr{
-        FixStr(){
-            clear();
-        }
+        FixStr();
 
         //probably fake
         FixStr(bool initialize){
@@ -24437,26 +24617,41 @@ namespace ml{
             }
         }
 
-    private:
-        char mString[N];
-        int mLength;
+    // public for compatibility
+    char mString[N];
+    int mLength;
 
-    public:
-        static const int npos = -1;
+    static const int npos = -1;
     };
+
+#pragma dont_inline on
+    template <size_t N>
+    FixStr<N>::FixStr(){
+        clear();
+    }
+#pragma dont_inline reset
 
 }
 /* end "monolib/util/FixStr.hpp" */
 
 namespace ml{
 
+    /// Utility class for path and filename string manipulation.
     class CPathUtil {
     public:
+        /// Returns a pointer to the filename portion (past the last path separator) of the given path.
         static const char* getFilePtrFromPath(const char* pPath);
-        static const char* getFileExtPtr(const char* pFilename);
-        static void getNoPathExtName(FixStr<64>& param_1, const char* param_2);
-        static void itoa(FixStr<16>& param_1, int param_2, int param_3);
 
+        /// Returns a pointer to the file extension portion (past the last '.') of the given filename.
+        static const char* getFileExtPtr(const char* pFilename);
+
+        /// Strips the extension from the filename in the given path and copies the result to outStr.
+        static void getNoPathExtName(FixStr<64>& outStr, const char* pPath);
+
+        /// Converts an integer to a left-padded zero-digit string, stored in outStr.
+        static void itoa(FixStr<16>& outStr, int num, int digits);
+
+        /// Removes the file extension from a fixed string in-place.
         static inline void removeExt(FixStr<32>& str){
             int length = str.rfind(".", -1);
 
@@ -24760,10 +24955,11 @@ namespace mtl {
         u8 padding[32 - 0x12]; //0x12
 
         u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+            return reinterpret_cast<u8*>(this + 1);
         }
         u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
+            u8* blockEnd = reinterpret_cast<u8*>(this + 1);
+            return blockEnd + (size - sizeof(MemBlock));
         }
 
         u32 getDataSize() const {
@@ -25585,8 +25781,10 @@ struct CFileHandle {
 
 class CEventFile {
 public:
-    BOOL unk0;
-    CFileHandle* mFileHandle; //0x4
+    BOOL unk0;                 //0x0
+    CFileHandle* mFileHandle;  //0x4
+    u8 _pad08[0x0C];           //0x8-0x13
+    u32 field_14;              //0x14
 
     void* getFileDataPtr();
 };
@@ -25633,6 +25831,16 @@ public:
         mSize = 0;
         mFront = 0;
         field6 = 0;
+        field7 = r4;
+    }
+
+    CMsgParam(u32 r4, u32* beforeLast){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        *beforeLast = 0;
         field7 = r4;
     }
 
@@ -25788,7 +25996,13 @@ public:
     
     static void Move();
     static void Draw();
-    static void Tail();
+    // Not present as OOL in retail CProcess.s; keep inline API for callers.
+    static void Tail() {
+        TChildListHeader<CProcess>& list = GetRootProcessList();
+        for (CProcess* proc = list.Begin(); proc != nullptr; proc = list.IterNext(proc)) {
+            TailImpl(proc);
+        }
+    }
 
     static TChildListHeader<CProcess>& GetFreeProcessList() {
         return sFreeProcessList;
@@ -25804,7 +26018,6 @@ private:
 
     static bool Remove(CProcess* proc);
 
-    static void DeleteList(TChildListHeader<CProcess>& list);
     static void DeleteImpl(CProcess* proc);
 
     static bool sIsInitialized;
@@ -26037,9 +26250,7 @@ public:
         return mChildren.front();
     }
 
-    bool isRunning() const {
-        return !isException() && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
-    }
+    bool isRunning() const;
 
     bool isException() const {
         return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;
@@ -26181,6 +26392,7 @@ public:
     static CWorkFlowShutdownAll* getInstance();
 
 private:
+    /// Singleton instance pointer.
     static CWorkFlowShutdownAll* spInstance;
 };
 /* end "monolib/work/CWorkFlowShutdownAll.hpp" */
@@ -26514,49 +26726,43 @@ struct CUICfInitBlock {
     u8 unk06[0x34 - 6];
 };
 
-struct CUICfInitTail {
-    u32 unk00;
-    u32 unk04;
-    u32 unk08;
-    u32 unk0C;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-    u32 unk1C;
-    u32 unk20;
-    u32 unk24;
-    u32 unk28;
-    u32 unk2C;
-    u32 unk30;
-    u32 unk34;
-    u32 unk38;
-    u32 unk3C;
-    u32 unk40;
-    u32 unk44;
-    u32 unk48;
-    u32 unk4C;
-    u32 unk50;
-    u32 unk54;
-    u32 unk58;
-    u32 unk5C;
-    u32 unk60;
-    u32 unk64;
-    u32 unk68;
-    u32 unk6C;
-    u32 unk70;
-    u32 unk74;
-    u32 unk78;
-    u32 unk7C;
-    u32 unk80;
-    u32 unk84;
-    u32 unk88;
-    u32 unk8C;
-};
-
 struct CUICfInitState {
     u8 mode;
     u8 state;
     u8 unk02[2];
+};
+
+// Retail copy: lwz +0; paired +8/+4; lhz +0xC; lone lwz +0x0E; paired words from +0x12.
+// Trailing bytes split so MWCC pair-unrolls (one big u8[] → lwzu). Zeros via u16* overlay.
+#pragma pack(push, 1)
+struct CUICfInitTailChunk8 {
+    u8 b[8];
+};
+struct CUICfInitTailChunk40 {
+    u8 b[0x40];
+};
+struct CUICfInitTailChunk3E {
+    u8 b[0x3E];
+};
+struct CUICfInitTailChunk40View {
+    u8 b[0x40]; // assign view: 2-byte overhang past Tail (retail last lwz pair)
+};
+struct CUICfInitTail {
+    u32 unk00;                  // +0x00
+    CUICfInitTailChunk8 mid;    // +0x04..+0x0B (memcpy pair → +8/+4 loads)
+    u16 unk0C;                  // +0x0C
+    u32 unk0E;                  // +0x0E
+    CUICfInitTailChunk40 rest0; // +0x12
+    CUICfInitTailChunk3E rest1; // +0x52
+}; // size = 0x90
+#pragma pack(pop)
+
+// Forces retail stack contiguity: state, block0, blocks[3], tail.
+struct CUICfInitTemplates {
+    CUICfInitState state;
+    CUICfInitBlock block0;
+    CUICfInitBlock blocks[3];
+    CUICfInitTail tail;
 };
 
 // 0xC-byte pool node for func_80133324's event queue - same layout as
@@ -26605,13 +26811,39 @@ public:
     void Init();
     void Term();
     void Move();
-    // func_80133324__12CUICfManagerFv is a free function below (retail Fv-mangled
-    // member that actually reads r4/r5/r6 event args; see CUICfManager.cpp).
-    friend void func_80133324__12CUICfManagerFv(CUICfManager* self, int id, int a1, int a2);
+
 
     // Fork helper for presentation gating (coop::ShouldRenderSplitScreen).
     u16 getFlags() const {
         return mFlags;
+    }
+    void setTimeout30() {
+        unk120 = 30;
+    }
+    void setFlagState(bool value) {
+        if (value) {
+            mInitSlots[0].unk00[1] = 1;
+        } else {
+            mInitSlots[0].unk00[0] = 1;
+        }
+        mFlags = 0;
+    }
+    void* getArcResourceAccessor() const {
+        return mArcResourceAccessor;
+    }
+    void setFieldC8C(u8 value) {
+        unkC88[4] = value;
+    }
+    void* getPackedFont9C() { return &mPackedFont9C; }
+    void* getPackedFontD8() { return &mPackedFontD8; }
+    int prepareMenus() {
+        if (mArcResourceAccessor == 0) {
+            mFlags |= 0x4;
+            return 0;
+        }
+        mFlags &= 0xfffb;
+        mFlags |= 0x8 | 0x10 | 0x20 | 0x40 | 0x80;
+        return 0;
     }
 
 private:
@@ -26640,25 +26872,84 @@ private:
     u8 unkC92[2];                                        // 0xC92
 
     static CUICfManager* spInstance;
+    CUICfManager();
+    virtual ~CUICfManager();
+    void OnFileEvent();
+    void func_80135FBC();
+    void func_80135FC4();
+    void func_80135FCC();
+    void func_80135FD4();
+    void func_80133324(int id, int a1, int a2);
+    static IWorkEvent* cfWorkEvent();
 }; // size = 0xC94
 /* end "kyoshin/CUICfManager.hpp" */
 /* "src/kyoshin/CTitleAHelp.cpp" line 3 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
-/* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* "include/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
 /* end "types.h" */
 
 class CPad;
 class CScnNw4r;
 class CView;
+class UnkClass_80186D20;
+class CfCamEventManager;
+class UnkClass_800821F8;
+class UnkClass_80085334;
+class UnkClass_8007E864;
+class CSysWinBuff;
+
+struct CfGameManagerData1C {
+    u8 field_0x0[0xC];
+};
+
+struct UnkClass_80083298SubF0 {
+    u8 field_0x0;
+};
+
+class UnkClass_80083298 {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual void vfunc_0x58();
+    virtual void vfunc_0x5C();
+    virtual void vfunc_0x60();
+    virtual void vfunc_0x64();
+    virtual void vfunc_0x68();
+    virtual void vfunc_0x6C();
+    virtual void vfunc_0x70();
+    virtual u32 vfunc_0x74();
+
+    u8 field_0x4[0xEC];
+    UnkClass_80083298SubF0 field_0xF0;
+};
 
 /* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
 or due to being in separate files, but compiled together in one file (unity compilation). For now,
 to make things simpler, everything exists in a single class. */
 namespace cf{
     class CfPadData;
+    class CfObject;
+    struct CfObjectSub54;
     class CfObjectMove;
-
     //unofficial name
     class CfGameManager{
     public:
@@ -26674,14 +26965,15 @@ namespace cf{
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
         static UNKWORD func_800822F4();
-        static UNKWORD func_800829B8();
+        static bool func_800829B8();
         static u32 getCurrentPadChannel();
-        static UNKTYPE* func_80083298();
-        static CfObjectMove* func_80082D54(int playerIndex);
+        static UnkClass_80083298* func_80083298();
+        static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
-        static bool func_80086F9C(s16);
-        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
-        static CPad* getPad(int r3);
+        static bool func_80086F9C();
+        static bool func_80086F9C(s16) { return func_80086F9C(); }
+        static void setCurrentPadPtr(const CPad* pad, u32 channel);
+        static CPad* getPad(int channel);
         static void setPad(int r3, CPad* pPad, u32 r5);
         static CfPadData* getCfPadData();
         static CPad* getCurrentPad();
@@ -26696,34 +26988,339 @@ namespace cf{
         }
 
         u32 unk0;
-        u32 unk4;
-        u32 unk8;
-        u8 unkC[0x28 - 0xC];
+        CfObject* field_0x4;
+        u32 mObjectFlags;
+        u8 field_0xC[0xC];
+        u16 field_0x18;
+        u8 field_0x1A[2];
+        CfGameManagerData1C field_0x1C;
         u8 unk28;
-        u8 unk29[0x68 - 0x29];
+        u8 unk29[0x40 - 0x29];
+        u16* field_0x40;
+        s32 field_0x44;
+        s32 field_0x48;
+        s32 field_0x4C;
+        u8 field_0x50[0x18];
         u32 unk68;
         u8 unk6C;
-        u8 unk6D[0x7C - 0x6D];
+        u8 unk6D[3];          // 0x6D-0x6F
+        u32 unk70;             // 0x70-0x73
+        u8 unk74[8];           // 0x74-0x7B
         u32 unk7C;
-        u8 unk80[0x8C - 0x80];
-        u32 unk8C;
-        u32 unk90;
+        u8 unk80[0x86 - 0x80];
+        u16 field_0x86;
+        u8 field_0x88[0x8C - 0x88];
+        s32 unk8C;
+        UnkClass_80083298* unk90;
         //between CObjectParam - CfObjectMove
         //likely player character object array, seems to always store pointers
         //to CfObjectPc objects except pointing at the 4th vtable
         CfObjectMove* unk94[3];
         u32 unkA0;
-        u32 unkA4;
-        u32 unkA8;
-        u32 unkAC;
-        u32 unkB0;
-        u32 unkB4;
+        UnkClass_80186D20* field_0xA4;
+        UnkClass_8007E864* unkA8;
+        UnkClass_80085334* unkAC;
+        UnkClass_800821F8* unkB0;
+        CfCamEventManager* unkB4;
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
+public:
+    void func_8007C0F8();
+    void func_8007C140();
+    void func_8007C188(unsigned long flags);
+    void func_8007C198();
+    void func_8007C2F4();
+    void func_8007C344();
+    void func_8007C360();
+    void func_8007C374();
+    void func_8007C4B4();
+    ~CfGameManager();
+    void func_8007C5B8();
+    cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
+    void func_8007C6C0();
+    void func_8007C8C8();
+    bool func_8007CBC8();
+    void func_8007CBD4();
+    void func_8007CBEC();
+    void func_8007CDA8();
+    void func_8007CE94();
+    void func_8007CF64() const;
+    void func_8007D190(unsigned long flags);
+    void func_8007D1A0();
+    void func_8007D794();
+    void func_8007D7A4();
+    void func_8007D834();
+    void func_8007D84C();
+    void func_8007DA00();
+    void func_8007DA0C();
+    void func_8007DCA8();
+    void func_8007DCB8();
+    void func_8007DE94();
+    void func_8007DECC();
+    u16 func_8007E030();
+    void func_8007E038();
+    CfObject** func_8007E0C8();
+    void func_8007E0D0();
+    void func_8007E4CC();
+    void func_8007E4DC();
+    void func_8007E864();
+    void func_8007E908();
+    void func_8007E960();
+    void func_8007E9CC();
+    void func_8007EEE0();
+    void func_8007EEF0();
+    u32 func_8007EEF8();
+    void func_8007EF04();
+    void func_8007EF44();
+    void func_8007EF48();
+    void func_8007EF4C();
+    void func_8007F044();
+    void func_8007F054();
+    void func_8007F0A4();
+    void func_8007F0AC();
+    void func_8007F0C4();
+    void func_8007F114();
+    void func_8007F11C();
+    void func_8007F1FC();
+    void func_8007F830();
+    u16 func_8007F8B8();
+    void func_8007F8C0();
+    void** func_8007F8D0();
+    void func_8007F8DC();
+    void func_8007F8F4();
+    void func_8007F900();
+    bool func_8007F91C();
+    void func_8007F990();
+    void func_8007F9AC();
+    void func_8007F9B4();
+    void func_8007F9BC();
+    void func_8007F9C4();
+    void func_8007FBFC();
+    void func_8007FC2C();
+    void func_8007FC5C();
+    void func_8007FD00();
+    void func_8007FD8C();
+    void func_8007FE18();
+    void func_8007FE1C();
+    void func_8007FE20();
+    void func_8007FE24();
+    void func_8007FE2C();
+    void func_8007FECC();
+    void func_8007FF6C();
+    void func_8008064C();
+    void func_800807BC();
+    void func_80080888();
+    void func_80080E20();
+    void func_80080E28();
+    void func_80080E30();
+    void func_80080E44();
+    void func_80080EE4();
+    void func_80080F40();
+    void func_80080F44();
+    void func_80080F48();
+    void func_80081258();
+    void func_80081264();
+    void func_8008126C();
+    void func_80081274();
+    void func_8008127C();
+    void func_80081284();
+    void func_8008128C();
+    void func_80081294();
+    void func_8008129C();
+    void func_800812A4();
+    void func_800812AC();
+    void func_800812B4();
+    void func_800812BC();
+    void func_800812C4();
+    void func_800812CC();
+    void func_800812D4();
+    void func_800812DC();
+    void func_800812E4();
+    void func_800812EC();
+    void func_800812F4();
+    void func_80081318();
+    void func_80081330();
+    void func_80081338();
+    void func_80081340();
+    void func_80081348();
+    void func_80081350();
+    void func_80081358();
+    void func_80081694();
+    void func_800817A8();
+    void func_800817B0();
+    void func_800817BC();
+    void func_80081874();
+    void func_8008187C();
+    void func_80081900();
+    void func_80081988();
+    void func_80081990();
+    void func_80081A24();
+    void func_80081A40();
+    void func_80081CA0();
+    void func_80081CB0();
+    void func_80081CB8();
+    void func_80081CBC();
+    void func_80081D2C();
+    void func_80081D88();
+    void func_80081D8C();
+    void func_80081DD8();
+    void func_80081E90();
+    void func_80081F28();
+    void func_80081F90();
+    void func_80082008();
+    void func_80082060();
+    void func_80082088();
+    bool func_80082104();
+    void func_8008212C();
+    UnkClass_800821F8* func_800821F8();
+    CfObject* func_8008221C();
+    void func_80082254();
+    void func_80082258();
+    void func_8008228C();
+    void func_800822FC();
+    void func_80082354();
+    void func_8008235C();
+    void func_800823A4();
+    void func_80082418();
+    void func_800824FC();
+    void func_80082544();
+    void func_80082568();
+    void func_80082614();
+    void func_8008261C();
+    bool func_80082680();
+    void func_80082694();
+    void func_8008269C();
+    void func_800826F0();
+    void func_80082768();
+    u16 func_80082770();
+    void func_800827A8();
+    void func_800827E4();
+    void func_80082834();
+    u32 func_800828DC();
+    u32 func_80082900();
+    void func_80082940();
+    void func_8008294C();
+    void func_80082A0C();
+    void func_80082A7C();
+    void func_80082B38();
+    void func_80082C48();
+    void func_80082D90();
+    void func_80082E50();
+    void func_80082EC0();
+    void func_80082EC4();
+    void func_80082F2C();
+    void func_80082FCC();
+    void func_80082FE4();
+    void func_80083100();
+    void func_8008310C();
+    void func_80083118();
+    void func_80083284();
+    void func_80083290();
+    void func_800832BC();
+    void func_80083304();
+    void func_80083328();
+    void func_80083458();
+    void func_80083460();
+    void func_80083468();
+    void func_80083470();
+    bool func_80083538();
+    bool func_80083544();
+    void func_80083550();
+    void func_80083560();
+    void func_800835FC();
+    void func_8008360C();
+    void func_80083718();
+    void func_8008372C();
+    void func_80083878();
+    void func_80083888();
+    void func_800838F4();
+    void func_80083C70();
+    void func_80083C78();
+    void func_80083CC8();
+    void func_80083CD8();
+    void func_80083D50();
+    void func_80083D70();
+    void func_80083DEC();
+    void func_80083EA4();
+    void func_80083F28();
+    void func_8008402C();
+    void func_8008413C();
+    void func_80084654();
+    void func_80084A00();
+    void func_80084AD4();
+    bool func_80084B68();
+    bool func_80084BAC();
+    bool func_80084BF4();
+    void func_80084C10();
+    void func_80084CA4();
+    void func_80084F50();
+    void func_80085220();
+    void func_80085248();
+    void func_80085334();
+    void func_800853C8();
+    void func_8008566C();
+    void func_80085838();
+    bool func_80085840();
+    bool func_8008585C();
+    void func_80085878();
+    void func_800858B8();
+    void func_80085978();
+    void func_80085E58();
+    void func_80085FB8();
+    void func_800862D0();
+    void func_800863F4();
+    void func_80086490();
+    void func_800865E8();
+    void func_800866A0();
+    void func_8008670C();
+    void func_80086778();
+    void func_80086B04();
+    void func_80086B08();
+    void func_80086B0C();
+    void func_80086B10();
+    void func_80086B14();
+    void func_80086B18();
+    void func_80086B1C();
+    void func_80086B24();
+    void func_80086B2C();
+    void func_80086B34();
+    void func_80086B3C();
+    void func_80086B44();
+    void func_80086B48();
+    void func_80086D90();
+    void func_80086D94();
+    void func_80086D98();
+    void func_80086D9C();
+    static u32 func_80086DA0();
+    void func_80086DA4();
+    void func_80086DA8();
+    void func_80086DAC();
+    void func_80086DB0();
+    void func_80086DB4();
+    static u32 func_80086DBC();
+    void func_80086E6C();
+    bool func_80087244();
+    bool func_80087250();
+    void func_80087280();
+    void func_80087330();
+    void func_80087334();
+    void func_80087348();
+    void func_80087364();
+    void func_80087378();
+    void func_80087390();
+    void func_800873AC();
+    CfObjectSub54* func_800873C8();
+    void func_800873D4();
+    void func_800873E8();
+    void func_800873FC();
+    void func_80087410();
+    u32 func_80087424();
+    void func_8008742C();
+    void func_8008743C();
+    void func_80087448();
     }; //size = 0xB8
-
-} //namespace cf
+} // namespace cf
 /* end "kyoshin/cf/CfGameManager.hpp" */
 /* "src/kyoshin/CTitleAHelp.cpp" line 4 "kyoshin/code_80135FDC.hpp" */
 #pragma once
@@ -26760,6 +27357,7 @@ char* func_80138F78(u16);
 void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
+extern "C" u8 code80135FDC_getByte_621F0();
 /* end "kyoshin/code_80135FDC.hpp" */
 /* "src/kyoshin/CTitleAHelp.cpp" line 5 "monolib/device/CDeviceFile.hpp" */
 #pragma once
@@ -26857,6 +27455,9 @@ public:
     // CTitleAHelp::OnFileEvent
     static void* func_80452C10(u32, nw4r::lyt::Layout*);
 
+    /// Flush font rendering state.
+    void func_80452CF8();
+
     DECL_WORKTHREAD_CREATE(CDeviceFont);
 
     //0x0: vtable
@@ -26886,10 +27487,12 @@ public:
     static CLibLayout* getInstance();
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
 
+    virtual void wkUpdate() override;  //0x88
+
     //0x0: vtable
     //0x0-1c4: CWorkThread
-    u32 unk1C4;
-    u8 unk1C8[0x2C0 - 0x1C8];
+    u32 unk1C4;                       // 0x1C4: unknown field
+    u8 unk1C8[0x2C0 - 0x1C8];        // 0x1C8-2C0: unknown trailing data
 };
 /* end "monolib/lib/CLibLayout.hpp" */
 /* "src/kyoshin/CTitleAHelp.cpp" line 9 "monolib/work/CEventFile.hpp" */
@@ -26903,13 +27506,23 @@ public:
 /* end "nw4r/ut.h" */
 
 extern void func_80124270(nw4r::lyt::Pane*, u32);
-extern void func_80127BD8(nw4r::math::VEC3*, nw4r::math::VEC3*);
+extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
+
+bool CTitleAHelp_isPaneVisible(const void*);
+void CTitleAHelp_setGXColor(GXColorS10*, s16, s16, s16, s16);
 
 static GXColorS10 lbl_80666D58; //light orange
 static GXColorS10 lbl_80666D60;
 
 static GXColorS10 lbl_80666D68; //light blue
 static GXColorS10 lbl_80666D70;
+
+extern GXColorS10 lbl_eu_80664468;
+extern GXColorS10 lbl_eu_80664470;
+extern GXColorS10 lbl_eu_80664478;
+extern GXColorS10 lbl_eu_80664480;
+
+extern "C" char lbl_eu_805054BC[];
 
 static u16 lbl_80537618[120][7]; //unsure of this lbl, it seems to work, could be a struct tho
 
@@ -26935,20 +27548,20 @@ void CTitleAHelp::CTitleAHelp_load() {
     CDeviceFile::setHandleFlag1(mFileHandle);
 }
 
-void CTitleAHelp::func_801C3FF0() {
+void CTitleAHelp::update() {
     if(unk28 == 0) return;
     switch(unk2c) {
         case 1:
-            func_801C477C();
+            showIn();
             break;
         case 2:
-            func_801C47F8();
+            onShowInComplete();
             break;
         case 4:
-            func_801C484C();
+            showOut();
             break;
         case 5:
-            func_801C48E0();
+            onShowOutComplete();
             break;
         default:
             break;
@@ -26956,13 +27569,13 @@ void CTitleAHelp::func_801C3FF0() {
     mLayout->Animate(0);
 }
 
-void CTitleAHelp::func_801C4080(nw4r::lyt::DrawInfo* drawInfo) {
+void CTitleAHelp::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (unk28 == 0)
         return;
     func_80137038(mLayout, drawInfo, 0, 1);
 }
 
-void CTitleAHelp::func_801C40A0() {
+void CTitleAHelp::release() {
     func_801390E0(&mFileHandle);
     unk28 = 0;
     if(mLayout != nullptr) {
@@ -26973,36 +27586,36 @@ void CTitleAHelp::func_801C40A0() {
     unk4.func_8045F778();
 }
 
-u8 CTitleAHelp::func_801C4114() { return unk35; }
+u8 CTitleAHelp::isLoaded() { return unk35; }
 
-u8 CTitleAHelp::func_801C411C() {
+u8 CTitleAHelp::isVisible() {
 	return unk28;
 }
 
-u8 CTitleAHelp::func_801C4124() { return unk36; }
+u8 CTitleAHelp::isIdle() { return unk36; }
 
 void CTitleAHelp::func_801C412C() {
-    if (unk2c != 0) {
+    if (unk2c == 0) {
         unk2c = 1;
         unk36 = 0;
     }
 }
 
-extern "C" void func_801C414C(CTitleAHelp* pThis) {
+void CTitleAHelp_startClose(CTitleAHelp* pThis) {
     if (pThis->unk2c == 3) {
         pThis->unk2c = 4;
         pThis->unk36 = 0;
     }
 }
 
-void CTitleAHelp::func_801C416C() {
+void CTitleAHelp::cancelClose() {
     if(unk37 != 0 && unk2c == 4) {
         unk2c = 2;
         unk36 = 0;
     }
 }
 
-void CTitleAHelp::func_801C4198() {
+void CTitleAHelp::requestClose() {
     if(unk2c == 3) {
         unk2c = 4;
         unk36 = 0;
@@ -27067,15 +27680,15 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         sprintf(buffer3, "txt_hlp%02d", (u8)i);
         nw4r::lyt::Pane* aPane = mLayout->GetRootPane()->FindPaneByName(buffer3, true);
 
-        if(func_801C4648(aPane) == 0) return;
+        if(CTitleAHelp_isPaneVisible(aPane) == 0) return;
         if((u8)i == 0) {
             nw4r::math::VEC3* translate = (nw4r::math::VEC3*)&aPane->GetTranslate();
-            func_80127BD8(&oldVec, translate);
+            copyVEC3(&oldVec, translate);
         }
         nw4r::math::VEC3 newVec = oldVec;
         newVec.x -= (float)someWidth;
 
-        func_80127BD8((nw4r::math::VEC3*)&aPane->GetTranslate(), &newVec);
+        copyVEC3((nw4r::math::VEC3*)&aPane->GetTranslate(), &newVec);
 
         nw4r::ut::Font* font = (nw4r::ut::Font*)((nw4r::lyt::TextBox*)aPane)->GetFont();
         const wchar_t* string = ((nw4r::lyt::TextBox*)aPane)->GetString();
@@ -27091,15 +27704,15 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         sprintf(buffer4, "pic_btn%02d", (u8)i);
         nw4r::lyt::Pane* selectedPane = mLayout->GetRootPane()->FindPaneByName(buffer4, true);
 
-        func_80127BD8(&newVec, &oldVec);
+        copyVEC3(&newVec, &oldVec);
         newVec.x -= (float)someWidth;
-        func_80127BD8((nw4r::math::VEC3*)&selectedPane->GetTranslate(), &newVec);
+        copyVEC3((nw4r::math::VEC3*)&selectedPane->GetTranslate(), &newVec);
 
         someWidth += selectedPane->GetSize().width;
         if((u8)i < 5) {
             sprintf(buffer3, "txt_hlp%02d", (u8)i + 1);
             selectedPane = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buffer3, true);
-            if(func_801C4648(selectedPane) == 0) return;
+            if(CTitleAHelp_isPaneVisible(selectedPane) == 0) return;
 
             const wchar_t* text = ((nw4r::lyt::TextBox*)selectedPane)->GetString();
             wchar_t firstChar = text[0];
@@ -27129,19 +27742,19 @@ void CTitleAHelp::func_801C46DC(u32 arg) {
     func_80124270(pane, arg);
 }
 
-void CTitleAHelp::func_801C473C(u8 arg) {
+void CTitleAHelp::setVisible(u8 arg) {
     unk28 = arg;
 }
 
 void CTitleAHelp::func_801C4744() {
-    func_80139A18(mLayout, "txt_tit", &lbl_80666D58, &lbl_80666D60);
+    func_80139A18(mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664468, &lbl_eu_80664470);
 }
 
 void CTitleAHelp::func_801C4760() {
-    func_80139A18(mLayout, "txt_tit", &lbl_80666D68, &lbl_80666D70);
+    func_80139A18(mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
 }
 
-void CTitleAHelp::func_801C477C() {
+void CTitleAHelp::showIn() {
     if(func_80137444(mAnimTrans20, 1.0f)) {
         mLayout->SetAnimationEnable(mAnimTrans20, 0);
         mLayout->SetAnimationEnable(mAnimTrans24, 1);
@@ -27149,7 +27762,7 @@ void CTitleAHelp::func_801C477C() {
     }
 }
 
-void CTitleAHelp::func_801C47F8() {
+void CTitleAHelp::onShowInComplete() {
     if(func_80137444(mAnimTrans24, 1.0f)) {
         unk2c = 3;
         unk36 = 1;
@@ -27157,7 +27770,7 @@ void CTitleAHelp::func_801C47F8() {
     }
 }
 
-void CTitleAHelp::func_801C484C() {
+void CTitleAHelp::showOut() {
     if(func_80137510(mAnimTrans24, 1.0f)) {
         if(unk37 == 0) {
             mLayout->SetAnimationEnable(mAnimTrans24, 0);
@@ -27169,7 +27782,7 @@ void CTitleAHelp::func_801C484C() {
     }
 }
 
-void CTitleAHelp::func_801C48E0() {
+void CTitleAHelp::onShowOutComplete() {
     if(func_80137510(mAnimTrans20, 1.0f)) {
         unk2c = 0;
         unk36 = 1;
@@ -27223,22 +27836,24 @@ bool CTitleAHelp::OnFileEvent(CEventFile* pEventFile) {
  * Utility functions
  *
  ******************************************************************************/
-extern "C" bool func_801C4648(const void* self) {
+bool CTitleAHelp_isPaneVisible(const void* self) {
     const uint8_t* bytes = static_cast<const uint8_t*>(self);
     return (bytes[0xBB] & 1) != 0;
 }
 
 void sinit_801C4AE4() {
-    func_801C4B60(&lbl_80666D58, 0xa8, 0x52, 0x08, 0x00);
-    func_801C4B60(&lbl_80666D60, 0xa8, 0x52, 0x08, 0xff);
+    CTitleAHelp_setGXColor(&lbl_80666D58, 0xa8, 0x52, 0x08, 0x00);
+    CTitleAHelp_setGXColor(&lbl_80666D60, 0xa8, 0x52, 0x08, 0xff);
 
-    func_801C4B60(&lbl_80666D68, 0x05, 0x80, 0xa6, 0x00);
-    func_801C4B60(&lbl_80666D70, 0x05, 0x80, 0xa6, 0xff);
+    CTitleAHelp_setGXColor(&lbl_80666D68, 0x05, 0x80, 0xa6, 0x00);
+    CTitleAHelp_setGXColor(&lbl_80666D70, 0x05, 0x80, 0xa6, 0xff);
 }
 
-void func_801C4B60(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
+void CTitleAHelp_setGXColor(GXColorS10* color, s16 r, s16 g, s16 b, s16 a) {
     color->a = a;
     color->b = b;
     color->g = g;
     color->r = r;
 }
+
+void __ct__CTitleAHelp(){}

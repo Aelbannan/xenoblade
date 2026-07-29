@@ -116,11 +116,13 @@ void SoundSystem::InitSoundSystem(const SoundSystemParam& rParam, void* pWork,
         detail::VoiceManager::GetInstance().GetRequiredMemSize(
             lbl_eu_8066550C));
 
-    // ChannelManager: do NOT advance pPtr; use current pointer for Setup
-    detail::ChannelManager::GetInstance().GetRequiredMemSize();
+    // ChannelManager: do NOT advance pPtr; pass maxVoices, use current pPtr for Setup
+    detail::ChannelManager::GetInstance().GetRequiredMemSize(
+        lbl_eu_8066550C);
     detail::ChannelManager::GetInstance().Setup(
         pPtr,
-        detail::ChannelManager::GetInstance().GetRequiredMemSize());
+        detail::ChannelManager::GetInstance().GetRequiredMemSize(
+            lbl_eu_8066550C));
 
     // Initialize the sequence player subsystem before creating threads
     detail::InitSeqPlayer();

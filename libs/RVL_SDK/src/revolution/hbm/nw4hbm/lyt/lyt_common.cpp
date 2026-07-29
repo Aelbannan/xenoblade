@@ -4,6 +4,7 @@
 #include <nw4hbm/ut.h>
 
 #include <revolution/GX.h>
+#include <revolution/TPL.h>
 
 #include <cstddef>
 #include <cstring>
@@ -231,9 +232,42 @@ void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
     DrawQuad(rBase, rSize, num, pCoords, pColors ? colorWork : NULL);
 }
 
+/******************************************************************************
+ *
+ * InitGXTexObjFromTPL
+ *
+ ******************************************************************************/
+void InitGXTexObjFromTPL(GXTexObj* pTexObj, TPLPalette* pTpl, u32 idx) {
+    // Resolve TPL file addresses if not already linked
+    if (reinterpret_cast<u32>(pTpl->descriptorArray) < 0x80000000) {
+        TPLBind(pTpl);
+    }
+
+    TPLDescriptor* pDesc = TPLGet(pTpl, idx);
+    TPLHeader* pHeader = pDesc->textureHeader;
+
+    // Mipmap if the texture has multiple LOD levels
+    GXBool mipmap = pHeader->minLOD != pHeader->maxLOD;
+
+    if (pDesc->CLUTHeader != NULL) {
+        GXInitTexObjCI(pTexObj, pHeader->data, pHeader->width, pHeader->height,
+                       static_cast<GXTexFmt>(pHeader->format), pHeader->wrapS,
+                       pHeader->wrapT, mipmap, 0);
+        GXInitTexObjUserData(pTexObj, pDesc->CLUTHeader);
+    } else {
+        GXInitTexObj(pTexObj, pHeader->data, pHeader->width, pHeader->height,
+                     static_cast<GXTexFmt>(pHeader->format), pHeader->wrapS,
+                     pHeader->wrapT, mipmap);
+    }
+
+    GXInitTexObjLOD(pTexObj, pHeader->minFilter, pHeader->magFilter,
+                    static_cast<f32>(pHeader->minLOD),
+                    static_cast<f32>(pHeader->maxLOD), pHeader->LODBias, false,
+                    pHeader->edgeLODEnable, GX_ANISO_1);
+}
+
 } // namespace detail
 } // namespace lyt
 } // namespace nw4hbm
 
 bool EqualsPaneName__Q36nw4hbm3lyt6detailFPCcPCc(const char* a, const char* b) { return strncmp(a, b, 16) == 0; }
-void InitGXTexObjFromTPL__Q36nw4hbm3lyt6detailFP9_GXTexObjP10TPLPaletteUl(){}

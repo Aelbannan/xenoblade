@@ -140,11 +140,11 @@ u32 func_804E6358(CMdlMaterial* self) {
 // func_804E5E38 on the embedded CMdlMaterial at +0x16C8 via func_80488C20.
 // ---------------------------------------------------------------------------
 void func_804E64B0(CMdlMaterial* self, void* arg2, CMdlModelOwner* owner) {
-    for (u32 i = 0; i < self->field_0x30; i++) {
-        s32 byteVal = self->byteArray[i];
-        s32 quotient = byteVal / 10;
-        s32 remainder = byteVal % 10;
-        if ((u32)quotient == (u32)owner->targetQuotient) {
+    for (int i = 0; i < (int)self->field_0x30; i++) {
+        int v = self->byteArray[i];
+        int q = v / 10;
+        int r = v % 10;
+        if (q == owner->targetQuotient) {
             func_80488C20(owner, arg2);
         }
     }

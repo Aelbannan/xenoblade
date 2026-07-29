@@ -745,15 +745,15 @@ volatile s16* MmlParser::GetVariablePtr(SeqPlayer* pPlayer, SeqTrack* pTrack,
 
 const u8* MmlParser::ParseAllocTrack(const void* pBuffer, u32 offset,
                                      u32* pSize) {
-    const u8* pCmd = static_cast<const u8*>(pBuffer) + offset;
+    const u8* pBase = static_cast<const u8*>(pBuffer);
 
-    if (pCmd[0] != MML_ALLOCTRACK) {
+    if (pBase[offset] != MML_ALLOCTRACK) {
         *pSize = 1;
-        return static_cast<const u8*>(pBuffer);
+        return pBase;
     }
 
-    *pSize = (pCmd[1] << 8) | pCmd[2];
-    return static_cast<const u8*>(pBuffer) + 3;
+    *pSize = (pBase[offset + 1] << 8) | pBase[offset + 2];
+    return pBase + 3;
 }
 
 } // namespace detail

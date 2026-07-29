@@ -21,6 +21,7 @@ public:
     static ChannelManager& GetInstance();
 
     u32 GetRequiredMemSize();
+    u32 GetRequiredMemSize(int numVoices);
 
     void Setup(void* pWork, u32 workSize);
     void Shutdown();

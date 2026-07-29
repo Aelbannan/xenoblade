@@ -177,6 +177,9 @@ public:
     ResFile GetParent();
 
     ResVtxFurPos GetResVtxFurPos(int idx) const;
+    ResVtxFurVec GetResVtxFurVec(int idx) const;
+    u32 GetResVtxFurPosNumEntries() const;
+    u32 GetResVtxFurVecNumEntries() const;
     ResTev GetResTev(u32 idx) const;
 
     ResMat GetResMat(const char* pName) const;

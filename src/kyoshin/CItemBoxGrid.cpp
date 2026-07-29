@@ -259,13 +259,15 @@ void func_801C56D8() { }
 int func_801C51BC(void* obj, u32 id) {
     u16 count = *(u16*)((u8*)obj + 0x804);
     u16 i = 0;
-    goto check;
-    do {
-        u16 v = *(u16*)((u8*)obj + 4 + i * 2);
-        if (v == (u16)id) return 1;
-        i++;
-    check:;
-    } while (i < count);
+    u16 id16 = (u16)id;
+    if (i < count) {
+        do {
+            u16 off = i + i;
+            u16 v = *(u16*)((u8*)obj + 4 + off);
+            if (v == id16) return 1;
+            i++;
+        } while (i < count);
+    }
     return 0;
 }
 

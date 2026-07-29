@@ -73,8 +73,8 @@ CPnt16 CDeviceVI::lbl_8065A6B8[] = {
     CPnt16(0,0),
     CPnt16(0,0),
     CPnt16(0,8),
-    CPnt16(0,16),
-    CPnt16(0,16),
+    CPnt16(0,0),
+    CPnt16(0,0),
     CPnt16(0,16),
     CPnt16(0,8),
     CPnt16(0,16),
@@ -185,8 +185,7 @@ u32 CDeviceVI::getVisPerFrame(){
 }
 
 bool CDeviceVI::entryCb(CDeviceVICb* entry){
-    reslist<CDeviceVICb*>& list = spInstance->mCallbackList;
-    list.push_back(entry);
+    getInstance()->mCallbackList.push_back(entry);
     return true;
 }
 

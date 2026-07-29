@@ -610,15 +610,17 @@ void func_801D85D8(CItemBoxInfo* info) {
     func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2ed, &lbl_eu_806645A8, &lbl_eu_806645B0);
     func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2f8, &lbl_eu_806645A8, &lbl_eu_806645B0);
     char buf[0x20];
-    sprintf(buf, base + 0x303, 0);
-    func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
-    void* child = *(void**)((u8*)layout + 0x10);
-    nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(base + 0x161, true);
-    sprintf(buf, base + 0x303, 0);
-    func_801D62F8((u8*)pane + 0x10, 0, buf);
-    sprintf(buf, base + 0x30e, 0);
-    func_80137E7C((nw4r::lyt::Layout*)layout, buf);
-    func_801392C0();
+    u32 max = func_801392C0();
+    for (u32 i = 0; i < max; i++) {
+        sprintf(buf, base + 0x303, i + 1);
+        func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10))->FindPaneByName(buf, true);
+        if (pane != NULL) {
+            for (u32 j = 0; j < 2; j++) {
+                func_801D62F8((u8*)pane + 0x10, j, buf);
+            }
+        }
+    }
 }
 void func_801D885C(CItemBoxInfo* info) {
     char buf[0x20];
@@ -1398,14 +1400,17 @@ void func_801E3918(CItemBoxInfo2* info) {
     func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2ed, &lbl_eu_806645A8, &lbl_eu_806645B0);
     func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2f8, &lbl_eu_806645A8, &lbl_eu_806645B0);
     char buf[0x20];
-    sprintf(buf, base + 0x303, 0);
-    func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
-    nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10))->FindPaneByName(base + 0x161, true);
-    sprintf(buf, base + 0x303, 0);
-    func_801D62F8((u8*)pane + 0x10, 0, buf);
-    sprintf(buf, base + 0x30e, 0);
-    func_80137E7C((nw4r::lyt::Layout*)layout, buf);
-    func_801392C0();
+    u32 max = func_801392C0();
+    for (u32 i = 0; i < max; i++) {
+        sprintf(buf, base + 0x303, i + 1);
+        func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10))->FindPaneByName(buf, true);
+        if (pane != NULL) {
+            for (u32 j = 0; j < 2; j++) {
+                func_801D62F8((u8*)pane + 0x10, j, buf);
+            }
+        }
+    }
 }
 void func_801E3B9C(CItemBoxInfo2* info) {
     void* layout = *(void**)((u8*)info + 0x34);

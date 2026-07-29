@@ -80,28 +80,35 @@ DECL_WEAK NWC24Err NWC24iPrepareShutdown(){
     return result;
 }
 
-s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2);
+s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE;
 
 DECL_WEAK NWC24Err NWC24iSynchronizeRtcCounter(BOOL val) {
-    s32 status;
-    u32 bias;
-    s64 time;
+    s32 result;
     s32 rtc;
     
     while (TRUE) {
-        status = SCCheckStatus();
+        s32 status = SCCheckStatus();
         if (status == 2) {
-            return -1;
+            result = -1;
+            goto check_result;
         }
         if (status == 0) {
             break;
         }
     }
     
-    bias = SCGetCounterBias();
-    time = OSGetTime();
-    rtc = OS_TICKS_TO_SEC(time) - bias;
-    return NWC24iSetRtcCounter_(rtc, val != FALSE);
+    {
+        u32 bias = SCGetCounterBias();
+        s64 time = OSGetTime();
+        rtc = OS_TICKS_TO_SEC(time) - bias;
+    }
+    result = 0;
+    
+check_result:
+    if (result == 0) {
+        return NWC24iSetRtcCounter_(rtc, val != FALSE);
+    }
+    return result;
 }
 
 DECL_WEAK s32 NWC24SuspendScheduler(){
@@ -202,7 +209,7 @@ static BOOL NWC24Shutdown_(BOOL final, u32 event){
     return FALSE;
 }
 
-s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) {
+s32 NWC24iSetRtcCounter_(u32 rtc, u32 param_2) DECOMP_DONT_INLINE {
     s32 result;
     s32 iVar2;
     s32 ipcResult;

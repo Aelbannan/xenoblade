@@ -84,6 +84,7 @@ private:
         BIT_VISIBLE,
         BIT_INFLUENCED_ALPHA,
         BIT_LOCATION_ADJUST,
+        BIT_USER_ALLOCATED,
     };
 
     // Need the typedef before the class definition is complete
@@ -260,7 +261,7 @@ public:
     void SetUserData(const char* pUserData);
 
     bool IsUserAllocated() const {
-        return mbUserAllocated;
+        return detail::TestBit(mFlag, BIT_USER_ALLOCATED);
     }
 
 protected:
@@ -284,11 +285,8 @@ protected:
     u8 mBasePosition; // at 0xBA
     u8 mFlag;         // at 0xBB
 
-    char mName[NW4R_LYT_RES_NAME_LEN + 1];          // at 0xBC
-    char mUserData[NW4R_LYT_PANE_USERDATA_LEN + 1]; // at 0xCD
-
-    bool mbUserAllocated; // at 0xD6
-    u8 mPadding;          // at 0xD7
+    char mName[NW4R_LYT_RES_NAME_LEN];          // at 0xBC
+    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xCD
 
 protected:
     void InsertChild(PaneList::Iterator next, Pane* pChild);

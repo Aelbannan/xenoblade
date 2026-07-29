@@ -110,15 +110,15 @@ u32 ADXM_IsSetupThrd(void) {
     return (lbl_eu_805F3A54 != 0) ? 1 : 0;
 }
 
-extern u32 lbl_eu_805FDD9C;
+extern s32 lbl_eu_805FDD9C;
 s32 ADXM_ShutdownFramework(void) {
-    u32 state = lbl_eu_805FDD9C;
     s32 result = 1;
-    if (state == 0 || state == 2) {
+    s32 state = lbl_eu_805FDD9C;
+    if (state == 0) {
         ADXM_ShutdownThrd();
-    } else if (state == 1) {
-        // already in shutdown state, skip
-    } else {
+    } else if (state == 2) {
+        ADXM_ShutdownThrd();
+    } else if (state != 1) {
         result = 0;
     }
     ADXMNG_SetFramework(-1);

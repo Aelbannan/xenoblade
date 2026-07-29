@@ -154,7 +154,7 @@ namespace nw4r {
 namespace db {
 
 void Panic(const char* file, int line, const char* fmt, ...) {
-    char buffer[4120];
+    char buffer[4104];
     va_list args;
     va_start(args, fmt);
     int len = vsprintf(buffer, fmt, args);

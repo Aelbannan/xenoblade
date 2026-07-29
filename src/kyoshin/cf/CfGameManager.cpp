@@ -17,11 +17,34 @@
 #include "monolib/util/FixStr.hpp"
 #include <string.h>
 
-// destructor defined inline in CfGameManager.hpp
-// Manually-named destructor wrapper for __dt__Q22cf13CfGameManagerFv
-extern "C" void __dt__Q22cf13CfGameManagerFv(void* self) {
-    static_cast<cf::CfGameManager*>(self)->~CfGameManager();
+extern "C" CScn* lbl_eu_80663E14;
+extern "C" void func_800B9404(UnkClass_80083298* object);
+extern "C" void func_801A9FC0(UnkClass_8007E864* object);
+extern "C" void func_8016EEB0(u32 object);
+extern "C" void func_800754C0(CfCamEventManager* object);
+extern "C" void __dl__FPv(void* object);
+
+cf::CfGameManager::~CfGameManager() {
+    func_800B9404(unk90);
+    unk90 = nullptr;
+    if (unkA8 != nullptr) {
+        func_801A9FC0(unkA8);
+    }
+    if (unkA0 != 0) {
+        func_8016EEB0(unkA0);
+    }
+    if (field_0xA4 != nullptr) {
+        func_80186664(field_0xA4);
+    }
+    if (unkB4 != nullptr) {
+        func_800754C0(unkB4);
+    }
+    unkB0 = nullptr;
+    lbl_eu_80663E14 = nullptr;
 }
+
+extern "C" void* __dt__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* self, s32 deleteFlag);
 
 namespace {
 

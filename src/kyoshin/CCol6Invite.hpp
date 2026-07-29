@@ -10,7 +10,7 @@
 */
 class CCol6Invite : public CProcess {
 public:
-    CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
+    static CCol6Invite* Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
     virtual ~CCol6Invite();
 
     // CProcess overrides

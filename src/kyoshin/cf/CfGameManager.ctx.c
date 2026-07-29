@@ -856,7 +856,7 @@ public:
     void func_8007C360();
     void func_8007C374();
     void func_8007C4B4();
-    virtual ~CfGameManager() {}
+    ~CfGameManager();
     void func_8007C5B8();
     cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
     void func_8007C6C0();
@@ -251610,11 +251610,34 @@ public:
 /* "src/kyoshin/cf/CfGameManager.cpp" line 17 "string.h" */
 /* end "string.h" */
 
-// destructor defined inline in CfGameManager.hpp
-// Manually-named destructor wrapper for __dt__Q22cf13CfGameManagerFv
-extern "C" void __dt__Q22cf13CfGameManagerFv(void* self) {
-    static_cast<cf::CfGameManager*>(self)->~CfGameManager();
+extern "C" CScn* lbl_eu_80663E14;
+extern "C" void func_800B9404(UnkClass_80083298* object);
+extern "C" void func_801A9FC0(UnkClass_8007E864* object);
+extern "C" void func_8016EEB0(u32 object);
+extern "C" void func_800754C0(CfCamEventManager* object);
+extern "C" void __dl__FPv(void* object);
+
+cf::CfGameManager::~CfGameManager() {
+    func_800B9404(unk90);
+    unk90 = nullptr;
+    if (unkA8 != nullptr) {
+        func_801A9FC0(unkA8);
+    }
+    if (unkA0 != 0) {
+        func_8016EEB0(unkA0);
+    }
+    if (field_0xA4 != nullptr) {
+        func_80186664(field_0xA4);
+    }
+    if (unkB4 != nullptr) {
+        func_800754C0(unkB4);
+    }
+    unkB0 = nullptr;
+    lbl_eu_80663E14 = nullptr;
 }
+
+extern "C" void* __dt__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* self, s32 deleteFlag);
 
 namespace {
 
@@ -251814,7 +251837,7 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
 }
 #pragma dont_inline reset
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 223 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 246 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 
 namespace ml {
@@ -252390,9 +252413,11 @@ extern "C" u32 func_80081318__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 
     return 0x38000000 | (first << 20) | (second << 10) | third;
 }
 
+#pragma dont_inline on
 extern "C" u32 func_80083718__Q22cf13CfGameManagerFv(u32 first, u32 second) {
     return 0x58000000 | (first << 20) | (second << 10);
 }
+#pragma dont_inline reset
 
 extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 second,
                                                         u32 third);
@@ -253058,6 +253083,55 @@ extern "C" void func_80082B38__Q22cf13CfGameManagerFv() {
 nextDestination:
         ;
     }
+}
+
+struct CfResStackObject {
+    u8 field_0x0[0x30];
+};
+
+extern "C" void func_80080F48__Q22cf13CfGameManagerFv(
+    u16 value, CfResStackObject* resource, bool first, bool second);
+extern "C" void* CfRes_getInstanceField();
+extern "C" s32 func_80062A84(u32 handle);
+extern "C" void func_80062B3C(u32 handle, u32 state);
+extern "C" void* CfRes_getField18(CfResStackObject* resource);
+extern "C" u32 func_8006251C(void* field);
+extern "C" u32 func_80062524(void* field);
+extern "C" void CfRes_setE28Mask(u32 mask);
+extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
+    cf::CfGameManager::getInstance();
+    if (!testResInfoFlag(0x400)) {
+        s32 byteOffset;
+        UnkClass_8009ECB0* data = func_8009ECB0();
+        volatile s32* values = func_8007E0C8__Q22cf13CfGameManagerFv(data);
+        CfRes_getInstanceField();
+        byteOffset = 0;
+        for (s32 i = 0; i < 13; ++i, byteOffset += 4) {
+            s32 value = values[byteOffset >> 2];
+            if (value > 0) {
+                if (value <= 8) {
+                    CfResStackObject resource;
+                    func_80080F48__Q22cf13CfGameManagerFv(
+                        static_cast<u16>(value), &resource, true, true);
+                    u32 handle = func_eu_80065640(8, value, 0, 0);
+                    if (func_80062A84(handle) == -1) {
+                        func_80062B3C(handle, 6);
+                    }
+                    void* field = CfRes_getField18(&resource);
+                    if (field != nullptr) {
+                        u32 first = func_8006251C(field);
+                        func_80062524(field);
+                        u32 packed =
+                            func_80083718__Q22cf13CfGameManagerFv(first, 1);
+                        if (func_80062A84(packed) == -1) {
+                            func_80062B3C(packed, 6);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    CfRes_setE28Mask(0x400);
 }
 
 extern "C" ItemListManager* func_800B6BA4__Fv();

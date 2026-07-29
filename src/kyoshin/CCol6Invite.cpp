@@ -27,7 +27,7 @@ extern u8 __ptmf_null[12];   // null pointer-to-member-function (lbl_eu_805139E8
 
 // Factory function for CCol6Invite singleton.
 // Returns the singleton instance, or NULL if already created.
-CCol6Invite* CCol6Invite::CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
+CCol6Invite* CCol6Invite::Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
     // Check if singleton already exists.
     if (gCol6Invite != nullptr) {
         return nullptr;

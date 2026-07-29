@@ -5,8 +5,7 @@
 extern "C" Class_80296898 lbl_eu_805772C8;
 
 // External function referenced by both init() and func_80296AE8.
-// Declared as void with no parameters in CErrMes.cpp; the boolean argument
-// (0 or 1) is passed via r3 at the call sites.
+// Takes a boolean (0 or 1) derived from mConfigData[0x0C].
 extern "C" void func_eu_802B14F8(u8);
 
 Class_80296898* func_80296A04(Class_80296898* obj){
@@ -57,8 +56,8 @@ void Class_80296898::init(){
     mConfigData[0x29] = 3;
     mConfigData[0x2A] = 5;
 
-    // mConfigData[0x0C] is struct offset 0x1C; normalize to 0/1 and forward.
-    func_eu_802B14F8(mConfigData[0x0C] != 0);
+    // Retail reads from the global singleton at offset 0x1C (mConfigData[0x0C])
+    func_eu_802B14F8(lbl_eu_805772C8.mConfigData[0x0C] != 0);
 }
 
 // Overwrite the full configuration from external source.
@@ -70,6 +69,5 @@ void func_80296AE8(u8* src){
         lbl_eu_805772C8.mFrameCount = 0xA;
     }
 
-    // mConfigData[0x0C] is struct offset 0x1C; normalize to 0/1 and forward.
     func_eu_802B14F8(lbl_eu_805772C8.mConfigData[0x0C] != 0);
 }

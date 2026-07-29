@@ -3,6 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CItemBoxInfo.hpp"
+#include <nw4r/lyt/lyt_layout.h>
+#include <nw4r/lyt/lyt_pane.h>
 
 // --- Forward declarations ---
 namespace nw4r { namespace lyt { class Layout; class DrawInfo; class AnimTransform; } }
@@ -220,10 +222,8 @@ void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
 
 void func_801D4C9C(CItemBoxInfo* info) {
     if (func_80137444((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
-        void* layout = info->state.layout;
-        void** vtable = *(void***)layout;
-        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform1, 0);
-        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform2, 1);
+        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, false);
+        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, true);
         info->state.state = 2;
     }
 }

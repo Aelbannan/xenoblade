@@ -1996,6 +1996,7 @@ extern const char lbl_eu_805055F0[];
 extern const char lbl_eu_8050560C[];
 extern const char lbl_eu_80505628[];
 extern const char lbl_eu_80534740[];
+extern const char lbl_eu_805347D8[];
 extern const char lbl_eu_80534818[];
 extern const char lbl_eu_80573D18[];
 extern const char lbl_eu_8050566C[];
@@ -3717,9 +3718,8 @@ void func_801D1F9C(short* dst, unsigned long val) {
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // CArtsBookItem constructor
 void __ct__CArtsBookItem(void* self) {
-    u8* vtable;
-    // vtable setup
     *(u16*)((u8*)self + 0x804) = 0;
+    *(void**)((u8*)self) = (void*)&lbl_eu_805347D8;
 }
 // Standard MWCC virtual destructor
 void* __dt__10CQuestItemFv(void* self, int mode) {

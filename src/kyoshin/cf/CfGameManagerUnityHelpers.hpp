@@ -1261,27 +1261,31 @@ extern "C" void CfRes_setE28Mask(u32 mask);
 extern "C" void func_8008360C__Q22cf13CfGameManagerFv() {
     cf::CfGameManager::getInstance();
     if (!testResInfoFlag(0x400)) {
+        s32 byteOffset;
         UnkClass_8009ECB0* data = func_8009ECB0();
-        s32* values = func_8007E0C8__Q22cf13CfGameManagerFv(data);
+        volatile s32* values = func_8007E0C8__Q22cf13CfGameManagerFv(data);
         CfRes_getInstanceField();
-        for (s32 i = 0; i < 13; ++i) {
-            s32 value = values[i];
-            if (value > 0 && value <= 8) {
-                CfResStackObject resource;
-                func_80080F48__Q22cf13CfGameManagerFv(
-                    static_cast<u16>(value), &resource, true, true);
-                u32 handle = func_eu_80065640(8, value, 0, 0);
-                if (func_80062A84(handle) == -1) {
-                    func_80062B3C(handle, 6);
-                }
-                void* field = CfRes_getField18(&resource);
-                if (field != nullptr) {
-                    u32 first = func_8006251C(field);
-                    func_80062524(field);
-                    u32 packed =
-                        func_80083718__Q22cf13CfGameManagerFv(first, 1);
-                    if (func_80062A84(packed) == -1) {
-                        func_80062B3C(packed, 6);
+        byteOffset = 0;
+        for (s32 i = 0; i < 13; ++i, byteOffset += 4) {
+            s32 value = values[byteOffset >> 2];
+            if (value > 0) {
+                if (value <= 8) {
+                    CfResStackObject resource;
+                    func_80080F48__Q22cf13CfGameManagerFv(
+                        static_cast<u16>(value), &resource, true, true);
+                    u32 handle = func_eu_80065640(8, value, 0, 0);
+                    if (func_80062A84(handle) == -1) {
+                        func_80062B3C(handle, 6);
+                    }
+                    void* field = CfRes_getField18(&resource);
+                    if (field != nullptr) {
+                        u32 first = func_8006251C(field);
+                        func_80062524(field);
+                        u32 packed =
+                            func_80083718__Q22cf13CfGameManagerFv(first, 1);
+                        if (func_80062A84(packed) == -1) {
+                            func_80062B3C(packed, 6);
+                        }
                     }
                 }
             }

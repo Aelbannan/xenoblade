@@ -148,7 +148,7 @@ public:
     void func_8007C360();
     void func_8007C374();
     void func_8007C4B4();
-    virtual ~CfGameManager() {}
+    ~CfGameManager();
     void func_8007C5B8();
     cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
     void func_8007C6C0();

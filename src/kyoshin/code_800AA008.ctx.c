@@ -1170,6 +1170,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -12285,7 +12286,7 @@ u32 func_800AA2E8(u32 a, u32 b, u32 c);
 u32 func_800AA300(u32 a, u32 b, u32 c);
 void func_800AA318(u32 packed, u32* out0, u32* out1, u32* out2, u32* out3);
 int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFlag);
-void func_800AA5C0();
+ml::FixStr<64>* func_800AA5C0(u32 packed);
 u32 func_800AA600(const char* str);
 u32 func_800AA714(const char* path);
 void sinit_800AABBC();
@@ -12365,51 +12366,46 @@ void func_800AA008(ml::FixStr<64>& buf, int type, u32 arg1, u32 arg2, u32 arg3) 
 }
 
 int func_800AA1B4(const char* str, int digitCount, int* out) {
-    *out = 0;
-    if (str == nullptr) return 0;
+    int ret = 0;
+    *out = ret;
+    if (str == nullptr) goto end;
+    ret = 1;
 
-    switch (digitCount) {
-    case 1:
-        *out = str[0] - '0';
-        break;
-    case 2: {
-        int val = (str[0] - '0') * 10;
-        val += str[1] - '0';
-        *out = val;
-        break;
-    }
-    case 3: {
-        int val = (str[0] - '0') * 100;
-        val += (str[1] - '0') * 10;
-        val += str[2] - '0';
-        *out = val;
-        break;
-    }
-    case 4: {
-        int val = (str[0] - '0') * 1000;
-        val += (str[1] - '0') * 100;
-        val += (str[2] - '0') * 10;
-        val += str[3] - '0';
-        *out = val;
-        break;
-    }
-    }
-    return 1;
+    if (digitCount != 1) goto check2;
+    *out = str[0] - '0';
+    goto end;
+
+check2:
+    if (digitCount != 2) goto check3;
+    *out = (str[0] - '0') * 10 + str[1] - '0';
+    goto end;
+
+check3:
+    if (digitCount != 3) goto check4;
+    *out = (str[0] - '0') * 100 + (str[1] - '0') * 10 + str[2] - '0';
+    goto end;
+
+check4:
+    if (digitCount != 4) goto fail;
+    *out = (str[2] - '0') * 10 + (str[0] - '0') * 1000 + (str[1] - '0') * 100 + str[3] - '0';
+    goto end;
+
+fail:
+    ret = 0;
+end:
+    return ret;
 }
 
 u32 func_800AA2BC(u32 a, u32 b) {
-    u32 v = b << 10;
-    return v | ((a << 20) | 0x08000000);
+    return (a << 20) | (b << 10) | 0x08000000;
 }
 
 u32 func_800AA2D0(u32 a, u32 b, u32 c) {
-    u32 v = c | (b << 10);
-    return v | ((a << 20) | 0xE0000000);
+    return ((a & 0xFFF) << 20) | ((c & 0x3FF) << 10) | 0xE0000000;
 }
 
 u32 func_800AA2E8(u32 a, u32 b, u32 c) {
-    u32 v = c | (b << 10);
-    return v | ((a << 20) | 0x10000000);
+    return (a << 20) | (b << 10) | c | 0x1000;
 }
 
 u32 func_800AA300(u32 a, u32 b, u32 c) {
@@ -12476,8 +12472,9 @@ int func_800AA33C(ml::FixStr<64>& buf, u32 packed, int prefixFlag, int suffixFla
     return result;
 }
 
-void func_800AA5C0() {
-    func_800AA33C(*(ml::FixStr<64>*)lbl_eu_80572C80, (u32)0, 0, 1);
+ml::FixStr<64>* func_800AA5C0(u32 packed) {
+    func_800AA33C(*(ml::FixStr<64>*)lbl_eu_80572C80, packed, 0, 1);
+    return (ml::FixStr<64>*)lbl_eu_80572C80;
 }
 
 u32 func_800AA600(const char* str) {

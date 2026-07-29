@@ -937,6 +937,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -1814,6 +1815,71 @@ typedef enum _GXProjectionType {
     GX_PERSPECTIVE,
     GX_ORTHOGRAPHIC
 } GXProjectionType;
+
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
 
 typedef enum _GXSpotFn {
     GX_SP_OFF,
@@ -3130,12 +3196,15 @@ typedef struct OSShutdownFunctionQueue {
 void OSRegisterShutdownFunction(OSShutdownFunctionInfo* info);
 BOOL __OSCallShutdownFunctions(u32 pass, u32 event);
 void __OSShutdownDevices(u32 event);
-void __OSGetDiscState(u8* out);
 void OSShutdownSystem(void);
 void OSRestart(u32 resetCode);
+void __OSReturnToMenu(u8 menuMode);
 void OSReturnToMenu(void);
+void __OSReturnToMenuForError(void);
+void __OSHotResetForError(void);
 u32 OSGetResetCode(void);
 void OSResetSystem(BOOL reset, u32 resetCode, BOOL forceMenu);
+extern volatile BOOL __OSIsReturnToIdle;
 
 #ifdef __cplusplus
 }
@@ -3827,9 +3896,10 @@ typedef void (*SICallback)(s32 chan, u32 status);
 
 void SIInit(void);
 u32 SISetXY(u32 lines, u32 times);
+void SISetCommand(s32 chan, u32 command);
 BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
                 SICallback callback, s64 wait);
-u32 SIGetType(s32 chan);
+u32 SIGetType(s32 chan) __attribute__((noinline));
 
 #ifdef __cplusplus
 }
@@ -4141,8 +4211,11 @@ static BOOL __SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr,
     Si.inAddr = inAddr;
 
     alignSize = (outSize + 3) / 4;
-    for (i = 0; i < alignSize; i++) {
-        SI_HW_REGS[SI_RAM_BASE + i] = ((u32*)outAddr)[i];
+    {
+        u32* out = (u32*)outAddr;
+        for (i = 0; i < alignSize; i++) {
+            SI_HW_REGS[SI_RAM_BASE + i] = out[i];
+        }
     }
 
     comscr.reg = SI_HW_REGS[SI_SICOMSCR];
@@ -4205,7 +4278,7 @@ BOOL SITransfer(s32 chan, void* outAddr, u32 outSize, void* inAddr, u32 inSize,
     packet = &Packet[chan];
     enabled = OSDisableInterrupts();
 
-    if (packet->chan != SI_CHAN_NONE || Si.chan == packet->chan) {
+    if (packet->chan != SI_CHAN_NONE || Si.chan == chan) {
         OSRestoreInterrupts(enabled);
         return FALSE;
     }
@@ -4241,12 +4314,16 @@ static void GetTypeCallback(s32 chan, u32 status) {
     // TypeTime[chan] = __OSGetSystemTime();
 }
 
-// TODO
 u32 SIGetType(s32 chan) {
-    ;
+    // TODO: full implementation
+    // Read volatile register to prevent call elimination by IPA
+    (void)SI_HW_REGS[SI_SICOMSCR];
+    return 0;
 }
 
-void SISetCommand() {}
+void SISetCommand(s32 chan, u32 command) {
+    SI_HW_REGS[chan * 3] = command;
+}
 void SITransferCommands() {
     *(volatile u32*)0xCD006438 = 0x80000000;
 }

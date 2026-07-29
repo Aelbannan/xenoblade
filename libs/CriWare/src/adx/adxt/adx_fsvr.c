@@ -32,8 +32,7 @@ struct ADXT_FsSvrGlobals {
     struct ADXT_FsSvrCallbackParam* post_arg;             // 0x14
 };
 
-// Declare the global struct at the retail address so the compiler emits
-// @ha/@l relocations matching the retail lis/addi sequence.
+// Declare the global struct at the retail address.
 extern struct ADXT_FsSvrGlobals lbl_eu_805E26B0;
 
 // Wrapper that enters/leaves the ADX critical section around adxt_ExecFsSvr.
@@ -48,13 +47,13 @@ void ADXT_ExecFsSvr() {
 // sequences through ADX subsystem servers (STM, F) with state updates, then
 // invokes an optional post-callback and resets state to 0.
 void adxt_ExecFsSvr() {
-    // Load base address into a callee-saved register early so the compiler
-    // caches it across function calls (matching retail r31 usage).
+    // Taking the address of the extern symbol forces the compiler to materialize
+    // the base address once; the callee-saved register allocation then caches it
+    // across function calls, matching the retail r31 pattern.
     struct ADXT_FsSvrGlobals* globals = &lbl_eu_805E26B0;
-    s32 state = globals->state;
 
     ADXCRS_Lock();
-    if (state != 0) {
+    if (globals->state != 0) {
         ADXCRS_Unlock();
         return;
     }

@@ -51,17 +51,18 @@ void btm_discovery_db_init(void)
    completion callback if a discovery was active, then re-initializes the DB. */
 void btm_discovery_db_reset(void)
 {
-    tBTM_DISCOVERY_CB *p = (tBTM_DISCOVERY_CB *)&btm_cb;
+    tBTM_DISCOVERY_CB *p;
 
-    btu_stop_timer(&p->discovery_timer);
-    if (p->field_0x1674) {
-        void (*callback)(UINT16) = p->field_0x6d0;
-        p->field_0x1674 = 0;
-        p->field_0x6d0 = NULL;
+    btu_stop_timer(&((tBTM_DISCOVERY_CB *)&btm_cb)->discovery_timer);
+    if (((tBTM_DISCOVERY_CB *)&btm_cb)->field_0x1674) {
+        void (*callback)(UINT16) = ((tBTM_DISCOVERY_CB *)&btm_cb)->field_0x6d0;
+        ((tBTM_DISCOVERY_CB *)&btm_cb)->field_0x1674 = 0;
+        ((tBTM_DISCOVERY_CB *)&btm_cb)->field_0x6d0 = NULL;
         if (callback) {
             callback(0);
         }
     }
+    p = (tBTM_DISCOVERY_CB *)&btm_cb;
     p->field_0x1678 = (tSDP_DISCOVERY_DB *)p->field_0x6d4;
     memset(&p->discovery_timer, 0, 0x1020);
     p->field_0x670 = 1;

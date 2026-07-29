@@ -56,7 +56,7 @@ extern void bta_dm_keep_acl(struct bta_dm_msg *p_data);
 extern void bta_dm_send_hci_reset(struct bta_dm_msg *p_data);
 
 /* DM action table: maps action index -> function pointer */
-tBTA_DM_ACTION * const bta_dm_action[] =
+tBTA_DM_ACTION const bta_dm_action[] =
 {
     bta_dm_enable,
     bta_dm_disable,
@@ -161,7 +161,7 @@ extern void bta_dm_disc_rmt_name(struct bta_dm_msg *p_data);
 extern void bta_dm_cancel_rmt_name(struct bta_dm_msg *p_data);
 
 /* Search action table: maps action index -> function pointer */
-tBTA_DM_SEARCH_ACTION * const bta_dm_search_action[] =
+tBTA_DM_SEARCH_ACTION const bta_dm_search_action[] =
 {
     bta_dm_search_start,
     bta_dm_search_cancel,

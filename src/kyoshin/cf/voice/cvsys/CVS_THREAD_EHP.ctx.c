@@ -717,6 +717,8 @@ typedef int BOOL;
 #endif
 /* end "types.h" */
 
+struct CCharVoice;
+
 class CVS_THREAD{
 public:
     u32* unk0;
@@ -731,15 +733,17 @@ public:
 
     //Virtual table (0x1c)
     virtual void func_802A3B50();
-    virtual void func_802A3BEC();
+    virtual void func_802A3BEC(CCharVoice* voicePtr);
     virtual int blank1();
     virtual void func_802A1EA0();
     virtual void func_802A3740();
     virtual int blank2();
     int func_802A5ECC() { return 240; }
+
+    void func_802A3E28();
 };
 
-extern void func_802A35A0(u32* destPtr);
+extern "C" unsigned int func_802A35A0(unsigned int value);
 /* end "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
 /* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" line 3 "kyoshin/cf/voice/CCharVoice.hpp" */
 #pragma once
@@ -835,30 +839,24 @@ struct CVoiceHandle {
     CVSubObj* field_0x04;        // 0x04: sub-object pointer (used by func_802A6820)
     u8 _pad[0x3E9C - 0x08];      // 0x08-0x3E9B: handle data
     CCharVoice voice;            // 0x3E9C: the actual voice object
+    u8 _pad_after_voice[0x3F08 - 0x3EDC];
+    u32 field_0x3f08;            // manager flag tested by func_802A6958
 };
 
-// The voice manager owns a circular list of handles.  The list stores the
-// embedded voice address, which the retail code converts back to its handle.
-struct CVoiceListNode {
-    CVoiceListNode* field_0x00;  // next node
-    u32 field_0x04;
-    CCharVoice* field_0x08;      // embedded CCharVoice address
+// The global voice-handle list is a circular list.  The node's payload is
+// stored at +8; +0 is the next node and the list's +4 is its end marker.
+struct CVoiceHandleListNode {
+    CVoiceHandleListNode* next;
+    CVoiceHandleListNode* previous;
+    CVoiceHandle* value;
 };
 
-struct CVoiceList {
-    u32 field_0x00;
-    CVoiceListNode* field_0x04;  // end sentinel
+struct CVoiceHandleList {
+    CVoiceHandleListNode* head;
+    CVoiceHandleListNode* end;
 };
 
-struct CVoiceManager {
-    void** vtable;
-    CVSubObj* field_0x04;
-    u8 _pad[0x3E9C - 0x08];
-    CCharVoice voice;
-    u8 _tail[0x3F08 - 0x3EDC];
-    u32 field_0x3F08;
-};
-
+extern "C" {
 // Sibling TU functions (unmangled global symbols).
 int func_802A3E88(CVS_THREAD* self);
 void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
@@ -867,8 +865,9 @@ int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
 CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
 CVoiceHandle* func_802A330C(int size, int align);
 int func_80174C98(CVoiceHandle* handle, u32* value, int arg);
-CVoiceList* func_800B6BC8();
-int func_802A7FE4(CVoiceManager* self);
+CVoiceHandleList* func_800B6BC8();
+int func_802A7FE4(CVoiceHandle* handle);
+}
 /* end "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" */
 /* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp" line 5 "monolib/math/Random.hpp" */
 #pragma once
@@ -914,36 +913,26 @@ void func_802A6718(CVS_THREAD_EHP* self) {
 void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
-    // Slot 0x20
+    // Slot 0x20: bias to embedded CCharVoice at +0x3E9C via &handle->voice.
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->field_0x20 = NULL;
-    }
+    if (handle) biased = &handle->voice;
+    if (biased == voicePtr) self->field_0x20 = NULL;
 
     // Slot 0x24
     handle = self->field_0x24;
     biased = (CCharVoice*)handle;
-    if (handle != NULL) {
-        biased = &handle->voice;
-    }
-    if (biased == voicePtr) {
-        self->field_0x24 = NULL;
-    }
+    if (handle) biased = &handle->voice;
+    if (biased == voicePtr) self->field_0x24 = NULL;
 
-    // Rotating slots 0x2C..0x34 (count in field_0x3c)
-    for (int i = 0; i < self->field_0x3c; i++) {
+    // Rotating slots 0x2C..0x34 (count in field_0x3c).
+    // Reusing handle/biased from outer scope keeps regalloc closer.
+    int i;
+    for (i = 0; i < self->field_0x3c; i++) {
         handle = self->field_0x2c[i];
         biased = (CCharVoice*)handle;
-        if (handle != NULL) {
-            biased = &handle->voice;
-        }
-        if (biased == voicePtr) {
-            self->field_0x2c[i] = NULL;
-        }
+        if (handle) biased = &handle->voice;
+        if (biased == voicePtr) self->field_0x2c[i] = NULL;
     }
 }
 
@@ -957,29 +946,40 @@ void func_802A658C(CVS_THREAD_EHP* self) {
         return;
     }
 
+    // Advance the rotating index forward or backward, wrapping at bounds.
     if (self->field_0x44 == 0) {
-        // Forward: increment, wrap to 0 once past the bound.
-        int newIdx = self->field_0x38 + 1;
-        self->field_0x38 = newIdx;
-        if (self->field_0x3c < newIdx) {
+        // Forward: increment, wrap to 0 if past bound.
+        self->field_0x38++;
+        if (self->field_0x3c < self->field_0x38) {
             self->field_0x38 = 0;
         }
     } else {
         // Backward: decrement, wrap to bound-1 on underflow.
-        int newIdx = self->field_0x38 - 1;
-        self->field_0x38 = newIdx;
-        if (newIdx < 0) {
+        self->field_0x38--;
+        if (self->field_0x38 < 0) {
             self->field_0x38 = self->field_0x3c - 1;
         }
     }
 
-    if (self->field_0x38 == self->field_0x40) {
-        self->func_802A3B50();
+    // Branch layout in retail: beq to vtable-call, fall-through for lbl copy.
+    // To get the same layout we invert the condition so the lbl copy
+    // (larger block) is the if-body and the vtable call is the else-body.
+    if (self->field_0x38 != self->field_0x40) {
+        // Reload slot-state triple {unk0, unk4, unk8} from init table.
+        // Retail loads [0] via lis+lwzu (value in r3, address in r4),
+        // then [1], stores [1], stores [0], loads [2], stores [2].
+        // Declaring 'a' before 'p' pushes the base pointer to r4 and
+        // the first loaded value to r3, matching the retail regalloc.
+        struct Init { u32 f0, f4, f8; };
+        u32 a;
+        const Init* p = (const Init*)lbl_eu_80539B14;
+        a = p->f0;
+        u32 b = p->f4;
+        self->unk4 = b;
+        self->unk0 = (u32*)a;
+        self->unk8 = p->f8;
     } else {
-        // Reload slot-state triple {field_0, field_4, callback}.
-        self->unk4 = lbl_eu_80539B14[1];
-        self->unk0 = (u32*)lbl_eu_80539B14[0];
-        self->unk8 = lbl_eu_80539B14[2];
+        self->func_802A3B50();
     }
 }
 
@@ -1021,102 +1021,57 @@ void func_802A6650(CVS_THREAD_EHP* self) {
 }
 
 // ── Target 5: us-802a8f54 (func_802A6820) ──────────────────────────────────
-// Standalone EHP voice selector. Given two party-slot indices, it selects and
-// starts the corresponding recovery voice on an available voice handle.
-int func_802A6820(int first, int second) {
-    if (first == second) {
+// Standalone EHP voice selector. Given two party-slot indices (a, b), it picks
+// a voice ID based on their relationship, allocates a 0xAA-byte buffer, and
+// plays the voice on the currently free handle. Returns 0 in all paths.
+int func_802A6820(int a, int b) {
+    if (a == b) {
         return 0;
     }
 
-    CVoiceHandle* handle = func_802A7998(NULL);
+    CVoiceHandle* handle = func_802A7998((CVoiceHandle*)0);
     if (handle == NULL) {
         return 0;
     }
 
+    // Skip if the current voice is still active.
     typedef int (*IsActiveFunc)(CVoiceHandle*);
     IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
     if (isActive(handle) != 0) {
         return 0;
     }
 
+    // Read a u32 value from the handle's sub-object (vtable offset 0x30) and
+    // gate the selection on a category check (func_80174C98).
     CVSubObj* subobj = handle->field_0x04;
-    typedef u32* (*GetValueFunc)(CVSubObj*);
-    GetValueFunc getValue = (GetValueFunc)subobj->vtable[0x30 / 4];
-    u32 value = *getValue(subobj);
+    typedef u32* (*GetPtrFunc)(CVSubObj*);
+    GetPtrFunc getPtr = (GetPtrFunc)subobj->vtable[0x30 / 4];
+    u32* result = getPtr(subobj);
+    u32 value = *result;
     if (func_80174C98(handle, &value, 0x803) == 0) {
         return 0;
     }
 
-    if (second < first && first >= 2) {
-        second = ml::math::mtRand(2) + 0x6A5;
-    } else if (first < second && first == 1) {
-        second = 0x6A7;
+    // Choose the voice ID from the relationship between a and b.
+    if (b < a && a >= 2) {
+        b = ml::math::mtRand(2) + 0x6A5;
+    } else if (a < b && a == 1) {
+        b = 0x6A7;
     } else {
         return 0;
     }
 
+    // Allocate the 0xAA-byte playback buffer.
     if (func_802A330C(0xAA, 1) == NULL) {
         return 0;
     }
 
-    CCharVoice* voice = (CCharVoice*)handle;
+    // Play the selected voice on the (biased) handle.
+    CCharVoice* voicePtr = (CCharVoice*)handle;
     if (handle != NULL) {
-        voice = &handle->voice;
+        voicePtr = &handle->voice;
     }
-    func_802A3D54(voice, second, 0xAA);
-    return 0;
-}
-
-// ── Target 6: us-802a908c (func_802A6958) ──────────────────────────────────
-// If the manager is enabled, find an eligible inactive voice in its list,
-// reserve the short playback buffer, then prepare and play the EHP line.
-int func_802A6958(CVoiceManager* manager) {
-    int found = 0;
-    if ((manager->field_0x3F08 & 0x8000) == 0) {
-        return 0;
-    }
-
-    typedef int (*IsActiveFunc)(CVoiceHandle*);
-    CVoiceHandle* managerHandle = (CVoiceHandle*)manager;
-    IsActiveFunc isActive = (IsActiveFunc)managerHandle->vtable[0x2BC / 4];
-    if (isActive(managerHandle) != 0) {
-        return 0;
-    }
-
-    CVoiceList* list = func_800B6BC8();
-    CVoiceListNode* node = list->field_0x04->field_0x00;
-    while (node != list->field_0x04) {
-        CVoiceHandle* handle = (CVoiceHandle*)node->field_0x08;
-        if (handle != NULL) {
-            handle = (CVoiceHandle*)((u8*)handle - 0x3E9C);
-        }
-
-        isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
-        if (isActive(handle) == 0) {
-            CVSubObj* subobj = handle->field_0x04;
-            typedef u32* (*GetValueFunc)(CVSubObj*);
-            GetValueFunc getValue = (GetValueFunc)subobj->vtable[0x30 / 4];
-            u32 value = *getValue(subobj);
-            if (func_80174C98(handle, &value, 0x803) != 0) {
-                found = 1;
-                break;
-            }
-        }
-        node = node->field_0x00;
-    }
-
-    if (found == 0) {
-        return 0;
-    }
-    if (func_802A330C(0x28, 1) == NULL) {
-        return 0;
-    }
-    if (func_802A7FE4(manager) != 0) {
-        return 0;
-    }
-
-    CCharVoice* voice = &manager->voice;
-    func_802A3D54(voice, 0xA8D, 0x28);
+    func_802A3D54(voicePtr, b, 0xAA);
     return 0;
 }
 
@@ -1124,3 +1079,4 @@ int func_802A6958(CVoiceManager* manager) {
 void __ct__802A5ED4() {}
 void func_802A617C() {}
 void func_802A6408() {}
+void func_802A6958() {}

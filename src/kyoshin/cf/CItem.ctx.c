@@ -1570,10 +1570,12 @@ void func_8015796C(){}
 
 void func_801579A4(){}
 
-extern "C" void func_801579C4(){}
+extern "C" void func_801579C4(u8 arg, u32* out1, u32* out2) { *out1 = 0; *out2 = 0; }
 
 extern "C" u32 func_80157C20(u8 arg) {
-    return 0;
+    u32 a, b;
+    func_801579C4(arg, &a, &b);
+    return a;
 }
 
 void func_80157C4C(){}

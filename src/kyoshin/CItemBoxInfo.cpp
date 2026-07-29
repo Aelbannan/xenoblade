@@ -74,6 +74,8 @@ void func_80136C98(nw4r::lyt::Layout*, const char*);
 void func_80136D74(nw4r::lyt::Layout*, const char*);
 void func_8009D7E4();
 void func_801C6158();
+void func_80137F88(void*, u16);
+void func_801394D4(void*, u16);
 u32 func_801E9774(void*, u16, void*);
 void func_801E98E4(void*, u16, void*, void*);
 void func_801D62F8(void*, u32, const void*);
@@ -508,9 +510,8 @@ void func_801D6394(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
 void func_801D69FC(CItemBoxInfo* info) {
     func_801D885C(info);
     char buf[0x80];
-    sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], 0);
     void* layout = info->state.layout;
-    nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10))->FindPaneByName(buf, true);
+    nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10))->FindPaneByName((char*)&lbl_eu_805063BC[0x1f4], true);
     if (pane != NULL) {
         func_80124270(pane, 0);
     }
@@ -522,12 +523,20 @@ void func_801D69FC(CItemBoxInfo* info) {
         sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], i);
         func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
         char* s = func_80136190(buf, (char*)&lbl_eu_805063BC[0x130], 0);
-        sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], s);
-        func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
-        void* inst3 = CItem_initItemImplInstances(info);
+        func_80136B4C((nw4r::lyt::Layout*)layout, s, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        void* inst = CItem_initItemImplInstances(info);
+        u16 v = func_801393CC(inst);
+        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1e2], v);
+        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1ab], v);
+        func_801361E8(lbl_eu_806640F8, (char*)&lbl_eu_805063BC[0x1b3], v);
+        func_801394D4(layout, v);
+        func_801D5564(info, 0, (void*)(u32)v, info);
         char* t = func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x139]);
-        sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], t);
-        void* inst4 = CItem_initItemImplInstances(info);
+        func_80136B4C((nw4r::lyt::Layout*)layout, t, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        func_80136B4C((nw4r::lyt::Layout*)layout, (char*)&lbl_eu_805063BC[0x2ab], (char*)&lbl_eu_805063BC[0x2aa], 0);
+        func_80137F88(layout, v);
+        func_80127BD8(layout, (float*)&lbl_eu_80668010);
+        func_80124270(pane, (void*)(u32)i);
     }
 }
 

@@ -47,8 +47,7 @@ void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
 
     // Rotating slots 0x2C..0x34 (count in field_0x3c).
     // Reusing handle/biased from outer scope keeps regalloc closer.
-    int i;
-    for (i = 0; i < self->field_0x3c; i++) {
+    for (int i = 0; i < self->field_0x3c; i++) {
         handle = self->field_0x2c[i];
         biased = (CCharVoice*)handle;
         if (handle) biased = &handle->voice;

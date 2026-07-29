@@ -2,6 +2,8 @@
 
 namespace homebutton {
 
+FrameController::~FrameController() {}
+
 void FrameController::init(int anmType, f32 maxFrame, f32 minFrame, f32 delta) {
     mAnmType = anmType;
     mMaxFrame = maxFrame;

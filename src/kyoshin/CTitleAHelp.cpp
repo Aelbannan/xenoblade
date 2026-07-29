@@ -15,30 +15,13 @@
 
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-void func_80139A18();
-#ifdef __cplusplus
-}
-#endif
-
 bool CTitleAHelp_isPaneVisible(const void*);
-void CTitleAHelp_setGXColor(GXColorS10*, s16, s16, s16, s16);
 
 static GXColorS10 lbl_80666D58; //light orange
 static GXColorS10 lbl_80666D60;
 
 static GXColorS10 lbl_80666D68; //light blue
 static GXColorS10 lbl_80666D70;
-
-extern GXColorS10 lbl_eu_80664468;
-extern GXColorS10 lbl_eu_80664470;
-extern GXColorS10 lbl_eu_80664478;
-extern GXColorS10 lbl_eu_80664480;
-
-extern "C" char lbl_eu_805054BC[];
 
 static u16 lbl_80537618[120][7]; //unsure of this lbl, it seems to work, could be a struct tho
 
@@ -64,20 +47,20 @@ void CTitleAHelp::CTitleAHelp_load() {
     CDeviceFile::setHandleFlag1(mFileHandle);
 }
 
-void CTitleAHelp::func_801C3FF0() {
+void CTitleAHelp::update() {
     if(unk28 == 0) return;
     switch(unk2c) {
         case 1:
-            func_801C477C();
+            showIn();
             break;
         case 2:
-            func_801C47F8();
+            onShowInComplete();
             break;
         case 4:
-            func_801C484C();
+            showOut();
             break;
         case 5:
-            func_801C48E0();
+            onShowOutComplete();
             break;
         default:
             break;
@@ -85,13 +68,13 @@ void CTitleAHelp::func_801C3FF0() {
     mLayout->Animate(0);
 }
 
-void CTitleAHelp::func_801C4080(nw4r::lyt::DrawInfo* drawInfo) {
+void CTitleAHelp::draw(nw4r::lyt::DrawInfo* drawInfo) {
     if (unk28 == 0)
         return;
     func_80137038(mLayout, drawInfo, 0, 1);
 }
 
-void CTitleAHelp::func_801C40A0() {
+void CTitleAHelp::release() {
     func_801390E0(&mFileHandle);
     unk28 = 0;
     if(mLayout != nullptr) {
@@ -102,16 +85,16 @@ void CTitleAHelp::func_801C40A0() {
     unk4.func_8045F778();
 }
 
-u8 CTitleAHelp::func_801C4114() { return unk35; }
+u8 CTitleAHelp::isLoaded() { return unk35; }
 
-u8 CTitleAHelp::func_801C411C() {
+u8 CTitleAHelp::isVisible() {
 	return unk28;
 }
 
 u8 CTitleAHelp::isIdle() { return unk36; }
 
 void CTitleAHelp::func_801C412C() {
-    if (unk2c == 0) {
+    if (unk2c != 0) {
         unk2c = 1;
         unk36 = 0;
     }
@@ -124,14 +107,14 @@ void CTitleAHelp_startClose(CTitleAHelp* pThis) {
     }
 }
 
-void CTitleAHelp::func_801C416C() {
+void CTitleAHelp::cancelClose() {
     if(unk37 != 0 && unk2c == 4) {
         unk2c = 2;
         unk36 = 0;
     }
 }
 
-void CTitleAHelp::func_801C4198() {
+void CTitleAHelp::requestClose() {
     if(unk2c == 3) {
         unk2c = 4;
         unk36 = 0;
@@ -258,19 +241,19 @@ void CTitleAHelp::func_801C46DC(u32 arg) {
     func_80124270(pane, arg);
 }
 
-void CTitleAHelp::func_801C473C(u8 arg) {
+void CTitleAHelp::setVisible(u8 arg) {
     unk28 = arg;
 }
 
 void CTitleAHelp::func_801C4744() {
-    func_80139A18(mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664468, &lbl_eu_80664470);
+    func_80139A18(mLayout, "txt_tit", &lbl_80666D58, &lbl_80666D60);
 }
 
 void CTitleAHelp::func_801C4760() {
-    func_80139A18(mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
+    func_80139A18(mLayout, "txt_tit", &lbl_80666D68, &lbl_80666D70);
 }
 
-void CTitleAHelp::func_801C477C() {
+void CTitleAHelp::showIn() {
     if(func_80137444(mAnimTrans20, 1.0f)) {
         mLayout->SetAnimationEnable(mAnimTrans20, 0);
         mLayout->SetAnimationEnable(mAnimTrans24, 1);
@@ -278,7 +261,7 @@ void CTitleAHelp::func_801C477C() {
     }
 }
 
-void CTitleAHelp::func_801C47F8() {
+void CTitleAHelp::onShowInComplete() {
     if(func_80137444(mAnimTrans24, 1.0f)) {
         unk2c = 3;
         unk36 = 1;
@@ -286,7 +269,7 @@ void CTitleAHelp::func_801C47F8() {
     }
 }
 
-void CTitleAHelp::func_801C484C() {
+void CTitleAHelp::showOut() {
     if(func_80137510(mAnimTrans24, 1.0f)) {
         if(unk37 == 0) {
             mLayout->SetAnimationEnable(mAnimTrans24, 0);
@@ -298,7 +281,7 @@ void CTitleAHelp::func_801C484C() {
     }
 }
 
-void CTitleAHelp::func_801C48E0() {
+void CTitleAHelp::onShowOutComplete() {
     if(func_80137510(mAnimTrans20, 1.0f)) {
         unk2c = 0;
         unk36 = 1;

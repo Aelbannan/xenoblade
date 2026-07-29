@@ -14,15 +14,6 @@ namespace {
 using namespace nw4hbm;
 using namespace nw4hbm::lyt;
 
-// Forward declarations for local template helpers
-template <typename T>
-int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
-                     const T* pStr, int len, f32 width, bool* pHasNextLine);
-
-template <typename T>
-void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
-                        const T* pStr, int len, f32 width);
-
 inline u8 ClampColor(s16 value) {
     return value < 0 ? 0 : (value > 255 ? 255 : value);
 }
@@ -33,6 +24,15 @@ ut::Color GetColor(const GXColorS10& rColor16) {
 
     return ut::Color(color8);
 }
+
+// Forward declarations for local template helpers
+template <typename T>
+int CalcLineRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                     const T* pStr, int len, f32 width, bool* pHasNextLine);
+
+template <typename T>
+void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
+                        const T* pStr, int len, f32 width);
 
 #pragma push
 #pragma auto_inline off

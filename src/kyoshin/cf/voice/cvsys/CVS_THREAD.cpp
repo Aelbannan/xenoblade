@@ -4,7 +4,7 @@
 
 extern "C" {
     extern u32 lbl_eu_80539910[];   // vtable for CVS_THREAD
-    extern void func_800BE924(void* voice);
+    extern void func_800BE924(u8* voice);
 }
 
 // ── func_802A3E74 ─────────────────────────────────────────────────────────
@@ -13,7 +13,7 @@ extern "C" {
 
 void func_802A3E74(CVS_THREAD* thread) {
     if (thread->unk10 != 0) {
-        func_800BE924((void*)thread->unk10);
+        func_800BE924((u8*)thread->unk10);
     }
 }
 
@@ -49,7 +49,7 @@ void CVS_THREAD::func_802A3BEC(CCharVoice* voicePtr) {
     u32 voice = unk10;
     if (voice != 0 && voice == (unsigned int)voicePtr) {
         if (voice != 0) {
-            func_800BE924((void*)voice);
+            func_800BE924((u8*)voice);
         }
         unk10 = 0;
         unk14 = -1;
@@ -69,7 +69,7 @@ void func_802A3D54(){
 
 void CVS_THREAD::func_802A3E28() {
     if (unk10 != 0) {
-        func_800BE924((void*)unk10);
+        func_800BE924((u8*)unk10);
     }
     unk10 = 0;
     unk14 = (u32)-1;

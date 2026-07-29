@@ -280,8 +280,9 @@ extern "C" void func_8007C5B8__Q22cf13CfGameManagerFv(
     manager->unkB4 = nullptr;
     manager->unk8C = 0;
     memset(manager->unk94, 0, sizeof(manager->unk94));
+    u32 x;
     const ResetVectorWords* zero = &zero__Q22ml5CVec3;
-    u32 x = zero->x;
+    x = zero->x;
     UnkClass_80085334* object = manager->unkAC;
     ResetVectorWords* destination =
         reinterpret_cast<ResetVectorWords*>(&manager->field_0x18);

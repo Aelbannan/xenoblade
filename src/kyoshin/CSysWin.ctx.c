@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CSysWin
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CSysWin.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CSysWin.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,46 +1390,56 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" void __ct__CSysWin() {}
+u8 CSysWin_isReady(void* self) { return static_cast<CSysWinFull*>(self)->field_28; }
 
-extern "C" void __dt__7CSysWinFv() {}
 
-extern "C" void func_8022B6F4() {}
 
-extern "C" void func_8022B748() {}
 
-extern "C" void func_8022B7C8() {}
 
-extern "C" void func_8022B7F4() {}
 
-extern "C" u8 func_8022B8A0(void* self) { return ((u8*)self)[0x28]; }
 
-extern "C" u8 func_8022B8A8(void* self) { return ((u8*)self)[0x34]; }
+u8 CSysWin_getUnk34(void* self) { return static_cast<CSysWinFull*>(self)->field_34; }
 
-extern "C" u8 func_8022B8B0(void* self) { return ((u8*)self)[0x36]; }
+u8 CSysWin_isActive(void* self) { return static_cast<CSysWinFull*>(self)->field_36; }
 
-extern "C" void func_8022B8B8() {}
 
-extern "C" void func_8022B8E4() {}
 
-extern "C" void func_8022B90C() {}
 
-extern "C" void func_8022B9B4() {}
 
-extern "C" void func_8022BF6C() {}
+void func_8022BF6C(){}
 
-extern "C" void func_8022BFC8() {}
+void func_8022BFC8(){}
 
-extern "C" void func_8022C1B4() {}
+void func_8022C1B4(){}
 
-extern "C" void func_8022C258() {}
+void func_8022C258(){}
 
-extern "C" void func_8022C2A4() {}
+void func_8022C2A4(){}
 
-extern "C" void func_8022C2F8() {}
+void func_8022C2F8(){}
 
-extern "C" void func_8022C348() {}
+void func_8022C348(){}
 
-extern "C" void OnFileEvent__7CSysWinFP10CEventFile() {}
+void CSysWin::OnFileEvent() {}

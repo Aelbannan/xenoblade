@@ -751,13 +751,25 @@ void CItemBoxInfoEntry::setItemBoxEntry(u16 r4, u32 r5, u8 r6) {
 }
 
 s32 func_801DF4E0(void* a, void* b, s32 arg2, void* d) {
-    s32 sum = (s32)(func_801DFD60(a, b, 0x2d) + func_801DF610(a, b, 0x52, d) + 0x64);
-    return (s32)(lbl_eu_80668040 * (float)(arg2 * sum));
+    void* r27 = a;
+    void* r28 = b;
+    s32 r29 = arg2;
+    void* r30 = d;
+    u32 r31 = func_801DFD60(r27, r28, 0x2d);
+    u32 r3 = func_801DF610(r27, r28, 0x52, r30);
+    s32 sum = (s32)(r3 + r31 + 0x64);
+    return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
 }
 
 s32 func_801DF578(void* a, void* b, s32 arg2, void* d) {
-    s32 sum = (s32)(func_801DFD60(a, b, 0x2d) + func_801DF610(a, b, 0x53, d) + 0x64);
-    return (s32)(lbl_eu_80668040 * (float)(arg2 * sum));
+    void* r27 = a;
+    void* r28 = b;
+    s32 r29 = arg2;
+    void* r30 = d;
+    u32 r31 = func_801DFD60(r27, r28, 0x2d);
+    u32 r3 = func_801DF610(r27, r28, 0x53, r30);
+    s32 sum = (s32)(r3 + r31 + 0x64);
+    return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
 }
 u32 func_801DF610(void* a, void* b, u32 c, void* d) {
     void* lookup = func_8009EC9C(c);

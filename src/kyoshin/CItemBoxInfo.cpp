@@ -615,15 +615,12 @@ void func_801D885C(CItemBoxInfo* info) {
     for (int i = 0; i < 3; i++) {
         int index = i + 1;
         sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
-        void* layout = info->state.layout;
-        void* child = *(void**)((u8*)layout + 0x10);
-        void** vtable = *(void***)child;
-        void* r = ((void*(*)(void*, const char*, u32))vtable[15])(child, buf, 1);
+        void* r = ((nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10))->FindPaneByName(buf, true);
         func_80124270(r, 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
-        func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
         sprintf(buf, (char*)&lbl_eu_805063BC[0x426], index);
-        func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
     }
 }
 void func_801D8930(CItemBoxInfo* info) {

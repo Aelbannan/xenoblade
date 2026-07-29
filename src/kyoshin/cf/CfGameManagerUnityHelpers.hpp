@@ -130,6 +130,26 @@ struct UnkCharEffect304 {
     u32 field_0x300;
 };
 
+struct UnkCharEffect300 {
+    void* vtable_0x0;
+    u8 field_0x4[0x2FC];
+};
+
+struct Unk815A4Object {
+    void* vtable_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    void* vtable_0xC;
+    void* vtable_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u32 field_0x1C;
+    u8 field_0x20[8];
+    CCharVoice voice_0x28;
+    UnkCharEffect300 effect_0x68;
+    u8 parts_0x368[0x30];
+};
+
 struct Unk80338Object {
     void* vtable_0x0;
     u32 field_0x4;
@@ -788,35 +808,42 @@ extern "C" ResourceLookup81694* func_80069C78(Unk817A8Object* object,
                                                 u32 key);
 extern "C" u32 func_80061FE8();
 extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
-extern "C" Unk814BCObject* __ct__800815A4(Unk814BCObject* self);
+extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self);
 extern "C" Unk80EE4Data* func_80081694__Q22cf13CfGameManagerFv(
     u32 firstKey, u32 secondKey) {
     cf::CfGameManager::getInstance();
     Unk817A8Object* object = func_800817A8__Q22cf13CfGameManagerFv();
     Unk80EE4Data* result = nullptr;
-    if (!func_800817B0__Q22cf13CfGameManagerFv()) {
-        ResourceLookup81694* first = func_80069C78(object, firstKey);
-        ResourceLookup81694* second = func_80069C78(object, secondKey);
-        if (first != nullptr && first->value != 0) {
-            u32 secondValue = second != nullptr ? second->value : 0;
-            result = reinterpret_cast<Unk80EE4Data*>(
-                func_80080F40__Q22cf13CfGameManagerFv(
-                    first->value, secondValue, 0));
-            if (result != nullptr) {
-                u32 heap = func_80061FE8();
-                void* memory = allocate__Q23mtl10MemManagerFUlUl(0x398, heap);
-                void* attached = memory;
-                if (memory != nullptr) {
-                    attached = __ct__800815A4(
-                        static_cast<Unk814BCObject*>(memory));
-                }
-                result->vfunc_0x70(attached);
+    ResourceLookup81694* first;
+    ResourceLookup81694* second;
+    if (func_800817B0__Q22cf13CfGameManagerFv()) {
+        goto done;
+    }
+    first = func_80069C78(object, firstKey);
+    second = func_80069C78(object, secondKey);
+    if (first == nullptr || first->value == 0) {
+        goto done;
+    }
+    {
+        u32 secondValue = second != nullptr ? second->value : 0;
+        result = reinterpret_cast<Unk80EE4Data*>(
+            func_80080F40__Q22cf13CfGameManagerFv(
+                first->value, secondValue, 0));
+        if (result != nullptr) {
+            u32 heap = func_80061FE8();
+            void* memory = allocate__Q23mtl10MemManagerFUlUl(0x398, heap);
+            void* attached = memory;
+            if (memory != nullptr) {
+                attached = __ct__800815A4(
+                    static_cast<Unk815A4Object*>(memory));
             }
+            result->vfunc_0x70(attached);
         }
     }
     if (result != nullptr) {
         result->vfunc_0x48();
     }
+done:
     return result;
 }
 
@@ -1405,6 +1432,32 @@ extern "C" Unk80338Object* __ct__80080338(Unk80338Object* self) {
     effect->field_0x300 = zero;
     result->field_0x378 = zero;
     result->field_0x37C = zero;
+    return result;
+}
+#pragma dont_inline reset
+
+extern "C" u8 lbl_eu_8052A8E8[];
+extern "C" u8 lbl_eu_8052FE38[];
+extern "C" void __ct__cf_CPartsChange(void* parts);
+#pragma dont_inline on
+extern "C" Unk815A4Object* __ct__800815A4(Unk815A4Object* self) {
+    Unk815A4Object* result = self;
+    self->field_0x4 = 0;
+    self->field_0x8 = 0;
+    self->vtable_0x0 = lbl_eu_8052AC98;
+    self->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    self->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    self->field_0x14 = 0;
+    self->field_0x18 = 0;
+    self->field_0x1C = 0;
+    __ct__CCharVoice(&self->voice_0x28);
+    result->vtable_0x0 = lbl_eu_8052A8E8;
+    result->vtable_0xC = &lbl_eu_8052A8E8[0xB4];
+    result->vtable_0x10 = &lbl_eu_8052A8E8[0xC4];
+    UnkCharEffect300* effect = &result->effect_0x68;
+    __ct__CCharEffect(effect);
+    effect->vtable_0x0 = lbl_eu_8052FE38;
+    __ct__cf_CPartsChange(&result->parts_0x368);
     return result;
 }
 #pragma dont_inline reset

@@ -2,6 +2,19 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/COption.hpp"
+#include "kyoshin/CBaseCur.hpp"
+#include <nw4r/lyt.h>
+
+// External labels and functions used by COption methods
+extern float lbl_eu_80668C10;
+extern char lbl_eu_805103D8[];
+
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+void func_801D216C(void*, u8);
+void func_801D2174(CBaseCur*);
+void func_80124270(nw4r::lyt::Pane*, u32);
+void func_8029E254(COption*);
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
@@ -47,7 +60,17 @@ void func_8029D054(){}
 
 void func_8029D0C0(){}
 
-void func_8029D10C(){}
+// Check if an animation transform has finished; if so, finalize state
+// and activate sub-cursors before calling the shared tail handler.
+void COption::func_8029D10C() {
+    if (func_80137444(mAnimTransform24, lbl_eu_80668C10) != 0) {
+        field_0x29 = 3;
+        field_0x2B = 1;
+        func_801D216C(&mSubCur1, 1);
+        func_801D216C(&mSubCur2, 1);
+        func_8029E254(this);
+    }
+}
 
 void func_8029D178(){}
 

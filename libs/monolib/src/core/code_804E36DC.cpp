@@ -43,7 +43,7 @@ void func_804E3D0C(UnkStruct_804E36DC* self, u32 value) {
 
 void func_804E3D48(UnkStruct_804E36DC* self, u32 value) {
     for (int i = 0; i < 4; i++) {
-        if (self->field_0xDC[i] == value) {
+        if (value == self->field_0xDC[i]) {
             self->field_0xDC[i] = 0;
             return;
         }

@@ -17,7 +17,6 @@ extern const char lbl_eu_8050A740[];
 extern void func_80137924(void*, void*, void*, void*);
 extern void func_80138078(u32);
 extern float lbl_eu_80668610;
-extern "C" void* createArcResourceAccessor__10CLibLayoutFv();
 
 // Constructor — defined as global function with __ct__ prefix to match
 // retail C-linkage symbol __ct__CExchangeWin (avoids 12-prefix mangling).
@@ -145,8 +144,7 @@ bool CExchangeWin::OnFileEvent(CEventFile* pEventFile) {
             (char*)&lbl_eu_8050A740[0xf6], true);
         if (pane != nullptr) {
             TPLHeader* header = resource->descriptorArray->textureHeader;
-            pane->mSize.width = (f32)header->width;
-            pane->mSize.height = (f32)header->height;
+            pane->SetSize(nw4r::lyt::Size((f32)header->width, (f32)header->height));
         }
     }
 

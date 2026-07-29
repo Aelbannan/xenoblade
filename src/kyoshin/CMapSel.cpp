@@ -3,6 +3,7 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CMapSel.hpp"
+#include "kyoshin/code_80135FDC.hpp"
 
 void __ct__CMapSel(){}
 
@@ -16,26 +17,33 @@ extern "C" void __dl__FPv(void*);
    byte-exact: null-check, member dtors in reverse-declaration order, then
    conditional delete if flags > 0. */
 extern "C" void* __dt__7CMapSelFv(CMapSel* _this, int flags) {
-    /* Pre-load locals to encourage MWCC to save this+flags as a consecutive pair
-       (stmw r30, 8(sp)) rather than separate stw instructions. */
-    CMapSel* thiz = _this;
-    int flg = flags;
-    if (thiz != 0) {
-        __dt__6CCur18Fv(thiz->mCursor, -1);
-        __dt__10CScrollBarFv(thiz->mScrollBar, -1);
-        __dt__17UnkClass_8045F564Fv(thiz->mMemRegion, -1);
-        if (flg > 0) {
-            __dl__FPv(thiz);
+    if (_this != 0) {
+        __dt__6CCur18Fv(_this->mCursor, -1);
+        __dt__10CScrollBarFv(_this->mScrollBar, -1);
+        __dt__17UnkClass_8045F564Fv(_this->mMemRegion, -1);
+        if (flags > 0) {
+            __dl__FPv(_this);
         }
     }
-    return thiz;
+    return _this;
 }
 
 void func_8024343C(){}
 
 void func_802434A0(){}
 
-void func_80243560(){}
+/* func_80243560 — Draw the map-select UI: layout, scrollbar, and cursor.
+   Guards on field_0x30 (widget active) and mState (not uninitialized). */
+extern "C" void func_801F35B0(void*, nw4r::lyt::DrawInfo*);
+extern "C" void func_801D20B0(void*, nw4r::lyt::DrawInfo*);
+
+void func_80243560(CMapSel* self, nw4r::lyt::DrawInfo* drawInfo) {
+    if (self->field_0x30 != 0 && self->mState != 0) {
+        func_80137038((nw4r::lyt::Layout*)self->mLayout, drawInfo, 0, 1);
+        func_801F35B0(self->mScrollBar, drawInfo);
+        func_801D20B0(self->mCursor, drawInfo);
+    }
+}
 
 void func_802435CC(){}
 

@@ -23,6 +23,10 @@ extern void func_801D21CC(CBaseCur* cur);
 extern "C" void __dt__8CBaseCurFv(void*, int);
 // CProcess base destructor
 extern "C" void __dt__8CProcessFv(void*, int);
+// CSubCur destructor (defined in kyoshin/CCur.cpp)
+extern "C" void* __dt__7CSubCurFv(CBaseCur*, int);
+// UnkClass_8045F564 destructor
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 
 // Destructor for CBaseCur-derived class at vtable 0x800FEA30.
 // Standard MWCC virtual dtor: null-check, call base dtor with flag 0,
@@ -48,6 +52,30 @@ u32 func_800FEDF8(void) {
 void* __dt__800FED0C(void* _this, int flags) {
     if (_this) {
         if (_this) {
+            __dt__8CProcessFv(_this, 0);
+        }
+        if (flags > 0) {
+            operator delete(_this);
+        }
+    }
+    return _this;
+}
+
+// CMainMenu::~CMainMenu() — virtual destructor (D1/D2 merged).
+// Destroys subobjects in reverse order: CSubCur at +0xA8, CBaseCur at +0x90,
+// UnkClass_8045F564 at +0x60, CProcess at 0x00, then conditionally frees memory.
+// The addic. for CBaseCur and the nested CProcess null-checks are MWCC
+// D2-inlined-into-D1 artifacts.
+extern "C" void* __dt__9CMainMenuFv(CMainMenu* _this, int flags) {
+    if (_this != NULL) {
+        CBaseCur* subCur = (CBaseCur*)((char*)_this + 0xA8);
+        __dt__7CSubCurFv(subCur, -1);
+        CBaseCur* baseCur = (CBaseCur*)((char*)_this + 0x90);
+        if (baseCur != NULL) {
+            __dt__8CBaseCurFv(baseCur, 0);
+        }
+        __dt__17UnkClass_8045F564Fv((char*)_this + 0x60, -1);
+        if (_this != NULL) {
             __dt__8CProcessFv(_this, 0);
         }
         if (flags > 0) {

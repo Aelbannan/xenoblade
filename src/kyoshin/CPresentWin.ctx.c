@@ -28655,9 +28655,10 @@ CPresentWin::CPresentWin() {
 // Cleanup: wait for draw, delete the layout, and clear fields
 void func_8022DB04(CPresentWin* self) {
     CDeviceVI::waitForDrawDone();
+    nw4r::lyt::Layout* layout = self->mpLayout;
     self->mField30 = 0;
-    if (self->mpLayout != NULL) {
-        delete self->mpLayout;
+    if (layout != NULL) {
+        delete layout;
         self->mpLayout = NULL;
     }
     self->mpField04 = NULL;

@@ -8,6 +8,9 @@
 // Shared helper: set pane visibility (extern, defined in code_80135FDC)
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 
+// String table for cursor layout/anim resource names (split1 rodata)
+extern char lbl_eu_80505DE8[];
+
 /* func_801D202C: Per-frame cursor update. Drives animation state:
    mActive==0 checks whether animTransform0 has finished;
    mActive==1 delegates to the CBaseCur vtable handler;
@@ -20,9 +23,11 @@ extern "C" void func_801D202C(CBaseCur* cur) {
     case 0:
         func_80137444(cur->mpAnimTrans0, 1.0f);
         break;
-    case 1:
-        ((void (*)(CBaseCur*))((void**)cur->mVtable)[5])(cur);
+    case 1: {
+        void (**vt)(CBaseCur*) = (void (**)(CBaseCur*))cur->mVtable;
+        vt[5](cur);
         break;
+    }
     }
     cur->mpLayout->Animate(0);
 }
@@ -186,13 +191,15 @@ void func_virt___dt__6CCur09Fv() { }
 /* CCur09::func_801D2478: Load the cursor layout (curs09.brlyt) and
    its loop animation (curs09_roop.brlan), unbind all existing
    animations from the layout, then run the shared cleanup handler. */
-extern "C" void func_801D2478__6CCur09Fv(CBaseCur* cur) {
-    extern char lbl_eu_80505DE8[];
+#pragma push
+#pragma optimize_for_size on
+extern "C" DECOMP_DONT_INLINE void func_801D2478__6CCur09Fv(CBaseCur* cur) {
     func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0xa0);
     func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0xb8);
     cur->mpLayout->UnbindAllAnimation();
     func_801D21CC(cur);
 }
+#pragma pop
 
 void func_801D24E8(){}
 

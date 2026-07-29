@@ -25,17 +25,32 @@ bool WsdFileReader::IsValidFileHeader(const void* pWsdBin) {
 
 WsdFileReader::WsdFileReader(const void* pWsdBin)
     : mHeader(NULL), mDataBlock(NULL), mWaveBlock(NULL) {
-    if (!IsValidFileHeader(pWsdBin)) {
+    const ut::BinaryFileHeader* pFileHeader =
+        static_cast<const ut::BinaryFileHeader*>(pWsdBin);
+
+    if (pFileHeader->signature != SIGNATURE) {
+        return;
+    }
+
+    if (pFileHeader->version < NW4R_VERSION(1, 0)) {
+        return;
+    }
+
+    if (pFileHeader->version >= NW4R_VERSION(1, 3)) {
         return;
     }
 
     mHeader = static_cast<const WsdFile::Header*>(pWsdBin);
 
-    mDataBlock = static_cast<const WsdFile::DataBlock*>(
-        ut::AddOffsetToPtr(mHeader, mHeader->dataBlockOffset));
+    if (mHeader->dataBlockOffset != 0) {
+        mDataBlock = static_cast<const WsdFile::DataBlock*>(
+            ut::AddOffsetToPtr(mHeader, mHeader->dataBlockOffset));
+    }
 
-    mWaveBlock = static_cast<const WsdFile::WaveBlock*>(
-        ut::AddOffsetToPtr(mHeader, mHeader->waveBlockOffset));
+    if (mHeader->waveBlockOffset != 0) {
+        mWaveBlock = static_cast<const WsdFile::WaveBlock*>(
+            ut::AddOffsetToPtr(mHeader, mHeader->waveBlockOffset));
+    }
 }
 
 bool WsdFileReader::ReadWaveSoundInfo(WaveSoundInfo* pSoundInfo, int id) const {

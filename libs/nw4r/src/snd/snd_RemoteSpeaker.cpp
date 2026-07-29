@@ -105,10 +105,8 @@ void RemoteSpeaker::Update() {
         return;
     }
 
-    SpeakerCommand command = mUserCommand;
-    if (command == COMMAND_NONE) {
-        command = mInternalCommand;
-    }
+    SpeakerCommand command =
+        mUserCommand != COMMAND_NONE ? mUserCommand : mInternalCommand;
 
     mUserCommand = COMMAND_NONE;
     mInternalCommand = COMMAND_NONE;

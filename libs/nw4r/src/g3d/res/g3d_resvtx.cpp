@@ -203,9 +203,20 @@ void ResVtxFurPos::SetArray(unsigned short idx) {
     }
 
     ResVtxFurPosData& r = ref();
-    void* pData;
 
-    if (r.toFurPosArray != 0 && idx < r.numLayer && idx >= 0) {
+    // Two-step validation pattern matches retail codegen
+    int hasArray = 0;
+    if (r.toFurPosArray != 0 && (s32)idx < (s32)r.numLayer) {
+        hasArray = 1;
+    }
+
+    int valid = 0;
+    if (hasArray != 0 && (s32)idx >= 0) {
+        valid = 1;
+    }
+
+    void* pData;
+    if (valid != 0) {
         pData = (u8*)&r + r.toFurPosArray + idx * r.ofsLayer;
     } else {
         pData = NULL;

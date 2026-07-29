@@ -302,18 +302,19 @@ void RemoteSpk::Disconnect(s32 chan) {
 
     WPADControlSpeaker(chan, WPAD_SPEAKER_ON, &SpeakerOnCallback);
 
-    ChanInfo& rInfo = info[chan];
-    rInfo.wencinfo.xn = 0;
-    rInfo.wencinfo.dl = 0;
-    rInfo.wencinfo.qn = 0;
-    rInfo.wencinfo.dn = 0;
-    rInfo.wencinfo.dlh = 0;
-    rInfo.wencinfo.dlq = 0;
-    for (int i = 0; i < 8; i++) {
-        rInfo.wencinfo.padding[i] = 0;
-    }
-    rInfo.first = true;
-    rInfo.playReady = false;
+    // Zero the entire WENCInfo struct (8 words = 32 bytes)
+    u32* pWenc = reinterpret_cast<u32*>(&info[chan].wencinfo);
+    pWenc[0] = 0;
+    pWenc[1] = 0;
+    pWenc[2] = 0;
+    pWenc[3] = 0;
+    pWenc[4] = 0;
+    pWenc[5] = 0;
+    pWenc[6] = 0;
+    pWenc[7] = 0;
+
+    info[chan].first = true;
+    info[chan].playReady = false;
 }
 
 } // namespace homebutton

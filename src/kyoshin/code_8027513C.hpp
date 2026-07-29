@@ -27,10 +27,12 @@ public:
 };
 
 // Helper to access fields of CfObjectEff that aren't yet named in its header.
-// CfObjectEff has padding _padA8[0xC0-0xA8]; offset 0xB0 is an unnamed u32.
+// Avoids needing the complete CfObjectEff type for matching.
 struct CfObjectEffLayout {
-    u8 _00[0xB0];
-    u32 field_0xB0;
+    u8 _00[0x68];
+    u32 mFlags68;       // 0x68 - CfObject::mFlags68
+    u8 _6C[0xB0 - 0x6C];
+    u32 field_0xB0;     // 0xB0 - unnamed field in CfObjectEff::_padA8
 };
 
 // Forward declarations for callees

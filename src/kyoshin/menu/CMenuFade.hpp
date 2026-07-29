@@ -4,11 +4,13 @@
 #include "monolib/lib/UnkClass_8045F564.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/scn/IScnRender.hpp"
-#include "monolib/work/IWorkEvent.hpp"
 
 #include <nw4r/lyt.h>
 
-class CMenuFade : public IUICf, public IWorkEvent, public IScnRender {
+// MWCC_REFERENCE §190: Do not inherit from IWorkEvent/IScnRender —
+// the vtable pointers at 0x58/0x5c are raw data; inheriting pulls weak
+// destructor stubs that blow the dtor shape vs retail.
+class CMenuFade : public IUICf {
 public:
     CMenuFade();
     virtual ~CMenuFade();
@@ -19,12 +21,13 @@ public:
     void cbRenderBefore();
     void func_80113E2C() { field_0x54 = 1; }
 
-    // Fields (IUICf/CTTask at 0x00-0x53, IWorkEvent at 0x58, IScnRender at 0x5c)
-    u8 field_0x54;                     // 0x54
-    u8 pad55[3];                       // 0x55-0x57
-    // IWorkEvent vtable at 0x58
-    // IScnRender vtable at 0x5c
-    CScn* mScn;                        // 0x60
-    UnkClass_8045F564 mLayoutMem;      // 0x64
-    nw4r::lyt::Layout* mLayout;        // 0x74
+    // Fields
+    // CProcess/CTTask/IUICf at 0x00-0x53
+    u8 field_0x54;                              // 0x54
+    u8 pad55[3];                                // 0x55-0x57
+    u32 mIWorkEventVtbl;                        // 0x58 — IWorkEvent vtable pointer (raw)
+    u32 mIScnRenderVtbl;                        // 0x5c — IScnRender vtable pointer (raw)
+    CScn* mScn;                                 // 0x60
+    UnkClass_8045F564 mLayoutMem;               // 0x64
+    nw4r::lyt::Layout* mLayout;                 // 0x74
 };

@@ -244387,7 +244387,7 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() {}
+    LinkListNode() { Init(); }
 
     void Init() {
         mNext = NULL;

@@ -139,9 +139,7 @@ public:
         return mChildren.front();
     }
 
-    bool isRunning() const {
-        return !isException() && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
-    }
+    bool isRunning() const;
 
     bool isException() const {
         return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;

@@ -30,16 +30,15 @@ void AxVoiceManager::Setup(void* pBuffer, u32 size) {
 
     mVoiceCount = size / sizeof(AxVoice);
 
-    u8* pPtr = static_cast<u8*>(pBuffer);
+    AxVoice* pVoice = static_cast<AxVoice*>(pBuffer);
 
     for (u32 i = 0; i < mVoiceCount; i++) {
-        AxVoice* pVoice = reinterpret_cast<AxVoice*>(pPtr);
         if (pVoice != NULL) {
             new (pVoice) AxVoice();
         }
 
-        mFreeVoiceList.Insert(mFreeVoiceList.GetEndIter(), pVoice);
-        pPtr += sizeof(AxVoice);
+        mFreeVoiceList.PushBack(pVoice);
+        pVoice++;
     }
 
     mInitialized = true;

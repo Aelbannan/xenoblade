@@ -87,6 +87,7 @@ private:
 
 private:
     static bool sBatteryFlag[WPAD_MAX_CONTROLLERS];
+    static bool sSetInfoAsync[WPAD_MAX_CONTROLLERS];
     static OSAlarm sAlarm[WPAD_MAX_CONTROLLERS];
     static OSAlarm sAlarmSoundOff[WPAD_MAX_CONTROLLERS];
     static Controller* sThis[WPAD_MAX_CONTROLLERS];

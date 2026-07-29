@@ -96,13 +96,21 @@ void CLibHbmControl::wkRender(){
     
 }
 
+static const char sCLibHbmControlName[] = "CLibHbmControl";
+
 CLibHbmControl* CLibHbmControl::create() {
     CLibHbm* parent = CLibHbm::getInstance();
+    const char* name = sCLibHbmControlName;
     WORK_ID id = CWorkThreadSystem::getWorkMem();
     CLibHbmControl* hbmControl = (CLibHbmControl*)mtl::MemManager::allocate(sizeof(CLibHbmControl), id);
 
     if (hbmControl != nullptr) {
-        new (hbmControl) CLibHbmControl("CLibHbmControl", parent);
+        new (hbmControl) CProc(name, parent, 8);
+        hbmControl->mHbmPhase = 0;
+        hbmControl->mWaitTimer = 0;
+        spInstance = hbmControl;
+        hbmControl->mType = THREAD_CLIBHBMCONTROL;
+        std::memset(&hbmControl->mHBMControllerData, 0, sizeof(HBMControllerData));
     }
 
     CWorkUtil::entryWork(hbmControl, parent, false);

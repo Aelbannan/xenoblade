@@ -145,7 +145,18 @@ void func_801D4174(CItemBoxInfo* info) {
 void func_801D40C4(){}
 
 
-void func_801D4B3C(){}
+void func_80137924(void*, void*, void*, void*);
+
+void func_801D4B3C(void* arg0, CItemBoxInfo* info, u32 arg2) {
+    char buf[0x20];
+    sprintf(buf, (char*)&lbl_eu_805063BC[0x161], arg2 + 1);
+    void* layout = info->state.layout;
+    void* child = *(void**)((u8*)layout + 0x10);
+    void** vtable = *(void***)child;
+    void* r1 = ((void*(*)(void*, const char*, u32))vtable[15])(child, (char*)&lbl_eu_805063BC[0x16e], 1);
+    void* r2 = ((void*(*)(void*, const char*, u32))vtable[15])(child, buf, 1);
+    func_80137924(arg0, r2, r1, child);
+}
 
 void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
     if (info->state.layout == 0) return;
@@ -408,7 +419,18 @@ void func_801E16F0(CItemBoxInfo2* info, char* arg1, char* arg2) {
     sprintf(buf, &lbl_eu_805063BC[0x151], arg1);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, buf, arg2, 0);
 }
-void func_801E174C(){}
+
+void func_801E174C(void* arg0, CItemBoxInfo2* info, u32 arg2) {
+    char buf[0x20];
+    sprintf(buf, (char*)&lbl_eu_805063BC[0x161], arg2 + 1);
+    void* layout = info->state.layout;
+    void* child = *(void**)((u8*)layout + 0x10);
+    void** vtable = *(void***)child;
+    void* r1 = ((void*(*)(void*, const char*, u32))vtable[15])(child, (char*)&lbl_eu_805063BC[0x16e], 1);
+    void* r2 = ((void*(*)(void*, const char*, u32))vtable[15])(child, buf, 1);
+    func_80137924(arg0, r2, r1, child);
+}
+
 void func_801E17EC(){}
 
 void func_801E1868(CItemBoxInfo2* info) {

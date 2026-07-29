@@ -13,7 +13,7 @@ CLight::CLight() {
     unk1C.y = 0.0f;
     unk1C.z = 0.0f;
     unk28 = 1.0f;
-    mpLightObj = nullptr;
+    mpLightObj = 0;
     unk34 = 0;
     unk38 = 1.0f;
     unk3C = 10000.0f;

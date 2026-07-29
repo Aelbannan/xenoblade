@@ -12823,9 +12823,7 @@ public:
         return mChildren.front();
     }
 
-    bool isRunning() const {
-        return !isException() && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
-    }
+    bool isRunning() const;
 
     bool isException() const {
         return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;
@@ -245291,7 +245289,7 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() {}
+    LinkListNode() { Init(); }
 
     void Init() {
         mNext = NULL;
@@ -258717,10 +258715,15 @@ void CTaskGameCf::func_8004431C() {
     mMoveFunc = lbl_eu_80525AB8;
 }
 
-extern const CTaskGameCf::MoveFunc lbl_eu_80525AC4;
+extern const u32 lbl_eu_80525AC4[3];
 
 void CTaskGameCf::func_8004433C() {
-    mMoveFunc = lbl_eu_80525AC4;
+    u32 v1 = lbl_eu_80525AC4[1];
+    u32 v0 = lbl_eu_80525AC4[0];
+    reinterpret_cast<u32*>(this)[0x40 / 4] = v1;
+    reinterpret_cast<u32*>(this)[0x3C / 4] = v0;
+    u32 v2 = lbl_eu_80525AC4[2];
+    reinterpret_cast<u32*>(this)[0x44 / 4] = v2;
 }
 
     void CTaskGameCf::startMission(s16 arg1, s16 arg2, ml::FixStr<32>& arg3, s16 arg4){
@@ -258775,17 +258778,10 @@ void cf::CTaskGameCf::func_800444DC(){
     *(Ptmf*)((char*)this + 0x3C) = &cf::CTaskGameCf::func_800444FC;
 }
 
-u32 lbl_eu_80525B18[3];
+CTaskGameCf::MoveFunc lbl_eu_80525B18;
 
 void CTaskGameCf::func_800444FC(){
-    struct CTTaskData {
-        u8 _00[0x3c];
-        u32 mData[3];
-    };
-    u32* dst = static_cast<CTTaskData*>(static_cast<void*>(this))->mData;
-    dst[0] = lbl_eu_80525B18[0];
-    dst[1] = lbl_eu_80525B18[1];
-    dst[2] = lbl_eu_80525B18[2];
+    mMoveFunc = lbl_eu_80525B18;
 }
 
     void CTaskGameCf::func_8004451C(){

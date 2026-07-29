@@ -5,9 +5,12 @@
 #include <revolution/PAD.h>
 #include <revolution/WPAD.h>
 
+extern "C" void WPADSetCallbackByKPAD(void (*callback)(void));
+
 namespace homebutton {
 
 bool Controller::sBatteryFlag[WPAD_MAX_CONTROLLERS];
+bool Controller::sSetInfoAsync[WPAD_MAX_CONTROLLERS];
 OSAlarm Controller::sAlarm[WPAD_MAX_CONTROLLERS];
 OSAlarm Controller::sAlarmSoundOff[WPAD_MAX_CONTROLLERS];
 Controller* Controller::sThis[WPAD_MAX_CONTROLLERS];
@@ -112,11 +115,11 @@ void Controller::initCallback() {
 }
 
 void Controller::clearCallback() {
+    WPADControlSpeaker(mHBController.chan, WPAD_SPEAKER_ON, NULL);
+    WPADSetCallbackByKPAD(NULL);
     WPADSetConnectCallback(mHBController.chan, mOldConnectCallback);
-    mOldConnectCallback = NULL;
-
+    WPADSetCallbackByKPAD((void (*)(void))1);
     WPADSetExtensionCallback(mHBController.chan, mOldExtensionCallback);
-    mOldExtensionCallback = NULL;
 }
 
 void Controller::setKpad(const HBMKPadData* pPadData, bool updatePos) {
@@ -269,9 +272,10 @@ HBController* Controller::getController() {
 }
 
 void Controller::startMotor() {
-    if (getChan() < WPAD_MAX_CONTROLLERS && !isPlayingSound() && mRumbleFlag) {
-        setRumble();
-        WPADControlMotor(getChan(), WPAD_MOTOR_RUMBLE);
+    if (mHBController.chan < WPAD_MAX_CONTROLLERS && mRumbleFlag &&
+        !remotespk->isPlaying(mHBController.chan)) {
+        mHBController.rumble = true;
+        WPADControlMotor(mHBController.chan, WPAD_MOTOR_RUMBLE);
     }
 }
 
@@ -297,6 +301,9 @@ s32 Controller::getInfoAsync(WPADInfo* pInfo) {
 void Controller::ControllerCallback(s32 chan, s32 result) {
     if (result == WPAD_ERR_OK && chan < WPAD_MAX_CONTROLLERS) {
         sBatteryFlag[chan] = true;
+    }
+    if (chan < WPAD_MAX_CONTROLLERS) {
+        sSetInfoAsync[chan] = false;
     }
 }
 

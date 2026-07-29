@@ -49,13 +49,27 @@ void func_800453EC(){}
 
 
 
-bool func_80045540(){ return false; }
+// This-adjusting thunk: called through a vtable where 'this' is 0x54 bytes past
+// the CTaskGameEff subobject. Adjusts this back and tail-calls cbRenderBefore.
+void func_80045540(CTaskGameEff* self) {
+    cbRenderBefore__12CTaskGameEffFv();
+    (void)self;
+}
 
-bool func_80045548(){ return false; }
+// This-adjusting thunk for destructor: same -0x54 adjustment, passes flag through.
+void func_80045548(CTaskGameEff* self, int flag) {
+    __dt__12CTaskGameEffFv(self, flag);
+}
 
-bool func_80045550(){ return false; }
+// This-adjusting thunk: -0x58 adjustment, calls func_80045044.
+void func_80045550(CTaskGameEff* self, void* param) {
+    func_80045044(self, param);
+}
 
-bool func_80045558(){ return false; }
+// This-adjusting thunk for destructor: -0x58 adjustment, passes flag through.
+void func_80045558(CTaskGameEff* self, int flag) {
+    __dt__12CTaskGameEffFv(self, flag);
+}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.

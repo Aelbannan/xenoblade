@@ -286,3 +286,25 @@ void CWorkRoot::setException(CException* pException){
 CException* CWorkRoot::getException(){
     return sException;
 }
+
+// Out-of-line definition to match retail bytecode.
+// Inlines the exception check from isException() rather than calling it.
+bool CWorkThread::isRunning() const {
+    bool exception;
+    if (mFlags & THREAD_FLAG_EXCEPTION) {
+        exception = true;
+    } else {
+        exception = (mMsgQueue.find(EVT_EXCEPTION) >= 0);
+    }
+
+    bool result = false;
+    if (!exception) {
+        bool stateOK = (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
+        if (stateOK) {
+            result = true;
+        }
+    }
+    return result;
+}
+
+

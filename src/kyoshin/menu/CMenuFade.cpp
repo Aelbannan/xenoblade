@@ -17,7 +17,8 @@ void CMenuFade::Draw() {
 
 void CMenuFade::Term() {
     CDeviceVI::waitForDrawDone();
-    mScn->removeRenderCB(this);
+    // IScnRender vtable lives at offset 0x5c — pass the raw address
+    mScn->removeRenderCB((IScnRender*)((u8*)this + 0x5c));
     if (mLayout) {
         delete mLayout;
     }

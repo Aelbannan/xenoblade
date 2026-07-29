@@ -12,8 +12,13 @@ extern "C" void CChain_setFieldAndClear(void*, int);
 // Forward decl: cf::CfGameManager::getPlayer(int)
 namespace cf { class CfGameManager { public: static cf::CfObjectMove* getPlayer(int); }; }
 
-void func_80282020(){}
+// Prepares arguments for func_802A0950: passes &mChainEffect, arg2, 0xAA, this,
+// arg3, and a branchless non-zero→0x5F conversion of arg4.
+void func_80282020(cf::CChainActorPc* self, int arg2, int arg3, int arg4) {
+    func_802A0950(&self->mChainEffect, arg2, 0xAA, (int)self, arg3, arg4 ? 0x5F : 0);
+}
 int func_802A0804(int, int);
+void func_80276CAC(void*, u32, u32);
 extern "C" void func_802A08F4(void*);
 extern "C" void func_802A0904(void*);
 extern "C" void func_80279DC0(void*);
@@ -56,7 +61,10 @@ void func_80277154();
 void func_8028248C() {
     func_80277154();
 }
-void func_80282490(){}
+// Reorders arguments and conditionally dereferences arg3 before tail-calling func_80276CAC.
+void func_80282490(cf::CChainActorPc* self, void* arg2, void* arg3) {
+    func_80276CAC(arg2, self->unk0, arg3 ? *(u32*)arg3 : 0);
+}
 
 // Resets chain state (setFieldAndClear) and clears the chain effect.
 extern "C" void func_80281924(cf::CChainActorPc* self, int val) {

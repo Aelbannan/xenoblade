@@ -248,10 +248,10 @@ protected:
     detail::BitGXNums mGXMemNum; // at 0x3C
     void* mpGXMem;               // at 0x40
 
-    char mName[NW4R_LYT_MATERIAL_NAME_LEN + 1]; // at 0x44
-    bool mbUserAllocated;                       // at 0x59
+    char mName[NW4R_LYT_RES_NAME_LEN]; // at 0x44
+    bool mbUserAllocated;              // at 0x54
 
-    u8 PADDING_0x5A[0x5C - 0x5A]; // at 0x5A
+    u8 PADDING_0x55[0x5C - 0x55]; // at 0x55
 
 private:
     void Init();

@@ -1,7 +1,15 @@
 #include "kyoshin/menu/CMenuFade.hpp"
+#include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceVI.hpp"
+#include "monolib/util/MemManager.hpp"
 
 extern int lbl_eu_80663FA0;
+
+extern "C" {
+extern char lbl_eu_804FDEA8[];  // String table: +0xa layout, +0x18 anim, +0x26 pane name
+nw4r::lyt::ArcResourceAccessor* func_801355F4();  // Shared ARC resource accessor
+void func_80137B44(nw4r::lyt::Layout*, const char*, u32);  // Pane color setter
+}
 
 CMenuFade::CMenuFade(){
 
@@ -9,6 +17,84 @@ CMenuFade::CMenuFade(){
 
 CMenuFade::~CMenuFade() {
 
+}
+
+/**
+ * Initialises the fade layout and animation.
+ *
+ * Allocates a 0x4000-byte MEM2 region via mLayoutMem, then builds the
+ * primary layout (mLayout) and default animation (mAnimDefault) from the
+ * shared ARC resource at string offsets 0xa and 0x18 respectively. Enables
+ * mAnimDefault, computes per-frame durations from the animation frame size,
+ * and sets the initial frame based on field_0x90. Configures pane alpha via
+ * func_80137B44 based on field_0x98. Registers this object as an IScnRender
+ * render callback at priority 0xd on the owning scene.
+ */
+void CMenuFade::Init() {
+    mtl::ALLOC_HANDLE handle = mtl::MemManager::getHandleMEM2();
+    mLayoutMem.createRegion(handle, 0x4000, lbl_eu_804FDEA8, 0);
+    // Scoped region guard — destructor releases the region when Init finishes
+    Class_8045F858 regionGuard(&mLayoutMem);
+
+    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
+    func_80136E84(&mLayout, accessor, lbl_eu_804FDEA8 + 0xa);
+
+    accessor = func_801355F4();
+    func_80136F08(mLayout, &mAnimDefault, accessor, lbl_eu_804FDEA8 + 0x18);
+
+    mLayout->SetAnimationEnable(mAnimDefault, true);
+
+    // Convert animation frame size to float (int-to-float via type-pun)
+    u16 frameSize = mAnimDefault->GetFrameSize();
+    float frameSizeF = (float)frameSize;
+
+    // Compute per-frame durations: if the divisor is negative, use a
+    // fallback constant instead of dividing.
+    if (field_0x80 >= 0.0f) {
+        field_0x80 = frameSizeF / field_0x80;
+    } else {
+        field_0x80 = 1.0f;
+    }
+
+    if (field_0x84 < 0.0f) {
+        field_0x84 = 30.0f;
+    }
+
+    if (field_0x88 >= 0.0f) {
+        field_0x88 = frameSizeF / field_0x88;
+    } else {
+        field_0x88 = 1.0f;
+    }
+
+    // Set initial animation frame based on state (field_0x90)
+    switch (field_0x90) {
+    case 0:
+    case 1:
+        field_0x7c = 0.0f;
+        break;
+    case 2:
+        field_0x7c = (float)(mAnimDefault->GetFrameSize() - 1) - 1.0f;
+        break;
+    }
+
+    // Configure pane alpha via string offset 0x26
+    switch (field_0x98) {
+    case 0:
+        func_80137B44(mLayout, lbl_eu_804FDEA8 + 0x26, 0xff);
+        break;
+    case 1:
+        func_80137B44(mLayout, lbl_eu_804FDEA8 + 0x26, (u32)-1);
+        break;
+    }
+
+    // Apply the computed frame and tick the animation
+    mAnimDefault->SetFrame(field_0x7c);
+    mLayout->Animate(0);
+
+    // Register as IScnRender callback at priority 0xd on the owning scene
+    IScnRender* cb = this;
+    mScn->addRenderCB(cb, 0xd, 0);
+    mLayoutMem.func_8045F810();
 }
 
 void CMenuFade::Draw() {

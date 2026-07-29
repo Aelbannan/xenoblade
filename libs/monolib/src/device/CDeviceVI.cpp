@@ -480,11 +480,10 @@ void CDeviceVI::endFrame(){
         return;
     }
 
-    // Inlined BEFORE_DRAW_DONE callback loop: skip if mViFlags bit 31 is set
-    if (!(spInstance->mViFlags & 0x80000000)) {
-        _reslist_node<CDeviceVICb*>* sentinel = spInstance->mCallbackList.mStartNodePtr;
-        _reslist_node<CDeviceVICb*>* node = sentinel->mNext;
-        while (node != sentinel) {
+    // Inlined BEFORE_DRAW_DONE callback loop
+    if (!unkInline1()) {
+        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
+        while (node != spInstance->mCallbackList.mStartNodePtr) {
             node->mItem->viBeforeDrawDone();
             node = node->mNext;
         }
@@ -500,17 +499,16 @@ void CDeviceVI::endFrame(){
     }
 
     // Inlined AFTER_DRAW_DONE callback loop
-    if (!(spInstance->mViFlags & 0x80000000)) {
-        _reslist_node<CDeviceVICb*>* sentinel = spInstance->mCallbackList.mStartNodePtr;
-        _reslist_node<CDeviceVICb*>* node = sentinel->mNext;
-        while (node != sentinel) {
+    if (!unkInline1()) {
+        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
+        while (node != spInstance->mCallbackList.mStartNodePtr) {
             node->mItem->viAfterDrawDone();
             node = node->mNext;
         }
     }
 
-    // Wait for remaining retraces if bit 27 of mViFlags is not set
-    if (!(spInstance->mViFlags & (1 << 27))) {
+    // Wait for remaining retraces if VI_FLAG_4 (bit 4, PPC bit 27) is not set
+    if (!(spInstance->mViFlags & (1 << 4))) {
         while (VIGetRetraceCount() - spInstance->unk2A4 < spInstance->mVisPerFrame - 1) {
         }
     }
@@ -525,7 +523,7 @@ void CDeviceVI::endFrame(){
 
     VIFlush();
 
-    if (!(spInstance->mViFlags & (1 << 27))) {
+    if (!(spInstance->mViFlags & (1 << 4))) {
         VIWaitForRetrace();
     }
 

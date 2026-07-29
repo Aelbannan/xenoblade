@@ -1688,8 +1688,7 @@ void func_801E4194(CItemBoxInfo2* info) {
     }
 }
 void func_801E4390(CItemBoxInfo2* info) {
-    if (info->state.layout == 0) return;
-    if (info->state.resource) {
+    if (info->state.layout != 0 && info->state.resource) {
         info->state.current = 1;
         info->state.active = 1;
     }

@@ -661,8 +661,7 @@ TevStage* Material::GetTevStageAry() {
 }
 
 void Material::SetName(const char* pName) {
-    std::strncpy(mName, pName, NW4R_LYT_MATERIAL_NAME_LEN);
-    mName[NW4R_LYT_MATERIAL_NAME_LEN] = '\0';
+    std::strncpy(mName, pName, NW4R_LYT_RES_NAME_LEN);
 }
 
 void Material::SetTextureNum(u8 num) {

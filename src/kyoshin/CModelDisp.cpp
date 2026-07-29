@@ -24,14 +24,13 @@ void func_801FC15C(CModelDisp* self) {
         }
 
         // Iterate over 3 sub-objects and call vmethod on controller pointer
-        for (int i = 0; i < 3; i++) {
+        for (u8 i = 0; i < 3; i++) {
             CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
             void* ctrl = sub->mpController;
             if (ctrl != NULL) {
                 // vcall: vtable[0x48/4 = 18] — takes field_2FDC as float arg
                 typedef void (*VMethod48)(void*, f32);
-                VMethod48* vtbl = *(VMethod48**)ctrl;
-                vtbl[18](ctrl, self->field_2FDC);
+                (*(VMethod48**)ctrl)[18](ctrl, self->field_2FDC);
             }
         }
     }
@@ -77,28 +76,24 @@ void func_801FCBF4(){}
 
 // Scans sub-objects for one whose mpController matches param's field_0x3A0,
 // then dispatches getNextChainObj / setParam calls for active slots.
-void func_801FCDB4(CModelDisp* self, void* param, int r5) {
-    u32 matchVal = *(u32*)((u8*)param + 0x3A0);
+// Scans sub-objects for one whose mpController matches param's field_0x3A0,
+// then dispatches getNextChainObj / setParam calls for active flag slots.
+void func_801FCDB4(CModelDisp* self, CModelDispParam* param, int arg5) {
+    u32 matchVal = param->field_0x3A0;
 
-    for (int i = 0; i < 3; i++) {
+    for (u8 i = 0; i < 3; i++) {
         CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
-        if ((u32)sub->mpController != matchVal) {
-            continue;
+        if ((u32)sub->mpController == matchVal) {
+            if (sub->mFlagFD0 != 0) {
+                sub->mResultA = func_8004B9B8(sub->mSubObj);
+                func_8004B9D4(sub->mBuffer, arg5, 0, -1, 0);
+            }
+            if (sub->mFlagFD4 != 0) {
+                sub->mResultB = func_8004B9B8(sub->mSubObj);
+                func_8004B9D4(sub->mBuffer2, arg5, 0, -1, 0);
+            }
+            break;
         }
-
-        if (sub->mFlagFD0 != 0) {
-            void* result = func_8004B9B8(sub->mSubObj);
-            sub->mResultA = result;
-            func_8004B9D4(sub->mBuffer, r5, 0, -1, 0);
-        }
-
-        if (sub->mFlagFD4 != 0) {
-            void* result2 = func_8004B9B8(sub->mSubObj);
-            sub->mResultB = result2;
-            func_8004B9D4(sub->mBuffer2, r5, 0, -1, 0);
-        }
-
-        break;
     }
 }
 

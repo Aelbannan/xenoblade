@@ -204,19 +204,19 @@ private:
 private:
     EnvGenerator mEnvelope; // at 0x0
     Lfo mLfo;               // at 0x1C
-    u8 mBiquadFilterType;   // at 0x34
+    u32 field_0x2C;         // at 0x2C
+    f32 field_0x30;         // at 0x30
 
+    u8 mLfoTarget;                // at 0x34
     bool mPauseFlag;              // at 0x35
     bool mActiveFlag;             // at 0x36
     bool mAllocFlag;              // at 0x37
     bool mAutoSweep;              // at 0x38
     bool mReleasePriorityFixFlag; // at 0x39
     u8 field_0x3A;                // at 0x3A
-    u8 mLfoTarget;                // at 0x3B
-    u8 mPanMode;                  // at 0x3C
-    u8 mPanCurve;                 // at 0x3D
-    u8 mRemoteFilter;             // at 0x3E
-    u8 PADDING_0x3F;              // at 0x3F
+    u8 mBiquadFilterType;         // at 0x3B
+    u8 mRemoteFilter;             // at 0x3C
+    u8 PADDING_0x3D[3];           // at 0x3D
 
     f32 mUserVolume;      // at 0x40
     f32 mUserPitchRatio;  // at 0x44
@@ -249,8 +249,8 @@ private:
     int mOriginalKey; // at 0xCC
     int mLength;      // at 0xD0
 
-    u32 field_0xD4;    // at 0xD4
-    u32 field_0xD8;    // at 0xD8
+    PanMode mPanMode;   // at 0xD4
+    PanCurve mPanCurve; // at 0xD8
     u32 field_0xDC;    // at 0xDC
 
     ChannelCallback mCallback; // at 0xE0

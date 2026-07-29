@@ -24,7 +24,7 @@ bool EqualsResName(const char* pLhs, const char* pRhs) {
 }
 
 bool EqualsMaterialName(const char* pLhs, const char* pRhs) {
-    return std::strncmp(pLhs, pRhs, NW4R_LYT_MATERIAL_NAME_LEN) == 0;
+    return std::strncmp(pLhs, pRhs, NW4R_LYT_RES_NAME_LEN) == 0;
 }
 
 bool TestFileHeader(const res::BinaryFileHeader& rHeader) {

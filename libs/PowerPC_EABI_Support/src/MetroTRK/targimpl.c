@@ -255,6 +255,14 @@ static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR
 
         __TRK_set_MSR(destMSR);
         {
+            // Write a single byte into a word-aligned address without
+            // disturbing the other three bytes.  The destination may be
+            // misaligned, so we read the containing word, clear the target
+            // byte's lane, OR in the new byte, and write the word back.
+            // The byte's lane is (3 - byteOffset) * 8 bits from the LE LSB,
+            // where byteOffset is the destination's offset within its word.
+            // Note: the two shift computations use equivalent but
+            // textually distinct expressions to prevent CSE matching retail.
             ui32* alignedPtr = (ui32*)((ui32)destPtr & ~3);
             ui32 v = *alignedPtr;
             ui32 mask =

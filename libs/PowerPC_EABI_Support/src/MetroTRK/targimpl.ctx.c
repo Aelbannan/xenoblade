@@ -5875,7 +5875,15 @@ static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR
         __sync();
 
         __TRK_set_MSR(destMSR);
-        ppc_writebyte1(destPtr, byteVal);
+        {
+            ui32* alignedPtr = (ui32*)((ui32)destPtr & ~3);
+            ui32 v = *alignedPtr;
+            ui32 mask =
+                0xff << ((3 - ((ui32)destPtr - (ui32)alignedPtr)) << 3);
+            *alignedPtr =
+                (v & ~mask) |
+                (byteVal << ((3 - ((ui32)destPtr & 3)) << 3));
+        }
         __sync();
 
         srcPtr++;

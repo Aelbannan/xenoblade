@@ -262,22 +262,22 @@ void Channel::Update(bool periodic) {
     }
 }
 
-void Channel::Start(const WaveInfo& rInfo, int length, u32 offset) {
+void Channel::Start(const WaveData& rInfo, int length, u32 offset) {
     mLength = length;
 
     mLfo.Reset();
     mEnvelope.Reset();
     mSweepCounter = 0;
 
-    field_0xF0->Setup(reinterpret_cast<const WaveData&>(rInfo), offset);
-    field_0xF0->Start();
+    mVoice->Setup(rInfo, offset);
+    mVoice->Start();
     mActiveFlag = true;
 }
 
 void Channel::Release() {
     if (mEnvelope.GetStatus() != EnvGenerator::STATUS_RELEASE) {
-        if (field_0xF0 != NULL && !mReleasePriorityFixFlag) {
-            field_0xF0->SetPriority(PRIORITY_RELEASE);
+        if (mVoice != NULL && !mReleasePriorityFixFlag) {
+            mVoice->SetPriority(PRIORITY_RELEASE);
         }
 
         mEnvelope.SetStatus(EnvGenerator::STATUS_RELEASE);
@@ -292,8 +292,8 @@ void Channel::NoteOff() {
     }
 
     if (mEnvelope.GetStatus() != EnvGenerator::STATUS_RELEASE) {
-        if (field_0xF0 != NULL && !mReleasePriorityFixFlag) {
-            field_0xF0->SetPriority(PRIORITY_RELEASE);
+        if (mVoice != NULL && !mReleasePriorityFixFlag) {
+            mVoice->SetPriority(PRIORITY_RELEASE);
         }
 
         mEnvelope.SetStatus(EnvGenerator::STATUS_RELEASE);
@@ -303,14 +303,14 @@ void Channel::NoteOff() {
 }
 
 void Channel::Stop() {
-    if (field_0xF0 == NULL) {
+    if (mVoice == NULL) {
         return;
     }
 
-    field_0xF0->Stop();
-    field_0xF0->Free();
+    mVoice->Stop();
+    mVoice->Free();
 
-    field_0xF0 = NULL;
+    mVoice = NULL;
     mPauseFlag = false;
     mActiveFlag = false;
 
@@ -410,7 +410,41 @@ void Channel::VoiceCallbackFunc(Voice* pDropVoice,
 
 Channel* Channel::AllocChannel(int channels, int voices, int priority,
                                ChannelCallback pCallback, u32 callbackArg) {
-    Channel* pChannel = ChannelManager::GetInstance().Alloc();
+    ChannelManager& mgr = ChannelManager::GetInstance();
+
+    void* pMem = reinterpret_cast<PoolImpl*>(&mgr)->AllocImpl();
+    Channel* pChannel;
+    if (pMem != NULL) {
+        pChannel = static_cast<Channel*>(pMem);
+
+        // Manual in-place construction
+        new (&pChannel->mEnvelope) EnvGenerator();
+        pChannel->mLfo.GetParam().Init();
+
+        pChannel->field_0x2C = 0;
+        pChannel->field_0x30 = 0.0f;
+        pChannel->mPauseFlag = false;
+        pChannel->mActiveFlag = false;
+        pChannel->mAllocFlag = false;
+
+        // Zero the silence volume (MoveValue<u8, u16> at 0xC0)
+        reinterpret_cast<u8*>(pChannel)[0xC0] = 0;
+        reinterpret_cast<u8*>(pChannel)[0xC1] = 0;
+        reinterpret_cast<u16*>(reinterpret_cast<u8*>(pChannel) + 0xC2)[0] = 0;
+        reinterpret_cast<u16*>(reinterpret_cast<u8*>(pChannel) + 0xC4)[0] = 0;
+
+        pChannel->mVoice = NULL;
+
+        // Zero the link list node at 0xF8
+        reinterpret_cast<u32*>(reinterpret_cast<u8*>(pChannel) + 0xF8)[0] = 0;
+        reinterpret_cast<u32*>(reinterpret_cast<u8*>(pChannel) + 0xFC)[0] = 0;
+    } else {
+        pChannel = NULL;
+    }
+
+    // Insert into ChannelManager's list
+    mgr.mChannelList.Insert(mgr.mChannelList.End(), pChannel);
+
     if (pChannel == NULL) {
         return NULL;
     }
@@ -421,7 +455,10 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
         channels, voices, priority, VoiceCallbackFunc, pChannel);
 
     if (pVoice == NULL) {
-        ChannelManager::GetInstance().Free(pChannel);
+        mgr.mChannelList.Erase(pChannel);
+        if (pChannel != NULL) {
+            reinterpret_cast<PoolImpl*>(&mgr)->FreeImpl(pChannel);
+        }
         return NULL;
     }
 

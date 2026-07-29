@@ -99,14 +99,16 @@ Pane::~Pane() {
         mChildList.Erase(it);
 
         if (!it->IsUserAllocated()) {
-            Layout::DeleteObj(&*it);
+            it->~Pane();
+            Layout::FreeMemory(&*it);
         }
     })
 
     UnbindAnimationSelf(NULL);
 
     if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
-        Layout::DeleteObj(mpMaterial);
+        mpMaterial->~Material();
+        Layout::FreeMemory(mpMaterial);
     }
 }
 
@@ -308,8 +310,40 @@ void Pane::Draw(const DrawInfo& rInfo) {
 }
 
 void Pane::DrawSelf(const DrawInfo& rInfo) {
-#pragma unused(rInfo)
-    // Debug draw stripped out
+    if (mpParent == NULL) {
+        return;
+    }
+    if (!rInfo.IsDebugDrawMode()) {
+        return;
+    }
+
+    LoadMtx(rInfo);
+
+    ut::Color color(0xFFFFFFFFu);
+
+    f32 baseX = 0.0f;
+    f32 baseY = 0.0f;
+
+    switch (mBasePosition % HORIZONTALPOSITION_MAX) {
+    case HORIZONTALPOSITION_CENTER:
+        baseX = -mSize.width * 0.5f;
+        break;
+    case HORIZONTALPOSITION_RIGHT:
+        baseX = -mSize.width;
+        break;
+    }
+
+    switch (mBasePosition / HORIZONTALPOSITION_MAX) {
+    case VERTICALPOSITION_CENTER:
+        baseY = -mSize.height * 0.5f;
+        break;
+    case VERTICALPOSITION_BOTTOM:
+        baseY = -mSize.height;
+        break;
+    }
+
+    math::VEC2 pos(baseX, baseY);
+    detail::DrawLine(pos, mSize, color);
 }
 
 void Pane::Animate(u32 option) {

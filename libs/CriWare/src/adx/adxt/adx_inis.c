@@ -81,7 +81,7 @@ int adxt_exec_fssvr(void) {
 // One-time initialization of all ADX subsystems.
 // Uses a refcount so repeated calls are no-ops until ADXT_Finish matches.
 void ADXT_Init(void) {
-    struct AdxInisContext* ctx = s_ctx;
+    struct AdxInisContext* ctx = &lbl_eu_805E26C8;
 
     ctx->field_0x18 = (u8*)lbl_eu_80515FB8;
     criCrw_GetVersion();

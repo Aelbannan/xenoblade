@@ -974,7 +974,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/utl.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 4"]),
+            Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c"),

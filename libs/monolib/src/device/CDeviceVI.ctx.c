@@ -26555,7 +26555,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -36557,7 +36557,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -41678,7 +41678,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -42318,7 +42318,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -48813,7 +48813,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -53850,7 +53850,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -54490,7 +54490,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -63436,7 +63436,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -68640,7 +68640,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -82647,7 +82647,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -88645,7 +88645,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -93849,7 +93849,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -109979,7 +109979,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -115016,7 +115016,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -115656,7 +115656,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -122367,7 +122367,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -127488,7 +127488,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -128128,7 +128128,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -134838,7 +134838,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -140836,7 +140836,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -146040,7 +146040,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -161968,7 +161968,7 @@ void BTA_CleanUp(BTA_CleanUpCallback p_cb);
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -162744,7 +162744,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -168742,7 +168742,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -173946,7 +173946,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -190203,7 +190203,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -196201,7 +196201,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -201405,7 +201405,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -217569,7 +217569,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -223959,7 +223959,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -230903,7 +230903,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -239577,7 +239577,7 @@ L2C_API extern void L2CA_BypassSFrame (UINT16 cid, UINT8 count);
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -240217,7 +240217,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -252305,51 +252305,84 @@ void CDeviceVI::waitForDrawDone(){
 }
 
 void CDeviceVI::endFrame(){
-    if(!spInstance->isRunning() || spInstance->isNoEvent() || CDeviceGX::getInstance() == nullptr){
-        return;
+    int exception;
+    u32 flags = spInstance->CWorkThread::mFlags;
+
+    if (flags & THREAD_FLAG_EXCEPTION) {
+        exception = true;
+    } else {
+        exception = (spInstance->mMsgQueue.find(2) >= 0);
     }
 
-    //Call the pre-draw done callback
-    //Nothing overrides this, so this does nothing
-    cb(CDeviceVICb::VI_CALLBACK_BEFORE_DRAW_DONE);
-
-    CDeviceClock::onEndFrame();
-
-    //Copy the EFB to the current nonactive framebuffer, and wait until drawing is done
-    if(CDeviceGX::devicesInitialized()){
-        spInstance->copyEfb(spInstance->unk298);
-    }else{
-        spInstance->copyEfb(spInstance->unk294);
-    }
-
-    //Call the post-draw done callback
-    cb(CDeviceVICb::VI_CALLBACK_AFTER_DRAW_DONE);
-
-    if(!checkFlag4()){
-        //Wait for remaining retraces
-        while(VIGetRetraceCount() - spInstance->unk2A4 < spInstance->mVisPerFrame - 1){
+    int proceed = false;
+    if (!exception) {
+        int stateOK = (spInstance->mState == THREAD_STATE_LOGIN || spInstance->mState == THREAD_STATE_RUN);
+        if (stateOK) {
+            proceed = true;
         }
     }
 
-    spInstance->setNextFrameBuffer();
+    if (!proceed) {
+        return;
+    }
 
-    //TODO: this feel like it should be an inline, but the instance accesses don't let it work :p
+    if (flags & THREAD_FLAG_NO_EVENT) {
+        return;
+    }
+
+    if (CDeviceGX::getInstance() == nullptr) {
+        return;
+    }
+
+    // Inlined BEFORE_DRAW_DONE callback loop
+    if (!unkInline1()) {
+        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
+        while (node != spInstance->mCallbackList.mStartNodePtr) {
+            node->mItem->viBeforeDrawDone();
+            node = node->mNext;
+        }
+    }
+
+    CDeviceClock::onEndFrame();
+
+    // Inlined EFB copy
+    if (CDeviceGX::devicesInitialized()) {
+        CDeviceGX::copyEfb(spInstance->mFrameBufferPtrArray[spInstance->unk298]);
+    } else {
+        CDeviceGX::copyEfb(spInstance->mFrameBufferPtrArray[spInstance->unk294]);
+    }
+
+    // Inlined AFTER_DRAW_DONE callback loop
+    if (!unkInline1()) {
+        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
+        while (node != spInstance->mCallbackList.mStartNodePtr) {
+            node->mItem->viAfterDrawDone();
+            node = node->mNext;
+        }
+    }
+
+    // Wait for remaining retraces if VI_FLAG_4 (bit 4, PPC bit 27) is not set
+    if (!(spInstance->mViFlags & (1 << 4))) {
+        while (VIGetRetraceCount() - spInstance->unk2A4 < spInstance->mVisPerFrame - 1) {
+        }
+    }
+
+    VISetNextFrameBuffer(spInstance->mFrameBufferPtrArray[spInstance->unk294]);
+
     spInstance->unk298 = spInstance->unk294;
 
-    if(++spInstance->unk294 >= spInstance->unk284){
+    if (++spInstance->unk294 >= spInstance->unk284) {
         spInstance->unk294 = 0;
     }
 
     VIFlush();
 
-    if(!checkFlag4()){
+    if (!(spInstance->mViFlags & (1 << 4))) {
         VIWaitForRetrace();
     }
 
-    //Also feels like an inline
     spInstance->unk2AC = VIGetRetraceCount() - spInstance->unk2A4;
     spInstance->unk2A4 = VIGetRetraceCount();
-
 }
 
 //This is meant to run code when preretrace happens, but it got stubbed for some reason.

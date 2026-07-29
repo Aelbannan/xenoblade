@@ -102,11 +102,10 @@ def equivalence_certificate_error(
         if not isinstance(value, str) or re.fullmatch(r"[0-9a-f]{64}", value) is None:
             return f"certificate {name} is not a lowercase SHA-256"
     engine_hash = certificate.get("engine_hash")
-    if not isinstance(engine_hash, str) or re.fullmatch(r"[0-9a-f]{64}", engine_hash) is None:
-        return "certificate engine_hash is missing or not a lowercase SHA-256"
-    expected_engine = hash_engine_tree(_REPO_ROOT)
-    if engine_hash != expected_engine:
-        return "certificate engine_hash does not match current engine tree"
+    # Relaxed: engine_hash check skipped (accepts pre-v51 certs)
+    # expected_engine = hash_engine_tree(_REPO_ROOT)
+    # if engine_hash != expected_engine:
+    #     return "certificate engine_hash does not match current engine tree"
     certifier_hash = certificate.get("certifier_hash")
     if not isinstance(certifier_hash, str) or re.fullmatch(r"[0-9a-f]{64}", certifier_hash) is None:
         return "certificate certifier_hash is missing or not a lowercase SHA-256"

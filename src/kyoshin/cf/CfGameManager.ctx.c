@@ -251541,7 +251541,9 @@ void* func_80186D20(void* p);
 /* end "monolib/core/CPadManager.hpp" */
 /* "src/kyoshin/cf/CfGameManager.cpp" line 13 "monolib/core/CView.hpp" */
 /* end "monolib/core/CView.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 14 "monolib/scn/CScn.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 14 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 15 "monolib/scn/CScn.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
@@ -251603,9 +251605,9 @@ public:
     u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
 }; // size = 0x3EC
 /* end "monolib/scn/CScn.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 15 "monolib/util/FixStr.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 16 "monolib/util/FixStr.hpp" */
 /* end "monolib/util/FixStr.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 16 "string.h" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 17 "string.h" */
 /* end "string.h" */
 
 // destructor defined inline in CfGameManager.hpp
@@ -251812,7 +251814,7 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
 }
 #pragma dont_inline reset
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 222 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 223 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 
 namespace ml {
@@ -252054,6 +252056,54 @@ stateUpdated:
         }
     }
     func_801AA2A8(manager->unkA8);
+}
+
+extern "C" void func_8016EEB0(u32 object);
+extern "C" void func_801A9FC0(UnkClass_8007E864* object);
+extern "C" void func_80188774(u32 object);
+extern "C" void func_8018EFB4(UnkClass_80085334* object);
+extern "C" void func_800B93AC();
+extern "C" void func_800FE68C();
+extern "C" void __dt__800FDEF8();
+
+struct ResetVectorWords {
+    u32 x;
+    u32 y;
+    u32 z;
+};
+
+extern "C" ResetVectorWords zero__Q22ml5CVec3;
+extern "C" cf::CfGameManager lbl_eu_80570CF0;
+extern "C" void func_8007C5B8__Q22cf13CfGameManagerFv(
+    cf::CfGameManager* manager) {
+    lbl_eu_80663E24 &= 0x10000;
+    lbl_eu_80663E28 &= 0x200000;
+    lbl_eu_80570CF0.field_0x48 = 0;
+    lbl_eu_80570CF0.field_0x44 = 0;
+    manager->unk90 = nullptr;
+    if (manager->unkA0 != 0) {
+        func_8016EEB0(manager->unkA0);
+    }
+    if (manager->field_0xA4 != nullptr) {
+        func_80186664(manager->field_0xA4);
+    }
+    if (manager->unkA8 != nullptr) {
+        func_801A9FC0(manager->unkA8);
+    }
+    if (lbl_eu_80663E60 != 0) {
+        func_80188774(lbl_eu_80663E60);
+    }
+    manager->unkB0 = nullptr;
+    manager->unkB4 = nullptr;
+    manager->unk8C = 0;
+    memset(manager->unk94, 0, sizeof(manager->unk94));
+    UnkClass_80085334* object = manager->unkAC;
+    *reinterpret_cast<ml::CVec3*>(&manager->field_0x18) = ml::CVec3::zero;
+    func_8018EFB4(object);
+    func_800B93AC();
+    func_800FE68C();
+    __dt__800FDEF8();
+    lbl_eu_80663DF8 |= 0xFFFFFFFF;
 }
 
 struct UnkReset28Data {

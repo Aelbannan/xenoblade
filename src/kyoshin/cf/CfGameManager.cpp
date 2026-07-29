@@ -485,9 +485,11 @@ u16 cf::CfGameManager::func_8007E030() {
     return field_0x18;
 }
 
+#pragma dont_inline on
 cf::CfObject** cf::CfGameManager::func_8007E0C8() {
     return &field_0x4;
 }
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_80087334() {
     field_0x4->CfObject_UnkVirtualFunc52();

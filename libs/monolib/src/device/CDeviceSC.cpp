@@ -15,8 +15,6 @@ unk1CD(0){
     SCInit();
 }
 
-CDeviceBase::~CDeviceBase() {}
-
 CDeviceSC::~CDeviceSC(){
     spInstance = nullptr;
 }
@@ -34,9 +32,6 @@ bool CDeviceSC::isSoundModeMono(){
 }
 
 u8 CDeviceSC::getLanguage(){
-    if(spInstance == nullptr){
-        return SCGetLanguage();
-    }
     return spInstance->mLanguage;
 }
 
@@ -70,6 +65,4 @@ bool CDeviceSC::wkStandbyLogout(){
     return false;
 }
 
-bool func_eu_8044A600(){
-    return SCGetLanguage() == 0;
-}
+void func_eu_8044A600(){}

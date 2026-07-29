@@ -3,8 +3,8 @@
 
 #include <harness_catalog.h>
 #include "libs/monolib/src/scn/CMdlMaterial.hpp"
-#include <nw4r/g3d/g3d_scnmdl.h>
-#include <nw4r/db/db_assert.h>
+#include "nw4r/g3d/g3d_scnmdl.h"
+#include "nw4r/db/db_assert.h"
 
 // CMdlMaterial::~CMdlMaterial() — D0 deleting destructor.
 // Body is empty; MWCC generates the conditional operator delete via the r4 flag.
@@ -40,7 +40,7 @@ void func_804E5E38(){}
 
 // Forward declaration: dispatches func_804E5E38 on the CMdlMaterial
 // embedded at +0x16C8 of the owner. Second arg is passed but unused.
-void func_80488C20(CMdlModelOwner* owner, void* arg2);
+void func_80488C20(CMdlModelOwner* owner, u8* arg2);
 
 // ---------------------------------------------------------------------------
 // func_804E5FD4 — Apply a uniform ambient colour derived from float RGB.
@@ -135,7 +135,7 @@ u32 func_804E6358(CMdlMaterial* self) {
 // quotient = b / 10.  If it matches owner->targetQuotient, dispatches
 // func_804E5E38 on the embedded CMdlMaterial at +0x16C8 via func_80488C20.
 // ---------------------------------------------------------------------------
-void func_804E64B0(CMdlMaterial* self, void* arg2, CMdlModelOwner* owner) {
+void func_804E64B0(CMdlMaterial* self, u8* arg2, CMdlModelOwner* owner) {
     for (u32 i = 0; i < self->field_0x30; i++) {
         s32 v = self->byteArray[i];
         if ((u32)(v / 10) == (u32)owner->targetQuotient) {

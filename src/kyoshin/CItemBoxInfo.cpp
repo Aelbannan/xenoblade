@@ -436,15 +436,25 @@ void func_801D5C38(void* out, void* unused, void* data, void* arg3) {
 void func_801D5DA4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     func_801D8318(info);
     func_801D4E2C(info, arg2, arg3);
-    char* base = (char*)&lbl_eu_805063BC;
+    func_801D69FC(info);
     void* layout = info->state.layout;
-    const char* s = func_80136190((char*)base + 0x130, base + 0x139, 0);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)s, base + 0x2aa, 0);
-    func_80136910((nw4r::lyt::Layout*)layout, base + 0x1f4, 0);
-    func_80136910((nw4r::lyt::Layout*)layout, base + 0x1f4, 0);
-    const char* s2 = func_80136190((char*)base + 0x139, base + 0x139, 0);
-    const char* s3 = func_80136190((char*)base + 0x139, base + 0x139, 0);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)s3, base + 0x2aa, 0);
+    char* base = (char*)&lbl_eu_805063BC;
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2b6, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2c1, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2cc, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2d7, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x267, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x273, base + 0x2aa, 0);
+    func_80136190(base + 0x130, base + 0x139, 0);
+    char buf[0x40];
+    u32 max = func_801392C0();
+    for (u32 i = 0; i < max; i++) {
+        u8 v = func_801392B4(i);
+        func_80136910((nw4r::lyt::Layout*)layout, base + 0x1f4, 0);
+        func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x303, base + 0x2aa, 0);
+    }
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x135, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x165, base + 0x2aa, 0);
 }
 
 void func_801D62F8(void* arr, u32 index, const void* color) {
@@ -498,14 +508,27 @@ void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src) {
     ((s16*)dst)[3] = ((s16*)src)[3];
 }
 void func_801D6394(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
-    func_801D8318(info);
+    func_801D85D8(info);
     func_801D69FC(info);
     void* layout = info->state.layout;
     char* base = (char*)&lbl_eu_805063BC;
-    const char* s = func_80136190(base + 0x130, base + 0x139, 0);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)s, base + 0x2aa, 0);
-    func_80136910((nw4r::lyt::Layout*)layout, base + 0x1f4, 0);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)base + 0x1f4, base + 0x2aa, 0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2b6, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2c1, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2cc, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2d7, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2e2, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x267, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x273, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x29e, base + 0x2aa, 0);
+    func_80136190(base + 0x130, base + 0x139, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x303, base + 0x2aa, 0);
+    u32 max = func_801392C0();
+    for (u32 i = 0; i < max; i++) {
+        u8 v = func_801392B4(i);
+        func_80136910((nw4r::lyt::Layout*)layout, base + 0x1f4, 0);
+        func_80136190(base + 0x130, base + 0x139, v);
+    }
+    func_801D5274(layout, arg2, arg3);
 }
 void func_801D69FC(CItemBoxInfo* info) {
     func_801D885C(info);

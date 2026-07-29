@@ -2,7 +2,7 @@
 #define CMdlMaterial_HPP
 
 #include <types.h>
-#include <nw4r/g3d/res/g3d_resmdl.h>
+#include "nw4r/g3d/res/g3d_resmdl.h"
 
 namespace nw4r { namespace g3d { class ScnMdl; } }
 
@@ -21,7 +21,7 @@ public:
     virtual ~CMdlMaterial();
 
     /* 0x04 */ CMdlModelOwner* owner;
-    /* 0x08 */ void* buffer;
+    /* 0x08 */ u8* buffer;
     /* 0x0C */ u32 field_0x0C;
     /* 0x10 */ u8 flag_0x10;
     /* 0x11 */ u8 pad_0x11[3];

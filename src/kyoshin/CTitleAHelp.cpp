@@ -16,6 +16,7 @@
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 extern void copyVEC3(nw4r::math::VEC3*, nw4r::math::VEC3*);
 bool CTitleAHelp_isPaneVisible(const void*);
+void CTitleAHelp_setGXColor(GXColorS10*, s16, s16, s16, s16);
 
 static GXColorS10 lbl_80666D58; //light orange
 static GXColorS10 lbl_80666D60;

@@ -1233,6 +1233,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -16042,15 +16043,17 @@ protected:
     math::MTX34 mMtx;    // at 0x54
     math::MTX34 mGlbMtx; // at 0x84
     
-    const ExtUserDataList* mpExtUserDataList; //at 0xB4
+    const ExtUserDataList* mpExtUserDataList; // at 0xB4
+    u32 field_0xB8;                            // at 0xB8
 
-    u8 mAlpha;        // at 0xB8
-    u8 mGlbAlpha;     // at 0xB9
-    u8 mBasePosition; // at 0xBA
-    u8 mFlag;         // at 0xBB
+    char mName[NW4R_LYT_RES_NAME_LEN + 1];     // at 0xBC
 
-    char mName[NW4R_LYT_RES_NAME_LEN];          // at 0xBC
-    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xCD
+    u8 mAlpha;        // at 0xCD
+    u8 mGlbAlpha;     // at 0xCE
+    u8 mBasePosition; // at 0xCF
+    u8 mFlag;         // at 0xD0
+
+    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xD1
 
 protected:
     void InsertChild(PaneList::Iterator next, Pane* pChild);
@@ -19795,10 +19798,29 @@ typedef enum {
 #endif
 #endif
 /* end "revolution/GX.h" */
+/* "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp" line 6 "revolution/TPL.h" */
+/**
+ * References: YAGCD, BrawlBox
+ */
 
-/* "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp" line 7 "cstddef" */
+#ifndef RVL_SDK_PUBLIC_TPL_H
+#define RVL_SDK_PUBLIC_TPL_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/TPL.h" line 10 "revolution/TPL/TPL.h" */
+/* end "revolution/TPL/TPL.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/TPL.h" */
+
+/* "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp" line 8 "cstddef" */
 /* end "cstddef" */
-/* "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp" line 8 "cstring" */
+/* "libs/RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_common.cpp" line 9 "cstring" */
 /* end "cstring" */
 
 
@@ -19838,7 +19860,7 @@ TexCoordAry::TexCoordAry() : mCap(0), mNum(0), mpData(NULL) {}
 
 void TexCoordAry::Free() {
     if (mpData != NULL) {
-        Layout::DeleteObj(mpData);
+        Layout::FreeMemory(mpData);
         mpData = NULL;
         mCap = 0;
         mNum = 0;
@@ -19847,13 +19869,13 @@ void TexCoordAry::Free() {
 
 void TexCoordAry::Reserve(u8 num) {
     if (mCap < num) {
-        Free();
-
-        //TODO(amber) according to tfp2 this should be NewArray, but it's not?
-        //mpData = Layout::NewArray<TexCoord>(num);
-        void* pMem = Layout::AllocMemory(num * sizeof(TexCoord));
-        mpData = pMem != NULL ? static_cast<TexCoord*>(pMem) : NULL;
-
+        if (mpData != NULL) {
+            Layout::FreeMemory(mpData);
+            mpData = NULL;
+            mCap = 0;
+            mNum = 0;
+        }
+        mpData = static_cast<TexCoord*>(Layout::AllocMemory(num * sizeof(TexCoord)));
         if (mpData != NULL) {
             mCap = num;
         }
@@ -20024,9 +20046,45 @@ void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
     DrawQuad(rBase, rSize, num, pCoords, pColors ? colorWork : NULL);
 }
 
+/******************************************************************************
+ *
+ * InitGXTexObjFromTPL
+ *
+ ******************************************************************************/
+void InitGXTexObjFromTPL(GXTexObj* pTexObj, TPLPalette* pTpl, u32 idx) {
+    // Resolve TPL file addresses if not already linked
+    if (reinterpret_cast<u32>(pTpl->descriptorArray) < 0x80000000) {
+        TPLBind(pTpl);
+    }
+
+    TPLDescriptor* pDesc = TPLGet(pTpl, idx);
+    TPLHeader* pHeader = pDesc->textureHeader;
+
+    // Mipmap if the texture has multiple LOD levels
+    GXBool mipmap = pHeader->minLOD != pHeader->maxLOD;
+
+    if (pDesc->CLUTHeader != NULL) {
+        GXInitTexObjCI(pTexObj, pHeader->data, pHeader->width, pHeader->height,
+                       static_cast<GXTexFmt>(pHeader->format), pHeader->wrapS,
+                       pHeader->wrapT, mipmap, 0);
+        GXInitTexObjUserData(pTexObj, pDesc->CLUTHeader);
+    } else {
+        GXInitTexObj(pTexObj, pHeader->data, pHeader->width, pHeader->height,
+                     static_cast<GXTexFmt>(pHeader->format), pHeader->wrapS,
+                     pHeader->wrapT, mipmap);
+    }
+
+    // Set up LOD — reload header pointer since r9 clobbered by GXInitTexObj*
+    pHeader = pDesc->textureHeader;
+    GXInitTexObjLOD(pTexObj, pHeader->minFilter, pHeader->magFilter,
+                    static_cast<f32>(pHeader->minLOD),
+                    static_cast<f32>(pHeader->maxLOD),
+                    pHeader->LODBias, false, pHeader->edgeLODEnable,
+                    GX_ANISO_1);
+}
+
 } // namespace detail
 } // namespace lyt
 } // namespace nw4hbm
 
 bool EqualsPaneName__Q36nw4hbm3lyt6detailFPCcPCc(const char* a, const char* b) { return strncmp(a, b, 16) == 0; }
-void InitGXTexObjFromTPL__Q36nw4hbm3lyt6detailFP9_GXTexObjP10TPLPaletteUl(){}

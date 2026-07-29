@@ -33,6 +33,10 @@ void func_802A6718(CVS_THREAD_EHP* self) {
 void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
+    // Loop counter declared first — influences regalloc order so the
+    // base pointer for array indexing lands in r5 (retail) not r4.
+    int i;
+
     // Slot 0x20: bias to embedded CCharVoice at +0x3E9C via &handle->voice.
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* biased = (CCharVoice*)handle;
@@ -46,8 +50,7 @@ void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     if (biased == voicePtr) self->field_0x24 = NULL;
 
     // Rotating slots 0x2C..0x34 (count in field_0x3c).
-    // Reusing handle/biased from outer scope keeps regalloc closer.
-    for (int i = 0; i < self->field_0x3c; i++) {
+    for (i = 0; i < self->field_0x3c; i++) {
         handle = self->field_0x2c[i];
         biased = (CCharVoice*)handle;
         if (handle) biased = &handle->voice;

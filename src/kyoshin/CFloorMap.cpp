@@ -165,7 +165,30 @@ void func_8024808C(){}
 
 void func_8024830C(){}
 
-void func_80248558(){}
+u32 func_80248558(void* self) {
+    extern void Panic__Q24nw4r2dbFPCciPCce();
+    u8* p = (u8*)self;
+    void* data = *(void**)(p + 0x08);
+    if (!data) return 0;
+    void* obj = *(void**)((u8*)data + 0x10);
+    if (!obj) Panic__Q24nw4r2dbFPCciPCce(&lbl_eu_8050BEA8[0x26C], 0x23D, "", "");
+    void** vtable = *(void***)obj;
+    void* result = ((void*(*)(void*, const char*, u32))vtable[15])(obj, &lbl_eu_8050BEA8[0x26C], 1);
+    if (!result) return 0;
+    void* target = *(void**)((u8*)result + 0x14);
+    f32 lbl_eu_80668790_val = *(f32*)lbl_eu_80668790;
+    f32 lbl_eu_80668764_val = *(f32*)lbl_eu_80668764;
+    f32 f30 = lbl_eu_80668790_val * lbl_eu_80668790_val;
+    void* current = result;
+    while (current) {
+        void* cur_target = *(void**)((u8*)current + 0x10);
+        if (cur_target == target) break;
+        void* next = *(void**)((u8*)current + 0x0C);
+        if (!next) break;
+        current = next;
+    }
+    return *(u32*)((u8*)current + 0x14);
+}
 
 void* func_80248920(void* self, const char* name, float x, float y, void* arg5, const char* paneName) {
     if (!name) return NULL;
@@ -219,7 +242,38 @@ void func_8024AEEC(){}
 
 void func_8024B234(){}
 
-void func_8024B4CC(){}
+void func_8024B4CC(void* result, void* data, void* node) {
+    extern f32 lbl_eu_80668764;
+    f32* r = (f32*)result;
+    r[0] = r[1] = r[2] = lbl_eu_80668764;
+    void* target = *(void**)((u8*)data + 0x10);
+    if (target == node || !node) return;
+    r[0] = *(f32*)((u8*)node + 0x2C);
+    r[1] = *(f32*)((u8*)node + 0x30);
+    r[2] = *(f32*)((u8*)node + 0x34);
+    void* next = *(void**)((u8*)node + 0x0C);
+    f32 temp[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+    if (target != next && next) {
+        temp[0] = *(f32*)((u8*)next + 0x2C);
+        temp[1] = *(f32*)((u8*)next + 0x30);
+        temp[2] = *(f32*)((u8*)next + 0x34);
+    }
+    void* next2 = next ? *(void**)((u8*)next + 0x0C) : 0;
+    if (target != next2 && next2) {
+        f32 local[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+        local[0] = *(f32*)((u8*)next2 + 0x2C);
+        local[1] = *(f32*)((u8*)next2 + 0x30);
+        local[2] = *(f32*)((u8*)next2 + 0x34);
+        void* next3 = *(void**)((u8*)next2 + 0x0C);
+        if (target != next3 && next3) {
+            f32 rec[3];
+            func_8024B4CC(rec, data, next3);
+            local[0] += rec[0]; local[1] += rec[1]; local[2] += rec[2];
+        }
+        temp[0] += local[0]; temp[1] += local[1]; temp[2] += local[2];
+    }
+    r[0] += temp[0]; r[1] += temp[1]; r[2] += temp[2];
+}
 
 void* __dt__8024B6B8(void* self, int mode) {
     extern void* __dl__FPv(void*);
@@ -283,7 +337,21 @@ void func_8024EC24(){}
 
 void func_8024EE50(){}
 
-void func_8024F1FC(){}
+void func_8024F1FC(void* self, u32 arg2) {
+    extern void func_8003AA34();
+    extern void* getFP__FPCc(const char*);
+    extern u8 lbl_eu_80664798;
+    lbl_eu_80664798 = (u8)arg2;
+    if (arg2 > 0x1C) return;
+    func_8003AA34();
+    u32 strs[] = {
+        0x524, 0x534, 0x544, 0x554, 0x564, 0x574, 0x584, 0x594,
+        0x5A4, 0x5B4, 0x5C4, 0x5D4, 0x5E4, 0x5F4, 0x604, 0x614,
+        0x624, 0x634, 0x634, 0x644, 0x654, 0x664, 0x674, 0x684,
+        0x634, 0x644, 0x654, 0x664
+    };
+    lbl_eu_8066479C = getFP__FPCc(&lbl_eu_8050BEA8[strs[arg2]]);
+}
 
 u32 func_8024F538(void* self) {
     u8 val = *(u8*)((u8*)self + 0x41);

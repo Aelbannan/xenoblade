@@ -3,6 +3,10 @@
 
 #include "kyoshin/CItemBoxGridSubMenu.hpp"
 
+#include "kyoshin/code_80135FDC.hpp"
+
+extern void func_80138078(u32);
+
 u8 CItemBoxGridSubMenu::func_80208358() {
     return mIsVisible;
 }
@@ -40,14 +44,24 @@ void func_80208760(){}
 
 void func_802087B8(){}
 
-void func_80208838(void){}
+void CItemBoxGridSubMenu::func_80208838() {
+    mSelectedIdx = -1;
+}
 
 void func_80208844(){}
 
 void func_80208890(){}
 
-extern "C" void func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(void*, void*, int, int);
-void func_802082D0(void* self){
-    if (*(u8*)((u8*)self + 0x20) == 0) return;
-    func_80137038__FPQ34nw4r3lyt6LayoutPQ34nw4r3lyt8DrawInfoii(*(void**)((u8*)self + 8), 0, 0, 1);
+void CItemBoxGridSubMenu::func_802082D0(nw4r::lyt::DrawInfo* drawInfo) {
+    if (!mIsVisible)
+        return;
+    func_80137038(mLayout, drawInfo, 0, 1);
+}
+
+void CItemBoxGridSubMenu::func_802083A4() {
+    if (mAnimState != 2)
+        return;
+    mAnimState = 3;
+    mIsOpened = 0;
+    func_80138078(14);
 }

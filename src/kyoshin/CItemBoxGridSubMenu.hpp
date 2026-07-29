@@ -32,4 +32,7 @@ struct CItemBoxGridSubMenu {
     u8 func_80208358();
     u8 func_80208360();
     void func_802083CC();
+    void func_80208838();
+    void func_802082D0(nw4r::lyt::DrawInfo* drawInfo);
+    void func_802083A4();
 };

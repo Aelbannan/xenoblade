@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/COption.hpp"
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
@@ -65,9 +66,11 @@ void func_8029D3C0(){}
 
 void func_8029D420(){}
 
-void func_8029D634(){}
+void func_8029D634(COptionFull* self, u8 val) {}
 
-void func_8029D7E8(){}
+void func_8029D7E8(COptionFull* self) {
+    func_8029D634(self, (u8)(self->_2C[0] + self->_2C[1]));
+}
 
 void func_8029D7FC(){}
 

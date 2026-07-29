@@ -3,6 +3,7 @@
 #include <types.h>
 #include "monolib/work/IWorkEvent.hpp"
 #include "monolib/lib/UnkClass_8045F564.hpp"
+#include "kyoshin/CScrollBar.hpp"
 
 /* Map selection UI widget. Displays a grid of available maps for the player
    to choose from. Contains a CScrollBar for scrolling through available maps
@@ -47,9 +48,10 @@ private:
     u8 field_0x30;                            // +0x30
     u8 mState;                                // +0x31
     u8 field_0x32;                            // +0x32
+    u8 mFlag33;                               // +0x33 -- initial-setup flag
 
 public:
-    u8 mFlag33;                               // +0x33 -- initial-setup flag
+    CScrollBar mScrollBar;                    // +0x34 -- scroll bar widget
     u8 func_802436C4() { return mFlag33; }
     virtual ~CMapSel();
     void OnFileEvent();

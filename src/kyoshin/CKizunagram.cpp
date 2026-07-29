@@ -65,10 +65,10 @@ void func_8025AB04(){}
 void func_8025AB84(){}
 
 extern float lbl_eu_80668828[];
-void CKizunagram_resetFields(void* self){
-    *(u8*)((u8*)self + 0x34) = 0;
-    *(u16*)((u8*)self + 0x36) = 0;
-    *(float*)((u8*)self + 0x38) = lbl_eu_80668828[0];
+void func_8025AC04(CKizunagram* self) {
+    self->field_0x34 = 0;
+    self->field_0x36 = 0;
+    self->field_0x38 = lbl_eu_80668828[0];
 }
 
 void func_8025AC1C(){}

@@ -40,7 +40,11 @@ public:
     virtual ~CKizunagram();
     void OnFileEvent();
 
-    // TODO: add fields
+    u8 _04[0x34 - 0x04];
+    u8 field_0x34;
+    u16 field_0x36;
+    float field_0x38;
+    u8 _3C[0x8C - 0x3C];
     u8 field_8C; // 0x8C
 };
 

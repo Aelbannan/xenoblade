@@ -2,7 +2,10 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-void __dt__9CMainMenuFv();
+#include "kyoshin/CMainMenu.hpp"
+extern "C" void __dt__9CMainMenuFv();
+extern "C" void cbRenderBefore__9CMainMenuFv();
+extern "C" void __ct__800FF300();
 u32 func_800FEDF8(void) {
     extern u32 lbl_eu_80663F18;
     return lbl_eu_80663F18;

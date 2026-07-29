@@ -6,7 +6,7 @@
 
 void __ct__CMapSel(){}
 
-void CMapSel::~CMapSel() {}
+CMapSel::~CMapSel() {}
 
 void func_8024343C(){}
 
@@ -16,7 +16,12 @@ void func_80243560(){}
 
 void func_802435CC(){}
 
-void func_80243680(){}
+u8 func_80243680(CMapSel* self){
+    if (self->mScrollBar.isVisible()) {
+        return self->field_0x32;
+    }
+    return 0;
+}
 
 // FULL_MATCH: reads the initial-setup flag at +0x33 (set to 1 in ctor, cleared on play/close)
 
@@ -32,11 +37,10 @@ void func_8024391C(){}
 
 void func_802439CC(){}
 
-u8 func_80243A9C(void* self){
-    auto* s = static_cast<CMapSelFull*>(self);
-    s8 x = s->field_8D;
-    s8 y = s->field_8C;
-    return s->mGridData[x + y];
+u8 func_80243A9C(CMapSelFull* self){
+    s8 x = self->field_8D;
+    s8 y = self->field_8C;
+    return self->mGridData[x + y];
 }
 
 void func_80243ABC(){}

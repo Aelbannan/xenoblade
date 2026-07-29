@@ -7,6 +7,10 @@
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/IWorkEvent.hpp"
+#include "monolib/work/CWorkThreadSystem.hpp"
+#include <nw4r/lyt/lyt_layout.h>
+#include <nw4r/lyt/lyt_pane.h>
+#include <nw4r/math/math_types.h>
 extern "C" void __dt__9CMainMenuFv();
 extern "C" void cbRenderBefore__9CMainMenuFv();
 extern "C" void __ct__800FF300();
@@ -75,9 +79,41 @@ void func_800FEF4C(){}
 
 void __ct__800FF300(void* self){}
 
+// rodata block containing "Param" pane name at offset 0x53
+extern "C" char lbl_eu_804FCEBC[];
+
 void CMainMenu::cbRenderBefore() {}
 
-void func_800FF6BC(){}
+// Finds the "Param" pane in the layout's root pane and sets its translate
+// to the given position (3 floats: x, y, z).
+void CMainMenu::func_800FEB14(float* pos) {
+    nw4r::lyt::Pane* pane = mpLayout->GetRootPane()->FindPaneByName(lbl_eu_804FCEBC + 0x53, true);
+    if (pane != NULL) {
+        pane->SetTranslate(nw4r::math::VEC3(pos[0], pos[1], pos[2]));
+    }
+}
+
+extern u32 lbl_eu_80663F18;
+
+// Creates the CMainMenu singleton: allocates 0xE4 bytes from work memory,
+// constructs with param, stores in lbl_eu_80663F18, and registers as a child
+// of the given CProcess. Returns NULL if already created.
+extern "C" CMainMenu* func_800FF6BC(CProcess* parent, void* param) {
+    if (lbl_eu_80663F18 != 0) {
+        return NULL;
+    }
+    mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
+    void* mem = mtl::MemManager::allocate(0xe4, workMem);
+    CMainMenu* menu;
+    if (mem != NULL) {
+        menu = new (mem) CMainMenu(param);
+    } else {
+        menu = NULL;
+    }
+    lbl_eu_80663F18 = (u32)menu;
+    menu->Regist(parent, false);
+    return (CMainMenu*)lbl_eu_80663F18;
+}
 
 extern u32 lbl_eu_80663F18;
 
@@ -97,7 +133,22 @@ int CMainMenu::func_800FF778() {
     return 0;
 }
 
-void func_800FF8B0(){}
+// Returns 1 if func_800FF778() is non-zero, else checks the global CMainMenu
+// singleton's field_0xE0 for states 4 or 8 (active/invite).
+extern "C" u32 func_800FF8B0() {
+    if (func_800FF778__9CMainMenuFv() != 0) {
+        return 1;
+    }
+    CMainMenu* menu = (CMainMenu*)(uintptr_t)lbl_eu_80663F18;
+    if (menu == NULL) {
+        return 0;
+    }
+    if (menu->field_0xE0 == 4) {
+        return 1;
+    }
+    // cntlzw trick: returns 1 if field_0xE0 == 8, else 0
+    return (menu->field_0xE0 == 8) ? 1 : 0;
+}
 
 // CMainMenu::Init — loads the menu layout file via CDeviceFile::readFile.
 // The IWorkEvent at offset 0x58 receives OnFileEvent when the load completes.

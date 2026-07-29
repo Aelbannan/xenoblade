@@ -6,7 +6,7 @@
 
 void func_804E536C();
 void func_804DF2F0(u32 r3, u32 r4);
-extern float lbl_eu_8066B2E4;
+extern "C" float lbl_eu_8066B2E4;
 
 void func_804E36DC(){}
 
@@ -22,7 +22,6 @@ void func_804E3CCC(UnkStruct_804E36DC* self) {
 }
 
 void func_804E3CDC(UnkStruct_804E36DC* self, float f1, float f2) {
-    extern "C" float lbl_eu_8066B2E4;
     if (f1 == lbl_eu_8066B2E4) return;
     if (f2 == lbl_eu_8066B2E4) return;
     self->field_0x90 = f1;

@@ -7,6 +7,7 @@
 
 extern void func_80138078(u32);
 extern void* func_801394D4(u32);
+extern float lbl_eu_8066862C;
 
 // Destructor — base object destructor (D2); MWCC emits D1 with delete check
 CPresentWin::~CPresentWin() {
@@ -67,9 +68,7 @@ u8 func_8022E504(void* self){ return static_cast<CPresentWin*>(self)->mField33; 
 
 // Check if an animation has completed; if so, set state to 2 and mark active
 void func_8022E50C(CPresentWin* self) {
-    extern float lbl_eu_8066862C;
-    float f = lbl_eu_8066862C;
-    if (func_80137444(self->mpAnimTransform, f)) {
+    if (func_80137444(self->mpAnimTransform, lbl_eu_8066862C)) {
         self->mField37 = 2;
         self->mField38 = 1;
     }
@@ -77,10 +76,7 @@ void func_8022E50C(CPresentWin* self) {
 
 // Check if an animation has finished; if so, reset state fields to idle
 void func_8022E558(CPresentWin* self) {
-    extern float lbl_eu_8066862C;
-    float f = lbl_eu_8066862C;
-    u32 r = func_80137510(self->mpAnimTransform, f);
-    if (r) {
+    if (func_80137510(self->mpAnimTransform, lbl_eu_8066862C)) {
         self->mField37 = 0;
         self->mField38 = 1;
         self->mField31 = 0;

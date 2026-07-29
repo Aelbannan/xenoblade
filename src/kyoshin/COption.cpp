@@ -14,9 +14,9 @@ extern "C" void func_801D216C(void*, int);
 // Global buffer for game config data
 extern u8 lbl_eu_80577308[];
 
-// Forward declarations for callees in this TU
-void func_8029D420(COption*);
-void func_8029E254(COption*);
+// Forward declarations for callees in this TU (noinline to preserve calls)
+__attribute__((noinline)) void func_8029D420(COption*);
+__attribute__((noinline)) void func_8029E254(COption*);
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
@@ -104,7 +104,7 @@ void func_8029D3C0(COption* self) {
     }
 }
 
-void func_8029D420(COption*){}
+__attribute__((noinline)) void func_8029D420(COption*){}
 
 void func_8029D634(){}
 
@@ -122,7 +122,7 @@ void func_8029E144(){}
 
 void func_8029E1CC(){}
 
-void func_8029E254(COption*){}
+__attribute__((noinline)) void func_8029E254(COption*){}
 
 void func_8029E3F8(){}
 

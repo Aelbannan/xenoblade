@@ -17,7 +17,7 @@ void func_8025C870() {}
 
 void func_80257F9C(void*, int) {}
 
-void __ct__CKizunaLine(){}
+// void __ct__CKizunaLine(){}
 
 void CKizunaLine::~CKizunaLine() {}
 

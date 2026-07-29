@@ -6,7 +6,7 @@
 
 void __ct__CMapSel(){}
 
-void CMapSel::~CMapSel() {}
+CMapSel::~CMapSel() {}
 
 void func_8024343C(){}
 

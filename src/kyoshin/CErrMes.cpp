@@ -68,19 +68,21 @@ extern "C" void* func_eu_802B14EC(void) { return &lbl_eu_8053A420[22]; }
 // param == 0 sets "en", otherwise "jp".  If values in group 2 changed,
 // triggers layout refresh callbacks.
 void func_eu_802B14F8(int param) {
-    // Use lbl_eu_8053A420 as base; groups start at byte offsets 0x18, 0x38, 0x58
+    // Use lbl_eu_8053A420 as base; groups start at indices 6, 14, 22
     u32* base = lbl_eu_8053A420;
-    u8* data = (u8*)base;
+    u8* pBase = (u8*)base;
+    u8* pGrp1 = pBase + 0x18;  // &base[6]
+    u8* pGrp2 = pBase + 0x38;  // &base[14]
+    u8* pGrp3 = pBase + 0x58;  // &base[22]
 
-    // Loop 1: set byte 6 = '/' in all 7 entries of each group (skip last of 8)
-    // Uses byte-offset iteration to match lwzx indexed addressing.
+    // Loop 1: set byte 6 = '/' in all 7 entries of each group
     {
-        int off = 0;
-        int n = 7;
+        volatile int off = 0;
+        volatile int n = 7;
         do {
-            ((CErrMesTextObj*)*(u32*)(data + 0x18 + off))->field_0x06 = '/';
-            ((CErrMesTextObj*)*(u32*)(data + 0x38 + off))->field_0x06 = '/';
-            ((CErrMesTextObj*)*(u32*)(data + 0x58 + off))->field_0x06 = '/';
+            ((CErrMesTextObj*)*(u32*)(pGrp1 + off))->field_0x06 = '/';
+            ((CErrMesTextObj*)*(u32*)(pGrp2 + off))->field_0x06 = '/';
+            ((CErrMesTextObj*)*(u32*)(pGrp3 + off))->field_0x06 = '/';
             off += 4;
         } while (--n > 0);
     }
@@ -94,24 +96,23 @@ void func_eu_802B14F8(int param) {
     }
 
     // Loop 2: set bytes 4,5 in entries 1-6 of each group (skip entry 0)
-    // Track whether group 2 values changed compared to what was already there.
     {
-        int off = 4;
+        volatile int off = 4;
         int changed = 0;
-        int n = 6;
+        volatile int n = 6;
         do {
-            CErrMesTextObj* p1 = (CErrMesTextObj*)*(u32*)(data + 0x18 + off);
+            CErrMesTextObj* p1 = (CErrMesTextObj*)*(u32*)(pGrp1 + off);
             p1->field_0x04 = c1;
             p1->field_0x05 = c2;
 
-            CErrMesTextObj* p2 = (CErrMesTextObj*)*(u32*)(data + 0x38 + off);
+            CErrMesTextObj* p2 = (CErrMesTextObj*)*(u32*)(pGrp2 + off);
             if ((s8)p2->field_0x04 != (s8)c1 || (s8)p2->field_0x05 != (s8)c2) {
                 changed = 1;
             }
             p2->field_0x04 = c1;
             p2->field_0x05 = c2;
 
-            CErrMesTextObj* p3 = (CErrMesTextObj*)*(u32*)(data + 0x58 + off);
+            CErrMesTextObj* p3 = (CErrMesTextObj*)*(u32*)(pGrp3 + off);
             p3->field_0x04 = c1;
             p3->field_0x05 = c2;
 

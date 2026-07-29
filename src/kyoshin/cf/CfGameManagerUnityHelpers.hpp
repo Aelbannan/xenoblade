@@ -778,9 +778,48 @@ extern "C" Unk8187CData* func_80080F40__Q22cf13CfGameManagerFv(u32 first, u32 se
                                                                  u32 third);
 extern "C" void func_80081874__Q22cf13CfGameManagerFv(Unk8187CData* data, u32 flags);
 class Unk817A8Object;
+struct ResourceLookup81694 {
+    u32 value;
+};
 extern "C" Unk817A8Object* func_800817A8__Q22cf13CfGameManagerFv();
 extern "C" bool func_800817B0__Q22cf13CfGameManagerFv();
 extern "C" bool func_80069C28(Unk817A8Object* object);
+extern "C" ResourceLookup81694* func_80069C78(Unk817A8Object* object,
+                                                u32 key);
+extern "C" u32 func_80061FE8();
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
+extern "C" Unk814BCObject* __ct__800815A4(Unk814BCObject* self);
+extern "C" Unk80EE4Data* func_80081694__Q22cf13CfGameManagerFv(
+    u32 firstKey, u32 secondKey) {
+    cf::CfGameManager::getInstance();
+    Unk817A8Object* object = func_800817A8__Q22cf13CfGameManagerFv();
+    Unk80EE4Data* result = nullptr;
+    if (!func_800817B0__Q22cf13CfGameManagerFv()) {
+        ResourceLookup81694* first = func_80069C78(object, firstKey);
+        ResourceLookup81694* second = func_80069C78(object, secondKey);
+        if (first != nullptr && first->value != 0) {
+            u32 secondValue = second != nullptr ? second->value : 0;
+            result = reinterpret_cast<Unk80EE4Data*>(
+                func_80080F40__Q22cf13CfGameManagerFv(
+                    first->value, secondValue, 0));
+            if (result != nullptr) {
+                u32 heap = func_80061FE8();
+                void* memory = allocate__Q23mtl10MemManagerFUlUl(0x398, heap);
+                void* attached = memory;
+                if (memory != nullptr) {
+                    attached = __ct__800815A4(
+                        static_cast<Unk814BCObject*>(memory));
+                }
+                result->vfunc_0x70(attached);
+            }
+        }
+    }
+    if (result != nullptr) {
+        result->vfunc_0x48();
+    }
+    return result;
+}
+
 extern "C" u32 CfRes_packThreeFields(u32 first, u32 second, u32 third);
 extern "C" UnkClass_800817BC* func_800817BC__Q22cf13CfGameManagerFv(
     u32 value, u32 unused) {

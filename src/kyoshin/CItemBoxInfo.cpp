@@ -205,18 +205,16 @@ void func_80137924(void*, void*, void*, void*);
 void func_801D4B3C(void* arg0, CItemBoxInfo* info, u32 arg2) {
     char buf[0x20];
     sprintf(buf, (char*)&lbl_eu_805063BC[0x161], arg2 + 1);
-    void* layout = info->state.layout;
-    void* child = *(void**)((u8*)layout + 0x10);
-    void** vtable = *(void***)child;
-    void* r1 = ((void*(*)(void*, const char*, u32))vtable[15])(child, (char*)&lbl_eu_805063BC[0x16e], 1);
-    void* r2 = ((void*(*)(void*, const char*, u32))vtable[15])(child, buf, 1);
+    nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
+    void* r1 = child->FindPaneByName((char*)&lbl_eu_805063BC[0x16e], true);
+    void* r2 = child->FindPaneByName(buf, true);
     func_80137924(arg0, r2, r1, child);
 }
 
 void func_801D4C3C(CItemBoxInfo* info, void* arg2) {
     if (info->state.layout == 0) return;
-    void* child = *(void**)((u8*)info->state.layout + 0x10);
-    void* result = ((void*(*)(void*, const char*, u32))(*(void***)child)[15])(child, &lbl_eu_805063BC[0x193], 1);
+    nw4r::lyt::Pane* child = (nw4r::lyt::Pane*)*(void**)((u8*)info->state.layout + 0x10);
+    nw4r::lyt::Pane* result = child->FindPaneByName((char*)&lbl_eu_805063BC[0x193], true);
     func_80124270(result, arg2);
 }
 
@@ -237,10 +235,8 @@ void func_801D4D18(CItemBoxInfo* info) {
 
 void func_801D4D64(CItemBoxInfo* info) {
     if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
-        void* layout = info->state.layout;
-        void** vtable = *(void***)layout;
-        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform2, 0);
-        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform1, 1);
+        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform2, false);
+        ((nw4r::lyt::Layout*)info->state.layout)->SetAnimationEnable((nw4r::lyt::AnimTransform*)info->state.animTransform1, true);
         info->state.state = 5;
     }
 }
@@ -447,9 +443,7 @@ void func_801D40C4(CItemBoxInfo* info) {
             case 4: func_801D4D64(info); break;
             case 5: func_801D4DE0(info); break;
         }
-        void* layout = info->state.layout;
-        void** vtable = *(void***)layout;
-        ((void(*)(void*, u32))vtable[14])(layout, 0);
+        ((nw4r::lyt::Layout*)info->state.layout)->Animate(0);
     }
 }
 
@@ -461,9 +455,7 @@ void func_801E1348(CItemBoxInfo2* info) {
             case 4: func_801E18B4(info); break;
             case 5: func_801E1930(info); break;
         }
-        void* layout = info->state.layout;
-        void** vtable = *(void***)layout;
-        ((void(*)(void*, u32))vtable[14])(layout, 0);
+        ((nw4r::lyt::Layout*)info->state.layout)->Animate(0);
     }
 }
 
@@ -1056,13 +1048,9 @@ void func_801E174C(void* arg0, CItemBoxInfo2* info, u32 arg2) {
 }
 
 void func_801E17EC(CItemBoxInfo2* info) {
-    void* anim = *(void**)((u8*)info + 0x38);
-    if (func_80137444((nw4r::lyt::AnimTransform*)anim, -0.0f) != 0) {
-        void* layout = *(void**)((u8*)info + 0x34);
-        void** vt = *(void***)layout;
-        ((void(*)(void*, void*, u32))vt[11])(layout, anim, 0);
-        void* anim2 = *(void**)((u8*)info + 0x3C);
-        ((void(*)(void*, void*, u32))vt[11])(layout, anim2, 1);
+    if (func_80137444((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), -0.0f) != 0) {
+        ((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34))->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x38), false);
+        ((nw4r::lyt::Layout*)*(void**)((u8*)info + 0x34))->SetAnimationEnable((nw4r::lyt::AnimTransform*)*(void**)((u8*)info + 0x3C), true);
         *(u32*)((u8*)info + 0x94) = 2;
     }
 }

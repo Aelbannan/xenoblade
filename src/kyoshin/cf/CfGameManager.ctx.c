@@ -1113,13 +1113,13 @@ public:
     void func_80086D94();
     void func_80086D98();
     void func_80086D9C();
-    void func_80086DA0();
+    u32 func_80086DA0();
     void func_80086DA4();
     void func_80086DA8();
     void func_80086DAC();
     void func_80086DB0();
     void func_80086DB4();
-    void func_80086DBC();
+    u32 func_80086DBC();
     void func_80086E6C();
     bool func_80087244();
     bool func_80087250();
@@ -250634,7 +250634,7 @@ namespace cf {
         virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
         virtual void CActorParam_UnkVirtualFunc130(); //0x29C
         virtual void CActorParam_UnkVirtualFunc131(); //0x2A0
-        virtual void CActorParam_UnkVirtualFunc132(); //0x2A4
+        virtual void* CActorParam_UnkVirtualFunc132(); //0x2A4
         virtual void CActorParam_UnkVirtualFunc133(); //0x2A8
         virtual void CActorParam_UnkVirtualFunc134(); //0x2AC
         virtual void CActorParam_UnkVirtualFunc135(); //0x2B0
@@ -251004,7 +251004,56 @@ namespace cf {
 } // namespace cf
 
 /* end "kyoshin/cf/object/CfObjectMap.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 9 "kyoshin/code_801862C0.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 9 "kyoshin/cf/voice/CCharVoice.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/voice/CCharVoice.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/**
+ * CCharVoice -- single character voice playback instance.
+ *
+ * Each instance manages a voice file path and interacts with the sound
+ * system to play/stop/update character voices.  The owner object decides
+ * which voice profile (normal vs battle) is used.
+ *
+ * N.B.  The class is NOT declared with virtual functions even though it
+ * has a vtable pointer at offset 0x3C.  The vtable (lbl_eu_805398B0) is
+ * set up as assembly data and assigned manually in the constructor so
+ * that the C-linkage symbol name __ct__CCharVoice is used (no C++
+ * namespace mangling).
+ *
+ * Field layout (total size 0x40 = 64 bytes):
+ *   0x00  mOwner            parent/owner object
+ *   0x04  mVoiceId          current voice ID
+ *   0x08  mPriorityCheck    priority value for play-through gate
+ *   0x0C  mSoundHandle      handle from archive-voice sound system
+ *   0x10  mFileName[0x20]   voice file path buffer (32 bytes)
+ *   0x30  mFileNameLen      strlen of mFileName
+ *   0x34  mField34          offset into mFileName for digit formatting
+ *   0x38  mBattleSndHandle  sound handle for battle-voice path
+ *   0x3C  mVtable           pointer to lbl_eu_805398B0 (vtable)
+ */
+struct CCharVoice {
+    void* mOwner;            // 0x00
+    s32   mVoiceId;          // 0x04
+    s32   mPriorityCheck;    // 0x08
+    s32   mSoundHandle;      // 0x0C
+    char  mFileName[0x20];  // 0x10
+    u32   mFileNameLen;      // 0x30
+    s32   mField34;          // 0x34
+    u16   mBattleSndHandle;  // 0x38
+    // 2 bytes padding to 0x3C
+    void* mVtable;           // 0x3C -- vtable pointer
+
+    void func_802A0B8C(void* owner);
+    void func_802A0E08();
+    void func_802A0FE8();
+    bool func_802A109C(float volume, int priority, int voiceId);
+    void func_802A1304();
+};
+/* end "kyoshin/cf/voice/CCharVoice.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 10 "kyoshin/code_801862C0.hpp" */
 #pragma once
 
 /**
@@ -251488,11 +251537,11 @@ void* func_80186D20(void* p);
 #endif
 /* end "kyoshin/code_801862C0.hpp" */
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 11 "monolib/core/CPadManager.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 12 "monolib/core/CPadManager.hpp" */
 /* end "monolib/core/CPadManager.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 12 "monolib/core/CView.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 13 "monolib/core/CView.hpp" */
 /* end "monolib/core/CView.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 13 "monolib/scn/CScn.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 14 "monolib/scn/CScn.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/scn/CScn.hpp" line 2 "monolib/work.hpp" */
@@ -251554,9 +251603,9 @@ public:
     u8 unk_3EA[0x3EC - 0x3EA]; //0x3EA
 }; // size = 0x3EC
 /* end "monolib/scn/CScn.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 14 "monolib/util/FixStr.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 15 "monolib/util/FixStr.hpp" */
 /* end "monolib/util/FixStr.hpp" */
-/* "src/kyoshin/cf/CfGameManager.cpp" line 15 "string.h" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 16 "string.h" */
 /* end "string.h" */
 
 // destructor defined inline in CfGameManager.hpp
@@ -251757,7 +251806,7 @@ extern "C" void func_80082544__Q22cf13CfGameManagerFv(s32 minimum, s32* value,
 }
 #pragma dont_inline reset
 
-/* "src/kyoshin/cf/CfGameManager.cpp" line 215 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
+/* "src/kyoshin/cf/CfGameManager.cpp" line 216 "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 // Typed helpers recovered from the original CfGameManager unity translation unit.
 
 namespace ml {
@@ -251790,6 +251839,46 @@ struct UnkLinkedNode {
     UnkLinkedNode* next;
 };
 
+struct ItemContainerPrefix {
+    u8 field_0x0[0x3E9C];
+};
+
+struct ItemListSubobject {
+    u32 field_0x0;
+};
+
+struct ItemListObject : public ItemContainerPrefix, public ItemListSubobject {
+    u8 field_0x3EA0[0x88];
+    u16 itemId_0x3F28;
+};
+
+struct ItemListNode {
+    ItemListNode* next;
+    u32 field_0x4;
+    ItemListSubobject* object;
+};
+
+struct ItemListManager {
+    u32 field_0x0;
+    ItemListNode* sentinel;
+};
+
+struct Unk81B80Object {
+    void* vtable_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    void* vtable_0xC;
+    void* vtable_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u32 field_0x1C;
+    u8 field_0x20[8];
+    CCharVoice voice_0x28;
+    void* vtable_0x68;
+    u8 effect_0x6C[0x300];
+    u32 field_0x36C;
+};
+
 struct UnkReset28Data {
     u8 field_0x0[0x28];
 };
@@ -251813,6 +251902,55 @@ public:
     virtual void vfunc_0x40();
     virtual void vfunc_0x44();
     virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual void vfunc_0x58();
+    virtual void vfunc_0x5C();
+    virtual void vfunc_0x60();
+    virtual void vfunc_0x64();
+    virtual void vfunc_0x68();
+    virtual void vfunc_0x6C();
+    virtual void vfunc_0x70(void* object);
+    virtual void vfunc_0x74();
+    virtual void vfunc_0x78();
+    virtual void vfunc_0x7C();
+    virtual void vfunc_0x80();
+    virtual void vfunc_0x84();
+    virtual void vfunc_0x88();
+    virtual void vfunc_0x8C();
+    virtual void vfunc_0x90();
+    virtual void vfunc_0x94();
+    virtual void vfunc_0x98();
+    virtual void vfunc_0x9C();
+    virtual void vfunc_0xA0();
+    virtual void vfunc_0xA4();
+    virtual void vfunc_0xA8();
+    virtual void vfunc_0xAC();
+    virtual void vfunc_0xB0();
+    virtual void vfunc_0xB4();
+    virtual void vfunc_0xB8();
+    virtual void vfunc_0xBC();
+    virtual void vfunc_0xC0();
+    virtual void vfunc_0xC4();
+    virtual void vfunc_0xC8();
+    virtual void vfunc_0xCC();
+    virtual void vfunc_0xD0();
+    virtual void vfunc_0xD4();
+    virtual void vfunc_0xD8();
+    virtual void vfunc_0xDC();
+    virtual void vfunc_0xE0();
+    virtual void vfunc_0xE4();
+    virtual void vfunc_0xE8();
+    virtual void vfunc_0xEC();
+    virtual void vfunc_0xF0();
+    virtual void vfunc_0xF4();
+    virtual void vfunc_0xF8();
+    virtual void vfunc_0xFC();
+    virtual void vfunc_0x100();
+    virtual void vfunc_0x104();
+    virtual void vfunc_0x108();
+    virtual void vfunc_0x10C(u32 mode);
 
     u8 field_0x4[0x74];
     char text_0x78[0x10];
@@ -252552,6 +252690,7 @@ extern "C" const char* getBdatStringColumnValue(BdatFilePointer* file,
                                                   const char* column, u16 index);
 extern "C" void func_8003B1EC(BdatFilePointer* file);
 extern "C" void func_8003B41C(BdatFilePointer* file);
+#pragma dont_inline on
 extern "C" Unk80EE4Data* func_80080E44__Q22cf13CfGameManagerFv(
     const char* name, u16 index) {
     func_8003AA34();
@@ -252563,6 +252702,68 @@ extern "C" Unk80EE4Data* func_80080E44__Q22cf13CfGameManagerFv(
     Unk80EE4Data* data = func_80081D2C__Q22cf13CfGameManagerFv(
         reinterpret_cast<u32>(value), 0, 0);
     func_80080EE4__Q22cf13CfGameManagerFv(data, name, index);
+    return data;
+}
+#pragma dont_inline reset
+
+extern "C" u8 lbl_eu_8052AC98[];
+extern "C" u8 lbl_eu_8052ADC0[];
+extern "C" void __ct__CCharVoice(CCharVoice* voice);
+extern "C" void __ct__cf_CCharEffectEne(void* effect);
+extern "C" Unk81B80Object* __ct__80081B80(Unk81B80Object* self) {
+    self->field_0x4 = 0;
+    self->field_0x8 = 0;
+    self->vtable_0x0 = lbl_eu_8052AC98;
+    self->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    self->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    self->field_0x14 = 0;
+    self->field_0x18 = 0;
+    self->field_0x1C = 0;
+    __ct__CCharVoice(&self->voice_0x28);
+    self->vtable_0x0 = lbl_eu_8052ADC0;
+    self->vtable_0xC = &lbl_eu_8052ADC0[0xB4];
+    self->vtable_0x10 = &lbl_eu_8052ADC0[0xC4];
+    self->vtable_0x68 = &lbl_eu_8052ADC0[0xF0];
+    __ct__cf_CCharEffectEne(&self->effect_0x6C);
+    self->field_0x36C = 0;
+    return self;
+}
+
+extern "C" ItemListManager* func_800B6BA4__Fv();
+extern "C" void func_800C01D4(ItemListObject* object, void* destination,
+                                u16 itemId);
+extern "C" void __ct__8009ED08(void* destination, u16 itemId);
+extern "C" void func_8007F830__Q22cf13CfGameManagerFv(void* destination,
+                                                        u16 itemId) {
+    ItemListManager* manager = func_800B6BA4__Fv();
+    ItemListNode* sentinel = manager->sentinel;
+    ItemListNode* node = sentinel->next;
+    while (node != sentinel) {
+        ItemListObject* object = static_cast<ItemListObject*>(node->object);
+        if (itemId == object->itemId_0x3F28) {
+            func_800C01D4(object, destination, itemId);
+            return;
+        }
+        node = node->next;
+    }
+    __ct__8009ED08(destination, itemId);
+}
+
+extern "C" u32 func_80061FE8();
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
+extern "C" void* __ct__800814BC(void* memory);
+extern "C" Unk80EE4Data* func_80081990__Q22cf13CfGameManagerFv(
+    const char* name, u16 index) {
+    Unk80EE4Data* data = func_80080E44__Q22cf13CfGameManagerFv(name, index);
+    u32 heap = func_80061FE8();
+    void* memory = allocate__Q23mtl10MemManagerFUlUl(0x36C, heap);
+    void* object = memory;
+    if (memory != nullptr) {
+        object = __ct__800814BC(memory);
+    }
+    data->vfunc_0x70(object);
+    data->vfunc_0x10C(9);
+    data->vfunc_0x48();
     return data;
 }
 
@@ -253750,7 +253951,7 @@ void cf::CfGameManager::func_80082254() {}
 
 void cf::CfGameManager::func_80082EC0() {}
 
-extern "C" void func_800B6BA4__Fv();
+extern "C" ItemListManager* func_800B6BA4__Fv();
 void cf::CfGameManager::func_80086B04() {}
 
 extern "C" void func_800B6BC8();
@@ -253786,8 +253987,7 @@ void cf::CfGameManager::func_80086D98() {}
 extern "C" void func_8006A2E0();
 void cf::CfGameManager::func_80086D9C() {}
 
-extern "C" void func_8006A33C();
-void cf::CfGameManager::func_80086DA0() {}
+u32 cf::CfGameManager::func_80086DA0() { return 0; }
 
 extern "C" void func_8006A37C();
 void cf::CfGameManager::func_80086DA4() {}
@@ -253801,8 +254001,7 @@ void cf::CfGameManager::func_80086DAC() {}
 extern "C" void func_8006A404();
 void cf::CfGameManager::func_80086DB0() {}
 
-extern "C" void func_8006A6D0();
-void cf::CfGameManager::func_80086DBC() {}
+u32 cf::CfGameManager::func_80086DBC() { return 0; }
 
 void cf::CfGameManager::func_8007F8B8() {}
 

@@ -30,6 +30,65 @@ struct UnkLinkedNode {
     UnkLinkedNode* next;
 };
 
+struct ItemContainerPrefix {
+    u8 field_0x0[0x3E9C];
+};
+
+struct ItemListSubobject {
+    u32 field_0x0;
+};
+
+struct ItemListObject : public ItemContainerPrefix, public ItemListSubobject {
+    u8 field_0x3EA0[0x88];
+    u16 itemId_0x3F28;
+};
+
+struct ItemListNode {
+    ItemListNode* next;
+    u32 field_0x4;
+    ItemListSubobject* object;
+};
+
+struct ItemListManager {
+    u32 field_0x0;
+    ItemListNode* sentinel;
+};
+
+struct UnkCharEffect304 {
+    void* vtable_0x0;
+    u8 field_0x4[0x300];
+};
+
+struct Unk814BCObject {
+    void* vtable_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    void* vtable_0xC;
+    void* vtable_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u32 field_0x1C;
+    u8 field_0x20[8];
+    CCharVoice voice_0x28;
+    UnkCharEffect304 effect_0x68;
+};
+
+struct Unk81B80Object {
+    void* vtable_0x0;
+    u32 field_0x4;
+    u32 field_0x8;
+    void* vtable_0xC;
+    void* vtable_0x10;
+    u32 field_0x14;
+    u32 field_0x18;
+    u32 field_0x1C;
+    u8 field_0x20[8];
+    CCharVoice voice_0x28;
+    void* vtable_0x68;
+    u8 effect_0x6C[0x300];
+    u32 field_0x36C;
+};
+
 struct UnkReset28Data {
     u8 field_0x0[0x28];
 };
@@ -841,6 +900,7 @@ extern "C" const char* getBdatStringColumnValue(BdatFilePointer* file,
                                                   const char* column, u16 index);
 extern "C" void func_8003B1EC(BdatFilePointer* file);
 extern "C" void func_8003B41C(BdatFilePointer* file);
+#pragma dont_inline on
 extern "C" Unk80EE4Data* func_80080E44__Q22cf13CfGameManagerFv(
     const char* name, u16 index) {
     func_8003AA34();
@@ -852,6 +912,96 @@ extern "C" Unk80EE4Data* func_80080E44__Q22cf13CfGameManagerFv(
     Unk80EE4Data* data = func_80081D2C__Q22cf13CfGameManagerFv(
         reinterpret_cast<u32>(value), 0, 0);
     func_80080EE4__Q22cf13CfGameManagerFv(data, name, index);
+    return data;
+}
+#pragma dont_inline reset
+
+extern "C" u8 lbl_eu_8052AC98[];
+extern "C" u8 lbl_eu_8052ADC0[];
+extern "C" void __ct__CCharVoice(CCharVoice* voice);
+extern "C" void __ct__cf_CCharEffectEne(void* effect);
+extern "C" Unk81B80Object* __ct__80081B80(Unk81B80Object* self) {
+    self->field_0x4 = 0;
+    self->field_0x8 = 0;
+    self->vtable_0x0 = lbl_eu_8052AC98;
+    self->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    self->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    self->field_0x14 = 0;
+    self->field_0x18 = 0;
+    self->field_0x1C = 0;
+    __ct__CCharVoice(&self->voice_0x28);
+    self->vtable_0x0 = lbl_eu_8052ADC0;
+    self->vtable_0xC = &lbl_eu_8052ADC0[0xB4];
+    self->vtable_0x10 = &lbl_eu_8052ADC0[0xC4];
+    self->vtable_0x68 = &lbl_eu_8052ADC0[0xF0];
+    __ct__cf_CCharEffectEne(&self->effect_0x6C);
+    self->field_0x36C = 0;
+    return self;
+}
+
+extern "C" ItemListManager* func_800B6BA4__Fv();
+extern "C" void func_800C01D4(ItemListObject* object, void* destination,
+                                u16 itemId);
+extern "C" void __ct__8009ED08(void* destination, u16 itemId);
+extern "C" void func_8007F830__Q22cf13CfGameManagerFv(void* destination,
+                                                        u16 itemId) {
+    ItemListManager* manager = func_800B6BA4__Fv();
+    ItemListNode* sentinel = manager->sentinel;
+    ItemListNode* node = sentinel->next;
+    while (node != sentinel) {
+        ItemListObject* object = static_cast<ItemListObject*>(node->object);
+        if (itemId == object->itemId_0x3F28) {
+            func_800C01D4(object, destination, itemId);
+            return;
+        }
+        node = node->next;
+    }
+    __ct__8009ED08(destination, itemId);
+}
+
+extern "C" u8 lbl_eu_8052AA28[];
+extern "C" u8 lbl_eu_8052FE08[];
+extern "C" void __ct__CCharEffect(void* effect);
+static inline Unk814BCObject* initializeUnk814Base(Unk814BCObject* base) {
+    base->field_0x4 = 0;
+    base->field_0x8 = 0;
+    base->vtable_0x0 = lbl_eu_8052AC98;
+    base->vtable_0xC = &lbl_eu_8052AC98[0xB4];
+    base->vtable_0x10 = &lbl_eu_8052AC98[0xC4];
+    base->field_0x14 = 0;
+    base->field_0x18 = 0;
+    base->field_0x1C = 0;
+    __ct__CCharVoice(&base->voice_0x28);
+    return base;
+}
+#pragma dont_inline on
+extern "C" Unk814BCObject* __ct__800814BC(Unk814BCObject* self) {
+    Unk814BCObject* result = self;
+    Unk814BCObject* base = initializeUnk814Base(result);
+    result->vtable_0x0 = lbl_eu_8052AA28;
+    result->vtable_0xC = &lbl_eu_8052AA28[0xB4];
+    result->vtable_0x10 = &lbl_eu_8052AA28[0xC4];
+    UnkCharEffect304* effect = &result->effect_0x68;
+    __ct__CCharEffect(effect);
+    effect->vtable_0x0 = lbl_eu_8052FE08;
+    return result;
+}
+#pragma dont_inline reset
+
+extern "C" u32 func_80061FE8();
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32 size, u32 heap);
+extern "C" Unk80EE4Data* func_80081990__Q22cf13CfGameManagerFv(
+    const char* name, u16 index) {
+    Unk80EE4Data* data = func_80080E44__Q22cf13CfGameManagerFv(name, index);
+    u32 heap = func_80061FE8();
+    void* memory = allocate__Q23mtl10MemManagerFUlUl(0x36C, heap);
+    void* object = memory;
+    if (memory != nullptr) {
+        object = __ct__800814BC(static_cast<Unk814BCObject*>(memory));
+    }
+    data->vfunc_0x70(object);
+    data->vfunc_0x10C(9);
+    data->vfunc_0x48();
     return data;
 }
 

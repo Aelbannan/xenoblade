@@ -7,6 +7,7 @@
 #include "kyoshin/cf/object/CObjectParam.hpp"
 #include "kyoshin/cf/object/CfObjectMove.hpp"
 #include "kyoshin/cf/object/CfObjectMap.hpp"
+#include "kyoshin/cf/voice/CCharVoice.hpp"
 #include "kyoshin/code_801862C0.hpp"
 
 #include "monolib/core/CPadManager.hpp"
@@ -692,7 +693,7 @@ void cf::CfGameManager::func_80082254() {}
 
 void cf::CfGameManager::func_80082EC0() {}
 
-extern "C" void func_800B6BA4__Fv();
+extern "C" ItemListManager* func_800B6BA4__Fv();
 void cf::CfGameManager::func_80086B04() {}
 
 extern "C" void func_800B6BC8();
@@ -728,8 +729,7 @@ void cf::CfGameManager::func_80086D98() {}
 extern "C" void func_8006A2E0();
 void cf::CfGameManager::func_80086D9C() {}
 
-extern "C" void func_8006A33C();
-void cf::CfGameManager::func_80086DA0() {}
+u32 cf::CfGameManager::func_80086DA0() { return 0; }
 
 extern "C" void func_8006A37C();
 void cf::CfGameManager::func_80086DA4() {}
@@ -743,8 +743,7 @@ void cf::CfGameManager::func_80086DAC() {}
 extern "C" void func_8006A404();
 void cf::CfGameManager::func_80086DB0() {}
 
-extern "C" void func_8006A6D0();
-void cf::CfGameManager::func_80086DBC() {}
+u32 cf::CfGameManager::func_80086DBC() { return 0; }
 
 void cf::CfGameManager::func_8007F8B8() {}
 

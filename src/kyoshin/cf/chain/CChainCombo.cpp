@@ -53,21 +53,14 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
         (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_UnkVirtualFunc132();
     CChainCombo_ArtsCategory* category =
         (CChainCombo_ArtsCategory*)holder->mArtsCategoryPtr;
-    u8 newArtsType = category->mArtsCategory;
+    int newArtsType = category->mArtsCategory;
 
     // Reset combo count if arts type changed (but not to/from 8).
     int oldArtsType = self->mArtsType;
-    int resetCombo;
-    if (newArtsType == 8) {
-        resetCombo = 0;
-    } else if (oldArtsType == 8) {
-        resetCombo = 0;
-    } else {
-        // (old - new) | (new - old) >> 31 — nonzero iff old != new.
-        resetCombo = (int)((u32)(oldArtsType - newArtsType) | (u32)(newArtsType - oldArtsType)) >> 31;
-    }
-    if (resetCombo != 0) {
-        self->mComboCount = 0;
+    if (newArtsType != 8 && oldArtsType != 8) {
+        if (((oldArtsType - newArtsType) | (newArtsType - oldArtsType)) >> 31) {
+            self->mComboCount = 0;
+        }
     }
 
     self->mArtsType = newArtsType;

@@ -47,6 +47,9 @@ void func_801D59C0(u32*, void*, void*);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F8;
+extern void* lbl_eu_806640D8;
+extern void* lbl_eu_80506330;
+u32 getLanguage__9CDeviceSCFv();
 extern void* lbl_eu_80664110;
 void func_801D1F9C(void*, u32);
 void func_801C4B60(void*, u32, u32, u32, u32);
@@ -1073,4 +1076,34 @@ void sinint_801EABC4() {
     func_801C4B60(&lbl_eu_80664588, 0xff, 0xff, 0xfa, 0);
 }
 
-void func_801D3C74(){}
+char* func_801D3C74(void* item_data, u8 index) {
+    if (index >= 12) return NULL;
+    u16 item_id = *(u16*)((u8*)item_data + index * 2);
+    if (item_id == 0) return NULL;
+    u8 category = *(u8*)((u8*)item_data + index + 0xB4);
+    s16 val = *(s16*)((u8*)item_data + index * 2 + 0xC0);
+    char buf[0x80];
+    sprintf(buf, (char*)&lbl_eu_805063BC, val);
+    func_801361E8(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0x3], item_id);
+    func_8013639C(lbl_eu_806640D8, (char*)&lbl_eu_805063BC[0xC]);
+    char* result = (char*)item_data + 0xD9;
+    sprintf(result, (char*)&lbl_eu_805063BC[0x18], 0);
+    u8 is_jp = 0;
+    u8 lang = getLanguage__9CDeviceSCFv();
+    if (lang == 3 || lang == 2) is_jp = 1;
+    char* scan = result;
+    char temp_buf[0x20];
+    char* format_base = (char*)&lbl_eu_805063BC;
+    char* alt_base = (char*)&lbl_eu_80506330;
+    while (*scan) {
+        if (*scan == '$') {
+            scan++;
+            if (*scan == '1' || *scan == '2') {
+                memset(temp_buf, 0, 0x20);
+                // Format based on scan character
+            }
+        }
+        scan++;
+    }
+    return result;
+}

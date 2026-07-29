@@ -1416,6 +1416,32 @@ public:
 
 /* "src/kyoshin/COption.hpp" line 2 "types.h" */
 /* end "types.h" */
+/* "src/kyoshin/COption.hpp" line 3 "kyoshin/CSysWin.hpp" */
+#pragma once
+
+/* "src/kyoshin/CSysWin.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+// Full object layout for CSysWin (used by C-linkage accessors)
+struct CSysWinFull {
+    u8 _00[0x28];
+    u8 field_28;
+    u8 _29[0x34 - 0x29];
+    u8 field_34;
+    u8 _35;
+    u8 field_36;
+};
+
+class CSysWin {
+public:
+    CSysWin();
+    virtual ~CSysWin();
+    void OnFileEvent();
+
+    // TODO: add fields
+};
+
+/* end "kyoshin/CSysWin.hpp" */
 
 class CCur19 {
 public:
@@ -1425,26 +1451,23 @@ public:
 };
 
 // Full object layout for COption (used by C-linkage accessors)
+// Extends through the CSysWin sub-object at 0xA8
 struct COptionFull {
-    u8 _00[0x18];
-    u32 field_0x18;
-    u8 _1C[0x28 - 0x1C];
-    u8 field_0x28;
-    u8 field_0x29;
-    u8 field_0x2A;
-    u8 field_2B;
-    u8 _2C[0x30 - 0x2C];
-    u8 field_30;
-    u8 _31;
-    u8 field_32;
-    u8 _33[0x78 - 0x33];
-    // CBaseCur subobject at 0x78 (0x16 bytes)
-    u8 cur1[0x16];
-    u8 _8E[0xA8 - 0x8E];
-    // CSysWin subobject at 0xA8 (0x3C bytes)
-    u8 syswin[0x3C];
-    // CBaseCur subobject at 0xE4 (0x16 bytes)
-    u8 cur2[0x16];
+    u8 _00[0x29];           // 0x00-0x28
+    u8 field_29;            // 0x29 - state (0-4)
+    u8 _2A;                 // 0x2A
+    u8 field_2B;            // 0x2B
+    u8 _2C[0x2E - 0x2C];   // 0x2C-0x2D
+    u8 field_2E;            // 0x2E
+    u8 _2F;                 // 0x2F
+    u8 field_30;            // 0x30
+    s8 _31;                 // 0x31
+    u8 field_32;            // 0x32
+    u8 _33[0x38 - 0x33];   // 0x33-0x37
+    u8 field_38[0x78 - 0x38]; // 0x38-0x77
+    u8 field_78[0x90 - 0x78]; // 0x78-0x8F
+    u8 field_90[0xA8 - 0x90]; // 0x90-0xA7
+    CSysWinFull mSysWin;    // 0xA8
 };
 
 class COption {
@@ -1453,26 +1476,7 @@ public:
     virtual ~COption();
     void OnFileEvent();
 
-    // vtable at 0x00 (implicit)
-    u8 _04[0x18 - 0x04];
-    u32 field_0x18;              // 0x18 - checked for non-zero; layout pointer or ready flag
-    u8 _1C[0x28 - 0x1C];
-    u8 field_0x28;               // 0x28
-    u8 field_0x29;               // 0x29 - menu state/phase
-    u8 field_0x2A;               // 0x2A
-    u8 field_0x2B;               // 0x2B
-    u8 _2C[0x30 - 0x2C];
-    u8 field_0x30;               // 0x30
-    u8 _31;                      // 0x31
-    u8 field_0x32;               // 0x32
-    u8 _33[0x78 - 0x33];
-    // CBaseCur subobject at 0x78 (0x16 bytes)
-    u8 cur1[0x16];
-    u8 _8E[0xA8 - 0x8E];
-    // CSysWin subobject at 0xA8 (0x3C bytes)
-    u8 syswin[0x3C];
-    // CBaseCur subobject at 0xE4 (0x16 bytes)
-    u8 cur2[0x16];
+    // TODO: add fields
 };
 
 /* end "kyoshin/COption.hpp" */
@@ -1506,17 +1510,19 @@ Class_80296898* func_80296A04(Class_80296898* obj);
 void func_80296AE8(u8* src);
 /* end "kyoshin/code_80296898.hpp" */
 
-// CSysWin_isActive returns the field_36 byte from CSysWinFull
-int CSysWin_isActive(u8*);
-// func_801D216C sets mVisible on a CBaseCur subobject
+// Callee declarations for retail functions in other TUs
+void func_801F369C(u8*);
 void func_801D216C(u8*, int);
+void func_80138078__FUl(u32);
+int CSysWin_isActive(CSysWinFull*);
+int CSysWin_getUnk34(CSysWinFull*);
 
-// Global buffer for game config data
-extern u8 lbl_eu_80577308[];
+// Forward declarations for same-TU functions
+void func_8029D420(COptionFull*);
+int func_8029E3F8(COptionFull*);
 
-// Forward declarations for callees in this TU (noinline to preserve calls)
-__attribute__((noinline)) void func_8029D420(COption*);
-__attribute__((noinline)) void func_8029E254(COption*);
+// Global Class_80296898 instance used by this TU
+extern Class_80296898 lbl_eu_80577308;
 
 u8 func_8029C790(void* self) { return static_cast<COptionFull*>(self)->field_2B; }
 
@@ -1550,7 +1556,17 @@ void func_8029CABC(){}
 
 void func_8029CB9C(){}
 
-void func_8029CC30(){}
+// State-machine transition: field_29 3→4; tear down cursor sub-objects
+void func_8029CC30(COptionFull* self) {
+    if (self->field_29 == 3) {
+        self->field_29 = 4;
+        self->field_2B = 0;
+        func_801F369C(self->field_38);
+        func_801D216C(self->field_78, 0);
+        func_801D216C(self->field_90, 0);
+        func_80138078__FUl(6);
+    }
+}
 
 void func_8029CC9C(){}
 
@@ -1558,7 +1574,16 @@ void func_8029CDB0(){}
 
 void func_8029CF7C(){}
 
-void func_8029D054(){}
+// Returns a menu action code based on syswin and state checks
+int func_8029D054(COptionFull* self) {
+    if (CSysWin_getUnk34(&self->mSysWin) != 0) {
+        return 0;
+    }
+    if (self->field_2E != 0) {
+        return 0x6d;
+    }
+    return (func_8029E3F8(self) != 0) ? 0x6e : 0x6c;
+}
 
 void func_8029D0C0(){}
 
@@ -1568,43 +1593,29 @@ void func_8029D178(){}
 
 void func_8029D1C4(){}
 
-// Called when the option menu transitions to a sub-state (CSysWin is active)
-void func_8029D210(COption* self) {
-    if (CSysWin_isActive(self->syswin)) {
-        self->field_0x29 = 3;
-        self->field_0x2B = 1;
-        func_801D216C(self->cur1, 0);
-        func_801D216C(self->cur2, 1);
-        func_8029E254(self);
-    }
-}
+void func_8029D210(){}
 
 void func_8029D278(){}
 
-// Similar to func_8029D210 but sets field_0x29 to 9 instead of 3
-void func_8029D2F0(COption* self) {
-    if (CSysWin_isActive(self->syswin)) {
-        self->field_0x29 = 9;
-        self->field_0x2B = 1;
-        func_801D216C(self->cur1, 0);
-        func_801D216C(self->cur2, 1);
-        func_8029E254(self);
+void func_8029D2F0(){}
+
+// State-machine transition: field_29→3, field_2B→1; init config if field_31==0
+void func_8029D358(COptionFull* self) {
+    if (!CSysWin_isActive(&self->mSysWin)) {
+        return;
     }
+    self->field_29 = 3;
+    self->field_2B = 1;
+    if (self->_31 != 0) {
+        return;
+    }
+    lbl_eu_80577308.init();
+    func_8029D420(self);
 }
 
-void func_8029D358(){}
+void func_8029D3C0(){}
 
-// Initializes the option menu by copying game config and activating
-void func_8029D3C0(COption* self) {
-    if (self->field_0x18 != 0) {
-        self->field_0x2A = 1;
-        self->field_0x28 = 1;
-        memcpy(lbl_eu_80577308, Class_80296898::getInstance(), 0x40);
-        func_8029D420(self);
-    }
-}
 
-__attribute__((noinline)) void func_8029D420(COption*){}
 
 void func_8029D634(){}
 
@@ -1622,14 +1633,14 @@ void func_8029E144(){}
 
 void func_8029E1CC(){}
 
-__attribute__((noinline)) void func_8029E254(COption*){}
+void func_8029E254(){}
 
-void func_8029E3F8(){}
+
 
 void COption::OnFileEvent() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern void func_80296A04__FP14Class_80296898(void*);
 void sinit_8029E7D8(){
-    func_80296A04__FP14Class_80296898(lbl_eu_80577308);
+    func_80296A04__FP14Class_80296898(&lbl_eu_80577308);
 }

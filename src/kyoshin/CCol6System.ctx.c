@@ -1416,52 +1416,7 @@ public:
 
 /* "src/kyoshin/CCol6System.hpp" line 2 "types.h" */
 /* end "types.h" */
-
-class __declspec(novtable) CCol6Hint {
-public:
-    CCol6Hint(void*);
-    virtual ~CCol6Hint();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
-
-    /* 0x04 */ u8 _pad04[0x74 - 0x04];
-    /* 0x74 */ u8 mMemRegion[0x10];               // UnkClass_8045F564 scratch region
-    /* 0x84 */ u8 _pad84[0x124 - 0x84];
-    /* 0x124 */ u8 mCur[0x18];                      // CCur18 cursor widget
-    /* 0x13C */ u8 mScrollBarBuf[0x40];             // CScrollBar widget (0x40 bytes)
-};
-
-class CCol6System {
-public:
-    CCol6System(void*);
-    virtual ~CCol6System();
-    void Init();
-    void Term();
-    void Move();
-    void cbRenderBefore();
-
-    // TODO: add fields
-};
-
-class CCol6Invite {
-public:
-    virtual ~CCol6Invite();
-    void Init();
-    void Move();
-
-    // TODO: add fields
-    void Term();
-};
-
-/* end "kyoshin/CCol6System.hpp" */
-/* "src/kyoshin/CCol6System.cpp" line 5 "kyoshin/CCol6CheckBat.hpp" */
-#pragma once
-
-/* "src/kyoshin/CCol6CheckBat.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "src/kyoshin/CCol6CheckBat.hpp" line 3 "monolib/work/CProcess.hpp" */
+/* "src/kyoshin/CCol6System.hpp" line 3 "monolib/work/CProcess.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/work/CProcess.hpp" line 2 "types.h" */
@@ -13028,6 +12983,72 @@ private:
 };
 /* end "monolib/work/CProcess.hpp" */
 
+/* CCol6Hint constructor — retail extern "C" symbol, no C++ mangling. */
+extern "C" u8* __ct__CCol6Hint(u8*, u8*);
+/* CCol6System constructor — retail extern "C" symbol. */
+extern "C" u8* __ct__CCol6System(u8*, u8*);
+/* CCur18 destructor — retail definition lives in kyoshin/CCur. */
+extern "C" void __dt__6CCur18Fv(u8*, int);
+/* CScrollBar destructor — retail symbol. */
+extern "C" void __dt__10CScrollBarFv(u8*, int);
+/* UnkClass_8045F564 destructor — retail symbol. */
+extern "C" void __dt__17UnkClass_8045F564Fv(u8*, int);
+/* CProcess base destructor — retail symbol. */
+extern "C" void __dt__8CProcessFv(u8*, int);
+/* CProcess::Regist — registers a process as a child of parent. */
+extern "C" void Regist__8CProcessFP8CProcessb(u8*, CProcess*, bool);
+/* mtl::MemManager::allocate — allocates from a memory region. */
+extern "C" u8* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
+/* CWorkThreadSystem::getWorkMem — returns work memory handle. */
+extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
+
+class __declspec(novtable) CCol6Hint {
+public:
+    CCol6Hint(u8*);
+    virtual ~CCol6Hint();
+    void Init();
+    void Term();
+    void Move();
+    void cbRenderBefore();
+
+    /* 0x04 */ u8 _pad04[0x74 - 0x04];
+    /* 0x74 */ u8 mMemRegion[0x10];               // UnkClass_8045F564 scratch region
+    /* 0x84 */ u8 _pad84[0x124 - 0x84];
+    /* 0x124 */ u8 mCur[0x18];                      // CCur18 cursor widget
+    /* 0x13C */ u8 mScrollBarBuf[0x40];             // CScrollBar widget (0x40 bytes)
+};
+
+class CCol6System {
+public:
+    CCol6System(u8*);
+    virtual ~CCol6System();
+    void Init();
+    void Term();
+    void Move();
+    void cbRenderBefore();
+
+    // TODO: add fields
+};
+
+class CCol6Invite {
+public:
+    virtual ~CCol6Invite();
+    void Init();
+    void Move();
+
+    // TODO: add fields
+    void Term();
+};
+
+/* end "kyoshin/CCol6System.hpp" */
+/* "src/kyoshin/CCol6System.cpp" line 5 "kyoshin/CCol6CheckBat.hpp" */
+#pragma once
+
+/* "src/kyoshin/CCol6CheckBat.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/CCol6CheckBat.hpp" line 3 "monolib/work/CProcess.hpp" */
+/* end "monolib/work/CProcess.hpp" */
+
 /*
   Collision-6 check-bat process. Singleton managed by CCol6System.
   Inherits CProcess for work-thread lifecycle (Init/Term/Move/Draw).
@@ -13099,29 +13120,20 @@ void func_8015D310(){}
 void func_8015D3A0(){}
 
 /* CCol6Hint constructor: placement-new called from func_8015DCD0 factory. */
-CCol6Hint::CCol6Hint(void* arg) {
+CCol6Hint::CCol6Hint(u8* arg) {
     // Stub — fields initialized by this ctor; body TBD when ctor is decompiled.
 }
 
-/* CCur18 destructor symbol — retail definition lives in kyoshin/CCur. */
-extern "C" void __dt__6CCur18Fv(void*, int);
-/* CScrollBar destructor — declared in kyoshin/CScrollBar.hpp. */
-extern "C" void __dt__10CScrollBarFv(void*, int);
-/* UnkClass_8045F564 destructor — declared in monolib/lib/UnkClass_8045F564.hpp. */
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-/* CProcess base destructor. */
-extern "C" void __dt__8CProcessFv(void*, int);
-
 /* CCol6Hint destructor: destroys owned sub-objects in reverse declaration
    order, then chains to CProcess base. MWCC virtual dtor pattern:
-   r4=-1 for sub-object dtors, r4=0 for the base CProcess dtor, then
-   operator delete if the caller requested it (MWCC handles the flag). */
+   flag=-1 for sub-object dtors, flag=0 for the base CProcess dtor, then
+   operator delete if the caller requested it. */
 CCol6Hint::~CCol6Hint() {
     __dt__10CScrollBarFv(mScrollBarBuf, -1);
     __dt__6CCur18Fv(mCur, -1);
     __dt__17UnkClass_8045F564Fv(mMemRegion, -1);
     if (this) {
-        __dt__8CProcessFv(this, 0);
+        __dt__8CProcessFv((u8*)this, 0);
     }
 }
 
@@ -13135,25 +13147,13 @@ void func_8015DB08(){}
 
 void CCol6Hint::cbRenderBefore() {}
 
-/* CCol6Hint constructor symbol — retail definition lives in this TU.
-   Returns this (in r3), matching MWCC ctor convention. */
-extern "C" void* __ct__CCol6Hint(void*, void*);
-/* CCol6System constructor symbol — retail definition lives in this TU. */
-extern "C" void* __ct__CCol6System(void*, void*);
-/* CProcess::Regist — registers a process as a child of parent. */
-extern "C" void Regist__8CProcessFP8CProcessb(void*, CProcess*, bool);
-/* mtl::MemManager::allocate — allocates from a memory region. */
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
-/* CWorkThreadSystem::getWorkMem — returns work memory handle. */
-extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
-
 /* Factory: creates the CCol6Hint singleton and registers it as a child
    of parent. Returns null if singleton already exists. */
-void* func_8015DCD0(CProcess* parent, void* arg) {
+CCol6Hint* func_8015DCD0(CProcess* parent, u8* arg) {
     if (lbl_eu_80664234 != nullptr) {
         return nullptr;
     }
-    void* hint = allocate__Q23mtl10MemManagerFUlUl(0x17c, getWorkMem__17CWorkThreadSystemFv());
+    u8* hint = allocate__Q23mtl10MemManagerFUlUl(0x17c, getWorkMem__17CWorkThreadSystemFv());
     if (hint != nullptr) {
         hint = __ct__CCol6Hint(hint, arg);
     }
@@ -13165,8 +13165,6 @@ void* func_8015DCD0(CProcess* parent, void* arg) {
 void func_8015DD4C(){}
 
 void func_8015E0BC(){}
-
-void __ct__CCol6System(){}
 
 CCol6System::~CCol6System() {}
 
@@ -13182,11 +13180,11 @@ void CCol6System::cbRenderBefore() {}
 
 /* Factory: creates the CCol6System singleton and registers it as a child
    of parent. Returns null if singleton already exists. */
-void* func_801602F4(CProcess* parent, void* arg) {
+CCol6System* func_801602F4(CProcess* parent, u8* arg) {
     if (lbl_eu_80664238 != nullptr) {
         return nullptr;
     }
-    void* sys = allocate__Q23mtl10MemManagerFUlUl(0x240, getWorkMem__17CWorkThreadSystemFv());
+    u8* sys = allocate__Q23mtl10MemManagerFUlUl(0x240, getWorkMem__17CWorkThreadSystemFv());
     if (sys != nullptr) {
         sys = __ct__CCol6System(sys, arg);
     }

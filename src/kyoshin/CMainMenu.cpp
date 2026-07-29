@@ -4,6 +4,8 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CMainMenu.hpp"
 #include "kyoshin/CArtsInfo.hpp"
+#include "kyoshin/CBaseCur.hpp"
+#include "kyoshin/code_80135FDC.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/IWorkEvent.hpp"
@@ -79,8 +81,22 @@ void func_800FEF4C(){}
 
 void __ct__800FF300(void* self){}
 
-// rodata block containing "Param" pane name at offset 0x53
+// rodata block containing resource names:
+// offset 0x00: brlyt name (e.g. "mf00_menu.brlyt")
+// offset 0x19: brlan name (e.g. "mf00_menu_in.brlan")
+// offset 0x37: brlan name (e.g. "mf00_menu_out.brlan")
+// offset 0x53: pane name "Param"
 extern "C" char lbl_eu_804FCEBC[];
+
+// VUpdate() override for the CBaseCur-derived class embedded at CMainMenu+0x90.
+// Loads the layout and two animation transforms, then initializes via func_801D21CC.
+extern "C" void func_800FEA88(CBaseCur* self) {
+    func_80136E84(&self->mpLayout, self->mArcResAcc, &lbl_eu_804FCEBC[0]);
+    func_80136F08(self->mpLayout, &self->mpAnimTrans0, self->mArcResAcc, &lbl_eu_804FCEBC[0x19]);
+    func_80136F08(self->mpLayout, &self->mpAnimTrans1, self->mArcResAcc, &lbl_eu_804FCEBC[0x37]);
+    self->mpLayout->UnbindAllAnimation();
+    func_801D21CC(self);
+}
 
 void CMainMenu::cbRenderBefore() {}
 
@@ -98,22 +114,17 @@ void CMainMenu::func_800FEB14(float* pos) {
 extern u32 lbl_eu_80663F18;
 
 extern "C" void Regist__8CProcessFP8CProcessb(void* _this, void* parent, bool insertTop);
-extern "C" void* __ct__CMainMenu(void* _this, void* param);
 
-// Creates the CMainMenu singleton: allocates 0xE4 bytes from work memory,
-// constructs with param, stores in lbl_eu_80663F18, and registers as a child
-// of the given CProcess. Returns NULL if already created.
+// Creates the CMainMenu singleton: allocates from work memory via placement new,
+// stores in lbl_eu_80663F18, and registers as a child of the given CProcess.
+// Returns NULL if already created.
 extern "C" void* func_800FF6BC(void* parent, void* param) {
-    if (lbl_eu_80663F18 != 0) {
+    if (lbl_eu_80663F18) {
         return NULL;
     }
-    mtl::ALLOC_HANDLE workMem = CWorkThreadSystem::getWorkMem();
-    void* mem = mtl::MemManager::allocate(0xe4, workMem);
-    if (mem != NULL) {
-        __ct__CMainMenu(mem, param);
-    }
-    lbl_eu_80663F18 = (u32)mem;
-    Regist__8CProcessFP8CProcessb(mem, parent, false);
+    CMainMenu* menu = new (CWorkThreadSystem::getWorkMem()) CMainMenu(param);
+    lbl_eu_80663F18 = (u32)menu;
+    Regist__8CProcessFP8CProcessb(menu, parent, false);
     return (void*)lbl_eu_80663F18;
 }
 

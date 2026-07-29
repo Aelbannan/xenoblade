@@ -4,7 +4,7 @@
 
 struct UnkStruct_804E36DC {
     u16 field_0x0;
-    u8 pad0x2[2];
+    u16 pad0x2;
     u32 field_0x4;
     u32 field_0x8;
     u32 field_0xC;

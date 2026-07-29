@@ -8,6 +8,25 @@
 // Shared helper: set pane visibility (extern, defined in code_80135FDC)
 extern void func_80124270(nw4r::lyt::Pane*, u32);
 
+/* func_801D202C: Per-frame cursor update. Drives animation state:
+   mActive==0 checks whether animTransform0 has finished;
+   mActive==1 delegates to the CBaseCur vtable handler;
+   then always calls Animate() on the layout (unless mpLayout is null). */
+extern "C" void func_801D202C(CBaseCur* cur) {
+    if (cur->mpLayout == NULL) {
+        return;
+    }
+    switch (cur->mActive) {
+    case 0:
+        func_80137444(cur->mpAnimTrans0, 1.0f);
+        break;
+    case 1:
+        ((void (*)(CBaseCur*))((void**)cur->mVtable)[5])(cur);
+        break;
+    }
+    cur->mpLayout->Animate(0);
+}
+
 // Vtable for CCur07 (set by constructor after base ctor runs)
 extern "C" int lbl_eu_80534978[];
 
@@ -164,6 +183,17 @@ extern "C" void* __dt__6CCur09Fv(CBaseCur* _this, int flags) {
 
 void func_virt___dt__6CCur09Fv() { }
 
+/* CCur09::func_801D2478: Load the cursor layout (curs09.brlyt) and
+   its loop animation (curs09_roop.brlan), unbind all existing
+   animations from the layout, then run the shared cleanup handler. */
+extern "C" void func_801D2478__6CCur09Fv(CBaseCur* cur) {
+    extern char lbl_eu_80505DE8[];
+    func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0xa0);
+    func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0xb8);
+    cur->mpLayout->UnbindAllAnimation();
+    func_801D21CC(cur);
+}
+
 void func_801D24E8(){}
 
 /* CCur11 constructor: chains to CBaseCur then sets the CCur11 vtable. */
@@ -278,7 +308,18 @@ void func_virt___dt__6CCur22Fv() { }
 
 void func_801D2BFC(){}
 
-void func_801D2C80(){}
+/* func_801D2C80: Position a cursor pane by index.
+   index 4 targets the root pane directly; indices 0-3 look up
+   named sub-panes (nul_curs06s/l, nul_curs07s/l) and position them.
+   The found pane (or root) is translated to the given position. */
+extern "C" void func_801D2C80(CBaseCur* cur, const nw4r::math::VEC3* trans, u8 index) {
+    if (index == 4) {
+        func_801D2150(cur->mpLayout->GetRootPane(), trans);
+    } else {
+        nw4r::lyt::Pane* pane = cur->mpLayout->GetRootPane()->FindPaneByName(sPaneNames[index], true);
+        func_801D2150(pane, trans);
+    }
+}
 
 /* Show or hide named sub-panes (nul_curs06s/l, nul_curs07s/l)
    by index. Used for cursor visibility control per menu page. */

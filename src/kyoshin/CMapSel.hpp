@@ -1,14 +1,18 @@
 #pragma once
 
 #include <types.h>
-#include "monolib/work/IWorkEvent.hpp"
-#include "monolib/lib/UnkClass_8045F564.hpp"
-#include "kyoshin/CScrollBar.hpp"
-#include "kyoshin/CBaseCur.hpp"
 
 /* Map selection UI widget. Displays a grid of available maps for the player
-   to choose from. Contains a CScrollBar for scrolling through available maps
-   and a CCur18 cursor for highlighting the current selection.
+   to choose from. Uses IWorkEvent-compatible vtable at +0x00 (set by the
+   constructor). Sub-objects are opaque byte arrays; their constructors and
+   destructors are called via extern "C" retail symbols.
+
+   Layout (0x8C bytes):
+     +0x00: IWorkEvent vtable pointer (set to lbl_eu_80536E10)
+     +0x04: UnkClass_8045F564 (0x10 bytes)
+     +0x14-+0x33: various fields
+     +0x34: CScrollBar (0x40 bytes)
+     +0x74: CCur18 (0x18 bytes)
 
    State machine (mState at +0x31):
      0 = uninitialized/hidden
@@ -16,14 +20,11 @@
      2 = fully loaded and visible
      3 = transitioning out
      4 = hidden/closed
-     5 = post-close cleanup
-
-   mFlag33 (+0x33) is a boolean that tracks whether the widget needs an initial
-   setup pass; it is set to 1 in the constructor and cleared when a "play" or
-   "close" state is entered. */
-class CMapSel : public IWorkEvent {
-private:
-    UnkClass_8045F564 mMemRegion;            // +0x04, size 0x10
+     5 = post-close cleanup */
+class CMapSel {
+public:
+    u8 mVtbl[4];                              // +0x00 — IWorkEvent vtable ptr
+    u8 mMemRegion[0x10];                      // +0x04 — UnkClass_8045F564
     u32 mFileHandle;                          // +0x14
     u32 mFileHandle2;                         // +0x18
     u32 mArcAccessor;                         // +0x1C
@@ -34,16 +35,11 @@ private:
     u8 field_0x30;                            // +0x30
     u8 mState;                                // +0x31
     u8 field_0x32;                            // +0x32
-
-public:
-    u8 mFlag33;                               // +0x33 -- initial-setup flag
+    u8 mFlag33;                               // +0x33
     u8 func_802436C4() { return mFlag33; }
-    virtual ~CMapSel();
     void OnFileEvent();
-
-private:
-    CScrollBar mScrollBar;                    // +0x34, size 0x40
-    CBaseCur mCursor;                         // +0x74, size 0x18 (CCur18)
+    u8 mScrollBar[0x40];                      // +0x34 — CScrollBar
+    u8 mCursor[0x18];                         // +0x74 — CCur18
 };
 
 // Extended layout for free-function accessors

@@ -1,22 +1,22 @@
 // Auto-scaffolded catalog TU for kyoshin/CCol6System
 // Cleaned-up C++ for CCol6CheckBat; other stubs pending decomp.
 
-#include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/CCol6System.hpp"
 #include "kyoshin/CCol6CheckBat.hpp"
+#include "kyoshin/CCol6System.hpp"
+#include "kyoshin/harness_catalog.hpp"
 
 // Singleton instance (retail: lbl_eu_80664230).
 CCol6CheckBat* gCol6CheckBat;
 
 int lbl_eu_80664230;
-CCol6Hint* lbl_eu_80664234;
-CCol6System* lbl_eu_80664238;
+int lbl_eu_80664234;
+int lbl_eu_80664238;
 int lbl_eu_8066235C;
 
 void func_8015D0B8() {
     lbl_eu_80664230 = 0;
-    lbl_eu_80664234 = nullptr;
-    lbl_eu_80664238 = nullptr;
+    lbl_eu_80664234 = 0;
+    lbl_eu_80664238 = 0;
     lbl_eu_8066235C = -1;
 }
 
@@ -36,36 +36,37 @@ void CCol6CheckBat::Move() {}
 
 void __ct__CCol6CheckBat(){}
 
-void func_8015D310(){}
+extern u32 func_8009CF8C(u32 resourceId);
+extern "C" u32 lbl_eu_80667540;
+extern "C" u8 lbl_eu_80667544;
+
+int func_8015D310() {
+    union {
+        struct {
+            u32 w;
+            u8 b;
+        };
+        u8 bytes[5];
+    } data;
+    data.w = lbl_eu_80667540;
+    data.b = lbl_eu_80667544;
+
+    u8 result = func_8009CF8C(0x7fc);
+
+    for (u32 i = 0; i < 5; i++) {
+        u8 idx = (u8)i;
+        if (result >= data.bytes[idx] && func_8009CF8C(idx + 0x804) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
 
 void func_8015D3A0(){}
 
-/* CCol6Hint constructor: placement-new called from func_8015DCD0 factory. */
-CCol6Hint::CCol6Hint(void* arg) {
-    // Stub — fields initialized by this ctor; body TBD when ctor is decompiled.
-}
+void __ct__CCol6Hint(){}
 
-/* CCur18 destructor symbol — retail definition lives in kyoshin/CCur. */
-extern "C" void __dt__6CCur18Fv(void*, int);
-/* CScrollBar destructor — declared in kyoshin/CScrollBar.hpp. */
-extern "C" void __dt__10CScrollBarFv(void*, int);
-/* UnkClass_8045F564 destructor — declared in monolib/lib/UnkClass_8045F564.hpp. */
-extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
-/* CProcess base destructor. */
-extern "C" void __dt__8CProcessFv(void*, int);
-
-/* CCol6Hint destructor: destroys owned sub-objects in reverse declaration
-   order, then chains to CProcess base. MWCC virtual dtor pattern:
-   r4=-1 for sub-object dtors, r4=0 for the base CProcess dtor, then
-   operator delete if the caller requested it (MWCC handles the flag). */
-CCol6Hint::~CCol6Hint() {
-    __dt__10CScrollBarFv(mScrollBarBuf, -1);
-    __dt__6CCur18Fv(mCur, -1);
-    __dt__17UnkClass_8045F564Fv(mMemRegion, -1);
-    if (this) {
-        __dt__8CProcessFv(this, 0);
-    }
-}
+CCol6Hint::~CCol6Hint() {}
 
 void CCol6Hint::Init() {}
 
@@ -77,32 +78,7 @@ void func_8015DB08(){}
 
 void CCol6Hint::cbRenderBefore() {}
 
-/* CCol6Hint constructor symbol — retail definition lives in this TU.
-   Returns this (in r3), matching MWCC ctor convention. */
-extern "C" void* __ct__CCol6Hint(void*, void*);
-/* CCol6System constructor symbol — retail definition lives in this TU. */
-extern "C" void* __ct__CCol6System(void*, void*);
-/* CProcess::Regist — registers a process as a child of parent. */
-extern "C" void Regist__8CProcessFP8CProcessb(void*, CProcess*, bool);
-/* mtl::MemManager::allocate — allocates from a memory region. */
-extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
-/* CWorkThreadSystem::getWorkMem — returns work memory handle. */
-extern "C" u32 getWorkMem__17CWorkThreadSystemFv();
-
-/* Factory: creates the CCol6Hint singleton and registers it as a child
-   of parent. Returns null if singleton already exists. */
-void* func_8015DCD0(CProcess* parent, void* arg) {
-    if (lbl_eu_80664234 != nullptr) {
-        return nullptr;
-    }
-    void* hint = allocate__Q23mtl10MemManagerFUlUl(0x17c, getWorkMem__17CWorkThreadSystemFv());
-    if (hint != nullptr) {
-        hint = __ct__CCol6Hint(hint, arg);
-    }
-    lbl_eu_80664234 = (CCol6Hint*)hint;
-    Regist__8CProcessFP8CProcessb(hint, parent, false);
-    return lbl_eu_80664234;
-}
+void func_8015DCD0(){}
 
 void func_8015DD4C(){}
 
@@ -122,20 +98,7 @@ void func_80160118(){}
 
 void CCol6System::cbRenderBefore() {}
 
-/* Factory: creates the CCol6System singleton and registers it as a child
-   of parent. Returns null if singleton already exists. */
-void* func_801602F4(CProcess* parent, void* arg) {
-    if (lbl_eu_80664238 != nullptr) {
-        return nullptr;
-    }
-    void* sys = allocate__Q23mtl10MemManagerFUlUl(0x240, getWorkMem__17CWorkThreadSystemFv());
-    if (sys != nullptr) {
-        sys = __ct__CCol6System(sys, arg);
-    }
-    lbl_eu_80664238 = (CCol6System*)sys;
-    Regist__8CProcessFP8CProcessb(sys, parent, false);
-    return lbl_eu_80664238;
-}
+void func_801602F4(){}
 
 void func_80160370(){}
 

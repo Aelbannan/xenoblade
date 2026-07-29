@@ -38,3 +38,5 @@ struct CItemBoxGridSubMenu {
     void func_8020844C();
     void func_802084D4(int arg);
 };
+
+void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor);

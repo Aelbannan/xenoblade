@@ -1422,7 +1422,12 @@ public:
     CKizunaRadar();
     virtual ~CKizunaRadar();
 
-    // TODO: add fields
+    u32 field_0x04;  // 0x04 - constructor r4 parameter stored here
+    u32 field_0x08;  // 0x08
+    u32 field_0x0C;  // 0x0C
+    u32 field_0x10;  // 0x10
+    float field_0x14; // 0x14
+    float field_0x18; // 0x18
 };
 
 class CKizunaCur {
@@ -1455,35 +1460,18 @@ public:
     virtual ~CKizunagram();
     void OnFileEvent();
 
-    // vtable pointer at 0x00 (implicit)
-    u8 _04[0x26 - 0x04];
-    u16 field_0x26;         // 0x26
-    u8 _28[0x34 - 0x28];
-    u8 field_0x34;          // 0x34
-    u8 _35;
-    u16 field_0x36;         // 0x36
-    /* 0x38-0x3B: overlapped region -- accessed as both float and individual u8 fields */
-    u8 _38[4];              // 0x38-0x3B
-    u8 field_0x3C;          // 0x3C
-    u8 _3D[0x61 - 0x3D];
-    u8 field_0x61;          // 0x61
-    u8 field_0x62;          // 0x62
-    u8 _63[0xBE - 0x63];    // 0x63-0xBD (includes sub-object at 0x68)
-    u8 field_0xBE;          // 0xBE
+    u8 _04[0x34];   // 0x04 - 0x37
+    u8 field_0x38;  // 0x38
+    u8 field_0x39;  // 0x39
+    u8 _3A[2];      // 0x3A - 0x3B
+    u8 field_0x3C;  // 0x3C
+    u8 _3D[0x4F];   // 0x3D - 0x8B
+    u8 field_8C;    // 0x8C
+    u8 _8D[0x30];   // 0x8D - 0xBC
+    u8 field_0xBD;  // 0xBD
 };
 
 /* end "kyoshin/CKizunagram.hpp" */
-
-// Sub-object embedded at CKizunagram+0x68; CBaseCur-compatible layout
-struct CKizunagramSubCur {
-    u8 _00[0x0C];
-    u8* animTrans0;     // 0x0C - nw4r::lyt::AnimTransform* (vtable dispatch)
-    u8* animTrans1;     // 0x10
-    u8 mActive;          // 0x14
-    u8 mVisible;         // 0x15
-    u8 _16[0x40 - 0x16];
-    f32 field_0x40;      // 0x40
-};
 
 void func_8025C870() {}
 
@@ -1496,22 +1484,15 @@ void func_8025C870() {}
 
 
 
-void func_80257F9C(){}
+void func_80257F9C(void*, int);
 
-CKizunaLine::CKizunaLine() {}
+void __ct__CKizunaLine(){}
 
 CKizunaLine::~CKizunaLine() {}
 
 void func_802580CC(){}
 
-extern float lbl_eu_80668828[];
-
-void func_80258F5C(float* dest, const float* a, const float* b) {
-    dest[0] = a[0] + b[0];
-    dest[1] = a[1] + b[1];
-    dest[2] = a[2] + b[2];
-    dest[3] = a[3] + b[3];
-}
+void func_80258F5C(){}
 
 void func_80258F80(){}
 
@@ -1519,16 +1500,7 @@ void func_80258F9C(){}
 
 void func_80259098(){}
 
-void func_80259228(CKizunagramSubCur* subobj) __attribute__((noinline)) {
-    subobj->mActive = 1;
-    subobj->mVisible = 0;
-    // Virtual call: animTrans0->vtable[8](animTrans0, animTrans1)
-    u32* vt = *(u32**)subobj->animTrans0;
-    typedef void (*VFunc)(u8*, u8*);
-    VFunc method = (VFunc)vt[8];
-    method(subobj->animTrans0, subobj->animTrans1);
-    subobj->field_0x40 = lbl_eu_80668828[0];
-}
+void func_80259228(){}
 
 void func_80259280(){}
 
@@ -1556,21 +1528,26 @@ void func_8025A11C(){}
 
 void func_8025AA38(){}
 
-extern float lbl_eu_80668828[];
-void func_8025AAE0(CKizunagram* self) {
-    u16 val = self->field_0x26;
-    if (val == 0) return;
-    float f = lbl_eu_80668828[0];
-    self->field_0x34 = 1;
-    self->field_0x36 = val;
-    *(float*)self->_38 = f;
-}
+void func_8025AAE0(){}
 
 void func_8025AB04(){}
 
 void func_8025AB84(){}
 
 extern float lbl_eu_80668828[];
+extern "C" void* lbl_eu_80537608[];
+
+void __ct__CKizunaRadar(CKizunaRadar* self, int r4) {
+    void* vt = lbl_eu_80537608;
+    self->field_0x04 = r4;
+    *(void**)self = vt;
+    self->field_0x08 = 0;
+    self->field_0x0C = 0;
+    self->field_0x10 = 0;
+    float f = lbl_eu_80668828[0];
+    self->field_0x14 = f;
+    self->field_0x18 = f;
+}
 void CKizunagram_resetFields(void* self){
     *(u8*)((u8*)self + 0x34) = 0;
     *(u16*)((u8*)self + 0x36) = 0;
@@ -1586,7 +1563,7 @@ void CKizunagram_copyString(unsigned char* dst, const unsigned char* src) {
     dst[3] = 0;
 }
 
-CKizunaInfo::CKizunaInfo() {}
+void __ct__CKizunaInfo(){}
 
 CKizunaInfo::~CKizunaInfo() {}
 
@@ -1596,7 +1573,7 @@ void func_8025B870(){}
 
 void func_8025B900(){}
 
-void func_8025B958(){}
+void func_8025B958(void*);
 
 void func_8025B9C8(){}
 
@@ -1610,7 +1587,7 @@ void func_8025C298(){}
 
 void func_8025C348(){}
 
-CKizunagram::CKizunagram() {}
+void __ct__CKizunagram(){}
 
 CKizunagram::~CKizunagram() {}
 
@@ -1641,7 +1618,13 @@ unsigned char CKizunagram_checkFields(void* arg1)
     return 0;
 }
 
-void func_8025C7D0(){}
+void func_8025C7D0(CKizunagram* self) {
+    if (self->field_0x39 != 0) return;
+    self->field_0x39 = 1;
+    self->field_0x3C = 0;
+    self->field_0x38 = 1;
+    func_8025B958((u8*)self + 0x4C);
+}
 
 void func_8025C7FC(){}
 
@@ -1675,11 +1658,7 @@ void func_8025CBCC(){}
 
 void func_8025CC70(){}
 
-void func_8025CC88(CKizunagram* self) {
-    if (self->field_0x62 == 0) return;
-    self->_38[1] = 2;
-    func_80259228(reinterpret_cast<CKizunagramSubCur*>(reinterpret_cast<u8*>(self) + 0x68));
-}
+void func_8025CC88(){}
 
 void func_8025CCA8(){}
 
@@ -1705,7 +1684,13 @@ void func_8025CE00(){}
 
 void func_8025CE78(){}
 
-void func_8025CF1C(){}
+void func_8025CF1C(CKizunagram* self) {
+    if (self->field_8C != 0) {
+        func_80257F9C((u8*)self + 0xAC, 1);
+    } else {
+        func_80257F9C((u8*)self + 0xAC, 0);
+    }
+}
 
 void func_8025CF40(){}
 

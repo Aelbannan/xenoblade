@@ -13,7 +13,7 @@ extern u8 lbl_eu_80664798;
 
 extern int CSysWin_getUnk34(void*);
 extern void func_80246200(void*);
-extern u32 func_80248558(u8*);
+extern u32 func_80248558(void*);
 extern void func_8024577C(void*, u16);
 extern void func_801F3850(void*, u16);
 extern void func_801375A0(float*, void*);
@@ -139,22 +139,6 @@ void func_80245DF8(){}
 
 void func_80246200(void* self){}
 
-u8* __dt__80244724(u8* self, int mode) {
-    extern u8* __dl__FPv(u8*);
-    if (self && mode > 0) {
-        __dl__FPv(self);
-    }
-    return self;
-}
-
-u8* __dt__8024503C(u8* self, int mode) {
-    extern u8* __dl__FPv(u8*);
-    if (self && mode > 0) {
-        __dl__FPv(self);
-    }
-    return self;
-}
-
 void* __dt__802462F0(void* self, int mode) {
     extern void* __dl__FPv(void*);
     if (self && mode > 0) {
@@ -180,27 +164,27 @@ void func_80247490(){}
 void func_8024808C(void* self, void* arg2) {
     extern void func_8003AA34();
     extern void* getFP__FPCc(const char*);
-    extern u32 func_801361E8(void*, const char*, u32);
+    extern u32 func_801361E8(const char*, const char*, u32);
     extern u32 func_8009CF8C(u32);
     extern void func_80141DC4(f32*);
-    extern s16 func_80136330(void*, const char*, u32);
+    extern s16 func_80136330(u32, const char*, u32);
     extern void* getPlayer__Q22cf13CfGameManagerFi(int);
-    extern u32 func_8003B1EC(u8*);
+    extern u32 func_8003B1EC(u32);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f64 lbl_eu_80668788;
     u8* p = (u8*)self;
     func_8003AA34();
     void* fp = getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
-    u8 map = func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], *(u32*)((u8*)arg2 + 0x10));
+    u8 map = func_801361E8((const char*)fp, &lbl_eu_8050BEA8[0x18C], *(u32*)((u8*)arg2 + 0x10));
     if (map != lbl_eu_80664798) return;
     if (!func_8009CF8C(0x20C8)) return;
     f32 buf[3];
     func_80141DC4(buf);
-    u8 count = func_8003B1EC(fp);
+    u8 count = func_8003B1EC((u32)fp);
     u8 r26 = 0;
     for (u8 i = 1; i <= count; i++) {
-        s16 val = func_80136330(fp, &lbl_eu_8050BEA8[0x15A], i);
+        s16 val = func_80136330((u32)fp, &lbl_eu_8050BEA8[0x15A], i);
         if ((f32)(s16)val > buf[1]) {
             if (i == p[0x0C]) { r26 = 1; break; }
         }
@@ -216,13 +200,13 @@ void func_8024830C(void* self, void* arg2) {
     extern u32 func_8009CF8C(u32);
     extern void func_80141DC4(f32*);
     extern u32 func_801361E8(const char*, const char*, u32);
-    extern u32 lbl_eu_80664184;
-    extern u8 lbl_eu_8050B798;
-    extern u32 lbl_eu_806640A8;
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f32 lbl_eu_8066877C;
     extern f64 lbl_eu_80668788;
+    extern u32 lbl_eu_80664184;
+    extern u16 lbl_eu_8050B798;
+    extern u32 lbl_eu_806640A8;
     u8* p = (u8*)self;
     f32* result = (f32*)p;
     result[0] = result[1] = result[2] = lbl_eu_80668764;
@@ -257,7 +241,7 @@ void func_8024830C(void* self, void* arg2) {
 }
 
 u32 func_80248558(void* self) {
-    extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+    extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, const char*);
     u8* p = (u8*)self;
     void* data = *(void**)(p + 0x08);
     if (!data) return 0;
@@ -824,8 +808,8 @@ u32 func_8024F6E0(void* self) {
     } else {
         s8 idx0 = *(s8*)((u8*)self + 0x205);
         s8 idx2 = *(s8*)((u8*)self + 0x207);
-        u32 offset = idx0 * 0x30C + (idx2 + idx1) * 0x18;
-        val = *(u16*)((u8*)self + offset + 0x214);
+        u8* ptr = (u8*)self + idx0 * 0x30C + (idx2 + idx1) * 0x18;
+        val = *(u16*)(ptr + 0x214);
     }
     return val != 0 ? 1 : 0;
 }

@@ -50,7 +50,7 @@ void func_801D4E2C(void*, u16, void*);
 void func_801D69FC(CItemBoxInfo*);
 void func_801D8A88(CItemBoxInfo*);
 void func_801D77A4(void*, u32, u16);
-void func_801D80EC(CItemBoxInfo*);
+void func_801D80EC(CItemBoxInfo*, u16, void*);
 void func_801D4A2C(void*);
 void func_801D8E34(CItemBoxInfo*, u16, void*, u16);
 u32 func_801C6E90(void*);
@@ -94,7 +94,7 @@ void func_801DF4B4(void*, void*);
 void func_801DF4D0(void*, u16, u32, u8);
 void func_801E9164(void*, void*);
 void func_801E9180(void*, u16, u32, u8);
-void func_801E2FEC(CItemBoxInfo2*);
+void func_801E2FEC(CItemBoxInfo2*, u16);
 void func_801D4260(CItemBoxInfo*, u16, void*, u16);
 void func_801E14DC(CItemBoxInfo2*, u16, void*, u16);
 extern void* lbl_eu_80664104;
@@ -573,7 +573,7 @@ void CItemBoxInfo::setItemBoxIndex(unsigned char index, short value) {
     state.values[index] = value;
 }
 
-void func_801D77BC(CItemBoxInfo* info) {
+void func_801D77BC(CItemBoxInfo* info, u16 arg2) {
     func_801D8930(info);
     func_801D85D8(info);
     u32 buf[2];
@@ -625,7 +625,7 @@ void func_801D8058(CItemBoxInfo* info, u32 arg2) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC[0x48f], (char*)buf[1], 0);
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout, (char*)&lbl_eu_805063BC[0x49b], (char*)buf[3], 0);
 }
-void func_801D80EC(CItemBoxInfo* info) {
+void func_801D80EC(CItemBoxInfo* info, u16 arg2, void* arg3) {
     void* layout = info->state.layout;
     char* base = (char*)&lbl_eu_805063BC;
     func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
@@ -1489,7 +1489,7 @@ void func_801E2C5C(CItemBoxInfo2* info) {
         }
     }
 }
-void func_801E2FEC(CItemBoxInfo2* info) {
+void func_801E2FEC(CItemBoxInfo2* info, u16 arg2) {
     func_801E3EB8(info);
     func_801E3B9C(info);
     u32 buf[2];
@@ -1983,11 +1983,11 @@ void func_801D47D4(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     } else if (r27 == 3) {
         func_801D79F8(info, r29, arg3, cond);
     } else if (r27 == 9) {
-        func_801D80EC(info);
+        func_801D80EC(info, r29, arg3);
     } else if (r27 == 0xA) {
         func_801D8058(info, r29);
     } else if (r27 == 0xD) {
-        func_801D77BC(info);
+        func_801D77BC(info, r29);
     } else {
         func_801D8318(info);
         func_801D85D8(info);

@@ -5,13 +5,17 @@
 #include <stdio.h>
 #include "kyoshin/CExchangeWin.hpp"
 #include "kyoshin/code_80135FDC.hpp"
+#include "kyoshin/CUICfManager.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 #include "monolib/device/CDeviceFile.hpp"
+#include "monolib/device/CDeviceFont.hpp"
 #include "monolib/util/MemManager.hpp"
 #include "monolib/work/CEventFile.hpp"
 extern const char lbl_eu_8050A740[];
 extern void func_80137924(void*, void*, void*, void*);
 extern void func_80138078(u32);
 extern float lbl_eu_80668610;
+extern "C" void* createArcResourceAccessor__10CLibLayoutFv();
 
 // Constructor — defined as global function with __ct__ prefix to match
 // retail C-linkage symbol __ct__CExchangeWin (avoids 12-prefix mangling).
@@ -72,16 +76,15 @@ extern "C" void func_8022D0D0(void* self) {
     func_80138078(0xe);
 }
 extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
-    char buf[32];
-    CExchangeWin* win = (CExchangeWin*)src;
+    char buf[40];
+    CExchangeWin* win;
+    nw4r::lyt::Pane* pane1;
+    nw4r::lyt::Pane* pane2;
 
+    win = (CExchangeWin*)src;
     sprintf(buf, &lbl_eu_8050A740[0x18], val + 1);
-
-    nw4r::lyt::Pane* pane1 =
-        win->mLayout->GetRootPane()->FindPaneByName(buf, true);
-    nw4r::lyt::Pane* pane2 =
-        win->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A740[0x25], true);
-
+    pane1 = win->mLayout->GetRootPane()->FindPaneByName(buf, true);
+    pane2 = win->mLayout->GetRootPane()->FindPaneByName(&lbl_eu_8050A740[0x25], true);
     func_80137924(dst, pane1, pane2, win->mLayout->GetRootPane());
 }
 extern "C" void func_8022CF2C(CExchangeWin* self) {

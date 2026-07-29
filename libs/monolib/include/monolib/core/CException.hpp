@@ -12,6 +12,7 @@ public:
 class CException : public CWorkThread {
 public:
     bool func_80457C8C();
+    void func_80458B64(u8 r4, u8 r5, u8 r6, u8 r7);
     static CException* func_80457CA4(CWorkThread* r3, const wchar_t* message, u32 r5);
 
     static CException* convertToException(CWorkThread* pThread){

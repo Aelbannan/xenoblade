@@ -6,7 +6,26 @@
 
 void __ct__CMapSel(){}
 
-CMapSel::~CMapSel() {}
+/* Retail destructor symbols for embedded sub-objects. */
+extern "C" void __dt__6CCur18Fv(void*, int);
+extern "C" void __dt__10CScrollBarFv(void*, int);
+extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
+extern "C" void __dl__FPv(void*);
+
+/* CMapSel complete-object destructor.  Matches the retail __dt__7CMapSelFv
+   byte-exact: null-check, member dtors in reverse-declaration order, then
+   conditional delete if flags > 0. */
+extern "C" void* __dt__7CMapSelFv(CMapSel* _this, int flags) {
+    if (_this != 0) {
+        __dt__6CCur18Fv(_this->mCursor, -1);
+        __dt__10CScrollBarFv(_this->mScrollBar, -1);
+        __dt__17UnkClass_8045F564Fv(_this->mMemRegion, -1);
+        if (flags > 0) {
+            __dl__FPv(_this);
+        }
+    }
+    return _this;
+}
 
 void func_8024343C(){}
 

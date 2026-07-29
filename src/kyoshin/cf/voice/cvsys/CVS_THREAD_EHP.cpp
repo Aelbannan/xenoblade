@@ -33,28 +33,36 @@ void func_802A6718(CVS_THREAD_EHP* self) {
 void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
-    // Loop counter declared first — influences regalloc order so the
-    // base pointer for array indexing lands in r5 (retail) not r4.
-    int i;
-
-    // Slot 0x20: bias to embedded CCharVoice at +0x3E9C via &handle->voice.
+    // Slot 0x20
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* biased = (CCharVoice*)handle;
-    if (handle) biased = &handle->voice;
-    if (biased == voicePtr) self->field_0x20 = NULL;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x20 = NULL;
+    }
 
     // Slot 0x24
     handle = self->field_0x24;
     biased = (CCharVoice*)handle;
-    if (handle) biased = &handle->voice;
-    if (biased == voicePtr) self->field_0x24 = NULL;
+    if (handle != NULL) {
+        biased = &handle->voice;
+    }
+    if (biased == voicePtr) {
+        self->field_0x24 = NULL;
+    }
 
-    // Rotating slots 0x2C..0x34 (count in field_0x3c).
-    for (i = 0; i < self->field_0x3c; i++) {
+    // Rotating slots 0x2C..0x34 (count in field_0x3c)
+    for (int i = 0; i < self->field_0x3c; i++) {
         handle = self->field_0x2c[i];
         biased = (CCharVoice*)handle;
-        if (handle) biased = &handle->voice;
-        if (biased == voicePtr) self->field_0x2c[i] = NULL;
+        if (handle != NULL) {
+            biased = &handle->voice;
+        }
+        if (biased == voicePtr) {
+            self->field_0x2c[i] = NULL;
+        }
     }
 }
 
@@ -68,40 +76,29 @@ void func_802A658C(CVS_THREAD_EHP* self) {
         return;
     }
 
-    // Advance the rotating index forward or backward, wrapping at bounds.
     if (self->field_0x44 == 0) {
-        // Forward: increment, wrap to 0 if past bound.
-        self->field_0x38++;
-        if (self->field_0x3c < self->field_0x38) {
+        // Forward: increment, wrap to 0 once past the bound.
+        int newIdx = self->field_0x38 + 1;
+        self->field_0x38 = newIdx;
+        if (self->field_0x3c < newIdx) {
             self->field_0x38 = 0;
         }
     } else {
         // Backward: decrement, wrap to bound-1 on underflow.
-        self->field_0x38--;
-        if (self->field_0x38 < 0) {
+        int newIdx = self->field_0x38 - 1;
+        self->field_0x38 = newIdx;
+        if (newIdx < 0) {
             self->field_0x38 = self->field_0x3c - 1;
         }
     }
 
-    // Branch layout in retail: beq to vtable-call, fall-through for lbl copy.
-    // To get the same layout we invert the condition so the lbl copy
-    // (larger block) is the if-body and the vtable call is the else-body.
-    if (self->field_0x38 != self->field_0x40) {
-        // Reload slot-state triple {unk0, unk4, unk8} from init table.
-        // Retail loads [0] via lis+lwzu (value in r3, address in r4),
-        // then [1], stores [1], stores [0], loads [2], stores [2].
-        // Declaring 'a' before 'p' pushes the base pointer to r4 and
-        // the first loaded value to r3, matching the retail regalloc.
-        struct Init { u32 f0, f4, f8; };
-        u32 a;
-        const Init* p = (const Init*)lbl_eu_80539B14;
-        a = p->f0;
-        u32 b = p->f4;
-        self->unk4 = b;
-        self->unk0 = (u32*)a;
-        self->unk8 = p->f8;
-    } else {
+    if (self->field_0x38 == self->field_0x40) {
         self->func_802A3B50();
+    } else {
+        // Reload slot-state triple {field_0, field_4, callback}.
+        self->unk4 = lbl_eu_80539B14[1];
+        self->unk0 = (u32*)lbl_eu_80539B14[0];
+        self->unk8 = lbl_eu_80539B14[2];
     }
 }
 

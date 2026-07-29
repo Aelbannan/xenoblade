@@ -187,14 +187,18 @@ u32 func_800AA600(const char* str) {
     if (str == NULL) return 0;
 
     const FormatEntry* table = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0);
+    int idx = 1;
     const FormatEntry* entry = &table[1];
     for (int i = 0; i < 10; i++) {
         if (str[0] == entry[0].name[0] && str[1] == entry[0].name[1])
-            return entry[0].id;
+            return table[idx].id;
+        idx++;
         if (str[0] == entry[1].name[0] && str[1] == entry[1].name[1])
-            return entry[1].id;
+            return table[idx].id;
+        idx++;
         if (str[0] == entry[2].name[0] && str[1] == entry[2].name[1])
-            return entry[2].id;
+            return table[idx].id;
+        idx++;
         entry += 3;
     }
     return 0;

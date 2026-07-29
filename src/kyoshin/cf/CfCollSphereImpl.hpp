@@ -6,13 +6,6 @@ namespace cf {
 
 // Forward declaration
 class CfDebugDrawManager;
-class CfCollSphereImpl;
-
-// Vtable for CfCollSphereImpl. Only the entry at offset 0xAC is known.
-struct CfCollSphereImplVtable {
-    void* pad[0xAC / 4];
-    void* (*func_0xAC)(CfCollSphereImpl* self);
-};
 
 // Collision sphere shape implementation.
 // Layout offsets derived from CfCollSphereImpl.s.

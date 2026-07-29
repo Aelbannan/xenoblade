@@ -4,25 +4,30 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/CModelDisp.hpp"
 #include "kyoshin/cf/CActParamAnimGame.hpp"
+#include "PowerPC_EABI_Support/Runtime/MWCPlusLib.h"
 
 // Forward declarations for cross-TU calls
 void* func_8004B9B8(void* self);
 void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
 
-// Mangled ctor/dtor symbols for __construct_array
-extern "C" {
-void __ct__Q22cf17CActParamAnimGameFv(void*);
-void __dt__Q22cf17CActParamAnimGameFv(void*, int);
-void __construct_array(void* ptr, void* ctor, void* dtor, u32 size, u32 n);
+namespace {
+// Helper to get the constructor function pointer (MWCC extension).
+inline ConstructorDestructor getCtor() {
+    return (ConstructorDestructor)&cf::CActParamAnimGame::CActParamAnimGame;
+}
+inline ConstructorDestructor getDtor() {
+    return (ConstructorDestructor)&cf::CActParamAnimGame::~CActParamAnimGame;
+}
 }
 
 // Constructs CActParamAnimGame sub-objects: a single instance at +0xC
 // and an array of 2 at +0x550 (element size 0x53C), then returns self.
 CModelDisp* func_801FBEB8(CModelDisp* self) {
-    __ct__Q22cf17CActParamAnimGameFv((u8*)self + 0xC);
-    __construct_array((u8*)self + 0x550,
-                      (void*)__ct__Q22cf17CActParamAnimGameFv,
-                      (void*)__dt__Q22cf17CActParamAnimGameFv,
+    CModelDispSub* sub = (CModelDispSub*)self;
+    new (&sub->_0C) cf::CActParamAnimGame();
+    __construct_array(&sub->mSubObj[0x53C],
+                      getCtor(),
+                      getDtor(),
                       0x53C, 2);
     return self;
 }
@@ -73,10 +78,7 @@ void func_801FC15C(CModelDisp* self) {
 
 void func_801FC218(){}
 
-#pragma push
-#pragma auto_inline off
-void func_801FC2B4(CModelDisp*, void**){}
-#pragma pop
+__declspec(noinline) void func_801FC2B4(CModelDisp*, void**){}
 
 void func_801FC3B0(){}
 

@@ -39,9 +39,13 @@ u32 ResMdl::GetResNodeNumEntries() const {
 
 /******************************************************************************
  *
- * ResVtxPos
+ * RexVtxPos
  *
  ******************************************************************************/
+ResVtxPos ResMdl::GetResVtxPos(const ResName name) const {
+    return ResVtxPos(ofs_to_obj<ResDic>(ref().toResVtxPosDic)[name]);
+}
+
 ResVtxPos ResMdl::GetResVtxPos(int idx) const {
     return ResVtxPos(ofs_to_obj<ResDic>(ref().toResVtxPosDic)[idx]);
 }
@@ -59,6 +63,10 @@ u32 ResMdl::GetResVtxPosNumEntries() const {
  * ResVtxNrm
  *
  ******************************************************************************/
+ResVtxNrm ResMdl::GetResVtxNrm(const ResName name) const {
+    return ResVtxNrm(ofs_to_obj<ResDic>(ref().toResVtxNrmDic)[name]);
+}
+
 ResVtxNrm ResMdl::GetResVtxNrm(int idx) const {
     return ResVtxNrm(ofs_to_obj<ResDic>(ref().toResVtxNrmDic)[idx]);
 }
@@ -76,6 +84,10 @@ u32 ResMdl::GetResVtxNrmNumEntries() const {
  * ResVtxClr
  *
  ******************************************************************************/
+ResVtxClr ResMdl::GetResVtxClr(const ResName name) const {
+    return ResVtxClr(ofs_to_obj<ResDic>(ref().toResVtxClrDic)[name]);
+}
+
 ResVtxClr ResMdl::GetResVtxClr(int idx) const {
     return ResVtxClr(ofs_to_obj<ResDic>(ref().toResVtxClrDic)[idx]);
 }
@@ -97,7 +109,7 @@ ResVtxTexCoord ResMdl::GetResVtxTexCoord(int idx) const {
     return ResVtxTexCoord(ofs_to_obj<ResDic>(ref().toResVtxTexCoordDic)[idx]);
 }
 
-inline u32 ResMdl::GetResVtxTexCoordNumEntries() const {
+u32 ResMdl::GetResVtxTexCoordNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResVtxTexCoordDic).GetNumData();
 }
 
@@ -131,6 +143,10 @@ u32 ResMdl::GetResMatNumEntries() const {
  * ResShp
  *
  ******************************************************************************/
+ResShp ResMdl::GetResShp(const char* pName) const {
+    return ResShp(ofs_to_obj<ResDic>(ref().toResShpDic)[pName]);
+}
+
 ResShp ResMdl::GetResShp(int idx) const {
     return ResShp(ofs_to_obj<ResDic>(ref().toResShpDic)[idx]);
 }
@@ -148,6 +164,11 @@ u32 ResMdl::GetResShpNumEntries() const {
  * ResTexPlttInfo
  *
  ******************************************************************************/
+ResTexPlttInfo ResMdl::GetResTexPlttInfoOffsetFromTexName(int idx) const {
+    return ResTexPlttInfo(
+        ofs_to_obj<ResDic>(ref().toResTexNameToTexPlttInfoDic)[idx]);
+}
+
 ResTexPlttInfo ResMdl::GetResTexPlttInfoOffsetFromTexName(unsigned long idx) const {
     return ResTexPlttInfo(
         ofs_to_obj<ResDic>(ref().toResTexNameToTexPlttInfoDic)[idx]);
@@ -260,16 +281,16 @@ ResVtxFurPos ResMdl::GetResVtxFurPos(int idx) const {
  * GetResVtxFurVec
  *
  ******************************************************************************/
-inline ResVtxFurVec ResMdl::GetResVtxFurVec(int idx) const {
+ResVtxFurVec ResMdl::GetResVtxFurVec(int idx) const {
     return ResVtxFurVec(
         ofs_to_obj<ResDic>(ref().toResVtxFurVecDic)[idx]);
 }
 
-inline u32 ResMdl::GetResVtxFurVecNumEntries() const {
+u32 ResMdl::GetResVtxFurVecNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResVtxFurVecDic).GetNumData();
 }
 
-inline u32 ResMdl::GetResVtxFurPosNumEntries() const {
+u32 ResMdl::GetResVtxFurPosNumEntries() const {
     return ofs_to_obj<ResDic>(ref().toResVtxFurPosDic).GetNumData();
 }
 

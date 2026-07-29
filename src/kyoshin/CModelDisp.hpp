@@ -2,6 +2,10 @@
 
 #include <types.h>
 
+namespace cf {
+class CActParamAnimGame;
+}
+
 // Sub-object struct within CModelDisp, stride 0xFF0
 struct CModelDispSub {
     u8 _00[0x08];

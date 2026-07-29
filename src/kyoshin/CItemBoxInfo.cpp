@@ -1940,19 +1940,8 @@ void func_801D77A4(void* arr, u32 index, u16 value) {
 void func_801D4260(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
     void* layout = info->state.layout;
     char* base = (char*)&lbl_eu_805063BC;
-    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
-    u32 max = func_801392C0();
-    char buf[0x40];
-    for (u32 i = 0; i < max; i++) {
-        sprintf(buf, base + 0x303, i + 1);
-        func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
-        void* child = *(void**)((u8*)layout + 0x10);
-        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
-        if (pane != NULL) {
-            for (u32 j = 0; j < 2; j++) {
-                func_801D62F8((u8*)pane + 0x10, j, buf);
-            }
-        }
+    for (int i = 0; i < 30; i++) {
+        func_80124270(layout, (void*)(u32)i);
     }
 }
 

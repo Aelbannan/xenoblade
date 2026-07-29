@@ -252524,6 +252524,43 @@ extern "C" void func_800866A0__Q22cf13CfGameManagerFv() {
 extern "C" void func_8006349C();
 extern "C" void func_80061870(UnkClass_80085334* object, u32 mode, u16 value,
                                 u32 fourth, u32 fifth, u32 sixth);
+extern "C" VoiceSource* func_800B76F4();
+extern "C" VoiceSource* func_800B7854(VoiceSource* source);
+extern "C" void func_800BEE1C(VoiceSource* source, bool enabled);
+extern "C" void func_8007FE2C__Q22cf13CfGameManagerFv() {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    lbl_eu_80663E28 |= 4;
+    VoiceSource* source = func_800B76F4();
+    while (source != nullptr) {
+        if ((source->flags_0x64 & 0x80000000) != 0) {
+            func_800BEE1C(source, true);
+        }
+        source = func_800B7854(source);
+    }
+}
+
+extern "C" void func_8007FECC__Q22cf13CfGameManagerFv() {
+    if (!lbl_eu_80663E70) {
+        __ct__Q22cf13CfGameManagerFv(&lbl_eu_80571758);
+        __register_global_object(&lbl_eu_80571758, __dt__Q22cf13CfGameManagerFv,
+                                 lbl_eu_80571748);
+        lbl_eu_80663E70 = 1;
+    }
+    lbl_eu_80663E28 &= ~4;
+    VoiceSource* source = func_800B76F4();
+    while (source != nullptr) {
+        if ((source->flags_0x64 & 0x80000000) != 0) {
+            func_800BEE1C(source, false);
+        }
+        source = func_800B7854(source);
+    }
+}
+
 extern "C" bool func_80061D2C(UnkClass_80085334* object, u32 mode);
 extern "C" bool func_80061E8C(UnkClass_80085334* object, u32 mode);
 extern "C" bool func_8007FD00__Q22cf13CfGameManagerFv(u32 mode) {
@@ -252976,7 +253013,8 @@ UnkClass_80083298* cf::CfGameManager::func_80083298() {
 #pragma dont_inline reset
 extern "C" void func_800B76CC();
 void func_eu_800874CC(){ func_800B76CC(); }
-extern "C" void func_800B76F4();
+struct VoiceSource;
+extern "C" VoiceSource* func_800B76F4();
 
 extern "C" void func_eu_800874D0()
 {
@@ -252987,7 +253025,7 @@ extern "C" void func_800B781C(void);
 void func_eu_800874D4(void){
     func_800B781C();
 }
-extern "C" void func_800B7854();
+extern "C" VoiceSource* func_800B7854(VoiceSource* source = 0);
 
 extern "C" void func_eu_800874D8()
 {

@@ -26,10 +26,6 @@ extern void func_80158118(void*, u32);
 extern void func_801D05D4(void*, int);
 extern void func_801CFF28(void*);
 extern void func_80138078__FUl(u32);
-extern u32 func_80208360(void*);
-extern void func_80208760(void*, void*);
-extern u32 func_8022DB74(void*);
-extern void func_8022E498(void*, void*);
 u8 func_801C67F8(CItemBoxGridFull* self);
 u8 func_801C6840(CItemBoxGridFull* self);
 
@@ -565,17 +561,7 @@ void func_801CE390(){}
 
 void func_801CE3E8(){}
 
-// Handle sub-object activation with virtual call.
-void func_801CE4B4(void* self) {
-    u8* p = (u8*)self;
-    if (!func_80208360(p + 0x418)) return;
-    *(u32*)(p + 0x58) = 7;
-    u8 temp[16];
-    func_80208760(temp, p + 0x418);
-    void** vtbl = *(void***)(p + 0xa0);
-    ((void(*)(void*, void*))vtbl[4])(p + 0xa0, temp);
-    func_801D216C(p + 0xa0, 1);
-}
+void func_801CE4B4(){}
 
 void func_801CE524(){}
 
@@ -590,17 +576,7 @@ void func_801CE9E8(void* self) {
     }
 }
 
-// Handle sub-object activation with virtual call (variant).
-void func_801CEA30(void* self) {
-    u8* p = (u8*)self;
-    if (!func_8022DB74(p + 0x468)) return;
-    *(u32*)(p + 0x58) = 0x10;
-    u8 temp[16];
-    func_8022E498(temp, p + 0x468);
-    void** vtbl = *(void***)(p + 0xd0);
-    ((void(*)(void*, void*))vtbl[4])(p + 0xd0, temp);
-    func_801D216C(p + 0xd0, 1);
-}
+void func_801CEA30(){}
 
 // Check if sub-obj is active; set state to 3 and clear flag.
 void func_801CEAA0(void* self) {

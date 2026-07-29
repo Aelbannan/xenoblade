@@ -51,11 +51,10 @@ void CDesktop::wkUpdate(){
 }
 
 void CDesktop::wkRender(){
-    CView* fullScreenView = CViewRoot::getFullScreenView();
-    if(fullScreenView != nullptr){
-        if(fullScreenView == CView::getCurrentView()){
-
-        }
+    CView* view = CViewRoot::getFullScreenView();
+    if(view != nullptr){
+        CView* currentView = CView::getCurrentView();
+        (void)(view == currentView);
     }
 }
 

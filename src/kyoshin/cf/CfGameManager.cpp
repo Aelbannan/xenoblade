@@ -337,7 +337,8 @@ UnkClass_80083298* cf::CfGameManager::func_80083298() {
 #pragma dont_inline reset
 extern "C" void func_800B76CC();
 void func_eu_800874CC(){ func_800B76CC(); }
-extern "C" void func_800B76F4();
+struct VoiceSource;
+extern "C" VoiceSource* func_800B76F4();
 
 extern "C" void func_eu_800874D0()
 {
@@ -348,7 +349,7 @@ extern "C" void func_800B781C(void);
 void func_eu_800874D4(void){
     func_800B781C();
 }
-extern "C" void func_800B7854();
+extern "C" VoiceSource* func_800B7854(VoiceSource* source = 0);
 
 extern "C" void func_eu_800874D8()
 {

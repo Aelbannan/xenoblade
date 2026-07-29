@@ -789,7 +789,7 @@ extern "C" void func_8007FE2C__Q22cf13CfGameManagerFv() {
     lbl_eu_80663E28 |= 4;
     VoiceSource* source = func_800B76F4();
     while (source != nullptr) {
-        if ((source->flags_0x64 & ~1) != 0) {
+        if ((source->flags_0x64 & 0x80000000) != 0) {
             func_800BEE1C(source, true);
         }
         source = func_800B7854(source);
@@ -806,7 +806,7 @@ extern "C" void func_8007FECC__Q22cf13CfGameManagerFv() {
     lbl_eu_80663E28 &= ~4;
     VoiceSource* source = func_800B76F4();
     while (source != nullptr) {
-        if ((source->flags_0x64 & ~1) != 0) {
+        if ((source->flags_0x64 & 0x80000000) != 0) {
             func_800BEE1C(source, false);
         }
         source = func_800B7854(source);

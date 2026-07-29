@@ -62,6 +62,11 @@ CPackItem::~CPackItem(){
 /* Main update tick for pack file loading state machine.
    Transitions through: NOT_LOADED → OPENED_PKH_FILE → (LOADING_AHX_ADX_FILE) → LOADED */
 void CPackItem::update(){
+    char localBuf[32];
+    localBuf[0] = '\0';
+    int localLen;
+    int dotPos;
+
     if(mLoadState == LOAD_STATE_NOT_LOADED){
         if(CWorkSystemPack::func_804DE100() == 0) return;
 
@@ -87,28 +92,38 @@ void CPackItem::update(){
         ml::CPathUtil::getNoPathExtName(tempString, mFilePath);
         mBaseName = tempString.c_str();
 
-        // Copy full path, strip extension manually, then append ".pkb"
+        // Copy full path, strip extension, then append ".pkb"
         mPkbFilename = mFilePath;
 
-        // Manual extension strip to match retail codegen (rfind + local buffer)
-        char localBuf[32];
-        localBuf[0] = '\0';
-        int localLen = 0;
-        {
-            int dotPos = mPkbFilename.rfind(lbl_eu_806623C0, -1);
-
-            if((u32)(dotPos + 1) > 1){
-                if(mPkbFilename.mLength != 0){
-                    if(dotPos == -1){
-                        dotPos = mPkbFilename.mLength;
-                    }
-                    strncpy(localBuf, mPkbFilename.mString, dotPos);
-                    localBuf[dotPos] = '\0';
-                    localLen = strlen(localBuf);
+        // Find last '.' in mPkbFilename (inlined rfind for matching)
+        dotPos = -1;
+        int len = mPkbFilename.mLength;
+        if(len != 0){
+            int dotLen = strlen(lbl_eu_806623C0);
+            char* p = mPkbFilename.mString + len - 1;
+            char* end = mPkbFilename.mString - 1;
+            while(p != end){
+                if(strncmp(p, lbl_eu_806623C0, dotLen) == 0){
+                    dotPos = p - mPkbFilename.mString;
+                    break;
                 }
-
-                mPkbFilename = localBuf;
+                p--;
             }
+        }
+
+        // Truncate at extension if found
+        if((u32)(dotPos + 1) > 1){
+            localLen = 0;
+            if(mPkbFilename.mLength != 0){
+                if(dotPos == -1){
+                    dotPos = mPkbFilename.mLength;
+                }
+                strncpy(localBuf, mPkbFilename.mString, dotPos);
+                localBuf[dotPos] = '\0';
+                localLen = strlen(localBuf);
+            }
+
+            mPkbFilename = localBuf;
         }
 
         mPkbFilename += lbl_eu_80524714 + 0x10;

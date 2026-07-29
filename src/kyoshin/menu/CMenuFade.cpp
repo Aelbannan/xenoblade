@@ -129,19 +129,17 @@ void func_80113E48(void* arg0) {
 }
 
 void CMenuFade::cbRenderBefore() {
-    // Use goto to match the retail beq+L → render; b → end layout.
     if (CTaskGame::getInstance()->func_800426F0()) {
         return;
     }
-    if ((lbl_eu_80663E28 & 0x00200000) == 0) {
-        goto render;
+    // __builtin_expect(..., 0) tells MWCC the render path is unlikely,
+    // which pushes it out-of-line (beq + b pattern instead of bne).
+    if (__builtin_expect((lbl_eu_80663E28 & 0x00200000) == 0, 0)) {
+        GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
+        nw4r::lyt::DrawInfo drawInfo;
+        func_80137250(&drawInfo);
+        func_80137038(mLayout, &drawInfo, 0, 1);
     }
-    return;
-render:
-    GXSetZMode(GX_FALSE, GX_NEVER, GX_FALSE);
-    nw4r::lyt::DrawInfo drawInfo;
-    func_80137250(&drawInfo);
-    func_80137038(mLayout, &drawInfo, 0, 1);
 }
 
 CMenuFade* func_80113C84(CProcess* parent, CScn* pScn, int p5, int p6, float f1, float f2, float f3) {

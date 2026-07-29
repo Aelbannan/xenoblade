@@ -152,6 +152,7 @@ void CTaskGameCf::func_800444FC(){
         if(v5){
             func_8009ECB0();
             func_8009ECB0();
+            func_eu_8006B238();
         } else {
             int* v18 = func_8009ECB0();
             func_8009ECB0();

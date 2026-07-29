@@ -345,21 +345,27 @@ void Controller::clrBatteryFlag() {
 }
 
 void Controller::updateSound() {
-    int chan = mHBController.chan;
-    u32 busClock = OS_BUS_CLOCK_SPEED;
-    u32 ticksPerMs = (u32)(((u64)0x10624DD3 * (u64)(busClock >> 2)) >> 38);
+    s32 chan = mHBController.chan;
 
     if (remotespk->isPlaying(chan)) {
         if (mCheckSoundTimeFlag) {
+            u32 bus;
+            u32 ticksPerMs;
+            s64 now;
+            s32 elapsed;
+
             mCheckSoundIntervalFlag = false;
 
-            s64 now = OSGetTime();
-            s32 elapsed =
+            bus = OS_BUS_CLOCK_SPEED;
+            ticksPerMs = (u32)(((u64)0x10624DD3 * (u64)(bus >> 2)) >> 38);
+            now = OSGetTime();
+            elapsed =
                 (s32)((u32)(now >> 32) - (u32)(mPlaySoundTime >> 32)) /
                 (s32)ticksPerMs;
 
             if (elapsed >= 480000) {
                 mCheckSoundTimeFlag = false;
+                mCheckSoundIntervalFlag = false;
 
                 if (WPADIsSpeakerEnabled(chan)) {
                     WPADControlSpeaker(chan, WPAD_SPEAKER_MUTE, NULL);
@@ -373,15 +379,23 @@ void Controller::updateSound() {
             }
         }
 
-        if (!mSoundOffFlag && WPADGetRadioSensitivity(chan) <= 85) {
-            if (WPADIsSpeakerEnabled(chan)) {
-                WPADControlSpeaker(chan, WPAD_SPEAKER_MUTE, NULL);
-                OSSetAlarmUserData(&sAlarmSoundOff[chan],
-                                   reinterpret_cast<void*>(chan));
-                OSCancelAlarm(&sAlarmSoundOff[chan]);
-                OSSetAlarm(&sAlarmSoundOff[chan], ticksPerMs * 1000,
-                           soundOnCallback);
-                mSoundOffFlag = true;
+        if (!mSoundOffFlag) {
+            u32 radio = WPADGetRadioSensitivity(chan);
+
+            if (radio <= 85) {
+                if (WPADIsSpeakerEnabled(chan)) {
+                    u32 bus = OS_BUS_CLOCK_SPEED;
+                    u32 ticksPerMs =
+                        (u32)(((u64)0x10624DD3 * (u64)(bus >> 2)) >> 38);
+
+                    WPADControlSpeaker(chan, WPAD_SPEAKER_MUTE, NULL);
+                    OSSetAlarmUserData(&sAlarmSoundOff[chan],
+                                       reinterpret_cast<void*>(chan));
+                    OSCancelAlarm(&sAlarmSoundOff[chan]);
+                    OSSetAlarm(&sAlarmSoundOff[chan], ticksPerMs * 1000,
+                               soundOnCallback);
+                    mSoundOffFlag = true;
+                }
             }
         }
     } else {
@@ -390,6 +404,9 @@ void Controller::updateSound() {
                 mStopSoundTime = OSGetTime();
                 mCheckSoundIntervalFlag = true;
             } else {
+                u32 bus = OS_BUS_CLOCK_SPEED;
+                u32 ticksPerMs =
+                    (u32)(((u64)0x10624DD3 * (u64)(bus >> 2)) >> 38);
                 s64 now = OSGetTime();
                 s32 elapsed =
                     (s32)((u32)(now >> 32) - (u32)(mStopSoundTime >> 32)) /

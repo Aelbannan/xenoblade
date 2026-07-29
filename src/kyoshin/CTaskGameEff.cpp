@@ -3,6 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "monolib/work/CProcess.hpp"
+#include "monolib/scn/CScn.hpp"
+#include "kyoshin/code_800B06A4.hpp"
 
 void __ct__CTaskGameEff(){}
 
@@ -10,9 +12,8 @@ void __dt__80044BB0(){}
 
 void __dt__Q212CTaskGameEff18CEffRenderHighPrioFv(){}
 
-void __dt___reslist_base_CScn(){}
-
-void __dt__reslist_CScn(){}
+template <> _reslist_base<CScn>::~_reslist_base() {}
+template <> reslist<CScn>::~reslist() {}
 
 CTaskGameEff::~CTaskGameEff() {}
 

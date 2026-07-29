@@ -29,6 +29,8 @@ u32 func_801392E4(void*);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F8;
+void func_801D1F9C(void*, u32);
+void func_801C4B60(void*, u32, u32, u32, u32);
 void __as__11_GXColorS10FRC11_GXColorS10(void* dst, const void* src);
 void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 
@@ -606,4 +608,36 @@ bool CItemBoxInfo2::OnFileEvent(CEventFile* file) {
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_801EABC4(){}
+extern void* lbl_eu_80664518;
+extern void* lbl_eu_80664520;
+extern void* lbl_eu_80664528;
+extern void* lbl_eu_80664530;
+extern void* lbl_eu_80664538;
+extern void* lbl_eu_80664540;
+extern void* lbl_eu_80664548;
+extern void* lbl_eu_80664550;
+extern void* lbl_eu_80664558;
+extern void* lbl_eu_80664560;
+extern void* lbl_eu_80664568;
+extern void* lbl_eu_80664570;
+extern void* lbl_eu_80664578;
+extern void* lbl_eu_80664580;
+extern void* lbl_eu_80664588;
+
+void sinint_801EABC4() {
+    func_801D1F9C(&lbl_eu_80664518, 0);
+    func_801D1F9C(&lbl_eu_80664520, 0);
+    func_801C4B60(&lbl_eu_80664528, 0x25, 0x8a, 0xce, 0);
+    func_801C4B60(&lbl_eu_80664530, 0x25, 0x8a, 0xce, 0);
+    func_801C4B60(&lbl_eu_80664538, 0xd2, 0x28, 0x14, 0);
+    func_801C4B60(&lbl_eu_80664540, 0xd2, 0x28, 0x14, 0);
+    func_801C4B60(&lbl_eu_80664548, 0x1f, 0xb0, 0x1a, 0);
+    func_801C4B60(&lbl_eu_80664550, 0x1f, 0xb0, 0x1a, 0);
+    func_801D1F9C(&lbl_eu_80664558, 0);
+    func_801D1F9C(&lbl_eu_80664560, 0);
+    func_801C4B60(&lbl_eu_80664568, 0xff, 0xff, 0xfa, 0);
+    func_801C4B60(&lbl_eu_80664570, 0x25, 0x8a, 0xce, 0);
+    func_801C4B60(&lbl_eu_80664578, 0xff, 0xff, 0xfa, 0);
+    func_801C4B60(&lbl_eu_80664580, 0xd2, 0x28, 0x14, 0);
+    func_801C4B60(&lbl_eu_80664588, 0xff, 0xff, 0xfa, 0);
+}

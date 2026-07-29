@@ -154,7 +154,7 @@ int func_802821E0(cf::CChainActorPc* self) {
         obj = self->unk0;
         float f86 = ((float(*)(u32))(*(void***)obj)[86])(obj);
         float f87 = ((float(*)(u32))(*(void***)obj)[87])(obj);
-        if (!(f87 > f86)) return 1;
+        if (f87 <= f86) return 1;
     }
     return 0;
 }

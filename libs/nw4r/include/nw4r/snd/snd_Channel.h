@@ -204,8 +204,6 @@ private:
 private:
     EnvGenerator mEnvelope; // at 0x0
     Lfo mLfo;               // at 0x1C
-    u32 field_0x2C;         // at 0x2C
-    f32 field_0x30;         // at 0x30
 
     u8 mLfoTarget;                // at 0x34
     bool mPauseFlag;              // at 0x35

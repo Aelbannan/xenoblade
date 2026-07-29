@@ -183,7 +183,7 @@ tBTA_DM_SEARCH_ACTION const bta_dm_search_action[] =
     bta_dm_cancel_rmt_name,
 };
 
-/* Search control block: storage lives here; primary access is from bta_dm_act.c */
+/* Search control block (defined in bta_dm_act.c) */
 struct bta_dm_search_cb_t
 {
     void *p_search_cback;       /* offset 0x00 */

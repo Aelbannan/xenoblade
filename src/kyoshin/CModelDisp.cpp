@@ -57,17 +57,13 @@ void func_801FCB4C(CModelDisp* self, int flags, int subIdx, int action, int ptrI
     u32 flag = (&sub->mFlagFD0)[ptrIdx];
     if (flag == 0) return;
 
-    void* ctrl = sub->mpController;
-
     // vcall: vtable[50] — takes controller only
     typedef void (*VMethod50)(void*);
-    VMethod50* vtbl50 = *(VMethod50**)ctrl;
-    vtbl50[50](ctrl);
+    (*(VMethod50**)sub->mpController)[50](sub->mpController);
 
     // vcall: vtable[49] — takes controller, flag, action, 0
     typedef void (*VMethod49)(void*, u32, int, int);
-    VMethod49* vtbl49 = *(VMethod49**)ctrl;
-    vtbl49[49](ctrl, flag, action, 0);
+    (*(VMethod49**)sub->mpController)[49](sub->mpController, flag, action, 0);
 }
 
 int func_801FCBEC(void* self) { return 0; }
@@ -79,11 +75,9 @@ void func_801FCBF4(){}
 // Scans sub-objects for one whose mpController matches param's field_0x3A0,
 // then dispatches getNextChainObj / setParam calls for active flag slots.
 void func_801FCDB4(CModelDisp* self, CModelDispParam* param, int arg5) {
-    u32 matchVal = param->field_0x3A0;
-
     for (u8 i = 0; i < 3; i++) {
         CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
-        if ((u32)sub->mpController == matchVal) {
+        if ((u32)sub->mpController == param->field_0x3A0) {
             if (sub->mFlagFD0 != 0) {
                 sub->mResultA = func_8004B9B8(sub->mSubObj);
                 func_8004B9D4(sub->mBuffer, arg5, 0, -1, 0);

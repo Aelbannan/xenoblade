@@ -56,8 +56,9 @@ void CMenuFade::Init() {
         field_0x80 = 1.0f;
     }
 
+    // field_0x84: if negative, clamp to fallback value 25.0
     if (field_0x84 < 0.0f) {
-        field_0x84 = 30.0f;
+        field_0x84 = 25.0f;
     }
 
     if (field_0x88 >= 0.0f) {
@@ -67,13 +68,14 @@ void CMenuFade::Init() {
     }
 
     // Set initial animation frame based on state (field_0x90)
+    // States 0/1 start at frame 0; state 2 starts at the last frame.
     switch (field_0x90) {
     case 0:
     case 1:
         field_0x7c = 0.0f;
         break;
     case 2:
-        field_0x7c = (float)(mAnimDefault->GetFrameSize() - 1) - 1.0f;
+        field_0x7c = (float)mAnimDefault->GetFrameSize() - 1.0f;
         break;
     }
 

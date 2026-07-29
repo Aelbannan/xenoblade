@@ -82,7 +82,7 @@ extern "C" u32 func_8013600C(void*, u32);
 extern "C" u32 func_800A32BC(u32);
 extern "C" u32 func_8003B1EC(u32);
 extern "C" u32 func_8009CF8C(u32);
-extern "C" u32 func_80139A18(void*);
+extern "C" u32 func_80139A18(void*, void*, void*, void*);
 extern "C" u32 func_80136190(void*, u32, u32);
 extern "C" void func_801C5158(void*, u32);
 extern "C" u32 func_801392B4(void*);
@@ -98,11 +98,11 @@ extern "C" void func_801D1F9C(void*, u32);
 extern "C" u32 func_801C62AC(void*, u32);
 extern "C" u32 func_801C631C(void*, u32);
 extern "C" u16 ArrayGet12(u8);
+extern "C" void func_80136910(void*, const char*, u8);
 extern "C" void func_8022B90C(void*, int);
 extern "C" void func_8022B9B4(void*, u32, int);
 extern "C" void func_8022BFC8(void*, int);
 extern "C" void func_8022B8B8(void*);
-extern "C" void func_8022B8E4(void*);
 extern "C" int func_801C6E90(void*);
 extern "C" u32 func_801D4260(void*, u8);
 extern "C" void func_801D0BD8(void*);
@@ -1858,7 +1858,69 @@ void func_801CFCBC(void* self, u32 val) {
     func_80124270(ret, val);
 }
 
-extern "C" void func_801CFD2C(void* self) { }
+extern "C" void func_801CFD2C(void* self) {
+    u8* p = (u8*)self;
+    int i;
+    for (i = 0; i < 12; i++) {
+        char buf1[64];
+        char buf2[64];
+        int tabNum = i + 1;
+        sprintf(buf1, &lbl_eu_8050566C[0x520], tabNum);
+        sprintf(buf2, &lbl_eu_8050566C[0x52f], tabNum);
+        u8 cat = p[i + 0x62];
+        int isCurTab = 0;
+        int isOtherTab = 0;
+        if (cat != 0) {
+            s8 curIdx = (s8)p[0x6f];
+            if (i == curIdx) {
+                isCurTab = 1;
+                isOtherTab = 0;
+            } else {
+                isCurTab = 0;
+                isOtherTab = 1;
+            }
+            {
+                u32 diff = cat - 4;
+                u32 layoutAddr = *(u32*)(p + 0x44);
+                if (diff <= 4 || cat == 2 || cat == 0xB) {
+                    func_80139A18((void*)layoutAddr, (void*)buf1, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+                    func_80139A18((void*)layoutAddr, (void*)buf2, (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+                } else {
+                    func_80139A18((void*)layoutAddr, (void*)buf1, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+                    func_80139A18((void*)layoutAddr, (void*)buf2, (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+                }
+            }
+        }
+        {
+            u32 layoutAddr = *(u32*)(p + 0x44);
+            void* pane = *(void**)(layoutAddr + 0x10);
+            void** vtbl = *(void***)pane;
+            void* textObj = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])(pane, buf1, 1);
+            func_80124270(textObj, isCurTab);
+        }
+        {
+            u32 layoutAddr = *(u32*)(p + 0x44);
+            void* pane = *(void**)(layoutAddr + 0x10);
+            void** vtbl = *(void***)pane;
+            void* textObj = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])(pane, buf2, 1);
+            func_80124270(textObj, isOtherTab);
+        }
+        func_801CFA58(self, cat, i);
+    }
+    func_801D05D4(self, 0);
+    if (p[0x527] == 2) {
+        CItemBoxGridFull* subGrid = (CItemBoxGridFull*)(p + 0x54c);
+        u16 count1;
+        p[0x542] = 0;
+        func_801C56D8((void*)subGrid, p[0x62], 0, *(u16*)(p + 0x52e), *(u16*)(p + 0x52a));
+        count1 = subGrid->field_2800;
+        func_801C56D8((void*)subGrid, p[0x63], 0, *(u16*)(p + 0x52e), *(u16*)(p + 0x52a));
+        if (count1 == 0 && subGrid->field_2800 == 0) {
+            p[0x542] = 1;
+        }
+    }
+    func_801CFF28(self);
+}
 
 extern "C" void func_801CFF28(void* self) {
     u8* p = (u8*)self;
@@ -1874,7 +1936,7 @@ extern "C" void func_801CFF28(void* self) {
     {
         u32 rows = func_801C5E5C((void*)subGrid);
         u32 layout = *(u32*)(p + 0x44);
-        func_80136910__FPQ34nw4r3lyt6LayoutPcUc((void*)layout, &lbl_eu_8050566C[0x53e], (u8)(rows & 0xFF));
+        func_80136910((void*)layout, &lbl_eu_8050566C[0x53e], (u8)(rows & 0xFF));
     }
     func_801CFFEC(self);
     func_801D0328(self);
@@ -1889,7 +1951,95 @@ void func_801CFFEC(void* self) { }
 
 void func_801D0328(void* self){}
 
-extern "C" void func_801D05D4(void* self, int val) { }
+extern "C" void func_801D05D4(void* self, int val) {
+    u8* p = (u8*)self;
+    s8 oldIdx = (s8)p[0x6f];
+    s8 newIdx;
+    u8 buf[3];
+    buf[0] = (u8)oldIdx;
+    if (val == 0) {
+        newIdx = oldIdx - 1;
+    } else {
+        newIdx = oldIdx + 1;
+    }
+    buf[1] = (u8)newIdx;
+    if ((s8)newIdx < 0) {
+        buf[1] = p[0x6e] - 1;
+    } else if ((s8)newIdx >= (s8)p[0x6e]) {
+        buf[1] = 0;
+    }
+    {
+        int i;
+        for (i = 0; i < 2; i++) {
+            s8 idx = (s8)buf[i];
+            char pane1[64];
+            char pane2[64];
+            int tabNum = idx + 1;
+            sprintf(pane1, &lbl_eu_8050566C[0x520], tabNum);
+            sprintf(pane2, &lbl_eu_8050566C[0x52f], tabNum);
+            {
+                u8 cat = p[idx + 0x62];
+                int isCurTab = 0;
+                int isOtherTab = 0;
+                if (cat != 0) {
+                    if (idx == (s8)p[0x6f]) {
+                        isCurTab = 1;
+                        isOtherTab = 0;
+                    } else {
+                        isCurTab = 0;
+                        isOtherTab = 1;
+                    }
+                    {
+                        u32 layout = *(u32*)(p + 0x44);
+                        void* pane = *(void**)(layout + 0x10);
+                        void** vtbl = *(void***)pane;
+                        void* textObj = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])(pane, pane1, 1);
+                        func_80124270(textObj, isCurTab);
+                    }
+                    {
+                        u32 layout = *(u32*)(p + 0x44);
+                        void* pane = *(void**)(layout + 0x10);
+                        void** vtbl = *(void***)pane;
+                        void* textObj = ((void*(*)(void*, char*, int))vtbl[0x3C / 4])(pane, pane2, 1);
+                        func_80124270(textObj, isOtherTab);
+                    }
+                }
+            }
+        }
+    }
+    {
+        u8 cat = p[(s8)p[0x6f] + 0x62];
+        u32 diff = cat - 4;
+        u32 layout = *(u32*)(p + 0x44);
+        if (diff <= 4 || cat == 2 || cat == 0xB) {
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5aa], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5b6], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5c2], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5ce], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5da], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5e6], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5f2], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5fe], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x60a], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x616], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x621], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x62c], (void*)&lbl_eu_806644A8, (void*)&lbl_eu_806644B0);
+        } else {
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5aa], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5b6], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5c2], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5ce], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5da], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5e6], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5f2], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x5fe], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x60a], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x616], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x621], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+            func_80139A18((void*)layout, (void*)&lbl_eu_8050566C[0x62c], (void*)&lbl_eu_80664498, (void*)&lbl_eu_806644A0);
+        }
+    }
+}
 
 extern "C" void func_801D0950(void* self) { }
 

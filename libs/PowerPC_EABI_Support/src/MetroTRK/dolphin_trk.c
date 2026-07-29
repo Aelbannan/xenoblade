@@ -8,8 +8,6 @@
 #include "PowerPC_EABI_Support/MetroTRK/main_TRK.h"
 #include "PowerPC_EABI_Support/MetroTRK/rvl_mem.h"
 
-#include <decomp.h>
-
 extern u8 _db_stack_addr[];
 
 #define EXCEPTION_SIZE  0x100

@@ -246373,7 +246373,6 @@ public:
         LinkListNode* mNode; // at 0x0
     };
 
-protected:
     static Iterator GetIteratorFromPointer(LinkListNode* pNode) {
         return Iterator(pNode);
     }
@@ -246395,6 +246394,8 @@ protected:
     Iterator Erase(Iterator it);
     Iterator Erase(LinkListNode* pNode);
     Iterator Erase(Iterator begin, Iterator end);
+
+protected:
 
 public:
     u32 GetSize() const {
@@ -253285,6 +253286,9 @@ struct CfResStackObject {
 
 extern "C" void func_80080F48__Q22cf13CfGameManagerFv(
     u16 value, CfResStackObject* resource, bool first, bool second);
+
+extern "C" void func_80081358__Q22cf13CfGameManagerFv(const char* name, u32 value,
+                                                        u32 third, u32 fourth);
 extern "C" void* CfRes_getInstanceField();
 extern "C" s32 func_80062A84(u32 handle);
 extern "C" void func_80062B3C(u32 handle, u32 state);

@@ -319,30 +319,38 @@ void Pane::DrawSelf(const DrawInfo& rInfo) {
 
     LoadMtx(rInfo);
 
-    ut::Color color(0xFFFFFFFFu);
+    ut::Color color(0x00FF00FFu);
 
-    f32 baseX = 0.0f;
-    f32 baseY = 0.0f;
+    f32 x = 0.0f;
+    f32 y = 0.0f;
 
     switch (mBasePosition % HORIZONTALPOSITION_MAX) {
     case HORIZONTALPOSITION_CENTER:
-        baseX = -mSize.width * 0.5f;
+        x = -mSize.width * 0.5f;
         break;
     case HORIZONTALPOSITION_RIGHT:
-        baseX = -mSize.width;
+        x = -mSize.width;
+        break;
+    default:
+        x = 0.0f;
         break;
     }
 
     switch (mBasePosition / HORIZONTALPOSITION_MAX) {
     case VERTICALPOSITION_CENTER:
-        baseY = -mSize.height * 0.5f;
+        y = -mSize.height * 0.5f;
         break;
     case VERTICALPOSITION_BOTTOM:
-        baseY = -mSize.height;
+        y = -mSize.height;
+        break;
+    default:
+        y = 0.0f;
         break;
     }
 
-    math::VEC2 pos(baseX, baseY);
+    math::VEC2 pos;
+    pos.x = x;
+    pos.y = y;
     detail::DrawLine(pos, mSize, color);
 }
 

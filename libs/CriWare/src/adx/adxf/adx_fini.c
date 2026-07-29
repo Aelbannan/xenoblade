@@ -56,22 +56,20 @@ void ADXF_Finish(void) {
     s32 ref = work->refcount - 1;
     work->refcount = ref;
 
-    if (ref != 0) {
-        return;
+    if (ref == 0) {
+        // Last reference released: tear down all open files
+        ADXF_CloseAll();
+
+        // Reset state fields (order matches retail ASM)
+        work->field_0x87C = 1;
+        work->field_0x878 = -1;
+        work->field_0x874 = 0;
+        work->field_0x870 = 0;
+        work->field_0x86C = 0;
+        work->field_0x868 = 0;
+        memset(work->field_0x848, 0, 0x20);
+        memset(work->field_0x748, 0xFF, 0x100);
+        memset(work->field_0x348, 0, 0x400);
+        memset(work->field_0x08, 0, 0x340);
     }
-
-    // Last reference released: tear down all open files
-    ADXF_CloseAll();
-
-    // Reset state fields (order matches retail ASM)
-    work->field_0x87C = 1;
-    work->field_0x878 = -1;
-    work->field_0x874 = 0;
-    work->field_0x870 = 0;
-    work->field_0x86C = 0;
-    work->field_0x868 = 0;
-    memset(work->field_0x848, 0, 0x20);
-    memset(work->field_0x748, 0xFF, 0x100);
-    memset(work->field_0x348, 0, 0x400);
-    memset(work->field_0x08, 0, 0x340);
 }

@@ -1445,39 +1445,7 @@ extern "C" void func_80080F48__Q22cf13CfGameManagerFv(
     u16 value, CfResStackObject* resource, bool first, bool second);
 
 extern "C" void func_80081358__Q22cf13CfGameManagerFv(const char* name, u32 value,
-                                                        u32 third, u32 fourth) {
-    cf::CfGameManager::getInstance();
-    if (static_cast<u16>(value - 1) > 12) {
-        return;
-    }
-    CfResStackObject resource;
-    func_80080F48__Q22cf13CfGameManagerFv(name, &resource, third, fourth);
-    Unk80EE4Data* data = func_80081D88__Q22cf13CfGameManagerFv(&resource, 0);
-    if (data == nullptr) {
-        return;
-    }
-    func_80080EE4__Q22cf13CfGameManagerFv(data, name, value);
-    if (third != 0) {
-        u32 size = 876;
-        u32 pool = func_80061FE8();
-        void* obj = allocate__Q23mtl10MemManagerFUlUl(size, pool);
-        if (obj != nullptr) {
-            __ct__800814BC(obj);
-        }
-        data->vfunc_0x70(obj);
-        data->vfunc_0x10C(9);
-    } else {
-        u32 size = 900;
-        u32 pool = func_80061FE8();
-        void* obj = allocate__Q23mtl10MemManagerFUlUl(size, pool);
-        if (obj != nullptr) {
-            __ct__80080338(obj);
-        }
-        data->vfunc_0x70(obj);
-        data->vfunc_0x10C(10);
-    }
-    data->vfunc_0x48();
-}
+                                                        u32 third, u32 fourth);
 extern "C" void* CfRes_getInstanceField();
 extern "C" s32 func_80062A84(u32 handle);
 extern "C" void func_80062B3C(u32 handle, u32 state);

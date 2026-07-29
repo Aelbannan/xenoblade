@@ -5876,6 +5876,11 @@ static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR
 
         __TRK_set_MSR(destMSR);
         {
+            // Write a single byte into the (possibly misaligned) dest
+            // without disturbing the other three bytes of the containing
+            // word: read the word, clear the target lane, OR in the byte,
+            // write back.  Lane = (3 - byteOffset) * 8 bits from the LE
+            // LSB, byteOffset = dest & 3.
             ui32* alignedPtr = (ui32*)((ui32)destPtr & ~3);
             ui32 v = *alignedPtr;
             ui32 mask =

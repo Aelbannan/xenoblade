@@ -1,10 +1,13 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
+#include "monolib/math/Random.hpp"
 
 // ── Extern symbols ────────────────────────────────────────────────────────
 
 extern "C" {
     extern u32 lbl_eu_80539910[];   // vtable for CVS_THREAD
     extern void func_800BE924(void* voice);
+    extern u8* lbl_eu_80664A58;     // voice manager global pointer
 }
 
 // ── func_802A3E74 ─────────────────────────────────────────────────────────
@@ -57,5 +60,182 @@ void func_802A3E88(){}
 void func_802A3EF0(){}
 void func_802A3FD4(){}
 void func_802A4120(){}
-void func_802A4430(){}
+// ── func_802A4430 ─────────────────────────────────────────────────────────
+// Voice-ID selector for battle-voice context.  Dispatches on
+// voice-thread state (1–7) and character type to pick the appropriate
+// voice line for tension, arts, chain-attack, revive, etc.
+
+int func_802A4430(CVoiceHandle* self) {
+    int isLeader;
+    u8* voicePtr;
+    int state;
+    int charType;
+
+    // Leader check: bias handle to voice area at +0x3E9C, compare with
+    // the player object.  If this voice belongs to the player, there is
+    // a 1-in-3 chance of treating it as a non-leader voice.
+    voicePtr = (u8*)self;
+    isLeader = 1;
+    if (self != NULL) {
+        voicePtr = (u8*)self + 0x3E9C;
+    }
+    if (voicePtr == (u8*)cf::CfGameManager::getPlayer(0)) {
+        if (ml::math::mtRand(2) == 0) {
+            isLeader = 0;
+        }
+    }
+
+    // Get voice-thread state.
+    state = func_802A77E8(self);
+
+    // Extract character type from pointer chain.
+    {
+        UnkTarget* target = self->unkTarget;
+        if (target != NULL) {
+            charType = target->field_0x08->field_0x18;
+        } else {
+            charType = -1;
+        }
+    }
+
+    // Character type must be in [7, 14].
+    if (charType < 7 || charType > 14) {
+        return -1;
+    }
+
+    // Validate iterator.
+    if (func_802A7850(state) == 0) {
+        return -1;
+    }
+
+    // Dispatch on voice-thread state.
+    switch (state) {
+    case 1:
+        if (charType == 7) {
+            // One-shot flag toggle on voice manager at offset 0x222.
+            int flag;
+            if (lbl_eu_80664A58[0x222] != 0) {
+                lbl_eu_80664A58[0x222] = 0;
+                flag = 1;
+            } else {
+                flag = 0;
+            }
+            if (flag != 0) {
+                return 0xBBB;
+            }
+            if (isLeader == 0) {
+                return 0xDD2;
+            }
+            return 0xDBD;
+        }
+        if (charType == 8) {
+            if (isLeader == 0) {
+                return 0xDB3;
+            }
+            return 0xDD1;
+        }
+        return -1;
+
+    case 2:
+        if (charType != 7) {
+            return -1;
+        }
+        // Check arts/skill availability via field at offset 0x8.
+        if (func_80148778(&self->unk8, 0xED) != 0) {
+            if (isLeader == 0) {
+                return 0xDBD;
+            }
+            return 0xDD2;
+        } else {
+            if (isLeader == 0) {
+                return 0xDBD;
+            }
+            return 0xDD1;
+        }
+
+    case 3: {
+        // Party gauge check.
+        int gaugeActive = 0;
+        if (func_802A77E8(self) == 3) {
+            if ((u32)cf::CfGameManager::func_800822F4() < 42) {
+                gaugeActive = 1;
+            }
+        }
+        if (gaugeActive != 0) {
+            if (isLeader == 0) {
+                return 0xDAD;
+            }
+            return 0xDD9;
+        }
+
+        // No gauge: dispatch on sub-state from equipment data.
+        {
+            UnkWorkObj* workObj;
+            UnkEquipData* equipData;
+            u16 subState;
+            int idx;
+
+            workObj = ((UnkWorkObj*(*)(CVoiceHandle*))self->vtable[0xA9])(self);
+            equipData = workObj->field_0x50;
+            if (equipData == NULL) {
+                return -1;
+            }
+            subState = equipData->subState;
+            idx = subState - 0x77;
+            if (idx > 8) {
+                return -1;
+            }
+
+            // Jump-table dispatch (9 entries).
+            switch (idx) {
+            case 0: return isLeader ? 0xDD1 : 0xDBF;
+            case 1: return isLeader ? 0xDD2 : 0xDBD;
+            case 2: return isLeader ? 0xDD3 : 0xDAD;
+            case 3: return isLeader ? 0xDD4 : 0xDBE;
+            case 4: return isLeader ? 0xDD1 : 0xDBF;
+            case 5: return isLeader ? 0xDD2 : 0xDBD;
+            case 6: return isLeader ? 0xDD3 : 0xDAD;
+            case 7: return isLeader ? 0xDD4 : 0xDBE;
+            case 8: return isLeader ? 0xDD3 : 0xDAD;
+            }
+        }
+        return -1;
+    }
+
+    case 4:
+        // Character types 7–10 map linearly to voice IDs.
+        if (charType < 7 || charType > 10) {
+            return -1;
+        }
+        return charType + 0xDCA;
+
+    case 5:
+        // Only valid for character types 7 and 8.
+        if (charType - 7 > 1) {
+            return -1;
+        }
+        if (isLeader == 0) {
+            return 0xDBD;
+        }
+        return 0xDD1;
+
+    case 6:
+        if (charType != 7) {
+            return -1;
+        }
+        return 0xDD1;
+
+    case 7:
+        // Character types 8–13 map to dynamic voice IDs.
+        if (charType < 8 || charType > 13) {
+            return -1;
+        }
+        if (isLeader == 0) {
+            return 0xDBE;
+        }
+        return charType + 0xDCC;
+    }
+
+    return -1;
+}
 void func_802A4798(){}

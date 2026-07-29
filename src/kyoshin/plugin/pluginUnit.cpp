@@ -8,6 +8,7 @@
 #include "monolib/vm/yvm2.h"
 #include "kyoshin/plugin/ocBdat.hpp"
 #include "kyoshin/cf/CBattleManager.hpp"
+#include "kyoshin/cf/CfGameManager.hpp"
 
 // C-linkage retail symbols referenced by learnArts / clearPcBtlState.
 extern "C" {
@@ -18,12 +19,16 @@ extern "C" {
     void* func_8003AA34();
     u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
 
-    // Actor param helpers (C-linkage in retail).
-    void* func_8009EC9C(unsigned short);
-    void func_800A18A4(void*, int);
-    void* func_800B8B94(int);
-    void* func_800B8C78(int);
-    void func_800F3958(void*, void*, int);
+    // Actor param helpers (C-linkage in retail). Typed as cf::CfObjectActor*
+    // to satisfy the no_void_ptr lint rule while keeping C linkage.
+    cf::CfObjectActor* func_8009EC9C(unsigned short);
+    void func_800A18A4(cf::CfObjectActor*, int);
+    cf::CfObjectActor* func_800B8B94(int);
+    cf::CfObjectActor* func_800B8C78(int);
+    void func_800F3958(cf::CBattleManager*, cf::CfObjectActor*, int);
+    void func_800EC8FC(cf::CBattleManager*, cf::CfObjectActor*,
+                      cf::CBattleStateEntry*, int);
+    int func_80174C98(cf::CfObjectActor*, u32*, int);
 
     // 100.0f constant used by getPcHpRate / getEneHpRate (lives in .sdata2).
     extern const float lbl_eu_80668250;
@@ -443,7 +448,8 @@ int setPcBtlState(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int state = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
 
-    // Optional arguments with defaults of 0.
+    // Optional arguments with defaults of 0. Reading pattern matches
+    // setEneBtlState: vmArgOmitChk(pThread, N) gates vmArgIntGet(N+1, ...).
     int arg4 = 0;
     if (vmArgOmitChk(pThread, 3) == 0) {
         arg4 = vmArgIntGet(4, vmArgPtrGet(pThread, 3));
@@ -465,7 +471,7 @@ int setPcBtlState(VMThread* pThread) {
         nextIdx++;
     }
 
-    void* actor = func_800B8B94(id);
+    cf::CfObjectActor* actor = func_800B8B94(id);
     if (actor == nullptr) {
         return 0;
     }
@@ -473,13 +479,16 @@ int setPcBtlState(VMThread* pThread) {
     // Build the CBattleStateEntry struct on the stack.
     CBattleStateEntry entry;
     memset(&entry, 0, sizeof(entry));
+    // +0x3f10 on the actor is a u32 handle/id used as the entry base.
     entry.unk00 = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(actor) + 0x3f10);
-    entry.unk14 = static_cast<s16>(state);
-    entry.unk16 = static_cast<s16>(arg6);
-    entry.unk1C = static_cast<f32>(arg4);
-    entry.unk20 = static_cast<f32>(arg7);
+    entry.unk0C = static_cast<u16>(state);
+    entry.unk14 = static_cast<s16>(arg6);
+    // (float)(s32) forces MWCC to emit the xoris 0x8000 + fsubs int-via-double
+    // conversion pattern instead of a single fctiwz.
+    entry.unk20 = (float)(s32)arg4;
+    entry.unk24 = (float)(s32)arg7;
 
-    // Special case: when state == 0xce, force unk18 to 0xa.
+    // Special case: when state == 0xce, force unk10 to 0xa.
     if (state == 0xce) {
         entry.unk10 = 0xa;
     } else {

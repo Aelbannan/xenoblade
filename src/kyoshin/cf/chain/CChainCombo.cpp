@@ -5,8 +5,8 @@
 // Forward declarations for functions called by the two decompiled functions.
 // func_800B708C is declared in CAIAction.hpp (included transitively).
 extern "C" void func_8013EAB0();
-extern "C" void* func_8016FE34(void*);
-extern "C" void func_802A07F4(int, void*);
+extern "C" CChainVObj* func_8016FE34(void*);
+extern "C" void func_802A07F4(int, CChainVObj*);
 
 // 3-entry table indexed by probability thresholds in func_80293EEC.
 extern "C" int lbl_eu_80538988[3];
@@ -42,10 +42,6 @@ struct CChainCombo_ArtsCategory {
     u8 mArtsCategory; // 0x3e
 };
 
-// Sub-object at actor+0x3e9c (CfObjectMove base, vtable 3).
-struct CChainCombo_MoveBase {
-    void** mVtbl;
-};
 
 void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     // Call vtable[0x2a4] on actor, get a pointer to a sub-object.
@@ -82,12 +78,13 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     // mPending guard at top; single stb at bottom matches retail structure.
     if (self->mPending) {
-        // Call vtable[0x4c] on the sub-object at actor+0x3e9c.
-        CChainCombo_MoveBase* moveBase = (CChainCombo_MoveBase*)((u8*)actor + 0x3e9c);
-        int (*vfunc)(void*) = (int (*)(void*))moveBase->mVtbl[0x4c / 4];
+        // Call vtable[0x4c] on the CfObjectMove base at actor+0x3e9c.
+        cf::CfObjectMove* moveBase = (cf::CfObjectMove*)actor;
+        void** vtbl = *(void***)moveBase;
+        int (*vfunc)(cf::CfObjectMove*) = (int (*)(cf::CfObjectMove*))vtbl[0x4c / 4];
         int result = vfunc(moveBase);
 
-        void* obj = func_8016FE34(func_800B708C((BOOL)result));
+        CChainVObj* obj = func_8016FE34(func_800B708C((BOOL)result));
         if (obj != nullptr) {
             // Random selection from a 3-entry table based on probability thresholds.
             int rand = ml::math::mtRand(100);
@@ -102,7 +99,7 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 
             // Call vtable[0x184] on the object.
             CChainVObj* vobj = (CChainVObj*)obj;
-            void (*vfunc2)(void*, int) = (void (*)(void*, int))vobj->mVtbl[0x184 / 4];
+            void (*vfunc2)(CChainVObj*, int) = (void (*)(CChainVObj*, int))vobj->mVtbl[0x184 / 4];
             vfunc2(vobj, value);
             func_802A07F4(0xbf, obj);
         }

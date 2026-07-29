@@ -64,7 +64,7 @@ u32 func_801DFD60(void*, void*, u32);
 u32 func_801DF610(void*, void*, u32, void*);
 s32 func_801DF4E0(void*, void*, s32, void*);
 s32 func_801DF578(void*, void*, s32, void*);
-u32 func_801E92B8(void*, u8, u32);
+u32 func_801E92B8(void*, void*);
 u32 func_801E9310(void*, void*, u32, void*);
 void func_801DF4B4(void*, void*);
 void func_801DF4D0(void*, u16, u32, u8);
@@ -811,8 +811,8 @@ u32 func_801E9690(u16 arg1, u32 arg2) {
     return result;
 }
 
-u32 func_801E92B8(void* dummy, u8 arg1, u32 ignored) {
-    void* obj = (u8*)func_8009EC9C(arg1) + 0x3534;
+u32 func_801E92B8(void* dummy, void* arg1) {
+    void* obj = (u8*)func_8009EC9C((u16)(u32)arg1) + 0x3534;
     if (func_8026178C(obj, 0x2d) != 0) {
         return func_8025FB10(obj, 0x2d);
     }
@@ -1506,12 +1506,26 @@ void CItemBoxInfoEntry::setItemBoxCopy(unsigned short a, unsigned int b, unsigne
     state = c;
 }
 
-u32 func_801E9190(void* a, void* b, u32 c, void* d) {
-    return func_801E92B8(a, 0, c) + func_801E9310(a, b, 0x52, d) + 0x64;
+s32 func_801E9190(void* a, void* b, s32 arg2, void* d) {
+    u32 r31 = func_801E92B8(a, b);
+    void* r27 = a;
+    void* r28 = b;
+    s32 r29 = arg2;
+    void* r30 = d;
+    u32 r3 = func_801E9310(r27, r28, 0x52, r30);
+    s32 sum = (s32)(r3 + r31 + 0x64);
+    return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
 }
 
-u32 func_801E9224(void* a, void* b, u32 c, void* d) {
-    return func_801E92B8(a, 0, c) + func_801E9310(a, b, 0x53, d) + 0x64;
+s32 func_801E9224(void* a, void* b, s32 arg2, void* d) {
+    u32 r31 = func_801E92B8(a, b);
+    void* r27 = a;
+    void* r28 = b;
+    s32 r29 = arg2;
+    void* r30 = d;
+    u32 r3 = func_801E9310(r27, r28, 0x53, r30);
+    s32 sum = (s32)(r3 + r31 + 0x64);
+    return (s32)(lbl_eu_80668040 * (float)(r29 * sum));
 }
 u32 func_801E9310(void* a, void* b, u32 c, void* d) {
     void* lookup = func_8009EC9C(c);

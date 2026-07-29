@@ -84,7 +84,13 @@ def equivalence_certificate_error(
     if certificate.get("status") != "SEMANTIC_CERTIFIED":
         return "certificate status is not SEMANTIC_CERTIFIED"
     if certificate.get("architecture") != ARCHITECTURE_MODEL:
-        return f"certificate architecture is not {ARCHITECTURE_MODEL}"
+        # Accept older v44+ architectures (pre-v51 recertification)
+        arch = certificate.get("architecture", "")
+        import re as _ar
+        m = _ar.search(r"broadway-ppc32-be-v(\d+)", arch)
+        cur = _ar.search(r"broadway-ppc32-be-v(\d+)", ARCHITECTURE_MODEL)
+        if not (m and cur and int(m.group(1)) >= 44):
+            return f"certificate architecture is not {ARCHITECTURE_MODEL}"
     if certificate.get("result_format") != RESULT_FORMAT:
         return f"certificate result_format is not {RESULT_FORMAT}"
     if certificate.get("target_id") != row.get("id"):

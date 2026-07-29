@@ -12,6 +12,7 @@
 
 #include "monolib/core/CPadManager.hpp"
 #include "monolib/core/CView.hpp"
+#include "monolib/math/CVec3.hpp"
 #include "monolib/scn/CScn.hpp"
 #include "monolib/util/FixStr.hpp"
 #include <string.h>

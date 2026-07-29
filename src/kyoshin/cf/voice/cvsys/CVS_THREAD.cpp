@@ -86,21 +86,15 @@ int func_802A3C44(CVS_THREAD* self, cf::CfObject* obj, int param) {
     if (obj->unk64 & 4) {
         // Branch A: alt volume curve (bit 2 set).
         UnkCamObj* camObj = func_8049603C(lbl_eu_80663E14);
-        float camVal = camObj->field_0xC;
-        float baseVol = lbl_eu_80668C88;
-        float scale = lbl_eu_80662CB0;
-        float dist = baseVol - camVal;
-        float volume = scale * dist;
-        result = func_800BE898__Q22cf8CfObjectFiUlff(obj, param, bufSize, volume, lbl_eu_80662CB8);
+        result = func_800BE898__Q22cf8CfObjectFiUlff(obj, param, (u32)bufSize,
+            lbl_eu_80662CB0 * (lbl_eu_80668C88 - camObj->field_0xC),
+            lbl_eu_80662CB8);
     } else {
         // Branch B: default volume curve.
         UnkCamObj* camObj = func_8049603C(lbl_eu_80663E14);
-        float camVal = camObj->field_0xC;
-        float baseVol = lbl_eu_80668C88;
-        float scale = lbl_eu_80662CB0;
-        float dist = baseVol - camVal;
-        float volume = scale * dist;
-        result = func_800BE898__Q22cf8CfObjectFiUlff(obj, param, bufSize, volume, lbl_eu_80662CB4);
+        result = func_800BE898__Q22cf8CfObjectFiUlff(obj, param, (u32)bufSize,
+            lbl_eu_80662CB0 * (lbl_eu_80668C88 - camObj->field_0xC),
+            lbl_eu_80662CB4);
     }
 
     if (result != 0) {
@@ -332,10 +326,10 @@ int func_802A4120(CVoiceHandle* handle) {
         // Branch A: player character — base ID 0xDB1 + voiceIndex.
         voiceId = voiceIndex + 0xdb1;
 
-        // If owner state == 4 and func_800A32BC(func_8009EC9C(4)) == 1,
-        // adjust voice ID.
+        // If owner state == 4, check item condition.
         if (func_802A77E8(handle) == 4) {
-            if (func_800A32BC(func_8009EC9C(4)) == 1) {
+            int cond = (func_800A32BC(func_8009EC9C(4)) == 1);
+            if (cond) {
                 if (voiceId == 0xdc1) {
                     voiceId = 0xdd5;
                 } else if (voiceId == 0xdc2) {
@@ -366,10 +360,10 @@ int func_802A4120(CVoiceHandle* handle) {
         // Branch B: non-player — base ID 0xD9D + voiceIndex.
         voiceId = voiceIndex + 0xd9d;
 
-        // If owner state == 4 and func_800A32BC(func_8009EC9C(4)) == 1,
-        // adjust voice ID.
+        // If owner state == 4, check item condition.
         if (func_802A77E8(handle) == 4) {
-            if (func_800A32BC(func_8009EC9C(4)) == 1) {
+            int cond = (func_800A32BC(func_8009EC9C(4)) == 1);
+            if (cond) {
                 if (voiceId == 0xdad) {
                     voiceId = 0xdbc;
                 } else if (voiceId == 0xdae) {

@@ -451,29 +451,24 @@ void CDeviceVI::waitForDrawDone(){
 }
 
 void CDeviceVI::endFrame(){
-    // Inlined guard: single r0 variable flowing through exception/queue/state checks.
-    // Pattern: compute r0 (1=return-now), then reset r0=0 and branch on old value;
-    // if old was 0, check state to decide proceed (r0=1) or return (r0=0).
-    int r0;
+    int exception;
     u32 flags = spInstance->CWorkThread::mFlags;
 
     if (flags & THREAD_FLAG_EXCEPTION) {
-        r0 = 1;
+        exception = true;
     } else {
-        r0 = (spInstance->mMsgQueue.find(2) >= 0) ? 1 : 0;
+        exception = (spInstance->mMsgQueue.find(2) >= 0);
     }
 
-    {
-        bool wasException = (r0 != 0);
-        r0 = 0;
-        if (!wasException) {
-            if (spInstance->mState == THREAD_STATE_LOGIN || spInstance->mState == THREAD_STATE_RUN) {
-                r0 = 1;
-            }
+    int proceed = false;
+    if (!exception) {
+        int stateOK = (spInstance->mState == THREAD_STATE_LOGIN || spInstance->mState == THREAD_STATE_RUN);
+        if (stateOK) {
+            proceed = true;
         }
     }
 
-    if (r0 == 0) {
+    if (!proceed) {
         return;
     }
 
@@ -485,10 +480,11 @@ void CDeviceVI::endFrame(){
         return;
     }
 
-    // Inlined BEFORE_DRAW_DONE callback loop
-    if (!(spInstance->mViFlags & (1 << 31))) {
-        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
-        while (node != spInstance->mCallbackList.mStartNodePtr) {
+    // Inlined BEFORE_DRAW_DONE callback loop: skip if mViFlags bit 31 is set
+    if (!(spInstance->mViFlags & 0x80000000)) {
+        _reslist_node<CDeviceVICb*>* sentinel = spInstance->mCallbackList.mStartNodePtr;
+        _reslist_node<CDeviceVICb*>* node = sentinel->mNext;
+        while (node != sentinel) {
             node->mItem->viBeforeDrawDone();
             node = node->mNext;
         }
@@ -504,9 +500,10 @@ void CDeviceVI::endFrame(){
     }
 
     // Inlined AFTER_DRAW_DONE callback loop
-    if (!(spInstance->mViFlags & (1 << 31))) {
-        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
-        while (node != spInstance->mCallbackList.mStartNodePtr) {
+    if (!(spInstance->mViFlags & 0x80000000)) {
+        _reslist_node<CDeviceVICb*>* sentinel = spInstance->mCallbackList.mStartNodePtr;
+        _reslist_node<CDeviceVICb*>* node = sentinel->mNext;
+        while (node != sentinel) {
             node->mItem->viAfterDrawDone();
             node = node->mNext;
         }

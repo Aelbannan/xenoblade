@@ -94,7 +94,6 @@ int func_802A4430(CVoiceHandle* handle);
 // Sibling TU functions
 CVoiceHandle* func_802A330C(int size, int align);
 int func_802A3E28();
-int func_802A77E8(CVoiceHandle* handle);
 UnkCamObj* func_8049603C(CScn* scene);
 
 // External functions
@@ -108,4 +107,5 @@ extern float lbl_eu_80668C88;
 extern float lbl_eu_80662CB0;
 extern float lbl_eu_80662CB4;
 extern float lbl_eu_80662CB8;
+int func_802A77E8(CVoiceHandle* handle);
 }

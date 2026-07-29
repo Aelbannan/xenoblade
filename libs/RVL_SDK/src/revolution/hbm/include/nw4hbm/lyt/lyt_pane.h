@@ -261,7 +261,7 @@ public:
     void SetUserData(const char* pUserData);
 
     bool IsUserAllocated() const {
-        return detail::TestBit(mFlag, BIT_USER_ALLOCATED);
+        return mUserAllocated;
     }
 
 protected:
@@ -278,16 +278,14 @@ protected:
     math::MTX34 mMtx;    // at 0x54
     math::MTX34 mGlbMtx; // at 0x84
     
-    char mName[NW4R_LYT_RES_NAME_LEN + 1];     // at 0xB4
-
-    char mpExtUserDataList[4]; // at 0xC5
-
-    u8 mAlpha;        // at 0xC9
-    u8 mGlbAlpha;     // at 0xCA
-    u8 mFlag;         // at 0xCB
-    u8 mBasePosition; // at 0xCC
-
-    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xCD
+    char mName[NW4R_LYT_RES_NAME_LEN];              // at 0xB4
+    char mUserData[NW4R_LYT_PANE_USERDATA_LEN];     // at 0xC4
+    u8 mBasePosition;  // at 0xCC
+    u8 mAlpha;         // at 0xCD
+    u8 mGlbAlpha;      // at 0xCE
+    u8 mFlag;          // at 0xCF
+    u8 mUserAllocated; // at 0xD0
+    char mpExtUserDataList[4]; // at 0xD1
 
 protected:
     void InsertChild(PaneList::Iterator next, Pane* pChild);

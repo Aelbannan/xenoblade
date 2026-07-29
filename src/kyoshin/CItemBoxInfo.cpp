@@ -15,7 +15,7 @@ u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 int sprintf(char*, const char*, ...);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
-void* func_8009EC9C(u16);
+void* func_8009EC9C(u32);
 u32 func_8026178C(void*, u32);
 u32 func_8025FB10(void*, u32);
 void func_80124270(void*, void*);
@@ -939,8 +939,8 @@ void func_801DF988(void* a, void* b, void* c, void* d) {
     }
 }
 u32 func_801DFD60(void* a, void* b, u32 arg2) {
-    void* obj = (u8*)func_8009EC9C((u16)(u32)b) + 0x3534;
     u32 result = 0;
+    void* obj = (u8*)func_8009EC9C((u32)b) + 0x3534;
     if (func_8026178C(obj, arg2) != 0) {
         result = func_8025FB10(obj, arg2);
     }

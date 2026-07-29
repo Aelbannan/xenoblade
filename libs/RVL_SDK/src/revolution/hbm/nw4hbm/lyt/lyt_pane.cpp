@@ -68,12 +68,14 @@ Pane::Pane() {
 }
 
 Pane::Pane(const res::Pane* pRes) {
-    Init();
+    mpParent = NULL;
+    mpMaterial = NULL;
+    mUserAllocated = false;
 
     mBasePosition = pRes->basePosition;
 
-    SetName(pRes->name);
-    SetUserData(pRes->userData);
+    std::strncpy(mName, pRes->name, NW4R_LYT_RES_NAME_LEN);
+    std::strncpy(mUserData, pRes->userData, NW4R_LYT_PANE_USERDATA_LEN);
 
     mTranslate = pRes->translate;
     mRotate = pRes->rotate;
@@ -88,6 +90,7 @@ Pane::Pane(const res::Pane* pRes) {
 void Pane::Init() {
     mpParent = NULL;
     mpMaterial = NULL;
+    mUserAllocated = false;
     std::memset(mpExtUserDataList, 0, sizeof(mpExtUserDataList));
 }
 
@@ -109,12 +112,10 @@ Pane::~Pane() {
 
 void Pane::SetName(const char* pName) {
     std::strncpy(mName, pName, NW4R_LYT_RES_NAME_LEN);
-    mName[NW4R_LYT_RES_NAME_LEN] = '\0';
 }
 
 void Pane::SetUserData(const char* pUserData) {
     std::strncpy(mUserData, pUserData, NW4R_LYT_PANE_USERDATA_LEN);
-    mUserData[NW4R_LYT_PANE_USERDATA_LEN] = '\0';
 }
 
 void Pane::AppendChild(Pane* pChild) {

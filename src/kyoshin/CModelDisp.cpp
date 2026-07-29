@@ -7,6 +7,7 @@
 // Forward declarations for cross-TU calls
 void* func_8004B9B8(void* self);
 void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
+int func_800BBC04(int arg);
 
 u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 
@@ -46,7 +47,29 @@ int func_801FCAC0(void* self) { return 0; }
 
 void func_801FCAC8(){}
 
-void func_801FCB4C(){}
+// Dispatches vtable calls on a sub-object controller when flags are set
+// and func_800BBC04 returns positive for the given action.
+void func_801FCB4C(CModelDisp* self, int flags, int subIdx, int action, int ptrIdx) {
+    if (flags == 0) return;
+    if (func_800BBC04(action) <= 0) return;
+
+    CModelDispSub* sub = (CModelDispSub*)((u8*)self + subIdx * 0xFF0);
+    // ptrIdx selects between the two adjacent flag u32s at 0xFD0/0xFD4
+    u32 flag = (&sub->mFlagFD0)[ptrIdx];
+    if (flag == 0) return;
+
+    void* ctrl = sub->mpController;
+
+    // vcall: vtable[50] — takes controller only
+    typedef void (*VMethod50)(void*);
+    VMethod50* vtbl50 = *(VMethod50**)ctrl;
+    vtbl50[50](ctrl);
+
+    // vcall: vtable[49] — takes controller, flag, action, 0
+    typedef void (*VMethod49)(void*, u32, int, int);
+    VMethod49* vtbl49 = *(VMethod49**)ctrl;
+    vtbl49[49](ctrl, flag, action, 0);
+}
 
 int func_801FCBEC(void* self) { return 0; }
 

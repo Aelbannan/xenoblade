@@ -37,45 +37,16 @@ void ChannelManager::Setup(void* pWork, u32 workSize) {
 }
 
 void ChannelManager::Shutdown() {
-    BOOL enabled = OSDisableInterrupts();
+    ut::AutoInterruptLock lock;
 
     if (!mInitialized) {
-        OSRestoreInterrupts(enabled);
         return;
     }
 
-    NW4R_UT_LINKLIST_FOREACH_SAFE(it, mChannelList, {
-        if (it->mVoice != NULL) {
-            it->mVoice->Stop();
-            it->mVoice->Free();
-            it->mVoice = NULL;
-            it->mPauseFlag = false;
-            it->mActiveFlag = false;
-        }
-
-        if (it->mCallback != NULL) {
-            it->mCallback(&*it, Channel::CALLBACK_STATUS_STOPPED,
-                          it->mCallbackData);
-        }
-
-        if (it->mNextLink != NULL) {
-            reinterpret_cast<DisposeCallback*>(it->mNextLink)
-                ->InvalidateData(
-                    reinterpret_cast<const void*>(it->field_0xEC),
-                    reinterpret_cast<const void*>(it->mCallbackData));
-        }
-
-        if (it->mAllocFlag) {
-            it->mAllocFlag = false;
-
-            mChannelList.Erase(&*it);
-        }
-    });
+    NW4R_UT_LINKLIST_FOREACH_SAFE (it, mChannelList, { it->Stop(); })
 
     mPool.Destroy(mMem, mMemSize);
     mInitialized = false;
-
-    OSRestoreInterrupts(enabled);
 }
 
 Channel* ChannelManager::Alloc() {
@@ -99,59 +70,59 @@ Channel::Channel()
 Channel::~Channel() {}
 
 void Channel::InitParam(ChannelCallback pCallback, u32 callbackArg) {
-    field_0xF4 = 0;
+    mNextLink = NULL;
+
     mCallback = pCallback;
     mCallbackData = callbackArg;
-    mNextLink = NULL;
-    field_0xEC = 0;
+
     mPauseFlag = false;
     mAutoSweep = true;
     mReleasePriorityFixFlag = false;
-    field_0x3A = false;
+
     mLength = 0;
     mKey = KEY_INIT;
     mOriginalKey = ORIGINAL_KEY_INIT;
+
     mInitVolume = 1.0f;
     mInitPan = 0.0f;
     mInitSurroundPan = 0.0f;
     mTune = 1.0f;
+
     mUserVolume = 1.0f;
     mUserPitch = 0.0f;
     mUserPitchRatio = 1.0f;
     mUserPan = 0.0f;
     mUserSurroundPan = 0.0f;
     mUserLpfFreq = 0.0f;
-    mLfoTarget = LFO_TARGET_PITCH;
-    mBiquadFilterValue = 0.0f;
-    mPanMode = PAN_MODE_DUAL;
+
+    mRemoteFilter = 0;
     mOutputLineFlag = OUTPUT_LINE_MAIN;
+
     mMainOutVolume = 1.0f;
     mMainSend = 0.0f;
-    mFxSend[0] = 0.0f;
-    mFxSend[1] = 0.0f;
-    mFxSend[2] = 0.0f;
-    mRemoteOutVolume[0] = 1.0f;
-    mRemoteSend[0] = 0.0f;
-    mRemoteFxSend[0] = 0.0f;
-    mRemoteOutVolume[1] = 1.0f;
-    mRemoteSend[1] = 0.0f;
-    mRemoteFxSend[1] = 0.0f;
-    mRemoteOutVolume[2] = 1.0f;
-    mRemoteSend[2] = 0.0f;
-    mRemoteFxSend[2] = 0.0f;
-    mRemoteOutVolume[3] = 1.0f;
-    mRemoteSend[3] = 0.0f;
-    mRemoteFxSend[3] = 0.0f;
+
+    for (int i = 0; i < AUX_BUS_NUM; i++) {
+        mFxSend[i] = 0.0f;
+    }
+
+    for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
+        mRemoteOutVolume[i] = 1.0f;
+        mRemoteSend[i] = 0.0f;
+        mRemoteFxSend[i] = 0.0f;
+    }
+
     mSilenceVolume.InitValue(SILENCE_VOLUME_MAX);
+
     mSweepPitch = 0.0f;
     mSweepLength = 0;
     mSweepCounter = 0;
+
     mEnvelope.Init();
     mLfo.GetParam().Init();
-    mBiquadFilterType = 0;
-    field_0xD4 = 0;
-    field_0xD8 = 0;
-    field_0xDC = 0;
+
+    mLfoTarget = LFO_TARGET_PITCH;
+    mPanMode = PAN_MODE_DUAL;
+    mPanCurve = PAN_CURVE_SQRT;
 }
 
 void Channel::Update(bool periodic) {
@@ -265,8 +236,8 @@ void Channel::Update(bool periodic) {
     }
 
     if (mVoice != NULL) {
-        mVoice->SetPanMode(static_cast<PanMode>(mPanMode));
-        mVoice->SetPanCurve(static_cast<PanCurve>(mPanCurve));
+        mVoice->SetPanMode(mPanMode);
+        mVoice->SetPanCurve(mPanCurve);
         mVoice->SetVolume(volume);
         mVoice->SetVeVolume(veTargetVolume, veInitVolume);
         mVoice->SetPitch(pitch);
@@ -291,22 +262,22 @@ void Channel::Update(bool periodic) {
     }
 }
 
-void Channel::Start(const WaveData& rData, int length, u32 offset) {
+void Channel::Start(const WaveInfo& rInfo, int length, u32 offset) {
     mLength = length;
 
     mLfo.Reset();
     mEnvelope.Reset();
     mSweepCounter = 0;
 
-    mVoice->Setup(rData, offset);
-    mVoice->Start();
+    field_0xF0->Setup(reinterpret_cast<const WaveData&>(rInfo), offset);
+    field_0xF0->Start();
     mActiveFlag = true;
 }
 
 void Channel::Release() {
     if (mEnvelope.GetStatus() != EnvGenerator::STATUS_RELEASE) {
-        if (mVoice != NULL && !mReleasePriorityFixFlag) {
-            mVoice->SetPriority(PRIORITY_RELEASE);
+        if (field_0xF0 != NULL && !mReleasePriorityFixFlag) {
+            field_0xF0->SetPriority(PRIORITY_RELEASE);
         }
 
         mEnvelope.SetStatus(EnvGenerator::STATUS_RELEASE);
@@ -321,8 +292,8 @@ void Channel::NoteOff() {
     }
 
     if (mEnvelope.GetStatus() != EnvGenerator::STATUS_RELEASE) {
-        if (mVoice != NULL && !mReleasePriorityFixFlag) {
-            mVoice->SetPriority(PRIORITY_RELEASE);
+        if (field_0xF0 != NULL && !mReleasePriorityFixFlag) {
+            field_0xF0->SetPriority(PRIORITY_RELEASE);
         }
 
         mEnvelope.SetStatus(EnvGenerator::STATUS_RELEASE);
@@ -332,19 +303,20 @@ void Channel::NoteOff() {
 }
 
 void Channel::Stop() {
-    if (mVoice == NULL) {
+    if (field_0xF0 == NULL) {
         return;
     }
 
-    mVoice->Stop();
-    mVoice->Free();
+    field_0xF0->Stop();
+    field_0xF0->Free();
 
-    mVoice = NULL;
+    field_0xF0 = NULL;
     mPauseFlag = false;
     mActiveFlag = false;
 
-    if (mCallback != NULL) {
-        mCallback(this, CALLBACK_STATUS_STOPPED, mCallbackData);
+    if (mCallbackData != 0) {
+        reinterpret_cast<ChannelCallback>(mCallbackData)(
+            this, CALLBACK_STATUS_STOPPED, reinterpret_cast<u32>(mVoice));
     }
 
     if (mNextLink != NULL) {
@@ -397,36 +369,35 @@ f32 Channel::GetSweepValue() const {
 void Channel::VoiceCallbackFunc(Voice* pDropVoice,
                                 Voice::VoiceCallbackStatus status,
                                 void* pCallbackArg) {
-    Channel* pChannel = static_cast<Channel*>(pCallbackArg);
     ChannelCallbackStatus channelStatus;
 
-    if (status == Voice::CALLBACK_STATUS_DROP_VOICE) {
-        channelStatus = CALLBACK_STATUS_DROP;
-        goto cleanup;
-    }
-    if (status >= Voice::CALLBACK_STATUS_DROP_VOICE) {
-        if (status >= Voice::CALLBACK_STATUS_DROP_DSP + 1) {
-            goto cleanup;
-        }
-        channelStatus = CALLBACK_STATUS_DROP;
-        goto cleanup;
-    }
-    if (status == Voice::CALLBACK_STATUS_FINISH_WAVE) {
+    switch (status) {
+    case Voice::CALLBACK_STATUS_FINISH_WAVE: {
         channelStatus = CALLBACK_STATUS_FINISH;
         pDropVoice->Free();
-        goto cleanup;
+        break;
     }
-    channelStatus = CALLBACK_STATUS_CANCEL;
-    pDropVoice->Free();
 
-cleanup:
+    case Voice::CALLBACK_STATUS_CANCEL: {
+        channelStatus = CALLBACK_STATUS_CANCEL;
+        pDropVoice->Free();
+        break;
+    }
+    case Voice::CALLBACK_STATUS_DROP_VOICE: {
+        channelStatus = CALLBACK_STATUS_DROP;
+        break;
+    }
+
+    case Voice::CALLBACK_STATUS_DROP_DSP: {
+        channelStatus = CALLBACK_STATUS_DROP;
+        break;
+    }
+    }
+
+    Channel* pChannel = static_cast<Channel*>(pCallbackArg);
+
     if (pChannel->mCallback != NULL) {
         pChannel->mCallback(pChannel, channelStatus, pChannel->mCallbackData);
-    }
-
-    if (pChannel->mNextLink != NULL) {
-        reinterpret_cast<DisposeCallback*>(pChannel->mNextLink)
-            ->InvalidateData(reinterpret_cast<const void*>(pChannel->field_0xEC), NULL);
     }
 
     pChannel->mVoice = NULL;

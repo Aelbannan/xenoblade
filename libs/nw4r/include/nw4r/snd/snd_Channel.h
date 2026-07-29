@@ -57,6 +57,9 @@ public:
     void SetRelease(int release) {
         mEnvelope.SetRelease(release);
     }
+    void SetHold(int hold) {
+        mEnvelope.SetHold(hold);
+    }
     bool IsRelease() const {
         return mEnvelope.GetStatus() == EnvGenerator::STATUS_RELEASE;
     }

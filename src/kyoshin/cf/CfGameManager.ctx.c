@@ -1691,6 +1691,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -18220,6 +18221,7 @@ public:
     u8 unk2B6[2]; //padding?
     u32 mTargetFramerate; //0x2B8
     float mSecPerFrame; //0x2BC
+    u32 unk2C0; //0x2C0
 
     //General screen dimensions
     static const int SCREEN_WIDTH = 640;
@@ -18618,7 +18620,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -28620,7 +28622,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -33741,7 +33743,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -34381,7 +34383,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -40876,7 +40878,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -45913,7 +45915,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -46553,7 +46555,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -55499,7 +55501,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -60703,7 +60705,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -74710,7 +74712,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -80708,7 +80710,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -85912,7 +85914,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -102042,7 +102044,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -107079,7 +107081,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -107719,7 +107721,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -114430,7 +114432,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -119551,7 +119553,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -120191,7 +120193,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -126901,7 +126903,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -132899,7 +132901,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -138103,7 +138105,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -154031,7 +154033,7 @@ void BTA_CleanUp(BTA_CleanUpCallback p_cb);
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -154807,7 +154809,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -160805,7 +160807,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -166009,7 +166011,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -182266,7 +182268,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -188264,7 +188266,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -193468,7 +193470,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -209632,7 +209634,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -216022,7 +216024,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -222966,7 +222968,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -231640,7 +231642,7 @@ L2C_API extern void L2CA_BypassSFrame (UINT16 cid, UINT8 count);
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -232280,7 +232282,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -252563,12 +252565,13 @@ extern "C" u32 func_80083718__Q22cf13CfGameManagerFv(u32 first, u32 second) {
 #pragma dont_inline reset
 
 extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 second,
-                                                        u32 third);
-extern "C" void func_8007C344__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third) {
-    func_8007C198__Q22cf13CfGameManagerFv(0, first, second, third);
+                                                        float value, u8 enabled);
+extern "C" void func_8007C344__Q22cf13CfGameManagerFv(u32 first, u32 second, u8 enabled,
+                                                        float value) {
+    func_8007C198__Q22cf13CfGameManagerFv(0, first, second, value, enabled);
 }
-extern "C" void func_8007C360__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    func_8007C198__Q22cf13CfGameManagerFv(1, first, second, 1);
+extern "C" void func_8007C360__Q22cf13CfGameManagerFv(u32 first, u32 second, float value) {
+    func_8007C198__Q22cf13CfGameManagerFv(1, first, second, value, 1);
 }
 
 extern "C" void func_80081258__Q22cf13CfGameManagerFv(UnkReset28Data* data) {
@@ -254228,6 +254231,41 @@ extern "C" void func_8007D7A4__Q22cf13CfGameManagerFv() {
     lbl_eu_80663E3C = 0;
     lbl_eu_80663E3E = 0;
     lbl_eu_80663E68 = lbl_eu_80666498;
+}
+
+extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 second,
+                                                        float value, u8 enabled) {
+    BdatTextEntry* base = &lbl_eu_80571658[mode];
+    base->value = value;
+    base->enabled = enabled;
+    if (first == 0) {
+        if (base->textLength != 0) {
+            base->enabled = 0;
+            base->text[0] = 0;
+            base->textLength = 0;
+            base->secondaryText[0] = 0;
+            base->secondaryTextLength = 0;
+            lbl_eu_80663E24 |= 8;
+        }
+        return;
+    }
+    BdatFilePointer* file = getFP__FPCc(lbl_eu_804FB824);
+    const char* val_a = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, first);
+    const char* val_b = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, second);
+    if (mode == 0) {
+        if (strcmp(base->text, val_a) != 0 || strcmp(base->secondaryText, val_b) != 0) {
+            lbl_eu_80663E24 |= 8;
+        }
+    }
+    strcpy(base->text, val_a);
+    base->textLength = strlen(val_a);
+    if (val_b != 0) {
+        strcpy(base->secondaryText, val_b);
+        base->secondaryTextLength = strlen(val_b);
+    } else {
+        base->secondaryText[0] = 0;
+        base->secondaryTextLength = 0;
+    }
 }
 /* end "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 

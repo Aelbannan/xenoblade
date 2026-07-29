@@ -5,6 +5,9 @@
 #include <string.h>
 #include <adx/adxt/adx_inis.hpp>
 
+// File-scope pointer to avoid per-function address materialization overhead.
+static struct AdxInisContext* const s_ctx = &lbl_eu_805E26C8;
+
 // Forward declarations for SVM functions
 s32 SVM_SetCbSvrIdWithString(s32 id, s32 arg, int (*cb)(void), s32 arg2,
                              const char* str);
@@ -78,7 +81,7 @@ int adxt_exec_fssvr(void) {
 // One-time initialization of all ADX subsystems.
 // Uses a refcount so repeated calls are no-ops until ADXT_Finish matches.
 void ADXT_Init(void) {
-    struct AdxInisContext* ctx = &lbl_eu_805E26C8;
+    struct AdxInisContext* ctx = s_ctx;
 
     ctx->field_0x18 = (u8*)lbl_eu_80515FB8;
     criCrw_GetVersion();
@@ -127,7 +130,7 @@ void ADXT_Init(void) {
 
 // Tears down all ADX subsystems when refcount reaches zero.
 void ADXT_Finish(void) {
-    struct AdxInisContext* ctx = &lbl_eu_805E26C8;
+    struct AdxInisContext* ctx = s_ctx;
     const char* str;
     struct AdxInisHandle* hndl;
     s32 i;

@@ -259,10 +259,9 @@ static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR
             ui32 v = *alignedPtr;
             ui32 mask =
                 0xff << ((3 - ((ui32)destPtr - (ui32)alignedPtr)) << 3);
-            ui32 positioned =
-                byteVal << ((3 - ((ui32)destPtr & 3)) << 3);
-            ui32 masked_val = v & ~mask;
-            *alignedPtr = masked_val | (mask & positioned);
+            *alignedPtr =
+                (v & ~mask) |
+                (byteVal << ((3 - ((ui32)destPtr & 3)) << 3));
         }
         __sync();
 

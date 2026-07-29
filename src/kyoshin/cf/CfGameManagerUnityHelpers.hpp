@@ -694,6 +694,23 @@ extern "C" u32 func_80082EC4__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value)
     return 0;
 }
 
+extern "C" bool func_8006C670(cf::CfObjectMove* player);
+extern "C" bool func_80082F2C__Q22cf13CfGameManagerFv(s32 playerIndex,
+                                                        bool requireFlag) {
+    bool result = false;
+    cf::CfObjectMove* player = cf::CfGameManager::getPlayer(playerIndex);
+    if (player != nullptr && player->CfObject_UnkVirtualFunc9()) {
+        if (requireFlag &&
+            !func_80082FCC__Q22cf13CfGameManagerFv(player, 0x100000)) {
+            return false;
+        }
+        if (func_8006C670(player)) {
+            result = true;
+        }
+    }
+    return result;
+}
+
 extern "C" void func_80082A7C__Q22cf13CfGameManagerFv(cf::CfObjectMove* object) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
     cf::CfObjectMove* oldFirst =

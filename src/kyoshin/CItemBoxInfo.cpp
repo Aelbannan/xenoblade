@@ -138,7 +138,15 @@ void func_801D4D18(CItemBoxInfo* info) {
     }
 }
 
-void func_801D4D64(){}
+void func_801D4D64(CItemBoxInfo* info) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
+        void* layout = info->state.layout;
+        void** vtable = *(void***)layout;
+        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform2, 0);
+        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform1, 1);
+        info->state.state = 5;
+    }
+}
 
 void func_801D4DE0(CItemBoxInfo* info) {
     if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {
@@ -332,7 +340,15 @@ void func_801E1868(CItemBoxInfo2* info) {
     }
 }
 
-void func_801E18B4(){}
+void func_801E18B4(CItemBoxInfo2* info) {
+    if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform2, -0.0f) != 0) {
+        void* layout = info->state.layout;
+        void** vtable = *(void***)layout;
+        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform2, 0);
+        ((void(*)(void*, void*, u32))vtable[11])(layout, info->state.animTransform1, 1);
+        info->state.state = 5;
+    }
+}
 
 void func_801E1930(CItemBoxInfo2* info) {
     if (func_80137510((nw4r::lyt::AnimTransform*)info->state.animTransform1, -0.0f) != 0) {

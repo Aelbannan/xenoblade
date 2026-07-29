@@ -230,7 +230,7 @@ void cf::CfObjectMove::setSubFieldE(unsigned short val) {
     *(unsigned short*)((char*)ptr + 0xe) = val;
 }
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc9() {}
+bool cf::CfObjectMove::CfObject_UnkVirtualFunc9() { return false; }
 
 void cf::CfObjectMove::CfObject_UnkVirtualFunc10() {}
 

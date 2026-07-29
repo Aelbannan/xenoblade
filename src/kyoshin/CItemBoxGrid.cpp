@@ -579,7 +579,12 @@ void func_801D1F9C(short* dst, unsigned long val) {
 }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void __ct__CArtsBookItem(){}
+// CArtsBookItem constructor
+void __ct__CArtsBookItem(CArtsBookItem* self) {
+    u8* vtable;
+    // vtable setup
+    *(u16*)((u8*)self + 0x804) = 0;
+}
 // Standard MWCC virtual destructor
 void* __dt__10CQuestItemFv(void* self, int mode) {
     if (self && mode > 0) __dl__FPv(self);

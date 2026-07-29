@@ -13,6 +13,9 @@ u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 int sprintf(char*, const char*, ...);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
+void* func_8009EC9C(u16);
+u32 func_8026178C(void*, u32);
+u32 func_8025FB10(void*, u32);
 
 void resetCItemBox() {}
 
@@ -171,7 +174,32 @@ void func_801DF4E0(){}
 void func_801DF578(){}
 void func_801DF610(){}
 void func_801DF988(){}
-void func_801DFD60(){}
+u32 func_801DFD60(u16 arg1, u32 arg2) {
+    void* obj = (u8*)func_8009EC9C(arg1) + 0x3534;
+    u32 result = 0;
+    if (func_8026178C(obj, arg2) != 0) {
+        result = func_8025FB10(obj, arg2);
+    }
+    return result;
+}
+
+u32 func_801E9690(u16 arg1, u32 arg2) {
+    void* obj = (u8*)func_8009EC9C(arg1) + 0x3534;
+    u32 result = 0;
+    if (func_8026178C(obj, arg2) != 0) {
+        result = func_8025FB10(obj, arg2);
+    }
+    return result;
+}
+
+u32 func_801E92B8(void* dummy, u8 arg1) {
+    void* obj = (u8*)func_8009EC9C(arg1) + 0x3534;
+    if (func_8026178C(obj, 0x2d) != 0) {
+        return func_8025FB10(obj, 0x2d);
+    }
+    return 0;
+}
+
 void func_801DFDC0(){}
 void func_801DFE48(){}
 void func_801DFFB8(){}
@@ -316,9 +344,7 @@ void CItemBoxInfoEntry::setItemBoxCopy(unsigned short a, unsigned int b, unsigne
 
 void func_801E9190(){}
 void func_801E9224(){}
-void func_801E92B8(){}
 void func_801E9310(){}
-void func_801E9690(){}
 void func_801E96F0(){}
 void func_801E9774(){}
 void func_801E98E4(){}

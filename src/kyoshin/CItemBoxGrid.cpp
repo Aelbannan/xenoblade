@@ -33,7 +33,27 @@ void SetEntry9Bytes(unsigned char* p, unsigned short a, unsigned char b, unsigne
     buf[8] = h;
 }
 
-void func_801C562C(){}
+// Copy a 9-byte entry from src to dst.
+void func_801C562C(void* dst, void* src) {
+    u8* d = (u8*)dst;
+    u8* s = (u8*)src;
+    short v0 = *(short*)(s + 0);
+    u8 v1 = s[2];
+    u8 v2 = s[3];
+    u8 v3 = s[4];
+    u8 v4 = s[5];
+    u8 v5 = s[6];
+    u8 v6 = s[7];
+    u8 v7 = s[8];
+    *(short*)(d + 0) = v0;
+    d[2] = v1;
+    d[3] = v2;
+    d[4] = v3;
+    d[5] = v4;
+    d[6] = v5;
+    d[7] = v6;
+    d[8] = v7;
+}
 
 void __dt__801C5670(){}
 
@@ -117,7 +137,19 @@ u8 func_801C673C(CItemBoxGridFull* self, u16 idx) {
 
 void func_801C6770(){}
 
-void func_801C67F8(){}
+// Count entries with non-zero byte at offset 8 in a 10-byte stride array.
+u8 func_801C67F8(CItemBoxGridFull* self) {
+    u16 count = self->field_2800;
+    u16 i;
+    u16 result = 0;
+    for (i = 0; i < count; i++) {
+        u8* entry = (u8*)self + i * 0xa;
+        if (entry[8] != 0) {
+            result++;
+        }
+    }
+    return (u8)result;
+}
 
 // Return a duration/stride value based on the category byte at offset 0x2802.
 u8 func_801C6840(CItemBoxGridFull* self) {
@@ -266,7 +298,14 @@ void func_801CB28C(){}
 
 void func_801CB38C(){}
 
-void func_801CB480(){}
+// Clear a 14-byte region (list/array init).
+void func_801CB480(void* self) {
+    int i;
+    u8* p = (u8*)self;
+    for (i = 0; i < 12; i++) p[0x62 + i] = 0;
+    p[0x6e] = 0;
+    p[0x6f] = 0;
+}
 
 void CItemBoxGrid::PushToList(unsigned char val) {
     unsigned char count = reinterpret_cast<unsigned char*>(this)[0x6e];
@@ -356,15 +395,7 @@ void CheckState4_Animate(char* self) {
 
 void func_801CE2F8(){}
 
-// Check sub-obj; set field and show sub-window.
-void func_801CE390(void* self) {
-    u8* p = (u8*)self;
-    if (func_80137510(*(u32*)(p + 0x48), 0.0f)) {
-        p[0x61] = 1;
-        *(u32*)(p + 0x58) = 0;
-        func_801D216C(p + 0x70, 0);
-    }
-}
+void func_801CE390(){}
 
 void func_801CE3E8(){}
 

@@ -245,6 +245,7 @@ extern "C" void func_8007F0C4__Q22cf13CfGameManagerFv(u32 first, u32 second) {
 }
 
 extern "C" u32 func_8009CF8C(u32 resourceId);
+extern "C" void func_8009D018(u32 resourceId, u32 value);
 extern "C" s32 func_80082418__Q22cf13CfGameManagerFv(s32 first, s32 second);
 extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second) {
     s32 index = func_80082418__Q22cf13CfGameManagerFv(first, second);
@@ -259,6 +260,19 @@ extern "C" s32 func_800824FC__Q22cf13CfGameManagerFv(s32 first, s32 second) {
 
 extern "C" bool func_8008235C__Q22cf13CfGameManagerFv(u32 bit) {
     return (func_8009CF8C(0x108) & (1U << bit)) != 0;
+}
+extern "C" bool func_800823A4__Q22cf13CfGameManagerFv(u32 bit, bool enable) {
+    u32 flags = func_8009CF8C(0x108);
+    u32 mask = 1U << bit;
+    bool changed = false;
+    if (enable) {
+        changed = (flags & mask) == 0;
+        flags |= mask;
+    } else {
+        flags &= ~mask;
+    }
+    func_8009D018(0x108, flags);
+    return changed;
 }
 extern "C" u32 func_80082354__Q22cf13CfGameManagerFv(u32 resourceId) {
     return func_8009CF8C(resourceId + 0x220);

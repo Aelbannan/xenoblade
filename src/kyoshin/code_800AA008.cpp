@@ -203,28 +203,26 @@ void func_800AA5C0() {
     func_800AA33C(*(ml::FixStr<64>*)lbl_eu_80572C80, (u32)0, 0, 1);
 }
 
+// Compare the first two characters of str against each FormatEntry's 2-char name.
+// Returns the matching entry's id field (u16 zero-extended to u32), or 0 if no match.
+// Loop is unrolled 3x to match retail codegen; scans entries 1 through 30.
 u32 func_800AA600(const char* str) {
-    const FormatEntry* entry;
-    int idx;
-
-    if (str == NULL) goto ret0;
-
-    entry = &reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[1];
-    idx = 1;
-    for (int i = 0; i < 10; i++) {
-        if (str[0] == entry[0].name[0] && str[1] == entry[0].name[1])
-            return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
-        idx++;
-        if (str[0] == entry[1].name[0] && str[1] == entry[1].name[1])
-            return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
-        idx++;
-        if (str[0] == entry[2].name[0] && str[1] == entry[2].name[1])
-            return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
-        idx++;
-        entry += 3;
+    if (str != NULL) {
+        const FormatEntry* entry = &reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[1];
+        int idx = 1;
+        for (int i = 0; i < 10; i++) {
+            if (str[0] == entry[0].name[0] && str[1] == entry[0].name[1])
+                return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
+            idx++;
+            if (str[0] == entry[1].name[0] && str[1] == entry[1].name[1])
+                return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
+            idx++;
+            if (str[0] == entry[2].name[0] && str[1] == entry[2].name[1])
+                return reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0)[idx].id;
+            idx++;
+            entry += 3;
+        }
     }
-
-ret0:
     return 0;
 }
 

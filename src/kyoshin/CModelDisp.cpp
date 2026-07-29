@@ -29,19 +29,20 @@ extern "C" void* __dt__801FBF0C(void* self, int deleting);
 // Destroys 1+2 cf::CActParamAnimGame sub-objects at offsets 0xC and 0x550.
 // ---------------------------------------------------------------------------
 extern "C" void* __dt__801FBF0C(void* self, int deleting) {
-    if (self != nullptr) {
-        extern void __dt__Q22cf17CActParamAnimGameFv(void*, int);
+    if (self == nullptr) {
+        return nullptr;
+    }
+    extern void __dt__Q22cf17CActParamAnimGameFv(void*, int);
 
-        // Destroy array of 2 CActParamAnimGame at offset 0x550 (each 0x53C)
-        __destroy_arr((u8*)self + 0x550, (ConstructorDestructor*)&__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
+    // Destroy array of 2 CActParamAnimGame at offset 0x550 (each 0x53C)
+    __destroy_arr((u8*)self + 0x550, (ConstructorDestructor*)&__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
 
-        // Destroy single CActParamAnimGame at offset 0xC (complete destructor call)
-        __dt__Q22cf17CActParamAnimGameFv((u8*)self + 0xC, -1);
+    // Destroy single CActParamAnimGame at offset 0xC (complete destructor call)
+    __dt__Q22cf17CActParamAnimGameFv((u8*)self + 0xC, -1);
 
-        if (deleting > 0) {
-            extern void __dl__FPv(void*);
-            __dl__FPv(self);
-        }
+    if (deleting > 0) {
+        extern void __dl__FPv(void*);
+        __dl__FPv(self);
     }
     return self;
 }
@@ -52,9 +53,7 @@ extern "C" void* __dt__801FBF0C(void* self, int deleting) {
 // at offset 0x8). Compiler emits null-check and flags-based delete wrapper.
 // ---------------------------------------------------------------------------
 CModelDisp::~CModelDisp() {
-    CModelDispSub* subs = (CModelDispSub*)((u8*)this + 0x8);
-    ConstructorDestructor* dtor = (ConstructorDestructor*)&__dt__801FBF0C;
-    __destroy_arr(subs, dtor, 0xFF0, 3);
+    __destroy_arr((u8*)this + 0x8, (ConstructorDestructor*)&__dt__801FBF0C, 0xFF0, 3);
 }
 
 // ---------------------------------------------------------------------------

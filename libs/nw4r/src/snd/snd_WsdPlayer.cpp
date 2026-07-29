@@ -7,46 +7,6 @@ namespace nw4r {
 namespace snd {
 namespace detail {
 
-// ---------------------------------------------------------------------------
-// This-adjustor thunks for secondary-base vtable entries.
-// DisposeCallback sits at WsdPlayer+0xD4, PlayerCallback at WsdPlayer+0xE0.
-// When called through a DisposeCallback* or PlayerCallback*, r3 points into
-// the subobject; the thunk adjusts r3 back to the full WsdPlayer* and
-// tail-calls the real implementation.
-//
-// We define these explicitly (instead of relying on compiler-generated thunks)
-// because the compiler emits decimal-offset names (@212@, @224@) while the
-// symbol map expects the retail names (@180@, @192@). The asm labels override
-// the symbol name to match retail.
-// ---------------------------------------------------------------------------
-
-extern "C" {
-void __dt__Q44nw4r3snd6detail9WsdPlayerFv(WsdPlayer* self);
-void OnShutdownSoundThread__Q44nw4r3snd6detail9WsdPlayerFv(WsdPlayer* self);
-void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9WsdPlayerFv(WsdPlayer* self);
-}
-
-extern "C" void _dt_180_thunk(WsdPlayer* self)
-    asm("@180@__dt__Q44nw4r3snd6detail9WsdPlayerFv");
-void _dt_180_thunk(WsdPlayer* self) {
-    __dt__Q44nw4r3snd6detail9WsdPlayerFv(
-        reinterpret_cast<WsdPlayer*>(reinterpret_cast<u8*>(self) - 0xD4));
-}
-
-extern "C" void _shutdown_192_thunk(WsdPlayer* self)
-    asm("@192@OnShutdownSoundThread__Q44nw4r3snd6detail9WsdPlayerFv");
-void _shutdown_192_thunk(WsdPlayer* self) {
-    OnShutdownSoundThread__Q44nw4r3snd6detail9WsdPlayerFv(
-        reinterpret_cast<WsdPlayer*>(reinterpret_cast<u8*>(self) - 0xE0));
-}
-
-extern "C" void _updateframe_192_thunk(WsdPlayer* self)
-    asm("@192@OnUpdateFrameSoundThread__Q44nw4r3snd6detail9WsdPlayerFv");
-void _updateframe_192_thunk(WsdPlayer* self) {
-    OnUpdateFrameSoundThread__Q44nw4r3snd6detail9WsdPlayerFv(
-        reinterpret_cast<WsdPlayer*>(reinterpret_cast<u8*>(self) - 0xE0));
-}
-
 WsdPlayer::WsdPlayer() : mActiveFlag(false) {}
 
 void WsdPlayer::InitParam(int voices, const WsdCallback* pCallback,

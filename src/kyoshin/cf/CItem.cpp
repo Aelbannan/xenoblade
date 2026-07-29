@@ -164,99 +164,97 @@ void func_801579A4(){}
 extern "C" u32 func_8009CF8C(u32 resourceId);
 
 extern "C" void* func_801579C4(u8 arg, u32* out1, u32* out2) {
+    char* base = (char*)lbl_eu_806641B8;
     void* result = 0;
-    u32 i;
 
     func_8009CF8C(0x80c);
 
     *out1 = 0;
 
-    for (i = 1; i <= 11; i++) {
-        if (*(u32*)((char*)lbl_eu_806641B8 + 0x12108) & (1 << i)) {
+    for (u32 i = 1; i <= 11; i++) {
+        if (*(u32*)(base + 0x12108) & (1 << i)) {
             *out1 += 10;
         }
     }
 
-    {
-        u32 v = *(u32*)((char*)lbl_eu_806641B8 + 0x12110);
-        if (v > 30) {
-            v = 30;
-        }
-        *(u32*)((char*)lbl_eu_806641B8 + 0x12110) = v;
+    u32 v = *(u32*)(base + 0x12110);
+    if (v > 30) {
+        v = 30;
+    }
+    *(u32*)(base + 0x12110) = v;
 
-        if (arg > 13) {
-            *out1 = 0;
+    if (arg > 13) {
+        *out1 = 0;
+        *out2 = 0;
+        return 0;
+    }
+
+    switch (arg) {
+        case 0:
+        case 1:
             *out2 = 0;
+            *out1 = 0;
             return 0;
-        }
-
-        switch (arg) {
-            case 0:
-            case 1:
-                *out2 = 0;
-                *out1 = 0;
-                return 0;
-            case 2:
-                *out2 = 52;
-                result = (char*)lbl_eu_806641B8 + 0xA58C;
-                *out1 += v + 60;
-                break;
-            case 3:
-                *out2 = 16;
-                *out1 = 300;
-                result = (char*)lbl_eu_806641B8 + 0xE778;
-                break;
-            case 4:
-                *out2 = 52;
-                result = (char*)lbl_eu_806641B8;
-                *out1 += v + 60;
-                break;
-            case 5:
-                *out2 = 52;
-                result = (char*)lbl_eu_806641B8 + 0x211C;
-                *out1 += v + 60;
-                break;
-            case 6:
-                *out2 = 52;
-                result = (char*)lbl_eu_806641B8 + 0x4238;
-                *out1 += v + 60;
-                break;
-            case 7:
-                *out2 = 52;
-                result = (char*)lbl_eu_806641B8 + 0x6354;
-                *out1 += v + 60;
-                break;
-            case 8:
-                *out2 = 52;
-                result = (char*)lbl_eu_806641B8 + 0x8470;
-                *out1 += v + 60;
-                break;
-            case 9:
-                *out2 = 28;
-                *out1 = 300;
-                result = (char*)lbl_eu_806641B8 + 0xC6A8;
-                break;
-            case 10:
-                *out2 = 8;
-                *out1 = 300;
-                result = (char*)lbl_eu_806641B8 + 0x101B8;
-                break;
-            case 11:
-                *out2 = 8;
-                result = (char*)lbl_eu_806641B8 + 0x10B18;
-                *out1 += v + 60;
-                break;
-            case 12:
-                *out2 = 8;
-                *out1 = 200;
-                result = (char*)lbl_eu_806641B8 + 0x11478;
-                break;
-            case 13:
-                *out2 = 8;
-                *out1 = 240;
-                result = (char*)lbl_eu_806641B8 + 0xFA38;
-                break;
-        }
+        case 2:
+            *out2 = 52;
+            result = base + 0xA58C;
+            *out1 += v + 60;
+            break;
+        case 3:
+            *out2 = 16;
+            *out1 = 300;
+            result = base + 0xE778;
+            break;
+        case 4:
+            *out2 = 52;
+            result = base;
+            *out1 += v + 60;
+            break;
+        case 5:
+            *out2 = 52;
+            result = base + 0x211C;
+            *out1 += v + 60;
+            break;
+        case 6:
+            *out2 = 52;
+            result = base + 0x4238;
+            *out1 += v + 60;
+            break;
+        case 7:
+            *out2 = 52;
+            result = base + 0x6354;
+            *out1 += v + 60;
+            break;
+        case 8:
+            *out2 = 52;
+            result = base + 0x8470;
+            *out1 += v + 60;
+            break;
+        case 9:
+            *out2 = 28;
+            *out1 = 300;
+            result = base + 0xC6A8;
+            break;
+        case 10:
+            *out2 = 8;
+            *out1 = 300;
+            result = base + 0x101B8;
+            break;
+        case 11:
+            *out2 = 8;
+            result = base + 0x10B18;
+            *out1 += v + 60;
+            break;
+        case 12:
+            *out2 = 8;
+            *out1 = 200;
+            result = base + 0x11478;
+            break;
+        case 13:
+            *out2 = 8;
+            *out1 = 240;
+            result = base + 0xFA38;
+            break;
     }
 
     return result;

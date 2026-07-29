@@ -316,7 +316,7 @@ void Pane::AnimateSelf(u32 option) {
         }
 
         AnimTransform* pAnimTrans = it->GetAnimTransform();
-        pAnimTrans->Animate(it->GetIndex(), static_cast<Pane*>(this));
+        pAnimTrans->Animate(it->GetIndex(), this);
     })
 
     if (IsVisible() || !(option & ANIMOPTION_SKIP_INVISIBLE)) {

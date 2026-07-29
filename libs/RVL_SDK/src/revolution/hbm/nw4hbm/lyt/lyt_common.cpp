@@ -19,8 +19,8 @@ namespace detail {
  * Utility functions
  *
  ******************************************************************************/
-bool EqualsPaneName(const char* pLhs, const char* pRhs) {
-    return std::strncmp(pLhs, pRhs, 16) == 0;
+bool EqualsResName(const char* pLhs, const char* pRhs) {
+    return std::strncmp(pLhs, pRhs, NW4R_LYT_RES_NAME_LEN) == 0;
 }
 
 bool EqualsMaterialName(const char* pLhs, const char* pRhs) {
@@ -68,6 +68,10 @@ void TexCoordAry::Reserve(u8 num) {
     }
 }
 
+namespace nw4hbm {
+namespace lyt {
+namespace detail {
+
 void TexCoordAry::SetSize(u8 num) {
     if (mpData != NULL && num <= mCap) {
         static const math::VEC2 sDefault[4] = {
@@ -82,6 +86,17 @@ void TexCoordAry::SetSize(u8 num) {
             }
         }
         mNum = num;
+    }
+}
+
+} // namespace detail
+} // namespace lyt
+} // namespace nw4hbm
+
+void TexCoordAry::SetCoord(u32 idx, const math::VEC2* coord) {
+    for(int i = 0; i < VERTEXCOLOR_MAX; i++)
+    {
+        mpData[idx][i] = coord[i];
     }
 }
 
@@ -165,6 +180,12 @@ ut::Color MultipleAlpha(ut::Color color, u8 alpha) {
     return result;
 }
 
+void MultipleAlpha(ut::Color* pDst, const ut::Color* pSrc, u8 alpha) {
+    for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
+        pDst[i] = MultipleAlpha(pSrc[i], alpha);
+    }
+}
+
 void SetVertexFormat(bool modulate, u8 numCoord) {
     GXClearVtxDesc();
 
@@ -237,27 +258,10 @@ void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
 void DrawQuad(const math::VEC2& rBase, const Size& rSize, u8 num,
               const TexCoord* pCoords, const ut::Color* pColors, u8 alpha) {
 
-    ut::Color colorWork[VERTEXCOLOR_MAX] = {
-        ut::Color(0xFFFFFFFF), ut::Color(0xFFFFFFFF),
-        ut::Color(0xFFFFFFFF), ut::Color(0xFFFFFFFF)
-    };
+    ut::Color colorWork[VERTEXCOLOR_MAX];
 
     if (pColors != NULL) {
-        for (int i = 0; i < 2; i++) {
-            const ut::Color srcColor0 = pColors[i * 2];
-            ut::Color tmp0 = srcColor0;
-            if (alpha != 255) {
-                tmp0.a = srcColor0.a * alpha / 255;
-            }
-            colorWork[i * 2] = tmp0;
-
-            const ut::Color srcColor1 = pColors[i * 2 + 1];
-            ut::Color tmp1 = srcColor1;
-            if (alpha != 255) {
-                tmp1.a = srcColor1.a * alpha / 255;
-            }
-            colorWork[i * 2 + 1] = tmp1;
-        }
+        MultipleAlpha(colorWork, pColors, alpha);
     }
 
     DrawQuad(rBase, rSize, num, pCoords, pColors ? colorWork : NULL);
@@ -304,4 +308,4 @@ void InitGXTexObjFromTPL(GXTexObj* pTexObj, TPLPalette* pTpl, u32 idx) {
 } // namespace lyt
 } // namespace nw4hbm
 
-
+bool EqualsPaneName__Q36nw4hbm3lyt6detailFPCcPCc(const char* a, const char* b) { return strncmp(a, b, 16) == 0; }

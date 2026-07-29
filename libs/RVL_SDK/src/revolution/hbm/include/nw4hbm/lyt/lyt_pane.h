@@ -278,10 +278,10 @@ protected:
     math::MTX34 mMtx;    // at 0x54
     math::MTX34 mGlbMtx; // at 0x84
     
-    const ExtUserDataList* mpExtUserDataList; // at 0xB4
-    u32 field_0xB8;                            // at 0xB8
+    char mName[NW4R_LYT_RES_NAME_LEN + 1];     // at 0xB4
 
-    char mName[NW4R_LYT_RES_NAME_LEN + 1];     // at 0xBC
+    const ExtUserDataList* mpExtUserDataList; // at 0xC5
+    u32 field_0xB8;                            // at 0xC9
 
     u8 mAlpha;        // at 0xCD
     u8 mGlbAlpha;     // at 0xCE

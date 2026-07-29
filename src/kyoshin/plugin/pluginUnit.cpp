@@ -10,6 +10,7 @@
 #include "kyoshin/cf/CBattleManager.hpp"
 #include "kyoshin/cf/CfGameManager.hpp"
 #include "kyoshin/cf/code_800F42AC.hpp"
+#include "kyoshin/cf/object/CActorParam.hpp"
 
 // C-linkage retail symbols referenced by learnArts / clearPcBtlState.
 extern "C" {

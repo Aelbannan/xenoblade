@@ -2431,11 +2431,14 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
 
 extern "C" u32 lbl_eu_80663E50;
 extern "C" u32 lbl_eu_80663E04;
-extern "C" void func_80083458__Q22cf13CfGameManagerFv() {
+extern "C" u32 lbl_eu_80664188;
+extern "C" u32 lbl_eu_80664184;
+extern "C" u8 lbl_eu_80664298;
+extern "C" u32 func_80083458__Q22cf13CfGameManagerFv() {
     return lbl_eu_80664188;
 }
 
-extern "C" void func_80083460__Q22cf13CfGameManagerFv() {
+extern "C" u32 func_80083460__Q22cf13CfGameManagerFv() {
     return lbl_eu_80664184;
 }
 

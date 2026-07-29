@@ -44,7 +44,9 @@ void CMenuFade::Init() {
 
     mLayout->SetAnimationEnable(mAnimDefault, true);
 
-    // Convert animation frame size to float (int-to-float via type-pun)
+    // Convert animation frame size to float (int-to-float via type-pun).
+    // The float result is used in both the field_0x80 and field_0x88
+    // computations below.
     u16 frameSize = mAnimDefault->GetFrameSize();
     float frameSizeF = (float)frameSize;
 
@@ -94,8 +96,7 @@ void CMenuFade::Init() {
     mLayout->Animate(0);
 
     // Register as IScnRender callback at priority 0xd on the owning scene
-    IScnRender* cb = this;
-    mScn->addRenderCB(cb, 0xd, 0);
+    mScn->addRenderCB(this, 0xd, 0);
     mLayoutMem.func_8045F810();
 }
 

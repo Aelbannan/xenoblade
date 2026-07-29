@@ -86,11 +86,14 @@ int func_802A4430(CVoiceHandle* self) {
         }
     }
 
-    // Get voice-thread state.
+    // Extract character type from pointer chain (declare before state
+    // so that MWCC assigns this to r31, matching the retail register).
+    int charType;
+
+    // Get voice-thread state (declare after charType so MWCC assigns
+    // this to r29, matching the retail register).
     int state = func_802A77E8(self);
 
-    // Extract character type from pointer chain.
-    int charType;
     {
         UnkTarget* target = self->unkTarget;
         if (target != NULL) {
@@ -101,9 +104,11 @@ int func_802A4430(CVoiceHandle* self) {
     }
 
     // Character type must be in [7, 14].
-    if (charType < 7 || charType > 14) {
-        return -1;
-    }
+    if (charType < 7) goto invalid_char;
+    if (charType <= 14) goto char_ok;
+invalid_char:
+    return -1;
+char_ok:
 
     // Validate iterator.
     if (func_802A7850(state) == 0) {

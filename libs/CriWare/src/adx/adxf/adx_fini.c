@@ -53,9 +53,10 @@ void ADXF_Init(void) {
 // closes all open files and resets the work structure to initial state.
 void ADXF_Finish(void) {
     struct ADXF_Work* work = &ADXF_Work;
+    s32 ref = work->refcount - 1;
+    work->refcount = ref;
 
-    work->refcount--;
-    if (work->refcount != 0) {
+    if (ref != 0) {
         return;
     }
 

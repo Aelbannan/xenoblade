@@ -1848,6 +1848,13 @@ extern void* lbl_eu_80664570;
 extern void* lbl_eu_80664578;
 extern void* lbl_eu_80664580;
 extern void* lbl_eu_80664588;
+extern void* lbl_eu_80664590;
+extern void* lbl_eu_80664598;
+extern void* lbl_eu_806645A0;
+extern void* lbl_eu_806645B8;
+extern void* lbl_eu_806645C0;
+extern void* lbl_eu_806645C8;
+extern void* lbl_eu_806645D0;
 
 void sinit_801EABC4() {
     func_801D1F9C(&lbl_eu_80664518, 0);
@@ -1865,6 +1872,15 @@ void sinit_801EABC4() {
     func_801C4B60(&lbl_eu_80664578, 0xff, 0xff, 0xfa, 0);
     func_801C4B60(&lbl_eu_80664580, 0xd2, 0x28, 0x14, 0);
     func_801C4B60(&lbl_eu_80664588, 0xff, 0xff, 0xfa, 0);
+    func_801C4B60(&lbl_eu_80664590, 0x1f, 0xa6, 0x1a, 0);
+    func_801D1F9C(&lbl_eu_80664598, 0);
+    func_801D1F9C(&lbl_eu_806645A0, 0);
+    func_801C4B60(&lbl_eu_806645A8, 0x80, 0x80, 0x80, 0);
+    func_801C4B60(&lbl_eu_806645B0, 0x80, 0x80, 0x80, 0);
+    func_801D1F9C(&lbl_eu_806645B8, 0);
+    func_801D1F9C(&lbl_eu_806645C0, 0);
+    func_801C4B60(&lbl_eu_806645C8, 0xff, 0xff, 0xfa, 0);
+    func_801C4B60(&lbl_eu_806645D0, 0x80, 0x80, 0x80, 0);
 }
 
 char* func_801D3C74(void* item_data, u8 index) {

@@ -412,7 +412,7 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
                                ChannelCallback pCallback, u32 callbackArg) {
     ChannelManager& mgr = ChannelManager::GetInstance();
 
-    void* pMem = static_cast<PoolImpl*>(static_cast<void*>(&mgr))->AllocImpl();
+    void* pMem = ((PoolImpl*)&mgr)->AllocImpl();
     Channel* pChannel;
     if (pMem != NULL) {
         pChannel = static_cast<Channel*>(pMem);
@@ -442,9 +442,10 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
     }
 
     // Insert into ChannelManager's list (reached from both branches)
-    static_cast<ut::detail::LinkListImpl&>(mgr.mChannelList)
-        .Insert(static_cast<ut::detail::LinkListImpl&>(mgr.mChannelList).GetEndIter(),
-                &pChannel->node);
+    {
+        nw4r::ut::detail::LinkListImpl* pList = (nw4r::ut::detail::LinkListImpl*)((u8*)&mgr + 4);
+        pList->Insert(pList->GetEndIter(), &pChannel->node);
+    }
 
     if (pChannel == NULL) {
         return NULL;
@@ -458,9 +459,12 @@ Channel* Channel::AllocChannel(int channels, int voices, int priority,
     if (pVoice == NULL) {
         // Trigger lazy init (guard check) before cleanup
         ChannelManager::GetInstance();
-        static_cast<ut::detail::LinkListImpl&>(mgr.mChannelList).Erase(&pChannel->node);
+        {
+            nw4r::ut::detail::LinkListImpl* pList = (nw4r::ut::detail::LinkListImpl*)((u8*)&mgr + 4);
+            pList->Erase(&pChannel->node);
+        }
         if (pChannel != NULL) {
-            static_cast<PoolImpl*>(static_cast<void*>(&mgr))->FreeImpl(pChannel);
+            ((PoolImpl*)&mgr)->FreeImpl(pChannel);
         }
         return NULL;
     }

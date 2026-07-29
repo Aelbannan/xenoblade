@@ -8,10 +8,10 @@ struct CItemBoxInfoState {
     u8 _00[0x30];
     void* resource;
     void* layout;
-    u8 _38[0x52];
+    u8 _38[0x58];
     u8 active;
-    u8 _8B[5];
-    u32 state;
+    u8 _91[3];
+    s32 state;
     u8 current;
     u8 visible;
     u8 _9A[0x26];

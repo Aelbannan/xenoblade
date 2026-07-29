@@ -594,7 +594,7 @@ config.libs = [
             Object(NonMatching, "kyoshin/CItemBoxGrid.cpp"),
             Object(NonMatching, "kyoshin/CCur.cpp"),
             Object(NonMatching, "kyoshin/CSortMenu.cpp"),
-            Object(NonMatching, "kyoshin/CItemBoxInfo.cpp"),
+            Object(NonMatching, "kyoshin/CItemBoxInfo.cpp", extra_cflags=["-O4,s"]),
             Object(NonMatching, "kyoshin/CNumSelect.cpp"),
             Object(NonMatching, "kyoshin/CItemBoxLine.cpp"),
             Object(NonMatching, "kyoshin/CScrollBar.cpp"),

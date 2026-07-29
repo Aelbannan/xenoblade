@@ -9,7 +9,6 @@ namespace nw4r { namespace lyt { class Layout; class DrawInfo; } }
 extern "C" char lbl_eu_805063BC[];
 void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
 void func_80136910(nw4r::lyt::Layout*, const char*, u8);
-void func_801E4194(CItemBoxInfo2*);
 int sprintf(char*, const char*, ...);
 void func_80137038(nw4r::lyt::Layout*, nw4r::lyt::DrawInfo*, int, int);
 
@@ -62,6 +61,23 @@ void func_801D4BDC(CItemBoxInfo* info, u8 arg2, u8 arg3) {
 }
 
 // --- Remaining CItemBoxInfo stubs ---
+
+void func_801D8C0C(CItemBoxInfo*);
+void func_801E4194(CItemBoxInfo2*);
+
+void func_801D421C(CItemBoxInfo* info) {
+    if (info->state.state != 0) return;
+    info->state.state = 1;
+    info->state.visible = 0;
+    func_801D8C0C(info);
+    return;
+}
+
+void func_801D4154(CItemBoxInfo* info, nw4r::lyt::DrawInfo* drawInfo) {
+    if (info->state.active != 0) {
+        func_80137038((nw4r::lyt::Layout*)info->state.layout, drawInfo, 0, 1);
+    }
+}
 
 void func_801D4A2C(){}
 void func_801D4B3C(){}

@@ -12380,7 +12380,6 @@ private:
 */
 class CCol6Invite : public CProcess {
 public:
-    static CCol6Invite* Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4);
     virtual ~CCol6Invite();
 
     // CProcess overrides
@@ -12389,8 +12388,8 @@ public:
     void Move() override;
     void Draw() override;
 
-    /* 0x3C */ u8 mCallbackA[12]; // pointer-to-member-function null (3 words)
-    /* 0x48 */ u8 mCallbackB[12]; // pointer-to-member-function null (3 words)
+    /* 0x3C */ u32 mCallbackA[3]; // pointer-to-member-function null (3 words)
+    /* 0x48 */ u32 mCallbackB[3]; // pointer-to-member-function null (3 words)
     /* 0x54 */ u32 mField54;      // init 0
     /* 0x58 */ u32 mField58;      // init 0
     /* 0x5C */ u32 mField5C;      // init 0
@@ -12420,29 +12419,23 @@ void func_eu_801651A0(char* buffer, const char* format, ...);
 /* "src/kyoshin/CCol6Invite.cpp" line 5 "stdarg.h" */
 /* end "stdarg.h" */
 
-// External functions
-extern "C" {
-    // Returns pool ID from global variable (r13 - 0x6364).
-    u32 sub_80439F4C();
-    // operator new(size, pool) - allocates from pool.
-    void* operator_new_804373F4(u32 size, u32 pool);
-    // CProcess constructor.
-    void __ct__8CProcessFv(CProcess* proc);
-    // CProcess::Regist
-    void Regist__8CProcessFP8CProcessb(CProcess* proc, CProcess* parent, bool insertTop);
-}
-
-// Singleton instance pointer (lbl_eu_8066423C in retail).
-CCol6Invite* gCol6Invite;
-
 // Symbols from data sections
 extern u32 lbl_eu_8052FF3C;  // vtable for CCol6Invite
 extern u32 lbl_eu_8052D238;  // temporary vtable
 extern u8 __ptmf_null[12];   // null pointer-to-member-function (lbl_eu_805139E8)
 
-// Factory function for CCol6Invite singleton.
+// External functions
+u32 sub_80439F4C();
+u8* operator_new_804373F4(u32 size, u32 pool);
+void __ct__8CProcessFv(CProcess* proc);
+void Regist__8CProcessFP8CProcessb(CProcess* proc, CProcess* parent, bool insertTop);
+
+// Singleton instance pointer (lbl_eu_8066423C in retail).
+CCol6Invite* gCol6Invite;
+
+// Constructor for CCol6Invite singleton.
 // Returns the singleton instance, or NULL if already created.
-CCol6Invite* CCol6Invite::Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
+CCol6Invite* __ct__CCol6Invite(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
     // Check if singleton already exists.
     if (gCol6Invite != nullptr) {
         return nullptr;
@@ -12451,42 +12444,46 @@ CCol6Invite* CCol6Invite::Create(CProcess* parent, u16 arg2, u8 arg3, u8 arg4) {
     // Get pool ID and allocate.
     u32 pool = sub_80439F4C();
     CCol6Invite* obj = (CCol6Invite*)operator_new_804373F4(0x78, pool);
-    if (obj == nullptr) {
-        return nullptr;
+
+    if (obj != nullptr) {
+        // Call CProcess constructor.
+        __ct__8CProcessFv(obj);
+
+        // Set temporary vtable.
+        *(u32*)((u8*)obj + 0x10) = lbl_eu_8052D238;
+
+        // Initialize callback fields from __ptmf_null (3 words each).
+        // Retail copies __ptmf_null[0..2] to mCallbackA, then same to mCallbackB.
+        obj->mCallbackA[0] = ((u32*)__ptmf_null)[0];
+        obj->mCallbackA[1] = ((u32*)__ptmf_null)[1];
+        obj->mCallbackA[2] = ((u32*)__ptmf_null)[2];
+        obj->mCallbackB[0] = ((u32*)__ptmf_null)[0];
+        obj->mCallbackB[1] = ((u32*)__ptmf_null)[1];
+        obj->mCallbackB[2] = ((u32*)__ptmf_null)[2];
+
+        // Initialize remaining fields.
+        obj->mField54 = 0;
+        obj->mField58 = 0;
+        obj->mField5C = 0;
+        obj->mIndex = -1;
+        obj->mFlag64 = 0;
+        obj->mFlag65 = 0;
+        obj->mFlag66 = 0;
+        obj->mActive = 1;
+        obj->mField68 = 0;
+
+        // Set final vtable and field at 0x6C.
+        *(u32*)((u8*)obj + 0x10) = lbl_eu_8052FF3C;
+        obj->mField6C = lbl_eu_8052FF3C + 0x24;
+
+        // Store arguments.
+        obj->mArg2 = arg2;
+        obj->mArg3 = arg3;
+        obj->mArg4 = arg4;
+        obj->mField74 = 0;
     }
 
-    // Call CProcess constructor.
-    __ct__8CProcessFv(obj);
-
-    // Set temporary vtable.
-    *(u32*)((u8*)obj + 0x10) = lbl_eu_8052D238;
-
-    // Initialize callback fields from __ptmf_null (all zeros).
-    memcpy((u8*)obj + 0x3C, __ptmf_null, 12);
-    memcpy((u8*)obj + 0x48, __ptmf_null, 12);
-
-    // Initialize remaining fields.
-    *(u32*)((u8*)obj + 0x54) = 0;
-    *(u32*)((u8*)obj + 0x58) = 0;
-    *(u32*)((u8*)obj + 0x5C) = 0;
-    *(s32*)((u8*)obj + 0x60) = -1;
-    *(u8*)((u8*)obj + 0x64) = 0;
-    *(u8*)((u8*)obj + 0x65) = 0;
-    *(u8*)((u8*)obj + 0x66) = 0;
-    *(u8*)((u8*)obj + 0x67) = 1;
-    *(u32*)((u8*)obj + 0x68) = 0;
-
-    // Set final vtable and field at 0x6C.
-    *(u32*)((u8*)obj + 0x10) = lbl_eu_8052FF3C;
-    *(u32*)((u8*)obj + 0x6C) = lbl_eu_8052FF3C + 0x24;
-
-    // Store arguments.
-    *(u16*)((u8*)obj + 0x70) = arg2;
-    *(u8*)((u8*)obj + 0x72) = arg3;
-    *(u8*)((u8*)obj + 0x73) = arg4;
-    *(u8*)((u8*)obj + 0x74) = 0;
-
-    // Store singleton.
+    // Store singleton (even if allocation failed).
     gCol6Invite = obj;
 
     // Register with parent.

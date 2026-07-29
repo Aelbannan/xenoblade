@@ -22,7 +22,7 @@ struct CModelDispSub {
 class CModelDisp {
 public:
     CModelDisp();
-    ~CModelDisp();
+    virtual ~CModelDisp();
 
     u8 _pad0[0x2FD8];
     u8 field_2FD8;          // 0x2FD8

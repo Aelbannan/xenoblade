@@ -183,6 +183,7 @@ bool WsdPlayer::StartChannel(const WsdCallback* pCallback, u32 callbackArg) {
     }
 
     pChannel->SetAttack(waveSoundNoteInfo.attack);
+    pChannel->SetHold(waveSoundNoteInfo.hold);
     pChannel->SetDecay(waveSoundNoteInfo.decay);
     pChannel->SetSustain(waveSoundNoteInfo.sustain);
     pChannel->SetRelease(waveSoundNoteInfo.release);

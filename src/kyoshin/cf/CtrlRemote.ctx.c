@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlRemote
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/cf/CtrlRemote.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CtrlRemote.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,73 +1390,190 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
+/* "src/kyoshin/cf/CtrlRemote.cpp" line 5 "kyoshin/cf/CtrlRemote.hpp" */
+#pragma once
 
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
+/* "src/kyoshin/cf/CtrlRemote.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* end "kyoshin/cf/CtrlRemote.hpp" */
 
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
+/* "src/kyoshin/cf/CtrlRemote.cpp" line 7 "string.h" */
+/* end "string.h" */
 
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
-
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
-
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
-
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
-
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
-
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
-
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
-
-extern "C" void func_8009C6B4() {}
-
-extern "C" void func_8009C6B8() {}
-
-extern "C" float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
-
-extern "C" void func_8009C860() {}
-
-extern "C" void func_8009C87C() {}
-
-extern "C" void func_8009C8F4() {}
-
-extern "C" void func_8009C980() {}
-
-extern "C" void func_8009C9B8() {}
-
-extern "C" void func_8009CAAC() {}
-
-extern "C" void func_8009CB80() {}
-
-extern "C" void func_8009CE14() {}
-
-extern "C" void func_8009CE88() {}
-
-extern "C" void func_8009CF0C() {}
-
-extern "C" int func_8009CF84(void* self) { return 4628; }
-
-extern "C" void func_8009CF8C() {}
-
-extern "C" void func_8009D018() {}
-
-extern "C" void func_8009D0B4() {}
-
-extern "C" void func_8009D12C() {}
-
-extern "C" void func_8009D1F8() {}
-
-extern "C" void func_8009D2C8() {}
-
-extern "C" void func_8009D414() {}
-
-extern "C" void func_8009D514() {}
-
-extern "C" u32 func_8009D5FC(void) {
-    extern u32 lbl_eu_80663E88;
-    return lbl_eu_80663E88;
+extern "C" {
+extern u32 lbl_eu_80571848[];
+extern u8 lbl_eu_80663E80;
+extern u32 lbl_eu_80661C70[2];
+extern u32 lbl_eu_80528048[4];
+extern u32 lbl_eu_80528058[32];
 }
+
+void __ct__CtrlRemote(){}
+
+void func_80098CB8(){}
+
+void func_80098EF8(){}
+
+float CActorParam_UnkVirtualFunc106__Q22cf11CActorParamFv(void* self) { return *(float*)((u8*)self + 0x1840); }
+
+void func_8009A1DC(){}
+
+void func_8009A4AC(){}
+
+void func_8009AE80(){}
+
+void func_8009B788(){}
+
+void func_8009BD14(){}
+
+void func_8009C1BC(){}
+
+void func_8009C6B4() {}
+
+void func_8009C6B8() {}
+
+void func_8009C6BC(){}
+
+void func_8009C860(){}
+
+void func_8009C87C(){}
+
+void func_8009C8F4(){}
+
+void func_8009C980(){}
+
+void func_8009C9B8(){}
+
+void func_8009CAAC(){}
+
+void func_8009CB80(){}
+
+void func_8009CE14(){}
+
+void func_8009CE88(){}
+
+void func_8009CF0C(){}
+
+int func_8009CF84(void* self) { return 4628; }
+
+extern "C" u32 func_8009D1F8(u32* buffer, s32 index);
+u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut);
+
+extern "C" void func_8009CF8C(void* arg)
+{
+	s32 flag = (s8)lbl_eu_80663E80;
+	if (flag == 0) {
+		memset(lbl_eu_80571848, 0, 0x1214);
+		memset(&lbl_eu_80571848[0x1234 / 4], 0, 0x20);
+		memset(&lbl_eu_80571848[0x1214 / 4], 0, 0x20);
+		lbl_eu_80663E80 = 1;
+	}
+	func_8009D1F8(lbl_eu_80571848, (s32)arg);
+}
+
+void func_8009D018(){}
+
+void func_8009D0B4(){}
+
+u32* func_8009D12C(u32* buffer, s32 index, s32* typeOut, s32* idxOut)
+{
+	if ((u32)index <= 0x1F) {
+		*idxOut = 0;
+		*typeOut = 4;
+		return &buffer[index];
+	}
+
+	s32 r7 = index - 0x20;
+	if ((u32)r7 <= 0x1FF) {
+		*idxOut = r7;
+		s32 r4 = r7 / 2;
+		*typeOut = 3;
+		return &buffer[r4 + 0x20];
+	}
+
+	r7 = index - 0x220;
+	if ((u32)r7 <= 0x7FF) {
+		*idxOut = r7;
+		s32 r4 = (r7 + 3) / 4;
+		*typeOut = 2;
+		return &buffer[r4 + 0x120];
+	}
+
+	s32 r4 = index - 0xA20;
+	if ((u32)r4 <= 0x2CAF) {
+		*idxOut = r4;
+		r4 = (r4 + 31) / 32;
+		*typeOut = 1;
+		return &buffer[r4 + 0x320];
+	}
+
+	*idxOut = 0;
+	*typeOut = 0;
+	return NULL;
+}
+
+extern "C" u32 func_8009D1F8(u32* buffer, s32 index)
+{
+	s32 shift;
+	s32 type;
+	s32 idx;
+	u32 mask;
+	u32* ptr;
+
+	shift = 0;
+	ptr = func_8009D12C(buffer, index, &type, &idx);
+	if (ptr == NULL) {
+		return 0;
+	}
+
+	switch (type) {
+	case 4:
+		mask = 0xFFFFFFFF;
+		shift = 0;
+		break;
+	case 3:
+		mask = lbl_eu_80661C70[idx & 1];
+		shift = (idx & 1) << 4;
+		break;
+	case 2:
+		mask = lbl_eu_80528048[idx & 3];
+		shift = (idx & 3) << 3;
+		break;
+	case 1:
+		mask = lbl_eu_80528058[idx & 0x1F];
+		shift = idx & 0x1F;
+		break;
+	}
+
+	return (*ptr & mask) >> shift;
+}
+
+void func_8009D2C8(){}
+
+void func_8009D414(){}
+
+void func_8009D514(){}
+
+extern "C" bool func_8009D5FC() { return false; }

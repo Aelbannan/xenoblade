@@ -27,11 +27,23 @@ void func_80245DF8(){}
 
 void func_80246200(){}
 
-void __dt__802462F0(){}
+void* __dt__802462F0(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void func_80246330(){}
 
-void __dt__802468C8(){}
+void* __dt__802468C8(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void func_80246908(){}
 
@@ -65,11 +77,23 @@ void func_8024B234(){}
 
 void func_8024B4CC(){}
 
-void __dt__8024B6B8(){}
+void* __dt__8024B6B8(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void func_8024B6F8(){}
 
-void __dt__8024B894(){}
+void* __dt__8024B894(void* self, int mode) {
+    extern void* __dl__FPv(void*);
+    if (self && mode > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void __ct__CFloorMap(){}
 
@@ -249,4 +273,21 @@ void func_8024FB78(){}
 void CFloorMap::OnFileEvent() const {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_80250CB4(){}
+void sinit_80250CB4() {
+    extern u16 lbl_eu_806647A0[];
+    extern u16 lbl_eu_806647A8[];
+    extern u16 lbl_eu_806647B0[];
+    extern u16 lbl_eu_806647B8[];
+    for (int i = 0; i < 4; i++) {
+        lbl_eu_806647A0[i] = 0xFF;
+        lbl_eu_806647A8[i] = 0xFF;
+    }
+    lbl_eu_806647B0[0] = 0xA0;
+    lbl_eu_806647B0[1] = 0x8C;
+    lbl_eu_806647B0[2] = 0x23;
+    lbl_eu_806647B0[3] = 0xFF;
+    lbl_eu_806647B8[0] = 0xD9;
+    lbl_eu_806647B8[1] = 0xC0;
+    lbl_eu_806647B8[2] = 0x43;
+    lbl_eu_806647B8[3] = 0xFF;
+}

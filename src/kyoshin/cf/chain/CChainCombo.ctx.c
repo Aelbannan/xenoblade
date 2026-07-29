@@ -734,6 +734,9 @@ extern "C" void func_802AA338__Fv();
 // Retail vtable lbl_eu_80538994 lives in split1 (dtor only); not emitted here.
 extern "C" void* lbl_eu_80538994[];
 
+// 3-entry table indexed by probability thresholds in func_80293EEC.
+extern "C" int lbl_eu_80538988[3];
+
 namespace cf {
 
 /* Chain arts combo tracker. Size 0x18.
@@ -753,7 +756,20 @@ struct CChainCombo {
 
 } // namespace cf
 
-// Opaque objects that only expose a C++-style vptr at +0 (forces r12-style loads).
+// Object returned by CActorParam_UnkVirtualFunc132 (vtable[0x2A4]).
+// Has a pointer at +0x50 to an arts category struct.
+struct CChainCombo_ArtsCategoryHolder {
+    u8 pad[0x50];
+    struct CChainCombo_ArtsCategory* mArtsCategory; // 0x50
+};
+
+// Object with arts category byte at +0x3E.
+struct CChainCombo_ArtsCategory {
+    u8 pad[0x3e];
+    u8 mArtsCategory; // 0x3e
+};
+
+// Opaque object that only exposes a C++-style vptr at +0 (forces r12-style loads).
 struct CChainVObj {
     void** mVtbl;
 };
@@ -911,7 +927,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_UnkVirtualFunc64();     //0x150
         virtual void CfObject_UnkVirtualFunc65();     //0x154
-        virtual void CfObject_UnkVirtualFunc66(u32 value) = 0; //0x158
+        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
@@ -999,7 +1015,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc54();
     void CfObject_UnkVirtualFunc55();
     void CObjectParam_UnkVirtualFunc2();
-    void CfObject_UnkVirtualFunc66(u32 value);
+    void CfObject_UnkVirtualFunc66();
     void CfObject_UnkVirtualFunc67();
     void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc69();
@@ -1094,7 +1110,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc61();
     void CfObject_UnkVirtualFunc62();
     void CfObject_UnkVirtualFunc12();
-    void CfObject_UnkVirtualFunc66(u32 value);
+    void CfObject_UnkVirtualFunc66();
     void CfObjectModel_UnkVirtualFunc19();
     void CfObjectModel_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc37();
@@ -2108,13 +2124,12 @@ namespace ml{
 /* end "monolib/math/Random.hpp" */
 
 // Forward declarations for functions called by the two decompiled functions.
-// func_800B708C is declared in CAIAction.hpp (included transitively).
 extern "C" void func_8013EAB0();
-extern "C" CChainVObj* func_8016FE34(void*);
-extern "C" void func_802A07F4(int, CChainVObj*);
+extern "C" void func_802A07F4(int, void*);
 
-// 3-entry table indexed by probability thresholds in func_80293EEC.
-extern "C" int lbl_eu_80538988[3];
+// Function pointer type for CfObjectModel_UnkVirtualFunc4 (vtable[0x184]).
+// Header declares it with no args, but retail passes an int.
+typedef void (*CfObjectModel_UnkVirtualFunc4_t)(cf::CfObjectModel*, int);
 
 namespace cf{
     CChainCombo::CChainCombo(){
@@ -2135,39 +2150,24 @@ namespace cf{
     }
 }
 
-// Object returned by CActorParam_UnkVirtualFunc132 (vtable[0x2a4]).
-struct CChainCombo_ArtsCategoryHolder {
-    u8 pad[0x50];
-    void* mArtsCategoryPtr; // 0x50
-};
-
-// Object with arts category byte at +0x3e.
-struct CChainCombo_ArtsCategory {
-    u8 pad[0x3e];
-    u8 mArtsCategory; // 0x3e
-};
-
-
 void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     // Call vtable[0x2a4] on actor, get a pointer to a sub-object.
     CChainCombo_ArtsCategoryHolder* holder =
         (CChainCombo_ArtsCategoryHolder*)actor->CActorParam_UnkVirtualFunc132();
-    CChainCombo_ArtsCategory* category =
-        (CChainCombo_ArtsCategory*)holder->mArtsCategoryPtr;
-    // Load old arts type between the two category loads (load-use delay slot).
-    int oldArtsType = self->mArtsType;
+    CChainCombo_ArtsCategory* category = holder->mArtsCategory;
     int newArtsType = category->mArtsCategory;
+    int oldArtsType = self->mArtsType;
 
     // Reset combo count if arts type changed (but not to/from 8).
-    // Reuse oldArtsType as the result variable to match retail register allocation.
+    int resetCombo = oldArtsType;
     if (newArtsType == 8) {
-        oldArtsType = 0;
-    } else if (oldArtsType == 8) {
-        oldArtsType = 0;
+        resetCombo = 0;
+    } else if (resetCombo == 8) {
+        resetCombo = 0;
     } else {
-        oldArtsType = ((oldArtsType - newArtsType) | (newArtsType - oldArtsType)) >> 31;
+        resetCombo = ((resetCombo - newArtsType) | (newArtsType - resetCombo)) >> 31;
     }
-    if (oldArtsType != 0) {
+    if (resetCombo != 0) {
         self->mComboCount = 0;
     }
 
@@ -2181,16 +2181,13 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 }
 
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
-    // mPending guard at top; single stb at bottom matches retail structure.
     if (self->mPending) {
-        // Call vtable[0x4c] on the CfObjectMove base at actor+0x3e9c.
-        cf::CfObjectMove* moveBase = (cf::CfObjectMove*)actor;
-        void** vtbl = *(void***)moveBase;
-        int (*vfunc)(cf::CfObjectMove*) = (int (*)(cf::CfObjectMove*))vtbl[0x4c / 4];
-        int result = vfunc(moveBase);
+        // Call vtable[0x4c] (CObjectParam_UnkVirtualFunc5) on the CfObjectMove sub-object at actor+0x3e9c.
+        cf::CfObjectMove* moveObj = (cf::CfObjectMove*)((u8*)actor + 0x3e9c);
+        func_800B708C(moveObj->CObjectParam_UnkVirtualFunc5());
 
-        CChainVObj* obj = func_8016FE34(func_800B708C((BOOL)result));
-        if (obj != nullptr) {
+        CChainVObj* vobj = (CChainVObj*)func_8016FE34();
+        if (vobj != nullptr) {
             // Random selection from a 3-entry table based on probability thresholds.
             int rand = ml::math::mtRand(100);
             int value;
@@ -2202,11 +2199,10 @@ void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
                 value = lbl_eu_80538988[2];
             }
 
-            // Call vtable[0x184] on the object.
-            CChainVObj* vobj = (CChainVObj*)obj;
-            void (*vfunc2)(CChainVObj*, int) = (void (*)(CChainVObj*, int))vobj->mVtbl[0x184 / 4];
-            vfunc2(vobj, value);
-            func_802A07F4(0xbf, obj);
+            // Call vtable[0x184] (CfObjectModel_UnkVirtualFunc4) on the object.
+            CfObjectModel_UnkVirtualFunc4_t func = (CfObjectModel_UnkVirtualFunc4_t)vobj->mVtbl[0x184 / 4];
+            func((cf::CfObjectModel*)vobj, value);
+            func_802A07F4(0xbf, vobj);
         }
     }
     self->mPending = false;

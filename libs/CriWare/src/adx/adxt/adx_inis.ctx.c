@@ -913,8 +913,8 @@ void ADXT_Init(void) {
 // Tears down all ADX subsystems when refcount reaches zero.
 void ADXT_Finish(void) {
     struct AdxInisContext* ctx = &lbl_eu_805E26C8;
-    struct AdxInisHandle* hndl;
     const char* str;
+    struct AdxInisHandle* hndl;
     s32 i;
 
     // If refcount is already zero, report error and return.
@@ -949,8 +949,8 @@ void ADXT_Finish(void) {
     ADXCRS_Finish();
 
     // Destroy any active handles that remain in the array.
-    hndl = ctx->handles;
     str = lbl_eu_80516010;
+    hndl = ctx->handles;
     for (i = 0; i < 16; i++) {
         if (hndl->flag != 0) {
             SVM_CallErr1(str + 0x7e);

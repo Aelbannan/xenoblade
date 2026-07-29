@@ -1420,14 +1420,16 @@ public:
 // Sub-object struct within CModelDisp, stride 0xFF0
 struct CModelDispSub {
     u8 _00[0x08];
-    void* mpController;             // 0x08 - pointer to controller (vcalled)
+    u8* mpController;               // 0x08 - pointer to controller (vcalled)
     u8 _0C[0x08];
-    u8 mSubObj[0x544];              // 0x14 - sub-object region (base for getNextChainObj)
+    u8 mSubObj[0x53C];              // 0x14 - sub-object region (base for getNextChainObj)
+    u32 field_0x550;                // 0x550 - counter, set to 150 after init
+    u8 _554[0x4];                   // 0x554 - padding
     u8 mBuffer[0x4B4];              // 0x558 - buffer region (base for func_8004B9D4)
-    void* mResultA;                 // 0xA0C - getNextChainObj result
+    u8* mResultA;                   // 0xA0C - getNextChainObj result
     u8 _A10[0x84];
     u8 mBuffer2[0x4B4];             // 0xA94 - second buffer region (base for func_8004B9D4)
-    void* mResultB;                 // 0xF48 - getNextChainObj result
+    u8* mResultB;                   // 0xF48 - getNextChainObj result
     u8 _F4C[0x84];
     u32 mFlagFD0;                   // 0xFD0 - flag
     u32 mFlagFD4;                   // 0xFD4 - flag
@@ -1439,7 +1441,9 @@ public:
     CModelDisp();
     ~CModelDisp();
 
-    u8 _pad0[0x2FD8];
+    u8* field_0x04;              // 0x04 - pointer (CScn*)
+    u8 mSubObjects[0x2FD0];      // 0x08 - embedded CModelDispSub array (3 x 0xFF0)
+    u8 _padEnd[4];               // 0x2FD8
     u8 field_2FD8;          // 0x2FD8
     u8 _pad2FD9[0x2FDC - 0x2FD9];
     f32 field_2FDC;         // 0x2FDC - display alpha/transition value
@@ -1490,8 +1494,19 @@ extern void __destroy_new_array3();
 /* end "PowerPC_EABI_Support/Runtime/MWCPlusLib.h" */
 
 // Forward declarations for cross-TU calls
-void* func_8004B9B8(void* self);
-void func_8004B9D4(void* self, int a2, int a3, int a4, int a5);
+u8* func_8004B9B8(u8* self);
+void func_8004B9D4(u8* self, int a2, int a3, int a4, int a5);
+void func_8004CF00(u8* self);
+u8* func_80496264(u8* obj, int index);
+u8* func_8004B60C(u8* self, f32 x, f32 y, f32 z);
+void func_8049EFF8(u8* a1, u8* a2, u8* a3, f32 a4);
+
+// sdata2 float constants
+extern f32 lbl_eu_806681E8;
+extern f32 lbl_eu_806681EC;
+extern f32 lbl_eu_806681F0;
+extern f32 lbl_eu_806681F4;
+extern f32 lbl_eu_806681F8;
 
 u8 func_801FC114(void* self) { return ((CModelDisp*)self)->field_2FE4; }
 
@@ -1505,29 +1520,29 @@ void func_801FC3B0(CModelDisp* self);
 void func_801FCAC8(CModelDisp* self);
 
 // Forward declaration for the sub-object destructor (address-based symbol).
-extern "C" void* __dt__801FBF0C(void* self, int deleting);
+u8* __dt__801FBF0C(CModelDispSub* self, int deleting);
 
 // ---------------------------------------------------------------------------
 // Address-based destructor for embedded sub-objects (CModelDispSub).
 // Called by CModelDisp::~CModelDisp via __destroy_arr and also directly.
 // Destroys 1+2 cf::CActParamAnimGame sub-objects at offsets 0xC and 0x550.
 // ---------------------------------------------------------------------------
-extern "C" void* __dt__801FBF0C(void* self, int deleting) {
+u8* __dt__801FBF0C(CModelDispSub* self, int deleting) {
     if (self != nullptr) {
-        extern void __dt__Q22cf17CActParamAnimGameFv(void*, int);
+        extern void __dt__Q22cf17CActParamAnimGameFv(u8*, int);
 
         // Destroy array of 2 CActParamAnimGame at offset 0x550 (each 0x53C)
-        __destroy_arr((u8*)self + 0x550, (ConstructorDestructor*)&__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
+        __destroy_arr(&self->field_0x550, (ConstructorDestructor*)&__dt__Q22cf17CActParamAnimGameFv, 0x53C, 2);
 
         // Destroy single CActParamAnimGame at offset 0xC (complete destructor call)
-        __dt__Q22cf17CActParamAnimGameFv((u8*)self + 0xC, -1);
+        __dt__Q22cf17CActParamAnimGameFv(self->_0C, -1);
 
         if (deleting > 0) {
-            extern void __dl__FPv(void*);
-            __dl__FPv(self);
+            extern void __dl__FPv(u8*);
+            __dl__FPv((u8*)self);
         }
     }
-    return self;
+    return (u8*)self;
 }
 
 // ---------------------------------------------------------------------------
@@ -1536,7 +1551,7 @@ extern "C" void* __dt__801FBF0C(void* self, int deleting) {
 // at offset 0x8). Compiler emits null-check and flags-based delete wrapper.
 // ---------------------------------------------------------------------------
 CModelDisp::~CModelDisp() {
-    __destroy_arr((u8*)this + 0x8, (ConstructorDestructor*)&__dt__801FBF0C, 0xFF0, 3);
+    __destroy_arr(this->mSubObjects, (ConstructorDestructor*)&__dt__801FBF0C, 0xFF0, 3);
 }
 
 // ---------------------------------------------------------------------------
@@ -1583,19 +1598,55 @@ void func_801FC15C(CModelDisp* self) {
     }
 }
 
-#pragma auto_inline off
-void func_801FC218(CModelDisp* self) {}
+void func_801FC218(CModelDisp* self) {
+    u32 i;
+
+    self->field_2FDC += lbl_eu_806681F8;
+    if (self->field_2FDC > lbl_eu_806681E8) {
+        self->field_2FDC = lbl_eu_806681E8;
+        self->field_2FD8 = 0;
+        self->field_2FE4 = 1;
+    }
+
+    i = 0;
+    while (i < 3) {
+        u8* sub = (u8*)self + (u32)((u8)i) * 0xFF0;
+        u8* ctrl = *(u8**)(sub + 8);
+        if (ctrl != NULL) {
+            typedef void (*VMethod48)(u8*, f32);
+            typedef VMethod48* VTable;
+            ((VTable*)ctrl)[0][18](ctrl, self->field_2FDC);
+        }
+        i++;
+    }
+}
 
 void func_801FC2B4(){}
 
 void func_801FC3B0(CModelDisp* self) {}
-#pragma auto_inline on
 
 int func_801FCAC0(void* self) { return 0; }
 
-#pragma auto_inline off
-void func_801FCAC8(CModelDisp* self) {}
-#pragma auto_inline on
+void func_801FCAC8(CModelDisp* self) {
+    u32 i;
+    u32 counter;
+    CModelDispSub* sub;
+
+    i = 0;
+    counter = 150;
+    sub = (CModelDispSub*)self;
+    while (i < 3) {
+        if (sub->mpController == NULL) goto next;
+        if (sub->field_0x550 > 0) goto skip;
+        func_8004B9D4(sub->mSubObj, 1, 0, -1, 0);
+        sub->field_0x550 = counter;
+skip:
+        func_8004CF00(sub->mSubObj);
+next:
+        i++;
+        sub++;
+    }
+}
 
 void func_801FCB4C(){}
 
@@ -1603,10 +1654,27 @@ int func_801FCBEC(void* self) { return 0; }
 
 void func_801FCBF4(){}
 
+void func_801FBFD8(CModelDisp* self) {
+    u8* pose;
+    u8 temp1[12];
+    u8 temp2[12];
+    u8* t1;
+    u8* t2;
+
+    pose = func_80496264(self->field_0x04, -1);
+
+    t1 = func_8004B60C(temp1, lbl_eu_806681EC, lbl_eu_806681E8, lbl_eu_806681EC);
+    t2 = func_8004B60C(temp2, lbl_eu_806681EC, lbl_eu_806681F0, lbl_eu_806681F4);
+
+    func_8049EFF8(pose, t2, t1, lbl_eu_806681EC);
+
+    func_801FC3B0(self);
+}
+
 // Scans sub-objects for one whose mpController matches param's field_0x3A0,
 // then dispatches getNextChainObj / setParam calls for active slots.
-void func_801FCDB4(CModelDisp* self, void* param, int r5) {
-    u32 matchVal = *(u32*)((u8*)param + 0x3A0);
+void func_801FCDB4(CModelDisp* self, u8* param, int r5) {
+    u32 matchVal = *(u32*)(param + 0x3A0);
 
     for (int i = 0; i < 3; i++) {
         CModelDispSub* sub = (CModelDispSub*)((u8*)self + i * 0xFF0);
@@ -1615,13 +1683,13 @@ void func_801FCDB4(CModelDisp* self, void* param, int r5) {
         }
 
         if (sub->mFlagFD0 != 0) {
-            void* result = func_8004B9B8(sub->mSubObj);
+            u8* result = func_8004B9B8(sub->mSubObj);
             sub->mResultA = result;
             func_8004B9D4(sub->mBuffer, r5, 0, -1, 0);
         }
 
         if (sub->mFlagFD4 != 0) {
-            void* result2 = func_8004B9B8(sub->mSubObj);
+            u8* result2 = func_8004B9B8(sub->mSubObj);
             sub->mResultB = result2;
             func_8004B9D4(sub->mBuffer2, r5, 0, -1, 0);
         }

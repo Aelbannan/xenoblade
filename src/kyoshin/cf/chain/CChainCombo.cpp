@@ -62,7 +62,7 @@ void func_80293E24(cf::CChainCombo* self, cf::CfObjectActor* actor) {
 void func_80293EEC(cf::CChainCombo* self, cf::CfObjectActor* actor) {
     if (self->mPending) {
         // Call vtable[0x4c] (CObjectParam_UnkVirtualFunc5) on the CfObjectMove sub-object at actor+0x3e9c.
-        cf::CfObjectMove* moveObj = (cf::CfObjectMove*)((u8*)actor + 0x3e9c);
+        cf::CfObjectMove* moveObj = static_cast<cf::CfObjectMove*>(actor);
         func_800B708C(moveObj->CObjectParam_UnkVirtualFunc5());
 
         CChainVObj* vobj = (CChainVObj*)func_8016FE34();

@@ -3,23 +3,6 @@
 #include "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp"
 #include "kyoshin/cf/voice/CCharVoice.hpp"
 
-// Forward declaration of a polymorphic sub-object reached through a voice
-// handle (CVoiceHandle+0x04). Only the vtable pointer at offset 0 is used.
-struct CVSubObj {
-    void** vtable;               // 0x00: vtable pointer
-};
-
-// Voice-handle type. The actual CCharVoice is embedded at offset 0x3E9C
-// within the handle allocation (0x3E9C bytes of handle data + CCharVoice).
-struct CVoiceHandle {
-    void** vtable;                     // 0x00: vtable pointer
-    CVSubObj* field_0x04;              // 0x04: sub-object pointer
-    u8 _pad[0x3E9C - 0x08];             // 0x08-0x3E9B: handle data
-    CCharVoice voice;                  // 0x3E9C: the actual voice object
-    u8 _pad2[0x3F00 - (0x3E9C + 0x40)]; // 0x3EDC-0x3EFF: padding past CCharVoice
-    u32 field_0x3F00;                  // 0x3F00: flags (bit 30 = ready flag)
-};
-
 /**
  * CVS_THREAD_VISION_BREAK - voice thread for vision-break status effect.
  *

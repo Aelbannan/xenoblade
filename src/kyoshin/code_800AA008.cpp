@@ -204,23 +204,20 @@ u32 func_800AA714(const char* path) {
     if (path == nullptr) return 0;
 
     const char* filePtr = ml::CPathUtil::getFilePtrFromPath(path);
+    ml::FixStr<64> nameBuf;
+    nameBuf = filePtr;
 
-    char nameBuf[64];
-    nameBuf[0] = '\0';
-    int nameLen = 0;
-    nameLen = strlen(filePtr);
-    strcpy(nameBuf, filePtr);
-
+    int extLen = nameBuf.size();
     int extOff;
-    if (nameLen == 0) {
+    if (extLen == 0) {
         extOff = -1;
     } else {
         int dotLen = strlen(lbl_eu_80661A40);
-        char* p = &nameBuf[nameLen - 1];
-        char* pEnd = &nameBuf[-1];
+        char* p = const_cast<char*>(nameBuf.c_str()) + 0x5F + extLen;
+        char* pEnd = const_cast<char*>(nameBuf.c_str()) + 0x5F;
         while (p != pEnd) {
             if (strncmp(p, lbl_eu_80661A40, dotLen) == 0) {
-                extOff = p - nameBuf;
+                extOff = (int)(p - nameBuf.mString);
                 goto found_ext;
             }
             p--;
@@ -230,32 +227,26 @@ u32 func_800AA714(const char* path) {
 
 found_ext:
     if (extOff + 1 > 1) {
-        if (nameLen != 0) {
-            char stripped[64];
-            stripped[0] = '\0';
-            int strippedLen = 0;
-
-            if (extOff == -1) {
-                extOff = nameLen;
+        if (extLen != 0) {
+            ml::FixStr<64> stripped;
+            if (extOff != -1) {
+                strncpy(stripped.mString, nameBuf.mString, extOff);
+                stripped.mString[extOff] = '\0';
+                stripped.mLength = strlen(stripped.mString);
             }
-            strncpy(stripped, nameBuf, extOff);
-            stripped[extOff] = '\0';
-            strippedLen = strlen(stripped);
-
-            nameLen = strlen(stripped);
-            strcpy(nameBuf, stripped);
+            nameBuf = stripped;
         }
     }
 
     u32 result = 0;
-    s8 firstChar = nameBuf[0];
-    s8 secondChar = nameBuf[1];
+    u8 firstChar = (u8)nameBuf[0];
+    u8 secondChar = (u8)nameBuf[1];
     const FormatEntry* entry = reinterpret_cast<const FormatEntry*>(lbl_eu_805283B0) + 1;
     for (int i = 0; i < 0x1E; i++) {
-        if ((s8)entry->name[0] == firstChar && (s8)entry->name[1] == secondChar) {
+        if ((u8)entry->name[0] == firstChar && (u8)entry->name[1] == secondChar) {
             u32 entryId = entry->id;
-            int remaining = nameLen - 2;
-            const char* nameTail = &nameBuf[2];
+            int remaining = nameBuf.mLength - 2;
+            const char* nameTail = &nameBuf.mString[2];
             u8 fmtType = entry->formatType;
 
             switch (fmtType) {
@@ -333,7 +324,7 @@ found_ext:
                 }
                 break;
             }
-            return result;
+            break;
         }
         entry++;
     }

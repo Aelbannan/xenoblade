@@ -716,32 +716,7 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-
-class CVS_THREAD{
-public:
-    u32* unk0;
-    u32 unk4;
-    u32 unk8;
-    u32 unkC;
-    u32 unk10;
-    u32 unk14;
-    u32 unk18;
-
-    CVS_THREAD();
-
-    //Virtual table (0x1c)
-    virtual void func_802A3B50();
-    virtual void func_802A3BEC();
-    virtual int blank1();
-    virtual void func_802A1EA0();
-    virtual void func_802A3740();
-    virtual int blank2();
-    int func_802A5ECC() { return 240; }
-};
-
-extern "C" unsigned int func_802A35A0(unsigned int value);
-/* end "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
-/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" line 3 "kyoshin/cf/voice/CCharVoice.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" line 3 "kyoshin/cf/voice/CCharVoice.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/voice/CCharVoice.hpp" line 2 "types.h" */
@@ -790,8 +765,184 @@ struct CCharVoice {
     void func_802A1304();
 };
 /* end "kyoshin/cf/voice/CCharVoice.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" line 4 "kyoshin/code_8027513C.hpp" */
+#pragma once
+
+/* "src/kyoshin/code_8027513C.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+
+class CfObjectImplTbox {
+public:
+    virtual ~CfObjectImplTbox();
+
+    // TODO: add fields
+};
+
+class CfObjectMove;
+class CfObjectEff;
+
+} // namespace cf
+
+// Target data struct pointed to by CfObjectMove::mTargetC4.
+// Real name unknown; used by func_80275454.
+struct UnkTargetData {
+    u8 _00[0xC];
+    u32 field_0xC;           // bit flags
+    u8 _10[0x3C4 - 0x10];
+    float field_0x3C4;
+    u8 _3C8[0x4EC - 0x3C8];
+    u32 field_0x4EC;          // bit flags
+    u8 _4F0[0x4F8 - 0x4F0];
+    float field_0x4F8;
+    u8 _4FC[0x504 - 0x4FC];
+    float field_0x504;
+    u8 _508[0x50C - 0x508];
+    float field_0x50C;
+};
+
+// Position container pointed to by CfObjectModel::field_0x90[8].
+// Real name unknown; contains world-space coordinates for effects.
+struct UnkPosContainer {
+    u8 _000[0x760];
+    float posX;    // 0x760
+    float posY;    // 0x764
+    float posZ;    // 0x768
+};
+
+// Camera/scene settings object returned by func_8049603C.
+// Real name unknown; float at 0xC read by func_80275454.
+struct UnkCamObj {
+    u8 _00[0xC];
+    float field_0xC;
+};
+
+// Layout wrapper for CfObjectEff to access field at offset 0xB0
+// without pointer arithmetic. Real field name unknown.
+struct CfObjectEffB0 {
+    u8 _00[0xB0];
+    u8* field_0xB0;
+};
+
+// TODO: identify real class name; contains embedded cf::CfObjectImplTbox subobjects
+class UnkCode8027513C {
+public:
+    u8 _00[0x14];
+    cf::CfObjectMove* field_0x14;   // pointer to CfObjectMove-derived instance
+    u8 _18[0x1C - 0x18];
+    int field_0x1C;
+    int field_0x20;
+    u8 _24[0x6C - 0x24];
+    u32 field_0x6C;                 // state counter for dispatch logic
+    u8 _70[0x74 - 0x70];
+    cf::CfObjectEff* field_0x74;
+    s16 field_0x78;
+};
+
+/* end "kyoshin/code_8027513C.hpp" */
+
+class CScn;
+
+// Polymorphic sub-object at CVoiceHandle+0x04 (used by CVS_THREAD_EHP).
+struct CVSubObj {
+    void** vtable;
+};
+
+class CVS_THREAD{
+public:
+    u32* unk0;
+    u32 unk4;
+    u32 unk8;
+    u32 unkC;
+    u32 unk10;
+    u32 unk14;
+    u32 unk18;
+
+    CVS_THREAD();
+
+    //Virtual table (0x1c)
+    virtual void func_802A3B50();
+    virtual void func_802A3BEC();
+    virtual int blank1();
+    virtual void func_802A1EA0();
+    virtual void func_802A3740();
+    virtual int blank2();
+    int func_802A5ECC() { return 240; }
+};
+
+// Voice-handle type.  CCharVoice voice is embedded at offset 0x3E9C.
+// Fields at 0x3F00 and 0x3F60 are accessed by func_802A4798 / func_802A3EF0.
+struct CVoiceHandle {
+    void** vtable;                              // 0x00
+    CVSubObj* field_0x04;                       // 0x04: sub-object pointer
+    u8 _pad[0x3E9C - 0x08];                     // 0x08-0x3E9B
+    CCharVoice voice;                           // 0x3E9C (0x40 bytes)
+    u8 _pad2[0x3F00 - (0x3E9C + 0x40)];         // 0x3EDC-0x3EFF
+    u32 field_0x3F00;                            // 0x3F00: flags
+    u8 _pad3a[0x3F08 - 0x3F04];                 // 0x3F04-0x3F07
+    u32 field_0x3f08;                            // 0x3F08: manager flag
+    u8 _pad3b[0x3F60 - 0x3F0C];                 // 0x3F0C-0x3F5F
+    void* field_0x3F60;                          // 0x3F60: party/voice data
+};
+
+// Inner struct reached via CVoiceHandle::field_0x3F60->field_0x08.
+// Value at +0x18 is checked for range [1,6] by func_802A4798.
+struct Field3F60Inner {
+    u8 _pad[0x8];
+    void* field_0x08;   // pointer to struct with field_0x18
+};
+
+// Target of Field3F60Inner::field_0x08; value at +0x18 checked.
+struct Field3F60Inner2 {
+    u8 _pad[0x18];
+    s32 field_0x18;     // checked for [1,6] range
+};
+
+extern "C" unsigned int func_802A35A0(unsigned int value);
+
+// Functions from this TU
+int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
+int func_802A3E88(CVS_THREAD* self);
+int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
+void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
+int func_802A4798(CVoiceHandle* handle);
+int func_802A3EF0(CVoiceHandle* handle);
+int func_802A3FD4(CVoiceHandle* handle);
+int func_802A4120(CVoiceHandle* handle);
+int func_802A4430(CVoiceHandle* handle);
+
+// Sibling TU functions
+CVoiceHandle* func_802A330C(int size, int align);
+int func_802A3E28();
+UnkCamObj* func_8049603C(CScn* scene);
+
+// Global symbols
+extern "C" {
+extern CScn* lbl_eu_80663E14;
+extern float lbl_eu_80668C88;
+extern float lbl_eu_80662CB0;
+extern float lbl_eu_80662CB4;
+extern float lbl_eu_80662CB8;
+}
+/* end "kyoshin/cf/voice/cvsys/CVS_THREAD.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" line 3 "kyoshin/cf/voice/CCharVoice.hpp" */
+/* end "kyoshin/cf/voice/CCharVoice.hpp" */
 
 struct CVoiceHandle;
+
+// The global voice-handle list is a circular list.  The node's payload is
+// stored at +8; +0 is the next node and the list's +4 is its end marker.
+struct CVoiceHandleListNode {
+    CVoiceHandleListNode* next;
+    CVoiceHandleListNode* previous;
+    CVoiceHandle* value;
+};
+
+struct CVoiceHandleList {
+    CVoiceHandleListNode* head;
+    CVoiceHandleListNode* end;
+};
 
 // CVS_THREAD_EHP: Voice thread for EHP (Emergency HP recovery) sequences.
 // Object size 0x48 (72 bytes). The buffer-size virtual (func_802A6818, the
@@ -821,48 +972,36 @@ public:
     u8 field_0x44;               // 0x44: direction flag
 };
 
-// Forward declaration of a polymorphic sub-object reached through a voice
-// handle (CVoiceHandle+0x04). Only the vtable pointer at offset 0 is used.
-struct CVSubObj {
-    void** vtable;               // 0x00: vtable pointer
-};
-
-// Voice-handle type. The actual CCharVoice is embedded at offset 0x3E9C
-// within the handle allocation (0x3E9C bytes of handle data + CCharVoice).
-// Code biases a handle pointer by 0x3E9C to reach the embedded CCharVoice.
-struct CVoiceHandle {
-    void** vtable;               // 0x00: vtable pointer
-    CVSubObj* field_0x04;        // 0x04: sub-object pointer (used by func_802A6820)
-    u8 _pad[0x3E9C - 0x08];      // 0x08-0x3E9B: handle data
-    CCharVoice voice;            // 0x3E9C: the actual voice object
-    u8 _pad_after_voice[0x3F08 - 0x3EDC];
-    u32 field_0x3f08;            // manager flag tested by func_802A6958
-};
-
-// The global voice-handle list is a circular list.  The node's payload is
-// stored at +8; +0 is the next node and the list's +4 is its end marker.
-struct CVoiceHandleListNode {
-    CVoiceHandleListNode* next;
-    CVoiceHandleListNode* previous;
-    CVoiceHandle* value;
-};
-
-struct CVoiceHandleList {
-    CVoiceHandleListNode* head;
-    CVoiceHandleListNode* end;
-};
-
 extern "C" {
 // Sibling TU functions (unmangled global symbols).
-int func_802A3E88(CVS_THREAD* self);
-void func_802A3BEC(CVS_THREAD* self, CCharVoice* voicePtr);
-int func_802A3C44(CVS_THREAD* self, CCharVoice* voicePtr, int voiceId);
-int func_802A3D54(CCharVoice* voicePtr, int voiceId, int arg);
+// Note: func_802A3E88, func_802A3BEC, func_802A3C44, func_802A3D54,
+//       func_802A330C are declared in CVS_THREAD.hpp.
 CVoiceHandle* func_802A7998(CVoiceHandle* exclude);
-CVoiceHandle* func_802A330C(int size, int align);
 int func_80174C98(CVoiceHandle* handle, u32* value, int arg);
 CVoiceHandleList* func_800B6BC8();
 int func_802A7FE4(CVoiceHandle* handle);
+u8* func_802A34E4(int size);
+void __ct__cf_CVS_THREAD(CVS_THREAD* self);
+int func_802A77E8(CVoiceHandle* handle);
+int func_802A7B90(CVoiceHandle* handle1, CVoiceHandle* handle2);
+int func_802A7870(CVoiceHandle** slots, int count, CVoiceHandle* owner);
+
+// Init-data tables (3 u32s each) and vtable.
+extern u32 lbl_eu_80539B14[3];
+extern u32 lbl_eu_80539B20[3];
+extern u32 lbl_eu_80539B2C[7];
+extern u32 lbl_eu_80539ADC[3];
+extern u32 lbl_eu_80539AC4[3];
+extern u32 lbl_eu_80539AD0[3];
+extern u32 lbl_eu_80539AB8[3];
+
+// Jump table for func_802A6408 switch (11 entries).
+extern u32 jumptable_eu_80539AE8[11];
+
+// Float / double constants.
+extern float lbl_eu_80668C90;
+extern float lbl_eu_80668C94;
+extern double lbl_eu_80668C98;
 }
 /* end "kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.hpp" */
 /* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp" line 5 "monolib/math/Random.hpp" */
@@ -880,12 +1019,78 @@ namespace ml{
     } //namespace math
 } //namespace ml
 /* end "monolib/math/Random.hpp" */
+/* "src/kyoshin/cf/voice/cvsys/CVS_THREAD_EHP.cpp" line 6 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
 
-// Init-data tables (3 u32s each: {0, -1, callback}). Each slot state carries
-// a {field_0, field_4, callback} triple that the rotation function copies into
-// unk0/unk4/unk8 when the rotating index is not at the stop index.
-extern "C" u32 lbl_eu_80539B14[3]; // {0, -1, func_802A6408}
-extern "C" u32 lbl_eu_80539B20[3]; // {0, -1, func_802A6718}
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "string.h" */
+
+
 
 // Virtual method override: returns the buffer size for this thread type.
 // Matches CVS_THREAD::blank1 slot in vtable; EHP subclass returns 0xB4 (180).
@@ -996,16 +1201,14 @@ void func_802A6650(CVS_THREAD_EHP* self) {
     CVoiceHandle* handle = func_802A7998(self->field_0x24);
     if (handle != NULL) {
         // is-active check via the handle's vtable (offset 0x2BC).
-        typedef int (*VtableFunc)(CVoiceHandle*);
-        VtableFunc isActive = (VtableFunc)handle->vtable[0x2BC / 4];
+        typedef int (*IsActiveFunc)(CVoiceHandle*);
+        IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
         if (isActive(handle) == 0) {
-            // Bias handle pointer in place to reach the embedded
-            // CCharVoice at +0x3E9C, reusing the register.
-            if (handle != NULL) {
-                handle = (CVoiceHandle*)((u8*)handle + 0x3E9C);
-            }
+            // Voice is not active -- play a random voice ID.
             CCharVoice* voicePtr = (CCharVoice*)handle;
-
+            if (handle != NULL) {
+                voicePtr = &handle->voice;
+            }
             int voiceId = ml::math::mtRand(2) + 0x51D;
             if (func_802A3C44(self, voicePtr, voiceId) != 0) {
                 return;
@@ -1026,35 +1229,30 @@ int func_802A6820(int a, int b) {
         return 0;
     }
 
-    CVoiceHandle* handle = func_802A7998(NULL);
+    CVoiceHandle* handle = func_802A7998((CVoiceHandle*)0);
     if (handle == NULL) {
         return 0;
     }
 
-    // is-active check via the handle's vtable (offset 0x2BC).
-    {
-        typedef int (*VtableFunc)(CVoiceHandle*);
-        VtableFunc isActive = (VtableFunc)handle->vtable[0x2BC / 4];
-        if (isActive(handle) != 0) {
-            return 0;
-        }
+    // Skip if the current voice is still active.
+    typedef int (*IsActiveFunc)(CVoiceHandle*);
+    IsActiveFunc isActive = (IsActiveFunc)handle->vtable[0x2BC / 4];
+    if (isActive(handle) != 0) {
+        return 0;
     }
 
-    // Read a u32 value from the handle's sub-object (vtable offset 0x30)
-    // and check a category flag via func_80174C98.
+    // Read a u32 value from the handle's sub-object (vtable offset 0x30) and
+    // gate the selection on a category check (func_80174C98).
     CVSubObj* subobj = handle->field_0x04;
-    {
-        typedef u32* (*GetValueFunc)(CVSubObj*);
-        GetValueFunc getValue = (GetValueFunc)subobj->vtable[0x30 / 4];
-        u32* p = getValue(subobj);
-        u32 value = *p;
-        if (func_80174C98(handle, &value, 0x803) == 0) {
-            return 0;
-        }
+    typedef u32* (*GetPtrFunc)(CVSubObj*);
+    GetPtrFunc getPtr = (GetPtrFunc)subobj->vtable[0x30 / 4];
+    u32* result = getPtr(subobj);
+    u32 value = *result;
+    if (func_80174C98(handle, &value, 0x803) == 0) {
+        return 0;
     }
 
     // Choose the voice ID from the relationship between a and b.
-    // r30 holds b and is later reused for the selected voice ID.
     if (b < a && a >= 2) {
         b = ml::math::mtRand(2) + 0x6A5;
     } else if (a < b && a == 1) {
@@ -1068,97 +1266,237 @@ int func_802A6820(int a, int b) {
         return 0;
     }
 
-    // Bias handle pointer in place to reach the embedded CCharVoice
-    // at +0x3E9C, reusing the register.
-    if (handle != NULL) {
-        handle = (CVoiceHandle*)((u8*)handle + 0x3E9C);
-    }
+    // Play the selected voice on the (biased) handle.
     CCharVoice* voicePtr = (CCharVoice*)handle;
-
+    if (handle != NULL) {
+        voicePtr = &handle->voice;
+    }
     func_802A3D54(voicePtr, b, 0xAA);
     return 0;
 }
 
-// Stubs for functions not yet decompiled in this TU.
-void __ct__802A5ED4() {}
-void func_802A617C() {}
-void func_802A6408() {}
+// ── Target 1: us-802a8b3c (func_802A6408) ──────────────────────────────────
+// Voice-play callback: loads init data from lbl_eu_80539ADC, checks that both
+// field_0x24 and the current rotating slot handle are inactive, switches on
+// the owner state (func_802A77E8) to select a voice ID, and plays it through
+// the voice-rotation system. Fallback calls vtable slot 2 (blank1).
+void func_802A6408(CVS_THREAD_EHP* self) {
+    typedef int (*IsActiveFunc)(CVoiceHandle*);
 
-// ── Target 3: us-802a908c (func_802A6958) ──────────────────────────────────
-// Voice play function.  Checks a manager flag (field_0x3f08 bit 16), then
-// scans the global voice-handle list for an inactive handle whose category
-// matches (func_80174C98 with 0x803).  On success allocates 0x28 bytes and
-// plays voice ID 0xA8D on the original handle's embedded CCharVoice.
-int func_802A6958(CVoiceHandle* arg) {
-    int found = 0;
+    // Load init data triple from lbl_eu_80539ADC using pointer increment.
+    const u32* p = lbl_eu_80539ADC;
+    u32 v0 = *p++;
+    CVoiceHandle* h24 = self->field_0x24;
+    self->unk4 = *p++;
+    self->unk0 = (u32*)v0;
+    self->unk8 = *p;
 
-    // Test bit 16 (0x10000) of the manager flag.
-    if (!(arg->field_0x3f08 & 0x10000)) {
-        return 0;
-    }
-
-    // is-active check via the handle's vtable (offset 0x2BC).
+    if (h24 == NULL) goto fallback;
     {
-        typedef int (*VtableFunc)(CVoiceHandle*);
-        VtableFunc isActive = (VtableFunc)arg->vtable[0x2BC / 4];
-        if (isActive(arg) != 0) {
-            return 0;
-        }
+        IsActiveFunc isActive = (IsActiveFunc)h24->vtable[0x2BC / 4];
+        if (isActive(h24) != 0) goto fallback;
     }
+    if (self->field_0x2c[self->field_0x38] == NULL) goto fallback;
+    {
+        CVoiceHandle* slotHandle = self->field_0x2c[self->field_0x38];
+        IsActiveFunc isActive2 = (IsActiveFunc)slotHandle->vtable[0x2BC / 4];
+        if (isActive2(slotHandle) != 0) goto fallback;
 
-    CVoiceHandleList* list = func_800B6BC8();
-    CVoiceHandleListNode* node = list->end->next;
-    while (node != list->end) {
-        // The list stores pointers biased by +0x3E9C (pointing to the
-        // embedded CCharVoice, not the CVoiceHandle base).  Recover the
-        // CVoiceHandle by subtracting the offset in place.
-        u8* raw = (u8*)node->value;
-        if (raw != NULL) {
-            raw = raw - 0x3E9C;
-        }
-        CVoiceHandle* handle = (CVoiceHandle*)raw;
-        // is-active check on the recovered handle.
-        {
-            typedef int (*VtableFunc)(CVoiceHandle*);
-            VtableFunc isActive = (VtableFunc)handle->vtable[0x2BC / 4];
-            if (isActive(handle) == 0) {
-                // Check category via the sub-object at field_0x04.
-                CVSubObj* subobj = handle->field_0x04;
-                typedef u32* (*GetValueFunc)(CVSubObj*);
-                GetValueFunc getValue =
-                    (GetValueFunc)subobj->vtable[0x30 / 4];
-                u32* p = getValue(subobj);
-                u32 value = *p;
-                if (func_80174C98(handle, &value, 0x803) != 0) {
-                    found = 1;
-                    break;
+        int state = func_802A77E8(self->field_0x24);
+        int voiceId;
+        if (state > 10) {
+            voiceId = -1;
+        } else {
+            switch (state) {
+            case 0:  voiceId = 0xAF1; break;
+            case 1:  voiceId = 0xAF2; break;
+            case 2:  voiceId = 0xAF3; break;
+            case 3:  voiceId = 0xAF4; break;
+            case 4:  voiceId = 0xAF5; break;
+            case 5:
+                if (func_802A7B90(slotHandle, self->field_0x24) != 0) {
+                    voiceId = 0x450;
+                } else {
+                    voiceId = 0xAF6;
                 }
+                break;
+            case 6:  voiceId = 0xAF7; break;
+            case 7:  voiceId = 0xAF8; break;
+            case 8:  voiceId = 0xAF9; break;
+            case 9:  voiceId = 0xAFA; break;
+            default: voiceId = -1; break;
             }
         }
-
-        node = node->next;
+        if (voiceId > 0) {
+            CCharVoice* voicePtr = NULL;
+            if (slotHandle != NULL) {
+                voicePtr = &slotHandle->voice;
+            }
+            if (func_802A3C44(self, voicePtr, voiceId) != 0) {
+                return;
+            }
+        }
     }
-
-    if (found == 0) {
-        return 0;
-    }
-
-    // Allocate 0x28 bytes.
-    if (func_802A330C(0x28, 1) == NULL) {
-        return 0;
-    }
-
-    if (func_802A7FE4(arg) != 0) {
-        return 0;
-    }
-
-    // Bias arg in place to get the embedded CCharVoice at +0x3E9C,
-    // reusing the same register for the cast to avoid a copy.
-    if (arg != NULL) {
-        arg = (CVoiceHandle*)((u8*)arg + 0x3E9C);
-    }
-    CCharVoice* voicePtr = (CCharVoice*)arg;
-
-    func_802A3D54(voicePtr, 0xA8D, 0x28);
-    return 0;
+fallback:
+    // Call vtable slot 2 (blank1 override = func_802A6818).
+    func_802A6818();
 }
+
+// ── Target 2: us-802a88b0 (func_802A617C) ──────────────────────────────────
+// Update/play function: computes HP-ratio thresholds using vtable getters on
+// field_0x20 (getBegin at vtable[74], getEnd at vtable[75]), then either
+// initializes the rotating slot array with a random stop index, or plays a
+// random voice on field_0x24, depending on which threshold condition is met.
+void func_802A617C(CVS_THREAD_EHP* self) {
+    typedef int (*IsActiveFunc)(CVoiceHandle*);
+    typedef float (*GetFloatFunc)(CVoiceHandle*);
+
+    if (self->field_0x20 == NULL) goto fallback;
+    if (self->field_0x24 == NULL) goto fallback;
+    {
+        IsActiveFunc isActive = (IsActiveFunc)self->field_0x24->vtable[0x2BC / 4];
+        if (isActive(self->field_0x24) != 0) goto fallback;
+    }
+
+    // First ratio check: (begin - field_0x28) / end  and  begin / end
+    {
+        CVoiceHandle* h20 = self->field_0x20;
+        GetFloatFunc getEnd = (GetFloatFunc)h20->vtable[0x12C / 4];
+        GetFloatFunc getBegin = (GetFloatFunc)h20->vtable[0x128 / 4];
+
+        float current = (float)self->field_0x28;
+        float end = getEnd(h20);
+        float begin = getBegin(h20);
+        float ratio2 = (begin - current) / end;
+        end = getEnd(h20);
+        begin = getBegin(h20);
+        float ratio1 = begin / end;
+
+        if (ratio1 <= lbl_eu_80668C90 && ratio2 > lbl_eu_80668C90) {
+            // Path 1: initialize rotating slots with random stop.
+            const u32* p = lbl_eu_80539AC4;
+            u32 v0 = *p++;
+            self->unk4 = *p++;
+            self->unk0 = (u32*)v0;
+            self->unk8 = *p;
+
+            s32 slots = func_802A7870(self->field_0x2c, 3, self->field_0x24);
+            self->field_0x3c = slots;
+            if (slots <= 0) goto fallback;
+            self->field_0x40 = ml::math::mtRand(slots);
+            self->field_0x38 = self->field_0x40;
+            return;
+        }
+    }
+
+    // Second ratio check with different threshold.
+    {
+        CVoiceHandle* h20 = self->field_0x20;
+        GetFloatFunc getEnd = (GetFloatFunc)h20->vtable[0x12C / 4];
+        GetFloatFunc getBegin = (GetFloatFunc)h20->vtable[0x128 / 4];
+
+        float current = (float)self->field_0x28;
+        float end = getEnd(h20);
+        float begin = getBegin(h20);
+        float ratio2 = (begin - current) / end;
+        end = getEnd(h20);
+        begin = getBegin(h20);
+        float ratio1 = begin / end;
+
+        if (ratio1 <= lbl_eu_80668C94 && ratio2 > lbl_eu_80668C94) {
+            // Path 2: play a random voice on field_0x24.
+            const u32* p = lbl_eu_80539AD0;
+            u32 v0 = *p++;
+            self->unk4 = *p++;
+            self->unk0 = (u32*)v0;
+            self->unk8 = *p;
+
+            CCharVoice* voicePtr = NULL;
+            if (self->field_0x24 != NULL) {
+                voicePtr = &self->field_0x24->voice;
+            }
+            int voiceId = ml::math::mtRand(2) + 0x517;
+            if (func_802A3C44(self, voicePtr, voiceId) != 0) {
+                return;
+            }
+        }
+    }
+
+fallback:
+    func_802A6818();
+}
+
+// ── Target 3: us-802a8608 (__ct__802A5ED4) ──────────────────────────────────
+// Factory constructor for CVS_THREAD_EHP. Takes an owner voice handle and a
+// second handle, validates HP-ratio thresholds, allocates buffer (0xB4) and
+// object (0x48), initializes fields, sets random direction, and returns the
+// new object (or NULL on failure).
+CVS_THREAD_EHP* __ct__802A5ED4(CVoiceHandle* owner, CVoiceHandle* handle, s32 value) {
+    if (value >= 0) return NULL;
+    if (!(owner->field_0x3F00 & 4)) return NULL;
+
+    typedef float (*GetFloatFunc)(CVoiceHandle*);
+    GetFloatFunc getEnd = (GetFloatFunc)owner->vtable[0x12C / 4];
+    GetFloatFunc getBegin = (GetFloatFunc)owner->vtable[0x128 / 4];
+
+    float current = (float)value;
+    float end = getEnd(owner);
+    float begin = getBegin(owner);
+    float ratio2 = (begin - current) / end;
+    end = getEnd(owner);
+    begin = getBegin(owner);
+    float ratio1 = begin / end;
+
+    int ok = 0;
+    if (ratio1 <= lbl_eu_80668C90 && ratio2 > lbl_eu_80668C90) {
+        ok = 1;
+    } else {
+        // Try second threshold.
+        end = getEnd(owner);
+        begin = getBegin(owner);
+        ratio2 = (begin - current) / end;
+        end = getEnd(owner);
+        begin = getBegin(owner);
+        ratio1 = begin / end;
+        if (ratio1 <= lbl_eu_80668C94 && ratio2 > lbl_eu_80668C94) {
+            ok = 1;
+        }
+    }
+    if (!ok) return NULL;
+
+    // Allocate the voice buffer and object.
+    if (func_802A330C(0xB4, 1) == NULL) return NULL;
+    CVS_THREAD_EHP* self = (CVS_THREAD_EHP*)func_802A34E4(0x48);
+    if (self == NULL) return NULL;
+
+    // Base constructor.
+    __ct__cf_CVS_THREAD(self);
+
+    // Set vtable and fields.
+    ((u32*)self)[7] = (u32)lbl_eu_80539B2C;
+    self->field_0x20 = owner;
+    self->field_0x24 = handle;
+    self->field_0x28 = value;
+
+    // Clear the 3 rotating slots (0xC bytes at 0x2C).
+    memset(&self->field_0x2c, 0, 0xC);
+
+    self->field_0x3c = 0;
+    self->field_0x38 = 0;
+    self->field_0x40 = 0;
+
+    // Random direction: 0 or 1.
+    self->field_0x44 = (ml::math::mtRand(2) != 0) ? 1 : 0;
+
+    // Load init data from lbl_eu_80539AB8.
+    const u32* p = lbl_eu_80539AB8;
+    u32 v0 = *p++;
+    self->unk4 = *p++;
+    self->unk0 = (u32*)v0;
+    self->unk8 = *p;
+
+    return self;
+}
+
+// Stub for function not yet decompiled in this TU.
+void func_802A6958() {}

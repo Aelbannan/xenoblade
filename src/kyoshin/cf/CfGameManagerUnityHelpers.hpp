@@ -723,12 +723,13 @@ extern "C" u32 func_80083718__Q22cf13CfGameManagerFv(u32 first, u32 second) {
 #pragma dont_inline reset
 
 extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 second,
-                                                        u32 third);
-extern "C" void func_8007C344__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third) {
-    func_8007C198__Q22cf13CfGameManagerFv(0, first, second, third);
+                                                        float value, u8 enabled);
+extern "C" void func_8007C344__Q22cf13CfGameManagerFv(u32 first, u32 second, u8 enabled,
+                                                        float value) {
+    func_8007C198__Q22cf13CfGameManagerFv(0, first, second, value, enabled);
 }
-extern "C" void func_8007C360__Q22cf13CfGameManagerFv(u32 first, u32 second) {
-    func_8007C198__Q22cf13CfGameManagerFv(1, first, second, 1);
+extern "C" void func_8007C360__Q22cf13CfGameManagerFv(u32 first, u32 second, float value) {
+    func_8007C198__Q22cf13CfGameManagerFv(1, first, second, value, 1);
 }
 
 extern "C" void func_80081258__Q22cf13CfGameManagerFv(UnkReset28Data* data) {
@@ -2391,12 +2392,13 @@ extern "C" void func_8007D7A4__Q22cf13CfGameManagerFv() {
 }
 
 extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 second,
-                                                        u32 third) {
+                                                        float value, u8 enabled) {
     BdatTextEntry* base = &lbl_eu_80571658[mode];
-    base->value = third;
-    base->enabled = 0;
+    base->value = value;
+    base->enabled = enabled;
     if (first == 0) {
         if (base->textLength != 0) {
+            base->enabled = 0;
             base->text[0] = 0;
             base->textLength = 0;
             base->secondaryText[0] = 0;
@@ -2405,19 +2407,19 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
         }
         return;
     }
-    const char* fp = getFP__FPCc(lbl_eu_804FB824);
-    u32 val_a = getBdatStringColumnValue(lbl_eu_804FB824 + 8, first);
-    u32 val_b = getBdatStringColumnValue(lbl_eu_804FB824 + 8, second);
+    BdatFilePointer* file = getFP__FPCc(lbl_eu_804FB824);
+    const char* val_a = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, first);
+    const char* val_b = getBdatStringColumnValue(file, lbl_eu_804FB824 + 8, second);
     if (mode == 0) {
         if (strcmp(base->text, val_a) != 0 || strcmp(base->secondaryText, val_b) != 0) {
             lbl_eu_80663E24 |= 8;
         }
     }
-    strcpy(base->text, reinterpret_cast<const char*>(val_a));
-    base->textLength = strlen(reinterpret_cast<const char*>(val_a));
+    strcpy(base->text, val_a);
+    base->textLength = strlen(val_a);
     if (val_b != 0) {
-        strcpy(base->secondaryText, reinterpret_cast<const char*>(val_b));
-        base->secondaryTextLength = strlen(reinterpret_cast<const char*>(val_b));
+        strcpy(base->secondaryText, val_b);
+        base->secondaryTextLength = strlen(val_b);
     } else {
         base->secondaryText[0] = 0;
         base->secondaryTextLength = 0;

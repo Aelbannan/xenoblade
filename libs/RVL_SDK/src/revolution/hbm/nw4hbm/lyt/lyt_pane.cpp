@@ -88,7 +88,7 @@ Pane::Pane(const res::Pane* pRes) {
 void Pane::Init() {
     mpParent = NULL;
     mpMaterial = NULL;
-    mpExtUserDataList = NULL;
+    std::memset(mpExtUserDataList, 0, sizeof(mpExtUserDataList));
 }
 
 Pane::~Pane() {
@@ -396,37 +396,48 @@ AnimationLink* Pane::FindAnimationLink(AnimTransform* pAnimTrans) {
 
 void Pane::SetAnimationEnable(AnimTransform* pAnimTrans, bool enable,
                               bool recursive) {
-
-    AnimationLink* pAnimLink = FindAnimationLink(pAnimTrans);
+    AnimationLink* pAnimLink = detail::FindAnimationLink(&mAnimList, pAnimTrans);
 
     if (pAnimLink != NULL) {
         pAnimLink->SetEnable(enable);
     }
 
-    u8 materialNum = GetMaterialNum();
-
-    for (u8 i = 0; i < materialNum; i++) {
-        GetMaterial(i)->SetAnimationEnable(pAnimTrans, enable);
+    if (mpMaterial != NULL) {
+        mpMaterial->SetAnimationEnable(pAnimTrans, enable);
     }
-    
+
     if (recursive) {
-        NW4R_UT_LINKLIST_FOREACH (it, mChildList, 
+        NW4R_UT_LINKLIST_FOREACH (it, mChildList,
             { it->SetAnimationEnable(pAnimTrans, enable, recursive); })
     }
 }
 
 void Pane::LoadMtx(const DrawInfo& rInfo) {
-    math::MTX34 mtx;
-    math::MTX34* pMtx = NULL;
+    Mtx mtx;
+    const ut::Rect& rect = rInfo.GetViewRect();
 
     if (rInfo.IsMultipleViewMtxOnDraw()) {
-        math::MTX34Mult(&mtx, &rInfo.GetViewMtx(), &mGlbMtx);
-        pMtx = &mtx;
-    }else{
-        pMtx = &mGlbMtx;
+        PSMTXConcat(rInfo.GetViewMtx(), mGlbMtx, mtx);
+
+        if (rect.bottom - rect.top < 0.0f) {
+            mtx[0][1] = -mtx[0][1];
+            mtx[1][1] = -mtx[1][1];
+            mtx[2][1] = -mtx[2][1];
+        }
+    } else {
+        if (rect.bottom - rect.top < 0.0f) {
+            PSMTXCopy(mGlbMtx, mtx);
+            mtx[0][1] = -mtx[0][1];
+            mtx[1][1] = -mtx[1][1];
+            mtx[2][1] = -mtx[2][1];
+        } else {
+            GXLoadPosMtxImm(mGlbMtx, GX_PNMTX0);
+            GXSetCurrentMtx(GX_PNMTX0);
+            return;
+        }
     }
 
-    GXLoadPosMtxImm(*pMtx, GX_PNMTX0);
+    GXLoadPosMtxImm(mtx, GX_PNMTX0);
     GXSetCurrentMtx(GX_PNMTX0);
 }
 
@@ -458,13 +469,13 @@ math::VEC2 Pane::GetVtxPos() const {
         break;
     }
 
-    case HORIZONTALPOSITION_CENTER: {
-        base.y = mSize.height / 2;
+    case VERTICALPOSITION_CENTER: {
+        base.y = -mSize.height / 2;
         break;
     }
 
-    case HORIZONTALPOSITION_RIGHT: {
-        base.y = mSize.height;
+    case VERTICALPOSITION_BOTTOM: {
+        base.y = -mSize.height;
         break;
     }
     }

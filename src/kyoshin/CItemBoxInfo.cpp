@@ -957,7 +957,7 @@ u32 func_801E9690(u16 arg1, u32 arg2) {
 }
 
 u32 func_801E92B8(void* dummy, void* arg1) {
-    void* obj = (u8*)func_8009EC9C((u16)(u32)arg1) + 0x3534;
+    void* obj = (u8*)func_8009EC9C((u8)(u32)arg1) + 0x3534;
     if (func_8026178C(obj, 0x2d) != 0) {
         return func_8025FB10(obj, 0x2d);
     }

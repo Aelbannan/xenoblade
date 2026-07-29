@@ -280,15 +280,14 @@ protected:
     
     char mName[NW4R_LYT_RES_NAME_LEN + 1];     // at 0xB4
 
-    const ExtUserDataList* mpExtUserDataList; // at 0xC5
-    u32 field_0xB8;                            // at 0xC9
+    char mpExtUserDataList[4]; // at 0xC5
 
-    u8 mAlpha;        // at 0xCD
-    u8 mGlbAlpha;     // at 0xCE
-    u8 mFlag;         // at 0xCF
-    u8 mBasePosition; // at 0xD0
+    u8 mAlpha;        // at 0xC9
+    u8 mGlbAlpha;     // at 0xCA
+    u8 mFlag;         // at 0xCB
+    u8 mBasePosition; // at 0xCC
 
-    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xD1
+    char mUserData[NW4R_LYT_PANE_USERDATA_LEN]; // at 0xCD
 
 protected:
     void InsertChild(PaneList::Iterator next, Pane* pChild);

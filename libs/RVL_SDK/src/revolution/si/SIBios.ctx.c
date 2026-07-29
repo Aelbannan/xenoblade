@@ -4062,11 +4062,11 @@ static u32 Type[SI_MAX_CHAN] = {SI_ERROR_NOREP, SI_ERROR_NOREP, SI_ERROR_NOREP,
 static SIPacket Packet[SI_MAX_CHAN];
 static s64 XferTime[SI_MAX_CHAN];
 static s64 TypeTime[SI_MAX_CHAN];
-static BOOL InputBufferValid[SI_MAX_CHAN];
-static u32 InputBuffer[SI_MAX_CHAN][2];
-static OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
-static u32 InputBufferVcount[SI_MAX_CHAN];
 static OSAlarm Alarm[SI_MAX_CHAN];
+static u32 InputBuffer[SI_MAX_CHAN][2];
+static BOOL InputBufferValid[SI_MAX_CHAN];
+static u32 InputBufferVcount[SI_MAX_CHAN];
+static OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
 static u32 cmdFixDevice[SI_MAX_CHAN];
 static SICallback TypeCallback[SI_MAX_TYPE][SI_MAX_CHAN];
 static u32 __PADFixBits;
@@ -4132,9 +4132,170 @@ u32 CompleteTransfer(void) {
     return sr;
 }
 
-// TODO
+typedef struct SIWork {
+    SIPacket Packet[SI_MAX_CHAN];
+    s64 XferTime[SI_MAX_CHAN];
+    s64 TypeTime[SI_MAX_CHAN];
+    OSAlarm Alarm[SI_MAX_CHAN];
+    u32 InputBuffer[SI_MAX_CHAN][2];
+    BOOL InputBufferValid[SI_MAX_CHAN];
+    u32 InputBufferVcount[SI_MAX_CHAN];
+    OSInterruptHandler RDSTHandler[SI_MAX_CHAN];
+} SIWork;
+
+static void GetTypeCallback(s32 chan, u32 status);
+
 static void SIInterruptHandler(s32 intr, OSContext* ctx) {
-    ;
+    static u32 cmdTypeAndStatus;
+    SIWork* w;
+    u32 comcsr;
+    s32 chan;
+    u32 result;
+    SICallback callback;
+    s32 idx;
+    s32 i;
+    SIPacket* packet;
+    s64 now;
+    BOOL enabled;
+    u32 sr;
+    u32 busInUse;
+    volatile u32* hwRegs;
+    u32* inputBuf;
+    BOOL* inputBufValid;
+    u32* inputBufVcount;
+
+    w = (SIWork*)Packet;
+    comcsr = SI_HW_REGS[SI_SICOMSCR];
+
+    /* TCINT: transfer completed */
+    if ((comcsr & ~3) == 0xC0000000) {
+        chan = Si.chan;
+        result = CompleteTransfer();
+        callback = Si.callback;
+        Si.callback = NULL;
+
+        /* Resubmit pending packets starting from next channel */
+        idx = chan;
+        for (i = 0; i < SI_MAX_CHAN; i++) {
+            idx++;
+            idx %= 4;
+            packet = &w->Packet[idx];
+            if (packet->chan == SI_CHAN_NONE) {
+                continue;
+            }
+            now = __OSGetSystemTime();
+            if (now < packet->fire) {
+                continue;
+            }
+            if (!__SITransfer(packet->chan, packet->outAddr, packet->outSize,
+                              packet->inAddr, packet->inSize,
+                              packet->callback)) {
+                break;
+            }
+            OSCancelAlarm(&w->Alarm[idx]);
+            packet->chan = SI_CHAN_NONE;
+            break;
+        }
+
+        if (callback != NULL) {
+            ((void (*)(s32, u32, OSContext*))callback)(chan, result, ctx);
+        }
+
+        /* Clear error bits for the serviced channel */
+        sr = SI_HW_REGS[SI_SISR];
+        sr &= 0x0F000000 >> (chan * 8);
+        SI_HW_REGS[SI_SISR] = sr;
+
+        /* If channel type is BUSY and bus is free, trigger a GetType probe */
+        if (Type[chan] == SI_ERROR_BUSY) {
+            busInUse = 0;
+            if (w->Packet[chan].chan != SI_CHAN_NONE) {
+                busInUse = 1;
+            } else if (Si.chan == chan) {
+                busInUse = 1;
+            }
+
+            if (!busInUse) {
+                SITransfer(chan, &cmdTypeAndStatus, 1, &Type[chan], 3,
+                           GetTypeCallback, OS_USEC_TO_TICKS(65));
+            }
+        }
+    }
+
+    /* RDSTINT: read status data available */
+    if ((comcsr & 0x18000000) == 0x18000000) {
+        s32 vcount = VIGetCurrentLine() + 1;
+        u32 poll = Si.poll;
+        u32 pollLines = (poll >> 16) & 0x3FF;
+
+        hwRegs = &SI_HW_REGS[SI_SIC0OUTBUF];
+        inputBuf = w->InputBuffer[0];
+        inputBufValid = w->InputBufferValid;
+        inputBufVcount = w->InputBufferVcount;
+
+        for (i = 0; i < SI_MAX_CHAN; i++) {
+            enabled = OSDisableInterrupts();
+            sr = SI_HW_REGS[SI_SISR] >> ((3 - i) * 8);
+
+            /* If NOREP error and not busy, mark channel as NOREP */
+            if ((sr & SI_NOREP) && !(Type[i] & SI_ERROR_BUSY)) {
+                Type[i] = SI_ERROR_NOREP;
+            }
+
+            OSRestoreInterrupts(enabled);
+
+            /* Capture RDST data */
+            if (sr & SI_RDST) {
+                inputBuf[0] = hwRegs[SI_SIC0INBUFH - SI_SIC0OUTBUF];
+                inputBuf[1] = hwRegs[SI_SIC0INBUFL - SI_SIC0OUTBUF];
+                *inputBufValid = TRUE;
+                *inputBufVcount = vcount;
+                enabled = 1;
+            } else {
+                enabled = 0;
+            }
+
+            if (enabled) {
+                *inputBufVcount = vcount;
+            }
+
+            hwRegs += 3;
+            inputBuf += 2;
+            inputBufValid++;
+            inputBufVcount++;
+        }
+
+        poll = Si.poll;
+
+        /* For each channel with polling enabled, check if data is fresh.
+         * If ANY polled channel has stale/missing data, skip the handlers.
+         * If ALL polled channels have fresh data, clear counters and
+         * call RDST handlers. */
+        if ((poll & 0x80) &&
+            (w->InputBufferVcount[0] == 0 ||
+             vcount > pollLines / 2 + w->InputBufferVcount[0])) {
+        } else if ((poll & 0x40) &&
+                   (w->InputBufferVcount[1] == 0 ||
+                    vcount > pollLines / 2 + w->InputBufferVcount[1])) {
+        } else if ((poll & 0x20) &&
+                   (w->InputBufferVcount[2] == 0 ||
+                    vcount > pollLines / 2 + w->InputBufferVcount[2])) {
+        } else if ((poll & 0x10) &&
+                   (w->InputBufferVcount[3] == 0 ||
+                    vcount > pollLines / 2 + w->InputBufferVcount[3])) {
+        } else {
+            w->InputBufferVcount[0] = 0;
+            w->InputBufferVcount[1] = 0;
+            w->InputBufferVcount[2] = 0;
+            w->InputBufferVcount[3] = 0;
+
+            for (i = 0; i < SI_MAX_CHAN; i++) {
+                if (w->RDSTHandler[i] != NULL) {
+                    w->RDSTHandler[i](intr, ctx);
+                }
+            }
+        }
+    }
 }
 
 void SIInit(void) {

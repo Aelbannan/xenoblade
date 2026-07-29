@@ -15,9 +15,11 @@ namespace snd {
 namespace detail {
 
 // Forward declarations
-struct WaveInfo;
+struct WaveData;
 
 class Channel {
+    friend class ChannelManager;
+
 public:
     enum ChannelCallbackStatus {
         CALLBACK_STATUS_STOPPED,
@@ -199,7 +201,7 @@ private:
 private:
     EnvGenerator mEnvelope; // at 0x0
     Lfo mLfo;               // at 0x1C
-    u8 mLfoTarget;          // at 0x34
+    u8 mBiquadFilterType;   // at 0x34
 
     bool mPauseFlag;              // at 0x35
     bool mActiveFlag;             // at 0x36
@@ -207,15 +209,18 @@ private:
     bool mAutoSweep;              // at 0x38
     bool mReleasePriorityFixFlag; // at 0x39
     u8 field_0x3A;                // at 0x3A
-    u8 mBiquadFilterType;         // at 0x3B
+    u8 mLfoTarget;                // at 0x3B
+    u8 mPanMode;                  // at 0x3C
+    u8 mPanCurve;                 // at 0x3D
+    u8 mRemoteFilter;             // at 0x3E
+    u8 PADDING_0x3F;              // at 0x3F
 
-    f32 mUserVolume;      // at 0x3C
-    f32 mUserPitchRatio;  // at 0x40
-    f32 mUserPan;         // at 0x44
-    f32 mUserSurroundPan; // at 0x48
-    f32 mUserLpfFreq;     // at 0x4C
+    f32 mUserVolume;      // at 0x40
+    f32 mUserPitchRatio;  // at 0x44
+    f32 mUserPan;         // at 0x48
+    f32 mUserSurroundPan; // at 0x4C
+    f32 mUserLpfFreq;     // at 0x50
 
-    int mRemoteFilter;   // at 0x50
     f32 mBiquadFilterValue;   // at 0x54
     int mOutputLineFlag;      // at 0x58
     f32 mMainOutVolume;       // at 0x5C
@@ -241,18 +246,17 @@ private:
     int mOriginalKey; // at 0xCC
     int mLength;      // at 0xD0
 
-    PanMode mPanMode;   // at 0xD4
-    PanCurve mPanCurve; // at 0xD8
+    u32 field_0xD4;    // at 0xD4
+    u32 field_0xD8;    // at 0xD8
+    u32 field_0xDC;    // at 0xDC
 
-    ChannelCallback mCallback; // at 0xDC
-    u32 mCallbackData;         // at 0xE0
+    ChannelCallback mCallback; // at 0xE0
+    u32 mCallbackData;         // at 0xE4
 
-    Voice* mVoice;      // at 0xE4
     Channel* mNextLink; // at 0xE8
-
-    u32 field_0xEC; // at 0xEC
-    Voice* field_0xF0; // at 0xF0
-    u32 field_0xF4; // at 0xF4
+    u32 field_0xEC;     // at 0xEC
+    Voice* mVoice;      // at 0xF0
+    u32 field_0xF4;     // at 0xF4
 
 public:
     NW4R_UT_LINKLIST_NODE_DECL(); // at 0xF8

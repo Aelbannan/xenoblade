@@ -176,9 +176,6 @@ u32 func_80248558(void* self) {
     void* result = ((void*(*)(void*, const char*, u32))vtable[15])(obj, &lbl_eu_8050BEA8[0x26C], 1);
     if (!result) return 0;
     void* target = *(void**)((u8*)result + 0x14);
-    f32 lbl_eu_80668790_val = *(f32*)lbl_eu_80668790;
-    f32 lbl_eu_80668764_val = *(f32*)lbl_eu_80668764;
-    f32 f30 = lbl_eu_80668790_val * lbl_eu_80668790_val;
     void* current = result;
     while (current) {
         void* cur_target = *(void**)((u8*)current + 0x10);
@@ -187,7 +184,7 @@ u32 func_80248558(void* self) {
         if (!next) break;
         current = next;
     }
-    return *(u32*)((u8*)current + 0x14);
+    return current ? *(u32*)((u8*)current + 0x14) : 0;
 }
 
 void* func_80248920(void* self, const char* name, float x, float y, void* arg5, const char* paneName) {
@@ -283,7 +280,43 @@ void* __dt__8024B6B8(void* self, int mode) {
     return self;
 }
 
-void func_8024B6F8(){}
+void func_8024B6F8(void* self, void* arg2, u32 arg3, u32 arg4) {
+    extern void* getPlayer__Q22cf13CfGameManagerFi(int);
+    extern s32 func_8009CF8C(u32);
+    extern s16 func_80136330(u32, const char*, u32);
+    extern s16 func_80137E7C(void*, void*, const char*, ...);
+    u8* p = (u8*)self;
+    if (!arg2 || !*(void**)p) return;
+    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    if (!player) return;
+    void* data = *(void**)p;
+    void* obj = *(void**)((u8*)data + 0x10);
+    void** vtable = *(void***)obj;
+    void* result = ((void*(*)(void*, void*, const char*, ...))vtable[1])(data, arg2, &lbl_eu_8050BEA8[0x47F]);
+    if (!result) return;
+    for (u32 i = 1; i <= arg3; i++) {
+        s16 val = func_80136330(*(u32*)lbl_eu_8066479C, &lbl_eu_8050BEA8[0x487], i);
+        if (val) {
+            u8* pBB = (u8*)result + 0xBB;
+            u8 bit = (i == arg4) ? 1 : 0;
+            *pBB = (*pBB & 0x7F) | bit;
+        }
+    }
+    if (arg4 == 0xC) {
+        if (result) {
+            u32 val = func_8009CF8C(0x20);
+            u8* pBB = (u8*)result + 0xBB;
+            *pBB = (*pBB & 0x7F) | ((__cntlzw(val ^ 0x166) >> 5) & 1);
+        }
+    } else if (arg4 == 5) {
+        if (result) {
+            u32 val = func_8009CF8C(0x20);
+            u8* pBB = (u8*)result + 0xBB;
+            u8 bit = ((val - 0x171) | (val ^ 0x171)) >> 31;
+            *pBB = (*pBB & 0x7F) | (bit & 1);
+        }
+    }
+}
 
 void* __dt__8024B894(void* self, int mode) {
     extern void* __dl__FPv(void*);

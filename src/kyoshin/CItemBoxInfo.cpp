@@ -358,22 +358,22 @@ void func_801D5564(void* out, void* unused, void* data, void* arg3) {
     }
 }
 
-void func_801D59C0(u32* out, void* arg2, void* arg3) {
-    u32 v0 = func_801392E4(arg2);
+void func_801D59C0(u32* out, void* unused, void* arg2) {
+    u32 buf[4];
+    func_801392E4(arg2);
     u16 v2 = func_80139358((u32)arg2);
-    u8 r1 = func_801361E8(lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x214], v2);
-    char* r2 = func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], r1);
-    u8 r3 = func_801361E8(lbl_eu_80664104, (char*)&lbl_eu_805063BC[0x225], v2);
-    char* r4;
-    if (r3 == 0x1A) {
-        r4 = func_80136190((char*)&lbl_eu_805063BC[0x219], (char*)&lbl_eu_805063BC[0x139], 0x14);
+    buf[0] = func_801361E8(lbl_eu_80664104, &lbl_eu_805063BC[0x214], v2);
+    buf[1] = (u32)func_80136190(&lbl_eu_805063BC[0x219], &lbl_eu_805063BC[0x139], (u8)buf[0]);
+    buf[2] = func_801361E8(lbl_eu_80664104, &lbl_eu_805063BC[0x225], v2);
+    if ((u8)buf[2] == 0x1A) {
+        buf[3] = (u32)func_80136190(&lbl_eu_805063BC[0x219], &lbl_eu_805063BC[0x139], 0x14);
     } else {
-        r4 = func_8013639C(lbl_eu_806640A8, (char*)&lbl_eu_805063BC[0x139]);
+        buf[3] = (u32)func_8013639C(lbl_eu_806640A8, &lbl_eu_805063BC[0x139]);
     }
-    out[0] = r1;
-    out[1] = (u32)r2;
-    out[2] = r3;
-    out[3] = (u32)r4;
+    out[0] = buf[0];
+    out[1] = buf[1];
+    out[2] = buf[2];
+    out[3] = buf[3];
 }
 
 void func_801D5AA0(CItemBoxInfo* info, u16 arg2, void* arg3) {

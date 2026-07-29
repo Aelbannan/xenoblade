@@ -873,7 +873,7 @@ public:
     void func_8007D7A4();
     void func_8007D834();
     void func_8007D84C();
-    void func_8007DA00();
+    void* func_8007DA00();
     void func_8007DA0C();
     void func_8007DCA8();
     void func_8007DCB8();
@@ -932,8 +932,8 @@ public:
     void func_8008064C();
     void func_800807BC();
     void func_80080888();
-    void func_80080E20();
-    void func_80080E28();
+    u8 func_80080E20();
+    u8 func_80080E28();
     void func_80080E30();
     void func_80080E44();
     void func_80080EE4();
@@ -1041,9 +1041,9 @@ public:
     void func_800832BC();
     void func_80083304();
     void func_80083328();
-    void func_80083458();
-    void func_80083460();
-    void func_80083468();
+    u32 func_80083458();
+    u32 func_80083460();
+    void func_80083468(u32 value);
     void func_80083470();
     bool func_80083538();
     bool func_80083544();
@@ -254271,6 +254271,31 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
         base->secondaryTextLength = 0;
     }
 }
+
+extern "C" u32 lbl_eu_80663E50;
+extern "C" u32 lbl_eu_80663E04;
+extern u32 lbl_eu_80664188;
+extern u32 lbl_eu_80664184;
+extern u8 lbl_eu_80664298;
+#pragma dont_inline on
+extern "C" u32 func_80083458__Q22cf13CfGameManagerFv() {
+    return lbl_eu_80664188;
+}
+#pragma dont_inline reset
+
+#pragma dont_inline on
+extern "C" u32 func_80083460__Q22cf13CfGameManagerFv() {
+    return lbl_eu_80664184;
+}
+#pragma dont_inline reset
+
+#pragma dont_inline on
+extern "C" void func_80083468__Q22cf13CfGameManagerFv(u32 value) {
+    lbl_eu_80664298 = value;
+}
+#pragma dont_inline reset
+
+
 /* end "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 
 namespace cf {
@@ -254722,9 +254747,9 @@ u32* cf::CfObject::CfObject_UnkVirtualFunc58() {
 }
 // lwz getters — return global vars
 extern u32 lbl_eu_80664188;
-void cf::CfGameManager::func_80083458() {}
+u32 cf::CfGameManager::func_80083458() { return lbl_eu_80664188; }
 extern u32 lbl_eu_80664184;
-void cf::CfGameManager::func_80083460() {}
+u32 cf::CfGameManager::func_80083460() { return lbl_eu_80664184; }
 void cf::CfGameManager::func_80086B1C() {}
 extern u32 lbl_eu_8066409C;
 void cf::CfGameManager::func_80086B24() {}
@@ -254739,21 +254764,22 @@ void cf::CfGameManager::func_80086DB4() {}
 extern u8 lbl_eu_80663E34;
 void cf::CfGameManager::func_8007F9BC() {}
 extern u8 lbl_eu_80663E5D;
-void cf::CfGameManager::func_80080E20() {}
+u8 cf::CfGameManager::func_80080E20() { return lbl_eu_80663E5D; }
 extern u8 lbl_eu_8066476D;
-void cf::CfGameManager::func_80080E28() {}
+u8 cf::CfGameManager::func_80080E28() { return lbl_eu_8066476D; }
 extern "C" u32 lbl_eu_8065FC18[];
-void cf::CfGameManager::func_8007DA00() {}
+void* cf::CfGameManager::func_8007DA00() { return lbl_eu_8065FC18; }
 
 void cf::CfGameManager::func_80080F40() {}
 
 void cf::CfGameManager::func_80080F44() {}
 
-void cf::CfGameManager::func_80081CB8() {}
+void cf::CfGameManager::func_80081CB8() { func_800B9548(); }
 
 void cf::CfGameManager::func_80081D88() {}
 
-void cf::CfGameManager::func_80082254() {}
+extern "C" void func_800B93D0();
+void cf::CfGameManager::func_80082254() { func_800B93D0(); }
 
 void cf::CfGameManager::func_80082EC0() {}
 
@@ -254888,7 +254914,7 @@ void cf::CfGameManager::func_80082694() {}
 void cf::CfGameManager::func_80083290() {}
 
 extern u8 lbl_eu_80664298;
-void cf::CfGameManager::func_80083468() {}
+void cf::CfGameManager::func_80083468(u32 value) { lbl_eu_80664298 = value; }
 
 void cf::CfGameManager::func_80083C70() {}
 

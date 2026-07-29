@@ -89,7 +89,7 @@ extern "C" u32 func_8013600C(void*, u32);
 extern "C" void func_80136B4C(void*, const char*, u32, u32);
 extern "C" void func_80136A1C(void*, const char*, void*, u32);
 extern "C" u32 func_8013639C(u32, const char*, u32);
-extern "C" u32 func_800A32BC(u32);
+extern "C" u32 func_800A32BC();
 extern "C" void copyVEC3(void*, void*);
 extern "C" u32 func_8003B1EC(u32);
 extern "C" u32 func_8009CF8C(u32);
@@ -128,11 +128,13 @@ extern "C" char* func_eu_802B1474(void);
 
 // Forward declarations for functions defined later in this file
 s32 func_801C7958(void* self, void* item);
-u32 func_801C7C7C(void* self, u32 id, void* item);
+s32 func_801C7C7C(void* self, u32 id, void* item);
 u32 func_801C6938(void* self, u32 idx);
+int func_801C51BC(void* obj, u32 id);
 u32 func_801C62AC(CItemBoxGridFull* self, u16 idx);
 void* func_801C631C(CItemBoxGridFull* self, u16 idx);
 s32 func_801C6388(CItemBoxGridFull* self, u16 idx);
+long func_801C6158(double f);
 u8 func_801C6528(CItemBoxGridFull* self, u16 idx);
 u8 func_801C65A0(CItemBoxGridFull* self, u16 idx);
 u8 func_801C6618(CItemBoxGridFull* self, u16 idx);
@@ -144,11 +146,11 @@ u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx);
 u32 func_801C618C(void* self, u32 id, void* item, int r6);
 u32 func_801C6EC0(CItemBoxGridFull* self, u16 idx);
 int LookupIndexedByte(char* obj);
-void func_801CECD0(void* self, int r4, int r5);
-void func_801CF240(void* self, int r4, int r5);
-void func_801CF71C(void* self, int r4, int r5);
-void func_801CF900(void* self);
-void func_801CFCBC(void* self, u32 val);
+void func_801CECD0(CItemBoxGridFull* self, u32 kind, void* item, u16 idx, u32 bt);
+void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx);
+void func_801CF71C(void* self, int r4, void* r5, int r6);
+void func_801CF900(void* self, u32 r4, void* r5, void* r6, u32 r7);
+void func_801CFCBC(void* self, u32 val, u32 idx);
 void func_801C56D8(void* self, int r4, int r5, int r6, int r7);
 u32 func_801C5E5C(void* self);
 char* func_801C6A44(void* self, u16 idx);
@@ -262,6 +264,7 @@ extern "C" void func_801EAF9C(void*);
 extern "C" void func_802082F0(void*);
 extern "C" void func_8022D018(void*);
 extern "C" void func_8022DB04(void*);
+extern "C" void* getFP__FPCc(const char*);
 extern "C" u32 func_80136254(void*, const char*, u32);
 extern "C" void __ct__CVisionItem(void*);
 extern "C" void __ct__CArtsBookItem(void*);
@@ -564,7 +567,7 @@ check_next:;
             }
         }
     }
-    func_801C6EC0((CItemBoxGridFull*)self);
+    func_801C6EC0((CItemBoxGridFull*)self, 0);
 }
 
 // Search for a matching short id in an array, return 1 if found.
@@ -938,7 +941,7 @@ u32 func_801C6938(void* self, u32 idx) {
         void* inst2 = CItem_initItemImplInstances(obj);
         void** vtbl2 = *(void***)inst2;
         u8 b = (u8)((u32(*)(void*, void*))vtbl2[2])(inst2, obj);
-        u32 r = func_80136190((u32)&lbl_eu_8050566C[0x14f], (u32)&lbl_eu_8050566C[0x158], (u32)(0x1e - (b - 1)));
+        u32 r = func_80136190((void*)&lbl_eu_8050566C[0x14f], (u32)&lbl_eu_8050566C[0x158], (u32)(0x1e - (b - 1)));
         sprintf((char*)(p + 0x2805), &lbl_eu_8050566C[0x15d], (char*)(p + 0x2805), r);
     }
 
@@ -3834,10 +3837,10 @@ void func_801CF240(CItemBoxGridFull* self, u32 kind, void* item, u16 idx) {
     }
 }
 
-void func_801CF71C(void* self, int r4, int r5) {
+void func_801CF71C(void* self, int r4, void* r5, int r6) {
     // Asm shows 4 params: (self, int r4, void* r5, int r6)
     // Called with r6=idx from func_801CFFEC
-    // Keeping existing stub signature; body omitted for now.
+    // Body omitted for now.
 }
 
 void func_801CF900(void* self, u32 r4, void* r5, void* r6, u32 r7) {
@@ -3923,7 +3926,7 @@ void func_801CFA58(void* self, int r4, int r5) {
 }
 
 // Format text and set on layout pane.
-void func_801CFCBC(void* self, u32 val) {
+void func_801CFCBC(void* self, u32 val, u32 idx) {
     u8* p = (u8*)self;
     char buf[64];
     sprintf(buf, &lbl_eu_8050566C[0x513], val + 1);
@@ -4675,7 +4678,259 @@ void func_801C53D8(void* self) {
         }
     }
 }
-void OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event) { }
+extern "C" void* getHandleMEM2(void);
+extern "C" void* createRegion__17UnkClass_8045F564FiiPCci(void*, int, int, const char*, int);
+extern "C" void __ct__14Class_8045F858FP17UnkClass_8045F564(void*, void*);
+extern "C" void func_80434A4C(u32);
+extern "C" void* getAllocHandle__10CLibLayoutFv(void);
+extern "C" void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
+extern "C" void* __ct__CTagProcessor(void*);
+extern "C" void* createArcResourceAccessor__10CLibLayoutFv(void);
+extern "C" void Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(void*, void*, const char*);
+extern "C" void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void**, void*, const char*);
+extern "C" void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
+extern "C" void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, void*);
+extern "C" void func_8013676C(void*, void*);
+extern "C" void* func_801355A0(void);
+extern "C" void* func_801355BC(void);
+extern "C" void func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(void*, char*, u32);
+extern "C" void func_80139198(u32);
+extern "C" void func_80136B4C(void*, const char*, const char*, u32);
+extern "C" void func_8013606C(const char*, const char*, u32);
+extern "C" void* func_801355F4(void);
+extern "C" void func_80139658(void*, const char*, u32);
+extern "C" void CopyVec4s(void*, void*);
+extern "C" void __ct__CCur07(void*, void*);
+extern "C" void __ct__CCur09(void*, void*);
+extern "C" void __ct__CCur18(void*, void*);
+extern "C" void __ct__CCur16(void*, void*);
+extern "C" void __ct__CCur11(void*, void*);
+extern "C" void __dt__6CCur07Fv(void*, int);
+extern "C" void __dt__6CCur09Fv(void*, int);
+extern "C" void __dt__6CCur18Fv(void*, int);
+extern "C" void __dt__6CCur16Fv(void*, int);
+extern "C" void __dt__6CCur11Fv(void*, int);
+extern "C" void func_8018B0FC(void*, void*);
+extern "C" void code80135FDC_setVec3(void*, float, float, float);
+extern "C" void func_801D24E8(void*, void*, void*);
+extern "C" void func_8022D614(void*, void*);
+extern "C" void func_80207FC8(void*, void*);
+extern "C" void func_801397AC(void*, u32);
+extern "C" void func_80086F9C(int);
+
+void OnFileEvent__12CItemBoxGridFP10CEventFile(void* self, void* event) {
+    u8* p = (u8*)self;
+    u32 evtHandle = *(u32*)((u8*)event + 4);
+    if (*(u32*)(p + 0x28) != evtHandle) return;
+    void* memHandle = getHandleMEM2();
+    createRegion__17UnkClass_8045F564FiiPCci(p + 8, 0x28000, &lbl_eu_8050566C[0x64d], memHandle, 0);
+    u8 regionBuf[16];
+    __ct__14Class_8045F858FP17UnkClass_8045F564(regionBuf, p + 8);
+    u32* fileData = *(u32**)(p + 0x28);
+    void* fileBuf = (void*)fileData[4];
+    fileData[4] = 0;
+    func_80434A4C(0);
+    void* allocHandle = getAllocHandle__10CLibLayoutFv();
+    void* tpMem = allocate__Q23mtl10MemManagerFUlUl(0x858, (u32)allocHandle);
+    if (tpMem) __ct__CTagProcessor(tpMem);
+    *(u32*)(p + 0x5c) = (u32)tpMem;
+    void* arcRes = createArcResourceAccessor__10CLibLayoutFv();
+    *(u32*)(p + 0x3c) = (u32)arcRes;
+    Attach__Q34nw4r3lyt19ArcResourceAccessorFPvPCc(arcRes, fileBuf, &lbl_eu_8050566C[0x65a]);
+    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc((void**)(p + 0x44), *(void**)(p + 0x3c), &lbl_eu_8050566C[0x65e]);
+    void* layout = *(void**)(p + 0x44);
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(layout, (void**)(p + 0x48), *(void**)(p + 0x3c), &lbl_eu_8050566C[0x673]);
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(layout, (void**)(p + 0x4c), *(void**)(p + 0x3c), &lbl_eu_8050566C[0x68b]);
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(layout, (void**)(p + 0x50), *(void**)(p + 0x3c), &lbl_eu_8050566C[0x6a8]);
+    void* rootPane = *(void**)(*(u32*)(p + 0x44) + 0x10);
+    void* font = func_80452C10__11CDeviceFontFUl(1, layout);
+    void** vtblFont = *(void***)font;
+    void* fontData = ((void*(*)())vtblFont[9])();
+    func_8013676C(rootPane, fontData);
+    u32 screenW = (u32)func_801355A0();
+    func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(layout, &lbl_eu_8050566C[0x55d], screenW);
+    func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(layout, &lbl_eu_8050566C[0x53e], screenW);
+    u32 screenH = (u32)func_801355BC();
+    u8 i;
+    for (i = 1; i <= 0x1e; i++) {
+        char nameBuf[32];
+        sprintf(nameBuf, &lbl_eu_8050566C[0x3a3], i);
+        func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(layout, nameBuf, screenH);
+    }
+    func_801368C0__FPQ34nw4r3lyt6LayoutPcUl(layout, &lbl_eu_8050566C[0x59b], screenH);
+    // Set visibility for animations
+    void** vtblLayout1 = *(void***)layout;
+    ((void(*)(void*, void*, u32))vtblLayout1[0xb])(layout, *(void**)(p + 0x4c), 0);
+    ((void(*)(void*, void*, u32))vtblLayout1[0xb])(layout, *(void**)(p + 0x50), 0);
+    ((void(*)(void*, void*, u32))vtblLayout1[0xb])(layout, *(void**)(p + 0x48), 1);
+    ((void(*)(void*, void*, u32))vtblLayout1[0xe])(layout, 0);
+    func_80139198(0);
+    // Set tag processor
+    void* pane = ((void*(*)(void*, const char*, u32))vtblLayout1[0xf])(layout, &lbl_eu_8050566C[0x58a], 1);
+    if (pane) *(u32*)((u8*)pane + 0xf8) = *(u32*)(p + 0x5c);
+    // Set up grid name
+    u32 msgA = func_80136190(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 5);
+    func_80136B4C(layout, &lbl_eu_8050566C[0x6c2], msgA, 0);
+    u32 msgB = func_80136190(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 4);
+    func_80136B4C(layout, &lbl_eu_8050566C[0x6d1], msgB, 0);
+    func_80136B4C(layout, &lbl_eu_8050566C[0x642], &lbl_eu_8050566C[0x3af], 0);
+    // Check game mode
+    const char* modeStr;
+    if (func_80086F9C(-1)) {
+        modeStr = &lbl_eu_8050566C[0x6dd];
+    } else {
+        modeStr = &lbl_eu_8050566C[0x6e6];
+    }
+    u32 msgC = func_8013606C(&lbl_eu_8050566C[0x6ef], modeStr, 0x49);
+    u32 msgId = func_80138F78(msgC & 0xFFFF);
+    void* sysWin = func_801355F4();
+    void** vtblSys = *(void***)sysWin;
+    u32 result = (u32)((void*(*)(void*, u32, u32, u32))vtblSys[3])(sysWin, 0x74696D67, msgId, 0);
+    if (result) {
+        u32 res = result;
+        func_80137E7C(layout, &lbl_eu_8050566C[0x6fd], res);
+        void* pane2 = ((void*(*)(void*, const char*, u32))vtblLayout1[0xf])(layout, &lbl_eu_8050566C[0x6fd], 1);
+        if (pane2) {
+            u32* mat = *(u32**)(res + 8);
+            u32* texData = (u32*)mat[0];
+            u16 w = *(u16*)(texData + 2);
+            u16 h = *(u16*)(texData + 0);
+            ((float*)((u8*)pane2 + 0x4c))[0] = (float)(s32)w;
+            ((float*)((u8*)pane2 + 0x50))[0] = (float)(s32)h;
+        }
+    }
+    // Set icon visibility based on mode
+    if (p[0x527] != 1) {
+        void* iconPane = ((void*(*)(void*, const char*, u32))vtblLayout1[0xf])(layout, &lbl_eu_8050566C[0x6c2], 1);
+        if (iconPane) func_80124270(iconPane, 0);
+        if (p[0x527] != 2) {
+            void* iconPane2 = ((void*(*)(void*, const char*, u32))vtblLayout1[0xf])(layout, &lbl_eu_8050566C[0x59b], 1);
+            if (iconPane2) func_80124270(iconPane2, 0);
+        }
+    }
+    // Copy cursor position
+    void* posPane = ((void*(*)(void*, const char*, u32))vtblLayout1[0xf])(layout, &lbl_eu_8050566C[0x709], 1);
+    if (posPane) {
+        float* pos = (float*)((u8*)posPane + 0x2c);
+        p[0x534] = *(u8*)(pos + 0);
+        p[0x535] = *(u8*)(pos + 1);
+        p[0x536] = *(u8*)(pos + 2);
+        *(float*)(p + 0x534) = pos[0];
+        // copy VEC3 from pane position
+    }
+    // Copy position vectors to color tables
+    u32 v40, v41;
+    func_80139658(layout, &lbl_eu_8050566C[0x716], 0);
+    v40 = *(u32*)((u8*)&v40 + 0);
+    v41 = *(u32*)((u8*)&v41 + 4);
+    // These get stored in the color tables (lbl_eu_80664488 etc)
+    u32 tmp4[2];
+    tmp4[0] = v40; tmp4[1] = v41;
+    CopyVec4s(&lbl_eu_80664488, tmp4);
+    func_80139658(layout, &lbl_eu_8050566C[0x716], 1);
+    u32 tmp5[2];
+    tmp5[0] = v40; tmp5[1] = v41;
+    CopyVec4s(&lbl_eu_80664490, tmp5);
+    // Copy color indices
+    *(s16*)((u8*)&lbl_eu_80664498 + 6) = *(s16*)((u8*)&lbl_eu_80664488 + 6);
+    *(s16*)((u8*)&lbl_eu_806644A0 + 6) = *(s16*)((u8*)&lbl_eu_80664490 + 6);
+    *(s16*)((u8*)&lbl_eu_806644A8 + 6) = *(s16*)((u8*)&lbl_eu_80664488 + 6);
+    *(s16*)((u8*)&lbl_eu_806644B0 + 6) = *(s16*)((u8*)&lbl_eu_80664490 + 6);
+    *(s16*)((u8*)&lbl_eu_806644B8 + 6) = *(s16*)((u8*)&lbl_eu_80664488 + 6);
+    *(s16*)((u8*)&lbl_eu_806644C0 + 6) = *(s16*)((u8*)&lbl_eu_80664490 + 6);
+    *(s16*)((u8*)&lbl_eu_806644C8 + 6) = *(s16*)((u8*)&lbl_eu_80664488 + 6);
+    *(s16*)((u8*)&lbl_eu_806644D0 + 6) = *(s16*)((u8*)&lbl_eu_80664490 + 6);
+    // Create cursor 07
+    u8 cur07Buf[0x18];
+    __ct__CCur07(cur07Buf, *(void**)(p + 0x3c));
+    func_8018B0FC(p + 0x70, cur07Buf);
+    __dt__6CCur07Fv(cur07Buf, -1);
+    void** vtblCur07 = *(void***)(p + 0x70);
+    ((void(*)(void*))vtblCur07[2])(p + 0x70);
+    // Create cursor 09
+    u8 cur09Buf[0x18];
+    __ct__CCur09(cur09Buf, *(void**)(p + 0x3c));
+    func_8018B0FC(p + 0x88, cur09Buf);
+    __dt__6CCur09Fv(cur09Buf, -1);
+    void** vtblCur09 = *(void***)(p + 0x88);
+    ((void(*)(void*))vtblCur09[2])(p + 0x88);
+    // Set vectors on cursor 09
+    u8 vec3Buf1[12];
+    code80135FDC_setVec3(vec3Buf1, lbl_eu_80667F90, lbl_eu_80667F94, lbl_eu_80667F34);
+    u8 vec3Buf2[12];
+    code80135FDC_setVec3(vec3Buf2, lbl_eu_80667F98, lbl_eu_80667F94, lbl_eu_80667F34);
+    func_801D24E8(p + 0x88, vec3Buf2, vec3Buf1);
+    // Create cursor 18
+    u8 cur18Buf[0x18];
+    __ct__CCur18(cur18Buf, func_801355F4());
+    func_8018B0FC(p + 0xa0, cur18Buf);
+    __dt__6CCur18Fv(cur18Buf, -1);
+    void** vtblCur18 = *(void***)(p + 0xa0);
+    ((void(*)(void*))vtblCur18[2])(p + 0xa0);
+    // Create cursor 16
+    u8 cur16Buf[0x18];
+    __ct__CCur16(cur16Buf, *(void**)(p + 0x3c));
+    func_8018B0FC(p + 0xb8, cur16Buf);
+    __dt__6CCur16Fv(cur16Buf, -1);
+    void** vtblCur16 = *(void***)(p + 0xb8);
+    ((void(*)(void*))vtblCur16[2])(p + 0xb8);
+    // Create cursor 11
+    u8 cur11Buf[0x18];
+    __ct__CCur11(cur11Buf, *(void**)(p + 0x3c));
+    func_8018B0FC(p + 0xd0, cur11Buf);
+    __dt__6CCur11Fv(cur11Buf, -1);
+    void** vtblCur11 = *(void***)(p + 0xd0);
+    ((void(*)(void*))vtblCur11[2])(p + 0xd0);
+    // Init teach display
+    func_8022D614(p + 0x468, *(void**)(p + 0x3c));
+    // Init file select
+    func_80207FC8(p + 0x418, *(void**)(p + 0x3c));
+    // Set up remaining UI
+    void* grpPane = ((void*(*)(void*, const char*, u32))vtblLayout1[0xf])(layout, &lbl_eu_8050566C[0x723], 1);
+    if (grpPane) {
+        u32 tmp6[2];
+        func_801397AC(grpPane, 0);
+        tmp6[0] = *(u32*)((u8*)tmp6 + 0);
+        tmp6[1] = *(u32*)((u8*)tmp6 + 4);
+        CopyVec4s(&lbl_eu_806644D8, tmp6);
+        func_801397AC(grpPane, 1);
+        tmp6[0] = *(u32*)((u8*)tmp6 + 0);
+        tmp6[1] = *(u32*)((u8*)tmp6 + 4);
+        CopyVec4s(&lbl_eu_806644E0, tmp6);
+        *(s16*)((u8*)&lbl_eu_806644E8 + 6) = *(s16*)((u8*)&lbl_eu_806644D8 + 6);
+        *(s16*)((u8*)&lbl_eu_806644F0 + 6) = *(s16*)((u8*)&lbl_eu_806644E0 + 6);
+        *(s16*)((u8*)&lbl_eu_806644F8 + 6) = *(s16*)((u8*)&lbl_eu_806644D8 + 6);
+        *(s16*)((u8*)&lbl_eu_80664500 + 6) = *(s16*)((u8*)&lbl_eu_806644E0 + 6);
+    }
+    u32 msgD = func_80136190(&lbl_eu_8050566C[0x14f], &lbl_eu_8050566C[0x158], 7);
+    func_80136B4C(layout, &lbl_eu_8050566C[0x72d], msgD, 0);
+    if (p[0x527] != 4) {
+        void* iconPane3 = ((void*(*)(void*, const char*, u32))vtblLayout1[0xf])(layout, &lbl_eu_8050566C[0x637], 1);
+        if (iconPane3) func_80124270(iconPane3, 0);
+        func_80136B4C(layout, &lbl_eu_8050566C[0x72d], &lbl_eu_8050566C[0x3af], 0);
+    }
+    if (p[0x527] == 2) {
+        u8 j;
+        for (j = 0; j < (u8)code80135FDC_getByte_64077(); j++) {
+            u32 pn = func_801392B4(j);
+            void* charData = func_8009EC9C(pn & 0xFF);
+            void* chp = (u8*)charData + 0x3534;
+            s32 stat = func_8026178C(chp, 0x8f);
+            if (stat) {
+                void* pane3 = ((void*(*)(void*, const char*, u32))vtblLayout1[0xf])(layout, &lbl_eu_8050566C[0x5b9], 1);
+                u8 nameIdx = j + 1;
+                char paneBuf[32];
+                sprintf(paneBuf, &lbl_eu_8050566C[0x5c8], nameIdx);
+                void* pane4 = ((void*(*)(void*, const char*, u32))vtblLayout1[0xf])(layout, paneBuf, 1);
+                if (pane4) {
+                    // Set up character icon
+                    // ... (complex texture setup)
+                }
+                // ... more per-character setup
+            }
+        }
+    }
+}
 
 // Static initialization of color table entries.
 void sinit_801D1E30(void) {

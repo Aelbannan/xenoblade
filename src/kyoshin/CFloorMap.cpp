@@ -49,11 +49,89 @@ u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_4
 
 
 
-void func_80245450(){}
+void func_80245450(void* self) {
+    extern void func_80246200(void*);
+    extern void func_80138078(u32);
+    u8* p = (u8*)self;
+    s8 idx0 = (s8)p[0x09];
+    u32 base = idx0 * 0x30C;
+    u8 count = *(u8*)(p + base + 0x318);
+    s8 idxA = (s8)p[0x0A];
+    s8 idxB = (s8)p[0x0B];
+    if (count >= 5) {
+        idxA++;
+        if (idxA >= 5) {
+            idxA = 4;
+            idxB++;
+            if (idxB > (s8)(count - 5)) {
+                idxA = 0;
+                idxB = 0;
+            }
+        }
+    } else {
+        idxA++;
+        if (idxA >= (s8)count) {
+            idxA = 0;
+            idxB = 0;
+        }
+    }
+    p[0x0A] = idxA;
+    p[0x0B] = idxB;
+    func_80246200(self);
+}
 
-void func_802455F0(){}
+void func_802455F0(void* self) {
+    extern void func_80246200(void*);
+    u8* p = (u8*)self;
+    s8 idx0 = (s8)p[0x09];
+    u32 base = idx0 * 0x30C;
+    u8 count = *(u8*)(p + base + 0x318);
+    if (count >= 5) {
+        p[0x0B] += 5;
+        if ((s8)p[0x0B] > (s8)count) {
+            p[0x0A] = p[0x0B] - count;
+            p[0x0B] = count;
+            if ((s8)p[0x0A] >= 5) {
+                p[0x0A] = 0;
+            }
+        }
+    } else {
+        p[0x0A] = count - 1;
+        p[0x0B] = 0;
+        if ((s8)p[0x0A] < 0) p[0x0A] = 0;
+    }
+    func_80246200(self);
+}
 
-void func_8024577C(){}
+void func_8024577C(void* self, u16 val) {
+    u8* p = (u8*)self;
+    if (!val) {
+        p[0x0A] = -1;
+        p[0x0B] = 0;
+        return;
+    }
+    s8 idx0 = (s8)p[0x09];
+    s8 idxA = (s8)p[0x0A];
+    s8 idxB = (s8)p[0x0B];
+    u32 base = idx0 * 0x30C;
+    u8 count = *(u8*)(p + base + 0x318);
+    for (u8 i = 0; i < count; i++) {
+        if (*(u16*)(p + base + i * 0x18 + 0x18) == val) {
+            if (i >= 5) {
+                p[0x0A] = 4;
+                p[0x0B] = i - 4;
+            } else {
+                p[0x0A] = i;
+                p[0x0B] = 0;
+            }
+            func_80246200(self);
+            if (idxA != (s8)p[0x0A] || idxB != (s8)p[0x0B]) {
+                func_80138078(1);
+            }
+            return;
+        }
+    }
+}
 
 void func_80245950(){}
 
@@ -105,22 +183,22 @@ void* func_80248920(void* self, const char* name, float x, float y, void* arg5, 
 
     if (!picture) return NULL;
 
-    picture = createPicture__10CLibLayoutFv();
-    SetName__Q34nw4r3lyt4PaneFPCc(picture, paneName);
+    void* pic = createPicture__10CLibLayoutFv();
+    SetName__Q34nw4r3lyt4PaneFPCc(pic, paneName);
 
-    *(float*)((u8*)picture + 0x2C) = x;
-    *(float*)((u8*)picture + 0x30) = y;
-    *(float*)((u8*)picture + 0x34) = lbl_eu_80668764;
+    *(float*)((u8*)pic + 0x2C) = x;
+    *(float*)((u8*)pic + 0x30) = y;
+    *(float*)((u8*)pic + 0x34) = lbl_eu_80668764;
 
-    func_80137C1C(picture, arg5);
+    func_80137C1C(pic, arg5);
 
-    u8* byte = (u8*)picture + 0xBB;
+    u8* byte = (u8*)pic + 0xBB;
     *byte = (*byte & 0x7F) | 0x01;
 
-    *(float*)((u8*)picture + 0x44) = lbl_eu_80668794;
-    *(float*)((u8*)picture + 0x48) = lbl_eu_80668794;
+    *(float*)((u8*)pic + 0x44) = lbl_eu_80668794;
+    *(float*)((u8*)pic + 0x48) = lbl_eu_80668794;
 
-    return picture;
+    return pic;
 }
 
 void func_80248A6C(){}

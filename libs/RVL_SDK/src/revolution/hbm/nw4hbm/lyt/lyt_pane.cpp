@@ -356,7 +356,21 @@ void Pane::AddAnimationLink(AnimationLink* pAnimLink) {
 }
 
 AnimationLink* Pane::FindAnimationLink(AnimTransform* pAnimTrans) {
-    return detail::FindAnimationLink(&mAnimList, pAnimTrans);
+    AnimationLink* pLink = detail::FindAnimationLink(&mAnimList, pAnimTrans);
+
+    if (pLink != NULL) {
+        return pLink;
+    }
+
+    if (mpMaterial != NULL) {
+        pLink = mpMaterial->FindAnimationLink(pAnimTrans);
+
+        if (pLink != NULL) {
+            return pLink;
+        }
+    }
+
+    return NULL;
 }
 
 void Pane::SetAnimationEnable(AnimTransform* pAnimTrans, bool enable,

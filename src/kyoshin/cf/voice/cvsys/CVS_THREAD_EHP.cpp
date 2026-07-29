@@ -47,7 +47,8 @@ void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
 
     // Rotating slots 0x2C..0x34 (count in field_0x3c).
     // Reusing handle/biased from outer scope keeps regalloc closer.
-    for (int i = 0; i < self->field_0x3c; i++) {
+    int i;
+    for (i = 0; i < self->field_0x3c; i++) {
         handle = self->field_0x2c[i];
         biased = (CCharVoice*)handle;
         if (handle) biased = &handle->voice;
@@ -87,12 +88,16 @@ void func_802A658C(CVS_THREAD_EHP* self) {
         // Reload slot-state triple {unk0, unk4, unk8} from init table.
         // Retail loads [0] via lis+lwzu (value in r3, address in r4),
         // then [1], stores [1], stores [0], loads [2], stores [2].
+        // Declaring 'a' before 'p' pushes the base pointer to r4 and
+        // the first loaded value to r3, matching the retail regalloc.
         struct Init { u32 f0, f4, f8; };
-        u32 a = ((const Init*)lbl_eu_80539B14)->f0;
-        u32 b = ((const Init*)lbl_eu_80539B14)->f4;
+        u32 a;
+        const Init* p = (const Init*)lbl_eu_80539B14;
+        a = p->f0;
+        u32 b = p->f4;
         self->unk4 = b;
         self->unk0 = (u32*)a;
-        self->unk8 = ((const Init*)lbl_eu_80539B14)->f8;
+        self->unk8 = p->f8;
     } else {
         self->func_802A3B50();
     }

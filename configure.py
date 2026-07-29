@@ -1501,7 +1501,7 @@ config.libs = [
             Object(MatchingFor("jp"), "nw4r/src/g3d/res/g3d_rescommon.cpp"),
             Object(MatchingFor("jp", "us"), "nw4r/src/g3d/res/g3d_resdict.cpp"),
             Object(MatchingFor("jp"), "nw4r/src/g3d/res/g3d_resfile.cpp"),
-            Object(NonMatching, "nw4r/src/g3d/res/g3d_resmdl.cpp"),
+            Object(Matching, "nw4r/src/g3d/res/g3d_resmdl.cpp"),
             Object(MatchingFor("jp"), "nw4r/src/g3d/res/g3d_resshp.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_restev.cpp"),
             Object(NonMatching, "nw4r/src/g3d/res/g3d_resmat.cpp"),

@@ -21,10 +21,10 @@ CLight* func_804C02E4(CLight* self, const CLight* other) {
     self->unk10 = other->unk10;
     self->unk1C = other->unk1C;
     self->unk28 = other->unk28;
-    *self->mpLightObj = *other->mpLightObj;
     self->mFlags = other->mFlags;
     self->unk34 = other->unk34;
     self->unk38 = other->unk38;
+    *self->mpLightObj = *other->mpLightObj;
     self->unk3C = other->unk3C;
     return self;
 }

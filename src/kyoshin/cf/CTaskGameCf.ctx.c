@@ -258683,6 +258683,8 @@ void func_80296AE8(u8* src);
 /* "src/kyoshin/cf/CTaskGameCf.cpp" line 14 "monolib/device/CDeviceVI.hpp" */
 /* end "monolib/device/CDeviceVI.hpp" */
 
+extern "C" void func_eu_8006B238();
+
 namespace cf{
     CTaskGameCf* CTaskGameCf::spInstance;
 
@@ -258821,6 +258823,7 @@ void CTaskGameCf::func_800444FC(){
         if(v5){
             func_8009ECB0();
             func_8009ECB0();
+            func_eu_8006B238();
         } else {
             int* v18 = func_8009ECB0();
             func_8009ECB0();
@@ -258851,30 +258854,31 @@ void CTaskGameCf::func_800444FC(){
 
         CDeviceVI::func_804483DC(Class_80296898::getInstance()->mFrameCount - 1);
 
-        if(unk_54 & 1){
-            unk_54 &= ~1;
-
-            if(CTaskEnvironment::getInstance()){
-                CTaskEnvironment::getInstance()->SetRemove();
-            }
-
-            if(CTaskCulling::getInstance()){
-                CTaskCulling::getInstance()->SetRemove();
-            }
-
-            if(!CfGameManager::checkUnkFlag(24)){
-                func_800407C8_tmp tmp;
-                pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
-            }
-
-            if(CUIWindowManager::getInstance()){
-                CUIWindowManager::getInstance()->SetRemove();
-            }
-
-            CUIBattleManager::func_8012F87C(0);
-            CTaskREvent::getInstance()->SetRemove();
-            mMoveFunc = &CTaskGameCf::beginExit;
+        if(!(unk_54 & 1)){
+            return;
         }
+        unk_54 &= ~1u;
+
+        if(CTaskEnvironment::getInstance()){
+            CTaskEnvironment::getInstance()->SetRemove();
+        }
+
+        if(CTaskCulling::getInstance()){
+            CTaskCulling::getInstance()->SetRemove();
+        }
+
+        if(!CfGameManager::checkUnkFlag(24)){
+            func_800407C8_tmp tmp;
+            pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
+        }
+
+        if(CUIWindowManager::getInstance()){
+            CUIWindowManager::getInstance()->SetRemove();
+        }
+
+        CUIBattleManager::func_8012F87C(0);
+        CTaskREvent::getInstance()->SetRemove();
+        mMoveFunc = &CTaskGameCf::beginExit;
     }
 
 void CTaskGameCf::beginExit() {

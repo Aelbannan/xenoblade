@@ -83,8 +83,7 @@ void EnvGenerator::Update(int msec) {
 
     case STATUS_DECAY: {
         f32 target = (f32)DecibelSquareTable[mSustain];
-        f32 step = mDecay * (f32)msec;
-        mValue -= step;
+        mValue -= mDecay * (f32)msec;
 
         if (mValue < target) {
             mValue = target;

@@ -12,7 +12,7 @@ public:
     ml::CVec3 unk4;
     ml::CVec3 unk10;
     ml::CVec3 unk1C;
-    float unk28;
+    u32 unk28;
     nw4r::g3d::LightObj* mpLightObj;
     u32 mFlags;
     u32 unk34;

@@ -77,6 +77,14 @@ extern u32 func_801D47D4(void*);
 extern u32 func_801D421C(void*);
 extern void func_801D4C3C(void*);
 extern u32 func_801D4260(void*);
+extern const float lbl_eu_80667F40;
+extern const float lbl_eu_80667F48;
+extern const float lbl_eu_80667F80;
+extern const char lbl_eu_8050566C[];
+extern u32 func_8009EC9C(u32);
+extern u32 func_800A082C(void);
+extern void func_801CE390(void*);
+
 u8 func_801C67F8(CItemBoxGridFull* self);
 u8 func_801C6840(CItemBoxGridFull* self);
 
@@ -665,7 +673,33 @@ void func_801C8ACC(){}
 
 void func_801C8C58(){}
 
-void func_801C8DE4(){}
+// Bubble sort entries by float comparison.
+void func_801C8DE4(CItemBoxGridFull* self) {
+    u32 n = self->field_2800;
+    u32 i;
+    for (i = 0; i < n - 1; i++) {
+        u32 limit = n - 1 - i;
+        u32 j;
+        int swapped = 0;
+        for (j = 0; j < limit; j++) {
+            u8* e1 = (u8*)self + j * 10;
+            u8* e2 = (u8*)self + (j + 1) * 10;
+            void* obj1 = func_80157C4C(self->field_2802, *(s16*)e1);
+            void* obj2 = func_80157C4C(self->field_2802, *(s16*)e2);
+            float v1 = func_801C9F88(self, obj1);
+            float v2 = func_801C9F88(self, obj2);
+            if (v1 >= v2) continue;
+            char tmp[27];
+            CopyEntry9Bytes(tmp, (const char*)e1);
+            CopyEntry9Bytes(tmp + 9, (const char*)e2);
+            func_801C562C(e1, tmp + 9);
+            CopyEntry9Bytes(tmp + 18, (const char*)tmp);
+            func_801C562C(e2, tmp);
+            swapped = 1;
+        }
+        if (!swapped) break;
+    }
+}
 
 // Bubble sort entries by byte comparison.
 void func_801C8F04(CItemBoxGridFull* self) {
@@ -803,7 +837,7 @@ void func_801C9CCC(){}
 
 void func_801C9E1C(){}
 
-void func_801C9F88(){}
+float func_801C9F88(void* self, void* entry) { return 0.0f; }
 
 // Check item slots for first valid entry.
 u32 func_801CA070(void* self, void* item) {
@@ -1083,7 +1117,7 @@ void func_801CE108(){}
 
 void func_801CE1A0(){}
 
-float lbl_eu_80667F78;
+extern float lbl_eu_80667F78;
 
 namespace nw4r { namespace lyt { class AnimTransform; } }
 void func_80137444(nw4r::lyt::AnimTransform*, float);

@@ -65,7 +65,78 @@ extern "C" void func_80281CB8(cf::CChainActorPc* self) {
     func_802A0904(&self->mChainEffect);
     func_80279DC0(self);
 }
-void func_80281CF0(){}
+// External declarations needed for func_80281CF0
+extern "C" void func_804B1DC0(void*, int);
+extern "C" void func_8009EC9C(int);
+extern "C" int func_800A32BC();
+extern "C" int func_8025FB10(int, int);
+extern "C" void* func_800B6BA4();
+extern "C" float func_800D81A8(int, void*, int);
+extern "C" void func_80279E48(void*, int);
+extern f32 lbl_eu_80668AEC;
+extern f32 lbl_eu_80668AF0;
+
+// Processes chain actor damage/healing based on arg.
+// arg == 0: iterates battle actor list applying scaled damage to each valid target
+// arg != 0: checks battle-manager flag 0xeb and vtable state; may trigger chain-end
+extern "C" void func_80281CF0(cf::CChainActorPc* self, int arg) {
+    u32 bit = self->unk6C & 1;
+    if ((u32)arg != bit) {
+        if (arg != 0) {
+            // arg != 0, arg != bit: check flag and vtable state
+            if (func_80148778((void*)(self->unk0 + 8), 0xeb) != 0) {
+                void* obj = (void*)(self->unk0 + 8);
+                void** vt = *(void***)(self->unk0 + 8);
+                ((void(*)(void*, int))vt[8])(obj, 0xeb);
+            }
+            int state = ((int(*)(void*))((void**)self->mVTable)[22])(self);
+            int cond = 0;
+            if (state == 4) {
+                func_8009EC9C(4);
+                cond = (func_800A32BC() == 1);
+            }
+            if (cond) {
+                void** vt = *(void***)(self->unk0);
+                ((void(*)(void*))vt[89])((void*)self->unk0);
+            }
+        } else {
+            // arg == 0: healing/damage loop over all battle actors
+            *(u16*)(self->unk0 + 0x455a) = 100;
+            func_804B1DC0((void*)(self->unk0 + 0x44a8), 1);
+            void* unk0obj = (void*)self->unk0;
+            void** unk0vt = *(void***)unk0obj;
+            float f30;
+            if (((int(*)(void*))unk0vt[164])(unk0obj) != 0) {
+                int val = ((int(*)(void*))unk0vt[164])(unk0obj);
+                f30 = lbl_eu_80668AF0 * (float)(s16)func_8025FB10(val, 0x44);
+            } else {
+                f30 = lbl_eu_80668AEC;
+            }
+            if (lbl_eu_80668AEC < f30) {
+                if (((int(*)(void*))unk0vt[175])(unk0obj) == 0) {
+                    void* list = func_800B6BA4();
+                    void* sentinel = *(void**)((u8*)list + 4);
+                    void* node = *(void**)sentinel;
+                    while (node != sentinel) {
+                        void* actor = *(void**)((u8*)node + 8);
+                        if (actor != 0) {
+                            actor = (void*)((u8*)actor - 0x3e9c);
+                        }
+                        void** actorVt = *(void***)actor;
+                        if (((int(*)(void*))actorVt[175])(actor) == 0) {
+                            getInstance__Q22cf14CBattleManagerFv();
+                            float f31 = func_800D81A8(0, actor, 0);
+                            float dmg = f30 * ((float(*)(void*))actorVt[75])(actor);
+                            ((void(*)(void*, float))actorVt[71])(actor, dmg * f31);
+                        }
+                        node = *(void**)node;
+                    }
+                }
+            }
+        }
+    }
+    func_80279E48(self, arg);
+}
 // Retail symbol: func_804B1DC0
 extern "C" void func_804B1DC0(void*, int);
 // Retail symbol: func_80279F6C

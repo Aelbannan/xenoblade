@@ -21,10 +21,11 @@ void* __dt___reslist_base_CScn(void* _this, int flags);
 // (same pattern as CTTask<CTaskGameEff>::~CTTask below).
 #pragma optimize_for_size on
 void* __dt__reslist_CScn(void* _this, int flags) {
-    if (!_this) return _this;
-    __dt___reslist_base_CScn(_this, 0);
-    if (flags > 0) {
-        operator delete(_this);
+    if (_this) {
+        __dt___reslist_base_CScn(_this, 0);
+        if (flags > 0) {
+            operator delete(_this);
+        }
     }
     return _this;
 }

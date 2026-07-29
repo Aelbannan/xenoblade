@@ -20,36 +20,37 @@ public:
 // Layout helper from code_80135FDC (not yet declared in the header).
 void func_80137B44(nw4r::lyt::Layout* layout, const char* paneName, int value);
 
-// lbl_* reloc names kept in extern "C" as allowed
-// Non-lbl symbols declared with proper types outside extern "C"
+// lbl_* reloc names — extern "C" for C linkage
 extern "C" {
 extern u32 lbl_eu_80663E28;
 extern CMenuFade* lbl_eu_80663FA0;
 extern const u8 lbl_eu_8052BF70[];   // CTTask<IUICf> vtable
 extern const u8 lbl_eu_8052C540[];   // CMenuFade vtable
-extern const u8 __ptmf_null[12];     // null pointer-to-member-function
 extern const f32 lbl_eu_80667058;    // 0.0f
 extern const f32 lbl_eu_8066705C;    // 1.0f
 extern const f64 lbl_eu_80667068;    // 4503599627370496.0 (u32->f32 magic)
 extern char lbl_eu_804FDEA8[];
 }
 
-extern void __ct__8CProcessFv(CProcess*);
-extern void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
+// PTMF null block (variable — no mangling, safe outside extern "C")
+extern const u32 __ptmf_null[3];
 
 // ============================================================================
 // Constructor
 // ============================================================================
 CMenuFade::CMenuFade(CScn* pScn, int p5, int p6, float f1, float f2, float f3) {
+    // CProcess base is constructed automatically via the member initializer
+    // list (implicit).  Vtable / PTMF initialization is done manually to
+    // follow the retail codegen sequence.
     u8* s = reinterpret_cast<u8*>(this);
 
-    __ct__8CProcessFv(this);
-
+    // Intermediate vtable (CTTask<IUICf> level)
     reinterpret_cast<u32*>(s)[0x10 / 4] = reinterpret_cast<u32>(lbl_eu_8052BF70);
 
-    u32 ptmf0 = reinterpret_cast<const u32*>(__ptmf_null)[0];
-    u32 ptmf1 = reinterpret_cast<const u32*>(__ptmf_null)[1];
-    u32 ptmf2 = reinterpret_cast<const u32*>(__ptmf_null)[2];
+    // Copy __ptmf_null to PTMF slots at 0x3C and 0x48
+    u32 ptmf0 = __ptmf_null[0];
+    u32 ptmf1 = __ptmf_null[1];
+    u32 ptmf2 = __ptmf_null[2];
     reinterpret_cast<u32*>(s)[0x3C / 4] = ptmf0;
     reinterpret_cast<u32*>(s)[0x40 / 4] = ptmf1;
     reinterpret_cast<u32*>(s)[0x44 / 4] = ptmf2;
@@ -57,18 +58,26 @@ CMenuFade::CMenuFade(CScn* pScn, int p5, int p6, float f1, float f2, float f3) {
     reinterpret_cast<u32*>(s)[0x4C / 4] = ptmf1;
     reinterpret_cast<u32*>(s)[0x50 / 4] = ptmf2;
 
+    // Zero the CMenuFadeBase fields
     field_0x54 = 0;
     pad55[0] = 0;
 
+    // Final vtable (CMenuFade)
     u32 vtFinal = reinterpret_cast<u32>(lbl_eu_8052C540);
     reinterpret_cast<u32*>(s)[0x10 / 4] = vtFinal;
+
+    // IWorkEvent vtable at 0x58 (+0x24 within CMenuFade vtable)
     mIWorkEventVtbl = vtFinal + 0x24;
+
+    // IScnRender vtable at 0x5c (+0xAC within CMenuFade vtable)
     reinterpret_cast<u32*>(s)[0x5C / 4] = vtFinal + 0xAC;
 
+    // Store constructor parameters
     mScn = pScn;
 
-    __ct__17UnkClass_8045F564Fv(&mLayoutMem);
+    // mLayoutMem is default-constructed (compiler-generated)
 
+    // Initialize remaining fields
     mLayout = nullptr;
     field_0x78 = 0;
     field_0x7C = 0.0f;

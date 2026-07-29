@@ -40,7 +40,7 @@ void func_804C03A0(CLight* self, int type) {
     self->unk34 = type;
     self->mpLightObj->Clear();
 
-    switch (type) {
+    switch (self->unk34) {
     case 1:
         self->mpLightObj->InitLightAttnA(1.0f, 0.0f, 0.0f);
         self->mpLightObj->InitLightAttnK(1.0f, 0.0f, 0.0f);

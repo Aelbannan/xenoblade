@@ -191,25 +191,25 @@ void CTaskGameCf::func_800444FC(){
         unk_54 &= ~1u;
 
         if(CTaskEnvironment::getInstance()){
-                CTaskEnvironment::getInstance()->SetRemove();
-            }
+            CTaskEnvironment::getInstance()->SetRemove();
+        }
 
-            if(CTaskCulling::getInstance()){
-                CTaskCulling::getInstance()->SetRemove();
-            }
+        if(CTaskCulling::getInstance()){
+            CTaskCulling::getInstance()->SetRemove();
+        }
 
-            if(!CfGameManager::checkUnkFlag(24)){
-                func_800407C8_tmp tmp;
-                pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
-            }
+        if(!CfGameManager::checkUnkFlag(24)){
+            func_800407C8_tmp tmp;
+            pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
+        }
 
-            if(CUIWindowManager::getInstance()){
-                CUIWindowManager::getInstance()->SetRemove();
-            }
+        if(CUIWindowManager::getInstance()){
+            CUIWindowManager::getInstance()->SetRemove();
+        }
 
-            CUIBattleManager::func_8012F87C(0);
-            CTaskREvent::getInstance()->SetRemove();
-            mMoveFunc = &CTaskGameCf::beginExit;
+        CUIBattleManager::func_8012F87C(0);
+        CTaskREvent::getInstance()->SetRemove();
+        mMoveFunc = &CTaskGameCf::beginExit;
     }
 
 void CTaskGameCf::beginExit() {

@@ -33,8 +33,7 @@ void func_802A6718(CVS_THREAD_EHP* self) {
 void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     func_802A3BEC(self, voicePtr);
 
-    // Slot 0x20: bias the handle to its embedded CCharVoice (at +0x3E9C)
-    // and clear the slot if the biased pointer matches voicePtr.
+    // Slot 0x20: bias to embedded CCharVoice at +0x3E9C via &handle->voice.
     CVoiceHandle* handle = self->field_0x20;
     CCharVoice* biased = (CCharVoice*)handle;
     if (handle) biased = &handle->voice;
@@ -47,13 +46,12 @@ void func_802A6760(CVS_THREAD_EHP* self, CCharVoice* voicePtr) {
     if (biased == voicePtr) self->field_0x24 = NULL;
 
     // Rotating slots 0x2C..0x34 (count in field_0x3c).
-    // The loop body mirrors the single-slot pattern above so MWCC
-    // assigns registers consistently.
+    // Reusing handle/biased from outer scope keeps regalloc closer.
     for (int i = 0; i < self->field_0x3c; i++) {
-        CVoiceHandle* h = self->field_0x2c[i];
-        CCharVoice* v = (CCharVoice*)h;
-        if (h) v = &h->voice;
-        if (v == voicePtr) self->field_0x2c[i] = NULL;
+        handle = self->field_0x2c[i];
+        biased = (CCharVoice*)handle;
+        if (handle) biased = &handle->voice;
+        if (biased == voicePtr) self->field_0x2c[i] = NULL;
     }
 }
 
@@ -87,12 +85,12 @@ void func_802A658C(CVS_THREAD_EHP* self) {
     // (larger block) is the if-body and the vtable call is the else-body.
     if (self->field_0x38 != self->field_0x40) {
         // Reload slot-state triple {unk0, unk4, unk8} from init table.
-        // Retail loads [0] with lwzu (forming the base address),
-        // then loads [1], stores [1], stores [0], loads [2], stores [2].
-        // Using *array (pointer deref) for the first element often
-        // triggers MWCC's lis+lwzu global-access pattern.
+        // Retail uses lis+lwzu for the first-element load to form the
+        // base address.  We load [0] first into a local so MWCC has
+        // the best chance of using the same lis+lwzu pattern.
+        u32 v0 = lbl_eu_80539B14[0];
         self->unk4 = lbl_eu_80539B14[1];
-        self->unk0 = (u32*)*lbl_eu_80539B14;
+        self->unk0 = (u32*)v0;
         self->unk8 = lbl_eu_80539B14[2];
     } else {
         self->func_802A3B50();

@@ -64,20 +64,20 @@ void CTitleAHelp::CTitleAHelp_load() {
     CDeviceFile::setHandleFlag1(mFileHandle);
 }
 
-void CTitleAHelp::update() {
+void CTitleAHelp::func_801C3FF0() {
     if(unk28 == 0) return;
     switch(unk2c) {
         case 1:
-            showIn();
+            func_801C477C();
             break;
         case 2:
-            onShowInComplete();
+            func_801C47F8();
             break;
         case 4:
-            showOut();
+            func_801C484C();
             break;
         case 5:
-            onShowOutComplete();
+            func_801C48E0();
             break;
         default:
             break;
@@ -85,13 +85,13 @@ void CTitleAHelp::update() {
     mLayout->Animate(0);
 }
 
-void CTitleAHelp::draw(nw4r::lyt::DrawInfo* drawInfo) {
+void CTitleAHelp::func_801C4080(nw4r::lyt::DrawInfo* drawInfo) {
     if (unk28 == 0)
         return;
     func_80137038(mLayout, drawInfo, 0, 1);
 }
 
-void CTitleAHelp::release() {
+void CTitleAHelp::func_801C40A0() {
     func_801390E0(&mFileHandle);
     unk28 = 0;
     if(mLayout != nullptr) {
@@ -102,9 +102,9 @@ void CTitleAHelp::release() {
     unk4.func_8045F778();
 }
 
-u8 CTitleAHelp::isLoaded() { return unk35; }
+u8 CTitleAHelp::func_801C4114() { return unk35; }
 
-u8 CTitleAHelp::isVisible() {
+u8 CTitleAHelp::func_801C411C() {
 	return unk28;
 }
 
@@ -124,14 +124,14 @@ void CTitleAHelp_startClose(CTitleAHelp* pThis) {
     }
 }
 
-void CTitleAHelp::cancelClose() {
+void CTitleAHelp::func_801C416C() {
     if(unk37 != 0 && unk2c == 4) {
         unk2c = 2;
         unk36 = 0;
     }
 }
 
-void CTitleAHelp::requestClose() {
+void CTitleAHelp::func_801C4198() {
     if(unk2c == 3) {
         unk2c = 4;
         unk36 = 0;
@@ -258,7 +258,7 @@ void CTitleAHelp::func_801C46DC(u32 arg) {
     func_80124270(pane, arg);
 }
 
-void CTitleAHelp::setVisible(u8 arg) {
+void CTitleAHelp::func_801C473C(u8 arg) {
     unk28 = arg;
 }
 
@@ -270,7 +270,7 @@ void CTitleAHelp::func_801C4760() {
     func_80139A18(mLayout, lbl_eu_805054BC + 0x17, &lbl_eu_80664478, &lbl_eu_80664480);
 }
 
-void CTitleAHelp::showIn() {
+void CTitleAHelp::func_801C477C() {
     if(func_80137444(mAnimTrans20, 1.0f)) {
         mLayout->SetAnimationEnable(mAnimTrans20, 0);
         mLayout->SetAnimationEnable(mAnimTrans24, 1);
@@ -278,7 +278,7 @@ void CTitleAHelp::showIn() {
     }
 }
 
-void CTitleAHelp::onShowInComplete() {
+void CTitleAHelp::func_801C47F8() {
     if(func_80137444(mAnimTrans24, 1.0f)) {
         unk2c = 3;
         unk36 = 1;
@@ -286,7 +286,7 @@ void CTitleAHelp::onShowInComplete() {
     }
 }
 
-void CTitleAHelp::showOut() {
+void CTitleAHelp::func_801C484C() {
     if(func_80137510(mAnimTrans24, 1.0f)) {
         if(unk37 == 0) {
             mLayout->SetAnimationEnable(mAnimTrans24, 0);
@@ -298,7 +298,7 @@ void CTitleAHelp::showOut() {
     }
 }
 
-void CTitleAHelp::onShowOutComplete() {
+void CTitleAHelp::func_801C48E0() {
     if(func_80137510(mAnimTrans20, 1.0f)) {
         unk2c = 0;
         unk36 = 1;

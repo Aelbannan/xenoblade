@@ -57,6 +57,12 @@ void func_801E40E8(CItemBoxInfo2*);
 void func_801E3B9C(CItemBoxInfo2*);
 void func_801E3EB8(CItemBoxInfo2*);
 void func_801E2638(CItemBoxInfo2*, u16, void*);
+void func_801E2928(CItemBoxInfo2*, u16, void*, u16);
+void func_801E2C5C(CItemBoxInfo2*, u16, void*, u16);
+void func_801E37C4(CItemBoxInfo2*);
+void func_801E43BC(CItemBoxInfo2*, u16, void*, u16);
+void func_801E3228(CItemBoxInfo2*, u16, void*, u16);
+void func_801E3730(CItemBoxInfo2*, u16);
 void func_801E27D0(void*, void*);
 void func_801E3918(CItemBoxInfo2*);
 void func_801E197C(void*, u16, void*);
@@ -1158,11 +1164,34 @@ void CItemBoxInfo2::advanceItemBox2State() {
 }
 
 void func_801E14DC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
-    void* layout = *(void**)((u8*)info + 0x34);
-    char* base = (char*)&lbl_eu_805063BC;
-    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x44f, base + 0x2aa, 0);
-    const char* s = func_80136190(base + 0x130, base + 0x139, 0);
-    func_80136B4C((nw4r::lyt::Layout*)layout, (char*)s, base + 0x2aa, 0);
+    func_801D4A2C((u8*)info + 0xB0);
+    u8 val = *(u8*)((u8*)info + 0x9A);
+    if (val == 4) {
+        func_801E43BC(info, arg2, arg3, arg4);
+    }
+    void* item = arg3 ? arg3 : NULL;
+    u16 id = item ? (*(u32*)item >> 20) : 0;
+    u16 id_final = arg2;
+    if (val != 4) id_final = id;
+    u8 r = (u8)(u32)func_801392E4((void*)(u32)id_final);
+    if (item != NULL) {
+        if (func_801C6E90(item) != 0 || func_801D4AB0(item) == 0) {
+            r = 9;
+        }
+    }
+    if (r - 4 <= 4) {
+        func_801E3228(info, id_final, arg3, arg4);
+    } else if (r == 2) {
+        if (val <= 2) arg4 = -1;
+        func_801E2928(info, id_final, arg3, arg4);
+    } else if (r == 3) {
+        if (val <= 2) arg4 = -1;
+        func_801E2C5C(info, id_final, arg3, arg4);
+    } else if (r == 9 || r == 10) {
+        func_801E37C4(info);
+    } else if (r == 13) {
+        func_801E3730(info, arg2);
+    }
 }
 void func_801E16F0(CItemBoxInfo2* info, char* arg1, char* arg2) {
     char buf[0x20];

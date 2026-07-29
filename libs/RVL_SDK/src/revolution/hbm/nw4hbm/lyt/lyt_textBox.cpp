@@ -69,18 +69,10 @@ void CalcStringRectImpl(ut::Rect* pRect, ut::TextWriterBase<T>* pWriter,
         pStr += consumed;
         len -= consumed;
 
-        if (r.left < pRect->left) {
-            pRect->left = r.left;
-        }
-        if (r.top < pRect->top) {
-            pRect->top = r.top;
-        }
-        if (r.right > pRect->right) {
-            pRect->right = r.right;
-        }
-        if (r.bottom > pRect->bottom) {
-            pRect->bottom = r.bottom;
-        }
+        pRect->left = r.left < pRect->left ? r.left : pRect->left;
+        pRect->top = r.top < pRect->top ? r.top : pRect->top;
+        pRect->right = r.right > pRect->right ? r.right : pRect->right;
+        pRect->bottom = r.bottom > pRect->bottom ? r.bottom : pRect->bottom;
     } while (len > 0);
 }
 

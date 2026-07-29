@@ -54,26 +54,19 @@ u32 func_804E5FD4(CMdlMaterial* self, f32* rgb) {
     }
 
     // Scale float [0-1] to byte [0-255], alpha = 0xFF
-    f32 r = 255.0f * rgb[0];
-    f32 g = 255.0f * rgb[1];
-    f32 b = 255.0f * rgb[2];
-
     GXColor color;
-    color.r = (u8)(s32)r;
-    color.g = (u8)(s32)g;
-    color.b = (u8)(s32)b;
+    color.r = (u8)(s32)(255.0f * rgb[0]);
+    color.g = (u8)(s32)(255.0f * rgb[1]);
+    color.b = (u8)(s32)(255.0f * rgb[2]);
     color.a = 0xFF;
 
-    CMdlModelOwner* owner = self->owner;
-    nw4r::g3d::ScnMdl* scnMdl = owner->scnMdl;
-
-    for (u32 i = 0; i < owner->resMdl.GetResMatNumEntries(); i++) {
-        nw4r::g3d::ResMat resMat = owner->resMdl.GetResMat(i);
+    for (u32 i = 0; i < self->owner->resMdl.GetResMatNumEntries(); i++) {
+        nw4r::g3d::ResMat resMat = self->owner->resMdl.GetResMat(i);
         if (!resMat.ptr()) {
             NW4R_PANIC("GetResMat returned null for index %u", i);
         }
 
-        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(scnMdl, resMat.GetID());
+        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(self->owner->scnMdl, resMat.GetID());
         nw4r::g3d::ResMatChan chan = matAccess.GetResMatChan(false);
 
         chan.GXSetChanAmbColor(GX_COLOR0, color);
@@ -99,27 +92,37 @@ u32 func_804E6358(CMdlMaterial* self) {
         return 0;
     }
 
-    CMdlModelOwner* owner = self->owner;
-    nw4r::g3d::ScnMdl* scnMdl = owner->scnMdl;
     int offs = 0;
 
-    for (u32 i = 0; i < owner->resMdl.GetResMatNumEntries(); i++) {
-        nw4r::g3d::ResMat resMat = owner->resMdl.GetResMat(i);
+    for (u32 i = 0; i < self->owner->resMdl.GetResMatNumEntries(); i++) {
+        nw4r::g3d::ResMat resMat = self->owner->resMdl.GetResMat(i);
         if (!resMat.ptr()) {
             NW4R_PANIC("GetResMat returned null for index %u", i);
         }
 
-        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(scnMdl, resMat.GetID());
+        nw4r::g3d::ScnMdl::CopiedMatAccess matAccess(self->owner->scnMdl, resMat.GetID());
         nw4r::g3d::ResMatChan chan = matAccess.GetResMatChan(false);
 
-        chan.GXSetChanAmbColor(GX_COLOR0, *(GXColor*)((u8*)self->buffer + offs));
-        offs += 4;
-        chan.GXSetChanAmbColor(GX_ALPHA0, *(GXColor*)((u8*)self->buffer + offs));
-        offs += 4;
-        chan.GXSetChanAmbColor(GX_COLOR1, *(GXColor*)((u8*)self->buffer + offs));
-        offs += 4;
-        chan.GXSetChanAmbColor(GX_ALPHA1, *(GXColor*)((u8*)self->buffer + offs));
-        offs += 4;
+        {
+            GXColor col = *(GXColor*)((u8*)self->buffer + offs);
+            offs += 4;
+            chan.GXSetChanAmbColor(GX_COLOR0, col);
+        }
+        {
+            GXColor col = *(GXColor*)((u8*)self->buffer + offs);
+            offs += 4;
+            chan.GXSetChanAmbColor(GX_ALPHA0, col);
+        }
+        {
+            GXColor col = *(GXColor*)((u8*)self->buffer + offs);
+            offs += 4;
+            chan.GXSetChanAmbColor(GX_COLOR1, col);
+        }
+        {
+            GXColor col = *(GXColor*)((u8*)self->buffer + offs);
+            offs += 4;
+            chan.GXSetChanAmbColor(GX_ALPHA1, col);
+        }
     }
 
     return 1;

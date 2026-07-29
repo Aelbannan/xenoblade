@@ -237,29 +237,41 @@ DSError TRKValidMemory32(const void* addr, size_t length, ValidMemoryOptions rea
 //This is a certified metrowerks moment
 #include "PowerPC_EABI_Support/MetroTRK/ppc_mem.h"
 
-static void TRK_ppc_memcpy(void* dest, const void* src, int n, ui32 param_4, ui32 param_5){
-    ui32 msr;
-    ui8* srcTemp = (ui8*)src;
-    ui8* destTemp = (ui8*)dest;
+static void TRK_ppc_memcpy(void* dest, const void* src, int n, ui32 destMSR, ui32 srcMSR) {
+    ui32 savedMSR;
+    ui8* srcPtr = (ui8*)src;
+    ui8* destPtr = (ui8*)dest;
+    ui32 mask = 0xff;
 
-    msr = __TRK_get_MSR(); //save the original MSR value
+    savedMSR = __TRK_get_MSR();
 
-    while(n != 0) {
-        ui8 val;
-        __TRK_set_MSR(param_5);
-        val = ppc_readbyte1(srcTemp);
-        asm{sync}
+    while (n != 0) {
+        ui8 byteVal;
+        ui32* aligned;
+        ui32 offset;
 
-        __TRK_set_MSR(param_4);
-        ppc_writebyte1(destTemp, val);
-        asm{sync}
+        __TRK_set_MSR(srcMSR);
+        aligned = (ui32*)((ui32)srcPtr & ~3);
+        offset = (ui32)srcPtr - (ui32)aligned;
+        byteVal = (ui8)(*aligned >> ((3 - offset) << 3));
+        __sync();
 
-        srcTemp++;
-        destTemp++;
+        __TRK_set_MSR(destMSR);
+        aligned = (ui32*)((ui32)destPtr & ~3);
+        offset = (ui32)destPtr - (ui32)aligned;
+        {
+            ui32 shift = (3 - offset) << 3;
+            ui32 maskVal = mask << shift;
+            *aligned = (*aligned & ~maskVal) | (maskVal & (byteVal << shift));
+        }
+        __sync();
+
+        srcPtr++;
+        destPtr++;
         n--;
     }
 
-    __TRK_set_MSR(msr); //restore MSR to its original value
+    __TRK_set_MSR(savedMSR);
 }
 
 DSError TRKTargetAccessMemory(void *data, void* start, size_t *length, MemoryAccessOptions accessOptions,bool read){

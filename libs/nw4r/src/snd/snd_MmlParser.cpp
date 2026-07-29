@@ -746,13 +746,18 @@ volatile s16* MmlParser::GetVariablePtr(SeqPlayer* pPlayer, SeqTrack* pTrack,
 const u8* MmlParser::ParseAllocTrack(const void* pBuffer, u32 offset,
                                      u32* pSize) {
     const u8* pBase = static_cast<const u8*>(pBuffer);
+    const u8* pCmd = &pBase[offset];
+    u8 firstByte = *pCmd;
 
-    if (pBase[offset] != MML_ALLOCTRACK) {
+    if (firstByte != MML_ALLOCTRACK) {
         *pSize = 1;
         return pBase;
     }
 
-    *pSize = (pBase[offset + 1] << 8) | pBase[offset + 2];
+    u32 size = pCmd[1];
+    size <<= 8;
+    size |= pCmd[2];
+    *pSize = size;
     return pBase + 3;
 }
 

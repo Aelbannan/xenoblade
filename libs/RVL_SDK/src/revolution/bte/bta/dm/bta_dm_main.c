@@ -195,7 +195,8 @@ struct bta_dm_search_cb_t
     void *p_search_queue;       /* offset 0x74 */
 };
 
-extern struct bta_dm_search_cb_t bta_dm_search_cb;
+/* Search control block instance */
+struct bta_dm_search_cb_t bta_dm_search_cb;
 
 /*
  * Search state tables: one per state, indexed as table[event][col].

@@ -31,8 +31,9 @@ CModelDisp* func_801FBEB8(CModelDisp* self) {
 void func_801FC2B4(CModelDisp*, void**);
 void func_801FC0C4(CModelDisp* self) {
     u32 i;
-    for (i = 0; i < 3; ++i) {
-        func_801FC2B4(self, &((CModelDispSub*)((u8*)self + (u8)i * 0xFF0))->mpController);
+    CModelDisp* s;
+    for (s = self, i = 0; i < 3; ++i) {
+        func_801FC2B4(s, &((CModelDispSub*)((u8*)s + (u8)i * 0xFF0))->mpController);
     }
 }
 
@@ -73,10 +74,7 @@ void func_801FC15C(CModelDisp* self) {
 
 void func_801FC218(){}
 
-#pragma push
-#pragma auto_inline off
-void func_801FC2B4(CModelDisp*, void**){}
-#pragma pop
+__declspec(noinline) void func_801FC2B4(CModelDisp*, void**){}
 
 void func_801FC3B0(){}
 

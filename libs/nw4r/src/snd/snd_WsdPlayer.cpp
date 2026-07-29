@@ -319,5 +319,3 @@ void WsdPlayer::ChannelCallbackFunc(Channel* pDropChannel,
 } // namespace snd
 } // namespace nw4r
 
-extern "C" void OnUpdateFrameSoundThread__Q44nw4r3snd6detail9WsdPlayerFv() {}
-extern "C" void InvalidateWaveData__Q44nw4r3snd6detail9WsdPlayerFPCvPCv() {}

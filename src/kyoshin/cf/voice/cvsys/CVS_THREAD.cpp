@@ -8,6 +8,9 @@ extern "C" {
     extern u32 lbl_eu_80539910[];   // vtable for CVS_THREAD
     extern void func_800BE924(void* voice);
     extern u8* lbl_eu_80664A58;     // voice manager global pointer
+    extern int func_802A77E8(CVoiceHandle* handle);
+    extern int func_802A7850(int iter);
+    extern int func_80148778(u32* obj, int arg);
 }
 
 // ── func_802A3E74 ─────────────────────────────────────────────────────────

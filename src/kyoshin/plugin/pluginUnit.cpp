@@ -142,7 +142,7 @@ struct CfObjectHpIf {
 /// returns -1.
 extern "C" int getPcHp(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    void* actor = func_800B8B94(id);
+    cf::CfObjectActor* actor = func_800B8B94(id);
     VMArg result;
     if (actor != nullptr) {
         // Dispatch the CfObjectModel vtable slot at 0x128 through the
@@ -193,7 +193,7 @@ int getPcHpRate(VMThread* pThread) {
 /// func_800B8C78 (ene list lookup).
 extern "C" int getEneHp(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
-    void* actor = func_800B8C78(id);
+    cf::CfObjectActor* actor = func_800B8C78(id);
     VMArg result;
     if (actor != nullptr) {
         CfObjectHpIf* obj = reinterpret_cast<CfObjectHpIf*>(actor);
@@ -228,6 +228,15 @@ int getEneHpRate(VMThread* pThread) {
     vmRetValSet(pThread, &result);
     return 1;
 }
+/// Forward declaration for the arts-state sub-object pointer stored at
+/// CfObjectActor+4. Cast-only: real layout is recovered in CActorParam.
+/// The vtable slots at +0x30 and +0x34 return u32* (dereferenced by caller).
+struct ArtsSubObjectIf {
+    virtual ~ArtsSubObjectIf() {}
+    virtual u32* subFunc0x30() = 0;
+    virtual u32* subFunc0x34() = 0;
+};
+
 /// Script command: check whether the PC actor with the given id is currently
 /// performing an arts attack matching the given arts type. Returns 1 if the
 /// actor is attacking with the specified arts, 2 otherwise. The check queries
@@ -238,7 +247,7 @@ int onPcArtsAttack(VMThread* pThread) {
     int id = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     int artsType = vmArgIntGet(3, vmArgPtrGet(pThread, 2));
 
-    void* actor = func_800B8B94(id);
+    cf::CfObjectActor* actor = func_800B8B94(id);
 
     VMArg result;
     result.type = VM_TYPE_INT;
@@ -256,20 +265,19 @@ int onPcArtsAttack(VMThread* pThread) {
     }
 
     // Access the arts-state sub-object at offset 4 of the actor.
-    void* subObj = *(reinterpret_cast<void**>(reinterpret_cast<u8*>(actor) + 4));
+    ArtsSubObjectIf* subObj =
+        reinterpret_cast<ArtsSubObjectIf*>(*reinterpret_cast<void**>(
+            reinterpret_cast<u8*>(actor) + 4));
 
     // Try selector 0xa against the sub-object's vtable[13] (offset 0x34) value.
-    void** subVtable = *reinterpret_cast<void***>(subObj);
-    auto subFunc0x34 = reinterpret_cast<u32* (*)(void*)>(subVtable[0x34 / 4]);
-    u32 val = *subFunc0x34(subObj);
+    u32 val = *reinterpret_cast<u32*>(subObj->subFunc0x34());
 
     bool matched = false;
     if (func_80174C98(actor, &val, 0xa) != 0) {
         matched = true;
     } else {
         // Fall back to vtable[12] (offset 0x30) value.
-        auto subFunc0x30 = reinterpret_cast<u32* (*)(void*)>(subVtable[0x30 / 4]);
-        val = *subFunc0x30(subObj);
+        val = *reinterpret_cast<u32*>(subObj->subFunc0x30());
         if (func_80174C98(actor, &val, 0xa) != 0) {
             matched = true;
         }
@@ -323,7 +331,7 @@ int setEneBtlState(VMThread* pThread) {
         nextIdx++;
     }
 
-    void* actor = func_800B8C78(id);
+    cf::CfObjectActor* actor = func_800B8C78(id);
     if (actor == nullptr) {
         return 0;
     }

@@ -319,6 +319,7 @@ void Pane::DrawSelf(const DrawInfo& rInfo) {
 
     LoadMtx(rInfo);
 
+    // Debug draw: outline the pane bounds with a green line
     ut::Color color(0x00FF00FFu);
 
     f32 x = 0.0f;
@@ -348,10 +349,7 @@ void Pane::DrawSelf(const DrawInfo& rInfo) {
         break;
     }
 
-    math::VEC2 pos;
-    pos.x = x;
-    pos.y = y;
-    detail::DrawLine(pos, mSize, color);
+    detail::DrawLine(math::VEC2(x, y), mSize, color);
 }
 
 void Pane::Animate(u32 option) {

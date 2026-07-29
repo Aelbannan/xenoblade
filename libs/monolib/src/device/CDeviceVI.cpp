@@ -480,8 +480,9 @@ void CDeviceVI::endFrame(){
         return;
     }
 
-    // Inlined BEFORE_DRAW_DONE callback loop
-    if (spInstance != nullptr && !(spInstance->mViFlags & 0x80000000)) {
+    // Inlined BEFORE_DRAW_DONE callback loop — unkInline1 checks spInstance
+    // null and mViFlags bit 31; skip loop if either condition triggers
+    if (!unkInline1()) {
         _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
         while (node != spInstance->mCallbackList.mStartNodePtr) {
             node->mItem->viBeforeDrawDone();
@@ -499,7 +500,7 @@ void CDeviceVI::endFrame(){
     }
 
     // Inlined AFTER_DRAW_DONE callback loop
-    if (spInstance != nullptr && !(spInstance->mViFlags & 0x80000000)) {
+    if (!unkInline1()) {
         _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
         while (node != spInstance->mCallbackList.mStartNodePtr) {
             node->mItem->viAfterDrawDone();

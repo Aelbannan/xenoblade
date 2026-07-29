@@ -71,8 +71,6 @@ int func_801FCBEC(void* self) { return 0; }
 void func_801FCBF4(){}
 
 // Scans sub-objects for one whose mpController matches param's field_0x3A0,
-// then dispatches getNextChainObj / setParam calls for active slots.
-// Scans sub-objects for one whose mpController matches param's field_0x3A0,
 // then dispatches getNextChainObj / setParam calls for active flag slots.
 void func_801FCDB4(CModelDisp* self, CModelDispParam* param, int arg5) {
     for (u8 i = 0; i < 3; i++) {

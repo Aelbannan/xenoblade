@@ -1779,10 +1779,9 @@ u32 func_801E96F0(void* dummy, u32 arg1, u32 arg2) {
     if (arg1 == 0 || arg2 == 0) return 0;
     char buf[0x20];
     sprintf(buf, &lbl_eu_805063BC[0x1f4], arg1);
-    void* global = lbl_eu_806640F8;
     u16 r5 = func_80139358(arg2);
-    u8 result = func_801361E8(global, buf, r5);
-    return (result != 0);
+    u32 result = func_801361E8(lbl_eu_806640F8, buf, r5);
+    return !!(u8)result;
 }
 u32 func_801E9774(void* global, u16 arg2, void* arg3) {
     if (global == NULL) return 0;

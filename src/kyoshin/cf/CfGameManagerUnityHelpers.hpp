@@ -366,6 +366,17 @@ public:
     u16 value_0x8C;
 };
 
+class ContainerRootInterface : public Unk80EE4Data {
+public:
+    virtual void vfunc_0x110();
+    virtual void vfunc_0x114();
+    virtual void vfunc_0x118();
+    virtual void vfunc_0x11C();
+    virtual void vfunc_0x120();
+    virtual void vfunc_0x124();
+    virtual float vfunc_0x128();
+};
+
 class PlayerVirtualInterface : public Unk80EE4Data {
 public:
     virtual void vfunc_0x110();
@@ -392,6 +403,54 @@ public:
 struct PlayerObjectContainer : public ItemContainerPrefix,
                                public PlayerVirtualInterface {
 };
+
+extern "C" cf::UnkClass_80082D90* func_80082D90__Q22cf13CfGameManagerFv();
+extern "C" bool func_8006EF04__Fi(s32 mask);
+extern "C" bool CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(
+    cf::CfObjectMove* player);
+extern "C" u32 func_8006C670(cf::CfObjectMove* player);
+extern "C" bool func_80083100__Q22cf13CfGameManagerFv(u32 state);
+extern "C" bool func_8008310C__Q22cf13CfGameManagerFv(u32 state);
+extern "C" bool func_8004B848(u32 state);
+extern "C" bool func_8006CA20(u32 state);
+extern "C" bool func_80082FE4__Q22cf13CfGameManagerFv() {
+    bool result = false;
+    PlayerObjectContainer* container = static_cast<PlayerObjectContainer*>(
+        reinterpret_cast<PlayerVirtualInterface*>(
+            func_80082D90__Q22cf13CfGameManagerFv()));
+    if (func_8006EF04__Fi(0x4000000)) {
+        return false;
+    }
+    if (container != nullptr) {
+        if (CfObject_UnkVirtualFunc9__Q22cf12CfObjectMoveFv(
+                reinterpret_cast<cf::CfObjectMove*>(
+                    &static_cast<PlayerVirtualInterface&>(*container))) &&
+            func_80082FCC__Q22cf13CfGameManagerFv(
+                reinterpret_cast<cf::CfObjectMove*>(
+                    &static_cast<PlayerVirtualInterface&>(*container)),
+                0x100000)) {
+            u32 state = func_8006C670(
+                reinterpret_cast<cf::CfObjectMove*>(
+                    &static_cast<PlayerVirtualInterface&>(*container)));
+            if (state != 0) {
+                if (func_80083100__Q22cf13CfGameManagerFv(state)) {
+                    result = false;
+                } else {
+                    ContainerRootInterface* root =
+                        reinterpret_cast<ContainerRootInterface*>(container);
+                    if (root->vfunc_0x128() <= lbl_eu_80666498) {
+                        result = false;
+                    } else if (func_8004B848(state) || func_8006CA20(state)) {
+                        if (!func_8008310C__Q22cf13CfGameManagerFv(state)) {
+                            result = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return result;
+}
 
 extern "C" void func_800858B8__Q22cf13CfGameManagerFv(u32 value) {
     if (!lbl_eu_80663E70) {
@@ -1405,6 +1464,7 @@ extern "C" void func_8007F830__Q22cf13CfGameManagerFv(void* destination,
     __ct__8009ED08(destination, itemId);
 }
 
+#pragma dont_inline on
 extern "C" cf::UnkClass_80082D90* func_80082D90__Q22cf13CfGameManagerFv() {
     cf::CfGameManager* gameManager = cf::CfGameManager::getInstance();
     ItemListManager* itemManager = func_800B6BA4__Fv();
@@ -1427,6 +1487,7 @@ extern "C" cf::UnkClass_80082D90* func_80082D90__Q22cf13CfGameManagerFv() {
     return reinterpret_cast<cf::UnkClass_80082D90*>(
         *func_8007C6B4__Q22cf13CfGameManagerFv(gameManager->unk94, 0));
 }
+#pragma dont_inline reset
 
 extern "C" u8 lbl_eu_8052A7E8[];
 extern "C" u8 lbl_eu_8052FE68[];
@@ -2104,7 +2165,7 @@ extern "C" u32 func_80082EC4__Q22cf13CfGameManagerFv(s32 playerIndex, u32 value)
     return 0;
 }
 
-extern "C" bool func_8006C670(cf::CfObjectMove* player);
+extern "C" u32 func_8006C670(cf::CfObjectMove* player);
 #pragma dont_inline on
 extern "C" bool func_80082F2C__Q22cf13CfGameManagerFv(s32 playerIndex,
                                                         bool requireFlag) {

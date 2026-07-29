@@ -480,9 +480,7 @@ void func_801D69FC(CItemBoxInfo* info) {
     char buf[0x80];
     sprintf(buf, (char*)&lbl_eu_805063BC[0x1f4], 0);
     void* layout = info->state.layout;
-    void* child = *(void**)((u8*)layout + 0x10);
-    void** vt = *(void***)child;
-    void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+    nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)*(void**)((u8*)layout + 0x10))->FindPaneByName(buf, true);
     if (pane != NULL) {
         func_80124270(pane, 0);
     }
@@ -522,8 +520,7 @@ void func_801D77BC(CItemBoxInfo* info) {
         func_80136B4C((nw4r::lyt::Layout*)layout, tmp, base + 0x2aa, 0);
         func_80137B44((nw4r::lyt::Layout*)layout, tmp, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, tmp, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(tmp, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, tmp);
@@ -544,8 +541,7 @@ void func_801D79F8(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);
@@ -580,8 +576,7 @@ void func_801D8318(CItemBoxInfo* info) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);
@@ -691,8 +686,7 @@ void func_801D8C0C(CItemBoxInfo* info) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);
@@ -713,8 +707,7 @@ void func_801D8E34(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);
@@ -1238,8 +1231,7 @@ void func_801E2928(CItemBoxInfo2* info) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) func_801D62F8((u8*)pane + 0x10, j, buf);
         }
@@ -1255,8 +1247,7 @@ void func_801E2C5C(CItemBoxInfo2* info) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) func_801D62F8((u8*)pane + 0x10, j, buf);
         }
@@ -1279,8 +1270,7 @@ void func_801E3228(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);
@@ -1341,8 +1331,7 @@ void func_801E3B9C(CItemBoxInfo2* info) {
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         sprintf(buf, base + 0x161, i + 1);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);
@@ -1378,8 +1367,7 @@ void func_801E3EB8(CItemBoxInfo2* info) {
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         sprintf(buf, base + 0x161, idx);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             void** pvt = *(void***)pane;
             u16 count = ((u16(*)(void*))pvt[26])(pane);
@@ -1437,8 +1425,7 @@ void func_801E4194(CItemBoxInfo2* info) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);
@@ -1465,8 +1452,7 @@ void func_801E43BC(CItemBoxInfo2* info, u16 arg2, void* arg3, u16 arg4) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);
@@ -1685,8 +1671,7 @@ void func_801D4260(CItemBoxInfo* info, u16 arg2, void* arg3, u16 arg4) {
         sprintf(buf, base + 0x303, i + 1);
         func_80137B44((nw4r::lyt::Layout*)layout, buf, 0x777777ff);
         void* child = *(void**)((u8*)layout + 0x10);
-        void** vt = *(void***)child;
-        void* pane = ((void*(*)(void*, const char*, u32))vt[15])(child, buf, 1);
+        nw4r::lyt::Pane* pane = ((nw4r::lyt::Pane*)child)->FindPaneByName(buf, true);
         if (pane != NULL) {
             for (u32 j = 0; j < 2; j++) {
                 func_801D62F8((u8*)pane + 0x10, j, buf);

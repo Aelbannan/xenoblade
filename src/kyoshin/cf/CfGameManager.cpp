@@ -454,9 +454,11 @@ bool cf::CfGameManager::func_800829B8() {
 }
 #pragma dont_inline reset
 
+#pragma dont_inline on
 bool cf::CfGameManager::func_80082680() {
     return lbl_eu_80664772 != 0;
 }
+#pragma dont_inline reset
 
 bool cf::CfGameManager::func_8007F91C() {
     return lbl_eu_80663E3C > 0;
@@ -614,9 +616,11 @@ void cf::CfGameManager::func_80083CC8() {
     lbl_eu_80663E24 &= ~0x20;
 }
 
+#pragma dont_inline on
 bool cf::CfGameManager::func_80087250() {
     return func_8009CF8C(0x3508) != 0;
 }
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_8007C4B4() {}
 void cf::CfGameManager::func_8007EF44() {}
@@ -792,7 +796,9 @@ void cf::CfGameManager::func_80081874() {}
 
 void cf::CfGameManager::func_80081CB0() {}
 
-UNKWORD cf::CfGameManager::func_800822F4() { return 0; }
+#pragma dont_inline on
+UNKWORD cf::CfGameManager::func_800822F4() { return func_8009CF8C(0x20); }
+#pragma dont_inline reset
 
 void cf::CfGameManager::func_80082614() {}
 void cf::CfGameManager::func_80082694() {}
@@ -805,7 +811,7 @@ void cf::CfGameManager::func_80083468() {}
 
 void cf::CfGameManager::func_80083C70() {}
 
-extern "C" void func_80496034(u32);
+extern "C" void* func_80496034(CScn*);
 void cf::CfGameManager::func_80085838() {}
 
 float cf::CfObject::CfObject_UnkVirtualFunc56() {

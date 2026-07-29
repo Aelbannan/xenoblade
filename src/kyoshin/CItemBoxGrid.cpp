@@ -21,6 +21,11 @@ extern u32 func_801392E4(u32);
 extern u32 func_801361E8(u32, const char*, u32);
 extern u32 func_80139358(u32);
 extern void* CItem_initItemImplInstances(void*);
+extern u32 func_801D3320(void*);
+extern void func_80158118(void*, u32);
+extern void func_801D05D4(void*, int);
+extern void func_801CFF28(void*);
+extern void func_80138078__FUl(u32);
 u8 func_801C67F8(CItemBoxGridFull* self);
 u8 func_801C6840(CItemBoxGridFull* self);
 
@@ -402,7 +407,15 @@ void func_801CAE9C(){}
 void func_801CB038(){}
 
 
-void func_801CB0FC(){}
+// Check if item grid is active.
+u32 func_801CB0FC(void* self) {
+    u8* p = (u8*)self;
+    if (p[0x528]) return 1;
+    if (CSysWin_getUnk34(p + 0x4ac)) return 1;
+    if (CSysWin_getUnk34(p + 0x4e8)) return 1;
+    if (p[0x544]) return 1;
+    return func_801D3320(p + 0xe8);
+}
 
 // Get field depending on window state.
 u8 func_801CB184(void* self) {
@@ -438,9 +451,35 @@ void CItemBoxGrid::PushToList(unsigned char val) {
     reinterpret_cast<unsigned char*>(this)[0x6e] = count + 1;
 }
 
-void func_801CB4E4(){}
+// Increment list counter with wrap.
+void func_801CB4E4(void* self) {
+    u8* p = (u8*)self;
+    if (func_801D3320(p + 0xe8)) return;
+    if (p[0x528]) return;
+    u8 idx = p[0x6f] + 1;
+    p[0x6f] = idx;
+    if ((s8)idx >= (s8)p[0x6e]) {
+        p[0x6f] = 0;
+    }
+    func_801D05D4(self, 0);
+    func_801CFF28(self);
+    func_80138078__FUl(0x70);
+}
 
-void func_801CB56C(){}
+// Decrement a list counter with wrap.
+void func_801CB56C(void* self) {
+    u8* p = (u8*)self;
+    if (func_801D3320(p + 0xe8)) return;
+    if (p[0x528]) return;
+    u8 idx = p[0x6f] - 1;
+    p[0x6f] = idx;
+    if ((s8)idx < 0) {
+        p[0x6f] = p[0x6e] - 1;
+    }
+    func_801D05D4(self, 1);
+    func_801CFF28(self);
+    func_80138078__FUl(0x70);
+}
 
 void func_801CB5F0(){}
 
@@ -560,7 +599,21 @@ void func_801CEAE8(void* self) {
 
 void func_801CEB3C(){}
 
-void func_801CEBF0(){}
+// Handle system window activation.
+void func_801CEBF0(void* self) {
+    u8* p = (u8*)self;
+    if (!CSysWin_isActive(p + 0x4e8)) return;
+    *(u32*)(p + 0x58) = 3;
+    if (!p[0x542] && !p[0x544]) {
+        func_801D216C(p + 0x70, 1);
+    }
+    if (!p[0x544]) {
+        func_801D0950(self);
+    }
+    if (p[0x544]) {
+        func_801D216C(p + 0xa0, 1);
+    }
+}
 
 // Check conditions; set flags.
 void func_801CEC80(void* self) {
@@ -598,7 +651,18 @@ void func_801D0BD8(){}
 
 void func_801D0E88(){}
 
-void func_801D11B8(){}
+// Handle item event dispatch.
+void func_801D11B8(void* self, void* item, int eventType) {
+    if (!item) return;
+    if (eventType >= 1) {
+        u32 w = *(u32*)item;
+        func_80158118(item, w >> 20);
+    } else {
+        void* inst = CItem_initItemImplInstances(item);
+        void** vtbl = *(void***)inst;
+        ((void(*)(void*, void*))vtbl[4])(inst, item);
+    }
+}
 
 void func_801D1220(){}
 

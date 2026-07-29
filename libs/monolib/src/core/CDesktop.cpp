@@ -47,7 +47,8 @@ CDesktopException* CDesktop::getException(){
 }
 
 void CDesktop::wkUpdate(){
-    CLibHbm::isHbmControlInitialized();
+    bool _ = CLibHbm::isHbmControlInitialized();
+    (void)_;
 }
 
 void CDesktop::wkRender(){
@@ -105,5 +106,5 @@ namespace{
     }
 }
 
-void CDesktop::OnFileEvent() {}
-void CDesktop::WorkEvent3() {}
+bool CDesktop::OnFileEvent(CEventFile* pFile) { return false; }
+bool CDesktop::WorkEvent3(void* pThing) { return false; }

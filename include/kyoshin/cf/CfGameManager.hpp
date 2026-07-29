@@ -120,8 +120,10 @@ namespace cf{
         u32 unk70;             // 0x70-0x73
         u8 unk74[8];           // 0x74-0x7B
         u32 unk7C;
-        u8 unk80[0x8C - 0x80];
-        u32 unk8C;
+        u8 unk80[0x86 - 0x80];
+        u16 field_0x86;
+        u8 field_0x88[0x8C - 0x88];
+        s32 unk8C;
         UnkClass_80083298* unk90;
         //between CObjectParam - CfObjectMove
         //likely player character object array, seems to always store pointers

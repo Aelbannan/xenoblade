@@ -179,25 +179,37 @@ CharWidths RomFont::GetCharWidths(u16 ch) const {
 }
 
 void RomFont::GetGlyph(Glyph* pGlyph, u16 ch) const {
+    // MWCC allocates stack in reverse declaration order.
+    // Retail layout: sp+8 buffer, sp+12 width, sp+16 y, sp+20 x, sp+24 pTexture
     void* pTexture;
-    u32 x, y, width;
+    u32 x;
+    u32 y;
+    u32 width;
     char buffer[CHAR_PTR_BUFFER_SIZE];
 
-    MakeCharPtr(buffer, ch);
+    // Resolve character: use alternate char if no glyph
+    ch = HasGlyph(ch) ? ch : mAlternateChar;
+
+    // Build multibyte char pointer on stack
+    if ((ch >> 8) == 0) {
+        buffer[0] = ch & 0xFF;
+        buffer[1] = '\0';
+    } else {
+        buffer[0] = ch >> 8;
+        buffer[1] = ch & 0xFF;
+        buffer[2] = '\0';
+    }
+
     OSGetFontTexture(buffer, &pTexture, &x, &y, &width);
 
     pGlyph->pTexture = pTexture;
-
     pGlyph->widths.left = 0;
     pGlyph->widths.glyphWidth = width;
     pGlyph->widths.charWidth = width;
-
     pGlyph->height = mFontHeader->cellHeight;
     pGlyph->texFormat = GX_TF_I4;
-
     pGlyph->texWidth = mFontHeader->sheetWidth;
     pGlyph->texHeight = mFontHeader->sheetHeight;
-
     pGlyph->cellX = x;
     pGlyph->cellY = y;
 }
@@ -254,44 +266,44 @@ void* RomFont::Unload() {
 }
 
 bool RomFont::HasGlyph(u16 ch) const {
-    if (mFontEncode == 1) {
-        bool valid = false;
+    switch (mFontEncode) {
+    case 0: {
+        bool valid = IsCP1252Char(ch);
+        return valid;
+    }
 
-        if (ch <= 0xFF) {
-            if (ch >= 0x20 && ch <= 0x7E) {
-                valid = true;
-            } else if (ch >= 0xA1 && ch <= 0xDF) {
-                valid = true;
+    case 1:
+        if (IsSJISHalfWidthChar(ch)) {
+            return true;
+        }
+
+        {
+            bool valid;
+            u8 hi = ch >> 8;
+            u8 lo = ch & 0xFF;
+
+            valid = false;
+
+            if (hi >= 0x81) {
+                if (hi <= 0x98) {
+                    if (lo >= 0x40) {
+                        if (lo <= 0xFC) {
+                            valid = true;
+                        }
+                    }
+                }
+            }
+
+            if (valid) {
+                return true;
             }
         }
 
-        if (valid) {
-            return true;
-        }
+        return false;
 
-        u8 hi = ch >> 8;
-        u8 lo = ch & 0xFF;
-
-        if (hi >= 0x81 && hi <= 0x98 && lo >= 0x40 && lo <= 0xFC) {
-            return true;
-        }
-
+    default:
         return false;
     }
-
-    if (mFontEncode >= 1) {
-        return false;
-    }
-
-    // mFontEncode == 0 (CP1252)
-    if (ch < 0x20) {
-        return false;
-    }
-    if (ch > 0xFF) {
-        return false;
-    }
-
-    return true;
 }
 
 } // namespace ut

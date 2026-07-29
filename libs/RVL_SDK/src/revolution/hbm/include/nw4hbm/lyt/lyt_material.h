@@ -194,6 +194,7 @@ public:
     void SetTextureNoWrap(u8 idx, const TexMap& rTexMap) {
         GetTexMapAry()[idx].SetNoWrap(rTexMap);
     }
+    void SetTexture(u8 idx, const GXTexObj& rTexObj);
 
     const TexSRT& GetTexSRT(u32 idx) const {
         return GetTexSRTAry()[idx];

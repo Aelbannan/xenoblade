@@ -251933,7 +251933,24 @@ public:
         };
     };
 };
-class UnkClass_800821F8;
+class UnkClass_800821F8 {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40(u32 mode);
+};
 
 class CItemImplInstances {
 public:
@@ -252545,6 +252562,45 @@ extern "C" UnkClass_800821F8* func_800784A0(u32 first, cf::CfObjectMove* second,
                                              u32 third, u32 fourth, u32 fifth,
                                              u32 sixth, u32 seventh);
 extern "C" void func_80075540(CfCamEventManager* manager, u32 flag);
+extern "C" void func_80081DD8__Q22cf13CfGameManagerFv(bool special, u32 value);
+extern "C" UnkClass_800821F8* func_800821F8__Q22cf13CfGameManagerFv();
+extern "C" void func_8008212C__Q22cf13CfGameManagerFv(u32 mode) {
+    if (mode >= 16 && mode <= 43) {
+        goto direct;
+    }
+    if (mode >= 8 && mode <= 10) {
+        goto enabled;
+    }
+    if (mode == 0) {
+        goto disabled;
+    }
+    if (mode == 11) {
+        goto enabledSingle;
+    }
+    goto done;
+
+enabled:
+    func_80081DD8__Q22cf13CfGameManagerFv(true, 0);
+    func_800821F8__Q22cf13CfGameManagerFv()->vfunc_0x40(mode);
+    goto done;
+
+enabledSingle:
+    func_80081DD8__Q22cf13CfGameManagerFv(true, 0);
+    func_800821F8__Q22cf13CfGameManagerFv()->vfunc_0x40(mode);
+    goto done;
+
+direct:
+    func_800821F8__Q22cf13CfGameManagerFv()->vfunc_0x40(mode);
+    goto done;
+
+disabled:
+    func_80081DD8__Q22cf13CfGameManagerFv(false, 0);
+
+done:
+    return;
+}
+
+#pragma dont_inline on
 extern "C" void func_80081DD8__Q22cf13CfGameManagerFv(bool special,
                                                         u32 value) {
     cf::CfGameManager* manager = cf::CfGameManager::getInstance();
@@ -252559,6 +252615,7 @@ extern "C" void func_80081DD8__Q22cf13CfGameManagerFv(bool special,
         func_80075540(manager->unkB4, 8);
     }
 }
+#pragma dont_inline reset
 
 extern "C" void func_80081E90__Q22cf13CfGameManagerFv(u32 third, u32 fourth,
                                                        u32 seventh) {
@@ -253546,9 +253603,11 @@ bool cf::CfGameManager::func_80082104() {
     return func_80079DBC(getInstance()->unkB4);
 }
 
+#pragma dont_inline on
 UnkClass_800821F8* cf::CfGameManager::func_800821F8() {
     return getInstance()->unkB0;
 }
+#pragma dont_inline reset
 
 cf::CfObject* cf::CfGameManager::func_8008221C() {
     CfCamEventManager* manager = getInstance()->unkB4;

@@ -170,12 +170,11 @@ void VoiceManager::UpdateAllVoices() {
             reinterpret_cast<u8*>(pCurr) - 0x11C)->Calc();
     }
 
-    // Third pass: Update on all voices with interrupts disabled.
-    // Compute sentinel BEFORE capturing the interrupt return value so the
-    // register allocation matches retail (lwzu pattern).
+    // Third pass: Update on all voices with interrupts disabled
     {
-        pEnd = reinterpret_cast<ut::LinkListNode*>(pBase + 0x8);
         BOOL enabled = OSDisableInterrupts();
+
+        pEnd = reinterpret_cast<ut::LinkListNode*>(pBase + 0x8);
         pNode = pEnd->GetNext();
 
         while (pNode != pEnd) {

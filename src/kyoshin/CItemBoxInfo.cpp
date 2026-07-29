@@ -35,6 +35,9 @@ void func_80136254(char*, char*, u16);
 void func_800A082C(void*);
 void func_8013B380(u32);
 void func_80139C98(u32);
+extern void* lbl_eu_806645A8;
+extern void* lbl_eu_806645B0;
+void func_80139A18(nw4r::lyt::Layout*, char*, void*, void*);
 extern void* lbl_eu_80664104;
 extern void* lbl_eu_806640A8;
 extern void* lbl_eu_806640F8;
@@ -390,8 +393,43 @@ void func_801D79F8(){}
 void func_801D8058(){}
 void func_801D80EC(){}
 void func_801D8318(){}
-void func_801D85D8(){}
-void func_801D885C(){}
+void func_801D85D8(CItemBoxInfo* info) {
+    void* layout = info->state.layout;
+    char* base = (char*)&lbl_eu_805063BC;
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x267, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x273, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x29e, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x354, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x2ab, base + 0x2aa, 0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2b6, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2c1, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2cc, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2d7, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2e2, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2ed, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x135, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x165, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x2f8, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x303, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x136, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x166, base + 0x2aa, 0);
+}
+void func_801D885C(CItemBoxInfo* info) {
+    char buf[0x20];
+    for (int i = 0; i < 3; i++) {
+        int index = i + 1;
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
+        void* layout = info->state.layout;
+        void* child = *(void**)((u8*)layout + 0x10);
+        void** vtable = *(void***)child;
+        void* r = ((void*(*)(void*, const char*, u32))vtable[15])(child, buf, 1);
+        func_80124270(r, 0);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
+        func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x426], index);
+        func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+    }
+}
 void func_801D8930(){}
 void func_801D8A88(CItemBoxInfo* info) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,
@@ -788,9 +826,44 @@ void func_801E2FEC(){}
 void func_801E3228(){}
 void func_801E3730(){}
 void func_801E37C4(){}
-void func_801E3918(){}
+void func_801E3918(CItemBoxInfo2* info) {
+    void* layout = *(void**)((u8*)info + 0x34);
+    char* base = (char*)&lbl_eu_805063BC;
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x267, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x273, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x29e, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x354, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x2ab, base + 0x2aa, 0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2b6, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2c1, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2cc, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2d7, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2e2, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80139A18((nw4r::lyt::Layout*)layout, base + 0x2ed, &lbl_eu_806645A8, &lbl_eu_806645B0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x135, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x165, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x2f8, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x303, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x136, base + 0x2aa, 0);
+    func_80136B4C((nw4r::lyt::Layout*)layout, base + 0x166, base + 0x2aa, 0);
+}
 void func_801E3B9C(){}
-void func_801E3DE4(){}
+void func_801E3DE4(CItemBoxInfo2* info) {
+    char buf[0x20];
+    for (int i = 0; i < 3; i++) {
+        int index = i + 1;
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x35f], index);
+        void* layout = *(void**)((u8*)info + 0x34);
+        void* child = *(void**)((u8*)layout + 0x10);
+        void** vtable = *(void***)child;
+        void* r = ((void*(*)(void*, const char*, u32))vtable[15])(child, buf, 1);
+        func_80124270(r, 0);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x408], index);
+        func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+        sprintf(buf, (char*)&lbl_eu_805063BC[0x426], index);
+        func_80136B4C((nw4r::lyt::Layout*)layout, buf, (char*)&lbl_eu_805063BC[0x2aa], 0);
+    }
+}
 void func_801E3EB8(){}
 void func_801E4010(CItemBoxInfo2* info) {
     func_80136B4C((nw4r::lyt::Layout*)info->state.layout,

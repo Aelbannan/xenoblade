@@ -774,12 +774,36 @@ extern "C" Unk80EE4Data* func_80081CBC__Q22cf13CfGameManagerFv(const char* text,
 }
 
 extern "C" UnkClass_800AA714* func_800AA714(u32 value);
-extern "C" void func_800B985C(UnkClass_800AA714* first, UnkClass_800AA714* second,
-                                u32 value);
-extern "C" void func_80081D2C__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 value) {
+extern "C" Unk80EE4Data* func_800B985C(UnkClass_800AA714* first,
+                                          UnkClass_800AA714* second, u32 value);
+#pragma dont_inline on
+extern "C" Unk80EE4Data* func_80081D2C__Q22cf13CfGameManagerFv(
+    u32 first, u32 second, u32 value) {
     UnkClass_800AA714* firstObject = func_800AA714(first);
     UnkClass_800AA714* secondObject = func_800AA714(second);
-    func_800B985C(firstObject, secondObject, value);
+    return func_800B985C(firstObject, secondObject, value);
+}
+#pragma dont_inline reset
+
+class BdatFilePointer;
+extern "C" void func_8003AA34();
+extern "C" BdatFilePointer* getFP__FPCc(const char* name);
+extern "C" const char* getBdatStringColumnValue(BdatFilePointer* file,
+                                                  const char* column, u16 index);
+extern "C" void func_8003B1EC(BdatFilePointer* file);
+extern "C" void func_8003B41C(BdatFilePointer* file);
+extern "C" Unk80EE4Data* func_80080E44__Q22cf13CfGameManagerFv(
+    const char* name, u16 index) {
+    func_8003AA34();
+    const char* value;
+    BdatFilePointer* file = getFP__FPCc(name);
+    value = getBdatStringColumnValue(file, &lbl_eu_804FB824[0x84], index);
+    func_8003B1EC(file);
+    func_8003B41C(file);
+    Unk80EE4Data* data = func_80081D2C__Q22cf13CfGameManagerFv(
+        reinterpret_cast<u32>(value), 0, 0);
+    func_80080EE4__Q22cf13CfGameManagerFv(data, name, index);
+    return data;
 }
 
 extern "C" u32 func_80078C08(CfCamEventManager* manager, u32 first, u32 second,

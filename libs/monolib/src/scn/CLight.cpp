@@ -7,7 +7,9 @@ CLight::CLight(){
     u32 r0 = r4 & 0xF;
     unk4 = CVec3(0.0f, 0.0f, 0.0f);
     unk10 = CVec3(0.5f, 0.5f, 0.5f);
-    unk1C = CVec3(1.0f, 0.0f, 0.0f);
+    unk1C_x = 1.0f;
+    unk20 = 0.0f;
+    unk24 = 0.0f;
     unk28 = 1.0f;
     mpLightObj = nullptr;
     unk30 = 0;
@@ -58,19 +60,21 @@ void CLight::func_804C0484(const float* dir) {
 void func_804C0570(void* self, int value){
     *(int*)((char*)self + 0x2c) = value;
 }
-void CLight::func_804C07F0(const float* color) {
-    // Copy 4-component color into this light
-    unk10.x = color[0];
-    unk10.y = color[1];
-    unk10.z = color[2];
-    unk1C.x = color[3];
+#include <cstring>
 
-    // Scale RGB by intensity, convert to 0-255 byte range
-    float intensity = unk38;
-    f32 r = unk10.x * intensity * 255.0f;
-    f32 g = unk10.y * intensity * 255.0f;
-    f32 b = unk10.z * intensity * 255.0f;
-    f32 a = unk1C.x * 255.0f;
+// lbl_eu_8066AFC0 = 255.0f used in color float-to-byte conversion
+extern f32 lbl_eu_8066AFC0;
+
+void CLight::func_804C07F0(const f32* color) {
+    // Copy the 4-component color into this light's fields (16 bytes)
+    memcpy(&unk10, color, 16);
+
+    // Load intensity and color from this, scale to 0-255 byte range
+    f32 intensity = unk38;
+    f32 r = unk10.x * intensity * lbl_eu_8066AFC0;
+    f32 g = unk10.y * intensity * lbl_eu_8066AFC0;
+    f32 b = unk10.z * intensity * lbl_eu_8066AFC0;
+    f32 a = unk1C.x * lbl_eu_8066AFC0;
 
     GXColor col;
     col.r = (u8)(s32)r;

@@ -253,11 +253,11 @@ void func_80275808(UnkCode8027513C* ptr) {
 
 void func_80275824(){}
 
-// State machine: dispatch through PTMF table indexed by field_0x6C,
-// then sync flag bit 11 between CfObjectMove->mFlags68 and CfObjectEff->mFlags68,
+// State machine: dispatch based on field_0x6C, then sync flag bit 11 between
+// CfObjectMove->mFlags68 and CfObjectEff->mFlags68,
 // and update child effect state via CfGameManager query.
 void func_80275850(UnkCode8027513C* self) {
-    // PTMF dispatch: table at lbl_eu_80537F98 maps state 0->func_80275454, 1->func_802756F0
+    // Dispatch: state 0->func_80275454, 1->func_802756F0 (originally via PTMF table)
     if (self->field_0x6C == 0) {
         func_80275454(self);
     } else if (self->field_0x6C == 1) {

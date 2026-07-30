@@ -3,11 +3,29 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+// forward declarations for scaffold thunk references
+void func_8023E4D4__Q22cf13CfNandManagerFv(void*);
+void __dt__Q22cf13CfNandManagerFv(void*);
+void cbRenderBefore__Q22cf13CfNandManagerFv(void*);
+
+
+namespace cf {
+class CfNandManager {
+public:
+    virtual ~CfNandManager();
+    void Term();
+    void Move();
+    void func_8023E4D4();
+    void create();
+    void cbRenderBefore();
+};
+} // namespace cf
+
 void __ct__cf_CfNandManager(){}
 
 void __dt__8023BFCC(){}
 
-void cf::CfNandManager::~CfNandManager() {}
+cf::CfNandManager::~CfNandManager() {}
 
 void Init__Q22cf13CfNandManagerFv(void) {
     extern void func_804DA1B4(void*);

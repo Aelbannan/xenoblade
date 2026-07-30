@@ -1,15 +1,20 @@
-// Auto-scaffolded catalog TU for monolib/src/mpfsys/MPFDrawMdlColor
-// Replace stubs with high-level C/C++ during decomp.
+#include "monolib/mpfsys/MPFDrawMdlColor.hpp"
 
-using namespace mpfsys;
-#include <harness_catalog.h>
+extern "C" {
+    s8 lbl_eu_80665898;
+    mpfsys::MPFDrawMdlColor* lbl_eu_8066589C;
+}
 
-void mpfsys::MPFDrawMdlColor::getInstance() {}
+static mpfsys::MPFDrawMdlColor lbl_eu_8056DBC0;
 
-void mpfsys::MPFDrawMdlNoColor::func_80479894() {}
+namespace mpfsys {
 
-void mpfsys::MPFDrawMdlNoColor::func_80479A1C() {}
+MPFDrawMdlColor* MPFDrawMdlColor::getInstance(){
+    if(!lbl_eu_80665898){
+        lbl_eu_8066589C = &lbl_eu_8056DBC0;
+        lbl_eu_80665898 = 1;
+    }
+    return lbl_eu_8066589C;
+}
 
-void mpfsys::MPFDrawMdlColor::func_80479BA0() {}
-
-void mpfsys::MPFDrawMdlColor::func_80479D40() {}
+} // namespace mpfsys

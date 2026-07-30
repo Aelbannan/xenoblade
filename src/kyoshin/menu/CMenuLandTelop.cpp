@@ -44,10 +44,10 @@ void func_801453B8(){}
 
 void func_8014548C(){}
 
-void func_80145A90(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x6c); }
+void func_80145A90(void* self) { reinterpret_cast<CMenuLandTelop*>((char*)self - 0x6c)->~CMenuLandTelop(); }
 
-void func_80145A98(void* self) { ((void(*)(void*))cbRenderBefore__14CMenuLandTelopFv)((char*)self - 0x70); }
+void func_80145A98(void* self) { reinterpret_cast<CMenuLandTelop*>((char*)self - 0x70)->cbRenderBefore(); }
 
-void func_80145AA0(void* self) { ((void(*)(void*))__dt__14CMenuLandTelopFv)((char*)self - 0x70); }
+void func_80145AA0(void* self) { reinterpret_cast<CMenuLandTelop*>((char*)self - 0x70)->~CMenuLandTelop(); }
 
 void func_80145AA8(){}

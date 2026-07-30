@@ -144,25 +144,10 @@ void func_8016C720(){}
 
 void func_eu_8016DA48(){}
 
-void func_8016C7D8(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x54); }
+void func_8016C7D8(void* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*)self - 0x54)->~CTaskREvtSequence(); }
 
-void func_8016C7E0(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
+void func_8016C7E0(void* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*)self - 0x58)->cbRenderBefore(); }
 
-extern "C" void func_8016C7E8(void* self) { ((void(*)(void*))__dt__Q22cf17CTaskREvtSequenceFv)((char*)self - 0x58); }
+extern "C" void func_8016C7E8(void* self) { reinterpret_cast<cf::CTaskREvtSequence*>((char*)self - 0x58)->~CTaskREvtSequence(); }
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
-template <typename T>
-class CTTask {
-public:
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-};
-
-namespace cf { class CTaskREvtSequence; }
-template<> CTTask<cf::CTaskREvtSequence>::~CTTask() {}
-template<> void CTTask<cf::CTaskREvtSequence>::Move() {}
-template<> void CTTask<cf::CTaskREvtSequence>::Draw() {}
+// CTTask<cf::CTaskREvtSequence> specializations provided by header

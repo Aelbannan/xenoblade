@@ -1,7 +1,20 @@
-// Auto-scaffolded catalog TU for monolib/src/mpfsys/MPFDrawBillboard
-// Replace stubs with high-level C/C++ during decomp.
+#include "monolib/mpfsys/MPFDrawBillboard.hpp"
 
-using namespace mpfsys;
-#include <harness_catalog.h>
+extern "C" {
+    s8 lbl_eu_806658A0;
+    mpfsys::MPFDrawBillboard* lbl_eu_806658A4;
+}
 
-void mpfsys::MPFDrawBillboard::getInstance() {}
+static mpfsys::MPFDrawBillboard lbl_eu_8056DC48;
+
+namespace mpfsys {
+
+MPFDrawBillboard* MPFDrawBillboard::getInstance(){
+    if(!lbl_eu_806658A0){
+        lbl_eu_806658A4 = &lbl_eu_8056DC48;
+        lbl_eu_806658A0 = 1;
+    }
+    return lbl_eu_806658A4;
+}
+
+} // namespace mpfsys

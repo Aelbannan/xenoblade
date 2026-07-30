@@ -3,9 +3,10 @@
 
 #include "kyoshin/makecrystal/CMenuMakeCrystal.hpp"
 
+
 void __ct__CMenuMakeCrystal(){}
 
-void CMenuMakeCrystal::~CMenuMakeCrystal() {}
+CMenuMakeCrystal::~CMenuMakeCrystal() {}
 
 void CMenuMakeCrystal::Init() {}
 

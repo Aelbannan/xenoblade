@@ -3,9 +3,18 @@
 
 #include <harness_catalog.h>
 
+struct CDeviceFontLoader {
+    ~CDeviceFontLoader();
+    void OnFileEvent();
+    void func_80454F30();
+    void wkStandbyLogin();
+    void wkStandbyLogout();
+};
+
+
 void __ct__CDeviceFontLoader(){}
 
-void CDeviceFontLoader::~CDeviceFontLoader() {}
+CDeviceFontLoader::~CDeviceFontLoader() {}
 
 void CDeviceFontLoader::func_80454F30() {}
 

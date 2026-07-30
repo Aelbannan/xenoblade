@@ -3,9 +3,14 @@
 
 #include <harness_catalog.h>
 
+struct CMdlAnmUV {
+    ~CMdlAnmUV();
+};
+
+
 void __ct__CMdlAnmUV(){}
 
-void CMdlAnmUV::~CMdlAnmUV() {}
+CMdlAnmUV::~CMdlAnmUV() {}
 
 u32 func_804E6C78(void) {
     extern u32 lbl_eu_80663C74;

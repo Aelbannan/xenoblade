@@ -3,6 +3,19 @@
 
 #include <harness_catalog.h>
 
+struct CWorkSystemPack {
+    void CWorkSystemPack();
+    ~CWorkSystemPack();
+    void func_804DDDF4();
+    void func_804DDFBC();
+    void func_804DE08C();
+    void func_804DE100();
+    void wkStandbyLogin();
+    void wkStandbyLogout();
+    void wkUpdate();
+};
+
+
 CWorkSystemPack::CWorkSystemPack() {}
 
 void __dt___reslist_base_CPackItem(){}
@@ -29,7 +42,7 @@ loop_cond:
 
 void __dt__reslist_CArcItem(){}
 
-void CWorkSystemPack::~CWorkSystemPack() {}
+CWorkSystemPack::~CWorkSystemPack() {}
 
 void func_804DDCD4(){}
 

@@ -82,7 +82,7 @@ void IsDerivedFrom__Q34nw4r3g3d9AnmObjChrCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d12AnmObjChrResCFv(){}
 
-const char lbl_eu_8051D5F8[];
+extern const char lbl_eu_8051D5F8[];
 void* GetTypeObj__Q34nw4r3g3d12AnmObjChrResCFv(void) { return (void*)lbl_eu_8051D5F8; }
 
 void __dt__Q34nw4r3g3d12AnmObjChrResFv(){}
@@ -93,14 +93,14 @@ void IsDerivedFrom__Q34nw4r3g3d13AnmObjChrNodeCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d14AnmObjChrBlendCFv(){}
 
-const char lbl_eu_8051D5E4[];
+extern const char lbl_eu_8051D5E4[];
 void* GetTypeObj__Q34nw4r3g3d14AnmObjChrBlendCFv(void) { return (void*)lbl_eu_8051D5E4; }
 
 void __dt__Q34nw4r3g3d14AnmObjChrBlendFv(){}
 
 void GetTypeName__Q34nw4r3g3d13AnmObjChrNodeCFv(){}
 
-const char lbl_eu_8051D5D0[];
+extern const char lbl_eu_8051D5D0[];
 extern "C" void* GetTypeObj__Q34nw4r3g3d13AnmObjChrNodeCFv(void) { return (void*)lbl_eu_8051D5D0; }
 
 void GetTypeName__Q34nw4r3g3d9AnmObjChrCFv(){}

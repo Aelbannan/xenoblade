@@ -104,7 +104,7 @@ void func_802316F8(){}
 
 void CMenuArtsSet::func_80231848(void* src){
     mField44 = *static_cast<float*>(src);
-    mField48 = *static_cast<float*>(static_cast<char*>(src) + 4);
+    mField48 = *(float*)((char*)src + 4);
 }
 
 void func_8023185C(){}
@@ -165,7 +165,7 @@ void func_80232C78(){}
 
 void __ct__CArtsList(){}
 
-void CArtsList::~CArtsList() {}
+CArtsList::~CArtsList() {}
 
 void func_8023352C(){}
 

@@ -8,7 +8,7 @@
 
 void __ct__CKizunaTalkList(){}
 
-void CKizunaTalkList::~CKizunaTalkList() {}
+CKizunaTalkList::~CKizunaTalkList() {}
 
 void func_802732F4(){}
 

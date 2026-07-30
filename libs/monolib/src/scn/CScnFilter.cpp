@@ -3,8 +3,10 @@
 
 #include <harness_catalog.h>
 
+#include <monolib/scn/CScnFilter.hpp>
+
 void __ct__CScnFilter(){}
 
-void CScnFilter::~CScnFilter() {}
+CScnFilter::~CScnFilter() {}
 
 void func_8049C868(){}

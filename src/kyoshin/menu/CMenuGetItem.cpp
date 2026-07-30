@@ -26,8 +26,9 @@ void func_8014A11C(){}
 
 void func_8014A1D4(){}
 
+extern unsigned long lbl_eu_806641A8;
 unsigned long func_8014A2A0(){
-    unsigned long v = *(unsigned long*)(lbl_eu_806641A8);
+    unsigned long v = lbl_eu_806641A8;
     return !!v;
 }
 
@@ -43,8 +44,8 @@ void func_8014A570(){}
 
 void func_8014A6F8(){}
 
-void func_8014A854(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x58); }
+void func_8014A854(void* self) { reinterpret_cast<CMenuGetItem*>((char*)self - 0x58)->~CMenuGetItem(); }
 
-void func_8014A85C(void* self) { ((void(*)(void*))cbRenderBefore__12CMenuGetItemFv)((char*)self - 0x5c); }
+void func_8014A85C(void* self) { reinterpret_cast<CMenuGetItem*>((char*)self - 0x5c)->cbRenderBefore(); }
 
-void func_8014A864(void* self) { ((void(*)(void*))__dt__12CMenuGetItemFv)((char*)self - 0x5c); }
+void func_8014A864(void* self) { reinterpret_cast<CMenuGetItem*>((char*)self - 0x5c)->~CMenuGetItem(); }

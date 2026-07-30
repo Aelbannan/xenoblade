@@ -52,8 +52,8 @@ void cf::CfObjectActor::CfObjectActor_UnkVirtualFunc10() {}
 
 
 void cf::CfObjectActor::CActorParam_UnkVirtualFunc23() {
-    this = (char*)this + 0x3e9c;
-    void** vtable = *(void***)this;
+    void* adjusted = (char*)this + 0x3e9c;
+    void** vtable = *(void***)adjusted;
     void (*func)(void*) = (void (*)(void*))vtable[0xe0 / 4];
-    func(this);
+    func(adjusted);
 }

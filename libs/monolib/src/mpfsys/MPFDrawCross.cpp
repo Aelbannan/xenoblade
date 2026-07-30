@@ -1,7 +1,20 @@
-// Auto-scaffolded catalog TU for monolib/src/mpfsys/MPFDrawCross
-// Replace stubs with high-level C/C++ during decomp.
+#include "monolib/mpfsys/MPFDrawCross.hpp"
 
-using namespace mpfsys;
-#include <harness_catalog.h>
+extern "C" {
+    s8 lbl_eu_806658A8;
+    mpfsys::MPFDrawCross* lbl_eu_806658AC;
+}
 
-void mpfsys::MPFDrawCross::getInstance() {}
+static mpfsys::MPFDrawCross lbl_eu_8056DC28;
+
+namespace mpfsys {
+
+MPFDrawCross* MPFDrawCross::getInstance(){
+    if(!lbl_eu_806658A8){
+        lbl_eu_806658AC = &lbl_eu_8056DC28;
+        lbl_eu_806658A8 = 1;
+    }
+    return lbl_eu_806658AC;
+}
+
+} // namespace mpfsys

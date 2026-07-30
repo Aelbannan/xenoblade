@@ -5,16 +5,9 @@
 
 extern "C" void* func_8049C7A8(void* self) { return (void*)((u8*)self + 0x8); }
 
-extern "C" void* func_8049C7A8(void* self) { return (void*)((u8*)self + 0x8); }
 
-extern "C" void* func_8049C7A8(void* self) { return (void*)((u8*)self + 0x8); }
 
-extern "C" void* func_8049C7A8(void* self) { return (void*)((u8*)self + 0x8); }
 
-extern "C" void* func_8049C7A8(void* self) { return (void*)((u8*)self + 0x8); }
 
-extern "C" void* func_8049C7A8(void* self) { return (void*)((u8*)self + 0x8); }
 
-extern "C" void* func_8049C7A8(void* self) { return (void*)((u8*)self + 0x8); }
 
-extern "C" void* func_8049C7A8(void* self) { return (void*)((u8*)self + 0x8); }

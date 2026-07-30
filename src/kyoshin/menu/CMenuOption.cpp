@@ -6,7 +6,7 @@
 
 void __ct__CMenuOption(){}
 
-void CMenuOption::~CMenuOption() {}
+CMenuOption::~CMenuOption() {}
 
 void CMenuOption::Init() {}
 

@@ -5,7 +5,7 @@
 
 void __ct__CMCCrystalInfo(){}
 
-void CMCCrystalInfo::~CMCCrystalInfo() {}
+CMCCrystalInfo::~CMCCrystalInfo() {}
 
 void func_8021A718(){}
 
@@ -74,7 +74,7 @@ void func_8021B63C(){}
 
 void func_8021B6C4(){}
 
-void CMCCrystalInfo::OnFileEvent() {}
+bool CMCCrystalInfo::OnFileEvent(CEventFile* pEventFile) { return false; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_8021BBC4(){}

@@ -4,9 +4,14 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuBattleChain.hpp"
+
+// forward declarations for scaffold thunk references
+void __dt__16CMenuBattleChainFv(void*);
+void cbRenderBefore__16CMenuBattleChainFv(void*);
+
 void __ct__CMenuBattleChain(){}
 
-void CMenuBattleChain::~CMenuBattleChain() {}
+CMenuBattleChain::~CMenuBattleChain() {}
 
 void CMenuBattleChain::Init() {}
 

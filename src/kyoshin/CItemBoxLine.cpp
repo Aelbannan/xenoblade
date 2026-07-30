@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CItemBoxLine.hpp"
 
 u8 func_801ED800(void* self) { return static_cast<CItemBoxLine*>(self)->unk59; }
 

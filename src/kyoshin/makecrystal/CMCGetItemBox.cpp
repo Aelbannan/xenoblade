@@ -4,6 +4,10 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/makecrystal/CMCGetItemBox.hpp"
+
+// forward declarations for scaffold thunk references
+void func_801D216C(void*);
+
 void func_80296B44(){}
 
 void __dt__80296BB0(){}
@@ -26,7 +30,7 @@ void func_80296FC0(){}
 
 void __ct__CMCGetItemBox(){}
 
-void CMCGetItemBox::~CMCGetItemBox() {}
+CMCGetItemBox::~CMCGetItemBox() {}
 
 void func_80297928(){}
 

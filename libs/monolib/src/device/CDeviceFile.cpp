@@ -3,13 +3,40 @@
 
 #include <harness_catalog.h>
 
+struct CDeviceFile {
+    CDeviceFile(const char* name, void* parent);
+    ~CDeviceFile(int type);
+    void cancel() const;
+    void func_8044E770(void* parent);
+    void func_8044E780();
+    void func_8044F0E4();
+    void func_8044F154() const;
+    void func_8044F1B8() const;
+    void func_8044F400() const;
+    void getFileSize();
+    int isInitialized();
+    void readCommonArchiveFile();
+    void readFile();
+    void removeFileJob();
+    void setHandleFlag1() const;
+    void setHandleFlag2() const;
+    void wkStandbyLogin();
+    void wkStandbyLogout();
+};
+
+struct CEventFile {
+    CEventFile();
+    void getFileDataPtr();
+};
+
+
 CDeviceFile::CDeviceFile(const char* name, void* parent) {}
 
 void __dt___reslist_base_CFileHandle(void* self, int type){}
 
 void __dt__reslist_CFileHandle(void* self, int type){}
 
-void CDeviceFile::~CDeviceFile(int type) {}
+CDeviceFile::~CDeviceFile(int type) {}
 
 extern u32 lbl_eu_80665660;
 u32 getInstance__11CDeviceFileFv(void) { return lbl_eu_80665660; }
@@ -77,7 +104,7 @@ extern "C" u8 func_eu_804521C4() {
     return lbl_eu_806636A9;
 }
 
-CEventFile::CEventFile() const {}
+CEventFile::CEventFile() {}
 
 void CEventFile::getFileDataPtr() {}
 

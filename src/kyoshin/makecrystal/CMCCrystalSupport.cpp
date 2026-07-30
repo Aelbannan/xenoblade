@@ -3,9 +3,15 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+class CMCCrystalSupport {
+public:
+    CMCCrystalSupport();
+    virtual ~CMCCrystalSupport();
+};
+
 void __ct__CMCCrystalSupport(){}
 
-void CMCCrystalSupport::~CMCCrystalSupport() {}
+CMCCrystalSupport::~CMCCrystalSupport() {}
 
 void func_8022E8F8(){}
 
@@ -20,13 +26,3 @@ void func_8022EA64(){}
 void func_8022EA88(){}
 
 void func_8022EB0C(){}
-
-void CMenuArtsSet::~CMenuArtsSet() {}
-
-void CMenuArtsSet::Init() {}
-
-void CMenuArtsSet::Term() {}
-
-void CMenuArtsSet::Move() {}
-
-void CMenuArtsSet::cbRenderBefore() {}

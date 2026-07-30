@@ -10,7 +10,7 @@ public:
     void Term();
     void Move();
     void cbRenderBefore();
-    void isInitialized();
+    unsigned long isInitialized();
 
     // TODO: add fields
 };

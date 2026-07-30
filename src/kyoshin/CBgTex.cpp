@@ -25,7 +25,6 @@ extern "C" u32 lbl_eu_80664184;
 extern "C" s32 lbl_eu_80664460;
 extern "C" nw4r::lyt::ArcResourceAccessor* lbl_eu_80664464;
 
-void CBgTex::func_801C3E3C();
 // Emit ctor before dtor so .text order matches retail (avoids 0xC align pad).
 CBgTex::CBgTex(u8 arg) {
     mVtbl = lbl_eu_80533DC8;

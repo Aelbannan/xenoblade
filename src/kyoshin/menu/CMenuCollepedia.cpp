@@ -7,7 +7,7 @@
 
 void __ct__CMenuCollepedia(){}
 
-void CMenuCollepedia::~CMenuCollepedia() {}
+CMenuCollepedia::~CMenuCollepedia() {}
 
 void CMenuCollepedia::Init() {}
 

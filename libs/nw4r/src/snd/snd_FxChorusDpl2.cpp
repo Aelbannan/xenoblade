@@ -21,6 +21,6 @@ void Shutdown__Q34nw4r3snd12FxChorusDpl2Fv(){}
 
 void SetParam__Q34nw4r3snd12FxChorusDpl2FRCQ44nw4r3snd6detail13FxChorusParam(){}
 
-void nw4r3snd12FxChorusDpl2FiPPvUlQ34nw::r3sn::UpdateBuffer() {}
+void UpdateBuffer__Q34nw4r3snd12FxChorusDpl2FiPPvUlQ34nw4r3snd12SampleFormatfQ34nw4r3snd10OutputMode() {}
 
 void OnChangeOutputMode__Q34nw4r3snd12FxChorusDpl2Fv(){}

@@ -6,9 +6,9 @@
 
 void __ct__CMenuMapSelectSC(){}
 
-void CMenuMapSelectSC::~CMenuMapSelectSC(int deletionFlag) const {}
+CMenuMapSelectSC::~CMenuMapSelectSC() {}
 
-void CMenuMapSelectSC::Init() const {}
+void CMenuMapSelectSC::Init() {}
 
 void func_80251294(void* r3, const void* r4) {
     struct S { int dummy; int a; int b; int c; int d; unsigned char e; unsigned char f; };
@@ -22,11 +22,11 @@ void func_80251294(void* r3, const void* r4) {
     dst->f = src->f;
 }
 
-void CMenuMapSelectSC::Term() const {}
+void CMenuMapSelectSC::Term() {}
 
-void CMenuMapSelectSC::Move() const {}
+void CMenuMapSelectSC::Move() {}
 
-void CMenuMapSelectSC::cbRenderBefore() const {}
+void CMenuMapSelectSC::cbRenderBefore() {}
 
 void func_802514D4(){}
 

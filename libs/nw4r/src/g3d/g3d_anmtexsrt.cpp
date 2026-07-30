@@ -43,7 +43,7 @@ void IsDerivedFrom__Q34nw4r3g3d12AnmObjTexSrtCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 
 void GetTypeName__Q34nw4r3g3d15AnmObjTexSrtResCFv(){}
 
-const char lbl_eu_8051D5A8[];
+extern const char lbl_eu_8051D5A8[];
 void* GetTypeObj__Q34nw4r3g3d15AnmObjTexSrtResCFv(void) { return (void*)lbl_eu_8051D5A8; }
 
 void __dt__Q34nw4r3g3d15AnmObjTexSrtResFv(){}

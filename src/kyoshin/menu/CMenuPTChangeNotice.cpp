@@ -4,9 +4,14 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuPTChangeNotice.hpp"
+
+// forward declarations for scaffold thunk references
+void __dt__19CMenuPTChangeNoticeFv(void*);
+void cbRenderBefore__19CMenuPTChangeNoticeFv(void*);
+
 void __ct__CMenuPTChangeNotice(){}
 
-void CMenuPTChangeNotice::~CMenuPTChangeNotice() {}
+CMenuPTChangeNotice::~CMenuPTChangeNotice() {}
 
 void CMenuPTChangeNotice::Init() {}
 

@@ -28,8 +28,9 @@ void func_801B46E4(){}
 
 void func_801B4790(){}
 
+extern unsigned long lbl_eu_80664414;
 unsigned long func_801B481C(){
-    unsigned long v = *(unsigned long*)(lbl_eu_80664414);
+    unsigned long v = lbl_eu_80664414;
     return !!v;
 }
 
@@ -63,13 +64,13 @@ void func_801B9864(){}
 
 void func_801B9C1C(){}
 
-void OnFileEvent__17CMenuGetItemMultiFP10CEventFile(void* self) { ((void(*)(void*))func_801B45A0)((char*)self - 0x6c); }
+extern "C" void OnFileEvent__17CMenuGetItemMultiFP10CEventFile(void* self) { func_801B45A0((char*)self - 0x6c); }
 
-void func_801BA134(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x6c); }
+void func_801BA134(void* self) { reinterpret_cast<CMenuGetItemMulti*>((char*)self - 0x6c)->~CMenuGetItemMulti(); }
 
-void func_801BA13C(void* self) { ((void(*)(void*))cbRenderBefore__17CMenuGetItemMultiFv)((char*)self - 0x70); }
+void func_801BA13C(void* self) { reinterpret_cast<CMenuGetItemMulti*>((char*)self - 0x70)->cbRenderBefore(); }
 
-void func_801BA144(void* self) { ((void(*)(void*))__dt__17CMenuGetItemMultiFv)((char*)self - 0x70); }
+void func_801BA144(void* self) { reinterpret_cast<CMenuGetItemMulti*>((char*)self - 0x70)->~CMenuGetItemMulti(); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_801B9FC8(){}

@@ -2,7 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfGimmickSaveOff.hpp"
 
+namespace cf {}
 void __ct__cf_CfGimmickSaveOff(){}
 
 cf::CfGimmickSaveOff::~CfGimmickSaveOff() {}

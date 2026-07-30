@@ -4,13 +4,18 @@
 #include <harness_catalog.h>
 #include "monolib/device/CDeviceFont.hpp"
 
-CDeviceFont::CDeviceFont() {}
+struct CDeviceFontInfo {
+    ~CDeviceFontInfo();
+};
+
+
+CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent) : CDeviceBase(pName, pParent, 0) {}
 
 void __dt___reslist_base_IDeviceFontInfo(){}
 
 void __dt__reslist_IDeviceFontInfo(){}
 
-void CDeviceFont::~CDeviceFont() {}
+CDeviceFont::~CDeviceFont() {}
 
 extern "C" CDeviceFont* getInstance__11CDeviceFontFv() {
     extern CDeviceFont* lbl_eu_80665678; // sdata2 singleton pointer
@@ -47,7 +52,7 @@ void CDeviceFont::func_80452D80() {}
 
 void CDeviceFont::wkUpdate() {}
 
-void CDeviceFontInfo::~CDeviceFontInfo() {}
+CDeviceFontInfo::~CDeviceFontInfo() {}
 
 void CDeviceFont::wkRender() {}
 

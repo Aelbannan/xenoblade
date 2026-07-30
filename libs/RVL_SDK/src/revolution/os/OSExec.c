@@ -162,35 +162,7 @@ extern int Prepared;
 void Callback() {
     Prepared = 1;
 }
-extern int Prepared;
-void Callback() {
-    Prepared = 1;
-}
-extern int Prepared;
-void Callback() {
-    Prepared = 1;
-}
-extern int Prepared;
-void Callback() {
-    Prepared = 1;
-}
-extern int Prepared;
-void Callback() {
-    Prepared = 1;
-}
 extern unsigned long DVDLowIntType;
 void callback(unsigned long type) {
     DVDLowIntType = type;
-}
-extern int Prepared;
-void Callback() {
-    Prepared = 1;
-}
-extern int Prepared;
-void Callback() {
-    Prepared = 1;
-}
-extern int Prepared;
-void Callback() {
-    Prepared = 1;
 }

@@ -2,7 +2,7 @@
 // FULL_MATCH: func_80192BE4, func_80192BEC (vtable adjustor thunks).
 
 #include "kyoshin/menu/CMenuPTState.hpp"
-extern f32 lbl_eu_80664300;
+extern u32 lbl_eu_80664300;
 
 // Real member functions defined in code_8018F8D8.cpp -- accessed via their
 // mangled linker names (suppresses further name decoration).
@@ -12,7 +12,7 @@ void __dt__12CMenuPTStateFv(CMenuPTState* self);
 void __ct__CMenuPTState(){}
 
 unsigned long func_80192BD0(){
-    unsigned long v = *(unsigned long*)(lbl_eu_80664300);
+    unsigned long v = lbl_eu_80664300;
     return !!v;
 }
 
@@ -28,7 +28,7 @@ void func_80192BEC(void* self) {
 }
 
 // ---------------------------------------------------------------------------
-// Placeholder stubs (not yet FULL_MATCH — kept for label/catalog coverage)
+// Placeholder stubs (not yet FULL_MATCH - kept for label/catalog coverage)
 // ---------------------------------------------------------------------------
 
 cf::UnkClass_80192BF4::UnkClass_80192BF4() {}

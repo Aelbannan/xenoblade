@@ -2,6 +2,18 @@
 
 #include <types.h>
 
+namespace cf {
+
+class CPcEffect07 {
+public:
+    CPcEffect07();
+    virtual ~CPcEffect07();
+
+    u8 _00[0x68];
+};
+
+} // namespace cf
+
 // PcEffect07 entries indexed by i*0x18 stride:
 //   short at +0x14 is active flag for entry i
 //   u8   at +0x1C is slot ID for entry i

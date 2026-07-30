@@ -76,7 +76,7 @@ void LoadLightSet__Q34nw4r3g3d8G3DStateFiPUlPUlPUlPUlPQ34nw4r3g3d11AmbLightObj()
 
 void SetCameraProjMtx__Q34nw4r3g3d8G3DStateFRCQ34nw4r3g3d6Cameraib(){}
 
-const unsigned char lbl_eu_8061DFA0[];
+extern const unsigned char lbl_eu_8061DFA0[];
 
 const void* GetCameraMtxPtr__Q34nw4r3g3d8G3DStateFv() {
     const unsigned char* base = lbl_eu_8061DFA0;

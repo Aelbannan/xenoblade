@@ -3,27 +3,26 @@
 
 #include <harness_catalog.h>
 
+struct CScnFilterMan {
+    ~CScnFilterMan();
+    void cbRenderBefore();
+    void update();
+};
+
+
 void func_8049CB6C(void) {}
 
 void func_8049C9F8(void){}
 
-void func_8049CB6C(void) {}
 
-void func_8049CB6C(void) {}
 
-void func_8049CB6C(void) {}
 
-void func_8049CB6C(void) {}
 
-void func_8049CB6C(void) {}
 
 void func_8049CB70(void){}
 
-void func_8049CB6C(void) {}
 
-void func_8049CB6C(void) {}
 
-void func_8049CB6C(void) {}
 
 void func_8049CC70(){}
 
@@ -47,7 +46,7 @@ void func_8049CF44(void){}
 
 void func_8049CF48(){}
 
-void CScnFilterMan::~CScnFilterMan() {}
+CScnFilterMan::~CScnFilterMan() {}
 
 void func_8049D12C(void){}
 

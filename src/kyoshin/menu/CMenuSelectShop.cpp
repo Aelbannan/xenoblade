@@ -28,8 +28,8 @@ void func_8018A58C(){}
 
 bool func_8018A608() { return false; }
 
-void func_8018A610(void* self) { ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)self - 0x6c); }
+void func_8018A610(void* self) { reinterpret_cast<CMenuSelectShop*>((char*)self - 0x6c)->~CMenuSelectShop(); }
 
-void func_8018A618(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuSelectShopFv)((char*)self - 0x70); }
+void func_8018A618(void* self) { reinterpret_cast<CMenuSelectShop*>((char*)self - 0x70)->cbRenderBefore(); }
 
-extern "C" void func_8018A620(void* self) { ((void(*)(void*))__dt__15CMenuSelectShopFv)((char*)self - 0x70); }
+extern "C" void func_8018A620(void* self) { reinterpret_cast<CMenuSelectShop*>((char*)self - 0x70)->~CMenuSelectShop(); }

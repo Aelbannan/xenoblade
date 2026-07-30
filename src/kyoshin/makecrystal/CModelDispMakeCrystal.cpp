@@ -4,6 +4,10 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/makecrystal/CModelDispMakeCrystal.hpp"
+
+// forward declarations for scaffold thunk references
+void __dt__21CModelDispMakeCrystalFv(void*);
+
 void __ct__CModelDispMakeCrystal(){}
 
 void CModelDispMakeCrystal::initCrystalSubStruct() {

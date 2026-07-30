@@ -3,25 +3,28 @@
 
 #include <harness_catalog.h>
 
-void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
+struct CLibCriMoviePlay {
+    void OnPauseTrigger();
+    void func_8045A8C8();
+    void func_8045AE84();
+    void func_8045B1E0();
+    void func_8045B310();
+    void wkStandbyLogin();
+    void wkStandbyLogout();
+    void wkUpdate();
+};
+
 
 void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
+
 
 void CLibCriMoviePlay::func_8045A8C8() {}
 
@@ -33,7 +36,6 @@ void CLibCriMoviePlay::wkStandbyLogout() {}
 
 void CLibCriMoviePlay::func_8045AE84() {}
 
-extern "C" void func_8045B1DC__16CLibCriMoviePlayFv(void) {}
 
 void CLibCriMoviePlay::func_8045B1E0() {}
 
@@ -43,6 +45,8 @@ void CLibCriMoviePlay::func_8045B310() {}
 
 extern "C" void func_8045B3D4__16CLibCriMoviePlayFv(void* self) { ((void(*)(void*))func_8045B1DC__16CLibCriMoviePlayFv)((char*)self - 0x1c4); }
 
+extern "C" void func_8045AE84__16CLibCriMoviePlayFv();
 extern "C" void func_8045B3DC__16CLibCriMoviePlayFv(void* self) { ((void(*)(void*))func_8045AE84__16CLibCriMoviePlayFv)((char*)self - 0x1c4); }
 
+extern "C" void __dt__16CLibCriMoviePlayFv(void* self, int deleteFlag);
 void func_8045B3E4__16CLibCriMoviePlayFv(void* self) { ((void(*)(void*))__dt__16CLibCriMoviePlayFv)((char*)self - 0x1c4); }

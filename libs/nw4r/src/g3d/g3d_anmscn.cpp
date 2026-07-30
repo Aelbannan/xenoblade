@@ -154,7 +154,7 @@ void UpdateCache__Q34nw4r3g3d9AnmScnResFv(){}
 void IsDerivedFrom__Q34nw4r3g3d9AnmScnResCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 void IsDerivedFrom__Q34nw4r3g3d6AnmScnCFQ44nw4r3g3d6G3dObj7TypeObj(){}
 void GetTypeName__Q34nw4r3g3d9AnmScnResCFv(){}
-const char lbl_eu_8051D630[];
+extern const char lbl_eu_8051D630[];
 
 const void* GetTypeObj__Q34nw4r3g3d9AnmScnResCFv() {
     return lbl_eu_8051D630;

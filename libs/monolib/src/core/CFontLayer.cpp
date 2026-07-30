@@ -8,19 +8,19 @@
 
 void __ct__CFontLayer(){}
 
-void CFontLayer::~CFontLayer() const {}
+CFontLayer::~CFontLayer() {}
 
-void CFontLayer::func_80449078() const {}
+extern "C" void func_80449078__10CFontLayerFv() {}
 
-void CFontLayer::func_80449148(void) const {}
+extern "C" void func_80449148__10CFontLayerFv() {}
 
-void CFontLayer::func_8044914C(void) const {}
+extern "C" void func_8044914C__10CFontLayerFv() {}
 
-void CFontLayer::func_80449150(void) const {}
+extern "C" void func_80449150__10CFontLayerFv() {}
 
-void CFontLayer::func_80449154(void) const {}
+extern "C" void func_80449154__10CFontLayerFv() {}
 
-void CFontLayer::func_80449158(void) const {}
+extern "C" void func_80449158__10CFontLayerFv() {}
 
 // FULL_MATCH: Pure tail call to CDeviceFont::func_80452CF8 (same this).
 // The 'channel' parameter is accepted but unused in this forwarding path.
@@ -31,4 +31,4 @@ void CFontLayer::fontFlush(int channel) {
     reinterpret_cast<CDeviceFont*>(this)->func_80452CF8();
 }
 
-void CFontLayer::func_80449160(void) const {}
+extern "C" void func_80449160__10CFontLayerFv() {}

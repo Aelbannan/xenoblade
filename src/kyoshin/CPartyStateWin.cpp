@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CPartyStateWin.hpp"
 struct CPartyStateWin;
 
 u32 func_801F9694(void) {
@@ -95,7 +96,6 @@ void func_801FBC7C(){}
 
 void CPartyStateWin::cbRenderBefore() {}
 
-void func_801FBDB8(void* self) { ((void(*)(void*))cbRenderBefore__14CPartyStateWinFv)((char*)self - 0x4); }
+void func_801FBDB8(void* self) { reinterpret_cast<CPartyStateWin*>((char*)self - 0x4)->cbRenderBefore(); }
 
-void __dt__14CPartyStateWinFv(void* self);
-void func_801FBDC0(void* self) { ((void(*)(void*))__dt__14CPartyStateWinFv)((char*)self - 0x4); }
+void func_801FBDC0(void* self) { reinterpret_cast<CPartyStateWin*>((char*)self - 0x4)->~CPartyStateWin(); }

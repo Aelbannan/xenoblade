@@ -3,9 +3,37 @@
 
 #include <harness_catalog.h>
 
+struct CDeviceFileDvd {
+    ~CDeviceFileDvd();
+    void cancel() const;
+    void cancelCurrent();
+    void getFileSize();
+    void isRequestFile();
+    void transState0();
+    void transState3();
+    void wkStandbyExceptionRetry();
+    void wkStandbyLogin();
+    void wkStandbyLogout();
+    void wkUpdate();
+};
+
+struct CFileHandle {
+    ~CFileHandle();
+    void call() const;
+    void checkExistRsrc() const;
+    void destroy() const;
+    void func_80451984() const;
+    void func_80451CBC() const;
+    void getRsrc() const;
+    void init() const;
+    void setup1() const;
+    void setup2() const;
+};
+
+
 void __ct__CDeviceFileDvd(){}
 
-void CDeviceFileDvd::~CDeviceFileDvd() {}
+CDeviceFileDvd::~CDeviceFileDvd() {}
 
 extern "C" u32 getInstance__14CDeviceFileDvdFv(void) {
     extern u32 lbl_eu_80665670;
@@ -36,7 +64,7 @@ void CFileHandle::setup1() const {}
 
 void CFileHandle::setup2() const {}
 
-void CFileHandle::~CFileHandle() const {}
+CFileHandle::~CFileHandle() {}
 
 void CFileHandle::init() const {}
 

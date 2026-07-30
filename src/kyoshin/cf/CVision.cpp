@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CVision.hpp"
 
 using namespace cf;
 
@@ -84,4 +85,4 @@ void func_801A897C(){}
 
 void func_801A924C(){}
 
-void cf::CVision::func_801A929C() {}
+void cf::CVision::func_801A929C(u32 r4) {}

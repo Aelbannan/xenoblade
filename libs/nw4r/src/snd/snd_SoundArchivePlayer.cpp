@@ -792,8 +792,10 @@ SoundStartable::StartResult SoundArchivePlayer::PrepareStrmImpl(
         return SoundStartable::START_ERR_CANNOT_OPEN_FILE;
     }
 
-    if (!pSound->Prepare(&mStrmBufferPool, strmOffsetType, startOffset, voices,
-                         pFileStream)) {
+    if (!pSound->Setup(&mStrmBufferPool, voices, 0)) {
+        return SoundStartable::START_ERR_UNKNOWN;
+    }
+    if (!pSound->Prepare(strmOffsetType, startOffset, pFileStream)) {
         return SoundStartable::START_ERR_UNKNOWN;
     }
 

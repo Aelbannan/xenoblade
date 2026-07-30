@@ -6,7 +6,7 @@
 
 void __ct__CMenuPassiveSkill(){}
 
-void CMenuPassiveSkill::~CMenuPassiveSkill() {}
+CMenuPassiveSkill::~CMenuPassiveSkill() {}
 
 void CMenuPassiveSkill::Init() {}
 

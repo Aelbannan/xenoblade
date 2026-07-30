@@ -3,9 +3,14 @@
 
 #include <harness_catalog.h>
 
+struct CScnBlend {
+    ~CScnBlend();
+};
+
+
 void __ct__CScnBlend(){}
 
-void CScnBlend::~CScnBlend() {}
+CScnBlend::~CScnBlend() {}
 
 struct CScnBlendState {
     u8 _00[0x54];

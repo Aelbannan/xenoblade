@@ -3,6 +3,9 @@
 
 #include <harness_catalog.h>
 
+struct ADXT_LscCallbackParam {
+    int placeholder;
+};
 struct ADXT_LscGlobals {
     void (*pre_callback)(struct ADXT_LscCallbackParam*);
     struct ADXT_LscCallbackParam* pre_param;
@@ -11,10 +14,6 @@ struct ADXT_LscGlobals {
 };
 
 #define ADXT_LSC_GLOBALS ((struct ADXT_LscGlobals*)0x805E3328)
-
-struct ADXT_LscCallbackParam {
-    int placeholder;
-};
 
 void ADXT_ExecLscSvr(void) {
     ADXCRS_Enter();

@@ -3,6 +3,10 @@
 
 #include "kyoshin/menu/CMenuMapSelect.hpp"
 
+// forward declarations for scaffold thunk references
+extern const char lbl_eu_80664790[];
+
+
 void __ct__CMenuMapSelect(){}
 
 unsigned long func_80242354(){

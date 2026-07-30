@@ -46,7 +46,7 @@ void func_804B4854(){}
 
 void func_804B49B8(){}
 
-void CTaskColiManager::~CTaskColiManager() {}
+CTaskColiManager::~CTaskColiManager() {}
 
 void func_804B4BDC(){}
 

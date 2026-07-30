@@ -3,6 +3,9 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+struct CCollepediaEntry { u8 _00[0x08]; u16 field_08; };
+struct CCollepediaFull { u8 _00[0xD8]; u8 field_D8; u8 field_D9; u8 _DA[0xE8 - 0xDA]; };
+
 void __ct__CCLPCur(){}
 
 void __dt__802531C4(){}
@@ -181,7 +184,7 @@ void func_802552B4(){}
 void func_802553AC(){}
 
 void func_80255688(void* self) {
-    auto* full = static_cast<CCollepediaFull*>(self);
+    CCollepediaFull* full = static_cast<CCollepediaFull*>(self);
     func_80253EE8((u8*)self + 0xE8, full->field_D9, full->field_D8);
 }
 

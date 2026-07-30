@@ -5,6 +5,7 @@
 
 #include "kyoshin/cf/CPcEffect07.hpp"
 
+namespace cf {}
 using namespace cf;
 void __ct__cf_CPcEffect07(){}
 
@@ -106,4 +107,4 @@ void thunk_adj4_update(void* self) { ((void(*)(void*))func_801B2318)((char*)self
 
 extern "C" void func_801B2554(void* self) { ((void(*)(void*))func_801B20C8)((char*)self - 0x4); }
 
-extern "C" void func_801B255C(void* self) { ((void(*)(void*))__dt__Q22cf11CPcEffect07Fv)((char*)self - 0x4); }
+extern "C" void func_801B255C(void* self) { reinterpret_cast<cf::CPcEffect07*>((char*)self - 0x4)->~CPcEffect07(); }

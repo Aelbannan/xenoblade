@@ -17,7 +17,7 @@ namespace cf {
         void func_8027728C();
         int getZero_78E04();
         bool chkActorList();
-        static u16 getChainCount();
+        u16 getChainCount();
         void setFieldAndClear(int val);
         int getZero_A584();
         int getZero_A9D0();

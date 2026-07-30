@@ -3,6 +3,15 @@
 
 #include <harness_catalog.h>
 
+struct CWorkSystemCache {
+    void CWorkSystemCache();
+    ~CWorkSystemCache();
+    void wkStandbyLogin();
+    void wkStandbyLogout();
+    void wkUpdate();
+};
+
+
 CWorkSystemCache::CWorkSystemCache() {}
 
 void __dt___reslist_base_CCacheItem(){}
@@ -11,7 +20,7 @@ void func_804D8EC8(){}
 
 void __dt__reslist_CCacheItem(){}
 
-void CWorkSystemCache::~CWorkSystemCache() {}
+CWorkSystemCache::~CWorkSystemCache() {}
 
 void func_804D8FB4(){}
 

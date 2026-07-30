@@ -16,7 +16,7 @@
 void __ct__CScnMaruShadowNw4r(){}
 
 // us-80491298: __dt__4CScnFvMaruShadowNw4r (destructor, 0x40 bytes)
-void CScn::~CScn() {}
+extern "C" void __dt__4CScnFvMaruShadowNw4r() {}
 
 // us-804912d8: func_8048D264 (0x29C bytes)
 void func_8048D264(){}

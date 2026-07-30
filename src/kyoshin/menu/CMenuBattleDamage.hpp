@@ -24,6 +24,8 @@ public:
     void thunk_IScnRender_cbRenderBefore();
     void thunk_IScnRender_dtor();
 
+    u8 mDamageType;
+    u8 mDamageDir;
     // TODO: add fields
 };
 

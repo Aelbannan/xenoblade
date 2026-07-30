@@ -6,7 +6,6 @@
 
 void __ct__CSkipTimer2(){}
 
-u8 CSkipTimer::func_8029FF1C() { return mActive; }
 
 
 
@@ -34,7 +33,7 @@ void func_8029F82C(){}
 
 void __ct__CSkipTimer(){}
 
-void CSkipTimer::~CSkipTimer() {}
+CSkipTimer::~CSkipTimer() {}
 
 void func_8029FBE0(){}
 
@@ -90,7 +89,7 @@ void func_802A055C(){}
 
 void func_802A05E4(){}
 
-void CSkipTimer::OnFileEvent() {}
+bool CSkipTimer::OnFileEvent(CEventFile* pEventFile) { return false; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_802A07D8(){}

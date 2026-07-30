@@ -3,6 +3,11 @@
 
 #include <harness_catalog.h>
 
+struct CVirtualLightAmb {
+    ~CVirtualLightAmb();
+};
+
+
 void __ct__CVirtualLightAmb(){}
 
-void CVirtualLightAmb::~CVirtualLightAmb() {}
+CVirtualLightAmb::~CVirtualLightAmb() {}

@@ -6,7 +6,7 @@
 
 void __ct__CSystemWindow(){}
 
-void CSystemWindow::~CSystemWindow() {}
+CSystemWindow::~CSystemWindow() {}
 
 void CSystemWindow::Init() {}
 

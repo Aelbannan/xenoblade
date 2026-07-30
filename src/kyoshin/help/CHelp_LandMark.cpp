@@ -8,7 +8,7 @@ extern u32 lbl_eu_80663E24;
 
 namespace cf {
 
-CHelp_LandMark::CHelp_LandMark() : CHelp() {
+CHelp_LandMark::CHelp_LandMark() : CHelp(0, 0) {
     func_8009D414(this->mSecondBase);
 }
 

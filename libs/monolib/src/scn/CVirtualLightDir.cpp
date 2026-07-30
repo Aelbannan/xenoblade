@@ -3,8 +3,13 @@
 
 #include <harness_catalog.h>
 
+struct CVirtualLightDir {
+    ~CVirtualLightDir();
+};
+
+
 void __ct__CVirtualLightDir(){}
 
 void func_8049474C(void* self, float a, float b){}
 
-void CVirtualLightDir::~CVirtualLightDir() {}
+CVirtualLightDir::~CVirtualLightDir() {}

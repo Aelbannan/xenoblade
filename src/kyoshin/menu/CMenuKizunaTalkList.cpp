@@ -5,7 +5,7 @@
 
 void __ct__CMenuKizunaTalkList(){}
 
-void CMenuKizunaTalkList::~CMenuKizunaTalkList(int deletionFlag) {}
+CMenuKizunaTalkList::~CMenuKizunaTalkList() {}
 
 void CMenuKizunaTalkList::Init() {}
 

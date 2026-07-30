@@ -1,7 +1,9 @@
 // Auto-scaffolded catalog TU for nw4r/src/g3d/g3d_scnroot
 // Replace stubs with high-level C/C++ during decomp.
 
+#include <nw4r/g3d.h>
 #include <harness_catalog.h>
+using nw4r::g3d::ScnRoot;
 
 void Construct__Q34nw4r3g3d7ScnRootFP12MEMAllocatorPUlUlUlUlUl(){}
 
@@ -49,7 +51,7 @@ void ZSort__Q34nw4r3g3d12ScnObjGatherFv(){}
 
 void Sort__Q34nw4r3g3d12ScnObjGatherFv(){}
 
-void nw4r3g3d12ScnObjGatherFPFPCQ34nw4r::g3d::ScnObj::Sort() {}
+void Sort__Q34nw4r3g3d12ScnObjGatherFPFPCQ34nw4r3g3d6ScnObjPCQ34nw4r3g3d6ScnObj_bPFPCQ34nw4r3g3d6ScnObjPCQ34nw4r3g3d6ScnObj_b() {}
 
 void DrawOpa__Q34nw4r3g3d12ScnObjGatherFPQ34nw4r3g3d14ResMdlDrawMode(){}
 

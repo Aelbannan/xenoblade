@@ -2,7 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CTaskREvent.hpp"
 
+namespace cf {}
 using namespace cf;
 
 class CEventFile;
@@ -90,35 +92,20 @@ void viAfterDrawDone__11CDeviceVICbFv() {}
 
 void viBeforeDrawDone__11CDeviceVICbFv() {}
 
-void func_801666C4(void* self) { ((void(*)(void*))func_801662E8)((char*)self - 0x54); }
+void func_801666C4(void* self) { func_801662E8((char*)self - 0x54); }
 
-void func_801666CC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x54); }
+void func_801666CC(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x54)->~CTaskREvent(); }
 
-void func_801666D4(void* self) { ((void(*)(void*))func_801644D8)((char*)self - 0x58); }
+void func_801666D4(void* self) { func_801644D8((char*)self - 0x58); }
 
-void func_801666DC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x58); }
+void func_801666DC(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x58)->~CTaskREvent(); }
 
-void func_801666E4(void* self) { ((void(*)(void*))cbRenderBefore__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
+void func_801666E4(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x5c)->cbRenderBefore(); }
 
-extern "C" void func_801666EC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x5c); }
+extern "C" void func_801666EC(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x5c)->~CTaskREvent(); }
 
 void cf::CTaskREvent::OnFileEvent() { func_801663A8(this); }
 
-extern "C" void func_801666FC(void* self) { ((void(*)(void*))__dt__Q22cf11CTaskREventFv)((char*)self - 0x60); }
+extern "C" void func_801666FC(void* self) { reinterpret_cast<cf::CTaskREvent*>((char*)self - 0x60)->~CTaskREvent(); }
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
-template <typename T>
-class CTTask {
-public:
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-};
-
-namespace cf { class CTaskREvent; }
-template<> CTTask<cf::CTaskREvent>::~CTTask() {}
-template<> void CTTask<cf::CTaskREvent>::Move() {}
-template<> void CTTask<cf::CTaskREvent>::Draw() {}
+// CTTask<cf::CTaskREvent> specializations provided by header

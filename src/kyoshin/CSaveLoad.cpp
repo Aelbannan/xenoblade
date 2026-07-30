@@ -59,7 +59,7 @@ void func_8028EF74(){}
 
 void __ct__CSaveLoad(){}
 
-void CSaveLoad::~CSaveLoad() {}
+CSaveLoad::~CSaveLoad() {}
 
 void CSaveLoad::func_8028F23C() {}
 
@@ -139,7 +139,7 @@ u32 func_8029183C(void) {
     return lbl_eu_80662AD0;
 }
 
-void cf::CfAward::~CfAward() {}
+cf::CfAward::~CfAward() {}
 
 void func_802918AC(){}
 

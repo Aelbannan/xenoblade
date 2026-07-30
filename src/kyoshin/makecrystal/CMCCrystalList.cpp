@@ -5,7 +5,7 @@
 
 void __ct__CMCCrystalList(){}
 
-void CMCCrystalList::~CMCCrystalList() {}
+CMCCrystalList::~CMCCrystalList() {}
 
 void func_80222848(){}
 
@@ -77,4 +77,4 @@ void func_802238CC(){}
 
 void func_80223988(){}
 
-void CMCCrystalList::OnFileEvent() {}
+bool CMCCrystalList::OnFileEvent(CEventFile* pEventFile) { return false; }

@@ -4,7 +4,13 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuPause.hpp"
-void CMenuPause::~CMenuPause() {}
+
+// forward declarations for scaffold thunk references
+extern const char lbl_eu_806647C8[];
+void __dt__10CMenuPauseFv(void*);
+void cbRenderBefore__10CMenuPauseFv(void*);
+
+CMenuPause::~CMenuPause() {}
 
 void CMenuPause::Init() {}
 

@@ -3,6 +3,12 @@
 
 #include <harness_catalog.h>
 
+struct UnkClass_80460308 {
+    void func_80460308();
+    void func_80460728();
+};
+
+
 void UnkClass_80460308::func_80460308() {}
 
 void UnkClass_80460308::func_80460728() {}

@@ -5,6 +5,7 @@
 
 #include "kyoshin/cf/code_8018F8D8.hpp"
 
+namespace cf {}
 using namespace cf;
 void func_8018F8D8(){}
 

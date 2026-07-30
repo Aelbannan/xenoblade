@@ -6,7 +6,7 @@
 
 void __ct__CMenuGCItem(){}
 
-void CMenuGCItem::~CMenuGCItem() {}
+CMenuGCItem::~CMenuGCItem() {}
 
 void CMenuGCItem::Init() {}
 

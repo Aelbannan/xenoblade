@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CNumSelect.hpp"
 struct CNumSelectFull;
 
 u8 func_801EB018(void* self) { return static_cast<CNumSelectFull*>(self)->field_2D; }

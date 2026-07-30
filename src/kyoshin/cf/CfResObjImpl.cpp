@@ -5,6 +5,7 @@
 
 #include "kyoshin/cf/CfResObjImpl.hpp"
 
+namespace cf {}
 using namespace cf;
 void __ct__cf_CfResObjImpl(){}
 

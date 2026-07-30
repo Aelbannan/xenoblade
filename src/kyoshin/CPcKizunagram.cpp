@@ -3,6 +3,8 @@
 
 #include "kyoshin/CPcKizunagram.hpp"
 
+void func_8025EE94(void*);
+
 u8 func_8025DA40(CPcKizunagram* pKizunagram) { return pKizunagram->mIsHidden; }
 
 

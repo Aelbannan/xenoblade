@@ -23,6 +23,12 @@ public:
     u8 func_80223F1C();
     void func_80223F24();
     void func_80223F44();
+    void init();
+    void update();
+    void destroy();
+    u8 isFinished();
+    void startInAnim();
+    void updateInAnim();
 
     u8 unk4;
     u8 unk5;
@@ -43,6 +49,8 @@ public:
     virtual ~CMCEffUpRed();
     void func_8022400C();
     void func_8022409C();
+    void init();
+    void play();
     CMCEffUpRed();
 };
 /******************************************************************************
@@ -56,6 +64,8 @@ public:
     virtual ~CMCEffUpBlue();
     void func_80224140();
     void func_802241D0();
+    void init();
+    void play();
     CMCEffUpBlue();
 };
 /******************************************************************************
@@ -69,6 +79,8 @@ public:
     virtual ~CMCEffUpGreen();
     void func_80224274();
     void func_80224304();
+    void init();
+    void play();
     CMCEffUpGreen();
 };
 /******************************************************************************
@@ -98,6 +110,13 @@ public:
     nw4r::lyt::ArcResourceAccessor* mArcResourceAccessor; //0x8
     UnkStruct unkStruct[8];                               //0xc
     u8 unk6c;
+    void init();
+    void update();
+    void draw(nw4r::lyt::DrawInfo*);
+    void destroy();
+    void activateSlots(u32);
+    void setTranslate(u32, nw4r::math::VEC3);
+    void setNumber(u32, u8);
     CMCEffUpPrm();
 };
 /******************************************************************************
@@ -128,6 +147,16 @@ public:
     nw4r::lyt::AnimTransform* mAnimTrans10;
     nw4r::lyt::AnimTransform* mAnimTrans14;
     u8 unk18;
+    void init();
+    void update();
+    void draw(nw4r::lyt::DrawInfo*);
+    void destroy();
+    void startIn();
+    void startOut();
+    void updateIn();
+    void updateOut();
+    void bindInAnim();
+    void bindOutAnim();
     CMCEffSuccess();
 };
 /******************************************************************************
@@ -140,6 +169,7 @@ public:
     CMCEffFailure(nw4r::lyt::ArcResourceAccessor*);
     virtual ~CMCEffFailure();
     void func_80224BBC();
+    void init();
     CMCEffFailure();
 };
 /******************************************************************************
@@ -191,6 +221,28 @@ public:
     u8 unk34;
     u16 unk36;
     u8 unk38;
+    void update();
+    void draw(nw4r::lyt::DrawInfo*);
+    void destroy();
+    u8 isFinished();
+    void startIn();
+    void startOut();
+    void startChange();
+    void startSpecial();
+    void setTraceVisible(u32);
+    void setCrystalInfo(u16, u8);
+    void updateIn();
+    void checkInDone();
+    void updateOut();
+    void updateChange();
+    void updateSpecial();
+    void bindInAnimTrace();
+    void bindOutAnimTrace();
+    void bindInAnimCrystal();
+    void bindChangeAnim();
+    void bindSpecialAnim();
+    void bindOutAnim();
+    void bindLoopAnim();
     CMCEffCrystal();
 };
 /******************************************************************************
@@ -204,6 +256,8 @@ public:
     virtual ~CMCEffUpRank();
     void func_80225B14();
     void func_80225BA4();
+    void init();
+    void play();
     CMCEffUpRank();
 };
 /******************************************************************************
@@ -217,6 +271,8 @@ public:
     virtual ~CMCEffDivide();
     void func_80225C48();
     void func_80225CD8();
+    void init();
+    void play();
     CMCEffDivide();
 };
 /******************************************************************************
@@ -252,5 +308,20 @@ public:
     nw4r::lyt::AnimTransform* mAnimTrans14;
     nw4r::lyt::AnimTransform* mAnimTrans18;
     u8 unk1c;
+    void init();
+    void update();
+    void draw(nw4r::lyt::DrawInfo*);
+    void destroy();
+    u8 isFinished();
+    void startIn();
+    void startOut();
+    void startChange();
+    void setNumber(u8);
+    void updateIn();
+    void updateOut();
+    void updateChange();
+    void bindInAnim();
+    void bindChangeAnim();
+    void bindOutAnim();
     CMCEffCylinder();
 };

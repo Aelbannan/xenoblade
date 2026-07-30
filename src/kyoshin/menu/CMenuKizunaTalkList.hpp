@@ -20,5 +20,4 @@ public:
     void func_802726E4();
     void func_802726EC();
 
-    CMenuKizunaTalkList();
 };

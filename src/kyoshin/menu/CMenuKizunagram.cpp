@@ -6,7 +6,7 @@
 
 void __ct__CMenuKizunagram(){}
 
-void CMenuKizunagram::~CMenuKizunagram() {}
+CMenuKizunagram::~CMenuKizunagram() {}
 
 void CMenuKizunagram::Init() {}
 

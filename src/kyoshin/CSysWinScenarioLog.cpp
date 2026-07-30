@@ -3,6 +3,12 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+// forward declarations for scaffold thunk references
+void func_8027EC80(void*);
+void __dt__18CSysWinScenarioLogFv(void*);
+void cbRenderBefore__18CSysWinScenarioLogFv(void*);
+
+
 u32 func_8027EA64(void) {
     extern u32 lbl_eu_80664908;
     return lbl_eu_80664908;

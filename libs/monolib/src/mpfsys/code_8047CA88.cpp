@@ -1,11 +1,14 @@
-// Auto-scaffolded catalog TU for monolib/src/mpfsys/code_8047CA88
-// Replace stubs with high-level C/C++ during decomp.
+#include "monolib/mpfsys/code_8047CA88.hpp"
 
-using namespace mpfsys;
-#include <harness_catalog.h>
+extern "C" {
+    s8 lbl_eu_806658C0;
+}
 
-void UnkClass_8047CA88::getInstance() {}
+static char lbl_eu_80658518[4];
 
-void UnkClass_8047CA88::func_8047CAA8() {}
-
-void UnkClass_8047CA88::func_8047CC4C() {}
+UnkClass_8047CA88* UnkClass_8047CA88::getInstance(){
+    if(!lbl_eu_806658C0){
+        lbl_eu_806658C0 = 1;
+    }
+    return (UnkClass_8047CA88*)&lbl_eu_80658518;
+}

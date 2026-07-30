@@ -6,7 +6,7 @@
 
 void __ct__CMenuTutorialList(){}
 
-void CMenuTutorialList::~CMenuTutorialList() {}
+CMenuTutorialList::~CMenuTutorialList() {}
 
 void CMenuTutorialList::Init() {}
 

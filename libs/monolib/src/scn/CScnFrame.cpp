@@ -3,8 +3,14 @@
 
 #include <harness_catalog.h>
 
+struct CScnFrame {
+    ~CScnFrame();
+    void update();
+};
+
+
 void __ct__CScnFrame(){}
 
-void CScnFrame::~CScnFrame() {}
+CScnFrame::~CScnFrame() {}
 
 void CScnFrame::update() {}

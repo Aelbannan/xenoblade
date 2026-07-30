@@ -4,7 +4,12 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuLvUp.hpp"
-void CMenuLvUp::~CMenuLvUp() {}
+
+// forward declarations for scaffold thunk references
+void __dt__9CMenuLvUpFv(void*);
+void cbRenderBefore__9CMenuLvUpFv(void*);
+
+CMenuLvUp::~CMenuLvUp() {}
 
 void CMenuLvUp::Init() {}
 

@@ -29,7 +29,7 @@ void __ct__CScnItemCamera(){}
 
 void __dt__8049EA9C(){}
 
-void CScnItemCamera::~CScnItemCamera() {}
+CScnItemCamera::~CScnItemCamera() {}
 
 void func_8049EB60(){}
 

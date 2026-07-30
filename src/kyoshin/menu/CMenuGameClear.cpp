@@ -4,7 +4,13 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuGameClear.hpp"
-void CMenuGameClear::~CMenuGameClear() {}
+
+// forward declarations for scaffold thunk references
+extern const char lbl_eu_80664C08[];
+void cbRenderBefore__14CMenuGameClearFv(void*);
+void __dt__14CMenuGameClearFv(void*);
+
+CMenuGameClear::~CMenuGameClear() {}
 
 void CMenuGameClear::Init() {}
 

@@ -35,7 +35,7 @@ extern "C" int func_8048EDE0()
 // --- CScnRootNw4r class ---
 
 // Constructor for CScnRootNw4r (inherits CScnRoot).
-vvoid __ct__CScnRootNw4r(void* self, void* mgr, void* param);or for CScnRootNw4r.
+void __ct__CScnRootNw4r(void* self, void* mgr, void* param);// for CScnRootNw4r.
 extern "C" void __dt__12CScnRootNw4rFv(void* self, int deleteFlag);
 
 // --- CScnRootNw4r helpers ---

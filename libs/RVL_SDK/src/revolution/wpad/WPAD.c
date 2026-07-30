@@ -2280,7 +2280,7 @@ static void __SendData(s32 chan, WPADCommand command) {
     pBuffer->len = (u8)(len + 1);
     pBuffer->offset = 10;
 
-    pRptData = &reinterpret_cast<u8*>(pBuffer + 1)[pBuffer->offset];
+    pRptData = &((u8*)(pBuffer + 1))[pBuffer->offset];
     pRptData[0] = reportID;
     memcpy(&pRptData[1], pCmdData, len);
 

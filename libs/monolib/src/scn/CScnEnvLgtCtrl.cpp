@@ -3,6 +3,11 @@
 
 #include <harness_catalog.h>
 
+struct CScnEnvLgtCtrl {
+    ~CScnEnvLgtCtrl();
+};
+
+
 void func_804C6B64(void* self, u32 val) { *(u32*)((u8*)self + 0xa8) = val; }
 
 
@@ -52,7 +57,7 @@ void func_804C26F0(){}
 
 void __ct__CScnEnvLgtCtrl(){}
 
-void CScnEnvLgtCtrl::~CScnEnvLgtCtrl() {}
+CScnEnvLgtCtrl::~CScnEnvLgtCtrl() {}
 
 void func_804C30E8(){}
 
@@ -155,7 +160,6 @@ void func_804C6010(void* _this, int r4, int r5) {
     if (r3 == nullptr) {
         return;
     }
-    if (r5 > 1) {
         r5 = 0;
     }
     int r0 = -r4;
@@ -194,7 +198,6 @@ void func_804C6AF4(void* ptr, int flag) {
 }
 
 void func_804C6B1C(void* r3, int r4) {
-    if (r4 != 0) {
         *(unsigned int*)((char*)r3 + 4) |= 0x80000000u;
     } else {
         *(unsigned int*)((char*)r3 + 4) &= ~0x80000000u;

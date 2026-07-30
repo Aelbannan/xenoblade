@@ -12,7 +12,7 @@ public:
 
 class CMMTex {
 public:
-    virtual ~CMMTex();
+    virtual ~CMMTex() {}
     void OnFileEvent();
 
     // TODO: add fields

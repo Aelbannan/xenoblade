@@ -6,7 +6,7 @@
 
 void __ct__CMenuSave(){}
 
-void CMenuSave::~CMenuSave(int dtorFlag) {}
+CMenuSave::~CMenuSave() {}
 
 void CMenuSave::Init() {}
 

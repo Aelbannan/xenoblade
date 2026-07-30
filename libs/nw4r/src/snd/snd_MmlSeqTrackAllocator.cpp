@@ -34,5 +34,7 @@ void MmlSeqTrackAllocator::Destroy(void* pBuffer, u32 size) {
 } // namespace snd
 } // namespace nw4r
 
+using nw4r::snd::detail::MmlSeqTrackAllocator;
+
 extern "C" u32 CountImpl__Q44nw4r3snd6detail8PoolImplCFv(void*);
 extern "C" int GetAllocatableTrackCount__Q44nw4r3snd6detail20MmlSeqTrackAllocatorCFv(void* self) { return static_cast<MmlSeqTrackAllocator*>(self)->GetAllocatableTrackCount(); }

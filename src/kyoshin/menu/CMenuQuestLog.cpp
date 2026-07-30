@@ -32,11 +32,11 @@ void func_8011CE44(){}
 
 void func_8011D03C(){}
 
-bool isIdle__11CTitleAHelpFv(void*);
-bool func_80227CCC(void*);
-unsigned int func_80228394(void*);
-void func_80229768(void*, unsigned short);
-void func_80229510(void*);
+extern "C" bool isIdle__11CTitleAHelpFv(void*);
+extern "C" bool func_80227CCC(void*);
+extern "C" unsigned int func_80228394(void*);
+extern "C" void func_80229768(void*, unsigned short);
+extern "C" void func_80229510(void*);
 
 void func_8011D08C(void* self)
 {
@@ -62,13 +62,13 @@ void func_8011D298(){}
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls cbRenderBefore.
 void func_8011D2E8(void* self) {
-    ((void(*)(void*))cbRenderBefore__13CMenuQuestLogFv)(static_cast<char*>(self) - 0x58);
+    reinterpret_cast<CMenuQuestLog*>(static_cast<char*>(self) - 0x58)->cbRenderBefore();
 }
 
 // Adjusting thunk: upcasts from a base sub-object (at offset +0x58 within CMenuQuestLog)
 // to the full CMenuQuestLog, then tail-calls the destructor.
 void func_8011D2F0(void* self) {
-    ((void(*)(void*))__dt__13CMenuQuestLogFv)(static_cast<char*>(self) - 0x58);
+    reinterpret_cast<CMenuQuestLog*>(static_cast<char*>(self) - 0x58)->~CMenuQuestLog();
 }
 
 void __dt__8011D2F8(){}

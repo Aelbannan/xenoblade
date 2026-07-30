@@ -3,6 +3,12 @@
 
 #include <harness_catalog.h>
 
+struct Class_8045F858 {
+    void Class_8045F858();
+    ~Class_8045F858();
+};
+
+
 Class_8045F858::Class_8045F858() {}
 
-void Class_8045F858::~Class_8045F858() {}
+Class_8045F858::~Class_8045F858() {}

@@ -2,10 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
-void __dt__13CMenuMiniMap2Fv(void* self);
-void func_8011C434(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x58); }
-
-void CMMTex::~CMMTex() {}
+#include "kyoshin/CMiniMap.hpp"
+void func_8011C434(void* self) { reinterpret_cast<CMenuMiniMap2*>((char*)self - 0x58)->~CMenuMiniMap2(); }
 
 void func_80117734(){}
 
@@ -13,7 +11,7 @@ void CMMTex::OnFileEvent() {}
 
 void __ct__CMiniMap(){}
 
-void CMiniMap::~CMiniMap() {}
+CMiniMap::~CMiniMap() {}
 
 void func_80117C30(){}
 
@@ -53,9 +51,9 @@ void func_8011C400()
     }
 }
 
-extern "C" void func_8011C43C(void* self) { ((void(*)(void*))cbRenderBefore__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
+extern "C" void func_8011C43C(void* self) { reinterpret_cast<CMenuMiniMap2*>((char*)self - 0x5c)->cbRenderBefore(); }
 
-extern "C" void func_8011C444(void* self) { ((void(*)(void*))__dt__13CMenuMiniMap2Fv)((char*)self - 0x5c); }
+extern "C" void func_8011C444(void* self) { reinterpret_cast<CMenuMiniMap2*>((char*)self - 0x5c)->~CMenuMiniMap2(); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 extern "C" float lbl_eu_806670A0;

@@ -6,7 +6,7 @@
 #include "kyoshin/cf/CfHikariItemManager.hpp"
 void __ct__cf_CfHikariItemManager(){}
 
-void cf::CfHikariItemManager::~CfHikariItemManager() {}
+cf::CfHikariItemManager::~CfHikariItemManager() {}
 
 void func_802B2894(){}
 

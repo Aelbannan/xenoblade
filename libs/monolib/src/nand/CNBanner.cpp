@@ -3,9 +3,20 @@
 
 #include <harness_catalog.h>
 
+struct CNBanner {
+    void CNBanner();
+    ~CNBanner();
+    void OnFileEvent();
+    void func_804F52F8();
+    void func_804F5304();
+    void func_804F5310();
+    void func_804F531C();
+};
+
+
 CNBanner::CNBanner() {}
 
-void CNBanner::~CNBanner() {}
+CNBanner::~CNBanner() {}
 
 void CNBanner::func_804F52F8(void) {}
 

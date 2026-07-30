@@ -32,5 +32,4 @@ public:
     /* 0x50 */ u8 mIsActive;               // Active flag; set when layout initialised
     u8 func_8021A8EC() const { return mIsActive; }
     /* 0x51 */ u8 mField51;                // Cleared when state transitions from 0→1
-    CMCCrystalInfo();
 };

@@ -2,6 +2,12 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CTaskGamePic.hpp"
+
+// forward declarations for scaffold thunk references
+void __dt__12CTaskGamePicFv(void*);
+void cbRenderBefore__12CTaskGamePicFv(void*);
+
 
 void Draw__12CTaskGamePicFv() {}
 

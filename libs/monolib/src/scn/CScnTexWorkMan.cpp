@@ -3,9 +3,15 @@
 
 #include <harness_catalog.h>
 
+struct CScnTexWorkMan {
+    CScnTexWorkMan();
+    ~CScnTexWorkMan();
+};
+
+
 CScnTexWorkMan::CScnTexWorkMan() {}
 
-void CScnTexWorkMan::~CScnTexWorkMan() {}
+CScnTexWorkMan::~CScnTexWorkMan() {}
 
 void func_80490208(){}
 

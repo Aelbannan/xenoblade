@@ -5,27 +5,17 @@
 
 void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
 extern "C" void* func_8048FDE4(void* self) { return (void*)((u8*)self + 0x45c); }
 
-extern "C" void* func_8048FDDC(void* self) { return (void*)((u8*)self + 0x44c); }
 
 void func_8048FE0C(){}
 

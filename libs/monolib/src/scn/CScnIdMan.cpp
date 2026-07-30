@@ -3,9 +3,15 @@
 
 #include <harness_catalog.h>
 
+struct CScnIdMan {
+    ~CScnIdMan();
+    void cbRenderBefore();
+};
+
+
 void __ct__CScnIdMan(){}
 
-void CScnIdMan::~CScnIdMan() {}
+CScnIdMan::~CScnIdMan() {}
 
 void func_8049E51C(){}
 

@@ -39,6 +39,5 @@ public:
     /* 0x31 */ u8 pad31[3];
     /* 0x34 */ u8 mSysWinData[0x3C];            // CSysWin panel widget
     /* 0x70 */ u8 mSkipTimer2Data[0x28];        // CSkipTimer2 sub-controller
-    CSkipTimer();
 };
 // Total size: 0x98 bytes (verified via CMenuSkipTimer mTimerData[0x98])

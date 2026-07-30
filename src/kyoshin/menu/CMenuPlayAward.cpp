@@ -4,9 +4,14 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuPlayAward.hpp"
+
+// forward declarations for scaffold thunk references
+void cbRenderBefore__14CMenuPlayAwardFv(void*);
+void __dt__14CMenuPlayAwardFv(void*);
+
 void __ct__CMenuPlayAward(){}
 
-void CMenuPlayAward::~CMenuPlayAward() {}
+CMenuPlayAward::~CMenuPlayAward() {}
 
 void CMenuPlayAward::Init() {}
 
@@ -55,7 +60,7 @@ void* func_80270AEC(void* self, int param) {
 
 void __ct__CPlayAwardList(){}
 
-void CPlayAwardList::~CPlayAwardList() {}
+CPlayAwardList::~CPlayAwardList() {}
 
 void func_80270CEC(){}
 

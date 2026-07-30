@@ -21,6 +21,6 @@ void Shutdown__Q34nw4r3snd15FxReverbStdDpl2Fv(){}
 
 void SetParam__Q34nw4r3snd15FxReverbStdDpl2FRCQ44nw4r3snd6detail16FxReverbStdParam(){}
 
-void nw4r3snd15FxReverbStdDpl2FiPPvUlQ3::nw4r::snd::UpdateBuffer() {}
+void UpdateBuffer__Q34nw4r3snd15FxReverbStdDpl2FiPPvUlQ34nw4r3snd12SampleFormatfQ34nw4r3snd10OutputMode() {}
 
 void OnChangeOutputMode__Q34nw4r3snd15FxReverbStdDpl2Fv(){}

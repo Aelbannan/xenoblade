@@ -63,7 +63,7 @@ void func_801BF70C(){}
 void func_801BF75C(CMenuItemExchangeOC* param) {
     CMenuItemExchange* self = reinterpret_cast<CMenuItemExchange*>(
         reinterpret_cast<uintptr_t>(param) - CMENU_ITEM_EXCHANGE_OC_OFFSET);
-    ((void(*)(CMenuItemExchange*))cbRenderBefore__17CMenuItemExchangeFv)(self);
+    self->cbRenderBefore();
 }
 
 /**
@@ -73,5 +73,5 @@ void func_801BF75C(CMenuItemExchangeOC* param) {
 void func_801BF764(CMenuItemExchangeOC* param) {
     CMenuItemExchange* self = reinterpret_cast<CMenuItemExchange*>(
         reinterpret_cast<uintptr_t>(param) - CMENU_ITEM_EXCHANGE_OC_OFFSET);
-    ((void(*)(CMenuItemExchange*))__dt__17CMenuItemExchangeFv)(self);
+    self->~CMenuItemExchange();
 }

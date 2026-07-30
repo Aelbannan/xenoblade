@@ -6,15 +6,14 @@
 #include "kyoshin/menu/CMenuItem.hpp"
 void __ct__CMenuItem(){}
 
+extern f32 lbl_eu_80664258;
 unsigned long func_80167A18(){
-    unsigned long v = *(unsigned long*)(extern f32 lbl_eu_80664258);
+    unsigned long v = *(unsigned long*)(&lbl_eu_80664258);
     return !!v;
 }
 
 void func_80167A2C(){}
 
-extern "C" void cbRenderBefore__9CMenuItemFv(void* self);
-extern "C" void func_80167C30(void* self) { cbRenderBefore__9CMenuItemFv((char*)self - 0x58); }
+void func_80167C30(void* self) { reinterpret_cast<CMenuItem*>((char*)self - 0x58)->cbRenderBefore(); }
 
-extern "C" void __dt__9CMenuItemFv(void* self);
-extern "C" void func_80167C38(void* self) { __dt__9CMenuItemFv((char*)self - 0x58); }
+void func_80167C38(void* self) { reinterpret_cast<CMenuItem*>((char*)self - 0x58)->~CMenuItem(); }

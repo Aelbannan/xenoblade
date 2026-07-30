@@ -5,6 +5,7 @@
 
 #include "kyoshin/cf/CfMapEffectManager.hpp"
 
+namespace cf {}
 using namespace cf;
 void __ct__cf_CfMapEffectManager(){}
 

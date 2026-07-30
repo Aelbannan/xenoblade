@@ -6,6 +6,39 @@
 #include "monolib/math/CCol4.hpp"
 #include "monolib/math/CMat34.hpp"
 
+struct CGXCache {
+    ~CGXCache();
+    void func_80449D68();
+    void func_8044A578();
+    void func_8044A6C8();
+    void func_8044A7F8();
+    void func_8044A94C();
+    void func_8044AA7C();
+    void func_8044ABAC();
+    void func_8044ACDC();
+    void func_8044AE8C();
+    void func_8044B03C();
+    void func_8044B168();
+    void func_8044B298(void* a, void* b, void* c);
+    void func_8044B4B8();
+    void func_8044B5B4();
+    void func_8044B5C0();
+    void func_8044B660();
+    void func_8044B8CC();
+    void func_8044BB20();
+    void func_8044BD74();
+    void func_8044BE10();
+    void* func_8044BE2C();
+    void func_8044BE3C();
+    void func_8044BFC0();
+    void func_8044C034();
+    void func_8044C1FC();
+    void func_8044CE68(u32 cmd);
+    void* func_8044CEF8(u32 cmd);
+    void func_8044CF74() const;
+};
+
+
 // __ct__80449548 (constructor at 0x80449548) defined once — all harness stubs
 // that map to this same symbol reference it rather than redefining.
 void __ct__80449548(void) {}
@@ -20,10 +53,8 @@ void* __dt__CMsgParam_32(void* self, int shouldDelete) {
     if (self != 0) {
         unsigned char* base = static_cast<unsigned char*>(self);
         // CMsgParam<32> layout: vtable(4) + entries[32](0x480) + mArrayPtr(4) + mFront(4) + mSize(4)
-        if (base + 4 != 0) {
-            *reinterpret_cast<unsigned int*>(base + 0x48c) = 0; // mSize
-            *reinterpret_cast<unsigned int*>(base + 0x488) = 0; // mFront
-        }
+        *reinterpret_cast<unsigned int*>(base + 0x48c) = 0; // mSize
+        *reinterpret_cast<unsigned int*>(base + 0x488) = 0; // mFront
         if (shouldDelete > 0)
             ::operator delete(self);
     }
@@ -42,7 +73,7 @@ void func_8044954C(void) {}
 
 void __ct__IStateCache(){}
 
-void CGXCache::~CGXCache() {}
+CGXCache::~CGXCache() {}
 
 void CGXCache::func_80449D68() {}
 
@@ -113,21 +144,18 @@ void CGXCache::func_8044B298(void* a, void* b, void* c) {
 
     // Keep b in r31 across the function like retail (null → this+0x4A8).
     insetPair = (u32*)b;
-    if (a != 0) {
         u32* a32 = (u32*)a;
         u32 w0 = a32[0];
         u32 w1 = a32[1];
         *(u32*)&cache->rect4A8[2] = w1;
         *(u32*)&cache->rect4A8[0] = w0;
     }
-    if (c != 0) {
         u32* c32 = (u32*)c;
         u32 w0 = c32[0];
         u32 w1 = c32[1];
         *(u32*)&cache->rect4B0[2] = w1;
         *(u32*)&cache->rect4B0[0] = w0;
     }
-    if (insetPair == 0) {
         insetPair = reinterpret_cast<u32*>(cache->rect4A8);
     }
 
@@ -142,7 +170,6 @@ void CGXCache::func_8044B298(void* a, void* b, void* c) {
     for (u32 n = cache->mSize; n != 0; n--) {
         idx = cache->mFront + i;
         slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
-        if (cache->mArrayPtr[slot].command == 0xb) {
             goto found_b;
         }
         i++;
@@ -161,10 +188,8 @@ found_b:
     func_8044CE68__8CGXCacheFv(&unk4, 0xb);
 
     i = 0;
-    for (u32 n = cache->mSize; n != 0; n--) {
         idx = cache->mFront + i;
         slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
-        if (cache->mArrayPtr[slot].command == 0xc) {
             goto found_c;
         }
         i++;
@@ -267,7 +292,6 @@ void CGXCache::func_8044C034() {
         tevStage++;
     }
     tevStage = 0;
-    while (tevStage < 0x10) {
         GXSetTevDirect((GXTevStageID)tevStage);
         tevStage++;
     }
@@ -399,10 +423,8 @@ void CGXCache::func_8044C1FC() {
     {
         s32 found_B = -1;
         u32 i_B;
-        for (i_B = 0; i_B < cache->mSize; i_B++) {
             u32 idx_B = cache->mFront + i_B;
             u32 slot_B = idx_B - (idx_B / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_B].command == 0xB) {
                 found_B = (s32)i_B;
                 break;
             }
@@ -421,10 +443,8 @@ void CGXCache::func_8044C1FC() {
     {
         s32 found_C = -1;
         u32 i_C;
-        for (i_C = 0; i_C < cache->mSize; i_C++) {
             u32 idx_C = cache->mFront + i_C;
             u32 slot_C = idx_C - (idx_C / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_C].command == 0xC) {
                 found_C = (s32)i_C;
                 break;
             }
@@ -443,10 +463,8 @@ void CGXCache::func_8044C1FC() {
     {
         s32 found_4 = -1;
         u32 i_4;
-        for (i_4 = 0; i_4 < cache->mSize; i_4++) {
             u32 idx_4 = cache->mFront + i_4;
             u32 slot_4 = idx_4 - (idx_4 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_4].command == 0x4) {
                 found_4 = (s32)i_4;
                 break;
             }
@@ -464,10 +482,8 @@ void CGXCache::func_8044C1FC() {
     {
         s32 found_5 = -1;
         u32 i_5;
-        for (i_5 = 0; i_5 < cache->mSize; i_5++) {
             u32 idx_5 = cache->mFront + i_5;
             u32 slot_5 = idx_5 - (idx_5 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_5].command == 0x5) {
                 found_5 = (s32)i_5;
                 break;
             }
@@ -485,10 +501,8 @@ void CGXCache::func_8044C1FC() {
     {
         s32 found_6 = -1;
         u32 i_6;
-        for (i_6 = 0; i_6 < cache->mSize; i_6++) {
             u32 idx_6 = cache->mFront + i_6;
             u32 slot_6 = idx_6 - (idx_6 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_6].command == 0x6) {
                 found_6 = (s32)i_6;
                 break;
             }
@@ -506,10 +520,8 @@ void CGXCache::func_8044C1FC() {
     {
         s32 found_7 = -1;
         u32 i_7;
-        for (i_7 = 0; i_7 < cache->mSize; i_7++) {
             u32 idx_7 = cache->mFront + i_7;
             u32 slot_7 = idx_7 - (idx_7 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_7].command == 0x7) {
                 found_7 = (s32)i_7;
                 break;
             }
@@ -527,10 +539,8 @@ void CGXCache::func_8044C1FC() {
     {
         s32 found_8 = -1;
         u32 i_8;
-        for (i_8 = 0; i_8 < cache->mSize; i_8++) {
             u32 idx_8 = cache->mFront + i_8;
             u32 slot_8 = idx_8 - (idx_8 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_8].command == 0x8) {
                 found_8 = (s32)i_8;
                 break;
             }
@@ -548,10 +558,8 @@ void CGXCache::func_8044C1FC() {
     {
         s32 found_0 = -1;
         u32 i_0;
-        for (i_0 = 0; i_0 < cache->mSize; i_0++) {
             u32 idx_0 = cache->mFront + i_0;
             u32 slot_0 = idx_0 - (idx_0 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_0].command == 0x0) {
                 found_0 = (s32)i_0;
                 break;
             }
@@ -569,10 +577,8 @@ void CGXCache::func_8044C1FC() {
     {
         s32 found_9 = -1;
         u32 i_9;
-        for (i_9 = 0; i_9 < cache->mSize; i_9++) {
             u32 idx_9 = cache->mFront + i_9;
             u32 slot_9 = idx_9 - (idx_9 / cache->mCapacity) * cache->mCapacity;
-            if (cache->mArrayPtr[slot_9].command == 0x9) {
                 found_9 = (s32)i_9;
                 break;
             }
@@ -627,10 +633,8 @@ void CGXCache::func_8044CE68(u32 cmd) {
     // Ascending `i < mSize` → mtctr + cmplwi/ble (same as C1FC ring walk).
     // Residual vs retail: early `mr r9,r3` (decomp late-copies at dispatch)
     // and match `beq` vs retail `bne+8; b` (+4B → 140/144).
-    for (i = 0; i < ring->mSize; i++) {
         u32 idx = ring->mFront + i;
         u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
-        if (ring->mArrayPtr[slot].command == cmd) {
             goto dispatch;
         }
     }
@@ -651,10 +655,8 @@ void* CGXCache::func_8044CEF8(u32 cmd) {
     MsgParam32Ring* ring = (MsgParam32Ring*)this;
     u32 i;
 
-    for (i = 0; i < ring->mSize; i++) {
         u32 idx = ring->mFront + i;
         u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
-        if (ring->mArrayPtr[slot].command == cmd) {
             goto found_entry;
         }
     }

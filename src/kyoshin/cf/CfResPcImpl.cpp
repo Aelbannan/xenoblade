@@ -2,7 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CfResPcImpl.hpp"
 
+namespace cf {}
 using namespace cf;
 
 void __ct__cf_CfResPcImpl(){}
@@ -68,11 +70,10 @@ void func_8018EEF0(){}
 
 
 
-cf::UnkClass_8018EF3C::~UnkClass_8018EF3C() const {}
+cf::UnkClass_8018EF3C::~UnkClass_8018EF3C() {}
 
 #include <string.h>
 
-#include "kyoshin/cf/CfResPcImpl.hpp"
 void func_8018EFB4(unsigned char* p)
 {
     *reinterpret_cast<unsigned int*>(p + 0x404) = 0;

@@ -1,27 +1,20 @@
-// Auto-scaffolded catalog TU for monolib/src/mpfsys/MPFDrawBillLayTex
-// Replace stubs with high-level C/C++ during decomp.
+#include "monolib/mpfsys/MPFDrawBillLayTex.hpp"
 
-using namespace mpfsys;
-#include <harness_catalog.h>
+extern "C" {
+    s8 lbl_eu_806658B0;
+    mpfsys::MPFDrawBillLayTex* lbl_eu_806658B4;
+}
 
-void mpfsys::MPFDrawBillLayTex::getInstance() {}
+static mpfsys::MPFDrawBillLayTex lbl_eu_8056DC00;
 
-void func_80479F54(){}
+namespace mpfsys {
 
-void func_8047A330(){}
+MPFDrawBillLayTex* MPFDrawBillLayTex::getInstance(){
+    if(!lbl_eu_806658B0){
+        lbl_eu_806658B4 = &lbl_eu_8056DC00;
+        lbl_eu_806658B0 = 1;
+    }
+    return lbl_eu_806658B4;
+}
 
-void func_8047A570(){}
-
-void mpfsys::MPFDrawBillboard::func_8047A7B0() {}
-
-void mpfsys::MPFDrawBillboard::func_8047A86C() {}
-
-void func_8047A918(){}
-
-void func_8047B1E8(){}
-
-void func_8047B528(){}
-
-void mpfsys::MPFDrawBillLayTex::func_8047B85C() {}
-
-void mpfsys::MPFDrawBillLayTex::func_8047B9DC() {}
+} // namespace mpfsys

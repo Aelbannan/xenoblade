@@ -3,11 +3,16 @@
 
 #include <harness_catalog.h>
 
+struct ScheduleList {
+    ~ScheduleList();
+};
+
+
 void __dt___reslist_base_CSchedule(){}
 
 void __dt__reslist_CSchedule(){}
 
-void ScheduleList::~ScheduleList() {}
+ScheduleList::~ScheduleList() {}
 
 void func_804E45F4(){}
 

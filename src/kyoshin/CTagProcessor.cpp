@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/CTagProcessor.hpp"
 
 void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCL(void* self, int deleting) {
     if (self && deleting > 0) {

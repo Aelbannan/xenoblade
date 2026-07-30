@@ -3,9 +3,18 @@
 
 #include <harness_catalog.h>
 
-void CNand::~CNand() {}
+struct CNRequest {
+    ~CNRequest();
+};
 
-void CNRequest::~CNRequest() {}
+struct CNand {
+    ~CNand();
+};
+
+
+CNand::~CNand() {}
+
+CNRequest::~CNRequest() {}
 
 void __ct__CNand(){}
 

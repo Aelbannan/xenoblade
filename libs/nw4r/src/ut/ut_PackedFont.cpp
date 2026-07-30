@@ -4,7 +4,7 @@
 #include <harness_catalog.h>
 
 void __ct__Q44nw4r2ut6detail15ArchiveFontBaseFv(void*);
-unsigned char lbl_eu_8056B084[];
+extern unsigned char lbl_eu_8056B084[];
 
 
 void* __dt__Q44nw4r2ut6detail15ArchiveFontBaseFv(void*, int);

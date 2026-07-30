@@ -20,5 +20,4 @@ public:
     void func_80257A7C();
     void func_80257A84();
 
-    CMenuKizunagram();
 };

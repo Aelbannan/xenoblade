@@ -3,9 +3,9 @@
 
 #include <harness_catalog.h>
 
-void nw4r3snd6detail15BiquadFilterLpfCFifPQ44nw4r::snd::GetCoef() const {}
+void GetCoef__Q44nw4r3snd6detail15BiquadFilterLpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef() {}
 
-void nw4r3snd6detail15BiquadFilterHpfCFifPQ44nw4r::snd::GetCoef() const {}
+void GetCoef__Q44nw4r3snd6detail15BiquadFilterHpfCFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef() {}
 
 void GetCoef__Q44nw4r3snd6detail18BiquadFilterBpf512CFifPQ44nw4r3snd20BiquadFilterCallback10BiquadCoef(){}
 

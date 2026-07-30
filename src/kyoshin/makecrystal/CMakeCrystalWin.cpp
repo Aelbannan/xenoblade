@@ -6,7 +6,7 @@
 #include "kyoshin/makecrystal/CMakeCrystalWin.hpp"
 void __ct__CMakeCrystalWin(){}
 
-void CMakeCrystalWin::~CMakeCrystalWin() {}
+CMakeCrystalWin::~CMakeCrystalWin() {}
 
 void func_8021260C(){}
 
@@ -45,6 +45,9 @@ void func_802132A0(){}
 void func_80213300(){}
 
 void CMakeCrystalWin::cbRenderBefore() {}
+
+void __dt__15CMakeCrystalWinFv(void*);
+void cbRenderBefore__15CMakeCrystalWinFv(void*);
 
 void func_80213478(void* self) { ((void(*)(void*))cbRenderBefore__15CMakeCrystalWinFv)((char*)self - 0x4); }
 

@@ -10,7 +10,6 @@ extern "C" CLibVM* __dt__6CLibVMFv(CLibVM* self, int deleting) {
     if (self != 0) {
         lbl_eu_80665720 = 0;
         __dt__11CWorkThreadFv(self, 0);
-        if (deleting > 0) {
             __dl__FPv(self);
         }
     }

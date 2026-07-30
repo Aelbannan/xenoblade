@@ -16,7 +16,7 @@ extern "C" void* __dt__8045F000(void* self, int flags) {
     return self;
 }
 
-void CLibLayout::~CLibLayout() {}
+CLibLayout::~CLibLayout() {}
 
 void CLibLayout::getAllocHandle(void) {}
 

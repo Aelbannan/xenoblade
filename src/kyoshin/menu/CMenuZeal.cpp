@@ -24,8 +24,8 @@ void func_8017FD4C(){}
 
 void func_8017FEF0(){}
 
-void func_8017FF60(void* self) { ((void(*)(void*))__dt__9CMenuZealFv)((char*)self - 0x58); }
+void func_8017FF60(void* self) { reinterpret_cast<CMenuZeal*>((char*)self - 0x58)->~CMenuZeal(); }
 
-void func_8017FF68(void* self) { ((void(*)(void*))cbRenderBefore__9CMenuZealFv)((char*)self - 0x5c); }
+void func_8017FF68(void* self) { reinterpret_cast<CMenuZeal*>((char*)self - 0x5c)->cbRenderBefore(); }
 
-extern "C" void func_8017FF70(void* self) { ((void(*)(void*))__dt__9CMenuZealFv)((char*)self - 0x5c); }
+extern "C" void func_8017FF70(void* self) { reinterpret_cast<CMenuZeal*>((char*)self - 0x5c)->~CMenuZeal(); }

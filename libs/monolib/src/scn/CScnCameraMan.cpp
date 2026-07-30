@@ -3,9 +3,16 @@
 
 #include <harness_catalog.h>
 
+struct CScnCameraMan {
+    ~CScnCameraMan();
+    void WorkEvent1();
+    void WorkEvent3();
+};
+
+
 void __ct__CScnCameraMan(){}
 
-void CScnCameraMan::~CScnCameraMan() {}
+CScnCameraMan::~CScnCameraMan() {}
 
 void func_8049AED4(){}
 

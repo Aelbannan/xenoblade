@@ -3,9 +3,14 @@
 
 #include <harness_catalog.h>
 
+struct CScnLightMan {
+    ~CScnLightMan();
+};
+
+
 void __ct__CScnLightMan(){}
 
-void CScnLightMan::~CScnLightMan() {}
+CScnLightMan::~CScnLightMan() {}
 
 void func_8048D124(void* arg1, void* arg2) {
     extern void func_804BF944(void*);

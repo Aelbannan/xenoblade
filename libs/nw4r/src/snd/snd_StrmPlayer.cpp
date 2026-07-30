@@ -916,6 +916,8 @@ void StrmPlayer::StrmDataLoadTask::OnCancel() {
 } // namespace snd
 } // namespace nw4r
 
+using nw4r::snd::detail::StrmPlayer;
+
 void AllocVoices__Q44nw4r3snd6detail10StrmPlayerFi(int){}
 void UpdateVoiceParams__Q44nw4r3snd6detail10StrmPlayerFPQ54nw4r3snd6detail10StrmPlayer9StrmTrack(){}
 void SetTrackVolume__Q44nw4r3snd6detail10StrmPlayerFUlf(){}

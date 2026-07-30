@@ -44,25 +44,25 @@ CArrow3D::~CArrow3D() {}
 
 void CArrow3D::cbRenderBefore() {}
 
-void Move__8CArrow3DFv(void) {}
+void CArrow3D::Move() {}
 
 void CArrow3D::Term() {}
 
 void CArrow3D::Init() {}
 
-void func_8012213C(void* self) { ((void(*)(void*))__dt__15CMenuSymbolMarkFv)((char*)self - 0x58); }
+void func_8012213C(void* self) { reinterpret_cast<CMenuSymbolMark*>((char*)self - 0x58)->~CMenuSymbolMark(); }
 
-void func_80122144(void* self) { ((void(*)(void*))cbRenderBefore__15CMenuSymbolMarkFv)((char*)self - 0x5c); }
+void func_80122144(void* self) { reinterpret_cast<CMenuSymbolMark*>((char*)self - 0x5c)->cbRenderBefore(); }
 
-void func_8012214C(void* self) { ((void(*)(void*))__dt__15CMenuSymbolMarkFv)((char*)self - 0x5c); }
+void func_8012214C(void* self) { reinterpret_cast<CMenuSymbolMark*>((char*)self - 0x5c)->~CMenuSymbolMark(); }
 
-void func_80122154(void* self) { ((void(*)(void*))cbRenderBefore__8CArrow3DFv)((char*)self - 0x54); }
+void func_80122154(void* self) { reinterpret_cast<CArrow3D*>((char*)self - 0x54)->cbRenderBefore(); }
 
-extern "C" void func_8012215C(void* self) { ((void(*)(void*))__dt__8CArrow3DFv)((char*)self - 0x54); }
+extern "C" void func_8012215C(void* self) { reinterpret_cast<CArrow3D*>((char*)self - 0x54)->~CArrow3D(); }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 // Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here — its inline methods collide.
+// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
 template <typename T>
 class CTTask {
 public:

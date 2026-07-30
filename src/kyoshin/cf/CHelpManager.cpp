@@ -8,7 +8,7 @@ cf::CHelpManager::CHelpManager() {}
 
 void func_80295924(){}
 
-void cf::CHelpManager::~CHelpManager() {}
+cf::CHelpManager::~CHelpManager() {}
 
 void func_802959AC(){}
 

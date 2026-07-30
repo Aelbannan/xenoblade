@@ -16,11 +16,11 @@ namespace cf{
         static CTaskREvent* getInstance();
         static CTaskREvent* create(CProcess* pParent, CScnNw4r* pScene, CView* pView);
 
-    private:
         //0x000-0x054 CTTask
-        char unk054[0x1F8 - 0x054]; //0x054
+    char unk054[0x1F8 - 0x054]; //0x054
 
-        static CTaskREvent* spInstance;
+    static CTaskREvent* spInstance;
+public:
     virtual ~CTaskREvent();
     void Init();
     void Term();

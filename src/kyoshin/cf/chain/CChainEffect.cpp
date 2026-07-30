@@ -2,6 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/chain/CChainEffect.hpp"
+
+namespace cf {}
 
 void func_802A07F4(){}
 

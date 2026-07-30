@@ -2,7 +2,9 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/cf/CSuddenCommu.hpp"
 
+namespace cf {}
 using namespace cf;
 
 cf::CSuddenCommu::CSuddenCommu() {}

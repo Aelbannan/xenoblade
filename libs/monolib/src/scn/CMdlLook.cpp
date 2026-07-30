@@ -3,9 +3,14 @@
 
 #include <harness_catalog.h>
 
+struct CMdlLook {
+    ~CMdlLook();
+};
+
+
 void __ct__CMdlLook(){}
 
-void CMdlLook::~CMdlLook() {}
+CMdlLook::~CMdlLook() {}
 
 void func_804E7B38(){}
 

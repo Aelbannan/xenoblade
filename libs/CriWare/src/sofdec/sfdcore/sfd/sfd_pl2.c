@@ -156,11 +156,10 @@ int SFD_Standby(void *handle) {
 }
 
 /* Standby sub-operation */
-void SFPL2_Standby(void *handle) {
+int SFPL2_Standby(void *handle) {
     fn_803CD484(handle);
     *(u32 *)((u8 *)handle + P_SUBSTATE) = 3;
-    *(u32 *)((u8 *)handle + P_PAUSECT) = 0;
-    *(u32 *)((u8 *)handle + P_PAUSE) = 0;
+    return 0;
 }
 
 /* Set playback speed (rational numerator/denominator) */

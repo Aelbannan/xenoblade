@@ -32,27 +32,25 @@ UnkClass_8045F564::~UnkClass_8045F564() {
         unk0 = 0xFFFFFFFF;
     }
     
-    // Remove this from CLibLayout tracking array
+    // STALL: Remove this from CLibLayout tracking array — codegen differs from retail
+    // MWCC generates different loop structure (comparison-based vs retail bdnz/cmplw)
     CLibLayout* layout = lbl_eu_80665710;
-    u32 count = layout->instanceCount;
-    if (count != 0) {
+    u32 cnt = layout->instanceCount;
+    if (cnt > 0) {
         u32 i = 0;
-        while (i < count - 1) {
+        do {
             if (layout->instanceArray[i] == this) {
-                layout->instanceArray[i] = layout->instanceArray[i + 1];
-                i++;
-                while (i < count - 1) {
-                    layout->instanceArray[i] = layout->instanceArray[i + 1];
-                    i++;
-                }
-                layout->instanceCount = count - 1;
-                goto done;
+                u32 j = i;
+                do {
+                    layout->instanceArray[j] = layout->instanceArray[j + 1];
+                    j++;
+                } while (j < cnt - 1);
+                layout->instanceCount = cnt - 1;
+                break;
             }
             i++;
-        }
+        } while (i < cnt);
     }
-done:
-    return;
 }
 
 void UnkClass_8045F564::createRegion(int size1, int size2, const char* name, int flag) {
@@ -69,11 +67,10 @@ void UnkClass_8045F564::createRegion(int size1, int size2, const char* name, int
             unk0 = MemManager::create(size1, size2, name);
         }
     } else {
-        const char* defaultName = lbl_eu_805231BC + 0xB;
         if (flag != 0) {
-            unk0 = MemManager::create_tail(size1, size2, defaultName);
+            unk0 = MemManager::create_tail(size1, size2, lbl_eu_805231BC + 0xB);
         } else {
-            unk0 = MemManager::create(size1, size2, defaultName);
+            unk0 = MemManager::create(size1, size2, lbl_eu_805231BC + 0xB);
         }
     }
     

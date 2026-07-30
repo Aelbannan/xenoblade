@@ -552,6 +552,20 @@ void SFBUF_SetTermFlg(void* buf, s32 idx, u32 flg);
 // void SFBUF_SetTermFlg(void* buf, u32 idx, u32 flg);
 ```
 
+#### 7b2. Signed vs unsigned modulo: `s32` for `divw`, `u32` for `divwu`
+
+MWCC's `%` operator on `u32` generates `divwu` (unsigned divide) for the modulus, but on `s32` generates `divw` (signed). When the modulo result feeds a pointer/memory offset via a sequence of `divw` → `mullw` → `subf` (remainder), the signedness of the types determines `divw` vs `divwu`:
+
+```cpp
+// Retail uses divw — fields must be s32
+u32 idx = (layout->hashAccum + layout->hashCount) % layout->hashDivisor;
+
+// Fix: declare the struct fields as s32, not u32
+// s32 hashAccum, hashCount, hashDivisor;
+```
+
+Symptom: one byte diff at the `%` → `divw`/`divwu` instruction. All other arithmetic matches.
+
 #### 7c. Instruction ordering: `li` before `stw` soft-cap
 
 MWCC aggressively schedules `li rX, 0` (setting up a later call's argument) **before** an intervening `stw` that writes through the same pointer. No C-level barrier prevents this:

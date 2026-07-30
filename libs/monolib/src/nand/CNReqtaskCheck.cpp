@@ -5,7 +5,7 @@
 // Global symbols
 extern "C" {
     void* lbl_eu_80665A00;
-    extern char lbl_eu_8056FDE8[];
+    extern void* lbl_eu_8056FDE8;
     u8 lbl_eu_806659D0;
     s32 lbl_eu_806659D4;
 
@@ -68,5 +68,7 @@ ret0:
 // us-804df738: sinit_804DB420
 // Static initializer: sets vtable pointer for CNReqtaskCheck
 void sinit_804DB420() {
-    lbl_eu_80665A00 = &lbl_eu_8056FDE8;
+    void* val = (void*)&lbl_eu_8056FDE8;
+    void** dest = &lbl_eu_80665A00;
+    *dest = val;
 }

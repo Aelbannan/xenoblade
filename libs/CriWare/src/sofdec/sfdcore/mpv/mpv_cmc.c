@@ -3,7 +3,16 @@
 
 #include <harness_catalog.h>
 
-void MPVCMC_InitObj() {}
+void MPVMC08_Init(u32* dst);
+void MPVMC16_Init(void* this_ptr);
+void mpvcmc_InitMcOiTa(void* self);
+
+void MPVCMC_InitObj(void* self) {
+    u8* base = (u8*)self;
+    MPVMC08_Init((u32*)(base + 0xA4C));
+    MPVMC16_Init(base + 0xA4C);
+    mpvcmc_InitMcOiTa(self);
+}
 
 void mpvcmc_InitMcOiTa(void* self) {
     u32 val = *(u32*)((u8*)self + 0xb24);

@@ -1,14 +1,24 @@
-// Auto-scaffolded catalog TU for monolib/src/work/CEvent1
-// Replace stubs with high-level C/C++ during decomp.
+// CEvent1 - Array-indexed accessor functions
 
-#include <harness_catalog.h>
+#include <types.h>
 
-struct CEvent1 {
-    void func_8043B574();
-    void func_8043B588();
-};
+// Large class (size at least 0x1108+)
+// Has an array of pointers at offset 0x1104
+typedef struct {
+    u8 pad[0x1104];          // padding to reach array offset
+    void* mPtrArray[1];      // 0x1104 - flexible array of pointers
+} CEvent1;
 
+// extern "C" to produce the exact Fv mangling
+extern "C" {
 
-void CEvent1::func_8043B574() {}
+float func_8043B574__7CEvent1Fv(CEvent1* self, int index) {
+    void* ptr = self->mPtrArray[index];
+    return *(float*)ptr;
+}
 
-void CEvent1::func_8043B588() {}
+void* func_8043B588__7CEvent1Fv(CEvent1* self, int index) {
+    return self->mPtrArray[index];
+}
+
+}

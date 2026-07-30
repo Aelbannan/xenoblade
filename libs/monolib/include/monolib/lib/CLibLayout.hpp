@@ -31,9 +31,9 @@ public:
     u32 unk1C4;                       // 0x1C4: unknown field
     u8 pad_1C8[0x58];                 // 0x1C8-0x21F
     void** hashTable;                  // 0x220-0x223: hash table for Class_8045F858
-    u32 hashAccum;                     // 0x224-0x227
-    u32 hashCount;                     // 0x228-0x22B
-    u32 hashDivisor;                   // 0x22C-0x22F
+    s32 hashAccum;                     // 0x224-0x227
+    s32 hashCount;                     // 0x228-0x22B
+    s32 hashDivisor;                   // 0x22C-0x22F
     u8 pad_230[0x8];                   // 0x230-0x237
     void** instanceArray;              // 0x238-0x23B: tracking array for UnkClass_8045F564
     u8 pad_23C[0x7C];                  // 0x23C-0x2B7

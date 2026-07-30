@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/mwply/mwsfdcre
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/mwply/mwsfdcre.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/mwply/mwsfdcre.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,6 +718,8 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
+extern void* MWSFLIB_GetLibWorkPtr(void);
+
 void mwsfcre_CalcWorkStmBuf() {}
 
 void mwPlyCalcWorkCprmSfd() {}
@@ -763,8 +765,18 @@ uint32_t criware_803A0BA8(void* r3_this, uint32_t r4) {
     return b;
 }
 
-void criware_803A0BDC() {}
+void criware_803A0BDC(void* self) {
+    void* work = MWSFLIB_GetLibWorkPtr();
+    void (*cb)(void*, void*) = (void(*)(void*, void*))*(void**)((u8*)work + 0x28);
+    void* param = *(void**)((u8*)work + 0x30);
+    cb(param, self);
+}
 
 void criware_803A0C1C() {}
 
-void criware_803A0C20() {}
+void criware_803A0C20(void* self) {
+    void* work = MWSFLIB_GetLibWorkPtr();
+    void (*cb)(void*, void*) = (void(*)(void*, void*))*(void**)((u8*)work + 0x2C);
+    void* param = *(void**)((u8*)work + 0x30);
+    cb(param, self);
+}

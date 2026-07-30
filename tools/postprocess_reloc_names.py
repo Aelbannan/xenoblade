@@ -702,6 +702,21 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("__dt__801C5670__FPvi", "__dt__801C5670"),
         ),
     ),
+    "CVec4.o": UnitRules(
+        exact_renames=(("...bss.0", "zero__Q22ml5CVec4"),),
+    ),
+    "CCol3.o": UnitRules(
+        exact_renames=(("...bss.0", "lbl_eu_80656C40"),),
+    ),
+    "CCol4.o": UnitRules(
+        exact_renames=(("...bss.0", "white__Q22ml5CCol4"),),
+    ),
+    "FloatUtils.o": UnitRules(
+        exact_renames=(
+            ("huge__2ml", "lbl_eu_8066A214"),
+            ("hugeminus__2ml", "lbl_eu_8066A218"),
+        ),
+    ),
 }
 
 

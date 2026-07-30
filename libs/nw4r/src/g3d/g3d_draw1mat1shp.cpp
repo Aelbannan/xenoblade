@@ -221,6 +221,14 @@ void Draw1Mat1ShpDirectly(ResMat mat, ResShp shp, const math::MTX34* pViewPos,
     // -----------------------------------------------------------------------
     if (hasFur) {
 
+        // The retail loads a 16-byte constant table before the TEV color
+        // setup.  Store to volatile stack to match retail instruction order.
+        volatile u32 furConst0 = 0, furConst1 = 0, furConst2 = 0, furConst3 = 0;
+        (void)furConst0; (void)furConst1; (void)furConst2; (void)furConst3;
+
+        f32 furParam1 = furData.ref().param1;
+        f32 furParam2 = furData.ref().param2;
+
         // ---- TEV colour source (swap or material default) ----
         ResMatTevColor tevColor;
         if (pSwap == NULL || !pSwap->tevColor.IsValid()) {
@@ -292,8 +300,6 @@ void Draw1Mat1ShpDirectly(ResMat mat, ResShp shp, const math::MTX34* pViewPos,
         // ---- Fur position data ----
         ResVtxFurPos furPos = shp.GetResVtxFurPos();
         u32 numLayer = furPos.ref().numLayer;
-        f32 furParam1 = furData.ref().param1;
-        f32 furParam2 = furData.ref().param2;
 
         // ---- Layer loop ----
         for (u16 layer = 0; layer < numLayer; layer++) {

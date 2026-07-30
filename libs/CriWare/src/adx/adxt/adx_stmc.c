@@ -31,7 +31,7 @@ int ADXSTM_IsOpened(const void* self) {
 }
 
 s32 ADXSTM_IsOpenReq(void* self) {
-    return ((signed char*)((u8*)self + 0x49))[0] ? 1 : 0;
+    return (*(s8*)((u8*)self + 0x49) || *(s8*)((u8*)self + 0x4D)) ? 1 : 0;
 }
 
 void ADXSTM_GetStat() {}
@@ -110,4 +110,4 @@ void ADXSTM_SetPause() {}
 
 void ADXSTM_SetSj() {}
 
-int ADXSTM_IsOpenedFile(void* self) { return *(signed char*)self; }
+int ADXSTM_IsOpenedFile(void* self) { return *(s8*)((u8*)self + 0x4D); }

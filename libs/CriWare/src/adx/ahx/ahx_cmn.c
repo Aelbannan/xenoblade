@@ -3,7 +3,8 @@
 
 #include <harness_catalog.h>
 
-void AHXDCD_SetupAtbl(u32 val) {}
+extern u32 lbl_eu_805E64C8;
+void AHXDCD_SetupAtbl(u32 val) { lbl_eu_805E64C8 = val; }
 
 extern u32 lbl_eu_805E64C8;
 u32 AHXCMN_SetAlcInfTbl(void* self, u32* out) {

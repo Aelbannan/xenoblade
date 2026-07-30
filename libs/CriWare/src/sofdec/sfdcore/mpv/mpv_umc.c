@@ -1,17 +1,14 @@
-// Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/mpv/mpv_umc
-// Replace stubs with high-level C/C++ during decomp.
-
 #include <harness_catalog.h>
 
-void MPVUMC_Init(void) {}
+extern void mpvumc_InitOneRef(void);
 
-void mpvumc_InitOneRef() {}
+void MPVUMC_Init(void) { mpvumc_InitOneRef(); }
 
-void MPVUMC_Finish(void) {}
+void MPVUMC_Finish() {}
 
 void MPVUMC_InitOutRfb() {}
 
-void MPVUMC_EndOfFrame(void) {}
+void MPVUMC_EndOfFrame() {}
 
 void fn_803AFDB0() {}
 

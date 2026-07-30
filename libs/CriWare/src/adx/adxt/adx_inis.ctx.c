@@ -790,6 +790,9 @@ void* memset(void* dest, int val, size_t count);
 /* "libs/CriWare/src/adx/adxt/adx_inis.c" line 5 "adx/adxt/adx_inis.hpp" */
 /* end "adx/adxt/adx_inis.hpp" */
 
+// File-scope pointer to avoid per-function address materialization overhead.
+static struct AdxInisContext* const s_ctx = &lbl_eu_805E26C8;
+
 // Forward declarations for SVM functions
 s32 SVM_SetCbSvrIdWithString(s32 id, s32 arg, int (*cb)(void), s32 arg2,
                              const char* str);
@@ -912,7 +915,7 @@ void ADXT_Init(void) {
 
 // Tears down all ADX subsystems when refcount reaches zero.
 void ADXT_Finish(void) {
-    struct AdxInisContext* ctx = &lbl_eu_805E26C8;
+    struct AdxInisContext* ctx = s_ctx;
     const char* str;
     struct AdxInisHandle* hndl;
     s32 i;

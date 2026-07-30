@@ -5,14 +5,17 @@
 
 void SKG_GenerateKey() {}
 
-u32 ADXB_GetDecErrMode(void) { return 0; }
+extern u32 lbl_eu_805E5370;
+
+u32 ADXB_GetDecErrMode(void) { return lbl_eu_805E5370; }
 
 void ADXB_Init() {}
 
-void adxb_DefGetWr(void* self, u32* out) {
-    u32 val = *(u32*)((u8*)self + 0x8c);
-    *out = val;
-    *(u32*)((u8*)self + 0x90) = val;
+u32 adxb_DefGetWr(void* self, u32* out1, u32* out2, u32* out3) {
+    *out1 = *(u32*)((u8*)self + 0x8C);
+    *out2 = *(u32*)((u8*)self + 0x40) - *(u32*)((u8*)self + 0x8C);
+    *out3 = *(u32*)((u8*)self + 0x18) - *(u32*)((u8*)self + 0x88);
+    return *(u32*)((u8*)self + 0x3C);
 }
 
 void adxb_DefAddWr(void* self, u32 unused, u32 addend) {

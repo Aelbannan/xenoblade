@@ -1,6 +1,17 @@
-// Auto-scaffolded catalog TU for nw4r/src/lyt/lyt_util
-// Replace stubs with high-level C/C++ during decomp.
+#include <nw4r/lyt.h>
 
-#include <harness_catalog.h>
+namespace nw4r {
+namespace lyt {
 
-void BindAnimation__Q24nw4r3lytFPQ34nw4r3lyt5GroupPQ34nw4r3lyt13AnimTransformbb(){}
+void BindAnimation(Group* pGroup, AnimTransform* pAnimTrans, bool recursive,
+                   bool disable) {
+    detail::PaneLinkList& rList = pGroup->GetPaneList();
+
+    for (detail::PaneLinkList::Iterator it = rList.GetBeginIter();
+         it != rList.GetEndIter(); ++it) {
+        it->mTarget->BindAnimation(pAnimTrans, recursive, disable);
+    }
+}
+
+} // namespace lyt
+} // namespace nw4r

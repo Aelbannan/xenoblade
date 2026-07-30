@@ -5,11 +5,12 @@
 
 void SKG_GenerateKey() {}
 
-void AHXSJD_SetupAtbl(void) {}
+void AHXSJD_SetupAtbl(u32 val) { AHXDCD_SetupAtbl(val); }
 
-void AHXSJD_SetupMtbl(u32 val) {}
+extern u32 lbl_eu_805E64D4;
+void AHXSJD_SetupMtbl(u32 val) { lbl_eu_805E64D4 = val; }
 
-void AHXSJD_SetupFtbl(void) {}
+void AHXSJD_SetupFtbl(u32 val) { AHXDCD_SetupFtbl(val); }
 
 void AHXSJD_SetupWtbl(void) { AHXDCD_SetupWtbl(); }
 

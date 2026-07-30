@@ -36,4 +36,11 @@ void MPV_SetMbCb(void* self, void* a, void* b, void* c) {
     MPVM2V_SetMbCb(self, a, b, c);
 }
 
-void MPVLIB_CheckHn() {}
+extern u32 lbl_eu_80602FEC;
+
+int MPVLIB_CheckHn(void* handle) {
+    if (handle == NULL) return -1;
+    if (*(int*)((u8*)handle + 0xb08) != 2) return -1;
+    lbl_eu_80602FEC = (u32)handle;
+    return 0;
+}

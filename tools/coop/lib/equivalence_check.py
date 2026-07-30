@@ -1603,9 +1603,11 @@ def _prove_bytes(
             scaled = max(scaled, _TIMEOUT_MS_MAX)
         timeout_ms = max(_TIMEOUT_MS_MIN, min(_TIMEOUT_MS_MAX, scaled))
 
+    _preset = contract if contract != "memory" else None
+    _observe = None if contract != "memory" else ["memory"]
     resolved_contract = make_contract(
-        preset=contract,
-        observe=None,
+        preset=_preset,
+        observe=_observe,
         timeout_ms=timeout_ms,
         live_out=live_out,
         original_live_out=original_live_out,

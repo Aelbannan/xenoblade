@@ -22,7 +22,7 @@ void MWSTM_GetReadFlg(void) {
     ADXSTM_IsOpenedFile();
 }
 
-void MWSTM_Create(void) {}
+void* MWSTM_Create(void* a, void* b) { return ADXSTM_Create(a, 0); }
 
 void MWSTM_Destroy(void) {
     ADXSTM_Destroy();

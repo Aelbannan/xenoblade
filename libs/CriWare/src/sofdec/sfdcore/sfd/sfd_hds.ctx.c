@@ -717,8 +717,8 @@ typedef int BOOL;
 #endif
 /* end "types.h" */
 /* end "harness_catalog.h" */
+void SFHDS_Init(void) { SFH_Init(); }
 
-void SFHDS_Init(void) {}
 
 void SFHDS_InitFhd(void* self) {
     *(u32*)((u8*)self) = 0;

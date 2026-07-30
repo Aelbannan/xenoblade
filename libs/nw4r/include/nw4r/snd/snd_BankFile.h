@@ -90,7 +90,7 @@ struct InstInfo {
 class BankFileReader {
 public:
     static const u32 SIGNATURE = FOURCC('R', 'B', 'N', 'K');
-    static const int VERSION = NW4R_VERSION(1, 1);
+    static const int VERSION = NW4R_VERSION(1, 2);
 
 public:
     explicit BankFileReader(const void* pBankBin);

@@ -64,10 +64,11 @@ private:
 
 private:
     StrmPlayer mStrmPlayer;                    // at 0xD8
-    StrmSoundHandle* mTempSpecialHandle;       // at 0x920
-    SoundInstanceManager<StrmSound>* mManager; // at 0x924
-    char UNK_0x928[0x93C - 0x928];
-    char mFileStreamBuffer[FILE_STREAM_BUFFER_SIZE]; // at 0x93C
+    u8 _padStrmPlayer[0xD6C - sizeof(StrmPlayer) - 0x34];
+    StrmSoundHandle* mTempSpecialHandle;       // at 0xE44
+    SoundInstanceManager<StrmSound>* mManager; // at 0xE48
+    char UNK_0xE4C[0xE60 - 0xE4C];
+    char mFileStreamBuffer[FILE_STREAM_BUFFER_SIZE]; // at 0xE60
 };
 
 } // namespace detail

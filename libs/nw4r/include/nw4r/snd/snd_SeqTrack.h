@@ -155,6 +155,7 @@ private:
     volatile s16 mTrackVariable[VARIABLE_NUM]; // at 0x98
     SeqPlayer* mPlayer;                        // at 0xB8
     Channel* mChannelList;                     // at 0xBC
+    u8 _padC0[0xC8 - 0xC0];                   // at 0xC0
 };
 
 } // namespace detail

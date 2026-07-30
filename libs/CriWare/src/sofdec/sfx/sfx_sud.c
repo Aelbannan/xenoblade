@@ -2,5 +2,5 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+void SFXSUD_Init(void) { SUD_Init(); }
 
-void SFXSUD_Init(void) {}

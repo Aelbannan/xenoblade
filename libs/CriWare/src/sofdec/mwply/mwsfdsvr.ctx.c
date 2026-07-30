@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/mwply/mwsfdsvr
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/mwply/mwsfdsvr.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/mwply/mwsfdsvr.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -736,7 +736,14 @@ void mwply_ExecSvrHndl() {}
 
 void mwsfd_ExecSvrHndl() {}
 
-void MWSFSVR_SetMwsfdSvrFlg(int flag) { *(int*)((char*)MWSFLIB_GetLibWorkPtr() + 0x58) = flag; }
+typedef struct MWSFDServerWork {
+    u8 _00[0x58];
+    int serverFlag;
+} MWSFDServerWork;
+
+void MWSFSVR_SetMwsfdSvrFlg(int flag) {
+    ((MWSFDServerWork*)MWSFLIB_GetLibWorkPtr())->serverFlag = flag;
+}
 
 void MWSFSVR_SetHnMwplySvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x7c) = val; }
 
@@ -750,6 +757,8 @@ void MWSFD_RequestStopRead() {}
 
 void MWSFD_IsFsBdr() {}
 
-void MWSFD_SetProhibitServer() {}
+void MWSFD_SetProhibitServer(int val) {
+    *(int*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f0) = val;
+}
 
 void mwPlyExecRequestServer() {}

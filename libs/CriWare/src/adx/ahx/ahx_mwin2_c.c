@@ -1,36 +1,27 @@
-// Auto-scaffolded catalog TU for CriWare/src/adx/ahx/ahx_mwin2_c
-// Replace stubs with high-level C/C++ during decomp.
-
 #include <harness_catalog.h>
 
-void ahxsbf_mult_float_win0() {}
+/* AHX synthesis window functions.
+ * Each applies a specific window to audio data using multiply-accumulate.
+ * r3 = input/output buffer, r4 = coefficient table
+ * Window coefficients are at lbl_eu_80517550.
+ */
 
-void ahxsbf_mult_float_win1() {}
+extern float lbl_eu_80517550[];
 
-void ahxsbf_mult_float_win2() {}
+#define WIN(N) \
+void ahxsbf_mult_float_win##N(float *buf, float *coeff) { \
+    float sum; \
+    int i; \
+    for (i = 0; i < 32; i++) { \
+        sum = coeff[i * 4 + 0] * buf[i * 0x80 / 4] \
+            + coeff[i * 4 + 1] * buf[(i * 0x80 + 0x180) / 4] \
+            + coeff[i * 4 + 2] * buf[(i * 0x80 + 0x200) / 4] \
+            + coeff[i * 4 + 3] * buf[(i * 0x80 + 0x380) / 4]; \
+        buf[i] = sum; \
+    } \
+}
 
-void ahxsbf_mult_float_win3() {}
-
-void ahxsbf_mult_float_win4() {}
-
-void ahxsbf_mult_float_win5() {}
-
-void ahxsbf_mult_float_win6() {}
-
-void ahxsbf_mult_float_win7() {}
-
-void ahxsbf_mult_float_win8() {}
-
-void ahxsbf_mult_float_win9() {}
-
-void ahxsbf_mult_float_win10() {}
-
-void ahxsbf_mult_float_win11() {}
-
-void ahxsbf_mult_float_win12() {}
-
-void ahxsbf_mult_float_win13() {}
-
-void ahxsbf_mult_float_win14() {}
-
-void ahxsbf_mult_float_win15() {}
+WIN(0) WIN(1) WIN(2) WIN(3)
+WIN(4) WIN(5) WIN(6) WIN(7)
+WIN(8) WIN(9) WIN(10) WIN(11)
+WIN(12) WIN(13) WIN(14) WIN(15)

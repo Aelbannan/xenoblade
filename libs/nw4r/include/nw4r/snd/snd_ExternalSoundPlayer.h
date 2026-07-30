@@ -30,6 +30,10 @@ public:
     void InsertSoundList(BasicSound* pSound);
     void RemoveSoundList(BasicSound* pSound);
 
+    bool AppendSound(BasicSound* pSound);
+    void RemoveSound(BasicSound* pSound);
+    bool detail_CanPlaySound(int count);
+
     template <typename TForEachFunc>
     TForEachFunc ForEachSound(TForEachFunc pFunc, bool reverse) {
         if (reverse) {
@@ -60,7 +64,7 @@ public:
 
 private:
     BasicSoundExtPlayList mSoundList; // at 0x0
-    u16 mPlayableCount;               // at 0xC
+    int mPlayableCount;                // at 0xC
     f32 mVolume;                      // at 0x10
 };
 

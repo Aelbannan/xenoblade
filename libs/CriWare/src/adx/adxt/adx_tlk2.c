@@ -1,10 +1,83 @@
-// Auto-scaffolded catalog TU for CriWare/src/adx/adxt/adx_tlk2
-// Replace stubs with high-level C/C++ during decomp.
-
 #include <harness_catalog.h>
 
-void ADXT_StartAfs() {}
+extern void ADXCRS_Enter(void);
+extern void ADXCRS_Leave(void);
+extern void ADXT_Stop(void *);
+extern int ADXF_GetFnameRangeEx(const char *, int, void *, u32 *, u32 *, u32 *);
+extern void ADXERR_CallErrFunc1_(const char *);
+extern void ADXERR_CallErrFunc2_(const char *, const char *);
+extern void ADXERR_ItoA2(int, int, char *, int);
+extern char *CRICRW_Strcpy(char *, int, const char *);
+extern void ADXT_SetLnkSw(void *, int);
 
-void adxt_StartAfs() {}
+extern char lbl_eu_805161A0[];
 
-void ADXT_StartFnameRange() {}
+void adxt_StartAfs(void *handle, const char *filename, int flags);
+
+void ADXT_StartAfs(void *handle, const char *filename, int flags) {
+    ADXCRS_Enter();
+    adxt_StartAfs(handle, filename, flags);
+    ADXCRS_Leave();
+}
+
+void adxt_StartAfs(void *handle, const char *filename, int flags) {
+    u32 range_start, range_end, range_size;
+
+    if (handle == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805161A0);
+        return;
+    }
+
+    ADXT_Stop(handle);
+
+    if (ADXF_GetFnameRangeEx(filename, flags, *(void **)((u8 *)handle + 0xAC),
+        &range_start, &range_end, &range_size) != 0)
+        return;
+
+    if (*(u32 *)((u8 *)handle + 0x08) == 0) {
+        /* error: stream not found */
+        char tmp[16];
+        ADXERR_ItoA2(filename ? 1 : 0, flags, tmp, 16);
+        ADXERR_CallErrFunc2_(lbl_eu_805161A0 + 0x29, tmp);
+        *(u16 *)((u8 *)handle + 0x60) = (u16)-1;
+        *(u8 *)((u8 *)handle + 0x01) = 0x06;
+        return;
+    }
+
+    /* success: set up stream info */
+    *(u32 *)((u8 *)handle + 0xB0) = *(u32 *)((u8 *)handle + 0xAC);
+    *(u32 *)((u8 *)handle + 0xB4) = range_start;
+    *(u32 *)((u8 *)handle + 0xB8) = range_end;
+    *(u32 *)((u8 *)handle + 0xBC) = range_size;
+    *(u8 *)((u8 *)handle + 0x01) = 1;
+    *(u8 *)((u8 *)handle + 0xA8) = 1;
+    *(u8 *)((u8 *)handle + 0x02) = 1;
+    ADXT_SetLnkSw(handle, 0);
+}
+
+int ADXT_StartFnameRange(void *handle, const char *fname) {
+    ADXCRS_Enter();
+
+    if (handle == NULL || fname == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805161A0 + 0x4D);
+        ADXCRS_Leave();
+        return -1;
+    }
+
+    ADXT_Stop(handle);
+
+    /* copy filename */
+    CRICRW_Strcpy((char *)handle + 0xAC, 0x100, fname);
+
+    *(u32 *)((u8 *)handle + 0xB0) = *(u32 *)((u8 *)handle + 0xAC);
+    *(u32 *)((u8 *)handle + 0xB4) = 0;
+    *(u32 *)((u8 *)handle + 0xB8) = 0;
+    *(u32 *)((u8 *)handle + 0xBC) = 0x000FFFFF;
+    *(u8 *)((u8 *)handle + 0x01) = 1;
+    *(u8 *)((u8 *)handle + 0xA8) = 1;
+    *(u8 *)((u8 *)handle + 0x02) = 0;
+    ADXT_SetLnkSw(handle, 0);
+
+    ADXCRS_Leave();
+    return 0;
+}

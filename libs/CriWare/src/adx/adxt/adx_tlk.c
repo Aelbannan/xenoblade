@@ -97,8 +97,10 @@ void ADXT_EntryFltFunc(void* this_, void* arg1, void* arg2) {
 
 void ADXT_IsHeader() {}
 
-s32 ADXT_IsEndcode(void* self, s32 idx) {
-    if (idx >= 2) return 0;
+s32 ADXT_IsEndcode(void* self, s32 idx, u32* out) {
+    if (idx < 2) return 0;
+    if (*(u16*)self != 0x8001) return 0;
+    *out = idx;
     return 1;
 }
 

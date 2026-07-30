@@ -2,8 +2,8 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+void AXRNA_EntryErrFunc(void* fn) { RNAERR_EntryErrFunc(fn); }
 
-void AXRNA_EntryErrFunc(void) {}
 
 void AXRNA_Init() {}
 

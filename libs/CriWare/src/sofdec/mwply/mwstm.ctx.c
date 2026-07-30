@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/mwply/mwstm
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/mwply/mwstm.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/mwply/mwstm.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -737,7 +737,7 @@ void MWSTM_GetReadFlg(void) {
     ADXSTM_IsOpenedFile();
 }
 
-void MWSTM_Create(void) {}
+void* MWSTM_Create(void* a, void* b) { return ADXSTM_Create(a, 0); }
 
 void MWSTM_Destroy(void) {
     ADXSTM_Destroy();

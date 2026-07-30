@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/ahx/ahx_cmn
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/ahx/ahx_cmn.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/ahx/ahx_cmn.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,7 +718,8 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void AHXDCD_SetupAtbl(u32 val) {}
+extern u32 lbl_eu_805E64C8;
+void AHXDCD_SetupAtbl(u32 val) { lbl_eu_805E64C8 = val; }
 
 extern u32 lbl_eu_805E64C8;
 u32 AHXCMN_SetAlcInfTbl(void* self, u32* out) {

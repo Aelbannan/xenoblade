@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_tim
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tim.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_tim.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -745,7 +745,16 @@ void SFTIM_InitTtu() {}
 
 void SFTIM_UpdateItime() {}
 
-void SFTIM_GetNextItime() {}
+int SFTIM_GetNextItime(void* self, int time) {
+    int a = *(int*)((u8*)self + 0x298);
+    int b = *(int*)((u8*)self + 0x29c);
+    int c = *(int*)((u8*)self + 0x2a0);
+    int sum1 = a + b;
+    int sum2 = a + c;
+    if (time < sum1) return sum1;
+    if (time >= sum2) return 0x7FFFFFFF;
+    return sum2;
+}
 
 void SFTIM_VbIn() {}
 
@@ -755,7 +764,7 @@ void SFTIM_GetAudioStartSample() {}
 
 void SFTIM_GetVideoStartSample() {}
 
-void SFTIM_SetStartTime(void* self, u32 a, u32 b) {}
+void SFTIM_SetStartTime(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x144) = a; *(u32*)((u8*)self + 0x148) = b; }
 
 void SFD_GetTime() {}
 
@@ -829,7 +838,7 @@ void sftim_IsGrExecTime() {}
 
 void SFTIM_IsVideoTerm() {}
 
-void SFTIM_SetSpeed(void* self, u32 a, u32 b) {}
+void SFTIM_SetSpeed(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x1048) = a; *(u32*)((u8*)self + 0x104C) = b; }
 
 void SFTIM_GetSpeed(void* self, u32* out1, u32* out2) {
     *out1 = *(u32*)((u8*)self + 0x1048);

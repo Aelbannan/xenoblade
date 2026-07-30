@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/mwply/mwsfdrna
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/mwply/mwsfdrna.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/mwply/mwsfdrna.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,6 +718,6 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void MWSFRNA_SetOutVol(void) {}
+void MWSFRNA_SetOutVol(void* self, u32 vol) { SFD_SetOutVol(*(void**)((u8*)self + 0x58), vol); }
 
-void MWSFRNA_GetOutVol(void) {}
+void MWSFRNA_GetOutVol(void* self) { SFD_GetOutVol(*(void**)((u8*)self + 0x58)); }

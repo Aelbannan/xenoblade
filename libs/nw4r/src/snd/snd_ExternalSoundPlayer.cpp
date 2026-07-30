@@ -30,6 +30,11 @@ void ExternalSoundPlayer::RemoveSoundList(BasicSound* pSound) {
     pSound->SetExternalSoundPlayer(NULL);
 }
 
+void ExternalSoundPlayer::RemoveSound(BasicSound* pSound) {
+    mSoundList.Erase(pSound);
+    pSound->DetachExternalSoundPlayer(this);
+}
+
 BasicSound* ExternalSoundPlayer::GetLowestPrioritySound() {
     int lowestPrio = BasicSound::PRIORITY_MAX + 1;
     BasicSound* pLowest = NULL;
@@ -48,10 +53,51 @@ BasicSound* ExternalSoundPlayer::GetLowestPrioritySound() {
     return pLowest;
 }
 
+bool ExternalSoundPlayer::AppendSound(BasicSound* pSound) {
+    SoundThread::AutoLock lock;
+
+    int priority = pSound->CalcCurrentPlayerPriority();
+
+    if (mPlayableCount == 0) {
+        return false;
+    }
+
+    while (GetPlayingSoundCount() >= mPlayableCount) {
+        int lowestPrio = BasicSound::PRIORITY_MAX + 1;
+        BasicSound* pLowest = NULL;
+
+        for (BasicSoundExtPlayList::Iterator it = mSoundList.GetBeginIter();
+             it != mSoundList.GetEndIter(); ++it) {
+
+            int currentPrio = it->CalcCurrentPlayerPriority();
+
+            if (lowestPrio > currentPrio) {
+                pLowest = &*it;
+                lowestPrio = currentPrio;
+            }
+        }
+
+        if (pLowest == NULL) {
+            return false;
+        }
+
+        if (priority < pLowest->CalcCurrentPlayerPriority()) {
+            return false;
+        }
+
+        pLowest->Shutdown();
+    }
+
+    mSoundList.PushBack(pSound);
+    pSound->AttachExternalSoundPlayer(this);
+
+    return true;
+}
+
+bool ExternalSoundPlayer::detail_CanPlaySound(int count) {
+    return false;
+}
+
 } // namespace detail
 } // namespace snd
 } // namespace nw4r
-
-void AppendSound__Q44nw4r3snd6detail19ExternalSoundPlayerFPQ44nw4r3snd6detail10BasicSound(){}
-void RemoveSound__Q44nw4r3snd6detail19ExternalSoundPlayerFPQ44nw4r3snd6detail10BasicSound(){}
-void detail_CanPlaySound__Q44nw4r3snd6detail19ExternalSoundPlayerFi(int){}

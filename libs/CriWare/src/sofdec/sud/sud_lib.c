@@ -3,7 +3,17 @@
 
 #include <harness_catalog.h>
 
-void SUD_Init() {}
+extern s32 lbl_eu_8061A4D0;
+extern void* lbl_eu_8061A4D4;
+extern const char lbl_eu_8051D448[];
+
+void SUD_Init(void) {
+    s32 *pc = &lbl_eu_8061A4D0;
+    s32 count = *pc;
+    if (count >= 1) return;
+    lbl_eu_8061A4D4 = (void*)lbl_eu_8051D448;
+    *pc = count + 1;
+}
 
 int strncmp(const char* s1, const char* s2, size_t n);
 extern const char lbl_eu_8051D47C[];

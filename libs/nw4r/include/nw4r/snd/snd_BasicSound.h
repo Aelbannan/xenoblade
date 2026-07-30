@@ -148,6 +148,8 @@ public:
     void SetExternalSoundPlayer(ExternalSoundPlayer* pExtPlayer) {
         mExtSoundPlayer = pExtPlayer;
     }
+    void AttachExternalSoundPlayer(ExternalSoundPlayer* pExtPlayer);
+    void DetachExternalSoundPlayer(ExternalSoundPlayer* pExtPlayer);
 
     AmbientParamUpdateCallback* GetAmbientParamUpdateCallback() {
         return mAmbientParamUpdateCallback;

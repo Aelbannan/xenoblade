@@ -3,4 +3,5 @@
 
 #include <harness_catalog.h>
 
-void gcCiSetRdMode(u32 val) {}
+extern u32 lbl_eu_805E7B28;
+void gcCiSetRdMode(void* a, void* b, void* c, u32 val) { lbl_eu_805E7B28 = val; }

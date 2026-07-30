@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/mpv/mpv_cdec
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_cdec.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -720,7 +720,7 @@ typedef int BOOL;
 
 void MPVCDEC_Init() {}
 
-void fn_803A7770(void) {}
+void fn_803A7770(void) { MPVERR_SetCode(NULL, 0); }
 
 void MPVCDEC_StartFrame() {}
 

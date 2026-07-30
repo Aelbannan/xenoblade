@@ -13,8 +13,8 @@ void ADXT_DetachAhx(void) {
 
 void AHXLINK_DetachAhx() {}
 
-void AHXLINK_SetDecSmpl(void) {}
+void AHXLINK_SetDecSmpl(u32 val) { AHXSJD_SetDecSmpl(val); }
 
-void AHXLINK_TermSupply(void) {}
+void AHXLINK_TermSupply(void) { AHXSJD_TermSupply(); }
 
 void AHXLINK_ExecOneAhx() {}

@@ -192,6 +192,7 @@ def evaluate_unit_match(
     target_id: str | None = None,
     phase_timer: Optional[PhaseTimer] = None,
     declared_return: str | None = None,
+    contract: str = "auto",
 ) -> MatchEvaluation:
     """Score a unit (and optionally SMT-prove one symbol).
 
@@ -212,7 +213,7 @@ def evaluate_unit_match(
         with timer("smt"):
             probe: EquivalenceProbe = prove_unit_symbol(
                 project, unit, fn_match.name, linked=linked, target_id=target_id,
-                declared_return=declared_return,
+                declared_return=declared_return, contract=contract,
             )
         equivalence = probe.status
         detail = probe.detail

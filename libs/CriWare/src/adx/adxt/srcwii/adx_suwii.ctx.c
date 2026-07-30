@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/adxt/srcwii/adx_suwii
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/adxt/srcwii/adx_suwii.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/adxt/srcwii/adx_suwii.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,6 +718,6 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void adxwii_err_dvd(void) {}
+void adxwii_err_dvd(void* a, void* b) { ADXERR_CallErrFunc1_((const char*)b); }
 
 void ADXWII_SetupDvdFs() {}

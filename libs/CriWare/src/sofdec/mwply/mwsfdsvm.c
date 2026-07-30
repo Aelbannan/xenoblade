@@ -16,8 +16,8 @@ void MWSFSVM_EntryMainFunc(int arg1, int arg2, int arg3)
     int result = SVM_SetCbSvrWithString(5, arg1, arg2, arg3);
     lbl_eu_805FF1DC = result;
 }
+void MWSFSVM_TestAndSet(void* p) { SVM_TestAndSet(p); }
 
-void MWSFSVM_TestAndSet(void) {}
 
 void MWSFSVM_Error() {}
 

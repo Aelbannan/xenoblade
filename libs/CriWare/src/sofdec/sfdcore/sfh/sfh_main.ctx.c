@@ -728,26 +728,6 @@ typedef struct SFHContext {
     u8  field_0x0C[0x0C]; /* 0x0C-0x17: remainder */
 } SFHContext;
 
-/* SFH info struct — populated by SFH_IsSfdHeader */
-typedef struct SFHInfo {
-    u32 status;       /* 0x00: -1 = error, 2 = ok */
-    u32 field_0x04;
-    u32 field_0x08;   /* 0x08: buffer size, must be >= 0x800 */
-    u32 tool_ver;     /* 0x0C: tool version = minor + major * 100 */
-    u32 sfh_ver;      /* 0x10: SFH version */
-    u32 module_ver;   /* 0x14: module version */
-} SFHInfo;
-
-/* VER1/VER2 forward declarations used by SFH_IsSfdHeader */
-u32 VER1_IsSfdHeader(SFHInfo* buf, u32* out);
-u32 VER2_IsSfdHeader(SFHInfo* buf, u32* out);
-u32 VER1_AnlyHdrToolVer(SFHInfo* buf, u32* out1, u32* out2);
-u32 VER2_AnlyHdrToolVer(SFHInfo* buf, u32* out1, u32* out2);
-u32 VER1_AnlyHdrSfhVer(SFHInfo* buf, u32* out1, u32* out2);
-u32 VER2_AnlyHdrSfhVer(SFHInfo* buf, u32* out1, u32* out2);
-u32 VER1_AnlyHdrModuleVer(SFHInfo* buf, u32* out1, u32* out2);
-u32 VER2_AnlyHdrModuleVer(SFHInfo* buf, u32* out1, u32* out2);
-
 void SFH_Init(void) {
     lbl_eu_80619BE8++;
 }
@@ -779,62 +759,7 @@ void SFH_Destroy(SFHContext* ctx) {
     memset(ctx, 0, sizeof(SFHContext));
 }
 
-u32 SFH_IsSfdHeader(SFHInfo* info, u32* out_ok) {
-    u32 tool_major;
-    u32 tool_minor;
-    u32 sfh_major;
-    u32 sfh_minor;
-    u32 mod_major;
-    u32 mod_minor;
-    u32 hdr_result;
-
-    tool_major = 0;
-    tool_minor = 0;
-    sfh_major = 0;
-    sfh_minor = 0;
-    mod_major = 0;
-    mod_minor = 0;
-    *out_ok = 0;
-
-    if (info->field_0x08 < 0x800) {
-        info->status = -1;
-        return 0;
-    }
-
-    if (VER1_IsSfdHeader(info, &hdr_result)) {
-        if (!VER1_AnlyHdrToolVer(info, &tool_major, &tool_minor)) {
-            return 0;
-        }
-        if (!VER1_AnlyHdrSfhVer(info, &sfh_major, &sfh_minor)) {
-            return 0;
-        }
-        if (!VER1_AnlyHdrModuleVer(info, &mod_major, &mod_minor)) {
-            mod_major = 0;
-            mod_minor = 0;
-        }
-        info->status = 2;
-    } else if (VER2_IsSfdHeader(info, &hdr_result)) {
-        VER2_AnlyHdrToolVer(info, &tool_major, &tool_minor);
-        if (!VER2_AnlyHdrSfhVer(info, &sfh_major, &sfh_minor)) {
-            return 0;
-        }
-        if (!VER2_AnlyHdrModuleVer(info, &mod_major, &mod_minor)) {
-            return 0;
-        }
-        info->status = 2;
-    }
-
-    if ((s32)info->status != 2) {
-        info->status = (u32)-1;
-        return 0;
-    }
-
-    info->tool_ver = tool_minor + tool_major * 100;
-    info->sfh_ver = sfh_minor + sfh_major * 100;
-    info->module_ver = mod_minor + mod_major * 100;
-    *out_ok = 1;
-    return 1;
-}
+void SFH_IsSfdHeader() {}
 
 u32 VER1_IsExistStmId(void* buf);
 u32 VER2_IsExistStmId(void* buf);
@@ -854,13 +779,12 @@ u32 SFH_IsEffFtrInf(void* buf) {
     return 0;
 }
 
-u32 VER1_AnlyHdrToolVer(SFHInfo* buf, u32* out1, u32* out2);
-u32 VER2_AnlyHdrToolVer(SFHInfo* buf, u32* out1, u32* out2);
-u32 SFH_AnlyHdrToolVer(SFHInfo* buf) {
-    u32 dummy1, dummy2;
+u32 VER1_AnlyHdrToolVer(void* buf);
+u32 VER2_AnlyHdrToolVer(void* buf);
+u32 SFH_AnlyHdrToolVer(void* buf) {
     s32 ver = *(s32*)((u8*)buf + 0x10);
-    if (ver < 0xC8) return VER1_AnlyHdrToolVer(buf, &dummy1, &dummy2);
-    if (ver < 0x12C) return VER2_AnlyHdrToolVer(buf, &dummy1, &dummy2);
+    if (ver < 0xC8) return VER1_AnlyHdrToolVer(buf);
+    if (ver < 0x12C) return VER2_AnlyHdrToolVer(buf);
     return 0;
 }
 

@@ -44,4 +44,9 @@ void ADX_DecodeInfoExLoop() {}
 
 void ADX_DecodeInfoAinf() {}
 
-void ADX_DecodeFooter() {}
+int ADX_DecodeFooter(void* info, int size, u16* out) {
+    if (size < 0x10) return -1;
+    if (*(u16*)info != 0x8001) return -2;
+    *out = (u16)(*(s16*)((u8*)info + 2) + 4);
+    return 0;
+}

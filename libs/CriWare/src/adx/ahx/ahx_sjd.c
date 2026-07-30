@@ -11,7 +11,7 @@ void AHXSJD_Create() {}
 
 void AHXSJD_Destroy() {}
 
-int AHXSJD_GetStat(void* self) { return *(signed char*)self; }
+int AHXSJD_GetStat(void* self) { return *(s8*)((u8*)self + 9); }
 
 typedef struct AHXSJDState {
     s8 status;
@@ -65,4 +65,8 @@ void AHXSJD_SetLnkSw(void* self, int val) {
     } else {
         *(u32*)((u8*)self + 0x38) = 1;
     }
+}
+
+void AHXSJD_TermSupply(void* self) {
+    *(u32*)((u8*)self + 0x0C) = 1;
 }

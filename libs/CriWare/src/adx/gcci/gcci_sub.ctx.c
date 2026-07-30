@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/gcci/gcci_sub
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/gcci/gcci_sub.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/gcci/gcci_sub.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,4 +718,5 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void gcCiSetRdMode(u32 val) {}
+extern u32 lbl_eu_805E7B28;
+void gcCiSetRdMode(void* a, void* b, void* c, u32 val) { lbl_eu_805E7B28 = val; }

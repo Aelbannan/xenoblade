@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfx/sfx_sud
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/sfx/sfx_sud.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/sfx/sfx_sud.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -717,5 +717,5 @@ typedef int BOOL;
 #endif
 /* end "types.h" */
 /* end "harness_catalog.h" */
+void SFXSUD_Init(void) { SUD_Init(); }
 
-void SFXSUD_Init(void) {}

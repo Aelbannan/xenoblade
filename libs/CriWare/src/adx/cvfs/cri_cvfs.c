@@ -35,6 +35,14 @@ void cvFsGetStat() {}
 
 void cvFsGetFileSize() {}
 
-void cvFsEntryErrFunc() {}
+void cvFsEntryErrFunc(void (*fn)(void*), void* arg) {
+    if (fn == NULL) {
+        lbl_eu_805E66E8 = NULL;
+        lbl_eu_805E66EC = NULL;
+    } else {
+        lbl_eu_805E66E8 = fn;
+        lbl_eu_805E66EC = arg;
+    }
+}
 
 void cvFsIsAvailableRetry() {}

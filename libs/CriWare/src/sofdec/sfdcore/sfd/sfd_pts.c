@@ -25,4 +25,10 @@ void SFPTS_ReadPtsQue() {}
 
 void sfpts_SearchPtsQue() {}
 
-void SFPTS_IsPtsQueFull() {}
+int SFPTS_IsPtsQueFull(void* self, int idx) {
+    u8* p = (u8*)self + idx * 0x74;
+    if (*(u32*)(p + 0x13f0) == 0) return 0;
+    s32 a = *(s32*)(p + 0x13f8);
+    s32 b = *(s32*)(p + 0x13f4);
+    return ((s64)a - (s64)b) >> 32;
+}

@@ -5,7 +5,7 @@
 
 void MPVCDEC_Init() {}
 
-void fn_803A7770(void) {}
+void fn_803A7770(void) { MPVERR_SetCode(NULL, 0); }
 
 void MPVCDEC_StartFrame() {}
 

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/wiirna/rna_crs
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/wiirna/rna_crs.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/wiirna/rna_crs.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,6 +718,6 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void GCRNA_LockCs(void) {}
+void GCRNA_LockCs(void* lock) { SJCRS_Lock(lock); }
 
-void GCRNA_UnlockCs(void) {}
+void GCRNA_UnlockCs(void* lock) { SJCRS_Unlock(lock); }

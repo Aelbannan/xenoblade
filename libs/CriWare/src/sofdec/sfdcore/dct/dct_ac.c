@@ -1,8 +1,66 @@
-// Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/dct/dct_ac
-// Replace stubs with high-level C/C++ during decomp.
-
 #include <harness_catalog.h>
+#include <math.h>
 
-void DCT_AcInit() {}
+extern int DCT_GetVerStr(void);
+extern u32 lbl_eu_806046B8[];
+extern double lbl_eu_8051C388[];
 
-void DCT_AcIdctDouble() {}
+/* Precomputed cosine table for DCT */
+/* [0] = scale for i==0, [1] = scale for i>0, [2] = 0.5, [3] = pi/8, [4] = int-to-double bias */
+
+/* Initialize DCT coefficient tables */
+void DCT_AcInit(void) {
+    double *tbl_base = (double *)&lbl_eu_806046B8[2]; /* +0x08 */
+    double *tbl_trans = (double *)&lbl_eu_806046B8[2] + 0x40; /* +0x208 */
+    int i, j;
+
+    /* Store version string */
+    lbl_eu_806046B8[0] = (u32)DCT_GetVerStr();
+
+    for (i = 0; i < 8; i++) {
+        double scale = (i == 0) ? lbl_eu_8051C388[0] : lbl_eu_8051C388[1];
+        double *row = tbl_base + i * 8;
+        double *col = tbl_trans + i;
+
+        for (j = 0; j < 8; j++) {
+            double arg = lbl_eu_8051C388[4] * (double)i;    /* pi/8 * i */
+            double offset = lbl_eu_8051C388[2] + (double)j; /* 0.5 + j */
+            double val = cos(arg * offset);                  /* cos(pi/8 * i * (j+0.5)) */
+            val *= scale;
+
+            row[j] = val;
+            col[j * 8] = val;
+        }
+    }
+}
+
+/* 2D IDCT: transform 8x8 block from freq domain to spatial domain
+ * r3 = input block (freq), r4 = output block (spatial) */
+void DCT_AcIdctDouble(const double *in, double *out) {
+    double tmp[8][8];
+    static const double *coeff = (double *)&lbl_eu_8051C388[6]; /* bias correction */
+    double *tbl = (double *)&lbl_eu_806046B8[2]; /* +0x08 DCT coefficient table */
+    int i, j, k;
+
+    /* Row IDCT: transform each row of input */
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 8; j++) {
+            double sum = lbl_eu_8051C388[6]; /* rounding bias */
+            for (k = 0; k < 8; k++) {
+                sum += tbl[k * 8 + j] * in[i * 8 + k];
+            }
+            tmp[i][j] = sum;
+        }
+    }
+
+    /* Column IDCT: transform each column of tmp to output */
+    for (i = 0; i < 8; i++) {
+        for (j = 0; j < 8; j++) {
+            double sum = lbl_eu_8051C388[6];
+            for (k = 0; k < 8; k++) {
+                sum += tbl[i * 8 + k] * tmp[k][j];
+            }
+            out[i * 8 + j] = sum;
+        }
+    }
+}

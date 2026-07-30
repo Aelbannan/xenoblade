@@ -3,4 +3,4 @@
 
 #include <harness_catalog.h>
 
-void SJERR_CallErr(void) {}
+void SJERR_CallErr(s32 code) { SVM_CallErr1(code); }

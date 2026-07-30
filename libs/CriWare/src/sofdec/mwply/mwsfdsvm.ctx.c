@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/mwply/mwsfdsvm
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/mwply/mwsfdsvm.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/mwply/mwsfdsvm.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -731,8 +731,8 @@ void MWSFSVM_EntryMainFunc(int arg1, int arg2, int arg3)
     int result = SVM_SetCbSvrWithString(5, arg1, arg2, arg3);
     lbl_eu_805FF1DC = result;
 }
+void MWSFSVM_TestAndSet(void* p) { SVM_TestAndSet(p); }
 
-void MWSFSVM_TestAndSet(void) {}
 
 void MWSFSVM_Error() {}
 

@@ -8,7 +8,15 @@ void SFPLY_Init(void) {
     lbl_eu_80619BA0 = 0;
 }
 
-void SFD_VbIn() {}
+extern void SFLIB_LockCs(void *);
+extern void SFLIB_UnlockCs(void *);
+
+void SFD_VbIn(void) {
+    void* cs;
+    SFLIB_LockCs(&cs);
+    SFTIM_VbIn();
+    SFLIB_UnlockCs(&cs);
+}
 
 void SFD_IsHnSvrWait() {}
 
@@ -40,9 +48,21 @@ void sfply_InitHn() {}
 
 void sfply_InitPlyInf() {}
 
-void SFPLY_AddDecPic() {}
+void SFPLY_AddDecPic(void* self, int delta, void* param) {
+    void (*cb)(void*, void*, u32*) = *(void(**)(void*, void*, u32*))((u8*)self + 0xd6c);
+    *(u32*)((u8*)self + 0x960) += delta;
+    if (cb == NULL) return;
+    cb(*(void**)((u8*)self + 0xd70), param, (u32*)&((u8*)self)[0x960]);
+}
 
-void SFPLY_AddSkipPic() {}
+void SFPLY_AddSkipPic(void* self, int delta, void* param) {
+    void (*cb)(void*, void*, u32*) = *(void(**)(void*, void*, u32*))((u8*)self + 0xd74);
+    u32 count = *(u32*)((u8*)self + 0x964) + delta;
+    *(u32*)((u8*)self + 0x964) = count;
+    if (cb != NULL) {
+        cb(*(void**)((u8*)self + 0xd78), param, (u32*)((u8*)self + 0x960));
+    }
+}
 
 void SFD_Destroy() {}
 

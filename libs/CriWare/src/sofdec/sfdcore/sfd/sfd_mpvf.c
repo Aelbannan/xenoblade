@@ -31,7 +31,7 @@ void SFMPVF_GetRead() {}
 
 void SFMPVF_AddRead() {}
 
-void SFMPVF_TermDec(void) {}
+void SFMPVF_TermDec(void* self) { *(u32*)((u8*)self + 0x27F0) = 1; }
 
 u32 SFMPVF_IsTermDec(void* self) { return *(u32*)((u8*)self + 0x27f0); }
 
@@ -61,8 +61,11 @@ void SFMPVF_RefStbyFrm(void* self) {
 
 void SFMPVF_EndRefFrm(void* self) {
     if (self == NULL) return;
+    if (*(u32*)self == 4) {
+        *(u32*)self = 2;
+        return;
+    }
     *(u32*)self = 0;
-    memset((u8*)self + 4, 0, 0x24);
 }
 
 void SFMPVF_HoldFrm() {}

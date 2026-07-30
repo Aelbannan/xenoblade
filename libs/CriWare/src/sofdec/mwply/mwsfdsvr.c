@@ -42,6 +42,8 @@ void MWSFD_RequestStopRead() {}
 
 void MWSFD_IsFsBdr() {}
 
-void MWSFD_SetProhibitServer() {}
+void MWSFD_SetProhibitServer(int val) {
+    *(int*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f0) = val;
+}
 
 void mwPlyExecRequestServer() {}

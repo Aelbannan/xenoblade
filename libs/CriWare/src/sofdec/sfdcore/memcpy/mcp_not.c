@@ -2,5 +2,5 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+void MEM_Copy(void* d, const void* s, u32 n) { memcpy(d, s, n); }
 
-void MEM_Copy(void) {}

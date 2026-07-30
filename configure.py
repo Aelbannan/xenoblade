@@ -1549,6 +1549,7 @@ config.libs = [
             Object(NonMatching, "nw4r/src/g3d/g3d_scnmdl.cpp"),
             Object(NonMatching, "nw4r/src/g3d/g3d_scnmdlexpand.cpp"),
             Object(NonMatching, "nw4r/src/g3d/g3d_calcmaterial.cpp"),
+
             Object(MatchingFor("jp"), "nw4r/src/g3d/g3d_init.cpp"),
             Object(MatchingFor("jp"), "nw4r/src/g3d/g3d_scnproc.cpp"),
             Object(MatchingFor("jp"), "nw4r/src/g3d/g3d_fog.cpp"),

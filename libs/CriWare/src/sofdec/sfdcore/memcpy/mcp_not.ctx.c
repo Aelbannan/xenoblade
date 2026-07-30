@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/memcpy/mcp_not
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/sfdcore/memcpy/mcp_not.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/sfdcore/memcpy/mcp_not.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -717,5 +717,5 @@ typedef int BOOL;
 #endif
 /* end "types.h" */
 /* end "harness_catalog.h" */
+void MEM_Copy(void* d, const void* s, u32 n) { memcpy(d, s, n); }
 
-void MEM_Copy(void) {}

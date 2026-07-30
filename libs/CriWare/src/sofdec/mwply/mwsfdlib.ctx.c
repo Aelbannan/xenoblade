@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/mwply/mwsfdlib
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/mwply/mwsfdlib.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/mwply/mwsfdlib.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,7 +718,10 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void* MWSFLIB_GetLibWorkPtr(void) { return 0; }
+typedef struct MWSFDLibWork MWSFDLibWork;
+extern MWSFDLibWork lbl_eu_805FF3A8;
+
+void* MWSFLIB_GetLibWorkPtr(void) { return &lbl_eu_805FF3A8; }
 
 void mwsflib_LscErrFunc(void) {}
 
@@ -726,20 +729,27 @@ void mwPlyInitSfdFx() {}
 
 void mwsflib_InitLibWork() {}
 
-extern char lbl_eu_805FF3A8[];
+typedef struct MWSFDLibWork {
+    u8 _00[0x38];
+    u32 usePicUsr;
+    u32 pauseBdr;
+    u8 _40[0x28];
+    u32 errCode;
+} MWSFDLibWork;
+
+extern MWSFDLibWork lbl_eu_805FF3A8;
 u32 MWSFD_GetUsePicUsr(void) {
-    return *(u32*)(lbl_eu_805FF3A8 + 0x38);
+    return lbl_eu_805FF3A8.usePicUsr;
 }
 
-extern char lbl_eu_805FF3A8[];
 u32 MWSFD_GetPauseBdr(void) {
-    return *(u32*)(lbl_eu_805FF3A8 + 0x3c);
+    return lbl_eu_805FF3A8.pauseBdr;
 }
 
 u32 MWSFLIB_SetErrCode(u32 code) {
     u32 lz = __cntlzw(code);
     u32 bit = (lz >> 5) & 1;
-    *(u32*)(lbl_eu_805FF3A8 + 0x68) = code;
+    lbl_eu_805FF3A8.errCode = code;
     return code & ~(0 - bit);
 }
 

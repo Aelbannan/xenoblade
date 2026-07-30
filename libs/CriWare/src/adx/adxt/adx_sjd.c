@@ -12,6 +12,7 @@ void ADXSJD_Create() {}
 void ADXSJD_Destroy() {}
 
 typedef struct ADXSJDState {
+    u8 pad;
     s8 status;
 } ADXSJDState;
 
@@ -31,9 +32,24 @@ void ADXSJD_SetMaxDecSmpl(void* self, u32 val) {
     ADXB_SetAhxDecSmpl(*(void**)((u8*)self + 0x04), val);
 }
 
-void ADXSJD_TermSupply(void) {}
+void ADXSJD_TermSupply(void* self) { ADXB_AhxTermSupply(*(void**)((u8*)self + 4)); }
 
-void ADXSJD_Start() {}
+void ADXSJD_Start(void *self) {
+    u32 *p = (u32 *)self;
+    u8 *pb = (u8 *)self;
+    p[0xA0/4] = 0;
+    p[0x2C/4] = 0;
+    p[0x30/4] = 0;
+    p[0x34/4] = 0;
+    p[0x38/4] = 0x7FFFFFFF;
+    p[0x3C/4] = (u32)-1;
+    p[0x40/4] = 0;
+    p[0x44/4] = 0;
+    pb[0x03] = 0;
+    p[0xA8/4] = 0;
+    p[0xAC/4] = 0;
+    pb[0x01] = 1;
+}
 
 void ADXSJD_Stop() {}
 

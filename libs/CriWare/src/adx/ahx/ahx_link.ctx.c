@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/ahx/ahx_link
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/ahx/ahx_link.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/ahx/ahx_link.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -728,8 +728,8 @@ void ADXT_DetachAhx(void) {
 
 void AHXLINK_DetachAhx() {}
 
-void AHXLINK_SetDecSmpl(void) {}
+void AHXLINK_SetDecSmpl(u32 val) { AHXSJD_SetDecSmpl(val); }
 
-void AHXLINK_TermSupply(void) {}
+void AHXLINK_TermSupply(void) { AHXSJD_TermSupply(); }
 
 void AHXLINK_ExecOneAhx() {}

@@ -19,15 +19,36 @@ void SFBUF_SetSupplySj() {}
 
 void fn_803C1CAC() {}
 
-void SFBUF_SetUoch() {}
+void SFBUF_SetUoch(void* self, int idx, int sub_idx, u32* src) {
+    u32 s1 = src[1];
+    u32 s0 = src[0];
+    u8* dst = (u8*)self + idx * 0x74 + (sub_idx << 4) + 0x13c8;
+    *(u32*)(dst + 0) = s0;
+    *(u32*)(dst + 4) = s1;
+    u32 s3 = src[3];
+    u32 s2 = src[2];
+    *(u32*)(dst + 8) = s2;
+    *(u32*)(dst + 12) = s3;
+}
 
-void SFBUF_GetUoch() {}
+void SFBUF_GetUoch(void* self, int idx, int sub_idx, u32* dst) {
+    u32* src = (u32*)((u8*)self + idx * 0x74 + (sub_idx << 4) + 0x13c8);
+    u32 s0 = src[0];
+    u32 s1 = src[1];
+    dst[1] = s1;
+    dst[0] = s0;
+    u32 s2 = src[2];
+    u32 s3 = src[3];
+    dst[3] = s3;
+    dst[2] = s2;
+}
 
-void SFBUF_RingGetWrite(void) {}
+void sfbuf_RingGetSub(void* self, void* a, void* b, int mode);
+void SFBUF_RingGetWrite(void* self, void* a, void* b) { sfbuf_RingGetSub(self, a, b, 0); }
 
-void SFBUF_RingGetRead(void) {}
+void SFBUF_RingGetRead(void* self, void* a, void* b) { sfbuf_RingGetSub(self, a, b, 1); }
 
-void sfbuf_RingGetSub() {}
+void sfbuf_RingGetSub(void* self, void* a, void* b, int mode) { (void)self; (void)a; (void)b; (void)mode; }
 
 void sfbuf_RingAddSub(void* a, void* b, void* c, int mode);
 void SFBUF_RingAddWrite(void* a, void* b, void* c) {
@@ -72,7 +93,15 @@ void SFBUF_AddRtotSj(void* self, int idx, int addend) {
     *ptr += addend;
 }
 
-void SFBUF_VfrmGetRead() {}
+extern int SFTRN_CallTrtTrif(void *, int, int, int *, int);
+
+int SFBUF_VfrmGetRead(void* self, int idx, int* a, int b) {
+    u8* p = (u8*)self + idx * 0x74;
+    if (*(u32*)(p + 0x13bc) == 0) {
+        return SFTRN_CallTrtTrif(self, *(int*)(p + 0x1404), 0xb, a, b);
+    }
+    return 0;
+}
 
 void SFBUF_VfrmAddRead() {}
 
@@ -105,6 +134,6 @@ int SFBUF_UpdateFlowCnt(int count, int new_val, int old_val) {
     u32 diff = new_val ^ old_val;
     u32 leading = __cntlzw(diff);
     u32 shifted = new_val << leading;
-    int bit = shifted >> 31;
-    return count + bit;
+    u32 bit = shifted >> 31;
+    return count + (int)bit;
 }

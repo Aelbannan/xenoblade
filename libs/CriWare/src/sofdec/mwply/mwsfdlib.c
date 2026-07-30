@@ -3,7 +3,10 @@
 
 #include <harness_catalog.h>
 
-void* MWSFLIB_GetLibWorkPtr(void) { return 0; }
+typedef struct MWSFDLibWork MWSFDLibWork;
+extern MWSFDLibWork lbl_eu_805FF3A8;
+
+void* MWSFLIB_GetLibWorkPtr(void) { return &lbl_eu_805FF3A8; }
 
 void mwsflib_LscErrFunc(void) {}
 

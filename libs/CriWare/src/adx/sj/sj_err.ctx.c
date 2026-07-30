@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/sj/sj_err
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/sj/sj_err.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/sj/sj_err.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,4 +718,4 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void SJERR_CallErr(void) {}
+void SJERR_CallErr(s32 code) { SVM_CallErr1(code); }

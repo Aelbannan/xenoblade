@@ -3,6 +3,6 @@
 
 #include <harness_catalog.h>
 
-void GCRNA_LockCs(void) {}
+void GCRNA_LockCs(void* lock) { SJCRS_Lock(lock); }
 
-void GCRNA_UnlockCs(void) {}
+void GCRNA_UnlockCs(void* lock) { SJCRS_Unlock(lock); }

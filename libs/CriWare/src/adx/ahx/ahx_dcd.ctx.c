@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/ahx/ahx_dcd
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/ahx/ahx_dcd.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/ahx/ahx_dcd.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -720,11 +720,12 @@ typedef int BOOL;
 
 void SKG_GenerateKey() {}
 
-void AHXSJD_SetupAtbl(void) {}
+void AHXSJD_SetupAtbl(u32 val) { AHXDCD_SetupAtbl(val); }
 
-void AHXSJD_SetupMtbl(u32 val) {}
+extern u32 lbl_eu_805E64D4;
+void AHXSJD_SetupMtbl(u32 val) { lbl_eu_805E64D4 = val; }
 
-void AHXSJD_SetupFtbl(void) {}
+void AHXSJD_SetupFtbl(u32 val) { AHXDCD_SetupFtbl(val); }
 
 void AHXSJD_SetupWtbl(void) { AHXDCD_SetupWtbl(); }
 
@@ -758,19 +759,31 @@ void AHXDCD_DecodeHeader() {}
 
 void AHXDCD_DecodeFrmHdr() {}
 
+typedef struct AHXDCDState {
+    u8 _00[0x349];
+    s8 outputReady;
+    u8 _34A[2];
+    u32 eofState;
+    u8 _350[0x44];
+    u32 totalNumSmpl;
+} AHXDCDState;
+
 u32 AHXDCD_IsEof(void* self) {
-    return (*(u32*)((u8*)self + 0x34c) == 0xc) ? 1 : 0;
+    return (((AHXDCDState*)self)->eofState == 0xc) ? 1 : 0;
 }
 
 void AHXDCD_DecodeData() {}
 
-s16 AHXDCD_GetOutBps(void* self) { return (signed char)((u8*)self)[0x34b]; }
+s16 AHXDCD_GetOutBps(void* self) {
+    return ((AHXDCDState*)self)->outputReady;
+}
 
 int AHXDCD_GetOutSmpl(void) { return 0x60; }
 
 u32 AHXDCD_GetTotalNumSmpl(void* self) {
-    if ((signed char)((u8*)self)[0x349] == 0) return 0;
-    return *(u32*)((u8*)self + 0x394);
+    AHXDCDState* state = (AHXDCDState*)self;
+    if (state->outputReady == 0) return 0;
+    return state->totalNumSmpl;
 }
 
 void* memcpy(void* dest, const void* src, size_t n);

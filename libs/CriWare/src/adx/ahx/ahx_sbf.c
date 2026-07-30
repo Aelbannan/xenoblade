@@ -3,9 +3,11 @@
 
 #include <harness_catalog.h>
 
-void AHXDCD_SetupFtbl(u32 val) {}
+extern u32 lbl_eu_805E64B8;
+void AHXDCD_SetupFtbl(u32 val) { lbl_eu_805E64B8 = val; }
 
-void AHXDCD_SetupWtbl(u32 val) {}
+extern u32 lbl_eu_805E64BC;
+void AHXDCD_SetupWtbl(u32 val) { lbl_eu_805E64BC = val; }
 
 void AHXSBF_Init() {}
 

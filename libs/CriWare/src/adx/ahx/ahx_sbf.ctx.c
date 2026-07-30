@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/ahx/ahx_sbf
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/ahx/ahx_sbf.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/ahx/ahx_sbf.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,9 +718,11 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void AHXDCD_SetupFtbl(u32 val) {}
+extern u32 lbl_eu_805E64B8;
+void AHXDCD_SetupFtbl(u32 val) { lbl_eu_805E64B8 = val; }
 
-void AHXDCD_SetupWtbl(u32 val) {}
+extern u32 lbl_eu_805E64BC;
+void AHXDCD_SetupWtbl(u32 val) { lbl_eu_805E64BC = val; }
 
 void AHXSBF_Init() {}
 

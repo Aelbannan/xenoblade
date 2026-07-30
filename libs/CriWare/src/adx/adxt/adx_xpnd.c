@@ -45,11 +45,7 @@ void ADXPD_GetExtPrm(void* self, s16* out1, s16* out2, s16* out3) {
 void ADXPD_Destroy(void* self) {
     if (self == NULL) return;
     *(u32*)self = 0;
-    {
-        void* s = self;
-        u32 z = (u32)(unsigned long)s & 0;
-        memset(s, z, 0x3c);
-    }
+    memset(self, 0, 0x3c);
 }
 
 u32 ADXPD_GetStat(void* self) { return *(u32*)((u8*)self + 0xc); }
@@ -64,9 +60,25 @@ int ADXPD_EntryMono(void* r3, int r4, int r5, int r6, int r7) {
     return 1;
 }
 
-void ADXPD_EntrySte() {}
+int ADXPD_EntrySte(void* r3, int r4, int r5, int r6, int r7) {
+    if (*(int*)((char*)r3 + 0xc) != 0) return 0;
+    *(int*)((char*)r3 + 0x14) = 2;
+    *(int*)((char*)r3 + 0x18) = r4;
+    *(int*)((char*)r3 + 0x1c) = r5;
+    *(int*)((char*)r3 + 0x20) = r6;
+    *(int*)((char*)r3 + 0x24) = r7;
+    return 1;
+}
 
-void ADXPD_EntryPl2() {}
+int ADXPD_EntryPl2(void* r3, int r4, int r5, int r6, int r7) {
+    if (*(int*)((char*)r3 + 0xc) != 0) return 0;
+    *(int*)((char*)r3 + 0x14) = 1;
+    *(int*)((char*)r3 + 0x18) = r4;
+    *(int*)((char*)r3 + 0x1c) = r5;
+    *(int*)((char*)r3 + 0x20) = r6;
+    *(int*)((char*)r3 + 0x24) = r7;
+    return 1;
+}
 
 void ADXPD_Start(void* self) {
     if (*(u32*)((u8*)self + 0xc) != 0) return;

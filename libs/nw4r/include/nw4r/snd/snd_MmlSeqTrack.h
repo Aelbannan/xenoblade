@@ -33,8 +33,8 @@ public:
     }
 
 private:
-    const MmlParser* mParser;       // at 0xC0
-    MmlParserParam mMmlParserParam; // at 0xC4
+    const MmlParser* mParser;       // at 0xC8
+    MmlParserParam mMmlParserParam; // at 0xCC
 };
 
 } // namespace detail

@@ -3,6 +3,6 @@
 
 #include <harness_catalog.h>
 
-void adxwii_err_dvd(void) {}
+void adxwii_err_dvd(void* a, void* b) { ADXERR_CallErrFunc1_((const char*)b); }
 
 void ADXWII_SetupDvdFs() {}

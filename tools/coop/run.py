@@ -345,6 +345,7 @@ def cmd_cycle(
     runtime_test: str,
     linked: bool = False,
     add_to_kb: str = "",
+    contract: str = "auto",
 ) -> int:
     targets = load_targets(config)
     target = get_target(targets, target_id)
@@ -384,7 +385,7 @@ def cmd_cycle(
         pass
     evaluation = evaluate_unit_match(
         project, unit, target.symbol, linked=linked, target_id=target.id,
-        declared_return=_declared_return,
+        declared_return=_declared_return, contract=contract,
     )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
@@ -1713,6 +1714,16 @@ def main() -> int:
             "when the unlinked .o pair has unresolved relocations."
         ),
     )
+    p_cycle.add_argument(
+        "--contract",
+        default="auto",
+        choices=["auto", "ppc-eabi", "ppc-eabi-fp", "strict", "live-out", "memory"],
+        help=(
+            "SMT equivalence contract preset (default: auto). "
+            "Use 'memory' to check only memory writes (void functions with register allocation differences). "
+            "Use live-out to check only live registers, or ppc-eabi for full ABI."
+        ),
+    )
 
     def add_harness_args(command_parser: argparse.ArgumentParser) -> None:
         command_parser.add_argument("--tier")
@@ -1978,6 +1989,7 @@ def main() -> int:
             runtime_test=args.runtime_test,
             linked=args.linked,
             add_to_kb=args.add_to_kb,
+            contract=args.contract,
         )
     if args.command == "queue":
         return cmd_queue(

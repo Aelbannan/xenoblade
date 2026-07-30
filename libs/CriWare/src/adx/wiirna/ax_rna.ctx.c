@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/wiirna/ax_rna
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/wiirna/ax_rna.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/wiirna/ax_rna.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -717,8 +717,8 @@ typedef int BOOL;
 #endif
 /* end "types.h" */
 /* end "harness_catalog.h" */
+void AXRNA_EntryErrFunc(void* fn) { RNAERR_EntryErrFunc(fn); }
 
-void AXRNA_EntryErrFunc(void) {}
 
 void AXRNA_Init() {}
 

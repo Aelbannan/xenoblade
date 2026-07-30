@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/adxt/adx_amp
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/adxt/adx_amp.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/adxt/adx_amp.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -727,6 +727,6 @@ void ADXAMP_Destroy(void* p) {
 
 void ADXAMP_Start() {}
 
-void ADXAMP_Stop(void) {}
+void ADXAMP_Stop(void *self) { *(u8*)((u8*)self + 1) = 0; }
 
 void ADXAMP_SetSfreq(void* self, u32 val) { *(u32*)((u8*)self + 0x20) = val; }

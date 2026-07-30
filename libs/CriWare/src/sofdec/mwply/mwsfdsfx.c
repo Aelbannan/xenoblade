@@ -3,7 +3,14 @@
 
 #include <harness_catalog.h>
 
-void MWSFSFX_Init() {}
+extern void SFX_Init(void);
+extern void SFX_SetErrFn(u32 a, u32 b);
+void mwsfsfx_SfxErrCbFn(void);
+
+void MWSFSFX_Init(void) {
+    SFX_Init();
+    SFX_SetErrFn((u32)mwsfsfx_SfxErrCbFn, 0);
+}
 
 void mwsfsfx_SfxErrCbFn(void) {}
 
@@ -17,9 +24,19 @@ void MWSFD_CnvFrmInfToSfx() {}
 
 void MWSFD_IsColAdjFrame() {}
 
-void MWSFD_IsColAdjFile() {}
+int MWSFD_IsColAdjFile(void* self, int idx) {
+    int index = idx % 8;
+    u32* entry = (u32*)((u8*)self + index * 0x38);
+    if ((s32)entry[0xE0 / 4] != 1) return 0;
+    return entry[0xFC / 4];
+}
 
-void MWSFD_GetFxType() {}
+int MWSFD_GetFxType(void* self, int idx) {
+    int index = idx % 8;
+    u32* entry = (u32*)((u8*)self + index * 0x38);
+    if ((s32)entry[0xE0 / 4] != 1) return 0x11;
+    return entry[0x104 / 4];
+}
 
 void mwsfsfx_SetYcc420plnInfToSfx() {}
 

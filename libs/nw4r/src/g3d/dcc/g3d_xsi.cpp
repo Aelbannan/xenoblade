@@ -272,7 +272,7 @@ static const TexSrtMtxFunc ProductTexSrtMtxTable[] = {
 } // namespace
 
 bool CalcTexMtx_Xsi(math::MTX34* pMtx, bool bSet, const TexSrt& rSrt, TexSrt::Flag flag) {
-    u32 idx = (flag >> 28) & 0x7;
+    u32 idx = DECOMP_PPC_RLWINM(flag, 31, 29, 31);
 
     if (idx == 0x7) {
         return false;

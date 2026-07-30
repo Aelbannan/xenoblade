@@ -16,21 +16,24 @@ void SVM_Lock(void) {
 
 extern u32 lbl_eu_805F26F0[];
 extern const char lbl_eu_80518F50[];
-void SVM_CallErr();
+void SVM_CallErr(const char*, u32, ...);
 void SVM_Unlock(void) {
     u32* b = lbl_eu_805F26F0;
-    void (*fn)(u32) = (void (*)(u32))b[0x18/4];
-    if (!fn) return;
-    b[0x04/4]--;
-    if (b[0x04/4] == 0) {
-        if (b[0x08/4] != 1)
-            SVM_CallErr(lbl_eu_80518F50, b[0x08/4], 1);
-        b[0x08/4] = 0;
+    u32 fn = b[6];
+    if (fn == 0) return;
+    {
+        u32 cnt = b[1];
+        b[1] = cnt - 1;
+        if (b[1] == 0) {
+            if (b[2] != 1)
+                SVM_CallErr(lbl_eu_80518F50, b[2], 1);
+            b[2] = 0;
+        }
     }
-    fn(b[0x1c/4]);
+    ((void (*)(u32))b[6])(b[7]);
 }
 
-void SVM_CallErr() {}
+void SVM_CallErr(const char*, u32, ...) {}
 
 void SVM_CallErr1() {}
 
@@ -48,8 +51,15 @@ void SVM_SetCbBdr() {}
 
 extern u32 lbl_eu_805F2A58[];
 extern void (*lbl_eu_805F2A68)(s32);
+extern u32 lbl_eu_805F2A58[];
+
 void SVM_GotoSvrBorder(s32 idx) {
-    lbl_eu_805F2A68(idx);
+    void (*fn)(void*);
+    u32 *entry = &lbl_eu_805F2A58[idx * 2];
+    fn = (void (*)(void*))entry[0];
+    if (fn != NULL) {
+        fn((void*)entry[1]);
+    }
 }
 
 void SVM_SetCbErr() {}

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/adxt/adx_bsc
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/adxt/adx_bsc.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/adxt/adx_bsc.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -720,14 +720,17 @@ typedef int BOOL;
 
 void SKG_GenerateKey() {}
 
-u32 ADXB_GetDecErrMode(void) { return 0; }
+extern u32 lbl_eu_805E5370;
+
+u32 ADXB_GetDecErrMode(void) { return lbl_eu_805E5370; }
 
 void ADXB_Init() {}
 
-void adxb_DefGetWr(void* self, u32* out) {
-    u32 val = *(u32*)((u8*)self + 0x8c);
-    *out = val;
-    *(u32*)((u8*)self + 0x90) = val;
+u32 adxb_DefGetWr(void* self, u32* out1, u32* out2, u32* out3) {
+    *out1 = *(u32*)((u8*)self + 0x8C);
+    *out2 = *(u32*)((u8*)self + 0x40) - *(u32*)((u8*)self + 0x8C);
+    *out3 = *(u32*)((u8*)self + 0x18) - *(u32*)((u8*)self + 0x88);
+    return *(u32*)((u8*)self + 0x3C);
 }
 
 void adxb_DefAddWr(void* self, u32 unused, u32 addend) {
@@ -764,7 +767,14 @@ u32 ADXB_GetSfreq(void* self) { return *(u32*)((u8*)self + 0x14); }
 
 void ADXB_GetNumChan() {}
 
-s16 ADXB_GetFmtBps(void* self) { return (signed char)((u8*)self)[0x0d]; }
+typedef struct ADXBFormatInfo {
+    u8 _00[0x0d];
+    s8 formatBitsPerSample;
+} ADXBFormatInfo;
+
+s16 ADXB_GetFmtBps(void* self) {
+    return ((ADXBFormatInfo*)self)->formatBitsPerSample;
+}
 
 void ADXB_GetOutBps() {}
 

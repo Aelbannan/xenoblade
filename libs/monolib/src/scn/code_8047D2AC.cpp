@@ -232,15 +232,18 @@ extern "C" s32 func_8047DC8C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
 extern "C" s32 func_8047DD4C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
                                                      void* arg2, u32 arg3) {
     u32 local;
-    if (!func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) return 0;
-    if (func_804819AC__17UnkClass_8047E110Fv(lbl_eu_80658560, local)) return 0;
-    if (arg3) {
-        func_8048169C__17UnkClass_8047E110Fv(lbl_eu_80658560, arg1, arg2);
-        return func_804819C4__17UnkClass_8047E110Fv(lbl_eu_80658560, local);
-    } else {
-        func_8048163C__17UnkClass_8047E110Fv(lbl_eu_80658560, arg2);
-        return func_80481790__17UnkClass_8047E110Fv(lbl_eu_80658560, local);
+    if (func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {
+        void* manager = lbl_eu_80658560;
+        if (!func_804819AC__17UnkClass_8047E110Fv(manager, local)) {
+            if (arg3) {
+                func_8048169C__17UnkClass_8047E110Fv(manager, arg1, arg2);
+                return func_804819C4__17UnkClass_8047E110Fv(manager, local);
+            }
+            func_8048163C__17UnkClass_8047E110Fv(manager, arg2);
+            return func_80481790__17UnkClass_8047E110Fv(manager, local);
+        }
     }
+    return 0;
 }
 
 // func_8047D2AC -- full walker tick (0x9E0) -- stub for now

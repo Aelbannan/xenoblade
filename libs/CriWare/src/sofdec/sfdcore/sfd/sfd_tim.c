@@ -814,9 +814,9 @@ void sftim_Tc2TimeN(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s32 totalFrame = frame + frame2;
     s32 totalSec = hour * 3600 + min * 60 + sec;
     s32 tcSec = tc / rate;
-    s32 halfUnit = (unit + (s32)((u32)unit >> 31)) >> 1;
+    
 
-    *out1 = tcSec * totalSec + totalFrame * unit + field * halfUnit;
+    *out1 = tcSec * totalSec + totalFrame * unit + field * (unit / 2);
     *out2 = tcSec;
 }
 
@@ -832,9 +832,9 @@ void sftim_Tc2Time23N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s16 field = *(s16*)(td + 0x1E);
     s32 totalFrame = frame + frame2;
     s32 totalSec = hour * 3600 + min * 60 + sec;
-    s32 halfUnit = (unit + (s32)((u32)unit >> 31)) >> 1;
+    
 
-    *out1 = totalSec * unit60 + totalFrame * unit + field * halfUnit;
+    *out1 = totalSec * unit60 + totalFrame * unit + field * (unit / 2);
     *out2 = tc / rate;
 }
 
@@ -850,9 +850,9 @@ void sftim_Tc2Time29N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s16 field = *(s16*)(td + 0x1E);
     s32 totalFrame = frame + frame2;
     s32 totalSec = hour * 3600 + min * 60 + sec;
-    s32 halfUnit = (unit + (s32)((u32)unit >> 31)) >> 1;
+    
 
-    *out1 = totalSec * unit60 + totalFrame * unit + field * halfUnit;
+    *out1 = totalSec * unit60 + totalFrame * unit + field * (unit / 2);
     *out2 = tc / rate;
 }
 
@@ -868,9 +868,9 @@ void sftim_Tc2Time59N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s16 field = *(s16*)(td + 0x1E);
     s32 totalFrame = frame + frame2;
     s32 totalSec = hour * 3600 + min * 60 + sec;
-    s32 halfUnit = (unit + (s32)((u32)unit >> 31)) >> 1;
+    
 
-    *out1 = totalSec * unit60 + totalFrame * unit + field * halfUnit;
+    *out1 = totalSec * unit60 + totalFrame * unit + field * (unit / 2);
     *out2 = tc / rate;
 }
 
@@ -886,9 +886,9 @@ void sftim_Tc2Time23D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s32 totalFrame = frame + frame2;
     s32 dropFrames = (min / 10) * 2;
     s32 totalFrames = hour * 86292 + dropFrames + min * 1438 + sec * 24 + totalFrame;
-    s32 halfUnit = (unit + (s32)((u32)unit >> 31)) >> 1;
+    
 
-    *out1 = totalFrames * unit + field * halfUnit;
+    *out1 = totalFrames * unit + field * (unit / 2);
     *out2 = tc / rate;
 }
 
@@ -904,9 +904,9 @@ void sftim_Tc2Time29D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s32 totalFrame = frame + frame2;
     s32 dropFrames = (min / 10) * 2;
     s32 totalFrames = hour * 107892 + dropFrames + min * 1798 + sec * 30 + totalFrame;
-    s32 halfUnit = (unit + (s32)((u32)unit >> 31)) >> 1;
+    
 
-    *out1 = totalFrames * unit + field * halfUnit;
+    *out1 = totalFrames * unit + field * (unit / 2);
     *out2 = tc / rate;
 }
 
@@ -922,9 +922,9 @@ void sftim_Tc2Time59D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s32 totalFrame = frame + frame2;
     s32 dropFrames = (min / 10) * 2;
     s32 totalFrames = hour * 215892 + dropFrames + min * 3598 + sec * 60 + totalFrame;
-    s32 halfUnit = (unit + (s32)((u32)unit >> 31)) >> 1;
+    
 
-    *out1 = totalFrames * unit + field * halfUnit;
+    *out1 = totalFrames * unit + field * (unit / 2);
     *out2 = tc / rate;
 }
 
@@ -1180,37 +1180,36 @@ s32 SFTIM_ExecCyclicFrameOutput(void* self) {
 }
 
 void SFD_CalcCycleFromFps(s32 fps, s32* out1, s32* out2) {
-    f32* fc = (f32*)lbl_eu_8051CBF8;
     f32 vsyncFreq = (f32)*(s32*)(lbl_eu_80606E38 + 0x1A4);
     f32 ratio = vsyncFreq / (f32)fps;
 
-    if (ratio < fc[28]) {
-        *out1 = (s32)(fc[29] + fc[30] / ratio);
+    if (ratio < 0.4f) {
+        *out1 = (s32)(0.5f + 1.0f / ratio);
         *out2 = 1;
-    } else if (ratio < fc[31]) {
+    } else if (ratio < 0.75f) {
         *out1 = 2;
         *out2 = 1;
-    } else if (ratio < fc[32]) {
+    } else if (ratio < 1.1f) {
         *out1 = 1;
         *out2 = 1;
-    } else if (ratio < fc[33]) {
+    } else if (ratio < 1.5f) {
         *out1 = 5;
         *out2 = 6;
-    } else if (ratio < fc[34]) {
+    } else if (ratio < 2.2f) {
         *out1 = 1;
         *out2 = 2;
-    } else if (ratio < fc[35]) {
+    } else if (ratio < 2.45f) {
         *out1 = 5;
         *out2 = 12;
-    } else if (ratio < fc[36]) {
+    } else if (ratio < 2.75f) {
         *out1 = 2;
         *out2 = 5;
-    } else if (ratio < fc[37]) {
+    } else if (ratio < 3.5f) {
         *out1 = 1;
         *out2 = 3;
     } else {
         *out1 = 1;
-        *out2 = (s32)(fc[29] + ratio);
+        *out2 = (s32)(0.5f + ratio);
     }
 }
 

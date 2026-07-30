@@ -186,14 +186,13 @@ void l2c_process_held_packets(BOOLEAN timed_out);
 *******************************************************************************/
 void l2c_init(void)
 {
-    UINT8 *p = (UINT8 *)&l2cb.ccb_pool;
-    int    i;
+    int i;
 
     memset(&l2cb, 0, sizeof(tL2C_CB));
 
-    for (i = 0; i < MAX_L2C_CHANNELS - 1; i++, p += sizeof(tL2C_CCB))
+    for (i = 0; i < MAX_L2C_CHANNELS - 1; i++)
     {
-        ((tL2C_CCB *)p)->p_next_ccb = (tL2C_CCB *)(p + sizeof(tL2C_CCB));
+        l2cb.ccb_pool[i].p_next_ccb = &l2cb.ccb_pool[i + 1];
     }
 
     l2cb.p_free_ccb_first  = &l2cb.ccb_pool[0];

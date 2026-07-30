@@ -164,7 +164,7 @@ typedef struct LodRangeObj {
     u8 gap[0x1E];
     u16 start;   // 0x1E
     u16 end;     // 0x20
-    u8 gap22[3];
+    u8 gap22[2];
     u8 mode;     // 0x24
 } LodRangeObj;
 

@@ -164,11 +164,11 @@ struct CfMapMineManager {
 // Small helpers (high-level; inlined at -O4)
 // ---------------------------------------------------------------------------
 
-static inline MineNode* ListHead(CfMapMineManager* m) { return m->mStartPtr; }
+static inline MineNode* ListHead(CfMapMineManager* m) { return m->mPoints.mStartPtr; }
 
 // _reslist_base::clearList() - mark every slot free, reset the sentinel.
-static inline void ListClear(CfMapMineManager* m) {
-    MineNode* start = m->mStartPtr;
+static inline void ListClearBase(MineListBase* L) {
+    MineNode* start = L->mStartPtr;
     MineNode* n = start->mNext;
     while (n != start) {
         MineNode* cur = n;
@@ -179,11 +179,13 @@ static inline void ListClear(CfMapMineManager* m) {
     start->mPrev = start;
 }
 
+static inline void ListClear(CfMapMineManager* m) { ListClearBase(&m->mPoints); }
+
 // First free slot index (mNext == NULL); appends at mCapacity when full.
 static inline u32 ListFindFree(CfMapMineManager* m) {
     u32 i = 0;
-    while (i < m->mCapacity) {
-        if (((MineNode*)((u8*)m->mList + i * 0x2C))->mNext == 0) break;
+    while (i < m->mPoints.mCapacity) {
+        if (((MineNode*)((u8*)m->mPoints.mList + i * 0x2C))->mNext == 0) break;
         i++;
     }
     return i;

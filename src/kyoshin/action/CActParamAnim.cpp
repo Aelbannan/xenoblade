@@ -79,7 +79,11 @@ void CActParamAnim::setOwner(int val) { *(int*)((char*)this + 8) = val; }
 // it effectively a whole-function asm body which is not permitted.
 void func_8004B738(){}
 
-void func_8004B75C(){}
+extern "C" void func_8004B75C(float* destination, const float* source, float scale) {
+    destination[0] = source[0] * scale;
+    destination[1] = source[1] * scale;
+    destination[2] = source[2] * scale;
+}
 
 void vec3_copy(float *dst, const float *src) {
     dst[0] = src[0];
@@ -105,6 +109,10 @@ void CActParamAnim::setVec3Y(float val) {
 
 int CActParamAnim::checkAnimFlag() {
     return (*(unsigned int *)((char *)this + 12) >> 1) & 1;
+}
+
+extern "C" u32 func_8004B848(const CActParamAnim* self) {
+    return (*(const u32*)((const u8*)self + 0xC) >> 1) & 1;
 }
 
 float CActParamAnim::func_8004B854() {

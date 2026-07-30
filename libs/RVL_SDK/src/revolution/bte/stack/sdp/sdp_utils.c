@@ -736,11 +736,11 @@ BOOLEAN sdpu_compare_uuid_arrays (UINT8 *p_uuid1, UINT32 len1, UINT8 *p_uuid2, U
 *******************************************************************************/
 BOOLEAN sdpu_compare_uuid_with_attr (tBT_UUID *puuid1, tSDP_DISC_ATTR *p_attr)
 {
-    UINT16 uuid_len;
+    UINT32 uuid_len;
 
     uuid_len = puuid1->len;
 
-    if (uuid_len != SDP_DISC_ATTR_TYPE (p_attr->attr_len_type))
+    if (uuid_len != SDP_DISC_ATTR_LEN (p_attr->attr_len_type))
         return (FALSE);
 
     if (uuid_len == LEN_UUID_16)

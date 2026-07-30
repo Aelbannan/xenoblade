@@ -803,7 +803,8 @@ extern "C" CETrailLight* func_804D807C(CETrailLight* self, CResHolder* parent) {
 // ---------------------------------------------------------------------------
 extern "C" CETrailLight* __dt__804D80F0(CETrailLight* self, int deleting) {
     if (self != nullptr) {
-        if (self->m_light != nullptr) {
+        CLight* light = self->m_light;
+        if (light != nullptr) {
             func_80494188(self->m_parent->m_res);
             self->m_light = nullptr;
         }

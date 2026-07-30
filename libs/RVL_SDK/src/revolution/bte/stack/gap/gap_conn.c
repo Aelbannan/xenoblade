@@ -112,6 +112,34 @@ void gap_congestion_ind(UINT16 lcid, BOOLEAN is_congested);
 
 /*******************************************************************************
 **
+** Function         gap_find_conn_by_cid
+**
+** Description      Find the connection control block holding a CID.
+**                  Small static helper; MWCC inlines it into every
+**                  caller below (retail has no standalone symbol).
+**
+*******************************************************************************/
+static tGAP_CONN_CB *gap_find_conn_by_cid(UINT16 cid)
+{
+    UINT8 xx = 0;
+    tGAP_CONN_CB *p_ccb = &gap_cb.conn.ccb[0];
+
+    while (xx < GAP_MAX_CONNECTIONS)
+    {
+        if ((p_ccb->state != GAP_CONN_STATE_IDLE)
+         && (p_ccb->cid == cid))
+        {
+            return p_ccb;
+        }
+        xx++;
+        p_ccb++;
+    }
+
+    return NULL;
+}
+
+/*******************************************************************************
+**
 ** Function         gap_conn_init
 **
 ** Description      Install the GAP connection handlers into the L2CAP
@@ -191,22 +219,13 @@ void gap_connect_cfm(UINT16 lcid, UINT16 result)
 {
     UINT8 xx;
     UINT16 psm;
-    tGAP_CONN_CB *p_ccb = &gap_cb.conn.ccb[0];
+    tGAP_CONN_CB *p_ccb;
     tGAP_CONN_CB *p_scan;
     BT_HDR *p_buf;
 
     /* Find the connection block for this CID */
-#pragma unroll 4
-    for (xx = 0; xx < GAP_MAX_CONNECTIONS; xx++, p_ccb++)
-    {
-        if ((p_ccb->state != GAP_CONN_STATE_IDLE)
-         && (p_ccb->cid == lcid))
-        {
-            break;
-        }
-    }
-
-    if (xx == GAP_MAX_CONNECTIONS)
+    p_ccb = gap_find_conn_by_cid(lcid);
+    if (p_ccb == NULL)
     {
         return;
     }
@@ -235,14 +254,17 @@ void gap_connect_cfm(UINT16 lcid, UINT16 result)
     p_ccb->state = GAP_CONN_STATE_IDLE;
 
     /* If no other connection is registered for the PSM, deregister it */
-#pragma unroll 4
-    for (xx = 0, p_scan = &gap_cb.conn.ccb[0]; xx < GAP_MAX_CONNECTIONS; xx++, p_scan++)
+    xx = 0;
+    p_scan = &gap_cb.conn.ccb[0];
+    while (xx < GAP_MAX_CONNECTIONS)
     {
         if ((p_scan->state != GAP_CONN_STATE_IDLE)
          && (p_scan->psm == psm))
         {
             return;
         }
+        xx++;
+        p_scan++;
     }
 
     L2CA_Deregister(psm);
@@ -257,20 +279,10 @@ void gap_connect_cfm(UINT16 lcid, UINT16 result)
 *******************************************************************************/
 void gap_config_ind(UINT16 cid, tL2CAP_CFG_INFO *p_cfg)
 {
-    UINT8 xx;
-    tGAP_CONN_CB *p_ccb = &gap_cb.conn.ccb[0];
+    tGAP_CONN_CB *p_ccb;
 
-#pragma unroll 4
-    for (xx = 0; xx < GAP_MAX_CONNECTIONS; xx++, p_ccb++)
-    {
-        if ((p_ccb->state != GAP_CONN_STATE_IDLE)
-         && (p_ccb->cid == cid))
-        {
-            break;
-        }
-    }
-
-    if (xx == GAP_MAX_CONNECTIONS)
+    p_ccb = gap_find_conn_by_cid(cid);
+    if (p_ccb == NULL)
     {
         return;
     }
@@ -311,21 +323,12 @@ void gap_config_cfm(UINT16 cid, tL2CAP_CFG_INFO *p_cfg)
 {
     UINT8 xx;
     UINT16 psm;
-    tGAP_CONN_CB *p_ccb = &gap_cb.conn.ccb[0];
+    tGAP_CONN_CB *p_ccb;
     tGAP_CONN_CB *p_scan;
     BT_HDR *p_buf;
 
-#pragma unroll 4
-    for (xx = 0; xx < GAP_MAX_CONNECTIONS; xx++, p_ccb++)
-    {
-        if ((p_ccb->state != GAP_CONN_STATE_IDLE)
-         && (p_ccb->cid == cid))
-        {
-            break;
-        }
-    }
-
-    if (xx == GAP_MAX_CONNECTIONS)
+    p_ccb = gap_find_conn_by_cid(cid);
+    if (p_ccb == NULL)
     {
         return;
     }
@@ -354,14 +357,17 @@ void gap_config_cfm(UINT16 cid, tL2CAP_CFG_INFO *p_cfg)
 
     p_ccb->state = GAP_CONN_STATE_IDLE;
 
-#pragma unroll 4
-    for (xx = 0, p_scan = &gap_cb.conn.ccb[0]; xx < GAP_MAX_CONNECTIONS; xx++, p_scan++)
+    xx = 0;
+    p_scan = &gap_cb.conn.ccb[0];
+    while (xx < GAP_MAX_CONNECTIONS)
     {
         if ((p_scan->state != GAP_CONN_STATE_IDLE)
          && (p_scan->psm == psm))
         {
             return;
         }
+        xx++;
+        p_scan++;
     }
 
     L2CA_Deregister(psm);
@@ -378,23 +384,14 @@ void gap_disconnect_ind(UINT16 lcid, BOOLEAN ack_needed)
 {
     UINT8 xx;
     UINT16 psm;
-    tGAP_CONN_CB *p_ccb = &gap_cb.conn.ccb[0];
+    tGAP_CONN_CB *p_ccb;
     tGAP_CONN_CB *p_scan;
     BT_HDR *p_buf;
 
     GAP_TRACE_EVENT1("GAP_CONN - Rcvd L2CAP disc, CID: 0x%x", lcid);
 
-#pragma unroll 4
-    for (xx = 0; xx < GAP_MAX_CONNECTIONS; xx++, p_ccb++)
-    {
-        if ((p_ccb->state != GAP_CONN_STATE_IDLE)
-         && (p_ccb->cid == lcid))
-        {
-            break;
-        }
-    }
-
-    if (xx == GAP_MAX_CONNECTIONS)
+    p_ccb = gap_find_conn_by_cid(lcid);
+    if (p_ccb == NULL)
     {
         return;
     }
@@ -415,14 +412,17 @@ void gap_disconnect_ind(UINT16 lcid, BOOLEAN ack_needed)
 
     p_ccb->state = GAP_CONN_STATE_IDLE;
 
-#pragma unroll 4
-    for (xx = 0, p_scan = &gap_cb.conn.ccb[0]; xx < GAP_MAX_CONNECTIONS; xx++, p_scan++)
+    xx = 0;
+    p_scan = &gap_cb.conn.ccb[0];
+    while (xx < GAP_MAX_CONNECTIONS)
     {
         if ((p_scan->state != GAP_CONN_STATE_IDLE)
          && (p_scan->psm == psm))
         {
             return;
         }
+        xx++;
+        p_scan++;
     }
 
     L2CA_Deregister(psm);
@@ -437,20 +437,10 @@ void gap_disconnect_ind(UINT16 lcid, BOOLEAN ack_needed)
 *******************************************************************************/
 void gap_data_ind(UINT16 lcid, BT_HDR *p_buf)
 {
-    UINT8 xx;
-    tGAP_CONN_CB *p_ccb = &gap_cb.conn.ccb[0];
+    tGAP_CONN_CB *p_ccb;
 
-#pragma unroll 4
-    for (xx = 0; xx < GAP_MAX_CONNECTIONS; xx++, p_ccb++)
-    {
-        if ((p_ccb->state != GAP_CONN_STATE_IDLE)
-         && (p_ccb->cid == lcid))
-        {
-            break;
-        }
-    }
-
-    if (xx == GAP_MAX_CONNECTIONS)
+    p_ccb = gap_find_conn_by_cid(lcid);
+    if (p_ccb == NULL)
     {
         GKI_freebuf(p_buf);
         return;
@@ -476,22 +466,12 @@ void gap_data_ind(UINT16 lcid, BT_HDR *p_buf)
 *******************************************************************************/
 void gap_congestion_ind(UINT16 lcid, BOOLEAN is_congested)
 {
-    UINT8 xx;
-    tGAP_CONN_CB *p_ccb = &gap_cb.conn.ccb[0];
+    tGAP_CONN_CB *p_ccb;
 
     GAP_TRACE_EVENT2("GAP_CONN - Rcvd L2CAP Is Congested (%d), CID: 0x%x", is_congested, lcid);
 
-#pragma unroll 4
-    for (xx = 0; xx < GAP_MAX_CONNECTIONS; xx++, p_ccb++)
-    {
-        if ((p_ccb->state != GAP_CONN_STATE_IDLE)
-         && (p_ccb->cid == lcid))
-        {
-            break;
-        }
-    }
-
-    if (xx == GAP_MAX_CONNECTIONS)
+    p_ccb = gap_find_conn_by_cid(lcid);
+    if (p_ccb == NULL)
     {
         return;
     }

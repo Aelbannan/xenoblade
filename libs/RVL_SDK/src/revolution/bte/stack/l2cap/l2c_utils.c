@@ -1,4 +1,4 @@
-// L2CAP utility functions — RVL retail slice.
+// L2CAP utility functions - RVL retail slice.
 // High-level C reconstruction of the Broadcom BTE l2c_utils module:
 // link/channel/registration control block management and the L2CAP
 // signalling packet builders.
@@ -58,7 +58,7 @@ enum {
 typedef struct t_l2c_linkcb tL2C_LCB;
 typedef struct t_l2c_ccb    tL2C_CCB;
 
-/* Registration control block — one per registered PSM (size 0x2C). The
+/* Registration control block - one per registered PSM (size 0x2C). The
  * retail tL2CAP_APPL_INFO holds 10 callback pointers (0x28 bytes). */
 typedef struct {
     BOOLEAN in_use;      /* 0x00 */
@@ -118,7 +118,6 @@ struct t_l2c_ccb {
     FLOW_SPEC       peer_cfg_qos;    /* 0x40 */
     FLOW_SPEC       our_cfg_qos;     /* 0x58 */
     BUFFER_Q        xmit_hold_q;     /* 0x70 */
-    UINT32          pad78;           /* 0x78 */
 };
 
 /* Configuration information (retail layout, size 0x30). */
@@ -162,7 +161,7 @@ typedef struct {
 
 extern tL2C_CB l2cb;
 
-/* btu — the vendored btu.h is a newer layout; declare the retail slice. */
+/* btu - the vendored btu.h is a newer layout; declare the retail slice. */
 typedef struct {
     UINT8   opaque[0x7C];
     UINT16  hcit_acl_data_size;   /* 0x7C */
@@ -215,7 +214,7 @@ extern void l2c_link_check_send_pkts (tL2C_LCB *p_lcb, tL2C_CCB *p_ccb, BT_HDR *
 extern void l2c_link_hci_disc_comp (UINT16 handle, UINT8 reason);
 
 /* local prototypes */
-static BT_HDR *l2cu_build_header (UINT16 handle, UINT16 len, UINT8 code, UINT8 ident);
+BT_HDR *l2cu_build_header (UINT16 handle, UINT16 len, UINT8 code, UINT8 ident);
 BOOLEAN        l2cu_create_conn_after_switch (tL2C_LCB *p_lcb);
 void           l2cu_release_lcb (tL2C_LCB *p_lcb);
 void           l2cu_release_ccb (tL2C_CCB *p_ccb);
@@ -327,7 +326,7 @@ UINT8 l2cu_get_conn_role (void)
  * Signalling packet construction
  ******************************************************************************/
 
-static BT_HDR *l2cu_build_header (UINT16 handle, UINT16 len, UINT8 code, UINT8 ident)
+BT_HDR *l2cu_build_header (UINT16 handle, UINT16 len, UINT8 code, UINT8 ident)
 {
     BT_HDR *p_buf = (BT_HDR *)GKI_getpoolbuf (2);
     UINT8  *p;

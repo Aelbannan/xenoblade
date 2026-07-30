@@ -41,6 +41,7 @@ extern CGradEntry lbl_eu_80660B78[360]; // cos table
 
 // External helpers (other monolib TUs).
 extern GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
+extern void* cacheInstance__9CDeviceGX;
 extern u32 func_8044BE24__8CGXCacheFv(void* cache);
 extern void* func_80496264(void* rsrc, int idx);
 extern void func_804D8B28(void* desktop);
@@ -151,12 +152,11 @@ struct CAnimPlayerRef {
 
 // The bind/track object itself (0x48 bytes).
 struct CLytBind {
-    u32 mType;             // 0x00
+    s32 mType;             // 0x00
     CBindPane* mPane;      // 0x04
     u8 mFlag;              // 0x08
     u8 mPad09[3];
-    CAnimPlayerRef mPlayer; // 0x0C
-    u32 mField14;          // 0x14
+    CAnimPlayerRef mPlayer; // 0x0C; its mPlayer is the bind field at 0x14
     ml::CMat34 mMtx;       // 0x18
 };
 
@@ -190,7 +190,7 @@ struct CFanColor {
 } // namespace
 
 // func_804EE558: set up the bind object for a pane.
-extern "C" void func_804EE558(CLytBind* self, CBindPane* pane, u32 type, u32 id, u8 flag) {
+extern "C" void func_804EE558(CLytBind* self, CBindPane* pane, s32 type, u32 id, u8 flag) {
     self->mType = type;
     self->mPane = pane;
     self->mFlag = flag;
@@ -352,11 +352,11 @@ extern "C" void func_804EE8FC(CLytBind* self, CBindSource* src) {
 // func_804EEACC: check whether the bind object can resolve a target.
 extern "C" u32 func_804EEACC(CLytBind* self) {
     if (self->mType == 0x1A) {
-        if (self->mPane->mAnimA != NULL && self->mField14 == 0) {
+        if (self->mPane->mAnimA != NULL && self->mPlayer.mPlayer == NULL) {
             return 0;
         }
     } else if (self->mType == 0x1B) {
-        if (self->mPane->mAnimB != NULL && self->mField14 == 0) {
+        if (self->mPane->mAnimB != NULL && self->mPlayer.mPlayer == NULL) {
             return 0;
         }
     }
@@ -722,7 +722,7 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
 extern "C" void func_804EEB40(void* desktop, const ml::CVec3* pos, const float* color,
                               const ml::CVec3* size, void* clampInfo, void* material,
                               CMarkerMtxSrc* mtxSrc, float angleDeg, float alpha, float vertRot) {
-    if (func_8044BE24__8CGXCacheFv(CDeviceGX::cacheInstance) != 0) {
+    if (func_8044BE24__8CGXCacheFv(cacheInstance__9CDeviceGX) != 0) {
         return;
     }
 

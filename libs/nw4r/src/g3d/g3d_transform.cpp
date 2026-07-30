@@ -16,13 +16,14 @@ namespace detail {
  * toolchain (PC port). It will not byte-match the retail PS instruction
  * stream -- the acceptance target is EQUIVALENT_MATCH, not FULL_MATCH.
  *
- * Two deliberate precision notes versus retail:
- *   - Retail's reciprocal is fres (~6-bit estimate) + one Newton-Raphson step
- *     (~12-bit). We use an exact IEEE divide (1.0f/det, ~24-bit): strictly
- *     more accurate, invisible in-game.
- *   - Retail's determinant/cofactors use fused ps_madd (single rounding); we
- *     use separate fmul/fadd. The singularity epsilon (~1e-36) is so small
- *     that this only ever matters for (near-)singular matrices.
+ * The MWCC matching path reproduces retail's lane-0 fres + Newton-Raphson
+ * reciprocal with scalar PowerPC builtins. Non-MWCC/PC builds use an exact
+ * IEEE divide (~24-bit), which is strictly more accurate than retail's
+ * approximately 12-bit reciprocal approximation.
+ *
+ * Retail's determinant/cofactors use fused ps_madd (single rounding); the
+ * portable scalar path uses separate fmul/fadd. The singularity epsilon
+ * (~1e-36) is so small that this only matters for (near-)singular matrices.
  *
  ******************************************************************************/
 
@@ -75,6 +76,34 @@ bool IsInvertible(f32 det) {
     return absDet >= INVERSE_EPSILON;
 }
 
+/**
+ * Reciprocal of the determinant.
+ *
+ * Retail (all on paired-single lane 0, which is full single precision and
+ * therefore bit-identical to the scalar instructions noted on the right):
+ *     fres     f5, f7         ; y0  = reciprocal estimate of det   (fres)
+ *     ps_add   f1, f5, f5     ; two = y0 + y0                      (fadds)
+ *     ps_mul   f2, f7, f5     ; t   = det * y0                     (fmuls)
+ *     ps_nmsub f0, f5, f2, f1 ; y1  = -(y0*t - two) = two - y0*t   (fnmsubs)
+ *
+ * On the matching (MWCC) build we reproduce that exactly with the scalar
+ * builtins, so the result is bit-identical to retail (~12-bit reciprocal).
+ * On every other build (PC port) we use an exact IEEE divide instead:
+ * strictly more accurate (~24-bit), and the fres approximation is an
+ * implementation detail of the Wii chip, not part of the game's logic.
+ */
+inline __attribute__((always_inline))
+f32 FastReciprocal(f32 det) {
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+    const f32 y0  = __fres(det);            // fres
+    const f32 t   = det * y0;               // fmuls  (ps_mul lane 0)
+    const f32 two = y0 + y0;                // fadds  (ps_add lane 0)
+    return __fnmsubs(y0, t, two);           // fnmsubs (ps_nmsub lane 0)
+#else
+    return 1.0f / det;
+#endif
+}
+
 } // anonymous namespace
 
 /******************************************************************************
@@ -105,7 +134,7 @@ bool CalcViewNrmMtx(math::MTX33* pOut, const math::MTX34* pMtx) {
         return false;
     }
 
-    const f32 inv = 1.0f / det;
+    const f32 inv = FastReciprocal(det);
     // Normal matrix = M^-T: out[R][C] = adj[3*C + R] * inv.
     pOut->_00 = adj[0]*inv; pOut->_01 = adj[3]*inv; pOut->_02 = adj[6]*inv;
     pOut->_10 = adj[1]*inv; pOut->_11 = adj[4]*inv; pOut->_12 = adj[7]*inv;
@@ -141,7 +170,7 @@ bool CalcViewTexMtx(math::MTX34* pOut, const math::MTX34* pMtx) {
         return false;
     }
 
-    const f32 inv = 1.0f / det;
+    const f32 inv = FastReciprocal(det);
     // M^-T into the 3x3, translation column = 0.
     pOut->_00 = adj[0]*inv; pOut->_01 = adj[3]*inv; pOut->_02 = adj[6]*inv; pOut->_03 = 0.0f;
     pOut->_10 = adj[1]*inv; pOut->_11 = adj[4]*inv; pOut->_12 = adj[7]*inv; pOut->_13 = 0.0f;
@@ -168,7 +197,7 @@ bool CalcInvWorldMtx(math::MTX34* pOut, const math::MTX34* pMtx) {
         return false;
     }
 
-    const f32 inv = 1.0f / det;
+    const f32 inv = FastReciprocal(det);
     // Read translation first (alias-safe even if pOut==pMtx; the 3x3 stores
     // below never touch the _03/_13/_23 slots).
     const f32 t0 = pMtx->_03, t1 = pMtx->_13, t2 = pMtx->_23;

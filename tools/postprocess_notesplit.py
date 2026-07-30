@@ -101,35 +101,57 @@ def derive_retail_path(decomp_path: Path) -> Path | None:
 
 
 def _patch_note_align(path: Path, align: int = 4) -> bool:
-    """Fix .note.split section header alignment in-place.
+    """Align ``.note.split`` using objcopy's ELF-aware section rewrite.
 
-    objcopy --add-section sets alignment to 1, but elfnote parsers
-    (including objdiff-cli) require alignment >= 4 for SHT_NOTE sections.
+    Changing only ``sh_addralign`` is insufficient: objdiff-cli parses note
+    records from the physical file offset and rejects an unaligned note with
+    ``ELF note is too short``.  ``objcopy --set-section-alignment`` moves the
+    section and updates the section-header table without producing malformed
+    ELF offsets.
     """
-    data = bytearray(path.read_bytes())
+    data = path.read_bytes()
+    if data[:4] != b"\x7fELF":
+        return False
+
     e_shoff = struct.unpack(">I", data[0x20:0x24])[0]
     e_shentsize = struct.unpack(">H", data[0x2E:0x30])[0]
     e_shnum = struct.unpack(">H", data[0x30:0x32])[0]
     e_shstrndx = struct.unpack(">H", data[0x32:0x34])[0]
-
     shstrtab_off = e_shoff + e_shstrndx * e_shentsize
     sh_name_off = struct.unpack(">I", data[shstrtab_off + 0x10: shstrtab_off + 0x14])[0]
     sh_size = struct.unpack(">I", data[shstrtab_off + 0x14: shstrtab_off + 0x18])[0]
-    shstrtab = bytes(data[sh_name_off: sh_name_off + sh_size])
+    shstrtab = data[sh_name_off:sh_name_off + sh_size]
 
+    note_off = None
+    note_align = 1
     for i in range(e_shnum):
         off = e_shoff + i * e_shentsize
-        sh_name_idx = struct.unpack(">I", data[off: off + 4])[0]
+        sh_name_idx = struct.unpack(">I", data[off:off + 4])[0]
         end = shstrtab.find(b"\x00", sh_name_idx)
         name = shstrtab[sh_name_idx:end].decode("ascii", errors="replace") if end > sh_name_idx else ""
         if name == ".note.split":
-            current_align = struct.unpack(">I", data[off + 0x20: off + 0x24])[0]
-            if current_align >= align:
-                return False
-            struct.pack_into(">I", data, off + 0x20, align)
-            path.write_bytes(bytes(data))
-            return True
-    return False
+            note_off = struct.unpack(">I", data[off + 0x10:off + 0x14])[0]
+            note_align = struct.unpack(">I", data[off + 0x20:off + 0x24])[0]
+            break
+
+    if note_off is None:
+        return False
+    if note_align >= align and note_off % align == 0:
+        return False
+
+    with tempfile.TemporaryDirectory(dir=str(path.parent), prefix="notesplit-") as tmpdir:
+        output = Path(tmpdir) / path.name
+        result = subprocess.run(
+            [str(OBJCOPY), "--set-section-alignment", f".note.split={align}",
+             str(path), str(output)],
+            capture_output=True,
+            text=True,
+        )
+        if result.returncode != 0 or not output.is_file():
+            print(f"failed to align .note.split in {path}: {result.stderr.strip()}", file=sys.stderr)
+            return False
+        output.replace(path)
+    return True
 
 
 def postprocess_object(decomp_path: Path, retail_path: Path | None = None) -> bool:

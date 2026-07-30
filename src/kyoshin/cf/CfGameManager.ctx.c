@@ -17671,7 +17671,7 @@ public:
     virtual void wkRender();
     void func_80458084(const wchar_t* message);
     void func_eu_8045C964(void* pLayout);
-    void func_80458B64(u8* buffer, u8 r, u8 g, u8 b, u8 a);
+    static void func_80458B64(u8* buffer, u8 r, u8 g, u8 b, u8 a);
     void func_80458B78(float x, float y, float z);
     void func_80458CBC(const wchar_t* text);
     virtual bool wkStandbyLogin();

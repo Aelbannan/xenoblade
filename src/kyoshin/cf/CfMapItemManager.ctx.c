@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfMapItemManager
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/cf/CfMapItemManager.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CfMapItemManager.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,56 +1390,76 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" void __ct__cf_CfMapItemManager() {}
+void __ct__cf_CfMapItemManager(){}
 
-extern "C" void __dt__801732F8() {}
+void __dt__801732F8(){}
 
-extern "C" void func_80173338() {}
+void func_80173338(){}
 
-extern "C" void func_801733C0() {}
+void func_801733C0(){}
 
-extern "C" int func_801737CC(void* self) { return 0; }
+int func_801737CC(void* self) { return 0; }
 
-extern "C" void func_801737D4() {}
+void func_801737D4(){}
 
-extern "C" void func_80173894(void* self) { func_801733C0(); }
+void func_80173894(void* self){ func_801733C0(); }
 
-extern "C" bool func_8017389C() { return false; }
+bool func_8017389C() { return false; }
 
-extern "C" bool func_801738A4() { return false; }
+bool func_801738A4() { return false; }
 
-extern "C" void func_801738AC() {}
+void func_801738AC(){}
 
-extern "C" void func_80173AEC() {}
+void func_80173AEC(){}
 
-extern "C" void func_80173C6C() {}
+void func_80173C6C(){}
 
-extern "C" void func_80173CA0() {}
+void func_80173CA0(){}
 
-extern "C" void func_801742D4() {}
+void func_801742D4(){}
 
-extern "C" int func_80174650(void* self) { return 1; }
+int func_80174650(void* self) { return 1; }
 
-extern "C" void func_80174658() {}
+void func_80174658(){}
 
-extern "C" void func_801746B4() {}
+void func_801746B4(){}
 
-extern "C" void func_801748B8() {}
+void func_801748B8(){}
 
-extern "C" void func_80174AE8() {}
+void func_80174AE8(){}
 
-extern "C" void func_80174B3C(void* self, unsigned char a, unsigned char b, unsigned char c) {
+void func_80174B3C(void* self, unsigned char a, unsigned char b, unsigned char c) {
     ((unsigned char*)self)[5] = a;
     ((unsigned char*)self)[6] = b;
     ((unsigned char*)self)[7] = c;
 }
 
-extern "C" void func_80174B4C() {}
+void func_80174B4C(){}
 
-extern "C" void func_80174C24() {}
+void func_80174C24(){}
 
-extern "C" void func_80174C98() {}
+void func_80174C98(){}
 
-extern "C" void func_801751DC() {}
+void func_801751DC(){}

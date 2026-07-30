@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfScript
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/cf/CfScript.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CfScript.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,8 +1390,28 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
-/* "src/kyoshin/cf/CfScript.cpp" line 5 "kyoshin/cf/CfScript.hpp" */
+/* "src/kyoshin/cf/CfScript.cpp" line 4 "kyoshin/cf/CfScript.hpp" */
 #pragma once
 
 /* "src/kyoshin/cf/CfScript.hpp" line 2 "types.h" */
@@ -1356,9 +1431,15 @@ class CfScriptManager;
 // TODO: replace placeholder with real members when this class is decompiled.
 class CfScript {
     friend class CfScriptManager;
-    u8 gap00[0x58];
+    u8 gap00[0x4c];
+    u32 mFlags;  // at 0x4c — flags accessed by CfScript functions
+    u8 gap50[0x08];
 public:
     // Currently a placeholder - actual fields TBD.
+    void waitLoad();
+    void OnFileEvent();
+    virtual ~CfScript();
+    void update();
 };
 
 // CfScriptManager - manages an array of up to 3 CfScript objects.
@@ -1369,112 +1450,116 @@ public:
     void init();
 
     CfScript mScripts[3]; // 0x00, 0x58, 0xB0
+    void func_80068B20();
+    void func_80068B58(const char* name);
+    void func_80068B94(const char* name);
+    void func_80068BC0();
+    void func_80068BF4();
+    void func_80068C28();
+    void func_800694B0();
+    void func_8006953C();
 };
 
 } // namespace cf
 /* end "kyoshin/cf/CfScript.hpp" */
 
-extern "C" void func_80068A20() {
+void func_80068A20() {
     extern void func_80068A30(void*, unsigned long);
     extern char lbl_eu_805708D0[];
     extern unsigned long lbl_eu_80661AC0;
     func_80068A30((void*)lbl_eu_805708D0, lbl_eu_80661AC0);
 }
 
-extern "C" void func_80068A30() {}
+void func_80068A30(){}
 
-extern "C" void func_80068A80() {
+void func_80068A80() {
     cf::CfScriptManager::getInstance()->init();
 }
 
-extern "C" void func_80068AA4() {}
+void func_80068AA4(){}
 
-extern "C" void func_80068AC8() {}
+void func_80068AC8(){}
 
-extern "C" void func_80068AEC() {}
+void func_80068AEC(){}
 
-extern "C" void func_80068B20__Q22cf15CfScriptManagerFv(void) {}
+void cf::CfScriptManager::func_80068B20(void) {}
 
-extern "C" void func_80068B24() {}
+void func_80068B24(){}
 
-extern "C" void func_80068ECC(void* subObj, const char* name);
-
-// Thunk: forward to func_80068ECC with &manager->mScripts[1] and the script name.
-extern "C" void func_80068B58(cf::CfScriptManager* manager, const char* name) {
-    func_80068ECC(&manager->mScripts[1], name);
+void func_80068ECC(void* subObj, const char* name);
+void cf::CfScriptManager::func_80068B58(const char* name) {
+    func_80068ECC(&mScripts[1], name);
 }
 
-extern "C" void func_80068B60() {}
+void func_80068B60(){}
 
-// Thunk: forward to func_80068ECC with &manager->mScripts[2] and the script name.
-extern "C" void func_80068B94(cf::CfScriptManager* manager, const char* name) {
-    func_80068ECC(&manager->mScripts[2], name);
+void cf::CfScriptManager::func_80068B94(const char* name) {
+    func_80068ECC(&mScripts[2], name);
 }
 
-extern "C" void func_80068B9C() {}
+void func_80068B9C(){}
 
-extern "C" void func_80068BC0(void* self) {
-    *(unsigned long*)((char*)self + 0x4c) |= 4;
+void cf::CfScriptManager::func_80068BC0() {
+    mScripts[0].mFlags |= 4;
 }
 
-extern "C" void func_80068BD0() {}
+void func_80068BD0(){}
 
-extern "C" void func_80068BF4(void* self) {
-    *(unsigned long*)((char*)self + 0xa4) |= 4;
+void cf::CfScriptManager::func_80068BF4() {
+    mScripts[1].mFlags |= 4;
 }
 
-extern "C" void func_80068C04() {}
+void func_80068C04(){}
 
-extern "C" void func_80068C28(void* self) {
-    *(unsigned long*)((char*)self + 0xfc) |= 4;
+void cf::CfScriptManager::func_80068C28() {
+    mScripts[2].mFlags |= 4;
 }
 
-extern "C" void func_80068C38() {}
+void func_80068C38(){}
 
-extern "C" void func_80068C5C() {}
+void func_80068C5C(){}
 
-extern "C" void func_80068C7C() {}
+void func_80068C7C(){}
 
-extern "C" void func_80068CA0() {}
+void func_80068CA0(){}
 
-extern "C" void func_80068D14() {}
+void func_80068D14(){}
 
-extern "C" void func_80068D38() {}
+void func_80068D38(){}
 
-extern "C" void func_80068DAC() {}
+void func_80068DAC(){}
 
-extern "C" void func_80068DD0() {}
+void func_80068DD0(){}
 
-extern "C" void func_80068E44() {}
+void func_80068E44(){}
 
-extern "C" void func_80068E7C() {}
+void func_80068E7C(){}
 
-extern "C" void func_80068E9C() {}
+void func_80068E9C(){}
 
+void cf::CfScript::waitLoad() {}
 
-extern "C" void waitLoad__Q22cf8CfScriptFv() {}
-
-extern "C" void update__Q22cf8CfScriptFv(void* self) {
-    *(unsigned long*)((char*)self + 0x4c) |= 0x20;
+void cf::CfScript::update() {
+    mFlags |= 0x20;
 }
 
-extern "C" void OnFileEvent__8CfScriptFP10CEventFile() {}
+void cf::CfScript::OnFileEvent() {}
 
-extern "C" void getInstance__Q22cf15CfScriptManagerFv() {}
+cf::CfScriptManager* cf::CfScriptManager::getInstance() { return nullptr; }
 
-extern "C" void __ct__cf_CfScript() {}
+void __ct__cf_CfScript(){}
 
-extern "C" void __dt__Q22cf8CfScriptFv() {}
+cf::CfScript::~CfScript() {}
 
-extern "C" void init__Q22cf15CfScriptManagerFv() {}
+void cf::CfScriptManager::init() {}
 
-extern "C" void func_800694B0__Q22cf15CfScriptManagerFv() {}
+void cf::CfScriptManager::func_800694B0() {}
 
-extern "C" void func_8006953C__Q22cf15CfScriptManagerFv() {}
+void cf::CfScriptManager::func_8006953C() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace ml {
 template <int N> class FixStr { public: void format(const char*, ...); };
 template <> void FixStr<128>::format(const char*, ...) {}
 }
-extern "C" void sinit_800696C8() {}
+void sinit_800696C8(){}

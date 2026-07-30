@@ -9,7 +9,7 @@ extern u32 lbl_eu_80663E24;
 
 void __ct__cf_CInfoCf(){}
 
-void cf::CInfoCf::~CInfoCf() {}
+cf::CInfoCf::~CInfoCf() {}
 
 void func_8016676C(){}
 
@@ -28,7 +28,7 @@ u32 func_80166830() {
     return lbl_eu_80663E24;
 }
 
-void CMenuItem::~CMenuItem() {}
+CMenuItem::~CMenuItem() {}
 
 void CMenuItem::Init() {}
 

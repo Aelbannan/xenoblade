@@ -5,6 +5,6 @@
 
 void __ct__cf_CfGimmickSaveOff(){}
 
-void cf::CfGimmickSaveOff::~CfGimmickSaveOff() {}
+cf::CfGimmickSaveOff::~CfGimmickSaveOff() {}
 
 void func_802ABCB4(){}

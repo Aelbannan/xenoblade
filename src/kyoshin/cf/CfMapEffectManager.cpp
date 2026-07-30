@@ -4,9 +4,11 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CfMapEffectManager.hpp"
+
+using namespace cf;
 void __ct__cf_CfMapEffectManager(){}
 
-void cf::CfMapEffectManager::~CfMapEffectManager() {}
+cf::CfMapEffectManager::~CfMapEffectManager() {}
 
 void func_8016EEB0(){}
 

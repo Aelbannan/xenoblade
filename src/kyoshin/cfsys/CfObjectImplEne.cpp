@@ -4,6 +4,9 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cfsys/CfObjectImplEne.hpp"
+
+void __dt__Q22cf15CfObjectImplEneFv();
+
 void func_800CFFCC(){}
 
 void* func_800D0088(void* self) { return (void*)((u8*)self + 0x6c); }
@@ -28,7 +31,7 @@ void func_800D0B04(){}
 
 void func_800D1020(void* self){}
 
-void cf::CfObjectImplEne::~CfObjectImplEne() {}
+cf::CfObjectImplEne::~CfObjectImplEne() {}
 
 void func_800D10B4(void* self) { ((void(*)(void*))func_800D0A58)((char*)self - 0xc); }
 

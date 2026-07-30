@@ -32,7 +32,7 @@ void func_801ECC10(){}
 
 void __ct__CItemBoxLine(){}
 
-void CItemBoxLine::~CItemBoxLine() {}
+CItemBoxLine::~CItemBoxLine() {}
 
 void func_801ED31C(){}
 

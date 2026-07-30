@@ -16,7 +16,7 @@
 
 void __ct__cf_CfGimmickEne(){}
 
-void cf::CfGimmickEne::~CfGimmickEne() {}
+cf::CfGimmickEne::~CfGimmickEne() {}
 
 // ---------------------------------------------------------------------------
 // Virtual function 2 - dispatch table router (scaffold)

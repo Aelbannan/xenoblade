@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for monolib/src/mpfsys/UnkClass_80471EC8
 // Replace stubs with high-level C/C++ during decomp.
 
+using namespace mpfsys;
 #include <harness_catalog.h>
 
 void mpfsys::UnkClass_80471EC8::func_80471EC8(void) {}

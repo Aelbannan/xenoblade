@@ -98,7 +98,7 @@ struct CMenuEnemyCtorProcess {
     u32 callbacks[6]; // 0x3C / 0x48 PTMF blocks
 };
 
-void CPcSelectCursor::CPcSelectCursor(void* self);
+extern "C" void __ct__CPcSelectCursor(void* self);
 extern "C" {
 char lbl_eu_8052BF70[];
 char lbl_eu_8052C438[];
@@ -233,12 +233,12 @@ CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
         selectCursor.field14 = copy;
         copy = tmpSel->field18;
         selectCursor.field18 = copy;
-        copy = tmpSel->layout1C;
-        selectCursor.layout1C = copy;
-        copy = tmpSel->anim20;
-        selectCursor.anim20 = copy;
-        copy = tmpSel->anim24;
-        selectCursor.anim24 = copy;
+        copy = reinterpret_cast<u32>(tmpSel->layout1C);
+        selectCursor.layout1C = reinterpret_cast<nw4r::lyt::Layout*>(copy);
+        copy = reinterpret_cast<u32>(tmpSel->anim20);
+        selectCursor.anim20 = reinterpret_cast<nw4r::lyt::AnimTransform*>(copy);
+        copy = reinterpret_cast<u32>(tmpSel->anim24);
+        selectCursor.anim24 = reinterpret_cast<nw4r::lyt::AnimTransform*>(copy);
         copy = tmpSel->field28;
         selectCursor.field28 = copy;
         copy = tmpSel->field2C;
@@ -258,7 +258,7 @@ CMenuEnemyState::CMenuEnemyState(void* scn) : unk54(0), unk55(0){
     }
     __dt__17UnkClass_8045F564Fv(tmp + 0x08, -1);
 
-    return this;
+    return;
 }
 
 extern "C" {
@@ -297,7 +297,7 @@ extern const f32 lbl_eu_80666FEC; // anim-state marker value
 extern const f32 lbl_eu_8066A1F8; // pulse amplitude
 
 cf::CfObjectSelectorObj* func_800FE68C();
-void* func_8016FE34();
+extern "C" void* func_8016FE34(void* r3);
 int func_8013BF48();
 void func_800BBA08(void* r3);
 void func_800BBA7C(void* r3);
@@ -595,7 +595,7 @@ after_bit21:
         }
 
         // r24 in retail's loop = result of func_8016FE34 (not the early target).
-        void* actor2 = func_8016FE34();
+        void* actor2 = func_8016FE34(NULL);
         int skipDist = 0;
         int hasSub = 0;
         if (actor2 != NULL) {
@@ -819,7 +819,7 @@ after_bit21:
         break;
     case 4:
         if (func_80137444(selectCursor.anim24, lbl_eu_80666FE8) != 0) {
-            static_cast<AnimTransformOverlay*>(selectCursor.anim24)->field10 = lbl_eu_80666FEC;
+            reinterpret_cast<AnimTransformOverlay*>(selectCursor.anim24)->field10 = lbl_eu_80666FEC;
             selectCursor.layout1C->Animate(0);
             selectCursor.layout1C->SetAnimationEnable(selectCursor.anim24, false);
             selectCursor.layout1C->SetAnimationEnable(selectCursor.anim20, true);

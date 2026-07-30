@@ -4,9 +4,11 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CPcEffect07.hpp"
+
+using namespace cf;
 void __ct__cf_CPcEffect07(){}
 
-void cf::CPcEffect07::~CPcEffect07() {}
+cf::CPcEffect07::~CPcEffect07() {}
 
 void func_801B19F0(){}
 

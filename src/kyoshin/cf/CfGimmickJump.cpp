@@ -3,9 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+using namespace cf;
+
 void __ct__cf_CfGimmickJump(){}
 
-void cf::CfGimmickJump::~CfGimmickJump() {}
+cf::CfGimmickJump::~CfGimmickJump() {}
 
 void func_8020F38C(){}
 

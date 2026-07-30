@@ -6,7 +6,7 @@
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
 void __ct__cf_CREvtObj(){}
 
-void cf::CREvtObj::~CREvtObj() {}
+cf::CREvtObj::~CREvtObj() {}
 
 void func_80185700(){}
 

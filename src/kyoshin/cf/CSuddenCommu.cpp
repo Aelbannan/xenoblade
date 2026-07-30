@@ -3,6 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+using namespace cf;
+
 cf::CSuddenCommu::CSuddenCommu() {}
 
 void func_801BA1DC(){}

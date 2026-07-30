@@ -6,7 +6,7 @@
 #include "kyoshin/menu/CMenuBattleCommu.hpp"
 void __ct__CMenuBattleCommu(){}
 
-void CMenuBattleCommu::~CMenuBattleCommu() {}
+CMenuBattleCommu::~CMenuBattleCommu() {}
 
 void CMenuBattleCommu::Init() {}
 

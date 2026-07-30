@@ -101,4 +101,4 @@ void func_800FD698(void* self) { ((void(*)(void*))func_800FD68C)((char*)self - 0
 extern "C" void func_800F4798(void* self);
 extern "C" void func_800FD6A0(void* self) { ((void(*)(void*))func_800F4798)((char*)self - 0x604); }
 
-void cf::CfObjectSelectorObj::~CfObjectSelectorObj() {}
+cf::CfObjectSelectorObj::~CfObjectSelectorObj() {}

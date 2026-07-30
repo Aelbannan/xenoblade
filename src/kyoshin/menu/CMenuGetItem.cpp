@@ -10,7 +10,7 @@ void __ct__80149878(){}
 
 void __ct__80149970(){}
 
-void CMenuGetItem::~CMenuGetItem() {}
+CMenuGetItem::~CMenuGetItem() {}
 
 void CMenuGetItem::Init() {}
 

@@ -3,9 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+using namespace cf;
+
 void __ct__cf_CfGimmickElv(){}
 
-void cf::CfGimmickElv::~CfGimmickElv() {}
+cf::CfGimmickElv::~CfGimmickElv() {}
 
 void func_8020B20C(){}
 

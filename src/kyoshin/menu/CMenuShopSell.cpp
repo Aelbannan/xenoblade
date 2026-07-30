@@ -6,7 +6,7 @@
 
 void __ct__CMenuShopSell(){}
 
-void CMenuShopSell::~CMenuShopSell() {}
+CMenuShopSell::~CMenuShopSell() {}
 
 void CMenuShopSell::Init() {}
 

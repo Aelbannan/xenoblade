@@ -4,9 +4,11 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/cf/CfGimmickObject.hpp"
 
+using namespace cf;
+
 void __ct__cf_CfGimmickObject(){}
 
-void cf::CfGimmickObject::~CfGimmickObject() {}
+cf::CfGimmickObject::~CfGimmickObject() {}
 
 void func_801F5B00(){}
 

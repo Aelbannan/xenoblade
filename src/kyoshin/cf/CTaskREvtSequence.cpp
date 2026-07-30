@@ -18,7 +18,7 @@ void __ct__cf_CTaskREvtSequence(){}
 
 void __dt__801682AC(){}
 
-void cf::CTaskREvtSequence::~CTaskREvtSequence() {}
+cf::CTaskREvtSequence::~CTaskREvtSequence() {}
 
 unsigned long func_801683FC(){
     extern unsigned long lbl_eu_80664268;

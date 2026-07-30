@@ -4,6 +4,8 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/CfResObjImpl.hpp"
+
+using namespace cf;
 void __ct__cf_CfResObjImpl(){}
 
 void func_8016C860(){}
@@ -35,4 +37,4 @@ extern "C" void func_8016CD68(void* self, int index, int value) {
     }
 }
 
-void cf::CfResObjImpl::~CfResObjImpl() {}
+cf::CfResObjImpl::~CfResObjImpl() {}

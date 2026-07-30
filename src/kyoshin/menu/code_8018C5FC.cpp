@@ -9,7 +9,7 @@ public:
     f32 unk4;
 };
 
-const f32 lbl_eu_80667A30;
+extern f32 lbl_eu_80667A30;
 
 UnkClass_8018C5FC::UnkClass_8018C5FC() {
     unk0 = 0;

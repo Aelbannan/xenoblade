@@ -69,7 +69,7 @@ void copyTagParam(u8* dst, const u8* src) {
     *(float*)(d + 8) = *(const float*)(s + 8);
 }
 
-void CTagProcessorBase::~CTagProcessorBase() {}
+CTagProcessorBase::~CTagProcessorBase() {}
 
 void func_80125AB8(){}
 
@@ -85,7 +85,7 @@ void func_80125D00(){}
 
 void __ct__CTagProcessor(){}
 
-void CTagProcessor::~CTagProcessor() {}
+CTagProcessor::~CTagProcessor() {}
 
 void func_8012615C(){}
 
@@ -134,7 +134,7 @@ void func_80127E74(){}
 
 void __ct__CTagProcessorSE(){}
 
-void CTagProcessorSE::~CTagProcessorSE() {}
+CTagProcessorSE::~CTagProcessorSE() {}
 
 void func_80127FB4(){}
 

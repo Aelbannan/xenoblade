@@ -3,11 +3,13 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+using namespace cf;
+
 class CEventFile;
 
 void __ct__cf_CTaskREvent(){}
 
-void cf::CTaskREvent::~CTaskREvent() {}
+cf::CTaskREvent::~CTaskREvent() {}
 
 void func_80164410(){}
 

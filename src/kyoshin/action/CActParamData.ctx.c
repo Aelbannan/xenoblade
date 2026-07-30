@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/action/CActParamData
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/action/CActParamData.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/action/CActParamData.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,228 +1390,294 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/action/CActParamData.cpp" line 4 "kyoshin/action/CActParamData.hpp" */
+#pragma once
 
-extern "C" void __ct__13CActParamDataFv() {}
+/* "src/kyoshin/action/CActParamData.hpp" line 2 "types.h" */
+/* end "types.h" */
 
-extern "C" void __dt__13CActParamDataFv() {}
+// External data referenced by sub-object pointers at +0x74.
+// Both getShortValue_A and getShortValue_B read from this.
+struct CActParamDataRef {
+    u8 _pad_00[0x08];  // 0x00-0x07
+    s16 mShort08;       // 0x08: read in getShortValue_A
+    s16 mShort0A;       // 0x0A: read in getShortValue_B
+};
 
-extern "C" void func_80053A90() {}
+// Pointer-offset return for getSubObjPtr (val + 0x14).
+struct CActParamDataSub {
+    u8 _pad_00[0x14];  // 0x00-0x13
+    void* mPtr14;       // 0x14: returned by getSubObjPtr
+};
 
-extern "C" void func_80053B24() {}
+class CActParamData {
+public:
+    static void func_80057CDC();
+    CActParamData();
+    virtual ~CActParamData();
 
-extern "C" void func_80053DE8() {}
+    // +0x00: vtable
+    char _pad_04[0x260 - 0x04];     // 0x04-0x25F
+    // Sub-object A at 0x260 (0x74 bytes, to 0x2D3)
+    char mSubObj260[0x274 - 0x260]; // 0x260-0x273
+    u32 mField274;                   // 0x274: flag (getNonNullPtr)
+    char mSubObj260_tail[0x2D4 - 0x278]; // 0x278-0x2D3
+    u32 mField2D4;                  // 0x2D4 (tag/ptr for SubObjA)
+    void* mPtr2D8;                  // 0x2D8 (getNonNullPtr)
+    u32 _pad_2DC;                   // 0x2DC
+    // Sub-object B at 0x2E0 (0x14 bytes, to 0x2F3)
+    char mSubObj2E0[0x2F4 - 0x2E0]; // 0x2E0-0x2F3
+    void* mPtr2F4;                  // 0x2F4 (tag/ptr, getSubObjPtr)
+    char _pad_2F8[0x354 - 0x2F8];   // 0x2F8-0x353
+    u32 mField354;                  // 0x354 (tag/ptr for SubObjB)
+    void* mPtr358;                  // 0x358 (getNonNullPtr)
+};
+/* end "kyoshin/action/CActParamData.hpp" */
 
-extern "C" void func_80053F40() {}
+CActParamData::CActParamData() {}
 
-extern "C" void func_80053F7C() {}
+CActParamData::~CActParamData() {}
 
-extern "C" void func_80054170() {}
+void initParamDefaults(){}
 
-extern "C" void func_80054438() {}
+void setupParamData(){}
 
-extern "C" void func_80054614() {}
+void calcFloatField(){}
 
-extern "C" void func_800547D4() {}
+void findByteInArray(){}
 
-extern "C" void func_80054980() {}
+void updateFloatInterp(){}
 
-extern "C" void func_80054A20() {}
+void setupWithFlag(){}
 
-extern "C" unsigned char func_80054A24(unsigned char* p, int sel) {
+void processDataBlock(){}
+
+void setupWithFlagAlt(){}
+
+void copyParamBlock(){}
+
+void iterLinkedList(){}
+
+void nop_80054A20() {}
+
+unsigned char getActParamByteBySel(unsigned char* p, int sel) {
     if (sel != 0) {
         return p[0x344];
     }
     return p[0x2c4];
 }
 
-extern "C" void func_80054A3C() {}
+void checkBothBlocks(){}
 
-extern "C" void func_80054A94() {}
+void validateBlockData(){}
 
-extern "C" void func_80054D3C(void* self);
-extern "C" void func_80054D34(void* self) { ((void(*)(void*))func_80054D3C)((char*)self + 0x2e0); }
+void processBlockCore(void* self);
+void callBlockAt2E0(void* self) { processBlockCore(static_cast<CActParamData*>(self)->mSubObj2E0); }
 
+void nop_800550D8() {}
 
-extern "C" void func_800550D8() {}
+void nop_800550DC() {}
 
-extern "C" void func_800550DC() {}
+void nop_800550E0() {}
 
-extern "C" void func_800550E0() {}
+void nop_800550E4() {}
 
-extern "C" void func_800550E4() {}
+void processWithFlag24(){}
 
-extern "C" void func_800550E8() {}
+void nop_800554D0() {}
 
-extern "C" void func_800554D0() {}
+void nop_800554D4() {}
 
-extern "C" void func_800554D4() {}
+void nop_800554D8() {}
 
-extern "C" void func_800554D8() {}
+void checkBlockBitFlag(){}
 
-extern "C" void func_800554DC() {}
+void checkType3Data(){}
 
-extern "C" void func_800555EC() {}
+void initDataEntries(){}
 
-extern "C" void func_80055700() {}
+void findEntryByIndex(){}
 
-extern "C" void func_8005577C() {}
+void processCode29(){}
 
-extern "C" void func_800557E8() {}
+void processCode29Ext(){}
 
-extern "C" void func_80055960() {}
+void storeResult(){}
 
-extern "C" void func_80055AC4() {}
+void processDataArray(){}
 
-extern "C" void func_80055B88() {}
+void getFloatFieldA(){}
 
-extern "C" void func_80055DB8() {}
+void getFloatFieldB(){}
 
-extern "C" void func_80055DD4() {}
+void resetBlockFields(){}
 
-extern "C" void func_80055DF0() {}
-
-extern "C" void* func_80055EA0(void* param) {
-    void* val = *(void**)((char*)param + 0x2f4);
+void* getSubObjPtr(void* param) {
+    CActParamData* p = static_cast<CActParamData*>(param);
+    void* val = p->mPtr2F4;
     if (!val) return 0;
-    return (char*)val + 0x14;
+    return &static_cast<CActParamDataSub*>(val)->mPtr14;
 }
 
-extern "C" void func_80055EBC() {}
+void hasAnyFieldSet(){}
 
-extern "C" void func_80055EE4() {}
+void saveStateFields(){}
 
-extern "C" void func_80055F08() {}
+void clearStateFields(){}
 
-extern "C" int func_80055F24(void* self) {
-    char* base = (char*)self + 0x260;
-    if (*(int*)((char*)self + 0x2d4) == 0)
-        base = (char*)self + 0x2e0;
-    void* ptr = *(void**)(base + 0x74);
+int getShortValue_A(void* self) {
+    CActParamData* p = static_cast<CActParamData*>(self);
+    void* ptr;
+    if (p->mField2D4 == 0)
+        ptr = reinterpret_cast<void*>(p->mField354);
+    else
+        ptr = reinterpret_cast<void*>(p->mField2D4);
     if (ptr == NULL)
         return -1;
-    return *(short*)((char*)ptr + 8);
+    return static_cast<CActParamDataRef*>(ptr)->mShort08;
 }
 
-extern "C" s16 func_80055F54(void* self) {
-    u8* base = (u8*)self + 0x260;
-    if (*(s32*)((u8*)self + 0x2d4) == 0)
-        base = (u8*)self + 0x2e0;
-    void* ptr = *(void**)(base + 0x74);
+s16 getShortValue_B(void* self) {
+    CActParamData* p = static_cast<CActParamData*>(self);
+    void* ptr;
+    if (p->mField2D4 == 0)
+        ptr = reinterpret_cast<void*>(p->mField354);
+    else
+        ptr = reinterpret_cast<void*>(p->mField2D4);
     if (!ptr) return -1;
-    return *(s16*)((u8*)ptr + 0xa);
+    return static_cast<CActParamDataRef*>(ptr)->mShort0A;
 }
 
-extern "C" void func_80055F84(void* self) {
-    *(unsigned long*)((char*)self + 0x2d4) = 0;
-    *(unsigned long*)((char*)self + 0x354) = 0;
+void clearTwoFields(void* self) {
+    CActParamData* p = static_cast<CActParamData*>(self);
+    p->mField2D4 = 0;
+    p->mField354 = 0;
 }
 
-extern "C" void func_80055F94() {}
+void getDataFromOffset48(){}
 
-extern "C" void* func_8005605C(void* param) {
-    if (*(int*)((int)param + 0x274) != 0) {
-        void* ptr = *(void**)((int)param + 0x2d8);
-        if (ptr != 0) return ptr;
+void* getNonNullPtr(void* param) {
+    CActParamData* p = static_cast<CActParamData*>(param);
+    if (p->mField274 != 0) {
+        if (p->mPtr2D8 != 0) return p->mPtr2D8;
     }
-    if (*(int*)((int)param + 0x2f4) != 0) {
-        void* result = *(void**)((int)param + 0x358);
-        if (result != 0) return result;
+    if (p->mPtr2F4 != 0) {
+        if (p->mPtr358 != 0) return p->mPtr358;
     }
     return 0;
 }
 
-extern "C" bool func_8005609C() { return false; }
+bool alwaysFalse_1() { return false; }
 
-extern "C" void func_800560A4(void* self) {
+void actCallVt34(void* self){
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[0x34 / 4];
     func(self);
 }
 
-extern "C" void func_800560B4(void* self) {
+void actCallVt98(void* self){
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[0x98 / 4];
     func(self);
 }
 
-extern "C" void func_800560C4(void* self) {
+void actCallVt88(void* self){
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[0x88 / 4];
     func(self);
 }
 
-extern "C" void func_800560D4(void* self) {
+void actCallVt8C(void* self){
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[0x8c / 4];
     func(self);
 }
 
-extern "C" void func_800560E4(void* self) {
+void actCallVt90(void* self){
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[0x90 / 4];
     func(self);
 }
 
-extern "C" void func_800560F4(void* self) {
+void actCallVt94(void* self){
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[148 / 4];
     func(self);
 }
 
-extern "C" void func_80056104() {}
+void actCallVt84_u16(){}
 
-extern "C" void func_80056118(void* self) {
+void actCallVt30(void* self){
     void** vtable = *(void***)self;
     void (*func)(void*) = (void (*)(void*))vtable[48 / 4];
     func(self);
 }
 
-extern "C" void func_80056128() {}
+void actCallVt40(){}
 
-extern "C" void func_80056138() {}
+void actCallVt38(){}
 
-extern "C" void func_80056148() {}
+void actCallVt3C(){}
 
-extern "C" void func_80056158() {}
+void actCallVt44(){}
 
-extern "C" void func_80056168() {}
+void actCallVt48(){}
 
-extern "C" void func_80056178() {}
+void actCallVt4C(){}
 
-extern "C" void func_80056188() {}
+void actCallVt50(){}
 
-extern "C" void func_80056198() {}
+void actCallVt58(){}
 
-extern "C" void func_800561A8() {}
+void actCallVt20(){}
 
-extern "C" void func_800561B8() {}
+void actCallVt24(){}
 
-extern "C" void func_800561C8() {}
+void actCallVt28(){}
 
-extern "C" void func_800561D8() {}
+void actCallVt2C(){}
 
-extern "C" void func_800561E8() {}
+void actCallVt5C(){}
 
-extern "C" void func_800561F8() {}
+void actCallVt60(){}
 
-extern "C" void func_80056208() {}
+void actCallVt64(){}
 
-extern "C" void func_80056218() {}
+void actCallVt68(){}
 
-extern "C" void func_80056228() {}
+void actCallVt6C(){}
 
-extern "C" void func_80056238() {}
+void actCallVt70(){}
 
-extern "C" void func_80056248() {}
+void actCallVt74(){}
 
-extern "C" void func_80056258() {}
+void actCallVt78(){}
 
-extern "C" void func_80056268() {}
+void actParamThunk_1(){}
 
-extern "C" void func_8005627C() {}
+void actParamThunk_2(){}
 
-// Fake SI iface for vt+0x7c tail-call (-RTTI on: omit _v000/_v004).
 struct CActParamDataVTableIf {
     virtual void _v008();
     virtual void _v00C();
@@ -1590,265 +1711,264 @@ struct CActParamDataVTableIf {
     virtual int vf7C(int a, int b);
 };
 
-extern "C" int func_80056290(void* self, int a) {
+int actParamThunk_3(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 3);
 }
 
-extern "C" int func_800562A4(void* self, int a) {
+int actParamThunk_4(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 4);
 }
 
-extern "C" int func_800562B8(void* self, int a) {
+int actParamThunk_5(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 5);
 }
 
-extern "C" int func_800562CC(void* self, int a) {
+int actParamThunk_6(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 6);
 }
 
-extern "C" int func_800562E0(void* self, int a) {
+int actParamThunk_7(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 7);
 }
 
-extern "C" int func_800562F4(void* self, int a) {
+int actParamThunk_8(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 8);
 }
 
-extern "C" int func_80056308(void* self, int a) {
+int actParamThunk_9(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 9);
 }
 
-extern "C" int func_8005631C(void* self, int a) {
+int actParamThunk_10(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 10);
 }
 
-extern "C" int func_80056330(void* self, int a) {
+int actParamThunk_11(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 11);
 }
 
-extern "C" int func_80056344(void* self, int a) {
+int actParamThunk_12(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 12);
 }
 
-extern "C" int func_80056358(void* self, int a) {
+int actParamThunk_13(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 13);
 }
 
-extern "C" int func_8005636C(void* self, int a) {
+int actParamThunk_14(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 14);
 }
 
-extern "C" int func_80056380(void* self, int a) {
+int actParamThunk_15(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 15);
 }
 
-extern "C" int func_80056394(void* self, int a) {
+int actParamThunk_16(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 16);
 }
 
-extern "C" int func_800563A8(void* self, int a) {
+int actParamThunk_17(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 17);
 }
 
-extern "C" int func_800563BC(void* self, int a) {
+int actParamThunk_18(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 18);
 }
 
-extern "C" int func_800563D0(void* self, int a) {
+int actParamThunk_19(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 19);
 }
 
-extern "C" int func_800563E4(void* self, int a) {
+int actParamThunk_20(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 20);
 }
 
-extern "C" int func_800563F8(void* self, int a) {
+int actParamThunk_21(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 21);
 }
 
-extern "C" int func_8005640C(void* self, int a) {
+int actParamThunk_22(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 22);
 }
 
-extern "C" int func_80056420(void* self, int a) {
+int actParamThunk_23(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 23);
 }
 
-extern "C" int func_80056434(void* self, int a) {
+int actParamThunk_24(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 24);
 }
 
-extern "C" int func_80056448(void* self, int a) {
+int actParamThunk_25(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 25);
 }
 
-extern "C" int func_8005645C(void* self, int a) {
+int actParamThunk_26(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 26);
 }
 
-extern "C" int func_80056470(void* self, int a) {
+int actParamThunk_27(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 27);
 }
 
-extern "C" int func_80056484(void* self, int a) {
+int actParamThunk_28(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 28);
 }
 
-extern "C" int func_80056498(void* self, int a) {
+int actParamThunk_29(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 29);
 }
 
-extern "C" int func_800564AC(void* self, int a) {
+int actParamThunk_30(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 30);
 }
 
-extern "C" int func_800564C0(void* self, int a) {
+int actParamThunk_31(void* self, int a) {
     return reinterpret_cast<CActParamDataVTableIf*>(self)->vf7C(a, 31);
 }
 
-extern "C" void func_800564D4() {}
+void actParamThunk_32(){}
 
-extern "C" void func_800564E8() {}
+void actParamThunk_33(){}
 
-extern "C" void func_800564FC() {}
+void actParamThunk_34(){}
 
-extern "C" void func_80056510() {}
+void actParamThunk_35(){}
 
-extern "C" void func_80056524() {}
+void actParamThunk_36(){}
 
-extern "C" void func_80056538() {}
+void actParamThunk_37(){}
 
-extern "C" void func_8005654C() {}
+void actParamThunk_38(){}
 
-extern "C" void func_80056560() {}
+void actParamThunk_39(){}
 
-extern "C" void func_80056574() {}
+void actParamThunk_40(){}
 
-extern "C" void func_80056588() {}
+void actParamThunk_41(){}
 
-extern "C" void func_8005659C() {}
+void actParamThunk_42(){}
 
-extern "C" void func_800565B0() {}
+void actParamThunk_43(){}
 
-extern "C" void func_800565C4() {}
+void actParamThunk_44(){}
 
-extern "C" void func_800565D8() {}
+void actParamThunk_45(){}
 
-extern "C" void func_800565EC() {}
+void actParamThunk_46(){}
 
-extern "C" void func_80056600() {}
+void actParamThunk_47(){}
 
-extern "C" void func_80056614() {}
+void actCallVt9C(){}
 
-extern "C" void func_80056624() {}
+void actThunkA0_0(){}
 
-extern "C" void func_80056638() {}
+void actThunkA0_1(){}
 
-extern "C" void func_8005664C() {}
+void actThunkA0_2(){}
 
-extern "C" void func_80056660() {}
+void actCallVtA4(){}
 
-extern "C" void func_80056670() {}
+void actCallVtA8(){}
 
-extern "C" void func_80056680() {}
+void actThunkB0_0(){}
 
-extern "C" void func_80056694() {}
+void actThunkB0_1(){}
 
-extern "C" void func_800566A8() {}
+void actThunkB0_2(){}
 
-extern "C" void func_800566BC() {}
+void actThunkB0_3(){}
 
-extern "C" void func_800566D0() {}
+void actThunkB4_0(){}
 
-extern "C" void func_800566E4() {}
+void actThunkB4_1(){}
 
-extern "C" void func_800566F8() {}
+void actCallVtB8(){}
 
-extern "C" void func_80056708() {}
+void actThunkAC_0(){}
 
-extern "C" void func_8005671C() {}
+void actThunkAC_1(){}
 
-extern "C" void func_80056730() {}
+void actBoundCallVtBC(){}
 
-extern "C" void func_80056760() {}
+void actBoundCallVtC0(){}
 
-extern "C" void func_80056790() {}
+void actCallVtC8(){}
 
-extern "C" void func_800567A0() {}
+void actCallVtCC(){}
 
-extern "C" void func_800567B0() {}
+void actCallVtD0(){}
 
-extern "C" void func_800567C0() {}
+void actCallVtD4(){}
 
-extern "C" void func_800567D0() {}
+void actCallVtD8(){}
 
-extern "C" void func_800567E0() {}
+void actCallVtDC(){}
 
-extern "C" bool func_800567F0() { return false; }
+bool alwaysFalse_2() { return false; }
 
-extern "C" bool func_800567F8() { return false; }
+bool alwaysFalse_3() { return false; }
 
-extern "C" bool func_80056800() { return false; }
+bool alwaysFalse_4() { return false; }
 
-extern "C" void func_80056808() {}
+void setterBit29_A(){}
 
-extern "C" void func_80056828() {}
+void setterBit29_B(){}
 
-extern "C" void func_80056888() {}
+void setterBit29_C(){}
 
-extern "C" void func_800568A8() {}
+void setterBit29_D(){}
 
-extern "C" void func_800568C8() {}
+void setterBit29_E(){}
 
-extern "C" void func_800568E8() {}
+void setterBit28_A(){}
 
-extern "C" void func_80056A98() {}
+void setterBit28_B(){}
 
-extern "C" void func_80056C34() {}
+void setterBit29_F(){}
 
-extern "C" void func_80056C54() {}
+void setterBit29_G(){}
 
-extern "C" void func_80056C7C() {}
+void setterBit29_H(){}
 
-extern "C" void func_80056CC8() {}
+void setterBit29_I(){}
 
-extern "C" void func_80056CE4() {}
+void setterBit29_J(){}
 
-extern "C" void func_80056D00() {}
+void setterBit28_C(){}
 
-extern "C" void func_80056EAC() {}
+void setterBit29_K(){}
 
-extern "C" void func_80056EC8() {}
+void setterBit28_D(){}
 
-extern "C" void func_80057084() {}
+void setterBit28_E(){}
 
-extern "C" void func_80057244() {}
+void setterBit29_L(){}
 
-extern "C" void func_80057264() {}
+void setterBit29_M(){}
 
-extern "C" void func_80057280() {}
+void setterBit28_F(){}
 
-extern "C" void func_8005742C() {}
+void setterBit28_G(){}
 
-extern "C" void func_80057470() {}
+void setterBit29_N(){}
 
-extern "C" void func_80057490() {}
+void setterBit28_H(){}
 
-extern "C" void func_80057654() {}
+void setterBit29_O(){}
 
-extern "C" void func_80057670() {}
+void setterBit28_I(){}
 
-extern "C" void func_80057828() {}
+void setterBit29_Find(){}
 
-extern "C" void func_8005789C() {}
+void setterBit28_J(){}
 
-extern "C" void func_80057A64() {}
+void setterBit0_ShortPair(){}
 
-extern "C" void func_80057BA0() {}
+void setterBit1_ShortPair(){}
 
-extern "C" void func_80057CDC__13CActParamDataFv() {}
+void buildVTable() {}
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace ml {
 template <int N> class FixStr { public: void format(const char*, ...); };
 template <> void FixStr<16>::format(const char*, ...) {}

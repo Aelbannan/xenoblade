@@ -77,7 +77,7 @@ void func_80138078(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 u32 func_80137510(void* anim, float frame);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
-void* func_8016FE34();
+extern "C" void* func_8016FE34(void* r3);
 void* getArtsParamAtCnt(void* obj, s32 index);
 int func_8010EDD4(void*);
 int func_8010A840(void*);
@@ -871,7 +871,7 @@ after_ce48:
                     case 10: {
                         unk318 |= (one << i) | (one << (i + 9));
                         cf::CfGameManager::getPlayer(0);
-                        void* skillSrc = func_8016FE34();
+                        void* skillSrc = func_8016FE34(NULL);
                         int ready = 0;
                         if (skillSrc != NULL) {
                             typedef u16* (*GetU16Fn)(void*);

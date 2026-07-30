@@ -1,3 +1,4 @@
+using namespace LOD;
 #include <types.h>
 
 void LOD::UnkClass_80468434::func_80468434() {}

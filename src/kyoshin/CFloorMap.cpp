@@ -1001,15 +1001,15 @@ void sinit_80250CB4() {
     extern u16 lbl_eu_806647B0[];
     extern u16 lbl_eu_806647B8[];
     for (int i = 0; i < 4; i++) {
-        lbl_eu_806647A0[i] = 0xFF;
-        lbl_eu_806647A8[i] = 0xFF;
+        lbl_eu_806647A0[i] = 0xFFFF;
+        lbl_eu_806647A8[i] = 0xFFFF;
     }
     lbl_eu_806647B0[0] = 0xA0;
     lbl_eu_806647B0[1] = 0x8C;
     lbl_eu_806647B0[2] = 0x23;
-    lbl_eu_806647B0[3] = 0xFF;
+    lbl_eu_806647B0[3] = 0xFFFF;
     lbl_eu_806647B8[0] = 0xD9;
     lbl_eu_806647B8[1] = 0xC0;
     lbl_eu_806647B8[2] = 0x43;
-    lbl_eu_806647B8[3] = 0xFF;
+    lbl_eu_806647B8[3] = 0xFFFF;
 }

@@ -4,7 +4,7 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/menu/CMenuKeyAssign.hpp"
-void CMenuKeyAssign::~CMenuKeyAssign() {}
+CMenuKeyAssign::~CMenuKeyAssign() {}
 
 void CMenuKeyAssign::Init() {}
 

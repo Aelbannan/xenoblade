@@ -3,9 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+using namespace cf;
+
 void __ct__cf_CfGimmickLock(){}
 
-void cf::CfGimmickLock::~CfGimmickLock() {}
+cf::CfGimmickLock::~CfGimmickLock() {}
 
 void func_8020C640(){}
 

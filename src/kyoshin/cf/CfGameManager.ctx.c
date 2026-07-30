@@ -17652,6 +17652,7 @@ public:
 class CException : public CWorkThread {
 public:
     bool func_80457C8C();
+    void func_80458B64(u8 r4, u8 r5, u8 r6, u8 r7);
     static CException* func_80457CA4(CWorkThread* r3, const wchar_t* message, u32 r5);
 
     static CException* convertToException(CWorkThread* pThread){
@@ -17670,7 +17671,9 @@ public:
         return exception;
     }
 
-    u8 unk1C4[0x200 - 0x1C4];
+    u8 unk1C4[0x1F8 - 0x1C4];
+    float field_0x1F8;           // 0x1F8 - compared against 0.8f in func_80457C8C
+    u8 unk1FC[0x200 - 0x1FC];
     IGameException* mException; //0x200
     u32 unk204;
 };
@@ -254295,6 +254298,8 @@ extern "C" void func_80083468__Q22cf13CfGameManagerFv(u32 value) {
 }
 #pragma dont_inline reset
 
+
+
 extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
                                                         float value, u8 enabled) {
     BdatTextEntry* base = &lbl_eu_805716F8;
@@ -254518,7 +254523,7 @@ bool cf::CfGameManager::func_80086F9C() {
 CPad* cf::CfGameManager::getPad(int channel) {
     return &lbl_eu_80570D40[channel & 7];
 }
-void cf::CfGameManager::setPad(int r3, CPad* pPad, u32 r5) {}
+void cf::CfGameManager::setPad(int channel, CPad* pad, u32 arg3) {}
 void cf::CfGameManager::setCurrentPadPtr(const CPad* pad, u32 channel) {
     if (pad != nullptr && lbl_eu_80661BC8 != 0xFFFFFFFF && lbl_eu_80661BC8 != channel) {
         return;

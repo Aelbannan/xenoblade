@@ -6,7 +6,7 @@
 #include "kyoshin/menu/CMenuLandTelop.hpp"
 void __ct__CMenuLandTelop(){}
 
-void CMenuLandTelop::~CMenuLandTelop() {}
+CMenuLandTelop::~CMenuLandTelop() {}
 
 void CMenuLandTelop::Init() {}
 

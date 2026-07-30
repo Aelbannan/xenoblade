@@ -467,7 +467,9 @@ def generate_build_ninja(
     python_lib = Path(os.path.relpath(__file__))
     python_lib_dir = python_lib.parent
     n.comment("The arguments passed to configure.py, for rerunning it.")
-    n.variable("configure_args", sys.argv[1:])
+    # Only flags (starting with -) go into configure_args; the positional
+    # mode argument ("configure"/"progress") is handled by the rule command.
+    n.variable("configure_args", [arg for arg in sys.argv[1:] if arg.startswith('-')])
     n.variable("python", f'"{sys.executable}"')
     n.newline()
 
@@ -1148,7 +1150,9 @@ def generate_build_ninja(
                 else:
                     sys.exit(f"Unknown source file type {obj.src_path}")
             else:
-                if config.warn_missing_source or obj.completed:
+                if (config.warn_missing_source or obj.completed) and not (
+                    obj.asm_path is not None and obj.asm_path.exists()
+                ):
                     print(f"Missing source file {obj.src_path}")
                 link_built_obj = False
 
@@ -2010,7 +2014,8 @@ def calculate_progress(config: ProjectConfig) -> None:
     out_path = config.out_path()
     report_path = out_path / "report.json"
     if not report_path.is_file():
-        sys.exit(f"Report file {report_path} does not exist")
+        print(f"No report found at {report_path}. Build the project first with 'ninja build/us/main.dol'.")
+        return
 
     report_data: Dict[str, Any] = {}
     with open(report_path, "r", encoding="utf-8") as f:

@@ -10,7 +10,7 @@ void __dt__801B2754(){}
 
 void __ct__801B2794(){}
 
-void CMenuGetItemMulti::~CMenuGetItemMulti() {}
+CMenuGetItemMulti::~CMenuGetItemMulti() {}
 
 void func_801B29E0(){}
 

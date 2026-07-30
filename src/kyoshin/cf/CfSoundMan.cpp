@@ -1,5 +1,7 @@
 #include "kyoshin/cf/CfSoundMan.hpp"
 
+using namespace cf;
+
 void __ct__801BF76C(){}
 
 void __dt__801BF80C(){}
@@ -24,7 +26,7 @@ void func_801BFAE8(){}
 
 void func_801BFB34(){}
 
-void cf::CfSoundMan::func_801BFC38() {}
+void cf::CfSoundMan::func_801BFC38(u32 r3, u32 r4, u32 r5, u32 r6, float f1) {}
 
 void func_801BFDE8(){}
 

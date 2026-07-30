@@ -99,22 +99,11 @@ static void InitMetroTRK_Inner(ui32 hwId) {
 // r5: hardware id
 void InitMetroTRK(void) {
     ui32 hwId;
-    DECOMP_ASM_INSN_BEGIN
+    // Hardware ID is passed in r5 at entry (non-standard ABI from boot code).
     asm {
         mr r3, r5
-    }
-    DECOMP_ASM_INSN_END
-    // The hardware ID is passed in r5 by the boot code (not via the standard
-    // C calling convention). Read it into a local so we can forward it.
-    hwId = *(ui32*)__builtin_return_address(0); // placeholder
-    // Actually, r5 holds the hardware ID at entry. We need to capture it.
-    // Use inline asm to move r5 into a C variable.
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        // r3 already holds the hwId from the mr above; store it
         stw r3, hwId
     }
-    DECOMP_ASM_INSN_END
     InitMetroTRK_Inner(hwId);
 }
 

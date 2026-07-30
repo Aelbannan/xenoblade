@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for monolib/src/lod/CLODCacheManagerS
 // Replace stubs with high-level C/C++ during decomp.
 
+using namespace LOD;
 #include <harness_catalog.h>
 
 extern "C" void* lbl_eu_80665738;

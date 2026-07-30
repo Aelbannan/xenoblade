@@ -38,7 +38,7 @@ int func_80164410();
 int func_801042A4();
 int func_801042B4();
 int func_800FF738();
-void* func_8016FE34();
+extern "C" void* func_8016FE34(void* r3);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
 UNKWORD func_8006EF04(UNKWORD r3);
 void* func_801355F4();
@@ -442,7 +442,7 @@ after_assets:
             if (func_8006EF04(0x10000000) == 0) {
                 objMove = cf::CfGameManager::getPlayer(0);
                 if (objMove != NULL) {
-                    actor2 = func_8016FE34();
+                    actor2 = func_8016FE34(NULL);
                     subObj = *(void**)((u8*)actor2 + 4);
                     {
                         u32* ret = vslot<GetU32Fn>(subObj, 0x30)(subObj);

@@ -4,6 +4,8 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/cf/code_8018F8D8.hpp"
+
+using namespace cf;
 void func_8018F8D8(){}
 
 void func_8018F924(){}
@@ -83,7 +85,7 @@ float func_80190938() { return lbl_eu_80667A90; }
 
 void func_80190940(){}
 
-void CMenuPTState::~CMenuPTState() {}
+CMenuPTState::~CMenuPTState() {}
 
 void CMenuPTState::Init() {}
 

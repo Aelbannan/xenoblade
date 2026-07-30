@@ -36,7 +36,7 @@ struct CMenuUpdate_8014274C {
 
 
 
-void CMenuUpdate::~CMenuUpdate() {}
+CMenuUpdate::~CMenuUpdate() {}
 
 void CMenuUpdate::Init() {}
 

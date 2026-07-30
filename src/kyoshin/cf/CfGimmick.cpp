@@ -5,6 +5,8 @@
 
 #include "kyoshin/cf/CfGimmick.hpp"
 
+using namespace cf;
+
 namespace cf {
     void CfGimmick::func_8020896C(void* other) {
         void* cur = *(void**)((char*)this + 0x78);
@@ -23,7 +25,7 @@ namespace cf {
 
 void __ct__cf_CfGimmick(){}
 
-void cf::CfGimmick::~CfGimmick() {}
+cf::CfGimmick::~CfGimmick() {}
 
 void func_8020899C(){}
 

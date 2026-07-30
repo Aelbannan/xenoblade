@@ -3,9 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+using namespace cf;
+
 void __ct__cf_CfGimmickWarp(){}
 
-void cf::CfGimmickWarp::~CfGimmickWarp() {}
+cf::CfGimmickWarp::~CfGimmickWarp() {}
 
 void func_8020D6FC(){}
 

@@ -6,7 +6,7 @@
 #include "kyoshin/realtimeevt/CREvtMem.hpp"
 void __ct__cf_CREvtMem(){}
 
-void cf::CREvtMem::~CREvtMem() {}
+cf::CREvtMem::~CREvtMem() {}
 
 void func_80167D40(){}
 

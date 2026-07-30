@@ -7,8 +7,6 @@ namespace homebutton {
 
 GroupAnmController::GroupAnmController() : mpGroup(), mpAnimGroup() {}
 
-GroupAnmController::~GroupAnmController() {}
-
 void GroupAnmController::do_calc() {
     bool enable;
 

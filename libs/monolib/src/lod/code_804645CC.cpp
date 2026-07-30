@@ -1,6 +1,7 @@
 // Auto-scaffolded catalog TU for monolib/src/lod/code_804645CC
 // Replace stubs with high-level C/C++ during decomp.
 
+using namespace LOD;
 #include <harness_catalog.h>
 
 void LOD::UnkClass_804645CC::func_804645CC() const {}

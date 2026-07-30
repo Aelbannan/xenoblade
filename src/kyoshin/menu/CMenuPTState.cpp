@@ -2,6 +2,7 @@
 // FULL_MATCH: func_80192BE4, func_80192BEC (vtable adjustor thunks).
 
 #include "kyoshin/menu/CMenuPTState.hpp"
+extern f32 lbl_eu_80664300;
 
 // Real member functions defined in code_8018F8D8.cpp -- accessed via their
 // mangled linker names (suppresses further name decoration).

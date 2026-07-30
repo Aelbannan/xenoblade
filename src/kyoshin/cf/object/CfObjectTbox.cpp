@@ -3,9 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+using namespace cf;
+
 cf::CfObjectTbox::CfObjectTbox() {}
 
-void cf::CfObjectTbox::~CfObjectTbox() {}
+cf::CfObjectTbox::~CfObjectTbox() {}
 
 void cf::CfObjectTbox::func_801F8DD0() {}
 

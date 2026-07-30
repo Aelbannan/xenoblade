@@ -6,7 +6,7 @@
 #include "kyoshin/menu/CMenuSelectShop.hpp"
 void __ct__CMenuSelectShop(){}
 
-void CMenuSelectShop::~CMenuSelectShop() {}
+CMenuSelectShop::~CMenuSelectShop() {}
 
 void CMenuSelectShop::Init() {}
 

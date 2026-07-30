@@ -13,7 +13,7 @@ void func_8003BD7C(){}
 
 void func_8003C044(){}
 
-void cf::CfObject::CfObject_UnkVirtualFunc23() { }
+u32 cf::CfObject::CfObject_UnkVirtualFunc23() { return 0; }
 
 void func_8003C0D0(){}
 

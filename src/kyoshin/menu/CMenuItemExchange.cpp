@@ -13,7 +13,7 @@ static const u32 CMENU_ITEM_EXCHANGE_OC_OFFSET = 0x6c;
 
 void __ct__CMenuItemExchange(){}
 
-void CMenuItemExchange::~CMenuItemExchange() {}
+CMenuItemExchange::~CMenuItemExchange() {}
 
 void CMenuItemExchange::Init() {}
 

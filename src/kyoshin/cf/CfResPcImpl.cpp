@@ -3,9 +3,11 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+using namespace cf;
+
 void __ct__cf_CfResPcImpl(){}
 
-void cf::CfResPcImpl::~CfResPcImpl() {}
+cf::CfResPcImpl::~CfResPcImpl() {}
 
 int func_8018CB14(void* p)
 {
@@ -66,7 +68,7 @@ void func_8018EEF0(){}
 
 
 
-void cf::UnkClass_8018EF3C::~UnkClass_8018EF3C() const {}
+cf::UnkClass_8018EF3C::~UnkClass_8018EF3C() const {}
 
 #include <string.h>
 

@@ -110,6 +110,7 @@ public:
 
     void Free();
     void Reserve(u8 num);
+    void SetCoord(u32 idx, const math::VEC2* coord);
     void SetSize(u8 num);
     void Copy(const void* pSrc, u8 num);
 

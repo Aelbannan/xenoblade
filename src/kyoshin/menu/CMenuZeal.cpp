@@ -6,7 +6,7 @@
 #include "kyoshin/menu/CMenuZeal.hpp"
 void __ct__CMenuZeal(){}
 
-void CMenuZeal::~CMenuZeal() {}
+CMenuZeal::~CMenuZeal() {}
 
 void CMenuZeal::Init() {}
 

@@ -15,7 +15,7 @@
 
 void __ct__cf_CfGimmickItem(){}
 
-void cf::CfGimmickItem::~CfGimmickItem() {}
+cf::CfGimmickItem::~CfGimmickItem() {}
 
 // ---------------------------------------------------------------------------
 // Remaining functions (scaffolds - NOT YET DECOMPILED)

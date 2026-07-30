@@ -3,6 +3,8 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
+using namespace cf;
+
 cf::CVision::CVision() {}
 
 void __ct__801A33AC(){}
@@ -11,7 +13,7 @@ void __dt__801A36D0(){}
 
 void __dt__801A3728(){}
 
-void cf::CVision::~CVision() {}
+cf::CVision::~CVision() {}
 
 void func_801A380C(){}
 

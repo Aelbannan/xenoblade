@@ -54,7 +54,7 @@ unsigned long func_800D5860(void* self) {
 
 void func_800D5874(){}
 
-const float lbl_eu_80666CFC;
+extern float lbl_eu_80666CFC;
 
 void func_800D59FC(void* obj) {
     struct __attribute__((packed)) Data70 {

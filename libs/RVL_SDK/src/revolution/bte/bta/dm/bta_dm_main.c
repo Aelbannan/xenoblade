@@ -6,6 +6,15 @@
 #include <revolution/BTE/stack/include/bt_types.h>
 #include <revolution/BTE/bta/sys/bta_sys.h>
 
+/* --- DM control block --- */
+
+/* bta_dm_cb is defined here so the linker resolves the extern declaration
+   in bta_dm_act.c. The full struct is defined in bta_dm_act.c; we only
+   need to reserve the correct size (0x72 bytes). */
+struct bta_dm_cb_t {
+    unsigned char data[0x72];
+} bta_dm_cb;
+
 /* --- Forward declarations --- */
 
 struct bta_dm_msg;

@@ -8,7 +8,7 @@ void func_8011D338(){}
 
 void __ct__CMenuSymbolMark(){}
 
-void CMenuSymbolMark::~CMenuSymbolMark() {}
+CMenuSymbolMark::~CMenuSymbolMark() {}
 
 void CMenuSymbolMark::Init() {}
 
@@ -40,7 +40,7 @@ void func_8011FB68(){}
 
 void func_801209BC(){}
 
-void CArrow3D::~CArrow3D() {}
+CArrow3D::~CArrow3D() {}
 
 void CArrow3D::cbRenderBefore() {}
 

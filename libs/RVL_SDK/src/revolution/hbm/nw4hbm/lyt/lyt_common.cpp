@@ -27,6 +27,10 @@ bool EqualsMaterialName(const char* pLhs, const char* pRhs) {
     return std::strncmp(pLhs, pRhs, NW4R_LYT_RES_NAME_LEN) == 0;
 }
 
+bool EqualsPaneName(const char* pLhs, const char* pRhs) {
+    return std::strncmp(pLhs, pRhs, NW4R_LYT_RES_NAME_LEN) == 0;
+}
+
 bool TestFileHeader(const res::BinaryFileHeader& rHeader) {
     return rHeader.byteOrder == 0xFEFF && rHeader.version == 8;
 }
@@ -68,10 +72,6 @@ void TexCoordAry::Reserve(u8 num) {
     }
 }
 
-namespace nw4hbm {
-namespace lyt {
-namespace detail {
-
 void TexCoordAry::SetSize(u8 num) {
     if (mpData != NULL && num <= mCap) {
         static const math::VEC2 sDefault[4] = {
@@ -88,10 +88,6 @@ void TexCoordAry::SetSize(u8 num) {
         mNum = num;
     }
 }
-
-} // namespace detail
-} // namespace lyt
-} // namespace nw4hbm
 
 void TexCoordAry::SetCoord(u32 idx, const math::VEC2* coord) {
     for(int i = 0; i < VERTEXCOLOR_MAX; i++)
@@ -307,5 +303,3 @@ void InitGXTexObjFromTPL(GXTexObj* pTexObj, TPLPalette* pTpl, u32 idx) {
 } // namespace detail
 } // namespace lyt
 } // namespace nw4hbm
-
-bool EqualsPaneName__Q36nw4hbm3lyt6detailFPCcPCc(const char* a, const char* b) { return strncmp(a, b, 16) == 0; }

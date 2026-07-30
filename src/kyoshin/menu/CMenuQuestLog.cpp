@@ -6,7 +6,7 @@
 #include "kyoshin/menu/CMenuQuestLog.hpp"
 void __ct__CMenuQuestLog(){}
 
-void CMenuQuestLog::~CMenuQuestLog() {}
+CMenuQuestLog::~CMenuQuestLog() {}
 
 void CMenuQuestLog::Init() {}
 

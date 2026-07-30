@@ -92,9 +92,13 @@ void ADXT_GetErrCode() {}
 
 void adxt_SetLpFlg() {}
 
-void ADXT_Pause() {}
+extern void adxt_Pause(void* self, int pause);
 
-void adxt_Pause() {}
+void ADXT_Pause(void* self, int pause) {
+    ADXCRS_Enter();
+    adxt_Pause(self, pause);
+    ADXCRS_Leave();
+}
 
 void ADXT_SetTranspose(void* self) {
     ADXCRS_Enter();

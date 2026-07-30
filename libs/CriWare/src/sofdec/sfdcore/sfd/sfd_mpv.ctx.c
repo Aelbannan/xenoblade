@@ -816,7 +816,19 @@ void sfmpv_ErrFn(s32 val, u32 err) {
 
 void SFMPV_Destroy() {}
 
-void SFMPV_RequestStop() {}
+int SFMPV_RequestStop(void* self) {
+    void* p;
+    int result;
+    
+    p = *(void**)(*(void**)((u8*)self + 0x2068));
+    if (p == NULL) {
+        result = 0;
+    } else {
+        MPV_RequestStop(p);
+        result = 0;
+    }
+    return result;
+}
 
 int SFMPV_Start(void) { return 0x0; }
 

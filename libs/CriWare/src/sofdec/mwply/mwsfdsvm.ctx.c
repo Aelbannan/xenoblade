@@ -722,7 +722,11 @@ void MWSFSVM_Init() {}
 
 void MWSFSVM_EntryIdVfunc() {}
 
-void MWSFSVM_EntryIdleFunc() {}
+extern u32 lbl_eu_805FF1D8;
+
+void MWSFSVM_EntryIdleFunc(void* p1, void* p2, void* p3) {
+    lbl_eu_805FF1D8 = SVM_SetCbSvrWithString(6, p1, p2, p3);
+}
 
 extern int lbl_eu_805FF1DC;
 

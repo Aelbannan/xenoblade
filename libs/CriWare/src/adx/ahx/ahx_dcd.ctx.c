@@ -729,10 +729,16 @@ void AHXSJD_SetupFtbl(u32 val) { AHXDCD_SetupFtbl(val); }
 
 void AHXSJD_SetupWtbl(void) { AHXDCD_SetupWtbl(); }
 
-void AHXDCD_Init() {}
-
 extern s32 lbl_eu_805E64D8;
-void AHXSBF_Finish(void);
+extern void AHXSBF_Finish(void);
+
+void AHXDCD_Init(void) {
+    if (lbl_eu_805E64D8 == 0) {
+        AHXSBF_Init();
+    }
+    lbl_eu_805E64D8++;
+}
+
 void AHXDCD_Finish(void) {
     if (--lbl_eu_805E64D8 != 0) return;
     AHXSBF_Finish();
@@ -751,9 +757,12 @@ void AHXDCD_Destroy(void* p)
     memset(p, 0, 0xbcc);
 }
 
-void AHXDCD_Reset() {}
+extern void AHXDCD_Reset(void* self);
 
-void AHXDCD_SetBsr() {}
+void AHXDCD_SetBsr(void* self, void* bsr) {
+    AHXDCD_Reset(self);
+    *(void**)((u8*)self + 0x350) = bsr;
+}
 
 void AHXDCD_DecodeHeader() {}
 

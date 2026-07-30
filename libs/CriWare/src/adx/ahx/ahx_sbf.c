@@ -9,11 +9,19 @@ void AHXDCD_SetupFtbl(u32 val) { lbl_eu_805E64B8 = val; }
 extern u32 lbl_eu_805E64BC;
 void AHXDCD_SetupWtbl(u32 val) { lbl_eu_805E64BC = val; }
 
-void AHXSBF_Init() {}
-
-void ahxsbf_init_filter() {}
-
 extern u32 lbl_eu_805E64B0;
+
+void ahxsbf_init_filter(void);
+
+void AHXSBF_Init(void) {
+    if (lbl_eu_805E64B0 == 0) {
+        ahxsbf_init_filter();
+    }
+    lbl_eu_805E64B0++;
+}
+
+void ahxsbf_init_filter(void) {}
+
 void AHXSBF_Finish(void) {
     lbl_eu_805E64B0--;
 }

@@ -755,7 +755,16 @@ void SFD_SetAdxtPara(u32 *src) {
     dst[6] = tmp & ~0x1f;
 }
 
-void SFADXT_Init() {}
+extern void ADXT_Init(void);
+extern void SFA_Init(void);
+extern int UTY_MemsetDword(u32*, u32, int);
+
+int SFADXT_Init(void) {
+    ADXT_Init();
+    SFA_Init();
+    UTY_MemsetDword((u32*)lbl_eu_80606DE8, 0, 7);
+    return 0;
+}
 
 int SFADXT_Finish() { SFA_Finish(); ADXT_Finish(); return 0; }
 

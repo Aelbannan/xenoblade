@@ -1,45 +1,164 @@
 #include "monolib/core/CException.hpp"
-
-// Split listed in configure.py; retail .text work lands here later.
-// IGameException dtor stays inline in the header so CfPadTask::~CfPadTask
-// stays 0xA0 (out-of-line empty base adds a bl / +12).
+#include "monolib/core/CDesktop.hpp"
+#include "monolib/core/CView.hpp"
+#include "monolib/core/CDrawGX.hpp"
+#include "monolib/device/CDeviceVI.hpp"
+#include "monolib/device/CDeviceFont.hpp"
+#include "monolib/lib/CLibHbm.hpp"
+#include "monolib/lib/CLibCri.hpp"
+#include "monolib/work/CWorkRoot.hpp"
+#include "monolib/work/CWorkSystem.hpp"
+#include "monolib/math.hpp"
 
 extern "C" {
-    // 0x806656C0: global pointer; func_8045925C stores `this` at offset 0x1F0
-    void* lbl_eu_806656C0;
-    // 0x806656C4: global counter used by func_804591BC
+    // Global exception instance pointer
+    CException* lbl_eu_806656C0;
+    
+    // Global exception array and counter
     u32 lbl_eu_806656C4;
-    // 0x80657B50: global array of 16 pointers used by func_804591BC
     void* lbl_eu_80657B50[16];
+    
+    // Global state variables
+    u32 lbl_eu_806656C8;
+    u32 lbl_eu_806656CC;
 }
 
-void __ct__CException() {}
-
-void func_80458B64(u8* buffer, u8 r4, u8 r5, u8 r6, u8 r7) {
-    // Writes 4 bytes (RGBA color) into the given buffer
-    buffer[0] = r4;
-    buffer[1] = r5;
-    buffer[2] = r6;
-    buffer[3] = r7;
+// Constructor
+CException::CException(const char* pName, CWorkThread* pParent)
+    : CProc(pName, pParent, 8)
+    , mExceptionCode(-1)
+    , mMessage(nullptr)
+    , mAlphaStep(0.0f)
+    , mAlpha(0.0f)
+    , mAnimState(0)
+    , mGameException(nullptr)
+    , unk204(0)
+    , unk208(0)
+    , mFrameCounter(0)
+    , mFlag210(0)
+    , mMaxExceptions(5)
+{
+    mType = THREAD_CEXCEPTION;
+    lbl_eu_806656C0 = this;
 }
 
+// Destructor
+CException::~CException() {
+    if (lbl_eu_806656C0 == this) {
+        lbl_eu_806656C0 = nullptr;
+    }
+}
+
+// Type check function
+bool CException::func_80457C8C() {
+    return mAlpha == 0.8f;
+}
+
+// Static factory function - creates exception
+CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* message, u32 r5) {
+    // Stub for now
+    return nullptr;
+}
+
+// Type validation
+CException* CException::func_80457EB0() {
+    if (this == nullptr) {
+        return nullptr;
+    }
+    
+    if (mType == THREAD_CEXCEPTION) {
+        return this;
+    }
+    
+    return nullptr;
+}
+
+// Ring buffer index calculation
+void* CException::func_80457ED4(u32 r4) {
+    u32 base = *(u32*)((u8*)this + 0x120);
+    u32 offset = *(u32*)((u8*)this + 0x124);
+    u32 divisor = *(u32*)((u8*)this + 0x12C);
+    
+    u32 idx = (offset + r4) % divisor;
+    return (void*)(base + idx * 0x24);
+}
+
+// Render function
+void CException::wkRender() {
+    // Stub for now
+}
+
+// Large text rendering function
+void CException::func_80458084(const wchar_t* message) {
+    // Stub for now
+}
+
+// Layout setter
+void CException::func_eu_8045C964(void* pLayout) {
+    // Stub for now
+}
+
+// RGBA setter
+void CException::func_80458B64(u8* buffer, u8 r, u8 g, u8 b, u8 a) {
+    buffer[0] = r;
+    buffer[1] = g;
+    buffer[2] = b;
+    buffer[3] = a;
+}
+
+// Position setter
+void CException::func_80458B78(float x, float y, float z) {
+    // Stub for now
+}
+
+// Text printer
+void CException::func_80458CBC(const wchar_t* text) {
+    // Stub for now
+}
+
+// Login setup
+bool CException::wkStandbyLogin() {
+    // Stub for now
+    return CProc::wkStandbyLogin();
+}
+
+// Logout teardown
+bool CException::wkStandbyLogout() {
+    // Stub for now
+    return CProc::wkStandbyLogout();
+}
+
+// Infinite render loop
+void CException::func_80459118(const char* message) {
+    // Stub for now
+}
+
+// Add to global array
+void CException::func_804591BC(IException* pException) {
+    u32 idx = lbl_eu_806656C4;
+    lbl_eu_80657B50[idx] = this;
+    lbl_eu_806656C4 = idx + 1;
+}
+
+// Remove from global array
+void CException::func_804591DC(IException* pException) {
+    u32 count = lbl_eu_806656C4;
+    
+    for (u32 i = 0; i < count; i++) {
+        if (lbl_eu_80657B50[i] == this) {
+            // Shift remaining elements
+            for (u32 j = i; j < count - 1; j++) {
+                lbl_eu_80657B50[j] = lbl_eu_80657B50[j + 1];
+            }
+            lbl_eu_806656C4 = count - 1;
+            return;
+        }
+    }
+}
+
+// Store this to global
 void CException::func_8045925C() {
-    // Store `this` at offset 0x1F0 of the global struct (if non-null)
     if (lbl_eu_806656C0 != nullptr) {
         *(CException**)((u8*)lbl_eu_806656C0 + 0x1F0) = this;
     }
 }
-
-void CException::func_804591BC(IException* pException) {
-    // Register this CException into the global exception array
-    u32 idx = lbl_eu_806656C4;
-    *(CException**)((u8*)lbl_eu_80657B50 + idx * 4) = this;
-    lbl_eu_806656C4 = idx + 1;
-}
-
-bool CException::func_80457C8C() {
-    // Compare field_0x1F8 against 0.8f; return EQ bit of CR0
-    return field_0x1F8 == 0.8f;
-}
-
-CException* CException::func_80457CA4(CWorkThread* r3, const wchar_t* message, u32 r5) { return nullptr; }

@@ -1690,3 +1690,43 @@ mangled names (`zero__Q22ml5CVec4`) that the retail object uses.
 - Suggested next experiments: provide callee contracts for nw4r functions;
   explicit `-ipa file` or `-O4,s` per-object flags;
   manual CMat33 inline with `DECOMP_PPC_*` intrinsics (§17.6)
+
+## `__declspec(novtable)` + `extern "C"` constructor + C++ virtual destructor
+
+**Symptom:** Retail constructor uses short-form symbol name (`__ct__CScnFrame` instead of
+`__ct__9CScnFrameFUl`), and derived destructor does not call base destructor.
+
+**Root cause:** The retail class may not use C++ inheritance but instead flatten the struct.
+The constructor is a plain `extern "C"` function, while the destructor is a genuine C++ virtual
+destructor with the full mangled name. The vtable/RTTI data lives in a separate data TU.
+
+**Fix pattern:**
+
+```cpp
+// Header: novtable + virtual dtor (no C++ constructor declaration)
+struct __declspec(novtable) CMyClass {
+    virtual ~CMyClass();
+    // fields...
+};
+
+// Source: extern "C" constructor sets vtable manually;
+// C++ virtual destructor handles delete check automatically
+
+extern char lbl_eu_ADDRESS[];  // vtable from data TU
+
+extern "C" void __ct__CMyClass(CMyClass* self) {
+    *(void**)self = (void*)lbl_eu_ADDRESS;  // manual vtable
+    // field inits...
+}
+
+CMyClass::~CMyClass() {}
+```
+
+**Constraints:**
+- `__declspec(novtable)` prevents MWCC from generating vtable/RTTI data in the TU
+- `extern "C"` constructor gives short-form symbol name matching retail
+- C++ virtual destructor gives full-form mangled name (`__dt__NClassNameFv`) matching retail
+- No base destructor call in generated code (no C++ base class relationship)
+- For "base class" init, call the init function explicitly: `other_init(self);`
+- Works with `-RTTI on -Cpp_exceptions on`
+- Tested on: CScnFrame (standalone), CVirtualLightAmb (flattened)

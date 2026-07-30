@@ -11,9 +11,63 @@ void sfbuf_InitRingSj() {}
 
 void SFBUF_DestroySj() {}
 
-void sfbuf_InitVfrmBuf() {}
+void sfbuf_InitVfrmBuf(void *vbuf, void *sj_base, u32 *sizes, u32 *ptrs, int idx) {
+    u8 *p = (u8 *)sj_base + idx * 0x74;
+    u32 ptr_val = ptrs[idx];
 
-void sfbuf_InitAringBuf() {}
+    *(u32 *)(p + 0x00) = 1;
+    *(u32 *)(p + 0x04) = (u32)(ptr_val != 0);
+    *(u32 *)(p + 0x08) = 0;
+    *(u32 *)(p + 0x0C) = 0;
+    *(u32 *)(p + 0x4C) = 9;
+    *(u32 *)(p + 0x50) = 9;
+    *(u32 *)(p + 0x10) = sizes[idx];
+    *(u32 *)(p + 0x14) = ptr_val;
+    *(u32 *)(p + 0x18) = 0;
+    *(u32 *)(p + 0x1C) = 0;
+
+    *(u32 *)(p + 0x20) = (u32)((u8 *)vbuf + 0x1758);
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x000) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x088) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x110) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x198) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x220) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x2A8) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x330) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x3B8) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x440) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x4C8) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x550) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x5D8) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x660) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x6E8) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x770) = 0;
+    *(u32 *)(*(u32 *)(p + 0x20) + 0x7F8) = 0;
+}
+
+void sfbuf_InitAringBuf(void *self, u32 *sizes, u32 *ptrs, int idx) {
+    u8 *p = (u8 *)self + idx * 0x74;
+    u32 ptr_val = ptrs[idx];
+
+    *(u32 *)(p + 0x00) = 2;
+    *(u32 *)(p + 0x04) = (u32)(ptr_val != 0);
+    *(u32 *)(p + 0x08) = 0;
+    *(u32 *)(p + 0x0C) = 0;
+    *(u32 *)(p + 0x4C) = 9;
+    *(u32 *)(p + 0x50) = 9;
+    *(u32 *)(p + 0x10) = sizes[idx];
+    *(u32 *)(p + 0x14) = ptr_val;
+    *(u32 *)(p + 0x18) = 0;
+    *(u32 *)(p + 0x1C) = 0;
+    *(u32 *)(p + 0x20) = 0;
+    *(u32 *)(p + 0x24) = 0;
+    *(u32 *)(p + 0x28) = 0;
+    *(u32 *)(p + 0x2C) = 0;
+    *(u32 *)(p + 0x30) = 0;
+    *(u32 *)(p + 0x34) = 0;
+    *(u32 *)(p + 0x38) = 0;
+    *(u32 *)(p + 0x3C) = 0;
+}
 
 void SFBUF_SetSupplySj() {}
 

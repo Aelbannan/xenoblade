@@ -36,13 +36,13 @@ void SFMPVF_TermDec(void* self) { *(u32*)((u8*)self + 0x27F0) = 1; }
 u32 SFMPVF_IsTermDec(void* self) { return *(u32*)((u8*)self + 0x27f0); }
 
 void SFMPVF_SetGopStat(void* self) {
+    u8* p;
     s32 cnt;
     s32 val;
-    u8* p;
     u32 one;
     
-    cnt = *(s32*)((u8*)self + 0x27ec);
     p = (u8*)self + 0x27f8;
+    cnt = *(s32*)((u8*)self + 0x27ec);
     one = 1;
     while (cnt-- > 0) {
         val = *(s32*)p;

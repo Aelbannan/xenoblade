@@ -19,7 +19,11 @@ void ADXRNA_Create(void) {
     AXRNA_Create();
 }
 
-void ADXRNA_Destroy() {}
+void ADXRNA_Destroy(void* self) {
+    AXRNA_SetPlaySw(self, 0);
+    AXRNA_SetTransSw(self, 0);
+    AXRNA_Destroy(self);
+}
 
 void ADXRNA_SetTransSw(void) {
     AXRNA_SetTransSw();

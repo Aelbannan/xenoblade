@@ -58,14 +58,10 @@ const u8 *MPV_BsearchDelim(const u8 *end, int count, int flags) {
         const u8 *p = base - i;
         u8 byte = *p;
         u32 pre_state = state | byte;
-        u32 check = pre_state << 8;
-        if (check == 0x01000000) {
-            u8 type = lbl_eu_8051C090[pre_state >> 24];
-            if (type & flags) {
-                return p;
-            }
+        if ((pre_state << 8) == 0x01000000 && (lbl_eu_8051C090[pre_state >> 24] & flags)) {
+            return p;
         }
-        state = check;
+        state = pre_state << 8;
     }
     return NULL;
 }

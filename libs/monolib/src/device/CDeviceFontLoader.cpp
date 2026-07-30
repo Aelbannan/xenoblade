@@ -28,7 +28,6 @@ public:
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
     virtual bool OnFileEvent(CEventFile* pEventFile);
-    virtual void func_80454F30(void* arg1, const char* pPath);
 
     // 0x000-0x1C3: inherited from CWorkThread
     void* mSomeData;          // 0x1C4
@@ -41,10 +40,15 @@ public:
 CDeviceFontLoader::~CDeviceFontLoader() {
 }
 
-void CDeviceFontLoader::func_80454F30(void* arg1, const char* pPath) {
-    mSomeData = arg1;
-    mFileNameLen = strlen(pPath);
-    strcpy(mFileName, pPath);
+// extern "C" to produce Fv mangling matching retail binary
+extern "C" {
+
+void func_80454F30__17CDeviceFontLoaderFv(CDeviceFontLoader* self, void* arg1, const char* pPath) {
+    self->mSomeData = arg1;
+    self->mFileNameLen = strlen(pPath);
+    strcpy(self->mFileName, pPath);
+}
+
 }
 
 bool CDeviceFontLoader::wkStandbyLogin() {

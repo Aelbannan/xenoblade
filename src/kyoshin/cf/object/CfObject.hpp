@@ -95,7 +95,10 @@ namespace cf {
         // CObjectParam currently ends at 0x28.
         u8 field_0x28[0x10];
         void* mSubObj38;          // 0x38-0x3B
-        u8 _pad3C[0x4C - 0x3C];   // 0x3C-0x4B
+        float mPos3C;           // 0x3C-0x3F
+        float mPos40;           // 0x40-0x43
+        float mPos44;           // 0x44-0x47
+        u8 _pad48[0x4C - 0x48];   // 0x48-0x4B
         float mField4C;           // 0x4C-0x4F
         u8 _pad50[0x54 - 0x50];   // 0x50-0x53
         CfObjectSub54 mSubObj54;     // 0x54-0x5F

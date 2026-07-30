@@ -39,24 +39,23 @@ s32 func_804DB114(void* vtable_ptr, void* data) {
         return 0;
     }
 
-    if ((s8)((u8*)data)[0x0D] > 0) {
-        if ((s8)((u8*)data)[0x0D] == 1) {
+    s32 state = (s8)((u8*)data)[0x0D];
+    if (state > 0) {
+        if (state != 1) {
+            if (lbl_eu_806659D4 < 0) return 2;
+        } else {
             s32 err = lbl_eu_806659D4;
             if (err == -12) {
                 ((u8*)data)[0x0D] = 3;
-                goto sw;
-            }
-            if (err < 0) return 2;
-            {
+            } else if (err < 0) {
+                return 2;
+            } else {
                 u32* dir = ((u32**)data)[2];
                 u32 cnt = ((u32*)data)[1];
                 if (cnt < ((u32*)dir)[0] * 13) return 2;
             }
-            goto sw;
         }
-        if (lbl_eu_806659D4 < 0) return 2;
     }
-sw:
 
     switch ((s8)((u8*)data)[0x0D]) {
         case 0: {

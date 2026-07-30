@@ -32,8 +32,8 @@ UnkClass_8045F564::~UnkClass_8045F564() {
         unk0 = 0xFFFFFFFF;
     }
     
-    // STALL: Remove this from CLibLayout tracking array — codegen differs from retail
-    // MWCC generates different loop structure (comparison-based vs retail bdnz/cmplw)
+    // Remove this from CLibLayout tracking array
+    // Best candidate: nested do-while (0xF8 bytes, 69% match, size PASS)
     CLibLayout* layout = lbl_eu_80665710;
     u32 cnt = layout->instanceCount;
     if (cnt > 0) {

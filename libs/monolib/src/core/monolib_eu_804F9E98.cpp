@@ -58,5 +58,6 @@ extern "C" int func_eu_804F9EE0(void* r3, void* r4) {
 // us-804f9fa4: sinit_eu_804F9FA4  size=0x18
 // Static initializer: stores address of lbl_eu_80570410 into lbl_eu_80665A98
 extern "C" void sinit_eu_804F9FA4() {
-    lbl_eu_80665A98 = lbl_eu_80570410;
+    void* volatile *p = (void* volatile*)&lbl_eu_80665A98;
+    *p = lbl_eu_80570410;
 }

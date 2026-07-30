@@ -717,6 +717,20 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("hugeminus__2ml", "lbl_eu_8066A218"),
         ),
     ),
+    "CCamUtil.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x4222F983), "lbl_eu_8066A190"),  # 40.74366 (deg2rad)
+            (struct.pack(">I", 0xBF800000), "lbl_eu_8066A194"),  # -1.0
+            (struct.pack(">I", 0x3F800000), "lbl_eu_8066A198"),  # 1.0
+            (struct.pack(">I", 0x3CC90FDB), "lbl_eu_8066A19C"),  # 0.02454369 (rad2FIdx)
+            (struct.pack(">I", 0x00000000), "lbl_eu_8066A1A0"),  # 0.0
+        ),
+        exact_renames=(
+            ("halfpi__2ml", "lbl_eu_8066A200"),
+            ("@STRING@AsinRad__Q24nw4r4mathFf", "lbl_eu_8052ADB0"),
+            ("@STRING@AsinRad__Q24nw4r4mathFf@0", "lbl_eu_8052AD88"),
+        ),
+    ),
 }
 
 

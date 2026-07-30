@@ -432,6 +432,33 @@ CDeviceGX* CDeviceGX::getInstance() {
 
 Common singleton labels: `CDeviceGX` → `lbl_eu_806656A0`, `CDesktop` → `lbl_eu_806656AC`, `CProcRoot` → `lbl_eu_806655A0`, `CViewRoot` → `lbl_eu_806655D0`.
 
+#### 1e. Lazy singleton — prototype >8 bytes to avoid `.sbss`
+
+When a `getInstance` lazy singleton uses a `static` prototype variable (≤8 B, e.g. a virtual class with just a vtable pointer), MWCC places it in `.sbss` with SDA21 addressing (`li r3, obj@sda21`). **Retail** places the prototype in regular `.bss` with full 32-bit addressing (`lis r3, obj@ha` + `addi r3, obj@l`), causing:
+- 4-byte size difference (1 SDA21 instruction vs 2 for lis+addi)
+- Branch target shifts
+- Reg-swap detection on `bne` offset
+
+**Fix:** wrap the prototype in a struct with ≥12 B of padding (total >8 B) so MWCC places it in `.bss`, matching retail's lis+addi pattern:
+
+```cpp
+struct PaddedPrototype {
+    mpfsys::MPFDrawBillboard obj;   // the actual prototype (4 B vtable)
+    u32 padding[4];                  // ≥16 B extra → total >8 B → .bss
+};
+static PaddedPrototype lbl_eu_8056DC48;
+```
+
+**Return-value trick.** When the retail returns the ADDRESS of an SDA pointer (`li r3, ptr@sda21`) rather than its value, the C++ must use `return (T*)&ptr_var;` (address-of, not value):
+
+```cpp
+extern "C" { T* lbl_eu_806658A4; }
+return (T*)&lbl_eu_806658A4;  // → li r3, lbl_eu_806658A4@sda21
+// NOT: return lbl_eu_806658A4;  // → lwz r3, lbl_eu_806658A4@sda21(r0)
+```
+
+**Targets fixed:** `us-8047deac`, `us-8047ded4`, `us-8047d814`, `us-80480a58` (all `getInstance` in `mpfsys::MPFDraw*` / `UnkClass_8047CA88`).
+
 **Always** prefer `extern "C" lbl_eu_*` in source first. Ctor/dtor stores should target the same label (don't dual-write `spInstance` + `lbl_eu_*` — bloats `.text`).
 
 #### 1b. Float/double pools — `extern "C" const float lbl_eu_*`
@@ -459,6 +486,24 @@ powerpc-eabi-objcopy --redefine-sym=@2856=lbl_eu_8066A1D8 path/to/Unit.o
 ```
 
 Reference implementation: `tools/postprocess_reloc_names.py` (wired into `coop run build/diff/cycle`). **Do not** rely on `objdiff.json` `symbol_mappings` — CLI-ignored (objdiff #279).
+
+#### 1f. Lazy singleton with separate storage — return address-of SDA ptr
+
+Same as §1e but for singletons where the pointer variable and the guard flag are both in SDA, and the prototype storage is a separate array. Pattern: guard check → set guard → return address of storage. Use `sizeof(T)+64` to exceed SDA threshold:
+
+```cpp
+extern "C" {
+    s8 guard_flag;          // in SDA
+    u8 storage[sizeof(T)+64];  // >8 B → .bss, accessed via lis+addi
+}
+
+T* getInstance() {
+    if(!guard_flag) guard_flag = 1;
+    return (T*)&storage;
+}
+```
+
+**Targets fixed:** `us-80480a58` (`UnkClass_8047CA88::getInstance`).
 
 ### 2. `extern "C"` on `bl` targets with retail mangling
 
@@ -1531,3 +1576,117 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
   path **returns `SFLIB_SetErr`'s result** (retail branch skips the
   `li r3,0`); `SFLIB_SetErr(...); return 0;` is a semantic mismatch, not a
   schedule difference.
+
+## MWCC 1.1 mangling quirks
+
+### Constructor symbol name: MWCC 1.1 emits full mangling, retail has short form
+
+MWCC 1.1 (`build/compilers/Wii/1.1/mwcceppc.exe`) generates full constructor
+mangling (`__ct__17CDeviceFontLoaderFPCcP11CWorkThread`) where the retail
+binary has a shorter form (`__ct__CDeviceFontLoader`). This is a version
+difference — earlier MWCC versions (used for retail) emit the short form.
+
+**Workaround:** the byte-level body still matches; only the symbol name
+differs. The hexdiff tool can compare via substring matching. For the co-op
+cycle command, the symbol map entry must match what MWCC actually emits.
+Update `config/<region>/symbols.txt` to the MWCC 1.1 mangling when needed.
+
+### Extern-C for Fv-mangled functions that take hidden parameters
+
+In the retail binary, some functions have `Fv` mangling (no C++ parameters
+beyond `this`) but their bodies read extra register parameters (r4, r5)
+passed by the caller. Examples:
+- `func_80454F30__17CDeviceFontLoaderFv` (takes `void* arg1, const char* path`)
+- `func_8043B574__7CEvent1Fv` (takes `int index` as r4)
+- `func_8043B588__7CEvent1Fv` (takes `int index` as r4)
+
+**Fix:** define the function as `extern "C"` with an explicit `self`
+pointer as first parameter. This produces the exact `Fv` symbol name
+(`extern "C"` strips C++ mangling), and the parameters are passed by C
+calling convention (r3=self, r4=arg1, r5=arg2):
+
+```cpp
+extern "C" {
+void func_80454F30__17CDeviceFontLoaderFv(
+    CDeviceFontLoader* self, void* arg1, const char* pPath) {
+    self->mSomeData = arg1;
+    self->mFileNameLen = strlen(pPath);
+    strcpy(self->mFileName, pPath);
+}
+}
+```
+
+This technique works for any `Fv`-mangled function that takes hidden
+parameters. The linker symbol matches the retail binary exactly.
+
+**Caveat:** cannot be used for constructors (which must be member functions
+in C++).
+
+### 16. stmw/lmw: `-O4,s` vs `-O4,p`
+
+MWCC with `-O4,p` (speed) does NOT use `stmw`/`lmw` for saving 3 consecutive
+callee-saved registers (r29-r31); it emits individual `stw`/`lwz` instructions
+(+8 bytes prologue, +8 bytes epilogue vs stmw/lmw).
+
+Switching to `-O4,s` (size) triggers `stmw`/`lmw` for 3-register saves.
+When using `-O4,s`, also add `-func_align 4` explicitly to prevent default
+16-byte function alignment from expanding the `.text` section:
+
+```python
+Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp",
+    extra_cflags=["-O4,s", "-func_align 4"]),
+```
+
+**Example:** `func_eu_804F9E98` (0x48) — `-O4,p` generated 88 bytes with
+3×`stw`/`lwz`; `-O4,s`+`-func_align 4` generated 72 bytes with `stmw`/`lmw`,
+matching retail exactly.
+
+## monolib __sinit_ functions — BSS symbol naming
+
+### Pattern
+
+The `__sinit_` function for a TU with `static` class members allocated in `.bss`
+can generate section-relative relocation symbols (`...bss.0`) instead of the
+mangled names (`zero__Q22ml5CVec4`) that the retail object uses.
+
+### Fix
+1. **Float literal pool:** Declare `extern const float lbl_eu_<addr>;` at TU
+   top and use those variables in static-initializer constructor calls instead
+   of literal float values (`CCol3(lbl_eu_8066A220, ...)` vs `CCol3(1,1,1)`).
+   This forces MWCC to emit SDA21 relocations referencing the shared DOL
+   `.sdata2` pool rather than TU-local `@N` pool entries.
+2. **BSS symbols:** Add a `postprocess_reloc_names.py` `UnitRules` entry with
+   `exact_renames=(("...bss.0", "zero__Q22ml5CVec4"),)` to rename the
+   section-relative BSS symbol to the mangled name expected by retail.
+
+### Affected files (this pass)
+- `libs/monolib/src/math/CVec4.cpp` — `extern const float lbl_eu_8066A1F0/1F4`
+- `libs/monolib/src/math/CCol3.cpp` — `extern const float lbl_eu_8066A220/224/228`
+- `libs/monolib/src/math/CCol4.cpp` — `extern const float lbl_eu_8066A230/234/238`
+- `libs/monolib/src/math/CMat44.cpp` — `extern const float lbl_eu_8066A258/25C`
+- `tools/postprocess_reloc_names.py` — added UnitRules entries for CVec4.o,
+  CCol3.o, CCol4.o, FloatUtils.o, CCamUtil.o
+
+### Functions accepted
+- `__sinit_\CCol3_cpp`: EQUIVALENT_MATCH (99.8%, fuzzy)
+- `__sinit_\CCol4_cpp`: EQUIVALENT_MATCH (99.9%, fuzzy)
+- `__sinit_\CMat44_cpp`: EQUIVALENT_MATCH (99.2%, fuzzy)
+- `__sinit_\CVec4_cpp`: EQUIVALENT_MATCH (99.7%, fuzzy)
+- `isErrFloat__Q22ml4mathFf`: FULL_MATCH (100.0%)
+
+### CCamUtil::getXYZ2ZXY — stall
+- Target: `us-80435a18`, `ml::CCamUtil::getXYZ2ZXY(CVec3&, CVec3 const&)`
+- Best result: 99.09% (160 instructions, 11 pure reg-swaps)
+- Relocation naming fixed via post-process pool patterns
+- EQUIVALENT_MATCH blocked by: 5 external callees (nw4r SinFIdx, CosFIdx,
+  Atan2FIdx, Warning, asin) without equivalence certificates
+- FULL_MATCH blocked by: 11 Chaitin FPR reg-swaps inside inlined CMat33
+  methods (setRotXYZ/getRotZXY) that cannot be resolved without changing
+  CMat33.hpp (shared header affecting other TUs)
+- Ruled-out hypotheses:
+  * Inlining rotXYZ computation directly (same reg allocation)
+  * Block-scoping sin/cos locals (no effect on Chaitin)
+  * Reordering locals (same allocation)
+- Suggested next experiments: provide callee contracts for nw4r functions;
+  explicit `-ipa file` or `-O4,s` per-object flags;
+  manual CMat33 inline with `DECOMP_PPC_*` intrinsics (§17.6)

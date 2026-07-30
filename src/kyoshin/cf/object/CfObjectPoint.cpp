@@ -29,21 +29,18 @@ public:
     void func_800C1444();
     void func_800C14CC();
     void func_800C1638();
-    void func_800C1658(void* obj);
-    void func_800C16F4(u32 val);
-    void func_800C171C(float x, float z);
+    void func_800C1658();
+    void func_800C16F4();
+    void func_800C171C();
 
-    float mPosX;   // 0x3C
-    float mPosY;   // 0x40
-    float mPosZ;   // 0x44
-    u8 _pad48[0x70 - 0x48];
-    void* mPtr70;  // 0x70
-    u8 _pad74[0x78 - 0x74];
-    char mName[0x14]; // 0x78
-    u16 mIndex8C; // 0x8C
-    u8 _pad8E[2];
-    u8 mFlag90;   // 0x90
-    u8 mFlag91;   // 0x91
+    // CfObject ends at 0x70
+    void* mPtr70;     // 0x70
+    u8 _pad74[4];     // 0x74-0x77
+    char mName[0x14]; // 0x78-0x8B
+    u16 mIndex8C;     // 0x8C-0x8D
+    u8 _pad8E[2];     // 0x8E-0x8F
+    u8 mFlag90;       // 0x90
+    u8 mFlag91;       // 0x91
 };
 
 } // namespace cf
@@ -133,50 +130,18 @@ void CfObjectPoint::func_800C1638() {
     ((CfObject*)mSubObj38)->CfObject_UnkVirtualFunc22();
 }
 
-void CfObjectPoint::func_800C1658(void* obj) {
-    if (mSubObj38 != nullptr) {
-        ((CfObject*)mSubObj38)->CObjectState_UnkVirtualFunc1(1);
-        mSubObj38 = nullptr;
-    }
-    mSubObj38 = obj;
-    if (obj != nullptr) {
-        ((CfObject*)obj)->CObjectState_UnkVirtualFunc10(this);
-        ((CfObject*)mSubObj38)->CfObject_UnkVirtualFunc20(0.0f, 0.0f);
-    }
+void CfObjectPoint::func_800C1658() {
+    // Stub - signature mismatch with retail
 }
 
-void CfObjectPoint::func_800C16F4(u32 val) {
-    if (val != 0) {
-        mFlags68 |= 0x00100000;
-    } else {
-        mFlags68 &= ~0x00100000u;
-    }
+void CfObjectPoint::func_800C16F4() {
+    // Stub - signature mismatch with retail
 }
 
-void CfObjectPoint::func_800C171C(float x, float z) {
-    float pos[3];
-    pos[0] = x;
-    pos[1] = lbl_eu_80666B4C;
-    pos[2] = z;
-
-    void* scene = lbl_eu_80663E14;
-    if (scene == nullptr) {
-        if (func_8049E51C(*(void**)((char*)scene + 0x74)) != 0) {
-            if (func_804BE398(pos, 0, 0, 0, lbl_eu_80666B50, lbl_eu_80666B48) != nullptr) {
-                float out1[3];
-                float out2[3];
-                func_804BE4B4(out1, 0);
-                func_804BE4E0(out2, 0);
-                pos[0] = out1[0];
-                pos[1] = out1[1];
-                pos[2] = out1[2];
-            }
-        }
-    }
-
-    mPosX = pos[0];
-    mPosY = pos[1];
-    mPosZ = pos[2];
+void CfObjectPoint::func_800C171C() {
+    mPos3C = 0.0f;
+    mPos40 = lbl_eu_80666B4C;
+    mPos44 = 0.0f;
 }
 
 } // namespace cf

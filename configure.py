@@ -1837,7 +1837,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/effect/code_804D9274.cpp"),
             Object(NonMatching, "monolib/src/nand/CNand.cpp"),
             Object(NonMatching, "monolib/src/nand/CNReqtaskSave.cpp"),
-            Object(NonMatching, "monolib/src/nand/CNReqtaskLoad.cpp"),
+            Object(NonMatching, "monolib/src/nand/CNReqtaskLoad.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "monolib/src/nand/CNReqtaskReaddir.cpp"),
             Object(NonMatching, "monolib/src/nand/CNReqtaskRemove.cpp"),
             Object(NonMatching, "monolib/src/nand/CNReqtaskCheck.cpp"),
@@ -1859,7 +1859,7 @@ config.libs = [
             Object(MatchingFor("jp"), "monolib/src/util/CErrorWii.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "monolib/src/core/code_804EE558.cpp"),
             Object(NonMatching, "monolib/src/core/code_804F0258.cpp"),
-            Object(NonMatching, "monolib/src/nand/CNReqtaskSaveBanner.cpp"),
+            Object(NonMatching, "monolib/src/nand/CNReqtaskSaveBanner.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "monolib/src/nand/CNBanner.cpp"),
             Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp", extra_cflags=["-O4,s", "-func_align 4"]), #EU/US only
         ],

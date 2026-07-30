@@ -7,6 +7,8 @@
 #include "monolib/math/CMat34.hpp"
 
 struct CGXCache {
+    void* unk4;
+    u8 unk510[0xC];
     ~CGXCache();
     void func_80449D68();
     void func_8044A578();
@@ -33,8 +35,6 @@ struct CGXCache {
     void func_8044BFC0();
     void func_8044C034();
     void func_8044C1FC();
-    void func_8044CE68(u32 cmd);
-    void* func_8044CEF8(u32 cmd);
     void func_8044CF74() const;
 };
 
@@ -99,7 +99,7 @@ void CGXCache::func_8044B168() {}
 
 void func_8044B294__8CGXCacheFUl(void) {}
 
-void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
 struct C1FCMsgEntry {
     u32 command;
     u32 wid;
@@ -144,18 +144,21 @@ void CGXCache::func_8044B298(void* a, void* b, void* c) {
 
     // Keep b in r31 across the function like retail (null → this+0x4A8).
     insetPair = (u32*)b;
+    {
         u32* a32 = (u32*)a;
         u32 w0 = a32[0];
         u32 w1 = a32[1];
         *(u32*)&cache->rect4A8[2] = w1;
         *(u32*)&cache->rect4A8[0] = w0;
     }
+    {
         u32* c32 = (u32*)c;
         u32 w0 = c32[0];
         u32 w1 = c32[1];
         *(u32*)&cache->rect4B0[2] = w1;
         *(u32*)&cache->rect4B0[0] = w0;
     }
+    {
         insetPair = reinterpret_cast<u32*>(cache->rect4A8);
     }
 
@@ -170,6 +173,7 @@ void CGXCache::func_8044B298(void* a, void* b, void* c) {
     for (u32 n = cache->mSize; n != 0; n--) {
         idx = cache->mFront + i;
         slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
+        if (cache->mArrayPtr[slot].command == 0x0d) {
             goto found_b;
         }
         i++;
@@ -188,8 +192,10 @@ found_b:
     func_8044CE68__8CGXCacheFv(&unk4, 0xb);
 
     i = 0;
+    for (u32 n = cache->mSize; n != 0; n--) {
         idx = cache->mFront + i;
         slot = idx - (idx / cache->mCapacity) * cache->mCapacity;
+        if (cache->mArrayPtr[slot].command == 0x0d) {
             goto found_c;
         }
         i++;
@@ -292,22 +298,21 @@ void CGXCache::func_8044C034() {
         tevStage++;
     }
     tevStage = 0;
+    while (tevStage < 0x10) {
         GXSetTevDirect((GXTevStageID)tevStage);
         tevStage++;
     }
 }
 
-extern "C" {
 GXRenderModeObj* getRenderModeObj__9CDeviceVIFv();
 extern const f32 lbl_eu_8066A37C;
 extern const f32 lbl_eu_8066A3A0;
 extern const f32 lbl_eu_8066A3A4;
 extern u32 lbl_eu_80663644;
-void func_8044BE3C__8CGXCacheFv(void* self);
-void func_8044C034__8CGXCacheFv(void* self);
-void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
-void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
-}
+extern "C" void func_8044BE3C__8CGXCacheFv(void* self);
+extern "C" void func_8044C034__8CGXCacheFv(void* self);
+extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd);
+extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd);
 
 #pragma dont_inline on
 void CGXCache::func_8044C1FC() {
@@ -419,17 +424,19 @@ void CGXCache::func_8044C1FC() {
     d1 = cache->rect4A8[1] - cache->rect4B0[1];
     cache->rect4B0[2] = stack4A8[2];
     cache->rect4B0[3] = stack4A8[3];
-
     {
         s32 found_B = -1;
         u32 i_B;
+        for (i_B = 0; i_B < cache->mSize; i_B++) {
             u32 idx_B = cache->mFront + i_B;
             u32 slot_B = idx_B - (idx_B / cache->mCapacity) * cache->mCapacity;
+            if (cache->mArrayPtr[slot_B].command == 0x0D) {
                 found_B = (s32)i_B;
                 break;
             }
         }
-        {
+        if (found_B != -1) {
+            
             u32 idx2_B = cache->mFront + (u32)found_B;
             u32 slot2_B = idx2_B - (idx2_B / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_B = &cache->mArrayPtr[slot2_B];
@@ -439,17 +446,19 @@ void CGXCache::func_8044C1FC() {
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0xB);
     }
-
     {
         s32 found_C = -1;
         u32 i_C;
+        for (i_C = 0; i_C < cache->mSize; i_C++) {
             u32 idx_C = cache->mFront + i_C;
             u32 slot_C = idx_C - (idx_C / cache->mCapacity) * cache->mCapacity;
+            if (cache->mArrayPtr[slot_C].command == 0x0D) {
                 found_C = (s32)i_C;
                 break;
             }
         }
-        {
+        if (found_C != -1) {
+            
             u32 idx2_C = cache->mFront + (u32)found_C;
             u32 slot2_C = idx2_C - (idx2_C / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_C = &cache->mArrayPtr[slot2_C];
@@ -459,17 +468,19 @@ void CGXCache::func_8044C1FC() {
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0xC);
     }
-
     {
         s32 found_4 = -1;
         u32 i_4;
+        for (i_4 = 0; i_4 < cache->mSize; i_4++) {
             u32 idx_4 = cache->mFront + i_4;
             u32 slot_4 = idx_4 - (idx_4 / cache->mCapacity) * cache->mCapacity;
+            if (cache->mArrayPtr[slot_4].command == 0x03) {
                 found_4 = (s32)i_4;
                 break;
             }
         }
-        {
+        if (found_4 != -1) {
+            
             u32 idx2_4 = cache->mFront + (u32)found_4;
             u32 slot2_4 = idx2_4 - (idx2_4 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_4 = &cache->mArrayPtr[slot2_4];
@@ -478,17 +489,19 @@ void CGXCache::func_8044C1FC() {
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x4);
     }
-
     {
         s32 found_5 = -1;
         u32 i_5;
+        for (i_5 = 0; i_5 < cache->mSize; i_5++) {
             u32 idx_5 = cache->mFront + i_5;
             u32 slot_5 = idx_5 - (idx_5 / cache->mCapacity) * cache->mCapacity;
+            if (cache->mArrayPtr[slot_5].command == 0x04) {
                 found_5 = (s32)i_5;
                 break;
             }
         }
-        {
+        if (found_5 != -1) {
+            
             u32 idx2_5 = cache->mFront + (u32)found_5;
             u32 slot2_5 = idx2_5 - (idx2_5 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_5 = &cache->mArrayPtr[slot2_5];
@@ -497,17 +510,19 @@ void CGXCache::func_8044C1FC() {
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x5);
     }
-
     {
         s32 found_6 = -1;
         u32 i_6;
+        for (i_6 = 0; i_6 < cache->mSize; i_6++) {
             u32 idx_6 = cache->mFront + i_6;
             u32 slot_6 = idx_6 - (idx_6 / cache->mCapacity) * cache->mCapacity;
+            if (cache->mArrayPtr[slot_6].command == 0x04) {
                 found_6 = (s32)i_6;
                 break;
             }
         }
-        {
+        if (found_6 != -1) {
+            
             u32 idx2_6 = cache->mFront + (u32)found_6;
             u32 slot2_6 = idx2_6 - (idx2_6 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_6 = &cache->mArrayPtr[slot2_6];
@@ -516,17 +531,19 @@ void CGXCache::func_8044C1FC() {
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x6);
     }
-
     {
         s32 found_7 = -1;
         u32 i_7;
+        for (i_7 = 0; i_7 < cache->mSize; i_7++) {
             u32 idx_7 = cache->mFront + i_7;
             u32 slot_7 = idx_7 - (idx_7 / cache->mCapacity) * cache->mCapacity;
+            if (cache->mArrayPtr[slot_7].command == 0x04) {
                 found_7 = (s32)i_7;
                 break;
             }
         }
-        {
+        if (found_7 != -1) {
+            
             u32 idx2_7 = cache->mFront + (u32)found_7;
             u32 slot2_7 = idx2_7 - (idx2_7 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_7 = &cache->mArrayPtr[slot2_7];
@@ -535,17 +552,19 @@ void CGXCache::func_8044C1FC() {
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x7);
     }
-
     {
         s32 found_8 = -1;
         u32 i_8;
+        for (i_8 = 0; i_8 < cache->mSize; i_8++) {
             u32 idx_8 = cache->mFront + i_8;
             u32 slot_8 = idx_8 - (idx_8 / cache->mCapacity) * cache->mCapacity;
+            if (cache->mArrayPtr[slot_8].command == 0x04) {
                 found_8 = (s32)i_8;
                 break;
             }
         }
-        {
+        if (found_8 != -1) {
+            
             u32 idx2_8 = cache->mFront + (u32)found_8;
             u32 slot2_8 = idx2_8 - (idx2_8 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_8 = &cache->mArrayPtr[slot2_8];
@@ -554,17 +573,19 @@ void CGXCache::func_8044C1FC() {
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x8);
     }
-
     {
         s32 found_0 = -1;
         u32 i_0;
+        for (i_0 = 0; i_0 < cache->mSize; i_0++) {
             u32 idx_0 = cache->mFront + i_0;
             u32 slot_0 = idx_0 - (idx_0 / cache->mCapacity) * cache->mCapacity;
+            if (cache->mArrayPtr[slot_0].command == 0x03) {
                 found_0 = (s32)i_0;
                 break;
             }
         }
-        {
+        if (found_0 != -1) {
+            
             u32 idx2_0 = cache->mFront + (u32)found_0;
             u32 slot2_0 = idx2_0 - (idx2_0 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_0 = &cache->mArrayPtr[slot2_0];
@@ -573,17 +594,19 @@ void CGXCache::func_8044C1FC() {
         }
         func_8044CE68__8CGXCacheFv(msgSelf, 0x0);
     }
-
     {
         s32 found_9 = -1;
         u32 i_9;
+        for (i_9 = 0; i_9 < cache->mSize; i_9++) {
             u32 idx_9 = cache->mFront + i_9;
             u32 slot_9 = idx_9 - (idx_9 / cache->mCapacity) * cache->mCapacity;
+            if (cache->mArrayPtr[slot_9].command == 0x03) {
                 found_9 = (s32)i_9;
                 break;
             }
         }
-        {
+        if (found_9 != -1) {
+            
             u32 idx2_9 = cache->mFront + (u32)found_9;
             u32 slot2_9 = idx2_9 - (idx2_9 / cache->mCapacity) * cache->mCapacity;
             C1FCMsgEntry* e_9 = &cache->mArrayPtr[slot2_9];
@@ -625,16 +648,15 @@ struct MsgParam32Ring {
     void* field7;
 };
 
-void CGXCache::func_8044CE68(u32 cmd) {
-    void* saved = this;
-    MsgParam32Ring* ring = (MsgParam32Ring*)this;
+extern "C" void func_8044CE68__8CGXCacheFv(void* self, u32 cmd) {
+    void* saved = self;
+    MsgParam32Ring* ring = (MsgParam32Ring*)self;
     u32 i;
 
-    // Ascending `i < mSize` → mtctr + cmplwi/ble (same as C1FC ring walk).
-    // Residual vs retail: early `mr r9,r3` (decomp late-copies at dispatch)
-    // and match `beq` vs retail `bne+8; b` (+4B → 140/144).
+    for (i = 0; i < ring->mSize; i++) {
         u32 idx = ring->mFront + i;
         u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
+        if (ring->mArrayPtr[slot].command == cmd) {
             goto dispatch;
         }
     }
@@ -645,18 +667,20 @@ dispatch:
         u32 idx = base->mFront + i;
         u32 slot = idx - (idx / base->mCapacity) * base->mCapacity;
         MsgParam32Entry* entry = &base->mArrayPtr[slot];
-        this = ((MsgParam32Ring*)this)->field7;
-        void** vtbl = *(void***)this;
-        ((void (*)(void*, u32, void*))vtbl[3])(this, cmd, &entry->wid);
+        self = ((MsgParam32Ring*)self)->field7;
+        void** vtbl = *(void***)self;
+        ((void (*)(void*, u32, void*))vtbl[3])(self, cmd, &entry->wid);
     }
 }
 
-void* CGXCache::func_8044CEF8(u32 cmd) {
-    MsgParam32Ring* ring = (MsgParam32Ring*)this;
+extern "C" void* func_8044CEF8__8CGXCacheFv(void* self, u32 cmd) {
+    MsgParam32Ring* ring = (MsgParam32Ring*)self;
     u32 i;
 
+    for (i = 0; i < ring->mSize; i++) {
         u32 idx = ring->mFront + i;
         u32 slot = idx - (idx / ring->mCapacity) * ring->mCapacity;
+        if (ring->mArrayPtr[slot].command == cmd) {
             goto found_entry;
         }
     }

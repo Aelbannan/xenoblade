@@ -1,4 +1,4 @@
-// CScnMaruShadowNw4r — scene shadow rendering (nw4r framework)
+// CScnMaruShadowNw4r -- scene shadow rendering (nw4r framework)
 //
 // Translation unit contains:
 //   - CScnMaruShadowNw4r constructor/destructor
@@ -6,8 +6,8 @@
 //   - Static initializer registered in .ctors
 //
 // FULL_MATCH functions:
-//   func_8048EA9C — returns 1 (capability check / stub)
-//   sinit_8048EAA4 — static initializer (empty, .ctors registration)
+//   func_8048EA9C -- returns 1 (capability check / stub)
+//   sinit_8048EAA4 -- static initializer (empty, .ctors registration)
 
 #include <harness_catalog.h>
 
@@ -51,31 +51,31 @@ void func_8048E67C(void* obj, int condition) {
 // us-80492710: func_8048E69C (0x39C bytes)
 void func_8048E69C(){}
 
-// us-80492aac: func_8048EA38 (0x8 bytes) — stores float to sda21 global
+// us-80492aac: func_8048EA38 (0x8 bytes) -- stores float to sda21 global
 void func_8048EA38(){}
 
-// us-80492ab4: func_8048EA40 (0x8 bytes) — loads float from sda21 global
+// us-80492ab4: func_8048EA40 (0x8 bytes) -- loads float from sda21 global
 float func_8048EA40()
 {
     extern float lbl_eu_80663964;
     return lbl_eu_80663964;
 }
 
-// us-80492abc: func_8048EA48 (0x2C bytes) — sets/clears flag 0x80 in halfword + stores float
+// us-80492abc: func_8048EA48 (0x2C bytes) -- sets/clears flag 0x80 in halfword + stores float
 void func_8048EA48(){}
 
-// us-80492ae8: func_8048EA74 (0x28 bytes) — sets/clears flag 0x100 in halfword
+// us-80492ae8: func_8048EA74 (0x28 bytes) -- sets/clears flag 0x100 in halfword
 void func_8048EA74(){}
 
 // --- FULL_MATCH functions ---
 
-// func_8048EA9C — capability check stub, always returns true.
+// func_8048EA9C -- capability check stub, always returns true.
 // Retail: li r3, 1; blr  (8 bytes)
 extern "C" int func_8048EA9C() { return 1; }
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 
-// sinit_8048EAA4 — static initializer registered in .ctors.
+// sinit_8048EAA4 -- static initializer registered in .ctors.
 // Empty body; used as constructor hook for the TU.
 // Retail: blr  (4 bytes)
 extern "C" void sinit_8048EAA4() {}

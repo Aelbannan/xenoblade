@@ -1,8 +1,27 @@
 // Auto-scaffolded catalog TU for monolib/src/lod/CLODCacheManagerS
 // Replace stubs with high-level C/C++ during decomp.
 
-using namespace LOD;
 #include <harness_catalog.h>
+#include "monolib/lod/LODMemMan.hpp"
+
+namespace LOD {
+struct CLODCacheManagerS {
+    void func_804630C0();
+    void func_80463118();
+    void func_8046323C();
+    void func_8046339C();
+    void func_80463590();
+};
+struct UnkClass_8046368C {
+    void func_8046368C() const;
+    void func_8046369C() const;
+    void func_804636AC() const;
+    void func_8046374C() const;
+    void func_8046375C() const;
+};
+}
+
+using namespace LOD;
 
 extern "C" void* lbl_eu_80665738;
 extern "C" void* lbl_eu_8066573C;

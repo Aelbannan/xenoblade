@@ -44,6 +44,7 @@ public:
     void renderRect(const ml::CRect16& r4);
     void renderCube(const ml::CVec3& r4, const ml::CVec3& r5);
     void renderCircle(const ml::CVec3& pos, int verts, float r);
+    void setGXCacheId(u32 id) { unk1C = id; }
 
     void setFlag4(){
         setFlag(FLAG_4, true);

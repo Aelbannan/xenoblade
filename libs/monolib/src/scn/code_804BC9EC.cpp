@@ -3,9 +3,12 @@
 
 #include <harness_catalog.h>
 #include <monolib/scn/code_804BC9EC.hpp>
-#include <PowerPC_EABI_Support/Runtime/NMWException.h>
 #include <revolution/GX.h>
 #include <revolution/MTX.h>
+
+// Forward-declare __register_global_object instead of including NMWException.h
+// (which conflicts with __ppc_eabi_init.h's _stack_addr declaration)
+extern "C" void* __register_global_object(void* object, void* destructor, void* registration);
 
 // Entry in the top-level chunk list (8 bytes each)
 struct ScnResEntry {

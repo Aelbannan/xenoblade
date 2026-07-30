@@ -4949,7 +4949,18 @@ static ui32 TRK_ISR_OFFSETS[NUM_EXCEPTIONS] = {
 
 static ui32* lc_base;
 
-static void InitMetroTRK_Inner(ui32 hwId) {
+// r5: hardware id at entry (non-standard ABI from boot code).
+// The entire function body is inline asm + C calls; InitMetroTRK_Inner
+// is NOT a separate function — retail inlines everything into one .text
+// entry with no extra prologue/epilogue.
+void InitMetroTRK(void) {
+    // Capture hardware ID from r5 right away (non-standard ABI).
+    // r5 survives through the save/restore and TRKSaveExtended1Block
+    // because the save block saves r0-r31 (including r5) to gTRKCPUState
+    // and the restore block reloads them all, so r5 retains hwId.
+    ui32 hwId;
+    asm { mr r3, r5; stw r3, hwId }
+
     // Save the CPU state: all GPRs, LR, CR, and MSR are captured into
     // gTRKCPUState so the debugger can inspect the pre-exception context.
     DECOMP_ASM_INSN_BEGIN
@@ -4991,14 +5002,10 @@ static void InitMetroTRK_Inner(ui32 hwId) {
         mtspr DABR, r0
         lis r1, _db_stack_addr@h
         ori r1, r1, _db_stack_addr@l
-        mr r3, r5
     }
     DECOMP_ASM_INSN_END
 
     if (InitMetroTRKCommTable(hwId) == 1) {
-        // BUG: the code originally reloaded gTRKCPUState here, but as-is it
-        // reads the return value of InitMetroTRKCommTable as a TRKCPUState
-        // pointer, causing the CPU to return to a garbage code address.
         DECOMP_ASM_INSN_BEGIN
         asm {
             lwz r4, 0x84(r3)
@@ -5010,28 +5017,6 @@ static void InitMetroTRK_Inner(ui32 hwId) {
     }
 
     TRK_main();
-}
-
-// r5: hardware id
-void InitMetroTRK(void) {
-    ui32 hwId;
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        mr r3, r5
-    }
-    DECOMP_ASM_INSN_END
-    // The hardware ID is passed in r5 by the boot code (not via the standard
-    // C calling convention). Read it into a local so we can forward it.
-    hwId = *(ui32*)__builtin_return_address(0); // placeholder
-    // Actually, r5 holds the hardware ID at entry. We need to capture it.
-    // Use inline asm to move r5 into a C variable.
-    DECOMP_ASM_INSN_BEGIN
-    asm {
-        // r3 already holds the hwId from the mr above; store it
-        stw r3, hwId
-    }
-    DECOMP_ASM_INSN_END
-    InitMetroTRK_Inner(hwId);
 }
 
 void InitMetroTRK_BBA(void) {

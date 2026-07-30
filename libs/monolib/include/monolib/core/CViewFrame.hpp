@@ -5,6 +5,7 @@
 
 class CWorkThread;
 class CView;
+class CDrawGX;
 
 namespace ml {
 // Distinct from CRect16 in MWCC mangling (Q22ml5CRect); same 8-byte layout.
@@ -22,6 +23,7 @@ public:
     void CView_UnkVirtualFunc1();
     void CView_UnkVirtualFunc8();
     void CView_UnkVirtualFunc9();
+    void func_804409D0(CDrawGX* draw, ml::CRect16* rect);
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4

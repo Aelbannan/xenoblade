@@ -114,10 +114,12 @@ void CToken::func_8043AA68(char* pOutBuffer, int bufferLen, const char* pName) {
     pOutBuffer[nameLen] = '\0';
 }
 
-void CToken::func_8043AB14() {
+char* CToken::func_8043AB14(char* pInput, int tokenIndex) {
     // Stub — not yet matched
+    return pInput;
 }
 
-void CToken::func_8043ABD4() {
+bool CToken::func_8043ABD4(const char* pInput, const char* mode) {
     // Stub — not yet matched
+    return false;
 }

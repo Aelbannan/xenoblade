@@ -67,7 +67,9 @@ void getScissorRect1(ml::CRect16* out, const CSplitFrame* self) {
     s32 u = (t >> 1) - (t & (s32)sum);
     s16 flag = (s16)((u32)u >> 31);
 
+    if (flag) {
         edge = (s16)(sy + sh);
+        if (boundH > edge) {
             edge = boundH;
         }
         mask = ((-(s32)sy) & ~(s32)sy) >> 31;
@@ -79,6 +81,7 @@ void getScissorRect1(ml::CRect16* out, const CSplitFrame* self) {
         flag = (s16)((u32)u >> 31);
     }
 
+    if (flag) {
         out->mPos.x = 0;
         out->mPos.y = 0;
         out->mSize.x = 0;
@@ -94,9 +97,11 @@ void getScissorRect1(ml::CRect16* out, const CSplitFrame* self) {
     y0 = (s16)((s32)sy & ~mask);
 
     s16 x1 = (s16)(sx + sw);
+    if (x1 > boundW) {
         x1 = boundW;
     }
     s16 y1 = (s16)(sy + sh);
+    if (y1 > boundH) {
         y1 = boundH;
     }
 
@@ -139,6 +144,7 @@ void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
     s16 sh = split.mSize.y;
 
     s16 edge = (s16)(sx + sw);
+    if (edge > boundW) {
         edge = boundW;
     }
     s32 mask = ((-(s32)sx) & ~(s32)sx) >> 31;
@@ -149,7 +155,9 @@ void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
     s32 u = (t >> 1) - (t & (s32)sum);
     s16 flag = (s16)((u32)u >> 31);
 
+    if (flag) {
         edge = (s16)(sy + sh);
+        if (edge > boundH) {
             edge = boundH;
         }
         mask = ((-(s32)sy) & ~(s32)sy) >> 31;
@@ -161,6 +169,7 @@ void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
         flag = (s16)((u32)u >> 31);
     }
 
+    if (flag) {
         out->mPos.x = 0;
         out->mPos.y = 0;
         out->mSize.x = 0;
@@ -176,9 +185,11 @@ void getScissorRect2(ml::CRect16* out, const CSplitFrame* self) {
     y0 = (s16)((s32)sy & ~mask);
 
     s16 x1 = (s16)(sx + sw);
+    if (x1 > boundW) {
         x1 = boundW;
     }
     s16 y1 = (s16)(sy + sh);
+    if (y1 > boundH) {
         y1 = boundH;
     }
 

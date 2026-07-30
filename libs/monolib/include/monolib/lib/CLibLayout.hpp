@@ -7,14 +7,24 @@
 class CLibLayout : public CWorkThread {
 public:
     CLibLayout(const char* pName, CWorkThread* pParent);
+    virtual ~CLibLayout();
 
     DECL_WORKTHREAD_CREATE(CLibLayout);
 
     static bool isInitialized();
     static CLibLayout* getInstance();
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
+    void getAllocHandle();
+    void createLayout();
+    void createPicture();
+    void createTextbox();
+    void deleteTextboxOrPicture();
+    void func_8045F438();
+    void func_8045F4E4();
 
     virtual void wkUpdate() override;  //0x88
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     //0x0: vtable
     //0x0-1c4: CWorkThread

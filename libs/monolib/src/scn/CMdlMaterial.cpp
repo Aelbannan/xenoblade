@@ -7,7 +7,7 @@
 #include <nw4r/g3d/res/g3d_resmdl.h>
 #include <nw4r/g3d/res/g3d_resmat.h>
 #include <nw4r/g3d/g3d_scnmdl.h>
-#include <nw4r/db/g3d_dbg.h>
+#include <nw4r/db/db_assert.h>
 #include <revolution/GX.h>
 #include <monolib/util/MemManager.hpp>
 

@@ -4,7 +4,7 @@
 #include <harness_catalog.h>
 
 struct CNBanner {
-    void CNBanner();
+    CNBanner();
     ~CNBanner();
     void OnFileEvent();
     void func_804F52F8();

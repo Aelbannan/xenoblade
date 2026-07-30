@@ -229,7 +229,7 @@ bool CViewFrame::render() {
 // @param self  CViewFrame with mBorder thickness and mFrameColor.
 // @param draw  Target CDrawGX draw context.
 // @param rect  Bounding rectangle of the frame area to draw.
-void CViewFrame::func_804409D0(CDrawGX* draw) {
+void CViewFrame::func_804409D0(CDrawGX* draw, ml::CRect16* rect) {
     ml::CCol4 col;
     ml::CRect16 piece;
     s16 border = this->mBorder;
@@ -406,7 +406,7 @@ extern "C" void func_8043FD10__10CViewFrameFR7CRect16PC10CViewFrame(
 
 // Detach the frame from a CWorkThread's render list. Currently a stub;
 // the retail function unlinks from a linked-list render-work chain.
-void CViewFrame::detachRenderWork() {}
+void CViewFrame::detachRenderWork(CWorkThread* pThread) {}
 
 extern "C" void func_8043FC60__10CViewFrameFUl(void* self, u32 val) {
     *(u32*)((u8*)self + 4) = val;

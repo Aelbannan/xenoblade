@@ -5,7 +5,7 @@
 
 struct CDeviceFile {
     CDeviceFile(const char* name, void* parent);
-    ~CDeviceFile(int type);
+    ~CDeviceFile();
     void cancel() const;
     void func_8044E770(void* parent);
     void func_8044E780();
@@ -36,7 +36,7 @@ void __dt___reslist_base_CFileHandle(void* self, int type){}
 
 void __dt__reslist_CFileHandle(void* self, int type){}
 
-CDeviceFile::~CDeviceFile(int type) {}
+CDeviceFile::~CDeviceFile() {}
 
 extern u32 lbl_eu_80665660;
 u32 getInstance__11CDeviceFileFv(void) { return lbl_eu_80665660; }

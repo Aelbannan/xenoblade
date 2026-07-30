@@ -1,6 +1,6 @@
 #include "monolib/lib/CLibVM.hpp"
 
-CLibVM::CLibVM() {}
+CLibVM::CLibVM(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {}
 
 extern "C" void* lbl_eu_80665720;
 extern "C" void __dt__11CWorkThreadFv(void*, int);
@@ -10,6 +10,7 @@ extern "C" CLibVM* __dt__6CLibVMFv(CLibVM* self, int deleting) {
     if (self != 0) {
         lbl_eu_80665720 = 0;
         __dt__11CWorkThreadFv(self, 0);
+        if (deleting > 0) {
             __dl__FPv(self);
         }
     }
@@ -22,10 +23,10 @@ CLibVM* CLibVM::getInstance() {
     return spInstance;
 }
 
-void CLibVM::isInitialized() {}
+bool CLibVM::isInitialized() { return false; }
 
-void CLibVM::setCallbacks(u32 a, u32 b) {}
+void CLibVM::setCallbacks(void (*callback1)(), void (*callback2)()) {}
 
-void CLibVM::wkStandbyLogin() {}
+bool CLibVM::wkStandbyLogin() { return true; }
 
-void CLibVM::wkStandbyLogout() {}
+bool CLibVM::wkStandbyLogout() { return true; }

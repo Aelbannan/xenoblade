@@ -17,7 +17,6 @@ public:
     virtual ~CSplitFrame();
 };
 
-{
 CView* lbl_eu_806655C8;
 CViewRoot* getInstance__9CViewRootFv();
 CView* getCurrent__9CViewRootFv();
@@ -51,13 +50,12 @@ void func_80442DA8__9CViewRootFv();
 void fontFlush__10CFontLayerFi(CFontLayer* layer, int flag);
 void render__10CViewFrameFv(CViewFrame* frame);
 // Incomplete arrays force lis/addi (not SDA lwz) -- same as CViewRoot::create.
-char lbl_eu_8056B298[];
-char lbl_eu_8056B280[];
-char lbl_eu_8056B6F0[];
-char lbl_eu_8056B6D8[];
-char lbl_eu_8056B6CC[];
+extern char lbl_eu_8056B298[];
+extern char lbl_eu_8056B280[];
+extern char lbl_eu_8056B6F0[];
+extern char lbl_eu_8056B6D8[];
+extern char lbl_eu_8056B6CC[];
 ml::CCol4 lbl_8065A0C8;
-}
 
 ml::CCol4 CView::sFrameColor;
 
@@ -371,6 +369,7 @@ updateMsg_loop:
             }
             break;
         }
+        }
         case 1: {
             // Attach IWorkEvent* to unk258; fan-out tag-1 msgs to child views.
             u32 msgItem = entry->wid;
@@ -384,8 +383,9 @@ updateMsg_loop:
                     node258 = node258->mNext;
                 }
                 if (node258 == sentinel258) {
-                reinterpret_cast<reslist<void*>*>(&unk258)->push_back(
-                    *reinterpret_cast<void**>(&msgItem));
+                    reinterpret_cast<reslist<void*>*>(&unk258)->push_back(
+                        *reinterpret_cast<void**>(&msgItem));
+                }
             }
 
             parentSnap = mParent;
@@ -680,7 +680,7 @@ renderView_count_fs_check:
     crossRootFlag = (u32)pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
         getWorkThread__9CWorkUtilFUl(listStart->mNext->mItem)));
 
-    listStart = unk238.mStartNodePtr;
+    listStart = reinterpret_cast<_reslist_node<WORK_ID>*>(unk238.mStartNodePtr);
     thisRoot = pssGetRoot__5CProcFP5CProc(CProc::convertToProc(
         getWorkThread__9CWorkUtilFUl(listStart->mNext->mItem)));
 
@@ -856,7 +856,7 @@ renderView_after_size_gate2:
                 draw.setCol(clearColor);
             }
         renderView_clear_begin:
-            draw.unk1C = mGXCacheId;
+            draw.setGXCacheId(mGXCacheId);
             draw.begin(PRIM_QUADS, 1);
             getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&home30,
                                                                       &mFrame);
@@ -1152,7 +1152,7 @@ renderView_self_state_end:
     goto renderView_attach_wk_check;
 
 renderView_attach_wk_body:
-    attachWork = getWorkThread__9CWorkUtilFUl(attachNode->mItem);
+    attachWork = getWorkThread__9CWorkUtilFUl(reinterpret_cast<_reslist_node<WORK_ID>*>(attachNode)->mItem);
     if (attachWork == nullptr) {
         goto renderView_attach_wk_next;
     }
@@ -1301,17 +1301,17 @@ renderView_attach_wk_check:
     fontFlush__10CFontLayerFi(static_cast<CFontLayer*>(this), 1);
 
 renderView_children:
-    childNode = (void**)mChildren.mStartNodePtr;
-    childNode = (void**)*childNode;
+    childNode = reinterpret_cast<_reslist_node<CWorkThread*>*>(mChildren.mStartNodePtr);
+    childNode = reinterpret_cast<_reslist_node<CWorkThread*>*>(childNode->mNext);
     goto renderView_child_check;
 
 renderView_child_body:
-    childView = CView::convertToView(reinterpret_cast<CWorkThread*>(childNode[2]));
+    childView = CView::convertToView(childNode->mItem);
     childView->renderView();
-    childNode = (void**)*childNode;
+    childNode = childNode->mNext;
 
 renderView_child_check:
-    if (childNode != (void**)mChildren.mStartNodePtr) {
+    if (childNode != reinterpret_cast<_reslist_node<CWorkThread*>*>(mChildren.mStartNodePtr)) {
         goto renderView_child_body;
     }
 
@@ -1320,7 +1320,7 @@ renderView_child_check:
     goto renderView_attach_after_check;
 
 renderView_attach_after_body:
-    attachWork = getWorkThread__9CWorkUtilFUl(attachNode->mItem);
+    attachWork = getWorkThread__9CWorkUtilFUl(reinterpret_cast<_reslist_node<WORK_ID>*>(attachNode)->mItem);
     if (attachWork == nullptr) {
         goto renderView_attach_after_next;
     }

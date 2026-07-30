@@ -4,7 +4,7 @@
 #include <harness_catalog.h>
 
 struct CWorkSystemCache {
-    void CWorkSystemCache();
+    CWorkSystemCache();
     ~CWorkSystemCache();
     void wkStandbyLogin();
     void wkStandbyLogout();

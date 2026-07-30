@@ -4,12 +4,9 @@
 #include <harness_catalog.h>
 
 extern "C" u32 lbl_eu_8056DC90;
-void func_80482038(void* self) { ((void(*)(void*))IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE)((char*)self + 0x2b8); }
-
-
-
-
 extern "C" void IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(void* self);
+
+void func_80482038(void* self) { ((void(*)(void*))IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE)((char*)self + 0x2b8); }
 
 extern "C" int func_80482040(void* self) { return 0; }
 

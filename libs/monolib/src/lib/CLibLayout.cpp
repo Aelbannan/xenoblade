@@ -4,7 +4,7 @@
 #include <harness_catalog.h>
 #include "monolib/lib/CLibLayout.hpp"
 
-CLibLayout::CLibLayout() {}
+CLibLayout::CLibLayout(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {}
 
 extern "C" void* __dt__8045F000(void* self, int flags) {
     if (self != 0) {
@@ -26,11 +26,11 @@ CLibLayout* CLibLayout::getInstance() {
     return lbl_eu_80665710;
 }
 
-void CLibLayout::isInitialized() {}
+bool CLibLayout::isInitialized() { return false; }
 
 void CLibLayout::createLayout() {}
 
-void CLibLayout::createArcResourceAccessor() {}
+nw4r::lyt::ArcResourceAccessor* CLibLayout::createArcResourceAccessor() { return 0; }
 
 void CLibLayout::createPicture() {}
 
@@ -41,9 +41,9 @@ void CLibLayout::deleteTextboxOrPicture() {}
 // No-op override; CLibLayout performs no per-frame work.
 void CLibLayout::wkUpdate() {}
 
-void CLibLayout::wkStandbyLogin() {}
+bool CLibLayout::wkStandbyLogin() { return true; }
 
-void CLibLayout::wkStandbyLogout() {}
+bool CLibLayout::wkStandbyLogout() { return true; }
 
 void CLibLayout::func_8045F438() {}
 

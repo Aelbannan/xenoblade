@@ -100,11 +100,11 @@ extern "C" void func_804BF8A8(CScnEnvLgtData* self) {
     // Reset the six float fields to 0.0f and the active-light count to 0.
     // The store order must match the retail (0x450 cluster first, then 0x438).
     extern const f32 lbl_eu_8066AF80;
-    f32* floats450 = reinterpret_cast<f32*>(&self->field_0x420[0x30]);  // 0x450
+    f32* floats450 = self->mAmbColor;  // 0x450
     floats450[0] = lbl_eu_8066AF80;
     floats450[1] = lbl_eu_8066AF80;
     floats450[2] = lbl_eu_8066AF80;
-    f32* floats438 = reinterpret_cast<f32*>(&self->field_0x420[0x18]);  // 0x438
+    f32* floats438 = self->mAmbColorBase;  // 0x438
     floats438[0] = lbl_eu_8066AF80;
     floats438[1] = lbl_eu_8066AF80;
     floats438[2] = lbl_eu_8066AF80;

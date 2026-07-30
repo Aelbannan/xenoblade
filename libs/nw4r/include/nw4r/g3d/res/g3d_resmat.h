@@ -610,6 +610,10 @@ public:
     ResMatChan GetResMatChan() {
         return ResMatChan(&ref().chan);
     }
+
+    void* GetResUserData() {
+        return ofs_to_ptr<void>(ref().toResUserData);
+    }
 };
 
 } // namespace g3d

@@ -160,8 +160,7 @@ void func_804C6010(void* _this, int r4, int r5) {
     if (r3 == nullptr) {
         return;
     }
-        r5 = 0;
-    }
+    r5 = 0;
     int r0 = -r4;
     r0 |= r4;
     r0 >>= 31;
@@ -198,6 +197,7 @@ void func_804C6AF4(void* ptr, int flag) {
 }
 
 void func_804C6B1C(void* r3, int r4) {
+    if (r4 != 0) {
         *(unsigned int*)((char*)r3 + 4) |= 0x80000000u;
     } else {
         *(unsigned int*)((char*)r3 + 4) &= ~0x80000000u;

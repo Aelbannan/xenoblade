@@ -4,7 +4,7 @@
 #include <harness_catalog.h>
 
 struct CWorkSystemPack {
-    void CWorkSystemPack();
+    CWorkSystemPack();
     ~CWorkSystemPack();
     void func_804DDDF4();
     void func_804DDFBC();

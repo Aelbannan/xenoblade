@@ -1,32 +1,33 @@
-// Auto-scaffolded catalog TU for CriWare/src/adx/adxt/adx_lsc
-// Replace stubs with high-level C/C++ during decomp.
-
 #include <harness_catalog.h>
 
-struct ADXT_LscCallbackParam {
-    int placeholder;
-};
-struct ADXT_LscGlobals {
-    void (*pre_callback)(struct ADXT_LscCallbackParam*);
-    struct ADXT_LscCallbackParam* pre_param;
-    void (*post_callback)(struct ADXT_LscCallbackParam*);
-    struct ADXT_LscCallbackParam* post_param;
-};
+extern void ADXCRS_Enter(void);
+extern void LSC_ExecServer(void);
+extern void ADXCRS_Leave(void);
 
-#define ADXT_LSC_GLOBALS ((struct ADXT_LscGlobals*)0x805E3328)
+extern void *lbl_eu_805E3328;
 
 void ADXT_ExecLscSvr(void) {
+    void *base = (void *)&lbl_eu_805E3328;
+    void (*cb1)(s32);
+    s32 arg1;
+    void (*cb2)(s32);
+    s32 arg2;
+
     ADXCRS_Enter();
-    
-    if (ADXT_LSC_GLOBALS->pre_callback) {
-        ADXT_LSC_GLOBALS->pre_callback(ADXT_LSC_GLOBALS->pre_param);
+
+    cb1 = *(void (**)(s32))base;
+    if (cb1 != NULL) {
+        arg1 = *(s32 *)((u8 *)base + 4);
+        cb1(arg1);
     }
-    
+
     LSC_ExecServer();
-    
-    if (ADXT_LSC_GLOBALS->post_callback) {
-        ADXT_LSC_GLOBALS->post_callback(ADXT_LSC_GLOBALS->post_param);
+
+    cb2 = *(void (**)(s32))((u8 *)base + 8);
+    if (cb2 != NULL) {
+        arg2 = *(s32 *)((u8 *)base + 12);
+        cb2(arg2);
     }
-    
+
     ADXCRS_Leave();
 }

@@ -1,6 +1,6 @@
 #include "monolib/lib/CLibG3d.hpp"
 
-CLibG3d::CLibG3d(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent) {}
+CLibG3d::CLibG3d(const char* pName, CWorkThread* pParent) : CWorkThread(pName, pParent, 0) {}
 
 CLibG3d::~CLibG3d() {}
 
@@ -9,8 +9,8 @@ CLibG3d* CLibG3d::getInstance() {
     return lbl_eu_806656F0;
 }
 
-void CLibG3d::isInitialized() {}
+bool CLibG3d::isInitialized() { return false; }
 
-void CLibG3d::wkStandbyLogin() {}
+bool CLibG3d::wkStandbyLogin() { return true; }
 
-void CLibG3d::wkStandbyLogout() {}
+bool CLibG3d::wkStandbyLogout() { return true; }

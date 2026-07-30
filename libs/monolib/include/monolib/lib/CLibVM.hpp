@@ -6,6 +6,9 @@
 class CLibVM : public CWorkThread {
 public:
     CLibVM(const char* pName, CWorkThread* pParent);
+    virtual ~CLibVM();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     DECL_WORKTHREAD_CREATE(CLibVM);
 

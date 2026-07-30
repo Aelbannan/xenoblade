@@ -2,7 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-#include "monolib/scn/CVirtualLightObj.hpp"
+#include "libs/monolib/src/scn/CVirtualLightObj.hpp"
 
 // Sets byte at offset 0x1174.
 extern "C" void func_804954AC(CVirtualLightObj* self, u8 val) {

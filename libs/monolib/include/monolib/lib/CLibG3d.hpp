@@ -6,6 +6,9 @@
 class CLibG3d : public CWorkThread {
 public:
     CLibG3d(const char* pName, CWorkThread* pParent);
+    virtual ~CLibG3d();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     DECL_WORKTHREAD_CREATE(CLibG3d);
 

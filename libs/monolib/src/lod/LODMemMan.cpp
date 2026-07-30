@@ -20,7 +20,7 @@ void LOD::LODMemMan::func_8046F088() {
 
 LOD::LODMemMan::LODMemMan() {}
 
-void LOD::LODMemMan::~LODMemMan() {}
+LOD::LODMemMan::~LODMemMan() {}
 
 void __dt__8046D144(){}
 
@@ -166,7 +166,7 @@ void LOD::LODMemMan::func_80471BC8() {}
 
 void LOD::LODMemMan::func_80471BF4() {}
 
-void LOD::LODMemMan::func_80471CC4() { func_804716B8__Q23LOD9LODMemManFv(); }
+void LOD::LODMemMan::func_80471CC4() { LOD::LODMemMan::func_804716B8(); }
 
 void LOD::LODMemMan::func_80471CCC() {}
 

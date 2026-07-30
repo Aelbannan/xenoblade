@@ -3,16 +3,6 @@
 
 #include <harness_catalog.h>
 
-u32 func_8049C430(void* self) { return *(u32*)((u8*)self + 0x188); }
-
-u32 func_8049C430(void* self) { return *(u32*)((u8*)self + 0x188); }
-
-u32 func_8049C430(void* self) { return *(u32*)((u8*)self + 0x188); }
-
-u32 func_8049C430(void* self) { return *(u32*)((u8*)self + 0x188); }
-
-u32 func_8049C430(void* self) { return *(u32*)((u8*)self + 0x188); }
-
 extern void func_80495E60();
 void func_8049BEA4(void* self){ func_80495E60(); }
 
@@ -21,10 +11,6 @@ void func_8049BEAC(void* self){ func_80484E5C(); }
 
 extern void func_804838DC();
 void func_8049BEB4(void* self){ func_804838DC(); }
-
-u32 func_8049C430(void* self) { return *(u32*)((u8*)self + 0x188); }
-
-u32 func_8049C430(void* self) { return *(u32*)((u8*)self + 0x188); }
 
 extern void func_8048315C();
 void func_8049BEE4(void* self){ func_8048315C(); }

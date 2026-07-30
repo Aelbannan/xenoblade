@@ -2,14 +2,36 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
-#include "monolib/device/CDeviceFont.hpp"
+
+struct CDeviceFont {
+    CDeviceFont(const char* pName, void* pParent);
+    ~CDeviceFont();
+    void func_804525D4();
+    void func_804525F0();
+    void func_80452690();
+    void func_8045271C();
+    void func_804527A4();
+    void func_8045283C();
+    void func_804528C4();
+    void func_8045294C();
+    void func_804529D4();
+    void func_80452B78();
+    void func_80452C10();
+    void func_eu_804558F4();
+    void func_80452CF8() const;
+    void func_80452D80();
+    void wkUpdate();
+    void wkRender();
+    void wkStandbyLogin();
+    void wkStandbyLogout();
+};
 
 struct CDeviceFontInfo {
     ~CDeviceFontInfo();
 };
 
 
-CDeviceFont::CDeviceFont(const char* pName, CWorkThread* pParent) : CDeviceBase(pName, pParent, 0) {}
+CDeviceFont::CDeviceFont(const char* pName, void* pParent) {}
 
 void __dt___reslist_base_IDeviceFontInfo(){}
 

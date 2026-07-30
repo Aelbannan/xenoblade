@@ -46,8 +46,6 @@ void func_804B4854(){}
 
 void func_804B49B8(){}
 
-CTaskColiManager::~CTaskColiManager() {}
-
 void func_804B4BDC(){}
 
 void func_804B4C7C(){}
@@ -104,7 +102,7 @@ void func_804B54D4(){}
 
 void func_804B5658(){}
 
-void CTaskColiManager::create() {}
+CTaskColiManager* CTaskColiManager::create() { return 0; }
 
 // --- Explicit template specializations for CTTask<CTaskColiManager> ---
 template<> CTTask<CTaskColiManager>::~CTTask() {}

@@ -14,7 +14,7 @@ MPFDrawBillboard* MPFDrawBillboard::getInstance(){
         lbl_eu_806658A4 = &lbl_eu_8056DC48;
         lbl_eu_806658A0 = 1;
     }
-    return lbl_eu_806658A4;
+    return (mpfsys::MPFDrawBillboard*)&lbl_eu_806658A4;
 }
 
 } // namespace mpfsys

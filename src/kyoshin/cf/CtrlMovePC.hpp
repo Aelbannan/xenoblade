@@ -25,7 +25,16 @@ namespace cf {
 class CCtrlMovePC {
 public:
     // --- base class (CCtrlMoveBase) region 0x00..0x4B ---
-    char mBase[0x48];          // 0x00 base fields incl. primary vtable
+    char mBase00[0x30];        // 0x00 primary vtable + base fields
+    void* mBase30;             // 0x30 (NULL-init)
+    void* mBaseData;           // 0x34 ctor param (data ptr)
+    f32 mBase38;               // 0x38
+    f32 mBase3C;               // 0x3C
+    u16 mBase40;               // 0x40
+    u16 mBase42;               // 0x42
+    u8 mBase44;                // 0x44
+    u8 mBase45;                // 0x45
+    char mBase46[2];           // 0x46..0x47
     void* mBaseVtable2;        // 0x48 secondary vtable (overwritten here)
 
     // --- CCtrlMovePC own fields ---

@@ -1,13 +1,11 @@
-// Auto-scaffolded catalog TU for monolib/src/scn/CVirtualLightAmb
-// Replace stubs with high-level C/C++ during decomp.
+// Decompiled for monolib/src/scn/CVirtualLightAmb
 
-#include <harness_catalog.h>
+#include <types.h>
+#include "libs/monolib/src/scn/CVirtualLightAmb.hpp"
 
-struct CVirtualLightAmb {
-    ~CVirtualLightAmb();
-};
+CVirtualLightAmb::CVirtualLightAmb() {
+    mField2C = 1;
+}
 
-
-void __ct__CVirtualLightAmb(){}
-
-CVirtualLightAmb::~CVirtualLightAmb() {}
+CVirtualLightAmb::~CVirtualLightAmb() {
+}

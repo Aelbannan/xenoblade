@@ -36,16 +36,18 @@ void SFMPVF_TermDec(void* self) { *(u32*)((u8*)self + 0x27F0) = 1; }
 u32 SFMPVF_IsTermDec(void* self) { return *(u32*)((u8*)self + 0x27f0); }
 
 void SFMPVF_SetGopStat(void* self) {
-    s32 count = *(s32*)((u8*)self + 0x27ec);
+    s32 cnt = *(s32*)((u8*)self + 0x27ec);
     u8* p = (u8*)self + 0x27f8;
-    while (count > 0) {
+    u32 one = 1;
+    goto check;
+    do {
         s32 val = *(s32*)p;
-        if (val == 2 || val == 4) {
-            *(s32*)(p + 0xfc) = 1;
-        }
+        if (val == 2 || val == 4)
+            *(u32*)(p + 0xFC) = one;
         p += 0x110;
-        count--;
-    }
+check:
+        ;
+    } while (--cnt != 0);
 }
 
 void SFMPVF_GetNumFrm() {}

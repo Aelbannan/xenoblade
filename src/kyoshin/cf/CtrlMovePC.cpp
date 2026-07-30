@@ -67,12 +67,12 @@ extern "C" void __ct__801993C4(CCtrlMovePC* self, void* baseParam, void* obj) {
     self->mFlags4C = 0x80000000u;
     self->mFlags50 = 0;
 
-    self->mPos   = *(const Vec*)&ml::CVec3::zero;
-    self->mVec6C = *(const Vec*)&ml::CVec3::zero;
-    self->mVecA8 = *(const Vec*)&ml::CVec3::zero;
-    self->mVecD8 = *(const Vec*)&ml::CVec3::zero;
-    self->mVecB4 = *(const Vec*)&ml::CVec3::zero;
-    self->mVec90 = *(const Vec*)&ml::CVec3::zero;
+    self->mPos   = ml::CVec3::zero;
+    self->mVec6C = ml::CVec3::zero;
+    self->mVecA8 = ml::CVec3::zero;
+    self->mVecD8 = ml::CVec3::zero;
+    self->mVecB4 = ml::CVec3::zero;
+    self->mVec90 = ml::CVec3::zero;
 
     self->mFloat100 = lbl_eu_80667B60;
 
@@ -116,4 +116,46 @@ extern "C" void func_80199618(CCtrlMovePC* self) {
         self->mTask = 0;
     }
     func_8008962C(self);
+}
+
+// ============================================================================
+// func_8019EDAC — tick counter; on wrap set data flag + transition (0x5C)
+// ============================================================================
+extern "C" int func_8019EDAC(CCtrlMovePC* self) {
+    s16 v = self->mArr124[1];          // 0x126
+    self->mArr124[1] = (s16)(v + 1);
+    if (v >= 8) {
+        self->mArr124[1] = 0;
+        u32* d = (u32*)self->mBaseData;
+        d[1] |= 1u;                    // *(data+4) |= 1
+        self->mStateFunc = lbl_eu_80532D28;
+    }
+    *(f32*)((char*)self->mBaseData + 0x14) = lbl_eu_80667B60;
+    return 0;
+}
+
+// ============================================================================
+// func_8019EE08 — flag-driven state transition + counter reset (0xB0)
+// ============================================================================
+extern "C" int func_8019EE08(CCtrlMovePC* self) {
+    u32 f = self->mFlags4C;
+    if ((f & 0x00200000u) == 0) {      // rlwinm. bit 10
+        self->mStateFunc = lbl_eu_80532D34;
+    } else {
+        extern const f32 lbl_eu_80667C40;
+        if (!(self->mDistFC >= lbl_eu_80667C40) && !(self->mArr124[17] > 0)) {
+            self->mFlags4C = (f & 0xFFFFFEFFu) | 0x8u;
+            self->mStateFunc = lbl_eu_80532D40;
+            self->mArr124[7] = 0;      // 0x132
+        }
+    }
+    u32 g = self->mFlags4C;
+    self->mArr124[2] = 0;              // 0x128
+    g |= 0x01000000u;                  // oris 0x100
+    self->mArr124[1] = 0;              // 0x126
+    g &= 0xE1FFFFFFu;                  // rlwinm 0,7,2
+    self->mArr124[3] = 0;              // 0x12a
+    self->mFlags4C = g;
+    *(f32*)((char*)self->mBaseData + 0x14) = lbl_eu_80667B60;
+    return 0;
 }

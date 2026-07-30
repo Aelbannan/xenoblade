@@ -5,7 +5,7 @@
 // Global symbols
 extern "C" {
     void* lbl_eu_80665A00;
-    void* lbl_eu_8056FDE8;
+    extern char lbl_eu_8056FDE8[];
     u8 lbl_eu_806659D0;
     s32 lbl_eu_806659D4;
 
@@ -35,34 +35,34 @@ s32 func_804DB364(void* vtable_ptr, void* data) {
         return 0;
     }
 
-    s8 state = (s8)((u8*)data)[0xC];
-
-    if (state > 0) {
+    if ((s8)((u8*)data)[0xC] > 0) {
         if (lbl_eu_806659D4 < 0) {
             return 2;
         }
     }
 
-    switch (state) {
+    switch ((s8)((u8*)data)[0xC]) {
         case 0: {
-            s32 result = func_804DA4E0(
+            s32 r = func_804DA4E0(
                 ((u32*)data)[0],
                 ((u32*)data)[1],
                 ((u32*)data)[2]);
-            if (result != 0) {
+            if (r != 0) {
                 return 2;
             }
             ((u8*)data)[0xC] = 1;
-            return 0;
+            goto ret0;
         }
         case 1:
             ((u8*)data)[0xC] = 2;
-            return 0;
+            goto ret0;
         case 2:
             return 1;
         default:
-            return 0;
+            break;
     }
+ret0:
+    return 0;
 }
 
 // us-804df738: sinit_804DB420

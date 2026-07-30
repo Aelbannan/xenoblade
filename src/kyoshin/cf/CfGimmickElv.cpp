@@ -812,7 +812,7 @@ extern "C" void func_8020BCA8(CfGimmickElvData* self) {
 extern "C" void func_8020C274(CfGimmickElvData* self) {
     if (self->flags & 0x20) {
         if (!(self->flag1B1 & 5)) {
-            u32 idx = self->unk1A0;
+            u32 idx = self->unk158;
             // Jump table call
             int (*fn)(void*, void*, void*) = (int(*)(void*, void*, void*))jumptable_eu_80535830[idx];
             if (fn(self->elvVec7, lbl_eu_805765A0, self->elvVec1) != 0) {

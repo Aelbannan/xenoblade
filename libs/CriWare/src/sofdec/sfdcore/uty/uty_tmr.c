@@ -18,7 +18,15 @@ extern s32 lbl_eu_80619BF4;
 extern u32 lbl_eu_80619BF8[2];
 u64 UTY_GetTmr(void) {
     if (lbl_eu_80619BF0 <= 0 || lbl_eu_80619BF4 == -1) return 0;
-    return __mftb();
+    {
+        u32 tbl, tbu, tmp;
+        do {
+            tbu = __mftb();
+            tbl = __mftb();
+            tmp = __mftb();
+        } while (tmp != tbu);
+        return ((u64)tbu << 32) | tbl;
+    }
 }
 
 s32 UTY_IsTmrVoid(s32 idx) {

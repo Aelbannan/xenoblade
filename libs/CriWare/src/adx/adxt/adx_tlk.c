@@ -3,11 +3,18 @@
 
 #include <harness_catalog.h>
 
+extern void ADXCRS_Enter(void);
+extern void ADXCRS_Leave(void);
+
 void ADXT_Create() {}
 
 void adxt_Create() {}
 
-void ADXT_Destroy() {}
+void ADXT_Destroy(void* self) {
+    ADXCRS_Enter();
+    adxt_Destroy(self);
+    ADXCRS_Leave();
+}
 
 void adxt_Destroy() {}
 
@@ -49,7 +56,15 @@ void ADXT_SetOutVol() {}
 
 void ADXT_GetOutVol() {}
 
-void ADXT_SetDefSvrFreq() {}
+extern u32 lbl_eu_805E4F18;
+extern u32 lbl_eu_805E4F1C;
+
+void ADXT_SetDefSvrFreq(void* self) {
+    ADXCRS_Enter();
+    lbl_eu_805E4F18 = (u32)self;
+    lbl_eu_805E4F1C = (u32)self;
+    ADXCRS_Leave();
+}
 
 void ADXT_SetSvrFreq() {}
 
@@ -57,9 +72,19 @@ void ADXT_GetNumSctIbuf() {}
 
 void ADXT_GetNumSmplObuf() {}
 
-void ADXT_SetAutoRcvr() {}
+void ADXT_SetAutoRcvr(void* self, u32 val) {
+    ADXCRS_Enter();
+    *(u8*)((u8*)self + 0x6D) = (u8)val;
+    ADXCRS_Leave();
+}
 
-void ADXT_ExecServer() {}
+extern void adxt_ExecServer(void);
+
+void ADXT_ExecServer(void) {
+    ADXCRS_Enter();
+    adxt_ExecServer();
+    ADXCRS_Leave();
+}
 
 void adxt_ExecServer() {}
 
@@ -81,13 +106,28 @@ void ADXT_GetTranspose(void* self) {
     ADXCRS_Leave();
 }
 
-void ADXT_TermSupply() {}
+void ADXT_TermSupply(void* self) {
+    ADXCRS_Enter();
+    ADXSJD_TermSupply(*(void**)((u8*)self + 4));
+    ADXCRS_Leave();
+}
 
 void ADXT_DiscardSmpl() {}
 
-void ADXT_SetTimeOfst() {}
+void ADXT_SetTimeOfst(void* self, u32 val) {
+    ADXCRS_Enter();
+    *(u32*)((u8*)self + 0x88) = val;
+    ADXCRS_Leave();
+}
 
-void ADXT_SetLnkSw() {}
+void ADXT_SetLnkSw(void* self, u32 val) {
+    ADXCRS_Enter();
+    *(u8*)((u8*)self + 0x98) = (u8)val;
+    if (*(void**)((u8*)self + 4) != NULL) {
+        ADXSJD_SetLnkSw(*(void**)((u8*)self + 4), val);
+    }
+    ADXCRS_Leave();
+}
 
 void ADXT_EntryFltFunc(void* this_, void* arg1, void* arg2) {
     ADXCRS_Enter();

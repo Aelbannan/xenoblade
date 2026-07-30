@@ -12,7 +12,7 @@ void CalcMaterialDirectly(ResMdl mdl, AnmObjTexPat* pAnmTexPat,
 
         if (pAnmTexPat != NULL) {
             if (pAnmTexPat->TestExistence(i)) {
-                TexPatAnmResult patResult;
+                TexPatAnmResult patResult = {};
                 pAnmTexPat->GetResult(&patResult, i);
                 ApplyTexPatAnmResult(mat.GetResTexObj(), mat.GetResTlutObj(),
                                      &patResult);
@@ -21,7 +21,7 @@ void CalcMaterialDirectly(ResMdl mdl, AnmObjTexPat* pAnmTexPat,
 
         if (pAnmTexSrt != NULL) {
             if (pAnmTexSrt->TestExistence(i)) {
-                TexSrtAnmResult srtResult;
+                TexSrtAnmResult srtResult = {};
                 pAnmTexSrt->GetResult(&srtResult, i);
                 ApplyTexSrtAnmResult(mat.GetResTexSrt(),
                                      mat.GetResMatIndMtxAndScale(), &srtResult);
@@ -31,7 +31,7 @@ void CalcMaterialDirectly(ResMdl mdl, AnmObjTexPat* pAnmTexPat,
 
         if (pAnmMatClr != NULL) {
             if (pAnmMatClr->TestExistence(i)) {
-                ClrAnmResult clrResult;
+                ClrAnmResult clrResult = {};
                 pAnmMatClr->GetResult(&clrResult, i);
                 ApplyClrAnmResult(mat.GetResMatChan(), mat.GetResMatTevColor(),
                                   &clrResult);

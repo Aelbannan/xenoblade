@@ -720,7 +720,14 @@ typedef int BOOL;
 
 void AHXSJD_Init() {}
 
-void AHXSJD_Finish() {}
+extern volatile s32 lbl_eu_805E64C0;
+
+void AHXSJD_Finish(void) {
+    if (lbl_eu_805E64C0 == 1) {
+        AHXDCD_Finish();
+    }
+    --lbl_eu_805E64C0;
+}
 
 void AHXSJD_Create() {}
 

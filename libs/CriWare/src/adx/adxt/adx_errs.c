@@ -13,6 +13,7 @@ extern char* CRICRW_Strncat(char* dst, void* ignored, const char* src, size_t n)
 
 extern char lbl_eu_80517498[];
 extern char lbl_eu_805E6488[0x20];
+extern u8 lbl_eu_805E6380[0x108];
 
 // ADXERR work area at lbl_eu_805E6380 (size 0x108):
 //   offset 0x00: void (*callback)(void* arg, char* msg)
@@ -24,18 +25,20 @@ struct ADXERR_Work {
     char buf[0x100];
 };
 
-static struct ADXERR_Work* const s_work = (struct ADXERR_Work*)&lbl_eu_805E6380;
+#define s_work ((struct ADXERR_Work*)&lbl_eu_805E6380)
 
 void ADXERR_Init(void) {
-    memset(s_work->buf, 0, 0x100);
-    s_work->callback = ((void (*)(void*, char*))0);
-    s_work->arg = ((void*)0);
+    struct ADXERR_Work* w = (struct ADXERR_Work*)&lbl_eu_805E6380;
+    memset(w->buf, 0, 0x100);
+    w->callback = ((void (*)(void*, char*))0);
+    w->arg = ((void*)0);
 }
 
 void ADXERR_Finish(void) {
-    memset(s_work->buf, 0, 0x100);
-    s_work->callback = ((void (*)(void*, char*))0);
-    s_work->arg = ((void*)0);
+    struct ADXERR_Work* w = (struct ADXERR_Work*)&lbl_eu_805E6380;
+    memset(w->buf, 0, 0x100);
+    w->callback = ((void (*)(void*, char*))0);
+    w->arg = ((void*)0);
 }
 
 void ADXERR_CallErrFunc1_(const char* msg) {

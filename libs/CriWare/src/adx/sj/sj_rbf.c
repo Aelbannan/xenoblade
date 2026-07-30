@@ -22,7 +22,15 @@ void SJRBF_GetUuid() {}
 
 void SJRBF_EntryErrFunc() {}
 
-void SJRBF_Reset() {}
+extern void SJCRS_Lock(void);
+extern void SJCRS_Unlock(void);
+extern void sjrbf_Reset(void*);
+
+void SJRBF_Reset(void* self) {
+    SJCRS_Lock();
+    sjrbf_Reset(self);
+    SJCRS_Unlock();
+}
 
 void sjrbf_Reset() {}
 

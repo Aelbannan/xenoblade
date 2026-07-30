@@ -13,7 +13,7 @@ void UTY_FinishTmr(void) {
     }
 }
 
-extern s64 lbl_eu_80619BF4;
+extern s32 lbl_eu_80619BF4;
 
 extern u32 lbl_eu_80619BF8[2];
 u64 UTY_GetTmr(void) {

@@ -26,7 +26,22 @@ void SFTIM_Init(SFTIM *sftim, int val) {
 
 void SFTIM_InitHn() {}
 
-void SFTIM_InitTtu() {}
+void SFTIM_InitTtu(void* self, int val) {
+    int zero = 0;
+    int one = 1;
+    *(int*)((u8*)self + 0x00) = zero;
+    *(int*)((u8*)self + 0x04) = zero;
+    *(int*)((u8*)self + 0x08) = zero;
+    *(int*)((u8*)self + 0x0C) = zero;
+    *(int*)((u8*)self + 0x10) = zero;
+    *(int*)((u8*)self + 0x14) = zero;
+    *(int*)((u8*)self + 0x18) = zero;
+    *(int*)((u8*)self + 0x1C) = zero;
+    *(u16*)((u8*)self + 0x20) = 0;
+    *(u16*)((u8*)self + 0x22) = 0;
+    *(int*)((u8*)self + 0x24) = val;
+    *(int*)((u8*)self + 0x28) = one;
+}
 
 void SFTIM_UpdateItime() {}
 
@@ -61,11 +76,40 @@ u32 SFTIM_GetTime(void* self, u32* out1, u32* out2) {
     return 0;
 }
 
-void sftim_GetTimeNone() {}
+int sftim_GetTimeNone(void *self, int *out1, int *out2) {
+    int val = *(int*)((char*)self + 0x54);
+    int tmp;
+    if (val == 4) goto good;
+    if (val == -4) goto good;
+    if (val == 6) goto good;
+    if (val == -6) goto good;
+    tmp = -1;
+    *out1 = tmp;
+    tmp = 1;
+    *out2 = tmp;
+    tmp = 0;
+    goto check;
+good:
+    tmp = 1;
+check:
+    if (!tmp) return 0;
+    tmp = -2;
+    *out1 = tmp;
+    tmp = 1;
+    *out2 = tmp;
+    return 0;
+}
 
 void sftim_GetTimeVsync() {}
 
-void sftim_GetTimeUfrm() {}
+int sftim_GetTimeUfrm(void* self, int* out1, int* out2) {
+    int val = *(int*)((u8*)self + 0x54);
+    if (!(val == 4 || val == -4 || val == 6 || val == -6)) {
+        *out1 = -1;
+        *out2 = 1;
+    }
+    return 0;
+}
 
 void sftim_GetTimeUtim() {}
 
@@ -109,7 +153,18 @@ void sftim_Tc2Time59D() {}
 
 void SFTIM_Pause() {}
 
-void SFTIM_GetTimeOneFrmVideo() {}
+extern u32 lbl_eu_8051CBF8[];
+
+void SFTIM_GetTimeOneFrmVideo(void* self, int* out1, int* out2) {
+    int fps = *(int*)((u8*)self + 0x930);
+    if (fps == 0) {
+        *out1 = fps;
+        *out2 = 0x7512;
+    } else {
+        *out1 = 1000;
+        *out2 = lbl_eu_8051CBF8[fps];
+    }
+}
 
 void SFD_GetFps() {}
 

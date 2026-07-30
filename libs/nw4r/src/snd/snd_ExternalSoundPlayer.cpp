@@ -95,7 +95,27 @@ bool ExternalSoundPlayer::AppendSound(BasicSound* pSound) {
 }
 
 bool ExternalSoundPlayer::detail_CanPlaySound(int count) {
-    return false;
+    if (mPlayableCount == 0) {
+        return false;
+    }
+
+    if (GetPlayingSoundCount() < mPlayableCount) {
+        return true;
+    }
+
+    BasicSound* pLowest = GetLowestPrioritySound();
+
+    if (pLowest == NULL) {
+        return false;
+    }
+
+    int lowestPrio = pLowest->CalcCurrentPlayerPriority();
+
+    if (count >= lowestPrio) {
+        return false;
+    }
+
+    return true;
 }
 
 } // namespace detail

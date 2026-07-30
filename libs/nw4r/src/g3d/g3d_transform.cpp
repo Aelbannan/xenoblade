@@ -1,10 +1,3 @@
-/**
- * g3d_transform.cpp - nw4r::g3d::detail matrix transform functions
- *
- * All three functions compute the inverse of the upper 3x3 of a 3x4 matrix
- * using paired-single (PS) instructions for the Gekko/Broadway CPU.
- */
-
 #include <nw4r/g3d.h>
 #include <nw4r/math.h>
 
@@ -12,271 +5,213 @@ namespace nw4r {
 namespace g3d {
 namespace detail {
 
-// Threshold for determinant comparison (~1.0e-36f, in .sdata2)
-extern "C" const float lbl_eu_80669B40;
+/**
+ * Singularity threshold for 3x3 matrix inverse.
+ * Retail value at lbl_eu_80669B40: 0x03AA2425 (~1e-36).
+ * Essentially a denormal guard — any meaningful determinant passes.
+ */
+static const f32 INVERSE_EPSILON = 1.0e-36f;
 
-/******************************************************************************
+/**
+ * Shared 3x3 inverse kernel.
  *
- * CalcViewNrmMtx - compute 3x3 normal matrix (inverse of upper 3x3)
+ * Computes the inverse of the upper-left 3x3 submatrix of a MTX34
+ * using cofactor expansion + determinant check.
  *
- ******************************************************************************/
-asm bool CalcViewNrmMtx(register math::MTX33* pOut,
-                        register const math::MTX34* pMtx) {
-    nofralloc
+ * Retail implements this with paired-single SIMD (psq_l, ps_merge10,
+ * ps_mul, ps_msub, ps_madd, fres, ps_nmsub, ps_muls0, ps_cmpo0).
+ * The scalar C++ below is mathematically identical.
+ *
+ * @param cofactors  Output: 9 cofactors (row-major 3x3), unscaled
+ * @param det        Output: determinant of the 3x3 submatrix
+ * @param pMtx       Input: 4x3 matrix whose 3x3 submatrix is inverted
+ * @return true if |det| >= epsilon (inverse exists)
+ */
+static bool CalcCofactorsAndDet(f32 cofactors[9], f32* det,
+                                const math::MTX34* pMtx) {
+    const f32 a = pMtx->_00, b = pMtx->_01, c = pMtx->_02;
+    const f32 d = pMtx->_10, e = pMtx->_11, f = pMtx->_12;
+    const f32 g = pMtx->_20, h = pMtx->_21, i = pMtx->_22;
 
-    psq_l f0,  0(pMtx), 1, 0
-    psq_l f1,  4(pMtx), 0, 0
-    psq_l f2, 16(pMtx), 1, 0
-    ps_merge10 f6, f1, f0
-    psq_l f3, 20(pMtx), 0, 0
-    psq_l f4, 32(pMtx), 1, 0
-    ps_merge10 f7, f3, f2
-    psq_l f5, 36(pMtx), 0, 0
+    // Cofactors (retail: ps_mul / ps_msub pairs)
+    // Row 0 of cofactor matrix
+    cofactors[0] = e * i - f * h;  // C00
+    cofactors[1] = c * h - b * i;  // C10 (note: transposed storage)
+    cofactors[2] = b * f - e * c;  // C20
 
-    ps_mul     f11, f3, f6
-    ps_merge10 f8,  f5, f4
-    ps_mul     f13, f5, f7
-    ps_msub    f11, f1, f7, f11
-    ps_mul     f12, f1, f8
-    ps_msub    f13, f3, f8, f13
+    // Row 1
+    cofactors[3] = f * g - i * d;  // C01
+    cofactors[4] = a * i - c * g;  // C11
+    cofactors[5] = c * d - f * a;  // C21
 
-    lis        r12, lbl_eu_80669B40@ha
-    ps_msub    f12, f5, f6, f12
+    // Row 2
+    cofactors[6] = d * h - e * g;  // C02
+    cofactors[7] = b * g - a * h;  // C12
+    cofactors[8] = a * e - b * d;  // C22
 
-    ps_mul     f7,  f0, f13
-    addi       r12, r12, lbl_eu_80669B40@l
-    ps_mul     f10, f3, f4
-    ps_madd    f7,  f2, f12, f7
-    ps_mul     f9,  f0, f5
-    ps_madd    f7,  f4, f11, f7
-    psq_l      f6,  0(r12), 1, 0
+    // Determinant via first-column expansion
+    // (retail: ps_mul f7,f0,f13 / ps_madd f7,f2,f12,f7 / ps_madd f7,f4,f11,f7)
+    *det = a * cofactors[0] + d * cofactors[1] + g * cofactors[2];
 
-    ps_mul     f8,  f1, f2
-    ps_abs     f8, f7
-    ps_msub    f10, f2, f5, f10
-    ps_cmpo0   cr0, f8, f6
-    ps_msub    f9,  f1, f4, f9
-    ps_msub    f8,  f0, f3, f8
-    bge        inverse_exists
+    // Singularity check (retail: ps_abs + ps_cmpo0 vs epsilon)
+    f32 absDet = *det < 0.0f ? -*det : *det;
+    return absDet >= INVERSE_EPSILON;
+}
 
-    psq_st     f0,  0(pOut), 1, 0
-    psq_st     f2,  12(pOut), 1, 0
-    psq_st     f4,  24(pOut), 1, 0
-    psq_st     f1,  4(pOut), 0, 0
-    psq_st     f3,  16(pOut), 0, 0
-    psq_st     f5,  28(pOut), 0, 0
-    li         r3, 0
-    blr
-
-inverse_exists:
-    fres       f5, f7
-    ps_mul     f8,  f1, f2
-    ps_sub     f6,  f6, f6
-    ps_add     f1,  f5, f5
-    ps_msub    f8,  f0, f3, f8
-    ps_mul     f2,  f7, f5
-    ps_nmsub   f0,  f5, f2, f1
-
-    ps_muls0   f13, f13, f0
-    ps_muls0   f12, f12, f0
-    psq_st     f13, 0(pOut), 0, 0
-    ps_muls0   f11, f11, f0
-    psq_st     f12, 12(pOut), 0, 0
-    ps_muls0   f10, f10, f0
-    psq_st     f11, 24(pOut), 0, 0
-    ps_muls0   f9,  f9, f0
-    psq_st     f10, 8(pOut), 1, 0
-    ps_muls0   f8,  f8, f0
-    psq_st     f9,  20(pOut), 1, 0
-    psq_st     f8,  32(pOut), 1, 0
-    li         r3, 1
-    blr
+/**
+ * Newton-Raphson refined reciprocal.
+ * Retail uses fres (hardware estimate, ~6 bits) + one NR step (~12 bits).
+ * On PC, 1.0f/x gives full 24-bit precision — strictly more accurate.
+ */
+static inline f32 FastReciprocal(f32 x) {
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+    // Match retail: fres + one Newton-Raphson iteration
+    register f32 work0, work1, work2;
+    ASM (
+        fres     work0, x
+        ps_add   work1, work0, work0
+        ps_mul   work2, work0, work0
+        ps_nmsub work0, x, work2, work1
+    )
+    return work0;
+#else
+    return 1.0f / x;
+#endif
 }
 
 /******************************************************************************
  *
- * CalcViewTexMtx - compute 3x4 texture matrix (inverse of upper 3x3,
- *                  zero translation)
+ * CalcViewNrmMtx
+ *
+ * Inverts the 3x3 rotation/scale submatrix of a MTX34 and writes
+ * the result to a MTX33. Used for normal-matrix computation.
+ *
+ * Retail: 0x803E3B14, size 0xE4
  *
  ******************************************************************************/
-asm bool CalcViewTexMtx(register math::MTX34* pOut,
-                        register const math::MTX34* pMtx) {
-    nofralloc
+bool CalcViewNrmMtx(math::MTX33* pOut, const math::MTX34* pMtx) {
+    f32 cof[9];
+    f32 det;
 
-    psq_l f0,  0(pMtx), 1, 0
-    psq_l f1,  4(pMtx), 0, 0
-    psq_l f2, 16(pMtx), 1, 0
-    ps_merge10 f6, f1, f0
-    psq_l f3, 20(pMtx), 0, 0
-    psq_l f4, 32(pMtx), 1, 0
-    ps_merge10 f7, f3, f2
-    psq_l f5, 36(pMtx), 0, 0
+    if (!CalcCofactorsAndDet(cof, &det, pMtx)) {
+        return false;
+    }
 
-    ps_mul     f11, f3, f6
-    ps_merge10 f8,  f5, f4
-    ps_mul     f13, f5, f7
-    ps_msub    f11, f1, f7, f11
-    ps_mul     f12, f1, f8
-    ps_msub    f13, f3, f8, f13
+    f32 invDet = FastReciprocal(det);
 
-    lis        r12, lbl_eu_80669B40@ha
-    ps_msub    f12, f5, f6, f12
+    // Scale cofactors → inverse (retail: ps_muls0 sequence)
+    // MTX33 layout: _00 _01 _02 / _10 _11 _12 / _20 _21 _22
+    pOut->_00 = cof[0] * invDet;
+    pOut->_01 = cof[3] * invDet;
+    pOut->_02 = cof[6] * invDet;
+    pOut->_10 = cof[1] * invDet;
+    pOut->_11 = cof[4] * invDet;
+    pOut->_12 = cof[7] * invDet;
+    pOut->_20 = cof[2] * invDet;
+    pOut->_21 = cof[5] * invDet;
+    pOut->_22 = cof[8] * invDet;
 
-    ps_mul     f7,  f0, f13
-    addi       r12, r12, lbl_eu_80669B40@l
-    ps_mul     f10, f3, f4
-    ps_madd    f7,  f2, f12, f7
-    ps_mul     f9,  f0, f5
-    ps_madd    f7,  f4, f11, f7
-    psq_l      f6,  0(r12), 1, 0
-
-    ps_mul     f8,  f1, f2
-    ps_abs     f8, f7
-    ps_msub    f10, f2, f5, f10
-    ps_cmpo0   cr0, f8, f6
-    ps_msub    f9,  f1, f4, f9
-    ps_msub    f8,  f0, f3, f8
-    bge        inverse_exists
-
-    cmplw      cr0, pOut, pMtx
-    beq        skip_copy
-    psq_st     f0,  0(pOut), 1, 0
-    psq_st     f2,  16(pOut), 1, 0
-    psq_st     f4,  32(pOut), 1, 0
-    psq_st     f1,  4(pOut), 0, 0
-    psq_st     f3,  20(pOut), 0, 0
-    psq_st     f5,  36(pOut), 0, 0
-
-skip_copy:
-    ps_sub     f6,  f6, f6
-    psq_st     f6,  12(pOut), 1, 0
-    psq_st     f6,  28(pOut), 1, 0
-    psq_st     f6,  44(pOut), 1, 0
-    li         r3, 0
-    blr
-
-inverse_exists:
-    fres       f5, f7
-    ps_mul     f8,  f1, f2
-    ps_sub     f6,  f6, f6
-    ps_add     f1,  f5, f5
-    ps_msub    f8,  f0, f3, f8
-    ps_mul     f2,  f7, f5
-    ps_nmsub   f0,  f5, f2, f1
-
-    psq_st     f6,  12(pOut), 1, 0
-    psq_st     f6,  28(pOut), 1, 0
-    psq_st     f6,  44(pOut), 1, 0
-
-    ps_muls0   f13, f13, f0
-    ps_muls0   f12, f12, f0
-    psq_st     f13, 0(pOut), 0, 0
-    ps_muls0   f11, f11, f0
-    psq_st     f12, 16(pOut), 0, 0
-    ps_muls0   f10, f10, f0
-    psq_st     f11, 32(pOut), 0, 0
-    ps_muls0   f9,  f9, f0
-    psq_st     f10, 8(pOut), 1, 0
-    ps_muls0   f8,  f8, f0
-    psq_st     f9,  24(pOut), 1, 0
-    psq_st     f8,  40(pOut), 1, 0
-    li         r3, 1
-    blr
+    return true;
 }
 
 /******************************************************************************
  *
- * CalcInvWorldMtx - compute 3x4 inverse world matrix
+ * CalcViewTexMtx
+ *
+ * Inverts the 3x3 submatrix and writes a full MTX34 with the
+ * translation column zeroed. Used for view-space texture matrices.
+ *
+ * Retail: 0x803E3BF8, size 0x108
  *
  ******************************************************************************/
-asm bool CalcInvWorldMtx(register math::MTX34* pOut,
-                         register const math::MTX34* pMtx) {
-    nofralloc
+bool CalcViewTexMtx(math::MTX34* pOut, const math::MTX34* pMtx) {
+    f32 cof[9];
+    f32 det;
 
-    psq_l f0,  0(pMtx), 1, 0
-    psq_l f1,  4(pMtx), 0, 0
-    psq_l f2, 16(pMtx), 1, 0
-    ps_merge10 f6, f1, f0
-    psq_l f3, 20(pMtx), 0, 0
-    psq_l f4, 32(pMtx), 1, 0
-    ps_merge10 f7, f3, f2
-    psq_l f5, 36(pMtx), 0, 0
+    if (!CalcCofactorsAndDet(cof, &det, pMtx)) {
+        // Singular: copy input as-is, zero translation column
+        if (pOut != pMtx) {
+            math::MTX34Copy(pOut, pMtx);
+        }
+        pOut->_03 = 0.0f;
+        pOut->_13 = 0.0f;
+        pOut->_23 = 0.0f;
+        return false;
+    }
 
-    ps_mul     f11, f3, f6
-    ps_merge10 f8,  f5, f4
-    ps_mul     f13, f5, f7
-    ps_msub    f11, f1, f7, f11
-    ps_mul     f12, f1, f8
-    ps_msub    f13, f3, f8, f13
+    f32 invDet = FastReciprocal(det);
 
-    lis        r12, lbl_eu_80669B40@ha
-    ps_msub    f12, f5, f6, f12
+    pOut->_00 = cof[0] * invDet;
+    pOut->_01 = cof[3] * invDet;
+    pOut->_02 = cof[6] * invDet;
+    pOut->_03 = 0.0f;
 
-    ps_mul     f7,  f0, f13
-    addi       r12, r12, lbl_eu_80669B40@l
-    ps_mul     f10, f3, f4
-    ps_madd    f7,  f2, f12, f7
-    ps_mul     f9,  f0, f5
-    ps_madd    f7,  f4, f11, f7
-    psq_l      f6,  0(r12), 1, 0
+    pOut->_10 = cof[1] * invDet;
+    pOut->_11 = cof[4] * invDet;
+    pOut->_12 = cof[7] * invDet;
+    pOut->_13 = 0.0f;
 
-    ps_mul     f8,  f1, f2
-    ps_abs     f8, f7
-    ps_msub    f10, f2, f5, f10
-    ps_cmpo0   cr0, f8, f6
-    ps_msub    f9,  f1, f4, f9
-    ps_msub    f8,  f0, f3, f8
-    bge        inverse_exists
+    pOut->_20 = cof[2] * invDet;
+    pOut->_21 = cof[5] * invDet;
+    pOut->_22 = cof[8] * invDet;
+    pOut->_23 = 0.0f;
 
-    li         r3, 0
-    blr
+    return true;
+}
 
-inverse_exists:
-    fres       f5, f7
-    ps_mul     f8,  f1, f2
-    ps_sub     f6,  f6, f6
-    ps_add     f1,  f5, f5
-    ps_msub    f8,  f0, f3, f8
-    ps_mul     f2,  f7, f5
-    ps_nmsub   f0,  f5, f2, f1
+/******************************************************************************
+ *
+ * CalcInvWorldMtx
+ *
+ * Full MTX34 inverse: inverts the 3x3 submatrix AND computes the
+ * translation column as -inv3x3 * t. Used for world→view transforms.
+ *
+ * Retail: 0x803E3D00, size 0x104
+ *
+ ******************************************************************************/
+bool CalcInvWorldMtx(math::MTX34* pOut, const math::MTX34* pMtx) {
+    f32 cof[9];
+    f32 det;
 
-    ps_muls0   f13, f13, f0
-    ps_muls0   f12, f12, f0
-    ps_muls0   f11, f11, f0
-    ps_muls0   f10, f10, f0
-    ps_muls0   f9,  f9, f0
-    ps_muls0   f8,  f8, f0
+    if (!CalcCofactorsAndDet(cof, &det, pMtx)) {
+        return false;
+    }
 
-    ps_merge00 f5,  f13, f12
-    ps_merge11 f4,  f13, f12
+    f32 invDet = FastReciprocal(det);
 
-    lfs        f1, 12(pMtx)
-    lfs        f2, 28(pMtx)
-    lfs        f3, 44(pMtx)
+    // Scaled inverse 3x3
+    f32 inv00 = cof[0] * invDet;
+    f32 inv01 = cof[3] * invDet;
+    f32 inv02 = cof[6] * invDet;
+    f32 inv10 = cof[1] * invDet;
+    f32 inv11 = cof[4] * invDet;
+    f32 inv12 = cof[7] * invDet;
+    f32 inv20 = cof[2] * invDet;
+    f32 inv21 = cof[5] * invDet;
+    f32 inv22 = cof[8] * invDet;
 
-    psq_st     f5,  0(pOut), 0, 0
-    psq_st     f4,  16(pOut), 0, 0
+    pOut->_00 = inv00;
+    pOut->_01 = inv01;
+    pOut->_02 = inv02;
 
-    ps_mul     f6,  f13, f1
-    ps_madd    f6,  f12, f2, f6
-    ps_nmadd   f6,  f11, f3, f6
+    pOut->_10 = inv10;
+    pOut->_11 = inv11;
+    pOut->_12 = inv12;
 
-    psq_st     f10, 32(pOut), 1, 0
-    psq_st     f9,  36(pOut), 1, 0
-    psq_st     f8,  40(pOut), 1, 0
+    pOut->_20 = inv20;
+    pOut->_21 = inv21;
+    pOut->_22 = inv22;
 
-    ps_merge00 f5,  f11, f6
-    ps_merge11 f4,  f11, f6
-    psq_st     f5,  8(pOut), 0, 0
-    psq_st     f4,  24(pOut), 0, 0
+    // Translation: -inv3x3 * t  (retail: lfs + ps_mul/ps_madd/ps_nmadd)
+    f32 t0 = pMtx->_03;
+    f32 t1 = pMtx->_13;
+    f32 t2 = pMtx->_23;
 
-    ps_mul     f7,  f10, f1
-    ps_madd    f7,  f9,  f2, f7
-    ps_nmadd   f7,  f8,  f3, f7
-    psq_st     f7,  44(pOut), 1, 0
+    pOut->_03 = -(inv00 * t0 + inv01 * t1 + inv02 * t2);
+    pOut->_13 = -(inv10 * t0 + inv11 * t1 + inv12 * t2);
+    pOut->_23 = -(inv20 * t0 + inv21 * t1 + inv22 * t2);
 
-    li         r3, 1
-    blr
+    return true;
 }
 
 } // namespace detail

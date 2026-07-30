@@ -40,7 +40,12 @@ void mwlSfdSleepDecSvr() {}
 
 void MWSFD_RequestStopRead() {}
 
-void MWSFD_IsFsBdr() {}
+s32 MWSFD_IsFsBdr(void* self) {
+    u32 r = (u32)MWSTM_GetReadFlg(MWSFD_GetStmHn(self));
+    u32 y = 1 - r;
+    u32 x = r - 1;
+    return (s32)((x | y) >> 31);
+}
 
 void MWSFD_SetProhibitServer(int val) {
     *(int*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f0) = val;

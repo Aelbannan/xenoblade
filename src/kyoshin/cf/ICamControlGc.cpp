@@ -1,12 +1,34 @@
-// Auto-scaffolded catalog TU for kyoshin/cf/ICamControlGc
-// Replace stubs with high-level C/C++ during decomp.
+// ICamControlGc — bitfield property getters
+// Each calls a virtual function (vtable+0x8) and extracts one flag bit.
 
 #include "kyoshin/harness_catalog.hpp"
 
-void func_80274DD8(){}
+typedef void* (*VF_GetObj)(void*);
 
-void func_80274E0C(){}
+int func_80274DD8(void* self) {
+    u32* vtable = *(u32**)self;
+    VF_GetObj vf = (VF_GetObj)vtable[2];
+    void* obj = vf(self);
+    return (*(int*)obj >> 19) & 1;
+}
 
-void func_80274E40(){}
+int func_80274E0C(void* self) {
+    u32* vtable = *(u32**)self;
+    VF_GetObj vf = (VF_GetObj)vtable[2];
+    void* obj = vf(self);
+    return (*(int*)obj >> 20) & 1;
+}
 
-void func_80274E74(){}
+int func_80274E40(void* self) {
+    u32* vtable = *(u32**)self;
+    VF_GetObj vf = (VF_GetObj)vtable[2];
+    void* obj = vf(self);
+    return (*(int*)obj >> 17) & 1;
+}
+
+int func_80274E74(void* self) {
+    u32* vtable = *(u32**)self;
+    VF_GetObj vf = (VF_GetObj)vtable[2];
+    void* obj = vf(self);
+    return (*(int*)obj >> 18) & 1;
+}

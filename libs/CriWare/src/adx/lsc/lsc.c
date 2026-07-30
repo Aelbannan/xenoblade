@@ -88,7 +88,7 @@ void LSC_Destroy(void *entry) {
 
 void LSC_SetStmHndl(void *entry, void *stm) {
     LSC_Enter();
-    *(void **)((u8 *)entry + 0x10) = stm;
+    *(void **)((u8 *)entry + 0x28) = stm;
     LSC_Leave();
 }
 

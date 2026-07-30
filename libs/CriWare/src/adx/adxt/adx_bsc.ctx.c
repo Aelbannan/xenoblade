@@ -748,9 +748,13 @@ void ADXB_SetDefFmt(void* self) {
     *(s16*)((u8*)self + 0x98) = 0;
 }
 
-void criware_eu_8038A864(void) {}
+void ADXB_SetDefPrm(void* self);
+void criware_eu_8038A864(void* self) {
+    *(s16*)((u8*)self + 0x98) = *(s16*)((u8*)self + 0x9a);
+    ADXB_SetDefPrm(self);
+}
 
-void ADXB_SetDefPrm() {}
+void ADXB_SetDefPrm(void* self) {}
 
 void ADXB_DecodeHeader() {}
 
@@ -776,7 +780,22 @@ s16 ADXB_GetFmtBps(void* self) {
     return ((ADXBFormatInfo*)self)->formatBitsPerSample;
 }
 
-void ADXB_GetOutBps() {}
+s32 ADXB_GetOutBps(void* self) {
+    s16 val = *(s16*)((u8*)self + 0x98);
+    if (val == 0) return 0x10;
+    if (val == 2) {
+        s16 sub = *(s16*)((u8*)self + 0x9c);
+        if (sub == 2) return 4;
+        if (sub == 1) return 8;
+        return 0x10;
+    }
+    if (val == 1) {
+        s16 sub = *(s16*)((u8*)self + 0x9c);
+        if (sub == 2) return 4;
+        return 0x10;
+    }
+    return 0x10;
+}
 
 u32 ADXB_GetBlkSmpl(void* self) { return *(u32*)((u8*)self + 0x10); }
 

@@ -733,12 +733,12 @@ void SFD_CalcYccPlane() {}
 void SFD_SetPicUsrBuf() {}
 
 extern u32 lbl_eu_80619B20[];
-void sfmpvf_SetPicUsrBuf();
-void SFMPVF_ResetPicUsrBuf(void) {
-    sfmpvf_SetPicUsrBuf(lbl_eu_80619B20[0x1c], lbl_eu_80619B20[0x1d], lbl_eu_80619B20[0x1e]);
+void sfmpvf_SetPicUsrBuf(void* self, u32 w, u32 h, u32 stride);
+void SFMPVF_ResetPicUsrBuf(void* self) {
+    sfmpvf_SetPicUsrBuf(self, lbl_eu_80619B20[0x1c], lbl_eu_80619B20[0x1d], lbl_eu_80619B20[0x1e]);
 }
 
-void sfmpvf_SetPicUsrBuf() {}
+void sfmpvf_SetPicUsrBuf(void* self, u32 w, u32 h, u32 stride) {}
 
 void SFMPVF_InitPicUsr() {}
 
@@ -750,7 +750,18 @@ void SFMPVF_TermDec(void* self) { *(u32*)((u8*)self + 0x27F0) = 1; }
 
 u32 SFMPVF_IsTermDec(void* self) { return *(u32*)((u8*)self + 0x27f0); }
 
-void SFMPVF_SetGopStat() {}
+void SFMPVF_SetGopStat(void* self) {
+    s32 count = *(s32*)((u8*)self + 0x27ec);
+    u8* p = (u8*)self + 0x27f8;
+    while (count > 0) {
+        s32 val = *(s32*)p;
+        if (val == 2 || val == 4) {
+            *(s32*)(p + 0xfc) = 1;
+        }
+        p += 0x110;
+        count--;
+    }
+}
 
 void SFMPVF_GetNumFrm() {}
 

@@ -737,7 +737,8 @@ void MWSTM_GetReadFlg(void) {
     ADXSTM_IsOpenedFile();
 }
 
-void* MWSTM_Create(void* a, void* b) { return ADXSTM_Create(a, 0); }
+extern void* ADXSTM_Create(void*, int);
+void* MWSTM_Create(void* a) { return ADXSTM_Create(a, 0); }
 
 void MWSTM_Destroy(void) {
     ADXSTM_Destroy();
@@ -749,7 +750,13 @@ void MWSTM_ReqStart(void) {
     ADXSTM_Start();
 }
 
-void MWSTM_ReqStop() {}
+extern void ADXSTM_StopNw(void*);
+extern void ADXSTM_ReleaseFileNw(void*);
+
+void MWSTM_ReqStop(void* self) {
+    ADXSTM_StopNw(self);
+    ADXSTM_ReleaseFileNw(self);
+}
 
 void MWSTM_GetStat(void) {
     ADXSTM_GetStat();

@@ -38,8 +38,13 @@ int criware_803A59B0(void) {
 
 /* Check if buf starts with MPEG start code prefix 0x000001 */
 int MPV_CheckDelim(const u8 *buf) {
-    u32 code = ((u32)buf[0] << 16) | ((u32)buf[1] << 8) | buf[2];
-    if (code != 0x000001) return 0;
+    int code;
+    code = buf[0];
+    code <<= 8;
+    code |= buf[1];
+    code <<= 8;
+    code |= buf[2];
+    if (code != 1) return 0;
     return lbl_eu_8051C090[buf[3]];
 }
 
@@ -47,17 +52,20 @@ int MPV_CheckDelim(const u8 *buf) {
 const u8 *MPV_BsearchDelim(const u8 *end, int count, int flags) {
     int i;
     u32 state = 0xFFFFFF00;
-    const u8 *p = end - 1;
+    const u8 *p = end;
 
     for (i = 0; i < count; i++) {
-        u8 byte = *p--;
-        state = (state | byte) << 8;
-        if ((state & 0xFFFFFF00) == 0x00000100) {
-            u8 type = lbl_eu_8051C090[(state >> 24) & 0xFF];
+        p--;
+        u8 byte = *p;
+        u32 pre_state = state | byte;
+        u32 check = pre_state << 8;
+        if (check == 0x01000000) {
+            u8 type = lbl_eu_8051C090[pre_state >> 24];
             if (type & flags) {
-                return p + 1;
+                return p;
             }
         }
+        state = check;
     }
     return NULL;
 }
@@ -75,7 +83,7 @@ const u8 *MPV_SearchDelim(const u8 *start, int count, int flags) {
                 return &start[i - 3];
             }
         }
-        state = ((state | byte) << 8) & 0xFFFFFF00;
+        state = (state | byte) << 8;
     }
     return NULL;
 }

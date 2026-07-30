@@ -15,7 +15,12 @@ void mwPlyCalcYccPlane() {}
 
 void mwPlyRelCurFrm() {}
 
-void mwPlyGetTotalFrmNum() {}
+int mwPlyGetTotalFrmNum(void* self) {
+    int index = *(s32*)((u8*)self + 0xd8) % 8;
+    u32* entry = (u32*)((u8*)self + index * 0x38);
+    if ((s32)entry[0xE0 / 4] != 1) return 0;
+    return entry[0x100 / 4];
+}
 
 void MWSFFRM_InitSfhInfTable() {}
 

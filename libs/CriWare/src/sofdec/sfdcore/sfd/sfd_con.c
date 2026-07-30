@@ -60,14 +60,15 @@ void SFLIB_LockCs(void* cs);
 void SFLIB_UnlockCs(void* cs);
 void SFCON_UpdateConcatTime(void* h, s32 delta) {
     u32 cs;
-    SFLIB_LockCs(&cs);
     SfdConcatContext* ctx = (SfdConcatContext*)((u8*)h + 0xd98);
+    SFLIB_LockCs(&cs);
     s32 idx = ctx->idx;
-    s32 time = ctx->time + delta;
-    ctx->time = time;
-    idx++;
-    ctx->timeQueue[idx % 32] = time;
-    ctx->idx = idx;
+    s32 time = ctx->time;
+    s32 new_time = time + delta;
+    ctx->time = new_time;
+    s32 new_idx = idx + 1;
+    ctx->timeQueue[new_idx % 32] = new_time;
+    ctx->idx = new_idx;
     SFLIB_UnlockCs(&cs);
 }
 

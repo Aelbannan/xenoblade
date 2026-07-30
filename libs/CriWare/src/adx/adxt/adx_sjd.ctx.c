@@ -720,7 +720,15 @@ typedef int BOOL;
 
 void ADXSJD_Init() {}
 
-void ADXSJD_Finish() {}
+extern volatile u32 lbl_eu_805E3340;
+extern u8 lbl_eu_805E3358[0xB40];
+
+void ADXSJD_Finish(void) {
+    lbl_eu_805E3340 = lbl_eu_805E3340 - 1;
+    if (lbl_eu_805E3340 == 0) {
+        memset(lbl_eu_805E3358, 0, sizeof(lbl_eu_805E3358));
+    }
+}
 
 void ADXSJD_Create() {}
 

@@ -22,7 +22,15 @@ void SJUNI_GetUuid() {}
 
 void SJUNI_EntryErrFunc() {}
 
-void SJUNI_Reset() {}
+extern void SJCRS_Lock(void);
+extern void SJCRS_Unlock(void);
+extern void sjuni_Reset(void*);
+
+void SJUNI_Reset(void* self) {
+    SJCRS_Lock();
+    sjuni_Reset(self);
+    SJCRS_Unlock();
+}
 
 void sjuni_Reset() {}
 

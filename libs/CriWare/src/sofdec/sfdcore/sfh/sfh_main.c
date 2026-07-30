@@ -32,8 +32,8 @@ SFHContext* SFH_Create(u32 arg0, s32 arg1, SFHContext* ctx) {
         if (a1 >= 0x800) {
             memset(c, 0, sizeof(SFHContext));
             c->active = 1;
-            c->field_0x04 = a0;
             result = c;
+            c->field_0x04 = a0;
             c->field_0x08 = a1;
         }
     }

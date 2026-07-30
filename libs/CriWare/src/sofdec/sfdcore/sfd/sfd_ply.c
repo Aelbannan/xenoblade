@@ -18,7 +18,12 @@ void SFD_VbIn(void) {
     SFLIB_UnlockCs(&cs);
 }
 
-void SFD_IsHnSvrWait() {}
+int SFD_IsHnSvrWait(void* self) {
+    int status = *(int*)((u8*)self + 0x54);
+    if ((unsigned int)(status - 1) > 3) return 1;
+    if (*(int*)((u8*)self + 0x64) == 1) return 1;
+    return (*(int*)((u8*)self + 0x50) == 0) ? 1 : 0;
+}
 
 void SFD_ExecOne() {}
 

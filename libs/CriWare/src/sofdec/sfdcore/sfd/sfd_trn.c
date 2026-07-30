@@ -13,7 +13,12 @@ void sftrn_BuildSystem() {}
 
 void SFTRN_CallTrSetup() {}
 
-void SFTRN_CallTrtTrif() {}
+int SFTRN_CallTrtTrif(void* self, int idx, int funcIdx, int* arg4, int arg5) {
+    void** table = *(void***)((u8*)self + idx * 0x44 + 0x1fe4);
+    if (table == NULL) return 0;
+    typedef int (*CallTrtFunc)(void*, int*, int, int);
+    return ((CallTrtFunc)table[funcIdx])(self, arg4, arg5, 0);
+}
 
 void SFTRN_SetPrepFlg(void* self, u32 idx, u32 val) {
     *(u32*)((u8*)self + 0x1fd8 + idx * 0x44) = val;

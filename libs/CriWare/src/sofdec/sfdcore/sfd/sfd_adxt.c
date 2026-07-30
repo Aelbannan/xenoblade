@@ -3,11 +3,20 @@
 
 #include <harness_catalog.h>
 
-void SFADXT_SetOutPan(void) {}
+extern void ADXT_SetOutPan(void*);
+void SFADXT_SetOutPan(void* self) {
+    ADXT_SetOutPan(*(void**)(*(void**)((u8*)self + 0x20ac)));
+}
 
-void SFADXT_GetOutPan(void) {}
+extern void ADXT_GetOutPan(void*);
+void SFADXT_GetOutPan(void* self) {
+    ADXT_GetOutPan(*(void**)(*(void**)((u8*)self + 0x20ac)));
+}
 
-void SFADXT_SetOutVol(void) {}
+extern void ADXT_SetOutVol(void*);
+void SFADXT_SetOutVol(void* self) {
+    ADXT_SetOutVol(*(void**)(*(void**)((u8*)self + 0x20ac)));
+}
 
 void ADXT_GetOutVol(void* a);
 void SFADXT_GetOutVol(void* self) {
@@ -16,7 +25,20 @@ void SFADXT_GetOutVol(void* self) {
 
 void SFADXT_SetSpeed() {}
 
-void SFD_SetAdxtPara() {}
+extern u32 lbl_eu_80606DE8[7];
+
+void SFD_SetAdxtPara(u32 *src) {
+    u32 *dst = lbl_eu_80606DE8;
+    dst[0] = src[0];
+    dst[1] = src[1];
+    u32 tmp = src[2] + 0x1f;
+    dst[2] = tmp & ~0x1f;
+    dst[3] = src[3];
+    dst[4] = src[4];
+    dst[5] = src[5];
+    tmp = src[6] + 0x1f;
+    dst[6] = tmp & ~0x1f;
+}
 
 void SFADXT_Init() {}
 
@@ -55,7 +77,13 @@ int SFADXT_RequestStop(void) { return 0x0; }
 
 void SFADXT_Start() {}
 
-void SFADXT_Stop() {}
+extern void ADXT_Stop(void*);
+
+u32 SFADXT_Stop(void* self) {
+    void* p = *(void**)((u8*)self + 0x20ac);
+    ADXT_Stop(*(void**)((u8*)p));
+    return 0;
+}
 
 void SFADXT_Pause() {}
 

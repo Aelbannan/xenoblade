@@ -38,8 +38,10 @@ void gcCiSetSctLen() {}
 
 void gcCiGetNumTr() {}
 
-s32 gcCiIsExistFile(s32 a, s32 b) {
-    return 0;
+extern s32 DVDConvertPathToEntrynum(const char*);
+s32 gcCiIsExistFile(const char* path) {
+    s32 entry = DVDConvertPathToEntrynum(path);
+    return (entry >= 0) ? 1 : 0;
 }
 
 void gcci_rd_cbfn() {}

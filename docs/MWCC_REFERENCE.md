@@ -382,11 +382,7 @@ High-level source should use `mVtbl->mSlots[N]` (or equivalent `this+0x8` reload
   `validate_callee_contract` (path explosion on `getView`→`getWorkThread`);
   rebind certs after certifier-tree edits and recertify leaves bottom-up.
 
-**RVL `PSMTXMultVec` / `vec.c` split fit:** retail MTX paired-single kernels match
-  only via the same `asm void` / `ASM()` PS idiom already used for `PSVEC*` /
-  `PSMTXConcat` in this fork (scalar C is 0% and oversize). Strip unused
-  `C_*` / empty `asm` stubs from `mtxvec.c` / `vec.c` — each emits a 4-byte
-  `blr` + align and blows the split (`mtxvec` 0x60, `vec` 0x210).
+
 
 **PSQ certify `IndexError`:** `execute_instruction` used to treat PSQ D-form
   `disp` as `frB` and index `state.fpr[disp]` before the PSQ handler (offsets

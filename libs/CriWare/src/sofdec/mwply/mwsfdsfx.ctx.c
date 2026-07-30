@@ -720,14 +720,15 @@ typedef int BOOL;
 
 extern void SFX_Init(void);
 extern void SFX_SetErrFn(u32 a, u32 b);
-void mwsfsfx_SfxErrCbFn(void);
+void mwsfsfx_SfxErrCbFn(void* context, int code);
 
 void MWSFSFX_Init(void) {
     SFX_Init();
     SFX_SetErrFn((u32)mwsfsfx_SfxErrCbFn, 0);
 }
 
-void mwsfsfx_SfxErrCbFn(void) {}
+extern void MWSFSVM_Error(const char*, ...);
+void mwsfsfx_SfxErrCbFn(void* context, int code) { MWSFSVM_Error((const char*)code); }
 
 int MWSFSFX_CalcHnWorkSiz(void) { return 0x301f; }
 

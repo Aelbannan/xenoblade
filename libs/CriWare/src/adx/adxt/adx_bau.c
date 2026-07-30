@@ -11,11 +11,9 @@ void ADX_DecodeInfoAu() {}
 
 void ADXB_DecodeHeaderAu() {}
 
-void ADXB_ExecOneAu16(void* self) {}
-
-void ADXB_ExecOneAu8(void* self) {}
-
-void ADXB_ExecOneAuUlaw(void* self) {}
+void ADXB_ExecOneAuUlaw(void* self);
+void ADXB_ExecOneAu8(void* self);
+void ADXB_ExecOneAu16(void* self);
 
 void ADXB_ExecOneAu(void* self) {
     s16 fmt = *(s16*)((u8*)self + 0x9c);
@@ -27,3 +25,7 @@ void ADXB_ExecOneAu(void* self) {
         ADXB_ExecOneAu16(self);
     }
 }
+
+void ADXB_ExecOneAu16(void* self) {}
+void ADXB_ExecOneAu8(void* self) {}
+void ADXB_ExecOneAuUlaw(void* self) {}

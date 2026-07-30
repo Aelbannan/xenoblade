@@ -11,10 +11,11 @@ void SFMPV_RestoreCond() {}
 
 void MPV_SetMbCb(void* p, u32 a, u32 b, u32 c);
 void SFD_SetMbCb(void* self, u32 a, u32 b, u32 c) {
-    *(u32*)((u8*)self + 0xd8c) = a;
-    *(u32*)((u8*)self + 0xd88) = c;
-    *(u32*)((u8*)self + 0xd84) = b;
-    MPV_SetMbCb(*(void**)(**(u32**)((u8*)self + 0x2068)), a, b, c);
+    void* arg1 = *(void**)(*(void**)((u8*)self + 0x2068));
+    ((u32*)self)[0xd8c / 4] = a;
+    ((u32*)self)[0xd88 / 4] = c;
+    ((u32*)self)[0xd84 / 4] = b;
+    MPV_SetMbCb(arg1, a, b, c);
 }
 
 void SFMPV_Init() {}

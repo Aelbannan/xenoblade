@@ -718,17 +718,24 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void ADXSTM_Init() {}
+extern volatile s32 lbl_eu_805E3E98;
+extern u8 lbl_eu_805E3EA8[0x1040];
 
-extern s32 lbl_eu_805E3E98;
+s32 ADXSTM_Init(void) {
+    if (++lbl_eu_805E3E98 == 1) {
+        memset(lbl_eu_805E3EA8, 0, sizeof(lbl_eu_805E3EA8));
+    }
+    return 1;
+}
+
 void ADXSTM_Finish(void) {
     if (--lbl_eu_805E3E98 != 0) return;
-    // would call ADXSTM_DestroyAll() here but that's in another TU
+    memset(lbl_eu_805E3EA8, 0, sizeof(lbl_eu_805E3EA8));
 }
 
 void ADXSTMF_SetupHandleMember() {}
 
-void ADXSTM_Create() {}
+void* ADXSTM_Create(void* a, int b) { return NULL; }
 
 void ADXSTM_Destroy() {}
 
@@ -749,7 +756,12 @@ s32 ADXSTM_IsOpenReq(void* self) {
     return (*(s8*)((u8*)self + 0x49) || *(s8*)((u8*)self + 0x4D)) ? 1 : 0;
 }
 
-void ADXSTM_GetStat() {}
+s32 ADXSTM_GetStat(void* self) {
+    ADXCRS_Enter();
+    s32 result = *(s8*)((u8*)self + 1);
+    ADXCRS_Leave();
+    return result;
+}
 
 int ADXSTM_Seek(void* this_, int pos)
 {
@@ -764,19 +776,78 @@ int ADXSTM_Seek(void* this_, int pos)
     return result;
 }
 
-void ADXSTM_Tell() {}
+s32 ADXSTM_Tell(void* self) {
+    ADXCRS_Enter();
+    s32 result;
+    if (*(u32*)((u8*)self + 8) != 0) {
+        result = *(u32*)((u8*)self + 0x5C);
+    } else {
+        result = 0;
+    }
+    ADXCRS_Leave();
+    return result;
+}
 
-void ADXSTM_Start() {}
+s32 ADXSTM_Start(void* self) {
+    ADXCRS_Enter();
+    ADXCRS_Lock();
+    *(u32*)((u8*)self + 0x38) = 0;
+    *(u32*)((u8*)self + 0x50) = 0;
+    if (*(u32*)((u8*)self + 0x18) == 0) {
+        *(u8*)((u8*)self + 1) = 3;
+    } else {
+        *(u8*)((u8*)self + 1) = 2;
+    }
+    *(u8*)((u8*)self + 2) = 0;
+    *(u32*)((u8*)self + 0x28) = 0;
+    *(u32*)((u8*)self + 0x2C) = 0;
+    *(u8*)((u8*)self + 0x4B) = 1;
+    *(u32*)((u8*)self + 0x60) = 0xFFFF;
+    ADXCRS_Unlock();
+    ADXCRS_Leave();
+    return 1;
+}
 
-void ADXSTM_Start2() {}
+s32 ADXSTM_Start2(void* self, u32 param) {
+    ADXCRS_Enter();
+    ADXCRS_Lock();
+    *(u32*)((u8*)self + 0x38) = 0;
+    *(u32*)((u8*)self + 0x50) = 0;
+    if (*(u32*)((u8*)self + 0x18) == 0) {
+        *(u8*)((u8*)self + 1) = 3;
+    } else {
+        *(u8*)((u8*)self + 1) = 2;
+    }
+    *(u8*)((u8*)self + 2) = 0;
+    *(u32*)((u8*)self + 0x28) = param;
+    *(u32*)((u8*)self + 0x2C) = 0;
+    *(u8*)((u8*)self + 0x4B) = 1;
+    *(u32*)((u8*)self + 0x60) = 0;
+    ADXCRS_Unlock();
+    ADXCRS_Leave();
+    return 1;
+}
 
 void ADXSTM_StopNw() {}
 
 void ADXSTM_Stop() {}
 
-void ADXSTM_EntryEosFunc() {}
+void ADXSTM_EntryEosFunc(void* self, void* func, void* ctx) {
+    ADXCRS_Enter();
+    *(void**)((u8*)self + 0x3C) = func;
+    *(void**)((u8*)self + 0x40) = ctx;
+    ADXCRS_Leave();
+}
 
-void ADXSTM_SetEos() {}
+void ADXSTM_SetEos(void* self, s32 val) {
+    ADXCRS_Enter();
+    if (val >= 0) {
+        *(s32*)((u8*)self + 0x34) = val;
+    } else {
+        *(s32*)((u8*)self + 0x34) = *(s32*)((u8*)self + 0x18);
+    }
+    ADXCRS_Leave();
+}
 
 void adxstmf_stat_exec() {}
 
@@ -790,7 +861,7 @@ void ADXSTM_ExecFsSvr(void) {
     ADXCRS_Leave();
 }
 
-void ADXSTM_ExecFsIdle() {}
+void ADXSTM_ExecFsIdle(void) {}
 
 typedef struct ADXSTMBufferState {
     u8 _00[0x1c];
@@ -813,15 +884,40 @@ int ADXSTM_SetBufSize(void *obj, int a, int b) {
     return 1;
 }
 
-void ADXSTM_SetReqRdSize() {}
+s32 ADXSTM_SetReqRdSize(void* self, u32 val) {
+    ADXCRS_Enter();
+    *(u32*)((u8*)self + 0x30) = val;
+    ADXCRS_Leave();
+    return 1;
+}
 
-void ADXSTM_GetFileLen() {}
+u32 ADXSTM_GetFileLen(void* self) {
+    ADXCRS_Enter();
+    u32 result = *(u32*)((u8*)self + 0x14);
+    ADXCRS_Leave();
+    return result;
+}
 
-void ADXSTM_GetFileLen64() {}
+u64 ADXSTM_GetFileLen64(void* self) {
+    ADXCRS_Enter();
+    u32 lo = *(u32*)((u8*)self + 0x10);
+    u32 hi = *(u32*)((u8*)self + 0x14);
+    ADXCRS_Leave();
+    return ((u64)lo) | ((u64)hi << 32);
+}
 
-void ADXSTM_GetFileSct() {}
+u32 ADXSTM_GetFileSct(void* self) {
+    ADXCRS_Enter();
+    u32 result = *(u32*)((u8*)self + 0x18);
+    ADXCRS_Leave();
+    return result;
+}
 
-void ADXSTM_SetPause() {}
+void ADXSTM_SetPause(void* self, u32 val) {
+    ADXCRS_Enter();
+    *(u8*)((u8*)self + 0x48) = (u8)val;
+    ADXCRS_Leave();
+}
 
 void ADXSTM_SetSj() {}
 

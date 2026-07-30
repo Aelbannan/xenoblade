@@ -5,7 +5,15 @@
 
 void ADXSJD_Init() {}
 
-void ADXSJD_Finish() {}
+extern volatile u32 lbl_eu_805E3340;
+extern u8 lbl_eu_805E3358[0xB40];
+
+void ADXSJD_Finish(void) {
+    lbl_eu_805E3340 = lbl_eu_805E3340 - 1;
+    if (lbl_eu_805E3340 == 0) {
+        memset(lbl_eu_805E3358, 0, sizeof(lbl_eu_805E3358));
+    }
+}
 
 void ADXSJD_Create() {}
 
@@ -51,7 +59,12 @@ void ADXSJD_Start(void *self) {
     pb[0x01] = 1;
 }
 
-void ADXSJD_Stop() {}
+extern void ADXB_Stop(void*);
+
+void ADXSJD_Stop(void* self) {
+    ADXB_Stop(*(void**)((u8*)self + 0x04));
+    *(u8*)((u8*)self + 0x01) = 0;
+}
 
 void adxsjd_decode_prep() {}
 

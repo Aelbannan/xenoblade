@@ -10,6 +10,8 @@ static const u32 G3D_CALCVIEW_MAX_MTX = 32;
 
 namespace {
 
+#pragma dont_inline on
+
 // Forward declarations
 void GetModelLocalAxisY2(math::VEC3*, const math::MTX34*, const math::MTX34*);
 void GetModelLocalAxisY3(math::VEC3*, const math::MTX34*, const math::MTX34*);
@@ -332,6 +334,8 @@ void Calc_BILLBOARD_PERSP_Y(math::MTX34* pOut, const math::MTX34* pMtxArray,
     // TODO: Full implementation
     math::MTX34Zero(pOut);
 }
+
+#pragma dont_inline off
 
 } // anonymous namespace
 

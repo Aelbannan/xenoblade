@@ -8,7 +8,8 @@ extern MWSFDLibWork lbl_eu_805FF3A8;
 
 void* MWSFLIB_GetLibWorkPtr(void) { return &lbl_eu_805FF3A8; }
 
-void mwsflib_LscErrFunc(void) {}
+extern void MWSFSVM_Error(const char*, ...);
+void mwsflib_LscErrFunc(void* context, int code) { MWSFSVM_Error((const char*)code); }
 
 void mwPlyInitSfdFx() {}
 

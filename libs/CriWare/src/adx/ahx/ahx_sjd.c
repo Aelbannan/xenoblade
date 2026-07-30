@@ -5,7 +5,14 @@
 
 void AHXSJD_Init() {}
 
-void AHXSJD_Finish() {}
+extern volatile s32 lbl_eu_805E64C0;
+
+void AHXSJD_Finish(void) {
+    if (lbl_eu_805E64C0 == 1) {
+        AHXDCD_Finish();
+    }
+    --lbl_eu_805E64C0;
+}
 
 void AHXSJD_Create() {}
 
@@ -27,7 +34,12 @@ void AHXSJD_SetInSj(void* self, u32 val) { ((AHXSJDState*)self)->input = val; }
 
 void AHXSJD_Start() {}
 
-void AHXSJD_Stop() {}
+extern void AHXDCD_Reset(void*);
+
+void AHXSJD_Stop(void* self) {
+    AHXDCD_Reset(*(void**)((u8*)self));
+    *(u8*)((u8*)self + 0x09) = 0;
+}
 
 void criware_8038CB9C() {}
 

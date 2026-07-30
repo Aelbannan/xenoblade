@@ -16,9 +16,27 @@ void searchStmId() {}
 
 void VER2_AnlyHdrToolVer() {}
 
-void VER2_AnlyHdrSfhVer() {}
+int VER2_AnlyHdrSfhVer(void* work, unsigned int* out1, unsigned int* out2) {
+    int sz;
+    *out1 = 0;
+    *out2 = 0;
+    sz = SFHLOCAL_GetSizeofMember(0x38, 0x39);
+    *out1 = SFHLOCAL_GetNbyteB(*(char**)((char*)work + 4) + 0x38, sz);
+    sz = SFHLOCAL_GetSizeofMember(0x39, 0x3a);
+    *out2 = SFHLOCAL_GetNbyteB(*(char**)((char*)work + 4) + 0x39, sz);
+    return 1;
+}
 
-void VER2_AnlyHdrModuleVer() {}
+int VER2_AnlyHdrModuleVer(void* work, unsigned int* out1, unsigned int* out2) {
+    int sz;
+    *out1 = 0;
+    *out2 = 0;
+    sz = SFHLOCAL_GetSizeofMember(0x3a, 0x3b);
+    *out1 = SFHLOCAL_GetNbyteB(*(char**)((char*)work + 4) + 0x3a, sz);
+    sz = SFHLOCAL_GetSizeofMember(0x3b, 0x3c);
+    *out2 = SFHLOCAL_GetNbyteB(*(char**)((char*)work + 4) + 0x3b, sz);
+    return 1;
+}
 
 
 int VER2_AnlyHdrSiz(const unsigned int *hdr, int *out_size) {

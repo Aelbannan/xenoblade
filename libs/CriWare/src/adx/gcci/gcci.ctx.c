@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/gcci/gcci
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/gcci/gcci.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/gcci/gcci.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -753,8 +753,10 @@ void gcCiSetSctLen() {}
 
 void gcCiGetNumTr() {}
 
-s32 gcCiIsExistFile(s32 a, s32 b) {
-    return 0;
+extern s32 DVDConvertPathToEntrynum(const char*);
+s32 gcCiIsExistFile(const char* path) {
+    s32 entry = DVDConvertPathToEntrynum(path);
+    return (entry >= 0) ? 1 : 0;
 }
 
 void gcci_rd_cbfn() {}

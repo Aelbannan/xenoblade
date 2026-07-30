@@ -720,9 +720,23 @@ typedef int BOOL;
 
 void MPVCDEC_Init() {}
 
-void fn_803A7770(void) { MPVERR_SetCode(NULL, 0); }
+void fn_803A7770(void) { MPVERR_SetCode(0); }
 
-void MPVCDEC_StartFrame() {}
+extern void DCT_IsrTrans(void* self, s32 val);
+extern u32 lbl_eu_80602A68[];
+extern u32 lbl_eu_80602A6C[];
+
+void MPVCDEC_StartFrame(void* self) {
+    u8* base = (u8*)self;
+    volatile u32* v = lbl_eu_80602A6C;
+    u32 p0, p1;
+    *(void**)(base + 0xc84) = DCT_IsrTrans;
+    *(u32*)(base + 0x9b4) = lbl_eu_80602A68[0] + 0x1160;
+    p0 = ((u32*)v[2])[0];
+    *(u32*)(base + 0xc68) = p0;
+    p1 = ((u32*)v[2])[1];
+    *(u32*)(base + 0xc6c) = p1;
+}
 
 void mpvcdec_IntraBlocksInt1() {}
 

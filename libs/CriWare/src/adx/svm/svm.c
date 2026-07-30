@@ -6,10 +6,12 @@
 extern u32 lbl_eu_805F26F0[];
 void SVM_Lock(void) {
     u32* b = lbl_eu_805F26F0;
-    u32* cb = (u32*)((u8*)b + 0x10);
-    void (*fn)(u32) = (void (*)(u32))*cb;
-    if (!fn) return;
-    fn(*(volatile u32*)(cb + 1));
+    u32 fn = b[4];
+    if (fn == 0) return;
+    {
+        u32* cb = &b[4];
+        ((void (*)(u32))fn)(*(cb + 1));
+    }
     if (b[1] == 0) b[2] = 1;
     b[1]++;
 }

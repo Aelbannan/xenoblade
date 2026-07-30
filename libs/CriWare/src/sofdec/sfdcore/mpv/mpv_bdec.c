@@ -88,11 +88,11 @@ void MPVBDEC_Init(void *handle) {
 /* Start decoding a frame */
 void MPVBDEC_StartFrame(void *handle) {
     u32 *p = (u32 *)handle;
-    u32 flag = p[0xD00 / 4];
+    s32 flag = (s32)p[0xD00 / 4];
     u32 *tbl = (u32 *)lbl_eu_806046A8;
     u32 *param_tbl = (u32 *)tbl[2];  /* tbl[2] = ptr to param array */
 
-    if (flag == 8) {
+    if ((s32)flag == 8) {
         /* progressive frame - skip field setup */
     } else {
         /* interlaced - select field parameters */

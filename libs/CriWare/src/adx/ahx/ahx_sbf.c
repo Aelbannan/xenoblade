@@ -20,4 +20,4 @@ void AHXSBF_Finish(void) {
 
 void AHXSBF_Create() {}
 
-void AHXSBF_Destroy(void) {}
+void AHXSBF_Destroy(void* self) { memset(self, 0, 0x1014); }

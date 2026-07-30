@@ -16905,6 +16905,7 @@ namespace ml{
 
 class CWorkThread;
 class CView;
+class CDrawGX;
 
 namespace ml {
 // Distinct from CRect16 in MWCC mangling (Q22ml5CRect); same 8-byte layout.
@@ -16922,6 +16923,7 @@ public:
     void CView_UnkVirtualFunc1();
     void CView_UnkVirtualFunc8();
     void CView_UnkVirtualFunc9();
+    void func_804409D0(CDrawGX* draw, ml::CRect16* rect);
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
@@ -17573,6 +17575,7 @@ public:
     void renderRect(const ml::CRect16& r4);
     void renderCube(const ml::CVec3& r4, const ml::CVec3& r5);
     void renderCircle(const ml::CVec3& pos, int verts, float r);
+    void setGXCacheId(u32 id) { unk1C = id; }
 
     void setFlag4(){
         setFlag(FLAG_4, true);
@@ -17643,6 +17646,8 @@ private:
 /* "libs/monolib/include/monolib/core/CException.hpp" line 3 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
 
+class IException;
+
 class IGameException {
 public:
     virtual ~IGameException() {}
@@ -17652,7 +17657,9 @@ public:
 class CException : public CWorkThread {
 public:
     bool func_80457C8C();
-    void func_80458B64(u8 r4, u8 r5, u8 r6, u8 r7);
+    void func_80458B64(u8* buffer, u8 r4, u8 r5, u8 r6, u8 r7);
+    void func_8045925C();
+    void func_804591BC(IException* pException);
     static CException* func_80457CA4(CWorkThread* r3, const wchar_t* message, u32 r5);
 
     static CException* convertToException(CWorkThread* pThread){
@@ -242134,6 +242141,9 @@ public:
 class CLibG3d : public CWorkThread {
 public:
     CLibG3d(const char* pName, CWorkThread* pParent);
+    virtual ~CLibG3d();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     DECL_WORKTHREAD_CREATE(CLibG3d);
 
@@ -249568,14 +249578,24 @@ protected:
 class CLibLayout : public CWorkThread {
 public:
     CLibLayout(const char* pName, CWorkThread* pParent);
+    virtual ~CLibLayout();
 
     DECL_WORKTHREAD_CREATE(CLibLayout);
 
     static bool isInitialized();
     static CLibLayout* getInstance();
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
+    void getAllocHandle();
+    void createLayout();
+    void createPicture();
+    void createTextbox();
+    void deleteTextboxOrPicture();
+    void func_8045F438();
+    void func_8045F4E4();
 
     virtual void wkUpdate() override;  //0x88
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     //0x0: vtable
     //0x0-1c4: CWorkThread
@@ -249686,6 +249706,9 @@ private:
 class CLibVM : public CWorkThread {
 public:
     CLibVM(const char* pName, CWorkThread* pParent);
+    virtual ~CLibVM();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     DECL_WORKTHREAD_CREATE(CLibVM);
 
@@ -249720,6 +249743,7 @@ public:
     
     void createRegion(int, int, const char*, int);
     void func_8045F778();
+    void func_8045F7E8();
     void func_8045F810();
 };
 
@@ -254333,6 +254357,9 @@ extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
 }
 
 
+
+
+// === NOT_STARTED function implementations ===
 
 /* end "kyoshin/cf/CfGameManagerUnityHelpers.hpp" */
 

@@ -16,7 +16,7 @@ struct PTMF {
 
 namespace cf {
 
-// CCtrlMovePC — player-character movement controller (state machine).
+// CCtrlMovePC - player-character movement controller (state machine).
 //
 // Derived from CCtrlMoveBase (base occupies 0x00..0x4B; secondary vtable at
 // 0x48 is overwritten by the derived ctor). Own fields begin at 0x4C.
@@ -69,7 +69,7 @@ public:
 
 // The 20 retail functions (placeholder symbols). Implemented in CtrlMovePC.cpp.
 extern "C" {
-void __ct__801993C4(cf::CCtrlMovePC* self, void* baseParam, void* obj);
+cf::CCtrlMovePC* __ct__801993C4(cf::CCtrlMovePC* self, void* baseParam, void* obj);
 void func_8019956C(cf::CCtrlMovePC* self);
 void func_80199618(cf::CCtrlMovePC* self);
 void func_80199678(cf::CCtrlMovePC* self, int flag);

@@ -23,7 +23,7 @@ void func_8020A434(void* ptr);
 void func_8020A484(u16 id);
 int func_8020A5DC(void* self);
 int func_8020A608(u16 id, int mode);
-void func_8020A6B0(void* self, void* a, u16 id, f32 f, void* b, int c, int d);
+void func_8020A6B0(void* a, void* b, u16 c, f32 d, int e, int g);
 int func_8020A87C(void* self, u32 ptr);
 void func_80462FD8__8CTaskLODFv(u8 lod, f32 f);
 void func_80462EF4__8CTaskLODFv(u8 lod, f32 f);

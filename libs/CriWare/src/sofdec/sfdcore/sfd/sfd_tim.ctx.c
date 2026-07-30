@@ -1056,7 +1056,7 @@ void SFTIM_UpdateItime(void* self, s32 itime) {
     s32 target = *(s32*)(p + 0x29C);
     *(s32*)(p + 0x2A4) = newMin;
 
-    if ((u32)(target - 0x7FFF0000) <= 0xFFFFu) {
+    if (target == 0x7FFFFFFF) {
         *(s32*)(p + 0x29C) = diff;
         return;
     }
@@ -1887,7 +1887,40 @@ s32 SFTIM_ExecCyclicFrameOutput(void* self) {
     return result;
 }
 
-void SFD_CalcCycleFromFps(void) {}
+void SFD_CalcCycleFromFps(s32 fps, s32* out1, s32* out2) {
+    f32* fc = (f32*)lbl_eu_8051CBF8;
+    f32 vsyncFreq = (f32)*(s32*)(lbl_eu_80606E38 + 0x1A4);
+    f32 ratio = vsyncFreq / (f32)fps;
+
+    if (ratio < fc[28]) {
+        *out1 = (s32)(fc[29] + fc[30] / ratio);
+        *out2 = 1;
+    } else if (ratio < fc[31]) {
+        *out1 = 2;
+        *out2 = 1;
+    } else if (ratio < fc[32]) {
+        *out1 = 1;
+        *out2 = 1;
+    } else if (ratio < fc[33]) {
+        *out1 = 5;
+        *out2 = 6;
+    } else if (ratio < fc[34]) {
+        *out1 = 1;
+        *out2 = 2;
+    } else if (ratio < fc[35]) {
+        *out1 = 5;
+        *out2 = 12;
+    } else if (ratio < fc[36]) {
+        *out1 = 2;
+        *out2 = 5;
+    } else if (ratio < fc[37]) {
+        *out1 = 1;
+        *out2 = 3;
+    } else {
+        *out1 = 1;
+        *out2 = (s32)(fc[29] + ratio);
+    }
+}
 
 void SFD_SetLimitTime(void* self, u32 val) { *(u32*)((u8*)self + 0x1390) = val; }
 

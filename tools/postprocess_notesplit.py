@@ -37,6 +37,7 @@ _SKIP_BASENAMES: set[str] = {
     "GCN_mem_alloc.o",
     "hidd_mgmt.o",
     "bta_hh_utils.o",
+    "CException.o",
 }
 
 

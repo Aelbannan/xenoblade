@@ -204,9 +204,12 @@ void LSC_SetFlowLimit(void *entry, int limit) {
 extern u32 lbl_eu_805EC440[];
 
 void LSC_CallStatFunc(void) {
-    u32 fn = lbl_eu_805EC440[0];
+    u32 *p = (u32*)lbl_eu_805EC440;
+    u32 fn = *p;
     if (fn == 0) return;
-    ((void (*)(u32, u32))fn)(lbl_eu_805EC440[1], lbl_eu_805EC440[2]);
+    u32 arg1 = *(p + 1);
+    u32 arg2 = *(p + 2);
+    ((void (*)(void*, void*))fn)((void*)arg1, (void*)arg2);
 }
 
 void LSC_SetLpFlg(void *entry, int flag) {

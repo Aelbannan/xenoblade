@@ -269,6 +269,35 @@ Object(MatchingFor("jp"), "kyoshin/CGame.cpp", extra_cflags=["-O4,s", "-func_ali
 Object(Matching, "monolib/src/core/CViewRectDataCore.cpp"),  # was NonMatching
 ```
 
+### RVL_SDK `OS_TICKS_TO_*` macros need a constant bus clock (i2c.c, FULL_MATCH)
+
+**Symptom:** every inlined `WaitMicroTime`/delay loop is bloated (~2x) with
+`lis`/`lwz` from `0x800000F8` plus `mulhwu` reciprocal steps; functions save
+extra callee-saved GPRs (`_savegpr_27` vs retail `_savegpr_29`-style manual
+`stw`), and the TU overflows its split budget. Relocation *layout* otherwise
+matches retail exactly.
+
+**Cause:** in this repo `OS_BUS_CLOCK_SPEED` is a memory-mapped **runtime
+global** (`OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED, 0x800000F8)` in
+`OSHardware.h`), so `OS_TICKS_TO_USEC(x) = ((x)*8)/(OS_TIME_SPEED/125000)`
+divides by a runtime value. Retail SDK builds used a **compile-time constant**
+`#define OS_BUS_CLOCK_SPEED 243000000`, folding the divisor to `486`
+(`li r6, 0x1e6; li r5, 0; bl __div2i`).
+
+**Fix (without touching shared headers):** in the TU, define a local
+constant-based macro and use it instead of `OS_TICKS_TO_USEC`:
+```c
+#define VI_I2C_BUS_CLOCK_SPEED 243000000
+#define VI_TICKS_TO_USEC(x) (((x) * 8) / (VI_I2C_BUS_CLOCK_SPEED / 4 / 125000))
+```
+`243000000/4/125000` folds to 486; `(s64)*8` lowers to `slwi/slwi/rlwimi` and
+the s64 division to `__div2i` — byte-identical to retail. Also note `-ipa file`
++ `-inline auto` inlines **global** (non-static) functions within the TU while
+keeping the external body (retail `WaitMicroTime` is GLOBAL yet fully inlined
+into `sendSlaveAddr`/`__VISendI2CData`), so keep such helpers non-static when
+retail symbols are global. Files: `libs/RVL_SDK/src/revolution/vi/i2c.c`
+(us-80369770/us-80369800/us-80369b50, all FULL_MATCH).
+
 ---
 
 ## C/C++ → MWCC translation patterns

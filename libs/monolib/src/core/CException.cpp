@@ -155,18 +155,24 @@ void CException::func_804591BC(IException* pException) {
 // Remove from global array
 void CException::func_804591DC(IException* pException) {
     u32 count = lbl_eu_806656C4;
+    CException** arr = lbl_eu_80657B50;
     u32 i = 0;
     u32 offset = 0;
     
-    for (i = 0; i < count; i++) {
-        if (lbl_eu_80657B50[i] == this) {
+    while (i < count) {
+        if (*(CException**)((u8*)arr + offset) == this) {
             u32 last = count - 1;
-            for (u32 j = i; j < last; j++) {
-                lbl_eu_80657B50[j] = lbl_eu_80657B50[j + 1];
+            u32 numShifts = last - i;
+            u32 shiftOffset = i * 4;
+            for (u32 j = 0; j < numShifts; j++) {
+                *(u32*)((u8*)arr + shiftOffset) = *(u32*)((u8*)arr + shiftOffset + 4);
+                shiftOffset += 4;
             }
             lbl_eu_806656C4 = count - 1;
             return;
         }
+        i++;
+        offset += 4;
     }
 }
 

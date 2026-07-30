@@ -50,7 +50,11 @@ struct UnkClass_804645CC {
     void func_80465314();
     void func_8046534C();
     void func_8046568C();
+    void func_80465704();
     void func_80465718();
+    void func_80465730();
+    void func_8046577C();
+    void func_804657E4();
     void func_80465800();
     void func_80465BC0();
 };
@@ -100,15 +104,17 @@ void LOD::UnkClass_804645CC::func_80465800() {}
 
 void LOD::UnkClass_804645CC::func_80465BC0() {}
 
-// ===== argument-bearing routines (free functions, retail symbol forced) =====
+// ===== argument-bearing routines =====
+// These receive data in r3/r4/f1 but retail symbols are annotated Fv (void).
+// This MWCC (Wii/1.1, 4.3 build 151) rejects function asm() labels (error
+// 33106 on every syntax variant), so a parameterized function cannot emit the
+// ...Fv symbol. Matching them requires re-annotating symbols.txt/targets.json
+// with the true mangling - see stall packet / final report.
 
-// r3 = pending value stored to the state word; sets flag bit 1.
-static void func_80465704(u32 val) asm("func_80465704__Q23LOD17UnkClass_804645CCFv") {
-    lbl_eu_80665814 = val;
-    lbl_eu_806657E8 |= 2;
-}
+void LOD::UnkClass_804645CC::func_80465704() {}
 
-// r3 = signed 16-bit value converted to float (paired-single qr5 dequant).
-static void func_804657E4(s16 val) asm("func_804657E4__Q23LOD17UnkClass_804645CCFv") {
-    lbl_eu_806657E4 = (f32)val;
-}
+void LOD::UnkClass_804645CC::func_80465730() {}
+
+void LOD::UnkClass_804645CC::func_8046577C() {}
+
+void LOD::UnkClass_804645CC::func_804657E4() {}

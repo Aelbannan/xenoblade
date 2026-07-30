@@ -320,20 +320,20 @@ u32 SVM_ExecSvrUsrIdle(void) {
 
 void SVM_Init(void) {
     u32* base = lbl_eu_805F26F0;
-    if (base[0] == 0) {
-        memset(&base[0x3a8 / 4], 0, 0x20);
-        memset(&base[0x10 / 4], 0, 8);
-        memset(&base[0x18 / 4], 0, 8);
-        memset(&base[0x3e8 / 4], 0, 8);
-        memset(&base[0x3f0 / 4], 0, 8);
-        base[0x3c8 / 4] = 0;
-        base[0x3cc / 4] = 0;
-        base[0x3d0 / 4] = 0;
-        base[0x3d4 / 4] = 0;
-        base[0x3d8 / 4] = 0;
-        base[0x3dc / 4] = 0;
-        base[0x3f8 / 4] = 0;
-    }
+    if (base[0] != 0) goto inc;
+    memset(&base[0x3a8 / 4], 0, 0x20);
+    memset(&base[0x10 / 4], 0, 8);
+    memset(&base[0x18 / 4], 0, 8);
+    memset(&base[0x3e8 / 4], 0, 8);
+    memset(&base[0x3f0 / 4], 0, 8);
+    base[0x3c8 / 4] = 0;
+    base[0x3cc / 4] = 0;
+    base[0x3d0 / 4] = 0;
+    base[0x3d4 / 4] = 0;
+    base[0x3d8 / 4] = 0;
+    base[0x3dc / 4] = 0;
+    base[0x3f8 / 4] = 0;
+inc:
     base[0] += 1;
 }
 

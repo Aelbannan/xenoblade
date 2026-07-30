@@ -102,7 +102,15 @@ struct MinePoint {
     u16 mPointId1C;   // 0x1C
     u8 mArea1E;       // 0x1E
     u8 mAreaSub1F;    // 0x1F
-    u32 mFlags;       // 0x20  [id:10][kind:6][count:8][low:8] (MSB-first)
+    union {
+        u32 mFlags;   // 0x20  raw
+        struct {
+            u32 mFlagId : 10;    // value bits 22-31
+            u32 mFlagKind : 6;   // value bits 16-21
+            u32 mFlagCount : 8;  // value bits 8-15
+            u32 mFlagLow : 8;    // value bits 0-7
+        };
+    };
 };
 
 // Intrusive reslist node: {next, prev, item}; stride 0x2C.
@@ -110,6 +118,17 @@ struct MineNode {
     MineNode* mNext;   // 0x00
     MineNode* mPrev;   // 0x04
     MinePoint mItem;   // 0x08
+};
+
+// Standalone reslist<MinePoint> layout (0x40 bytes).
+struct MineListBase {
+    void* mVtable;         // 0x00
+    MineNode* mStartPtr;   // 0x04  (= &mStartNode)
+    MineNode mStartNode;   // 0x08  (0x2C bytes -> ends at 0x34)
+    MineNode* mList;       // 0x34
+    u32 mCapacity;         // 0x38
+    u8 mUnk03C;            // 0x3C
+    u8 mPad03D[3];         // 0x3D
 };
 
 // One on-screen mine message (ring-buffer slot, 0x48 bytes).
@@ -136,14 +155,7 @@ struct MineMsgRing {
 
 struct CfMapMineManager {
     f32 mTime;             // 0x000
-    // reslist<MinePoint> mPoints - laid out explicitly for symbol control:
-    void* mVtable;         // 0x004
-    MineNode* mStartPtr;   // 0x008  (= &mStartNode)
-    MineNode mStartNode;   // 0x00C  (0x2C bytes)
-    MineNode* mList;       // 0x038
-    u32 mCapacity;         // 0x03C
-    u8 mUnk040;            // 0x040
-    u8 mPad041[3];         // 0x041
+    MineListBase mPoints;  // 0x004  (0x40 bytes -> ends at 0x44)
     MineMsgRing mMsgs;     // 0x044  (0x490 bytes -> ends at 0x4D4)
     MineSoundTimer mSnd[16]; // 0x4D4..0x554
 };
@@ -510,7 +522,7 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
 // ---------------------------------------------------------------------------
 // func_80207C08 - true when no active point matches (id, area, sub).
 // ---------------------------------------------------------------------------
-extern "C" int func_80207C08(u32 pointId, u32 area, u32 sub) {
+extern "C" int func_80207C08(u32 pointId, int area, int sub) {
     CfMapMineManager* mgr = lbl_eu_806646A0;
     if (mgr == 0 || pointId == 0) {
         return 1;
@@ -518,10 +530,10 @@ extern "C" int func_80207C08(u32 pointId, u32 area, u32 sub) {
     MineNode* start = mgr->mStartPtr;
     MineNode* n = start->mNext;
     while (n != start) {
-        if (n->mItem.mId18 != 0 && (n->mItem.mFlags & 0x00010000) != 0 &&
+        if (n->mItem.mId18 != 0 && ((n->mItem.mFlags >> 16) & 1) != 0 &&
             area == n->mItem.mArea1E && sub == n->mItem.mAreaSub1F &&
             pointId == n->mItem.mPointId1C &&
-            (n->mItem.mFlags & 0x0000FF00) != 0) {
+            ((n->mItem.mFlags >> 8) & 0xFF) != 0) {
             return 0;
         }
         n = n->mNext;
@@ -544,5 +556,699 @@ extern "C" void func_80207C94(u8* out) {
         *(out + 0x5) = n->mItem.mAreaSub1F;
         out += 6;
         n = n->mNext;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_80207B24 - play a collection sound effect based on drop kind.
+// ---------------------------------------------------------------------------
+extern "C" void func_80207B24(CfMapMineManager* self, u32 kind, void* pos) {
+    int sfx = 0;
+    if (kind == 4) sfx = 0xB;
+    else if (kind == 5) sfx = 0xC;
+    else if (kind == 6) sfx = 0xD;
+    else if (kind == 7) sfx = 0xE;
+    else if (kind == 8) sfx = 0xF;
+    else if (kind == 9) sfx = 0x10;
+
+    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    if (player == 0) return;
+    void* obj = func_8008187C__Q22cf13CfGameManagerFv(sfx);
+    if (obj == 0) return;
+    func_800ACF78(obj, player, 0);
+    void* vt = *(void**)obj;
+    ((void (*)(void*, void*))(*(u32*)((u8*)vt + 0x9C)))(obj, pos);
+}
+
+// ---------------------------------------------------------------------------
+// func_80206FA8 - per-point update: timers, respawn, LOD registration.
+// ---------------------------------------------------------------------------
+extern "C" void func_80206FA8(CfMapMineManager* self, MinePoint* pt) {
+    u16 area = lbl_eu_80663E42;
+    u16 sub = lbl_eu_80663E44;
+    CfRes_getD80Flag();
+    f32 dt = func_80496288();
+
+    if (pt->mTimer14 > 0.0f) {
+        if (func_80207C08(pt->mPointId1C, pt->mArea1E, pt->mAreaSub1F) == 0) {
+            pt->mTimer14 = pt->mTimer14 - dt;
+        }
+        return;
+    }
+
+    pt->mTimer14 = 0.0f;
+    if (((pt->mFlags >> 8) & 0xFF) != 0) return;
+    if (area != pt->mArea1E) return;
+    if (sub != pt->mAreaSub1F) return;
+
+    BdatFilePointer* file = lbl_eu_806640C8;
+    u32 id = pt->mFlags >> 22;
+    const char* cols = lbl_eu_80508424;
+    u8 lo = (u8)getBdatStringColumnValue(file, cols + 0x00, id);
+    u8 hi = (u8)getBdatStringColumnValue(file, cols + 0x08, id);
+    int r = mtRand__Q22ml4mathFi((hi - lo) + 1);
+    u32 fl = pt->mFlags;
+    fl = (fl & 0xFFFF00FF) | (((lo + r) & 0xFF) << 8);
+    pt->mFlags = fl;
+
+    if (((fl >> 8) & 0xFF) != 0) {
+        if ((fl & 0x00010000) != 0) {
+            u32 g = lbl_eu_80663E24;
+            f32 a = 160.0f - (f32)((g >> 20) & 1);
+            func_80462E58__8CTaskLODFv(pt->mPointId1C, 1, a);
+        } else {
+            if (func_80186BC8(pt->mPointId1C) != 0) {
+                func_800BFBF4(pt->mPointId1C, 1);
+            }
+        }
+        func_802066A8(self, pt);
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_802073CC - advance message-ring timers, pop the oldest when expired.
+// ---------------------------------------------------------------------------
+extern "C" void func_802073CC(CfMapMineManager* self) {
+    CfRes_getD80Flag();
+    f32 dt = func_80496288();
+
+    MineMsgRing* ring = &self->mMsgs;
+    int changed = 0;
+    for (u32 i = 0; i < ring->mCount; i++) {
+        MineMsg* slot =
+            &ring->mSlots[(ring->mReadIdx + i) % ring->mCapacity];
+        if (slot->mTime <= 0.0f) {
+            slot->mTime = slot->mTime - dt;
+            if (slot->mTime < 0.0) {
+                slot->mTime = 0.0f;
+                changed = 1;
+            }
+        }
+    }
+
+    if (changed != 0) {
+        MineMsg* slot = &ring->mSlots[ring->mReadIdx % ring->mCapacity];
+        func_801352A4(self);
+        u32 next = ring->mReadIdx + 1;
+        ring->mCount = ring->mCount - 1;
+        ring->mReadIdx = next % ring->mCapacity;
+        char buf[0x40];
+        u32 len = strlen(slot->mText);
+        strcpy(buf, slot->mText);
+        f32 t = slot->mTime;
+        (void)len;
+        (void)t;
+        (void)buf;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_8020712C - find the nearest activatable point to a position.
+// ---------------------------------------------------------------------------
+extern "C" void func_8020712C(MineNode** out, CfMapMineManager* mgr,
+                              CfMapMineManager* list, f32* pos) {
+    BdatFilePointer* file = lbl_eu_806640C8;
+    u16 area = lbl_eu_80663E42;
+    u16 sub = lbl_eu_80663E44;
+    u32 playerId = func_800822F4__Q22cf13CfGameManagerFv();
+    *out = 0;
+    playerId &= 0xFFFF;
+
+    u32 marker;
+    if (func_800FE68C() != 0) {
+        u32 base = func_800FE68C() + 0x10000;
+        marker = *(u32*)(base - 0x6F1C);
+    } else {
+        marker = 0;
+    }
+
+    const char* cols = lbl_eu_80508424;
+    MineNode* start = list->mStartPtr;
+    MineNode* n = start->mNext;
+    while (n != start) {
+        n->mItem.mFlags &= ~0x00060000;
+        if (n->mItem.mTimer14 > 0.0f || ((n->mItem.mFlags >> 8) & 0xFF) == 0) {
+            func_80206FA8(mgr, &n->mItem);
+            n = n->mNext;
+            continue;
+        }
+        if (area != n->mItem.mArea1E || sub != n->mItem.mAreaSub1F) {
+            n = n->mNext;
+            continue;
+        }
+        u32 id = n->mItem.mFlags >> 22;
+        u16 a = (u16)getBdatStringColumnValue(file, cols + 0x60, id);
+        u16 b = (u16)getBdatStringColumnValue(file, cols + 0x66,
+                                              n->mItem.mFlags >> 22);
+        if (playerId < a || playerId > b) {
+            if (n->mItem.mObj0 != 0) {
+                func_800ACC14(n->mItem.mObj0, 1);
+                n->mItem.mObj0 = 0;
+            }
+            n = n->mNext;
+            continue;
+        }
+        n->mItem.mFlags |= 0x00040000;
+        f32 dx = n->mItem.mPosX - pos[0];
+        f32 dy = n->mItem.mPosY - pos[1];
+        f32 dz = n->mItem.mPosZ - pos[2];
+        f32 ady = dy < 0 ? -dy : dy;
+        f32 dist2 = dx * dx + dy * dy + dz * dz;
+        if (ady > 50.0f || dist2 > 40000.0f) {
+            if (n->mItem.mObj0 != 0) {
+                *(u32*)((u8*)n->mItem.mObj0 + 0x68) |= 0x40;
+                n->mItem.mObj0 = 0;
+            }
+            n = n->mNext;
+            continue;
+        }
+        if (n->mItem.mObj0 != 0 && n->mItem.mCounter1A > 0) {
+            n->mItem.mCounter1A = n->mItem.mCounter1A - 1;
+        }
+        if (n->mItem.mCounter1A > 0) {
+            n = n->mNext;
+            continue;
+        }
+        if (ady >= 2.5f || dist2 >= 6.25f) {
+            n = n->mNext;
+            continue;
+        }
+        if (n->mItem.mObj4 == 0) {
+            n = n->mNext;
+            continue;
+        }
+        n->mItem.mFlags |= 0x00020000;
+        if (*(u32*)((u8*)n->mItem.mObj4 + 0x74) == marker) {
+            *out = n;
+        }
+        n = n->mNext;
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_80206BD4 - main per-frame point scan: spawn/despawn and insert new.
+// ---------------------------------------------------------------------------
+extern "C" void func_80206BD4(CfMapMineManager* self) {
+    BdatFilePointer* file = lbl_eu_806640C8;
+    u32 rowBegin = func_8003B41C(file);
+    u32 rowEnd = rowBegin + func_8003B1EC(file);
+    u16 area = lbl_eu_80663E42;
+    u16 sub = lbl_eu_80663E44;
+
+    MineNode* start = self->mStartPtr;
+    MineNode* n = start->mNext;
+    while (n != start) {
+        if (n->mItem.mObj0 != 0) {
+            if (func_800B8920(n->mItem.mObj0) != 0) {
+                func_800B9404(n->mItem.mObj0);
+            }
+            n->mItem.mObj0 = 0;
+        }
+        if (n->mItem.mObj4 != 0) {
+            if (func_800B8920(n->mItem.mObj4) != 0) {
+                func_800B9404(n->mItem.mObj4);
+            }
+            n->mItem.mObj4 = 0;
+        }
+        n->mItem.mObj0 = 0;
+        n->mItem.mObj4 = 0;
+        n = n->mNext;
+    }
+
+    self->mMsgs.mCount = 0;
+    self->mMsgs.mReadIdx = 0;
+    for (int i = 0; i < 16; i++) {
+        self->mSnd[i].mId = 0;
+        self->mSnd[i].mTime = 0.0f;
+    }
+    self->mTime = 0.0f;
+
+    MinePoint tmp;
+    for (u32 row = rowBegin; row < rowEnd; row++) {
+        MineNode* found = 0;
+        MineNode* s2 = self->mStartPtr;
+        MineNode* m = s2->mNext;
+        while (m != s2) {
+            if ((m->mItem.mFlags >> 22) == (row & 0xFFFF) &&
+                (u8)area == m->mItem.mArea1E &&
+                (u8)sub == m->mItem.mAreaSub1F) {
+                found = m;
+                break;
+            }
+            m = m->mNext;
+        }
+
+        if (found != 0) {
+            func_802064A8(self, row, &found->mItem, 0);
+            if (found->mItem.mTimer14 < 1.0e-6f) {
+                func_802066A8(self, &found->mItem);
+                if ((found->mItem.mFlags & 0x00010000) != 0) {
+                    u32 g = lbl_eu_80663E24;
+                    f32 a = 160.0f - (f32)((g >> 20) & 1);
+                    func_80462E58__8CTaskLODFv(found->mItem.mPointId1C, 1, a);
+                } else {
+                    if (func_80186BC8(found->mItem.mPointId1C) != 0) {
+                        func_800BFBF4(found->mItem.mPointId1C, 1);
+                    }
+                }
+            } else if (found->mItem.mArea1E == (u8)area &&
+                       found->mItem.mAreaSub1F == (u8)sub) {
+                if (func_80207C08(found->mItem.mPointId1C,
+                                  found->mItem.mArea1E,
+                                  found->mItem.mAreaSub1F) != 0) {
+                    if ((found->mItem.mFlags & 0x00010000) != 0) {
+                        u32 g = lbl_eu_80663E24;
+                        f32 a = 160.0f - (f32)((g >> 20) & 1);
+                        func_80462E58__8CTaskLODFv(found->mItem.mPointId1C, 0,
+                                                   a);
+                    } else {
+                        if (func_80186BC8(found->mItem.mPointId1C) != 0) {
+                            func_800BFBF4(found->mItem.mPointId1C, 2);
+                        }
+                    }
+                }
+            }
+        } else {
+            if (func_802064A8(self, row, &tmp, 1) != 0) {
+                func_802066A8(self, &tmp);
+                u32 idx = ListFindFree(self);
+                MineNode* slot = (MineNode*)((u8*)self->mList + idx * 0x2C);
+                MinePoint* dst = &slot->mItem;
+                *(u32*)((u8*)dst + 0x00) = *(u32*)((u8*)&tmp + 0x00);
+                *(u32*)((u8*)dst + 0x04) = *(u32*)((u8*)&tmp + 0x04);
+                *(f32*)((u8*)dst + 0x08) = *(f32*)((u8*)&tmp + 0x08);
+                *(f32*)((u8*)dst + 0x0C) = *(f32*)((u8*)&tmp + 0x0C);
+                *(f32*)((u8*)dst + 0x10) = *(f32*)((u8*)&tmp + 0x10);
+                *(f32*)((u8*)dst + 0x14) = *(f32*)((u8*)&tmp + 0x14);
+                *(u16*)((u8*)dst + 0x18) = *(u16*)((u8*)&tmp + 0x18);
+                *(s16*)((u8*)dst + 0x1A) = *(s16*)((u8*)&tmp + 0x1A);
+                *(u16*)((u8*)dst + 0x1C) = *(u16*)((u8*)&tmp + 0x1C);
+                *(u8*)((u8*)dst + 0x1E) = *(u8*)((u8*)&tmp + 0x1E);
+                *(u8*)((u8*)dst + 0x1F) = *(u8*)((u8*)&tmp + 0x1F);
+                *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)&tmp + 0x20);
+                // push_back into the intrusive list
+                MineNode* head = self->mStartPtr;
+                slot->mNext = head;
+                slot->mPrev = head->mPrev;
+                head->mPrev->mNext = slot;
+                head->mPrev = slot;
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_802067E4 - generate a collectible item drop for a mine point.
+// ---------------------------------------------------------------------------
+extern "C" int func_802067E4(CfMapMineManager* self, MinePoint* pt,
+                             void* item, u8* outFlag) {
+    if (lbl_eu_806646A8 == 0) {
+        lbl_eu_806646A4 = strlen(lbl_eu_80662758) - 1;
+        lbl_eu_806646A8 = 1;
+    }
+
+    BdatFilePointer* file = lbl_eu_806640C8;
+    *outFlag = 0;
+    memset(item, 0, 0x34);
+    const char* cols = lbl_eu_80508424;
+    u16 rowVal = (u16)getBdatStringColumnValue(file, cols + 0x1F,
+                                               pt->mFlags >> 22);
+    if (rowVal == 0) {
+        return 0;
+    }
+
+    func_801583E0(item);
+    void* impl = CItem_initItemImplInstances();
+    ((void (*)(void*, void*))(*(u32*)((u8*)*(void**)impl + 0x1C)))(impl, item);
+
+    u8 spA, spB;
+    func_80157F04(rowVal, &spA, &spB);
+    u8 kind = (u8)getBdatStringColumnValue(file, cols + 0x53, spB);
+
+    void* mgr = func_8009ECB0();
+    u32* arr = (u32*)((u8*)mgr + 0x4);
+    u32 total = 0;
+    for (int i = 0; i < 9; i++) {
+        u32 v = arr[i];
+        if (v >= 1 && v <= 8) {
+            void* rec = func_8009EC9C((u16)v);
+            void* data = (u8*)rec + 0x3534;
+            if (data != 0 && func_8026178C(data, 0x91) != 0) {
+                total += func_8025FB10(data, 0x91);
+            }
+        }
+    }
+
+    int rnd = mtRand__Q22ml4mathFi(10000);
+    u32 bias = lbl_eu_80662760[(pt->mFlags >> 11) & 1];
+    u32 scaled = (total + bias) * 100;
+    u32 x = scaled ^ rnd;
+    u32 q = (x & scaled) - (s32)x / 2;
+    u8 flagBit = (u8)(q >> 31);
+    *outFlag = flagBit;
+    *(u8*)((u8*)item + 0x16) = flagBit ? 2 : 1;
+
+    u16 cap = (u16)func_8009CF8C(0x800);
+    if (cap > kind && lbl_eu_80663E42 == 4) {
+        kind = cap;
+    }
+    func_801570A0(item, kind);
+
+    u32 tblIdx = ((pt->mFlags >> 16) & 1) ? 2 : 0;
+    if (*outFlag) tblIdx += 1;
+    u8 lo = lbl_eu_80662750[tblIdx * 2];
+    u8 hi = lbl_eu_80662750[tblIdx * 2 + 1];
+
+    for (int k = 0; k < 4; k++) {
+        void* im = CItem_initItemImplInstances();
+        ((void (*)(void*, void*, u32, u32))(*(u32*)((u8*)*(void**)im + 0x50)))(
+            im, item, k, 0);
+        void* im2 = CItem_initItemImplInstances();
+        ((void (*)(void*, void*, u32, u32))(*(u32*)((u8*)*(void**)im2 + 0x68)))(
+            im2, item, k, 0);
+    }
+
+    int need, limit;
+    if ((pt->mFlags & 0x00010000) != 0) {
+        need = 2;
+        limit = 4;
+    } else {
+        need = 1;
+        limit = 2;
+    }
+
+    u16 picked[4];
+    memset(picked, 0, 8);
+    int attempts = 0;
+    int npicked = 0;
+    s32 nameLen = lbl_eu_806646A4;
+
+    for (;;) {
+        lbl_eu_80662758[nameLen] = (char)(attempts + 0x31);
+        lbl_eu_80535720[nameLen] = (char)(attempts + 0x31);
+        u16 A = (u16)getBdatStringColumnValue(file, lbl_eu_80662758,
+                                              pt->mFlags >> 22);
+        u8 B = (u8)getBdatStringColumnValue(file, lbl_eu_80535720,
+                                            pt->mFlags >> 22);
+        if (*outFlag != 0 && B != 0) {
+            B = (u8)(B + 100);
+        }
+        int roll = mtRand__Q22ml4mathFi(100);
+        if (A != 0 && roll < B) {
+            int dup = 0;
+            for (int j = 0; j < npicked; j++) {
+                if (A == picked[j]) {
+                    dup = 1;
+                    break;
+                }
+            }
+            if (dup == 0) {
+                u16 qty = (u16)mtRand__Q22ml4mathFii(lo, hi);
+                void* im = CItem_initItemImplInstances();
+                ((void (*)(void*, void*, u32, u32))(*(u32*)((u8*)*(void**)im +
+                                                             0x50)))(im, item,
+                                                                     npicked, A);
+                void* im2 = CItem_initItemImplInstances();
+                ((void (*)(void*, void*, u32, u32))(*(u32*)((u8*)*(void**)im2 +
+                                                             0x68)))(im2, item,
+                                                                     npicked,
+                                                                     qty);
+                picked[npicked] = A;
+                npicked++;
+                if (npicked >= limit) {
+                    return 1;
+                }
+            }
+        }
+        attempts++;
+        if (attempts >= limit) {
+            attempts -= (attempts / limit) * limit;
+        }
+        if (npicked >= need) {
+            return 1;
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// func_802074F0 - top-level update: timers, nearest point, collection input.
+// ---------------------------------------------------------------------------
+extern "C" void func_802074F0(CfMapMineManager* self) {
+    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    if (player == 0) return;
+
+    func_802073CC(self);
+    CfRes_getD80Flag();
+    f32 dt = func_80496288();
+
+    for (int i = 0; i < 16; i++) {
+        if (self->mSnd[i].mId != 0) {
+            self->mSnd[i].mTime -= dt;
+            if (self->mSnd[i].mTime <= 0.0) {
+                func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, self->mSnd[i].mId,
+                                                           0, 0, 0.6f);
+                self->mSnd[i].mId = 0;
+                self->mSnd[i].mTime = 0.0f;
+            }
+        }
+    }
+
+    void* p2 = getPlayer__Q22cf13CfGameManagerFi(0);
+    void* vt = *(void**)p2;
+    f32 px = ((f32 (*)(void*))(*(u32*)((u8*)vt + 0xAC)))(p2);
+    // (position fetch elided in this reconstruction stub)
+
+    if (self->mTime > 0.0f) {
+        CfRes_getD80Flag();
+        self->mTime -= func_80496288();
+        if (self->mTime < 0.0f) self->mTime = 0.0f;
+        return;
+    }
+
+    MineNode* nearest;
+    f32 pos[3];
+    lbl_eu_80663E24 &= ~1u;
+    func_8020712C(&nearest, self, (CfMapMineManager*)((u8*)self + 0x4), pos);
+    if (nearest == 0) return;
+    if (func_8007F91C__Q22cf13CfGameManagerFv() != 0) return;
+
+    int ready = 0;
+    u32 fl = nearest->mItem.mFlags;
+    if ((fl & 0x00020000) != 0 && ((fl >> 8) & 0xFF) != 0) {
+        ready = 1;
+    }
+    if (ready == 0) return;
+    if (func_8013EB90(1) != 0) return;
+    if (func_800FF738() != 0) return;
+    if ((lbl_eu_80663E24 & 0xAFA40000) != 0) return;
+    if (func_80084BF4__Q22cf13CfGameManagerFv() != 0) return;
+    void* pad2 = func_800821F8__Q22cf13CfGameManagerFv();
+    if (pad2 != 0 && (*(u32*)((u8*)pad2 + 0x4) & 0x01000000) != 0) return;
+    if (func_80085840__Q22cf13CfGameManagerFv() == 0) return;
+    if ((lbl_eu_80663E24 & 0x00002000) != 0) return;
+    void* pad = getCurrentPad__Q22cf13CfGameManagerFv();
+    if ((*(u32*)((u8*)pad + 0x4) & 0x00000010) == 0) return;
+
+    u8 itemBuf[0x80];
+    u8 dropFlag = 0;
+    u16 sp24 = 0;
+    u32 sp20 = 0;
+    if (func_802067E4(self, &nearest->mItem, itemBuf, &dropFlag) == 0) return;
+
+    if (func_801599D4(itemBuf, 0) == 0) {
+        const char* cols = lbl_eu_80508424;
+        void* fp = getFP__FPCc(cols + 0x77);
+        getBdatStringColumnValue((BdatFilePointer*)fp, cols + 0x4E, 0x1B);
+        func_8013D55C(0, 0, 0);
+        return;
+    }
+
+    // Collection succeeded: decrement count, spawn message, play fanfare.
+    u32 fl2 = nearest->mItem.mFlags;
+    u32 cnt = (fl2 >> 8) & 0xFF;
+    fl2 = (fl2 & 0xFFFF00FF) | (((cnt - 1) & 0xFF) << 8);
+    nearest->mItem.mFlags = fl2;
+    if (((fl2 >> 8) & 0xFF) == 0) {
+        if (nearest->mItem.mObj4 != 0) {
+            if (func_800B8920(nearest->mItem.mObj4) != 0) {
+                func_800B9404(nearest->mItem.mObj4);
+            }
+            nearest->mItem.mObj4 = 0;
+        }
+        nearest->mItem.mObj4 = 0;
+        if ((nearest->mItem.mFlags & 0x00010000) == 0 ||
+            func_80207C08(nearest->mItem.mPointId1C, nearest->mItem.mArea1E,
+                          nearest->mItem.mAreaSub1F) == 0) {
+            if ((nearest->mItem.mFlags & 0x00010000) != 0) {
+                u32 g = lbl_eu_80663E24;
+                f32 a = 160.0f - (f32)((g >> 20) & 1);
+                func_80462E58__8CTaskLODFv(nearest->mItem.mPointId1C, 0, a);
+            } else {
+                if (func_80186BC8(nearest->mItem.mPointId1C) != 0) {
+                    func_800BFBF4(nearest->mItem.mPointId1C, 2);
+                }
+            }
+        }
+    }
+
+    u32 id = nearest->mItem.mFlags >> 22;
+    u8 msgKind = (u8)getBdatStringColumnValue(lbl_eu_806640C8,
+                                              lbl_eu_80508424 + 0x6C, id);
+    f32 msgTime = 30.0f * (1.0f / 60.0f) *
+                  (176.0f - (f32)((msgKind & 0xFF)));
+    nearest->mItem.mTimer14 = msgTime;
+    self->mTime = 60.0f;
+
+    func_80207B24(self, (dropFlag >> 6) & 3, (u8*)itemBuf + 0x10);
+    func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(0, 0x3C, 0, 0, 0.6f);
+
+    // Register a sound timer.
+    u16 sndId = (dropFlag != 0) ? 0x47 : 0x46;
+    for (int i = 0; i < 16; i++) {
+        if (self->mSnd[i].mId == 0) {
+            self->mSnd[i].mId = sndId;
+            self->mSnd[i].mTime = 25.0f;
+            break;
+        }
+    }
+
+    // Push a message into the ring buffer.
+    MineMsgRing* ring = &self->mMsgs;
+    char msgText[0x48];
+    msgText[0] = 0;
+    void* im = CItem_initItemImplInstances();
+    const char* nm = ((const char* (*)(void*, void*))(*(u32*)((u8*)*(void**)im +
+                                                              0x20)))(im,
+                                                                      itemBuf);
+    u32 mlen = strlen(nm);
+    strcpy(msgText, nm);
+    f32 mtime = 22.0f;
+
+    if (ring->mCount == 16) {
+        MineMsg* old = &ring->mSlots[ring->mReadIdx % ring->mCapacity];
+        u32 nxt = ring->mReadIdx + 1;
+        ring->mCount -= 1;
+        ring->mReadIdx = nxt % ring->mCapacity;
+        (void)old;
+    }
+    {
+        u32 widx = (ring->mReadIdx + ring->mCount) % ring->mCapacity;
+        MineMsg* slot = &ring->mSlots[widx];
+        slot->mLen = strlen(msgText);
+        strcpy(slot->mText, msgText);
+        slot->mTime = mtime;
+        ring->mCount += 1;
+    }
+
+    u32 cid = func_80082694__Q22cf13CfGameManagerFv(0x70);
+    u32 cval = cid + 1;
+    func_8008269C__Q22cf13CfGameManagerFv(0x70, cval);
+    if (cval == 1) func_800826F0__Q22cf13CfGameManagerFv(0x70);
+    else if (cval == 0x32) func_800826F0__Q22cf13CfGameManagerFv(0x71);
+    else if (cval == 0x1F4) func_800826F0__Q22cf13CfGameManagerFv(0x72);
+
+    void* im2 = CItem_initItemImplInstances();
+    u32 rarity = ((u32(*)(void*, void*))(*(u32*)((u8*)*(void**)im2 + 0x08)))(
+        im2, itemBuf);
+    if ((rarity & 0xFFFF) >= 5) {
+        func_800826F0__Q22cf13CfGameManagerFv(0x76);
+    }
+
+    if (msgText[0] != 0) {
+        u32 sid = func_80082694__Q22cf13CfGameManagerFv(0x73);
+        u32 sval = sid + 1;
+        func_8008269C__Q22cf13CfGameManagerFv(0x73, sval);
+        if (sval == 1) func_800826F0__Q22cf13CfGameManagerFv(0x73);
+        else if (sval == 7) func_800826F0__Q22cf13CfGameManagerFv(0x74);
+        else if (sval == 0x4D) func_800826F0__Q22cf13CfGameManagerFv(0x75);
+    }
+
+    lbl_eu_80663E24 |= 0x80000000;
+}
+
+// ---------------------------------------------------------------------------
+// func_80207D2C - rebuild point list from a 150-entry save record.
+// ---------------------------------------------------------------------------
+extern "C" void func_80207D2C(u8* rec) {
+    CfMapMineManager* mgr = lbl_eu_806646A0;
+    if (mgr != 0) {
+        MineNode* start = mgr->mStartPtr;
+        MineNode* n = start->mNext;
+        while (n != start) {
+            MineNode* cur = n;
+            n = n->mNext;
+            cur->mNext = 0;
+        }
+        start->mNext = start;
+        start->mPrev = start;
+        mgr->mMsgs.mCount = 0;
+        mgr->mMsgs.mReadIdx = 0;
+        mgr->mTime = 0.0f;
+        for (int i = 0; i < 16; i++) {
+            mgr->mSnd[i].mId = 0;
+            mgr->mSnd[i].mTime = 0.0f;
+        }
+    }
+
+    MinePoint tmp;
+    tmp.mObj0 = 0;
+    tmp.mObj4 = 0;
+    tmp.mPosX = 0.0f;
+    tmp.mPosY = 0.0f;
+    tmp.mPosZ = 0.0f;
+    tmp.mTimer14 = 0.0f;
+    tmp.mId18 = 0;
+    tmp.mCounter1A = 0;
+    tmp.mPointId1C = 0;
+    tmp.mArea1E = 0;
+    tmp.mAreaSub1F = 0;
+    u32 fl = tmp.mFlags;
+    fl &= 0x003FFFFF;
+    fl &= 0xFFFF00FF;
+    fl &= 0xFF1FFFFF;
+    tmp.mFlags = fl;
+
+    for (int i = 0; i < 150; i++) {
+        u8 cnt = rec[3];
+        if (cnt == 0) break;
+        u16 pid = *(u16*)(rec + 0);
+        u8 area = rec[4];
+        u8 sub = rec[5];
+        u8 count = rec[2];
+        tmp.mTimer14 = (f32)(176.0 - (f32)sub);
+        u32 f2 = tmp.mFlags;
+        f2 = (f2 & 0xFFFF00FF) | ((count & 0xFF) << 8);
+        f2 = (f2 & 0x003FFFFF) | ((cnt & 0x3FF) << 22);
+        tmp.mFlags = f2;
+        tmp.mArea1E = area;
+        tmp.mAreaSub1F = (u8)(176.0 - (f32)sub);
+
+        CfMapMineManager* m2 = lbl_eu_806646A0;
+        u32 idx = 0;
+        while (idx < m2->mCapacity) {
+            if (((MineNode*)((u8*)m2->mList + idx * 0x2C))->mNext == 0) break;
+            idx++;
+        }
+        MineNode* slot = (MineNode*)((u8*)m2->mList + idx * 0x2C);
+        MinePoint* dst = &slot->mItem;
+        *(u32*)((u8*)dst + 0x00) = *(u32*)((u8*)&tmp + 0x00);
+        *(u32*)((u8*)dst + 0x04) = *(u32*)((u8*)&tmp + 0x04);
+        *(f32*)((u8*)dst + 0x08) = *(f32*)((u8*)&tmp + 0x08);
+        *(f32*)((u8*)dst + 0x0C) = *(f32*)((u8*)&tmp + 0x0C);
+        *(f32*)((u8*)dst + 0x10) = *(f32*)((u8*)&tmp + 0x10);
+        *(f32*)((u8*)dst + 0x14) = *(f32*)((u8*)&tmp + 0x14);
+        *(u16*)((u8*)dst + 0x18) = *(u16*)((u8*)&tmp + 0x18);
+        *(s16*)((u8*)dst + 0x1A) = *(s16*)((u8*)&tmp + 0x1A);
+        *(u16*)((u8*)dst + 0x1C) = *(u16*)((u8*)&tmp + 0x1C);
+        *(u8*)((u8*)dst + 0x1E) = *(u8*)((u8*)&tmp + 0x1E);
+        *(u8*)((u8*)dst + 0x1F) = *(u8*)((u8*)&tmp + 0x1F);
+        *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)&tmp + 0x20);
+
+        MineNode* head = m2->mStartPtr;
+        slot->mNext = head;
+        slot->mPrev = head->mPrev;
+        head->mPrev->mNext = slot;
+        head->mPrev = slot;
+        rec += 6;
     }
 }

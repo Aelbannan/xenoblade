@@ -56,6 +56,9 @@ extern u32 lbl_eu_806657BC;
 extern u32 lbl_eu_806657C0;
 extern u32 lbl_eu_806657C4;
 extern u16 lbl_eu_806657C8;      // normal stride in bytes
+extern u8* lbl_eu_8066581C;
+extern u8* lbl_eu_80665820;
+extern u8* lbl_eu_80665824;
 
 // ---------------------------------------------------------------------------
 // BSS objects (far access).
@@ -311,7 +314,7 @@ extern "C" void func_80463C24__Q23LOD17UnkClass_8046368CFv(s32 index, s32 offset
 
     u8* record = lbl_eu_806657AC + slot * 0xB4;
     Mtx work[3];
-    PSMTXConcat(g->mtx58, mtx, work[0]);
+    PSMTXConcat(g->mtx58, *mtx, work[0]);
     PSMTXConcat(work[0], *(const Mtx*)(record + 0x1A4), work[1]);
     PSMTXConcat(work[0], *(const Mtx*)(record + 0x174), work[2]);
 
@@ -398,15 +401,15 @@ extern "C" s32 func_80463F60__Q23LOD17UnkClass_8046368CFv(const LodPickObj* obj)
 // us-80467f5c  func_80463F8C  (conditional scalar updates, args in f1..f3)
 // ===========================================================================
 extern "C" void func_80463F8C__Q23LOD17UnkClass_8046368CFv(f32 a, f32 b, f32 c) {
-    if (a != lbl_eu_8066A5F4) {
+    if (lbl_eu_8066A5F4 != a) {
         lbl_eu_80658038[0] = a;
         lbl_eu_806657B0 |= 0x8;
     }
-    if (b != lbl_eu_8066A5F4) {
+    if (lbl_eu_8066A5F4 != b) {
         lbl_eu_806657B0 |= 0x10;
         lbl_eu_80658038[1] = b;
     }
-    if (c == lbl_eu_8066A5F4) {
+    if (lbl_eu_8066A5F4 == c) {
         return;
     }
     lbl_eu_806657B0 |= 0x20;
@@ -621,22 +624,17 @@ extern "C" s32 func_804643D8__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b, s32 da, 
 // ===========================================================================
 extern "C" s32 func_8046451C__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b) {
     s32 lim = lbl_eu_806657B8;
+    s32 ok = 0;
     if (a > b) {
         if (a <= lim) {
-            return 1;
+            ok = 1;
+        } else if (b >= lim) {
+            ok = 1;
         }
-        if (b < lim) {
-            return 0;
-        }
-        return 1;
+    } else if (a <= lim && b >= lim) {
+        ok = 1;
     }
-    if (a > lim) {
-        return 0;
-    }
-    if (b < lim) {
-        return 0;
-    }
-    return 1;
+    return ok;
 }
 
 // ===========================================================================

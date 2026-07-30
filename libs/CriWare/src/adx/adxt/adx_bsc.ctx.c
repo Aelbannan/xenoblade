@@ -724,7 +724,15 @@ extern u32 lbl_eu_805E5370;
 
 u32 ADXB_GetDecErrMode(void) { return lbl_eu_805E5370; }
 
-void ADXB_Init() {}
+extern volatile u32 lbl_eu_805E5358;
+extern u8 lbl_eu_805E5378[0x1000];
+
+void ADXB_Init(void) {
+    ADXPD_Init();
+    lbl_eu_805E5358++;
+    memset(lbl_eu_805E5378, 0, 0x1000);
+    *(u32*)((u8*)&lbl_eu_805E5358 + 0x18) = 0;
+}
 
 u32 adxb_DefGetWr(void* self, u32* out1, u32* out2, u32* out3) {
     *out1 = *(u32*)((u8*)self + 0x8C);
@@ -828,7 +836,13 @@ void ADXB_TakeSnapshot(void* this_) {
     ADXPD_GetExtPrm(*(void**)((char*)r31 + 8), (char*)r31 + 0xa6, (char*)r31 + 0xa8, (char*)r31 + 0xaa);
 }
 
-void ADXB_RestoreSnapshot() {}
+void ADXB_RestoreSnapshot(void* self) {
+    ADXPD_SetDly(*(void**)((u8*)self + 0x08), (u32*)((u8*)self + 0xB0), (u32*)((u8*)self + 0xB4));
+    ADXPD_SetExtPrm(*(void**)((u8*)self + 0x08),
+        *(s16*)((u8*)self + 0xA6),
+        *(s16*)((u8*)self + 0xA8),
+        *(s16*)((u8*)self + 0xAA));
+}
 
 void adxb_get_key() {}
 
@@ -842,16 +856,52 @@ void ADXB_SetLnkSw(void* self, int val) {
 
 u32 ADXB_GetStat(void* self) { return *(u32*)((u8*)self + 0x4); }
 
-void ADXB_EntryData() {}
+void ADXB_EntryData(void* self, s32 param2, s32 param3) {
+    s32 val;
+    
+    if (*(s16*)((u8*)self + 0x98) == 0) {
+        val = (s32)(s8)(*(u8*)((u8*)self + 0x0f));
+        *(s32*)((u8*)self + 0x48) = param2;
+        *(s32*)((u8*)self + 0x4c) = param3 / val;
+        *(s32*)((u8*)self + 0x74) = 0;
+    } else {
+        s32 v7, v6;
+        v7 = (s32)(s8)(*(u8*)((u8*)self + 0x0d));
+        v6 = (s32)(s8)(*(u8*)((u8*)self + 0x0e));
+        v7 = (v7 + 7) >> 3;
+        *(s32*)((u8*)self + 0x48) = param2;
+        *(s32*)((u8*)self + 0x74) = 0;
+        *(s32*)((u8*)self + 0x4c) = param3 / (v7 * v6);
+    }
+    
+    *(s32*)((u8*)self + 0x90) = 0;
+    *(s32*)((u8*)self + 0x94) = 0;
+    *(s32*)((u8*)self + 0xf4) = 0;
+    *(s32*)((u8*)self + 0xf0) = 0;
+}
 
 void ADXB_Start(void* self) {
     if (*(u32*)((u8*)self + 0x04) != 0) return;
     *(u32*)((u8*)self + 0x04) = 1;
 }
 
-void ADXB_Stop() {}
+extern void (*lbl_eu_805E5364)(void*);
 
-void ADXB_Reset() {}
+void ADXB_Stop(void* self) {
+    if (*(u32*)((u8*)self + 0xE0) != 0) {
+        lbl_eu_805E5364(self);
+    }
+    ADXPD_Stop(*(void**)((u8*)self + 0x08));
+    *(u32*)((u8*)self + 0x04) = 0;
+}
+
+void ADXB_Reset(void* self) {
+    if (*(u32*)((u8*)self + 0x04) == 3) {
+        ADXPD_Reset(*(void**)((u8*)self + 0x08));
+        *(u32*)((u8*)self + 0x8C) = 0;
+        *(u32*)((u8*)self + 0x04) = 0;
+    }
+}
 
 u32 ADXB_GetDecDtLen(void* self) { return *(u32*)((u8*)self + 0x94); }
 

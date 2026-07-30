@@ -91,7 +91,8 @@ void func_804DD5B0(ml::CMat34* mtx, f32 rad) {
 
 int func_804DD0A0(Mtx mtx, const Vec* v) {
     f32 mag = PSVECMag(v);
-    if (fabsf(mag - lbl_eu_8066B270) <= lbl_eu_8066A208) {
+    bool nearOne = ml::math::abs(mag - lbl_eu_8066B270) <= lbl_eu_8066A208;
+    if (nearOne) {
         PSMTXIdentity(mtx);
         return 1;
     }

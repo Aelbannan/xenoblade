@@ -60,7 +60,7 @@ struct CSchedule {
     float field_0x94;        // 0x94
     s16 mHandles[32];        // 0x98: resolved handles (initialized to -1)
     u8 mEntryCount;          // 0xd8: entry count
-    u8 field_0xd9;           // 0xd9
+    s8 field_0xd9;           // 0xd9: active-item count for the last step
     CScheduleChild* mChildren[4]; // 0xdc: child objects with virtual destructors
     u8* mTablePtr;           // 0xec: pointer to vtable-like structure
 };

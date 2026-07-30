@@ -78,7 +78,7 @@ public:
     virtual void _v69();
     virtual void _v70();
     virtual void _v71();
-    virtual f32 getF74();  // idx 72 -> slot 74 (0x128)
+    virtual f32 getF74();  // slot 74 (0x128)
     virtual void _v73();
     virtual void _v74();
     virtual void _v75();
@@ -369,7 +369,7 @@ public:
     virtual void _v360();
     virtual void _v361();
     virtual void _v362();
-    virtual f32 getAngle();  // idx 363 -> slot 365 (0x5b4)
+    virtual f32 getAngle();  // slot 365 (0x5b4)
 };
 
 class CMoveEmbedded {
@@ -384,14 +384,14 @@ public:
     virtual void _v7();
     virtual void _v8();
     virtual void _v9();
-    virtual void* getCtrl();  // idx 10 -> slot 12 (0x30)
+    virtual void* getCtrl();  // slot 12 (0x30)
     virtual void _v11();
     virtual void _v12();
     virtual void _v13();
     virtual void _v14();
     virtual void _v15();
     virtual void _v16();
-    virtual void* get19();  // idx 17 -> slot 19 (0x4c)
+    virtual void* get19();  // slot 19 (0x4c)
     virtual void _v18();
     virtual void _v19();
     virtual void _v20();
@@ -407,7 +407,7 @@ public:
     virtual void _v30();
     virtual void _v31();
     virtual void _v32();
-    virtual void _v33();
+    virtual f32 getF35();  // slot 35 (0x8c)
     virtual void _v34();
     virtual void _v35();
     virtual void _v36();
@@ -415,7 +415,7 @@ public:
     virtual void _v38();
     virtual void _v39();
     virtual void _v40();
-    virtual void getPosition();  // idx 41 -> slot 43 (0xac)
+    virtual void getPosition();  // slot 43 (0xac)
     virtual void _v42();
     virtual void _v43();
     virtual void _v44();
@@ -440,13 +440,13 @@ public:
     virtual void _v63();
     virtual void _v64();
     virtual void _v65();
-    virtual void get68();  // idx 66 -> slot 68 (0x110)
+    virtual void get68();  // slot 68 (0x110)
     virtual void _v67();
     virtual void _v68();
     virtual void _v69();
     virtual void _v70();
     virtual void _v71();
-    virtual f32 getF74();  // idx 72 -> slot 74 (0x128)
+    virtual f32 getF74();  // slot 74 (0x128)
     virtual void _v73();
     virtual void _v74();
     virtual void _v75();
@@ -737,7 +737,7 @@ public:
     virtual void _v360();
     virtual void _v361();
     virtual void _v362();
-    virtual f32 getAngle();  // idx 363 -> slot 365 (0x5b4)
+    virtual f32 getAngle();  // slot 365 (0x5b4)
 };
 
 } // namespace cf

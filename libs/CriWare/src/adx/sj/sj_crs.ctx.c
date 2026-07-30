@@ -939,6 +939,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -3855,36 +3856,34 @@ DECL_SECTION(".init") extern const ExtabIndexInfo _eti_init_info[];
 #endif
 /* end "revolution/OS.h" */
 
-volatile int sjcrs_lvl;
-BOOL sjcrs_msk; // maybe also volatile
-extern volatile int sj_init_count;
+extern volatile int lbl_eu_805F26E0; /* sjcrs_lvl */
+extern volatile BOOL lbl_eu_805F26E4; /* sjcrs_msk */
+extern volatile int lbl_eu_805F26E8; /* sj_init_count */
 
 void SJCRS_Init(void){
-    sj_init_count++;
-    if (sj_init_count == 1){
-        sjcrs_lvl = 0;
+    lbl_eu_805F26E8++;
+    if (lbl_eu_805F26E8 == 1){
+        lbl_eu_805F26E0 = 0;
     }
 }
 
 void SJCRS_Finish(void){
-    sj_init_count--;
-    if (sj_init_count == 0){
-        sjcrs_lvl = 0;
+    lbl_eu_805F26E8--;
+    if (lbl_eu_805F26E8 == 0){
+        lbl_eu_805F26E0 = 0;
     }
 }
 
-static volatile int sj_init_count;
-
 void SJCRS_Lock(void){
-    if (!sjcrs_lvl){
-        sjcrs_msk = OSDisableInterrupts();
+    if (!lbl_eu_805F26E0){
+        lbl_eu_805F26E4 = OSDisableInterrupts();
     }
-    sjcrs_lvl++;
+    lbl_eu_805F26E0++;
 }
 
 void SJCRS_Unlock(void){
-    sjcrs_lvl--;
-    if (!sjcrs_lvl){
-        OSRestoreInterrupts(sjcrs_msk);
+    lbl_eu_805F26E0--;
+    if (!lbl_eu_805F26E0){
+        OSRestoreInterrupts(lbl_eu_805F26E4);
     }
 }

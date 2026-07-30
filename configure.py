@@ -1761,7 +1761,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/lib/Class_8045F858.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibStaticData.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibVM.cpp"),
-            Object(NonMatching, "monolib/src/lib/UnkClass_80460308.cpp"),
+            Object(NonMatching, "monolib/src/lib/UnkClass_80460308.cpp", extra_cflags=["-O4,p", "-unroll 0", "-func_align 4"]),
             Object(NonMatching, "monolib/src/lib/UnkClass_80460C34.cpp"),
             Object(NonMatching, "monolib/src/lod/CTaskLOD.cpp"),
             Object(NonMatching, "monolib/src/lod/CLODCacheManagerS.cpp"),

@@ -70,6 +70,24 @@ float lbl_eu_80661748[30];
 
 namespace {
 
+// The retail SDK takes channel colors by pointer; this repo's header
+// declares them by value, so call through the pointer signature.
+inline void setChanAmbColor(GXChannelID chan, const GXColor* color) {
+    reinterpret_cast<void (*)(GXChannelID, const GXColor*)>(GXSetChanAmbColor)(chan, color);
+}
+inline void setChanMatColor(GXChannelID chan, const GXColor* color) {
+    reinterpret_cast<void (*)(GXChannelID, const GXColor*)>(GXSetChanMatColor)(chan, color);
+}
+// Retail passes a trailing scale/zero word to these TEV setters.
+inline void setTevColorIn6(GXTevStageID stage, u32 a, u32 b, u32 c, u32 d, u32 e) {
+    reinterpret_cast<void (*)(GXTevStageID, u32, u32, u32, u32, u32)>(GXSetTevColorIn)(stage, a,
+                                                                                       b, c, d, e);
+}
+inline void setTevAlphaIn6(GXTevStageID stage, u32 a, u32 b, u32 c, u32 d, u32 e) {
+    reinterpret_cast<void (*)(GXTevStageID, u32, u32, u32, u32, u32)>(GXSetTevAlphaIn)(stage, a,
+                                                                                       b, c, d, e);
+}
+
 // u16 -> float through the shared 0x4330000000000000 magic constant.
 inline float u16ToF(u16 v) {
     union {
@@ -616,24 +634,24 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
         GXSetNumTexGens(1);
         GXSetNumTevStages(1);
         Mtx* texMtx = func_804F42A0(1, 0);
-        GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX2x4);
+        GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
         GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
-                          GX_PTTEXMTX0);
+                          0x7D);
         GXSetNumChans(1);
-        GXSetChanCtrl(GX_COLOR0A4, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
+        GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
                       GX_AF_NONE);
         GXColor amb;
         *(u32*)&amb = lbl_eu_8066B400;
-        GXSetChanAmbColor(GX_COLOR0A4, &amb);
+        setChanAmbColor(GX_COLOR0A0, &amb);
         GXColor mat;
         *(u32*)&mat = *(u32*)&matColor;
-        GXSetChanMatColor(GX_COLOR0A4, &mat);
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMapId, GX_COLOR0A4);
+        setChanMatColor(GX_COLOR0A0, &mat);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMapId, GX_COLOR0A0);
         GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_S, GX_F32, 0);
         GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_MTXIDX0, GX_NONE);
+        GXSetVtxDesc(GX_VA_CLR0, GX_NONE);
         GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
         GXSetVtxDesc(GX_VA_TEX1, GX_NONE);
         GXBegin(GX_TRIANGLEFAN, GX_VTXFMT0, 10);
@@ -646,47 +664,47 @@ extern "C" u32 func_804EECB0(u32 texMapId, CDrawCtx* draw, const ml::CVec3* pos,
             GXSetNumTexGens(2);
             GXSetNumTevStages(2);
             Mtx* texMtx = func_804F42A0(1, 0);
-            GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX2x4);
+            GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
             GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
-                              GX_PTTEXMTX0);
+                              0x7D);
             GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_IDENTITY, GX_FALSE,
-                              GX_PTTEXMTX0);
+                              0x7D);
         } else {
             GXSetNumTexGens(2);
             GXSetNumTevStages(2);
             Mtx* texMtx = func_804F42A0(1, 0);
-            GXLoadTexMtxImm(texMtx, GX_TEXMTX0, GX_MTX2x4);
+            GXLoadTexMtxImm((const float(*)[4])texMtx, GX_TEXMTX0, GX_MTX_2x4);
             GXSetTexCoordGen2(GX_TEXCOORD0, GX_TG_MTX2x4, GX_TG_TEX0, GX_TEXMTX0, GX_FALSE,
-                              GX_PTTEXMTX0);
+                              0x7D);
             mtxSrc->mTexMtx.setScale(mtxSrc->mScaleX, mtxSrc->mScaleY, mtxSrc->mScaleZ);
             mtxSrc->mTexMtx.replaceTranslation(
                 ml::CVec3(mtxSrc->mField0C + lbl_eu_8066B408, mtxSrc->mField10 + lbl_eu_8066B408,
                           mtxSrc->mField14 + lbl_eu_8066B408));
-            GXLoadTexMtxImm(mtxSrc->mTexMtx, GX_TEXMTX1, GX_MTX2x4);
+            GXLoadTexMtxImm(mtxSrc->mTexMtx.mtx, GX_TEXMTX1, GX_MTX_2x4);
             GXSetTexCoordGen2(GX_TEXCOORD1, GX_TG_MTX2x4, GX_TG_TEX1, GX_TEXMTX1, GX_FALSE,
-                              GX_PTTEXMTX0);
+                              0x7D);
         }
         GXSetNumChans(1);
-        GXSetChanCtrl(GX_COLOR0A4, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
+        GXSetChanCtrl(GX_COLOR0A0, GX_FALSE, GX_SRC_REG, GX_SRC_REG, GX_LIGHT_NULL, GX_DF_NONE,
                       GX_AF_NONE);
         GXColor amb;
         *(u32*)&amb = lbl_eu_8066B404;
-        GXSetChanAmbColor(GX_COLOR0A4, &amb);
+        setChanAmbColor(GX_COLOR0A0, &amb);
         GXColor mat;
         *(u32*)&mat = *(u32*)&matColor;
-        GXSetChanMatColor(GX_COLOR0A4, &mat);
-        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMapId, GX_COLOR0A4);
+        setChanMatColor(GX_COLOR0A0, &mat);
+        GXSetTevOrder(GX_TEVSTAGE0, GX_TEXCOORD0, (GXTexMapID)texMapId, GX_COLOR0A0);
         GXSetTevOp(GX_TEVSTAGE0, GX_REPLACE);
         GXSetTevOrder(GX_TEVSTAGE1, GX_TEXCOORD1, (GXTexMapID)flag, GX_COLOR_NULL);
-        GXSetTevColorIn(GX_TEVSTAGE1, GX_CC_0, GX_CC_0, GX_CC_0, GX_CC_0);
+        setTevColorIn6(GX_TEVSTAGE1, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, GX_CC_ZERO, 0);
         GXSetTevColorOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_FALSE, GX_TEVPREV);
-        GXSetTevAlphaIn(GX_TEVSTAGE1, GX_CA_0, GX_CA_APREV, GX_CA_TEXA, GX_CA_0, GX_TEV_SCALE_0);
+        setTevAlphaIn6(GX_TEVSTAGE1, GX_CA_ZERO, GX_CA_APREV, GX_CA_TEXA, GX_CA_ZERO, 0);
         GXSetTevAlphaOp(GX_TEVSTAGE1, GX_TEV_ADD, GX_TB_ZERO, GX_CS_SCALE_1, GX_TRUE, GX_TEVPREV);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX0, GX_TEX_S, GX_F32, 0);
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_TEX1, GX_TEX_S, GX_F32, 0);
         GXSetVtxDesc(GX_VA_POS, GX_DIRECT);
-        GXSetVtxDesc(GX_VA_MTXIDX0, GX_NONE);
+        GXSetVtxDesc(GX_VA_CLR0, GX_NONE);
         GXSetVtxDesc(GX_VA_TEX0, GX_DIRECT);
         GXSetVtxDesc(GX_VA_TEX1, GX_DIRECT);
         GXBegin(GX_TRIANGLEFAN, GX_VTXFMT1, 10);

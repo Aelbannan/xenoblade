@@ -491,15 +491,15 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
         GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT2, (u16)t->m_numVerts);
         for (s16 i = 0; i < t->m_numVerts; i++) {
             CETrailVertex* v = &t->m_verts[i];
-            GXWGFifo.f32 = v->m_x;
-            GXWGFifo.f32 = v->m_y;
-            GXWGFifo.f32 = v->m_z;
-            GXWGFifo.u8 = color[0];
-            GXWGFifo.u8 = color[1];
-            GXWGFifo.u8 = color[2];
-            GXWGFifo.u8 = (u8)(f32)v->m_shade;
-            GXWGFifo.f32 = t->m_texU0Scale * (t->m_texU0 + v->m_u);
-            GXWGFifo.f32 = t->m_texV0Scale * (t->m_texV0 + v->m_v);
+            WGPIPE.f = v->m_x;
+            WGPIPE.f = v->m_y;
+            WGPIPE.f = v->m_z;
+            WGPIPE.uc = color[0];
+            WGPIPE.uc = color[1];
+            WGPIPE.uc = color[2];
+            WGPIPE.uc = (u8)(f32)v->m_shade;
+            WGPIPE.f = t->m_texU0Scale * (t->m_texU0 + v->m_u);
+            WGPIPE.f = t->m_texV0Scale * (t->m_texV0 + v->m_v);
         }
         break;
     }
@@ -507,17 +507,17 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
         GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT2, (u16)t->m_numVerts);
         for (s16 i = 0; i < t->m_numVerts; i++) {
             CETrailVertex* v = &t->m_verts[i];
-            GXWGFifo.f32 = v->m_x;
-            GXWGFifo.f32 = v->m_y;
-            GXWGFifo.f32 = v->m_z;
-            GXWGFifo.u8 = color[0];
-            GXWGFifo.u8 = color[1];
-            GXWGFifo.u8 = color[2];
-            GXWGFifo.u8 = (u8)(f32)v->m_shade;
-            GXWGFifo.f32 = t->m_texU0Scale * (t->m_texU0 + v->m_u);
-            GXWGFifo.f32 = t->m_texV0Scale * (t->m_texV0 + v->m_v);
-            GXWGFifo.f32 = t->m_texU1Scale * (t->m_texU1 + v->m_u);
-            GXWGFifo.f32 = t->m_texV1Scale * (t->m_texV1 + v->m_v);
+            WGPIPE.f = v->m_x;
+            WGPIPE.f = v->m_y;
+            WGPIPE.f = v->m_z;
+            WGPIPE.uc = color[0];
+            WGPIPE.uc = color[1];
+            WGPIPE.uc = color[2];
+            WGPIPE.uc = (u8)(f32)v->m_shade;
+            WGPIPE.f = t->m_texU0Scale * (t->m_texU0 + v->m_u);
+            WGPIPE.f = t->m_texV0Scale * (t->m_texV0 + v->m_v);
+            WGPIPE.f = t->m_texU1Scale * (t->m_texU1 + v->m_u);
+            WGPIPE.f = t->m_texV1Scale * (t->m_texV1 + v->m_v);
         }
         break;
     }
@@ -525,13 +525,13 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
         GXBegin(GX_TRIANGLESTRIP, GX_VTXFMT2, (u16)t->m_numVerts);
         for (s16 i = 0; i < t->m_numVerts; i++) {
             CETrailVertex* v = &t->m_verts[i];
-            GXWGFifo.f32 = v->m_x;
-            GXWGFifo.f32 = v->m_y;
-            GXWGFifo.f32 = v->m_z;
-            GXWGFifo.u8 = color[0];
-            GXWGFifo.u8 = color[1];
-            GXWGFifo.u8 = color[2];
-            GXWGFifo.u8 = (u8)(f32)v->m_shade;
+            WGPIPE.f = v->m_x;
+            WGPIPE.f = v->m_y;
+            WGPIPE.f = v->m_z;
+            WGPIPE.uc = color[0];
+            WGPIPE.uc = color[1];
+            WGPIPE.uc = color[2];
+            WGPIPE.uc = (u8)(f32)v->m_shade;
         }
         break;
     }
@@ -539,6 +539,12 @@ extern "C" void func_804D7434(CETrail* t, s32 mode, const u8* color) {
 
     mtl::MemManager::func_80434A4C(true);
 }
+
+// ---------------------------------------------------------------------------
+// func_804D7B28: append/update one trail segment
+// ---------------------------------------------------------------------------
+extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
+                              const ml::CVec4* color, const ml::CVec4* scale);
 
 // ---------------------------------------------------------------------------
 // func_804D77E4: update trail geometry from link matrices
@@ -630,15 +636,6 @@ extern "C" void func_804D77E4(CETrail* t, const Mtx* M, const ml::CVec4* color, 
     }
     }
 }
-
-// ---------------------------------------------------------------------------
-// func_804D7B28: append/update one trail segment
-// ---------------------------------------------------------------------------
-extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
-                              const ml::CVec4* color, const ml::CVec4* scale);
-
-// forward declaration used by func_804D77E4 above
-void func_804D7B28_decl_guard();
 
 extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3* posB,
                               const ml::CVec4* color, const ml::CVec4* scale) {

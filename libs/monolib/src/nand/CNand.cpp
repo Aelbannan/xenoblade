@@ -108,7 +108,7 @@ extern "C" void func_804DA1B4(CNand* self) {
 // Ring buffer producer: claim the next free request slot (func_804DA47C).
 // Returns NULL when advancing the tail would collide with the head (full).
 extern "C" DECOMP_DONT_INLINE CNRequest* func_804DA47C(CNand* self) {
-    s16 next = (s16)((self->mTail + 1) % 8);
+    s16 next = (s16)((s16)(self->mTail + 1) % 8);
     if (next == self->mHead) {
         return nullptr;
     }
@@ -126,17 +126,17 @@ extern "C" void func_804DA1CC(CNand* self) {
             break;
         }
         self->mStatus = status;
-        self->mHead = (s16)((self->mHead + 1) % 8);
+        self->mHead = (s16)((s16)(self->mHead + 1) % 8);
     }
 }
 
 // Enqueue a check request (func_804DA248).
 extern "C" int func_804DA248(CNand* self, u32 a1, u32 a2, u32 a3) {
     CNRequest* req = func_804DA47C(self);
-    if (req == nullptr) {
-        return 0;
+    if (req != nullptr) {
+        return func_804DAB80(req, a1, a2, a3);
     }
-    return func_804DAB80(req, a1, a2, a3);
+    return 0;
 }
 
 // Enqueue a save request, optionally preceded by a directory-create request

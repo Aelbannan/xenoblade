@@ -1,4 +1,4 @@
-// zlib 1.2.3 inflate (inflate.c / inftrees.c) — Monolith Soft monolib fork.
+// zlib 1.2.3 inflate (inflate.c / inftrees.c) -- Monolith Soft monolib fork.
 // Retail TU monolib/src/lib/UnkClass_80460C34.cpp.
 //
 // The retail symbols carry placeholder `__17UnkClass_80460C34Fv` mangling but
@@ -57,7 +57,7 @@ typedef struct z_stream_s {
     z_ulong  reserved;           // 0x34
 } z_stream;                      // sizeof = 0x38
 
-// inflate_mode — retail enum is compacted: COPY and LEN_ are folded away.
+// inflate_mode -- retail enum is compacted: COPY and LEN_ are folded away.
 // Values verified against the retail switch jump table (jumptable_eu_8056D600).
 typedef enum {
     HEAD, FLAGS, TIME, OS, EXLEN, EXTRA, NAME, COMMENT, HCRC,

@@ -262,27 +262,23 @@ extern "C" void func_8020B2E4(CfGimmickElvData* self) {
 extern "C" void func_8020B34C(CfGimmickElvData* self) {
     // Init unk7C if needed
     if ((self->unk66 & 1) && self->unk7C == 0) {
-        int r = func_8020A608(self->unk6A, 0);
-        self->unk7C = (u32)func_8020A35C(self, 0xF, self->vec0);
+        self->unk7C = (u32)func_8020A35C((void*)func_8020A608(self->unk6A, 0), 0xF, self->vec0);
     }
 
     // Init unk1A4 if needed
     if ((self->flag1B0 & 1) && self->unk1A4 == 0) {
-        int r = func_8020A608(self->unk6A, 0);
-        self->unk1A4 = (u32)func_8020A35C(self, 0xF, self->elvVec0);
+        self->unk1A4 = (u32)func_8020A35C((void*)func_8020A608(self->unk6A, 0), 0xF, self->elvVec0);
     }
 
     // Check flags bit 8 (0x100)
     if (self->flags & 0x100) {
-        // LOD1 effect
-        if ((self->flag1B1 & 1) && (self->flags & 0x01000000)) {
-            func_8020A6B0(self, self->elvVec1, self->unk6A, lbl_eu_80668390,
-                         &self->unk1A8, 1, 0);
+        // LOD1 effect (bit 23)
+        if ((self->flag1B1 & 1) && (self->flags & 0x00800000)) {
+            func_8020A6B0(&self->unk1A8, self->elvVec1, self->unk6A, lbl_eu_80668390, 1, 0);
         }
-        // LOD2 effect
-        if ((self->flag1B2 & 1) && (self->flags & 0x02000000)) {
-            func_8020A6B0(self, self->elvVec2, self->unk6A, lbl_eu_80668390,
-                         &self->unk1AC, 1, 0);
+        // LOD2 effect (bit 24)
+        if ((self->flag1B2 & 1) && (self->flags & 0x01000000)) {
+            func_8020A6B0(&self->unk1AC, self->elvVec2, self->unk6A, lbl_eu_80668390, 1, 0);
         }
     } else {
         func_8020A434((void*)&self->unk1A8);
@@ -290,7 +286,7 @@ extern "C" void func_8020B34C(CfGimmickElvData* self) {
     }
 
     // Clear transient flags
-    self->flags &= ~0x01E00100;
+    self->flags &= 0xFE1FFFFF;
 }
 
 // ============================================================

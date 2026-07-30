@@ -26,8 +26,8 @@ void MakeTexSrtMtx_S(math::MTX34* pMtx, const TexSrt& rSrt) {
 }
 
 void MakeTexSrtMtx_R(math::MTX34* pMtx, const TexSrt& rSrt) {
-    f32 fidx = rSrt.R * lbl_eu_80669CA0;
     f32 sinR, cosR;
+    f32 fidx = rSrt.R * lbl_eu_80669CA0;
     math::SinCosFIdx(&sinR, &cosR, fidx);
 
     pMtx->m[0][0] = cosR;

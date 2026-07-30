@@ -442,17 +442,15 @@ class CalleeContract:
         return cls(
             frozenset({"*"}),
             frozenset({
-                *(f"r{i}" for i in (0, *range(3, 13))),
-                *(f"f{i}" for i in range(14)),
-                *(f"f{i}.ps1" for i in range(14)),
-                "cr0", "cr1", "cr5", "cr6", "cr7",
-                "xer.ca", "xer.ov", "xer.so", "fpscr", "ctr",
-                # Persistent / privileged state an unknown callee may clobber.
-                # Omitting these preserved entry MSR/GQR/… across opaque calls
-                # (false EQUIVALENT when a later mfmsr/mfspr observes them).
-                "msr", "time_base", "srr0", "srr1",
+                *(f"r{i}" for i in range(32)),
+                *(f"f{i}" for i in range(32)),
+                *(f"f{i}.ps1" for i in range(32)),
                 *(f"gqr{i}" for i in range(8)),
                 *(f"sr{i}" for i in range(16)),
+                *(f"cr{i}" for i in range(8)),
+                "xer.ca", "xer.ov", "xer.so",
+                "lr", "ctr", "fpscr",
+                "msr", "time_base", "srr0", "srr1",
                 *AUX_SPR_NAMES.values(),
                 "memory", "valid", "invalid_reason",
             }),

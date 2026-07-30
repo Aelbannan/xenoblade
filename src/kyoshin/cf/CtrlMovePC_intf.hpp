@@ -1,747 +1,743 @@
 #pragma once
 #include <types.h>
 // Auto-generated vtable-padded interfaces for CCtrlMovePC object references.
-// Slot N => vtable offset N*4. No virtual destructor (would shift slots).
+// MWCC adds 2 implicit leading vtable slots; declared idx P -> offset (P+2)*4.
 namespace cf {
-
-class CMoveEmbedded {
-public:
-    virtual void _v0();  // slot 0
-    virtual void _v1();  // slot 1
-    virtual void _v2();  // slot 2
-    virtual void _v3();  // slot 3
-    virtual void _v4();  // slot 4
-    virtual void _v5();  // slot 5
-    virtual void _v6();  // slot 6
-    virtual void _v7();  // slot 7
-    virtual void _v8();  // slot 8
-    virtual void _v9();  // slot 9
-    virtual void _v10();  // slot 10
-    virtual void _v11();  // slot 11
-    virtual void* getCtrl();  // slot 12 (0x30)
-    virtual void _v13();  // slot 13
-    virtual void _v14();  // slot 14
-    virtual void _v15();  // slot 15
-    virtual void _v16();  // slot 16
-    virtual void _v17();  // slot 17
-    virtual void _v18();  // slot 18
-    virtual void* get19();  // slot 19 (0x4c)
-    virtual void _v20();  // slot 20
-    virtual void _v21();  // slot 21
-    virtual void _v22();  // slot 22
-    virtual void _v23();  // slot 23
-    virtual void _v24();  // slot 24
-    virtual void _v25();  // slot 25
-    virtual void _v26();  // slot 26
-    virtual void _v27();  // slot 27
-    virtual void _v28();  // slot 28
-    virtual void _v29();  // slot 29
-    virtual void _v30();  // slot 30
-    virtual void _v31();  // slot 31
-    virtual void _v32();  // slot 32
-    virtual void _v33();  // slot 33
-    virtual void _v34();  // slot 34
-    virtual void _v35();  // slot 35
-    virtual void _v36();  // slot 36
-    virtual void _v37();  // slot 37
-    virtual void _v38();  // slot 38
-    virtual void _v39();  // slot 39
-    virtual void _v40();  // slot 40
-    virtual void _v41();  // slot 41
-    virtual void _v42();  // slot 42
-    virtual void getPosition();  // slot 43 (0xac)
-    virtual void _v44();  // slot 44
-    virtual void _v45();  // slot 45
-    virtual void _v46();  // slot 46
-    virtual void _v47();  // slot 47
-    virtual void _v48();  // slot 48
-    virtual void _v49();  // slot 49
-    virtual void _v50();  // slot 50
-    virtual void _v51();  // slot 51
-    virtual void _v52();  // slot 52
-    virtual void _v53();  // slot 53
-    virtual void _v54();  // slot 54
-    virtual void _v55();  // slot 55
-    virtual void _v56();  // slot 56
-    virtual void _v57();  // slot 57
-    virtual void _v58();  // slot 58
-    virtual void _v59();  // slot 59
-    virtual void _v60();  // slot 60
-    virtual void _v61();  // slot 61
-    virtual void _v62();  // slot 62
-    virtual void _v63();  // slot 63
-    virtual void _v64();  // slot 64
-    virtual void _v65();  // slot 65
-    virtual void _v66();  // slot 66
-    virtual void _v67();  // slot 67
-    virtual void get68();  // slot 68 (0x110)
-    virtual void _v69();  // slot 69
-    virtual void _v70();  // slot 70
-    virtual void _v71();  // slot 71
-    virtual void _v72();  // slot 72
-    virtual void _v73();  // slot 73
-    virtual f32 getF74();  // slot 74 (0x128)
-    virtual void _v75();  // slot 75
-    virtual void _v76();  // slot 76
-    virtual void _v77();  // slot 77
-    virtual void _v78();  // slot 78
-    virtual void _v79();  // slot 79
-    virtual void _v80();  // slot 80
-    virtual void _v81();  // slot 81
-    virtual void _v82();  // slot 82
-    virtual void _v83();  // slot 83
-    virtual void _v84();  // slot 84
-    virtual void _v85();  // slot 85
-    virtual void _v86();  // slot 86
-    virtual void _v87();  // slot 87
-    virtual void _v88();  // slot 88
-    virtual void _v89();  // slot 89
-    virtual void _v90();  // slot 90
-    virtual void _v91();  // slot 91
-    virtual void _v92();  // slot 92
-    virtual void _v93();  // slot 93
-    virtual void _v94();  // slot 94
-    virtual void _v95();  // slot 95
-    virtual void _v96();  // slot 96
-    virtual void _v97();  // slot 97
-    virtual void _v98();  // slot 98
-    virtual void _v99();  // slot 99
-    virtual void _v100();  // slot 100
-    virtual void _v101();  // slot 101
-    virtual void _v102();  // slot 102
-    virtual void _v103();  // slot 103
-    virtual void _v104();  // slot 104
-    virtual void _v105();  // slot 105
-    virtual void _v106();  // slot 106
-    virtual void _v107();  // slot 107
-    virtual void _v108();  // slot 108
-    virtual void _v109();  // slot 109
-    virtual void _v110();  // slot 110
-    virtual void _v111();  // slot 111
-    virtual void _v112();  // slot 112
-    virtual void _v113();  // slot 113
-    virtual void _v114();  // slot 114
-    virtual void _v115();  // slot 115
-    virtual void _v116();  // slot 116
-    virtual void _v117();  // slot 117
-    virtual void _v118();  // slot 118
-    virtual void _v119();  // slot 119
-    virtual void _v120();  // slot 120
-    virtual void _v121();  // slot 121
-    virtual void _v122();  // slot 122
-    virtual void _v123();  // slot 123
-    virtual void _v124();  // slot 124
-    virtual void _v125();  // slot 125
-    virtual void _v126();  // slot 126
-    virtual void _v127();  // slot 127
-    virtual void _v128();  // slot 128
-    virtual void _v129();  // slot 129
-    virtual void _v130();  // slot 130
-    virtual void _v131();  // slot 131
-    virtual void _v132();  // slot 132
-    virtual void _v133();  // slot 133
-    virtual void _v134();  // slot 134
-    virtual void _v135();  // slot 135
-    virtual void _v136();  // slot 136
-    virtual void _v137();  // slot 137
-    virtual void _v138();  // slot 138
-    virtual void _v139();  // slot 139
-    virtual void _v140();  // slot 140
-    virtual void _v141();  // slot 141
-    virtual void _v142();  // slot 142
-    virtual void _v143();  // slot 143
-    virtual void _v144();  // slot 144
-    virtual void _v145();  // slot 145
-    virtual void _v146();  // slot 146
-    virtual void _v147();  // slot 147
-    virtual void _v148();  // slot 148
-    virtual void _v149();  // slot 149
-    virtual void _v150();  // slot 150
-    virtual void _v151();  // slot 151
-    virtual void _v152();  // slot 152
-    virtual void _v153();  // slot 153
-    virtual void _v154();  // slot 154
-    virtual void _v155();  // slot 155
-    virtual void _v156();  // slot 156
-    virtual void _v157();  // slot 157
-    virtual void _v158();  // slot 158
-    virtual void _v159();  // slot 159
-    virtual void _v160();  // slot 160
-    virtual void _v161();  // slot 161
-    virtual void _v162();  // slot 162
-    virtual void _v163();  // slot 163
-    virtual void _v164();  // slot 164
-    virtual void _v165();  // slot 165
-    virtual void _v166();  // slot 166
-    virtual void _v167();  // slot 167
-    virtual void _v168();  // slot 168
-    virtual void _v169();  // slot 169
-    virtual void _v170();  // slot 170
-    virtual void _v171();  // slot 171
-    virtual void _v172();  // slot 172
-    virtual void _v173();  // slot 173
-    virtual void _v174();  // slot 174
-    virtual void _v175();  // slot 175
-    virtual void _v176();  // slot 176
-    virtual void _v177();  // slot 177
-    virtual void _v178();  // slot 178
-    virtual void _v179();  // slot 179
-    virtual void _v180();  // slot 180
-    virtual void _v181();  // slot 181
-    virtual void _v182();  // slot 182
-    virtual void _v183();  // slot 183
-    virtual void _v184();  // slot 184
-    virtual void _v185();  // slot 185
-    virtual void _v186();  // slot 186
-    virtual void _v187();  // slot 187
-    virtual void _v188();  // slot 188
-    virtual void _v189();  // slot 189
-    virtual void _v190();  // slot 190
-    virtual void _v191();  // slot 191
-    virtual void _v192();  // slot 192
-    virtual void _v193();  // slot 193
-    virtual void _v194();  // slot 194
-    virtual void _v195();  // slot 195
-    virtual void _v196();  // slot 196
-    virtual void _v197();  // slot 197
-    virtual void _v198();  // slot 198
-    virtual void _v199();  // slot 199
-    virtual void _v200();  // slot 200
-    virtual void _v201();  // slot 201
-    virtual void _v202();  // slot 202
-    virtual void _v203();  // slot 203
-    virtual void _v204();  // slot 204
-    virtual void _v205();  // slot 205
-    virtual void _v206();  // slot 206
-    virtual void _v207();  // slot 207
-    virtual void _v208();  // slot 208
-    virtual void _v209();  // slot 209
-    virtual void _v210();  // slot 210
-    virtual void _v211();  // slot 211
-    virtual void _v212();  // slot 212
-    virtual void _v213();  // slot 213
-    virtual void _v214();  // slot 214
-    virtual void _v215();  // slot 215
-    virtual void _v216();  // slot 216
-    virtual void _v217();  // slot 217
-    virtual void _v218();  // slot 218
-    virtual void _v219();  // slot 219
-    virtual void _v220();  // slot 220
-    virtual void _v221();  // slot 221
-    virtual void _v222();  // slot 222
-    virtual void _v223();  // slot 223
-    virtual void _v224();  // slot 224
-    virtual void _v225();  // slot 225
-    virtual void _v226();  // slot 226
-    virtual void _v227();  // slot 227
-    virtual void _v228();  // slot 228
-    virtual void _v229();  // slot 229
-    virtual void _v230();  // slot 230
-    virtual void _v231();  // slot 231
-    virtual void _v232();  // slot 232
-    virtual void _v233();  // slot 233
-    virtual void _v234();  // slot 234
-    virtual void _v235();  // slot 235
-    virtual void _v236();  // slot 236
-    virtual void _v237();  // slot 237
-    virtual void _v238();  // slot 238
-    virtual void _v239();  // slot 239
-    virtual void _v240();  // slot 240
-    virtual void _v241();  // slot 241
-    virtual void _v242();  // slot 242
-    virtual void _v243();  // slot 243
-    virtual void _v244();  // slot 244
-    virtual void _v245();  // slot 245
-    virtual void _v246();  // slot 246
-    virtual void _v247();  // slot 247
-    virtual void _v248();  // slot 248
-    virtual void _v249();  // slot 249
-    virtual void _v250();  // slot 250
-    virtual void _v251();  // slot 251
-    virtual void _v252();  // slot 252
-    virtual void _v253();  // slot 253
-    virtual void _v254();  // slot 254
-    virtual void _v255();  // slot 255
-    virtual void _v256();  // slot 256
-    virtual void _v257();  // slot 257
-    virtual void _v258();  // slot 258
-    virtual void _v259();  // slot 259
-    virtual void _v260();  // slot 260
-    virtual void _v261();  // slot 261
-    virtual void _v262();  // slot 262
-    virtual void _v263();  // slot 263
-    virtual void _v264();  // slot 264
-    virtual void _v265();  // slot 265
-    virtual void _v266();  // slot 266
-    virtual void _v267();  // slot 267
-    virtual void _v268();  // slot 268
-    virtual void _v269();  // slot 269
-    virtual void _v270();  // slot 270
-    virtual void _v271();  // slot 271
-    virtual void _v272();  // slot 272
-    virtual void _v273();  // slot 273
-    virtual void _v274();  // slot 274
-    virtual void _v275();  // slot 275
-    virtual void _v276();  // slot 276
-    virtual void _v277();  // slot 277
-    virtual void _v278();  // slot 278
-    virtual void _v279();  // slot 279
-    virtual void _v280();  // slot 280
-    virtual void _v281();  // slot 281
-    virtual void _v282();  // slot 282
-    virtual void _v283();  // slot 283
-    virtual void _v284();  // slot 284
-    virtual void _v285();  // slot 285
-    virtual void _v286();  // slot 286
-    virtual void _v287();  // slot 287
-    virtual void _v288();  // slot 288
-    virtual void _v289();  // slot 289
-    virtual void _v290();  // slot 290
-    virtual void _v291();  // slot 291
-    virtual void _v292();  // slot 292
-    virtual void _v293();  // slot 293
-    virtual void _v294();  // slot 294
-    virtual void _v295();  // slot 295
-    virtual void _v296();  // slot 296
-    virtual void _v297();  // slot 297
-    virtual void _v298();  // slot 298
-    virtual void _v299();  // slot 299
-    virtual void _v300();  // slot 300
-    virtual void _v301();  // slot 301
-    virtual void _v302();  // slot 302
-    virtual void _v303();  // slot 303
-    virtual void _v304();  // slot 304
-    virtual void _v305();  // slot 305
-    virtual void _v306();  // slot 306
-    virtual void _v307();  // slot 307
-    virtual void _v308();  // slot 308
-    virtual void _v309();  // slot 309
-    virtual void _v310();  // slot 310
-    virtual void _v311();  // slot 311
-    virtual void _v312();  // slot 312
-    virtual void _v313();  // slot 313
-    virtual void _v314();  // slot 314
-    virtual void _v315();  // slot 315
-    virtual void _v316();  // slot 316
-    virtual void _v317();  // slot 317
-    virtual void _v318();  // slot 318
-    virtual void _v319();  // slot 319
-    virtual void _v320();  // slot 320
-    virtual void _v321();  // slot 321
-    virtual void _v322();  // slot 322
-    virtual void _v323();  // slot 323
-    virtual void _v324();  // slot 324
-    virtual void _v325();  // slot 325
-    virtual void _v326();  // slot 326
-    virtual void _v327();  // slot 327
-    virtual void _v328();  // slot 328
-    virtual void _v329();  // slot 329
-    virtual void _v330();  // slot 330
-    virtual void _v331();  // slot 331
-    virtual void _v332();  // slot 332
-    virtual void _v333();  // slot 333
-    virtual void _v334();  // slot 334
-    virtual void _v335();  // slot 335
-    virtual void _v336();  // slot 336
-    virtual void _v337();  // slot 337
-    virtual void _v338();  // slot 338
-    virtual void _v339();  // slot 339
-    virtual void _v340();  // slot 340
-    virtual void _v341();  // slot 341
-    virtual void _v342();  // slot 342
-    virtual void _v343();  // slot 343
-    virtual void _v344();  // slot 344
-    virtual void _v345();  // slot 345
-    virtual void _v346();  // slot 346
-    virtual void _v347();  // slot 347
-    virtual void _v348();  // slot 348
-    virtual void _v349();  // slot 349
-    virtual void _v350();  // slot 350
-    virtual void _v351();  // slot 351
-    virtual void _v352();  // slot 352
-    virtual void _v353();  // slot 353
-    virtual void _v354();  // slot 354
-    virtual void _v355();  // slot 355
-    virtual void _v356();  // slot 356
-    virtual void _v357();  // slot 357
-    virtual void _v358();  // slot 358
-    virtual void _v359();  // slot 359
-    virtual void _v360();  // slot 360
-    virtual void _v361();  // slot 361
-    virtual void _v362();  // slot 362
-    virtual void _v363();  // slot 363
-    virtual void _v364();  // slot 364
-    virtual f32 getAngle();  // slot 365 (0x5b4)
-};
 
 class CMoveWrapper {
 public:
-    virtual void _v0();  // slot 0
-    virtual void _v1();  // slot 1
-    virtual void _v2();  // slot 2
-    virtual void _v3();  // slot 3
-    virtual void _v4();  // slot 4
-    virtual void _v5();  // slot 5
-    virtual void _v6();  // slot 6
-    virtual void _v7();  // slot 7
-    virtual void _v8();  // slot 8
-    virtual void _v9();  // slot 9
-    virtual void _v10();  // slot 10
-    virtual void _v11();  // slot 11
-    virtual void _v12();  // slot 12
-    virtual void _v13();  // slot 13
-    virtual void _v14();  // slot 14
-    virtual void _v15();  // slot 15
-    virtual void _v16();  // slot 16
-    virtual void _v17();  // slot 17
-    virtual void _v18();  // slot 18
-    virtual void _v19();  // slot 19
-    virtual void _v20();  // slot 20
-    virtual void _v21();  // slot 21
-    virtual void _v22();  // slot 22
-    virtual void _v23();  // slot 23
-    virtual void _v24();  // slot 24
-    virtual void _v25();  // slot 25
-    virtual void _v26();  // slot 26
-    virtual void _v27();  // slot 27
-    virtual void _v28();  // slot 28
-    virtual void _v29();  // slot 29
-    virtual void _v30();  // slot 30
-    virtual void _v31();  // slot 31
-    virtual void _v32();  // slot 32
-    virtual void _v33();  // slot 33
-    virtual void _v34();  // slot 34
-    virtual void _v35();  // slot 35
-    virtual void _v36();  // slot 36
-    virtual void _v37();  // slot 37
-    virtual void _v38();  // slot 38
-    virtual void _v39();  // slot 39
-    virtual void _v40();  // slot 40
-    virtual void _v41();  // slot 41
-    virtual void _v42();  // slot 42
-    virtual void _v43();  // slot 43
-    virtual void _v44();  // slot 44
-    virtual void _v45();  // slot 45
-    virtual void _v46();  // slot 46
-    virtual void _v47();  // slot 47
-    virtual void _v48();  // slot 48
-    virtual void _v49();  // slot 49
-    virtual void _v50();  // slot 50
-    virtual void _v51();  // slot 51
-    virtual void _v52();  // slot 52
-    virtual void _v53();  // slot 53
-    virtual void _v54();  // slot 54
-    virtual void _v55();  // slot 55
-    virtual void _v56();  // slot 56
-    virtual void _v57();  // slot 57
-    virtual void _v58();  // slot 58
-    virtual void _v59();  // slot 59
-    virtual void _v60();  // slot 60
-    virtual void _v61();  // slot 61
-    virtual void _v62();  // slot 62
-    virtual void _v63();  // slot 63
-    virtual void _v64();  // slot 64
-    virtual void _v65();  // slot 65
-    virtual void _v66();  // slot 66
-    virtual void _v67();  // slot 67
-    virtual void _v68();  // slot 68
-    virtual void _v69();  // slot 69
-    virtual void _v70();  // slot 70
-    virtual void _v71();  // slot 71
-    virtual void _v72();  // slot 72
-    virtual void _v73();  // slot 73
-    virtual f32 getF74();  // slot 74 (0x128)
-    virtual void _v75();  // slot 75
-    virtual void _v76();  // slot 76
-    virtual void _v77();  // slot 77
-    virtual void _v78();  // slot 78
-    virtual void _v79();  // slot 79
-    virtual void _v80();  // slot 80
-    virtual void _v81();  // slot 81
-    virtual void _v82();  // slot 82
-    virtual void _v83();  // slot 83
-    virtual void _v84();  // slot 84
-    virtual void _v85();  // slot 85
-    virtual void _v86();  // slot 86
-    virtual void _v87();  // slot 87
-    virtual void _v88();  // slot 88
-    virtual void _v89();  // slot 89
-    virtual void _v90();  // slot 90
-    virtual void _v91();  // slot 91
-    virtual void _v92();  // slot 92
-    virtual void _v93();  // slot 93
-    virtual void _v94();  // slot 94
-    virtual void _v95();  // slot 95
-    virtual void _v96();  // slot 96
-    virtual void _v97();  // slot 97
-    virtual void _v98();  // slot 98
-    virtual void _v99();  // slot 99
-    virtual void _v100();  // slot 100
-    virtual void _v101();  // slot 101
-    virtual void _v102();  // slot 102
-    virtual void _v103();  // slot 103
-    virtual void _v104();  // slot 104
-    virtual void _v105();  // slot 105
-    virtual void _v106();  // slot 106
-    virtual void _v107();  // slot 107
-    virtual void _v108();  // slot 108
-    virtual void _v109();  // slot 109
-    virtual void _v110();  // slot 110
-    virtual void _v111();  // slot 111
-    virtual void _v112();  // slot 112
-    virtual void _v113();  // slot 113
-    virtual void _v114();  // slot 114
-    virtual void _v115();  // slot 115
-    virtual void _v116();  // slot 116
-    virtual void _v117();  // slot 117
-    virtual void _v118();  // slot 118
-    virtual void _v119();  // slot 119
-    virtual void _v120();  // slot 120
-    virtual void _v121();  // slot 121
-    virtual void _v122();  // slot 122
-    virtual void _v123();  // slot 123
-    virtual void _v124();  // slot 124
-    virtual void _v125();  // slot 125
-    virtual void _v126();  // slot 126
-    virtual void _v127();  // slot 127
-    virtual void _v128();  // slot 128
-    virtual void _v129();  // slot 129
-    virtual void _v130();  // slot 130
-    virtual void _v131();  // slot 131
-    virtual void _v132();  // slot 132
-    virtual void _v133();  // slot 133
-    virtual void _v134();  // slot 134
-    virtual void _v135();  // slot 135
-    virtual void _v136();  // slot 136
-    virtual void _v137();  // slot 137
-    virtual void _v138();  // slot 138
-    virtual void _v139();  // slot 139
-    virtual void _v140();  // slot 140
-    virtual void _v141();  // slot 141
-    virtual void _v142();  // slot 142
-    virtual void _v143();  // slot 143
-    virtual void _v144();  // slot 144
-    virtual void _v145();  // slot 145
-    virtual void _v146();  // slot 146
-    virtual void _v147();  // slot 147
-    virtual void _v148();  // slot 148
-    virtual void _v149();  // slot 149
-    virtual void _v150();  // slot 150
-    virtual void _v151();  // slot 151
-    virtual void _v152();  // slot 152
-    virtual void _v153();  // slot 153
-    virtual void _v154();  // slot 154
-    virtual void _v155();  // slot 155
-    virtual void _v156();  // slot 156
-    virtual void _v157();  // slot 157
-    virtual void _v158();  // slot 158
-    virtual void _v159();  // slot 159
-    virtual void _v160();  // slot 160
-    virtual void _v161();  // slot 161
-    virtual void _v162();  // slot 162
-    virtual void _v163();  // slot 163
-    virtual void _v164();  // slot 164
-    virtual void _v165();  // slot 165
-    virtual void _v166();  // slot 166
-    virtual void _v167();  // slot 167
-    virtual void _v168();  // slot 168
-    virtual void _v169();  // slot 169
-    virtual void _v170();  // slot 170
-    virtual void _v171();  // slot 171
-    virtual void _v172();  // slot 172
-    virtual void _v173();  // slot 173
-    virtual void _v174();  // slot 174
-    virtual void _v175();  // slot 175
-    virtual void _v176();  // slot 176
-    virtual void _v177();  // slot 177
-    virtual void _v178();  // slot 178
-    virtual void _v179();  // slot 179
-    virtual void _v180();  // slot 180
-    virtual void _v181();  // slot 181
-    virtual void _v182();  // slot 182
-    virtual void _v183();  // slot 183
-    virtual void _v184();  // slot 184
-    virtual void _v185();  // slot 185
-    virtual void _v186();  // slot 186
-    virtual void _v187();  // slot 187
-    virtual void _v188();  // slot 188
-    virtual void _v189();  // slot 189
-    virtual void _v190();  // slot 190
-    virtual void _v191();  // slot 191
-    virtual void _v192();  // slot 192
-    virtual void _v193();  // slot 193
-    virtual void _v194();  // slot 194
-    virtual void _v195();  // slot 195
-    virtual void _v196();  // slot 196
-    virtual void _v197();  // slot 197
-    virtual void _v198();  // slot 198
-    virtual void _v199();  // slot 199
-    virtual void _v200();  // slot 200
-    virtual void _v201();  // slot 201
-    virtual void _v202();  // slot 202
-    virtual void _v203();  // slot 203
-    virtual void _v204();  // slot 204
-    virtual void _v205();  // slot 205
-    virtual void _v206();  // slot 206
-    virtual void _v207();  // slot 207
-    virtual void _v208();  // slot 208
-    virtual void _v209();  // slot 209
-    virtual void _v210();  // slot 210
-    virtual void _v211();  // slot 211
-    virtual void _v212();  // slot 212
-    virtual void _v213();  // slot 213
-    virtual void _v214();  // slot 214
-    virtual void _v215();  // slot 215
-    virtual void _v216();  // slot 216
-    virtual void _v217();  // slot 217
-    virtual void _v218();  // slot 218
-    virtual void _v219();  // slot 219
-    virtual void _v220();  // slot 220
-    virtual void _v221();  // slot 221
-    virtual void _v222();  // slot 222
-    virtual void _v223();  // slot 223
-    virtual void _v224();  // slot 224
-    virtual void _v225();  // slot 225
-    virtual void _v226();  // slot 226
-    virtual void _v227();  // slot 227
-    virtual void _v228();  // slot 228
-    virtual void _v229();  // slot 229
-    virtual void _v230();  // slot 230
-    virtual void _v231();  // slot 231
-    virtual void _v232();  // slot 232
-    virtual void _v233();  // slot 233
-    virtual void _v234();  // slot 234
-    virtual void _v235();  // slot 235
-    virtual void _v236();  // slot 236
-    virtual void _v237();  // slot 237
-    virtual void _v238();  // slot 238
-    virtual void _v239();  // slot 239
-    virtual void _v240();  // slot 240
-    virtual void _v241();  // slot 241
-    virtual void _v242();  // slot 242
-    virtual void _v243();  // slot 243
-    virtual void _v244();  // slot 244
-    virtual void _v245();  // slot 245
-    virtual void _v246();  // slot 246
-    virtual void _v247();  // slot 247
-    virtual void _v248();  // slot 248
-    virtual void _v249();  // slot 249
-    virtual void _v250();  // slot 250
-    virtual void _v251();  // slot 251
-    virtual void _v252();  // slot 252
-    virtual void _v253();  // slot 253
-    virtual void _v254();  // slot 254
-    virtual void _v255();  // slot 255
-    virtual void _v256();  // slot 256
-    virtual void _v257();  // slot 257
-    virtual void _v258();  // slot 258
-    virtual void _v259();  // slot 259
-    virtual void _v260();  // slot 260
-    virtual void _v261();  // slot 261
-    virtual void _v262();  // slot 262
-    virtual void _v263();  // slot 263
-    virtual void _v264();  // slot 264
-    virtual void _v265();  // slot 265
-    virtual void _v266();  // slot 266
-    virtual void _v267();  // slot 267
-    virtual void _v268();  // slot 268
-    virtual void _v269();  // slot 269
-    virtual void _v270();  // slot 270
-    virtual void _v271();  // slot 271
-    virtual void _v272();  // slot 272
-    virtual void _v273();  // slot 273
-    virtual void _v274();  // slot 274
-    virtual void _v275();  // slot 275
-    virtual void _v276();  // slot 276
-    virtual void _v277();  // slot 277
-    virtual void _v278();  // slot 278
-    virtual void _v279();  // slot 279
-    virtual void _v280();  // slot 280
-    virtual void _v281();  // slot 281
-    virtual void _v282();  // slot 282
-    virtual void _v283();  // slot 283
-    virtual void _v284();  // slot 284
-    virtual void _v285();  // slot 285
-    virtual void _v286();  // slot 286
-    virtual void _v287();  // slot 287
-    virtual void _v288();  // slot 288
-    virtual void _v289();  // slot 289
-    virtual void _v290();  // slot 290
-    virtual void _v291();  // slot 291
-    virtual void _v292();  // slot 292
-    virtual void _v293();  // slot 293
-    virtual void _v294();  // slot 294
-    virtual void _v295();  // slot 295
-    virtual void _v296();  // slot 296
-    virtual void _v297();  // slot 297
-    virtual void _v298();  // slot 298
-    virtual void _v299();  // slot 299
-    virtual void _v300();  // slot 300
-    virtual void _v301();  // slot 301
-    virtual void _v302();  // slot 302
-    virtual void _v303();  // slot 303
-    virtual void _v304();  // slot 304
-    virtual void _v305();  // slot 305
-    virtual void _v306();  // slot 306
-    virtual void _v307();  // slot 307
-    virtual void _v308();  // slot 308
-    virtual void _v309();  // slot 309
-    virtual void _v310();  // slot 310
-    virtual void _v311();  // slot 311
-    virtual void _v312();  // slot 312
-    virtual void _v313();  // slot 313
-    virtual void _v314();  // slot 314
-    virtual void _v315();  // slot 315
-    virtual void _v316();  // slot 316
-    virtual void _v317();  // slot 317
-    virtual void _v318();  // slot 318
-    virtual void _v319();  // slot 319
-    virtual void _v320();  // slot 320
-    virtual void _v321();  // slot 321
-    virtual void _v322();  // slot 322
-    virtual void _v323();  // slot 323
-    virtual void _v324();  // slot 324
-    virtual void _v325();  // slot 325
-    virtual void _v326();  // slot 326
-    virtual void _v327();  // slot 327
-    virtual void _v328();  // slot 328
-    virtual void _v329();  // slot 329
-    virtual void _v330();  // slot 330
-    virtual void _v331();  // slot 331
-    virtual void _v332();  // slot 332
-    virtual void _v333();  // slot 333
-    virtual void _v334();  // slot 334
-    virtual void _v335();  // slot 335
-    virtual void _v336();  // slot 336
-    virtual void _v337();  // slot 337
-    virtual void _v338();  // slot 338
-    virtual void _v339();  // slot 339
-    virtual void _v340();  // slot 340
-    virtual void _v341();  // slot 341
-    virtual void _v342();  // slot 342
-    virtual void _v343();  // slot 343
-    virtual void _v344();  // slot 344
-    virtual void _v345();  // slot 345
-    virtual void _v346();  // slot 346
-    virtual void _v347();  // slot 347
-    virtual void _v348();  // slot 348
-    virtual void _v349();  // slot 349
-    virtual void _v350();  // slot 350
-    virtual void _v351();  // slot 351
-    virtual void _v352();  // slot 352
-    virtual void _v353();  // slot 353
-    virtual void _v354();  // slot 354
-    virtual void _v355();  // slot 355
-    virtual void _v356();  // slot 356
-    virtual void _v357();  // slot 357
-    virtual void _v358();  // slot 358
-    virtual void _v359();  // slot 359
-    virtual void _v360();  // slot 360
-    virtual void _v361();  // slot 361
-    virtual void _v362();  // slot 362
-    virtual void _v363();  // slot 363
-    virtual void _v364();  // slot 364
-    virtual f32 getAngle();  // slot 365 (0x5b4)
+    virtual void _v0();
+    virtual void _v1();
+    virtual void _v2();
+    virtual void _v3();
+    virtual void _v4();
+    virtual void _v5();
+    virtual void _v6();
+    virtual void _v7();
+    virtual void _v8();
+    virtual void _v9();
+    virtual void _v10();
+    virtual void _v11();
+    virtual void _v12();
+    virtual void _v13();
+    virtual void _v14();
+    virtual void _v15();
+    virtual void _v16();
+    virtual void _v17();
+    virtual void _v18();
+    virtual void _v19();
+    virtual void _v20();
+    virtual void _v21();
+    virtual void _v22();
+    virtual void _v23();
+    virtual void _v24();
+    virtual void _v25();
+    virtual void _v26();
+    virtual void _v27();
+    virtual void _v28();
+    virtual void _v29();
+    virtual void _v30();
+    virtual void _v31();
+    virtual void _v32();
+    virtual void _v33();
+    virtual void _v34();
+    virtual void _v35();
+    virtual void _v36();
+    virtual void _v37();
+    virtual void _v38();
+    virtual void _v39();
+    virtual void _v40();
+    virtual void _v41();
+    virtual void _v42();
+    virtual void _v43();
+    virtual void _v44();
+    virtual void _v45();
+    virtual void _v46();
+    virtual void _v47();
+    virtual void _v48();
+    virtual void _v49();
+    virtual void _v50();
+    virtual void _v51();
+    virtual void _v52();
+    virtual void _v53();
+    virtual void _v54();
+    virtual void _v55();
+    virtual void _v56();
+    virtual void _v57();
+    virtual void _v58();
+    virtual void _v59();
+    virtual void _v60();
+    virtual void _v61();
+    virtual void _v62();
+    virtual void _v63();
+    virtual void _v64();
+    virtual void _v65();
+    virtual void _v66();
+    virtual void _v67();
+    virtual void _v68();
+    virtual void _v69();
+    virtual void _v70();
+    virtual void _v71();
+    virtual f32 getF74();  // idx 72 -> slot 74 (0x128)
+    virtual void _v73();
+    virtual void _v74();
+    virtual void _v75();
+    virtual void _v76();
+    virtual void _v77();
+    virtual void _v78();
+    virtual void _v79();
+    virtual void _v80();
+    virtual void _v81();
+    virtual void _v82();
+    virtual void _v83();
+    virtual void _v84();
+    virtual void _v85();
+    virtual void _v86();
+    virtual void _v87();
+    virtual void _v88();
+    virtual void _v89();
+    virtual void _v90();
+    virtual void _v91();
+    virtual void _v92();
+    virtual void _v93();
+    virtual void _v94();
+    virtual void _v95();
+    virtual void _v96();
+    virtual void _v97();
+    virtual void _v98();
+    virtual void _v99();
+    virtual void _v100();
+    virtual void _v101();
+    virtual void _v102();
+    virtual void _v103();
+    virtual void _v104();
+    virtual void _v105();
+    virtual void _v106();
+    virtual void _v107();
+    virtual void _v108();
+    virtual void _v109();
+    virtual void _v110();
+    virtual void _v111();
+    virtual void _v112();
+    virtual void _v113();
+    virtual void _v114();
+    virtual void _v115();
+    virtual void _v116();
+    virtual void _v117();
+    virtual void _v118();
+    virtual void _v119();
+    virtual void _v120();
+    virtual void _v121();
+    virtual void _v122();
+    virtual void _v123();
+    virtual void _v124();
+    virtual void _v125();
+    virtual void _v126();
+    virtual void _v127();
+    virtual void _v128();
+    virtual void _v129();
+    virtual void _v130();
+    virtual void _v131();
+    virtual void _v132();
+    virtual void _v133();
+    virtual void _v134();
+    virtual void _v135();
+    virtual void _v136();
+    virtual void _v137();
+    virtual void _v138();
+    virtual void _v139();
+    virtual void _v140();
+    virtual void _v141();
+    virtual void _v142();
+    virtual void _v143();
+    virtual void _v144();
+    virtual void _v145();
+    virtual void _v146();
+    virtual void _v147();
+    virtual void _v148();
+    virtual void _v149();
+    virtual void _v150();
+    virtual void _v151();
+    virtual void _v152();
+    virtual void _v153();
+    virtual void _v154();
+    virtual void _v155();
+    virtual void _v156();
+    virtual void _v157();
+    virtual void _v158();
+    virtual void _v159();
+    virtual void _v160();
+    virtual void _v161();
+    virtual void _v162();
+    virtual void _v163();
+    virtual void _v164();
+    virtual void _v165();
+    virtual void _v166();
+    virtual void _v167();
+    virtual void _v168();
+    virtual void _v169();
+    virtual void _v170();
+    virtual void _v171();
+    virtual void _v172();
+    virtual void _v173();
+    virtual void _v174();
+    virtual void _v175();
+    virtual void _v176();
+    virtual void _v177();
+    virtual void _v178();
+    virtual void _v179();
+    virtual void _v180();
+    virtual void _v181();
+    virtual void _v182();
+    virtual void _v183();
+    virtual void _v184();
+    virtual void _v185();
+    virtual void _v186();
+    virtual void _v187();
+    virtual void _v188();
+    virtual void _v189();
+    virtual void _v190();
+    virtual void _v191();
+    virtual void _v192();
+    virtual void _v193();
+    virtual void _v194();
+    virtual void _v195();
+    virtual void _v196();
+    virtual void _v197();
+    virtual void _v198();
+    virtual void _v199();
+    virtual void _v200();
+    virtual void _v201();
+    virtual void _v202();
+    virtual void _v203();
+    virtual void _v204();
+    virtual void _v205();
+    virtual void _v206();
+    virtual void _v207();
+    virtual void _v208();
+    virtual void _v209();
+    virtual void _v210();
+    virtual void _v211();
+    virtual void _v212();
+    virtual void _v213();
+    virtual void _v214();
+    virtual void _v215();
+    virtual void _v216();
+    virtual void _v217();
+    virtual void _v218();
+    virtual void _v219();
+    virtual void _v220();
+    virtual void _v221();
+    virtual void _v222();
+    virtual void _v223();
+    virtual void _v224();
+    virtual void _v225();
+    virtual void _v226();
+    virtual void _v227();
+    virtual void _v228();
+    virtual void _v229();
+    virtual void _v230();
+    virtual void _v231();
+    virtual void _v232();
+    virtual void _v233();
+    virtual void _v234();
+    virtual void _v235();
+    virtual void _v236();
+    virtual void _v237();
+    virtual void _v238();
+    virtual void _v239();
+    virtual void _v240();
+    virtual void _v241();
+    virtual void _v242();
+    virtual void _v243();
+    virtual void _v244();
+    virtual void _v245();
+    virtual void _v246();
+    virtual void _v247();
+    virtual void _v248();
+    virtual void _v249();
+    virtual void _v250();
+    virtual void _v251();
+    virtual void _v252();
+    virtual void _v253();
+    virtual void _v254();
+    virtual void _v255();
+    virtual void _v256();
+    virtual void _v257();
+    virtual void _v258();
+    virtual void _v259();
+    virtual void _v260();
+    virtual void _v261();
+    virtual void _v262();
+    virtual void _v263();
+    virtual void _v264();
+    virtual void _v265();
+    virtual void _v266();
+    virtual void _v267();
+    virtual void _v268();
+    virtual void _v269();
+    virtual void _v270();
+    virtual void _v271();
+    virtual void _v272();
+    virtual void _v273();
+    virtual void _v274();
+    virtual void _v275();
+    virtual void _v276();
+    virtual void _v277();
+    virtual void _v278();
+    virtual void _v279();
+    virtual void _v280();
+    virtual void _v281();
+    virtual void _v282();
+    virtual void _v283();
+    virtual void _v284();
+    virtual void _v285();
+    virtual void _v286();
+    virtual void _v287();
+    virtual void _v288();
+    virtual void _v289();
+    virtual void _v290();
+    virtual void _v291();
+    virtual void _v292();
+    virtual void _v293();
+    virtual void _v294();
+    virtual void _v295();
+    virtual void _v296();
+    virtual void _v297();
+    virtual void _v298();
+    virtual void _v299();
+    virtual void _v300();
+    virtual void _v301();
+    virtual void _v302();
+    virtual void _v303();
+    virtual void _v304();
+    virtual void _v305();
+    virtual void _v306();
+    virtual void _v307();
+    virtual void _v308();
+    virtual void _v309();
+    virtual void _v310();
+    virtual void _v311();
+    virtual void _v312();
+    virtual void _v313();
+    virtual void _v314();
+    virtual void _v315();
+    virtual void _v316();
+    virtual void _v317();
+    virtual void _v318();
+    virtual void _v319();
+    virtual void _v320();
+    virtual void _v321();
+    virtual void _v322();
+    virtual void _v323();
+    virtual void _v324();
+    virtual void _v325();
+    virtual void _v326();
+    virtual void _v327();
+    virtual void _v328();
+    virtual void _v329();
+    virtual void _v330();
+    virtual void _v331();
+    virtual void _v332();
+    virtual void _v333();
+    virtual void _v334();
+    virtual void _v335();
+    virtual void _v336();
+    virtual void _v337();
+    virtual void _v338();
+    virtual void _v339();
+    virtual void _v340();
+    virtual void _v341();
+    virtual void _v342();
+    virtual void _v343();
+    virtual void _v344();
+    virtual void _v345();
+    virtual void _v346();
+    virtual void _v347();
+    virtual void _v348();
+    virtual void _v349();
+    virtual void _v350();
+    virtual void _v351();
+    virtual void _v352();
+    virtual void _v353();
+    virtual void _v354();
+    virtual void _v355();
+    virtual void _v356();
+    virtual void _v357();
+    virtual void _v358();
+    virtual void _v359();
+    virtual void _v360();
+    virtual void _v361();
+    virtual void _v362();
+    virtual f32 getAngle();  // idx 363 -> slot 365 (0x5b4)
+};
+
+class CMoveEmbedded {
+public:
+    virtual void _v0();
+    virtual void _v1();
+    virtual void _v2();
+    virtual void _v3();
+    virtual void _v4();
+    virtual void _v5();
+    virtual void _v6();
+    virtual void _v7();
+    virtual void _v8();
+    virtual void _v9();
+    virtual void* getCtrl();  // idx 10 -> slot 12 (0x30)
+    virtual void _v11();
+    virtual void _v12();
+    virtual void _v13();
+    virtual void _v14();
+    virtual void _v15();
+    virtual void _v16();
+    virtual void* get19();  // idx 17 -> slot 19 (0x4c)
+    virtual void _v18();
+    virtual void _v19();
+    virtual void _v20();
+    virtual void _v21();
+    virtual void _v22();
+    virtual void _v23();
+    virtual void _v24();
+    virtual void _v25();
+    virtual void _v26();
+    virtual void _v27();
+    virtual void _v28();
+    virtual void _v29();
+    virtual void _v30();
+    virtual void _v31();
+    virtual void _v32();
+    virtual void _v33();
+    virtual void _v34();
+    virtual void _v35();
+    virtual void _v36();
+    virtual void _v37();
+    virtual void _v38();
+    virtual void _v39();
+    virtual void _v40();
+    virtual void getPosition();  // idx 41 -> slot 43 (0xac)
+    virtual void _v42();
+    virtual void _v43();
+    virtual void _v44();
+    virtual void _v45();
+    virtual void _v46();
+    virtual void _v47();
+    virtual void _v48();
+    virtual void _v49();
+    virtual void _v50();
+    virtual void _v51();
+    virtual void _v52();
+    virtual void _v53();
+    virtual void _v54();
+    virtual void _v55();
+    virtual void _v56();
+    virtual void _v57();
+    virtual void _v58();
+    virtual void _v59();
+    virtual void _v60();
+    virtual void _v61();
+    virtual void _v62();
+    virtual void _v63();
+    virtual void _v64();
+    virtual void _v65();
+    virtual void get68();  // idx 66 -> slot 68 (0x110)
+    virtual void _v67();
+    virtual void _v68();
+    virtual void _v69();
+    virtual void _v70();
+    virtual void _v71();
+    virtual f32 getF74();  // idx 72 -> slot 74 (0x128)
+    virtual void _v73();
+    virtual void _v74();
+    virtual void _v75();
+    virtual void _v76();
+    virtual void _v77();
+    virtual void _v78();
+    virtual void _v79();
+    virtual void _v80();
+    virtual void _v81();
+    virtual void _v82();
+    virtual void _v83();
+    virtual void _v84();
+    virtual void _v85();
+    virtual void _v86();
+    virtual void _v87();
+    virtual void _v88();
+    virtual void _v89();
+    virtual void _v90();
+    virtual void _v91();
+    virtual void _v92();
+    virtual void _v93();
+    virtual void _v94();
+    virtual void _v95();
+    virtual void _v96();
+    virtual void _v97();
+    virtual void _v98();
+    virtual void _v99();
+    virtual void _v100();
+    virtual void _v101();
+    virtual void _v102();
+    virtual void _v103();
+    virtual void _v104();
+    virtual void _v105();
+    virtual void _v106();
+    virtual void _v107();
+    virtual void _v108();
+    virtual void _v109();
+    virtual void _v110();
+    virtual void _v111();
+    virtual void _v112();
+    virtual void _v113();
+    virtual void _v114();
+    virtual void _v115();
+    virtual void _v116();
+    virtual void _v117();
+    virtual void _v118();
+    virtual void _v119();
+    virtual void _v120();
+    virtual void _v121();
+    virtual void _v122();
+    virtual void _v123();
+    virtual void _v124();
+    virtual void _v125();
+    virtual void _v126();
+    virtual void _v127();
+    virtual void _v128();
+    virtual void _v129();
+    virtual void _v130();
+    virtual void _v131();
+    virtual void _v132();
+    virtual void _v133();
+    virtual void _v134();
+    virtual void _v135();
+    virtual void _v136();
+    virtual void _v137();
+    virtual void _v138();
+    virtual void _v139();
+    virtual void _v140();
+    virtual void _v141();
+    virtual void _v142();
+    virtual void _v143();
+    virtual void _v144();
+    virtual void _v145();
+    virtual void _v146();
+    virtual void _v147();
+    virtual void _v148();
+    virtual void _v149();
+    virtual void _v150();
+    virtual void _v151();
+    virtual void _v152();
+    virtual void _v153();
+    virtual void _v154();
+    virtual void _v155();
+    virtual void _v156();
+    virtual void _v157();
+    virtual void _v158();
+    virtual void _v159();
+    virtual void _v160();
+    virtual void _v161();
+    virtual void _v162();
+    virtual void _v163();
+    virtual void _v164();
+    virtual void _v165();
+    virtual void _v166();
+    virtual void _v167();
+    virtual void _v168();
+    virtual void _v169();
+    virtual void _v170();
+    virtual void _v171();
+    virtual void _v172();
+    virtual void _v173();
+    virtual void _v174();
+    virtual void _v175();
+    virtual void _v176();
+    virtual void _v177();
+    virtual void _v178();
+    virtual void _v179();
+    virtual void _v180();
+    virtual void _v181();
+    virtual void _v182();
+    virtual void _v183();
+    virtual void _v184();
+    virtual void _v185();
+    virtual void _v186();
+    virtual void _v187();
+    virtual void _v188();
+    virtual void _v189();
+    virtual void _v190();
+    virtual void _v191();
+    virtual void _v192();
+    virtual void _v193();
+    virtual void _v194();
+    virtual void _v195();
+    virtual void _v196();
+    virtual void _v197();
+    virtual void _v198();
+    virtual void _v199();
+    virtual void _v200();
+    virtual void _v201();
+    virtual void _v202();
+    virtual void _v203();
+    virtual void _v204();
+    virtual void _v205();
+    virtual void _v206();
+    virtual void _v207();
+    virtual void _v208();
+    virtual void _v209();
+    virtual void _v210();
+    virtual void _v211();
+    virtual void _v212();
+    virtual void _v213();
+    virtual void _v214();
+    virtual void _v215();
+    virtual void _v216();
+    virtual void _v217();
+    virtual void _v218();
+    virtual void _v219();
+    virtual void _v220();
+    virtual void _v221();
+    virtual void _v222();
+    virtual void _v223();
+    virtual void _v224();
+    virtual void _v225();
+    virtual void _v226();
+    virtual void _v227();
+    virtual void _v228();
+    virtual void _v229();
+    virtual void _v230();
+    virtual void _v231();
+    virtual void _v232();
+    virtual void _v233();
+    virtual void _v234();
+    virtual void _v235();
+    virtual void _v236();
+    virtual void _v237();
+    virtual void _v238();
+    virtual void _v239();
+    virtual void _v240();
+    virtual void _v241();
+    virtual void _v242();
+    virtual void _v243();
+    virtual void _v244();
+    virtual void _v245();
+    virtual void _v246();
+    virtual void _v247();
+    virtual void _v248();
+    virtual void _v249();
+    virtual void _v250();
+    virtual void _v251();
+    virtual void _v252();
+    virtual void _v253();
+    virtual void _v254();
+    virtual void _v255();
+    virtual void _v256();
+    virtual void _v257();
+    virtual void _v258();
+    virtual void _v259();
+    virtual void _v260();
+    virtual void _v261();
+    virtual void _v262();
+    virtual void _v263();
+    virtual void _v264();
+    virtual void _v265();
+    virtual void _v266();
+    virtual void _v267();
+    virtual void _v268();
+    virtual void _v269();
+    virtual void _v270();
+    virtual void _v271();
+    virtual void _v272();
+    virtual void _v273();
+    virtual void _v274();
+    virtual void _v275();
+    virtual void _v276();
+    virtual void _v277();
+    virtual void _v278();
+    virtual void _v279();
+    virtual void _v280();
+    virtual void _v281();
+    virtual void _v282();
+    virtual void _v283();
+    virtual void _v284();
+    virtual void _v285();
+    virtual void _v286();
+    virtual void _v287();
+    virtual void _v288();
+    virtual void _v289();
+    virtual void _v290();
+    virtual void _v291();
+    virtual void _v292();
+    virtual void _v293();
+    virtual void _v294();
+    virtual void _v295();
+    virtual void _v296();
+    virtual void _v297();
+    virtual void _v298();
+    virtual void _v299();
+    virtual void _v300();
+    virtual void _v301();
+    virtual void _v302();
+    virtual void _v303();
+    virtual void _v304();
+    virtual void _v305();
+    virtual void _v306();
+    virtual void _v307();
+    virtual void _v308();
+    virtual void _v309();
+    virtual void _v310();
+    virtual void _v311();
+    virtual void _v312();
+    virtual void _v313();
+    virtual void _v314();
+    virtual void _v315();
+    virtual void _v316();
+    virtual void _v317();
+    virtual void _v318();
+    virtual void _v319();
+    virtual void _v320();
+    virtual void _v321();
+    virtual void _v322();
+    virtual void _v323();
+    virtual void _v324();
+    virtual void _v325();
+    virtual void _v326();
+    virtual void _v327();
+    virtual void _v328();
+    virtual void _v329();
+    virtual void _v330();
+    virtual void _v331();
+    virtual void _v332();
+    virtual void _v333();
+    virtual void _v334();
+    virtual void _v335();
+    virtual void _v336();
+    virtual void _v337();
+    virtual void _v338();
+    virtual void _v339();
+    virtual void _v340();
+    virtual void _v341();
+    virtual void _v342();
+    virtual void _v343();
+    virtual void _v344();
+    virtual void _v345();
+    virtual void _v346();
+    virtual void _v347();
+    virtual void _v348();
+    virtual void _v349();
+    virtual void _v350();
+    virtual void _v351();
+    virtual void _v352();
+    virtual void _v353();
+    virtual void _v354();
+    virtual void _v355();
+    virtual void _v356();
+    virtual void _v357();
+    virtual void _v358();
+    virtual void _v359();
+    virtual void _v360();
+    virtual void _v361();
+    virtual void _v362();
+    virtual f32 getAngle();  // idx 363 -> slot 365 (0x5b4)
 };
 
 } // namespace cf

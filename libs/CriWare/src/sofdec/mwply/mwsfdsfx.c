@@ -46,7 +46,17 @@ void MWSFSFX_SetCompoMode(void* self) {
     SFX_SetCompoMode(*(void**)((u8*)self + 0xC8));
 }
 
-void mwPlyFxGetCompoMode() {}
+extern int MWSFD_IsEnableHndl(void*);
+extern void MWSFSVM_Error(const char*, ...);
+extern char lbl_eu_80519EC8[];
+
+u32 mwPlyFxGetCompoMode(void* self) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519EC8 + 0x201);
+        return 0;
+    }
+    return *(u32*)((u8*)self + 0x68);
+}
 
 void mwPlyFxSetOutBufPitchHeight() {}
 

@@ -35,6 +35,8 @@ _SKIP_BASENAMES: set[str] = {
     "locale.o",
     "support.o",
     "GCN_mem_alloc.o",
+    "hidd_mgmt.o",
+    "bta_hh_utils.o",
 }
 
 

@@ -297,7 +297,7 @@ public:
     void func_80082354();
     void func_8008235C();
     void func_800823A4();
-    s32 func_80082418(s32 arg1, s32 arg2);
+    void func_80082418();
     void func_800824FC();
     void func_80082544();
     void func_80082568();

@@ -3,7 +3,16 @@
 
 #include <harness_catalog.h>
 
-void ADXSJD_Init() {}
+extern volatile u32 lbl_eu_805E3340;
+extern u8 lbl_eu_805E3358[0xB40];
+
+void ADXSJD_Init(void) {
+    if (lbl_eu_805E3340 == 0) {
+        ADXB_Init();
+        memset(lbl_eu_805E3358, 0, sizeof(lbl_eu_805E3358));
+    }
+    lbl_eu_805E3340++;
+}
 
 extern volatile u32 lbl_eu_805E3340;
 extern u8 lbl_eu_805E3358[0xB40];

@@ -199,7 +199,7 @@ extern "C" void __ct__cf_CfGimmickElv(CfGimmickElvData* self, u16 rowId) {
 // ============================================================
 // Destructor: __dt__Q22cf12CfGimmickElvFv (0x8C bytes)
 // ============================================================
-extern "C" void __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
+extern "C" void* __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
     if (self != NULL) {
         self->vtable = (void*)lbl_eu_805358C8;
         func_80208EE4(self);
@@ -212,6 +212,7 @@ extern "C" void __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
             __dl__FPv(self);
         }
     }
+    return self;
 }
 
 // ============================================================
@@ -232,13 +233,14 @@ extern "C" void func_8020B20C(CfGimmickElvData* self) {
 // ============================================================
 extern "C" void func_8020B264(CfGimmickElvData* self, int show) {
     if (self->lod0 != 0) {
-        self->flags &= ~0x01E0;
-        if (show == 0) {
+        self->flags &= ~0x1000E0;
+        if (show != 0) {
             self->flags |= 0x40;
             func_80462F10__8CTaskLODFv(self->lod0);
         } else {
             self->flags |= 0x20;
-            func_80462EF4__8CTaskLODFv(self->lod0, lbl_eu_80668380);
+            f32 zero = lbl_eu_80668380;
+            func_80462EF4__8CTaskLODFv(self->lod0, zero);
         }
         func_80463014__8CTaskLODFv(self->lod0);
     }

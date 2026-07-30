@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/adx/adxt/srcwii/adx_rnawii
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/adx/adxt/srcwii/adx_rnawii.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/adx/adxt/srcwii/adx_rnawii.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -734,7 +734,11 @@ void ADXRNA_Create(void) {
     AXRNA_Create();
 }
 
-void ADXRNA_Destroy() {}
+void ADXRNA_Destroy(void* self) {
+    AXRNA_SetPlaySw(self, 0);
+    AXRNA_SetTransSw(self, 0);
+    AXRNA_Destroy(self);
+}
 
 void ADXRNA_SetTransSw(void) {
     AXRNA_SetTransSw();

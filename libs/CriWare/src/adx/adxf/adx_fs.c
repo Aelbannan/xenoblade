@@ -86,8 +86,8 @@ int ADXF_CloseAll(void) {
 int adxf_read_sj32(int a, int b) { return 0; }
 int adxf_ReadNw32(int a, int b, int c, int d) { return 0; }
 int ADXF_ReadNw(int a, int b, int c, int d, int e) { int r; ADXCRS_Enter(); r = 0; ADXCRS_Leave(); return r; }
-void ADXF_Stop(int a) { ADXCRS_Enter(); ADXCRS_Leave(); }
-void adxf_Stop(int a) {}
+int ADXF_Stop(int a) { int r; ADXCRS_Enter(); r = adxf_Stop(a); ADXCRS_Leave(); return r; }
+int adxf_Stop(int a) { return 0; }
 int adxf_ExecOne(int a) { return 0; }
 int ADXF_ExecServer(int a) { int r; ADXCRS_Enter(); r = 0; ADXCRS_Leave(); return r; }
 int ADXF_Seek(int a, int b, int c) { int r; ADXCRS_Enter(); r = 0; ADXCRS_Leave(); return r; }
@@ -98,6 +98,14 @@ int ADXF_GetNumReqSct(int a) { return 0; }
 int adxf_ChkPrmGfr(int a) { return 0; }
 int ADXF_GetFnameRangeEx(int a, int b, int c, int d, int e, int f) { return 0; }
 int adxf_GetFnameRangeEx(int a, int b, int c, int d, int e, int f) { return 0; }
-int ADXF_GetFnameFromPt(int a, int b) { return 0; }
+extern u32 lbl_eu_805E00F0[];
+
+char* ADXF_GetFnameFromPt(int idx) {
+    char* p;
+    ADXCRS_Enter();
+    p = (char*)lbl_eu_805E00F0[idx];
+    ADXCRS_Leave();
+    return p + 0x10;
+}
 void ADXT_ExecFsSvr(void) { ADXCRS_Enter(); ADXCRS_Leave(); }
 void adxt_ExecFsSvr(void) {}

@@ -17647,8 +17647,11 @@ private:
 /* end "types.h" */
 /* "libs/monolib/include/monolib/core/CException.hpp" line 3 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
+/* "libs/monolib/include/monolib/core/CException.hpp" line 4 "monolib/core/CProc.hpp" */
+/* end "monolib/core/CProc.hpp" */
 
 class IException;
+class CWorkThread;
 
 class IGameException {
 public:
@@ -17656,13 +17659,27 @@ public:
     virtual bool gameExceptionCB(u32 r4) = 0;
 };
 
-class CException : public CWorkThread {
+class CException : public CProc {
 public:
+    CException(const char* pName, CWorkThread* pParent);
+    virtual ~CException();
+    
     bool func_80457C8C();
-    void func_80458B64(u8* buffer, u8 r4, u8 r5, u8 r6, u8 r7);
-    void func_8045925C();
+    static CException* func_80457CA4(CWorkThread* pThread, const wchar_t* message, u32 r5);
+    CException* func_80457EB0();
+    void* func_80457ED4(u32 r4);
+    virtual void wkRender();
+    void func_80458084(const wchar_t* message);
+    void func_eu_8045C964(void* pLayout);
+    void func_80458B64(u8* buffer, u8 r, u8 g, u8 b, u8 a);
+    void func_80458B78(float x, float y, float z);
+    void func_80458CBC(const wchar_t* text);
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+    void func_80459118(const char* message);
     void func_804591BC(IException* pException);
-    static CException* func_80457CA4(CWorkThread* r3, const wchar_t* message, u32 r5);
+    void func_804591DC(IException* pException);
+    void func_8045925C();
 
     static CException* convertToException(CWorkThread* pThread){
          CException* exception;
@@ -17680,11 +17697,19 @@ public:
         return exception;
     }
 
-    u8 unk1C4[0x1F8 - 0x1C4];
-    float field_0x1F8;           // 0x1F8 - compared against 0.8f in func_80457C8C
-    u8 unk1FC[0x200 - 0x1FC];
-    IGameException* mException; //0x200
-    u32 unk204;
+    //0x0-0x1EC: CProc
+    s32 mExceptionCode;          //0x1EC
+    const wchar_t* mMessage;     //0x1F0
+    float mAlphaStep;            //0x1F4
+    float mAlpha;                //0x1F8
+    u32 mAnimState;              //0x1FC
+    IGameException* mGameException; //0x200
+    u32 unk204;                  //0x204
+    u32 unk208;                  //0x208
+    u32 mFrameCounter;           //0x20C
+    u8 mFlag210;                 //0x210
+    u8 pad211[3];                //0x211
+    u32 mMaxExceptions;          //0x214
 };
 /* end "monolib/core/CException.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 6 "monolib/core/CPackItem.hpp" */
@@ -249602,7 +249627,16 @@ public:
     //0x0: vtable
     //0x0-1c4: CWorkThread
     u32 unk1C4;                       // 0x1C4: unknown field
-    u8 unk1C8[0x2C0 - 0x1C8];        // 0x1C8-2C0: unknown trailing data
+    u8 pad_1C8[0x58];                 // 0x1C8-0x21F
+    void** hashTable;                  // 0x220-0x223: hash table for Class_8045F858
+    s32 hashAccum;                     // 0x224-0x227
+    s32 hashCount;                     // 0x228-0x22B
+    s32 hashDivisor;                   // 0x22C-0x22F
+    u8 pad_230[0x8];                   // 0x230-0x237
+    void** instanceArray;              // 0x238-0x23B: tracking array for UnkClass_8045F564
+    u8 pad_23C[0x7C];                  // 0x23C-0x2B7
+    u32 instanceCount;                 // 0x2B8-0x2BB
+    u8 pad_2BC[0x4];                   // 0x2BC-0x2BF
 };
 /* end "monolib/lib/CLibLayout.hpp" */
 /* "libs/monolib/include/monolib/lib.hpp" line 8 "monolib/lib/CLibStaticData.hpp" */
@@ -249734,7 +249768,7 @@ public:
 
 class UnkClass_8045F564{
 public:
-    int unk0;
+    u32 unk0;
     u32 unk4;
     u32 unk8;
     u32 unkC;
@@ -249942,7 +249976,7 @@ namespace cf {
     //min size: 0x38
     class CObjectParam : public CObjectState {
     public:
-        virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
+        virtual void CObjectParam_UnkVirtualFunc1(u32 a, u8 b); //0x3C
         virtual void CObjectParam_UnkVirtualFunc2(); //0x40
         virtual int CObjectParam_UnkVirtualFunc3(); //0x44
         virtual void CObjectParam_UnkVirtualFunc4(); //0x48
@@ -250034,7 +250068,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_UnkVirtualFunc64();     //0x150
         virtual void CfObject_UnkVirtualFunc65();     //0x154
-        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
+        virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
@@ -250051,7 +250085,10 @@ namespace cf {
         // CObjectParam currently ends at 0x28.
         u8 field_0x28[0x10];
         void* mSubObj38;          // 0x38-0x3B
-        u8 _pad3C[0x4C - 0x3C];   // 0x3C-0x4B
+        float mPos3C;           // 0x3C-0x3F
+        float mPos40;           // 0x40-0x43
+        float mPos44;           // 0x44-0x47
+        u8 _pad48[0x4C - 0x48];   // 0x48-0x4B
         float mField4C;           // 0x4C-0x4F
         u8 _pad50[0x54 - 0x50];   // 0x50-0x53
         CfObjectSub54 mSubObj54;     // 0x54-0x5F
@@ -250873,7 +250910,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc54();
     void CfObject_UnkVirtualFunc55();
     void CObjectParam_UnkVirtualFunc2();
-    void CfObject_UnkVirtualFunc66();
+    void CfObject_UnkVirtualFunc66(int);
     void CfObject_UnkVirtualFunc67();
     void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc69();
@@ -250968,7 +251005,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc61();
     void CfObject_UnkVirtualFunc62();
     void CfObject_UnkVirtualFunc12();
-    void CfObject_UnkVirtualFunc66();
+    void CfObject_UnkVirtualFunc66(int);
     void CfObjectModel_UnkVirtualFunc19();
     void CfObjectModel_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc37();

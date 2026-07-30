@@ -27,7 +27,6 @@ int mwPlySfdStart(void *h) {
 int mwPlyTermSupply(void *h) {
     if (SFD_TermSupply(sfd(h)))
         MWSFSVM_Error(lbl_eu_8051B1A0 + 0x62);
-    return 0;
 }
 
 int mw_sfd_start_ex(void *a, void *b, void *c) {
@@ -75,6 +74,12 @@ int fn_803A537C(void *a, void *b) {
     return 0;
 }
 
-int MWSFD_IsEndPrepareStop(void *h) {
-    return 0;
+int MWSFD_IsFsBdr(void*);
+int MWSFSVR_IsSvrBdrHndl(void*);
+
+int MWSFD_IsEndPrepareStop(void* h) {
+    if (!MWSFD_IsFsBdr(h)) {
+        return 0;
+    }
+    return !!MWSFSVR_IsSvrBdrHndl(h);
 }

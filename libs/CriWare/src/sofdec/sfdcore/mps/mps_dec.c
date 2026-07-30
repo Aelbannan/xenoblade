@@ -7,10 +7,6 @@ void MPSDEC_Init() {}
 
 void MPSDEC_Finish() {}
 
-void MPS_SetSystemFn() {}
-
-void MPS_SetPsMapFn() {}
-
 typedef struct MPS_WORK MPS_WORK;
 struct MPS_WORK {
     unsigned char pad[0xf4];
@@ -18,7 +14,21 @@ struct MPS_WORK {
     void *pes_obj;
 };
 
-extern int MPSLIB_CheckHn(MPS_WORK *hn);
+int MPSLIB_CheckHn(MPS_WORK*);
+
+void MPS_SetSystemFn(MPS_WORK* hn, void* fn, void* obj) {
+    if (MPSLIB_CheckHn(hn) == 0) {
+        *(void**)((u8*)hn + 0xE4) = fn;
+        *(void**)((u8*)hn + 0xE8) = obj;
+    }
+}
+
+void MPS_SetPsMapFn(MPS_WORK* hn, void* fn, void* obj) {
+    if (MPSLIB_CheckHn(hn) == 0) {
+        *(void**)((u8*)hn + 0xEC) = fn;
+        *(void**)((u8*)hn + 0xF0) = obj;
+    }
+}
 
 void MPS_SetPesFn(MPS_WORK *hn, void *pes_fn, void *pes_obj) {
     if (MPSLIB_CheckHn(hn) == 0) {

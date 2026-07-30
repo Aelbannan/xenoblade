@@ -52,16 +52,20 @@ int MPV_CheckDelim(const u8 *buf) {
 const u8 *MPV_BsearchDelim(const u8 *end, int count, int flags) {
     int i;
     u32 state = 0xFFFFFF00;
-    const u8 *base = end - 1;
+    const u8 *p = end;
 
     for (i = 0; i < count; i++) {
-        const u8 *p = base - i;
+        p--;
         u8 byte = *p;
-        u32 pre_state = state | byte;
-        if ((pre_state << 8) == 0x01000000 && (lbl_eu_8051C090[pre_state >> 24] & flags)) {
-            return p;
+        state = state | byte;
+        u32 check = state << 8;
+        if (check == 0x01000000) {
+            u8 type = lbl_eu_8051C090[state >> 24];
+            if (type & flags) {
+                return p;
+            }
         }
-        state = pre_state << 8;
+        state = check;
     }
     return NULL;
 }

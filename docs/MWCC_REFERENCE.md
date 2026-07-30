@@ -1730,3 +1730,46 @@ CMyClass::~CMyClass() {}
 - For "base class" init, call the init function explicitly: `other_init(self);`
 - Works with `-RTTI on -Cpp_exceptions on`
 - Tested on: CScnFrame (standalone), CVirtualLightAmb (flattened)
+
+### Early-load scheduling via pre-computed locals (CriWare sfd_buf)
+
+**Symptom:** Function is semantically correct but hexdiff shows pervasive register
+swaps and prologue scheduling mismatches. MWCC schedules array loads near their
+first *use* in source order, but retail scheduled them at the *top* of the
+function for latency hiding.
+
+**Fix:** Compute derived values (nonzero flags, pointer offsets) into named locals
+*before* any stores. This forces the compiler to schedule the loads early,
+matching retail's instruction order and Chaitin register allocation.
+
+```c
+// BAD: compiler delays ptrs[idx] load until the p[4] store
+*(u32 *)(p + 0x00) = 2;
+*(u32 *)(p + 0x04) = (u32)(ptrs[idx] != 0);  // load scheduled here
+
+// GOOD: local forces early load, matching retail scheduling
+u32 valid = (u32)(ptrs[idx] != 0);  // load scheduled at top
+*(u32 *)(p + 0x00) = 2;
+*(u32 *)(p + 0x04) = valid;
+```
+
+**Key details:**
+- The local must be used *soon* after definition (within ~2 instructions) for the
+  compiler to schedule the load at the definition point. If the use is far away
+  (20+ instructions), the compiler delays the computation regardless.
+- For pointer fields that are later re-dereferenced (e.g. `p[0x20]` stored then
+  read back for indirect zeroing), use the local for the *first* indirect access
+  and re-dereference through the struct field for subsequent ones. The compiler
+  uses the live register for the first access, then reloads from memory (aliasing
+  prevents CSE), matching retail's `stw r3, off(r10); stw r7, 0(r3); lwz r3, off(r10); ...`
+  pattern.
+- Do NOT cache array values that retail reloads (e.g. `ptrs[idx]` used for both
+  the nonzero check and a later field store). Without a local, the stores to `p`
+  between the two accesses prevent CSE (void* aliasing), forcing the reload.
+
+**Results:** sfbuf_InitAringBuf went from 76.8% (HIGH_MATCH, SMT blocked by
+Chaitin rotation) to **100% FULL_MATCH** with this pattern. sfbuf_InitVfrmBuf
+reached **91.2% EQUIVALENT_MATCH** (remaining gap: prologue scheduling of a
+late-used `addi` that the compiler won't hoist).
+
+**Files:** `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_buf.c`

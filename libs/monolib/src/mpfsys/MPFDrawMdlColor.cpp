@@ -115,7 +115,7 @@ MPFDrawMdlColor* MPFDrawMdlColor::getInstance(){
 
 } // namespace mpfsys
 
-// mpfsys::MPFDrawMdlNoColor::func_80479894() — draw every group, no vertex
+// mpfsys::MPFDrawMdlNoColor::func_80479894() - draw every group, no vertex
 // colors.
 extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
     const MPFDrawMdlPolyNoColor* polys = (const MPFDrawMdlPolyNoColor*)(lbl_eu_80665840 + data->polyListOff);
@@ -141,13 +141,12 @@ extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdl
     func_80474F2C__Q26mpfsys17UnkClass_80471EC8Fv();
 
     mpfsys::UnkClass_80471EC8* const* slot = list->groups;
-    for (u32 i = 1; i < list->count; i++, slot++) {
-        mpfsys::UnkClass_80471EC8* group = *slot;
-        func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(group, tevStage, data->scale, data->mtxSelect);
-        func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(group);
+    for (u32 i = 1; i < list->count; slot++, i++) {
+        func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(*slot, tevStage, data->scale, data->mtxSelect);
+        func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(*slot);
 
         const MPFDrawMdlPolyNoColor* poly = polys;
-        for (s32 j = 0; j < data->polyCount; j++, poly++) {
+        for (s32 j = 0; j < data->polyCount; poly++, j++) {
             func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
             if (mats[poly->matIdx].texFlags & 8) {
                 func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -164,7 +163,7 @@ extern "C" void func_80479894__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdl
     GXSetCurrentMtx(0);
 }
 
-// mpfsys::MPFDrawMdlNoColor::func_80479A1C() — draw the first half of the
+// mpfsys::MPFDrawMdlNoColor::func_80479A1C() - draw the first half of the
 // groups (pair list), no vertex colors.
 extern "C" void func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdlNoColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
     const MPFDrawMdlPolyNoColor* polys = (const MPFDrawMdlPolyNoColor*)(lbl_eu_80665840 + data->polyListOff);
@@ -192,7 +191,7 @@ extern "C" void func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdl
         func_80474CF4__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
 
         const MPFDrawMdlPolyNoColor* poly = polys;
-        for (s32 j = 0; j < data->polyCount; j++, poly++) {
+        for (s32 j = 0; j < data->polyCount; poly++, j++) {
             func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
             if (mats[poly->matIdx].texFlags & 8) {
                 func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -210,7 +209,7 @@ extern "C" void func_80479A1C__Q26mpfsys17MPFDrawMdlNoColorFv(mpfsys::MPFDrawMdl
     GXSetCurrentMtx(0);
 }
 
-// mpfsys::MPFDrawMdlColor::func_80479BA0() — draw every group with vertex
+// mpfsys::MPFDrawMdlColor::func_80479BA0() - draw every group with vertex
 // colors.
 extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupList* list) {
     const MPFDrawMdlPolyColor* polys = (const MPFDrawMdlPolyColor*)(lbl_eu_80665840 + data->polyListOff);
@@ -236,13 +235,12 @@ extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlCo
     }
 
     mpfsys::UnkClass_80471EC8* const* slot = list->groups;
-    for (u32 i = 1; i < list->count; i++, slot++) {
-        mpfsys::UnkClass_80471EC8* group = *slot;
-        func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(group, tevStage, data->scale, data->mtxSelect);
-        func_80474D50__Q26mpfsys17UnkClass_80471EC8Fv(group);
+    for (u32 i = 1; i < list->count; slot++, i++) {
+        func_80474B00__Q26mpfsys17UnkClass_80471EC8Fv(*slot, tevStage, data->scale, data->mtxSelect);
+        func_80474D50__Q26mpfsys17UnkClass_80471EC8Fv(*slot);
 
         const MPFDrawMdlPolyColor* poly = polys;
-        for (s32 j = 0; j < data->polyCount; j++, poly++) {
+        for (s32 j = 0; j < data->polyCount; poly++, j++) {
             func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
             if (mats[poly->matIdx].texFlags & 8) {
                 func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();
@@ -260,7 +258,7 @@ extern "C" void func_80479BA0__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlCo
     GXSetCurrentMtx(0);
 }
 
-// mpfsys::MPFDrawMdlColor::func_80479D40() — draw the first half of the
+// mpfsys::MPFDrawMdlColor::func_80479D40() - draw the first half of the
 // groups (pair list) with vertex colors.
 extern "C" void func_80479D40__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlColor* self, MPFDrawMdlData* data, const MPFDrawMdlGroupPairList* list) {
     const MPFDrawMdlPolyColor* polys = (const MPFDrawMdlPolyColor*)(lbl_eu_80665840 + data->polyListOff);
@@ -288,7 +286,7 @@ extern "C" void func_80479D40__Q26mpfsys15MPFDrawMdlColorFv(mpfsys::MPFDrawMdlCo
         func_80474D50__Q26mpfsys17UnkClass_80471EC8Fv(pair->obj);
 
         const MPFDrawMdlPolyColor* poly = polys;
-        for (s32 j = 0; j < data->polyCount; j++, poly++) {
+        for (s32 j = 0; j < data->polyCount; poly++, j++) {
             func_80474DF8__Q26mpfsys17UnkClass_80471EC8Fv(mats[poly->matIdx].texMapId);
             if (mats[poly->matIdx].texFlags & 8) {
                 func_80474E68__Q26mpfsys17UnkClass_80471EC8Fv();

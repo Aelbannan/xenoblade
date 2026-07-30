@@ -1,14 +1,7 @@
-// Auto-scaffolded catalog TU for RVL_SDK/src/revolution/hbm/syn
-// Replace stubs with high-level C/C++ during decomp.
+// High-level C reconstruction of RVL_SDK/src/revolution/hbm/syn
+// No inline asm, no register tricks. Matches retail via EQUIVALENT_MATCH.
 
-/* "libs/RVL_SDK/src/revolution/hbm/syn.c" line 4 "harness_catalog.h" */
-#pragma once
-
-/**
- * Minimal includes for auto-scaffolded catalog TUs (libs + non-kyoshin).
- * Kyoshin scaffolds use kyoshin/harness_catalog.hpp instead.
- */
-/* "include/harness_catalog.h" line 6 "types.h" */
+/* "libs/RVL_SDK/src/revolution/hbm/syn.c" line 3 "types.h" */
 #ifndef TYPES_H
 #define TYPES_H
 
@@ -716,20 +709,711 @@ typedef int BOOL;
 
 #endif
 /* end "types.h" */
-/* end "harness_catalog.h" */
+/* "libs/RVL_SDK/src/revolution/hbm/syn.c" line 4 "revolution/os/OSInterrupt.h" */
+#ifndef RVL_SDK_OS_INTERRUPT_H
+#define RVL_SDK_OS_INTERRUPT_H
+/* "libs/RVL_SDK/include/revolution/os/OSInterrupt.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-void __HBMSYNRemoveSynthFromList__FP11HBMSYNSYNTH() {}
+// Forward declarations
+typedef struct OSContext;
 
-void HBMSYNInit() {}
+// Create mask from interrupt ID
+#define OS_INTR_MASK(intr) (1 << (31 - intr))
 
-void HBMSYNQuit() {}
+typedef enum {
+    OS_INTR_MEM_0,
+    OS_INTR_MEM_1,
+    OS_INTR_MEM_2,
+    OS_INTR_MEM_3,
+    OS_INTR_MEM_ADDRESS,
+    OS_INTR_DSP_AI,
+    OS_INTR_DSP_ARAM,
+    OS_INTR_DSP_DSP,
+    OS_INTR_AI_AI,
+    OS_INTR_EXI_0_EXI,
+    OS_INTR_EXI_0_TC,
+    OS_INTR_EXI_0_EXT,
+    OS_INTR_EXI_1_EXI,
+    OS_INTR_EXI_1_TC,
+    OS_INTR_EXI_1_EXT,
+    OS_INTR_EXI_2_EXI,
+    OS_INTR_EXI_2_TC,
+    OS_INTR_PI_CP,
+    OS_INTR_PI_PE_TOKEN,
+    OS_INTR_PI_PE_FINISH,
+    OS_INTR_PI_SI,
+    OS_INTR_PI_DI,
+    OS_INTR_PI_RSW,
+    OS_INTR_PI_ERROR,
+    OS_INTR_PI_VI,
+    OS_INTR_PI_DEBUG,
+    OS_INTR_PI_HSP,
+    OS_INTR_PI_ACR,
+    OS_INTR_28,
+    OS_INTR_29,
+    OS_INTR_30,
+    OS_INTR_31,
 
-void HBMSYNRunAudioFrame() {}
+    OS_INTR_MAX
+} OSInterruptType;
 
-void HBMSYNInitSynth() {}
+//TODO: is this s16 or s32???
+typedef void (*OSInterruptHandler)(s32 intr, struct OSContext* ctx);
 
-void HBMSYNQuitSynth() {}
+extern u32 __OSLastInterruptSrr0;
+extern s16 __OSLastInterrupt;
+extern s64 __OSLastInterruptTime;
 
-void HBMSYNMidiInput() {}
+BOOL OSDisableInterrupts(void);
+BOOL OSEnableInterrupts(void);
+BOOL OSRestoreInterrupts(BOOL status);
 
-void HBMSYNSetMasterVolume(void* self, u32 val) {}
+OSInterruptHandler __OSSetInterruptHandler(OSInterruptType type,
+                                           OSInterruptHandler handler);
+OSInterruptHandler __OSGetInterruptHandler(OSInterruptType type);
+
+void __OSInterruptInit(void);
+
+u32 __OSMaskInterrupts(u32 userMask);
+u32 __OSUnmaskInterrupts(u32 userMask);
+void __OSDispatchInterrupt(u8 intr, struct OSContext* ctx);
+
+void __RAS_OSDisableInterrupts_begin(void);
+void __RAS_OSDisableInterrupts_end(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/os/OSInterrupt.h" */
+/* "libs/RVL_SDK/src/revolution/hbm/syn.c" line 5 "revolution/ax/AXVPB.h" */
+#ifndef RVL_SDK_AX_VPB_H
+#define RVL_SDK_AX_VPB_H
+/* "libs/RVL_SDK/include/revolution/ax/AXVPB.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/ax/AXVPB.h" line 4 "revolution/AX/AXPB.h" */
+#ifndef RVL_SDK_AX_PB_H
+#define RVL_SDK_AX_PB_H
+/* "libs/RVL_SDK/include/revolution/AX/AXPB.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * One frame contains eight bytes:
+ * - One for the header
+ * - Seven for the audio samples
+ */
+#define AX_ADPCM_FRAME_SIZE 8
+#define AX_ADPCM_SAMPLE_BYTES_PER_FRAME (AX_ADPCM_FRAME_SIZE - 1)
+
+// Two audio samples per byte (each nibble)
+#define AX_ADPCM_SAMPLES_PER_BYTE 2
+
+// Amount of audio samples in a frame
+#define AX_ADPCM_SAMPLES_PER_FRAME                                             \
+    (AX_ADPCM_SAMPLE_BYTES_PER_FRAME * AX_ADPCM_SAMPLES_PER_BYTE)
+
+// Amount of nibbles in a frame
+#define AX_ADPCM_NIBBLES_PER_FRAME (AX_ADPCM_FRAME_SIZE * 2)
+
+typedef enum { AX_VOICE_NORMAL, AX_VOICE_STREAM } AXVOICETYPE;
+
+typedef enum { AX_VOICE_STOP, AX_VOICE_RUN } AXVOICESTATE;
+
+typedef enum {
+    AX_SAMPLE_FORMAT_DSP_ADPCM = 0,
+    AX_SAMPLE_FORMAT_PCM_S16 = 10,
+    AX_SAMPLE_FORMAT_PCM_S8 = 25,
+} AXSAMPLETYPE;
+
+// For rmtIIR union I think? From NW4R asserts, but fits well in __AXSyncPBs
+typedef enum {
+    AX_PB_LPF_ON = 1,
+    AX_PB_BIQUAD_ON,
+};
+
+typedef enum {
+    AX_SRC_TYPE_NONE,
+    AX_SRC_TYPE_LINEAR,
+    AX_SRC_TYPE_4TAP_8K,
+    AX_SRC_TYPE_4TAP_12K,
+    AX_SRC_TYPE_4TAP_16K,
+    AX_SRC_TYPE_4TAP_AUTO
+} AXPBSRCTYPE;
+
+typedef enum {
+    AX_MIXER_CTRL_L = (1 << 0),
+    AX_MIXER_CTRL_R = (1 << 1),
+    AX_MIXER_CTRL_DELTA = (1 << 2),
+    AX_MIXER_CTRL_S = (1 << 3),
+    AX_MIXER_CTRL_DELTA_S = (1 << 4),
+
+    AX_MIXER_CTRL_AL = (1 << 16),
+    AX_MIXER_CTRL_AR = (1 << 17),
+    AX_MIXER_CTRL_DELTA_A = (1 << 18),
+    AX_MIXER_CTRL_AS = (1 << 19),
+    AX_MIXER_CTRL_DELTA_AS = (1 << 20),
+
+    AX_MIXER_CTRL_BL = (1 << 21),
+    AX_MIXER_CTRL_BR = (1 << 22),
+    AX_MIXER_CTRL_DELTA_B = (1 << 23),
+    AX_MIXER_CTRL_BS = (1 << 24),
+    AX_MIXER_CTRL_DELTA_BS = (1 << 25),
+
+    AX_MIXER_CTRL_CL = (1 << 26),
+    AX_MIXER_CTRL_CR = (1 << 27),
+    AX_MIXER_CTRL_DELTA_C = (1 << 28),
+    AX_MIXER_CTRL_CS = (1 << 29),
+    AX_MIXER_CTRL_DELTA_CS = (1 << 30)
+};
+
+typedef enum {
+    AX_MIXER_CTRL_RMT_M0 = (1 << 0),
+    AX_MIXER_CTRL_RMT_DELTA_M0 = (1 << 1),
+    AX_MIXER_CTRL_RMT_A0 = (1 << 2),
+    AX_MIXER_CTRL_RMT_DELTA_A0 = (1 << 3),
+
+    AX_MIXER_CTRL_RMT_M1 = (1 << 4),
+    AX_MIXER_CTRL_RMT_DELTA_M1 = (1 << 5),
+    AX_MIXER_CTRL_RMT_A1 = (1 << 6),
+    AX_MIXER_CTRL_RMT_DELTA_A1 = (1 << 7),
+
+    AX_MIXER_CTRL_RMT_M2 = (1 << 8),
+    AX_MIXER_CTRL_RMT_DELTA_M2 = (1 << 9),
+    AX_MIXER_CTRL_RMT_A2 = (1 << 10),
+    AX_MIXER_CTRL_RMT_DELTA_A2 = (1 << 11),
+
+    AX_MIXER_CTRL_RMT_M3 = (1 << 12),
+    AX_MIXER_CTRL_RMT_DELTA_M3 = (1 << 13),
+    AX_MIXER_CTRL_RMT_A3 = (1 << 14),
+    AX_MIXER_CTRL_RMT_DELTA_A3 = (1 << 15)
+};
+
+typedef struct _AXPBMIX {
+    u16 vL;          // at 0x0
+    u16 vDeltaL;     // at 0x2
+    u16 vR;          // at 0x4
+    u16 vDeltaR;     // at 0x6
+    u16 vAuxAL;      // at 0x8
+    u16 vDeltaAuxAL; // at 0xA
+    u16 vAuxAR;      // at 0xC
+    u16 vDeltaAuxAR; // at 0xE
+    u16 vAuxBL;      // at 0x10
+    u16 vDeltaAuxBL; // at 0x12
+    u16 vAuxBR;      // at 0x14
+    u16 vDeltaAuxBR; // at 0x16
+    u16 vAuxCL;      // at 0x18
+    u16 vDeltaAuxCL; // at 0x1A
+    u16 vAuxCR;      // at 0x1C
+    u16 vDeltaAuxCR; // at 0x1E
+    u16 vS;          // at 0x20
+    u16 vDeltaS;     // at 0x22
+    u16 vAuxAS;      // at 0x24
+    u16 vDeltaAuxAS; // at 0x26
+    u16 vAuxBS;      // at 0x28
+    u16 vDeltaAuxBS; // at 0x2A
+    u16 vAuxCS;      // at 0x2C
+    u16 vDeltaAuxCS; // at 0x2E
+} AXPBMIX;
+
+typedef struct _AXPBITD {
+    u16 flag;         // at 0x0
+    u16 bufferHi;     // at 0x2
+    u16 bufferLo;     // at 0x4
+    u16 shiftL;       // at 0x6
+    u16 shiftR;       // at 0x8
+    u16 targetShiftL; // at 0xA
+    u16 targetShiftR; // at 0xC
+} AXPBITD;
+
+typedef struct _AXPBDPOP {
+    s16 aL;     // at 0x0
+    s16 aAuxAL; // at 0x2
+    s16 aAuxBL; // at 0x4
+    s16 aAuxCL; // at 0x6
+    s16 aR;     // at 0x8
+    s16 aAuxAR; // at 0xA
+    s16 aAuxBR; // at 0xC
+    s16 aAuxCR; // at 0xE
+    s16 aS;     // at 0x10
+    s16 aAuxAS; // at 0x12
+    s16 aAuxBS; // at 0x14
+    s16 aAuxCS; // at 0x16
+} AXPBDPOP;
+
+typedef struct _AXPBVE {
+    u16 currentVolume; // at 0x0
+    s16 currentDelta;  // at 0x2
+} AXPBVE;
+
+typedef struct _AXPBADDR {
+    u16 loopFlag;         // at 0x0
+    u16 format;           // at 0x2
+    u16 loopAddressHi;    // at 0x4
+    u16 loopAddressLo;    // at 0x6
+    u16 endAddressHi;     // at 0x8
+    u16 endAddressLo;     // at 0xA
+    u16 currentAddressHi; // at 0xC
+    u16 currentAddressLo; // at 0xE
+} AXPBADDR;
+
+typedef struct _AXPBADPCM {
+    u16 a[8][2];    // at 0x0
+    u16 gain;       // at 0x20
+    u16 pred_scale; // at 0x22
+    u16 yn1;        // at 0x24
+    u16 yn2;        // at 0x26
+} AXPBADPCM;
+
+typedef struct _AXPBSRC {
+    u16 ratioHi;            // at 0x0
+    u16 ratioLo;            // at 0x2
+    u16 currentAddressFrac; // at 0x4
+    u16 last_samples[4];    // at 0x6
+} AXPBSRC;
+
+typedef struct _AXPBADPCMLOOP {
+    u16 loop_pred_scale; // at 0x0
+    u16 loop_yn1;        // at 0x2
+    u16 loop_yn2;        // at 0x4
+} AXPBADPCMLOOP;
+
+typedef struct _AXPBLPF {
+    u16 on;  // at 0x0
+    u16 yn1; // at 0x2
+    u16 a0;  // at 0x4
+    u16 b0;  // at 0x6
+} AXPBLPF;
+
+typedef struct _AXPBBIQUAD {
+    u16 on;  // at 0x0
+    u16 xn1; // at 0x2
+    u16 xn2; // at 0x4
+    u16 yn1; // at 0x6
+    u16 yn2; // at 0x8
+    u16 b0;  // at 0xA
+    u16 b1;  // at 0xC
+    u16 b2;  // at 0xE
+    u16 a1;  // at 0x10
+    u16 a2;  // at 0x12
+} AXPBBIQUAD;
+
+typedef struct _AXPBRMTMIX {
+    u16 vMain0;      // at 0x0
+    u16 vDeltaMain0; // at 0x2
+    u16 vAux0;       // at 0x4
+    u16 vDeltaAux0;  // at 0x6
+    u16 vMain1;      // at 0x8
+    u16 vDeltaMain1; // at 0xA
+    u16 vAux1;       // at 0xC
+    u16 vDeltaAux1;  // at 0xE
+    u16 vMain2;      // at 0x10
+    u16 vDeltaMain2; // at 0x12
+    u16 vAux2;       // at 0x14
+    u16 vDeltaAux2;  // at 0x16
+    u16 vMain3;      // at 0x18
+    u16 vDeltaMain3; // at 0x1A
+    u16 vAux3;       // at 0x1C
+    u16 vDeltaAux3;  // at 0x1E
+} AXPBRMTMIX;
+
+typedef struct _AXPBRMTDPOP {
+    s16 aMain0; // at 0x0
+    s16 aMain1; // at 0x2
+    s16 aMain2; // at 0x4
+    s16 aMain3; // at 0x6
+    s16 aAux0;  // at 0x8
+    s16 aAux1;  // at 0xA
+    s16 aAux2;  // at 0xC
+    s16 aAux3;  // at 0xE
+} AXPBRMTDPOP;
+
+typedef struct _AXPBRMTSRC {
+    u16 currentAddressFrac; // at 0x0
+    u16 last_samples[4];    // at 0x2
+} AXPBRMTSRC;
+
+typedef union __AXPBRMTIIR {
+    AXPBLPF lpf;
+    AXPBBIQUAD biquad;
+} AXPBRMTIIR;
+
+typedef struct _AXPB {
+    u16 nextHi;                // at 0x0
+    u16 nextLo;                // at 0x2
+    u16 currHi;                // at 0x4
+    u16 currLo;                // at 0x6
+    u16 srcSelect;             // at 0x8
+    u16 coefSelect;            // at 0xA
+    u32 mixerCtrl;             // at 0xC
+    u16 state;                 // at 0x10
+    u16 type;                  // at 0x12
+    AXPBMIX mix;               // at 0x14
+    AXPBITD itd;               // at 0x44
+    AXPBDPOP dpop;             // at 0x52
+    AXPBVE ve;                 // at 0x6A
+    AXPBADDR addr;             // at 0x6E
+    AXPBADPCM adpcm;           // at 0x7E
+    AXPBSRC src;               // at 0xA6
+    AXPBADPCMLOOP adpcmLoop;   // at 0xB4
+    AXPBLPF lpf;               // at 0xBA
+    AXPBBIQUAD biquad;         // at 0xC2
+    u16 remote;                // at 0xD6
+    u16 rmtMixerCtrl;          // at 0xD8
+    AXPBRMTMIX rmtMix;         // at 0xDA
+    AXPBRMTDPOP rmtDpop;       // at 0xFA
+    AXPBRMTSRC rmtSrc;         // at 0x10A
+    AXPBRMTIIR rmtIIR;         // at 0x114
+    u8 padding[0x140 - 0x128]; // at 0x128
+} AXPB;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AX/AXPB.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define AX_SAMPLE_RATE 32000
+#define AX_VOICE_MAX 96
+
+typedef enum {
+    AX_PBSYNC_SELECT = (1 << 0),
+    AX_PBSYNC_MIXER_CTRL = (1 << 1),
+    AX_PBSYNC_STATE = (1 << 2),
+    AX_PBSYNC_TYPE = (1 << 3),
+    AX_PBSYNC_MIX = (1 << 4),
+    AX_PBSYNC_ITD = (1 << 5),
+    AX_PBSYNC_ITD_SHIFT = (1 << 6),
+    AX_PBSYNC_DPOP = (1 << 7),
+    AX_PBSYNC_VE = (1 << 8),
+    AX_PBSYNC_VE_DELTA = (1 << 9),
+    AX_PBSYNC_ADDR = (1 << 10),
+    AX_PBSYNC_LOOP_FLAG = (1 << 11),
+    AX_PBSYNC_LOOP_ADDR = (1 << 12),
+    AX_PBSYNC_END_ADDR = (1 << 13),
+    AX_PBSYNC_CURR_ADDR = (1 << 14),
+    AX_PBSYNC_ADPCM = (1 << 15),
+    AX_PBSYNC_SRC = (1 << 16),
+    AX_PBSYNC_SRC_RATIO = (1 << 17),
+    AX_PBSYNC_ADPCM_LOOP = (1 << 18),
+    AX_PBSYNC_LPF = (1 << 19),
+    AX_PBSYNC_LPF_COEFS = (1 << 20),
+    AX_PBSYNC_BIQUAD = (1 << 21),
+    AX_PBSYNC_BIQUAD_COEFS = (1 << 22),
+    AX_PBSYNC_REMOTE = (1 << 23),
+    AX_PBSYNC_RMT_MIXER_CTRL = (1 << 24),
+    AX_PBSYNC_RMTMIX = (1 << 25),
+    AX_PBSYNC_RMTDPOP = (1 << 26),
+    AX_PBSYNC_RMTSRC = (1 << 27),
+    AX_PBSYNC_RMTIIR = (1 << 28),
+    AX_PBSYNC_RMTIIR_LPF_COEFS = (1 << 29),
+    AX_PBSYNC_RMTIIR_BIQUAD_COEFS = (1 << 30),
+    AX_PBSYNC_ALL = (1 << 31),
+};
+
+typedef void (*AXVoiceCallback)(void* vpb);
+
+typedef struct _AXVPB {
+    void* next;               // at 0x0
+    void* prev;               // at 0x4
+    void* next1;              // at 0x8
+    u32 priority;             // at 0xC
+    AXVoiceCallback callback; // at 0x10
+    u32 userContext;          // at 0x14
+    u32 index;                // at 0x18
+    u32 sync;                 // at 0x1C
+    u32 depop;                // at 0x20
+    void* itdBuffer;          // at 0x24
+    AXPB pb;                  // at 0x28
+} AXVPB;
+
+s32 __AXGetNumVoices(void);
+void __AXServiceVPB(AXVPB* vpb);
+void __AXDumpVPB(AXVPB* vpb);
+void __AXSyncPBs(u32 baseCycles);
+AXPB* __AXGetPBs(void);
+void __AXSetPBDefault(AXVPB* vpb);
+void __AXVPBInit(void);
+void __AXVPBQuit(void);
+void AXSetVoiceState(AXVPB* vpb, u16 state);
+void AXSetVoiceAddr(AXVPB* vpb, AXPBADDR* addr);
+void AXGetLpfCoefs(u16 freq, u16* a, u16* b);
+void AXSetMaxDspCycles(u32 num);
+s32 AXGetMaxVoices(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/ax/AXVPB.h" */
+/* "libs/RVL_SDK/src/revolution/hbm/syn.c" line 6 "revolution/ax/AXAlloc.h" */
+#ifndef RVL_SDK_AX_ALLOC_H
+#define RVL_SDK_AX_ALLOC_H
+/* "libs/RVL_SDK/include/revolution/ax/AXAlloc.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/ax/AXAlloc.h" line 4 "revolution/AX/AXVPB.h" */
+/* end "revolution/AX/AXVPB.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define AX_PRIORITY_FREE 0
+#define AX_PRIORITY_MIN 1
+#define AX_PRIORITY_MAX 31
+
+AXVPB* __AXGetStackHead(u32 prio);
+void __AXServiceCallbackStack(void);
+void __AXInitVoiceStacks(void);
+void __AXAllocInit(void);
+void __AXAllocQuit(void);
+void __AXPushFreeStack(AXVPB* vpb);
+AXVPB* __AXPopFreeStack(void);
+void __AXPushCallbackStack(AXVPB* vpb);
+AXVPB* __AXPopCallbackStack(void);
+void __AXRemoveFromStack(AXVPB* vpb);
+void __AXPushStackHead(AXVPB* vpb, u32 prio);
+AXVPB* __AXPopStackFromBottom(u32 prio);
+void AXFreeVoice(AXVPB* vpb);
+AXVPB* AXAcquireVoice(u32 prio, AXVoiceCallback callback, u32 userContext);
+void AXSetVoicePriority(AXVPB* vpb, u32 prio);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/ax/AXAlloc.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations of external functions in the HBM/OS/AX subsystems
+void __HBMSYNResetAllControllers(struct HBMSYNSYNTH*);
+void __HBMSYNRunInputBufferEvents(struct HBMSYNSYNTH*);
+void __HBMSYNServiceVoice(s32);
+void HBMMIXReleaseChannel(void*);
+void HBMFreeIndexByKey(void*);
+BOOL AXIsInit(void);
+
+// ---- BSS globals (single contiguous .bss block) ----
+extern struct HBMSYNSYNTH* __HBMSYNSynthList; // .bss:0x0 | size 4
+extern void* __HBMSYNVoice;                   // .bss:0x4 | size 4 — pointer to voice array
+extern u32 __init;                             // .bss:0x4C8 | size 4 — init flag
+
+// ---- HBMSYNSYNTH — synthesizer instance structure ----
+// Offsets inferred from retail ASM (syn.c, synctrl.c, synvoice.c, seq.c)
+typedef struct HBMSYNSYNTH {
+    struct HBMSYNSYNTH* next;   // 0x00 — linked-list next
+    void* dataSections[6];      // 0x04-0x18 — pointers into sound data
+    u32  field1C;               // 0x1C — playback speed param (from r5)
+    u32  field20;               // 0x20 — playback speed param (from r5 + 0x80000000)
+    u32  field24;               // 0x24 — playback speed param (from r5 << 1)
+    u8   pad28[0x68 - 0x28];   // 0x28-0x67
+    u32  masterVolume;          // 0x68 — master volume (<< 16)
+    u8   pad6C[0xFC - 0x6C];   // 0x6C-0xFB
+    u8   midiBuffer[0x300];    // 0xFC-0x3FB — MIDI input buffer
+    u8*  midiWritePtr;          // 0x3FC — current write pos in midiBuffer
+    u32  midiCount;             // 0x400 — number of MIDI bytes received
+    u32  activeVoiceFlag;       // 0x404 — non-zero when voices are active
+    u8   voiceData[0x2000];    // 0x408-0x2407 — per-voice state blocks
+} HBMSYNSYNTH;
+
+// ---- Per-voice entry (size 0x4C) ----
+typedef struct {
+    u8   pad00[0x04];          // 0x00
+    void* mixChannel;           // 0x04 — HBMMIXChannel*
+    struct HBMSYNSYNTH* synth; // 0x08 — owning synthesizer
+    u8   pad0C[0x4C - 0x0C];   // 0x0C-0x4B — rest of voice state
+} HBMSYNVoiceEntry;
+
+// ---- Function implementations ----
+
+void __HBMSYNRemoveSynthFromList__FP11HBMSYNSYNTH(HBMSYNSYNTH* synth)
+{
+    BOOL intr = OSDisableInterrupts();
+    HBMSYNSYNTH* cur = __HBMSYNSynthList;
+    HBMSYNSYNTH* last = NULL;
+    HBMSYNSYNTH* first = NULL;
+
+    while (cur != NULL) {
+        if (cur != synth) {
+            if (first != NULL) {
+                last->next = cur;
+                last = cur;
+            } else {
+                last = cur;
+                first = cur;
+            }
+        }
+        cur = cur->next;
+    }
+
+    if (last != NULL) {
+        last->next = NULL;
+    }
+
+    __HBMSYNSynthList = first;
+    OSRestoreInterrupts(intr);
+}
+
+void HBMSYNInit(void)
+{
+    u8* base = (u8*)&__HBMSYNSynthList;
+
+    if (!AXIsInit()) {
+        return;
+    }
+
+    u32* initFlag = (u32*)(base + 0x4C8);
+
+    if (*initFlag != 0) {
+        return;
+    }
+
+    // __HBMSYNVoice = &__s_HBMSYNVoice (at base + 8)
+    *(void**)(base + 4) = base + 8;
+
+    // Clear the synth reference in every voice (16 voices x 0x4C bytes)
+    {
+        s32 i;
+        for (i = 0; i < 16; i++) {
+            ((HBMSYNVoiceEntry*)__HBMSYNVoice)[i].synth = NULL;
+        }
+    }
+
+    // __HBMSYNSynthList = NULL
+    *(HBMSYNSYNTH**)base = NULL;
+
+    *initFlag = 1;
+}
+
+void HBMSYNQuit(void)
+{
+    __HBMSYNVoice = NULL;
+    __init = 0;
+}
+
+void HBMSYNRunAudioFrame(void)
+{
+    if (__init == 0) {
+        return;
+    }
+
+    s32 i;
+    for (i = 0; i < 16; i++) {
+        __HBMSYNServiceVoice(i);
+    }
+
+    HBMSYNSYNTH* syn = __HBMSYNSynthList;
+    while (syn != NULL) {
+        __HBMSYNRunInputBufferEvents(syn);
+        syn = syn->next;
+    }
+}
+
+void HBMSYNInitSynth(HBMSYNSYNTH* syn, u32* config, u32 param3)
+{
+    u32 v = param3 + 0x80000000;
+
+    syn->dataSections[0] = (u8*)config + config[0];
+    syn->dataSections[1] = (u8*)config + config[1];
+    syn->dataSections[2] = (u8*)config + config[2];
+    syn->dataSections[3] = (u8*)config + config[3];
+    syn->dataSections[4] = (u8*)config + config[4];
+    syn->dataSections[5] = (u8*)config + config[5];
+
+    syn->field1C = v >> 1;
+    syn->field20 = v;
+    syn->field24 = v << 1;
+
+    syn->masterVolume = 0;
+
+    __HBMSYNResetAllControllers(syn);
+
+    syn->midiWritePtr = syn->midiBuffer;
+    syn->midiCount = 0;
+    syn->activeVoiceFlag = 0;
+
+    // Clear voice data region: 16 groups x 0x200 bytes, zeroed 4 words at a time
+    {
+        u32* p = (u32*)syn->voiceData;
+        u32* end = (u32*)(syn->voiceData + sizeof(syn->voiceData));
+        while (p < end) {
+            *p++ = 0;
+        }
+    }
+
+    // Insert this synth into the global linked list (under interrupt lock)
+    {
+        BOOL intr = OSDisableInterrupts();
+        HBMSYNSYNTH* head = __HBMSYNSynthList;
+        if (head != NULL) {
+            syn->next = head;
+        } else {
+            syn->next = NULL;
+        }
+        __HBMSYNSynthList = syn;
+        OSRestoreInterrupts(intr);
+    }
+}
+
+void HBMSYNQuitSynth(HBMSYNSYNTH* syn)
+{
+    BOOL intr = OSDisableInterrupts();
+
+    if (syn->activeVoiceFlag != 0) {
+        HBMSYNVoiceEntry* voices = (HBMSYNVoiceEntry*)__HBMSYNVoice;
+        s32 i;
+        for (i = 0; i < 16; i++) {
+            HBMSYNVoiceEntry* v = &voices[i];
+            if (v->synth == syn) {
+                HBMMIXReleaseChannel(v->mixChannel);
+                HBMFreeIndexByKey(*(void**)((u8*)v->mixChannel + 0x18));
+                AXFreeVoice((AXVPB*)v->mixChannel);
+                v->synth = NULL;
+            }
+        }
+    }
+
+    __HBMSYNRemoveSynthFromList__FP11HBMSYNSYNTH(syn);
+
+    OSRestoreInterrupts(intr);
+}
+
+void HBMSYNMidiInput(HBMSYNSYNTH* syn, const u8* data)
+{
+    u8* p;
+    p = syn->midiWritePtr;
+    *p = data[0];
+    p = syn->midiWritePtr;
+    syn->midiWritePtr = p + 1;
+    p = syn->midiWritePtr;
+    *p = data[1];
+    p = syn->midiWritePtr;
+    syn->midiWritePtr = p + 1;
+    p = syn->midiWritePtr;
+    *p = data[2];
+    p = syn->midiWritePtr;
+    syn->midiWritePtr = p + 1;
+    syn->midiCount++;
+}
+
+void HBMSYNSetMasterVolume(HBMSYNSYNTH* syn, u32 vol)
+{
+    syn->masterVolume = vol << 16;
+}
+
+#ifdef __cplusplus
+}
+#endif

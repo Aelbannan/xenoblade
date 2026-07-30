@@ -6,10 +6,16 @@ static volatile u32 __i2c_ident_first = 0;
 #define busRd32(addr) (*(volatile u32*)(addr))
 #define busWrt32(addr, val) (*(volatile u32*)(addr)) = (val)
 
+// The retail VI driver was compiled against a fixed 243 MHz bus clock, so
+// the tick->microsecond conversion folds to a constant divisor (486) instead
+// of loading OS_BUS_CLOCK_SPEED at runtime.
+#define VI_I2C_BUS_CLOCK_SPEED 243000000
+#define VI_TICKS_TO_USEC(x) (((x) * 8) / (VI_I2C_BUS_CLOCK_SPEED / 4 / 125000))
+
 void WaitMicroTime(s32 usec) {
     s64 t = __OSGetSystemTime();
 
-    while (OS_TICKS_TO_USEC(__OSGetSystemTime() - t) < usec)
+    while (VI_TICKS_TO_USEC(__OSGetSystemTime() - t) < usec)
         ;
 }
 

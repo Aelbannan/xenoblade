@@ -20,7 +20,16 @@ void gcCiGetFileSize() {}
 
 void gcCiOpen() {}
 
-void gcCiClose() {}
+void gcCiStopTr(void*);
+int DVDClose(void*);
+
+void gcCiClose(void* self) {
+    if (self == NULL) return;
+    gcCiStopTr(self);
+    DVDClose((u8*)self + 0x28);
+    *(u8*)self = 0;
+    memset(self, 0, 0x64);
+}
 
 void gcCiSeek() {}
 
@@ -28,7 +37,7 @@ void gcCiTell() {}
 
 void gcCiReqRd() {}
 
-void gcCiStopTr() {}
+void gcCiStopTr(void* self) { (void)self; }
 
 void gcCiGetStat() {}
 

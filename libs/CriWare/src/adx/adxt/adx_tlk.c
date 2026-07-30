@@ -6,11 +6,11 @@
 extern void ADXCRS_Enter(void);
 extern void ADXCRS_Leave(void);
 
-void ADXT_Create() {}
+void ADXT_Create();
 
-void adxt_Create() {}
+void adxt_Create();
 
-void adxt_Destroy(void* self) {}
+void adxt_Destroy(void* self);
 
 void ADXT_Destroy(void* self) {
     ADXCRS_Enter();
@@ -34,9 +34,15 @@ void ADXT_GetStat() {}
 
 void adxt_GetTimeSfreq2() {}
 
-void ADXT_GetTime() {}
+void adxt_GetTime(void*, void*, void*);
 
-void adxt_GetTime() {}
+void ADXT_GetTime(void* a, void* b, void* c) {
+    ADXCRS_Enter();
+    adxt_GetTime(a, b, c);
+    ADXCRS_Leave();
+}
+
+void adxt_GetTime(void* a, void* b, void* c) { (void)a; (void)b; (void)c; }
 
 void ADXT_GetTimeReal() {}
 
@@ -46,15 +52,35 @@ void ADXT_GetSfreq() {}
 
 void ADXT_GetNumChan() {}
 
-void ADXT_SetOutPan() {}
+void adxt_SetOutPan(void*, void*, void*);
 
-void adxt_SetOutPan() {}
+void ADXT_SetOutPan(void* a, void* b, void* c) {
+    ADXCRS_Enter();
+    adxt_SetOutPan(a, b, c);
+    ADXCRS_Leave();
+}
+
+void adxt_SetOutPan(void* a, void* b, void* c) { (void)a; (void)b; (void)c; }
 
 void ADXT_GetOutPan() {}
 
 void ADXT_SetOutVol() {}
 
-void ADXT_GetOutVol() {}
+extern void ADXERR_CallErrFunc1_(const char*);
+extern char lbl_eu_805162F8[];
+
+s32 ADXT_GetOutVol(void* self) {
+    s32 vol;
+    ADXCRS_Enter();
+    if (self == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x37A);
+        vol = 0;
+    } else {
+        vol = *(s16*)((u8*)self + 0x40);
+    }
+    ADXCRS_Leave();
+    return vol;
+}
 
 extern u32 lbl_eu_805E4F18;
 extern u32 lbl_eu_805E4F1C;
@@ -88,7 +114,18 @@ void ADXT_ExecServer(void) {
 
 void adxt_ExecServer() {}
 
-void ADXT_GetErrCode() {}
+s32 ADXT_GetErrCode(void* self) {
+    s32 err;
+    ADXCRS_Enter();
+    if (self == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x513);
+        err = -1;
+    } else {
+        err = *(s16*)((u8*)self + 0x60);
+    }
+    ADXCRS_Leave();
+    return err;
+}
 
 void adxt_SetLpFlg() {}
 

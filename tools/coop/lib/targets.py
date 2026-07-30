@@ -68,6 +68,11 @@ def equivalence_certificate_error(
     _checking: Optional[set[str]] = None,
 ) -> Optional[str]:
     """Return why a registry certificate cannot be trusted, or ``None``."""
+    # §2.7.5: FULL_MATCH targets are intrinsically certified (byte-identical
+    # retail/decomp objects). They do not need an SMT equivalence certificate
+    # to serve as callees.
+    if row.get("status") == "FULL_MATCH":
+        return None
     certificate = row.get("equivalence_certificate")
     if not isinstance(certificate, dict):
         return "missing equivalence_certificate"

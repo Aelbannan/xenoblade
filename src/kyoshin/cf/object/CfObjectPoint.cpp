@@ -60,7 +60,7 @@ CfObjectPoint::~CfObjectPoint() {
 }
 
 void CfObjectPoint::func_800C1324() {
-    CfObject_UnkVirtualFunc66();
+    CfObject_UnkVirtualFunc66(1);
     mFlag91 = 0;
     mFlag90 = 0;
 }

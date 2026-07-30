@@ -8,9 +8,11 @@
 // objdiff can pair them exactly with the retail object.
 
 #include "kyoshin/cf/CtrlMovePC.hpp"
+#include "kyoshin/cf/CtrlMovePC_intf.hpp"
 #include <monolib/math/CVec3.hpp>
 
 using cf::CCtrlMovePC;
+using cf::CMoveWrapper;
 
 // ---- external runtime / engine symbols (exact retail names) ----
 extern "C" {
@@ -22,7 +24,7 @@ void func_8008962C(CCtrlMovePC* self);
 void func_80089694(CCtrlMovePC* self, const Vec* v, f32 f);
 
 // ptmf runtime.
-extern const PTMF __ptmf_null;
+extern int (CCtrlMovePC::*const __ptmf_null)();
 long __ptmf_test(PTMF* ptmf);
 void __ptmf_scall(...);
 
@@ -33,21 +35,27 @@ void  func_8047CF20(void* unk, void* task);      // UnkClass_8047CD0C::func
 void* func_8047CE7C(void);                       // UnkClass_8047CD0C::func
 void  func_8047DE14(void* a, Vec* b, f32 c, f32 d);
 void  func_8047DD4C(void* a, Vec* b, void* c, f32 d, f32 e, int f);
+void* getInstance__Q22cf14CBattleManagerFv(void);
+f32 SinFIdx__Q24nw4r4mathFf(f32);
+f32 CosFIdx__Q24nw4r4mathFf(f32);
 
 // Data labels (vtables / ptmf constants).
 extern const char lbl_eu_80532D58[];  // secondary vtable
-extern const PTMF lbl_eu_80532B60;
-extern const PTMF lbl_eu_80532B78;
-extern const PTMF lbl_eu_80532B84;
-extern const PTMF lbl_eu_80532C14;
-extern const PTMF lbl_eu_80532C20;
-extern const PTMF lbl_eu_80532C98;
-extern const PTMF lbl_eu_80532D28;
-extern const PTMF lbl_eu_80532D34;
-extern const PTMF lbl_eu_80532D40;
-extern const PTMF lbl_eu_80532D4C;
+extern int (CCtrlMovePC::*const lbl_eu_80532B60)();
+extern int (CCtrlMovePC::*const lbl_eu_80532B78)();
+extern int (CCtrlMovePC::*const lbl_eu_80532B84)();
+extern int (CCtrlMovePC::*const lbl_eu_80532C14)();
+extern int (CCtrlMovePC::*const lbl_eu_80532C20)();
+extern int (CCtrlMovePC::*const lbl_eu_80532C98)();
+extern int (CCtrlMovePC::*const lbl_eu_80532D28)();
+extern int (CCtrlMovePC::*const lbl_eu_80532D34)();
+extern int (CCtrlMovePC::*const lbl_eu_80532D40)();
+extern int (CCtrlMovePC::*const lbl_eu_80532D4C)();
 
 extern const f32 lbl_eu_80667B60;  // 0.0f
+extern const f32 lbl_eu_80667B68;
+extern const f32 lbl_eu_80667B9C;
+extern const f32 lbl_eu_80667C40;
 }
 
 // ============================================================================
@@ -142,8 +150,7 @@ extern "C" int func_8019EE08(CCtrlMovePC* self) {
     if ((f & 0x00200000u) == 0) {      // rlwinm. bit 10
         self->mStateFunc = lbl_eu_80532D34;
     } else {
-        extern const f32 lbl_eu_80667C40;
-        if (!(self->mDistFC >= lbl_eu_80667C40) && !(self->mArr124[17] > 0)) {
+        if (self->mDistFC >= lbl_eu_80667C40 && self->mArr124[17] <= 0) {
             self->mFlags4C = (f & 0xFFFFFEFFu) | 0x8u;
             self->mStateFunc = lbl_eu_80532D40;
             self->mArr124[7] = 0;      // 0x132
@@ -157,5 +164,48 @@ extern "C" int func_8019EE08(CCtrlMovePC* self) {
     self->mArr124[3] = 0;              // 0x12a
     self->mFlags4C = g;
     *(f32*)((char*)self->mBaseData + 0x14) = lbl_eu_80667B60;
+    return 0;
+}
+
+// ============================================================================
+// func_8019CCDC — facing sin/cos update or ptmf transition (0xC4)
+// ============================================================================
+extern "C" int func_8019CCDC(CCtrlMovePC* self) {
+    if (self->mFlags4C & 0x00040000u) {        // rlwinm. bit 13
+        self->mVec90.y = lbl_eu_80667B60;      // 0x94 = 0.0
+        CMoveWrapper* w = (CMoveWrapper*)self->mObject;
+        f32 s = w->getAngle();                 // vtable 0x5b4
+        self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * s);
+        f32 c = ((CMoveWrapper*)self->mObject)->getAngle();
+        self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * c);
+        func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
+    } else {
+        self->mStateFunc = lbl_eu_80532C98;
+        *(f32*)((char*)self->mBaseData + 0x14) = lbl_eu_80667B60;
+    }
+    return 0;
+}
+
+// ============================================================================
+// func_8019EEB8 — counter-gated facing update or transition (0xD8)
+// ============================================================================
+extern "C" int func_8019EEB8(CCtrlMovePC* self) {
+    s16 old = self->mArr124[15];               // 0x142
+    self->mArr124[15] = (s16)(old + 1);
+    if (old < 30) {
+        CMoveWrapper* w = (CMoveWrapper*)self->mObject;
+        void* sub = *(void**)((char*)w + 0x3f60);
+        u16 flag = *(u16*)((char*)sub + 0x530);
+        if ((flag & 1u) == 0) {                // clrlwi. bit 31
+            f32 a = w->getAngle();             // vtable 0x5b4
+            self->mVec90.x = SinFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * a);
+            f32 b = ((CMoveWrapper*)self->mObject)->getAngle();
+            self->mVec90.z = CosFIdx__Q24nw4r4mathFf(lbl_eu_80667B9C * b);
+            func_80089694(self, (const Vec*)&self->mVec90, lbl_eu_80667B68);
+            return 0;
+        }
+    }
+    self->mArr124[15] = 0;
+    self->mStateFunc = lbl_eu_80532D4C;
     return 0;
 }

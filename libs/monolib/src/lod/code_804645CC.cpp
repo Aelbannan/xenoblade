@@ -1,9 +1,11 @@
 // Decompilation of monolib/src/lod/code_804645CC
-// LOD::UnkClass_804645CC — LOD billboard/quad renderer state + draw routines.
+// LOD::UnkClass_804645CC - LOD billboard/quad renderer state + draw routines.
 //
-// Retail symbols are annotated Fv (void) in symbols.txt, but several routines
-// receive data in r3/f1. Those are handled with explicit asm symbol labels so
-// the mangled name stays ...Fv while the real signature carries the argument.
+// Retail symbols are annotated Fv (void) in symbols.txt (stripped DOL), but
+// several routines receive data in r3/r4/f1. MWCC cannot emit an Fv mangling
+// for a function that has parameters, so those routines are defined as free
+// functions carrying their real signature and an asm() label that forces the
+// retail ...Fv symbol. Register usage matches the retail ABI (r3=first arg).
 
 #include <harness_catalog.h>
 #include <types.h>
@@ -48,11 +50,7 @@ struct UnkClass_804645CC {
     void func_80465314();
     void func_8046534C();
     void func_8046568C();
-    void func_80465704();
     void func_80465718();
-    void func_80465730();
-    void func_8046577C();
-    void func_804657E4();
     void func_80465800();
     void func_80465BC0();
 };
@@ -92,20 +90,25 @@ void LOD::UnkClass_804645CC::func_8046568C() {
     }
 }
 
-void LOD::UnkClass_804645CC::func_80465704() {}
-
-// Store 0xFF into the pending-value slot and clear flag bits {1} of the state word.
+// Store 0xFF into the pending-value slot and clear flag bit 1 of the state word.
 void LOD::UnkClass_804645CC::func_80465718() {
     lbl_eu_80665814 = 0xFF;
     lbl_eu_806657E8 &= ~2u;
 }
 
-void LOD::UnkClass_804645CC::func_80465730() {}
-
-void LOD::UnkClass_804645CC::func_8046577C() {}
-
-void LOD::UnkClass_804645CC::func_804657E4() {}
-
 void LOD::UnkClass_804645CC::func_80465800() {}
 
 void LOD::UnkClass_804645CC::func_80465BC0() {}
+
+// ===== argument-bearing routines (free functions, retail symbol forced) =====
+
+// r3 = pending value stored to the state word; sets flag bit 1.
+static void func_80465704(u32 val) asm("func_80465704__Q23LOD17UnkClass_804645CCFv") {
+    lbl_eu_80665814 = val;
+    lbl_eu_806657E8 |= 2;
+}
+
+// r3 = signed 16-bit value converted to float (paired-single qr5 dequant).
+static void func_804657E4(s16 val) asm("func_804657E4__Q23LOD17UnkClass_804645CCFv") {
+    lbl_eu_806657E4 = (f32)val;
+}

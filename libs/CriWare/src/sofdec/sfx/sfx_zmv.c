@@ -2,19 +2,31 @@
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
 
-void SFXZ_Init() {}
+void* memset(void* s, int c, size_t n);
+
 extern u8 lbl_eu_8061A260[];
 extern float lbl_eu_8051D218;
 
-void* SFXZ_Create() {
-    u8* p = (u8*)lbl_eu_8061A260 + 12;
-    s32 cnt = *(s32*)(lbl_eu_8061A260 + 8);
-    while (cnt > 0) {
-        if (*(u32*)p == 0) break;
-        p += 0x4C;
-        cnt--;
-    }
-    if (cnt <= 0) p = NULL;
+void SFXZ_Init(void) {
+    memset(lbl_eu_8061A260, 0, 0x26c);
+    *(u32*)(lbl_eu_8061A260 + 8) = 8;
+    *(u32*)(lbl_eu_8061A260 + 4) = 0;
+}
+
+void* SFXZ_Create(void) {
+    u8* p = lbl_eu_8061A260;
+    s32 cnt = *(s32*)(p + 8);
+    p += 12;
+    if (cnt <= 0) goto L_null;
+L_loop:
+    if (*(u32*)p != 0) goto L_next;
+    goto L_found;
+L_next:
+    p += 0x4C;
+    if (--cnt != 0) goto L_loop;
+L_null:
+    p = NULL;
+L_found:
     if (p == NULL) return NULL;
     {
         float f0 = lbl_eu_8051D218;

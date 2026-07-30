@@ -117,7 +117,7 @@ void cf::CfObjectModel::CfObjectModel_UnkVirtualFunc3() {}
 
 void func_800BB618(){}
 
-void cf::CfObjectModel::CfObject_UnkVirtualFunc66() {}
+void cf::CfObjectModel::CfObject_UnkVirtualFunc66(int) {}
 
 void cf::CfObjectModel::CfObject_UnkVirtualFunc67() {}
 

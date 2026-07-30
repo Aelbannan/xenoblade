@@ -11,7 +11,24 @@ void mpvlib_InitClip0255() {}
 
 void mpvlib_InitPicAtr() {}
 
-void MPV_Finish() {}
+void MPVUMC_Finish(void);
+void MPVSL_Finish(void);
+void MPVM2V_Finish(void);
+
+extern u32 lbl_eu_80602B88[];
+
+void MPV_Finish(void) {
+    MPVUMC_Finish();
+    MPVSL_Finish();
+    MPVM2V_Finish();
+    if (lbl_eu_80602B88[0x48/4] & 0x10000000) {
+        u32 base = lbl_eu_80602B88[0x50/4];
+        u32 i;
+        for (i = 0; i < 0xDF; i++) {
+            __dcbi((void*)(base + i * 0x20));
+        }
+    }
+}
 
 void MPV_Create() {}
 

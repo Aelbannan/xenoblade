@@ -56,7 +56,7 @@ public:
     f32 mDistFC;               // 0xFC
     f32 mFloat100;             // 0x100
     char mPad104[0x4];         // 0x104..0x107
-    PTMF mStateFunc;           // 0x108 state dispatch ptmf
+    int (CCtrlMovePC::*mStateFunc)();  // 0x108 state dispatch ptmf (12 bytes)
     void* mPlayer;             // 0x114 player wrapper (CfObject @ +0x3e9c)
     void* mObject;             // 0x118 controlled object wrapper
     void* mTask;               // 0x11C active move task

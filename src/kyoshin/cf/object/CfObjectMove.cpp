@@ -252,7 +252,7 @@ int cf::CfObjectMove::nullsub_25() { return 0; }
 
 void cf::CfObjectMove::CfObjectMove_UnkVirtualFunc3() {}
 
-void cf::CfObjectMove::CfObject_UnkVirtualFunc66() {}
+void cf::CfObjectMove::CfObject_UnkVirtualFunc66(int) {}
 
 void cf::CfObjectMove::CfObjectModel_UnkVirtualFunc19() {}
 

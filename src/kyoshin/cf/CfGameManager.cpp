@@ -731,22 +731,6 @@ void cf::CfGameManager::func_80082254() { func_800B93D0(); }
 
 void cf::CfGameManager::func_80082EC0() {}
 
-struct PadChannelMap {
-    u8 data[8][8];
-};
-extern PadChannelMap lbl_eu_804FB7B0;
-
-s32 cf::CfGameManager::func_80082418(s32 arg1, s32 arg2) {
-    PadChannelMap map = lbl_eu_804FB7B0;
-    if (arg1 < 1 || arg1 > 8) {
-        return -1;
-    }
-    if (arg2 < 1 || arg2 > 8) {
-        return -1;
-    }
-    return (s8)map.data[arg1 - 1][arg2 - 1];
-}
-
 extern "C" ItemListManager* func_800B6BA4__Fv();
 void cf::CfGameManager::func_80086B04() {}
 

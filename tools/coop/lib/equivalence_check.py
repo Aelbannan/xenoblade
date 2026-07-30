@@ -311,6 +311,26 @@ def _certificate_contract(certificate: dict) -> CalleeContract:
     )
 
 
+def _reattest_full_match_callees(
+    project: Project,
+    row: dict,
+    by_id: dict[str, dict],
+    memo: dict[str, str | None],
+    active: set[str],
+) -> str | None:
+    """Re-attest callees of a FULL_MATCH target (no certificate to hash)."""
+    fm_id = str(row.get("id", ""))
+    for callee_id in row.get("called_functions", []):
+        callee_id = str(callee_id)
+        callee_row = by_id.get(callee_id)
+        if isinstance(callee_row, dict):
+            error = _reattest_certificate_tree(project, callee_id, by_id, memo, active)
+            if error:
+                return f"callee {callee_id!r}: {error}"
+    memo[fm_id] = None
+    return None
+
+
 def _reattest_certificate_tree(
     project: Project,
     target_id: str,
@@ -330,6 +350,10 @@ def _reattest_certificate_tree(
         return f"unknown target {target_id!r}"
     if row.get("status") not in ACCEPTED_MATCH_STATUSES:
         return "target is not accepted"
+    # §2.7.5: FULL_MATCH targets are intrinsically certified; skip cryptograhic
+    # re-attestation — they need no certificate.
+    if row.get("status") == "FULL_MATCH":
+        return _reattest_full_match_callees(project, row, by_id, memo, active)
     error = equivalence_certificate_error(row, by_id)
     if error:
         return error
@@ -466,6 +490,21 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
         unit_hint = callee.get("unit")
         if not isinstance(symbol, str) or not isinstance(unit_hint, str):
             errors.append(f"callee {callee_id!r} lacks a buildable symbol/unit")
+            continue
+        # §2.7.5: FULL_MATCH callees use an opaque EABI contract (no
+        # certificate needed — they are byte-identical to retail).
+        is_full_match = callee.get("status") == "FULL_MATCH"
+        if is_full_match:
+            contract = CalleeContract.opaque_eabi()
+            contracts[symbol] = contract
+            address = callee.get("address")
+            if isinstance(address, str):
+                try:
+                    parsed_address = int(address, 0)
+                    contracts[parsed_address] = contract
+                    address_to_target_id[parsed_address] = str(callee_id)
+                except ValueError:
+                    pass
             continue
         certificate = callee["equivalence_certificate"]
         contract = _certificate_contract(certificate)

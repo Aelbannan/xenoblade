@@ -13,7 +13,22 @@ void MWSFD_SetVideoSw(void* self, u32 sw) {
     SFD_SetCond(*(void**)((u8*)self + 0x58), 5, sw);
 }
 
-void mwPlyGetSfdHn() {}
+extern void MWSFSVM_Error(const char*, ...);
+extern char lbl_eu_8051B7B0[];
+
+void* mwPlyGetSfdHn(void* self) {
+    u32 sig;
+    if (self == NULL) {
+        sig = 0;
+    } else {
+        sig = *(u32*)self;
+    }
+    if (sig != 1) {
+        MWSFSVM_Error(lbl_eu_8051B7B0 + 0x5A);
+        return NULL;
+    }
+    return *(void**)((u8*)self + 0x58);
+}
 
 void SFD_SetCond();
 void MWSFD_SetCond(void* self, u32 sw) {

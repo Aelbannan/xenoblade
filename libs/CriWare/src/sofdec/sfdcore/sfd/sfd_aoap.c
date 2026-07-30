@@ -15,7 +15,15 @@ int SFAOAP_Finish(void) { return 0x0; }
 
 void SFAOAP_ExecServer() {}
 
-void SFAOAP_Create() {}
+int SFSET_GetCond(void*, int);
+
+int SFAOAP_Create(void* self) {
+    if (!SFSET_GetCond(self, 6)) {
+        return 0;
+    }
+    *(void**)((u8*)self + 0x21BC) = (u8*)self + 0x261C;
+    return 0;
+}
 
 int SFAOAP_Destroy(void) { return 0x0; }
 

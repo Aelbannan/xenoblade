@@ -29,8 +29,8 @@ struct LSC_StmEntry {
     u8 field_0x1[0x237];
 };
 
-void LSC_Init() {
-    struct LSC_CriticalSection cs = lbl_eu_80518418;
+void LSC_Init(void) {
+    struct LSC_CriticalSection cs;
     LSC_LockCrs(&cs);
     if (lbl_eu_805E7D38 == 0) {
         memset(lbl_eu_805E7D40, 0, 0x4700);

@@ -50,13 +50,12 @@ extern "C" u32 func_80460308__17UnkClass_80460308Fv(u32 adler, const u8* buf, u3
 
     /* in case short lengths are provided, keep it somewhat fast */
     if (len < 16) {
-        n = len >> 3;
-        while (n--) {
+        for (n = len >> 3; n != 0; n--) {
             ADLER_DO8(buf, 0);
             buf += 8;
         }
         len &= 7;
-        while (len--) {
+        for (; len != 0; len--) {
             adler += *buf++;
             sum2 += adler;
         }
@@ -85,13 +84,12 @@ extern "C" u32 func_80460308__17UnkClass_80460308Fv(u32 adler, const u8* buf, u3
             ADLER_DO16(buf);
             buf += 16;
         }
-        n = len >> 3;
-        while (n--) {
+        for (n = len >> 3; n != 0; n--) {
             ADLER_DO8(buf, 0);
             buf += 8;
         }
         len &= 7;
-        while (len--) {
+        for (; len != 0; len--) {
             adler += *buf++;
             sum2 += adler;
         }

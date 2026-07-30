@@ -1417,15 +1417,85 @@ public:
 /* "src/kyoshin/CFloorMap.hpp" line 2 "types.h" */
 /* end "types.h" */
 
+// Forward declarations for types used in CFloorMap
+class CScrollBar;
+class CBaseCur;
+class CSysWin;
+
+// 8-byte entry in the layout pointer array at 0x150
+struct UnkLayoutEntry {
+    u32 mPtr;   // +0x00: layout pointer
+    u32 mUnk;   // +0x04: unknown
+};
+
 // Full object layout for CFloorMap (used by C-linkage accessors)
 struct CFloorMapFull {
-    u8 _00[0x40];
-    u8 field_40;
-    u8 field_41;
-    u8 _42[0x58 - 0x42];
-    u8 field_58;
-    u8 _59[0x208 - 0x59];
-    u8 field_208;
+    u8 _00[0x40];            // 0x00-0x3F
+    u8 field_40;             // 0x40 - draw/visibility flag A
+    u8 field_41;             // 0x41 - draw/visibility flag B
+    u8 _42[0x58 - 0x42];     // 0x42-0x57
+    u8 field_58;             // 0x58 - cursor active flag
+    u8 _59[0x5C - 0x59];     // 0x59-0x5B
+    u8 field_5C;             // 0x5C - cursor index (s8)
+    u8 _5D[0x60 - 0x5D];     // 0x5D-0x5F
+    u32 mScrollBar;          // 0x60 - scrollbar widget
+    u8 _64[0xA0 - 0x64];     // 0x64-0x9F
+    u32 mCursor;             // 0xA0 - cursor widget
+    u8 _A4[0xB8 - 0xA4];     // 0xA4-0xB7
+    u32 mSysWinB8;           // 0xB8 - system window
+    u8 _BC[0xF4 - 0xBC];     // 0xBC-0xF3
+    u32 mSysWinF4;           // 0xF4 - system window
+    u8 _F8[0x130 - 0xF8];    // 0xF8-0x12F
+    u32 mLayout130;          // 0x130 - layout pointer (IWorkEvent)
+    u8 _134[0x138 - 0x134];  // 0x134-0x137
+    u32 mLayout138;          // 0x138 - layout pointer (IWorkEvent)
+    u8 _13C[0x140 - 0x13C];  // 0x13C-0x13F
+    u32 mLayout140;          // 0x140 - layout pointer
+    u8 _144[0x150 - 0x144];  // 0x144-0x14F
+    UnkLayoutEntry mLayouts150[0x14]; // 0x150-0x1F0 - array of 20 8-byte entries
+    u8 field_1F0;            // 0x1F0 - count for layout array
+    u8 _1F1[0x1FC - 0x1F1];  // 0x1F1-0x1FB
+    u32 mLayout1FC;          // 0x1FC - layout pointer (IWorkEvent)
+    u8 _200[0x204 - 0x200];  // 0x200-0x203
+    u8 field_204;            // 0x204
+    u8 field_205;            // 0x205 (s8)
+    u8 field_206;            // 0x206 (s8)
+    u8 field_207;            // 0x207
+    u8 field_208;            // 0x208
+    u8 _209[0x32CC - 0x209]; // 0x209-0x32CB
+    u8 field_32CC;           // 0x32CC
+    u8 _32CD[0x32D4 - 0x32CD]; // 0x32CD-0x32D3
+    u32 mLayout32D4;         // 0x32D4 - layout pointer (IWorkEvent)
+    u32 mLayout32D8;         // 0x32D8
+    u32 mLayout32DC;         // 0x32DC
+    u32 mLayout32E0;         // 0x32E0
+    u8 field_32E4;           // 0x32E4
+    u8 field_32E5;           // 0x32E5
+    u8 _32E6[0x32EC - 0x32E6]; // 0x32E6-0x32EB
+    u32 mLayout32EC;         // 0x32EC - layout pointer
+    u32 mLayout32F0;         // 0x32F0
+    u32 mLayout32F4;         // 0x32F4
+    u32 mLayout32F8;         // 0x32F8
+    u8 field_32FC;           // 0x32FC
+    u8 field_32FD;           // 0x32FD
+    u8 _32FE[0x3304 - 0x32FE]; // 0x32FE-0x3303
+    u32 mLayout3304;         // 0x3304 - layout pointer
+    u32 mLayout3308;         // 0x3308
+    u32 mLayout330C;         // 0x330C
+    u32 mLayout3310;         // 0x3310
+    u8 field_3314;           // 0x3314
+    u8 field_3315;           // 0x3315
+    u8 _3316[0x331C - 0x3316]; // 0x3316-0x331B
+    u32 mLayout331C;         // 0x331C - layout pointer
+    u32 mLayout3320;         // 0x3320
+    u32 mLayout3324;         // 0x3324
+    u32 mLayout3328;         // 0x3328
+    u8 field_332C;           // 0x332C
+    u8 field_332D;           // 0x332D
+    u8 _332E[0x3334 - 0x332E]; // 0x332E-0x3333
+    u32 mLayout3334;         // 0x3334 - layout pointer
+    u8 _3338[0x333C - 0x3338]; // 0x3338-0x333B
+    u8 field_333C;           // 0x333C
 };
 
 class CFloorMap {
@@ -1436,7 +1506,6 @@ public:
 
     // TODO: add fields
 };
-
 /* end "kyoshin/CFloorMap.hpp" */
 /* "src/kyoshin/CFloorMap.cpp" line 5 "cstdio" */
 #ifndef MSL_CPP_CSTDIO_H
@@ -1848,7 +1917,7 @@ extern u8 lbl_eu_80664798;
 
 extern int CSysWin_getUnk34(void*);
 extern void func_80246200(void*);
-extern u32 func_80248558(u8*);
+extern u32 func_80248558(void*);
 extern void func_8024577C(void*, u16);
 extern void func_801F3850(void*, u16);
 extern void func_801375A0(float*, void*);
@@ -1860,6 +1929,12 @@ extern void SetName__Q34nw4r3lyt4PaneFPCc(void*, const char*);
 extern void* func_80137E7C(void*, const char*, const char*);
 extern u32 func_8009CF8C(u32);
 extern void func_80138078(u32);
+
+// Draw helpers used by CFloorMap::Draw and related functions
+extern "C" void func_80137038(void* layout, void* drawInfo, int, int);
+extern "C" void func_801F35B0(void* scrollBar, void* drawInfo);
+extern "C" void func_8022B7C8(void* sysWin, void* drawInfo);
+extern "C" void func_801D20B0(void* cursor, void* drawInfo);
 
 extern float lbl_eu_80668764;
 extern float lbl_eu_80668794;
@@ -1974,22 +2049,6 @@ void func_80245DF8(){}
 
 void func_80246200(void* self){}
 
-u8* __dt__80244724(u8* self, int mode) {
-    extern u8* __dl__FPv(u8*);
-    if (self && mode > 0) {
-        __dl__FPv(self);
-    }
-    return self;
-}
-
-u8* __dt__8024503C(u8* self, int mode) {
-    extern u8* __dl__FPv(u8*);
-    if (self && mode > 0) {
-        __dl__FPv(self);
-    }
-    return self;
-}
-
 void* __dt__802462F0(void* self, int mode) {
     extern void* __dl__FPv(void*);
     if (self && mode > 0) {
@@ -2015,24 +2074,24 @@ void func_80247490(){}
 void func_8024808C(void* self, void* arg2) {
     extern void func_8003AA34();
     extern void* getFP__FPCc(const char*);
-    extern u32 func_801361E8(void*, const char*, u32);
+    extern u32 func_801361E8(const char*, const char*, u32);
     extern u32 func_8009CF8C(u32);
     extern void func_80141DC4(f32*);
-    extern s16 func_80136330(void*, const char*, u32);
+    extern s16 func_80136330(u32, const char*, u32);
     extern void* getPlayer__Q22cf13CfGameManagerFi(int);
-    extern u32 func_8003B1EC(u8*);
+    extern u32 func_8003B1EC(u32);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f64 lbl_eu_80668788;
     u8* p = (u8*)self;
     func_8003AA34();
-    void* fp = getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
-    u8 map = func_801361E8(fp, &lbl_eu_8050BEA8[0x18C], *(u32*)((u8*)arg2 + 0x10));
+    u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
+    u8 map = func_801361E8((const char*)fp, &lbl_eu_8050BEA8[0x18C], *(u32*)((u8*)arg2 + 0x10));
     if (map != lbl_eu_80664798) return;
     if (!func_8009CF8C(0x20C8)) return;
     f32 buf[3];
     func_80141DC4(buf);
-    u8 count = func_8003B1EC((u8*)fp);
+    u8 count = func_8003B1EC(fp);
     u8 r26 = 0;
     for (u8 i = 1; i <= count; i++) {
         s16 val = func_80136330(fp, &lbl_eu_8050BEA8[0x15A], i);
@@ -2052,8 +2111,8 @@ void func_8024830C(void* self, void* arg2) {
     extern void func_80141DC4(f32*);
     extern u32 func_801361E8(const char*, const char*, u32);
     extern u32 lbl_eu_80664184;
-    extern u8 lbl_eu_8050B798;
     extern u32 lbl_eu_806640A8;
+    extern u16 lbl_eu_8050B798;
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f32 lbl_eu_8066877C;
@@ -2091,9 +2150,9 @@ void func_8024830C(void* self, void* arg2) {
     func_801F3850(*(void**)(p + 0x3134), (u16)(s16)p[0x0B]);
 }
 
-u32 func_80248558(u8* self) {
-    extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
-    u8* p = self;
+u32 func_80248558(void* self) {
+    extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, const char*);
+    u8* p = (u8*)self;
     void* data = *(void**)(p + 0x08);
     if (!data) return 0;
     void* obj = *(void**)((u8*)data + 0x10);
@@ -2261,7 +2320,60 @@ void func_8024BE1C(){}
 
 void func_8024C1FC(){}
 
-void func_8024C8F8(){}
+void func_8024C8F8(void* self, void* drawInfo) {
+    CFloorMapFull* p = (CFloorMapFull*)self;
+    if (!p->field_40) return;
+    if (!p->field_41) return;
+    if (p->mLayout130)
+        func_80137038((void*)p->mLayout130, drawInfo, 0, 1);
+    if (p->mLayout138)
+        func_80137038((void*)p->mLayout138, drawInfo, 0, 1);
+    if (p->mLayout140)
+        func_80137038((void*)p->mLayout140, drawInfo, 0, 1);
+    if (*(void**)((u8*)p + 0x150)) {
+        u8 i = 0;
+        do {
+            void* s = *(void**)((u8*)p + 0x150 + i * 8);
+            func_80137038(s, drawInfo, 0, 1);
+            i++;
+        } while (i < p->field_1F0);
+    }
+    if (p->field_208) {
+        if (p->mLayout1FC)
+            func_80137038((void*)p->mLayout1FC, drawInfo, 0, 1);
+        if (p->mLayout32D4 && p->field_32E5)
+            func_80137038((void*)p->mLayout32D4, drawInfo, 0, 1);
+        if (p->field_204 && p->mLayout32EC && p->field_32FD)
+            func_80137038((void*)p->mLayout32EC, drawInfo, 0, 1);
+        if ((s8)p->field_206 >= 0) {
+            u8 cond;
+            if (p->mLayout32D4) {
+                void** vtable = *(void***)(*(void**)((u8*)p->mLayout32D4 + 0x10));
+                void* result = ((void*(*)(void*, const char*, u32))vtable[15])((void*)p->mLayout32D4, &lbl_eu_8050BEA8[0xEE], 1);
+                cond = (*(u8*)((u8*)result + 0xBB)) & 1;
+            } else {
+                cond = 0;
+            }
+            if (!cond) {
+                s8 idx = (s8)p->field_205;
+                if (*(u8*)((u8*)p + idx * 0x30C + 0x514)) {
+                    if (p->mLayout3304 && p->field_3315)
+                        func_80137038((void*)p->mLayout3304, drawInfo, 0, 1);
+                }
+            }
+        }
+        if (p->mLayout331C && p->field_332D)
+            func_80137038((void*)p->mLayout331C, drawInfo, 0, 1);
+    }
+    if (p->field_208)
+        func_801F35B0((void*)p->mScrollBar, drawInfo);
+    if (p->field_333C && p->mLayout3334)
+        func_80137038((void*)p->mLayout3334, drawInfo, 0, 1);
+    func_8022B7C8((void*)p->mSysWinB8, drawInfo);
+    func_8022B7C8((void*)p->mSysWinF4, drawInfo);
+    if ((s8)p->field_5C >= 0)
+        func_801D20B0((void*)p->mCursor, drawInfo);
+}
 
 void func_8024CB94(){}
 
@@ -2351,7 +2463,7 @@ void func_8024E2BC(void* self) {
 
 void func_8024E650(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(u8*);
+    extern u32 func_80248558(void*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_806687A4;
@@ -2396,7 +2508,7 @@ done:;
 
 void func_8024E828(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(u8*);
+    extern u32 func_80248558(void*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_806687A8;
@@ -2441,7 +2553,7 @@ done:;
 
 void func_8024EA00(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(u8*);
+    extern u32 func_80248558(void*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668798;
     extern f32 lbl_eu_806687A8;
@@ -2492,7 +2604,7 @@ void func_8024EA00(void* self) {
 
 void func_8024EC24(void* self) {
     extern int CSysWin_getUnk34(void*);
-    extern u32 func_80248558(u8*);
+    extern u32 func_80248558(void*);
     extern void func_8024577C(void*, u16);
     extern f32 lbl_eu_80668798;
     extern f32 lbl_eu_806687A8;
@@ -2686,7 +2798,7 @@ void func_8024F7CC(void* self) {
     extern void func_8024B4CC(void*, void*, void*);
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_806687BC;
-    extern u32 func_80248558(u8*);
+    extern u32 func_80248558(void*);
     extern void func_8024577C(void*, u16);
     u8* p = (u8*)self;
     if (!p[0x5D]) return;

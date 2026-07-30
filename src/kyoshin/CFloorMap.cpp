@@ -26,6 +26,12 @@ extern void* func_80137E7C(void*, const char*, const char*);
 extern u32 func_8009CF8C(u32);
 extern void func_80138078(u32);
 
+// Draw helpers used by CFloorMap::Draw and related functions
+void func_80137038(void* layout, void* drawInfo, int, int);
+void func_801F35B0(void* scrollBar, void* drawInfo);
+void func_8022B7C8(void* sysWin, void* drawInfo);
+void func_801D20B0(void* cursor, void* drawInfo);
+
 extern float lbl_eu_80668764;
 extern float lbl_eu_80668794;
 extern float lbl_eu_80668798;
@@ -175,16 +181,16 @@ void func_8024808C(void* self, void* arg2) {
     extern f64 lbl_eu_80668788;
     u8* p = (u8*)self;
     func_8003AA34();
-    void* fp = getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
+    u32 fp = (u32)getFP__FPCc(&lbl_eu_8050BEA8[0x17F]);
     u8 map = func_801361E8((const char*)fp, &lbl_eu_8050BEA8[0x18C], *(u32*)((u8*)arg2 + 0x10));
     if (map != lbl_eu_80664798) return;
     if (!func_8009CF8C(0x20C8)) return;
     f32 buf[3];
     func_80141DC4(buf);
-    u8 count = func_8003B1EC((u32)fp);
+    u8 count = func_8003B1EC(fp);
     u8 r26 = 0;
     for (u8 i = 1; i <= count; i++) {
-        s16 val = func_80136330((u32)fp, &lbl_eu_8050BEA8[0x15A], i);
+        s16 val = func_80136330(fp, &lbl_eu_8050BEA8[0x15A], i);
         if ((f32)(s16)val > buf[1]) {
             if (i == p[0x0C]) { r26 = 1; break; }
         }
@@ -200,13 +206,13 @@ void func_8024830C(void* self, void* arg2) {
     extern u32 func_8009CF8C(u32);
     extern void func_80141DC4(f32*);
     extern u32 func_801361E8(const char*, const char*, u32);
+    extern u32 lbl_eu_80664184;
+    extern u32 lbl_eu_806640A8;
+    extern u16 lbl_eu_8050B798;
     extern f32 lbl_eu_80668764;
     extern f32 lbl_eu_80668778;
     extern f32 lbl_eu_8066877C;
     extern f64 lbl_eu_80668788;
-    extern u32 lbl_eu_80664184;
-    extern u16 lbl_eu_8050B798;
-    extern u32 lbl_eu_806640A8;
     u8* p = (u8*)self;
     f32* result = (f32*)p;
     result[0] = result[1] = result[2] = lbl_eu_80668764;
@@ -410,7 +416,60 @@ void func_8024BE1C(){}
 
 void func_8024C1FC(){}
 
-void func_8024C8F8(){}
+void func_8024C8F8(void* self, void* drawInfo) {
+    CFloorMapFull* p = (CFloorMapFull*)self;
+    if (!p->field_40) return;
+    if (!p->field_41) return;
+    if (p->mLayout130)
+        func_80137038((void*)p->mLayout130, drawInfo, 0, 1);
+    if (p->mLayout138)
+        func_80137038((void*)p->mLayout138, drawInfo, 0, 1);
+    if (p->mLayout140)
+        func_80137038((void*)p->mLayout140, drawInfo, 0, 1);
+    if (*(void**)((u8*)p + 0x150)) {
+        u8 i = 0;
+        do {
+            void* s = *(void**)((u8*)p + 0x150 + i * 8);
+            func_80137038(s, drawInfo, 0, 1);
+            i++;
+        } while (i < p->field_1F0);
+    }
+    if (p->field_208) {
+        if (p->mLayout1FC)
+            func_80137038((void*)p->mLayout1FC, drawInfo, 0, 1);
+        if (p->mLayout32D4 && p->field_32E5)
+            func_80137038((void*)p->mLayout32D4, drawInfo, 0, 1);
+        if (p->field_204 && p->mLayout32EC && p->field_32FD)
+            func_80137038((void*)p->mLayout32EC, drawInfo, 0, 1);
+        if ((s8)p->field_206 >= 0) {
+            u8 cond;
+            if (p->mLayout32D4) {
+                void** vtable = *(void***)(*(void**)((u8*)p->mLayout32D4 + 0x10));
+                void* result = ((void*(*)(void*, const char*, u32))vtable[15])((void*)p->mLayout32D4, &lbl_eu_8050BEA8[0xEE], 1);
+                cond = (*(u8*)((u8*)result + 0xBB)) & 1;
+            } else {
+                cond = 0;
+            }
+            if (!cond) {
+                s8 idx = (s8)p->field_205;
+                if (*(u8*)((u8*)p + idx * 0x30C + 0x514)) {
+                    if (p->mLayout3304 && p->field_3315)
+                        func_80137038((void*)p->mLayout3304, drawInfo, 0, 1);
+                }
+            }
+        }
+        if (p->mLayout331C && p->field_332D)
+            func_80137038((void*)p->mLayout331C, drawInfo, 0, 1);
+    }
+    if (p->field_208)
+        func_801F35B0((void*)p->mScrollBar, drawInfo);
+    if (p->field_333C && p->mLayout3334)
+        func_80137038((void*)p->mLayout3334, drawInfo, 0, 1);
+    func_8022B7C8((void*)p->mSysWinB8, drawInfo);
+    func_8022B7C8((void*)p->mSysWinF4, drawInfo);
+    if ((s8)p->field_5C >= 0)
+        func_801D20B0((void*)p->mCursor, drawInfo);
+}
 
 void func_8024CB94(){}
 
@@ -808,8 +867,8 @@ u32 func_8024F6E0(void* self) {
     } else {
         s8 idx0 = *(s8*)((u8*)self + 0x205);
         s8 idx2 = *(s8*)((u8*)self + 0x207);
-        u8* ptr = (u8*)self + idx0 * 0x30C + (idx2 + idx1) * 0x18;
-        val = *(u16*)(ptr + 0x214);
+        u32 offset = idx0 * 0x30C + (idx2 + idx1) * 0x18;
+        val = *(u16*)((u8*)self + offset + 0x214);
     }
     return val != 0 ? 1 : 0;
 }

@@ -198,6 +198,19 @@ def _postprocess_reloc_object(project: Project, obj: Path | None) -> None:
 
 def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
     _postprocess_reloc_object(project, obj)
+    _postprocess_notesplit_object(project, obj)
+
+
+def _postprocess_notesplit_object(project: Project, obj: Path | None) -> None:
+    """Copy .note.split from retail object to decomp object."""
+    if obj is None:
+        return
+    script = project.root / "tools" / "postprocess_notesplit.py"
+    if not script.is_file():
+        return
+    # Script is a no-op when the decomp already has .note.split
+    # or when the retail counterpart is missing.
+    subprocess.run([sys.executable, str(script), str(obj)], cwd=project.root, check=False)
 
 
 def _object_paths_for_unit(project: Project, unit) -> tuple[Path | None, Path | None]:

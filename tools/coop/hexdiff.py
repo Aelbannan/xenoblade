@@ -699,6 +699,13 @@ def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
         cwd=project.root, check=False,
         capture_output=True,
     )
+    # Also copy .note.split from retail to decomp
+    notesplit_script = project.root / "tools" / "postprocess_notesplit.py"
+    if notesplit_script.is_file():
+        subprocess.run(
+            [sys.executable, str(notesplit_script), str(obj)],
+            cwd=project.root, check=False,
+        )
 
 
 def _output_terminal(

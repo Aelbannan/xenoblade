@@ -24,15 +24,14 @@ void SJRBF_EntryErrFunc() {}
 
 extern void SJCRS_Lock(void);
 extern void SJCRS_Unlock(void);
-extern void sjrbf_Reset(void*);
+
+void sjrbf_Reset(void* self) {}
 
 void SJRBF_Reset(void* self) {
     SJCRS_Lock();
     sjrbf_Reset(self);
     SJCRS_Unlock();
 }
-
-void sjrbf_Reset() {}
 
 void fn_80397A74() {}
 

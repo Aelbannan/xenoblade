@@ -722,7 +722,8 @@ extern volatile s32 lbl_eu_805E3E98;
 extern u8 lbl_eu_805E3EA8[0x1040];
 
 s32 ADXSTM_Init(void) {
-    if (++lbl_eu_805E3E98 == 1) {
+    s32 tmp = ++lbl_eu_805E3E98;
+    if (tmp == 1) {
         memset(lbl_eu_805E3EA8, 0, sizeof(lbl_eu_805E3EA8));
     }
     return 1;
@@ -802,7 +803,7 @@ s32 ADXSTM_Start(void* self) {
     *(u32*)((u8*)self + 0x28) = 0;
     *(u32*)((u8*)self + 0x2C) = 0;
     *(u8*)((u8*)self + 0x4B) = 1;
-    *(u32*)((u8*)self + 0x60) = 0xFFFF;
+    *(u32*)((u8*)self + 0x60) = 0xFFFFF;
     ADXCRS_Unlock();
     ADXCRS_Leave();
     return 1;
@@ -819,10 +820,10 @@ s32 ADXSTM_Start2(void* self, u32 param) {
         *(u8*)((u8*)self + 1) = 2;
     }
     *(u8*)((u8*)self + 2) = 0;
-    *(u32*)((u8*)self + 0x28) = param;
+    *(u32*)((u8*)self + 0x28) = 0;
     *(u32*)((u8*)self + 0x2C) = 0;
     *(u8*)((u8*)self + 0x4B) = 1;
-    *(u32*)((u8*)self + 0x60) = 0;
+    *(u32*)((u8*)self + 0x60) = param;
     ADXCRS_Unlock();
     ADXCRS_Leave();
     return 1;
@@ -900,10 +901,10 @@ u32 ADXSTM_GetFileLen(void* self) {
 
 u64 ADXSTM_GetFileLen64(void* self) {
     ADXCRS_Enter();
-    u32 lo = *(u32*)((u8*)self + 0x10);
-    u32 hi = *(u32*)((u8*)self + 0x14);
+    u32 hi = *(u32*)((u8*)self + 0x10);
+    u32 lo = *(u32*)((u8*)self + 0x14);
     ADXCRS_Leave();
-    return ((u64)lo) | ((u64)hi << 32);
+    return ((u64)hi << 32) | lo;
 }
 
 u32 ADXSTM_GetFileSct(void* self) {

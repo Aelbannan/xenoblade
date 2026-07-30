@@ -135,6 +135,8 @@ namespace cf{
         UnkClass_80085334* unkAC;
         UnkClass_800821F8* unkB0;
         CfCamEventManager* unkB4;
+        u8 field_0xB8[0x4EC - 0xB8];
+        u32 field_0x4EC;
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
@@ -325,8 +327,8 @@ public:
     void func_80082F2C();
     void func_80082FCC();
     void func_80082FE4();
-    void func_80083100();
-    void func_8008310C();
+    u32 func_80083100();
+    u32 func_8008310C();
     void func_80083118();
     void func_80083284();
     void func_80083290();

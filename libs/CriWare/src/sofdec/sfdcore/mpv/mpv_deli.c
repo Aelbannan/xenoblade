@@ -52,10 +52,10 @@ int MPV_CheckDelim(const u8 *buf) {
 const u8 *MPV_BsearchDelim(const u8 *end, int count, int flags) {
     int i;
     u32 state = 0xFFFFFF00;
-    const u8 *p = end;
+    const u8 *base = end - 1;
 
     for (i = 0; i < count; i++) {
-        p--;
+        const u8 *p = base - i;
         u8 byte = *p;
         u32 pre_state = state | byte;
         u32 check = pre_state << 8;

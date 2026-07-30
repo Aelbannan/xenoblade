@@ -10,13 +10,13 @@ void ADXT_Create() {}
 
 void adxt_Create() {}
 
+void adxt_Destroy(void* self) {}
+
 void ADXT_Destroy(void* self) {
     ADXCRS_Enter();
     adxt_Destroy(self);
     ADXCRS_Leave();
 }
-
-void adxt_Destroy() {}
 
 void ADXT_DestroyAll() {}
 

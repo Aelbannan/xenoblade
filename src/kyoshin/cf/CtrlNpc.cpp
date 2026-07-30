@@ -20,7 +20,7 @@ void func_8009398C(){}
 
 void func_80093F28(){}
 
-void cf::CObjectState::CObjectState_UnkVirtualFunc5() {}
+void cf::CObjectState::CObjectState_UnkVirtualFunc5(int) {}
 
 void func_800948F8(){}
 

@@ -24,15 +24,14 @@ void SJUNI_EntryErrFunc() {}
 
 extern void SJCRS_Lock(void);
 extern void SJCRS_Unlock(void);
-extern void sjuni_Reset(void*);
+
+void sjuni_Reset(void* self) {}
 
 void SJUNI_Reset(void* self) {
     SJCRS_Lock();
     sjuni_Reset(self);
     SJCRS_Unlock();
 }
-
-void sjuni_Reset() {}
 
 void SJUNI_GetNumData() {}
 

@@ -6,6 +6,9 @@
 
 namespace cf {}
 
+cf::IObjectInfo::~IObjectInfo() {}
+cf::CChainEffect::~CChainEffect() {}
+
 void func_802A07F4(){}
 
 void func_802A0804(){}

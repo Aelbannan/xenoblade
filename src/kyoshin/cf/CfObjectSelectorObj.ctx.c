@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfObjectSelectorObj
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/cf/CfObjectSelectorObj.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CfObjectSelectorObj.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,9 +1390,32 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
-/* end "kyoshin/harness_catalog.hpp" */
-/* "src/kyoshin/cf/CfObjectSelectorObj.cpp" line 5 "kyoshin/cf/object/CfObjectSelectorObj.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
 #pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
+/* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CfObjectSelectorObj.cpp" line 4 "kyoshin/cf/object/CfObjectSelectorObj.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CfObjectSelectorObj.hpp" line 2 "types.h" */
+/* end "types.h" */
 
 namespace cf{
 
@@ -1348,75 +1426,80 @@ namespace cf{
         static void create();
         static void destroy();
 
+        void func_800FE694(float val);
+        unsigned long func_800FE910();
+        void func_800FE920();
+        void func_800FE938();
+        void func_800FE950(unsigned int a, unsigned int b, unsigned int c);
+
     private:
         static CfObjectSelectorObj* spInstance;
         
-        char unk0000[0xC188 - 0x0000]; //0x0000
+        char _pad_00[0x608C - 0x0000]; // 0x0000-0x608B
+        u32 mField608C;                  // 0x608C
+        u32 _pad_6090[0x6094 - 0x6090];  // 0x6090
+        u32 mField6094;                  // 0x6094
+        u32 mField6098;                  // 0x6098
+        char _pad_609C[0x90E8 - 0x609C]; // 0x609C-0x90E7
+        u32 mField90E8;                  // 0x90E8
+        u32 mField90EC;                  // 0x90EC
+        char _pad_90F0[0x90F8 - 0x90F0]; // 0x90F0-0x90F7
+        float mField90F8;                // 0x90F8
+        char _pad_90FC[0xC164 - 0x90FC]; // 0x90FC-0xC163
+        float mFieldC164;                // 0xC164
+        char _pad_C168[0xC178 - 0xC168]; // 0xC168-0xC177
+        void* mPtrC178;                  // 0xC178
+        char _pad_C17C[0xC180 - 0xC17C]; // 0xC17C-0xC17F
+        u32 mFieldC180;                  // 0xC180
+        char _pad_C184[0xC188 - 0xC184]; // 0xC184-0xC187
     }; //size = 0xC188
 
 } //namespace cf
 /* end "kyoshin/cf/object/CfObjectSelectorObj.hpp" */
 
-extern "C" void func_800FD774() {}
+namespace cf {
+    void CfObjectSelectorObj::func_800FE694(float val) {
+        mField90F8 = val;
+        mFieldC164 = val;
+    }
 
-extern "C" void __ct__800FDB4C() {}
+    unsigned long CfObjectSelectorObj::func_800FE910() {
+        return (mFieldC180 >> 10) & 1;
+    }
 
-extern "C" void __dt__800FDC1C() {}
+    void CfObjectSelectorObj::func_800FE920() {
+        char* obj = static_cast<char*>(mPtrC178);
+        *reinterpret_cast<unsigned int*>(obj + 0x3068) |= 4;
+    }
 
-extern "C" void func_800FDE4C() {}
+    void CfObjectSelectorObj::func_800FE938() {
+        char* obj = static_cast<char*>(mPtrC178);
+        *reinterpret_cast<unsigned int*>(obj + 0x3068) |= 8u;
+    }
 
-extern "C" void __dt__800FDEF8() {}
+    void CfObjectSelectorObj::func_800FE950(unsigned int a, unsigned int b, unsigned int c) {
+        mField608C = a;
+        mField6094 = b;
+        mField6098 = c;
+        mField90E8 = a;
+        mField90EC = b;
+    }
+}
 
-extern "C" void func_800FE104() {}
+cf::CfObjectSelectorObj* lbl_eu_80663F14;
 
-// spInstance for the CfObjectSelectorObj singleton
-extern "C" cf::CfObjectSelectorObj* lbl_eu_80663F14;
-
-// Returns the CfObjectSelectorObj singleton instance
-extern "C" cf::CfObjectSelectorObj* func_800FE68C() {
+cf::CfObjectSelectorObj* func_800FE68C() {
     return lbl_eu_80663F14;
 }
 
-extern "C" void func_800FE694(void* self, float val) {
-    float* base = (float*)((char*)self + 0x10000);
-    base[-0x6f08 / 4] = val;
-    base[-0x3e9c / 4] = val;
-}
+void func_800FE6A4(){}
 
-extern "C" void func_800FE6A4() {}
+void func_800FE738(){}
 
-extern "C" void func_800FE738() {}
+void func_800FE7D8(){}
 
-extern "C" void func_800FE7D8() {}
+void func_800FE860(){}
 
-extern "C" void func_800FE860() {}
+void func_800FE96C(){}
 
-extern "C" unsigned long func_800FE910(void* self) {
-    unsigned long* base = (unsigned long*)((char*)self + 0x10000);
-    unsigned long v = base[-0x3e80 / 4];
-    return (v >> 10) & 1;
-}
-
-extern "C" void func_800FE920(char* p)
-{
-    char* obj = *(char**)(p + 0xC178);
-    *(unsigned int*)(obj + 0x3068) |= 4;
-}
-
-extern "C" void func_800FE938(char* param_1) {
-    char* obj = *(char**)(param_1 + 0xC178);
-    *(unsigned int*)(obj + 0x3068) |= 8u;
-}
-
-extern "C" void func_800FE950(char* this_, unsigned int a, unsigned int b, unsigned int c) {
-    *(unsigned int*)(this_ + 0x608c) = a;
-    *(unsigned int*)(this_ + 0x6094) = b;
-    *(unsigned int*)(this_ + 0x6098) = c;
-    *(unsigned int*)(this_ + 0x90e8) = a;
-    *(unsigned int*)(this_ + 0x90ec) = b;
-}
-
-extern "C" void func_800FE96C() {}
-
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_800FEA14() {}
+void sinit_800FEA14(){}

@@ -24,8 +24,8 @@ namespace cf {
         virtual ~CChainTime();
         
         void func_8027CE30();
-        void func_8027CF3C();
     };
 }
 
 void func_8027CEB0(cf::CChainTime*, u8);
+void func_8027CF3C(cf::CChainTime*);

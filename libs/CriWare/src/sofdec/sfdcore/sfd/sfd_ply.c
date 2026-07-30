@@ -73,7 +73,15 @@ void SFD_Destroy() {}
 
 void SFD_Start() {}
 
-void fn_803CD484() {}
+s32 SFTRN_CallTrtTrif(void* self, int a, int b, int c, int d);
+s32 fn_803CD484(void* self) {
+    s32 result = SFTRN_CallTrtTrif(self, 2, 6, 0, 0);
+    if (result == 0) {
+        return 0;
+    } else {
+        return result;
+    }
+}
 
 void SFD_Stop() {}
 

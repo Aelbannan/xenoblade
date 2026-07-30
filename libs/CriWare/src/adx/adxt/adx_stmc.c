@@ -7,7 +7,8 @@ extern volatile s32 lbl_eu_805E3E98;
 extern u8 lbl_eu_805E3EA8[0x1040];
 
 s32 ADXSTM_Init(void) {
-    if (++lbl_eu_805E3E98 == 1) {
+    s32 tmp = ++lbl_eu_805E3E98;
+    if (tmp == 1) {
         memset(lbl_eu_805E3EA8, 0, sizeof(lbl_eu_805E3EA8));
     }
     return 1;

@@ -5,13 +5,13 @@
 
 extern u32 lbl_eu_805F26F0[];
 void SVM_Lock(void) {
+    u32 fn;
+    u32 ctx;
     u32* b = lbl_eu_805F26F0;
-    u32 fn = b[4];
+    fn = b[4];
     if (fn == 0) return;
-    {
-        u32* cb = &b[4];
-        ((void (*)(u32))fn)(*(cb + 1));
-    }
+    ctx = b[5];
+    ((void (*)(u32))fn)(ctx);
     if (b[1] == 0) b[2] = 1;
     b[1]++;
 }
@@ -56,12 +56,10 @@ extern void (*lbl_eu_805F2A68)(s32);
 extern u32 lbl_eu_805F2A58[];
 
 void SVM_GotoSvrBorder(s32 idx) {
-    void (*fn)(void*);
-    u32 *entry = &lbl_eu_805F2A58[idx * 2];
-    fn = (void (*)(void*))entry[0];
-    if (fn != NULL) {
-        fn((void*)entry[1]);
-    }
+    u32* base = lbl_eu_805F2A58;
+    u32 fn = base[idx * 2];
+    if (fn == 0) return;
+    ((void (*)(void*))fn)((void*)base[idx * 2 + 1]);
 }
 
 void SVM_SetCbErr() {}

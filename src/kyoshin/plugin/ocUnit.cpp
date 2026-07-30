@@ -65,7 +65,7 @@ void cf::CfObject::CfObject_UnkVirtualFunc29() { }
 
 void func_8003C78C(){}
 
-void cf::CObjectParam::CObjectParam_UnkVirtualFunc1() {}
+void cf::CObjectParam::CObjectParam_UnkVirtualFunc1(u32, u8) {}
 
 bool isValid() { return false; }
 
@@ -86,7 +86,7 @@ void dispOn(){}
 
 void dispOff(){}
 
-void cf::CObjectState::CObjectState_UnkVirtualFunc8() {}
+int cf::CObjectState::CObjectState_UnkVirtualFunc8(int) { return 0; }
 
 int CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv(void* self, int mask) {
     return (*(int*)((char*)self + 4) & mask) != 0 ? 1 : 0;
@@ -130,7 +130,7 @@ void cf::CObjectState::CObjectState_UnkVirtualFunc11() { }
 
 void onEvent(){}
 
-void cf::CObjectState::CObjectState_UnkVirtualFunc10() {}
+void cf::CObjectState::CObjectState_UnkVirtualFunc10(void*) {}
 
 void cf::CObjectState::CObjectState_UnkVirtualFunc9() {}
 

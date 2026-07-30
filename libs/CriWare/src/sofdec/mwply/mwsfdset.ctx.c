@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/mwply/mwsfdset
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/mwply/mwsfdset.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/mwply/mwsfdset.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -743,7 +743,13 @@ u32 MWSFD_GetCond(void* self) {
 
 u32 MWSFD_GetStmHn(void* self) { return *(u32*)((u8*)self + 0x5c); }
 
-void MWSFD_SetFlowLimit() {}
+void MWSTM_SetFlowLimit(void* h, u32 limit);
+void MWSFLSC_SetFlowLimit(void* self, u32 limit);
+void MWSFD_SetFlowLimit(void* self, u32 limit) {
+    void* h = *(void**)((u8*)self + 0x5c);
+    MWSTM_SetFlowLimit(h, limit);
+    MWSFLSC_SetFlowLimit(self, limit);
+}
 
 u32 MWSFD_IsEnableHndl(void* self) {
     if (self == NULL) return 0;

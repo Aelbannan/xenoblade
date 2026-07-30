@@ -14,6 +14,10 @@ cf::CChainTime::CChainTime() {
     mPaused = 1;
 }
 
+cf::CChainTime::~CChainTime() {
+    func_8027CE30();
+}
+
 void cf::CChainTime::func_8027CE30() {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     func_800EA484(bm, 0.0f, 0x13);
@@ -27,7 +31,7 @@ void cf::CChainTime::func_8027CE30() {
     mPaused = 1;
 }
 
-void func_8027CEB0(cf::CChainTime* self, u8 val) {
+extern "C" void func_8027CEB0(cf::CChainTime* self, u8 val) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     func_800EA484(bm, 0.0f, 0x13);
     
@@ -40,13 +44,13 @@ void func_8027CEB0(cf::CChainTime* self, u8 val) {
     self->mLoop = val;
 }
 
-void cf::CChainTime::func_8027CF3C() {
-    f32 timer = mTimer;
+extern "C" void func_8027CF3C(cf::CChainTime* self) {
+    f32 timer = self->mTimer;
     
     if (timer != 0.0f) {
-        if (mEnabled != 0) {
-            if (-1.0f != timer || mChainEffect.unk4 != 0) {
-                timer = mTimer;
+        if (self->mEnabled != 0) {
+            if (-1.0f != timer || self->mChainEffect.unk4 != 0) {
+                timer = self->mTimer;
                 if (timer <= -1.0f) {
                     func_802A0818(0xB8, 0);
                     func_802A0818(0xC1, 0);
@@ -69,17 +73,17 @@ void cf::CChainTime::func_8027CF3C() {
             func_800EA484(bm, timer, 0x13);
         }
         
-        int effId = (mLoop != 0) ? 0xB4 : 0xBB;
-        func_802A0950(&mChainEffect, mEnabled, effId, 0, 0, 0);
+        int effId = (self->mLoop != 0) ? 0xB4 : 0xBB;
+        func_802A0950(&self->mChainEffect, self->mEnabled, effId, 0, 0, 0);
     } else {
-        if (mPaused != 0) {
+        if (self->mPaused != 0) {
             cf::CBattleManager* bm = cf::CBattleManager::getInstance();
             func_800EA484(bm, 0.0f, 0x13);
         }
         
-        int effId = (mLoop != 0) ? 0xB4 : 0xBB;
-        func_802A0950(&mChainEffect, 0, effId, 0, 0, 0);
+        int effId = (self->mLoop != 0) ? 0xB4 : 0xBB;
+        func_802A0950(&self->mChainEffect, 0, effId, 0, 0, 0);
     }
     
-    mPaused = 0;
+    self->mPaused = 0;
 }

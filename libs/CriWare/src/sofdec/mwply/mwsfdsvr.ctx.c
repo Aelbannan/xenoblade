@@ -753,9 +753,18 @@ void MWSFSVR_IsSvrBdrHndl() {}
 
 void mwlSfdSleepDecSvr() {}
 
-void MWSFD_RequestStopRead() {}
+void MWSFLSC_Pause(void* self, int flag);
+void* MWSFD_GetStmHn(void* self);
+void MWSTM_ReqStop(void* h);
+void MWSFD_RequestStopRead(void* self) {
+    MWSFLSC_Pause(self, 1);
+    MWSTM_ReqStop(MWSFD_GetStmHn(self));
+}
 
-void MWSFD_IsFsBdr() {}
+s32 MWSFD_IsFsBdr(void* self) {
+    s32 r = MWSTM_GetReadFlg(MWSFD_GetStmHn(self));
+    return r != 1;
+}
 
 void MWSFD_SetProhibitServer(int val) {
     *(int*)((u8*)MWSFLIB_GetLibWorkPtr() + 0x34f0) = val;

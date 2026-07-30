@@ -763,8 +763,6 @@ void SFBUF_RingGetWrite(void* self, void* a, void* b) { sfbuf_RingGetSub(self, a
 
 void SFBUF_RingGetRead(void* self, void* a, void* b) { sfbuf_RingGetSub(self, a, b, 1); }
 
-void sfbuf_RingGetSub(void* self, void* a, void* b, int mode) { (void)self; (void)a; (void)b; (void)mode; }
-
 void sfbuf_RingAddSub(void* a, void* b, void* c, int mode);
 void SFBUF_RingAddWrite(void* a, void* b, void* c) {
     sfbuf_RingAddSub(a, b, c, 0);
@@ -800,7 +798,15 @@ u32 SFBUF_GetRTot(void* self, u32 idx) {
 
 void SFBUF_GetWTot() {}
 
-void SFBUF_RingGetSj() {}
+s32 SFLIB_SetErr(s32 val, u32 err_code);
+s32 SFBUF_RingGetSj(void* self, s32 idx, u32* out) {
+    u8* p = (u8*)self + idx * 0x74;
+    *out = 0;
+    if (*(u32*)(p + 0x13bc) == 0)
+        return SFLIB_SetErr((s32)self, 0xff000401);
+    *out = *(u32*)(p + 0x13cc);
+    return 0;
+}
 
 void SFBUF_AddRtotSj(void* self, int idx, int addend) {
     u32* ptr = (u32*)((u8*)self + idx * 0x74 + 0x13ec);
@@ -841,7 +847,11 @@ int SFBUF_GetTermFlg(void* self, int idx) {
     return *(u32*)((u8*)self + idx * 0x74 + 0x13c4);
 }
 
-void SFBUF_RingGetDataSiz() {}
+s32 SFBUF_RingGetDataSiz(void* self, int idx) {
+    u32 result[4];
+    sfbuf_RingGetSub(self, (void*)(u32)idx, result, 1);
+    return (s32)(result[1] + result[3]);
+}
 
 void SFBUF_GetFlowCnt() {}
 
@@ -852,3 +862,5 @@ int SFBUF_UpdateFlowCnt(int count, int new_val, int old_val) {
     u32 bit = shifted >> 31;
     return count + (int)bit;
 }
+
+void sfbuf_RingGetSub(void* self, void* a, void* b, int mode) {}

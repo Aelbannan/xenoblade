@@ -538,6 +538,8 @@ struct ResMatData {
     ResChanData chan;           // at 0x3F0
 };
 
+class ResMatFur;
+
 class ResMat : public ResCommon<ResMatData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResMat);
@@ -610,6 +612,8 @@ public:
     ResMatChan GetResMatChan() {
         return ResMatChan(&ref().chan);
     }
+
+    ResMatFur GetResMatFur();
 
     void* GetResUserData() {
         return ofs_to_ptr<void>(ref().toResUserData);

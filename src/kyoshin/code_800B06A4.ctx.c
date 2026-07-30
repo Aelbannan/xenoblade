@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/code_800B06A4
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/code_800B06A4.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/code_800B06A4.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,13 +1390,167 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/code_800B06A4.cpp" line 4 "kyoshin/code_800B06A4.hpp" */
+#ifndef KYOSHIN_CODE_800B06A4_HPP
+#define KYOSHIN_CODE_800B06A4_HPP
 
-// Forward declarations for functions called from extern "C" wrappers
-void* func_800B07E8();
-extern "C" u32 func_800AA2BC(u32 a, u32 b);
+/* "include/kyoshin/code_800B06A4.hpp" line 3 "types.h" */
+/* end "types.h" */
 
-extern "C" void func_800B06A4(float a) {
+namespace cf {
+struct CfObject {
+    char _pad[4];
+};
+struct TboxInfo {
+    char _pad[4];
+};
+struct IFactoryEvent {
+    char _pad[4];
+};
+}
+
+namespace ml {
+template <int N>
+struct FixStr {
+    char data[N];
+    FixStr();
+};
+}
+
+template <typename T>
+class _reslist_base {
+public:
+    ~_reslist_base();
+    char _pad[0x1F];
+};
+
+template <typename T>
+class reslist : public _reslist_base<T> {
+public:
+    ~reslist();
+    char _pad2[0x20 - sizeof(_reslist_base<T>)];
+};
+
+class UnkClass_800B0AD8 {
+public:
+    UnkClass_800B0AD8();
+    void clearCounters();
+    u32 getCount();
+    u32 getSize();
+    void* getRingElem(u32 index);
+    u8 unk0[0xAF8];                // 0x00
+    UnkClass_800B0AD8* unkAF8;     // 0xAF8
+    u32 unkAFC;                     // 0xAFC
+    u32 unkB00;                     // 0xB00
+    u32 unkB04;                     // 0xB04
+    // total size: 0xB08
+};
+
+class UnkClass_805764CC : public reslist<cf::CfObject> {
+public:
+    UnkClass_805764CC();
+    ~UnkClass_805764CC() {}
+    static UnkClass_805764CC* func_800B07E8();
+
+    u32 get_u32_18();
+    u32 get_u32_04();
+    u32 get_u32_74();
+    u32 get_u32_70();
+    u32 get_u32_380();
+    u32 get_u32_98();
+    u32 get_u32_620();
+    u16 get_u16_45C0();
+    void appendToBuffer(void* other);
+    void clear_380();
+    void clear_700();
+    void fwdTo_2DB0(int param);
+    void fwdTo_99EC(int param);
+    void maskField_6C(u32 mask, int enable);
+    void set_float_730(float val);
+    void set_u16_738(u16 val);
+    void set_u32_00(u32 val);
+    void set_u32_720(u32 val);
+    void set_u32_734(u32 val);
+    void set_u8_73A(u8 a, u8 b);
+    void* getNull();
+    void* getPtr_1A8();
+    void* getPtr_720();
+    
+    // 0x20 - 0xB27
+    UnkClass_800B0AD8 field_0x20;
+    // 0xB28 - 0xB47
+    reslist<cf::CfObject> field_0xB28;
+    // 0xB48 - 0xB67
+    reslist<cf::CfObject> field_0xB48;
+    // 0xB68 - 0xB87
+    reslist<cf::CfObject> field_0xB68;
+    // 0xB88 - 0xBA7
+    reslist<cf::CfObject> field_0xB88;
+    // 0xBA8 - 0xBC7
+    reslist<cf::CfObject> field_0xBA8;
+    // 0xBC8 - 0xBE7
+    reslist<cf::CfObject> field_0xBC8;
+    // 0xBE8 - 0xC07
+    reslist<cf::CfObject> field_0xBE8;
+    // 0xC08 - 0xC27
+    reslist<cf::CfObject> field_0xC08;
+    // 0xC28 - 0xC47
+    reslist<cf::CfObject> field_0xC28;
+    // 0xC48 - 0xC7F
+    reslist<cf::TboxInfo> field_0xC48;
+    // 0xC80 - 0xC9F
+    reslist<cf::IFactoryEvent*> field_0xC80;
+    // 0xCA0 - 0xCAF
+    u32 field_0xCA0;
+    u32 field_0xCA4;
+    u32 field_0xCA8;
+    u32 field_0xCAC;
+    // 0xCB0 - 0xCFB
+    ml::FixStr<64> field_0xCB0;
+    // 0xCFC - 0xD07
+    u32 field_0xCFC;
+    u32 field_0xD00;
+    u32 field_0xD04;
+    // 0xD08 - 0xD11
+    u16 field_0xD0E;
+    u16 field_0xD10;
+};
+
+#endif
+/* end "kyoshin/code_800B06A4.hpp" */
+
+void UnkClass_800B0AD8::clearCounters() {
+    *(unsigned long*)((char*)this + 0xb00) = 0;
+    *(unsigned long*)((char*)this + 0xafc) = 0;
+}
+// Forward declarations for functions called from wrappers
+// func_800B07E8 is declared as UnkClass_805764CC::func_800B07E8() in the header.
+// Provide an alias for unqualified calls (sub_mainReset, sub_dispatchInit_*).
+UnkClass_805764CC* func_800B07E8();
+u32 func_800AA2BC(u32 a, u32 b);
+
+void gfloat_initStore(float a){
     extern float lbl_eu_80661CCC;
     extern float lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8;
@@ -1365,439 +1574,425 @@ extern "C" void func_800B06A4(float a) {
 
 
 
-extern "C" void func_800B0A90(void) {}
+void init_0A90(void){}
 
 
 
 
-extern "C" void func_800B0B40(void* self) {
-    *(unsigned long*)((char*)self + 0xb00) = 0;
-    *(unsigned long*)((char*)self + 0xafc) = 0;
-}
+// clearCounters defined inline in header
 
-extern "C" void __ct__reslist_cf_TboxInfo() {}
+void __ct__reslist_cf_TboxInfo(){}
 
 
-extern "C" void __ct__reslist_cf_IFactoryEvent() {}
+void __ct__reslist_cf_IFactoryEvent(){}
 
-extern "C" void __dt__17UnkClass_805764CCFv() {}
 
-extern "C" void func_800B0FA0() {}
+void init_0FA0(){}
 
-extern "C" u32 func_800B0FEC(void* self) { return *(u32*)((u8*)self + 0x18); }
+u32 UnkClass_805764CC::get_u32_18() { return *(u32*)((u8*)this + 0x18); }
 
-extern "C" void func_800B0FF4() {}
+void init_0FF4(){}
 
-extern "C" void func_800B1120() {}
+void init_dispatchTarget_1(){}
 
-extern "C" void __ct__cf_CfValueItemManager() {}
+void __ct__cf_CfValueItemManager(){}
 
-extern "C" void func_800B1368(unsigned long flags) {
+void gflag_setBits(unsigned long flags) {
     extern unsigned long lbl_eu_80663EE0;
     lbl_eu_80663EE0 |= flags;
 }
 
-extern "C" void FactoryEvent3__Q22cf13IFactoryEventFv() {}
+void FactoryEvent3__Q22cf13IFactoryEventFv() {}
 
-extern "C" void func_800B137C() {}
+void init_137C(){}
 
-extern "C" void func_800B14C4(void* dst, void* src) {
+void node_copyNextPtr(void* dst, void* src) {
     void* ptr = *(void**)((char*)src + 4);
     *(unsigned long*)dst = *(unsigned long*)ptr;
 }
 
-extern "C" void* func_800B14D4(void* self) {
+void* node_getDataPtr(void* self) {
     return (char*)(*(void**)self) + 8;
 }
 
-extern "C" void func_800B14E0() {}
+void init_14E0() {}
 
-extern "C" void func_800B14F0(void* dst, void* src) {
+void node_copyNextU32(void* dst, void* src) {
     *(unsigned long*)dst = *(unsigned long*)((char*)src + 4);
 }
 
-extern "C" void func_800B14FC() {}
+void init_14FC() {}
 
-extern "C" void func_800B1518(void) {}
+void init_1518(void){}
 
-extern "C" void __dt__800B151C() {}
+void __dt__800B151C(){}
 
-extern "C" void func_800B15A4() {}
+void init_dispatchTarget_2(){}
 
 extern u32 lbl_eu_80663F24;
-extern "C" void func_800B1808() { lbl_eu_80663F24 = 0; }
+void gvar_clearF24(){ lbl_eu_80663F24 = 0; }
 
-extern "C" void FactoryEvent4__Q22cf13IFactoryEventFv() {}
+void FactoryEvent4__Q22cf13IFactoryEventFv() {}
 
-extern "C" void func_800B1818(void* self, u32 val) { *(u32*)((u8*)self + 0x0) = val; }
+void UnkClass_805764CC::set_u32_00(u32 val) { *(u32*)((u8*)this + 0x0) = val; }
 
-extern "C" void func_800B1820(int* dst, int* src) {
+void copy_int_ptr(int* dst, int* src) {
     *dst = *src;
 }
 
-extern "C" void func_800B182C() {}
+void init_182C() {}
 
-extern "C" void __dt__800B183C() {}
+void __dt__800B183C(){}
 
-extern "C" void __dt__800B18CC() {}
+void __dt__800B18CC(){}
 
-extern "C" void func_800B1954() {}
+void init_dispatchTarget_5(){}
 
-extern "C" void func_800B1A5C() {}
+void init_1A5C(){}
 
-extern "C" void func_800B1A8C() {}
+void init_1A8C() {}
 
-extern "C" void* func_800B1A9C(void* self) {
+void* node_getDataPtr_alt(void* self) {
     return (char*)(*(void**)self) + 8;
 }
 
-extern "C" void func_800B1AA8() {}
+void init_1AA8() {}
 
-extern "C" void func_800B1AC0(int* dst, int* src) {
+void copy_int_ptr_alt(int* dst, int* src) {
     *dst = *src;
 }
 
-extern "C" void func_800B1ACC(void* dst, void* src) {
+void node_copyNextU32_alt(void* dst, void* src) {
     *(unsigned long*)dst = *(unsigned long*)((char*)src + 4);
 }
 
-extern "C" void func_800B1AD8() {}
+void init_1AD8() {}
 
-extern "C" void func_800B1AF4() {}
+void init_1AF4(){}
 
-extern "C" void func_800B1B2C() {}
+void init_dispatchTarget_6(){}
 
-extern "C" void func_800B1BBC() {}
+void init_1BBC(){}
 
-extern "C" unsigned long func_800B1C00() {
+unsigned long gflag_getBit25(){
     extern unsigned long lbl_eu_80663EE0;
     return (lbl_eu_80663EE0 >> 25) & 1;
 }
 
-extern "C" void func_800B1C0C() {}
+void init_1C0C() {}
 
-extern "C" void func_800B1C24() {}
+void init_1C24() {}
 
-extern "C" void func_800B1C40() {}
+void init_1C40(){}
 
-extern "C" void func_800B1C78() {}
+void init_1C78(){}
 
-extern "C" void func_800B1CDC() {}
+void init_1CDC(){}
 
-extern "C" void func_800B1E18() {}
+void init_1E18(){}
 
-extern "C" void func_800B1E2C() {}
+void init_1E2C(){}
 
-extern "C" void func_800B1EB8() {}
+void init_1EB8() {}
 
-extern "C" void func_800B1EC8() {}
+void init_1EC8(){}
 
-extern "C" void func_800B1F2C() {}
+void init_1F2C(){}
 
-extern "C" void func_800B1F40() {}
+void init_1F40(){}
 
-extern "C" void func_800B1F54() {}
+void init_1F54(){}
 
-extern "C" void func_800B1F6C() {}
+void init_1F6C(){}
 
-extern "C" void func_800B1FD8() {}
+void init_1FD8(){}
 
-extern "C" void func_800B2034() {}
+void init_2034(){}
 
-extern "C" void func_800B2048() {}
+void init_2048(){}
 
-extern "C" void func_800B205C() {}
+void init_205C(){}
 
-extern "C" void func_800B20A0() {}
+void init_20A0(){}
 
-extern "C" void func_800B20B4() {}
+void init_20B4(){}
 
-extern "C" u32 func_800B2D28(void* self) { return *(u32*)((u8*)self + 0x4); }
+u32 UnkClass_805764CC::get_u32_04() { return *(u32*)((u8*)this + 0x4); }
 
-extern "C" void __dt__800B2D30() {}
+void __dt__800B2D30(){}
 
-extern "C" void FactoryEvent1__Q22cf13IFactoryEventFv() {}
+void FactoryEvent1__Q22cf13IFactoryEventFv() {}
 
-extern "C" void func_800B2D88(void* self, int param) {
-    extern void func_800B2DB0(void*, void*);
-    func_800B2DB0(self, &param);
+void UnkClass_805764CC::fwdTo_2DB0(int param) {
+    extern void fwd_2DB0_body(void*, void*);
+    fwd_2DB0_body(this, &param);
 }
 
-extern "C" void func_800B2DB0() {}
+void fwd_2DB0_body(){}
 
-extern "C" void func_800B2E38() {}
+void init_2E38(){}
 
-extern "C" void func_800B2ED0() {}
+void init_2ED0(){}
 
-extern "C" int func_800B31B0(void* p) {
+int obj_testBit_64_v0(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
 }
 
-extern "C" int func_800B31BC(void* p) {
+int obj_testBit_64_v1(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
 }
 
-extern "C" int func_800B31C8(void* p) {
+int obj_testBit_64_v2(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
 }
 
-extern "C" int func_800B31D4(void* p) {
+int obj_testBit_64_v3(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
 }
 
-extern "C" int func_800B31E0(void* p) {
+int obj_testBit_64_v4(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
 }
 
-extern "C" int func_800B31EC(void* p) {
+int obj_testBit_64_v5(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
 }
 
-extern "C" int func_800B31F8(void* p) {
+int obj_testBit_64_v6(void* p) {
     return (*(int*)((char*)p + 0x64) >> 1) & 1;
 }
 
-extern "C" u32 func_800B3204(u32 val) { return (val >> 16) & 0xFF; }
+u32 shift_u32_hi8(u32 val) { return (val >> 16) & 0xFF; }
 
-extern "C" void func_800B3210() {}
+void init_3210(){}
 
-extern "C" u32 func_800B39C0(void* self) { return *(u32*)((u8*)self + 0x74); }
+u32 UnkClass_805764CC::get_u32_74() { return *(u32*)((u8*)this + 0x74); }
 
-extern "C" void func_800B39C8() {}
+void init_39C8(){}
 
-extern "C" void func_800B3A54(int* dst, int* src) {
+void copy_int_ptr_alt2(int* dst, int* src) {
     *dst = *src;
 }
 
-extern "C" void func_800B3A60(void* self, int param) {
-    extern void func_800B99EC(void*, void*);
-    func_800B99EC(self, &param);
+void UnkClass_805764CC::fwdTo_99EC(int param) {
+    extern void fwd_99EC_body(void*, void*);
+    fwd_99EC_body(this, &param);
 }
 
-extern "C" void func_800B3A88() {}
+void init_3A88(){}
 
-extern "C" u32 func_800B3D34(u32 val) { return val >> 24; }
+u32 shift_u32_byte3(u32 val) { return val >> 24; }
 
-extern "C" u32 func_800B3D40(u32 val) { return (val >> 16) & 0xFF; }
+u32 shift_u32_hi8_alt1(u32 val) { return (val >> 16) & 0xFF; }
 
-extern "C" void func_800B3D4C() {}
+void init_3D4C() {}
 
-extern "C" void func_800B3D64() {}
+void init_3D64(){}
 
-extern "C" void func_800B4120() {}
+void init_4120(){}
 
-extern "C" void func_800B4278() {}
+void init_4278(){}
 
-extern "C" void func_800B42E8() {}
+void init_42E8(){}
 
-extern "C" void func_800B4368() {}
+void init_4368(){}
 
-extern "C" void func_800B4400() {}
+void init_4400(){}
 
-extern "C" void func_800B44A0() {}
+void init_44A0(){}
 
-extern "C" void func_800B4554() {}
+void init_4554(){}
 
-extern "C" void func_800B4588(u32 val) {}
+void init_4588(u32 val) {}
 
-extern "C" u32 func_800B4594(u32 val) { return (val >> 16) & 0xFF; }
+u32 shift_u32_hi8_alt2(u32 val) { return (val >> 16) & 0xFF; }
 
-extern "C" void func_800B45A0() {}
+void init_45A0(){}
 
-extern "C" void func_800B47A8() {}
+void init_47A8(){}
 
-extern "C" void func_800B4A24() {}
+void init_4A24(){}
 
-extern "C" int CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(void* self) { return 0; }
+int CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(void* self) { return 0; }
 
-extern "C" void func_800B4B0C() {}
+void init_4B0C(){}
 
-extern "C" void func_800B4B74() {}
+void init_4B74(){}
 
-extern "C" void func_800B4B88() {}
+void init_4B88(){}
 
-extern "C" void func_800B4CA0() {}
+void init_4CA0(){}
 
-extern "C" void func_800B4D84() {}
+void init_4D84(){}
 
-extern "C" u32 func_800B4F58(u32 val) { return (val >> 16) & 0xFF; }
+u32 shift_u32_hi8_alt3(u32 val) { return (val >> 16) & 0xFF; }
 
 extern u16 lbl_eu_8066408C;
-extern "C" unsigned short func_800B4F64()
-{
+unsigned short gvar_get408C(){
     return lbl_eu_8066408C;
 }
 
-extern "C" void func_800B4F6C() {}
+void init_4F6C() {}
 
-extern "C" void func_800B4F80() {}
+void init_4F80() {}
 
-extern "C" void func_800B4F90() {}
+void init_4F90() {}
 
-extern "C" u32 func_800B4FA4(void* self) { return *(u32*)((u8*)self + 0x70); }
+u32 UnkClass_805764CC::get_u32_70() { return *(u32*)((u8*)this + 0x70); }
 
-extern "C" void func_800B4FAC() {}
+void init_4FAC(){}
 
-extern "C" void func_800B535C() {}
+void init_535C(){}
 
-extern "C" void func_800B570C() {}
+void init_570C(){}
 
-extern "C" void func_800B587C() {}
+void init_587C(){}
 
-extern "C" void func_800B5944() {}
+void init_5944() {}
 
-extern "C" void func_800B5948() {}
+void init_5948() {}
 
-extern "C" void func_800B5958(void* self) { *(u32*)((u8*)self + 896) = 0; }
+void UnkClass_805764CC::clear_380() { *(u32*)((u8*)this + 896) = 0; }
 
-extern "C" void* func_800B5964(void* self) { return 0; }
+void* UnkClass_805764CC::getNull() { return 0; }
 
-extern "C" u32 func_800B5970(void* self) { return *(u32*)((u8*)self + 0x380); }
+u32 UnkClass_805764CC::get_u32_380() { return *(u32*)((u8*)this + 0x380); }
 
-extern "C" void func_800B5978() {}
+void init_5978(){}
 
-extern "C" void func_800B5994() {}
+void init_5994(){}
 
-extern "C" void func_800B6484() {}
+void init_6484() {}
 
-extern "C" void func_800B6494() {}
+void init_6494() {}
 
-extern "C" u32 func_800B64AC(u32 val) { return (val >> 16) & 0xFF; }
+u32 shift_u32_hi8_alt4(u32 val) { return (val >> 16) & 0xFF; }
 
-extern "C" void func_800B64B8() {}
+void init_64B8() {}
 
-extern "C" u32 func_800B64D0(u32 a, u32 b) { return a & b; }
+u32 shift_u32_and(u32 a, u32 b) { return a & b; }
 
-extern "C" u32 func_800B64DC(void* self) { return *(u32*)((u8*)self + 0x98); }
+u32 UnkClass_805764CC::get_u32_98() { return *(u32*)((u8*)this + 0x98); }
 
-extern "C" u16 func_800B64E4(void* self) { return *(u16*)((u8*)self + 0x45C0); }
+u16 UnkClass_805764CC::get_u16_45C0() { return *(u16*)((u8*)this + 0x45C0); }
 
-extern "C" u32 func_800B64EC(u32 val) { return (val >> 16) & 0xFF; }
+u32 shift_u32_hi8_alt5(u32 val) { return (val >> 16) & 0xFF; }
 
-extern "C" void func_800B64F8() {}
+void init_64F8() {}
 
-extern "C" void func_800B6508() {}
+void init_6508() {}
 
-extern "C" void func_800B6520(void* self, void* other) {
-    unsigned int count = *(unsigned int*)((unsigned char*)self + 0x700);
+void UnkClass_805764CC::appendToBuffer(void* other) {
+    unsigned int count = *(unsigned int*)((unsigned char*)this + 0x700);
     unsigned int val = *(unsigned int*)other;
     unsigned int newCount = count + 1;
-    *(unsigned int*)((unsigned char*)self + 0x700) = newCount;
+    *(unsigned int*)((unsigned char*)this + 0x700) = newCount;
     float fval = *(float*)((unsigned char*)other + 4);
-    void* dest = (unsigned char*)self + count * 8;
+    void* dest = (unsigned char*)this + count * 8;
     *(unsigned int*)dest = val;
     *(float*)((unsigned char*)dest + 4) = fval;
 }
 
-extern "C" void func_800B6544() {}
+void init_6544() {}
 
-extern "C" void func_800B655C() {}
+void init_655C(){}
 
-extern "C" void func_800B66AC() {}
+void init_66AC() {}
 
-extern "C" void func_800B66BC() {}
+void init_66BC(){}
 
-extern "C" void func_800B67CC() {}
+void init_67CC(){}
 
-extern "C" void* func_800B67EC(void* self) { return (void*)((u8*)self + 0x1a8); }
+void* UnkClass_805764CC::getPtr_1A8() { return (void*)((u8*)this + 0x1a8); }
 
-extern "C" void func_800B67F4(void* self) { *(u32*)((u8*)self + 1792) = 0; }
+void UnkClass_805764CC::clear_700() { *(u32*)((u8*)this + 1792) = 0; }
 
-extern "C" void func_800B6800() {}
+void init_6800(){}
 
-extern "C" void func_800B68A8() {}
+void init_68A8(){}
 
-extern "C" void func_800B6AF4() {}
+void init_6AF4(){}
 
-extern "C" void func_800B6BA0(void) {}
+void init_6BA0(void){}
 
-extern "C" void* func_800B6BA4__Fv() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xB28;
+void* sub_getReslist_B28() {
+    return &UnkClass_805764CC::func_800B07E8()->field_0xB28;
 }
 
-extern "C" void* func_800B6BC8() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xB48;
+void* sub_getReslist_B48() {
+    return &UnkClass_805764CC::func_800B07E8()->field_0xB48;
 }
 
-extern "C" void* func_800B6BEC() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xB68;
+void* sub_getReslist_B68() {
+    return &UnkClass_805764CC::func_800B07E8()->field_0xB68;
 }
 
-extern "C" void* func_800B6C10() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xB88;
+void* sub_getReslist_B88() {
+    return &UnkClass_805764CC::func_800B07E8()->field_0xB88;
 }
 
-extern "C" void* func_800B6C34() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xBE8;
+void* sub_getReslist_BE8() {
+    return &UnkClass_805764CC::func_800B07E8()->field_0xBE8;
 }
 
-extern "C" void* func_800B6C58() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xBC8;
+void* sub_getReslist_BC8() {
+    return &UnkClass_805764CC::func_800B07E8()->field_0xBC8;
 }
 
-extern "C" void* func_800B6C7C() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xC08;
+void* sub_getReslist_C08() {
+    return &UnkClass_805764CC::func_800B07E8()->field_0xC08;
 }
 
-extern "C" void* func_800B6CA0() {
-    extern void* func_800B07E8__Fv();
-    return (unsigned char*)func_800B07E8__Fv() + 0xC48;
+void* sub_getReslist_C48() {
+    return &UnkClass_805764CC::func_800B07E8()->field_0xC48;
 }
 
-extern "C" void func_800B6CC4() {}
+void init_6CC4(){}
 
-extern "C" void func_800B6CF8() {}
+void init_6CF8(){}
 
-extern "C" void* func_800B6D3C(void*);
+void* func_800B6D3C(void*);
+void fwd_6DD0_body(){}
 
-extern "C" void func_800B6DD0() {}
+void init_6EC0(){}
 
-extern "C" void func_800B6EC0() {}
+u32 UnkClass_800B0AD8::getCount() { return *(u32*)((u8*)this + 0xB00); }
 
-extern "C" u32 func_800B6FFC(void* self) { return *(u32*)((u8*)self + 0xB00); }
+u32 UnkClass_800B0AD8::getSize() { return *(u32*)((u8*)this + 0xB04); }
 
-extern "C" u32 func_800B7004(void* self) { return *(u32*)((u8*)self + 0xB04); }
-
-extern "C" void* func_800B700C(void* self, u32 index) {
-    u32 start = *(u32*)((u8*)self + 0xAFC);
-    u32 count = *(u32*)((u8*)self + 0xB04);
-    u32* base = *(u32**)((u8*)self + 0xAF8);
+void* UnkClass_800B0AD8::getRingElem(u32 index) {
+    u32 start = *(u32*)((u8*)this + 0xAFC);
+    u32 count = *(u32*)((u8*)this + 0xB04);
+    u32* base = *(u32**)((u8*)this + 0xAF8);
     return &base[(start + index) % count];
 }
 
-extern "C" void func_800B7034() {
+void sub_mainReset() {
     func_800B6D3C(func_800B07E8());
 }
 
-extern "C" void func_800B7058() {}
+void init_7058(){}
 
-extern "C" void func_800B708C__Fi() {}
+void init_708C(){}
 
-extern "C" void func_800B70FC() {}
+void init_70FC(){}
 
-extern "C" u32 func_800B71C4(void) {
+u32 gvar_get40F4(void) {
     extern u32 lbl_eu_806640F4;
     return lbl_eu_806640F4;
 }
 
-extern "C" void func_800B71CC() {}
+void init_71CC(){}
 
-extern "C" void* func_800B720C(void* self) { return (void*)((u8*)self + 0x720); }
+void* UnkClass_805764CC::getPtr_720() { return (void*)((u8*)this + 0x720); }
 
-extern "C" void func_800B7214() {}
+void init_7214(){}
 
-extern "C" void func_800B72DC() {}
+void init_72DC(){}
 
-extern "C" void func_800B7320() {}
+void init_7320(){}
 
-extern "C" void func_800B73E8(void* out_prev, void* unused, void* list_ptr) {
+void list_removeNode(void* out_prev, void* unused, void* list_ptr) {
     (void)unused;
     void* entry = *(void**)list_ptr;
     void* prev = *(void**)entry;
@@ -1809,20 +2004,18 @@ extern "C" void func_800B73E8(void* out_prev, void* unused, void* list_ptr) {
     *(void**)out_prev = prev;
 }
 
-extern "C" void func_800B7410() {}
+void init_7410(){}
 
-extern "C" unsigned short func_800B75B4()
-{
+unsigned short gvar_get408C_alt1(){
     return lbl_eu_8066408C;
 }
 
-extern "C" unsigned short func_800B75BC()
-{
+unsigned short gvar_get408C_alt2(){
     return lbl_eu_8066408C;
 }
 
-extern "C" void func_800B75C4(void* self, u32 mask, int enable) {
-    u32* field = (u32*)((u8*)self + 0x6C);
+void UnkClass_805764CC::maskField_6C(u32 mask, int enable) {
+    u32* field = (u32*)((u8*)this + 0x6C);
     if (enable) {
         *field |= mask;
     } else {
@@ -1830,9 +2023,9 @@ extern "C" void func_800B75C4(void* self, u32 mask, int enable) {
     }
 }
 
-extern "C" void func_800B75EC() {}
+void init_75EC(){}
 
-extern "C" int func_800B7680(void* self) {
+int list_countNodes(void* self){
     void* head = *(void**)((char*)self + 4);
     void* cur = *(void**)head;
     int count = 0;
@@ -1843,186 +2036,175 @@ extern "C" int func_800B7680(void* self) {
     return count;
 }
 
-extern "C" void func_800B76A4(void* self) {
-    void* ptr = func_800B07E8();
-    func_800B6D3C((void*)((u8*)ptr + 0xB28));
+void sub_resetReslist_B28(void* self) {
+    func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB28);
 }
 
-extern "C" void func_800B76CC(void* self) {
-    void* ptr = func_800B07E8();
-    func_800B6D3C((void*)((u8*)ptr + 0xB48));
+void sub_resetReslist_B48(void* self) {
+    func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB48);
 }
 
-extern "C" void func_800B76F4(void* self) {
-    void* ptr = func_800B07E8();
-    func_800B6D3C((void*)((u8*)ptr + 0xB68));
+void sub_resetReslist_B68(void* self) {
+    func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB68);
 }
 
-extern "C" void* func_800B771C(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xB88);
+void* sub_resetReslist_B88(void* self) {
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB88);
 }
 
-extern "C" void* func_800B7744(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xBE8);
+void* sub_resetReslist_BE8(void* self) {
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBE8);
 }
 
-extern "C" void* func_800B776C(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xBC8);
+void* sub_resetReslist_BC8(void* self) {
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBC8);
 }
 
-extern "C" void* func_800B7794(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xC08);
+void* sub_resetReslist_C08(void* self) {
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xC08);
 }
 
-extern "C" void* func_800B77BC(void* self) {
-    extern void* func_800B07E8__Fv();
-    return func_800B6D3C((char*)func_800B07E8__Fv() + 0xBA8);
+void* sub_resetReslist_BA8(void* self) {
+    return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBA8);
 }
 
-extern "C" void func_800B77E4() {}
+void init_77E4(){}
 
-extern "C" void func_800B781C() {}
+void init_781C(){}
 
-extern "C" void func_800B7854() {}
+void init_7854(){}
 
-extern "C" void func_800B788C(void* param_1) { extern void* func_800B07E8(); extern void func_800B6DD0(void*, void*); void* ptr = func_800B07E8(); func_800B6DD0((char*)ptr + 0xb88, param_1); }
+void sub_pushToReslist_B88(cf::CfObject* param_1) { extern void fwd_6DD0_body(void*, void*); fwd_6DD0_body(&UnkClass_805764CC::func_800B07E8()->field_0xB88, param_1); }
 
-extern "C" void func_800B78C4() {}
+void init_78C4(){}
 
-extern "C" void func_800B78FC() {}
+void init_78FC(){}
 
-extern "C" void func_800B7934() {}
+void init_7934(){}
 
-extern "C" void func_800B796C() {}
+void init_796C(){}
 
-extern "C" void func_800B79A4() {}
+void init_79A4(){}
 
-extern "C" void func_800B7A18() {}
+void init_7A18(){}
 
-extern "C" void func_800B7AF0() {}
+void init_7AF0(){}
 
-extern "C" void func_800B83AC() {}
+void init_83AC(){}
 
-extern "C" void func_800B8524() {}
+void init_8524(){}
 
-extern "C" void func_800B87FC() {}
+void init_dispatchTarget_3() {}
 
-extern "C" void func_800B8800() {}
+void init_dispatchTarget_4() {}
 
-extern "C" void func_800B8804__FPvPQ22cf13IFactoryEvent() {}
+void init_8804(){}
 
-extern "C" void func_800B88E0() {}
+void init_88E0(){}
 
-extern "C" void func_800B8920() {}
+void init_8920(){}
 
-extern "C" void func_800B89CC() {}
+void init_89CC(){}
 
-extern "C" void func_800B8A64() {}
+void init_8A64(){}
 
-extern "C" void func_800B8AFC() {}
+void init_8AFC(){}
 
-extern "C" void func_800B8B94() {}
+void init_8B94(){}
 
-extern "C" void func_800B8C78() {}
+void init_8C78(){}
 
-extern "C" void func_800B8D5C() {}
+void init_8D5C(){}
 
-extern "C" void func_800B8FC4() {}
+void init_8FC4(){}
 
-extern "C" void func_800B92B4() {
+void sub_dispatchInit_1() {
     func_800B07E8();
-    ((void(*)())func_800B1120)();
+    ((void(*)())init_dispatchTarget_1)();
 }
 
-extern "C" void func_800B92D8() {
+void sub_dispatchInit_2() {
     func_800B07E8();
-    ((void(*)())func_800B15A4)();
+    ((void(*)())init_dispatchTarget_2)();
 }
 
-extern "C" void func_800B92FC() {}
+void init_92FC(){}
 
-extern "C" void func_800B9340() {
+void sub_dispatchInit_3() {
     func_800B07E8();
-    ((void(*)())func_800B87FC)();
+    ((void(*)())init_dispatchTarget_3)();
 }
 
-extern "C" void func_800B9364() {
+void sub_dispatchInit_4() {
     func_800B07E8();
-    ((void(*)())func_800B8800)();
+    ((void(*)())init_dispatchTarget_4)();
 }
 
-extern "C" void func_800B9388() {
+void sub_dispatchInit_5() {
     func_800B07E8();
-    ((void(*)())func_800B1954)();
+    ((void(*)())init_dispatchTarget_5)();
 }
 
-extern "C" void func_800B93AC() {
+void sub_dispatchInit_6() {
     func_800B07E8();
-    ((void(*)())func_800B1B2C)();
+    ((void(*)())init_dispatchTarget_6)();
 }
 
-extern "C" void func_800B93D0() {}
+void init_93D0(){}
 
-extern "C" void func_800B9404() {}
+void init_9404(){}
 
-extern "C" void func_800B9438() {}
+void init_9438(){}
 
-extern "C" void func_800B946C() {}
+void init_946C(){}
 
-extern "C" void func_800B94A0() {}
+void init_94A0(){}
 
-extern "C" void func_800B94D4() {}
+void init_dispatchTarget_7(){}
 
-extern "C" void func_800B9524(u32 a, u32 b) {
+void sub_dispatchWithArgs(u32 a, u32 b) {
     func_800AA2BC(a, b);
-    ((void(*)())func_800B94D4)();
+    ((void(*)())init_dispatchTarget_7)();
 }
 
-extern "C" void func_800B9548() {}
+void init_9548(){}
 
-extern "C" void func_800B957C() {}
+void init_957C(){}
 
-extern "C" void func_800B96C4(void* self, u32 val) { *(u32*)((u8*)self + 0x734) = val; }
+void UnkClass_805764CC::set_u32_734(u32 val) { *(u32*)((u8*)this + 0x734) = val; }
 
-extern "C" void func_800B96CC(void* self, u8 a, u8 b) { ((u8*)self)[1850] = a; ((u8*)self)[1851] = b; }
+void UnkClass_805764CC::set_u8_73A(u8 a, u8 b) { this->field_0x20.unk0[0x71A] = a; this->field_0x20.unk0[0x71B] = b; }
 
-extern "C" void func_800B96D8(void* self, u32 val) { *(u32*)((u8*)self + 0x720) = val; }
+void UnkClass_805764CC::set_u32_720(u32 val) { *(u32*)((u8*)this + 0x720) = val; }
 
-extern "C" void func_800B96E0(void* self, u16 val) { *(u16*)((u8*)self + 0x738) = val; }
+void UnkClass_805764CC::set_u16_738(u16 val) { *(u16*)((u8*)this + 0x738) = val; }
 
-extern "C" void func_800B96E8() {}
+void init_96E8() {}
 
-extern "C" void func_800B9704(void* self, float val) { *(float*)((u8*)self + 0x730) = val; }
+void UnkClass_805764CC::set_float_730(float val) { *(float*)((u8*)this + 0x730) = val; }
 
-extern "C" void __ct__800B970C() {}
+void __ct__800B970C(){}
 
-extern "C" void func_800B97A0() {}
+void init_97A0(){}
 
-extern "C" void func_800B985C() {}
+void init_985C(){}
 
-extern "C" void func_800B98C8() {}
+void init_98C8(){}
 
-extern "C" u32 func_800B9984(void* self) { return *(u32*)((u8*)self + 0x620); }
+u32 UnkClass_805764CC::get_u32_620() { return *(u32*)((u8*)this + 0x620); }
 
-extern "C" void func_800B998C() {}
+void init_998C(){}
 
-extern "C" void func_800B99BC() {}
+void init_99BC(){}
 
-extern "C" void func_800B99EC() {}
+void fwd_99EC_body(){}
 
-extern "C" void func_800B9A30() {}
+void init_9A30() {}
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-namespace cf { struct TboxInfo { char _pad; }; }
-namespace cf { struct IFactoryEvent { char _pad; }; }
-template <typename T> class _reslist_base { public: ~_reslist_base(); };
-template <typename T> class reslist { public: ~reslist(); };
+// Definitions provided by include/kyoshin/code_800B06A4.hpp
 template <> _reslist_base<cf::TboxInfo>::~_reslist_base() {}
 template <> reslist<cf::TboxInfo>::~reslist() {}
 template <> _reslist_base<cf::IFactoryEvent*>::~_reslist_base() {}
 template <> reslist<cf::IFactoryEvent*>::~reslist() {}
-extern "C" void sinit_800B9A40() {}
+void sinit_800B9A40(){}

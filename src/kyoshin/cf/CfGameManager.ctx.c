@@ -843,6 +843,8 @@ namespace cf{
         UnkClass_80085334* unkAC;
         UnkClass_800821F8* unkB0;
         CfCamEventManager* unkB4;
+        u8 field_0xB8[0x4EC - 0xB8];
+        u32 field_0x4EC;
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
@@ -1033,8 +1035,8 @@ public:
     void func_80082F2C();
     void func_80082FCC();
     void func_80082FE4();
-    void func_80083100();
-    void func_8008310C();
+    u32 func_80083100();
+    u32 func_8008310C();
     void func_80083118();
     void func_80083284();
     void func_80083290();
@@ -249914,16 +249916,16 @@ namespace cf {
     //min size: 0x10
     class CObjectState {
     public:
-        virtual void CObjectState_UnkVirtualFunc1();  //0x8
-        virtual void CObjectState_UnkVirtualFunc2();  //0xC
-        virtual void CObjectState_UnkVirtualFunc3();  //0x10
+        virtual void CObjectState_UnkVirtualFunc1(u32 bits);  //0x8
+        virtual int CObjectState_UnkVirtualFunc2(int mask);  //0xC
+        virtual void CObjectState_UnkVirtualFunc3(u32 mask);  //0x10
         virtual void CObjectState_UnkVirtualFunc4();  //0x14
-        virtual void CObjectState_UnkVirtualFunc5();  //0x18
+        virtual void CObjectState_UnkVirtualFunc5(int arg);  //0x18
         virtual void CObjectState_UnkVirtualFunc6();  //0x1C
-        virtual void CObjectState_UnkVirtualFunc7();  //0x20
-        virtual void CObjectState_UnkVirtualFunc8();  //0x24
+        virtual void CObjectState_UnkVirtualFunc7(int arg);  //0x20
+        virtual int CObjectState_UnkVirtualFunc8(int arg);  //0x24
         virtual void CObjectState_UnkVirtualFunc9();  //0x28
-        virtual void CObjectState_UnkVirtualFunc10(); //0x2C
+        virtual void CObjectState_UnkVirtualFunc10(void* arg); //0x2C
         virtual void CObjectState_UnkVirtualFunc11(); //0x30
         virtual void* CObjectState_UnkVirtualFunc12(); //0x34
         virtual void CObjectState_UnkVirtualFunc13(); //0x38
@@ -255024,9 +255026,13 @@ extern "C" void func_80141C6C(void*, void*);
 void cf::CfGameManager::func_80082940() {}
 
 #pragma dont_inline on
-void cf::CfGameManager::func_80083100() {}
+u32 cf::CfGameManager::func_80083100() {
+    return (field_0x4EC >> 16) & 1;
+}
 
-void cf::CfGameManager::func_8008310C() {}
+u32 cf::CfGameManager::func_8008310C() {
+    return (field_0x4EC >> 7) & 1;
+}
 #pragma dont_inline reset
 
 void cf::CfGameManager::func_80083284() {}

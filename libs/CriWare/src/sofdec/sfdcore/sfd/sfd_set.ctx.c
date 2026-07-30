@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_set
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_set.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_set.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -718,7 +718,13 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void SFD_GetHnStat() {}
+s32 SFLIB_CheckHn(void* h);
+s32 SFLIB_SetErr(s32 val, u32 err_code);
+u32 SFD_GetHnStat(void* self) {
+    if (SFLIB_CheckHn(self))
+        SFLIB_SetErr(0, 0xff000111);
+    return *(u32*)((u8*)self + 0x54);
+}
 
 void SFD_SetCond() {}
 

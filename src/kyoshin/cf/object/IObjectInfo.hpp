@@ -5,7 +5,7 @@
 namespace cf {
     class IObjectInfo {
     public:
-        virtual ~IObjectInfo(){}
+        virtual ~IObjectInfo();
         virtual void IObjectInfo_UnkVirtualFunc1() = 0; //not sure if this exists
     };
 }

@@ -774,7 +774,12 @@ void ADXSJD_Start(void *self) {
     pb[0x01] = 1;
 }
 
-void ADXSJD_Stop() {}
+extern void ADXB_Stop(void*);
+
+void ADXSJD_Stop(void* self) {
+    ADXB_Stop(*(void**)((u8*)self + 0x04));
+    *(u8*)((u8*)self + 0x01) = 0;
+}
 
 void adxsjd_decode_prep() {}
 

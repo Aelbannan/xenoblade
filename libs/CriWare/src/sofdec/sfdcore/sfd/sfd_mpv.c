@@ -87,7 +87,17 @@ void sfmpv_InitInf() {}
 
 void sfmpv_InitFrmObj() {}
 
-void sfmpv_ErrFn() {}
+s32 SFLIB_SetErr(void* h, u32 err_code);
+s32 fn_803C34F8(s32 val, u32 err_code);
+void sfmpv_ErrFn(s32 val, u32 err) {
+    u32 tmp = err + 3;
+    if (tmp <= 1) return;
+    if (err == 0) return;
+    if ((err & 0xFFFF0000) == 0xFF040000)
+        fn_803C34F8(val, err);
+    else
+        SFLIB_SetErr((void*)val, err);
+}
 
 void SFMPV_Destroy() {}
 

@@ -28,7 +28,13 @@ u32 MWSFD_GetCond(void* self) {
 
 u32 MWSFD_GetStmHn(void* self) { return *(u32*)((u8*)self + 0x5c); }
 
-void MWSFD_SetFlowLimit() {}
+void MWSTM_SetFlowLimit(void* h, u32 limit);
+void MWSFLSC_SetFlowLimit(void* self, u32 limit);
+void MWSFD_SetFlowLimit(void* self, u32 limit) {
+    void* h = *(void**)((u8*)self + 0x5c);
+    MWSTM_SetFlowLimit(h, limit);
+    MWSFLSC_SetFlowLimit(self, limit);
+}
 
 u32 MWSFD_IsEnableHndl(void* self) {
     if (self == NULL) return 0;

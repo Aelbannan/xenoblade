@@ -907,9 +907,13 @@ extern "C" void func_80141C6C(void*, void*);
 void cf::CfGameManager::func_80082940() {}
 
 #pragma dont_inline on
-void cf::CfGameManager::func_80083100() {}
+u32 cf::CfGameManager::func_80083100() {
+    return (field_0x4EC >> 16) & 1;
+}
 
-void cf::CfGameManager::func_8008310C() {}
+u32 cf::CfGameManager::func_8008310C() {
+    return (field_0x4EC >> 7) & 1;
+}
 #pragma dont_inline reset
 
 void cf::CfGameManager::func_80083284() {}

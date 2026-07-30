@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CfResPcImpl
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/cf/CfResPcImpl.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CfResPcImpl.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,103 +1390,147 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CfResPcImpl.cpp" line 4 "kyoshin/cf/CfResPcImpl.hpp" */
+#pragma once
 
-extern "C" void __ct__cf_CfResPcImpl() {}
+/* "src/kyoshin/cf/CfResPcImpl.hpp" line 2 "types.h" */
+/* end "types.h" */
+namespace cf {
 
-extern "C" void __dt__Q22cf11CfResPcImplFv() {}
+class CfResPcImpl {
+public:
+    CfResPcImpl();
+    virtual ~CfResPcImpl();
 
-extern "C" int func_8018CB14(void* p)
+    u8 _00[0x14];
+};
+
+class UnkClass_8018EF3C {
+public:
+    virtual ~UnkClass_8018EF3C();
+
+    // TODO: add fields
+};
+} // namespace cf
+
+/* end "kyoshin/cf/CfResPcImpl.hpp" */
+
+namespace cf {}
+using namespace cf;
+
+void __ct__cf_CfResPcImpl(){}
+
+cf::CfResPcImpl::~CfResPcImpl() {}
+
+int func_8018CB14(void* p)
 {
     return (unsigned int)*(unsigned short*)((char*)p + 8) >= 3;
 }
 
-extern "C" int func_8018CB34() { return 2; }
+int func_8018CB34() { return 2; }
 
-extern "C" void func_8018CB3C() {}
+void func_8018CB3C(){}
 
-extern "C" void func_eu_8018E19C() {}
+void func_eu_8018E19C(){}
 
-extern "C" void func_8018D134() {}
+void func_8018D134(){}
 
-extern "C" void func_8018CBE8() {}
+void func_8018CBE8(){}
 
-extern "C" void func_8018CD9C() {}
+void func_8018CD9C(){}
 
-extern "C" void func_8018CE70() {}
+void func_8018CE70(){}
 
-extern "C" void func_8018CF08() {}
+void func_8018CF08(){}
 
-extern "C" void func_8018CF90() {}
+void func_8018CF90(){}
 
-extern "C" void func_8018D00C() {}
+void func_8018D00C(){}
 
-extern "C" void func_8018D0C4() {}
+void func_8018D0C4(){}
 
-extern "C" void func_8018D154(u32 a, u32 b) { volatile int _x = 0; (void)_x; (void)a; (void)b; }
+void func_8018D154(u32 a, u32 b){ volatile int _x = 0; (void)_x; (void)a; (void)b; }
 
-extern "C" void func_8018D288(void) {
+void func_8018D288(void){
     func_8018D154(0, 0);
 }
 
-extern "C" void func_8018D290() {}
+void func_8018D290(){}
 
-extern "C" void func_8018D354() {}
+void func_8018D354(){}
 
-extern "C" void func_8018D3F0() {}
+void func_8018D3F0(){}
 
-extern "C" void func_8018D510() {}
+void func_8018D510(){}
 
-extern "C" void func_8018D570() {}
+void func_8018D570(){}
 
-extern "C" void func_8018D65C() {}
+void func_8018D65C(){}
 
-extern "C" void func_8018D79C() {}
+void func_8018D79C(){}
 
-extern "C" void func_8018DE8C() {}
+void func_8018DE8C(){}
 
-extern "C" void func_8018E69C() {}
+void func_8018E69C(){}
 
-extern "C" void func_8018E7E4() {}
+void func_8018E7E4(){}
 
-extern "C" void func_8018EE18() {}
+void func_8018EE18(){}
 
-extern "C" void func_8018EEF0() {}
+void func_8018EEF0(){}
 
-extern "C" void __ct__Q22cf17UnkClass_8018EF3CFv(void* self) {
-    *(unsigned long*)((char*)self + 0x400) = 0;
-    *(unsigned long*)((char*)self + 0x404) = 0;
-}
 
-extern "C" void __dt__Q22cf17UnkClass_8018EF3CFv() {}
 
-/* "src/kyoshin/cf/CfResPcImpl.cpp" line 135 "string.h" */
+cf::UnkClass_8018EF3C::~UnkClass_8018EF3C() {}
+
+/* "src/kyoshin/cf/CfResPcImpl.cpp" line 74 "string.h" */
 /* end "string.h" */
 
-extern "C" void func_8018EFB4(unsigned char* p)
+void func_8018EFB4(unsigned char* p)
 {
     *reinterpret_cast<unsigned int*>(p + 0x404) = 0;
     *reinterpret_cast<unsigned int*>(p + 0x400) = 0;
     memset(p, 0, 0x400);
 }
 
-extern "C" int func_8018EFCC() { return 1; }
+int func_8018EFCC() { return 1; }
 
-extern "C" void func_8018EFD4() {}
+void func_8018EFD4(){}
 
-extern "C" void func_8018F018() {}
+void func_8018F018(){}
 
-extern "C" void func_8018F164() {}
+void func_8018F164(){}
 
-extern "C" void func_8018F1FC() {}
+void func_8018F1FC(){}
 
-extern "C" void func_8018F2EC() {}
+void func_8018F2EC(){}
 
-extern "C" void func_8018F368() {}
+void func_8018F368(){}
 
-extern "C" void func_8018F46C() {}
+void func_8018F46C(){}
 
-extern "C" void func_8018F510(void* self, unsigned long cond) {
+void func_8018F510(void* self, unsigned long cond){
     extern void func_8018F368(void*);
     extern void func_8018F46C(void*);
     if (cond == 0)
@@ -1440,8 +1539,8 @@ extern "C" void func_8018F510(void* self, unsigned long cond) {
         func_8018F368(self);
 }
 
-extern "C" void func_8018F520() {}
+void func_8018F520(){}
 
-extern "C" void func_8018F5A4() {}
+void func_8018F5A4(){}
 
-extern "C" void func_8018F63C() {}
+void func_8018F63C(){}

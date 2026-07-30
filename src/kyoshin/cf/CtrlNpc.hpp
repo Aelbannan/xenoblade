@@ -10,7 +10,7 @@ public:
 
 class CObjectState {
 public:
-    void CObjectState_UnkVirtualFunc5();
+    void CObjectState_UnkVirtualFunc5(int);
 
     // TODO: add fields
 };

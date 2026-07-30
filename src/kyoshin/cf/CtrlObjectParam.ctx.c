@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/cf/CtrlObjectParam
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/cf/CtrlObjectParam.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CtrlObjectParam.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,94 +1390,986 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/cf/CtrlObjectParam.cpp" line 4 "kyoshin/cf/CtrlObjectParam.hpp" */
+#pragma once
 
-extern "C" void __ct__8009D604() {}
+/* "src/kyoshin/cf/CtrlObjectParam.hpp" line 2 "types.h" */
+/* end "types.h" */
 
-extern "C" void __dt__8009D72C() {}
+namespace cf {
 
-extern "C" void* func_8009D764(void* self) {
-    *(unsigned short*)((char*)self + 0) = 0xFFFF;
-    *(unsigned short*)((char*)self + 2) = 0xFFFF;
-    *(unsigned short*)((char*)self + 4) = 0xFFFF;
-    *(unsigned short*)((char*)self + 6) = 0xFFFF;
-    *(unsigned short*)((char*)self + 8) = 0xFFFF;
-    *(unsigned short*)((char*)self + 10) = 0xFFFF;
+    // ── Opaque struct for func_8009D764 ─────────────────────────────────────
+    //   6 u16s (set to 0xFFFF) + 192-byte zeroed area.
+    struct CtrlObjectParamInit {
+        u16 field_00;
+        u16 field_02;
+        u16 field_04;
+        u16 field_06;
+        u16 field_08;
+        u16 field_0A;
+        u8  blob[192];
+    };
+
+    // ── 32-byte sub-struct entry (getSubStruct / getShortAt1C / getByteE4) ──
+    struct CtrlObjectParamSubEntry {
+        u8  pad_00[0x10];        // 0x00..0x0F
+        s16 shortArr[8];         // 0x10..0x1F  — accessed at work+0x1C = entry[0].shortArr
+    };
+
+    // ── Opaque data block with sub-entries (getSubStruct, getShortAt1C, getByteE4) ──
+    struct CtrlObjectParamData {
+        u8                       pad_0C[0x0C];          // 0x00..0x0B
+        CtrlObjectParamSubEntry  entries[6];            // 0x0C..0xCB  (6×32=192)
+        u8                       pad_CC[0x18];           // 0xCC..0xE3
+        u8                       field_E4;               // 0xE4
+
+        CtrlObjectParamSubEntry* getSubStruct(unsigned long index);
+        void setArgType2(void* arg);
+        void setArgType3(void* arg);
+        void setArgType5(void* arg);
+        long getShortAt1C(unsigned long index);
+    };
+
+    // ── Swap view (swapIntFields): int arrays at +4 and +16 ─────────────────
+    struct CtrlObjectParamSwap {
+        u8  pad_00[4];       // 0x00..0x03
+        int intArr1[3];      // 0x04..0x0F  (type 1, indices 0,1,2)
+        int intArr2[3];      // 0x10..0x1B  (type 2, indices 0,1,2)
+    };
+
+    // ── Clear view (clearStruct): byte + 24 ints ───────────────────────────
+    struct CtrlObjectParamClear {
+        u8  firstByte;        // 0x00
+        u32 words[24];        // 0x04..0x63
+
+        int clearStruct();
+    };
+
+    // ── Clear 16 bytes view (clear16Bytes) ─────────────────────────────────
+    struct CtrlObjectParamClear16 {
+        u32 words[4];         // 0x00..0x0F
+
+        void clear16Bytes();
+    };
+
+    // ── Byte-at-E4 view (getByteE4) ────────────────────────────────────────
+    struct CtrlObjectParamByteE4 {
+        u8  pad_00[0xE4];
+        u8  field_E4;
+
+        u8 getByteE4();
+    };
+
+} // namespace cf
+/* end "kyoshin/cf/CtrlObjectParam.hpp" */
+/* "src/kyoshin/cf/CtrlObjectParam.cpp" line 5 "kyoshin/cf/object/CActorParam.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 3 "kyoshin/cf/object/CDebugState.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CDebugState.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+    class CDebugState {
+
+    };
+}
+/* end "kyoshin/cf/object/CDebugState.hpp" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 4 "kyoshin/cf/object/CBattleState.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CBattleState.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+    class UnkClass_CActorParam15E0;
+
+    // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
+    // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
+    // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
+    struct CBattleStateEntry {
+        u32 unk00; // 0x00
+        u32 unk04; // 0x04
+        u32 unk08; // 0x08
+        u16 unk0C; // 0x0C - id; also bit index into CBattleState::unk15AC
+        s32 unk10; // 0x10 - clamped value
+        s16 unk14; // 0x14
+        s16 unk16; // 0x16
+        s16 unk18; // 0x18 - lower clamp bound (0 == no lower clamp)
+        s16 unk1A; // 0x1A
+        f32 unk1C; // 0x1C
+        f32 unk20; // 0x20
+        f32 unk24; // 0x24
+        f32 unk28; // 0x28
+        u16 unk2C; // 0x2C
+        u16 unk2E; // 0x2E
+        u32 unk30; // 0x30
+    };
+
+    // size: 0x15DC
+    class CBattleState {
+    public:
+        virtual void CBattleState_UnkVirtualFunc1();  //0x8
+        virtual void CBattleState_UnkVirtualFunc2();  //0xC
+        virtual int CBattleState_UnkVirtualFunc3();  //0x10
+        virtual void CBattleState_UnkVirtualFunc4();  //0x14
+        virtual void CBattleState_UnkVirtualFunc5();  //0x18
+        virtual void CBattleState_UnkVirtualFunc6();  //0x1C
+        virtual void CBattleState_UnkVirtualFunc7();  //0x20
+        virtual void CBattleState_UnkVirtualFunc8();  //0x24
+        virtual void CBattleState_UnkVirtualFunc9();  //0x28
+        virtual void CBattleState_UnkVirtualFunc10(); //0x2C
+        virtual void CBattleState_UnkVirtualFunc11(); //0x30
+        virtual void CBattleState_UnkVirtualFunc12(); //0x34
+        virtual void CBattleState_UnkVirtualFunc13(); //0x38
+        virtual void CBattleState_UnkVirtualFunc14(); //0x3C
+        virtual void CBattleState_UnkVirtualFunc15(); //0x40
+        virtual void CBattleState_UnkVirtualFunc16(); //0x44
+        virtual void CBattleState_UnkVirtualFunc17(); //0x48
+        virtual void CBattleState_UnkVirtualFunc18(); //0x4C
+        virtual void CBattleState_UnkVirtualFunc19(); //0x50
+        virtual void CBattleState_UnkVirtualFunc20(); //0x54
+        virtual void CBattleState_UnkVirtualFunc21(); //0x58
+        virtual void CBattleState_UnkVirtualFunc22(); //0x5C
+        virtual void CBattleState_UnkVirtualFunc23(); //0x60
+        virtual void CBattleState_UnkVirtualFunc24(); //0x64
+        virtual void CBattleState_UnkVirtualFunc25(); //0x68
+        virtual void CBattleState_UnkVirtualFunc26(); //0x6C
+        virtual void CBattleState_UnkVirtualFunc27(); //0x70
+        virtual void CBattleState_UnkVirtualFunc28(); //0x74
+        virtual void CBattleState_UnkVirtualFunc29(); //0x78
+        virtual void CBattleState_UnkVirtualFunc30(); //0x7C
+        virtual void CBattleState_UnkVirtualFunc31(); //0x80
+        virtual void CBattleState_UnkVirtualFunc32(); //0x84
+        virtual void CBattleState_UnkVirtualFunc33(); //0x88
+
+        CBattleState();
+
+        u16 unk4;
+        u16 unk6;
+        u8 unk8[0x1520];
+        u8 unk1528[4];
+        u8 unk152C[0x80];
+        u8 unk15AC[0x15D8 - 0x15AC];
+        UnkClass_CActorParam15E0* field_0x15D8;
+    };
+}
+
+namespace cf {
+    struct CBattleStateSrcEntry;
+}
+/* end "kyoshin/cf/object/CBattleState.hpp" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CActorState.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+    class CActorState {
+    public:
+        virtual void CActorState_UnkVirtualFunc1(); //0x8
+
+        CActorState(UNKTYPE* r4){
+            unk4 = r4;
+        }
+
+        UNKTYPE* unk4;
+    };
+}
+/* end "kyoshin/cf/object/CActorState.hpp" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 6 "kyoshin/cf/CArtsSet.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/CArtsSet.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/CArtsSet.hpp" line 3 "cstring" */
+/* end "cstring" */
+
+namespace cf {
+    
+    //size: 0x88
+    class CAttackParam {
+    public:
+        u8 unk0;
+        u8 unk4[0x20 - 0x4];
+        u32 unk20;
+        u32 unk24;
+        u16 unk28;
+        u8 unk2A;
+        u8 unk2B;
+        float unk2C;
+        float unk30;
+        u16 unk34;
+        u16 unk36;
+        u8 unk38[4];
+        u16 unk3C;
+        u8 unk3E;
+        u8 unk3F;
+        u16 unk40;
+        u8 unk42;
+        u8 unk43;
+        u8 unk44;
+        u16 unk46;
+        u16 unk48;
+        u16 unk4A;
+        u16 unk4C;
+        float unk50;
+        float unk54;
+        u16 unk58;
+        u16 unk5A;
+        u16 unk5C;
+        u16 unk5E;
+        float unk60;
+        u16 unk64;
+        u8 unk66;
+        u8 unk67;
+        u16 unk68;
+        u16 unk6A;
+        u8 unk6C[5];
+        u8 unk71;
+        u16 unk72;
+        u16 unk74;
+        u8 unk76;
+        u8 unk77;
+        u32 unk78;
+        float unk7C;
+        float unk80;
+
+        CAttackParam();
+
+        virtual void CAttackParam_UnkVirtualFunc1(){
+            unk0 = 0;
+            unk20 = 0;
+            unk24 = 0;
+            unk28 = 0;
+            unk2A = 1;
+            unk2B = 0;
+            unk2C = 0;
+            unk30 = 0;
+            unk34 = 0;
+            unk36 = 0;
+            unk3C = 0;
+            unk3E = 0;
+            unk40 = 0;
+            unk42 = 0;
+            unk43 = 0;
+            unk44 = 0;
+            unk46 = 0;
+            unk48 = 0;
+            unk4A = 0;
+            unk4C = 0;
+            unk50 = 0;
+            unk54 = 0;
+            unk58 = 0;
+            unk5A = 0;
+            unk5C = 0;
+            unk5E = 0;
+            unk60 = 0;
+            unk64 = 0;
+            unk66 = 0;
+            unk67 = 0;
+            unk68 = 0;
+            unk6A = 0;
+            unk72 = 0;
+            unk74 = 0;
+            unk77 = 0;
+            unk7C = 0;
+            unk80 = 0;  
+
+            std::memset(unk38, 0, sizeof(unk38));
+            std::memset(unk6C, 0, sizeof(unk6C));
+        }
+        virtual u8 CAttackParam_UnkVirtualFunc2();
+        virtual void CAttackParam_UnkVirtualFunc3(u8 r4);
+        virtual void CAttackParam_UnkVirtualFunc4();
+    };
+
+    struct _sAttackSet {
+    };
+
+    //size: 0x334
+    class CAttackSet : _sAttackSet {
+    public:
+        CAttackSet(){}
+        virtual void func_80153E88();
+        
+        //0x0: vtable
+        CAttackParam mAttackParams[6]; //0x4
+    };
+
+    //size: 0x8C
+    class CArtsParam : public CAttackParam {
+    public:
+        UNKTYPE* unk88;
+
+        CArtsParam();
+        virtual void CArtsParam_UnkVirtualFunc1();
+        virtual u8 CArtsParam_UnkVirtualFunc2();
+        virtual void CArtsParam_UnkVirtualFunc3(u8 r4);
+    };
+
+    //size: 0x38
+    struct _sArtsSet {
+        union {
+            struct {
+                u16 unk0;
+                u8 unk2[2];
+                u8 unk4[0x30];
+            };
+            u16 mArtsSlotData[24];
+        };
+
+        _sArtsSet();
+        virtual void _sArtsSet_UnkVirtualFunc1(){
+            unk0 = 0;
+            std::memset(unk4, 0, sizeof(unk4));
+        }
+    };
+
+    //size: 0xD58
+    class CArtsSet : _sArtsSet {
+    public:
+        CArtsSet(){}
+        virtual void CArtsSet_UnkVirtualFunc1();
+
+        void setArtsSlotRC(unsigned short value, unsigned int row, unsigned int index);
+        unsigned short getArtsSlotRC(int index, int subindex);
+        void setArtsSlotByIdx(unsigned short value, int index);
+        void* getArtsParamRC(int index460, int index8c);
+        void* getArtsParamRC2(int index1, int index2);
+        void* getArtsParamByIdx(int index);
+
+        //0x0: vtable
+        //0x0-38: _sArtsSet
+        CArtsParam mArtsParams[24]; //0x38
+    };
+};
+/* end "kyoshin/cf/CArtsSet.hpp" */
+/* "src/kyoshin/cf/object/CActorParam.hpp" line 7 "cstring" */
+/* end "cstring" */
+
+namespace cf {
+
+    class UnkClass_CActorParam15E0;
+
+    //size: 0x7C
+    struct CActorParam_UnkStruct2 {
+        u8 unk0[0x40];
+        u16 unk40;
+        u8 unk42[0x78 - 0x42];
+        u32 unk78;
+    };
+
+    //might be fake?
+    struct CActorParam_UnkStruct6 {
+        CActorParam_UnkStruct6(){
+            unk0 = 0;
+        }
+    
+        u8 unk0;
+    };
+
+    struct CActorParam_Bitflags {
+        CActorParam_Bitflags(){
+            flags = 0;
+        }
+
+        u32 flags;
+    };
+
+    //size: 0xBC
+    struct CActorParam_UnkStruct1 {
+        CActorParam_UnkStruct1() {
+            init();
+        }
+
+        void init(){
+            unk0 = 0;
+            unk4 = 0;
+            unk48 = 0;
+            unk4C = -1;
+            unk50 = 0;
+            unk54 = 0;
+            unk58 = 0;
+            unk5C = 0;
+            unk60 = 0;
+            unk64 = 0;
+            unk7C = 0;
+            unk80 = 0;
+            unkB8 = 0;
+            unk68 = 0;
+            unk6C = 0;
+            unk70 = 0;
+            unk72 = 0;
+            std::memset(unk8, 0, sizeof(unk8));
+            std::memset(unk84, 0, sizeof(unk84));
+            mFlagsArray[0].flags = 0;
+            mFlagsArray[1].flags = 0;
+        }
+
+        u32 unk0;
+        u32 unk4;
+        u8 unk8[0x40];
+        u32 unk48;
+        int unk4C;
+        CActorParam_UnkStruct2* unk50;
+        float unk54;
+        float unk58;
+        float unk5C;
+        float unk60;
+        float unk64;
+        float unk68;
+        float unk6C;
+        u16 unk70;
+        u16 unk72;
+        CActorParam_Bitflags mFlagsArray[2]; //0x74
+        u32 unk7C;
+        u16 unk80;
+        u8 unk82[2];
+        u8 unk84[0x34];
+        u32 unkB8;
+
+        enum Flags_74 {
+            FLAG_BIT_0 = (1 << 0),
+            FLAG_BIT_1 = (1 << 1),
+            FLAG_BIT_2 = (1 << 2),
+            FLAG_BIT_3 = (1 << 3),
+            FLAG_BIT_4 = (1 << 4),
+            FLAG_BIT_5 = (1 << 5),
+            FLAG_BIT_6 = (1 << 6),
+            FLAG_BIT_7 = (1 << 7),
+            FLAG_BIT_8 = (1 << 8),
+            FLAG_BIT_9 = (1 << 9),
+            FLAG_BIT_10 = (1 << 10),
+            FLAG_BIT_11 = (1 << 11),
+            FLAG_BIT_12 = (1 << 12),
+            FLAG_BIT_13 = (1 << 13),
+            FLAG_BIT_14 = (1 << 14),
+            FLAG_BIT_15 = (1 << 15),
+            FLAG_BIT_16 = (1 << 16),
+            FLAG_BIT_17 = (1 << 17),
+            FLAG_BIT_18 = (1 << 18),
+            FLAG_BIT_19 = (1 << 19),
+            FLAG_BIT_20 = (1 << 20),
+            FLAG_BIT_21 = (1 << 21),
+            FLAG_BIT_22 = (1 << 22),
+            FLAG_BIT_23 = (1 << 23),
+            FLAG_BIT_24 = (1 << 24),
+            FLAG_BIT_25 = (1 << 25),
+            FLAG_BIT_26 = (1 << 26),
+            FLAG_BIT_27 = (1 << 27),
+            FLAG_BIT_28 = (1 << 28),
+            FLAG_BIT_29 = (1 << 29),
+            FLAG_BIT_30 = (1 << 30),
+            FLAG_BIT_31 = (1 << 31),
+        };
+    };
+
+    //size: 0x52
+    struct CActorParam_UnkStruct4 {
+        CActorParam_UnkStruct4() {
+            std::memset(this, 0, sizeof(*this)); //wtf??
+        }
+
+        u8 unk0[0x4E];
+        CActorParam_UnkStruct6 unk4E[4];
+    };
+
+    //TODO: related to above struct?
+    //size: 0x78
+    struct CActorParam_UnkStruct3 {
+        CActorParam_UnkStruct3() {
+            unk74 = 0;
+
+            std::memset(this, 0, sizeof(*this)); //wtf??
+
+            unk5C = 1.0f;
+            unk38 = 5;
+            unk3A = 5;
+        }
+
+        u8 unk0[0x38];
+        u16 unk38;
+        u16 unk3A;
+        u8 unk3C[0x44 - 0x3C];
+        float unk44;
+        u8 unk48[4];
+        float unk4C;
+        u8 unk50[0x5C - 0x50];
+        float unk5C;
+        u8 unk60[0x70 - 0x60];
+        CActorParam_UnkStruct6 unk70[4];
+        u32 unk74;
+    };
+
+    //size: 0x18
+    struct CActorParam_UnkStruct5 {
+        CActorParam_UnkStruct5(){
+            std::memset(this, 0, sizeof(*this)); //wtf??
+        }
+
+        void init(){
+            unk14 = 0;
+            unk4 = 0;
+            unk0 = 0;
+            unkC = 0;
+            unk8 = 0;
+            unk10 = 0;
+        }
+
+        float unk0;
+        float unk4;
+        float unk8;
+        float unkC;
+        float unk10;
+        u32 unk14;
+    };
+
+    //size: 0x3384
+    class CActorParam : public CActorState, public CBattleState, public CDebugState {
+    public:
+        CActorParam(UNKTYPE* r4, UNKTYPE* r5);
+    #pragma region vtable
+        virtual void CActorParam_UnkVirtualFunc1();   //0x98
+        virtual void CActorParam_UnkVirtualFunc2();   //0x9C
+        virtual void CActorParam_UnkVirtualFunc3();   //0xA0
+        virtual void CActorParam_UnkVirtualFunc4();   //0xA4
+        virtual void CActorParam_UnkVirtualFunc5();   //0xA8
+        virtual void CActorParam_UnkVirtualFunc6();   //0xAC
+        virtual void CActorParam_UnkVirtualFunc7();   //0xB0
+        virtual void CActorParam_UnkVirtualFunc8();   //0xB4
+        virtual void CActorParam_UnkVirtualFunc9();   //0xB8
+        virtual void CActorParam_UnkVirtualFunc10();  //0xBC
+        virtual void CActorParam_UnkVirtualFunc11();  //0xC0
+        virtual void CActorParam_UnkVirtualFunc12();  //0xC4
+        virtual void CActorParam_UnkVirtualFunc13();  //0xC8
+        virtual void CActorParam_UnkVirtualFunc14(u8 val);  //0xCC
+        virtual void CActorParam_UnkVirtualFunc15();  //0xD0
+        virtual void CActorParam_UnkVirtualFunc16(float val);  //0xD4
+        virtual void CActorParam_UnkVirtualFunc17();  //0xD8
+        virtual void CActorParam_UnkVirtualFunc18();  //0xDC
+        virtual u32 CActorParam_UnkVirtualFunc19();  //0xE0
+        virtual void CActorParam_UnkVirtualFunc20();  //0xE4
+        virtual void CActorParam_UnkVirtualFunc21();  //0xE8
+        virtual void CActorParam_UnkVirtualFunc22();  //0xEC
+        virtual void CActorParam_UnkVirtualFunc23();  //0xF0
+        virtual void CActorParam_UnkVirtualFunc24();  //0xF4
+        virtual void CActorParam_UnkVirtualFunc25();  //0xF8
+        virtual u32 CActorParam_UnkVirtualFunc26();  //0xFC
+        virtual void CActorParam_UnkVirtualFunc27();  //0x100
+        virtual void CActorParam_UnkVirtualFunc28();  //0x104
+        virtual u32 CActorParam_UnkVirtualFunc29();  //0x108
+        virtual void CActorParam_UnkVirtualFunc30();  //0x10C
+        virtual void CActorParam_UnkVirtualFunc31();  //0x110
+        virtual void CActorParam_UnkVirtualFunc32();  //0x114
+        virtual void CActorParam_UnkVirtualFunc33(float val);  //0x118
+        virtual void CActorParam_UnkVirtualFunc34();  //0x11C
+        virtual void CActorParam_UnkVirtualFunc35();  //0x120
+        virtual void CActorParam_UnkVirtualFunc36();  //0x124
+        virtual void CActorParam_UnkVirtualFunc37();  //0x128
+        virtual void CActorParam_UnkVirtualFunc38();  //0x12C
+        virtual void CActorParam_UnkVirtualFunc39();  //0x130
+        virtual void CActorParam_UnkVirtualFunc40();  //0x134
+        virtual void CActorParam_UnkVirtualFunc41();  //0x138
+        virtual void CActorParam_UnkVirtualFunc42();  //0x13C
+        virtual void CActorParam_UnkVirtualFunc43();  //0x140
+        virtual void CActorParam_UnkVirtualFunc44();  //0x144
+        virtual void CActorParam_UnkVirtualFunc45();  //0x148
+        virtual void CActorParam_UnkVirtualFunc46();  //0x14C
+        virtual void CActorParam_UnkVirtualFunc47();  //0x150
+        virtual void CActorParam_UnkVirtualFunc48();  //0x154
+        virtual void CActorParam_UnkVirtualFunc49();  //0x158
+        virtual void CActorParam_UnkVirtualFunc50();  //0x15C
+        virtual void CActorParam_UnkVirtualFunc51();  //0x160
+        virtual void CActorParam_UnkVirtualFunc52();  //0x164
+        virtual void CActorParam_UnkVirtualFunc53();  //0x168
+        virtual void CActorParam_UnkVirtualFunc54();  //0x16C
+        virtual void CActorParam_UnkVirtualFunc55(u16 val);  //0x170
+        virtual void CActorParam_UnkVirtualFunc56();  //0x174
+        virtual void CActorParam_UnkVirtualFunc57();  //0x178
+        virtual void CActorParam_UnkVirtualFunc58();  //0x17C
+        virtual void CActorParam_UnkVirtualFunc59();  //0x180
+        virtual void CActorParam_UnkVirtualFunc60();  //0x184
+        virtual void CActorParam_UnkVirtualFunc61(u16 val);  //0x188
+        virtual void CActorParam_UnkVirtualFunc62();  //0x18C
+        virtual void CActorParam_UnkVirtualFunc63();  //0x190
+        virtual void CActorParam_UnkVirtualFunc64();  //0x194
+        virtual void CActorParam_UnkVirtualFunc65(float val);  //0x198
+        virtual void CActorParam_UnkVirtualFunc66();  //0x19C
+        virtual void CActorParam_UnkVirtualFunc67();  //0x1A0
+        virtual void CActorParam_UnkVirtualFunc68(float val);  //0x1A4
+        virtual void CActorParam_UnkVirtualFunc69();  //0x1A8
+        virtual void CActorParam_UnkVirtualFunc70();  //0x1AC
+        virtual void CActorParam_UnkVirtualFunc71();  //0x1B0
+        virtual void CActorParam_UnkVirtualFunc72();  //0x1B4
+        virtual void CActorParam_UnkVirtualFunc73();  //0x1B8
+        virtual void CActorParam_UnkVirtualFunc74(float val);  //0x1BC
+        virtual void CActorParam_UnkVirtualFunc75();  //0x1C0
+        virtual void* CActorParam_UnkVirtualFunc76();  //0x1C4
+        virtual void CActorParam_UnkVirtualFunc77();  //0x1C8
+        virtual void CActorParam_UnkVirtualFunc78();  //0x1CC
+        virtual void CActorParam_UnkVirtualFunc79();  //0x1D0
+        virtual void CActorParam_UnkVirtualFunc80();  //0x1D4
+        virtual void CActorParam_UnkVirtualFunc81(u32 val);  //0x1D8
+        virtual void CActorParam_UnkVirtualFunc82(u32 addend);  //0x1DC
+        virtual void CActorParam_UnkVirtualFunc83(u32 addend);  //0x1E0
+        virtual void CActorParam_UnkVirtualFunc84();  //0x1E4
+        virtual u32 CActorParam_UnkVirtualFunc85();  //0x1E8
+        virtual void CActorParam_UnkVirtualFunc86();  //0x1EC
+        virtual void CActorParam_UnkVirtualFunc87();  //0x1F0
+        virtual void CActorParam_UnkVirtualFunc88();  //0x1F4
+        virtual void CActorParam_UnkVirtualFunc89();  //0x1F8
+        virtual void CActorParam_UnkVirtualFunc90(u32 addend);  //0x1FC
+        virtual void CActorParam_UnkVirtualFunc91();  //0x200
+        virtual void CActorParam_UnkVirtualFunc92();  //0x204
+        virtual void CActorParam_UnkVirtualFunc93();  //0x208
+        virtual void* CActorParam_UnkVirtualFunc94();  //0x20C
+        virtual void CActorParam_UnkVirtualFunc95();  //0x210
+        virtual void CActorParam_UnkVirtualFunc96();  //0x214
+        virtual void CActorParam_UnkVirtualFunc97();  //0x218
+        virtual void CActorParam_UnkVirtualFunc98();  //0x21C
+        virtual void CActorParam_UnkVirtualFunc99();  //0x220
+        virtual void* CActorParam_UnkVirtualFunc100(); //0x224
+        virtual void CActorParam_UnkVirtualFunc101(); //0x228
+        virtual void CActorParam_UnkVirtualFunc102(); //0x22C
+        virtual void CActorParam_UnkVirtualFunc103(); //0x230
+        virtual void CActorParam_UnkVirtualFunc104(); //0x234
+        virtual void CActorParam_UnkVirtualFunc105(); //0x238
+        virtual void CActorParam_UnkVirtualFunc106(); //0x23C
+        virtual void CActorParam_UnkVirtualFunc107(); //0x240
+        virtual void CActorParam_UnkVirtualFunc108(); //0x244
+        virtual void CActorParam_UnkVirtualFunc109(); //0x248
+        virtual void CActorParam_UnkVirtualFunc110(); //0x24C
+        virtual void CActorParam_UnkVirtualFunc111(); //0x250
+        virtual void CActorParam_UnkVirtualFunc112(); //0x254
+        virtual u32* CActorParam_UnkVirtualFunc113(); //0x258
+        virtual void CActorParam_UnkVirtualFunc114(); //0x25C
+        virtual bool CActorParam_UnkVirtualFunc115(); //0x260
+        virtual void CActorParam_UnkVirtualFunc116(float val); //0x264
+        virtual float* CActorParam_UnkVirtualFunc117(); //0x268
+        virtual void CActorParam_UnkVirtualFunc118(); //0x26C
+        virtual float* CActorParam_UnkVirtualFunc119(); //0x270
+        virtual void CActorParam_UnkVirtualFunc120(); //0x274
+        virtual void CActorParam_UnkVirtualFunc121(); //0x278
+        virtual void* CActorParam_UnkVirtualFunc122(); //0x27C
+        virtual void CActorParam_UnkVirtualFunc123(); //0x280
+        virtual void CActorParam_UnkVirtualFunc124(); //0x284
+        virtual void* CActorParam_UnkVirtualFunc125(); //0x288
+        virtual void CActorParam_UnkVirtualFunc126(); //0x28C
+        virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127(); //0x290
+        virtual void CActorParam_UnkVirtualFunc128(); //0x294
+        virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
+        virtual void CActorParam_UnkVirtualFunc130(); //0x29C
+        virtual void CActorParam_UnkVirtualFunc131(); //0x2A0
+        virtual void* CActorParam_UnkVirtualFunc132(); //0x2A4
+        virtual void CActorParam_UnkVirtualFunc133(); //0x2A8
+        virtual void CActorParam_UnkVirtualFunc134(); //0x2AC
+        virtual void CActorParam_UnkVirtualFunc135(); //0x2B0
+        virtual void CActorParam_UnkVirtualFunc136(); //0x2B4
+        virtual void CActorParam_UnkVirtualFunc137(); //0x2B8
+        virtual bool CActorParam_UnkVirtualFunc138(); //0x2BC
+        virtual void CActorParam_UnkVirtualFunc139(); //0x2C0
+        virtual void CActorParam_UnkVirtualFunc140(); //0x2C4
+        virtual void CActorParam_UnkVirtualFunc141(); //0x2C8
+        virtual void CActorParam_UnkVirtualFunc142(); //0x2CC
+        virtual void CActorParam_UnkVirtualFunc143(); //0x2D0
+        virtual void CActorParam_UnkVirtualFunc144(); //0x2D4
+        virtual void CActorParam_UnkVirtualFunc145(); //0x2D8
+        virtual void CActorParam_UnkVirtualFunc146(); //0x2DC
+        virtual void CActorParam_UnkVirtualFunc147(); //0x2E0
+        virtual void CActorParam_UnkVirtualFunc148(); //0x2E4
+        virtual void CActorParam_UnkVirtualFunc149(); //0x2E8
+        virtual void CActorParam_UnkVirtualFunc150(); //0x2EC
+        virtual void CActorParam_UnkVirtualFunc151(); //0x2F0
+        virtual void* CActorParam_UnkVirtualFunc152(); //0x2F4
+        virtual void CActorParam_UnkVirtualFunc153(); //0x2F8
+        virtual void CActorParam_UnkVirtualFunc154(); //0x2FC
+        virtual void CActorParam_UnkVirtualFunc155(); //0x300
+        virtual void CActorParam_UnkVirtualFunc156(); //0x304
+        virtual void CActorParam_UnkVirtualFunc157(); //0x308
+        virtual void CActorParam_UnkVirtualFunc158(); //0x30C
+        virtual void CActorParam_UnkVirtualFunc159(); //0x310
+        virtual void CActorParam_UnkVirtualFunc160(); //0x314
+        virtual void CActorParam_UnkVirtualFunc161(); //0x318
+        virtual void CActorParam_UnkVirtualFunc162(); //0x31C
+        virtual void CActorParam_UnkVirtualFunc163(); //0x320
+        virtual void CActorParam_UnkVirtualFunc164(); //0x324
+        virtual void* CActorParam_UnkVirtualFunc165(); //0x328
+        virtual void CActorParam_UnkVirtualFunc166(); //0x32C
+        virtual void CActorParam_UnkVirtualFunc167(); //0x330
+        virtual void CActorParam_UnkVirtualFunc168(); //0x334
+        virtual void CActorParam_UnkVirtualFunc169(); //0x338
+        virtual void CActorParam_UnkVirtualFunc170(); //0x33C
+        virtual void CActorParam_UnkVirtualFunc171(); //0x340
+        virtual void CActorParam_UnkVirtualFunc172(); //0x344
+        virtual void CActorParam_UnkVirtualFunc173(); //0x348
+        virtual void CActorParam_UnkVirtualFunc174(); //0x34C
+        virtual void CActorParam_UnkVirtualFunc175(); //0x350
+        virtual void CActorParam_UnkVirtualFunc176(); //0x354
+        virtual void CActorParam_UnkVirtualFunc177(); //0x358
+        virtual void CActorParam_UnkVirtualFunc178(); //0x35C
+        virtual void CActorParam_UnkVirtualFunc179(); //0x360
+        virtual void CActorParam_UnkVirtualFunc180(); //0x364
+        virtual void CActorParam_UnkVirtualFunc181(); //0x368
+    #pragma endregion
+
+        UNKTYPE* unk15DC;
+        UnkClass_CActorParam15E0* unk15E0;
+        u32 unk15E4;
+        float unk15E8;
+        u32 unk15EC;
+        u32 unk15F0;
+        u8 unk15F4[4];        // 0x15F4
+        float unk15F8;         // 0x15F8
+        float unk15FC;
+        u32 unk1600;
+        u32 unk1604;
+        u32 unk1608;
+        u16 unk160C;
+        u16 unk160E;
+        float unk1610;
+        u16 unk1614;
+        u16 unk1616;
+        float unk1618;
+        u32 unk161C;
+        float unk1620;
+        float unk1624;
+        u8 unk1628;
+        u8 unk1629;
+        u8 unk162A;
+        u8 unk162B;
+        u8 unk162C;
+        float unk1630;
+        u32 unk1634;
+        u32 unk1638;
+        u32 unk163C;
+        u32 unk1640;
+        u32 unk1644;
+        u16 unk1648;
+        u16 unk164A;
+        u16 unk164C;
+        u8 unk164E[2];
+        CActorParam_UnkStruct3 unk1650;
+        CActorParam_UnkStruct3 unk16C8;
+        CActorParam_UnkStruct4 unk1740;
+        CActorParam_UnkStruct4 unk1792;
+        CActorParam_UnkStruct3 unk17E4;
+        CActorParam_UnkStruct3 unk185C;
+        CActorParam_UnkStruct4 unk18D4;
+        u8 unk1926[2]; //filler?
+        CActorParam_UnkStruct5 unk1928[8];
+        CArtsSet mArtsSet; //0x19E8
+        u8 unk2740[0xC];
+        CAttackSet mAttackSet; //0x274C
+        u32 unk2A80; //probably not here
+        CActorParam_UnkStruct1 unk2A84[10];
+        CActorParam_UnkStruct1 unk31DC;
+        CActorParam_UnkStruct1 unk3298;
+        u8 unk3354;
+        u8 unk3355[3]; //padding?
+        u16 unk3358;
+        u16 unk335A;
+        u8 unk335C[5];
+        u8 unk3361[3]; //padding?
+        float unk3364;
+        float unk3368;
+        u32 unk336C;
+        u32 unk3370;
+        u32 unk3374;
+        u8 unk3378[4];
+        float unk337C;
+    CActorParam();
+    void CBattleState_UnkVirtualFunc18();
+    void CBattleState_UnkVirtualFunc17();
+    int CBattleState_UnkVirtualFunc3();
+    void CBattleState_UnkVirtualFunc2();
+    };
+
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc19() { return unk15EC; }
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc29() { return *(u32*)&unk17E4; }
+inline u32* cf::CActorParam::CActorParam_UnkVirtualFunc113() { return &unk161C; }
+inline bool cf::CActorParam::CActorParam_UnkVirtualFunc115() { return !!unk1628; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc117() { return &unk1620; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc119() { return &unk1624; }
+inline void* cf::CActorParam::CActorParam_UnkVirtualFunc122() { return &mArtsSet; }
+}
+/* end "kyoshin/cf/object/CActorParam.hpp" */
+/* "src/kyoshin/cf/CtrlObjectParam.cpp" line 6 "kyoshin/cf/object/CObjectParam.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CObjectParam.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "src/kyoshin/cf/object/CObjectParam.hpp" line 3 "kyoshin/cf/object/CObjectState.hpp" */
+#pragma once
+
+/* "src/kyoshin/cf/object/CObjectState.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace cf {
+    //min size: 0x10
+    class CObjectState {
+    public:
+        virtual void CObjectState_UnkVirtualFunc1();  //0x8
+        virtual void CObjectState_UnkVirtualFunc2();  //0xC
+        virtual void CObjectState_UnkVirtualFunc3();  //0x10
+        virtual void CObjectState_UnkVirtualFunc4();  //0x14
+        virtual void CObjectState_UnkVirtualFunc5();  //0x18
+        virtual void CObjectState_UnkVirtualFunc6();  //0x1C
+        virtual void CObjectState_UnkVirtualFunc7();  //0x20
+        virtual void CObjectState_UnkVirtualFunc8();  //0x24
+        virtual void CObjectState_UnkVirtualFunc9();  //0x28
+        virtual void CObjectState_UnkVirtualFunc10(); //0x2C
+        virtual void CObjectState_UnkVirtualFunc11(); //0x30
+        virtual void* CObjectState_UnkVirtualFunc12(); //0x34
+        virtual void CObjectState_UnkVirtualFunc13(); //0x38
+
+        //0x0: vtable
+        u32 unk4;          // 0x04
+        u32 unk8;          // 0x08
+        u32 unkC;          // 0x0C
+    };
+}
+/* end "kyoshin/cf/object/CObjectState.hpp" */
+
+namespace cf {
+    //min size: 0x38
+    class CObjectParam : public CObjectState {
+    public:
+        virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
+        virtual void CObjectParam_UnkVirtualFunc2(); //0x40
+        virtual int CObjectParam_UnkVirtualFunc3(); //0x44
+        virtual void CObjectParam_UnkVirtualFunc4(); //0x48
+        virtual BOOL CObjectParam_UnkVirtualFunc5(); //0x4C
+        virtual void CObjectParam_UnkVirtualFunc6(); //0x50
+
+        //0x0: vtable
+        //0x0-10: CObjectState
+        void* mPtr10;          // 0x10-0x13 (pointer stored at offset 0x10)
+        u8 unk14[0x20 - 0x14]; // 0x14-0x2F
+        u32 field_30;          // 0x30  — checked for non-zero by UnkVirtualFunc3
+        u8  unk34[4];          // 0x34..0x37  (remainder of old unk10_3[0x28])
+    };
+}
+/* end "kyoshin/cf/object/CObjectParam.hpp" */
+
+void __ct__8009D604(){}
+
+void __dt__8009D72C(){}
+
+extern "C" void* func_8009D764(cf::CtrlObjectParamInit* p) {
+    p->field_00 = 0xFFFF;
+    p->field_02 = 0xFFFF;
+    p->field_04 = 0xFFFF;
+    p->field_06 = 0xFFFF;
+    p->field_08 = 0xFFFF;
+    p->field_0A = 0xFFFF;
     extern void* memset(void*, int, unsigned long);
-    return memset((char*)self + 12, 0, 192);
+    return static_cast<char*>(memset(p->blob, 0, sizeof(p->blob)));
 }
 
-extern "C" void func_8009D790() {}
+void func_8009D790(){}
 
-extern "C" void* func_8009D7E4(void* self, unsigned long index) {
-    return (char*)self + (index << 5) + 0xc;
+cf::CtrlObjectParamSubEntry* cf::CtrlObjectParamData::getSubStruct(unsigned long index) {
+    return &entries[index];
 }
 
-extern "C" void func_8009D7F4() {}
+void func_8009D7F4(){}
 
-extern "C" void* CActorParam_UnkVirtualFunc94__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x1650); }
-
-extern "C" void func_8009DB1C() {}
-
-extern "C" void func_8009DB28() {}
-
-extern "C" void func_8009DBF4() {}
-
-extern "C" void CActorParam_UnkVirtualFunc33__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x17e8) = val; }
-
-extern "C" void func_8009DFC8() {}
-
-extern "C" void func_8009E024() {}
-
-extern "C" void func_8009E030() {}
-
-extern "C" void func_8009E03C(void* self, void* arg) {
-    extern void func_8009DBF4(void*, unsigned long, void*);
-    func_8009DBF4(self, 2, arg);
+void* cf::CActorParam::CActorParam_UnkVirtualFunc94() {
+    return &unk1650;
 }
 
-extern "C" void func_8009E048(void* self, void* arg) {
-    extern void func_8009DBF4(void*, unsigned long, void*);
-    func_8009DBF4(self, 3, arg);
+void func_8009DB1C(){}
+
+void func_8009DB28(){}
+
+void func_8009DBF4(){}
+
+void cf::CActorParam::CActorParam_UnkVirtualFunc33(float val) {
+    reinterpret_cast<float&>(unk17E4.unk0[4]) = val;
 }
 
-extern "C" void func_8009E054() {}
+void func_8009DFC8(){}
 
-extern "C" void func_8009E0A8(void* self, void* arg) {
-    extern void func_8009DBF4(void*, unsigned long, void*);
-    func_8009DBF4(self, 5, arg);
+void func_8009E024(){}
+
+void func_8009E030(){}
+
+void cf::CtrlObjectParamData::setArgType2(void* arg) {
+    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);
+    func_8009DBF4(this, 2, arg);
 }
 
-extern "C" long func_8009E0B4(void* self, unsigned long index) {
-    return *(short*)((char*)self + (index << 1) + 0x1c);
+void cf::CtrlObjectParamData::setArgType3(void* arg) {
+    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);
+    func_8009DBF4(this, 3, arg);
 }
 
-extern "C" void func_8009E0C4() {}
+void func_8009E054(){}
 
-extern "C" void func_8009E120() {}
+void cf::CtrlObjectParamData::setArgType5(void* arg) {
+    extern void func_8009DBF4(cf::CtrlObjectParamData*, unsigned long, void*);
+    func_8009DBF4(this, 5, arg);
+}
 
-extern "C" void func_8009E168() {}
+long cf::CtrlObjectParamData::getShortAt1C(unsigned long index) {
+    return entries[0].shortArr[index];
+}
 
-extern "C" int func_8009E20C(void* self, int firstType, int firstIndex, int secondType, int secondIndex) {
+void func_8009E0C4(){}
+
+void func_8009E120(){}
+
+void func_8009E168(){}
+
+extern "C" int func_8009E20C(cf::CtrlObjectParamSwap* self, int firstType, int firstIndex,
+                             int secondType, int secondIndex) {
     int* first = 0;
     int* second = 0;
     if (firstType == 1)
-        first = reinterpret_cast<int*>(reinterpret_cast<char*>(self) + firstIndex * 4 + 4);
+        first = &self->intArr1[firstIndex];
     else if (firstType == 2)
-        first = reinterpret_cast<int*>(reinterpret_cast<char*>(self) + firstIndex * 4 + 16);
+        first = &self->intArr2[firstIndex];
     if (secondType == 1)
-        second = reinterpret_cast<int*>(reinterpret_cast<char*>(self) + secondIndex * 4 + 4);
+        second = &self->intArr1[secondIndex];
     else if (secondType == 2)
-        second = reinterpret_cast<int*>(reinterpret_cast<char*>(self) + secondIndex * 4 + 16);
+        second = &self->intArr2[secondIndex];
     int value = *first;
     *first = *second;
     *second = value;
     return 1;
 }
 
-extern "C" void func_8009E284() {}
+void func_8009E284(){}
 
-extern "C" int func_8009E344(const unsigned int* param_1, unsigned int param_2, int* param_3, int* param_4) {
+extern "C" int func_8009E344(const unsigned int* param_1, unsigned int param_2,
+                              int* param_3, int* param_4) {
     for (int i = 0; i < 3; ++i) {
         if (param_1[i + 1] == param_2) {
             *param_3 = 1;
@@ -1440,224 +2387,271 @@ extern "C" int func_8009E344(const unsigned int* param_1, unsigned int param_2, 
     return 0;
 }
 
-extern "C" void func_8009E3C0() {}
+void func_8009E3C0(){}
 
-extern "C" void func_8009E474() {}
+void func_8009E474(){}
 
-extern "C" void func_8009E574() {}
+void func_8009E574(){}
 
-extern "C" void func_8009E56C(void* self) { func_8009E574(); }
+void func_8009E56C(void* self){ func_8009E574(); }
 
-extern "C" void func_8009E740() {}
+void func_8009E740(){}
 
-extern "C" int func_8009E7C8(unsigned char* self) { self[0] = 0; unsigned int* words = reinterpret_cast<unsigned int*>(self + 4); words[0] = 0; words[1] = 0; words[2] = 0; words[3] = 0; words[4] = 0; words[5] = 0; words[6] = 0; words[7] = 0; words[8] = 0; words[9] = 0; words[10] = 0; words[11] = 0; words[12] = 0; words[13] = 0; words[14] = 0; words[15] = 0; words[16] = 0; words[17] = 0; words[18] = 0; words[19] = 0; words[20] = 0; words[21] = 0; words[22] = 0; words[23] = 0; return 1; }
+int cf::CtrlObjectParamClear::clearStruct() {
+    firstByte = 0;
+    for (int i = 0; i < 24; ++i) words[i] = 0;
+    return 1;
+}
 
-extern "C" void func_8009E838() {}
+void func_8009E838(){}
 
-extern "C" void func_8009E974() {}
+void func_8009E974(){}
 
-extern "C" void func_8009EABC() {}
+void func_8009EABC(){}
 
-extern "C" void func_8009EB2C() {}
+void func_8009EB2C(){}
 
-extern "C" void func_8009EB94() {}
+void func_8009EB94(){}
 
 extern "C" int func_8009EBE8(unsigned int idx) {
     extern u32 lbl_eu_80663E88;
     if (idx >= 50000) return 0;
-    return (*(unsigned char*)(lbl_eu_80663E88 + (idx >> 3) + 8188) >> (idx & 7)) & 1;
+    const u8* bitmap = reinterpret_cast<const u8*>(lbl_eu_80663E88 + 8188);
+    return (bitmap[idx >> 3] >> (idx & 7)) & 1;
 }
 
-extern "C" void func_8009EC18() {}
+void func_8009EC18(){}
 
-extern "C" void func_8009EC6C() {}
+void func_8009EC6C(){}
 
 extern "C" void* func_8009EC9C(int idx) {
     extern u32 lbl_eu_80663E88;
-    return (void*)(lbl_eu_80663E88 + idx * 15828 + 16880);
+    return reinterpret_cast<void*>(lbl_eu_80663E88 + idx * 15828 + 16880);
 }
 
 extern "C" void* func_8009ECB0() {
     extern unsigned long lbl_eu_80663E88;
-    return (void*)(lbl_eu_80663E88 + 0x1f98);
+    return reinterpret_cast<void*>(lbl_eu_80663E88 + 0x1f98);
 }
 
 extern "C" void* func_8009ECBC(int idx) {
     extern u32 lbl_eu_80663E88;
-    return (void*)(lbl_eu_80663E88 + (idx * 8) + 88);
+    return reinterpret_cast<void*>(lbl_eu_80663E88 + (idx * 8) + 88);
 }
 
 extern "C" void func_8009ECD0(unsigned long val) {
     extern unsigned long lbl_eu_80663E88;
     unsigned long addr = lbl_eu_80663E88;
-    *(unsigned long*)(addr + 0x3A388) = val;
+    *reinterpret_cast<unsigned long*>(addr + 0x3A388) = val;
 }
 
 extern "C" u32 func_8009ECE0() {
     extern u32 lbl_eu_80663E88;
-    return *(u32*)(lbl_eu_80663E88 + 0x40000 - 0x5C78);
+    return *reinterpret_cast<u32*>(lbl_eu_80663E88 + 0x3A388);
 }
 
 extern "C" unsigned long func_8009ECF0() {
     extern unsigned long lbl_eu_80663E88;
-    return *(unsigned short*)(lbl_eu_80663E88 + 0x50);
+    return *reinterpret_cast<unsigned short*>(lbl_eu_80663E88 + 0x50);
 }
 
 extern "C" void func_8009ECFC(unsigned short value) {
     extern unsigned long lbl_eu_80663E88;
-    *(unsigned short*)(lbl_eu_80663E88 + 0x50) = value;
+    *reinterpret_cast<unsigned short*>(lbl_eu_80663E88 + 0x50) = value;
 }
 
-extern "C" void __ct__8009ED08() {}
+void __ct__8009ED08(){}
 
-extern "C" void func_8009EF9C() {}
+void func_8009EF9C(){}
 
-extern "C" void CActorParam_UnkVirtualFunc16__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x15f8) = val; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc16(float val) {
+    unk15F8 = val;
+}
 
-extern "C" void CActorParam_UnkVirtualFunc55__Q22cf11CActorParamFv(void* self, u16 val) { *(u16*)((u8*)self + 0x160E) = val; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc55(u16 val) {
+    unk160E = val;
+}
 
-extern "C" void CActorParam_UnkVirtualFunc61__Q22cf11CActorParamFv(void* self, u16 val) { *(u16*)((u8*)self + 0x1616) = val; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc61(u16 val) {
+    unk1616 = val;
+}
 
-extern "C" void CActorParam_UnkVirtualFunc65__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1610) = val; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc65(float val) {
+    unk1610 = val;
+}
 
-extern "C" void CActorParam_UnkVirtualFunc68__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1618) = val; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc68(float val) {
+    unk1618 = val;
+}
 
-extern "C" void CActorParam_UnkVirtualFunc74__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1830) = val; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc74(float val) {
+    unk17E4.unk4C = val;
+}
 
-extern "C" void CActorParam_UnkVirtualFunc14__Q22cf11CActorParamFv(void* self, u8 val) { ((u8*)self)[0x15F4] = val; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc14(u8 val) {
+    unk15F4[0] = val;
+}
 
-extern "C" void* CActorParam_UnkVirtualFunc165__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x164c); }
+void* cf::CActorParam::CActorParam_UnkVirtualFunc165() {
+    return &unk164C;
+}
 
-extern "C" void CActorParam_UnkVirtualFunc116__Q22cf11CActorParamFv(void* self, float val) { *(float*)((u8*)self + 0x1620) = val; }
+void cf::CActorParam::CActorParam_UnkVirtualFunc116(float val) {
+    unk1620 = val;
+}
 
-extern "C" void func_8009F6D4() {}
+void func_8009F6D4(){}
 
-extern "C" void* CActorParam_UnkVirtualFunc152__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x3358); }
+void* cf::CActorParam::CActorParam_UnkVirtualFunc152() {
+    return &unk3358;
+}
 
-extern "C" void __ct__8009F8B8() {}
+void __ct__8009F8B8(){}
 
-extern "C" void func_800A03F4() {}
+void func_800A03F4(){}
 
-extern "C" void* CActorParam_UnkVirtualFunc125__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x2740); }
+void* cf::CActorParam::CActorParam_UnkVirtualFunc125() {
+    return unk2740;
+}
 
-extern "C" void* CActorParam_UnkVirtualFunc76__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x1830); }
+void* cf::CActorParam::CActorParam_UnkVirtualFunc76() {
+    return &unk17E4.unk4C;
+}
 
-extern "C" void func_800A082C() {}
+void func_800A082C(){}
 
-extern "C" void func_800A0860() {}
+void func_800A0860(){}
 
-extern "C" void* CActorParam_UnkVirtualFunc100__Q22cf11CActorParamFv(void* self) { return (void*)((u8*)self + 0x17e4); }
+void* cf::CActorParam::CActorParam_UnkVirtualFunc100() {
+    return &unk17E4;
+}
 
-extern "C" void func_800A0E64() {}
+void func_800A0E64(){}
 
-extern "C" void func_800A11A4() {}
+void func_800A11A4(){}
 
-extern "C" void func_800A1370() {}
+void func_800A1370(){}
 
-extern "C" void CActorParam_UnkVirtualFunc126__Q22cf11CActorParamFv() {}
+void CActorParam_UnkVirtualFunc126__Q22cf11CActorParamFv() {}
 
-extern "C" void func_800A13C4() {}
+void func_800A13C4(){}
 
-extern "C" void func_800A145C() {}
+void func_800A145C(){}
 
-extern "C" u32 CActorParam_UnkVirtualFunc26__Q22cf11CActorParamFv(void* self) { return *(u32*)((u8*)self + 0x1650); }
+u32 cf::CActorParam::CActorParam_UnkVirtualFunc26() {
+    return reinterpret_cast<u32&>(unk1650);
+}
 
-extern "C" void CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv() {}
+void CActorParam_UnkVirtualFunc166__Q22cf11CActorParamFv() {}
 
-extern "C" void func_800A18A4() {}
+void func_800A18A4(){}
 
-extern "C" void func_800A1B08() {}
+void func_800A1B08(){}
 
-extern "C" void func_800A1CA0() {}
+void func_800A1CA0(){}
 
-extern "C" void func_800A1E3C() {}
+void func_800A1E3C(){}
 
-extern "C" void func_800A21F8() {}
+void func_800A21F8(){}
 
-extern "C" void CActorParam_UnkVirtualFunc82__Q22cf11CActorParamFv(void* self, u32 addend) {
+void cf::CActorParam::CActorParam_UnkVirtualFunc82(u32 addend) {
     u32 cap = 0x05F60000 - 7937;
-    u32 val = *(u32*)((u8*)self + 0x1604) + addend;
-    *(u32*)((u8*)self + 0x1604) = val;
+    u32 val = unk1604 + addend;
+    unk1604 = val;
     if (val > cap) {
-        *(u32*)((u8*)self + 0x1604) = cap;
+        unk1604 = cap;
     }
 }
 
-extern "C" void CActorParam_UnkVirtualFunc90__Q22cf11CActorParamFv(void* self, u32 addend) {
+void cf::CActorParam::CActorParam_UnkVirtualFunc90(u32 addend) {
     u32 cap = 0x05F60000 - 7937;
-    u32 val = *(u32*)((u8*)self + 0x1608) + addend;
-    *(u32*)((u8*)self + 0x1608) = val;
+    u32 val = unk1608 + addend;
+    unk1608 = val;
     if (val > cap) {
-        *(u32*)((u8*)self + 0x1608) = cap;
+        unk1608 = cap;
     }
 }
 
-extern "C" void func_800A26A4() {}
+void func_800A26A4(){}
 
-extern "C" void func_800A282C() {}
+void func_800A282C(){}
 
-extern "C" void func_800A2974() {}
+void func_800A2974(){}
 
-extern "C" u32 CActorParam_UnkVirtualFunc85__Q22cf11CActorParamFv(void* self) { return *(u32*)((u8*)self + 0x1604); }
+u32 cf::CActorParam::CActorParam_UnkVirtualFunc85() {
+    return unk1604;
+}
 
-extern "C" void CActorParam_UnkVirtualFunc83__Q22cf11CActorParamFv(void* self, u32 addend) {
+void cf::CActorParam::CActorParam_UnkVirtualFunc83(u32 addend) {
     u32 cap = 0x05F60000 - 7937;
-    u32 val = *(u32*)((u8*)self + 0x1600) + addend;
-    *(u32*)((u8*)self + 0x1600) = val;
+    u32 val = unk1600 + addend;
+    unk1600 = val;
     if (val > cap) {
-        *(u32*)((u8*)self + 0x1600) = cap;
+        unk1600 = cap;
     }
 }
 
-extern "C" void CActorParam_UnkVirtualFunc81__Q22cf11CActorParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x1604) = val; }
-
-extern "C" void func_800A2AF0() {}
-
-extern "C" void func_800A2DE8() {}
-
-extern "C" void func_800A30E4() {}
-
-extern "C" u8 func_800A32BC(void* self) { return ((u8*)self)[0xE4]; }
-
-extern "C" void func_800A32C4() {}
-
-extern "C" void func_800A3304() {}
-
-extern "C" void func_800A33C8() {}
-
-extern "C" void CObjectState_UnkVirtualFunc13__Q22cf12CObjectStateFv(void* self) { *(u32*)((u8*)self + 12) = *(u32*)((u8*)self + 8); }
-
-extern "C" void* CObjectState_UnkVirtualFunc12__Q22cf12CObjectStateFv(void* self) { return (void*)((u8*)self + 0xc); }
-
-extern "C" void CObjectState_UnkVirtualFunc6__Q22cf12CObjectStateFv(void* self) { *(u32*)((u8*)self + 8) = 0; }
-
-extern "C" void CObjectState_UnkVirtualFunc4__Q22cf12CObjectStateFv(void* self) { *(u32*)((u8*)self + 4) = 0; }
-
-extern "C" int CObjectParam_UnkVirtualFunc3__Q22cf12CObjectParamFv(void* self) {
-    return *(int*)((char*)self + 48) != 0 ? 1 : 0;
+void cf::CActorParam::CActorParam_UnkVirtualFunc81(u32 val) {
+    unk1604 = val;
 }
 
-extern "C" void func_800A34C8(void* self) {
-    *(u32*)((u8*)self + 0) = 0;
-    *(u32*)((u8*)self + 4) = 0;
-    *(u32*)((u8*)self + 8) = 0;
-    *(u32*)((u8*)self + 12) = 0;
+void func_800A2AF0(){}
+
+void func_800A2DE8(){}
+
+void func_800A30E4(){}
+
+u8 cf::CtrlObjectParamByteE4::getByteE4() {
+    return field_E4;
 }
 
-extern "C" void __dt__800A34E0() {}
+void func_800A32C4(){}
 
-extern "C" void func_800A3520() {}
+void func_800A3304(){}
 
-extern "C" void func_800A3594() {}
+void func_800A33C8(){}
 
-extern "C" void func_800A36A4() {}
+void cf::CObjectState::CObjectState_UnkVirtualFunc13() {
+    unkC = unk8;
+}
 
-extern "C" void func_800A37CC() {}
+void* cf::CObjectState::CObjectState_UnkVirtualFunc12() {
+    return &unkC;
+}
 
-extern "C" void func_800A3940() {}
+void cf::CObjectState::CObjectState_UnkVirtualFunc6() {
+    unk8 = 0;
+}
 
-extern "C" void func_800A3998() {}
+void cf::CObjectState::CObjectState_UnkVirtualFunc4() {
+    unk4 = 0;
+}
 
-extern "C" void func_800A39E8() {}
+int cf::CObjectParam::CObjectParam_UnkVirtualFunc3() {
+    return field_30 != 0 ? 1 : 0;
+}
 
-extern "C" void func_800A3A6C() {}
+void cf::CtrlObjectParamClear16::clear16Bytes() {
+    words[0] = 0;
+    words[1] = 0;
+    words[2] = 0;
+    words[3] = 0;
+}
+
+void __dt__800A34E0(){}
+
+void func_800A3520(){}
+
+void func_800A3594(){}
+
+void func_800A36A4(){}
+
+void func_800A37CC(){}
+
+void func_800A3940(){}
+
+void func_800A3998(){}
+
+void func_800A39E8(){}
+
+void func_800A3A6C(){}

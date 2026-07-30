@@ -8,8 +8,7 @@ namespace cf {
 bool CHelp_Sp::func_802B8654() {
     CfObjectPc* objPc = func_800BFC68(CfGameManager::getPlayer(0));
     if (objPc != nullptr) {
-        void** vt = *reinterpret_cast<void***>(objPc);
-        f32 value = reinterpret_cast<f32 (*)(CfObjectPc*)>(vt[0x160 / 4])(objPc);
+        f32 value = reinterpret_cast<f32 (*)(CfObjectPc*)>(reinterpret_cast<void***>(objPc)[0][0x160 / 4])(objPc);
         return mThreshold <= value;
     }
     return false;

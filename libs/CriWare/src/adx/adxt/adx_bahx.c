@@ -7,7 +7,7 @@ extern void (*lbl_eu_805E5348)(void*);
 void ADXB_SetAhxInSj(void* self) {
     void* p = *(void**)((u8*)self + 0xb8);
     if (p == NULL) return;
-    lbl_eu_805E5348(p);
+    ((void (*)(void*))lbl_eu_805E5348)(p);
 }
 
 void ADXB_SetAhxDecSmpl() {}

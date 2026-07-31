@@ -2586,3 +2586,25 @@ Match details (bytes):
   (static inline does NOT suppress emission above ~0x44 — MWCC emits larger
   statics even when fully inlined; verified the tiny strequal case is
   suppressed but TRK_copy_vector was not).
+
+## CriWare adx_fini — reloc-name alignment for SMT; unattainable lis-hoist schedule
+
+- **`ADXF_Init` / `ADXF_Finish`** (`libs/CriWare/src/adx/adxf/adx_fini.c`, 95.2% /
+  89.5% fuzzy): the SMT engine keys each unresolved relocation on the **canonical
+  symbol name** (`reloc.addr.<sha256(name)>`). A decomp global declared as
+  `ADXF_Work` while retail references `lbl_eu_805DFDA8` produces *different*
+  address BitVecs → memory writes at distinct symbolic addresses → opaque-callee
+  token divergence → `inconclusive_abstraction`. Fix: **name the BSS global with
+  the retail linker symbol** (`struct ADXF_Work lbl_eu_805DFDA8;`) so both sides
+  share one reloc symbol. This alone moved `ADXF_Init` from inconclusive to
+  `EQUIVALENT_MATCH` (live-out contract; accepted).
+- **Retail materializes a single-base struct pointer with `lis r31,@ha; addi
+  r31,r31,@l` (self-addi) before its first use; every available MWCC (GC
+  1.3.2 → 3.0a5.2, Wii 1.0/1.1/1.3/1.5/1.6/1.7/0x4201_127, `-O4,p`/`-O4,s`,
+  `-opt level=2,peephole`, `-opt noschedule`) instead hoists `lis rN,@ha` above
+  the LR/r31 spills into a scratch register and folds the LO16 into the first
+  load/store (`lwz r0,@l(r3)`), materializing the pointer later
+  (`addi r31,r3,@l`). ~25 source shapes (local pointer, direct globals, mixed,
+  `volatile`, array-of-1, `s32*` member alias, block/early-return forms) all
+  reproduce the same 6-instruction prologue delta — treat as a hard cap; use
+  EQUIVALENT_MATCH with a matching reloc symbol instead of chasing bytes.

@@ -1,5 +1,8 @@
-// Auto-scaffolded catalog TU for CriWare/src/adx/adxf/adx_fini
-// Replace stubs with high-level C/C++ during decompilation.
+// CriWare ADX: ADXF subsystem init/finalize (libs/CriWare/src/adx/adxf/adx_fini.c)
+//
+// Matches retail ADXF_Init / ADXF_Finish. The work struct is the retail BSS
+// object lbl_eu_805DFDA8; using the retail linker name keeps the SMT
+// equivalence reloc symbols aligned with the retail object.
 
 #include <harness_catalog.h>
 #include <string.h>
@@ -23,14 +26,14 @@ struct ADXF_Work {
     u32 field_0x87C;        // 0x87C
 };
 
-// Global ADXF work structure in BSS
-struct ADXF_Work ADXF_Work[1];
+// Global ADXF work structure in BSS (retail symbol name)
+struct ADXF_Work lbl_eu_805DFDA8;
 
 // Forward declarations for ADXF functions defined in adx_fs.c
 void ADXF_CloseAll(void);
 
 void ADXF_Init(void) {
-    struct ADXF_Work* work = ADXF_Work;
+    struct ADXF_Work* work = &lbl_eu_805DFDA8;
     work->field_0x04 = lbl_eu_80515788;
 
     if (work->refcount == 0) {
@@ -49,10 +52,8 @@ void ADXF_Init(void) {
     work->refcount++;
 }
 
-
-
 void ADXF_Finish(void) {
-    struct ADXF_Work* work = ADXF_Work;
+    struct ADXF_Work* work = &lbl_eu_805DFDA8;
     if (--work->refcount != 0) return;
     ADXF_CloseAll();
     work->field_0x87C = 1;

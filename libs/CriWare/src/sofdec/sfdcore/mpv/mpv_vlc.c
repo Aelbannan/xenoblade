@@ -77,74 +77,74 @@ void mpvvlc_InitMbTypeBpic(void) {
 u16 *mpvvlc_InitCbpSub1(u16 *tbl) {
     s16 *p = (s16 *)tbl;
 
-    *p++ = 0;
-    *p++ = 0;
-    *p++ = -0x18f7;
-    *p++ = -0x24f7;
-    *p++ = -0x04f7;
-    *p++ = -0x08f7;
-    *p++ = -0x10f7;
-    *p++ = -0x20f7;
-    *p++ = -0x45f8;
-    *p++ = -0x45f8;
-    *p++ = -0x49f8;
-    *p++ = -0x49f8;
-    *p++ = -0x51f8;
-    *p++ = -0x51f8;
-    *p++ = -0x61f8;
-    *p++ = -0x61f8;
-    *p++ = 0x7908;
-    *p++ = 0x7908;
-    *p++ = 0x7508;
-    *p++ = 0x7508;
-    *p++ = 0x6d08;
-    *p++ = 0x6d08;
-    *p++ = 0x5d08;
-    *p++ = 0x5d08;
-    *p++ = -0x59f8;
-    *p++ = -0x59f8;
-    *p++ = -0x65f8;
-    *p++ = -0x65f8;
-    *p++ = 0x6508;
-    *p++ = 0x6508;
-    *p++ = 0x5908;
-    *p++ = 0x5908;
-    *p++ = -0x14f8;
-    *p++ = -0x14f8;
-    *p++ = -0x28f8;
-    *p++ = -0x28f8;
-    *p++ = -0x0cf8;
-    *p++ = -0x0cf8;
-    *p++ = -0x30f8;
-    *p++ = -0x30f8;
-    *p++ = -0x55f8;
-    *p++ = -0x55f8;
-    *p++ = -0x69f8;
-    *p++ = -0x69f8;
-    *p++ = -0x4df8;
-    *p++ = -0x4df8;
-    *p++ = -0x71f8;
-    *p++ = -0x71f8;
-    *p++ = 0x6908;
-    *p++ = 0x6908;
-    *p++ = 0x5508;
-    *p++ = 0x5508;
-    *p++ = 0x7108;
-    *p++ = 0x7108;
-    *p++ = 0x4d08;
-    *p++ = 0x4d08;
-    *p++ = -0x1cf8;
-    *p++ = -0x1cf8;
-    *p++ = -0x2cf8;
-    *p++ = -0x2cf8;
-    *p++ = -0x34f8;
-    *p++ = -0x34f8;
-    *p++ = -0x38f8;
-    *p++ = -0x38f8;
+    p[0] = 0;
+    p[1] = 0;
+    p[2] = -0x18f7;
+    p[3] = -0x24f7;
+    p[4] = -0x04f7;
+    p[5] = -0x08f7;
+    p[6] = -0x10f7;
+    p[7] = -0x20f7;
+    p[8] = -0x45f8;
+    p[9] = -0x45f8;
+    p[10] = -0x49f8;
+    p[11] = -0x49f8;
+    p[12] = -0x51f8;
+    p[13] = -0x51f8;
+    p[14] = -0x61f8;
+    p[15] = -0x61f8;
+    p[16] = 0x7908;
+    p[17] = 0x7908;
+    p[18] = 0x7508;
+    p[19] = 0x7508;
+    p[20] = 0x6d08;
+    p[21] = 0x6d08;
+    p[22] = 0x5d08;
+    p[23] = 0x5d08;
+    p[24] = -0x59f8;
+    p[25] = -0x59f8;
+    p[26] = -0x65f8;
+    p[27] = -0x65f8;
+    p[28] = 0x6508;
+    p[29] = 0x6508;
+    p[30] = 0x5908;
+    p[31] = 0x5908;
+    p[32] = -0x14f8;
+    p[33] = -0x14f8;
+    p[34] = -0x28f8;
+    p[35] = -0x28f8;
+    p[36] = -0x0cf8;
+    p[37] = -0x0cf8;
+    p[38] = -0x30f8;
+    p[39] = -0x30f8;
+    p[40] = -0x55f8;
+    p[41] = -0x55f8;
+    p[42] = -0x69f8;
+    p[43] = -0x69f8;
+    p[44] = -0x4df8;
+    p[45] = -0x4df8;
+    p[46] = -0x71f8;
+    p[47] = -0x71f8;
+    p[48] = 0x6908;
+    p[49] = 0x6908;
+    p[50] = 0x5508;
+    p[51] = 0x5508;
+    p[52] = 0x7108;
+    p[53] = 0x7108;
+    p[54] = 0x4d08;
+    p[55] = 0x4d08;
+    p[56] = -0x1cf8;
+    p[57] = -0x1cf8;
+    p[58] = -0x2cf8;
+    p[59] = -0x2cf8;
+    p[60] = -0x34f8;
+    p[61] = -0x34f8;
+    p[62] = -0x38f8;
+    p[63] = -0x38f8;
     return tbl + 0x40;
 }
 
-/* Coded-block-pattern sub-table 2 (chroma pattern code tables) */
+
 u16 *mpvvlc_InitCbpSub2(u16 *tbl) {
     s16 *p = (s16 *)tbl;
     s16 *q = (s16 *)(tbl + 0x50);
@@ -219,7 +219,7 @@ void mpvvlc_InitDcSizC(void) {
 
 /* Luma DC size table (2nd form) */
 void mpvvlc2_InitDcSizY(void) {
-    u8 *p = lbl_eu_80603C28;
+    s8 *p = (s8 *)lbl_eu_80603C28;
     int i;
 
     for (i = 0; i < 256; i++)
@@ -239,18 +239,18 @@ void mpvvlc2_InitDcSizY(void) {
     for (i = 0; i < 16; i++)
         *p++ = 0x76;
     for (i = 0; i < 8; i++)
-        *p++ = 0x87;
+        *p++ = -0x79;
     for (i = 0; i < 4; i++)
-        *p++ = 0x98;
-    *p++ = 0xa9;
-    *p++ = 0xa9;
-    *p++ = 0xb9;
-    *p++ = 0xb9;
+        *p++ = -0x68;
+    *p++ = -0x57;
+    *p++ = -0x57;
+    *p++ = -0x47;
+    *p++ = -0x47;
 }
 
 /* Chroma DC size table (2nd form) */
 void mpvvlc2_InitDcSizC(void) {
-    u8 *p = lbl_eu_80604028;
+    s8 *p = (s8 *)lbl_eu_80604028;
     int i;
 
     for (i = 0; i < 256; i++)
@@ -270,11 +270,11 @@ void mpvvlc2_InitDcSizC(void) {
     for (i = 0; i < 8; i++)
         *p++ = 0x77;
     for (i = 0; i < 4; i++)
-        *p++ = 0x88;
-    *p++ = 0x99;
-    *p++ = 0x99;
-    *p++ = 0xaa;
-    *p++ = 0xba;
+        *p++ = -0x78;
+    *p++ = -0x67;
+    *p++ = -0x67;
+    *p++ = -0x56;
+    *p++ = -0x46;
 }
 
 /* Intra run/level VLC table (128 dwords) */
@@ -326,8 +326,7 @@ void mpvvlc_InitMbaiIpic(void) {
         *p++ = 0x0240;
 
     v = 0x210;
-    i = 2;
-    while (i--) {
+    for (i = 0; i < 2; i++) {
         for (j = 0; j < 6; j++) {
             *p++ = v | 0x440d;
             *p++ = v | 0x040c;
@@ -341,8 +340,7 @@ void mpvvlc_InitMbaiIpic(void) {
         *p++ = v | 0x040b;
         v -= 0x10;
     }
-    i = 2;
-    while (i--) {
+    for (i = 0; i < 2; i++) {
         for (j = 0; j < 3; j++) {
             *p++ = v | 0x440a;
             *p++ = v | 0x440a;
@@ -363,8 +361,7 @@ void mpvvlc_InitMbaiIpic(void) {
             v -= 0x10;
         }
     }
-    i = 2;
-    while (i--) {
+    for (i = 0; i < 2; i++) {
         *p++ = v | 0x4409;
         *p++ = v | 0x4409;
         *p++ = v | 0x4409;

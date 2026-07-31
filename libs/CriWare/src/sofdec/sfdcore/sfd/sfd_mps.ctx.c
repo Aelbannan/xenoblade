@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/sfd/sfd_mps
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mps.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/sfdcore/sfd/sfd_mps.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -742,7 +742,31 @@ void criware_803C1570(void* self, u32 a, u32 b) {
 
 void sfmps_DecodeOneUnit() {}
 
-void sfmps_pesfn() {}
+typedef struct {
+    u8 _000[0x9A0];
+    u32 stm_id;
+    u32 stm_inf;
+    u8 _9A8[0x3B4];
+    u32 pes_fn;
+    u32 pes_obj;
+} SFMPS_HN;
+
+void sfmps_pesfn(SFMPS_HN* hn, u8 stream_kind, u32 arg3, u32 arg4) {
+    void (*cb)(u32, u8*, u32*, u32*, u32, u32*);
+    u8 kind_copy;
+    u32 args[2];
+    u32 stm_info[2];
+    
+    cb = (void (*)(u32, u8*, u32*, u32*, u32, u32*))hn->pes_fn;
+    if (cb == NULL) return;
+    
+    kind_copy = stream_kind;
+    args[0] = arg3;
+    args[1] = arg4;
+    stm_info[0] = hn->stm_id;
+    stm_info[1] = hn->stm_inf;
+    cb(hn->pes_obj, &kind_copy, stm_info, args, 0, NULL);
+}
 
 void sfmps_SkipNext() {}
 
@@ -779,7 +803,15 @@ s32 sfmps_ErrFn(void* h, u32 err_code) {
     return SFLIB_SetErr(h, err_code);
 }
 
-void SFMPS_Destroy() {}
+int MPS_Destroy(void*);
+
+int SFMPS_Destroy(void* self) {
+    void* mps = *(void**)((u8*)self + 0x2024);
+    if (MPS_Destroy(*(void**)mps)) {
+        return SFLIB_SetErr(self, 0xFF000D0A);
+    }
+    return 0;
+}
 
 int SFMPS_RequestStop(void) { return 0x0; }
 

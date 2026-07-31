@@ -145,16 +145,15 @@ void* func_8003B4B0(void* bdat, const char* col){
     entry = base + bucketOff;
     while (1) {
         if (strcmp(colArg, entry + 4) == 0) {
-            break;
+            return entry;
         }
         nextOff = *reinterpret_cast<u16*>(entry + 2);
         if (nextOff == 0) {
-            entry = 0;
             break;
         }
         entry = base + nextOff;
     }
-    return entry;
+    return 0;
 }
 #pragma dont_inline reset
 
@@ -446,7 +445,7 @@ u32 func_8003B748(void* table, void* col, s32 row, s32 index){
     BdatHeader* hdr = static_cast<BdatHeader*>(table);
     char* base = reinterpret_cast<char*>(hdr);
     u16 colOff = static_cast<BdatColEntry*>(col)->colHdrRel;
-    char* colHdr = base + colOff;
+    u8* colHdr = reinterpret_cast<u8*>(base) + colOff;
     if (colHdr[0] != 2) {
         return 0;
     }
@@ -457,13 +456,13 @@ u32 func_8003B748(void* table, void* col, s32 row, s32 index){
     u16 stride = hdr->stride;
     u16 dataOff = hdr->dataOff;
     s32 rowStride = row * stride;
-    u32 elemType = static_cast<u8>(colHdr[1]);
+    s32 elemType = static_cast<s32>(colHdr[1]);
     char* dataBase = base + dataOff;
     u16 colDataOff = *reinterpret_cast<u16*>(colHdr + 0x2);
     dataBase += rowStride;
     dataBase += colDataOff;
     // Retail: subi/cmplwi then ble to *4; fall-through is the cmpwi switch.
-    if (elemType - 6 > 1) {
+    if (static_cast<u32>(elemType - 6) > 1) {
         switch (elemType) {
         case 1:
         case 4:
@@ -490,12 +489,12 @@ u32 func_8003B748(void* table, void* col, s32 row, s32 index){
 void func_8003B800(VMArg* out, void* data, u32 type){
     VMArg* outArg;
     void* dataArg;
-    u32 typeArg;
+    s32 typeArg;
     u32 local;
 
     outArg = out;
     dataArg = data;
-    typeArg = type;
+    typeArg = static_cast<s32>(type);
     local = 0;
     switch (typeArg) {
     case 0:
@@ -510,7 +509,7 @@ void func_8003B800(VMArg* out, void* data, u32 type){
         local = *reinterpret_cast<u32*>(dataArg);
         break;
     case 4:
-        local = static_cast<u32>(static_cast<s32>(static_cast<s8>(*reinterpret_cast<u8*>(dataArg))));
+        local = static_cast<u32>(*reinterpret_cast<s8*>(dataArg));
         break;
     case 5:
         local = static_cast<u32>(static_cast<s32>(*reinterpret_cast<s16*>(dataArg)));

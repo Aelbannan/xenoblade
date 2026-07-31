@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/realtimeevt/CREvtModelObj
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/realtimeevt/CREvtModelObj.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/realtimeevt/CREvtModelObj.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,52 +1390,87 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
 
-extern "C" void __ct__CREvtModelObj() {}
+/* "src/kyoshin/realtimeevt/CREvtModelObj.cpp" line 5 "kyoshin/realtimeevt/CREvtModelObj.hpp" */
+#pragma once
 
-extern "C" void __ct__80181B74(void* self) {}
+/* "src/kyoshin/realtimeevt/CREvtModelObj.hpp" line 2 "types.h" */
+/* end "types.h" */
 
-extern "C" void func_80181C90() {}
+class CREvtModelObj {
+public:
+    CREvtModelObj();
 
-extern "C" void func_80181DDC() {}
+    // TODO: add fields
+    void OnFileEvent();
+};
 
-extern "C" void func_80181F28() {}
+/* end "kyoshin/realtimeevt/CREvtModelObj.hpp" */
+void __ct__CREvtModelObj(){}
 
-extern "C" void func_80182084() {}
+void __ct__80181B74(void* self){}
 
-extern "C" void func_80182100() {}
+void func_80181C90(){}
 
-extern "C" void func_80182178() {}
+void func_80181DDC(){}
 
-extern "C" void func_80182B2C() {}
+void func_80181F28(){}
 
-extern "C" void func_80183264(void) {}
+void func_80182084(){}
 
-extern "C" void func_80183268() {}
+void func_80182100(){}
 
-extern "C" void func_801832D4() {}
+void func_80182178(){}
 
-extern "C" void func_8018351C() {}
+void func_80182B2C(){}
 
-extern "C" int func_801835BC(void* self) { return 1; }
+void func_80183264(void) {}
 
-extern "C" void func_801835C4(void* self) {
+void func_80183268(){}
+
+void func_801832D4(){}
+
+void func_8018351C(){}
+
+int func_801835BC(void* self) { return 1; }
+
+void func_801835C4(void* self) {
     *(unsigned long*)((char*)self + 0x18) &= ~0x20;
 }
 
-extern "C" void func_801835D4(void* self) {}
+void func_801835D4(void* self){}
 
-extern "C" void func_801836CC(void* self, unsigned long value)
+void func_801836CC(void* self, unsigned long value)
 {
     if (*(unsigned long*)((char*)self + 0x7c) == value) {
         *(unsigned long*)((char*)self + 0x7c) = 0;
     }
 }
 
-extern "C" void func_801836E4() {}
+void func_801836E4(){}
 
-extern "C" void OnFileEvent__13CREvtModelObjFP10CEventFile(void* self) { ((void(*)(void*))func_801835D4)((char*)self - 0x38); }
+void CREvtModelObj::OnFileEvent() { func_801835D4(this); }
 
 extern "C" void func_8018370C(void* self) { ((void(*)(void*))__ct__80181B74)((char*)self - 0x38); }
 

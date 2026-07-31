@@ -281,7 +281,25 @@ float CActParamAnim::func_8004B898() {
     return lbl_eu_80665EA0;
 }
 
-void func_8004B8B0(){}
+extern "C" void func_8004B8B0(CActParamAnim* self, u32 param1, u32 param2, f32 value) {
+    if (param1 != 0) {
+        *(f32*)((u8*)self + 0x480) = value;
+        u32 flags = *(u32*)((u8*)self + 0xC);
+        flags |= 0x10000;
+        *(u32*)((u8*)self + 0xC) = flags;
+        if (param2 != 0) {
+            flags |= 0x20000;
+            *(u32*)((u8*)self + 0xC) = flags;
+        } else {
+            flags &= ~0x20000;
+            *(u32*)((u8*)self + 0xC) = flags;
+        }
+    } else {
+        u32 flags = *(u32*)((u8*)self + 0xC);
+        flags &= ~0x30000;
+        *(u32*)((u8*)self + 0xC) = flags;
+    }
+}
 
 void func_8004B8F8(){}
 
@@ -306,7 +324,20 @@ void* CActParamAnim::getNextChainObj() {
 
 void func_8004B9D4(){}
 
-void func_8004BC28(){}
+extern "C" f32 func_8004BC28(f32 value) {
+    extern f32 lbl_eu_8066A1FC;
+    extern f32 lbl_eu_8066A1F8;
+    f32 twoPi = lbl_eu_8066A1FC;
+    f32 pi = lbl_eu_8066A1F8;
+    while (value >= pi) {
+        value -= twoPi;
+    }
+    f32 negPi = -pi;
+    while (value < negPi) {
+        value += twoPi;
+    }
+    return value;
+}
 
 void CActParamAnim::setBlendFlag(int param) {
     if (param != 0) {
@@ -341,7 +372,19 @@ extern "C" void func_8004CB80(f32* out, const f32* a, const f32* b){
     out[2] = result.z;
 }
 
-void func_8004CBC8(){}
+extern "C" void func_8004CBC8(f32* vec) {
+    extern f32 lbl_eu_80665EA0;
+    extern void PSVECNormalize(const f32*, f32*);
+    extern ml::CVec3 zero__Q22ml5CVec3;
+    f32 magSq = vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
+    if (magSq == lbl_eu_80665EA0) {
+        vec[0] = zero__Q22ml5CVec3.x;
+        vec[1] = zero__Q22ml5CVec3.y;
+        vec[2] = zero__Q22ml5CVec3.z;
+    } else {
+        PSVECNormalize(vec, vec);
+    }
+}
 
 float Atan2FIdx__Q24nw4r4mathFff(float, float);
 float CActParamAnim_atan2Scaled(float y, float x) {
@@ -406,7 +449,20 @@ void CActParamAnim::func_8004E828() {}
 
 void CActParamAnim::func_8004E9EC() {}
 
-void func_8004EC78(){}
+extern "C" f32 func_8004EC78(f32 value) {
+    extern f32 lbl_eu_80665EA0;
+    extern f32 FrSqrt__Q24nw4r4mathFf(f32);
+    extern void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+    extern char lbl_eu_80526324[];
+    extern char lbl_eu_80526300[];
+    if (value < 0.0f) {
+        Warning__Q24nw4r2dbFPCciPCce(lbl_eu_80526324, 0x273, lbl_eu_80526300);
+    }
+    if (value <= 0.0f) {
+        return 0.0f;
+    }
+    return value * FrSqrt__Q24nw4r4mathFf(value);
+}
 
 void CActParamAnim::func_8004ECF4() const {}
 

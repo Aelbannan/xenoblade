@@ -4,19 +4,117 @@
 #include "kyoshin/harness_catalog.hpp"
 #include <nw4r/math/math_types.h>
 
-void func_80135FDC(){}
+// ---------- globals ----------
+extern "C" {
+extern u8 lbl_eu_806621F0;
+extern u8 lbl_eu_80664058;
+extern u8 lbl_eu_80664059;
+extern u8 lbl_eu_8066405A;
+extern u8 lbl_eu_8066405B;
+extern u32 lbl_eu_8066405C;
+extern u32 lbl_eu_80664060;
+extern u8 lbl_eu_80664064;
+extern u32 lbl_eu_80664068;
+extern u32 lbl_eu_8066406C;
+extern u8 lbl_eu_80664070;
+extern u8 lbl_eu_80664077;
+extern u16 lbl_eu_80664078;
+extern u8 lbl_eu_8066407E;
+extern u8 lbl_eu_8066407F;
+extern u8 lbl_eu_80664080;
+extern u32 lbl_eu_806640EC;
+extern u32 lbl_eu_80664098;
+extern u32 lbl_eu_806640A8;
+extern u32 lbl_eu_806640D8;
+extern u32 lbl_eu_806640F0;
+extern u32 lbl_eu_806640F4;
+extern u32 lbl_eu_806640F8;
+extern u32 lbl_eu_806640FC;
+extern u32 lbl_eu_80664104;
+extern u32 lbl_eu_80664108;
+extern u32 lbl_eu_8066410C;
+extern u32 lbl_eu_80664110;
+extern u32 lbl_eu_80664184;
+extern f32 lbl_eu_806672D8;
+extern f32 lbl_eu_806672DC;
+extern f32 lbl_eu_806672E0;
+extern f32 lbl_eu_806672E4;
+extern f32 lbl_eu_806672E8;
+extern f32 lbl_eu_806672EC;
+extern f32 lbl_eu_806672F0;
+extern f64 lbl_eu_806672F8;
+extern f32 lbl_eu_80667300;
+extern f32 lbl_eu_80667304;
+extern f32 lbl_eu_80667308;
+extern f32 lbl_eu_8066730C;
+extern f32 lbl_eu_80667310;
+extern f32 lbl_eu_80667314;
+extern f32 lbl_eu_80667318;
+extern f32 lbl_eu_8066731C;
+extern f32 lbl_eu_80667320;
+extern f32 lbl_eu_80667324;
+extern f32 lbl_eu_80667328;
+extern f32 lbl_eu_8066732C;
+extern f32 lbl_eu_80667330;
+extern f32 lbl_eu_80667334;
+extern f32 lbl_eu_80667338;
+extern f32 lbl_eu_8066733C;
+extern f32 lbl_eu_80667340;
+extern f32 lbl_eu_80667344;
+extern f32 lbl_eu_80667348;
+extern f32 lbl_eu_80667350;
+extern f32 lbl_eu_80667358;
+extern f32 lbl_eu_80667360;
+extern u32 lbl_eu_8066A208;
+extern u32 lbl_eu_8066A20C;
+extern u32 lbl_eu_806621F4;
+extern u32 lbl_eu_80663E14;
+extern u32 lbl_eu_80663E24;
+extern char lbl_eu_80500664[];
+}
 
-void func_8013600C(){}
+extern void func_8003AA34();
+extern void* getFP__FPCc();
+extern void* getBdatStringColumnValue();
 
-void func_8013606C(){}
+// ---------- init ----------
+void func_80135FDC() {
+    lbl_eu_80664058 = 0;
+    lbl_eu_80664059 = 0;
+    lbl_eu_8066405A = 0;
+    lbl_eu_8066405B = 0;
+    lbl_eu_8066405C = 0;
+    lbl_eu_806621F0 = 1;
+    lbl_eu_80664068 = 0;
+    lbl_eu_8066406C = 0;
+    lbl_eu_8066407F = 0;
+}
 
-void func_801360CC(){}
+// ---------- BDAT helpers ----------
+// func_8013600C: BDAT string -> u8
+// func_8013606C: BDAT string -> u16
+// func_801360CC: BDAT string -> s8
+// func_80136130: BDAT string -> s16
+// func_80136190: BDAT string -> void
 
-void func_80136130(){}
+static inline void* bdatInit(const char* a, const char* b, const char* c) {
+    func_8003AA34();
+    void* fp = getFP__FPCc();
+    return getBdatStringColumnValue(fp, b, c);
+}
 
-void func_80136190(){}
+void func_80136190(const char* a, const char* b, const char* c) {
+    func_8003AA34();
+    void* fp = getFP__FPCc();
+    getBdatStringColumnValue(fp, b, c);
+}
 
-void func_801361E8(){}
+void func_801361E8(const char* a, const char* b, const char* c) {
+    if (!a) return;
+    func_8003AA34();
+    void* fp = getFP__FPCc();
+    getBdatStringColumnValue(fp, b, c);
+}
 
 void func_80136254(){}
 

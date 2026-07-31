@@ -285,10 +285,12 @@ void CException::wkRender() {
     if (view != nullptr) {
         view = (CView*)((u8*)view + 0x1C4);
     }
+    u16 width = 0;
+    u16 height = 0;
     GXRenderModeObj* mode = CDeviceVI::getRenderModeObj();
-    u16 width = mode->fbWidth;
+    width = mode->fbWidth;
     mode = CDeviceVI::getRenderModeObj();
-    u16 height = mode->efbHeight;
+    height = mode->efbHeight;
     if (view == nullptr) {
         func_804525D4__11CDeviceFontFv();
         CDeviceVI::setFlag0(false);

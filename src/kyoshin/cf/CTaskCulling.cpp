@@ -4,6 +4,9 @@
 #include "monolib/scn.hpp"
 #include <cstring>
 
+// cf::CfGameManager accessor (returns void* due to UnkClass type mismatch)
+void* func_80083298__Q22cf13CfGameManagerFv(void);
+
 // Buffer header for spInstance->unk94 (occ culling data)
 #pragma pack(push, 1)
 struct OccBufferHead {
@@ -93,7 +96,7 @@ void CTaskCulling::func_801A2C94(){
 
         func_801A2C94();
 
-        cf::CfGameManager* gm = cf::CfGameManager::func_80083298();
+        cf::CfGameManager* gm = (cf::CfGameManager*)func_80083298__Q22cf13CfGameManagerFv();
         u32 r4, r5, r6, r7;
 
         func_800AA318(gm->unk70, &r4, &r5, &r6, &r7);

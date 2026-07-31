@@ -17691,7 +17691,7 @@ public:
     const wchar_t* mMessage;     //0x1F0
     float mAlphaStep;            //0x1F4
     float mAlpha;                //0x1F8
-    u32 mAnimState;              //0x1FC
+    s32 mAnimState;              //0x1FC
     IGameException* mException; //0x200
     u32 unk204;                  //0x204
     u32 unk208;                  //0x208
@@ -250113,6 +250113,7 @@ namespace cf {
 
 namespace cf {
     class UnkClass_CActorParam15E0;
+    struct CBattleStateSrcEntry;
 
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
@@ -250183,10 +250184,6 @@ namespace cf {
         u8 unk15AC[0x15D8 - 0x15AC];
         UnkClass_CActorParam15E0* field_0x15D8;
     };
-}
-
-namespace cf {
-    struct CBattleStateSrcEntry;
 }
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 /* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
@@ -254668,7 +254665,42 @@ bool cf::CfGameManager::func_80086F9C() {
 CPad* cf::CfGameManager::getPad(int channel) {
     return &lbl_eu_80570D40[channel & 7];
 }
-void cf::CfGameManager::setPad(int channel, CPad* pad, u32 arg3) {}
+extern "C" void setPad__Q22cf13CfGameManagerFv(int channel, CPad* pad, u32 arg3) {
+    CPad* destination = &lbl_eu_80570D40[channel & 7];
+    destination->mHeldButtonFlags = pad->mHeldButtonFlags;
+    destination->mPressedButtonFlags = pad->mPressedButtonFlags;
+    destination->mTurboPressButtonFlags = pad->mTurboPressButtonFlags;
+    destination->mReleasedButtonFlags = pad->mReleasedButtonFlags;
+    destination->mShortPressButtonFlags = pad->mShortPressButtonFlags;
+    destination->mLongHoldButtonFlags = pad->mLongHoldButtonFlags;
+    for (s32 i = 0; i < 0x40; ++i) {
+        destination->mButtonHoldTimersTurbo[i] = pad->mButtonHoldTimersTurbo[i];
+        destination->mButtonHoldTimers[i] = pad->mButtonHoldTimers[i];
+    }
+    destination->mLStickX = pad->mLStickX;
+    destination->mLStickY = pad->mLStickY;
+    destination->mRStickX = pad->mRStickX;
+    destination->mRStickY = pad->mRStickY;
+    destination->mLeftTriggerByte = pad->mLeftTriggerByte;
+    destination->mRightTriggerByte = pad->mRightTriggerByte;
+    destination->mLStickXRaw = pad->mLStickXRaw;
+    destination->mLStickYRaw = pad->mLStickYRaw;
+    destination->mRStickXRaw = pad->mRStickXRaw;
+    destination->mRStickYRaw = pad->mRStickYRaw;
+    destination->mLeftTriggerFloat = pad->mLeftTriggerFloat;
+    destination->mRightTriggerFloat = pad->mRightTriggerFloat;
+    destination->mWpadData = pad->mWpadData;
+    destination->mWiimoteAccelData = pad->mWiimoteAccelData;
+    destination->mNunchuckAccelData = pad->mNunchuckAccelData;
+    destination->mPadType = pad->mPadType;
+    destination->mWpadErr = pad->mWpadErr;
+    destination->mConnected = pad->mConnected;
+    destination->mChannel = pad->mChannel;
+    destination->mMotorTimer = pad->mMotorTimer;
+    if (channel <= 3 && arg3 != 0) {
+        lbl_eu_80661BC8 = channel;
+    }
+}
 void cf::CfGameManager::setCurrentPadPtr(const CPad* pad, u32 channel) {
     if (pad != nullptr && lbl_eu_80661BC8 != 0xFFFFFFFF && lbl_eu_80661BC8 != channel) {
         return;

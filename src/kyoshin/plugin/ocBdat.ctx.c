@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/plugin/ocBdat
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/plugin/ocBdat.cpp" line 4 "kyoshin/plugin/ocBdat.hpp" */
+/* "src/kyoshin/plugin/ocBdat.cpp" line 3 "kyoshin/plugin/ocBdat.hpp" */
 #pragma once
 
 /* "src/kyoshin/plugin/ocBdat.hpp" line 2 "types.h" */
@@ -1165,6 +1165,61 @@ void vmHalt();
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1188,7 +1243,7 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
-/* "src/kyoshin/plugin/ocBdat.cpp" line 5 "kyoshin/code_801862C0.hpp" */
+/* "src/kyoshin/plugin/ocBdat.cpp" line 4 "kyoshin/code_801862C0.hpp" */
 #pragma once
 
 /**
@@ -1223,9 +1278,9 @@ void* func_80186D20(void* p);
 }
 #endif
 /* end "kyoshin/code_801862C0.hpp" */
-/* "src/kyoshin/plugin/ocBdat.cpp" line 6 "monolib/vm/yvm2.h" */
+/* "src/kyoshin/plugin/ocBdat.cpp" line 5 "monolib/vm/yvm2.h" */
 /* end "monolib/vm/yvm2.h" */
-/* "src/kyoshin/plugin/ocBdat.cpp" line 7 "string.h" */
+/* "src/kyoshin/plugin/ocBdat.cpp" line 6 "string.h" */
 #ifndef MSL_STRING_H
 #define MSL_STRING_H
 
@@ -1296,6 +1351,12 @@ void* memset(void* dest, int val, size_t count);
 #endif
 /* end "string.h" */
 
+void* func_8003B4B0(void* bdat, const char* col);
+u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
+u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index);
+u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
+u32 func_8003B748(void* table, void* col, s32 row, s32 index);
+void func_8003B800(VMArg* out, void* data, u32 type);
 extern "C" {
 extern s8 lbl_eu_80663D10;
 extern u32 lbl_eu_80663D14;
@@ -1304,20 +1365,17 @@ extern void* lbl_eu_805705D0[8];
 BOOL vmOCRegist(OCData* pOC);
 extern OCData lbl_eu_80524E40;
 
-void* func_8003B4B0(void* bdat, const char* col);
+
 u32 func_8003B6A0(void* base, void* data, u32 type);
-u32 func_8003B748(void* table, void* col, s32 row, s32 index);
-u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
-u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index);
+
+
+
 u32 func_8003AFC0(void* bdat, const char* col);
 u32 func_8003B204(void* bdat, const char* col);
-u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
-void func_8003B800(VMArg* out, void* data, u32 type);
 }
 
-extern "C" void* func_eu_8003B720(void* p);
-
-extern "C" void* func_8003AA34() {
+void* func_eu_8003B720(void* p);
+void* CBdat::func_8003AA34() {
     if (!lbl_eu_80663D10) {
         lbl_eu_80663D10 = 1;
     }
@@ -1350,13 +1408,11 @@ void* getFP(const char* pName) {
     void** tableSlot;
     const char* name;
     s32 tableIdx;
-    void* table;
+    BdatNameIndexHdr* hdr;
     s32 hi;
     s32 lo;
-    u32 sum;
-    u32 adj;
     s32 mid;
-    u32 entryOff;
+    u16 entryOff;
     char* entry;
     u16 nameOff;
     const char* entryName;
@@ -1366,16 +1422,15 @@ void* getFP(const char* pName) {
     name = pName;
     tableIdx = 0;
     while (tableIdx < 7) {
-        table = *tableSlot;
-        if (table != 0) {
+        hdr = static_cast<BdatNameIndexHdr*>(*tableSlot);
+        if (hdr != 0) {
+            char* base = reinterpret_cast<char*>(hdr);
             lo = 0;
-            hi = *reinterpret_cast<s32*>(table);
+            hi = hdr->count;
             while (lo < hi) {
-                sum = static_cast<u32>(lo) + static_cast<u32>(hi);
-                adj = sum + (sum >> 31);
-                mid = adj >> 1;
-                entryOff = *reinterpret_cast<u32*>(reinterpret_cast<char*>(table) + (adj & ~1u) + 8u);
-                entry = reinterpret_cast<char*>(table) + entryOff;
+                mid = (lo + hi) / 2;
+                entryOff = hdr->offsets[mid];
+                entry = base + entryOff;
                 nameOff = *reinterpret_cast<u16*>(entry + 6);
                 entryName = entry + nameOff;
                 cmp = strcmp(entryName, name);
@@ -1396,8 +1451,7 @@ void* getFP(const char* pName) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" void* func_8003B4B0(void* bdat, const char* col) {
-    void* bdatArg;
+void* func_8003B4B0(void* bdat, const char* col){
     const char* colArg;
     u16 bucketCount;
     char* hashBase;
@@ -1409,13 +1463,14 @@ extern "C" void* func_8003B4B0(void* bdat, const char* col) {
     char* entry;
     u16 nextOff;
 
-    bdatArg = bdat;
-    colArg = col;
-    if (bdatArg == 0) {
+    if (bdat == 0) {
         return 0;
     }
-    bucketCount = *reinterpret_cast<u16*>(reinterpret_cast<char*>(bdatArg) + 0xC);
-    hashBase = reinterpret_cast<char*>(bdatArg) + *reinterpret_cast<u16*>(reinterpret_cast<char*>(bdatArg) + 0xA);
+    BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
+    char* base = reinterpret_cast<char*>(hdr);
+    colArg = col;
+    bucketCount = hdr->bucketCount;
+    hashBase = base + hdr->hashBaseOff;
     hashLen = static_cast<s32>(strlen(colArg));
     if (hashLen > 8) {
         hashLen = 8;
@@ -1432,29 +1487,26 @@ extern "C" void* func_8003B4B0(void* bdat, const char* col) {
     if (bucketOff == 0) {
         return 0;
     }
-    entry = reinterpret_cast<char*>(bdatArg) + bucketOff;
+    entry = base + bucketOff;
     while (1) {
         if (strcmp(colArg, entry + 4) == 0) {
-            break;
+            return entry;
         }
         nextOff = *reinterpret_cast<u16*>(entry + 2);
         if (nextOff == 0) {
-            entry = 0;
             break;
         }
-        entry = reinterpret_cast<char*>(bdatArg) + nextOff;
+        entry = base + nextOff;
     }
-    return entry;
+    return 0;
 }
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) {
-    void* bdatArg;
+u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index){
     const char* colArg;
     s32 indexArg;
     void* colEntry;
-    char* tbl;
     s32 rowBase;
     s32 maxRow;
     s32 rowIdx;
@@ -1467,69 +1519,63 @@ extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index) 
     u32 elemType;
     char* dataPtr;
 
-    bdatArg = bdat;
+    if (bdat == 0) {
+        return 0;
+    }
+    BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
+    char* base = reinterpret_cast<char*>(hdr);
     colArg = col;
     indexArg = index;
-    colEntry = func_8003B4B0(bdatArg, colArg);
+    colEntry = func_8003B4B0(hdr, colArg);
     if (colEntry == 0) {
         return 0;
     }
-    if (bdatArg == 0) {
-        return 0;
-    }
-    tbl = reinterpret_cast<char*>(bdatArg);
-    rowBase = *reinterpret_cast<u16*>(tbl + 0x12);
-    maxRow = *reinterpret_cast<u16*>(tbl + 0x10);
+    rowBase = hdr->rowBase;
+    maxRow = hdr->maxRow;
     rowIdx = indexArg - rowBase;
     if (rowIdx < 0 || maxRow < rowIdx) {
         return 0;
     }
     indexArg = rowIdx;
-    colRel = *reinterpret_cast<u16*>(colEntry);
-    colHdr = tbl + colRel;
-    if (static_cast<u8>(colHdr[0]) != 1) {
+    colRel = static_cast<BdatColEntry*>(colEntry)->colHdrRel;
+    colHdr = base + colRel;
+    if (colHdr[0] != 1) {
         return 0;
     }
-    stride = *reinterpret_cast<u16*>(tbl + 0x8);
-    dataOff = *reinterpret_cast<u16*>(tbl + 0xE);
+    stride = hdr->stride;
+    dataOff = hdr->dataOff;
     rowBytes = indexArg * stride;
     colDataOff = *reinterpret_cast<u16*>(colHdr + 0x2);
     elemType = static_cast<u8>(colHdr[1]);
-    dataPtr = tbl + dataOff + rowBytes + colDataOff;
-    return func_8003B6A0(bdatArg, dataPtr, elemType);
+    dataPtr = base + dataOff + rowBytes + colDataOff;
+    return func_8003B6A0(hdr, dataPtr, elemType);
 }
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index) {
-    void* bdatArg;
+u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index){
     const char* colArg;
     s32 rowArg;
     s32 indexArg;
     void* colEntry;
-    char* tbl;
     s32 rowBase;
     s32 maxRow;
     s32 rowIdx;
     s32 ok;
 
-    bdatArg = bdat;
+    if (bdat == 0) {
+        return 0;
+    }
+    BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
     colArg = col;
     rowArg = row;
     indexArg = index;
-    if (bdatArg == 0) {
-        return 0;
-    }
-    colEntry = func_8003B4B0(bdatArg, colArg);
+    colEntry = func_8003B4B0(hdr, colArg);
     if (colEntry == 0) {
         return 0;
     }
-    if (bdatArg == 0) {
-        return 0;
-    }
-    tbl = reinterpret_cast<char*>(bdatArg);
-    rowBase = *reinterpret_cast<u16*>(tbl + 0x12);
-    maxRow = *reinterpret_cast<u16*>(tbl + 0x10);
+    rowBase = hdr->rowBase;
+    maxRow = hdr->maxRow;
     rowIdx = rowArg - rowBase;
     if (maxRow < rowIdx) {
         ok = 0;
@@ -1542,33 +1588,29 @@ extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index) {
     if (ok == 0) {
         return 0;
     }
-    return func_8003B748(bdatArg, colEntry, rowArg, indexArg);
+    return func_8003B748(hdr, colEntry, rowArg, indexArg);
 }
 #pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" u32 func_8003AFC0(void* bdat, const char* col) {
-    void* bdatArg;
     const char* colArg;
     void* colEntry;
-    char* tbl;
     char* colHdr;
 
-    bdatArg = bdat;
-    colArg = col;
-    if (bdatArg == 0) {
+    if (bdat == 0) {
         return 0;
     }
-    colEntry = func_8003B4B0(bdatArg, colArg);
+    BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
+    char* base = reinterpret_cast<char*>(hdr);
+    colArg = col;
+    colEntry = func_8003B4B0(hdr, colArg);
     if (colEntry == 0) {
         return 0;
     }
-    if (bdatArg == 0) {
-        return 0;
-    }
-    tbl = reinterpret_cast<char*>(bdatArg);
-    colHdr = tbl + *reinterpret_cast<u16*>(colEntry);
-    if (static_cast<u8>(colHdr[0]) != 2) {
+    u16 colRel = static_cast<BdatColEntry*>(colEntry)->colHdrRel;
+    colHdr = base + colRel;
+    if (colHdr[0] != 2) {
         return 0;
     }
     return *reinterpret_cast<u16*>(colHdr + 0x4);
@@ -1579,19 +1621,15 @@ extern "C" u32 func_8003B1EC(void* p) {
     if (p == 0) {
         return 0;
     }
-    return *reinterpret_cast<u16*>(reinterpret_cast<char*>(p) + 0x10);
+    return static_cast<BdatHeader*>(p)->maxRow;
 }
 
 extern "C" u32 func_8003B6A0(void* base, void* data, u32 type);
 
 #pragma dont_inline on
 extern "C" u32 func_8003B434(void* table, void*, void* col, s32 row) {
-    void* tableArg;
     void* colArg;
     s32 rowArg;
-    char* tbl;
-    s32 rowBase;
-    s32 maxRow;
     s32 rowIdx;
     s32 ok;
     u16 colRel;
@@ -1604,17 +1642,15 @@ extern "C" u32 func_8003B434(void* table, void*, void* col, s32 row) {
     u8 elemType;
     char* dataPtr;
 
-    tableArg = table;
-    colArg = col;
-    rowArg = row;
-    if (tableArg == 0) {
+    if (table == 0) {
         return 0;
     }
-    tbl = reinterpret_cast<char*>(tableArg);
-    rowBase = *reinterpret_cast<u16*>(tbl + 0x12);
-    maxRow = *reinterpret_cast<u16*>(tbl + 0x10);
-    rowIdx = rowArg - rowBase;
-    if (maxRow < rowIdx) {
+    BdatHeader* hdr = static_cast<BdatHeader*>(table);
+    char* base = reinterpret_cast<char*>(hdr);
+    colArg = col;
+    rowArg = row;
+    rowIdx = rowArg - hdr->rowBase;
+    if (hdr->maxRow < rowIdx) {
         goto bounds_fail;
     }
     if (rowIdx >= 0) {
@@ -1630,45 +1666,41 @@ bounds_check:
     if (ok == 0) {
         return 0;
     }
-    colRel = *reinterpret_cast<u16*>(colArg);
-    colHdr = tbl + colRel;
-    if (static_cast<u8>(colHdr[0]) != 1) {
+    colRel = static_cast<BdatColEntry*>(colArg)->colHdrRel;
+    colHdr = base + colRel;
+    if (colHdr[0] != 1) {
         return 0;
     }
-    stride = *reinterpret_cast<u16*>(tbl + 0x8);
-    dataOff = *reinterpret_cast<u16*>(tbl + 0xE);
+    stride = hdr->stride;
+    dataOff = hdr->dataOff;
     rowBytes = rowArg * stride;
     colDataOff = *reinterpret_cast<u16*>(colHdr + 0x2);
-    dataBase = tbl + dataOff;
+    dataBase = base + dataOff;
     elemType = static_cast<u8>(colHdr[1]);
     dataBase += rowBytes;
     dataPtr = dataBase + colDataOff;
-    return func_8003B6A0(tableArg, dataPtr, elemType);
+    return func_8003B6A0(hdr, dataPtr, elemType);
 }
 #pragma dont_inline reset
 
 #pragma dont_inline on
 extern "C" u32 func_8003B204(void* bdat, const char* col) {
-    void* bdatArg;
     const char* colArg;
     void* colEntry;
-    char* tbl;
     char* colHdr;
 
-    bdatArg = bdat;
-    colArg = col;
-    if (bdatArg == 0) {
+    if (bdat == 0) {
         return 0;
     }
-    colEntry = func_8003B4B0(bdatArg, colArg);
+    BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
+    char* base = reinterpret_cast<char*>(hdr);
+    colArg = col;
+    colEntry = func_8003B4B0(hdr, colArg);
     if (colEntry == 0) {
         return 0;
     }
-    if (bdatArg == 0) {
-        return 0;
-    }
-    tbl = reinterpret_cast<char*>(bdatArg);
-    colHdr = tbl + *reinterpret_cast<u16*>(colEntry);
+    u16 colRel = static_cast<BdatColEntry*>(colEntry)->colHdrRel;
+    colHdr = base + colRel;
     return static_cast<u8>(colHdr[1]);
 }
 #pragma dont_inline reset
@@ -1677,38 +1709,36 @@ extern "C" u32 func_8003B41C(void* p) {
     if (p == 0) {
         return 0;
     }
-    return *reinterpret_cast<u16*>(reinterpret_cast<char*>(p) + 0x12);
+    return static_cast<BdatHeader*>(p)->rowBase;
 }
 
 #pragma dont_inline on
-extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2) {
-    void* bdatArg;
+u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2){
     const char* col1Arg;
     s32 rowArg;
     const char* col2Arg;
-    char* tbl;
     s32 rowBase;
     s32 maxRow;
     s32 rowIdx;
     s32 ok;
     void* col1Entry;
     void* col2Entry;
-    char* flagHdr;
+    BdatColHdrFlag* flagHdr;
     char* col1Hdr;
     u32 val;
     u32 mask;
     u8 shift;
 
-    bdatArg = bdat;
+    if (bdat == 0) {
+        return 0;
+    }
+    BdatHeader* hdr = static_cast<BdatHeader*>(bdat);
+    char* base = reinterpret_cast<char*>(hdr);
     col1Arg = col1;
     rowArg = row;
     col2Arg = col2;
-    if (bdatArg == 0) {
-        return 0;
-    }
-    tbl = reinterpret_cast<char*>(bdatArg);
-    rowBase = *reinterpret_cast<u16*>(tbl + 0x12);
-    maxRow = *reinterpret_cast<u16*>(tbl + 0x10);
+    rowBase = hdr->rowBase;
+    maxRow = hdr->maxRow;
     rowIdx = rowArg - rowBase;
     if (maxRow < rowIdx) {
         ok = 0;
@@ -1721,60 +1751,63 @@ extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const cha
     if (ok == 0) {
         return 0;
     }
-    col1Entry = func_8003B4B0(bdatArg, col1Arg);
+    col1Entry = func_8003B4B0(hdr, col1Arg);
     if (col1Entry == 0) {
         return 0;
     }
-    col2Entry = func_8003B4B0(bdatArg, col2Arg);
+    col2Entry = func_8003B4B0(hdr, col2Arg);
     if (col2Entry == 0) {
         return 0;
     }
-    flagHdr = tbl + *reinterpret_cast<u16*>(col2Entry);
-    if (static_cast<u8>(flagHdr[0]) != 3) {
+    u16 col2Rel = static_cast<BdatColEntry*>(col2Entry)->colHdrRel;
+    flagHdr = reinterpret_cast<BdatColHdrFlag*>(base + col2Rel);
+    if (flagHdr->type != 3) {
         return 0;
     }
-    if (static_cast<u16>(reinterpret_cast<char*>(col1Entry) - tbl) != *reinterpret_cast<u16*>(flagHdr + 0x6)) {
+    if (static_cast<u16>(reinterpret_cast<uintptr_t>(col1Entry) - reinterpret_cast<uintptr_t>(hdr)) != flagHdr->colEntryRel) {
         return 0;
     }
     val = 0;
-    col1Hdr = tbl + *reinterpret_cast<u16*>(col1Entry);
-    if (static_cast<u8>(col1Hdr[0]) == 1) {
-        u16 stride = *reinterpret_cast<u16*>(tbl + 0x8);
-        u16 dataOff = *reinterpret_cast<u16*>(tbl + 0xE);
+    u16 col1Rel = static_cast<BdatColEntry*>(col1Entry)->colHdrRel;
+    col1Hdr = base + col1Rel;
+    if (col1Hdr[0] == 1) {
+        u16 stride = hdr->stride;
+        u16 dataOff = hdr->dataOff;
         s32 rowBytes = rowArg * stride;
         u16 colDataOff = *reinterpret_cast<u16*>(col1Hdr + 0x2);
         u32 elemType = static_cast<u8>(col1Hdr[1]);
-        char* dataPtr = tbl + dataOff + rowBytes + colDataOff;
-        val = func_8003B6A0(bdatArg, dataPtr, elemType);
+        char* dataPtr = base + dataOff + rowBytes + colDataOff;
+        val = func_8003B6A0(hdr, dataPtr, elemType);
     }
-    mask = *reinterpret_cast<u32*>(flagHdr + 0x2);
-    shift = static_cast<u8>(flagHdr[1]);
+    mask = flagHdr->mask;
+    shift = flagHdr->shift;
     return (val & mask) >> shift;
 }
 #pragma dont_inline reset
 
 
-extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index) {
-    char* tbl = reinterpret_cast<char*>(table);
-    u16 colOff = *reinterpret_cast<u16*>(col);
-    char* colHdr = tbl + colOff;
-    if (static_cast<u8>(colHdr[0]) != 2) {
+u32 func_8003B748(void* table, void* col, s32 row, s32 index){
+    BdatHeader* hdr = static_cast<BdatHeader*>(table);
+    char* base = reinterpret_cast<char*>(hdr);
+    u16 colOff = static_cast<BdatColEntry*>(col)->colHdrRel;
+    u8* colHdr = reinterpret_cast<u8*>(base) + colOff;
+    if (colHdr[0] != 2) {
         return 0;
     }
     s32 count = *reinterpret_cast<u16*>(colHdr + 0x4);
     if (count <= index) {
         return 0;
     }
-    u16 stride = *reinterpret_cast<u16*>(tbl + 0x8);
-    u16 dataOff = *reinterpret_cast<u16*>(tbl + 0xE);
+    u16 stride = hdr->stride;
+    u16 dataOff = hdr->dataOff;
     s32 rowStride = row * stride;
-    u32 elemType = static_cast<u8>(colHdr[1]);
-    char* dataBase = tbl + dataOff;
+    s32 elemType = static_cast<s32>(colHdr[1]);
+    char* dataBase = base + dataOff;
     u16 colDataOff = *reinterpret_cast<u16*>(colHdr + 0x2);
     dataBase += rowStride;
     dataBase += colDataOff;
     // Retail: subi/cmplwi then ble to *4; fall-through is the cmpwi switch.
-    if (elemType - 6 > 1) {
+    if (static_cast<u32>(elemType - 6) > 1) {
         switch (elemType) {
         case 1:
         case 4:
@@ -1798,15 +1831,15 @@ extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index) {
 
 
 #pragma dont_inline on
-extern "C" void func_8003B800(VMArg* out, void* data, u32 type) {
+void func_8003B800(VMArg* out, void* data, u32 type){
     VMArg* outArg;
     void* dataArg;
-    u32 typeArg;
+    s32 typeArg;
     u32 local;
 
     outArg = out;
     dataArg = data;
-    typeArg = type;
+    typeArg = static_cast<s32>(type);
     local = 0;
     switch (typeArg) {
     case 0:
@@ -1821,7 +1854,7 @@ extern "C" void func_8003B800(VMArg* out, void* data, u32 type) {
         local = *reinterpret_cast<u32*>(dataArg);
         break;
     case 4:
-        local = static_cast<u32>(static_cast<s32>(static_cast<s8>(*reinterpret_cast<u8*>(dataArg))));
+        local = static_cast<u32>(*reinterpret_cast<s8*>(dataArg));
         break;
     case 5:
         local = static_cast<u32>(static_cast<s32>(*reinterpret_cast<s16*>(dataArg)));
@@ -1867,7 +1900,7 @@ extern "C" int bdat(VMThread* t, void* /*unused*/, u16 unk) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" int getVal(VMThread* t, void* bdat) {
+int getVal(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
     const char* col;
@@ -1889,7 +1922,7 @@ extern "C" int getVal(VMThread* t, void* bdat) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-extern "C" int getArrayVal(VMThread* t, void* bdat) {
+int getArrayVal(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
     const char* col;

@@ -1162,31 +1162,146 @@ void vmHalt();
 extern "C" {
 #endif
 
-int isExistProperty(VMThread* pThread);
-int isExistSelector(VMThread* pThread);
-int getOCName(VMThread* pThread);
+int isExistProperty(VMThread* pThread, int r4, OCData* pOC);
+int isExistSelector(VMThread* pThread, int r4, OCData* pOC);
+int getOCName(VMThread* pThread, int r4, OCData* pOC);
 void ocBuiltinRegist();
 
 #ifdef __cplusplus
 }
 #endif
 /* end "kyoshin/plugin/ocBuiltin.hpp" */
+/* "src/kyoshin/plugin/ocBuiltin.cpp" line 1 "cstring" */
+#ifndef MSL_CPP_CSTRING_H
+#define MSL_CPP_CSTRING_H
+/* "libs/PowerPC_EABI_Support/include/stl/cstring" line 2 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "string.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::__memrchr;
+using ::memchr;
+using ::memcmp;
+using ::memcpy;
+using ::memmove;
+using ::memset;
+using ::strcat;
+using ::strchr;
+using ::strcmp;
+using ::strcpy;
+using ::stricmp;
+using ::strlen;
+using ::strncat;
+using ::strncmp;
+using ::strncpy;
+using ::strstr;
+} // namespace std
+
+#endif
+#endif
+/* end "cstring" */
 
 extern "C" {
 void vmBuiltinOCRegist(OCData* pOC);
+// Built-in OC data block registered by ocBuiltinRegist (0x80524BF8, size 0x10)
 extern OCData lbl_eu_80524BF8;
 }
 
-extern "C" void ocBuiltinRegist() {
-    vmBuiltinOCRegist(&lbl_eu_80524BF8);
+int isExistProperty(VMThread* pThread, int r4, OCData* pOC) {
+    VMArg arg;
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    const char* name = vmArgStringGet(2, ptr);
+    u32 result = vmPropertySearch(pOC, name);
+    arg.type = ((u32)__cntlzw((result >> 31) ^ 1) >> 5) + 1;
+    vmRetValSet(pThread, &arg);
+    return 1;
 }
 
-extern "C" void ocBuiltinRegist() {
-    vmBuiltinOCRegist(&lbl_eu_80524BF8);
+int isExistSelector(VMThread* pThread, int r4, OCData* pOC) {
+    VMArg arg;
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    const char* name = vmArgStringGet(2, ptr);
+    u32 result = vmSelectorSearch(pOC, name);
+    arg.type = ((u32)__cntlzw((result >> 31) ^ 1) >> 5) + 1;
+    vmRetValSet(pThread, &arg);
+    return 1;
 }
 
-extern "C" void ocBuiltinRegist() {
-    vmBuiltinOCRegist(&lbl_eu_80524BF8);
+int getOCName(VMThread* pThread, int r4, OCData* pOC) {
+    VMArg arg;
+    arg.type = VM_TYPE_STRING;
+    arg.unk2 = strlen(pOC->name);
+    arg.value.pointerVal = (void*)pOC->name;
+    vmRetValSet(pThread, &arg);
+    return 1;
 }
 
 extern "C" void ocBuiltinRegist() {

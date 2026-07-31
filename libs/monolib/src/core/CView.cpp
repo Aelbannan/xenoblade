@@ -155,18 +155,89 @@ setRect_tail:
 }
 
 bool CView::attachRenderWork(CWorkThread* pThread) {
-    // Dual context-ring enqueue: tag0+WorkID then tag1+thread*. Typed
-    // CMsgParam<10> restores exact -0x80 / stmw r21 / 0x1E0 / stwux; remaining
-    // dual-inline snap schedule is a Chaitin near-miss — keep iterating in high-level C.
-    CMsgParam<10>& messages =
-        *reinterpret_cast<CMsgParam<10>*>(&mContextMsgVtable);
+    // Dual context-ring enqueue: tag0+WorkID then tag1+thread*.
+    // Raw ring manipulation (not CMsgParam<10>) to match retail's
+    // stmw r21 / -0x80 frame / stwux slot / retroactive flag+wid.
+    volatile struct {
+        u32 w0, w1, w2, w3, w4, w5, w6;
+        s16 half;
+        u8 byte;
+        u8 pad;
+    } snapFan0;
+    volatile struct {
+        u32 w0, w1, w2, w3, w4, w5, w6;
+        s16 half;
+        u8 byte;
+        u8 pad;
+    } snapTag1;
+    u32 sum;
+    u32 slot;
+    u8* slotPtr;
+    u32 prevIdx;
+    u32 writeIdx;
 
-    messages.enqueue(0);
-    messages.last().unk23 = 3;
-    messages.last().wid = pThread->mWorkID;
-    messages.enqueue(1);
-    messages.last().unk23 = 3;
-    messages.last().wid = (WORK_ID)pThread;
+    // Enqueue tag 0: attach work ID to unk238
+    sum = unk3F0 + mContextRingWriteIndex;
+    slot = sum % mContextRingCapacity;
+    slotPtr = (u8*)mContextRingBase + slot * 0x24;
+    *(u32*)slotPtr = 0; // tag 0
+    *(u32*)(slotPtr + 0x4) = snapFan0.w0;
+    *(u32*)(slotPtr + 0x8) = snapFan0.w1;
+    *(u32*)(slotPtr + 0xC) = snapFan0.w2;
+    *(u32*)(slotPtr + 0x10) = snapFan0.w3;
+    *(u32*)(slotPtr + 0x14) = snapFan0.w4;
+    *(u32*)(slotPtr + 0x18) = snapFan0.w5;
+    *(u32*)(slotPtr + 0x1C) = snapFan0.w6;
+    *(s16*)(slotPtr + 0x20) = snapFan0.half;
+    slotPtr[0x22] = snapFan0.byte;
+    slotPtr[0x23] = 0;
+
+    prevIdx = mContextRingWriteIndex;
+    writeIdx = mContextRingWriteIndex + 1;
+    mContextRingWriteIndex = writeIdx;
+    unk3FC = prevIdx;
+
+    sum = unk3F0 + prevIdx;
+    slot = sum % mContextRingCapacity;
+    slotPtr = (u8*)mContextRingBase + slot * 0x24;
+    slotPtr[0x23] = 3;
+
+    sum = unk3F0 + unk3FC;
+    slot = sum % mContextRingCapacity;
+    slotPtr = (u8*)mContextRingBase + slot * 0x24;
+    *(u32*)(slotPtr + 0x4) = pThread->mWorkID;
+
+    // Enqueue tag 1: attach IWorkEvent* to unk258
+    sum = unk3F0 + mContextRingWriteIndex;
+    slot = sum % mContextRingCapacity;
+    slotPtr = (u8*)mContextRingBase + slot * 0x24;
+    *(u32*)slotPtr = 1; // tag 1
+    *(u32*)(slotPtr + 0x4) = snapTag1.w0;
+    *(u32*)(slotPtr + 0x8) = snapTag1.w1;
+    *(u32*)(slotPtr + 0xC) = snapTag1.w2;
+    *(u32*)(slotPtr + 0x10) = snapTag1.w3;
+    *(u32*)(slotPtr + 0x14) = snapTag1.w4;
+    *(u32*)(slotPtr + 0x18) = snapTag1.w5;
+    *(u32*)(slotPtr + 0x1C) = snapTag1.w6;
+    *(s16*)(slotPtr + 0x20) = snapTag1.half;
+    slotPtr[0x22] = snapTag1.byte;
+    slotPtr[0x23] = 0;
+
+    prevIdx = mContextRingWriteIndex;
+    writeIdx = mContextRingWriteIndex + 1;
+    mContextRingWriteIndex = writeIdx;
+    unk3FC = prevIdx;
+
+    sum = unk3F0 + prevIdx;
+    slot = sum % mContextRingCapacity;
+    slotPtr = (u8*)mContextRingBase + slot * 0x24;
+    slotPtr[0x23] = 3;
+
+    sum = unk3F0 + unk3FC;
+    slot = sum % mContextRingCapacity;
+    slotPtr = (u8*)mContextRingBase + slot * 0x24;
+    *(u32*)(slotPtr + 0x4) = (u32)(WORK_ID)pThread;
+
     return true;
 }
 

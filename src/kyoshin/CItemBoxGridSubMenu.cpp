@@ -28,6 +28,8 @@ void func_80124288(char*, char*);
 void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
 void code80135FDC_setVec3(float*, float, float, float);
 
+extern "C" u32 func_801355A0();
+
 void* __ct__CItemBoxGridSubMenu(void* self) {
     CItemBoxGridSubMenu* s = (CItemBoxGridSubMenu*)self;
     s->mVtbl = lbl_eu_80535750;
@@ -234,7 +236,9 @@ void func_80208760(){}
 
 void func_802087B8(){}
 
-void func_80208838(void){}
+void func_80208838(CItemBoxGridSubMenu* self) {
+    self->mSelectedIdx = -1;
+}
 
 void func_80208844(){}
 

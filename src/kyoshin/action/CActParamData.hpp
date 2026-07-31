@@ -18,6 +18,7 @@ struct CActParamDataSub {
 
 class CActParamData {
 public:
+    static void buildVTable();
     static void func_80057CDC();
     CActParamData();
     virtual ~CActParamData();

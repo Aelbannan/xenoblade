@@ -24225,7 +24225,40 @@ void* __dt__8024B894(void* self, int mode) {
     return self;
 }
 
-void __ct__CFloorMap(){}
+extern "C" void __ct__80244F50(void* self, void* arg4, void* arg5, u8 arg6) {
+    u8* p = static_cast<u8*>(self);
+    p[0] = 0;
+    *(u32*)(p + 0x04) = (u32)arg5;
+    p[0x08] = arg6;
+    p[0x09] = 0;
+    p[0x0A] = 0xFF;
+    p[0x0B] = 0;
+    p[0x0C] = 1;
+    p[0x30D0] = 0;
+    *(u32*)(p + 0x30D4) = 0;
+    *(u32*)(p + 0x30D8) = 0;
+    *(u32*)(p + 0x30DC) = 0;
+    *(u32*)(p + 0x30E0) = 0;
+    *(u32*)(p + 0x30E4) = 0;
+    p[0x30E8] = 0;
+    p[0x30E9] = 1;
+    *(u32*)(p + 0x30EC) = 0;
+    *(u32*)(p + 0x30F0) = 0;
+    *(u32*)(p + 0x30F4) = 0;
+    *(u32*)(p + 0x30F8) = 0;
+    *(u32*)(p + 0x30FC) = 0;
+    p[0x3100] = 0;
+    p[0x3101] = 1;
+    *(u32*)(p + 0x3104) = 0;
+    *(u32*)(p + 0x3108) = 0;
+    *(u32*)(p + 0x310C) = 0;
+    *(u32*)(p + 0x3110) = 0;
+    *(u32*)(p + 0x3114) = 0;
+    p[0x3118] = 0;
+    p[0x3119] = 1;
+    *(u32*)(p + 0x311C) = (u32)arg5;
+    *(u32*)(p + 0x3134) = (u32)arg4;
+}
 
 CFloorMap::~CFloorMap() {}
 
@@ -24775,7 +24808,7 @@ void func_8024F7CC(void* self) {
     *(f32*)(p + 0x50) = pos[1] / lbl_eu_806687BC;
 }
 
-extern "C" u32 func_8024FB78() {
+u32 func_8024FB78() {
     extern u32 lbl_eu_80664184;
     extern u8 lbl_eu_80664798;
     extern u32 lbl_eu_8066479C;
@@ -24785,30 +24818,29 @@ extern "C" u32 func_8024FB78() {
     extern void func_80141DC4(f32*);
     extern f64 lbl_eu_80668770;
     u32 result = 0;
-    f32 playerY = 0.0f;
-    f32 cameraPos[3];
     if ((lbl_eu_80664184 & 0xFF) == lbl_eu_80664798) {
         if (!lbl_eu_8066479C) return 0;
         void* player = getPlayer__Q22cf13CfGameManagerFi(0);
         if (!player) return 0;
         void** vt = *(void***)player;
         f32* pos = (f32*)((void*(*)(void*))vt[0xAC])(player);
-        playerY = pos[1];
+        f32 y = pos[1];
         u32 count = func_8003B1EC(lbl_eu_8066479C);
         for (u32 i = 1; i <= count; i++) {
             s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
-            if ((f32)(s16)val > playerY) return i;
+            if ((f32)(s16)val > y) return i;
         }
     } else {
         if (!lbl_eu_8066479C) return 0;
-        func_80141DC4(cameraPos);
+        f32 buf[3];
+        func_80141DC4(buf);
         u32 count = func_8003B1EC(lbl_eu_8066479C);
         for (u32 i = 1; i <= count; i++) {
             s16 val = func_80136330(lbl_eu_8066479C, &lbl_eu_8050BEA8[0x15A], i);
-            if ((f32)(s16)val > cameraPos[1]) return i;
+            if ((f32)(s16)val > buf[1]) return i;
         }
     }
-    return result;
+    return 0;
 }
 
 void CFloorMap::OnFileEvent() const {}

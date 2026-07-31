@@ -196,5 +196,5 @@ private:
     void func_80135FCC();
     void func_80135FD4();
     void func_80133324(int id, int a1, int a2);
-    static IWorkEvent* cfWorkEvent();
+    IWorkEvent* cfWorkEvent();
 }; // size = 0xC94

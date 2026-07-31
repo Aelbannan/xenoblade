@@ -6,9 +6,9 @@
 extern "C" {
 #endif
 
-int isExistProperty(VMThread* pThread);
-int isExistSelector(VMThread* pThread);
-int getOCName(VMThread* pThread);
+int isExistProperty(VMThread* pThread, int r4, OCData* pOC);
+int isExistSelector(VMThread* pThread, int r4, OCData* pOC);
+int getOCName(VMThread* pThread, int r4, OCData* pOC);
 void ocBuiltinRegist();
 
 #ifdef __cplusplus

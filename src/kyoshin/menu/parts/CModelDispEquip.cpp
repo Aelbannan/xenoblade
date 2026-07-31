@@ -8,7 +8,34 @@
 // Forward declarations for symbols referenced by thunks
 extern "C" void __dt__15CModelDispEquipFv();
 
-void __ct__CModelDispEquip(){}
+void __ct__CModelDispEquip(void* self, u32 somePtr, s32 equipSlot) {
+    CModelDispEquip* obj = (CModelDispEquip*)self;
+    obj->somePtr = somePtr;
+    obj->equipSlot = equipSlot;
+    obj->state = 0;
+    obj->alpha = 0.0f;
+    obj->alphaTimer = 1.0f;
+    obj->state20 = 1;
+    obj->state21 = 1;
+    obj->weaponId = 0;
+    obj->timer = 0;
+    obj->unk_55C = 0;
+    obj->currentModelPtr = 0;
+    obj->modelFileHandle = 0;
+    obj->modelData = 0;
+    for (int i = 0; i < 2; i++) {
+        obj->animModelPtrs[i] = 0;
+        obj->animPtrs[i] = 0;
+    }
+    for (int i = 0; i < 8; i++) {
+        obj->equipPtrs[i] = 0;
+    }
+    for (int i = 0; i < 9; i++) {
+        obj->fileSlots[i].handle = 0;
+        obj->fileSlots[i].data = 0;
+        obj->fileSlots[i].flag = 0;
+    }
+}
 
 void CModelDispEquip::resetBase() {
     *(unsigned long*)this = 0;
@@ -16,9 +43,14 @@ void CModelDispEquip::resetBase() {
     ((unsigned char*)this)[8] = 0;
 }
 
-void __dt__801FF6F0(){}
+void __dt__801FF6F0(void* self, int param) {
+    if (self == nullptr) return;
+    if (param <= 0) return;
+}
 
-CModelDispEquip::~CModelDispEquip() {}
+CModelDispEquip::~CModelDispEquip() {
+    if (this == nullptr) return;
+}
 
 void func_801FF7B0(){}
 
@@ -26,24 +58,22 @@ void func_801FF82C(){}
 
 void func_801FF874(){}
 
-u8 CModelDispEquip::getState20() { return field_1020; }
+u8 CModelDispEquip::getState20() { return state20; }
 
-u8 CModelDispEquip::getState21() { return field_1021; }
+u8 CModelDispEquip::getState21() { return state21; }
 
 void CModelDispEquip::setState14() {
-    if (field_1014 != 0) {
-        return;
-    }
-    field_1014 = 1;
-    field_1020 = 0;
+    if (state != 0) return;
+    state = 1;
+    state20 = 0;
 }
 
 void CModelDispEquip::setState14_3() {
-    field_1014 = 3;
-    field_1020 = 0;
+    state = 3;
+    state20 = 0;
 }
 
-void func_801FF9A0(){}
+u32 func_801FF9A0(CModelDispEquip* self) { return (u32)(u8)self->equipSlot; }
 
 void func_801FF9AC(){}
 

@@ -7,7 +7,7 @@
 
 #include <nw4r/lyt.h>
 
-u16 func_8013606C(char*, char*, u16);
+u16 func_8013606C(const char*, char*, u16);
 char* func_80136190(char*, char*, u32);
 u32 func_801361E8(void*, char*, u32);
 char* func_8013639C(void*, char*, u16);

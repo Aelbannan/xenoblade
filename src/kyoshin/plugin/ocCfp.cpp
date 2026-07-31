@@ -3,33 +3,92 @@
 
 #include "kyoshin/plugin/ocCfp.hpp"
 
-void func_80045560(){}
+extern "C" {
+unsigned short func_80086DA0__Q22cf13CfGameManagerFv();
+unsigned short func_80086DA4__Q22cf13CfGameManagerFv();
+void func_80086D90__Q22cf13CfGameManagerFv(unsigned short);
+void func_80086D94__Q22cf13CfGameManagerFv(unsigned short);
+}
 
-void func_8004559C(){}
+int func_80045560(VMThread* self, int a, int val){
+    VMArg arg;
+    arg.type = 9;
+    arg.unk2 = val;
+    arg.value.intVal = 0;
+    vmRetValSet(self, &arg);
+    return 1;
+}
 
-void func_800455E8(){}
+int func_8004559C(VMThread* self){
+    VMArg arg;
+    arg.type = 3;
+    arg.value.intVal = func_80086DA0__Q22cf13CfGameManagerFv();
+    vmRetValSet(self, &arg);
+    return 1;
+}
 
-void func_80045634(){}
+int func_800455E8(VMThread* self){
+    VMArg arg;
+    arg.type = 3;
+    arg.value.intVal = func_80086DA4__Q22cf13CfGameManagerFv();
+    vmRetValSet(self, &arg);
+    return 1;
+}
 
-int func_80045694(void* self){
-    extern void* vmOCPropertyGet(void*);
-    extern void func_80086D90__Q22cf13CfGameManagerFv(unsigned short);
+int func_80045634(VMThread* self){
+    VMArg arg;
+    arg.type = 3;
+    arg.value.intVal = func_80086DA0__Q22cf13CfGameManagerFv() / 3;
+    vmRetValSet(self, &arg);
+    return 1;
+}
+
+int func_80045694(VMThread* self){
     void* prop = vmOCPropertyGet(self);
-    func_80086D90__Q22cf13CfGameManagerFv(*(unsigned short*)((char*)prop + 4));
+    u32 val = *(u32*)((char*)prop + 4);
+    func_80086D90__Q22cf13CfGameManagerFv(val & 0xFFFF);
     return 0;
 }
 
-int func_800456C4(void* self){
-    extern void* vmOCPropertyGet(void*);
-    extern void func_80086D94__Q22cf13CfGameManagerFv(unsigned short);
+int func_800456C4(VMThread* self){
     void* prop = vmOCPropertyGet(self);
-    func_80086D94__Q22cf13CfGameManagerFv(*(unsigned short*)((char*)prop + 4));
+    u32 val = *(u32*)((char*)prop + 4);
+    func_80086D94__Q22cf13CfGameManagerFv(val & 0xFFFF);
     return 0;
 }
 
-void getTimeIdxMin(){}
+int getTimeIdxMin(VMThread* self){
+    VMArg* argPtr = vmArgPtrGet(self, 1);
+    int idx = vmArgIntGet(2, argPtr);
+    VMArg arg;
+    if (idx > 7) {
+        arg.type = 3;
+        arg.value.intVal = 0;
+        vmOCExceptionThrow(self);
+        return 0;
+    }
+    arg.type = 3;
+    arg.value.intVal = idx * 3;
+    vmRetValSet(self, &arg);
+    return 1;
+}
 
-void getTimeIdxMax(){}
+int getTimeIdxMax(VMThread* self){
+    VMArg* argPtr = vmArgPtrGet(self, 1);
+    int idx = vmArgIntGet(2, argPtr);
+    VMArg arg;
+    if (idx > 7) {
+        arg.type = 3;
+        arg.value.intVal = 0;
+        vmOCExceptionThrow(self);
+        return 0;
+    }
+    int val = idx + 1;
+    arg.value.intVal = val * 3;
+    arg.type = 3;
+    vmRetValSet(self, &arg);
+    return 1;
+}
 
 extern "C" {
 BOOL vmOCRegist(OCData* pOC);

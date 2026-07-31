@@ -718,7 +718,7 @@ typedef int BOOL;
 
 class UnkClass_8045F564{
 public:
-    int unk0;
+    u32 unk0;
     u32 unk4;
     u32 unk8;
     u32 unkC;
@@ -729,6 +729,7 @@ public:
     
     void createRegion(int, int, const char*, int);
     void func_8045F778();
+    void func_8045F7E8();
     void func_8045F810();
 };
 
@@ -13741,7 +13742,6 @@ public:
         LinkListNode* mNode; // at 0x0
     };
 
-protected:
     static Iterator GetIteratorFromPointer(LinkListNode* pNode) {
         return Iterator(pNode);
     }
@@ -13763,6 +13763,8 @@ protected:
     Iterator Erase(Iterator it);
     Iterator Erase(LinkListNode* pNode);
     Iterator Erase(Iterator begin, Iterator end);
+
+protected:
 
 public:
     u32 GetSize() const {
@@ -24547,14 +24549,9 @@ namespace ml{
             return size() == 0;
         }
         
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
+        // Declared out-of-line: retail emits a standalone
+        // format__Q22ml10FixStr<N>FPCce (resolved via the retail symbol map).
+        void format(const char* format, ...);
 
         //Sets the given string to the first characters of this string, up to the specified length.
         //TODO: This might just be substr, but when the start index is 0?
@@ -27023,6 +27020,8 @@ namespace cf{
         UnkClass_80085334* unkAC;
         UnkClass_800821F8* unkB0;
         CfCamEventManager* unkB4;
+        u8 field_0xB8[0x4EC - 0xB8];
+        u32 field_0x4EC;
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
@@ -27053,7 +27052,7 @@ public:
     void func_8007D7A4();
     void func_8007D834();
     void func_8007D84C();
-    void func_8007DA00();
+    void* func_8007DA00();
     void func_8007DA0C();
     void func_8007DCA8();
     void func_8007DCB8();
@@ -27112,8 +27111,8 @@ public:
     void func_8008064C();
     void func_800807BC();
     void func_80080888();
-    void func_80080E20();
-    void func_80080E28();
+    u8 func_80080E20();
+    u8 func_80080E28();
     void func_80080E30();
     void func_80080E44();
     void func_80080EE4();
@@ -27213,17 +27212,17 @@ public:
     void func_80082F2C();
     void func_80082FCC();
     void func_80082FE4();
-    void func_80083100();
-    void func_8008310C();
+    u32 func_80083100();
+    u32 func_8008310C();
     void func_80083118();
     void func_80083284();
     void func_80083290();
     void func_800832BC();
     void func_80083304();
     void func_80083328();
-    void func_80083458();
-    void func_80083460();
-    void func_80083468();
+    u32 func_80083458();
+    u32 func_80083460();
+    void func_80083468(u32 value);
     void func_80083470();
     bool func_80083538();
     bool func_80083544();
@@ -27359,6 +27358,8 @@ void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 extern "C" u8 code80135FDC_getByte_621F0();
+extern "C" u8 code80135FDC_getByte_64077();
+extern "C" u8 func_801392B4(u8);
 /* end "kyoshin/code_80135FDC.hpp" */
 /* "src/kyoshin/CTitleAHelp.cpp" line 5 "monolib/device/CDeviceFile.hpp" */
 #pragma once
@@ -27481,19 +27482,38 @@ public:
 class CLibLayout : public CWorkThread {
 public:
     CLibLayout(const char* pName, CWorkThread* pParent);
+    virtual ~CLibLayout();
 
     DECL_WORKTHREAD_CREATE(CLibLayout);
 
     static bool isInitialized();
     static CLibLayout* getInstance();
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
+    void getAllocHandle();
+    void createLayout();
+    void createPicture();
+    void createTextbox();
+    void deleteTextboxOrPicture();
+    void func_8045F438();
+    void func_8045F4E4();
 
     virtual void wkUpdate() override;  //0x88
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     //0x0: vtable
     //0x0-1c4: CWorkThread
     u32 unk1C4;                       // 0x1C4: unknown field
-    u8 unk1C8[0x2C0 - 0x1C8];        // 0x1C8-2C0: unknown trailing data
+    u8 pad_1C8[0x58];                 // 0x1C8-0x21F
+    void** hashTable;                  // 0x220-0x223: hash table for Class_8045F858
+    s32 hashAccum;                     // 0x224-0x227
+    s32 hashCount;                     // 0x228-0x22B
+    s32 hashDivisor;                   // 0x22C-0x22F
+    u8 pad_230[0x8];                   // 0x230-0x237
+    void** instanceArray;              // 0x238-0x23B: tracking array for UnkClass_8045F564
+    u8 pad_23C[0x7C];                  // 0x23C-0x2B7
+    u32 instanceCount;                 // 0x2B8-0x2BB
+    u8 pad_2BC[0x4];                   // 0x2BC-0x2BF
 };
 /* end "monolib/lib/CLibLayout.hpp" */
 /* "src/kyoshin/CTitleAHelp.cpp" line 9 "monolib/work/CEventFile.hpp" */
@@ -27515,7 +27535,7 @@ static GXColorS10 lbl_80666D60;
 static GXColorS10 lbl_80666D68; //light blue
 static GXColorS10 lbl_80666D70;
 
-static u16 lbl_80537618[120][7]; //unsure of this lbl, it seems to work, could be a struct tho
+extern u16 lbl_eu_80533E60[];
 
 // Retail constructor symbol (extern "C" to avoid MWCC mangling to __ct__11CTitleAHelpFPcUc)
 extern "C" CTitleAHelp* __ct__CTitleAHelp(CTitleAHelp* self, char* arg1, u8 arg2) {
@@ -27628,94 +27648,100 @@ void CTitleAHelp::func_801C41C0(char* arg) {
 }
 
 void CTitleAHelp::func_801C41E8(u8 arg) {
-    if(mLayout == nullptr) return;
+    if (mLayout == nullptr) return;
 
-    u16* u16Table = lbl_80537618[arg];
-    for(u8 i = 0; i < 6; i++) {
-        char buffer1[0x20];
-        sprintf(buffer1, "pic_btn%02d", i);
-        char buffer2[0x20];
-        sprintf(buffer2, "txt_hlp%02d", i);
+    u16* row = &lbl_eu_80533E60[arg * 7];
 
-        u16 tableValue = u16Table[i];
-        if(tableValue != 0) {
-            func_80124270(mLayout->GetRootPane()->FindPaneByName(buffer1, true), true);
-            func_80124270(mLayout->GetRootPane()->FindPaneByName(buffer2, true), true);
+    for (u8 i = 0; i < 6; i++) {
+        char buf1[0x20];
+        sprintf(buf1, "pic_btn%02d", i);
+        char buf2[0x20];
+        sprintf(buf2, "txt_hlp%02d", i);
 
-            char* fileID = "fileID_1";
-            if(cf::CfGameManager::func_80086F9C(-1) != 0) fileID = "fileID_2";
+        u16 tableVal = row[i];
+        if (tableVal != 0) {
+            nw4r::lyt::Pane* root = mLayout->GetRootPane();
+            func_80124270(root->FindPaneByName(buf1, true), 1);
+            func_80124270(root->FindPaneByName(buf2, true), 1);
 
-            u16 unknownU16 = func_8013606C("MNU_kyeassign", fileID, tableValue);
-            char* name = func_80138F78(unknownU16);
-            nw4r::lyt::ArcResourceAccessor* resourceAccessor = CUICfManager::func_801355F4();
-            void* resource = resourceAccessor->GetResource(resourceAccessor->RES_TYPE_TEXTURE, name, 0);
+            const char* fileID = "fileID_1";
+            if (cf::CfGameManager::func_80086F9C(-1) != 0) {
+                fileID = "fileID_2";
+            }
 
-            if(resource != nullptr) {
-                func_80137E7C(mLayout, buffer1, resource);
-                nw4r::lyt::Pane* somePane = mLayout->GetRootPane()->FindPaneByName(buffer1, true);
+            u16 keyVal = func_8013606C("MNU_kyeassign", fileID, tableVal);
+            char* name = func_80138F78(keyVal);
 
-                if(somePane != nullptr) {
-                    //resource size is assigned to pane, this is ugly tho :c
-                    void* pVoid = *(void**)((u8*)resource + 0x8);
-                    void* Size = *(void**)pVoid;
-                    u16 height = *(u16*)((u8*)Size + 0x0);
-                    u16 width = *(u16*)((u8*)Size + 0x2);
-                    somePane->SetSize(nw4r::lyt::Size(width, height));
+            nw4r::lyt::ArcResourceAccessor* resAcc = CUICfManager::func_801355F4();
+            void* resource = resAcc->GetResource(nw4r::lyt::ArcResourceAccessor::RES_TYPE_TEXTURE, name, nullptr);
+
+            if (resource != nullptr) {
+                func_80137E7C(mLayout, buf1, resource);
+
+                nw4r::lyt::Pane* pane = mLayout->GetRootPane()->FindPaneByName(buf1, true);
+                if (pane != nullptr) {
+                    u32* texPtr = *(u32**)((u8*)resource + 8);
+                    u16 width = *(u16*)(*texPtr + 2);
+                    u16 height = *(u16*)(*texPtr + 0);
+                    pane->mSize.width = (f32)width;
+                    pane->mSize.height = (f32)height;
                 }
             }
-            char* helpText = func_80136190("MNU_kyeassign", "help", tableValue);
-            func_80136B4C(mLayout, buffer2, helpText, 0);
+
+            char* helpText = func_80136190("MNU_kyeassign", "help", tableVal);
+            func_80136B4C(mLayout, buf2, helpText, 0);
         } else {
-            func_80124270(mLayout->GetRootPane()->FindPaneByName(buffer1, true), false);
-            func_80124270(mLayout->GetRootPane()->FindPaneByName(buffer2, true), false);
+            nw4r::lyt::Pane* root = mLayout->GetRootPane();
+            func_80124270(root->FindPaneByName(buf1, true), 0);
+            func_80124270(root->FindPaneByName(buf2, true), 0);
         }
     }
 
     u16 someWidth = 0;
     nw4r::math::VEC3 oldVec;
-    for(u32 i = 0; i < 6; i++) {
-        char buffer3[0x20];
 
-        sprintf(buffer3, "txt_hlp%02d", (u8)i);
-        nw4r::lyt::Pane* aPane = mLayout->GetRootPane()->FindPaneByName(buffer3, true);
+    for (u8 i = 0; i < 6; i++) {
+        char buf3[0x20];
+        sprintf(buf3, "txt_hlp%02d", i);
 
-        if(func_801C4648(aPane) == 0) return;
-        if((u8)i == 0) {
-            nw4r::math::VEC3* translate = (nw4r::math::VEC3*)&aPane->GetTranslate();
-            copyVEC3(&oldVec, translate);
+        nw4r::lyt::TextBox* textBox = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buf3, true);
+        if (!func_801C4648(textBox)) return;
+
+        if (i == 0) {
+            copyVEC3(&oldVec, (nw4r::math::VEC3*)&textBox->mTranslate);
         }
+
         nw4r::math::VEC3 newVec = oldVec;
-        newVec.x -= (float)someWidth;
+        newVec.x -= (f32)someWidth;
+        copyVEC3((nw4r::math::VEC3*)&textBox->mTranslate, &newVec);
 
-        copyVEC3((nw4r::math::VEC3*)&aPane->GetTranslate(), &newVec);
-
-        nw4r::ut::Font* font = (nw4r::ut::Font*)((nw4r::lyt::TextBox*)aPane)->GetFont();
-        const wchar_t* string = ((nw4r::lyt::TextBox*)aPane)->GetString();
+        nw4r::ut::Font* font = (nw4r::ut::Font*)textBox->GetFont();
+        const wchar_t* str = textBox->mTextBuf;
 
         u8 j = 0;
-        while(string[j] != 0) {
-            someWidth += (u16)font->GetCharWidth(string[j]);
+        while (str[j] != 0) {
+            someWidth += (u16)font->GetCharWidth(str[j]);
             j++;
         }
         someWidth -= 4;
 
-        char buffer4[0x20];
-        sprintf(buffer4, "pic_btn%02d", (u8)i);
-        nw4r::lyt::Pane* selectedPane = mLayout->GetRootPane()->FindPaneByName(buffer4, true);
+        char buf4[0x20];
+        sprintf(buf4, "pic_btn%02d", i);
+        nw4r::lyt::Pane* picPane = mLayout->GetRootPane()->FindPaneByName(buf4, true);
 
         copyVEC3(&newVec, &oldVec);
-        newVec.x -= (float)someWidth;
-        copyVEC3((nw4r::math::VEC3*)&selectedPane->GetTranslate(), &newVec);
+        newVec.x -= (f32)someWidth;
+        copyVEC3((nw4r::math::VEC3*)&picPane->mTranslate, &newVec);
 
-        someWidth += selectedPane->GetSize().width;
-        if((u8)i < 5) {
-            sprintf(buffer3, "txt_hlp%02d", (u8)i + 1);
-            selectedPane = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buffer3, true);
-            if(func_801C4648(selectedPane) == 0) return;
+        someWidth = (int)((f32)someWidth + picPane->mSize.width);
 
-            const wchar_t* text = ((nw4r::lyt::TextBox*)selectedPane)->GetString();
-            wchar_t firstChar = text[0];
-            if(firstChar != 0x2b && firstChar != 0xff0b) { //0x2b = "+" ; 0xff0b = "＋"
+        if (i < 5) {
+            sprintf(buf3, "txt_hlp%02d", i + 1);
+            nw4r::lyt::TextBox* nextPane = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buf3, true);
+            if (!func_801C4648(nextPane)) return;
+
+            wchar_t firstChar = nextPane->mTextBuf[0];
+            if (firstChar != 0x2b && firstChar != 0xff0b) {
                 someWidth += 0x10;
             }
         } else {

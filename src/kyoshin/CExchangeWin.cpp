@@ -18,11 +18,11 @@ extern void func_80137924(void*, void*, void*, void*);
 extern void func_80138078(u32);
 extern float lbl_eu_80668610;
 
-// Constructor — defined as global function with __ct__ prefix to match
-// retail C-linkage symbol __ct__CExchangeWin (avoids 12-prefix mangling).
+// Constructor — extern "C" to match retail C-linkage symbol __ct__CExchangeWin
+// (avoids 12-prefix mangling).
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 
-CExchangeWin* __ct__CExchangeWin(CExchangeWin* self) {
+extern "C" CExchangeWin* __ct__CExchangeWin(CExchangeWin* self) {
     self->mVtbl = lbl_eu_80536640;
     __ct__17UnkClass_8045F564Fv(&self->mMemRegion);
     self->mFileHandle = nullptr;
@@ -34,6 +34,13 @@ CExchangeWin* __ct__CExchangeWin(CExchangeWin* self) {
     self->_26 = 0;
     self->field_27 = 1;
     return self;
+}
+
+// Destructor — compiler handles member destructors automatically.
+// The explicit mMemRegion.~UnkClass_8045F564() call is NOT added here
+// because MWCC generates it automatically for non-trivial members,
+// and adding it explicitly causes a double call.
+CExchangeWin::~CExchangeWin() {
 }
 
 extern "C" u8 func_8022D08C(void* self) { return ((CExchangeWin*)self)->field_25; }
@@ -53,7 +60,7 @@ extern "C" void func_8022D0A4(CExchangeWin* self) {
     func_80138078(0xd);
 }
 
-extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
+extern "C" void func_8022D1F8(CExchangeWin* self) {
     float f = lbl_eu_80668610;
     u32 r = func_80137444(self->mAnimTransform, f);
     if (r) {
@@ -62,7 +69,15 @@ extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
     }
 }
 
-extern "C" __attribute__((noinline)) void func_8022D244(CExchangeWin* self) {}
+extern "C" void func_8022D244(CExchangeWin* self) {
+    float f = lbl_eu_80668610;
+    u32 r = func_80137510(self->mAnimTransform, f);
+    if (r) {
+        self->_26 = 0;
+        self->field_27 = 1;
+        self->field_24 = 0;
+    }
+}
 
 // OnFileEvent — loads the layout from a file, sets up fonts, animations,
 // text fields, and a texture resource with pane sizing from TPL dimensions.
@@ -171,6 +186,11 @@ extern "C" void func_8022D0D0(void* self) {
     s->field_27 = 0;
     func_80138078(0xe);
 }
+extern "C" void func_8022D19C(CExchangeWin* self, char* text1, char* text2) {
+    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x34], text1, 0);
+    func_80136B4C(self->mLayout, (char*)&lbl_eu_8050A740[0x41], text2, 0);
+}
+
 extern "C" void func_8022D0F8(void* dst, void* src, u8 val) {
     char buf[40];
     CExchangeWin* win;
@@ -198,15 +218,12 @@ extern "C" void func_8022CF2C(CExchangeWin* self) {
 // mLayout->Animate(0) when field_24 is set. Dispatches to func_8022D1F8
 // for _26==1 (entering) and func_8022D244 for _26==3 (exiting).
 extern "C" void func_8022CF7C(CExchangeWin* self) {
-    s32 s;
-
     if (self->field_24 == 0) {
         return;
     }
-    s = self->_26;
-    if (s == 1) {
+    if (self->_26 == 1) {
         func_8022D1F8(self);
-    } else if (s == 3) {
+    } else if (self->_26 == 3) {
         func_8022D244(self);
     }
     self->mLayout->Animate(0);

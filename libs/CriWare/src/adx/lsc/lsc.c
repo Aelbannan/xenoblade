@@ -32,12 +32,39 @@ void *LSC_Create(void *handle) {
     return r;
 }
 
+typedef struct LscStm {
+    void *hndl;             /* +0x00 */
+    char pad[0x20 - 4];     /* +0x04 */
+} LscStm;
+
+typedef struct LscEntry {
+    u8     flag;            /* +0x00 */
+    u8     stat;            /* +0x01 */
+    u8     pause;           /* +0x02 */
+    u8     loop;            /* +0x03 */
+    u8     dummy;           /* +0x04 */
+    char   pad5[3];         /* +0x05 */
+    void  *hndl;            /* +0x08 */
+    char   padc[0x14 - 0x0C]; /* +0x0C */
+    s32    limit;           /* +0x14 */
+    s32    total;           /* +0x18 */
+    s32    cur;             /* +0x1C */
+    s32    idx;             /* +0x20 */
+    s32    num;             /* +0x24 */
+    void  *stm;             /* +0x28 */
+    s32    f2c;             /* +0x2C */
+    char   pad30[0x34 - 0x30]; /* +0x30 */
+    s32    f34;             /* +0x34 */
+    char   pad38[0x50 - 0x38]; /* +0x38 */
+    LscStm stms[16];        /* +0x50 */
+} LscEntry;
+
 void *lsc_Create(void *handle) {
-    u8 *entry;
+    s32 crs;
+    s32 size1, size2, total;
     int i;
-    u32 crs;
-    void (*getsize)(void *, int, s32 *);
-    s32 size1, size2, total, adjusted;
+    u8 *p;
+    LscEntry *entry;
 
     if (handle == NULL) {
         LSC_CallErrFunc_(lbl_eu_80518478);
@@ -47,42 +74,64 @@ void *lsc_Create(void *handle) {
     LSC_LockCrs(&crs);
 
     entry = NULL;
-    for (i = 0; i < LSE_MAX; i++) {
-        u8 *e = lbl_eu_805E7D40 + i * LSE_SIZE;
-        if ((s8)e[0] == 0) { entry = e; break; }
+    for (i = 0, p = lbl_eu_805E7D40; i < LSE_MAX; p += LSE_SIZE, i++) {
+        if ((s8)p[0] == 0) {
+            entry = (LscEntry *)&lbl_eu_805E7D40[i * LSE_SIZE];
+            break;
+        }
     }
 
     if (entry == NULL) {
         LSC_CallErrFunc_(lbl_eu_80518478 + 0x30);
-        LSC_UnlockCrs(&crs);
-        return NULL;
+    } else {
+        memset(entry, 0, LSE_SIZE);
+        entry->hndl = handle;
+        entry->stat = 0;
+
+        size1 = ((s32 (**)(void *, int))(*(void **)handle))[9](handle, 1);
+        size2 = ((s32 (**)(void *, int))(*(void **)handle))[9](handle, 0);
+        total = size2 + size1;
+        entry->total = total;
+        entry->limit = (total * 8) / 10;
+
+        for (i = 0; i < 0x10; i++)
+            entry->stms[i].hndl = NULL;
+
+        entry->flag = 1;
     }
 
-    memset(entry, 0, LSE_SIZE);
-    *(void **)(entry + 0x08) = handle;
-
-    getsize = (void (*)(void *, int, s32 *))((u32 *)(*(void **)handle))[9];
-    getsize(handle, 1, &size1);
-    getsize(handle, 0, &size2);
-    total = size1 + size2;
-    *(s32 *)(entry + 0x18) = total;
-    /* total * 2/3 roughly */
-    adjusted = (total / 3) * 2;
-    *(s32 *)(entry + 0x1C) = adjusted;
-
-    entry[0] = 1;
-    entry[0x01] = 0;
     LSC_UnlockCrs(&crs);
     return entry;
 }
 
-void LSC_Destroy(void *entry) {
-    s32 idx;
+void LSC_Destroy(LscEntry *entry) {
     LSC_Enter();
-    idx = (s32)(((u8 *)entry - lbl_eu_805E7D40) / LSE_SIZE);
-    if (idx >= 0 && idx < LSE_MAX && entry != NULL) {
-        ADXSTM_StopNw(*(void **)((u8 *)entry + 0x10));
-        ADXSTM_ReleaseFileNw(*(void **)((u8 *)entry + 0x10));
+    if (entry != NULL) {
+        LSC_Enter();
+        if (entry == NULL) {
+            LSC_CallErrFunc_(lbl_eu_80518478 + 0x5F);
+        } else {
+            if (entry->stm != NULL) {
+                ADXSTM_Stop(entry->stm);
+                entry->pause = 0;
+            }
+            if ((s8)entry->stat != 0) {
+                entry->stat = 0;
+                entry->f2c = 0;
+                LSC_Enter();
+                if (entry == NULL) {
+                    LSC_CallErrFunc_(lbl_eu_80518478 + 0x88);
+                } else if ((s8)entry->stat == 0) {
+                    entry->cur = 0;
+                    entry->idx = 0;
+                    entry->num = 0;
+                }
+                LSC_Leave();
+                entry->f34 = 0;
+            }
+        }
+        LSC_Leave();
+        entry->flag = 0;
         memset(entry, 0, LSE_SIZE);
     }
     LSC_Leave();
@@ -133,19 +182,48 @@ int lsc_EntryFileRange(void *entry, const char *fname, int off_lo, int off_hi, i
     return 0;
 }
 
-int LSC_Start(void *entry) {
+void LSC_Start(void *entry) {
     u8 *e = (u8 *)entry;
-    if ((s8)e[0x01] > 0) return -1;
-    e[0x01] = 1;
-    e[0x02] = 0;
-    e[0x03] = 1;
-    e[0x04] = 0;
-    *(s32 *)(e + 0x20) = 0;
-    *(s32 *)(e + 0x24) = *(s32 *)(e + 0x18);
-    if (*(s32 *)(e + 0x1C) > 0)
-        e[0x03] = 2;
-    LSC_CallStatFunc();
-    return 0;
+    s32 crs;
+
+    LSC_Enter();
+    if (entry == NULL) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0x103);
+    } else {
+        LSC_LockCrs(&crs);
+        if ((s8)e[0x01] != 0) {
+            LSC_Enter();
+            if (entry == NULL) {
+                LSC_CallErrFunc_(lbl_eu_80518478 + 0x5F);
+            } else {
+                if (*(void **)((u8 *)entry + 0x28) != NULL) {
+                    ADXSTM_Stop(*(void **)((u8 *)entry + 0x28));
+                    ((u8 *)entry)[0x02] = 0;
+                }
+                if ((s8)((u8 *)entry)[0x01] != 0) {
+                    ((u8 *)entry)[0x01] = 0;
+                    *(s32 *)((u8 *)entry + 0x2C) = 0;
+                    LSC_Enter();
+                    if (entry == NULL) {
+                        LSC_CallErrFunc_(lbl_eu_80518478 + 0x88);
+                    } else if ((s8)((u8 *)entry)[0x01] == 0) {
+                        *(s32 *)((u8 *)entry + 0x1C) = 0;
+                        *(s32 *)((u8 *)entry + 0x20) = 0;
+                        *(s32 *)((u8 *)entry + 0x24) = 0;
+                    }
+                    LSC_Leave();
+                    *(s32 *)((u8 *)entry + 0x34) = 0;
+                }
+            }
+            LSC_Leave();
+        }
+        if (*(s32 *)(e + 0x24) > 0)
+            e[0x01] = 2;
+        else
+            e[0x01] = 1;
+        LSC_UnlockCrs(&crs);
+    }
+    LSC_Leave();
 }
 
 void LSC_Stop(void *entry) {

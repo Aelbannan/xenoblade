@@ -2608,3 +2608,52 @@ Match details (bytes):
   `volatile`, array-of-1, `s32*` member alias, block/early-return forms) all
   reproduce the same 6-instruction prologue delta — treat as a hard cap; use
   EQUIVALENT_MATCH with a matching reloc symbol instead of chasing bytes.
+
+### TRK_ppc_memcpy — asm{sync} barrier defeats CSE of duplicated shifts (ACCEPTED FULL_MATCH)
+
+Retail computes `(3 - offset) << 3` TWICE in the write section (two `subfic`+`rlwinm`
+chains) for the mask `0xff << shift` and the byte `val << shift`. Any single-function
+form (inline, separate locals, two vars, `*8` vs `<<3`, signed/unsigned casts, `-opt
+level 1/2/3`, `-O4,s`, `-opt nocse`) makes MWCC CSE them into one shift (196 vs 204
+bytes).
+
+WINNING STRUCTURE (0 mismatches, 34/34 unit functions byte-identical, unit 0x1824
+exact):
+- Keep `ppc_readbyte1` / `ppc_writebyte1` as **static inline** helpers with the
+  ORIGINAL single-variable source (same `alignedPtr` for both shifts) — MWCC does
+  NOT CSE the two chains once they live inside a separately-compiled helper that is
+  inlined into a caller that contains `asm{sync}` barriers. The `asm{sync}` (the
+  original Metrowerks TRK idiom; upstream xbret + SSBM use it; the retail literally
+  contains `sync` at both barrier sites) changes the inlining/CSE boundary.
+- `static inline` is REQUIRED (not plain `static`): plain statics are emitted as
+  standalone 0x34/0x20 functions and blow the 8-byte split headroom.
+- `__sync()` builtin does NOT work: 25 mismatches (CSE + allocation + scheduling
+  change) even with the same helper structure. `asm{sync}` is irreplaceable here.
+- The two shifts are only CSE'd when the expression trees are textually identical
+  in ONE function body; across the helper boundary the subfic+rlwinm chains survive.
+- The v3 trick (two differently-named `& ~3` variables) ALSO defeats CSE inside a
+  single function (rlwinm/subf merged, subfic+rlwinm chains duplicated) but the
+  register allocation then differs from retail (maskShift r4 vs r3) — the helper +
+  asm{sync} structure gets BOTH the structure AND the exact allocation.
+
+### MSL mem_funcs.c — SSBM-style macro source (aligned/unaligned 100%)
+
+The MSL `__copy_longs_*` functions must operate on the PARAMETERS via macros, not
+locals:
+- `#define cps ((unsigned char*) src)`, `cpd/cpd/lpd` similarly, `deref_auto_inc(p)
+  *++(p)`, plus `#pragma ANSI_strict off` (allows lvalue-cast assignment /
+  `*--((unsigned char*)dst)` pre-decrement of casts) and `#pragma defer_codegen on`.
+- Pointer reassignment `cps = ((unsigned char*)src) - 1` keeps values in the param
+  registers (dst stays r3, word-counter takes the freed r4) → `__copy_longs_aligned`
+  and `__copy_longs_unaligned` are now 100% byte-identical (was 20 reg-swaps / 31
+  structural diffs).
+- Removed `__copy_mem`/`__move_mem` stubs (retail has no such symbols; the `//unused`
+  comment form still EMITS the empty functions — delete them outright) → unit .text
+  exactly 0x2D0 = retail budget.
+- `__copy_longs_rev_unaligned` (0xac): 20 PURE reg-swaps remain — retail coalesces
+  `cps = src + n` into r4 (`add r4,r4,r5`); every tested source form (macro, direct,
+  compound `+=`, char* params, cpd-first, reset-from-params, all 9 compilers, with/
+  without -ipa) gives `add r11,r4,r5`. Best variant: reset final loop via
+  `cps = ((unsigned char*)src) + src_offset` (fixes the final add's dest to r3, 20
+  vs 21 mismatches). Size correct; does not affect the accepted aligned target or
+  the 0x2D0 unit budget.

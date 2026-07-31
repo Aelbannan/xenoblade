@@ -1509,19 +1509,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -2772,6 +2764,19 @@ DSError TRKValidMemory32(const void* addr, size_t length, ValidMemoryOptions rea
     return err;
 }
 
+static inline ui8 ppc_readbyte1(const ui8* ptr){
+    ui32* alignedPtr = (ui32 *)((ui32)ptr & ~3);
+    return (ui8)(*alignedPtr >> ((3 - ((ui32)ptr - (ui32)alignedPtr)) << 3));
+}
+
+static inline void ppc_writebyte1(ui8* ptr, ui8 val){
+    ui32* alignedPtr = (ui32 *)((ui32)ptr & ~3);
+    ui32 v = *alignedPtr;
+    ui32 uVar3 = 0xff << ((3 - ((ui32)ptr - (ui32)alignedPtr)) << 3);
+    ui32 iVar1 = (3 - ((ui32)ptr - (ui32)alignedPtr)) << 3;
+    *alignedPtr = (v & ~uVar3) | (uVar3 & (val << iVar1));
+}
+
 static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR) {
     ui32 savedMSR;
     ui8* srcPtr = src;
@@ -2781,24 +2786,14 @@ static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR
 
     while (n != 0) {
         ui8 byteVal;
-        ui32* srcAligned;
-        ui32* destAligned;
-        ui32 v;
-        ui32 uVar3;
-        ui32 iVar1;
 
         __TRK_set_MSR(srcMSR);
-        srcAligned = (ui32 *)((ui32)srcPtr & ~3);
-        byteVal = (ui8)(*srcAligned >> ((3 - ((ui32)srcPtr - (ui32)srcAligned)) << 3));
-        __sync();
+        byteVal = ppc_readbyte1(srcPtr);
+        asm{sync}
 
         __TRK_set_MSR(destMSR);
-        destAligned = (ui32 *)((ui32)destPtr & ~3);
-        v = *destAligned;
-        uVar3 = 0xff << ((3 - ((ui32)destPtr - (ui32)destAligned)) << 3);
-        iVar1 = (3 - ((ui32)destPtr - (ui32)destAligned)) << 3;
-        *destAligned = (v & ~uVar3) | (uVar3 & (byteVal << iVar1));
-        __sync();
+        ppc_writebyte1(destPtr, byteVal);
+        asm{sync}
 
         srcPtr++;
         destPtr++;

@@ -1,65 +1,66 @@
 #include "PowerPC_EABI_Support/MSL_C/MSL_Common/mem_funcs.h"
 
-//unused
-void __copy_mem(){
-}
+#pragma ANSI_strict off
+#pragma defer_codegen on
 
-//unused
-void __move_mem(){
-}
+#define cps ((unsigned char*) src)
+#define cpd ((unsigned char*) dst)
+#define lps ((unsigned long*) src)
+#define lpd ((unsigned long*) dst)
+#define deref_auto_inc(p) *++(p)
 
-void __copy_longs_aligned(void *dst, const void *src, unsigned long n) {
+void __copy_longs_aligned(void* dst, const void* src, unsigned long n)
+{
     unsigned long i;
-    unsigned char *d, *s;
-    unsigned long *dw, *sw;
 
-    i = (-(unsigned long)dst) & 3;
-    s = (unsigned char *)src;
-    s--;
-    d = (unsigned char *)dst;
-    d--;
+    i = (-(unsigned long) dst) & 3;
+
+    cps = ((unsigned char*) src) - 1;
+    cpd = ((unsigned char*) dst) - 1;
 
     if (i) {
         n -= i;
+
         do {
-            *++d = *++s;
+            deref_auto_inc(cpd) = deref_auto_inc(cps);
         } while (--i);
     }
 
-    sw = (unsigned long *)(s + 1) - 1;
-    dw = (unsigned long *)(d + 1) - 1;
+    src = ((unsigned long*) (cps + 1)) - 1;
+    dst = ((unsigned long*) (cpd + 1)) - 1;
 
     i = n >> 5;
+
     if (i) {
         do {
-            *++dw = *++sw;
-            *++dw = *++sw;
-            *++dw = *++sw;
-            *++dw = *++sw;
-            *++dw = *++sw;
-            *++dw = *++sw;
-            *++dw = *++sw;
-            *++dw = *++sw;
+            deref_auto_inc(lpd) = deref_auto_inc(lps);
+            deref_auto_inc(lpd) = deref_auto_inc(lps);
+            deref_auto_inc(lpd) = deref_auto_inc(lps);
+            deref_auto_inc(lpd) = deref_auto_inc(lps);
+            deref_auto_inc(lpd) = deref_auto_inc(lps);
+            deref_auto_inc(lpd) = deref_auto_inc(lps);
+            deref_auto_inc(lpd) = deref_auto_inc(lps);
+            deref_auto_inc(lpd) = deref_auto_inc(lps);
         } while (--i);
     }
 
     i = (n & 31) >> 2;
+
     if (i) {
         do {
-            *++dw = *++sw;
+            deref_auto_inc(lpd) = deref_auto_inc(lps);
         } while (--i);
     }
 
-    s = (unsigned char *)(sw + 1);
-    s--;
-    d = (unsigned char *)(dw + 1);
-    d--;
+    cps = ((unsigned char*) (lps + 1)) - 1;
+    cpd = ((unsigned char*) (lpd + 1)) - 1;
 
     n &= 3;
+
     if (n) {
-        do {
-            *++d = *++s;
-        } while (--n);
+        do
+            deref_auto_inc(cpd) = deref_auto_inc(cps);
+        while (--n);
     }
 }
 
@@ -113,120 +114,110 @@ void __copy_longs_rev_aligned(void *pDest, const void *pSrc, unsigned long len) 
     }
 }
 
-void __copy_longs_unaligned(void *pDest, const void *pSrc, unsigned long len) {
+void __copy_longs_unaligned(void* dst, const void* src, unsigned long n)
+{
     unsigned long i, v1, v2;
-    unsigned int src, ls, rs;
-    unsigned char* srcChar;
-    unsigned char* destChar;
-    unsigned long* srcLong;
-    unsigned long* destLong;
+    unsigned int src_offset, left_shift, right_shift;
 
-    i = (-(unsigned long)pDest) & 3;
-    srcChar = (unsigned char*)pSrc;
-    srcChar--;
-    destChar = (unsigned char*)pDest;
-    destChar--;
+    i = (-(unsigned long) dst) & 3;
 
-    if (i != 0) {
-        len -= i;
+    cps = ((unsigned char*) src) - 1;
+    cpd = ((unsigned char*) dst) - 1;
+
+    if (i) {
+        n -= i;
 
         do {
-            *++destChar = *++srcChar;
-        } while(--i);
+            deref_auto_inc(cpd) = deref_auto_inc(cps);
+        } while (--i);
     }
 
-    src = ((unsigned int)(srcChar + 1)) & 3;
-    ls = src << 3;
-    rs = 32 - ls;
+    src_offset = ((unsigned int) (cps + 1)) & 3;
 
-    srcChar -= src;
+    left_shift = src_offset << 3;
+    right_shift = 32 - left_shift;
 
-    srcLong = (unsigned long*)(srcChar + 1) - 1;
-    destLong = (unsigned long*)(destChar + 1) - 1;
+    cps -= src_offset;
 
-    i = len >> 3;
-    v1 = *++srcLong;
+    lps = ((unsigned long*) (cps + 1)) - 1;
+    lpd = ((unsigned long*) (cpd + 1)) - 1;
+
+    i = n >> 3;
+
+    v1 = deref_auto_inc(lps);
 
     do {
-        v2 = *++srcLong;
-        *++destLong = (v1 << ls) | (v2 >> rs);
-        v1 = *++srcLong;
-        *++destLong = (v2 << ls) | (v1 >> rs);
-    } while(--i);
+        v2 = deref_auto_inc(lps);
+        deref_auto_inc(lpd) = (v1 << left_shift) | (v2 >> right_shift);
+        v1 = deref_auto_inc(lps);
+        deref_auto_inc(lpd) = (v2 << left_shift) | (v1 >> right_shift);
+    } while (--i);
 
-    if (len & 4) {
-        v2 = *++srcLong;
-        *++destLong = (v1 << ls) | (v2 >> rs);
+    if (n & 4) {
+        v2 = deref_auto_inc(lps);
+        deref_auto_inc(lpd) = (v1 << left_shift) | (v2 >> right_shift);
     }
 
-    srcChar = (unsigned char*)(srcLong + 1);
-    srcChar--;
-    destChar = (unsigned char*)(destLong + 1);
-    destChar--;
+    cps = ((unsigned char*) (lps + 1)) - 1;
+    cpd = ((unsigned char*) (lpd + 1)) - 1;
 
-    len &= 3;
+    n &= 3;
 
-    if (len != 0) {
-        srcChar -= 4 - src;
+    if (n) {
+        cps -= 4 - src_offset;
         do {
-            *++destChar = *++srcChar;
-        } while(--len);
+            deref_auto_inc(cpd) = deref_auto_inc(cps);
+        } while (--n);
     }
 }
 
-void __copy_longs_rev_unaligned(void *pDest, const void *pSrc, unsigned long len) {
+void __copy_longs_rev_unaligned(void* dst, const void* src, unsigned long n)
+{
     unsigned long i, v1, v2;
-    unsigned int src, ls, rs;
-    unsigned char* srcChar;
-    unsigned char* destChar;
-    unsigned long* srcLong;
-    unsigned long* destLong;
+    unsigned int src_offset, left_shift, right_shift;
 
-    srcChar = (unsigned char*)pSrc + len;
-    destChar = (unsigned char*)pDest + len;
-    i = ((unsigned long)pDest) & 3;
+    cps = ((unsigned char*) src) + n;
+    cpd = ((unsigned char*) dst) + n;
 
-    if (i != 0) {
-        len -= i;
+    i = ((unsigned long) cpd) & 3;
+
+    if (i) {
+        n -= i;
 
         do {
-            *--destChar = *--srcChar;
-        } while(--i);
+            *--cpd = *--cps;
+        } while (--i);
     }
 
-    src = ((unsigned int)(srcChar)) & 3;
-    ls = src << 3;
-    rs = 32 - ls;
+    src_offset = ((unsigned int) cps) & 3;
 
-    srcChar += 4 - src;
+    left_shift = src_offset << 3;
+    right_shift = 32 - left_shift;
 
-    srcLong = (unsigned long*)srcChar;
-    destLong = (unsigned long*)destChar;
-    
-    i = len >> 3;
-    v1 = *--srcLong;
+    cps += 4 - src_offset;
+
+    i = n >> 3;
+
+    v1 = *--lps;
 
     do {
-        v2 = *--srcLong;
-        *--destLong = (v2 << ls) | (v1 >> rs);
-        v1 = *--srcLong;
-        *--destLong = (v1 << ls) | (v2 >> rs);
-    } while(--i);
+        v2 = *--lps;
+        *--lpd = (v2 << left_shift) | (v1 >> right_shift);
+        v1 = *--lps;
+        *--lpd = (v1 << left_shift) | (v2 >> right_shift);
+    } while (--i);
 
-    if (len & 4) {
-        v2 = *--srcLong;
-        *--destLong = (v2 << ls) | (v1 >> rs);
+    if (n & 4) {
+        v2 = *--lps;
+        *--lpd = (v2 << left_shift) | (v1 >> right_shift);
     }
 
-    len &= 3;
+    n &= 3;
 
-    srcChar = (unsigned char*)pSrc;
-    destChar = (unsigned char*)pDest;
-
-    if (len != 0) {
-        srcChar += src;
+    if (n) {
+        cps = ((unsigned char*) src) + src_offset;
         do {
-            *--destChar = *--srcChar;
-        } while(--len);
+            *--cpd = *--cps;
+        } while (--n);
     }
 }

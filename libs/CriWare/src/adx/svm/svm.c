@@ -1,5 +1,11 @@
 // svm.c - CRI ADX Server Manager
 // Reconstructed from retail svm.s (0x80399B0C..0x8039AD88).
+//
+// The retail build inlines the lock/unlock/error-callback bodies into every
+// caller (there are no standalone helper functions in the retail .text), so
+// these bodies are expressed as macros here. The lock/unlock/err callback
+// pairs are part of the single ctrl struct at lbl_eu_805F26F0; the error
+// callback pair and message buffer are separate globals next to it.
 
 #include <string.h>
 
@@ -22,9 +28,9 @@ typedef struct SvmSvrEntry {
 } SvmSvrEntry;
 
 typedef struct SvmCtrl {
-    u32 init_count;            /* 0x000 */
-    u32 lock_count;            /* 0x004 */
-    u32 lock_flag;             /* 0x008 */
+    volatile u32 init_count;   /* 0x000 */
+    volatile u32 lock_count;   /* 0x004 */
+    volatile s32 lock_flag;    /* 0x008 */
     u32 field_0x0C;            /* 0x00C */
     SvmCbPair lock_cb;         /* 0x010 */
     SvmCbPair unlock_cb;       /* 0x018 */
@@ -50,58 +56,65 @@ extern int CRICRW_Vsprintf(char* s, void* ignored, const char* fmt, va_list ap);
 
 void SVM_CallErr(const char* fmt, ...);
 
-/* Report an error message through the error callback; NULL means no message. */
-static void svm_err_cb_msg(const char* msg) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    if (msg == NULL) {
-        void (*fn)(void*, const void*) = ctrl->err_cb.func;
-        void* obj = ctrl->err_cb.object;
-        fn(obj, NULL);
-    } else {
-        CRICRW_Strncpy(ctrl->err_msg, (void*)0x100, msg, 0xFF);
-        if (ctrl->err_cb.func != NULL) {
-            void (*fn)(void*, const void*) = ctrl->err_cb.func;
-            void* obj = ctrl->err_cb.object;
-            fn(obj, ctrl->err_msg);
-        }
-    }
-}
+/* Report an error message through the error callback; NULL means no message.
+   (Retail inlines this into svm_SetCbSvr / svm_SetCbSvrId / SVM_DelCbSvr;
+   the error callback is reached through the ctrl struct there.) */
+#define SVM_ERR_CB_MSG(m)                                                     \
+    do {                                                                      \
+        SvmCtrl* _e = &lbl_eu_805F26F0;                                       \
+        if ((m) == NULL) {                                                    \
+            void (*_fn)(void*, const void*) = _e->err_cb.func;                \
+            void* _obj = _e->err_cb.object;                                   \
+            _fn(_obj, NULL);                                                  \
+        } else {                                                              \
+            CRICRW_Strncpy(_e->err_msg, (void*)0x100, (m), 0xFF);             \
+            if (_e->err_cb.func != NULL) {                                    \
+                void (*_fn)(void*, const void*) = _e->err_cb.func;            \
+                void* _obj = _e->err_cb.object;                               \
+                _fn(_obj, _e->err_msg);                                       \
+            }                                                                 \
+        }                                                                     \
+    } while (0)
 
-static void svm_lock(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    if (ctrl->lock_cb.func != NULL) {
-        void (*fn)(void*) = ctrl->lock_cb.func;
-        void* obj = ctrl->lock_cb.object;
-        fn(obj);
-        if (ctrl->lock_count == 0)
-            ctrl->lock_flag = 1;
-        ctrl->lock_count++;
-    }
-}
+/* Lock the server manager (retail inlines this body into every caller). */
+#define SVM_LOCK()                                                            \
+    do {                                                                      \
+        SvmCtrl* _c = &lbl_eu_805F26F0;                                       \
+        if (_c->lock_cb.func != NULL) {                                       \
+            void (*_fn)(void*) = _c->lock_cb.func;                            \
+            void* _obj = _c->lock_cb.object;                                  \
+            _fn(_obj);                                                        \
+            if (_c->lock_count == 0)                                          \
+                _c->lock_flag = 1;                                            \
+            _c->lock_count++;                                                 \
+        }                                                                     \
+    } while (0)
 
-static void svm_unlock(void) {
-    SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    if (ctrl->unlock_cb.func != NULL) {
-        ctrl->lock_count--;
-        if (ctrl->lock_count == 0) {
-            if (ctrl->lock_flag != 1)
-                SVM_CallErr(lbl_eu_80518F50, ctrl->lock_flag, 1);
-            ctrl->lock_flag = 0;
-        }
-        {
-            void (*fn)(void*) = ctrl->unlock_cb.func;
-            void* obj = ctrl->unlock_cb.object;
-            fn(obj);
-        }
-    }
-}
+/* Unlock the server manager (retail inlines this body into every caller). */
+#define SVM_UNLOCK()                                                          \
+    do {                                                                      \
+        SvmCtrl* _c = &lbl_eu_805F26F0;                                       \
+        if (_c->unlock_cb.func != NULL) {                                     \
+            _c->lock_count = _c->lock_count - 1;                              \
+            if (_c->lock_count == 0) {                                        \
+                if (_c->lock_flag != 1)                                       \
+                    SVM_CallErr(lbl_eu_80518F50, _c->lock_flag, 1);           \
+                _c->lock_flag = 0;                                            \
+            }                                                                 \
+            {                                                                 \
+                void (*_fn)(void*) = _c->unlock_cb.func;                      \
+                void* _obj = _c->unlock_cb.object;                            \
+                _fn(_obj);                                                    \
+            }                                                                 \
+        }                                                                     \
+    } while (0)
 
 void SVM_Lock(void) {
-    svm_lock();
+    SVM_LOCK();
 }
 
 void SVM_Unlock(void) {
-    svm_unlock();
+    SVM_UNLOCK();
 }
 
 void SVM_CallErr(const char* fmt, ...) {
@@ -136,9 +149,9 @@ void svm_SetCbSvrId(u32 svrId, u32 idx, void* fn, void* ctx, const char* name);
 
 s32 SVM_SetCbSvrWithString(u32 svrId, void* fn, void* ctx, const char* name) {
     s32 ret;
-    svm_lock();
+    SVM_LOCK();
     ret = svm_SetCbSvr(svrId, fn, ctx, name);
-    svm_unlock();
+    SVM_UNLOCK();
     return ret;
 }
 
@@ -146,7 +159,7 @@ s32 svm_SetCbSvr(u32 svrId, void* fn, void* ctx, const char* name) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     s32 i;
     if (svrId > 7) {
-        svm_err_cb_msg(&lbl_eu_80518F50[0x47]);
+        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0x47]);
         return -1;
     }
     for (i = 0; i < 6; i++) {
@@ -160,45 +173,45 @@ s32 svm_SetCbSvr(u32 svrId, void* fn, void* ctx, const char* name) {
     }
     if (i != 6)
         return i;
-    svm_err_cb_msg(&lbl_eu_80518F50[0x75]);
+    SVM_ERR_CB_MSG(&lbl_eu_80518F50[0x75]);
     return -1;
 }
 
 void SVM_DelCbSvr(u32 svrId, u32 idx) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    svm_lock();
+    SVM_LOCK();
     if (idx > 5) {
-        svm_err_cb_msg(&lbl_eu_80518F50[0xA3]);
+        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0xA3]);
     } else if (svrId > 7) {
-        svm_err_cb_msg(&lbl_eu_80518F50[0xC3]);
+        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0xC3]);
     } else {
         ctrl->svr_tbl[svrId][idx].func = NULL;
         ctrl->svr_tbl[svrId][idx].object = NULL;
         ctrl->svr_tbl[svrId][idx].name = NULL;
     }
-    svm_unlock();
+    SVM_UNLOCK();
 }
 
 void SVM_SetCbSvrIdWithString(u32 svrId, u32 idx, void* fn, void* ctx, const char* name) {
-    svm_lock();
+    SVM_LOCK();
     svm_SetCbSvrId(svrId, idx, fn, ctx, name);
-    svm_unlock();
+    SVM_UNLOCK();
 }
 
 void svm_SetCbSvrId(u32 svrId, u32 idx, void* fn, void* ctx, const char* name) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     if (idx > 5) {
-        svm_err_cb_msg(&lbl_eu_80518F50[0xE9]);
+        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0xE9]);
         return;
     }
     if (svrId > 7) {
-        svm_err_cb_msg(&lbl_eu_80518F50[0x10B]);
+        SVM_ERR_CB_MSG(&lbl_eu_80518F50[0x10B]);
         return;
     }
     {
         SvmSvrEntry* entry = &ctrl->svr_tbl[svrId][idx];
         if (entry->func != NULL)
-            svm_err_cb_msg(&lbl_eu_80518F50[0x131]);
+            SVM_ERR_CB_MSG(&lbl_eu_80518F50[0x131]);
         entry->func = (u32 (*)(void*))fn;
         entry->object = ctx;
         entry->name = name != NULL ? name : &lbl_eu_80518F50[0x6D];
@@ -207,10 +220,10 @@ void svm_SetCbSvrId(u32 svrId, u32 idx, void* fn, void* ctx, const char* name) {
 
 void SVM_SetCbBdr(s32 idx, void* fn, void* ctx) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    svm_lock();
+    SVM_LOCK();
     ctrl->bdr_tbl[idx].func = (void (*)(void*))fn;
     ctrl->bdr_tbl[idx].object = ctx;
-    svm_unlock();
+    SVM_UNLOCK();
 }
 
 extern u32 lbl_eu_805F2A58[];
@@ -223,10 +236,10 @@ void SVM_GotoSvrBorder(s32 idx) {
 
 void SVM_SetCbErr(void* fn, void* ctx) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    svm_lock();
+    SVM_LOCK();
     ctrl->err_cb.func = (void (*)(void*, const void*))fn;
     ctrl->err_cb.object = ctx;
-    svm_unlock();
+    SVM_UNLOCK();
 }
 
 extern SvmCbPair lbl_eu_805F2700;
@@ -420,7 +433,7 @@ void SVM_Init(void) {
 
 void SVM_Finish(void) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
-    ctrl->init_count--;
+    ctrl->init_count = ctrl->init_count - 1;
     if (ctrl->init_count != 0)
         return;
     memset(&ctrl->exec_flags[0], 0, 0x20);
@@ -440,13 +453,13 @@ s32 SVM_TestAndSet(u32* p) {
     SvmCtrl* ctrl = &lbl_eu_805F26F0;
     if (ctrl->testandset_fn != NULL)
         return ((s32 (*)(u32*))ctrl->testandset_fn)(p);
-    svm_lock();
+    SVM_LOCK();
     {
         u32 old = *p;
         s32 result;
         *p = 1;
         result = (old == 0) ? 0 : 1;
-        svm_unlock();
+        SVM_UNLOCK();
         return result;
     }
 }

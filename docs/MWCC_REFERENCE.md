@@ -1852,6 +1852,36 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
   `strcmp(col, entry+4)` and `lhz(entry+2)` chain.
 
 
+## CriWare svm.c — volatile counts + inlined lock/unlock/err bodies (US)
+
+- **`libs/CriWare/src/adx/svm/svm.c`** (`SVM_Lock` 95.9%, `SVM_Unlock` 79 → **97.1%**
+  fuzzy; `SVM_ExecSvrVint` / `SVM_CallErr1` **FULL_MATCH**): the retail file
+  has **no standalone lock/unlock/err-callback helpers** — every caller
+  contains the inlined body, so the source must express them as **macros**
+  (not `static` functions, which MWCC emits standalone, blowing the split
+  budget by ~0x160). Two other retail facts:
+  1. **`volatile` on the count fields** (`init_count`/`lock_count`/`lock_flag`;
+     matches the actual CRI source where `svm_init_level` etc. are
+     `volatile Sint32`). This is what produces the retail's
+     `subi; stw; lwz(RELOAD); cmpwi` decrement sequence — non-volatile fields
+     fold into `addic.`. It also produces the reload between the `== 0` check
+     and the later `++`.
+  2. `lock_flag` must be **`s32`** (retail `cmpwi`/`2C`, not `cmplwi`/`28`).
+  3. The err-cb macro reaches the callback through **`ctrl->err_cb`** (member,
+     folded onto the ctrl base) while `SVM_CallErr`/`SVM_CallErr1` use the
+     **separate global `lbl_eu_805F2810`** (own base). The retail does exactly
+     this: `0x120(r31)` in the macro users vs `lis r3,@ha` in CallErr1.
+- **Known unreproducible (do not burn time):** the retail loads callback-pair
+  objects via `addi r3, base, off; lwz r3, 4(r3)` and the ExecSvr functions
+  materialize `&ctrl->exec_flags[0]` / `&exec_counts[0]` / `&svr_tbl[0]`
+  pointers (two-add `p = base + 6`). MWCC 3.0a5.2 `-O4,p` folds all of these
+  from every C shape tried (~30 variants: pointer locals, casts, volatile,
+  defined-globals, inlined `svm_exec_svr(svtype)`, per-version sweeps
+  1.2.5–3.0a5.2, `-O4,s`, `-ipa`). `EQUIVALENT_MATCH` is also blocked for
+  these (they hold indirect callback calls → `has_indirect_calls` gate in
+  `tools/coop/lib/equivalence_check.py` and the SMT has no matched-callee
+  lemma for the `bctrl`).
+
 ## CriWare tiny setters/getters — r3 clobber vs value-in-r3 (US)
 
 - **`SVM_SetCbLock` / `SVM_SetCbUnlock`** (`libs/CriWare/src/adx/svm/svm.c`,

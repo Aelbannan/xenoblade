@@ -873,12 +873,33 @@ memset(self, 0, 0x3c);
 
 `volatile`, expression nesting `((u32*)self)[0] = 0`, and data dependencies via `memset(self, *(u32*)self, …)` all fail to flip the schedule. Accept as a soft-cap; equivalence proves EQUIVALENT when no callee-register dependency exists.
 
-#### 7d. Register allocation for small C functions
+Confirmed on `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_ply.c` (`SFD_Start`, `SFD_TermSupply`): the same float appears for a **return-constant** `li r31,0` (result=0) vs a following `stw r0, 0x50(r30)` store. Tried 8+ shapes (statement order both ways, goto-out structure, declaration order, `-O3`/`-O4,s`/`-ipa file`, `#pragma scheduling off` — fixes the float but regresses prologue address-const hoisting, `#pragma optimization_level 3`, val locals, `result+1` dependency — all fail). Both functions stalled at 95–97% CODE_MATCH; EQUIVALENT_MATCH additionally blocked by the `has_indirect_calls` gate (vtable trace calls via `bctrl`), so only FULL_MATCH (100%) can accept — unreachable for this soft-cap. Do not spend further attempts here without a tooling change.
 
+#### 7d. Register allocation for small C functions
 For simple C functions with few locals, MWCC's Chaitin allocator may differ from retail:
 
 - **Extra unused param** (`void f(void* self, u32 unused, u32 addend)`) can push the third argument into `r5` matching retail where `addend` naturally lands. The middle param is dead but occupies `r4` so the active value goes to `r5` (same as retail).
 - **Global function pointers** (`lbl_eu_*`: `extern void (*lbl)(void)`) may load the symbol address into a different register (`lis r3` vs retail `lis r4`). The reg-swap is harmless for leaf void functions but causes `not_equivalent` in SMT when `r3` is live-out (the equivalence checker treats it as an observable). Use `extern u32 lbl_eu_*[]` + manual cast if register pressure is high, though this rarely changes the allocation.
+
+#### 7d2. State-machine dispatch: goto-chain, not `switch` (CriWare sfd_ply, FULL_MATCH ×3)
+
+For sparse value dispatch (player status / flags / condition code), MWCC's `switch` lowering emits a **balanced compare-tree** (`cmpi root; beq; bge; …`) even for 2–4 consecutive cases; retail is a **linear equality chain with bodies appended after the chain**. `if-else-if` emits bne-skips with inline bodies (wrong layout). Use an explicit **goto-chain** with the case bodies after the tests:
+
+```c
+if (flags == 1) goto case1;
+if (flags == 2) goto case2;
+if (flags != 3) goto caseDefault;   /* last test NEGATED: `if (c) goto A; goto B;` emits `bne B; b A`; the negated form emits retail's `beq A; b B` */
+goto case3;
+case1: result = 1; goto done;
+case2: result = 2; goto done;
+case3: /* complex body */ goto done;
+caseDefault: result = 3;
+done: …;
+```
+
+Verified FULL_MATCH: `criware_803C9FC0` (range check `(unsigned)(st-2) <= 2` + equality), `fn_803CC238` (avFlags 1/2/3), `sfply_IsEtrg` (cond 1/2/3/0). Also: `result = 0` must be **initialized after** any early-return guard (retail `li rX,0` sits at the first use point, not the declaration); and the last dispatch test must be written **negated** (`if (x != N) goto default; goto caseN;`) to hit the branch-over-branch peephole — the direct form emits `bne default; b caseN` instead of retail `beq caseN; b default`.
+
+**CriWare `SFLIB_SetErr` returns the error code (s32):** error-handler paths like `SFD_ExecOne`/`SFD_Start`/`SFD_TermSupply` `return SFLIB_SetErr(0, 0xff00xxxx);` (retail reuses r3 = SetErr result for the epilogue, no `li r3,0`). Declaring it `void` produces an extra `li r3,0; b epilogue`. `SFD_ExecOne` (FULL_MATCH) shows the shared-epilogue form: the SetErr path `b` jumps straight to the epilogue restores, skipping the else-path's `li r3, 0`.
 
 #### 7e. s64/s64 locals: struct field access, not `<< 32 |` construction (CRI SFTMR_AddTsum)
 

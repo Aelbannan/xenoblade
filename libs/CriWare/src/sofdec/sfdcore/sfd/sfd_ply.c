@@ -21,7 +21,7 @@ int sfply_ResetHn(void* self);
 
 // External functions
 extern int SFLIB_CheckHn(void* hn);
-extern void SFLIB_SetErr(void* hn, u32 errCode);
+extern s32 SFLIB_SetErr(void* hn, u32 errCode);
 extern void SFLIB_LockCs(void* cs);
 extern void SFLIB_UnlockCs(void* cs);
 extern void SFTIM_VbIn(void);
@@ -151,10 +151,9 @@ int SFD_ExecOne(void* self) {
     void* ctx;
     void* vtbl;
     void (*trace)(void*, void*);
-    int result = 0;
 
     if (SFLIB_CheckHn(self)) {
-        SFLIB_SetErr(0, 0xff000138);
+        return SFLIB_SetErr(0, 0xff000138);
     } else {
         ctx = lbl_eu_80606E34;
         if (ctx) {
@@ -172,8 +171,8 @@ int SFD_ExecOne(void* self) {
             trace = *(void(**)(void*, void*))((u8*)vtbl + 0x24);
             trace(ctx, lbl_eu_8056864C + 0x6C);
         }
+        return 0;
     }
-    return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -413,10 +412,12 @@ int fn_803CC170(void* self) {
         int t = SFTRN_GetTermFlg(self, 7);
         ready6 = p | t;
     }
-    if (ready5) {
-        if (ready6) return 1;
-    }
+    if (!ready5) goto ret0;
+    if (ready6) goto ret1;
+ret0:
     return 0;
+ret1:
+    return 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -428,21 +429,27 @@ void fn_803CC238(void* self) {
     if (FIELD(int, self, 0xA34) == 1) avFlags |= 1;
     if (FIELD(int, self, 0xA30) == 1) avFlags |= 2;
 
-    switch (avFlags) {
-    case 1: cond = 1; break;
-    case 2: cond = 2; break;
-    case 3: {
-        int c25 = SFSET_GetCond(self, 0x19);
-        if (c25) { cond = c25; break; }
-        if (!UTY_IsTmrVoid()) {
-            int c48 = SFSET_GetCond(self, 0x48);
-            if (c48) { cond = c48; break; }
-        }
-        cond = 3;
-        break;
-    }
-    default: cond = 3; break;
-    }
+    if (avFlags == 1) goto case1;
+    if (avFlags == 2) goto case2;
+    if (avFlags != 3) goto caseDefault;
+    goto case3;
+case1:
+    cond = 1;
+    goto setCond;
+case2:
+    cond = 2;
+    goto setCond;
+case3:
+    cond = SFSET_GetCond(self, 0x19);
+    if (cond) goto setCond;
+    if (UTY_IsTmrVoid()) goto set3;
+    if (SFSET_GetCond(self, 0x48)) goto setCond;
+set3:
+    cond = 3;
+    goto setCond;
+caseDefault:
+    cond = 3;
+setCond:
     SFSET_SetCond(self, 0x19, cond);
 }
 
@@ -566,21 +573,36 @@ int sfply_IsBpaOff(void* self) {
 // sfply_IsEtrg
 // ---------------------------------------------------------------------------
 int sfply_IsEtrg(void* self) {
-    int vf, af, tf, c19, result;
+    int vf, af, tf, c19;
+    int result;
     if (!FIELD(int, self, 0xA34) && !FIELD(int, self, 0xA30)) return 1;
+    result = 0;
     vf = SFTRN_GetTermFlg(self, 6);
     af = SFTRN_GetTermFlg(self, 7);
     tf = SFTRN_GetTermFlg(self, 1);
     c19 = SFSET_GetCond(self, 0x19);
-    switch (c19) {
-    case 1: result = af; break;
-    case 2: result = vf; break;
-    case 3: result = af | vf; break;
-    case 0: result = af & vf; break;
-    default: result = 0; break;
-    }
+    if (c19 == 1) goto case1;
+    if (c19 == 2) goto case2;
+    if (c19 == 3) goto case3;
+    if (c19 != 0) goto after;
+    goto case0;
+case1:
+    result = af;
+    goto after;
+case2:
+    result = vf;
+    goto after;
+case3:
+    result = af | vf;
+    goto after;
+case0:
+    result = af & vf;
+after:
     if (SFTRN_IsSetup(self, 1)) result &= tf;
-    return result ? 1 : 0;
+    if (result) goto ret1;
+    return 0;
+ret1:
+    return 1;
 }
 
 // ---------------------------------------------------------------------------
@@ -590,12 +612,18 @@ int criware_803C9FC0(void* self) {
     int result = 0;
     if (SFTRN_IsSetup(self, 1)) {
         int st = FIELD(int, self, 0x54);
-        unsigned int adj = (unsigned int)(st - 2);
-        if (adj <= 2) {
-            result = SFTRN_GetTermFlg(self, 1);
-        } else if (st == 6) {
-            result = 1;
-        }
+        if ((unsigned int)(st - 2) <= 2) goto callBlock;
+        if (st == 6) goto set1;
+        goto set0;
+callBlock:
+        if (SFTRN_GetTermFlg(self, 1)) result = 1;
+        goto end;
+set1:
+        result = 1;
+        goto end;
+set0:
+        result = 0;
+end:;
     }
     return result;
 }
@@ -606,16 +634,18 @@ int criware_803C9FC0(void* self) {
 int sfply_IsPlayTimeAutoStop(void* self) {
     int timeSec, timeUsec;
     int limitTime;
-    if (FIELD(int, self, 0x54) != 4) return 0;
-    if (FIELD(int, self, 0x5C) == 1) return 0;
-    if (FIELD(int, self, 0x980) == 1) return 0;
+    if (FIELD(int, self, 0x54) != 4) goto ret0;
+    if (FIELD(int, self, 0x5C) == 1) goto ret0;
+    if (FIELD(int, self, 0x980) != 1) goto cont;
+ret0:
+    return 0;
+cont:
     if (SFTIM_GetTimeSub(self, &timeSec, &timeUsec)) return 0;
     if (timeSec < 0) return 0;
     criware_803CA124(self, timeUsec);
     SFD_GetLimitTime(self, &limitTime);
     if (limitTime == -1) return 0;
-    if (UTY_CmpTime(limitTime, 1000, timeSec, timeUsec)) return 1;
-    return 0;
+    return (UTY_CmpTime(limitTime, 1000, timeSec, timeUsec) != 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -805,16 +835,32 @@ void* sfply_InitHn(void* config, void* extra) {
 // sfply_InitPlyInf
 // ---------------------------------------------------------------------------
 void sfply_InitPlyInf(void* self) {
+    u32 zero = 0;
     UTY_MemsetDword(self, 0, 0x2A);
-    // Zero out all fields (0x98 bytes / 4 = 38 words, pairs)
-    {
-        u32* p = (u32*)self;
-        int i;
-        for (i = 0; i < 0x26; i += 2) {
-            p[i] = 0;
-            p[i + 1] = 0;
-        }
-    }
+    FIELD(u32, self, 0x00) = zero;
+    FIELD(u32, self, 0x04) = zero;
+    FIELD(u32, self, 0x08) = zero;
+    FIELD(u32, self, 0x0C) = zero;
+    FIELD(u32, self, 0x10) = zero;
+    FIELD(u32, self, 0x18) = zero;
+    FIELD(u32, self, 0x1C) = zero;
+    FIELD(u32, self, 0x20) = zero;
+    FIELD(u32, self, 0x24) = zero;
+    FIELD(u32, self, 0x28) = zero;
+    FIELD(u32, self, 0x2C) = zero;
+    FIELD(u32, self, 0x30) = zero;
+    FIELD(s64, self, 0x38) = 0;
+    FIELD(s64, self, 0x40) = 0;
+    FIELD(s64, self, 0x48) = 0;
+    FIELD(s64, self, 0x50) = 0;
+    FIELD(s64, self, 0x58) = 0;
+    FIELD(s64, self, 0x60) = 0;
+    FIELD(s64, self, 0x68) = 0;
+    FIELD(s64, self, 0x70) = 0;
+    FIELD(s64, self, 0x78) = 0;
+    FIELD(s64, self, 0x80) = 0;
+    FIELD(s64, self, 0x88) = 0;
+    FIELD(s64, self, 0x90) = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -916,8 +962,7 @@ int SFD_Start(void* self) {
     void (*trace)(void*, void*);
 
     if (SFLIB_CheckHn(self)) {
-        SFLIB_SetErr(0, 0xff000132);
-        return 0;
+        return SFLIB_SetErr(0, 0xff000132);
     }
     ctx = lbl_eu_80606E34;
     if (ctx) {
@@ -1074,11 +1119,11 @@ void SFD_RequestStop(void* self) {
 // SFD_TermSupply
 // ---------------------------------------------------------------------------
 int SFD_TermSupply(void* self) {
-    int result = 0;
     void* ctx;
     void* vtbl;
     void (*trace)(void*, void*);
     int bufId;
+    int result;
 
     ctx = lbl_eu_80606E34;
     if (ctx) {
@@ -1089,18 +1134,18 @@ int SFD_TermSupply(void* self) {
     }
 
     if (SFLIB_CheckHn(self)) {
-        SFLIB_SetErr(0, 0xff00013D);
-    } else {
-        bufId = FIELD(int, self, 0x1FEC);
-        if (SFBUF_GetTermFlg(self, bufId) == 1) {
-            result = 0;
-        } else {
-            SFBUF_SetTermFlg(self, bufId, 1);
-            FIELD(int, self, 0x50) = 1;
-            result = 0;
-        }
+        result = SFLIB_SetErr(0, 0xff00013D);
+        goto out;
     }
-
+    bufId = FIELD(int, self, 0x1FEC);
+    if (SFBUF_GetTermFlg(self, bufId) == 1) {
+        result = 0;
+        goto out;
+    }
+    SFBUF_SetTermFlg(self, bufId, 1);
+    FIELD(int, self, 0x50) = 1;
+    result = 0;
+out:
     ctx = lbl_eu_80606E34;
     if (ctx) {
         vtbl = *(void**)ctx;

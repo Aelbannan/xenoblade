@@ -855,15 +855,13 @@ bool ChrAnmResult::GetRotateDeg(math::VEC3* pRotate) const {
                 : ySquared * math::FrSqrt(ySquared);
 
     if (lbl_eu_80669AE0 == y) {
-        pRotate->x = math::Atan2FIdx(rt._02 + rt._11, rt._12 + rt._01) *
-                     lbl_eu_80669B00;
+        pRotate->x = math::Atan2Deg(rt._02 + rt._11, rt._12 + rt._01);
         pRotate->y = math::FSelect(rt._20, lbl_eu_80669B08, lbl_eu_80669B04);
-        pRotate->z = math::Atan2FIdx(rt._02 + rt._11, rt._12 - rt._01) *
-                     lbl_eu_80669B00;
+        pRotate->z = math::Atan2Deg(rt._02 + rt._11, rt._12 - rt._01);
     } else {
-        pRotate->x = math::Atan2FIdx(rt._21, rt._22) * lbl_eu_80669B00;
-        pRotate->y = math::Atan2FIdx(-rt._20, y) * lbl_eu_80669B00;
-        pRotate->z = math::Atan2FIdx(rt._10, rt._00) * lbl_eu_80669B00;
+        pRotate->x = math::Atan2Deg(rt._21, rt._22);
+        pRotate->y = math::Atan2Deg(-rt._20, y);
+        pRotate->z = math::Atan2Deg(rt._10, rt._00);
     }
 
     return false;

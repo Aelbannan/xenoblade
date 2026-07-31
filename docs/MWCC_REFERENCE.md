@@ -2283,6 +2283,26 @@ ordinary stack/temporary scheduling. Equivalence is currently blocked by
 unaccepted sibling/callee targets, not by a high-level semantic gap. Preserve
 these candidates and pursue callee certification before compiler-shape changes.
 
+**CfCam named-kernel exception (US):** `func_8006BB04` (scale), `func_8006C6E8`
+(add), and `func_80071CF4` (distance-square) required isolated `psq_*`/`ps_*`
+backends in `src/kyoshin/cf/CfCam_ps.inl`; ordinary NW4R C++ forms either left
+FPR-color residuals or could not reproduce the retail temporary schedule. Each
+MWCC path is limited to the named kernel, uses compiler-managed operands, and
+has a complete scalar fallback. All three are byte-exact (0x1C, 0x48, and
+0x5C) with equivalent certificates and CfCam TU size PASS; the independent PC
+fallback test passed 100,000 random cases. `func_8006DFC8` uses the existing
+high-level `nw4r::math::VEC3LenSq` helper and is also byte-exact. See the
+policy-exception records in `attempts.jsonl` for opcode sets and guards.
+
+## CSchedule / monolib small residuals — bounded ceilings (US)
+
+- `CSchedule::~CSchedule()` remains a readable exact-size `0xF4` reconstruction at 98.44% with 15 pure GPR color swaps. Child-loop pointer/helper/declaration variants did not improve it; acceptance is additionally gated by the unaccepted `__dl__FPv`, `func_804DFB88`, and indirect vtable-call chain. Keep high-level C++.
+- `func_804E3434` remains exact-size `0x1E0` at 94.51% (9 pure swaps and 7 structural initialization-order words). Reordering flag locals, using a `u16` flag, changing the identity-matrix spelling, and splitting the flag expression did not improve it. The remaining semantic certificate chain passes through `func_804DFA84` (`us-804e3f20`), which is not yet accepted.
+- `UnkClass_8045F564::~UnkClass_8045F564()` remains exact-size `0x100` at 99.53% with 5 pure swaps. The opaque byte-offset aliasing loop is required to retain the retail per-iteration singleton reload; further declaration-order variants do not improve the result.
+- `CCamUtil::getXYZ2ZXY` remains exact-size `0x280` at 99.09%/34 hexdiff words (23 pure FPR/GPR swaps, 11 structural schedule words). Direct matrix `set` spelling worsened the candidate. Do not alter shared `CMat33.hpp` or use register steering.
+- `func_eu_804F9EE0` is byte-identical by hexdiff (196/196 bytes, zero mismatches) and split-fit with `-O4,s -func_align 4`; auto cycle remains blocked only by unaccepted `func_804DA9C4` and `func_eu_804DEB4C`. A direct `live-out` proof with opaque relocated-callee contracts is equivalent, but it is not a replacement for the registry's certified-callee auto policy.
+- The five NAND `__sinit` functions (`sinit_804DB420`, `sinit_804DB0D8`, `sinit_804DB228`, `sinit_804DB330`, `sinit_804F5140`) remain at 0% fuzzy because retail emits a 24-byte `li dest@sda21; b .+4; lis/addi; stw through r3` artifact while MWCC's high-level C emits a 20-byte folded store. All previously tried high-level forms and compiler pragmas were ruled out; retain the readable candidates and do not add assembly.
+
 ## zlib `inflate_table` register-color ceiling (US)
 
 `UnkClass_80460C34::func_80462068` (`us-80466038`) is a readable stock zlib

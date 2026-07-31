@@ -50,7 +50,7 @@ public:
     const wchar_t* mMessage;     //0x1F0
     float mAlphaStep;            //0x1F4
     float mAlpha;                //0x1F8
-    u32 mAnimState;              //0x1FC
+    s32 mAnimState;              //0x1FC
     IGameException* mException; //0x200
     u32 unk204;                  //0x204
     u32 unk208;                  //0x208

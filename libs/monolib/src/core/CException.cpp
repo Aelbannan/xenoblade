@@ -14,6 +14,7 @@
 #include "monolib/math.hpp"
 #include <nw4r/ut/ut_TextWriterBase.h>
 #include <revolution/enc/encunicode.h>
+#include <nw4r/lyt/lyt_layout.h>
 #include <cstring>
 
 struct CExceptionMsgParamView {
@@ -71,8 +72,9 @@ extern "C" {
 
     void func_804525D4__11CDeviceFontFv();
     void* func_eu_804558F4__11CDeviceFontFv(u32 index);
+    void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32 index, nw4r::lyt::Layout* layout);
     void Panic__Q24nw4r2dbFPCciPCce(const char* file, int line, const char* fmt, ...);
-    void func_800407C8(ml::CCol4* out, f32 r, f32 g, f32 b, f32 a);
+    ml::CCol4* func_800407C8(ml::CCol4* out, f32 r, f32 g, f32 b, f32 a);
     void __ct__7CDrawGXFv(CDrawGX* self);
     void __dt__7CDrawGXFv(CDrawGX* self, int shouldDelete);
     void setCol__7CDrawGXFRCQ22ml5CCol4(CDrawGX* self, const ml::CCol4* col);
@@ -163,8 +165,6 @@ extern "C" bool func_80457C8C__10CExceptionFv(CException* self) {
 // Static factory function
 CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* message, u32 value) {
     CException* exception;
-    CDesktop* desktop = getException__8CDesktopFv();
-
     if (func_8045DE00__7CLibHbmFv()) {
         return nullptr;
     }
@@ -178,6 +178,7 @@ CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* messa
         wkSetEvent__11CWorkThreadFQ211CWorkThread3EVT(exception, CWorkThread::EVT_NONE);
     }
 
+    CDesktop* desktop = getException__8CDesktopFv();
     if (desktop != nullptr) {
         CView* view = getView__8CDesktopFv();
         CWorkThread* parent = getException__8CDesktopFv();
@@ -262,7 +263,7 @@ extern "C" void* func_80457ED4__10CExceptionFv(CMsgParamEntry* entries, u32 valu
 
 // Render function
 void CException::wkRender() {
-    u32 state = mAnimState;
+    s32 state = mAnimState;
     if (state == 0) {
         mAlpha += mAlphaStep;
         if (mAlpha >= 0.8f) {
@@ -285,24 +286,23 @@ void CException::wkRender() {
         view = (CView*)((u8*)view + 0x1C4);
     }
     GXRenderModeObj* mode = CDeviceVI::getRenderModeObj();
-    s16 width = mode->fbWidth;
+    u16 width = mode->fbWidth;
     mode = CDeviceVI::getRenderModeObj();
-    s16 height = mode->efbHeight;
+    u16 height = mode->efbHeight;
     if (view == nullptr) {
         func_804525D4__11CDeviceFontFv();
         CDeviceVI::setFlag0(false);
         CDeviceVI::setFlag4(false);
     } else {
         CView* current = CView::getCurrentView();
-        width = *(s16*)((u8*)current + 0x1C8);
+        width = current->mRectData.mViewSize.x;
         current = CView::getCurrentView();
-        height = *(s16*)((u8*)current + 0x1CA);
+        height = current->mRectData.mViewSize.y;
     }
 
     CDrawGX draw;
     ml::CCol4 color;
-    func_800407C8(&color, 0.0f, 0.0f, 0.0f, mAlpha);
-    draw.setCol(color);
+    draw.setCol(*func_800407C8(&color, 0.0f, 0.0f, 0.0f, mAlpha));
     ml::CRect16 rect;
     rect.mPos.x = 0;
     rect.mPos.y = 0;
@@ -532,16 +532,16 @@ bool CException::wkStandbyLogin() {
 // Logout teardown
 bool CException::wkStandbyLogout() {
     CDoubleListNode* sentinel = *(CDoubleListNode**)((u8*)this + 0x60);
-    if (sentinel->mNext != sentinel) {
-        return false;
-    }
-    extern const f32 lbl_eu_8066A480;
-    f32 alpha = mAlpha;
-    if (lbl_eu_8066A480 != alpha) {
-        if (isOff__11CWorkSystemFv() == false &&
-            func_8045D478__7CLibHbmFv() == nullptr && mFlag210 == 0) {
+    if (sentinel->mNext == sentinel) {
+        extern const f32 lbl_eu_8066A480;
+        f32 alpha = mAlpha;
+        if (lbl_eu_8066A480 != alpha &&
+            (isOff__11CWorkSystemFv() == false &&
+             func_8045D478__7CLibHbmFv() == nullptr && mFlag210 == 0)) {
             return false;
         }
+    } else {
+        return false;
     }
 
     setAppException__8CDesktopFi(0);

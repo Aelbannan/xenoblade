@@ -1,7 +1,6 @@
 #include "kyoshin/cf/CfCam.hpp"
 #include <nw4r/math/math_types.h>
 #include "kyoshin/cf/CfCam_ps.inl"
-
 void* __ct__cf_CfCam(void* self, void* arg);
 void func_8006BEC4(void* self);
 extern "C" {
@@ -222,6 +221,9 @@ extern "C" int cfCam_getUnk90E4(void *self) { return *(int *)((char *)self + 0x9
 extern "C" unsigned int cfCam_getBit27_0x64(void *self) {
     unsigned int word = *(unsigned int *)((char *)self + 0x64);
     return (word >> 27) & 1U;
+}
+extern "C" f32 func_8006DFC8(const nw4r::math::VEC3* vector) {
+    return nw4r::math::VEC3LenSq(vector);
 }
 extern int lbl_eu_80663DF0;
 

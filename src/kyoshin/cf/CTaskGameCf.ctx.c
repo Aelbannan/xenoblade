@@ -1308,14 +1308,9 @@ namespace ml{
             return size() == 0;
         }
         
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
+        // Declared out-of-line: retail emits a standalone
+        // format__Q22ml10FixStr<N>FPCce (resolved via the retail symbol map).
+        void format(const char* format, ...);
 
         //Sets the given string to the first characters of this string, up to the specified length.
         //TODO: This might just be substr, but when the start index is 0?
@@ -1928,6 +1923,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -13259,8 +13255,6 @@ public:
 /* end "monolib/work/IWorkEvent.hpp" */
 /* end "monolib/work.hpp" */
 
-extern "C" void func_eu_8006B238();
-
 class CTaskGame;
 
 namespace cf{
@@ -16562,6 +16556,7 @@ namespace ml{
 
 class CWorkThread;
 class CView;
+class CDrawGX;
 
 namespace ml {
 // Distinct from CRect16 in MWCC mangling (Q22ml5CRect); same 8-byte layout.
@@ -16579,6 +16574,7 @@ public:
     void CView_UnkVirtualFunc1();
     void CView_UnkVirtualFunc8();
     void CView_UnkVirtualFunc9();
+    void func_804409D0(CDrawGX* draw, ml::CRect16* rect);
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
@@ -17230,6 +17226,7 @@ public:
     void renderRect(const ml::CRect16& r4);
     void renderCube(const ml::CVec3& r4, const ml::CVec3& r5);
     void renderCircle(const ml::CVec3& pos, int verts, float r);
+    void setGXCacheId(u32 id) { unk1C = id; }
 
     void setFlag4(){
         setFlag(FLAG_4, true);
@@ -17299,6 +17296,11 @@ private:
 /* end "types.h" */
 /* "libs/monolib/include/monolib/core/CException.hpp" line 3 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
+/* "libs/monolib/include/monolib/core/CException.hpp" line 4 "monolib/core/CProc.hpp" */
+/* end "monolib/core/CProc.hpp" */
+
+class IException;
+class CWorkThread;
 
 class IGameException {
 public:
@@ -17306,10 +17308,21 @@ public:
     virtual bool gameExceptionCB(u32 r4) = 0;
 };
 
-class CException : public CWorkThread {
+class CException : public CProc {
 public:
+    CException(const char* pName, CWorkThread* pParent);
+    virtual ~CException();
+    
     bool func_80457C8C();
-    static CException* func_80457CA4(CWorkThread* r3, const wchar_t* message, u32 r5);
+    static CException* func_80457CA4(CWorkThread* pThread, const wchar_t* message, u32 r5);
+    CException* func_80457EB0();
+    void* func_80457ED4(u32 r4);
+    virtual void wkRender();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+    void func_804591BC(IException* pException);
+    void func_804591DC(IException* pException);
+    void func_8045925C();
 
     static CException* convertToException(CWorkThread* pThread){
          CException* exception;
@@ -17327,9 +17340,19 @@ public:
         return exception;
     }
 
-    u8 unk1C4[0x200 - 0x1C4];
+    //0x0-0x1EC: CProc
+    s32 mExceptionCode;          //0x1EC
+    const wchar_t* mMessage;     //0x1F0
+    float mAlphaStep;            //0x1F4
+    float mAlpha;                //0x1F8
+    s32 mAnimState;              //0x1FC
     IGameException* mException; //0x200
-    u32 unk204;
+    u32 unk204;                  //0x204
+    u32 unk208;                  //0x208
+    u32 mFrameCounter;           //0x20C
+    u8 mFlag210;                 //0x210
+    u8 pad211[3];                //0x211
+    u32 mMaxExceptions;          //0x214
 };
 /* end "monolib/core/CException.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 6 "monolib/core/CPackItem.hpp" */
@@ -17878,6 +17901,7 @@ public:
     u8 unk2B6[2]; //padding?
     u32 mTargetFramerate; //0x2B8
     float mSecPerFrame; //0x2BC
+    u32 unk2C0; //0x2C0
 
     //General screen dimensions
     static const int SCREEN_WIDTH = 640;
@@ -18276,7 +18300,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -28278,7 +28302,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -33399,7 +33423,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -34039,7 +34063,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -40534,7 +40558,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -45571,7 +45595,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -46211,7 +46235,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -55157,7 +55181,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -60361,7 +60385,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -74368,7 +74392,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -80366,7 +80390,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -85570,7 +85594,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -101700,7 +101724,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -106737,7 +106761,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -107377,7 +107401,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -114088,7 +114112,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -119209,7 +119233,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -119849,7 +119873,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -126559,7 +126583,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -132557,7 +132581,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -137761,7 +137785,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -153689,7 +153713,7 @@ void BTA_CleanUp(BTA_CleanUpCallback p_cb);
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -154465,7 +154489,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -160463,7 +160487,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -165667,7 +165691,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -181924,7 +181948,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -187922,7 +187946,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -193126,7 +193150,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -209290,7 +209314,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -215680,7 +215704,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -222624,7 +222648,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -231298,7 +231322,7 @@ L2C_API extern void L2CA_BypassSFrame (UINT16 cid, UINT8 count);
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -231938,7 +231962,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -241684,9 +241708,7 @@ public:
 
 /* "libs/monolib/include/monolib/scn/CLight.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
-/* end "monolib/math.hpp" */
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 4 "nw4r/g3d/g3d_light.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "nw4r/g3d/g3d_light.h" */
 #ifndef NW4R_G3D_LIGHT_H
 #define NW4R_G3D_LIGHT_H
 /* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 2 "nw4r/types_nw4r.h" */
@@ -245389,7 +245411,6 @@ public:
         LinkListNode* mNode; // at 0x0
     };
 
-protected:
     static Iterator GetIteratorFromPointer(LinkListNode* pNode) {
         return Iterator(pNode);
     }
@@ -245411,6 +245432,8 @@ protected:
     Iterator Erase(Iterator it);
     Iterator Erase(LinkListNode* pNode);
     Iterator Erase(Iterator begin, Iterator end);
+
+protected:
 
 public:
     u32 GetSize() const {
@@ -251412,6 +251435,8 @@ struct ResMatData {
     ResChanData chan;           // at 0x3F0
 };
 
+class ResMatFur;
+
 class ResMat : public ResCommon<ResMatData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResMat);
@@ -251483,6 +251508,12 @@ public:
 
     ResMatChan GetResMatChan() {
         return ResMatChan(&ref().chan);
+    }
+
+    ResMatFur GetResMatFur();
+
+    void* GetResUserData() {
+        return ofs_to_ptr<void>(ref().toResUserData);
     }
 };
 
@@ -252481,21 +252512,32 @@ private:
 
 #endif
 /* end "nw4r/g3d/g3d_light.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 4 "nw4r/math/math_types.h" */
+/* end "nw4r/math/math_types.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 5 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
 
-class CLight{
+class CLight {
 public:
     CLight();
-    virtual ~CLight(){}
+    ~CLight(){}
 
-    ml::CVec3 unk4;
-    ml::CVec3 unk10;
-    ml::CVec3 unk1C;
-    u32 unk28;
-    nw4r::g3d::LightObj* mpLightObj;
-    u32 mFlags;
-    u32 unk34;
-    float unk38;
-    float unk3C;
+    void func_804C0484(const float* dir);
+    void func_804C07F0(const f32* color);
+    void func_804C09E8(GXLightObj* outLight, const Mtx matrix);
+
+    u32 mFlags;                         // 0x00
+    ml::CVec3 unk4;                     // 0x04 - position
+    ml::CVec3 unk10;                    // 0x10 - color RGB
+    f32 unk1C_x;                        // 0x1C - alpha
+    f32 unk20;                          // 0x20 - direction.x
+    f32 unk24;                          // 0x24 - direction.y
+    f32 unk28;                          // 0x28 - direction.z
+    nw4r::g3d::LightObj* mpLightObj;    // 0x2C
+    u32 unk30;                          // 0x30 - padding
+    s32 unk34;                          // 0x34 - light type
+    f32 unk38;                          // 0x38 - intensity
+    f32 unk3C;                          // 0x3C - attenuation end
 };
 /* end "monolib/scn/CLight.hpp" */
 /* "libs/monolib/include/monolib/scn.hpp" line 3 "monolib/scn/ICulling.hpp" */
@@ -258122,11 +258164,11 @@ namespace cf{
         static CTaskREvent* getInstance();
         static CTaskREvent* create(CProcess* pParent, CScnNw4r* pScene, CView* pView);
 
-    private:
         //0x000-0x054 CTTask
-        char unk054[0x1F8 - 0x054]; //0x054
+    char unk054[0x1F8 - 0x054]; //0x054
 
-        static CTaskREvent* spInstance;
+    static CTaskREvent* spInstance;
+public:
     virtual ~CTaskREvent();
     void Init();
     void Term();
@@ -258276,6 +258318,8 @@ namespace cf{
         UnkClass_80085334* unkAC;
         UnkClass_800821F8* unkB0;
         CfCamEventManager* unkB4;
+        u8 field_0xB8[0x4EC - 0xB8];
+        u32 field_0x4EC;
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
@@ -258289,7 +258333,7 @@ public:
     void func_8007C360();
     void func_8007C374();
     void func_8007C4B4();
-    virtual ~CfGameManager() {}
+    ~CfGameManager();
     void func_8007C5B8();
     cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
     void func_8007C6C0();
@@ -258306,7 +258350,7 @@ public:
     void func_8007D7A4();
     void func_8007D834();
     void func_8007D84C();
-    void func_8007DA00();
+    void* func_8007DA00();
     void func_8007DA0C();
     void func_8007DCA8();
     void func_8007DCB8();
@@ -258324,7 +258368,7 @@ public:
     void func_8007E9CC();
     void func_8007EEE0();
     void func_8007EEF0();
-    void func_8007EEF8();
+    u32 func_8007EEF8();
     void func_8007EF04();
     void func_8007EF44();
     void func_8007EF48();
@@ -258338,9 +258382,9 @@ public:
     void func_8007F11C();
     void func_8007F1FC();
     void func_8007F830();
-    void func_8007F8B8();
+    u16 func_8007F8B8();
     void func_8007F8C0();
-    void func_8007F8D0();
+    void** func_8007F8D0();
     void func_8007F8DC();
     void func_8007F8F4();
     void func_8007F900();
@@ -258365,8 +258409,8 @@ public:
     void func_8008064C();
     void func_800807BC();
     void func_80080888();
-    void func_80080E20();
-    void func_80080E28();
+    u8 func_80080E20();
+    u8 func_80080E28();
     void func_80080E30();
     void func_80080E44();
     void func_80080EE4();
@@ -258466,17 +258510,17 @@ public:
     void func_80082F2C();
     void func_80082FCC();
     void func_80082FE4();
-    void func_80083100();
-    void func_8008310C();
+    u32 func_80083100();
+    u32 func_8008310C();
     void func_80083118();
     void func_80083284();
     void func_80083290();
     void func_800832BC();
     void func_80083304();
     void func_80083328();
-    void func_80083458();
-    void func_80083460();
-    void func_80083468();
+    u32 func_80083458();
+    u32 func_80083460();
+    void func_80083468(u32 value);
     void func_80083470();
     bool func_80083538();
     bool func_80083544();
@@ -258546,13 +258590,13 @@ public:
     void func_80086D94();
     void func_80086D98();
     void func_80086D9C();
-    void func_80086DA0();
+    static u32 func_80086DA0();
     void func_80086DA4();
     void func_80086DA8();
     void func_80086DAC();
     void func_80086DB0();
     void func_80086DB4();
-    void func_80086DBC();
+    static u32 func_80086DBC();
     void func_80086E6C();
     bool func_80087244();
     bool func_80087250();
@@ -258823,7 +258867,6 @@ void CTaskGameCf::func_800444FC(){
         if(v5){
             func_8009ECB0();
             func_8009ECB0();
-            func_eu_8006B238();
         } else {
             int* v18 = func_8009ECB0();
             func_8009ECB0();
@@ -258854,31 +258897,30 @@ void CTaskGameCf::func_800444FC(){
 
         CDeviceVI::func_804483DC(Class_80296898::getInstance()->mFrameCount - 1);
 
-        if(!(unk_54 & 1)){
-            return;
-        }
-        unk_54 &= ~1u;
+        if(unk_54 & 1){
+            unk_54 &= ~1;
 
-        if(CTaskEnvironment::getInstance()){
-            CTaskEnvironment::getInstance()->SetRemove();
-        }
+            if(CTaskEnvironment::getInstance()){
+                CTaskEnvironment::getInstance()->SetRemove();
+            }
 
-        if(CTaskCulling::getInstance()){
-            CTaskCulling::getInstance()->SetRemove();
-        }
+            if(CTaskCulling::getInstance()){
+                CTaskCulling::getInstance()->SetRemove();
+            }
 
-        if(!CfGameManager::checkUnkFlag(24)){
-            func_800407C8_tmp tmp;
-            pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
-        }
+            if(!CfGameManager::checkUnkFlag(24)){
+                func_800407C8_tmp tmp;
+                pTaskGame->getScene()->func_8049602C(0, func_800407C8(&tmp, 0.0f, 0.0f, 0.0f, 1.0f));
+            }
 
-        if(CUIWindowManager::getInstance()){
-            CUIWindowManager::getInstance()->SetRemove();
-        }
+            if(CUIWindowManager::getInstance()){
+                CUIWindowManager::getInstance()->SetRemove();
+            }
 
-        CUIBattleManager::func_8012F87C(0);
-        CTaskREvent::getInstance()->SetRemove();
-        mMoveFunc = &CTaskGameCf::beginExit;
+            CUIBattleManager::func_8012F87C(0);
+            CTaskREvent::getInstance()->SetRemove();
+            mMoveFunc = &CTaskGameCf::beginExit;
+        }
     }
 
 void CTaskGameCf::beginExit() {

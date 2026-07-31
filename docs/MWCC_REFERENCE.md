@@ -2731,3 +2731,56 @@ with symbolic memory and die with `proof deadline exceeded during
 cfg-exploration` (>900 s). Byte-identical functions bypass this via the
 `full-instruction-match` contract (see certificate `contract` field) — so for
 this function shape EQUIVALENT_MATCH is effectively gated on 100% static match.
+
+## CriWare adx_tlk (GC/3.0a5.2, `-O4,p`) — declaration-order Chaitin levers (US)
+
+**Declaration order flips Chaitin colors and stack slots — 3 confirmed wins on
+`libs/CriWare/src/adx/adxt/adx_tlk.c`:**
+
+| Function | Before | Reorder | After |
+|---|---|---|---|
+| `adxt_start_sj` | 13 mm (loop ptr/counter r30↔r31 swap) | `u8* p;` before `s32 i;` | 6 mm |
+| `adxt_ExecServer` | 22 mm (srv base r29↔r31 + loop regs) | `u32* srv` declared first | 4 mm |
+| `ADXT_DiscardSmpl` | 19 mm (result/savedLock r28↔r29 + time/sfreq stack-slot swap) | `u32 savedLock; u32 result; u32 sfreq, time;` | 10 mm |
+
+The allocation order is *not* first-use order and not spill-cost-ordered in an
+obvious way; the practical method is: change declaration order one variable at a
+time, rebuild via hexdiff, keep any reduction. Same-lever results elsewhere:
+`MPV_BsearchDelim` (100% via decl order) and `adxt_SetLpFlg` (100% via
+`(x+0x7FF)/0x800` temp — see below).
+
+**Signed rounding `(x + C) >> n` folds into a mask; `/ 0x800` keeps
+`addi;srawi;addze;slwi`.** `adxt_SetLpFlg` needed retail's `(lpStart+0x7FF)/2048`
+rounding: `lpStart = (lpStart + 0x7FF) >> 11; lpStart <<= 11;` folded to
+`addi;rlwinm` (4 instructions short, size fail). Fix:
+`s32 rounded = (lpStart + 0x7FF) / 0x800; lpStart = rounded << 11;` — the
+explicit temp stopped MWCC folding the div+shift pair and reproduced
+`addi;srawi;addze;slwi` byte-for-byte (100%).
+
+**Struct-typed locals avoid stack-overlap UB.** `adxt_InsertSilence` read the
+vtbl chunk result via `void* data; *(s32*)((u8*)&data + 4)` — MWCC placed
+`data` at sp+12 overlapping the r28 save slot (a real 8-byte read past a 4-byte
+local). Declaring `SJ_CHUNK_ { u8* ptr; s32 size; } data, rest;` fixed the
+layout and the frame (0x30) and cut 36 reg-swaps + all structural diffs to 12
+pure reg-swaps.
+
+**`__cvt_fp2unsigned` must be declared `extern u32 (float)`, not float.**
+`(u32)__cvt_fp2unsigned(x)` with a float-returning prototype emitted the
+conversion call TWICE (call + the (u32) cast's float→u32 runtime helper).
+Declaring it u32-returning removes the double call (ADXT_DiscardSmpl 280→280
+size, -4 instructions).
+
+**Residual soft-caps (recorded, do not chase):** `adxt_InsertSilence` 12 mm =
+pure chunkSize↔numBytes color swap (invariant across decl orders, numBytes3,
+got-inline, numBlocks, sj-last); `adxt_ExecServer` 4 mm = `stw srv[9]` sunk
+below the callback null-check `cmpi` (volatile store, statement reorder both
+ways, fn-local all identical); `adxt_GetTimeSfreq2` 4 mm = `add` RA/RB operand
+encoding + else-block `li/stw` constant scheduling; `adxt_start_sj` 6 mm =
+constant-block `lbz self[2]` hoist + li/subi order; `ADXT_DiscardSmpl` 10 mm =
+int→float 0x4330-conversion store interleave (explicit float temps, ratio var,
+expression reorder all regress); `ADXT_StartSj` 2 mm = `stb`/`or r3` schedule
+swap before `adxt_start_sj` (volatile, `if(x=3)`, temp copies, decl reorder all
+identical). All six are additionally blocked from EQUIVALENT_MATCH by the
+registry gates: `has_indirect_calls=True` (vtbl `bcctrl` in retail asm) or
+unaccepted callee chains (`ADXERR_CallErrFunc1_`→`SVM_CallErr`,
+`adxt_GetTime`, ADXCRS_*), so only 100% static (FULL_MATCH) can close them.

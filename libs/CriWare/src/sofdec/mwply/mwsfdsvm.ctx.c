@@ -717,6 +717,78 @@ typedef int BOOL;
 #endif
 /* end "types.h" */
 /* end "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/mwply/mwsfdsvm.c" line 4 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "string.h" */
+/* "libs/CriWare/src/sofdec/mwply/mwsfdsvm.c" line 5 "stdarg.h" */
+/* end "stdarg.h" */
 
 extern u32 lbl_eu_805FF1D0;
 extern u32 lbl_eu_805FF1D8;
@@ -751,24 +823,45 @@ void MWSFSVM_EntryMainFunc(int arg1, int arg2, int arg3)
 }
 void MWSFSVM_TestAndSet(void* p) { SVM_TestAndSet(p); }
 
-
-void MWSFSVM_Error() {}
-
 /* ---- SVM trace callback infrastructure ----
  * lbl_eu_805FF3A0 is a global pointer to an optional trace object whose
- * vtable exposes a "trace" method at offset 0x24; lbl_eu_80566B9C is the
- * trace record (entry sub-record at +0x04, exit sub-record at +0x6c). */
+ * vtable exposes a "trace" method at offset 0x24; lbl_eu_80566AC8 is the
+ * error data record (sub-record at +0x6c). */
 
 typedef struct TraceCb TraceCb;
 
 typedef struct TraceCbVtable {
     u8 pad_0x00[0x24];
-    void (*trace)(TraceCb* self, u32* rec);   /* 0x24 */
+    void (*trace)(TraceCb* self, void* data);   /* 0x24 */
 } TraceCbVtable;
 
 struct TraceCb {
     const TraceCbVtable* vtable;
 };
+
+extern TraceCb* lbl_eu_805FF3A0;
+extern u8 lbl_eu_80566AC8[];
+
+extern void SVM_CallErr1(const char* msg);
+
+void MWSFSVM_Error(const char* fmt, ...) {
+    va_list ap;
+    char msg[256];
+
+    memset(msg, 0, sizeof(msg));
+    va_start(ap, fmt);
+    vsprintf(msg, fmt, ap);
+    va_end(ap);
+
+    if (lbl_eu_805FF3A0 != NULL) {
+        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0, msg);
+    }
+    SVM_CallErr1(msg);
+    if (lbl_eu_805FF3A0 != NULL) {
+        lbl_eu_805FF3A0->vtable->trace(lbl_eu_805FF3A0,
+            (void*)(lbl_eu_80566AC8 + 0x6C));
+    }
+}
 
 typedef struct TraceRec TraceRec;
 struct TraceRec {
@@ -778,7 +871,6 @@ struct TraceRec {
     u32 field_0x6c;                            /* 0x6c (exit sub-record) */
 };
 
-extern TraceCb* lbl_eu_805FF3A0;
 extern TraceRec lbl_eu_80566B9C;
 extern int SVM_GotoSvrBorder(int svrId);
 

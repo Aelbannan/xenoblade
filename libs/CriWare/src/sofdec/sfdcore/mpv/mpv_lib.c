@@ -7,6 +7,9 @@ void MPV_Init() {}
 
 void mpvlib_ChkFatal() {}
 
+extern u8 lbl_eu_80602BE8[];
+extern u32 lbl_eu_80602FE8;
+
 void mpvlib_InitClip0255() {}
 
 void mpvlib_InitPicAtr() {}

@@ -4,6 +4,8 @@
 #include <revolution/OS.h>
 #include <revolution/VI.h>
 
+IErrorWii::~IErrorWii(){}
+
 CErrorWii* CErrorWii::spInstance;
 bool CErrorWii::sPowerCallbackCalled;
 bool CErrorWii::sResetCallbackCalled;

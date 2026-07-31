@@ -43,7 +43,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
         virtual void CfObject_UnkVirtualFunc29(float value);     //0xC4
         virtual void CfObject_UnkVirtualFunc30();     //0xC8
-        virtual void CfObject_UnkVirtualFunc31();     //0xCC
+        virtual float CfObject_UnkVirtualFunc31();     //0xCC
         virtual void CfObject_UnkVirtualFunc32();     //0xD0
         virtual void CfObject_UnkVirtualFunc33(float amount); //0xD4
         virtual float CfObject_UnkVirtualFunc34();     //0xD8

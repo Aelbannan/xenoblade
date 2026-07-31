@@ -4,6 +4,8 @@
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/plugin/pluginCfs.hpp"
 
+struct UnkClass_8009ECB0;
+
 // ============================================================================
 // External declarations (called functions not declared in included headers)
 // ============================================================================
@@ -12,11 +14,26 @@ extern "C" {
     extern unsigned long lbl_eu_80663E28;  // game state flags 2
     extern float lbl_eu_80663EDC;          // wait pop timer
     extern unsigned long lbl_eu_80663E14;  // ignore PAL flag
+    extern float lbl_eu_80665E30;          // fixed-point divisor (4096.0f)
+    extern float lbl_eu_80665E34;          // 0.5f
+    extern float lbl_eu_80665E38;          // scale factor
+    extern float lbl_eu_80665E3C;          // 1.0f
+    extern float lbl_eu_80665E40;          // 4503601774854144.0f (for xoris)
+    extern float lbl_eu_80665E48;          // various constants
+    extern float lbl_eu_80665E4C;          // 0.0f
+    extern float lbl_eu_80665E30;          // fixed-point divisor
+    extern float lbl_eu_80665E34;          // 0.5f
+    extern float lbl_eu_80665E38;          // scale factor
+    extern float lbl_eu_80665E3C;          // 1.0f
+    extern float lbl_eu_80665E40;          // 4503601774854144.0f
+    extern float lbl_eu_80665E48;          // misc constant
+    extern float lbl_eu_80665E4C;          // 0.0f
 
     void func_8004302C(int, int);
     void func_80043628();
     void func_800A3304();
     void func_801579A4();
+    void func_8012FAA8();
     int func_8015796C(int);
     void func_80157184(int);
     void func_801571A8(int);
@@ -81,9 +98,11 @@ extern "C" {
     void func_800B98C8(int);
     void func_80083888__Q22cf13CfGameManagerFv(const char*);
     bool func_80084BF4__Q22cf13CfGameManagerFv();
+    bool func_80087250__Q22cf13CfGameManagerFv();
     void func_800B94A0();
-    void func_8009E740(UnkClass_8009ECB0*, int);
-    bool func_8009E56C(UnkClass_8009ECB0*, int, int);
+    void func_8009E740(void*, int);
+    int func_8009E56C(void*, int, int);
+    bool func_8009E344(void*, int, int*, int*);
     void func_8009E3C0();
     int  func_801586D4(int, int);
     void func_80159C04(int, int);
@@ -107,7 +126,7 @@ extern "C" {
 // --- setMapJumpArea (us-8004785c) ---
 int setMapJumpArea(VMThread* pThread) {
     int args[15];
-    int r22, r20, r17, r21, r16, r14;
+    int v22, v20, v17, v21, v16, v14_int;
     
     // Read args 1-15: vmArgIntGet(2, ptr) for arg1, vmArgFixedGet for args 3-15
     // Arg 1: int
@@ -127,50 +146,50 @@ int setMapJumpArea(VMThread* pThread) {
     
     // Arg 16: optional int
     if (vmArgOmitChk(pThread, 16)) {
-        r22 = 0x168;
-        r20 = 17;
+        v22 = 0x168;
+        v20 = 17;
     } else {
-        r20 = 17;
+        v20 = 17;
         VMArg* arg = vmArgPtrGet(pThread, 16);
-        r22 = vmArgIntGet(17, arg);
+        v22 = vmArgIntGet(17, arg);
     }
     
     // Arg 17: optional string
-    r17 = 0;
-    if (!vmArgOmitChk(pThread, r20)) {
-        VMArg* arg = vmArgPtrGet(pThread, r20);
-        r20++;
-        r17 = (int)vmArgStringGet(r20, arg);
+    v17 = 0;
+    if (!vmArgOmitChk(pThread, v20)) {
+        VMArg* arg = vmArgPtrGet(pThread, v20);
+        v20++;
+        v17 = (int)vmArgStringGet(v20, arg);
     } else {
-        r20++;
+        v20++;
     }
     
     // Arg 18: optional int
-    r21 = 0;
-    if (!vmArgOmitChk(pThread, r20)) {
-        VMArg* arg = vmArgPtrGet(pThread, r20);
-        r20++;
-        r21 = vmArgIntGet(r20, arg);
+    v21 = 0;
+    if (!vmArgOmitChk(pThread, v20)) {
+        VMArg* arg = vmArgPtrGet(pThread, v20);
+        v20++;
+        v21 = vmArgIntGet(v20, arg);
     } else {
-        r20++;
+        v20++;
     }
     
     // Arg 19: optional int
-    r16 = 0;
-    if (!vmArgOmitChk(pThread, r20)) {
-        VMArg* arg = vmArgPtrGet(pThread, r20);
-        r20++;
-        r16 = vmArgIntGet(r20, arg);
+    v16 = 0;
+    if (!vmArgOmitChk(pThread, v20)) {
+        VMArg* arg = vmArgPtrGet(pThread, v20);
+        v20++;
+        v16 = vmArgIntGet(v20, arg);
     } else {
-        r20++;
+        v20++;
     }
     
     // Arg 20: optional int
-    r14 = 0;
-    if (!vmArgOmitChk(pThread, r20)) {
-        VMArg* arg = vmArgPtrGet(pThread, r20);
-        r20++;
-        r14 = vmArgIntGet(r20, arg);
+    v14_int = 0;
+    if (!vmArgOmitChk(pThread, v20)) {
+        VMArg* arg = vmArgPtrGet(pThread, v20);
+        v20++;
+        v14_int = vmArgIntGet(v20, arg);
     }
     
     // Convert fixed-point args (3-15) to floats
@@ -185,18 +204,18 @@ int setMapJumpArea(VMThread* pThread) {
     float v11 = (float)(s32)args[10] / 4096.0f;
     float v12 = (float)(s32)args[11] / 4096.0f;
     float v13 = (float)(s32)args[12] / 4096.0f;
-    float v14 = (float)(s32)args[13] / 4096.0f;
-    float v15 = (float)(s32)args[14] / 4096.0f;
+    float v14f = (float)(s32)args[13] / 4096.0f;
+    float v15f = (float)(s32)args[14] / 4096.0f;
     
     float t1[3] = {v3, v4, v5};
     float t2[3] = {v6, v7, v8};
     float t3[3] = {v9, v10, v11};
-    float t4[3] = {v12, v13, v14};
+    float t4[3] = {v12, v13, v14f};
     
     void* gm = func_80081CB8__Q22cf13CfGameManagerFv();
     if (gm) {
-        func_800AB978(v15, t4, t3);
-        func_800AB8CC(v15, t1, t2);
+        func_800AB978(v15f, t4, t3);
+        func_800AB8CC(v15f, t1, t2);
         
         float sum[3];
         sum[0] = t1[0] + t2[0];
@@ -208,15 +227,15 @@ int setMapJumpArea(VMThread* pThread) {
         scaled[1] = sum[1] * lbl_eu_80665E38;
         scaled[2] = sum[2] * lbl_eu_80665E38;
         
-        func_800AC30C(args[0], args[1], (const char*)r17);
+        func_800AC30C(args[0], args[1], (const char*)v17);
         
-        int neg = -r21;
-        int orVal = neg | r21;
+        int neg = -v21;
+        int orVal = neg | v21;
         int boolVal = (unsigned int)orVal >> 31;
-        func_8007C360__Q22cf13CfGameManagerFv((float)(s32)r22, boolVal, r16);
+        func_8007C360__Q22cf13CfGameManagerFv((float)(s32)v22, boolVal, v16);
     }
     
-    func_8007C360__Q22cf13CfGameManagerFv(1.0f, r14, r16);
+    func_8007C360__Q22cf13CfGameManagerFv(1.0f, v14_int, v16);
     return 0;
 }
 
@@ -232,7 +251,7 @@ void func_80047814__Q22cf13CfObjectPointFv(void* self, void* src) {
 // --- setMapJumpAreaBox (us-80047e18) ---
 int setMapJumpAreaBox(VMThread* pThread) {
     int args[12];
-    int r28, r15, r27, r26, r25;
+    int v28, v15, v27, v26, v25;
     
     // Args 1-2: ints
     {
@@ -251,50 +270,50 @@ int setMapJumpAreaBox(VMThread* pThread) {
     
     // Arg 12: optional int
     if (vmArgOmitChk(pThread, 12)) {
-        r28 = 0x168;
-        r15 = 13;
+        v28 = 0x168;
+        v15 = 13;
     } else {
-        r15 = 13;
+        v15 = 13;
         VMArg* arg = vmArgPtrGet(pThread, 12);
-        r28 = vmArgIntGet(13, arg);
+        v28 = vmArgIntGet(13, arg);
     }
     
     // Arg 13: optional string
-    r27 = 0;
-    if (!vmArgOmitChk(pThread, r15)) {
-        VMArg* arg = vmArgPtrGet(pThread, r15);
-        r15++;
-        r27 = (int)vmArgStringGet(r15, arg);
+    v27 = 0;
+    if (!vmArgOmitChk(pThread, v15)) {
+        VMArg* arg = vmArgPtrGet(pThread, v15);
+        v15++;
+        v27 = (int)vmArgStringGet(v15, arg);
     } else {
-        r15++;
+        v15++;
     }
     
     // Arg 14: optional int
-    r26 = 0;
-    if (!vmArgOmitChk(pThread, r15)) {
-        VMArg* arg = vmArgPtrGet(pThread, r15);
-        r15++;
-        r26 = vmArgIntGet(r15, arg);
+    v26 = 0;
+    if (!vmArgOmitChk(pThread, v15)) {
+        VMArg* arg = vmArgPtrGet(pThread, v15);
+        v15++;
+        v26 = vmArgIntGet(v15, arg);
     } else {
-        r15++;
+        v15++;
     }
     
     // Arg 15: optional int
-    r25 = 0;
-    if (!vmArgOmitChk(pThread, r15)) {
-        VMArg* arg = vmArgPtrGet(pThread, r15);
-        r15++;
-        r25 = vmArgIntGet(r15, arg);
+    v25 = 0;
+    if (!vmArgOmitChk(pThread, v15)) {
+        VMArg* arg = vmArgPtrGet(pThread, v15);
+        v15++;
+        v25 = vmArgIntGet(v15, arg);
     } else {
-        r15++;
+        v15++;
     }
     
     // Arg 16: optional int
-    int r16 = 0;
-    if (!vmArgOmitChk(pThread, r15)) {
-        VMArg* arg = vmArgPtrGet(pThread, r15);
-        r15++;
-        r16 = vmArgIntGet(r15, arg);
+    int v16 = 0;
+    if (!vmArgOmitChk(pThread, v15)) {
+        VMArg* arg = vmArgPtrGet(pThread, v15);
+        v15++;
+        v16 = vmArgIntGet(v15, arg);
     }
     
     // Convert fixed-point to floats
@@ -316,15 +335,15 @@ int setMapJumpAreaBox(VMThread* pThread) {
     if (gm) {
         func_800AB978(lbl_eu_80665E48, tB, tB);
         func_800ABA18(0.0f, tA, tC);
-        func_800AC30C(args[0], args[1], (const char*)r27);
+        func_800AC30C(args[0], args[1], (const char*)v27);
         
-        int neg = -r26;
-        int orVal = neg | r26;
+        int neg = -v26;
+        int orVal = neg | v26;
         int boolVal = (unsigned int)orVal >> 31;
-        func_8007C360__Q22cf13CfGameManagerFv((float)(s32)r28, boolVal, r25);
+        func_8007C360__Q22cf13CfGameManagerFv((float)(s32)v28, boolVal, v25);
     }
     
-    func_8007C360__Q22cf13CfGameManagerFv(1.0f, r25, r16);
+    func_8007C360__Q22cf13CfGameManagerFv(1.0f, v25, v16);
     return 0;
 }
 
@@ -403,27 +422,27 @@ int changeWalker(VMThread* pThread) {
 
 // --- eventStart (us-80049624) ---
 int eventStart(VMThread* pThread) {
-    int r31, r30;
+    int v31, v30;
     
     if (vmArgOmitChk(pThread, 1)) {
-        r31 = 0;
-        r30 = 2;
+        v31 = 0;
+        v30 = 2;
     } else {
-        r30 = 2;
+        v30 = 2;
         VMArg* arg = vmArgPtrGet(pThread, 1);
-        r31 = vmArgIntGet(2, arg);
+        v31 = vmArgIntGet(2, arg);
     }
     
     int val;
-    if (vmArgOmitChk(pThread, r30)) {
+    if (vmArgOmitChk(pThread, v30)) {
         val = 0;
     } else {
-        VMArg* arg = vmArgPtrGet(pThread, r30);
-        r30++;
-        val = vmArgIntGet(r30, arg);
+        VMArg* arg = vmArgPtrGet(pThread, v30);
+        v30++;
+        val = vmArgIntGet(v30, arg);
     }
     
-    func_80085E58__Q22cf13CfGameManagerFv(r31, val);
+    func_80085E58__Q22cf13CfGameManagerFv(v31, val);
     void* bm = getInstance__Q22cf14CBattleManagerFv();
     func_800F4004(bm);
     return 0;
@@ -465,39 +484,39 @@ int setMono(VMThread* pThread) {
 
 // --- setMapDispID (us-800497d8) ---
 int setMapDispID(VMThread* pThread) {
-    int r26, r27, r28, r29, r30;
+    int v26, v27, v28, v29, v30;
     
     {
         VMArg* arg = vmArgPtrGet(pThread, 1);
-        r26 = vmArgIntGet(2, arg);
+        v26 = vmArgIntGet(2, arg);
     }
     {
         VMArg* arg = vmArgPtrGet(pThread, 2);
-        r27 = vmArgBoolGet(3, arg);
+        v27 = vmArgBoolGet(3, arg);
     }
     {
         VMArg* arg = vmArgPtrGet(pThread, 3);
-        r28 = vmArgBoolGet(4, arg);
+        v28 = vmArgBoolGet(4, arg);
     }
     {
         VMArg* arg = vmArgPtrGet(pThread, 4);
-        r29 = vmArgBoolGet(5, arg);
+        v29 = vmArgBoolGet(5, arg);
     }
     {
         VMArg* arg = vmArgPtrGet(pThread, 5);
-        r30 = vmArgBoolGet(6, arg);
+        v30 = vmArgBoolGet(6, arg);
     }
     
     void* gm = func_80083298__Q22cf13CfGameManagerFv();
     if (gm) {
-        if (r27) {
-            if (r28) func_80462D04(r26);
-            if (r29) { func_804BC9EC__Fv(); func_804BCC30(r26); }
-            if (r30) func_8047BD8C((u8*)gm + 0xF0, r26);
+        if (v27) {
+            if (v28) func_80462D04(v26);
+            if (v29) { func_804BC9EC__Fv(); func_804BCC30(v26); }
+            if (v30) func_8047BD8C((u8*)gm + 0xF0, v26);
         } else {
-            if (r28) func_80462D5C(r26);
-            if (r29) { func_804BC9EC__Fv(); func_804BCC3C(r26); }
-            if (r30) func_8047BD94((u8*)gm + 0xF0, r26);
+            if (v28) func_80462D5C(v26);
+            if (v29) { func_804BC9EC__Fv(); func_804BCC3C(v26); }
+            if (v30) func_8047BD94((u8*)gm + 0xF0, v26);
         }
     }
     return 0;
@@ -526,8 +545,8 @@ int isMainParty(VMThread* pThread) {
     
     int firstOut = 0;
     int secondOut = -1;
-    UnkClass_8009ECB0* data = func_8009ECB0();
-    func_8009E344(data, val, &firstOut, &secondOut);
+    int* data = func_8009ECB0();
+    func_8009E344((void*)data, val, &firstOut, &secondOut);
     
     int result = firstOut;
     int sub = result - 1;
@@ -549,8 +568,8 @@ int isResvParty(VMThread* pThread) {
     
     int firstOut = 0;
     int secondOut = -1;
-    UnkClass_8009ECB0* data = func_8009ECB0();
-    func_8009E344(data, val, &firstOut, &secondOut);
+    int* data = func_8009ECB0();
+    func_8009E344((void*)data, val, &firstOut, &secondOut);
     
     int result = firstOut;
     int sub = result - 2;
@@ -568,86 +587,86 @@ int isResvParty(VMThread* pThread) {
 // --- addParty (us-80049ac0) ---
 int addParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
-    int r31 = vmArgIntGet(2, arg);
+    int v31 = vmArgIntGet(2, arg);
     
     int firstOut = 0;
     int secondOut = -1;
-    UnkClass_8009ECB0* data = func_8009ECB0();
-    func_8009E344(data, r31, &firstOut, &secondOut);
+    int* data = func_8009ECB0();
+    func_8009E344((void*)data, v31, &firstOut, &secondOut);
     
     int count = firstOut;
     int sub = count - 2;
-    int clz = __builtin_clz(sub);
+    int clz = __cntlzw(sub);
     int isEq = (unsigned int)clz >> 5;
     
     if (isEq != 1 && isEq != 2) {
-        UnkClass_8009ECB0* data2 = func_8009ECB0();
+        UnkClass_8009ECB0* data2 = (UnkClass_8009ECB0*)func_8009ECB0();
         int group = 0;
         
-        if (r31 == 9)       group = 6;
-        else if (r31 == 10) group = 7;
-        else if (r31 == 6)  group = 9;
-        else if (r31 == 7)  group = 10;
-        else if (r31 == 12 || r31 == 13) group = 4;
+        if (v31 == 9)       group = 6;
+        else if (v31 == 10) group = 7;
+        else if (v31 == 6)  group = 9;
+        else if (v31 == 7)  group = 10;
+        else if (v31 == 12 || v31 == 13) group = 4;
         
         if (group) func_8009E740(data2, group);
         
-        if (!func_8009E56C(data2, r31, 1)) {
-            func_8009E56C(data2, r31, 2);
+        if (!func_8009E56C(data2, v31, 1)) {
+            func_8009E56C(data2, v31, 2);
         }
     }
     
-    func_800823A4__Q22cf13CfGameManagerFv(r31, 1);
+    func_800823A4__Q22cf13CfGameManagerFv(v31, 1);
     return 0;
 }
 
 // --- makeParty (us-80049bf8) ---
 int makeParty(VMThread* pThread) {
-    int r29, r28, r27, r26, r25, r24, r23, r30;
+    int v29, v28, v27, v26, v25, v24, v23, v30;
     
     {
         VMArg* arg = vmArgPtrGet(pThread, 1);
-        r29 = vmArgIntGet(2, arg);
+        v29 = vmArgIntGet(2, arg);
     }
     
     // Arg 2: optional
-    if (vmArgOmitChk(pThread, 2)) { r28 = 0; r30 = 3; }
-    else { r30 = 3; VMArg* arg = vmArgPtrGet(pThread, 2); r28 = vmArgIntGet(3, arg); }
+    if (vmArgOmitChk(pThread, 2)) { v28 = 0; v30 = 3; }
+    else { v30 = 3; VMArg* arg = vmArgPtrGet(pThread, 2); v28 = vmArgIntGet(3, arg); }
     
     // Arg 3: optional
-    if (vmArgOmitChk(pThread, r30)) { r27 = 0; r30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, r30); r30++; r27 = vmArgIntGet(r30, arg); }
+    if (vmArgOmitChk(pThread, v30)) { v27 = 0; v30++; }
+    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v27 = vmArgIntGet(v30, arg); }
     
     // Arg 4: optional
-    if (vmArgOmitChk(pThread, r30)) { r26 = 0; r30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, r30); r30++; r26 = vmArgIntGet(r30, arg); }
+    if (vmArgOmitChk(pThread, v30)) { v26 = 0; v30++; }
+    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v26 = vmArgIntGet(v30, arg); }
     
     // Arg 5: optional
-    if (vmArgOmitChk(pThread, r30)) { r25 = 0; r30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, r30); r30++; r25 = vmArgIntGet(r30, arg); }
+    if (vmArgOmitChk(pThread, v30)) { v25 = 0; v30++; }
+    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v25 = vmArgIntGet(v30, arg); }
     
     // Arg 6: optional
-    if (vmArgOmitChk(pThread, r30)) { r24 = 0; r30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, r30); r30++; r24 = vmArgIntGet(r30, arg); }
+    if (vmArgOmitChk(pThread, v30)) { v24 = 0; v30++; }
+    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v24 = vmArgIntGet(v30, arg); }
     
     // Arg 7: optional
-    if (vmArgOmitChk(pThread, r30)) { r23 = 0; r30++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, r30); r30++; r23 = vmArgIntGet(r30, arg); }
+    if (vmArgOmitChk(pThread, v30)) { v23 = 0; v30++; }
+    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; v23 = vmArgIntGet(v30, arg); }
     
     // Arg 8: optional bool
     int r30_bool;
-    if (vmArgOmitChk(pThread, r30)) { r30_bool = 1; }
-    else { VMArg* arg = vmArgPtrGet(pThread, r30); r30++; r30_bool = vmArgBoolGet(r30, arg); }
+    if (vmArgOmitChk(pThread, v30)) { r30_bool = 1; }
+    else { VMArg* arg = vmArgPtrGet(pThread, v30); v30++; r30_bool = vmArgBoolGet(v30, arg); }
     
     // Build party data
     u16 pdata[9];
     memset(pdata, 0, sizeof(pdata));
-    pdata[0] = r29 & 0xFFFF;
-    pdata[1] = r28 & 0xFFFF;
-    pdata[2] = r27 & 0xFFFF;
-    pdata[3] = r26 & 0xFFFF;
-    pdata[4] = r25 & 0xFFFF;
-    pdata[5] = r24 & 0xFFFF;
+    pdata[0] = v29 & 0xFFFF;
+    pdata[1] = v28 & 0xFFFF;
+    pdata[2] = v27 & 0xFFFF;
+    pdata[3] = v26 & 0xFFFF;
+    pdata[4] = v25 & 0xFFFF;
+    pdata[5] = v24 & 0xFFFF;
     
     // Player positions
     float pos[3][3];
@@ -668,11 +687,11 @@ int makeParty(VMThread* pThread) {
     func_8007F1FC__Q22cf13CfGameManagerFv(pdata, 1);
     
     if (r30_bool) {
-        UnkClass_8009ECB0* d = func_8009ECB0();
-        func_80080888__Q22cf13CfGameManagerFv(d->entries_0x4[0] & 0xFFFF, 1);
+        int* d = func_8009ECB0();
+        func_80080888__Q22cf13CfGameManagerFv(d[1] & 0xFFFF, 1);
     }
     
-    if (func_800822F4__Q22cf13CfGameManagerFv() == 1 && func_80087250__Q22cf13CfGameManagerFv()) {
+    if (func_8009CF8C(0x20) == 1 && func_80087250__Q22cf13CfGameManagerFv()) {
         func_8012FAA8();
     }
     
@@ -688,26 +707,26 @@ int makeParty(VMThread* pThread) {
 }
 
 float cf::CfObject::CfObject_UnkVirtualFunc31() {
-    return mField4C;
+    return *(float*)((u8*)this + 0x4C);
 }
 
 // --- makeGuestParty (us-80049f84) ---
 int makeGuestParty(VMThread* pThread) {
-    int r30, r29, r31;
+    int v30, v29, v31;
     
-    if (vmArgOmitChk(pThread, 1)) { r30 = 0; r31 = 2; }
-    else { r31 = 2; VMArg* arg = vmArgPtrGet(pThread, 1); r30 = vmArgIntGet(2, arg); }
+    if (vmArgOmitChk(pThread, 1)) { v30 = 0; v31 = 2; }
+    else { v31 = 2; VMArg* arg = vmArgPtrGet(pThread, 1); v30 = vmArgIntGet(2, arg); }
     
-    if (vmArgOmitChk(pThread, r31)) { r29 = 0; r31++; }
-    else { VMArg* arg = vmArgPtrGet(pThread, r31); r31++; r29 = vmArgIntGet(r31, arg); }
+    if (vmArgOmitChk(pThread, v31)) { v29 = 0; v31++; }
+    else { VMArg* arg = vmArgPtrGet(pThread, v31); v31++; v29 = vmArgIntGet(v31, arg); }
     
-    if (vmArgOmitChk(pThread, r31)) { r31 = 0; }
-    else { VMArg* arg = vmArgPtrGet(pThread, r31); r31++; r31 = vmArgIntGet(r31, arg); }
+    if (vmArgOmitChk(pThread, v31)) { v31 = 0; }
+    else { VMArg* arg = vmArgPtrGet(pThread, v31); v31++; v31 = vmArgIntGet(v31, arg); }
     
-    UnkClass_8009ECB0* data = func_8009ECB0();
-    data->entries_0x4[0] = (data->entries_0x4[0] & 0xFFFF0000) | (r30 & 0xFFFF);
-    data->entries_0x4[1] = (data->entries_0x4[1] & 0xFFFF0000) | (r29 & 0xFFFF);
-    data->entries_0x4[2] = (data->entries_0x4[2] & 0xFFFF0000) | (r31 & 0xFFFF);
+    int* data = func_8009ECB0();
+    data[1] = (data[1] & 0xFFFF0000) | (v30 & 0xFFFF);
+    data[2] = (data[2] & 0xFFFF0000) | (v29 & 0xFFFF);
+    data[3] = (data[3] & 0xFFFF0000) | (v31 & 0xFFFF);
     func_8009E3C0();
     return 0;
 }
@@ -715,9 +734,9 @@ int makeGuestParty(VMThread* pThread) {
 // --- delParty (us-8004a0a0) ---
 int delParty(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
-    int r31 = vmArgIntGet(2, arg);
-    UnkClass_8009ECB0* data = func_8009ECB0();
-    func_8009E740(data, r31);
+    int v31 = vmArgIntGet(2, arg);
+    int* data = func_8009ECB0();
+    func_8009E740(data, v31);
     return 0;
 }
 
@@ -730,7 +749,7 @@ int addItem(VMThread* pThread) {
     int neg = -result;
     int orVal = neg | result;
     int boolVal = (unsigned int)orVal >> 31;
-    int clz = __builtin_clz(boolVal);
+    int clz = __cntlzw(boolVal);
     
     VMArg ret;
     ret.type = 1;
@@ -742,7 +761,7 @@ int addItem(VMThread* pThread) {
 // --- delItem (us-8004a160) ---
 int delItem(VMThread* pThread) {
     VMArg* arg = vmArgPtrGet(pThread, 1);
-    int r31 = vmArgIntGet(2, arg);
+    int v31 = vmArgIntGet(2, arg);
     
     int val = 1;
     if (!vmArgOmitChk(pThread, 2)) {
@@ -750,7 +769,7 @@ int delItem(VMThread* pThread) {
         val = vmArgIntGet(3, arg2);
     }
     
-    func_80159C04(r31 & 0xFFFF, val);
+    func_80159C04(v31 & 0xFFFF, val);
     return 0;
 }
 
@@ -1552,7 +1571,6 @@ unsigned long setFieldVision() {
 }
 
 void pluginCfsRegist(){
-    extern void vmPluginRegist(const char*, PluginFuncData*);
     extern char lbl_eu_804FB040[];
     extern PluginFuncData lbl_eu_80525F98[];
     vmPluginRegist(&lbl_eu_804FB040[6], lbl_eu_80525F98);

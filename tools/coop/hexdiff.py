@@ -651,7 +651,17 @@ def run(argv: list[str] | None = None) -> int:
         print(f"ERROR: symbol {args.symbol!r} not found in {retail_path}", file=sys.stderr)
         print(f"  available: {', '.join(f.name for f in retail_fn[:20])}", file=sys.stderr)
         return 4
-    if not decomp_match:
+    if not decomp_match and retail_match:
+        # If the symbol resolved in the retail object but not in the decomp
+        # object (name mismatch between retail and decompiled symbols), try
+        # matching by offset (value) so the diff still works.
+        retail_val = retail_match[0].value
+        decomp_match = [f for f in decomp_fn if f.value == retail_val]
+        if not decomp_match:
+            print(f"ERROR: symbol {args.symbol!r} not found in {decomp_path}", file=sys.stderr)
+            print(f"  available: {', '.join(f.name for f in decomp_fn[:20])}", file=sys.stderr)
+            return 4
+    elif not decomp_match:
         print(f"ERROR: symbol {args.symbol!r} not found in {decomp_path}", file=sys.stderr)
         print(f"  available: {', '.join(f.name for f in decomp_fn[:20])}", file=sys.stderr)
         return 4

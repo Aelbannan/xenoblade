@@ -25,7 +25,7 @@ extern "C" {
     void __ct__Q34nw4r3lyt8DrawInfoFv(void*);
     void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
     void func_80143ADC(void*, u32, u32, u32, u32);
-    void func_80143F78(void*);
+    int func_80143F78(void*);
     void func_80144070(void*);
     void func_801440A8(void*);
     void func_80144410(void*);
@@ -61,7 +61,7 @@ extern "C" {
     void* getHandleMEM2__Q23mtl10MemManagerFv();
     void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
     void* getWorkMem__17CWorkThreadSystemFv();
-    nw4r::lyt::ArcResourceAccessor* func_801355F4();
+    void* func_801355F4();
     void Regist__8CProcessFP8CProcessb(void*, void*, bool);
     void func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc(void*, void*, const char*);
     void func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(void*, void**, void*, char*);
@@ -73,7 +73,7 @@ extern "C" {
     void func_80137B44(void*, const char*, int);
     void func_80136B4C(void*, const char*, void*, int);
     void func_8013639C(void*, const char*, int);
-    void func_80136254(void*, const char*, int);
+    u16 func_80136254(void*, const char*, int);
     u16 func_8013606C(const char*, const char*, int);
     void func_80136190(const char*, const char*, int);
     void func_80138078__FUl(u32);
@@ -98,7 +98,10 @@ extern "C" {
     bool func_8009CF8C(int);
     void func_8009D018(int, int);
     void format__Q22ml10FixStr_32_FPCce(void*, const char*, ...);
-    u16 func_80138F78(u32);
+    void* func_80138F78(u32);
+    bool func_800829B8__Q22cf13CfGameManagerFv();
+    bool func_8008585C__Q22cf13CfGameManagerFv();
+    bool func_80085840__Q22cf13CfGameManagerFv();
 }
 
 // IWorkEvent
@@ -185,39 +188,36 @@ extern "C" void __dt__11CMenuUpdateFv(void* self, int flags) {
 // Init
 extern "C" void Init__11CMenuUpdateFv(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
-    int handle = (int)getHandleMEM2__Q23mtl10MemManagerFv();
+    u32 handle = (u32)getHandleMEM2__Q23mtl10MemManagerFv();
     obj->mMemRegion.createRegion(handle, 0x4000, (const char*)lbl_eu_805013C8, 0);
 
-    // Class_8045F858 stack object
     Class_8045F858 stackObj(&obj->mMemRegion);
 
-    nw4r::lyt::ArcResourceAccessor* accessor = func_801355F4();
-    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc((void**)&obj->mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
+    void* accessor = func_801355F4();
+    func_80136E84__FPPQ34nw4r3lyt6LayoutPQ34nw4r3lyt19ArcResourceAccessorPCc((void*)&obj->mLayout, accessor, (const char*)((u32)lbl_eu_805013C8 + 0xC));
 
     accessor = func_801355F4();
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        obj->mLayout, &obj->mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim1, accessor, (char*)((u32)lbl_eu_805013C8 + 0x25));
 
     accessor = func_801355F4();
-    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc(
-        obj->mLayout, &obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
+    func_80136F08__FPQ34nw4r3lyt6LayoutPPQ34nw4r3lyt13AnimTransformPQ34nw4r3lyt19ArcResourceAccessorPc((void*)obj->mLayout, (void**)&obj->mAnim2, accessor, (char*)((u32)lbl_eu_805013C8 + 0x41));
 
     void* font = func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(1, obj->mLayout);
     void* fontVtab = *(void**)font;
-    void* result2 = ((void* (*)(void*))fontVtab[0x24 / 4])(font);
+    void* result2 = ((void* (*)(void*))((void**)fontVtab)[0x24 / 4])(font);
     func_8013676C((void*)*(u32*)((u8*)obj + 0x10), result2);
 
     obj->mActiveAnim = obj->mAnim2;
     void* layoutVtab = *(void**)obj->mLayout;
-    ((void (*)(void*, void*, bool))layoutVtab[0x2C / 4])(obj->mLayout, obj->mActiveAnim, 0);
+    ((void (*)(void*, void*, bool))((void**)layoutVtab)[0x2C / 4])(obj->mLayout, obj->mActiveAnim, 0);
     obj->mActiveAnim = obj->mAnim1;
-    ((void (*)(void*, void*, bool))layoutVtab[0x2C / 4])(obj->mLayout, obj->mActiveAnim, 1);
-    ((void (*)(void*, bool))layoutVtab[0x38 / 4])(obj->mLayout, 0);
+    ((void (*)(void*, void*, bool))((void**)layoutVtab)[0x2C / 4])(obj->mLayout, obj->mActiveAnim, 1);
+    ((void (*)(void*, bool))((void**)layoutVtab)[0x38 / 4])(obj->mLayout, 0);
 
     obj->setField67(0);
     addRenderCB__4CScnFP10IScnRenderUlUl(obj->mScene, (u8*)self + 0x70, 7, 0);
     obj->mMemRegion.func_8045F810();
-    // dtor handled by scope
+    // stackObj destructor called automatically
 }
 
 // Term
@@ -228,7 +228,7 @@ extern "C" void Term__11CMenuUpdateFv(void* self) {
     removeRenderCB__4CScnFP10IScnRender(obj->mScene, renderPtr);
     if (obj->mLayout) {
         void* vtab = *(void**)obj->mLayout;
-        ((void (*)(void*, bool))vtab[0x08 / 4])(obj->mLayout, 1);
+        ((void (*)(void*, bool))((void**)vtab)[0x08 / 4])(obj->mLayout, 1);
         obj->mLayout = 0;
     }
     obj->mMemRegion.func_8045F778();
@@ -251,7 +251,7 @@ extern "C" void Move__11CMenuUpdateFv(void* self) {
     }
 
     void* vtab = *(void**)obj->mLayout;
-    ((void (*)(void*, bool))vtab[0x38 / 4])(obj->mLayout, 0);
+    ((void (*)(void*, bool))((void**)vtab)[0x38 / 4])(obj->mLayout, 0);
 }
 
 // cbRenderBefore
@@ -283,7 +283,7 @@ extern "C" u8 getField64(void* self) { return ((u8*)self)[0x64]; }
 extern "C" void* getGlobalA10() { return (void*)lbl_eu_80664A10; }
 extern "C" int getGlobal0E0() { return lbl_eu_806640E0; }
 extern "C" void func_80142C64(void* self) { ((u8*)self)[0x15] = 1; }
-extern "C" void func_80142C80(void* self) { if (lbl_eu_80664198) setField64((void*)(u32)lbl_eu_80664198, 1); }
+extern "C" void func_80142C80(void* self) { if (lbl_eu_80664198) { ((void(*)(void*, u8))setField64)((void*)(u32)lbl_eu_80664198, 1); } }
 extern "C" void* noop_80142D5C(void* self) { return self; }
 extern "C" void* setVec2(void* self, f32 a, f32 b) { *(f32*)self = a; *(f32*)((u8*)self + 4) = b; return self; }
 extern "C" void setFieldFloat10(void* self, f32 val) { *(f32*)((u8*)self + 0x10) = val; }
@@ -329,9 +329,9 @@ extern "C" void func_80142CA0(void* self, void* r4, void* r5) {
     char buf[32];
     format__Q22ml10FixStr_32_FPCce(&buf, (const char*)((u32)lbl_eu_805013C8 + 0x69), r5);
     noop_80142D5C(&buf);
-    func_801355F4();
-    nw4r::lyt::ArcResourceAccessor* accessor;
-    void* text = ((void* (*)(void*, u32, void*, int))((void**)accessor)[0x0C / 4])(accessor, 0x74696D67, &buf, 0);
+    void* accessor = func_801355F4();
+    void* vtab = *(void**)accessor;
+    void* text = ((void* (*)(void*, u32, void*, int))((void**)vtab)[0x0C / 4])(accessor, 0x74696D67, &buf, 0);
     if (text) func_80137E7C(obj->mLayout, (const char*)r4, text);
 }
 
@@ -342,21 +342,21 @@ extern "C" void func_80142D60(void* self) {}
 extern "C" void func_80143ADC(void* self, u32 r4, u32 r5, u32 r6, u32 r7) {}
 
 // func_80143F78
-extern "C" bool func_80143F78(void* self) {
+extern "C" int func_80143F78(void* self) {
     CMenuUpdate* obj = (CMenuUpdate*)self;
     if (!code80135FDC_getByte_64059()) {
         if (!func_8006EF04__Fi(0x100) && !func_8006EF04__Fi(0xBFE4)) {}
-        else return true;
+        else return 1;
     }
     if (func_8029A658()) obj->mFloat12C = 1.0f;
-    if (CfGameManager::func_800829B8()) return true;
-    if (CfGameManager::func_8008585C()) return true;
-    if (!CfGameManager::func_80085840()) return true;
-    if (func_801BCF38()) return true;
-    if (func_8029EE58()) return true;
+    if (func_800829B8__Q22cf13CfGameManagerFv()) return 1;
+    if (func_8008585C__Q22cf13CfGameManagerFv()) return 1;
+    if (!func_80085840__Q22cf13CfGameManagerFv()) return 1;
+    if (func_801BCF38()) return 1;
+    if (func_8029EE58()) return 1;
     obj->mFloat12C -= 0.016666668f;
     if (obj->mFloat12C < 0.0f) obj->mFloat12C = 0.0f;
-    return false;
+    return 0;
 }
 
 // func_80144070
@@ -379,6 +379,6 @@ extern "C" f32 func_801443E4() {
 extern "C" void func_80144410(void* self) {}
 
 // Thunks
-extern "C" void func_80144590(void* self) { __dt__11CMenuUpdateFv((char*)self - 0x6C, -1); }
-extern "C" void func_80144598(void* self) { cbRenderBefore__11CMenuUpdateFv((char*)self - 0x70); }
-extern "C" void func_801445A0(void* self) { __dt__11CMenuUpdateFv((char*)self - 0x70, -1); }
+extern "C" void dtorThunk_6c(void* self) { __dt__11CMenuUpdateFv((char*)self - 0x6C, -1); }
+extern "C" void renderThunk_70(void* self) { cbRenderBefore__11CMenuUpdateFv((char*)self - 0x70); }
+extern "C" void dtorThunk_70(void* self) { __dt__11CMenuUpdateFv((char*)self - 0x70, -1); }

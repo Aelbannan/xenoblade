@@ -8,7 +8,7 @@
 class IErrorWii {
 public:
     IErrorWii(){}
-    virtual ~IErrorWii(){}
+    virtual ~IErrorWii();
     virtual void errorWiiCB() = 0;
 };
 

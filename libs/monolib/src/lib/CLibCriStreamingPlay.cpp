@@ -1,6 +1,7 @@
 // CLibCriStreamingPlay - CRI streaming audio playback manager
 
 #include "monolib/lib/CLibCriStreamingPlay.hpp"
+#include "monolib/core/CException.hpp"
 #include <cstring>
 
 extern "C" {
@@ -107,7 +108,7 @@ CLibCriStreamingPlay::CLibCriStreamingPlay(const char* pName, CWorkThread* pPare
     lbl_eu_806656EC = allocate_head__Q23mtl10MemManagerFUlUli(mem2, 0xA000, 4);
     
     // Initialize exception handler
-    func_804591BC__10CExceptionFP10IException(base + 0x1C4, nullptr);
+    ((CException*)(base + 0x1C4))->func_804591BC(nullptr);
 }
 
 // Destructor - cleans up all resources
@@ -115,7 +116,7 @@ CLibCriStreamingPlay::~CLibCriStreamingPlay() {
     u8* base = (u8*)this;
     
     // Clean up exception handler
-    func_804591DC__10CExceptionFP10IException(base + 0x1C4, nullptr);
+    ((CException*)(base + 0x1C4))->func_804591DC(nullptr);
     
     // Free audio buffer
     if (lbl_eu_806656EC) {
@@ -554,7 +555,7 @@ void CLibCriStreamingPlay::wkUpdate() {
 
 // wkStandbyLogin - Just calls base class
 bool CLibCriStreamingPlay::wkStandbyLogin() {
-    wkStandbyLogin__11CWorkThreadFv(this);
+    CWorkThread::wkStandbyLogin();
     return true;
 }
 
@@ -588,7 +589,7 @@ bool CLibCriStreamingPlay::wkStandbyLogout() {
     }
     
     // Call base logout
-    wkStandbyLogout__11CWorkThreadFv(this);
+    CWorkThread::wkStandbyLogout();
     return true;
 }
 

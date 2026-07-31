@@ -9,6 +9,8 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/work/CWorkUtil.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
+#include "monolib/work/CWorkSystem.hpp"
+#include "monolib/lib/CLib.hpp"
 #include <revolution/ax/AX.h>
 #include <revolution/ax/AXOut.h>
 #include <revolution/ai/ai.h>
@@ -55,14 +57,6 @@ CLibCri* CLibCri::spInstance;
 
 // AX callback function pointer (sda21-relative: lbl_eu_806656DC)
 static void (*sAXCallback)(void);
-
-// Free function wrapper for AX callback registration
-static void sAXCallbackWrapper() {
-    CLibCri* instance = CLibCri::getInstance();
-    if (instance != nullptr) {
-        instance->func_80459830();
-    }
-}
 
 // String constant (CRI file extension marker: lbl_eu_80522FD8)
 extern "C" const char lbl_eu_80522FD8[];
@@ -114,9 +108,8 @@ void CLibCri::func_80459830() {
 CLibCri::CLibCri(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 2)
 {
-    CDeviceVICb();
-    mType = THREAD_CLIBCRI; // 0xF
     spInstance = this;
+    mType = THREAD_CLIBCRI; // 0xF
     CErrorWii::addCallback(static_cast<IErrorWii*>(this));
 }
 
@@ -216,7 +209,7 @@ bool CLibCri::wkStandbyLogin() {
     AIInit(nullptr);
     AXInit();
     MIXInit();
-    sAXCallback = AXRegisterCallback(sAXCallbackWrapper);
+    sAXCallback = AXRegisterCallback(func_80459830);
     ADXT_Init();
 
     // Create CLibCriMoviePlay (0x668 bytes)
@@ -246,17 +239,9 @@ bool CLibCri::wkStandbyLogin() {
 // Logout cleanup sequence
 // ============================================================================
 bool CLibCri::wkStandbyLogout() {
-    CWorkThread* childFront = mChildren.front();
-    if (childFront->mChildren.front() != childFront) {
-        return false;
-    }
-
-    if (CWorkThreadSystem::getInstance() != nullptr) {
-        return false;
-    }
-    if (CLib::getInstance() != nullptr) {
-        return false;
-    }
+    if (mChildren.begin() != mChildren.end()) goto return_false;
+    if (CWorkSystem::getInstance() != nullptr) goto return_false;
+    if (CLib::getInstance() != nullptr) goto return_false;
 
     ADXT_Finish();
     ADXM_ShutdownFramework();
@@ -269,6 +254,9 @@ bool CLibCri::wkStandbyLogout() {
     AXQuit();
 
     return CWorkThread::wkStandbyLogout();
+
+return_false:
+    return false;
 }
 
 // ============================================================================
@@ -291,5 +279,5 @@ void CLibCri::func_80459C74() {
 // Compiler generates thunk that adjusts this from IErrorWii subobject
 // ============================================================================
 void CLibCri::errorWiiCB() {
-    func_80459C74();
+    func_8045BBA0__20CLibCriStreamingPlayFv();
 }

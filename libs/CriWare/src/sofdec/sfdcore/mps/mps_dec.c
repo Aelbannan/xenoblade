@@ -37,7 +37,24 @@ void MPS_SetPesFn(MPS_WORK *hn, void *pes_fn, void *pes_obj) {
     }
 }
 
-void MPS_DecHd() {}
+extern int MPSLIB_SetErr(void *, int);
+
+typedef void (*mps_dechd_fn)(void *, void *, void *, void *, void *);
+
+void MPS_DecHd(void *handle, void *arg1, void *arg2, void *out1, void *out2) {
+    mps_dechd_fn fn;
+
+    *(int *)out1 = 0;
+    *(int *)out2 = 0;
+
+    if (MPSLIB_CheckHn((MPS_WORK*)handle)) {
+        MPSLIB_SetErr(NULL, 0xFF020301);
+        return;
+    }
+
+    fn = *(mps_dechd_fn *)((u8 *)handle + 0xD4);
+    fn(handle, arg1, arg2, out1, out2);
+}
 
 void MPSDEC_DecHdMpeg1() {}
 

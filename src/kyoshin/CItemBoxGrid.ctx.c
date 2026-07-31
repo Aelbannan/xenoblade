@@ -2001,7 +2001,7 @@ u8 func_801C65A0(CItemBoxGridFull* self, u16 idx);
 u8 func_801C6618(CItemBoxGridFull* self, u16 idx);
 u8 func_801C6708(CItemBoxGridFull* self, u16 idx);
 u8 func_801C673C(CItemBoxGridFull* self, u16 idx);
-u8 func_801C67F8(CItemBoxGridFull* self);
+extern "C" u8 func_801C67F8(CItemBoxGridFull* self);
 u8 func_801C6840(CItemBoxGridFull* self);
 u32 func_801C5FC0(CItemBoxGridFull* self, u16 idx);
 u32 func_801C618C(void* self, u32 id, void* item, int r6);
@@ -2487,19 +2487,13 @@ check_next:;
 }
 
 // Search for a matching short id in an array, return 1 if found.
-extern "C" int func_801C51BC(void* obj, u16 id) {
-    u16 count;
-    u16 i;
-    u16 val;
-    count = *(u16*)((u8*)obj + 0x804);
-    i = 0;
-    goto check;
-loop:
-    val = *(u16*)((u8*)obj + (i * 2 + 4));
-    if (id == val) return 1;
-    i++;
-check:
-    if (i < count) goto loop;
+int func_801C51BC(void* obj, u16 id) {
+    u16 count = *(u16*)((u8*)obj + 0x804);
+    u16 i = 0;
+    while (i < count) {
+        if (*(u16*)((u8*)obj + i * 2 + 4) == id) return 1;
+        i++;
+    }
     return 0;
 }
 
@@ -2537,10 +2531,13 @@ void func_801C5F20(CItemBoxGridFull* self) {
 }
 
 // Lookup entry in 10-byte stride table; return stored short or -1.
-s16 func_801C5F48(CItemBoxGridFull* self, u16 idx) {
+extern "C" s16 func_801C5F48(CItemBoxGridFull* self, u16 idx) {
     s8 base = (s8)self->field_2804;
     u16 offset = (u16)(base * 0x1e + idx);
     if (offset >= self->field_2800) return -1;
+    void* obj = func_80157C4C(self->field_2802, *(s16*)((u8*)self + offset * 0xa));
+    if (!obj) return -1;
+    if (!*(u32*)obj) return -1;
     return *(s16*)((u8*)self + offset * 0xa);
 }
 
@@ -2793,10 +2790,10 @@ void func_801C6770(CItemBoxGridFull* self, u16 idx) {
 }
 
 // Count entries with non-zero byte at offset 8 in a 10-byte stride array.
-u8 func_801C67F8(CItemBoxGridFull* self) {
+extern "C" u8 func_801C67F8(CItemBoxGridFull* self) {
     u16 count = self->field_2800;
-    u16 i;
     u16 result = 0;
+    u16 i;
     for (i = 0; i < count; i++) {
         u8* entry = (u8*)self + i * 0xa;
         if (entry[8] != 0) {

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/plugin/ocUnit
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/plugin/ocUnit.cpp" line 4 "kyoshin/plugin/ocUnit.hpp" */
+/* "src/kyoshin/plugin/ocUnit.cpp" line 3 "kyoshin/plugin/ocUnit.hpp" */
 #pragma once
 
 /**
@@ -1322,6 +1322,9 @@ namespace cf {
 /* end "types.h" */
 
 namespace cf {
+    class UnkClass_CActorParam15E0;
+    struct CBattleStateSrcEntry;
+
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
     // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
@@ -1349,17 +1352,17 @@ namespace cf {
     public:
         virtual void CBattleState_UnkVirtualFunc1();  //0x8
         virtual void CBattleState_UnkVirtualFunc2();  //0xC
-        virtual void CBattleState_UnkVirtualFunc3();  //0x10
+        virtual int CBattleState_UnkVirtualFunc3();  //0x10
         virtual void CBattleState_UnkVirtualFunc4();  //0x14
-        virtual void CBattleState_UnkVirtualFunc5();  //0x18
-        virtual void CBattleState_UnkVirtualFunc6();  //0x1C
+        virtual void CBattleState_UnkVirtualFunc5(CBattleStateEntry* entry);  //0x18
+        virtual void CBattleState_UnkVirtualFunc6(CBattleStateEntry* entry);  //0x1C
         virtual void CBattleState_UnkVirtualFunc7();  //0x20
-        virtual void CBattleState_UnkVirtualFunc8();  //0x24
+        virtual void CBattleState_UnkVirtualFunc8(CBattleStateEntry* entry);  //0x24
         virtual void CBattleState_UnkVirtualFunc9();  //0x28
-        virtual void CBattleState_UnkVirtualFunc10(); //0x2C
-        virtual void CBattleState_UnkVirtualFunc11(); //0x30
+        virtual void CBattleState_UnkVirtualFunc10(CBattleStateEntry* arg); //0x2C
+        virtual void CBattleState_UnkVirtualFunc11(u32 mask); //0x30
         virtual void CBattleState_UnkVirtualFunc12(); //0x34
-        virtual void CBattleState_UnkVirtualFunc13(); //0x38
+        virtual void* CBattleState_UnkVirtualFunc13(int index); //0x38
         virtual void CBattleState_UnkVirtualFunc14(); //0x3C
         virtual void CBattleState_UnkVirtualFunc15(); //0x40
         virtual void CBattleState_UnkVirtualFunc16(); //0x44
@@ -1372,14 +1375,14 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc23(); //0x60
         virtual void CBattleState_UnkVirtualFunc24(); //0x64
         virtual void CBattleState_UnkVirtualFunc25(); //0x68
-        virtual void CBattleState_UnkVirtualFunc26(); //0x6C
+        virtual void CBattleState_UnkVirtualFunc26(const CBattleStateSrcEntry* src); //0x6C
         virtual void CBattleState_UnkVirtualFunc27(); //0x70
         virtual void CBattleState_UnkVirtualFunc28(); //0x74
         virtual void CBattleState_UnkVirtualFunc29(); //0x78
         virtual void CBattleState_UnkVirtualFunc30(); //0x7C
-        virtual void CBattleState_UnkVirtualFunc31(); //0x80
+        virtual int CBattleState_UnkVirtualFunc31(u32 id); //0x80
         virtual void CBattleState_UnkVirtualFunc32(); //0x84
-        virtual void CBattleState_UnkVirtualFunc33(); //0x88
+        virtual int CBattleState_UnkVirtualFunc33(u32 id); //0x88
 
         CBattleState();
 
@@ -1388,43 +1391,10 @@ namespace cf {
         u8 unk8[0x1520];
         u8 unk1528[4];
         u8 unk152C[0x80];
-        u8 unk15AC[0x15DC - 0x15AC];
+        u8 unk15AC[0x15D8 - 0x15AC];
+        UnkClass_CActorParam15E0* field_0x15D8;
     };
 }
-
-// symbols.txt mangles Fv; retail leaves the arg entry in r4 (same pattern
-// as cf::CAIAction's UnkVirtualFunc1/2).
-extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg);
-
-// symbols.txt mangles Fv; retail leaves the caller's mask in r4 (same ABI
-// pattern as CBattleState_UnkVirtualFunc6).
-extern "C" void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 mask);
-
-// symbols.txt mangles Fv; retail leaves the id in r4 (same fake-Fv ABI as
-// UnkVirtualFunc6 above).
-extern "C" int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 id);
-
-namespace cf {
-    struct CBattleStateSrcEntry;
-}
-
-// symbols.txt mangles Fv; retail leaves the source table pointer in r4
-// (same ABI pattern as UnkVirtualFunc6 above).
-extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, const cf::CBattleStateSrcEntry* src);
-
-// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
-// ABI as UnkVirtualFunc6 above).
-extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* entry);
-
-// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
-// ABI as UnkVirtualFunc6/8). Matches on unk2E, then clears matching slots.
-extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg);
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 /* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
 #pragma once
@@ -1472,7 +1442,7 @@ namespace cf {
         u8 unk38[4];
         u16 unk3C;
         u8 unk3E;
-        u8 unk3F; //padding?
+        u8 unk3F;
         u16 unk40;
         u8 unk42;
         u8 unk43;
@@ -1494,19 +1464,18 @@ namespace cf {
         u16 unk68;
         u16 unk6A;
         u8 unk6C[5];
-        u8 unk71; //filler?
+        u8 unk71;
         u16 unk72;
         u16 unk74;
-        u8 unk76; //filler?
+        u8 unk76;
         u8 unk77;
         u32 unk78;
         float unk7C;
         float unk80;
-        //0x84: vtable
 
         CAttackParam();
 
-        virtual void CAttackParam_UnkVirtualFunc1(){ //0x8
+        virtual void CAttackParam_UnkVirtualFunc1(){
             unk0 = 0;
             unk20 = 0;
             unk24 = 0;
@@ -1548,10 +1517,9 @@ namespace cf {
             std::memset(unk38, 0, sizeof(unk38));
             std::memset(unk6C, 0, sizeof(unk6C));
         }
-        virtual u8 CAttackParam_UnkVirtualFunc2(); //0xC
-        virtual void CAttackParam_UnkVirtualFunc3(u8 r4); //0x10
-        virtual void CAttackParam_UnkVirtualFunc4(); //0x14
-
+        virtual u8 CAttackParam_UnkVirtualFunc2();
+        virtual void CAttackParam_UnkVirtualFunc3(u8 r4);
+        virtual void CAttackParam_UnkVirtualFunc4();
     };
 
     struct _sAttackSet {
@@ -1570,8 +1538,6 @@ namespace cf {
     //size: 0x8C
     class CArtsParam : public CAttackParam {
     public:
-        //0x0: vtable
-        //0x0-0x88: CAttackParam
         UNKTYPE* unk88;
 
         CArtsParam();
@@ -1582,13 +1548,17 @@ namespace cf {
 
     //size: 0x38
     struct _sArtsSet {
-        u16 unk0;
-        u8 unk2[2];
-        u8 unk4[0x30];
-        //0x34: vtable
+        union {
+            struct {
+                u16 unk0;
+                u8 unk2[2];
+                u8 unk4[0x30];
+            };
+            u16 mArtsSlotData[24];
+        };
 
         _sArtsSet();
-        virtual void _sArtsSet_UnkVirtualFunc1(){ //0x8
+        virtual void _sArtsSet_UnkVirtualFunc1(){
             unk0 = 0;
             std::memset(unk4, 0, sizeof(unk4));
         }
@@ -1598,7 +1568,14 @@ namespace cf {
     class CArtsSet : _sArtsSet {
     public:
         CArtsSet(){}
-        virtual void CArtsSet_UnkVirtualFunc1(); //0x8
+        virtual void CArtsSet_UnkVirtualFunc1();
+
+        void setArtsSlotRC(unsigned short value, unsigned int row, unsigned int index);
+        unsigned short getArtsSlotRC(int index, int subindex);
+        void setArtsSlotByIdx(unsigned short value, int index);
+        void* getArtsParamRC(int index460, int index8c);
+        void* getArtsParamRC2(int index1, int index2);
+        void* getArtsParamByIdx(int index);
 
         //0x0: vtable
         //0x0-38: _sArtsSet
@@ -1610,6 +1587,8 @@ namespace cf {
 /* end "cstring" */
 
 namespace cf {
+
+    class UnkClass_CActorParam15E0;
 
     //size: 0x7C
     struct CActorParam_UnkStruct2 {
@@ -1802,30 +1781,30 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc11();  //0xC0
         virtual void CActorParam_UnkVirtualFunc12();  //0xC4
         virtual void CActorParam_UnkVirtualFunc13();  //0xC8
-        virtual void CActorParam_UnkVirtualFunc14();  //0xCC
+        virtual void CActorParam_UnkVirtualFunc14(u8 val);  //0xCC
         virtual void CActorParam_UnkVirtualFunc15();  //0xD0
-        virtual void CActorParam_UnkVirtualFunc16();  //0xD4
+        virtual void CActorParam_UnkVirtualFunc16(float val);  //0xD4
         virtual void CActorParam_UnkVirtualFunc17();  //0xD8
         virtual void CActorParam_UnkVirtualFunc18();  //0xDC
-        virtual int CActorParam_UnkVirtualFunc19();  //0xE0
+        virtual u32 CActorParam_UnkVirtualFunc19();  //0xE0
         virtual void CActorParam_UnkVirtualFunc20();  //0xE4
         virtual void CActorParam_UnkVirtualFunc21();  //0xE8
         virtual void CActorParam_UnkVirtualFunc22();  //0xEC
         virtual void CActorParam_UnkVirtualFunc23();  //0xF0
         virtual void CActorParam_UnkVirtualFunc24();  //0xF4
         virtual void CActorParam_UnkVirtualFunc25();  //0xF8
-        virtual void CActorParam_UnkVirtualFunc26();  //0xFC
+        virtual u32 CActorParam_UnkVirtualFunc26();  //0xFC
         virtual void CActorParam_UnkVirtualFunc27();  //0x100
         virtual void CActorParam_UnkVirtualFunc28();  //0x104
-        virtual void CActorParam_UnkVirtualFunc29();  //0x108
+        virtual u32 CActorParam_UnkVirtualFunc29();  //0x108
         virtual void CActorParam_UnkVirtualFunc30();  //0x10C
         virtual void CActorParam_UnkVirtualFunc31();  //0x110
         virtual void CActorParam_UnkVirtualFunc32();  //0x114
-        virtual void CActorParam_UnkVirtualFunc33();  //0x118
+        virtual void CActorParam_UnkVirtualFunc33(float val);  //0x118
         virtual void CActorParam_UnkVirtualFunc34();  //0x11C
         virtual void CActorParam_UnkVirtualFunc35();  //0x120
         virtual void CActorParam_UnkVirtualFunc36();  //0x124
-        virtual void CActorParam_UnkVirtualFunc37();  //0x128
+        virtual float CActorParam_UnkVirtualFunc37();  //0x128
         virtual void CActorParam_UnkVirtualFunc38();  //0x12C
         virtual void CActorParam_UnkVirtualFunc39();  //0x130
         virtual void CActorParam_UnkVirtualFunc40();  //0x134
@@ -1843,52 +1822,52 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc52();  //0x164
         virtual void CActorParam_UnkVirtualFunc53();  //0x168
         virtual void CActorParam_UnkVirtualFunc54();  //0x16C
-        virtual void CActorParam_UnkVirtualFunc55();  //0x170
+        virtual void CActorParam_UnkVirtualFunc55(u16 val);  //0x170
         virtual void CActorParam_UnkVirtualFunc56();  //0x174
         virtual void CActorParam_UnkVirtualFunc57();  //0x178
         virtual void CActorParam_UnkVirtualFunc58();  //0x17C
         virtual void CActorParam_UnkVirtualFunc59();  //0x180
         virtual void CActorParam_UnkVirtualFunc60();  //0x184
-        virtual void CActorParam_UnkVirtualFunc61();  //0x188
+        virtual void CActorParam_UnkVirtualFunc61(u16 val);  //0x188
         virtual void CActorParam_UnkVirtualFunc62();  //0x18C
         virtual void CActorParam_UnkVirtualFunc63();  //0x190
         virtual void CActorParam_UnkVirtualFunc64();  //0x194
-        virtual void CActorParam_UnkVirtualFunc65();  //0x198
+        virtual void CActorParam_UnkVirtualFunc65(float val);  //0x198
         virtual void CActorParam_UnkVirtualFunc66();  //0x19C
         virtual void CActorParam_UnkVirtualFunc67();  //0x1A0
-        virtual void CActorParam_UnkVirtualFunc68();  //0x1A4
+        virtual void CActorParam_UnkVirtualFunc68(float val);  //0x1A4
         virtual void CActorParam_UnkVirtualFunc69();  //0x1A8
         virtual void CActorParam_UnkVirtualFunc70();  //0x1AC
         virtual void CActorParam_UnkVirtualFunc71();  //0x1B0
         virtual void CActorParam_UnkVirtualFunc72();  //0x1B4
         virtual void CActorParam_UnkVirtualFunc73();  //0x1B8
-        virtual void CActorParam_UnkVirtualFunc74();  //0x1BC
+        virtual void CActorParam_UnkVirtualFunc74(float val);  //0x1BC
         virtual void CActorParam_UnkVirtualFunc75();  //0x1C0
-        virtual void CActorParam_UnkVirtualFunc76();  //0x1C4
+        virtual void* CActorParam_UnkVirtualFunc76();  //0x1C4
         virtual void CActorParam_UnkVirtualFunc77();  //0x1C8
         virtual void CActorParam_UnkVirtualFunc78();  //0x1CC
         virtual void CActorParam_UnkVirtualFunc79();  //0x1D0
         virtual void CActorParam_UnkVirtualFunc80();  //0x1D4
-        virtual void CActorParam_UnkVirtualFunc81();  //0x1D8
-        virtual void CActorParam_UnkVirtualFunc82();  //0x1DC
-        virtual void CActorParam_UnkVirtualFunc83();  //0x1E0
+        virtual void CActorParam_UnkVirtualFunc81(u32 val);  //0x1D8
+        virtual void CActorParam_UnkVirtualFunc82(u32 addend);  //0x1DC
+        virtual void CActorParam_UnkVirtualFunc83(u32 addend);  //0x1E0
         virtual void CActorParam_UnkVirtualFunc84();  //0x1E4
-        virtual void CActorParam_UnkVirtualFunc85();  //0x1E8
+        virtual u32 CActorParam_UnkVirtualFunc85();  //0x1E8
         virtual void CActorParam_UnkVirtualFunc86();  //0x1EC
         virtual void CActorParam_UnkVirtualFunc87();  //0x1F0
         virtual void CActorParam_UnkVirtualFunc88();  //0x1F4
         virtual void CActorParam_UnkVirtualFunc89();  //0x1F8
-        virtual void CActorParam_UnkVirtualFunc90();  //0x1FC
+        virtual void CActorParam_UnkVirtualFunc90(u32 addend);  //0x1FC
         virtual void CActorParam_UnkVirtualFunc91();  //0x200
         virtual void CActorParam_UnkVirtualFunc92();  //0x204
         virtual void CActorParam_UnkVirtualFunc93();  //0x208
-        virtual void CActorParam_UnkVirtualFunc94();  //0x20C
+        virtual void* CActorParam_UnkVirtualFunc94();  //0x20C
         virtual void CActorParam_UnkVirtualFunc95();  //0x210
         virtual void CActorParam_UnkVirtualFunc96();  //0x214
         virtual void CActorParam_UnkVirtualFunc97();  //0x218
         virtual void CActorParam_UnkVirtualFunc98();  //0x21C
         virtual void CActorParam_UnkVirtualFunc99();  //0x220
-        virtual void CActorParam_UnkVirtualFunc100(); //0x224
+        virtual void* CActorParam_UnkVirtualFunc100(); //0x224
         virtual void CActorParam_UnkVirtualFunc101(); //0x228
         virtual void CActorParam_UnkVirtualFunc102(); //0x22C
         virtual void CActorParam_UnkVirtualFunc103(); //0x230
@@ -1901,26 +1880,26 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc110(); //0x24C
         virtual void CActorParam_UnkVirtualFunc111(); //0x250
         virtual void CActorParam_UnkVirtualFunc112(); //0x254
-        virtual void CActorParam_UnkVirtualFunc113(); //0x258
+        virtual u32* CActorParam_UnkVirtualFunc113(); //0x258
         virtual void CActorParam_UnkVirtualFunc114(); //0x25C
-        virtual void CActorParam_UnkVirtualFunc115(); //0x260
-        virtual void CActorParam_UnkVirtualFunc116(); //0x264
-        virtual void CActorParam_UnkVirtualFunc117(); //0x268
+        virtual bool CActorParam_UnkVirtualFunc115(); //0x260
+        virtual void CActorParam_UnkVirtualFunc116(float val); //0x264
+        virtual float* CActorParam_UnkVirtualFunc117(); //0x268
         virtual void CActorParam_UnkVirtualFunc118(); //0x26C
-        virtual void CActorParam_UnkVirtualFunc119(); //0x270
+        virtual float* CActorParam_UnkVirtualFunc119(); //0x270
         virtual void CActorParam_UnkVirtualFunc120(); //0x274
         virtual void CActorParam_UnkVirtualFunc121(); //0x278
-        virtual void CActorParam_UnkVirtualFunc122(); //0x27C
+        virtual void* CActorParam_UnkVirtualFunc122(); //0x27C
         virtual void CActorParam_UnkVirtualFunc123(); //0x280
         virtual void CActorParam_UnkVirtualFunc124(); //0x284
-        virtual void CActorParam_UnkVirtualFunc125(); //0x288
+        virtual void* CActorParam_UnkVirtualFunc125(); //0x288
         virtual void CActorParam_UnkVirtualFunc126(); //0x28C
-        virtual void CActorParam_UnkVirtualFunc127(); //0x290
+        virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127(); //0x290
         virtual void CActorParam_UnkVirtualFunc128(); //0x294
         virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
         virtual void CActorParam_UnkVirtualFunc130(); //0x29C
         virtual void CActorParam_UnkVirtualFunc131(); //0x2A0
-        virtual void CActorParam_UnkVirtualFunc132(); //0x2A4
+        virtual void* CActorParam_UnkVirtualFunc132(); //0x2A4
         virtual void CActorParam_UnkVirtualFunc133(); //0x2A8
         virtual void CActorParam_UnkVirtualFunc134(); //0x2AC
         virtual void CActorParam_UnkVirtualFunc135(); //0x2B0
@@ -1940,7 +1919,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc149(); //0x2E8
         virtual void CActorParam_UnkVirtualFunc150(); //0x2EC
         virtual void CActorParam_UnkVirtualFunc151(); //0x2F0
-        virtual void CActorParam_UnkVirtualFunc152(); //0x2F4
+        virtual void* CActorParam_UnkVirtualFunc152(); //0x2F4
         virtual void CActorParam_UnkVirtualFunc153(); //0x2F8
         virtual void CActorParam_UnkVirtualFunc154(); //0x2FC
         virtual void CActorParam_UnkVirtualFunc155(); //0x300
@@ -1953,7 +1932,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc162(); //0x31C
         virtual void CActorParam_UnkVirtualFunc163(); //0x320
         virtual void CActorParam_UnkVirtualFunc164(); //0x324
-        virtual void CActorParam_UnkVirtualFunc165(); //0x328
+        virtual void* CActorParam_UnkVirtualFunc165(); //0x328
         virtual void CActorParam_UnkVirtualFunc166(); //0x32C
         virtual void CActorParam_UnkVirtualFunc167(); //0x330
         virtual void CActorParam_UnkVirtualFunc168(); //0x334
@@ -1973,12 +1952,13 @@ namespace cf {
     #pragma endregion
 
         UNKTYPE* unk15DC;
-        UNKTYPE* unk15E0;
+        UnkClass_CActorParam15E0* unk15E0;
         u32 unk15E4;
         float unk15E8;
         u32 unk15EC;
         u32 unk15F0;
-        u8 unk15F4[8];
+        u8 unk15F4[4];        // 0x15F4
+        float unk15F8;         // 0x15F8
         float unk15FC;
         u32 unk1600;
         u32 unk1604;
@@ -2036,7 +2016,20 @@ namespace cf {
         u32 unk3374;
         u8 unk3378[4];
         float unk337C;
+    CActorParam();
+    void CBattleState_UnkVirtualFunc18();
+    void CBattleState_UnkVirtualFunc17();
+    int CBattleState_UnkVirtualFunc3();
+    void CBattleState_UnkVirtualFunc2();
     };
+
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc19() { return unk15EC; }
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc29() { return *(u32*)&unk17E4; }
+inline u32* cf::CActorParam::CActorParam_UnkVirtualFunc113() { return &unk161C; }
+inline bool cf::CActorParam::CActorParam_UnkVirtualFunc115() { return !!unk1628; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc117() { return &unk1620; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc119() { return &unk1624; }
+inline void* cf::CActorParam::CActorParam_UnkVirtualFunc122() { return &mArtsSet; }
 }
 /* end "kyoshin/cf/object/CActorParam.hpp" */
 /* "src/kyoshin/plugin/ocUnit.hpp" line 12 "kyoshin/cf/object/CObjectParam.hpp" */
@@ -2054,22 +2047,24 @@ namespace cf {
     //min size: 0x10
     class CObjectState {
     public:
-        virtual void CObjectState_UnkVirtualFunc1();  //0x8
-        virtual void CObjectState_UnkVirtualFunc2();  //0xC
-        virtual void CObjectState_UnkVirtualFunc3();  //0x10
+        virtual void CObjectState_UnkVirtualFunc1(u32 bits);  //0x8
+        virtual int CObjectState_UnkVirtualFunc2(int mask);  //0xC
+        virtual void CObjectState_UnkVirtualFunc3(u32 mask);  //0x10
         virtual void CObjectState_UnkVirtualFunc4();  //0x14
-        virtual void CObjectState_UnkVirtualFunc5();  //0x18
+        virtual void CObjectState_UnkVirtualFunc5(int arg);  //0x18
         virtual void CObjectState_UnkVirtualFunc6();  //0x1C
-        virtual void CObjectState_UnkVirtualFunc7();  //0x20
-        virtual void CObjectState_UnkVirtualFunc8();  //0x24
+        virtual void CObjectState_UnkVirtualFunc7(int arg);  //0x20
+        virtual int CObjectState_UnkVirtualFunc8(int arg);  //0x24
         virtual void CObjectState_UnkVirtualFunc9();  //0x28
-        virtual void CObjectState_UnkVirtualFunc10(); //0x2C
+        virtual int CObjectState_UnkVirtualFunc10(void* arg, int arg2); //0x2C
         virtual void CObjectState_UnkVirtualFunc11(); //0x30
-        virtual void CObjectState_UnkVirtualFunc12(); //0x34
+        virtual void* CObjectState_UnkVirtualFunc12(); //0x34
         virtual void CObjectState_UnkVirtualFunc13(); //0x38
 
         //0x0: vtable
-        u8 unk4_3[0xC];
+        u32 unk4;          // 0x04
+        u32 unk8;          // 0x08
+        u32 unkC;          // 0x0C
     };
 }
 /* end "kyoshin/cf/object/CObjectState.hpp" */
@@ -2078,16 +2073,19 @@ namespace cf {
     //min size: 0x38
     class CObjectParam : public CObjectState {
     public:
-        virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
-        virtual void CObjectParam_UnkVirtualFunc2(); //0x40
-        virtual void CObjectParam_UnkVirtualFunc3(); //0x44
+        virtual void CObjectParam_UnkVirtualFunc1(u32 a, u8 b); //0x3C
+        virtual void* CObjectParam_UnkVirtualFunc2(); //0x40
+        virtual int CObjectParam_UnkVirtualFunc3(); //0x44
         virtual void CObjectParam_UnkVirtualFunc4(); //0x48
         virtual BOOL CObjectParam_UnkVirtualFunc5(); //0x4C
         virtual void CObjectParam_UnkVirtualFunc6(); //0x50
 
         //0x0: vtable
         //0x0-10: CObjectState
-        u8 unk10_3[0x28];
+        void* mPtr10;          // 0x10-0x13 (pointer stored at offset 0x10)
+        u8 unk14[0x20 - 0x14]; // 0x14-0x2F
+        u32 field_30;          // 0x30  — checked for non-zero by UnkVirtualFunc3
+        u8  unk34[4];          // 0x34..0x37  (remainder of old unk10_3[0x28])
     };
 }
 /* end "kyoshin/cf/object/CObjectParam.hpp" */
@@ -2100,19 +2098,24 @@ namespace cf {
 /* end "kyoshin/cf/object/CObjectParam.hpp" */
 
 namespace cf {
+    class UnkClass_80082D90;
+    struct CfObjectSub54 {
+        u8 field_0x0[0xC];
+    };
+
     //min size: 0x70
     class CfObject : public CObjectParam {
     public:
         //vtable 1 (CfObject)
         virtual ~CfObject();                      //0x54
         virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
-        virtual void CfObject_UnkVirtualFunc3();      //0x5C
+        virtual void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
         virtual void CfObject_UnkVirtualFunc5();      //0x64
         virtual void CfObject_UnkVirtualFunc6();      //0x68
         virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
         virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
-        virtual void CfObject_UnkVirtualFunc9();      //0x74
+        virtual bool CfObject_UnkVirtualFunc9();      //0x74
         virtual void CfObject_UnkVirtualFunc10();     //0x78
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
         virtual void CfObject_UnkVirtualFunc12();     //0x80
@@ -2123,21 +2126,21 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc17();     //0x94
         virtual void CfObject_UnkVirtualFunc18();     //0x98
         virtual void CfObject_UnkVirtualFunc19();     //0x9C
-        virtual void CfObject_UnkVirtualFunc20();     //0xA0
+        virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
         virtual void CfObject_UnkVirtualFunc21();     //0xA4
         virtual void CfObject_UnkVirtualFunc22();     //0xA8
-        virtual void CfObject_UnkVirtualFunc23();     //0xAC
+        virtual u32 CfObject_UnkVirtualFunc23();      //0xAC
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
         virtual void CfObject_UnkVirtualFunc25();     //0xB4
-        virtual void CfObject_UnkVirtualFunc26();     //0xB8
+        virtual void CfObject_UnkVirtualFunc26(u32 value, float amount); //0xB8
         virtual void CfObject_UnkVirtualFunc27();     //0xBC
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
-        virtual void CfObject_UnkVirtualFunc29();     //0xC4
+        virtual void CfObject_UnkVirtualFunc29(float value);     //0xC4
         virtual void CfObject_UnkVirtualFunc30();     //0xC8
-        virtual void CfObject_UnkVirtualFunc31();     //0xCC
+        virtual float CfObject_UnkVirtualFunc31();     //0xCC
         virtual void CfObject_UnkVirtualFunc32();     //0xD0
-        virtual void CfObject_UnkVirtualFunc33();     //0xD4
-        virtual void CfObject_UnkVirtualFunc34();     //0xD8
+        virtual void CfObject_UnkVirtualFunc33(float amount); //0xD4
+        virtual float CfObject_UnkVirtualFunc34();     //0xD8
         virtual void CfObject_UnkVirtualFunc35();     //0xDC
         virtual void CfObject_UnkVirtualFunc36();     //0xE0
         virtual void CfObject_UnkVirtualFunc37();     //0xE4
@@ -2153,15 +2156,15 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc47();     //0x10C
         virtual void CfObject_UnkVirtualFunc48();     //0x110
         virtual void CfObject_UnkVirtualFunc49();     //0x114
-        virtual void CfObject_UnkVirtualFunc50();     //0x118
-        virtual void CfObject_UnkVirtualFunc51();     //0x11C
+        virtual int CfObject_UnkVirtualFunc50();     //0x118
+        virtual int CfObject_UnkVirtualFunc51();     //0x11C
         virtual void CfObject_UnkVirtualFunc52();     //0x120
-        virtual void CfObject_UnkVirtualFunc53();     //0x124
+        virtual CfObject* CfObject_UnkVirtualFunc53(); //0x124
         virtual void CfObject_UnkVirtualFunc54();     //0x128
         virtual void CfObject_UnkVirtualFunc55();     //0x12C
-        virtual void CfObject_UnkVirtualFunc56();     //0x130
+        virtual float CfObject_UnkVirtualFunc56();     //0x130
         virtual void CfObject_UnkVirtualFunc57();     //0x134
-        virtual void CfObject_UnkVirtualFunc58();     //0x138
+        virtual u32* CfObject_UnkVirtualFunc58();     //0x138
         virtual void CfObject_UnkVirtualFunc59();     //0x13C
         virtual void CfObject_UnkVirtualFunc60();     //0x140
         virtual void CfObject_UnkVirtualFunc61();     //0x144
@@ -2169,11 +2172,11 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_UnkVirtualFunc64();     //0x150
         virtual void CfObject_UnkVirtualFunc65();     //0x154
-        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
+        virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
-        virtual void CfObject_UnkVirtualFunc70();     //0x168
+        virtual void CfObject_UnkVirtualFunc70(float value); //0x168
         virtual void CfObject_UnkVirtualFunc71();     //0x16C
         virtual void CfObject_UnkVirtualFunc72();     //0x170
         virtual void CfObject_UnkVirtualFunc73();     //0x174
@@ -2183,10 +2186,20 @@ namespace cf {
 
 
         //0x0: vtable
-        //0x0-38: CObjectParam
-        u8 unk38_3[0x64 - 0x38];
-        u32 unk64;
-        u8 unk68[0x70 - 0x68];
+        // CObjectParam currently ends at 0x28.
+        u8 field_0x28[0x10];
+        void* mSubObj38;          // 0x38-0x3B
+        float mPos3C;           // 0x3C-0x3F
+        float mPos40;           // 0x40-0x43
+        float mPos44;           // 0x44-0x47
+        u8 _pad48[0x4C - 0x48];   // 0x48-0x4B
+        float mField4C;           // 0x4C-0x4F
+        u8 _pad50[0x54 - 0x50];   // 0x50-0x53
+        CfObjectSub54 mSubObj54;     // 0x54-0x5F
+        float mFloat60;            // 0x60-0x63
+        u32 unk64;                  // 0x64-0x67
+        u32 mFlags68;               // 0x68-0x6B
+        u8 _pad6C[0x70 - 0x6C];    // 0x6C-0x6F
     };
 }
 /* end "kyoshin/cf/object/CfObject.hpp" */
@@ -2232,12 +2245,50 @@ namespace cf {
         virtual void CfObjectModel_UnkVirtualFunc20(); //0x1C4
 
         //0x0: vtable
-        //0x0-70: CfObject
-        u8 unk70_3[0x1C];
+        // CfObject ends at 0x70.
+        u8 field_0x70[0x1C];
         u16 unk8C_3;
-        u8 unk8E_3[0x30];
+        u16 field_0x8E;
+        u8 field_0x90[0x20]; // 0x90-0xAF
+        void* mSubObjB0;      // 0xB0-0xB3
+        u8 unkB4[0xBC - 0xB4]; // 0xB4-0xBB
+        u8 field_BC;          // 0xBC
+        u8 field_BD;          // 0xBD
+    CfObjectModel();
+    void CfObject_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc6();
+    void CfObject_UnkVirtualFunc8();
+    void CfObject_UnkVirtualFunc63();
+    void CfObject_UnkVirtualFunc19();
+    void CfObject_UnkVirtualFunc22();
+    void CfObject_UnkVirtualFunc20();
+    u32 CfObject_UnkVirtualFunc23();
+    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc29();
+    void CfObject_UnkVirtualFunc32();
+    float CfObject_UnkVirtualFunc34();
+    void CfObject_UnkVirtualFunc33(float amount);
+    void CfObject_UnkVirtualFunc30();
+    float CfObject_UnkVirtualFunc56();
+    void CfObject_UnkVirtualFunc52();
+    CfObject* CfObject_UnkVirtualFunc53();
+    void CfObject_UnkVirtualFunc54();
+    void CfObject_UnkVirtualFunc55();
+    void* CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc66(int);
+    void CfObject_UnkVirtualFunc67();
+    void CfObject_UnkVirtualFunc70(float value);
+    void CfObject_UnkVirtualFunc69();
+    void CfObject_UnkVirtualFunc68();
+    void CfObject_UnkVirtualFunc24();
+    void CfObject_UnkVirtualFunc28();
+    float CfObject_UnkVirtualFunc31();
+    void CfObject_UnkVirtualFunc35();
+    void CfObject_UnkVirtualFunc36();
+    void CfObject_UnkVirtualFunc72();
     };
 }
+
 /* end "kyoshin/cf/object/CfObjectModel.hpp" */
 
 namespace cf {
@@ -2274,59 +2325,629 @@ namespace cf {
 
         //0x0: vtable
         //0x0-BE: CfObjectModel
-        u8 unkBE_3[0x657];
-        u8 unk715[3]; //might not belong here
+        // Field layout starting at offset 0xBE:
+        u8 _BE[6];              // 0xBE-0xC3
+        void* mTargetC4;         // 0xC4-0xC7
+        u8 _C8[0x544];           // 0xC8-0x60B
+        u8 _60C_region[0xB4];   // 0x60C-0x6BF
+        void* mTarget6C0;         // 0x6C0-0x6C3
+        u8 _6C4[5];              // 0x6C4-0x6C8
+        u8 mFlags6C9;             // 0x6C9
+        u8 _6CA[4];             // 0x6CA-0x6CD
+        u8 field_6CE;            // 0x6CE
+        u8 field_6CF;            // 0x6CF
+        u8 _6D0[0x20];           // 0x6D0-0x6EF
+        float mMoveSpeed;         // 0x6F0-0x6F3
+        u8 _6F4[0x21];           // 0x6F4-0x714
+        u8 unk715[3];            // 0x715-0x717
+    void CfObject_UnkVirtualFunc4();
+    void CfObject_UnkVirtualFunc7();
+    void CfObject_UnkVirtualFunc6();
+    void CfObjectModel_UnkVirtualFunc1();
+    void CfObjectModel_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc5();
+    void CfObject_UnkVirtualFunc46();
+    void CfObject_UnkVirtualFunc47();
+    void CfObject_UnkVirtualFunc49();
+    void CfObject_UnkVirtualFunc64();
+    void CfObject_UnkVirtualFunc65();
+    void CfObject_UnkVirtualFunc19();
+    void CfObject_UnkVirtualFunc22();
+    void CfObject_UnkVirtualFunc25();
+    void CfObject_UnkVirtualFunc26(u32 value, float amount);
+    u32 CfObject_UnkVirtualFunc23();
+    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc30();
+    void CfObject_UnkVirtualFunc32();
+    void CfObject_UnkVirtualFunc33(float amount);
+    void CfObject_UnkVirtualFunc13();
+    void CfObject_UnkVirtualFunc57();
+    void* CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc14();
+    void CfObject_UnkVirtualFunc15();
+    void CfObject_UnkVirtualFunc16();
+    void CfObject_UnkVirtualFunc17();
+    void CfObjectModel_UnkVirtualFunc18();
+    bool CfObject_UnkVirtualFunc9();
+    void CfObject_UnkVirtualFunc10();
+    void CfObject_UnkVirtualFunc61();
+    void CfObject_UnkVirtualFunc62();
+    void CfObject_UnkVirtualFunc12();
+    void CfObject_UnkVirtualFunc66(int);
+    void CfObjectModel_UnkVirtualFunc19();
+    void CfObjectModel_UnkVirtualFunc6();
+    void CfObject_UnkVirtualFunc37();
+    void CfObject_UnkVirtualFunc38();
+    void CfObject_UnkVirtualFunc39();
+    void CfObject_UnkVirtualFunc40();
+    void CfObject_UnkVirtualFunc42();
+    void CfObject_UnkVirtualFunc43();
+    void CfObject_UnkVirtualFunc45();
+    void CfObject_UnkVirtualFunc70(float value);
+    int CfObject_UnkVirtualFunc50();
+    int CfObject_UnkVirtualFunc51();
+    void CfObject_UnkVirtualFunc60();
+    void CfObject_UnkVirtualFunc29(float value);
+    void setMoveSpeed(float value);
+    void resetMoveSpeed();
+    void updatePos();
+    void* getUnk54();
+    int getSubState();
+    void freeSub();
+    void setSubFieldC(unsigned short val);
+    int getSubFieldA();
+    void setSubFieldA(unsigned short val);
+    int getSubFieldE();
+    void setSubFieldE(unsigned short val);
+    void virtCall10();
+    int nullsub_25();
+    int nullsub_26();
+    int nullsub_27();
+    int nullsub_28();
+    int isActive();
+    void setBit6c9(unsigned long bit);
+    cf::CfObjectMove* testFlag8();
     };
 }
+
 /* end "kyoshin/cf/object/CfObjectMove.hpp" */
+/* "src/kyoshin/plugin/ocUnit.hpp" line 15 "kyoshin/cf/CfGameManager.hpp" */
+#pragma once
+
+/* "include/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CPad;
+class CScnNw4r;
+class CView;
+class UnkClass_80186D20;
+class CfCamEventManager;
+class UnkClass_800821F8;
+class UnkClass_80085334;
+class UnkClass_8007E864;
+class CSysWinBuff;
+
+struct CfGameManagerData1C {
+    u8 field_0x0[0xC];
+};
+
+struct UnkClass_80083298SubF0 {
+    u8 field_0x0;
+};
+
+class UnkClass_80083298 {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual void vfunc_0x58();
+    virtual void vfunc_0x5C();
+    virtual void vfunc_0x60();
+    virtual void vfunc_0x64();
+    virtual void vfunc_0x68();
+    virtual void vfunc_0x6C();
+    virtual void vfunc_0x70();
+    virtual u32 vfunc_0x74();
+
+    u8 field_0x4[0xEC];
+    UnkClass_80083298SubF0 field_0xF0;
+};
+
+/* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
+or due to being in separate files, but compiled together in one file (unity compilation). For now,
+to make things simpler, everything exists in a single class. */
+namespace cf{
+    class CfPadData;
+    class CfObject;
+    struct CfObjectSub54;
+    class CfObjectMove;
+    //unofficial name
+    class CfGameManager{
+    public:
+        CfGameManager();
+
+        static CfGameManager* getInstance();
+        static CfGameManager* init(CScnNw4r* spSene, CView* pView, bool arg3);
+
+        static void func_80086B5C(int arg1, int arg2, int arg3);
+        static void enablePadFlags(u32 enableFlags, bool enable);
+        static bool func_8007E1B4();
+        static void func_8007E218();
+        static void func_8007E514(int, int, char const*, int, int);
+        static void func_8007F930(bool arg1);
+        static UNKWORD func_800822F4();
+        static bool func_800829B8();
+        static u32 getCurrentPadChannel();
+        static UnkClass_80083298* func_80083298();
+        static CfObjectMove* getPlayer(int playerIndex);
+        static u32 getEnabledInputFlags();
+        static bool func_80086F9C();
+        static bool func_80086F9C(s16) { return func_80086F9C(); }
+        static void setCurrentPadPtr(const CPad* pad, u32 channel);
+        static CPad* getPad(int channel);
+        static void setPad(int r3, CPad* pPad, u32 r5);
+        static CfPadData* getCfPadData();
+        static CPad* getCurrentPad();
+
+        static bool checkUnkFlag(int bit){
+            return sUnkFlags & (1 << bit);
+        }
+
+        static void setUnkFlag(int bit, bool state){
+            if(state == true) sUnkFlags |= (1 << bit);
+            else sUnkFlags &= ~(1 << bit);
+        }
+
+        u32 unk0;
+        CfObject* field_0x4;
+        u32 mObjectFlags;
+        u8 field_0xC[0xC];
+        u16 field_0x18;
+        u8 field_0x1A[2];
+        CfGameManagerData1C field_0x1C;
+        u8 unk28;
+        u8 unk29[0x40 - 0x29];
+        u16* field_0x40;
+        s32 field_0x44;
+        s32 field_0x48;
+        s32 field_0x4C;
+        u8 field_0x50[0x18];
+        u32 unk68;
+        u8 unk6C;
+        u8 unk6D[3];          // 0x6D-0x6F
+        u32 unk70;             // 0x70-0x73
+        u8 unk74[8];           // 0x74-0x7B
+        u32 unk7C;
+        u8 unk80[0x86 - 0x80];
+        u16 field_0x86;
+        u8 field_0x88[0x8C - 0x88];
+        s32 unk8C;
+        UnkClass_80083298* unk90;
+        //between CObjectParam - CfObjectMove
+        //likely player character object array, seems to always store pointers
+        //to CfObjectPc objects except pointing at the 4th vtable
+        CfObjectMove* unk94[3];
+        u32 unkA0;
+        UnkClass_80186D20* field_0xA4;
+        UnkClass_8007E864* unkA8;
+        UnkClass_80085334* unkAC;
+        UnkClass_800821F8* unkB0;
+        CfCamEventManager* unkB4;
+        u8 field_0xB8[0x4EC - 0xB8];
+        u32 field_0x4EC;
+
+        static u32 sUnkFlags;
+        static CScnNw4r* spScene;
+public:
+    void func_8007C0F8();
+    void func_8007C140();
+    void func_8007C188(unsigned long flags);
+    void func_8007C198();
+    void func_8007C2F4();
+    void func_8007C344();
+    void func_8007C360();
+    void func_8007C374();
+    void func_8007C4B4();
+    ~CfGameManager();
+    void func_8007C5B8();
+    cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
+    void func_8007C6C0();
+    void func_8007C8C8();
+    bool func_8007CBC8();
+    void func_8007CBD4();
+    void func_8007CBEC();
+    void func_8007CDA8();
+    void func_8007CE94();
+    void func_8007CF64() const;
+    void func_8007D190(unsigned long flags);
+    void func_8007D1A0();
+    void func_8007D794();
+    void func_8007D7A4();
+    void func_8007D834();
+    void func_8007D84C();
+    void* func_8007DA00();
+    void func_8007DA0C();
+    void func_8007DCA8();
+    void func_8007DCB8();
+    void func_8007DE94();
+    void func_8007DECC();
+    u16 func_8007E030();
+    void func_8007E038();
+    CfObject** func_8007E0C8();
+    void func_8007E0D0();
+    void func_8007E4CC();
+    void func_8007E4DC();
+    void func_8007E864();
+    void func_8007E908();
+    void func_8007E960();
+    void func_8007E9CC();
+    void func_8007EEE0();
+    void func_8007EEF0();
+    u32 func_8007EEF8();
+    void func_8007EF04();
+    void func_8007EF44();
+    void func_8007EF48();
+    void func_8007EF4C();
+    void func_8007F044();
+    void func_8007F054();
+    void func_8007F0A4();
+    void func_8007F0AC();
+    void func_8007F0C4();
+    void func_8007F114();
+    void func_8007F11C();
+    void func_8007F1FC();
+    void func_8007F830();
+    u16 func_8007F8B8();
+    void func_8007F8C0();
+    void** func_8007F8D0();
+    void func_8007F8DC();
+    void func_8007F8F4();
+    void func_8007F900();
+    bool func_8007F91C();
+    void func_8007F990();
+    void func_8007F9AC();
+    void func_8007F9B4();
+    void func_8007F9BC();
+    void func_8007F9C4();
+    void func_8007FBFC();
+    void func_8007FC2C();
+    void func_8007FC5C();
+    void func_8007FD00();
+    void func_8007FD8C();
+    void func_8007FE18();
+    void func_8007FE1C();
+    void func_8007FE20();
+    void func_8007FE24();
+    void func_8007FE2C();
+    void func_8007FECC();
+    void func_8007FF6C();
+    void func_8008064C();
+    void func_800807BC();
+    void func_80080888();
+    u8 func_80080E20();
+    u8 func_80080E28();
+    void func_80080E30();
+    void func_80080E44();
+    void func_80080EE4();
+    void func_80080F40();
+    void func_80080F44();
+    void func_80080F48();
+    void func_80081258();
+    void func_80081264();
+    void func_8008126C();
+    void func_80081274();
+    void func_8008127C();
+    void func_80081284();
+    void func_8008128C();
+    void func_80081294();
+    void func_8008129C();
+    void func_800812A4();
+    void func_800812AC();
+    void func_800812B4();
+    void func_800812BC();
+    void func_800812C4();
+    void func_800812CC();
+    void func_800812D4();
+    void func_800812DC();
+    void func_800812E4();
+    void func_800812EC();
+    void func_800812F4();
+    void func_80081318();
+    void func_80081330();
+    void func_80081338();
+    void func_80081340();
+    void func_80081348();
+    void func_80081350();
+    void func_80081358();
+    void func_80081694();
+    void func_800817A8();
+    void func_800817B0();
+    void func_800817BC();
+    void func_80081874();
+    void func_8008187C();
+    void func_80081900();
+    void func_80081988();
+    void func_80081990();
+    void func_80081A24();
+    void func_80081A40();
+    void func_80081CA0();
+    void func_80081CB0();
+    void func_80081CB8();
+    void func_80081CBC();
+    void func_80081D2C();
+    void func_80081D88();
+    void func_80081D8C();
+    void func_80081DD8();
+    void func_80081E90();
+    void func_80081F28();
+    void func_80081F90();
+    void func_80082008();
+    void func_80082060();
+    void func_80082088();
+    bool func_80082104();
+    void func_8008212C();
+    UnkClass_800821F8* func_800821F8();
+    CfObject* func_8008221C();
+    void func_80082254();
+    void func_80082258();
+    void func_8008228C();
+    void func_800822FC();
+    void func_80082354();
+    void func_8008235C();
+    void func_800823A4();
+    void func_80082418();
+    void func_800824FC();
+    void func_80082544();
+    void func_80082568();
+    void func_80082614();
+    void func_8008261C();
+    bool func_80082680();
+    void func_80082694();
+    void func_8008269C();
+    void func_800826F0();
+    void func_80082768();
+    u16 func_80082770();
+    void func_800827A8();
+    void func_800827E4();
+    void func_80082834();
+    u32 func_800828DC();
+    u32 func_80082900();
+    void func_80082940();
+    void func_8008294C();
+    void func_80082A0C();
+    void func_80082A7C();
+    void func_80082B38();
+    void func_80082C48();
+    void func_80082D90();
+    void func_80082E50();
+    void func_80082EC0();
+    void func_80082EC4();
+    void func_80082F2C();
+    void func_80082FCC();
+    void func_80082FE4();
+    u32 func_80083100();
+    u32 func_8008310C();
+    void func_80083118();
+    void func_80083284();
+    void func_80083290();
+    void func_800832BC();
+    void func_80083304();
+    void func_80083328();
+    u32 func_80083458();
+    u32 func_80083460();
+    void func_80083468(u32 value);
+    void func_80083470();
+    bool func_80083538();
+    bool func_80083544();
+    void func_80083550();
+    void func_80083560();
+    void func_800835FC();
+    void func_8008360C();
+    void func_80083718();
+    void func_8008372C();
+    void func_80083878();
+    void func_80083888();
+    void func_800838F4();
+    void func_80083C70();
+    void func_80083C78();
+    void func_80083CC8();
+    void func_80083CD8();
+    void func_80083D50();
+    void func_80083D70();
+    void func_80083DEC();
+    void func_80083EA4();
+    void func_80083F28();
+    void func_8008402C();
+    void func_8008413C();
+    void func_80084654();
+    void func_80084A00();
+    void func_80084AD4();
+    bool func_80084B68();
+    bool func_80084BAC();
+    bool func_80084BF4();
+    void func_80084C10();
+    void func_80084CA4();
+    void func_80084F50();
+    void func_80085220();
+    void func_80085248();
+    void func_80085334();
+    void func_800853C8();
+    void func_8008566C();
+    void func_80085838();
+    bool func_80085840();
+    bool func_8008585C();
+    void func_80085878();
+    void func_800858B8();
+    void func_80085978();
+    void func_80085E58();
+    void func_80085FB8();
+    void func_800862D0();
+    void func_800863F4();
+    void func_80086490();
+    void func_800865E8();
+    void func_800866A0();
+    void func_8008670C();
+    void func_80086778();
+    void func_80086B04();
+    void func_80086B08();
+    void func_80086B0C();
+    void func_80086B10();
+    void func_80086B14();
+    void func_80086B18();
+    void func_80086B1C();
+    void func_80086B24();
+    void func_80086B2C();
+    void func_80086B34();
+    void func_80086B3C();
+    void func_80086B44();
+    void func_80086B48();
+    void func_80086D90();
+    void func_80086D94();
+    void func_80086D98();
+    void func_80086D9C();
+    static u32 func_80086DA0();
+    void func_80086DA4();
+    void func_80086DA8();
+    void func_80086DAC();
+    void func_80086DB0();
+    void func_80086DB4();
+    static u32 func_80086DBC();
+    void func_80086E6C();
+    bool func_80087244();
+    bool func_80087250();
+    void func_80087280();
+    void func_80087330();
+    void func_80087334();
+    void func_80087348();
+    void func_80087364();
+    void func_80087378();
+    void func_80087390();
+    void func_800873AC();
+    CfObjectSub54* func_800873C8();
+    void func_800873D4();
+    void func_800873E8();
+    void func_800873FC();
+    void func_80087410();
+    u32 func_80087424();
+    void func_8008742C();
+    void func_8008743C();
+    void func_80087448();
+    }; //size = 0xB8
+} // namespace cf
+/* end "kyoshin/cf/CfGameManager.hpp" */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 void ocUnitRegist();
+void func_8013D07C(void* obj, const char* str, int mode);
+void func_8013D448(void* obj, const char* str);
+unsigned int func_8013EC58();
+int func_80174C98(void* player, int* val, int mode);
+u8 code80135FDC_getByte_64058();
+unsigned int func_8013EC58();
 
 #ifdef __cplusplus
 }
 #endif
+
+
+
 /* end "kyoshin/plugin/ocUnit.hpp" */
 
-extern "C" void func_8003BC10() {}
+// C-linkage retail symbols referenced by the plugin functions below.
+extern "C" {
+    extern u32 lbl_eu_80663E24;
+    extern char lbl_eu_804FA74C[];
+    extern void* lbl_eu_806618D8;
+    extern void* lbl_eu_806618F0;
+    extern void* lbl_eu_806618E8;
 
-extern "C" void CfObject_UnkVirtualFunc50__Q22cf12CfObjectMoveFv() {}
-
-extern "C" void CfObject_UnkVirtualFunc51__Q22cf12CfObjectMoveFv() {}
-
-extern "C" void func_8003BD7C() {}
-
-extern "C" void func_8003C044() {}
-
-extern "C" bool CfObject_UnkVirtualFunc23__Q22cf8CfObjectFv() { return false; }
-
-extern "C" void func_8003C0D0() {}
-
-extern "C" void func_8003C154() {}
-
-extern "C" void func_8003C1D8() {}
-
-extern "C" float CfObject_UnkVirtualFunc34__Q22cf8CfObjectFv(void* self) {
-    float f = *(float*)((char*)self + 0x4c);
-    return f * 0.019592438f;
+    // VM/script helpers
+    void func_800BE12C(void* obj, int a, int b, int c, int d);
+    void func_800BE824(void* obj, int flag);
+    void func_800BE0F8(void* obj, int target);
+    void func_800BE33C(void* obj, int flag);
+    void* func_800BBC0C();
+    void func_800BF314(void* obj, int flag);
+    void func_800F38E0(void* battleMgr, void* actor, int flag);
+    void func_800F3958(void* battleMgr, void* actor, int index);
+    void func_800EC8FC(void* battleMgr, void* actor, void* data, int flag);
+    u32 func_800FE68C();
+    void func_800ACC14(void* obj, s8 val);
+    void func_800ACF78(void* obj, void* target, void* child);
+    void func_800ACFD8(void* obj, void* target);
+    void func_800AC4A8(void* obj, u16 param);
+    void func_800ABF24(void* obj, void* pos, void* offset, float f);
+    void func_8013D07C(void* subObj, const char* str, int flag);
+    void func_8013D448(void* subObj, const char* str);
+    unsigned int func_8013EC58();
+    int func_80174C98(void* player, int* val, int flag);
+    unsigned char code80135FDC_getByte_64058();
+    void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
+    int strcmp(const char* s1, const char* s2);
+    void* memset(void* ptr, int val, u32 size);
+    void* getInstance__Q22cf14CBattleManagerFv();
+    void* getInstance__Q22cf13CfGameManagerFv();
+    void* getPlayer__Q22cf13CfGameManagerFi(int i);
+    void* func_80081694__Q22cf13CfGameManagerFv(unsigned short a, unsigned short b);
+    void* func_80081CBC__Q22cf13CfGameManagerFv(const char* name, unsigned short param);
+    void* func_80081CB8__Q22cf13CfGameManagerFv();
+    void* func_800817BC__Q22cf13CfGameManagerFv(int index, int mode);
+    void* func_8008187C__Q22cf13CfGameManagerFv(int index);
 }
 
-extern "C" void func_8003C260() {}
+void func_8003BC10(){}
 
-extern "C" bool CObjectParam_UnkVirtualFunc2__Q22cf12CObjectParamFv() { return false; }
+int cf::CfObjectMove::CfObject_UnkVirtualFunc50() { return static_cast<cf::CfObjectMove*>(this)->field_6CE; }
 
-extern "C" void func_8003C2F4() {}
+int cf::CfObjectMove::CfObject_UnkVirtualFunc51() { return static_cast<cf::CfObjectMove*>(this)->field_6CF; }
 
-extern "C" void func_8003C354() {}
+void func_8003BD7C(){}
 
-extern "C" void func_8003C3D0() {}
+void func_8003C044(){}
 
-extern "C" bool CActorParam_UnkVirtualFunc37__Q22cf11CActorParamFv() { return false; }
+u32 cf::CfObject::CfObject_UnkVirtualFunc23() { return (u32)&mPos3C; }
 
-extern "C" void func_8003C480() {}
+void func_8003C0D0(){}
+
+void func_8003C154(){}
+
+void func_8003C1D8(){}
+
+float cf::CfObject::CfObject_UnkVirtualFunc34() { return mField4C * 0.019592438f; }
+
+void func_8003C260(){}
+
+void* cf::CObjectParam::CObjectParam_UnkVirtualFunc2() { return mPtr10; }
+
+void func_8003C2F4(){}
+
+void func_8003C354(){}
+
+void func_8003C3D0(){}
+
+float cf::CActorParam::CActorParam_UnkVirtualFunc37() { return *(float*)((u8*)this + 0x17E8); }
+
+void func_8003C480(){}
 
 extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
@@ -2337,31 +2958,31 @@ extern "C" void CfObject_UnkVirtualFunc22__Q22cf8CfObjectFv(void* self, void* sr
     *(u32*)((u8*)self + 0x44) = c;
 }
 
-extern "C" void func_8003C560() {}
+void func_8003C560(){}
 
-extern "C" void func_8003C624() {}
+void func_8003C624(){}
 
-extern "C" void func_8003C6E8() {}
+void func_8003C6E8(){}
 
-extern "C" void CfObject_UnkVirtualFunc30__Q22cf8CfObjectFv(void* self) {
-    void** vtable = *(void***)self;
+void cf::CfObject::CfObject_UnkVirtualFunc30() {
+    void** vtable = *(void***)this;
     void (*func)(void*) = (void (*)(void*))vtable[0xC4 / 4];
-    func(self);
+    func(this);
 }
 
-extern "C" bool CfObject_UnkVirtualFunc29__Q22cf8CfObjectFv() { return false; }
+void cf::CfObject::CfObject_UnkVirtualFunc29(float value) { mField4C = value; }
 
-extern "C" void func_8003C78C() {}
+void func_8003C78C(){}
 
-extern "C" void CObjectParam_UnkVirtualFunc1__Q22cf12CObjectParamFv() {}
+void cf::CObjectParam::CObjectParam_UnkVirtualFunc1(u32, u8) {}
 
-extern "C" bool isValid() { return false; }
+bool isValid() { return false; }
 
-extern "C" void func_8003C84C() {}
+void func_8003C84C(){}
 
-extern "C" void CfObject_UnkVirtualFunc26__Q22cf8CfObjectFv() {}
+void cf::CfObject::CfObject_UnkVirtualFunc26(u32 value, float amount) {}
 
-extern "C" void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv(void* self, void* src) {
+void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);
@@ -2370,131 +2991,1118 @@ extern "C" void CfObject_UnkVirtualFunc19__Q22cf8CfObjectFv(void* self, void* sr
     *(u32*)((u8*)self + 0x44) = c;
 }
 
-extern "C" void dispOn() {}
+void dispOn(){}
 
-extern "C" void dispOff() {}
+void dispOff(){}
 
-extern "C" void CObjectState_UnkVirtualFunc8__Q22cf12CObjectStateFv() {}
+int cf::CObjectState::CObjectState_UnkVirtualFunc8(int) { return 0; }
 
-extern "C" int CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv(void* self, int mask) {
+int CObjectState_UnkVirtualFunc2__Q22cf12CObjectStateFv(void* self, int mask) {
     return (*(int*)((char*)self + 4) & mask) != 0 ? 1 : 0;
 }
 
-extern "C" void func_8003CB70() {}
+void func_8003CB70(){}
 
-extern "C" void func_8003CC0C() {}
+void func_8003CC0C(){}
 
-extern "C" void func_8003CC9C() {}
+void func_8003CC9C(){}
 
-extern "C" void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv() {}
+void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv() {}
 
-extern "C" void func_8003CD6C() {}
+void func_8003CD6C(){}
 
-extern "C" bool CfObject_UnkVirtualFunc50__Q22cf8CfObjectFv() { return false; }
+int cf::CfObject::CfObject_UnkVirtualFunc50() { return -1; }
 
-extern "C" void func_8003CDE0() {}
+void func_8003CDE0(){}
 
-extern "C" void walkR() {}
+void walkR(){}
 
-extern "C" void func_8003CED0() {}
+void func_8003CED0(){}
 
-extern "C" void func_8003CF48() {}
+void func_8003CF48(){}
 
-extern "C" void func_8003D060() {}
+void func_8003D060(){}
 
-extern "C" void func_8003D2B8() {}
+void func_8003D2B8(){}
 
-extern "C" void func_8003D32C() {}
+void func_8003D32C(){}
 
-extern "C" void moveTo() {}
+void moveTo(){}
 
-extern "C" void func_8003D570() {}
+void func_8003D570(){}
 
-extern "C" void func_8003D5DC() {}
+void func_8003D5DC(){}
 
-extern "C" void isTalk() {}
+void isTalk(){}
 
-extern "C" bool CObjectState_UnkVirtualFunc11__Q22cf12CObjectStateFv() { return false; }
+void cf::CObjectState::CObjectState_UnkVirtualFunc11() { }
 
-extern "C" void onEvent() {}
+void onEvent(){}
 
-extern "C" void CObjectState_UnkVirtualFunc10__Q22cf12CObjectStateFv() {}
+int cf::CObjectState::CObjectState_UnkVirtualFunc10(void* arg, int arg2) { return 0; }
 
-extern "C" void CObjectState_UnkVirtualFunc9__Q22cf12CObjectStateFv() {}
+void cf::CObjectState::CObjectState_UnkVirtualFunc9() {}
 
-extern "C" void func_8003D9C4() {}
+// --- Batch 2 targets start here ---
 
-extern "C" void winTalk() {}
+// us-8003df40: func_8003D9C4
+// Checks if a CfObject supports a talk/hybridheal flag, returns 1 or 2
+extern "C" int func_8003D9C4(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (!obj) {
+        u8 retVal = 2;
+        vmRetValSet(pThread, (VMArg*)&retVal);
+        return 0;
+    }
+    if (obj->unk64 & 0x10) {
+        u8 retVal;
+        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)0x2000, 0)) {
+            retVal = 1;
+        } else {
+            retVal = 2;
+        }
+        vmRetValSet(pThread, (VMArg*)&retVal);
+        return 1;
+    } else {
+        u8 retVal = 2;
+        vmRetValSet(pThread, (VMArg*)&retVal);
+        vmOCExceptionThrow(pThread);
+        return 0;
+    }
+}
 
-extern "C" void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv(void* self, unsigned long bits) {
+// us-8003dfec: winTalk
+// Starts a talk window interaction
+extern "C" int winTalk(VMThread* pThread, int handle) {
+    VMArg* arg1 = vmArgPtrGet(pThread, 1);
+    const char* str = vmArgStringGet(2, arg1);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    cf::CfObjectMove* player = (cf::CfObjectMove*)cf::CfGameManager::getPlayer(0);
+    if (player) {
+        player = (cf::CfObjectMove*)((u8*)player - 0x3E9C);
+    }
+    func_8013D07C(obj->mSubObj38, str, 1);
+    if (obj->unk64 & 0x10) {
+        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 0)) {
+            ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
+        }
+        if (!code80135FDC_getByte_64058()) {
+            u32* valPtr = (u32*)((cf::CObjectState*)player->mTargetC4)->CObjectState_UnkVirtualFunc8(0);
+            u32 val = *valPtr;
+            if (!func_80174C98((void*)player, (int*)&val, 1)) {
+                cf::CObjectState* state = (cf::CObjectState*)((u8*)player + 0x3E9C);
+                state->CObjectState_UnkVirtualFunc1(1);
+                ((void(*)(void*, void*))(*(void***)((u8*)player + 0x3E9C))[0x50/4])((u8*)player + 0x3E9C, obj->mSubObj38);
+            }
+        }
+    } else if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {
+        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc8(1)) {
+            ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
+        }
+        u32* valPtr = (u32*)((cf::CObjectState*)player->mTargetC4)->CObjectState_UnkVirtualFunc8(0);
+        u32 val = *valPtr;
+        if (!func_80174C98((void*)player, (int*)&val, 1)) {
+            cf::CObjectState* state = (cf::CObjectState*)((u8*)player + 0x3E9C);
+            state->CObjectState_UnkVirtualFunc1(1);
+            ((void(*)(void*, void*))(*(void***)((u8*)player + 0x3E9C))[0x50/4])((u8*)player + 0x3E9C, obj->mSubObj38);
+        }
+    }
+    return 0;
+}
+
+// us-8003e1f8: func_8003DC7C
+// Sets or clears a CfObject flag based on bool arg
+extern "C" int func_8003DC7C(VMThread* pThread, int handle) {
+    int boolVal;
+    if (vmArgOmitChk(pThread, 1)) {
+        boolVal = 1;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        boolVal = vmArgBoolGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (obj && (obj->unk64 & 0x10)) {
+        if (boolVal) {
+            ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(0x10);
+        } else {
+            ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc3(0x10);
+        }
+    }
+    return 0;
+}
+
+// us-8003e2c0: func_8003DD44
+// Gets a string arg and calls func_8013D07C on the object's sub-field
+extern "C" int func_8003DD44(VMThread* pThread, int handle) {
+    VMArg* arg1 = vmArgPtrGet(pThread, 1);
+    const char* str = vmArgStringGet(2, arg1);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    func_8013D07C(obj->mSubObj38, str, 1);
+    return 0;
+}
+
+// us-8003e328: func_8003DDAC
+// Returns the current object handle (OC search result)
+extern "C" int func_8003DDAC(VMThread* pThread, int handle) {
+    u8 type = 3;
+    u32 ocHandle = func_8013EC58();
+    VMArg retVal;
+    retVal.type = type;
+    retVal.value.uintVal = ocHandle;
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
+
+// us-8003e370: func_8003DDF4
+// Gets a string and calls a func, then handles notification flags
+extern "C" int func_8003DDF4(VMThread* pThread, int handle) {
+    VMArg* arg1 = vmArgPtrGet(pThread, 1);
+    const char* str = vmArgStringGet(2, arg1);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    func_8013D448(obj->mSubObj38, str);
+    if (obj->unk64 & 0x10) {
+        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 0)) {
+            ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
+        }
+    } else if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {
+        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc8(1)) {
+            ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
+        }
+    }
+    return 0;
+}
+
+// us-8003e46c: setAct
+// Sets an action on an object: action ID and optional fixed-point parameter
+extern "C" int setAct(VMThread* pThread, int handle) {
+    VMArg* arg1 = vmArgPtrGet(pThread, 1);
+    int actionId = vmArgIntGet(2, arg1);
+    int fixedParam;
+    if (vmArgOmitChk(pThread, 2)) {
+        fixedParam = 1;
+    } else {
+        VMArg* arg2 = vmArgPtrGet(pThread, 2);
+        fixedParam = vmArgFixedGet(3, arg2);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    func_800BE12C(obj, actionId, 0, -1, 1);
+    if (fixedParam != 1) {
+        float f = (float)(s32)fixedParam / 2048.0f;
+        ((void(*)(void*, float))(*(void***)obj)[0x88/4])(obj, f);
+    }
+    return 0;
+}
+
+// us-8003e560: func_8003DFE4
+// Calls a virtual function with a fixed-point parameter converted to float
+extern "C" int func_8003DFE4(VMThread* pThread, int handle) {
+    VMArg* arg1 = vmArgPtrGet(pThread, 1);
+    int fixedVal = vmArgFixedGet(2, arg1);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    float f = (float)(s32)fixedVal / 2048.0f;
+    ((void(*)(void*, float))(*(void***)obj)[0x88/4])(obj, f);
+    return 0;
+}
+
+// us-8003e5ec: lookAt
+// Makes an object look at a target, with optional snap/rotate flags
+extern "C" int lookAt(VMThread* pThread, int handle) {
+    int targetOC;
+    if (vmArgOmitChk(pThread, 1)) {
+        targetOC = 0;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        targetOC = (int)vmArgOCGet(2, ptr);
+    }
+    int snap;
+    if (vmArgOmitChk(pThread, 2)) {
+        snap = 0;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 2);
+        snap = vmArgBoolGet(3, ptr);
+    }
+    int rotate;
+    if (vmArgOmitChk(pThread, 3)) {
+        rotate = 1;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 3);
+        rotate = vmArgBoolGet(4, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* self = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (targetOC) {
+        ctx = func_801862C0(pThread);
+        cf::CfObject* target = (cf::CfObject*)func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
+        void* actor = (void*)__dynamic_cast(target, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+        if (actor) {
+            if (((cf::CfObject*)actor)->unk64 & 0x40000000 || ((cf::CfObject*)actor)->unk64 & 0x10) {
+                if (*(void**)((u8*)self + 0xC4)) {
+                    if (((int(*)(void*, const char*))(*(void***)actor)[0x120/4])(actor, &lbl_eu_804FA74C[0x3C])) {
+                        if (snap) {
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, actor, &lbl_eu_804FA74C[0x3C]);
+                        } else {
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1AC/4])(self, actor, &lbl_eu_804FA74C[0x3C]);
+                        }
+                    } else if (((int(*)(void*, const char*))(*(void***)actor)[0x120/4])(actor, &lbl_eu_804FA74C[0x43])) {
+                        if (snap) {
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, actor, &lbl_eu_804FA74C[0x43]);
+                        } else {
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1AC/4])(self, actor, &lbl_eu_804FA74C[0x43]);
+                        }
+                    } else if (((int(*)(void*, const char*))(*(void***)actor)[0x120/4])(actor, &lbl_eu_804FA74C[0x4B])) {
+                        if (snap) {
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, actor, &lbl_eu_804FA74C[0x4B]);
+                        } else {
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1AC/4])(self, actor, &lbl_eu_804FA74C[0x4B]);
+                        }
+                    }
+                }
+            } else {
+                if (snap) {
+                    ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, actor, &lbl_eu_804FA74C[0x4B]);
+                } else {
+                    ((void(*)(void*, void*, const char*))(*(void***)self)[0x1AC/4])(self, actor, &lbl_eu_804FA74C[0x4B]);
+                }
+            }
+        } else {
+            void* pos = ((void*(*)(void*))(*(void***)target)[0xBC/4])(target);
+            ((void(*)(void*, void*))(*(void***)self)[0x1A8/4])(self, pos);
+        }
+        ((void(*)(void*, int))(*(void***)self)[0x1B4/4])(self, rotate ? 1 : 0);
+    } else {
+        ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, 0, &lbl_eu_804FA74C[0x3C]);
+    }
+    return 0;
+}
+
+// us-8003e94c: turn
+// Turns an object by a fixed-point angle
+extern "C" int turn(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int angle = vmArgIntGet(2, ptr);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    float f = (float)(s32)angle / 2048.0f * 0.0000958738f;
+    ((void(*)(void*, float))(*(void***)obj)[0xCC/4])(obj, f);
+    func_800BE12C(obj, 3, 0, -1, 1);
+    return 0;
+}
+
+// us-8003e9f4: func_8003E478
+// Sets a flag on the object if it's alive
+extern "C" int func_8003E478(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (obj && !(obj->unk64 & 1)) {
+        obj->mFlags68 |= 0x00080000;
+    }
+    return 0;
+}
+
+// us-8003ea4c: func_8003E4D0
+// Sets a flag on the object if it's alive
+extern "C" int func_8003E4D0(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (obj && !(obj->unk64 & 1)) {
+        obj->mFlags68 |= 0x00100000;
+    }
+    return 0;
+}
+
+// us-8003eaa4: func_8003E528
+// Gets the current OC handle for the object's party member
+extern "C" int func_8003E528(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    u32 ocHandle = obj->CObjectParam_UnkVirtualFunc5();
+    if (!ocHandle) {
+        cf::CfObjectMove* player = cf::CfGameManager::getPlayer(0);
+        if (obj == (cf::CfObject*)player) {
+            ocHandle = func_800FE68C();
+            ocHandle = *(u32*)((u8*)ocHandle + 0x10000 - 0x6F1C);
+        }
+    }
+    if (ocHandle) {
+        ctx = func_801862C0(pThread);
+        cf::CfObject* target = (cf::CfObject*)func_801864DC(ctx, ocHandle);
+        const char* typeName;
+        if (target->unk64 & 0x01000000) {
+            typeName = &lbl_eu_804FA74C[0x50];
+        } else if (target->unk64 & 0x4000) {
+            typeName = &lbl_eu_804FA74C[0x54];
+        } else if (target->unk64 & 0x04000000) {
+            typeName = &lbl_eu_804FA74C[0x5A];
+        } else if (target->unk64 & 0x8000) {
+            typeName = &lbl_eu_804FA74C[0x61];
+        } else {
+            typeName = &lbl_eu_804FA74C[0x66];
+        }
+        u8 type = 9;
+        u16 ocId = vmOCSearch(typeName);
+        VMArg retVal;
+        retVal.type = type;
+        retVal.unk2 = ocId;
+        retVal.value.pointerVal = target->mSubObj38;
+        vmRetValSet(pThread, &retVal);
+        return 1;
+    } else {
+        vmOCExceptionThrow(pThread);
+        return 0;
+    }
+}
+
+// us-8003ebe8: func_8003E66C
+// Gets the current battle target's OC handle
+extern "C" int func_8003E66C(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    u32 ocHandle = obj->CObjectParam_UnkVirtualFunc5();
+    if (ocHandle) {
+        ctx = func_801862C0(pThread);
+        obj = (cf::CfObject*)func_801864DC(ctx, ocHandle);
+        u8 type = 3;
+        u16 hp = *(u16*)((u8*)obj + 0x8C);
+        VMArg retVal;
+        retVal.type = type;
+        retVal.value.uintVal = hp;
+        vmRetValSet(pThread, &retVal);
+    } else {
+        VMArg retVal;
+        retVal.type = 0;
+        vmRetValSet(pThread, &retVal);
+    }
+    return 1;
+}
+
+// us-8003ec88: isPC
+// Checks if the object is a player character
+extern "C" int isPC(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    int isPC = (obj->unk64 >> 30) & 1;
+    u8 retVal = isPC ? 2 : 1;
+    vmRetValSet(pThread, (VMArg*)&retVal);
+    return 1;
+}
+
+// us-8003ecec: isNPC
+// Checks if the object is an NPC
+extern "C" int isNPC(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    int isNPC = (obj->unk64 >> 28) & 1;
+    u8 retVal = isNPC ? 2 : 1;
+    vmRetValSet(pThread, (VMArg*)&retVal);
+    return 1;
+}
+
+// us-8003ed50: isENE
+// Checks if the object is an enemy
+extern "C" int isENE(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    int isENE = (obj->unk64 >> 29) & 1;
+    u8 retVal = isENE ? 2 : 1;
+    vmRetValSet(pThread, (VMArg*)&retVal);
+    return 1;
+}
+
+// us-8003edb4: isPT
+// Checks if the object is a party member
+extern "C" int isPT(VMThread* pThread, int handle) {
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    u8 retVal;
+    if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {
+        retVal = 1;
+    } else {
+        retVal = 2;
+    }
+    vmRetValSet(pThread, (VMArg*)&retVal);
+    return 1;
+}
+
+// us-8003ee2c: invin
+// Toggles invincibility on a CfObjectActor
+extern "C" int invin(VMThread* pThread, int handle) {
+    int enable;
+    if (vmArgOmitChk(pThread, 1)) {
+        enable = 1;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        enable = vmArgBoolGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+    if (actor) {
+        void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
+        if (enable) {
+            func_800F38E0(battleMgr, actor, 1);
+        } else {
+            func_800F3958(battleMgr, actor, 1);
+        }
+    }
+    return 0;
+}
+
+// us-8003eef0: func_8003E974
+// Complex battle AI function - sets up a battle event with ID, type, etc.
+extern "C" int func_8003E974(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int eventId = vmArgIntGet(2, ptr);
+    int arg2;
+    if (vmArgOmitChk(pThread, 2)) {
+        arg2 = 0;
+    } else {
+        VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+        arg2 = vmArgIntGet(3, ptr2);
+    }
+    int arg3;
+    if (vmArgOmitChk(pThread, 3)) {
+        arg3 = 0;
+    } else {
+        VMArg* ptr3 = vmArgPtrGet(pThread, 3);
+        arg3 = vmArgIntGet(4, ptr3);
+    }
+    int arg4;
+    if (vmArgOmitChk(pThread, 4)) {
+        arg4 = 0;
+    } else {
+        VMArg* ptr4 = vmArgPtrGet(pThread, 4);
+        arg4 = vmArgIntGet(5, ptr4);
+    }
+    int arg5;
+    if (vmArgOmitChk(pThread, 5)) {
+        arg5 = 0;
+    } else {
+        VMArg* ptr5 = vmArgPtrGet(pThread, 5);
+        arg5 = vmArgIntGet(6, ptr5);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+    if (actor) {
+        u8 data[0x34];
+        memset(data, 0, sizeof(data));
+        float f1 = (float)(s32)arg2 / 2048.0f;
+        float f2 = (float)(s32)arg5 / 2048.0f;
+        *(u32*)&data[0] = *(u32*)((u8*)actor + 0x3F10);
+        *(u32*)&data[4] = 0;
+        *(u16*)&data[0x14] = (u16)eventId;
+        *(u32*)&data[0x18] = arg3;
+        *(u16*)&data[0x1C] = (u16)arg4;
+        *(float*)&data[0x28] = f1;
+        *(float*)&data[0x2C] = f2;
+        void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
+        func_800EC8FC(battleMgr, actor, data, 0);
+    }
+    return 0;
+}
+
+// us-8003f0e0: func_8003EB64
+// Removes buff/debuff from an actor by index
+extern "C" int func_8003EB64(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int index = vmArgIntGet(2, ptr);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+    if (actor) {
+        void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
+        func_800F3958(battleMgr, actor, index);
+    }
+    return 0;
+}
+
+// us-8003f168: setColi
+// Enables/disables collision on an actor
+extern "C" int setColi(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int enable = vmArgBoolGet(2, ptr);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+    if (actor) {
+        func_800BE824(actor, enable ? 1 : 0);
+    }
+    return 0;
+}
+
+// us-8003f1ec: setEye
+// Sets the eye/attention target
+extern "C" int setEye(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int target = vmArgIntGet(2, ptr);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (obj) {
+        func_800BE0F8(obj, target);
+    }
+    return 0;
+}
+
+// us-8003f254: func_8003ECD8
+// Enables/disables gravity on an object
+extern "C" int func_8003ECD8(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int enable = vmArgBoolGet(2, ptr);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (obj) {
+        ((void(*)(void*, int))(*(void***)obj)[0x150/4])(obj, enable ? 0 : 1);
+    }
+    return 0;
+}
+
+// us-8003f2cc: func_8003ED50
+// Enables/disables a visibility flag on an object and its model
+extern "C" int func_8003ED50(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int enable = vmArgBoolGet(2, ptr);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (obj) {
+        if (enable) {
+            obj->mFlags68 |= 0x8000;
+        } else {
+            obj->mFlags68 &= ~0x8000;
+        }
+        void* model = *(void**)((u8*)obj + 0x98);
+        if (model) {
+            if (enable) {
+                *(u32*)((u8*)model + 0x7A8) |= 0x1000;
+            } else {
+                *(u32*)((u8*)model + 0x7A8) &= ~0x1000;
+            }
+        }
+    }
+    return 0;
+}
+
+// us-8003f380: func_8003EE04
+// Enables/disables a flag on the object
+extern "C" int func_8003EE04(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int enable = vmArgBoolGet(2, ptr);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    if (obj) {
+        func_800BE33C(obj, enable ? 1 : 0);
+    }
+    return 0;
+}
+
+// us-8003f3f0: func_8003EE74
+// Calls a game-level function with a bool parameter
+extern "C" int func_8003EE74(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int enable = vmArgBoolGet(2, ptr);
+    void* ctx = func_801862C0(pThread);
+    func_801864DC(ctx, handle);
+    void* gameObj = func_800BBC0C();
+    if (gameObj) {
+        func_800BF314(gameObj, enable);
+    }
+    return 0;
+}
+
+// us-8003f45c: func_8003EEE0
+// Battle party selection/generation
+extern "C" int func_8003EEE0(VMThread* pThread, int handle, int r5) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int partyId = vmArgIntGet(2, ptr);
+    int arg2;
+    if (vmArgOmitChk(pThread, 2)) {
+        arg2 = 0;
+    } else {
+        VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+        arg2 = vmArgIntGet(3, ptr2);
+    }
+    int arg3;
+    if (vmArgOmitChk(pThread, 3)) {
+        arg3 = 0;
+    } else {
+        VMArg* ptr3 = vmArgPtrGet(pThread, 3);
+        arg3 = vmArgIntGet(4, ptr3);
+    }
+    u32 flag = lbl_eu_80663E24;
+    int hadFlag = (flag >> 13) & 1;
+    u32 newFlag = flag & ~0x00020000;
+    if (arg3) {
+        newFlag |= 0x00040000;
+    }
+    lbl_eu_80663E24 = newFlag;
+    void* result = func_80081694__Q22cf13CfGameManagerFv((u16)partyId, (u16)arg2);
+    newFlag = lbl_eu_80663E24;
+    u32 restoredFlag = newFlag & ~0x00020000;
+    if (hadFlag) {
+        restoredFlag |= 0x00040000;
+    }
+    lbl_eu_80663E24 = restoredFlag;
+    void* ctx;
+    if (!result) {
+        vmOCExceptionThrow(pThread);
+        return 0;
+    }
+    ctx = func_801862C0(pThread);
+    func_801863F4(ctx);
+    *(u32*)((u8*)result + 0x68) |= 0x40000000;
+    u8 type = 9;
+    VMArg retVal;
+    retVal.type = type;
+    retVal.unk2 = (u16)r5;
+    retVal.value.pointerVal = ctx;
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
+
+// us-8003f5b0: setRot
+// Sets the rotation of an object from 3 fixed-point angles
+extern "C" int setRot(VMThread* pThread, int handle) {
+    VMArg* ptr1 = vmArgPtrGet(pThread, 1);
+    int rotX = vmArgFixedGet(2, ptr1);
+    VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+    int rotY = vmArgFixedGet(3, ptr2);
+    VMArg* ptr3 = vmArgPtrGet(pThread, 3);
+    int rotZ = vmArgFixedGet(4, ptr3);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    float fx = (float)(s32)rotX / 2048.0f * 0.0000958738f;
+    float fy = (float)(s32)rotY / 2048.0f * 0.0000958738f;
+    float fz = (float)(s32)rotZ / 2048.0f * 0.0000958738f;
+    float rot[3] = { fx, fy, fz };
+    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, rot);
+    return 0;
+}
+
+// us-8003f6f4: gravity
+// Toggles gravity on an object
+extern "C" int gravity(VMThread* pThread, int handle) {
+    VMArg* ptr = vmArgPtrGet(pThread, 1);
+    int enable = vmArgBoolGet(2, ptr);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    ((void(*)(void*, int))(*(void***)obj)[0x150/4])(obj, enable ? 0 : 1);
+    return 0;
+}
+
+// us-8003f78c: func_8003F210
+// Battle party lookup by name, returns OC handle
+extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
+    void* ctx;
+    VMArg* ptr1 = vmArgPtrGet(pThread, 1);
+    const char* name = vmArgStringGet(2, ptr1);
+    VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+    int param = vmArgIntGet(3, ptr2);
+    int arg3;
+    if (vmArgOmitChk(pThread, 3)) {
+        arg3 = 0;
+    } else {
+        VMArg* ptr3 = vmArgPtrGet(pThread, 3);
+        arg3 = vmArgIntGet(4, ptr3);
+    }
+    u32 flag = lbl_eu_80663E24;
+    int hadFlag = (flag >> 13) & 1;
+    u32 newFlag = flag & ~0x00020000;
+    if (arg3) {
+        newFlag |= 0x00040000;
+    }
+    lbl_eu_80663E24 = newFlag;
+    void* result = 0;
+    if (strcmp(name, &lbl_eu_804FA74C[0x6B]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x54]) == 0) {
+        result = func_80081CBC__Q22cf13CfGameManagerFv(&lbl_eu_804FA74C[0x6B], (u16)param);
+    } else if (strcmp(name, &lbl_eu_804FA74C[0x79]) == 0) {
+        result = func_80081CB8__Q22cf13CfGameManagerFv();
+    }
+    if (!result) {
+        vmOCExceptionThrow(pThread);
+        return 0;
+    }
+    newFlag = lbl_eu_80663E24;
+    u32 restoredFlag = newFlag & ~0x00020000;
+    if (hadFlag) {
+        restoredFlag |= 0x00040000;
+    }
+    lbl_eu_80663E24 = restoredFlag;
+    ctx = func_801862C0(pThread);
+    func_801863F4(ctx);
+    *(u32*)((u8*)result + 0x68) |= 0x40000000;
+    u8 type = 9;
+    VMArg retVal;
+    retVal.type = type;
+    retVal.unk2 = (u16)r5;
+    retVal.value.pointerVal = ctx;
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
+
+// us-8003f914: func_8003F398
+// Sets a virtual function on the object (enable)
+extern "C" int func_8003F398(VMThread* pThread, int handle) {
+    if (!vmArgOmitChk(pThread, 1)) {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 1);
+    return 0;
+}
+
+// us-8003f994: func_8003F418
+// Sets a virtual function on the object (disable)
+extern "C" int func_8003F418(VMThread* pThread, int handle) {
+    if (!vmArgOmitChk(pThread, 1)) {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 0);
+    return 0;
+}
+
+// us-8003fa14: func_8003F498
+// Battle party member lookup by name/type
+extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
+    void* ctx;
+    VMArg* ptr1 = vmArgPtrGet(pThread, 1);
+    const char* name = vmArgStringGet(2, ptr1);
+    VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+    int index = vmArgIntGet(3, ptr2);
+    int arg3;
+    if (vmArgOmitChk(pThread, 3)) {
+        arg3 = 0;
+    } else {
+        VMArg* ptr3 = vmArgPtrGet(pThread, 3);
+        arg3 = vmArgIntGet(4, ptr3);
+    }
+    u32 flag = lbl_eu_80663E24;
+    int hadFlag = (flag >> 13) & 1;
+    u32 newFlag = flag & ~0x00020000;
+    if (arg3) {
+        newFlag |= 0x00040000;
+    }
+    lbl_eu_80663E24 = newFlag;
+    void* result = 0;
+    if (strcmp(name, &lbl_eu_804FA74C[0x85]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x89]) == 0) {
+        result = func_800817BC__Q22cf13CfGameManagerFv(index, 0);
+    } else if (strcmp(name, &lbl_eu_804FA74C[0x8C]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x93]) == 0) {
+        result = func_8008187C__Q22cf13CfGameManagerFv(index);
+    }
+    if (!result) {
+        vmOCExceptionThrow(pThread);
+        return 0;
+    }
+    cf::CfGameManager::getInstance();
+    if (lbl_eu_80663E24 & 0x00040000) {
+        *(u32*)((u8*)result + 0x64) |= 0x00010000;
+    }
+    newFlag = lbl_eu_80663E24;
+    u32 restoredFlag = newFlag & ~0x00020000;
+    if (hadFlag) {
+        restoredFlag |= 0x00040000;
+    }
+    lbl_eu_80663E24 = restoredFlag;
+    ctx = func_801862C0(pThread);
+    func_801863F4(ctx);
+    *(u32*)((u8*)result + 0x68) |= 0x40000000;
+    u8 type = 9;
+    VMArg retVal;
+    retVal.type = type;
+    retVal.unk2 = (u16)r5;
+    retVal.value.pointerVal = ctx;
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
+
+// us-8003fbc8: func_8003F64C
+// Enables a virtual function on the object (same as func_8003F398)
+extern "C" int func_8003F64C(VMThread* pThread, int handle) {
+    if (!vmArgOmitChk(pThread, 1)) {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 1);
+    return 0;
+}
+
+// us-8003fc48: func_8003F6CC
+// Disables a virtual function on the object (same as func_8003F418)
+extern "C" int func_8003F6CC(VMThread* pThread, int handle) {
+    if (!vmArgOmitChk(pThread, 1)) {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 0);
+    return 0;
+}
+
+// us-8003fcc8: func_8003F74C
+// Sets a property on an object with a signed byte value
+extern "C" int func_8003F74C(VMThread* pThread, int handle) {
+    int value;
+    if (vmArgOmitChk(pThread, 1)) {
+        value = 1;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        value = vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    func_800ACC14(obj, (s8)value);
+    return 0;
+}
+
+// us-8003fd48: func_8003F7CC
+// Sets a follow/attention relationship between two objects
+extern "C" int func_8003F7CC(VMThread* pThread, int handle) {
+    int targetOC;
+    if (vmArgOmitChk(pThread, 1)) {
+        targetOC = 0;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        targetOC = (int)vmArgOCGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    void* target = 0;
+    if (targetOC) {
+        ctx = func_801862C0(pThread);
+        target = func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
+    }
+    func_800ACF78(obj, target, 0);
+    return 0;
+}
+
+// us-8003fdec: func_8003F870
+// Sets a follow relationship with parent/child lookup
+extern "C" int func_8003F870(VMThread* pThread, int handle) {
+    int targetOC;
+    if (vmArgOmitChk(pThread, 1)) {
+        targetOC = 0;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        targetOC = (int)vmArgOCGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    void* parent = 0;
+    void* child = 0;
+    if (targetOC) {
+        ctx = func_801862C0(pThread);
+        parent = func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
+        if (parent) {
+            u32* fieldC8 = (u32*)((u8*)parent + 0xC8);
+            void* followTarget = 0;
+            if (*fieldC8) {
+                followTarget = *(void**)((u8*)parent + 0x6F8);
+            } else {
+                u32* fieldCC = (u32*)((u8*)parent + 0xCC);
+                if (*fieldCC) {
+                    followTarget = *(void**)((u8*)parent + 0x6FC);
+                }
+            }
+            if (followTarget) {
+                    void** vt = *(void***)followTarget;
+                    void (*vfunc)(void*) = (void (*)(void*))vt[0xAC / 4];
+                    vfunc(followTarget);
+                    child = followTarget;
+            }
+        }
+    }
+    func_800ACF78(obj, parent, child);
+    return 0;
+}
+
+// us-8003fef8: func_8003F97C
+// Unfollow/clear a relationship
+extern "C" int func_8003F97C(VMThread* pThread, int handle) {
+    int targetOC;
+    if (vmArgOmitChk(pThread, 1)) {
+        targetOC = 0;
+    } else {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        targetOC = (int)vmArgOCGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    void* target = 0;
+    if (targetOC) {
+        ctx = func_801862C0(pThread);
+        target = func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
+    }
+    func_800ACFD8(obj, target);
+    return 0;
+}
+
+// us-8003ff98: func_8003FA1C
+// Sets up a battle encounter by name
+extern "C" int func_8003FA1C(VMThread* pThread, int handle, int r5) {
+    void* ctx;
+    VMArg* ptr1 = vmArgPtrGet(pThread, 1);
+    const char* name = vmArgStringGet(2, ptr1);
+    VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+    int param = vmArgIntGet(3, ptr2);
+    void* battleMgr = func_80081CB8__Q22cf13CfGameManagerFv();
+    if (battleMgr) {
+        *(u32*)((u8*)battleMgr + 0x94) = 5;
+        func_800AC4A8(battleMgr, (u16)param);
+        ((void(*)(void*, int))(*(void***)battleMgr)[0x158/4])(battleMgr, 0);
+    }
+    if (!battleMgr) {
+        vmOCExceptionThrow(pThread);
+        return 0;
+    }
+    ctx = func_801862C0(pThread);
+    func_801863F4(ctx);
+    *(u32*)((u8*)battleMgr + 0x68) |= 0x40000000;
+    u8 type = 9;
+    VMArg retVal;
+    retVal.type = type;
+    retVal.unk2 = (u16)r5;
+    retVal.value.pointerVal = ctx;
+    vmRetValSet(pThread, &retVal);
+    return 1;
+}
+
+// us-80040094: func_8003FB18
+// Enables a virtual function on the object (same as func_8003F398)
+extern "C" int func_8003FB18(VMThread* pThread, int handle) {
+    if (!vmArgOmitChk(pThread, 1)) {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 1);
+    return 0;
+}
+
+// us-80040114: func_8003FB98
+// Disables a virtual function on the object (same as func_8003F418)
+extern "C" int func_8003FB98(VMThread* pThread, int handle) {
+    if (!vmArgOmitChk(pThread, 1)) {
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        vmArgIntGet(2, ptr);
+    }
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 0);
+    return 0;
+}
+
+// us-80040194: func_8003FC18
+// Moves an object by a fixed-point offset in its local X direction
+extern "C" int func_8003FC18(VMThread* pThread, int handle) {
+    VMArg* ptr1 = vmArgPtrGet(pThread, 1);
+    int distX = vmArgFixedGet(2, ptr1);
+    VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+    int distY = vmArgFixedGet(3, ptr2);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    float fDistX = (float)(s32)distX / 2048.0f;
+    float fDistY = (float)(s32)distY / 2048.0f;
+    if (obj) {
+        void* pos = ((void*(*)(void*))(*(void***)obj)[0xBC/4])(obj);
+        float x = *(float*)((u8*)pos + 0);
+        float y = *(float*)((u8*)pos + 4);
+        float z = *(float*)((u8*)pos + 8);
+        float offset[3] = { x, y + fDistY, z };
+        func_800ABF24(obj, pos, offset, fDistX);
+    }
+    return 0;
+}
+
+// us-800402c4: func_8003FD48
+// Moves an object to a position using 3 fixed-point coordinates
+extern "C" int func_8003FD48(VMThread* pThread, int handle) {
+    VMArg* ptr1 = vmArgPtrGet(pThread, 1);
+    int x = vmArgFixedGet(2, ptr1);
+    VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+    int y = vmArgFixedGet(3, ptr2);
+    VMArg* ptr3 = vmArgPtrGet(pThread, 3);
+    int z = vmArgFixedGet(4, ptr3);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    float fx = (float)(s32)x / 2048.0f;
+    float fy = (float)(s32)y / 2048.0f;
+    float fz = (float)(s32)z / 2048.0f;
+    float pos[3] = { fx, fy, fz };
+    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, pos);
+    return 0;
+}
+
+// us-80040458: func_8003FEDC
+// Rotation function with 3 fixed-point angles
+extern "C" int func_8003FEDC(VMThread* pThread, int handle) {
+    VMArg* ptr1 = vmArgPtrGet(pThread, 1);
+    int rotX = vmArgFixedGet(2, ptr1);
+    VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+    int rotY = vmArgFixedGet(3, ptr2);
+    VMArg* ptr3 = vmArgPtrGet(pThread, 3);
+    int rotZ = vmArgFixedGet(4, ptr3);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    float fx = (float)(s32)rotX / 2048.0f * 0.0000958738f;
+    float fy = (float)(s32)rotY / 2048.0f * 0.0000958738f;
+    float fz = (float)(s32)rotZ / 2048.0f * 0.0000958738f;
+    float rot[3] = { fx, fy, fz };
+    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, rot);
+    return 0;
+}
+
+// us-80040570: func_8003FFF4
+// Sets a position on an object using 3 fixed-point coords
+extern "C" int func_8003FFF4(VMThread* pThread, int handle) {
+    VMArg* ptr1 = vmArgPtrGet(pThread, 1);
+    int x = vmArgFixedGet(2, ptr1);
+    VMArg* ptr2 = vmArgPtrGet(pThread, 2);
+    int y = vmArgFixedGet(3, ptr2);
+    VMArg* ptr3 = vmArgPtrGet(pThread, 3);
+    int z = vmArgFixedGet(4, ptr3);
+    void* ctx = func_801862C0(pThread);
+    cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
+    float fx = (float)(s32)x / 2048.0f;
+    float fy = (float)(s32)y / 2048.0f;
+    float fz = (float)(s32)z / 2048.0f;
+    float pos[3] = { fx, fy, fz };
+    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, pos);
+    return 0;
+}
+
+// us-80040664: ocUnitRegist
+// Registers all OC unit plugin functions
+extern "C" void ocUnitRegist() {}
+
+void CObjectState_UnkVirtualFunc1__Q22cf12CObjectStateFv(void* self, unsigned long bits) {
     *(unsigned long*)((char*)self + 4) |= bits;
 }
 
-extern "C" void CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
+void CObjectParam_UnkVirtualFunc6__Q22cf12CObjectParamFv(void* self, u32 val) { *(u32*)((u8*)self + 0x34) = val; }
 
-extern "C" void func_8003DC7C() {}
-
-extern "C" void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv(void* self, unsigned long mask) {
+void CObjectState_UnkVirtualFunc3__Q22cf12CObjectStateFv(void* self, unsigned long mask) {
     *(unsigned long*)((char*)self + 4) &= ~mask;
 }
 
-extern "C" void func_8003DD44() {}
+void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { static_cast<cf::CfObjectModel*>(self)->field_BD = val; }
 
-extern "C" void func_8003DDAC() {}
+u32 CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
 
-extern "C" void func_8003DDF4() {}
-
-extern "C" void setAct() {}
-
-extern "C" void func_8003DFE4() {}
-
-extern "C" void lookAt() {}
-
-extern "C" void CfObjectModel_UnkVirtualFunc16__Q22cf13CfObjectModelFv(void* self, u8 val) { ((u8*)self)[0xBD] = val; }
-
-extern "C" void turn() {}
-
-extern "C" void func_8003E478() {}
-
-extern "C" void func_8003E4D0() {}
-
-extern "C" void func_8003E528() {}
-
-extern "C" u32 CObjectParam_UnkVirtualFunc5__Q22cf12CObjectParamFv(void* self) { return *(u32*)((u8*)self + 0x34); }
-
-extern "C" void func_8003E66C() {}
-
-extern "C" void isPC() {}
-
-extern "C" void isNPC() {}
-
-extern "C" void isENE() {}
-
-extern "C" void isPT() {}
-
-extern "C" void invin() {}
-
-extern "C" void func_8003E974() {}
-
-extern "C" void func_8003EB64() {}
-
-extern "C" void setColi() {}
-
-extern "C" void setEye() {}
-
-extern "C" void func_8003ECD8() {}
-
-extern "C" void func_8003ED50() {}
-
-extern "C" void func_8003EE04() {}
-
-extern "C" void func_8003EE74() {}
-
-extern "C" void func_8003EEE0() {}
-
-extern "C" void setRot() {}
-
-extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv(void* self, void* src) {
+void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv(void* self, void* src) {
     u32 a = *(u32*)((u8*)src + 0);
     u32 b = *(u32*)((u8*)src + 4);
     u32 c = *(u32*)((u8*)src + 8);
@@ -2503,9 +4111,7 @@ extern "C" void CfObject_UnkVirtualFunc27__Q22cf8CfObjectFv(void* self, void* sr
     *(u32*)((u8*)self + 0x50) = c;
 }
 
-extern "C" void gravity() {}
-
-extern "C" void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv(void* self, int flag) {
+void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv(void* self, int flag) {
     u32* field = (u32*)((char*)self + 0x68);
     if (flag) {
         *field |= 0x01000000;
@@ -2513,39 +4119,3 @@ extern "C" void CfObject_UnkVirtualFunc64__Q22cf8CfObjectFv(void* self, int flag
         *field &= ~0x01000000;
     }
 }
-
-extern "C" void func_8003F210() {}
-
-extern "C" void func_8003F398() {}
-
-extern "C" void func_8003F418() {}
-
-extern "C" void func_8003F498() {}
-
-extern "C" void func_8003F64C() {}
-
-extern "C" void func_8003F6CC() {}
-
-extern "C" void func_8003F74C() {}
-
-extern "C" void func_8003F7CC() {}
-
-extern "C" void func_8003F870() {}
-
-extern "C" void func_8003F97C() {}
-
-extern "C" void func_8003FA1C() {}
-
-extern "C" void func_8003FB18() {}
-
-extern "C" void func_8003FB98() {}
-
-extern "C" void func_8003FC18() {}
-
-extern "C" void func_8003FD48() {}
-
-extern "C" void func_8003FEDC() {}
-
-extern "C" void func_8003FFF4() {}
-
-extern "C" void ocUnitRegist() {}

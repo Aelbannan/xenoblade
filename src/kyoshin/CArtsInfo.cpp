@@ -37,6 +37,7 @@ extern "C" void __dt__17UnkClass_8045F564Fv(void*, int);
 extern "C" void __ct__CCur18(void*, void*);
 extern "C" void __dt__6CCur18Fv(void*, int);
 extern "C" void __dl__FPv(void*);
+extern "C" void func_80137038(void*, void*, int, int);
 extern "C" u32 func_80137444(nw4r::lyt::AnimTransform*, float);
 extern "C" u32 func_80137510(nw4r::lyt::AnimTransform*, float);
 extern "C" void func_80136B4C(void*, const char*, void*, u32);
@@ -291,7 +292,7 @@ void func_80235AE0(CArtsInfo* self) {
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans1, 1);
 
     // Set anim transform frame
-    self->mpAnimTrans4->SetFrame(lbl_eu_80668680);
+    *(float*)((u8*)self->mpAnimTrans4 + 0x10) = lbl_eu_80668680;
 
     callVirt_38_0(self->mpLayout1);
 
@@ -302,7 +303,7 @@ void func_80235AE0(CArtsInfo* self) {
     callVirt_2C_50(self->mpLayout1, self->mpAnimTrans3, 1);
 
     // Set anim transform frame
-    self->mpAnimTrans3->SetFrame(lbl_eu_80668680);
+    *(float*)((u8*)self->mpAnimTrans3 + 0x10) = lbl_eu_80668680;
 
     callVirt_38_0(self->mpLayout1);
 
@@ -311,7 +312,7 @@ void func_80235AE0(CArtsInfo* self) {
     callVirt_2C_50(self->mpLayout2, self->mpAnimTrans5, 1);
 
     // Set anim transform frame
-    self->mpAnimTrans5->SetFrame(lbl_eu_80668680);
+    *(float*)((u8*)self->mpAnimTrans5 + 0x10) = lbl_eu_80668680;
 
     callVirt_38_0(self->mpLayout2);
 
@@ -346,7 +347,7 @@ void func_80235D24(CArtsInfo* self) {
     callVirt_2C_50(self->mpLayout2, self->mpAnimTrans5, 1);
 
     // Set anim transform frame
-    self->mpAnimTrans5->SetFrame(lbl_eu_80668680);
+    *(float*)((u8*)self->mpAnimTrans5 + 0x10) = lbl_eu_80668680;
 
     callVirt_38_0(self->mpLayout2);
 
@@ -369,7 +370,7 @@ void func_80235DD8(CArtsInfo* self) {
     callVirt_2C_50(self->mpLayout2, self->mpAnimTrans6, 1);
 
     // Set anim transform frame
-    self->mpAnimTrans6->SetFrame(lbl_eu_80668680);
+    *(float*)((u8*)self->mpAnimTrans6 + 0x10) = lbl_eu_80668680;
 
     callVirt_38_0(self->mpLayout2);
 }
@@ -765,8 +766,7 @@ void CArtsInfo::initialize() {
 
 void CArtsInfo::OnFileEvent() {}
 
-// func_80137038 declaration (referenced in draw function)
-extern "C" void func_80137038(nw4r::lyt::Layout*, void*, int, int);
+
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 void sinit_8023BC8C(){}

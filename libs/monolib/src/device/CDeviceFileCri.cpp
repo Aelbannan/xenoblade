@@ -1,75 +1,87 @@
 #include "monolib/device.hpp"
 #include "monolib/core.hpp"
-#include <revolution/ARC.h>
 #include <revolution/DVD.h>
+#include <revolution/os/OSCache.h>
 #include <string.h>
 
 extern "C" {
-    int func_804DDCD4(const char* pPath, const char* pFilename);
-    void func_eu_804520D0(const char* pPath);
-    bool func_eu_804521C4();
+    int func_eu_804521C4();
+    int func_eu_804520D0(const char*);
+    int func_804DDCD4(const char*, const char*);
     extern wchar_t* lbl_eu_806636C8;
     extern wchar_t* lbl_eu_806636CC;
     extern wchar_t* lbl_eu_806636D0;
+    extern u32 lbl_eu_8056C354[];
+    extern u8 lbl_eu_806576C8[];
 }
 
-CDeviceFileCri* CDeviceFileCri::sInstance = nullptr;
-
-static bool hasActiveCDeviceFileJobReadDvd() {
-    CDeviceFileCri* inst = CDeviceFileCri::getInstance();
-    if (inst == nullptr) return nullptr;
-    reslist<CWorkThread*>& children = inst->mChildren;
-    CWorkThread* node = children.front();
-    while (node != children.end()) {
-        CWorkThread* child = node->wkGetChild();
-        if (child != nullptr && child->mType == 68) {
-            return child;
-        }
-        node = node->wkGetChild();
-    }
-    return nullptr;
+extern "C" {
+    void func_804591BC__10CExceptionFP10IException(CException* self, IException* pException);
+    void func_804591DC__10CExceptionFP10IException(CException* self);
+    void func_80459118__10CExceptionFv(const char* msg);
+    void func_8045925C__10CExceptionFv(CException* self);
+    CException* func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(CWorkThread* thread, const wchar_t* msg, u32 val);
+    void removeFileJob__11CDeviceFileFP14CDeviceFileJob(CDeviceFileJob* job);
 }
 
-void CDeviceFileCri::closeADXFAndCleanup() {
-    CDeviceFileCri* inst = getInstance();
-    CWorkThread* node = inst->mChildren.front();
-    while (node != inst->mChildren.end()) {
-        CWorkThread* child = node->wkGetChild();
-        if (child != nullptr && child->mType != 68) {
-            child = nullptr;
-        }
-        if (child != nullptr) {
-            break;
-        }
-        node = node->wkGetChild();
-    }
-
-    if (inst->mADXFHandle != nullptr) {
-        ADXF_Stop(inst->mADXFHandle);
-        ADXF_GetNumReqSct(inst->mADXFHandle);
-        ADXF_Close(inst->mADXFHandle);
-        inst->mADXFHandle = nullptr;
-    }
-
-    if (child != nullptr) {
-        CDeviceFile::removeFileJob(static_cast<CDeviceFileJob*>(child));
-    }
-    inst->mState = 0;
+extern "C" {
+    void ADXF_Stop(void* adxf);
+    int ADXF_GetNumReqSct(void* adxf);
+    void ADXF_Close(void* adxf);
+    int ADXF_IsOpened(void* adxf);
+    int ADXF_GetFsizeByte(void* adxf);
+    int ADXF_GetFsizeSct(void* adxf);
+    void ADXF_ReadNw(void* adxf, int sectors, void* buffer);
+    void* ADXF_OpenNw(const char* filename, int arg);
 }
 
-CDeviceFileJobReadDvd* CDeviceFileCri::getFirstCDeviceFileJobReadDvd() {
-    CWorkThread* child = mChildren.front()->wkGetChild();
-    if (child == nullptr) return nullptr;
-    if (child->mType != 68) return nullptr;
-    return static_cast<CDeviceFileJobReadDvd*>(child);
+extern "C" bool isOff__11CWorkSystemFv();
+extern "C" void* getInstance__11CWorkSystemFv();
+extern "C" void* getInstance__4CLibFv();
+extern "C" void func_80451CBC__11CFileHandleFi(CFileHandle* handle, int val);
+extern "C" void destroy__11CFileHandleFv(CFileHandle* handle);
+extern "C" void call__11CFileHandleF3CBM(CFileHandle* handle, int cbm);
+extern "C" void callCBM3__21CDeviceFileJobReadDvdFv(CDeviceFileJobReadDvd* job);
+extern "C" u32 getTargetFramerate__9CDeviceVIFv();
+
+CDeviceFileCri* CDeviceFileCri::getInstance() { return sInstance; }
+
+void CDeviceFileCri::func_80450B14(const wchar_t* pData) { lbl_eu_806636C8 = (wchar_t*)pData; }
+void CDeviceFileCri::func_80450B1C(const wchar_t* pData) { lbl_eu_806636CC = (wchar_t*)pData; }
+void CDeviceFileCri::func_80450B24(const wchar_t* pData) { lbl_eu_806636D0 = (wchar_t*)pData; }
+
+extern "C" void sinit_80450B2C() {
+    lbl_eu_806576C8[0] = 0;
+    *(u32*)(lbl_eu_806576C8 + 0x80) = 0;
+}
+
+void CDeviceFileCri::func_80450AB8(unsigned long) {
+    if (sInstance != nullptr && sInstance->mADXFHandle != nullptr) {
+        ADXF_Stop(sInstance->mADXFHandle);
+        ADXF_GetNumReqSct(sInstance->mADXFHandle);
+        ADXF_Close(sInstance->mADXFHandle);
+        sInstance->mADXFHandle = nullptr;
+    }
+}
+
+extern "C" void func_80450AB8__14CDeviceFileCriFv(CDeviceFileCri* self);
+
+extern "C" void func_80450B44(void* self, u32 arg) {
+    func_80450AB8__14CDeviceFileCriFv((CDeviceFileCri*)((char*)self - 0x1C4));
+}
+
+extern "C" void func_80450B4C(void* self) {
+    CDeviceFileCri* obj = (CDeviceFileCri*)((char*)self - 0x1C4);
+    delete obj;
 }
 
 CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capacity)
     : CWorkThread(pName, pParent, capacity) {
-    *(u32*)this = (u32)&lbl_eu_8056C354;
-    *(u32*)((char*)this + 0x1C4) = (u32)&lbl_eu_8056C354 + 0xA0;
-    unk1D0 = 0;
-    mActiveWorkID = -1;
+    *(u32**)this = (u32*)lbl_eu_8056C354;
+    *(u32**)((char*)this + 0x1C4) = (u32*)((char*)lbl_eu_8056C354 + 0xA0);
+    
+    mState = 0;
+    mActiveWorkID = (WORK_ID)-1;
     unk1D0 = 0;
     mADXFHandle = nullptr;
     mBuffer = nullptr;
@@ -77,257 +89,291 @@ CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capa
     mRetryCounter = 0;
     mExceptionPending = 0;
     mTimeoutCounter = 0;
+    
     sInstance = this;
-    mBuffer = CDevice::getDevSys2Handle()->allocate_head(0x800, 0x20);
-    IException* exception = (this != nullptr) ?
-        (IException*)((char*)this + 0x1C4) : nullptr;
-    CException::getInstance()->func_804591BC(exception);
+    
+    mtl::ALLOC_HANDLE handle = CDevice::getDevSys2Handle();
+    mBuffer = mtl::MemManager::allocate_head(handle, 0x800, 0x20);
+    
+    IException* pException = (IException*)((char*)this + 0x1C4);
+    func_804591BC__10CExceptionFP10IException((CException*)this, pException);
+}
+
+CDeviceFileCri::~CDeviceFileCri() {
+    if (this == nullptr) return;
+    
+    *(u32**)this = (u32*)lbl_eu_8056C354;
+    *(u32**)((char*)this + 0x1C4) = (u32*)((char*)lbl_eu_8056C354 + 0xA0);
+    
+    func_804591DC__10CExceptionFP10IException((CException*)this);
+    
+    sInstance = nullptr;
+    
+    if (mBuffer != nullptr) {
+        mtl::MemManager::deallocate(mBuffer);
+        mBuffer = nullptr;
+    }
+    
+    CWorkThread::~CWorkThread();
+}
+
+CDeviceFileJobReadDvd* CDeviceFileCri::getFirstCDeviceFileJobReadDvd() {
+    if (mChildren.empty()) return nullptr;
+    CWorkThread* child = mChildren.front();
+    if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) return nullptr;
+    return (CDeviceFileJobReadDvd*)child;
+}
+
+void CDeviceFileCri::closeADXFAndCleanup() {
+    CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
+    if (mADXFHandle != nullptr) {
+        ADXF_Stop(mADXFHandle);
+        ADXF_GetNumReqSct(mADXFHandle);
+        ADXF_Close(mADXFHandle);
+        mADXFHandle = nullptr;
+    }
+    removeFileJob__11CDeviceFileFP14CDeviceFileJob(job);
+    mState = 0;
+}
+
+bool CDeviceFileCri::func_8044F744() {
+    if (isOff__11CWorkSystemFv()) return true;
+    if (!func_eu_804521C4()) return true;
+    
+    int status = DVDGetDriveStatus();
+    
+    if (status == -1) {
+        func_80459118__10CExceptionFv("DVD fatal error");
+        return false;
+    }
+    
+    if (status == 6 || status == 11 || status == 4) {
+        bool hasWork = false;
+        if (mFlags & THREAD_FLAG_PAUSE) {
+            hasWork = true;
+        } else if (!mChildren.empty()) {
+            CWorkThread* child = mChildren.front();
+            if (child != nullptr && child->mType == THREAD_CDEVICEFILEJOBREADDVD) {
+                hasWork = true;
+            }
+        }
+        
+        if (!hasWork) {
+            const wchar_t* msg = (status == 11) ? lbl_eu_806636CC : lbl_eu_806636C8;
+            func_80457CA4__10CExceptionFP11CWorkThreadPCwUl(this, msg, 4);
+        }
+        return false;
+    }
+    
+    return true;
 }
 
 void CDeviceFileCri::func_8044F964() {
-    CDeviceFileCri* inst = getInstance();
-    if (inst != nullptr && inst->mADXFHandle != nullptr) {
-        ADXF_Stop(inst->mADXFHandle);
-        ADXF_Close(inst->mADXFHandle);
-        inst->mADXFHandle = nullptr;
-    }
+    if (sInstance == nullptr) return;
+    if (sInstance->mADXFHandle == nullptr) return;
+    
+    ADXF_Stop(sInstance->mADXFHandle);
+    ADXF_Close(sInstance->mADXFHandle);
+    sInstance->mADXFHandle = nullptr;
 }
 
 int CDeviceFileCri::getFileSize(const char* pPath, int arg1) {
-    int pathLen = strlen(pPath);
-    char pathBuf[256];
-    char strippedPath[256];
+    char pathBuf[0x80];
+    char nameBuf[0x80];
+    
     strcpy(pathBuf, pPath);
-
     if (arg1 != 0) {
         func_eu_804520D0(pathBuf);
     }
-
-    int strippedLen;
+    
     if (pPath[0] == '/') {
-        strippedLen = strlen(pPath + 1);
-        strcpy(strippedPath, pPath + 1);
+        strcpy(nameBuf, pPath + 1);
     } else {
-        strippedLen = strlen(pPath);
-        strcpy(strippedPath, pPath);
+        strcpy(nameBuf, pPath);
     }
-
-    const wchar_t* baseDir = lbl_eu_806636C8 + 3;
-    int baseLen = strlen((const char*)baseDir);
-
-    int pos = 0;
-    const char* search = strippedPath;
-    while (pos < strippedLen) {
-        if (strncmp(search, (const char*)baseDir, baseLen) == 0) {
+    
+    int nameLen = strlen(nameBuf);
+    const char* dotStr = ".adx";
+    int dotStrLen = strlen(dotStr);
+    
+    int foundIdx = -1;
+    for (int i = 0; i < nameLen; i++) {
+        if (strncmp(&nameBuf[i], dotStr, dotStrLen) == 0) {
+            foundIdx = i;
             break;
         }
-        search++;
-        pos++;
     }
-
-    if (pos != -1 && pos < strippedLen) {
-        strippedPath[pos] = '\0';
-        strippedLen = pos;
+    
+    if (foundIdx != -1 && foundIdx < nameLen) {
+        nameBuf[foundIdx] = '\0';
     }
-
-    int result = func_804DDCD4(strippedPath, pPath);
-    if (result > -1) {
-        return result;
-    }
-
+    
+    int ret = func_804DDCD4(nameBuf, pPath);
+    if (ret > 0) return ret;
+    
     int entrynum = DVDConvertPathToEntrynum(pathBuf);
-    if (entrynum < 0) {
-        return result;
-    }
-
+    if (entrynum < 0) return ret;
+    
     DVDFileInfo fileInfo;
-    if (!DVDFastOpen(entrynum, &fileInfo)) {
-        return result;
+    if (!DVDFastOpen(entrynum, &fileInfo)) return ret;
+    
+    int size = fileInfo.size;
+    int rem = size & 0x7FF;
+    if (rem != 0) {
+        size = (size + 0x800) - rem;
     }
-
-    u32 fileSize = fileInfo.length;
-    if (fileSize & 0x7FF) {
-        fileSize = (fileSize + 0x800) & ~0x7FF;
-    }
-
+    
     DVDClose(&fileInfo);
-    return fileSize;
+    return size;
 }
 
 void CDeviceFileCri::func_8044FB08(const char* pPath) {
-    CDeviceFileCri* inst = getInstance();
-    CWorkThread* child = inst->mChildren.front()->wkGetChild();
-    while (child != inst->mChildren.end()) {
-        CWorkThread* job = child->wkGetChild();
-        if (job != nullptr) {
-            if (job->mType != 68) {
-                job = nullptr;
-            }
-        }
-        if (job != nullptr) {
-            CDeviceFileJobReadDvd* dvdJob = static_cast<CDeviceFileJobReadDvd*>(job);
-            dvdJob->mHandle->call(CBM_3);
-        }
-        child = child->wkGetChild();
+    CDeviceFileJobReadDvd* job = sInstance->getFirstCDeviceFileJobReadDvd();
+    if (job != nullptr) {
+        job->cancel(pPath);
     }
 }
 
 bool CDeviceFileCri::cancel(CFileHandle* pHandle) {
-    CDeviceFileCri* inst = getInstance();
-    CWorkThread* child = inst->mChildren.front()->wkGetChild();
-    while (child != inst->mChildren.end()) {
-        CWorkThread* job = child->wkGetChild();
-        if (job != nullptr) {
-            if (job->mType != 68) {
-                job = nullptr;
-            }
-        }
-        if (job != nullptr) {
-            CDeviceFileJobReadDvd* dvdJob = static_cast<CDeviceFileJobReadDvd*>(job);
-            if (dvdJob->mHandle->call(CBM_3)) {
-                return true;
-            }
-        }
-        child = child->wkGetChild();
+    CDeviceFileJobReadDvd* job = sInstance->getFirstCDeviceFileJobReadDvd();
+    if (job != nullptr) {
+        return job->cancel(pHandle);
     }
     return false;
 }
 
 void CDeviceFileCri::func_8044FC38() {
-    CDeviceFileCri* inst = getInstance();
-    int count = 0;
-    CWorkThread* child = inst->mChildren.front();
-    while (child != inst->mChildren.end()) {
-        count++;
-        child = child->wkGetChild();
-    }
-
+    CDeviceFileCri* inst = sInstance;
+    u32 count = inst->mChildren.size();
     if (count == 0) return;
-
-    CWorkThread* firstChild = inst->mChildren.front()->wkGetChild();
-    CDeviceFileJobReadDvd* dvdJob = nullptr;
-    if (firstChild != nullptr) {
-        if (firstChild->mType == 68) {
-            dvdJob = static_cast<CDeviceFileJobReadDvd*>(firstChild);
-        }
-    }
-
+    
+    CDeviceFileJobReadDvd* job = inst->getFirstCDeviceFileJobReadDvd();
+    
     if (inst->mADXFHandle != nullptr) {
         ADXF_Stop(inst->mADXFHandle);
         ADXF_GetNumReqSct(inst->mADXFHandle);
         ADXF_Close(inst->mADXFHandle);
         inst->mADXFHandle = nullptr;
     }
-
-    if (dvdJob != nullptr) {
-        CDeviceFile::removeFileJob(dvdJob);
-    }
+    
+    removeFileJob__11CDeviceFileFP14CDeviceFileJob(job);
     inst->mState = 0;
 }
 
 bool CDeviceFileCri::func_8044FCFC() {
     CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
     if (job == nullptr) return false;
-
+    
     CFileHandle* handle = job->mHandle;
-    bool isOpen = ADXF_IsOpened(mADXFHandle);
-    if (!isOpen) {
-        if (ADXF_GetNumReqSct(mADXFHandle) == 4) {
-            handle->call(CBM_3);
+    
+    if (!ADXF_IsOpened(mADXFHandle)) {
+        int numReq = ADXF_GetNumReqSct(mADXFHandle);
+        if (numReq == 4) {
+            call__11CFileHandleF3CBM(handle, 3);
             closeADXFAndCleanup();
-            return false;
         }
         return false;
     }
-
-    u32 fileSize = ADXF_GetFsizeByte(mADXFHandle);
-    u32 alignedSize = fileSize;
-    if (fileSize & 0x7FF) {
-        alignedSize = (fileSize + 0x800) & ~(0x7FF);
+    
+    int fileSize = ADXF_GetFsizeByte(mADXFHandle);
+    int alignedSize = fileSize;
+    int rem = fileSize & 0x7FF;
+    if (rem != 0) {
+        alignedSize = (fileSize + 0x800) - rem;
     }
-    u32 remaining = alignedSize;
-
-    ADXF_GetFsizeSct(mADXFHandle);
-    if (remaining <= 0) {
-        handle->call(CBM_3);
+    
+    int readSize = alignedSize;
+    
+    if (alignedSize <= 0) {
+        call__11CFileHandleF3CBM(handle, 3);
         closeADXFAndCleanup();
         return false;
     }
-
-    u32 readSize = handle->mLength;
-    if (readSize != 0) {
-        remaining = readSize;
+    
+    if (handle->unk10 != 0) {
+        readSize = handle->unk10;
     }
-
-    if (handle->unk10 + remaining > alignedSize) {
-        remaining = remaining - (handle->unk10 + remaining - alignedSize);
+    
+    u32 endOff = readSize + handle->unk10;
+    if (endOff > (u32)alignedSize) {
+        readSize -= (endOff - alignedSize);
     }
-
-    handle->destroy(remaining, 0x20, 0x800);
-    if (handle->unk58 & 0x8) {
-        handle->call(CBM_3);
+    
+    destroy__11CFileHandleFv(handle);
+    
+    if (handle->unk14 & 0x10) {
+        call__11CFileHandleF3CBM(handle, 3);
         closeADXFAndCleanup();
         return false;
     }
-
+    
     mTimeoutCounter = 0;
     if (handle->unk10 != 0) {
         mState = 2;
         return true;
+    } else {
+        mState = 4;
+        return false;
     }
-    mState = 4;
-    return false;
 }
 
 bool CDeviceFileCri::func_80450058() {
     CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
-    int reqSct = ADXF_GetNumReqSct(mADXFHandle);
-    if (reqSct - 1 <= 1) return false;
-
-    if (reqSct == 3) {
-        CFileHandle* handle = job->mHandle;
-        u32 pos = handle->unk10;
-        u32 len = handle->mLength;
-        u32 remaining = len - (pos & 0x7FF);
-        if (remaining > handle->mLength) {
-            remaining = handle->mLength;
-        }
-
-        char* dst = (char*)mBuffer + (pos & 0x7FF);
-        memcpy(dst, (char*)handle->mData + handle->unk10, remaining);
-        DCFlushRangeNoSync((char*)handle->mData + handle->unk10, remaining);
-        handle->func_80451CBC(remaining);
-
-        if (handle->unk10 != 0 && handle->unk10 == handle->mLength) {
+    CFileHandle* handle = job->mHandle;
+    
+    int numReq = ADXF_GetNumReqSct(mADXFHandle);
+    if ((u32)(numReq - 1) <= 1) return false;
+    
+    if (numReq == 3) {
+        u32 offset = handle->unk10 & 0x7FF;
+        u32 copySize = 0x800 - offset;
+        if (copySize > handle->mLength) copySize = handle->mLength;
+        
+        memcpy((char*)mBuffer + offset, (char*)handle->mData + handle->unk10, copySize);
+        DCFlushRangeNoSync((char*)handle->mData + handle->unk10, copySize);
+        
+        func_80451CBC__11CFileHandleFi(handle, copySize);
+        
+        bool complete = (handle->unk10 != 0 && handle->unk10 == handle->mLength);
+        
+        if (complete) {
             ADXF_Stop(mADXFHandle);
             ADXF_Close(mADXFHandle);
             mADXFHandle = nullptr;
             mActiveWorkID = job->mWorkID;
-            mState = 8;
             mIdleCounter = 0;
+            mState = 8;
             return true;
         }
+        
+        if (handle->unk10 == 0) {
+            mState = 4;
+            return true;
+        }
+        
         return false;
     }
-
-    CFileHandle* handle = job->mHandle;
-    handle->call(CBM_3);
+    
+    call__11CFileHandleF3CBM(handle, 3);
     closeADXFAndCleanup();
     return false;
 }
 
 bool CDeviceFileCri::func_80450260() {
     CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
-    int reqSct = ADXF_GetNumReqSct(mADXFHandle);
-    if (reqSct - 1 <= 1) return false;
-
-    if (reqSct == 3) {
-        CFileHandle* handle = job->mHandle;
+    CFileHandle* handle = job->mHandle;
+    
+    int numReq = ADXF_GetNumReqSct(mADXFHandle);
+    if ((u32)(numReq - 1) <= 1) return false;
+    
+    if (numReq == 3) {
         u32 remaining = handle->mLength - handle->unk10;
-        u32 sectors = remaining >> 11;
-        handle->func_80451CBC(sectors << 11);
-
-        if (handle->unk10 != 0 && handle->unk10 == handle->mLength) {
+        u32 aligned = remaining & ~0x7FFu;
+        
+        func_80451CBC__11CFileHandleFi(handle, aligned);
+        
+        bool complete = (handle->unk10 != 0 && handle->unk10 == handle->mLength);
+        if (complete) {
             ADXF_Stop(mADXFHandle);
             ADXF_Close(mADXFHandle);
             mADXFHandle = nullptr;
@@ -338,27 +384,28 @@ bool CDeviceFileCri::func_80450260() {
         }
         return false;
     }
-
-    CFileHandle* handle = job->mHandle;
-    handle->unk10 = 0;
-    handle->call(CBM_3);
+    
+    call__11CFileHandleF3CBM(handle, 3);
     closeADXFAndCleanup();
     return false;
 }
 
 bool CDeviceFileCri::func_8045042C() {
     CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
-    int reqSct = ADXF_GetNumReqSct(mADXFHandle);
-    if (reqSct - 1 <= 1) return false;
-
-    if (reqSct == 3) {
-        CFileHandle* handle = job->mHandle;
+    CFileHandle* handle = job->mHandle;
+    
+    int numReq = ADXF_GetNumReqSct(mADXFHandle);
+    if ((u32)(numReq - 1) <= 1) return false;
+    
+    if (numReq == 3) {
         int remaining = handle->mLength - handle->unk10;
         if (remaining > 0) {
             memcpy(mBuffer, (char*)handle->mData + handle->unk10, remaining);
             DCFlushRange((char*)handle->mData + handle->unk10, remaining);
         }
-        handle->func_80451CBC(remaining);
+        
+        func_80451CBC__11CFileHandleFi(handle, remaining);
+        
         ADXF_Stop(mADXFHandle);
         ADXF_Close(mADXFHandle);
         mADXFHandle = nullptr;
@@ -367,189 +414,173 @@ bool CDeviceFileCri::func_8045042C() {
         mIdleCounter = 0;
         return true;
     }
-
-    CFileHandle* handle = job->mHandle;
-    handle->call(CBM_3);
+    
+    call__11CFileHandleF3CBM(handle, 3);
     closeADXFAndCleanup();
     return false;
 }
 
 void CDeviceFileCri::wkUpdate() {
     if (!func_8044F744()) return;
-
-    switch (mState) {
+    
+    u32 state = mState;
+    if (state > 8) return;
+    
+    switch (state) {
     case 0: {
-        if (mChildren.front() == mChildren.end()) break;
-        CWorkThread* child = mChildren.front()->wkGetChild();
-        if (child == nullptr || child->mType != 68) break;
-
-        CDeviceFileJobReadDvd* dvdJob = static_cast<CDeviceFileJobReadDvd*>(child);
-        CFileHandle* handle = dvdJob->mHandle;
-
-        if (handle->unk1A4 != 0) {
-            handle->unk210 = 1;
-            mADXFHandle = ADXF_OpenNw(handle->mName.c_str(), 0);
+        if (mChildren.empty()) break;
+        CWorkThread* child = mChildren.front();
+        if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) break;
+        
+        CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
+        
+        bool ready = false;
+        if (job->mFlags & THREAD_FLAG_PAUSE) {
+            ready = true;
         } else {
-            handle->unk210 = 1;
-            mADXFHandle = ADXF_OpenNw((const char*)handle + 0x184, 0);
+            u32 jState = job->mState;
+            if (jState == 2 || jState == 3) {
+                ready = true;
+            }
         }
+        
+        if (!ready) break;
+        if (job->mFlags & THREAD_FLAG_EXCEPTION) break;
+        
+        CFileHandle* handle = job->mHandle;
+        handle->unk10 = 1;
+        
+        const char* filename;
+        if (handle->unk14 == 0) {
+            filename = handle->mName.c_str() + 0x5C;
+        } else {
+            filename = handle->mName.c_str() + 0x184;
+        }
+        
+        mADXFHandle = ADXF_OpenNw(filename, 0);
         mState = 1;
         break;
     }
-    case 1:
-        if (func_8044FCFC()) break;
-        break;
-    case 2:
-        if (mTimeoutCounter-- <= 0) {
-            CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
-            if (job != nullptr) {
-                CFileHandle* handle = job->mHandle;
-                u32 sectors = handle->unk10 >> 11;
-                if (sectors != 0) {
-                    ADXF_Seek(mADXFHandle, sectors, 0);
-                }
-                if (handle->unk10 & 0x7FF) {
-                    ADXF_ReadNw(mADXFHandle, 1, mBuffer);
-                    mState = 3;
-                } else {
-                    mState = 4;
-                    mTimeoutCounter = 0;
-                }
-            }
-        }
-        break;
-    case 3:
-        if (func_80450058()) break;
-        break;
-    case 4: {
+    case 1: {
+        if (!func_8044FCFC()) break;
+        
+        mTimeoutCounter--;
+        if (mTimeoutCounter > 0) break;
+        
         CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
         CFileHandle* handle = job->mHandle;
-        int remaining = handle->mLength - handle->unk10;
-        if (remaining > 0) {
-            int partialBytes = handle->unk10 & 0x7FF;
-            int readSize = 0x800 - partialBytes;
-            if (readSize > handle->mLength) readSize = handle->mLength;
-            memcpy((char*)mBuffer + partialBytes, (char*)handle->mData + handle->unk10, readSize);
-            DCFlushRangeNoSync((char*)handle->mData + handle->unk10, readSize);
-            handle->func_80451CBC(readSize);
+        u32 remaining = handle->mLength - handle->unk10;
+        
+        if (remaining > 0x800) {
+            ADXF_ReadNw(mADXFHandle, remaining >> 11, (char*)handle->mData + handle->unk10);
+            mState = 5;
+        } else {
+            mState = 7;
         }
-        if (handle->unk10 != 0 && handle->unk10 == handle->mLength) {
-            ADXF_Stop(mADXFHandle);
-            ADXF_Close(mADXFHandle);
-            mADXFHandle = nullptr;
-            mActiveWorkID = job->mWorkID;
-            mIdleCounter = 0;
-            mState = 8;
-            return;
+        break;
+    }
+    case 2: {
+        if (!func_80450058()) break;
+        
+        mTimeoutCounter--;
+        if (mTimeoutCounter > 0) break;
+        
+        CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
+        CFileHandle* handle = job->mHandle;
+        u32 remaining = handle->mLength - handle->unk10;
+        
+        if (remaining > 0x800) {
+            ADXF_ReadNw(mADXFHandle, remaining >> 11, (char*)handle->mData + handle->unk10);
+            mState = 5;
+        } else {
+            mState = 7;
         }
-        mState = 5;
-        return;
+        break;
+    }
+    case 3: {
+        func_80450058();
+        break;
+    }
+    case 4: {
+        func_8045042C();
+        break;
     }
     case 5: {
-        CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
-        CFileHandle* handle = job->mHandle;
-        int remaining = handle->mLength - handle->unk10;
-        int sectors = remaining >> 11;
-        handle->func_80451CBC(sectors << 11);
-        if (handle->unk10 == handle->mLength) {
-            ADXF_Stop(mADXFHandle);
-            ADXF_Close(mADXFHandle);
-            mADXFHandle = nullptr;
-            mActiveWorkID = job->mWorkID;
-            mState = 8;
-            mIdleCounter = 0;
-            return;
-        }
-        int bulkSectors = (handle->mLength - handle->unk10) >> 11;
-        ADXF_ReadNw(mADXFHandle, bulkSectors, (char*)handle->mData + handle->unk10);
-        mState = 6;
-        return;
-    }
-    case 6:
-        if (func_80450260()) break;
+        func_80450260();
         break;
-    case 7: {
-        CDeviceFileJobReadDvd* job = getFirstCDeviceFileJobReadDvd();
+    }
+    case 6: {
+        if (mChildren.empty()) break;
+        CWorkThread* child = mChildren.front();
+        if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) break;
+        
+        CDeviceFileJobReadDvd* job = (CDeviceFileJobReadDvd*)child;
         CFileHandle* handle = job->mHandle;
-        int remaining = handle->mLength - handle->unk10;
+        
+        u32 remaining = handle->mLength - handle->unk10;
         if (remaining != 0) {
             ADXF_ReadNw(mADXFHandle, 1, mBuffer);
         }
         mState = 6;
         break;
     }
+    case 7: {
+        func_8045042C();
+        break;
+    }
     case 8: {
-        if (mChildren.front() == mChildren.end()) {
+        if (mChildren.empty()) {
             mState = 0;
             break;
         }
-        CWorkThread* child = mChildren.front()->wkGetChild();
-        if (child == nullptr || child->mType != 68) {
+        
+        CWorkThread* child = mChildren.front();
+        if (child == nullptr || child->mType != THREAD_CDEVICEFILEJOBREADDVD) {
             mState = 0;
             break;
         }
-        CDeviceFileJobReadDvd* dvdJob = static_cast<CDeviceFileJobReadDvd*>(child);
-        if (dvdJob->mWorkID == mActiveWorkID && !dvdJob->isException()) {
+        
+        if (mActiveWorkID != child->mWorkID) {
+            mState = 0;
+            break;
+        }
+        
+        if (!(child->mFlags & THREAD_FLAG_EXCEPTION)) {
             mIdleCounter++;
             if (mIdleCounter >= 30) {
-                CDeviceFileJobReadDvd* job = static_cast<CDeviceFileJobReadDvd*>(
-                    mChildren.front()->wkGetChild());
-                if (job != nullptr && job->mType == 68) {
-                    job->callCBM3();
-                }
+                callCBM3__21CDeviceFileJobReadDvdFv((CDeviceFileJobReadDvd*)child);
                 mIdleCounter = 0;
             }
+            break;
         }
+        
         mState = 0;
         break;
     }
     }
 }
 
-bool CDeviceFileCri::func_8044F744() {
-    if (CWorkSystem::isOff()) return true;
-    if (!func_eu_804521C4()) return true;
-
-    int status = DVDGetDriveStatus();
-    if (status == -1) {
-        CException::getInstance()->func_80459118();
-        return false;
-    }
-
-    if (status == 4 || status == 11) {
-        if (!hasActiveCDeviceFileJobReadDvd()) {
-            CException::func_80457CA4(this, lbl_eu_806636C8, 4);
-        }
-        return false;
-    }
-
-    if (status == 6) {
-        if (!(mFlags & THREAD_FLAG_EXCEPTION)) {
-            if (!hasActiveCDeviceFileJobReadDvd()) {
-                CException::func_80457CA4(this, lbl_eu_806636C8, 4);
-            }
-        }
-        return false;
-    }
-
-    return true;
-}
-
-void CDeviceFileCri::wkStandbyLogin() {
-    CWorkThread::wkStandbyLogin();
+bool CDeviceFileCri::wkStandbyLogin() {
+    return CWorkThread::wkStandbyLogin();
 }
 
 bool CDeviceFileCri::wkStandbyLogout() {
-    if (mChildren.front() == mChildren.end()) {
-        if (CWorkSystem::getInstance() == nullptr && CLib::getInstance() == nullptr) {
-            return CWorkThread::wkStandbyLogout();
+    if (mChildren.empty()) {
+        CWorkSystem* ws = (CWorkSystem*)getInstance__11CWorkSystemFv();
+        if (ws == nullptr) {
+            void* clib = getInstance__4CLibFv();
+            if (clib == nullptr) {
+                return CWorkThread::wkStandbyLogout();
+            }
         }
     }
     return false;
 }
 
 bool CDeviceFileCri::wkStandbyExceptionRetry(u32 wid) {
-    if (!func_8044F744()) {
+    bool result = func_8044F744();
+    
+    if (!result) {
         if (mExceptionPending) {
             mExceptionPending = false;
             return true;
@@ -557,57 +588,18 @@ bool CDeviceFileCri::wkStandbyExceptionRetry(u32 wid) {
         mRetryCounter = 0;
         return false;
     }
-
+    
     mExceptionPending = true;
-    u32 framerate = CDeviceVI::getTargetFramerate();
+    
+    u32 framerate = getTargetFramerate__9CDeviceVIFv();
+    u32 maxRetries = framerate * 6;
+    
     mRetryCounter++;
-    if (mRetryCounter < framerate * 6) {
-        CException::getInstance()->func_8045925C();
+    if (mRetryCounter < maxRetries) {
+        func_8045925C__10CExceptionFv((CException*)this);
         return false;
     }
+    
     mExceptionPending = false;
     return true;
-}
-
-void CDeviceFileCri::func_80450AB8() {
-    CDeviceFileCri* inst = getInstance();
-    if (inst != nullptr && inst->mADXFHandle != nullptr) {
-        ADXF_Stop(inst->mADXFHandle);
-        ADXF_GetNumReqSct(inst->mADXFHandle);
-        ADXF_Close(inst->mADXFHandle);
-        inst->mADXFHandle = nullptr;
-    }
-}
-
-void CDeviceFileCri::func_80450B14(const wchar_t* pData) {
-    lbl_eu_806636C8 = (wchar_t*)pData;
-}
-
-void CDeviceFileCri::func_80450B1C(const wchar_t* pData) {
-    lbl_eu_806636CC = (wchar_t*)pData;
-}
-
-void CDeviceFileCri::func_80450B24(const wchar_t* pData) {
-    lbl_eu_806636D0 = (wchar_t*)pData;
-}
-
-void CDeviceFileCri::getInstance() {}
-void CDeviceFileCri::UnkStruct_8044F65C_UnkVirtualFunc1() {}
-void CDeviceFileCri::UnkStruct_8044F65C_UnkVirtualFunc2() {}
-void CDeviceFileCri::UnkStruct_8044F65C_UnkVirtualFunc3() {}
-
-static void sinit_80450B2C() {
-    // TODO: static initializer
-}
-
-extern "C" {
-void func_80450B44(void* this_ptr, u32 arg) {
-    CDeviceFileCri* obj = (CDeviceFileCri*)((char*)this_ptr - 0x1C4);
-    obj->func_80450AB8();
-}
-
-void func_80450B4C(void* this_ptr) {
-    CDeviceFileCri* obj = (CDeviceFileCri*)((char*)this_ptr - 0x1C4);
-    obj->~CDeviceFileCri();
-}
 }

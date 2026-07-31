@@ -1,9 +1,7 @@
 #pragma once
 
 #include <types.h>
-
-// Forward declarations
-class UnkClass_8045F564;
+#include "monolib/lib/UnkClass_8045F564.hpp"
 
 namespace nw4r {
 namespace lyt {

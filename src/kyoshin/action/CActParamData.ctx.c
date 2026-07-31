@@ -1433,6 +1433,7 @@ struct CActParamDataSub {
 
 class CActParamData {
 public:
+    static void buildVTable();
     static void func_80057CDC();
     CActParamData();
     virtual ~CActParamData();
@@ -1452,8 +1453,7 @@ public:
     char _pad_2F8[0x354 - 0x2F8];   // 0x2F8-0x353
     u32 mField354;                  // 0x354 (tag/ptr for SubObjB)
     void* mPtr358;                  // 0x358 (getNonNullPtr)
-};
-/* end "kyoshin/action/CActParamData.hpp" */
+};/* end "kyoshin/action/CActParamData.hpp" */
 
 CActParamData::CActParamData() {}
 

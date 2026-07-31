@@ -120,17 +120,17 @@ public:
 };
 
 // C-linkage helpers for thunks
-extern "C" void func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r8);
+extern "C" void* func_80142B4C(void* self, u32 r4, int r5, int r6, int r7, int r8);
 extern "C" void func_80142C64(void* self);
 extern "C" void* getGlobalA10();
 extern "C" int getGlobal0E0();
 extern "C" void func_80142C80(void* self);
 extern "C" void func_80142CA0(void* self, void* r4, void* r5);
-extern "C" void noop_80142D5C(void* self);
+extern "C" void* noop_80142D5C(void* self);
 extern "C" void func_80142D60(void* self);
 extern "C" void func_80143ADC(void* self, u32 r4, u32 r5, u32 r6, u32 r7);
-extern "C" void func_80143F78(void* self);
+extern "C" int func_80143F78(void* self);
 extern "C" void func_80144070(void* self);
 extern "C" void func_801440A8(void* self);
-extern "C" void func_801443E4();
+extern "C" f32 func_801443E4();
 extern "C" void func_80144410(void* self);

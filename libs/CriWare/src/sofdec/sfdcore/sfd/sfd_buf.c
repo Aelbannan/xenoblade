@@ -121,8 +121,8 @@ static void sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
 
         if (allocSize != 0) {
             /* Lock and initialize buffer fields */
-            u32 cs[8];
-            SFLIB_LockCs(cs);
+            u32 cs;
+            SFLIB_LockCs(&cs);
 
             *(u32 *)(p + OFF_BUFOBJ) = allocSize;
             *(u32 *)(p + OFF_BUFSIZ) = actualSize;
@@ -131,7 +131,7 @@ static void sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
             *(u32 *)(p + OFF_DLM_PTR) = 0;
             *(u32 *)(p + OFF_DLM_SIZE) = 0;
 
-            SFLIB_UnlockCs(cs);
+            SFLIB_UnlockCs(&cs);
 
             /* Initialize PTS queue */
             SFPTS_InitPtsQue(p + 0x38);
@@ -227,37 +227,38 @@ void SFBUF_InitHn(void *self, int idx, u32 *config) {
  */
 void SFBUF_DestroySj(void *self) {
     u8 *base = (u8 *)self;
+    u8 *supply = base + 0x13C8;
+    void *obj;
 
-    /* Buffer 0: ring buffer at +0x13B8 */
+    /* Buffer 0: ring buffer */
     if (*(u32 *)(base + 0x13B8) == SFBUF_STATE_ACTIVE) {
-        u32 *objPtr = (u32 *)(base + 0x13CC);
-        if (*objPtr != 0) {
-            void *obj = (void *)*objPtr;
+        obj = *(void **)(supply + 0x04);
+        if (obj != NULL) {
             void *vtable = *(void **)obj;
             ((void (*)(void *))((void **)vtable)[3])(obj);
-            *objPtr = 0;
+            *(u32 *)(supply + 0x04) = 0;
         }
     }
 
-    /* Buffer 1: vfrm buffer at +0x142C */
+    /* Buffer 1: vfrm buffer */
+    supply = base + 0x143C;
     if (*(u32 *)(base + 0x142C) == SFBUF_STATE_ACTIVE) {
-        u32 *objPtr = (u32 *)(base + 0x1440);
-        if (*objPtr != 0) {
-            void *obj = (void *)*objPtr;
+        obj = *(void **)(supply + 0x04);
+        if (obj != NULL) {
             void *vtable = *(void **)obj;
             ((void (*)(void *))((void **)vtable)[3])(obj);
-            *objPtr = 0;
+            *(u32 *)(supply + 0x04) = 0;
         }
     }
 
-    /* Buffer 2: aring buffer at +0x14A0 */
+    /* Buffer 2: aring buffer */
+    supply = base + 0x14B0;
     if (*(u32 *)(base + 0x14A0) == SFBUF_STATE_ACTIVE) {
-        u32 *objPtr = (u32 *)(base + 0x14B4);
-        if (*objPtr != 0) {
-            void *obj = (void *)*objPtr;
+        obj = *(void **)(supply + 0x04);
+        if (obj != NULL) {
             void *vtable = *(void **)obj;
             ((void (*)(void *))((void **)vtable)[3])(obj);
-            *objPtr = 0;
+            *(u32 *)(supply + 0x04) = 0;
         }
     }
 }
@@ -342,7 +343,7 @@ void sfbuf_InitAringBuf(void *self, u32 *cumulative, u32 *sizes, int idx) {
 s32 SFBUF_SetSupplySj(void *self, int idx, u32 *supply) {
     u32 bufBase;
     int bufIdx;
-    u32 cs[8];
+    u32 cs;
 
     /* Validate supply configuration */
     if (supply[1] == 0) {
@@ -387,7 +388,7 @@ s32 SFBUF_SetSupplySj(void *self, int idx, u32 *supply) {
         u8 *dst = (u8 *)self + bufBase + 0x13C8;
 
         /* Lock critical section */
-        SFLIB_LockCs(cs);
+        SFLIB_LockCs(&cs);
 
         /* Store active flag */
         *(u32 *)((u8 *)self + bufBase + 0x13BC) = flag;
@@ -406,7 +407,7 @@ s32 SFBUF_SetSupplySj(void *self, int idx, u32 *supply) {
         *(u32 *)(dst + 0x20) = 0;
         *(u32 *)(dst + 0x24) = 0;
 
-        SFLIB_UnlockCs(cs);
+        SFLIB_UnlockCs(&cs);
 
         /* Reset PTS queue */
         SFPTS_ResetPtsQue(dst + 0x28);
@@ -440,9 +441,9 @@ int fn_803C1CAC(void *self) {
     }
 
     /* Check if buffer has supply configured */
-    fields = (u32 *)((u8 *)self + bufIdx * SFBUF_BUF_STRIDE + 0x13B8);
+    fields = (u32 *)((u8 *)self + bufIdx * 0x74 + 0x13B8);
 
-    if (fields[1] == 0 || fields[4] == 0) { /* active flag or supply ptr */
+    if (fields[1] == 0 || fields[5] == 0) { /* active flag or ring obj */
         return 0;
     }
     return 1;
@@ -696,13 +697,13 @@ void SFBUF_RingAddRead(void *self, int idx, u32 size) {
  * @param size  Output: DLM size
  */
 void SFBUF_RingGetDlm(void *self, int idx, u32 *dlm, u32 *size) {
-    u8 *p = sfbuf_base(self, idx);
-    u32 cs[8];
+    u8 *p = (u8 *)self + idx * 0x74;
+    u32 cs;
 
-    SFLIB_LockCs(cs);
+    SFLIB_LockCs(&cs);
     *dlm = *(u32 *)(p + 0x13E0);
     *size = *(u32 *)(p + 0x13E4);
-    SFLIB_UnlockCs(cs);
+    SFLIB_UnlockCs(&cs);
 }
 
 /*
@@ -716,13 +717,13 @@ void SFBUF_RingGetDlm(void *self, int idx, u32 *dlm, u32 *size) {
  * @param size  DLM size value
  */
 void SFBUF_RingSetDlm(void *self, int idx, u32 dlm, u32 size) {
-    u8 *p = sfbuf_base(self, idx);
-    u32 cs[8];
+    u8 *p = (u8 *)self + idx * 0x74;
+    u32 cs;
 
-    SFLIB_LockCs(cs);
+    SFLIB_LockCs(&cs);
     *(u32 *)(p + 0x13E0) = dlm;
     *(u32 *)(p + 0x13E4) = size;
-    SFLIB_UnlockCs(cs);
+    SFLIB_UnlockCs(&cs);
 }
 
 /*
@@ -758,31 +759,28 @@ u32 SFBUF_GetRTot(void *self, u32 idx) {
  * @return Write total (clamped to 0x7FFFFFFF)
  */
 u32 SFBUF_GetWTot(void *self, int idx) {
-    u8 *p = sfbuf_base(self, idx);
-    u32 cs[8];
+    u8 *p = (u8 *)self + idx * 0x74;
+    u32 cs;
     u32 wtot;
     u32 rtot;
 
-    SFLIB_LockCs(cs);
+    SFLIB_LockCs(&cs);
 
     wtot = *(u32 *)(p + 0x13E8);
     rtot = *(u32 *)(p + 0x13EC);
 
     if (wtot == 0 && rtot != 0) {
-        /* Compute from ring buffer position */
         void *ringObj = *(void **)(p + 0x13CC);
         void *vtable = *(void **)ringObj;
         u32 (*getFunc)(void *, int) = (u32 (*)(void *, int))((void **)vtable)[9];
-        u32 writePos = getFunc(ringObj, 1);
-        wtot = rtot + writePos;
+        wtot = rtot + getFunc(ringObj, 1);
     }
 
-    /* Clamp to positive range */
     if ((s32)wtot < 0) {
         wtot = 0x7FFFFFFF;
     }
 
-    SFLIB_UnlockCs(cs);
+    SFLIB_UnlockCs(&cs);
 
     return wtot;
 }
@@ -859,15 +857,18 @@ int SFBUF_VfrmGetRead(void *self, int idx, int *out, int size) {
  * @param flags Additional flags
  */
 void SFBUF_VfrmAddRead(void *self, int idx, u32 size, u32 flags) {
-    u8 *p = sfbuf_base(self, idx);
-    u32 result = 0;
+    u8 *p = (u8 *)self + idx * 0x74;
+    s32 result;
+    u32 savedFlags;
+
+    result = 0;
+    savedFlags = flags;
 
     if (*(u32 *)(p + 0x13BC) == 0) {
         result = SFTRN_CallTrtTrif(self, *(int *)(p + 0x1404), 0x0C,
-                                   (int *)(u32)size, (int)flags);
+                                   (int *)(u32)size, (int)savedFlags);
     }
 
-    /* Mark buffer as updated */
     *(u32 *)((u8 *)self + 0x50) = 1;
 }
 
@@ -949,23 +950,22 @@ void SFBUF_GetFlowCnt(void *self, u32 *readCnt, u32 *writeCnt) {
     void *vtable = *(void **)self;
     u32 (*initFunc)(void *) = (u32 (*)(void *))((void **)vtable)[4];
     u32 initResult = initFunc(self);
+    u32 *w = writeCnt;
+    u32 *r = readCnt;
 
     if (initResult == (u32)lbl_eu_80606E10) {
-        /* Ring buffer - use SJRBF flow count */
-        *readCnt = SJRBF_GetFlowCnt(self, 1, 1);
-        *writeCnt = SJRBF_GetFlowCnt(self, 0, 1);
+        *w = SJRBF_GetFlowCnt(self, 0, 1);
+        *r = SJRBF_GetFlowCnt(self, 1, 1);
     } else if (initResult == (u32)lbl_eu_80606E14) {
-        /* Memory buffer - compute from buffer size */
         u32 bufSize = SJMEM_GetBufSize(self);
-        *readCnt = bufSize;
+        *r = bufSize;
 
         vtable = *(void **)self;
         initFunc = (u32 (*)(void *))((void **)vtable)[9];
-        *writeCnt = bufSize - initFunc(self);
+        *w = bufSize - initFunc(self);
     } else {
-        /* Unknown buffer type */
-        *readCnt = 0;
-        *writeCnt = 0;
+        *w = 0;
+        *r = 0;
     }
 }
 

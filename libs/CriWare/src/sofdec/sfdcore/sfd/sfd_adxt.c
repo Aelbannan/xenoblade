@@ -62,11 +62,38 @@ void SFADXT_ExecServer() {}
 
 void sfadxt_CopyData() {}
 
-void sfadxt_AdjustSync() {}
+int sfadxt_AdjustSync(void *handle);
 
-void sfadxt_ExcludeHdr() {}
+extern int ADXT_IsHeader(void *buf, int size, int *out);
+extern int SFHDS_GetMuxVerNum(void *handle);
+extern int sfadxt_SearchAlign(void *handle, void *buf, int size);
+extern u32 lbl_eu_803C1A10[];
 
-void sfadxt_SearchAlign() {}
+void sfadxt_ExcludeHdr(void *handle, void *buf, int size, int *out_size) {
+    int r30 = 0;
+    u32 *r31 = *(u32 **)((u8 *)handle + 0x20AC);
+    int local;
+
+    *out_size = 0;
+
+    if (size >= 288) {
+        if (ADXT_IsHeader(buf, size, &local)) {
+            r30 = local;
+        } else if (SFHDS_GetMuxVerNum(handle) >= 108) {
+            r30 = sfadxt_SearchAlign(handle, buf, size) - (int)buf;
+            r31[0xF] = (u32)lbl_eu_803C1A10;
+            *out_size = r30;
+            {
+                u32 lo = *(u32 *)((u8 *)handle + 0x9DC) + r30;
+                u32 hi = *(u32 *)((u8 *)handle + 0x9D8);
+                *(u32 *)((u8 *)handle + 0x9DC) = lo;
+                *(u32 *)((u8 *)handle + 0x9D8) = hi + (r30 >> 31) + (lo < (u32)r30 ? 1 : 0);
+            }
+        }
+    }
+}
+
+int sfadxt_SearchAlign(void *handle, void *buf, int size);
 
 void sfadxt_ExcludeSilence() {}
 

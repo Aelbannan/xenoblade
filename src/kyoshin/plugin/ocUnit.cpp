@@ -29,12 +29,20 @@ extern "C" {
     void func_800ABF24(void* obj, void* pos, void* offset, float f);
     void func_8013D07C(void* subObj, const char* str, int flag);
     void func_8013D448(void* subObj, const char* str);
-    u32 func_8013EC58();
-    int func_80174C98(void* player, void* val, int flag);
-    int CUICfManager::func_80135FDC();
+    unsigned int func_8013EC58();
+    int func_80174C98(void* player, int* val, int flag);
+    unsigned char code80135FDC_getByte_64058();
     void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
     int strcmp(const char* s1, const char* s2);
     void* memset(void* ptr, int val, u32 size);
+    void* getInstance__Q22cf14CBattleManagerFv();
+    void* getInstance__Q22cf13CfGameManagerFv();
+    void* getPlayer__Q22cf13CfGameManagerFi(int i);
+    void* func_80081694__Q22cf13CfGameManagerFv(unsigned short a, unsigned short b);
+    void* func_80081CBC__Q22cf13CfGameManagerFv(const char* name, unsigned short param);
+    void* func_80081CB8__Q22cf13CfGameManagerFv();
+    void* func_800817BC__Q22cf13CfGameManagerFv(int index, int mode);
+    void* func_8008187C__Q22cf13CfGameManagerFv(int index);
 }
 
 void func_8003BC10(){}
@@ -213,10 +221,10 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
         if (!code80135FDC_getByte_64058()) {
             u32* valPtr = (u32*)((cf::CObjectState*)player->mTargetC4)->CObjectState_UnkVirtualFunc8(0);
             u32 val = *valPtr;
-            if (!func_80174C98(player, &val, 1)) {
+            if (!func_80174C98((void*)player, (int*)&val, 1)) {
                 cf::CObjectState* state = (cf::CObjectState*)((u8*)player + 0x3E9C);
                 state->CObjectState_UnkVirtualFunc1(1);
-                ((cf::CObjectParam*)((u8*)player + 0x3E9C))->CObjectParam_UnkVirtualFunc6(obj->mSubObj38);
+                ((void(*)(void*, void*))(*(void***)((u8*)player + 0x3E9C))[0x50/4])((u8*)player + 0x3E9C, obj->mSubObj38);
             }
         }
     } else if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {
@@ -225,10 +233,10 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
         }
         u32* valPtr = (u32*)((cf::CObjectState*)player->mTargetC4)->CObjectState_UnkVirtualFunc8(0);
         u32 val = *valPtr;
-        if (!func_80174C98(player, &val, 1)) {
+        if (!func_80174C98((void*)player, (int*)&val, 1)) {
             cf::CObjectState* state = (cf::CObjectState*)((u8*)player + 0x3E9C);
             state->CObjectState_UnkVirtualFunc1(1);
-            ((cf::CObjectParam*)((u8*)player + 0x3E9C))->CObjectParam_UnkVirtualFunc6(obj->mSubObj38);
+            ((void(*)(void*, void*))(*(void***)((u8*)player + 0x3E9C))[0x50/4])((u8*)player + 0x3E9C, obj->mSubObj38);
         }
     }
     return 0;
@@ -273,8 +281,8 @@ extern "C" int func_8003DDAC(VMThread* pThread, int handle) {
     u8 type = 3;
     u32 ocHandle = func_8013EC58();
     VMArg retVal;
-    retVal.unk0 = type;
-    retVal.unk4 = ocHandle;
+    retVal.type = type;
+    retVal.value.uintVal = ocHandle;
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -316,7 +324,7 @@ extern "C" int setAct(VMThread* pThread, int handle) {
     func_800BE12C(obj, actionId, 0, -1, 1);
     if (fixedParam != 1) {
         float f = (float)(s32)fixedParam / 2048.0f;
-        obj->CfObject_UnkVirtualFunc13(f);
+        ((void(*)(void*, float))(*(void***)obj)[0x88/4])(obj, f);
     }
     return 0;
 }
@@ -329,7 +337,7 @@ extern "C" int func_8003DFE4(VMThread* pThread, int handle) {
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float f = (float)(s32)fixedVal / 2048.0f;
-    obj->CfObject_UnkVirtualFunc13(f);
+    ((void(*)(void*, float))(*(void***)obj)[0x88/4])(obj, f);
     return 0;
 }
 
@@ -362,44 +370,44 @@ extern "C" int lookAt(VMThread* pThread, int handle) {
     if (targetOC) {
         ctx = func_801862C0(pThread);
         cf::CfObject* target = (cf::CfObject*)func_801864DC(ctx, *(int*)((u8*)targetOC + 4));
-        cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(target, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+        void* actor = (void*)__dynamic_cast(target, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
         if (actor) {
-            if (actor->unk64 & 0x40000000 || actor->unk64 & 0x10) {
-                if (self->mTargetC4) {
-                    if (actor->CfObject_UnkVirtualFunc52(&lbl_eu_804FA74C[0x3C])) {
+            if (((cf::CfObject*)actor)->unk64 & 0x40000000 || ((cf::CfObject*)actor)->unk64 & 0x10) {
+                if (*(void**)((u8*)self + 0xC4)) {
+                    if (((int(*)(void*, const char*))(*(void***)actor)[0x120/4])(actor, &lbl_eu_804FA74C[0x3C])) {
                         if (snap) {
-                            self->CfObjectModel_UnkVirtualFunc15(actor, &lbl_eu_804FA74C[0x3C]);
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, actor, &lbl_eu_804FA74C[0x3C]);
                         } else {
-                            self->CfObjectModel_UnkVirtualFunc14(actor, &lbl_eu_804FA74C[0x3C]);
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1AC/4])(self, actor, &lbl_eu_804FA74C[0x3C]);
                         }
-                    } else if (actor->CfObject_UnkVirtualFunc52(&lbl_eu_804FA74C[0x43])) {
+                    } else if (((int(*)(void*, const char*))(*(void***)actor)[0x120/4])(actor, &lbl_eu_804FA74C[0x43])) {
                         if (snap) {
-                            self->CfObjectModel_UnkVirtualFunc15(actor, &lbl_eu_804FA74C[0x43]);
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, actor, &lbl_eu_804FA74C[0x43]);
                         } else {
-                            self->CfObjectModel_UnkVirtualFunc14(actor, &lbl_eu_804FA74C[0x43]);
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1AC/4])(self, actor, &lbl_eu_804FA74C[0x43]);
                         }
-                    } else if (actor->CfObject_UnkVirtualFunc52(&lbl_eu_804FA74C[0x4B])) {
+                    } else if (((int(*)(void*, const char*))(*(void***)actor)[0x120/4])(actor, &lbl_eu_804FA74C[0x4B])) {
                         if (snap) {
-                            self->CfObjectModel_UnkVirtualFunc15(actor, &lbl_eu_804FA74C[0x4B]);
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, actor, &lbl_eu_804FA74C[0x4B]);
                         } else {
-                            self->CfObjectModel_UnkVirtualFunc14(actor, &lbl_eu_804FA74C[0x4B]);
+                            ((void(*)(void*, void*, const char*))(*(void***)self)[0x1AC/4])(self, actor, &lbl_eu_804FA74C[0x4B]);
                         }
                     }
                 }
             } else {
                 if (snap) {
-                    self->CfObjectModel_UnkVirtualFunc15(actor, &lbl_eu_804FA74C[0x4B]);
+                    ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, actor, &lbl_eu_804FA74C[0x4B]);
                 } else {
-                    self->CfObjectModel_UnkVirtualFunc14(actor, &lbl_eu_804FA74C[0x4B]);
+                    ((void(*)(void*, void*, const char*))(*(void***)self)[0x1AC/4])(self, actor, &lbl_eu_804FA74C[0x4B]);
                 }
             }
         } else {
-            void* pos = target->CfObject_UnkVirtualFunc27();
-            self->CfObjectModel_UnkVirtualFunc13(pos);
+            void* pos = ((void*(*)(void*))(*(void***)target)[0xBC/4])(target);
+            ((void(*)(void*, void*))(*(void***)self)[0x1A8/4])(self, pos);
         }
-        self->CfObjectModel_UnkVirtualFunc16(rotate ? 1 : 0);
+        ((void(*)(void*, int))(*(void***)self)[0x1B4/4])(self, rotate ? 1 : 0);
     } else {
-        self->CfObjectModel_UnkVirtualFunc15(0, &lbl_eu_804FA74C[0x3C]);
+        ((void(*)(void*, void*, const char*))(*(void***)self)[0x1B0/4])(self, 0, &lbl_eu_804FA74C[0x3C]);
     }
     return 0;
 }
@@ -412,7 +420,7 @@ extern "C" int turn(VMThread* pThread, int handle) {
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     float f = (float)(s32)angle / 2048.0f * 0.0000958738f;
-    obj->CfObject_UnkVirtualFunc31(f);
+    ((void(*)(void*, float))(*(void***)obj)[0xCC/4])(obj, f);
     func_800BE12C(obj, 3, 0, -1, 1);
     return 0;
 }
@@ -470,9 +478,9 @@ extern "C" int func_8003E528(VMThread* pThread, int handle) {
         u8 type = 9;
         u16 ocId = vmOCSearch(typeName);
         VMArg retVal;
-        retVal.unk0 = type;
+        retVal.type = type;
         retVal.unk2 = ocId;
-        retVal.unk4 = target->mSubObj38;
+        retVal.value.pointerVal = target->mSubObj38;
         vmRetValSet(pThread, &retVal);
         return 1;
     } else {
@@ -493,12 +501,12 @@ extern "C" int func_8003E66C(VMThread* pThread, int handle) {
         u8 type = 3;
         u16 hp = *(u16*)((u8*)obj + 0x8C);
         VMArg retVal;
-        retVal.unk0 = type;
-        retVal.unk4 = hp;
+        retVal.type = type;
+        retVal.value.uintVal = hp;
         vmRetValSet(pThread, &retVal);
     } else {
         VMArg retVal;
-        retVal.unk0 = 0;
+        retVal.type = 0;
         vmRetValSet(pThread, &retVal);
     }
     return 1;
@@ -564,9 +572,9 @@ extern "C" int invin(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
     if (actor) {
-        cf::CBattleManager* battleMgr = cf::CBattleManager::getInstance();
+        void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
         if (enable) {
             func_800F38E0(battleMgr, actor, 1);
         } else {
@@ -611,7 +619,7 @@ extern "C" int func_8003E974(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
     if (actor) {
         u8 data[0x34];
         memset(data, 0, sizeof(data));
@@ -624,7 +632,7 @@ extern "C" int func_8003E974(VMThread* pThread, int handle) {
         *(u16*)&data[0x1C] = (u16)arg4;
         *(float*)&data[0x28] = f1;
         *(float*)&data[0x2C] = f2;
-        cf::CBattleManager* battleMgr = cf::CBattleManager::getInstance();
+        void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
         func_800EC8FC(battleMgr, actor, data, 0);
     }
     return 0;
@@ -637,9 +645,9 @@ extern "C" int func_8003EB64(VMThread* pThread, int handle) {
     int index = vmArgIntGet(2, ptr);
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
     if (actor) {
-        cf::CBattleManager* battleMgr = cf::CBattleManager::getInstance();
+        void* battleMgr = getInstance__Q22cf14CBattleManagerFv();
         func_800F3958(battleMgr, actor, index);
     }
     return 0;
@@ -652,7 +660,7 @@ extern "C" int setColi(VMThread* pThread, int handle) {
     int enable = vmArgBoolGet(2, ptr);
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    cf::CfObjectActor* actor = (cf::CfObjectActor*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
+    void* actor = (void*)__dynamic_cast(obj, 0, (void*)lbl_eu_806618D8, (void*)lbl_eu_806618F0, 0);
     if (actor) {
         func_800BE824(actor, enable ? 1 : 0);
     }
@@ -680,7 +688,7 @@ extern "C" int func_8003ECD8(VMThread* pThread, int handle) {
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     if (obj) {
-        obj->CfObject_UnkVirtualFunc64(enable ? 0 : 1);
+        ((void(*)(void*, int))(*(void***)obj)[0x150/4])(obj, enable ? 0 : 1);
     }
     return 0;
 }
@@ -763,25 +771,26 @@ extern "C" int func_8003EEE0(VMThread* pThread, int handle, int r5) {
         newFlag |= 0x00040000;
     }
     lbl_eu_80663E24 = newFlag;
-    void* result = cf::CfGameManager::func_80081694((u16)partyId, (u16)arg2);
+    void* result = func_80081694__Q22cf13CfGameManagerFv((u16)partyId, (u16)arg2);
     newFlag = lbl_eu_80663E24;
     u32 restoredFlag = newFlag & ~0x00020000;
     if (hadFlag) {
         restoredFlag |= 0x00040000;
     }
     lbl_eu_80663E24 = restoredFlag;
+    void* ctx;
     if (!result) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
     ctx = func_801862C0(pThread);
-    func_801863F4(ctx, result);
+    func_801863F4(ctx);
     *(u32*)((u8*)result + 0x68) |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
-    retVal.unk0 = type;
+    retVal.type = type;
     retVal.unk2 = (u16)r5;
-    retVal.unk4 = ctx;
+    retVal.value.pointerVal = ctx;
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -801,7 +810,7 @@ extern "C" int setRot(VMThread* pThread, int handle) {
     float fy = (float)(s32)rotY / 2048.0f * 0.0000958738f;
     float fz = (float)(s32)rotZ / 2048.0f * 0.0000958738f;
     float rot[3] = { fx, fy, fz };
-    obj->CfObject_UnkVirtualFunc27(rot);
+    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, rot);
     return 0;
 }
 
@@ -812,13 +821,14 @@ extern "C" int gravity(VMThread* pThread, int handle) {
     int enable = vmArgBoolGet(2, ptr);
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc64(enable ? 0 : 1);
+    ((void(*)(void*, int))(*(void***)obj)[0x150/4])(obj, enable ? 0 : 1);
     return 0;
 }
 
 // us-8003f78c: func_8003F210
 // Battle party lookup by name, returns OC handle
 extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
+    void* ctx;
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr1);
     VMArg* ptr2 = vmArgPtrGet(pThread, 2);
@@ -839,9 +849,9 @@ extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
     lbl_eu_80663E24 = newFlag;
     void* result = 0;
     if (strcmp(name, &lbl_eu_804FA74C[0x6B]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x54]) == 0) {
-        result = cf::CfGameManager::func_80081CBC(&lbl_eu_804FA74C[0x6B], (u16)param);
+        result = func_80081CBC__Q22cf13CfGameManagerFv(&lbl_eu_804FA74C[0x6B], (u16)param);
     } else if (strcmp(name, &lbl_eu_804FA74C[0x79]) == 0) {
-        result = cf::CfGameManager::func_80081CB8();
+        result = func_80081CB8__Q22cf13CfGameManagerFv();
     }
     if (!result) {
         vmOCExceptionThrow(pThread);
@@ -854,13 +864,13 @@ extern "C" int func_8003F210(VMThread* pThread, int handle, int r5) {
     }
     lbl_eu_80663E24 = restoredFlag;
     ctx = func_801862C0(pThread);
-    func_801863F4(ctx, result);
+    func_801863F4(ctx);
     *(u32*)((u8*)result + 0x68) |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
-    retVal.unk0 = type;
+    retVal.type = type;
     retVal.unk2 = (u16)r5;
-    retVal.unk4 = ctx;
+    retVal.value.pointerVal = ctx;
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -874,7 +884,7 @@ extern "C" int func_8003F398(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(1);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 1);
     return 0;
 }
 
@@ -887,13 +897,14 @@ extern "C" int func_8003F418(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(0);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 0);
     return 0;
 }
 
 // us-8003fa14: func_8003F498
 // Battle party member lookup by name/type
 extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
+    void* ctx;
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr1);
     VMArg* ptr2 = vmArgPtrGet(pThread, 2);
@@ -914,9 +925,9 @@ extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
     lbl_eu_80663E24 = newFlag;
     void* result = 0;
     if (strcmp(name, &lbl_eu_804FA74C[0x85]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x89]) == 0) {
-        result = cf::CfGameManager::func_800817BC(index, 0);
+        result = func_800817BC__Q22cf13CfGameManagerFv(index, 0);
     } else if (strcmp(name, &lbl_eu_804FA74C[0x8C]) == 0 || strcmp(name, &lbl_eu_804FA74C[0x93]) == 0) {
-        result = cf::CfGameManager::func_8008187C(index);
+        result = func_8008187C__Q22cf13CfGameManagerFv(index);
     }
     if (!result) {
         vmOCExceptionThrow(pThread);
@@ -933,13 +944,13 @@ extern "C" int func_8003F498(VMThread* pThread, int handle, int r5) {
     }
     lbl_eu_80663E24 = restoredFlag;
     ctx = func_801862C0(pThread);
-    func_801863F4(ctx, result);
+    func_801863F4(ctx);
     *(u32*)((u8*)result + 0x68) |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
-    retVal.unk0 = type;
+    retVal.type = type;
     retVal.unk2 = (u16)r5;
-    retVal.unk4 = ctx;
+    retVal.value.pointerVal = ctx;
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -953,7 +964,7 @@ extern "C" int func_8003F64C(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(1);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 1);
     return 0;
 }
 
@@ -966,7 +977,7 @@ extern "C" int func_8003F6CC(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(0);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 0);
     return 0;
 }
 
@@ -1036,7 +1047,10 @@ extern "C" int func_8003F870(VMThread* pThread, int handle) {
                 }
             }
             if (followTarget) {
-                child = (*(void**)(followTarget))[0xAC / 4](followTarget);
+                    void** vt = *(void***)followTarget;
+                    void (*vfunc)(void*) = (void (*)(void*))vt[0xAC / 4];
+                    vfunc(followTarget);
+                    child = followTarget;
             }
         }
     }
@@ -1068,28 +1082,29 @@ extern "C" int func_8003F97C(VMThread* pThread, int handle) {
 // us-8003ff98: func_8003FA1C
 // Sets up a battle encounter by name
 extern "C" int func_8003FA1C(VMThread* pThread, int handle, int r5) {
+    void* ctx;
     VMArg* ptr1 = vmArgPtrGet(pThread, 1);
     const char* name = vmArgStringGet(2, ptr1);
     VMArg* ptr2 = vmArgPtrGet(pThread, 2);
     int param = vmArgIntGet(3, ptr2);
-    void* battleMgr = cf::CfGameManager::func_80081CB8();
+    void* battleMgr = func_80081CB8__Q22cf13CfGameManagerFv();
     if (battleMgr) {
         *(u32*)((u8*)battleMgr + 0x94) = 5;
         func_800AC4A8(battleMgr, (u16)param);
-        ((cf::CfObject*)battleMgr)->CfObject_UnkVirtualFunc66(0);
+        ((void(*)(void*, int))(*(void***)battleMgr)[0x158/4])(battleMgr, 0);
     }
     if (!battleMgr) {
         vmOCExceptionThrow(pThread);
         return 0;
     }
-    void* ctx = func_801862C0(pThread);
-    func_801863F4(ctx, battleMgr);
+    ctx = func_801862C0(pThread);
+    func_801863F4(ctx);
     *(u32*)((u8*)battleMgr + 0x68) |= 0x40000000;
     u8 type = 9;
     VMArg retVal;
-    retVal.unk0 = type;
+    retVal.type = type;
     retVal.unk2 = (u16)r5;
-    retVal.unk4 = ctx;
+    retVal.value.pointerVal = ctx;
     vmRetValSet(pThread, &retVal);
     return 1;
 }
@@ -1103,7 +1118,7 @@ extern "C" int func_8003FB18(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(1);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 1);
     return 0;
 }
 
@@ -1116,7 +1131,7 @@ extern "C" int func_8003FB98(VMThread* pThread, int handle) {
     }
     void* ctx = func_801862C0(pThread);
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
-    obj->CfObject_UnkVirtualFunc66(0);
+    ((void(*)(void*, int))(*(void***)obj)[0x158/4])(obj, 0);
     return 0;
 }
 
@@ -1132,7 +1147,7 @@ extern "C" int func_8003FC18(VMThread* pThread, int handle) {
     float fDistX = (float)(s32)distX / 2048.0f;
     float fDistY = (float)(s32)distY / 2048.0f;
     if (obj) {
-        void* pos = obj->CfObject_UnkVirtualFunc27();
+        void* pos = ((void*(*)(void*))(*(void***)obj)[0xBC/4])(obj);
         float x = *(float*)((u8*)pos + 0);
         float y = *(float*)((u8*)pos + 4);
         float z = *(float*)((u8*)pos + 8);
@@ -1157,7 +1172,7 @@ extern "C" int func_8003FD48(VMThread* pThread, int handle) {
     float fy = (float)(s32)y / 2048.0f;
     float fz = (float)(s32)z / 2048.0f;
     float pos[3] = { fx, fy, fz };
-    obj->CfObject_UnkVirtualFunc27(pos);
+    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, pos);
     return 0;
 }
 
@@ -1176,7 +1191,7 @@ extern "C" int func_8003FEDC(VMThread* pThread, int handle) {
     float fy = (float)(s32)rotY / 2048.0f * 0.0000958738f;
     float fz = (float)(s32)rotZ / 2048.0f * 0.0000958738f;
     float rot[3] = { fx, fy, fz };
-    obj->CfObject_UnkVirtualFunc27(rot);
+    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, rot);
     return 0;
 }
 
@@ -1195,7 +1210,7 @@ extern "C" int func_8003FFF4(VMThread* pThread, int handle) {
     float fy = (float)(s32)y / 2048.0f;
     float fz = (float)(s32)z / 2048.0f;
     float pos[3] = { fx, fy, fz };
-    obj->CfObject_UnkVirtualFunc27(pos);
+    ((void(*)(void*, void*))(*(void***)obj)[0xBC/4])(obj, pos);
     return 0;
 }
 

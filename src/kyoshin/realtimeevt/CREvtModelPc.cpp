@@ -26,7 +26,7 @@ extern "C" {
     extern u32 lbl_eu_805321D4[];    // ptmf constant
     extern u32 lbl_eu_805321E0[];    // ptmf constant
     extern u32 lbl_eu_805037A8[];    // slot param lookup table
-    extern u32 lbl_eu_80663E14;      // scene / alloc handle
+    extern void* lbl_eu_80663E14;      // scene / alloc handle
     extern f32 lbl_eu_80667918;      // float constant (0.0f)
     extern f64 lbl_eu_80667920;      // double constant (int-to-float conversion)
 }
@@ -83,6 +83,8 @@ extern "C" {
     extern void func_80484F80(void* model, f32 val);
 
     // __ptmf intrinsics
+    extern void func_8044F400(CFileHandle* pFileHandle, u32 val);
+
     extern u32 __ptmf_null[3];
     extern int __ptmf_cmpr(void* ptmf, void* other);
 }
@@ -351,7 +353,7 @@ extern "C" void func_80183C90(void* self) {
     void* alloc;
     int archiveResult;
     void* workEvent;
-    void* reqHandle;
+    CFileHandle* reqHandle;
     void* memHandle;
     void* memHandle2;
     void* h;
@@ -558,7 +560,7 @@ extern "C" void func_80183C90(void* self) {
                 (IWorkEvent*)workEvent, 0, 0);
             FLD(u32, s, 0x68) = (u32)reqHandle;
 
-            CDeviceFile::func_8044F154(reqHandle, (CFileHandle*)h2);
+            func_8044F400((CFileHandle*)reqHandle, (u32)h2);
 
             parent = FLD(void*, s, 0x1C);
             if (FLD(u32, parent, 0x58) & 0x1) {
@@ -686,7 +688,7 @@ extern "C" void func_80184730(void* self) {
     if (data0 == 0 || !allLoaded) return;
 
     // Create model
-    void* model = func_80495E8C(FLDP(void, lbl_eu_80663E14, 0), data0, -1, 1);
+    void* model = func_80495E8C(lbl_eu_80663E14, data0, -1, 1);
     FLD(u32, s, 0x20) = (u32)model;
 
     func_80484E5C(model);

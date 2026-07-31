@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <decomp.h>
 
 extern int SFHLOCAL_GetSizeofMember(int, int);
 extern int SFHLOCAL_GetNbyteB(const void *, int);
@@ -479,6 +480,7 @@ int VER2_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
     u8 *f;
     u32 codec;
     u32 result = 0;
+    s32 *verPtr = (s32 *)((u8 *)work + 0x10);
 
     *out = 0;
     f = searchStmId(work, stm_id);
@@ -489,13 +491,36 @@ int VER2_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
     if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
         codec = ((codec >> 4) & 0xF) + 0x40;
     }
-    if (codec == 0x41) { result = 1; }
-    if (codec == 0x42) { result = 3; }
-    if (codec == 0x43) { result = 4; }
-    if (codec == 0x47) { result = 5; }
-    if (codec == 0x48) { result = 6; }
-    if (codec == 0x49) { result = 7; }
-    if (codec == 0x4A) { result = 8; }
+    if (codec == 0x41) goto set1;
+    if (codec == 0x42) goto set3;
+    if (codec == 0x43) goto set4;
+    if (codec == 0x47) goto set5;
+    if (codec == 0x48) goto set6;
+    if (codec == 0x49) goto set7;
+    if (codec == 0x4A) goto set8;
+    result = 0;
+    goto done;
+set1:
+    result = 1;
+    goto done;
+set3:
+    result = 3;
+    goto done;
+set4:
+    result = 4;
+    goto done;
+set5:
+    result = 5;
+    goto done;
+set6:
+    result = 6;
+    goto done;
+set7:
+    result = 7;
+    goto done;
+set8:
+    result = 8;
+done:
     *out = result;
     return 1;
 }
@@ -510,7 +535,7 @@ int VER2_AnlyElemAvrBitRate(void *work, u32 stm_id, u32 *out) {
         return 0;
     }
     val = SFHLOCAL_GetNbyteB(f + 0xC, SFHLOCAL_GetSizeofMember(0xC, 0x10));
-    if ((val >> 16) == 0xFFFF) {
+    if (val + 0x10000u == 0xFFFFu) {
         val = 0;
     }
     *out = val;

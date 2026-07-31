@@ -14,7 +14,7 @@ namespace cf {
 
 class CfObject {
 public:
-    void CfObject_UnkVirtualFunc31();
+    float CfObject_UnkVirtualFunc31();
 
     // TODO: add fields
 };

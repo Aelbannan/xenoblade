@@ -11,6 +11,7 @@ public:
     virtual void wkUpdate();
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
+    virtual void errorWiiCB();
     void func_8045AE84();
     void func_8045B1E0();
     void OnPauseTrigger();

@@ -151,30 +151,29 @@ int SFD_ExecOne(void* self) {
     void* ctx;
     void* vtbl;
     void (*trace)(void*, void*);
+    int result = 0;
 
     if (SFLIB_CheckHn(self)) {
         SFLIB_SetErr(0, 0xff000138);
-        return 0;
+    } else {
+        ctx = lbl_eu_80606E34;
+        if (ctx) {
+            *(void**)(lbl_eu_8056864C + 0x0C) = self;
+            vtbl = *(void**)ctx;
+            trace = *(void(**)(void*, void*))((u8*)vtbl + 0x24);
+            trace(ctx, lbl_eu_8056864C + 4);
+        }
+
+        sfply_ExecOne(self);
+
+        ctx = lbl_eu_80606E34;
+        if (ctx) {
+            vtbl = *(void**)ctx;
+            trace = *(void(**)(void*, void*))((u8*)vtbl + 0x24);
+            trace(ctx, lbl_eu_8056864C + 0x6C);
+        }
     }
-
-    ctx = lbl_eu_80606E34;
-    if (ctx) {
-        *(void**)(lbl_eu_8056864C + 0x0C) = self;
-        vtbl = *(void**)ctx;
-        trace = *(void(**)(void*, void*))((u8*)vtbl + 0x24);
-        trace(ctx, lbl_eu_8056864C + 4);
-    }
-
-    sfply_ExecOne(self);
-
-    ctx = lbl_eu_80606E34;
-    if (ctx) {
-        vtbl = *(void**)ctx;
-        trace = *(void(**)(void*, void*))((u8*)vtbl + 0x24);
-        trace(ctx, lbl_eu_8056864C + 0x6C);
-    }
-
-    return 0;
+    return result;
 }
 
 // ---------------------------------------------------------------------------
@@ -591,8 +590,9 @@ int criware_803C9FC0(void* self) {
     int result = 0;
     if (SFTRN_IsSetup(self, 1)) {
         int st = FIELD(int, self, 0x54);
-        if ((unsigned int)(st - 2) <= 2) {
-            if (SFTRN_GetTermFlg(self, 1)) result = 1;
+        unsigned int adj = (unsigned int)(st - 2);
+        if (adj <= 2) {
+            result = SFTRN_GetTermFlg(self, 1);
         } else if (st == 6) {
             result = 1;
         }
@@ -1092,9 +1092,12 @@ int SFD_TermSupply(void* self) {
         SFLIB_SetErr(0, 0xff00013D);
     } else {
         bufId = FIELD(int, self, 0x1FEC);
-        if (SFBUF_GetTermFlg(self, bufId) != 1) {
+        if (SFBUF_GetTermFlg(self, bufId) == 1) {
+            result = 0;
+        } else {
             SFBUF_SetTermFlg(self, bufId, 1);
             FIELD(int, self, 0x50) = 1;
+            result = 0;
         }
     }
 

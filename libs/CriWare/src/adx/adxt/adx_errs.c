@@ -42,34 +42,36 @@ void ADXERR_Finish(void) {
 }
 
 void ADXERR_CallErrFunc1_(const char* msg) {
+    struct ADXERR_Work* w = s_work;
     if (!msg) {
         SVM_CallErr(lbl_eu_80517498);
         return;
     }
 
-    CRICRW_Strncpy(s_work->buf, ((void*)0), msg, 0xFF);
+    CRICRW_Strncpy(w->buf, (void*)0x100, msg, 0xFF);
 
-    if (s_work->callback) {
-        s_work->callback(s_work->arg, s_work->buf);
+    if (w->callback) {
+        w->callback(w->arg, w->buf);
     }
 
-    SVM_CallErr(s_work->buf);
+    SVM_CallErr(w->buf);
 }
 
 void ADXERR_CallErrFunc2_(const char* a, const char* b) {
+    struct ADXERR_Work* w = s_work;
     if (!a || !b) {
         SVM_CallErr(lbl_eu_80517498);
         return;
     }
 
-    CRICRW_Strncpy(s_work->buf, ((void*)0), a, 0xFF);
-    CRICRW_Strncat(s_work->buf, ((void*)0), b, 0xFF);
+    CRICRW_Strncpy(w->buf, (void*)0x100, a, 0xFF);
+    CRICRW_Strncat(w->buf, (void*)0x100, b, 0xFF);
 
-    if (s_work->callback) {
-        s_work->callback(s_work->arg, s_work->buf);
+    if (w->callback) {
+        w->callback(w->arg, w->buf);
     }
 
-    SVM_CallErr(s_work->buf);
+    SVM_CallErr(w->buf);
 }
 
 void ADXERR_ItoA(s32 value, char* buf, s32 buf_size) {
@@ -110,13 +112,9 @@ void ADXERR_ItoA(s32 value, char* buf, s32 buf_size) {
 }
 
 void ADXERR_ItoA2(s32 a, s32 b, char* buf, s32 buf_size) {
-    s32 len;
-
     ADXERR_ItoA(a, buf, buf_size);
 
-    len = (s32)strlen(buf);
-    CRICRW_Strncat(buf, ((void*)0), lbl_eu_80517498 + 6, buf_size - len - 1);
+    CRICRW_Strncat(buf, (void*)buf_size, lbl_eu_80517498 + 6, buf_size - (s32)strlen(buf) - 1);
 
-    len = (s32)strlen(buf);
-    ADXERR_ItoA(b, buf + len, 4 - len);
+    ADXERR_ItoA(b, buf + (s32)strlen(buf), 4 - (s32)strlen(buf));
 }

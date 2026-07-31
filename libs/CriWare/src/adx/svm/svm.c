@@ -189,9 +189,10 @@ void SVM_DelCbSvr(u32 svrId, u32 idx) {
     } else if (svrId > 7) {
         SVM_ERR_CB_MSG(&lbl_eu_80518F50[0xC3]);
     } else {
-        ctrl->svr_tbl[svrId][idx].func = NULL;
-        ctrl->svr_tbl[svrId][idx].object = NULL;
-        ctrl->svr_tbl[svrId][idx].name = NULL;
+        SvmSvrEntry* entry = &ctrl->svr_tbl[svrId][idx];
+        entry->func = NULL;
+        entry->object = NULL;
+        entry->name = NULL;
     }
     SVM_UNLOCK();
 }
@@ -218,7 +219,10 @@ void svm_SetCbSvrId(u32 svrId, u32 idx, void* fn, void* ctx, const char* name) {
             SVM_ERR_CB_MSG(&lbl_eu_80518F50[0x131]);
         entry->func = (u32 (*)(void*))fn;
         entry->object = ctx;
-        entry->name = name != NULL ? name : &lbl_eu_80518F50[0x6D];
+        if (name != NULL)
+            entry->name = name;
+        else
+            entry->name = &lbl_eu_80518F50[0x6D];
     }
 }
 

@@ -706,7 +706,10 @@ void TRKPostInterruptEvent(void){
     switch((ui16)(gTRKCPUState.Extended1.exceptionID & 0xFFFF)) {
         case PPC_PROGRAMERROR:
         case PPC_TRACE:
-        TRKTargetReadInstruction((void*)&inst, (void*)gTRKCPUState.Default.PC);
+        {
+        size_t registersLength = sizeof(InstructionType);
+        TRKTargetAccessMemory((void*)&inst, (void*)gTRKCPUState.Default.PC, &registersLength, kUserMemory, true);
+        }
 
         if (inst == SUPPORT_TRAP) {
             eventType = kSupportEvent;
@@ -836,10 +839,12 @@ DSError TRKTargetInterrupt(NubEvent* event){
 
 DSError TRKTargetAddStopInfo(MessageBuffer* b){
     DSError error;
-    ui32* puVar1;
     ui32 local_458;
     int local_45c;
     int auStack_460;
+    size_t registersLength;
+    size_t length;
+    char writeData[1024];
     msgbuf_t reply;
     
     TRK_memset(&reply,0,TRK_MSG_HEADER_LENGTH);
@@ -849,7 +854,8 @@ DSError TRKTargetAddStopInfo(MessageBuffer* b){
     GetThreadInfo(&local_45c,&auStack_460);
     *(ui32*)&reply.unk10[4] = local_45c;
     *(ui32*)&reply.unk10[8] = *(ui32*)ConvertAddress(CURRENT_THREAD_ADDR);
-    TRKTargetReadInstruction((void*)&local_458, (void*)gTRKCPUState.Default.PC);
+    registersLength = sizeof(InstructionType);
+    TRKTargetAccessMemory((void*)&local_458, (void*)gTRKCPUState.Default.PC, &registersLength, kUserMemory, true);
     reply.unkC = local_458;
     *(ui32*)reply.unk10 = gTRKCPUState.Extended1.exceptionID & 0xFFFF;
 
@@ -885,9 +891,7 @@ DSError TRKTargetAddStopInfo(MessageBuffer* b){
     }
 
     if (error == kNoError) {
-        char writeData[1024];
-        size_t length = sizeof(writeData);
-
+        length = sizeof(writeData);
         error = TRKTargetAccessMemory((void*)writeData, (void*)(gTRKCPUState.Default.PC & 0xfffffc00),&length,kUserMemory,true);
         TRK_AppendBuffer(b,writeData,sizeof(writeData));
     }
@@ -903,7 +907,10 @@ void TRKTargetAddExceptionInfo(MessageBuffer* b){
     reply.msgLength = sizeof(msgbuf_t);
     reply.commandId = kDSNotifyException;
     reply.replyErrorInt = gTRKExceptionStatus.exceptionInfo.PC;
-    TRKTargetReadInstruction((void*)&local_54,(void*)gTRKExceptionStatus.exceptionInfo.PC);
+    {
+    size_t registersLength = sizeof(InstructionType);
+    TRKTargetAccessMemory((void*)&local_54,(void*)gTRKExceptionStatus.exceptionInfo.PC, &registersLength, kUserMemory, true);
+    }
     *(ui32*)&reply.unkC = local_54;
     *(ui32*)reply.unk10 = gTRKExceptionStatus.exceptionInfo.exceptionID;
     TRKAppendBuffer_ui8(b,(ui8 *)&reply,sizeof(msgbuf_t));
@@ -954,13 +961,40 @@ DSError TRKTargetDoStep(){
 }
 
 static bool TRKTargetCheckStep(){
-    if(gTRKStepStatus.active){
-        TRKTargetEnableTrace(false);
+    bool stepDone;
 
-        if(TRKTargetStepDone()){
+    if(gTRKStepStatus.active){
+        gTRKCPUState.Extended1.MSR = (gTRKCPUState.Extended1.MSR & (0xFFFFFFFF ^ MSR_SE)) | MSR_EE;
+
+        stepDone = true;
+        if (gTRKStepStatus.active && ((ui16)gTRKCPUState.Extended1.exceptionID) == PPC_TRACE) {
+            switch(gTRKStepStatus.type){
+                case kDSStepIntoCount:
+                if (gTRKStepStatus.count > 0) {
+                    stepDone = false;
+                }
+                break;
+                case kDSStepIntoRange:
+                if (gTRKCPUState.Default.PC >= gTRKStepStatus.rangeStart && gTRKCPUState.Default.PC <= gTRKStepStatus.rangeEnd) {
+                    stepDone = false;
+                }
+                break;
+                default:
+                break;
+            }
+        }
+
+        if(stepDone){
             gTRKStepStatus.active = false;
         }else {
-            TRKTargetDoStep();
+            gTRKStepStatus.active = true;
+            gTRKCPUState.Extended1.MSR = (gTRKCPUState.Extended1.MSR | MSR_SE) & (0xFFFFFFFF ^ MSR_EE);
+
+            if (gTRKStepStatus.type == kDSStepIntoCount || gTRKStepStatus.type == kDSStepOverCount) {
+                gTRKStepStatus.count--;
+            }
+
+            TRKTargetSetStopped(false);
         }
     }
 
@@ -975,8 +1009,16 @@ DSError TRKTargetSingleStep(ui8 count, bool stepOver){
     }else{
         gTRKStepStatus.type = kDSStepIntoCount;
         gTRKStepStatus.count = count;
-    
-        error = TRKTargetDoStep();
+
+        gTRKStepStatus.active = true;
+        gTRKCPUState.Extended1.MSR = (gTRKCPUState.Extended1.MSR | MSR_SE) & (0xFFFFFFFF ^ MSR_EE);
+
+        if (gTRKStepStatus.type == kDSStepIntoCount || gTRKStepStatus.type == kDSStepOverCount) {
+            gTRKStepStatus.count--;
+        }
+
+        TRKTargetSetStopped(false);
+        error = kNoError;
     }
 
     return error;
@@ -993,7 +1035,15 @@ DSError TRKTargetStepOutOfRange(ui32 rangeStart, ui32 rangeEnd, bool stepOver){
         gTRKStepStatus.rangeStart = rangeStart;
         gTRKStepStatus.rangeEnd = rangeEnd;
 
-        error = TRKTargetDoStep();
+        gTRKStepStatus.active = true;
+        gTRKCPUState.Extended1.MSR = (gTRKCPUState.Extended1.MSR | MSR_SE) & (0xFFFFFFFF ^ MSR_EE);
+
+        if (gTRKStepStatus.type == kDSStepIntoCount || gTRKStepStatus.type == kDSStepOverCount) {
+            gTRKStepStatus.count--;
+        }
+
+        TRKTargetSetStopped(false);
+        error = kNoError;
     }
 
     return error;

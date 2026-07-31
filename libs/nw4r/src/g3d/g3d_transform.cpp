@@ -5,10 +5,24 @@ namespace nw4r {
 namespace g3d {
 namespace detail {
 
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+
+// Isolated Gekko paired-single backend (PLAN.md §17.6).
+// Wii/MWCC matching build: the retail nw4r SDK compiled these kernels as
+// whole `asm` function bodies (psq_l/ps_merge10/ps_mul/ps_msub/ps_madd/
+// ps_abs/ps_cmpo0/fres/ps_nmsub/ps_muls0/psq_st + minimal memory/branch
+// support).  MWCC reschedules register-operand ASM() blocks and recolors
+// FPRs, so only the SDK kernel bodies reproduce the retail byte stream.
+// See libs/nw4r/include/nw4r/g3d/detail/g3d_transform_ps.inl for the full
+// exception record (opcode set, guard, fallback).
+#include "nw4r/g3d/detail/g3d_transform_ps.inl"
+
+#else
+
 /******************************************************************************
  *
  * 3x3 inverse kernels shared by CalcViewNrmMtx / CalcViewTexMtx /
- * CalcInvWorldMtx.
+ * CalcInvWorldMtx -- scalar fallback for PC / NONMATCHING builds.
  *
  * Retail implements these with Gekko paired-single SIMD (psq_l, ps_merge10,
  * ps_mul, ps_msub, ps_madd, fres, ps_nmsub, ps_muls0, ps_cmpo0). The scalar
@@ -16,10 +30,10 @@ namespace detail {
  * toolchain (PC port). It will not byte-match the retail PS instruction
  * stream -- the acceptance target is EQUIVALENT_MATCH, not FULL_MATCH.
  *
- * The MWCC matching path reproduces retail's lane-0 fres + Newton-Raphson
- * reciprocal with scalar PowerPC builtins. Non-MWCC/PC builds use an exact
- * IEEE divide (~24-bit), which is strictly more accurate than retail's
- * approximately 12-bit reciprocal approximation.
+ * The matching path (the .inl above) reproduces retail's lane-0 fres +
+ * Newton-Raphson reciprocal. Non-MWCC/PC builds use an exact IEEE divide
+ * (~24-bit), which is strictly more accurate than retail's approximately
+ * 12-bit reciprocal approximation.
  *
  * Retail's determinant/cofactors use fused ps_madd (single rounding); the
  * portable scalar path uses separate fmul/fadd. The singularity epsilon
@@ -217,6 +231,8 @@ bool CalcInvWorldMtx(math::MTX34* pOut, const math::MTX34* pMtx) {
     pOut->_23 = -(i20*t0 + i21*t1 + i22*t2);
     return true;
 }
+
+#endif // __MWERKS__ && !NONMATCHING
 
 } // namespace detail
 } // namespace g3d

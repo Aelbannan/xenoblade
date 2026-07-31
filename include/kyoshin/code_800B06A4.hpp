@@ -122,4 +122,22 @@ public:
     u16 field_0xD10;
 };
 
+// Simple intrusive singly-linked list node (next pointer at offset 0)
+struct SListNode {
+    SListNode* next;
+};
+
+// Container holding an embedded sentinel pointer at offset 4
+struct SList {
+    u8 field_0x00[4];
+    SListNode* sentinel;
+};
+
+// Free functions defined in this translation unit
+void func_800B93AC();
+void func_800B1A5C(void* listPtr);
+void func_800B998C(void* a, void* b, void* c, u32 d, void* e, void* f);
+void func_800B99BC(void* a, void* b, void* c, u32 d, void* e, void* f);
+void sinit_800B9A40();
+
 #endif

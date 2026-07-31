@@ -274,6 +274,20 @@ MTX34* MTX34RotAxisFIdx(MTX34* pMtx, const VEC3* pAxis, f32 fidx) {
     return pMtx;
 }
 
+#if defined(__MWERKS__) && !defined(NONMATCHING)
+
+// Isolated Gekko paired-single backend (PLAN.md §17.6).  Wii/MWCC matching
+// build: the retail nw4r SDK shipped MTX34RotXYZFIdx as a whole `asm`
+// function body (paired-single reduction loops, u16 quantized stack
+// conversion, sin/cos table lookups, rotation-matrix assembly).  MWCC
+// reschedules register-operand ASM() blocks and recolors FPRs, so only the
+// SDK kernel body reproduces the retail byte stream.  See
+// libs/nw4r/include/nw4r/math/detail/math_types_ps.inl for the full
+// exception record (opcode set, guard, fallback).
+#include "nw4r/math/detail/math_types_ps.inl"
+
+#else
+
 MTX34* MTX34RotXYZFIdx(MTX34* pMtx, f32 fx, f32 fy, f32 fz) {
     f32 sx, cx;
     SinCosFIdx(&sx, &cx, fx);
@@ -304,6 +318,8 @@ MTX34* MTX34RotXYZFIdx(MTX34* pMtx, f32 fx, f32 fy, f32 fz) {
 
     return pMtx;
 }
+
+#endif // __MWERKS__ && !NONMATCHING
 
 VEC3* VEC3TransformNormal(VEC3* pOut, const MTX34* pMtx, const VEC3* pVec) {
     VEC3 tmp;

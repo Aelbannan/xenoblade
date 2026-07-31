@@ -1,0 +1,1020 @@
+// Auto-generated retail-ordered source for kyoshin/code_800B06A4
+// Replace stubs with high-level C/C++ during decomp.
+
+#include "kyoshin/harness_catalog.hpp"
+#include "kyoshin/code_800B06A4.hpp"
+
+UnkClass_805764CC* func_800B07E8();
+u32 func_800AA2BC(u32 a, u32 b);
+
+// func_800B06A4 at +0x0000, size 0x0
+void func_800B06A4() {
+}
+
+// func_800B06C8 at +0x0000, size 0x0
+void func_800B06C8() {
+}
+
+// func_800B07E8__Fv at +0x0000, size 0x0
+void func_800B07E8__Fv() {
+}
+
+// func_800B084C at +0x0000, size 0x0
+void func_800B084C() {
+}
+
+// func_800B0894 at +0x0000, size 0x0
+void func_800B0894() {
+}
+
+// __ct__17UnkClass_805764CCFv at +0x0000, size 0x0
+void __ct__17UnkClass_805764CCFv() {
+}
+
+// func_800B0A90 at +0x0000, size 0x0
+void func_800B0A90() {
+}
+
+// __ct__reslist_cf_CfObject at +0x0000, size 0x0
+void __ct__reslist_cf_CfObject() {
+}
+
+// __ct__17UnkClass_800B0AD8Fv at +0x0000, size 0x0
+void __ct__17UnkClass_800B0AD8Fv() {
+}
+
+// __dt__800B0AF4 at +0x0000, size 0x0
+void __dt__800B0AF4() {
+}
+
+// func_800B0B40 at +0x0000, size 0x0
+void func_800B0B40() {
+}
+
+// __ct__reslist_cf_TboxInfo at +0x0000, size 0x0
+void __ct__reslist_cf_TboxInfo() {
+}
+
+// func_800B0B8C at +0x0000, size 0x0
+void func_800B0B8C() {
+}
+
+// "__dt__29_reslist_base<Q22cf8TboxInfo>Fv" at +0x0000, size 0x0
+void "__dt__29_reslist_base<Q22cf8TboxInfo>Fv"() {
+}
+
+// "__dt__23reslist<Q22cf8TboxInfo>Fv" at +0x0000, size 0x0
+void "__dt__23reslist<Q22cf8TboxInfo>Fv"() {
+}
+
+// __ct__reslist_cf_IFactoryEvent at +0x0000, size 0x0
+void __ct__reslist_cf_IFactoryEvent() {
+}
+
+// "__dt__36_reslist_base<PQ22cf13IFactoryEvent>Fv" at +0x0000, size 0x0
+void "__dt__36_reslist_base<PQ22cf13IFactoryEvent>Fv"() {
+}
+
+// "__dt__30reslist<PQ22cf13IFactoryEvent>Fv" at +0x0000, size 0x0
+void "__dt__30reslist<PQ22cf13IFactoryEvent>Fv"() {
+}
+
+// __dt__17UnkClass_805764CCFv at +0x0000, size 0x0
+void __dt__17UnkClass_805764CCFv() {
+}
+
+// func_800B0FA0 at +0x0000, size 0x0
+void func_800B0FA0() {
+}
+
+// func_800B0FEC at +0x0000, size 0x0
+void func_800B0FEC() {
+}
+
+// func_800B0FF4 at +0x0000, size 0x0
+void func_800B0FF4() {
+}
+
+// func_800B1120 at +0x0000, size 0x0
+void func_800B1120() {
+}
+
+// __ct__cf_CfValueItemManager at +0x0000, size 0x0
+void __ct__cf_CfValueItemManager() {
+}
+
+// func_800B1368 at +0x0000, size 0x0
+void func_800B1368() {
+}
+
+// FactoryEvent3__Q22cf13IFactoryEventFv at +0x0000, size 0x0
+void FactoryEvent3__Q22cf13IFactoryEventFv() {
+}
+
+// func_800B137C at +0x0000, size 0x0
+void func_800B137C() {
+}
+
+// func_800B14C4 at +0x0000, size 0x0
+void func_800B14C4() {
+}
+
+// func_800B14D4 at +0x0000, size 0x0
+void func_800B14D4() {
+}
+
+// func_800B14E0 at +0x0000, size 0x0
+void func_800B14E0() {
+}
+
+// func_800B14F0 at +0x0000, size 0x0
+void func_800B14F0() {
+}
+
+// func_800B14FC at +0x0000, size 0x0
+void func_800B14FC() {
+}
+
+// func_800B1518 at +0x0000, size 0x0
+void func_800B1518() {
+}
+
+// __dt__800B151C at +0x0000, size 0x0
+void __dt__800B151C() {
+}
+
+// func_800B15A4 at +0x0000, size 0x0
+void func_800B15A4() {
+}
+
+// func_800B1808 at +0x0000, size 0x0
+void func_800B1808() {
+}
+
+// FactoryEvent4__Q22cf13IFactoryEventFv at +0x0000, size 0x0
+void FactoryEvent4__Q22cf13IFactoryEventFv() {
+}
+
+// func_800B1818 at +0x0000, size 0x0
+void func_800B1818() {
+}
+
+// func_800B1820 at +0x0000, size 0x0
+void func_800B1820() {
+}
+
+// func_800B182C at +0x0000, size 0x0
+void func_800B182C() {
+}
+
+// __dt__800B183C at +0x0000, size 0x0
+void __dt__800B183C() {
+}
+
+// __dt__800B18CC at +0x0000, size 0x0
+void __dt__800B18CC() {
+}
+
+// func_800B1954 at +0x0000, size 0x0
+void func_800B1954() {
+}
+
+// func_800B1A5C at +0x0000, size 0x0
+void func_800B1A5C() {
+}
+
+// func_800B1A8C at +0x0000, size 0x0
+void func_800B1A8C() {
+}
+
+// func_800B1A9C at +0x0000, size 0x0
+void func_800B1A9C() {
+}
+
+// func_800B1AA8 at +0x0000, size 0x0
+void func_800B1AA8() {
+}
+
+// func_800B1AC0 at +0x0000, size 0x0
+void func_800B1AC0() {
+}
+
+// func_800B1ACC at +0x0000, size 0x0
+void func_800B1ACC() {
+}
+
+// func_800B1AD8 at +0x0000, size 0x0
+void func_800B1AD8() {
+}
+
+// func_800B1AF4 at +0x0000, size 0x0
+void func_800B1AF4() {
+}
+
+// func_800B1B2C at +0x0000, size 0x0
+void func_800B1B2C() {
+}
+
+// func_800B1BBC at +0x0000, size 0x0
+void func_800B1BBC() {
+}
+
+// func_800B1C00 at +0x0000, size 0x0
+void func_800B1C00() {
+}
+
+// func_800B1C0C at +0x0000, size 0x0
+void func_800B1C0C() {
+}
+
+// func_800B1C24 at +0x0000, size 0x0
+void func_800B1C24() {
+}
+
+// func_800B1C40 at +0x0000, size 0x0
+void func_800B1C40() {
+}
+
+// func_800B1C78 at +0x0000, size 0x0
+void func_800B1C78() {
+}
+
+// func_800B1CDC at +0x0000, size 0x0
+void func_800B1CDC() {
+}
+
+// func_800B1E18 at +0x0000, size 0x0
+void func_800B1E18() {
+}
+
+// func_800B1E2C at +0x0000, size 0x0
+void func_800B1E2C() {
+}
+
+// func_800B1EB8 at +0x0000, size 0x0
+void func_800B1EB8() {
+}
+
+// func_800B1EC8 at +0x0000, size 0x0
+void func_800B1EC8() {
+}
+
+// func_800B1F2C at +0x0000, size 0x0
+void func_800B1F2C() {
+}
+
+// func_800B1F40 at +0x0000, size 0x0
+void func_800B1F40() {
+}
+
+// func_800B1F54 at +0x0000, size 0x0
+void func_800B1F54() {
+}
+
+// func_800B1F6C at +0x0000, size 0x0
+void func_800B1F6C() {
+}
+
+// func_800B1FD8 at +0x0000, size 0x0
+void func_800B1FD8() {
+}
+
+// func_800B2034 at +0x0000, size 0x0
+void func_800B2034() {
+}
+
+// func_800B2048 at +0x0000, size 0x0
+void func_800B2048() {
+}
+
+// func_800B205C at +0x0000, size 0x0
+void func_800B205C() {
+}
+
+// func_800B20A0 at +0x0000, size 0x0
+void func_800B20A0() {
+}
+
+// func_800B20B4 at +0x0000, size 0x0
+void func_800B20B4() {
+}
+
+// func_800B2D28 at +0x0000, size 0x0
+void func_800B2D28() {
+}
+
+// __dt__800B2D30 at +0x0000, size 0x0
+void __dt__800B2D30() {
+}
+
+// FactoryEvent1__Q22cf13IFactoryEventFv at +0x0000, size 0x0
+void FactoryEvent1__Q22cf13IFactoryEventFv() {
+}
+
+// func_800B2D88 at +0x0000, size 0x0
+void func_800B2D88() {
+}
+
+// func_800B2DB0 at +0x0000, size 0x0
+void func_800B2DB0() {
+}
+
+// func_800B2E38 at +0x0000, size 0x0
+void func_800B2E38() {
+}
+
+// func_800B2ED0 at +0x0000, size 0x0
+void func_800B2ED0() {
+}
+
+// func_800B31B0 at +0x0000, size 0x0
+void func_800B31B0() {
+}
+
+// func_800B31BC at +0x0000, size 0x0
+void func_800B31BC() {
+}
+
+// func_800B31C8 at +0x0000, size 0x0
+void func_800B31C8() {
+}
+
+// func_800B31D4 at +0x0000, size 0x0
+void func_800B31D4() {
+}
+
+// func_800B31E0 at +0x0000, size 0x0
+void func_800B31E0() {
+}
+
+// func_800B31EC at +0x0000, size 0x0
+void func_800B31EC() {
+}
+
+// func_800B31F8 at +0x0000, size 0x0
+void func_800B31F8() {
+}
+
+// func_800B3204 at +0x0000, size 0x0
+void func_800B3204() {
+}
+
+// func_800B3210 at +0x0000, size 0x0
+void func_800B3210() {
+}
+
+// func_800B39C0 at +0x0000, size 0x0
+void func_800B39C0() {
+}
+
+// func_800B39C8 at +0x0000, size 0x0
+void func_800B39C8() {
+}
+
+// func_800B3A54 at +0x0000, size 0x0
+void func_800B3A54() {
+}
+
+// func_800B3A60 at +0x0000, size 0x0
+void func_800B3A60() {
+}
+
+// func_800B3A88 at +0x0000, size 0x0
+void func_800B3A88() {
+}
+
+// func_800B3D34 at +0x0000, size 0x0
+void func_800B3D34() {
+}
+
+// func_800B3D40 at +0x0000, size 0x0
+void func_800B3D40() {
+}
+
+// func_800B3D4C at +0x0000, size 0x0
+void func_800B3D4C() {
+}
+
+// func_800B3D64 at +0x0000, size 0x0
+void func_800B3D64() {
+}
+
+// func_800B4120 at +0x0000, size 0x0
+void func_800B4120() {
+}
+
+// func_800B4278 at +0x0000, size 0x0
+void func_800B4278() {
+}
+
+// func_800B42E8 at +0x0000, size 0x0
+void func_800B42E8() {
+}
+
+// func_800B4368 at +0x0000, size 0x0
+void func_800B4368() {
+}
+
+// func_800B4400 at +0x0000, size 0x0
+void func_800B4400() {
+}
+
+// func_800B44A0 at +0x0000, size 0x0
+void func_800B44A0() {
+}
+
+// func_800B4554 at +0x0000, size 0x0
+void func_800B4554() {
+}
+
+// func_800B4588 at +0x0000, size 0x0
+void func_800B4588() {
+}
+
+// func_800B4594 at +0x0000, size 0x0
+void func_800B4594() {
+}
+
+// func_800B45A0 at +0x0000, size 0x0
+void func_800B45A0() {
+}
+
+// func_800B47A8 at +0x0000, size 0x0
+void func_800B47A8() {
+}
+
+// func_800B4A24 at +0x0000, size 0x0
+void func_800B4A24() {
+}
+
+// CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv at +0x0000, size 0x0
+void CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv() {
+}
+
+// func_800B4B0C at +0x0000, size 0x0
+void func_800B4B0C() {
+}
+
+// func_800B4B74 at +0x0000, size 0x0
+void func_800B4B74() {
+}
+
+// func_800B4B88 at +0x0000, size 0x0
+void func_800B4B88() {
+}
+
+// func_800B4CA0 at +0x0000, size 0x0
+void func_800B4CA0() {
+}
+
+// func_800B4D84 at +0x0000, size 0x0
+void func_800B4D84() {
+}
+
+// func_800B4F58 at +0x0000, size 0x0
+void func_800B4F58() {
+}
+
+// func_800B4F64 at +0x0000, size 0x0
+void func_800B4F64() {
+}
+
+// func_800B4F6C at +0x0000, size 0x0
+void func_800B4F6C() {
+}
+
+// func_800B4F80 at +0x0000, size 0x0
+void func_800B4F80() {
+}
+
+// func_800B4F90 at +0x0000, size 0x0
+void func_800B4F90() {
+}
+
+// func_800B4FA4 at +0x0000, size 0x0
+void func_800B4FA4() {
+}
+
+// func_800B4FAC at +0x0000, size 0x0
+void func_800B4FAC() {
+}
+
+// func_800B535C at +0x0000, size 0x0
+void func_800B535C() {
+}
+
+// func_800B570C at +0x0000, size 0x0
+void func_800B570C() {
+}
+
+// func_800B587C at +0x0000, size 0x0
+void func_800B587C() {
+}
+
+// func_800B5944 at +0x0000, size 0x0
+void func_800B5944() {
+}
+
+// func_800B5948 at +0x0000, size 0x0
+void func_800B5948() {
+}
+
+// func_800B5958 at +0x0000, size 0x0
+void func_800B5958() {
+}
+
+// func_800B5964 at +0x0000, size 0x0
+void func_800B5964() {
+}
+
+// func_800B5970 at +0x0000, size 0x0
+void func_800B5970() {
+}
+
+// func_800B5978 at +0x0000, size 0x0
+void func_800B5978() {
+}
+
+// func_800B5994 at +0x0000, size 0x0
+void func_800B5994() {
+}
+
+// func_800B6484 at +0x0000, size 0x0
+void func_800B6484() {
+}
+
+// func_800B6494 at +0x0000, size 0x0
+void func_800B6494() {
+}
+
+// func_800B64AC at +0x0000, size 0x0
+void func_800B64AC() {
+}
+
+// func_800B64B8 at +0x0000, size 0x0
+void func_800B64B8() {
+}
+
+// func_800B64D0 at +0x0000, size 0x0
+void func_800B64D0() {
+}
+
+// func_800B64DC at +0x0000, size 0x0
+void func_800B64DC() {
+}
+
+// func_800B64E4 at +0x0000, size 0x0
+void func_800B64E4() {
+}
+
+// func_800B64EC at +0x0000, size 0x0
+void func_800B64EC() {
+}
+
+// func_800B64F8 at +0x0000, size 0x0
+void func_800B64F8() {
+}
+
+// func_800B6508 at +0x0000, size 0x0
+void func_800B6508() {
+}
+
+// func_800B6520 at +0x0000, size 0x0
+void func_800B6520() {
+}
+
+// func_800B6544 at +0x0000, size 0x0
+void func_800B6544() {
+}
+
+// func_800B655C at +0x0000, size 0x0
+void func_800B655C() {
+}
+
+// func_800B66AC at +0x0000, size 0x0
+void func_800B66AC() {
+}
+
+// func_800B66BC at +0x0000, size 0x0
+void func_800B66BC() {
+}
+
+// func_800B67CC at +0x0000, size 0x0
+void func_800B67CC() {
+}
+
+// func_800B67EC at +0x0000, size 0x0
+void func_800B67EC() {
+}
+
+// func_800B67F4 at +0x0000, size 0x0
+void func_800B67F4() {
+}
+
+// func_800B6800 at +0x0000, size 0x0
+void func_800B6800() {
+}
+
+// func_800B68A8 at +0x0000, size 0x0
+void func_800B68A8() {
+}
+
+// func_800B6AF4 at +0x0000, size 0x0
+void func_800B6AF4() {
+}
+
+// func_800B6BA0 at +0x0000, size 0x0
+void func_800B6BA0() {
+}
+
+// func_800B6BA4__Fv at +0x0000, size 0x0
+void func_800B6BA4__Fv() {
+}
+
+// func_800B6BC8 at +0x0000, size 0x0
+void func_800B6BC8() {
+}
+
+// func_800B6BEC at +0x0000, size 0x0
+void func_800B6BEC() {
+}
+
+// func_800B6C10 at +0x0000, size 0x0
+void func_800B6C10() {
+}
+
+// func_800B6C34 at +0x0000, size 0x0
+void func_800B6C34() {
+}
+
+// func_800B6C58 at +0x0000, size 0x0
+void func_800B6C58() {
+}
+
+// func_800B6C7C at +0x0000, size 0x0
+void func_800B6C7C() {
+}
+
+// func_800B6CA0 at +0x0000, size 0x0
+void func_800B6CA0() {
+}
+
+// func_800B6CC4 at +0x0000, size 0x0
+void func_800B6CC4() {
+}
+
+// func_800B6CF8 at +0x0000, size 0x0
+void func_800B6CF8() {
+}
+
+// func_800B6D3C at +0x0000, size 0x0
+void func_800B6D3C() {
+}
+
+// func_800B6DD0 at +0x0000, size 0x0
+void func_800B6DD0() {
+}
+
+// func_800B6EC0 at +0x0000, size 0x0
+void func_800B6EC0() {
+}
+
+// func_800B6FFC at +0x0000, size 0x0
+void func_800B6FFC() {
+}
+
+// func_800B7004 at +0x0000, size 0x0
+void func_800B7004() {
+}
+
+// func_800B700C at +0x0000, size 0x0
+void func_800B700C() {
+}
+
+// func_800B7034 at +0x0000, size 0x0
+void func_800B7034() {
+}
+
+// func_800B7058 at +0x0000, size 0x0
+void func_800B7058() {
+}
+
+// func_800B708C__Fi at +0x0000, size 0x0
+void func_800B708C__Fi() {
+}
+
+// func_800B70FC at +0x0000, size 0x0
+void func_800B70FC() {
+}
+
+// func_800B71C4 at +0x0000, size 0x0
+void func_800B71C4() {
+}
+
+// func_800B71CC at +0x0000, size 0x0
+void func_800B71CC() {
+}
+
+// func_800B720C at +0x0000, size 0x0
+void func_800B720C() {
+}
+
+// func_800B7214 at +0x0000, size 0x0
+void func_800B7214() {
+}
+
+// func_800B72DC at +0x0000, size 0x0
+void func_800B72DC() {
+}
+
+// func_800B7320 at +0x0000, size 0x0
+void func_800B7320() {
+}
+
+// func_800B73E8 at +0x0000, size 0x0
+void func_800B73E8() {
+}
+
+// func_800B7410 at +0x0000, size 0x0
+void func_800B7410() {
+}
+
+// func_800B75B4 at +0x0000, size 0x0
+void func_800B75B4() {
+}
+
+// func_800B75BC at +0x0000, size 0x0
+void func_800B75BC() {
+}
+
+// func_800B75C4 at +0x0000, size 0x0
+void func_800B75C4() {
+}
+
+// func_800B75EC at +0x0000, size 0x0
+void func_800B75EC() {
+}
+
+// func_800B7680 at +0x0000, size 0x0
+void func_800B7680() {
+}
+
+// func_800B76A4 at +0x0000, size 0x0
+void func_800B76A4() {
+}
+
+// func_800B76CC at +0x0000, size 0x0
+void func_800B76CC() {
+}
+
+// func_800B76F4 at +0x0000, size 0x0
+void func_800B76F4() {
+}
+
+// func_800B771C at +0x0000, size 0x0
+void func_800B771C() {
+}
+
+// func_800B7744 at +0x0000, size 0x0
+void func_800B7744() {
+}
+
+// func_800B776C at +0x0000, size 0x0
+void func_800B776C() {
+}
+
+// func_800B7794 at +0x0000, size 0x0
+void func_800B7794() {
+}
+
+// func_800B77BC at +0x0000, size 0x0
+void func_800B77BC() {
+}
+
+// func_800B77E4 at +0x0000, size 0x0
+void func_800B77E4() {
+}
+
+// func_800B781C at +0x0000, size 0x0
+void func_800B781C() {
+}
+
+// func_800B7854 at +0x0000, size 0x0
+void func_800B7854() {
+}
+
+// func_800B788C at +0x0000, size 0x0
+void func_800B788C() {
+}
+
+// func_800B78C4 at +0x0000, size 0x0
+void func_800B78C4() {
+}
+
+// func_800B78FC at +0x0000, size 0x0
+void func_800B78FC() {
+}
+
+// func_800B7934 at +0x0000, size 0x0
+void func_800B7934() {
+}
+
+// func_800B796C at +0x0000, size 0x0
+void func_800B796C() {
+}
+
+// func_800B79A4 at +0x0000, size 0x0
+void func_800B79A4() {
+}
+
+// func_800B7A18 at +0x0000, size 0x0
+void func_800B7A18() {
+}
+
+// func_800B7AF0 at +0x0000, size 0x0
+void func_800B7AF0() {
+}
+
+// func_800B83AC at +0x0000, size 0x0
+void func_800B83AC() {
+}
+
+// func_800B8524 at +0x0000, size 0x0
+void func_800B8524() {
+}
+
+// func_800B87FC at +0x0000, size 0x0
+void func_800B87FC() {
+}
+
+// func_800B8800 at +0x0000, size 0x0
+void func_800B8800() {
+}
+
+// func_800B8804__FPvPQ22cf13IFactoryEvent at +0x0000, size 0x0
+void func_800B8804__FPvPQ22cf13IFactoryEvent() {
+}
+
+// func_800B88E0 at +0x0000, size 0x0
+void func_800B88E0() {
+}
+
+// func_800B8920 at +0x0000, size 0x0
+void func_800B8920() {
+}
+
+// func_800B89CC at +0x0000, size 0x0
+void func_800B89CC() {
+}
+
+// func_800B8A64 at +0x0000, size 0x0
+void func_800B8A64() {
+}
+
+// func_800B8AFC at +0x0000, size 0x0
+void func_800B8AFC() {
+}
+
+// func_800B8B94 at +0x0000, size 0x0
+void func_800B8B94() {
+}
+
+// func_800B8C78 at +0x0000, size 0x0
+void func_800B8C78() {
+}
+
+// func_800B8D5C at +0x0000, size 0x0
+void func_800B8D5C() {
+}
+
+// func_800B8FC4 at +0x0000, size 0x0
+void func_800B8FC4() {
+}
+
+// func_800B92B4 at +0x0000, size 0x0
+void func_800B92B4() {
+}
+
+// func_800B92D8 at +0x0000, size 0x0
+void func_800B92D8() {
+}
+
+// func_800B92FC at +0x0000, size 0x0
+void func_800B92FC() {
+}
+
+// func_800B9340 at +0x0000, size 0x0
+void func_800B9340() {
+}
+
+// func_800B9364 at +0x0000, size 0x0
+void func_800B9364() {
+}
+
+// func_800B9388 at +0x0000, size 0x0
+void func_800B9388() {
+}
+
+// func_800B93AC at +0x0000, size 0x0
+void func_800B93AC() {
+}
+
+// func_800B93D0 at +0x0000, size 0x0
+void func_800B93D0() {
+}
+
+// func_800B9404 at +0x0000, size 0x0
+void func_800B9404() {
+}
+
+// func_800B9438 at +0x0000, size 0x0
+void func_800B9438() {
+}
+
+// func_800B946C at +0x0000, size 0x0
+void func_800B946C() {
+}
+
+// func_800B94A0 at +0x0000, size 0x0
+void func_800B94A0() {
+}
+
+// func_800B94D4 at +0x0000, size 0x0
+void func_800B94D4() {
+}
+
+// func_800B9524 at +0x0000, size 0x0
+void func_800B9524() {
+}
+
+// func_800B9548 at +0x0000, size 0x0
+void func_800B9548() {
+}
+
+// func_800B957C at +0x0000, size 0x0
+void func_800B957C() {
+}
+
+// func_800B96C4 at +0x0000, size 0x0
+void func_800B96C4() {
+}
+
+// func_800B96CC at +0x0000, size 0x0
+void func_800B96CC() {
+}
+
+// func_800B96D8 at +0x0000, size 0x0
+void func_800B96D8() {
+}
+
+// func_800B96E0 at +0x0000, size 0x0
+void func_800B96E0() {
+}
+
+// func_800B96E8 at +0x0000, size 0x0
+void func_800B96E8() {
+}
+
+// func_800B9704 at +0x0000, size 0x0
+void func_800B9704() {
+}
+
+// __ct__800B970C at +0x0000, size 0x0
+void __ct__800B970C() {
+}
+
+// func_800B97A0 at +0x0000, size 0x0
+void func_800B97A0() {
+}
+
+// func_800B985C at +0x0000, size 0x0
+void func_800B985C() {
+}
+
+// func_800B98C8 at +0x0000, size 0x0
+void func_800B98C8() {
+}
+
+// func_800B9984 at +0x0000, size 0x0
+void func_800B9984() {
+}
+
+// func_800B998C at +0x0000, size 0x0
+void func_800B998C() {
+}
+
+// func_800B99BC at +0x0000, size 0x0
+void func_800B99BC() {
+}
+
+// func_800B99EC at +0x0000, size 0x0
+void func_800B99EC() {
+}
+
+// func_800B9A30 at +0x0000, size 0x0
+void func_800B9A30() {
+}
+
+// sinit_800B9A40 at +0x0000, size 0x0
+void sinit_800B9A40() {
+}

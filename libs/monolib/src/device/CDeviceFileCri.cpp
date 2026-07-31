@@ -72,7 +72,7 @@ extern "C" void func_80450B44(void* self, u32 arg) {
 
 extern "C" void func_80450B4C(void* self) {
     CDeviceFileCri* obj = (CDeviceFileCri*)((char*)self - 0x1C4);
-    delete obj;
+    obj->~CDeviceFileCri();
 }
 
 CDeviceFileCri::CDeviceFileCri(const char* pName, CWorkThread* pParent, int capacity)

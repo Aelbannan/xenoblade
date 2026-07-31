@@ -1537,6 +1537,24 @@ public:
     u16 field_0xD10;
 };
 
+// Simple intrusive singly-linked list node (next pointer at offset 0)
+struct SListNode {
+    SListNode* next;
+};
+
+// Container holding an embedded sentinel pointer at offset 4
+struct SList {
+    u8 field_0x00[4];
+    SListNode* sentinel;
+};
+
+// Free functions defined in this translation unit
+void func_800B93AC();
+void func_800B1A5C(void* listPtr);
+void func_800B998C(void* a, void* b, void* c, u32 d, void* e, void* f);
+void func_800B99BC(void* a, void* b, void* c, u32 d, void* e, void* f);
+void sinit_800B9A40();
+
 #endif
 /* end "kyoshin/code_800B06A4.hpp" */
 
@@ -1549,8 +1567,10 @@ void UnkClass_800B0AD8::clearCounters() {
 // Provide an alias for unqualified calls (sub_mainReset, sub_dispatchInit_*).
 UnkClass_805764CC* func_800B07E8();
 u32 func_800AA2BC(u32 a, u32 b);
+void func_8019397C(u32 param);
+void func_80193D48(u32 param);
 
-void gfloat_initStore(float a){
+extern "C" void func_800B06A4(float a){
     extern float lbl_eu_80661CCC;
     extern float lbl_eu_80661CD0;
     extern float lbl_eu_80663EC8;
@@ -1574,7 +1594,9 @@ void gfloat_initStore(float a){
 
 
 
-void init_0A90(void){}
+void func_800B0A90(u32* ptr) {
+    *ptr = 0;
+}
 
 
 
@@ -1602,6 +1624,16 @@ void gflag_setBits(unsigned long flags) {
     lbl_eu_80663EE0 |= flags;
 }
 
+void func_800B1808() {
+    extern unsigned long lbl_eu_80663EE0;
+    lbl_eu_80663EE0 = 0;
+}
+
+unsigned long func_800B1C00() {
+    extern unsigned long lbl_eu_80663EE0;
+    return (lbl_eu_80663EE0 >> 6) & 1;
+}
+
 void FactoryEvent3__Q22cf13IFactoryEventFv() {}
 
 void init_137C(){}
@@ -1623,7 +1655,9 @@ void node_copyNextU32(void* dst, void* src) {
 
 void init_14FC() {}
 
-void init_1518(void){}
+extern "C" void __dt__800B151C();
+
+extern "C" void func_800B1518() { __dt__800B151C(); }
 
 void __dt__800B151C(){}
 
@@ -1689,7 +1723,12 @@ void init_1C78(){}
 
 void init_1CDC(){}
 
-void init_1E18(){}
+void func_800B1E18(UnkClass_805764CC* obj) {
+    u32 val = *(u32*)((u8*)obj + 0xCA0);
+    if (val != 0) {
+        func_8019397C(val);
+    }
+}
 
 void init_1E2C(){}
 
@@ -1697,11 +1736,20 @@ void init_1EB8() {}
 
 void init_1EC8(){}
 
-void init_1F2C(){}
+void func_800B1F2C(UnkClass_805764CC* obj) {
+    u32 val = *(u32*)((u8*)obj + 0xCA0);
+    if (val != 0) {
+        func_80193D48(val);
+    }
+}
 
 void init_1F40(){}
 
-void init_1F54(){}
+extern "C" void func_800B1F54(UnkClass_805764CC* self){
+    if(self->field_0xCA0==0)return;
+    extern float lbl_eu_80663EC8;
+    func_80195E5C(lbl_eu_80663EC8);
+}
 
 void init_1F6C(){}
 
@@ -1832,6 +1880,8 @@ unsigned short gvar_get408C(){
     return lbl_eu_8066408C;
 }
 
+extern "C" u16 func_800B4F64() { extern u16 lbl_eu_80664314; return lbl_eu_80664314; }
+
 void init_4F6C() {}
 
 void init_4F80() {}
@@ -1858,7 +1908,13 @@ void* UnkClass_805764CC::getNull() { return 0; }
 
 u32 UnkClass_805764CC::get_u32_380() { return *(u32*)((u8*)this + 0x380); }
 
-void init_5978(){}
+extern "C" void func_800B5978(UnkClass_805764CC* self,u32* val){
+    u32* f380=(u32*)((u8*)self+0x380);
+    u32 idx=*f380;
+    u32* arr=(u32*)self;
+    arr[idx]=*val;
+    *f380=idx+1;
+}
 
 void init_5994(){}
 
@@ -1901,7 +1957,11 @@ void init_66AC() {}
 
 void init_66BC(){}
 
-void init_67CC(){}
+extern "C" int func_800B67CC(void* self){
+    u8 val=*(u8*)((u8*)self+2);
+    if(val<1||val>24)return 0;
+    return 1;
+}
 
 void* UnkClass_805764CC::getPtr_1A8() { return (void*)((u8*)this + 0x1a8); }
 
@@ -1913,7 +1973,7 @@ void init_68A8(){}
 
 void init_6AF4(){}
 
-void init_6BA0(void){}
+extern "C" void func_800B6BA0() { func_800B07E8(); }
 
 void* sub_getReslist_B28() {
     return &UnkClass_805764CC::func_800B07E8()->field_0xB28;
@@ -2023,9 +2083,13 @@ void UnkClass_805764CC::maskField_6C(u32 mask, int enable) {
     }
 }
 
+extern "C" u16 func_800B75B4() { extern u16 lbl_eu_80663E42; return lbl_eu_80663E42; }
+
+extern "C" u16 func_800B75BC() { extern u16 lbl_eu_80663E44; return lbl_eu_80663E44; }
+
 void init_75EC(){}
 
-int list_countNodes(void* self){
+extern "C" int func_800B7680(void* self){
     void* head = *(void**)((char*)self + 4);
     void* cur = *(void**)head;
     int count = 0;

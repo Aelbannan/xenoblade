@@ -202,7 +202,7 @@ extern "C" void func_80479F54(MPFDrawBillData* billboard, Vec* positions) {
 
 extern "C" void func_8047A330(MPFDrawBillData* billboard, Vec* positions, MPFDrawBillIndexList* list) {
     s32 mask = -1;
-    if (!(billboard->flags & 2) && billboard->layerDepth != lbl_eu_8066A848) {
+    if (!(billboard->flags & 2) && !(billboard->layerDepth == lbl_eu_8066A848)) {
         mask = 0;
     }
 
@@ -211,10 +211,6 @@ extern "C" void func_8047A330(MPFDrawBillData* billboard, Vec* positions, MPFDra
     const u32* index = list->indices + 1;
     for (u32 i = 0; i < count - 1; i++, index++) {
         u32 value = *index;
-        const u32* order = lbl_eu_80523E00;
-        if (value & 1) {
-            order = lbl_eu_80523E10;
-        }
         u32 first = ((value & lbl_eu_8066A72C) << 1 & mask) + 2;
         const Vec* corner = &lbl_eu_8066584C[value];
         nw4r::math::VEC3 vertex0;
@@ -226,16 +222,20 @@ extern "C" void func_8047A330(MPFDrawBillData* billboard, Vec* positions, MPFDra
         nw4r::math::VEC3Add(&vertex2, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[first + 1]);
         nw4r::math::VEC3Add(&vertex3, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[1]);
 
+        const u32* order = lbl_eu_80523E00;
+        if (value & 1) {
+            order = lbl_eu_80523E10;
+        }
         GXPosition3f32(vertex0.x, vertex0.y, vertex0.z);
         GXTexCoord1u16(lbl_eu_80665850[value]);
         GXColor1x8(billboard->colors[order[0]]);
-        GXPosition3f32(vertex1.x, vertex1.y, vertex1.z);
-        GXTexCoord1u16(lbl_eu_80665850[value]);
-        GXColor1x8(billboard->colors[order[1]]);
         GXPosition3f32(vertex2.x, vertex2.y, vertex2.z);
         GXTexCoord1u16(lbl_eu_80665850[value]);
-        GXColor1x8(billboard->colors[order[2]]);
+        GXColor1x8(billboard->colors[order[1]]);
         GXPosition3f32(vertex3.x, vertex3.y, vertex3.z);
+        GXTexCoord1u16(lbl_eu_80665850[value]);
+        GXColor1x8(billboard->colors[order[2]]);
+        GXPosition3f32(vertex1.x, vertex1.y, vertex1.z);
         GXTexCoord1u16(lbl_eu_80665850[value]);
         GXColor1x8(billboard->colors[order[3]]);
     }

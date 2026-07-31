@@ -160,19 +160,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -765,22 +757,11 @@ extern "C"{
 
 static type_info_struct unknown_type = {"???"};
 
-static int strequal(const char* s1, const char* s2){
+static inline int strequal(const char* s1, const char* s2){
     for(; *s1 == *s2; s1++, s2++){
         if (*s1 == 0) return 0;
     }
     return *(u8*)s1 - *(u8*)s2;
-}
-
-//unused
-void* __get_typeid(void* obj, long offset){
-    if(obj == NULL) throw std::bad_typeid();
-
-    if((obj = **(void***)((char*)obj + offset)) == 0){
-        return &unknown_type;
-    }
-    
-    return obj;
 }
 
 void* __dynamic_cast(void* obj, int offset, type_info_struct* typeInfo, type_info_struct* subtypeInfo, short isReference) {
@@ -836,5 +817,3 @@ void* __dynamic_cast(void* obj, int offset, type_info_struct* typeInfo, type_inf
     if (isReference) throw std::bad_cast();
     return NULL;
 }
-
-extern "C" const char* what__Q23std8bad_castCFv(void) { return "bad_cast"; }

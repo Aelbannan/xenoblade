@@ -298,6 +298,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 | `extern "C" lbl_eu_*` | Reloc names when values match under `functionRelocDiffs=data_value` |
 | Goto gate chains | Multi-exit guards (`setSplitLine` pattern) — not for prologue spill order alone |
 | **Isolated MWCC Gekko paired-single backend** | A named Wii/MWCC kernel requires `psq_*`, `ps_*`, or `fres` operations unavailable through approved high-level C++/MWCC builtins. See the requirements below. |
+| **Wii boot-entry vectors (`InitMetroTRK*`)** | A named Wii/MWCC target is a hardware boot-entry vector entered with a non-standard ABI (no valid stack frame, hardware ID in `r5`) so MWCC's mandatory frame prologue cannot reproduce it, after the C++ path is exhausted (PLAN.md §17.6). `asm void` + `nofralloc` transcribing only the named boot-vector body, guarded to MWCC with a complete C fallback for PC/non-MWCC builds. Log every use with `"policy_exception": true`. |
 
 #### Isolated Gekko paired-single backend
 

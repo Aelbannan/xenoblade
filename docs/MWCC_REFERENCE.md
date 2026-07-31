@@ -2560,3 +2560,29 @@ isolated Gekko PS backend in `libs/RVL_SDK/src/revolution/mtx/mtx_ps.inl`
   `DECOMP_FORCELITERAL(mtx_c, …)` fake function were dead code not present in
   the retail object; removing them restored the unit to its `0xC10` split
   budget (0x8 spare). All 19 retail functions in the unit are 100%.
+
+### InitMetroTRK / InitMetroTRK_BBA — Wii boot-entry vectors (ACCEPTED via §17.6 exception)
+
+Both accepted FULL_MATCH with `asm void` + `nofralloc` (policy exception,
+PLAN.md §17.6, logged in attempts.jsonl with `"policy_exception": true`).
+Retail bodies cannot be produced by C: MWCC's mandatory frame prologue
+conflicts with the non-standard entry ABI (no valid stack frame, hardware ID
+in r5), hand-rolled `stmw`/`lmw` GPR save/restore, `mtsrr1` + IABR/DABR SPR
+writes, and the fixed debug-stack switch.
+
+Match details (bytes):
+- Use the EXACT retail mnemonics: `mtiabr`/`mtdabr` assemble to the retail
+  `mtspr IABR/DABR` encodings (0x7C12FBA6 / 0x7C15FBA6) — the historical
+  asm-void version's only gap was the `_db_stack_addr` reloc; write the stack
+  address as ABSOLUTE `lis r1, 0x8067; ori r1, r1, 0xd560` (retail has no
+  relocation there, unlike `gTRKCPUState`/`TRKSaveExtended1Block`/
+  `InitMetroTRKCommTable`/`TRK_main` which keep their relocs).
+- `InitMetroTRK` clears MSR_EE (`ori;xori`), `InitMetroTRK_BBA` leaves it set
+  and uses `li r3, 2`; both tail-`b TRK_main` with a trailing dead `blr`.
+- Unit-size extras fixed the same way as targimpl.c: drop the
+  `dolphin_trk_glue.h` include (drags `<revolution/OS.h>` → OSFastCast.h
+  statics) in favor of local prototypes + `<revolution/os/OSInterrupt.h>` +
+  `<revolution/os/OSReset.h>`; hand-inline the 0xc0 `TRK_copy_vector` static
+  (static inline does NOT suppress emission above ~0x44 — MWCC emits larger
+  statics even when fully inlined; verified the tiny strequal case is
+  suppressed but TRK_copy_vector was not).

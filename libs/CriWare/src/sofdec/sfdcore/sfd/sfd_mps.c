@@ -854,7 +854,7 @@ int sfmps_CopyDstBuft(void* self, s32 stream_kind, s32 buf, s32 size, s32 pts_hi
     total_size = ring_buf[3];
     write_pos = ring_buf[2];
     first_ptr = (void*)ring_buf[0];
-    second_ptr = (void*)ring_buf[4];
+    second_ptr = (void*)ring_buf[5];
 
     if (size > first_size + total_size)
         return 0;

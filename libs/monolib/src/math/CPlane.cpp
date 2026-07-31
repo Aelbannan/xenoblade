@@ -10,7 +10,7 @@ namespace ml {
         CVec3::cross(cross, temp1, temp2);
 
         mNormal = cross;
-        normalize();
+        mNormal.normalizeSub();
         mDist = -CVec3::dot(pos, mNormal);
 
         return this;

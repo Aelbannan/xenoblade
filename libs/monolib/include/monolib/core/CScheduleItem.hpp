@@ -18,7 +18,8 @@ struct CScheduleItem {
     u8 _pad49[3];     // 0x49
     void* mOwner;     // 0x4C: owning CSchedule
     s16 mPoolIndex;   // 0x50: index in the pool (-1 = free)
-};
+    u8 _pad52[6];     // 0x52
+};                  // size 0x58
 
 // Entry blob header: {lifetime, offset} pairs resolved by func_804E3EB4.
 struct CScheduleEntryData {

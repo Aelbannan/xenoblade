@@ -3,6 +3,18 @@
 
 #include <harness_catalog.h>
 
+#include "monolib/core/CScheduleItem.hpp"
+
+// Schedule item pool (lbl_eu_80661718, 0x10 bytes in .bss).
+struct CScheduleItemPool {
+    CScheduleItem* base; // 0x0: item array (stride 0x58)
+    s32 count;           // 0x4
+    s32 freeCount;       // 0x8
+    s32 lastHandle;      // 0xC
+};
+extern "C" CScheduleItemPool lbl_eu_80661718;
+extern "C" void func_804E3E2C(CScheduleItem* item);
+
 void func_804DEDA8(void* r3) {
     char* base = (char*)r3;
     base[0] = 0;
@@ -85,9 +97,31 @@ void func_804DFA08(){}
 
 void func_804DFA84(){}
 
-void func_804DFB88(){}
+// Release a schedule item by handle (idempotent for invalid handles).
+extern "C" void func_804DFB88(s16 handle) {
+    if (handle < 0) {
+        return;
+    }
+    if (handle >= 0 && handle < lbl_eu_80661718.count) {
+        lbl_eu_80661718.lastHandle = handle;
+        func_804E3E2C(&lbl_eu_80661718.base[handle]);
+        if (lbl_eu_80661718.freeCount > 0) {
+            lbl_eu_80661718.freeCount--;
+        }
+    }
+}
 
-void func_804DFBF4(){}
+// Look up a schedule item by handle; returns NULL for invalid handles.
+extern "C" CScheduleItem* func_804DFBF4(s16 handle) {
+    if (handle < 0) {
+        return NULL;
+    }
+    bool inRange = handle >= 0 && handle < lbl_eu_80661718.count;
+    if (inRange) {
+        return &lbl_eu_80661718.base[handle];
+    }
+    return NULL;
+}
 
 void func_804DFC48(){}
 

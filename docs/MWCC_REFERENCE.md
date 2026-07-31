@@ -897,7 +897,7 @@ caseDefault: result = 3;
 done: …;
 ```
 
-Verified FULL_MATCH: `criware_803C9FC0` (range check `(unsigned)(st-2) <= 2` + equality), `fn_803CC238` (avFlags 1/2/3), `sfply_IsEtrg` (cond 1/2/3/0). Also: `result = 0` must be **initialized after** any early-return guard (retail `li rX,0` sits at the first use point, not the declaration); and the last dispatch test must be written **negated** (`if (x != N) goto default; goto caseN;`) to hit the branch-over-branch peephole — the direct form emits `bne default; b caseN` instead of retail `beq caseN; b default`.
+Verified FULL_MATCH: `criware_803C9FC0` (range check `(unsigned)(st-2) <= 2` + equality), `fn_803CC238` (avFlags 1/2/3), `sfply_IsEtrg` (cond 1/2/3/0). Also: `result = 0` must be **initialized after** any early-return guard (retail `li rX,0` sits at the first use point, not the declaration); and the last dispatch test must be written **negated** (`if (x != N) goto default; goto caseN;`) to hit the branch-over-branch peephole — the direct form emits `bne default; b caseN` instead of retail `beq caseN; b default`. **Compiler note:** these dispatch notes (negated form, `SFLIB_SetErr` returns) hold under the *default GC/3.0a5.2* compiler. The retail `sfd_ply.c` was built with a **Wii-family compiler (configure `mw_version = "Wii/1.1"`)**, which changes two things: (1) store scheduling — the retail `li r0,1; stw r0, off(rX)` order (vs GC's `li r0,1; li rX,0; stw` delay) matches only on Wii; this is what unlocks `SFD_RelFrm`, `SFD_RequestStop`, `SFD_Start`, `SFD_TermSupply`, `SFPLY_Init` at 100% (all eight Wii/1.x versions match, all five GC versions fail). (2) dispatch polarity — under Wii/1.1 the **direct** form (`if (x == N) goto caseN; goto default;`) reproduces retail `beq caseN; b default`; the negated form emits `bne default; b caseN`. `SFD_GetFrm`/`SFD_Stop` remain soft-caps: their retail `beq next-block; b target` (conditional targeting the *immediate successor*) is merged to `bne target` by every MWCC version (GC and Wii) regardless of source shape; GetFrm additionally has a 3-way callee-saved rotation (retail self=r29/outFrm=r30/result=r31 vs MWCC outFrm=r31/self=r30/result=r29 — prologue `li result` lands after the parameter moves).
 
 **CriWare `SFLIB_SetErr` returns the error code (s32):** error-handler paths like `SFD_ExecOne`/`SFD_Start`/`SFD_TermSupply` `return SFLIB_SetErr(0, 0xff00xxxx);` (retail reuses r3 = SetErr result for the epilogue, no `li r3,0`). Declaring it `void` produces an extra `li r3,0; b epilogue`. `SFD_ExecOne` (FULL_MATCH) shows the shared-epilogue form: the SetErr path `b` jumps straight to the epilogue restores, skipping the else-path's `li r3, 0`.
 
@@ -2863,3 +2863,46 @@ FULL_MATCH opaque-by-policy callees `SJCRS_Lock`/`Unlock`/`Strcpy`/`Strcat` whos
 abstract memory transitions make the exit LR incomparable; §2.7.5). Needs either a
 matching MWCC build, or an engine change for private-stack-aware exit.target comparison
 of entry-frame LR restores.
+
+## CriWare ADX LSC — NULL-check wrappers + LSC_CallStatFunc lwzu soft-cap (US)
+
+`libs/CriWare/src/adx/lsc/lsc.c` (GC/3.0a5.2, `-O4,p`). 9/10 targets
+`LSC_EntryFname`, `LSC_EntryFileRange`, `LSC_GetStat`, `LSC_GetNumStm`,
+`LSC_SetLpFlg`, `LSC_SetFlowLimit`, `LSC_Pause`, `LSC_Stop`, `LSC_ExecServer`
+→ **FULL_MATCH** (100%, EQUIVALENT, semantic certificates).
+
+**Reusable ADX wrapper pattern** (all of the above): the retail wrappers are
+`LSC_Enter()` … `LSC_Leave()` around a body that reports errors through
+`LSC_CallErrFunc_(lbl_eu_80518478 + <off>)` — the offsets are **symptom
+constants**, not file offsets: `LSC_Stop` 0x5F/0x88, `LSC_Pause` 0x12C,
+`LSC_GetStat` 0x155, `LSC_GetNumStm` 0x17E, `LSC_SetFlowLimit` 0x2EC/0x315,
+`LSC_SetLpFlg` 0x369, `lsc_EntryFileRange` 0xB1/0xDA. NULL paths jump straight
+to the shared `LSC_Leave` epilogue (no second call); `-1` error results live
+in the same NV that holds the success value, then `LSC_Leave(); return r;`.
+`LSC_Stop` nests a second `LSC_Enter`/`LSC_Leave` pair inside the
+`(s8)e[1] != 0` block, with `e[0x34] = 0` between the inner and outer
+`LSC_Leave` calls. `LSC_ExecServer()` takes **no** args: iterate the 32×0x238
+LSE table calling `lsc_ExecHndl(e)` when `e[0] == 1` (declare the table
+`s8[]`-typed local so the `e[0]==1` compare emits `cmpi`, not `cmpli`).
+Wrappers must capture the inner `lsc_EntryFileRange` return value
+(`r = lsc_EntryFileRange(…)` — retail `or r31,r3,r3`); `LSC_EntryFname` passes
+`0x100000 - 1` as the last arg (`lis r6,16; subi r7,r6,1` — a runtime
+subtraction, not the folded literal 0xFFFFF).
+
+**Soft-cap — `LSC_CallStatFunc` (0x80395984, 84% HIGH_MATCH):** retail is
+`lis r4,@ha; addi r4,r4,@l; lwz r12,0(r4); cmpi; beqlr; lwz r3,4(r4);
+lwz r4,8(r4); mtctr r12; bctrl; blr` (fn table at bss `lbl_eu_805EC440`).
+MWCC **always** folds the `addi` into an update-form load (`lwzu r12,0(r4)`)
+when the base materialization is immediately followed by the first load at
+disp 0. Ruled out: u32*/u8*/void*/void**/fn-ptr** pointer forms, array/
+struct/cast accesses (those split into a two-base `lis r3; lwz LO(r3)` +
+`addi r4,r3` form that clobbers r3 on the NULL path → provably
+`not_equivalent`), loads-upfront (MWCC hoists the arg loads above the branch),
+`volatile`, `#pragma peephole off`/`#pragma scheduling off`,
+`-opt nopeephole` (fixes the fusion but breaks the other 9 functions),
+`-opt nosched/noloadstore/noccse/noglobal/nocommon/nodeadstore`,
+`-O4,s`, and MWCC GC 3.0a5.2/3.0a5/3.0a3.4/3.0a3 + Wii 1.0/1.0a/1.1/1.7
+(all fuse identically). Keep the single-pointer form — it preserves r3/r4 on
+the NULL path like retail; SMT EQUIVALENT is additionally blocked by the
+`bctrl` through the runtime callback (needs indirect-target closure). Only a
+tooling change (peephole per-function, or indirect-call closure) can close it.

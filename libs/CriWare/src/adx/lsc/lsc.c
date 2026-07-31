@@ -6,11 +6,13 @@ extern void LSC_Leave(void);
 extern void LSC_LockCrs(void *);
 extern void LSC_UnlockCrs(void *);
 extern void LSC_CallErrFunc_(const char *, ...);
+extern void LSC_CallStatFunc(void);
+extern void lsc_ExecHndl(u8 *);
 extern int ADXSTM_StopNw(void *);
+extern void ADXSTM_Stop(void *);
 extern int ADXSTM_Start(void *);
 extern int ADXSTM_GetStat(void *);
 extern int ADXSTM_ReleaseFileNw(void *);
-extern void LSC_CallStatFunc(void);
 
 extern char lbl_eu_80518478[];
 extern u8 lbl_eu_805E7D40[];
@@ -19,7 +21,7 @@ extern u8 lbl_eu_805E7D40[];
 #define LSE_SIZE  0x238
 
 void *lsc_Create(void *);
-void lsc_EntryFileRange(void *, const char *, int, int, int);
+int lsc_EntryFileRange(void *, const char *, int, int, int);
 void LSC_Stop(void *);
 
 void *LSC_Create(void *handle) {
@@ -95,22 +97,20 @@ void LSC_SetStmHndl(void *entry, void *stm) {
 int LSC_EntryFname(void *entry, const char *fname) {
     int r;
     LSC_Enter();
-    lsc_EntryFileRange(entry, fname, 0, 0, 0);
-    r = 0;
+    r = lsc_EntryFileRange(entry, fname, 0, 0, 0x100000 - 1);
     LSC_Leave();
     return r;
 }
 
-int LSC_EntryFileRange(void *entry, const char *fname, int a, int b, int c) {
+int LSC_EntryFileRange(void *entry, const char *fname, int off_lo, int off_hi, int size) {
     int r;
     LSC_Enter();
-    lsc_EntryFileRange(entry, fname, a, b, c);
-    r = 0;
+    r = lsc_EntryFileRange(entry, fname, off_lo, off_hi, size);
     LSC_Leave();
     return r;
 }
 
-void lsc_EntryFileRange(void *entry, const char *fname, int off_lo, int off_hi, int size) {
+int lsc_EntryFileRange(void *entry, const char *fname, int off_lo, int off_hi, int size) {
     int i;
     u8 *e = (u8 *)entry;
     char *dst;
@@ -130,6 +130,7 @@ void lsc_EntryFileRange(void *entry, const char *fname, int off_lo, int off_hi, 
     *(s32 *)(e + 0x4C) = size;
 
     LSC_UnlockCrs(entry);
+    return 0;
 }
 
 int LSC_Start(void *entry) {
@@ -148,70 +149,116 @@ int LSC_Start(void *entry) {
 }
 
 void LSC_Stop(void *entry) {
-    u8 *e = (u8 *)entry;
     LSC_Enter();
-    if ((s8)e[0x01] != 0) {
-        ADXSTM_StopNw(*(void **)(e + 0x10));
-        ADXSTM_ReleaseFileNw(*(void **)(e + 0x10));
-        e[0x01] = 0;
-        e[0x02] = 0;
-    }
-    LSC_Leave();
-}
-
-int LSC_Pause(void *entry, int pause) {
-    u8 *e = (u8 *)entry;
-    LSC_Enter();
-    if (pause) {
-        ADXSTM_StopNw(*(void **)(e + 0x10));
-        e[0x04] = 1;
+    if (entry == NULL) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0x5F);
     } else {
-        ADXSTM_Start(*(void **)(e + 0x10));
-        e[0x04] = 0;
+        if (*(void **)((u8 *)entry + 0x28) != NULL) {
+            ADXSTM_Stop(*(void **)((u8 *)entry + 0x28));
+            ((u8 *)entry)[0x02] = 0;
+        }
+        if ((s8)((u8 *)entry)[0x01] != 0) {
+            ((u8 *)entry)[0x01] = 0;
+            *(s32 *)((u8 *)entry + 0x2C) = 0;
+            LSC_Enter();
+            if (entry == NULL) {
+                LSC_CallErrFunc_(lbl_eu_80518478 + 0x88);
+            } else if ((s8)((u8 *)entry)[0x01] == 0) {
+                *(s32 *)((u8 *)entry + 0x1C) = 0;
+                *(s32 *)((u8 *)entry + 0x20) = 0;
+                *(s32 *)((u8 *)entry + 0x24) = 0;
+            }
+            LSC_Leave();
+            *(s32 *)((u8 *)entry + 0x34) = 0;
+        }
     }
     LSC_Leave();
-    return 0;
 }
 
-void LSC_ExecServer(void *entry) {
-    u8 *e = (u8 *)entry;
-    if (e[0x04] == 1) return;
-    if ((s8)e[0x01] != 2) return;
-    if (ADXSTM_GetStat(*(void **)(e + 0x10)) == 4)
-        e[0x01] = 3;
+void LSC_Pause(void *entry, int pause) {
+    LSC_Enter();
+    if (entry == NULL) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0x12C);
+    } else if (pause == 1) {
+        ((u8 *)entry)[0x04] = 1;
+    } else {
+        ((u8 *)entry)[0x04] = 0;
+    }
+    LSC_Leave();
+}
+
+void LSC_ExecServer(void) {
+    int i;
+    s8 *e;
+    void *crs;
+
+    LSC_Enter();
+    LSC_LockCrs(&crs);
+
+    e = (s8 *)lbl_eu_805E7D40;
+    for (i = 0; i < LSE_MAX; i++, e += LSE_SIZE) {
+        if (e[0x00] == 1)
+            lsc_ExecHndl((u8 *)e);
+    }
+
+    LSC_UnlockCrs(&crs);
+    LSC_Leave();
 }
 
 int LSC_GetStat(void *entry) {
-    return *(s8 *)((u8 *)entry + 0x01);
+    int r;
+    LSC_Enter();
+    if (entry == NULL) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0x155);
+        r = -1;
+    } else {
+        r = *(s8 *)((u8 *)entry + 0x01);
+    }
+    LSC_Leave();
+    return r;
 }
 
-int LSC_GetNumStm(void) {
-    int i, n = 0;
-    for (i = 0; i < LSE_MAX; i++) {
-        if (*(s8 *)(lbl_eu_805E7D40 + i * LSE_SIZE) != 0)
-            n++;
+int LSC_GetNumStm(void *entry) {
+    int r;
+    LSC_Enter();
+    if (entry == NULL) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0x17E);
+        r = -1;
+    } else {
+        r = *(s32 *)((u8 *)entry + 0x24);
     }
-    return n;
+    LSC_Leave();
+    return r;
 }
 
 void LSC_SetFlowLimit(void *entry, int limit) {
-    u8 *e = (u8 *)entry;
-    *(s32 *)(e + 0x18) = limit;
-    *(s32 *)(e + 0x24) = limit;
-    *(s32 *)(e + 0x1C) = (limit / 3) * 2;
+    LSC_Enter();
+    if (entry == NULL) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0x2EC);
+    } else if (limit < 0 || limit > *(s32 *)((u8 *)entry + 0x18)) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0x315, limit);
+    } else {
+        *(s32 *)((u8 *)entry + 0x14) = limit;
+    }
+    LSC_Leave();
 }
 
 extern u32 lbl_eu_805EC440[];
 
 void LSC_CallStatFunc(void) {
-    u32 *p = (u32*)lbl_eu_805EC440;
+    u32 *p = (u32 *)lbl_eu_805EC440;
     u32 fn = *p;
-    if (fn == 0) return;
-    u32 arg1 = *(p + 1);
-    u32 arg2 = *(p + 2);
-    ((void (*)(void*, void*))fn)((void*)arg1, (void*)arg2);
+    if (fn == 0)
+        return;
+    ((void (*)(u32, u32))fn)(p[1], p[2]);
 }
 
 void LSC_SetLpFlg(void *entry, int flag) {
-    *(u8 *)((u8 *)entry + 0xA8) = (flag != 0) ? 1 : 0;
+    LSC_Enter();
+    if (entry == NULL) {
+        LSC_CallErrFunc_(lbl_eu_80518478 + 0x369);
+    } else {
+        ((u8 *)entry)[0x03] = (u8)flag;
+    }
+    LSC_Leave();
 }

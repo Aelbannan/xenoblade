@@ -2867,6 +2867,36 @@ abstract memory transitions make the exit LR incomparable; §2.7.5). Needs eithe
 matching MWCC build, or an engine change for private-stack-aware exit.target comparison
 of entry-frame LR restores.
 
+**RESOLVED — desc-hoist fix (this fork):** the retail sj_* error blocks are byte-identical
+under **`mw_version = "Wii/1.1"` + `#pragma opt_propagation off` + a `const char *suffix`
+local** assigned before the two calls (`suffix = lbl + desc_off; CRICRW_Strcpy(buf, 0x40,
+lbl + code_off); CRICRW_Strcat(buf, 0x40, suffix);`). `opt_propagation off` stops MWCC
+from sinking the suffix computation below the strcpy call; with the suffix local the
+IR keeps it pre-call and the allocator puts it in the callee-saved reg (r31/r30),
+reproducing retail exactly. `fn_80397A74` (us-80397a74), `sjrbf_Create` (us-803975d4)
+and `sjrbf_IsGetChunk` (us-80398360) are now **FULL_MATCH (0/67, 0/77, 0/94)** on
+`GC/3.0a5.2`→`Wii/1.1` switch. Scope the pragma per function with
+`#pragma push / #pragma opt_propagation off / … / #pragma pop` — a file-level pragma
+regresses `sjrbf_Create`'s loop (75/79). Wii/1.1 is also required for `sjrbf_Create`'s
+store block (`stw valid / addi vtable@l / lis err@ha / stw vtable / addi uuid@l /
+addi err@l`); GC/3.0a5.x hoists `lis err@ha` above the valid store and sinks the vtable
+store to the end.
+
+**Remaining soft-cap — `sjrbf_PutChunk` (us-80397e6c, 44/121 instrs):** the
+`chunk->size > 0 && chunk->ptr != NULL` gate. Retail emits `cmpwi ptr,0; bne body;
+b exit; body:` (branch-over-branch); every MWCC build collapses to `beq exit; body:`
+(1 instr short, shifts the mode dispatch/memcpy blocks). Tested ~35 gate structures
+(&& / nested / OR+return / goto-chains / labels before-after body / bitwise &
+ternary / ptr-first / comma) × Wii 1.0–1.7 + GC 3.0a3–3.0a5.2 × -O2/-O3/-O4/-O4,s
+× `-opt` nopeephole/nodeadcode/nodeadstore/nospeed × pragmas (scheduling, peephole,
+optimize_for_size, optimization_level) — all collapse. The over-branch survives only
+when the exit block is placed before the body label (wrong layout, two epilogues).
+Also fixed here: retail never sets r3 at the PutChunk exit (function returns garbage)
+— do NOT `return 0` (extra `li r3,0`). `EQUIVALENT_MATCH` is additionally blocked by
+the `has_indirect_calls` gate (put_func/err_func `bctrl`), so FULL_MATCH (100%) is the
+only route — unreachable while the gate collapses. Same over-branch appears in
+`sjrbf_UngetChunk` / `sjmem_PutChunk` retail gates.
+
 **Post-desc-hoist body fixes (this fork, GC/3.0a5.2 `-O4,p`)** — the four internal
 functions now sit at 88.5–94.8% fuzzy / size PASS (`fn_80397A74` 0x10C exact,
 `sjrbf_PutChunk` 0x1E4, `sjrbf_IsGetChunk` 0x178, `sjrbf_Create` 0x134); all
@@ -3063,3 +3093,45 @@ body (no `bl LSC_Stop`; the standalone LSC_Stop exists separately). Duplicating
 the verified 0/52-mismatch LSC_Stop body text verbatim reproduces the inline
 copies exactly — including the leading `LSC_Enter()` (A') and the body's own
 `LSC_Leave()` (D') whose block membership determines the skip-branch target.
+
+## CRI ADX SJ sj_mem.c error branches — desc-precompute soft-cap (US)
+
+`libs/CriWare/src/adx/sj/sj_mem.c` SJMEM_Destroy/GetUuid/EntryErrFunc/Reset/
+GetBufSize + sjmem_PutChunk/IsGetChunk/GetNumData (and the same pattern in
+`sj_uni.c`/`sj_rbf.c`). Retail error branch per call site:
+
+```text
+lis r5, lbl@ha; addi r3, sp, SLOT; addi r5, r5, lbl@l; li r4, 0x40
+addi r31, r5, 12      ; DESC pointer (second call's src) precomputed FIRST
+addi r5, r5, 95       ; CODE pointer (first call's src) — reuses r5/base
+bl CRICRW_Strcpy      ; Strcpy(buf, 0x40, code) — then
+or r5, r31, r31       ; mr desc into r5; bl CRICRW_Strcat; bl SJERR_CallErr
+```
+
+Message table `lbl_eu_80518A68` layout confirmed from retail bytes: code
+string ('E20040902xx', offsets 0x27/0x53/0x5F/0x6B/0x77/0x83/0x8F/0x9B/0xA7/
+0xB3/0xD7/0xE3/0x107/0x113/0x137/0x143) then description (0x0C " : NULL
+pointer is passed.", 0x33 " : Specified handle is invalid."). Source must be
+`CRICRW_Strcpy(buf, 0x40, lbl + CODE_OFF); CRICRW_Strcat(buf, 0x40, lbl +
+0x0C/0x33);` — code first, description second.
+
+**Working fixes:** (1) `memset()` not `__builtin_memset` — retail reloc is
+`bl memset`; `__builtin_memset` breaks the FULL_MATCH callee contract lookup
+(`calls lack current certificates`). (2) Error-branch buffers: declare BOTH at
+function top with `char buf2[64]; char buf1[64];` (buf2 FIRST) — MWCC assigns
+slots in declaration order, flipping branch1→sp+8 / branch2→sp+0x48 to match
+retail (sj_rbf.c SJRBF_Destroy already used this).
+
+**Hard soft-cap (SMT + FULL_MATCH blocked):** retail precomputes the DESC
+pointer (`addi r31, r5, 12`) into r31 BEFORE the Strcpy call and emits
+`or r5, r31, r31` after; every available MWCC (GC/1.x-3.0a5.2, Wii/1.0-1.7,
+`-O1`..`-O4,p/s`, `#pragma scheduling/peephole off`, `-ipa file`) instead
+keeps the BASE in r31 and rematerializes `addi r5, r31, 12` after the call
+(2 instr shorter). ~25 source shapes ruled out (locals/consts in every order,
+comma exprs, casts, nested `Strcat(Strcpy(...))`, static inline helper,
+array indexing, `&lbl[i]`). EQUIVALENT_MATCH additionally blocked: the opaque
+EABI callee tokens (reads `*`) include r31, so the retail r31=desc vs decomp
+r31=base at every call diverges the fresh-memory UFs → exit.target mismatch
+(`inconclusive_abstraction`); the 3 functions with a `bctrl` err_func call
+(GetNumData/PutChunk/IsGetChunk) also fail the `has_indirect_calls` gate.
+Keep high-level C++ at the achieved ~83–90% HIGH_MATCH; **no** `insn_patches`.

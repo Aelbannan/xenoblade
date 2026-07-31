@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 
+extern void *memset(void *, int, unsigned long);
+
 extern char lbl_eu_80518A68[];
 extern u32 lbl_eu_805ECE48;  /* init counter */
 extern u8  lbl_eu_805ECE50[]; /* work area (0x480 bytes) */
@@ -53,7 +55,7 @@ void SJMEM_Init(void) {
     SJCRS_Init();
     SJCRS_Lock();
     if (lbl_eu_805ECE48 == 0) {
-        __builtin_memset(lbl_eu_805ECE50, 0, 0x480);
+        memset(lbl_eu_805ECE50, 0, 0x480);
     }
     lbl_eu_805ECE48++;
     SJCRS_Unlock();
@@ -63,7 +65,7 @@ void SJMEM_Init(void) {
 void SJMEM_Finish(void) {
     SJCRS_Lock();
     if (--lbl_eu_805ECE48 == 0) {
-        __builtin_memset(lbl_eu_805ECE50, 0, 0x480);
+        memset(lbl_eu_805ECE50, 0, 0x480);
     }
     SJCRS_Unlock();
     SJCRS_Finish();
@@ -116,20 +118,20 @@ void *sjmem_Create(void *pool_mem, u32 flags) {
 
 /* --- SJMEM_Destroy --- */
 void SJMEM_Destroy(void *self_ptr) {
+    char buf2[64];
+    char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x5F);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x5F);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x6B);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x6B);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
         SJERR_CallErr(buf2);
     } else {
-        __builtin_memset(self, 0, 0x24);
+        memset(self, 0, 0x24);
         self->valid = 0;
     }
     SJCRS_Unlock();
@@ -137,19 +139,19 @@ void SJMEM_Destroy(void *self_ptr) {
 
 /* --- SJMEM_GetUuid --- */
 void *SJMEM_GetUuid(void *self_ptr) {
+    char buf2[64];
+    char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     void *r;
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x77);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x77);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
         SJERR_CallErr(buf1);
         r = NULL;
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x83);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x83);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
         SJERR_CallErr(buf2);
         r = NULL;
     } else {
@@ -161,17 +163,17 @@ void *SJMEM_GetUuid(void *self_ptr) {
 
 /* --- SJMEM_EntryErrFunc --- */
 void SJMEM_EntryErrFunc(void *self_ptr, void *cbfunc, void *cbarg) {
+    char buf2[64];
+    char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x8F);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x8F);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x9B);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x9B);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
         SJERR_CallErr(buf2);
     } else {
         self->err_func = (void (*)(void *, int))cbfunc;
@@ -182,17 +184,17 @@ void SJMEM_EntryErrFunc(void *self_ptr, void *cbfunc, void *cbarg) {
 
 /* --- SJMEM_Reset --- */
 void SJMEM_Reset(void *self_ptr) {
+    char buf2[64];
+    char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x27);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x27);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x53);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x53);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
         SJERR_CallErr(buf2);
     } else {
         self->avail = self->buf_size;
@@ -203,19 +205,19 @@ void SJMEM_Reset(void *self_ptr) {
 
 /* --- SJMEM_GetNumData --- */
 int SJMEM_GetNumData(void *self_ptr, int mode) {
+    char buf2[64];
+    char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     int r;
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0xA7);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0xA7);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0xB3);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0xB3);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
         SJERR_CallErr(buf2);
         r = 0;
     } else if (mode == 1) {
@@ -277,13 +279,13 @@ int SJMEM_PutChunk(void *self, int mode, SJ_CHUNK *chunk) {
 int sjmem_PutChunk(SJMEM *self, int mode, SJ_CHUNK *chunk) {
     if (self == NULL) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0xD7);
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xD7);
+        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x0C);
         SJERR_CallErr(buf);
     } else if (self->valid == 0) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0xE3);
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0xE3);
+        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x33);
         SJERR_CallErr(buf);
     } else if (chunk->size > 0 && chunk->ptr != NULL) {
         if (mode == 0) {
@@ -356,15 +358,15 @@ int sjmem_IsGetChunk(SJMEM *self, int mode, int size, int *out) {
     int result;
     if (self == NULL) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x107);
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x107);
+        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x0C);
         SJERR_CallErr(buf);
         return 0;
     }
     if (self->valid == 0) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x113);
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518A68 + 0x113);
+        CRICRW_Strcat(buf, 0x40, lbl_eu_80518A68 + 0x33);
         SJERR_CallErr(buf);
         return 0;
     }
@@ -383,19 +385,19 @@ int sjmem_IsGetChunk(SJMEM *self, int mode, int size, int *out) {
 
 /* --- SJMEM_GetBufSize --- */
 int SJMEM_GetBufSize(void *self_ptr) {
+    char buf2[64];
+    char buf1[64];
     SJMEM *self = (SJMEM *)self_ptr;
     int r;
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x137);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518A68 + 0x137);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518A68 + 0x0C);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x143);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518A68 + 0x143);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518A68 + 0x33);
         SJERR_CallErr(buf2);
         r = 0;
     } else {

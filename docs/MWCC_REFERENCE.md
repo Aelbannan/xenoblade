@@ -2897,6 +2897,17 @@ the `has_indirect_calls` gate (put_func/err_func `bctrl`), so FULL_MATCH (100%) 
 only route — unreachable while the gate collapses. Same over-branch appears in
 `sjrbf_UngetChunk` / `sjmem_PutChunk` retail gates.
 
+**RESOLVED — PutChunk gate (this fork):** the branch-over-branch is reproduced by
+writing the function **`void`** with an **exit label placed BEFORE the body label**
+plus explicit `return;` statements. Pattern: the `&&` gate is `if (size > 0 &&
+ptr != NULL) goto body; goto exit; exit: return; body: …` — the `return;` in the
+exit block (its epilogue merges with the function end) prevents MWCC from collapsing
+`bne body; b exit; body` into `beq exit; body`, producing the retail layout
+`[bne body][b exit][body][exit]`. All mode bodies end with `return;` (retail
+`b exit`), the error paths use `goto end;` (retail `b .L_80398038`), and the final
+`end: return;` is the shared epilogue. `sjrbf_PutChunk` is now **FULL_MATCH 0/121**.
+Same structure applies to `sjrbf_UngetChunk` / `sjmem_PutChunk` gates.
+
 **Post-desc-hoist body fixes (this fork, GC/3.0a5.2 `-O4,p`)** — the four internal
 functions now sit at 88.5–94.8% fuzzy / size PASS (`fn_80397A74` 0x10C exact,
 `sjrbf_PutChunk` 0x1E4, `sjrbf_IsGetChunk` 0x178, `sjrbf_Create` 0x134); all

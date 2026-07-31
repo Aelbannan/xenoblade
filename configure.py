@@ -1214,7 +1214,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/nand/NANDOpenClose.c"),
             Object(Matching, "RVL_SDK/src/revolution/nand/NANDCore.c"),
             Object(Matching, "RVL_SDK/src/revolution/nand/NANDCheck.c"),
-            Object(Matching, "RVL_SDK/src/revolution/nand/NANDLogging.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/nand/NANDLogging.c"),
         ],
     ),
     DolphinLib(

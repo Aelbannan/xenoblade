@@ -819,11 +819,12 @@ void sftim_Tc2TimeN(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
     s32 field = *(s16*)(td + 0x1E);
-    s32 totalFrame = frame + frame2;
     s32 totalSec = sec + min * 60 + hour * 3600;
+    s32 half = unit / 2;
+    s32 totalFrame = frame + frame2;
     s32 time = tcSec * totalSec;
     time += totalFrame * unit;
-    time += field * (unit / 2);
+    time += field * half;
     *out1 = time;
     *out2 = tcSec;
 }
@@ -839,11 +840,12 @@ void sftim_Tc2Time23N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s32 field = *(s16*)(td + 0x1E);
     s32 totalSec = sec + min * 60 + hour * 3600;
+    s32 half = unit / 2;
+    s32 totalFrame = frame + frame2;
     s32 time = totalSec * unit60;
-    time += (frame + frame2) * unit;
-    time += field * (unit / 2);
+    time += totalFrame * unit;
+    time += *(s16*)(td + 0x1E) * half;
     *out1 = time;
     *out2 = tc / rate;
 }
@@ -880,13 +882,7 @@ void sftim_Tc2Time59N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s32 field = *(s16*)(td + 0x1E);
-    s32 totalFrame = frame + frame2;
-    s32 totalSec = sec + min * 60 + hour * 3600;
-    s32 time = totalSec * unit60;
-    time += totalFrame * unit;
-    time += field * (unit / 2);
-    *out1 = time;
+    *out1 = (sec + min * 60 + hour * 3600) * unit60 + (frame + frame2) * unit + *(s16*)(td + 0x1E) * (unit / 2);
     *out2 = tc / rate;
 }
 
@@ -1156,10 +1152,10 @@ s32 SFTIM_IsVideoTerm(void* self) {
         return 0;
     }
 
-    return (UTY_CmpTime(v1018 + (v101C * 2000) / 21186,
+    return (UTY_CmpTime(v1018 + (v101C * 2000) / 59940,
                         v101C,
                         *(s32*)(p + 0x1028),
-                        *(s32*)(p + 0x102C)) == 0);
+                        *(s32*)(p + 0x102C)) != 0);
 }
 
 void SFTIM_SetSpeed(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x1048) = a; *(u32*)((u8*)self + 0x104C) = b; }
@@ -1169,10 +1165,9 @@ void SFTIM_GetSpeed(void* self, u32* out1, u32* out2) {
     *out2 = *(u32*)((u8*)self + 0x104c);
 }
 
-void SFD_SetCyclicFrameOutput(void* self, s32 num, s32 den) {
+s32 SFD_SetCyclicFrameOutput(void* self, s32 num, s32 den) {
     if (SFLIB_CheckHn(self) != 0) {
-        SFLIB_SetErr(0, 0xFF00012B);
-        return;
+        return SFLIB_SetErr(0, 0xFF00012B);
     }
     {
         char cs[8];
@@ -1184,6 +1179,7 @@ void SFD_SetCyclicFrameOutput(void* self, s32 num, s32 den) {
         }
         SFLIB_UnlockCs(cs);
     }
+    return 0;
 }
 
 s32 SFTIM_ExecCyclicFrameOutput(void* self) {

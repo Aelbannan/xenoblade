@@ -2987,3 +2987,33 @@ FULL_MATCH; six sibling functions reached 89.7–97.7% (HIGH/CODE_MATCH).
   respond to declaration order, statement order, u16/u32 locals, or casts;
   EQUIVALENT_MATCH is additionally gated on the ADXSTM_* callees in
   `adx_stmc` (TU currently fails to build) being accepted.
+
+### 14c. CriWare sfd_mps PTS pair layout + Copy* param order (EQUIVALENT-gate notes)
+
+Matching the sfd_mps `CopyAudio`/`CopyVideo`/`CopyDstBuft` family (HIGH/CODE_MATCH,
+not yet accepted) surfaced two layout facts that are easy to get wrong:
+
+- **PTS params are `(…, pts_hi, pts_lo)` with `pts_hi` in the 5th arg (r7).**
+  The retail 64-bit `(pts < 0)` check (`xoris r30,0x8000 … subfc r0,r0,r29`)
+  subtracts the 6th arg as the LO word, so the 6th register (r8) holds `pts_lo`.
+  Declaring `(…, pts_lo, pts_hi)` silently swaps the xoris/subfc operands.
+- **The `SfdMpsInf` 64-bit PTS pairs store HI at the lower offset**
+  (`[0x10]=hi,[0x14]=lo` and `[0x18]=hi,[0x1c]=lo`): `sfmps_InitInf` writes
+  `p[4]=0x7fffffff` (hi), `p[5]=-1` (lo) = `0x7FFFFFFFFFFFFFFF` sentinel, and
+  `sfmps_SetMpsHd` reads `sub[6]` as hi. CopyAudio's min/max update skips
+  negative PTS (`(s64)pts < 0` → the `xoris`/`subfe`/`neg.` chain), then
+  `min = (pts < min) ? pts : min;` ternaries (phi-merge `or` copies per §7e).
+- `CopyDstBuft` `second_ptr` comes from **`ring_buf[5]`** (offset 0x54), not
+  [4]; the retail keeps it in callee-saved `r22` across the `SFBUF_RingAddWrite`
+  call.
+
+Remaining gaps are MWCC allocator rotations (5th/6th param registers r29/r30,
+final-store temp pairs r0/r4, s64 `+=` store scheduling) that resist declaration
+order, temp-splitting, block scoping, goto-chains, and ternary rewrites.
+EQUIVALENT_MATCH for these is additionally gated: `Seek` on `SFHDS_ReprocessHdr`
+(STRUCTURAL, sfd_hds), `DecodeSomeUnit` on the sfd_buf callee chain
+(`sfbuf_RingAddSub` STRUCTURAL, sfd_buf.o unbuilt), `SkipNext` on the SMT path
+limit (4096) for the `while(size>=4){MPS_CheckDelim…}` loop, and
+`CopyUsrSj`/`CopyDstBuft` on the `has_indirect_calls` gate (vtable `bctrl` +
+`lbl_eu_80619BAC` function pointer) — all FULL_MATCH-only without external
+unblocking.

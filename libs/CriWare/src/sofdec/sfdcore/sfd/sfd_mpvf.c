@@ -3,11 +3,63 @@
 
 #include <harness_catalog.h>
 
+extern u32 lbl_eu_80619B20[];
+
 void SFMPVF_InitPool() {}
 
-void SFD_SetMpvParaTbl() {}
+void SFD_SetMpvParaTbl(u32* src, u32* strides, u32* tbl) {
+    u32* g = lbl_eu_80619B20;
+    s32 i = 0;
+    s32 j, k;
 
-s32 sfmpvf_CheckMpvPara(void* self);
+    *(u64*)&g[0] = *(u64*)&src[0];
+    *(u64*)&g[2] = *(u64*)&src[2];
+    *(u64*)&g[4] = *(u64*)&src[4];
+    *(u64*)&g[6] = *(u64*)&src[6];
+    g[4] = 0;
+    g[8] = 0;
+    g[0xA] = (strides[0] + 0x1F) & ~0x1F;
+    g[0xB] = (strides[1] + 0x1F) & ~0x1F;
+
+    for (j = 0; j < 4; j++) {
+        for (k = 0; k < 4; k++) {
+            if (i < src[7]) {
+                g[0xC + j * 4 + k] = (tbl[k] + 0x1F) & ~0x1F;
+            } else {
+                g[0xC + j * 4 + k] = 0;
+            }
+            i++;
+        }
+        tbl += 4;
+    }
+}
+
+s32 sfmpvf_CheckMpvPara(void* self) {
+    u32* g = lbl_eu_80619B20;
+    u32* p = lbl_eu_80619B20;
+    u32 width = p[0x1C / 4];
+    u32 i;
+
+    if (width - 1 > 0xF) {
+        return -1;
+    }
+    if (p[0x10 / 4] == 0 || p[0x20 / 4] == 0) {
+        u32* q = g + 0xA;
+        if (q[0] == 0) {
+            return -1;
+        }
+        if (q[1] == 0) {
+            return -1;
+        }
+    }
+    p = g + 0xC;
+    for (i = 0; i < width; i++, p++) {
+        if (*p == 0) {
+            return -1;
+        }
+    }
+    return 0;
+}
 
 void* memcpy(void* dst, const void* src, size_t n);
 s32 SFLIB_SetErr(void* h, u32 err_code);
@@ -58,7 +110,13 @@ void SFMPVF_ResetPicUsrBuf(void* self) {
 
 void sfmpvf_SetPicUsrBuf(void* self, u32 w, u32 h, u32 stride) {}
 
-void SFMPVF_InitPicUsr() {}
+void SFMPVF_InitPicUsr(void* self) {
+    u32* w = (u32*)self;
+    u32 i;
+    for (i = 0; i < 0x94 / 4; i++) {
+        w[i] = 0;
+    }
+}
 
 void SFMPVF_GetRead() {}
 
@@ -150,10 +208,60 @@ void SFMPVF_EndRefFrm(void* self) {
 
 void SFMPVF_HoldFrm() {}
 
-void SFD_IsNextFrmReady() {}
+s32 sfmpvf_SearchStbyFrm(void* h, void** outA, void** outB);
+u32 SFSET_GetCond(void* self, u32 idx);
+s32 SFTIM_IsGetFrmTimeTunit(void* self, s32 cmpA, s32 cmpB);
+s32 SFLIB_CheckHn(void* h);s32 SFD_IsNextFrmReady(void* h) {
+    void* cs;
+    void* frm;
+    void* dummy;
+    if (SFLIB_CheckHn(h) != 0) {
+        SFLIB_SetErr(0, 0xff000183);
+        return 0;
+    }
+    SFLIB_LockCs(&cs);
+    if (*(s32*)((u8*)h + 0x54) != 4) {
+        frm = NULL;
+    } else {
+        sfmpvf_SearchStbyFrm(h, &dummy, &frm);
+        if (frm != NULL && SFSET_GetCond(h, 0xf) != 0 &&
+            SFTIM_IsGetFrmTimeTunit(h, *(u32*)((u8*)frm + 0x44), *(u32*)((u8*)frm + 0x48)) == 0) {
+            frm = NULL;
+        }
+    }
+    SFLIB_UnlockCs(&cs);
+    return frm != NULL;
+}
 
-void sfmpvf_SearchStbyFrm() {}
-
-void sfmpvf_IsChkFirst() {}
+s32 sfmpvf_IsChkFirst(void* a, void* b) {
+    s32 x;
+    if (a == NULL) {
+        return 1;
+    }
+    if (*(s32*)((u8*)b + 0x54) < *(s32*)((u8*)a + 0x54)) {
+        return 1;
+    }
+    if (*(s32*)((u8*)b + 0x54) > *(s32*)((u8*)a + 0x54)) {
+        return 0;
+    }
+    if (*(s32*)((u8*)b + 0xF0) < *(s32*)((u8*)a + 0xF0)) {
+        return 1;
+    }
+    if (*(s32*)((u8*)b + 0xF0) > *(s32*)((u8*)a + 0xF0)) {
+        return 0;
+    }
+    if (*(s32*)((u8*)b + 0xF4) < *(s32*)((u8*)a + 0xF4)) {
+        return 1;
+    }
+    if (*(s32*)((u8*)b + 0xF4) > *(s32*)((u8*)a + 0xF4)) {
+        return 0;
+    }
+    {
+        s32 x = *(s32*)((u8*)b + 0xF8) ^ *(s32*)((u8*)a + 0xF8);
+        s32 t = x >> 1;
+        s32 m = x & *(s32*)((u8*)a + 0xF8);
+        return (u32)(t - m) >> 31;
+    }
+}
 
 void SFMPVF_ChkImageSize() {}

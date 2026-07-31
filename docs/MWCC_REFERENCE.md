@@ -230,6 +230,17 @@ bytes. Reusable patterns:
   then/else duplication. EQUIVALENT blocked by unresolved indirect vtable calls
   (obj/core/hn dispatch) in the SMT callee attestation — needs FULL_MATCH.
 
+## sfh_ver2 / sfh_local — Sofdec SFH analysers (US, GC/3.0a5.2 `-O4,p`)
+
+`libs/CriWare/src/sofdec/sfdcore/sfh/{sfh_ver2,sfh_local}.c`. 6/10 VER2_Anly* targets FULL_MATCH; `searchStmId` 97.9% CODE_MATCH. Reusable patterns:
+
+- **Sparse dispatch → goto-chain, not `switch`:** for kind ∈ {0xC0, 0xE0, 0xA0}, MWCC's `switch` lowering emits a **signed `cmpi` + range check** (`cmpi; beq; bge; cmpi …`) with reordered cases; retail is the **unsigned `cmpli` equality chain** with case bodies appended after the chain. A goto-chain (`if (kind == C0) goto caseC0; …; goto done; caseC0: …; goto done; …`) reproduces retail exactly (CodecAud/searchStmId). `if-else-if` emits the same chain but **bne-skips with inline bodies** (wrong layout).
+- **Switch with consecutive cases → jump table:** 7 consecutive cases (0x21–0x27) make MWCC emit `lis/rlwinm/lwzx/bcctr`; retail uses an equality chain — use the goto-chain + **shared-store result variable** (`if (c==X) goto setN; …; result = 0; store: *out = result;`) with the default block placed **after** the set blocks so its `li r0,0` falls into the store.
+- **Result-pointer init sinking:** initialize `found = NULL` after `work`'s last use (right before the dispatch) — retail reuses `work`'s register (r28) for `found`; initializing at declaration adds a 5th live register (frame 48B vs 32B, `stmw r27` vs individual stw).
+- **Counted loops are `while` (check-first), not `do-while`:** retail emits `[setup] b .check; body; inc; .check: cmpw; blt` — write `cur = …; i = 0; while (i < n) { …; cur += stride; i++; }` with **increment order matching retail** (`cur` before `i`).
+- **Statement order in merge branches:** `n_aud = 0; is_v2 = 1; n_vid = 0;` interleaves `stw; li; stw` like retail (the li lands between the two stores).
+- **Soft-cap (same class as ADX_ScanInfoCode / MWSST_Destroy):** tail `li r3, 1` before/after `stw r0, 0(r30)` — MWCC floats the return-constant load above the r0-store when the stored value is an ALU result in r0; when the value stays in r3 (direct call result / val local) the li lands after the store. 8+ source shapes (temp, inline, comma, reassign, pragma scheduling off) do not change it. SMT path additionally requires the whole callee tree accepted (`searchStmId` → `SFH_AnlyNumElem*` → `VER*_AnlyNumElem*` → `SFHLOCAL_GetNbyteL`); the leaf `SFHLOCAL_GetNbyteL` is blocked because MWCC **auto-unrolls** every loop form of the retail's mtctr/bdnz 8-byte rlwimi reader (while/for/cnt/index forms, `#pragma opt_unroll off` / `opt_unroll_loops off` / `optimization_level 3`, `-O4,s`) — unrolled bodies switch from rlwimi to rlwinm+or.
+
 ## COccCulling::setFrustum — scale/rot + interleaved planes (US)
 
 Exact size `0x588`. Best ~**89.2%** HIGH_MATCH: `setScale(CVec3(sx,sy,lbl_eu_80667C88))` + `setRotXYZ` + `FLAGS_01` plane guard + SDA dir/unk124/128 zeros + `math::sqrt` (inlined `FSqrt`/`Warning`/`FrSqrt`).

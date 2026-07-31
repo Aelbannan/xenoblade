@@ -41,9 +41,66 @@ void MPV_GetDctCnt(void* self, u32* out1, u32* out2) {
 
 void MPV_Destroy() {}
 
-void MPV_SetCond() {}
+extern u32 lbl_eu_80602FEC;
+void MPVM2V_SetCond(void* mpv);
+s32 MPVERR_SetCode(s32 val, u32 err_code);
 
-void MPV_GetCond() {}
+s32 MPV_SetCond(void* mpv, s32 cond, s32 val) {
+    u32* tbl;
+    if (mpv == NULL) {
+        u32* base = *(u32**)((u8*)lbl_eu_80602B88 + 0x58);
+        s32 n = *(s32*)((u8*)lbl_eu_80602B88 + 0x54);
+        tbl = base + cond;
+        while (n-- > 0) {
+            if (*(s32*)((u8*)base + 0xb08) == 2) {
+                *(u32*)((u8*)tbl + 0xb10) = val;
+            }
+            tbl = (u32*)((u8*)tbl + 0xdc0);
+            base = (u32*)((u8*)base + 0xdc0);
+        }
+        tbl = (u32*)lbl_eu_80602B88;
+    } else {
+        s32 err;
+        if (mpv == NULL) {
+            err = -1;
+        } else if (*(s32*)((u8*)mpv + 0xb08) != 2) {
+            err = -1;
+        } else {
+            lbl_eu_80602FEC = (u32)mpv;
+            err = 0;
+        }
+        if (err != 0) {
+            return MPVERR_SetCode(0, 0xff030202);
+        }
+        tbl = (u32*)((u8*)mpv + 0xb10);
+    }
+    tbl[cond] = val;
+    MPVM2V_SetCond(mpv);
+    return 0;
+}
+
+s32 MPV_GetCond(void* mpv, s32 cond, s32* out) {
+    u32* tbl;
+    if (mpv == NULL) {
+        tbl = (u32*)lbl_eu_80602B88;
+    } else {
+        s32 err;
+        if (mpv == NULL) {
+            err = -1;
+        } else if (*(s32*)((u8*)mpv + 0xb08) != 2) {
+            err = -1;
+        } else {
+            lbl_eu_80602FEC = (u32)mpv;
+            err = 0;
+        }
+        if (err != 0) {
+            return MPVERR_SetCode(0, 0xff030210);
+        }
+        tbl = (u32*)((u8*)mpv + 0xb10);
+    }
+    *out = tbl[cond];
+    return 0;
+}
 
 void MPVM2V_SetMbCb(void* self, void* a, void* b, void* c);
 void MPV_SetMbCb(void* self, void* a, void* b, void* c) {

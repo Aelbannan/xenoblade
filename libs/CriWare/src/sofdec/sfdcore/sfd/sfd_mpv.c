@@ -29,8 +29,8 @@ s32 SFD_SetMpvCond(void* h, s32 cond, s32 val) {
 
 s32 SFMPV_SaveCond(void* h, s32* conds, u32 count) {
     void* mpv;
-    s32 max;
     s32 i;
+    s32 max;
     u32 n;
     mpv = **(void***)((u8*)h + 0x2068);
     if (mpv == NULL) {
@@ -48,8 +48,8 @@ s32 SFMPV_SaveCond(void* h, s32* conds, u32 count) {
 }
 
 s32 SFMPV_RestoreCond(void* h, s32* conds, s32 count) {
-    void* p = *(void**)((u8*)h + 0x2068);
-    void* mpv = *(void**)p;
+    u32 p = *(u32*)((u8*)h + 0x2068);
+    void* mpv = *(void**)(void*)p;
     if (mpv != NULL) {
         s32 i;
         for (i = 0; i < count; i++) {

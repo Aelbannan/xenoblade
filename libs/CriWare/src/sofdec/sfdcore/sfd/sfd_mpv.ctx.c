@@ -718,11 +718,60 @@ typedef int BOOL;
 /* end "types.h" */
 /* end "harness_catalog.h" */
 
-void SFD_SetMpvCond() {}
+s32 MPV_SetCond(void* mpv, s32 cond, s32 val);
+s32 MPV_GetCond(void* mpv, s32 cond, s32* out);
+s32 SFLIB_CheckHn(void* h);
+s32 SFLIB_SetErr(void* h, u32 err_code);
 
-void SFMPV_SaveCond() {}
+s32 SFD_SetMpvCond(void* h, s32 cond, s32 val) {
+    void* mpv;
+    if (h == NULL) {
+        mpv = NULL;
+    } else {
+        if (SFLIB_CheckHn(h) != 0) {
+            return SFLIB_SetErr(0, 0xff000181);
+        }
+        mpv = **(void***)((u8*)h + 0x2068);
+    }
+    if (cond == 5) {
+        val = 0;
+    }
+    if (MPV_SetCond(mpv, cond, val) != 0) {
+        return SFLIB_SetErr(h, 0xff000f12);
+    }
+    return 0;
+}
 
-void SFMPV_RestoreCond() {}
+s32 SFMPV_SaveCond(void* h, s32* conds, u32 count) {
+    void* mpv;
+    s32 i;
+    s32 max;
+    u32 n;
+    mpv = **(void***)((u8*)h + 0x2068);
+    if (mpv == NULL) {
+        return 0;
+    }
+    n = count >> 2;
+    max = 0x10;
+    if (n <= 0x10) {
+        max = n;
+    }
+    for (i = 0; i < max; i++) {
+        MPV_GetCond(mpv, i, conds + i);
+    }
+    return max;
+}
+
+s32 SFMPV_RestoreCond(void* h, s32* conds, s32 count) {
+    u32 p = *(u32*)((u8*)h + 0x2068);
+    void* mpv = *(void**)(void*)p;
+    if (mpv != NULL) {
+        s32 i;
+        for (i = 0; i < count; i++) {
+            MPV_SetCond(mpv, i, conds[i]);
+        }
+    }
+}
 
 void MPV_SetMbCb(void* p, u32 a, u32 b, u32 c);
 void SFD_SetMbCb(void* self, u32 a, u32 b, u32 c) {
@@ -733,7 +782,28 @@ void SFD_SetMbCb(void* self, u32 a, u32 b, u32 c) {
     MPV_SetMbCb(arg1, a, b, c);
 }
 
-void SFMPV_Init() {}
+s32 MPV_SetErrFunc(u32 a, void* fn, u32 b);
+s32 MPV_Init(u32 a, void* b);
+extern u32 lbl_eu_80607AF8;
+extern u32 lbl_eu_80619B18;
+void sfmpv_ErrFn(s32 val, u32 err);
+void SFMPVF_InitPool();
+s32 fn_803C34F8(s32 val, u32 err_code);
+
+s32 SFMPV_Init(void) {
+    s32 r;
+    u32 zero = 0;
+    if (MPV_SetErrFunc(0, sfmpv_ErrFn, 0) != 0) {
+        return SFLIB_SetErr(0, 0xff000f0b);
+    }
+    r = MPV_Init(8, &lbl_eu_80607AF8);
+    if (r != 0) {
+        return fn_803C34F8(0, ((u32)r + 0xfd0000 == 0xff05) ? 0xff000f13 : 0xff000f01);
+    }
+    SFMPVF_InitPool();
+    lbl_eu_80619B18 = zero;
+    return 0;
+}
 
 int SFMPV_Finish(void) {
     MPV_Finish();
@@ -742,7 +812,30 @@ int SFMPV_Finish(void) {
 
 void SFMPV_ExecServer() {}
 
-void sfmpv_ProcessAuxShc() {}
+s32 MPV_DecodePicAtr(u32 handle, void* in, void* out);
+void sfmpv_ProcessAuxShc(void* self) {
+    typedef struct SfdAtr {
+        u32 w;
+        u32 h;
+    } SfdAtr;
+    SfdAtr atr;
+    u32 out;
+    u32 handle;
+    void* shc = *(void**)((u8*)self + 0x2068);
+    atr.w = *(u32*)((u8*)self + 0xd90);
+    handle = *(u32*)shc;
+    atr.h = *(u32*)((u8*)self + 0xd94);
+    if (atr.w != 0) {
+        if (atr.h != 0) {
+            if (*(s32*)((u8*)shc + 8) == 0xc0) {
+                if (MPV_DecodePicAtr(handle, &atr, &out) == 0) {
+                    *(u32*)((u8*)shc + 4) = 2;
+                    *(u32*)((u8*)shc + 8) = 0xc8;
+                }
+            }
+        }
+    }
+}
 
 void sfmpv_IsVbvEnough() {}
 
@@ -780,7 +873,32 @@ void sfmpv_IsSkip() {}
 
 void sfmpv_UpdateDefect() {}
 
-void sfmpv_IsEmptyBpic() {}
+u32 SFSET_GetCond(void* self, u32 idx);
+s32 MPV_IsEmptyBpic(u32 a, u32 b, u32 size);
+s32 MPV_IsEmptyPpic(u32 a, u32 b, u32 size);
+
+s32 sfmpv_IsEmptyBpic(void* self, s32 type, void* bpic) {
+    if (SFSET_GetCond(self, 7) != 0) {
+        return 0;
+    }
+    if (type == 3) {
+        s32 r = MPV_IsEmptyBpic(*(u32*)bpic, *(u32*)((u8*)bpic + 4),
+                                *(u32*)((u8*)self + 0x924) * *(u32*)((u8*)self + 0x928));
+        if (r != 0) {
+            *(u32*)((u8*)self + 0x970) += 1;
+        }
+        return r;
+    }
+    if (type == 2) {
+        s32 r = MPV_IsEmptyPpic(*(u32*)bpic, *(u32*)((u8*)bpic + 4),
+                                *(u32*)((u8*)self + 0x924) * *(u32*)((u8*)self + 0x928));
+        if (r != 0) {
+            *(u32*)((u8*)self + 0x974) += 1;
+        }
+        return r;
+    }
+    return 0;
+}
 
 void sfmpv_IsLate() {}
 
@@ -800,7 +918,41 @@ void SFMPV_Create() {}
 
 void sfmpv_InitInf() {}
 
-void sfmpv_InitFrmObj() {}
+void SFTIM_InitTtu(void* self, int val);
+int UTY_MemsetDword(u32* dst, u32 val, int count);
+
+void sfmpv_InitFrmObj(void* frm, const u32* src, s32 count) {
+    s32 i;
+    for (i = 0; i < count; i++) {
+        *(u32*)((u8*)frm + 0x00) = 0;
+        *(u32*)((u8*)frm + 0x04) = 0;
+        *(u16*)((u8*)frm + 0x0c) = 0;
+        *(u16*)((u8*)frm + 0x0e) = 0;
+        *(u16*)((u8*)frm + 0x10) = 0;
+        *(u16*)((u8*)frm + 0x12) = 0;
+        *(u32*)((u8*)frm + 0x14) = 5;
+        SFTIM_InitTtu((u8*)frm + 0x18, 0);
+        *(u32*)((u8*)frm + 0x08) = src[0];
+        *(u32*)((u8*)frm + 0x44) = 0;
+        *(u32*)((u8*)frm + 0x48) = 1;
+        *(u32*)((u8*)frm + 0x4c) = 0;
+        *(u32*)((u8*)frm + 0x50) = 0;
+        *(u32*)((u8*)frm + 0x54) = 0;
+        *(u32*)((u8*)frm + 0x58) = 0;
+        *(u32*)((u8*)frm + 0x5c) = 0;
+        *(u32*)((u8*)frm + 0x64) = -1;
+        UTY_MemsetDword((u32*)((u8*)frm + 0x68), -1, 0x20);
+        *(u32*)((u8*)frm + 0xec) = -1;
+        *(u32*)((u8*)frm + 0xe8) = -1;
+        *(u32*)((u8*)frm + 0xf0) = 0;
+        *(u32*)((u8*)frm + 0xf4) = 0;
+        *(u32*)((u8*)frm + 0xf8) = 0;
+        *(u32*)((u8*)frm + 0xfc) = 0;
+        *(u16*)((u8*)frm + 0x100) = 0;
+        frm = (u8*)frm + 0x110;
+        src += 1;
+    }
+}
 
 s32 SFLIB_SetErr(void* h, u32 err_code);
 s32 fn_803C34F8(s32 val, u32 err_code);

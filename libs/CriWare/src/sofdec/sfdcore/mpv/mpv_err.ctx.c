@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for CriWare/src/sofdec/sfdcore/mpv/mpv_err
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_err.c" line 4 "harness_catalog.h" */
+/* "libs/CriWare/src/sofdec/sfdcore/mpv/mpv_err.c" line 3 "harness_catalog.h" */
 #pragma once
 
 /**
@@ -730,4 +730,25 @@ void MPVERR_InitErrInf(void* self) {
 
 void MPV_SetErrFunc() {}
 
-void MPVERR_SetCode() {}
+extern u32 lbl_eu_80602A78[];
+
+s32 MPVERR_SetCode(s32 val, u32 err_code) {
+    if (val == 0) {
+        lbl_eu_80602A78[2] = err_code;
+        if (err_code != 0) {
+            void (*cb)(u32) = (void (*)(u32))lbl_eu_80602A78[0];
+            if (cb != NULL) {
+                cb(lbl_eu_80602A78[1]);
+            }
+        }
+    } else {
+        *(u32*)((u8*)val + 0xbe4) = err_code;
+        if (err_code != 0) {
+            void (*cb)(u32) = *(void (**)(u32))((u8*)val + 0xbdc);
+            if (cb != NULL) {
+                cb(*(u32*)((u8*)val + 0xbe0));
+            }
+        }
+    }
+    return err_code;
+}

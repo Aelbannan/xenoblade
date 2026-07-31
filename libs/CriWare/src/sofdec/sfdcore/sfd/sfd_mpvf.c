@@ -5,28 +5,37 @@
 
 extern u32 lbl_eu_80619B20[];
 
-void SFMPVF_InitPool() {}
+void* memset(void* dst, int val, size_t n);
+void SFMPVF_InitPool(void) {
+    u8* p = (u8*)lbl_eu_80619B20;
+    memset(&lbl_eu_80619B20[0], 0, 0x24);
+    memset(p + 0x28, 0, 8);
+    memset(p + 0x30, 0, 0x40);
+}
 
 void SFD_SetMpvParaTbl(u32* src, u32* strides, u32* tbl) {
     u32* g = lbl_eu_80619B20;
+    u32* p = g;
+    u32* q = g + 0xA;
+    u32* r = g + 0xC;
     s32 i = 0;
     s32 j, k;
 
-    *(u64*)&g[0] = *(u64*)&src[0];
-    *(u64*)&g[2] = *(u64*)&src[2];
-    *(u64*)&g[4] = *(u64*)&src[4];
-    *(u64*)&g[6] = *(u64*)&src[6];
-    g[4] = 0;
-    g[8] = 0;
-    g[0xA] = (strides[0] + 0x1F) & ~0x1F;
-    g[0xB] = (strides[1] + 0x1F) & ~0x1F;
+    *(u64*)&p[0] = *(u64*)&src[0];
+    *(u64*)&p[2] = *(u64*)&src[2];
+    *(u64*)&p[4] = *(u64*)&src[4];
+    *(u64*)&p[6] = *(u64*)&src[6];
+    p[4] = 0;
+    p[8] = 0;
+    q[0] = (strides[0] + 0x1F) & ~0x1F;
+    q[1] = (strides[1] + 0x1F) & ~0x1F;
 
     for (j = 0; j < 4; j++) {
         for (k = 0; k < 4; k++) {
             if (i < src[7]) {
-                g[0xC + j * 4 + k] = (tbl[k] + 0x1F) & ~0x1F;
+                r[j * 4 + k] = (tbl[k] + 0x1F) & ~0x1F;
             } else {
-                g[0xC + j * 4 + k] = 0;
+                r[j * 4 + k] = 0;
             }
             i++;
         }
@@ -35,10 +44,12 @@ void SFD_SetMpvParaTbl(u32* src, u32* strides, u32* tbl) {
 }
 
 s32 sfmpvf_CheckMpvPara(void* self) {
-    u32* g = lbl_eu_80619B20;
-    u32* p = lbl_eu_80619B20;
-    u32 width = p[0x1C / 4];
+    u32* p;
+    u32* g = (u32*)lbl_eu_80619B20;
+    u32 width;
     u32 i;
+    p = g;
+    width = p[0x1C / 4];
 
     if (width - 1 > 0xF) {
         return -1;

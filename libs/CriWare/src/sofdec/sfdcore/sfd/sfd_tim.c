@@ -515,8 +515,8 @@ s32 SFTIM_GetAudioStartSample(void* self, s32 sampleRate) {
 
     {
         s32 result = (s32)(startTime * sampleRate / 90000);
-        lbl_eu_80619BB0[0] = *(u32*)((u8*)self + 0x158);
-        lbl_eu_80619BB0[1] = *(u32*)((u8*)self + 0x15C);
+        lbl_eu_80619BB0[0] = (u32)(startTime >> 32);
+        lbl_eu_80619BB0[1] = (u32)startTime;
         *lbl_eu_80619BB8 = result;
         return result;
     }
@@ -946,8 +946,8 @@ void SFTIM_Pause(void* self, s32 mode) {
     if (mode == 2) {
         s32 num, den;
         s32 fps = *(s32*)(p + 0x930);
-        char cs1[8];
-        char cs2[8];
+        u32 cs1;
+        u32 cs2;
 
         if (fps == 0) {
             num = 0;
@@ -959,17 +959,21 @@ void SFTIM_Pause(void* self, s32 mode) {
 
         {
             s32 delta = UTY_MulDiv(*(s32*)(lbl_eu_80606E38 + 0x1A8), num, den);
-            SFLIB_LockCs(cs1);
-            *(s32*)(p + 0x1044) += delta;
-            *(s32*)(p + 0x106C) += delta;
-            SFLIB_UnlockCs(cs1);
+            s32 t;
+            SFLIB_LockCs(&cs1);
+            *(volatile s32*)(p + 0x1044) += delta;
+            *(volatile s32*)(p + 0x106C) += delta;
+            SFLIB_UnlockCs(&cs1);
         }
 
         {
             s32 delta2 = UTY_MulDiv(*(s32*)(p + 0x1088), num, den);
-            SFLIB_LockCs(cs2);
-            *(s32*)(p + 0x1084) += delta2;
-            SFLIB_UnlockCs(cs2);
+            s32 t2;
+            SFLIB_LockCs(&cs2);
+            t2 = *(s32*)(p + 0x1084);
+            t2 += delta2;
+            *(s32*)(p + 0x1084) = t2;
+            SFLIB_UnlockCs(&cs2);
         }
     }
 }
@@ -1186,11 +1190,7 @@ s32 SFTIM_ExecCyclicFrameOutput(void* self) {
     u8* p = (u8*)self;
     s32 result;
 
-    if (*(s32*)(p + 0x1384) == 0) {
-        return 1;
-    }
-
-    {
+    if (*(s32*)(p + 0x1384) != 0) {
         char cs[8];
         SFLIB_LockCs(cs);
         if (*(s32*)(p + 0x138C) == -1) {
@@ -1210,6 +1210,8 @@ s32 SFTIM_ExecCyclicFrameOutput(void* self) {
             }
         }
         SFLIB_UnlockCs(cs);
+    } else {
+        result = 1;
     }
     return result;
 }

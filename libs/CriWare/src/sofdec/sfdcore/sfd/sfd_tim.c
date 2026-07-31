@@ -20,6 +20,8 @@ extern u32 lbl_eu_8051CBF8[];    /* fps denominator table */
 extern u32 lbl_eu_8051CC20[];    /* tc2time function table */
 extern u32 lbl_eu_80619BB0[];    /* debug globals */
 extern u32 lbl_eu_80619BB8[];    /* debug globals */
+extern u32 lbl_eu_80619BBC[];    /* debug globals */
+extern u32 lbl_eu_80619BC0[];    /* debug globals */
 
 /* Forward declarations for function pointers */
 s32 sftim_GetTimeNone(void* self, s32* out1, s32* out2);
@@ -520,28 +522,30 @@ s32 SFTIM_GetAudioStartSample(void* self, s32 sampleRate) {
     }
 }
 
-void SFTIM_GetVideoStartSample(void* self, int* out1, int* out2) {
-    int val = *(int*)((u8*)self + 0x118);
+s32 SFTIM_GetVideoStartSample(void* self, s32 mul, s32* out2) {
+    u8* p = (u8*)self;
+    s32 val = *(s32*)(p + 0x118);
+    s32 num;
+    s32 den;
+    s32 r;
+
     *out2 = val;
     if (val != 0) {
-        int a = *(int*)((u8*)self + 0x13C);
-        int b = *(int*)((u8*)self + 0x140);
-        int r = UTY_MulDiv(a, val, b);
-        lbl_eu_80619BB0[2] = a;
-        *lbl_eu_80619BB8 = r; /* reusing debug global */
-        *out1 = r;
+        num = *(s32*)(p + 0x13C);
+        den = *(s32*)(p + 0x140);
     } else {
-        int a = *(int*)((u8*)self + 0x110);
-        if (a >= 0) {
-            int b = *(int*)((u8*)self + 0x114);
-            int r = UTY_MulDiv(a, val, b);
-            lbl_eu_80619BB0[2] = a;
-            *lbl_eu_80619BB8 = r;
-            *out1 = r;
+        num = *(s32*)(p + 0x110);
+        if (num >= 0) {
+            den = *(s32*)(p + 0x114);
         } else {
-            *out1 = -1;
+            return -1;
         }
     }
+
+    r = UTY_MulDiv(num, mul, den);
+    lbl_eu_80619BBC[0] = num;
+    lbl_eu_80619BC0[0] = r;
+    return r;
 }
 
 void SFTIM_SetStartTime(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x144) = a; *(u32*)((u8*)self + 0x148) = b; }
@@ -628,18 +632,20 @@ s32 sftim_GetTimeVsync(void* self, s32* out1, s32* out2) {
     s32 val = *(s32*)((u8*)self + 0x54);
     s32 ok;
 
-    if (val == 4 || val == -4 || val == 6 || val == -6) {
-        ok = 1;
-    } else {
-        *out1 = -1;
-        *out2 = 1;
-        ok = 0;
-    }
-
+    if (val == 4) goto good;
+    if (val == -4) goto good;
+    if (val == 6) goto good;
+    if (val == -6) goto good;
+    *out1 = -1;
+    *out2 = 1;
+    ok = 0;
+    goto check;
+good:
+    ok = 1;
+check:
     if (!ok) {
         return 0;
     }
-
     *out1 = *(s32*)((u8*)self + 0x1044);
     *out2 = *(s32*)(lbl_eu_80606E38 + 0x1A8);
     return 0;
@@ -831,15 +837,13 @@ void sftim_Tc2Time23N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     s32 min = *(s32*)(td + 0xC);
     s32 hour = *(s32*)(td + 0x8);
     s32 sec = *(s32*)(td + 0x10);
-    s32 field = *(s16*)(td + 0x1E);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s32 totalFrame = frame + frame2;
+    s32 field = *(s16*)(td + 0x1E);
     s32 totalSec = sec + min * 60 + hour * 3600;
-    s32 half = unit / 2;
     s32 time = totalSec * unit60;
-    time += totalFrame * unit;
-    time += field * half;
+    time += (frame + frame2) * unit;
+    time += field * (unit / 2);
     *out1 = time;
     *out2 = tc / rate;
 }
@@ -1009,19 +1013,24 @@ s32 SFD_GetFps(void* self, s32* out) {
     return 0;
 }
 
-void SFTIM_IsGetFrmTime(void* self, void* frm, s32 cmpA, s32 cmpB) {
+s32 SFTIM_IsGetFrmTime(void* self, void* frm) {
+    s32 cmpB;
+    s32 cmpA;
+    s32 result;
+
     if (frm == NULL) {
-        return;
+        return 0;
     }
+
+    cmpB = *(s32*)((u8*)frm + 0x18);
+    cmpA = *(s32*)((u8*)frm + 0x14);
+
     if (*(s32*)((u8*)self + 0xA54) != 0) {
-        *(s32*)((u8*)frm + 0) = 1;
-        return;
+        return 1;
     }
-    {
-        s32 result;
-        SFTIM_IsExecTime(self, cmpA, cmpB, &result, *(s32*)((u8*)self + 0xACC));
-        *(s32*)((u8*)frm + 0) = result;
-    }
+
+    SFTIM_IsExecTime(self, cmpA, cmpB, &result, *(s32*)((u8*)self + 0xACC));
+    return result;
 }
 
 s32 SFTIM_IsGetFrmTimeTunit(void* self, s32 cmpA, s32 cmpB) {
@@ -1133,7 +1142,25 @@ void sftim_IsGrExecTime(void* self, s32 cmpA, s32 cmpB, s32 timeVal, s32 timeUni
     }
 }
 
-void SFTIM_IsVideoTerm(void* self) {}
+s32 SFTIM_IsVideoTerm(void* self) {
+    u8* p = (u8*)self;
+    s32 cond = *(s32*)(p + 0x960);
+    s32 v1018 = *(s32*)(p + 0x1018);
+    s32 v101C = *(s32*)(p + 0x101C);
+
+    if (cond == 0) {
+        return 1;
+    }
+
+    if (v1018 == -5) {
+        return 0;
+    }
+
+    return (UTY_CmpTime(v1018 + (v101C * 2000) / 21186,
+                        v101C,
+                        *(s32*)(p + 0x1028),
+                        *(s32*)(p + 0x102C)) == 0);
+}
 
 void SFTIM_SetSpeed(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x1048) = a; *(u32*)((u8*)self + 0x104C) = b; }
 

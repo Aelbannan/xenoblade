@@ -121,7 +121,7 @@ void func_80127764(){}
 
 void func_80127BC4(){}
 
-void copyVEC3(float* dst, const float* src) {
+extern "C" void copyVEC3(float* dst, const float* src) {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];

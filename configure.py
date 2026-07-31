@@ -1861,7 +1861,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/core/code_804F0258.cpp"),
             Object(NonMatching, "monolib/src/nand/CNReqtaskSaveBanner.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "monolib/src/nand/CNBanner.cpp"),
-            Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp", extra_cflags=["-func_align 4"]), #EU/US only
+            Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp", extra_cflags=["-O4,s", "-func_align 4"]), #EU/US only
         ],
     },
     {

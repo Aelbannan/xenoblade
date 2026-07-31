@@ -332,7 +332,14 @@ void* CActParamAnim::getModelObj() {
 
 void func_8004C608(){}
 
-void func_8004CB80(){}
+extern "C" void func_8004CB80(f32* out, const f32* a, const f32* b){
+    nw4r::math::VEC3 result =
+        *reinterpret_cast<const nw4r::math::VEC3*>(a) -
+        *reinterpret_cast<const nw4r::math::VEC3*>(b);
+    out[0] = result.x;
+    out[1] = result.y;
+    out[2] = result.z;
+}
 
 void func_8004CBC8(){}
 
@@ -421,8 +428,10 @@ void CActParamAnim::func_8004FE58() {}
 
 void CActParamAnim::func_8004FFBC() {}
 
-f32 func_800504BC(const f32* a, const f32* b){
-    return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+extern "C" f32 func_800504BC(const f32* a, const f32* b){
+    return nw4r::math::VEC3Dot(
+        reinterpret_cast<const nw4r::math::VEC3*>(a),
+        reinterpret_cast<const nw4r::math::VEC3*>(b));
 }
 
 void func_800504DC(){}

@@ -122,6 +122,7 @@ extern "C" {
     CView* pssCreateView__5CProcFPCcP11CWorkThreadi(CProc* self, const char* name,
                                                      CWorkThread* thread, int arg);
     void* func_8045D478__7CLibHbmFv();
+    bool func_8045DE00__7CLibHbmFv();
     bool isHbmControlInitialized__7CLibHbmFv();
 }
 
@@ -164,7 +165,7 @@ CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* messa
     CException* exception;
     CDesktop* desktop = getException__8CDesktopFv();
 
-    if (isHbmControlInitialized__7CLibHbmFv()) {
+    if (func_8045DE00__7CLibHbmFv()) {
         return nullptr;
     }
 
@@ -316,12 +317,14 @@ void CException::wkRender() {
 }
 
 // Main exception text renderer.
+#pragma dont_inline on
 extern "C" void func_80458084__10CExceptionFv(const void* message) {
     void* writer = (void*)func_eu_804558F4__11CDeviceFontFv(0);
     SetupGX__Q34nw4r2ut10CharWriterFv(writer);
     func_80458B78__10CExceptionFv(writer, 0.0f, 0.0f, 0.0f);
     func_80458CBC__10CExceptionFv(writer, (const wchar_t*)message);
 }
+#pragma dont_inline reset
 
 // Set the nw4r TextWriter font pointer.
 extern "C" void func_eu_8045C964__10CExceptionFv(void* writer, void* font) {
@@ -498,31 +501,16 @@ extern "C" void func_80458CBC__10CExceptionFv(void* writer, const wchar_t* text)
 
 // Login setup
 bool CException::wkStandbyLogin() {
-    CView* desktopView = getView__8CDesktopFv();
-    if (desktopView != nullptr) {
-        CView* view = pssCreateView__5CProcFPCcP11CWorkThreadi(this, mName.c_str(), desktopView, 0);
+    if (getView__8CDesktopFv() != nullptr) {
+        CView* view = pssCreateView__5CProcFPCcP11CWorkThreadi(this, mName.c_str(),
+                                                               getView__8CDesktopFv(), 0);
         ml::CCol4 color;
         func_800407C8(&color, 0.0f, 0.0f, 0.0f, 1.0f);
         *(ml::CCol4*)((u8*)view + 0x444) = color;
 
-        CExceptionMsgParamView* queue = msgParam(this);
-        CMsgParamEntry* entry = (CMsgParamEntry*)func_80457ED4__10CExceptionFv(queue->entries, queue->field6);
-        entry->command = CWorkThread::EVT_4;
-        CMsgParamEntry* source = msgLast(this);
-        entry->wid = source->wid;
-        entry->unk8 = source->unk8;
-        entry->unkC = source->unkC;
-        entry->unk10 = source->unk10;
-        entry->unk14 = source->unk14;
-        entry->unk18 = source->unk18;
-        entry->unk1C = source->unk1C;
-        entry->unk20 = source->unk20;
-        entry->unk22 = source->unk22;
-        entry->unk23 = 0;
-        queue->field6++;
-        queue->field6--;
-        view->mContextRingWriteIndex++;
-        view->unk3FC = view->mContextRingWriteIndex - 1;
+        CMsgParam<10>& messages =
+            *reinterpret_cast<CMsgParam<10>*>(&view->mContextMsgVtable);
+        messages.enqueue(CWorkThread::EVT_4);
         GXRenderModeObj* mode = getRenderModeObj__9CDeviceVIFv();
         ml::CRect16 rect(0, 0, mode->fbWidth, mode->efbHeight);
         setRect__5CViewFRCQ22ml7CRect16(view, &rect);

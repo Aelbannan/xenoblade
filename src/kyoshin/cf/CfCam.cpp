@@ -1,4 +1,6 @@
 #include "kyoshin/cf/CfCam.hpp"
+#include <nw4r/math/math_types.h>
+#include "kyoshin/cf/CfCam_ps.inl"
 
 void* __ct__cf_CfCam(void* self, void* arg);
 void func_8006BEC4(void* self);
@@ -112,9 +114,9 @@ void func_8006BA80(){}
 float func_8006BAF0(void* self){
     return __fabs(*(float*)self);
 }
-extern "C" float PSVECMag(const float* v);
-extern "C" float cfCam_vecMag(const float* v) { return PSVECMag(v); }
-void func_8006BB04(){}
+extern "C" float cfCam_vecMag(const float* v) {
+    return PSVECMag(reinterpret_cast<const Vec*>(v));
+}
 extern "C" void cfCam_setOrClearUnk04Bits(void* r3, int r4, int r5) {
     cf::CfCamFollow* self = static_cast<cf::CfCamFollow*>(r3);
     if (r5) {
@@ -163,7 +165,6 @@ extern "C" bool cfCam_testBits2_3_0x530(const unsigned char* this_) { return (*(
 extern "C" bool cfCam_testBits4_5_0x530(const void* self) { return (*(const unsigned short*)((const unsigned char*)self + 0x530) & 0x30) != 0; }
 extern "C" bool cfCam_testUnk1D4Bits(void* self, unsigned int mask) { return (static_cast<cf::CfCamFollow*>(self)->unk1D4 & mask) != 0; }
 void func_8006C6CC(){}
-void func_8006C6E8(){}
 extern "C" void cfCam_clearUnk1D4Bits(void* _this, unsigned int mask) {
     static_cast<cf::CfCamFollow*>(_this)->unk1D4 &= ~mask;
 }
@@ -222,7 +223,6 @@ extern "C" unsigned int cfCam_getBit27_0x64(void *self) {
     unsigned int word = *(unsigned int *)((char *)self + 0x64);
     return (word >> 27) & 1U;
 }
-void func_8006DFC8(){}
 extern int lbl_eu_80663DF0;
 
 extern "C" int cfCam_getGlobal_80663DF0()
@@ -282,7 +282,6 @@ extern "C" void* cfCam_getUnk60Ptr(void* self) { return static_cast<char*>(self)
 extern "C" void* cfCam_getUnk6CPtr(void* ptr) {
     return (char*)ptr + 0x6c;
 }
-void func_80071CF4(){}
 extern "C" int cfCam_getBit19_0x0C(void* _this) {
     return ((*(unsigned*)((char*)_this + 0xc)) >> 19) & 1;
 }

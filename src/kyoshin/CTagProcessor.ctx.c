@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/CTagProcessor
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/CTagProcessor.cpp" line 4 "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CTagProcessor.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -1312,6 +1312,61 @@ void* func_80186D20(void* p);
 
 void* getFP(const char* pName);
 
+#pragma pack(push, 1)
+
+// Fixed header at the start of every bdat table.
+struct BdatHeader {
+    s32 count;        // +0x00
+    u32 _pad04;       // +0x04
+    u16 stride;       // +0x08: row stride in bytes
+    u16 hashBaseOff;  // +0x0A: offset from table start to hash bucket table
+    u16 bucketCount;  // +0x0C: number of hash buckets
+    u16 dataOff;      // +0x0E: offset from table start to row data
+    u16 maxRow;       // +0x10: maximum valid row index
+    u16 rowBase;      // +0x12: minimum valid row index (rowBase)
+};
+
+// Column entry in bdat hash chain.
+struct BdatColEntry {
+    u16 colHdrRel;    // +0x00: relative offset to column header (from table start)
+    u16 nextOff;      // +0x02: next entry offset (0 = end of chain)
+    char name[1];     // +0x04: null-terminated name (variable length)
+};
+
+// Column header for type 1 (value).
+struct BdatColHdrValue {
+    u8 type;          // +0x00: 1
+    u8 elemType;      // +0x01: element type enum
+    u16 dataOff;      // +0x02: column data offset within row
+};
+
+// Column header for type 2 (array).
+struct BdatColHdrArray {
+    u8 type;          // +0x00: 2
+    u8 elemType;      // +0x01: element type
+    u16 dataOff;      // +0x02: column data offset within row
+    u16 count;        // +0x04: array element count
+};
+
+// Column header for type 3 (flag).
+struct BdatColHdrFlag {
+    u8 type;          // +0x00: 3
+    u8 shift;         // +0x01: right-shift amount
+    u32 mask;         // +0x02: bitmask
+    u16 colEntryRel;  // +0x06: relative offset to the value column entry
+};
+
+// Name-index table: s32 count at +0x00, then u32 at +0x04, then
+// u16 entry offsets at +0x08 (each entry is a u16 offset from table start
+// to the NameEntry structure). The binary search indexes by `mid`.
+struct BdatNameIndexHdr {
+    s32 count;       // +0x00
+    u32 _pad;        // +0x04
+    u16 offsets[];   // +0x08 (flexible array of u16 entry offsets)
+};
+
+#pragma pack(pop)
+
 // Utility class for handling bdat files.
 class CBdat {
 public:
@@ -1335,44 +1390,95 @@ void ocBdatRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocBdat.hpp" */
-/* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/harness_catalog.hpp" line 15 "kyoshin/CTaskGameEff.hpp" */
+#pragma once
 
-extern "C" void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCL(void* self, int deleting) {
+/* "src/kyoshin/CTaskGameEff.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTaskGameEff {
+public:
+    CTaskGameEff();
+    virtual ~CTaskGameEff();
+    void Init();
+    void Term();
+
+    // TODO: add fields
+    void Move();
+    void cbRenderBefore();
+    void Draw();
+};
+
+/* end "kyoshin/CTaskGameEff.hpp" */
+/* end "kyoshin/harness_catalog.hpp" */
+/* "src/kyoshin/CTagProcessor.cpp" line 4 "kyoshin/CTagProcessor.hpp" */
+#pragma once
+
+/* "src/kyoshin/CTagProcessor.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+class CTagProcessorBase {
+public:
+    CTagProcessorBase();
+    virtual ~CTagProcessorBase();
+
+    // TODO: add fields
+};
+
+class CTagProcessor {
+public:
+    CTagProcessor();
+    virtual ~CTagProcessor();
+
+    // TODO: add fields
+};
+
+class CTagProcessorSE {
+public:
+    CTagProcessorSE();
+    virtual ~CTagProcessorSE();
+
+    // TODO: add fields
+};
+
+/* end "kyoshin/CTagProcessor.hpp" */
+
+void* __dt___unnamed_CTagProcessor_cpp_CTagCodeCL(void* self, int deleting) {
     if (self && deleting > 0) {
         ::operator delete(self);
     }
     return self;
 }
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeLine() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeLine(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect2() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeSelect2(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeAct() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeAct(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeFade() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeFade(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeQuest() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeQuest(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeInvisible() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeInvisible(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeQstStart() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeQstStart(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodePresent() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodePresent(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeTailOff() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeTailOff(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeExchange() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeExchange(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeShop() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeShop(){}
 
-extern "C" void __dt___unnamed_CTagProcessor_cpp_CTagCodeMakeCrystal() {}
+void __dt___unnamed_CTagProcessor_cpp_CTagCodeMakeCrystal(){}
 
-extern "C" void func_801258D0() {}
+void func_801258D0(){}
 
-extern "C" void func_801258F8(void* obj, unsigned char a, unsigned char b, float c) {
+void initTagParam(u8* obj, unsigned char a, unsigned char b, float c) {
     unsigned char* base = (unsigned char*)obj;
     base[0] = a;
     base[1] = 0;
@@ -1383,308 +1489,268 @@ extern "C" void func_801258F8(void* obj, unsigned char a, unsigned char b, float
     *(float*)(base + 8) = c;
 }
 
-extern "C" void func_8012591C() {}
+void func_8012591C(){}
 
-extern "C" void func_80125944() {}
+void func_80125944(){}
 
-extern "C" void __dt__8012596C() {}
+void __dt__8012596C(){}
 
-extern "C" void __ct__CTagProcessorBase() {}
+void __ct__CTagProcessorBase(){}
 
-extern "C" void func_80125A2C(void* r3, const void* r4) {
-    unsigned char* dst = (unsigned char*)r3;
-    const unsigned char* src = (const unsigned char*)r4;
+void copyTagParam(u8* dst, const u8* src) {
+    unsigned char* d = (unsigned char*)dst;
+    const unsigned char* s = (const unsigned char*)src;
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+    d[3] = s[3];
+    *(unsigned short*)(d + 4) = *(const unsigned short*)(s + 4);
+    d[6] = s[6];
+    *(float*)(d + 8) = *(const float*)(s + 8);
+}
+
+CTagProcessorBase::~CTagProcessorBase() {}
+
+void func_80125AB8(){}
+
+
+
+void func_80125B08(){}
+
+int defaultProcess(void* self) { return 0; }
+
+void func_80125B58(){}
+
+void func_80125D00(){}
+
+void __ct__CTagProcessor(){}
+
+CTagProcessor::~CTagProcessor() {}
+
+void func_8012615C(){}
+
+void copyVEC2(float *dst, const float *src) {
+    dst[0] = src[0];
+    dst[1] = src[1];
+}
+
+void __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color(){}
+
+// TagContext struct for the u8*-self functions
+struct TagContext {
+    u8 _pad00[0x04];
+    const wchar_t* contextStr;
+    u8 _pad08[0x0C - 0x08];
+    float charSpace;
+
+    const wchar_t* getContextStr() const { return contextStr; }
+    const wchar_t** getContextStrPtr() { return &contextStr; }
+    void addToCharSpace(float val) { charSpace = *(float*)((u8*)this + 4) + val; }
+};
+
+void func_80127670(){}
+
+void func_801276C8(){}
+
+void func_801276E0(){}
+
+void func_801276F4(){}
+
+void func_80127764(){}
+
+void func_80127BC4(){}
+
+extern "C" void copyVEC3(float* dst, const float* src) {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
-    dst[3] = src[3];
-    *(unsigned short*)(dst + 4) = *(const unsigned short*)(src + 4);
-    dst[6] = src[6];
-    *(float*)(dst + 8) = *(const float*)(src + 8);
 }
 
-extern "C" void __dt__17CTagProcessorBaseFv() {}
+void func_80127BF4(){}
 
-extern "C" void func_80125AB8() {}
+void func_80127D20(){}
 
+void func_80127E74(){}
 
+void __ct__CTagProcessorSE(){}
 
-extern "C" void func_80125B08() {}
+CTagProcessorSE::~CTagProcessorSE() {}
 
-extern "C" int func_80125B50(void* self) { return 0; }
+void func_80127FB4(){}
 
-extern "C" void func_80125B58() {}
+void func_801286E0(){}
 
-extern "C" void func_80125D00() {}
+void func_80128740(){}
 
-extern "C" void __ct__CTagProcessor() {}
+void func_801287BC(){}
 
-extern "C" void __dt__13CTagProcessorFv() {}
+void func_801289B4(){}
 
-extern "C" void func_8012615C() {}
+void func_801289FC(){}
 
-extern "C" void func_80127630(float *dst, const float *src) {
-    dst[0] = src[0];
-    dst[1] = src[1];
-}
+void func_80128A70(){}
 
-extern "C" void __as__Q34nw4r2ut5ColorFRCQ34nw4r2ut5Color() {}
+void func_80128AB8(){}
 
-extern "C" u32 func_80127668(void* self) { return *(u32*)((u8*)self + 0x4); }
+void func_80128B0C(){}
 
-extern "C" void func_80127670() {}
-
-extern "C" void* func_801276C0(void* self) { return (void*)((u8*)self + 0x4); }
-
-extern "C" void func_801276C8() {}
-
-extern "C" void func_801276E0() {}
-
-extern "C" void func_801276F4() {}
-
-extern "C" void func_80127764() {}
-
-extern "C" void func_80127BC4() {}
-
-extern "C" void func_80127BD8(float* dst, const float* src) {
-    dst[0] = src[0];
-    dst[1] = src[1];
-    dst[2] = src[2];
-}
-
-extern "C" void func_80127BF4() {}
-
-extern "C" void func_80127D20() {}
-
-extern "C" void func_80127E74() {}
-
-extern "C" void __ct__CTagProcessorSE() {}
-
-extern "C" void __dt__15CTagProcessorSEFv() {}
-
-extern "C" void func_80127FB4() {}
-
-extern "C" void func_801286E0() {}
-
-extern "C" void func_80128740() {}
-
-extern "C" void func_801287BC() {}
-
-extern "C" void func_801289B4() {}
-
-extern "C" void func_801289FC() {}
-
-extern "C" void func_80128A70() {}
-
-extern "C" void func_80128AB8() {}
-
-extern "C" void func_80128B0C() {}
-
-extern "C" void* func_80128B80(void* arg1, void* arg2) {
+void* callInitTagProc(void* arg1, void* arg2) {
     extern void func_8013BDE4(void*);
     func_8013BDE4(arg1);
     return arg2;
 }
 
-extern "C" void func_80128BB0() {}
+void func_80128BB0(){}
 
-extern "C" void func_80128BF8() {}
+void func_80128BF8(){}
 
-extern "C" void func_80128C6C() {}
+void func_80128C6C(){}
 
-extern "C" void func_80128DA0() {}
+void func_80128DA0(){}
 
-extern "C" void func_80128EF8() {}
+void func_80128EF8(){}
 
-extern "C" void func_80129008() {}
+void func_80129008(){}
 
-extern "C" void* func_80129118(void* dummy, void* r4) {
-    *(u16*)r4 = 0xD;
-    return (u16*)r4 + 1;
+u16* writeTagCode0D(void* dummy, u16* buf) {
+    *buf = 0xD;
+    return buf + 1;
 }
 
-extern "C" void func_80129128() {}
+void func_80129128(){}
 
-extern "C" void func_801291F4() {}
+void func_801291F4(){}
 
-extern "C" void func_8012930C() {}
+void func_8012930C(){}
 
-extern "C" void func_80129430() {}
+void func_80129430(){}
 
-extern "C" void func_80129564() {}
+void func_80129564(){}
 
-extern "C" void func_8012967C(void* self, float val) {
-    *(float*)((char*)self + 0xc) = *(float*)((char*)self + 4) + val;
+// Converted to TagContext::addToCharSpace
+
+void func_8012968C(){}
+
+void func_801299D4(){}
+
+void func_80129AEC(){}
+
+void func_80129C04(){}
+
+void func_80129D1C(){}
+
+void func_80129E20(){}
+
+void func_80129F3C(){}
+
+void func_8012A070(){}
+
+void func_8012A1A4(){}
+
+void func_8012A224(){}
+
+void func_8012A388(){}
+
+void func_8012A460(){}
+
+void func_8012AAA4(){}
+
+void func_8012AD2C(){}
+
+void func_8012AD40(){}
+
+void func_8012AF90(){}
+
+void func_8012B070(){}
+
+void func_8012B204(){}
+
+void func_8012B328(){}
+
+void func_8012B440(){}
+
+void func_8012B8C4(){}
+
+void func_8012B944(){}
+
+u16* writeTagCode03(void* unused, u16* buf) {
+    *buf = 3;
+    return buf + 1;
 }
 
-extern "C" void func_8012968C() {}
-
-extern "C" void func_801299D4() {}
-
-extern "C" void func_80129AEC() {}
-
-extern "C" void func_80129C04() {}
-
-extern "C" void func_80129D1C() {}
-
-extern "C" void func_80129E20() {}
-
-extern "C" void func_80129F3C() {}
-
-extern "C" void func_8012A070() {}
-
-extern "C" void func_8012A1A4() {}
-
-extern "C" void func_8012A224() {}
-
-extern "C" void func_8012A388() {}
-
-extern "C" void func_8012A460() {}
-
-extern "C" void func_8012AAA4() {}
-
-extern "C" void func_8012AD2C() {}
-
-extern "C" void func_8012AD40() {}
-
-extern "C" void func_8012AF90() {}
-
-extern "C" void func_8012B070() {}
-
-extern "C" void func_8012B204() {}
-
-extern "C" void func_8012B328() {}
-
-extern "C" void func_8012B440() {}
-
-extern "C" void func_8012B8C4() {}
-
-extern "C" void func_8012B944() {}
-
-extern "C" void* func_8012B9E0(void* unused, void* buf) {
-    *(unsigned short*)buf = 3;
-    return (char*)buf + 2;
-}
-
-extern "C" void* func_8012B9F0(void* unused, void* buf) {
-    *(unsigned short*)buf = 0xa;
-    return (char*)buf + 2;
+extern "C" u16* writeTagCode0A(void* unused, u16* buf) {
+    *buf = 0xa;
+    return buf + 1;
 }
 
 extern u32 lbl_eu_8052D9E0[];
-extern "C" void __ct__CTagCodeCL(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D9E0;
-}
+
 
 extern u32 lbl_eu_8052D9B8[];
-extern "C" void __ct__CTagCodeCP(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D9B8;
-}
+
 
 extern u32 lbl_eu_8052D990[];
-extern "C" void __ct__CTagCodeWait(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D990;
-}
+
 
 extern u32 lbl_eu_8052D968[];
-extern "C" void __ct__CTagCodeDel(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D968;
-}
+
 
 extern u32 lbl_eu_8052D940[];
-extern "C" void __ct__CTagCodeRuby(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D940;
-}
+
 
 extern u32 lbl_eu_8052D918[];
-extern "C" void __ct__CTagCodeCol(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D918;
-}
+
 
 extern u32 lbl_eu_8052D898[];
-extern "C" void __ct__CTagCodeTrust(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D898;
-}
+
 
 extern u32 lbl_eu_8052D870[];
-extern "C" void __ct__CTagCodeType(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D870;
-}
+
 
 extern u32 lbl_eu_8052D848[];
-extern "C" void __ct__CTagCodePos(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D848;
-}
+
 
 extern u32 lbl_eu_8052D820[];
-extern "C" void __ct__CTagCodeMouth(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D820;
-}
+
 
 extern u32 lbl_eu_8052D7F8[];
-extern "C" void __ct__CTagCodeLine(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D7F8;
-}
+
 
 extern u32 lbl_eu_8052D7D0[];
-extern "C" void __ct__CTagCodeSelect(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D7D0;
-}
+
 
 extern u32 lbl_eu_8052D7A8[];
-extern "C" void __ct__CTagCodeSelect2(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D7A8;
-}
+
 
 extern u32 lbl_eu_8052D780[];
-extern "C" void __ct__CTagCodeAct(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D780;
-}
+
 
 extern u32 lbl_eu_8052D758[];
-extern "C" void __ct__CTagCodeFade(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D758;
-}
+
 
 extern u32 lbl_eu_8052D730[];
-extern "C" void __ct__CTagCodeQuest(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D730;
-}
+
 
 extern u32 lbl_eu_8052D708[];
-extern "C" void __ct__CTagCodeInvisible(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D708;
-}
+
 
 extern u32 lbl_eu_8052D6E0[];
-extern "C" void __ct__CTagCodeQstStart(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D6E0;
-}
+
 
 extern u32 lbl_eu_8052D6B8[];
-extern "C" void __ct__CTagCodePresent(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D6B8;
-}
+
 
 extern u32 lbl_eu_8052D690[];
-extern "C" void __ct__CTagCodeTailOff(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D690;
-}
+
 
 extern u32 lbl_eu_8052D668[];
-extern "C" void __ct__CTagCodeExchange(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D668;
-}
+
 
 extern u32 lbl_eu_8052D640[];
-extern "C" void __ct__CTagCodeShop(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D640;
-}
+
 
 extern u32 lbl_eu_8052D618[];
-extern "C" void __ct__CTagCodeMakeCrystal(void* self) {
-    *(u32*)self = (u32)lbl_eu_8052D618;
-}
+
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
-extern "C" void sinit_8012BA00() {}
+void sinit_8012BA00(){}

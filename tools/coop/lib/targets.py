@@ -390,6 +390,28 @@ def write_targets_document(config: CoopConfig, data: Dict[str, Any]) -> Path:
         return _write_targets_document_unlocked(config, data)
 
 
+@contextmanager
+def locked_targets_document(
+    config: CoopConfig,
+) -> Iterator[Tuple[Dict[str, Any], Callable[[], Path]]]:
+    """Load the registry under an exclusive lock and yield (data, write).
+
+    The write callback persists *data* under the same lock so the entire
+    load-modify-write cycle is atomic::
+
+        with locked_targets_document(config) as (data, write):
+            # mutate data ...
+            write()
+    """
+    with exclusive_targets_lock(config):
+        data = load_targets_document(config)
+
+        def _write() -> Path:
+            return _write_targets_document_unlocked(config, data)
+
+        yield data, _write
+
+
 def update_target_result(
     config: CoopConfig,
     target_id: str,
@@ -1237,13 +1259,14 @@ def import_symbols(
     config: CoopConfig,
     *,
     kind: str = "function",
+    _data: Optional[Dict[str, Any]] = None,
 ) -> tuple[Dict[str, Any], int, int]:
     """Return an updated registry plus (added, skipped) counts.
 
     Curated records are never replaced. Imported IDs are address-based so a later
     semantic rename does not create a second target.
     """
-    data = load_targets_document(config)
+    data = load_targets_document(config) if _data is None else _data
     data.setdefault("schema_version", 2)
     rows = data.setdefault("targets", [])
     for row in rows:
@@ -1372,13 +1395,15 @@ def parse_asm_calls(path: Path) -> List[FunctionCalls]:
 def sync_called_functions(
     project: Any,
     config: CoopConfig,
+    *,
+    _data: Optional[Dict[str, Any]] = None,
 ) -> tuple[Dict[str, Any], int, int, int]:
     """Populate direct call edges from generated retail assembly.
 
     Returns the updated document and counts for scanned functions, resolved
     direct edges, and unresolved direct edges.
     """
-    data = load_targets_document(config)
+    data = load_targets_document(config) if _data is None else _data
     rows = data.get("targets", [])
     by_address: Dict[tuple[str, str], List[Dict[str, Any]]] = {}
     by_symbol: Dict[tuple[str, str], List[Dict[str, Any]]] = {}

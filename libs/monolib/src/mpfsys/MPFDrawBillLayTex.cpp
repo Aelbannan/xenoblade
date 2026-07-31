@@ -206,9 +206,10 @@ extern "C" void func_8047A330(MPFDrawBillData* billboard, Vec* positions, MPFDra
         mask = 0;
     }
 
-    GXBegin(GX_QUADS, GX_VTXFMT0, (list->count - 1) * 4);
-    const u32* index = list->indices;
-    for (u32 i = 1; i < list->count; i++, index++) {
+    u32 count = list->count;
+    GXBegin(GX_QUADS, GX_VTXFMT0, (count - 1) * 4);
+    const u32* index = list->indices + 1;
+    for (u32 i = 0; i < count - 1; i++, index++) {
         u32 value = *index;
         const u32* order = lbl_eu_80523E00;
         if (value & 1) {
@@ -247,7 +248,8 @@ extern "C" void func_8047A570(MPFDrawBillData* billboard, Vec* positions, MPFDra
     }
 
     MPFDrawBillPair* pair = list->pairs;
-    for (s32 i = 0; i < (s32)(list->count >> 1); i++, pair++) {
+    s32 count = (s32)(list->count >> 1);
+    for (s32 i = 0; i < count; i++, pair++) {
         func_80474DAC__Q26mpfsys17UnkClass_80471EC8Fv(pair->parameter);
 
         u32 value = pair->index;
@@ -536,7 +538,8 @@ extern "C" void func_8047B528(void* self, MPFDrawBillData* billboard, MPFDrawBil
     func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv();
 
     MPFDrawBillPair* pair = list->pairs;
-    for (s32 i = 0; i < (s32)(list->count >> 1); i++, pair++) {
+    s32 count = (s32)(list->count >> 1);
+    for (s32 i = 0; i < count; i++, pair++) {
         func_80474DAC__Q26mpfsys17UnkClass_80471EC8Fv(pair->parameter);
         u32 value = pair->index;
         u32 base = (value & lbl_eu_8066A72C) << 2;

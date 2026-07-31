@@ -23862,6 +23862,12 @@ extern float lbl_eu_806687B8;
 
 typedef void* (*VFuncPtr)(void*, const char*, u32);
 
+extern "C" void code80135FDC_setVec3(float*, float, float, float);
+extern "C" void copyVEC3(float*, const float*);
+extern "C" void func_80137738(nw4r::math::VEC3*, const nw4r::math::VEC3*);
+
+extern "C" void func_8024B4CC(void*, void*, void*);
+
 u8 func_8024CE60(void* self) { return static_cast<CFloorMapFull*>(self)->field_40; }
 
 
@@ -24138,37 +24144,66 @@ void func_8024AEEC(){}
 
 void func_8024B234(){}
 
-void func_8024B4CC(void* result, void* data, void* node) {
+extern "C" void func_8024B4CC(void* result, void* data, void* node) {
     extern f32 lbl_eu_80668764;
-    f32* r = (f32*)result;
-    r[0] = r[1] = r[2] = lbl_eu_80668764;
-    void* target = *(void**)((u8*)data + 0x10);
-    if (target == node || !node) return;
-    r[0] = *(f32*)((u8*)node + 0x2C);
-    r[1] = *(f32*)((u8*)node + 0x30);
-    r[2] = *(f32*)((u8*)node + 0x34);
-    void* next = *(void**)((u8*)node + 0x0C);
-    f32 temp[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
+
+    struct ChainNode {
+        u8 _00[0x0C];
+        ChainNode* next;
+        void* owner;
+        u8 _14[0x18];
+        f32 position[3];
+    };
+
+    ChainNode* current = static_cast<ChainNode*>(node);
+    f32* output = static_cast<f32*>(result);
+    output[0] = output[1] = output[2] = lbl_eu_80668764;
+    ChainNode* root = *(ChainNode**)data;
+    void* target = root->owner;
+    if (target == current || !current) return;
+
+    output[0] = current->position[0];
+    output[1] = current->position[1];
+    output[2] = current->position[2];
+    ChainNode* next = current->next;
+    f32 temp[3];
+    code80135FDC_setVec3(temp, lbl_eu_80668764, lbl_eu_80668764,
+                         lbl_eu_80668764);
     if (target != next && next) {
-        temp[0] = *(f32*)((u8*)next + 0x2C);
-        temp[1] = *(f32*)((u8*)next + 0x30);
-        temp[2] = *(f32*)((u8*)next + 0x34);
+        temp[0] = next->position[0];
+        temp[1] = next->position[1];
+        temp[2] = next->position[2];
     }
-    void* next2 = next ? *(void**)((u8*)next + 0x0C) : 0;
+
+    ChainNode* next2 = next ? next->next : 0;
+    f32 local[3];
+    code80135FDC_setVec3(local, lbl_eu_80668764, lbl_eu_80668764,
+                         lbl_eu_80668764);
     if (target != next2 && next2) {
-        f32 local[3] = {lbl_eu_80668764, lbl_eu_80668764, lbl_eu_80668764};
-        local[0] = *(f32*)((u8*)next2 + 0x2C);
-        local[1] = *(f32*)((u8*)next2 + 0x30);
-        local[2] = *(f32*)((u8*)next2 + 0x34);
-        void* next3 = *(void**)((u8*)next2 + 0x0C);
+        local[0] = next2->position[0];
+        local[1] = next2->position[1];
+        local[2] = next2->position[2];
+        f32 recursivePosition[3];
+        code80135FDC_setVec3(recursivePosition, lbl_eu_80668764,
+                             lbl_eu_80668764, lbl_eu_80668764);
+        ChainNode* next3 = next2->next;
         if (target != next3 && next3) {
-            f32 rec[3];
-            func_8024B4CC(rec, data, next3);
-            local[0] += rec[0]; local[1] += rec[1]; local[2] += rec[2];
+            copyVEC3(recursivePosition, next3->position);
+            f32 recursive[3];
+            func_8024B4CC(recursive, data, next3->next);
+            func_80137738((nw4r::math::VEC3*)recursivePosition,
+                          (const nw4r::math::VEC3*)recursive);
         }
-        temp[0] += local[0]; temp[1] += local[1]; temp[2] += local[2];
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)local,
+                            (const nw4r::math::VEC3*)local,
+                            (const nw4r::math::VEC3*)recursivePosition);
     }
-    r[0] += temp[0]; r[1] += temp[1]; r[2] += temp[2];
+    nw4r::math::VEC3Add((nw4r::math::VEC3*)temp,
+                        (const nw4r::math::VEC3*)temp,
+                        (const nw4r::math::VEC3*)local);
+    nw4r::math::VEC3Add((nw4r::math::VEC3*)output,
+                        (const nw4r::math::VEC3*)output,
+                        (const nw4r::math::VEC3*)temp);
 }
 
 void* __dt__8024B6B8(void* self, int mode) {

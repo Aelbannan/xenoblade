@@ -54,15 +54,18 @@ from tools.coop.lib.object_size import ObjectSizeCheck, check_object_size, forma
 from tools.coop.lib.project import ObjdiffUnit, Project
 
 from tools.coop.lib.targets import (
+    _write_targets_document_unlocked,
     audit_promotion_registry,
     claim_target,
     equivalence_certificate_error,
     equivalence_certificate_migration_report,
+    exclusive_targets_lock,
     get_target,
     harness_targets,
     import_symbols,
     load_targets,
     load_targets_document,
+    locked_targets_document,
     pending_targets,
     plan_recertify_bottom_up,
     recertify_ready_wave,
@@ -771,14 +774,15 @@ def cmd_targets_import_symbols(
     kind: str,
     dry_run: bool,
 ) -> int:
-    data, added, skipped = import_symbols(project, config, kind=kind)
     label = "all symbols" if kind == "all" else f"{kind} symbols"
-    print(f"import {label}: {added} add, {skipped} already present")
-    if dry_run:
-        print("dry-run: registry not changed")
-        return 0
-    path = write_targets_document(config, data)
-    print(f"updated: {path}")
+    with locked_targets_document(config) as (data, write):
+        data, added, skipped = import_symbols(project, config, kind=kind, _data=data)
+        print(f"import {label}: {added} add, {skipped} already present")
+        if dry_run:
+            print("dry-run: registry not changed")
+            return 0
+        path = write()
+        print(f"updated: {path}")
     return cmd_targets_validate(config)
 
 
@@ -790,16 +794,19 @@ def cmd_targets_sync_attempts(config: CoopConfig) -> int:
 
 
 def cmd_targets_sync_calls(project: Project, config: CoopConfig, *, dry_run: bool) -> int:
-    data, scanned, resolved, unresolved = sync_called_functions(project, config)
-    print(
-        f"call graph: {scanned} function record(s), "
-        f"{resolved} resolved direct edge(s), {unresolved} unresolved direct edge(s)"
-    )
-    if dry_run:
-        print("dry-run: registry not changed")
-        return 0
-    path = write_targets_document(config, data)
-    print(f"updated: {path}")
+    with locked_targets_document(config) as (data, write):
+        data, scanned, resolved, unresolved = sync_called_functions(
+            project, config, _data=data
+        )
+        print(
+            f"call graph: {scanned} function record(s), "
+            f"{resolved} resolved direct edge(s), {unresolved} unresolved direct edge(s)"
+        )
+        if dry_run:
+            print("dry-run: registry not changed")
+            return 0
+        path = write()
+        print(f"updated: {path}")
     return cmd_targets_validate(config)
 
 
@@ -1121,36 +1128,45 @@ def cmd_targets_recertify(
 
             certificate = rebind_certificate_provenance(certificate)
 
-            document = load_targets_document(config)
-            rows_by_id = {
-                str(row["id"]): row
-                for row in document.get("targets", [])
-                if isinstance(row, dict) and isinstance(row.get("id"), str)
-            }
-            trial = dict(rows_by_id.get(target.id, {"id": target.id}))
-            trial["status"] = target.status
-            trial["equivalence_certificate"] = certificate
-            rows_by_id[target.id] = trial
-            cert_error = equivalence_certificate_error(trial, rows_by_id)
-            if cert_error:
-                print(f"  FAIL: certificate rejected ({cert_error})", file=sys.stderr)
-                failed_ids.add(target.id)
-                failed += 1
-                continue
+            with exclusive_targets_lock(config):
+                document = load_targets_document(config)
+                rows_by_id = {
+                    str(row["id"]): row
+                    for row in document.get("targets", [])
+                    if isinstance(row, dict) and isinstance(row.get("id"), str)
+                }
+                trial = dict(rows_by_id.get(target.id, {"id": target.id}))
+                trial["status"] = target.status
+                trial["equivalence_certificate"] = certificate
+                rows_by_id[target.id] = trial
+                cert_error = equivalence_certificate_error(trial, rows_by_id)
+                if cert_error:
+                    print(f"  FAIL: certificate rejected ({cert_error})", file=sys.stderr)
+                    failed_ids.add(target.id)
+                    failed += 1
+                    continue
 
-            update_target_result(
-                config,
-                target.id,
-                status=target.status,
-                instruction_match=(
-                    evaluation.fn_match.match_percent if evaluation.fn_match else None
-                ),
-                equivalence_status=evaluation.equivalence.value,
-                equivalence_certificate=certificate,
-                certificate_checked=True,
-                equivalence_confidence=evaluation.equivalence_confidence,
-                equivalence_policy=evaluation.equivalence_policy,
-            )
+                for row in document.get("targets", []):
+                    if row.get("id") != target.id:
+                        continue
+                    row["status"] = target.status
+                    if evaluation.fn_match and evaluation.fn_match.match_percent is not None:
+                        row["instruction_match"] = round(float(evaluation.fn_match.match_percent), 3)
+                    if evaluation.equivalence.value:
+                        row["equivalence_status"] = evaluation.equivalence.value
+                    row["equivalence_certificate"] = certificate
+                    if evaluation.equivalence_confidence is not None:
+                        row["equivalence_confidence"] = evaluation.equivalence_confidence
+                    if evaluation.equivalence_policy is not None:
+                        row["equivalence_policy"] = evaluation.equivalence_policy
+                    if target.status in {"FULL_MATCH", "EQUIVALENT_MATCH"}:
+                        row["workflow_status"] = "ACCEPTED"
+                    elif row.get("workflow_status") in {
+                        None, "BACKLOG", "QUEUED", "CLAIMED", "ACCEPTED",
+                    }:
+                        row["workflow_status"] = "ACTIVE"
+                    break
+                _write_targets_document_unlocked(config, document)
             append_attempt(
                 config.resolve(config.attempt_log),
                 AttemptRecord(

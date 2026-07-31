@@ -2,6 +2,7 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include "kyoshin/harness_catalog.hpp"
+#include <nw4r/math/math_types.h>
 
 void func_80135FDC(){}
 
@@ -88,13 +89,16 @@ void func_80137510(){}
 
 void func_801375A0(){}
 
-void code80135FDC_setVec3(float* self, float a, float b, float c) {
+extern "C" void code80135FDC_setVec3(float* self, float a, float b, float c) {
     *(float*)((char*)self + 0) = a;
     *(float*)((char*)self + 4) = b;
     *(float*)((char*)self + 8) = c;
 }
 
-void func_80137738(){}
+extern "C" void func_80137738(nw4r::math::VEC3* output,
+                              const nw4r::math::VEC3* value) {
+    nw4r::math::VEC3Add(output, output, value);
+}
 
 void func_8013775C(){}
 

@@ -34,10 +34,145 @@ struct CCharEffectEne {
     void* mManager;          // 0x29C: CfObjectMove* or similar
 };
 
-// -- VTable dispatch helpers --
-typedef void* (*MgrVFunc_0x220)(void*, u32);
-typedef void* (*VFunc_0xA8)(void*);
-typedef void (*TargetVFunc_0x194)(void*, u32);
+// Cast-only SI interface for the virtual slots used here. The two RTTI
+// slots are omitted so the declared methods retain their retail offsets.
+struct CCharEffectEneVTableIf {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual void _v07C();
+    virtual void _v080();
+    virtual void _v084();
+    virtual void _v088();
+    virtual void _v08C();
+    virtual void _v090();
+    virtual void _v094();
+    virtual void _v098();
+    virtual void _v09C();
+    virtual void _v0A0();
+    virtual void _v0A4();
+    virtual void* _v0A8();
+    virtual void _v0AC();
+    virtual void _v0B0();
+    virtual void _v0B4();
+    virtual void _v0B8();
+    virtual void _v0BC();
+    virtual void _v0C0();
+    virtual void _v0C4();
+    virtual void _v0C8();
+    virtual void _v0CC();
+    virtual void _v0D0();
+    virtual void _v0D4();
+    virtual void _v0D8();
+    virtual void _v0DC();
+    virtual void _v0E0();
+    virtual void _v0E4();
+    virtual void _v0E8();
+    virtual void _v0EC();
+    virtual void _v0F0();
+    virtual void _v0F4();
+    virtual void _v0F8();
+    virtual void _v0FC();
+    virtual void _v100();
+    virtual void _v104();
+    virtual void _v108();
+    virtual void _v10C();
+    virtual void _v110();
+    virtual void _v114();
+    virtual void _v118();
+    virtual void _v11C();
+    virtual void _v120();
+    virtual void _v124();
+    virtual void _v128();
+    virtual void _v12C();
+    virtual void _v130();
+    virtual void _v134();
+    virtual void _v138();
+    virtual void _v13C();
+    virtual void _v140();
+    virtual void _v144();
+    virtual void _v148();
+    virtual void _v14C();
+    virtual void _v150();
+    virtual void _v154();
+    virtual void _v158();
+    virtual void _v15C();
+    virtual void _v160();
+    virtual void _v164();
+    virtual void _v168();
+    virtual void _v16C();
+    virtual void _v170();
+    virtual void _v174();
+    virtual void _v178();
+    virtual void _v17C();
+    virtual void _v180();
+    virtual void _v184();
+    virtual void _v188();
+    virtual void _v18C();
+    virtual void _v190();
+    virtual void _v194(u32 value);
+    virtual void _v198();
+    virtual void _v19C();
+    virtual void _v1A0();
+    virtual void _v1A4();
+    virtual void _v1A8();
+    virtual void _v1AC();
+    virtual void _v1B0();
+    virtual void _v1B4();
+    virtual void _v1B8();
+    virtual void _v1BC();
+    virtual void _v1C0();
+    virtual void _v1C4();
+    virtual void _v1C8();
+    virtual void _v1CC();
+    virtual void _v1D0();
+    virtual void _v1D4();
+    virtual void _v1D8();
+    virtual void _v1DC();
+    virtual void _v1E0();
+    virtual void _v1E4();
+    virtual void _v1E8();
+    virtual void _v1EC();
+    virtual void _v1F0();
+    virtual void _v1F4();
+    virtual void _v1F8();
+    virtual void _v1FC();
+    virtual void _v200();
+    virtual void _v204();
+    virtual void _v208();
+    virtual void _v20C();
+    virtual void _v210();
+    virtual void _v214();
+    virtual void _v218();
+    virtual void _v21C();
+    virtual void* _v220(u32 value);
+};
 
 // __ct__cf_CCharEffectEne: Constructor.
 extern "C" CCharEffectEne* __ct__cf_CCharEffectEne(CCharEffectEne* self) {
@@ -57,13 +192,11 @@ extern "C" void* func_8015CD04(CCharEffectEne* self, u32 index, s32 mode) {
             if (entry < 0x200) {
                 result = func_8008187C__Q22cf13CfGameManagerFv(entry);
             } else {
-                result = ((MgrVFunc_0x220)((*(void***)self->mManager)[0x220 / 4]))(
-                    self->mManager, entry - 0x200);
+                result = reinterpret_cast<CCharEffectEneVTableIf*>(self->mManager)->_v220(entry - 0x200);
             }
         }
     } else {
-        result = ((MgrVFunc_0x220)((*(void***)self->mManager)[0x220 / 4]))(
-            self->mManager, (u32)mode);
+        result = reinterpret_cast<CCharEffectEneVTableIf*>(self->mManager)->_v220((u32)mode);
     }
 
     return result;
@@ -76,12 +209,10 @@ extern "C" void* func_8015CD9C(CCharEffectEne* self, u32 index, s32 mode) {
     if (mode < 0) {
         u16 entry = lbl_eu_80501EB8[index];
         if (entry != 0) {
-            obj = ((MgrVFunc_0x220)((*(void***)self->mManager)[0x220 / 4]))(
-                self->mManager, entry);
+            obj = reinterpret_cast<CCharEffectEneVTableIf*>(self->mManager)->_v220(entry);
         }
     } else {
-        obj = ((MgrVFunc_0x220)((*(void***)self->mManager)[0x220 / 4]))(
-            self->mManager, (u32)mode);
+        obj = reinterpret_cast<CCharEffectEneVTableIf*>(self->mManager)->_v220((u32)mode);
     }
 
     if (obj != nullptr) {
@@ -124,13 +255,11 @@ extern "C" void* func_8015CED0(CCharEffectEne* self, u32 index, s32 mode) {
                     func_800ACF78(obj, self->mManager, 0);
                 }
             } else {
-                obj = ((MgrVFunc_0x220)((*(void***)self->mManager)[0x220 / 4]))(
-                    self->mManager, entry - 0x200);
+                obj = reinterpret_cast<CCharEffectEneVTableIf*>(self->mManager)->_v220(entry - 0x200);
             }
         }
     } else {
-        obj = ((MgrVFunc_0x220)((*(void***)self->mManager)[0x220 / 4]))(
-            self->mManager, (u32)mode);
+        obj = reinterpret_cast<CCharEffectEneVTableIf*>(self->mManager)->_v220((u32)mode);
     }
 
     return obj;
@@ -163,14 +292,14 @@ extern "C" void func_8015CF90(CCharEffectEne* self, void* target, u32 type, u32 
     }
 
     if (data != nullptr) {
-        dataSrc = ((VFunc_0xA8)((*(void***)data)[0xA8 / 4]))(data);
+        dataSrc = reinterpret_cast<CCharEffectEneVTableIf*>(data)->_v0A8();
     } else {
         dataSrc = nullptr;
     }
 
     func_800ACF78(target, self->mManager, (u32)dataSrc);
 
-    ((TargetVFunc_0x194)((*(void***)target)[0x194 / 4]))(target, bitFlag);
+    reinterpret_cast<CCharEffectEneVTableIf*>(target)->_v194(bitFlag);
 
     func_800ACEF8(target, (void*)((u8*)(*(void**)((u8*)self->mManager + 0x98)) + 0x304));
 

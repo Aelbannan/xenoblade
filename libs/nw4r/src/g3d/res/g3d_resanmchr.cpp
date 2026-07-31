@@ -843,8 +843,8 @@ bool ChrAnmResult::GetRotateDeg(math::VEC3* pRotate) const {
         return true;
     }
 
-    // FSqrt returns 0 when -sin(y) <= -1 or -sin(y) >= 1
-    f32 y = math::FSqrt(-(rt._20 * rt._20 - 1.0f));
+    f32 ySquared = -(rt._20 * rt._20 - 1.0f);
+    f32 y = ySquared > 0.0f ? ySquared * math::FrSqrt(ySquared) : 0.0f;
 
     if (y == 0.0f) {
         pRotate->x = math::Atan2Deg(rt._02 + rt._11, rt._12 + rt._01);

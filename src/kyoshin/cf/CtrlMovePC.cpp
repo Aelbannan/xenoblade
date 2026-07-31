@@ -30,8 +30,8 @@ void __ptmf_scall(...);
 
 // Engine helpers.
 void* func_8016FE34(void* obj);
-void* func_80083298(void);                       // cf::CfGameManager accessor
-void  func_8047CF20(void* unk, void* task);      // UnkClass_8047CD0C::func
+void* func_80083298__Q22cf13CfGameManagerFv(void); // cf::CfGameManager accessor
+void  func_8047CF20__17UnkClass_8047CD0CFv(void* unk, void* task); // UnkClass_8047CD0C::func
 void* func_8047CE7C(void);                       // UnkClass_8047CD0C::func
 void  func_8047DE14(void* a, Vec* b, f32 c, f32 d);
 void  func_8047DD4C(void* a, Vec* b, void* c, f32 d, f32 e, int f);
@@ -115,11 +115,11 @@ extern "C" CCtrlMovePC* __ct__801993C4(CCtrlMovePC* self, void* baseParam, void*
 // ============================================================================
 extern "C" void func_80199618(CCtrlMovePC* self) {
     if (self->mTask != 0) {
-        void* gm = func_80083298();
+        void* gm = func_80083298__Q22cf13CfGameManagerFv();
         if (gm != 0) {
             void* p = (char*)gm + 0x2f2c;
             if (p != 0) {
-                func_8047CF20(p, self->mTask);
+                func_8047CF20__17UnkClass_8047CD0CFv(p, self->mTask);
             }
         }
         self->mTask = 0;
@@ -217,21 +217,29 @@ extern "C" int func_8019EEB8(CCtrlMovePC* self) {
 // ============================================================================
 extern "C" void func_8019956C(CCtrlMovePC* self) {
     cf::CMoveEmbedded* emb = (cf::CMoveEmbedded*)((char*)self->mObject + 0x3e9c);
-    f32 v = emb->getF35();                       // vtable 0x8c
-    if (v == lbl_eu_80667B60) {                  // == 0.0
+    f32 v = emb->getF35();
+    if (v == lbl_eu_80667B60) {
         return;
     }
-    u8 b = *(u8*)((char*)getInstance__Q22cf14CBattleManagerFv() + 0x1aa);
-    if (b >= 1 && b <= 0x18) {
+
+    u8 battleState = *(u8*)((char*)getInstance__Q22cf14CBattleManagerFv() + 0x1aa);
+    u32 inBattle = 0;
+    if (battleState >= 1) {
+        if (battleState <= 0x18) {
+            inBattle = 1;
+        }
+    }
+    if (inBattle != 0) {
         return;
     }
+
     if (func_801999C0(self) == 0) {
         return;
     }
-    if (!self->mStateFunc) {                     // __ptmf_test
+    if (!self->mStateFunc) {
         return;
     }
-    while ((self->*self->mStateFunc)()) {        // __ptmf_scall loop
+    while ((self->*self->mStateFunc)()) {
     }
 }
 
@@ -246,11 +254,11 @@ static inline void zeroArr(CCtrlMovePC* s) {
 
 // Release mTask through the game manager (shared by reset paths).
 static inline void releaseTask(CCtrlMovePC* s) {
-    void* gm = func_80083298();
+    void* gm = func_80083298__Q22cf13CfGameManagerFv();
     if (gm != 0) {
         void* p = (char*)gm + 0x2f2c;
         if (p != 0) {
-            func_8047CF20(p, s->mTask);
+            func_8047CF20__17UnkClass_8047CD0CFv(p, s->mTask);
         }
     }
     s->mTask = 0;

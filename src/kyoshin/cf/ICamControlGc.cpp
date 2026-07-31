@@ -3,32 +3,24 @@
 
 #include "kyoshin/harness_catalog.hpp"
 
-typedef void* (*VF_GetObj)(void*);
+struct ICamControlGcIf { virtual void* getObject(); };
 
 extern "C" int func_80274DD8(void* self) {
-    u32* vtable = *(u32**)self;
-    VF_GetObj vf = (VF_GetObj)vtable[2];
-    void* obj = vf(self);
+    void* obj = reinterpret_cast<ICamControlGcIf*>(self)->getObject();
     return (*(int*)obj >> 19) & 1;
 }
 
 extern "C" int func_80274E0C(void* self) {
-    u32* vtable = *(u32**)self;
-    VF_GetObj vf = (VF_GetObj)vtable[2];
-    void* obj = vf(self);
+    void* obj = reinterpret_cast<ICamControlGcIf*>(self)->getObject();
     return (*(int*)obj >> 20) & 1;
 }
 
 extern "C" int func_80274E40(void* self) {
-    u32* vtable = *(u32**)self;
-    VF_GetObj vf = (VF_GetObj)vtable[2];
-    void* obj = vf(self);
+    void* obj = reinterpret_cast<ICamControlGcIf*>(self)->getObject();
     return (*(int*)obj >> 17) & 1;
 }
 
 extern "C" int func_80274E74(void* self) {
-    u32* vtable = *(u32**)self;
-    VF_GetObj vf = (VF_GetObj)vtable[2];
-    void* obj = vf(self);
+    void* obj = reinterpret_cast<ICamControlGcIf*>(self)->getObject();
     return (*(int*)obj >> 18) & 1;
 }

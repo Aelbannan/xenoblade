@@ -259,6 +259,26 @@ UNIT_RULES: dict[str, UnitRules] = {
             ("getFlagVal", "getFlagVal_8003C0C0"),
         ),
     ),
+    "CfCollSphereImpl.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">II", MAGIC_HI, 0), "lbl_eu_80666920"),
+        ),
+    ),
+    "code_802B9064.o": UnitRules(
+        pool_patterns=(
+            (struct.pack(">I", 0x3F800000), "float_8066B818"),
+            (struct.pack(">I", 0x3F000000), "float_8066B81C"),
+        ),
+    ),
+    "CChainTime.o": UnitRules(
+        exact_renames=(
+            ("__vt__Q22cf10CChainTime", "lbl_eu_8052BD74"),
+        ),
+        pool_patterns=(
+            (struct.pack(">I", 0x00000000), "lbl_eu_80668A88"),
+            (struct.pack(">I", 0xBF800000), "lbl_eu_80668A8C"),
+        ),
+    ),
     "CMenuArtsSelect.o": UnitRules(),
     "CMenuBattlePlayerState.o": UnitRules(
         # Move: MWCC int→float biases as TU-local @N; retail lbl_eu_80666FA8/FB8.

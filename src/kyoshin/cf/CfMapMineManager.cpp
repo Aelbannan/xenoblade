@@ -4,6 +4,7 @@
 // with C linkage so the object exports the exact retail symbols.
 
 #include <types.h>
+#include <decomp.h>
 #include <string.h>
 
 // ---------------------------------------------------------------------------
@@ -18,6 +19,7 @@ extern "C" u32 func_8003B41C(BdatFilePointer* file);
 extern "C" u32 CfRes_getD80Flag();
 extern "C" f32 func_80496288();
 extern "C" u32 func_80061FFC();
+extern "C" const f32 lbl_eu_806682B0;
 extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 extern "C" void* __construct_new_array(void* block, void* ctor, void* dtor,
                                        u32 size, u32 n);
@@ -160,6 +162,50 @@ struct CfMapMineManager {
     MineSoundTimer mSnd[16]; // 0x4D4..0x554
 };
 
+// Cast-only view of the scene object.  RTTI contributes the two hidden
+// entries before the first declared virtual, so this declaration places the
+// position callback at the retail vtable offset 0x9C.
+struct MineSceneObjectIf {
+    virtual void v008();
+    virtual void v00C();
+    virtual void v010();
+    virtual void v014();
+    virtual void v018();
+    virtual void v01C();
+    virtual void v020();
+    virtual void v024();
+    virtual void v028();
+    virtual void v02C();
+    virtual void v030();
+    virtual void v034();
+    virtual void v038();
+    virtual void v03C();
+    virtual void v040();
+    virtual void v044();
+    virtual void v048();
+    virtual void v04C();
+    virtual void v050();
+    virtual void v054();
+    virtual void v058();
+    virtual void v05C();
+    virtual void v060();
+    virtual void v064();
+    virtual void v068();
+    virtual void v06C();
+    virtual void v070();
+    virtual void v074();
+    virtual void v078();
+    virtual void v07C();
+    virtual void v080();
+    virtual void v084();
+    virtual void v088();
+    virtual void v08C();
+    virtual void v090();
+    virtual void v094();
+    virtual void v098();
+    virtual void setPosition(void* position);
+};
+
 // ---------------------------------------------------------------------------
 // Small helpers (high-level; inlined at -O4)
 // ---------------------------------------------------------------------------
@@ -196,27 +242,25 @@ static inline u32 ListFindFree(CfMapMineManager* m) {
 // Zeroes the item's runtime fields, preserves mFlags id bits partially.
 // ---------------------------------------------------------------------------
 extern "C" void func_80205F78(MineNode* node) {
-    u32 flags = node->mItem.mFlags;
-    flags &= 0x003FFFFF;          // clrlwi r0, r0, 10
-    flags &= 0xFFFF00FF;          // rlwinm r0, r0, 0, 24, 15
     node->mItem.mObj0 = 0;
     node->mItem.mObj4 = 0;
-    node->mItem.mTimer14 = 0.0f;
+    node->mItem.mTimer14 = lbl_eu_806682B0;
     node->mItem.mId18 = 0;
     node->mItem.mPointId1C = 0;
-    node->mItem.mFlags = flags;
+    node->mItem.mFlags &= 0x003FFFFF;
+    node->mItem.mFlags &= 0xFFFF00FF;
 }
 
 // ---------------------------------------------------------------------------
 // __dt___reslist_base_cf_CfMapMineManager_MinePoint - base list destructor.
 // ---------------------------------------------------------------------------
-extern "C" CfMapMineManager*
-__dt___reslist_base_cf_CfMapMineManager_MinePoint(CfMapMineManager* self,
+extern "C" MineListBase*
+__dt___reslist_base_cf_CfMapMineManager_MinePoint(MineListBase* self,
                                                   s32 flags) {
     if (self != 0) {
         self->mVtable = lbl_eu_80535744;
-        ListClear(self);
-        if (self->mUnk040 == false) {
+        ListClearBase(self);
+        if (self->mUnk03C == false) {
             if (self->mList != 0) {
                 __dla__FPv((u8*)self->mList - 0x10);
             }
@@ -232,13 +276,13 @@ __dt___reslist_base_cf_CfMapMineManager_MinePoint(CfMapMineManager* self,
 // ---------------------------------------------------------------------------
 // __dt__reslist_cf_CfMapMineManager_MinePoint - derived list destructor.
 // ---------------------------------------------------------------------------
-extern "C" CfMapMineManager*
-__dt__reslist_cf_CfMapMineManager_MinePoint(CfMapMineManager* self, s32 flags) {
+extern "C" MineListBase*
+__dt__reslist_cf_CfMapMineManager_MinePoint(MineListBase* self, s32 flags) {
     if (self != 0) {
         if (self != 0) {
             self->mVtable = lbl_eu_80535744;
-            ListClear(self);
-            if (self->mUnk040 == false) {
+            ListClearBase(self);
+            if (self->mUnk03C == false) {
                 if (self->mList != 0) {
                     __dla__FPv((u8*)self->mList - 0x10);
                 }
@@ -272,13 +316,13 @@ extern "C" MineMsgRing* __dt__80206124(MineMsgRing* self, s32 flags) {
 extern "C" CfMapMineManager* __dt__80206170(CfMapMineManager* self, s32 flags) {
     if (self != 0) {
         ListClear(self);
-        if (self->mUnk040 == false) {
-            if (self->mList != 0) {
-                __dla__FPv((u8*)self->mList - 0x10);
+        if (self->mPoints.mUnk03C == false) {
+            if (self->mPoints.mList != 0) {
+                __dla__FPv((u8*)self->mPoints.mList - 0x10);
             }
-            self->mList = 0;
+            self->mPoints.mList = 0;
         }
-        self->mCapacity = 0;
+        self->mPoints.mCapacity = 0;
         lbl_eu_806646A0 = 0;
         if ((u32)self + 0x44 != 0) {
             self->mMsgs.mCount = 0;
@@ -286,13 +330,13 @@ extern "C" CfMapMineManager* __dt__80206170(CfMapMineManager* self, s32 flags) {
         }
         // Inlined ~_reslist_base for the embedded list subobject.
         if ((u32)self + 0x04 != 0) {
-            self->mVtable = lbl_eu_80535744;
+            self->mPoints.mVtable = lbl_eu_80535744;
             ListClear(self);
-            if (self->mUnk040 == false) {
-                if (self->mList != 0) {
-                    __dla__FPv((u8*)self->mList - 0x10);
+            if (self->mPoints.mUnk03C == false) {
+                if (self->mPoints.mList != 0) {
+                    __dla__FPv((u8*)self->mPoints.mList - 0x10);
                 }
-                self->mList = 0;
+                self->mPoints.mList = 0;
             }
         }
         if (flags > 0) {
@@ -306,27 +350,31 @@ extern "C" CfMapMineManager* __dt__80206170(CfMapMineManager* self, s32 flags) {
 // __ct__80205A7C - CfMapMineManager constructor.
 // ---------------------------------------------------------------------------
 extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
-    u32 flags = self->mStartNode.mItem.mFlags;
+    u32 flags = self->mPoints.mStartNode.mItem.mFlags;
     flags &= 0x003FFFFF;
     flags &= 0xFFFF00FF;
 
     self->mTime = 0.0f;
-    self->mVtable = lbl_eu_80535744;
-    self->mList = 0;
-    self->mCapacity = 0;
-    self->mStartNode.mItem.mTimer14 = 0.0f;
-    self->mStartNode.mItem.mId18 = 0;
-    self->mStartNode.mItem.mPointId1C = 0;
-    self->mStartNode.mItem.mFlags = flags;
-    self->mStartNode.mItem.mObj0 = 0;
-    self->mStartNode.mItem.mObj4 = 0;
-    self->mUnk040 = false;
-    self->mStartPtr = &self->mStartNode;
-    self->mStartNode.mNext = &self->mStartNode;
-    self->mStartNode.mPrev = &self->mStartNode;
-    self->mVtable = lbl_eu_8053572C;
+    self->mPoints.mVtable = lbl_eu_80535744;
+    self->mPoints.mList = 0;
+    self->mPoints.mCapacity = 0;
+    self->mPoints.mStartNode.mItem.mTimer14 = 0.0f;
+    self->mPoints.mStartNode.mItem.mId18 = 0;
+    self->mPoints.mStartNode.mItem.mPointId1C = 0;
+    self->mPoints.mStartNode.mItem.mFlags = flags;
+    self->mPoints.mStartNode.mItem.mObj0 = 0;
+    self->mPoints.mStartNode.mItem.mObj4 = 0;
+    self->mPoints.mUnk03C = false;
+    self->mPoints.mStartPtr = &self->mPoints.mStartNode;
+    self->mPoints.mStartNode.mNext = &self->mPoints.mStartNode;
+    self->mPoints.mStartNode.mPrev = &self->mPoints.mStartNode;
+    self->mPoints.mVtable = lbl_eu_8053572C;
     self->mMsgs.mSlots[0].mText[0] = 0;
     self->mMsgs.mSlots[0].mLen = 0;
+    for (int i = 1; i < 16; i++) {
+        self->mMsgs.mSlots[i].mText[0] = 0;
+        self->mMsgs.mSlots[i].mLen = 0;
+    }
 
     // MineMsgRing header.
     self->mMsgs.mCapacity = 16;
@@ -345,17 +393,17 @@ extern "C" CfMapMineManager* __ct__80205A7C(CfMapMineManager* self) {
     // Allocate the node array (150 nodes x 0x2C).
     u32 handle = func_80061FFC();
     void* mem = allocate_array__Q23mtl10MemManagerFUlUl(0x19D8, handle);
-    self->mList = (MineNode*)__construct_new_array(mem, (void*)func_80205F78, 0,
-                                                   0x2C, 0x96);
+    self->mPoints.mList = (MineNode*)__construct_new_array(mem, (void*)func_80205F78, 0,
+                                                           0x2C, 0x96);
     for (int i = 0; i < 150; i++) {
-        ((MineNode*)((u8*)self->mList + i * 0x2C))->mNext = 0;
+        ((MineNode*)((u8*)self->mPoints.mList + i * 0x2C))->mNext = 0;
     }
-    self->mCapacity = 0x96;
+    self->mPoints.mCapacity = 0x96;
 
     // Reset the message ring and sound timers on the singleton.
     CfMapMineManager* mgr = lbl_eu_806646A0;
     if (mgr != 0) {
-        MineNode* start = mgr->mStartPtr;
+        MineNode* start = mgr->mPoints.mStartPtr;
         MineNode* n = start->mNext;
         while (n != start) {
             MineNode* cur = n;
@@ -382,7 +430,7 @@ extern "C" void func_802062BC() {
     CfMapMineManager* mgr = lbl_eu_806646A0;
     if (mgr == 0) return;
 
-    MineNode* start = mgr->mStartPtr;
+    MineNode* start = mgr->mPoints.mStartPtr;
     MineNode* n = start->mNext;
     while (n != start) {
         MineNode* cur = n;
@@ -405,7 +453,7 @@ extern "C" void func_802062BC() {
 // func_80206388 - release every point's scene objects and reset state.
 // ---------------------------------------------------------------------------
 extern "C" void func_80206388(CfMapMineManager* self) {
-    MineNode* start = self->mStartPtr;
+    MineNode* start = self->mPoints.mStartPtr;
     MineNode* n = start->mNext;
     while (n != start) {
         if (n->mItem.mObj0 != 0) {
@@ -514,8 +562,7 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
 
     void* vt = *(void**)obj;
     ((void (*)(void*, u32))(*(u32*)((u8*)vt + 0x158)))(obj, 1);
-    void* vt2 = *(void**)obj;
-    ((void (*)(void*, void*))(*(u32*)((u8*)vt2 + 0x9C)))(obj, &pt->mPosX);
+    ((MineSceneObjectIf*)obj)->setPosition(&pt->mPosX);
     *(u8*)((u8*)obj + 0x90) = 0;
 
     return pt->mObj4 != 0;
@@ -525,13 +572,12 @@ extern "C" int func_802066A8(CfMapMineManager* self, MinePoint* pt) {
 // func_80207C08 - true when no active point matches (id, area, sub).
 // ---------------------------------------------------------------------------
 extern "C" int func_80207C08(u32 pointId, int area, int sub) {
-    CfMapMineManager* mgr = lbl_eu_806646A0;
-    if (mgr == 0 || pointId == 0) {
+    if (lbl_eu_806646A0 == 0 || pointId == 0) {
         return 1;
     }
-    MineNode* start = mgr->mStartPtr;
-    MineNode* n = start->mNext;
-    while (n != start) {
+    MineNode* head = lbl_eu_806646A0->mPoints.mStartPtr;
+    MineNode* n = head->mNext;
+    while (n != head) {
         if (n->mItem.mId18 != 0 && ((n->mItem.mFlags >> 16) & 1) != 0 &&
             area == n->mItem.mArea1E && sub == n->mItem.mAreaSub1F &&
             pointId == n->mItem.mPointId1C &&
@@ -546,16 +592,26 @@ extern "C" int func_80207C08(u32 pointId, int area, int sub) {
 // ---------------------------------------------------------------------------
 // func_80207C94 - snapshot active points into a 6-byte record array.
 // ---------------------------------------------------------------------------
+struct MineSnapshot {
+    s16 mTimer;
+    u8 mCount;
+    u8 mKind;
+    u8 mArea;
+    u8 mSub;
+};
+
 extern "C" void func_80207C94(u8* out) {
     memset(out, 0, 0x384);
-    MineNode* start = lbl_eu_806646A0->mStartPtr;
+    MineNode* start = lbl_eu_806646A0->mPoints.mStartPtr;
     MineNode* n = start->mNext;
+    (void)start;
     while (n != start) {
-        *(s16*)(out + 0x0) = (s16)n->mItem.mTimer14;
-        *(out + 0x2) = (u8)((n->mItem.mFlags >> 8) & 0xFF);
-        *(out + 0x3) = (u8)((n->mItem.mFlags >> 2) & 0xFF);
-        *(out + 0x4) = n->mItem.mArea1E;
-        *(out + 0x5) = n->mItem.mAreaSub1F;
+        MineSnapshot* snapshot = (MineSnapshot*)out;
+        snapshot->mTimer = (s16)n->mItem.mTimer14;
+        snapshot->mCount = (u8)((n->mItem.mFlags >> 8) & 0xFF);
+        snapshot->mKind = (u8)DECOMP_PPC_RLWINM(n->mItem.mFlags, 10, 24, 31);
+        snapshot->mArea = n->mItem.mArea1E;
+        snapshot->mSub = n->mItem.mAreaSub1F;
         out += 6;
         n = n->mNext;
     }
@@ -578,8 +634,7 @@ extern "C" void func_80207B24(CfMapMineManager* self, u32 kind, void* pos) {
     void* obj = func_8008187C__Q22cf13CfGameManagerFv(sfx);
     if (obj == 0) return;
     func_800ACF78(obj, player, 0);
-    void* vt = *(void**)obj;
-    ((void (*)(void*, void*))(*(u32*)((u8*)vt + 0x9C)))(obj, pos);
+    ((MineSceneObjectIf*)obj)->setPosition(pos);
 }
 
 // ---------------------------------------------------------------------------
@@ -685,7 +740,7 @@ extern "C" void func_8020712C(MineNode** out, CfMapMineManager* mgr,
     }
 
     const char* cols = lbl_eu_80508424;
-    MineNode* start = list->mStartPtr;
+    MineNode* start = list->mPoints.mStartPtr;
     MineNode* n = start->mNext;
     while (n != start) {
         n->mItem.mFlags &= ~0x00060000;
@@ -757,7 +812,7 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
     u16 area = lbl_eu_80663E42;
     u16 sub = lbl_eu_80663E44;
 
-    MineNode* start = self->mStartPtr;
+    MineNode* start = self->mPoints.mStartPtr;
     MineNode* n = start->mNext;
     while (n != start) {
         if (n->mItem.mObj0 != 0) {
@@ -788,7 +843,7 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
     MinePoint tmp;
     for (u32 row = rowBegin; row < rowEnd; row++) {
         MineNode* found = 0;
-        MineNode* s2 = self->mStartPtr;
+        MineNode* s2 = self->mPoints.mStartPtr;
         MineNode* m = s2->mNext;
         while (m != s2) {
             if ((m->mItem.mFlags >> 22) == (row & 0xFFFF) &&
@@ -834,7 +889,7 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
             if (func_802064A8(self, row, &tmp, 1) != 0) {
                 func_802066A8(self, &tmp);
                 u32 idx = ListFindFree(self);
-                MineNode* slot = (MineNode*)((u8*)self->mList + idx * 0x2C);
+                MineNode* slot = (MineNode*)((u8*)self->mPoints.mList + idx * 0x2C);
                 MinePoint* dst = &slot->mItem;
                 *(u32*)((u8*)dst + 0x00) = *(u32*)((u8*)&tmp + 0x00);
                 *(u32*)((u8*)dst + 0x04) = *(u32*)((u8*)&tmp + 0x04);
@@ -849,7 +904,7 @@ extern "C" void func_80206BD4(CfMapMineManager* self) {
                 *(u8*)((u8*)dst + 0x1F) = *(u8*)((u8*)&tmp + 0x1F);
                 *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)&tmp + 0x20);
                 // push_back into the intrusive list
-                MineNode* head = self->mStartPtr;
+                MineNode* head = self->mPoints.mStartPtr;
                 slot->mNext = head;
                 slot->mPrev = head->mPrev;
                 head->mPrev->mNext = slot;
@@ -1174,7 +1229,7 @@ extern "C" void func_802074F0(CfMapMineManager* self) {
 extern "C" void func_80207D2C(u8* rec) {
     CfMapMineManager* mgr = lbl_eu_806646A0;
     if (mgr != 0) {
-        MineNode* start = mgr->mStartPtr;
+        MineNode* start = mgr->mPoints.mStartPtr;
         MineNode* n = start->mNext;
         while (n != start) {
             MineNode* cur = n;
@@ -1227,11 +1282,11 @@ extern "C" void func_80207D2C(u8* rec) {
 
         CfMapMineManager* m2 = lbl_eu_806646A0;
         u32 idx = 0;
-        while (idx < m2->mCapacity) {
-            if (((MineNode*)((u8*)m2->mList + idx * 0x2C))->mNext == 0) break;
+        while (idx < m2->mPoints.mCapacity) {
+            if (((MineNode*)((u8*)m2->mPoints.mList + idx * 0x2C))->mNext == 0) break;
             idx++;
         }
-        MineNode* slot = (MineNode*)((u8*)m2->mList + idx * 0x2C);
+        MineNode* slot = (MineNode*)((u8*)m2->mPoints.mList + idx * 0x2C);
         MinePoint* dst = &slot->mItem;
         *(u32*)((u8*)dst + 0x00) = *(u32*)((u8*)&tmp + 0x00);
         *(u32*)((u8*)dst + 0x04) = *(u32*)((u8*)&tmp + 0x04);
@@ -1246,7 +1301,7 @@ extern "C" void func_80207D2C(u8* rec) {
         *(u8*)((u8*)dst + 0x1F) = *(u8*)((u8*)&tmp + 0x1F);
         *(u32*)((u8*)dst + 0x20) = *(u32*)((u8*)&tmp + 0x20);
 
-        MineNode* head = m2->mStartPtr;
+        MineNode* head = m2->mPoints.mStartPtr;
         slot->mNext = head;
         slot->mPrev = head->mPrev;
         head->mPrev->mNext = slot;

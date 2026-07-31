@@ -18,9 +18,13 @@ typedef void* CVirtualLightObjPtr;
 struct CTimeLightGrp_BaseLayout {
     void* vtbl;                                                      // +0x00
     void* parent;                                                    // +0x04
-    // _reslist_base<CVirtualLightObjPtr> starts here at offset +0x08
-    _reslist_base<CVirtualLightObjPtr> reslistBase;                  // +0x08..+0x27
-    // CTimeLightGrp extra fields beyond the base
+    void* resVtbl;                                                   // +0x08
+    _reslist_node<CVirtualLightObjPtr>* mStartNodePtr;               // +0x0C
+    _reslist_node<CVirtualLightObjPtr> mStartNode;                   // +0x10
+    _reslist_node<CVirtualLightObjPtr>* mList;                       // +0x1C
+    int mCapacity;                                                   // +0x20
+    u8 unk1C;                                                        // +0x24
+    u8 pad_25[3];                                                    // +0x25..+0x27
     float mVal0;                                                     // +0x28
     float mVal1;                                                     // +0x2C
     float mVal2;                                                     // +0x30
@@ -31,6 +35,7 @@ struct CTimeLightGrp_BaseLayout {
 extern "C" u8 lbl_eu_80526418[];
 extern "C" u8 lbl_eu_80526430[];
 extern "C" u8 lbl_eu_80526448[];
+extern "C" const float lbl_eu_80666038;
 
 extern "C" void* __dl__FPv(void* ptr);
 extern "C" void* __dla__FPv(void* ptr);
@@ -40,12 +45,14 @@ extern "C" void* allocate_array__Q23mtl10MemManagerFUlUl(u32 size, u32 handle);
 // ================== __ct__CTimeLightGrp ==================
 extern "C" void __ct__CTimeLightGrp(void* self, void* parent) {
     CTimeLightGrp_BaseLayout* p = (CTimeLightGrp_BaseLayout*)self;
-    _reslist_base<CVirtualLightObjPtr>* base = &p->reslistBase;
+    _reslist_base<CVirtualLightObjPtr>* base =
+        (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
     int i;
 
     // CTimeLightGrp fields
     p->vtbl = lbl_eu_80526418;
     p->parent = parent;
+    p->resVtbl = lbl_eu_80526448;
 
     // Base init (inlined _reslist_base ctor)
     base->mList = nullptr;
@@ -62,21 +69,21 @@ extern "C" void __ct__CTimeLightGrp(void* self, void* parent) {
     *(void**)((u8*)self + 8) = lbl_eu_80526430;
 
     // Zero extra float fields
-    p->mVal0 = 0.0f;
-    p->mVal1 = 0.0f;
-    p->mVal2 = 0.0f;
-    p->mVal3 = 0.0f;
-    p->mScale = 0.0f;
+    p->mVal0 = lbl_eu_80666038;
+    p->mVal1 = lbl_eu_80666038;
+    p->mVal2 = lbl_eu_80666038;
+    p->mVal3 = lbl_eu_80666038;
+    p->mScale = lbl_eu_80666038;
 
     // Allocate and initialise node array
     base->mList = (_reslist_node<CVirtualLightObjPtr>*)
         allocate_array__Q23mtl10MemManagerFUlUl(
             0x180, (u32)func_80496004(parent));
-    base->mCapacity = 32;
 
     for (i = 0; i < 32; i++) {
         base->mList[i].mNext = nullptr;
     }
+    base->mCapacity = 32;
 }
 
 // ================== __dt__8005A03C ==================
@@ -166,7 +173,7 @@ extern "C" void __dt__13CTimeLightGrpFv(void* self, int mode) {
         _reslist_node<CVirtualLightObjPtr>* cur;
         _reslist_node<CVirtualLightObjPtr>* head;
 
-        head = p->reslistBase.mStartNodePtr;
+        head = p->mStartNodePtr;
         cur = head->mNext;
         while (cur != head) {
             _reslist_node<CVirtualLightObjPtr>* prev = cur;
@@ -178,7 +185,7 @@ extern "C" void __dt__13CTimeLightGrpFv(void* self, int mode) {
     }
 
     // Step 2: destroy the reslist_base subobject
-    base = &p->reslistBase;
+    base = (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
     if (base != nullptr) {
         *(void**)base = lbl_eu_80526448;
 
@@ -210,7 +217,8 @@ extern "C" void __dt__13CTimeLightGrpFv(void* self, int mode) {
 // ================== func_8005A2F0 ==================
 extern "C" void func_8005A2F0(void* self, void* item) {
     CTimeLightGrp_BaseLayout* p = (CTimeLightGrp_BaseLayout*)self;
-    _reslist_base<CVirtualLightObjPtr>* base = &p->reslistBase;
+    _reslist_base<CVirtualLightObjPtr>* base =
+        (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
     _reslist_node<CVirtualLightObjPtr>* entry;
     _reslist_node<CVirtualLightObjPtr>* head;
     int i;
@@ -238,7 +246,8 @@ extern "C" void func_8005A2F0(void* self, void* item) {
 // ================== func_8005A374 ==================
 extern "C" void func_8005A374(void* self) {
     CTimeLightGrp_BaseLayout* p = (CTimeLightGrp_BaseLayout*)self;
-    _reslist_base<CVirtualLightObjPtr>* base = &p->reslistBase;
+    _reslist_base<CVirtualLightObjPtr>* base =
+        (_reslist_base<CVirtualLightObjPtr>*)((u8*)self + 8);
     _reslist_node<CVirtualLightObjPtr>* head;
     _reslist_node<CVirtualLightObjPtr>* cur;
     float sx, sy, sz, sw;

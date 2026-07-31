@@ -10,7 +10,8 @@ extern u8 lbl_eu_805357E8[];   // bdat column pointer table
 extern u8 lbl_eu_8050867C[];   // bdat column name strings
 extern u32 lbl_eu_80664130;    // bdat table pointer (via sda21)
 extern u32 lbl_eu_806646BC;    // global flag
-extern u8 lbl_eu_80535868[];   // PTMF state table
+typedef void (CfGimmickElvData::*CfGimmickElvStateFunc)();
+extern CfGimmickElvStateFunc lbl_eu_80535868[];   // PTMF state table
 extern u32 lbl_eu_805765B0[];  // bit array
 extern u32 lbl_eu_805765A0[];  // vec3 constants
 extern void* lbl_eu_80663E14;  // global pointer (via sda21)
@@ -221,9 +222,7 @@ extern "C" void* __dt__Q22cf12CfGimmickElvFv(CfGimmickElvData* self, int mode) {
 extern "C" void func_8020B20C(CfGimmickElvData* self) {
     if (lbl_eu_806646BC & 2) {
         // PTMF call through state table
-        u16 st = self->state;
-        void (*fn)(CfGimmickElvData*) = *(void(**)(CfGimmickElvData*))(lbl_eu_80535868 + st * 0xC);
-        fn(self);
+        (self->*lbl_eu_80535868[self->state])();
         func_8020B34C(self);
     }
 }
@@ -286,7 +285,7 @@ extern "C" void func_8020B34C(CfGimmickElvData* self) {
     }
 
     // Clear transient flags
-    self->flags &= 0xFE1FFFFF;
+    self->flags &= 0xFE1FFEFF;
 }
 
 // ============================================================

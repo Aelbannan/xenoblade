@@ -273,9 +273,105 @@ IntersectionResult FRUSTUM::IntersectAABB_Ex(const AABB* pBox) const {
     return result;
 }
 
+struct SEGMENT3 {
+    VEC3 a;
+    VEC3 b;
+};
+
+struct CAPSULE {
+    SEGMENT3 segment;
+    f32 radius;
+};
+
+f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
+                             const SEGMENT3* pSegment1, f32* pOut0,
+                             f32* pOut1) {
+    VEC3 d0, d1, diff;
+    VEC3Sub(&d0, &pSegment0->b, &pSegment0->a);
+    VEC3Sub(&d1, &pSegment1->b, &pSegment1->a);
+    VEC3Sub(&diff, &pSegment0->a, &pSegment1->a);
+
+    f32 a = VEC3LenSq(&d0);
+    f32 b = VEC3Dot(&d0, &d1);
+    f32 c = VEC3LenSq(&d1);
+    f32 d = VEC3Dot(&d0, &diff);
+    f32 e = VEC3Dot(&d1, &diff);
+    f32 determinant = a * c - b * b;
+
+    f32 sNumerator;
+    f32 sDenominator = determinant;
+    f32 tNumerator;
+    f32 tDenominator = determinant;
+
+    if (determinant < 0.0001f) {
+        sNumerator = 0.0f;
+        sDenominator = 1.0f;
+        tNumerator = e;
+        tDenominator = c;
+    } else {
+        sNumerator = b * e - c * d;
+        tNumerator = a * e - b * d;
+
+        if (sNumerator < 0.0f) {
+            sNumerator = 0.0f;
+            tNumerator = e;
+            tDenominator = c;
+        } else if (sNumerator > sDenominator) {
+            sNumerator = sDenominator;
+            tNumerator = e + b;
+            tDenominator = c;
+        }
+    }
+
+    if (tNumerator < 0.0f) {
+        tNumerator = 0.0f;
+
+        if (-d < 0.0f) {
+            sNumerator = 0.0f;
+        } else if (-d > a) {
+            sNumerator = sDenominator;
+        } else {
+            sNumerator = -d;
+            sDenominator = a;
+        }
+    } else if (tNumerator > tDenominator) {
+        tNumerator = tDenominator;
+
+        if (-d + b < 0.0f) {
+            sNumerator = 0.0f;
+        } else if (-d + b > a) {
+            sNumerator = sDenominator;
+        } else {
+            sNumerator = -d + b;
+            sDenominator = a;
+        }
+    }
+
+    f32 s = FAbs(sNumerator) < 0.0001f ? 0.0f
+                                         : sNumerator / sDenominator;
+    f32 t = FAbs(tNumerator) < 0.0001f ? 0.0f
+                                       : tNumerator / tDenominator;
+
+    if (pOut0 != 0) {
+        *pOut0 = s;
+    }
+    if (pOut1 != 0) {
+        *pOut1 = t;
+    }
+
+    VEC3 closest = diff + d0 * s - d1 * t;
+    return closest.LenSq();
+}
+
+bool IntersectionCapsule(const CAPSULE* pCapsule0,
+                         const CAPSULE* pCapsule1) {
+    f32 radius = pCapsule0->radius + pCapsule1->radius;
+    return DistSqSegment3ToSegment3(&pCapsule0->segment,
+                                    &pCapsule1->segment, 0, 0) <=
+           radius * radius;
+}
+
 } // namespace math
 } // namespace nw4r
 
-void DistSqSegment3ToSegment3__Q24nw4r4mathFPCQ34nw4r4math8SEGMENT3PCQ34nw4r4math8SEGMENT3PfPf(){}
-void IntersectionCapsule__Q24nw4r4mathFPCQ34nw4r4math7CAPSULEPCQ34nw4r4math7CAPSULE(){}
 void IntersectSphere__Q34nw4r4math7FRUSTUMCFPCQ34nw4r4math6SPHERE(){}

@@ -27,5 +27,5 @@ namespace cf {
     };
 }
 
-void func_8027CEB0(cf::CChainTime*, u8);
-void func_8027CF3C(cf::CChainTime*);
+extern "C" void func_8027CEB0(cf::CChainTime*, u8);
+extern "C" void func_8027CF3C(cf::CChainTime*);

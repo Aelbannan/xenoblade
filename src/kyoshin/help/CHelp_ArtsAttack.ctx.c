@@ -897,6 +897,8 @@ namespace cf{
         UnkClass_80085334* unkAC;
         UnkClass_800821F8* unkB0;
         CfCamEventManager* unkB4;
+        u8 field_0xB8[0x4EC - 0xB8];
+        u32 field_0x4EC;
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
@@ -1087,8 +1089,8 @@ public:
     void func_80082F2C();
     void func_80082FCC();
     void func_80082FE4();
-    void func_80083100();
-    void func_8008310C();
+    u32 func_80083100();
+    u32 func_8008310C();
     void func_80083118();
     void func_80083284();
     void func_80083290();
@@ -1237,16 +1239,16 @@ namespace cf {
     //min size: 0x10
     class CObjectState {
     public:
-        virtual void CObjectState_UnkVirtualFunc1();  //0x8
-        virtual void CObjectState_UnkVirtualFunc2();  //0xC
-        virtual void CObjectState_UnkVirtualFunc3();  //0x10
+        virtual void CObjectState_UnkVirtualFunc1(u32 bits);  //0x8
+        virtual int CObjectState_UnkVirtualFunc2(int mask);  //0xC
+        virtual void CObjectState_UnkVirtualFunc3(u32 mask);  //0x10
         virtual void CObjectState_UnkVirtualFunc4();  //0x14
-        virtual void CObjectState_UnkVirtualFunc5();  //0x18
+        virtual void CObjectState_UnkVirtualFunc5(int arg);  //0x18
         virtual void CObjectState_UnkVirtualFunc6();  //0x1C
-        virtual void CObjectState_UnkVirtualFunc7();  //0x20
-        virtual void CObjectState_UnkVirtualFunc8();  //0x24
+        virtual void CObjectState_UnkVirtualFunc7(int arg);  //0x20
+        virtual int CObjectState_UnkVirtualFunc8(int arg);  //0x24
         virtual void CObjectState_UnkVirtualFunc9();  //0x28
-        virtual void CObjectState_UnkVirtualFunc10(); //0x2C
+        virtual void CObjectState_UnkVirtualFunc10(void* arg); //0x2C
         virtual void CObjectState_UnkVirtualFunc11(); //0x30
         virtual void* CObjectState_UnkVirtualFunc12(); //0x34
         virtual void CObjectState_UnkVirtualFunc13(); //0x38
@@ -1263,7 +1265,7 @@ namespace cf {
     //min size: 0x38
     class CObjectParam : public CObjectState {
     public:
-        virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
+        virtual void CObjectParam_UnkVirtualFunc1(u32 a, u8 b); //0x3C
         virtual void CObjectParam_UnkVirtualFunc2(); //0x40
         virtual int CObjectParam_UnkVirtualFunc3(); //0x44
         virtual void CObjectParam_UnkVirtualFunc4(); //0x48
@@ -1355,7 +1357,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_UnkVirtualFunc64();     //0x150
         virtual void CfObject_UnkVirtualFunc65();     //0x154
-        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
+        virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
@@ -1372,7 +1374,10 @@ namespace cf {
         // CObjectParam currently ends at 0x28.
         u8 field_0x28[0x10];
         void* mSubObj38;          // 0x38-0x3B
-        u8 _pad3C[0x4C - 0x3C];   // 0x3C-0x4B
+        float mPos3C;           // 0x3C-0x3F
+        float mPos40;           // 0x40-0x43
+        float mPos44;           // 0x44-0x47
+        u8 _pad48[0x4C - 0x48];   // 0x48-0x4B
         float mField4C;           // 0x4C-0x4F
         u8 _pad50[0x54 - 0x50];   // 0x50-0x53
         CfObjectSub54 mSubObj54;     // 0x54-0x5F
@@ -1443,7 +1448,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc54();
     void CfObject_UnkVirtualFunc55();
     void CObjectParam_UnkVirtualFunc2();
-    void CfObject_UnkVirtualFunc66();
+    void CfObject_UnkVirtualFunc66(int);
     void CfObject_UnkVirtualFunc67();
     void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc69();
@@ -1538,7 +1543,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc61();
     void CfObject_UnkVirtualFunc62();
     void CfObject_UnkVirtualFunc12();
-    void CfObject_UnkVirtualFunc66();
+    void CfObject_UnkVirtualFunc66(int);
     void CfObjectModel_UnkVirtualFunc19();
     void CfObjectModel_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc37();
@@ -2598,25 +2603,24 @@ namespace cf {
 /* end "kyoshin/cf/object/CfObjectPc.hpp" */
 
 extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
-
 extern "C" u32 func_80174C98(void* actor, u32* outVal, u32 flags);
+struct D { u8 pad[8]; virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual bool _v01C(u32); };
+struct A { virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C(); virtual void* _v030(); };
 
 namespace cf {
-
-typedef void* (*GetPtrFn)(void*);
 
 bool CHelp_ArtsAttack::func_802B7D00() {
     CfObjectPc* objPc = func_800BFC68(CfGameManager::getPlayer(0));
 
     if (objPc != nullptr) {
-        void* sub = reinterpret_cast<void*>(static_cast<CObjectState*>(objPc)->unk4);
-        u32 localVal = *reinterpret_cast<u32*>(
-            reinterpret_cast<GetPtrFn>((*reinterpret_cast<void***>(sub))[0x30 / 4])(sub));
+        void* sub = *(void**)((u8*)objPc + 4);
+        void* ret = reinterpret_cast<A*>(sub)->_v030();
+        u32 localVal = *(u32*)ret;
 
-        u32 funcResult = func_80174C98(objPc, &localVal, 0xa);
+        u32 funcResult = func_80174C98(objPc, &localVal, 0xA);
+        u32 boolVal = funcResult == 0;
 
-        return reinterpret_cast<bool (*)(CHelp*, u32)>(mVtbl->mSlots[7])(
-            this, static_cast<u32>(funcResult == 0));
+        return reinterpret_cast<D*>(this)->_v01C(boolVal);
     }
 
     return false;

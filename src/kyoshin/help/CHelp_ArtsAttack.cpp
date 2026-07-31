@@ -4,6 +4,8 @@
 
 extern cf::CfObjectPc* func_800BFC68(cf::CfObjectMove* objMove);
 extern "C" u32 func_80174C98(void* actor, u32* outVal, u32 flags);
+struct D { u8 pad[8]; virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual bool _v01C(u32); };
+struct A { virtual void _v008(); virtual void _v00C(); virtual void _v010(); virtual void _v014(); virtual void _v018(); virtual void _v01C(); virtual void _v020(); virtual void _v024(); virtual void _v028(); virtual void _v02C(); virtual void* _v030(); };
 
 namespace cf {
 
@@ -11,16 +13,14 @@ bool CHelp_ArtsAttack::func_802B7D00() {
     CfObjectPc* objPc = func_800BFC68(CfGameManager::getPlayer(0));
 
     if (objPc != nullptr) {
-        void* sub = (void*)*(u32*)((u8*)objPc + 4);
-        void* vtable = *(void**)sub;
-        void* (*getFunc)(void*) = (void* (*)(void*))((void**)vtable)[0x30 / 4];
-        void* ret = getFunc(sub);
+        void* sub = *(void**)((u8*)objPc + 4);
+        void* ret = reinterpret_cast<A*>(sub)->_v030();
         u32 localVal = *(u32*)ret;
 
         u32 funcResult = func_80174C98(objPc, &localVal, 0xA);
         u32 boolVal = funcResult == 0;
 
-        return ((bool (*)(CHelp*, u32))mVtbl->mSlots[7])(this, boolVal);
+        return reinterpret_cast<D*>(this)->_v01C(boolVal);
     }
 
     return false;

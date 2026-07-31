@@ -727,9 +727,54 @@ struct CfCollSphereImpl {
 } // namespace cf
 /* end "kyoshin/cf/CfCollSphereImpl.hpp" */
 
-// VTable function pointer at offset 0xAC (slot 43) on CfCollSphereImpl.
-// Returns a CfDebugDrawManager* (or draw-context handle).
-typedef void* (*CfCollSphereVFunc_0xAC)(cf::CfCollSphereImpl*);
+// Cast-only SI interface.  Omitting the RTTI slots makes the declared
+// virtual at +0xAC line up with the retail vtable; MWCC consequently emits
+// the same r12 virtual-call sequence instead of a function-pointer temp.
+struct CfCollSphereVTableIf {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual void _v07C();
+    virtual void _v080();
+    virtual void _v084();
+    virtual void _v088();
+    virtual void _v08C();
+    virtual void _v090();
+    virtual void _v094();
+    virtual void _v098();
+    virtual void _v09C();
+    virtual void _v0A0();
+    virtual void _v0A4();
+    virtual void _v0A8();
+    virtual void* _v0AC();
+    virtual void _v0B0();
+};
 
 // renderSphere: member of cf::CfDebugDrawManager.
 // Retail passes (manager, float_radius) despite the Fv mangling.
@@ -739,28 +784,15 @@ extern "C" void renderSphere__Q22cf18CfDebugDrawManagerFv(void* self, float val)
 extern "C" void func_800A5738(void* a, void* b, float val, void* c);
 
 // func_800AAD28: debug draw for sphere collision shape (single call).
-// r3 = context pointer (passed through to renderSphere as first arg),
-// r4 = shape.
-//
-// Reads mRadius, converts float->unsigned->float (MWCC idiom for
-// sanitising the fractional part), calls vfunc at vtable offset 0xAC
-// to get draw data, then calls renderSphere.
 extern "C" void func_800AAD28(void* context, cf::CfCollSphereImpl* shape) {
     u32 uval = static_cast<u32>(shape->mRadius);
-    void** vtbl = *reinterpret_cast<void***>(shape);
-    CfCollSphereVFunc_0xAC getData = (CfCollSphereVFunc_0xAC)(vtbl[0xAC / 4]);
-    void* data = getData(shape);
+    void* data = reinterpret_cast<CfCollSphereVTableIf*>(shape)->_v0AC();
     renderSphere__Q22cf18CfDebugDrawManagerFv(data, static_cast<float>(uval));
 }
 
 // func_800AAD94: debug draw for sphere with extra transform params.
-// r3 = context, r4 = shape, r5 = a, r6 = b.
-// Same radius/vtable pattern, then calls func_800A5738 with
-// additional parameters.
 extern "C" void func_800AAD94(void* context, cf::CfCollSphereImpl* shape, void* a, void* b) {
     u32 uval = static_cast<u32>(shape->mRadius);
-    void** vtbl = *reinterpret_cast<void***>(shape);
-    CfCollSphereVFunc_0xAC getData = (CfCollSphereVFunc_0xAC)(vtbl[0xAC / 4]);
-    void* data = getData(shape);
+    void* data = reinterpret_cast<CfCollSphereVTableIf*>(shape)->_v0AC();
     func_800A5738(a, data, static_cast<float>(uval), b);
 }

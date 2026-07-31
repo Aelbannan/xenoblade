@@ -4,14 +4,14 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "kyoshin/cf/CMcaFile.hpp"
 
-extern void func_80495EAC(void*, void*, ml::FixStr<64>&);
+extern "C" void func_80495EAC(void*, void*, ml::FixStr<64>&);
 
 extern "C" void __ct__CMcaFile(void* self, void* data) {
-    extern u8 __vt__8CMcaFile[];
+    extern u8 lbl_eu_80526348[];
     u8* s = (u8*)self;
     u8* d = (u8*)data;
 
-    *(void**)self = (void*)__vt__8CMcaFile;
+    *(void**)self = (void*)lbl_eu_80526348;
     s[4] = 0;
     *(void**)(s + 8) = data;
     *(void**)(s + 12) = data;

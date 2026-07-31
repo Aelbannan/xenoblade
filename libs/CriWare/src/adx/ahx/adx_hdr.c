@@ -5,12 +5,8 @@ void adxhdr_get_base_info(const u8 *src, u8 *dst) {
     dst[1] = src[1];
     dst[2] = src[2];
     dst[3] = src[3];
-    /* big-endian u32 from src[4..7] */
-    dst[4] = ((u32)src[4] << 24) | ((u32)src[5] << 16) | ((u32)src[6] << 8) | src[7];
-    ((u32 *)dst)[1] = *(const u32 *)(dst + 4);
-    /* big-endian u32 from src[8..11] */
-    ((u32 *)dst)[2] = ((u32)src[8] << 24) | ((u32)src[9] << 16) | ((u32)src[10] << 8) | src[11];
-    /* big-endian u16 from src[12..13] */
+    *(u32 *)(dst + 4) = ((u32)src[4] << 24) | ((u32)src[5] << 16) | ((u32)src[6] << 8) | src[7];
+    *(u32 *)(dst + 8) = ((u32)src[8] << 24) | ((u32)src[9] << 16) | ((u32)src[10] << 8) | src[11];
     *(u16 *)(dst + 12) = (u16)((src[12] << 8) | src[13]);
     dst[0x3C] = src[0x0E];
     dst[0x3D] = src[0x0F];

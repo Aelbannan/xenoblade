@@ -2906,3 +2906,41 @@ struct/cast accesses (those split into a two-base `lis r3; lwz LO(r3)` +
 the NULL path like retail; SMT EQUIVALENT is additionally blocked by the
 `bctrl` through the runtime callback (needs indirect-target closure). Only a
 tooling change (peephole per-function, or indirect-call closure) can close it.
+
+### CriWare adx_fs request-queue patterns (GC/3.0a5.2, -O4,p)
+
+`libs/CriWare/src/adx/adxf/adx_fs.c` — ADXF_OpenNw is a byte-identical
+FULL_MATCH; six sibling functions reached 89.7–97.7% (HIGH/CODE_MATCH).
+
+- **Signed `% 16` rotates under `-O4,p`:** the retail request-queue index
+  (`slwi 28; srwi 31; subf; rotlwi 4; add`) is MWCC `-O4,p` codegen for
+  `s32 % 16` (verify: all of GC 3.0a3.2…3.0a5.2 + Wii 1.0/1.0a/1.1/1.7 emit
+  the div-based `srawi;addze;slwi;subf` form under `-O4,s`, and the rotate
+  form under `-O4,p`/`-O3`). Do not rewrite as `& 15` (clrlwi) or div-based.
+- **Request blocks:** 16×0x10 slots `lbl_eu_805E04F0`, per-type u16 seq
+  counters `lbl_eu_805E05F0[type]` (offset = type*2: 1→0x2, 3→0x6, 4→0x8,
+  5→0xA), rotating s32 index `lbl_eu_805E0610` stored back as `idx + 1`.
+  First request per call increments the seq counter and stores it back; the
+  second request re-reads it WITHOUT incrementing.
+- **Source order matters for the second block:** put `req->flag` /
+  `req->status` BEFORE the `seq = seqctr[type]` read in the second request
+  block (retail loads the flag constant before the seq load there; block 1
+  keeps seq-first).
+- **`u16 seq` local:** declaring the sequence-number local as `u16` (not
+  `s32`) is required to reproduce retail's register allocation in
+  ADXF_Close/CloseAll/adxf_Stop (s32 shifts several registers).
+- **`s8` field equality in branch form:** `if (s8_field == small_positive)`
+  emits `lbz; cmpwi` WITHOUT `extsb` (zero/sign extension agree for the
+  constant) — do not force `(u8)` casts (that yields `cmplwi`).
+- **ADXSTM_BindFileNw 6th arg:** retail materializes `0x7FFFF800` as
+  `lis r6,0x8000; subi r8,r6,0x800` and passes it as the 6th argument
+  (size sentinel) — declare 6 params, not 5.
+- **Sector size:** `r = (s32)((s64)len + 0x7FF) / 2048` — signed 64-bit
+  division by 2048 emits `addc;adde;rotlwi;mr;rlwimi;rlwimi;srawi;addze`;
+  `u64 >> 11` produces a shorter, non-matching sequence.
+- **Remaining reg-swap barrier:** the last diffs are MWCC register-coloring
+  tie-breaks (ctr-addr vs idx register swap in every request block;
+  callee-saved coloring in CloseAll's hoisted loop constants). They did not
+  respond to declaration order, statement order, u16/u32 locals, or casts;
+  EQUIVALENT_MATCH is additionally gated on the ADXSTM_* callees in
+  `adx_stmc` (TU currently fails to build) being accepted.

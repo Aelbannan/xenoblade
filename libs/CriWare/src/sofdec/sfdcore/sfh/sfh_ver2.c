@@ -217,7 +217,7 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     u32 t1;
     u32 t2;
     u32 ok;
-    char c;
+    int c;
 
     *out1 = 0;
     *out2 = 0;
@@ -226,8 +226,11 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     t1 = 0;
     t2 = 0;
     p = strstr(buf, lbl_eu_8051CF00 + 0x19);
-    if (p != NULL) {
+    if (p == NULL) {
+        ok = 0;
+    } else {
         p += 4;
+        t1 = 0;
         for (;;) {
             c = *p;
             if (c == '.' || c == ' ' || c == 0) {
@@ -244,6 +247,7 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             p++;
         }
         p++;
+        t2 = 0;
         for (;;) {
             c = *p;
             if (c == '.' || c == ' ' || c == 0) {
@@ -268,7 +272,6 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     *out2 = t2;
     return 1;
 }
-
 int VER2_AnlyHdrSfhVer(void* work, unsigned int* out1, unsigned int* out2) {
     int sz;
     *out1 = 0;
@@ -402,8 +405,8 @@ int VER2_AnlyElemCodecAud(void *work, u32 stm_id, u32 *out) {
     if (codec == 0x24) goto set3;
     if (codec == 0x25) goto set4;
     if (codec == 0x26) goto set5;
-    if (codec == 0x27) goto set6;
-    goto setdef;
+    if (codec != 0x27) goto setdef;
+    goto set6;
 set1:
     result = 1;
     goto store;
@@ -431,7 +434,6 @@ store:
     *out = result;
     return 1;
 }
-
 int VER2_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
     u8 *f;
     u32 layer;
@@ -445,19 +447,27 @@ int VER2_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
     layer = SFHLOCAL_GetNbyteB(f + 0x1, SFHLOCAL_GetSizeofMember(0x1, 0x2));
     if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
         result = layer & 0xF;
-    } else if (layer == 0x24) {
-        result = 1;
-    } else if (layer == 0x25) {
-        result = 2;
-    } else if (layer == 0x26) {
-        result = 3;
-    } else {
-        return 0;
+        goto store;
     }
+    if (layer == 0x24) goto set1;
+    if (layer == 0x25) goto set2;
+    if (layer != 0x26) goto ret0;
+    goto set3;
+set1:
+    result = 1;
+    goto store;
+set2:
+    result = 2;
+    goto store;
+set3:
+    result = 3;
+    goto store;
+ret0:
+    return 0;
+store:
     *out = result;
     return 1;
 }
-
 int VER2_AnlyElemChNum(void *work, u32 stm_id, u32 *out) {
     u8 *f;
     u32 val;
@@ -490,7 +500,6 @@ int VER2_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
     u8 *f;
     u32 codec;
     u32 result = 0;
-    s32 *verPtr = (s32 *)((u8 *)work + 0x10);
 
     *out = 0;
     f = searchStmId(work, stm_id);
@@ -507,9 +516,8 @@ int VER2_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
     if (codec == 0x47) goto set5;
     if (codec == 0x48) goto set6;
     if (codec == 0x49) goto set7;
-    if (codec == 0x4A) goto set8;
-    result = 0;
-    goto done;
+    if (codec != 0x4A) goto setdef;
+    goto set8;
 set1:
     result = 1;
     goto done;
@@ -530,11 +538,13 @@ set7:
     goto done;
 set8:
     result = 8;
+    goto done;
+setdef:
+    result = 0;
 done:
     *out = result;
     return 1;
 }
-
 int VER2_AnlyElemAvrBitRate(void *work, u32 stm_id, u32 *out) {
     u8 *f;
     u32 val;
@@ -698,7 +708,7 @@ int VER2_AnlyFtrNetWidth(void *work, u32 stm_id, u32 *out) {
         return 0;
     }
     val = SFHLOCAL_GetNbyteB(f + 0x28, SFHLOCAL_GetSizeofMember(0x28, 0x2A));
-    val = (val & 0x7F) | ((val & 0x7F) << 7);
+    val = ((val >> 8 & 0x7F) << 7) | (val & 0x7F);
     if (val == 0) {
         return 0;
     }
@@ -716,7 +726,7 @@ int VER2_AnlyFtrNetHeight(void *work, u32 stm_id, u32 *out) {
         return 0;
     }
     val = SFHLOCAL_GetNbyteB(f + 0x2A, SFHLOCAL_GetSizeofMember(0x2A, 0x2C));
-    val = (val & 0x7F) | ((val & 0x7F) << 7);
+    val = ((val >> 8 & 0x7F) << 7) | (val & 0x7F);
     if (val == 0) {
         return 0;
     }

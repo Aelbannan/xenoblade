@@ -2657,3 +2657,36 @@ locals:
   `cps = ((unsigned char*)src) + src_offset` (fixes the final add's dest to r3, 20
   vs 21 mismatches). Size correct; does not affect the accepted aligned target or
   the 0x2D0 unit budget.
+
+## CriWare Sofdec mpv_deli — CTR delimiter loops, decl-order wins + color ceiling (US)
+
+`libs/CriWare/src/sofdec/sfdcore/mpv/mpv_deli.c` (GC/3.0a5.2, `-O4,p`).
+
+**MPV_BsearchDelim (us-803a91d0, 0x60) — 100% via declaration order.** The backward
+search loop (`q = p - i`, `lbz` offset addressing) allocates sequentially from
+declaration order to ascending volatile regs: `const u8 *p = end - 1; int i;
+u32 state = 0xFFFFFF00;` → `p=r7, i=r8, state=r9` matching retail exactly. Any
+other order (`i,state,p` = p=r9; `state,...` = 9 mismatches) regressed. `u8 byte`
+in the loop lands in r0 (pure temp) and `u32 check` temp captures retail's
+`rlwinm r4` target. Two-step state update (`state = state|byte; check = state<<8;
+state = check;`) reproduces retail's in-place `or r9,r9,r0`.
+
+**MPV_SearchDelim (us-803a9230, 0x58) — 5 pure reg-swaps, Chaitin ceiling.** Forward
+search uses `lbzx` indexed addressing (`start[i]`), so byte must be a named
+register (used across the branch). Best candidate: `u32 byte = *q` (u8 byte →
+byte=r4/q=r9 3-cycle; u32 → byte=r9/q=r4, q already matches retail r4) plus
+`(byte | state)` operand order — with the state↔byte swap, `byte|state` emits
+`or r0,r9,r8` matching retail's `state|byte` bytes (saves 1 mismatch; reverse
+order costs it). Residual 5: state r8↔retail r9 and byte r9↔retail r8 across
+`li`/`cmpli`/`lbzx`/`lbzx`/`rlwinm`. Invariant across ~100 variants: decl-order
+permutations, func-scope locals, byte u8/u16/u32, casts, table-pointer local,
+flags copy, block scopes, compilers GC/3.0a5.2/3.0a3.4/Wii/1.1/Wii/1.0a. Do not
+chase it — keep the source candidate.
+
+**Checker note: lbz/lbzx CTR memory loops have no closed-form plan.** The
+equivalence engine's memory-loop plan (`collect_memory_loop_ctr_lwz_addresses`)
+is `lwz`-only; byte-load loops with a data-dependent branch unroll up to 2048×
+with symbolic memory and die with `proof deadline exceeded during
+cfg-exploration` (>900 s). Byte-identical functions bypass this via the
+`full-instruction-match` contract (see certificate `contract` field) — so for
+this function shape EQUIVALENT_MATCH is effectively gated on 100% static match.

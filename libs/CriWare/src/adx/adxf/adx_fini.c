@@ -24,13 +24,13 @@ struct ADXF_Work {
 };
 
 // Global ADXF work structure in BSS
-struct ADXF_Work ADXF_Work;
+struct ADXF_Work ADXF_Work[1];
 
 // Forward declarations for ADXF functions defined in adx_fs.c
 void ADXF_CloseAll(void);
 
 void ADXF_Init(void) {
-    struct ADXF_Work* work = &ADXF_Work;
+    struct ADXF_Work* work = ADXF_Work;
     work->field_0x04 = lbl_eu_80515788;
 
     if (work->refcount == 0) {
@@ -49,8 +49,10 @@ void ADXF_Init(void) {
     work->refcount++;
 }
 
+
+
 void ADXF_Finish(void) {
-    struct ADXF_Work* work = &ADXF_Work;
+    struct ADXF_Work* work = ADXF_Work;
     if (--work->refcount != 0) return;
     ADXF_CloseAll();
     work->field_0x87C = 1;

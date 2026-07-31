@@ -10,8 +10,8 @@
 u32 SFHLOCAL_GetNbyteL(const u8* p, int n) {
     u32 r = 0;
     int i;
-    for (i = n - 1; i >= 0; i--) {
-        r = (r << 8) | p[i];
+    for (i = n; i > 0; i--) {
+        r = (r << 8) | p[i - 1];
     }
     return r;
 }

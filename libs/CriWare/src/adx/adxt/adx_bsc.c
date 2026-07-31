@@ -625,7 +625,7 @@ void ADXB_ExecOneAdx(void* adxb) {
                 void* pd2 = *(void**)(p + 0x08);
                 int i;
                 ADXCRS_Lock();
-                for (i = 0; (u32)i < (*(u32*)((u8*)pd2 + 0x10) << 5); i++) {
+                for (i = 0; i < (int)(*(u32*)((u8*)pd2 + 0x10) << 5); i++) {
                     void* buf1 = *(void**)((u8*)pd2 + 0x20);
                     void* buf2 = *(void**)((u8*)pd2 + 0x24);
                     lbl_eu_805E5360(adxb,

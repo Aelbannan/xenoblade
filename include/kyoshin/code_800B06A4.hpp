@@ -11,6 +11,7 @@ template <int N>
 struct FixStr {
     char mString[N];
     int mLength;
+    u8 _pad[8];
     FixStr();
 };
 }

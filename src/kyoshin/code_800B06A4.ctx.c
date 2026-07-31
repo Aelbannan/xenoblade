@@ -1424,6 +1424,7 @@ template <int N>
 struct FixStr {
     char mString[N];
     int mLength;
+    u8 _pad[8];
     FixStr();
 };
 }
@@ -1514,6 +1515,24 @@ extern void func_80193810(u32);
 extern void func_801F3CCC(u32);
 extern void func_801F45B4(u32);
 extern void func_802074F0(u32);
+
+// External C-linkage functions called by targets in this TU
+extern "C" void func_800B4278(UnkClass_805764CC* obj, u32 val);
+extern "C" void func_800B42E8(UnkClass_805764CC* obj, u32 val);
+extern "C" void func_800B4368(UnkClass_805764CC* obj, u32 val);
+extern "C" void* func_800B20B4(void* obj, u32 a, u32 b, u32 c);
+extern "C" void func_800B72DC(UnkClass_805764CC* obj);
+struct SListNode{SListNode*next;};
+struct SList{u8 field_0x00[4];SListNode*sentinel;};
+void func_800B1B2C();
+void func_800B47A8(u32,void*,void*,void*,u32,void*,void*);
+extern "C" void func_800B1A5C(void*listPtr){
+    SListNode*next=((SList*)listPtr)->sentinel->next;
+    SListNode*cur;
+    while(next!=((SList*)listPtr)->sentinel){cur=next;next=cur->next;cur->next=NULL;}
+    ((SList*)listPtr)->sentinel->next=((SList*)listPtr)->sentinel;
+}
+extern "C" void func_800B93AC(){func_800B07E8();func_800B1B2C();}
 void gfloat_initStore(float a){
     extern float lbl_eu_80661CCC,lbl_eu_80661CD0,lbl_eu_80663EC8,lbl_eu_80663ECC,lbl_eu_80663ED0,lbl_eu_80663ED4;
     double ad=a; float sq=(float)ad; float c=lbl_eu_80661CD0;
@@ -1523,7 +1542,7 @@ void init_0A90(void){}
 void __ct__reslist_cf_TboxInfo(){}
 void __ct__reslist_cf_IFactoryEvent(){}
 void init_0FA0(){}
-u32 UnkClass_805764CC::get_u32_18(){return *(u32*)((u8*)this+0x18);}
+u32 UnkClass_805764CC::get_u32_18(){return*(u32*)((u8*)this+0x18);}
 void init_0FF4(){}
 void init_dispatchTarget_1(){}
 void __ct__cf_CfValueItemManager(){}
@@ -1548,7 +1567,6 @@ void init_182C(){}
 void __dt__800B183C(){}
 void __dt__800B18CC(){}
 void init_dispatchTarget_5(){}
-void init_1A5C(){}
 void init_1A8C(){}
 void*node_getDataPtr_alt(void*self){return(char*)(*(void**)self)+8;}
 void init_1AA8(){}
@@ -1569,17 +1587,13 @@ void init_1E2C(){}
 void init_1EB8(){}
 void init_1EC8(){}
 void init_1F2C(){}
-// Target 1: us-800b280c
 void func_800B1F40(UnkClass_805764CC*self){if(self->field_0xCA0){func_80193810(self->field_0xCA0);}}
 void init_1F54(){}
 void init_1F6C(){}
 void init_1FD8(){}
-// Target 2: us-800b2900
 void func_800B2034(UnkClass_805764CC*self){if(self->field_0xCFC){func_801F3CCC(self->field_0xCFC);}}
-// Target 3: us-800b2914
 void func_800B2048(UnkClass_805764CC*self){if(self->field_0xCFC){func_801F45B4(self->field_0xCFC);}}
 void init_205C(){}
-// Target 4: us-800b296c
 void func_800B20A0(UnkClass_805764CC*self){if(self->field_0xCAC){func_802074F0(self->field_0xCAC);}}
 void init_20B4(){}
 u32 UnkClass_805764CC::get_u32_04(){return*(u32*)((u8*)this+0x4);}
@@ -1613,20 +1627,7 @@ void init_42E8(){}
 void init_4368(){}
 void init_4400(){}
 void init_44A0(){}
-// Search a linked list for a node matching either address (r5) or key (r6)
-void func_800B4554(void** out, void** listPtr, void** addrKey, u32* dataKey) {
-    void* node;
-    while (1) {
-        node = *listPtr;
-        if (node == *addrKey) break;
-        if (*(u32*)((u8*)node + 8) != *dataKey) {
-            *listPtr = *(void**)node;
-        } else {
-            break;
-        }
-    }
-    *out = node;
-}
+void init_4554(){}
 void init_4588(u32 val){}
 u32 shift_u32_hi8_alt2(u32 val){return(val>>16)&0xFF;}
 void init_45A0(){}
@@ -1634,7 +1635,6 @@ void init_47A8(){}
 void init_4A24(){}
 int CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(void*self){return 0;}
 void init_4B0C(){}
-// Target 5: us-800b5470
 int func_800B4B74(UnkClass_805764CC*self,u32 val){return(self->field_0x15F0==val)?1:0;}
 void init_4B88(){}
 void init_4CA0(){}
@@ -1799,10 +1799,17 @@ void init_98C8(){}
 u32 UnkClass_805764CC::get_u32_620(){return*(u32*)((u8*)this+0x620);}
 void init_998C(){}
 void init_99BC(){}
+extern "C" void func_800B998C(void*a,void*b,void*c2,u32 d,void*e,void*f){func_800B47A8(1,a,b,c2,d,e,f);}
+extern "C" void func_800B99BC(void*a,void*b,void*c2,u32 d,void*e,void*f){func_800B47A8(0,a,b,c2,d,e,f);}
 void fwd_99EC_body(){}
 void init_9A30(){}
 template<>_reslist_base<cf::TboxInfo>::~_reslist_base(){}
 template<>reslist<cf::TboxInfo>::~reslist(){}
 template<>_reslist_base<cf::IFactoryEvent*>::~_reslist_base(){}
 template<>reslist<cf::IFactoryEvent*>::~reslist(){}
-void sinit_800B9A40(){}
+extern "C" void sinit_800B9A40(){
+    extern float lbl_eu_80661CC8,lbl_eu_80661CCC,lbl_eu_80661CD0,lbl_eu_80663EC8,lbl_eu_80663ECC,lbl_eu_80663ED0,lbl_eu_80663ED4;
+    extern unsigned long lbl_eu_80663EE0;
+    float f0=lbl_eu_80661CCC;float f3=lbl_eu_80661CC8;float f2=f3*f3;float f1=lbl_eu_80661CD0;
+    f0=f0*f0;lbl_eu_80663EC8=f3;lbl_eu_80663ECC=f2;lbl_eu_80663ED0=f1;lbl_eu_80663ED4=f0;lbl_eu_80663EE0=0;
+}

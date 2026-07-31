@@ -2864,6 +2864,46 @@ abstract memory transitions make the exit LR incomparable; §2.7.5). Needs eithe
 matching MWCC build, or an engine change for private-stack-aware exit.target comparison
 of entry-frame LR restores.
 
+**Post-desc-hoist body fixes (this fork, GC/3.0a5.2 `-O4,p`)** — the four internal
+functions now sit at 88.5–94.8% fuzzy / size PASS (`fn_80397A74` 0x10C exact,
+`sjrbf_PutChunk` 0x1E4, `sjrbf_IsGetChunk` 0x178, `sjrbf_Create` 0x134); all
+remaining static diffs are the desc-hoist error blocks plus one store-block
+materialization rotation. Reusable patterns:
+
+- **`sjrbf_Create` loop:** index the global directly
+  (`((SJRBF *)lbl_eu_805ED2D8)[i].valid` in the loop AND `&((SJRBF *)lbl_eu_805ED2D8)[i]`
+  for `self`) — a named `instances` local makes MWCC keep the base in a callee-saved
+  register across the whole unrolled loop (extra `or r6,r9,r9` at setup, 70/77 instr
+  mismatched). Direct-global form byte-matches the 8× unrolled `mtctr/bdnz` loop
+  (77→6 instrs). A single `void *r` return variable (assigned in both the NULL branch
+  and the success branch, `return r`) reproduces retail `li r31,0` + shared-exit
+  `or r3,r31,r31` (early `return NULL;`/`return self;` put the NULL in r3). Residual
+  6 instrs: the store block materialization order — retail `stw valid / addi vtable@l /
+  lis err@ha / stw vtable / addi uuid@l / addi err@l`; MWCC always emits `lis err@ha /
+  stw valid / addi vtable@l / addi uuid@l / addi err@l / stw vtable` (the err_func lis
+  is hoisted above the valid store and the vtable store sinks to the end). Ruled out:
+  source assignment order permutations, err-func local, all-locals precompute,
+  `#pragma scheduling off` / `optimization_level 3`.
+- **`sjrbf_PutChunk` memcpy blocks:** (1) head wrap copy — dest must be
+  `self->pool_mem + (self->buf_size + offset)` (retail computes `pool_mem + offset`
+  then `+ buf_size`, reusing the offset value) with the length min **inlined in the
+  call** (`(chunk->size < (int)(self->xtr_size - offset)) ? chunk->size :
+  (int)(self->xtr_size - offset)`); the in-call ternary reproduces the retail's
+  interleaved min/dest schedule (`lwz size / subf copy / lwz buf_size / add pool+off /
+  cmpw / add dest / bge / mr`) — a `copy_len` local hoists the whole min before the
+  dest computation (mismatch). (2) tail copy — src must be
+  `self->pool_mem + (end_offset - copy_len)` (NOT `chunk->ptr + (end_offset - copy_len)`;
+  that expression is algebraically different — extra `(ptr - pool_mem)` — and emits
+  different adds) with `copy_len` as a variable (inlining the ternary twice duplicates
+  the min: 4 extra instructions). `memcpy(chunk->ptr + buf_size, ...)` for dest also
+  miscompiles (retail reuses the offset; ptr-based drops it).
+- **`sjrbf_IsGetChunk` avail expression:** write `self->xtr_size +
+  (self->buf_size - self->get_pos)` (parenthesized sub) — the flat
+  `xtr_size + buf_size - get_pos` left-associates as `(xtr+buf)-pos` and emits a
+  different load/subf order. Parenthesized form byte-matches the retail's
+  `lwz pos / lwz buf_size / lwz xtr / subf / lwz avail / add` schedule (both mode 0
+  and mode 1 arms; 85.3→91.8% fuzzy).
+
 ## CriWare ADX LSC — NULL-check wrappers + LSC_CallStatFunc lwzu soft-cap (US)
 
 `libs/CriWare/src/adx/lsc/lsc.c` (GC/3.0a5.2, `-O4,p`). 9/10 targets

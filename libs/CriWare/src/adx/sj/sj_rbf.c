@@ -90,27 +90,30 @@ void *SJRBF_Create(void *pool_mem, u32 buf_size, u32 xtr_size) {
 
 /* --- sjrbf_Create (internal) --- */
 void *sjrbf_Create(void *pool_mem, u32 buf_size, u32 xtr_size) {
-    SJRBF *instances = (SJRBF *)lbl_eu_805ED2D8;
     int i;
+    void *r;
 
     for (i = 0; i < 0x100; i++) {
-        if (instances[i].valid == 0) break;
+        if (((SJRBF *)lbl_eu_805ED2D8)[i].valid == 0) break;
     }
-    if (i == 0x100) return NULL;
-
-    SJRBF *self = &instances[i];
-    self->valid = 1;
-    self->vtable = lbl_eu_80565C30;
-    self->pool_mem = (u8 *)pool_mem;
-    self->buf_size = buf_size;
-    self->xtr_size = xtr_size;
-    self->uuid = lbl_eu_80518BB8;
-    self->err_func = (void (*)(void *, int))SJRBF_Error;
-    self->err_arg = self;
-    self->put_func = NULL;
-    self->put_arg = NULL;
-    sjrbf_Reset(self);
-    return self;
+    if (i == 0x100) {
+        r = NULL;
+    } else {
+        SJRBF *self = &((SJRBF *)lbl_eu_805ED2D8)[i];
+        self->valid = 1;
+        self->vtable = lbl_eu_80565C30;
+        self->pool_mem = (u8 *)pool_mem;
+        self->buf_size = buf_size;
+        self->xtr_size = xtr_size;
+        self->uuid = lbl_eu_80518BB8;
+        self->err_func = (void (*)(void *, int))SJRBF_Error;
+        self->err_arg = self;
+        self->put_func = NULL;
+        self->put_arg = NULL;
+        sjrbf_Reset(self);
+        r = self;
+    }
+    return r;
 }
 
 /* --- SJRBF_Destroy --- */
@@ -213,16 +216,16 @@ void sjrbf_Reset(SJRBF *self) {
 /* --- fn_80397A74 --- */
 int fn_80397A74(void *self_ptr, int mode) {
     SJRBF *self = (SJRBF *)self_ptr;
+    char buf2[64];
+    char buf1[64];
     int r;
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
         CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518BC8 + 0x103);
         CRICRW_Strcat(buf1, 0x40, lbl_eu_80518BC8 + 0x0C);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
-        char buf2[64];
         CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518BC8 + 0x10F);
         CRICRW_Strcat(buf2, 0x40, lbl_eu_80518BC8 + 0x77);
         SJERR_CallErr(buf2);
@@ -322,9 +325,10 @@ int sjrbf_PutChunk(SJRBF *self, int mode, SJ_CHUNK *chunk) {
             {
                 int offset = chunk->ptr - self->pool_mem;
                 if (offset < (int)self->xtr_size) {
-                    int copy_len = self->xtr_size - offset;
-                    if (chunk->size < copy_len) copy_len = chunk->size;
-                    memcpy(chunk->ptr + self->buf_size, chunk->ptr, copy_len);
+                    memcpy(self->pool_mem + (self->buf_size + offset), chunk->ptr,
+                           (chunk->size < (int)(self->xtr_size - offset))
+                               ? chunk->size
+                               : (int)(self->xtr_size - offset));
                 }
             }
             {
@@ -332,7 +336,7 @@ int sjrbf_PutChunk(SJRBF *self, int mode, SJ_CHUNK *chunk) {
                 if (end_offset > (int)self->buf_size) {
                     int copy_len = end_offset - self->buf_size;
                     if (chunk->size < copy_len) copy_len = chunk->size;
-                    memcpy(self->pool_mem, chunk->ptr + (end_offset - copy_len), copy_len);
+                    memcpy(self->pool_mem, self->pool_mem + (end_offset - copy_len), copy_len);
                 }
             }
             self->put_avail += chunk->size;
@@ -430,12 +434,12 @@ int sjrbf_IsGetChunk(SJRBF *self, int mode, int size, int *out) {
         return 0;
     }
     if (mode == 0) {
-        int avail = self->xtr_size + self->buf_size - self->get_pos;
+        int avail = self->xtr_size + (self->buf_size - self->get_pos);
         if ((int)self->get_avail < avail) avail = self->get_avail;
         result = size;
         if (avail < size) result = avail;
     } else if (mode == 1) {
-        int avail = self->xtr_size + self->buf_size - self->put_pos;
+        int avail = self->xtr_size + (self->buf_size - self->put_pos);
         if ((int)self->put_avail < avail) avail = self->put_avail;
         result = size;
         if (avail < size) result = avail;

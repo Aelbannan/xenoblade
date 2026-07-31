@@ -40,6 +40,7 @@ extern u32 ADXSJD_GetBlkSmpl(void*);
 extern u32 ADXSJD_GetNumLoop(void*);
 extern u32 ADXSJD_GetStat(void*);
 extern void ADXSJD_Stop(void*);
+extern s16 ADXSJD_GetDefPan(void*, s32);
 extern void ADXSJD_SetLnkSw(void*, u32);
 extern void ADXSJD_SetMaxDecSmpl(void*, u32);
 extern void ADXSJD_TermSupply(void*);
@@ -51,10 +52,12 @@ extern u32 ADXRNA_DiscardData(void*, u32);
 extern void ADXRNA_SetTransSw(void*, s32);
 extern void ADXRNA_SetPlaySw(void*, s32);
 extern void ADXRNA_SetOutVol(void*, s32);
+extern void ADXRNA_SetOutPan(void*, s32, s32);
+extern u32 lbl_eu_805E26D4;
 extern void ADXRNA_ExecServer(void);
 extern u32 ADXT_ExecHndl(void*);
 extern void SJ_SplitChunk(void*, u32, void*, void*);
-extern float __cvt_fp2unsigned(float);
+extern u32 __cvt_fp2unsigned(float);
 extern u32 lbl_eu_805E26DC;
 extern u32 lbl_eu_805E4F10;
 extern u32 lbl_eu_805E4F18;
@@ -71,15 +74,20 @@ extern void* memset(void*, int, u32);
 
 extern void* adxt_Create(void* work, void* buf, void* arg3);
 
+typedef struct ADXT_ {
+    u8 _pad0[0x38];
+    s32 sfreq; /* 0x38 */
+    u8 _pad1[0x48 - 0x3C];
+    s32 maxDec; /* 0x48 */
+} ADXT_;
+
 void adxt_SetLpFlg(void* self, u32 flg);
 void adxt_start_sj(void* self, void* sj);
 void adxt_start_stm(void* self, void* fname, void* sctOfst, void* sctLen, s32 numChan);
 void adxt_StopWithoutLsc(void* self);
 void adxt_Destroy(void* self);
 void adxt_GetTime(void* self, u32* time, u32* sfreq);
-void adxt_GetTimeSfreq2(void* self, u32* time, u32* sfreq);
-void adxt_SetOutPan(void* a, void* b, void* c);
-void adxt_Pause(void* self, int pause);
+void adxt_SetOutPan(void* self, s32 ch, s32 pan);
 void adxt_ExecServer(void);
 
 void* ADXT_Create(void* work, void* buf, void* arg3) {
@@ -113,17 +121,15 @@ void ADXT_DestroyAll() {
 void adxt_start_sj(void* self, void* sj) {
     s32 i;
     u8* p;
-    s32 numChan;
     p = (u8*)self;
-    numChan = (s32)(s8)((u8*)self)[3];
-    for (i = 0; i < numChan; i++) {
+    for (i = 0; i < (s32)(s8)((u8*)self)[3]; i++) {
         void* obuf = *(void**)(p + 0x18);
         void** vtbl = *(void***)obuf;
         ((void (*)(void*))vtbl[5])(obuf);
         p += 4;
     }
     ADXSJD_SetInSj(*(void**)((u8*)self + 4), sj);
-    *(void**)((u8*)self + 0x10) = sj;
+    *(void**)((u8*)self + 0x14) = sj;
     ADXSJD_Start(*(void**)((u8*)self + 4));
     ((u8*)self)[1] = 1;
     *(u32*)((u8*)self + 0x4C) = 0;
@@ -270,7 +276,7 @@ void adxt_GetTimeSfreq2(void* self, u32* time, u32* sfreq) {
         } else if (*(void**)((u8*)self + 0x18) != NULL) {
             void** vtbl = *(void***)*(void**)((u8*)self + 0x18);
             s32 v = ((s32 (*)(void*, s32))vtbl[9])(*(void**)((u8*)self + 0x18), 1);
-            obufNumSmpl = (u32)((v + (v >> 31)) >> 1);
+            obufNumSmpl = (u32)(((v < 0) + v) >> 1);
         } else {
             obufNumSmpl = 0;
         }
@@ -280,13 +286,17 @@ void adxt_GetTimeSfreq2(void* self, u32* time, u32* sfreq) {
         *time = ADXSJD_GetTotalNumSmpl(*(void**)((u8*)self + 4));
         *sfreq = ADXSJD_GetSfreq(*(void**)((u8*)self + 4));
         {
-            u32 bps = ADXSJD_GetOutBps(*(void**)((u8*)self + 4));
+            s32 bps = (s32)ADXSJD_GetOutBps(*(void**)((u8*)self + 4));
             *time = *time * (16 / bps);
         }
         *time += *(u32*)((u8*)self + 0xA4);
     } else {
         *time = 0;
         *sfreq = 1;
+    }
+    *time = *time + *(u32*)((u8*)self + 0x88);
+    if ((s32)*time < 0) {
+        *time = 0;
     }
 }
 
@@ -362,11 +372,9 @@ void ADXT_GetTime(void* a, void* b, void* c) {
 s32 ADXT_GetTimeReal(void* self) {
     u32 t2, t1;
     s32 ret;
-    float ratio;
     ADXCRS_Enter();
     adxt_GetTime(self, &t1, &t2);
-    ratio = (float)(s32)t1 / (float)(s32)t2;
-    ret = (s32)(ratio * lbl_eu_805162F0);
+    ret = (s32)((float)(s32)t1 / (float)(s32)t2 * lbl_eu_805162F0);
     ADXCRS_Leave();
     return ret;
 }
@@ -416,9 +424,57 @@ s32 ADXT_GetNumChan(void* self) {
     return ret;
 }
 
-void ADXT_SetOutPan(void* a, void* b, void* c) {
+void adxt_SetOutPan(void* self, s32 ch, s32 pan) {
+    s32 defpan;
+    s32 outpan;
+    if (self == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x246);
+        return;
+    }
+    if (ch != 0 && ch != 1) {
+        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x277);
+        return;
+    }
+    if (pan != -128) {
+        if (pan < -15) {
+            pan = -15;
+        } else if (pan > 15) {
+            pan = 15;
+        }
+    }
+    if ((s8)((u8*)self)[0xA9] == 1) {
+        defpan = (s16)ADXSJD_GetDefPan(*(void**)((u8*)self + 4), ch);
+        if (defpan == -128) {
+            defpan = 0;
+        }
+    } else {
+        defpan = 0;
+    }
+    if (lbl_eu_805E26D4 == 0) {
+        if (pan == -128) {
+            if ((s32)ADXSJD_GetNumChan(*(void**)((u8*)self + 4)) == 2) {
+                outpan = (ch == 0) ? -15 : 15;
+            } else {
+                outpan = 0;
+            }
+            outpan += defpan;
+        } else {
+            outpan = pan + defpan;
+        }
+    } else {
+        outpan = 0;
+    }
+    *(s16*)((u8*)self + 0x42 + ch * 2) = (s16)pan;
+    if (ch < (s32)(s8)((u8*)self)[3]) {
+        ADXRNA_SetOutPan(*(void**)((u8*)self + 0xC), ch, outpan);
+    } else {
+        ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x2A1);
+    }
+}
+
+void ADXT_SetOutPan(void* self, s32 ch, s32 pan) {
     ADXCRS_Enter();
-    adxt_SetOutPan(a, b, c);
+    adxt_SetOutPan(self, ch, pan);
     ADXCRS_Leave();
 }
 
@@ -436,7 +492,9 @@ s32 ADXT_GetOutPan(void* self, s32 ch) {
 }
 
 extern s16 ADXSJD_GetDefOutVol(void*);
-extern void ADXRNA_SetOutPan(void*, s32);
+extern s16 ADXSJD_GetDefPan(void*, s32);
+extern void ADXRNA_SetOutPan(void*, s32, s32);
+extern u32 lbl_eu_805E26D4;
 
 void ADXT_SetOutVol(void* self, s32 vol) {
     s32 defvol;
@@ -478,32 +536,42 @@ void ADXT_SetDefSvrFreq(void* self) {
     ADXCRS_Leave();
 }
 
-void ADXT_SetSvrFreq(void* self, u32 freq) {
-    u32 sfreq;
-    u32 numLoop;
-    u32 blkSmpl;
-    u32 val;
+void ADXT_SetSvrFreq(void* self, s32 freq) {
+    ADXT_* adxt;
+    void* sjd;
+    s32 sfreq;
+    s32 numLoop;
+    s32 blkSmpl;
+    s32 val;
     ADXCRS_Enter();
     if (self == NULL) {
         ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x3A4);
     } else {
-        *(u32*)((u8*)self + 0x38) = freq;
-        lbl_eu_805E4F1C = freq;
-        sfreq = ADXSJD_GetSfreq(*(void**)((u8*)self + 4));
-        if (ADXSJD_GetStat(*(void**)((u8*)self + 4)) == 2) {
-            sfreq = ADXSJD_GetSfreq(*(void**)((u8*)self + 4));
-            numLoop = ADXSJD_GetNumLoop(*(void**)((u8*)self + 4));
-            if ((s32)numLoop > 0) {
-                val = sfreq / freq;
-                *(u32*)((u8*)self + 0x48) = val * 4 - val;
+        adxt = (ADXT_*)self;
+        adxt->sfreq = freq;
+        lbl_eu_805E4F1C = (u32)freq;
+        sjd = *(void**)((u8*)self + 4);
+        if ((s32)ADXSJD_GetStat(sjd) == 2) {
+            sfreq = (s32)ADXSJD_GetSfreq(sjd);
+            numLoop = (s32)ADXSJD_GetNumLoop(sjd);
+            if (numLoop > 0) {
+                val = sfreq / adxt->sfreq;
+                adxt->maxDec = val * 4 - val;
             } else {
-                val = sfreq / freq;
-                *(u32*)((u8*)self + 0x48) = (s32)(val * 4 - val + ((s32)(val * 4 - val) < 0)) >> 1;
+                val = sfreq / adxt->sfreq;
+                {
+                    s32 x = val * 4 - val;
+                    adxt->maxDec = ((x < 0) + x) >> 1;
+                }
             }
-            blkSmpl = ADXSJD_GetBlkSmpl(*(void**)((u8*)self + 4));
+            blkSmpl = (s32)ADXSJD_GetBlkSmpl(sjd);
             val = blkSmpl * 2;
-            *(u32*)((u8*)self + 0x48) = ((*(u32*)((u8*)self + 0x48) + val) / val) * val;
-            ADXSJD_SetMaxDecSmpl(*(void**)((u8*)self + 4), *(u32*)((u8*)self + 0x48));
+            {
+                s32 cur = adxt->maxDec;
+                cur = (cur + val) / val * val;
+                adxt->maxDec = cur;
+            }
+            ADXSJD_SetMaxDecSmpl(sjd, (u32)adxt->maxDec);
         }
     }
     ADXCRS_Leave();
@@ -533,7 +601,7 @@ s32 ADXT_GetNumSmplObuf(void* self, s32 ch) {
     if (n != 0) {
         ADX_VFN2 fn = ((ADX_VFN2*)*(void**)n)[9];
         s32 v = fn((void*)n, 1);
-        return (v + (v < 0)) >> 1;
+        return ((v < 0) + v) >> 1;
     }
     return 0;
 }
@@ -553,7 +621,7 @@ void ADXT_ExecServer(void) {
 void adxt_ExecServer(void) {
     s32 i;
     u8* p;
-    u32* srv = (u32*)lbl_eu_805E4EF0;
+    u32* srv = (u32*)&lbl_eu_805E4EF0;
     ADXCRS_Lock();
     if (srv[9] != 0) {
         ADXCRS_Unlock();
@@ -573,18 +641,27 @@ void adxt_ExecServer(void) {
         }
         p += 0xC4;
     }
-    srv[9] = 3;
-    if (*(void (**)(void*))&srv[4] != NULL) {
-        (*(void (**)(void*))&srv[4])(*(void**)&srv[5]);
+    {
+        void (*fn)(void*) = *(void (**)(void*))&srv[4];
+        srv[9] = 3;
+        if (fn != NULL) {
+            fn(*(void**)&srv[5]);
+        }
     }
     ADXRNA_ExecServer();
-    if (*(void (**)(void*))&srv[6] != NULL) {
-        (*(void (**)(void*))&srv[6])(*(void**)&srv[7]);
+    {
+        void (*fn)(void*) = *(void (**)(void*))&srv[6];
+        if (fn != NULL) {
+            fn(*(void**)&srv[7]);
+        }
     }
-    if (*(void (**)(void*))&srv[2] != NULL) {
-        (*(void (**)(void*))&srv[2])(*(void**)&srv[3]);
+    {
+        void (*fn)(void*) = *(void (**)(void*))&srv[2];
+        srv[9] = 0;
+        if (fn != NULL) {
+            fn(*(void**)&srv[3]);
+        }
     }
-    srv[9] = 0;
 }
 
 s32 ADXT_GetErrCode(void* self) {
@@ -602,32 +679,32 @@ s32 ADXT_GetErrCode(void* self) {
 
 void adxt_SetLpFlg(void* self, u32 flg) {
     s32 numData;
-    u32 lpStart, lpEnd, lpSize;
-    u32 decDtLen;
+    s32 lpStart, lpEnd, lpSize;
+    s32 decDtLen;
     if (self == NULL) {
         ADXERR_CallErrFunc1_(lbl_eu_805162F8 + 0x594);
         return;
     }
-    if (*(void**)((u8*)self + 0x14) != NULL) {
+    if (*(void**)((u8*)self + 0x14) == NULL) {
+        numData = 0;
+    } else {
         void** vtbl = *(void***)*(void**)((u8*)self + 0x14);
         numData = ((s32 (*)(void*, s32))vtbl[9])(*(void**)((u8*)self + 0x14), 1);
-    } else {
-        numData = 0;
     }
-    if ((s8)((u8*)self)[2] != 4 && ((u8*)self)[0x6C] == 1 && flg == 0) {
-        decDtLen = ADXSJD_GetDecDtLen(*(void**)((u8*)self + 4));
-        decDtLen += numData;
-        lpStart = ADXSJD_GetLpStartOfst(*(void**)((u8*)self + 4));
-        lpStart = (lpStart + 0x7FF) >> 11;
+    if ((s8)((u8*)self)[2] != 4 && (s8)((u8*)self)[0x6C] == 1 && flg == 0) {
+        decDtLen = (s32)ADXSJD_GetDecDtLen(*(void**)((u8*)self + 4));
+        numData += decDtLen;
+        lpStart = (s32)ADXSJD_GetLpStartOfst(*(void**)((u8*)self + 4));
+        lpStart = (lpStart + 0x7FF) / 0x800;
         lpStart <<= 11;
-        lpEnd = ADXSJD_GetLpEndOfst(*(void**)((u8*)self + 4));
-        lpEnd = (lpEnd + 0x7FF) >> 11;
+        lpEnd = (s32)ADXSJD_GetLpEndOfst(*(void**)((u8*)self + 4));
+        lpEnd = (lpEnd + 0x7FF) / 0x800;
         lpEnd <<= 11;
         lpSize = lpEnd - lpStart;
-        if ((s32)lpSize <= 0) {
+        if (lpSize <= 0) {
             *(u32*)((u8*)self + 0xC0) = 0;
         } else {
-            *(u32*)((u8*)self + 0xC0) = lpStart + ((decDtLen - lpStart) / lpSize) * lpSize;
+            *(u32*)((u8*)self + 0xC0) = (u32)(lpStart + ((numData - lpStart) / lpSize) * lpSize);
         }
     }
     ((u8*)self)[0x6C] = (u8)flg;
@@ -733,7 +810,7 @@ void ADXT_TermSupply(void* self) {
 
 void adxt_GetTime(void* self, u32* time, u32* sfreq);
 
-void ADXT_DiscardSmpl(void* self, u32 num) {
+s32 ADXT_DiscardSmpl(void* self, u32 num) {
     u32 result;
     u32 savedLock;
     u32 time, sfreq;
@@ -749,10 +826,11 @@ void ADXT_DiscardSmpl(void* self, u32 num) {
         lbl_eu_805E4F10 = 0;
         adxt_GetTime(self, &time, &sfreq);
         lbl_eu_805E4F10 = savedLock;
-        *(u32*)((u8*)self + 0x9C) = (u32)__cvt_fp2unsigned((float)(s32)time / (float)(s32)sfreq * (float)(s32)time);
+        *(u32*)((u8*)self + 0x9C) = __cvt_fp2unsigned((float)(s32)time / (float)(s32)sfreq * (float)(s32)lbl_eu_805E4F28);
         *(u32*)((u8*)self + 0xA0) = lbl_eu_805E26DC;
     }
     ADXCRS_Leave();
+    return result;
 }
 
 void ADXT_SetTimeOfst(void* self, u32 val) {
@@ -780,10 +858,25 @@ s32 ADXT_IsHeader(void* data, s32 size, s32* out) {
     s16 outA;
     u8 outB, outC, outD, outE;
     u32 outF, outG, outH;
+    s16* pA;
+    u8* pB;
+    u8* pC;
+    u8* pD;
+    u8* pE;
+    u32* pF;
+    u32* pG;
+    u32* pH;
     if (size < 2) return 0;
     if (*(u16*)data != 0x8000) return 0;
-    if (ADX_DecodeInfo(data, size, &outA, &outB, &outC, &outD, &outE,
-                      &outF, &outG, &outH) < 0) {
+    pA = &outA;
+    pB = &outB;
+    pC = &outC;
+    pD = &outD;
+    pE = &outE;
+    pF = &outF;
+    pG = &outG;
+    pH = &outH;
+    if (ADX_DecodeInfo(data, size, pA, pB, pC, pD, pE, pF, pG, pH) < 0) {
         return 0;
     }
     *out = outA;
@@ -799,42 +892,25 @@ s32 ADXT_IsEndcode(void* self, s32 idx, u32* out) {
 
 s32 adxt_InsertSilence(void* self, s32 ch, s32 smpl) {
     void* sj;
-    u32 chunkSize;
-    u32 numBytes;
-    u32 got;
+    s32 chunkSize;
+    s32 numBytes1, numBytes2;
+    s32 got;
     void* data;
-    u32 size;
     void* rest;
     sj = *(void**)((u8*)self + 0x14);
     if (sj == NULL) {
         return 0;
     }
     chunkSize = ch * 0x12;
-    numBytes = (smpl >> 5) * chunkSize;
+    numBytes1 = (smpl / 32) * chunkSize;
     {
         void** vtbl = *(void***)sj;
-        ((void (*)(void*, s32, u32, void**))vtbl[6])(sj, 0, numBytes, &data);
+        ((void (*)(void*, s32, s32, void**))vtbl[6])(sj, 0, numBytes1, &data);
     }
-    got = *(u32*)((u8*)&data + 4);
-    numBytes = (got / chunkSize) * chunkSize;
-    memset(data, 0, numBytes);
-    SJ_SplitChunk(&data, numBytes, &data, &rest);
-    {
-        void** vtbl = *(void***)sj;
-        ((void (*)(void*, s32, void**))vtbl[8])(sj, 1, &data);
-    }
-    {
-        void** vtbl = *(void***)sj;
-        ((void (*)(void*, s32, void**))vtbl[7])(sj, 0, &rest);
-    }
-    {
-        void** vtbl = *(void***)sj;
-        ((void (*)(void*, s32, u32, void**))vtbl[6])(sj, 0, numBytes, &data);
-    }
-    got = *(u32*)((u8*)&data + 4);
-    numBytes = (got / chunkSize) * chunkSize;
-    memset(data, 0, numBytes);
-    SJ_SplitChunk(&data, numBytes, &data, &rest);
+    got = *(s32*)((u8*)&data + 4);
+    numBytes2 = (got / chunkSize) * chunkSize;
+    memset(data, 0, numBytes2);
+    SJ_SplitChunk(&data, numBytes2, &data, &rest);
     {
         void** vtbl = *(void***)sj;
         ((void (*)(void*, s32, void**))vtbl[8])(sj, 1, &data);
@@ -843,7 +919,23 @@ s32 adxt_InsertSilence(void* self, s32 ch, s32 smpl) {
         void** vtbl = *(void***)sj;
         ((void (*)(void*, s32, void**))vtbl[7])(sj, 0, &rest);
     }
-    return numBytes;
+    {
+        void** vtbl = *(void***)sj;
+        ((void (*)(void*, s32, s32, void**))vtbl[6])(sj, 0, numBytes1 - numBytes2, &data);
+    }
+    got = *(s32*)((u8*)&data + 4);
+    numBytes2 = (got / chunkSize) * chunkSize;
+    memset(data, 0, numBytes2);
+    SJ_SplitChunk(&data, numBytes2, &data, &rest);
+    {
+        void** vtbl = *(void***)sj;
+        ((void (*)(void*, s32, void**))vtbl[8])(sj, 1, &data);
+    }
+    {
+        void** vtbl = *(void***)sj;
+        ((void (*)(void*, s32, void**))vtbl[7])(sj, 0, &rest);
+    }
+    return ((numBytes1 + numBytes2) / chunkSize) << 5;
 }
 
 s32 ADXT_InsertSilence(void* self, s32 ch, s32 smpl) {

@@ -193,7 +193,33 @@ void sfmpv_DecodeFrm() {}
 
 void sfmpv_SetFrmPara() {}
 
-void fn_803C9948() {}
+void fn_803C9948(void* a, void* b, s32* out1, s32* out2) {
+    s32 v1 = 0;
+    s32 v2 = 0;
+    if (*(s32*)((u8*)a + 0x40) == 3) {
+        s32 f = *(s32*)((u8*)b + 0x2C);
+        if (f == 2) {
+            void* p = *(void**)((u8*)b + 0xE8);
+            if (p != NULL) {
+                v1 = *(s32*)((u8*)p + 0x4C);
+                v2 = *(s32*)((u8*)p + 0x50);
+            }
+        } else if (f == 3) {
+            void* p = *(void**)((u8*)b + 0xE8);
+            if (p != NULL) {
+                v1 = *(s32*)((u8*)p + 0x4C);
+                v2 = *(s32*)((u8*)p + 0x50);
+            }
+            void* q = *(void**)((u8*)b + 0xEC);
+            if (q != NULL) {
+                v1 += *(s32*)((u8*)q + 0x4C);
+                v2 += *(s32*)((u8*)q + 0x50);
+            }
+        }
+    }
+    *out1 = v1;
+    *out2 = v2;
+}
 
 void fn_803C99C8() {}
 

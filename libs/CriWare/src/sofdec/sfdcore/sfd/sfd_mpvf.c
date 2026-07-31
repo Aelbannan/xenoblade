@@ -109,7 +109,21 @@ s32 SFMPVF_WriteGlobalMpvPara(void* self) {
     g[0x1e] = *(u32*)((u8*)self + 0x3900);
 }
 
-void SFD_CalcYccPlane() {}
+void SFD_CalcYccPlane(s32 base, s32 w, s32 h, void* out) {
+    s32 wa = (w + 15) / 16;
+    s32 h15 = h + 15;
+    *(s32*)((u8*)out + 8) = base;
+    s32 w16 = wa * 16;
+    s32 w32 = (w16 + 31) / 32;
+    s32 t = (((((wa >> 27) & 1) + w16) >> 1) + 31) / 32;
+    *(s16*)((u8*)out + 14) = (s16)(w32 * 32);
+    s32 ha = h15 / 16;
+    *(s16*)((u8*)out + 12) = (s16)(t * 32);
+    s32 h16 = ha * 16;
+    s32 u = (((ha >> 27) & 1) + h16) >> 1;
+    *(s32*)((u8*)out + 0) = base + h16 * (w32 * 32);
+    *(s32*)((u8*)out + 4) = base + h16 * (w32 * 32) + u * (t * 32);
+}
 
 void SFD_SetPicUsrBuf() {}
 

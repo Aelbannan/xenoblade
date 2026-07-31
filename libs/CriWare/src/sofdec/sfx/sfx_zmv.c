@@ -14,20 +14,19 @@ void SFXZ_Init(void) {
 }
 
 void* SFXZ_Create(void) {
-    u8* p = lbl_eu_8061A260;
-    s32 cnt = *(s32*)(p + 8);
-    p += 12;
-    if (cnt <= 0) goto L_null;
-L_loop:
-    if (*(u32*)p != 0) goto L_next;
-    goto L_found;
-L_next:
-    p += 0x4C;
-    if (--cnt != 0) goto L_loop;
-L_null:
+    u8* base = lbl_eu_8061A260;
+    u8* p = base + 12;
+    s32 cnt = *(s32*)(base + 8);
+    s32 i;
+    for (i = 0; i < cnt; i++) {
+        if (*(u32*)p != 0)
+            goto found;
+        p += 0x4C;
+    }
     p = NULL;
-L_found:
-    if (p == NULL) return NULL;
+found:
+    if (p == NULL)
+        return p;
     {
         float f0 = lbl_eu_8051D218;
         *(float*)(p + 0x3C) = f0;

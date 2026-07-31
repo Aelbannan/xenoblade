@@ -1351,7 +1351,7 @@ config.libs = [
             Object(MatchingFor("jp"), "CriWare/src/adx/ahx/ahx_ftbl.c"),
             Object(NonMatching, "CriWare/src/adx/ahx/ahx_link.c"),
             Object(NonMatching, "CriWare/src/adx/ahx/ahx_mflt_c.c"),
-            Object(NonMatching, "CriWare/src/adx/ahx/ahx_mwin2_c.c"),
+            Object(Matching, "CriWare/src/adx/ahx/ahx_mwin2_c.c"),
             Object(NonMatching, "CriWare/src/adx/ahx/ahx_sbf2.c"),
             Object(NonMatching, "CriWare/src/adx/ahx/ahx_sbf.c"),
             Object(NonMatching, "CriWare/src/adx/ahx/ahx_sjd.c"),

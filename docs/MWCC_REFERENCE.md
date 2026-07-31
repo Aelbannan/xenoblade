@@ -8,6 +8,56 @@ Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVA
 
 ---
 
+## Isolated Gekko paired-single backends — worked results (nw4r g3d + math)
+
+Four nw4r PS kernels reached byte-exact match by shipping the **retail SDK's own
+whole `asm` function bodies** in designated PS backend `.inl` files, instead of
+register-operand `ASM()` blocks. Findings that transfer to any PS target:
+
+- **Whole `asm` bodies are the only form that reproduces retail PS kernels.**
+  MWCC reschedules register-operand `ASM()` blocks and recolors FPRs (e.g. a
+  verbatim retail-order block came back with hoisted loads and a different FPR
+  coloring). The retail nw4r SDK compiled these functions as `asm bool/MTX34*`
+  bodies with `nofralloc`; identical bodies compiled byte-exact. Reference
+  source: the Skyward Sword decomp port `zeldaret/ss` `src/nw4r/g3d/g3d_transform.cpp`
+  (same SDK code, byte-identical to Xenoblade retail). `CalcViewNrmMtx`,
+  `CalcViewTexMtx`, `CalcInvWorldMtx` = `FULL_MATCH` 100%, semantic certificates,
+  split `0x2F0`/`0x2F0` (`libs/nw4r/include/nw4r/g3d/detail/g3d_transform_ps.inl`).
+- **Reference retail data-pool symbols instead of defining TU-local constants.**
+  Retail loads the epsilon / (65536,65536) pair via `lis/addi` + `psq_l` from
+  `lbl_eu_80669B40` / `lbl_eu_80669E50`, which live in the retail data pool
+  (`nw4r_data.o`, not the function TU). Declare `extern "C" { extern const f32
+  lbl_eu_80669B40; }` and reference the same symbol from the asm. This keeps the
+  decomp object free of extra data sections, makes relocations (and objdiff
+  `functionRelocDiffs=data_value` fuzzy) match retail exactly.
+- **`.inl` included inside a namespace must NOT reopen the namespaces** — the
+  g3d kernels first shipped with their own `namespace nw4r { namespace g3d {
+  namespace detail {` wrappers and came out double-mangled
+  (`CalcViewNrmMtx__Q6nw4r3g3d6detail4nw4r3g3d6detailF...`, objdiff 0%).
+- **`MTX34._00(ptr)` field-offset syntax fails in asm bodies in this project's
+  TU context** (`<string not found>`); use numeric offsets (`0x0(r4)` etc.).
+- **Frame-trigger bug:** a `psq_l/psq_st` whose base is a `register` parameter
+  name, inside an asm body that also contains `stwu r1, -0xN(r1)`, makes MWCC
+  3.0a5.2 insert its own `stwu/or r31,sp,sp` prologue + `lwz sp,0(sp)` epilogue.
+  Writing explicit registers (`0x2c(r3)` instead of `0x2c(pMtx)`) avoids it
+  (the parameter is in r3 by ABI).
+- **`li r0, X@sda21` cannot be emitted by MWCC 3.0a5.2 asm** — the assembler
+  accepts only `@h/@ha/@l/@loword/@hiword`. The compiler *does* emit
+  `addi rX, 0, X@sda21` (R_PPC_EMB_SDA21) for a C++ pointer init
+  (`register const f32* p = &sdata2sym[0];`), but only in register-operand
+  (non-asm-body) code, which for this kernel adds a frame-pointer save and
+  reschedules the PS stream. `MTX34RotXYZFIdx` (retail `li r0,lbl_eu_80669E50@sda21`)
+  therefore stays at hexdiff 100% / objdiff 99.943% (the `@l` fallback is
+  byte-identical; SMT prove times out on the PS kernel). Logged as a stall in
+  `attempts.jsonl` — revisit only via a newer MWCC with `@sda21` support or a
+  linked-DOL prove with the `li` baked.
+- `g3d_transform_ps.inl` / `math_types_ps.inl` are guarded by
+  `#if defined(__MWERKS__) && !defined(NONMATCHING)`; the scalar C++ fallbacks
+  (CalcAdjugate/IsInvertible/FastReciprocal, SinCosFIdx-based rotation) remain
+  in the owning TUs for PC/NONMATCHING builds.
+
+---
+
 ## Route-scene GQR5 setup remains a compiler artifact
 
 `UnkClass_8047D2AC::{func_8047DF54,func_8047DE3C}` use retail `mtspr GQR5` with `0x03070307` before the signed-fixed-point scene-manager calls and `0x00070007` afterward. The normal high-level candidate preserves the solver calls and state updates, but no source-level `OSSetGQR*` or scalar initialization reproduced the orphaned GQR writes; the bounded candidates stayed at 69.2%/76.1% and split-size PASS. Keep the candidate readable and do not add inline assembly or register tricks; revisit after the `UnkClass_8047E110` solver callee frontier is accepted.
@@ -2294,6 +2344,60 @@ fallback test passed 100,000 random cases. `func_8006DFC8` uses the existing
 high-level `nw4r::math::VEC3LenSq` helper and is also byte-exact. See the
 policy-exception records in `attempts.jsonl` for opcode sets and guards.
 
+### 7m. MPFDrawBillLayTex session findings (US, 2026-08-01)
+
+- **Mask condition is `==`, not `!=`:** all four mask computations
+  (`func_8047A330`/`A570`/`B1E8`/`B528`) set `mask = 0` when
+  `!(flags & 2) && layerDepth == lbl_eu_8066A848` (retail: fcmpu +
+  mfcr/extrwi/xori/cntlzw/srwi value-normalisation, beq-skips when
+  `layerDepth != zero`). The old candidates had the comparison inverted;
+  `!=` also fails to reproduce the mfcr value idiom (MWCC emits a plain branch
+  for either form; the mfcr form needs a value context not reachable from a
+  simple `if` — semantics, not bytes, are the fixable part).
+- **GX quad emission order is v0, v2, v3, v1** (not v0,v1,v2,v3) in
+  `func_8047A330`/`A570` — the vertex order follows the corner layout
+  (positions[0], positions[first], positions[first+1], positions[1]).
+  `func_8047B1E8`/`B528` emit v0..v7 sequentially. The VEC3Add inline-ASM
+  call order is scheduler-controlled (retail interleaves v1/v0 first); source
+  call order v1,v0,v2,v3 matched the retail slot map best.
+- **Hoist loop-invariant globals into locals:** `s32 count = lbl_eu_8066A728;`
+  and `f32 zero = lbl_eu_8066A848;` per loop scope are required for MWCC to
+  keep them in saved registers AND to auto-unroll. `func_8047A918` grew from
+  0x38C→0x89C bytes (retail 0x8D0) once the locals were added (the retail
+  unrolls the corner-write and y-flip loops ×2/×8); `func_80479F54` went
+  88%→96.6% with the same fix. Without a local, the compiler reloads the
+  global each iteration (aliasing) and refuses to unroll.
+- **func_8047A918 output-pointer bug:** the flags&2 branch advanced
+  `positions` in the old candidate; retail keeps `positions` fixed and uses a
+  separate advancing output pointer (the y-negation loops must restart from
+  the beginning). Also flags&4 handling is per-branch: the
+  layerDepth==0 path negates only the four just-written corners (straight-line
+  fneg of the saved halfHeight registers), the other paths use the full
+  unrolled loop.
+- **UnkClass_80471EC8 methods are free functions:** the class is a decomp
+  annotation over globals; the retail `...Fv` symbols actually take params
+  (r3/r4/f1). Corrected signatures: `func_804734F4(u8)` → `...FUc`,
+  `func_804737CC(int, f32)` → `...Fif`, `func_80473500(int, int, f32)` →
+  `...Fiif`. When `this` is unused, define the function as `extern "C"` with
+  the mangled name — a C++ member keeps `this` in r3 and pushes the first
+  param to r4 (retail has it in r3). An empty callee body must be wrapped in
+  `#pragma dont_inline` or MWCC inlines it away (removing the tail call).
+  `func_804734F4` (getter, uses `this`), `func_804742BC` (GX state setup),
+  `func_804737CC` are all 100% byte-exact with this pattern.
+- **GX FIFO SMT wall:** functions writing the GX FIFO (`stb/sth/stfs
+  -0x8000(rX)` with `lis rX, 0xcc01`) cannot pass the SMT equivalence probe —
+  the memory bus fails closed on symbolic MMIO/RAM mixed-space
+  (`symbolic-mmio-mixed-address-space`), so `EQUIVALENT_MATCH` is unreachable
+  for `func_8047A330/A570/B1E8/B528`; FULL_MATCH (byte identity) is the only
+  path. Their GX callee closure (GXBegin → __GXSetDirtyState →
+  __GXSetSUTexRegs → __SetSURegs) is also uncertifiable for the same reason
+  (needs FULL_MATCH of the SDK GX functions).
+- **SMT probe budget:** a 247-instruction FP+loop function
+  (`func_80479F54`) times out the probe (~40-50 min: two 900 s phases +
+  linked fallback) under both `auto` and `memory` contracts; `--linked`
+  doesn't shortcut the gate. Expect acceptance of large FP/loop functions to
+  need either a faster relational strategy or FULL_MATCH.
+
 ## CSchedule / monolib small residuals — bounded ceilings (US)
 
 - `CSchedule::~CSchedule()` remains a readable exact-size `0xF4` reconstruction at 98.44% with 15 pure GPR color swaps. Child-loop pointer/helper/declaration variants did not improve it; acceptance is additionally gated by the unaccepted `__dl__FPv`, `func_804DFB88`, and indirect vtable-call chain. Keep high-level C++.
@@ -2315,3 +2419,144 @@ swaps or worsen the result/stack layout. Do not use register bindings, fake
 stack objects, assembly, or binary patching; retain the source-level candidate
 and use the EQUIVALENT_MATCH path once the effect-aware proof accepts the
 register allocation or the compiler/tooling gains a bounded proof strategy.
+
+## PowerPC_EABI_Support batch — patterns that work + bounded ceilings (2026-08)
+
+Accepted this session (4 targets, all split-fit): `__register_global_object`
+(removed unused `__register_atexit` stub for the 0x60 split), `strcpy` (HEAD
+already had the 16 unused stubs removed), `stricmp`, `TRKTargetAccessFP`.
+
+### stricmp — signed-char locals produce retail extsb (works)
+
+`int stricmp(const char* s1, const char* s2)` with `char c1, c2` (signed) and
+`c1 = tolower(*s1++)` compiles the mapped chars with `extsb` sign-extension
+before the `<`/`>` compares and the `c1 != 0` loop test. `int c1, c2` (the
+naive form) misses the `extsb`s (152 vs 160 bytes, 24 structural). The locale
+`tolower` static-inline from `stl/ctype.h` is exactly what retail used.
+`extras.c` unit also had 44 unused 4-byte stubs (now comments) — removing them
+was required for the 0xA0 split.
+
+### MWCC always emits static functions (confirmed)
+
+At `-O4,p -inline auto`/`-inline on`, MWCC emits EVERY static function in the
+TU — including uncalled ones and ones fully inlined everywhere. This is why
+retail `.o` (post-link, dead-stripped) lacks helper statics that the original
+source had: `strequal` in MWRTTI, `ppc_readbyte1/2` in targimpl, OSFastCast.h
+statics. For decomp `.o` comparison, such helpers must be removed from source;
+hand-inline callers with EXACT MWCC-inlining semantics (see below).
+
+### Hand-inlining helpers — the captured-result local trick (works)
+
+When a helper's return value is unused at a call site (e.g.
+`TRKTargetReadInstruction` in `TRKTargetAddStopInfo`), hand-inlining with just
+the call + locals puts the inlined temp on a different stack slot than MWCC's
+inliner (sp+12 vs retail sp+8, 4 mismatches). Fix: declare the helper's own
+result local and capture the call (`DSError readError = TRKTargetAccessMemory(...)`),
+then DCE does the rest — byte-identical. `TRKTargetSingleStep`,
+`TRKTargetStepOutOfRange`, `TRKTargetCheckStep` (with the redundant
+`gTRKStepStatus.active &&` term retained in the inlined StepDone condition!)
+all reproduced byte-identically this way. Do NOT drop "redundant" condition
+terms MWCC folds — its scheduling depends on them.
+
+### stl/exception — retail std::exception is non-virtual (works)
+
+The fork's `<stl/exception>` declared `virtual ~exception()`/`virtual what()`;
+any `throw std::bad_cast()` then emitted `__dt__exception` + `what_exception`
+(+ their vtable) which retail lacks. Changing exception (and bad_exception) to
+non-virtual with no dtor/what (`exception(){}` only) removes those emissions
+and leaves `NMWException` byte-identical (verified 8/8). The retail typeinfo
+name still carries `!std::exception!!` in the derived `!`-names.
+
+### MWRTTI — ACCEPTED via `static inline` (works)
+
+`std::bad_cast::~bad_cast()` (us-802bca50) accepted FULL_MATCH. Fixes that
+made the 0x2A8 split fit exactly:
+1. **`static inline` helpers are NOT emitted** when fully inlined — plain
+   `static` ARE always emitted (confirmed). Changing `strequal` to
+   `static inline` dropped its 0x44 standalone copy (manual inline and
+   `-ipa file` both regress `__dynamic_cast`).
+2. **Remove the duplicate extern-"C" what()** — the `stl/typeinfo` header's
+   inline `what()` is the sole definition; an added `extern "C"
+   what__Q23std8bad_castCFv` made MWCC emit a ghost 0x10 copy.
+3. **`stl/exception` non-virtual** — see section above.
+4. Remove the unused `__get_typeid` (its `throw std::bad_typeid()` cascades
+   bad_typeid methods).
+
+`__dynamic_cast` retains ONE addend diff (throw-string offset 0x04 vs retail
+0x27) because our TU defines `__RTTI__exception` locally while retail
+references it externally; does not block the dtor target.
+
+### TRK_ppc_memcpy / __copy_longs_aligned — register/CE ceilings (stalled)
+
+- `TRK_ppc_memcpy`: 196 vs 204 bytes; MWCC level-4 CSE merges the two
+  `(3 - offset) << 3` shifts in inlined `ppc_writebyte1`; retail computes both.
+  ~20 source variants (types, casts, register, locals, `* 8`, `<< 3`, offset
+  variable) all CSE. `-opt nocse` gives the right structure but regresses
+  `TRKTargetCheckStep` (reg-swaps) and `TRKTargetInterrupt` (switch lowering).
+  SMT times out (loop + opaque `__TRK_set_MSR` callee, symbolic trip count).
+- `__copy_longs_aligned`: 20 pure reg-swaps (d pointer r3 vs r4); stable across
+  all declaration/init variants, all 9 Wii compilers, `-O4,s`, exact ninja
+  flags. SMT hits loop-iteration limit (symbolic trip counts). Unit split is
+  also over because `__copy_longs_unaligned`/`rev_unaligned` were auto-promoted
+  on 2026-07-17 with non-matching sources (0xc4/0xc8 vs 0xc0/0xac).
+
+### CriWare adxt_StartAfs — SetLnkSw arg-setup hoist vs dependent store (soft-cap 96.8%)
+
+- `libs/CriWare/src/adx/adxt/adx_tlk2.c` `adxt_StartAfs` (us-803853e8, 0x104).
+  Success block retail: `lwz r3,0xAC(handle); li r0,1; stw r3,0xB0(handle); mr r3,handle;
+  li r4,0; lwz r5,...` — the 0xB0 store (value freshly loaded from 0xAC) is emitted
+  BEFORE the `ADXT_SetLnkSw(handle,0)` arg setup, and the loaded value is colored r3
+  then reused by `mr r3,handle`. Decomp (MWCC GC/3.0a5.2 -O4,p gekko): `lwz r5;
+  li r0,1; mr r3; li r4; stw r5` — the args are hoisted above the dependent store and
+  the load lands in r5. 4 mismatches (1 reg-swap + 3 structural), 96.8% match.
+- Root cause: Chaitin/scheduling fixed point. The store is latency-blocked behind its
+  load; the scheduler fills the gap with the ready ALU args. With t1→r3 the store would
+  have to precede `mr r3` (retail), but the fixed point colours t1→r5, so the args move
+  above the store and no conflict forces the retail order. The sibling
+  `ADXT_StartFnameRange` (constants 0/0/0xFFFFF in the gap) matches 100% because its
+  constant materialisations occupy r3/r5/r6/r0 and force the 0xB0 value into r4, which
+  `li r4,0` (arg2) then clobbers — the store is forced before the args.
+- Ruled out (~50 experiments): all 9 available MWCC versions (1.2.5…3.0a5.2) with
+  -O4,p/-O4,s/-O3; ~30 `-proc` models (only the 801/821/823/850/860/86X/5100/5200
+  family reproduces store-before-args with t1→r3, but it reverses call-arg emission
+  order and breaks the prologue/error-path schedules; gekko/740/750 keep retail's
+  prologue/epilogue); `-schedule on/off`, `-opt noschedule`, `#pragma peephole off`
+  (t1→r4, store before arg2 only, but unschedules the prologue), `#pragma
+  opt_propagation off`, `#pragma optimize_for_size/speed`; C and C++ modes; temp
+  locals for the 0xAC load, `void*`/`char*` casts, struct-typed handle access,
+  precomputed range locals (KB §early-load pattern), store-order permutations,
+  call-arg locals before the stores, call in the middle of the stores. None produce
+  the retail window while keeping the other 61 instructions byte-identical.
+- Acceptance: size PASS (0x210 split, 0 spare). EQUIVALENT_MATCH blocked on
+  unvalidated callees (us-80381fd0 ADXF_GetFnameRangeEx, us-803860e4 ADXT_Stop,
+  plus deeper us-80399c04/us-8038d5cc) and full-function SMT times out during
+  constraint-build even with `--assume-relocated-callees`. Keep the high-level C
+  reconstruction as the best state; re-cycle once the callee chain is accepted.
+
+## 7m. RVL_SDK mtx PS kernels — asm void vs register-var block choice (US)
+
+Four `mtx.c` leaf kernels were BACKLOG/COMPILES and are now FULL_MATCH via the
+isolated Gekko PS backend in `libs/RVL_SDK/src/revolution/mtx/mtx_ps.inl`
+(§17.6, `__MWERKS__ && !NONMATCHING`, scalar fallback in the `#else`).
+
+- **Load/store or mixed load/ALU/store kernels → `asm void` + `nofralloc`**
+  (`PSMTXCopy`, `PSMTXScaleApply`): MWCC reschedules register-operand `ASM()`
+  blocks (hoists all `psq_l` before `psq_st`), so interleaved load/store
+  kernels must be `asm void` bodies like the SDK shipped them (see the Petari /
+  MKWii donor mtx.c). `PSMTXScale` is store-only and matches as a register-var
+  `ASM()` block.
+- **Register-var `ASM()` block declaration ORDER controls FPR allocation.**
+  MWCC assigns the inline's `register f32` vars to the lowest free FPRs in
+  *declaration* order (`work0, work1, work2` → f0/f1/f2; `work2, work1, work0`
+  → f2/f1/f0). Verified with a minimal MWCC reproducer. The retail
+  `PSMTXQuat`'s allocation (pA→f2, pB→f1, result→f0) implies the SDK's
+  VEC3Sub-style inlines declared vars in reverse order; for Quat the retail
+  stream reproduces exactly when the SDK source-order block is written and MWCC
+  schedules it (same as the donor SMG/MKWii source, Xenoblade retail order).
+- `PSMTXQuat`'s retail normalizes (fres + Newton + 2/n scale), unlike the
+  no-normalize variant; `fsubs/fadds/fmuls/frsp/lfs/stfs` are part of the
+  kernel's minimum scalar ops and were logged as policy exceptions.
+- Stub functions (`C_MTX*`, `PSMTXReflect`) and the redundant
+  `DECOMP_FORCELITERAL(mtx_c, …)` fake function were dead code not present in
+  the retail object; removing them restored the unit to its `0xC10` split
+  budget (0x8 spare). All 19 retail functions in the unit are 100%.

@@ -11,6 +11,8 @@ extern void func_80124270(nw4r::lyt::Pane*, u32);
 // String table for cursor layout/anim resource names (split1 rodata)
 extern char lbl_eu_80505DE8[];
 
+
+
 /* func_801D202C: Per-frame cursor update. Drives animation state:
    mActive==0 checks whether animTransform0 has finished;
    mActive==1 delegates to the CBaseCur vtable handler;

@@ -1,14 +1,12 @@
-// Auto-scaffolded catalog TU for kyoshin/menu/parts/CModelDispEquip
-// Replace stubs with high-level C/C++ during decomp.
-
-#include "kyoshin/harness_catalog.hpp"
+// CModelDispEquip - Equipment display model
+// High-level C/C++ reconstruction
 
 #include "kyoshin/menu/parts/CModelDispEquip.hpp"
 
-// Forward declarations for symbols referenced by thunks
-extern "C" void __dt__15CModelDispEquipFv();
-
-void __ct__CModelDispEquip(void* self, u32 somePtr, s32 equipSlot) {
+// ============================================================
+// Target: us-80201254 | __ct__CModelDispEquip (constructor)
+// ============================================================
+extern "C" void __ct__CModelDispEquip(void* self, u32 somePtr, s32 equipSlot) {
     CModelDispEquip* obj = (CModelDispEquip*)self;
     obj->somePtr = somePtr;
     obj->equipSlot = equipSlot;
@@ -37,114 +35,274 @@ void __ct__CModelDispEquip(void* self, u32 somePtr, s32 equipSlot) {
     }
 }
 
-void CModelDispEquip::resetBase() {
-    *(unsigned long*)this = 0;
-    *(unsigned long*)((char*)this + 4) = 0;
-    ((unsigned char*)this)[8] = 0;
+// ============================================================
+// Target: us-802013cc | func_801FF6DC
+// ============================================================
+extern "C" void func_801FF6DC(void* ptr) {
+    *(u32*)ptr = 0;
+    *(u32*)((u8*)ptr + 4) = 0;
+    *(u8*)((u8*)ptr + 8) = 0;
 }
 
-void __dt__801FF6F0(void* self, int param) {
+// ============================================================
+// Target: us-802013e0 | __dt__801FF6F0
+// ============================================================
+extern "C" void __dt__801FF6F0(void* self, int param) {
     if (self == nullptr) return;
     if (param <= 0) return;
 }
 
-CModelDispEquip::~CModelDispEquip() {
-    if (this == nullptr) return;
+// ============================================================
+// Target: us-8020144c | __dt__15CModelDispEquipFv
+// ============================================================
+extern "C" void __dt__15CModelDispEquipFv(void* self, int param) {
+    if (self == nullptr) return;
 }
 
-void func_801FF7B0(){}
+// ============================================================
+// Target: us-802014a0 | func_801FF7B0
+// ============================================================
+extern "C" void func_801FF7B0() {}
 
-void func_801FF82C(){}
+// ============================================================
+// Target: us-8020151c | func_801FF82C
+// ============================================================
+extern "C" void func_801FF82C() {}
 
-void func_801FF874(){}
+// ============================================================
+// Target: us-80201564 | func_801FF874
+// ============================================================
+extern "C" void func_801FF874() {}
 
-u8 CModelDispEquip::getState20() { return state20; }
-
-u8 CModelDispEquip::getState21() { return state21; }
-
-void CModelDispEquip::setState14() {
-    if (state != 0) return;
-    state = 1;
-    state20 = 0;
+// ============================================================
+// Target: us-8020164c | func_801FF95C (getState20)
+// ============================================================
+extern "C" u8 func_801FF95C(CModelDispEquip* self) {
+    return self->state20;
 }
 
-void CModelDispEquip::setState14_3() {
-    state = 3;
-    state20 = 0;
+// ============================================================
+// Target: us-80201654 | func_801FF964 (getState21)
+// ============================================================
+extern "C" u8 func_801FF964(CModelDispEquip* self) {
+    return self->state21;
 }
 
-u32 func_801FF9A0(CModelDispEquip* self) { return (u32)(u8)self->equipSlot; }
+// ============================================================
+// Target: us-8020165c | func_801FF96C (setState14)
+// ============================================================
+extern "C" void func_801FF96C(CModelDispEquip* self) {
+    if (self->state != 0) return;
+    self->state = 1;
+    self->state20 = 0;
+}
 
-void func_801FF9AC(){}
+// ============================================================
+// Target: us-8020167c | func_801FF98C (setState14_3)
+// ============================================================
+extern "C" void func_801FF98C(CModelDispEquip* self) {
+    self->state = 3;
+    self->state20 = 0;
+}
 
-void CModelDispEquip::storeFloats(float* dest, float a, float b, float c, float d) {
+// ============================================================
+// Target: us-80201690 | func_801FF9A0
+// ============================================================
+extern "C" u32 func_801FF9A0(CModelDispEquip* self) {
+    return (u32)(u8)self->equipSlot;
+}
+
+// ============================================================
+// Target: us-8020169c | func_801FF9AC
+// ============================================================
+extern "C" void func_801FF9AC() {}
+
+// ============================================================
+// Target: us-802017a4 | func_801FFAB4 (storeFloats)
+// ============================================================
+extern "C" void func_801FFAB4(float* dest, float a, float b, float c, float d) {
     dest[0] = a;
     dest[1] = b;
     dest[2] = c;
     dest[3] = d;
 }
 
-void func_801FFAC8(){}
+// ============================================================
+// Target: us-802017b8 | func_801FFAC8
+// ============================================================
+extern "C" void func_801FFAC8() {}
 
-void func_801FFADC(){}
+// ============================================================
+// Target: us-802017cc | func_801FFADC
+// ============================================================
+extern "C" void func_801FFADC() {}
 
-void func_801FFBC4(){}
+// ============================================================
+// Target: us-802018b4 | func_801FFBC4
+// ============================================================
+extern "C" void func_801FFBC4() {}
 
-void func_801FFDB0(){}
+// ============================================================
+// Target: us-80201aa0 | func_801FFDB0
+// ============================================================
+extern "C" void func_801FFDB0() {}
 
-void func_801FFDC4(){}
+// ============================================================
+// Target: us-80201ab4 | func_801FFDC4
+// ============================================================
+extern "C" void func_801FFDC4() {}
 
-void func_80200388(){}
+// ============================================================
+// Target: us-80202078 | func_80200388
+// ============================================================
+extern "C" void func_80200388() {}
 
-void func_80200394(){}
+// ============================================================
+// Target: us-80202084 | func_80200394
+// ============================================================
+extern "C" void func_80200394() {}
 
-void func_80200C20(){}
+// ============================================================
+// Target: us-80202914 | func_80200C20
+// ============================================================
+extern "C" void func_80200C20() {}
 
-void func_80200CE8(){}
+// ============================================================
+// Target: us-802029e0 | func_80200CE8
+// ============================================================
+extern "C" void func_80200CE8() {}
+
+// ============================================================
+// Target: us-80202ad8 | OnFileEvent__15CModelDispEquipFP10CEventFile
+// ============================================================
+extern "C" void OnFileEvent__15CModelDispEquipFP10CEventFile() {}
+
+// ============================================================
+// Target: us-80202b8c | func_80200E94
+// ============================================================
+extern "C" void func_80200E94() {}
+
+// ============================================================
+// Target: us-80202c00 | func_80200F08
+// ============================================================
+extern "C" void func_80200F08() {}
+
+// ============================================================
+// Target: us-80202c94 | func_80200F9C
+// ============================================================
+extern "C" void func_80200F9C() {}
+
+// ============================================================
+// Target: us-80202ca8 | func_80200FB0
+// ============================================================
+extern "C" void func_80200FB0() {}
+
+// ============================================================
+// Target: us-80202e40 | func_80201148
+// ============================================================
+extern "C" void func_80201148() {}
+
+// ============================================================
+// Target: us-80202f90 | func_80201298
+// ============================================================
+extern "C" void func_80201298() {}
+
+// ============================================================
+// Target: us-80203010 | func_80201318 (empty)
+// ============================================================
+extern "C" void func_80201318() {}
+
+// ============================================================
+// Target: us-80203014 | func_8020131C
+// ============================================================
+extern "C" void func_8020131C() {}
+
+// ============================================================
+// Target: us-80203138 | func_80201440 (empty)
+// ============================================================
+extern "C" void func_80201440() {}
+
+// ============================================================
+// Target: us-8020313c | func_80201444
+// ============================================================
+extern "C" void func_80201444() {}
+
+// ============================================================
+// Target: us-80203174 | func_8020147C
+// ============================================================
+extern "C" void func_8020147C() {}
+
+// ============================================================
+// Target: us-802031b8 | func_802014C0
+// ============================================================
+extern "C" void func_802014C0() {}
+
+// ============================================================
+// Target: us-80203214 | func_8020151C
+// ============================================================
+extern "C" void func_8020151C() {}
+
+// ============================================================
+// Target: us-80203268 | func_80201570
+// ============================================================
+extern "C" void func_80201570() {}
+
+// ============================================================
+// Target: us-802032cc | func_802015D4
+// ============================================================
+extern "C" void func_802015D4() {}
+
+// ============================================================
+// Target: us-80203330 | func_80201638
+// ============================================================
+extern "C" void func_80201638() {}
+
+// ============================================================
+// Target: us-802033b4 | func_802016BC
+// ============================================================
+extern "C" void func_802016BC() {}
+
+// ============================================================
+// Target: us-80203438 | func_80201740
+// ============================================================
+extern "C" void func_80201740() {}
+
+// ============================================================
+// Target: us-8020349c | func_802017A4
+// ============================================================
+extern "C" void func_802017A4() {}
+
+// ============================================================
+// Target: us-80203500 | func_80201808
+// ============================================================
+extern "C" void func_80201808() {}
+
+// ============================================================
+// Target: us-802035f8 | func_80201900
+// ============================================================
+extern "C" void func_80201900() {}
+
+// ============================================================
+// Target: us-802036f0 | sinit_802019F8
+// ============================================================
+extern "C" void sinit_802019F8() {}
+
+// ============================================================
+// Member function implementations (for thunks / virtual dispatch)
+// ============================================================
+void CModelDispEquip::resetBase() {
+    *(unsigned long*)this = 0;
+    *(unsigned long*)((char*)this + 4) = 0;
+    ((unsigned char*)this)[8] = 0;
+}
 
 void CModelDispEquip::OnFileEvent() {}
-
-void func_80200E94(){}
-
-void func_80200F08(){}
-
-void CModelDispEquip::func_80200F9C(){}
-
-void func_80200FB0(){}
-
-void func_80201148(){}
-
-void CModelDispEquip::func_80201298(){}
-
+void CModelDispEquip::func_80200F9C() {}
+void CModelDispEquip::func_80201298() {}
 void CModelDispEquip::vfunc18() {}
-
-void CModelDispEquip::func_8020131C(){}
-
+void CModelDispEquip::func_8020131C() {}
 void CModelDispEquip::vfunc40() {}
-
-void CModelDispEquip::func_80201444(){}
-
-void func_8020147C(){}
-
-void func_802014C0(){}
-
-void func_8020151C(){}
-
-void func_80201570(){}
-
-void func_802015D4(){}
-
-void func_80201638(){}
-
-void func_802016BC(){}
-
-void func_80201740(){}
-
-void func_802017A4(){}
-
-void func_80201808(){}
-
-void func_80201900(){}
+void CModelDispEquip::func_80201444() {}
 
 void CModelDispEquip::thunk4_1298() {
     reinterpret_cast<CModelDispEquip*>(reinterpret_cast<char*>(this) - 4)->func_80201298();
@@ -177,6 +335,3 @@ void CModelDispEquip::thunk8_1444() {
 void CModelDispEquip::thunk8_dtor() {
     ((void(*)(void*))__dt__15CModelDispEquipFv)((char*)this - 8);
 }
-
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-void sinit_802019F8(){}

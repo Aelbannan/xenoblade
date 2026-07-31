@@ -21,14 +21,16 @@ void func_8015D0B8() {
 }
 
 // CCol6CheckBat::~CCol6CheckBat()
+#pragma optimize_for_size on
 CCol6CheckBat::~CCol6CheckBat() {}
+#pragma optimize_for_size off
 
 // CCol6CheckBat::Init() - no-op; override satisfies CProcess pure-virtual.
 void CCol6CheckBat::Init() {}
 
 // CCol6CheckBat::Term() - clears singleton pointer.
 void CCol6CheckBat::Term() {
-    gCol6CheckBat = nullptr;
+    *(CCol6CheckBat**)&lbl_eu_80664230 = nullptr;
 }
 
 // CCol6CheckBat::Move() - update tick (stub pending decomp).

@@ -5,6 +5,7 @@
 #include "monolib/device/CFileHandle.hpp"
 #include "monolib/device/CDeviceFile.hpp"
 #include "monolib/work/CEventFile.hpp"
+#include "kyoshin/realtimeevt/CREvtModel.hpp"
 
 class CREvtModel;
 

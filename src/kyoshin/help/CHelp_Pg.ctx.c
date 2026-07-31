@@ -817,16 +817,16 @@ namespace cf {
     //min size: 0x10
     class CObjectState {
     public:
-        virtual void CObjectState_UnkVirtualFunc1();  //0x8
-        virtual void CObjectState_UnkVirtualFunc2();  //0xC
-        virtual void CObjectState_UnkVirtualFunc3();  //0x10
+        virtual void CObjectState_UnkVirtualFunc1(u32 bits);  //0x8
+        virtual int CObjectState_UnkVirtualFunc2(int mask);  //0xC
+        virtual void CObjectState_UnkVirtualFunc3(u32 mask);  //0x10
         virtual void CObjectState_UnkVirtualFunc4();  //0x14
-        virtual void CObjectState_UnkVirtualFunc5();  //0x18
+        virtual void CObjectState_UnkVirtualFunc5(int arg);  //0x18
         virtual void CObjectState_UnkVirtualFunc6();  //0x1C
-        virtual void CObjectState_UnkVirtualFunc7();  //0x20
-        virtual void CObjectState_UnkVirtualFunc8();  //0x24
+        virtual void CObjectState_UnkVirtualFunc7(int arg);  //0x20
+        virtual int CObjectState_UnkVirtualFunc8(int arg);  //0x24
         virtual void CObjectState_UnkVirtualFunc9();  //0x28
-        virtual void CObjectState_UnkVirtualFunc10(); //0x2C
+        virtual int CObjectState_UnkVirtualFunc10(void* arg, int arg2); //0x2C
         virtual void CObjectState_UnkVirtualFunc11(); //0x30
         virtual void* CObjectState_UnkVirtualFunc12(); //0x34
         virtual void CObjectState_UnkVirtualFunc13(); //0x38
@@ -843,8 +843,8 @@ namespace cf {
     //min size: 0x38
     class CObjectParam : public CObjectState {
     public:
-        virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
-        virtual void CObjectParam_UnkVirtualFunc2(); //0x40
+        virtual void CObjectParam_UnkVirtualFunc1(u32 a, u8 b); //0x3C
+        virtual void* CObjectParam_UnkVirtualFunc2(); //0x40
         virtual int CObjectParam_UnkVirtualFunc3(); //0x44
         virtual void CObjectParam_UnkVirtualFunc4(); //0x48
         virtual BOOL CObjectParam_UnkVirtualFunc5(); //0x4C
@@ -898,12 +898,12 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc26(u32 value, float amount); //0xB8
         virtual void CfObject_UnkVirtualFunc27();     //0xBC
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
-        virtual void CfObject_UnkVirtualFunc29();     //0xC4
+        virtual void CfObject_UnkVirtualFunc29(float value);     //0xC4
         virtual void CfObject_UnkVirtualFunc30();     //0xC8
         virtual void CfObject_UnkVirtualFunc31();     //0xCC
         virtual void CfObject_UnkVirtualFunc32();     //0xD0
         virtual void CfObject_UnkVirtualFunc33(float amount); //0xD4
-        virtual void CfObject_UnkVirtualFunc34();     //0xD8
+        virtual float CfObject_UnkVirtualFunc34();     //0xD8
         virtual void CfObject_UnkVirtualFunc35();     //0xDC
         virtual void CfObject_UnkVirtualFunc36();     //0xE0
         virtual void CfObject_UnkVirtualFunc37();     //0xE4
@@ -919,8 +919,8 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc47();     //0x10C
         virtual void CfObject_UnkVirtualFunc48();     //0x110
         virtual void CfObject_UnkVirtualFunc49();     //0x114
-        virtual void CfObject_UnkVirtualFunc50();     //0x118
-        virtual void CfObject_UnkVirtualFunc51();     //0x11C
+        virtual int CfObject_UnkVirtualFunc50();     //0x118
+        virtual int CfObject_UnkVirtualFunc51();     //0x11C
         virtual void CfObject_UnkVirtualFunc52();     //0x120
         virtual CfObject* CfObject_UnkVirtualFunc53(); //0x124
         virtual void CfObject_UnkVirtualFunc54();     //0x128
@@ -935,7 +935,7 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_UnkVirtualFunc64();     //0x150
         virtual void CfObject_UnkVirtualFunc65();     //0x154
-        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
+        virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
@@ -952,7 +952,10 @@ namespace cf {
         // CObjectParam currently ends at 0x28.
         u8 field_0x28[0x10];
         void* mSubObj38;          // 0x38-0x3B
-        u8 _pad3C[0x4C - 0x3C];   // 0x3C-0x4B
+        float mPos3C;           // 0x3C-0x3F
+        float mPos40;           // 0x40-0x43
+        float mPos44;           // 0x44-0x47
+        u8 _pad48[0x4C - 0x48];   // 0x48-0x4B
         float mField4C;           // 0x4C-0x4F
         u8 _pad50[0x54 - 0x50];   // 0x50-0x53
         CfObjectSub54 mSubObj54;     // 0x54-0x5F
@@ -1014,7 +1017,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc27();
     void CfObject_UnkVirtualFunc29();
     void CfObject_UnkVirtualFunc32();
-    void CfObject_UnkVirtualFunc34();
+    float CfObject_UnkVirtualFunc34();
     void CfObject_UnkVirtualFunc33(float amount);
     void CfObject_UnkVirtualFunc30();
     float CfObject_UnkVirtualFunc56();
@@ -1022,8 +1025,8 @@ namespace cf {
     CfObject* CfObject_UnkVirtualFunc53();
     void CfObject_UnkVirtualFunc54();
     void CfObject_UnkVirtualFunc55();
-    void CObjectParam_UnkVirtualFunc2();
-    void CfObject_UnkVirtualFunc66();
+    void* CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc66(int);
     void CfObject_UnkVirtualFunc67();
     void CfObject_UnkVirtualFunc70(float value);
     void CfObject_UnkVirtualFunc69();
@@ -1081,7 +1084,10 @@ namespace cf {
         void* mTarget6C0;         // 0x6C0-0x6C3
         u8 _6C4[5];              // 0x6C4-0x6C8
         u8 mFlags6C9;             // 0x6C9
-        u8 _6CA[0x26];           // 0x6CA-0x6EF
+        u8 _6CA[4];             // 0x6CA-0x6CD
+        u8 field_6CE;            // 0x6CE
+        u8 field_6CF;            // 0x6CF
+        u8 _6D0[0x20];           // 0x6D0-0x6EF
         float mMoveSpeed;         // 0x6F0-0x6F3
         u8 _6F4[0x21];           // 0x6F4-0x714
         u8 unk715[3];            // 0x715-0x717
@@ -1107,7 +1113,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc33(float amount);
     void CfObject_UnkVirtualFunc13();
     void CfObject_UnkVirtualFunc57();
-    void CObjectParam_UnkVirtualFunc2();
+    void* CObjectParam_UnkVirtualFunc2();
     void CfObject_UnkVirtualFunc14();
     void CfObject_UnkVirtualFunc15();
     void CfObject_UnkVirtualFunc16();
@@ -1118,7 +1124,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc61();
     void CfObject_UnkVirtualFunc62();
     void CfObject_UnkVirtualFunc12();
-    void CfObject_UnkVirtualFunc66();
+    void CfObject_UnkVirtualFunc66(int);
     void CfObjectModel_UnkVirtualFunc19();
     void CfObjectModel_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc37();
@@ -1129,8 +1135,8 @@ namespace cf {
     void CfObject_UnkVirtualFunc43();
     void CfObject_UnkVirtualFunc45();
     void CfObject_UnkVirtualFunc70(float value);
-    void CfObject_UnkVirtualFunc50();
-    void CfObject_UnkVirtualFunc51();
+    int CfObject_UnkVirtualFunc50();
+    int CfObject_UnkVirtualFunc51();
     void CfObject_UnkVirtualFunc60();
     void CfObject_UnkVirtualFunc29(float value);
     void setMoveSpeed(float value);
@@ -1264,6 +1270,7 @@ namespace cf {
 
 namespace cf {
     class UnkClass_CActorParam15E0;
+    struct CBattleStateSrcEntry;
 
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
@@ -1294,15 +1301,15 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc2();  //0xC
         virtual int CBattleState_UnkVirtualFunc3();  //0x10
         virtual void CBattleState_UnkVirtualFunc4();  //0x14
-        virtual void CBattleState_UnkVirtualFunc5();  //0x18
-        virtual void CBattleState_UnkVirtualFunc6();  //0x1C
+        virtual void CBattleState_UnkVirtualFunc5(CBattleStateEntry* entry);  //0x18
+        virtual void CBattleState_UnkVirtualFunc6(CBattleStateEntry* entry);  //0x1C
         virtual void CBattleState_UnkVirtualFunc7();  //0x20
-        virtual void CBattleState_UnkVirtualFunc8();  //0x24
+        virtual void CBattleState_UnkVirtualFunc8(CBattleStateEntry* entry);  //0x24
         virtual void CBattleState_UnkVirtualFunc9();  //0x28
-        virtual void CBattleState_UnkVirtualFunc10(); //0x2C
-        virtual void CBattleState_UnkVirtualFunc11(); //0x30
+        virtual void CBattleState_UnkVirtualFunc10(CBattleStateEntry* arg); //0x2C
+        virtual void CBattleState_UnkVirtualFunc11(u32 mask); //0x30
         virtual void CBattleState_UnkVirtualFunc12(); //0x34
-        virtual void CBattleState_UnkVirtualFunc13(); //0x38
+        virtual void* CBattleState_UnkVirtualFunc13(int index); //0x38
         virtual void CBattleState_UnkVirtualFunc14(); //0x3C
         virtual void CBattleState_UnkVirtualFunc15(); //0x40
         virtual void CBattleState_UnkVirtualFunc16(); //0x44
@@ -1315,14 +1322,14 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc23(); //0x60
         virtual void CBattleState_UnkVirtualFunc24(); //0x64
         virtual void CBattleState_UnkVirtualFunc25(); //0x68
-        virtual void CBattleState_UnkVirtualFunc26(); //0x6C
+        virtual void CBattleState_UnkVirtualFunc26(const CBattleStateSrcEntry* src); //0x6C
         virtual void CBattleState_UnkVirtualFunc27(); //0x70
         virtual void CBattleState_UnkVirtualFunc28(); //0x74
         virtual void CBattleState_UnkVirtualFunc29(); //0x78
         virtual void CBattleState_UnkVirtualFunc30(); //0x7C
-        virtual void CBattleState_UnkVirtualFunc31(); //0x80
+        virtual int CBattleState_UnkVirtualFunc31(u32 id); //0x80
         virtual void CBattleState_UnkVirtualFunc32(); //0x84
-        virtual void CBattleState_UnkVirtualFunc33(); //0x88
+        virtual int CBattleState_UnkVirtualFunc33(u32 id); //0x88
 
         CBattleState();
 
@@ -1334,10 +1341,6 @@ namespace cf {
         u8 unk15AC[0x15D8 - 0x15AC];
         UnkClass_CActorParam15E0* field_0x15D8;
     };
-}
-
-namespace cf {
-    struct CBattleStateSrcEntry;
 }
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 /* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
@@ -1843,7 +1846,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc34();  //0x11C
         virtual void CActorParam_UnkVirtualFunc35();  //0x120
         virtual void CActorParam_UnkVirtualFunc36();  //0x124
-        virtual void CActorParam_UnkVirtualFunc37();  //0x128
+        virtual float CActorParam_UnkVirtualFunc37();  //0x128
         virtual void CActorParam_UnkVirtualFunc38();  //0x12C
         virtual void CActorParam_UnkVirtualFunc39();  //0x130
         virtual void CActorParam_UnkVirtualFunc40();  //0x134
@@ -2190,7 +2193,7 @@ namespace cf {
 namespace cf {
     class IObjectInfo {
     public:
-        virtual ~IObjectInfo(){}
+        virtual ~IObjectInfo();
         virtual void IObjectInfo_UnkVirtualFunc1() = 0; //not sure if this exists
     };
 }
@@ -2201,7 +2204,7 @@ namespace cf {
     class CChainEffect : public IObjectInfo {
     public:
         CChainEffect();
-        virtual ~CChainEffect(){}
+        virtual ~CChainEffect();
         virtual void IObjectInfo_UnkVirtualFunc1();
 
         //0x0: vtable
@@ -12179,14 +12182,9 @@ namespace ml{
             return size() == 0;
         }
         
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
+        // Declared out-of-line: retail emits a standalone
+        // format__Q22ml10FixStr<N>FPCce (resolved via the retail symbol map).
+        void format(const char* format, ...);
 
         //Sets the given string to the first characters of this string, up to the specified length.
         //TODO: This might just be substr, but when the start index is 0?
@@ -13826,11 +13824,11 @@ namespace cf {
         virtual ~CChainTime();
         
         void func_8027CE30();
-        void func_8027CF3C();
     };
 }
 
-void func_8027CEB0(cf::CChainTime*, u8);
+extern "C" void func_8027CEB0(cf::CChainTime*, u8);
+extern "C" void func_8027CF3C(cf::CChainTime*);
 /* end "kyoshin/cf/chain/CChainTime.hpp" */
 /* "src/kyoshin/cf/chain/CChain.hpp" line 7 "kyoshin/cf/chain/CChainChance.hpp" */
 #pragma once

@@ -126,6 +126,11 @@ void criware_803A326C(MWSFDPLY* self, s32 idx) {
     }
 }
 
+/* Get the SST core handle by index. */
+void* mwPlyGetSstCoreHnByIdx(MWSFDPLY* self, s32 idx) {
+    return self->sst[idx].handle;
+}
+
 /* Start SJ (SoftDec audio) output for an active stream set. */
 void* MWSST_StartSj(SstHn* sst) {
     if (MWSST_IsActive(sst) == 1) {

@@ -17,7 +17,21 @@ extern OcThreadListHdr lbl_eu_805704C8;
 extern OcThreadListHdr lbl_eu_80570538;
 }
 
-int thread(VMThread* pThread){ return 0; }
+extern "C" int thread(VMThread* pThread, int unused, u32 unk2) {
+    VMArg* arg = vmArgPtrGet(pThread, 1);
+    u32 func = vmArgFunctionGet(2, arg);
+    u32 outId;
+    if (vmThreadGetOC(pThread, func, &outId) == 0) {
+        vmOCExceptionThrow(pThread);
+        return 0;
+    }
+    VMArg result;
+    result.type = VM_TYPE_OC;
+    result.unk2 = (u16)unk2;
+    result.value.uintVal = outId;
+    vmRetValSet(pThread, &result);
+    return 1;
+}
 
 extern "C" int start_8003A784(VMThread* pThread, u32 r4) {
     vmThreadStart(pThread, r4);

@@ -251,7 +251,22 @@ void sfmpv_ErrFn(s32 val, u32 err) {
         SFLIB_SetErr((void*)val, err);
 }
 
-void SFMPV_Destroy() {}
+void SFMPVF_WriteGlobalMpvPara(void* self);
+s32 MPV_Destroy(u32 mpv);
+
+s32 SFMPV_Destroy(void* self) {
+    void* shc = *(void**)((u8*)self + 0x2068);
+    u32 mpv = *(u32*)shc;
+    if (mpv == 0) {
+        return 0;
+    }
+    SFMPVF_WriteGlobalMpvPara(self);
+    if (MPV_Destroy(mpv) != 0) {
+        return SFLIB_SetErr(self, 0xff000f0c);
+    }
+    *(u32*)shc = 0;
+    return 0;
+}
 
 int SFMPV_RequestStop(void* self) {
     void* p;
@@ -289,7 +304,54 @@ void SFMPV_GetRead(void* self, void* a, void* b) {
     SFMPVF_GetRead(self, a, b, sfmpv_SetFrmInf);
 }
 
-void sfmpv_SetFrmInf() {}
+void sfmpv_SetFrmInf(void* self, void* frm, void* info) {
+    *(u32*)((u8*)info + 0x00) = *(u32*)((u8*)frm + 0x68);
+    *(u32*)((u8*)info + 0x04) = *(u32*)((u8*)frm + 0x6c);
+    *(u32*)((u8*)info + 0x08) = *(u32*)((u8*)frm + 0x70);
+    *(u32*)((u8*)info + 0x0c) = *(u32*)((u8*)frm + 0x74);
+    *(u32*)((u8*)info + 0x10) = *(u32*)((u8*)frm + 0x80);
+    *(u32*)((u8*)info + 0x14) = *(u32*)((u8*)frm + 0x44);
+    *(u32*)((u8*)info + 0x18) = *(u32*)((u8*)frm + 0x48);
+    *(u32*)((u8*)info + 0x1c) = *(u32*)((u8*)self + 0x40);
+    *(u32*)((u8*)info + 0x20) = *(u32*)((u8*)frm + 0x08);
+    *(u32*)((u8*)info + 0x24) = *(u32*)((u8*)frm + 0x4c);
+    *(u32*)((u8*)info + 0x28) = *(u32*)((u8*)frm + 0x50);
+    *(u32*)((u8*)info + 0x2c) = *(u32*)((u8*)frm + 0x54);
+    *(u32*)((u8*)info + 0x30) = *(u32*)((u8*)frm + 0x58);
+    *(u32*)((u8*)info + 0x34) = *(u32*)((u8*)frm + 0x5c);
+    *(u32*)((u8*)info + 0x38) = *(u32*)((u8*)frm + 0x60);
+    *(u32*)((u8*)info + 0x3c) = *(u32*)((u8*)frm + 0xa8);
+    *(u32*)((u8*)info + 0x40) = *(u32*)((u8*)frm + 0xac);
+    if (*(u32*)((u8*)frm + 0xa8) == 0) {
+        *(u32*)((u8*)info + 0x48) = 2;
+    } else {
+        *(u32*)((u8*)info + 0x48) = 1;
+    }
+    *(u32*)((u8*)info + 0x50) = *(u32*)((u8*)frm + 0xe8);
+    *(u32*)((u8*)info + 0x54) = *(u32*)((u8*)frm + 0xec);
+    *(u32*)((u8*)info + 0x58) = *(u32*)((u8*)frm + 0xa0);
+    *(u32*)((u8*)info + 0x5c) = *(u32*)((u8*)frm + 0xa4);
+    *(u32*)((u8*)info + 0x60) = *(u32*)((u8*)frm + 0xb0);
+    *(u32*)((u8*)info + 0x64) = *(u32*)((u8*)frm + 0xb4);
+    *(u16*)((u8*)info + 0x68) = *(s16*)((u8*)frm + 0xb8);
+    *(u16*)((u8*)info + 0x6a) = *(s16*)((u8*)frm + 0xba);
+    *(u8*)((u8*)info + 0x6c) = *(u8*)((u8*)frm + 0xbd);
+    *(u8*)((u8*)info + 0x6d) = *(u8*)((u8*)frm + 0xbe);
+    *(u8*)((u8*)info + 0x6e) = *(u8*)((u8*)frm + 0xbf);
+    *(u8*)((u8*)info + 0x6f) = *(u8*)((u8*)frm + 0xc1);
+    *(u8*)((u8*)info + 0x70) = *(u8*)((u8*)frm + 0xc2);
+    *(u8*)((u8*)info + 0x71) = *(u8*)((u8*)frm + 0xc3);
+    *(u8*)((u8*)info + 0x72) = *(u8*)((u8*)frm + 0xc4);
+    *(u8*)((u8*)info + 0x73) = *(u8*)((u8*)frm + 0xc5);
+    *(u8*)((u8*)info + 0x74) = *(u8*)((u8*)frm + 0xc6);
+    *(u8*)((u8*)info + 0x75) = *(u8*)((u8*)frm + 0xc7);
+    *(u8*)((u8*)info + 0x76) = *(u8*)((u8*)frm + 0xc8);
+    *(u8*)((u8*)info + 0x77) = *(u8*)((u8*)frm + 0xc9);
+    *(u8*)((u8*)info + 0x78) = *(u8*)((u8*)frm + 0xca);
+    *(u8*)((u8*)info + 0x79) = *(u8*)((u8*)frm + 0xcb);
+    *(u8*)((u8*)info + 0x7a) = *(u8*)((u8*)frm + 0xcc);
+    *(u16*)((u8*)info + 0x7c) = *(s16*)((u8*)frm + 0x100);
+}
 
 void SFMPV_AddRead(void) { SFMPVF_AddRead(); }
 

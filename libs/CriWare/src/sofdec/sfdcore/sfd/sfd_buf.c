@@ -21,15 +21,18 @@ extern s32 SFTRN_CallTrtTrif(void *self, int idx, int funcIdx, int *arg4, int ar
 extern void *lbl_eu_80606E10; /* ring buffer object */
 extern void *lbl_eu_80606E14; /* memory buffer object */
 
-/* Buffer object virtual method indices */
-#define SJ_INIT   0  /* vtable[4] - returns buffer handle/size */
-#define SJ_DESTROY 3 /* vtable[3] - destroys the object */
+/* Forward declarations for internal functions */
+static void sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
+                              int idx, u32 extraSize);
+void sfbuf_InitVfrmBuf(void *self, void *handle, u32 *cumulative,
+                        u32 *sizes, int idx);
+void sfbuf_InitAringBuf(void *self, u32 *cumulative, u32 *sizes, int idx);
+void sfbuf_RingGetSub(void *self, int idx, u32 *out, int mode);
+void sfbuf_RingAddSub(void *self, int idx, u32 size, int mode);
 
 /* Buffer constants */
 #define SFBUF_MAX_IDX   8
-#define SFBUF_NUM_BUF   7
 #define SFBUF_BUF_STRIDE 0x74
-#define SFBUF_BUFOBJ_OFF 0x13B8
 #define SFBUF_STATE_ACTIVE 5
 #define SFBUF_STATE_READY  4
 #define SFBUF_ERR_BASE     0xFF000400
@@ -37,25 +40,16 @@ extern void *lbl_eu_80606E14; /* memory buffer object */
 /* Per-buffer field offsets (relative to buffer base + idx*0x74) */
 #define OFF_STATE       0x00
 #define OFF_ACTIVE      0x04
-#define OFF_SUPPLY_PTR  0x10
-#define OFF_SUPPLY_SIZE 0x14
 #define OFF_BUFOBJ      0x1C
 #define OFF_BUFSIZ      0x18
 #define OFF_WTOT        0x20
 #define OFF_RTOT        0x24
 #define OFF_DLM_PTR     0x28
 #define OFF_DLM_SIZE    0x2C
-#define OFF_PREP_FLG    0x08
-#define OFF_TERM_FLG    0x0C
 
 /* Helper: get per-buffer base pointer */
 static inline u8 *sfbuf_base(void *self, int idx) {
     return (u8 *)self + idx * SFBUF_BUF_STRIDE;
-}
-
-/* Helper: access field at buffer base + offset */
-static inline u32 *sfbuf_field(void *self, int idx, int off) {
-    return (u32 *)(sfbuf_base(self, idx) + off);
 }
 
 /*
@@ -73,16 +67,16 @@ void SFBUF_Init(void) {
     /* Create ring buffer and get its handle */
     obj = SJRBF_Create(pool, 8, 0);
     vtable = *(void **)obj;
-    lbl_eu_80606E10 = ((void *(*)(void *))((void **)vtable)[SJ_INIT])(obj);
+    lbl_eu_80606E10 = ((void *(*)(void *))((void **)vtable)[4])(obj);
     vtable = *(void **)obj;
-    ((void (*)(void *))((void **)vtable)[SJ_DESTROY])(obj);
+    ((void (*)(void *))((void **)vtable)[3])(obj);
 
     /* Create memory buffer and get its handle */
     obj = SJMEM_Create(pool, 8);
     vtable = *(void **)obj;
-    lbl_eu_80606E14 = ((void *(*)(void *))((void **)vtable)[SJ_INIT])(obj);
+    lbl_eu_80606E14 = ((void *(*)(void *))((void **)vtable)[4])(obj);
     vtable = *(void **)obj;
-    ((void (*)(void *))((void **)vtable)[SJ_DESTROY])(obj);
+    ((void (*)(void *))((void **)vtable)[3])(obj);
 }
 
 /*
@@ -125,9 +119,7 @@ static void sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
             }
         }
 
-        if (allocSize == 0) {
-            /* Allocation failed - error already set */
-        } else {
+        if (allocSize != 0) {
             /* Lock and initialize buffer fields */
             u32 cs[8];
             SFLIB_LockCs(cs);
@@ -158,9 +150,9 @@ static void sfbuf_InitRingSj(void *self, u32 *cumulative, u32 *sizes,
 /*
  * SFBUF_InitHn - Initialize buffer handle with all ring buffers
  *
- * Sets up the complete buffer system: initializes 4 ring buffers
- * (ring, vfrm0, aring0, vfrm1, aring1), configures video frame
- * buffers and audio ring buffers, and sets initial state.
+ * Sets up the complete buffer system: initializes ring buffers,
+ * configures video frame buffers and audio ring buffers, and
+ * sets initial state.
  *
  * @param self   Buffer handle pointer
  * @param idx    Buffer group index
@@ -235,10 +227,6 @@ void SFBUF_InitHn(void *self, int idx, u32 *config) {
  */
 void SFBUF_DestroySj(void *self) {
     u8 *base = (u8 *)self;
-    int i;
-
-    /* Check and destroy buffers at offsets 0x13B8, 0x142C, 0x14A0 */
-    /* These are the ring (idx 0), vfrm (idx 1), aring (idx 2) buffers */
 
     /* Buffer 0: ring buffer at +0x13B8 */
     if (*(u32 *)(base + 0x13B8) == SFBUF_STATE_ACTIVE) {
@@ -246,7 +234,7 @@ void SFBUF_DestroySj(void *self) {
         if (*objPtr != 0) {
             void *obj = (void *)*objPtr;
             void *vtable = *(void **)obj;
-            ((void (*)(void *))((void **)vtable)[SJ_DESTROY])(obj);
+            ((void (*)(void *))((void **)vtable)[3])(obj);
             *objPtr = 0;
         }
     }
@@ -257,7 +245,7 @@ void SFBUF_DestroySj(void *self) {
         if (*objPtr != 0) {
             void *obj = (void *)*objPtr;
             void *vtable = *(void **)obj;
-            ((void (*)(void *))((void **)vtable)[SJ_DESTROY])(obj);
+            ((void (*)(void *))((void **)vtable)[3])(obj);
             *objPtr = 0;
         }
     }
@@ -268,7 +256,7 @@ void SFBUF_DestroySj(void *self) {
         if (*objPtr != 0) {
             void *obj = (void *)*objPtr;
             void *vtable = *(void **)obj;
-            ((void (*)(void *))((void **)vtable)[SJ_DESTROY])(obj);
+            ((void (*)(void *))((void **)vtable)[3])(obj);
             *objPtr = 0;
         }
     }
@@ -282,7 +270,7 @@ void SFBUF_DestroySj(void *self) {
  */
 void sfbuf_InitVfrmBuf(void *self, void *handle, u32 *cumulative,
                         u32 *sizes, int idx) {
-    u8 *p = sfbuf_base(self, idx);
+    u8 *p = (u8 *)self + idx * SFBUF_BUF_STRIDE;
     u32 ptrVal = sizes[idx];
     u32 valid = (u32)(-(s32)ptrVal | ptrVal) >> 31; /* non-zero check */
     u8 *vfrm = (u8 *)handle + 0x1758;
@@ -303,7 +291,7 @@ void sfbuf_InitVfrmBuf(void *self, void *handle, u32 *cumulative,
     *(u32 *)(p + 0x20) = (u32)vfrm;
     *(u32 *)vfrm = 0;
 
-    /* Initialize 16 frame slots in the VFRM queue */
+    /* Initialize 16 frame slots in the VFRM queue (stride 0x88) */
     for (i = 0; i < 16; i++) {
         *(u32 *)(*(u32 *)(p + 0x20) + i * 0x88) = 0;
     }
@@ -316,7 +304,7 @@ void sfbuf_InitVfrmBuf(void *self, void *handle, u32 *cumulative,
  * sizes and pointers. Clears all ring control fields.
  */
 void sfbuf_InitAringBuf(void *self, u32 *cumulative, u32 *sizes, int idx) {
-    u8 *p = sfbuf_base(self, idx);
+    u8 *p = (u8 *)self + idx * SFBUF_BUF_STRIDE;
     u32 ptrVal = sizes[idx];
     u32 valid = (u32)(-(s32)ptrVal | ptrVal) >> 31; /* non-zero check */
 

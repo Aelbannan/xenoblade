@@ -119,14 +119,16 @@ void cf::CBattleState::CBattleState_UnkVirtualFunc6(cf::CBattleStateEntry* arg) 
     cf::CBattleStateEntry* entries;
     cf::CBattleStateEntry* p;
     int n;
+    u32 one;
+    u32 bit;
 
     // Bit `arg->unk0C` set into the this+0x15AC bitfield (word-aligned byte
     // offset = (id >> 3) & ~3, bit position = id & 0x1F).
-    *(u32*)(unk15AC + (((u32)arg->unk0C >> 3) & ~3u)) |=
-        1u << (arg->unk0C & 0x1F);
-
+    one = 1;
     entries = (cf::CBattleStateEntry*)((u8*)this + 0x1388);
     p = entries;
+    bit = one << (arg->unk0C & 0x1F);
+    *(u32*)(unk15AC + (((u32)arg->unk0C >> 3) & ~3u)) |= bit;
     for (n = 8; n != 0; n--, p++) {
         if (p->unk0C == arg->unk0C) {
             if (p->unk10 < arg->unk10) {

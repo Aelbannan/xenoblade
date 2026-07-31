@@ -207,6 +207,7 @@ bool CView::attachRenderWork(CWorkThread* pThread) {
     slotPtr = (u8*)mContextRingBase + slot * 0x24;
     *(u32*)(slotPtr + 0x4) = pThread->mWorkID;
 
+
     // Enqueue tag 1: attach IWorkEvent* to unk258
     sum = unk3F0 + mContextRingWriteIndex;
     slot = sum % mContextRingCapacity;

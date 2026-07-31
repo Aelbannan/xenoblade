@@ -6,7 +6,14 @@
 #include "kyoshin/makecrystal/CMCCrystalBox.hpp"
 void func_802138B8(){}
 
-void func_80213964(){}
+void func_80213964(int unused, void* a, void* b) {
+    short a_s = *(short*)a, b_s = *(short*)b;
+    unsigned char a_b = ((unsigned char*)a)[2], b_b = ((unsigned char*)b)[2];
+    *(short*)a = b_s;
+    ((unsigned char*)a)[2] = b_b;
+    *(short*)b = a_s;
+    ((unsigned char*)b)[2] = a_b;
+}
 
 void func_80213988(){}
 
@@ -47,7 +54,16 @@ void copyCrystalBoxParam_80213E20(CMCCrystalBoxParam *dst, const CMCCrystalBoxPa
 
 void __dt__80213E4C(){}
 
-void func_80213E8C(){}
+void func_80213E8C(CMCCrystalBox* self) {
+    u32 i;
+    self->unk20 = 0;
+    self->unk29 = 0;
+    self->unk6A = 0;
+    for (i = 0; i < 8; i++) {
+        self->subObjPtrs[i] = 0;
+        ((u8*)self)[0x21 + i] = 0xFF;
+    }
+}
 
 void __dt__80213ECC(){}
 
@@ -65,7 +81,11 @@ void func_80214634(){}
 
 u8 getByte_69_802146C0(void* self) { return static_cast<CMCCrystalBox*>(self)->unk69; }
 
-void func_802146C8(){}
+u8 func_802146C8(CMCCrystalBox* self) {
+    if (self->unk2D1 != 0) return 1;
+    if (self->unk1500 != 0) return 1;
+    return self->unk2CE;
+}
 
 u8 CSysWin_getUnk34(void* self);
 void syswinGetUnk34_802146F8(void* self) { CSysWin_getUnk34((char*)self + 0x290); }
@@ -183,7 +203,14 @@ void func_80217434(){}
 
 void func_802177D0(){}
 
-void func_80217BDC(){}
+u8 func_80217BDC(void* self) {
+    u32 vtable = *(u32*)self;
+    u32 kind = (vtable >> 16) & 0xF;
+    u32 flag = ((u8*)self)[7] & 3;
+    if (kind != 9) return 0;
+    if (flag != 1) return 0;
+    return 1;
+}
 
 void func_80217C0C(){}
 

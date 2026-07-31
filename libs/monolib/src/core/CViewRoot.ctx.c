@@ -1429,9 +1429,7 @@ namespace ml{
 
     template <size_t N>
     struct FixStr{
-        FixStr(){
-            clear();
-        }
+        FixStr();
 
         //probably fake
         FixStr(bool initialize){
@@ -1521,14 +1519,9 @@ namespace ml{
             return size() == 0;
         }
         
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
+        // Declared out-of-line: retail emits a standalone
+        // format__Q22ml10FixStr<N>FPCce (resolved via the retail symbol map).
+        void format(const char* format, ...);
 
         //Sets the given string to the first characters of this string, up to the specified length.
         //TODO: This might just be substr, but when the start index is 0?
@@ -1598,6 +1591,13 @@ namespace ml{
 
     static const int npos = -1;
     };
+
+#pragma dont_inline on
+    template <size_t N>
+    FixStr<N>::FixStr(){
+        clear();
+    }
+#pragma dont_inline reset
 
 }
 /* end "monolib/util/FixStr.hpp" */
@@ -2333,6 +2333,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -12649,9 +12650,7 @@ public:
         return mChildren.front();
     }
 
-    bool isRunning() const {
-        return !isException() && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
-    }
+    bool isRunning() const;
 
     bool isException() const {
         return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;
@@ -16337,6 +16336,7 @@ namespace ml{
 
 class CWorkThread;
 class CView;
+class CDrawGX;
 
 namespace ml {
 // Distinct from CRect16 in MWCC mangling (Q22ml5CRect); same 8-byte layout.
@@ -16354,6 +16354,7 @@ public:
     void CView_UnkVirtualFunc1();
     void CView_UnkVirtualFunc8();
     void CView_UnkVirtualFunc9();
+    void func_804409D0(CDrawGX* draw, ml::CRect16* rect);
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
@@ -17204,6 +17205,7 @@ public:
     u8 unk2B6[2]; //padding?
     u32 mTargetFramerate; //0x2B8
     float mSecPerFrame; //0x2BC
+    u32 unk2C0; //0x2C0
 
     //General screen dimensions
     static const int SCREEN_WIDTH = 640;
@@ -17622,7 +17624,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -27624,7 +27626,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -32745,7 +32747,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -33385,7 +33387,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -39880,7 +39882,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -44917,7 +44919,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -45557,7 +45559,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -54503,7 +54505,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -59707,7 +59709,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -73714,7 +73716,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -79712,7 +79714,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -84916,7 +84918,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -101046,7 +101048,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -106083,7 +106085,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -106723,7 +106725,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -113434,7 +113436,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -118555,7 +118557,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -119195,7 +119197,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -125905,7 +125907,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -131903,7 +131905,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -137107,7 +137109,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -153035,7 +153037,7 @@ void BTA_CleanUp(BTA_CleanUpCallback p_cb);
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -153811,7 +153813,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -159809,7 +159811,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -165013,7 +165015,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -181270,7 +181272,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -187268,7 +187270,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -192472,7 +192474,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -208636,7 +208638,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -215026,7 +215028,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -221970,7 +221972,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -230644,7 +230646,7 @@ L2C_API extern void L2CA_BypassSFrame (UINT16 cid, UINT8 count);
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -231284,7 +231286,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK

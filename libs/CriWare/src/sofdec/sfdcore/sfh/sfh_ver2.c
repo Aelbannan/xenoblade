@@ -375,38 +375,316 @@ int VER2_AnlyDiffTime(void *work, u64 *out) {
     return 1;
 }
 
-void VER2_AnlyElemCodecAud() {}
+int VER2_AnlyElemCodecAud(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 codec;
 
-void VER2_AnlyElemLayer() {}
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    codec = SFHLOCAL_GetNbyteB(f + 0x1, SFHLOCAL_GetSizeofMember(0x1, 0x2));
+    if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
+        codec = (codec >> 4) & 0xF;
+        codec += 0x20;
+    }
+    if (codec == 0x21) {
+        *out = 1;
+        return 1;
+    }
+    if (codec == 0x22) {
+        *out = 7;
+        return 1;
+    }
+    if (codec == 0x23) {
+        *out = 8;
+        return 1;
+    }
+    if (codec == 0x24) {
+        *out = 3;
+        return 1;
+    }
+    if (codec == 0x25) {
+        *out = 4;
+        return 1;
+    }
+    if (codec == 0x26) {
+        *out = 5;
+        return 1;
+    }
+    if (codec == 0x27) {
+        *out = 6;
+        return 1;
+    }
+    *out = 0;
+    return 1;
+}
 
-void VER2_AnlyElemChNum() {}
+int VER2_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 layer;
 
-void VER2_AnlyElemSmpHz() {}
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    layer = SFHLOCAL_GetNbyteB(f + 0x1, SFHLOCAL_GetSizeofMember(0x1, 0x2));
+    if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
+        *out = layer & 0xF;
+        return 1;
+    }
+    if (layer == 0x24) {
+        *out = 1;
+    } else if (layer == 0x25) {
+        *out = 2;
+    } else if (layer == 0x26) {
+        *out = 3;
+    } else {
+        return 0;
+    }
+    return 1;
+}
 
-void VER2_AnlyElemCodecVid() {}
+int VER2_AnlyElemChNum(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 val;
 
-void VER2_AnlyElemAvrBitRate() {}
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    val = SFHLOCAL_GetNbyteB(f + 0x2, SFHLOCAL_GetSizeofMember(0x2, 0x3));
+    *out = (val >> 4) & 0xF;
+    return 1;
+}
 
-void VER2_AnlyElemPicSz() {}
+int VER2_AnlyElemSmpHz(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 val;
 
-void VER2_AnlyElemPicRate() {}
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    val = SFHLOCAL_GetNbyteB(f + 0x2, SFHLOCAL_GetSizeofMember(0x2, 0x5));
+    *out = val & 0xFFFFF;
+    return 1;
+}
 
-void VER2_AnlyFtrColType() {}
+int VER2_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 codec;
+    u32 result = 0;
 
-void VER2_AnlyFtrPicType() {}
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    codec = SFHLOCAL_GetNbyteB(f + 0x1, SFHLOCAL_GetSizeofMember(0x1, 0x2));
+    if (*(s32 *)((u8 *)work + 0x10) == 0xC8) {
+        codec = ((codec >> 4) & 0xF) + 0x40;
+    }
+    if (codec == 0x41) { result = 1; }
+    if (codec == 0x42) { result = 3; }
+    if (codec == 0x43) { result = 4; }
+    if (codec == 0x47) { result = 5; }
+    if (codec == 0x48) { result = 6; }
+    if (codec == 0x49) { result = 7; }
+    if (codec == 0x4A) { result = 8; }
+    *out = result;
+    return 1;
+}
 
-void VER2_AnlyFtrFixFlg() {}
+int VER2_AnlyElemAvrBitRate(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 val;
 
-void VER2_AnlyFtrShcFixFlg() {}
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    val = SFHLOCAL_GetNbyteB(f + 0xC, SFHLOCAL_GetSizeofMember(0xC, 0x10));
+    if ((val >> 16) == 0xFFFF) {
+        val = 0;
+    }
+    *out = val;
+    return 1;
+}
 
-void VER2_AnlyFtrExpand() {}
+int VER2_AnlyElemPicSz(void *work, u32 stm_id, u32 *width, u32 *height) {
+    u8 *f;
 
-void VER2_AnlyFtrGopN() {}
+    *width = 0;
+    *height = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    *width = SFHLOCAL_GetNbyteB(f + 0x2, SFHLOCAL_GetSizeofMember(0x2, 0x4));
+    *height = SFHLOCAL_GetNbyteB(f + 0x4, SFHLOCAL_GetSizeofMember(0x4, 0x6));
+    return 1;
+}
 
-void VER2_AnlyFtrGopM() {}
+int VER2_AnlyElemPicRate(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
 
-void VER2_AnlyFtrFxType() {}
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    *out = SFHLOCAL_GetNbyteB(f + 0xA, SFHLOCAL_GetSizeofMember(0xA, 0xC));
+    return 1;
+}
 
-void VER2_AnlyFtrNetWidth() {}
+int VER2_AnlyFtrColType(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
 
-void VER2_AnlyFtrNetHeight() {}
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    *out = SFHLOCAL_GetNbyteB(f + 0x21, SFHLOCAL_GetSizeofMember(0x21, 0x22));
+    return 1;
+}
+
+int VER2_AnlyFtrPicType(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    *out = SFHLOCAL_GetNbyteB(f + 0x22, SFHLOCAL_GetSizeofMember(0x22, 0x23));
+    return 1;
+}
+
+int VER2_AnlyFtrFixFlg(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 val;
+
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    val = SFHLOCAL_GetNbyteB(f + 0x23, SFHLOCAL_GetSizeofMember(0x23, 0x24));
+    *out = val & 1;
+    return 1;
+}
+
+int VER2_AnlyFtrShcFixFlg(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 val;
+
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    val = SFHLOCAL_GetNbyteB(f + 0x23, SFHLOCAL_GetSizeofMember(0x23, 0x24));
+    *out = (val >> 3) & 1;
+    return 1;
+}
+
+int VER2_AnlyFtrExpand(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    *out = SFHLOCAL_GetNbyteB(f + 0x24, SFHLOCAL_GetSizeofMember(0x24, 0x25));
+    return 1;
+}
+
+int VER2_AnlyFtrGopN(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 val;
+
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    val = SFHLOCAL_GetNbyteB(f + 0x25, SFHLOCAL_GetSizeofMember(0x25, 0x26));
+    if ((s32)val > 0x3F) {
+        val = -1;
+    }
+    *out = val;
+    return 1;
+}
+
+int VER2_AnlyFtrGopM(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 val;
+
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    val = SFHLOCAL_GetNbyteB(f + 0x26, SFHLOCAL_GetSizeofMember(0x26, 0x27));
+    if ((s32)val > 0x3F) {
+        val = -1;
+    }
+    *out = val;
+    return 1;
+}
+
+int VER2_AnlyFtrFxType(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    *out = SFHLOCAL_GetNbyteB(f + 0x27, SFHLOCAL_GetSizeofMember(0x27, 0x28));
+    return 1;
+}
+
+int VER2_AnlyFtrNetWidth(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 val;
+
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    val = SFHLOCAL_GetNbyteB(f + 0x28, SFHLOCAL_GetSizeofMember(0x28, 0x2A));
+    val = (val & 0x7F) | ((val & 0x7F) << 7);
+    if (val == 0) {
+        return 0;
+    }
+    *out = val;
+    return 1;
+}
+
+int VER2_AnlyFtrNetHeight(void *work, u32 stm_id, u32 *out) {
+    u8 *f;
+    u32 val;
+
+    *out = 0;
+    f = searchStmId(work, stm_id);
+    if (f == NULL) {
+        return 0;
+    }
+    val = SFHLOCAL_GetNbyteB(f + 0x2A, SFHLOCAL_GetSizeofMember(0x2A, 0x2C));
+    val = (val & 0x7F) | ((val & 0x7F) << 7);
+    if (val == 0) {
+        return 0;
+    }
+    *out = val;
+    return 1;
+}

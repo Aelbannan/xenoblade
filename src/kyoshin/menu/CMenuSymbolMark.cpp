@@ -1,78 +1,160 @@
-// Auto-scaffolded catalog TU for kyoshin/menu/CMenuSymbolMark
-// Replace stubs with high-level C/C++ during decomp.
-
-#include "kyoshin/harness_catalog.hpp"
+// Decompiled: CMenuSymbolMark + CArrow3D
+// High-level C++ reconstruction
 
 #include "kyoshin/menu/CMenuSymbolMark.hpp"
-void func_8011D338(){}
 
-void __ct__CMenuSymbolMark(){}
+// Zero-body stubs for matching
+// Each function will be filled in iteratively
 
-CMenuSymbolMark::~CMenuSymbolMark() {}
+// ---------- func_8011D338 ----------
+extern "C" u32 func_8011D338() {
+    return 0;
+}
 
-void CMenuSymbolMark::Init() {}
+// ---------- CMenuSymbolMark constructor ----------
+CMenuSymbolMark::CMenuSymbolMark(CScn* scn) {
+}
 
-void CMenuSymbolMark::Term() {}
+extern "C" void __dt__17UnkClass_8045F564Fv(void* self, int deleteFlag);
+struct PTMF;
+extern "C" long __ptmf_test(PTMF* ptmf);
+extern "C" void __ptmf_scall(...);
 
-void CMenuSymbolMark::Move() {}
+// ---------- CMenuSymbolMark destructor ----------
+CMenuSymbolMark::~CMenuSymbolMark() {
+    if (this) {
+        __dt__17UnkClass_8045F564Fv(&mUnkClass, -1);
+        this->CProcess::~CProcess();
+    }
+}
 
-void CMenuSymbolMark::cbRenderBefore() {}
+// ---------- CMenuSymbolMark::Init ----------
+void CMenuSymbolMark::Init() {
+}
 
-void func_8011E4C4(){}
+// ---------- CMenuSymbolMark::Term ----------
+void CMenuSymbolMark::Term() {
+}
 
-void func_8011E540(){}
+// ---------- CMenuSymbolMark::Move ----------
+void CMenuSymbolMark::Move() {
+}
 
-void func_8011E778(){}
+// ---------- CMenuSymbolMark::cbRenderBefore ----------
+void CMenuSymbolMark::cbRenderBefore() {
+}
 
-void func_8011EA98(){}
+// ---------- func_8011E4C4 ----------
+extern "C" void* func_8011E4C4(CScn* scn) {
+    return 0;
+}
 
-void func_8011EBA8(){}
+// ---------- func_8011E540 ----------
+void func_8011E540(CMenuSymbolMark* self, u32 a, void* b, void* c, u32 d, u32 e) {
+}
 
-void func_8011EC94(){}
+// ---------- func_8011E778 ----------
+void func_8011E778(CMenuSymbolMark* self, SymbolMarkEntry* entry, void* pos, void* c, u32 d) {
+}
 
-void func_8011EDDC(){}
+// ---------- func_8011EA98 ----------
+void func_8011EA98(CMenuSymbolMark* self) {
+}
 
-void func_8011EFB0(){}
+// ---------- func_8011EBA8 ----------
+void func_8011EBA8(CMenuSymbolMark* self) {
+}
 
-void func_8011F8F8(){}
+// ---------- func_8011EC94 ----------
+void func_8011EC94(CMenuSymbolMark* self) {
+}
 
-void func_8011FB68(){}
+// ---------- func_8011EDDC ----------
+void func_8011EDDC(CMenuSymbolMark* self) {
+}
 
-void func_801209BC(){}
+// ---------- func_8011EFB0 ----------
+void func_8011EFB0(CMenuSymbolMark* self) {
+}
 
-CArrow3D::~CArrow3D() {}
+// ---------- func_8011F8F8 ----------
+void func_8011F8F8(CMenuSymbolMark* self) {
+}
 
-void CArrow3D::cbRenderBefore() {}
+// ---------- func_8011FB68 ----------
+void func_8011FB68(CMenuSymbolMark* self) {
+}
 
-void CArrow3D::Move() {}
+// ---------- func_801209BC ----------
+void func_801209BC(CMenuSymbolMark* self) {
+}
 
-void CArrow3D::Term() {}
+// ---------- CArrow3D destructor ----------
+CArrow3D::~CArrow3D() {
+    if (this) {
+        this->CTTask<CArrow3D>::~CTTask();
+    }
+}
 
-void CArrow3D::Init() {}
+// ---------- CTTask<CArrow3D>::Move ----------
+template<>
+void CTTask<CArrow3D>::Move() {
+    if (__ptmf_test(&mMoveFunc)) {
+        __ptmf_scall(this, &mMoveFunc);
+    }
+}
 
-void func_8012213C(void* self) { reinterpret_cast<CMenuSymbolMark*>((char*)self - 0x58)->~CMenuSymbolMark(); }
+// ---------- CTTask<CArrow3D>::Draw ----------
+template<>
+void CTTask<CArrow3D>::Draw() {
+    if (__ptmf_test(&mDrawFunc)) {
+        __ptmf_scall(this, &mDrawFunc);
+    }
+}
 
-void func_80122144(void* self) { reinterpret_cast<CMenuSymbolMark*>((char*)self - 0x5c)->cbRenderBefore(); }
+// ---------- CArrow3D::cbRenderBefore ----------
+void CArrow3D::cbRenderBefore() {
+}
 
-void func_8012214C(void* self) { reinterpret_cast<CMenuSymbolMark*>((char*)self - 0x5c)->~CMenuSymbolMark(); }
+// ---------- CArrow3D::Move ----------
+void CArrow3D::Move() {
+}
 
-void func_80122154(void* self) { reinterpret_cast<CArrow3D*>((char*)self - 0x54)->cbRenderBefore(); }
+// ---------- CArrow3D::Term ----------
+void CArrow3D::Term() {
+}
 
-extern "C" void func_8012215C(void* self) { reinterpret_cast<CArrow3D*>((char*)self - 0x54)->~CArrow3D(); }
+// ---------- CArrow3D::Init ----------
+void CArrow3D::Init() {
+}
 
-// --- hard-symbol stubs (scaffold_hard_symbols) ---
-// Local CTTask (out-of-line Move/Draw/dtor) for harness stubs.
-// Do not include monolib/work/CTTask.hpp here - its inline methods collide.
-template <typename T>
-class CTTask {
-public:
-    CTTask();
-    virtual ~CTTask();
-    virtual void Move();
-    virtual void Draw();
-};
+// ---------- Thunk functions ----------
+// These are vtable thunks for multiple inheritance.
+// When called through the IWorkEvent vtable (offset 0x58) or IScnRender vtable (offset 0x5C),
+// the this pointer needs adjustment before calling the actual implementation.
+// Using non-virtual scoped calls to avoid vtable dispatch in the thunk.
 
-class CArrow3D;
-template<> CTTask<CArrow3D>::~CTTask() {}
-template<> void CTTask<CArrow3D>::Move() {}
-template<> void CTTask<CArrow3D>::Draw() {}
+extern "C" void func_8012213C(void* self) {
+    CMenuSymbolMark* obj = (CMenuSymbolMark*)((char*)self - 0x58);
+    obj->CMenuSymbolMark::~CMenuSymbolMark();
+}
+
+extern "C" void func_80122144(void* self) {
+    CMenuSymbolMark* obj = (CMenuSymbolMark*)((char*)self - 0x5C);
+    obj->CMenuSymbolMark::cbRenderBefore();
+}
+
+extern "C" void func_8012214C(void* self) {
+    CMenuSymbolMark* obj = (CMenuSymbolMark*)((char*)self - 0x5C);
+    obj->CMenuSymbolMark::~CMenuSymbolMark();
+}
+
+extern "C" void func_80122154(void* self) {
+    CArrow3D* obj = (CArrow3D*)((char*)self - 0x54);
+    obj->CArrow3D::cbRenderBefore();
+}
+
+extern "C" void func_8012215C(void* self) {
+    CArrow3D* obj = (CArrow3D*)((char*)self - 0x54);
+    obj->CArrow3D::~CArrow3D();
+}

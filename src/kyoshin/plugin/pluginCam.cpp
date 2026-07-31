@@ -16,7 +16,7 @@ public:
     virtual void vfunc_0x08();
     virtual void vfunc_0x0C();
     virtual void vfunc_0x10();
-    virtual void vfunc_0x14();
+    virtual void vfunc_0x14(void* pos);
     virtual void vfunc_0x18();
     virtual void vfunc_0x1C();
     virtual void vfunc_0x20();
@@ -26,13 +26,13 @@ public:
     virtual void vfunc_0x30();
     virtual void vfunc_0x34();
     virtual void vfunc_0x38();
-    virtual void vfunc_0x3C();
+    virtual void vfunc_0x3C(f32 fov);
     virtual void vfunc_0x40();
     virtual void vfunc_0x44();
     virtual void vfunc_0x48();
     virtual void vfunc_0x4C(void* dir);
-    virtual void vfunc_0x50(float rotX);
-    virtual void vfunc_0x54(float rotY);
+    virtual void vfunc_0x50(f32 rotX);
+    virtual void vfunc_0x54(f32 rotY);
     virtual void vfunc_0x58();
     virtual void vfunc_0x5C(u32 targetId);
     virtual void vfunc_0x60();
@@ -40,12 +40,7 @@ public:
     virtual void vfunc_0x68(void* obj, void* pos, int flags);
     virtual void vfunc_0x6C(void* obj, void* lookat, int flags);
     u8 field_0x04[0x0C - 0x04];
-    void* objPtr; // 0x0C
-};
-
-// Incomplete struct for shake data (0x34 bytes)
-struct ShakeData {
-    f32 values[13];
+    void* objPtr;
 };
 
 extern "C" {
@@ -59,7 +54,7 @@ u32 func_80082008__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
                                           u32 fourth, u32 fifth);
 void func_80082088__Q22cf13CfGameManagerFv(u32 first, u32 second, u32 third,
                                            u32 fourth, float value);
-void func_8007B044(ShakeData* data);
+void func_8007B044(void* data);
 void func_8007B078(s32 val);
 void func_8016FD84(f32 val1, f32 val2);
 }
@@ -88,19 +83,24 @@ extern "C" int select(VMThread* pThread) {
 
 extern "C" int restore(VMThread* pThread) {
     s32 cameraId;
-    s32 targetCamId;
+    s32 transitionTime;
+    s32 nextArg;
 
     if (vmArgOmitChk(pThread, 1)) {
         cameraId = 0;
+        nextArg = 2;
     } else {
-        cameraId = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
+        VMArg* ptr = vmArgPtrGet(pThread, 1);
+        nextArg = 2;
+        cameraId = vmArgIntGet(2, ptr);
     }
 
-    s32 transitionTime;
-    if (vmArgOmitChk(pThread, 2)) {
+    if (vmArgOmitChk(pThread, nextArg)) {
         transitionTime = 0;
     } else {
-        transitionTime = vmArgIntGet(2, vmArgPtrGet(pThread, 2));
+        VMArg* ptr = vmArgPtrGet(pThread, nextArg);
+        nextArg++;
+        transitionTime = vmArgIntGet(nextArg, ptr);
     }
 
     func_80081E90__Q22cf13CfGameManagerFv(
@@ -115,11 +115,7 @@ extern "C" int setPos(VMThread* pThread) {
     s32 fixedY = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
     s32 fixedZ = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
 
-    ml::CVec3 pos = {
-        fixedToFloat(fixedX),
-        fixedToFloat(fixedY),
-        fixedToFloat(fixedZ)
-    };
+    ml::CVec3 pos(fixedToFloat(fixedX), fixedToFloat(fixedY), fixedToFloat(fixedZ));
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
     cam->vfunc_0x14(&pos);
@@ -132,11 +128,7 @@ extern "C" int setLookat(VMThread* pThread) {
     s32 fixedY = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
     s32 fixedZ = vmArgFixedGet(4, vmArgPtrGet(pThread, 3));
 
-    ml::CVec3 lookat = {
-        fixedToFloat(fixedX),
-        fixedToFloat(fixedY),
-        fixedToFloat(fixedZ)
-    };
+    ml::CVec3 lookat(fixedToFloat(fixedX), fixedToFloat(fixedY), fixedToFloat(fixedZ));
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
     cam->vfunc_0x64(&lookat);
@@ -148,11 +140,7 @@ extern "C" int setDir(VMThread* pThread) {
     s32 fixedAngle = vmArgFixedGet(2, vmArgPtrGet(pThread, 1));
     s32 fixedDist = vmArgFixedGet(3, vmArgPtrGet(pThread, 2));
 
-    ml::CVec3 dir = {
-        degToRad(fixedAngle),
-        fixedToFloat(fixedDist),
-        0.0f
-    };
+    ml::CVec3 dir(degToRad(fixedAngle), fixedToFloat(fixedDist), 0.0f);
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
     cam->vfunc_0x4C(&dir);
@@ -210,11 +198,7 @@ extern "C" int setPosOfs(VMThread* pThread) {
         flags = vmArgIntGet(6, vmArgPtrGet(pThread, 5));
     }
 
-    ml::CVec3 pos = {
-        fixedToFloat(fixedX),
-        fixedToFloat(fixedY),
-        fixedToFloat(fixedZ)
-    };
+    ml::CVec3 pos(fixedToFloat(fixedX), fixedToFloat(fixedY), fixedToFloat(fixedZ));
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
     void* obj = func_801862C0(pThread);
@@ -236,11 +220,7 @@ extern "C" int setLookatOfs(VMThread* pThread) {
         flags = vmArgIntGet(6, vmArgPtrGet(pThread, 5));
     }
 
-    ml::CVec3 lookat = {
-        fixedToFloat(fixedX),
-        fixedToFloat(fixedY),
-        fixedToFloat(fixedZ)
-    };
+    ml::CVec3 lookat(fixedToFloat(fixedX), fixedToFloat(fixedY), fixedToFloat(fixedZ));
 
     UnkCamIntf* cam = func_800821F8__Q22cf13CfGameManagerFv();
     void* obj = func_801862C0(pThread);
@@ -393,24 +373,24 @@ extern "C" int shake(VMThread* pThread) {
     s32 fixed11 = vmArgFixedGet(13, vmArgPtrGet(pThread, 12));
     bool boolParam = vmArgBoolGet(14, vmArgPtrGet(pThread, 13));
 
-    ShakeData data;
-    memset(&data, 0, sizeof(data));
+    f32 data[13];
+    memset(data, 0, sizeof(data));
 
-    data.values[0] = (f32)intParam;
-    data.values[1] = fixedToFloat(fixed1);
-    data.values[2] = fixedToFloat(fixed2);
-    data.values[6] = 0.0f;
-    data.values[3] = fixedToFloat(fixed3);
-    data.values[4] = fixedToFloat(fixed4);
-    data.values[5] = fixedToFloat(fixed5);
-    data.values[7] = fixedToFloat(fixed6);
-    data.values[8] = fixedToFloat(fixed7);
-    data.values[9] = fixedToFloat(fixed8);
-    data.values[10] = fixedToFloat(fixed9);
-    data.values[11] = fixedToFloat(fixed10);
-    data.values[12] = fixedToFloat(fixed11);
+    data[0] = (f32)intParam;
+    data[1] = fixedToFloat(fixed1);
+    data[2] = fixedToFloat(fixed2);
+    data[6] = 0.0f;
+    data[3] = fixedToFloat(fixed3);
+    data[4] = fixedToFloat(fixed4);
+    data[5] = fixedToFloat(fixed5);
+    data[7] = fixedToFloat(fixed6);
+    data[8] = fixedToFloat(fixed7);
+    data[9] = fixedToFloat(fixed8);
+    data[10] = fixedToFloat(fixed9);
+    data[11] = fixedToFloat(fixed10);
+    data[12] = fixedToFloat(fixed11);
 
-    func_8007B044(&data);
+    func_8007B044(data);
     return 0;
 }
 
@@ -419,6 +399,6 @@ extern "C" int stopShake(VMThread* pThread) {
     return 0;
 }
 
-extern "C" void pluginCamRegist() {
+void pluginCamRegist() {
     vmPluginRegist(lbl_eu_804FB1A4, lbl_eu_80526560);
 }

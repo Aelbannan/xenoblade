@@ -44,7 +44,65 @@ void SFH_Destroy(SFHContext* ctx) {
     memset(ctx, 0, sizeof(SFHContext));
 }
 
-void SFH_IsSfdHeader() {}
+u32 VER1_IsSfdHeader(void* buf, void* out);
+u32 VER2_IsSfdHeader(void* buf, void* out);
+u32 VER1_AnlyHdrToolVer(void* buf, u32* outMajor, u32* outMinor);
+u32 VER2_AnlyHdrToolVer(void* buf, u32* outMajor, u32* outMinor);
+u32 VER1_AnlyHdrSfhVer(void* buf, u32* outMajor, u32* outMinor);
+u32 VER2_AnlyHdrSfhVer(void* buf, u32* outMajor, u32* outMinor);
+u32 VER1_AnlyHdrModuleVer(void* buf, u32* outMajor, u32* outMinor);
+u32 VER2_AnlyHdrModuleVer(void* buf, u32* outMajor, u32* outMinor);
+
+int SFH_IsSfdHeader(SFHContext* ctx, int* outIsValid) {
+    u32 toolMajor = 0, toolMinor = 0;
+    u32 sfhMajor = 0, sfhMinor = 0;
+    u32 moduleMajor = 0, moduleMinor = 0;
+    int isValid = 0;
+
+    *outIsValid = 0;
+
+    if (ctx->field_0x08 < 0x800) {
+        ctx->active = -1;
+        return 0;
+    }
+
+    if (VER1_IsSfdHeader(ctx, &isValid)) {
+        if (!VER1_AnlyHdrToolVer(ctx, &toolMajor, &toolMinor)) {
+            return 0;
+        }
+        if (!VER1_AnlyHdrSfhVer(ctx, &sfhMajor, &sfhMinor)) {
+            return 0;
+        }
+        if (!VER1_AnlyHdrModuleVer(ctx, &moduleMajor, &moduleMinor)) {
+            moduleMajor = 0;
+            moduleMinor = 0;
+        }
+        ctx->active = 2;
+    } else {
+        if (!VER2_IsSfdHeader(ctx, &isValid)) {
+            goto check_result;
+        }
+        VER2_AnlyHdrToolVer(ctx, &toolMajor, &toolMinor);
+        if (!VER2_AnlyHdrSfhVer(ctx, &sfhMajor, &sfhMinor)) {
+            return 0;
+        }
+        VER2_AnlyHdrModuleVer(ctx, &moduleMajor, &moduleMinor);
+        ctx->active = 2;
+    }
+
+check_result:
+    if (ctx->active != 2) {
+        ctx->active = -1;
+        return 0;
+    }
+
+    ctx->field_0x0C = toolMinor + toolMajor * 100;
+    ctx->field_0x10 = sfhMinor + sfhMajor * 100;
+    ctx->field_0x14 = moduleMinor + moduleMajor * 100;
+    *outIsValid = 1;
+
+    return 1;
+}
 
 u32 VER1_IsExistStmId(void* buf);
 u32 VER2_IsExistStmId(void* buf);

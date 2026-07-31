@@ -45,7 +45,10 @@ namespace cf {
         void* mTarget6C0;         // 0x6C0-0x6C3
         u8 _6C4[5];              // 0x6C4-0x6C8
         u8 mFlags6C9;             // 0x6C9
-        u8 _6CA[0x26];           // 0x6CA-0x6EF
+        u8 _6CA[4];             // 0x6CA-0x6CD
+        u8 field_6CE;            // 0x6CE
+        u8 field_6CF;            // 0x6CF
+        u8 _6D0[0x20];           // 0x6D0-0x6EF
         float mMoveSpeed;         // 0x6F0-0x6F3
         u8 _6F4[0x21];           // 0x6F4-0x714
         u8 unk715[3];            // 0x715-0x717
@@ -71,7 +74,7 @@ namespace cf {
     void CfObject_UnkVirtualFunc33(float amount);
     void CfObject_UnkVirtualFunc13();
     void CfObject_UnkVirtualFunc57();
-    void CObjectParam_UnkVirtualFunc2();
+    void* CObjectParam_UnkVirtualFunc2();
     void CfObject_UnkVirtualFunc14();
     void CfObject_UnkVirtualFunc15();
     void CfObject_UnkVirtualFunc16();
@@ -93,8 +96,8 @@ namespace cf {
     void CfObject_UnkVirtualFunc43();
     void CfObject_UnkVirtualFunc45();
     void CfObject_UnkVirtualFunc70(float value);
-    void CfObject_UnkVirtualFunc50();
-    void CfObject_UnkVirtualFunc51();
+    int CfObject_UnkVirtualFunc50();
+    int CfObject_UnkVirtualFunc51();
     void CfObject_UnkVirtualFunc60();
     void CfObject_UnkVirtualFunc29(float value);
     void setMoveSpeed(float value);

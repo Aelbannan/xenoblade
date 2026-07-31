@@ -129,7 +129,72 @@ void SFMPVF_InitPicUsr(void* self) {
     }
 }
 
-void SFMPVF_GetRead() {}
+extern u32 SFSET_GetCond(void* self, u32 idx);
+extern void* SFMPVF_HoldFrm(void* self);
+extern s32 SFTIM_IsGetFrmTime(void* self, void* frm);
+extern s32 SFTIM_ExecCyclicFrameOutput(void* self);
+
+s32 SFMPVF_GetRead(void* self, void** ppRead, u32* pFrmCnt, void (*callback)(void*, void*, void*)) {
+    void* frm;
+    void* entry;
+    s32 i;
+    u32 cnt = *(u32*)((u8*)self + 0x27ec);
+    u8* base = (u8*)self + 0x27f8;
+
+    if (SFSET_GetCond(self, 0xf) == 0 && *(s32*)((u8*)self + 0x5c) == 1) {
+        *ppRead = NULL;
+        return 0;
+    }
+
+    frm = SFMPVF_HoldFrm(self);
+    if (frm == NULL) {
+        *ppRead = NULL;
+        return 0;
+    }
+
+    /* Search for the held frame's entry index */
+    entry = NULL;
+    for (i = 0; i < (s32)cnt; i++) {
+        void* e = base + i * 0x110;
+        if (e == frm) {
+            entry = (u8*)self + 0x1758 + i * 0x88;
+            break;
+        }
+    }
+
+    *(u32*)entry = 1;
+    *(void**)((u8*)self + 0x27f4) = frm;
+    *ppRead = (u8*)entry + 8;
+
+    /* Call the read callback */
+    callback(self, frm, *ppRead);
+
+    /* Copy frame info */
+    *(u32*)((u8*)self + 0x1018) = *(u32*)((u8*)*ppRead + 0x14);
+    *(u32*)((u8*)self + 0x101c) = *(u32*)((u8*)*ppRead + 0x18);
+
+    if (SFTIM_IsGetFrmTime(self, *ppRead) == 0) {
+        *ppRead = NULL;
+        return 0;
+    }
+
+    if (SFTIM_ExecCyclicFrameOutput(self) == 0) {
+        *ppRead = NULL;
+        return 0;
+    }
+
+    if (*(s32*)((u8*)self + 0x68) == 2) {
+        s32 frameCnt = *(s32*)((u8*)self + 0x6c);
+        u32 newCnt = frameCnt + 1;
+        *(u32*)((u8*)self + 0x6c) = newCnt;
+        if ((s32)newCnt < 0) {
+            *(u32*)((u8*)self + 0x6c) = 0;
+        }
+        *(u32*)((u8*)frm + 0x64) = frameCnt;
+        *pFrmCnt = frameCnt;
+    }
+    return 0;
+}
 
 void SFMPVF_AddRead() {}
 

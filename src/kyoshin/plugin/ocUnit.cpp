@@ -3,17 +3,51 @@
 
 #include "kyoshin/plugin/ocUnit.hpp"
 
+// C-linkage retail symbols referenced by the plugin functions below.
+extern "C" {
+    extern u32 lbl_eu_80663E24;
+    extern char lbl_eu_804FA74C[];
+    extern void* lbl_eu_806618D8;
+    extern void* lbl_eu_806618F0;
+    extern void* lbl_eu_806618E8;
+
+    // VM/script helpers
+    void func_800BE12C(void* obj, int a, int b, int c, int d);
+    void func_800BE824(void* obj, int flag);
+    void func_800BE0F8(void* obj, int target);
+    void func_800BE33C(void* obj, int flag);
+    void* func_800BBC0C();
+    void func_800BF314(void* obj, int flag);
+    void func_800F38E0(void* battleMgr, void* actor, int flag);
+    void func_800F3958(void* battleMgr, void* actor, int index);
+    void func_800EC8FC(void* battleMgr, void* actor, void* data, int flag);
+    u32 func_800FE68C();
+    void func_800ACC14(void* obj, s8 val);
+    void func_800ACF78(void* obj, void* target, void* child);
+    void func_800ACFD8(void* obj, void* target);
+    void func_800AC4A8(void* obj, u16 param);
+    void func_800ABF24(void* obj, void* pos, void* offset, float f);
+    void func_8013D07C(void* subObj, const char* str, int flag);
+    void func_8013D448(void* subObj, const char* str);
+    u32 func_8013EC58();
+    int func_80174C98(void* player, void* val, int flag);
+    int CUICfManager::func_80135FDC();
+    void* __dynamic_cast(void* obj, int offset, void* rtti, void* targetRtti, int flag);
+    int strcmp(const char* s1, const char* s2);
+    void* memset(void* ptr, int val, u32 size);
+}
+
 void func_8003BC10(){}
 
-s8 cf::CfObjectMove::CfObject_UnkVirtualFunc50() { return static_cast<cf::CfObjectMove*>(this)->field_6CE; }
+int cf::CfObjectMove::CfObject_UnkVirtualFunc50() { return static_cast<cf::CfObjectMove*>(this)->field_6CE; }
 
-s8 cf::CfObjectMove::CfObject_UnkVirtualFunc51() { return static_cast<cf::CfObjectMove*>(this)->field_6CF; }
+int cf::CfObjectMove::CfObject_UnkVirtualFunc51() { return static_cast<cf::CfObjectMove*>(this)->field_6CF; }
 
 void func_8003BD7C(){}
 
 void func_8003C044(){}
 
-u32* cf::CfObject::CfObject_UnkVirtualFunc23() { return &mPos3C; }
+u32 cf::CfObject::CfObject_UnkVirtualFunc23() { return (u32)&mPos3C; }
 
 void func_8003C0D0(){}
 
@@ -33,7 +67,7 @@ void func_8003C354(){}
 
 void func_8003C3D0(){}
 
-float cf::CActorParam::CActorParam_UnkVirtualFunc37() { return unk17E8; }
+float cf::CActorParam::CActorParam_UnkVirtualFunc37() { return *(float*)((u8*)this + 0x17E8); }
 
 void func_8003C480(){}
 
@@ -99,7 +133,7 @@ void CfObject_UnkVirtualFunc49__Q22cf8CfObjectFv() {}
 
 void func_8003CD6C(){}
 
-u32 cf::CfObject::CfObject_UnkVirtualFunc50() { return 0xFFFFFFFF; }
+int cf::CfObject::CfObject_UnkVirtualFunc50() { return -1; }
 
 void func_8003CDE0(){}
 
@@ -127,7 +161,7 @@ void cf::CObjectState::CObjectState_UnkVirtualFunc11() { }
 
 void onEvent(){}
 
-void cf::CObjectState::CObjectState_UnkVirtualFunc10(void*) {}
+int cf::CObjectState::CObjectState_UnkVirtualFunc10(void* arg, int arg2) { return 0; }
 
 void cf::CObjectState::CObjectState_UnkVirtualFunc9() {}
 
@@ -145,7 +179,7 @@ extern "C" int func_8003D9C4(VMThread* pThread, int handle) {
     }
     if (obj->unk64 & 0x10) {
         u8 retVal;
-        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)0x2000)) {
+        if (((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)0x2000, 0)) {
             retVal = 1;
         } else {
             retVal = 2;
@@ -173,7 +207,7 @@ extern "C" int winTalk(VMThread* pThread, int handle) {
     }
     func_8013D07C(obj->mSubObj38, str, 1);
     if (obj->unk64 & 0x10) {
-        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1)) {
+        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 0)) {
             ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
         }
         if (!code80135FDC_getByte_64058()) {
@@ -254,7 +288,7 @@ extern "C" int func_8003DDF4(VMThread* pThread, int handle) {
     cf::CfObject* obj = (cf::CfObject*)func_801864DC(ctx, handle);
     func_8013D448(obj->mSubObj38, str);
     if (obj->unk64 & 0x10) {
-        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1)) {
+        if (!((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc10((void*)1, 0)) {
             ((cf::CObjectState*)obj)->CObjectState_UnkVirtualFunc1(1);
         }
     } else if ((obj->unk64 & 0x4000) || (obj->unk64 & 0x8000)) {

@@ -23122,75 +23122,15 @@ struct CItemBoxGridSubMenu {
 
 void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* accessor);
 /* end "kyoshin/CItemBoxGridSubMenu.hpp" */
-/* "src/kyoshin/CItemBoxGridSubMenu.cpp" line 4 "monolib/device/CDeviceFont.hpp" */
+/* "src/kyoshin/CItemBoxGridSubMenu.cpp" line 4 "kyoshin/code_80135FDC.hpp" */
 #pragma once
 
-/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 2 "types.h" */
+/* "src/kyoshin/code_80135FDC.hpp" line 2 "monolib/device/CFileHandle.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 2 "types.h" */
 /* end "types.h" */
-
-/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 4 "monolib/device/CDeviceBase.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 3 "monolib/work/CWorkThread.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 4 "monolib/work/CMsgParam.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
-#pragma once
-
-//List of forward declarations for commonly used classes.
-
-//Core
-class CView;
-class CException;
-
-//Device
-class CFileHandle;
-class CDeviceFileJob;
-
-//Math
-namespace ml {
-    struct CPnt16;
-    struct CRect16;
-    struct CVec3;
-    struct CVec4;
-    struct CCol3;
-    struct CCol4;
-    struct CMat34;
-    struct CFrustum;
-} //namespace ml
-
-//Scene
-class CScn;
-class CScnNw4r;
-class IScnRender;
-class ICulling;
-
-//Util
-class CChildListNode;
-
-//Work
-class CEventFile;
-class CProcess;
-class CProc;
-class CWorkThread;
-/* end "monolib/monolib_types.hpp" */
-/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
+/* "libs/monolib/include/monolib/device/CFileHandle.hpp" line 3 "monolib/util.hpp" */
 #pragma once
 
 /* "libs/monolib/include/monolib/util.hpp" line 2 "monolib/util/BoolUtils.hpp" */
@@ -24447,14 +24387,9 @@ namespace ml{
             return size() == 0;
         }
         
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
+        // Declared out-of-line: retail emits a standalone
+        // format__Q22ml10FixStr<N>FPCce (resolved via the retail symbol map).
+        void format(const char* format, ...);
 
         //Sets the given string to the first characters of this string, up to the specified length.
         //TODO: This might just be substr, but when the start index is 0?
@@ -25081,6 +25016,94 @@ template <typename T> T* PtrSingleton<T>::spInstance;
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 3 "monolib/util/MemManager.hpp" */
 /* end "monolib/util/MemManager.hpp" */
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 3 "monolib/monolib_types.hpp" */
+#pragma once
+
+//List of forward declarations for commonly used classes.
+
+//Core
+class CView;
+class CException;
+
+//Device
+class CFileHandle;
+class CDeviceFileJob;
+
+//Math
+namespace ml {
+    struct CPnt16;
+    struct CRect16;
+    struct CVec3;
+    struct CVec4;
+    struct CCol3;
+    struct CCol4;
+    struct CMat34;
+    struct CFrustum;
+} //namespace ml
+
+//Scene
+class CScn;
+class CScnNw4r;
+class IScnRender;
+class ICulling;
+
+//Util
+class CChildListNode;
+
+//Work
+class CEventFile;
+class CProcess;
+class CProc;
+class CWorkThread;
+/* end "monolib/monolib_types.hpp" */
+/* "libs/monolib/include/monolib/work/CWorkThreadSystem.hpp" line 4 "monolib/util.hpp" */
+/* end "monolib/util.hpp" */
+
+/*
+Handle to a work memory region
+*/
+typedef u32 WORK_ID;
+static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
+
+class CWorkThreadSystem{
+    friend class CWorkThread;
+
+public:
+    static void initialize();
+    static void destroy();
+
+    static WORK_ID allocWID(CWorkThread* thread);
+    static void freeWID(WORK_ID wid){
+        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
+        sWorkThreads[wid] = nullptr;
+    }
+
+    static mtl::ALLOC_HANDLE getWorkMem();
+
+private:
+    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
+
+    //Highest allowed work ID
+    static const WORK_ID MAX_WORK_ID = 2048;
+    //One registration bit flag per work ID
+    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
+
+    static const char* scRegionName;
+    static BOOL sMemAvailable;
+
+    //Handle for all work memory allocations
+    static mtl::ALLOC_HANDLE sAllocHandle;
+
+    //Work thread registration flags, by ID
+    static u32* sAllocFlags;
+
+    //Registered work threads, by ID
+    static CWorkThread** sWorkThreads;
+};
 /* end "monolib/work/CWorkThreadSystem.hpp" */
 /* "libs/monolib/include/monolib/util/reslist.hpp" line 5 "algorithm" */
 #ifndef MSL_CPP_ALGORITHM_H
@@ -25577,47 +25600,168 @@ namespace ml{
 /* end "monolib/util/TPLUtils.hpp" */
 /* end "monolib/util.hpp" */
 
-/*
-Handle to a work memory region
-*/
-typedef u32 WORK_ID;
-static const WORK_ID INVALID_WORK_ID = 0xFFFFFFFF;
+enum CBM {
+    CBM_0,
+    CBM_1,
+    CBM_2,
+    CBM_3,
+    CBM_4,
+    CBM_5
+};
 
-class CWorkThreadSystem{
-    friend class CWorkThread;
+struct CFileHandle {
+    int unk0;
+    void* mData; //0x4
+    u8 unk8[0x10 - 0x8];
+    int unk10;
+    u32 unk14;
+    u8 unk18[0x3C - 0x18];
+    u32 mLength; //0x3C
+    u8 unk40[0x5C - 0x40];
+    ml::FixStr<32> mName; //0x5C
+    u8 unk80[0x160 - 0x80];
+    u32 unk160;
 
-public:
-    static void initialize();
-    static void destroy();
+    void call(CBM cbm);
+    bool checkExistRsrc(CBM cbm);
+    UNKTYPE* getRsrc();
 
-    static WORK_ID allocWID(CWorkThread* thread);
-    static void freeWID(WORK_ID wid){
-        sAllocFlags[wid / 32] &= ~(1 << wid % 32);
-        sWorkThreads[wid] = nullptr;
+    inline void* getData(){
+        void* r31 = mData;
+        mData = nullptr;
+        return r31;
     }
 
-    static mtl::ALLOC_HANDLE getWorkMem();
+    inline bool unkInline2() const {
+        return unk10 != 0 && unk10 == mLength;
+    }
 
-private:
-    static const u32 REGION_SIZE = 0x70000 - sizeof(mtl::MemBlock);
+    inline u32 getLength() const {
+        return mLength;
+    }
 
-    //Highest allowed work ID
-    static const WORK_ID MAX_WORK_ID = 2048;
-    //One registration bit flag per work ID
-    static const u32 ALLOC_FLAGS_COUNT = MAX_WORK_ID / (sizeof(u32) * 8);
-
-    static const char* scRegionName;
-    static BOOL sMemAvailable;
-
-    //Handle for all work memory allocations
-    static mtl::ALLOC_HANDLE sAllocHandle;
-
-    //Work thread registration flags, by ID
-    static u32* sAllocFlags;
-
-    //Registered work threads, by ID
-    static CWorkThread** sWorkThreads;
 };
+/* end "monolib/device/CFileHandle.hpp" */
+/* "src/kyoshin/code_80135FDC.hpp" line 3 "monolib/work/IWorkEvent.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
+/* end "monolib/monolib_types.hpp" */
+
+/* Interface for work events, which provides a set of 32 event handler functions that
+get triggered when a certain event happens (such as when loading a file for OnFileEvent).
+Deriving classes can override any of these functions to run their own code when the
+corresponding event happens.
+
+Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
+being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
+out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
+with no apparent calls to the other 3 (possibly debug only).
+
+In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
+with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
+events being unused as well.
+
+Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
+kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
+IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
+into every overriding TU and blows split budgets (see MWCC_REFERENCE
+CBattery/CBgTex note). */
+class IWorkEvent {
+public:
+    virtual ~IWorkEvent();
+    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
+    virtual bool OnFileEvent(CEventFile* pEventFile);
+    virtual bool WorkEvent3(UNKTYPE* r4);
+    virtual bool WorkEvent4();
+    virtual void OnPauseTrigger(bool paused);
+    // Completely unused, but still left in...
+    virtual bool WorkEvent6();
+    virtual bool WorkEvent7();
+    virtual bool WorkEvent8();
+    virtual bool WorkEvent9();
+    virtual bool WorkEvent10();
+    virtual bool WorkEvent11();
+    virtual bool WorkEvent12();
+    virtual bool WorkEvent13();
+    virtual bool WorkEvent14();
+    virtual bool WorkEvent15();
+    virtual bool WorkEvent16();
+    virtual bool WorkEvent17();
+    virtual bool WorkEvent18();
+    virtual bool WorkEvent19();
+    virtual bool WorkEvent20();
+    virtual bool WorkEvent21();
+    virtual bool WorkEvent22();
+    virtual bool WorkEvent23();
+    virtual bool WorkEvent24();
+    virtual bool WorkEvent25();
+    virtual bool WorkEvent26();
+    virtual bool WorkEvent27();
+    virtual bool WorkEvent28();
+    virtual bool WorkEvent29();
+    virtual bool WorkEvent30();
+    virtual void WorkEvent31();
+};
+/* end "monolib/work/IWorkEvent.hpp" */
+
+/* "src/kyoshin/code_80135FDC.hpp" line 5 "revolution/gx/GXTypes.h" */
+/* end "revolution/gx/GXTypes.h" */
+
+/* "src/kyoshin/code_80135FDC.hpp" line 7 "nw4r/lyt.h" */
+/* end "nw4r/lyt.h" */
+
+u16 func_8013606C(const char*, char*, u16);
+char* func_80136190(char*, char*, u32);
+u32 func_801361E8(void*, char*, u32);
+char* func_8013639C(void*, char*, u16);
+void func_8013676C(nw4r::lyt::Pane*, u32);
+void func_801368C0(nw4r::lyt::Layout*, char*, u32);
+void func_80136910(nw4r::lyt::Layout*, char*, u8);
+void func_80136A1C(nw4r::lyt::Layout*, char*, char*, u32);
+void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
+void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
+void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
+void func_80137038(nw4r::lyt::Layout* pLayout, nw4r::lyt::DrawInfo* pDrawInfo, int r5, int r6);
+void func_80137250(nw4r::lyt::DrawInfo* pDrawInfo);
+u8 func_801372B4(u32);
+u32 func_80137444(nw4r::lyt::AnimTransform*, float);
+u32 func_80137510(nw4r::lyt::AnimTransform*, float);
+void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
+char* func_80138F78(u16);
+void func_801390E0(CFileHandle**);
+void func_80139124(nw4r::lyt::ArcResourceAccessor*);
+void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
+extern "C" u8 code80135FDC_getByte_621F0();
+extern "C" u8 code80135FDC_getByte_64077();
+extern "C" u8 func_801392B4(u8);
+/* end "kyoshin/code_80135FDC.hpp" */
+/* "src/kyoshin/CItemBoxGridSubMenu.cpp" line 5 "monolib/device/CDeviceFont.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/device/CDeviceFont.hpp" line 4 "monolib/device/CDeviceBase.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/device/CDeviceBase.hpp" line 3 "monolib/work/CWorkThread.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 4 "monolib/work/CMsgParam.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/monolib/include/monolib/work/CMsgParam.hpp" line 4 "monolib/work/CWorkThreadSystem.hpp" */
 /* end "monolib/work/CWorkThreadSystem.hpp" */
 
 //Message param entry format:
@@ -25748,68 +25892,6 @@ private:
 };
 /* end "monolib/work/CMsgParam.hpp" */
 /* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 5 "monolib/work/IWorkEvent.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/work/IWorkEvent.hpp" line 3 "monolib/monolib_types.hpp" */
-/* end "monolib/monolib_types.hpp" */
-
-/* Interface for work events, which provides a set of 32 event handler functions that
-get triggered when a certain event happens (such as when loading a file for OnFileEvent).
-Deriving classes can override any of these functions to run their own code when the
-corresponding event happens.
-
-Of the 32 available event slots, however, only events 1-5 are ever overriden, with the rest
-being empty slots that were left in for some dumb reason (tysm monolithsoft <3). Additionally,
-out of the 5 overriden events, only OnFileEvent and OnPauseTrigger seem to be used,
-with no apparent calls to the other 3 (possibly debug only).
-
-In XC3D, all instances of the unused event functions (including events 1, 3, and 4) are absent,
-with the entries for each instead just being 0 in the vtable. This points to the extra 3 overridden
-events being unused as well.
-
-Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
-kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
-IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
-into every overriding TU and blows split budgets (see MWCC_REFERENCE
-CBattery/CBgTex note). */
-class IWorkEvent {
-public:
-    virtual ~IWorkEvent();
-    virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
-    virtual bool OnFileEvent(CEventFile* pEventFile);
-    virtual bool WorkEvent3(UNKTYPE* r4);
-    virtual bool WorkEvent4();
-    virtual void OnPauseTrigger(bool paused);
-    // Completely unused, but still left in...
-    virtual bool WorkEvent6();
-    virtual bool WorkEvent7();
-    virtual bool WorkEvent8();
-    virtual bool WorkEvent9();
-    virtual bool WorkEvent10();
-    virtual bool WorkEvent11();
-    virtual bool WorkEvent12();
-    virtual bool WorkEvent13();
-    virtual bool WorkEvent14();
-    virtual bool WorkEvent15();
-    virtual bool WorkEvent16();
-    virtual bool WorkEvent17();
-    virtual bool WorkEvent18();
-    virtual bool WorkEvent19();
-    virtual bool WorkEvent20();
-    virtual bool WorkEvent21();
-    virtual bool WorkEvent22();
-    virtual bool WorkEvent23();
-    virtual bool WorkEvent24();
-    virtual bool WorkEvent25();
-    virtual bool WorkEvent26();
-    virtual bool WorkEvent27();
-    virtual bool WorkEvent28();
-    virtual bool WorkEvent29();
-    virtual bool WorkEvent30();
-    virtual void WorkEvent31();
-};
 /* end "monolib/work/IWorkEvent.hpp" */
 /* "libs/monolib/include/monolib/work/CWorkThread.hpp" line 6 "monolib/work/CWorkThreadSystem.hpp" */
 /* end "monolib/work/CWorkThreadSystem.hpp" */
@@ -26118,27 +26200,23 @@ extern "C" const float lbl_eu_8066830C; // 100.0f
 extern "C" const float lbl_eu_80668310; // -17.0f
 extern "C" const float lbl_eu_80668314; // 120.0f
 extern "C" const float lbl_eu_80668318; // -37.0f
-extern "C" const double lbl_eu_806682F8; // 4503599627370496.0 (for int-to-float)
+extern "C" const double lbl_eu_806682F8;
 
-// External functions (unmangled retail symbols)
-extern "C" void func_80136D74(void*, const char*, int);
-extern "C" char* func_80136190(char*, char*, u32);
-extern "C" void func_80127BC4(void*, const void*);
-extern "C" void func_80124288(void*, void*);
-extern "C" void code80135FDC_setVec3(float*, float, float, float);
-extern "C" void func_801D2150(nw4r::lyt::Pane*, const nw4r::math::VEC3*);
-extern "C" void func_80136E84(nw4r::lyt::Layout**, nw4r::lyt::ArcResourceAccessor*, const char*);
-extern "C" void func_80136F08(nw4r::lyt::Layout*, nw4r::lyt::AnimTransform**, nw4r::lyt::ArcResourceAccessor*, char*);
-extern "C" void* func_80452C10(u32, nw4r::lyt::Layout*);
-extern "C" void func_8013676C(nw4r::lyt::Pane*, u32);
+// Forward declarations for functions not in included headers
+void func_80136D74(char*, const char*, int);
+void func_80127BC4(char*, const char*);
+void func_80124288(char*, char*);
+void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
+void code80135FDC_setVec3(float*, float, float, float);
+
 extern "C" u32 func_801355A0();
-extern "C" void func_801368C0(nw4r::lyt::Layout*, char*, u32);
-extern "C" void func_80136B4C(nw4r::lyt::Layout*, char*, char*, u32);
-extern "C" u16 func_8013606C(char*, char*, u16);
-extern "C" void* func_80138F78(u16);
-extern "C" void* func_801355F4();
-extern "C" void func_80137E7C(nw4r::lyt::Layout*, char*, void*);
+extern "C" u32 func_80136190(void*, u32, u32);
+extern "C" void func_80136E84(void*, void*, const char*);
+extern "C" void func_80136F08(void*, void*, void*, const char*);
+extern "C" void func_8013676C(void*, u32);
+extern "C" void func_801368C0(void*, const char*, u32);
 extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+extern "C" void* func_801355F4();
 
 void* __ct__CItemBoxGridSubMenu(void* self) {
     CItemBoxGridSubMenu* s = (CItemBoxGridSubMenu*)self;
@@ -26232,20 +26310,20 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
 
     mSubState = 1;
 
-    func_80136D74(mTxtBoxA, &lbl_eu_805084BC[0xb3], 0);
-    func_80136D74(mTxtBoxB, &lbl_eu_805084BC[0xb3], 0);
-    func_80136D74(mTxtBoxC, &lbl_eu_805084BC[0xb3], 0);
+    func_80136D74((char*)mTxtBoxA, &lbl_eu_805084BC[0xb3], 0);
+    func_80136D74((char*)mTxtBoxB, &lbl_eu_805084BC[0xb3], 0);
+    func_80136D74((char*)mTxtBoxC, &lbl_eu_805084BC[0xb3], 0);
 
     if (arg == 10) {
-        func_80136D74(mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
-        func_80136D74(mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'A'), 0);
+        func_80136D74((char*)mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else if (arg == 13) {
-        func_80136D74(mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
-        func_80136D74(mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], '@'), 0);
+        func_80136D74((char*)mTxtBoxB, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
         mSubState = 2;
     } else {
-        func_80136D74(mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
+        func_80136D74((char*)mTxtBoxA, func_80136190(&lbl_eu_805084BC[0xb4], &lbl_eu_805084BC[0xbd], 'C'), 0);
     }
 
     nw4r::lyt::Pane* pane1 = mLayout->GetRootPane()->FindPaneByName(&lbl_eu_805084BC[0xc2], true);
@@ -26253,36 +26331,39 @@ void CItemBoxGridSubMenu::func_802084D4(int arg) {
 
     switch (mSubState) {
     case 1: {
-        float sz[2];
-        func_80127BC4(sz, (u8*)pane1 + 0x4c);
-        sz[1] = lbl_eu_80668300;
-        func_80124288(pane1, sz);
+        nw4r::lyt::Size sz = pane1->GetSize();
+        sz.height = lbl_eu_80668300;
+        pane1->SetSize(sz);
 
-        float v[3];
-        code80135FDC_setVec3(v, lbl_eu_80668304, lbl_eu_80668308, lbl_eu_80668304);
-        func_801D2150(pane2, (nw4r::math::VEC3*)v);
+        nw4r::math::VEC3 v;
+        v.x = lbl_eu_80668304;
+        v.y = lbl_eu_80668308;
+        v.z = lbl_eu_80668304;
+        func_801D2150(pane2, &v);
         break;
     }
     case 2: {
-        float sz[2];
-        func_80127BC4(sz, (u8*)pane1 + 0x4c);
-        sz[1] = lbl_eu_8066830C;
-        func_80124288(pane1, sz);
+        nw4r::lyt::Size sz = pane1->GetSize();
+        sz.height = lbl_eu_8066830C;
+        pane1->SetSize(sz);
 
-        float v[3];
-        code80135FDC_setVec3(v, lbl_eu_80668304, lbl_eu_80668310, lbl_eu_80668304);
-        func_801D2150(pane2, (nw4r::math::VEC3*)v);
+        nw4r::math::VEC3 v;
+        v.x = lbl_eu_80668304;
+        v.y = lbl_eu_80668310;
+        v.z = lbl_eu_80668304;
+        func_801D2150(pane2, &v);
         break;
     }
     case 3: {
-        float sz[2];
-        func_80127BC4(sz, (u8*)pane1 + 0x4c);
-        sz[1] = lbl_eu_80668314;
-        func_80124288(pane1, sz);
+        nw4r::lyt::Size sz = pane1->GetSize();
+        sz.height = lbl_eu_80668314;
+        pane1->SetSize(sz);
 
-        float v[3];
-        code80135FDC_setVec3(v, lbl_eu_80668304, lbl_eu_80668318, lbl_eu_80668304);
-        func_801D2150(pane2, (nw4r::math::VEC3*)v);
+        nw4r::math::VEC3 v;
+        v.x = lbl_eu_80668304;
+        v.y = lbl_eu_80668318;
+        v.z = lbl_eu_80668304;
+        func_801D2150(pane2, &v);
         break;
     }
     }
@@ -26295,9 +26376,9 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     func_80136E84(&self->mLayout, accessor, &lbl_eu_805084BC[0x00]);
     func_80136F08(self->mLayout, &self->mAnimDefault, accessor, &lbl_eu_805084BC[0x19]);
 
-    void* fontObj = CDeviceFont::func_80452C10(1, self->mLayout);
+    u8* fontObj = (u8*)CDeviceFont::func_80452C10(1, self->mLayout);
     nw4r::lyt::Pane* root = self->mLayout->GetRootPane();
-    u32 fontVal = (*(u32(*)(void*))(*(u32**)fontObj + 9))(fontObj);
+    u32 fontVal = (*(u32(*)(u8*))(*(u32**)fontObj + 9))(fontObj);
     func_8013676C(root, fontVal);
 
     u32 color = func_801355A0();
@@ -26321,10 +26402,10 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
     const char* fileID = (gmVal == 0) ? &lbl_eu_805084BC[0xa0] : &lbl_eu_805084BC[0x97];
 
     u16 msgId = func_8013606C(&lbl_eu_805084BC[0x78], (char*)fileID, 0x2b);
-    void* tex = func_80138F78(msgId);
+    u8* tex = (u8*)func_80138F78(msgId);
 
-    void* sys = func_801355F4();
-    void* mat = (*(void*(*)(void*, u32, void*, u32))(*(u32**)sys + 3))(sys, 0x74696d67, tex, 0);
+    u8* sys = (u8*)func_801355F4();
+    u8* mat = (*(u8*(*)(u8*, u32, u8*, u32))(*(u32**)sys + 3))(sys, 0x74696d67, tex, 0);
     if (mat != NULL) {
         func_80137E7C(self->mLayout, &lbl_eu_805084BC[0xa9], mat);
 
@@ -26332,10 +26413,10 @@ void func_80207FC8(CItemBoxGridSubMenu* self, nw4r::lyt::ArcResourceAccessor* ac
         u16 w = *(u16*)(*(u8**)mat + 8 + 2);
         u16 h = *(u16*)(*(u8**)mat + 8 + 0);
 
-        float fvars[2];
-        fvars[0] = (float)(int)w;
-        fvars[1] = (float)(int)h;
-        func_80124288(picPane, fvars);
+        nw4r::lyt::Size sz;
+        sz.width = (f32)(s32)w;
+        sz.height = (f32)(s32)h;
+        picPane->SetSize(sz);
     }
 }
 
@@ -26343,7 +26424,9 @@ void func_80208760(){}
 
 void func_802087B8(){}
 
-void func_80208838(void){}
+void func_80208838(CItemBoxGridSubMenu* self) {
+    self->mSelectedIdx = -1;
+}
 
 void func_80208844(){}
 

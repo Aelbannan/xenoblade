@@ -133,67 +133,70 @@ void sfsee_ExecHeadAnaly(void* self) {
 
 s32 SFD_SetFileSize(void* self, s32 fileSize) {
     void* avplay;
-    s32 result;
+    s32 result = 0;
     
     if (SFLIB_CheckHn(self)) {
-        result = 0;
         SFLIB_SetErr(NULL, 0xFF000159);
     } else {
         avplay = *(void**)((u8*)self + 0x2670);
         if (avplay == NULL) {
-            result = 0;
-        } else {
-            *(s32*)((u8*)avplay + 0xDC4) = fileSize;
-            sfsee_UpdateEByteRate(self);
-            result = 0;
+            return 0;
         }
+        *(s32*)((u8*)avplay + 0xDC4) = fileSize;
+        sfsee_UpdateEByteRate(self);
     }
     return result;
 }
 
 s32 SFD_SetTotTime(void* self, s32 timeHi, s32 timeLo) {
     void* avplay;
+    s32 result = 0;
     
     if (SFLIB_CheckHn(self)) {
         SFLIB_SetErr(NULL, 0xFF00015A);
     } else {
         avplay = *(void**)((u8*)self + 0x2670);
-        if (avplay != NULL) {
-            *(s32*)((u8*)avplay + 0xDC8) = timeHi;
-            *(s32*)((u8*)avplay + 0xDCC) = timeLo;
-            sfsee_UpdateEByteRate(self);
+        if (avplay == NULL) {
+            return 0;
         }
+        *(s32*)((u8*)avplay + 0xDC8) = timeHi;
+        *(s32*)((u8*)avplay + 0xDCC) = timeLo;
+        sfsee_UpdateEByteRate(self);
     }
-    return 0;
+    return result;
 }
 
 s32 SFD_SetByteRate(void* self, s32 byteRate) {
     void* avplay;
+    s32 result = 0;
     
     if (SFLIB_CheckHn(self)) {
         SFLIB_SetErr(NULL, 0xFF00015B);
     } else {
         avplay = *(void**)((u8*)self + 0x2670);
-        if (avplay != NULL) {
-            *(s32*)((u8*)avplay + 0xDD0) = byteRate;
-            sfsee_UpdateEByteRate(self);
+        if (avplay == NULL) {
+            return 0;
         }
+        *(s32*)((u8*)avplay + 0xDD0) = byteRate;
+        sfsee_UpdateEByteRate(self);
     }
-    return 0;
+    return result;
 }
 
 s32 SFD_SetSeekPos(void* self, s32 seekPos) {
     void* avplay;
+    s32 result = 0;
     
     if (SFLIB_CheckHn(self)) {
         SFLIB_SetErr(NULL, 0xFF00015C);
     } else {
         avplay = *(void**)((u8*)self + 0x2670);
-        if (avplay != NULL) {
-            *(s32*)((u8*)avplay + 0xDD4) = seekPos;
+        if (avplay == NULL) {
+            return 0;
         }
+        *(s32*)((u8*)avplay + 0xDD4) = seekPos;
     }
-    return 0;
+    return result;
 }
 
 void sfsee_ExecFinAnaly(void* self) {

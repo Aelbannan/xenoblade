@@ -18,6 +18,8 @@ extern void func_80137924(void*, void*, void*, void*);
 extern void func_80138078(u32);
 extern float lbl_eu_80668610;
 
+
+
 // Constructor — extern "C" to match retail C-linkage symbol __ct__CExchangeWin
 // (avoids 12-prefix mangling).
 extern "C" void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
@@ -60,19 +62,17 @@ extern "C" void func_8022D0A4(CExchangeWin* self) {
     func_80138078(0xd);
 }
 
-extern "C" void func_8022D1F8(CExchangeWin* self) {
+extern "C" __attribute__((noinline)) void func_8022D1F8(CExchangeWin* self) {
     float f = lbl_eu_80668610;
-    u32 r = func_80137444(self->mAnimTransform, f);
-    if (r) {
+    if (func_80137444(self->mAnimTransform, f)) {
         self->_26 = 2;
         self->field_27 = 1;
     }
 }
 
-extern "C" void func_8022D244(CExchangeWin* self) {
+extern "C" __attribute__((noinline)) void func_8022D244(CExchangeWin* self) {
     float f = lbl_eu_80668610;
-    u32 r = func_80137510(self->mAnimTransform, f);
-    if (r) {
+    if (func_80137510(self->mAnimTransform, f)) {
         self->_26 = 0;
         self->field_27 = 1;
         self->field_24 = 0;
@@ -221,10 +221,13 @@ extern "C" void func_8022CF7C(CExchangeWin* self) {
     if (self->field_24 == 0) {
         return;
     }
-    if (self->_26 == 1) {
+    switch (self->_26) {
+    case 1:
         func_8022D1F8(self);
-    } else if (self->_26 == 3) {
+        break;
+    case 3:
         func_8022D244(self);
+        break;
     }
     self->mLayout->Animate(0);
 }

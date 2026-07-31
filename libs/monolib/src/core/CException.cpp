@@ -188,11 +188,9 @@ CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* messa
             __ct__CException(result, lbl_eu_80522F7C, parent);
         }
         exception = result;
-        if (exception != nullptr) {
-            entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(exception, parent, false);
-            exception->unk1E4 = view->mWorkID;
-            exception = exception->func_80457EB0();
-        }
+        entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(exception, parent, false);
+        exception->unk1E4 = view->mWorkID;
+        exception = exception->func_80457EB0();
     } else {
         CWorkThread* parent = (CWorkThread*)CDeviceException_getInstance();
         mtl::ALLOC_HANDLE handle = getWorkMem__17CWorkThreadSystemFv();
@@ -201,11 +199,9 @@ CException* CException::func_80457CA4(CWorkThread* pThread, const wchar_t* messa
             __ct__CException(result, lbl_eu_80522F7C, parent);
         }
         exception = result;
-        if (exception != nullptr) {
-            entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(exception, parent, false);
-            exception = exception->func_80457EB0();
-            setException__9CWorkRootFP10CException(exception);
-        }
+        entryWork__9CWorkUtilFP11CWorkThreadP11CWorkThreadb(exception, parent, false);
+        exception = exception->func_80457EB0();
+        setException__9CWorkRootFP10CException(exception);
     }
 
     if (exception == nullptr) {
@@ -589,27 +585,16 @@ void CException::func_804591BC(IException* pException) {
 // Remove from global array
 extern "C" void func_804591DC__10CExceptionFP10IException(CException* self) {
     u32 count = lbl_eu_806656C4;
-    u8* current = (u8*)lbl_eu_80657B50;
-    u32 index = 0;
-    u32 byteOffset = 0;
-    while (index < count) {
-        if (*(u32*)(current + 0x0) == (u32)self) {
+    CException** exceptions = lbl_eu_80657B50;
+    for (u32 index = 0; index < count; ++index) {
+        if (exceptions[index] == self) {
             u32 last = count - 1;
-            u32 shifts = last - index;
-            u32 destination = index * 4;
-            u8* source = (u8*)lbl_eu_80657B50;
-            while (index < last) {
-                u8* destinationEntry = source + destination;
-                destination += 4;
-                *(u32*)destinationEntry = *(u32*)(destinationEntry + 4);
-                index++;
+            for (u32 shift = index; shift < last; ++shift) {
+                exceptions[shift] = exceptions[shift + 1];
             }
             lbl_eu_806656C4 = last;
             return;
         }
-        current += 4;
-        index++;
-        byteOffset += 4;
     }
 }
 

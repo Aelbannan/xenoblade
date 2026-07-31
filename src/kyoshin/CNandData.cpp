@@ -27,8 +27,8 @@ int CNandData::sNandIconTextureSomething[] = {
 };
 
 // Forward declarations for functions in CErrMes unit that return BDAT strings
-const char* func_eu_802B14A4();
-const char* func_eu_802B14BC();
+extern "C" const char* func_eu_802B14A4();
+extern "C" const char* func_eu_802B14BC();
 
 CNandData CNandData::sInstance;
 

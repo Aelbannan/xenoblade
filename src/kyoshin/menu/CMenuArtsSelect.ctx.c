@@ -717,7 +717,7 @@ typedef int BOOL;
 
 class UnkClass_8045F564{
 public:
-    int unk0;
+    u32 unk0;
     u32 unk4;
     u32 unk8;
     u32 unkC;
@@ -728,6 +728,7 @@ public:
     
     void createRegion(int, int, const char*, int);
     void func_8045F778();
+    void func_8045F7E8();
     void func_8045F810();
 };
 
@@ -748,28 +749,10 @@ public:
 
 /* "libs/monolib/include/monolib/scn/CLight.hpp" line 2 "types.h" */
 /* end "types.h" */
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "monolib/math.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math.hpp" line 2 "monolib/math/CAttrTransform.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 3 "monolib/math/CVec3.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CVec3.hpp" line 2 "monolib/math/Utility.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/Utility.hpp" line 2 "nw4r/math.h" */
-#ifndef NW4R_PUBLIC_MATH_H
-#define NW4R_PUBLIC_MATH_H
-
-/* "libs/nw4r/include/nw4r/math.h" line 3 "nw4r/math/math_arithmetic.h" */
-#ifndef NW4R_MATH_ARITHMETIC_H
-#define NW4R_MATH_ARITHMETIC_H
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 2 "nw4r/types_nw4r.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 3 "nw4r/g3d/g3d_light.h" */
+#ifndef NW4R_G3D_LIGHT_H
+#define NW4R_G3D_LIGHT_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 2 "nw4r/types_nw4r.h" */
 #ifndef NW4R_TYPES_H
 #define NW4R_TYPES_H
 /* "libs/nw4r/include/nw4r/types_nw4r.h" line 2 "types.h" */
@@ -794,943 +777,42 @@ public:
 #endif
 /* end "nw4r/types_nw4r.h" */
 
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 4 "nw4r/db/db_assert.h" */
-#ifndef NW4R_DB_ASSERT_H
-#define NW4R_DB_ASSERT_H
-
-/* "libs/nw4r/include/nw4r/db/db_assert.h" line 3 "nw4r/types_nw4r.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 4 "nw4r/g3d/g3d_state.h" */
+#ifndef NW4R_G3D_STATE_H
+#define NW4R_G3D_STATE_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 2 "nw4r/types_nw4r.h" */
 /* end "nw4r/types_nw4r.h" */
 
-namespace nw4r
-{
-    namespace db
-    {
-        // Forward declarations
-        namespace detail {
-            class ConsoleHead;
-        }
-
-        #define NW4R_WARNING(...) nw4r::db::Warning(__FILE__, __LINE__, __VA_ARGS__)
-        #define NW4R_PANIC(...) nw4r::db::Panic(__FILE__, __LINE__, __VA_ARGS__)
-        #define NW4R_DB_ASSERT(exp, ...) \
-            if(!(exp))                \
-            nw4r::db::Panic(__FILE__, __LINE__, __VA_ARGS__)
-
-        #define NW4R_DB_ASSERT_WARN(exp, ...) \
-            if(!(exp))                \
-            nw4r::db::Warning(__FILE__, __LINE__, __VA_ARGS__)
-
-        /* DECL_WEAK */ void VPanic(const char* file, int line, const char* fmt, std::va_list vlist, bool halt);
-        /* DECL_WEAK */ void Panic(const char* file, int line, const char* fmt, ...);
-        /* DECL_WEAK */ void VWarning(const char* file, int line, const char* fmt, std::va_list vlist);
-        /* DECL_WEAK */ void Warning(const char* file, int line, const char* msg, ...);
-        
-        namespace detail
-        {
-            void Log(const char* fmt, ...);
-        }
-        
-        detail::ConsoleHead* Assertion_SetConsole(detail::ConsoleHead* console);
-        detail::ConsoleHead* Assertion_GetConsole();
-        void Assertion_ShowConsole(u32 time);
-        void Assertion_HideConsole();
-        void Assertion_SetWarningTime(u32 time);
-        bool Assertion_SetAutoWarning(bool enable);
-    }
-}
-
-#endif
-/* end "nw4r/db/db_assert.h" */
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 5 "nw4r/math/math_constant.h" */
-#ifndef NW4R_MATH_CONSTANT_H
-#define NW4R_MATH_CONSTANT_H
-/* "libs/nw4r/include/nw4r/math/math_constant.h" line 2 "nw4r/types_nw4r.h" */
+/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 4 "nw4r/g3d/g3d_camera.h" */
+#ifndef NW4R_G3D_CAMERA_H
+#define NW4R_G3D_CAMERA_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 2 "nw4r/types_nw4r.h" */
 /* end "nw4r/types_nw4r.h" */
 
-/* "libs/nw4r/include/nw4r/math/math_constant.h" line 4 "cmath" */
-#ifndef MSL_CPP_CMATH_H
-#define MSL_CPP_CMATH_H
-/* "libs/PowerPC_EABI_Support/include/stl/cmath" line 2 "math.h" */
-#ifndef MSL_MATH_H
-#define MSL_MATH_H
+/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
+#ifndef NW4R_G3D_RES_RES_COMMON_H
+#define NW4R_G3D_RES_RES_COMMON_H
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
 
-/* "libs/PowerPC_EABI_Support/include/stl/math.h" line 3 "types.h" */
-/* end "types.h" */
-
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-/* "libs/PowerPC_EABI_Support/include/stl/math.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h" */
-#ifndef MSL_MATH_DOUBLE_H
-#define MSL_MATH_DOUBLE_H
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-double atan(double x);
-double ceil(double x);
-double copysign(double x, double y);
-double cos(double x);
-double floor(double x);
-double frexp(double x, int* eptr);
-double ldexp(double value, int exp);
-double modf(double x, double* iptr);
-double sin(double x);
-double tan(double x);
-double acos(double x);
-double asin(double x);
-double atan2(double y, double x);
-double fmod(double x, double y);
-double pow(double x, double y);
-double sqrt(double x);
-double log(double x);
-
-inline float acosf(float x) {
-    return acos(x);
-}
-inline float ceilf(float x) {
-    return ceil(x);
-}
-inline float cosf(float x) {
-    return cos(x);
-}
-inline float sinf(float x) {
-    return sin(x);
-}
-
-float sqrtf(float x);
-
-inline float tanf(float x) {
-    return tan(x);
-}
-inline float floorf(float x) {
-    return floor(x);
-}
-inline float fmodf(float x, float y) {
-    return fmod(x, y);
-}
-
-inline float modff(float x, float* iptr) {
-    float frac;
-    double intg;
-
-    x = (double)x;
-    frac = modf(x, &intg);
-    *iptr = intg;
-
-    return frac;
-}
-
-float fabsf(float);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h" */
-/* "libs/PowerPC_EABI_Support/include/stl/math.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h" */
-#ifndef _MSL_MATH_API_H
-#define _MSL_MATH_API_H
-
-/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h" line 3 "types.h" */
-/* end "types.h" */
-
-
-#ifdef __cplusplus
-extern "C" {
-#endif // ifdef __cplusplus
-
-
-#if defined(i386) || defined(i486) || defined(intel) || defined(x86) || defined(i86pc) || defined(__alpha) || defined(__osf__)
-#define __LITTLE_ENDIAN
-#endif
-
-#ifdef __LITTLE_ENDIAN
-#define __HI(x)  *(1 + (int*)&x)
-#define __LO(x)  *(int*)&x
-#define __HIp(x) *(1 + (int*)x)
-#define __LOp(x) *(int*)x
-#else
-#define __HI(x)  *(int*)&x
-#define __LO(x)  *(1 + (int*)&x)
-#define __HIp(x) *(int*)x
-#define __LOp(x) *(1 + (int*)x)
-#endif
-
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h" */
-
-extern int __float_nan[];
-extern int __float_huge[];
-extern int __double_huge[];
-
-#define INFINITY (*(float*) __float_huge)
-#define NAN (*(float*) __float_nan)
-#define HUGE_VAL (*(double*) __double_huge)
-
-#define FP_NAN 1
-#define FP_INFINITE 2
-#define FP_ZERO 3
-#define FP_NORMAL 4
-#define FP_SUBNORMAL
-
-#define M_PI    3.1415927f
-#define M_SQRT3 1.73205f
-
-int __signbitf(float);
-int __fpclassifyf(float);
-int __signbitd(double);
-int __fpclassifyd(double);
-
-#define fpclassify(x) ((sizeof(x) == sizeof(float)) ? __fpclassifyf((float)(x)) : __fpclassifyd((double)(x)))
-#define signbit(x) ((sizeof(x) == sizeof(float)) ? __signbitf((float)(x)) : __signbitd((double)(x)))
-
-#define isfinite(x) ((fpclassify(x) > FP_INFINITE))
-#define isnan(x) (fpclassify(x) == FP_NAN)
-#define isnormal(x) (fpclassify(x) == FP_NORMAL)
-
-inline long double fabsl(long double x) {
-    return __fabs((double)x);
-}
-
-double __ieee754_acos(double);
-double __ieee754_fmod(double, double);
-double __ieee754_log(double);
-double __ieee754_log10(double);
-double __ieee754_pow(double, double);
-double __ieee754_sqrt(double);
-double __ieee754_atan2(double, double);
-double __ieee754_asin(double);
-
-double copysign(double, double);
-double scalbn(double, int);
-
-double __kernel_sin(double, double, int);
-double __kernel_cos(double, double);
-double __kernel_tan(double, double, int);
-
-int __ieee754_rem_pio2(double, double *);
-
-double nan(const char* arg);
-
-#ifdef __cplusplus
-};
-#endif // ifdef __cplusplus
-
-#endif
-/* end "math.h" */
-#ifdef __cplusplus
-
-namespace std {
-using ::acos;
-using ::acosf;
-using ::asin;
-using ::atan;
-using ::atan2;
-using ::ceil;
-using ::ceilf;
-using ::copysign;
-using ::cos;
-using ::cosf;
-using ::fabsf;
-using ::floor;
-using ::floorf;
-using ::fmod;
-using ::fmodf;
-using ::frexp;
-using ::ldexp;
-using ::modf;
-using ::modff;
-using ::nan;
-using ::pow;
-using ::scalbn;
-using ::sin;
-using ::sinf;
-using ::sqrt;
-using ::sqrtf;
-using ::tan;
-using ::tanf;
-} // namespace std
-
-#endif
-#endif
-/* end "cmath" */
-
-/******************************************************************************
- *
- * Mathematical constants
- *
- ******************************************************************************/
-// Pi mathematical constant
-#define NW4R_MATH_PI M_PI
-
-// ln(2)
-#define NW4R_MATH_LN_2 0.69314718056f
-
-// 1 / sqrt(3)
-#define NW4R_MATH_INVSQRT3 0.577350258f
-
-/******************************************************************************
- *
- * Not-a-number (NaN) types
- *
- ******************************************************************************/
-// Quiet NaN (0x7FC00000)
-#define NW4R_MATH_QNAN (-(0.0f / 0.0f))
-
-/******************************************************************************
- *
- * Float limits
- *
- ******************************************************************************/
-// Smallest finite floating-point value
-#define NW4R_MATH_FLT_MIN 1.175494350e-38f
-
-// Largest finite floating-point value
-#define NW4R_MATH_FLT_MAX 3.402823466e+38f
-
-// Difference between 1.0 and the next representable value
-#define NW4R_MATH_FLT_EPSILON 1.192092895e-7f
-
-#endif
-/* end "nw4r/math/math_constant.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 7 "revolution/OS.h" */
+/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 4 "revolution/GX.h" */
 /**
- * References: YAGCD, WiiBrew, Dolphin Emulator
+ * References: YAGCD, Dolphin Emulator, publicly available patents
  */
 
-#ifndef RVL_SDK_PUBLIC_OS_H
-#define RVL_SDK_PUBLIC_OS_H
+#ifndef RVL_SDK_PUBLIC_GX_H
+#define RVL_SDK_PUBLIC_GX_H
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
-#ifndef RVL_SDK_OS_H
-#define RVL_SDK_OS_H
-/* "libs/RVL_SDK/include/revolution/OS/OS.h" line 2 "types.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
+#ifndef RVL_SDK_GX_ATTR_H
+#define RVL_SDK_GX_ATTR_H
+/* "libs/RVL_SDK/include/revolution/GX/GXAttr.h" line 2 "types.h" */
 /* end "types.h" */
 
-/* "libs/RVL_SDK/include/revolution/OS/OS.h" line 4 "revolution/OS/OSContext.h" */
-#ifndef RVL_SDK_OS_CONTEXT_H
-#define RVL_SDK_OS_CONTEXT_H
-/* "libs/RVL_SDK/include/revolution/OS/OSContext.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef enum {
-    OS_CONTEXT_STATE_FP_SAVED = (1 << 0),
-} OSContextState;
-
-typedef struct OSContext {
-    u32 gprs[32];  // at 0x0
-    u32 cr;        // at 0x80
-    u32 lr;        // at 0x84
-    u32 ctr;       // at 0x88
-    u32 xer;       // at 0x8C
-    f64 fprs[32];  // at 0x90
-    u32 fpscr_pad; // at 0x190
-    u32 fpscr;     // at 0x194
-    u32 srr0;      // at 0x198
-    u32 srr1;      // at 0x19C
-    u16 mode;      // at 0x1A0
-    u16 state;     // at 0x1A2
-    u32 gqrs[8];   // at 0x1A4
-    u32 psf_pad;   // at 0x1C4
-    f64 psfs[32];  // at 0x1C8
-} OSContext;
-
-void OSSaveFPUContext(OSContext* ctx);
-void OSSetCurrentContext(OSContext* ctx);
-OSContext* OSGetCurrentContext(void);
-BOOL OSSaveContext(OSContext* ctx);
-void OSLoadContext(OSContext* ctx);
-void* OSGetStackPointer(void);
-void OSSwitchFiber(void* func, void* stack);
-void OSSwitchFiberEx(u32 r3, u32 r4, u32 r5, u32 r6, void* func, void* stack);
-void OSClearContext(OSContext* ctx);
-void OSInitContext(OSContext* ctx, void* _srr0, void* stack);
-void OSDumpContext(const OSContext* ctx);
-void __OSContextInit(void);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSContext.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OS.h" line 5 "revolution/OS/OSExec.h" */
-#ifndef RVL_SDK_OS_EXEC_H
-#define RVL_SDK_OS_EXEC_H
-/* "libs/RVL_SDK/include/revolution/OS/OSExec.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct OSExecParams {
-    UNKWORD WORD_0x0;
-    UNKWORD WORD_0x4;
-    char UNK_0x8[0x4];
-    void* regionStart; // at 0xC
-    void* regionEnd;   // at 0x10
-    char UNK_0x14[0x1C - 0x14];
-} OSExecParams;
-
-extern BOOL __OSInReboot;
-extern void* __OSNextPartitionType;
-
-void __OSGetExecParams(OSExecParams* out);
-void __OSLaunchMenu(void);
-void __OSBootDol(u32, u32, u32*);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSExec.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef enum {
-    OS_CONSOLE_MASK = 0xF0000000,
-    OS_CONSOLE_MASK_RVL = 0x00000000,
-    OS_CONSOLE_MASK_EMU = 0x10000000,
-    OS_CONSOLE_MASK_TDEV = 0x20000000,
-
-    OS_CONSOLE_RVL_PP_1 = 0x00000011,
-    OS_CONSOLE_RVL_PP_2_1 = 0x00000012,
-    OS_CONSOLE_RVL_PP_2_2 = 0x00000020,
-    OS_CONSOLE_RVA_1 = 0x00000100,
-
-    OS_CONSOLE_RVL_EMU = 0x10000008,
-    OS_CONSOLE_NDEV_1_0 = 0x10000010,
-    OS_CONSOLE_NDEV_1_1 = 0x10000011,
-    OS_CONSOLE_NDEV_1_2 = 0x10000012,
-    OS_CONSOLE_NDEV_2_0 = 0x10000020,
-    OS_CONSOLE_NDEV_2_1 = 0x10000021,
-} OSConsoleType;
-
-typedef enum {
-    OS_APP_TYPE_IPL = 0x40,
-    OS_APP_TYPE_DVD = 0x80,
-    OS_APP_TYPE_CHANNEL = 0x81,
-} OSAppType;
-
-typedef enum {
-    OS_EXC_SYSTEM_RESET,
-    OS_EXC_MACHINE_CHECK,
-    OS_EXC_DSI,
-    OS_EXC_ISI,
-    OS_EXC_EXT_INTERRUPT,
-    OS_EXC_ALIGNMENT,
-    OS_EXC_PROGRAM,
-    OS_EXC_FP_UNAVAIL,
-    OS_EXC_DECREMENTER,
-    OS_EXC_SYSTEM_CALL,
-    OS_EXC_TRACE,
-    OS_EXC_PERF_MONITOR,
-    OS_EXC_IABR,
-    OS_EXC_SMI,
-    OS_EXC_THERMAL_INT,
-
-    OS_EXC_MAX
-} OSExceptionType;
-
-typedef struct OSIOSRev {
-    u8 idHi;       // at 0x0
-    u8 idLo;       // at 0x1
-    u8 verMajor;   // at 0x2
-    u8 verMinor;   // at 0x3
-    u8 buildMon;   // at 0x4
-    u8 buildDay;   // at 0x5
-    u16 buildYear; // at 0x6
-} OSIOSRev;
-
-typedef void (*OSExceptionHandler)(u8 type, OSContext* ctx);
-
-extern BOOL __OSInIPL;
-extern BOOL __OSInNandBoot;
-extern BOOL __OSIsGcam;
-extern s64 __OSStartTime;
-extern OSExecParams __OSRebootParams;
-
-void __OSFPRInit(void);
-u32 __OSGetHollywoodRev(void);
-void __OSGetIOSRev(OSIOSRev* rev);
-u32 OSGetConsoleType(void);
-void OSInit(void);
-OSExceptionHandler __OSSetExceptionHandler(u8 type, OSExceptionHandler handler);
-OSExceptionHandler __OSGetExceptionHandler(u8 type);
-void OSDefaultExceptionHandler(u8 type, OSContext* ctx);
-void __OSPSInit(void);
-u32 __OSGetDIConfig(void);
-void OSRegisterVersion(const char* ver);
-const char* OSGetAppGamename(void);
-u8 OSGetAppType(void);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OS.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
-#ifndef RVL_SDK_OS_ADDRESS_H
-#define RVL_SDK_OS_ADDRESS_H
-/* "libs/RVL_SDK/include/revolution/OS/OSAddress.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-static inline void* OSPhysicalToCached(u32 ofs) {
-    return (void*)(ofs + 0x80000000);
-}
-
-static inline void* OSPhysicalToUncached(u32 ofs) {
-    return (void*)(ofs + 0xC0000000);
-}
-
-static inline void* OSCachedToPhysical(const void* ofs) {
-    return (u8*)ofs - 0x80000000;
-}
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
-#ifndef RVL_SDK_OS_ALARM_H
-#define RVL_SDK_OS_ALARM_H
-/* "libs/RVL_SDK/include/revolution/OS/OSAlarm.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Forward declarations
-typedef struct OSAlarm;
-typedef struct OSContext;
-typedef struct OSThread;
-
-typedef void (*OSAlarmHandler)(struct OSAlarm* alarm, struct OSContext* ctx);
-
-typedef struct OSAlarm {
-    OSAlarmHandler handler; // at 0x0
-    u32 tag;                // at 0x4
-    s64 end;                // at 0x8
-    struct OSAlarm* prev;   // at 0x10
-    struct OSAlarm* next;   // at 0x14
-    s64 period;             // at 0x18
-    s64 start;              // at 0x20
-    void* userData;         // at 0x28
-} OSAlarm;
-
-typedef struct OSAlarmQueue {
-    OSAlarm* head; // at 0x0
-    OSAlarm* tail; // at 0x4
-} OSAlarmQueue;
-
-void __OSInitAlarm(void);
-void OSCreateAlarm(OSAlarm* alarm);
-void OSSetAlarm(OSAlarm* alarm, s64 tick, OSAlarmHandler handler);
-void OSSetPeriodicAlarm(OSAlarm* alarm, s64 tick, s64 period,
-                        OSAlarmHandler handler);
-void OSCancelAlarm(OSAlarm* alarm);
-void OSSetAlarmTag(OSAlarm* alarm, u32 tag);
-void OSSetAlarmUserData(OSAlarm* alarm, void* userData);
-void* OSGetAlarmUserData(const OSAlarm* alarm);
-void __OSCancelInternalAlarms(struct OSThread* thread);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSAlarm.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
-#ifndef RVL_SDK_OS_ALLOC_H
-#define RVL_SDK_OS_ALLOC_H
-/* "libs/RVL_SDK/include/revolution/OS/OSAlloc.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-extern volatile s32 __OSCurrHeap;
-
-void* OSAllocFromHeap(s32 handle, s32 size);
-void OSFreeToHeap(s32 handle, void* p);
-s32 OSSetCurrentHeap(s32 handle);
-void* OSInitAlloc(void* start, void* end, s32 numHeaps);
-s32 OSCreateHeap(void* start, void* end);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSAlloc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
-#ifndef RVL_SDK_OS_ARENA_H
-#define RVL_SDK_OS_ARENA_H
-/* "libs/RVL_SDK/include/revolution/OS/OSArena.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void* OSGetMEM1ArenaHi(void);
-void* OSGetMEM2ArenaHi(void);
-void* OSGetArenaHi(void);
-
-void* OSGetMEM1ArenaLo(void);
-void* OSGetMEM2ArenaLo(void);
-void* OSGetArenaLo(void);
-
-void OSSetMEM1ArenaHi(void* hi);
-void OSSetMEM2ArenaHi(void* hi);
-void OSSetArenaHi(void* hi);
-
-void OSSetMEM1ArenaLo(void* lo);
-void OSSetMEM2ArenaLo(void* lo);
-void OSSetArenaLo(void* lo);
-
-void* OSAllocFromMEM1ArenaLo(size_t size, u32 align);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSArena.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
-#ifndef RVL_SDK_OS_AUDIOSYSTEM_H
-#define RVL_SDK_OS_AUDIOSYSTEM_H
-/* "libs/RVL_SDK/include/revolution/OS/OSAudioSystem.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void __OSInitAudioSystem(void);
-void __OSStopAudioSystem(void);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSAudioSystem.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
-#ifndef RVL_SDK_OS_CACHE_H
-#define RVL_SDK_OS_CACHE_H
-/* "libs/RVL_SDK/include/revolution/OS/OSCache.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define OS_CACHE_BASE 0xE0000000
-
-// Forward declarations
-typedef struct OSContext;
-
-void DCEnable(void);
-void DCInvalidateRange(const void* buf, u32 len);
-void DCFlushRange(const void* buf, u32 len);
-void DCStoreRange(const void* buf, u32 len);
-void DCFlushRangeNoSync(const void* buf, u32 len);
-void DCStoreRangeNoSync(const void* buf, u32 len);
-void DCZeroRange(const void* buf, u32 len);
-
-void ICInvalidateRange(const void* buf, u32 len);
-void ICFlashInvalidate(void);
-void ICEnable(void);
-
-void LCEnable(void);
-void LCDisable(void);
-void LCLoadBlocks(void* dst, const void* src, u32 blocks);
-void LCStoreBlocks(void* dst, const void* src, u32 blocks);
-u32 LCStoreData(void* dst, const void* src, u32 len);
-u32 LCQueueLength(void);
-void LCQueueWait(u32 n);
-
-void L2Enable(void);
-void L2Disable(void);
-void L2GlobalInvalidate(void);
-
-void DMAErrorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar, ...);
-
-void __OSCacheInit(void);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSCache.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
-/* end "revolution/OS/OSContext.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
-#ifndef RVL_SDK_OS_CRC_H
-#define RVL_SDK_OS_CRC_H
-/* "libs/RVL_SDK/include/revolution/OS/OSCrc.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-u16 OSCalcCRC16(const u8* array, s32 length);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSCrc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
-#ifndef RVL_SDK_OS_ERROR_H
-#define RVL_SDK_OS_ERROR_H
-/* "libs/RVL_SDK/include/revolution/OS/OSError.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Forward declarations
-typedef struct OSContext;
-
-#define OS_ERROR(...) OSPanic(__FILE__, __LINE__, __VA_ARGS__)
-
-#define OS_ASSERT(exp, ...)                                                    \
-    if (!(exp))                                                                \
-    OSPanic(__FILE__, __LINE__, __VA_ARGS__)
-
-typedef enum {
-    OS_ERR_SYSTEM_RESET,
-    OS_ERR_MACHINE_CHECK,
-    OS_ERR_DSI,
-    OS_ERR_ISI,
-    OS_ERR_EXT_INTERRUPT,
-    OS_ERR_ALIGNMENT,
-    OS_ERR_PROGRAM,
-    OS_ERR_FP_UNAVAIL,
-    OS_ERR_DECREMENTER,
-    OS_ERR_SYSTEM_CALL,
-    OS_ERR_TRACE,
-    OS_ERR_PERF_MONITOR,
-    OS_ERR_IABR,
-    OS_ERR_SMI,
-    OS_ERR_THERMAL_INT,
-    OS_ERR_PROTECTION,
-    OS_ERR_FP_EXCEPTION,
-
-    OS_ERR_MAX
-} OSErrorType;
-
-typedef void (*OSErrorHandler)(u8 error, struct OSContext* ctx, u32 dsisr, u32 dar,
-                               ...);
-
-extern OSErrorHandler __OSErrorTable[OS_ERR_MAX];
-extern u32 __OSFpscrEnableBits;
-
-/* DECL_WEAK */ void OSReport(const char* msg, ...);
-/* DECL_WEAK */ void OSPanic(const char* file, int line, const char* msg, ...);
-/* DECL_WEAK */ void OSVReport(const char* msg, va_list arg);
-
-OSErrorHandler OSSetErrorHandler(u16 error, OSErrorHandler handler);
-void __OSUnhandledException(u8 error, struct OSContext* ctx, u32 dsisr, u32 dar);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSError.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
-/* end "revolution/OS/OSExec.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
-#ifndef RVL_SDK_OS_FAST_CAST_H
-#define RVL_SDK_OS_FAST_CAST_H
-/* "libs/RVL_SDK/include/revolution/OS/OSFastCast.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#define OS_GQR_TYPE_U8 4
-#define OS_GQR_TYPE_U16 5
-#define OS_GQR_TYPE_S8 6
-#define OS_GQR_TYPE_S16 7
-
-static void OSInitFastCast(void) {
-    ASM (
-        li r3, 4
-        oris r3, r3, 4
-        mtgqr2 r3
-
-        li r3, 5
-        oris r3, r3, 5
-        mtgqr3 r3
-
-        li r3, 6
-        oris r3, r3, 6
-        mtgqr4 r3
-        
-        li r3, 7
-        oris r3, r3, 7
-        mtgqr5 r3
-    )
-}
-
-static void OSSetGQR6(register u32 type, register u32 scale) {
-    register u32 val = ((scale << 8 | type) << 16) | ((scale << 8) | type);
-
-    ASM (
-        mtspr 0x396, val
-    )
-}
-
-static void OSSetGQR7(register u32 type, register u32 scale) {
-    register u32 val = ((scale << 8 | type) << 16) | ((scale << 8) | type);
-
-    ASM (
-        mtspr 0x397, val
-    )
-}
-
-/******************************************************************************
- *
- * Convert from U8
- *
- ******************************************************************************/
-static f32 __OSu8tof32(register u8* in) {
-    register f32 ret;
-
-    ASM (
-        psq_l ret, 0(in), 1, 2
-    )
-
-    return ret;
-}
-
-static void OSu8tof32(u8* in, volatile f32* out) {
-    *out = __OSu8tof32(in);
-}
-
-/******************************************************************************
- *
- * Convert from U16
- *
- ******************************************************************************/
-static f32 __OSu16tof32(register u16* arg) {
-    register f32 ret;
-
-    ASM (
-        psq_l ret, 0(arg), 1, 3
-    )
-
-    return ret;
-}
-
-static void OSu16tof32(u16* in, volatile f32* out) {
-    *out = __OSu16tof32(in);
-}
-
-/******************************************************************************
- *
- * Convert from S16
- *
- ******************************************************************************/
-static f32 __OSs16tof32(register s16* arg) {
-    register f32 ret;
-
-    ASM (
-        psq_l ret, 0(arg), 1, 5
-    )
-
-    return ret;
-}
-
-static void OSs16tof32(s16* in, volatile f32* out) {
-    *out = __OSs16tof32(in);
-}
-
-/******************************************************************************
- *
- * Convert from F32
- *
- ******************************************************************************/
-static u8 __OSf32tou8(register f32 arg) {
-    f32 a;
-    register f32* ptr = &a;
-    u8 r;
-
-    ASM (
-        psq_st arg, 0(ptr), 1, 2
-    )
-
-    r = *(u8*)ptr;
-    return r;
-}
-
-static void OSf32tou8(f32* in, volatile u8* out) {
-    *out = __OSf32tou8(*in);
-}
-
-static u16 __OSf32tou16(register f32 arg) {
-    f32 a;
-    register f32* ptr = &a;
-    u16 r;
-
-    ASM (
-        psq_st arg, 0(ptr), 1, 3
-    )
-
-    r = *(u16*)ptr;
-    return r;
-}
-
-static void OSf32tou16(f32* in, volatile u16* out) {
-    *out = __OSf32tou16(*in);
-}
-
-static s16 __OSf32tos16(register f32 arg) {
-    f32 a;
-    register f32* ptr = &a;
-    s16 r;
-
-    ASM (
-        psq_st arg, 0(ptr), 1, 5
-    )
-
-    r = *(s16*)ptr;
-    return r;
-}
-
-static void OSf32tos16(f32* in, volatile s16* out) {
-    *out = __OSf32tos16(*in);
-}
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSFastCast.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
-#ifndef RVL_SDK_OS_FATAL_H
-#define RVL_SDK_OS_FATAL_H
-/* "libs/RVL_SDK/include/revolution/OS/OSFatal.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/OS/OSFatal.h" line 4 "revolution/GX/GXTypes.h" */
+/* "libs/RVL_SDK/include/revolution/GX/GXAttr.h" line 4 "revolution/GX/GXTypes.h" */
 #ifndef RVL_SDK_GX_TYPES_H
 #define RVL_SDK_GX_TYPES_H
 /* "libs/RVL_SDK/include/revolution/GX/GXTypes.h" line 2 "types.h" */
@@ -2717,6 +1799,1132 @@ typedef enum _GXZTexOp {
 }
 #endif
 #endif
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct _GXVtxDescList {
+    GXAttr attr;     // at 0x0
+    GXAttrType type; // at  0x4
+} GXVtxDescList;
+
+typedef struct _GXVtxAttrFmtList {
+    GXAttr attr;         // at 0x0
+    GXCompCnt compCnt;   // at 0x4
+    GXCompType compType; // at 0x8
+    u8 shift;            // at 0xC
+} GXVtxAttrFmtList;
+
+void GXSetVtxDesc(GXAttr name, GXAttrType type);
+void GXSetVtxDescv(const GXVtxDescList* list);
+void GXGetVtxDesc(GXAttr name, GXAttrType* type);
+void GXGetVtxDescv(GXVtxDescList* list);
+void GXClearVtxDesc(void);
+void GXSetVtxAttrFmt(GXVtxFmt fmt, GXAttr attr, GXCompCnt compCnt,
+                     GXCompType compType, u8 shift);
+
+// TODO(kiwi) Please find a way to get rid of this
+#if defined(GXATTR_MATCH_HACK)
+void GXSetVtxAttrFmtv(s16 fmt, const GXVtxAttrFmtList* list);
+#else
+void GXSetVtxAttrFmtv(GXVtxFmt fmt, const GXVtxAttrFmtList* list);
+#endif
+
+void GXGetVtxAttrFmt(GXVtxFmt fmt, GXAttr attr, GXCompCnt* compCnt,
+                     GXCompType* compType, u8* shift);
+void GXGetVtxAttrFmtv(GXVtxFmt fmt, GXVtxAttrFmtList* list);
+void GXSetArray(GXAttr attr, const void* base, u8 stride);
+void GXInvalidateVtxCache(void);
+void GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType type, GXTexGenSrc src,
+                       u32 texMtxIdx, GXBool normalize, u32 dualTexMtxIdx);
+void GXSetNumTexGens(u8 num);
+
+void __GXSetVCD(void);
+void __GXCalculateVLim(void);
+void __GXSetVAT(void);
+
+static void GXSetTexCoordGen(GXTexCoordID id, GXTexGenType type,
+                             GXTexGenSrc src, u32 texMtxIdx) {
+    GXSetTexCoordGen2(id, type, src, texMtxIdx, FALSE, GX_PTIDENTITY);
+}
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXAttr.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
+#ifndef RVL_SDK_GX_BUMP_H
+#define RVL_SDK_GX_BUMP_H
+/* "libs/RVL_SDK/include/revolution/GX/GXBump.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXBump.h" line 4 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void GXSetTevIndirect(GXTevStageID tevStage, GXIndTexStageID texStage,
+                      GXIndTexFormat texFmt, GXIndTexBiasSel biasSel,
+                      GXIndTexMtxID mtxId, GXIndTexWrap wrapS,
+                      GXIndTexWrap wrapT, GXBool addPrev, GXBool utcLod,
+                      GXIndTexAlphaSel alphaSel);
+void GXSetIndTexMtx(GXIndTexMtxID id, const f32 offset[2][3], s8 scaleExp);
+void GXSetIndTexCoordScale(GXIndTexStageID stage, GXIndTexScale scaleS,
+                           GXIndTexScale scaleT);
+void GXSetIndTexOrder(GXIndTexStageID stage, GXTexCoordID coord,
+                      GXTexMapID map);
+void GXSetNumIndStages(u8 num);
+void GXSetTevDirect(GXTevStageID stage);
+
+void GXSetTevIndWarp(GXTevStageID tev_stage, GXIndTexStageID ind_stage,
+GXBool signed_offsets, GXBool replace_mode, GXIndTexMtxID matrix_sel);
+
+void __GXUpdateBPMask(void);
+void __GXSetIndirectMask(u32 mask);
+void __GXFlushTextureState(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXBump.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
+#ifndef RVL_SDK_GX_DISPLAY_LIST_H
+#define RVL_SDK_GX_DISPLAY_LIST_H
+/* "libs/RVL_SDK/include/revolution/GX/GXDisplayList.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXDisplayList.h" line 4 "revolution/GX/GXHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap8.html#sec8
+ * https://www.gc-forever.com/yagcd/chap5.html#sec5
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
+ * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
+ * https://patents.google.com/patent/US6700586B1/en
+ * https://patents.google.com/patent/US6639595B1/en
+ * https://patents.google.com/patent/US7002591
+ * https://patents.google.com/patent/US6697074
+ */
+
+#ifndef RVL_SDK_GX_HARDWARE_H
+#define RVL_SDK_GX_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/************************************************************
+ *
+ *
+ * GX FIFO
+ *
+ *
+ ***********************************************************/
+
+/**
+ * FIFO write/gather pipe
+ */
+extern volatile union {
+    // 1-byte
+    char c;
+    unsigned char uc;
+    // 2-byte
+    short s;
+    unsigned short us;
+    // 4-byte
+    int i;
+    unsigned int ui;
+    void* p;
+    float f;
+} WGPIPE DECL_ADDRESS(0xCC008000);
+
+/**
+ * FIFO commands
+ */
+typedef enum {
+    GX_FIFO_CMD_NOOP = 0x00,
+
+    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
+    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
+    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
+
+    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
+    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
+    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
+    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
+
+    GX_FIFO_CMD_CALL_DL = 0x40,
+    GX_FIFO_CMD_INVAL_VTX = 0x48,
+
+    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
+    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
+    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
+    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
+    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
+    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
+} GXFifoCmd;
+
+/**
+ * FIFO command sizes
+ */
+#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
+#define GX_FIFO_CMD_DRAW_SIZE 3
+
+#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
+#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
+#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
+
+#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
+        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
+        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
+        WGPIPE.c = reg;                                                        \
+        WGPIPE.i = cmd;                                                        \
+    }
+
+#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
+
+#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
+    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
+
+/************************************************************
+ *
+ *
+ * GX Blitting Processor (BP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into BP register
+ */
+#define GX_BP_LOAD_REG(data)                                                   \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
+    WGPIPE.i = (data);
+
+/**
+ * Set BP command opcode (first 8 bits)
+ */
+#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
+
+#define GX_BP_OPCODE_SHIFT 24
+#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Command Processor (CP)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * Load immediate value into CP register
+ */
+#define GX_CP_LOAD_REG(addr, data)                                             \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
+    WGPIPE.c = (addr);                                                         \
+    WGPIPE.i = (data);
+
+#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
+
+/************************************************************
+ *
+ *
+ * GX Transform Unit (XF)
+ *
+ *
+ ***********************************************************/
+
+/**
+ * XF memory
+ */
+typedef enum {
+    GX_XF_MEM_POSMTX = 0x0000,
+    GX_XF_MEM_NRMMTX = 0x0400,
+    GX_XF_MEM_DUALTEXMTX = 0x0500,
+    GX_XF_MEM_LIGHTOBJ = 0x0600
+} GXXfMem;
+
+/**
+ * Header for an XF register load
+ */
+#define GX_XF_LOAD_REG_HDR(addr)                                               \
+    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
+    WGPIPE.i = (addr);
+
+/**
+ * Load immediate value into XF register
+ */
+#define GX_XF_LOAD_REG(addr, data)                                             \
+    GX_XF_LOAD_REG_HDR(addr);                                                  \
+    WGPIPE.i = (data);
+
+#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
+
+/**
+ * Load immediate values into multiple XF registers
+ */
+#define GX_XF_LOAD_REGS(size, addr)                                            \
+    {                                                                          \
+        u32 cmd = 0;                                                           \
+        cmd |= (addr);                                                         \
+        cmd |= (size) << 16;                                                   \
+        GX_XF_LOAD_REG_HDR(cmd);                                               \
+    }
+
+/**
+ * Enums for Tex0-Tex7 register fields
+ */
+typedef enum {
+    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
+    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
+} GXXfTexProj;
+
+typedef enum {
+    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
+    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
+} GXXfTexForm;
+
+typedef enum {
+    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
+    GX_XF_TG_BUMP,    // Texgen bump mapping
+
+    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                   // color0
+
+    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
+                  // color1
+} GXXfTexGen;
+
+/**
+ * Misc. hardware enums
+ */
+typedef enum {
+    GX_RAS_COLOR0A0,
+    GX_RAS_COLOR1A1,
+    GX_RAS_ALPHA_BUMP = 5,
+    GX_RAS_ALPHA_BUMPN,
+    GX_RAS_COLOR_ZERO,
+
+    GX_RAS_MAX_CHANNEL
+} GXRasChannelID;
+
+typedef enum {
+    GX_TEVREG_COLOR,
+    GX_TEVREG_KONST,
+} GXTevRegType;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXHardware.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void GXBeginDisplayList(void* list, u32 size);
+u32 GXEndDisplayList(void);
+void GXCallDisplayList(void* list, u32 size);
+
+static void GXFastCallDisplayList(void* list, u32 size) {
+    WGPIPE.c = GX_FIFO_CMD_CALL_DL;
+    WGPIPE.p = list;
+    WGPIPE.ui = size;
+}
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXDisplayList.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
+#ifndef RVL_SDK_GX_DRAW_H
+#define RVL_SDK_GX_DRAW_H
+/* "libs/RVL_SDK/include/revolution/GX/GXDraw.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void GXDrawCylinder(u8 sides);
+void GXDrawSphere(u32 stacks, u32 sectors);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXDraw.h" */
+/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
+#ifndef RVL_SDK_GX_FIFO_H
+#define RVL_SDK_GX_FIFO_H
+/* "libs/RVL_SDK/include/revolution/GX/GXFifo.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXFifo.h" line 4 "revolution/GX/GXInternal.h" */
+#ifndef RVL_SDK_GX_INTERNAL_H
+#define RVL_SDK_GX_INTERNAL_H
+/* "libs/RVL_SDK/include/revolution/GX/GXInternal.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXInternal.h" line 4 "revolution/GX/GXTypes.h" */
+/* end "revolution/GX/GXTypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/**
+ * GX internal structures.
+ *
+ * Wouldn't be necessary if the public ones didn't include padding; but they do,
+ * so there has to be different structure definitions.
+ *
+ * These internal structures are implemented like the RFL ones since we don't
+ * have DWARF info for most GX structures.
+ */
+
+/**
+ * Declare a public structure from the corresponding internal structure.
+ * (Implementation size is included to require that such a structure already
+ * exists.)
+ */
+#define GX_PUBLIC_STRUCT_DECL(name, size)                                      \
+    typedef struct _##name {                                                   \
+        u32 dummy[((size) - sizeof(name##Impl) + sizeof(name##Impl)) /         \
+                  sizeof(u32)];                                                \
+    } name;
+
+typedef struct _GXFifoObjImpl {
+    void* base;        // at 0x0
+    void* end;         // at 0x4
+    u32 size;          // at 0x8
+    void* hiWatermark; // at 0xC
+    void* loWatermark; // at 0x10
+    void* readPtr;     // at 0x14
+    void* writePtr;    // at 0x18
+    u32 count;         // at 0x1C
+    u8 wrap;           // at 0x20
+    u8 bind_cpu;       // at 0x21
+    u8 bind_gp;        // at 0x22
+    u8 pad;            // at 0x23
+} GXFifoObjImpl;
+
+typedef struct _GXLightObjImpl {
+    char UNK_0x0[0xC];
+    GXColor color; // at 0xC
+    f32 aa;        // at 0x10
+    f32 ab;        // at 0x14
+    f32 ac;        // at 0x18
+    f32 ka;        // at 0x1C
+    f32 kb;        // at 0x20
+    f32 kc;        // at 0x24
+    f32 posX;      // at 0x28
+    f32 posY;      // at 0x2C
+    f32 posZ;      // at 0x30
+    f32 dirX;      // at 0x34
+    f32 dirY;      // at 0x38
+    f32 dirZ;      // at 0x3C
+} GXLightObjImpl;
+
+typedef struct _GXTexObjImpl {
+    u32 mode0;
+    u32 mode1;
+    u32 image0;
+    u32 image3;
+    void* userData;
+    GXTexFmt fmt;
+    u32 tlutName;
+    u16 loadCnt;
+    u8 loadFmt;
+    u8 flags;
+} GXTexObjImpl;
+
+typedef struct _GXTlutObjImpl {
+    u32 tlut;
+    u32 loadTlut0;
+    u16 numEntries;
+} GXTlutObjImpl;
+
+typedef struct _GXTexRegionImpl {
+    u32 image1;
+    u32 image2;
+    u16 sizeEven;
+    u16 sizeOdd;
+    u8 is32bMipmap;
+    u8 isCached;
+} GXTexRegionImpl;
+
+typedef struct _GXTlutRegionImpl {
+    u32 loadTlut1;
+    GXTlutObjImpl tlutObj;
+} GXTlutRegionImpl;
+
+#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
+
+#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
+    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
+    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
+
+#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
+
+#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
+
+#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/GX/GXInternal.h" */
+
+/* "libs/RVL_SDK/include/revolution/GX/GXFifo.h" line 6 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+#ifndef RVL_SDK_OS_H
+#define RVL_SDK_OS_H
+/* "libs/RVL_SDK/include/revolution/OS/OS.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OS.h" line 4 "revolution/OS/OSContext.h" */
+#ifndef RVL_SDK_OS_CONTEXT_H
+#define RVL_SDK_OS_CONTEXT_H
+/* "libs/RVL_SDK/include/revolution/OS/OSContext.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    OS_CONTEXT_STATE_FP_SAVED = (1 << 0),
+} OSContextState;
+
+typedef struct OSContext {
+    u32 gprs[32];  // at 0x0
+    u32 cr;        // at 0x80
+    u32 lr;        // at 0x84
+    u32 ctr;       // at 0x88
+    u32 xer;       // at 0x8C
+    f64 fprs[32];  // at 0x90
+    u32 fpscr_pad; // at 0x190
+    u32 fpscr;     // at 0x194
+    u32 srr0;      // at 0x198
+    u32 srr1;      // at 0x19C
+    u16 mode;      // at 0x1A0
+    u16 state;     // at 0x1A2
+    u32 gqrs[8];   // at 0x1A4
+    u32 psf_pad;   // at 0x1C4
+    f64 psfs[32];  // at 0x1C8
+} OSContext;
+
+void OSSaveFPUContext(OSContext* ctx);
+void OSSetCurrentContext(OSContext* ctx);
+OSContext* OSGetCurrentContext(void);
+BOOL OSSaveContext(OSContext* ctx);
+void OSLoadContext(OSContext* ctx);
+void* OSGetStackPointer(void);
+void OSSwitchFiber(void* func, void* stack);
+void OSSwitchFiberEx(u32 r3, u32 r4, u32 r5, u32 r6, void* func, void* stack);
+void OSClearContext(OSContext* ctx);
+void OSInitContext(OSContext* ctx, void* _srr0, void* stack);
+void OSDumpContext(const OSContext* ctx);
+void __OSContextInit(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OS.h" line 5 "revolution/OS/OSExec.h" */
+#ifndef RVL_SDK_OS_EXEC_H
+#define RVL_SDK_OS_EXEC_H
+/* "libs/RVL_SDK/include/revolution/OS/OSExec.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct OSExecParams {
+    UNKWORD WORD_0x0;
+    UNKWORD WORD_0x4;
+    char UNK_0x8[0x4];
+    void* regionStart; // at 0xC
+    void* regionEnd;   // at 0x10
+    char UNK_0x14[0x1C - 0x14];
+} OSExecParams;
+
+extern BOOL __OSInReboot;
+extern void* __OSNextPartitionType;
+
+void __OSGetExecParams(OSExecParams* out);
+void __OSLaunchMenu(void);
+void __OSBootDol(u32, u32, u32*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSExec.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef enum {
+    OS_CONSOLE_MASK = 0xF0000000,
+    OS_CONSOLE_MASK_RVL = 0x00000000,
+    OS_CONSOLE_MASK_EMU = 0x10000000,
+    OS_CONSOLE_MASK_TDEV = 0x20000000,
+
+    OS_CONSOLE_RVL_PP_1 = 0x00000011,
+    OS_CONSOLE_RVL_PP_2_1 = 0x00000012,
+    OS_CONSOLE_RVL_PP_2_2 = 0x00000020,
+    OS_CONSOLE_RVA_1 = 0x00000100,
+
+    OS_CONSOLE_RVL_EMU = 0x10000008,
+    OS_CONSOLE_NDEV_1_0 = 0x10000010,
+    OS_CONSOLE_NDEV_1_1 = 0x10000011,
+    OS_CONSOLE_NDEV_1_2 = 0x10000012,
+    OS_CONSOLE_NDEV_2_0 = 0x10000020,
+    OS_CONSOLE_NDEV_2_1 = 0x10000021,
+} OSConsoleType;
+
+typedef enum {
+    OS_APP_TYPE_IPL = 0x40,
+    OS_APP_TYPE_DVD = 0x80,
+    OS_APP_TYPE_CHANNEL = 0x81,
+} OSAppType;
+
+typedef enum {
+    OS_EXC_SYSTEM_RESET,
+    OS_EXC_MACHINE_CHECK,
+    OS_EXC_DSI,
+    OS_EXC_ISI,
+    OS_EXC_EXT_INTERRUPT,
+    OS_EXC_ALIGNMENT,
+    OS_EXC_PROGRAM,
+    OS_EXC_FP_UNAVAIL,
+    OS_EXC_DECREMENTER,
+    OS_EXC_SYSTEM_CALL,
+    OS_EXC_TRACE,
+    OS_EXC_PERF_MONITOR,
+    OS_EXC_IABR,
+    OS_EXC_SMI,
+    OS_EXC_THERMAL_INT,
+
+    OS_EXC_MAX
+} OSExceptionType;
+
+typedef struct OSIOSRev {
+    u8 idHi;       // at 0x0
+    u8 idLo;       // at 0x1
+    u8 verMajor;   // at 0x2
+    u8 verMinor;   // at 0x3
+    u8 buildMon;   // at 0x4
+    u8 buildDay;   // at 0x5
+    u16 buildYear; // at 0x6
+} OSIOSRev;
+
+typedef void (*OSExceptionHandler)(u8 type, OSContext* ctx);
+
+extern BOOL __OSInIPL;
+extern BOOL __OSInNandBoot;
+extern BOOL __OSIsGcam;
+extern s64 __OSStartTime;
+extern OSExecParams __OSRebootParams;
+
+void __OSFPRInit(void);
+u32 __OSGetHollywoodRev(void);
+void __OSGetIOSRev(OSIOSRev* rev);
+u32 OSGetConsoleType(void);
+void OSInit(void);
+OSExceptionHandler __OSSetExceptionHandler(u8 type, OSExceptionHandler handler);
+OSExceptionHandler __OSGetExceptionHandler(u8 type);
+void OSDefaultExceptionHandler(u8 type, OSContext* ctx);
+void __OSPSInit(void);
+u32 __OSGetDIConfig(void);
+void OSRegisterVersion(const char* ver);
+const char* OSGetAppGamename(void);
+u8 OSGetAppType(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+#ifndef RVL_SDK_OS_ADDRESS_H
+#define RVL_SDK_OS_ADDRESS_H
+/* "libs/RVL_SDK/include/revolution/OS/OSAddress.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+static inline void* OSPhysicalToCached(u32 ofs) {
+    return (void*)(ofs + 0x80000000);
+}
+
+static inline void* OSPhysicalToUncached(u32 ofs) {
+    return (void*)(ofs + 0xC0000000);
+}
+
+static inline void* OSCachedToPhysical(const void* ofs) {
+    return (u8*)ofs - 0x80000000;
+}
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+#ifndef RVL_SDK_OS_ALARM_H
+#define RVL_SDK_OS_ALARM_H
+/* "libs/RVL_SDK/include/revolution/OS/OSAlarm.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSAlarm;
+typedef struct OSContext;
+typedef struct OSThread;
+
+typedef void (*OSAlarmHandler)(struct OSAlarm* alarm, struct OSContext* ctx);
+
+typedef struct OSAlarm {
+    OSAlarmHandler handler; // at 0x0
+    u32 tag;                // at 0x4
+    s64 end;                // at 0x8
+    struct OSAlarm* prev;   // at 0x10
+    struct OSAlarm* next;   // at 0x14
+    s64 period;             // at 0x18
+    s64 start;              // at 0x20
+    void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
+} OSAlarm;
+
+typedef struct OSAlarmQueue {
+    OSAlarm* head; // at 0x0
+    OSAlarm* tail; // at 0x4
+} OSAlarmQueue;
+
+void __OSInitAlarm(void);
+void OSCreateAlarm(OSAlarm* alarm);
+void OSSetAlarm(OSAlarm* alarm, s64 tick, OSAlarmHandler handler);
+void OSSetPeriodicAlarm(OSAlarm* alarm, s64 tick, s64 period,
+                        OSAlarmHandler handler);
+void OSCancelAlarm(OSAlarm* alarm);
+void OSSetAlarmTag(OSAlarm* alarm, u32 tag);
+void OSSetAlarmUserData(OSAlarm* alarm, void* userData);
+void* OSGetAlarmUserData(const OSAlarm* alarm);
+void __OSCancelInternalAlarms(struct OSThread* thread);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+#ifndef RVL_SDK_OS_ALLOC_H
+#define RVL_SDK_OS_ALLOC_H
+/* "libs/RVL_SDK/include/revolution/OS/OSAlloc.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+extern volatile s32 __OSCurrHeap;
+
+void* OSAllocFromHeap(s32 handle, s32 size);
+void OSFreeToHeap(s32 handle, void* p);
+s32 OSSetCurrentHeap(s32 handle);
+void* OSInitAlloc(void* start, void* end, s32 numHeaps);
+s32 OSCreateHeap(void* start, void* end);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+#ifndef RVL_SDK_OS_ARENA_H
+#define RVL_SDK_OS_ARENA_H
+/* "libs/RVL_SDK/include/revolution/OS/OSArena.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* OSGetMEM1ArenaHi(void);
+void* OSGetMEM2ArenaHi(void);
+void* OSGetArenaHi(void);
+
+void* OSGetMEM1ArenaLo(void);
+void* OSGetMEM2ArenaLo(void);
+void* OSGetArenaLo(void);
+
+void OSSetMEM1ArenaHi(void* hi);
+void OSSetMEM2ArenaHi(void* hi);
+void OSSetArenaHi(void* hi);
+
+void OSSetMEM1ArenaLo(void* lo);
+void OSSetMEM2ArenaLo(void* lo);
+void OSSetArenaLo(void* lo);
+
+void* OSAllocFromMEM1ArenaLo(size_t size, u32 align);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+#ifndef RVL_SDK_OS_AUDIOSYSTEM_H
+#define RVL_SDK_OS_AUDIOSYSTEM_H
+/* "libs/RVL_SDK/include/revolution/OS/OSAudioSystem.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void __OSInitAudioSystem(void);
+void __OSStopAudioSystem(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+#ifndef RVL_SDK_OS_CACHE_H
+#define RVL_SDK_OS_CACHE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSCache.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define OS_CACHE_BASE 0xE0000000
+
+// Forward declarations
+typedef struct OSContext;
+
+void DCEnable(void);
+void DCInvalidateRange(const void* buf, u32 len);
+void DCFlushRange(const void* buf, u32 len);
+void DCStoreRange(const void* buf, u32 len);
+void DCFlushRangeNoSync(const void* buf, u32 len);
+void DCStoreRangeNoSync(const void* buf, u32 len);
+void DCZeroRange(const void* buf, u32 len);
+
+void ICInvalidateRange(const void* buf, u32 len);
+void ICFlashInvalidate(void);
+void ICEnable(void);
+
+void LCEnable(void);
+void LCDisable(void);
+void LCLoadBlocks(void* dst, const void* src, u32 blocks);
+void LCStoreBlocks(void* dst, const void* src, u32 blocks);
+u32 LCStoreData(void* dst, const void* src, u32 len);
+u32 LCQueueLength(void);
+void LCQueueWait(u32 n);
+
+void L2Enable(void);
+void L2Disable(void);
+void L2GlobalInvalidate(void);
+
+void DMAErrorHandler(u8 error, OSContext* ctx, u32 dsisr, u32 dar, ...);
+
+void __OSCacheInit(void);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+#ifndef RVL_SDK_OS_CRC_H
+#define RVL_SDK_OS_CRC_H
+/* "libs/RVL_SDK/include/revolution/OS/OSCrc.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+u16 OSCalcCRC16(const u8* array, s32 length);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+#ifndef RVL_SDK_OS_ERROR_H
+#define RVL_SDK_OS_ERROR_H
+/* "libs/RVL_SDK/include/revolution/OS/OSError.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+
+#define OS_ERROR(...) OSPanic(__FILE__, __LINE__, __VA_ARGS__)
+
+#define OS_ASSERT(exp, ...)                                                    \
+    if (!(exp))                                                                \
+    OSPanic(__FILE__, __LINE__, __VA_ARGS__)
+
+typedef enum {
+    OS_ERR_SYSTEM_RESET,
+    OS_ERR_MACHINE_CHECK,
+    OS_ERR_DSI,
+    OS_ERR_ISI,
+    OS_ERR_EXT_INTERRUPT,
+    OS_ERR_ALIGNMENT,
+    OS_ERR_PROGRAM,
+    OS_ERR_FP_UNAVAIL,
+    OS_ERR_DECREMENTER,
+    OS_ERR_SYSTEM_CALL,
+    OS_ERR_TRACE,
+    OS_ERR_PERF_MONITOR,
+    OS_ERR_IABR,
+    OS_ERR_SMI,
+    OS_ERR_THERMAL_INT,
+    OS_ERR_PROTECTION,
+    OS_ERR_FP_EXCEPTION,
+
+    OS_ERR_MAX
+} OSErrorType;
+
+typedef void (*OSErrorHandler)(u8 error, struct OSContext* ctx, u32 dsisr, u32 dar,
+                               ...);
+
+extern OSErrorHandler __OSErrorTable[OS_ERR_MAX];
+extern u32 __OSFpscrEnableBits;
+
+/* DECL_WEAK */ void OSReport(const char* msg, ...);
+/* DECL_WEAK */ void OSPanic(const char* file, int line, const char* msg, ...);
+/* DECL_WEAK */ void OSVReport(const char* msg, va_list arg);
+
+OSErrorHandler OSSetErrorHandler(u16 error, OSErrorHandler handler);
+void __OSUnhandledException(u8 error, struct OSContext* ctx, u32 dsisr, u32 dar);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+#ifndef RVL_SDK_OS_FAST_CAST_H
+#define RVL_SDK_OS_FAST_CAST_H
+/* "libs/RVL_SDK/include/revolution/OS/OSFastCast.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#define OS_GQR_TYPE_U8 4
+#define OS_GQR_TYPE_U16 5
+#define OS_GQR_TYPE_S8 6
+#define OS_GQR_TYPE_S16 7
+
+static void OSInitFastCast(void) {
+    ASM (
+        li r3, 4
+        oris r3, r3, 4
+        mtgqr2 r3
+
+        li r3, 5
+        oris r3, r3, 5
+        mtgqr3 r3
+
+        li r3, 6
+        oris r3, r3, 6
+        mtgqr4 r3
+        
+        li r3, 7
+        oris r3, r3, 7
+        mtgqr5 r3
+    )
+}
+
+static void OSSetGQR6(register u32 type, register u32 scale) {
+    register u32 val = ((scale << 8 | type) << 16) | ((scale << 8) | type);
+
+    ASM (
+        mtspr 0x396, val
+    )
+}
+
+static void OSSetGQR7(register u32 type, register u32 scale) {
+    register u32 val = ((scale << 8 | type) << 16) | ((scale << 8) | type);
+
+    ASM (
+        mtspr 0x397, val
+    )
+}
+
+/******************************************************************************
+ *
+ * Convert from U8
+ *
+ ******************************************************************************/
+static f32 __OSu8tof32(register u8* in) {
+    register f32 ret;
+
+    ASM (
+        psq_l ret, 0(in), 1, 2
+    )
+
+    return ret;
+}
+
+static void OSu8tof32(u8* in, volatile f32* out) {
+    *out = __OSu8tof32(in);
+}
+
+/******************************************************************************
+ *
+ * Convert from U16
+ *
+ ******************************************************************************/
+static f32 __OSu16tof32(register u16* arg) {
+    register f32 ret;
+
+    ASM (
+        psq_l ret, 0(arg), 1, 3
+    )
+
+    return ret;
+}
+
+static void OSu16tof32(u16* in, volatile f32* out) {
+    *out = __OSu16tof32(in);
+}
+
+/******************************************************************************
+ *
+ * Convert from S16
+ *
+ ******************************************************************************/
+static f32 __OSs16tof32(register s16* arg) {
+    register f32 ret;
+
+    ASM (
+        psq_l ret, 0(arg), 1, 5
+    )
+
+    return ret;
+}
+
+static void OSs16tof32(s16* in, volatile f32* out) {
+    *out = __OSs16tof32(in);
+}
+
+/******************************************************************************
+ *
+ * Convert from F32
+ *
+ ******************************************************************************/
+static u8 __OSf32tou8(register f32 arg) {
+    f32 a;
+    register f32* ptr = &a;
+    u8 r;
+
+    ASM (
+        psq_st arg, 0(ptr), 1, 2
+    )
+
+    r = *(u8*)ptr;
+    return r;
+}
+
+static void OSf32tou8(f32* in, volatile u8* out) {
+    *out = __OSf32tou8(*in);
+}
+
+static u16 __OSf32tou16(register f32 arg) {
+    f32 a;
+    register f32* ptr = &a;
+    u16 r;
+
+    ASM (
+        psq_st arg, 0(ptr), 1, 3
+    )
+
+    r = *(u16*)ptr;
+    return r;
+}
+
+static void OSf32tou16(f32* in, volatile u16* out) {
+    *out = __OSf32tou16(*in);
+}
+
+static s16 __OSf32tos16(register f32 arg) {
+    f32 a;
+    register f32* ptr = &a;
+    s16 r;
+
+    ASM (
+        psq_st arg, 0(ptr), 1, 5
+    )
+
+    r = *(s16*)ptr;
+    return r;
+}
+
+static void OSf32tos16(f32* in, volatile s16* out) {
+    *out = __OSf32tos16(*in);
+}
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+#ifndef RVL_SDK_OS_FATAL_H
+#define RVL_SDK_OS_FATAL_H
+/* "libs/RVL_SDK/include/revolution/OS/OSFatal.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSFatal.h" line 4 "revolution/GX/GXTypes.h" */
 /* end "revolution/GX/GXTypes.h" */
 #ifdef __cplusplus
 extern "C" {
@@ -4245,3388 +4453,6 @@ DECL_SECTION(".init") extern const ExtabIndexInfo _eti_init_info[];
 }
 #endif
 #endif
-/* end "revolution/OS/__ppc_eabi_init.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 9 "cmath" */
-/* end "cmath" */
-
-namespace nw4r {
-namespace math {
-
-/******************************************************************************
- *
- * Implementation details
- *
- ******************************************************************************/
-namespace detail {
-
-f32 FExp(f32 x);
-f32 FLog(f32 x);
-
-} // namespace detail
-
-/******************************************************************************
- *
- * Arithmetic functions
- *
- ******************************************************************************/
-f32 FrSqrt(f32 x);
-
-inline f32 FAbs(register f32 x) {
-    register f32 ax;
-
-    ASM (
-        fabs ax, x
-    )
-
-    return ax;
-}
-
-inline f32 FCeil(f32 x) {
-    return std::ceilf(x);
-}
-
-inline f32 FExp(f32 x) {
-    return detail::FExp(x);
-}
-
-inline f32 FFloor(f32 x) {
-    return std::floorf(x);
-}
-
-inline f32 FInv(register f32 x) {
-    register f32 work0, work1, work2, work3;
-
-    ASM (
-        fmr  work1, x     // x
-        fres work0, work1 // 1/x
-
-        // Refine estimate
-        ps_add   work2, work0, work0        // 2/x
-        ps_mul   work3, work0, work0        // 1/x^2
-        ps_nmsub work0, work1, work3, work2 // -(x * 1/x^2 - 2/x)
-    )
-
-    return work0;
-}
-
-inline f32 FMod(f32 x, f32 y) {
-    return std::fmodf(x, y);
-}
-
-inline f32 FModf(f32 x, f32* pY) {
-    return std::modff(x, pY);
-}
-
-inline f32 FSqrt(f32 x) {
-#line 627
-    NW4R_DB_ASSERT_WARN(x >= 0.0f, "FSqrt: Input is out of the domain.");
-
-    return x <= 0.0f ? 0.0f : x * FrSqrt(x);
-}
-
-inline f32 FLog(f32 x) {
-    if (x > 0.0f) {
-        return detail::FLog(x);
-    }
-
-    return NW4R_MATH_QNAN;
-}
-
-inline f32 FSelect(register f32 value, register f32 ge_zero,
-                   register f32 lt_zero) {
-    register f32 ret;
-
-    ASM (
-        fsel ret, value, ge_zero, lt_zero
-    )
-
-    return ret;
-}
-
-/******************************************************************************
- *
- * Fastcast functions
- *
- ******************************************************************************/
-inline f32 U16ToF32(u16 arg) {
-    f32 ret;
-    OSu16tof32(&arg, &ret);
-    return ret;
-}
-inline u16 F32ToU16(f32 arg) {
-    u16 ret;
-    OSf32tou16(&arg, &ret);
-    return ret;
-}
-
-inline f32 S16ToF32(s16 arg) {
-    f32 ret;
-    OSs16tof32(&arg, &ret);
-    return ret;
-}
-inline s16 F32ToS16(f32 arg) {
-    s16 ret;
-    OSf32tos16(&arg, &ret);
-    return ret;
-}
-
-inline u32 F32AsU32(f32 arg) {
-    return *reinterpret_cast<u32*>(&arg);
-}
-inline f32 U32AsF32(u32 arg) {
-    return *reinterpret_cast<f32*>(&arg);
-}
-
-inline s32 FGetExpPart(f32 x) {
-    s32 s = F32AsU32(x);
-    return ((s >> 23) & 0xFF) - 127;
-}
-inline f32 FGetMantPart(f32 x) {
-    u32 u = F32AsU32(x);
-    return U32AsF32((u & 0x807FFFFF) | 0x3F800000);
-}
-
-} // namespace math
-} // namespace nw4r
-
-#endif
-/* end "nw4r/math/math_arithmetic.h" */
-/* "libs/nw4r/include/nw4r/math.h" line 4 "nw4r/math/math_geometry.h" */
-#ifndef NW4R_MATH_GEOMETRY_H
-#define NW4R_MATH_GEOMETRY_H
-/* "libs/nw4r/include/nw4r/math/math_geometry.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_geometry.h" line 4 "nw4r/math/math_types.h" */
-#ifndef NW4R_MATH_TYPES_H
-#define NW4R_MATH_TYPES_H
-/* "libs/nw4r/include/nw4r/math/math_types.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_types.h" line 4 "nw4r/math/math_arithmetic.h" */
-/* end "nw4r/math/math_arithmetic.h" */
-/* "libs/nw4r/include/nw4r/math/math_types.h" line 5 "nw4r/math/math_triangular.h" */
-#ifndef NW4R_MATH_TRIANGULAR_H
-#define NW4R_MATH_TRIANGULAR_H
-/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 4 "nw4r/db/db_assert.h" */
-/* end "nw4r/db/db_assert.h" */
-/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 5 "nw4r/math/math_arithmetic.h" */
-/* end "nw4r/math/math_arithmetic.h" */
-/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 6 "nw4r/math/math_constant.h" */
-/* end "nw4r/math/math_constant.h" */
-
-/******************************************************************************
- *
- * Macros to convert between units
- *
- ******************************************************************************/
-// [0, 65535] -> [0.0, 256.0f]
-#define NW4R_MATH_IDX_TO_FIDX(x) ((x) * (1.0f / 256.0f))
-
-// Convert degrees <-> lookup-table index
-#define NW4R_MATH_DEG_TO_FIDX(x) ((x) * (256.0f / 360.0f))
-#define NW4R_MATH_FIDX_TO_DEG(x) ((x) * (360.0f / 256.0f))
-
-// Convert radians <-> lookup-table index
-#define NW4R_MATH_RAD_TO_FIDX(x) ((x) * (128.0f / NW4R_MATH_PI))
-#define NW4R_MATH_FIDX_TO_RAD(x) ((x) * (NW4R_MATH_PI / 128.0f))
-
-// Convert degrees <-> radians
-#define NW4R_MATH_DEG_TO_RAD(x) ((x) * (NW4R_MATH_PI / 180.0f))
-#define NW4R_MATH_RAD_TO_DEG(x) ((x) * (180.0f / NW4R_MATH_PI))
-
-namespace nw4r {
-namespace math {
-
-/******************************************************************************
- *
- * Sin functions
- *
- ******************************************************************************/
-f32 SinFIdx(f32 fidx);
-
-inline f32 SinIdx(u16 idx) {
-    return SinFIdx(NW4R_MATH_IDX_TO_FIDX(U16ToF32(idx)));
-}
-inline f32 SinDeg(f32 deg) {
-    return SinFIdx(NW4R_MATH_DEG_TO_FIDX(deg));
-}
-inline f32 SinRad(f32 rad) {
-    return SinFIdx(NW4R_MATH_RAD_TO_FIDX(rad));
-}
-
-/******************************************************************************
- *
- * Cosine functions
- *
- ******************************************************************************/
-f32 CosFIdx(f32 fidx);
-
-inline f32 CosDeg(f32 deg) {
-    return CosFIdx(NW4R_MATH_DEG_TO_FIDX(deg));
-}
-inline f32 CosRad(f32 rad) {
-    return CosFIdx(NW4R_MATH_RAD_TO_FIDX(rad));
-}
-
-/******************************************************************************
- *
- * Tangent functions
- *
- ******************************************************************************/
-inline f32 TanFIdx(f32 fidx) {
-    return std::tanf(NW4R_MATH_FIDX_TO_RAD(fidx));
-}
-inline f32 TanDeg(f32 deg) {
-    return TanFIdx(NW4R_MATH_DEG_TO_FIDX(deg));
-}
-inline f32 TanRad(f32 rad) {
-    return TanFIdx(NW4R_MATH_RAD_TO_FIDX(rad));
-}
-
-/******************************************************************************
- *
- * Sin & cosine functions
- *
- ******************************************************************************/
-void SinCosFIdx(f32* pSin, f32* pCos, f32 fidx);
-
-inline void SinCosDeg(f32* pSin, f32* pCos, f32 deg) {
-    return SinCosFIdx(pSin, pCos, NW4R_MATH_DEG_TO_FIDX(deg));
-}
-inline void SinCosRad(f32* pSin, f32* pCos, f32 rad) {
-    return SinCosFIdx(pSin, pCos, NW4R_MATH_RAD_TO_FIDX(rad));
-}
-
-/******************************************************************************
- *
- * Arc-sine functions
- *
- ******************************************************************************/
-
- inline f32 AsinRad(f32 x){
-    bool inRange = x <= 1.0f && x >= -1.0f;
-
-#line 228
-    NW4R_DB_ASSERT_WARN(inRange, "AsinRad: Input is out of the domain.");
-
-    return std::asin(x);
-}
-
-/******************************************************************************
- *
- * Arc-cosine functions
- *
- ******************************************************************************/
-
- inline f32 AcosRad(f32 x){
-    bool inRange = x <= 1.0f && x >= -1.0f;
-
-#line 239
-    NW4R_DB_ASSERT_WARN(inRange, "AcosRad: Input is out of the domain.");
-
-    return std::acos(x);
-}
-
-/******************************************************************************
- *
- * Arc-tangent functions
- *
- ******************************************************************************/
-f32 AtanFIdx(f32 x);
-
-inline f32 AtanDeg(f32 x) {
-    return NW4R_MATH_FIDX_TO_DEG(AtanFIdx(x));
-}
-inline f32 AtanRad(f32 x) {
-    return NW4R_MATH_FIDX_TO_RAD(AtanFIdx(x));
-}
-
-/******************************************************************************
- *
- * Arc-tangent (2-argument) functions
- *
- ******************************************************************************/
-f32 Atan2FIdx(f32 y, f32 x);
-
-inline f32 Atan2Deg(f32 y, f32 x) {
-    return NW4R_MATH_FIDX_TO_DEG(Atan2FIdx(y, x));
-}
-inline f32 Atan2Rad(f32 y, f32 x) {
-    return NW4R_MATH_FIDX_TO_RAD(Atan2FIdx(y, x));
-}
-
-} // namespace math
-} // namespace nw4r
-
-#endif
-/* end "nw4r/math/math_triangular.h" */
-
-/* "libs/nw4r/include/nw4r/math/math_types.h" line 7 "revolution/MTX.h" */
-#ifndef RVL_SDK_PUBLIC_MTX_H
-#define RVL_SDK_PUBLIC_MTX_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 6 "revolution/MTX/mtx.h" */
-#ifndef RVL_SDK_MTX_MTX_H
-#define RVL_SDK_MTX_MTX_H
-/* "libs/RVL_SDK/include/revolution/MTX/mtx.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/MTX/mtx.h" line 4 "revolution/MTX/mtxtypes.h" */
-#ifndef RVL_SDK_MTX_TYPES_H
-#define RVL_SDK_MTX_TYPES_H
-/* "libs/RVL_SDK/include/revolution/MTX/mtxtypes.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef f32 Mtx[3][4];
-typedef f32 Mtx44[4][4];
-
-typedef struct Vec {
-    f32 x, y, z;
-} Vec;
-
-typedef struct Vec2 {
-    f32 x, y;
-} Vec2;
-
-typedef struct Quaternion {
-    f32 x, y, z, w;
-} Quaternion;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/MTX/mtxtypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// TODO(kiwi) Create macros for PS/C_ functions
-void PSMTXIdentity(Mtx);
-void PSMTXCopy(const Mtx, Mtx);
-void PSMTXConcat(const Mtx, const Mtx, Mtx);
-void PSMTXConcatArray(const Mtx, const Mtx, Mtx, u32);
-void PSMTXTranspose(const Mtx, Mtx);
-u32 PSMTXInverse(const Mtx, Mtx);
-u32 PSMTXInvXpose(const Mtx, Mtx);
-void PSMTXRotRad(Mtx, char, f32);
-void PSMTXRotTrig(Mtx, f32, f32, char);
-void PSMTXRotAxisRad(Mtx, const Vec*, f32);
-void PSMTXTrans(Mtx, f32, f32, f32);
-void PSMTXTransApply(const Mtx, Mtx, f32, f32, f32);
-void PSMTXScale(Mtx, f32, f32, f32);
-void PSMTXScaleApply(const Mtx, Mtx, f32, f32, f32);
-void PSMTXQuat(Mtx, const Quaternion*);
-
-void C_MTXLookAt(Mtx, const Vec*, const Vec*, const Vec*);
-void C_MTXLightFrustum(Mtx, f32, f32, f32, f32, f32, f32, f32, f32, f32);
-void C_MTXLightPerspective(Mtx, f32, f32, f32, f32, f32, f32);
-void C_MTXLightOrtho(Mtx, f32, f32, f32, f32, f32, f32, f32, f32);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/MTX/mtx.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 7 "revolution/MTX/mtx44.h" */
-#ifndef RVL_SDK_MTX_MTX44_H
-#define RVL_SDK_MTX_MTX44_H
-/* "libs/RVL_SDK/include/revolution/MTX/mtx44.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/MTX/mtx44.h" line 4 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void PSMTX44Copy(Mtx44, Mtx44);
-void C_MTXFrustum(Mtx44 mtx, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f);
-void C_MTXPerspective(Mtx44 mtx, f32 fovy, f32 aspect, f32 n, f32 f);
-void C_MTXOrtho(Mtx44 mtx, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/MTX/mtx44.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 8 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 9 "revolution/MTX/mtxvec.h" */
-#ifndef RVL_SDK_MTX_MTXVEC_H
-#define RVL_SDK_MTX_MTXVEC_H
-/* "libs/RVL_SDK/include/revolution/MTX/mtxvec.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/MTX/mtxvec.h" line 4 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void PSMTXMultVec(const Mtx mtx, const Vec* vec, Vec* out);
-void PSMTXMultVecSR(const Mtx, const Vec*, Vec*);
-void PSMTXMultVecArraySR();
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/MTX/mtxvec.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 10 "revolution/MTX/quat.h" */
-#ifndef RVL_SDK_MTX_QUAT_H
-#define RVL_SDK_MTX_QUAT_H
-/* "libs/RVL_SDK/include/revolution/MTX/quat.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/MTX/quat.h" line 4 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
-void PSQUATAdd(const Quaternion* a, const Quaternion* b, Quaternion* sum);
-void PSQUATMultiply(const Quaternion* a, const Quaternion* b, Quaternion* prod);
-void PSQUATScale(const Quaternion* in, Quaternion* out, f32 scale);
-f32 PSQUATDotProduct(const Quaternion* a, const Quaternion* b);
-void PSQUATNormalize(const Quaternion* in, Quaternion* out);
-void PSQUATInverse(const Quaternion* in, Quaternion* out);
-void C_QUATMtx(Quaternion* quat, const Mtx mtx);
-void C_QUATLerp(const Quaternion* a, const Quaternion* b, Quaternion* out,
-                f32 t);
-void C_QUATSlerp(const Quaternion* a, const Quaternion* b, Quaternion* out,
-                 f32 t);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/MTX/quat.h" */
-/* "libs/RVL_SDK/include/revolution/MTX.h" line 11 "revolution/MTX/vec.h" */
-#ifndef RVL_SDK_MTX_VEC_H
-#define RVL_SDK_MTX_VEC_H
-/* "libs/RVL_SDK/include/revolution/MTX/vec.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/MTX/vec.h" line 4 "revolution/MTX/mtxtypes.h" */
-/* end "revolution/MTX/mtxtypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void PSVECAdd(const Vec* a, const Vec* b, Vec* sum);
-void PSVECScale(const Vec* in, Vec* out, f32 scale);
-void PSVECNormalize(const Vec* in, Vec* out);
-f32 PSVECMag(const Vec* v);
-f32 PSVECDotProduct(const Vec* a, const Vec* b);
-void PSVECCrossProduct(const Vec* a, const Vec* b, Vec* prod);
-f32 PSVECSquareDistance(const Vec* a, const Vec* b);
-void C_VECHalfAngle(const Vec* a, const Vec* b, Vec* half);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/MTX/vec.h" */
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/MTX.h" */
-
-namespace nw4r {
-namespace math {
-
-/******************************************************************************
- *
- * VEC2 structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _VEC2 {
-    f32 x, y;
-};
-
-struct VEC2 : _VEC2 {
-    VEC2() {}
-    VEC2(f32 fx, f32 fy) {
-        x = fx;
-        y = fy;
-    }
-
-    operator f32*() {
-        return reinterpret_cast<f32*>(this);
-    }
-    operator const f32*() const {
-        return reinterpret_cast<const f32*>(this);
-    }
-
-    VEC2 operator+(const VEC2& rRhs) const {
-        return VEC2(x + rRhs.x, y + rRhs.y);
-    }
-    VEC2 operator-(const VEC2& rRhs) const {
-        return VEC2(x - rRhs.x, y - rRhs.y);
-    }
-
-    VEC2& operator+=(const VEC2& rRhs) {
-        x += rRhs.x;
-        y += rRhs.y;
-        return *this;
-    }
-    VEC2& operator-=(const VEC2& rRhs) {
-        x -= rRhs.x;
-        y -= rRhs.y;
-        return *this;
-    }
-
-    bool operator==(const VEC2& rRhs) const {
-        return x == rRhs.x && y == rRhs.y;
-    }
-    bool operator!=(const VEC2& rRhs) const {
-        return x != rRhs.x || y != rRhs.y;
-    }
-};
-
-/******************************************************************************
- *
- * VEC3 structure
- *
- ******************************************************************************/
-// Forward declarations
-struct VEC3;
-VEC3* VEC3Add(VEC3* pOut, const VEC3* pA, const VEC3* pB);
-VEC3* VEC3Sub(VEC3* pOut, const VEC3* pA, const VEC3* pB);
-VEC3* VEC3Scale(VEC3* pOut, const VEC3* pIn, f32 scale);
-
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _VEC3 {
-    f32 x, y, z;
-};
-
-struct VEC3 : _VEC3 {
-    VEC3() {}
-    VEC3(f32 fx, f32 fy, f32 fz) {
-        x = fx;
-        y = fy;
-        z = fz;
-    }
-    VEC3(const _VEC3& rVec) {
-        x = rVec.x;
-        y = rVec.y;
-        z = rVec.z;
-    }
-    VEC3(const Vec& rVec) {
-        x = rVec.x;
-        y = rVec.y;
-        z = rVec.z;
-    }
-    VEC3(const f32* pData) {
-        x = pData[0];
-        y = pData[1];
-        z = pData[2];
-    }
-
-    operator Vec*() {
-        return reinterpret_cast<Vec*>(this);
-    }
-    operator const Vec*() const {
-        return reinterpret_cast<const Vec*>(this);
-    }
-
-    f32 LenSq() const {
-        return x * x + y * y + z * z;
-    }
-
-    VEC3 operator-() const {
-        return VEC3(-x, -y, -z);
-    }
-
-    VEC3 operator+(const VEC3& rRhs) const {
-        VEC3 out;
-        VEC3Add(&out, this, &rRhs);
-        return out;
-    }
-    VEC3 operator-(const VEC3& rRhs) const {
-        VEC3 out;
-        VEC3Sub(&out, this, &rRhs);
-        return out;
-    }
-    VEC3 operator*(f32 x) const {
-        VEC3 out;
-        VEC3Scale(&out, this, x);
-        return out;
-    }
-    VEC3 operator/(f32 x) const {
-        f32 r = 1 / x;
-        return *this * r;
-    }
-
-    VEC3& operator+=(const VEC3& rRhs) {
-        VEC3Add(this, this, &rRhs);
-        return *this;
-    }
-    VEC3& operator-=(const VEC3& rRhs) {
-        VEC3Sub(this, this, &rRhs);
-        return *this;
-    }
-    VEC3& operator*=(f32 x) {
-        VEC3Scale(this, this, x);
-        return *this;
-    }
-    VEC3& operator/=(f32 x) {
-        return *this *= (1 / x);
-    }
-
-    bool operator==(const VEC3& rRhs) const {
-        return x == rRhs.x && y == rRhs.y && z == rRhs.z;
-    }
-    bool operator!=(const VEC3& rRhs) const {
-        return x != rRhs.x || y != rRhs.y || z != rRhs.z;
-    }
-};
-
-/******************************************************************************
- *
- * MTX33 structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _MTX33 {
-    union {
-        struct {
-            f32 _00, _01, _02;
-            f32 _10, _11, _12;
-            f32 _20, _21, _22;
-        };
-
-        f32 m[3][3];
-        f32 a[3 * 3];
-    };
-};
-
-struct MTX33 : _MTX33 {
-    MTX33() {}
-};
-
-/******************************************************************************
- *
- * MTX34 structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _MTX34 {
-    union {
-        struct {
-            f32 _00, _01, _02, _03;
-            f32 _10, _11, _12, _13;
-            f32 _20, _21, _22, _23;
-        };
-
-        f32 m[3][4];
-        f32 a[3 * 4];
-        Mtx mtx;
-    };
-};
-
-struct MTX34 : _MTX34 {
-    typedef f32 (*MtxRef)[4];
-    typedef const f32 (*MtxRefConst)[4];
-
-    MTX34() {}
-
-    // clang-format off
-    MTX34(f32 f00, f32 f01, f32 f02, f32 f03,
-          f32 f10, f32 f11, f32 f12, f32 f13,
-          f32 f20, f32 f21, f32 f22, f32 f23) {
-        _00 = f00; _01 = f01; _02 = f02; _03 = f03;
-        _10 = f10; _11 = f11; _12 = f12; _13 = f13;
-        _20 = f20; _21 = f21; _22 = f22; _23 = f23;
-    }
-    // clang-format on
-
-    operator MtxRef() {
-        return mtx;
-    }
-    operator MtxRefConst() const {
-        return mtx;
-    }
-};
-
-/******************************************************************************
- *
- * MTX44 structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _MTX44 {
-    union {
-        struct {
-            f32 _00, _01, _02, _03;
-            f32 _10, _11, _12, _13;
-            f32 _20, _21, _22, _23;
-            f32 _30, _31, _32, _33;
-        };
-
-        f32 m[4][4];
-        f32 a[4 * 4];
-        Mtx44 mtx;
-    };
-};
-
-struct MTX44 : _MTX44 {
-    typedef f32 (*Mtx44Ref)[4];
-    typedef const f32 (*Mtx44RefConst)[4];
-
-    MTX44() {}
-
-    operator Mtx44Ref() {
-        return mtx;
-    }
-    operator Mtx44RefConst() const {
-        return mtx;
-    }
-};
-
-/******************************************************************************
- *
- * QUAT structure
- *
- ******************************************************************************/
-// Provides a POD type that can be upcasted to the real structure.
-// (Has the added benefit of forcing struct copies to use lwz/stw.)
-struct _QUAT {
-    f32 x, y, z, w;
-};
-
-struct QUAT : _QUAT {
-    QUAT() {}
-    QUAT(f32 fx, f32 fy, f32 fz, f32 fw) {
-        x = fx;
-        y = fy;
-        z = fz;
-        w = fw;
-    }
-
-    // TODO(kiwi) These are not real AFAIK. Do they really manually cast the
-    // QUAT?
-    operator Quaternion*() {
-        return reinterpret_cast<Quaternion*>(this);
-    }
-    operator const Quaternion*() const {
-        return reinterpret_cast<const Quaternion*>(this);
-    }
-};
-
-/******************************************************************************
- *
- * VEC2 functions
- *
- ******************************************************************************/
-inline f32 VEC2Len(const VEC2* pVec) {
-    return FSqrt(pVec->x * pVec->x + pVec->y * pVec->y);
-}
-
-/******************************************************************************
- *
- * VEC3 functions
- *
- ******************************************************************************/
-VEC3* VEC3Maximize(VEC3* pOut, const VEC3* pA, const VEC3* pB);
-VEC3* VEC3Minimize(VEC3* pOut, const VEC3* pA, const VEC3* pB);
-VEC3* VEC3TransformNormal(VEC3* pOut, const MTX34* pMtx, const VEC3* pVec);
-
-inline VEC3* VEC3Add(register VEC3* pOut, register const VEC3* pA,
-                     register const VEC3* pB) {
-    register f32 work0, work1, work2;
-
-    ASM (
-        // Add XY
-        psq_l  work0, VEC3.x(pA),   0, 0
-        psq_l  work1, VEC3.x(pB),   0, 0
-        ps_add work2, work0, work1
-        psq_st work2, VEC3.x(pOut), 0, 0
-        
-        // Add Z
-        psq_l  work0, VEC3.z(pA),   1, 0
-        psq_l  work1, VEC3.z(pB),   1, 0
-        ps_add work2, work0, work1
-        psq_st work2, VEC3.z(pOut), 1, 0
-    )
-
-    return pOut;
-}
-
-inline f32 VEC3Dot(register const VEC3* pA, register const VEC3* pB) {
-    register f32 dot;
-    register f32 work0, work1, work2, work3;
-
-    ASM (
-        // YZ product
-        psq_l  work0, VEC3.y(pA), 0, 0
-        psq_l  work1, VEC3.y(pB), 0, 0
-        ps_mul work0, work0, work1
-        
-        // X product + YZ product
-        psq_l   work3, VEC3.x(pA), 1, 0
-        psq_l   work2, VEC3.x(pB), 1, 0
-        ps_madd work1, work3, work2, work0
-        
-        // Dot product
-        ps_sum0 dot, work1, work0, work0
-    )
-
-    return dot;
-}
-
-inline f32 VEC3LenSq(register const VEC3* pVec) {
-    register f32 work0, work1, work2;
-
-    ASM (
-        // Square XY
-        psq_l  work0, VEC3.x(pVec), 0, 0
-        ps_mul work0, work0, work0
-
-        // Square Z
-        lfs     work1, VEC3.z(pVec)
-        ps_madd work2, work1, work1, work0
-
-        // Sum products
-        ps_sum0 work2, work2, work0, work0
-    )
-
-    return work2;
-}
-
-inline VEC3* VEC3Lerp(register VEC3* pOut, register const VEC3* pVec1,
-                      register const VEC3* pVec2, register f32 t) {
-    register f32 work0, work1, work2;
-
-    ASM (
-        // X/Y delta
-        psq_l  work0, VEC3.x(pVec1), 0, 0
-        psq_l  work1, VEC3.x(pVec2), 0, 0
-        ps_sub work2, work1, work0
-        // Scale with time and add to v0
-        ps_madds0 work2, work2, t, work0
-        psq_st    work2, VEC3.x(pOut), 0, 0
-        
-        // Z delta
-        psq_l  work0, VEC3.z(pVec1), 1, 0
-        psq_l  work1, VEC3.z(pVec2), 1, 0
-        ps_sub work2, work1, work0
-        // Scale with time and add to v0
-        ps_madds0 work2, work2, t, work0
-        psq_st    work2, VEC3.z(pOut), 1, 0
-    )
-
-    return pOut;
-}
-
-inline VEC3* VEC3Scale(register VEC3* pOut, register const VEC3* pIn,
-                       register f32 scale) {
-    register f32 work0, work1;
-
-    ASM (
-        // Scale XY
-        psq_l    work0, VEC3.x(pIn),  0, 0
-        ps_muls0 work1, work0, scale
-        psq_st   work1, VEC3.x(pOut), 0, 0
-
-        // Scale Z
-        psq_l    work0, VEC3.z(pIn),  1, 0
-        ps_muls0 work1, work0, scale
-        psq_st   work1, VEC3.z(pOut), 1, 0
-    )
-
-    return pOut;
-}
-
-inline VEC3* VEC3Sub(register VEC3* pOut, register const VEC3* pA,
-                     register const VEC3* pB) {
-    register f32 work0, work1, work2;
-
-    ASM (
-        // Sub XY
-        psq_l  work0, VEC3.x(pA),   0, 0
-        psq_l  work1, VEC3.x(pB),   0, 0
-        ps_sub work2, work0, work1
-        psq_st work2, VEC3.x(pOut), 0, 0
-        
-        // Sub Z
-        psq_l  work0, VEC3.z(pA),   1, 0
-        psq_l  work1, VEC3.z(pB),   1, 0
-        ps_sub work2, work0, work1
-        psq_st work2, VEC3.z(pOut), 1, 0
-    )
-
-    return pOut;
-}
-
-inline VEC3* VEC3Cross(VEC3* pOut, const VEC3* pA, const VEC3* pB) {
-    PSVECCrossProduct(*pA, *pB, *pOut);
-    return pOut;
-}
-
-inline f32 VEC3DistSq(const VEC3* pA, const VEC3* pB) {
-    return PSVECSquareDistance(*pA, *pB);
-}
-
-inline f32 VEC3Len(const VEC3* pVec) {
-    return PSVECMag(*pVec);
-}
-
-inline VEC3* VEC3Normalize(VEC3* pOut, const VEC3* pIn) {
-    PSVECNormalize(*pIn, *pOut);
-    return pOut;
-}
-
-inline VEC3* VEC3Transform(VEC3* pOut, const MTX34* pMtx, const VEC3* pVec) {
-    PSMTXMultVec(*pMtx, *pVec, *pOut);
-    return pOut;
-}
-
-inline VEC3* VEC3TransformCoord(VEC3* pOut, const MTX34* pMtx,
-                                const VEC3* pVec) {
-    PSMTXMultVec(*pMtx, *pVec, *pOut);
-    return pOut;
-}
-
-/******************************************************************************
- *
- * MTX33 functions
- *
- ******************************************************************************/
-MTX33* MTX33Identity(MTX33* pMtx);
-
-/******************************************************************************
- *
- * MTX34 functions
- *
- ******************************************************************************/
-MTX33* MTX34ToMTX33(MTX33* pOut, const MTX34* pIn);
-u32 MTX34InvTranspose(MTX33* pOut, const MTX34* pIn);
-MTX34* MTX34Zero(MTX34* pMtx);
-MTX34* MTX34Scale(MTX34* pOut, const MTX34* pIn, const VEC3* pScale);
-MTX34* MTX34Trans(MTX34* pOut, const MTX34* pIn, const VEC3* pTrans);
-MTX34* MTX34RotAxisFIdx(MTX34* pMtx, const VEC3* pAxis, f32 fidx);
-MTX34* MTX34RotXYZFIdx(MTX34* pMtx, f32 fx, f32 fy, f32 fz);
-
-inline MTX34* MTX34Copy(MTX34* pOut, const MTX34* pIn) {
-    PSMTXCopy(*pIn, *pOut);
-    return pOut;
-}
-
-inline MTX34* MTX34Identity(MTX34* pMtx) {
-    PSMTXIdentity(*pMtx);
-    return pMtx;
-}
-
-inline u32 MTX34Inv(MTX34* pOut, const MTX34* pIn) {
-    return PSMTXInverse(*pIn, *pOut);
-}
-
-inline u32 MTX34InvTranspose(MTX34* pOut, const MTX34* pIn) {
-    return PSMTXInvXpose(*pIn, *pOut);
-}
-
-inline MTX34* MTX34LookAt(MTX34* pMtx, const VEC3* pPos, const VEC3* pUp,
-                          const VEC3* pTarget) {
-    C_MTXLookAt(*pMtx, *pPos, *pUp, *pTarget);
-    return pMtx;
-}
-
-inline MTX34* MTX34Mult(MTX34* pOut, const MTX34* pA, const MTX34* pB) {
-    PSMTXConcat(*pA, *pB, *pOut);
-    return pOut;
-}
-
-inline MTX34* MTX34MultArray(MTX34* pOut, const MTX34* p1, const MTX34* pSrc,
-                             u32 len) {
-    PSMTXConcatArray(*p1, *pSrc, *pOut, len);
-    return pOut;
-}
-
-inline MTX34* MTX34RotAxisRad(MTX34* pOut, const VEC3* pAxis, f32 frad) {
-    return MTX34RotAxisFIdx(pOut, pAxis, NW4R_MATH_RAD_TO_FIDX(frad));
-}
-
-inline MTX34* MTX34RotXYZDeg(MTX34* pMtx, f32 dx, f32 dy, f32 dz) {
-    return MTX34RotXYZFIdx(pMtx, NW4R_MATH_DEG_TO_FIDX(dx),
-                           NW4R_MATH_DEG_TO_FIDX(dy),
-                           NW4R_MATH_DEG_TO_FIDX(dz));
-}
-
-inline MTX34* MTX34RotXYZRad(MTX34* pMtx, f32 rx, f32 ry, f32 rz) {
-    return MTX34RotXYZFIdx(pMtx, NW4R_MATH_RAD_TO_FIDX(rx),
-                           NW4R_MATH_RAD_TO_FIDX(ry),
-                           NW4R_MATH_RAD_TO_FIDX(rz));
-}
-
-inline MTX34* MTX34Scale(MTX34* pOut, const VEC3* pScale, const MTX34* pIn) {
-    PSMTXScaleApply(*pIn, *pOut, pScale->x, pScale->y, pScale->z);
-    return pOut;
-}
-
-inline QUAT* MTX34ToQUAT(QUAT* pQuat, const MTX34* pMtx) {
-    C_QUATMtx(*pQuat, *pMtx);
-    return pQuat;
-}
-
-inline MTX34* MTX34Trans(MTX34* pOut, const VEC3* pTrans, const MTX34* pIn) {
-    PSMTXTransApply(*pIn, *pOut, pTrans->x, pTrans->y, pTrans->z);
-    return pOut;
-}
-
-/******************************************************************************
- *
- * MTX44 functions
- *
- ******************************************************************************/
-MTX44* MTX44Identity(MTX44* pMtx);
-MTX44* MTX44Copy(MTX44* pDst, const MTX44* pSrc);
-
-/******************************************************************************
- *
- * QUAT functions
- *
- ******************************************************************************/
-inline MTX34* QUATToMTX34(MTX34* pMtx, const QUAT* pQuat) {
-    PSMTXQuat(*pMtx, *pQuat);
-    return pMtx;
-}
-
-// @bug QUATSlerp macro changes this function name!
-inline QUAT* C_QUATSlerp(QUAT* pOut, const QUAT* p1, const QUAT* p2, f32 t) {
-    ::C_QUATSlerp(*p1, *p2, *pOut, t);
-    return pOut;
-}
-
-} // namespace math
-} // namespace nw4r
-
-#endif
-/* end "nw4r/math/math_types.h" */
-
-namespace nw4r {
-namespace math {
-
-// Forward declarations
-struct AABB;
-
-enum IntersectionResult {
-    INTERSECTION_NONE,
-    INTERSECTION_1,
-    INTERSECTION_2,
-
-    INTERSECTION_LINE3_ON_PLANE = INTERSECTION_2,
-    INTERSECTION_RAY3_ON_PLANE = INTERSECTION_2,
-    INTERSECTION_SEGMENT3_ON_PLANE = INTERSECTION_2,
-
-    INTERSECTION_OUTSIDE = 0,
-    INTERSECTION_INSIDE,
-    INTERSECTION_INTERSECT
-};
-
-bool IntersectionAABB(const AABB* pA, const AABB* pB);
-
-/******************************************************************************
- *
- * Plane
- *
- ******************************************************************************/
-struct PLANE {
-    PLANE() {}
-
-    f32 Test(const VEC3& rPoint) const {
-        return d + VEC3Dot(&n, &rPoint);
-    }
-
-    void Set(const VEC3* p0, const VEC3* p1, const VEC3* p2);
-
-    VEC3 n; // at 0x0
-    f32 d;  // at 0xC
-};
-
-/******************************************************************************
- *
- * Axis-aligned bounding box
- *
- ******************************************************************************/
-struct AABB {
-    AABB() {}
-
-    void Set(const VEC3* pPoints, unsigned int num);
-    void Set(const AABB* pBox, const MTX34* pMtx);
-
-    VEC3 min; // at 0x0
-    VEC3 max; // at 0xC
-};
-
-/******************************************************************************
- *
- * Frustum
- *
- ******************************************************************************/
-class FRUSTUM {
-private:
-    enum Point {
-        POINT_NEAR_TL,
-        POINT_NEAR_TR,
-        POINT_NEAR_BR,
-        POINT_NEAR_BL,
-
-        POINT_FAR_TL,
-        POINT_FAR_TR,
-        POINT_FAR_BR,
-        POINT_FAR_BL,
-
-        POINT_MAX
-    };
-
-    enum Plane {
-        PLANE_L,
-        PLANE_R,
-        PLANE_N,
-        PLANE_F,
-        PLANE_T,
-        PLANE_B,
-
-        PLANE_MAX
-    };
-
-public:
-    void Set(f32 fovy, f32 aspect, f32 n, f32 f, const MTX34& rCamMtx);
-    void Set(f32 t, f32 b, f32 l, f32 r, f32 n, f32 f, const MTX34& rCamMtx);
-
-    IntersectionResult IntersectAABB_Ex(const AABB* pBox) const;
-
-private:
-    MTX34 mCamMtx;            // at 0x0
-    PLANE mPlaneL;            // at 0x30
-    PLANE mPlaneR;            // at 0x40
-    PLANE mPlaneT;            // at 0x50
-    PLANE mPlaneB;            // at 0x60
-    f32 mNearZ;               // at 0x70
-    f32 mFarZ;                // at 0x74
-    AABB mBox;                // at 0x78
-    PLANE mPlanes[PLANE_MAX]; // at 0x90
-};
-
-} // namespace math
-} // namespace nw4r
-
-#endif
-/* end "nw4r/math/math_geometry.h" */
-/* "libs/nw4r/include/nw4r/math.h" line 5 "nw4r/math/math_triangular.h" */
-/* end "nw4r/math/math_triangular.h" */
-/* "libs/nw4r/include/nw4r/math.h" line 6 "nw4r/math/math_types.h" */
-/* end "nw4r/math/math_types.h" */
-
-#endif
-/* end "nw4r/math.h" */
-
-#define PI 3.14159265f
-#define DEG2RAD(x) ((x)*(PI/180.0f))
-
-//Utility math functions
-namespace ml{
-    namespace math{
-
-    inline float abs(float x){
-        return (double)nw4r::math::FAbs(x);
-    }
-
-    inline float sqrt(float x){
-        return nw4r::math::FSqrt(x);
-    }
-
-    inline float clamp(float x, float min, float max) {
-        if (x < min) x = min;
-        else if(x > max) x = max;
-        return x;
-    }
-
-    inline float sin(float x){
-        return nw4r::math::SinRad(x);
-    }
-
-    inline float cos(float x){
-        return nw4r::math::CosRad(x);
-    }
-
-    inline void sincos(float x, float& sinX, float& cosX){
-        sinX = sin(x);
-        cosX = cos(x);
-    }
-
-    inline float asin(float x){
-        x = clamp(x, -1.0f, 1.0f);
-        return nw4r::math::AsinRad(x);
-    }
-
-    inline float acos(float x){
-        x = clamp(x, -1.0f, 1.0f);
-        return nw4r::math::AcosRad(x);
-    }
-
-    inline float atan2(float y, float x){
-        return nw4r::math::Atan2FIdx(y, x);
-    }
-
-    inline float atan2Deg(float y, float x){
-        return nw4r::math::Atan2Deg(y, x);
-    }
-
-    inline float atan2Rad(float y, float x){
-        return nw4r::math::Atan2Rad(y, x);
-    }
-
-    inline float dot(const float* vec){
-        return vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
-    }
-
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Utility.hpp" */
-/* "libs/monolib/include/monolib/math/CVec3.hpp" line 3 "monolib/math/MathConstants.hpp" */
-#pragma once
-
-namespace ml{
-    //General math constants
-    extern const float pi;
-    extern const float tau;
-    extern const float halfpi;
-    extern const float quarterpi;
-    extern const float epsilon;
-    extern const float rad2deg;
-    extern const float deg2rad;
-    extern const float huge;
-    extern const float hugeminus;
-} //namespace ml
-/* end "monolib/math/MathConstants.hpp" */
-/* "libs/monolib/include/monolib/math/CVec3.hpp" line 4 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    //Possibly inherits from nw4r VEC3?
-    struct CVec3 {
-        static CVec3 zero;
-        static CVec3 unitX;
-        static CVec3 unitY;
-        static CVec3 unitZ;
-        static CVec3 unit;
-
-        CVec3(){}
-
-        CVec3(float x, float y, float z){
-            set(x, y, z);
-        }
-
-        CVec3(const CVec3& vec){
-            set(vec.x, vec.y, vec.z);
-        }
-
-        //Conversion functions for converting to the SDK/NW4R vector types.
-        operator Vec*(){
-            return reinterpret_cast<Vec*>(this);
-        }
-
-        operator const Vec*() const {
-            return reinterpret_cast<const Vec*>(this);
-        }
-
-        operator nw4r::math::VEC3*(){
-            return reinterpret_cast<nw4r::math::VEC3*>(this);
-        }
-
-        operator const nw4r::math::VEC3*() const {
-            return reinterpret_cast<const nw4r::math::VEC3*>(this);
-        }
-
-        void set(float x, float y, float z){
-            this->x = x;
-            this->y = y;
-            this->z = z;
-        }
-
-        void set(const CVec3& vec){
-            x = vec.x;
-            y = vec.y;
-            z = vec.z;
-        }
-
-        void setZero(){
-            *this = zero;
-        }
-        
-        CVec3 operator-() const {
-            return CVec3(-x, -y, -z);
-        }
-
-        CVec3 operator+(const CVec3& rhs) const {
-            CVec3 out;
-            //add(out, *this, rhs);
-            nw4r::math::VEC3Add(out, *this, rhs);
-            return out;
-        }
-        CVec3 operator-(const CVec3& rhs) const {
-            CVec3 out;
-            sub(out, *this, rhs);
-            //nw4r::math::VEC3Sub(out, *this, rhs);
-            return out;
-        }
-        CVec3 operator*(float x) const {
-            CVec3 out;
-            scale(out, *this, x);
-            return out;
-        }
-        CVec3 operator/(float x) const {
-            float r = 1/x;
-            return *this * r;
-        }
-
-        CVec3& operator+=(const CVec3& rhs) {
-            add(*this, *this, rhs);
-            return *this;
-        }
-        CVec3& operator-=(const CVec3& rhs) {
-            sub(*this, *this, rhs);
-            return *this;
-        }
-        CVec3& operator*=(float x) {
-            scale(*this, *this, x);
-            return *this;
-        }
-        CVec3& operator/=(float x) {
-            return *this *= (1/x);
-        }
-
-        bool operator==(const CVec3& vec) const {
-            return x == vec.x && y == vec.y && z == vec.z;
-        }
-
-        bool operator!=(const CVec3& vec) const {
-            return x != vec.x || y != vec.y || z != vec.z;
-        }
-
-        void normalize(){
-            if(!isZero()) {
-                normalizeSub();
-            }else{
-                set(0,0,1);
-            }
-        }
-
-        //Unofficial
-        void normalizeSub(){
-            if(x*x + y*y + z*z == 0.0f){
-                setZero();
-            }else {
-                PSVECNormalize(*this,*this);
-            }
-        }
-        
-        //Unofficial
-        float magnitude() const {
-            return x*x + y*y + z*z;
-        }
-
-        float getLength() const {
-            return math::sqrt(magnitude());
-        }
-
-        bool isZero() const {
-            //TODO: this can't be it, right???
-            bool result = false;
-            bool temp = false;
-            if(math::abs(x) <= epsilon && math::abs(y) <= epsilon){
-                temp = true;
-            }
-            if(temp && math::abs(z) <= epsilon) result = true;
-            return result;
-        }
-
-        bool isErr() const;
-
-        //TODO: properly figure out these asm inlines
-
-        static float dot(const CVec3& lhs, const CVec3& rhs) {
-            return nw4r::math::VEC3Dot(lhs, rhs);
-        }
-        
-        static void add(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
-            CVec3 temp;
-            nw4r::math::VEC3Add(temp, lhs, rhs);
-            outVec.set(temp);
-        }
-
-        static void sub(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
-            CVec3 temp;
-            nw4r::math::VEC3Sub(temp, lhs, rhs);
-            outVec.set(temp);
-        }
-
-        static void scale(CVec3& outVec, const CVec3& vec, float scale){
-            CVec3 temp;
-            nw4r::math::VEC3Scale(temp, vec, scale);
-            outVec.set(temp);
-        }
-
-        static void cross(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
-            CVec3 temp;
-            nw4r::math::VEC3Cross(temp, lhs, rhs);
-            outVec.set(temp);
-        }
-        
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float x;
-            float y;
-            float z;
-        };
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 4 "monolib/math/CMat34.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CMat34.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CMat34.hpp" line 3 "monolib/math/CQuat.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 3 "monolib/math/MathConstants.hpp" */
-/* end "monolib/math/MathConstants.hpp" */
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 4 "monolib/math/Utility.hpp" */
-/* end "monolib/math/Utility.hpp" */
-/* "libs/monolib/include/monolib/math/CQuat.hpp" line 5 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CQuat{
-        CQuat(){}
-
-        CQuat(float x, float y, float z, float w){
-            set(x,y,z,w);
-        }
-
-        operator Quaternion*(){
-            return reinterpret_cast<Quaternion*>(this);
-        }
-
-        operator const Quaternion*() const{
-            return reinterpret_cast<const Quaternion*>(this);
-        }
-
-        CQuat& operator*=(const CQuat& other){
-            PSQUATMultiply(*this, other, *this);
-            return *this;
-        }
-
-        inline void set(float x, float y, float z, float w){
-            this->x = x;
-            this->y = y;
-            this->z = z;
-            this->w = w;
-        }
-
-        inline void setIdentity(){
-            set(0,0,0,1);
-        }
-  
-        //Sets the quaternion from the given euler angle, following the 3-2-1 conversion.
-        inline void setRotXYZ(const CVec3* angle){
-            float x = angle->x * 0.5f;
-            float y = angle->y * 0.5f;
-            float z = angle->z * 0.5f;
-            float sinX = math::sin(x);
-            float cosX = math::cos(x);
-            float sinY = math::sin(y);
-            float cosY = math::cos(y);
-            float sinZ = math::sin(z);
-            float cosZ = math::cos(z);
-
-            this->x = cosZ*(sinX*cosY) - sinZ*(cosX*sinY);
-            this->y = cosZ*(cosX*sinY) + sinZ*(sinX*cosY);
-            this->z = sinZ*(cosX*cosY) - cosZ*(sinX*sinY);
-            this->w = cosZ*(cosX*cosY) + sinZ*(sinX*sinY);
-        }
-
-        //Converts this quaternion to euler angles, storing the result in the given vector.
-        inline void getRotXYZ(CVec3* result) const {
-            //So many variables :p
-            float twoX = x + x;
-            float twoY = y + y;
-            float twoZ = z + z;
-
-            float twoXZ = x * twoZ;
-            float twoYW = w * twoY;
-
-            //NOTE: Unnecessary clamp
-            float input = -(twoXZ - twoYW);
-            if(input >= 1) input = 1;
-            else if(input <= -1) input = -1;
-            //y = asin(-(2xz - 2yw))
-            float angle = math::asin(input);
-            result->y = angle;
-
-            float twoX2 = x * twoX;
-            float twoXY = x * twoY;
-            float twoZ2 = z * twoZ;
-            float twoZW = w * twoZ;
-                    
-            if (angle < halfpi) {
-                if (angle > -halfpi) {
-                    //-pi/2 < angle < pi/2
-                    float twoY2 = y * twoY;
-                    float twoYZ = y * twoZ;
-                    float twoXW = w * twoX;
-                    //x = atan2(2yz + 2xw, 1 - (2x^2 + 2y^2))
-                    result->x = math::atan2Rad(twoYZ + twoXW, 1.0f - (twoX2 + twoY2));
-                    //z = atan2(2xy + 2zw, 1 - (2y^2 + 2z^2))
-                    result->z = math::atan2Rad(twoXY + twoZW, 1.0f - (twoY2 + twoZ2));
-                }else{
-                    //angle > pi/2
-                    //x = -atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
-                    result->x = -math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
-                    result->z = 0;
-                }
-            }else{
-                //angle < -pi/2
-                //x = atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
-                result->x = math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
-                result->z = 0;
-            }
-        }
-
-        static void slerp(CQuat& outQuat, const CQuat& a, const CQuat& b, float t);
-        void setRotZXY(const CVec3* angle);
-        void getRotZXY(CVec3* result) const;
-
-
-        struct{
-        float x;
-        float y;
-        float z;
-        float w;
-        };
-
-        static CQuat zero;
-        static CQuat identity;
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CQuat.hpp" */
-/* "libs/monolib/include/monolib/math/CMat34.hpp" line 4 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CMat34{
-        CMat34(){}
-
-        CMat34(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23){
-            set(
-                m00,m01,m02,m03,
-                m10,m11,m12,m13,
-                m20,m21,m22,m23
-            );
-        }
-
-        void set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23){
-            m[0][0] = m00;
-            m[0][1] = m01;
-            m[0][2] = m02;
-            m[0][3] = m03;
-            m[1][0] = m10;
-            m[1][1] = m11;
-            m[1][2] = m12;
-            m[1][3] = m13;
-            m[2][0] = m20;
-            m[2][1] = m21;
-            m[2][2] = m22;
-            m[2][3] = m23;
-        }
-
-        operator nw4r::math::MTX34*(){
-            return reinterpret_cast<nw4r::math::MTX34*>(this);
-        }
-
-        operator const nw4r::math::MTX34*() const {
-            return reinterpret_cast<const nw4r::math::MTX34*>(this);
-        }
-
-        //TODO: can this be included without interfering with the above operators?
-        /*
-        operator Mtx*(){
-            return &m;
-        }
-
-        operator const Mtx*() const {
-            return &m;
-        }
-        */
-
-        CMat34 operator*(CMat34& rhs) const {
-            CMat34 mat;
-            mul(mat, *this, rhs);
-            return mat;
-        }
-
-        void mul(CVec3& outVec, const CVec3& vec) const {
-            PSMTXMultVec(mtx, vec, outVec);
-        }
-
-
-        static void mul(CMat34& outMat, const CMat34& mat1, const CMat34& mat2){
-            PSMTXConcat(mat2.mtx, mat1.mtx, outMat.mtx);
-        }
-
-        void setUnit(){
-            PSMTXIdentity(mtx);
-        }
-
-        void setScale(float x, float y, float z){
-            set(
-                x, 0, 0, 0,
-                0, y, 0, 0,
-                0, 0, z, 0
-            );
-        }
-
-        void setScale(const CVec3& scale){
-            setScale(scale.x, scale.y, scale.z);
-        }
-
-        void setRotX(float x){
-            float sinX, cosX;
-            math::sincos(x, sinX, cosX);
-
-            set(
-            1, 0,    0,     0,
-            0, cosX, -sinX, 0,
-            0, sinX, cosX,  0
-            );
-        }
-
-        void setRotY(float y){
-            float sinY, cosY;
-            math::sincos(y, sinY, cosY);
-
-            set(
-            cosY,  0, sinY, 0,
-            0,     1, 0,    0,
-            -sinY, 0, cosY, 0
-            );
-        }
-
-        void setRotZ(float z){
-            float sinZ, cosZ;
-            math::sincos(z, sinZ, cosZ);
-
-            set(
-            cosZ, -sinZ, 0, 0,
-            sinZ, cosZ,  0, 0,
-            0,    0,     1, 0
-            );
-        }
-
-        void addRotX(float x){
-            CMat34 mat;
-            mat.setRotX(x);
-            mul(*this, *this, mat);
-        }
-
-        void addRotY(float y){
-            CMat34 mat;
-            mat.setRotY(y);
-            mul(*this, *this, mat);
-        }
-
-        void addRotZ(float z){
-            CMat34 mat;
-            mat.setRotZ(z);
-            mul(*this, *this, mat);
-        }
-
-        void getRotQuat(CQuat& quat) const{
-            CQuat temp;
-            C_QUATMtx(temp, mtx);
-            quat = temp;
-        }
-
-        void setRotQuat(const CQuat& quat){
-            PSMTXQuat(mtx, quat);
-        }
-
-        void setRotXYZ(const CVec3& angle){
-            nw4r::math::MTX34RotXYZRad(*this, angle.x, angle.y, angle.z);
-        }
-
-        void setRotZXY(const CVec3& angle){
-            setRotZ(angle.z);
-            addRotX(angle.x);
-            addRotY(angle.y);
-        }
-
-        void invert(CMat34* outMat){
-            PSMTXInverse(mtx, outMat->mtx);
-        }
-
-        CVec3 getTranslation(){
-            return CVec3(m[0][3], m[1][3], m[2][3]);
-        }
-
-        void addTranslation(const CVec3& vec){
-            m[0][3] += vec.x;
-            m[1][3] += vec.y;
-            m[2][3] += vec.z;
-        }
-
-
-        void replaceTranslation(const CVec3& vec){
-            m[0][3] = vec.x;
-            m[1][3] = vec.y;
-            m[2][3] = vec.z;
-        }
-
-        void getRotAxis(CVec3& vec, float* outAngle) const;
-        bool getRotXYZ(CVec3& vec) const;
-        bool getRotZXY(CVec3& vec) const;
-        bool getRotZYX(CVec3& vec) const;
-
-        union {
-            float m[3][4];
-            Mtx mtx;
-        };
-
-        static CMat34 zero;
-        static CMat34 identity;
-    };
-} //namespace ml
-/* end "monolib/math/CMat34.hpp" */
-/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 5 "monolib/math/CQuat.hpp" */
-/* end "monolib/math/CQuat.hpp" */
-
-namespace ml{
-    struct CAttrTransform{
-        enum Flags{
-            FLAG_0 = 1 << 0,
-            FLAG_1 = 1 << 1,
-            FLAG_2 = 1 << 2,
-            FLAG_USE_ZXY = 1 << 3
-        };
-
-        CAttrTransform(){
-            clear();
-        }
-
-        void clear();
-        void update();
-
-        CVec3 mPos; //0x0
-        CVec3 mRot; //0xC
-        CMat34 mMtx1; //0x18
-        CMat34 mLocalMat; //0x48
-        CMat34 mLocalMatInv; //0x78
-        CQuat unkA8;
-        CVec3 mPrevPos; //0xB8
-        CVec3 mPrevRot; //0xC4
-        CQuat mLocalQuat; //0xD0
-        u32 mFlags; //0xE0
-    };
-} //namespace ml
-/* end "monolib/math/CAttrTransform.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 3 "monolib/math/CCamUtil.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CCamUtil.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-
-namespace ml {
-    struct CCamUtil {
-        static void getXYZ2ZXY(CVec3& outVec, const CVec3& vec);
-    };
-} //namespace ml
-/* end "monolib/math/CCamUtil.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 4 "monolib/math/CCol3.hpp" */
-#pragma once
-
-namespace ml {
-    struct CCol3{
-        CCol3(){}
-        CCol3(float r, float g, float b){
-            set(r, g, b);
-        }
-
-        void set(float r, float g, float b){
-            this->r = r;
-            this->g = g;
-            this->b = b;
-        }
-
-        void clamp(float min, float max){
-            if(r > max) r = max;
-            else if(r < min) r = min;
-            if(g > max) g = max;
-            else if(g < min) g = min;
-            if(b > max) b = max;
-            else if(b < min) b = min;
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float r;
-            float g;
-            float b;
-        };
-
-        static CCol3 white;
-        static CCol3 gray;
-        static CCol3 black;
-        static CCol3 red;
-        static CCol3 green;
-        static CCol3 blue;
-        static CCol3 yellow;
-        static CCol3 cyan;
-        static CCol3 magenta;
-        static CCol3 salmon;
-        static CCol3 orange;
-    };
-} //namespace ml
-/* end "monolib/math/CCol3.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 5 "monolib/math/CCol4.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CCol4.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-
-#define COLOR_TO_U32(r, g, b, a) (((u8)(255 * r) << 24) | ((u8)(255 * g) << 16) | ((u8)(255 * b) << 8) | (u8)(255 * a))
-
-namespace ml {
-    
-    struct CCol4{
-        CCol4(){}
-        CCol4(float r, float g, float b, float a){
-            set(r,g,b,a);
-        }
-
-        void set(float r, float g, float b, float a){
-            this->r = r;
-            this->g = g;
-            this->b = b;
-            this->a = a;
-        }
-
-        void clamp(float min, float max){
-            if(r > max) r = max;
-            else if(r < min) r = min;
-            if(g > max) g = max;
-            else if(g < min) g = min;
-            if(b > max) b = max;
-            else if(b < min) b = min;
-            if(a > max) a = max;
-            else if(a < min) a = min;
-        }
-
-        u32 toU32() const {
-            return COLOR_TO_U32(r, g, b, a);
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float r;
-            float g;
-            float b;
-            float a;
-        };
-
-        static CCol4 white;
-        static CCol4 gray;
-        static CCol4 black;
-        static CCol4 red;
-        static CCol4 green;
-        static CCol4 blue;
-        static CCol4 yellow;
-        static CCol4 cyan;
-        static CCol4 magenta;
-        static CCol4 salmon;
-        static CCol4 orange;
-        static CCol4 zero;
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CCol4.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 6 "monolib/math/CFrustum.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 3 "monolib/math/CMat34.hpp" */
-/* end "monolib/math/CMat34.hpp" */
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 4 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 5 "monolib/math/CPlane.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CPlane.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-
-namespace ml {
-    struct CPlane {
-        CPlane(){
-        }
-        CPlane(const CVec3& pos, const CVec3& p1, const CVec3& p2){
-            set(pos, p1, p2);
-        }
-
-        CPlane* set(const CVec3& pos, const CVec3& p1, const CVec3& p2);
-        static void getCross(CVec3& outVec, const CPlane& plane, const CVec3& rayOrigin, const CVec3& rayDir);
-
-        void normalize(){
-            mNormal.normalizeSub();
-        }
-
-        CVec3 convertRayToNormal(const CVec3& rayStartPos, const CVec3& rayEndPos) const {
-            CVec3 normal = rayEndPos - rayStartPos;
-            normal.normalizeSub();
-            return normal;
-        }
-
-        //Sets this plane from the given ray start/end position.
-        void set(const CVec3& rayStartPos, const CVec3& rayEndPos){
-            mNormal = convertRayToNormal(rayStartPos, rayEndPos);
-            mDist = -CVec3::dot(rayStartPos, mNormal);
-        }
-
-        float getPointDistance(const CVec3& pos) const {
-            return CVec3::dot(pos, mNormal) + mDist;
-        }
-        
-        bool isWithinDistance(const CVec3& vec, float distance) const {
-            if(getPointDistance(vec) < distance) return true;
-            else return false;
-        }
-
-        bool isOnNegativeSide(const CVec3& vec) const {
-            if(getPointDistance(vec) < 0) return true;
-            else return false;
-        }
-
-        bool isOnPositiveSide(const CVec3& vec) const {
-            if(getPointDistance(vec) >= 0) return true;
-            else return false;
-        }
-
-        //Determines if the points are on different sides of the plane.
-        bool isDifferentSide(const CVec3& vec1, const CVec3& vec2) const {
-            float f0 = getPointDistance(vec2);
-            float f1 = getPointDistance(vec1);
-            
-            bool r3 = f1 >= 0;
-            bool r0 = f0 >= 0;
-            //TODO: is this some weird inline for calculating if only one of two conditions are true?
-            return r3 ^ r0;
-        }
-
-        CVec3 mNormal; //0x0
-        float mDist; //0x4
-    };
-
-} //namespace ml
-/* end "monolib/math/CPlane.hpp" */
-
-//TODO: idk if this belongs here in monolib or in the scene code. There's no evidence of it in XCX
-namespace ml{
-
-    struct CFrustum{
-        u8 unk0[0xCC];
-        ml::CMat34 unkCC;
-        u8 unkFC[0x10];
-        ml::CVec3 unk10C;
-        u8 unk118[0x258 - 0x118];
-        ml::CPlane unk248[6];
-    };
-
-} //namespace ml
-/* end "monolib/math/CFrustum.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 7 "monolib/math/CMat33.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CMat33.hpp" line 2 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math/CMat33.hpp" line 3 "monolib/math/Utility.hpp" */
-/* end "monolib/math/Utility.hpp" */
-/* "libs/monolib/include/monolib/math/CMat33.hpp" line 4 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CMat33{
-        CMat33(){}
-
-        CMat33(float m00, float m01, float m02,
-        float m10, float m11, float m12,
-        float m20, float m21, float m22){
-            set(m00, m01, m02, m10, m11, m12, m20, m21, m22);
-        }
-
-        void set(float m00, float m01, float m02,
-        float m10, float m11, float m12,
-        float m20, float m21, float m22){
-            m[0][0] = m00;
-            m[0][1] = m01;
-            m[0][2] = m02;
-            m[1][0] = m10;
-            m[1][1] = m11;
-            m[1][2] = m12;
-            m[2][0] = m20;
-            m[2][1] = m21;
-            m[2][2] = m22;
-        }
-
-        void setRotXYZ(const CVec3& angle){
-            float sinX = math::sin(angle.x);
-            float cosX = math::cos(angle.x);
-            float sinY = math::sin(angle.y);
-            float cosY = math::cos(angle.y);
-            float sinZ = math::sin(angle.z);
-            float cosZ = math::cos(angle.z);
-
-            set(
-            cosY*cosZ, sinX*sinY*cosZ - cosX*sinZ, cosX*sinY*cosZ + sinX*sinZ,
-            cosY*sinZ, sinX*sinY*sinZ + cosX*cosZ, cosX*sinY*sinZ - sinX*cosZ,
-            -sinY,     sinX*cosY,                  cosX*cosY
-            );
-        }
-
-        void getRotZXY(CVec3& outVec){
-            float angle = math::asin(-m[1][2]);
-            outVec.x = angle;
-
-            if(angle < halfpi){
-                if(angle > -halfpi){
-                    //-pi/2 < angle < pi/2
-                    outVec.z = math::atan2Rad(m[1][0], m[1][1]);
-                    outVec.y = math::atan2Rad(m[0][2], m[2][2]);
-                }else{
-                    //angle < -pi/2
-                    outVec.z = -math::atan2Rad(m[2][0], m[0][0]);
-                    outVec.y = 0;
-                }
-            }else{
-                //angle > pi/2
-                outVec.z = math::atan2Rad(m[2][0], m[0][0]);
-                outVec.y = 0;
-            }
-        }
-
-        float m[3][3];
-    };
-} //namespace ml
-/* end "monolib/math/CMat33.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 8 "monolib/math/CMat34.hpp" */
-/* end "monolib/math/CMat34.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 9 "monolib/math/CMat44.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CMat44.hpp" line 2 "revolution/MTX.h" */
-/* end "revolution/MTX.h" */
-
-namespace ml {
-    struct CMat44{
-        CMat44(){}
-
-        CMat44(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
-        float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33){
-            m[0][0] = m00;
-            m[0][1] = m01;
-            m[0][2] = m02;
-            m[0][3] = m03;
-            m[1][0] = m10;
-            m[1][1] = m11;
-            m[1][2] = m12;
-            m[1][3] = m13;
-            m[2][0] = m20;
-            m[2][1] = m21;
-            m[2][2] = m22;
-            m[2][3] = m23;
-            m[3][0] = m30;
-            m[3][1] = m31;
-            m[3][2] = m32;
-            m[3][3] = m33;
-        }
-
-        union {
-            float m[4][4];
-            Mtx44 mtx;
-        };
-    
-        static CMat44 zero;
-        static CMat44 identity;
-    };
-} //namespace ml
-/* end "monolib/math/CMat44.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 10 "monolib/math/CPlane.hpp" */
-/* end "monolib/math/CPlane.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 11 "monolib/math/CPnt16.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CPnt16.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace ml {
-    struct CPnt16{
-        CPnt16(){}
-
-        CPnt16(s16 x, s16 y){
-            set(x,y);
-        }
-
-        void set(s16 x, s16 y){
-            this->x = x;
-            this->y = y;
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lhz/sth. */
-        struct{
-            s16 x;
-            s16 y;
-        };
-    };
-} //namespace ml
-/* end "monolib/math/CPnt16.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 12 "monolib/math/CQuat.hpp" */
-/* end "monolib/math/CQuat.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 13 "monolib/math/CRect16.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/CRect16.hpp" line 2 "types.h" */
-/* end "types.h" */
-/* "libs/monolib/include/monolib/math/CRect16.hpp" line 3 "monolib/math/CPnt16.hpp" */
-/* end "monolib/math/CPnt16.hpp" */
-
-namespace ml {
-    struct CRect16 {
-        CRect16(){
-        }
-    
-        CRect16(s16 x, s16 y, s16 width, s16 height){
-            set(x, y, width, height);
-        }
-
-        CRect16(const CPnt16& pos, const CPnt16& size){
-            set(pos, size);
-        }
-
-        void set(s16 x, s16 y, s16 width, s16 height){
-            mPos.x = x;
-            mPos.y = y;
-            mSize.x = width;
-            mSize.y = height;
-        }
-
-        void set(const CPnt16& pos, const CPnt16& size){
-            mPos.x = pos.x;
-            mPos.y = pos.y;
-            mSize.x = size.x;
-            mSize.y = size.y;
-        }
-    
-        bool isInside(const CPnt16& point) const;
-
-        CPnt16 mPos; //0x0
-        CPnt16 mSize; //0x4
-    };
-} //namespace ml
-/* end "monolib/math/CRect16.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 14 "monolib/math/CVec2.hpp" */
-#pragma once
-
-/* Not known to be used yet, but it's here anyways just in case they did end up using it (it exists
-in XCX, so it probably at least existed). It also doesn't hurt to have anyway for modding and stuff. */
-namespace ml {
-    struct CVec2 {
-
-        CVec2(){}
-
-        CVec2(float x, float y){
-            set(x, y);
-        }
-
-        CVec2(const CVec2& vec){
-            set(vec.x, vec.y);
-        }
-
-        void set(float x, float y){
-            this->x = x;
-            this->y = y;
-        }
-
-        void set(const CVec2& vec){
-            x = vec.x;
-            y = vec.y;
-        }
-
-        bool operator==(const CVec2& vec) const {
-            return x == vec.x && y == vec.y;
-        }
-
-        bool operator!=(const CVec2& vec) const {
-            return x != vec.x || y != vec.y;
-        }
-        
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float x;
-            float y;
-        };
-
-    };
-
-} //namespace ml
-/* end "monolib/math/CVec2.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 15 "monolib/math/CVec3.hpp" */
-/* end "monolib/math/CVec3.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 16 "monolib/math/CVec4.hpp" */
-#pragma once
-
-namespace ml {
-    struct CVec4{
-        static CVec4 zero;
-        static CVec4 unitX;
-        static CVec4 unitY;
-        static CVec4 unitZ;
-        static CVec4 unit;
-
-        CVec4() {}
-
-        CVec4(float x, float y, float z, float w){
-            this->x = x;
-            this->y = y;
-            this->z = z;
-            this->w = w;
-        }
-
-        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
-        which is more efficient than lfs/stfd. */
-        struct{
-            float x;
-            float y;
-            float z;
-            float w;
-        };
-
-    };
-} //namespace ml
-/* end "monolib/math/CVec4.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 17 "monolib/math/Main.hpp" */
-#pragma once
-
-namespace ml{
-    namespace math{
-        void initialize();
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Main.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 18 "monolib/math/FloatUtils.hpp" */
-#pragma once
-
-#define FLOAT_LARGE 1e14f
-#define FLOAT_SMALL -1e14f
-#define FLOAT_MAX_HEX 0xD3D3D3D3
-#define FLOAT_MAX_HEX_NEG 0xF3F3F3F3
-#define FLOAT_NAN 0xFFFFFFFF
-#define FLOAT_TO_HEX(f) (*(u32*)&f)
-
-namespace ml{
-    namespace math{
-        bool isErrFloat(float f);
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/FloatUtils.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 19 "monolib/math/MathConstants.hpp" */
-/* end "monolib/math/MathConstants.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 20 "monolib/math/MTRand.hpp" */
-//Original copyright comments:
-
-// Mersenne Twister random number generator -- a C++ class MTRand
-// Based on code by Makoto Matsumoto, Takuji Nishimura, and Shawn Cokus
-// Richard J. Wagner  v1.1  28 September 2009  wagnerr@umich.edu
-
-// The Mersenne Twister is an algorithm for generating random numbers.  It
-// was designed with consideration of the flaws in various other generators.
-// The period, 2^19937-1, and the order of equidistribution, 623 dimensions,
-// are far greater.  The generator is also fast; it avoids multiplication and
-// division, and it benefits from caches and pipelines.  For more information
-// see the inventors' web page at
-// http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
-
-// Reference
-// M. Matsumoto and T. Nishimura, "Mersenne Twister: A 623-Dimensionally
-// Equidistributed Uniform Pseudo-Random Number Generator", ACM Transactions on
-// Modeling and Computer Simulation, Vol. 8, No. 1, January 1998, pp 3-30.
-
-// Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
-// Copyright (C) 2000 - 2009, Richard J. Wagner
-// All rights reserved.
-// 
-// Redistribution and use in source and binary forms, with or without
-// modification, are permitted provided that the following conditions
-// are met:
-// 
-//   1. Redistributions of source code must retain the above copyright
-//      notice, this list of conditions and the following disclaimer.
-//
-//   2. Redistributions in binary form must reproduce the above copyright
-//      notice, this list of conditions and the following disclaimer in the
-//      documentation and/or other materials provided with the distribution.
-//
-//   3. The names of its contributors may not be used to endorse or promote 
-//      products derived from this software without specific prior written 
-//      permission.
-// 
-// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-// POSSIBILITY OF SUCH DAMAGE.
-
-// The original code included the following notice:
-// 
-//     When you use this, send an email to: m-mat@math.sci.hiroshima-u.ac.jp
-//     with an appropriate reference to your work.
-// 
-// It would be nice to CC: wagnerr@umich.edu and Cokus@math.washington.edu
-// when you write.
-
-
-/* Monolithsoft made slight modifications from the most commonly found version,
-most notably changing function names.
-This might be the version this is based on: https://gist.github.com/yuikns/10017640 */
-
-#pragma once
-
-/* "libs/monolib/include/monolib/math/MTRand.hpp" line 65 "types.h" */
-/* end "types.h" */
-
-namespace ml{
-
-//Probably uses a singleton template
-
-class MTRand{
-protected:
-    static const int N = 624; //length
-    static const int M = 397; //period
-    u32 state[N]; //twister
-    int left; //0x9C0
-    BOOL initialized; //0x9C4
-    u32* pNext; //0x9C8
-    u32 unk9D0;
-
-public:
-    static MTRand* getInstance();
-    void srand(u32);
-    void nextMt();
-    u32 rand32();
-    u32 rand31();
-    float randFloat();
-    float randFloat1();
-
-    inline u32 rand(){
-        return rand31();
-    }
-
-    inline u32 rand(int max){
-        if(max != 0){
-            int randVal = rand();
-            return randVal % max;
-        }else{
-            return 0;
-        }
-    }
-
-    inline u32 rand(int min, int max){
-        int range = max - min;
-        int result = 0;
-
-        if(range != 0){
-            int randVal = rand();
-            result = (randVal % range);
-        }else{
-            result = 0;
-        }
-
-        return min + result; //wtf? why not just add it before?
-    }
-
-protected:
-    inline u32 hiBit(u32 u) { return u & 0x80000000; }
-    inline u32 loBit(u32 u) { return u & 0x00000001; }
-    inline u32 loBits(u32 u) { return u & 0x7fffffff; }
-    inline u32 mixBits(u32 u, u32 v) { return hiBit(u) | loBits(v); }
-    inline u32 magic(u32 u) { return loBit(u) ? 0x9908b0dfUL : 0x0UL; }
-    inline u32 twist(u32 m, u32 s0, u32 s1) {
-        const u32 y = mixBits(s0, s1);
-        const u32 mask = magic(s1);
-        return m ^ (mask ^ (y >> 1));
-    }
-};
-
-} //namespace ml
-/* end "monolib/math/MTRand.hpp" */
-/* "libs/monolib/include/monolib/math.hpp" line 21 "monolib/math/Random.hpp" */
-#pragma once
-
-/* "libs/monolib/include/monolib/math/Random.hpp" line 2 "types.h" */
-/* end "types.h" */
-
-namespace ml{
-    namespace math{
-        void mtInit(u32 seed);
-        int mtRand();
-        int mtRand(int max);
-        int mtRand(int min,int max);
-    } //namespace math
-} //namespace ml
-/* end "monolib/math/Random.hpp" */
-/* end "monolib/math.hpp" */
-/* "libs/monolib/include/monolib/scn/CLight.hpp" line 4 "nw4r/g3d/g3d_light.h" */
-#ifndef NW4R_G3D_LIGHT_H
-#define NW4R_G3D_LIGHT_H
-/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/g3d/g3d_light.h" line 4 "nw4r/g3d/g3d_state.h" */
-#ifndef NW4R_G3D_STATE_H
-#define NW4R_G3D_STATE_H
-/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/g3d/g3d_state.h" line 4 "nw4r/g3d/g3d_camera.h" */
-#ifndef NW4R_G3D_CAMERA_H
-#define NW4R_G3D_CAMERA_H
-/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 4 "nw4r/g3d/res/g3d_rescommon.h" */
-#ifndef NW4R_G3D_RES_RES_COMMON_H
-#define NW4R_G3D_RES_RES_COMMON_H
-/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 2 "nw4r/types_nw4r.h" */
-/* end "nw4r/types_nw4r.h" */
-
-/* "libs/nw4r/include/nw4r/g3d/res/g3d_rescommon.h" line 4 "revolution/GX.h" */
-/**
- * References: YAGCD, Dolphin Emulator, publicly available patents
- */
-
-#ifndef RVL_SDK_PUBLIC_GX_H
-#define RVL_SDK_PUBLIC_GX_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/GX.h" line 10 "revolution/GX/GXAttr.h" */
-#ifndef RVL_SDK_GX_ATTR_H
-#define RVL_SDK_GX_ATTR_H
-/* "libs/RVL_SDK/include/revolution/GX/GXAttr.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXAttr.h" line 4 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-typedef struct _GXVtxDescList {
-    GXAttr attr;     // at 0x0
-    GXAttrType type; // at  0x4
-} GXVtxDescList;
-
-typedef struct _GXVtxAttrFmtList {
-    GXAttr attr;         // at 0x0
-    GXCompCnt compCnt;   // at 0x4
-    GXCompType compType; // at 0x8
-    u8 shift;            // at 0xC
-} GXVtxAttrFmtList;
-
-void GXSetVtxDesc(GXAttr name, GXAttrType type);
-void GXSetVtxDescv(const GXVtxDescList* list);
-void GXGetVtxDesc(GXAttr name, GXAttrType* type);
-void GXGetVtxDescv(GXVtxDescList* list);
-void GXClearVtxDesc(void);
-void GXSetVtxAttrFmt(GXVtxFmt fmt, GXAttr attr, GXCompCnt compCnt,
-                     GXCompType compType, u8 shift);
-
-// TODO(kiwi) Please find a way to get rid of this
-#if defined(GXATTR_MATCH_HACK)
-void GXSetVtxAttrFmtv(s16 fmt, const GXVtxAttrFmtList* list);
-#else
-void GXSetVtxAttrFmtv(GXVtxFmt fmt, const GXVtxAttrFmtList* list);
-#endif
-
-void GXGetVtxAttrFmt(GXVtxFmt fmt, GXAttr attr, GXCompCnt* compCnt,
-                     GXCompType* compType, u8* shift);
-void GXGetVtxAttrFmtv(GXVtxFmt fmt, GXVtxAttrFmtList* list);
-void GXSetArray(GXAttr attr, const void* base, u8 stride);
-void GXInvalidateVtxCache(void);
-void GXSetTexCoordGen2(GXTexCoordID id, GXTexGenType type, GXTexGenSrc src,
-                       u32 texMtxIdx, GXBool normalize, u32 dualTexMtxIdx);
-void GXSetNumTexGens(u8 num);
-
-void __GXSetVCD(void);
-void __GXCalculateVLim(void);
-void __GXSetVAT(void);
-
-static void GXSetTexCoordGen(GXTexCoordID id, GXTexGenType type,
-                             GXTexGenSrc src, u32 texMtxIdx) {
-    GXSetTexCoordGen2(id, type, src, texMtxIdx, FALSE, GX_PTIDENTITY);
-}
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXAttr.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 11 "revolution/GX/GXBump.h" */
-#ifndef RVL_SDK_GX_BUMP_H
-#define RVL_SDK_GX_BUMP_H
-/* "libs/RVL_SDK/include/revolution/GX/GXBump.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXBump.h" line 4 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void GXSetTevIndirect(GXTevStageID tevStage, GXIndTexStageID texStage,
-                      GXIndTexFormat texFmt, GXIndTexBiasSel biasSel,
-                      GXIndTexMtxID mtxId, GXIndTexWrap wrapS,
-                      GXIndTexWrap wrapT, GXBool addPrev, GXBool utcLod,
-                      GXIndTexAlphaSel alphaSel);
-void GXSetIndTexMtx(GXIndTexMtxID id, const f32 offset[2][3], s8 scaleExp);
-void GXSetIndTexCoordScale(GXIndTexStageID stage, GXIndTexScale scaleS,
-                           GXIndTexScale scaleT);
-void GXSetIndTexOrder(GXIndTexStageID stage, GXTexCoordID coord,
-                      GXTexMapID map);
-void GXSetNumIndStages(u8 num);
-void GXSetTevDirect(GXTevStageID stage);
-
-void GXSetTevIndWarp(GXTevStageID tev_stage, GXIndTexStageID ind_stage,
-GXBool signed_offsets, GXBool replace_mode, GXIndTexMtxID matrix_sel);
-
-void __GXUpdateBPMask(void);
-void __GXSetIndirectMask(u32 mask);
-void __GXFlushTextureState(void);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXBump.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 12 "revolution/GX/GXDisplayList.h" */
-#ifndef RVL_SDK_GX_DISPLAY_LIST_H
-#define RVL_SDK_GX_DISPLAY_LIST_H
-/* "libs/RVL_SDK/include/revolution/GX/GXDisplayList.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXDisplayList.h" line 4 "revolution/GX/GXHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap8.html#sec8
- * https://www.gc-forever.com/yagcd/chap5.html#sec5
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/BPMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/XFMemory.h
- * https://github.com/dolphin-emu/dolphin/blob/master/Source/Core/VideoCommon/OpcodeDecoding.h
- * https://patents.google.com/patent/US6700586B1/en
- * https://patents.google.com/patent/US6639595B1/en
- * https://patents.google.com/patent/US7002591
- * https://patents.google.com/patent/US6697074
- */
-
-#ifndef RVL_SDK_GX_HARDWARE_H
-#define RVL_SDK_GX_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 15 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXHardware.h" line 17 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/************************************************************
- *
- *
- * GX FIFO
- *
- *
- ***********************************************************/
-
-/**
- * FIFO write/gather pipe
- */
-extern volatile union {
-    // 1-byte
-    char c;
-    unsigned char uc;
-    // 2-byte
-    short s;
-    unsigned short us;
-    // 4-byte
-    int i;
-    unsigned int ui;
-    void* p;
-    float f;
-} WGPIPE DECL_ADDRESS(0xCC008000);
-
-/**
- * FIFO commands
- */
-typedef enum {
-    GX_FIFO_CMD_NOOP = 0x00,
-
-    GX_FIFO_CMD_LOAD_BP_REG = 0x61,
-    GX_FIFO_CMD_LOAD_CP_REG = 0x08,
-    GX_FIFO_CMD_LOAD_XF_REG = 0x10,
-
-    GX_FIFO_CMD_LOAD_INDX_A = 0x20,
-    GX_FIFO_CMD_LOAD_INDX_B = 0x28,
-    GX_FIFO_CMD_LOAD_INDX_C = 0x30,
-    GX_FIFO_CMD_LOAD_INDX_D = 0x38,
-
-    GX_FIFO_CMD_CALL_DL = 0x40,
-    GX_FIFO_CMD_INVAL_VTX = 0x48,
-
-    GX_FIFO_CMD_DRAW_POINTS = GX_POINTS,
-    GX_FIFO_CMD_DRAW_LINES = GX_LINES,
-    GX_FIFO_CMD_DRAW_LINESTRIP = GX_LINESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLES = GX_TRIANGLES,
-    GX_FIFO_CMD_DRAW_TRIANGLESTRIP = GX_TRIANGLESTRIP,
-    GX_FIFO_CMD_DRAW_TRIANGLEFAN = GX_TRIANGLEFAN,
-    GX_FIFO_CMD_DRAW_QUADS = GX_QUADS,
-} GXFifoCmd;
-
-/**
- * FIFO command sizes
- */
-#define GX_FIFO_CMD_LOAD_INDX_SIZE 5
-#define GX_FIFO_CMD_DRAW_SIZE 3
-
-#define __GX_FIFO_SET_LOAD_INDX_DST(reg, x) ((reg) = GX_BITSET(reg, 20, 12, x))
-#define __GX_FIFO_SET_LOAD_INDX_NELEM(reg, x) ((reg) = GX_BITSET(reg, 16, 4, x))
-#define __GX_FIFO_SET_LOAD_INDX_INDEX(reg, x) ((reg) = GX_BITSET(reg, 0, 16, x))
-
-#define __GX_FIFO_LOAD_INDX(reg, dst, nelem, index)                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        __GX_FIFO_SET_LOAD_INDX_DST(cmd, dst);                                 \
-        __GX_FIFO_SET_LOAD_INDX_NELEM(cmd, nelem);                             \
-        __GX_FIFO_SET_LOAD_INDX_INDEX(cmd, index);                             \
-        WGPIPE.c = reg;                                                        \
-        WGPIPE.i = cmd;                                                        \
-    }
-
-#define GX_FIFO_LOAD_INDX_A(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_A, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_B(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_B, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_C(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_C, dst, nelem, index)
-
-#define GX_FIFO_LOAD_INDX_D(dst, nelem, index)                                 \
-    __GX_FIFO_LOAD_INDX(GX_FIFO_CMD_LOAD_INDX_D, dst, nelem, index)
-
-/************************************************************
- *
- *
- * GX Blitting Processor (BP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into BP register
- */
-#define GX_BP_LOAD_REG(data)                                                   \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;                                        \
-    WGPIPE.i = (data);
-
-/**
- * Set BP command opcode (first 8 bits)
- */
-#define GX_BP_SET_OPCODE(cmd, opcode) (cmd) = GX_BITSET(cmd, 0, 8, (opcode))
-
-#define GX_BP_OPCODE_SHIFT 24
-#define GX_BP_CMD_SZ (sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Command Processor (CP)
- *
- *
- ***********************************************************/
-
-/**
- * Load immediate value into CP register
- */
-#define GX_CP_LOAD_REG(addr, data)                                             \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_CP_REG;                                        \
-    WGPIPE.c = (addr);                                                         \
-    WGPIPE.i = (data);
-
-#define GX_CP_CMD_SZ (sizeof(u8) + sizeof(u8) + sizeof(u32))
-
-/************************************************************
- *
- *
- * GX Transform Unit (XF)
- *
- *
- ***********************************************************/
-
-/**
- * XF memory
- */
-typedef enum {
-    GX_XF_MEM_POSMTX = 0x0000,
-    GX_XF_MEM_NRMMTX = 0x0400,
-    GX_XF_MEM_DUALTEXMTX = 0x0500,
-    GX_XF_MEM_LIGHTOBJ = 0x0600
-} GXXfMem;
-
-/**
- * Header for an XF register load
- */
-#define GX_XF_LOAD_REG_HDR(addr)                                               \
-    WGPIPE.c = GX_FIFO_CMD_LOAD_XF_REG;                                        \
-    WGPIPE.i = (addr);
-
-/**
- * Load immediate value into XF register
- */
-#define GX_XF_LOAD_REG(addr, data)                                             \
-    GX_XF_LOAD_REG_HDR(addr);                                                  \
-    WGPIPE.i = (data);
-
-#define GX_XF_CMD_SZ (sizeof(u8) + sizeof(u32) + sizeof(u32))
-
-/**
- * Load immediate values into multiple XF registers
- */
-#define GX_XF_LOAD_REGS(size, addr)                                            \
-    {                                                                          \
-        u32 cmd = 0;                                                           \
-        cmd |= (addr);                                                         \
-        cmd |= (size) << 16;                                                   \
-        GX_XF_LOAD_REG_HDR(cmd);                                               \
-    }
-
-/**
- * Enums for Tex0-Tex7 register fields
- */
-typedef enum {
-    GX_XF_TEX_PROJ_ST, // (s,t): texmul is 2x4
-    GX_XF_TEX_PROJ_STQ // (s,t,q): texmul is 3x4
-} GXXfTexProj;
-
-typedef enum {
-    GX_XF_TEX_FORM_AB11, // (A, B, 1.0, 1.0) (used for regular texture source)
-    GX_XF_TEX_FORM_ABC1  // (A, B, C, 1.0) (used for geometry or normal source)
-} GXXfTexForm;
-
-typedef enum {
-    GX_XF_TG_REGULAR, // Regular transformation (transform incoming data)
-    GX_XF_TG_BUMP,    // Texgen bump mapping
-
-    GX_XF_TG_CLR0, // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                   // color0
-
-    GX_XF_TG_CLR1 // Color texgen: (s,t)=(r,g:b) (g and b are concatenated),
-                  // color1
-} GXXfTexGen;
-
-/**
- * Misc. hardware enums
- */
-typedef enum {
-    GX_RAS_COLOR0A0,
-    GX_RAS_COLOR1A1,
-    GX_RAS_ALPHA_BUMP = 5,
-    GX_RAS_ALPHA_BUMPN,
-    GX_RAS_COLOR_ZERO,
-
-    GX_RAS_MAX_CHANNEL
-} GXRasChannelID;
-
-typedef enum {
-    GX_TEVREG_COLOR,
-    GX_TEVREG_KONST,
-} GXTevRegType;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXHardware.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void GXBeginDisplayList(void* list, u32 size);
-u32 GXEndDisplayList(void);
-void GXCallDisplayList(void* list, u32 size);
-
-static void GXFastCallDisplayList(void* list, u32 size) {
-    WGPIPE.c = GX_FIFO_CMD_CALL_DL;
-    WGPIPE.p = list;
-    WGPIPE.ui = size;
-}
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXDisplayList.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 13 "revolution/GX/GXDraw.h" */
-#ifndef RVL_SDK_GX_DRAW_H
-#define RVL_SDK_GX_DRAW_H
-/* "libs/RVL_SDK/include/revolution/GX/GXDraw.h" line 2 "types.h" */
-/* end "types.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-void GXDrawCylinder(u8 sides);
-void GXDrawSphere(u32 stacks, u32 sectors);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXDraw.h" */
-/* "libs/RVL_SDK/include/revolution/GX.h" line 14 "revolution/GX/GXFifo.h" */
-#ifndef RVL_SDK_GX_FIFO_H
-#define RVL_SDK_GX_FIFO_H
-/* "libs/RVL_SDK/include/revolution/GX/GXFifo.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXFifo.h" line 4 "revolution/GX/GXInternal.h" */
-#ifndef RVL_SDK_GX_INTERNAL_H
-#define RVL_SDK_GX_INTERNAL_H
-/* "libs/RVL_SDK/include/revolution/GX/GXInternal.h" line 2 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXInternal.h" line 4 "revolution/GX/GXTypes.h" */
-/* end "revolution/GX/GXTypes.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/**
- * GX internal structures.
- *
- * Wouldn't be necessary if the public ones didn't include padding; but they do,
- * so there has to be different structure definitions.
- *
- * These internal structures are implemented like the RFL ones since we don't
- * have DWARF info for most GX structures.
- */
-
-/**
- * Declare a public structure from the corresponding internal structure.
- * (Implementation size is included to require that such a structure already
- * exists.)
- */
-#define GX_PUBLIC_STRUCT_DECL(name, size)                                      \
-    typedef struct _##name {                                                   \
-        u32 dummy[((size) - sizeof(name##Impl) + sizeof(name##Impl)) /         \
-                  sizeof(u32)];                                                \
-    } name;
-
-typedef struct _GXFifoObjImpl {
-    void* base;        // at 0x0
-    void* end;         // at 0x4
-    u32 size;          // at 0x8
-    void* hiWatermark; // at 0xC
-    void* loWatermark; // at 0x10
-    void* readPtr;     // at 0x14
-    void* writePtr;    // at 0x18
-    u32 count;         // at 0x1C
-    u8 wrap;           // at 0x20
-    u8 bind_cpu;       // at 0x21
-    u8 bind_gp;        // at 0x22
-    u8 pad;            // at 0x23
-} GXFifoObjImpl;
-
-typedef struct _GXLightObjImpl {
-    char UNK_0x0[0xC];
-    GXColor color; // at 0xC
-    f32 aa;        // at 0x10
-    f32 ab;        // at 0x14
-    f32 ac;        // at 0x18
-    f32 ka;        // at 0x1C
-    f32 kb;        // at 0x20
-    f32 kc;        // at 0x24
-    f32 posX;      // at 0x28
-    f32 posY;      // at 0x2C
-    f32 posZ;      // at 0x30
-    f32 dirX;      // at 0x34
-    f32 dirY;      // at 0x38
-    f32 dirZ;      // at 0x3C
-} GXLightObjImpl;
-
-typedef struct _GXTexObjImpl {
-    u32 mode0;
-    u32 mode1;
-    u32 image0;
-    u32 image3;
-    void* userData;
-    GXTexFmt fmt;
-    u32 tlutName;
-    u16 loadCnt;
-    u8 loadFmt;
-    u8 flags;
-} GXTexObjImpl;
-
-typedef struct _GXTlutObjImpl {
-    u32 tlut;
-    u32 loadTlut0;
-    u16 numEntries;
-} GXTlutObjImpl;
-
-typedef struct _GXTexRegionImpl {
-    u32 image1;
-    u32 image2;
-    u16 sizeEven;
-    u16 sizeOdd;
-    u8 is32bMipmap;
-    u8 isCached;
-} GXTexRegionImpl;
-
-typedef struct _GXTlutRegionImpl {
-    u32 loadTlut1;
-    GXTlutObjImpl tlutObj;
-} GXTlutRegionImpl;
-
-#define GX_SETUP_TEXOBJ(l, p) GXTexObjImpl* l = (GXTexObjImpl*)(p);
-
-#define GX_SETUP_ALL_TEXOBJS(l, p, m, q) \
-    GXTexObjImpl* l = (GXTexObjImpl*)(p); \
-    GXTexRegionImpl* m = (GXTexRegionImpl*)(q);
-
-#define GX_SETUP_TLUTOBJ(l, p) GXTlutObjImpl* l = (GXTlutObjImpl*)(p);
-
-#define GX_SETUP_TREGOBJ(l, p) GXTexRegionImpl* l = (GXTexRegionImpl*)(p);
-
-#define GX_SETUP_TLUTREGOBJ(l, p) GXTlutRegionImpl* l = (GXTlutRegionImpl*)(p);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/GX/GXInternal.h" */
-
-/* "libs/RVL_SDK/include/revolution/GX/GXFifo.h" line 6 "revolution/OS.h" */
-/**
- * References: YAGCD, WiiBrew, Dolphin Emulator
- */
-
-#ifndef RVL_SDK_PUBLIC_OS_H
-#define RVL_SDK_PUBLIC_OS_H
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
-/* end "revolution/OS/OS.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
-/* end "revolution/OS/OSAlarm.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
-/* end "revolution/OS/OSAlloc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
-/* end "revolution/OS/OSArena.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
-/* end "revolution/OS/OSAudioSystem.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
-/* end "revolution/OS/OSCache.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
-/* end "revolution/OS/OSContext.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
-/* end "revolution/OS/OSCrc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
-/* end "revolution/OS/OSError.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
-/* end "revolution/OS/OSExec.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
-/* end "revolution/OS/OSFastCast.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
-/* end "revolution/OS/OSFatal.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
-/* end "revolution/OS/OSFont.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
-/**
- * For more details, see:
- * https://www.gc-forever.com/yagcd/chap4.html#sec4
- * https://www.gc-forever.com/yagcd/chap13.html#sec13
- * https://wiibrew.org/wiki/Memory_map
- */
-
-#ifndef RVL_SDK_OS_HARDWARE_H
-#define RVL_SDK_OS_HARDWARE_H
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
-/* end "types.h" */
-
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
-/* end "revolution/DVD/dvd.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
-/* end "revolution/OS/OSAddress.h" */
-/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-// Forward declarations
-typedef struct OSContext;
-typedef struct OSExecParams;
-
-// Derive offsets for use with OSAddress functions
-#define __DEF_ADDR_OFFSETS(name, addr)                                         \
-    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
-    static const u32 OS_CACHED_##name = (addr);                                \
-    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
-
-// Define a global variable in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name DECL_ADDRESS(addr);                                         \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define a global array in *CACHED* MEM1.
-// Can be accessed directly or with OSAddress functions.
-#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name arr DECL_ADDRESS(addr);                                     \
-    __DEF_ADDR_OFFSETS(name, addr)
-
-// Define an global variable in the hardware-register range.
-#define OS_DEF_HW_REG(type, name, addr)                                        \
-    /* Memory-mapped value for direct access */                                \
-    type OS_##name : (addr);
-
-typedef enum {
-    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
-    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
-} OSBootMagic;
-
-typedef struct OSBootInfo {
-    DVDDiskID diskID; // at 0x0
-    u32 bootMagic;    // at 0x20
-    u32 aplVersion;   // at 0x24
-    u32 physMemSize;  // at 0x28
-    u32 consoleType;  // at 0x2C
-    void* arenaLo;    // at 0x30
-    void* arenaHi;    // at 0x34
-    void* fstStart;   // at 0x38
-    u32 fstSize;      // at 0x3C
-} OSBootInfo;
-
-typedef struct OSDebugInterface {
-    BOOL usingDebugger;    // at 0x0
-    u32 exceptionMask;     // at 0x4
-    void* exceptionHook;   // at 0x8
-    void* exceptionHookLR; // at 0xC
-} OSDebugInterface;
-
-typedef struct OSBI2 {
-    u32 dbgMonitorSize;   // at 0x0
-    u32 simulatedMemSize; // at 0x4
-    u32 argumentOfs;      // at 0x8
-    u32 debugFlag;        // at 0xC
-    u32 trackLocation;    // at 0x10
-    u32 trackSize;        // at 0x14
-    u32 countryCode;      // at 0x18
-    u32 WORD_0x1C;
-    u32 lastInsert;
-    u32 padSpec;            // at 0x24
-    u32 totalTextDataLimit; // at 0x28
-    u32 simulatedMem2Size;  // at 0x2C
-} OSBI2;
-
-/**
- * 0x80000000 - 0x80000100
- */
-// clang-format off
-OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
-OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
-OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
-OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
-OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
-OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
-OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
-OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
-OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
-OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
-OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
-OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
-OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
-OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
-// clang-format on
-
-/**
- * 0x80003000 - 0x80003F00
- */
-// clang-format off
-OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
-OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
-OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
-OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
-OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
-OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
-OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
-OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
-OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
-OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
-OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
-OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
-OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
-OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
-OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
-OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
-OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
-OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
-OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
-OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
-OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
-OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
-OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
-OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
-OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
-OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
-OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
-OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
-OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
-OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
-OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
-OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
-OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
-OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
-OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
-OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
-OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
-// clang-format on
-
-/**
- * PI hardware globals
- */
-volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
-typedef enum {
-    PI_INTSR,    //!< 0xCC003000
-    PI_INTMR,    //!< 0xCC003004
-    PI_REG_0x8,  //!< 0xCC003008
-    PI_REG_0xC,  //!< 0xCC00300C
-    PI_REG_0x10, //!< 0xCC003010
-    PI_REG_0x14, //!< 0xCC003014
-    PI_REG_0x18, //!< 0xCC003018
-    PI_REG_0x1C, //!< 0xCC00301C
-    PI_REG_0x20, //!< 0xCC003020
-    PI_RESET,    //!< 0xCC003024
-    // . . .
-} PIHwReg;
-
-// INTSR - Interrupt Cause Register
-#define PI_INTSR_ERROR (1 << 0)
-#define PI_INTSR_RSW (1 << 1)
-#define PI_INTSR_DI (1 << 2)
-#define PI_INTSR_SI (1 << 3)
-#define PI_INTSR_EXI (1 << 4)
-#define PI_INTSR_AI (1 << 5)
-#define PI_INTSR_DSP (1 << 6)
-#define PI_INTSR_MEM (1 << 7)
-#define PI_INTSR_VI (1 << 8)
-#define PI_INTSR_PE_TOKEN (1 << 9)
-#define PI_INTSR_PE_FINISH (1 << 10)
-#define PI_INTSR_CP (1 << 11)
-#define PI_INTSR_DEBUG (1 << 12)
-#define PI_INTSR_HSP (1 << 13)
-#define PI_INTSR_ACR (1 << 14)
-#define PI_INTSR_RSWST (1 << 16)
-
-// INTMR - Interrupt Mask Register
-#define PI_INTMR_ERROR (1 << 0)
-#define PI_INTMR_RSW (1 << 1)
-#define PI_INTMR_DI (1 << 2)
-#define PI_INTMR_SI (1 << 3)
-#define PI_INTMR_EXI (1 << 4)
-#define PI_INTMR_AI (1 << 5)
-#define PI_INTMR_DSP (1 << 6)
-#define PI_INTMR_MEM (1 << 7)
-#define PI_INTMR_VI (1 << 8)
-#define PI_INTMR_PE_TOKEN (1 << 9)
-#define PI_INTMR_PE_FINISH (1 << 10)
-#define PI_INTMR_CP (1 << 11)
-#define PI_INTMR_DEBUG (1 << 12)
-#define PI_INTMR_HSP (1 << 13)
-#define PI_INTMR_ACR (1 << 14)
-
-/**
- * MI hardware registers
- */
-volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
-typedef enum {
-    MI_PAGE_MEM0_H, //!< 0xCC004000
-    MI_PAGE_MEM0_L, //!< 0xCC004002
-    MI_PAGE_MEM1_H, //!< 0xCC004004
-    MI_PAGE_MEM1_L, //!< 0xCC004006
-    MI_PAGE_MEM2_H, //!< 0xCC004008
-    MI_PAGE_MEM2_L, //!< 0xCC00400A
-    MI_PAGE_MEM3_H, //!< 0xCC00400C
-    MI_PAGE_MEM3_L, //!< 0xCC00400E
-    MI_PROT_MEM0,   //!< 0xCC004010
-    MI_PROT_MEM1,   //!< 0xCC004012
-    MI_PROT_MEM2,   //!< 0xCC004014
-    MI_PROT_MEM3,   //!< 0xCC004016
-    MI_REG_0x18,    //!< 0xCC004018
-    MI_REG_0x1A,    //!< 0xCC00401A
-    MI_INTMR,       //!< 0xCC00401C
-    MI_INTSR,       //!< 0xCC00401E
-    MI_REG_0x20,    //!< 0xCC004020
-    MI_ADDRLO,      //!< 0xCC004022
-    MI_ADDRHI,      //!< 0xCC004024
-    MI_REG_0x26,    //!< 0xCC004026
-    MI_REG_0x28,    //!< 0xCC004028
-    // . . .
-} MIHwReg;
-
-// INTMR - Interrupt Mask Register
-#define MI_INTMR_MEM0 (1 << 0)
-#define MI_INTMR_MEM1 (1 << 1)
-#define MI_INTMR_MEM2 (1 << 2)
-#define MI_INTMR_MEM3 (1 << 3)
-#define MI_INTMR_ADDR (1 << 4)
-
-// INTSR - Interrupt Cause Register
-#define MI_INTSR_MEM0 (1 << 0)
-#define MI_INTSR_MEM1 (1 << 1)
-#define MI_INTSR_MEM2 (1 << 2)
-#define MI_INTSR_MEM3 (1 << 3)
-#define MI_INTSR_ADDR (1 << 4)
-
-/**
- * DI hardware registers
- */
-volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
-typedef enum {
-    DI_DMA_ADDR = 5, // !< 0xCD006014
-    DI_CONFIG = 9,   // !< 0xCD006024
-} DIHwReg;
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-/* end "revolution/OS/OSHardware.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
-/* end "revolution/OS/OSInterrupt.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
-/* end "revolution/OS/OSIpc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
-/* end "revolution/OS/OSLink.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
-/* end "revolution/OS/OSMemory.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
-/* end "revolution/OS/OSMessage.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
-/* end "revolution/OS/OSMutex.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
-/* end "revolution/OS/OSNet.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
-/* end "revolution/OS/OSPlayRecord.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
-/* end "revolution/OS/OSPlayTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
-/* end "revolution/OS/OSReset.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
-/* end "revolution/OS/OSRtc.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
-/* end "revolution/OS/OSSerial.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
-/* end "revolution/OS/OSStateFlags.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
-/* end "revolution/OS/OSStateTM.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
-/* end "revolution/OS/OSSync.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
-/* end "revolution/OS/OSThread.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
-/* end "revolution/OS/OSTime.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
-/* end "revolution/OS/OSUtf.h" */
-/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
 /* end "revolution/OS/__ppc_eabi_init.h" */
 
 #ifdef __cplusplus
@@ -11578,6 +8404,184 @@ void GXSetTexCoordCylWrap(GXTexCoordID, GXBool, GXBool);
 /* end "revolution/GX/GXTypes.h" */
 
 /* "libs/RVL_SDK/include/revolution/GX/GXTransform.h" line 6 "revolution/MTX.h" */
+#ifndef RVL_SDK_PUBLIC_MTX_H
+#define RVL_SDK_PUBLIC_MTX_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/MTX.h" line 6 "revolution/MTX/mtx.h" */
+#ifndef RVL_SDK_MTX_MTX_H
+#define RVL_SDK_MTX_MTX_H
+/* "libs/RVL_SDK/include/revolution/MTX/mtx.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/MTX/mtx.h" line 4 "revolution/MTX/mtxtypes.h" */
+#ifndef RVL_SDK_MTX_TYPES_H
+#define RVL_SDK_MTX_TYPES_H
+/* "libs/RVL_SDK/include/revolution/MTX/mtxtypes.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef f32 Mtx[3][4];
+typedef f32 Mtx44[4][4];
+
+typedef struct Vec {
+    f32 x, y, z;
+} Vec;
+
+typedef struct Vec2 {
+    f32 x, y;
+} Vec2;
+
+typedef struct Quaternion {
+    f32 x, y, z, w;
+} Quaternion;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MTX/mtxtypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// TODO(kiwi) Create macros for PS/C_ functions
+void PSMTXIdentity(Mtx);
+void PSMTXCopy(const Mtx, Mtx);
+void PSMTXConcat(const Mtx, const Mtx, Mtx);
+void PSMTXConcatArray(const Mtx, const Mtx, Mtx, u32);
+void PSMTXTranspose(const Mtx, Mtx);
+u32 PSMTXInverse(const Mtx, Mtx);
+u32 PSMTXInvXpose(const Mtx, Mtx);
+void PSMTXRotRad(Mtx, char, f32);
+void PSMTXRotTrig(Mtx, f32, f32, char);
+void PSMTXRotAxisRad(Mtx, const Vec*, f32);
+void PSMTXTrans(Mtx, f32, f32, f32);
+void PSMTXTransApply(const Mtx, Mtx, f32, f32, f32);
+void PSMTXScale(Mtx, f32, f32, f32);
+void PSMTXScaleApply(const Mtx, Mtx, f32, f32, f32);
+void PSMTXQuat(Mtx, const Quaternion*);
+
+void C_MTXLookAt(Mtx, const Vec*, const Vec*, const Vec*);
+void C_MTXLightFrustum(Mtx, f32, f32, f32, f32, f32, f32, f32, f32, f32);
+void C_MTXLightPerspective(Mtx, f32, f32, f32, f32, f32, f32);
+void C_MTXLightOrtho(Mtx, f32, f32, f32, f32, f32, f32, f32, f32);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MTX/mtx.h" */
+/* "libs/RVL_SDK/include/revolution/MTX.h" line 7 "revolution/MTX/mtx44.h" */
+#ifndef RVL_SDK_MTX_MTX44_H
+#define RVL_SDK_MTX_MTX44_H
+/* "libs/RVL_SDK/include/revolution/MTX/mtx44.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/MTX/mtx44.h" line 4 "revolution/MTX/mtxtypes.h" */
+/* end "revolution/MTX/mtxtypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void PSMTX44Copy(Mtx44, Mtx44);
+void C_MTXFrustum(Mtx44 mtx, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f);
+void C_MTXPerspective(Mtx44 mtx, f32 fovy, f32 aspect, f32 n, f32 f);
+void C_MTXOrtho(Mtx44 mtx, f32 t, f32 b, f32 l, f32 r, f32 n, f32 f);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MTX/mtx44.h" */
+/* "libs/RVL_SDK/include/revolution/MTX.h" line 8 "revolution/MTX/mtxtypes.h" */
+/* end "revolution/MTX/mtxtypes.h" */
+/* "libs/RVL_SDK/include/revolution/MTX.h" line 9 "revolution/MTX/mtxvec.h" */
+#ifndef RVL_SDK_MTX_MTXVEC_H
+#define RVL_SDK_MTX_MTXVEC_H
+/* "libs/RVL_SDK/include/revolution/MTX/mtxvec.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/MTX/mtxvec.h" line 4 "revolution/MTX/mtxtypes.h" */
+/* end "revolution/MTX/mtxtypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void PSMTXMultVec(const Mtx mtx, const Vec* vec, Vec* out);
+void PSMTXMultVecSR(const Mtx, const Vec*, Vec*);
+void PSMTXMultVecArraySR();
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MTX/mtxvec.h" */
+/* "libs/RVL_SDK/include/revolution/MTX.h" line 10 "revolution/MTX/quat.h" */
+#ifndef RVL_SDK_MTX_QUAT_H
+#define RVL_SDK_MTX_QUAT_H
+/* "libs/RVL_SDK/include/revolution/MTX/quat.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/MTX/quat.h" line 4 "revolution/MTX/mtxtypes.h" */
+/* end "revolution/MTX/mtxtypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+void PSQUATAdd(const Quaternion* a, const Quaternion* b, Quaternion* sum);
+void PSQUATMultiply(const Quaternion* a, const Quaternion* b, Quaternion* prod);
+void PSQUATScale(const Quaternion* in, Quaternion* out, f32 scale);
+f32 PSQUATDotProduct(const Quaternion* a, const Quaternion* b);
+void PSQUATNormalize(const Quaternion* in, Quaternion* out);
+void PSQUATInverse(const Quaternion* in, Quaternion* out);
+void C_QUATMtx(Quaternion* quat, const Mtx mtx);
+void C_QUATLerp(const Quaternion* a, const Quaternion* b, Quaternion* out,
+                f32 t);
+void C_QUATSlerp(const Quaternion* a, const Quaternion* b, Quaternion* out,
+                 f32 t);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MTX/quat.h" */
+/* "libs/RVL_SDK/include/revolution/MTX.h" line 11 "revolution/MTX/vec.h" */
+#ifndef RVL_SDK_MTX_VEC_H
+#define RVL_SDK_MTX_VEC_H
+/* "libs/RVL_SDK/include/revolution/MTX/vec.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/MTX/vec.h" line 4 "revolution/MTX/mtxtypes.h" */
+/* end "revolution/MTX/mtxtypes.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void PSVECAdd(const Vec* a, const Vec* b, Vec* sum);
+void PSVECScale(const Vec* in, Vec* out, f32 scale);
+void PSVECNormalize(const Vec* in, Vec* out);
+f32 PSVECMag(const Vec* v);
+f32 PSVECDotProduct(const Vec* a, const Vec* b);
+void PSVECCrossProduct(const Vec* a, const Vec* b, Vec* prod);
+f32 PSVECSquareDistance(const Vec* a, const Vec* b);
+void C_VECHalfAngle(const Vec* a, const Vec* b, Vec* half);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/MTX/vec.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
 /* end "revolution/MTX.h" */
 #ifdef __cplusplus
 extern "C" {
@@ -12737,6 +9741,1703 @@ inline GXColorS10 GetRGBAS10(s16 r, s16 g, s16 b, s16 a) {
 /* end "nw4r/g3d/res/g3d_rescommon.h" */
 
 /* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 6 "nw4r/math.h" */
+#ifndef NW4R_PUBLIC_MATH_H
+#define NW4R_PUBLIC_MATH_H
+
+/* "libs/nw4r/include/nw4r/math.h" line 3 "nw4r/math/math_arithmetic.h" */
+#ifndef NW4R_MATH_ARITHMETIC_H
+#define NW4R_MATH_ARITHMETIC_H
+/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 4 "nw4r/db/db_assert.h" */
+#ifndef NW4R_DB_ASSERT_H
+#define NW4R_DB_ASSERT_H
+
+/* "libs/nw4r/include/nw4r/db/db_assert.h" line 3 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+namespace nw4r
+{
+    namespace db
+    {
+        // Forward declarations
+        namespace detail {
+            class ConsoleHead;
+        }
+
+        #define NW4R_WARNING(...) nw4r::db::Warning(__FILE__, __LINE__, __VA_ARGS__)
+        #define NW4R_PANIC(...) nw4r::db::Panic(__FILE__, __LINE__, __VA_ARGS__)
+        #define NW4R_DB_ASSERT(exp, ...) \
+            if(!(exp))                \
+            nw4r::db::Panic(__FILE__, __LINE__, __VA_ARGS__)
+
+        #define NW4R_DB_ASSERT_WARN(exp, ...) \
+            if(!(exp))                \
+            nw4r::db::Warning(__FILE__, __LINE__, __VA_ARGS__)
+
+        /* DECL_WEAK */ void VPanic(const char* file, int line, const char* fmt, std::va_list vlist, bool halt);
+        /* DECL_WEAK */ void Panic(const char* file, int line, const char* fmt, ...);
+        /* DECL_WEAK */ void VWarning(const char* file, int line, const char* fmt, std::va_list vlist);
+        /* DECL_WEAK */ void Warning(const char* file, int line, const char* msg, ...);
+        
+        namespace detail
+        {
+            void Log(const char* fmt, ...);
+        }
+        
+        detail::ConsoleHead* Assertion_SetConsole(detail::ConsoleHead* console);
+        detail::ConsoleHead* Assertion_GetConsole();
+        void Assertion_ShowConsole(u32 time);
+        void Assertion_HideConsole();
+        void Assertion_SetWarningTime(u32 time);
+        bool Assertion_SetAutoWarning(bool enable);
+    }
+}
+
+#endif
+/* end "nw4r/db/db_assert.h" */
+/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 5 "nw4r/math/math_constant.h" */
+#ifndef NW4R_MATH_CONSTANT_H
+#define NW4R_MATH_CONSTANT_H
+/* "libs/nw4r/include/nw4r/math/math_constant.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/math/math_constant.h" line 4 "cmath" */
+#ifndef MSL_CPP_CMATH_H
+#define MSL_CPP_CMATH_H
+/* "libs/PowerPC_EABI_Support/include/stl/cmath" line 2 "math.h" */
+#ifndef MSL_MATH_H
+#define MSL_MATH_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/math.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+/* "libs/PowerPC_EABI_Support/include/stl/math.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h" */
+#ifndef MSL_MATH_DOUBLE_H
+#define MSL_MATH_DOUBLE_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+double atan(double x);
+double ceil(double x);
+double copysign(double x, double y);
+double cos(double x);
+double floor(double x);
+double frexp(double x, int* eptr);
+double ldexp(double value, int exp);
+double modf(double x, double* iptr);
+double sin(double x);
+double tan(double x);
+double acos(double x);
+double asin(double x);
+double atan2(double y, double x);
+double fmod(double x, double y);
+double pow(double x, double y);
+double sqrt(double x);
+double log(double x);
+
+inline float acosf(float x) {
+    return acos(x);
+}
+inline float ceilf(float x) {
+    return ceil(x);
+}
+inline float cosf(float x) {
+    return cos(x);
+}
+inline float sinf(float x) {
+    return sin(x);
+}
+
+float sqrtf(float x);
+
+inline float tanf(float x) {
+    return tan(x);
+}
+inline float floorf(float x) {
+    return floor(x);
+}
+inline float fmodf(float x, float y) {
+    return fmod(x, y);
+}
+
+inline float modff(float x, float* iptr) {
+    float frac;
+    double intg;
+
+    x = (double)x;
+    frac = modf(x, &intg);
+    *iptr = intg;
+
+    return frac;
+}
+
+float fabsf(float);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/math_double.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/math.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h" */
+#ifndef _MSL_MATH_API_H
+#define _MSL_MATH_API_H
+
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h" line 3 "types.h" */
+/* end "types.h" */
+
+
+#ifdef __cplusplus
+extern "C" {
+#endif // ifdef __cplusplus
+
+
+#if defined(i386) || defined(i486) || defined(intel) || defined(x86) || defined(i86pc) || defined(__alpha) || defined(__osf__)
+#define __LITTLE_ENDIAN
+#endif
+
+#ifdef __LITTLE_ENDIAN
+#define __HI(x)  *(1 + (int*)&x)
+#define __LO(x)  *(int*)&x
+#define __HIp(x) *(1 + (int*)x)
+#define __LOp(x) *(int*)x
+#else
+#define __HI(x)  *(int*)&x
+#define __LO(x)  *(1 + (int*)&x)
+#define __HIp(x) *(int*)x
+#define __LOp(x) *(1 + (int*)x)
+#endif
+
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/math_api.h" */
+
+extern int __float_nan[];
+extern int __float_huge[];
+extern int __double_huge[];
+
+#define INFINITY (*(float*) __float_huge)
+#define NAN (*(float*) __float_nan)
+#define HUGE_VAL (*(double*) __double_huge)
+
+#define FP_NAN 1
+#define FP_INFINITE 2
+#define FP_ZERO 3
+#define FP_NORMAL 4
+#define FP_SUBNORMAL
+
+#define M_PI    3.1415927f
+#define M_SQRT3 1.73205f
+
+int __signbitf(float);
+int __fpclassifyf(float);
+int __signbitd(double);
+int __fpclassifyd(double);
+
+#define fpclassify(x) ((sizeof(x) == sizeof(float)) ? __fpclassifyf((float)(x)) : __fpclassifyd((double)(x)))
+#define signbit(x) ((sizeof(x) == sizeof(float)) ? __signbitf((float)(x)) : __signbitd((double)(x)))
+
+#define isfinite(x) ((fpclassify(x) > FP_INFINITE))
+#define isnan(x) (fpclassify(x) == FP_NAN)
+#define isnormal(x) (fpclassify(x) == FP_NORMAL)
+
+inline long double fabsl(long double x) {
+    return __fabs((double)x);
+}
+
+double __ieee754_acos(double);
+double __ieee754_fmod(double, double);
+double __ieee754_log(double);
+double __ieee754_log10(double);
+double __ieee754_pow(double, double);
+double __ieee754_sqrt(double);
+double __ieee754_atan2(double, double);
+double __ieee754_asin(double);
+
+double copysign(double, double);
+double scalbn(double, int);
+
+double __kernel_sin(double, double, int);
+double __kernel_cos(double, double);
+double __kernel_tan(double, double, int);
+
+int __ieee754_rem_pio2(double, double *);
+
+double nan(const char* arg);
+
+#ifdef __cplusplus
+};
+#endif // ifdef __cplusplus
+
+#endif
+/* end "math.h" */
+#ifdef __cplusplus
+
+namespace std {
+using ::acos;
+using ::acosf;
+using ::asin;
+using ::atan;
+using ::atan2;
+using ::ceil;
+using ::ceilf;
+using ::copysign;
+using ::cos;
+using ::cosf;
+using ::fabsf;
+using ::floor;
+using ::floorf;
+using ::fmod;
+using ::fmodf;
+using ::frexp;
+using ::ldexp;
+using ::modf;
+using ::modff;
+using ::nan;
+using ::pow;
+using ::scalbn;
+using ::sin;
+using ::sinf;
+using ::sqrt;
+using ::sqrtf;
+using ::tan;
+using ::tanf;
+} // namespace std
+
+#endif
+#endif
+/* end "cmath" */
+
+/******************************************************************************
+ *
+ * Mathematical constants
+ *
+ ******************************************************************************/
+// Pi mathematical constant
+#define NW4R_MATH_PI M_PI
+
+// ln(2)
+#define NW4R_MATH_LN_2 0.69314718056f
+
+// 1 / sqrt(3)
+#define NW4R_MATH_INVSQRT3 0.577350258f
+
+/******************************************************************************
+ *
+ * Not-a-number (NaN) types
+ *
+ ******************************************************************************/
+// Quiet NaN (0x7FC00000)
+#define NW4R_MATH_QNAN (-(0.0f / 0.0f))
+
+/******************************************************************************
+ *
+ * Float limits
+ *
+ ******************************************************************************/
+// Smallest finite floating-point value
+#define NW4R_MATH_FLT_MIN 1.175494350e-38f
+
+// Largest finite floating-point value
+#define NW4R_MATH_FLT_MAX 3.402823466e+38f
+
+// Difference between 1.0 and the next representable value
+#define NW4R_MATH_FLT_EPSILON 1.192092895e-7f
+
+#endif
+/* end "nw4r/math/math_constant.h" */
+
+/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 7 "revolution/OS.h" */
+/**
+ * References: YAGCD, WiiBrew, Dolphin Emulator
+ */
+
+#ifndef RVL_SDK_PUBLIC_OS_H
+#define RVL_SDK_PUBLIC_OS_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/OS.h" line 10 "revolution/OS/OS.h" */
+/* end "revolution/OS/OS.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 11 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 12 "revolution/OS/OSAlarm.h" */
+/* end "revolution/OS/OSAlarm.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 13 "revolution/OS/OSAlloc.h" */
+/* end "revolution/OS/OSAlloc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 14 "revolution/OS/OSArena.h" */
+/* end "revolution/OS/OSArena.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 15 "revolution/OS/OSAudioSystem.h" */
+/* end "revolution/OS/OSAudioSystem.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 16 "revolution/OS/OSCache.h" */
+/* end "revolution/OS/OSCache.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 17 "revolution/OS/OSContext.h" */
+/* end "revolution/OS/OSContext.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 18 "revolution/OS/OSCrc.h" */
+/* end "revolution/OS/OSCrc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 19 "revolution/OS/OSError.h" */
+/* end "revolution/OS/OSError.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 20 "revolution/OS/OSExec.h" */
+/* end "revolution/OS/OSExec.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 21 "revolution/OS/OSFastCast.h" */
+/* end "revolution/OS/OSFastCast.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 22 "revolution/OS/OSFatal.h" */
+/* end "revolution/OS/OSFatal.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 23 "revolution/OS/OSFont.h" */
+/* end "revolution/OS/OSFont.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 24 "revolution/OS/OSHardware.h" */
+/**
+ * For more details, see:
+ * https://www.gc-forever.com/yagcd/chap4.html#sec4
+ * https://www.gc-forever.com/yagcd/chap13.html#sec13
+ * https://wiibrew.org/wiki/Memory_map
+ */
+
+#ifndef RVL_SDK_OS_HARDWARE_H
+#define RVL_SDK_OS_HARDWARE_H
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 9 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 11 "revolution/DVD/dvd.h" */
+/* end "revolution/DVD/dvd.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 12 "revolution/OS/OSAddress.h" */
+/* end "revolution/OS/OSAddress.h" */
+/* "libs/RVL_SDK/include/revolution/OS/OSHardware.h" line 13 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct OSContext;
+typedef struct OSExecParams;
+
+// Derive offsets for use with OSAddress functions
+#define __DEF_ADDR_OFFSETS(name, addr)                                         \
+    static const u32 OS_PHYS_##name = (addr) - 0x80000000;                     \
+    static const u32 OS_CACHED_##name = (addr);                                \
+    static const u32 OS_UNCACHED_##name = (addr) + (0xC0000000 - 0x80000000);
+
+// Define a global variable in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_VAR(type, name, addr)                                    \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name DECL_ADDRESS(addr);                                         \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define a global array in *CACHED* MEM1.
+// Can be accessed directly or with OSAddress functions.
+#define OS_DEF_GLOBAL_ARR(type, name, arr, addr)                               \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name arr DECL_ADDRESS(addr);                                     \
+    __DEF_ADDR_OFFSETS(name, addr)
+
+// Define an global variable in the hardware-register range.
+#define OS_DEF_HW_REG(type, name, addr)                                        \
+    /* Memory-mapped value for direct access */                                \
+    type OS_##name : (addr);
+
+typedef enum {
+    OS_BOOT_MAGIC_BOOTROM = 0xD15EA5E,
+    OS_BOOT_MAGIC_JTAG = 0xE5207C22,
+} OSBootMagic;
+
+typedef struct OSBootInfo {
+    DVDDiskID diskID; // at 0x0
+    u32 bootMagic;    // at 0x20
+    u32 aplVersion;   // at 0x24
+    u32 physMemSize;  // at 0x28
+    u32 consoleType;  // at 0x2C
+    void* arenaLo;    // at 0x30
+    void* arenaHi;    // at 0x34
+    void* fstStart;   // at 0x38
+    u32 fstSize;      // at 0x3C
+} OSBootInfo;
+
+typedef struct OSDebugInterface {
+    BOOL usingDebugger;    // at 0x0
+    u32 exceptionMask;     // at 0x4
+    void* exceptionHook;   // at 0x8
+    void* exceptionHookLR; // at 0xC
+} OSDebugInterface;
+
+typedef struct OSBI2 {
+    u32 dbgMonitorSize;   // at 0x0
+    u32 simulatedMemSize; // at 0x4
+    u32 argumentOfs;      // at 0x8
+    u32 debugFlag;        // at 0xC
+    u32 trackLocation;    // at 0x10
+    u32 trackSize;        // at 0x14
+    u32 countryCode;      // at 0x18
+    u32 WORD_0x1C;
+    u32 lastInsert;
+    u32 padSpec;            // at 0x24
+    u32 totalTextDataLimit; // at 0x28
+    u32 simulatedMem2Size;  // at 0x2C
+} OSBI2;
+
+/**
+ * 0x80000000 - 0x80000100
+ */
+// clang-format off
+OS_DEF_GLOBAL_VAR(OSBootInfo, BOOT_INFO,                   0x80000000);
+OS_DEF_GLOBAL_VAR(OSDebugInterface, DEBUG_INTERFACE,       0x80000040);
+OS_DEF_GLOBAL_ARR(u8, DB_INTEGRATOR_HOOK, [0x24],          0x80000060);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT_PHYS,        0x800000C0);
+OS_DEF_GLOBAL_VAR(u32, PREV_INTR_MASK,                     0x800000C4);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_INTR_MASK,                  0x800000C8);
+OS_DEF_GLOBAL_VAR(u32, TV_FORMAT,                          0x800000CC);
+OS_DEF_GLOBAL_VAR(u32, ARAM_SIZE,                          0x800000D0);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_CONTEXT,             0x800000D4);
+OS_DEF_GLOBAL_VAR(OSContext*, CURRENT_FPU_CONTEXT,         0x800000D8);
+OS_DEF_GLOBAL_VAR(OSThreadQueue, THREAD_QUEUE,             0x800000DC);
+OS_DEF_GLOBAL_VAR(OSThread*, CURRENT_THREAD,               0x800000E4);
+OS_DEF_GLOBAL_VAR(u32, DEBUG_MONITOR_SIZE,                 0x800000E8);
+OS_DEF_GLOBAL_VAR(void*, DEBUG_MONITOR,                    0x800000EC);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM_SIZE,                 0x800000F0);
+OS_DEF_GLOBAL_VAR(OSBI2*, DVD_BI2,                         0x800000F4);
+OS_DEF_GLOBAL_VAR(u32, BUS_CLOCK_SPEED,                    0x800000F8);
+OS_DEF_GLOBAL_VAR(u32, CPU_CLOCK_SPEED,                    0x800000FC);
+// clang-format on
+
+/**
+ * 0x80003000 - 0x80003F00
+ */
+// clang-format off
+OS_DEF_GLOBAL_ARR(void*, EXCEPTION_TABLE, [15],          0x80003000);
+OS_DEF_GLOBAL_VAR(void*, INTR_HANDLER_TABLE,             0x80003040);
+OS_DEF_GLOBAL_ARR(volatile s32, EXI_LAST_INSERT, [2],    0x800030C0);
+OS_DEF_GLOBAL_VAR(void*, FIRST_REL,                      0x800030C8);
+OS_DEF_GLOBAL_VAR(void*, LAST_REL,                       0x800030CC);
+OS_DEF_GLOBAL_VAR(void*, REL_NAME_TABLE,                 0x800030D0);
+OS_DEF_GLOBAL_VAR(u32, DOL_TOTAL_TEXT_DATA,              0x800030D4);
+OS_DEF_GLOBAL_VAR(s64, SYSTEM_TIME,                      0x800030D8);
+OS_DEF_GLOBAL_VAR(s8, PAD_FLAGS,                         0x800030E3);
+OS_DEF_GLOBAL_VAR(u16, GC_PAD_3_BTN,                     0x800030E4);
+OS_DEF_GLOBAL_VAR(volatile u16, DVD_DEVICE_CODE,         0x800030E6);
+OS_DEF_GLOBAL_VAR(u8, BI2_DEBUG_FLAG,                    0x800030E8);
+OS_DEF_GLOBAL_VAR(u8, PAD_SPEC,                          0x800030E9);
+OS_DEF_GLOBAL_VAR(struct OSExecParams*, DOL_EXEC_PARAMS, 0x800030F0);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM1_SIZE,               0x80003100);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM1_SIZE,              0x80003104);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_START,              0x8000310C);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM1_END,                0x80003110);
+OS_DEF_GLOBAL_VAR(u32, PHYSICAL_MEM2_SIZE,               0x80003118);
+OS_DEF_GLOBAL_VAR(u32, SIMULATED_MEM2_SIZE,              0x8000311C);
+OS_DEF_GLOBAL_VAR(void*, ACCESSIBLE_MEM2_END,            0x80003120);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_START,              0x80003124);
+OS_DEF_GLOBAL_VAR(void*, USABLE_MEM2_END,                0x80003128);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_START,               0x80003130);
+OS_DEF_GLOBAL_VAR(void*, IPC_BUFFER_END,                 0x80003134);
+OS_DEF_GLOBAL_VAR(u32, HOLLYWOOD_REV,                    0x80003138);
+OS_DEF_GLOBAL_VAR(u32, IOS_VERSION,                      0x80003140);
+OS_DEF_GLOBAL_VAR(u32, IOS_BUILD_DATE,                   0x80003144);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_START,                 0x80003148);
+OS_DEF_GLOBAL_VAR(void*, IOS_HEAP_END,                   0x8000314C);
+OS_DEF_GLOBAL_VAR(u32, GDDR_VENDOR_CODE,                 0x80003158);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PROGRAM_TARGET,               0x8000315C);
+OS_DEF_GLOBAL_VAR(u8, APPLOADER_TARGET,                  0x8000315D);
+OS_DEF_GLOBAL_VAR(BOOL, MIOS_SHUTDOWN_FLAG,              0x80003164);
+OS_DEF_GLOBAL_VAR(u32, CURRENT_APP_NAME,                 0x80003180);
+OS_DEF_GLOBAL_VAR(u8, CURRENT_APP_TYPE,                  0x80003184);
+OS_DEF_GLOBAL_VAR(u8, LOCKED_FLAG,                       0x80003187);
+OS_DEF_GLOBAL_VAR(u32, MINIMUM_IOS_VERSION,              0x80003188);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_LAUNCH_CODE,           0x8000318C);
+OS_DEF_GLOBAL_VAR(u32, NAND_TITLE_RETURN_CODE,           0x80003190);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_TYPE,              0x80003194);
+OS_DEF_GLOBAL_VAR(u32, BOOT_PARTITION_OFFSET,            0x80003198);
+OS_DEF_GLOBAL_VAR(u8, BOOT_PARTITION_319C,               0x8000319C);
+OS_DEF_GLOBAL_VAR(s8, WIFI_AFH_CHANNEL,                  0x800031A2);
+OS_DEF_GLOBAL_ARR(u8, NWC24_USER_ID_BUFFER, [32],        0x800031C0);
+OS_DEF_GLOBAL_VAR(u64, NWC24_USER_ID,                    0x800031C0);
+OS_DEF_GLOBAL_ARR(u8, SC_PRDINFO, [0x100],               0x80003800);
+// clang-format on
+
+/**
+ * PI hardware globals
+ */
+volatile u32 DECL_HW_REGS(PI) DECL_ADDRESS(0xCC003000);
+typedef enum {
+    PI_INTSR,    //!< 0xCC003000
+    PI_INTMR,    //!< 0xCC003004
+    PI_REG_0x8,  //!< 0xCC003008
+    PI_REG_0xC,  //!< 0xCC00300C
+    PI_REG_0x10, //!< 0xCC003010
+    PI_REG_0x14, //!< 0xCC003014
+    PI_REG_0x18, //!< 0xCC003018
+    PI_REG_0x1C, //!< 0xCC00301C
+    PI_REG_0x20, //!< 0xCC003020
+    PI_RESET,    //!< 0xCC003024
+    // . . .
+} PIHwReg;
+
+// INTSR - Interrupt Cause Register
+#define PI_INTSR_ERROR (1 << 0)
+#define PI_INTSR_RSW (1 << 1)
+#define PI_INTSR_DI (1 << 2)
+#define PI_INTSR_SI (1 << 3)
+#define PI_INTSR_EXI (1 << 4)
+#define PI_INTSR_AI (1 << 5)
+#define PI_INTSR_DSP (1 << 6)
+#define PI_INTSR_MEM (1 << 7)
+#define PI_INTSR_VI (1 << 8)
+#define PI_INTSR_PE_TOKEN (1 << 9)
+#define PI_INTSR_PE_FINISH (1 << 10)
+#define PI_INTSR_CP (1 << 11)
+#define PI_INTSR_DEBUG (1 << 12)
+#define PI_INTSR_HSP (1 << 13)
+#define PI_INTSR_ACR (1 << 14)
+#define PI_INTSR_RSWST (1 << 16)
+
+// INTMR - Interrupt Mask Register
+#define PI_INTMR_ERROR (1 << 0)
+#define PI_INTMR_RSW (1 << 1)
+#define PI_INTMR_DI (1 << 2)
+#define PI_INTMR_SI (1 << 3)
+#define PI_INTMR_EXI (1 << 4)
+#define PI_INTMR_AI (1 << 5)
+#define PI_INTMR_DSP (1 << 6)
+#define PI_INTMR_MEM (1 << 7)
+#define PI_INTMR_VI (1 << 8)
+#define PI_INTMR_PE_TOKEN (1 << 9)
+#define PI_INTMR_PE_FINISH (1 << 10)
+#define PI_INTMR_CP (1 << 11)
+#define PI_INTMR_DEBUG (1 << 12)
+#define PI_INTMR_HSP (1 << 13)
+#define PI_INTMR_ACR (1 << 14)
+
+/**
+ * MI hardware registers
+ */
+volatile u16 DECL_HW_REGS(MI) DECL_ADDRESS(0xCC004000);
+typedef enum {
+    MI_PAGE_MEM0_H, //!< 0xCC004000
+    MI_PAGE_MEM0_L, //!< 0xCC004002
+    MI_PAGE_MEM1_H, //!< 0xCC004004
+    MI_PAGE_MEM1_L, //!< 0xCC004006
+    MI_PAGE_MEM2_H, //!< 0xCC004008
+    MI_PAGE_MEM2_L, //!< 0xCC00400A
+    MI_PAGE_MEM3_H, //!< 0xCC00400C
+    MI_PAGE_MEM3_L, //!< 0xCC00400E
+    MI_PROT_MEM0,   //!< 0xCC004010
+    MI_PROT_MEM1,   //!< 0xCC004012
+    MI_PROT_MEM2,   //!< 0xCC004014
+    MI_PROT_MEM3,   //!< 0xCC004016
+    MI_REG_0x18,    //!< 0xCC004018
+    MI_REG_0x1A,    //!< 0xCC00401A
+    MI_INTMR,       //!< 0xCC00401C
+    MI_INTSR,       //!< 0xCC00401E
+    MI_REG_0x20,    //!< 0xCC004020
+    MI_ADDRLO,      //!< 0xCC004022
+    MI_ADDRHI,      //!< 0xCC004024
+    MI_REG_0x26,    //!< 0xCC004026
+    MI_REG_0x28,    //!< 0xCC004028
+    // . . .
+} MIHwReg;
+
+// INTMR - Interrupt Mask Register
+#define MI_INTMR_MEM0 (1 << 0)
+#define MI_INTMR_MEM1 (1 << 1)
+#define MI_INTMR_MEM2 (1 << 2)
+#define MI_INTMR_MEM3 (1 << 3)
+#define MI_INTMR_ADDR (1 << 4)
+
+// INTSR - Interrupt Cause Register
+#define MI_INTSR_MEM0 (1 << 0)
+#define MI_INTSR_MEM1 (1 << 1)
+#define MI_INTSR_MEM2 (1 << 2)
+#define MI_INTSR_MEM3 (1 << 3)
+#define MI_INTSR_ADDR (1 << 4)
+
+/**
+ * DI hardware registers
+ */
+volatile u32 DECL_HW_REGS(DI) DECL_ADDRESS(0xCD006000);
+typedef enum {
+    DI_DMA_ADDR = 5, // !< 0xCD006014
+    DI_CONFIG = 9,   // !< 0xCD006024
+} DIHwReg;
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS/OSHardware.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 25 "revolution/OS/OSInterrupt.h" */
+/* end "revolution/OS/OSInterrupt.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 26 "revolution/OS/OSIpc.h" */
+/* end "revolution/OS/OSIpc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 27 "revolution/OS/OSLink.h" */
+/* end "revolution/OS/OSLink.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 28 "revolution/OS/OSMemory.h" */
+/* end "revolution/OS/OSMemory.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 29 "revolution/OS/OSMessage.h" */
+/* end "revolution/OS/OSMessage.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 30 "revolution/OS/OSMutex.h" */
+/* end "revolution/OS/OSMutex.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 31 "revolution/OS/OSNet.h" */
+/* end "revolution/OS/OSNet.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 32 "revolution/OS/OSPlayRecord.h" */
+/* end "revolution/OS/OSPlayRecord.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 33 "revolution/OS/OSPlayTime.h" */
+/* end "revolution/OS/OSPlayTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 34 "revolution/OS/OSReset.h" */
+/* end "revolution/OS/OSReset.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 35 "revolution/OS/OSRtc.h" */
+/* end "revolution/OS/OSRtc.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 36 "revolution/OS/OSSerial.h" */
+/* end "revolution/OS/OSSerial.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 37 "revolution/OS/OSStateFlags.h" */
+/* end "revolution/OS/OSStateFlags.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 38 "revolution/OS/OSStateTM.h" */
+/* end "revolution/OS/OSStateTM.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 39 "revolution/OS/OSSync.h" */
+/* end "revolution/OS/OSSync.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 40 "revolution/OS/OSThread.h" */
+/* end "revolution/OS/OSThread.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 41 "revolution/OS/OSTime.h" */
+/* end "revolution/OS/OSTime.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 42 "revolution/OS/OSUtf.h" */
+/* end "revolution/OS/OSUtf.h" */
+/* "libs/RVL_SDK/include/revolution/OS.h" line 43 "revolution/OS/__ppc_eabi_init.h" */
+/* end "revolution/OS/__ppc_eabi_init.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/OS.h" */
+
+/* "libs/nw4r/include/nw4r/math/math_arithmetic.h" line 9 "cmath" */
+/* end "cmath" */
+
+namespace nw4r {
+namespace math {
+
+/******************************************************************************
+ *
+ * Implementation details
+ *
+ ******************************************************************************/
+namespace detail {
+
+f32 FExp(f32 x);
+f32 FLog(f32 x);
+
+} // namespace detail
+
+/******************************************************************************
+ *
+ * Arithmetic functions
+ *
+ ******************************************************************************/
+f32 FrSqrt(f32 x);
+
+inline f32 FAbs(register f32 x) {
+    register f32 ax;
+
+    ASM (
+        fabs ax, x
+    )
+
+    return ax;
+}
+
+inline f32 FCeil(f32 x) {
+    return std::ceilf(x);
+}
+
+inline f32 FExp(f32 x) {
+    return detail::FExp(x);
+}
+
+inline f32 FFloor(f32 x) {
+    return std::floorf(x);
+}
+
+inline f32 FInv(register f32 x) {
+    register f32 work0, work1, work2, work3;
+
+    ASM (
+        fmr  work1, x     // x
+        fres work0, work1 // 1/x
+
+        // Refine estimate
+        ps_add   work2, work0, work0        // 2/x
+        ps_mul   work3, work0, work0        // 1/x^2
+        ps_nmsub work0, work1, work3, work2 // -(x * 1/x^2 - 2/x)
+    )
+
+    return work0;
+}
+
+inline f32 FMod(f32 x, f32 y) {
+    return std::fmodf(x, y);
+}
+
+inline f32 FModf(f32 x, f32* pY) {
+    return std::modff(x, pY);
+}
+
+inline f32 FSqrt(f32 x) {
+#line 627
+    NW4R_DB_ASSERT_WARN(x >= 0.0f, "FSqrt: Input is out of the domain.");
+
+    return x <= 0.0f ? 0.0f : x * FrSqrt(x);
+}
+
+inline f32 FLog(f32 x) {
+    if (x > 0.0f) {
+        return detail::FLog(x);
+    }
+
+    return NW4R_MATH_QNAN;
+}
+
+inline f32 FSelect(register f32 value, register f32 ge_zero,
+                   register f32 lt_zero) {
+    register f32 ret;
+
+    ASM (
+        fsel ret, value, ge_zero, lt_zero
+    )
+
+    return ret;
+}
+
+/******************************************************************************
+ *
+ * Fastcast functions
+ *
+ ******************************************************************************/
+inline f32 U16ToF32(u16 arg) {
+    f32 ret;
+    OSu16tof32(&arg, &ret);
+    return ret;
+}
+inline u16 F32ToU16(f32 arg) {
+    u16 ret;
+    OSf32tou16(&arg, &ret);
+    return ret;
+}
+
+inline f32 S16ToF32(s16 arg) {
+    f32 ret;
+    OSs16tof32(&arg, &ret);
+    return ret;
+}
+inline s16 F32ToS16(f32 arg) {
+    s16 ret;
+    OSf32tos16(&arg, &ret);
+    return ret;
+}
+
+inline u32 F32AsU32(f32 arg) {
+    return *reinterpret_cast<u32*>(&arg);
+}
+inline f32 U32AsF32(u32 arg) {
+    return *reinterpret_cast<f32*>(&arg);
+}
+
+inline s32 FGetExpPart(f32 x) {
+    s32 s = F32AsU32(x);
+    return ((s >> 23) & 0xFF) - 127;
+}
+inline f32 FGetMantPart(f32 x) {
+    u32 u = F32AsU32(x);
+    return U32AsF32((u & 0x807FFFFF) | 0x3F800000);
+}
+
+} // namespace math
+} // namespace nw4r
+
+#endif
+/* end "nw4r/math/math_arithmetic.h" */
+/* "libs/nw4r/include/nw4r/math.h" line 4 "nw4r/math/math_geometry.h" */
+#ifndef NW4R_MATH_GEOMETRY_H
+#define NW4R_MATH_GEOMETRY_H
+/* "libs/nw4r/include/nw4r/math/math_geometry.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/math/math_geometry.h" line 4 "nw4r/math/math_types.h" */
+#ifndef NW4R_MATH_TYPES_H
+#define NW4R_MATH_TYPES_H
+/* "libs/nw4r/include/nw4r/math/math_types.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/math/math_types.h" line 4 "nw4r/math/math_arithmetic.h" */
+/* end "nw4r/math/math_arithmetic.h" */
+/* "libs/nw4r/include/nw4r/math/math_types.h" line 5 "nw4r/math/math_triangular.h" */
+#ifndef NW4R_MATH_TRIANGULAR_H
+#define NW4R_MATH_TRIANGULAR_H
+/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 2 "nw4r/types_nw4r.h" */
+/* end "nw4r/types_nw4r.h" */
+
+/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 4 "nw4r/db/db_assert.h" */
+/* end "nw4r/db/db_assert.h" */
+/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 5 "nw4r/math/math_arithmetic.h" */
+/* end "nw4r/math/math_arithmetic.h" */
+/* "libs/nw4r/include/nw4r/math/math_triangular.h" line 6 "nw4r/math/math_constant.h" */
+/* end "nw4r/math/math_constant.h" */
+
+/******************************************************************************
+ *
+ * Macros to convert between units
+ *
+ ******************************************************************************/
+// [0, 65535] -> [0.0, 256.0f]
+#define NW4R_MATH_IDX_TO_FIDX(x) ((x) * (1.0f / 256.0f))
+
+// Convert degrees <-> lookup-table index
+#define NW4R_MATH_DEG_TO_FIDX(x) ((x) * (256.0f / 360.0f))
+#define NW4R_MATH_FIDX_TO_DEG(x) ((x) * (360.0f / 256.0f))
+
+// Convert radians <-> lookup-table index
+#define NW4R_MATH_RAD_TO_FIDX(x) ((x) * (128.0f / NW4R_MATH_PI))
+#define NW4R_MATH_FIDX_TO_RAD(x) ((x) * (NW4R_MATH_PI / 128.0f))
+
+// Convert degrees <-> radians
+#define NW4R_MATH_DEG_TO_RAD(x) ((x) * (NW4R_MATH_PI / 180.0f))
+#define NW4R_MATH_RAD_TO_DEG(x) ((x) * (180.0f / NW4R_MATH_PI))
+
+namespace nw4r {
+namespace math {
+
+/******************************************************************************
+ *
+ * Sin functions
+ *
+ ******************************************************************************/
+f32 SinFIdx(f32 fidx);
+
+inline f32 SinIdx(u16 idx) {
+    return SinFIdx(NW4R_MATH_IDX_TO_FIDX(U16ToF32(idx)));
+}
+inline f32 SinDeg(f32 deg) {
+    return SinFIdx(NW4R_MATH_DEG_TO_FIDX(deg));
+}
+inline f32 SinRad(f32 rad) {
+    return SinFIdx(NW4R_MATH_RAD_TO_FIDX(rad));
+}
+
+/******************************************************************************
+ *
+ * Cosine functions
+ *
+ ******************************************************************************/
+f32 CosFIdx(f32 fidx);
+
+inline f32 CosDeg(f32 deg) {
+    return CosFIdx(NW4R_MATH_DEG_TO_FIDX(deg));
+}
+inline f32 CosRad(f32 rad) {
+    return CosFIdx(NW4R_MATH_RAD_TO_FIDX(rad));
+}
+
+/******************************************************************************
+ *
+ * Tangent functions
+ *
+ ******************************************************************************/
+inline f32 TanFIdx(f32 fidx) {
+    return std::tanf(NW4R_MATH_FIDX_TO_RAD(fidx));
+}
+inline f32 TanDeg(f32 deg) {
+    return TanFIdx(NW4R_MATH_DEG_TO_FIDX(deg));
+}
+inline f32 TanRad(f32 rad) {
+    return TanFIdx(NW4R_MATH_RAD_TO_FIDX(rad));
+}
+
+/******************************************************************************
+ *
+ * Sin & cosine functions
+ *
+ ******************************************************************************/
+void SinCosFIdx(f32* pSin, f32* pCos, f32 fidx);
+
+inline void SinCosDeg(f32* pSin, f32* pCos, f32 deg) {
+    return SinCosFIdx(pSin, pCos, NW4R_MATH_DEG_TO_FIDX(deg));
+}
+inline void SinCosRad(f32* pSin, f32* pCos, f32 rad) {
+    return SinCosFIdx(pSin, pCos, NW4R_MATH_RAD_TO_FIDX(rad));
+}
+
+/******************************************************************************
+ *
+ * Arc-sine functions
+ *
+ ******************************************************************************/
+
+ inline f32 AsinRad(f32 x){
+    bool inRange = x <= 1.0f && x >= -1.0f;
+
+#line 228
+    NW4R_DB_ASSERT_WARN(inRange, "AsinRad: Input is out of the domain.");
+
+    return std::asin(x);
+}
+
+/******************************************************************************
+ *
+ * Arc-cosine functions
+ *
+ ******************************************************************************/
+
+ inline f32 AcosRad(f32 x){
+    bool inRange = x <= 1.0f && x >= -1.0f;
+
+#line 239
+    NW4R_DB_ASSERT_WARN(inRange, "AcosRad: Input is out of the domain.");
+
+    return std::acos(x);
+}
+
+/******************************************************************************
+ *
+ * Arc-tangent functions
+ *
+ ******************************************************************************/
+f32 AtanFIdx(f32 x);
+
+inline f32 AtanDeg(f32 x) {
+    return NW4R_MATH_FIDX_TO_DEG(AtanFIdx(x));
+}
+inline f32 AtanRad(f32 x) {
+    return NW4R_MATH_FIDX_TO_RAD(AtanFIdx(x));
+}
+
+/******************************************************************************
+ *
+ * Arc-tangent (2-argument) functions
+ *
+ ******************************************************************************/
+f32 Atan2FIdx(f32 y, f32 x);
+
+inline f32 Atan2Deg(f32 y, f32 x) {
+    return NW4R_MATH_FIDX_TO_DEG(Atan2FIdx(y, x));
+}
+inline f32 Atan2Rad(f32 y, f32 x) {
+    return NW4R_MATH_FIDX_TO_RAD(Atan2FIdx(y, x));
+}
+
+} // namespace math
+} // namespace nw4r
+
+#endif
+/* end "nw4r/math/math_triangular.h" */
+
+/* "libs/nw4r/include/nw4r/math/math_types.h" line 7 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace nw4r {
+namespace math {
+
+/******************************************************************************
+ *
+ * VEC2 structure
+ *
+ ******************************************************************************/
+// Provides a POD type that can be upcasted to the real structure.
+// (Has the added benefit of forcing struct copies to use lwz/stw.)
+struct _VEC2 {
+    f32 x, y;
+};
+
+struct VEC2 : _VEC2 {
+    VEC2() {}
+    VEC2(f32 fx, f32 fy) {
+        x = fx;
+        y = fy;
+    }
+
+    operator f32*() {
+        return reinterpret_cast<f32*>(this);
+    }
+    operator const f32*() const {
+        return reinterpret_cast<const f32*>(this);
+    }
+
+    VEC2 operator+(const VEC2& rRhs) const {
+        return VEC2(x + rRhs.x, y + rRhs.y);
+    }
+    VEC2 operator-(const VEC2& rRhs) const {
+        return VEC2(x - rRhs.x, y - rRhs.y);
+    }
+
+    VEC2& operator+=(const VEC2& rRhs) {
+        x += rRhs.x;
+        y += rRhs.y;
+        return *this;
+    }
+    VEC2& operator-=(const VEC2& rRhs) {
+        x -= rRhs.x;
+        y -= rRhs.y;
+        return *this;
+    }
+
+    bool operator==(const VEC2& rRhs) const {
+        return x == rRhs.x && y == rRhs.y;
+    }
+    bool operator!=(const VEC2& rRhs) const {
+        return x != rRhs.x || y != rRhs.y;
+    }
+};
+
+/******************************************************************************
+ *
+ * VEC3 structure
+ *
+ ******************************************************************************/
+// Forward declarations
+struct VEC3;
+VEC3* VEC3Add(VEC3* pOut, const VEC3* pA, const VEC3* pB);
+VEC3* VEC3Sub(VEC3* pOut, const VEC3* pA, const VEC3* pB);
+VEC3* VEC3Scale(VEC3* pOut, const VEC3* pIn, f32 scale);
+
+// Provides a POD type that can be upcasted to the real structure.
+// (Has the added benefit of forcing struct copies to use lwz/stw.)
+struct _VEC3 {
+    f32 x, y, z;
+};
+
+struct VEC3 : _VEC3 {
+    VEC3() {}
+    VEC3(f32 fx, f32 fy, f32 fz) {
+        x = fx;
+        y = fy;
+        z = fz;
+    }
+    VEC3(const _VEC3& rVec) {
+        x = rVec.x;
+        y = rVec.y;
+        z = rVec.z;
+    }
+    VEC3(const Vec& rVec) {
+        x = rVec.x;
+        y = rVec.y;
+        z = rVec.z;
+    }
+    VEC3(const f32* pData) {
+        x = pData[0];
+        y = pData[1];
+        z = pData[2];
+    }
+
+    operator Vec*() {
+        return reinterpret_cast<Vec*>(this);
+    }
+    operator const Vec*() const {
+        return reinterpret_cast<const Vec*>(this);
+    }
+
+    f32 LenSq() const {
+        return x * x + y * y + z * z;
+    }
+
+    VEC3 operator-() const {
+        return VEC3(-x, -y, -z);
+    }
+
+    VEC3 operator+(const VEC3& rRhs) const {
+        VEC3 out;
+        VEC3Add(&out, this, &rRhs);
+        return out;
+    }
+    VEC3 operator-(const VEC3& rRhs) const {
+        VEC3 out;
+        VEC3Sub(&out, this, &rRhs);
+        return out;
+    }
+    VEC3 operator*(f32 x) const {
+        VEC3 out;
+        VEC3Scale(&out, this, x);
+        return out;
+    }
+    VEC3 operator/(f32 x) const {
+        f32 r = 1 / x;
+        return *this * r;
+    }
+
+    VEC3& operator+=(const VEC3& rRhs) {
+        VEC3Add(this, this, &rRhs);
+        return *this;
+    }
+    VEC3& operator-=(const VEC3& rRhs) {
+        VEC3Sub(this, this, &rRhs);
+        return *this;
+    }
+    VEC3& operator*=(f32 x) {
+        VEC3Scale(this, this, x);
+        return *this;
+    }
+    VEC3& operator/=(f32 x) {
+        return *this *= (1 / x);
+    }
+
+    bool operator==(const VEC3& rRhs) const {
+        return x == rRhs.x && y == rRhs.y && z == rRhs.z;
+    }
+    bool operator!=(const VEC3& rRhs) const {
+        return x != rRhs.x || y != rRhs.y || z != rRhs.z;
+    }
+};
+
+/******************************************************************************
+ *
+ * MTX33 structure
+ *
+ ******************************************************************************/
+// Provides a POD type that can be upcasted to the real structure.
+// (Has the added benefit of forcing struct copies to use lwz/stw.)
+struct _MTX33 {
+    union {
+        struct {
+            f32 _00, _01, _02;
+            f32 _10, _11, _12;
+            f32 _20, _21, _22;
+        };
+
+        f32 m[3][3];
+        f32 a[3 * 3];
+    };
+};
+
+struct MTX33 : _MTX33 {
+    MTX33() {}
+};
+
+/******************************************************************************
+ *
+ * MTX34 structure
+ *
+ ******************************************************************************/
+// Provides a POD type that can be upcasted to the real structure.
+// (Has the added benefit of forcing struct copies to use lwz/stw.)
+struct _MTX34 {
+    union {
+        struct {
+            f32 _00, _01, _02, _03;
+            f32 _10, _11, _12, _13;
+            f32 _20, _21, _22, _23;
+        };
+
+        f32 m[3][4];
+        f32 a[3 * 4];
+        Mtx mtx;
+    };
+};
+
+struct MTX34 : _MTX34 {
+    typedef f32 (*MtxRef)[4];
+    typedef const f32 (*MtxRefConst)[4];
+
+    MTX34() {}
+
+    // clang-format off
+    MTX34(f32 f00, f32 f01, f32 f02, f32 f03,
+          f32 f10, f32 f11, f32 f12, f32 f13,
+          f32 f20, f32 f21, f32 f22, f32 f23) {
+        _00 = f00; _01 = f01; _02 = f02; _03 = f03;
+        _10 = f10; _11 = f11; _12 = f12; _13 = f13;
+        _20 = f20; _21 = f21; _22 = f22; _23 = f23;
+    }
+    // clang-format on
+
+    operator MtxRef() {
+        return mtx;
+    }
+    operator MtxRefConst() const {
+        return mtx;
+    }
+};
+
+/******************************************************************************
+ *
+ * MTX44 structure
+ *
+ ******************************************************************************/
+// Provides a POD type that can be upcasted to the real structure.
+// (Has the added benefit of forcing struct copies to use lwz/stw.)
+struct _MTX44 {
+    union {
+        struct {
+            f32 _00, _01, _02, _03;
+            f32 _10, _11, _12, _13;
+            f32 _20, _21, _22, _23;
+            f32 _30, _31, _32, _33;
+        };
+
+        f32 m[4][4];
+        f32 a[4 * 4];
+        Mtx44 mtx;
+    };
+};
+
+struct MTX44 : _MTX44 {
+    typedef f32 (*Mtx44Ref)[4];
+    typedef const f32 (*Mtx44RefConst)[4];
+
+    MTX44() {}
+
+    operator Mtx44Ref() {
+        return mtx;
+    }
+    operator Mtx44RefConst() const {
+        return mtx;
+    }
+};
+
+/******************************************************************************
+ *
+ * QUAT structure
+ *
+ ******************************************************************************/
+// Provides a POD type that can be upcasted to the real structure.
+// (Has the added benefit of forcing struct copies to use lwz/stw.)
+struct _QUAT {
+    f32 x, y, z, w;
+};
+
+struct QUAT : _QUAT {
+    QUAT() {}
+    QUAT(f32 fx, f32 fy, f32 fz, f32 fw) {
+        x = fx;
+        y = fy;
+        z = fz;
+        w = fw;
+    }
+
+    // TODO(kiwi) These are not real AFAIK. Do they really manually cast the
+    // QUAT?
+    operator Quaternion*() {
+        return reinterpret_cast<Quaternion*>(this);
+    }
+    operator const Quaternion*() const {
+        return reinterpret_cast<const Quaternion*>(this);
+    }
+};
+
+/******************************************************************************
+ *
+ * VEC2 functions
+ *
+ ******************************************************************************/
+inline f32 VEC2Len(const VEC2* pVec) {
+    return FSqrt(pVec->x * pVec->x + pVec->y * pVec->y);
+}
+
+/******************************************************************************
+ *
+ * VEC3 functions
+ *
+ ******************************************************************************/
+VEC3* VEC3Maximize(VEC3* pOut, const VEC3* pA, const VEC3* pB);
+VEC3* VEC3Minimize(VEC3* pOut, const VEC3* pA, const VEC3* pB);
+VEC3* VEC3TransformNormal(VEC3* pOut, const MTX34* pMtx, const VEC3* pVec);
+
+inline VEC3* VEC3Add(register VEC3* pOut, register const VEC3* pA,
+                     register const VEC3* pB) {
+    register f32 work0, work1, work2;
+
+    ASM (
+        // Add XY
+        psq_l  work0, VEC3.x(pA),   0, 0
+        psq_l  work1, VEC3.x(pB),   0, 0
+        ps_add work2, work0, work1
+        psq_st work2, VEC3.x(pOut), 0, 0
+        
+        // Add Z
+        psq_l  work0, VEC3.z(pA),   1, 0
+        psq_l  work1, VEC3.z(pB),   1, 0
+        ps_add work2, work0, work1
+        psq_st work2, VEC3.z(pOut), 1, 0
+    )
+
+    return pOut;
+}
+
+inline f32 VEC3Dot(register const VEC3* pA, register const VEC3* pB) {
+    register f32 dot;
+    register f32 work0, work1, work2, work3;
+
+    ASM (
+        // YZ product
+        psq_l  work0, VEC3.y(pA), 0, 0
+        psq_l  work1, VEC3.y(pB), 0, 0
+        ps_mul work0, work0, work1
+        
+        // X product + YZ product
+        psq_l   work3, VEC3.x(pA), 1, 0
+        psq_l   work2, VEC3.x(pB), 1, 0
+        ps_madd work1, work3, work2, work0
+        
+        // Dot product
+        ps_sum0 dot, work1, work0, work0
+    )
+
+    return dot;
+}
+
+inline f32 VEC3LenSq(register const VEC3* pVec) {
+    register f32 work0, work1, work2;
+
+    ASM (
+        // Square XY
+        psq_l  work0, VEC3.x(pVec), 0, 0
+        ps_mul work0, work0, work0
+
+        // Square Z
+        lfs     work1, VEC3.z(pVec)
+        ps_madd work2, work1, work1, work0
+
+        // Sum products
+        ps_sum0 work2, work2, work0, work0
+    )
+
+    return work2;
+}
+
+inline VEC3* VEC3Lerp(register VEC3* pOut, register const VEC3* pVec1,
+                      register const VEC3* pVec2, register f32 t) {
+    register f32 work0, work1, work2;
+
+    ASM (
+        // X/Y delta
+        psq_l  work0, VEC3.x(pVec1), 0, 0
+        psq_l  work1, VEC3.x(pVec2), 0, 0
+        ps_sub work2, work1, work0
+        // Scale with time and add to v0
+        ps_madds0 work2, work2, t, work0
+        psq_st    work2, VEC3.x(pOut), 0, 0
+        
+        // Z delta
+        psq_l  work0, VEC3.z(pVec1), 1, 0
+        psq_l  work1, VEC3.z(pVec2), 1, 0
+        ps_sub work2, work1, work0
+        // Scale with time and add to v0
+        ps_madds0 work2, work2, t, work0
+        psq_st    work2, VEC3.z(pOut), 1, 0
+    )
+
+    return pOut;
+}
+
+inline VEC3* VEC3Scale(register VEC3* pOut, register const VEC3* pIn,
+                       register f32 scale) {
+    register f32 work0, work1;
+
+    ASM (
+        // Scale XY
+        psq_l    work0, VEC3.x(pIn),  0, 0
+        ps_muls0 work1, work0, scale
+        psq_st   work1, VEC3.x(pOut), 0, 0
+
+        // Scale Z
+        psq_l    work0, VEC3.z(pIn),  1, 0
+        ps_muls0 work1, work0, scale
+        psq_st   work1, VEC3.z(pOut), 1, 0
+    )
+
+    return pOut;
+}
+
+inline VEC3* VEC3Sub(register VEC3* pOut, register const VEC3* pA,
+                     register const VEC3* pB) {
+    register f32 work0, work1, work2;
+
+    ASM (
+        // Sub XY
+        psq_l  work0, VEC3.x(pA),   0, 0
+        psq_l  work1, VEC3.x(pB),   0, 0
+        ps_sub work2, work0, work1
+        psq_st work2, VEC3.x(pOut), 0, 0
+        
+        // Sub Z
+        psq_l  work0, VEC3.z(pA),   1, 0
+        psq_l  work1, VEC3.z(pB),   1, 0
+        ps_sub work2, work0, work1
+        psq_st work2, VEC3.z(pOut), 1, 0
+    )
+
+    return pOut;
+}
+
+inline VEC3* VEC3Cross(VEC3* pOut, const VEC3* pA, const VEC3* pB) {
+    PSVECCrossProduct(*pA, *pB, *pOut);
+    return pOut;
+}
+
+inline f32 VEC3DistSq(const VEC3* pA, const VEC3* pB) {
+    return PSVECSquareDistance(*pA, *pB);
+}
+
+inline f32 VEC3Len(const VEC3* pVec) {
+    return PSVECMag(*pVec);
+}
+
+inline VEC3* VEC3Normalize(VEC3* pOut, const VEC3* pIn) {
+    PSVECNormalize(*pIn, *pOut);
+    return pOut;
+}
+
+inline VEC3* VEC3Transform(VEC3* pOut, const MTX34* pMtx, const VEC3* pVec) {
+    PSMTXMultVec(*pMtx, *pVec, *pOut);
+    return pOut;
+}
+
+inline VEC3* VEC3TransformCoord(VEC3* pOut, const MTX34* pMtx,
+                                const VEC3* pVec) {
+    PSMTXMultVec(*pMtx, *pVec, *pOut);
+    return pOut;
+}
+
+/******************************************************************************
+ *
+ * MTX33 functions
+ *
+ ******************************************************************************/
+MTX33* MTX33Identity(MTX33* pMtx);
+
+/******************************************************************************
+ *
+ * MTX34 functions
+ *
+ ******************************************************************************/
+MTX33* MTX34ToMTX33(MTX33* pOut, const MTX34* pIn);
+u32 MTX34InvTranspose(MTX33* pOut, const MTX34* pIn);
+MTX34* MTX34Zero(MTX34* pMtx);
+MTX34* MTX34Scale(MTX34* pOut, const MTX34* pIn, const VEC3* pScale);
+MTX34* MTX34Trans(MTX34* pOut, const MTX34* pIn, const VEC3* pTrans);
+MTX34* MTX34RotAxisFIdx(MTX34* pMtx, const VEC3* pAxis, f32 fidx);
+MTX34* MTX34RotXYZFIdx(MTX34* pMtx, f32 fx, f32 fy, f32 fz);
+
+inline MTX34* MTX34Copy(MTX34* pOut, const MTX34* pIn) {
+    PSMTXCopy(*pIn, *pOut);
+    return pOut;
+}
+
+inline MTX34* MTX34Identity(MTX34* pMtx) {
+    PSMTXIdentity(*pMtx);
+    return pMtx;
+}
+
+inline u32 MTX34Inv(MTX34* pOut, const MTX34* pIn) {
+    return PSMTXInverse(*pIn, *pOut);
+}
+
+inline u32 MTX34InvTranspose(MTX34* pOut, const MTX34* pIn) {
+    return PSMTXInvXpose(*pIn, *pOut);
+}
+
+inline MTX34* MTX34LookAt(MTX34* pMtx, const VEC3* pPos, const VEC3* pUp,
+                          const VEC3* pTarget) {
+    C_MTXLookAt(*pMtx, *pPos, *pUp, *pTarget);
+    return pMtx;
+}
+
+inline MTX34* MTX34Mult(MTX34* pOut, const MTX34* pA, const MTX34* pB) {
+    PSMTXConcat(*pA, *pB, *pOut);
+    return pOut;
+}
+
+inline MTX34* MTX34MultArray(MTX34* pOut, const MTX34* p1, const MTX34* pSrc,
+                             u32 len) {
+    PSMTXConcatArray(*p1, *pSrc, *pOut, len);
+    return pOut;
+}
+
+inline MTX34* MTX34RotAxisRad(MTX34* pOut, const VEC3* pAxis, f32 frad) {
+    return MTX34RotAxisFIdx(pOut, pAxis, NW4R_MATH_RAD_TO_FIDX(frad));
+}
+
+inline MTX34* MTX34RotXYZDeg(MTX34* pMtx, f32 dx, f32 dy, f32 dz) {
+    return MTX34RotXYZFIdx(pMtx, NW4R_MATH_DEG_TO_FIDX(dx),
+                           NW4R_MATH_DEG_TO_FIDX(dy),
+                           NW4R_MATH_DEG_TO_FIDX(dz));
+}
+
+inline MTX34* MTX34RotXYZRad(MTX34* pMtx, f32 rx, f32 ry, f32 rz) {
+    return MTX34RotXYZFIdx(pMtx, NW4R_MATH_RAD_TO_FIDX(rx),
+                           NW4R_MATH_RAD_TO_FIDX(ry),
+                           NW4R_MATH_RAD_TO_FIDX(rz));
+}
+
+inline MTX34* MTX34Scale(MTX34* pOut, const VEC3* pScale, const MTX34* pIn) {
+    PSMTXScaleApply(*pIn, *pOut, pScale->x, pScale->y, pScale->z);
+    return pOut;
+}
+
+inline QUAT* MTX34ToQUAT(QUAT* pQuat, const MTX34* pMtx) {
+    C_QUATMtx(*pQuat, *pMtx);
+    return pQuat;
+}
+
+inline MTX34* MTX34Trans(MTX34* pOut, const VEC3* pTrans, const MTX34* pIn) {
+    PSMTXTransApply(*pIn, *pOut, pTrans->x, pTrans->y, pTrans->z);
+    return pOut;
+}
+
+/******************************************************************************
+ *
+ * MTX44 functions
+ *
+ ******************************************************************************/
+MTX44* MTX44Identity(MTX44* pMtx);
+MTX44* MTX44Copy(MTX44* pDst, const MTX44* pSrc);
+
+/******************************************************************************
+ *
+ * QUAT functions
+ *
+ ******************************************************************************/
+inline MTX34* QUATToMTX34(MTX34* pMtx, const QUAT* pQuat) {
+    PSMTXQuat(*pMtx, *pQuat);
+    return pMtx;
+}
+
+// @bug QUATSlerp macro changes this function name!
+inline QUAT* C_QUATSlerp(QUAT* pOut, const QUAT* p1, const QUAT* p2, f32 t) {
+    ::C_QUATSlerp(*p1, *p2, *pOut, t);
+    return pOut;
+}
+
+} // namespace math
+} // namespace nw4r
+
+#endif
+/* end "nw4r/math/math_types.h" */
+
+namespace nw4r {
+namespace math {
+
+// Forward declarations
+struct AABB;
+
+enum IntersectionResult {
+    INTERSECTION_NONE,
+    INTERSECTION_1,
+    INTERSECTION_2,
+
+    INTERSECTION_LINE3_ON_PLANE = INTERSECTION_2,
+    INTERSECTION_RAY3_ON_PLANE = INTERSECTION_2,
+    INTERSECTION_SEGMENT3_ON_PLANE = INTERSECTION_2,
+
+    INTERSECTION_OUTSIDE = 0,
+    INTERSECTION_INSIDE,
+    INTERSECTION_INTERSECT
+};
+
+bool IntersectionAABB(const AABB* pA, const AABB* pB);
+
+/******************************************************************************
+ *
+ * Plane
+ *
+ ******************************************************************************/
+struct PLANE {
+    PLANE() {}
+
+    f32 Test(const VEC3& rPoint) const {
+        return d + VEC3Dot(&n, &rPoint);
+    }
+
+    void Set(const VEC3* p0, const VEC3* p1, const VEC3* p2);
+
+    VEC3 n; // at 0x0
+    f32 d;  // at 0xC
+};
+
+/******************************************************************************
+ *
+ * Axis-aligned bounding box
+ *
+ ******************************************************************************/
+struct AABB {
+    AABB() {}
+
+    void Set(const VEC3* pPoints, unsigned int num);
+    void Set(const AABB* pBox, const MTX34* pMtx);
+
+    VEC3 min; // at 0x0
+    VEC3 max; // at 0xC
+};
+
+/******************************************************************************
+ *
+ * Frustum
+ *
+ ******************************************************************************/
+class FRUSTUM {
+private:
+    enum Point {
+        POINT_NEAR_TL,
+        POINT_NEAR_TR,
+        POINT_NEAR_BR,
+        POINT_NEAR_BL,
+
+        POINT_FAR_TL,
+        POINT_FAR_TR,
+        POINT_FAR_BR,
+        POINT_FAR_BL,
+
+        POINT_MAX
+    };
+
+    enum Plane {
+        PLANE_L,
+        PLANE_R,
+        PLANE_N,
+        PLANE_F,
+        PLANE_T,
+        PLANE_B,
+
+        PLANE_MAX
+    };
+
+public:
+    void Set(f32 fovy, f32 aspect, f32 n, f32 f, const MTX34& rCamMtx);
+    void Set(f32 t, f32 b, f32 l, f32 r, f32 n, f32 f, const MTX34& rCamMtx);
+
+    IntersectionResult IntersectAABB_Ex(const AABB* pBox) const;
+
+private:
+    MTX34 mCamMtx;            // at 0x0
+    PLANE mPlaneL;            // at 0x30
+    PLANE mPlaneR;            // at 0x40
+    PLANE mPlaneT;            // at 0x50
+    PLANE mPlaneB;            // at 0x60
+    f32 mNearZ;               // at 0x70
+    f32 mFarZ;                // at 0x74
+    AABB mBox;                // at 0x78
+    PLANE mPlanes[PLANE_MAX]; // at 0x90
+};
+
+} // namespace math
+} // namespace nw4r
+
+#endif
+/* end "nw4r/math/math_geometry.h" */
+/* "libs/nw4r/include/nw4r/math.h" line 5 "nw4r/math/math_triangular.h" */
+/* end "nw4r/math/math_triangular.h" */
+/* "libs/nw4r/include/nw4r/math.h" line 6 "nw4r/math/math_types.h" */
+/* end "nw4r/math/math_types.h" */
+
+#endif
 /* end "nw4r/math.h" */
 
 /* "libs/nw4r/include/nw4r/g3d/g3d_camera.h" line 8 "revolution/MTX.h" */
@@ -15649,7 +14350,7 @@ class LinkListNode : private NonCopyable {
     friend class detail::LinkListImpl;
 
 public:
-    LinkListNode() {}
+    LinkListNode() { Init(); }
 
     void Init() {
         mNext = NULL;
@@ -15746,7 +14447,6 @@ public:
         LinkListNode* mNode; // at 0x0
     };
 
-protected:
     static Iterator GetIteratorFromPointer(LinkListNode* pNode) {
         return Iterator(pNode);
     }
@@ -15768,6 +14468,8 @@ protected:
     Iterator Erase(Iterator it);
     Iterator Erase(LinkListNode* pNode);
     Iterator Erase(Iterator begin, Iterator end);
+
+protected:
 
 public:
     u32 GetSize() const {
@@ -22882,6 +21584,8 @@ struct ResMatData {
     ResChanData chan;           // at 0x3F0
 };
 
+class ResMatFur;
+
 class ResMat : public ResCommon<ResMatData> {
 public:
     NW4R_G3D_RESOURCE_FUNC_DEF(ResMat);
@@ -22953,6 +21657,12 @@ public:
 
     ResMatChan GetResMatChan() {
         return ResMatChan(&ref().chan);
+    }
+
+    ResMatFur GetResMatFur();
+
+    void* GetResUserData() {
+        return ofs_to_ptr<void>(ref().toResUserData);
     }
 };
 
@@ -23951,21 +22661,304 @@ private:
 
 #endif
 /* end "nw4r/g3d/g3d_light.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 4 "nw4r/math/math_types.h" */
+/* end "nw4r/math/math_types.h" */
+/* "libs/monolib/include/monolib/scn/CLight.hpp" line 5 "monolib/math/CVec3.hpp" */
+#pragma once
 
-class CLight{
+/* "libs/monolib/include/monolib/math/CVec3.hpp" line 2 "monolib/math/Utility.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/Utility.hpp" line 2 "nw4r/math.h" */
+/* end "nw4r/math.h" */
+
+#define PI 3.14159265f
+#define DEG2RAD(x) ((x)*(PI/180.0f))
+
+//Utility math functions
+namespace ml{
+    namespace math{
+
+    inline float abs(float x){
+        return (double)nw4r::math::FAbs(x);
+    }
+
+    inline float sqrt(float x){
+        return nw4r::math::FSqrt(x);
+    }
+
+    inline float clamp(float x, float min, float max) {
+        if (x < min) x = min;
+        else if(x > max) x = max;
+        return x;
+    }
+
+    inline float sin(float x){
+        return nw4r::math::SinRad(x);
+    }
+
+    inline float cos(float x){
+        return nw4r::math::CosRad(x);
+    }
+
+    inline void sincos(float x, float& sinX, float& cosX){
+        sinX = sin(x);
+        cosX = cos(x);
+    }
+
+    inline float asin(float x){
+        x = clamp(x, -1.0f, 1.0f);
+        return nw4r::math::AsinRad(x);
+    }
+
+    inline float acos(float x){
+        x = clamp(x, -1.0f, 1.0f);
+        return nw4r::math::AcosRad(x);
+    }
+
+    inline float atan2(float y, float x){
+        return nw4r::math::Atan2FIdx(y, x);
+    }
+
+    inline float atan2Deg(float y, float x){
+        return nw4r::math::Atan2Deg(y, x);
+    }
+
+    inline float atan2Rad(float y, float x){
+        return nw4r::math::Atan2Rad(y, x);
+    }
+
+    inline float dot(const float* vec){
+        return vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
+    }
+
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Utility.hpp" */
+/* "libs/monolib/include/monolib/math/CVec3.hpp" line 3 "monolib/math/MathConstants.hpp" */
+#pragma once
+
+namespace ml{
+    //General math constants
+    extern const float pi;
+    extern const float tau;
+    extern const float halfpi;
+    extern const float quarterpi;
+    extern const float epsilon;
+    extern const float rad2deg;
+    extern const float deg2rad;
+    extern const float huge;
+    extern const float hugeminus;
+} //namespace ml
+/* end "monolib/math/MathConstants.hpp" */
+/* "libs/monolib/include/monolib/math/CVec3.hpp" line 4 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    //Possibly inherits from nw4r VEC3?
+    struct CVec3 {
+        static CVec3 zero;
+        static CVec3 unitX;
+        static CVec3 unitY;
+        static CVec3 unitZ;
+        static CVec3 unit;
+
+        CVec3(){}
+
+        CVec3(float x, float y, float z){
+            set(x, y, z);
+        }
+
+        CVec3(const CVec3& vec){
+            set(vec.x, vec.y, vec.z);
+        }
+
+        //Conversion functions for converting to the SDK/NW4R vector types.
+        operator Vec*(){
+            return reinterpret_cast<Vec*>(this);
+        }
+
+        operator const Vec*() const {
+            return reinterpret_cast<const Vec*>(this);
+        }
+
+        operator nw4r::math::VEC3*(){
+            return reinterpret_cast<nw4r::math::VEC3*>(this);
+        }
+
+        operator const nw4r::math::VEC3*() const {
+            return reinterpret_cast<const nw4r::math::VEC3*>(this);
+        }
+
+        void set(float x, float y, float z){
+            this->x = x;
+            this->y = y;
+            this->z = z;
+        }
+
+        void set(const CVec3& vec){
+            x = vec.x;
+            y = vec.y;
+            z = vec.z;
+        }
+
+        void setZero(){
+            *this = zero;
+        }
+        
+        CVec3 operator-() const {
+            return CVec3(-x, -y, -z);
+        }
+
+        CVec3 operator+(const CVec3& rhs) const {
+            CVec3 out;
+            //add(out, *this, rhs);
+            nw4r::math::VEC3Add(out, *this, rhs);
+            return out;
+        }
+        CVec3 operator-(const CVec3& rhs) const {
+            CVec3 out;
+            sub(out, *this, rhs);
+            //nw4r::math::VEC3Sub(out, *this, rhs);
+            return out;
+        }
+        CVec3 operator*(float x) const {
+            CVec3 out;
+            scale(out, *this, x);
+            return out;
+        }
+        CVec3 operator/(float x) const {
+            float r = 1/x;
+            return *this * r;
+        }
+
+        CVec3& operator+=(const CVec3& rhs) {
+            add(*this, *this, rhs);
+            return *this;
+        }
+        CVec3& operator-=(const CVec3& rhs) {
+            sub(*this, *this, rhs);
+            return *this;
+        }
+        CVec3& operator*=(float x) {
+            scale(*this, *this, x);
+            return *this;
+        }
+        CVec3& operator/=(float x) {
+            return *this *= (1/x);
+        }
+
+        bool operator==(const CVec3& vec) const {
+            return x == vec.x && y == vec.y && z == vec.z;
+        }
+
+        bool operator!=(const CVec3& vec) const {
+            return x != vec.x || y != vec.y || z != vec.z;
+        }
+
+        void normalize(){
+            if(!isZero()) {
+                normalizeSub();
+            }else{
+                set(0,0,1);
+            }
+        }
+
+        //Unofficial
+        void normalizeSub(){
+            if(x*x + y*y + z*z == 0.0f){
+                setZero();
+            }else {
+                PSVECNormalize(*this,*this);
+            }
+        }
+        
+        //Unofficial
+        float magnitude() const {
+            return x*x + y*y + z*z;
+        }
+
+        float getLength() const {
+            return math::sqrt(magnitude());
+        }
+
+        bool isZero() const {
+            //TODO: this can't be it, right???
+            bool result = false;
+            bool temp = false;
+            if(math::abs(x) <= epsilon && math::abs(y) <= epsilon){
+                temp = true;
+            }
+            if(temp && math::abs(z) <= epsilon) result = true;
+            return result;
+        }
+
+        bool isErr() const;
+
+        //TODO: properly figure out these asm inlines
+
+        static float dot(const CVec3& lhs, const CVec3& rhs) {
+            return nw4r::math::VEC3Dot(lhs, rhs);
+        }
+        
+        static void add(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
+            CVec3 temp;
+            nw4r::math::VEC3Add(temp, lhs, rhs);
+            outVec.set(temp);
+        }
+
+        static void sub(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
+            CVec3 temp;
+            nw4r::math::VEC3Sub(temp, lhs, rhs);
+            outVec.set(temp);
+        }
+
+        static void scale(CVec3& outVec, const CVec3& vec, float scale){
+            CVec3 temp;
+            nw4r::math::VEC3Scale(temp, vec, scale);
+            outVec.set(temp);
+        }
+
+        static void cross(CVec3& outVec, const CVec3& lhs, const CVec3& rhs){
+            CVec3 temp;
+            nw4r::math::VEC3Cross(temp, lhs, rhs);
+            outVec.set(temp);
+        }
+        
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float x;
+            float y;
+            float z;
+        };
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CVec3.hpp" */
+
+class CLight {
 public:
     CLight();
-    virtual ~CLight(){}
+    ~CLight(){}
 
-    ml::CVec3 unk4;
-    ml::CVec3 unk10;
-    ml::CVec3 unk1C;
-    float unk28;
-    nw4r::g3d::LightObj* mpLightObj;
-    u32 mFlags;
-    u32 unk34;
-    float unk38;
-    float unk3C;
+    void func_804C0484(const float* dir);
+    void func_804C07F0(const f32* color);
+    void func_804C09E8(GXLightObj* outLight, const Mtx matrix);
+
+    u32 mFlags;                         // 0x00
+    ml::CVec3 unk4;                     // 0x04 - position
+    ml::CVec3 unk10;                    // 0x10 - color RGB
+    f32 unk1C_x;                        // 0x1C - alpha
+    f32 unk20;                          // 0x20 - direction.x
+    f32 unk24;                          // 0x24 - direction.y
+    f32 unk28;                          // 0x28 - direction.z
+    nw4r::g3d::LightObj* mpLightObj;    // 0x2C
+    u32 unk30;                          // 0x30 - padding
+    s32 unk34;                          // 0x34 - light type
+    f32 unk38;                          // 0x38 - intensity
+    f32 unk3C;                          // 0x3C - attenuation end
 };
 /* end "monolib/scn/CLight.hpp" */
 /* "libs/monolib/include/monolib/scn.hpp" line 3 "monolib/scn/ICulling.hpp" */
@@ -24039,8 +23032,10 @@ public:
 
 class CEventFile {
 public:
-    BOOL unk0;
-    CFileHandle* mFileHandle; //0x4
+    BOOL unk0;                 //0x0
+    CFileHandle* mFileHandle;  //0x4
+    u8 _pad08[0x0C];           //0x8-0x13
+    u32 field_14;              //0x14
 
     void* getFileDataPtr();
 };
@@ -25178,6 +24173,7 @@ private:
     static CErrorWii* spInstance;
     static bool sPowerCallbackCalled;
     static bool sResetCallbackCalled;
+    static bool sUnkFlag;
 };
 /* end "monolib/util/CErrorWii.hpp" */
 /* "libs/monolib/include/monolib/util.hpp" line 6 "monolib/util/CPathUtil.hpp" */
@@ -25292,9 +24288,7 @@ namespace ml{
 
     template <size_t N>
     struct FixStr{
-        FixStr(){
-            clear();
-        }
+        FixStr();
 
         //probably fake
         FixStr(bool initialize){
@@ -25384,14 +24378,9 @@ namespace ml{
             return size() == 0;
         }
         
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
+        // Declared out-of-line: retail emits a standalone
+        // format__Q22ml10FixStr<N>FPCce (resolved via the retail symbol map).
+        void format(const char* format, ...);
 
         //Sets the given string to the first characters of this string, up to the specified length.
         //TODO: This might just be substr, but when the start index is 0?
@@ -25455,13 +24444,19 @@ namespace ml{
             }
         }
 
-    private:
-        char mString[N];
-        int mLength;
+    // public for compatibility
+    char mString[N];
+    int mLength;
 
-    public:
-        static const int npos = -1;
+    static const int npos = -1;
     };
+
+#pragma dont_inline on
+    template <size_t N>
+    FixStr<N>::FixStr(){
+        clear();
+    }
+#pragma dont_inline reset
 
 }
 /* end "monolib/util/FixStr.hpp" */
@@ -25787,10 +24782,11 @@ namespace mtl {
         u8 padding[32 - 0x12]; //0x12
 
         u8* getStartAddr() {
-            return reinterpret_cast<u8*>(this) + sizeof(MemBlock);
+            return reinterpret_cast<u8*>(this + 1);
         }
         u8* getEndAddr() {
-            return reinterpret_cast<u8*>(this) + size;
+            u8* blockEnd = reinterpret_cast<u8*>(this + 1);
+            return blockEnd + (size - sizeof(MemBlock));
         }
 
         u32 getDataSize() const {
@@ -26937,6 +25933,16 @@ public:
         field7 = r4;
     }
 
+    CMsgParam(u32 r4, u32* beforeLast){
+        mCapacity = N;
+        mArrayPtr = mEntries;
+        mSize = 0;
+        mFront = 0;
+        field6 = 0;
+        *beforeLast = 0;
+        field7 = r4;
+    }
+
     virtual ~CMsgParam(){
         clear();
     }
@@ -27405,9 +26411,7 @@ public:
         return mChildren.front();
     }
 
-    bool isRunning() const {
-        return !isException() && (mState == THREAD_STATE_LOGIN || mState == THREAD_STATE_RUN);
-    }
+    bool isRunning() const;
 
     bool isException() const {
         return checkFlag(THREAD_FLAG_EXCEPTION) ? true : mMsgQueue.find(EVT_EXCEPTION) >= 0;
@@ -30499,6 +29503,22 @@ public:
     void Move();
     void cbRenderBefore();
 
+    void func_80104454();
+    void func_80105A34();
+    void func_80105D54();
+    void func_80106450();
+    void func_801065E4();
+    void func_80106900();
+    void func_80106C30(s32 index);
+    void func_80106EC8(s32 index);
+    void func_801071B8(s32 index);
+    void func_801072E0();
+    void func_80107580();
+    int func_80107970(s32 index);
+    int func_80107C54(s32 index);
+    void func_801080F8();
+    void func_80108994();
+
     // Process base (CProcess): CDoubleListNode + vtable@0x10 + child list + flags@0x38.
     u8 unk00[0x10];
     void* vtable; // 0x10
@@ -30572,6 +29592,7 @@ public:
     u8 unk342[0x344 - 0x342];
     f32 unk344; // 0x344
     u8 unk348; // 0x348 - party-target latch
+    virtual ~CMenuArtsSelect();
 };
 
 extern "C" {
@@ -30646,6 +29667,1033 @@ public:
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 5 "monolib/util.hpp" */
 /* end "monolib/util.hpp" */
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 6 "monolib/math.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math.hpp" line 2 "monolib/math/CAttrTransform.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 3 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 4 "monolib/math/CMat34.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CMat34.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CMat34.hpp" line 3 "monolib/math/CQuat.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 3 "monolib/math/MathConstants.hpp" */
+/* end "monolib/math/MathConstants.hpp" */
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 4 "monolib/math/Utility.hpp" */
+/* end "monolib/math/Utility.hpp" */
+/* "libs/monolib/include/monolib/math/CQuat.hpp" line 5 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CQuat{
+        CQuat(){}
+
+        CQuat(float x, float y, float z, float w){
+            set(x,y,z,w);
+        }
+
+        operator Quaternion*(){
+            return reinterpret_cast<Quaternion*>(this);
+        }
+
+        operator const Quaternion*() const{
+            return reinterpret_cast<const Quaternion*>(this);
+        }
+
+        CQuat& operator*=(const CQuat& other){
+            PSQUATMultiply(*this, other, *this);
+            return *this;
+        }
+
+        inline void set(float x, float y, float z, float w){
+            this->x = x;
+            this->y = y;
+            this->z = z;
+            this->w = w;
+        }
+
+        inline void setIdentity(){
+            set(0,0,0,1);
+        }
+  
+        //Sets the quaternion from the given euler angle, following the 3-2-1 conversion.
+        inline void setRotXYZ(const CVec3* angle){
+            float x = angle->x * 0.5f;
+            float y = angle->y * 0.5f;
+            float z = angle->z * 0.5f;
+            float sinX = math::sin(x);
+            float cosX = math::cos(x);
+            float sinY = math::sin(y);
+            float cosY = math::cos(y);
+            float sinZ = math::sin(z);
+            float cosZ = math::cos(z);
+
+            this->x = cosZ*(sinX*cosY) - sinZ*(cosX*sinY);
+            this->y = cosZ*(cosX*sinY) + sinZ*(sinX*cosY);
+            this->z = sinZ*(cosX*cosY) - cosZ*(sinX*sinY);
+            this->w = cosZ*(cosX*cosY) + sinZ*(sinX*sinY);
+        }
+
+        //Converts this quaternion to euler angles, storing the result in the given vector.
+        inline void getRotXYZ(CVec3* result) const {
+            //So many variables :p
+            float twoX = x + x;
+            float twoY = y + y;
+            float twoZ = z + z;
+
+            float twoXZ = x * twoZ;
+            float twoYW = w * twoY;
+
+            //NOTE: Unnecessary clamp
+            float input = -(twoXZ - twoYW);
+            if(input >= 1) input = 1;
+            else if(input <= -1) input = -1;
+            //y = asin(-(2xz - 2yw))
+            float angle = math::asin(input);
+            result->y = angle;
+
+            float twoX2 = x * twoX;
+            float twoXY = x * twoY;
+            float twoZ2 = z * twoZ;
+            float twoZW = w * twoZ;
+                    
+            if (angle < halfpi) {
+                if (angle > -halfpi) {
+                    //-pi/2 < angle < pi/2
+                    float twoY2 = y * twoY;
+                    float twoYZ = y * twoZ;
+                    float twoXW = w * twoX;
+                    //x = atan2(2yz + 2xw, 1 - (2x^2 + 2y^2))
+                    result->x = math::atan2Rad(twoYZ + twoXW, 1.0f - (twoX2 + twoY2));
+                    //z = atan2(2xy + 2zw, 1 - (2y^2 + 2z^2))
+                    result->z = math::atan2Rad(twoXY + twoZW, 1.0f - (twoY2 + twoZ2));
+                }else{
+                    //angle > pi/2
+                    //x = -atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
+                    result->x = -math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
+                    result->z = 0;
+                }
+            }else{
+                //angle < -pi/2
+                //x = atan2(2xy - 2zw, 1 - (2x^2 + 2z^2))
+                result->x = math::atan2Rad(twoXY - twoZW, 1.0f - (twoX2 + twoZ2));
+                result->z = 0;
+            }
+        }
+
+        static void slerp(CQuat& outQuat, const CQuat& a, const CQuat& b, float t);
+        void setRotZXY(const CVec3* angle);
+        void getRotZXY(CVec3* result) const;
+
+
+        struct{
+        float x;
+        float y;
+        float z;
+        float w;
+        };
+
+        static CQuat zero;
+        static CQuat identity;
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CQuat.hpp" */
+/* "libs/monolib/include/monolib/math/CMat34.hpp" line 4 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CMat34{
+        CMat34(){}
+
+        CMat34(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23){
+            set(
+                m00,m01,m02,m03,
+                m10,m11,m12,m13,
+                m20,m21,m22,m23
+            );
+        }
+
+        void set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23){
+            m[0][0] = m00;
+            m[0][1] = m01;
+            m[0][2] = m02;
+            m[0][3] = m03;
+            m[1][0] = m10;
+            m[1][1] = m11;
+            m[1][2] = m12;
+            m[1][3] = m13;
+            m[2][0] = m20;
+            m[2][1] = m21;
+            m[2][2] = m22;
+            m[2][3] = m23;
+        }
+
+        operator nw4r::math::MTX34*(){
+            return reinterpret_cast<nw4r::math::MTX34*>(this);
+        }
+
+        operator const nw4r::math::MTX34*() const {
+            return reinterpret_cast<const nw4r::math::MTX34*>(this);
+        }
+
+        //TODO: can this be included without interfering with the above operators?
+        /*
+        operator Mtx*(){
+            return &m;
+        }
+
+        operator const Mtx*() const {
+            return &m;
+        }
+        */
+
+        CMat34 operator*(CMat34& rhs) const {
+            CMat34 mat;
+            mul(mat, *this, rhs);
+            return mat;
+        }
+
+        void mul(CVec3& outVec, const CVec3& vec) const {
+            PSMTXMultVec(mtx, vec, outVec);
+        }
+
+
+        static void mul(CMat34& outMat, const CMat34& mat1, const CMat34& mat2){
+            PSMTXConcat(mat2.mtx, mat1.mtx, outMat.mtx);
+        }
+
+        void setUnit(){
+            PSMTXIdentity(mtx);
+        }
+
+        void setScale(float x, float y, float z){
+            set(
+                x, 0, 0, 0,
+                0, y, 0, 0,
+                0, 0, z, 0
+            );
+        }
+
+        void setScale(const CVec3& scale){
+            setScale(scale.x, scale.y, scale.z);
+        }
+
+        void setRotX(float x){
+            float sinX, cosX;
+            math::sincos(x, sinX, cosX);
+
+            set(
+            1, 0,    0,     0,
+            0, cosX, -sinX, 0,
+            0, sinX, cosX,  0
+            );
+        }
+
+        void setRotY(float y){
+            float sinY, cosY;
+            math::sincos(y, sinY, cosY);
+
+            set(
+            cosY,  0, sinY, 0,
+            0,     1, 0,    0,
+            -sinY, 0, cosY, 0
+            );
+        }
+
+        void setRotZ(float z){
+            float sinZ, cosZ;
+            math::sincos(z, sinZ, cosZ);
+
+            set(
+            cosZ, -sinZ, 0, 0,
+            sinZ, cosZ,  0, 0,
+            0,    0,     1, 0
+            );
+        }
+
+        void addRotX(float x){
+            CMat34 mat;
+            mat.setRotX(x);
+            mul(*this, *this, mat);
+        }
+
+        void addRotY(float y){
+            CMat34 mat;
+            mat.setRotY(y);
+            mul(*this, *this, mat);
+        }
+
+        void addRotZ(float z){
+            CMat34 mat;
+            mat.setRotZ(z);
+            mul(*this, *this, mat);
+        }
+
+        void getRotQuat(CQuat& quat) const{
+            CQuat temp;
+            C_QUATMtx(temp, mtx);
+            quat = temp;
+        }
+
+        void setRotQuat(const CQuat& quat){
+            PSMTXQuat(mtx, quat);
+        }
+
+        void setRotXYZ(const CVec3& angle){
+            nw4r::math::MTX34RotXYZRad(*this, angle.x, angle.y, angle.z);
+        }
+
+        void setRotZXY(const CVec3& angle){
+            setRotZ(angle.z);
+            addRotX(angle.x);
+            addRotY(angle.y);
+        }
+
+        void invert(CMat34* outMat){
+            PSMTXInverse(mtx, outMat->mtx);
+        }
+
+        CVec3 getTranslation(){
+            return CVec3(m[0][3], m[1][3], m[2][3]);
+        }
+
+        void addTranslation(const CVec3& vec){
+            m[0][3] += vec.x;
+            m[1][3] += vec.y;
+            m[2][3] += vec.z;
+        }
+
+
+        void replaceTranslation(const CVec3& vec){
+            m[0][3] = vec.x;
+            m[1][3] = vec.y;
+            m[2][3] = vec.z;
+        }
+
+        void getRotAxis(CVec3& vec, float* outAngle) const;
+        bool getRotXYZ(CVec3& vec) const;
+        bool getRotZXY(CVec3& vec) const;
+        bool getRotZYX(CVec3& vec) const;
+
+        union {
+            float m[3][4];
+            Mtx mtx;
+        };
+
+        static CMat34 zero;
+        static CMat34 identity;
+    };
+} //namespace ml
+/* end "monolib/math/CMat34.hpp" */
+/* "libs/monolib/include/monolib/math/CAttrTransform.hpp" line 5 "monolib/math/CQuat.hpp" */
+/* end "monolib/math/CQuat.hpp" */
+
+namespace ml{
+    struct CAttrTransform{
+        enum Flags{
+            FLAG_0 = 1 << 0,
+            FLAG_1 = 1 << 1,
+            FLAG_2 = 1 << 2,
+            FLAG_USE_ZXY = 1 << 3
+        };
+
+        CAttrTransform(){
+            clear();
+        }
+
+        void clear();
+        void update();
+
+        CVec3 mPos; //0x0
+        CVec3 mRot; //0xC
+        CMat34 mMtx1; //0x18
+        CMat34 mLocalMat; //0x48
+        CMat34 mLocalMatInv; //0x78
+        CQuat unkA8;
+        CVec3 mPrevPos; //0xB8
+        CVec3 mPrevRot; //0xC4
+        CQuat mLocalQuat; //0xD0
+        u32 mFlags; //0xE0
+    };
+} //namespace ml
+/* end "monolib/math/CAttrTransform.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 3 "monolib/math/CCamUtil.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CCamUtil.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+
+namespace ml {
+    struct CCamUtil {
+        static void getXYZ2ZXY(CVec3& outVec, const CVec3& vec);
+    };
+} //namespace ml
+/* end "monolib/math/CCamUtil.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 4 "monolib/math/CCol3.hpp" */
+#pragma once
+
+namespace ml {
+    struct CCol3{
+        CCol3(){}
+        CCol3(float r, float g, float b){
+            set(r, g, b);
+        }
+
+        void set(float r, float g, float b){
+            this->r = r;
+            this->g = g;
+            this->b = b;
+        }
+
+        void clamp(float min, float max){
+            if(r > max) r = max;
+            else if(r < min) r = min;
+            if(g > max) g = max;
+            else if(g < min) g = min;
+            if(b > max) b = max;
+            else if(b < min) b = min;
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float r;
+            float g;
+            float b;
+        };
+
+        static CCol3 white;
+        static CCol3 gray;
+        static CCol3 black;
+        static CCol3 red;
+        static CCol3 green;
+        static CCol3 blue;
+        static CCol3 yellow;
+        static CCol3 cyan;
+        static CCol3 magenta;
+        static CCol3 salmon;
+        static CCol3 orange;
+    };
+} //namespace ml
+/* end "monolib/math/CCol3.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 5 "monolib/math/CCol4.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CCol4.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+
+#define COLOR_TO_U32(r, g, b, a) (((u8)(255 * r) << 24) | ((u8)(255 * g) << 16) | ((u8)(255 * b) << 8) | (u8)(255 * a))
+
+namespace ml {
+    
+    struct CCol4{
+        CCol4(){}
+        CCol4(float r, float g, float b, float a){
+            set(r,g,b,a);
+        }
+
+        void set(float r, float g, float b, float a){
+            this->r = r;
+            this->g = g;
+            this->b = b;
+            this->a = a;
+        }
+
+        void clamp(float min, float max){
+            if(r > max) r = max;
+            else if(r < min) r = min;
+            if(g > max) g = max;
+            else if(g < min) g = min;
+            if(b > max) b = max;
+            else if(b < min) b = min;
+            if(a > max) a = max;
+            else if(a < min) a = min;
+        }
+
+        u32 toU32() const {
+            return COLOR_TO_U32(r, g, b, a);
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float r;
+            float g;
+            float b;
+            float a;
+        };
+
+        static CCol4 white;
+        static CCol4 gray;
+        static CCol4 black;
+        static CCol4 red;
+        static CCol4 green;
+        static CCol4 blue;
+        static CCol4 yellow;
+        static CCol4 cyan;
+        static CCol4 magenta;
+        static CCol4 salmon;
+        static CCol4 orange;
+        static CCol4 zero;
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CCol4.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 6 "monolib/math/CFrustum.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 3 "monolib/math/CMat34.hpp" */
+/* end "monolib/math/CMat34.hpp" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 4 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CFrustum.hpp" line 5 "monolib/math/CPlane.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CPlane.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+
+namespace ml {
+    struct CPlane {
+        CPlane(){
+        }
+        CPlane(const CVec3& pos, const CVec3& p1, const CVec3& p2){
+            set(pos, p1, p2);
+        }
+
+        CPlane* set(const CVec3& pos, const CVec3& p1, const CVec3& p2);
+        static void getCross(CVec3& outVec, const CPlane& plane, const CVec3& rayOrigin, const CVec3& rayDir);
+
+        void normalize(){
+            mNormal.normalizeSub();
+        }
+
+        CVec3 convertRayToNormal(const CVec3& rayStartPos, const CVec3& rayEndPos) const {
+            CVec3 normal = rayEndPos - rayStartPos;
+            normal.normalizeSub();
+            return normal;
+        }
+
+        //Sets this plane from the given ray start/end position.
+        void set(const CVec3& rayStartPos, const CVec3& rayEndPos){
+            mNormal = convertRayToNormal(rayStartPos, rayEndPos);
+            mDist = -CVec3::dot(rayStartPos, mNormal);
+        }
+
+        float getPointDistance(const CVec3& pos) const {
+            return CVec3::dot(pos, mNormal) + mDist;
+        }
+        
+        bool isWithinDistance(const CVec3& vec, float distance) const {
+            if(getPointDistance(vec) < distance) return true;
+            else return false;
+        }
+
+        bool isOnNegativeSide(const CVec3& vec) const {
+            if(getPointDistance(vec) < 0) return true;
+            else return false;
+        }
+
+        bool isOnPositiveSide(const CVec3& vec) const {
+            if(getPointDistance(vec) >= 0) return true;
+            else return false;
+        }
+
+        //Determines if the points are on different sides of the plane.
+        bool isDifferentSide(const CVec3& vec1, const CVec3& vec2) const {
+            float f0 = getPointDistance(vec2);
+            float f1 = getPointDistance(vec1);
+            
+            bool r3 = f1 >= 0;
+            bool r0 = f0 >= 0;
+            //TODO: is this some weird inline for calculating if only one of two conditions are true?
+            return r3 ^ r0;
+        }
+
+        CVec3 mNormal; //0x0
+        float mDist; //0x4
+    };
+
+} //namespace ml
+/* end "monolib/math/CPlane.hpp" */
+
+//TODO: idk if this belongs here in monolib or in the scene code. There's no evidence of it in XCX
+namespace ml{
+
+    struct CFrustum{
+        u8 unk0[0xCC];
+        ml::CMat34 unkCC;
+        u8 unkFC[0x10];
+        ml::CVec3 unk10C;
+        u8 unk118[0x258 - 0x118];
+        ml::CPlane unk248[6];
+    };
+
+} //namespace ml
+/* end "monolib/math/CFrustum.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 7 "monolib/math/CMat33.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CMat33.hpp" line 2 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math/CMat33.hpp" line 3 "monolib/math/Utility.hpp" */
+/* end "monolib/math/Utility.hpp" */
+/* "libs/monolib/include/monolib/math/CMat33.hpp" line 4 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CMat33{
+        CMat33(){}
+
+        CMat33(float m00, float m01, float m02,
+        float m10, float m11, float m12,
+        float m20, float m21, float m22){
+            set(m00, m01, m02, m10, m11, m12, m20, m21, m22);
+        }
+
+        void set(float m00, float m01, float m02,
+        float m10, float m11, float m12,
+        float m20, float m21, float m22){
+            m[0][0] = m00;
+            m[0][1] = m01;
+            m[0][2] = m02;
+            m[1][0] = m10;
+            m[1][1] = m11;
+            m[1][2] = m12;
+            m[2][0] = m20;
+            m[2][1] = m21;
+            m[2][2] = m22;
+        }
+
+        void setRotXYZ(const CVec3& angle){
+            float sinX = math::sin(angle.x);
+            float cosX = math::cos(angle.x);
+            float sinY = math::sin(angle.y);
+            float cosY = math::cos(angle.y);
+            float sinZ = math::sin(angle.z);
+            float cosZ = math::cos(angle.z);
+
+            set(
+            cosY*cosZ, sinX*sinY*cosZ - cosX*sinZ, cosX*sinY*cosZ + sinX*sinZ,
+            cosY*sinZ, sinX*sinY*sinZ + cosX*cosZ, cosX*sinY*sinZ - sinX*cosZ,
+            -sinY,     sinX*cosY,                  cosX*cosY
+            );
+        }
+
+        void getRotZXY(CVec3& outVec){
+            float angle = math::asin(-m[1][2]);
+            outVec.x = angle;
+
+            if(angle < halfpi){
+                if(angle > -halfpi){
+                    //-pi/2 < angle < pi/2
+                    outVec.z = math::atan2Rad(m[1][0], m[1][1]);
+                    outVec.y = math::atan2Rad(m[0][2], m[2][2]);
+                }else{
+                    //angle < -pi/2
+                    outVec.z = -math::atan2Rad(m[2][0], m[0][0]);
+                    outVec.y = 0;
+                }
+            }else{
+                //angle > pi/2
+                outVec.z = math::atan2Rad(m[2][0], m[0][0]);
+                outVec.y = 0;
+            }
+        }
+
+        float m[3][3];
+    };
+} //namespace ml
+/* end "monolib/math/CMat33.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 8 "monolib/math/CMat34.hpp" */
+/* end "monolib/math/CMat34.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 9 "monolib/math/CMat44.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CMat44.hpp" line 2 "revolution/MTX.h" */
+/* end "revolution/MTX.h" */
+
+namespace ml {
+    struct CMat44{
+        CMat44(){}
+
+        CMat44(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13,
+        float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33){
+            m[0][0] = m00;
+            m[0][1] = m01;
+            m[0][2] = m02;
+            m[0][3] = m03;
+            m[1][0] = m10;
+            m[1][1] = m11;
+            m[1][2] = m12;
+            m[1][3] = m13;
+            m[2][0] = m20;
+            m[2][1] = m21;
+            m[2][2] = m22;
+            m[2][3] = m23;
+            m[3][0] = m30;
+            m[3][1] = m31;
+            m[3][2] = m32;
+            m[3][3] = m33;
+        }
+
+        union {
+            float m[4][4];
+            Mtx44 mtx;
+        };
+    
+        static CMat44 zero;
+        static CMat44 identity;
+    };
+} //namespace ml
+/* end "monolib/math/CMat44.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 10 "monolib/math/CPlane.hpp" */
+/* end "monolib/math/CPlane.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 11 "monolib/math/CPnt16.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CPnt16.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace ml {
+    struct CPnt16{
+        CPnt16(){}
+
+        CPnt16(s16 x, s16 y){
+            set(x,y);
+        }
+
+        void set(s16 x, s16 y){
+            this->x = x;
+            this->y = y;
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lhz/sth. */
+        struct{
+            s16 x;
+            s16 y;
+        };
+    };
+} //namespace ml
+/* end "monolib/math/CPnt16.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 12 "monolib/math/CQuat.hpp" */
+/* end "monolib/math/CQuat.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 13 "monolib/math/CRect16.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/CRect16.hpp" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/monolib/include/monolib/math/CRect16.hpp" line 3 "monolib/math/CPnt16.hpp" */
+/* end "monolib/math/CPnt16.hpp" */
+
+namespace ml {
+    struct CRect16 {
+        CRect16(){
+        }
+    
+        CRect16(s16 x, s16 y, s16 width, s16 height){
+            set(x, y, width, height);
+        }
+
+        CRect16(const CPnt16& pos, const CPnt16& size){
+            set(pos, size);
+        }
+
+        void set(s16 x, s16 y, s16 width, s16 height){
+            mPos.x = x;
+            mPos.y = y;
+            mSize.x = width;
+            mSize.y = height;
+        }
+
+        void set(const CPnt16& pos, const CPnt16& size){
+            mPos.x = pos.x;
+            mPos.y = pos.y;
+            mSize.x = size.x;
+            mSize.y = size.y;
+        }
+    
+        bool isInside(const CPnt16& point) const;
+
+        CPnt16 mPos; //0x0
+        CPnt16 mSize; //0x4
+    };
+} //namespace ml
+/* end "monolib/math/CRect16.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 14 "monolib/math/CVec2.hpp" */
+#pragma once
+
+/* Not known to be used yet, but it's here anyways just in case they did end up using it (it exists
+in XCX, so it probably at least existed). It also doesn't hurt to have anyway for modding and stuff. */
+namespace ml {
+    struct CVec2 {
+
+        CVec2(){}
+
+        CVec2(float x, float y){
+            set(x, y);
+        }
+
+        CVec2(const CVec2& vec){
+            set(vec.x, vec.y);
+        }
+
+        void set(float x, float y){
+            this->x = x;
+            this->y = y;
+        }
+
+        void set(const CVec2& vec){
+            x = vec.x;
+            y = vec.y;
+        }
+
+        bool operator==(const CVec2& vec) const {
+            return x == vec.x && y == vec.y;
+        }
+
+        bool operator!=(const CVec2& vec) const {
+            return x != vec.x || y != vec.y;
+        }
+        
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float x;
+            float y;
+        };
+
+    };
+
+} //namespace ml
+/* end "monolib/math/CVec2.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 15 "monolib/math/CVec3.hpp" */
+/* end "monolib/math/CVec3.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 16 "monolib/math/CVec4.hpp" */
+#pragma once
+
+namespace ml {
+    struct CVec4{
+        static CVec4 zero;
+        static CVec4 unitX;
+        static CVec4 unitY;
+        static CVec4 unitZ;
+        static CVec4 unit;
+
+        CVec4() {}
+
+        CVec4(float x, float y, float z, float w){
+            this->x = x;
+            this->y = y;
+            this->z = z;
+            this->w = w;
+        }
+
+        /* Nesting the variables in a nameless makes mwcc use lwz/stw for struct copies,
+        which is more efficient than lfs/stfd. */
+        struct{
+            float x;
+            float y;
+            float z;
+            float w;
+        };
+
+    };
+} //namespace ml
+/* end "monolib/math/CVec4.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 17 "monolib/math/Main.hpp" */
+#pragma once
+
+namespace ml{
+    namespace math{
+        void initialize();
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Main.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 18 "monolib/math/FloatUtils.hpp" */
+#pragma once
+
+#define FLOAT_LARGE 1e14f
+#define FLOAT_SMALL -1e14f
+#define FLOAT_MAX_HEX 0xD3D3D3D3
+#define FLOAT_MAX_HEX_NEG 0xF3F3F3F3
+#define FLOAT_NAN 0xFFFFFFFF
+#define FLOAT_TO_HEX(f) (*(u32*)&f)
+
+namespace ml{
+    namespace math{
+        bool isErrFloat(float f);
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/FloatUtils.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 19 "monolib/math/MathConstants.hpp" */
+/* end "monolib/math/MathConstants.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 20 "monolib/math/MTRand.hpp" */
+//Original copyright comments:
+
+// Mersenne Twister random number generator -- a C++ class MTRand
+// Based on code by Makoto Matsumoto, Takuji Nishimura, and Shawn Cokus
+// Richard J. Wagner  v1.1  28 September 2009  wagnerr@umich.edu
+
+// The Mersenne Twister is an algorithm for generating random numbers.  It
+// was designed with consideration of the flaws in various other generators.
+// The period, 2^19937-1, and the order of equidistribution, 623 dimensions,
+// are far greater.  The generator is also fast; it avoids multiplication and
+// division, and it benefits from caches and pipelines.  For more information
+// see the inventors' web page at
+// http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
+
+// Reference
+// M. Matsumoto and T. Nishimura, "Mersenne Twister: A 623-Dimensionally
+// Equidistributed Uniform Pseudo-Random Number Generator", ACM Transactions on
+// Modeling and Computer Simulation, Vol. 8, No. 1, January 1998, pp 3-30.
+
+// Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
+// Copyright (C) 2000 - 2009, Richard J. Wagner
+// All rights reserved.
+// 
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions
+// are met:
+// 
+//   1. Redistributions of source code must retain the above copyright
+//      notice, this list of conditions and the following disclaimer.
+//
+//   2. Redistributions in binary form must reproduce the above copyright
+//      notice, this list of conditions and the following disclaimer in the
+//      documentation and/or other materials provided with the distribution.
+//
+//   3. The names of its contributors may not be used to endorse or promote 
+//      products derived from this software without specific prior written 
+//      permission.
+// 
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
+// LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+// CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+// SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+// INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+// CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+// ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+// POSSIBILITY OF SUCH DAMAGE.
+
+// The original code included the following notice:
+// 
+//     When you use this, send an email to: m-mat@math.sci.hiroshima-u.ac.jp
+//     with an appropriate reference to your work.
+// 
+// It would be nice to CC: wagnerr@umich.edu and Cokus@math.washington.edu
+// when you write.
+
+
+/* Monolithsoft made slight modifications from the most commonly found version,
+most notably changing function names.
+This might be the version this is based on: https://gist.github.com/yuikns/10017640 */
+
+#pragma once
+
+/* "libs/monolib/include/monolib/math/MTRand.hpp" line 65 "types.h" */
+/* end "types.h" */
+
+namespace ml{
+
+//Probably uses a singleton template
+
+class MTRand{
+protected:
+    static const int N = 624; //length
+    static const int M = 397; //period
+    u32 state[N]; //twister
+    int left; //0x9C0
+    BOOL initialized; //0x9C4
+    u32* pNext; //0x9C8
+    u32 unk9D0;
+
+public:
+    static MTRand* getInstance();
+    void srand(u32);
+    void nextMt();
+    u32 rand32();
+    u32 rand31();
+    float randFloat();
+    float randFloat1();
+
+    inline u32 rand(){
+        return rand31();
+    }
+
+    inline u32 rand(int max){
+        if(max != 0){
+            int randVal = rand();
+            return randVal % max;
+        }else{
+            return 0;
+        }
+    }
+
+    inline u32 rand(int min, int max){
+        int range = max - min;
+        int result = 0;
+
+        if(range != 0){
+            int randVal = rand();
+            result = (randVal % range);
+        }else{
+            result = 0;
+        }
+
+        return min + result; //wtf? why not just add it before?
+    }
+
+protected:
+    inline u32 hiBit(u32 u) { return u & 0x80000000; }
+    inline u32 loBit(u32 u) { return u & 0x00000001; }
+    inline u32 loBits(u32 u) { return u & 0x7fffffff; }
+    inline u32 mixBits(u32 u, u32 v) { return hiBit(u) | loBits(v); }
+    inline u32 magic(u32 u) { return loBit(u) ? 0x9908b0dfUL : 0x0UL; }
+    inline u32 twist(u32 m, u32 s0, u32 s1) {
+        const u32 y = mixBits(s0, s1);
+        const u32 mask = magic(s1);
+        return m ^ (mask ^ (y >> 1));
+    }
+};
+
+} //namespace ml
+/* end "monolib/math/MTRand.hpp" */
+/* "libs/monolib/include/monolib/math.hpp" line 21 "monolib/math/Random.hpp" */
+#pragma once
+
+/* "libs/monolib/include/monolib/math/Random.hpp" line 2 "types.h" */
+/* end "types.h" */
+
+namespace ml{
+    namespace math{
+        void mtInit(u32 seed);
+        int mtRand();
+        int mtRand(int max);
+        int mtRand(int min,int max);
+    } //namespace math
+} //namespace ml
+/* end "monolib/math/Random.hpp" */
 /* end "monolib/math.hpp" */
 /* "libs/monolib/include/monolib/device/CDeviceVI.hpp" line 7 "revolution/GX.h" */
 /**
@@ -31043,6 +31091,7 @@ public:
     u8 unk2B6[2]; //padding?
     u32 mTargetFramerate; //0x2B8
     float mSecPerFrame; //0x2BC
+    u32 unk2C0; //0x2C0
 
     //General screen dimensions
     static const int SCREEN_WIDTH = 640;
@@ -31454,7 +31503,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -41456,7 +41505,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -46577,7 +46626,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -47217,7 +47266,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -53712,7 +53761,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -58749,7 +58798,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -59389,7 +59438,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -68335,7 +68384,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -73539,7 +73588,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -86416,20 +86465,27 @@ typedef struct
 } tBTM_ESCO_INFO;
 
 /* Define the structure used for SCO Management
-*/
+ * NOTE: Retail Wii layout differs from Broadcom SDK — the structure
+ * is flattened with ESCO fields inlined rather than nested.
+ */
 typedef struct
 {
-    tBTM_ESCO_INFO   esco;              /* Current settings             */
-#if BTM_SCO_HCI_INCLUDED == TRUE
-    BUFFER_Q         xmit_data_q;       /* SCO data transmitting queue  */
-#endif
-    tBTM_SCO_CB     *p_conn_cb;         /* Callback for when connected  */
-    tBTM_SCO_CB     *p_disc_cb;         /* Callback for when disconnect */
-    UINT16           state;             /* The state of the SCO link    */
-    UINT16           hci_handle;        /* HCI Handle                   */
-    BOOLEAN          is_orig;           /* TRUE if the originator       */
-    BOOLEAN          rem_bd_known;      /* TRUE if remote BD addr known */
-
+    /* 0x00 */ tBTM_SCO_CB     *p_conn_cb;         /* Callback for when connected  */
+    /* 0x04 */ tBTM_SCO_CB     *p_disc_cb;         /* Callback for when disconnect */
+    /* 0x08 */ UINT16           state;             /* The state of the SCO link    */
+    /* 0x0A */ UINT16           hci_handle;        /* HCI Handle                   */
+    /* 0x0C */ BOOLEAN          is_orig;           /* TRUE if the originator       */
+    /* 0x0D */ BOOLEAN          rem_bd_known;      /* TRUE if remote BD addr known */
+    /* 0x10 */ tBTM_ESCO_CBACK *p_esco_cback;     /* Callback for eSCO events     */
+    /* 0x14 */ tBTM_ESCO_PARAMS esco_setup;        /* eSCO setup parameters        */
+    /* 0x24 */ UINT16           rx_pkt_len;        /* eSCO data: rx packet length  */
+    /* 0x26 */ UINT16           tx_pkt_len;        /* eSCO data: tx packet length  */
+    /* 0x28 */ BD_ADDR          bd_addr;           /* eSCO data: remote BD addr    */
+    /* 0x2E */ UINT8            link_type;         /* eSCO data: link type         */
+    /* 0x2F */ UINT8            tx_interval;       /* eSCO data: tx interval       */
+    /* 0x30 */ UINT8            retrans_window;    /* eSCO data: retrans window    */
+    /* 0x31 */ UINT8            air_mode;          /* eSCO data: air mode          */
+    /* 0x32 */ UINT8            hci_status;        /* eSCO data: HCI status        */
 } tSCO_CONN;
 
 /* SCO Management control block */
@@ -86440,10 +86496,11 @@ typedef struct
     tBTM_SCO_DATA_CB     *p_data_cb;        /* Callback for SCO data over HCI */
     UINT32               xmit_window_size; /* Total SCO window in bytes  */
 #endif
-    tSCO_CONN            sco_db[BTM_MAX_SCO_LINKS];
-    tBTM_ESCO_PARAMS     def_esco_parms;
+    /* NOTE: Retail layout uses 3 entries regardless of BTM_MAX_SCO_LINKS */
+    tSCO_CONN            sco_db[3];
     BD_ADDR              xfer_addr;
     UINT16               sco_disc_reason;
+    tBTM_ESCO_PARAMS     def_esco_parms;
     BOOLEAN              esco_supported;    /* TRUE if 1.2 cntlr AND supports eSCO links */
     tBTM_SCO_TYPE        desired_sco_mode;
     tBTM_SCO_TYPE        xfer_sco_type;
@@ -87538,7 +87595,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -93536,7 +93593,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -98740,7 +98797,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -114870,7 +114927,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -119907,7 +119964,7 @@ The maximum number of payload octets that the local device can receive in a sing
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -120547,7 +120604,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -127258,7 +127315,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -132379,7 +132436,7 @@ typedef struct tBAUD_REG_tag {
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -133019,7 +133076,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -139729,7 +139786,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -145727,7 +145784,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -150931,7 +150988,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -166859,7 +166916,7 @@ void BTA_CleanUp(BTA_CleanUpCallback p_cb);
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -167635,7 +167692,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -173633,7 +173690,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -178837,7 +178894,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -195094,7 +195151,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -201092,7 +201149,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -206296,7 +206353,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -222460,7 +222517,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -228850,7 +228907,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -235794,7 +235851,7 @@ typedef unsigned char   UBYTE;
 
 /* Definitions of task IDs for inter-task messaging */
 #ifndef BTU_TASK
-#define BTU_TASK                0
+#define BTU_TASK                2
 #endif
 
 #ifndef BTIF_TASK
@@ -244348,11 +244405,7047 @@ L2C_API extern void L2CA_BypassSFrame (UINT16 cid, UINT8 count);
 /* "libs/RVL_SDK/include/revolution/BTE/rvl/uusb_ppc.h" line 2 "types.h" */
 /* end "types.h" */
 
+/* "libs/RVL_SDK/include/revolution/BTE/rvl/uusb_ppc.h" line 4 "revolution/bte/gki/common/gki.h" */
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#ifndef GKI_H
+#define GKI_H
+
+
+/* Include platform-specific over-rides */
+#if (defined(NFC_STANDALONE) && (NFC_STANDALONE == TRUE))
+/* "libs/RVL_SDK/include/revolution/bte/gki/common/gki.h" line 25 "revolution/BTE/include/gki_target.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Add #defines for RVL target
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#ifndef GKI_TARGET_H
+#define GKI_TARGET_H
+
+/**
+ * Modifications for decomp
+ */
+#define GKI_MAX_TASKS               8
+#define GKI_NUM_TIMERS              2
+#define GKI_DELAY_STOP_SYS_TICK     0
+#define GKI_BUF1_SIZE               128
+#define GKI_BUF3_SIZE               1800
+#define GKI_BUF3_MAX                30
+#define GKI_BUF4_SIZE               8192
+#define GKI_BUF4_MAX                9
+#define GKI_NUM_FIXED_BUF_POOLS     5
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfff0
+#define GKI_NUM_TOTAL_BUF_POOLS     9
+
+// RVL version didn't have A2DP?
+#define GKI_PPC_TASK 2
+
+
+/* Operating System Selection */
+#ifndef BTE_SIM_APP
+#define _GKI_ARM
+#define _GKI_STANDALONE
+#else
+#define _BT_WIN32
+#endif
+
+/* define prefix for exporting APIs from libraries */
+#define EXPORT_API
+
+#ifndef BTE_BSE_WRAPPER
+#ifdef  BTE_SIM_APP
+#undef  EXPORT_API
+#define EXPORT_API  __declspec(dllexport)
+#endif
+#endif
+
+#define GKI_API EXPORT_API
+#define UDRV_API EXPORT_API
+
+#ifndef GKI_DEBUG
+#define GKI_DEBUG FALSE
+#endif
+
+
+#if defined (GKI_DEBUG) && (GKI_DEBUG == TRUE)
+#define GKI_TRACE(fmt, ...)     ALOGI ("%s: " fmt, __FUNCTION__, ## __VA_ARGS__)
+#else
+#define GKI_TRACE(fmt, ...)
+#endif
+
+/******************************************************************************
+**
+** Task configuration
+**
+******************************************************************************/
+
+/* Definitions of task IDs for inter-task messaging */
+#ifndef BTU_TASK
+#define BTU_TASK                2
+#endif
+
+#ifndef BTIF_TASK
+#define BTIF_TASK               1
+#endif
+
+#ifndef A2DP_MEDIA_TASK
+#define A2DP_MEDIA_TASK         2
+#endif
+
+/* The number of GKI tasks in the software system. */
+#ifndef GKI_MAX_TASKS
+#define GKI_MAX_TASKS               3
+#endif
+
+/******************************************************************************
+**
+** Timer configuration
+**
+******************************************************************************/
+
+/* The number of GKI timers in the software system. */
+#ifndef GKI_NUM_TIMERS
+#define GKI_NUM_TIMERS              3
+#endif
+
+/* A conversion value for translating ticks to calculate GKI timer.  */
+#ifndef TICKS_PER_SEC
+#define TICKS_PER_SEC               100
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+#ifndef GKI_MS_TO_TICKS
+#define GKI_MS_TO_TICKS(x)   ((x) / (1000 / TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_SECS_TO_TICKS
+#define GKI_SECS_TO_TICKS(x)   ((x) * (TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_TICKS_TO_MS
+#define GKI_TICKS_TO_MS(x)   ((x) * 1000 / TICKS_PER_SEC)
+#endif
+
+#ifndef GKI_TICKS_TO_SECS
+#define GKI_TICKS_TO_SECS(x)   ((x) / TICKS_PER_SEC)
+#endif
+
+
+
+/* TICK per second from OS (OS dependent change this macro accordingly to various OS) */
+#ifndef OS_TICKS_PER_SEC
+#define OS_TICKS_PER_SEC               1000
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+
+#ifndef GKI_OS_TICKS_TO_MS
+#define GKI_OS_TICKS_TO_MS(x)   ((x) * 1000 / OS_TICKS_PER_SEC)
+#endif
+
+
+#ifndef GKI_OS_TICKS_TO_SECS
+#define GKI_OS_TICKS_TO_SECS(x)   ((x) / OS_TICKS_PER_SEC))
+#endif
+
+
+/* delay in ticks before stopping system tick. */
+#ifndef GKI_DELAY_STOP_SYS_TICK
+#define GKI_DELAY_STOP_SYS_TICK     10
+#endif
+
+/* Option to guarantee no preemption during timer expiration (most system don't need this) */
+#ifndef GKI_TIMER_LIST_NOPREEMPT
+#define GKI_TIMER_LIST_NOPREEMPT    FALSE
+#endif
+
+/******************************************************************************
+**
+** Buffer configuration
+**
+******************************************************************************/
+
+/* TRUE if GKI uses dynamic buffers. */
+#ifndef GKI_USE_DYNAMIC_BUFFERS
+#define GKI_USE_DYNAMIC_BUFFERS     FALSE
+#endif
+
+/* The size of the buffers in pool 0. */
+#ifndef GKI_BUF0_SIZE
+#define GKI_BUF0_SIZE               64
+#endif
+
+/* The number of buffers in buffer pool 0. */
+#ifndef GKI_BUF0_MAX
+#define GKI_BUF0_MAX                48
+#endif
+
+/* The ID of buffer pool 0. */
+#ifndef GKI_POOL_ID_0
+#define GKI_POOL_ID_0               0
+#endif
+
+/* The size of the buffers in pool 1. */
+#ifndef GKI_BUF1_SIZE
+#define GKI_BUF1_SIZE               288
+#endif
+
+/* The number of buffers in buffer pool 1. */
+#ifndef GKI_BUF1_MAX
+#define GKI_BUF1_MAX                26
+#endif
+
+/* The ID of buffer pool 1. */
+#ifndef GKI_POOL_ID_1
+#define GKI_POOL_ID_1               1
+#endif
+
+/* The size of the buffers in pool 2. */
+#ifndef GKI_BUF2_SIZE
+#define GKI_BUF2_SIZE               660
+#endif
+
+/* The number of buffers in buffer pool 2. */
+#ifndef GKI_BUF2_MAX
+#define GKI_BUF2_MAX                45
+#endif
+
+/* The ID of buffer pool 2. */
+#ifndef GKI_POOL_ID_2
+#define GKI_POOL_ID_2               2
+#endif
+
+/* The size of the buffers in pool 3. */
+#ifndef GKI_BUF3_SIZE
+#define GKI_BUF3_SIZE               (4096+16)
+#endif
+
+/* The number of buffers in buffer pool 3. */
+#ifndef GKI_BUF3_MAX
+#define GKI_BUF3_MAX                200
+#endif
+
+/* The ID of buffer pool 3. */
+#ifndef GKI_POOL_ID_3
+#define GKI_POOL_ID_3               3
+#endif
+
+/* The size of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE
+#define GKI_MAX_BUF_SIZE            GKI_BUF3_SIZE
+#endif
+
+/* The pool ID of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE_POOL_ID
+#define GKI_MAX_BUF_SIZE_POOL_ID    GKI_POOL_ID_3
+#endif
+
+/* RESERVED buffer pool for OBX */
+/* Ideally there should be 1 buffer for each instance for RX data, and some number
+of TX buffers based on active instances. OBX will only use these if packet size
+requires it. In most cases the large packets are used in only one direction so
+the other direction will use smaller buffers.
+Devices with small amount of RAM should limit the number of active obex objects.
+*/
+/* The size of the buffers in pool 4. */
+#ifndef GKI_BUF4_SIZE
+#define GKI_BUF4_SIZE               (8080+26)
+#endif
+
+/* The number of buffers in buffer pool 4. */
+#ifndef GKI_BUF4_MAX
+#define GKI_BUF4_MAX                (OBX_NUM_SERVERS + OBX_NUM_CLIENTS)
+#endif
+
+/* The ID of buffer pool 4. */
+#ifndef GKI_POOL_ID_4
+#define GKI_POOL_ID_4               4
+#endif
+
+/* The number of fixed GKI buffer pools.
+eL2CAP requires Pool ID 5
+If BTM_SCO_HCI_INCLUDED is FALSE, Pool ID 6 is unnecessary, otherwise set to 7
+If BTA_HL_INCLUDED is FALSE then Pool ID 7 is uncessary and set the following to 7, otherwise set to 8
+If BLE_INCLUDED is FALSE then Pool ID 8 is uncessary and set the following to 8, otherwise set to 9
+POOL_ID 9 is a public pool meant for large buffer needs such as SDP_DB
+*/
+// btla-specific ++
+#ifndef GKI_NUM_FIXED_BUF_POOLS
+#define GKI_NUM_FIXED_BUF_POOLS     10
+#endif
+
+/* The buffer pool usage mask. */
+#ifndef GKI_DEF_BUFPOOL_PERM_MASK
+/* Setting POOL_ID 9 as a public pool meant for large buffers such as SDP_DB */
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfdf0
+#endif
+// btla-specific --
+
+/* The number of fixed and dynamic buffer pools */
+#ifndef GKI_NUM_TOTAL_BUF_POOLS
+#define GKI_NUM_TOTAL_BUF_POOLS     10
+#endif
+
+/* The following is intended to be a reserved pool for L2CAP
+Flow control and retransmissions and intentionally kept out
+of order */
+
+/* The number of buffers in buffer pool 5. */
+#ifndef GKI_BUF5_MAX
+#define GKI_BUF5_MAX                64
+#endif
+
+/* The ID of buffer pool 5. */
+#ifndef GKI_POOL_ID_5
+#define GKI_POOL_ID_5               5
+#endif
+
+/* The size of the buffers in pool 5
+** Special pool used by l2cap retransmissions only.  This size based on segment
+** that will fit into both DH5 and 2-DH3 packet types after accounting for GKI
+** header.  13 bytes of max headers allows us a 339 payload max. (in btui_app.txt)
+** Note: 748 used for insight scriptwrapper with CAT-2 scripts.
+*/
+#ifndef GKI_BUF5_SIZE
+#define GKI_BUF5_SIZE               748
+#endif
+
+/* The buffer corruption check flag. */
+#ifndef GKI_ENABLE_BUF_CORRUPTION_CHECK
+#define GKI_ENABLE_BUF_CORRUPTION_CHECK TRUE
+#endif
+
+/* The GKI severe error macro. */
+#ifndef GKI_SEVERE
+#define GKI_SEVERE(code)
+#endif
+
+/* TRUE if GKI includes debug functionality. */
+#ifndef GKI_DEBUG
+#define GKI_DEBUG                   FALSE
+#endif
+
+/* Maximum number of exceptions logged. */
+#ifndef GKI_MAX_EXCEPTION
+#define GKI_MAX_EXCEPTION           8
+#endif
+
+/* Maximum number of chars stored for each exception message. */
+#ifndef GKI_MAX_EXCEPTION_MSGLEN
+#define GKI_MAX_EXCEPTION_MSGLEN    64
+#endif
+
+#ifndef GKI_SEND_MSG_FROM_ISR
+#define GKI_SEND_MSG_FROM_ISR    FALSE
+#endif
+
+
+/* The following is intended to be a reserved pool for SCO
+over HCI data and intentionally kept out of order */
+
+/* The ID of buffer pool 6. */
+#ifndef GKI_POOL_ID_6
+#define GKI_POOL_ID_6               6
+#endif
+
+/* The size of the buffers in pool 6,
+  BUF_SIZE = max SCO data 255 + sizeof(BT_HDR) = 8 + SCO packet header 3 + padding 2 = 268 */
+#ifndef GKI_BUF6_SIZE
+#define GKI_BUF6_SIZE               268
+#endif
+
+/* The number of buffers in buffer pool 6. */
+#ifndef GKI_BUF6_MAX
+#define GKI_BUF6_MAX                60
+#endif
+
+
+/* The following pool is a dedicated pool for HDP
+   If a shared pool is more desirable then
+   1. set BTA_HL_LRG_DATA_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size is larger than 9472
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 7 is not needed
+*/
+
+/* The ID of buffer pool 7. */
+#ifndef GKI_POOL_ID_7
+#define GKI_POOL_ID_7               7
+#endif
+
+/* The size of the buffers in pool 7 */
+#ifndef GKI_BUF7_SIZE
+#define GKI_BUF7_SIZE               9472
+#endif
+
+/* The number of buffers in buffer pool 7. */
+#ifndef GKI_BUF7_MAX
+#define GKI_BUF7_MAX                2
+#endif
+
+/* The following pool is a dedicated pool for GATT
+   If a shared pool is more desirable then
+   1. set GATT_DB_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size fit a common GATT database needs
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 8 is not needed
+*/
+
+/* The ID of buffer pool 8. */
+#ifndef GKI_POOL_ID_8
+#define GKI_POOL_ID_8               8
+#endif
+
+/* The size of the buffers in pool 8 */
+#ifndef GKI_BUF8_SIZE
+#define GKI_BUF8_SIZE               128
+#endif
+
+/* The number of buffers in buffer pool 8. */
+#ifndef GKI_BUF8_MAX
+#define GKI_BUF8_MAX                30
+#endif
+
+// btla-specific ++
+/* The following pool is  meant for large allocations such as SDP_DB */
+#ifndef GKI_POOL_ID_9
+#define GKI_POOL_ID_9              9
+#endif
+
+#ifndef GKI_BUF9_SIZE
+#define GKI_BUF9_SIZE            8192
+#endif
+
+#ifndef GKI_BUF9_MAX
+#define GKI_BUF9_MAX           5
+#endif
+// btla-specific --
+
+/* GKI Trace Macros */
+#define GKI_TRACE_0(m)                          LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m)
+#define GKI_TRACE_1(m,p1)                       LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1)
+#define GKI_TRACE_2(m,p1,p2)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2)
+#define GKI_TRACE_3(m,p1,p2,p3)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3)
+#define GKI_TRACE_4(m,p1,p2,p3,p4)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4)
+#define GKI_TRACE_5(m,p1,p2,p3,p4,p5)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_6(m,p1,p2,p3,p4,p5,p6)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5,p6)
+
+#define GKI_TRACE_ERROR_0(m)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m)
+#define GKI_TRACE_ERROR_1(m,p1)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1)
+#define GKI_TRACE_ERROR_2(m,p1,p2)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2)
+#define GKI_TRACE_ERROR_3(m,p1,p2,p3)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3)
+#define GKI_TRACE_ERROR_4(m,p1,p2,p3,p4)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4)
+#define GKI_TRACE_ERROR_5(m,p1,p2,p3,p4,p5)     LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_ERROR_6(m,p1,p2,p3,p4,p5,p6)  LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5,p6)
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+EXPORT_API extern void LogMsg (UINT32 trace_set_mask, const char *fmt_str, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* GKI_TARGET_H */
+/* end "revolution/BTE/include/gki_target.h" */
+#else
+    /* For non-nfc_standalone, include Bluetooth definitions */
+/* "libs/RVL_SDK/include/revolution/bte/gki/common/gki.h" line 28 "revolution/BTE/include/bt_target.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Add #defines for RVL target
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef BT_TARGET_H
+#define BT_TARGET_H
+
+/**
+ * Modifications for decomp
+ */
+#ifdef REVOLUTION
+
+#define HAS_NO_BDROID_BUILDCFG
+
+#define RFCOMM_INCLUDED         TRUE
+#define GAP_INCLUDED            TRUE
+#define HID_DEV_INCLUDED        TRUE
+#define HID_HOST_INCLUDED       TRUE
+#define BNEP_INCLUDED           FALSE
+#define A2D_INCLUDED            FALSE
+#define AVRC_INCLUDED           FALSE
+#define PAN_INCLUDED            FALSE
+
+#define BTA_AG_INCLUDED         FALSE
+#define BTA_PAN_INCLUDED        FALSE
+#define BTA_FS_INCLUDED         FALSE
+#define BTA_AR_INCLUDED         FALSE
+#define BTA_AV_INCLUDED         FALSE
+
+#define BT_USE_TRACES           TRUE
+
+#define BTM_SSR_INCLUDED        FALSE
+#define BTM_EIR_SERVER_INCLUDED FALSE
+
+#define ANDROID_APP_INCLUDED    FALSE
+#define ANDROID_USE_LOGCAT      FALSE
+#define LINUX_GKI_INCLUDED      FALSE
+
+#define BTM_BUSY_LEVEL_CHANGE_INCLUDED FALSE
+
+#define BTA_DM_COD              {0x40, 0x02, 0x04}
+#define BTA_SYS_TIMER_PERIOD    1000
+
+#endif
+
+#ifndef BUILDCFG
+#define BUILDCFG
+#endif
+/* "libs/RVL_SDK/include/revolution/BTE/include/bt_target.h" line 76 "revolution/BTE/gki/platform/data_types.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Move from ulinux/ to platform/
+ *      - Add #include for RVL types (include/types.h)
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/gki/platform/data_types.h" line 36 "types.h" */
+/* end "types.h" */
+
+typedef unsigned char   UINT8;
+typedef unsigned short  UINT16;
+typedef unsigned long   UINT32;
+typedef signed   long   INT32;
+typedef signed   char   INT8;
+typedef signed   short  INT16;
+typedef unsigned char   BOOLEAN;
+
+
+typedef UINT32          TIME_STAMP;
+
+#ifndef TRUE
+#define TRUE   (!FALSE)
+#endif
+
+typedef unsigned char   UBYTE;
+
+#ifdef __arm
+#define PACKED  __packed
+#define INLINE  __inline
+#else
+#define PACKED
+#define INLINE
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN FALSE
+#endif
+
+#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
+#define UINT16_HI_BYTE(x)       ((x) >> 8)
+
+
+#define BCM_STRCAT_S(x1,x2,x3)      strcat((x1),(x3))
+#define BCM_STRNCAT_S(x1,x2,x3,x4)  strncat((x1),(x3),(x4))
+#define BCM_STRCPY_S(x1,x2,x3)      strcpy((x1),(x3))
+#define BCM_STRNCPY_S(x1,x2,x3,x4)  strncpy((x1),(x3),(x4))
+
+
+
+#endif
+/* end "revolution/BTE/gki/platform/data_types.h" */
+
+
+#ifndef BTIF_HSAG_SERVICE_NAME
+#define BTIF_HSAG_SERVICE_NAME  ("Headset Gateway")
+#endif
+
+#ifndef BTIF_HFAG_SERVICE_NAME
+#define BTIF_HFAG_SERVICE_NAME  ("Handsfree Gateway")
+#endif
+
+/* Include common GKI definitions used by this platform */
+/* "libs/RVL_SDK/include/revolution/BTE/include/bt_target.h" line 88 "revolution/BTE/include/gki_target.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Add #defines for RVL target
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+#ifndef GKI_TARGET_H
+#define GKI_TARGET_H
+
+/**
+ * Modifications for decomp
+ */
+#define GKI_MAX_TASKS               8
+#define GKI_NUM_TIMERS              2
+#define GKI_DELAY_STOP_SYS_TICK     0
+#define GKI_BUF1_SIZE               128
+#define GKI_BUF3_SIZE               1800
+#define GKI_BUF3_MAX                30
+#define GKI_BUF4_SIZE               8192
+#define GKI_BUF4_MAX                9
+#define GKI_NUM_FIXED_BUF_POOLS     5
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfff0
+#define GKI_NUM_TOTAL_BUF_POOLS     9
+
+// RVL version didn't have A2DP?
+#define GKI_PPC_TASK 2
+
+
+/* Operating System Selection */
+#ifndef BTE_SIM_APP
+#define _GKI_ARM
+#define _GKI_STANDALONE
+#else
+#define _BT_WIN32
+#endif
+
+/* define prefix for exporting APIs from libraries */
+#define EXPORT_API
+
+#ifndef BTE_BSE_WRAPPER
+#ifdef  BTE_SIM_APP
+#undef  EXPORT_API
+#define EXPORT_API  __declspec(dllexport)
+#endif
+#endif
+
+#define GKI_API EXPORT_API
+#define UDRV_API EXPORT_API
+
+#ifndef GKI_DEBUG
+#define GKI_DEBUG FALSE
+#endif
+
+
+#if defined (GKI_DEBUG) && (GKI_DEBUG == TRUE)
+#define GKI_TRACE(fmt, ...)     ALOGI ("%s: " fmt, __FUNCTION__, ## __VA_ARGS__)
+#else
+#define GKI_TRACE(fmt, ...)
+#endif
+
+/******************************************************************************
+**
+** Task configuration
+**
+******************************************************************************/
+
+/* Definitions of task IDs for inter-task messaging */
+#ifndef BTU_TASK
+#define BTU_TASK                2
+#endif
+
+#ifndef BTIF_TASK
+#define BTIF_TASK               1
+#endif
+
+#ifndef A2DP_MEDIA_TASK
+#define A2DP_MEDIA_TASK         2
+#endif
+
+/* The number of GKI tasks in the software system. */
+#ifndef GKI_MAX_TASKS
+#define GKI_MAX_TASKS               3
+#endif
+
+/******************************************************************************
+**
+** Timer configuration
+**
+******************************************************************************/
+
+/* The number of GKI timers in the software system. */
+#ifndef GKI_NUM_TIMERS
+#define GKI_NUM_TIMERS              3
+#endif
+
+/* A conversion value for translating ticks to calculate GKI timer.  */
+#ifndef TICKS_PER_SEC
+#define TICKS_PER_SEC               100
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+#ifndef GKI_MS_TO_TICKS
+#define GKI_MS_TO_TICKS(x)   ((x) / (1000 / TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_SECS_TO_TICKS
+#define GKI_SECS_TO_TICKS(x)   ((x) * (TICKS_PER_SEC))
+#endif
+
+#ifndef GKI_TICKS_TO_MS
+#define GKI_TICKS_TO_MS(x)   ((x) * 1000 / TICKS_PER_SEC)
+#endif
+
+#ifndef GKI_TICKS_TO_SECS
+#define GKI_TICKS_TO_SECS(x)   ((x) / TICKS_PER_SEC)
+#endif
+
+
+
+/* TICK per second from OS (OS dependent change this macro accordingly to various OS) */
+#ifndef OS_TICKS_PER_SEC
+#define OS_TICKS_PER_SEC               1000
+#endif
+
+/************************************************************************
+**  Utility macros converting ticks to time with user define OS ticks per sec
+**/
+
+#ifndef GKI_OS_TICKS_TO_MS
+#define GKI_OS_TICKS_TO_MS(x)   ((x) * 1000 / OS_TICKS_PER_SEC)
+#endif
+
+
+#ifndef GKI_OS_TICKS_TO_SECS
+#define GKI_OS_TICKS_TO_SECS(x)   ((x) / OS_TICKS_PER_SEC))
+#endif
+
+
+/* delay in ticks before stopping system tick. */
+#ifndef GKI_DELAY_STOP_SYS_TICK
+#define GKI_DELAY_STOP_SYS_TICK     10
+#endif
+
+/* Option to guarantee no preemption during timer expiration (most system don't need this) */
+#ifndef GKI_TIMER_LIST_NOPREEMPT
+#define GKI_TIMER_LIST_NOPREEMPT    FALSE
+#endif
+
+/******************************************************************************
+**
+** Buffer configuration
+**
+******************************************************************************/
+
+/* TRUE if GKI uses dynamic buffers. */
+#ifndef GKI_USE_DYNAMIC_BUFFERS
+#define GKI_USE_DYNAMIC_BUFFERS     FALSE
+#endif
+
+/* The size of the buffers in pool 0. */
+#ifndef GKI_BUF0_SIZE
+#define GKI_BUF0_SIZE               64
+#endif
+
+/* The number of buffers in buffer pool 0. */
+#ifndef GKI_BUF0_MAX
+#define GKI_BUF0_MAX                48
+#endif
+
+/* The ID of buffer pool 0. */
+#ifndef GKI_POOL_ID_0
+#define GKI_POOL_ID_0               0
+#endif
+
+/* The size of the buffers in pool 1. */
+#ifndef GKI_BUF1_SIZE
+#define GKI_BUF1_SIZE               288
+#endif
+
+/* The number of buffers in buffer pool 1. */
+#ifndef GKI_BUF1_MAX
+#define GKI_BUF1_MAX                26
+#endif
+
+/* The ID of buffer pool 1. */
+#ifndef GKI_POOL_ID_1
+#define GKI_POOL_ID_1               1
+#endif
+
+/* The size of the buffers in pool 2. */
+#ifndef GKI_BUF2_SIZE
+#define GKI_BUF2_SIZE               660
+#endif
+
+/* The number of buffers in buffer pool 2. */
+#ifndef GKI_BUF2_MAX
+#define GKI_BUF2_MAX                45
+#endif
+
+/* The ID of buffer pool 2. */
+#ifndef GKI_POOL_ID_2
+#define GKI_POOL_ID_2               2
+#endif
+
+/* The size of the buffers in pool 3. */
+#ifndef GKI_BUF3_SIZE
+#define GKI_BUF3_SIZE               (4096+16)
+#endif
+
+/* The number of buffers in buffer pool 3. */
+#ifndef GKI_BUF3_MAX
+#define GKI_BUF3_MAX                200
+#endif
+
+/* The ID of buffer pool 3. */
+#ifndef GKI_POOL_ID_3
+#define GKI_POOL_ID_3               3
+#endif
+
+/* The size of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE
+#define GKI_MAX_BUF_SIZE            GKI_BUF3_SIZE
+#endif
+
+/* The pool ID of the largest PUBLIC fixed buffer in system. */
+#ifndef GKI_MAX_BUF_SIZE_POOL_ID
+#define GKI_MAX_BUF_SIZE_POOL_ID    GKI_POOL_ID_3
+#endif
+
+/* RESERVED buffer pool for OBX */
+/* Ideally there should be 1 buffer for each instance for RX data, and some number
+of TX buffers based on active instances. OBX will only use these if packet size
+requires it. In most cases the large packets are used in only one direction so
+the other direction will use smaller buffers.
+Devices with small amount of RAM should limit the number of active obex objects.
+*/
+/* The size of the buffers in pool 4. */
+#ifndef GKI_BUF4_SIZE
+#define GKI_BUF4_SIZE               (8080+26)
+#endif
+
+/* The number of buffers in buffer pool 4. */
+#ifndef GKI_BUF4_MAX
+#define GKI_BUF4_MAX                (OBX_NUM_SERVERS + OBX_NUM_CLIENTS)
+#endif
+
+/* The ID of buffer pool 4. */
+#ifndef GKI_POOL_ID_4
+#define GKI_POOL_ID_4               4
+#endif
+
+/* The number of fixed GKI buffer pools.
+eL2CAP requires Pool ID 5
+If BTM_SCO_HCI_INCLUDED is FALSE, Pool ID 6 is unnecessary, otherwise set to 7
+If BTA_HL_INCLUDED is FALSE then Pool ID 7 is uncessary and set the following to 7, otherwise set to 8
+If BLE_INCLUDED is FALSE then Pool ID 8 is uncessary and set the following to 8, otherwise set to 9
+POOL_ID 9 is a public pool meant for large buffer needs such as SDP_DB
+*/
+// btla-specific ++
+#ifndef GKI_NUM_FIXED_BUF_POOLS
+#define GKI_NUM_FIXED_BUF_POOLS     10
+#endif
+
+/* The buffer pool usage mask. */
+#ifndef GKI_DEF_BUFPOOL_PERM_MASK
+/* Setting POOL_ID 9 as a public pool meant for large buffers such as SDP_DB */
+#define GKI_DEF_BUFPOOL_PERM_MASK   0xfdf0
+#endif
+// btla-specific --
+
+/* The number of fixed and dynamic buffer pools */
+#ifndef GKI_NUM_TOTAL_BUF_POOLS
+#define GKI_NUM_TOTAL_BUF_POOLS     10
+#endif
+
+/* The following is intended to be a reserved pool for L2CAP
+Flow control and retransmissions and intentionally kept out
+of order */
+
+/* The number of buffers in buffer pool 5. */
+#ifndef GKI_BUF5_MAX
+#define GKI_BUF5_MAX                64
+#endif
+
+/* The ID of buffer pool 5. */
+#ifndef GKI_POOL_ID_5
+#define GKI_POOL_ID_5               5
+#endif
+
+/* The size of the buffers in pool 5
+** Special pool used by l2cap retransmissions only.  This size based on segment
+** that will fit into both DH5 and 2-DH3 packet types after accounting for GKI
+** header.  13 bytes of max headers allows us a 339 payload max. (in btui_app.txt)
+** Note: 748 used for insight scriptwrapper with CAT-2 scripts.
+*/
+#ifndef GKI_BUF5_SIZE
+#define GKI_BUF5_SIZE               748
+#endif
+
+/* The buffer corruption check flag. */
+#ifndef GKI_ENABLE_BUF_CORRUPTION_CHECK
+#define GKI_ENABLE_BUF_CORRUPTION_CHECK TRUE
+#endif
+
+/* The GKI severe error macro. */
+#ifndef GKI_SEVERE
+#define GKI_SEVERE(code)
+#endif
+
+/* TRUE if GKI includes debug functionality. */
+#ifndef GKI_DEBUG
+#define GKI_DEBUG                   FALSE
+#endif
+
+/* Maximum number of exceptions logged. */
+#ifndef GKI_MAX_EXCEPTION
+#define GKI_MAX_EXCEPTION           8
+#endif
+
+/* Maximum number of chars stored for each exception message. */
+#ifndef GKI_MAX_EXCEPTION_MSGLEN
+#define GKI_MAX_EXCEPTION_MSGLEN    64
+#endif
+
+#ifndef GKI_SEND_MSG_FROM_ISR
+#define GKI_SEND_MSG_FROM_ISR    FALSE
+#endif
+
+
+/* The following is intended to be a reserved pool for SCO
+over HCI data and intentionally kept out of order */
+
+/* The ID of buffer pool 6. */
+#ifndef GKI_POOL_ID_6
+#define GKI_POOL_ID_6               6
+#endif
+
+/* The size of the buffers in pool 6,
+  BUF_SIZE = max SCO data 255 + sizeof(BT_HDR) = 8 + SCO packet header 3 + padding 2 = 268 */
+#ifndef GKI_BUF6_SIZE
+#define GKI_BUF6_SIZE               268
+#endif
+
+/* The number of buffers in buffer pool 6. */
+#ifndef GKI_BUF6_MAX
+#define GKI_BUF6_MAX                60
+#endif
+
+
+/* The following pool is a dedicated pool for HDP
+   If a shared pool is more desirable then
+   1. set BTA_HL_LRG_DATA_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size is larger than 9472
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 7 is not needed
+*/
+
+/* The ID of buffer pool 7. */
+#ifndef GKI_POOL_ID_7
+#define GKI_POOL_ID_7               7
+#endif
+
+/* The size of the buffers in pool 7 */
+#ifndef GKI_BUF7_SIZE
+#define GKI_BUF7_SIZE               9472
+#endif
+
+/* The number of buffers in buffer pool 7. */
+#ifndef GKI_BUF7_MAX
+#define GKI_BUF7_MAX                2
+#endif
+
+/* The following pool is a dedicated pool for GATT
+   If a shared pool is more desirable then
+   1. set GATT_DB_POOL_ID to the desired Gki Pool ID
+   2. make sure that the shared pool size fit a common GATT database needs
+   3. adjust GKI_NUM_FIXED_BUF_POOLS accordingly since
+      POOL ID 8 is not needed
+*/
+
+/* The ID of buffer pool 8. */
+#ifndef GKI_POOL_ID_8
+#define GKI_POOL_ID_8               8
+#endif
+
+/* The size of the buffers in pool 8 */
+#ifndef GKI_BUF8_SIZE
+#define GKI_BUF8_SIZE               128
+#endif
+
+/* The number of buffers in buffer pool 8. */
+#ifndef GKI_BUF8_MAX
+#define GKI_BUF8_MAX                30
+#endif
+
+// btla-specific ++
+/* The following pool is  meant for large allocations such as SDP_DB */
+#ifndef GKI_POOL_ID_9
+#define GKI_POOL_ID_9              9
+#endif
+
+#ifndef GKI_BUF9_SIZE
+#define GKI_BUF9_SIZE            8192
+#endif
+
+#ifndef GKI_BUF9_MAX
+#define GKI_BUF9_MAX           5
+#endif
+// btla-specific --
+
+/* GKI Trace Macros */
+#define GKI_TRACE_0(m)                          LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m)
+#define GKI_TRACE_1(m,p1)                       LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1)
+#define GKI_TRACE_2(m,p1,p2)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2)
+#define GKI_TRACE_3(m,p1,p2,p3)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3)
+#define GKI_TRACE_4(m,p1,p2,p3,p4)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4)
+#define GKI_TRACE_5(m,p1,p2,p3,p4,p5)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_6(m,p1,p2,p3,p4,p5,p6)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_GENERIC,m,p1,p2,p3,p4,p5,p6)
+
+#define GKI_TRACE_ERROR_0(m)                    LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m)
+#define GKI_TRACE_ERROR_1(m,p1)                 LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1)
+#define GKI_TRACE_ERROR_2(m,p1,p2)              LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2)
+#define GKI_TRACE_ERROR_3(m,p1,p2,p3)           LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3)
+#define GKI_TRACE_ERROR_4(m,p1,p2,p3,p4)        LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4)
+#define GKI_TRACE_ERROR_5(m,p1,p2,p3,p4,p5)     LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5)
+#define GKI_TRACE_ERROR_6(m,p1,p2,p3,p4,p5,p6)  LogMsg(TRACE_CTRL_GENERAL | TRACE_LAYER_GKI | TRACE_ORG_GKI | TRACE_TYPE_ERROR,m,p1,p2,p3,p4,p5,p6)
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+EXPORT_API extern void LogMsg (UINT32 trace_set_mask, const char *fmt_str, ...);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  /* GKI_TARGET_H */
+/* end "revolution/BTE/include/gki_target.h" */
+
+/* "libs/RVL_SDK/include/revolution/BTE/include/bt_target.h" line 90 "revolution/BTE/stack/include/bt_types.h" */
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef BT_TYPES_H
+#define BT_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 23 "revolution/BTE/gki/platform/data_types.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Move from ulinux/ to platform/
+ *      - Add #include for RVL types (include/types.h)
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/gki/platform/data_types.h" line 36 "types.h" */
+/* end "types.h" */
+
+typedef unsigned char   UINT8;
+typedef unsigned short  UINT16;
+typedef unsigned long   UINT32;
+typedef signed   long   INT32;
+typedef signed   char   INT8;
+typedef signed   short  INT16;
+typedef unsigned char   BOOLEAN;
+
+
+typedef UINT32          TIME_STAMP;
+
+#ifndef TRUE
+#define TRUE   (!FALSE)
+#endif
+
+typedef unsigned char   UBYTE;
+
+#ifdef __arm
+#define PACKED  __packed
+#define INLINE  __inline
+#else
+#define PACKED
+#define INLINE
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN FALSE
+#endif
+
+#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
+#define UINT16_HI_BYTE(x)       ((x) >> 8)
+
+
+#define BCM_STRCAT_S(x1,x2,x3)      strcat((x1),(x3))
+#define BCM_STRNCAT_S(x1,x2,x3,x4)  strncat((x1),(x3),(x4))
+#define BCM_STRCPY_S(x1,x2,x3)      strcpy((x1),(x3))
+#define BCM_STRNCPY_S(x1,x2,x3,x4)  strncpy((x1),(x3),(x4))
+
+
+
+#endif
+/* end "revolution/BTE/gki/platform/data_types.h" */
+
+#ifdef _WIN32
+#ifdef BLUESTACK_TESTER
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 27 "bte_stack_entry.h" */
+/* end "bte_stack_entry.h" */
+#endif
+#endif
+
+/* READ WELL !!
+**
+** This section defines global events. These are events that cross layers.
+** Any event that passes between layers MUST be one of these events. Tasks
+** can use their own events internally, but a FUNDAMENTAL design issue is
+** that global events MUST be one of these events defined below.
+**
+** The convention used is the the event name contains the layer that the
+** event is going to.
+*/
+#define BT_EVT_MASK                 0xFF00
+#define BT_SUB_EVT_MASK             0x00FF
+                                                /* To Bluetooth Upper Layers        */
+                                                /************************************/
+#define BT_EVT_TO_BTU_L2C_EVT       0x0900      /* L2CAP event */
+#define BT_EVT_TO_BTU_HCI_EVT       0x1000      /* HCI Event                        */
+#define BT_EVT_TO_BTU_HCI_BR_EDR_EVT (0x0000 | BT_EVT_TO_BTU_HCI_EVT)      /* event from BR/EDR controller */
+#define BT_EVT_TO_BTU_HCI_AMP1_EVT   (0x0001 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 1 controller */
+#define BT_EVT_TO_BTU_HCI_AMP2_EVT   (0x0002 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 2 controller */
+#define BT_EVT_TO_BTU_HCI_AMP3_EVT   (0x0003 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 3 controller */
+
+#define BT_EVT_TO_BTU_HCI_ACL       0x1100      /* ACL Data from HCI                */
+#define BT_EVT_TO_BTU_HCI_SCO       0x1200      /* SCO Data from HCI                */
+#define BT_EVT_TO_BTU_HCIT_ERR      0x1300      /* HCI Transport Error              */
+
+#define BT_EVT_TO_BTU_SP_EVT        0x1400      /* Serial Port Event                */
+#define BT_EVT_TO_BTU_SP_DATA       0x1500      /* Serial Port Data                 */
+
+#define BT_EVT_TO_BTU_HCI_CMD       0x1600      /* HCI command from upper layer     */
+
+
+#define BT_EVT_TO_BTU_L2C_SEG_XMIT  0x1900      /* L2CAP segment(s) transmitted     */
+
+#define BT_EVT_PROXY_INCOMING_MSG   0x1A00      /* BlueStackTester event: incoming message from target */
+
+#define BT_EVT_BTSIM                0x1B00      /* Insight BTSIM event */
+#define BT_EVT_BTISE                0x1C00      /* Insight Script Engine event */
+
+                                                /* To LM                            */
+                                                /************************************/
+#define BT_EVT_TO_LM_HCI_CMD        0x2000      /* HCI Command                      */
+#define BT_EVT_TO_LM_HCI_ACL        0x2100      /* HCI ACL Data                     */
+#define BT_EVT_TO_LM_HCI_SCO        0x2200      /* HCI SCO Data                     */
+#define BT_EVT_TO_LM_HCIT_ERR       0x2300      /* HCI Transport Error              */
+#define BT_EVT_TO_LM_LC_EVT         0x2400      /* LC event                         */
+#define BT_EVT_TO_LM_LC_LMP         0x2500      /* LC Received LMP command frame    */
+#define BT_EVT_TO_LM_LC_ACL         0x2600      /* LC Received ACL data             */
+#define BT_EVT_TO_LM_LC_SCO         0x2700      /* LC Received SCO data  (not used) */
+#define BT_EVT_TO_LM_LC_ACL_TX      0x2800      /* LMP data transmit complete       */
+#define BT_EVT_TO_LM_LC_LMPC_TX     0x2900      /* LMP Command transmit complete    */
+#define BT_EVT_TO_LM_LOCAL_ACL_LB   0x2a00      /* Data to be locally loopbacked    */
+#define BT_EVT_TO_LM_HCI_ACL_ACK    0x2b00      /* HCI ACL Data ack      (not used) */
+#define BT_EVT_TO_LM_DIAG           0x2c00      /* LM Diagnostics commands          */
+
+
+#define BT_EVT_TO_BTM_CMDS          0x2f00
+#define BT_EVT_TO_BTM_PM_MDCHG_EVT (0x0001 | BT_EVT_TO_BTM_CMDS)
+
+#define BT_EVT_TO_TCS_CMDS          0x3000
+
+#define BT_EVT_TO_OBX_CL_MSG        0x3100
+#define BT_EVT_TO_OBX_SR_MSG        0x3200
+
+#define BT_EVT_TO_CTP_CMDS          0x3300
+
+/* Obex Over L2CAP */
+#define BT_EVT_TO_OBX_CL_L2C_MSG    0x3400
+#define BT_EVT_TO_OBX_SR_L2C_MSG    0x3500
+
+/* ftp events */
+#define BT_EVT_TO_FTP_SRVR_CMDS     0x3800
+#define BT_EVT_TO_FTP_CLNT_CMDS     0x3900
+
+#define BT_EVT_TO_BTU_SAP           0x3a00       /* SIM Access Profile events */
+
+/* opp events */
+#define BT_EVT_TO_OPP_SRVR_CMDS     0x3b00
+#define BT_EVT_TO_OPP_CLNT_CMDS     0x3c00
+
+/* gap events */
+#define BT_EVT_TO_GAP_MSG           0x3d00
+
+/* start timer */
+#define BT_EVT_TO_START_TIMER       0x3e00
+
+/* start quick timer */
+#define BT_EVT_TO_START_QUICK_TIMER 0x3f00
+
+
+/* for NFC                          */
+                                                /************************************/
+#define BT_EVT_TO_NFC_NCI           0x4000      /* NCI Command, Notification or Data*/
+#define BT_EVT_TO_NFC_INIT          0x4100      /* Initialization message */
+#define BT_EVT_TO_LLCP_ECHO         0x4200      /* LLCP Echo Service */
+#define BT_EVT_TO_LLCP_SOCKET       0x4300      /* LLCP over TCP/IP */
+#define BT_EVT_TO_NCI_LP            0x4400      /* Low power */
+#define BT_EVT_TO_NFC_ERR           0x4500      /* Error notification to NFC Task */
+
+#define BT_EVT_TO_NFCCSIM_NCI       0x4a00      /* events to NFCC simulation (NCI packets) */
+
+/* HCISU Events */
+
+#define BT_EVT_HCISU                0x5000
+
+// btla-specific ++
+#define BT_EVT_TO_HCISU_RECONFIG_EVT            (0x0001 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_UPDATE_BAUDRATE_EVT     (0x0002 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ENABLE_EVT           (0x0003 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_DISABLE_EVT          (0x0004 | BT_EVT_HCISU)
+// btla-specific --
+#define BT_EVT_TO_HCISU_LP_APP_SLEEPING_EVT     (0x0005 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ALLOW_BT_SLEEP_EVT   (0x0006 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_WAKEUP_HOST_EVT      (0x0007 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_RCV_H4IBSS_EVT       (0x0008 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_H5_RESET_EVT            (0x0009 | BT_EVT_HCISU)
+#define BT_EVT_HCISU_START_QUICK_TIMER          (0x000a | BT_EVT_HCISU)
+
+#define BT_EVT_DATA_TO_AMP_1        0x5100
+#define BT_EVT_DATA_TO_AMP_15       0x5f00
+
+/* HSP Events */
+
+#define BT_EVT_BTU_HSP2             0x6000
+
+#define BT_EVT_TO_BTU_HSP2_EVT     (0x0001 | BT_EVT_BTU_HSP2)
+
+/* BPP Events */
+#define BT_EVT_TO_BPP_PR_CMDS       0x6100      /* Printer Events */
+#define BT_EVT_TO_BPP_SND_CMDS      0x6200      /* BPP Sender Events */
+
+/* BIP Events */
+#define BT_EVT_TO_BIP_CMDS          0x6300
+
+/* HCRP Events */
+
+#define BT_EVT_BTU_HCRP             0x7000
+
+#define BT_EVT_TO_BTU_HCRP_EVT     (0x0001 | BT_EVT_BTU_HCRP)
+#define BT_EVT_TO_BTU_HCRPM_EVT    (0x0002 | BT_EVT_BTU_HCRP)
+
+
+#define BT_EVT_BTU_HFP              0x8000
+#define BT_EVT_TO_BTU_HFP_EVT      (0x0001 | BT_EVT_BTU_HFP)
+
+#define BT_EVT_BTU_IPC_EVT          0x9000
+#define BT_EVT_BTU_IPC_LOGMSG_EVT  (0x0000 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_ACL_EVT     (0x0001 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTU_EVT     (0x0002 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_EVT     (0x0003 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_MSG_EVT (0x0004 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTM_EVT     (0x0005 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_AVDT_EVT    (0x0006 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_SLIP_EVT    (0x0007 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_MGMT_EVT    (0x0008 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTTRC_EVT   (0x0009 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BURST_EVT   (0x000A | BT_EVT_BTU_IPC_EVT)
+
+
+/* BTIF Events */
+#define BT_EVT_BTIF                 0xA000
+#define BT_EVT_CONTEXT_SWITCH_EVT  (0x0001 | BT_EVT_BTIF)
+
+#define BT_EVT_TRIGGER_STACK_INIT   EVENT_MASK(APPL_EVT_0)
+
+
+/* Define the header of each buffer used in the Bluetooth stack.
+*/
+typedef struct
+{
+    UINT16          event;
+    UINT16          len;
+    UINT16          offset;
+    UINT16          layer_specific;
+} BT_HDR;
+
+#define BT_HDR_SIZE (sizeof (BT_HDR))
+
+#define BT_PSM_SDP                      0x0001
+#define BT_PSM_RFCOMM                   0x0003
+#define BT_PSM_TCS                      0x0005
+#define BT_PSM_CTP                      0x0007
+#define BT_PSM_BNEP                     0x000F
+#define BT_PSM_HIDC                     0x0011
+#define BT_PSM_HIDI                     0x0013
+#define BT_PSM_UPNP                     0x0015
+#define BT_PSM_AVCTP                    0x0017
+#define BT_PSM_AVDTP                    0x0019
+#define BT_PSM_AVCTP_13                 0x001B /* Advanced Control - Browsing */
+#define BT_PSM_UDI_CP                   0x001D /* Unrestricted Digital Information Profile C-Plane  */
+#define BT_PSM_ATT                      0x001F /* Attribute Protocol  */
+
+
+/* These macros extract the HCI opcodes from a buffer
+*/
+#define HCI_GET_CMD_HDR_OPCODE(p)    (UINT16)((*((UINT8 *)((p) + 1) + p->offset) + \
+                                              (*((UINT8 *)((p) + 1) + p->offset + 1) << 8)))
+#define HCI_GET_CMD_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 2))
+
+#define HCI_GET_EVT_HDR_OPCODE(p)    (UINT8)(*((UINT8 *)((p) + 1) + p->offset))
+#define HCI_GET_EVT_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 1))
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Little Endian format).
+*/
+#define UINT32_TO_STREAM(p, u32) {*(p)++ = (UINT8)(u32); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 24);}
+#define UINT24_TO_STREAM(p, u24) {*(p)++ = (UINT8)(u24); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)((u24) >> 16);}
+#define UINT16_TO_STREAM(p, u16) {*(p)++ = (UINT8)(u16); *(p)++ = (UINT8)((u16) >> 8);}
+#define UINT8_TO_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define INT8_TO_STREAM(p, u8)    {*(p)++ = (INT8)(u8);}
+#define ARRAY32_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 32;           ijk++) *(p)++ = (UINT8) a[31 - ijk];}
+#define ARRAY16_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 16;           ijk++) *(p)++ = (UINT8) a[15 - ijk];}
+#define ARRAY8_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < 8;            ijk++) *(p)++ = (UINT8) a[7 - ijk];}
+#define BDADDR_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < BD_ADDR_LEN;  ijk++) *(p)++ = (UINT8) a[BD_ADDR_LEN - 1 - ijk];}
+#define LAP_TO_STREAM(p, a)      {register int ijk; for (ijk = 0; ijk < LAP_LEN;      ijk++) *(p)++ = (UINT8) a[LAP_LEN - 1 - ijk];}
+#define DEVCLASS_TO_STREAM(p, a) {register int ijk; for (ijk = 0; ijk < DEV_CLASS_LEN;ijk++) *(p)++ = (UINT8) a[DEV_CLASS_LEN - 1 - ijk];}
+#define ARRAY_TO_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len;        ijk++) *(p)++ = (UINT8) a[ijk];}
+#define REVERSE_ARRAY_TO_STREAM(p, a, len)  {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[len - 1 - ijk];}
+
+#define STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define STREAM_TO_UINT16(u16, p) {u16 = ((UINT16)(*(p)) + (((UINT16)(*((p) + 1))) << 8)); (p) += 2;}
+#define STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) ); (p) += 3;}
+#define STREAM_TO_UINT32(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) + ((((UINT32)(*((p) + 3)))) << 24)); (p) += 4;}
+#define STREAM_TO_BDADDR(a, p)   {register int ijk; register UINT8 *pbda = (UINT8 *)a + BD_ADDR_LEN - 1; for (ijk = 0; ijk < BD_ADDR_LEN; ijk++) *pbda-- = *p++;}
+#define STREAM_TO_ARRAY32(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 31; for (ijk = 0; ijk < 32; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY16(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 15; for (ijk = 0; ijk < 16; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY8(a, p)   {register int ijk; register UINT8 *_pa = (UINT8 *)a + 7; for (ijk = 0; ijk < 8; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_DEVCLASS(a, p) {register int ijk; register UINT8 *_pa = (UINT8 *)a + DEV_CLASS_LEN - 1; for (ijk = 0; ijk < DEV_CLASS_LEN; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_LAP(a, p)      {register int ijk; register UINT8 *plap = (UINT8 *)a + LAP_LEN - 1; for (ijk = 0; ijk < LAP_LEN; ijk++) *plap-- = *p++;}
+#define STREAM_TO_ARRAY(a, p, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+#define REVERSE_STREAM_TO_ARRAY(a, p, len) {register int ijk; register UINT8 *_pa = (UINT8 *)a + len - 1; for (ijk = 0; ijk < len; ijk++) *_pa-- = *p++;}
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Little Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)(u32); *((UINT8 *)(p)+1) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+3) = (UINT8)((u32) >> 24);}
+#define UINT24_TO_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)(u24); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u24) >> 16);}
+#define UINT16_TO_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)(u16); *((UINT8 *)(p)+1) = (UINT8)((u16) >> 8);}
+#define UINT8_TO_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Big Endian format)
+*/
+#define UINT32_TO_BE_STREAM(p, u32) {*(p)++ = (UINT8)((u32) >> 24);  *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)(u32); }
+#define UINT24_TO_BE_STREAM(p, u24) {*(p)++ = (UINT8)((u24) >> 16); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)(u24);}
+#define UINT16_TO_BE_STREAM(p, u16) {*(p)++ = (UINT8)((u16) >> 8); *(p)++ = (UINT8)(u16);}
+#define UINT8_TO_BE_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define ARRAY_TO_BE_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[ijk];}
+
+#define BE_STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define BE_STREAM_TO_UINT16(u16, p) {u16 = (UINT16)(((UINT16)(*(p)) << 8) + (UINT16)(*((p) + 1))); (p) += 2;}
+#define BE_STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*((p) + 2))) + ((UINT32)(*((p) + 1)) << 8) + ((UINT32)(*(p)) << 16)); (p) += 3;}
+#define BE_STREAM_TO_UINT32(u32, p) {u32 = ((UINT32)(*((p) + 3)) + ((UINT32)(*((p) + 2)) << 8) + ((UINT32)(*((p) + 1)) << 16) + ((UINT32)(*(p)) << 24)); (p) += 4;}
+#define BE_STREAM_TO_ARRAY(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Big Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_BE_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)((u32) >> 24);  *((UINT8 *)(p)+1) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+3) = (UINT8)(u32); }
+#define UINT24_TO_BE_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)((u24) >> 16); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)(u24);}
+#define UINT16_TO_BE_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)((u16) >> 8); *((UINT8 *)(p)+1) = (UINT8)(u16);}
+#define UINT8_TO_BE_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/* Common Bluetooth field definitions */
+#define BD_ADDR_LEN     6                   /* Device address length */
+typedef UINT8 BD_ADDR[BD_ADDR_LEN];         /* Device address */
+typedef UINT8 *BD_ADDR_PTR;                 /* Pointer to Device Address */
+
+#define AMP_KEY_TYPE_GAMP       0
+#define AMP_KEY_TYPE_WIFI       1
+#define AMP_KEY_TYPE_UWB        2
+typedef UINT8 tAMP_KEY_TYPE;
+
+#define BT_OCTET8_LEN    8
+typedef UINT8 BT_OCTET8[BT_OCTET8_LEN];   /* octet array: size 16 */
+
+#define LINK_KEY_LEN    16
+typedef UINT8 LINK_KEY[LINK_KEY_LEN];       /* Link Key */
+
+#define AMP_LINK_KEY_LEN        32
+typedef UINT8 AMP_LINK_KEY[AMP_LINK_KEY_LEN];   /* Dedicated AMP and GAMP Link Keys */
+
+#define BT_OCTET16_LEN    16
+typedef UINT8 BT_OCTET16[BT_OCTET16_LEN];   /* octet array: size 16 */
+
+#define PIN_CODE_LEN    16
+typedef UINT8 PIN_CODE[PIN_CODE_LEN];       /* Pin Code (upto 128 bits) MSB is 0 */
+typedef UINT8 *PIN_CODE_PTR;                /* Pointer to Pin Code */
+
+#define DEV_CLASS_LEN   3
+typedef UINT8 DEV_CLASS[DEV_CLASS_LEN];     /* Device class */
+typedef UINT8 *DEV_CLASS_PTR;               /* Pointer to Device class */
+
+#define EXT_INQ_RESP_LEN   3
+typedef UINT8 EXT_INQ_RESP[EXT_INQ_RESP_LEN];/* Extended Inquiry Response */
+typedef UINT8 *EXT_INQ_RESP_PTR;             /* Pointer to Extended Inquiry Response */
+
+#define BD_NAME_LEN     248
+typedef UINT8 BD_NAME[BD_NAME_LEN];         /* Device name */
+typedef UINT8 *BD_NAME_PTR;                 /* Pointer to Device name */
+
+#define BD_FEATURES_LEN 8
+typedef UINT8 BD_FEATURES[BD_FEATURES_LEN]; /* LMP features supported by device */
+
+#define BT_EVENT_MASK_LEN  8
+typedef UINT8 BT_EVENT_MASK[BT_EVENT_MASK_LEN];   /* Event Mask */
+
+#define LAP_LEN         3
+typedef UINT8 LAP[LAP_LEN];                 /* IAC as passed to Inquiry (LAP) */
+typedef UINT8 INQ_LAP[LAP_LEN];             /* IAC as passed to Inquiry (LAP) */
+
+#define RAND_NUM_LEN    16
+typedef UINT8 RAND_NUM[RAND_NUM_LEN];
+
+#define ACO_LEN         12
+typedef UINT8 ACO[ACO_LEN];                 /* Authenticated ciphering offset */
+
+#define COF_LEN         12
+typedef UINT8 COF[COF_LEN];                 /* ciphering offset number */
+
+typedef struct {
+    UINT8               qos_flags;          /* TBD */
+    UINT8               service_type;       /* see below */
+    UINT32              token_rate;         /* bytes/second */
+    UINT32              token_bucket_size;  /* bytes */
+    UINT32              peak_bandwidth;     /* bytes/second */
+    UINT32              latency;            /* microseconds */
+    UINT32              delay_variation;    /* microseconds */
+} FLOW_SPEC;
+
+/* Values for service_type */
+#define NO_TRAFFIC      0
+#define BEST_EFFORT     1
+#define GUARANTEED      2
+
+/* Service class of the CoD */
+#define SERV_CLASS_NETWORKING               (1 << 1)
+#define SERV_CLASS_RENDERING                (1 << 2)
+#define SERV_CLASS_CAPTURING                (1 << 3)
+#define SERV_CLASS_OBJECT_TRANSFER          (1 << 4)
+#define SERV_CLASS_OBJECT_AUDIO             (1 << 5)
+#define SERV_CLASS_OBJECT_TELEPHONY         (1 << 6)
+#define SERV_CLASS_OBJECT_INFORMATION       (1 << 7)
+
+/* Second byte */
+#define SERV_CLASS_LIMITED_DISC_MODE        (0x20)
+
+/* Field size definitions. Note that byte lengths are rounded up. */
+#define ACCESS_CODE_BIT_LEN             72
+#define ACCESS_CODE_BYTE_LEN            9
+#define SHORTENED_ACCESS_CODE_BIT_LEN   68
+
+typedef UINT8 ACCESS_CODE[ACCESS_CODE_BYTE_LEN];
+
+#define SYNTH_TX                1           /* want synth code to TRANSMIT at this freq */
+#define SYNTH_RX                2           /* want synth code to RECEIVE at this freq */
+
+#define SYNC_REPS 1             /* repeats of sync word transmitted to start of burst */
+
+/* Bluetooth CLK27 */
+#define BT_CLK27            (2 << 26)
+
+/* Bluetooth CLK12 is 1.28 sec */
+#define BT_CLK12_TO_MS(x)    ((x) * 1280)
+#define BT_MS_TO_CLK12(x)    ((x) / 1280)
+#define BT_CLK12_TO_SLOTS(x) ((x) << 11)
+
+/* Bluetooth CLK is 0.625 msec */
+#define BT_CLK_TO_MS(x)      (((x) * 5 + 3) / 8)
+#define BT_MS_TO_CLK(x)      (((x) * 8 + 2) / 5)
+
+#define BT_CLK_TO_MICROSECS(x)  (((x) * 5000 + 3) / 8)
+#define BT_MICROSECS_TO_CLK(x)  (((x) * 8 + 2499) / 5000)
+
+/* Maximum UUID size - 16 bytes, and structure to hold any type of UUID. */
+#define MAX_UUID_SIZE              16
+typedef struct
+{
+#define LEN_UUID_16     2
+#define LEN_UUID_32     4
+#define LEN_UUID_128    16
+
+    UINT16          len;
+
+    union
+    {
+        UINT16      uuid16;
+        UINT32      uuid32;
+        UINT8       uuid128[MAX_UUID_SIZE];
+    } uu;
+
+} tBT_UUID;
+
+#define BT_EIR_FLAGS_TYPE                   0x01
+#define BT_EIR_MORE_16BITS_UUID_TYPE        0x02
+#define BT_EIR_COMPLETE_16BITS_UUID_TYPE    0x03
+#define BT_EIR_MORE_32BITS_UUID_TYPE        0x04
+#define BT_EIR_COMPLETE_32BITS_UUID_TYPE    0x05
+#define BT_EIR_MORE_128BITS_UUID_TYPE       0x06
+#define BT_EIR_COMPLETE_128BITS_UUID_TYPE   0x07
+#define BT_EIR_SHORTENED_LOCAL_NAME_TYPE    0x08
+#define BT_EIR_COMPLETE_LOCAL_NAME_TYPE     0x09
+#define BT_EIR_TX_POWER_LEVEL_TYPE          0x0A
+#define BT_EIR_OOB_BD_ADDR_TYPE             0x0C
+#define BT_EIR_OOB_COD_TYPE                 0x0D
+#define BT_EIR_OOB_SSP_HASH_C_TYPE          0x0E
+#define BT_EIR_OOB_SSP_RAND_R_TYPE          0x0F
+#define BT_EIR_MANUFACTURER_SPECIFIC_TYPE   0xFF
+
+#define BT_OOB_COD_SIZE            3
+#define BT_OOB_HASH_C_SIZE         16
+#define BT_OOB_RAND_R_SIZE         16
+
+/* Broadcom proprietary UUIDs and reserved PSMs
+**
+** The lowest 4 bytes byte of the UUID or GUID depends on the feature. Typically,
+** the value of those bytes will be the PSM or SCN, but it is up to the features.
+*/
+#define BRCM_PROPRIETARY_UUID_BASE  0xDA, 0x23, 0x41, 0x02, 0xA3, 0xBB, 0xC1, 0x71, 0xBA, 0x09, 0x6f, 0x21
+#define BRCM_PROPRIETARY_GUID_BASE  0xda23, 0x4102, 0xa3, 0xbb, 0xc1, 0x71, 0xba, 0x09, 0x6f, 0x21
+
+/* We will not allocate a PSM in the reserved range to 3rd party apps
+*/
+#define BRCM_RESERVED_PSM_START	    0x5AE1
+#define BRCM_RESERVED_PSM_END	    0x5AFF
+
+#define BRCM_UTILITY_SERVICE_PSM    0x5AE1
+#define BRCM_MATCHER_PSM            0x5AE3
+
+/* Connection statistics
+*/
+
+/* Structure to hold connection stats */
+#ifndef BT_CONN_STATS_DEFINED
+#define BT_CONN_STATS_DEFINED
+
+/* These bits are used in the bIsConnected field */
+#define BT_CONNECTED_USING_BREDR   1
+#define BT_CONNECTED_USING_AMP     2
+
+typedef struct
+{
+    UINT32   is_connected;
+    INT32    rssi;
+    UINT32   bytes_sent;
+    UINT32   bytes_rcvd;
+    UINT32   duration;
+} tBT_CONN_STATS;
+
+#endif
+
+
+/*****************************************************************************
+**                          Low Energy definitions
+**
+** Address types
+*/
+#define BLE_ADDR_PUBLIC         0x00
+#define BLE_ADDR_RANDOM         0x01
+#define BLE_ADDR_TYPE_MASK      (BLE_ADDR_RANDOM | BLE_ADDR_PUBLIC)
+typedef UINT8 tBLE_ADDR_TYPE;
+
+#define BLE_ADDR_IS_STATIC(x)   ((x[0] & 0xC0) == 0xC0)
+
+typedef struct
+{
+    tBLE_ADDR_TYPE      type;
+    BD_ADDR             bda;
+} tBLE_BD_ADDR;
+
+/* Device Types
+*/
+#define BT_DEVICE_TYPE_BREDR   0x01
+#define BT_DEVICE_TYPE_BLE     0x02
+#define BT_DEVICE_TYPE_DUMO    0x03
+typedef UINT8 tBT_DEVICE_TYPE;
+/*****************************************************************************/
+
+
+/* Define trace levels */
+#define BT_TRACE_LEVEL_NONE    0          /* No trace messages to be generated    */
+#define BT_TRACE_LEVEL_ERROR   1          /* Error condition trace messages       */
+#define BT_TRACE_LEVEL_WARNING 2          /* Warning condition trace messages     */
+#define BT_TRACE_LEVEL_API     3          /* API traces                           */
+#define BT_TRACE_LEVEL_EVENT   4          /* Debug messages for events            */
+#define BT_TRACE_LEVEL_DEBUG   5          /* Full debug messages                  */
+#define BT_TRACE_LEVEL_VERBOSE 6          /* Verbose debug messages               */
+
+#define MAX_TRACE_LEVEL        6
+
+
+/* Define New Trace Type Definition */
+/* TRACE_CTRL_TYPE                  0x^^000000*/
+#define TRACE_CTRL_MASK             0xff000000
+#define TRACE_GET_CTRL(x)           ((((UINT32)(x)) & TRACE_CTRL_MASK) >> 24)
+
+#define TRACE_CTRL_GENERAL          0x00000000
+#define TRACE_CTRL_STR_RESOURCE     0x01000000
+#define TRACE_CTRL_SEQ_FLOW         0x02000000
+#define TRACE_CTRL_MAX_NUM          3
+
+/* LAYER SPECIFIC                   0x00^^0000*/
+#define TRACE_LAYER_MASK            0x00ff0000
+#define TRACE_GET_LAYER(x)          ((((UINT32)(x)) & TRACE_LAYER_MASK) >> 16)
+
+#define TRACE_LAYER_NONE            0x00000000
+#define TRACE_LAYER_USB             0x00010000
+#define TRACE_LAYER_SERIAL          0x00020000
+#define TRACE_LAYER_SOCKET          0x00030000
+#define TRACE_LAYER_RS232           0x00040000
+#define TRACE_LAYER_TRANS_MAX_NUM   5
+#define TRACE_LAYER_TRANS_ALL       0x007f0000
+#define TRACE_LAYER_LC              0x00050000
+#define TRACE_LAYER_LM              0x00060000
+#define TRACE_LAYER_HCI             0x00070000
+#define TRACE_LAYER_L2CAP           0x00080000
+#define TRACE_LAYER_RFCOMM          0x00090000
+#define TRACE_LAYER_SDP             0x000a0000
+#define TRACE_LAYER_TCS             0x000b0000
+#define TRACE_LAYER_OBEX            0x000c0000
+#define TRACE_LAYER_BTM             0x000d0000
+#define TRACE_LAYER_GAP             0x000e0000
+#define TRACE_LAYER_DUN             0x000f0000
+#define TRACE_LAYER_GOEP            0x00100000
+#define TRACE_LAYER_ICP             0x00110000
+#define TRACE_LAYER_HSP2            0x00120000
+#define TRACE_LAYER_SPP             0x00130000
+#define TRACE_LAYER_CTP             0x00140000
+#define TRACE_LAYER_BPP             0x00150000
+#define TRACE_LAYER_HCRP            0x00160000
+#define TRACE_LAYER_FTP             0x00170000
+#define TRACE_LAYER_OPP             0x00180000
+#define TRACE_LAYER_BTU             0x00190000
+#define TRACE_LAYER_GKI             0x001a0000
+#define TRACE_LAYER_BNEP            0x001b0000
+#define TRACE_LAYER_PAN             0x001c0000
+#define TRACE_LAYER_HFP             0x001d0000
+#define TRACE_LAYER_HID             0x001e0000
+#define TRACE_LAYER_BIP             0x001f0000
+#define TRACE_LAYER_AVP             0x00200000
+#define TRACE_LAYER_A2D             0x00210000
+#define TRACE_LAYER_SAP             0x00220000
+#define TRACE_LAYER_AMP             0x00230000
+#define TRACE_LAYER_MCA             0x00240000
+#define TRACE_LAYER_ATT             0x00250000
+#define TRACE_LAYER_SMP             0x00260000
+#define TRACE_LAYER_NFC             0x00270000
+#define TRACE_LAYER_NCI             0x00280000
+#define TRACE_LAYER_IDEP            0x00290000
+#define TRACE_LAYER_NDEP            0x002a0000
+#define TRACE_LAYER_LLCP            0x002b0000
+#define TRACE_LAYER_RW              0x002c0000
+#define TRACE_LAYER_CE              0x002d0000
+#define TRACE_LAYER_SNEP            0x002e0000
+#define TRACE_LAYER_NDEF            0x002f0000
+#define TRACE_LAYER_NFA             0x00300000
+
+#define TRACE_LAYER_MAX_NUM         0x0031
+
+
+/* TRACE_ORIGINATOR                 0x0000^^00*/
+#define TRACE_ORG_MASK              0x0000ff00
+#define TRACE_GET_ORG(x)            ((((UINT32)(x)) & TRACE_ORG_MASK) >> 8)
+
+#define TRACE_ORG_STACK             0x00000000
+#define TRACE_ORG_HCI_TRANS         0x00000100
+#define TRACE_ORG_PROTO_DISP        0x00000200
+#define TRACE_ORG_RPC               0x00000300
+#define TRACE_ORG_GKI               0x00000400
+#define TRACE_ORG_APPL              0x00000500
+#define TRACE_ORG_SCR_WRAPPER       0x00000600
+#define TRACE_ORG_SCR_ENGINE        0x00000700
+#define TRACE_ORG_USER_SCR          0x00000800
+#define TRACE_ORG_TESTER            0x00000900
+#define TRACE_ORG_MAX_NUM           10          /* 32-bit mask; must be < 32 */
+#define TRACE_LITE_ORG_MAX_NUM		6
+#define TRACE_ORG_ALL               0x03ff
+#define TRACE_ORG_RPC_TRANS         0x04
+
+#define TRACE_ORG_REG               0x00000909
+#define TRACE_ORG_REG_SUCCESS       0x0000090a
+
+/* TRACE_TYPE                       0x000000^^*/
+#define TRACE_TYPE_MASK             0x000000ff
+#define TRACE_GET_TYPE(x)           (((UINT32)(x)) & TRACE_TYPE_MASK)
+
+#define TRACE_TYPE_ERROR            0x00000000
+#define TRACE_TYPE_WARNING          0x00000001
+#define TRACE_TYPE_API              0x00000002
+#define TRACE_TYPE_EVENT            0x00000003
+#define TRACE_TYPE_DEBUG            0x00000004
+#define TRACE_TYPE_STACK_ONLY_MAX   TRACE_TYPE_DEBUG
+#define TRACE_TYPE_TX               0x00000005
+#define TRACE_TYPE_RX               0x00000006
+#define TRACE_TYPE_DEBUG_ASSERT     0x00000007
+#define TRACE_TYPE_GENERIC          0x00000008
+#define TRACE_TYPE_REG              0x00000009
+#define TRACE_TYPE_REG_SUCCESS      0x0000000a
+#define TRACE_TYPE_CMD_TX           0x0000000b
+#define TRACE_TYPE_EVT_TX           0x0000000c
+#define TRACE_TYPE_ACL_TX           0x0000000d
+#define TRACE_TYPE_CMD_RX           0x0000000e
+#define TRACE_TYPE_EVT_RX           0x0000000f
+#define TRACE_TYPE_ACL_RX           0x00000010
+#define TRACE_TYPE_TARGET_TRACE     0x00000011
+#define TRACE_TYPE_SCO_TX           0x00000012
+#define TRACE_TYPE_SCO_RX           0x00000013
+
+
+#define TRACE_TYPE_MAX_NUM          20
+#define TRACE_TYPE_ALL              0xffff
+
+/* Define color for script type */
+#define SCR_COLOR_DEFAULT       0
+#define SCR_COLOR_TYPE_COMMENT  1
+#define SCR_COLOR_TYPE_COMMAND  2
+#define SCR_COLOR_TYPE_EVENT    3
+#define SCR_COLOR_TYPE_SELECT   4
+
+/* Define protocol trace flag values */
+#define SCR_PROTO_TRACE_HCI_SUMMARY 0x00000001
+#define SCR_PROTO_TRACE_HCI_DATA    0x00000002
+#define SCR_PROTO_TRACE_L2CAP       0x00000004
+#define SCR_PROTO_TRACE_RFCOMM      0x00000008
+#define SCR_PROTO_TRACE_SDP         0x00000010
+#define SCR_PROTO_TRACE_TCS         0x00000020
+#define SCR_PROTO_TRACE_OBEX        0x00000040
+#define SCR_PROTO_TRACE_OAPP        0x00000080 /* OBEX Application Profile */
+#define SCR_PROTO_TRACE_AMP         0x00000100
+#define SCR_PROTO_TRACE_BNEP        0x00000200
+#define SCR_PROTO_TRACE_AVP         0x00000400
+#define SCR_PROTO_TRACE_MCA         0x00000800
+#define SCR_PROTO_TRACE_ATT         0x00001000
+#define SCR_PROTO_TRACE_SMP         0x00002000
+#define SCR_PROTO_TRACE_NCI         0x00004000
+#define SCR_PROTO_TRACE_DEP         0x00008000
+#define SCR_PROTO_TRACE_LLCP        0x00010000
+#define SCR_PROTO_TRACE_NDEF        0x00020000
+#define SCR_PROTO_TRACE_TAGS        0x00040000
+#define SCR_PROTO_TRACE_ALL         0x0007ffff
+#define SCR_PROTO_TRACE_HCI_LOGGING_VSE 0x0800 /* Brcm vs event for logmsg and protocol traces */
+
+#define MAX_SCRIPT_TYPE             5
+
+#define TCS_PSM_INTERCOM        5
+#define TCS_PSM_CORDLESS        7
+#define BT_PSM_BNEP             0x000F
+/* Define PSMs HID uses */
+#define HID_PSM_CONTROL         0x0011
+#define HID_PSM_INTERRUPT       0x0013
+
+/* Define a function for logging */
+typedef void (BT_LOG_FUNC) (int trace_type, const char *fmt_str, ...);
+
+#endif
+/* end "revolution/BTE/stack/include/bt_types.h" */
+
+
+//------------------Added from Bluedroid buildcfg.h---------------------
+#ifndef UNV_INCLUDED
+#define UNV_INCLUDED FALSE
+#endif
+
+#ifndef GATT_PTS
+#define GATT_PTS FALSE
+#endif
+
+#ifndef L2CAP_INCLUDED
+#define L2CAP_INCLUDED TRUE
+#endif
+
+#ifndef L2CAP_EXTFEA_SUPPORTED_MASK
+#define L2CAP_EXTFEA_SUPPORTED_MASK (L2CAP_EXTFEA_ENH_RETRANS | L2CAP_EXTFEA_STREAM_MODE | L2CAP_EXTFEA_NO_CRC | L2CAP_EXTFEA_FIXED_CHNLS)
+#endif
+
+#ifndef BTUI_OPS_FORMATS
+#define BTUI_OPS_FORMATS (BTA_OP_VCARD21_MASK | BTA_OP_ANY_MASK)
+#endif
+
+#ifndef BTA_RFC_MTU_SIZE
+#define BTA_RFC_MTU_SIZE (L2CAP_MTU_SIZE-L2CAP_MIN_OFFSET-RFCOMM_DATA_OVERHEAD)
+#endif
+
+#ifndef BTA_DUN_MTU
+#define BTA_DUN_MTU BTA_RFC_MTU_SIZE
+#endif
+
+#ifndef BTA_SPP_MTU
+#define BTA_SPP_MTU BTA_RFC_MTU_SIZE
+#endif
+
+#ifndef BTA_FAX_MTU
+#define BTA_FAX_MTU BTA_RFC_MTU_SIZE
+#endif
+
+#ifndef SDP_RAW_PDU_INCLUDED
+#define SDP_RAW_PDU_INCLUDED  TRUE
+#endif
+
+#ifndef GATTS_APPU_USE_GATT_TRACE
+#define GATTS_APPU_USE_GATT_TRACE FALSE
+#endif
+
+#ifndef SMP_HOST_ENCRYPT_INCLUDED
+#define SMP_HOST_ENCRYPT_INCLUDED FALSE
+#endif
+
+#ifndef SAP_INCLUDED
+#define SAP_INCLUDED FALSE
+#endif
+
+#ifndef SBC_NO_PCM_CPY_OPTION
+#define SBC_NO_PCM_CPY_OPTION FALSE
+#endif
+
+#ifndef SBC_IPAQ_OPT
+#define SBC_IPAQ_OPT FALSE
+#endif
+
+#ifndef SBC_IS_64_MULT_IN_QUANTIZER
+#define SBC_IS_64_MULT_IN_QUANTIZER FALSE
+#endif
+
+#ifndef BTA_INCLUDED
+#define BTA_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AG_INCLUDED
+#define BTA_AG_INCLUDED  TRUE
+#endif
+
+#ifndef BTA_CT_INCLUDED
+#define BTA_CT_INCLUDED  FALSE
+#endif
+
+#ifndef BTA_CG_INCLUDED
+#define BTA_CG_INCLUDED  FALSE
+#endif
+
+#ifndef BTA_DG_INCLUDED
+#define BTA_DG_INCLUDED  FALSE
+#endif
+
+#ifndef BTA_FT_INCLUDED
+#define BTA_FT_INCLUDED FALSE
+#endif
+
+#ifndef BTA_OP_INCLUDED
+#define BTA_OP_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PR_INCLUDED
+#define BTA_PR_INCLUDED FALSE
+#endif
+
+#ifndef BTA_SS_INCLUDED
+#define BTA_SS_INCLUDED FALSE
+#endif
+
+#ifndef BTA_DM_INCLUDED
+#define BTA_DM_INCLUDED TRUE
+#endif
+
+
+#ifndef BTA_DI_INCLUDED
+#define BTA_DI_INCLUDED FALSE
+#endif
+
+#ifndef BTA_BI_INCLUDED
+#define BTA_BI_INCLUDED FALSE
+#endif
+
+#ifndef BTA_SC_INCLUDED
+#define BTA_SC_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PAN_INCLUDED
+#define BTA_PAN_INCLUDED TRUE
+#endif
+
+#ifndef BTA_FS_INCLUDED
+#define BTA_FS_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AC_INCLUDED
+#define BTA_AC_INCLUDED FALSE
+#endif
+
+#ifndef BTA_HD_INCLUDED
+#define BTA_HD_INCLUDED FALSE
+#endif
+
+#ifndef BTA_HH_INCLUDED
+#define BTA_HH_INCLUDED TRUE
+#endif
+
+#ifndef BTA_HH_ROLE
+#define BTA_HH_ROLE BTA_MASTER_ROLE_PREF
+#endif
+
+#ifndef BTA_AR_INCLUDED
+#define BTA_AR_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AV_INCLUDED
+#define BTA_AV_INCLUDED TRUE
+#endif
+
+#ifndef BTA_AV_VDP_INCLUDED
+#define BTA_AV_VDP_INCLUDED FALSE
+#endif
+
+#ifndef BTA_AVK_INCLUDED
+#define BTA_AVK_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PBS_INCLUDED
+#define BTA_PBS_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PBC_INCLUDED
+#define BTA_PBC_INCLUDED FALSE
+#endif
+
+#ifndef BTA_FM_INCLUDED
+#define BTA_FM_INCLUDED FALSE
+#endif
+
+#ifndef BTA_FM_DEBUG
+#define BTA_FM_DEBUG FALSE
+#endif
+
+#ifndef BTA_FMTX_INCLUDED
+#define BTA_FMTX_INCLUDED FALSE
+#endif
+
+#ifndef BTA_FMTX_DEBUG
+#define BTA_FMTX_DEBUG FALSE
+#endif
+
+#ifndef BTA_FMTX_FMRX_SWITCH_WORKAROUND
+#define BTA_FMTX_FMRX_SWITCH_WORKAROUND FALSE
+#endif
+
+#ifndef BTA_FMTX_US_FCC_RULES
+#define BTA_FMTX_US_FCC_RULES FALSE
+#endif
+
+#ifndef BTA_HS_INCLUDED
+#define BTA_HS_INCLUDED FALSE
+#endif
+
+#ifndef BTA_MSE_INCLUDED
+#define BTA_MSE_INCLUDED FALSE
+#endif
+
+#ifndef BTA_MCE_INCLUDED
+#define BTA_MCE_INCLUDED FALSE
+#endif
+
+#ifndef BTA_PLAYBACK_INCLUDED
+#define BTA_PLAYBACK_INCLUDED FALSE
+#endif
+
+#ifndef BTA_SSR_INCLUDED
+#define BTA_SSR_INCLUDED FALSE
+#endif
+
+#ifndef BTA_JV_INCLUDED
+#define BTA_JV_INCLUDED FALSE
+#endif
+
+#ifndef BTA_GATT_INCLUDED
+#define BTA_GATT_INCLUDED FALSE
+#endif
+
+#ifndef BTA_DISABLE_DELAY
+#define BTA_DISABLE_DELAY 200 /* in milliseconds */
+#endif
+
+#ifndef RPC_TRACE_ONLY
+#define RPC_TRACE_ONLY  FALSE
+#endif
+
+#ifndef ANDROID_APP_INCLUDED
+#define ANDROID_APP_INCLUDED  TRUE
+#endif
+
+#ifndef ANDROID_USE_LOGCAT
+#define ANDROID_USE_LOGCAT  TRUE
+#endif
+
+#ifndef LINUX_GKI_INCLUDED
+#define LINUX_GKI_INCLUDED  TRUE
+#endif
+
+#ifndef BTA_SYS_TIMER_PERIOD
+#define BTA_SYS_TIMER_PERIOD  100
+#endif
+
+#ifndef GKI_SHUTDOWN_EVT
+#define GKI_SHUTDOWN_EVT  APPL_EVT_7
+#endif
+
+#ifndef GKI_PTHREAD_JOINABLE
+#define GKI_PTHREAD_JOINABLE  TRUE
+#endif
+
+#ifndef LINUX_DRV_INCLUDED
+#define LINUX_DRV_INCLUDED  TRUE
+#endif
+
+#ifndef LINUX_OS
+#define LINUX_OS  TRUE
+#endif
+
+#ifndef BTM_APP_DEV_INIT
+#define BTM_APP_DEV_INIT  bte_main_post_reset_init
+#endif
+
+#ifndef SBC_FOR_EMBEDDED_LINUX
+#define SBC_FOR_EMBEDDED_LINUX TRUE
+#endif
+
+#ifndef BTA_DM_REMOTE_DEVICE_NAME_LENGTH
+#define BTA_DM_REMOTE_DEVICE_NAME_LENGTH 248
+#endif
+
+#ifndef AVDT_VERSION
+#define AVDT_VERSION  0x0102
+#endif
+
+#ifndef BTA_AG_AT_MAX_LEN
+#define BTA_AG_AT_MAX_LEN  512
+#endif
+
+#ifndef BTA_AVRCP_FF_RW_SUPPORT
+#define BTA_AVRCP_FF_RW_SUPPORT TRUE
+#endif
+
+#ifndef BTA_AG_SCO_PKT_TYPES
+#define BTA_AG_SCO_PKT_TYPES  (BTM_SCO_LINK_ONLY_MASK | BTM_SCO_PKT_TYPES_MASK_EV3 |  BTM_SCO_PKT_TYPES_MASK_NO_3_EV3 | BTM_SCO_PKT_TYPES_MASK_NO_2_EV5 | BTM_SCO_PKT_TYPES_MASK_NO_3_EV5)
+#endif
+
+#ifndef BTA_AV_MAX_A2DP_MTU
+#define BTA_AV_MAX_A2DP_MTU  668
+#endif
+
+#ifndef BTA_AV_RET_TOUT
+#define BTA_AV_RET_TOUT 15
+#endif
+
+#ifndef PORCHE_PAIRING_CONFLICT
+#define PORCHE_PAIRING_CONFLICT  TRUE
+#endif
+
+#ifndef BTA_AV_CO_CP_SCMS_T
+#define BTA_AV_CO_CP_SCMS_T  FALSE
+#endif
+
+#ifndef AVDT_CONNECT_CP_ONLY
+#define AVDT_CONNECT_CP_ONLY  FALSE
+#endif
+
+#ifndef BT_TRACE_PROTOCOL
+#define BT_TRACE_PROTOCOL  TRUE
+#endif
+
+#ifndef BT_USE_TRACES
+#define BT_USE_TRACES  TRUE
+#endif
+
+#ifndef BT_TRACE_BTIF
+#define BT_TRACE_BTIF  TRUE
+#endif
+
+#ifndef BTTRC_INCLUDED
+#define BTTRC_INCLUDED  FALSE
+#endif
+
+#ifndef BT_TRACE_VERBOSE
+#define BT_TRACE_VERBOSE  FALSE
+#endif
+
+#ifndef BTTRC_PARSER_INCLUDED
+#define BTTRC_PARSER_INCLUDED  FALSE
+#endif
+
+#ifndef MAX_TRACE_RAM_SIZE
+#define MAX_TRACE_RAM_SIZE  10000
+#endif
+
+#ifndef OBX_INITIAL_TRACE_LEVEL
+#define OBX_INITIAL_TRACE_LEVEL  BT_TRACE_LEVEL_ERROR
+#endif
+
+#ifndef PBAP_ZERO_VCARD_IN_DB
+#define PBAP_ZERO_VCARD_IN_DB  FALSE
+#endif
+
+#ifndef BTA_DM_SDP_DB_SIZE
+#define BTA_DM_SDP_DB_SIZE  8000
+#endif
+
+#ifndef FTS_REJECT_INVALID_OBEX_SET_PATH_REQ
+#define FTS_REJECT_INVALID_OBEX_SET_PATH_REQ FALSE
+#endif
+
+#ifndef HL_INCLUDED
+#define HL_INCLUDED  TRUE
+#endif
+
+#ifndef NO_GKI_RUN_RETURN
+#define NO_GKI_RUN_RETURN  TRUE
+#endif
+
+#ifndef AG_VOICE_SETTINGS
+#define AG_VOICE_SETTINGS  HCI_DEFAULT_VOICE_SETTINGS
+#endif
+
+#ifndef BTIF_DM_OOB_TEST
+#define BTIF_DM_OOB_TEST  TRUE
+#endif
+//------------------End added from Bluedroid buildcfg.h---------------------
+
+
+
+/* #define BYPASS_AVDATATRACE */
+
+/******************************************************************************
+**
+** Platform-Specific
+**
+******************************************************************************/
+
+/* API macros for simulator */
+
+#define BTAPI
+
+#ifndef BTE_BSE_WRAPPER
+#ifdef  BTE_SIM_APP
+#undef  BTAPI
+#define BTAPI         __declspec(dllexport)
+#endif
+#endif
+
+#define BT_API          BTAPI
+#define BTU_API         BTAPI
+#define A2D_API         BTAPI
+#define VDP_API         BTAPI
+#define AVDT_API        BTAPI
+#define AVCT_API        BTAPI
+#define AVRC_API        BTAPI
+#define BIP_API         BTAPI
+#define BNEP_API        BTAPI
+#define BPP_API         BTAPI
+#define BTM_API         BTAPI
+#define CTP_API         BTAPI
+#define DUN_API         BTAPI
+#define FTP_API         BTAPI
+#define GAP_API         BTAPI
+#define GOEP_API        BTAPI
+#define HCI_API         BTAPI
+#define HCRP_API        BTAPI
+#define HID_API         BTAPI
+#define HFP_API         BTAPI
+#define HSP2_API        BTAPI
+#define ICP_API         BTAPI
+#define L2C_API         BTAPI
+#define OBX_API         BTAPI
+#define OPP_API         BTAPI
+#define PAN_API         BTAPI
+#define RFC_API         BTAPI
+#define RPC_API         BTAPI
+#define SDP_API         BTAPI
+#define SPP_API         BTAPI
+#define TCS_API         BTAPI
+#define XML_API         BTAPI
+#define BTA_API         BTAPI
+#define SBC_API         BTAPI
+#define MCE_API         BTAPI
+#define MCA_API         BTAPI
+#define GATT_API        BTAPI
+#define SMP_API         BTAPI
+
+
+/******************************************************************************
+**
+** GKI Buffer Pools
+**
+******************************************************************************/
+
+/* Receives HCI events from the lower-layer. */
+#ifndef HCI_CMD_POOL_ID
+#define HCI_CMD_POOL_ID             GKI_POOL_ID_2
+#endif
+
+#ifndef HCI_CMD_POOL_BUF_SIZE
+#define HCI_CMD_POOL_BUF_SIZE       GKI_BUF2_SIZE
+#endif
+
+/* Receives ACL data packets from thelower-layer. */
+#ifndef HCI_ACL_POOL_ID
+#define HCI_ACL_POOL_ID             GKI_POOL_ID_3
+#endif
+
+#ifndef HCI_ACL_POOL_BUF_SIZE
+#define HCI_ACL_POOL_BUF_SIZE       GKI_BUF3_SIZE
+#endif
+
+/* Maximum number of buffers available for ACL receive data. */
+#ifndef HCI_ACL_BUF_MAX
+#define HCI_ACL_BUF_MAX             GKI_BUF3_MAX
+#endif
+
+/* Receives SCO data packets from the lower-layer. */
+#ifndef HCI_SCO_POOL_ID
+#define HCI_SCO_POOL_ID             GKI_POOL_ID_6
+#endif
+
+/* Not used. */
+#ifndef HCI_DATA_DESCR_POOL_ID
+#define HCI_DATA_DESCR_POOL_ID      GKI_POOL_ID_0
+#endif
+
+/* Sends SDP data packets. */
+#ifndef SDP_POOL_ID
+#define SDP_POOL_ID                 3
+#endif
+
+/* Sends RFCOMM command packets. */
+#ifndef RFCOMM_CMD_POOL_ID
+#define RFCOMM_CMD_POOL_ID          GKI_POOL_ID_2
+#endif
+
+#ifndef RFCOMM_CMD_POOL_BUF_SIZE
+#define RFCOMM_CMD_POOL_BUF_SIZE    GKI_BUF2_SIZE
+#endif
+
+/* Sends RFCOMM data packets. */
+#ifndef RFCOMM_DATA_POOL_ID
+#define RFCOMM_DATA_POOL_ID         GKI_POOL_ID_3
+#endif
+
+#ifndef RFCOMM_DATA_POOL_BUF_SIZE
+#define RFCOMM_DATA_POOL_BUF_SIZE   GKI_BUF3_SIZE
+#endif
+
+/* Sends L2CAP packets to the peer and HCI messages to the controller. */
+#ifndef L2CAP_CMD_POOL_ID
+#define L2CAP_CMD_POOL_ID           GKI_POOL_ID_2
+#endif
+
+/* Sends L2CAP segmented packets in ERTM mode */
+#ifndef L2CAP_FCR_TX_POOL_ID
+#define L2CAP_FCR_TX_POOL_ID        HCI_ACL_POOL_ID
+#endif
+
+/* Receives L2CAP segmented packets in ERTM mode */
+#ifndef L2CAP_FCR_RX_POOL_ID
+#define L2CAP_FCR_RX_POOL_ID        HCI_ACL_POOL_ID
+#endif
+
+/* Used by BTM when it sends HCI commands to the controller. */
+#ifndef BTM_CMD_POOL_ID
+#define BTM_CMD_POOL_ID             GKI_POOL_ID_2
+#endif
+
+/* Sends TCS messages. */
+#ifndef TCS_MSG_POOL_ID
+#define TCS_MSG_POOL_ID             GKI_POOL_ID_2
+#endif
+
+#ifndef OBX_CMD_POOL_SIZE
+#define OBX_CMD_POOL_SIZE           GKI_BUF2_SIZE
+#endif
+
+#ifndef OBX_LRG_DATA_POOL_SIZE
+#define OBX_LRG_DATA_POOL_SIZE      GKI_BUF4_SIZE
+#endif
+
+#ifndef OBX_LRG_DATA_POOL_ID
+#define OBX_LRG_DATA_POOL_ID        GKI_POOL_ID_4
+#endif
+
+/* Used for CTP discovery database. */
+#ifndef CTP_SDP_DB_POOL_ID
+#define CTP_SDP_DB_POOL_ID          GKI_POOL_ID_3
+#endif
+
+/* Used for CTP data exchange feature. */
+#ifndef CTP_DATA_EXCHG_POOL_ID
+#define CTP_DATA_EXCHG_POOL_ID      GKI_POOL_ID_2
+#endif
+
+/* Used to send data to L2CAP. */
+#ifndef GAP_DATA_POOL_ID
+#define GAP_DATA_POOL_ID            GKI_POOL_ID_3
+#endif
+
+/* Used for SPP inquiry and discovery databases. */
+#ifndef SPP_DB_POOL_ID
+#define SPP_DB_POOL_ID              GKI_POOL_ID_3
+#endif
+
+#ifndef SPP_DB_SIZE
+#define SPP_DB_SIZE                 GKI_BUF3_SIZE
+#endif
+
+/* HCRP protocol and internal commands. */
+#ifndef HCRP_CMD_POOL_ID
+#define HCRP_CMD_POOL_ID            GKI_POOL_ID_2
+#endif
+
+#ifndef HCRP_CMD_POOL_SIZE
+#define HCRP_CMD_POOL_SIZE          GKI_BUF2_SIZE
+#endif
+
+#ifndef BIP_EVT_POOL_SIZE
+#define BIP_EVT_POOL_SIZE           GKI_BUF3_SIZE
+#endif
+
+#ifndef BIP_DB_SIZE
+#define BIP_DB_SIZE                 GKI_BUF3_SIZE
+#endif
+
+
+/* BNEP data and protocol messages. */
+#ifndef BNEP_POOL_ID
+#define BNEP_POOL_ID                GKI_POOL_ID_3
+#endif
+
+/* RPC pool for temporary trace message buffers. */
+#ifndef RPC_SCRATCH_POOL_ID
+#define RPC_SCRATCH_POOL_ID         GKI_POOL_ID_2
+#endif
+
+/* RPC scratch buffer size (not related to RPC_SCRATCH_POOL_ID) */
+#ifndef RPC_SCRATCH_BUF_SIZE
+#define RPC_SCRATCH_BUF_SIZE        GKI_BUF3_SIZE
+#endif
+
+/* RPC pool for protocol messages */
+#ifndef RPC_MSG_POOL_ID
+#define RPC_MSG_POOL_ID             GKI_POOL_ID_3
+#endif
+
+#ifndef RPC_MSG_POOL_SIZE
+#define RPC_MSG_POOL_SIZE           GKI_BUF3_SIZE
+#endif
+
+/* AVDTP pool for protocol messages */
+#ifndef AVDT_CMD_POOL_ID
+#define AVDT_CMD_POOL_ID            GKI_POOL_ID_2
+#endif
+
+/* AVDTP pool size for media packets in case of fragmentation */
+#ifndef AVDT_DATA_POOL_SIZE
+#define AVDT_DATA_POOL_SIZE         GKI_BUF3_SIZE
+#endif
+
+#ifndef PAN_POOL_ID
+#define PAN_POOL_ID                 GKI_POOL_ID_3
+#endif
+
+/* UNV pool for read/write serialization */
+#ifndef UNV_MSG_POOL_ID
+#define UNV_MSG_POOL_ID             GKI_POOL_ID_2
+#endif
+
+#ifndef UNV_MSG_POOL_SIZE
+#define UNV_MSG_POOL_SIZE           GKI_BUF2_SIZE
+#endif
+
+/* AVCTP pool for protocol messages */
+#ifndef AVCT_CMD_POOL_ID
+#define AVCT_CMD_POOL_ID            GKI_POOL_ID_1
+#endif
+
+#ifndef AVCT_META_CMD_POOL_ID
+#define AVCT_META_CMD_POOL_ID       GKI_POOL_ID_2
+#endif
+
+/* AVRCP pool for protocol messages */
+#ifndef AVRC_CMD_POOL_ID
+#define AVRC_CMD_POOL_ID            GKI_POOL_ID_1
+#endif
+
+/* AVRCP pool size for protocol messages */
+#ifndef AVRC_CMD_POOL_SIZE
+#define AVRC_CMD_POOL_SIZE          GKI_BUF1_SIZE
+#endif
+
+/* AVRCP Metadata pool for protocol messages */
+#ifndef AVRC_META_CMD_POOL_ID
+#define AVRC_META_CMD_POOL_ID       GKI_POOL_ID_2
+#endif
+
+/* AVRCP Metadata pool size for protocol messages */
+#ifndef AVRC_META_CMD_POOL_SIZE
+#define AVRC_META_CMD_POOL_SIZE     GKI_BUF2_SIZE
+#endif
+
+
+/* AVRCP buffer size for browsing channel messages */
+#ifndef AVRC_BROWSE_POOL_SIZE
+#define AVRC_BROWSE_POOL_SIZE     GKI_MAX_BUF_SIZE
+#endif
+
+/*  HDP buffer size for the Pulse Oximeter  */
+#ifndef BTA_HL_LRG_DATA_POOL_SIZE
+#define BTA_HL_LRG_DATA_POOL_SIZE      GKI_BUF7_SIZE
+#endif
+
+#ifndef BTA_HL_LRG_DATA_POOL_ID
+#define BTA_HL_LRG_DATA_POOL_ID        GKI_POOL_ID_7
+#endif
+
+/* GATT Server Database pool ID */
+#ifndef GATT_DB_POOL_ID
+#define GATT_DB_POOL_ID                 GKI_POOL_ID_8
+#endif
+
+/******************************************************************************
+**
+** Lower Layer Interface
+**
+******************************************************************************/
+
+/* Sends ACL data received over HCI to the upper stack. */
+#ifndef HCI_ACL_DATA_TO_UPPER
+#define HCI_ACL_DATA_TO_UPPER(p)    {((BT_HDR *)p)->event = BT_EVT_TO_BTU_HCI_ACL; GKI_send_msg (BTU_TASK, BTU_HCI_RCV_MBOX, p);}
+#endif
+
+/* Sends SCO data received over HCI to the upper stack. */
+#ifndef HCI_SCO_DATA_TO_UPPER
+#define HCI_SCO_DATA_TO_UPPER(p)    {((BT_HDR *)p)->event = BT_EVT_TO_BTU_HCI_SCO; GKI_send_msg (BTU_TASK, BTU_HCI_RCV_MBOX, p);}
+#endif
+
+/* Sends an HCI event received over HCI to theupper stack. */
+#ifndef HCI_EVT_TO_UPPER
+#define HCI_EVT_TO_UPPER(p)         {((BT_HDR *)p)->event = BT_EVT_TO_BTU_HCI_EVT; GKI_send_msg (BTU_TASK, BTU_HCI_RCV_MBOX, p);}
+#endif
+
+/* Macro for allocating buffer for HCI commands */
+#ifndef HCI_GET_CMD_BUF
+#if (!defined(HCI_USE_VARIABLE_SIZE_CMD_BUF) || (HCI_USE_VARIABLE_SIZE_CMD_BUF == FALSE))
+/* Allocate fixed-size buffer from HCI_CMD_POOL (default case) */
+#define HCI_GET_CMD_BUF(paramlen)    ((BT_HDR *)GKI_getpoolbuf (HCI_CMD_POOL_ID))
+#else
+/* Allocate smallest possible buffer (for platforms with limited RAM) */
+#define HCI_GET_CMD_BUF(paramlen)    ((BT_HDR *)GKI_getbuf ((UINT16)(BT_HDR_SIZE + HCIC_PREAMBLE_SIZE + (paramlen))))
+#endif
+#endif  /* HCI_GET_CMD_BUF */
+
+/******************************************************************************
+**
+** HCI Services (H4)
+**
+******************************************************************************/
+#ifndef HCISU_H4_INCLUDED
+#define HCISU_H4_INCLUDED               TRUE
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+BT_API extern void bte_main_hci_send (BT_HDR *p_msg, UINT16 event);
+#if (HCISU_H4_INCLUDED == TRUE)
+BT_API extern void bte_main_lpm_allow_bt_device_sleep(void);
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+/* Sends ACL data received from the upper stack to the BD/EDR HCI transport. */
+#ifndef HCI_ACL_DATA_TO_LOWER
+#define HCI_ACL_DATA_TO_LOWER(p)    bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_HCI_ACL);
+#endif
+
+#ifndef HCI_BLE_ACL_DATA_TO_LOWER
+#define HCI_BLE_ACL_DATA_TO_LOWER(p)    bte_main_hci_send((BT_HDR *)(p), (UINT16)(BT_EVT_TO_LM_HCI_ACL|LOCAL_BLE_CONTROLLER_ID));
+#endif
+
+/* Sends SCO data received from the upper stack to the HCI transport. */
+#ifndef HCI_SCO_DATA_TO_LOWER
+#define HCI_SCO_DATA_TO_LOWER(p)    bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_HCI_SCO);
+#endif
+
+/* Sends an HCI command received from the upper stack to the BD/EDR HCI transport. */
+#ifndef HCI_CMD_TO_LOWER
+#define HCI_CMD_TO_LOWER(p)         bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_HCI_CMD);
+#endif
+
+/* Sends an LM Diagnosic command received from the upper stack to the HCI transport. */
+#ifndef HCI_LM_DIAG_TO_LOWER
+#define HCI_LM_DIAG_TO_LOWER(p)     bte_main_hci_send((BT_HDR *)(p), BT_EVT_TO_LM_DIAG);
+#endif
+
+/* Send HCISU a message to allow BT sleep */
+#ifndef HCI_LP_ALLOW_BT_DEVICE_SLEEP
+#define HCI_LP_ALLOW_BT_DEVICE_SLEEP()       bte_main_lpm_allow_bt_device_sleep()
+#endif
+
+/* If nonzero, the upper-layer sends at most this number of HCI commands to the lower-layer. */
+#ifndef HCI_MAX_SIMUL_CMDS
+#define HCI_MAX_SIMUL_CMDS          0
+#endif
+
+/* Timeout for receiving response to HCI command */
+#ifndef BTU_CMD_CMPL_TIMEOUT
+#define BTU_CMD_CMPL_TIMEOUT        8
+#endif
+
+/* If TRUE, BTU task will check HCISU again when HCI command timer expires */
+#ifndef BTU_CMD_CMPL_TOUT_DOUBLE_CHECK
+#define BTU_CMD_CMPL_TOUT_DOUBLE_CHECK      FALSE
+#endif
+
+/* Use 2 second for low-resolution systems, override to 1 for high-resolution systems */
+#ifndef BT_1SEC_TIMEOUT
+#define BT_1SEC_TIMEOUT             (2)
+#endif
+
+/* Quick Timer */
+/* if L2CAP_FCR_INCLUDED is TRUE then it should have 100 millisecond resolution */
+/* if none of them is included then QUICK_TIMER_TICKS_PER_SEC is set to 0 to exclude quick timer */
+#ifndef QUICK_TIMER_TICKS_PER_SEC
+#define QUICK_TIMER_TICKS_PER_SEC   10       /* 10ms timer */
+#endif
+
+/******************************************************************************
+**
+** BTM
+**
+******************************************************************************/
+/* if set to TRUE, stack will automatically send an HCI reset at start-up. To be
+set to FALSE for advanced start-up / shut-down procedures using USER_HW_ENABLE_API
+and USER_HW_DISABLE_API macros */
+#ifndef BTM_AUTOMATIC_HCI_RESET
+#define BTM_AUTOMATIC_HCI_RESET      FALSE
+#endif
+
+/* Include BTM Discovery database and code. */
+#ifndef BTM_DISCOVERY_INCLUDED
+#define BTM_DISCOVERY_INCLUDED      TRUE
+#endif
+
+/* Include inquiry code. */
+#ifndef BTM_INQUIRY_INCLUDED
+#define BTM_INQUIRY_INCLUDED        TRUE
+#endif
+
+/* Cancel Inquiry on incoming SSP */
+#ifndef BTM_NO_SSP_ON_INQUIRY
+#define BTM_NO_SSP_ON_INQUIRY       FALSE
+#endif
+
+/* Include periodic inquiry code (used when BTM_INQUIRY_INCLUDED is TRUE). */
+#ifndef BTM_PERIODIC_INQ_INCLUDED
+#define BTM_PERIODIC_INQ_INCLUDED   TRUE
+#endif
+
+/* Include security authorization code */
+#ifndef BTM_AUTHORIZATION_INCLUDED
+#define BTM_AUTHORIZATION_INCLUDED  TRUE
+#endif
+
+/* Includes SCO if TRUE */
+#ifndef BTM_SCO_INCLUDED
+#define BTM_SCO_INCLUDED            TRUE       /* TRUE includes SCO code */
+#endif
+
+/* Includes SCO if TRUE */
+#ifndef BTM_SCO_HCI_INCLUDED
+#define BTM_SCO_HCI_INCLUDED            FALSE       /* TRUE includes SCO over HCI code */
+#endif
+
+/* Includes WBS if TRUE */
+#ifndef BTM_WBS_INCLUDED
+#define BTM_WBS_INCLUDED            FALSE       /* TRUE includes WBS code */
+#endif
+
+/* Includes PCM2 support if TRUE */
+#ifndef BTM_PCM2_INCLUDED
+#define BTM_PCM2_INCLUDED           FALSE
+#endif
+
+/*  This is used to work around a controller bug that doesn't like Disconnect
+**  issued while there is a role switch in progress
+*/
+#ifndef BTM_DISC_DURING_RS
+#define BTM_DISC_DURING_RS TRUE
+#endif
+
+/**************************
+** Initial SCO TX credit
+*************************/
+/* max TX SCO data packet size */
+#ifndef BTM_SCO_DATA_SIZE_MAX
+#define BTM_SCO_DATA_SIZE_MAX       240
+#endif
+
+/* maximum BTM buffering capacity */
+#ifndef BTM_SCO_MAX_BUF_CAP
+#define BTM_SCO_MAX_BUF_CAP     (BTM_SCO_INIT_XMIT_CREDIT * 4)
+#endif
+
+/* The size in bytes of the BTM inquiry database. */
+#ifndef BTM_INQ_DB_SIZE
+#define BTM_INQ_DB_SIZE             40
+#endif
+
+/* This is set to enable automatic periodic inquiry at startup. */
+#ifndef BTM_ENABLE_AUTO_INQUIRY
+#define BTM_ENABLE_AUTO_INQUIRY     FALSE
+#endif
+
+/* This is set to always try to acquire the remote device name. */
+#ifndef BTM_INQ_GET_REMOTE_NAME
+#define BTM_INQ_GET_REMOTE_NAME     FALSE
+#endif
+
+/* The inquiry duration in 1.28 second units when auto inquiry is enabled. */
+#ifndef BTM_DEFAULT_INQ_DUR
+#define BTM_DEFAULT_INQ_DUR         5
+#endif
+
+/* The inquiry mode when auto inquiry is enabled. */
+#ifndef BTM_DEFAULT_INQ_MODE
+#define BTM_DEFAULT_INQ_MODE        BTM_GENERAL_INQUIRY
+#endif
+
+/* The default periodic inquiry maximum delay when auto inquiry is enabled, in 1.28 second units. */
+#ifndef BTM_DEFAULT_INQ_MAX_DELAY
+#define BTM_DEFAULT_INQ_MAX_DELAY   30
+#endif
+
+/* The default periodic inquiry minimum delay when auto inquiry is enabled, in 1.28 second units. */
+#ifndef BTM_DEFAULT_INQ_MIN_DELAY
+#define BTM_DEFAULT_INQ_MIN_DELAY   20
+#endif
+
+/* The maximum age of entries in inquiry database in seconds ('0' disables feature). */
+#ifndef BTM_INQ_MAX_AGE
+#define BTM_INQ_MAX_AGE             0
+#endif
+
+/* The maximum age of entries in inquiry database based on inquiry response failure ('0' disables feature). */
+#ifndef BTM_INQ_AGE_BY_COUNT
+#define BTM_INQ_AGE_BY_COUNT        0
+#endif
+
+/* TRUE if controller does not support inquiry event filtering. */
+#ifndef BTM_BYPASS_EVENT_FILTERING
+#define BTM_BYPASS_EVENT_FILTERING  FALSE
+#endif
+
+/* TRUE if inquiry filtering is desired from BTM. */
+#ifndef BTM_USE_INQ_RESULTS_FILTER
+#define BTM_USE_INQ_RESULTS_FILTER  TRUE
+#endif
+
+/* The default scan mode */
+#ifndef BTM_DEFAULT_SCAN_TYPE
+#define BTM_DEFAULT_SCAN_TYPE       BTM_SCAN_TYPE_INTERLACED
+#endif
+
+/* Should connections to unknown devices be allowed when not discoverable? */
+#ifndef BTM_ALLOW_CONN_IF_NONDISCOVER
+#define BTM_ALLOW_CONN_IF_NONDISCOVER   TRUE
+#endif
+
+/* When connectable mode is set to TRUE, the device will respond to paging. */
+#ifndef BTM_IS_CONNECTABLE
+#define BTM_IS_CONNECTABLE          FALSE
+#endif
+
+/* Sets the Page_Scan_Window:  the length of time that the device is performing a page scan. */
+#ifndef BTM_DEFAULT_CONN_WINDOW
+#define BTM_DEFAULT_CONN_WINDOW     0x0012
+#endif
+
+/* Sets the Page_Scan_Activity:  the interval between the start of two consecutive page scans. */
+#ifndef BTM_DEFAULT_CONN_INTERVAL
+#define BTM_DEFAULT_CONN_INTERVAL   0x0800
+#endif
+
+/* This is set to automatically perform inquiry scan on startup. */
+#ifndef BTM_IS_DISCOVERABLE
+#define BTM_IS_DISCOVERABLE         FALSE
+#endif
+
+/* When automatic inquiry scan is enabled, this sets the discovery mode. */
+#ifndef BTM_DEFAULT_DISC_MODE
+#define BTM_DEFAULT_DISC_MODE       BTM_GENERAL_DISCOVERABLE
+#endif
+
+/* When automatic inquiry scan is enabled, this sets the inquiry scan window. */
+#ifndef BTM_DEFAULT_DISC_WINDOW
+#define BTM_DEFAULT_DISC_WINDOW     0x0012
+#endif
+
+/* When automatic inquiry scan is enabled, this sets the inquiry scan interval. */
+#ifndef BTM_DEFAULT_DISC_INTERVAL
+#define BTM_DEFAULT_DISC_INTERVAL   0x0800
+#endif
+
+/* Sets the period, in seconds, to automatically perform service discovery. */
+#ifndef BTM_AUTO_DISCOVERY_PERIOD
+#define BTM_AUTO_DISCOVERY_PERIOD   0
+#endif
+
+/* The size in bytes of the BTM discovery database (if discovery is included). */
+#ifndef BTM_DISCOVERY_DB_SIZE
+#define BTM_DISCOVERY_DB_SIZE       4000
+#endif
+
+/* Number of milliseconds to delay BTU task startup upon device initialization. */
+#ifndef BTU_STARTUP_DELAY
+#define BTU_STARTUP_DELAY           0
+#endif
+
+/* Whether BTA is included in BTU task. */
+#ifndef BTU_BTA_INCLUDED
+#define BTU_BTA_INCLUDED            TRUE
+#endif
+
+/* Number of seconds to wait to send an HCI Reset command upon device initialization. */
+#ifndef BTM_FIRST_RESET_DELAY
+#define BTM_FIRST_RESET_DELAY       0
+#endif
+
+/* The number of seconds to wait for controller module to reset after issuing an HCI Reset command. */
+#ifndef BTM_AFTER_RESET_TIMEOUT
+#define BTM_AFTER_RESET_TIMEOUT     0
+#endif
+
+/* Default class of device
+* {SERVICE_CLASS, MAJOR_CLASS, MINOR_CLASS}
+*
+* SERVICE_CLASS:0x5A (Bit17 -Networking,Bit19 - Capturing,Bit20 -Object Transfer,Bit22 -Telephony)
+* MAJOR_CLASS:0x02 - PHONE
+* MINOR_CLASS:0x0C - SMART_PHONE
+*
+*/
+#ifndef BTA_DM_COD
+#define BTA_DM_COD {0x5A, 0x02, 0x0C}
+#endif
+
+/* The number of SCO links. */
+#ifndef BTM_MAX_SCO_LINKS
+#define BTM_MAX_SCO_LINKS           2
+#endif
+
+/* The preferred type of SCO links (2-eSCO, 0-SCO). */
+#ifndef BTM_DEFAULT_SCO_MODE
+#define BTM_DEFAULT_SCO_MODE        2
+#endif
+
+/* The number of security records for peer devices. */
+#ifndef BTM_SEC_MAX_DEVICE_RECORDS
+#define BTM_SEC_MAX_DEVICE_RECORDS  100
+#endif
+
+/* The number of security records for services. */
+#ifndef BTM_SEC_MAX_SERVICE_RECORDS
+#define BTM_SEC_MAX_SERVICE_RECORDS 32
+#endif
+
+/* If True, force a retrieval of remote device name for each bond in case it's changed */
+#ifndef BTM_SEC_FORCE_RNR_FOR_DBOND
+#define BTM_SEC_FORCE_RNR_FOR_DBOND  FALSE
+#endif
+
+/* Maximum device name length used in btm database. */
+#ifndef BTM_MAX_REM_BD_NAME_LEN
+#define BTM_MAX_REM_BD_NAME_LEN     248
+#endif
+
+/* Maximum local device name length stored btm database.
+  '0' disables storage of the local name in BTM */
+#ifndef BTM_MAX_LOC_BD_NAME_LEN
+#define BTM_MAX_LOC_BD_NAME_LEN     248
+#endif
+
+/* TRUE if default string is used, FALSE if device name is set in the application */
+#ifndef BTM_USE_DEF_LOCAL_NAME
+#define BTM_USE_DEF_LOCAL_NAME      TRUE
+#endif
+
+/* Fixed Default String (Ignored if BTM_USE_DEF_LOCAL_NAME is FALSE) */
+#ifndef BTM_DEF_LOCAL_NAME
+#define BTM_DEF_LOCAL_NAME      ""
+#endif
+
+/* Maximum service name stored with security authorization (0 if not needed) */
+#ifndef BTM_SEC_SERVICE_NAME_LEN
+#define BTM_SEC_SERVICE_NAME_LEN    BT_MAX_SERVICE_NAME_LEN
+#endif
+
+/* Maximum number of pending security callback */
+#ifndef BTM_SEC_MAX_CALLBACKS
+#define BTM_SEC_MAX_CALLBACKS       7
+#endif
+
+/* Maximum length of the service name. */
+#ifndef BT_MAX_SERVICE_NAME_LEN
+#define BT_MAX_SERVICE_NAME_LEN     21
+#endif
+
+/* ACL buffer size in HCI Host Buffer Size command. */
+#ifndef BTM_ACL_BUF_SIZE
+#define BTM_ACL_BUF_SIZE            0
+#endif
+
+/* This is set to use the BTM power manager. */
+#ifndef BTM_PWR_MGR_INCLUDED
+#define BTM_PWR_MGR_INCLUDED        TRUE
+#endif
+
+/* The maximum number of clients that can register with the power manager. */
+#ifndef BTM_MAX_PM_RECORDS
+#define BTM_MAX_PM_RECORDS          2
+#endif
+
+/* This is set to show debug trace messages for the power manager. */
+#ifndef BTM_PM_DEBUG
+#define BTM_PM_DEBUG                FALSE
+#endif
+
+/* This is set to TRUE if link is to be unparked due to BTM_CreateSCO API. */
+#ifndef BTM_SCO_WAKE_PARKED_LINK
+#define BTM_SCO_WAKE_PARKED_LINK    TRUE
+#endif
+
+/* May be set to the the name of a function used for vendor specific chip initialization */
+#ifndef BTM_APP_DEV_INIT
+/* #define BTM_APP_DEV_INIT         myInitFunction() */
+#endif
+
+/* This is set to TRUE if the busy level change event is desired. (replace ACL change event) */
+#ifndef BTM_BUSY_LEVEL_CHANGE_INCLUDED
+#define BTM_BUSY_LEVEL_CHANGE_INCLUDED  TRUE
+#endif
+
+/* If the user does not respond to security process requests within this many seconds,
+ * a negative response would be sent automatically.
+ * It's recommended to use a value between 30 and OBX_TIMEOUT_VALUE
+ * 30 is LMP response timeout value */
+#ifndef BTM_SEC_TIMEOUT_VALUE
+#define BTM_SEC_TIMEOUT_VALUE           35
+#endif
+
+/* Maximum number of callbacks that can be registered using BTM_RegisterForVSEvents */
+#ifndef BTM_MAX_VSE_CALLBACKS
+#define BTM_MAX_VSE_CALLBACKS           3
+#endif
+
+/* Number of streams for dual stack */
+#ifndef BTM_SYNC_INFO_NUM_STR
+#define BTM_SYNC_INFO_NUM_STR           2
+#endif
+
+/* Number of streams for dual stack in BT Controller */
+#ifndef BTM_SYNC_INFO_NUM_STR_BTC
+#define BTM_SYNC_INFO_NUM_STR_BTC       2
+#endif
+
+/******************************************
+**    Lisbon Features
+*******************************************/
+/* This is set to TRUE if the server Extended Inquiry Response feature is desired. */
+/* server sends EIR to client */
+#ifndef BTM_EIR_SERVER_INCLUDED
+#define BTM_EIR_SERVER_INCLUDED         TRUE
+#endif
+
+/* This is set to TRUE if the client Extended Inquiry Response feature is desired. */
+/* client inquiry to server */
+#ifndef BTM_EIR_CLIENT_INCLUDED
+#define BTM_EIR_CLIENT_INCLUDED         TRUE
+#endif
+
+/* This is set to TRUE if the FEC is required for EIR packet. */
+#ifndef BTM_EIR_DEFAULT_FEC_REQUIRED
+#define BTM_EIR_DEFAULT_FEC_REQUIRED    TRUE
+#endif
+
+/* User defined UUID look up table */
+#ifndef BTM_EIR_UUID_LKUP_TBL
+#endif
+
+/* The IO capability of the local device (for Simple Pairing) */
+#ifndef BTM_LOCAL_IO_CAPS
+#define BTM_LOCAL_IO_CAPS               BTM_IO_CAP_IO
+#endif
+
+/* The default MITM Protection Requirement (for Simple Pairing)
+ * Possible values are BTM_AUTH_SP_YES or BTM_AUTH_SP_NO */
+#ifndef BTM_DEFAULT_AUTH_REQ
+#define BTM_DEFAULT_AUTH_REQ            BTM_AUTH_SP_NO
+#endif
+
+/* The default MITM Protection Requirement for dedicated bonding using Simple Pairing
+ * Possible values are BTM_AUTH_AP_YES or BTM_AUTH_AP_NO */
+#ifndef BTM_DEFAULT_DD_AUTH_REQ
+#define BTM_DEFAULT_DD_AUTH_REQ            BTM_AUTH_AP_YES
+#endif
+
+/* Include Out-of-Band implementation for Simple Pairing */
+#ifndef BTM_OOB_INCLUDED
+#define BTM_OOB_INCLUDED                TRUE
+#endif
+
+/* TRUE to include Sniff Subrating */
+#ifndef BTM_SSR_INCLUDED
+#define BTM_SSR_INCLUDED                TRUE
+#endif
+
+/*************************
+** End of Lisbon Features
+**************************/
+
+/* Used for conformance testing ONLY */
+#ifndef BTM_BLE_CONFORMANCE_TESTING
+#define BTM_BLE_CONFORMANCE_TESTING           FALSE
+#endif
+
+
+/******************************************************************************
+**
+** L2CAP
+**
+******************************************************************************/
+
+/* Flow control and retransmission mode */
+
+#ifndef L2CAP_FCR_INCLUDED
+#define L2CAP_FCR_INCLUDED TRUE
+#endif
+
+/* The maximum number of simultaneous links that L2CAP can support. */
+#ifndef MAX_ACL_CONNECTIONS
+#define MAX_L2CAP_LINKS             7
+#else
+#define MAX_L2CAP_LINKS             MAX_ACL_CONNECTIONS
+#endif
+
+/* The maximum number of simultaneous channels that L2CAP can support. */
+#ifndef MAX_L2CAP_CHANNELS
+#define MAX_L2CAP_CHANNELS          10
+#endif
+
+/* The maximum number of simultaneous applications that can register with L2CAP. */
+#ifndef MAX_L2CAP_CLIENTS
+#define MAX_L2CAP_CLIENTS           15
+#endif
+
+/* The number of seconds of link inactivity before a link is disconnected. */
+#ifndef L2CAP_LINK_INACTIVITY_TOUT
+#define L2CAP_LINK_INACTIVITY_TOUT  4
+#endif
+
+/* The number of seconds of link inactivity after bonding before a link is disconnected. */
+#ifndef L2CAP_BONDING_TIMEOUT
+#define L2CAP_BONDING_TIMEOUT       3
+#endif
+
+/* The time from the HCI connection complete to disconnect if no channel is established. */
+#ifndef L2CAP_LINK_STARTUP_TOUT
+#define L2CAP_LINK_STARTUP_TOUT     60
+#endif
+
+/* The L2CAP MTU; must be in accord with the HCI ACL pool size. */
+#ifndef L2CAP_MTU_SIZE
+#define L2CAP_MTU_SIZE              1691
+#endif
+
+/* The L2CAP MPS over Bluetooth; must be in accord with the FCR tx pool size and ACL down buffer size. */
+#ifndef L2CAP_MPS_OVER_BR_EDR
+#define L2CAP_MPS_OVER_BR_EDR       1010
+#endif
+
+/* This is set to enable host flow control. */
+#ifndef L2CAP_HOST_FLOW_CTRL
+#define L2CAP_HOST_FLOW_CTRL        FALSE
+#endif
+
+/* If host flow control enabled, this is the number of buffers the controller can have unacknowledged. */
+#ifndef L2CAP_HOST_FC_ACL_BUFS
+#define L2CAP_HOST_FC_ACL_BUFS      20
+#endif
+
+/* The percentage of the queue size allowed before a congestion event is sent to the L2CAP client (typically 120%). */
+#ifndef L2CAP_FWD_CONG_THRESH
+#define L2CAP_FWD_CONG_THRESH       120
+#endif
+
+/* This is set to enable L2CAP to  take the ACL link out of park mode when ACL data is to be sent. */
+#ifndef L2CAP_WAKE_PARKED_LINK
+#define L2CAP_WAKE_PARKED_LINK      TRUE
+#endif
+
+/* Whether link wants to be the master or the slave. */
+#ifndef L2CAP_DESIRED_LINK_ROLE
+#define L2CAP_DESIRED_LINK_ROLE     HCI_ROLE_SLAVE
+#endif
+
+/* Include Non-Flushable Packet Boundary Flag feature of Lisbon */
+#ifndef L2CAP_NON_FLUSHABLE_PB_INCLUDED
+#define L2CAP_NON_FLUSHABLE_PB_INCLUDED     TRUE
+#endif
+
+/* Minimum number of ACL credit for high priority link */
+#ifndef L2CAP_HIGH_PRI_MIN_XMIT_QUOTA
+#define L2CAP_HIGH_PRI_MIN_XMIT_QUOTA       4
+#endif
+
+/* used for monitoring HCI ACL credit management */
+#ifndef L2CAP_HCI_FLOW_CONTROL_DEBUG
+#define L2CAP_HCI_FLOW_CONTROL_DEBUG        TRUE
+#endif
+
+/* Used for calculating transmit buffers off of */
+#ifndef L2CAP_NUM_XMIT_BUFFS
+#define L2CAP_NUM_XMIT_BUFFS                HCI_ACL_BUF_MAX
+#endif
+
+/* Unicast Connectionless Data */
+#ifndef L2CAP_UCD_INCLUDED
+#define L2CAP_UCD_INCLUDED                  FALSE
+#endif
+
+/* Unicast Connectionless Data MTU */
+#ifndef L2CAP_UCD_MTU
+#define L2CAP_UCD_MTU                       L2CAP_MTU_SIZE
+#endif
+
+/* Unicast Connectionless Data Idle Timeout */
+#ifndef L2CAP_UCD_IDLE_TIMEOUT
+#define L2CAP_UCD_IDLE_TIMEOUT              2
+#endif
+
+/* Unicast Connectionless Data Idle Timeout */
+#ifndef L2CAP_UCD_CH_PRIORITY
+#define L2CAP_UCD_CH_PRIORITY               L2CAP_CHNL_PRIORITY_MEDIUM
+#endif
+
+/* Max clients on Unicast Connectionless Data */
+#ifndef L2CAP_MAX_UCD_CLIENTS
+#define L2CAP_MAX_UCD_CLIENTS               5
+#endif
+
+/* Used for features using fixed channels; set to zero if no fixed channels supported (BLE, etc.) */
+/* Excluding L2CAP signaling channel and UCD */
+#ifndef L2CAP_NUM_FIXED_CHNLS
+#define L2CAP_NUM_FIXED_CHNLS               4
+#endif
+
+/* First fixed channel supported */
+#ifndef L2CAP_FIRST_FIXED_CHNL
+#define L2CAP_FIRST_FIXED_CHNL              3
+#endif
+
+#ifndef L2CAP_LAST_FIXED_CHNL
+#define L2CAP_LAST_FIXED_CHNL           (L2CAP_FIRST_FIXED_CHNL + L2CAP_NUM_FIXED_CHNLS - 1)
+#endif
+
+/* Round Robin service channels in link */
+#ifndef L2CAP_ROUND_ROBIN_CHANNEL_SERVICE
+#define L2CAP_ROUND_ROBIN_CHANNEL_SERVICE   TRUE
+#endif
+
+/* Used for calculating transmit buffers off of */
+#ifndef L2CAP_NUM_XMIT_BUFFS
+#define L2CAP_NUM_XMIT_BUFFS                HCI_ACL_BUF_MAX
+#endif
+
+/* Used for features using fixed channels; set to zero if no fixed channels supported (BLE, etc.) */
+#ifndef L2CAP_NUM_FIXED_CHNLS
+#define L2CAP_NUM_FIXED_CHNLS               1
+#endif
+
+/* First fixed channel supported */
+#ifndef L2CAP_FIRST_FIXED_CHNL
+#define L2CAP_FIRST_FIXED_CHNL              3
+#endif
+
+#ifndef L2CAP_LAST_FIXED_CHNL
+#define L2CAP_LAST_FIXED_CHNL           (L2CAP_FIRST_FIXED_CHNL + L2CAP_NUM_FIXED_CHNLS - 1)
+#endif
+
+/* used for monitoring eL2CAP data flow */
+#ifndef L2CAP_ERTM_STATS
+#define L2CAP_ERTM_STATS                    FALSE
+#endif
+
+/* USED FOR FCR TEST ONLY:  When TRUE generates bad tx and rx packets */
+#ifndef L2CAP_CORRUPT_ERTM_PKTS
+#define L2CAP_CORRUPT_ERTM_PKTS             FALSE
+#endif
+
+/* Used for conformance testing ONLY:  When TRUE lets scriptwrapper overwrite info response */
+#ifndef L2CAP_CONFORMANCE_TESTING
+#define L2CAP_CONFORMANCE_TESTING           FALSE
+#endif
+
+
+#ifndef TIMER_PARAM_TYPE
+#ifdef  WIN2000
+#define TIMER_PARAM_TYPE    void *
+#else
+#define TIMER_PARAM_TYPE    UINT32
+#endif
+#endif
+
+/******************************************************************************
+**
+** BLE
+**
+******************************************************************************/
+
+#ifndef BLE_INCLUDED
+#define BLE_INCLUDED            FALSE
+#endif
+
+#ifndef LOCAL_BLE_CONTROLLER_ID
+#define LOCAL_BLE_CONTROLLER_ID         (1)
+#endif
+
+/******************************************************************************
+**
+** ATT/GATT Protocol/Profile Settings
+**
+******************************************************************************/
+#ifndef ATT_INCLUDED
+#define ATT_INCLUDED         FALSE
+#endif
+
+#ifndef ATT_DEBUG
+#define ATT_DEBUG           FALSE
+#endif
+
+#ifndef GATT_SERVER_ENABLED
+#define GATT_SERVER_ENABLED          FALSE
+#endif
+
+#ifndef GATT_CLIENT_ENABLED
+#define GATT_CLIENT_ENABLED          FALSE
+#endif
+
+#ifndef GATT_MAX_SR_PROFILES
+#define GATT_MAX_SR_PROFILES        32 /* max is 32 */
+#endif
+
+#ifndef GATT_MAX_APPS
+#define GATT_MAX_APPS            10 /* note: 2 apps used internally GATT and GAP */
+#endif
+
+#ifndef GATT_MAX_CL_PROFILES
+#define GATT_MAX_CL_PROFILES        4
+#endif
+
+#ifndef GATT_MAX_PHY_CHANNEL
+#define GATT_MAX_PHY_CHANNEL        4
+#endif
+
+/* Used for conformance testing ONLY */
+#ifndef GATT_CONFORMANCE_TESTING
+#define GATT_CONFORMANCE_TESTING           FALSE
+#endif
+
+/* number of background connection device allowence, ideally to be the same as WL size
+*/
+#ifndef GATT_MAX_BG_CONN_DEV
+#define GATT_MAX_BG_CONN_DEV        32
+#endif
+
+/******************************************************************************
+**
+** SMP
+**
+******************************************************************************/
+#ifndef SMP_INCLUDED
+#define SMP_INCLUDED         FALSE
+#endif
+
+#ifndef SMP_DEBUG
+#define SMP_DEBUG            FALSE
+#endif
+
+#ifndef SMP_DEFAULT_AUTH_REQ
+#define SMP_DEFAULT_AUTH_REQ    SMP_AUTH_NB_ENC_ONLY
+#endif
+
+#ifndef SMP_MAX_ENC_KEY_SIZE
+#define SMP_MAX_ENC_KEY_SIZE    16
+#endif
+
+#ifndef SMP_MIN_ENC_KEY_SIZE
+#define SMP_MIN_ENC_KEY_SIZE    7
+#endif
+
+/* Used for conformance testing ONLY */
+#ifndef SMP_CONFORMANCE_TESTING
+#define SMP_CONFORMANCE_TESTING           FALSE
+#endif
+
+/******************************************************************************
+**
+** SDP
+**
+******************************************************************************/
+
+/* This is set to enable SDP server functionality. */
+#ifndef SDP_SERVER_ENABLED
+#define SDP_SERVER_ENABLED          TRUE
+#endif
+
+/* The maximum number of SDP records the server can support. */
+#ifndef SDP_MAX_RECORDS
+#define SDP_MAX_RECORDS             20
+#endif
+
+/* The maximum number of attributes in each record. */
+#ifndef SDP_MAX_REC_ATTR
+//#if defined(HID_DEV_INCLUDED) && (HID_DEV_INCLUDED==TRUE)
+#define SDP_MAX_REC_ATTR            25
+//#else
+//#define SDP_MAX_REC_ATTR            13
+//#endif
+#endif
+
+#ifndef SDP_MAX_PAD_LEN
+#define SDP_MAX_PAD_LEN             600
+#endif
+
+/* The maximum length, in bytes, of an attribute. */
+#ifndef SDP_MAX_ATTR_LEN
+//#if defined(HID_DEV_INCLUDED) && (HID_DEV_INCLUDED==TRUE)
+//#define SDP_MAX_ATTR_LEN            80
+//#else
+//#define SDP_MAX_ATTR_LEN            100
+//#endif
+#define SDP_MAX_ATTR_LEN            400
+#endif
+
+/* The maximum number of attribute filters supported by SDP databases. */
+#ifndef SDP_MAX_ATTR_FILTERS
+#define SDP_MAX_ATTR_FILTERS        15
+#endif
+
+/* The maximum number of UUID filters supported by SDP databases. */
+#ifndef SDP_MAX_UUID_FILTERS
+#define SDP_MAX_UUID_FILTERS        3
+#endif
+
+/* This is set to enable SDP client functionality. */
+#ifndef SDP_CLIENT_ENABLED
+#define SDP_CLIENT_ENABLED          TRUE
+#endif
+
+/* The maximum number of record handles retrieved in a search. */
+#ifndef SDP_MAX_DISC_SERVER_RECS
+#define SDP_MAX_DISC_SERVER_RECS    21
+#endif
+
+/* The size of a scratchpad buffer, in bytes, for storing the response to an attribute request. */
+#ifndef SDP_MAX_LIST_BYTE_COUNT
+#define SDP_MAX_LIST_BYTE_COUNT     4096
+#endif
+
+/* The maximum number of parameters in an SDP protocol element. */
+#ifndef SDP_MAX_PROTOCOL_PARAMS
+#define SDP_MAX_PROTOCOL_PARAMS     2
+#endif
+
+/* The maximum number of simultaneous client and server connections. */
+#ifndef SDP_MAX_CONNECTIONS
+#define SDP_MAX_CONNECTIONS         4
+#endif
+
+/* The MTU size for the L2CAP configuration. */
+#ifndef SDP_MTU_SIZE
+#define SDP_MTU_SIZE                256
+#endif
+
+/* The flush timeout for the L2CAP configuration. */
+#ifndef SDP_FLUSH_TO
+#define SDP_FLUSH_TO                0xFFFF
+#endif
+
+/* The name for security authorization. */
+#ifndef SDP_SERVICE_NAME
+#define SDP_SERVICE_NAME            "Service Discovery"
+#endif
+
+/* The security level for BTM. */
+#ifndef SDP_SECURITY_LEVEL
+#define SDP_SECURITY_LEVEL          BTM_SEC_NONE
+#endif
+
+/* Device identification feature. */
+#ifndef SDP_DI_INCLUDED
+#define SDP_DI_INCLUDED             TRUE
+#endif
+
+/******************************************************************************
+**
+** RFCOMM
+**
+******************************************************************************/
+
+#ifndef RFCOMM_INCLUDED
+#define RFCOMM_INCLUDED             TRUE
+#endif
+
+/* The maximum number of ports supported. */
+#ifndef MAX_RFC_PORTS
+#define MAX_RFC_PORTS               30
+#endif
+
+/* The maximum simultaneous links to different devices. */
+#ifndef MAX_ACL_CONNECTIONS
+#define MAX_BD_CONNECTIONS          7
+#else
+#define MAX_BD_CONNECTIONS          MAX_ACL_CONNECTIONS
+#endif
+
+/* The port receive queue low watermark level, in bytes. */
+#ifndef PORT_RX_LOW_WM
+#define PORT_RX_LOW_WM              (BTA_RFC_MTU_SIZE * PORT_RX_BUF_LOW_WM)
+#endif
+
+/* The port receive queue high watermark level, in bytes. */
+#ifndef PORT_RX_HIGH_WM
+#define PORT_RX_HIGH_WM             (BTA_RFC_MTU_SIZE * PORT_RX_BUF_HIGH_WM)
+#endif
+
+/* The port receive queue critical watermark level, in bytes. */
+#ifndef PORT_RX_CRITICAL_WM
+#define PORT_RX_CRITICAL_WM         (BTA_RFC_MTU_SIZE * PORT_RX_BUF_CRITICAL_WM)
+#endif
+
+/* The port receive queue low watermark level, in number of buffers. */
+#ifndef PORT_RX_BUF_LOW_WM
+#define PORT_RX_BUF_LOW_WM          4
+#endif
+
+/* The port receive queue high watermark level, in number of buffers. */
+#ifndef PORT_RX_BUF_HIGH_WM
+#define PORT_RX_BUF_HIGH_WM         10
+#endif
+
+/* The port receive queue critical watermark level, in number of buffers. */
+#ifndef PORT_RX_BUF_CRITICAL_WM
+#define PORT_RX_BUF_CRITICAL_WM     15
+#endif
+
+/* The port transmit queue high watermark level, in bytes. */
+#ifndef PORT_TX_HIGH_WM
+#define PORT_TX_HIGH_WM             (BTA_RFC_MTU_SIZE * PORT_TX_BUF_HIGH_WM)
+#endif
+
+/* The port transmit queue critical watermark level, in bytes. */
+#ifndef PORT_TX_CRITICAL_WM
+#define PORT_TX_CRITICAL_WM         (BTA_RFC_MTU_SIZE * PORT_TX_BUF_CRITICAL_WM)
+#endif
+
+/* The port transmit queue high watermark level, in number of buffers. */
+#ifndef PORT_TX_BUF_HIGH_WM
+#define PORT_TX_BUF_HIGH_WM         10
+#endif
+
+/* The port transmit queue high watermark level, in number of buffers. */
+#ifndef PORT_TX_BUF_CRITICAL_WM
+#define PORT_TX_BUF_CRITICAL_WM     15
+#endif
+
+/* The RFCOMM multiplexer preferred flow control mechanism. */
+#ifndef PORT_FC_DEFAULT
+#define PORT_FC_DEFAULT             PORT_FC_CREDIT
+#endif
+
+/* The maximum number of credits receiver sends to peer when using credit-based flow control. */
+#ifndef PORT_CREDIT_RX_MAX
+#define PORT_CREDIT_RX_MAX          16
+#endif
+
+/* The credit low watermark level. */
+#ifndef PORT_CREDIT_RX_LOW
+#define PORT_CREDIT_RX_LOW          8
+#endif
+
+/* Test code allowing l2cap FEC on RFCOMM.*/
+#ifndef PORT_ENABLE_L2CAP_FCR_TEST
+#define PORT_ENABLE_L2CAP_FCR_TEST  FALSE
+#endif
+
+/* if application like BTA, Java or script test engine is running on other than BTU thread, */
+/* PORT_SCHEDULE_LOCK shall be defined as GKI_sched_lock() or GKI_disable() */
+#ifndef PORT_SCHEDULE_LOCK
+#define PORT_SCHEDULE_LOCK          GKI_disable()
+#endif
+
+/* if application like BTA, Java or script test engine is running on other than BTU thread, */
+/* PORT_SCHEDULE_LOCK shall be defined as GKI_sched_unlock() or GKI_enable() */
+#ifndef PORT_SCHEDULE_UNLOCK
+#define PORT_SCHEDULE_UNLOCK        GKI_enable()
+#endif
+
+/******************************************************************************
+**
+** TCS
+**
+******************************************************************************/
+
+#ifndef TCS_INCLUDED
+#define TCS_INCLUDED                FALSE
+#endif
+
+/* If set to TRUE, gives lean TCS state machine configuration. */
+#ifndef TCS_LEAN
+#define TCS_LEAN                    FALSE
+#endif
+
+/* To include/exclude point-to-multipoint broadcast SETUP configuration. */
+#ifndef TCS_BCST_SETUP_INCLUDED
+#define TCS_BCST_SETUP_INCLUDED     TRUE
+#endif
+
+/* To include/exclude supplementary services. */
+#ifndef TCS_SUPP_SVCS_INCLUDED
+#define TCS_SUPP_SVCS_INCLUDED      TRUE
+#endif
+
+/* To include/exclude WUG master role. */
+#ifndef TCS_WUG_MASTER_INCLUDED
+#define TCS_WUG_MASTER_INCLUDED     TRUE
+#endif
+
+/* To include/exclude WUG member role. */
+#ifndef TCS_WUG_MEMBER_INCLUDED
+#define TCS_WUG_MEMBER_INCLUDED     TRUE
+#endif
+
+/* Maximum number of WUG members. */
+#ifndef TCS_MAX_WUG_MEMBERS
+#define TCS_MAX_WUG_MEMBERS         7
+#endif
+
+/* Broadcom specific acknowledgement message to ensure fast and robust operation of WUG FIMA procedure. */
+#ifndef TCS_WUG_LISTEN_ACPT_ACK_INCLUDED
+#define TCS_WUG_LISTEN_ACPT_ACK_INCLUDED TRUE
+#endif
+
+/* The number of simultaneous calls supported. */
+#ifndef TCS_MAX_NUM_SIMUL_CALLS
+#define TCS_MAX_NUM_SIMUL_CALLS     3
+#endif
+
+/* The number of devices the device can connect to. */
+#ifndef TCS_MAX_NUM_ACL_CONNS
+#define TCS_MAX_NUM_ACL_CONNS       7
+#endif
+
+/* The maximum length, in bytes, of the company specific information element. */
+#ifndef TCS_MAX_CO_SPEC_LEN
+#define TCS_MAX_CO_SPEC_LEN         40
+#endif
+
+/* The maximum length, in bytes, of the audio control information element . */
+#ifndef TCS_MAX_AUDIO_CTL_LEN
+#define TCS_MAX_AUDIO_CTL_LEN       40
+#endif
+
+/* (Dis)allow EDR ESCO */
+#ifndef TCS_AUDIO_USE_ESCO_EDR
+#define TCS_AUDIO_USE_ESCO_EDR      FALSE
+#endif
+
+/******************************************************************************
+**
+** OBX
+**
+******************************************************************************/
+#ifndef OBX_INCLUDED
+#define OBX_INCLUDED               FALSE
+#endif
+
+#ifndef OBX_CLIENT_INCLUDED
+#define OBX_CLIENT_INCLUDED        TRUE
+#endif
+
+#ifndef OBX_SERVER_INCLUDED
+#define OBX_SERVER_INCLUDED        TRUE
+#endif
+
+/* TRUE to include OBEX authentication/MD5 code */
+#ifndef OBX_MD5_INCLUDED
+#define OBX_MD5_INCLUDED           TRUE
+#endif
+
+/* TRUE to include OBEX authentication/MD5 test code */
+#ifndef OBX_MD5_TEST_INCLUDED
+#define OBX_MD5_TEST_INCLUDED       FALSE
+#endif
+
+/* TRUE to include OBEX 1.4 enhancement (including Obex Over L2CAP) */
+#ifndef OBX_14_INCLUDED
+#define OBX_14_INCLUDED             FALSE
+#endif
+/* MD5 code is required to use OBEX 1.4 features (Reliable session) */
+#if (OBX_MD5_INCLUDED == FALSE)
+#undef OBX_14_INCLUDED
+#define OBX_14_INCLUDED             FALSE
+#endif
+
+/* L2CAP FCR/eRTM mode is required to use OBEX Over L2CAP */
+#if (L2CAP_FCR_INCLUDED == FALSE)
+#undef OBX_14_INCLUDED
+#define OBX_14_INCLUDED             FALSE
+#endif
+
+/* The timeout value (in seconds) for reliable sessions to remain in suspend. 0xFFFFFFFF for no timeout event. */
+#ifndef OBX_SESS_TIMEOUT_VALUE
+#define OBX_SESS_TIMEOUT_VALUE      600
+#endif
+
+/* The idle timeout value. 0 for no timeout event. */
+#ifndef OBX_TIMEOUT_VALUE
+#define OBX_TIMEOUT_VALUE           60
+#endif
+
+/* Timeout value used for disconnect */
+#ifndef OBX_DISC_TOUT_VALUE
+#define OBX_DISC_TOUT_VALUE         5
+#endif
+
+/* The maximum number of registered servers. */
+#ifndef OBX_NUM_SERVERS
+#define OBX_NUM_SERVERS             12
+#endif
+
+/* The maximum number of sessions per registered server. */
+#ifndef OBX_MAX_SR_SESSION
+#define OBX_MAX_SR_SESSION          4
+#endif
+
+/* The maximum number of sessions for all registered servers.
+ * (must be equal or bigger than OBX_NUM_SERVERS) */
+#ifndef OBX_NUM_SR_SESSIONS
+#define OBX_NUM_SR_SESSIONS         26
+#endif
+
+/* The maximum number of sessions per registered server.
+ * must be less than MAX_BD_CONNECTIONS */
+#ifndef OBX_MAX_SR_SESSION
+#define OBX_MAX_SR_SESSION          4
+#endif
+
+/* The maximum number of suspended sessions per registered servers. */
+#ifndef OBX_MAX_SUSPEND_SESSIONS
+#define OBX_MAX_SUSPEND_SESSIONS    4
+#endif
+
+/* The maximum number of active clients. */
+#ifndef OBX_NUM_CLIENTS
+#define OBX_NUM_CLIENTS             8
+#endif
+
+/* The maximum length of OBEX target header.*/
+#ifndef OBX_MAX_TARGET_LEN
+#define OBX_MAX_TARGET_LEN          16
+#endif
+
+/* The maximum length of authentication challenge realm.*/
+#ifndef OBX_MAX_REALM_LEN
+#define OBX_MAX_REALM_LEN           30
+#endif
+
+/* The maximum of GKI buffer queued at OBX before flow control L2CAP */
+#ifndef OBX_MAX_RX_QUEUE_COUNT
+#define OBX_MAX_RX_QUEUE_COUNT      3
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+   Pool ID where to reassemble the SDU.
+   This Pool will allow buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef OBX_USER_RX_POOL_ID
+#define OBX_USER_RX_POOL_ID     OBX_LRG_DATA_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+   Pool ID where to hold the SDU.
+   This Pool will allow buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef OBX_USER_TX_POOL_ID
+#define OBX_USER_TX_POOL_ID     OBX_LRG_DATA_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+GKI Buffer Pool ID used to hold MPS segments during SDU reassembly
+*/
+#ifndef OBX_FCR_RX_POOL_ID
+#define OBX_FCR_RX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+GKI Buffer Pool ID used to hold MPS segments used in (re)transmissions.
+L2CAP_DEFAULT_ERM_POOL_ID is specified to use the HCI ACL data pool.
+Note:  This pool needs to have enough buffers to hold two times the window size negotiated
+ in the L2CA_SetFCROptions (2 * tx_win_size)  to allow for retransmissions.
+ The size of each buffer must be able to hold the maximum MPS segment size passed in
+ L2CA_SetFCROptions plus BT_HDR (8) + HCI preamble (4) + L2CAP_MIN_OFFSET (11 - as of BT 2.1 + EDR Spec).
+*/
+#ifndef OBX_FCR_TX_POOL_ID
+#define OBX_FCR_TX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Size of the transmission window when using enhanced retransmission mode. Not used
+in basic and streaming modes. Range: 1 - 63
+*/
+#ifndef OBX_FCR_OPT_TX_WINDOW_SIZE_BR_EDR
+#define OBX_FCR_OPT_TX_WINDOW_SIZE_BR_EDR       20
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Number of transmission attempts for a single I-Frame before taking
+Down the connection. Used In ERTM mode only. Value is Ignored in basic and
+Streaming modes.
+Range: 0, 1-0xFF
+0 - infinite retransmissions
+1 - single transmission
+*/
+#ifndef OBX_FCR_OPT_MAX_TX_B4_DISCNT
+#define OBX_FCR_OPT_MAX_TX_B4_DISCNT    20
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Retransmission Timeout
+Range: Minimum 2000 (2 secs) on BR/EDR when supporting PBF.
+ */
+#ifndef OBX_FCR_OPT_RETX_TOUT
+#define OBX_FCR_OPT_RETX_TOUT           2000
+#endif
+
+/* This option is application when OBX_14_INCLUDED=TRUE
+Monitor Timeout
+Range: Minimum 12000 (12 secs) on BR/EDR when supporting PBF.
+*/
+#ifndef OBX_FCR_OPT_MONITOR_TOUT
+#define OBX_FCR_OPT_MONITOR_TOUT        12000
+#endif
+
+/******************************************************************************
+**
+** BNEP
+**
+******************************************************************************/
+
+#ifndef BNEP_INCLUDED
+#define BNEP_INCLUDED               TRUE
+#endif
+
+/* Protocol filtering is an optional feature. Bydefault it will be turned on */
+#ifndef BNEP_SUPPORTS_PROT_FILTERS
+#define BNEP_SUPPORTS_PROT_FILTERS          TRUE
+#endif
+
+/* Multicast filtering is an optional feature. Bydefault it will be turned on */
+#ifndef BNEP_SUPPORTS_MULTI_FILTERS
+#define BNEP_SUPPORTS_MULTI_FILTERS         TRUE
+#endif
+
+/* BNEP status API call is used mainly to get the L2CAP handle */
+#ifndef BNEP_SUPPORTS_STATUS_API
+#define BNEP_SUPPORTS_STATUS_API            TRUE
+#endif
+
+/* This is just a debug function */
+#ifndef BNEP_SUPPORTS_DEBUG_DUMP
+#define BNEP_SUPPORTS_DEBUG_DUMP            TRUE
+#endif
+
+#ifndef BNEP_SUPPORTS_ALL_UUID_LENGTHS
+#define BNEP_SUPPORTS_ALL_UUID_LENGTHS      TRUE    /* Otherwise it will support only 16bit UUIDs */
+#endif
+
+/*
+** When BNEP connection changes roles after the connection is established
+** we will do an authentication check again on the new role
+*/
+#ifndef BNEP_DO_AUTH_FOR_ROLE_SWITCH
+#define BNEP_DO_AUTH_FOR_ROLE_SWITCH        TRUE
+#endif
+
+
+/* Maximum number of protocol filters supported. */
+#ifndef BNEP_MAX_PROT_FILTERS
+#define BNEP_MAX_PROT_FILTERS       5
+#endif
+
+/* Maximum number of multicast filters supported. */
+#ifndef BNEP_MAX_MULTI_FILTERS
+#define BNEP_MAX_MULTI_FILTERS      5
+#endif
+
+/* Minimum MTU size. */
+#ifndef BNEP_MIN_MTU_SIZE
+#define BNEP_MIN_MTU_SIZE           L2CAP_MTU_SIZE
+#endif
+
+/* Preferred MTU size. */
+#ifndef BNEP_MTU_SIZE
+#define BNEP_MTU_SIZE               BNEP_MIN_MTU_SIZE
+#endif
+
+/* Maximum size of user data, in bytes.  */
+#ifndef BNEP_MAX_USER_DATA_SIZE
+#define BNEP_MAX_USER_DATA_SIZE     1500
+#endif
+
+/* Maximum number of buffers allowed in transmit data queue. */
+#ifndef BNEP_MAX_XMITQ_DEPTH
+#define BNEP_MAX_XMITQ_DEPTH        20
+#endif
+
+/* Maximum number BNEP of connections supported. */
+#ifndef BNEP_MAX_CONNECTIONS
+#define BNEP_MAX_CONNECTIONS        7
+#endif
+
+
+/******************************************************************************
+**
+** AVDTP
+**
+******************************************************************************/
+
+#ifndef AVDT_INCLUDED
+#define AVDT_INCLUDED               TRUE
+#endif
+
+/* Include reporting capability in AVDTP */
+#ifndef AVDT_REPORTING
+#define AVDT_REPORTING              TRUE
+#endif
+
+/* Include multiplexing capability in AVDTP */
+#ifndef AVDT_MULTIPLEXING
+#define AVDT_MULTIPLEXING           TRUE
+#endif
+
+/* Number of simultaneous links to different peer devices. */
+#ifndef AVDT_NUM_LINKS
+#define AVDT_NUM_LINKS              2
+#endif
+
+/* Number of simultaneous stream endpoints. */
+#ifndef AVDT_NUM_SEPS
+#define AVDT_NUM_SEPS               3
+#endif
+
+/* Number of transport channels setup per media stream(audio or video) */
+#ifndef AVDT_NUM_CHANNELS
+
+#if AVDT_REPORTING == TRUE
+/* signaling, media and reporting channels */
+#define AVDT_NUM_CHANNELS   3
+#else
+/* signaling and media channels */
+#define AVDT_NUM_CHANNELS   2
+#endif
+
+#endif
+
+/* Number of transport channels setup by AVDT for all media streams
+ * AVDT_NUM_CHANNELS * Number of simultaneous streams.
+ */
+#ifndef AVDT_NUM_TC_TBL
+#define AVDT_NUM_TC_TBL             6
+#endif
+
+
+/* Maximum size in bytes of the codec capabilities information element. */
+#ifndef AVDT_CODEC_SIZE
+#define AVDT_CODEC_SIZE             10
+#endif
+
+/* Maximum size in bytes of the content protection information element. */
+#ifndef AVDT_PROTECT_SIZE
+#define AVDT_PROTECT_SIZE           90
+#endif
+
+/* Maximum number of GKI buffers in the fragment queue (for video frames).
+ * Must be less than the number of buffers in the buffer pool of size AVDT_DATA_POOL_SIZE */
+#ifndef AVDT_MAX_FRAG_COUNT
+#define AVDT_MAX_FRAG_COUNT         15
+#endif
+
+/******************************************************************************
+**
+** PAN
+**
+******************************************************************************/
+
+#ifndef PAN_INCLUDED
+#define PAN_INCLUDED                     TRUE
+#endif
+
+/* This will enable the PANU role */
+#ifndef PAN_SUPPORTS_ROLE_PANU
+#define PAN_SUPPORTS_ROLE_PANU              TRUE
+#endif
+
+/* This will enable the GN role */
+#ifndef PAN_SUPPORTS_ROLE_GN
+#define PAN_SUPPORTS_ROLE_GN                TRUE
+#endif
+
+/* This will enable the NAP role */
+#ifndef PAN_SUPPORTS_ROLE_NAP
+#define PAN_SUPPORTS_ROLE_NAP               TRUE
+#endif
+
+/* This is just for debugging purposes */
+#ifndef PAN_SUPPORTS_DEBUG_DUMP
+#define PAN_SUPPORTS_DEBUG_DUMP             TRUE
+#endif
+
+
+/* Maximum number of PAN connections allowed */
+#ifndef MAX_PAN_CONNS
+#define MAX_PAN_CONNS                    7
+#endif
+
+/* Default service name for NAP role */
+#ifndef PAN_NAP_DEFAULT_SERVICE_NAME
+#define PAN_NAP_DEFAULT_SERVICE_NAME    "Network Access Point Service"
+#endif
+
+/* Default service name for GN role */
+#ifndef PAN_GN_DEFAULT_SERVICE_NAME
+#define PAN_GN_DEFAULT_SERVICE_NAME     "Group Network Service"
+#endif
+
+/* Default service name for PANU role */
+#ifndef PAN_PANU_DEFAULT_SERVICE_NAME
+#define PAN_PANU_DEFAULT_SERVICE_NAME   "PAN User Service"
+#endif
+
+/* Default description for NAP role service */
+#ifndef PAN_NAP_DEFAULT_DESCRIPTION
+#define PAN_NAP_DEFAULT_DESCRIPTION     "NAP"
+#endif
+
+/* Default description for GN role service */
+#ifndef PAN_GN_DEFAULT_DESCRIPTION
+#define PAN_GN_DEFAULT_DESCRIPTION      "GN"
+#endif
+
+/* Default description for PANU role service */
+#ifndef PAN_PANU_DEFAULT_DESCRIPTION
+#define PAN_PANU_DEFAULT_DESCRIPTION    "PANU"
+#endif
+
+/* Default Security level for PANU role. */
+#ifndef PAN_PANU_SECURITY_LEVEL
+#define PAN_PANU_SECURITY_LEVEL          0
+#endif
+
+/* Default Security level for GN role. */
+#ifndef PAN_GN_SECURITY_LEVEL
+#define PAN_GN_SECURITY_LEVEL            0
+#endif
+
+/* Default Security level for NAP role. */
+#ifndef PAN_NAP_SECURITY_LEVEL
+#define PAN_NAP_SECURITY_LEVEL           0
+#endif
+
+
+
+
+/******************************************************************************
+**
+** GAP
+**
+******************************************************************************/
+
+#ifndef GAP_INCLUDED
+#define GAP_INCLUDED                FALSE
+#endif
+
+/* This is set to enable use of GAP L2CAP connections. */
+#ifndef GAP_CONN_INCLUDED
+#define GAP_CONN_INCLUDED           TRUE
+#endif
+
+/* This is set to enable posting event for data write */
+#ifndef GAP_CONN_POST_EVT_INCLUDED
+#define GAP_CONN_POST_EVT_INCLUDED  FALSE
+#endif
+
+/* The maximum number of simultaneous GAP L2CAP connections. */
+#ifndef GAP_MAX_CONNECTIONS
+#define GAP_MAX_CONNECTIONS         8
+#endif
+
+/******************************************************************************
+**
+** CTP
+**
+******************************************************************************/
+
+#ifndef CTP_INCLUDED
+#define CTP_INCLUDED                FALSE
+#endif
+
+/* To include CTP gateway functionality or not. */
+#ifndef CTP_GW_INCLUDED
+#define CTP_GW_INCLUDED             TRUE
+#endif
+
+/* The number of terminals supported. */
+#ifndef CTP_MAX_NUM_TLS
+#define CTP_MAX_NUM_TLS             7
+#endif
+
+/* If the controller can not support sniff mode when the SCO is up, set this to FALSE. */
+#ifndef CTP_USE_SNIFF_ON_SCO
+#define CTP_USE_SNIFF_ON_SCO        FALSE
+#endif
+
+/* When ACL link between TL and GW is idle for more than this amount of seconds, the ACL may be put to low power mode. */
+#ifndef CTP_TL_IDLE_TIMEOUT
+#define CTP_TL_IDLE_TIMEOUT         90
+#endif
+
+/* To include CTP terminal functionality or not. */
+#ifndef CTP_TL_INCLUDED
+#define CTP_TL_INCLUDED             TRUE
+#endif
+
+/* To include CTP device discovery functionality or not. */
+#ifndef CTP_DISCOVERY_INCLUDED
+#define CTP_DISCOVERY_INCLUDED      TRUE
+#endif
+
+/* set to TRUE for controllers that do not support multi-point */
+#ifndef CTP_TL_WAIT_DISC
+#define CTP_TL_WAIT_DISC            TRUE
+#endif
+
+/* The CTP inquiry database size. */
+#ifndef CTP_INQ_DB_SIZE
+#define CTP_INQ_DB_SIZE             CTP_DISC_REC_SIZE
+#endif
+
+/* The CTP discovery record size. */
+#ifndef CTP_DISC_REC_SIZE
+#define CTP_DISC_REC_SIZE           60
+#endif
+
+/* CTP TL would try to re-establish L2CAP channel after channel is disconnected for this amount of seconds. */
+#ifndef CTP_GUARD_LINK_LOST
+#define CTP_GUARD_LINK_LOST         1
+#endif
+
+/* The link policy bitmap. */
+#ifndef CTP_DEFAULT_LINK_POLICY
+#define CTP_DEFAULT_LINK_POLICY     0x000F
+#endif
+
+/* The minimum period interval used for the sniff and park modes. */
+#ifndef CTP_DEF_LOWPWR_MIN_PERIOD
+#define CTP_DEF_LOWPWR_MIN_PERIOD   0x100
+#endif
+
+/* The maximum period interval used for the sniff and park modes. */
+#ifndef CTP_DEF_LOWPWR_MAX_PERIOD
+#define CTP_DEF_LOWPWR_MAX_PERIOD   0x1E0
+#endif
+
+/* The number of baseband receive slot sniff attempts. */
+#ifndef CTP_DEF_LOWPWR_ATTEMPT
+#define CTP_DEF_LOWPWR_ATTEMPT      0x200
+#endif
+
+/* The number of baseband receive slots for sniff timeout. */
+#ifndef CTP_DEF_LOWPWR_TIMEOUT
+#define CTP_DEF_LOWPWR_TIMEOUT      0x200
+#endif
+
+/* This is set if CTP is to use park mode. */
+#ifndef CTP_PARK_INCLUDED
+#define CTP_PARK_INCLUDED           TRUE
+#endif
+
+/* This is set if CTP is to use sniff mode. */
+#ifndef CTP_SNIFF_INCLUDED
+#define CTP_SNIFF_INCLUDED          TRUE
+#endif
+
+/* To include CTP data exchange functionality or not. */
+#ifndef CTP_DATA_EXCHG_FEATURE
+#define CTP_DATA_EXCHG_FEATURE      FALSE
+#endif
+
+/* To include CTP GW intercom functionality or not. */
+#ifndef CTP_GW_INTERCOM_FEATURE
+#define CTP_GW_INTERCOM_FEATURE     FALSE
+#endif
+
+/* The MTU size for L2CAP channel. */
+#ifndef CTP_MTU_SIZE
+#define CTP_MTU_SIZE                200
+#endif
+
+/* The L2CAP PSM for the data exchange feature. */
+#ifndef CTP_DATA_EXCHG_PSM
+#define CTP_DATA_EXCHG_PSM          13
+#endif
+
+/* The flush timeout for L2CAP channels. */
+#ifndef CTP_FLUSH_TO
+#define CTP_FLUSH_TO                0xFFFF
+#endif
+
+/* The default service name for CTP. */
+#ifndef CTP_DEFAULT_SERVICE_NAME
+#define CTP_DEFAULT_SERVICE_NAME    "Cordless Telephony"
+#endif
+
+/* The CTP security level. */
+#ifndef CTP_SECURITY_LEVEL
+#define CTP_SECURITY_LEVEL          (BTM_SEC_IN_AUTHORIZE | BTM_SEC_IN_AUTHENTICATE | BTM_SEC_IN_ENCRYPT)
+#endif
+
+/* The number of lines to the external network. */
+#ifndef CTP_MAX_LINES
+#define CTP_MAX_LINES               1
+#endif
+
+/* Test if the number of resources in TCS is consistent with CTP setting. */
+#ifndef CTP_TEST_FULL_TCS
+#define CTP_TEST_FULL_TCS           TRUE
+#endif
+
+/* The default inquiry mode. */
+#ifndef CTP_DEFAULT_INQUIRY_MODE
+#define CTP_DEFAULT_INQUIRY_MODE    BTM_GENERAL_INQUIRY
+#endif
+
+/* The default inquiry duration. */
+#ifndef CTP_DEFAULT_INQ_DURATION
+#define CTP_DEFAULT_INQ_DURATION    4
+#endif
+
+/* The maximum number of inquiry responses. */
+#ifndef CTP_DEFAULT_INQ_MAX_RESP
+#define CTP_DEFAULT_INQ_MAX_RESP    3
+#endif
+
+/* When TL does not create another L2CAP channel within this period of time GW declares that it's "Connected Limited". */
+#ifndef CTP_TL_CONN_TIMEOUT
+#define CTP_TL_CONN_TIMEOUT         5
+#endif
+
+/* The delay for ACL to completely disconnect (for intercom) before sending the connect request to GW. */
+#ifndef CTP_RECONNECT_DELAY
+#define CTP_RECONNECT_DELAY         5
+#endif
+
+/* How many times to retry connection when it has failed. */
+#ifndef CTP_RETRY_ON_CONN_ERR
+#define CTP_RETRY_ON_CONN_ERR       5
+#endif
+
+/******************************************************************************
+**
+** ICP
+**
+******************************************************************************/
+
+#ifndef ICP_INCLUDED
+#define ICP_INCLUDED                FALSE
+#endif
+
+/* The ICP default MTU. */
+#ifndef ICP_MTU_SIZE
+#define ICP_MTU_SIZE                100
+#endif
+
+/* The ICP security level. */
+#ifndef ICP_SECURITY_LEVEL
+#define ICP_SECURITY_LEVEL          BTM_SEC_NONE
+#endif
+
+/* The default service name for ICP. */
+#ifndef ICP_DEFAULT_SERVICE_NAME
+#define ICP_DEFAULT_SERVICE_NAME    "Intercom"
+#endif
+
+/* The flush timeout for L2CAP channels. */
+#ifndef ICP_FLUSH_TO
+#define ICP_FLUSH_TO                0xFFFF
+#endif
+
+/******************************************************************************
+**
+** SPP
+**
+******************************************************************************/
+
+#ifndef SPP_INCLUDED
+#define SPP_INCLUDED                FALSE
+#endif
+
+/* The SPP default MTU. */
+#ifndef SPP_DEFAULT_MTU
+#define SPP_DEFAULT_MTU             127
+#endif
+
+/* The interval, in seconds, that a client tries to reconnect to a service. */
+#ifndef SPP_RETRY_CONN_INTERVAL
+#define SPP_RETRY_CONN_INTERVAL     1
+#endif
+
+/* The SPP discoverable mode: limited or general. */
+#ifndef SPP_DISCOVERABLE_MODE
+#define SPP_DISCOVERABLE_MODE       BTM_GENERAL_DISCOVERABLE
+#endif
+
+/* The maximum number of inquiry results returned in by inquiry procedure. */
+#ifndef SPP_DEF_INQ_MAX_RESP
+#define SPP_DEF_INQ_MAX_RESP        10
+#endif
+
+/* The SPP discovery record size. */
+#ifndef SPP_DISC_REC_SIZE
+#define SPP_DISC_REC_SIZE           60
+#endif
+
+#ifndef SPP_MAX_RECS_PER_DEVICE
+#define SPP_MAX_RECS_PER_DEVICE     (SPP_DB_SIZE / SPP_DISC_REC_SIZE)
+#endif
+
+/* Inquiry duration in 1.28 second units. */
+#ifndef SPP_DEF_INQ_DURATION
+#define SPP_DEF_INQ_DURATION        9
+#endif
+
+/* keep the raw data received from SDP server in database. */
+#ifndef SDP_RAW_DATA_INCLUDED
+#define SDP_RAW_DATA_INCLUDED       TRUE
+#endif
+
+/* TRUE, to allow JV to create L2CAP connection on SDP PSM. */
+#ifndef SDP_FOR_JV_INCLUDED
+#define SDP_FOR_JV_INCLUDED         FALSE
+#endif
+
+/* Inquiry duration in 1.28 second units. */
+#ifndef SDP_DEBUG
+#define SDP_DEBUG                   TRUE
+#endif
+
+/******************************************************************************
+**
+** HSP2, HFP
+**
+******************************************************************************/
+
+#ifndef HSP2_INCLUDED
+#define HSP2_INCLUDED               FALSE
+#endif
+
+/* Include the ability to perform inquiry for peer devices. */
+#ifndef HSP2_INQUIRY_INCLUDED
+#define HSP2_INQUIRY_INCLUDED       TRUE
+#endif
+
+/* Include Audio Gateway specific code. */
+#ifndef HSP2_AG_INCLUDED
+#define HSP2_AG_INCLUDED            TRUE
+#endif
+
+/* Include Headset Specific Code. */
+#ifndef HSP2_HS_INCLUDED
+#define HSP2_HS_INCLUDED            TRUE
+#endif
+
+/* Include the ability to open an SCO connection for In-Band Ringing. */
+#ifndef HSP2_IB_RING_INCLUDED
+#define HSP2_IB_RING_INCLUDED       TRUE
+#endif
+
+/* Include the ability to repeat a ring. */
+#ifndef HSP2_AG_REPEAT_RING
+#define HSP2_AG_REPEAT_RING         TRUE
+#endif
+
+#ifndef HSP2_APP_CLOSES_ON_CKPD
+#define HSP2_APP_CLOSES_ON_CKPD     FALSE
+#endif
+
+
+/* Include the ability to park a connection. */
+#ifndef HSP2_PARK_INCLUDED
+#define HSP2_PARK_INCLUDED          TRUE
+#endif
+
+/* Include HSP State Machine debug trace messages. */
+#ifndef HSP2_FSM_DEBUG
+#define HSP2_FSM_DEBUG              TRUE
+#endif
+
+/* The Module's Inquiry Scan Window. */
+#ifndef HSP2_INQ_SCAN_WINDOW
+#define HSP2_INQ_SCAN_WINDOW        0
+#endif
+
+/* The Module's Inquiry Scan Interval. */
+#ifndef HSP2_INQ_SCAN_INTERVAL
+#define HSP2_INQ_SCAN_INTERVAL      0
+#endif
+
+/* The Module's Page Scan Interval. */
+#ifndef HSP2_PAGE_SCAN_INTERVAL
+#define HSP2_PAGE_SCAN_INTERVAL     0
+#endif
+
+/* The Module's Page Scan Window. */
+#ifndef HSP2_PAGE_SCAN_WINDOW
+#define HSP2_PAGE_SCAN_WINDOW       0
+#endif
+
+/* The Park Mode's Minimum Beacon Period. */
+#ifndef HSP2_BEACON_MIN_PERIOD
+#define HSP2_BEACON_MIN_PERIOD      450
+#endif
+
+/* The Park Mode's Maximum Beacon Period. */
+#ifndef HSP2_BEACON_MAX_PERIOD
+#define HSP2_BEACON_MAX_PERIOD      500
+#endif
+
+/* The duration of the inquiry in seconds. */
+#ifndef HSP2_INQ_DURATION
+#define HSP2_INQ_DURATION           4
+#endif
+
+/* Maximum number of peer responses during an inquiry. */
+#ifndef HSP2_INQ_MAX_NUM_RESPS
+#define HSP2_INQ_MAX_NUM_RESPS      3
+#endif
+
+/* Maximum number of times to retry an inquiry prior to failure. */
+#ifndef HSP2_MAX_INQ_RETRY
+#define HSP2_MAX_INQ_RETRY          6
+#endif
+
+/* Maximum number of times to retry an RFCOMM connection prior to failure. */
+#ifndef HSP2_MAX_CONN_RETRY
+#define HSP2_MAX_CONN_RETRY         3
+#endif
+
+/* If the connect request failed for authentication reasons, do not retry */
+#ifndef HSP2_NO_RETRY_ON_AUTH_FAIL
+#define HSP2_NO_RETRY_ON_AUTH_FAIL  TRUE
+#endif
+
+/* Maximum number of characters in an HSP2 device name. */
+#ifndef HSP2_MAX_NAME_LEN
+#define HSP2_MAX_NAME_LEN           32
+#endif
+
+/* The minimum speaker and/or microphone gain setting. */
+#ifndef HSP2_MIN_GAIN
+#define HSP2_MIN_GAIN               0
+#endif
+
+/* The maximum speaker and/or microphone setting. */
+#ifndef HSP2_MAX_GAIN
+#define HSP2_MAX_GAIN               15
+#endif
+
+/* The default value to send on an AT+CKPD. */
+#ifndef HSP2_KEYPRESS_DEFAULT
+#define HSP2_KEYPRESS_DEFAULT       200
+#endif
+
+/* Maximum amount a data that can be received per RFCOMM frame. */
+#ifndef HSP2_MAX_RFC_READ_LEN
+#define HSP2_MAX_RFC_READ_LEN       128
+#endif
+
+/* The time in seconds to wait for completion of a partial AT command or response from the peer. */
+#ifndef HSP2_AT_TO_INTERVAL
+#define HSP2_AT_TO_INTERVAL         30
+#endif
+
+/* The time to wait before repeating a ring to a peer Headset. */
+#ifndef HSP2_REPEAT_RING_TO
+#define HSP2_REPEAT_RING_TO         4
+#endif
+
+/* Time to wait for a response for an AT command */
+#ifndef HSP2_AT_RSP_TO
+#define HSP2_AT_RSP_TO              20
+#endif
+
+/* SCO packet type(s) to use (bitmask: see spec), 0 - device default (recommended) */
+#ifndef HSP2_SCO_PKT_TYPES
+#define HSP2_SCO_PKT_TYPES          ((UINT16)0x0000)
+#endif
+
+/* The default settings of the SCO voice link. */
+#ifndef HSP2_DEFAULT_VOICE_SETTINGS
+#define HSP2_DEFAULT_VOICE_SETTINGS (HCI_INP_CODING_LINEAR | HCI_INP_DATA_FMT_2S_COMPLEMENT | HCI_INP_SAMPLE_SIZE_16BIT | HCI_AIR_CODING_FORMAT_CVSD)
+#endif
+
+#ifndef HSP2_MAX_AT_CMD_LENGTH
+#define HSP2_MAX_AT_CMD_LENGTH       16
+#endif
+
+#ifndef HSP2_MAX_AT_VAL_LENGTH
+#if (defined(HFP_INCLUDED) && HFP_INCLUDED == TRUE)
+#define HSP2_MAX_AT_VAL_LENGTH       310
+#else
+#define HSP2_MAX_AT_VAL_LENGTH       5
+#endif
+#endif
+
+
+#ifndef HSP2_SDP_DB_SIZE
+#define HSP2_SDP_DB_SIZE             300
+#endif
+
+
+/******************************************************************************
+**
+** HFP
+**
+******************************************************************************/
+
+#ifndef HFP_INCLUDED
+#define HFP_INCLUDED                FALSE
+#endif
+
+/* Include Audio Gateway specific code. */
+#ifndef HFP_AG_INCLUDED
+#define HFP_AG_INCLUDED             TRUE
+#endif
+
+/* Include Hand Free Specific Code. */
+#ifndef HFP_HF_INCLUDED
+#define HFP_HF_INCLUDED             TRUE
+#endif
+
+/* Use AT interface instead of full blown API */
+#ifndef AT_INTERFACE
+#define AT_INTERFACE            FALSE
+#endif
+
+/* HFP Manages SCO establishement for various procedures */
+#ifndef HFP_SCO_MGMT_INCLUDED
+#define HFP_SCO_MGMT_INCLUDED             TRUE
+#endif
+
+/* CCAP compliant features and behavior desired */
+#ifndef CCAP_COMPLIANCE
+#define CCAP_COMPLIANCE             TRUE
+#endif
+
+/* Caller ID string, part of +CLIP result code */
+#ifndef HFP_MAX_CLIP_INFO
+#define HFP_MAX_CLIP_INFO             45
+#endif
+
+#ifndef HFP_RPT_PEER_INFO_INCLUDED
+#define HFP_RPT_PEER_INFO_INCLUDED  TRUE  /* Reporting of peer features enabled */
+#endif
+
+/******************************************************************************
+**
+** HID
+**
+******************************************************************************/
+
+/* HID Device Role Included */
+#ifndef HID_DEV_INCLUDED
+#define HID_DEV_INCLUDED             FALSE
+#endif
+
+#ifndef HID_DEV_PM_INCLUDED
+#define HID_DEV_PM_INCLUDED         TRUE
+#endif
+
+/* The HID Device is a virtual cable */
+#ifndef HID_DEV_VIRTUAL_CABLE
+#define HID_DEV_VIRTUAL_CABLE       TRUE
+#endif
+
+/* The HID device initiates the reconnections */
+#ifndef HID_DEV_RECONN_INITIATE
+#define HID_DEV_RECONN_INITIATE     TRUE
+#endif
+
+/* THe HID device is normally connectable */
+#ifndef HID_DEV_NORMALLY_CONN
+#define HID_DEV_NORMALLY_CONN       FALSE
+#endif
+
+/* The device is battery powered */
+#ifndef HID_DEV_BATTERY_POW
+#define HID_DEV_BATTERY_POW         TRUE
+#endif
+
+/* Device is capable of waking up the host */
+#ifndef HID_DEV_REMOTE_WAKE
+#define HID_DEV_REMOTE_WAKE         TRUE
+#endif
+
+/* Device needs host to close SDP channel after SDP is over */
+#ifndef HID_DEV_SDP_DISABLE
+#define HID_DEV_SDP_DISABLE         TRUE
+#endif
+
+#ifndef HID_DEV_MTU_SIZE
+#define HID_DEV_MTU_SIZE                 64
+#endif
+
+#ifndef HID_DEV_FLUSH_TO
+#define HID_DEV_FLUSH_TO                 0xffff
+#endif
+
+#ifndef HID_DEV_PAGE_SCAN_WIN
+#define HID_DEV_PAGE_SCAN_WIN       (0)
+#endif
+
+#ifndef HID_DEV_PAGE_SCAN_INT
+#define HID_DEV_PAGE_SCAN_INT       (0)
+#endif
+
+#ifndef HID_DEV_MAX_CONN_RETRY
+#define HID_DEV_MAX_CONN_RETRY      (15)
+#endif
+
+#ifndef HID_DEV_REPAGE_WIN
+#define HID_DEV_REPAGE_WIN          (1)
+#endif
+
+#ifndef HID_DEV_SVC_NAME
+#define HID_DEV_SVC_NAME            "HID"
+#endif
+
+#ifndef HID_DEV_SVC_DESCR
+#define HID_DEV_SVC_DESCR           "3-button mouse and keyboard"
+#endif
+
+#ifndef HID_DEV_PROVIDER_NAME
+#define HID_DEV_PROVIDER_NAME       "Widcomm"
+#endif
+
+#ifndef HID_DEV_REL_NUM
+#define HID_DEV_REL_NUM             0x0100
+#endif
+
+#ifndef HID_DEV_PARSER_VER
+#define HID_DEV_PARSER_VER          0x0111
+#endif
+
+#ifndef HID_DEV_SUBCLASS
+#define HID_DEV_SUBCLASS            COD_MINOR_POINTING
+#endif
+
+#ifndef HID_DEV_COUNTRY_CODE
+#define HID_DEV_COUNTRY_CODE        0x33
+#endif
+
+#ifndef HID_DEV_SUP_TOUT
+#define HID_DEV_SUP_TOUT            0x8000
+#endif
+
+#ifndef HID_DEV_NUM_LANGS
+#define HID_DEV_NUM_LANGS           1
+#endif
+
+#ifndef HID_DEV_INACT_TIMEOUT
+#define HID_DEV_INACT_TIMEOUT       60
+#endif
+
+#ifndef HID_DEV_BUSY_MODE_PARAMS
+#define HID_DEV_BUSY_MODE_PARAMS    { 320, 160, 10, 20, HCI_MODE_ACTIVE }
+#endif
+
+#ifndef HID_DEV_IDLE_MODE_PARAMS
+#define HID_DEV_IDLE_MODE_PARAMS    { 320, 160, 10, 20, HCI_MODE_SNIFF }
+#endif
+
+#ifndef HID_DEV_SUSP_MODE_PARAMS
+#define HID_DEV_SUSP_MODE_PARAMS    { 640, 320,  0,    0, HCI_MODE_PARK }
+#endif
+
+#ifndef HID_DEV_MAX_DESCRIPTOR_SIZE
+#define HID_DEV_MAX_DESCRIPTOR_SIZE      128     /* Max descriptor size          */
+#endif
+
+#ifndef HID_DEV_LANGUAGELIST
+#define HID_DEV_LANGUAGELIST             {0x35, 0x06, 0x09, 0x04, 0x09, 0x09, 0x01, 0x00}
+#endif
+
+#ifndef HID_DEV_LINK_SUPERVISION_TO
+#define HID_DEV_LINK_SUPERVISION_TO      0x8000
+#endif
+
+#ifndef HID_CONTROL_POOL_ID
+#define HID_CONTROL_POOL_ID             2
+#endif
+
+#ifndef HID_INTERRUPT_POOL_ID
+#define HID_INTERRUPT_POOL_ID           2
+#endif
+
+/*************************************************************************
+** Definitions for Both HID-Host & Device
+*/
+#ifndef HID_MAX_SVC_NAME_LEN
+#define HID_MAX_SVC_NAME_LEN  32
+#endif
+
+#ifndef HID_MAX_SVC_DESCR_LEN
+#define HID_MAX_SVC_DESCR_LEN 32
+#endif
+
+#ifndef HID_MAX_PROV_NAME_LEN
+#define HID_MAX_PROV_NAME_LEN 32
+#endif
+
+/*************************************************************************
+** Definitions for HID-Host
+*/
+#ifndef  HID_HOST_INCLUDED
+#define HID_HOST_INCLUDED           TRUE
+#endif
+
+#ifndef HID_HOST_MAX_DEVICES
+#define HID_HOST_MAX_DEVICES        7
+#endif
+
+#ifndef HID_HOST_MTU
+#define HID_HOST_MTU                640
+#endif
+
+#ifndef HID_HOST_FLUSH_TO
+#define HID_HOST_FLUSH_TO                 0xffff
+#endif
+
+#ifndef HID_HOST_MAX_CONN_RETRY
+#define HID_HOST_MAX_CONN_RETRY     (3)
+#endif
+
+#ifndef HID_HOST_REPAGE_WIN
+#define HID_HOST_REPAGE_WIN          (2)
+#endif
+
+
+/******************************************************************************
+**
+** DUN and FAX
+**
+******************************************************************************/
+
+#ifndef DUN_INCLUDED
+#define DUN_INCLUDED                FALSE
+#endif
+
+
+/******************************************************************************
+**
+** GOEP
+**
+******************************************************************************/
+
+#ifndef GOEP_INCLUDED
+#define GOEP_INCLUDED               FALSE
+#endif
+
+/* This is set to enable GOEP non-blocking file system access functions. */
+#ifndef GOEP_FS_INCLUDED
+#define GOEP_FS_INCLUDED        FALSE
+#endif
+
+/* GOEP authentication key size. */
+#ifndef GOEP_MAX_AUTH_KEY_SIZE
+#define GOEP_MAX_AUTH_KEY_SIZE      16
+#endif
+
+/* Maximum size of the realm authentication string. */
+#ifndef GOEP_MAX_AUTH_REALM_SIZE
+#define GOEP_MAX_AUTH_REALM_SIZE    16
+#endif
+
+/* Realm Character Set */
+#ifndef GOEP_REALM_CHARSET
+#define GOEP_REALM_CHARSET          0       /* ASCII */
+#endif
+
+/* This is set to the maximum length of path name allowed in the system (_MAX_PATH). */
+#ifndef GOEP_MAX_PATH_SIZE
+#define GOEP_MAX_PATH_SIZE          255
+#endif
+
+/* Specifies whether or not client's user id is required during obex authentication */
+#ifndef GOEP_SERVER_USERID_REQUIRED
+#define GOEP_SERVER_USERID_REQUIRED FALSE
+#endif
+
+/* This is set to the maximum length of file name allowed in the system (_MAX_FNAME). */
+#ifndef GOEP_MAX_FILE_SIZE
+#define GOEP_MAX_FILE_SIZE          128
+#endif
+
+/* Character used as path separator */
+#ifndef GOEP_PATH_SEPARATOR
+#define GOEP_PATH_SEPARATOR         ((char) 0x5c)   /* 0x2f ('/'), or 0x5c ('\') */
+#endif
+
+/******************************************************************************
+**
+** OPP
+**
+******************************************************************************/
+
+#ifndef OPP_INCLUDED
+#define OPP_INCLUDED                FALSE
+#endif
+
+/* This is set to enable OPP client capabilities. */
+#ifndef OPP_CLIENT_INCLUDED
+#define OPP_CLIENT_INCLUDED         FALSE
+#endif
+
+/* This is set to enable OPP server capabilities. */
+#ifndef OPP_SERVER_INCLUDED
+#define OPP_SERVER_INCLUDED         FALSE
+#endif
+
+/* if the optional formating functions are to be included or not */
+#ifndef OPP_FORMAT_INCLUDED
+#define OPP_FORMAT_INCLUDED         FALSE
+#endif
+
+/* Maximum number of client sessions allowed by server */
+#ifndef OPP_MAX_SRVR_SESS
+#define OPP_MAX_SRVR_SESS           3
+#endif
+
+/******************************************************************************
+**
+** FTP
+**
+******************************************************************************/
+
+#ifndef FTP_INCLUDED
+#define FTP_INCLUDED                FALSE
+#endif
+
+/* This is set to enable FTP client capabilities. */
+#ifndef FTP_CLIENT_INCLUDED
+#define FTP_CLIENT_INCLUDED         TRUE
+#endif
+
+/* This is set to enable FTP server capabilities. */
+#ifndef FTP_SERVER_INCLUDED
+#define FTP_SERVER_INCLUDED         TRUE
+#endif
+
+/******************************************************************************
+**
+** XML Parser
+**
+******************************************************************************/
+
+#ifndef XML_STACK_SIZE
+#define XML_STACK_SIZE             7
+#endif
+
+/******************************************************************************
+**
+** BPP Printer
+**
+******************************************************************************/
+#ifndef BPP_DEBUG
+#define BPP_DEBUG            FALSE
+#endif
+
+#ifndef BPP_INCLUDED
+#define BPP_INCLUDED                FALSE
+#endif
+
+#ifndef BPP_SND_INCLUDED
+#define BPP_SND_INCLUDED            FALSE
+#endif
+
+/* Maximum number of senders allowed to connect simultaneously
+** The maximum is 6 or (OBX_NUM_SERVERS / 2), whichever is smaller
+*/
+#ifndef BPP_PR_MAX_CON
+#define BPP_PR_MAX_CON         3
+#endif
+
+/* Service Name. maximum length: 248
+#ifndef BPP_SERVICE_NAME
+#define BPP_SERVICE_NAME            "Basic Printing"
+#endif
+ */
+/* Document Format Supported. ASCII comma-delimited list of MIME type:version string
+#ifndef BPP_DOC_FORMAT_SUPPORTED
+#define BPP_DOC_FORMAT_SUPPORTED    "application/vnd.pwg-xhtml-print:1.0,application/vnd.hp-PCL:5E,application/PDF"
+#endif
+
+#ifndef BPP_DOC_FORMAT_SUPPORTED_LEN
+#define BPP_DOC_FORMAT_SUPPORTED_LEN    77
+#endif
+ */
+/* Character repertoires.
+#ifndef BPP_CHARACTER_REPERTOIRES
+#define BPP_CHARACTER_REPERTOIRES {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01}
+#endif
+ */
+/* XHTML formats.
+#ifndef BPP_XHTML_PRINT_FORMATS
+#define BPP_XHTML_PRINT_FORMATS     "image/gif:89A,image/jpeg"
+#endif
+
+#ifndef BPP_XHTML_PRINT_FORMATS_LEN
+#define BPP_XHTML_PRINT_FORMATS_LEN 24
+#endif
+ */
+/* Color supported.
+#ifndef BPP_COLOR_SUPORTED
+#define BPP_COLOR_SUPORTED          FALSE
+#endif
+ */
+/* 1284 ID string. First 2 bytes are the length.
+#ifndef BPP_1284ID
+#define BPP_1284ID                  "\x00\x48MANUFACTURER:ACME Manufacturing;COMMAND SET:PCL,MPL;MODEL:LaserBeam \?;"
+#endif
+
+#ifndef BPP_1284ID_LEN
+#define BPP_1284ID_LEN              72
+#endif
+ */
+/* Printer name.
+#ifndef BPP_PRINTER_NAME
+#define BPP_PRINTER_NAME            "My Printer"
+#endif
+
+#ifndef BPP_PRINTER_NAME_LEN
+#define BPP_PRINTER_NAME_LEN        10
+#endif
+ */
+
+/* Printer location.
+#ifndef BPP_PRINTER_LOCATION
+#define BPP_PRINTER_LOCATION        "Hotel Lobby"
+#endif
+
+#ifndef BPP_PRINTER_LOCATION_LEN
+#define BPP_PRINTER_LOCATION_LEN    11
+#endif
+ */
+/* Duplex printing supported.
+#ifndef BPP_DUPLEX_SUPPORTED
+#define BPP_DUPLEX_SUPPORTED        TRUE
+#endif
+ */
+
+/* Media types supported.
+#ifndef BPP_MEDIA_TYPES_SUPPORTED
+#define BPP_MEDIA_TYPES_SUPPORTED   "stationary,continuous-long,photographic-high-gloss,cardstock"
+#endif
+
+#ifndef BPP_MEDIA_TYPES_SUPPORTED_LEN
+#define BPP_MEDIA_TYPES_SUPPORTED_LEN   60
+#endif
+ */
+/* Maximum media with supported.
+#ifndef BPP_MAX_MEDIA_WIDTH
+#define BPP_MAX_MEDIA_WIDTH         205
+#endif
+ */
+/* Maximum media length supported.
+#ifndef BPP_MAX_MEDIA_LENGTH
+#define BPP_MAX_MEDIA_LENGTH        285
+#endif
+ */
+/* the maximum string len for the media size of medium loaded */
+#ifndef BPP_MEDIA_SIZE_LEN
+#define BPP_MEDIA_SIZE_LEN          33
+#endif
+
+/* Debug Trace the SOAP object, if TRUE */
+#ifndef BPP_TRACE_XML
+#define BPP_TRACE_XML               TRUE
+#endif
+
+/* in case that the SOAP object does not all come in one OBEX packet,
+ * this size of data may be kept in the BPP control block for continuing parsing.
+ * The maximum is the size of the biggest GKI buffer (GKI_MAX_BUF_SIZE) */
+#ifndef BPP_SOAP_KEEP_SIZE
+#define BPP_SOAP_KEEP_SIZE          200
+#endif
+
+
+/******************************************************************************
+**
+** BIP
+**
+******************************************************************************/
+#ifndef BIP_INCLUDED
+#define BIP_INCLUDED                FALSE
+#endif
+
+/* TRUE to include imaging initiator */
+#ifndef BIP_INITR_INCLUDED
+#define BIP_INITR_INCLUDED          FALSE
+#endif
+
+/* TRUE to include imaging responder */
+#ifndef BIP_RSPDR_INCLUDED
+#define BIP_RSPDR_INCLUDED          FALSE
+#endif
+
+/* TRUE to include image push feature */
+#ifndef BIP_PUSH_INCLUDED
+#define BIP_PUSH_INCLUDED           TRUE
+#endif
+
+/* TRUE to include image pull feature */
+#ifndef BIP_PULL_INCLUDED
+#define BIP_PULL_INCLUDED           TRUE
+#endif
+
+/* TRUE to include advanced image printing feature */
+#ifndef BIP_PRINTING_INCLUDED
+#define BIP_PRINTING_INCLUDED       TRUE
+#endif
+
+/* TRUE to include automatic archive feature */
+#ifndef BIP_ARCHIVE_INCLUDED
+#define BIP_ARCHIVE_INCLUDED        TRUE
+#endif
+
+/* TRUE to include remote camera feature */
+#ifndef BIP_CAMERA_INCLUDED
+#define BIP_CAMERA_INCLUDED         TRUE
+#endif
+
+/* TRUE to include remote display feature */
+#ifndef BIP_DISPLAY_INCLUDED
+#define BIP_DISPLAY_INCLUDED        TRUE
+#endif
+
+/* TRUE to include sanity check code for API functions */
+#ifndef BIP_SANITY_CHECKS
+#define BIP_SANITY_CHECKS           TRUE
+#endif
+
+/* TRUE to show the received XML object in trace for conformance tests */
+#ifndef BIP_TRACE_XML
+#define BIP_TRACE_XML               TRUE
+#endif
+
+/* in case that the received XML object is not complete, the XML parser state machine needs
+ * to keep a copy of the data from the last '<'
+ * This macro specifies the maximun amount of data for this purpose */
+#ifndef BIP_XML_CARRY_OVER_LEN
+#define BIP_XML_CARRY_OVER_LEN      100
+#endif
+
+/* minimum 4, maximum is 255. The value should be set to the maximum size of encoding string + 1. JPEG2000.
+ * If vendor specific format is supported, it might be bigger than 9 */
+#ifndef BIP_IMG_ENCODE_SIZE
+#define BIP_IMG_ENCODE_SIZE         9
+#endif
+
+/* MIME type: text/plain */
+#ifndef BIP_TYPE_SIZE
+#define BIP_TYPE_SIZE               20
+#endif
+
+/* example: iso-8895-1 */
+#ifndef BIP_CHARSET_SIZE
+#define BIP_CHARSET_SIZE            10
+#endif
+
+/* friendly name */
+#ifndef BIP_FNAME_SIZE
+#define BIP_FNAME_SIZE              20
+#endif
+
+/* service name */
+#ifndef BIP_SNAME_SIZE
+#define BIP_SNAME_SIZE              60
+#endif
+
+/* temporary storage file name(for file system access, may include path) */
+#ifndef BIP_TEMP_NAME_SIZE
+#define BIP_TEMP_NAME_SIZE          200
+#endif
+
+/* image file name */
+#ifndef BIP_IMG_NAME_SIZE
+#define BIP_IMG_NAME_SIZE           200
+#endif
+
+/* attachment file name */
+#ifndef BIP_ATT_NAME_SIZE
+#define BIP_ATT_NAME_SIZE           200
+#endif
+
+/* object (image, attachment, thumbnail) file name (may be used for file system) */
+#ifndef BIP_OBJ_NAME_SIZE
+#define BIP_OBJ_NAME_SIZE           200
+#endif
+
+
+
+/******************************************************************************
+**
+** HCRP
+**
+******************************************************************************/
+
+#ifndef HCRP_INCLUDED
+#define HCRP_INCLUDED               FALSE
+#endif
+
+/* This is set to enable server. */
+#ifndef HCRP_SERVER_INCLUDED
+#define HCRP_SERVER_INCLUDED       FALSE
+#endif
+
+/* This is set to enable client. */
+#ifndef HCRP_CLIENT_INCLUDED
+#define HCRP_CLIENT_INCLUDED        FALSE
+#endif
+
+/* TRUE enables the notification option of the profile. */
+#ifndef HCRP_NOTIFICATION_INCLUDED
+#define HCRP_NOTIFICATION_INCLUDED  TRUE
+#endif
+
+/* TRUE enables the vendor specific option of the profile. */
+#ifndef HCRP_VENDOR_SPEC_INCLUDED
+#define HCRP_VENDOR_SPEC_INCLUDED   TRUE
+#endif
+
+/* TRUE enables state machine traces. */
+#ifndef HCRP_FSM_DEBUG
+#define HCRP_FSM_DEBUG              FALSE
+#endif
+
+/* TRUE enables protocol message traces. */
+#ifndef HCRP_PROTO_DEBUG
+#define HCRP_PROTO_DEBUG            FALSE
+#endif
+
+/* Maximum length used to store the service name (Minimum 1). */
+#ifndef HCRP_MAX_SERVICE_NAME_LEN
+#define HCRP_MAX_SERVICE_NAME_LEN   32
+#endif
+
+/* Maximum length used to store the device name (Minimum 1). */
+#ifndef HCRP_MAX_DEVICE_NAME_LEN
+#define HCRP_MAX_DEVICE_NAME_LEN    32
+#endif
+
+/* Maximum length of device location (Minimum 1) */
+#ifndef HCRP_MAX_DEVICE_LOC_LEN
+#define HCRP_MAX_DEVICE_LOC_LEN     32
+#endif
+
+/* Maximum length used to store the friendly name (Minimum 1). */
+#ifndef HCRP_MAX_FRIENDLY_NAME_LEN
+#define HCRP_MAX_FRIENDLY_NAME_LEN  32
+#endif
+
+/* Maximum length used to store the 1284 id string (Minimum 2 byte length field). */
+#ifndef HCRP_MAX_SDP_1284_ID_LEN
+#define HCRP_MAX_SDP_1284_ID_LEN    128
+#endif
+
+/* Maximum length for parameters to be processed for vendor specific commands. */
+#ifndef HCRP_MAX_VEND_SPEC_LEN
+#define HCRP_MAX_VEND_SPEC_LEN      4
+#endif
+
+/* Number of seconds to wait for 2nd GAP to open. */
+#ifndef HCRP_OPEN_CHAN_TOUT
+#define HCRP_OPEN_CHAN_TOUT         5
+#endif
+
+/* Number of seconds to wait for 2nd GAP to close. */
+#ifndef HCRP_CLOSE_CHAN_TOUT
+#define HCRP_CLOSE_CHAN_TOUT        3
+#endif
+
+/* Number of seconds to wait for the application to respond to a protocol request. */
+#ifndef HCRP_APPL_RSP_TOUT
+#define HCRP_APPL_RSP_TOUT          5
+#endif
+
+/* Number of seconds to wait for the peer device to respond to a protocol request. */
+#ifndef HCRP_CMD_RSP_TOUT
+#define HCRP_CMD_RSP_TOUT           7
+#endif
+
+/* Number of seconds between subsequent credit requests to the server when the send watermark has been exceeded. */
+#ifndef HCRP_CREDIT_REQ_UPDATES
+#define HCRP_CREDIT_REQ_UPDATES     1
+#endif
+
+/* Maximum number of results to return in a HCRP_FindServices search. */
+#ifndef HCRP_MAX_SEARCH_RESULTS
+#define HCRP_MAX_SEARCH_RESULTS     1
+#endif
+
+/* Maximum number of bytes to be reserved for searching for the client's notification record. */
+#ifndef HCRP_MAX_NOTIF_DISC_BUF
+#define HCRP_MAX_NOTIF_DISC_BUF     300
+#endif
+
+/* Maximum number of clients the server will allow to be registered for notifications. */
+#ifndef HCRP_MAX_NOTIF_CLIENTS
+#define HCRP_MAX_NOTIF_CLIENTS      3
+#endif
+
+/* Spec says minimum of two notification retries. */
+#ifndef HCRP_NOTIF_NUM_RETRIES
+#define HCRP_NOTIF_NUM_RETRIES      4
+#endif
+
+/*************************************************************************
+** Definitions for Multi-Client Server HCRP
+** Note: Many of the above HCRP definitions are also used
+** Maximum number of clients allowed to connect simultaneously
+** Must be less than ((GAP_MAX_CONNECTIONS - 1) / 2)
+*/
+#ifndef HCRPM_MAX_CLIENTS
+#define HCRPM_MAX_CLIENTS           3
+#endif
+
+
+/******************************************************************************
+**
+** PAN
+**
+******************************************************************************/
+
+#ifndef PAN_INCLUDED
+#define PAN_INCLUDED                FALSE
+#endif
+
+
+/******************************************************************************
+**
+** SAP
+**
+******************************************************************************/
+
+#ifndef SAP_SERVER_INCLUDED
+#define SAP_SERVER_INCLUDED         FALSE
+#endif
+
+
+/*************************************************************************
+ * A2DP Definitions
+ */
+#ifndef A2D_INCLUDED
+#define A2D_INCLUDED            TRUE
+#endif
+
+/* TRUE to include SBC utility functions */
+#ifndef A2D_SBC_INCLUDED
+#define A2D_SBC_INCLUDED        A2D_INCLUDED
+#endif
+
+/* TRUE to include MPEG-1,2 (mp3) utility functions */
+#ifndef A2D_M12_INCLUDED
+#define A2D_M12_INCLUDED        A2D_INCLUDED
+#endif
+
+/* TRUE to include MPEG-2,4 (aac) utility functions */
+#ifndef A2D_M24_INCLUDED
+#define A2D_M24_INCLUDED        A2D_INCLUDED
+#endif
+
+/******************************************************************************
+**
+** AVCTP
+**
+******************************************************************************/
+
+#ifndef AVCT_INCLUDED
+#define AVCT_INCLUDED               TRUE
+#endif
+
+/* Number of simultaneous ACL links to different peer devices. */
+#ifndef AVCT_NUM_LINKS
+#define AVCT_NUM_LINKS              2
+#endif
+
+/* Number of simultaneous AVCTP connections. */
+#ifndef AVCT_NUM_CONN
+#define AVCT_NUM_CONN               3
+#endif
+
+/* Pool ID where to reassemble the SDU.
+   This Pool allows buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef AVCT_BR_USER_RX_POOL_ID
+#define AVCT_BR_USER_RX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/* Pool ID where to hold the SDU.
+   This Pool allows buffers to be used that are larger than
+   the L2CAP_MAX_MTU. */
+#ifndef AVCT_BR_USER_TX_POOL_ID
+#define AVCT_BR_USER_TX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments during SDU reassembly
+*/
+#ifndef AVCT_BR_FCR_RX_POOL_ID
+#define AVCT_BR_FCR_RX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments used in (re)transmissions.
+L2CAP_DEFAULT_ERM_POOL_ID is specified to use the HCI ACL data pool.
+Note:  This pool needs to have enough buffers to hold two times the window size negotiated
+ in the tL2CAP_FCR_OPTIONS (2 * tx_win_size)  to allow for retransmissions.
+ The size of each buffer must be able to hold the maximum MPS segment size passed in
+ tL2CAP_FCR_OPTIONS plus BT_HDR (8) + HCI preamble (4) + L2CAP_MIN_OFFSET (11 - as of BT 2.1 + EDR Spec).
+*/
+#ifndef AVCT_BR_FCR_TX_POOL_ID
+#define AVCT_BR_FCR_TX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* AVCTP Browsing channel FCR Option:
+Size of the transmission window when using enhanced retransmission mode. Not used
+in basic and streaming modes. Range: 1 - 63
+*/
+#ifndef AVCT_BR_FCR_OPT_TX_WINDOW_SIZE
+#define AVCT_BR_FCR_OPT_TX_WINDOW_SIZE      10
+#endif
+
+/* AVCTP Browsing channel FCR Option:
+Number of transmission attempts for a single I-Frame before taking
+Down the connection. Used In ERTM mode only. Value is Ignored in basic and
+Streaming modes.
+Range: 0, 1-0xFF
+0 - infinite retransmissions
+1 - single transmission
+*/
+#ifndef AVCT_BR_FCR_OPT_MAX_TX_B4_DISCNT
+#define AVCT_BR_FCR_OPT_MAX_TX_B4_DISCNT    20
+#endif
+
+/* AVCTP Browsing channel FCR Option: Retransmission Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost I-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 2000 (2 secs) when supporting PBF.
+ */
+#ifndef AVCT_BR_FCR_OPT_RETX_TOUT
+#define AVCT_BR_FCR_OPT_RETX_TOUT           2000
+#endif
+
+/* AVCTP Browsing channel FCR Option: Monitor Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost S-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 12000 (12 secs) when supporting PBF.
+*/
+#ifndef AVCT_BR_FCR_OPT_MONITOR_TOUT
+#define AVCT_BR_FCR_OPT_MONITOR_TOUT        12000
+#endif
+
+/******************************************************************************
+**
+** AVRCP
+**
+******************************************************************************/
+
+#ifndef AVRC_INCLUDED
+#define AVRC_INCLUDED               TRUE
+#endif
+
+/******************************************************************************
+**
+** MCAP
+**
+******************************************************************************/
+#ifndef MCA_INCLUDED
+#define MCA_INCLUDED                FALSE
+#endif
+
+/* TRUE to support Clock Synchronization OpCodes */
+#ifndef MCA_SYNC_INCLUDED
+#define MCA_SYNC_INCLUDED           FALSE
+#endif
+
+/* The MTU size for the L2CAP configuration on control channel. 48 is the minimal */
+#ifndef MCA_CTRL_MTU
+#define MCA_CTRL_MTU    60
+#endif
+
+/* The maximum number of registered MCAP instances. */
+#ifndef MCA_NUM_REGS
+#define MCA_NUM_REGS    3
+#endif
+
+/* The maximum number of control channels (to difference devices) per registered MCAP instances. */
+#ifndef MCA_NUM_LINKS
+#define MCA_NUM_LINKS   3
+#endif
+
+/* The maximum number of MDEP (including HDP echo) per registered MCAP instances. */
+#ifndef MCA_NUM_DEPS
+#define MCA_NUM_DEPS    3
+#endif
+
+/* The maximum number of MDL link per control channel. */
+#ifndef MCA_NUM_MDLS
+#define MCA_NUM_MDLS    4
+#endif
+
+/* Pool ID where to reassemble the SDU. */
+#ifndef MCA_USER_RX_POOL_ID
+#define MCA_USER_RX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/* Pool ID where to hold the SDU. */
+#ifndef MCA_USER_TX_POOL_ID
+#define MCA_USER_TX_POOL_ID     HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments during SDU reassembly
+*/
+#ifndef MCA_FCR_RX_POOL_ID
+#define MCA_FCR_RX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/*
+GKI Buffer Pool ID used to hold MPS segments used in (re)transmissions.
+L2CAP_DEFAULT_ERM_POOL_ID is specified to use the HCI ACL data pool.
+Note:  This pool needs to have enough buffers to hold two times the window size negotiated
+ in the tL2CAP_FCR_OPTIONS (2 * tx_win_size)  to allow for retransmissions.
+ The size of each buffer must be able to hold the maximum MPS segment size passed in
+ tL2CAP_FCR_OPTIONS plus BT_HDR (8) + HCI preamble (4) + L2CAP_MIN_OFFSET (11 - as of BT 2.1 + EDR Spec).
+*/
+#ifndef MCA_FCR_TX_POOL_ID
+#define MCA_FCR_TX_POOL_ID      HCI_ACL_POOL_ID
+#endif
+
+/* MCAP control channel FCR Option:
+Size of the transmission window when using enhanced retransmission mode.
+1 is defined by HDP specification for control channel.
+*/
+#ifndef MCA_FCR_OPT_TX_WINDOW_SIZE
+#define MCA_FCR_OPT_TX_WINDOW_SIZE      1
+#endif
+
+/* MCAP control channel FCR Option:
+Number of transmission attempts for a single I-Frame before taking
+Down the connection. Used In ERTM mode only. Value is Ignored in basic and
+Streaming modes.
+Range: 0, 1-0xFF
+0 - infinite retransmissions
+1 - single transmission
+*/
+#ifndef MCA_FCR_OPT_MAX_TX_B4_DISCNT
+#define MCA_FCR_OPT_MAX_TX_B4_DISCNT    20
+#endif
+
+/* MCAP control channel FCR Option: Retransmission Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost I-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 2000 (2 secs) when supporting PBF.
+ */
+#ifndef MCA_FCR_OPT_RETX_TOUT
+#define MCA_FCR_OPT_RETX_TOUT           2000
+#endif
+
+/* MCAP control channel FCR Option: Monitor Timeout
+The AVRCP specification set a value in the range of 300 - 2000 ms
+Timeout (in msecs) to detect Lost S-Frames. Only used in Enhanced retransmission mode.
+Range: Minimum 12000 (12 secs) when supporting PBF.
+*/
+#ifndef MCA_FCR_OPT_MONITOR_TOUT
+#define MCA_FCR_OPT_MONITOR_TOUT        12000
+#endif
+
+/* MCAP control channel FCR Option: Maximum PDU payload size.
+The maximum number of payload octets that the local device can receive in a single PDU.
+*/
+#ifndef MCA_FCR_OPT_MPS_SIZE
+#define MCA_FCR_OPT_MPS_SIZE            1000
+#endif
+
+/* Shared transport */
+#ifndef NFC_SHARED_TRANSPORT_ENABLED
+#define NFC_SHARED_TRANSPORT_ENABLED    FALSE
+#endif
+
+/******************************************************************************
+**
+** SER
+**
+******************************************************************************/
+
+#ifndef SER_INCLUDED
+#define SER_INCLUDED                FALSE
+#endif
+
+/* Task which runs the serial application. */
+#ifndef SER_TASK
+#define SER_TASK                    BTE_APPL_TASK
+#endif
+
+/* Mailbox used by serial application. */
+#ifndef SER_MBOX
+#define SER_MBOX                    TASK_MBOX_1
+#endif
+
+/* Mailbox mask. */
+#ifndef SER_MBOX_MASK
+#define SER_MBOX_MASK               TASK_MBOX_1_EVT_MASK
+#endif
+
+/* TX path application event. */
+#ifndef SER_TX_PATH_APPL_EVT
+#define SER_TX_PATH_APPL_EVT        EVENT_MASK(APPL_EVT_3)
+#endif
+
+/* RX path application event. */
+#ifndef SER_RX_PATH_APPL_EVT
+#define SER_RX_PATH_APPL_EVT        EVENT_MASK(APPL_EVT_4)
+#endif
+
+/******************************************************************************
+**
+** Sleep Mode (Low Power Mode)
+**
+******************************************************************************/
+
+#ifndef HCILP_INCLUDED
+#define HCILP_INCLUDED                  TRUE
+#endif
+
+/******************************************************************************
+**
+** RPC
+**
+******************************************************************************/
+
+#ifndef RPC_INCLUDED
+#define RPC_INCLUDED                FALSE
+#endif
+
+/* RPCT task mailbox ID for messages coming from rpcgen code. */
+#ifndef RPCT_MBOX
+#define RPCT_MBOX                   TASK_MBOX_0
+#endif
+
+/* RPCT task event for mailbox. */
+#ifndef RPCT_RPC_MBOX_EVT
+#define RPCT_RPC_MBOX_EVT           TASK_MBOX_0_EVT_MASK
+#endif
+
+/* RPCT task event from driver indicating RX data is ready. */
+#ifndef RPCT_RX_READY_EVT
+#define RPCT_RX_READY_EVT           APPL_EVT_0
+#endif
+
+/* RPCT task event from driver indicating data TX is done. */
+#ifndef RPCT_TX_DONE_EVT
+#define RPCT_TX_DONE_EVT            APPL_EVT_1
+#endif
+
+/* RPCT task event indicating data is in the circular buffer. */
+#ifndef RPCT_UCBUF_EVT
+#define RPCT_UCBUF_EVT              APPL_EVT_2
+#endif
+
+/* Task ID of RPCGEN task. */
+#ifndef RPCGEN_TASK
+#define RPCGEN_TASK                 BTU_TASK
+#endif
+
+/* RPCGEN task event for messages coming from RPCT. */
+#ifndef RPCGEN_MSG_EVT
+#define RPCGEN_MSG_EVT              TASK_MBOX_1_EVT_MASK
+#endif
+
+#ifndef RPCGEN_MSG_MBOX
+#define RPCGEN_MSG_MBOX             TASK_MBOX_1
+#endif
+
+/* Size of circular buffer used to store diagnostic messages. */
+#ifndef RPCT_UCBUF_SIZE
+#define RPCT_UCBUF_SIZE             2000
+#endif
+
+/******************************************************************************
+**
+** SAP - Sample applications
+**
+******************************************************************************/
+
+#ifndef MMI_INCLUDED
+#define MMI_INCLUDED                FALSE
+#endif
+
+/******************************************************************************
+**
+** APPL - Application Task
+**
+******************************************************************************/
+/* When TRUE indicates that an application task is to be run */
+#ifndef APPL_INCLUDED
+#define APPL_INCLUDED                TRUE
+#endif
+
+/* When TRUE remote terminal code included (RPC MUST be included) */
+#ifndef RSI_INCLUDED
+#define RSI_INCLUDED                TRUE
+#endif
+
+
+
+#define L2CAP_FEATURE_REQ_ID      73
+#define L2CAP_FEATURE_RSP_ID     173
+
+
+#define L2CAP_ENHANCED_FEATURES   0
+
+
+/******************************************************************************
+**
+** BTA
+**
+******************************************************************************/
+/* BTA EIR canned UUID list (default is dynamic) */
+#ifndef BTA_EIR_CANNED_UUID_LIST
+#define BTA_EIR_CANNED_UUID_LIST FALSE
+#endif
+
+/* Number of supported customer UUID in EIR */
+#ifndef BTA_EIR_SERVER_NUM_CUSTOM_UUID
+#define BTA_EIR_SERVER_NUM_CUSTOM_UUID     8
+#endif
+
+/* CHLD override for bluedroid */
+#ifndef BTA_AG_CHLD_VAL_ECC
+#define BTA_AG_CHLD_VAL_ECC  "(0,1,1x,2,2x,3)"
+#endif
+
+#ifndef BTA_AG_CHLD_VAL
+#define BTA_AG_CHLD_VAL  "(0,1,2,3)"
+#endif
+
+/* Set the CIND to match HFP 1.5 */
+#ifndef BTA_AG_CIND_INFO
+#define BTA_AG_CIND_INFO "(\"call\",(0,1)),(\"callsetup\",(0-3)),(\"service\",(0-1)),(\"signal\",(0-5)),(\"roam\",(0,1)),(\"battchg\",(0-5)),(\"callheld\",(0-2))"
+#endif
+
+
+/******************************************************************************
+**
+** BTE
+**
+******************************************************************************/
+#ifndef BTE_PLATFORM_IDLE
+#define BTE_PLATFORM_IDLE
+#endif
+
+#ifndef BTE_IDLE_TASK_INCLUDED
+#define BTE_IDLE_TASK_INCLUDED FALSE
+#endif
+
+#ifndef BTE_PLATFORM_INITHW
+#define BTE_PLATFORM_INITHW
+#endif
+
+#ifndef BTE_BTA_CODE_INCLUDED
+#define BTE_BTA_CODE_INCLUDED FALSE
+#endif
+
+/******************************************************************************
+**
+** BTTRC
+**
+******************************************************************************/
+/* Whether to parse and display traces-> Platform specific implementation */
+#ifndef BTTRC_DISP
+#define BTTRC_DISP        BTTRC_DispOnInsight
+#endif
+
+#endif /* BT_TARGET_H */
+/* end "revolution/BTE/include/bt_target.h" */
+#endif
+
+
+
+/* "libs/RVL_SDK/include/revolution/bte/gki/common/gki.h" line 33 "revolution/BTE/stack/include/bt_types.h" */
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef BT_TYPES_H
+#define BT_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 23 "revolution/BTE/gki/platform/data_types.h" */
+/******************************************************************************
+ *
+ *  NOTICE OF CHANGES
+ *  2024/03/25:
+ *      - Move from ulinux/ to platform/
+ *      - Add #include for RVL types (include/types.h)
+ * 
+ *  Compile with REVOLUTION defined to include these changes.
+ * 
+ ******************************************************************************/
+
+
+
+//Modified by celestialamber
+
+/******************************************************************************
+ *
+ *  Copyright (C) 1999-2012 Broadcom Corporation
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at:
+ *
+ *  http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ *
+ ******************************************************************************/
+
+#ifndef DATA_TYPES_H
+#define DATA_TYPES_H
+
+/* "libs/RVL_SDK/include/revolution/BTE/gki/platform/data_types.h" line 36 "types.h" */
+/* end "types.h" */
+
+typedef unsigned char   UINT8;
+typedef unsigned short  UINT16;
+typedef unsigned long   UINT32;
+typedef signed   long   INT32;
+typedef signed   char   INT8;
+typedef signed   short  INT16;
+typedef unsigned char   BOOLEAN;
+
+
+typedef UINT32          TIME_STAMP;
+
+#ifndef TRUE
+#define TRUE   (!FALSE)
+#endif
+
+typedef unsigned char   UBYTE;
+
+#ifdef __arm
+#define PACKED  __packed
+#define INLINE  __inline
+#else
+#define PACKED
+#define INLINE
+#endif
+
+#ifndef BIG_ENDIAN
+#define BIG_ENDIAN FALSE
+#endif
+
+#define UINT16_LOW_BYTE(x)      ((x) & 0xff)
+#define UINT16_HI_BYTE(x)       ((x) >> 8)
+
+
+#define BCM_STRCAT_S(x1,x2,x3)      strcat((x1),(x3))
+#define BCM_STRNCAT_S(x1,x2,x3,x4)  strncat((x1),(x3),(x4))
+#define BCM_STRCPY_S(x1,x2,x3)      strcpy((x1),(x3))
+#define BCM_STRNCPY_S(x1,x2,x3,x4)  strncpy((x1),(x3),(x4))
+
+
+
+#endif
+/* end "revolution/BTE/gki/platform/data_types.h" */
+
+#ifdef _WIN32
+#ifdef BLUESTACK_TESTER
+/* "libs/RVL_SDK/include/revolution/BTE/stack/include/bt_types.h" line 27 "bte_stack_entry.h" */
+/* end "bte_stack_entry.h" */
+#endif
+#endif
+
+/* READ WELL !!
+**
+** This section defines global events. These are events that cross layers.
+** Any event that passes between layers MUST be one of these events. Tasks
+** can use their own events internally, but a FUNDAMENTAL design issue is
+** that global events MUST be one of these events defined below.
+**
+** The convention used is the the event name contains the layer that the
+** event is going to.
+*/
+#define BT_EVT_MASK                 0xFF00
+#define BT_SUB_EVT_MASK             0x00FF
+                                                /* To Bluetooth Upper Layers        */
+                                                /************************************/
+#define BT_EVT_TO_BTU_L2C_EVT       0x0900      /* L2CAP event */
+#define BT_EVT_TO_BTU_HCI_EVT       0x1000      /* HCI Event                        */
+#define BT_EVT_TO_BTU_HCI_BR_EDR_EVT (0x0000 | BT_EVT_TO_BTU_HCI_EVT)      /* event from BR/EDR controller */
+#define BT_EVT_TO_BTU_HCI_AMP1_EVT   (0x0001 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 1 controller */
+#define BT_EVT_TO_BTU_HCI_AMP2_EVT   (0x0002 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 2 controller */
+#define BT_EVT_TO_BTU_HCI_AMP3_EVT   (0x0003 | BT_EVT_TO_BTU_HCI_EVT)      /* event from local AMP 3 controller */
+
+#define BT_EVT_TO_BTU_HCI_ACL       0x1100      /* ACL Data from HCI                */
+#define BT_EVT_TO_BTU_HCI_SCO       0x1200      /* SCO Data from HCI                */
+#define BT_EVT_TO_BTU_HCIT_ERR      0x1300      /* HCI Transport Error              */
+
+#define BT_EVT_TO_BTU_SP_EVT        0x1400      /* Serial Port Event                */
+#define BT_EVT_TO_BTU_SP_DATA       0x1500      /* Serial Port Data                 */
+
+#define BT_EVT_TO_BTU_HCI_CMD       0x1600      /* HCI command from upper layer     */
+
+
+#define BT_EVT_TO_BTU_L2C_SEG_XMIT  0x1900      /* L2CAP segment(s) transmitted     */
+
+#define BT_EVT_PROXY_INCOMING_MSG   0x1A00      /* BlueStackTester event: incoming message from target */
+
+#define BT_EVT_BTSIM                0x1B00      /* Insight BTSIM event */
+#define BT_EVT_BTISE                0x1C00      /* Insight Script Engine event */
+
+                                                /* To LM                            */
+                                                /************************************/
+#define BT_EVT_TO_LM_HCI_CMD        0x2000      /* HCI Command                      */
+#define BT_EVT_TO_LM_HCI_ACL        0x2100      /* HCI ACL Data                     */
+#define BT_EVT_TO_LM_HCI_SCO        0x2200      /* HCI SCO Data                     */
+#define BT_EVT_TO_LM_HCIT_ERR       0x2300      /* HCI Transport Error              */
+#define BT_EVT_TO_LM_LC_EVT         0x2400      /* LC event                         */
+#define BT_EVT_TO_LM_LC_LMP         0x2500      /* LC Received LMP command frame    */
+#define BT_EVT_TO_LM_LC_ACL         0x2600      /* LC Received ACL data             */
+#define BT_EVT_TO_LM_LC_SCO         0x2700      /* LC Received SCO data  (not used) */
+#define BT_EVT_TO_LM_LC_ACL_TX      0x2800      /* LMP data transmit complete       */
+#define BT_EVT_TO_LM_LC_LMPC_TX     0x2900      /* LMP Command transmit complete    */
+#define BT_EVT_TO_LM_LOCAL_ACL_LB   0x2a00      /* Data to be locally loopbacked    */
+#define BT_EVT_TO_LM_HCI_ACL_ACK    0x2b00      /* HCI ACL Data ack      (not used) */
+#define BT_EVT_TO_LM_DIAG           0x2c00      /* LM Diagnostics commands          */
+
+
+#define BT_EVT_TO_BTM_CMDS          0x2f00
+#define BT_EVT_TO_BTM_PM_MDCHG_EVT (0x0001 | BT_EVT_TO_BTM_CMDS)
+
+#define BT_EVT_TO_TCS_CMDS          0x3000
+
+#define BT_EVT_TO_OBX_CL_MSG        0x3100
+#define BT_EVT_TO_OBX_SR_MSG        0x3200
+
+#define BT_EVT_TO_CTP_CMDS          0x3300
+
+/* Obex Over L2CAP */
+#define BT_EVT_TO_OBX_CL_L2C_MSG    0x3400
+#define BT_EVT_TO_OBX_SR_L2C_MSG    0x3500
+
+/* ftp events */
+#define BT_EVT_TO_FTP_SRVR_CMDS     0x3800
+#define BT_EVT_TO_FTP_CLNT_CMDS     0x3900
+
+#define BT_EVT_TO_BTU_SAP           0x3a00       /* SIM Access Profile events */
+
+/* opp events */
+#define BT_EVT_TO_OPP_SRVR_CMDS     0x3b00
+#define BT_EVT_TO_OPP_CLNT_CMDS     0x3c00
+
+/* gap events */
+#define BT_EVT_TO_GAP_MSG           0x3d00
+
+/* start timer */
+#define BT_EVT_TO_START_TIMER       0x3e00
+
+/* start quick timer */
+#define BT_EVT_TO_START_QUICK_TIMER 0x3f00
+
+
+/* for NFC                          */
+                                                /************************************/
+#define BT_EVT_TO_NFC_NCI           0x4000      /* NCI Command, Notification or Data*/
+#define BT_EVT_TO_NFC_INIT          0x4100      /* Initialization message */
+#define BT_EVT_TO_LLCP_ECHO         0x4200      /* LLCP Echo Service */
+#define BT_EVT_TO_LLCP_SOCKET       0x4300      /* LLCP over TCP/IP */
+#define BT_EVT_TO_NCI_LP            0x4400      /* Low power */
+#define BT_EVT_TO_NFC_ERR           0x4500      /* Error notification to NFC Task */
+
+#define BT_EVT_TO_NFCCSIM_NCI       0x4a00      /* events to NFCC simulation (NCI packets) */
+
+/* HCISU Events */
+
+#define BT_EVT_HCISU                0x5000
+
+// btla-specific ++
+#define BT_EVT_TO_HCISU_RECONFIG_EVT            (0x0001 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_UPDATE_BAUDRATE_EVT     (0x0002 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ENABLE_EVT           (0x0003 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_DISABLE_EVT          (0x0004 | BT_EVT_HCISU)
+// btla-specific --
+#define BT_EVT_TO_HCISU_LP_APP_SLEEPING_EVT     (0x0005 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_ALLOW_BT_SLEEP_EVT   (0x0006 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_WAKEUP_HOST_EVT      (0x0007 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_LP_RCV_H4IBSS_EVT       (0x0008 | BT_EVT_HCISU)
+#define BT_EVT_TO_HCISU_H5_RESET_EVT            (0x0009 | BT_EVT_HCISU)
+#define BT_EVT_HCISU_START_QUICK_TIMER          (0x000a | BT_EVT_HCISU)
+
+#define BT_EVT_DATA_TO_AMP_1        0x5100
+#define BT_EVT_DATA_TO_AMP_15       0x5f00
+
+/* HSP Events */
+
+#define BT_EVT_BTU_HSP2             0x6000
+
+#define BT_EVT_TO_BTU_HSP2_EVT     (0x0001 | BT_EVT_BTU_HSP2)
+
+/* BPP Events */
+#define BT_EVT_TO_BPP_PR_CMDS       0x6100      /* Printer Events */
+#define BT_EVT_TO_BPP_SND_CMDS      0x6200      /* BPP Sender Events */
+
+/* BIP Events */
+#define BT_EVT_TO_BIP_CMDS          0x6300
+
+/* HCRP Events */
+
+#define BT_EVT_BTU_HCRP             0x7000
+
+#define BT_EVT_TO_BTU_HCRP_EVT     (0x0001 | BT_EVT_BTU_HCRP)
+#define BT_EVT_TO_BTU_HCRPM_EVT    (0x0002 | BT_EVT_BTU_HCRP)
+
+
+#define BT_EVT_BTU_HFP              0x8000
+#define BT_EVT_TO_BTU_HFP_EVT      (0x0001 | BT_EVT_BTU_HFP)
+
+#define BT_EVT_BTU_IPC_EVT          0x9000
+#define BT_EVT_BTU_IPC_LOGMSG_EVT  (0x0000 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_ACL_EVT     (0x0001 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTU_EVT     (0x0002 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_EVT     (0x0003 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_L2C_MSG_EVT (0x0004 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTM_EVT     (0x0005 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_AVDT_EVT    (0x0006 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_SLIP_EVT    (0x0007 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_MGMT_EVT    (0x0008 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BTTRC_EVT   (0x0009 | BT_EVT_BTU_IPC_EVT)
+#define BT_EVT_BTU_IPC_BURST_EVT   (0x000A | BT_EVT_BTU_IPC_EVT)
+
+
+/* BTIF Events */
+#define BT_EVT_BTIF                 0xA000
+#define BT_EVT_CONTEXT_SWITCH_EVT  (0x0001 | BT_EVT_BTIF)
+
+#define BT_EVT_TRIGGER_STACK_INIT   EVENT_MASK(APPL_EVT_0)
+
+
+/* Define the header of each buffer used in the Bluetooth stack.
+*/
+typedef struct
+{
+    UINT16          event;
+    UINT16          len;
+    UINT16          offset;
+    UINT16          layer_specific;
+} BT_HDR;
+
+#define BT_HDR_SIZE (sizeof (BT_HDR))
+
+#define BT_PSM_SDP                      0x0001
+#define BT_PSM_RFCOMM                   0x0003
+#define BT_PSM_TCS                      0x0005
+#define BT_PSM_CTP                      0x0007
+#define BT_PSM_BNEP                     0x000F
+#define BT_PSM_HIDC                     0x0011
+#define BT_PSM_HIDI                     0x0013
+#define BT_PSM_UPNP                     0x0015
+#define BT_PSM_AVCTP                    0x0017
+#define BT_PSM_AVDTP                    0x0019
+#define BT_PSM_AVCTP_13                 0x001B /* Advanced Control - Browsing */
+#define BT_PSM_UDI_CP                   0x001D /* Unrestricted Digital Information Profile C-Plane  */
+#define BT_PSM_ATT                      0x001F /* Attribute Protocol  */
+
+
+/* These macros extract the HCI opcodes from a buffer
+*/
+#define HCI_GET_CMD_HDR_OPCODE(p)    (UINT16)((*((UINT8 *)((p) + 1) + p->offset) + \
+                                              (*((UINT8 *)((p) + 1) + p->offset + 1) << 8)))
+#define HCI_GET_CMD_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 2))
+
+#define HCI_GET_EVT_HDR_OPCODE(p)    (UINT8)(*((UINT8 *)((p) + 1) + p->offset))
+#define HCI_GET_EVT_HDR_PARAM_LEN(p) (UINT8)  (*((UINT8 *)((p) + 1) + p->offset + 1))
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Little Endian format).
+*/
+#define UINT32_TO_STREAM(p, u32) {*(p)++ = (UINT8)(u32); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 24);}
+#define UINT24_TO_STREAM(p, u24) {*(p)++ = (UINT8)(u24); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)((u24) >> 16);}
+#define UINT16_TO_STREAM(p, u16) {*(p)++ = (UINT8)(u16); *(p)++ = (UINT8)((u16) >> 8);}
+#define UINT8_TO_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define INT8_TO_STREAM(p, u8)    {*(p)++ = (INT8)(u8);}
+#define ARRAY32_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 32;           ijk++) *(p)++ = (UINT8) a[31 - ijk];}
+#define ARRAY16_TO_STREAM(p, a)  {register int ijk; for (ijk = 0; ijk < 16;           ijk++) *(p)++ = (UINT8) a[15 - ijk];}
+#define ARRAY8_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < 8;            ijk++) *(p)++ = (UINT8) a[7 - ijk];}
+#define BDADDR_TO_STREAM(p, a)   {register int ijk; for (ijk = 0; ijk < BD_ADDR_LEN;  ijk++) *(p)++ = (UINT8) a[BD_ADDR_LEN - 1 - ijk];}
+#define LAP_TO_STREAM(p, a)      {register int ijk; for (ijk = 0; ijk < LAP_LEN;      ijk++) *(p)++ = (UINT8) a[LAP_LEN - 1 - ijk];}
+#define DEVCLASS_TO_STREAM(p, a) {register int ijk; for (ijk = 0; ijk < DEV_CLASS_LEN;ijk++) *(p)++ = (UINT8) a[DEV_CLASS_LEN - 1 - ijk];}
+#define ARRAY_TO_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len;        ijk++) *(p)++ = (UINT8) a[ijk];}
+#define REVERSE_ARRAY_TO_STREAM(p, a, len)  {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[len - 1 - ijk];}
+
+#define STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define STREAM_TO_UINT16(u16, p) {u16 = ((UINT16)(*(p)) + (((UINT16)(*((p) + 1))) << 8)); (p) += 2;}
+#define STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) ); (p) += 3;}
+#define STREAM_TO_UINT32(u32, p) {u32 = (((UINT32)(*(p))) + ((((UINT32)(*((p) + 1)))) << 8) + ((((UINT32)(*((p) + 2)))) << 16) + ((((UINT32)(*((p) + 3)))) << 24)); (p) += 4;}
+#define STREAM_TO_BDADDR(a, p)   {register int ijk; register UINT8 *pbda = (UINT8 *)a + BD_ADDR_LEN - 1; for (ijk = 0; ijk < BD_ADDR_LEN; ijk++) *pbda-- = *p++;}
+#define STREAM_TO_ARRAY32(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 31; for (ijk = 0; ijk < 32; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY16(a, p)  {register int ijk; register UINT8 *_pa = (UINT8 *)a + 15; for (ijk = 0; ijk < 16; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_ARRAY8(a, p)   {register int ijk; register UINT8 *_pa = (UINT8 *)a + 7; for (ijk = 0; ijk < 8; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_DEVCLASS(a, p) {register int ijk; register UINT8 *_pa = (UINT8 *)a + DEV_CLASS_LEN - 1; for (ijk = 0; ijk < DEV_CLASS_LEN; ijk++) *_pa-- = *p++;}
+#define STREAM_TO_LAP(a, p)      {register int ijk; register UINT8 *plap = (UINT8 *)a + LAP_LEN - 1; for (ijk = 0; ijk < LAP_LEN; ijk++) *plap-- = *p++;}
+#define STREAM_TO_ARRAY(a, p, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+#define REVERSE_STREAM_TO_ARRAY(a, p, len) {register int ijk; register UINT8 *_pa = (UINT8 *)a + len - 1; for (ijk = 0; ijk < len; ijk++) *_pa-- = *p++;}
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Little Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)(u32); *((UINT8 *)(p)+1) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+3) = (UINT8)((u32) >> 24);}
+#define UINT24_TO_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)(u24); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)((u24) >> 16);}
+#define UINT16_TO_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)(u16); *((UINT8 *)(p)+1) = (UINT8)((u16) >> 8);}
+#define UINT8_TO_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a stream (Big Endian format)
+*/
+#define UINT32_TO_BE_STREAM(p, u32) {*(p)++ = (UINT8)((u32) >> 24);  *(p)++ = (UINT8)((u32) >> 16); *(p)++ = (UINT8)((u32) >> 8); *(p)++ = (UINT8)(u32); }
+#define UINT24_TO_BE_STREAM(p, u24) {*(p)++ = (UINT8)((u24) >> 16); *(p)++ = (UINT8)((u24) >> 8); *(p)++ = (UINT8)(u24);}
+#define UINT16_TO_BE_STREAM(p, u16) {*(p)++ = (UINT8)((u16) >> 8); *(p)++ = (UINT8)(u16);}
+#define UINT8_TO_BE_STREAM(p, u8)   {*(p)++ = (UINT8)(u8);}
+#define ARRAY_TO_BE_STREAM(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) *(p)++ = (UINT8) a[ijk];}
+
+#define BE_STREAM_TO_UINT8(u8, p)   {u8 = (UINT8)(*(p)); (p) += 1;}
+#define BE_STREAM_TO_UINT16(u16, p) {u16 = (UINT16)(((UINT16)(*(p)) << 8) + (UINT16)(*((p) + 1))); (p) += 2;}
+#define BE_STREAM_TO_UINT24(u32, p) {u32 = (((UINT32)(*((p) + 2))) + ((UINT32)(*((p) + 1)) << 8) + ((UINT32)(*(p)) << 16)); (p) += 3;}
+#define BE_STREAM_TO_UINT32(u32, p) {u32 = ((UINT32)(*((p) + 3)) + ((UINT32)(*((p) + 2)) << 8) + ((UINT32)(*((p) + 1)) << 16) + ((UINT32)(*(p)) << 24)); (p) += 4;}
+#define BE_STREAM_TO_ARRAY(p, a, len) {register int ijk; for (ijk = 0; ijk < len; ijk++) ((UINT8 *) a)[ijk] = *p++;}
+
+
+/********************************************************************************
+** Macros to get and put bytes to and from a field (Big Endian format).
+** These are the same as to stream, except the pointer is not incremented.
+*/
+#define UINT32_TO_BE_FIELD(p, u32) {*(UINT8 *)(p) = (UINT8)((u32) >> 24);  *((UINT8 *)(p)+1) = (UINT8)((u32) >> 16); *((UINT8 *)(p)+2) = (UINT8)((u32) >> 8); *((UINT8 *)(p)+3) = (UINT8)(u32); }
+#define UINT24_TO_BE_FIELD(p, u24) {*(UINT8 *)(p) = (UINT8)((u24) >> 16); *((UINT8 *)(p)+1) = (UINT8)((u24) >> 8); *((UINT8 *)(p)+2) = (UINT8)(u24);}
+#define UINT16_TO_BE_FIELD(p, u16) {*(UINT8 *)(p) = (UINT8)((u16) >> 8); *((UINT8 *)(p)+1) = (UINT8)(u16);}
+#define UINT8_TO_BE_FIELD(p, u8)   {*(UINT8 *)(p) = (UINT8)(u8);}
+
+
+/* Common Bluetooth field definitions */
+#define BD_ADDR_LEN     6                   /* Device address length */
+typedef UINT8 BD_ADDR[BD_ADDR_LEN];         /* Device address */
+typedef UINT8 *BD_ADDR_PTR;                 /* Pointer to Device Address */
+
+#define AMP_KEY_TYPE_GAMP       0
+#define AMP_KEY_TYPE_WIFI       1
+#define AMP_KEY_TYPE_UWB        2
+typedef UINT8 tAMP_KEY_TYPE;
+
+#define BT_OCTET8_LEN    8
+typedef UINT8 BT_OCTET8[BT_OCTET8_LEN];   /* octet array: size 16 */
+
+#define LINK_KEY_LEN    16
+typedef UINT8 LINK_KEY[LINK_KEY_LEN];       /* Link Key */
+
+#define AMP_LINK_KEY_LEN        32
+typedef UINT8 AMP_LINK_KEY[AMP_LINK_KEY_LEN];   /* Dedicated AMP and GAMP Link Keys */
+
+#define BT_OCTET16_LEN    16
+typedef UINT8 BT_OCTET16[BT_OCTET16_LEN];   /* octet array: size 16 */
+
+#define PIN_CODE_LEN    16
+typedef UINT8 PIN_CODE[PIN_CODE_LEN];       /* Pin Code (upto 128 bits) MSB is 0 */
+typedef UINT8 *PIN_CODE_PTR;                /* Pointer to Pin Code */
+
+#define DEV_CLASS_LEN   3
+typedef UINT8 DEV_CLASS[DEV_CLASS_LEN];     /* Device class */
+typedef UINT8 *DEV_CLASS_PTR;               /* Pointer to Device class */
+
+#define EXT_INQ_RESP_LEN   3
+typedef UINT8 EXT_INQ_RESP[EXT_INQ_RESP_LEN];/* Extended Inquiry Response */
+typedef UINT8 *EXT_INQ_RESP_PTR;             /* Pointer to Extended Inquiry Response */
+
+#define BD_NAME_LEN     248
+typedef UINT8 BD_NAME[BD_NAME_LEN];         /* Device name */
+typedef UINT8 *BD_NAME_PTR;                 /* Pointer to Device name */
+
+#define BD_FEATURES_LEN 8
+typedef UINT8 BD_FEATURES[BD_FEATURES_LEN]; /* LMP features supported by device */
+
+#define BT_EVENT_MASK_LEN  8
+typedef UINT8 BT_EVENT_MASK[BT_EVENT_MASK_LEN];   /* Event Mask */
+
+#define LAP_LEN         3
+typedef UINT8 LAP[LAP_LEN];                 /* IAC as passed to Inquiry (LAP) */
+typedef UINT8 INQ_LAP[LAP_LEN];             /* IAC as passed to Inquiry (LAP) */
+
+#define RAND_NUM_LEN    16
+typedef UINT8 RAND_NUM[RAND_NUM_LEN];
+
+#define ACO_LEN         12
+typedef UINT8 ACO[ACO_LEN];                 /* Authenticated ciphering offset */
+
+#define COF_LEN         12
+typedef UINT8 COF[COF_LEN];                 /* ciphering offset number */
+
+typedef struct {
+    UINT8               qos_flags;          /* TBD */
+    UINT8               service_type;       /* see below */
+    UINT32              token_rate;         /* bytes/second */
+    UINT32              token_bucket_size;  /* bytes */
+    UINT32              peak_bandwidth;     /* bytes/second */
+    UINT32              latency;            /* microseconds */
+    UINT32              delay_variation;    /* microseconds */
+} FLOW_SPEC;
+
+/* Values for service_type */
+#define NO_TRAFFIC      0
+#define BEST_EFFORT     1
+#define GUARANTEED      2
+
+/* Service class of the CoD */
+#define SERV_CLASS_NETWORKING               (1 << 1)
+#define SERV_CLASS_RENDERING                (1 << 2)
+#define SERV_CLASS_CAPTURING                (1 << 3)
+#define SERV_CLASS_OBJECT_TRANSFER          (1 << 4)
+#define SERV_CLASS_OBJECT_AUDIO             (1 << 5)
+#define SERV_CLASS_OBJECT_TELEPHONY         (1 << 6)
+#define SERV_CLASS_OBJECT_INFORMATION       (1 << 7)
+
+/* Second byte */
+#define SERV_CLASS_LIMITED_DISC_MODE        (0x20)
+
+/* Field size definitions. Note that byte lengths are rounded up. */
+#define ACCESS_CODE_BIT_LEN             72
+#define ACCESS_CODE_BYTE_LEN            9
+#define SHORTENED_ACCESS_CODE_BIT_LEN   68
+
+typedef UINT8 ACCESS_CODE[ACCESS_CODE_BYTE_LEN];
+
+#define SYNTH_TX                1           /* want synth code to TRANSMIT at this freq */
+#define SYNTH_RX                2           /* want synth code to RECEIVE at this freq */
+
+#define SYNC_REPS 1             /* repeats of sync word transmitted to start of burst */
+
+/* Bluetooth CLK27 */
+#define BT_CLK27            (2 << 26)
+
+/* Bluetooth CLK12 is 1.28 sec */
+#define BT_CLK12_TO_MS(x)    ((x) * 1280)
+#define BT_MS_TO_CLK12(x)    ((x) / 1280)
+#define BT_CLK12_TO_SLOTS(x) ((x) << 11)
+
+/* Bluetooth CLK is 0.625 msec */
+#define BT_CLK_TO_MS(x)      (((x) * 5 + 3) / 8)
+#define BT_MS_TO_CLK(x)      (((x) * 8 + 2) / 5)
+
+#define BT_CLK_TO_MICROSECS(x)  (((x) * 5000 + 3) / 8)
+#define BT_MICROSECS_TO_CLK(x)  (((x) * 8 + 2499) / 5000)
+
+/* Maximum UUID size - 16 bytes, and structure to hold any type of UUID. */
+#define MAX_UUID_SIZE              16
+typedef struct
+{
+#define LEN_UUID_16     2
+#define LEN_UUID_32     4
+#define LEN_UUID_128    16
+
+    UINT16          len;
+
+    union
+    {
+        UINT16      uuid16;
+        UINT32      uuid32;
+        UINT8       uuid128[MAX_UUID_SIZE];
+    } uu;
+
+} tBT_UUID;
+
+#define BT_EIR_FLAGS_TYPE                   0x01
+#define BT_EIR_MORE_16BITS_UUID_TYPE        0x02
+#define BT_EIR_COMPLETE_16BITS_UUID_TYPE    0x03
+#define BT_EIR_MORE_32BITS_UUID_TYPE        0x04
+#define BT_EIR_COMPLETE_32BITS_UUID_TYPE    0x05
+#define BT_EIR_MORE_128BITS_UUID_TYPE       0x06
+#define BT_EIR_COMPLETE_128BITS_UUID_TYPE   0x07
+#define BT_EIR_SHORTENED_LOCAL_NAME_TYPE    0x08
+#define BT_EIR_COMPLETE_LOCAL_NAME_TYPE     0x09
+#define BT_EIR_TX_POWER_LEVEL_TYPE          0x0A
+#define BT_EIR_OOB_BD_ADDR_TYPE             0x0C
+#define BT_EIR_OOB_COD_TYPE                 0x0D
+#define BT_EIR_OOB_SSP_HASH_C_TYPE          0x0E
+#define BT_EIR_OOB_SSP_RAND_R_TYPE          0x0F
+#define BT_EIR_MANUFACTURER_SPECIFIC_TYPE   0xFF
+
+#define BT_OOB_COD_SIZE            3
+#define BT_OOB_HASH_C_SIZE         16
+#define BT_OOB_RAND_R_SIZE         16
+
+/* Broadcom proprietary UUIDs and reserved PSMs
+**
+** The lowest 4 bytes byte of the UUID or GUID depends on the feature. Typically,
+** the value of those bytes will be the PSM or SCN, but it is up to the features.
+*/
+#define BRCM_PROPRIETARY_UUID_BASE  0xDA, 0x23, 0x41, 0x02, 0xA3, 0xBB, 0xC1, 0x71, 0xBA, 0x09, 0x6f, 0x21
+#define BRCM_PROPRIETARY_GUID_BASE  0xda23, 0x4102, 0xa3, 0xbb, 0xc1, 0x71, 0xba, 0x09, 0x6f, 0x21
+
+/* We will not allocate a PSM in the reserved range to 3rd party apps
+*/
+#define BRCM_RESERVED_PSM_START	    0x5AE1
+#define BRCM_RESERVED_PSM_END	    0x5AFF
+
+#define BRCM_UTILITY_SERVICE_PSM    0x5AE1
+#define BRCM_MATCHER_PSM            0x5AE3
+
+/* Connection statistics
+*/
+
+/* Structure to hold connection stats */
+#ifndef BT_CONN_STATS_DEFINED
+#define BT_CONN_STATS_DEFINED
+
+/* These bits are used in the bIsConnected field */
+#define BT_CONNECTED_USING_BREDR   1
+#define BT_CONNECTED_USING_AMP     2
+
+typedef struct
+{
+    UINT32   is_connected;
+    INT32    rssi;
+    UINT32   bytes_sent;
+    UINT32   bytes_rcvd;
+    UINT32   duration;
+} tBT_CONN_STATS;
+
+#endif
+
+
+/*****************************************************************************
+**                          Low Energy definitions
+**
+** Address types
+*/
+#define BLE_ADDR_PUBLIC         0x00
+#define BLE_ADDR_RANDOM         0x01
+#define BLE_ADDR_TYPE_MASK      (BLE_ADDR_RANDOM | BLE_ADDR_PUBLIC)
+typedef UINT8 tBLE_ADDR_TYPE;
+
+#define BLE_ADDR_IS_STATIC(x)   ((x[0] & 0xC0) == 0xC0)
+
+typedef struct
+{
+    tBLE_ADDR_TYPE      type;
+    BD_ADDR             bda;
+} tBLE_BD_ADDR;
+
+/* Device Types
+*/
+#define BT_DEVICE_TYPE_BREDR   0x01
+#define BT_DEVICE_TYPE_BLE     0x02
+#define BT_DEVICE_TYPE_DUMO    0x03
+typedef UINT8 tBT_DEVICE_TYPE;
+/*****************************************************************************/
+
+
+/* Define trace levels */
+#define BT_TRACE_LEVEL_NONE    0          /* No trace messages to be generated    */
+#define BT_TRACE_LEVEL_ERROR   1          /* Error condition trace messages       */
+#define BT_TRACE_LEVEL_WARNING 2          /* Warning condition trace messages     */
+#define BT_TRACE_LEVEL_API     3          /* API traces                           */
+#define BT_TRACE_LEVEL_EVENT   4          /* Debug messages for events            */
+#define BT_TRACE_LEVEL_DEBUG   5          /* Full debug messages                  */
+#define BT_TRACE_LEVEL_VERBOSE 6          /* Verbose debug messages               */
+
+#define MAX_TRACE_LEVEL        6
+
+
+/* Define New Trace Type Definition */
+/* TRACE_CTRL_TYPE                  0x^^000000*/
+#define TRACE_CTRL_MASK             0xff000000
+#define TRACE_GET_CTRL(x)           ((((UINT32)(x)) & TRACE_CTRL_MASK) >> 24)
+
+#define TRACE_CTRL_GENERAL          0x00000000
+#define TRACE_CTRL_STR_RESOURCE     0x01000000
+#define TRACE_CTRL_SEQ_FLOW         0x02000000
+#define TRACE_CTRL_MAX_NUM          3
+
+/* LAYER SPECIFIC                   0x00^^0000*/
+#define TRACE_LAYER_MASK            0x00ff0000
+#define TRACE_GET_LAYER(x)          ((((UINT32)(x)) & TRACE_LAYER_MASK) >> 16)
+
+#define TRACE_LAYER_NONE            0x00000000
+#define TRACE_LAYER_USB             0x00010000
+#define TRACE_LAYER_SERIAL          0x00020000
+#define TRACE_LAYER_SOCKET          0x00030000
+#define TRACE_LAYER_RS232           0x00040000
+#define TRACE_LAYER_TRANS_MAX_NUM   5
+#define TRACE_LAYER_TRANS_ALL       0x007f0000
+#define TRACE_LAYER_LC              0x00050000
+#define TRACE_LAYER_LM              0x00060000
+#define TRACE_LAYER_HCI             0x00070000
+#define TRACE_LAYER_L2CAP           0x00080000
+#define TRACE_LAYER_RFCOMM          0x00090000
+#define TRACE_LAYER_SDP             0x000a0000
+#define TRACE_LAYER_TCS             0x000b0000
+#define TRACE_LAYER_OBEX            0x000c0000
+#define TRACE_LAYER_BTM             0x000d0000
+#define TRACE_LAYER_GAP             0x000e0000
+#define TRACE_LAYER_DUN             0x000f0000
+#define TRACE_LAYER_GOEP            0x00100000
+#define TRACE_LAYER_ICP             0x00110000
+#define TRACE_LAYER_HSP2            0x00120000
+#define TRACE_LAYER_SPP             0x00130000
+#define TRACE_LAYER_CTP             0x00140000
+#define TRACE_LAYER_BPP             0x00150000
+#define TRACE_LAYER_HCRP            0x00160000
+#define TRACE_LAYER_FTP             0x00170000
+#define TRACE_LAYER_OPP             0x00180000
+#define TRACE_LAYER_BTU             0x00190000
+#define TRACE_LAYER_GKI             0x001a0000
+#define TRACE_LAYER_BNEP            0x001b0000
+#define TRACE_LAYER_PAN             0x001c0000
+#define TRACE_LAYER_HFP             0x001d0000
+#define TRACE_LAYER_HID             0x001e0000
+#define TRACE_LAYER_BIP             0x001f0000
+#define TRACE_LAYER_AVP             0x00200000
+#define TRACE_LAYER_A2D             0x00210000
+#define TRACE_LAYER_SAP             0x00220000
+#define TRACE_LAYER_AMP             0x00230000
+#define TRACE_LAYER_MCA             0x00240000
+#define TRACE_LAYER_ATT             0x00250000
+#define TRACE_LAYER_SMP             0x00260000
+#define TRACE_LAYER_NFC             0x00270000
+#define TRACE_LAYER_NCI             0x00280000
+#define TRACE_LAYER_IDEP            0x00290000
+#define TRACE_LAYER_NDEP            0x002a0000
+#define TRACE_LAYER_LLCP            0x002b0000
+#define TRACE_LAYER_RW              0x002c0000
+#define TRACE_LAYER_CE              0x002d0000
+#define TRACE_LAYER_SNEP            0x002e0000
+#define TRACE_LAYER_NDEF            0x002f0000
+#define TRACE_LAYER_NFA             0x00300000
+
+#define TRACE_LAYER_MAX_NUM         0x0031
+
+
+/* TRACE_ORIGINATOR                 0x0000^^00*/
+#define TRACE_ORG_MASK              0x0000ff00
+#define TRACE_GET_ORG(x)            ((((UINT32)(x)) & TRACE_ORG_MASK) >> 8)
+
+#define TRACE_ORG_STACK             0x00000000
+#define TRACE_ORG_HCI_TRANS         0x00000100
+#define TRACE_ORG_PROTO_DISP        0x00000200
+#define TRACE_ORG_RPC               0x00000300
+#define TRACE_ORG_GKI               0x00000400
+#define TRACE_ORG_APPL              0x00000500
+#define TRACE_ORG_SCR_WRAPPER       0x00000600
+#define TRACE_ORG_SCR_ENGINE        0x00000700
+#define TRACE_ORG_USER_SCR          0x00000800
+#define TRACE_ORG_TESTER            0x00000900
+#define TRACE_ORG_MAX_NUM           10          /* 32-bit mask; must be < 32 */
+#define TRACE_LITE_ORG_MAX_NUM		6
+#define TRACE_ORG_ALL               0x03ff
+#define TRACE_ORG_RPC_TRANS         0x04
+
+#define TRACE_ORG_REG               0x00000909
+#define TRACE_ORG_REG_SUCCESS       0x0000090a
+
+/* TRACE_TYPE                       0x000000^^*/
+#define TRACE_TYPE_MASK             0x000000ff
+#define TRACE_GET_TYPE(x)           (((UINT32)(x)) & TRACE_TYPE_MASK)
+
+#define TRACE_TYPE_ERROR            0x00000000
+#define TRACE_TYPE_WARNING          0x00000001
+#define TRACE_TYPE_API              0x00000002
+#define TRACE_TYPE_EVENT            0x00000003
+#define TRACE_TYPE_DEBUG            0x00000004
+#define TRACE_TYPE_STACK_ONLY_MAX   TRACE_TYPE_DEBUG
+#define TRACE_TYPE_TX               0x00000005
+#define TRACE_TYPE_RX               0x00000006
+#define TRACE_TYPE_DEBUG_ASSERT     0x00000007
+#define TRACE_TYPE_GENERIC          0x00000008
+#define TRACE_TYPE_REG              0x00000009
+#define TRACE_TYPE_REG_SUCCESS      0x0000000a
+#define TRACE_TYPE_CMD_TX           0x0000000b
+#define TRACE_TYPE_EVT_TX           0x0000000c
+#define TRACE_TYPE_ACL_TX           0x0000000d
+#define TRACE_TYPE_CMD_RX           0x0000000e
+#define TRACE_TYPE_EVT_RX           0x0000000f
+#define TRACE_TYPE_ACL_RX           0x00000010
+#define TRACE_TYPE_TARGET_TRACE     0x00000011
+#define TRACE_TYPE_SCO_TX           0x00000012
+#define TRACE_TYPE_SCO_RX           0x00000013
+
+
+#define TRACE_TYPE_MAX_NUM          20
+#define TRACE_TYPE_ALL              0xffff
+
+/* Define color for script type */
+#define SCR_COLOR_DEFAULT       0
+#define SCR_COLOR_TYPE_COMMENT  1
+#define SCR_COLOR_TYPE_COMMAND  2
+#define SCR_COLOR_TYPE_EVENT    3
+#define SCR_COLOR_TYPE_SELECT   4
+
+/* Define protocol trace flag values */
+#define SCR_PROTO_TRACE_HCI_SUMMARY 0x00000001
+#define SCR_PROTO_TRACE_HCI_DATA    0x00000002
+#define SCR_PROTO_TRACE_L2CAP       0x00000004
+#define SCR_PROTO_TRACE_RFCOMM      0x00000008
+#define SCR_PROTO_TRACE_SDP         0x00000010
+#define SCR_PROTO_TRACE_TCS         0x00000020
+#define SCR_PROTO_TRACE_OBEX        0x00000040
+#define SCR_PROTO_TRACE_OAPP        0x00000080 /* OBEX Application Profile */
+#define SCR_PROTO_TRACE_AMP         0x00000100
+#define SCR_PROTO_TRACE_BNEP        0x00000200
+#define SCR_PROTO_TRACE_AVP         0x00000400
+#define SCR_PROTO_TRACE_MCA         0x00000800
+#define SCR_PROTO_TRACE_ATT         0x00001000
+#define SCR_PROTO_TRACE_SMP         0x00002000
+#define SCR_PROTO_TRACE_NCI         0x00004000
+#define SCR_PROTO_TRACE_DEP         0x00008000
+#define SCR_PROTO_TRACE_LLCP        0x00010000
+#define SCR_PROTO_TRACE_NDEF        0x00020000
+#define SCR_PROTO_TRACE_TAGS        0x00040000
+#define SCR_PROTO_TRACE_ALL         0x0007ffff
+#define SCR_PROTO_TRACE_HCI_LOGGING_VSE 0x0800 /* Brcm vs event for logmsg and protocol traces */
+
+#define MAX_SCRIPT_TYPE             5
+
+#define TCS_PSM_INTERCOM        5
+#define TCS_PSM_CORDLESS        7
+#define BT_PSM_BNEP             0x000F
+/* Define PSMs HID uses */
+#define HID_PSM_CONTROL         0x0011
+#define HID_PSM_INTERRUPT       0x0013
+
+/* Define a function for logging */
+typedef void (BT_LOG_FUNC) (int trace_type, const char *fmt_str, ...);
+
+#endif
+/* end "revolution/BTE/stack/include/bt_types.h" */
+
+/* Error codes */
+#define GKI_SUCCESS         0x00
+#define GKI_FAILURE         0x01
+#define GKI_INVALID_TASK    0xF0
+#define GKI_INVALID_POOL    0xFF
+
+
+/************************************************************************
+** Mailbox definitions. Each task has 4 mailboxes that are used to
+** send buffers to the task.
+*/
+#define TASK_MBOX_0    0
+#define TASK_MBOX_1    1
+#define TASK_MBOX_2    2
+#define TASK_MBOX_3    3
+
+#define NUM_TASK_MBOX  4
+
+/************************************************************************
+** Event definitions.
+**
+** There are 4 reserved events used to signal messages rcvd in task mailboxes.
+** There are 4 reserved events used to signal timeout events.
+** There are 8 general purpose events available for applications.
+*/
+#define MAX_EVENTS              16
+
+#define TASK_MBOX_0_EVT_MASK   0x0001
+#define TASK_MBOX_1_EVT_MASK   0x0002
+#define TASK_MBOX_2_EVT_MASK   0x0004
+#define TASK_MBOX_3_EVT_MASK   0x0008
+
+
+#define TIMER_0             0
+#define TIMER_1             1
+#define TIMER_2             2
+#define TIMER_3             3
+
+#define TIMER_0_EVT_MASK    0x0010
+#define TIMER_1_EVT_MASK    0x0020
+#define TIMER_2_EVT_MASK    0x0040
+#define TIMER_3_EVT_MASK    0x0080
+
+#define APPL_EVT_0          8
+#define APPL_EVT_1          9
+#define APPL_EVT_2          10
+#define APPL_EVT_3          11
+#define APPL_EVT_4          12
+#define APPL_EVT_5          13
+#define APPL_EVT_6          14
+#define APPL_EVT_7          15
+
+#define EVENT_MASK(evt)       ((UINT16)(0x0001 << (evt)))
+
+/************************************************************************
+**  Max Time Queue
+**/
+#ifndef GKI_MAX_TIMER_QUEUES
+#define GKI_MAX_TIMER_QUEUES    3
+#endif
+
+/************************************************************************
+**  Macro to determine the pool buffer size based on the GKI POOL ID at compile time.
+**  Pool IDs index from 0 to GKI_NUM_FIXED_BUF_POOLS - 1
+*/
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 1)
+
+#ifndef GKI_POOL_ID_0
+#define GKI_POOL_ID_0                0
+#endif /* ifndef GKI_POOL_ID_0 */
+
+#ifndef GKI_BUF0_SIZE
+#define GKI_BUF0_SIZE                0
+#endif /* ifndef GKI_BUF0_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 1 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 2)
+
+#ifndef GKI_POOL_ID_1
+#define GKI_POOL_ID_1                0
+#endif /* ifndef GKI_POOL_ID_1 */
+
+#ifndef GKI_BUF1_SIZE
+#define GKI_BUF1_SIZE                0
+#endif /* ifndef GKI_BUF1_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 2 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 3)
+
+#ifndef GKI_POOL_ID_2
+#define GKI_POOL_ID_2                0
+#endif /* ifndef GKI_POOL_ID_2 */
+
+#ifndef GKI_BUF2_SIZE
+#define GKI_BUF2_SIZE                0
+#endif /* ifndef GKI_BUF2_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 3 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 4)
+
+#ifndef GKI_POOL_ID_3
+#define GKI_POOL_ID_3                0
+#endif /* ifndef GKI_POOL_ID_4 */
+
+#ifndef GKI_BUF3_SIZE
+#define GKI_BUF3_SIZE                0
+#endif /* ifndef GKI_BUF3_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 4 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 5)
+
+#ifndef GKI_POOL_ID_4
+#define GKI_POOL_ID_4                0
+#endif /* ifndef GKI_POOL_ID_4 */
+
+#ifndef GKI_BUF4_SIZE
+#define GKI_BUF4_SIZE                0
+#endif /* ifndef GKI_BUF4_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 5 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 6)
+
+#ifndef GKI_POOL_ID_5
+#define GKI_POOL_ID_5                0
+#endif /* ifndef GKI_POOL_ID_5 */
+
+#ifndef GKI_BUF5_SIZE
+#define GKI_BUF5_SIZE                0
+#endif /* ifndef GKI_BUF5_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 6 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 7)
+
+#ifndef GKI_POOL_ID_6
+#define GKI_POOL_ID_6                0
+#endif /* ifndef GKI_POOL_ID_6 */
+
+#ifndef GKI_BUF6_SIZE
+#define GKI_BUF6_SIZE                0
+#endif /* ifndef GKI_BUF6_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 7 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 8)
+
+#ifndef GKI_POOL_ID_7
+#define GKI_POOL_ID_7                0
+#endif /* ifndef GKI_POOL_ID_7 */
+
+#ifndef GKI_BUF7_SIZE
+#define GKI_BUF7_SIZE                0
+#endif /* ifndef GKI_BUF7_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 8 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 9)
+
+#ifndef GKI_POOL_ID_8
+#define GKI_POOL_ID_8                0
+#endif /* ifndef GKI_POOL_ID_8 */
+
+#ifndef GKI_BUF8_SIZE
+#define GKI_BUF8_SIZE                0
+#endif /* ifndef GKI_BUF8_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 9 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 10)
+
+#ifndef GKI_POOL_ID_9
+#define GKI_POOL_ID_9                0
+#endif /* ifndef GKI_POOL_ID_9 */
+
+#ifndef GKI_BUF9_SIZE
+#define GKI_BUF9_SIZE                0
+#endif /* ifndef GKI_BUF9_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 10 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 11)
+
+#ifndef GKI_POOL_ID_10
+#define GKI_POOL_ID_10                0
+#endif /* ifndef GKI_POOL_ID_10 */
+
+#ifndef GKI_BUF10_SIZE
+#define GKI_BUF10_SIZE                0
+#endif /* ifndef GKI_BUF10_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 11 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 12)
+
+#ifndef GKI_POOL_ID_11
+#define GKI_POOL_ID_11                0
+#endif /* ifndef GKI_POOL_ID_11 */
+
+#ifndef GKI_BUF11_SIZE
+#define GKI_BUF11_SIZE                0
+#endif /* ifndef GKI_BUF11_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 12 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 13)
+
+#ifndef GKI_POOL_ID_12
+#define GKI_POOL_ID_12                0
+#endif /* ifndef GKI_POOL_ID_12 */
+
+#ifndef GKI_BUF12_SIZE
+#define GKI_BUF12_SIZE                0
+#endif /* ifndef GKI_BUF12_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 13 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 14)
+
+#ifndef GKI_POOL_ID_13
+#define GKI_POOL_ID_13                0
+#endif /* ifndef GKI_POOL_ID_13 */
+
+#ifndef GKI_BUF13_SIZE
+#define GKI_BUF13_SIZE                0
+#endif /* ifndef GKI_BUF13_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 14 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 15)
+
+#ifndef GKI_POOL_ID_14
+#define GKI_POOL_ID_14                0
+#endif /* ifndef GKI_POOL_ID_14 */
+
+#ifndef GKI_BUF14_SIZE
+#define GKI_BUF14_SIZE                0
+#endif /* ifndef GKI_BUF14_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 15 */
+
+
+#if (GKI_NUM_FIXED_BUF_POOLS < 16)
+
+#ifndef GKI_POOL_ID_15
+#define GKI_POOL_ID_15                0
+#endif /* ifndef GKI_POOL_ID_15 */
+
+#ifndef GKI_BUF15_SIZE
+#define GKI_BUF15_SIZE                0
+#endif /* ifndef GKI_BUF15_SIZE */
+
+#endif /* GKI_NUM_FIXED_BUF_POOLS < 16 */
+
+
+/* Timer list entry callback type
+*/
+typedef void (TIMER_CBACK)(void *p_tle);
+#ifndef TIMER_PARAM_TYPE
+#ifdef  WIN2000
+#define TIMER_PARAM_TYPE    void *
+#else
+#define TIMER_PARAM_TYPE    UINT32
+#endif
+#endif
+/* Define a timer list entry
+*/
+typedef struct _tle
+{
+    struct _tle  *p_next;
+    struct _tle  *p_prev;
+    TIMER_CBACK  *p_cback;
+    INT32         ticks;
+    TIMER_PARAM_TYPE   param;
+    UINT16        event;
+    UINT8         in_use;
+} TIMER_LIST_ENT;
+
+/* Define a timer list queue
+*/
+typedef struct
+{
+    TIMER_LIST_ENT   *p_first;
+    TIMER_LIST_ENT   *p_last;
+    INT32             last_ticks;
+} TIMER_LIST_Q;
+
+
+/***********************************************************************
+** This queue is a general purpose buffer queue, for application use.
+*/
+typedef struct
+{
+    void    *p_first;
+    void    *p_last;
+    UINT16   count;
+} BUFFER_Q;
+
+#define GKI_IS_QUEUE_EMPTY(p_q) ((p_q)->count == 0)
+
+/* Task constants
+*/
+#ifndef TASKPTR
+typedef void (*TASKPTR)(UINT32);
+#endif
+
+
+#define GKI_PUBLIC_POOL         0       /* General pool accessible to GKI_getbuf() */
+#define GKI_RESTRICTED_POOL     1       /* Inaccessible pool to GKI_getbuf() */
+
+/***********************************************************************
+** Function prototypes
+*/
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Task management
+*/
+GKI_API extern UINT8   GKI_create_task (TASKPTR, UINT8, INT8 *, UINT16 *, UINT16);
+GKI_API extern void    GKI_destroy_task(UINT8 task_id);
+GKI_API extern void    GKI_task_self_cleanup(UINT8 task_id);
+GKI_API extern void    GKI_exit_task(UINT8);
+GKI_API extern UINT8   GKI_get_taskid(void);
+GKI_API extern void    GKI_init(void);
+GKI_API extern void    GKI_shutdown(void);
+GKI_API extern INT8   *GKI_map_taskname(UINT8);
+GKI_API extern UINT8   GKI_resume_task(UINT8);
+GKI_API extern void    GKI_run(void *);
+GKI_API extern void    GKI_freeze(void);
+GKI_API extern void    GKI_stop(void);
+GKI_API extern UINT8   GKI_suspend_task(UINT8);
+GKI_API extern UINT8   GKI_is_task_running(UINT8);
+
+/* memory management
+*/
+GKI_API extern void GKI_shiftdown (UINT8 *p_mem, UINT32 len, UINT32 shift_amount);
+GKI_API extern void GKI_shiftup (UINT8 *p_dest, UINT8 *p_src, UINT32 len);
+
+/* To send buffers and events between tasks
+*/
+GKI_API extern UINT8   GKI_isend_event (UINT8, UINT16);
+GKI_API extern void   *GKI_read_mbox  (UINT8);
+GKI_API extern void    GKI_send_msg   (UINT8, UINT8, void *);
+GKI_API extern UINT8   GKI_send_event (UINT8, UINT16);
+
+
+/* To get and release buffers, change owner and get size
+*/
+GKI_API extern void    GKI_change_buf_owner (void *, UINT8);
+GKI_API extern UINT8   GKI_create_pool (UINT16, UINT16, UINT8, void *);
+GKI_API extern void    GKI_delete_pool (UINT8);
+GKI_API extern void   *GKI_find_buf_start (void *);
+GKI_API extern void    GKI_freebuf (void *);
+GKI_API extern void   *GKI_getbuf (UINT16);
+GKI_API extern UINT16  GKI_get_buf_size (void *);
+GKI_API extern void   *GKI_getpoolbuf (UINT8);
+GKI_API extern UINT16  GKI_poolfreecount (UINT8);
+GKI_API extern UINT16  GKI_poolutilization (UINT8);
+GKI_API extern void    GKI_register_mempool (void *p_mem);
+GKI_API extern UINT8   GKI_set_pool_permission(UINT8, UINT8);
+
+
+/* User buffer queue management
+*/
+GKI_API extern void   *GKI_dequeue  (BUFFER_Q *);
+GKI_API extern void    GKI_enqueue (BUFFER_Q *, void *);
+GKI_API extern void    GKI_enqueue_head (BUFFER_Q *, void *);
+GKI_API extern void   *GKI_getfirst (BUFFER_Q *);
+GKI_API extern void   *GKI_getnext (void *);
+GKI_API extern void    GKI_init_q (BUFFER_Q *);
+GKI_API extern BOOLEAN GKI_queue_is_empty(BUFFER_Q *);
+GKI_API extern void   *GKI_remove_from_queue (BUFFER_Q *, void *);
+GKI_API extern UINT16  GKI_get_pool_bufsize (UINT8);
+
+/* Timer management
+*/
+GKI_API extern void    GKI_add_to_timer_list (TIMER_LIST_Q *, TIMER_LIST_ENT  *);
+GKI_API extern void    GKI_delay(UINT32);
+GKI_API extern UINT32  GKI_get_tick_count(void);
+GKI_API extern INT8   *GKI_get_time_stamp(INT8 *);
+GKI_API extern void    GKI_init_timer_list (TIMER_LIST_Q *);
+GKI_API extern void    GKI_init_timer_list_entry (TIMER_LIST_ENT  *);
+GKI_API extern INT32   GKI_ready_to_sleep (void);
+GKI_API extern void    GKI_remove_from_timer_list (TIMER_LIST_Q *, TIMER_LIST_ENT  *);
+GKI_API extern void    GKI_start_timer(UINT8, INT32, BOOLEAN);
+GKI_API extern void    GKI_stop_timer (UINT8);
+GKI_API extern void    GKI_timer_update(INT32);
+GKI_API extern UINT16  GKI_update_timer_list (TIMER_LIST_Q *, INT32);
+GKI_API extern UINT16  GKI_wait(UINT16, UINT32);
+
+/* Start and Stop system time tick callback
+ * true for start system tick if time queue is not empty
+ * false to stop system tick if time queue is empty
+*/
+typedef void (SYSTEM_TICK_CBACK)(BOOLEAN);
+
+/* Time queue management for system ticks
+*/
+GKI_API extern BOOLEAN GKI_timer_queue_empty (void);
+GKI_API extern void    GKI_timer_queue_register_callback(SYSTEM_TICK_CBACK *);
+
+/* Disable Interrupts, Enable Interrupts
+*/
+GKI_API extern void    GKI_enable(void);
+GKI_API extern void    GKI_disable(void);
+GKI_API extern void    GKI_sched_lock(void);
+GKI_API extern void    GKI_sched_unlock(void);
+
+/* Allocate (Free) memory from an OS
+*/
+GKI_API extern void     *GKI_os_malloc (UINT32);
+GKI_API extern void      GKI_os_free (void *);
+
+/* os timer operation */
+GKI_API extern UINT32 GKI_get_os_tick_count(void);
+
+/* Exception handling
+*/
+GKI_API extern void    GKI_exception (UINT16, char *);
+
+#if GKI_DEBUG == TRUE
+GKI_API extern void    GKI_PrintBufferUsage(UINT8 *p_num_pools, UINT16 *p_cur_used);
+GKI_API extern void    GKI_PrintBuffer(void);
+GKI_API extern void    GKI_print_task(void);
+#else
+#undef GKI_PrintBufferUsage
+#define GKI_PrintBuffer() NULL
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+
+#endif
+/* end "revolution/bte/gki/common/gki.h" */
+/* "libs/RVL_SDK/include/revolution/BTE/rvl/uusb_ppc.h" line 5 "revolution/usb/usb.h" */
+#ifndef RVL_SDK_USB_H
+#define RVL_SDK_USB_H
+/* "libs/RVL_SDK/include/revolution/usb/usb.h" line 2 "types.h" */
+/* end "types.h" */
+
+/* "libs/RVL_SDK/include/revolution/usb/usb.h" line 4 "revolution/IPC.h" */
+/**
+ * References: WiiBrew, Dolphin Emulator, fail0verflow
+ */
+
+#ifndef RVL_SDK_PUBLIC_IPC_H
+#define RVL_SDK_PUBLIC_IPC_H
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 10 "revolution/IPC/ipcMain.h" */
+/* end "revolution/IPC/ipcMain.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 11 "revolution/IPC/ipcProfile.h" */
+/* end "revolution/IPC/ipcProfile.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 12 "revolution/IPC/ipcclt.h" */
+/* end "revolution/IPC/ipcclt.h" */
+/* "libs/RVL_SDK/include/revolution/IPC.h" line 13 "revolution/IPC/memory.h" */
+/* end "revolution/IPC/memory.h" */
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/IPC.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef void (*USBCallback)(IPCResult result, void* arg);
+typedef void (*USBISOCallback)(IPCResult result, void* arg1, void* arg2);
+
+IPCResult IUSB_OpenLib(void);
+IPCResult IUSB_CloseLib(void);
+IPCResult IUSB_OpenDeviceIds(const char* interface, u16 vid, u16 pid,
+                             IPCResult* resultOut);
+IPCResult IUSB_CloseDeviceAsync(s32 fd, USBCallback callback,
+                                void* callbackArg);
+IPCResult IUSB_ReadIntrMsgAsync(s32 fd, u32 endpoint, u32 length, void* buffer,
+                                USBCallback callback, void* callbackArg);
+IPCResult IUSB_ReadBlkMsgAsync(s32 fd, u32 endpoint, u32 length, void* buffer,
+                               USBCallback callback, void* callbackArg);
+IPCResult IUSB_WriteBlkMsgAsync(s32 fd, u32 endpoint, u32 length,
+                                const void* buffer, USBCallback callback,
+                                void* callbackArg);
+IPCResult IUSB_WriteCtrlMsgAsync(s32 fd, u8 requestType, u8 request, u16 value,
+                                 u16 index, u16 length, void* buffer,
+                                 USBCallback callback, void* callbackArg);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/usb/usb.h" */
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 u32 __ntd_get_allocated_mem_size(void);
+
+/* UUSB private control block (retail global `usb`, size 0x4C).
+ * Field names are recovered where semantics are understood; unknown
+ * members keep `field_0xNN` offsets. */
+typedef struct tUUSB_CB {
+    s32 fd;                       /* 0x00 device file descriptor */
+    u8 field_0x04[0xC];          /* 0x04 unused in matched functions */
+    u8 field_0x10;                /* 0x10 endpoint (intr/bulk ctrl) */
+    u8 field_0x11;                /* 0x11 endpoint */
+    u8 field_0x12;                /* 0x12 endpoint */
+    u8 field_0x13;                /* 0x13 endpoint */
+    u32 vid;                      /* 0x14 USB vendor id */
+    u32 pid;                      /* 0x18 USB product id */
+    u8 pool_id_intr;             /* 0x1C intr read pool id */
+    u8 pool_id_bulk;             /* 0x1D bulk read pool id */
+    u8 field_0x1E[2];            /* 0x1E */
+    void (*close_cb)(int reason, s8 result); /* 0x20 upper-layer close notify */
+    u32 close_cb_arg;            /* 0x24 close callback argument */
+    u8 trace_state;             /* 0x28 trace init state */
+    u8 state;                    /* 0x29 UUSB state machine */
+    u8 field_0x2A;              /* 0x2A */
+    u8 field_0x2B;              /* 0x2B read-restart flag */
+    BUFFER_Q bulk_write_q;       /* 0x2C bulk write buffer queue */
+    u8 bulk_pending;            /* 0x38 outstanding bulk writes */
+    u8 field_0x39[3];           /* 0x39 */
+    BUFFER_Q ctrl_write_q;       /* 0x3C ctrl write buffer queue */
+    u8 ctrl_pending;            /* 0x48 outstanding ctrl writes */
+    u8 field_0x49[3];           /* 0x49 */
+} tUUSB_CB;
+
+/* UUSB state values (usb.state). */
+enum {
+    UUSB_STATE_IDLE = 0,
+    UUSB_STATE_OPEN = 2,
+    UUSB_STATE_READY = 4,
+    UUSB_STATE_CLOSED = 5,
+};
+
+/* Close notification reason passed to tUUSB_CB.close_cb. */
+#define UUSB_CLOSE_REASON_CLOSED 4
+
+/* Global control block and trace flags (retail linker names). */
+extern tUUSB_CB usb;
+extern u8 uusb_g_usb_devid_found;
+extern u8 uusb_g_trace_state_initialized;
+extern u32 wait4hci;
+
+/* Public UUSB API. */
+void UUSB_Register(void* cb_arg);
+void UUSB_Open(s32 fd, void (*close_cb)(int reason, s8 result));
+s32 UUSB_Read(void);
+s32 UUSB_Write(s32 type, void* data, u16 length);
+void UUSB_Close(void);
+void UUSB_Unregister(void);
+
+/* USB close completion callback (IUSB_CloseDeviceAsync). */
+void uusb_CloseDeviceCB(IPCResult result, void* arg);
+void uusb_ReadIntrDataCB(IPCResult result, void* arg);
+void uusb_ReadBulkDataCB(IPCResult result, void* arg);
+void uusb_WriteCtrlDataCB(IPCResult result, void* arg);
+void uusb_WriteBulkDataCB(IPCResult result, void* arg);
 
 #ifdef __cplusplus
 }
@@ -247046,7 +254139,7 @@ struct CProc_UnkStruct1 {
     void* unkC;
 };
 //size: 0x1ec
-class CProc : public CWorkThread {
+class __declspec(novtable) CProc : public CWorkThread {
 public:
     CProc(const char* pName, CWorkThread* pParent, s16 capacity);
     virtual ~CProc();
@@ -247109,6 +254202,7 @@ public:
 
 class CWorkThread;
 class CView;
+class CDrawGX;
 
 namespace ml {
 // Distinct from CRect16 in MWCC mangling (Q22ml5CRect); same 8-byte layout.
@@ -247126,6 +254220,7 @@ public:
     void CView_UnkVirtualFunc1();
     void CView_UnkVirtualFunc8();
     void CView_UnkVirtualFunc9();
+    void func_804409D0(CDrawGX* draw, ml::CRect16* rect);
 
     void* mVtable; // 0x0
     CView* mOwner; // 0x4
@@ -247146,7 +254241,12 @@ public:
     s16 unk5A; // 0x5A - unused trailing padding; satisfies 0x5C sizeof
 };
 
-extern void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4);
+extern "C" void getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(
+    ml::CRect16* rect, const CViewFrame* r4);
+
+inline void getFrame2ViewOffset(ml::CRect16& rect, CViewFrame* r4) {
+    getFrame2ViewOffset__10CViewFrameFR7CRect16PC10CViewFrame(&rect, r4);
+}
 /* end "monolib/core/CViewFrame.hpp" */
 /* "libs/monolib/include/monolib/core/CView.hpp" line 7 "monolib/core/CViewRectData.hpp" */
 #pragma once
@@ -247772,6 +254872,7 @@ public:
     void renderRect(const ml::CRect16& r4);
     void renderCube(const ml::CVec3& r4, const ml::CVec3& r5);
     void renderCircle(const ml::CVec3& pos, int verts, float r);
+    void setGXCacheId(u32 id) { unk1C = id; }
 
     void setFlag4(){
         setFlag(FLAG_4, true);
@@ -247841,6 +254942,11 @@ private:
 /* end "types.h" */
 /* "libs/monolib/include/monolib/core/CException.hpp" line 3 "monolib/work.hpp" */
 /* end "monolib/work.hpp" */
+/* "libs/monolib/include/monolib/core/CException.hpp" line 4 "monolib/core/CProc.hpp" */
+/* end "monolib/core/CProc.hpp" */
+
+class IException;
+class CWorkThread;
 
 class IGameException {
 public:
@@ -247848,10 +254954,21 @@ public:
     virtual bool gameExceptionCB(u32 r4) = 0;
 };
 
-class CException : public CWorkThread {
+class CException : public CProc {
 public:
+    CException(const char* pName, CWorkThread* pParent);
+    virtual ~CException();
+    
     bool func_80457C8C();
-    static CException* func_80457CA4(CWorkThread* r3, const wchar_t* message, u32 r5);
+    static CException* func_80457CA4(CWorkThread* pThread, const wchar_t* message, u32 r5);
+    CException* func_80457EB0();
+    void* func_80457ED4(u32 r4);
+    virtual void wkRender();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
+    void func_804591BC(IException* pException);
+    void func_804591DC(IException* pException);
+    void func_8045925C();
 
     static CException* convertToException(CWorkThread* pThread){
          CException* exception;
@@ -247869,9 +254986,19 @@ public:
         return exception;
     }
 
-    u8 unk1C4[0x200 - 0x1C4];
+    //0x0-0x1EC: CProc
+    s32 mExceptionCode;          //0x1EC
+    const wchar_t* mMessage;     //0x1F0
+    float mAlphaStep;            //0x1F4
+    float mAlpha;                //0x1F8
+    s32 mAnimState;              //0x1FC
     IGameException* mException; //0x200
-    u32 unk204;
+    u32 unk204;                  //0x204
+    u32 unk208;                  //0x208
+    u32 mFrameCounter;           //0x20C
+    u8 mFlag210;                 //0x210
+    u8 pad211[3];                //0x211
+    u32 mMaxExceptions;          //0x214
 };
 /* end "monolib/core/CException.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 6 "monolib/core/CPackItem.hpp" */
@@ -247898,7 +255025,7 @@ struct PackHeader {
     u64 mFileHashTable[];         // 0x78
 };
 
-//size: 0x88
+//size: 0x8C
 class CPackItem : public IWorkEvent {
 public:
     CPackItem(const char* name, int partitionId);
@@ -247932,17 +255059,18 @@ public:
     u16* mFileIds;                   // 0x5C - per-file ID table (indexed by hash entry)
     u32* mFileDataOffsets;           // 0x60 - per-file data offset or partition ID table
     int mAdxPartitionId;             // 0x64
-    u8* mAhxAdxBuffer;               // 0x68 - work buffer for ADX/AHX load
-    u32 mHashLowerHalf;              // 0x6C
-    u32 mHashUpperHalf;              // 0x70
-    LoadState mLoadState;            // 0x74
-    u8 mFileReadFailed;              // 0x78 - set when async file read errors
-    u8 mPackHeaderExternal;          // 0x79 - set when pack header owned by work system
-    bool mIsAhxAdxFile;              // 0x7A
-    u8 unk7B;                        // 0x7B - padding
-    u32 mWorkPackDataPtr;            // 0x7C - pack data pointer from work system
-    u32 mWorkPackDataSize;           // 0x80 - pack data size from work system
-    const char* mFilePath;           // 0x84 - full path to the pack file
+    u32 field_0x68;                  // 0x68
+    u8* mAhxAdxBuffer;               // 0x6C - work buffer for ADX/AHX load
+    u32 mHashLowerHalf;              // 0x70
+    u32 mHashUpperHalf;              // 0x74
+    LoadState mLoadState;            // 0x78
+    u8 mFileReadFailed;              // 0x7C - set when async file read errors
+    u8 mPackHeaderExternal;          // 0x7D - set when pack header owned by work system
+    bool mIsAhxAdxFile;              // 0x7E
+    u8 unk7F;                        // 0x7F - padding
+    u32 mWorkPackDataPtr;            // 0x80 - pack data pointer from work system
+    u32 mWorkPackDataSize;           // 0x84 - pack data size from work system
+    const char* mFilePath;           // 0x88 - full path to the pack file
 };
 /* end "monolib/core/CPackItem.hpp" */
 /* "libs/monolib/include/monolib/core.hpp" line 7 "monolib/core/CPadManager.hpp" */
@@ -248009,9 +255137,8 @@ bool isExistData__5CRsrcFPCv(const void* data);
 /* end "monolib/util/MemManager.hpp" */
 
 // size: 0x4E8
-class CRsrcData : public CWorkThread {
+class __declspec(novtable) CRsrcData : public CWorkThread {
 public:
-    CRsrcData(const char* pName, CWorkThread* pParent);
     virtual ~CRsrcData();
 
     virtual void wkUpdate();
@@ -248124,6 +255251,8 @@ public:
     static void renderView();
     static CView* getFullScreenView();
     static CView* getView(WORK_ID id);
+    void func_80442B54(void* a, void* b, void* c);
+    void func_80442C68();
 
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
@@ -248181,6 +255310,7 @@ public:
 
     static CTaskGame* getInstance();
     static u32 func_800404F0();
+    static u32 isUnk68Bit13Set();
     virtual void Init();
 
     void func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7);
@@ -248189,8 +255319,16 @@ public:
     void func_80042720();
     static bool func_8004368C();
     static CTaskGame* create(CView* pView, CWorkThread* pThread, int r5);
+    s32 callStubReturnZero_800436A8();
 
     virtual void Term();
+    void stub_80040A3C();
+    void stub_80042720();
+    void setFlag_200(bool enabled, unsigned int mode);
+    void setFlag_400(int enabled, unsigned int mode, unsigned int value);
+    void setFlag_100000(int enabled, int unused, unsigned int value);
+    void setFlag_1000000(int enabled);
+    void setFlag_1000(int value);
     virtual void ITitleMenu__UnkVirtualFunc1();
     virtual void IErrMesWinSel__UnkVirtualFunc1();
     virtual bool gameExceptionCB(u32 r4);
@@ -248256,6 +255394,10 @@ public:
 
 protected:
     static CTaskGame* spInstance;
+    CTaskGame();
+    void cbRenderBefore();
+    void OnFileEvent();
+    void Draw();
 };
 /* end "kyoshin/CTaskGame.hpp" */
 /* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 7 "nw4r/math.h" */
@@ -248319,22 +255461,24 @@ namespace cf {
     //min size: 0x10
     class CObjectState {
     public:
-        virtual void CObjectState_UnkVirtualFunc1();  //0x8
-        virtual void CObjectState_UnkVirtualFunc2();  //0xC
-        virtual void CObjectState_UnkVirtualFunc3();  //0x10
+        virtual void CObjectState_UnkVirtualFunc1(u32 bits);  //0x8
+        virtual int CObjectState_UnkVirtualFunc2(int mask);  //0xC
+        virtual void CObjectState_UnkVirtualFunc3(u32 mask);  //0x10
         virtual void CObjectState_UnkVirtualFunc4();  //0x14
-        virtual void CObjectState_UnkVirtualFunc5();  //0x18
+        virtual void CObjectState_UnkVirtualFunc5(int arg);  //0x18
         virtual void CObjectState_UnkVirtualFunc6();  //0x1C
-        virtual void CObjectState_UnkVirtualFunc7();  //0x20
-        virtual void CObjectState_UnkVirtualFunc8();  //0x24
+        virtual void CObjectState_UnkVirtualFunc7(int arg);  //0x20
+        virtual int CObjectState_UnkVirtualFunc8(int arg);  //0x24
         virtual void CObjectState_UnkVirtualFunc9();  //0x28
-        virtual void CObjectState_UnkVirtualFunc10(); //0x2C
+        virtual int CObjectState_UnkVirtualFunc10(void* arg, int arg2); //0x2C
         virtual void CObjectState_UnkVirtualFunc11(); //0x30
-        virtual void CObjectState_UnkVirtualFunc12(); //0x34
+        virtual void* CObjectState_UnkVirtualFunc12(); //0x34
         virtual void CObjectState_UnkVirtualFunc13(); //0x38
 
         //0x0: vtable
-        u8 unk4_3[0xC];
+        u32 unk4;          // 0x04
+        u32 unk8;          // 0x08
+        u32 unkC;          // 0x0C
     };
 }
 /* end "kyoshin/cf/object/CObjectState.hpp" */
@@ -248343,34 +255487,42 @@ namespace cf {
     //min size: 0x38
     class CObjectParam : public CObjectState {
     public:
-        virtual void CObjectParam_UnkVirtualFunc1(); //0x3C
-        virtual void CObjectParam_UnkVirtualFunc2(); //0x40
-        virtual void CObjectParam_UnkVirtualFunc3(); //0x44
+        virtual void CObjectParam_UnkVirtualFunc1(u32 a, u8 b); //0x3C
+        virtual void* CObjectParam_UnkVirtualFunc2(); //0x40
+        virtual int CObjectParam_UnkVirtualFunc3(); //0x44
         virtual void CObjectParam_UnkVirtualFunc4(); //0x48
         virtual BOOL CObjectParam_UnkVirtualFunc5(); //0x4C
         virtual void CObjectParam_UnkVirtualFunc6(); //0x50
 
         //0x0: vtable
         //0x0-10: CObjectState
-        u8 unk10_3[0x28];
+        void* mPtr10;          // 0x10-0x13 (pointer stored at offset 0x10)
+        u8 unk14[0x20 - 0x14]; // 0x14-0x2F
+        u32 field_30;          // 0x30  — checked for non-zero by UnkVirtualFunc3
+        u8  unk34[4];          // 0x34..0x37  (remainder of old unk10_3[0x28])
     };
 }
 /* end "kyoshin/cf/object/CObjectParam.hpp" */
 
 namespace cf {
+    class UnkClass_80082D90;
+    struct CfObjectSub54 {
+        u8 field_0x0[0xC];
+    };
+
     //min size: 0x70
     class CfObject : public CObjectParam {
     public:
         //vtable 1 (CfObject)
         virtual ~CfObject();                      //0x54
         virtual void CfObject_UnkVirtualFunc2() = 0;  //0x58
-        virtual void CfObject_UnkVirtualFunc3();      //0x5C
+        virtual void CfObject_UnkVirtualFunc3(UnkClass_80082D90* data); //0x5C
         virtual void CfObject_UnkVirtualFunc4() = 0;  //0x60
         virtual void CfObject_UnkVirtualFunc5();      //0x64
         virtual void CfObject_UnkVirtualFunc6();      //0x68
         virtual void CfObject_UnkVirtualFunc7() = 0;  //0x6C
         virtual void CfObject_UnkVirtualFunc8() = 0;  //0x70
-        virtual void CfObject_UnkVirtualFunc9();      //0x74
+        virtual bool CfObject_UnkVirtualFunc9();      //0x74
         virtual void CfObject_UnkVirtualFunc10();     //0x78
         virtual void CfObject_UnkVirtualFunc11();     //0x7C
         virtual void CfObject_UnkVirtualFunc12();     //0x80
@@ -248381,21 +255533,21 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc17();     //0x94
         virtual void CfObject_UnkVirtualFunc18();     //0x98
         virtual void CfObject_UnkVirtualFunc19();     //0x9C
-        virtual void CfObject_UnkVirtualFunc20();     //0xA0
+        virtual void CfObject_UnkVirtualFunc20(float a, float b);     //0xA0
         virtual void CfObject_UnkVirtualFunc21();     //0xA4
         virtual void CfObject_UnkVirtualFunc22();     //0xA8
-        virtual void CfObject_UnkVirtualFunc23();     //0xAC
+        virtual u32 CfObject_UnkVirtualFunc23();      //0xAC
         virtual void CfObject_UnkVirtualFunc24();     //0xB0
         virtual void CfObject_UnkVirtualFunc25();     //0xB4
-        virtual void CfObject_UnkVirtualFunc26();     //0xB8
+        virtual void CfObject_UnkVirtualFunc26(u32 value, float amount); //0xB8
         virtual void CfObject_UnkVirtualFunc27();     //0xBC
         virtual void CfObject_UnkVirtualFunc28();     //0xC0
-        virtual void CfObject_UnkVirtualFunc29();     //0xC4
+        virtual void CfObject_UnkVirtualFunc29(float value);     //0xC4
         virtual void CfObject_UnkVirtualFunc30();     //0xC8
         virtual void CfObject_UnkVirtualFunc31();     //0xCC
         virtual void CfObject_UnkVirtualFunc32();     //0xD0
-        virtual void CfObject_UnkVirtualFunc33();     //0xD4
-        virtual void CfObject_UnkVirtualFunc34();     //0xD8
+        virtual void CfObject_UnkVirtualFunc33(float amount); //0xD4
+        virtual float CfObject_UnkVirtualFunc34();     //0xD8
         virtual void CfObject_UnkVirtualFunc35();     //0xDC
         virtual void CfObject_UnkVirtualFunc36();     //0xE0
         virtual void CfObject_UnkVirtualFunc37();     //0xE4
@@ -248411,15 +255563,15 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc47();     //0x10C
         virtual void CfObject_UnkVirtualFunc48();     //0x110
         virtual void CfObject_UnkVirtualFunc49();     //0x114
-        virtual void CfObject_UnkVirtualFunc50();     //0x118
-        virtual void CfObject_UnkVirtualFunc51();     //0x11C
+        virtual int CfObject_UnkVirtualFunc50();     //0x118
+        virtual int CfObject_UnkVirtualFunc51();     //0x11C
         virtual void CfObject_UnkVirtualFunc52();     //0x120
-        virtual void CfObject_UnkVirtualFunc53();     //0x124
+        virtual CfObject* CfObject_UnkVirtualFunc53(); //0x124
         virtual void CfObject_UnkVirtualFunc54();     //0x128
         virtual void CfObject_UnkVirtualFunc55();     //0x12C
-        virtual void CfObject_UnkVirtualFunc56();     //0x130
+        virtual float CfObject_UnkVirtualFunc56();     //0x130
         virtual void CfObject_UnkVirtualFunc57();     //0x134
-        virtual void CfObject_UnkVirtualFunc58();     //0x138
+        virtual u32* CfObject_UnkVirtualFunc58();     //0x138
         virtual void CfObject_UnkVirtualFunc59();     //0x13C
         virtual void CfObject_UnkVirtualFunc60();     //0x140
         virtual void CfObject_UnkVirtualFunc61();     //0x144
@@ -248427,11 +255579,11 @@ namespace cf {
         virtual void CfObject_UnkVirtualFunc63();     //0x14C
         virtual void CfObject_UnkVirtualFunc64();     //0x150
         virtual void CfObject_UnkVirtualFunc65();     //0x154
-        virtual void CfObject_UnkVirtualFunc66() = 0; //0x158
+        virtual void CfObject_UnkVirtualFunc66(int) = 0; //0x158
         virtual void CfObject_UnkVirtualFunc67();     //0x15C
         virtual void CfObject_UnkVirtualFunc68() = 0; //0x160
         virtual void CfObject_UnkVirtualFunc69();     //0x164
-        virtual void CfObject_UnkVirtualFunc70();     //0x168
+        virtual void CfObject_UnkVirtualFunc70(float value); //0x168
         virtual void CfObject_UnkVirtualFunc71();     //0x16C
         virtual void CfObject_UnkVirtualFunc72();     //0x170
         virtual void CfObject_UnkVirtualFunc73();     //0x174
@@ -248441,10 +255593,20 @@ namespace cf {
 
 
         //0x0: vtable
-        //0x0-38: CObjectParam
-        u8 unk38_3[0x64 - 0x38];
-        u32 unk64;
-        u8 unk68[0x70 - 0x68];
+        // CObjectParam currently ends at 0x28.
+        u8 field_0x28[0x10];
+        void* mSubObj38;          // 0x38-0x3B
+        float mPos3C;           // 0x3C-0x3F
+        float mPos40;           // 0x40-0x43
+        float mPos44;           // 0x44-0x47
+        u8 _pad48[0x4C - 0x48];   // 0x48-0x4B
+        float mField4C;           // 0x4C-0x4F
+        u8 _pad50[0x54 - 0x50];   // 0x50-0x53
+        CfObjectSub54 mSubObj54;     // 0x54-0x5F
+        float mFloat60;            // 0x60-0x63
+        u32 unk64;                  // 0x64-0x67
+        u32 mFlags68;               // 0x68-0x6B
+        u8 _pad6C[0x70 - 0x6C];    // 0x6C-0x6F
     };
 }
 /* end "kyoshin/cf/object/CfObject.hpp" */
@@ -248478,12 +255640,50 @@ namespace cf {
         virtual void CfObjectModel_UnkVirtualFunc20(); //0x1C4
 
         //0x0: vtable
-        //0x0-70: CfObject
-        u8 unk70_3[0x1C];
+        // CfObject ends at 0x70.
+        u8 field_0x70[0x1C];
         u16 unk8C_3;
-        u8 unk8E_3[0x30];
+        u16 field_0x8E;
+        u8 field_0x90[0x20]; // 0x90-0xAF
+        void* mSubObjB0;      // 0xB0-0xB3
+        u8 unkB4[0xBC - 0xB4]; // 0xB4-0xBB
+        u8 field_BC;          // 0xBC
+        u8 field_BD;          // 0xBD
+    CfObjectModel();
+    void CfObject_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc6();
+    void CfObject_UnkVirtualFunc8();
+    void CfObject_UnkVirtualFunc63();
+    void CfObject_UnkVirtualFunc19();
+    void CfObject_UnkVirtualFunc22();
+    void CfObject_UnkVirtualFunc20();
+    u32 CfObject_UnkVirtualFunc23();
+    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc29();
+    void CfObject_UnkVirtualFunc32();
+    float CfObject_UnkVirtualFunc34();
+    void CfObject_UnkVirtualFunc33(float amount);
+    void CfObject_UnkVirtualFunc30();
+    float CfObject_UnkVirtualFunc56();
+    void CfObject_UnkVirtualFunc52();
+    CfObject* CfObject_UnkVirtualFunc53();
+    void CfObject_UnkVirtualFunc54();
+    void CfObject_UnkVirtualFunc55();
+    void* CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc66(int);
+    void CfObject_UnkVirtualFunc67();
+    void CfObject_UnkVirtualFunc70(float value);
+    void CfObject_UnkVirtualFunc69();
+    void CfObject_UnkVirtualFunc68();
+    void CfObject_UnkVirtualFunc24();
+    void CfObject_UnkVirtualFunc28();
+    void CfObject_UnkVirtualFunc31();
+    void CfObject_UnkVirtualFunc35();
+    void CfObject_UnkVirtualFunc36();
+    void CfObject_UnkVirtualFunc72();
     };
 }
+
 /* end "kyoshin/cf/object/CfObjectModel.hpp" */
 
 namespace cf {
@@ -248520,10 +255720,91 @@ namespace cf {
 
         //0x0: vtable
         //0x0-BE: CfObjectModel
-        u8 unkBE_3[0x657];
-        u8 unk715[3]; //might not belong here
+        // Field layout starting at offset 0xBE:
+        u8 _BE[6];              // 0xBE-0xC3
+        void* mTargetC4;         // 0xC4-0xC7
+        u8 _C8[0x544];           // 0xC8-0x60B
+        u8 _60C_region[0xB4];   // 0x60C-0x6BF
+        void* mTarget6C0;         // 0x6C0-0x6C3
+        u8 _6C4[5];              // 0x6C4-0x6C8
+        u8 mFlags6C9;             // 0x6C9
+        u8 _6CA[4];             // 0x6CA-0x6CD
+        u8 field_6CE;            // 0x6CE
+        u8 field_6CF;            // 0x6CF
+        u8 _6D0[0x20];           // 0x6D0-0x6EF
+        float mMoveSpeed;         // 0x6F0-0x6F3
+        u8 _6F4[0x21];           // 0x6F4-0x714
+        u8 unk715[3];            // 0x715-0x717
+    void CfObject_UnkVirtualFunc4();
+    void CfObject_UnkVirtualFunc7();
+    void CfObject_UnkVirtualFunc6();
+    void CfObjectModel_UnkVirtualFunc1();
+    void CfObjectModel_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc5();
+    void CfObject_UnkVirtualFunc46();
+    void CfObject_UnkVirtualFunc47();
+    void CfObject_UnkVirtualFunc49();
+    void CfObject_UnkVirtualFunc64();
+    void CfObject_UnkVirtualFunc65();
+    void CfObject_UnkVirtualFunc19();
+    void CfObject_UnkVirtualFunc22();
+    void CfObject_UnkVirtualFunc25();
+    void CfObject_UnkVirtualFunc26(u32 value, float amount);
+    u32 CfObject_UnkVirtualFunc23();
+    void CfObject_UnkVirtualFunc27();
+    void CfObject_UnkVirtualFunc30();
+    void CfObject_UnkVirtualFunc32();
+    void CfObject_UnkVirtualFunc33(float amount);
+    void CfObject_UnkVirtualFunc13();
+    void CfObject_UnkVirtualFunc57();
+    void* CObjectParam_UnkVirtualFunc2();
+    void CfObject_UnkVirtualFunc14();
+    void CfObject_UnkVirtualFunc15();
+    void CfObject_UnkVirtualFunc16();
+    void CfObject_UnkVirtualFunc17();
+    void CfObjectModel_UnkVirtualFunc18();
+    bool CfObject_UnkVirtualFunc9();
+    void CfObject_UnkVirtualFunc10();
+    void CfObject_UnkVirtualFunc61();
+    void CfObject_UnkVirtualFunc62();
+    void CfObject_UnkVirtualFunc12();
+    void CfObject_UnkVirtualFunc66(int);
+    void CfObjectModel_UnkVirtualFunc19();
+    void CfObjectModel_UnkVirtualFunc6();
+    void CfObject_UnkVirtualFunc37();
+    void CfObject_UnkVirtualFunc38();
+    void CfObject_UnkVirtualFunc39();
+    void CfObject_UnkVirtualFunc40();
+    void CfObject_UnkVirtualFunc42();
+    void CfObject_UnkVirtualFunc43();
+    void CfObject_UnkVirtualFunc45();
+    void CfObject_UnkVirtualFunc70(float value);
+    int CfObject_UnkVirtualFunc50();
+    int CfObject_UnkVirtualFunc51();
+    void CfObject_UnkVirtualFunc60();
+    void CfObject_UnkVirtualFunc29(float value);
+    void setMoveSpeed(float value);
+    void resetMoveSpeed();
+    void updatePos();
+    void* getUnk54();
+    int getSubState();
+    void freeSub();
+    void setSubFieldC(unsigned short val);
+    int getSubFieldA();
+    void setSubFieldA(unsigned short val);
+    int getSubFieldE();
+    void setSubFieldE(unsigned short val);
+    void virtCall10();
+    int nullsub_25();
+    int nullsub_26();
+    int nullsub_27();
+    int nullsub_28();
+    int isActive();
+    void setBit6c9(unsigned long bit);
+    cf::CfObjectMove* testFlag8();
     };
 }
+
 /* end "kyoshin/cf/object/CfObjectMove.hpp" */
 /* "src/kyoshin/cf/object/CfObjectActor.hpp" line 4 "kyoshin/cf/object/CAIAction.hpp" */
 #pragma once
@@ -248559,6 +255840,7 @@ struct CAIActionExport {
 class CAIAction {
 public:
     CAIAction();
+    ~CAIAction();
 
     // Declared Fv for vtable; body is extern "C" with outA/outB args
     virtual void CAIAction_UnkVirtualFunc1(); // 0x8
@@ -248598,6 +255880,14 @@ extern "C" void CAIAction_UnkVirtualFunc2__Q22cf9CAIActionFv(cf::CAIAction* self
 
 extern void func_8014A86C(void*);
 extern void func_8014A8F8();
+extern UNKTYPE* func_800B708C(BOOL);
+extern UNKTYPE* func_8016FE34();
+
+struct CAIActionQuery;
+struct CAIActionEnumHolder;
+void func_80043D90(CAIActionEnumHolder*);
+void __dt__80043E88(CAIActionEnumHolder*, s32);
+void* func_80150828(cf::CAIAction*, CAIActionQuery*);
 /* end "kyoshin/cf/object/CAIAction.hpp" */
 /* "src/kyoshin/cf/object/CfObjectActor.hpp" line 5 "kyoshin/cf/object/CActorParam.hpp" */
 #pragma once
@@ -248623,6 +255913,9 @@ namespace cf {
 /* end "types.h" */
 
 namespace cf {
+    class UnkClass_CActorParam15E0;
+    struct CBattleStateSrcEntry;
+
     // 0x34-byte slot layout used by CBattleState_UnkVirtualFunc6's incoming
     // arg (r4) and by the 8-entry array at CBattleState+0x1388. Same struct
     // shape reused for both (see MWCC_REFERENCE §CBattleState_UnkVirtualFunc6).
@@ -248650,17 +255943,17 @@ namespace cf {
     public:
         virtual void CBattleState_UnkVirtualFunc1();  //0x8
         virtual void CBattleState_UnkVirtualFunc2();  //0xC
-        virtual void CBattleState_UnkVirtualFunc3();  //0x10
+        virtual int CBattleState_UnkVirtualFunc3();  //0x10
         virtual void CBattleState_UnkVirtualFunc4();  //0x14
-        virtual void CBattleState_UnkVirtualFunc5();  //0x18
-        virtual void CBattleState_UnkVirtualFunc6();  //0x1C
+        virtual void CBattleState_UnkVirtualFunc5(CBattleStateEntry* entry);  //0x18
+        virtual void CBattleState_UnkVirtualFunc6(CBattleStateEntry* entry);  //0x1C
         virtual void CBattleState_UnkVirtualFunc7();  //0x20
-        virtual void CBattleState_UnkVirtualFunc8();  //0x24
+        virtual void CBattleState_UnkVirtualFunc8(CBattleStateEntry* entry);  //0x24
         virtual void CBattleState_UnkVirtualFunc9();  //0x28
-        virtual void CBattleState_UnkVirtualFunc10(); //0x2C
-        virtual void CBattleState_UnkVirtualFunc11(); //0x30
+        virtual void CBattleState_UnkVirtualFunc10(CBattleStateEntry* arg); //0x2C
+        virtual void CBattleState_UnkVirtualFunc11(u32 mask); //0x30
         virtual void CBattleState_UnkVirtualFunc12(); //0x34
-        virtual void CBattleState_UnkVirtualFunc13(); //0x38
+        virtual void* CBattleState_UnkVirtualFunc13(int index); //0x38
         virtual void CBattleState_UnkVirtualFunc14(); //0x3C
         virtual void CBattleState_UnkVirtualFunc15(); //0x40
         virtual void CBattleState_UnkVirtualFunc16(); //0x44
@@ -248673,14 +255966,14 @@ namespace cf {
         virtual void CBattleState_UnkVirtualFunc23(); //0x60
         virtual void CBattleState_UnkVirtualFunc24(); //0x64
         virtual void CBattleState_UnkVirtualFunc25(); //0x68
-        virtual void CBattleState_UnkVirtualFunc26(); //0x6C
+        virtual void CBattleState_UnkVirtualFunc26(const CBattleStateSrcEntry* src); //0x6C
         virtual void CBattleState_UnkVirtualFunc27(); //0x70
         virtual void CBattleState_UnkVirtualFunc28(); //0x74
         virtual void CBattleState_UnkVirtualFunc29(); //0x78
         virtual void CBattleState_UnkVirtualFunc30(); //0x7C
-        virtual void CBattleState_UnkVirtualFunc31(); //0x80
+        virtual int CBattleState_UnkVirtualFunc31(u32 id); //0x80
         virtual void CBattleState_UnkVirtualFunc32(); //0x84
-        virtual void CBattleState_UnkVirtualFunc33(); //0x88
+        virtual int CBattleState_UnkVirtualFunc33(u32 id); //0x88
 
         CBattleState();
 
@@ -248689,43 +255982,10 @@ namespace cf {
         u8 unk8[0x1520];
         u8 unk1528[4];
         u8 unk152C[0x80];
-        u8 unk15AC[0x15DC - 0x15AC];
+        u8 unk15AC[0x15D8 - 0x15AC];
+        UnkClass_CActorParam15E0* field_0x15D8;
     };
 }
-
-// symbols.txt mangles Fv; retail leaves the arg entry in r4 (same pattern
-// as cf::CAIAction's UnkVirtualFunc1/2).
-extern "C" void CBattleState_UnkVirtualFunc6__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg);
-
-// symbols.txt mangles Fv; retail leaves the caller's mask in r4 (same ABI
-// pattern as CBattleState_UnkVirtualFunc6).
-extern "C" void CBattleState_UnkVirtualFunc11__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 mask);
-
-// symbols.txt mangles Fv; retail leaves the id in r4 (same fake-Fv ABI as
-// UnkVirtualFunc6 above).
-extern "C" int CBattleState_UnkVirtualFunc31__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, u32 id);
-
-namespace cf {
-    struct CBattleStateSrcEntry;
-}
-
-// symbols.txt mangles Fv; retail leaves the source table pointer in r4
-// (same ABI pattern as UnkVirtualFunc6 above).
-extern "C" void CBattleState_UnkVirtualFunc26__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, const cf::CBattleStateSrcEntry* src);
-
-// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
-// ABI as UnkVirtualFunc6 above).
-extern "C" void CBattleState_UnkVirtualFunc8__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* entry);
-
-// symbols.txt mangles Fv; retail leaves the entry arg in r4 (same fake-Fv
-// ABI as UnkVirtualFunc6/8). Matches on unk2E, then clears matching slots.
-extern "C" void CBattleState_UnkVirtualFunc10__Q22cf12CBattleStateFv(
-    cf::CBattleState* self, cf::CBattleStateEntry* arg);
 /* end "kyoshin/cf/object/CBattleState.hpp" */
 /* "src/kyoshin/cf/object/CActorParam.hpp" line 5 "kyoshin/cf/object/CActorState.hpp" */
 #pragma once
@@ -248773,7 +256033,7 @@ namespace cf {
         u8 unk38[4];
         u16 unk3C;
         u8 unk3E;
-        u8 unk3F; //padding?
+        u8 unk3F;
         u16 unk40;
         u8 unk42;
         u8 unk43;
@@ -248795,19 +256055,18 @@ namespace cf {
         u16 unk68;
         u16 unk6A;
         u8 unk6C[5];
-        u8 unk71; //filler?
+        u8 unk71;
         u16 unk72;
         u16 unk74;
-        u8 unk76; //filler?
+        u8 unk76;
         u8 unk77;
         u32 unk78;
         float unk7C;
         float unk80;
-        //0x84: vtable
 
         CAttackParam();
 
-        virtual void CAttackParam_UnkVirtualFunc1(){ //0x8
+        virtual void CAttackParam_UnkVirtualFunc1(){
             unk0 = 0;
             unk20 = 0;
             unk24 = 0;
@@ -248849,10 +256108,9 @@ namespace cf {
             std::memset(unk38, 0, sizeof(unk38));
             std::memset(unk6C, 0, sizeof(unk6C));
         }
-        virtual u8 CAttackParam_UnkVirtualFunc2(); //0xC
-        virtual void CAttackParam_UnkVirtualFunc3(u8 r4); //0x10
-        virtual void CAttackParam_UnkVirtualFunc4(); //0x14
-
+        virtual u8 CAttackParam_UnkVirtualFunc2();
+        virtual void CAttackParam_UnkVirtualFunc3(u8 r4);
+        virtual void CAttackParam_UnkVirtualFunc4();
     };
 
     struct _sAttackSet {
@@ -248871,8 +256129,6 @@ namespace cf {
     //size: 0x8C
     class CArtsParam : public CAttackParam {
     public:
-        //0x0: vtable
-        //0x0-0x88: CAttackParam
         UNKTYPE* unk88;
 
         CArtsParam();
@@ -248883,13 +256139,17 @@ namespace cf {
 
     //size: 0x38
     struct _sArtsSet {
-        u16 unk0;
-        u8 unk2[2];
-        u8 unk4[0x30];
-        //0x34: vtable
+        union {
+            struct {
+                u16 unk0;
+                u8 unk2[2];
+                u8 unk4[0x30];
+            };
+            u16 mArtsSlotData[24];
+        };
 
         _sArtsSet();
-        virtual void _sArtsSet_UnkVirtualFunc1(){ //0x8
+        virtual void _sArtsSet_UnkVirtualFunc1(){
             unk0 = 0;
             std::memset(unk4, 0, sizeof(unk4));
         }
@@ -248899,7 +256159,14 @@ namespace cf {
     class CArtsSet : _sArtsSet {
     public:
         CArtsSet(){}
-        virtual void CArtsSet_UnkVirtualFunc1(); //0x8
+        virtual void CArtsSet_UnkVirtualFunc1();
+
+        void setArtsSlotRC(unsigned short value, unsigned int row, unsigned int index);
+        unsigned short getArtsSlotRC(int index, int subindex);
+        void setArtsSlotByIdx(unsigned short value, int index);
+        void* getArtsParamRC(int index460, int index8c);
+        void* getArtsParamRC2(int index1, int index2);
+        void* getArtsParamByIdx(int index);
 
         //0x0: vtable
         //0x0-38: _sArtsSet
@@ -248911,6 +256178,8 @@ namespace cf {
 /* end "cstring" */
 
 namespace cf {
+
+    class UnkClass_CActorParam15E0;
 
     //size: 0x7C
     struct CActorParam_UnkStruct2 {
@@ -249103,30 +256372,30 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc11();  //0xC0
         virtual void CActorParam_UnkVirtualFunc12();  //0xC4
         virtual void CActorParam_UnkVirtualFunc13();  //0xC8
-        virtual void CActorParam_UnkVirtualFunc14();  //0xCC
+        virtual void CActorParam_UnkVirtualFunc14(u8 val);  //0xCC
         virtual void CActorParam_UnkVirtualFunc15();  //0xD0
-        virtual void CActorParam_UnkVirtualFunc16();  //0xD4
+        virtual void CActorParam_UnkVirtualFunc16(float val);  //0xD4
         virtual void CActorParam_UnkVirtualFunc17();  //0xD8
         virtual void CActorParam_UnkVirtualFunc18();  //0xDC
-        virtual int CActorParam_UnkVirtualFunc19();  //0xE0
+        virtual u32 CActorParam_UnkVirtualFunc19();  //0xE0
         virtual void CActorParam_UnkVirtualFunc20();  //0xE4
         virtual void CActorParam_UnkVirtualFunc21();  //0xE8
         virtual void CActorParam_UnkVirtualFunc22();  //0xEC
         virtual void CActorParam_UnkVirtualFunc23();  //0xF0
         virtual void CActorParam_UnkVirtualFunc24();  //0xF4
         virtual void CActorParam_UnkVirtualFunc25();  //0xF8
-        virtual void CActorParam_UnkVirtualFunc26();  //0xFC
+        virtual u32 CActorParam_UnkVirtualFunc26();  //0xFC
         virtual void CActorParam_UnkVirtualFunc27();  //0x100
         virtual void CActorParam_UnkVirtualFunc28();  //0x104
-        virtual void CActorParam_UnkVirtualFunc29();  //0x108
+        virtual u32 CActorParam_UnkVirtualFunc29();  //0x108
         virtual void CActorParam_UnkVirtualFunc30();  //0x10C
         virtual void CActorParam_UnkVirtualFunc31();  //0x110
         virtual void CActorParam_UnkVirtualFunc32();  //0x114
-        virtual void CActorParam_UnkVirtualFunc33();  //0x118
+        virtual void CActorParam_UnkVirtualFunc33(float val);  //0x118
         virtual void CActorParam_UnkVirtualFunc34();  //0x11C
         virtual void CActorParam_UnkVirtualFunc35();  //0x120
         virtual void CActorParam_UnkVirtualFunc36();  //0x124
-        virtual void CActorParam_UnkVirtualFunc37();  //0x128
+        virtual float CActorParam_UnkVirtualFunc37();  //0x128
         virtual void CActorParam_UnkVirtualFunc38();  //0x12C
         virtual void CActorParam_UnkVirtualFunc39();  //0x130
         virtual void CActorParam_UnkVirtualFunc40();  //0x134
@@ -249144,52 +256413,52 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc52();  //0x164
         virtual void CActorParam_UnkVirtualFunc53();  //0x168
         virtual void CActorParam_UnkVirtualFunc54();  //0x16C
-        virtual void CActorParam_UnkVirtualFunc55();  //0x170
+        virtual void CActorParam_UnkVirtualFunc55(u16 val);  //0x170
         virtual void CActorParam_UnkVirtualFunc56();  //0x174
         virtual void CActorParam_UnkVirtualFunc57();  //0x178
         virtual void CActorParam_UnkVirtualFunc58();  //0x17C
         virtual void CActorParam_UnkVirtualFunc59();  //0x180
         virtual void CActorParam_UnkVirtualFunc60();  //0x184
-        virtual void CActorParam_UnkVirtualFunc61();  //0x188
+        virtual void CActorParam_UnkVirtualFunc61(u16 val);  //0x188
         virtual void CActorParam_UnkVirtualFunc62();  //0x18C
         virtual void CActorParam_UnkVirtualFunc63();  //0x190
         virtual void CActorParam_UnkVirtualFunc64();  //0x194
-        virtual void CActorParam_UnkVirtualFunc65();  //0x198
+        virtual void CActorParam_UnkVirtualFunc65(float val);  //0x198
         virtual void CActorParam_UnkVirtualFunc66();  //0x19C
         virtual void CActorParam_UnkVirtualFunc67();  //0x1A0
-        virtual void CActorParam_UnkVirtualFunc68();  //0x1A4
+        virtual void CActorParam_UnkVirtualFunc68(float val);  //0x1A4
         virtual void CActorParam_UnkVirtualFunc69();  //0x1A8
         virtual void CActorParam_UnkVirtualFunc70();  //0x1AC
         virtual void CActorParam_UnkVirtualFunc71();  //0x1B0
         virtual void CActorParam_UnkVirtualFunc72();  //0x1B4
         virtual void CActorParam_UnkVirtualFunc73();  //0x1B8
-        virtual void CActorParam_UnkVirtualFunc74();  //0x1BC
+        virtual void CActorParam_UnkVirtualFunc74(float val);  //0x1BC
         virtual void CActorParam_UnkVirtualFunc75();  //0x1C0
-        virtual void CActorParam_UnkVirtualFunc76();  //0x1C4
+        virtual void* CActorParam_UnkVirtualFunc76();  //0x1C4
         virtual void CActorParam_UnkVirtualFunc77();  //0x1C8
         virtual void CActorParam_UnkVirtualFunc78();  //0x1CC
         virtual void CActorParam_UnkVirtualFunc79();  //0x1D0
         virtual void CActorParam_UnkVirtualFunc80();  //0x1D4
-        virtual void CActorParam_UnkVirtualFunc81();  //0x1D8
-        virtual void CActorParam_UnkVirtualFunc82();  //0x1DC
-        virtual void CActorParam_UnkVirtualFunc83();  //0x1E0
+        virtual void CActorParam_UnkVirtualFunc81(u32 val);  //0x1D8
+        virtual void CActorParam_UnkVirtualFunc82(u32 addend);  //0x1DC
+        virtual void CActorParam_UnkVirtualFunc83(u32 addend);  //0x1E0
         virtual void CActorParam_UnkVirtualFunc84();  //0x1E4
-        virtual void CActorParam_UnkVirtualFunc85();  //0x1E8
+        virtual u32 CActorParam_UnkVirtualFunc85();  //0x1E8
         virtual void CActorParam_UnkVirtualFunc86();  //0x1EC
         virtual void CActorParam_UnkVirtualFunc87();  //0x1F0
         virtual void CActorParam_UnkVirtualFunc88();  //0x1F4
         virtual void CActorParam_UnkVirtualFunc89();  //0x1F8
-        virtual void CActorParam_UnkVirtualFunc90();  //0x1FC
+        virtual void CActorParam_UnkVirtualFunc90(u32 addend);  //0x1FC
         virtual void CActorParam_UnkVirtualFunc91();  //0x200
         virtual void CActorParam_UnkVirtualFunc92();  //0x204
         virtual void CActorParam_UnkVirtualFunc93();  //0x208
-        virtual void CActorParam_UnkVirtualFunc94();  //0x20C
+        virtual void* CActorParam_UnkVirtualFunc94();  //0x20C
         virtual void CActorParam_UnkVirtualFunc95();  //0x210
         virtual void CActorParam_UnkVirtualFunc96();  //0x214
         virtual void CActorParam_UnkVirtualFunc97();  //0x218
         virtual void CActorParam_UnkVirtualFunc98();  //0x21C
         virtual void CActorParam_UnkVirtualFunc99();  //0x220
-        virtual void CActorParam_UnkVirtualFunc100(); //0x224
+        virtual void* CActorParam_UnkVirtualFunc100(); //0x224
         virtual void CActorParam_UnkVirtualFunc101(); //0x228
         virtual void CActorParam_UnkVirtualFunc102(); //0x22C
         virtual void CActorParam_UnkVirtualFunc103(); //0x230
@@ -249202,26 +256471,26 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc110(); //0x24C
         virtual void CActorParam_UnkVirtualFunc111(); //0x250
         virtual void CActorParam_UnkVirtualFunc112(); //0x254
-        virtual void CActorParam_UnkVirtualFunc113(); //0x258
+        virtual u32* CActorParam_UnkVirtualFunc113(); //0x258
         virtual void CActorParam_UnkVirtualFunc114(); //0x25C
-        virtual void CActorParam_UnkVirtualFunc115(); //0x260
-        virtual void CActorParam_UnkVirtualFunc116(); //0x264
-        virtual void CActorParam_UnkVirtualFunc117(); //0x268
+        virtual bool CActorParam_UnkVirtualFunc115(); //0x260
+        virtual void CActorParam_UnkVirtualFunc116(float val); //0x264
+        virtual float* CActorParam_UnkVirtualFunc117(); //0x268
         virtual void CActorParam_UnkVirtualFunc118(); //0x26C
-        virtual void CActorParam_UnkVirtualFunc119(); //0x270
+        virtual float* CActorParam_UnkVirtualFunc119(); //0x270
         virtual void CActorParam_UnkVirtualFunc120(); //0x274
         virtual void CActorParam_UnkVirtualFunc121(); //0x278
-        virtual void CActorParam_UnkVirtualFunc122(); //0x27C
+        virtual void* CActorParam_UnkVirtualFunc122(); //0x27C
         virtual void CActorParam_UnkVirtualFunc123(); //0x280
         virtual void CActorParam_UnkVirtualFunc124(); //0x284
-        virtual void CActorParam_UnkVirtualFunc125(); //0x288
+        virtual void* CActorParam_UnkVirtualFunc125(); //0x288
         virtual void CActorParam_UnkVirtualFunc126(); //0x28C
-        virtual void CActorParam_UnkVirtualFunc127(); //0x290
+        virtual UnkClass_CActorParam15E0* CActorParam_UnkVirtualFunc127(); //0x290
         virtual void CActorParam_UnkVirtualFunc128(); //0x294
         virtual CActorParam_UnkStruct1* CActorParam_UnkVirtualFunc129(); //0x298
         virtual void CActorParam_UnkVirtualFunc130(); //0x29C
         virtual void CActorParam_UnkVirtualFunc131(); //0x2A0
-        virtual void CActorParam_UnkVirtualFunc132(); //0x2A4
+        virtual void* CActorParam_UnkVirtualFunc132(); //0x2A4
         virtual void CActorParam_UnkVirtualFunc133(); //0x2A8
         virtual void CActorParam_UnkVirtualFunc134(); //0x2AC
         virtual void CActorParam_UnkVirtualFunc135(); //0x2B0
@@ -249241,7 +256510,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc149(); //0x2E8
         virtual void CActorParam_UnkVirtualFunc150(); //0x2EC
         virtual void CActorParam_UnkVirtualFunc151(); //0x2F0
-        virtual void CActorParam_UnkVirtualFunc152(); //0x2F4
+        virtual void* CActorParam_UnkVirtualFunc152(); //0x2F4
         virtual void CActorParam_UnkVirtualFunc153(); //0x2F8
         virtual void CActorParam_UnkVirtualFunc154(); //0x2FC
         virtual void CActorParam_UnkVirtualFunc155(); //0x300
@@ -249254,7 +256523,7 @@ namespace cf {
         virtual void CActorParam_UnkVirtualFunc162(); //0x31C
         virtual void CActorParam_UnkVirtualFunc163(); //0x320
         virtual void CActorParam_UnkVirtualFunc164(); //0x324
-        virtual void CActorParam_UnkVirtualFunc165(); //0x328
+        virtual void* CActorParam_UnkVirtualFunc165(); //0x328
         virtual void CActorParam_UnkVirtualFunc166(); //0x32C
         virtual void CActorParam_UnkVirtualFunc167(); //0x330
         virtual void CActorParam_UnkVirtualFunc168(); //0x334
@@ -249274,12 +256543,13 @@ namespace cf {
     #pragma endregion
 
         UNKTYPE* unk15DC;
-        UNKTYPE* unk15E0;
+        UnkClass_CActorParam15E0* unk15E0;
         u32 unk15E4;
         float unk15E8;
         u32 unk15EC;
         u32 unk15F0;
-        u8 unk15F4[8];
+        u8 unk15F4[4];        // 0x15F4
+        float unk15F8;         // 0x15F8
         float unk15FC;
         u32 unk1600;
         u32 unk1604;
@@ -249337,7 +256607,20 @@ namespace cf {
         u32 unk3374;
         u8 unk3378[4];
         float unk337C;
+    CActorParam();
+    void CBattleState_UnkVirtualFunc18();
+    void CBattleState_UnkVirtualFunc17();
+    int CBattleState_UnkVirtualFunc3();
+    void CBattleState_UnkVirtualFunc2();
     };
+
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc19() { return unk15EC; }
+inline u32 cf::CActorParam::CActorParam_UnkVirtualFunc29() { return *(u32*)&unk17E4; }
+inline u32* cf::CActorParam::CActorParam_UnkVirtualFunc113() { return &unk161C; }
+inline bool cf::CActorParam::CActorParam_UnkVirtualFunc115() { return !!unk1628; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc117() { return &unk1620; }
+inline float* cf::CActorParam::CActorParam_UnkVirtualFunc119() { return &unk1624; }
+inline void* cf::CActorParam::CActorParam_UnkVirtualFunc122() { return &mArtsSet; }
 }
 /* end "kyoshin/cf/object/CActorParam.hpp" */
 
@@ -249357,7 +256640,7 @@ namespace cf {
         virtual void CfObjectActor_UnkVirtualFunc8();  //0x5BC
         virtual void CfObjectActor_UnkVirtualFunc9();  //0x5C0
         virtual void CfObjectActor_UnkVirtualFunc10(); //0x5C4
-        virtual void CfObjectActor_UnkVirtualFunc11(); //0x5C8
+        virtual void CfObjectActor_UnkVirtualFunc11(void* arg); //0x5C8
         virtual void CfObjectActor_UnkVirtualFunc12(); //0x5CC
         virtual void CfObjectActor_UnkVirtualFunc13(); //0x5D0
 
@@ -249368,6 +256651,19 @@ namespace cf {
         //0x3e9c: vtable 3
         //0x3e9c-45b4: CfObjectMove
         u8 unk45B4[0x8];
+    void CActorParam_UnkVirtualFunc1();
+    void CActorParam_UnkVirtualFunc140();
+    void CActorParam_UnkVirtualFunc179();
+    void CActorParam_UnkVirtualFunc180();
+    void CActorParam_UnkVirtualFunc33();
+    void CActorParam_UnkVirtualFunc35();
+    void CActorParam_UnkVirtualFunc34();
+    void CActorParam_UnkVirtualFunc54();
+    void CActorParam_UnkVirtualFunc60();
+    void CActorParam_UnkVirtualFunc4();
+    void CActorParam_UnkVirtualFunc21();
+    void CActorParam_UnkVirtualFunc23();
+    void func_801725DC();
     };
 }
 /* end "kyoshin/cf/object/CfObjectActor.hpp" */
@@ -249422,14 +256718,13 @@ namespace cf {
     public:
         u8 unk0[0x60];
         bool unk60; //0x60
-        //0x64: vtable
+        u8 _pad61[3];
+        u32 mVTable; //0x64: vtable pointer (manually managed, non-standard ABI)
 
         CChainTemp(){
             std::memset(unk0, 0, sizeof(unk0));
             unk60 = false;
         }
-        virtual ~CChainTemp(){}
-        virtual void CChainTemp_UnkVirtualFunc1(); //0
     };
 }
 /* end "kyoshin/cf/chain/CChainTemp.hpp" */
@@ -249447,7 +256742,7 @@ namespace cf {
 namespace cf {
     class IObjectInfo {
     public:
-        virtual ~IObjectInfo(){}
+        virtual ~IObjectInfo();
         virtual void IObjectInfo_UnkVirtualFunc1() = 0; //not sure if this exists
     };
 }
@@ -249458,7 +256753,7 @@ namespace cf {
     class CChainEffect : public IObjectInfo {
     public:
         CChainEffect();
-        virtual ~CChainEffect(){}
+        virtual ~CChainEffect();
         virtual void IObjectInfo_UnkVirtualFunc1();
 
         //0x0: vtable
@@ -249467,23 +256762,27 @@ namespace cf {
         u32 unk8;
     };
 }
+
+extern "C" void func_802A0950(cf::CChainEffect*, int, int, int, int, int);
 /* end "kyoshin/cf/chain/CChainEffect.hpp" */
 /* "src/kyoshin/cf/chain/CChainActor.hpp" line 5 "cstring" */
 /* end "cstring" */
 
 namespace cf {
     //size: 0x80
+    // Vtable at 0x70 is manually managed; no implicit C++ vtable at 0x00.
     class CChainActor {
     public:
         u32 unk0;
-        CChainTemp mChainTemp; //0x4?
-        u16 unk6C;
-        //0x70: vtable
+        CChainTemp mChainTemp; //0x4
+        u16 unk6C;              //0x6C
+        u8 _pad6E[2];           //0x6E
+        u32 mVTable;            //0x70: vtable pointer (manually managed, non-standard ABI)
 
         CChainActor() : unk6C(0) {
             unk0 = 0;
         }
-        virtual ~CChainActor();
+        ~CChainActor();
 
         CChainEffect mChainEffect; //0x74
     };
@@ -249508,16 +256807,10 @@ namespace cf {
     class CChainActorEne : public CChainActor {
     public:
         // No additional members beyond CChainActor
-        // Class methods use extern "C" linkage to match retail symbol names
+        void func_802818D4();
+        s32 func_802818DC();
     };
 }
-
-// Forwarding: passes &self->mChainEffect to func_802A0AA0
-// Returns whether the effect matches the given parameter
-extern "C" void func_802818D4(cf::CChainActorEne* self);
-
-// Returns whether this enemy chain actor is active
-extern "C" s32 func_802818DC(cf::CChainActorEne* self);
 
 /* end "kyoshin/cf/chain/CChainActorEne.hpp" */
 
@@ -249597,18 +256890,28 @@ namespace cf {
     //size: 0x18
     class CChainTime {
     public:
-        u8 unk0[8];
-        CChainEffect mChainEffect; //0x8
+        // 0x00: mTimer (float)
+        // 0x04: mEnabled (u8)
+        // 0x05: mPaused (u8)
+        // 0x06: mLoop (u8)
+        // 0x07: padding
+        f32 mTimer;          // 0x00
+        u8 mEnabled;         // 0x04
+        u8 mPaused;          // 0x05
+        u8 mLoop;            // 0x06
+        u8 _pad07;           // 0x07
+        CChainEffect mChainEffect; //0x08 (size 0xC)
         //0x14: vtable
 
-        CChainTime(){}
-        virtual ~CChainTime(){
-            func_8027CE30();
-        }
+        CChainTime();
+        virtual ~CChainTime();
         
         void func_8027CE30();
     };
 }
+
+extern "C" void func_8027CEB0(cf::CChainTime*, u8);
+extern "C" void func_8027CF3C(cf::CChainTime*);
 /* end "kyoshin/cf/chain/CChainTime.hpp" */
 /* "src/kyoshin/cf/chain/CChain.hpp" line 7 "kyoshin/cf/chain/CChainChance.hpp" */
 #pragma once
@@ -249630,6 +256933,13 @@ namespace cf {
         //0x10: vtable
 
         virtual ~CChainChance(){}
+
+        void func_8027C098() {
+            mChainCount = 0;
+            mField08 = 0;
+            mField0A = 0;
+            mField0C = 0;
+        }
 
         u8 unk14[4];          //0x14
     };
@@ -249657,12 +256967,16 @@ struct CChainGauge {
 // type is not void*.  The gauges these operate on live at CChainCombo+0xC.
 extern "C" void func_80294824__FPv(cf::CChainGauge* gauge);
 extern "C" void func_80294834__FPv(cf::CChainGauge* gauge);
+extern "C" void func_80294844(cf::CChainGauge* gauge, float value);
 
 // Resets/respawns chain combo state (CMenuBattleChain.cpp).
 extern "C" void func_802AA338__Fv();
 
 // Retail vtable lbl_eu_80538994 lives in split1 (dtor only); not emitted here.
 extern "C" void* lbl_eu_80538994[];
+
+// 3-entry table indexed by probability thresholds in func_80293EEC.
+extern "C" int lbl_eu_80538988[3];
 
 namespace cf {
 
@@ -249683,7 +256997,20 @@ struct CChainCombo {
 
 } // namespace cf
 
-// Opaque objects that only expose a C++-style vptr at +0 (forces r12-style loads).
+// Object returned by CActorParam_UnkVirtualFunc132 (vtable[0x2A4]).
+// Has a pointer at +0x50 to an arts category struct.
+struct CChainCombo_ArtsCategoryHolder {
+    u8 pad[0x50];
+    struct CChainCombo_ArtsCategory* mArtsCategory; // 0x50
+};
+
+// Object with arts category byte at +0x3E.
+struct CChainCombo_ArtsCategory {
+    u8 pad[0x3e];
+    u8 mArtsCategory; // 0x3e
+};
+
+// Opaque object that only exposes a C++-style vptr at +0 (forces r12-style loads).
 struct CChainVObj {
     void** mVtbl;
 };
@@ -249696,6 +257023,18 @@ namespace cf {
         CChain();
         ~CChain(){}
         void func_8027728C();
+        int getZero_78E04();
+        bool chkActorList();
+        u16 getChainCount();
+        void setFieldAndClear(int val);
+        int getZero_A584();
+        int getZero_A9D0();
+        int getZero_A9D8();
+        int getZero_A9E0();
+        int getZero_A9EC();
+        int getZero_A9F4();
+        int getZero_A9FC();
+        int getZero_AA04();
 
         u8 unk0[0x18];
         CChainActorList mChainActorList; //0x18
@@ -249883,14 +257222,16 @@ namespace cf{
         virtual ~CBattleManager(); //0x8
         virtual void FactoryEvent2(); //0x10
         virtual void func_80085220(u32 r4, u32 r5); //0x1C
-        virtual void func_800E2584(); //0x20
+        virtual void func_800E2584(u32 mask); //0x20
         virtual void func_800F42A0(); //0x24
         virtual void func_800885F0(); //0x28
         virtual void func_800EA410(); //0x2C
         virtual void func_800EA420(); //0x30
-        virtual void func_800EA460(); //0x34
+        virtual void func_800EA460(float a, float b, unsigned long c); //0x34
         virtual void func_800EA470(); //0x38
         virtual void func_800EA998(); //0x3C
+
+        void* func_800EA444();
 
         static CBattleManager* getInstance();
         static void func_800D9190();
@@ -249921,24 +257262,100 @@ namespace cf{
         static CBattleManager* spInstance;
     };
 }
+
+// --- Standalone function access structs (CBattleManager.cpp) ---
+
+// Intrusive linked-list node: +0x00 = next, +0x08 = data ptr
+struct SimpleListNode {
+    SimpleListNode* next;
+    void* data;
+};
+
+// Return layout of func_8009EC9C (accessed at +0x1C, cast_int_arith L63/L80)
+struct UnkStruct_8009EC9C_Ret {
+    u8 pad_00[0x1C];
+    u8 unk1C;
+};
+
+// Layout for func_800EA384 self: list sentinel ptr at +0x08
+struct Func800EA384_Self {
+    u8 pad_00[0x08];
+    SimpleListNode* listHead;
+};
+
+// Layout for func_800F4004 this_: list sentinel ptr at +0x48
+struct Func800F4004_Self {
+    u8 pad_00[0x48];
+    SimpleListNode* listHead;
+};
 /* end "kyoshin/cf/CBattleManager.hpp" */
 /* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 9 "kyoshin/cf/CfGameManager.hpp" */
 #pragma once
 
-/* "src/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
+/* "include/kyoshin/cf/CfGameManager.hpp" line 2 "types.h" */
 /* end "types.h" */
 
 class CPad;
 class CScnNw4r;
 class CView;
+class UnkClass_80186D20;
+class CfCamEventManager;
+class UnkClass_800821F8;
+class UnkClass_80085334;
+class UnkClass_8007E864;
+class CSysWinBuff;
+
+struct CfGameManagerData1C {
+    u8 field_0x0[0xC];
+};
+
+struct UnkClass_80083298SubF0 {
+    u8 field_0x0;
+};
+
+class UnkClass_80083298 {
+public:
+    virtual void vfunc_0x08();
+    virtual void vfunc_0x0C();
+    virtual void vfunc_0x10();
+    virtual void vfunc_0x14();
+    virtual void vfunc_0x18();
+    virtual void vfunc_0x1C();
+    virtual void vfunc_0x20();
+    virtual void vfunc_0x24();
+    virtual void vfunc_0x28();
+    virtual void vfunc_0x2C();
+    virtual void vfunc_0x30();
+    virtual void vfunc_0x34();
+    virtual void vfunc_0x38();
+    virtual void vfunc_0x3C();
+    virtual void vfunc_0x40();
+    virtual void vfunc_0x44();
+    virtual void vfunc_0x48();
+    virtual void vfunc_0x4C();
+    virtual void vfunc_0x50();
+    virtual void vfunc_0x54();
+    virtual void vfunc_0x58();
+    virtual void vfunc_0x5C();
+    virtual void vfunc_0x60();
+    virtual void vfunc_0x64();
+    virtual void vfunc_0x68();
+    virtual void vfunc_0x6C();
+    virtual void vfunc_0x70();
+    virtual u32 vfunc_0x74();
+
+    u8 field_0x4[0xEC];
+    UnkClass_80083298SubF0 field_0xF0;
+};
 
 /* TODO: it's possible this file contains multiple separate classes, either just all being put in here,
 or due to being in separate files, but compiled together in one file (unity compilation). For now,
 to make things simpler, everything exists in a single class. */
 namespace cf{
     class CfPadData;
+    class CfObject;
+    struct CfObjectSub54;
     class CfObjectMove;
-
     //unofficial name
     class CfGameManager{
     public:
@@ -249954,14 +257371,15 @@ namespace cf{
         static void func_8007E514(int, int, char const*, int, int);
         static void func_8007F930(bool arg1);
         static UNKWORD func_800822F4();
-        static UNKWORD func_800829B8();
+        static bool func_800829B8();
         static u32 getCurrentPadChannel();
-        static UNKTYPE* func_80083298();
+        static UnkClass_80083298* func_80083298();
         static CfObjectMove* getPlayer(int playerIndex);
         static u32 getEnabledInputFlags();
-        static bool func_80086F9C(s16);
-        static void setCurrentPadPtr(const CPad* pPad, u32 r4);
-        static CPad* getPad(int r3);
+        static bool func_80086F9C();
+        static bool func_80086F9C(s16) { return func_80086F9C(); }
+        static void setCurrentPadPtr(const CPad* pad, u32 channel);
+        static CPad* getPad(int channel);
         static void setPad(int r3, CPad* pPad, u32 r5);
         static CfPadData* getCfPadData();
         static CPad* getCurrentPad();
@@ -249976,34 +257394,341 @@ namespace cf{
         }
 
         u32 unk0;
-        u32 unk4;
-        u32 unk8;
-        u8 unkC[0x28 - 0xC];
+        CfObject* field_0x4;
+        u32 mObjectFlags;
+        u8 field_0xC[0xC];
+        u16 field_0x18;
+        u8 field_0x1A[2];
+        CfGameManagerData1C field_0x1C;
         u8 unk28;
-        u8 unk29[0x68 - 0x29];
+        u8 unk29[0x40 - 0x29];
+        u16* field_0x40;
+        s32 field_0x44;
+        s32 field_0x48;
+        s32 field_0x4C;
+        u8 field_0x50[0x18];
         u32 unk68;
         u8 unk6C;
-        u8 unk6D[0x7C - 0x6D];
+        u8 unk6D[3];          // 0x6D-0x6F
+        u32 unk70;             // 0x70-0x73
+        u8 unk74[8];           // 0x74-0x7B
         u32 unk7C;
-        u8 unk80[0x8C - 0x80];
-        u32 unk8C;
-        u32 unk90;
+        u8 unk80[0x86 - 0x80];
+        u16 field_0x86;
+        u8 field_0x88[0x8C - 0x88];
+        s32 unk8C;
+        UnkClass_80083298* unk90;
         //between CObjectParam - CfObjectMove
         //likely player character object array, seems to always store pointers
         //to CfObjectPc objects except pointing at the 4th vtable
         CfObjectMove* unk94[3];
         u32 unkA0;
-        u32 unkA4;
-        u32 unkA8;
-        u32 unkAC;
-        u32 unkB0;
-        u32 unkB4;
+        UnkClass_80186D20* field_0xA4;
+        UnkClass_8007E864* unkA8;
+        UnkClass_80085334* unkAC;
+        UnkClass_800821F8* unkB0;
+        CfCamEventManager* unkB4;
+        u8 field_0xB8[0x4EC - 0xB8];
+        u32 field_0x4EC;
 
         static u32 sUnkFlags;
         static CScnNw4r* spScene;
+public:
+    void func_8007C0F8();
+    void func_8007C140();
+    void func_8007C188(unsigned long flags);
+    void func_8007C198();
+    void func_8007C2F4();
+    void func_8007C344();
+    void func_8007C360();
+    void func_8007C374();
+    void func_8007C4B4();
+    ~CfGameManager();
+    void func_8007C5B8();
+    cf::CfObjectMove** func_8007C6B4(cf::CfObjectMove** slots, int index);
+    void func_8007C6C0();
+    void func_8007C8C8();
+    bool func_8007CBC8();
+    void func_8007CBD4();
+    void func_8007CBEC();
+    void func_8007CDA8();
+    void func_8007CE94();
+    void func_8007CF64() const;
+    void func_8007D190(unsigned long flags);
+    void func_8007D1A0();
+    void func_8007D794();
+    void func_8007D7A4();
+    void func_8007D834();
+    void func_8007D84C();
+    void* func_8007DA00();
+    void func_8007DA0C();
+    void func_8007DCA8();
+    void func_8007DCB8();
+    void func_8007DE94();
+    void func_8007DECC();
+    u16 func_8007E030();
+    void func_8007E038();
+    CfObject** func_8007E0C8();
+    void func_8007E0D0();
+    void func_8007E4CC();
+    void func_8007E4DC();
+    void func_8007E864();
+    void func_8007E908();
+    void func_8007E960();
+    void func_8007E9CC();
+    void func_8007EEE0();
+    void func_8007EEF0();
+    u32 func_8007EEF8();
+    void func_8007EF04();
+    void func_8007EF44();
+    void func_8007EF48();
+    void func_8007EF4C();
+    void func_8007F044();
+    void func_8007F054();
+    void func_8007F0A4();
+    void func_8007F0AC();
+    void func_8007F0C4();
+    void func_8007F114();
+    void func_8007F11C();
+    void func_8007F1FC();
+    void func_8007F830();
+    u16 func_8007F8B8();
+    void func_8007F8C0();
+    void** func_8007F8D0();
+    void func_8007F8DC();
+    void func_8007F8F4();
+    void func_8007F900();
+    bool func_8007F91C();
+    void func_8007F990();
+    void func_8007F9AC();
+    void func_8007F9B4();
+    void func_8007F9BC();
+    void func_8007F9C4();
+    void func_8007FBFC();
+    void func_8007FC2C();
+    void func_8007FC5C();
+    void func_8007FD00();
+    void func_8007FD8C();
+    void func_8007FE18();
+    void func_8007FE1C();
+    void func_8007FE20();
+    void func_8007FE24();
+    void func_8007FE2C();
+    void func_8007FECC();
+    void func_8007FF6C();
+    void func_8008064C();
+    void func_800807BC();
+    void func_80080888();
+    u8 func_80080E20();
+    u8 func_80080E28();
+    void func_80080E30();
+    void func_80080E44();
+    void func_80080EE4();
+    void func_80080F40();
+    void func_80080F44();
+    void func_80080F48();
+    void func_80081258();
+    void func_80081264();
+    void func_8008126C();
+    void func_80081274();
+    void func_8008127C();
+    void func_80081284();
+    void func_8008128C();
+    void func_80081294();
+    void func_8008129C();
+    void func_800812A4();
+    void func_800812AC();
+    void func_800812B4();
+    void func_800812BC();
+    void func_800812C4();
+    void func_800812CC();
+    void func_800812D4();
+    void func_800812DC();
+    void func_800812E4();
+    void func_800812EC();
+    void func_800812F4();
+    void func_80081318();
+    void func_80081330();
+    void func_80081338();
+    void func_80081340();
+    void func_80081348();
+    void func_80081350();
+    void func_80081358();
+    void func_80081694();
+    void func_800817A8();
+    void func_800817B0();
+    void func_800817BC();
+    void func_80081874();
+    void func_8008187C();
+    void func_80081900();
+    void func_80081988();
+    void func_80081990();
+    void func_80081A24();
+    void func_80081A40();
+    void func_80081CA0();
+    void func_80081CB0();
+    void func_80081CB8();
+    void func_80081CBC();
+    void func_80081D2C();
+    void func_80081D88();
+    void func_80081D8C();
+    void func_80081DD8();
+    void func_80081E90();
+    void func_80081F28();
+    void func_80081F90();
+    void func_80082008();
+    void func_80082060();
+    void func_80082088();
+    bool func_80082104();
+    void func_8008212C();
+    UnkClass_800821F8* func_800821F8();
+    CfObject* func_8008221C();
+    void func_80082254();
+    void func_80082258();
+    void func_8008228C();
+    void func_800822FC();
+    void func_80082354();
+    void func_8008235C();
+    void func_800823A4();
+    void func_80082418();
+    void func_800824FC();
+    void func_80082544();
+    void func_80082568();
+    void func_80082614();
+    void func_8008261C();
+    bool func_80082680();
+    void func_80082694();
+    void func_8008269C();
+    void func_800826F0();
+    void func_80082768();
+    u16 func_80082770();
+    void func_800827A8();
+    void func_800827E4();
+    void func_80082834();
+    u32 func_800828DC();
+    u32 func_80082900();
+    void func_80082940();
+    void func_8008294C();
+    void func_80082A0C();
+    void func_80082A7C();
+    void func_80082B38();
+    void func_80082C48();
+    void func_80082D90();
+    void func_80082E50();
+    void func_80082EC0();
+    void func_80082EC4();
+    void func_80082F2C();
+    void func_80082FCC();
+    void func_80082FE4();
+    u32 func_80083100();
+    u32 func_8008310C();
+    void func_80083118();
+    void func_80083284();
+    void func_80083290();
+    void func_800832BC();
+    void func_80083304();
+    void func_80083328();
+    u32 func_80083458();
+    u32 func_80083460();
+    void func_80083468(u32 value);
+    void func_80083470();
+    bool func_80083538();
+    bool func_80083544();
+    void func_80083550();
+    void func_80083560();
+    void func_800835FC();
+    void func_8008360C();
+    void func_80083718();
+    void func_8008372C();
+    void func_80083878();
+    void func_80083888();
+    void func_800838F4();
+    void func_80083C70();
+    void func_80083C78();
+    void func_80083CC8();
+    void func_80083CD8();
+    void func_80083D50();
+    void func_80083D70();
+    void func_80083DEC();
+    void func_80083EA4();
+    void func_80083F28();
+    void func_8008402C();
+    void func_8008413C();
+    void func_80084654();
+    void func_80084A00();
+    void func_80084AD4();
+    bool func_80084B68();
+    bool func_80084BAC();
+    bool func_80084BF4();
+    void func_80084C10();
+    void func_80084CA4();
+    void func_80084F50();
+    void func_80085220();
+    void func_80085248();
+    void func_80085334();
+    void func_800853C8();
+    void func_8008566C();
+    void func_80085838();
+    bool func_80085840();
+    bool func_8008585C();
+    void func_80085878();
+    void func_800858B8();
+    void func_80085978();
+    void func_80085E58();
+    void func_80085FB8();
+    void func_800862D0();
+    void func_800863F4();
+    void func_80086490();
+    void func_800865E8();
+    void func_800866A0();
+    void func_8008670C();
+    void func_80086778();
+    void func_80086B04();
+    void func_80086B08();
+    void func_80086B0C();
+    void func_80086B10();
+    void func_80086B14();
+    void func_80086B18();
+    void func_80086B1C();
+    void func_80086B24();
+    void func_80086B2C();
+    void func_80086B34();
+    void func_80086B3C();
+    void func_80086B44();
+    void func_80086B48();
+    void func_80086D90();
+    void func_80086D94();
+    void func_80086D98();
+    void func_80086D9C();
+    static u32 func_80086DA0();
+    void func_80086DA4();
+    void func_80086DA8();
+    void func_80086DAC();
+    void func_80086DB0();
+    void func_80086DB4();
+    static u32 func_80086DBC();
+    void func_80086E6C();
+    bool func_80087244();
+    bool func_80087250();
+    void func_80087280();
+    void func_80087330();
+    void func_80087334();
+    void func_80087348();
+    void func_80087364();
+    void func_80087378();
+    void func_80087390();
+    void func_800873AC();
+    CfObjectSub54* func_800873C8();
+    void func_800873D4();
+    void func_800873E8();
+    void func_800873FC();
+    void func_80087410();
+    u32 func_80087424();
+    void func_8008742C();
+    void func_8008743C();
+    void func_80087448();
     }; //size = 0xB8
-
-} //namespace cf
+} // namespace cf
 /* end "kyoshin/cf/CfGameManager.hpp" */
 /* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 10 "kyoshin/code_80135FDC.hpp" */
 #pragma once
@@ -252357,7 +260082,7 @@ protected:
 #endif
 /* end "nw4r/lyt.h" */
 
-u16 func_8013606C(char*, char*, u16);
+u16 func_8013606C(const char*, char*, u16);
 char* func_80136190(char*, char*, u32);
 u32 func_801361E8(void*, char*, u32);
 char* func_8013639C(void*, char*, u16);
@@ -252378,6 +260103,9 @@ char* func_80138F78(u16);
 void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
+extern "C" u8 code80135FDC_getByte_621F0();
+extern "C" u8 code80135FDC_getByte_64077();
+extern "C" u8 func_801392B4(u8);
 /* end "kyoshin/code_80135FDC.hpp" */
 
 /* "src/kyoshin/menu/CMenuArtsSelect.cpp" line 12 "decomp.h" */
@@ -252846,7 +260574,21 @@ typedef enum {
 #endif
 /* end "revolution/GX.h" */
 
+
 extern "C" {
+void CMenuArtsSelect_clearArtsRef();
+void CMenuArtsSelect_releaseArtsRef(void* self, UnkArtsSelectRef* ref);
+void CMenuArtsSelect_setDisabled();
+bool CMenuArtsSelect_isFinished();
+CMenuArtsSelect* CMenuArtsSelect_getInstance();
+bool CMenuArtsSelect_isCreated();
+int CMenuArtsSelect_isInteractable();
+CMenuArtsSelect* CMenuArtsSelect_getSelectState();
+int CMenuArtsSelect_isNotReady();
+void CMenuArtsSelect_workEventDraw(void* self);
+void CMenuArtsSelect_workEventDtor(void* p);
+void CMenuArtsSelect_scnRenderRelease(void* ptr);
+void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self);
 void* func_80110A70();
 void* func_8010CE48();
 void func_8010EDE4(void*);
@@ -252856,6 +260598,31 @@ void func_80133770();
 // Batch 2026-07-14g: menu-arts-cbrender owns cbRenderBefore exclusively.
 // Batch 2026-07-14j: menu-arts-move owns Move exclusively.
 // Batch 2026-07-14k: menu-arts-ctor owns __ct__CMenuArtsSelect exclusively.
+
+// Arts parameter info layout (case 10 in Move).
+struct ArtsParamInfo {
+    u8 _pad00[0x74];
+    u16 mCheckFlag;  // +0x74: non-zero when skill has gauge
+    u8 _pad76[0x80 - 0x76];
+    f32 mRatioNum;   // +0x80: current gauge value
+    void* mTablePtr; // +0x84: pointer to function table
+};
+
+// Function table for arts param info (+0x14 = getMax vtable slot).
+struct ArtsParamTable {
+    u8 _pad00[0x14];
+    void* mGetMaxFn; // +0x14: vtable entry for getMax()
+};
+
+// Battle actor container: CfObjectMove lives at offset 0x3e9c.
+// The +0x04 field is a secondary MI vtable pointer.
+struct BattleActor {
+    void* mVtable0;          // +0x00: primary vtable
+    void* mSecondaryVtable;  // +0x04: secondary MI vtable
+    u8 _pad08[0x3e9c - 0x08];
+    u8 mMoveStart;           // +0x3e9c: CfObjectMove starts here
+};
+
 extern u32 lbl_eu_80663E24;
 extern u32 lbl_eu_80663E28;
 // Unmangled retail names; int (not u8) avoids clrlwi before cmpwi.
@@ -252865,30 +260632,30 @@ int func_80122448();
 
 void* getInstance__11CSysWinBuffFv();
 u8 func_8013BEB8();
-void func_801080F8(CMenuArtsSelect* self);
+
 int func_8012FA5C();
 void func_80138078(u32);
 nw4r::lyt::ArcResourceAccessor* func_801355F4();
 u32 func_80137510(void* anim, float frame);
 u32 func_80174C98(void* actor, u32* outVal, u32 flags);
-void* func_8016FE34();
-void* func_80153DB0(void* obj, s32 index);
+extern "C" void* func_8016FE34(void* r3);
+void* getArtsParamAtCnt(void* obj, s32 index);
 int func_8010EDD4(void*);
 int func_8010A840(void*);
 
-void func_80104454(CMenuArtsSelect* self);
-void func_80105A34(CMenuArtsSelect* self);
-void func_80105D54(CMenuArtsSelect* self);
-void func_80106450(CMenuArtsSelect* self);
-void func_801065E4(CMenuArtsSelect* self);
-void func_80106900(CMenuArtsSelect* self);
-void func_80106C30(CMenuArtsSelect* self, s32 index);
-void func_80106EC8(CMenuArtsSelect* self, s32 index);
-void func_801071B8(CMenuArtsSelect* self, s32 index);
-void func_801072E0(CMenuArtsSelect* self);
-void func_80107580(CMenuArtsSelect* self);
-int func_80107970(CMenuArtsSelect* self, s32 index);
-int func_80107C54(CMenuArtsSelect* self, s32 index);
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 extern char lbl_eu_804FD1E0[];
 extern u8 lbl_eu_804FD0D0[];
@@ -252898,7 +260665,7 @@ u32 getAllocHandle__10CLibLayoutFv();
 void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
 void __ct__CTagProcessor(void*);
 void* func_80452C10__11CDeviceFontFUlPQ34nw4r3lyt6Layout(u32, nw4r::lyt::Layout*);
-void func_80108994(CMenuArtsSelect*);
+
 void func_80139198(u32);
 u32 func_801392C0();
 extern const f32 lbl_eu_80666F28; // 0.0f
@@ -252917,7 +260684,6 @@ void __ct__17UnkClass_8045F564Fv(UnkClass_8045F564*);
 // Retail linker name is unlengthened `__ct__CMenuArtsSelect` (not __ct__15...).
 extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* scn) {
     CMenuArtsSelect* p;
-    u8* ptmfBase;
     char* vtFinal;
     char* vtWork;
     char* vtScn;
@@ -252941,23 +260707,22 @@ extern "C" CMenuArtsSelect* __ct__CMenuArtsSelect(CMenuArtsSelect* self, CScn* s
     // Interim CProcess vtable, then final MI vtable + interface pieces.
     p->vtable = lbl_eu_8052C1C0;
     vtFinal = lbl_eu_8052C084;
-    ptmfBase = (u8*)__ptmf_null;
     // Retail: lwzu of [0], then stw [1]@+0x40 before [0]@+0x3C.
-    ptmfWord0 = *(u32*)(ptmfBase + 0);
+    ptmfWord0 = __ptmf_null[0];
     vtWork = vtFinal + 0x24;
     vtScn = vtFinal + 0xAC;
     z = 0;
-    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    ptmfWord1 = __ptmf_null[1];
     p->ptmfMove[1] = ptmfWord1;
     vtInfo = vtFinal + 0xBC;
     p->ptmfMove[0] = ptmfWord0;
-    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    ptmfWord2 = __ptmf_null[2];
     p->ptmfMove[2] = ptmfWord2;
-    ptmfWord0 = *(u32*)(ptmfBase + 0);
-    ptmfWord1 = *(u32*)(ptmfBase + 4);
+    ptmfWord0 = __ptmf_null[0];
+    ptmfWord1 = __ptmf_null[1];
     p->ptmfDraw[1] = ptmfWord1;
     p->ptmfDraw[0] = ptmfWord0;
-    ptmfWord2 = *(u32*)(ptmfBase + 8);
+    ptmfWord2 = __ptmf_null[2];
     p->ptmfDraw[2] = ptmfWord2;
     p->unk54 = (u8)z;
     p->unk55 = (u8)z;
@@ -253110,7 +260875,9 @@ void CMenuArtsSelect::Init() {
     {
         nw4r::lyt::Pane* pane = unk80->GetRootPane()->FindPaneByName(lbl_eu_804FD1E0 + 0x5c, true);
         if (pane != NULL) {
-            *reinterpret_cast<void**>(reinterpret_cast<u8*>(pane) + 0xF8) = unk294;
+            // TextBox::mpTagProcessor at offset 0xF8
+            struct TextBoxLayout { u8 _[0xF8]; void* mpTagProcessor; };
+            reinterpret_cast<TextBoxLayout*>(pane)->mpTagProcessor = unk294;
         }
     }
 
@@ -253276,13 +261043,17 @@ void CMenuArtsSelect::Init() {
             } else {
                 lookupIdx = i + 1;
             }
-            f32 origZ = *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34));
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x2C)) = static_cast<f32>(posX[lookupIdx]);
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x30)) = static_cast<f32>(posY[lookupIdx]);
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34)) = origZ;
-            f32 s = scale[lookupIdx];
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x44)) = s;
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x48)) = s;
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[lookupIdx]);
+                trans.y = static_cast<f32>(posY[lookupIdx]);
+                // trans.z unchanged
+                pane->SetTranslate(trans);
+            }
+            {
+                f32 s = scale[lookupIdx];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
         }
     }
 
@@ -253307,13 +261078,17 @@ void CMenuArtsSelect::Init() {
             } else {
                 lookupIdx = i + 1;
             }
-            f32 origZ = *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34));
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x2C)) = static_cast<f32>(posX[lookupIdx]);
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x30)) = static_cast<f32>(posY[lookupIdx]);
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x34)) = origZ;
-            f32 s = scale[lookupIdx];
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x44)) = s;
-            *(reinterpret_cast<f32*>(reinterpret_cast<u8*>(pane) + 0x48)) = s;
+            {
+                nw4r::math::VEC3 trans = pane->GetTranslate();
+                trans.x = static_cast<f32>(posX[lookupIdx]);
+                trans.y = static_cast<f32>(posY[lookupIdx]);
+                // trans.z unchanged
+                pane->SetTranslate(trans);
+            }
+            {
+                f32 s = scale[lookupIdx];
+                pane->SetScale(nw4r::math::VEC2(s, s));
+            }
 
             unk1B8[i]->SetAnimationEnable(unk1DC[i], true);
 
@@ -253327,14 +261102,14 @@ void CMenuArtsSelect::Init() {
     unk30C = 0;
     unk308 = 4;
 
-    func_80108994(this);
+    func_80108994();
     func_80139198(0);
     unk31C = func_801392C0();
 
     {
         IScnRender* cb = reinterpret_cast<IScnRender*>(this);
         if (this != NULL) {
-            cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x5c);
+            cb = reinterpret_cast<IScnRender*>(&vtScnRender);
         }
         mScn->addRenderCB(cb, 0xa, 0);
     }
@@ -253360,7 +261135,7 @@ void CMenuArtsSelect::Term() {
     // MI adjust: IScnRender at +0x5c (null-this safe).
     IScnRender* cb = reinterpret_cast<IScnRender*>(this);
     if (this != NULL) {
-        cb = reinterpret_cast<IScnRender*>(reinterpret_cast<u8*>(this) + 0x5c);
+        cb = reinterpret_cast<IScnRender*>(&this->vtScnRender);
     }
     mScn->removeRenderCB(cb);
 
@@ -253484,7 +261259,7 @@ after_bit21:
     DECOMP_ASM_INSN_END
 after_ce48:
 
-    func_801080F8(this);
+    func_801080F8();
 
     {
         u8 flag = func_8013BEB8();
@@ -253507,22 +261282,22 @@ after_ce48:
 
     if (unk298 >= 2) {
         void* move = cf::CfGameManager::getPlayer(0);
-        void* actor = move;
+        BattleActor* actor = reinterpret_cast<BattleActor*>(move);
         if (move != NULL) {
-            actor = reinterpret_cast<u8*>(move) - 0x3e9c;
+            actor = (BattleActor*)((char*)move - 0x3e9c);
         }
         if (actor != NULL) {
             typedef void* (*GetPtrFn)(void*);
-            void* sub = *reinterpret_cast<void**>(reinterpret_cast<u8*>(actor) + 4);
+            void* sub = actor->mSecondaryVtable;
             u32* pVal = reinterpret_cast<u32*>(artsVslot<GetPtrFn>(sub, 0x30)(sub));
             u32 localVal = pVal[0];
             if (func_80174C98(actor, &localVal, 0x803) != 0) {
                 if (unk348 == 0) {
                     unk348 = 1;
                     unk328 = 4;
-                    func_80107580(this);
+                    func_80107580();
                     if (unk324 == 4) {
-                        func_801072E0(this);
+                        func_801072E0();
                     }
                 }
             } else {
@@ -253535,7 +261310,7 @@ after_ce48:
     case 0:
         unk308 |= 0x10u;
         if (func_8012FA5C() != 0) {
-            func_80107580(this);
+            func_80107580();
             func_80138078(0x42);
             unk298 = 1;
         }
@@ -253543,9 +261318,8 @@ after_ce48:
     case 1:
         unk308 |= 0x10u;
         if (func_80137444(unk84, lbl_eu_80666F2C) != 0) {
-            u8* flagByte =
-                reinterpret_cast<u8*>(unk8C->GetRootPane()) + 0xBB;
-            *flagByte = static_cast<u8>((*flagByte & 0xFEu) | 1u);
+            nw4r::lyt::Pane* rootPane8C = unk8C->GetRootPane();
+            rootPane8C->SetVisible(true);
             char* nameStr =
                 func_80136190(lbl_eu_804FD1E0 + 0x249, lbl_eu_804FD1E0 + 0x254, 1);
             char* helpStr =
@@ -253557,7 +261331,7 @@ after_ce48:
         }
         break;
     case 2:
-        func_80104454(this);
+        func_80104454();
         break;
     case 3:
         unk308 |= 0x90u;
@@ -253571,11 +261345,11 @@ after_ce48:
             homes[2] = lbl_eu_80666F28;
             homes[3] = homes[1];
             homes[4] = lbl_eu_80666F28;
-            f32* t = reinterpret_cast<f32*>(
-                reinterpret_cast<u8*>(unk98->GetRootPane()) + 0x2C);
-            t[0] = homes[0];
-            t[1] = homes[1];
-            t[2] = homes[2];
+            nw4r::math::VEC3 paneTrans98 = unk98->GetRootPane()->GetTranslate();
+            paneTrans98.x = homes[0];
+            paneTrans98.y = homes[1];
+            paneTrans98.z = homes[2];
+            unk98->GetRootPane()->SetTranslate(paneTrans98);
             // Sink homes[3/4] so the array storage is not truncated.
             (void)*(volatile f32*)&homes[3];
             (void)*(volatile f32*)&homes[4];
@@ -253583,7 +261357,7 @@ after_ce48:
         }
         break;
     case 4:
-        func_80105A34(this);
+        func_80105A34();
         break;
     case 5:
         if (func_80110A70() != NULL) {
@@ -253599,7 +261373,7 @@ after_ce48:
         }
         break;
     case 6:
-        func_80105D54(this);
+        func_80105D54();
         break;
     case 7:
         if (func_80110A70() != NULL) {
@@ -253608,9 +261382,7 @@ after_ce48:
                     0) {
                     if (func_8010A840(reinterpret_cast<u8*>(func_8010CE48()) +
                                       0x7cc) != 0) {
-                        u8* flagByte =
-                            reinterpret_cast<u8*>(unk8C->GetRootPane()) + 0xBB;
-                        *flagByte = static_cast<u8>((*flagByte & 0xFEu) | 1u);
+                        unk8C->GetRootPane()->SetVisible(true);
                         unk298 = 2;
                     }
                 }
@@ -253618,7 +261390,7 @@ after_ce48:
         }
         break;
     case 8:
-        func_80106450(this);
+        func_80106450();
         break;
     default:
         break;
@@ -253626,16 +261398,16 @@ after_ce48:
 
     if (unk298 != 0) {
         void* move = cf::CfGameManager::getPlayer(0);
-        void* actor = move;
+        BattleActor* actor = reinterpret_cast<BattleActor*>(move);
         if (move != NULL) {
-            actor = reinterpret_cast<u8*>(move) - 0x3e9c;
+            actor = (BattleActor*)((char*)move - 0x3e9c);
         }
         if (actor != NULL) {
             if (unk298 >= 2 && !(unk308 & 0x80u)) {
                 if (unk328 == 4) {
                     switch (static_cast<s32>(unk29C)) {
                     case 9:
-                        func_801065E4(this);
+                        func_801065E4();
                         break;
                     case 10:
                         unk308 |= 0x3u;
@@ -253644,7 +261416,7 @@ after_ce48:
                         }
                         break;
                     case 11:
-                        func_80106900(this);
+                        func_80106900();
                         break;
                     default:
                         break;
@@ -253655,12 +261427,12 @@ after_ce48:
                 for (s32 i = 0; i < 8; i++) {
                     switch (static_cast<s32>(unk2A0[i])) {
                     case 9:
-                        func_80106C30(this, i);
+                        func_80106C30(i);
                         break;
                     case 10: {
                         unk318 |= (one << i) | (one << (i + 9));
                         cf::CfGameManager::getPlayer(0);
-                        void* skillSrc = func_8016FE34();
+                        void* skillSrc = func_8016FE34(NULL);
                         int ready = 0;
                         if (skillSrc != NULL) {
                             typedef u16* (*GetU16Fn)(void*);
@@ -253673,24 +261445,18 @@ after_ce48:
                         typedef void* (*GetPtrFn)(void*);
                         void* skill =
                             artsVslot<GetPtrFn>(skillSrc, 0x278)(skillSrc);
-                        void* info = func_80153DB0(skill, i);
+                        void* infoRaw = getArtsParamAtCnt(skill, i);
                         if (ready == 0) {
-                            if (*reinterpret_cast<u16*>(
-                                    reinterpret_cast<u8*>(info) + 0x74) != 0) {
+                            ArtsParamInfo* info = static_cast<ArtsParamInfo*>(infoRaw);
+                            if (info->mCheckFlag != 0) {
                                 typedef f32 (*GetF32Fn)(void*);
-                                void* table = *reinterpret_cast<void**>(
-                                    reinterpret_cast<u8*>(info) + 0x84);
-                                GetF32Fn getMax = reinterpret_cast<GetF32Fn>(
-                                    *reinterpret_cast<void**>(
-                                        reinterpret_cast<u8*>(table) + 0x14));
-                                f32 denom = getMax(info);
+                                ArtsParamTable* table = static_cast<ArtsParamTable*>(info->mTablePtr);
+                                GetF32Fn getMax = reinterpret_cast<GetF32Fn>(table->mGetMaxFn);
+                                f32 denom = getMax(infoRaw);
                                 f32 ratio;
                                 if (denom != zeroF) {
-                                    denom = getMax(info);
-                                    ratio =
-                                        *reinterpret_cast<f32*>(
-                                            reinterpret_cast<u8*>(info) + 0x80) /
-                                        denom;
+                                    denom = getMax(infoRaw);
+                                    ratio = info->mRatioNum / denom;
                                 } else {
                                     ratio = lbl_eu_80666F44;
                                 }
@@ -253708,7 +261474,7 @@ after_ce48:
                         break;
                     }
                     case 11:
-                        func_80106EC8(this, i);
+                        func_80106EC8(i);
                         break;
                     default:
                         break;
@@ -253745,7 +261511,7 @@ after_ce48:
                     u32 mask = (1u << i) | (1u << (i + 9));
                     unk310 &= ~mask;
                     if (unk200[nextIdx]->unkBB & 1) {
-                        if (func_80107C54(this, i) != 0) {
+                        if (func_80107C54(i) != 0) {
                             unk104[i]->SetAnimationEnable(unk14C[i], false);
                             unk104[i]->SetAnimationEnable(unk128[i], true);
                             unk128[i]->SetFrame(lbl_eu_80666F28);
@@ -253769,7 +261535,7 @@ after_ce48:
                     break;
                 }
                 case 0xe:
-                    func_801071B8(this, i);
+                    func_801071B8(i);
                     break;
                 case 0xf:
                     unk310 |= (1u << i) | (1u << (i + 9));
@@ -253784,7 +261550,7 @@ after_ce48:
                 switch (static_cast<s32>(unk2E4[i])) {
                 case 0x10:
                     unk314 &= ~((1u << i) | (1u << (i + 9)));
-                    if (func_80107970(this, i) != 0) {
+                    if (func_80107970(i) != 0) {
                         unk2E4[i] = 0x11;
                     }
                     break;
@@ -253796,7 +261562,7 @@ after_ce48:
                     break;
                 case 0x12:
                     unk314 = (unk314 | (1u << i)) & ~(1u << (i + 9));
-                    if (func_80107970(this, i) == 0) {
+                    if (func_80107970(i) == 0) {
                         unk2E4[i] = 0x13;
                     }
                     break;
@@ -253994,52 +261760,52 @@ done:
     ;
 }
 
-extern "C" void func_801023D0() { lbl_eu_80663F24 = 0; }
-extern "C" void func_801041F4(void* self, UnkArtsSelectRef* ref) { if (lbl_eu_80663F24 == ref) { *reinterpret_cast<unsigned int*>(reinterpret_cast<char*>(ref) + 0xb0) = 0; lbl_eu_80663F24 = 0; } }
-extern "C" void func_8010428C() { if (lbl_eu_80663F20 != 0) *(unsigned char *)((char *)lbl_eu_80663F20 + 0x336) = 1; }
-extern "C" bool func_801042A4() { return false; }
-extern "C" CMenuArtsSelect* func_801042AC() { return lbl_eu_80663F20; }
-extern "C" bool func_801042B4() { return lbl_eu_80663F20 != 0; }
-extern "C" void func_801042C8() {}
-extern "C" int func_801042F0() { CMenuArtsSelect* menu = lbl_eu_80663F20; if (menu != 0) { int value = *reinterpret_cast<int*>(reinterpret_cast<unsigned char*>(menu) + 0x298); if (value != 1 && value != 3) return 1; } return 0; }
-extern "C" CMenuArtsSelect* func_80104320() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(reinterpret_cast<unsigned char*>(lbl_eu_80663F20) + 0x7c); }
-extern "C" int func_80104398() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
-extern "C" void __dt__15CMenuArtsSelectFv(void*);
-extern "C" bool func_80108C30(void* self) {
+extern "C" void CMenuArtsSelect_clearArtsRef() { lbl_eu_80663F24 = 0; }
+extern "C" void CMenuArtsSelect_releaseArtsRef(void* self, UnkArtsSelectRef* ref) { if (lbl_eu_80663F24 == ref) { ref->unkB0 = NULL; lbl_eu_80663F24 = 0; } }
+extern "C" void CMenuArtsSelect_setDisabled() { if (lbl_eu_80663F20 != 0) lbl_eu_80663F20->unk336 = 1; }
+extern "C" bool CMenuArtsSelect_isFinished() { return false; }
+extern "C" CMenuArtsSelect* CMenuArtsSelect_getInstance() { return lbl_eu_80663F20; }
+extern "C" bool CMenuArtsSelect_isCreated() { return lbl_eu_80663F20 != 0; }
+void func_801042C8(){}
+extern "C" int CMenuArtsSelect_isInteractable() { CMenuArtsSelect* menu = lbl_eu_80663F20; if (menu != 0) { int value = menu->unk298; if (value != 1 && value != 3) return 1; } return 0; }
+extern "C" CMenuArtsSelect* CMenuArtsSelect_getSelectState() { if (lbl_eu_80663F20 == 0) return 0; return reinterpret_cast<CMenuArtsSelect*>(&lbl_eu_80663F20->unk7C); }
+extern "C" int CMenuArtsSelect_isNotReady() { return lbl_eu_80663F20 == 0 ? 1 : lbl_eu_80663F24 == 0; }
+void __dt__15CMenuArtsSelectFv(void*);
+bool func_80108C30(void* self){
     __dt__15CMenuArtsSelectFv((char*)self - 0x58);
     return false;
 }
-extern "C" void func_80108C38(void* self) {
+extern "C" void CMenuArtsSelect_workEventDraw(void* self) {
     ((CMenuArtsSelect*)((char*)self - 0x5c))->cbRenderBefore();
 }
-extern "C" void func_80108C40(void* p) {
+extern "C" void CMenuArtsSelect_workEventDtor(void* p) {
     extern void __dt__15CMenuArtsSelectFv(void*);
     __dt__15CMenuArtsSelectFv((u8*)p - 0x5c);
 }
-extern "C" void func_80108C48(void* ptr) { ((void (*)(char*))func_801041F4)((char*)ptr - 0x60); }
-extern "C" void func_80108C50(CMenuArtsSelect* self) {
+extern "C" void CMenuArtsSelect_scnRenderRelease(void* ptr) { ((void (*)(char*))CMenuArtsSelect_releaseArtsRef)((char*)ptr - 0x60); }
+extern "C" void CMenuArtsSelect_scnRenderDtor(CMenuArtsSelect* self) {
     extern void __dt__15CMenuArtsSelectFv(void*);
     __dt__15CMenuArtsSelectFv((CMenuArtsSelect*)((char*)self - 0x60));
 }
 
-extern "C" void func_80104210() {}
-extern "C" void func_8010433C() {}
-extern "C" void func_801043BC() {}
-extern "C" void func_80104454(CMenuArtsSelect* self) {}
-extern "C" void func_80105A34(CMenuArtsSelect* self) {}
-extern "C" void func_80105D54(CMenuArtsSelect* self) {}
-extern "C" void func_80106450(CMenuArtsSelect* self) {}
-extern "C" void func_801065E4(CMenuArtsSelect* self) {}
-extern "C" void func_80106900(CMenuArtsSelect* self) {}
-extern "C" void func_80106C30(CMenuArtsSelect* self, s32 index) {}
-extern "C" void func_80106EC8(CMenuArtsSelect* self, s32 index) {}
-extern "C" void func_801071B8(CMenuArtsSelect* self, s32 index) {}
-extern "C" void func_801072E0(CMenuArtsSelect* self) {}
-extern "C" void func_80107580(CMenuArtsSelect* self) {}
-extern "C" void func_8010784C() {}
-extern "C" int func_80107970(CMenuArtsSelect* self, s32 index) { return 0; }
-extern "C" int func_80107C54(CMenuArtsSelect* self, s32 index) { return 0; }
-extern "C" void func_801080F8(CMenuArtsSelect* self) {}
-extern "C" void func_801086D0() {}
-extern "C" void func_801088CC() {}
-extern "C" void func_80108994(CMenuArtsSelect*) {}
+void func_80104210(){}
+void func_8010433C(){}
+void func_801043BC(){}
+void CMenuArtsSelect::func_80104454(){}
+void CMenuArtsSelect::func_80105A34(){}
+void CMenuArtsSelect::func_80105D54(){}
+void CMenuArtsSelect::func_80106450(){}
+void CMenuArtsSelect::func_801065E4(){}
+void CMenuArtsSelect::func_80106900(){}
+void CMenuArtsSelect::func_80106C30(s32 index){}
+void CMenuArtsSelect::func_80106EC8(s32 index){}
+void CMenuArtsSelect::func_801071B8(s32 index){}
+void CMenuArtsSelect::func_801072E0(){}
+void CMenuArtsSelect::func_80107580(){}
+void func_8010784C(){}
+int CMenuArtsSelect::func_80107970(s32 index){ return 0; }
+int CMenuArtsSelect::func_80107C54(s32 index){ return 0; }
+void CMenuArtsSelect::func_801080F8(){}
+void func_801086D0(){}
+void func_801088CC(){}
+void CMenuArtsSelect::func_80108994(){}

@@ -4,14 +4,29 @@
 // pluginBtlRegist.
 
 #include "kyoshin/harness_catalog.hpp"
-#include "kyoshin/cf/CBattleManager.hpp"
-#include "kyoshin/cf/CfGameManager.hpp"
+
+// Forward declarations for types used in the extern API below
+namespace cf {
+class CBattleManager {
+public:
+    static CBattleManager* getInstance();
+    void func_800E2584(u32 mask);
+    void func_80085220(u32 r4, u32 r5);
+    void* func_800EA444();
+    // +0x194: UnkClass_8018C5FC
+    // +0x219C: CVision
+};
+class CfGameManager {
+public:
+    static void* getPlayer(int index);
+};
+}
 
 // --- C-linkage retail helpers ---
 extern "C" {
     // CBattleManager helpers
     void func_800F3C08(cf::CBattleManager*, int);
-    unsigned char func_800F3DC8(cf::CBattleManager*, int);
+    int func_800F3DC8(cf::CBattleManager*, int);
     void func_800F4034(cf::CBattleManager*);
     void func_800F3F8C(cf::CBattleManager*);
     void func_800F3FC8(cf::CBattleManager*);
@@ -61,7 +76,7 @@ extern "C" {
 
     // bdat helpers
     void* getFP__FPCc(const char* name);
-    const char* getBdatStringColumnValue(void* bdat, const char* col, u16 index);
+    const char* getBdatStringColumnValue(void* bdat, const char* col, u32 index);
     u32 func_8003B1EC(void* bdat);
     void func_8003AA34();
 
@@ -69,8 +84,7 @@ extern "C" {
     extern char lbl_eu_806618D8[];
     extern char lbl_eu_806619A0[];
     void* __dynamic_cast(void*, int, void*, void*, int);
-    bool CMenuArtsSelect_isCreated();
-    void* func_800B708C(BOOL);
+    void* func_800B708C(int);
 }
 
 // --- pluginBtl function implementations ---
@@ -88,9 +102,10 @@ int endObserve(VMThread* pThread) {
 }
 
 int defeatingCount(VMThread* pThread) {
+    VMArg* argPtr = vmArgPtrGet(pThread, 1);
+    int key = vmArgIntGet(2, argPtr);
     VMArg arg;
     arg.type = 3;
-    int key = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     arg.value.uintVal = func_800F3DC8(bm, key);
     vmRetValSet(pThread, &arg);
@@ -98,27 +113,26 @@ int defeatingCount(VMThread* pThread) {
 }
 
 int isEnd(VMThread* pThread) {
-    bool result = false;
+    u8 holder[8];
+    int result = 0;
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
-    // reslist<CfObjectActor*> starts at bm+4; sentinel node at bm+0xC
     void** sentinelPtr = *(void***)((u8*)bm + 8);
     int count = 0;
     for (void* node = *sentinelPtr; node != sentinelPtr; node = *(void**)node) {
         count++;
     }
     if (count == 0) {
-        u8 holder[8];
         func_80043E08(holder, 0x20, 0x800);
         void* list = func_80043F18(holder);
         __ct__800FC32C(list, 3, 4, 0);
         list = func_80043F18(holder);
         if (*(u32*)((u8*)list + 0x620) != 0) {
-            result = true;
+            result = 1;
         }
         __dt__80043E88(holder, -1);
     }
     VMArg arg;
-    arg.type = result ? 1 : 2;
+    arg.type = (__cntlzw(result) >> 5) + 1;
     arg.value.uintVal = 0;
     vmRetValSet(pThread, &arg);
     return 1;
@@ -164,14 +178,16 @@ int attackEne(VMThread* pThread) {
     }
     u8 holder[8];
     func_80043D90(holder);
-    void* list = func_80043F18(holder);
-    func_800F4A98(list, 0x100, 0);
-    u32 count = *(u32*)((u8*)func_80043F18(holder) + 0x620);
-    for (u32 i = 0; i < count; i++) {
-        void* unit = func_8016FE34(func_800F6EAC(func_80043F18(holder), i));
+    func_800F4A98(func_80043F18(holder), 0x100, 0);
+    u32 i = 0;
+    while (true) {
+        void* list2 = func_80043F18(holder);
+        if (i >= *(u32*)((u8*)list2 + 0x620)) break;
+        void* unit = func_8016FE34(func_800F6EAC(list2, i));
         if (*(u16*)((u8*)unit + 0x3F28) == targetId) {
             func_800D9978(cf::CBattleManager::getInstance(), unit);
         }
+        i++;
     }
     __dt__80043E88(holder, -1);
     return 0;
@@ -245,14 +261,16 @@ int voiceEvent(VMThread* pThread) {
 }
 
 int isVoiceEvent(VMThread* pThread) {
-    bool result = false;
-    if (func_8006EF04__Fi(0x1000) != 0) {
+    int result = 0;
+    cf::CfGameManager::getInstance();
+    if (func_8006EF04__Fi(0x10000000) != 0) {
+        extern bool CMenuArtsSelect_isCreated();
         if (!CMenuArtsSelect_isCreated() && func_80192BD0() == 0) {
-            result = true;
+            result = 1;
         }
     }
     VMArg arg;
-    arg.type = result ? 1 : 2;
+    arg.type = (__cntlzw(result) >> 5) + 1;
     arg.value.uintVal = 0;
     vmRetValSet(pThread, &arg);
     return 1;
@@ -321,9 +339,9 @@ int breakVision(VMThread* pThread) {
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     void* visionList = bm->func_800EA444();
     if (visionList != 0) {
-        void* actor = func_800B708C((BOOL)*(u32*)((u8*)visionList + 0));
+        void* actor = func_800B708C(*(u32*)((u8*)visionList + 0));
         void* voiceAction = func_8016FE34(actor);
-        func_801A8244(&bm->mVision, visionList, 5, 1, 0);
+        func_801A8244((u8*)bm + 0x219C, visionList, 5, 1, 0);
         if (voiceAction != 0) {
             func_801537F0((u8*)voiceAction + 0x3380);
             func_801537E0((u8*)voiceAction + 0x3380);
@@ -336,7 +354,8 @@ int setPTG(VMThread* pThread) {
     int ptg = vmArgIntGet(2, vmArgPtrGet(pThread, 1));
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     if (bm != 0) {
-        func_8018C8F4(&bm->unk194, ptg);
+        bm = cf::CBattleManager::getInstance();
+        func_8018C8F4((u8*)bm + 0x194, ptg);
     }
     return 0;
 }
@@ -345,7 +364,8 @@ int getPTG(VMThread* pThread) {
     u32 ptg = 0;
     cf::CBattleManager* bm = cf::CBattleManager::getInstance();
     if (bm != 0) {
-        ptg = *(u32*)((u8*)&bm->unk194);
+        bm = cf::CBattleManager::getInstance();
+        ptg = *(u32*)((u8*)bm + 0x194);
     }
     VMArg arg;
     arg.type = 3;
@@ -359,7 +379,7 @@ int test(VMThread* pThread) {
     func_8003AA34();
     void* bdat = getFP__FPCc("ene_arts");
     u32 count = func_8003B1EC(bdat);
-    for (u32 i = 1; i < count; i++) {
+    for (int i = 1; i < (int)count; i++) {
         getBdatStringColumnValue(bdat, "name", i);
     }
     return 0;

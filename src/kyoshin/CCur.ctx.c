@@ -24996,14 +24996,9 @@ namespace ml{
             return size() == 0;
         }
         
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
+        // Declared out-of-line: retail emits a standalone
+        // format__Q22ml10FixStr<N>FPCce (resolved via the retail symbol map).
+        void format(const char* format, ...);
 
         //Sets the given string to the first characters of this string, up to the specified length.
         //TODO: This might just be substr, but when the start index is 0?
@@ -26327,7 +26322,7 @@ public:
 /* "src/kyoshin/code_80135FDC.hpp" line 7 "nw4r/lyt.h" */
 /* end "nw4r/lyt.h" */
 
-u16 func_8013606C(char*, char*, u16);
+u16 func_8013606C(const char*, char*, u16);
 char* func_80136190(char*, char*, u32);
 u32 func_801361E8(void*, char*, u32);
 char* func_8013639C(void*, char*, u16);
@@ -26349,10 +26344,33 @@ void func_801390E0(CFileHandle**);
 void func_80139124(nw4r::lyt::ArcResourceAccessor*);
 void func_80139A18(nw4r::lyt::Layout*, char*, GXColorS10*, GXColorS10*);
 extern "C" u8 code80135FDC_getByte_621F0();
+extern "C" u8 code80135FDC_getByte_64077();
+extern "C" u8 func_801392B4(u8);
 /* end "kyoshin/code_80135FDC.hpp" */
 
 // Shared helper: set pane visibility (extern, defined in code_80135FDC)
 extern void func_80124270(nw4r::lyt::Pane*, u32);
+
+// String table for cursor layout/anim resource names (split1 rodata)
+extern char lbl_eu_80505DE8[];
+
+
+
+/* func_801D202C: Per-frame cursor update. Drives animation state:
+   mActive==0 checks whether animTransform0 has finished;
+   mActive==1 delegates to the CBaseCur vtable handler;
+   then always calls Animate() on the layout (unless mpLayout is null). */
+extern "C" void func_801D202C(CBaseCur* cur) {
+    if (cur->mpLayout == NULL) {
+        return;
+    }
+    if (cur->mActive == 0) {
+        func_80137444(cur->mpAnimTrans0, 1.0f);
+    } else if (cur->mActive == 1) {
+        ((void (*)(CBaseCur*))((void**)cur->mVtable)[5])(cur);
+    }
+    cur->mpLayout->Animate(0);
+}
 
 // Vtable for CCur07 (set by constructor after base ctor runs)
 extern "C" int lbl_eu_80534978[];
@@ -26510,6 +26528,19 @@ extern "C" void* __dt__6CCur09Fv(CBaseCur* _this, int flags) {
 
 void func_virt___dt__6CCur09Fv() { }
 
+/* CCur09::func_801D2478: Load the cursor layout (curs09.brlyt) and
+   its loop animation (curs09_roop.brlan), unbind all existing
+   animations from the layout, then run the shared cleanup handler. */
+#pragma push
+#pragma optimize_for_size on
+extern "C" DECOMP_DONT_INLINE void func_801D2478__6CCur09Fv(CBaseCur* cur) {
+    func_80136E84(&cur->mpLayout, cur->mArcResAcc, lbl_eu_80505DE8 + 0xa0);
+    func_80136F08(cur->mpLayout, &cur->mpAnimTrans0, cur->mArcResAcc, lbl_eu_80505DE8 + 0xb8);
+    cur->mpLayout->UnbindAllAnimation();
+    func_801D21CC(cur);
+}
+#pragma pop
+
 void func_801D24E8(){}
 
 /* CCur11 constructor: chains to CBaseCur then sets the CCur11 vtable. */
@@ -26624,8 +26655,6 @@ void func_virt___dt__6CCur22Fv() { }
 
 void func_801D2BFC(){}
 
-void func_801D2C80(){}
-
 /* Show or hide named sub-panes (nul_curs06s/l, nul_curs07s/l)
    by index. Used for cursor visibility control per menu page. */
 static const char* sPaneNames[] = {
@@ -26634,6 +26663,19 @@ static const char* sPaneNames[] = {
     "nul_curs07s",
     "nul_curs07l",
 };
+
+/* func_801D2C80: Position a cursor pane by index.
+   index 4 targets the root pane directly; indices 0-3 look up
+   named sub-panes (nul_curs06s/l, nul_curs07s/l) and position them.
+   The found pane (or root) is translated to the given position. */
+extern "C" void func_801D2C80(CBaseCur* cur, const nw4r::math::VEC3* trans, u8 index) {
+    if (index == 4) {
+        func_801D2150(cur->mpLayout->GetRootPane(), trans);
+    } else {
+        nw4r::lyt::Pane* pane = cur->mpLayout->GetRootPane()->FindPaneByName(sPaneNames[index], true);
+        func_801D2150(pane, trans);
+    }
+}
 
 extern "C" void func_801D2CF4(CBaseCur* cur, u8 index) {
     if (index >= 4) {

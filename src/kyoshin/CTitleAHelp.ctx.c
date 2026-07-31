@@ -26878,7 +26878,7 @@ private:
     void func_80135FCC();
     void func_80135FD4();
     void func_80133324(int id, int a1, int a2);
-    static IWorkEvent* cfWorkEvent();
+    IWorkEvent* cfWorkEvent();
 }; // size = 0xC94
 /* end "kyoshin/CUICfManager.hpp" */
 /* "src/kyoshin/CTitleAHelp.cpp" line 3 "kyoshin/cf/CfGameManager.hpp" */
@@ -27336,7 +27336,7 @@ public:
 /* "src/kyoshin/code_80135FDC.hpp" line 7 "nw4r/lyt.h" */
 /* end "nw4r/lyt.h" */
 
-u16 func_8013606C(char*, char*, u16);
+u16 func_8013606C(const char*, char*, u16);
 char* func_80136190(char*, char*, u32);
 u32 func_801361E8(void*, char*, u32);
 char* func_8013639C(void*, char*, u16);
@@ -27669,7 +27669,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
                 fileID = "fileID_2";
             }
 
-            u16 keyVal = func_8013606C("MNU_kyeassign", fileID, tableVal);
+            u16 keyVal = func_8013606C("MNU_kyeassign", (char*)fileID, tableVal);
             char* name = func_80138F78(keyVal);
 
             nw4r::lyt::ArcResourceAccessor* resAcc = CUICfManager::func_801355F4();
@@ -27683,8 +27683,7 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
                     u32* texPtr = *(u32**)((u8*)resource + 8);
                     u16 width = *(u16*)(*texPtr + 2);
                     u16 height = *(u16*)(*texPtr + 0);
-                    pane->mSize.width = (f32)width;
-                    pane->mSize.height = (f32)height;
+                    pane->SetSize(nw4r::lyt::Size((f32)width, (f32)height));
                 }
             }
 
@@ -27708,15 +27707,15 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
         if (!func_801C4648(textBox)) return;
 
         if (i == 0) {
-            copyVEC3(&oldVec, (nw4r::math::VEC3*)&textBox->mTranslate);
+            oldVec = textBox->GetTranslate();
         }
 
         nw4r::math::VEC3 newVec = oldVec;
         newVec.x -= (f32)someWidth;
-        copyVEC3((nw4r::math::VEC3*)&textBox->mTranslate, &newVec);
+        textBox->SetTranslate(newVec);
 
         nw4r::ut::Font* font = (nw4r::ut::Font*)textBox->GetFont();
-        const wchar_t* str = textBox->mTextBuf;
+        const wchar_t* str = textBox->GetString();
 
         u8 j = 0;
         while (str[j] != 0) {
@@ -27731,16 +27730,16 @@ void CTitleAHelp::func_801C41E8(u8 arg) {
 
         copyVEC3(&newVec, &oldVec);
         newVec.x -= (f32)someWidth;
-        copyVEC3((nw4r::math::VEC3*)&picPane->mTranslate, &newVec);
+        picPane->SetTranslate(newVec);
 
-        someWidth = (int)((f32)someWidth + picPane->mSize.width);
+        someWidth = (int)((f32)someWidth + picPane->GetSize().width);
 
         if (i < 5) {
             sprintf(buf3, "txt_hlp%02d", i + 1);
             nw4r::lyt::TextBox* nextPane = (nw4r::lyt::TextBox*)mLayout->GetRootPane()->FindPaneByName(buf3, true);
             if (!func_801C4648(nextPane)) return;
 
-            wchar_t firstChar = nextPane->mTextBuf[0];
+            wchar_t firstChar = nextPane->GetString()[0];
             if (firstChar != 0x2b && firstChar != 0xff0b) {
                 someWidth += 0x10;
             }

@@ -1,7 +1,7 @@
 // Auto-scaffolded catalog TU for kyoshin/plugin/ocMsg
 // Replace stubs with high-level C/C++ during decomp.
 
-/* "src/kyoshin/plugin/ocMsg.cpp" line 4 "kyoshin/plugin/ocMsg.hpp" */
+/* "src/kyoshin/plugin/ocMsg.cpp" line 3 "kyoshin/plugin/ocMsg.hpp" */
 #pragma once
 
 /* "src/kyoshin/plugin/ocMsg.hpp" line 2 "monolib/vm/yvm2.h" */
@@ -1171,7 +1171,7 @@ void ocMsgRegist();
 }
 #endif
 /* end "kyoshin/plugin/ocMsg.hpp" */
-/* "src/kyoshin/plugin/ocMsg.cpp" line 5 "types.h" */
+/* "src/kyoshin/plugin/ocMsg.cpp" line 4 "types.h" */
 /* end "types.h" */
 
 struct OcMsgRingHdr {
@@ -1182,37 +1182,43 @@ struct OcMsgRingHdr {
     u32 count;
 };
 
-extern "C" void func_8003A53C() {}
+extern "C" void* func_8003A4E0();
+extern "C" void* func_8003A4EC();
 
-extern "C" int func_8003A588(void* thread) {
-    extern void vmRetValSet(void*, void*);
-    int args[2];
-    args[0] = 3;
-    args[1] = *(int*)((char*)thread + 100);
-    vmRetValSet(thread, args);
+extern "C" int func_8003A53C(VMThread* pThread, void* r4, s16 r5) {
+    VMArg args;
+    *(u8*)&args.type = 9;
+    *(u16*)((char*)&args + 2) = r5;
+    args.value.pointerVal = func_8003A4E0();
+    vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A5C0(void* thread) {
-    extern void vmRetValSet(void*, void*);
-    int args[2];
-    args[0] = 3;
-    args[1] = *(int*)((char*)thread + 104);
-    vmRetValSet(thread, args);
+extern "C" int func_8003A588(VMThread* pThread, void* target) {
+    VMArg args;
+    *(u8*)&args.type = 3;
+    args.value.uintVal = *(u32*)((char*)target + 0x64);
+    vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A5F8(void* thread) {
-    extern void* vmOCPropertyGet(void*);
-    void* prop = vmOCPropertyGet(thread);
-    *(int*)((char*)thread + 100) = *(int*)((char*)prop + 4);
+extern "C" int func_8003A5C0(VMThread* pThread, void* target) {
+    VMArg args;
+    *(u8*)&args.type = 3;
+    args.value.uintVal = *(u32*)((char*)target + 0x68);
+    vmRetValSet(pThread, &args);
+    return 1;
+}
+
+extern "C" int func_8003A5F8(VMThread* pThread, void* target) {
+    void* prop = vmOCPropertyGet(pThread);
+    *(u32*)((char*)target + 0x64) = *(u32*)((char*)prop + 4);
     return 0;
 }
 
-extern "C" int func_8003A630(void* thread) {
-    extern void* vmOCPropertyGet(void*);
-    void* prop = vmOCPropertyGet(thread);
-    *(int*)((char*)thread + 104) = *(int*)((char*)prop + 4);
+extern "C" int func_8003A630(VMThread* pThread, void* target) {
+    void* prop = vmOCPropertyGet(pThread);
+    *(u32*)((char*)target + 0x68) = *(u32*)((char*)prop + 4);
     return 0;
 }
 
@@ -1225,9 +1231,22 @@ extern "C" s32 func_8003A668(void*, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern "C" void func_8003A68C() {}
+extern "C" int func_8003A68C(VMThread* pThread, void* target) {
+    int count = *(int*)((char*)target + 0x10);
+    int x = count ^ 0x0a;
+    VMArg args;
+    *(u8*)&args.type = 1 + ((u32)((x >> 1) - (x & 0x0a)) >> 31);
+    vmRetValSet(pThread, &args);
+    return 1;
+}
 
-extern "C" void func_8003A6D4() {}
+extern "C" int func_8003A6D4(VMThread* pThread, void* target) {
+    int count = *(int*)((char*)target + 0x10);
+    VMArg args;
+    *(u8*)&args.type = 1 + ((u32)((-count) & ~count) >> 31);
+    vmRetValSet(pThread, &args);
+    return 1;
+}
 
 extern "C" s32 func_8003A714(s32 ret, OcMsgRingHdr* list) {
     // Reuse `ret` for writeIdx then count so +1 lands in a distinct reg (retail addi r5,r3,1).
@@ -1267,45 +1286,56 @@ extern "C" s32 func_8003A764(s32 ret, OcMsgRingHdr* list) {
     return 0;
 }
 
-extern "C" void func_8003A7B4() {}
-
-extern "C" int func_8003A800(void* thread) {
-    extern void vmRetValSet(void*, void*);
-    int args[2];
-    args[0] = 3;
-    args[1] = *(int*)((char*)thread + 140);
-    vmRetValSet(thread, args);
+extern "C" int func_8003A7B4(VMThread* pThread, void* r4, s16 r5) {
+    VMArg args;
+    *(u8*)&args.type = 9;
+    *(u16*)((char*)&args + 2) = r5;
+    args.value.pointerVal = func_8003A4EC();
+    vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A838(void* thread) {
-    extern void vmRetValSet(void*, void*);
-    int args[2];
-    args[0] = 3;
-    args[1] = *(int*)((char*)thread + 144);
-    vmRetValSet(thread, args);
+extern "C" int func_8003A800(VMThread* pThread, void* target) {
+    VMArg args;
+    *(u8*)&args.type = 3;
+    args.value.uintVal = *(u32*)((char*)target + 0x8C);
+    vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A870(void* thread) {
-    extern void vmRetValSet(void*, void*);
-    int args[2];
-    args[0] = 3;
-    args[1] = *(int*)((char*)thread + 148);
-    vmRetValSet(thread, args);
+extern "C" int func_8003A838(VMThread* pThread, void* target) {
+    VMArg args;
+    *(u8*)&args.type = 3;
+    args.value.uintVal = *(u32*)((char*)target + 0x90);
+    vmRetValSet(pThread, &args);
     return 1;
 }
 
-extern "C" int func_8003A8A8(void* thread) {
-    extern void* vmOCPropertyGet(void*);
-    void* prop = vmOCPropertyGet(thread);
-    *(int*)((char*)thread + 140) = *(int*)((char*)prop + 4);
+extern "C" int func_8003A870(VMThread* pThread, void* target) {
+    VMArg args;
+    *(u8*)&args.type = 3;
+    args.value.uintVal = *(u32*)((char*)target + 0x94);
+    vmRetValSet(pThread, &args);
+    return 1;
+}
+
+extern "C" int func_8003A8A8(VMThread* pThread, void* target) {
+    void* prop = vmOCPropertyGet(pThread);
+    *(u32*)((char*)target + 0x8C) = *(u32*)((char*)prop + 4);
     return 0;
 }
 
-extern "C" void func_8003A8E0() {}
+extern "C" int func_8003A8E0(VMThread* pThread, void* target) {
+    void* prop = vmOCPropertyGet(pThread);
+    *(u32*)((char*)target + 0x90) = *(u32*)((char*)prop + 4);
+    return 0;
+}
 
-extern "C" void func_8003A918() {}
+extern "C" int func_8003A918(VMThread* pThread, void* target) {
+    void* prop = vmOCPropertyGet(pThread);
+    *(u32*)((char*)target + 0x94) = *(u32*)((char*)prop + 4);
+    return 0;
+}
 
 extern "C" s32 func_8003A950(s32 ret, OcMsgRingHdr* list) {
     ret = list->writeIdx;

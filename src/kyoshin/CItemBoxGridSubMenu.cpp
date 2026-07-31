@@ -29,6 +29,13 @@ void func_801D2150(nw4r::lyt::Pane* pane, const nw4r::math::VEC3* trans);
 void code80135FDC_setVec3(float*, float, float, float);
 
 extern "C" u32 func_801355A0();
+extern "C" u32 func_80136190(void*, u32, u32);
+extern "C" void func_80136E84(void*, void*, const char*);
+extern "C" void func_80136F08(void*, void*, void*, const char*);
+extern "C" void func_8013676C(void*, u32);
+extern "C" void func_801368C0(void*, const char*, u32);
+extern "C" int func_80086F9C__Q22cf13CfGameManagerFv(int);
+extern "C" void* func_801355F4();
 
 void* __ct__CItemBoxGridSubMenu(void* self) {
     CItemBoxGridSubMenu* s = (CItemBoxGridSubMenu*)self;

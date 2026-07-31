@@ -147,7 +147,7 @@ extern "C" char* func_eu_802B1474(void);
 s32 func_801C7958(void* self, void* item);
 s32 func_801C7C7C(void* self, u32 id, void* item);
 u32 func_801C6938(void* self, u32 idx);
-int func_801C51BC(void* obj, u32 id);
+extern "C" int func_801C51BC(void* obj, u16 id);
 u32 func_801C62AC(CItemBoxGridFull* self, u16 idx);
 void* func_801C631C(CItemBoxGridFull* self, u16 idx);
 s32 func_801C6388(CItemBoxGridFull* self, u16 idx);
@@ -643,7 +643,7 @@ check_next:;
 }
 
 // Search for a matching short id in an array, return 1 if found.
-int func_801C51BC(void* obj, u32 id) {
+extern "C" int func_801C51BC(void* obj, u16 id) {
     u16 count;
     u16 i;
     u16 val;
@@ -652,7 +652,7 @@ int func_801C51BC(void* obj, u32 id) {
     goto check;
 loop:
     val = *(u16*)((u8*)obj + (i * 2 + 4));
-    if (val == (u16)id) return 1;
+    if (id == val) return 1;
     i++;
 check:
     if (i < count) goto loop;
@@ -3644,7 +3644,8 @@ void func_801CE974(void* self) {
     *(u32*)(p + 0x58) = 0xd;
     func_801D216C(p + 0xa0, 1);
     u8 temp[16];
-    func_8022D0F8(temp, p + 0x440, p[0x529]);
+    u8 val529 = p[0x529];
+    func_8022D0F8(temp, p + 0x440, val529);
     ((void(*)(void*, void*))(*(void***)(p + 0xa0))[4])(p + 0xa0, temp);
 }
 

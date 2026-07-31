@@ -13,28 +13,33 @@ public:
     virtual void viAfterDrawDone();
     virtual void viBeginFrame();
 
-    // Internal methods
+    // Playback control
+    int func_8045B5AC(const char* filename, int param2, bool loopFlag, int afsId, int afsSubId, bool forceAhx);
+    bool func_8045B970(int id);
+    void func_8045BAB0(int id);
+    void func_8045BBA0();
+    void func_8045BC4C(int id, bool pause);
+    int func_8045BE48(int id);
+
+    // Volume/fade control
+    float func_8045C67C(int id);
+    void func_8045C700(int id, float volume);
+    void func_8045C8B0(int id, float volume);
+    void func_8045CA4C(int id, float volume, float fadeTime, int action);
+    void func_8045CCFC(int id, float param2, float param3, float param4);
+
+    // Cleanup/state
     void func_8045CF30();
-    void func_8045CFDC();
-    void func_8045D03C();
+    int func_8045CFDC(int param);
+    bool func_8045D03C(int id);
 
     // Virtual thunks (FULL_MATCH - adjust this from CDeviceVICb subobject)
     void func_8045D140();
     void func_8045D148();
 
-    // Other methods (stubs)
-    static void func_8045B5AC();
-    static void func_8045B970();
-    static void func_8045BAB0();
-    static void func_8045BBA0();
-    static void func_8045BC4C();
-    static void func_8045C67C();
-    static void func_8045C700();
-    static void func_8045C8B0();
-    static void func_8045CA4C();
-    static void func_8045CCFC();
-
-    // Callback stubs
-    virtual bool wkStandbyLogin();
-    virtual void OnPauseTrigger(bool paused);
+    // CWorkThread virtual overrides
+    void wkUpdate();
+    bool wkStandbyLogin();
+    bool wkStandbyLogout();
+    void OnPauseTrigger(bool paused);
 };

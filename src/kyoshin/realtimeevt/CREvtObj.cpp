@@ -3,16 +3,14 @@
 // Vtable at 0x80532320
 // Size: 0x14 (vtable ptr + field_04 + __ptmf[3])
 
+#include <types.h>
 #include "kyoshin/realtimeevt/CREvtObj.hpp"
-#include "kyoshin/harness_catalog.hpp"
-
-#include <cstring>
 
 // Forward declarations for functions in CREvtMem
 extern "C" void* func_80167F6C(void* ptr, u32 alignment, int useMEM1);
 extern "C" void func_80167FFC(void* ptr);
 
-// __ptmf intrinsics
+// __ptmf intrinsics and null sentinel
 extern "C" {
 extern u32 __ptmf_null[3];
 long __ptmf_test(void* ptmf);
@@ -20,51 +18,55 @@ void __ptmf_scall(void* obj, ...);
 }
 
 // Vtable for cf::CREvtObj
-extern "C" {
-extern const u32 lbl_eu_80532320[];
-}
+extern "C" void* lbl_eu_80532320[];
 
 // ============================================================================
-// Constructor: cf::CREvtObj::CREvtObj(int arg)
+// Constructor: __ct__cf_CREvtObj
+// r3 = this, r4 = arg
 // Stores vtable, arg at +0x04, initializes __ptmf at +0x08 to null
 // ============================================================================
-void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg) {
-    self->mField04 = arg;
-    self->mPtmf[0] = __ptmf_null[0];
-    self->mPtmf[1] = __ptmf_null[1];
-    self->mPtmf[2] = __ptmf_null[2];
+extern "C" void __ct__cf_CREvtObj(cf::CREvtObj* self, int arg) {
+    self->field_04 = arg;
+    self->vtable = (void*)lbl_eu_80532320;
+    const u32* src = &__ptmf_null[0];
+    u32* dst = &self->ptmf[0];
+    u32 tmp0 = *src++;
+    dst[1] = *src++;
+    dst[2] = *src;
+    dst[0] = tmp0;
 }
 
 // ============================================================================
-// Destructor: cf::CREvtObj::~CREvtObj()
+// Destructor: __dt__Q22cf8CREvtObjFv
+// r3 = this, r4 = dealloc_flag
 // If dealloc_flag > 0, calls func_80167FFC(this) to deallocate from CREvtMem
 // ============================================================================
-cf::CREvtObj::~CREvtObj() {
-    // hidden int dealloc_flag is passed by MWCC
-}
-
-// Note: The destructor body in the assembly checks dealloc_flag and calls
-// func_80167FFC. MWCC generates the flag check automatically. The actual
-// __dt__Q22cf8CREvtObjFv gets the flag from the hidden int parameter.
-
-// ============================================================================
-// func_80185700: Calls the stored __ptmf if non-null
-// ============================================================================
-void func_80185700(cf::CREvtObj* self) {
-    if (__ptmf_test(&self->mPtmf)) {
-        __ptmf_scall(self, &self->mPtmf);
+extern "C" void __dt__Q22cf8CREvtObjFv(cf::CREvtObj* self, int dealloc_flag) {
+    if (self != nullptr) {
+        if (dealloc_flag > 0) {
+            func_80167FFC(self);
+        }
     }
 }
 
 // ============================================================================
-// func_80185748: Allocates from CREvtMem with alignment 4, useMEM1=1
+// func_80185700: Calls the stored __ptmf if non-null
 // ============================================================================
-extern "C" void* func_80185748(cf::CREvtObj* self) {
-    return func_80167F6C(self, 4, 1);
+extern "C" void func_80185700(cf::CREvtObj* self) {
+    if (__ptmf_test(&self->ptmf)) {
+        __ptmf_scall(self, &self->ptmf);
+    }
 }
 
 // ============================================================================
-// __dt__80185754: Deallocates from CREvtMem
+// func_80185748: Tail-calls func_80167F6C(this, 4, 1)
+// ============================================================================
+extern "C" void* func_80185748(void* ptr) {
+    return func_80167F6C(ptr, 4, 1);
+}
+
+// ============================================================================
+// __dt__80185754: Tail-calls func_80167FFC(this)
 // ============================================================================
 extern "C" void __dt__80185754(void* ptr) {
     func_80167FFC(ptr);

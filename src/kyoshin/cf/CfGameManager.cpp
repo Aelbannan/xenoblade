@@ -578,7 +578,7 @@ void cf::CfGameManager::func_800873D4() {
 }
 
 void cf::CfGameManager::func_800873E8() {
-    field_0x4->CfObject_UnkVirtualFunc29();
+    field_0x4->CfObject_UnkVirtualFunc29(0.0f);
 }
 
 void cf::CfGameManager::func_800873FC() {

@@ -9,7 +9,6 @@
 #include "monolib/util/CPathUtil.hpp"
 #include "monolib/work/CWorkUtil.hpp"
 #include "monolib/work/CWorkThreadSystem.hpp"
-#include "monolib/util/CErrorWii.hpp"
 #include <revolution/ax/AX.h>
 #include <revolution/ax/AXOut.h>
 #include <revolution/ai/ai.h>
@@ -32,6 +31,7 @@ extern "C" {
 }
 
 // CLibCriStreamingPlay factory function (static, 8 args)
+// Called from func_8045997C with various parameters
 extern "C" int func_8045B5AC(
     const char* filename,
     u32 allocHandle,
@@ -43,26 +43,34 @@ extern "C" int func_8045B5AC(
     int arg7
 );
 
-// CWorkSystemPack stubs (return 0/empty)
+// CWorkSystemPack stubs
 extern "C" {
     int func_804DE010(const char* ext);
     void func_804DDD54(const char* ext, const char* filename,
                        int* out1, int* out2, int* out3, int* out4);
 }
 
-// Singleton instance pointer (sda21-relative)
-extern "C" CLibCri* lbl_eu_806656D8;
+// Singleton instance pointer (sda21-relative: lbl_eu_806656D8)
+CLibCri* CLibCri::spInstance;
 
-// AX callback function pointer (sda21-relative)
-extern "C" void (*lbl_eu_806656DC)(void);
+// AX callback function pointer (sda21-relative: lbl_eu_806656DC)
+static void (*sAXCallback)(void);
 
-// String constant (CRI file extension marker)
+// Free function wrapper for AX callback registration
+static void sAXCallbackWrapper() {
+    CLibCri* instance = CLibCri::getInstance();
+    if (instance != nullptr) {
+        instance->func_80459830();
+    }
+}
+
+// String constant (CRI file extension marker: lbl_eu_80522FD8)
 extern "C" const char lbl_eu_80522FD8[];
 
 // Empty error callback (free function)
 extern "C" void func_80459C70() {}
 
-// Forwarding stubs to CLibCriStreamingPlay (extern "C" declarations)
+// Forwarding stubs to CLibCriStreamingPlay
 extern "C" {
     void func_8045B970__20CLibCriStreamingPlayFv();
     void func_8045BAB0__20CLibCriStreamingPlayFv();
@@ -78,7 +86,7 @@ extern "C" {
     void func_8045D03C__20CLibCriStreamingPlayFv();
 }
 
-// Forwarding stubs to CLibCriMoviePlay (extern "C" declarations)
+// Forwarding stubs to CLibCriMoviePlay
 extern "C" {
     void func_8045A260__16CLibCriMoviePlayFv();
     void func_8045A48C__16CLibCriMoviePlayFv();
@@ -90,54 +98,39 @@ extern "C" {
     void func_8045B1E0__16CLibCriMoviePlayFv();
 }
 
-// CLibCri vtable (external asm symbol)
-extern "C" void* lbl_eu_8056CE58;
-
 // ============================================================================
 // CLibCri AX callback handler
-// Calls MIXUpdateSettings, then calls registered callback if non-null
 // ============================================================================
 void CLibCri::func_80459830() {
     MIXUpdateSettings();
-    if (lbl_eu_806656DC != nullptr) {
-        lbl_eu_806656DC();
+    if (sAXCallback != nullptr) {
+        sAXCallback();
     }
 }
 
 // ============================================================================
 // CLibCri constructor
-// Calls CWorkThread(name, parent, 2), CDeviceVICb(), sets vtable pointers,
-// stores singleton, registers error callback.
 // ============================================================================
 CLibCri::CLibCri(const char* pName, CWorkThread* pParent)
     : CWorkThread(pName, pParent, 2)
 {
     CDeviceVICb();
-    // Vtable pointers set by compiler-generated prologue
-    // lbl_eu_8056CE58 is CLibCri vtable
-    // offset 0xA0 = CDeviceVICb vtable
-    // offset 0xB8 = IErrorWii vtable
     mType = THREAD_CLIBCRI; // 0xF
-    lbl_eu_806656D8 = this;
+    spInstance = this;
     CErrorWii::addCallback(static_cast<IErrorWii*>(this));
 }
 
 // ============================================================================
 // CLibCri destructor
-// Removes error callback, clears singleton. Subobject destructors are
-// called by the compiler-generated epilogue (CDeviceVICb at 0x1C4,
-// CWorkThread at base).
 // ============================================================================
 CLibCri::~CLibCri() {
     if (this == nullptr) return;
     CErrorWii::removeCallback(static_cast<IErrorWii*>(this));
-    lbl_eu_806656D8 = nullptr;
-    // Compiler calls ~CDeviceVICb() and ~CWorkThread() automatically
+    spInstance = nullptr;
 }
 
 // ============================================================================
 // File playback dispatch function
-// Checks file extension, extracts CRI parameters, creates streaming player.
 // ============================================================================
 int CLibCri::func_8045997C(const char* filename, u32 allocHandle, int fileHandle) {
     if (allocHandle == (u32)-1) {
@@ -164,7 +157,6 @@ int CLibCri::func_8045997C(const char* filename, u32 allocHandle, int fileHandle
 
 // ============================================================================
 // Forwarding stubs to CLibCriStreamingPlay
-// Each is a single tail-call (b instruction in assembly)
 // ============================================================================
 void CLibCri::func_80459A78() { func_8045B970__20CLibCriStreamingPlayFv(); }
 void CLibCri::func_80459A7C() { func_8045BAB0__20CLibCriStreamingPlayFv(); }
@@ -184,62 +176,47 @@ void CLibCri::func_80459AA4() { func_8045D03C__20CLibCriStreamingPlayFv(); }
 // ============================================================================
 void CLibCri::func_80459AA8() { func_8045A260__16CLibCriMoviePlayFv(); }
 void CLibCri::func_80459AAC() { func_8045A48C__16CLibCriMoviePlayFv(); }
-
-// Parameter swap adapter: assembly swaps r3(this) and r4, then tail-calls
-// CLibCriMoviePlay::func_8045B310 with swapped args
-void CLibCri::func_80459AB0() {
-    // Handled by compiler - the member function call convention
-    // provides 'this' in r3; the forwarding is implicit
-}
-
 void CLibCri::func_80459AC0() { func_8045A708__16CLibCriMoviePlayFv(); }
 void CLibCri::func_80459AC4() { func_8045A7F8__16CLibCriMoviePlayFv(); }
 void CLibCri::func_80459AC8() { func_8045A644__16CLibCriMoviePlayFv(); }
 void CLibCri::func_80459ACC() { func_8045A8C8__16CLibCriMoviePlayFv(); }
 void CLibCri::func_80459AD0() { func_8045B1E0__16CLibCriMoviePlayFv(); }
 
-// ============================================================================
-// Empty virtual override (CWorkThread::wkUpdate)
-// ============================================================================
+// Parameter swap adapter
+void CLibCri::func_80459AB0() {
+    // Assembly swaps this (r3) and second arg (r4), then tail-calls
+    // CLibCriMoviePlay::func_8045B310
+}
+
+// Empty virtual override
 void CLibCri::wkUpdate() {}
 
-// ============================================================================
 // CRI main execution
-// ============================================================================
 void CLibCri::func_80459AD8() {
     ADXM_ExecMain();
 }
 
-// ============================================================================
 // Returns singleton instance
-// ============================================================================
 CLibCri* CLibCri::getInstance() {
-    return lbl_eu_806656D8;
+    return spInstance;
 }
 
 // ============================================================================
 // Login initialization sequence
-// Initializes CRI subsystems, AX, creates CLibCriMoviePlay and
-// CLibCriStreamingPlay child workers.
 // ============================================================================
 bool CLibCri::wkStandbyLogin() {
     if (!CDevice::isColdStartReady()) {
         return false;
     }
 
-    // Register CRI error callback
     ADXM_SetCbErr((void (*)())func_80459C70, (void*)this);
-
-    // Initialize CRI subsystems
     ADXWII_SetupDvdFs(0);
     ADXM_SetupFramework(2, 0);
     ADXT_SetDefSvrFreq(30);
     AIInit(nullptr);
     AXInit();
     MIXInit();
-
-    // Register AX callback and initialize ADXT
-    lbl_eu_806656DC = AXRegisterCallback((AXOutCallback)func_80459830);
+    sAXCallback = AXRegisterCallback(sAXCallbackWrapper);
     ADXT_Init();
 
     // Create CLibCriMoviePlay (0x668 bytes)
@@ -262,13 +239,11 @@ bool CLibCri::wkStandbyLogin() {
     }
     CWorkUtil::entryWork(streamPlay, this, false);
 
-    // Call parent login
     return CWorkThread::wkStandbyLogin();
 }
 
 // ============================================================================
 // Logout cleanup sequence
-// Checks children empty, work system/lib gone, then shuts down CRI.
 // ============================================================================
 bool CLibCri::wkStandbyLogout() {
     CWorkThread* childFront = mChildren.front();
@@ -286,7 +261,7 @@ bool CLibCri::wkStandbyLogout() {
     ADXT_Finish();
     ADXM_ShutdownFramework();
 
-    if (lbl_eu_806656DC != nullptr) {
+    if (sAXCallback != nullptr) {
         AXRegisterCallback(nullptr);
     }
 
@@ -297,28 +272,23 @@ bool CLibCri::wkStandbyLogout() {
 }
 
 // ============================================================================
-// CDeviceVICb virtual override
-// Compiler generates thunk that adjusts 'this' from CDeviceVICb subobject
-// at offset 0x1C4 back to CLibCri base, then calls this implementation.
-// The thunk appears as func_80459C78 in the retail binary.
+// CDeviceVICb virtual override (viBeginFrame)
+// Compiler generates thunk that adjusts this from CDeviceVICb subobject
 // ============================================================================
 void CLibCri::viBeginFrame() {
     func_80459AD8();
 }
 
 // ============================================================================
-// CDeviceVICb virtual override: forwarding to CLibCriStreamingPlay
-// Compiler generates thunk that adjusts 'this' from CDeviceVICb subobject.
+// CDeviceVICb virtual override
 // ============================================================================
 void CLibCri::func_80459C74() {
     func_8045BBA0__20CLibCriStreamingPlayFv();
 }
 
 // ============================================================================
-// IErrorWii virtual override
-// Compiler generates thunk that adjusts 'this' from IErrorWii subobject
-// at offset 0x1C8 back to CLibCri base, then calls this implementation.
-// The thunk appears as func_80459C88 in the retail binary.
+// IErrorWii virtual override (errorWiiCB)
+// Compiler generates thunk that adjusts this from IErrorWii subobject
 // ============================================================================
 void CLibCri::errorWiiCB() {
     func_80459C74();

@@ -105,8 +105,8 @@ s32 MPV_GetCond(void* mpv, s32 cond, s32* out) {
 void MPVM2V_SetMbCb(void* self, void* a, void* b, void* c);
 void MPV_SetMbCb(void* self, void* a, void* b, void* c) {
     *(void**)((u8*)self + 0xb50) = a;
-    *(void**)((u8*)self + 0xb54) = b;
     *(void**)((u8*)self + 0xb58) = c;
+    *(void**)((u8*)self + 0xb54) = b;
     MPVM2V_SetMbCb(self, a, b, c);
 }
 

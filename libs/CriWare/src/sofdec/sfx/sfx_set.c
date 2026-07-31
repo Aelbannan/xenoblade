@@ -2,48 +2,73 @@
 #include <harness_catalog.h>
 #include "libs/CriWare/src/sofdec/sfx/sfx_types.h"
 
-void SFX_SetCompoMode(void* self, u32 val) { ((SFXSetState*)self)->compoMode = val; }
-void SFX_SetOutBufSize(void* self, u32 val1, u32 val2) { *(u32*)((u8*)self + 0x08) = val1; *(u32*)((u8*)self + 0x0C) = val2; }
-void SFX_SetUnitWidth(void* self, u32 val) { ((SFXSetState*)self)->unitWidth = val; }
+void SFX_SetCompoMode(SFXSetState* self, u32 val) {
+    self->compoMode = val;
+}
+
+void SFX_SetOutBufSize(SFXSetState* self, u32 w, u32 h) {
+    *(u32*)((u8*)self + 0x08) = w;
+    *(u32*)((u8*)self + 0x0C) = h;
+}
+
+void SFX_SetUnitWidth(SFXSetState* self, u32 val) {
+    self->unitWidth = val;
+}
+
 extern u8 lbl_eu_8051CF28[];
 extern int SJ_SearchTag(u32*, const u8*, const u8*, u32*);
 
-void SFX_SetTagInf(void* self, u32 val1, u32 val2) {
+void SFX_SetTagInf(SFXHandleState* self, u32 val1, u32 val2) {
     void* zmv;
     u32 input[2];
     u32 output[2];
-    int found;
 
-    zmv = *(void**)((u8*)self + 0x24);
-    *(u32*)((u8*)self + 0x18) = val1;
-    *(u32*)((u8*)self + 0x1c) = val2;
-
+    zmv = self->zmv;
+    self->tagVal1 = val1;
+    self->tagVal2 = val2;
     input[0] = val1;
     input[1] = val2;
-    found = SJ_SearchTag(input, lbl_eu_8051CF28, lbl_eu_8051CF28 + 5, output);
+    SJ_SearchTag(input, lbl_eu_8051CF28, lbl_eu_8051CF28 + 5, output);
+    SFXZ_SetTagInf(zmv, output[0], output[1]);
+    self->tagFlag = 1;
+}
 
-    if (found == 0) {
-        SFXZ_SetTagInf(zmv, 0, 0);
+void SFX_GetTagInf(SFXHandleState* self, u32* out1, u32* out2) {
+    if (self->tagFlag == 1) {
+        *out1 = self->tagVal1;
+        *out2 = self->tagVal2;
     } else {
-        SFXZ_SetTagInf(zmv, output[0], output[1]);
+        *out1 = 0;
+        *out2 = 0;
     }
+}
 
-    *(u32*)((u8*)self + 0x14) = 1;
-}
-void SFX_GetTagInf(void* self, u32* out1, u32* out2) {
-    if (*(s32*)((u8*)self + 0x14) == 1) goto if_body;
-    *out1 = 0;
-    *out2 = 0;
-    return;
-if_body:
-    *out1 = *(u32*)((u8*)self + 0x18);
-    *out2 = *(u32*)((u8*)self + 0x1C);
-}
 extern u32 SFXZ_GetZfrmRange(u32, u32);
-void SFX_GetZfrmRange(void* a, void* b) {
-    SFXZ_GetZfrmRange(*(u32*)((u8*)a + 0x24), *(u32*)((u8*)b + 0x4c));
+
+void SFX_GetZfrmRange(SFXHandleState* self, SFXSetState* other) {
+    SFXZ_GetZfrmRange((u32)self->zmv, *(u32*)((u8*)other + 0x4C));
 }
-u32 SFX_GetSplitField(void* self) { return ((SFXSetState*)self)->splitField; }
-u32 SFX_GetProgOut(void* self) { return ((SFXSetState*)self)->progOut; }
-u32 SFX_GetCnvBottomUp(void* self) { return ((SFXSetState*)self)->cnvBottomUp; }
-void SFX_ShiftYccPtrByPix() {}
+
+u32 SFX_GetSplitField(SFXSetState* self) {
+    return self->splitField;
+}
+
+u32 SFX_GetProgOut(SFXSetState* self) {
+    return self->progOut;
+}
+
+u32 SFX_GetCnvBottomUp(SFXSetState* self) {
+    return self->cnvBottomUp;
+}
+
+void SFX_ShiftYccPtrByPix(SFXHandleState* self, u32 pixX, u32 pixY) {
+    s32 div2X = (s32)pixX / 2;
+    s32 div2Y = (s32)pixY / 2;
+
+    self->field_0x04 += div2X * self->width + pixX;
+    self->height -= div2X;
+    self->field_0x10 += div2Y * self->field_0x0C + pixY;
+    self->field_0x1C -= div2Y;
+    self->field_0x24 += div2Y * self->bufStride;
+    self->field_0x2C -= div2Y;
+}

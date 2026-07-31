@@ -5,6 +5,9 @@ u32 lbl_80666624;
 u32 lbl_80666630;
 u32 lbl_80666634;
 
+// IWorkEvent destructor - strong symbol to override weak from IWorkEvent.cpp
+IWorkEvent::~IWorkEvent() {}
+
 void func_8004041C(void* self, u8 a1, float a2, int a3, u32 a4, u8 a5, u32 a6, u32 a7) {
     struct Fields {
         u8 field0;
@@ -101,7 +104,18 @@ CTaskGame* CTaskGame::create(CView* pView, CWorkThread* pThread, int r5){
 }
 
 void CTaskGame_stub_800407C8() {}
-void CTaskGame_stub_80040AF4(){}
+extern "C" void func_80040AF4(CTaskGame* self) {
+    self->unk100++;
+    void* obj = reinterpret_cast<void*>(self->unkCC);
+    if (*(u32*)((u8*)obj + 0x64) != 0) {
+        self->unk78 = 1;
+        extern u32 lbl_eu_80525580[3];
+        u32* dst = reinterpret_cast<u32*>((u8*)self + 0x3C);
+        dst[0] = lbl_eu_80525580[0];
+        dst[1] = lbl_eu_80525580[1];
+        dst[2] = lbl_eu_80525580[2];
+    }
+}
 void CTaskGame_stub_800419BC(){}
 void CTaskGame_stub_80041AFC(){}
 void CTaskGame_stub_800426A4() {}
@@ -285,7 +299,25 @@ void CTaskGame_thunk_IErrMesWinSel_dtor(void* p) {
 }
 
 void CTaskGame::Term() {}
-void CTaskGame::stub_80040A3C() {}
+void CTaskGame::func_80040A3C(u16 r4, u16 r5, const char* r6, s16 r7) {
+    unk86 = r4;
+    unk88 = r5;
+    if (r6 != nullptr) {
+        unkA4 = r6;
+    } else {
+        extern char lbl_eu_804FA890[];
+        unkA4 = &lbl_eu_804FA890[0x6D];
+    }
+    unk8A = r7;
+    unk68 |= 2;
+    unk128 = 3;
+    if (unkD4 != nullptr) {
+        extern void func_802956A8(void*);
+        func_802956A8(reinterpret_cast<void*>(unkD4));
+        u32* d4Obj = reinterpret_cast<u32*>(unkD4);
+        d4Obj[0x60 / 4] &= ~3;
+    }
+}
 void CTaskGame_stub_80040B38(){}
 void CTaskGame_stub_80040C2C(){}
 void CTaskGame_stub_80040CD8(){}
@@ -316,7 +348,14 @@ void CTaskGame_stub_80042274(){}
 void CTaskGame_stub_800424E0(){}
 void CTaskGame_stub_8004256C(){}
 void CTaskGame_stub_80042630(){}
-void CTaskGame_stub_800426A8(){}
+extern "C" void func_800426A8() {
+    extern int func_8029183C();
+    if (func_8029183C() == 2) {
+        CTaskGame* self = CTaskGame::getInstance();
+        extern char lbl_eu_804FA890[];
+        self->func_80040A3C(0, 0, &lbl_eu_804FA890[0x8A], 1);
+    }
+}
 void CTaskGame::stub_80042720() {}
 void CTaskGame_stub_80042784(){}
 void CTaskGame_stub_80042874(){}

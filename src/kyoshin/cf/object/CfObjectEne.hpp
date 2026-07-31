@@ -44,7 +44,7 @@ public:
     void CBattleState_UnkVirtualFunc1();
     void CBattleState_UnkVirtualFunc2();
     void CfObject_UnkVirtualFunc31();
-    void CObjectParam_UnkVirtualFunc2();
+    void* CObjectParam_UnkVirtualFunc2();
     void CfObjectMove_UnkVirtualFunc6();
     void CfObject_UnkVirtualFunc14();
 };

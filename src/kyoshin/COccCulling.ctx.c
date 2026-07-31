@@ -15563,7 +15563,8 @@ void COccCulling::func_801A1188(CCullFrustum* pFrustum){
     CVec3 r1_20;
     unk24->unkCC.mul(r1_20, pFrustum->mPos);
     pFrustum->unk124 = -r1_20.z;
-    float dot = CVec3::dot(pFrustum->mDir, unk24->unk10C - pFrustum->mPos);
+    CVec3 dirToFrustum = unk24->unk10C - pFrustum->mPos;
+    float dot = CVec3::dot(pFrustum->mDir, dirToFrustum);
 
     if(dot < lbl_eu_80667C8C){
         pFrustum->mPlane0.set(pFrustum->unk90[0], pFrustum->unk90[1], pFrustum->unk90[2]);

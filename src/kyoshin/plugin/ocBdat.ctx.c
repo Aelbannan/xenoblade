@@ -1351,12 +1351,14 @@ void* memset(void* dest, int val, size_t count);
 #endif
 /* end "string.h" */
 
-void* func_8003B4B0(void* bdat, const char* col);
-u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
-u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index);
-u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
-u32 func_8003B748(void* table, void* col, s32 row, s32 index);
-void func_8003B800(VMArg* out, void* data, u32 type);
+extern "C" void* func_8003B4B0(void* bdat, const char* col);
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index);
+extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index);
+extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2);
+extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index);
+extern "C" void func_8003B800(VMArg* out, void* data, u32 type);
+extern "C" int getVal_8003BDB8(VMThread* t, void* bdat);
+extern "C" int getArrayVal_8003BE70(VMThread* t, void* bdat);
 extern "C" {
 extern s8 lbl_eu_80663D10;
 extern u32 lbl_eu_80663D14;
@@ -1451,7 +1453,7 @@ void* getFP(const char* pName) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-void* func_8003B4B0(void* bdat, const char* col){
+extern "C" void* func_8003B4B0(void* bdat, const char* col){
     const char* colArg;
     u16 bucketCount;
     char* hashBase;
@@ -1503,7 +1505,7 @@ void* func_8003B4B0(void* bdat, const char* col){
 #pragma dont_inline reset
 
 #pragma dont_inline on
-u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index){
+extern "C" u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index){
     const char* colArg;
     s32 indexArg;
     void* colEntry;
@@ -1553,7 +1555,7 @@ u32 getBdatStringColumnValue(void* bdat, const char* col, s32 index){
 #pragma dont_inline reset
 
 #pragma dont_inline on
-u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index){
+extern "C" u32 func_8003AD98(void* bdat, const char* col, s32 row, s32 index){
     const char* colArg;
     s32 rowArg;
     s32 indexArg;
@@ -1713,7 +1715,7 @@ extern "C" u32 func_8003B41C(void* p) {
 }
 
 #pragma dont_inline on
-u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2){
+extern "C" u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2){
     const char* col1Arg;
     s32 rowArg;
     const char* col2Arg;
@@ -1786,7 +1788,7 @@ u32 func_eu_8003B488(void* bdat, const char* col1, s32 row, const char* col2){
 #pragma dont_inline reset
 
 
-u32 func_8003B748(void* table, void* col, s32 row, s32 index){
+extern "C" u32 func_8003B748(void* table, void* col, s32 row, s32 index){
     BdatHeader* hdr = static_cast<BdatHeader*>(table);
     char* base = reinterpret_cast<char*>(hdr);
     u16 colOff = static_cast<BdatColEntry*>(col)->colHdrRel;
@@ -1831,7 +1833,7 @@ u32 func_8003B748(void* table, void* col, s32 row, s32 index){
 
 
 #pragma dont_inline on
-void func_8003B800(VMArg* out, void* data, u32 type){
+extern "C" void func_8003B800(VMArg* out, void* data, u32 type){
     VMArg* outArg;
     void* dataArg;
     s32 typeArg;
@@ -1900,7 +1902,7 @@ extern "C" int bdat(VMThread* t, void* /*unused*/, u16 unk) {
 #pragma dont_inline reset
 
 #pragma dont_inline on
-int getVal(VMThread* t, void* bdat){
+extern "C" int getVal_8003BDB8(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
     const char* col;
@@ -1922,7 +1924,7 @@ int getVal(VMThread* t, void* bdat){
 #pragma dont_inline reset
 
 #pragma dont_inline on
-int getArrayVal(VMThread* t, void* bdat){
+extern "C" int getArrayVal_8003BE70(VMThread* t, void* bdat){
     VMThread* thread;
     void* bdatTbl;
     const char* col;

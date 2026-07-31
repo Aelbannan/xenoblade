@@ -73,9 +73,9 @@ extern u32 lbl_eu_80663E24;
 extern char lbl_eu_80500664[];
 }
 
-extern void func_8003AA34();
-extern void* getFP__FPCc();
-extern void* getBdatStringColumnValue();
+extern "C" void func_8003AA34(const char*);
+extern "C" void* getFP__FPCc(const char*);
+extern "C" void* getBdatStringColumnValue(void*, const char*, const char*);
 
 // ---------- init ----------
 void func_80135FDC() {
@@ -90,6 +90,28 @@ void func_80135FDC() {
     lbl_eu_8066407F = 0;
 }
 
+void func_8013BD9C() {
+    lbl_eu_80664058 = 1;
+}
+
+void func_8013BE38() {
+    lbl_eu_8066405A = 0;
+    lbl_eu_8066405B = 0;
+    lbl_eu_8066405C = 0;
+    lbl_eu_80664060 = 0;
+}
+
+void func_8013BDE4() {
+    lbl_eu_8066405B = 0;
+    lbl_eu_8066405C = 0;
+    lbl_eu_80664060 = 0;
+    lbl_eu_8066405A = 1;
+}
+
+u8 func_801392B4(u32 idx) {
+    return *(u8*)((u32)(&lbl_eu_80664070) + idx);
+}
+
 // ---------- BDAT helpers ----------
 // func_8013600C: BDAT string -> u8
 // func_8013606C: BDAT string -> u16
@@ -97,23 +119,17 @@ void func_80135FDC() {
 // func_80136130: BDAT string -> s16
 // func_80136190: BDAT string -> void
 
-static inline void* bdatInit(const char* a, const char* b, const char* c) {
-    func_8003AA34();
-    void* fp = getFP__FPCc();
-    return getBdatStringColumnValue(fp, b, c);
-}
-
 void func_80136190(const char* a, const char* b, const char* c) {
-    func_8003AA34();
-    void* fp = getFP__FPCc();
+    func_8003AA34(a);
+    void* fp = getFP__FPCc(a);
     getBdatStringColumnValue(fp, b, c);
 }
 
-void func_801361E8(const char* a, const char* b, const char* c) {
-    if (!a) return;
-    func_8003AA34();
-    void* fp = getFP__FPCc();
-    getBdatStringColumnValue(fp, b, c);
+u8 func_801361E8(const char* a, const char* b, const char* c) {
+    if (a == 0) return 0;
+    func_8003AA34(a);
+    void* fp = getFP__FPCc(a);
+    return *(u8*)getBdatStringColumnValue(fp, b, c);
 }
 
 void func_80136254(){}
@@ -245,7 +261,7 @@ void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(){}
 
 void func_80139198(){}
 
-u8 func_801392B4(void* self){ return *(u8*)self; }
+
 
 extern u8 lbl_eu_80664077;
 u8 code80135FDC_getByte_64077() { return lbl_eu_80664077; }
@@ -333,7 +349,6 @@ void func_8013BCD4(){}
 
 void func_8013BD24(){}
 
-void func_8013BD9C(void){}
 
 extern u8 lbl_eu_80664058;
 void code80135FDC_clearByte_64058() { lbl_eu_80664058 = 0; }
@@ -349,7 +364,6 @@ void code80135FDC_clearByte_64059() { lbl_eu_80664059 = 0; }
 extern u8 lbl_eu_80664059;
 u8 code80135FDC_getByte_64059() { return lbl_eu_80664059; }
 
-void func_8013BDE4(){}
 
 extern u8 lbl_eu_8066405B;
 void code80135FDC_setByte_6405B() { lbl_eu_8066405B = 1; }
@@ -377,7 +391,6 @@ u32 code80135FDC_getWord_64060(void) {
     return lbl_eu_80664060;
 }
 
-void func_8013BE38(){}
 
 extern u8 lbl_eu_806621F0;
 u8 code80135FDC_getByte_621F0() { return lbl_eu_806621F0; }

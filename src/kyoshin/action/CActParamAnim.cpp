@@ -329,13 +329,17 @@ extern "C" f32 func_8004BC28(f32 value) {
     extern f32 lbl_eu_8066A1F8;
     f32 twoPi = lbl_eu_8066A1FC;
     f32 pi = lbl_eu_8066A1F8;
-    while (value >= pi) {
-        value -= twoPi;
-    }
+    goto check1;
+loop1:
+    value -= twoPi;
+check1:
+    if (pi <= value) goto loop1;
     f32 negPi = -pi;
-    while (value < negPi) {
-        value += twoPi;
-    }
+    goto check2;
+loop2:
+    value += twoPi;
+check2:
+    if (value < negPi) goto loop2;
     return value;
 }
 
@@ -375,12 +379,15 @@ extern "C" void func_8004CB80(f32* out, const f32* a, const f32* b){
 extern "C" void func_8004CBC8(f32* vec) {
     extern f32 lbl_eu_80665EA0;
     extern void PSVECNormalize(const f32*, f32*);
-    extern ml::CVec3 zero__Q22ml5CVec3;
-    f32 magSq = vec[0]*vec[0] + vec[1]*vec[1] + vec[2]*vec[2];
-    if (magSq == lbl_eu_80665EA0) {
-        vec[0] = zero__Q22ml5CVec3.x;
-        vec[1] = zero__Q22ml5CVec3.y;
-        vec[2] = zero__Q22ml5CVec3.z;
+    extern u32 zero__Q22ml5CVec3[];
+    f32 y = vec[1];
+    f32 x = vec[0];
+    f32 z = vec[2];
+    f32 magSq = y*y + x*x + z*z;
+    if (magSq == 0.0f) {
+        vec[0] = 0.0f;
+        vec[1] = 0.0f;
+        vec[2] = 0.0f;
     } else {
         PSVECNormalize(vec, vec);
     }
@@ -392,9 +399,17 @@ float CActParamAnim_atan2Scaled(float y, float x) {
     return lbl_eu_80665ED0 * Atan2FIdx__Q24nw4r4mathFff(y, x);
 }
 
-void func_8004CC68(){}
+extern "C" f32 func_8004CC68(f32 angle) {
+    extern f32 lbl_eu_80665ED8;
+    extern f32 SinFIdx__Q24nw4r4mathFf(f32);
+    return SinFIdx__Q24nw4r4mathFf(lbl_eu_80665ED8 * angle);
+}
 
-void func_8004CC74(){}
+extern "C" f32 func_8004CC74(f32 angle) {
+    extern f32 lbl_eu_80665ED8;
+    extern f32 CosFIdx__Q24nw4r4mathFf(f32);
+    return CosFIdx__Q24nw4r4mathFf(lbl_eu_80665ED8 * angle);
+}
 
 int CActParamAnim::checkRenderFlag() { return ((*(unsigned int*)((unsigned char*)this + 0x260) >> 5) & 1); }
 
@@ -527,9 +542,27 @@ void CActParamAnim::setActiveFlag(s32 param) {
     }
 }
 
-void func_80051AD0(){}
+extern "C" int func_80051AD0(CActParamAnim* self) {
+    extern f32 lbl_eu_80665EA0;
+    extern f32 lbl_eu_80665ECC;
+    void* owner = *(void**)((u8*)self + 8);
+    if (owner == NULL) return 0;
+    f32 animSpeed = *(f32*)((u8*)self + 0x394);
+    if (animSpeed == lbl_eu_80665EA0) return 0;
+    f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
+    if (val >= *(f32*)((u8*)self + 0x434) && val <= lbl_eu_80665ECC) return 1;
+    return 0;
+}
 
-void func_80051B38(){}
+extern "C" int func_80051B38(CActParamAnim* self) {
+    extern f32 lbl_eu_80665EA0;
+    void* owner = *(void**)((u8*)self + 8);
+    if (owner == NULL) return 0;
+    f32 animSpeed = *(f32*)((u8*)self + 0x394);
+    if (animSpeed == lbl_eu_80665EA0) return 0;
+    f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
+    return val < *(f32*)((u8*)self + 0x434) ? 1 : 0;
+}
 
 void CActParamAnim::startAnimA() {
     *(unsigned int *)((char *)this + 0x4a8) = 0x44a05;
@@ -559,9 +592,27 @@ void CActParamAnim::startAnimC() {
     *(volatile float*)((char*)this + 0x484) = tmp;
 }
 
-void func_80051BF4(){}
+extern "C" int func_80051BF4(CActParamAnim* self) {
+    void* owner = *(void**)((u8*)self + 8);
+    if (owner == NULL) return 0;
+    f32 animSpeed = *(f32*)((u8*)self + 0x394);
+    extern f32 lbl_eu_80665EA0;
+    if (animSpeed == lbl_eu_80665EA0) return 0;
+    f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
+    return val > *(f32*)((u8*)self + 0x434) ? 1 : 0;
+}
 
-void func_80051C40(){}
+extern "C" int func_80051C40(CActParamAnim* self) {
+    void* owner = *(void**)((u8*)self + 8);
+    if (owner == NULL) return 0;
+    extern f32 lbl_eu_80665EA0;
+    f32 animSpeed = *(f32*)((u8*)self + 0x394);
+    if (animSpeed == lbl_eu_80665EA0) return 0;
+    f32 f1 = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
+    f32 f2 = *(f32*)((u8*)self + 0x434);
+    if (f1 >= f2) return 1;
+    return 0;
+}
 
 void CActParamAnim::stopAnim() {
     u32 val = *(u32*)((u8*)this + 12);
@@ -573,7 +624,17 @@ void CActParamAnim::stopAnim() {
     *(u32*)((u8*)this + 12) = tmp;
 }
 
-void func_80051CD4(){}
+extern "C" int func_80051CD4(CActParamAnim* self) {
+    void* owner = *(void**)((u8*)self + 8);
+    if (owner == NULL) return 0;
+    extern f32 lbl_eu_80665EA0;
+    f32 animSpeed = *(f32*)((u8*)self + 0x394);
+    if (animSpeed == lbl_eu_80665EA0) return 0;
+    f32 val = *(f32*)((u8*)owner + 0x14) * *(f32*)((u8*)self + 0x430);
+    extern f32 lbl_eu_80665ECC;
+    if (val <= lbl_eu_80665ECC) return 1;
+    return 0;
+}
 
 u32 CActParamAnim::checkFlag13() { return (*(u32*)((u8*)this + 608) >> 13) & 0x1u; }
 
@@ -595,7 +656,10 @@ void func_80052584(){}
 
 void func_800526C0(){}
 
-void func_8005274C(){}
+extern "C" void func_8005274C(void* self, const void* param) {
+    extern void PSQUATMultiply(const void*, const void*, void*);
+    PSQUATMultiply(self, param, self);
+}
 
 void func_80052780(void* self, void* src){
     *(int*)((char*)self + 168) = *(int*)((char*)src + 0);
@@ -605,9 +669,28 @@ void func_80052780(void* self, void* src){
     *(int*)((char*)self + 224) |= 4;
 }
 
-void func_800527B0(){}
+extern "C" void* func_800527B0(void* self, const void* a, const void* b) {
+    extern void PSVECCrossProduct(const void*, const void*, void*);
+    PSVECCrossProduct(self, b, a);
+    return (void*)a;
+}
 
-void func_800527E8(){}
+extern "C" void func_800527E8(CActParamAnim* self) {
+    extern f32 getSecPerFrame__9CDeviceVIFv(void);
+    extern f32 PSVECMag(const f32*);
+    f32 animSpeed = *(f32*)((u8*)self + 0x390);
+    f32 field380 = *(f32*)((u8*)self + 0x380);
+    f32 frameSec = getSecPerFrame__9CDeviceVIFv();
+    f32 field384 = *(f32*)((u8*)self + 0x384);
+    f32 field3C8 = *(f32*)((u8*)self + 0x3C8);
+    f32 field3C0 = *(f32*)((u8*)self + 0x3C0);
+    f32 temp = field384 * field380 * animSpeed * frameSec;
+    f32 vec[3];
+    vec[0] = field3C0;
+    vec[1] = 0.0f;
+    vec[2] = field3C8;
+    PSVECMag(vec);
+}
 
 void CActParamAnim::mulVec3Y(float param_2) {
     *(float*)((char*)this + 0x3c4) *= param_2;

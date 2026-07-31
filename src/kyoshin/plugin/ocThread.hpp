@@ -7,7 +7,7 @@ extern "C" {
 #endif
 
 /* Plugin entry points (script-facing); bodies in ocThread.cpp. */
-int thread(VMThread* pThread);
+int thread(VMThread* pThread, int unused, u32 unk2);
 int start_8003A784(VMThread* pThread, u32 r4);
 int end_8003A7A8(VMThread* pThread, u32 threadId);
 int isAlive_8003A7D0(VMThread* pThread, u32 threadId);

@@ -10,7 +10,7 @@ void func_80086D90__Q22cf13CfGameManagerFv(unsigned short);
 void func_80086D94__Q22cf13CfGameManagerFv(unsigned short);
 }
 
-int func_80045560(VMThread* self, int a, int val){
+extern "C" int func_80045560(VMThread* self, int a, int val){
     VMArg arg;
     arg.type = 9;
     arg.unk2 = val;
@@ -19,7 +19,7 @@ int func_80045560(VMThread* self, int a, int val){
     return 1;
 }
 
-int func_8004559C(VMThread* self){
+extern "C" int func_8004559C(VMThread* self){
     VMArg arg;
     arg.type = 3;
     arg.value.intVal = func_80086DA0__Q22cf13CfGameManagerFv();
@@ -27,7 +27,7 @@ int func_8004559C(VMThread* self){
     return 1;
 }
 
-int func_800455E8(VMThread* self){
+extern "C" int func_800455E8(VMThread* self){
     VMArg arg;
     arg.type = 3;
     arg.value.intVal = func_80086DA4__Q22cf13CfGameManagerFv();
@@ -35,7 +35,7 @@ int func_800455E8(VMThread* self){
     return 1;
 }
 
-int func_80045634(VMThread* self){
+extern "C" int func_80045634(VMThread* self){
     VMArg arg;
     arg.type = 3;
     arg.value.intVal = func_80086DA0__Q22cf13CfGameManagerFv() / 3;
@@ -43,21 +43,21 @@ int func_80045634(VMThread* self){
     return 1;
 }
 
-int func_80045694(VMThread* self){
+extern "C" int func_80045694(VMThread* self){
     void* prop = vmOCPropertyGet(self);
     u32 val = *(u32*)((char*)prop + 4);
     func_80086D90__Q22cf13CfGameManagerFv(val & 0xFFFF);
     return 0;
 }
 
-int func_800456C4(VMThread* self){
+extern "C" int func_800456C4(VMThread* self){
     void* prop = vmOCPropertyGet(self);
     u32 val = *(u32*)((char*)prop + 4);
     func_80086D94__Q22cf13CfGameManagerFv(val & 0xFFFF);
     return 0;
 }
 
-int getTimeIdxMin(VMThread* self){
+extern "C" int getTimeIdxMin(VMThread* self){
     VMArg* argPtr = vmArgPtrGet(self, 1);
     int idx = vmArgIntGet(2, argPtr);
     VMArg arg;
@@ -73,7 +73,7 @@ int getTimeIdxMin(VMThread* self){
     return 1;
 }
 
-int getTimeIdxMax(VMThread* self){
+extern "C" int getTimeIdxMax(VMThread* self){
     VMArg* argPtr = vmArgPtrGet(self, 1);
     int idx = vmArgIntGet(2, argPtr);
     VMArg arg;

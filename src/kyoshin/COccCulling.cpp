@@ -87,9 +87,11 @@ void COccCulling::setFrustum(CCullFrustum* pFrustum){
     pFrustum->unk128 = lbl_eu_80667C8C;
 
     for(int i = 0; i < ARRAY_SIZE(sPlaneCoords); i++){
-        pFrustum->mMat.mul(pFrustum->unk90[i], sPlaneCoords[i]);
+        CVec3* unk90i = &pFrustum->unk90[i];
+        pFrustum->mMat.mul(*unk90i, sPlaneCoords[i]);
 
-        float magnitude = nw4r::math::VEC3LenSq(pFrustum->mPos - pFrustum->unk90[i]);
+        CVec3 diff = pFrustum->mPos - *unk90i;
+        float magnitude = nw4r::math::VEC3LenSq(diff);
 
         if(pFrustum->unk128 < magnitude){
             pFrustum->unk128 = magnitude;

@@ -4,6 +4,8 @@
 extern int DCT_GetVerStr(void);
 extern u32 lbl_eu_806046B8[];
 extern double lbl_eu_8051C388[];
+extern double lbl_eu_8051C3A8;
+extern double lbl_eu_806046C0[8][8];
 
 /* Precomputed cosine table for DCT */
 /* [0] = scale for i==0, [1] = scale for i>0, [2] = 0.5, [3] = pi/8, [4] = int-to-double bias */
@@ -35,19 +37,18 @@ void DCT_AcInit(void) {
 }
 
 /* 2D IDCT: transform 8x8 block from freq domain to spatial domain
- * r3 = input block (freq), r4 = output block (spatial) */
+ * Row pass: tmp[i][j] = bias + sum_k tbl[k][j] * in[i][k]
+ * Column pass: out[i][j] = bias + sum_k tmp[i][k] * tbl[j][k] */
 void DCT_AcIdctDouble(const double *in, double *out) {
     double tmp[8][8];
-    static const double *coeff = (double *)&lbl_eu_8051C388[6]; /* bias correction */
-    double *tbl = (double *)&lbl_eu_806046B8[2]; /* +0x08 DCT coefficient table */
     int i, j, k;
 
     /* Row IDCT: transform each row of input */
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++) {
-            double sum = lbl_eu_8051C388[6]; /* rounding bias */
+            double sum = lbl_eu_8051C3A8; /* rounding bias (0.0) */
             for (k = 0; k < 8; k++) {
-                sum += tbl[k * 8 + j] * in[i * 8 + k];
+                sum += lbl_eu_806046C0[k][j] * in[i * 8 + k];
             }
             tmp[i][j] = sum;
         }
@@ -56,9 +57,9 @@ void DCT_AcIdctDouble(const double *in, double *out) {
     /* Column IDCT: transform each column of tmp to output */
     for (i = 0; i < 8; i++) {
         for (j = 0; j < 8; j++) {
-            double sum = lbl_eu_8051C388[6];
+            double sum = lbl_eu_8051C3A8; /* rounding bias (0.0) */
             for (k = 0; k < 8; k++) {
-                sum += tbl[i * 8 + k] * tmp[k][j];
+                sum += lbl_eu_806046C0[k][j] * tmp[i][k];
             }
             out[i * 8 + j] = sum;
         }

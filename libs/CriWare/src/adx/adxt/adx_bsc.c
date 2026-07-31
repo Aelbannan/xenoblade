@@ -9,8 +9,8 @@ extern void ADXPD_Destroy(void* pd);
 extern void ADXPD_Stop(void* pd);
 extern void ADXPD_Reset(void* pd);
 extern void ADXPD_EntryMono(void* pd, void* data, void* dest, void* arg7);
-extern void ADXPD_EntrySte(void* pd, void* data, void* dest, void* arg7);
-extern void ADXPD_EntryPl2(void* pd, void* data, void* dest, void* arg7);
+extern void ADXPD_EntrySte(void* pd, void* data, s32 num, void* dest, void* arg7);
+extern void ADXPD_EntryPl2(void* pd, void* data, s32 num, void* dest, void* arg7);
 extern void ADXPD_Start(void* pd);
 extern int ADXPD_GetStat(void* pd);
 extern int ADXPD_GetNumBlk(void* pd);
@@ -20,17 +20,27 @@ extern void ADXPD_SetDly(void* pd, void* in1, void* in2);
 extern void ADXPD_GetExtPrm(void* pd, void* out1, void* out2, void* out3);
 extern void ADXPD_SetExtPrm(void* pd, s16 v1, s16 v2, s16 v3);
 
-extern s32 ADX_DecodeInfo(void* data, s32 size, void* out_encoding,
-    void* out_version, void* out_channelCount, void* out_sampleRate,
-    void* out_blockSize, void* out_numChannels, void* out_totalSamples);
+extern s32 ADX_DecodeInfo(void* data, s32 size, void* out_audioOffset,
+    void* out_encoding, void* out_version, void* out_blockSize,
+    void* out_channelCount, void* out_sampleRate,
+    void* out_totalSamples, void* out_samplesPerBlock);
+extern s32 ADX_DecodeInfoExVer(void* data, s32 size, void* out_version, void* out_flags);
+extern s32 ADX_DecodeInfoExADPCM2(void* data, s32 size, void* out);
+extern s32 ADX_DecodeInfoExIdly(void* data, s32 size, void* out1, void* out2);
+extern s32 ADX_DecodeInfoExLoop(void* data, s32 size,
+    void* out1, void* out2, void* out3, void* out4,
+    void* out5, void* out6, void* out7);
+extern s32 ADX_DecodeInfoAinf(void* data, s32 size,
+    void* out1, void* out2, void* out3, void* out4);
+extern void ADXPD_SetCoef(void* pd, u32 sampleRate, s16 coef);
 extern int ADXB_CheckSpsd(void* data);
 extern int ADXB_CheckWav(void* data);
 extern int ADXB_CheckAiff(void* data);
 extern int ADXB_CheckAu(void* data);
-extern void ADXB_DecodeHeaderSpsd(void* adxb, void* data, void* out_encoding);
-extern void ADXB_DecodeHeaderWav(void* adxb, void* data, void* out_encoding);
-extern void ADXB_DecodeHeaderAiff(void* adxb, void* data, void* out_encoding);
-extern void ADXB_DecodeHeaderAu(void* adxb, void* data, void* out_encoding);
+extern s32 ADXB_DecodeHeaderSpsd(void* adxb, void* data, void* out_encoding);
+extern s32 ADXB_DecodeHeaderWav(void* adxb, void* data, void* out_encoding);
+extern s32 ADXB_DecodeHeaderAiff(void* adxb, void* data, void* out_encoding);
+extern s32 ADXB_DecodeHeaderAu(void* adxb, void* data, void* out_encoding);
 extern void ADXB_ExecOneAhx(void* adxb);
 extern void ADXB_ExecOneSpsd(void* adxb);
 extern void ADXB_ExecOneAiff(void* adxb);
@@ -42,7 +52,7 @@ extern void ADXCRS_Unlock(void);
 extern void CRICRW_Sprintf(char* buf, int size, const char* fmt, ...);
 
 extern u32 lbl_eu_805E5370;
-extern volatile u32 lbl_eu_805E5358;
+extern u32 lbl_eu_805E5358;
 extern u8 lbl_eu_805E5378[0x1000];
 extern u32 lbl_eu_80560048;
 extern s16 lbl_eu_80516B30[];
@@ -52,18 +62,19 @@ extern void ADXERR_CallErrFunc1_(const char* msg);
 extern void ADXERR_CallErrFunc2_(const char* msg, const char* detail);
 
 extern void (*lbl_eu_805E5364)(void*);
+extern void (*lbl_eu_805E535C)(void*, void*);
 extern void (*lbl_eu_805E5360)(void*, s16, void*, void*);
 
 /* Forward declarations */
 int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* out_key3);
 s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding);
 
-void SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
+s16 SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
     int i;
     s16 x;
 
-    if (*(volatile u32*)&lbl_eu_805E5358 == 0) {
-        *(volatile u32*)&lbl_eu_805E5358 = 1;
+    if (lbl_eu_805E5358 == 0) {
+        lbl_eu_805E5358 = lbl_eu_805E5358 + 1;
     }
 
     *key1 = 0;
@@ -71,32 +82,46 @@ void SKG_GenerateKey(u8* data, int len, s16* key1, s16* key2, s16* key3) {
     *key3 = 0;
 
     if (data == NULL && len <= 0) {
-        return;
+        return 0;
     }
 
-    /* Pass 1: seed = 0x4A1D */
     x = 0x4A1D;
     for (i = 0; i < len; i++) {
-        s16 mul = (s16)(x * lbl_eu_80516B30[0x80 + (s8)data[i]]);
-        x = lbl_eu_80516B30[0x80 + (s16)((s16)((mul << 10) - (mul >> 21)) + (mul >> 21))];
+        u32 m = (u32)((s32)x * (s32)lbl_eu_80516B30[0x80 + (s8)data[i]]);
+        u32 b = m << 22;
+        u32 s = (m >> 31) & 1;
+        u32 t = (b - s);
+        t = (t << 10) | (t >> 22);
+        t = t + s;
+        x = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
     }
     *key1 = x;
 
-    /* Pass 2: seed = 0x53FF */
     x = 0x53FF;
     for (i = 0; i < len; i++) {
-        s16 mul = (s16)(x * lbl_eu_80516B30[0x80 + (s8)data[i]]);
-        x = lbl_eu_80516B30[0x80 + (s16)((s16)((mul << 10) - (mul >> 21)) + (mul >> 21))];
+        u32 m = (u32)((s32)x * (s32)lbl_eu_80516B30[0x80 + (s8)data[i]]);
+        u32 b = m << 22;
+        u32 s = (m >> 31) & 1;
+        u32 t = (b - s);
+        t = (t << 10) | (t >> 22);
+        t = t + s;
+        x = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
     }
     *key2 = x;
 
-    /* Pass 3: seed = 0x5DC1 */
     x = 0x5DC1;
     for (i = 0; i < len; i++) {
-        s16 mul = (s16)(x * lbl_eu_80516B30[0x80 + (s8)data[i]]);
-        x = lbl_eu_80516B30[0x80 + (s16)((s16)((mul << 10) - (mul >> 21)) + (mul >> 21))];
+        u32 m = (u32)((s32)x * (s32)lbl_eu_80516B30[0x80 + (s8)data[i]]);
+        u32 b = m << 22;
+        u32 s = (m >> 31) & 1;
+        u32 t = (b - s);
+        t = (t << 10) | (t >> 22);
+        t = t + s;
+        x = *(s16*)((u8*)lbl_eu_80516B30 + (t << 1));
     }
     *key3 = x;
+
+    return 0;
 }
 
 u32 ADXB_GetDecErrMode(void) { return lbl_eu_805E5370; }
@@ -124,13 +149,16 @@ void adxb_DefAddWr(void* self, u32 unused, u32 addend) {
 void* ADXB_Create(void* arg0, void* pcmBuf, void* workBuf, void* workSize) {
     int i;
     u8* slot;
+    u8* p;
 
+    p = (u8*)lbl_eu_805E5378;
     for (i = 0; i < 16; i++) {
-        if (*(s16*)(lbl_eu_805E5378 + i * 0x100) == 0) break;
+        if (*(s16*)p == 0) break;
+        p += 0x100;
     }
     if (i == 16) return NULL;
 
-    slot = lbl_eu_805E5378 + i * 0x100;
+    slot = (u8*)lbl_eu_805E5378 + i * 0x100;
     memset(slot, 0, 0x100);
     *(u16*)(slot + 0x00) = 1;
 
@@ -138,8 +166,12 @@ void* ADXB_Create(void* arg0, void* pcmBuf, void* workBuf, void* workSize) {
         void* pd = ADXPD_Create();
         *(void**)(slot + 0x08) = pd;
         if (pd == NULL) {
-            memset(slot, 0, 0x100);
-            *(u16*)(slot + 0x00) = 0;
+            if (slot != NULL) {
+                *(void**)(slot + 0x08) = NULL;
+                ADXPD_Destroy(pd);
+                memset(slot, 0, 0x100);
+                *(u16*)(slot + 0x00) = 0;
+            }
             return NULL;
         }
     }
@@ -172,9 +204,9 @@ void ADXB_Destroy(void* self) {
 
 int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* out_key3) {
     u8* p = (u8*)adxb;
-    s16* k1 = (s16*)out_key1;
-    s16* k2 = (s16*)out_key2;
     s16* k3 = (s16*)out_key3;
+    s16* k2 = (s16*)out_key2;
+    s16* k1 = (s16*)out_key1;
     s16* defKeys = (s16*)((u8*)&lbl_eu_805E5358 + 0x10);
 
     if (lbl_eu_80560048 == 0) {
@@ -230,56 +262,95 @@ int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* o
 
 s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding) {
     u8* p = (u8*)adxb;
-    u8* d = (u8*)data;
-    u8 encodingType;
-    u32 totalSamples;
+    s16 l3, l2, l1;
     s16 highPassVal;
+    s16 dly2, dly1;
+    s16 sp32;
+    s16 k1, k2, k3;
 
     if (((u32)data & 1) != 0 && lbl_eu_805E5370 == 0) {
-        ADXERR_CallErrFunc2_(lbl_eu_80517330 + 0x1F, lbl_eu_80517330 + 0x1F);
+        ADXERR_CallErrFunc2_(lbl_eu_80517330, lbl_eu_80517330 + 0x1F);
         return -1;
     }
 
     *(u16*)(p + 0x02) = 1;
 
-    if (ADX_DecodeInfo(data, (s32)out_encoding,
+    if (ADX_DecodeInfo(data, (s32)out_encoding, &highPassVal,
             p + 0x0C, p + 0x0D, p + 0x0F, p + 0x0E,
-            p + 0x14, p + 0x18, &highPassVal) < 0) {
+            p + 0x14, p + 0x18, p + 0x10) < 0) {
         return 0;
     }
 
-    encodingType = p[0x0C];
-    if (encodingType > 4) {
+    if ((s8)p[0x0C] > 4) {
         if (*(u32*)(p + 0xB8) == 0) {
             ADXERR_CallErrFunc2_(lbl_eu_80517330 + 0x3E, lbl_eu_80517330 + 0x5E);
             return -1;
         }
-    }
 
-    *(u32*)(p + 0x18) = (d[8] << 24) | (d[9] << 16) | (d[10] << 8) | d[11];
-    *(s16*)(p + 0x02) = (s16)((d[0x0C] << 8) | d[0x0D]);
-    p[0x0C] = d[4];
-    p[5] = d[5];
-    p[6] = d[6];
-    *(u32*)(p + 0x10) = (d[7] << 8) | d[8];
-    p[0x0F] = d[0x0F];
-    p[0x10] = d[0x10];
+        p[0x0D] = 8;
+        p[0x0F] = p[0x0E] * 192;
+        *(u32*)(p + 0x10) = 96;
+        *(s16*)(p + 0x98) = 10;
+        *(s16*)(p + 0x1C) = 0;
+        *(s16*)(p + 0x24) = 0;
+        *(s16*)(p + 0x26) = 0;
+        *(u32*)(p + 0x20) = 0;
+        *(u32*)(p + 0x28) = 0;
+        *(u32*)(p + 0x2C) = 0;
+        *(u32*)(p + 0x30) = 0;
+        *(u32*)(p + 0x34) = 0;
+        *(u32*)(p + 0x88) = 0;
 
-    if (p[0x0F] > 4) {
-        if (p[0x10] != 0) {
-            *(u32*)(p + 0x28) = (d[0x11] << 24) | (d[0x12] << 16) | (d[0x13] << 8) | d[0x14];
-            *(u32*)(p + 0x30) = (d[0x15] << 24) | (d[0x16] << 16) | (d[0x17] << 8) | d[0x18];
-            *(u16*)(p + 0x24) = (s16)(s8)d[0x19];
+        if (ADX_DecodeInfoExVer(data, (s32)out_encoding, p + 0xEC, p + 0xED) < 0) {
+            return 0;
         }
+
+        sp32 = 0;
+
+        if (adxb_get_key(adxb, (void*)*(u32*)(p + 0x18), &k1, &k2, &k3) < 0) {
+            return -1;
+        }
+
+        if (lbl_eu_805E535C != NULL) {
+            lbl_eu_805E535C(*(void**)(p + 0xB8), &sp32);
+        }
+    } else {
+        if (ADX_DecodeInfoExVer(data, (s32)out_encoding, p + 0xEC, p + 0xED) < 0) {
+            return 0;
+        }
+
+        if (adxb_get_key(adxb, (void*)*(u32*)(p + 0x18), &l1, &l2, &l3) < 0) {
+            return -1;
+        }
+
+        ADXPD_SetExtPrm(*(void**)(p + 0x08), l1, l2, l3);
+
+        if (ADX_DecodeInfoExADPCM2(data, (s32)out_encoding, p + 0x1C) < 0) {
+            return 0;
+        }
+
+        if (ADX_DecodeInfoExIdly(data, (s32)out_encoding, &dly1, &dly2) < 0) {
+            return 0;
+        }
+
+        ADXPD_SetCoef(*(void**)(p + 0x08), *(u32*)(p + 0x14), *(s16*)(p + 0x1C));
+        ADXPD_SetDly(*(void**)(p + 0x08), &dly1, &dly2);
+        ADX_DecodeInfoExLoop(data, (s32)out_encoding,
+            p + 0x20, p + 0x24, p + 0x26, p + 0x28,
+            p + 0x2C, p + 0x30, p + 0x34);
+        ADX_DecodeInfoAinf(data, (s32)out_encoding,
+            p + 0xC4, p + 0xC8, p + 0xD8, p + 0xDA);
     }
 
-    adxb_get_key(adxb, *(void**)(p + 0x38), p + 0xA0, p + 0xA2, p + 0xA4);
-    *(u32*)(p + 0xB8) = 1;
+    *(s32*)(p + 0x50) = (s8)p[0x0E];
+    *(s32*)(p + 0x54) = (s8)p[0x0F];
+    *(s32*)(p + 0x58) = *(u32*)(p + 0x10);
+    *(s32*)(p + 0x5C) = *(u32*)(p + 0x3C);
+    *(s32*)(p + 0x60) = *(u32*)(p + 0x40);
+    *(s32*)(p + 0x64) = *(u32*)(p + 0x44);
     *(u32*)(p + 0x8C) = 0;
-    *(u32*)(p + 0x88) = 0;
-    *(u32*)(p + 0x04) = 0;
 
-    return 1;
+    return highPassVal;
 }
 
 void ADXB_SetDefFmt(void* self) {
@@ -326,31 +397,34 @@ void ADXB_SetDefPrm(void* self) {
 }
 
 s32 ADXB_DecodeHeader(void* adxb, void* data, void* out_encoding) {
+    u8* p = (u8*)adxb;
     u8* d = (u8*)data;
     u16 magic;
-    s32 result;
 
-    if (d == NULL) return -1;
+    *(u32*)(p + 0xC4) = 0;
+    *(s16*)(p + 0xD8) = 0;
+    *(s16*)(p + 0xDA) = -128;
+    *(s16*)(p + 0xDC) = -128;
+    memset(p + 0xC8, 0, 16);
 
     magic = (u16)((d[0] << 8) | d[1]);
-    result = -1;
 
     if (magic == 0x8000) {
-        result = ADXB_DecodeHeaderAdx(adxb, data, out_encoding);
-    } else if (ADXB_CheckSpsd(data)) {
-        ADXB_DecodeHeaderSpsd(adxb, data, out_encoding);
-        result = 0;
-    } else if (ADXB_CheckWav(data)) {
-        ADXB_DecodeHeaderWav(adxb, data, out_encoding);
-        result = 0;
-    } else if (ADXB_CheckAiff(data)) {
-        ADXB_DecodeHeaderAiff(adxb, data, out_encoding);
-        result = 0;
-    } else if (ADXB_CheckAu(data)) {
-        ADXB_DecodeHeaderAu(adxb, data, out_encoding);
-        result = 0;
+        return ADXB_DecodeHeaderAdx(adxb, data, out_encoding);
     }
-    return result;
+    if (ADXB_CheckSpsd(data)) {
+        return ADXB_DecodeHeaderSpsd(adxb, data, out_encoding);
+    }
+    if (ADXB_CheckWav(data)) {
+        return ADXB_DecodeHeaderWav(adxb, data, out_encoding);
+    }
+    if (ADXB_CheckAiff(data)) {
+        return ADXB_DecodeHeaderAiff(adxb, data, out_encoding);
+    }
+    if (ADXB_CheckAu(data)) {
+        return ADXB_DecodeHeaderAu(adxb, data, out_encoding);
+    }
+    return -1;
 }
 
 void ADXB_EntryGetWrFunc(void* self, void* func, void* ctx) {
@@ -488,61 +562,56 @@ u32 ADXB_GetDecDtLen(void* self) { return *(u32*)((u8*)self + 0x94); }
 u32 ADXB_GetDecNumSmpl(void* self) { return *(u32*)((u8*)self + 0x90); }
 
 void ADXB_EvokeDecode(void* adxb) {
-    u8* p = (u8*)adxb;
-    u32 blkSize = *(u32*)(p + 0x58);
-    u32 wrPos = *(u32*)(p + 0x70);
-    u32 pcmOfst = *(u32*)(p + 0x68);
-    u32 pcmBufSize = *(u32*)(p + 0x60);
-    u32 blkSmpl = *(u32*)(p + 0x50);
-    u32 maxBlks = *(u32*)(p + 0x4C);
-    u32 numBlks;
-    u32 endAdj;
-    u32 decodeEnd;
-    u32 pcmEnd;
-    u32 availWrPos;
-    u32 availBlks;
-    void* pd;
+    s32 blkSize = *(s32*)((u8*)adxb + 0x58);
+    s32 wrPos = *(s32*)((u8*)adxb + 0x70);
+    s32 pcmOfst = *(s32*)((u8*)adxb + 0x68);
+    s32 pcmBufSize = *(s32*)((u8*)adxb + 0x60);
+    s32 blkSmpl = *(s32*)((u8*)adxb + 0x50);
+    s32 maxBlks = *(s32*)((u8*)adxb + 0x4C);
+    s32 availWrPos = *(s32*)((u8*)adxb + 0x6C);
+    s32 tmp;
+    s32 numBlks;
+    s32 endAdj;
+    s32 decodeEnd;
+    s32 deSize;
+    s32 availBlks;
 
-    u32 tmp = (wrPos + blkSize) - 1;
+    tmp = (wrPos + blkSize) - 1;
     numBlks = tmp / blkSize;
-    endAdj = tmp - (numBlks * blkSize);
-    endAdj = (blkSize - 1) - endAdj;
-
-    pcmEnd = (pcmBufSize - pcmOfst) + blkSize - 1;
-    decodeEnd = pcmEnd / blkSize;
+    endAdj = (blkSize - 1) - (tmp % blkSize);
+    decodeEnd = (pcmBufSize - pcmOfst + blkSize - 1) / blkSize;
+    deSize = decodeEnd * blkSize;
+    maxBlks = maxBlks / blkSmpl;
 
     if (numBlks < decodeEnd) {
-        u32 check = pcmOfst + (numBlks * blkSize) - endAdj;
-        if (check < pcmBufSize) {
-            decodeEnd = numBlks + 1;
+        if (pcmOfst + deSize - endAdj < pcmBufSize) {
+            decodeEnd++;
         }
     }
 
-    availWrPos = *(u32*)(p + 0x6C);
     if (wrPos < availWrPos) {
-        availWrPos = availWrPos + endAdj;
+        availBlks = (availWrPos + endAdj) / blkSize;
+        if (maxBlks > availBlks) maxBlks = availBlks;
     }
-    availBlks = availWrPos / blkSize;
-
-    maxBlks = maxBlks / blkSmpl;
-    if (maxBlks > availBlks) maxBlks = availBlks;
     if (maxBlks > numBlks) maxBlks = numBlks;
     if (maxBlks > decodeEnd) maxBlks = decodeEnd;
 
-    pd = *(void**)(p + 0x08);
     if (blkSmpl == 2) {
-        ADXPD_EntrySte(pd, *(void**)(p + 0x48),
-            (void*)(*(u32*)(p + 0x5C) + (pcmOfst << 1)),
-            (void*)(*(u32*)(p + 0x5C) + (*(u32*)(p + 0x64) << 1)));
+        void* pd = *(void**)((u8*)adxb + 0x08);
+        ADXPD_EntrySte(pd, *(void**)((u8*)adxb + 0x48), maxBlks << 1,
+            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1)),
+            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1) + (*(u32*)((u8*)adxb + 0x64) << 1)));
         ADXPD_Start(pd);
-    } else if (*(u32*)(p + 0xE0) != 0) {
-        ADXPD_EntryPl2(pd, *(void**)(p + 0x48),
-            (void*)(*(u32*)(p + 0x5C) + (pcmOfst << 1)),
-            (void*)(*(u32*)(p + 0x5C) + (*(u32*)(p + 0x64) << 1)));
+    } else if (*(s32*)((u8*)adxb + 0xE0) != 0) {
+        void* pd = *(void**)((u8*)adxb + 0x08);
+        ADXPD_EntryPl2(pd, *(void**)((u8*)adxb + 0x48), maxBlks,
+            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1)),
+            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1) + (*(u32*)((u8*)adxb + 0x64) << 1)));
         ADXPD_Start(pd);
     } else {
-        ADXPD_EntryMono(pd, *(void**)(p + 0x48),
-            (void*)(*(u32*)(p + 0x5C) + (pcmOfst << 1)),
+        void* pd = *(void**)((u8*)adxb + 0x08);
+        ADXPD_EntryMono(pd, *(void**)((u8*)adxb + 0x48),
+            (void*)(*(u32*)((u8*)adxb + 0x5C) + (*(u32*)((u8*)adxb + 0x68) << 1)),
             NULL);
         ADXPD_Start(pd);
     }
@@ -555,49 +624,63 @@ void ADXB_EndDecode(void* adxb) {
     s32 numBlkSmpl = *(s32*)(p + 0x54);
     u32 pcmOfst = *(u32*)(p + 0x68);
     u32 pcmBase = *(u32*)(p + 0x5C);
-    u32 pcmBufSize = *(u32*)(p + 0x40);
+    s32 pcmBufSize = *(s32*)(p + 0x40);
     u32 workBufSize = *(u32*)(p + 0x44);
     s32 tmp;
+    s32 endAdj2;
     s32 numBlks;
-    s32 endAdj;
     s32 numBlkPD;
     s32 decSmpl;
     s32 decDtLen;
-    u32 pcmEnd;
+    s32 pcmEnd;
     s32 samplesLeft;
     int i;
 
-    tmp = (wrPos + blkSize) - 1;
+    tmp = wrPos + blkSize - 1;
+    endAdj2 = (blkSize - 1) - (tmp % blkSize);
     numBlks = tmp / blkSize;
-    endAdj = tmp - (numBlks * blkSize);
-    endAdj = (blkSize - 1) - endAdj;
 
     numBlkPD = ADXPD_GetNumBlk(*(void**)(p + 0x08));
     decSmpl = (numBlkPD * blkSize) / numBlkSmpl;
-    if ((u32)(numBlks * (s32)(*(u32*)(p + 0x50))) <= (u32)numBlkPD) {
-        decSmpl -= endAdj;
+    if (numBlks * (s32)(*(u32*)(p + 0x50)) <= numBlkPD) {
+        decSmpl -= endAdj2;
     }
     decDtLen = numBlkPD * numBlkSmpl;
 
     *(u32*)(p + 0x90) = (u32)decSmpl;
     *(u32*)(p + 0x94) = (u32)decDtLen;
 
-    pcmEnd = pcmOfst + (u32)decSmpl;
+    pcmEnd = pcmOfst + decSmpl;
     if (pcmEnd < pcmBufSize) return;
 
-    samplesLeft = (s32)(pcmEnd - pcmBufSize);
+    samplesLeft = pcmEnd - pcmBufSize;
 
     if (*(s32*)(p + 0x50) == 2 || *(s32*)(p + 0xE0) != 0) {
-        for (i = 0; i < samplesLeft; i++) {
-            ((s16*)pcmBase)[i] = ((s16*)(pcmBase + (pcmBufSize << 1)))[i];
+        {
+            s16* d = (s16*)pcmBase;
+            const s16* s = (const s16*)(pcmBase + (pcmBufSize << 1));
+            s32 n = samplesLeft;
+            while (n > 0) {
+                *d++ = *s++;
+                n--;
+            }
         }
-        for (i = 0; i < samplesLeft; i++) {
-            ((s16*)(pcmBase + (workBufSize << 1)))[i] =
-                ((s16*)(pcmBase + ((workBufSize + pcmBufSize) << 1)))[i];
+        {
+            s16* d = (s16*)(pcmBase + (workBufSize << 1));
+            const s16* s = (const s16*)(pcmBase + ((workBufSize + pcmBufSize) << 1));
+            s32 n = samplesLeft;
+            while (n > 0) {
+                *d++ = *s++;
+                n--;
+            }
         }
     } else {
-        for (i = 0; i < samplesLeft; i++) {
-            ((s16*)pcmBase)[i] = ((s16*)(pcmBase + (pcmBufSize << 1)))[i];
+        s16* d = (s16*)pcmBase;
+        const s16* s = (const s16*)(pcmBase + (pcmBufSize << 1));
+        s32 n = samplesLeft;
+        while (n > 0) {
+            *d++ = *s++;
+            n--;
         }
     }
 }
@@ -667,18 +750,18 @@ void ADXB_ExecHndl(void* adxb) {
     }
 
     {
-        void (*wrCb)(void*, u32, u32, u32);
-        wrCb = *(void (**)(void*, u32, u32, u32))(p + 0xF8);
+        void (*wrCb)(void*, s32, s32);
+        wrCb = *(void (**)(void*, s32, s32))(p + 0xF8);
         if (wrCb != NULL) {
-            u32 dataLen = *(u32*)(p + 0x94);
-            u32 decodedSmpl = *(u32*)(p + 0x90);
+            s32 prevLen = *(s32*)(p + 0xF0);
+            s32 dataLen = *(s32*)(p + 0x94);
+            s32 decodedSmpl = *(s32*)(p + 0x90);
+            s32 diff = dataLen - prevLen;
+            if (diff < 0) {
+                diff = (0x7FFFFFFF - prevLen) + dataLen;
+            }
             s8 chan = (s8)*(u8*)(p + 0x0E);
-            u32 prevLen = *(u32*)(p + 0xF0);
-            u32 diff;
-            void* ctx;
-            diff = dataLen - prevLen;
-            ctx = *(void**)(p + 0xFC);
-            wrCb(ctx, diff, decodedSmpl * (chan << 1), decodedSmpl * (chan << 1));
+            wrCb(*(void**)(p + 0xFC), diff, chan * (decodedSmpl << 1));
             *(u32*)(p + 0xF0) = *(u32*)(p + 0x94);
         }
     }

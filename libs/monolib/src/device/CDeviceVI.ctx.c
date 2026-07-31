@@ -10774,14 +10774,9 @@ namespace ml{
             return size() == 0;
         }
         
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
+        // Declared out-of-line: retail emits a standalone
+        // format__Q22ml10FixStr<N>FPCce (resolved via the retail symbol map).
+        void format(const char* format, ...);
 
         //Sets the given string to the first characters of this string, up to the specified length.
         //TODO: This might just be substr, but when the start index is 0?
@@ -250047,6 +250042,9 @@ public:
 class CLibG3d : public CWorkThread {
 public:
     CLibG3d(const char* pName, CWorkThread* pParent);
+    virtual ~CLibG3d();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     DECL_WORKTHREAD_CREATE(CLibG3d);
 
@@ -250946,19 +250944,38 @@ protected:
 class CLibLayout : public CWorkThread {
 public:
     CLibLayout(const char* pName, CWorkThread* pParent);
+    virtual ~CLibLayout();
 
     DECL_WORKTHREAD_CREATE(CLibLayout);
 
     static bool isInitialized();
     static CLibLayout* getInstance();
     static nw4r::lyt::ArcResourceAccessor* createArcResourceAccessor();
+    void getAllocHandle();
+    void createLayout();
+    void createPicture();
+    void createTextbox();
+    void deleteTextboxOrPicture();
+    void func_8045F438();
+    void func_8045F4E4();
 
     virtual void wkUpdate() override;  //0x88
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     //0x0: vtable
     //0x0-1c4: CWorkThread
     u32 unk1C4;                       // 0x1C4: unknown field
-    u8 unk1C8[0x2C0 - 0x1C8];        // 0x1C8-2C0: unknown trailing data
+    u8 pad_1C8[0x58];                 // 0x1C8-0x21F
+    void** hashTable;                  // 0x220-0x223: hash table for Class_8045F858
+    s32 hashAccum;                     // 0x224-0x227
+    s32 hashCount;                     // 0x228-0x22B
+    s32 hashDivisor;                   // 0x22C-0x22F
+    u8 pad_230[0x8];                   // 0x230-0x237
+    void** instanceArray;              // 0x238-0x23B: tracking array for UnkClass_8045F564
+    u8 pad_23C[0x7C];                  // 0x23C-0x2B7
+    u32 instanceCount;                 // 0x2B8-0x2BB
+    u8 pad_2BC[0x4];                   // 0x2BC-0x2BF
 };
 /* end "monolib/lib/CLibLayout.hpp" */
 /* "libs/monolib/include/monolib/lib.hpp" line 8 "monolib/lib/CLibStaticData.hpp" */
@@ -251064,6 +251081,9 @@ private:
 class CLibVM : public CWorkThread {
 public:
     CLibVM(const char* pName, CWorkThread* pParent);
+    virtual ~CLibVM();
+    virtual bool wkStandbyLogin();
+    virtual bool wkStandbyLogout();
 
     DECL_WORKTHREAD_CREATE(CLibVM);
 
@@ -251087,7 +251107,7 @@ public:
 
 class UnkClass_8045F564{
 public:
-    int unk0;
+    u32 unk0;
     u32 unk4;
     u32 unk8;
     u32 unkC;
@@ -251098,6 +251118,7 @@ public:
     
     void createRegion(int, int, const char*, int);
     void func_8045F778();
+    void func_8045F7E8();
     void func_8045F810();
 };
 
@@ -252306,84 +252327,51 @@ void CDeviceVI::waitForDrawDone(){
 }
 
 void CDeviceVI::endFrame(){
-    int exception;
-    u32 flags = spInstance->CWorkThread::mFlags;
-
-    if (flags & THREAD_FLAG_EXCEPTION) {
-        exception = true;
-    } else {
-        exception = (spInstance->mMsgQueue.find(2) >= 0);
-    }
-
-    int proceed = false;
-    if (!exception) {
-        int stateOK = (spInstance->mState == THREAD_STATE_LOGIN || spInstance->mState == THREAD_STATE_RUN);
-        if (stateOK) {
-            proceed = true;
-        }
-    }
-
-    if (!proceed) {
+    if(!spInstance->isRunning() || spInstance->isNoEvent() || CDeviceGX::getInstance() == nullptr){
         return;
     }
 
-    if (flags & THREAD_FLAG_NO_EVENT) {
-        return;
-    }
-
-    if (CDeviceGX::getInstance() == nullptr) {
-        return;
-    }
-
-    // Inlined BEFORE_DRAW_DONE callback loop — unkInline1 checks spInstance
-    // null and mViFlags bit 31; skip loop if either condition triggers
-    if (!unkInline1()) {
-        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
-        while (node != spInstance->mCallbackList.mStartNodePtr) {
-            node->mItem->viBeforeDrawDone();
-            node = node->mNext;
-        }
-    }
+    //Call the pre-draw done callback
+    //Nothing overrides this, so this does nothing
+    cb(CDeviceVICb::VI_CALLBACK_BEFORE_DRAW_DONE);
 
     CDeviceClock::onEndFrame();
 
-    // Inlined EFB copy
-    if (CDeviceGX::devicesInitialized()) {
-        CDeviceGX::copyEfb(spInstance->mFrameBufferPtrArray[spInstance->unk298]);
-    } else {
-        CDeviceGX::copyEfb(spInstance->mFrameBufferPtrArray[spInstance->unk294]);
+    //Copy the EFB to the current nonactive framebuffer, and wait until drawing is done
+    if(CDeviceGX::devicesInitialized()){
+        spInstance->copyEfb(spInstance->unk298);
+    }else{
+        spInstance->copyEfb(spInstance->unk294);
     }
 
-    // Inlined AFTER_DRAW_DONE callback loop
-    if (!unkInline1()) {
-        _reslist_node<CDeviceVICb*>* node = spInstance->mCallbackList.mStartNodePtr->mNext;
-        while (node != spInstance->mCallbackList.mStartNodePtr) {
-            node->mItem->viAfterDrawDone();
-            node = node->mNext;
+    //Call the post-draw done callback
+    cb(CDeviceVICb::VI_CALLBACK_AFTER_DRAW_DONE);
+
+    if(!checkFlag4()){
+        //Wait for remaining retraces
+        while(VIGetRetraceCount() - spInstance->unk2A4 < spInstance->mVisPerFrame - 1){
         }
     }
 
-    if (!(spInstance->mViFlags & 0x10)) {
-        while (VIGetRetraceCount() - spInstance->unk2A4 < spInstance->mVisPerFrame - 1) {
-        }
-    }
+    spInstance->setNextFrameBuffer();
 
-    VISetNextFrameBuffer(spInstance->mFrameBufferPtrArray[spInstance->unk294]);
-
+    //TODO: this feel like it should be an inline, but the instance accesses don't let it work :p
     spInstance->unk298 = spInstance->unk294;
 
-    if (++spInstance->unk294 >= spInstance->unk284) {
+    if(++spInstance->unk294 >= spInstance->unk284){
         spInstance->unk294 = 0;
     }
 
     VIFlush();
 
-    if (!(spInstance->mViFlags & 0x10)) {
+    if(!checkFlag4()){
         VIWaitForRetrace();
     }
 
+    //Also feels like an inline
     spInstance->unk2AC = VIGetRetraceCount() - spInstance->unk2A4;
     spInstance->unk2A4 = VIGetRetraceCount();
+
 }
 
 //This is meant to run code when preretrace happens, but it got stubbed for some reason.

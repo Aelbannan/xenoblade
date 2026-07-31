@@ -131,14 +131,9 @@ extern "C" void func_80465704__Q23LOD17UnkClass_804645CCFv(s32 value) {
 }
 
 extern "C" void func_80465730__Q23LOD17UnkClass_804645CCFv(f32 scale) {
-    union {
-        double d;
-        u32 word[2];
-    } converted;
-    converted.word[0] = 0x43300000;
-    converted.word[1] = lbl_eu_80665814 ^ 0x80000000;
+    s32 value = lbl_eu_80665814;
     lbl_eu_806657E8 |= 2;
-    lbl_eu_80665814 = (s32)((converted.d - lbl_eu_8066A628) * scale);
+    lbl_eu_80665814 = (s32)((f32)value * scale);
 }
 
 extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32 value) {

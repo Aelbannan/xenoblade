@@ -246,6 +246,18 @@ static void trailClearList(CETrail* t) {
     t->m_head->m_prev = t->m_head;
 }
 
+static void trailClearListDerived(CETrail* t) {
+    CETrailNode* head = t->m_head;
+    CETrailNode* cur = head->m_next;
+    while (cur != head) {
+        CETrailNode* old = cur;
+        cur = old->m_next;
+        old->m_next = nullptr;
+    }
+    head->m_next = head;
+    head->m_prev = head;
+}
+
 // ---------------------------------------------------------------------------
 // func_804D70A0: POINT node constructor (array element init)
 // ---------------------------------------------------------------------------
@@ -454,7 +466,17 @@ extern "C" CETrail* __dt__7CETrailFv(CETrail* t, int deleting) {
 
         if (t != nullptr) {
             t->m_vtable = lbl_eu_8056FC64;
-            trailClearList(t);
+            {
+                CETrailNode* head = t->m_head;
+                CETrailNode* cur = head->m_next;
+                while (cur != head) {
+                    CETrailNode* old = cur;
+                    cur = old->m_next;
+                    old->m_next = nullptr;
+                }
+                head->m_next = head;
+                head->m_prev = head;
+            }
             if (!t->m_ownsList && t->m_list != nullptr) {
                 delete[] t->m_list;
                 t->m_list = nullptr;

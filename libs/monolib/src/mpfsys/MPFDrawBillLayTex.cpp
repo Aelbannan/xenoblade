@@ -328,7 +328,6 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
     func_804737CC__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
     func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
 
-    Vec* output = positions;
     if (billboard->flags & 2) {
         Vec vertex0;
         Vec vertex1;
@@ -352,21 +351,13 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
                 vertex3.x = lbl_eu_8066A848;
                 vertex3.y = y;
                 vertex3.z = billboard->halfWidth;
-                Vec transformed0;
-                Vec transformed1;
-                Vec transformed2;
-                Vec transformed3;
-                PSMTXMultVec(layers->matrix, &vertex0, &transformed0);
-                PSMTXMultVec(layers->matrix, &vertex1, &transformed1);
-                PSMTXMultVec(layers->matrix, &vertex2, &transformed2);
-                PSMTXMultVec(layers->matrix, &vertex3, &transformed3);
-                output[0] = transformed0;
-                output[1] = transformed1;
-                output[2] = transformed2;
-                output[3] = transformed3;
+                PSMTXMultVec(layers->matrix, &vertex0, positions + 0);
+                PSMTXMultVec(layers->matrix, &vertex1, positions + 1);
+                PSMTXMultVec(layers->matrix, &vertex2, positions + 2);
+                PSMTXMultVec(layers->matrix, &vertex3, positions + 3);
                 v += step;
                 layers++;
-                output += 4;
+                positions += 4;
             }
         } else {
             vertex0.x = -billboard->halfWidth;
@@ -382,6 +373,7 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
             vertex3.y = billboard->halfHeight;
             vertex3.z = billboard->halfWidth;
             MPFDrawBillLayer* layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8Fv(lbl_eu_80665838, billboard->layerIndex);
+            Vec* output = positions;
             for (s32 i = 0; i < lbl_eu_8066A728; i++) {
                 PSMTXMultVec(layers->matrix, &vertex0, output + 0);
                 PSMTXMultVec(layers->matrix, &vertex1, output + 1);
@@ -392,6 +384,7 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
             }
         }
     } else if (billboard->layerDepth != lbl_eu_8066A848) {
+        Vec* output = positions;
         func_804734F4__Q26mpfsys17UnkClass_80471EC8Fv(lbl_eu_80665838, billboard->layerIndex);
         f32 step = billboard->layerDepth * lbl_eu_8066A730;
         f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
@@ -413,28 +406,28 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
             output += 4;
         }
     } else {
-        positions[0].x = -billboard->halfWidth;
-        positions[0].y = billboard->halfHeight;
-        positions[0].z = lbl_eu_8066A848;
-        positions[1].x = billboard->halfWidth;
-        positions[1].y = billboard->halfHeight;
-        positions[1].z = lbl_eu_8066A848;
-        positions[2].x = lbl_eu_8066A848;
-        positions[2].y = billboard->halfHeight;
-        positions[2].z = -billboard->halfWidth;
-        positions[3].x = lbl_eu_8066A848;
-        positions[3].y = billboard->halfHeight;
-        positions[3].z = billboard->halfWidth;
+        Vec* output = positions;
+        output[0].x = -billboard->halfWidth;
+        output[0].y = billboard->halfHeight;
+        output[0].z = lbl_eu_8066A848;
+        output[1].x = billboard->halfWidth;
+        output[1].y = billboard->halfHeight;
+        output[1].z = lbl_eu_8066A848;
+        output[2].x = lbl_eu_8066A848;
+        output[2].y = billboard->halfHeight;
+        output[2].z = -billboard->halfWidth;
+        output[3].x = lbl_eu_8066A848;
+        output[3].y = billboard->halfHeight;
+        output[3].z = billboard->halfWidth;
     }
 
     if (billboard->flags & 4) {
-        Vec* flip = positions;
         for (s32 i = 0; i < lbl_eu_8066A728; i++) {
-            flip[0].y = -flip[0].y;
-            flip[1].y = -flip[1].y;
-            flip[2].y = -flip[2].y;
-            flip[3].y = -flip[3].y;
-            flip += 4;
+            positions[0].y = -positions[0].y;
+            positions[1].y = -positions[1].y;
+            positions[2].y = -positions[2].y;
+            positions[3].y = -positions[3].y;
+            positions += 4;
         }
     }
 }

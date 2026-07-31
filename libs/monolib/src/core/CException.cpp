@@ -127,12 +127,13 @@ extern "C" {
 
 // Constructor - extern "C" to match retail symbol name
 extern "C" CException* __ct__CException(CException* self, const char* pName, CWorkThread* pParent) {
+    extern const f32 lbl_eu_8066A480;
     __ct__5CProcFPCcP11CWorkThreads(self, pName, pParent, 8);
     *(void**)self = lbl_eu_8056CCE0;
     self->mExceptionCode = -1;
     self->mMessage = nullptr;
-    self->mAlphaStep = 0.0f;
-    self->mAlpha = 0.0f;
+    self->mAlphaStep = lbl_eu_8066A480;
+    self->mAlpha = lbl_eu_8066A480;
     self->mAnimState = 0;
     self->mException = nullptr;
     self->unk204 = 0;
@@ -267,36 +268,51 @@ void CException::wkRender() {
             mAlpha = 0.8f;
             mAnimState = state + 1;
         }
-    } else if (state == 1 && (mFlags & 1) != 0) {
-        mAlpha -= mAlphaStep;
-        if (mAlpha <= 0.0f) {
-            mAlpha = 0.0f;
-            mAnimState = state + 1;
+    } else if (state == 1) {
+        if ((mFlags & 1) != 0) {
+            mAlpha -= mAlphaStep;
+            if (mAlpha <= 0.0f) {
+                mAlpha = 0.0f;
+                mAnimState = state + 1;
+            }
         }
     }
 
-    CView* currentView = getCurrentView__5CViewFv();
-    ml::CRect16 rect;
-    if (currentView == nullptr) {
-        GXRenderModeObj* mode = getRenderModeObj__9CDeviceVIFv();
+    CView* currentView = CView::getCurrentView();
+    CView* view = currentView;
+    if (view != nullptr) {
+        view = (CView*)((u8*)view + 0x1C4);
+    }
+    GXRenderModeObj* mode = CDeviceVI::getRenderModeObj();
+    s16 width = mode->fbWidth;
+    mode = CDeviceVI::getRenderModeObj();
+    s16 height = mode->efbHeight;
+    if (view == nullptr) {
         func_804525D4__11CDeviceFontFv();
-        setFlag0__9CDeviceVIFb(false);
-        setFlag4__9CDeviceVIFb(false);
-        rect.set(0, 0, mode->fbWidth, mode->efbHeight);
+        CDeviceVI::setFlag0(false);
+        CDeviceVI::setFlag4(false);
     } else {
-        rect.set(0, 0, currentView->mRectData.mViewSize.x,
-                 currentView->mRectData.mViewSize.y);
+        CView* current = CView::getCurrentView();
+        width = *(s16*)((u8*)current + 0x1C8);
+        current = CView::getCurrentView();
+        height = *(s16*)((u8*)current + 0x1CA);
     }
 
     CDrawGX draw;
     ml::CCol4 color;
     func_800407C8(&color, 0.0f, 0.0f, 0.0f, mAlpha);
-    setCol__7CDrawGXFRCQ22ml5CCol4(&draw, &color);
-    renderRect__7CDrawGXFRCQ22ml7CRect16(&draw, &rect);
+    draw.setCol(color);
+    ml::CRect16 rect;
+    rect.mPos.x = 0;
+    rect.mPos.y = 0;
+    rect.mSize.x = width;
+    rect.mSize.y = height;
+    draw.renderRect(rect);
 
-    if (mAnimState < 1 || (mFlags & 1) == 0) {
-        func_80458084__10CExceptionFv(mMessage);
+    if (mAnimState >= 1 && (mFlags & 1) != 0) {
+        return;
     }
+    func_80458084__10CExceptionFv(mMessage);
 }
 
 // Main exception text renderer.
@@ -382,35 +398,21 @@ extern "C" void func_80458B64__10CExceptionFv(u8* buffer, u8 r, u8 g, u8 b, u8 a
 
 // Set a TextWriter cursor position.
 extern "C" void func_80458B78__10CExceptionFv(void* writer, f32 x, f32 y, f32 z) {
+    bool valid0 = true;
+    bool valid1 = true;
+    bool valid2 = true;
+    bool valid3 = true;
+    bool valid4 = true;
+    bool valid5 = true;
     u32 address = (u32)writer;
-    bool validMem1 = true;
-    bool validMem2 = true;
-    bool validIo = true;
-    bool validIo2 = true;
-    bool validRegs = true;
-    bool validRegs2 = true;
     if ((address & 0xFF000000) != 0x80000000 &&
-        (address & 0xFF800000) != 0x81000000) {
-        validMem1 = false;
-    }
-    if (!validMem1 && (address & 0xF8000000) != 0x90000000) {
-        validMem2 = false;
-    }
-    if (!validMem2 && (address & 0xFF000000) != 0xC0000000) {
-        validIo = false;
-    }
-    if (!validIo && (address & 0xFF800000) != 0xC1000000) {
-        validIo2 = false;
-    }
-    if (!validIo2 && (address & 0xF8000000) != 0xD0000000) {
-        validRegs = false;
-    }
-    if (!validRegs && (address & 0xFFFFC000) != 0xE0000000) {
-        validRegs2 = false;
-    }
-    if (!validRegs2) {
-        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_805378A0, 0x102, lbl_eu_8053786C, writer);
-    }
+        (address & 0xFF800000) != 0x81000000) valid0 = false;
+    if (!valid0 && (address & 0xFF000000) != 0xC0000000) valid1 = false;
+    if (!valid1 && (address & 0xFF800000) != 0xC1000000) valid2 = false;
+    if (!valid2 && (address & 0xF8000000) != 0xD0000000) valid3 = false;
+    if (!valid3 && (address & 0xFF800000) != 0x3F000000) valid4 = false;
+    if (!valid4 && (address & 0xFFFFC000) != 0x20000000) valid5 = false;
+    if (!valid5) Panic__Q24nw4r2dbFPCciPCce(lbl_eu_805378A0, 0x102, lbl_eu_8053786C, writer);
     *(f32*)((u8*)writer + 0x2C) = x;
     *(f32*)((u8*)writer + 0x30) = y;
     *(f32*)((u8*)writer + 0x34) = z;
@@ -527,11 +529,17 @@ bool CException::wkStandbyLogin() {
 
 // Logout teardown
 bool CException::wkStandbyLogout() {
-    if (!mChildren.empty()) {
+    CDoubleListNode* sentinel = *(CDoubleListNode**)((u8*)this + 0x60);
+    if (sentinel->mNext != sentinel) {
         return false;
     }
-    if (mAlpha != 0.0f && !isOff__11CWorkSystemFv() && func_8045D478__7CLibHbmFv() == nullptr && mFlag210 == 0) {
-        return false;
+    extern const f32 lbl_eu_8066A480;
+    f32 alpha = mAlpha;
+    if (lbl_eu_8066A480 != alpha) {
+        if (isOff__11CWorkSystemFv() == false &&
+            func_8045D478__7CLibHbmFv() == nullptr && mFlag210 == 0) {
+            return false;
+        }
     }
 
     setAppException__8CDesktopFi(0);
@@ -577,25 +585,27 @@ void CException::func_804591BC(IException* pException) {
 // Remove from global array
 extern "C" void func_804591DC__10CExceptionFP10IException(CException* self) {
     u32 count = lbl_eu_806656C4;
-    u8* base = (u8*)lbl_eu_80657B50;
+    u8* current = (u8*)lbl_eu_80657B50;
     u32 index = 0;
     u32 byteOffset = 0;
     while (index < count) {
-        if (*(u32*)(base + byteOffset) == (u32)self) {
+        if (*(u32*)(current + 0x0) == (u32)self) {
             u32 last = count - 1;
             u32 shifts = last - index;
             u32 destination = index * 4;
-            for (u32 n = shifts; n != 0; --n) {
-                u8* current = (u8*)lbl_eu_80657B50 + destination;
+            u8* source = (u8*)lbl_eu_80657B50;
+            while (index < last) {
+                u8* destinationEntry = source + destination;
                 destination += 4;
-                *(u32*)current = *(u32*)(current + 4);
+                *(u32*)destinationEntry = *(u32*)(destinationEntry + 4);
+                index++;
             }
             lbl_eu_806656C4 = last;
             return;
         }
+        current += 4;
         index++;
         byteOffset += 4;
-        base += 4;
     }
 }
 

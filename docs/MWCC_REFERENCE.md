@@ -637,6 +637,12 @@ Key observations from `UnkClass_8047CA88::func_8047CC4C/CAA8` (us-80480c1c / us-
 
 **Fv-with-hidden-params:** retail symbols ending `Fv` may still take args in r4/r5/r6/f1 (e.g. `func_8047CAA8__17UnkClass_8047CA88Fv(self, param)`). Implement with `extern "C"` + the exact mangled name and explicit params — the `bl` reloc name stays correct and MWCC passes the extra args normally.
 
+**Billboard layered-renderer application:** `MPFDrawBillLayTex`'s billboard quad paths use the NW4R `VEC3Add` high-level helper to reproduce retail paired-single `psq_l`/`ps_add`/`psq_st` sequences. Scalar `Vec.x/y/z` additions compiled to separate `lfs`/`fadds` instructions and reduced `func_8047A330` to 22.9% fuzzy; replacing only the four corner sums with `nw4r::math::VEC3Add` raised it to 59.3% and kept the split within budget. Use the SDK/NW4R vector helper for PS-heavy geometry rather than scalar C++ arithmetic.
+
+**CException compiler-context breakthrough:** `CException::~CException` required TU-local `-O4,s` plus explicit `-func_align 4` to select MWCC's `stmw/lmw r30` save/restore pair; default `-O4,p` emitted four individual `stw/lwz` instructions and was 8 bytes too large. The same flags preserved the exact `__ct__CException` and leaf helper sizes. Keep this as a configure-level optimization context, not a source-level register trick. Files: `configure.py`, `libs/monolib/src/core/CException.cpp`; destructor `0x68`, `FULL_MATCH`.
+
+**LOD fixed-trip matrix cursor loop:** In `UnkClass_8046368C::func_80463C24`, expressing the three matrix uploads as a high-level `while (i < 3)` with explicit `Mtx*` cursors (`workCursor` and `normalCursor`) produced the retail loop and exact `0x120` function size; the remaining 19 hexdiff mismatches were pure GPR color swaps. This is preferable to unrolling or low-level steering. Acceptance remained blocked only by the equivalence engine's symbolic MMIO abstraction around MTX/GX callees.
+
 ### 2. `extern "C"` on `bl` targets with retail mangling
 
 MWCC emits `bl` to **exact linker symbols**. C++-mangled names on callees cause wrong relocs.

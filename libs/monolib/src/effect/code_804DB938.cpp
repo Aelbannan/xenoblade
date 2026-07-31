@@ -296,9 +296,9 @@ void func_804DD754(void) {
 // ---------------------------------------------------------------------------
 
 // 3-component lerp.
-void func_804DD89C(nw4r::math::VEC3* out, const nw4r::math::VEC3* a,
-                   const nw4r::math::VEC3* b, f32 t) {
-    nw4r::math::VEC3Lerp(out, a, b, t);
+void func_804DD89C(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b,
+                   f32 t) {
+    nw4r::math::VEC3Lerp(*out, *a, *b, t);
 }
 
 // 4-component lerp.

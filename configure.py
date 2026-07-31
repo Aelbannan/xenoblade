@@ -1747,7 +1747,7 @@ config.libs = [
             Object(MatchingFor("jp", "us"), "monolib/src/device/CDeviceGX.cpp"),
             Object(NonMatching, "monolib/src/core/CDesktop.cpp", extra_cflags=["-func_align 4"]),
             Object(MatchingFor("jp"), "monolib/src/core/CDrawGX.cpp"),
-            Object(NonMatching, "monolib/src/core/CException.cpp"),
+            Object(NonMatching, "monolib/src/core/CException.cpp", extra_cflags=["-O4,s", "-func_align 4"]),
             Object(NonMatching, "monolib/src/core/CViewRectDataCore.cpp"),
             Object(MatchingFor("jp"), "monolib/src/lib/CLib.cpp"),
             Object(NonMatching, "monolib/src/lib/CLibCri.cpp"),

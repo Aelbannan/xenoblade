@@ -122,16 +122,6 @@ inline float gradLookup(const CGradEntry* table, float deg) {
     return table[idx].base + frac * table[idx].slope;
 }
 
-inline float markerLookup(const CGradEntry* table, float angle) {
-    int n = (int)angle;
-    int index = n % 360;
-    if (index < 0) {
-        index += 360;
-    }
-    float frac = angle - (float)n;
-    return table[index].base + frac * table[index].slope;
-}
-
 // Pane the bind object attaches to.
 struct CBindAnim {
     virtual void slot0();
@@ -265,9 +255,7 @@ extern "C" void func_804EE60C(CLytBind* self) {
 // func_804EE658: rebuild the world matrix from the bound source,
 // preserving the current translation.
 extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
-    float tx = self->mMtx.m[0][3];
-    float ty = self->mMtx.m[1][3];
-    float tz = self->mMtx.m[2][3];
+    ml::CVec3 translation = self->mMtx.getTranslation();
 
     self->mMtx = ml::CMat34::identity;
 
@@ -322,9 +310,7 @@ extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
         break;
     }
 
-    self->mMtx.m[0][3] = tx;
-    self->mMtx.m[1][3] = ty;
-    self->mMtx.m[2][3] = tz;
+    self->mMtx.replaceTranslation(translation);
 }
 
 // func_804EE8FC: rebuild the translation from the bound source.
@@ -413,12 +399,11 @@ extern "C" void func_804EF830(ml::CVec3* verts) {
         if (i == 0) {
             verts[i].set(lbl_eu_8066B408, lbl_eu_8066B408, lbl_eu_8066B408);
         } else if (i < 9) {
-            float step = (float)(i - 1);
-            float deg = step * lbl_eu_8066B438;
+            float deg = s32ToF(i - 1) * lbl_eu_8066B438;
             float rad = ml::deg2rad * deg;
             float angle = ml::rad2deg * rad;
-            verts[i].x = markerLookup(lbl_eu_80660B78, angle);
-            verts[i].y = markerLookup(lbl_eu_80660038, angle);
+            verts[i].x = gradLookup(lbl_eu_80660B78, angle);
+            verts[i].y = gradLookup(lbl_eu_80660038, angle);
             verts[i].z = lbl_eu_8066B408;
         } else {
             verts[i] = verts[1];

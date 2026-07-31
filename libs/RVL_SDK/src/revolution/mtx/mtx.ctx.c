@@ -1574,7 +1574,7 @@ void C_MTXScale(){
 
 void PSMTXScale(Mtx m, f32 xS, f32 yS, f32 zS) {
     f32 zero = 0.0f;
-    m[0][0] = zero;
+    m[0][0] = xS;
     m[0][1] = m[0][2] = zero;
     m[0][3] = m[1][0] = zero;
     m[1][1] = yS;

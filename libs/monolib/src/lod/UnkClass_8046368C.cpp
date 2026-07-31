@@ -79,7 +79,10 @@ extern u8 lbl_eu_806581C8[0x180]; // 8 x 0x30 work objects
 //   0x218  nrm[3]  normal matrices
 // ---------------------------------------------------------------------------
 typedef struct LodGlobal {
-    f32 v[10];
+    union {
+        f32 v[10];
+        u32 words[10];
+    };
     Mtx mtx28;
     Mtx mtx58;
     u8 gap88[0x218 - 0x88];
@@ -88,8 +91,9 @@ typedef struct LodGlobal {
 
 // Mtx is a raw C array; copy it via an aggregate wrapper (retail emits a
 // plain 12-word copy, not PSMTXCopy).
-typedef struct LodMtxCopy {
+typedef union LodMtxCopy {
     Mtx m;
+    u32 words[12];
 } LodMtxCopy;
 
 extern LodGlobal lbl_eu_80657FB0;
@@ -176,6 +180,11 @@ typedef struct LodRotObj {
     f32 f14;
 } LodRotObj;
 
+typedef struct LodVtxPool {
+    u32 f00;
+    u32 version;
+} LodVtxPool;
+
 } // extern "C"
 
 // ===========================================================================
@@ -219,14 +228,14 @@ extern "C" void func_80463814__Q23LOD17UnkClass_8046368CFv(
 
     PSMTXInverse(g->mtx28, g->mtx28);
     GXSetCurrentMtx(0);
+    LodVtxPool* pool = (LodVtxPool*)lbl_eu_80665768;
     func_8046369C__Q23LOD17UnkClass_8046368CFv();
 
     GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_POS, GX_POS_XYZ, GX_F32, 0);
-    const u32 version = *(const u32*)(lbl_eu_80665768 + 4);
-    if (version >= 0x3EE) {
+    if (pool->version >= 0x3EE) {
         GXSetVtxAttrFmt(GX_VTXFMT0, GX_VA_NRM, GX_NRM_XYZ, GX_S16, 14);
         lbl_eu_806657C8 = 6;
-        if (version >= 0x3EF) {
+        if (pool->version >= 0x3EF) {
             func_8046368C__Q23LOD17UnkClass_8046368CFv();
         }
     } else {
@@ -250,24 +259,25 @@ extern "C" void func_80463814__Q23LOD17UnkClass_8046368CFv(
     GXSetChanCtrl(GX_COLOR1A1, GX_FALSE, GX_SRC_REG, GX_SRC_VTX, GX_LIGHT_NULL, GX_DF_CLAMP, GX_AF_NONE);
 
     // Snapshot the previous basis (rotation part) before resetting it.
-    Mtx prev;
-    prev[0][0] = g->v[0];
-    prev[0][1] = g->v[1];
-    prev[0][2] = g->v[2];
-    prev[0][3] = lbl_eu_8066A5F4;
-    prev[1][0] = g->v[4];
-    prev[1][1] = g->v[5];
-    prev[1][2] = g->v[6];
-    prev[1][3] = lbl_eu_8066A5F4;
-    prev[2][0] = g->v[8];
-    prev[2][1] = g->v[9];
-    prev[2][2] = g->mtx28[0][0];
-    prev[2][3] = lbl_eu_8066A5F4;
+    LodMtxCopy prev;
+    prev.words[0] = g->words[0];
+    prev.words[1] = g->words[1];
+    prev.words[2] = g->words[2];
+    prev.words[3] = *(const u32*)&lbl_eu_8066A5F4;
+    prev.words[4] = g->words[4];
+    prev.words[5] = g->words[5];
+    prev.words[6] = g->words[6];
+    prev.words[7] = *(const u32*)&lbl_eu_8066A5F4;
+    prev.words[8] = g->words[8];
+    prev.words[9] = g->words[9];
+    prev.words[10] = ((const LodMtxCopy*)g->mtx28)->words[0];
+    prev.words[11] = *(const u32*)&lbl_eu_8066A5F4;
 
     // Reset basis: unit x/y axes plus the input translation column.
-    g->v[6] = (*input)[0][3];
-    g->v[7] = (*input)[1][3];
-    g->v[8] = (*input)[2][3];
+    const LodMtxCopy* inputBits = (const LodMtxCopy*)input;
+    g->words[6] = inputBits->words[3];
+    g->words[7] = inputBits->words[7];
+    g->words[8] = inputBits->words[11];
     g->v[0] = lbl_eu_8066A5F8;
     g->v[1] = lbl_eu_8066A5F4;
     g->v[2] = lbl_eu_8066A5F4;
@@ -279,8 +289,8 @@ extern "C" void func_80463814__Q23LOD17UnkClass_8046368CFv(
     // (zero-length axes fall back to ml::CVec3::zero).
     Vec* axis0 = reinterpret_cast<Vec*>(&g->v[0]);
     Vec* axis1 = reinterpret_cast<Vec*>(&g->v[3]);
-    PSMTXMultVec(prev, axis0, axis0);
-    PSMTXMultVec(prev, axis1, axis1);
+    PSMTXMultVec(prev.m, axis0, axis0);
+    PSMTXMultVec(prev.m, axis1, axis1);
 
     f32 sq0 = g->v[0] * g->v[0] + g->v[1] * g->v[1] + g->v[2] * g->v[2];
     if (sq0 == lbl_eu_8066A5F4) {
@@ -437,38 +447,37 @@ extern "C" void func_80463F8C__Q23LOD17UnkClass_8046368CFv(f32 a, f32 b, f32 c) 
 // us-80467fc8  func_80463FF8  (range crosses the distance limit?)
 // ===========================================================================
 extern "C" s32 func_80463FF8__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj) {
-    if (!(obj->mode & 0x2)) {
-        return 1;
-    }
+    if (obj->mode & 0x2) {
+        s32 a = (s32)obj->start * 60;
+        s32 b = (s32)obj->end * 60;
+        s32 lim;
+        if (a <= b) {
+            goto ordered;
+        }
 
-    s32 a = (s32)obj->start * 60;
-    s32 b = (s32)obj->end * 60;
-    s32 lim;
-    if (a <= b) {
-        goto ordered;
-    }
-
-    lim = lbl_eu_806657B8;
-    if (a <= lim) {
+        lim = lbl_eu_806657B8;
+        if (a <= lim) {
+            return 1;
+        }
+        if (b < lim) {
+            goto return_zero;
+        }
         return 1;
-    }
-    if (b < lim) {
-        goto return_zero;
-    }
-    return 1;
 
 ordered:
-    lim = lbl_eu_806657B8;
-    if (a > lim) {
-        goto return_zero;
-    }
-    if (b < lim) {
-        goto return_zero;
-    }
-    return 1;
+        lim = lbl_eu_806657B8;
+        if (a > lim) {
+            goto return_zero;
+        }
+        if (b < lim) {
+            goto return_zero;
+        }
+        return 1;
 
 return_zero:
-    return 0;
+        return 0;
+    }
+    return 1;
 }
 
 // ===========================================================================
@@ -604,28 +613,31 @@ extern "C" s32 func_804642BC__Q23LOD17UnkClass_8046368CFv(s32 a, u32 b) {
 extern "C" s32 func_804643D8__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b, s32 da, s32 db) {
     s32 lim = lbl_eu_806657B8;
 
-    if (a > b) {
-        if (a <= lim) {
-            if (da != 0 && a + da > lim) {
-                s32 over = a + da - lim;
-                func_80465704__Q23LOD17UnkClass_804645CCFv(255 - (over * 255) / da);
-            } else {
-                func_80465718__Q23LOD17UnkClass_804645CCFv();
-            }
-            return 0;
-        }
-        if (b < lim) {
-            return 1;
-        }
-        if (db != 0 && b - db < lim) {
-            s32 over = b - lim;
-            func_80465704__Q23LOD17UnkClass_804645CCFv((over * 255) / db);
+    if (a <= b) {
+        goto ordered;
+    }
+
+    if (a <= lim) {
+        if (da != 0 && a + da > lim) {
+            s32 over = a + da - lim;
+            func_80465704__Q23LOD17UnkClass_804645CCFv(255 - (over * 255) / da);
         } else {
             func_80465718__Q23LOD17UnkClass_804645CCFv();
         }
         return 0;
     }
+    if (b < lim) {
+        return 1;
+    }
+    if (db != 0 && b - db < lim) {
+        s32 under = b - lim;
+        func_80465704__Q23LOD17UnkClass_804645CCFv((under * 255) / db);
+    } else {
+        func_80465718__Q23LOD17UnkClass_804645CCFv();
+    }
+    return 0;
 
+ordered:
     if (a > lim) {
         return 1;
     }
@@ -633,13 +645,13 @@ extern "C" s32 func_804643D8__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b, s32 da, 
         return 1;
     }
     if (da != 0 && a + da > lim) {
-        s32 over = a + da - lim;
-        func_80465704__Q23LOD17UnkClass_804645CCFv(255 - (over * 255) / da);
+        s32 over2 = a + da - lim;
+        func_80465704__Q23LOD17UnkClass_804645CCFv(255 - (over2 * 255) / da);
         return 0;
     }
     if (db != 0 && b - db < lim) {
-        s32 over = b - lim;
-        func_80465704__Q23LOD17UnkClass_804645CCFv((over * 255) / db);
+        s32 under2 = b - lim;
+        func_80465704__Q23LOD17UnkClass_804645CCFv((under2 * 255) / db);
         return 0;
     }
     func_80465718__Q23LOD17UnkClass_804645CCFv();

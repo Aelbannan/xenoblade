@@ -19,7 +19,7 @@
 extern "C" {
 extern u32 lbl_eu_80665770;
 extern u32 lbl_eu_80665774;
-extern u32 lbl_eu_806657D0;
+extern s32 lbl_eu_806657D0;
 extern u32 lbl_eu_806657D4;
 extern u32 lbl_eu_806657D8;
 extern u32 lbl_eu_806657DC;
@@ -80,7 +80,21 @@ void LOD::UnkClass_804645CC::func_80465298() {
     GXSetTevSwapModeTable(GX_TEV_SWAP3, GX_CH_RED, GX_CH_GREEN, GX_CH_BLUE, GX_CH_ALPHA);
 }
 
-void LOD::UnkClass_804645CC::func_80465314() {}
+typedef void (*LodTexCoordSetup)(s32, s32);
+extern "C" LodTexCoordSetup lbl_eu_8056D728[];
+
+extern "C" void func_80465314__Q23LOD17UnkClass_804645CCFv(s32 value) {
+    if (lbl_eu_806657D0 == value) {
+        return;
+    }
+
+    u32 offset = ((u32)value << 1) & 0x7C;
+    s32 lowBit = value & 1;
+    LodTexCoordSetup handler = *(LodTexCoordSetup*)((u8*)lbl_eu_8056D728 + offset);
+    s32 highByte = value >> 8;
+    lbl_eu_806657D0 = value;
+    handler(lowBit + 2, highByte);
+}
 
 void LOD::UnkClass_804645CC::func_8046534C() {}
 
@@ -117,16 +131,21 @@ extern "C" void func_80465704__Q23LOD17UnkClass_804645CCFv(s32 value) {
 }
 
 extern "C" void func_80465730__Q23LOD17UnkClass_804645CCFv(f32 scale) {
-    s32 value = lbl_eu_80665814;
+    union {
+        double d;
+        u32 word[2];
+    } converted;
+    converted.word[0] = 0x43300000;
+    converted.word[1] = lbl_eu_80665814 ^ 0x80000000;
     lbl_eu_806657E8 |= 2;
-    lbl_eu_80665814 = (s32)((f32)value * scale);
+    lbl_eu_80665814 = (s32)((converted.d - lbl_eu_8066A628) * scale);
 }
 
 extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32 value) {
     if (value == 0xFF) {
-        u32 flags = lbl_eu_806657E8;
+        s32 flags = lbl_eu_806657E8;
         lbl_eu_80665804 = 0;
-        lbl_eu_806657E8 = flags & ~4u;
+        lbl_eu_806657E8 = flags & ~4;
         return;
     }
 

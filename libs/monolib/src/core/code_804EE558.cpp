@@ -122,6 +122,16 @@ inline float gradLookup(const CGradEntry* table, float deg) {
     return table[idx].base + frac * table[idx].slope;
 }
 
+inline float markerLookup(const CGradEntry* table, float angle) {
+    int n = (int)angle;
+    int index = n % 360;
+    if (index < 0) {
+        index += 360;
+    }
+    float frac = angle - (float)n;
+    return table[index].base + frac * table[index].slope;
+}
+
 // Pane the bind object attaches to.
 struct CBindAnim {
     virtual void slot0();
@@ -403,11 +413,12 @@ extern "C" void func_804EF830(ml::CVec3* verts) {
         if (i == 0) {
             verts[i].set(lbl_eu_8066B408, lbl_eu_8066B408, lbl_eu_8066B408);
         } else if (i < 9) {
-            float deg = s32ToF(i - 1) * lbl_eu_8066B438;
+            float step = (float)(i - 1);
+            float deg = step * lbl_eu_8066B438;
             float rad = ml::deg2rad * deg;
             float angle = ml::rad2deg * rad;
-            verts[i].x = gradLookup(lbl_eu_80660B78, angle);
-            verts[i].y = gradLookup(lbl_eu_80660038, angle);
+            verts[i].x = markerLookup(lbl_eu_80660B78, angle);
+            verts[i].y = markerLookup(lbl_eu_80660038, angle);
             verts[i].z = lbl_eu_8066B408;
         } else {
             verts[i] = verts[1];
@@ -424,17 +435,17 @@ extern "C" void func_804EF9B8(ml::CVec3* verts, const ml::CVec3* pos, ml::CVec3 
 
     for (s16 i = 0; i < 10; i++) {
         if (i == 0) {
-            verts[i] = verts[i] + *pos;
+            verts[i] += *pos;
         } else if (i < 9) {
             verts[i].x *= size.x;
             verts[i].y *= size.y;
             verts[i].z *= size.z;
             if (angle != lbl_eu_8066B408) {
-                ml::CVec3 tmp;
-                PSMTXMultVec(rotMtx, verts[i], tmp);
-                verts[i] = tmp;
+                ml::CVec3 rotated;
+                PSMTXMultVec(rotMtx, verts[i], rotated);
+                verts[i] = rotated;
             }
-            verts[i] = verts[i] + *pos;
+            verts[i] += *pos;
         } else {
             verts[i] = verts[1];
         }

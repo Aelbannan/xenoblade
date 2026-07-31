@@ -152,8 +152,6 @@ extern "C" int func_80462068__17UnkClass_80460C34Fv(
     z_uint mask;
     z_code here;
     z_code* next;
-    const z_ushort* extra;
-    const z_ushort* base;
     int end;
     z_ushort count[Z_MAXBITS + 1];
     z_ushort offs[Z_MAXBITS + 1];
@@ -196,6 +194,8 @@ extern "C" int func_80462068__17UnkClass_80460C34Fv(
     for (sym = 0; sym < codes; sym++)
         if (lens[sym] != 0) work[offs[lens[sym]]++] = (z_ushort)sym;
 
+    const z_ushort* extra;
+    const z_ushort* base;
     switch (type) {
     case Z_CODES:
         base = extra = work;

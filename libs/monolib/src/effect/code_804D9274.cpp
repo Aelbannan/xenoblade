@@ -29,8 +29,12 @@ extern f32 lbl_eu_8066A210; // pi/180
 
 // Degree-indexed sin/cos tables: 360 entries of {value, slope} pairs,
 // populated at runtime by monolib/src/core/code_804EE558.cpp.
-extern f32 lbl_eu_80660038[]; // sin table
-extern f32 lbl_eu_80660B78[]; // cos table
+struct CESinCosEntry {
+    f32 value;
+    f32 slope;
+};
+extern CESinCosEntry lbl_eu_80660038[360]; // sin table
+extern CESinCosEntry lbl_eu_80660B78[360]; // cos table
 
 // Uniform random in [0, 1).
 static inline f32 randF() {
@@ -54,8 +58,8 @@ static inline f32 sinTbl(f32 rad) {
     if (idx < 0) {
         idx += 360;
     }
-    const f32* p = &lbl_eu_80660038[idx * 2];
-    return *p + (deg - (f32)i) * p[1];
+    CESinCosEntry* entry = &lbl_eu_80660038[idx];
+    return entry->value + (deg - (f32)i) * entry->slope;
 }
 
 static inline f32 cosTbl(f32 rad) {
@@ -65,8 +69,8 @@ static inline f32 cosTbl(f32 rad) {
     if (idx < 0) {
         idx += 360;
     }
-    const f32* p = &lbl_eu_80660B78[idx * 2];
-    return *p + (deg - (f32)i) * p[1];
+    CESinCosEntry* entry = &lbl_eu_80660B78[idx];
+    return entry->value + (deg - (f32)i) * entry->slope;
 }
 
 // func_804D9274: load pi/2 and tail-call the X-axis rotation helper.

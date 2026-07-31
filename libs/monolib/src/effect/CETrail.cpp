@@ -236,15 +236,14 @@ static u32 trailListSize(CETrail* t) {
 }
 
 static void trailClearList(CETrail* t) {
-    CETrailNode* head = t->m_head;
-    CETrailNode* cur = head->m_next;
-    while (cur != head) {
+    CETrailNode* cur = t->m_head->m_next;
+    while (cur != t->m_head) {
         CETrailNode* old = cur;
         cur = old->m_next;
         old->m_next = nullptr;
     }
-    head->m_next = head;
-    head->m_prev = head;
+    t->m_head->m_next = t->m_head;
+    t->m_head->m_prev = t->m_head;
 }
 
 // ---------------------------------------------------------------------------
@@ -410,7 +409,14 @@ extern "C" CETrail* __dt__reslist_CETrail_POINT(CETrail* t, int deleting) {
     if (t != nullptr) {
         if (t != nullptr) {
             t->m_vtable = lbl_eu_8056FC64;
-            trailClearList(t);
+            CETrailNode* cur = t->m_head->m_next;
+            while (cur != t->m_head) {
+                CETrailNode* old = cur;
+                cur = old->m_next;
+                old->m_next = nullptr;
+            }
+            t->m_head->m_next = t->m_head;
+            t->m_head->m_prev = t->m_head;
             if (!t->m_ownsList && t->m_list != nullptr) {
                 delete[] t->m_list;
                 t->m_list = nullptr;
@@ -803,7 +809,7 @@ extern "C" CETrailLight* func_804D807C(CETrailLight* self, CResHolder* parent) {
 // ---------------------------------------------------------------------------
 struct CETrailLightDtor {
     CResHolder* m_parent;
-    void* m_light;
+    CLight* m_light;
 };
 
 extern "C" CETrailLightDtor* __dt__804D80F0(CETrailLightDtor* self, int deleting) {

@@ -1,6 +1,7 @@
 #include <revolution/MTX.h>
 
 #include <math.h>
+#include <string.h>
 
 #define MTXDegToRad(a) ((a)*0.01745329252f)
 
@@ -35,18 +36,7 @@ void C_MTXCopy(){
 }
 
 void PSMTXCopy(const Mtx src, Mtx dst) {
-    dst[0][0] = src[0][0];
-    dst[0][1] = src[0][1];
-    dst[0][2] = src[0][2];
-    dst[0][3] = src[0][3];
-    dst[1][0] = src[1][0];
-    dst[1][1] = src[1][1];
-    dst[1][2] = src[1][2];
-    dst[1][3] = src[1][3];
-    dst[2][0] = src[2][0];
-    dst[2][1] = src[2][1];
-    dst[2][2] = src[2][2];
-    dst[2][3] = src[2][3];
+    memcpy(dst, src, sizeof(Mtx));
 }
 
 //unused
@@ -512,7 +502,7 @@ void C_MTXScale(){
 
 void PSMTXScale(Mtx m, f32 xS, f32 yS, f32 zS) {
     f32 zero = 0.0f;
-    m[0][0] = zero;
+    m[0][0] = xS;
     m[0][1] = m[0][2] = zero;
     m[0][3] = m[1][0] = zero;
     m[1][1] = yS;

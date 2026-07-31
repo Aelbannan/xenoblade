@@ -2401,7 +2401,6 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
     base->enabled = enabled;
     if (first == 0) {
         if (base->textLength != 0) {
-            base->enabled = 0;
             base->text[0] = 0;
             base->textLength = 0;
             base->secondaryText[0] = 0;
@@ -2418,11 +2417,11 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
             lbl_eu_80663E24 |= 8;
         }
     }
-    strcpy(base->text, val_a);
     base->textLength = strlen(val_a);
+    strcpy(base->text, val_a);
     if (val_b != 0) {
-        strcpy(base->secondaryText, val_b);
         base->secondaryTextLength = strlen(val_b);
+        strcpy(base->secondaryText, val_b);
     } else {
         base->secondaryText[0] = 0;
         base->secondaryTextLength = 0;
@@ -2475,11 +2474,11 @@ extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
     if (strcmp(base->text, val_a) != 0 || strcmp(base->secondaryText, val_b) != 0) {
         lbl_eu_80663E24 |= 8;
     }
-    strcpy(base->text, val_a);
     base->textLength = strlen(val_a);
+    strcpy(base->text, val_a);
     if (val_b != 0) {
-        strcpy(base->secondaryText, val_b);
         base->secondaryTextLength = strlen(val_b);
+        strcpy(base->secondaryText, val_b);
     } else {
         base->secondaryText[0] = 0;
         base->secondaryTextLength = 0;

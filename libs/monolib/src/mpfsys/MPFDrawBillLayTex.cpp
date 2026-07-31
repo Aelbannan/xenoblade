@@ -3,6 +3,7 @@
 
 #include <revolution/GX.h>
 #include <revolution/MTX.h>
+#include <nw4r/math/math_types.h>
 
 struct MPFDrawBillData {
     f32 halfWidth;             // 0x00
@@ -22,6 +23,12 @@ struct MPFDrawBillLayer {
     Mtx matrix;
     u8 gap84[0x30];
 };
+
+static inline void addBillVec(nw4r::math::VEC3* out, const Vec* a, const Vec* b) {
+    nw4r::math::VEC3Add(out,
+                        reinterpret_cast<const nw4r::math::VEC3*>(a),
+                        reinterpret_cast<const nw4r::math::VEC3*>(b));
+}
 
 struct MPFDrawBillIndexList {
     u32 count;
@@ -209,22 +216,14 @@ extern "C" void func_8047A330(MPFDrawBillData* billboard, Vec* positions, MPFDra
         }
         u32 first = ((value & lbl_eu_8066A72C) << 1 & mask) + 2;
         const Vec* corner = &lbl_eu_8066584C[value];
-        Vec vertex0;
-        Vec vertex1;
-        Vec vertex2;
-        Vec vertex3;
-        vertex0.x = corner->x + positions[0].x;
-        vertex0.y = corner->y + positions[0].y;
-        vertex0.z = corner->z + positions[0].z;
-        vertex1.x = corner->x + positions[first].x;
-        vertex1.y = corner->y + positions[first].y;
-        vertex1.z = corner->z + positions[first].z;
-        vertex2.x = corner->x + positions[first + 1].x;
-        vertex2.y = corner->y + positions[first + 1].y;
-        vertex2.z = corner->z + positions[first + 1].z;
-        vertex3.x = corner->x + positions[1].x;
-        vertex3.y = corner->y + positions[1].y;
-        vertex3.z = corner->z + positions[1].z;
+        nw4r::math::VEC3 vertex0;
+        nw4r::math::VEC3 vertex1;
+        nw4r::math::VEC3 vertex2;
+        nw4r::math::VEC3 vertex3;
+        nw4r::math::VEC3Add(&vertex0, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[0]);
+        nw4r::math::VEC3Add(&vertex1, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[first]);
+        nw4r::math::VEC3Add(&vertex2, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[first + 1]);
+        nw4r::math::VEC3Add(&vertex3, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[1]);
 
         GXPosition3f32(vertex0.x, vertex0.y, vertex0.z);
         GXTexCoord1u16(lbl_eu_80665850[value]);
@@ -257,22 +256,14 @@ extern "C" void func_8047A570(MPFDrawBillData* billboard, Vec* positions, MPFDra
         base &= mask;
         u32 first = base + 2;
         const Vec* corner = &lbl_eu_8066584C[value];
-        Vec vertex0;
-        Vec vertex1;
-        Vec vertex2;
-        Vec vertex3;
-        vertex0.x = corner->x + positions[0].x;
-        vertex0.y = corner->y + positions[0].y;
-        vertex0.z = corner->z + positions[0].z;
-        vertex1.x = corner->x + positions[first].x;
-        vertex1.y = corner->y + positions[first].y;
-        vertex1.z = corner->z + positions[first].z;
-        vertex2.x = corner->x + positions[first + 1].x;
-        vertex2.y = corner->y + positions[first + 1].y;
-        vertex2.z = corner->z + positions[first + 1].z;
-        vertex3.x = corner->x + positions[1].x;
-        vertex3.y = corner->y + positions[1].y;
-        vertex3.z = corner->z + positions[1].z;
+        nw4r::math::VEC3 vertex0;
+        nw4r::math::VEC3 vertex1;
+        nw4r::math::VEC3 vertex2;
+        nw4r::math::VEC3 vertex3;
+        nw4r::math::VEC3Add(&vertex0, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[0]);
+        nw4r::math::VEC3Add(&vertex1, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[first]);
+        nw4r::math::VEC3Add(&vertex2, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[first + 1]);
+        nw4r::math::VEC3Add(&vertex3, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[1]);
 
         GXBegin(GX_QUADS, GX_VTXFMT0, 4);
         GXPosition3f32(vertex0.x, vertex0.y, vertex0.z);
@@ -337,6 +328,7 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
     func_804737CC__Q26mpfsys17UnkClass_80471EC8Fv(billboard->texIndex, billboard->texScale);
     func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
 
+    Vec* output = positions;
     if (billboard->flags & 2) {
         Vec vertex0;
         Vec vertex1;
@@ -360,12 +352,21 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
                 vertex3.x = lbl_eu_8066A848;
                 vertex3.y = y;
                 vertex3.z = billboard->halfWidth;
-                PSMTXMultVec(layers->matrix, &vertex0, &positions[0]);
-                PSMTXMultVec(layers->matrix, &vertex1, &positions[1]);
-                PSMTXMultVec(layers->matrix, &vertex2, &positions[2]);
-                PSMTXMultVec(layers->matrix, &vertex3, &positions[3]);
+                Vec transformed0;
+                Vec transformed1;
+                Vec transformed2;
+                Vec transformed3;
+                PSMTXMultVec(layers->matrix, &vertex0, &transformed0);
+                PSMTXMultVec(layers->matrix, &vertex1, &transformed1);
+                PSMTXMultVec(layers->matrix, &vertex2, &transformed2);
+                PSMTXMultVec(layers->matrix, &vertex3, &transformed3);
+                output[0] = transformed0;
+                output[1] = transformed1;
+                output[2] = transformed2;
+                output[3] = transformed3;
                 v += step;
                 layers++;
+                output += 4;
             }
         } else {
             vertex0.x = -billboard->halfWidth;
@@ -382,11 +383,12 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
             vertex3.z = billboard->halfWidth;
             MPFDrawBillLayer* layers = func_804734F4__Q26mpfsys17UnkClass_80471EC8Fv(lbl_eu_80665838, billboard->layerIndex);
             for (s32 i = 0; i < lbl_eu_8066A728; i++) {
-                PSMTXMultVec(layers->matrix, &vertex0, &positions[0]);
-                PSMTXMultVec(layers->matrix, &vertex1, &positions[1]);
-                PSMTXMultVec(layers->matrix, &vertex2, &positions[2]);
-                PSMTXMultVec(layers->matrix, &vertex3, &positions[3]);
+                PSMTXMultVec(layers->matrix, &vertex0, output + 0);
+                PSMTXMultVec(layers->matrix, &vertex1, output + 1);
+                PSMTXMultVec(layers->matrix, &vertex2, output + 2);
+                PSMTXMultVec(layers->matrix, &vertex3, output + 3);
                 layers++;
+                output += 4;
             }
         }
     } else if (billboard->layerDepth != lbl_eu_8066A848) {
@@ -395,20 +397,20 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
         f32 v = lbl_eu_8066A850 * step + (lbl_eu_8066A84C - lbl_eu_8066A850 * billboard->layerDepth);
         for (s32 i = 0; i < lbl_eu_8066A728; i++) {
             f32 y = billboard->halfHeight * v;
-            positions[0].x = -billboard->halfWidth;
-            positions[0].y = y;
-            positions[0].z = lbl_eu_8066A848;
-            positions[1].x = billboard->halfWidth;
-            positions[1].y = y;
-            positions[1].z = lbl_eu_8066A848;
-            positions[2].x = lbl_eu_8066A848;
-            positions[2].y = y;
-            positions[2].z = -billboard->halfWidth;
-            positions[3].x = lbl_eu_8066A848;
-            positions[3].y = y;
-            positions[3].z = billboard->halfWidth;
+            output[0].x = -billboard->halfWidth;
+            output[0].y = y;
+            output[0].z = lbl_eu_8066A848;
+            output[1].x = billboard->halfWidth;
+            output[1].y = y;
+            output[1].z = lbl_eu_8066A848;
+            output[2].x = lbl_eu_8066A848;
+            output[2].y = y;
+            output[2].z = -billboard->halfWidth;
+            output[3].x = lbl_eu_8066A848;
+            output[3].y = y;
+            output[3].z = billboard->halfWidth;
             v += step;
-            positions += 4;
+            output += 4;
         }
     } else {
         positions[0].x = -billboard->halfWidth;
@@ -426,12 +428,13 @@ extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions)
     }
 
     if (billboard->flags & 4) {
+        Vec* flip = positions;
         for (s32 i = 0; i < lbl_eu_8066A728; i++) {
-            positions[0].y = -positions[0].y;
-            positions[1].y = -positions[1].y;
-            positions[2].y = -positions[2].y;
-            positions[3].y = -positions[3].y;
-            positions += 4;
+            flip[0].y = -flip[0].y;
+            flip[1].y = -flip[1].y;
+            flip[2].y = -flip[2].y;
+            flip[3].y = -flip[3].y;
+            flip += 4;
         }
     }
 }
@@ -478,24 +481,16 @@ extern "C" void func_8047B1E8(void* self, MPFDrawBillData* billboard, MPFDrawBil
         vertex0.x = corner->x - billboard->halfWidth;
         vertex0.y = corner->y;
         vertex0.z = corner->z;
-        vertex1.x = corner->x + positions[base + 0].x;
-        vertex1.y = corner->y + positions[base + 0].y;
-        vertex1.z = corner->z + positions[base + 0].z;
-        vertex2.x = corner->x + positions[base + 1].x;
-        vertex2.y = corner->y + positions[base + 1].y;
-        vertex2.z = corner->z + positions[base + 1].z;
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&vertex1, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[base + 0]);
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&vertex2, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[base + 1]);
         vertex3.x = corner->x + billboard->halfWidth;
         vertex3.y = corner->y;
         vertex3.z = corner->z;
         vertex4.x = corner->x;
         vertex4.y = corner->y;
         vertex4.z = corner->z - billboard->halfWidth;
-        vertex5.x = corner->x + positions[base + 2].x;
-        vertex5.y = corner->y + positions[base + 2].y;
-        vertex5.z = corner->z + positions[base + 2].z;
-        vertex6.x = corner->x + positions[base + 3].x;
-        vertex6.y = corner->y + positions[base + 3].y;
-        vertex6.z = corner->z + positions[base + 3].z;
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&vertex5, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[base + 2]);
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&vertex6, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[base + 3]);
         vertex7.x = corner->x;
         vertex7.y = corner->y;
         vertex7.z = corner->z + billboard->halfWidth;
@@ -565,24 +560,16 @@ extern "C" void func_8047B528(void* self, MPFDrawBillData* billboard, MPFDrawBil
         vertex0.x = corner->x - billboard->halfWidth;
         vertex0.y = corner->y;
         vertex0.z = corner->z;
-        vertex1.x = corner->x + positions[base + 0].x;
-        vertex1.y = corner->y + positions[base + 0].y;
-        vertex1.z = corner->z + positions[base + 0].z;
-        vertex2.x = corner->x + positions[base + 1].x;
-        vertex2.y = corner->y + positions[base + 1].y;
-        vertex2.z = corner->z + positions[base + 1].z;
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&vertex1, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[base + 0]);
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&vertex2, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[base + 1]);
         vertex3.x = corner->x + billboard->halfWidth;
         vertex3.y = corner->y;
         vertex3.z = corner->z;
         vertex4.x = corner->x;
         vertex4.y = corner->y;
         vertex4.z = corner->z - billboard->halfWidth;
-        vertex5.x = corner->x + positions[base + 2].x;
-        vertex5.y = corner->y + positions[base + 2].y;
-        vertex5.z = corner->z + positions[base + 2].z;
-        vertex6.x = corner->x + positions[base + 3].x;
-        vertex6.y = corner->y + positions[base + 3].y;
-        vertex6.z = corner->z + positions[base + 3].z;
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&vertex5, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[base + 2]);
+        nw4r::math::VEC3Add((nw4r::math::VEC3*)&vertex6, (const nw4r::math::VEC3*)corner, (const nw4r::math::VEC3*)&positions[base + 3]);
         vertex7.x = corner->x;
         vertex7.y = corner->y;
         vertex7.z = corner->z + billboard->halfWidth;

@@ -37,6 +37,19 @@ extern "C" void* func_804DF2F0(void* table, void* key);
 extern "C" void __dl__FPv(void* ptr);
 extern "C" f64 lbl_eu_8066B2F0;
 extern "C" f64 lbl_eu_8066B2E8;
+extern "C" float lbl_eu_8066B2E0;
+extern "C" float lbl_eu_8066B2E4;
+
+struct CScheduleFlags {
+    u16 b15 : 1;
+    u16 : 1;
+    u16 b13 : 1;
+    u16 b12 : 1;
+    u16 b11 : 1;
+    u16 : 2;
+    u16 b8 : 1;
+    u16 : 8;
+};
 
 // Forward declarations of functions defined below
 extern "C" void func_804E39E8(CSchedule* self, f32 delta);
@@ -208,7 +221,8 @@ extern "C" DECOMP_DONT_INLINE void func_804E424C(CScheduleItem* item, f32 delta,
 
 // us-804e7b78: main update: transform flags, fixed-timestep stepping.
 extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
-    if (self->field_0x00 & 0x100) {
+    CScheduleFlags* flags = (CScheduleFlags*)&self->field_0x00;
+    if (flags->b8) {
         return;
     }
 
@@ -216,17 +230,17 @@ extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
 
     u32 hasTranslation =
         (self->field_0x1c != lbl_eu_8066B2E4) || (self->field_0x20 != lbl_eu_8066B2E4) || (self->field_0x24 != lbl_eu_8066B2E4);
-    self->field_0x00 = (self->field_0x00 & ~0x2000) | (hasTranslation << 13);
+    flags->b13 = hasTranslation;
 
     u32 hasRotation =
         (self->field_0x28 != lbl_eu_8066B2E4) || (self->field_0x2c != lbl_eu_8066B2E4) || (self->field_0x30 != lbl_eu_8066B2E4);
-    self->field_0x00 = (self->field_0x00 & ~0x1000) | (hasRotation << 12);
+    flags->b12 = hasRotation;
 
     u32 hasScale =
         (self->field_0x34 != lbl_eu_8066B2E0) || (self->field_0x38 != lbl_eu_8066B2E0) || (self->field_0x3c != lbl_eu_8066B2E0);
-    self->field_0x00 = (self->field_0x00 & ~0x800) | (hasScale << 11);
+    flags->b11 = hasScale;
 
-    if ((self->field_0x00 & 0x2000) || (self->field_0x00 & 0x1000) || (self->field_0x00 & 0x800)) {
+    if (flags->b13 || flags->b12 || flags->b11) {
         func_804DCA88(&self->mMatrix, &self->field_0x28);
         self->mMatrix.m[0][3] += self->field_0x1c;
         self->mMatrix.m[1][3] += self->field_0x20;
@@ -236,8 +250,8 @@ extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
     }
 
     if (self->mEntryCount == 0) {
-        self->field_0x90 = lbl_eu_8066B2E4;
-        self->field_0x94 = lbl_eu_8066B2E0;
+        self->field_0x90 = 0.0f;
+        self->field_0x94 = 1.0f;
         return;
     }
 
@@ -262,8 +276,8 @@ extern "C" void func_804E36DC(CSchedule* self, f32 dt) {
                 }
             }
         }
-        self->field_0x90 = lbl_eu_8066B2E4;
-        self->field_0x94 = lbl_eu_8066B2E0;
+        self->field_0x90 = 0.0f;
+        self->field_0x94 = 1.0f;
     }
 
     func_804E39E8(self, step);
@@ -284,7 +298,7 @@ extern "C" void func_804E39E8(CSchedule* self, f32 delta) {
         }
     }
     if (self->field_0xd9 <= 0) {
-        self->field_0x00 = (u16)DECOMP_PPC_RLWINM((u32)self->field_0x00, 0, 17, 15);
+        ((CScheduleFlags*)&self->field_0x00)->b15 = 0;
         if (self->mEntryCount != 0) {
             for (int i = 0; i < 32; i++) {
                 if (self->mHandles[i] >= 0) {
@@ -338,7 +352,7 @@ extern "C" void func_804E3B6C(CSchedule* self) {
 
 // us-804e8168: clear the retired flag and notify listeners.
 extern "C" void func_804E3CCC(CSchedule* self) {
-    self->field_0x00 = (u16)DECOMP_PPC_RLWINM((u32)self->field_0x00, 0, 17, 15);
+    ((CScheduleFlags*)&self->field_0x00)->b15 = 0;
     func_804E536C(self);
 }
 

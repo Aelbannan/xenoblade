@@ -44,20 +44,22 @@ extern "C" {
     extern void* lbl_eu_8056CCE0[];
     
     // Global exception instance pointer
-    CException* lbl_eu_806656C0;
+    extern CException* lbl_eu_806656C0;
     
     // Global exception array and counter
-    u32 lbl_eu_806656C4;
-    CException* lbl_eu_80657B50[16];
+    extern u32 lbl_eu_806656C4;
+    extern CException* lbl_eu_80657B50[16];
     
     // Global state variables
-    u32 lbl_eu_806656C8;
-    u32 lbl_eu_806656CC;
+    extern u32 lbl_eu_806656C8;
+    extern u32 lbl_eu_806656CC;
     
     // Shared exception strings/data and external helpers.
     extern char lbl_eu_80522F7C[];
     extern char lbl_eu_8053785C[];
     extern char lbl_eu_80537828[];
+    extern char lbl_eu_805378A0[];
+    extern char lbl_eu_8053786C[];
     extern char lbl_eu_80537818[];
     extern char lbl_eu_805377E0[];
     extern char lbl_eu_80537734[];
@@ -151,8 +153,9 @@ CException::~CException() {
 }
 
 // Type check function
-bool CException::func_80457C8C() {
-    return mAlpha == 0.8f;
+extern "C" bool func_80457C8C__10CExceptionFv(CException* self) {
+    extern const f32 lbl_eu_8066A484;
+    return lbl_eu_8066A484 == self->mAlpha;
 }
 
 // Static factory function
@@ -306,6 +309,66 @@ extern "C" void func_80458084__10CExceptionFv(const void* message) {
 
 // Set the nw4r TextWriter font pointer.
 extern "C" void func_eu_8045C964__10CExceptionFv(void* writer, void* font) {
+    u32 writerAddress = (u32)writer;
+    bool writerMem1 = true;
+    bool writerMem2 = true;
+    bool writerIo = true;
+    bool writerIo2 = true;
+    bool writerRegs = true;
+    bool writerRegs2 = true;
+
+    if ((writerAddress & 0xFF000000) != 0x80000000 &&
+        (writerAddress & 0xFF800000) != 0x81000000) {
+        writerMem1 = false;
+    }
+    if (!writerMem1 && (writerAddress & 0xF8000000) != 0x90000000) {
+        writerMem2 = false;
+    }
+    if (!writerMem2 && (writerAddress & 0xFF000000) != 0xC0000000) {
+        writerIo = false;
+    }
+    if (!writerIo && (writerAddress & 0xFF800000) != 0xC1000000) {
+        writerIo2 = false;
+    }
+    if (!writerIo2 && (writerAddress & 0xF8000000) != 0xD0000000) {
+        writerRegs = false;
+    }
+    if (!writerRegs && (writerAddress & 0xFFFFC000) != 0xE0000000) {
+        writerRegs2 = false;
+    }
+    if (!writerRegs2) {
+        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_8053785C, 0x41, lbl_eu_80537828, writer);
+    }
+
+    u32 fontAddress = (u32)font;
+    bool fontMem1 = true;
+    bool fontMem2 = true;
+    bool fontIo = true;
+    bool fontIo2 = true;
+    bool fontRegs = true;
+    bool fontRegs2 = true;
+    if ((fontAddress & 0xFF000000) != 0x80000000 &&
+        (fontAddress & 0xFF800000) != 0x81000000) {
+        fontMem1 = false;
+    }
+    if (!fontMem1 && (fontAddress & 0xF8000000) != 0x90000000) {
+        fontMem2 = false;
+    }
+    if (!fontMem2 && (fontAddress & 0xFF000000) != 0xC0000000) {
+        fontIo = false;
+    }
+    if (!fontIo && (fontAddress & 0xFF800000) != 0xC1000000) {
+        fontIo2 = false;
+    }
+    if (!fontIo2 && (fontAddress & 0xF8000000) != 0xD0000000) {
+        fontRegs = false;
+    }
+    if (!fontRegs && (fontAddress & 0xFFFFC000) != 0xE0000000) {
+        fontRegs2 = false;
+    }
+    if (!fontRegs2) {
+        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80537818, 0x42, lbl_eu_805377E0, font);
+    }
     *(void**)((u8*)writer + 0x48) = font;
 }
 
@@ -319,6 +382,35 @@ extern "C" void func_80458B64__10CExceptionFv(u8* buffer, u8 r, u8 g, u8 b, u8 a
 
 // Set a TextWriter cursor position.
 extern "C" void func_80458B78__10CExceptionFv(void* writer, f32 x, f32 y, f32 z) {
+    u32 address = (u32)writer;
+    bool validMem1 = true;
+    bool validMem2 = true;
+    bool validIo = true;
+    bool validIo2 = true;
+    bool validRegs = true;
+    bool validRegs2 = true;
+    if ((address & 0xFF000000) != 0x80000000 &&
+        (address & 0xFF800000) != 0x81000000) {
+        validMem1 = false;
+    }
+    if (!validMem1 && (address & 0xF8000000) != 0x90000000) {
+        validMem2 = false;
+    }
+    if (!validMem2 && (address & 0xFF000000) != 0xC0000000) {
+        validIo = false;
+    }
+    if (!validIo && (address & 0xFF800000) != 0xC1000000) {
+        validIo2 = false;
+    }
+    if (!validIo2 && (address & 0xF8000000) != 0xD0000000) {
+        validRegs = false;
+    }
+    if (!validRegs && (address & 0xFFFFC000) != 0xE0000000) {
+        validRegs2 = false;
+    }
+    if (!validRegs2) {
+        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_805378A0, 0x102, lbl_eu_8053786C, writer);
+    }
     *(f32*)((u8*)writer + 0x2C) = x;
     *(f32*)((u8*)writer + 0x30) = y;
     *(f32*)((u8*)writer + 0x34) = z;
@@ -326,6 +418,65 @@ extern "C" void func_80458B78__10CExceptionFv(void* writer, f32 x, f32 y, f32 z)
 
 // Print a wide string through a TextWriter.
 extern "C" void func_80458CBC__10CExceptionFv(void* writer, const wchar_t* text) {
+    u32 writerAddress = (u32)writer;
+    bool writerMem1 = true;
+    bool writerMem2 = true;
+    bool writerIo = true;
+    bool writerIo2 = true;
+    bool writerRegs = true;
+    bool writerRegs2 = true;
+    if ((writerAddress & 0xFF000000) != 0x80000000 &&
+        (writerAddress & 0xFF800000) != 0x81000000) {
+        writerMem1 = false;
+    }
+    if (!writerMem1 && (writerAddress & 0xF8000000) != 0x90000000) {
+        writerMem2 = false;
+    }
+    if (!writerMem2 && (writerAddress & 0xFF000000) != 0xC0000000) {
+        writerIo = false;
+    }
+    if (!writerIo && (writerAddress & 0xFF800000) != 0xC1000000) {
+        writerIo2 = false;
+    }
+    if (!writerIo2 && (writerAddress & 0xF8000000) != 0xD0000000) {
+        writerRegs = false;
+    }
+    if (!writerRegs && (writerAddress & 0xFFFFC000) != 0xE0000000) {
+        writerRegs2 = false;
+    }
+    if (!writerRegs2) {
+        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_80537734, 0x100, lbl_eu_80537700, writer);
+    }
+
+    u32 textAddress = (u32)text;
+    bool textMem1 = true;
+    bool textMem2 = true;
+    bool textIo = true;
+    bool textIo2 = true;
+    bool textRegs = true;
+    bool textRegs2 = true;
+    if ((textAddress & 0xFF000000) != 0x80000000 &&
+        (textAddress & 0xFF800000) != 0x81000000) {
+        textMem1 = false;
+    }
+    if (!textMem1 && (textAddress & 0xF8000000) != 0x90000000) {
+        textMem2 = false;
+    }
+    if (!textMem2 && (textAddress & 0xFF000000) != 0xC0000000) {
+        textIo = false;
+    }
+    if (!textIo && (textAddress & 0xFF800000) != 0xC1000000) {
+        textIo2 = false;
+    }
+    if (!textIo2 && (textAddress & 0xF8000000) != 0xD0000000) {
+        textRegs = false;
+    }
+    if (!textRegs && (textAddress & 0xFFFFC000) != 0xE0000000) {
+        textRegs2 = false;
+    }
+    if (!textRegs2) {
+        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_805376EC, 0x101, lbl_eu_805376B8, text);
+    }
     Print__Q34nw4r2ut17TextWriterBaseFPCwi(writer, text, (int)wcslen(text));
 }
 
@@ -426,26 +577,25 @@ void CException::func_804591BC(IException* pException) {
 // Remove from global array
 extern "C" void func_804591DC__10CExceptionFP10IException(CException* self) {
     u32 count = lbl_eu_806656C4;
-    CException** entries = lbl_eu_80657B50;
+    u8* base = (u8*)lbl_eu_80657B50;
     u32 index = 0;
     u32 byteOffset = 0;
-
     while (index < count) {
-        if (entries[index] == self) {
+        if (*(u32*)(base + byteOffset) == (u32)self) {
             u32 last = count - 1;
             u32 shifts = last - index;
             u32 destination = index * 4;
-            while (index < last) {
-                u8* current = (u8*)entries + destination;
-                *(u32*)current = *(u32*)(current + 4);
+            for (u32 n = shifts; n != 0; --n) {
+                u8* current = (u8*)lbl_eu_80657B50 + destination;
                 destination += 4;
-                index++;
+                *(u32*)current = *(u32*)(current + 4);
             }
-            lbl_eu_806656C4 = count - 1;
+            lbl_eu_806656C4 = last;
             return;
         }
         index++;
         byteOffset += 4;
+        base += 4;
     }
 }
 

@@ -169,7 +169,7 @@ extern "C" void func_804E4094(CScheduleItem* item, f32 delta) {
 // us-804e8390: per-frame item step used by CSchedule::func_804E39E8.
 extern "C" DECOMP_DONT_INLINE int func_804E3EF4(CScheduleItem* item, f32 time, f32 delta,
                              ScheduleEntry* entries, CSchedule* sched) {
-    if (!(item->mFlags & 0x80)) {
+    if (!((item->mFlags >> 7) & 1)) {
         func_804E3FB0(item, entries, sched);
         item->mFlags |= 0x80;
     }

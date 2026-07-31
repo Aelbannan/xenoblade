@@ -30,7 +30,9 @@ void mpfsys::UnkClass_80471EC8::func_804728E8() {}
 
 void mpfsys::UnkClass_80471EC8::func_80473394() {}
 
-void* mpfsys::UnkClass_80471EC8::func_804734F4() { return 0; }
+void* mpfsys::UnkClass_80471EC8::func_804734F4(u8 layerIndex) {
+    return (u8*)this + layerIndex * 0x1680;
+}
 
 void mpfsys::UnkClass_80471EC8::func_80473500() {}
 

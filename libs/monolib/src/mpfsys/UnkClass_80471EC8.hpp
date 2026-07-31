@@ -19,7 +19,7 @@ public:
     void func_80472870();
     void func_804728E8();
     void func_80473394();
-    void func_804734F4();
+    void* func_804734F4(u8 layerIndex);
     void func_80473500();
     void func_804737CC();
     void func_804737F0();

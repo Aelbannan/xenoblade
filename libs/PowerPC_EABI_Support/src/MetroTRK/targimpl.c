@@ -3,11 +3,12 @@
 #include "PowerPC_EABI_Support/MetroTRK/Processor/ppc/Board/dolphin/memmap.h"
 #include "PowerPC_EABI_Support/MetroTRK/targimpl.h"
 #include "PowerPC_EABI_Support/MetroTRK/mpc_7xx_603e.h"
-#include "PowerPC_EABI_Support/MetroTRK/dolphin_trk_glue.h"
+void TRKUARTInterruptHandler();
 #include "PowerPC_EABI_Support/MetroTRK/msghndlr.h"
 #include "PowerPC_EABI_Support/MetroTRK/support.h"
 #include "PowerPC_EABI_Support/MetroTRK/rvl_mem.h"
-#include <revolution/OS.h>
+#include <revolution/os/OSThread.h>
+#include <revolution/os/OSHardware.h>
 
 typedef struct ExceptionStatus{
     StopInfo_PPC exceptionInfo;
@@ -82,123 +83,38 @@ void __TRK_set_MSR(ui32 val) {
 #pragma dont_inline reset
 
 //unused
-asm ui32 __TRK_get_PVR(){
-    nofralloc
-    mfspr r3, SPR_PVR
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_IBAT0U(){
-    nofralloc
-    mfspr r3, SPR_IBAT0U
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_IBAT0L(){
-    nofralloc
-    mfspr r3, SPR_IBAT0L
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_IBAT1U(){
-    nofralloc
-    mfspr r3, SPR_IBAT1U
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_IBAT1L(){
-    nofralloc
-    mfspr r3, SPR_IBAT1L
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_IBAT2U(){
-    nofralloc
-    mfspr r3, SPR_IBAT2U
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_IBAT2L(){
-    nofralloc
-    mfspr r3, SPR_IBAT2L
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_IBAT3U(){
-    nofralloc
-    mfspr r3, SPR_IBAT3U
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_IBAT3L(){
-    nofralloc
-    mfspr r3, SPR_IBAT3L
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_DBAT0U(){
-    nofralloc
-    mfspr r3, SPR_DBAT0U
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_DBAT0L(){
-    nofralloc
-    mfspr r3, SPR_DBAT0L
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_DBAT1U(){
-    nofralloc
-    mfspr r3, SPR_DBAT1U
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_DBAT1L(){
-    nofralloc
-    mfspr r3, SPR_DBAT1L
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_DBAT2U(){
-    nofralloc
-    mfspr r3, SPR_DBAT2U
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_DBAT2L(){
-    nofralloc
-    mfspr r3, SPR_DBAT2L
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_DBAT3U(){
-    nofralloc
-    mfspr r3, SPR_DBAT3U
-    blr
-}
 
 //unused
-asm ui32 __TRK_get_DBAT3L(){
-    nofralloc
-    mfspr r3, SPR_DBAT3L
-    blr
-}
 
 DSError TRKValidMemory32(const void* addr, size_t length, ValidMemoryOptions readWriteable){
     DSError err = kInvalidMemory;
@@ -236,9 +152,6 @@ DSError TRKValidMemory32(const void* addr, size_t length, ValidMemoryOptions rea
     return err;
 }
 
-//This is a certified metrowerks moment
-#include "PowerPC_EABI_Support/MetroTRK/ppc_mem.h"
-
 static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR) {
     ui32 savedMSR;
     ui8* srcPtr = src;
@@ -248,13 +161,23 @@ static void TRK_ppc_memcpy(ui8* dest, ui8* src, int n, ui32 destMSR, ui32 srcMSR
 
     while (n != 0) {
         ui8 byteVal;
+        ui32* srcAligned;
+        ui32* destAligned;
+        ui32 v;
+        ui32 uVar3;
+        ui32 iVar1;
 
         __TRK_set_MSR(srcMSR);
-        byteVal = ppc_readbyte1(srcPtr);
+        srcAligned = (ui32 *)((ui32)srcPtr & ~3);
+        byteVal = (ui8)(*srcAligned >> ((3 - ((ui32)srcPtr - (ui32)srcAligned)) << 3));
         __sync();
 
         __TRK_set_MSR(destMSR);
-        ppc_writebyte1(destPtr, byteVal);
+        destAligned = (ui32 *)((ui32)destPtr & ~3);
+        v = *destAligned;
+        uVar3 = 0xff << ((3 - ((ui32)destPtr - (ui32)destAligned)) << 3);
+        iVar1 = (3 - ((ui32)destPtr - (ui32)destAligned)) << 3;
+        *destAligned = (v & ~uVar3) | (uVar3 & (byteVal << iVar1));
         __sync();
 
         srcPtr++;
@@ -305,18 +228,6 @@ DSError TRKTargetAccessMemory(void *data, void* start, size_t *length, MemoryAcc
 }
 
 //unused
-DSError TRKTargetReadInstruction(void* data, void* start){
-    DSError error = kNoError;
-    size_t registersLength = sizeof(InstructionType);
-
-    error = TRKTargetAccessMemory(data, start, &registersLength, kUserMemory, true);
-
-    if(error == kNoError && registersLength != sizeof(InstructionType)){
-        error = kInvalidMemory;
-    }
-
-    return error;
-}
 
 DSError TRKTargetAccessDefault(ui32 firstRegister, ui32 lastRegister, MessageBuffer* b, size_t* registersLengthPtr, bool read){
     DSError error;
@@ -488,25 +399,8 @@ DSError TRKTargetAccessExtended2(ui32 firstRegister, ui32 lastRegister, MessageB
 }
 
 //unused
-DSError TRKTargetVersions(DSVersions* versions){
-    versions->kernelMajor = DS_KERNEL_MAJOR_VERSION;
-    versions->kernelMinor = DS_KERNEL_MINOR_VERSION;
-    versions->protocolMajor = DS_PROTOCOL_MAJOR_VERSION;
-    versions->protocolMinor = DS_PROTOCOL_MINOR_VERSION;
-    return kNoError;
-}
 
 //unused
-DSError TRKTargetCheckException(){
-    DSError error = kNoError;
-
-    if (gTRKExceptionStatus.exceptionDetected) {
-        gTRKExceptionStatus.exceptionDetected = false;
-        error = kCWDSException;
-    }
-
-    return error;
-}
 
 asm void TRK_InterruptHandler(ui16 exceptionNumber){
     nofralloc
@@ -842,7 +736,6 @@ DSError TRKTargetAddStopInfo(MessageBuffer* b){
     ui32 local_458;
     int local_45c;
     int auStack_460;
-    size_t registersLength;
     size_t length;
     char writeData[1024];
     msgbuf_t reply;
@@ -854,8 +747,11 @@ DSError TRKTargetAddStopInfo(MessageBuffer* b){
     GetThreadInfo(&local_45c,&auStack_460);
     *(ui32*)&reply.unk10[4] = local_45c;
     *(ui32*)&reply.unk10[8] = *(ui32*)ConvertAddress(CURRENT_THREAD_ADDR);
-    registersLength = sizeof(InstructionType);
-    TRKTargetAccessMemory((void*)&local_458, (void*)gTRKCPUState.Default.PC, &registersLength, kUserMemory, true);
+    {
+    DSError readError;
+    size_t registersLength = sizeof(InstructionType);
+    readError = TRKTargetAccessMemory((void*)&local_458, (void*)gTRKCPUState.Default.PC, &registersLength, kUserMemory, true);
+    }
     reply.unkC = local_458;
     *(ui32*)reply.unk10 = gTRKCPUState.Extended1.exceptionID & 0xFFFF;
 
@@ -916,49 +812,8 @@ void TRKTargetAddExceptionInfo(MessageBuffer* b){
     TRKAppendBuffer_ui8(b,(ui8 *)&reply,sizeof(msgbuf_t));
 }
 
-DSError TRKTargetEnableTrace(bool val){
-    if(val){
-        gTRKCPUState.Extended1.MSR = (gTRKCPUState.Extended1.MSR | MSR_SE) & (0xFFFFFFFF ^ MSR_EE);
-    }else{
-        gTRKCPUState.Extended1.MSR = (gTRKCPUState.Extended1.MSR & (0xFFFFFFFF ^ MSR_SE)) | MSR_EE;
-    }
-    return kNoError;
-}
 
-bool TRKTargetStepDone(){
-    bool result = true;
 
-    if (gTRKStepStatus.active && ((ui16)gTRKCPUState.Extended1.exceptionID) == PPC_TRACE) {
-        switch(gTRKStepStatus.type){
-            case kDSStepIntoCount:
-            if (gTRKStepStatus.count > 0) {
-                result = false;
-            }
-            break;
-            case kDSStepIntoRange:
-            if (gTRKCPUState.Default.PC >= gTRKStepStatus.rangeStart && gTRKCPUState.Default.PC <= gTRKStepStatus.rangeEnd) {
-                result = false;
-            }
-            break;
-            default:
-            break;
-        }
-    }
-
-    return result;
-}
-
-DSError TRKTargetDoStep(){
-    gTRKStepStatus.active = true;
-    TRKTargetEnableTrace(true);
-    
-    if (gTRKStepStatus.type == kDSStepIntoCount || gTRKStepStatus.type == kDSStepOverCount) {
-        gTRKStepStatus.count--;
-    }
-
-    TRKTargetSetStopped(false);
-    return kNoError;
-}
 
 static bool TRKTargetCheckStep(){
     bool stepDone;
@@ -1125,14 +980,6 @@ DSError TRKTargetSupportRequest(){
 }
 
 //unused
-DSError TRKTargetFlushCache(u8 options, void* start, void* end){
-    if(start < end){
-        TRK_flush_cache((ui32)start, (ui32)((ui8*)end - (ui8*)start));
-        return kNoError;
-    }else{
-        return kInvalidMemory;
-    }
-}
 
 bool TRKTargetStopped(){
     return gTRKState.stopped;
@@ -1289,14 +1136,8 @@ void TRKTargetSetInputPendingPtr(void* ptr){
 #endif
 
 //unused
-void SetInputState(bool state){
-    gTRKState.inputActivated = state;
-}
 
 //unused
-ui8 TRKGetInTRKFlag(){
-    return gTRKExceptionStatus.inTRK;
-}
 
 ui32 ConvertAddress(ui32 addr) {
     return addr | 0x80000000;

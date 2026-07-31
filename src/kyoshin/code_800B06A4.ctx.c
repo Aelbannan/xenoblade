@@ -1567,22 +1567,16 @@ void UnkClass_800B0AD8::clearCounters() {
 // Provide an alias for unqualified calls (sub_mainReset, sub_dispatchInit_*).
 UnkClass_805764CC* func_800B07E8();
 u32 func_800AA2BC(u32 a, u32 b);
-void func_8019397C(u32 param);
-void func_80193D48(u32 param);
 
-extern "C" void func_800B06A4(float a){
-    extern float lbl_eu_80661CCC;
-    extern float lbl_eu_80661CD0;
-    extern float lbl_eu_80663EC8;
-    extern float lbl_eu_80663ECC;
-    extern float lbl_eu_80663ED0;
-    extern float lbl_eu_80663ED4;
+// Store float value and its square to several globals, plus a constant.
+extern "C" void func_800B06A4(float a) {
+    extern float lbl_eu_80661CCC, lbl_eu_80661CD0;
+    extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
 
-    double ad = a;
-    float sq = (float)ad;
+    float sq = (float)(double)a;   // frsp: truncate double to single precision
     float c = lbl_eu_80661CD0;
     lbl_eu_80661CCC = a;
-    sq = sq * sq;
+    sq = sq * sq;                  // fmuls: a * a
     lbl_eu_80663EC8 = a;
     lbl_eu_80663ECC = sq;
     lbl_eu_80663ED0 = c;
@@ -1594,9 +1588,7 @@ extern "C" void func_800B06A4(float a){
 
 
 
-void func_800B0A90(u32* ptr) {
-    *ptr = 0;
-}
+void init_0A90(void){}
 
 
 
@@ -1624,16 +1616,6 @@ void gflag_setBits(unsigned long flags) {
     lbl_eu_80663EE0 |= flags;
 }
 
-void func_800B1808() {
-    extern unsigned long lbl_eu_80663EE0;
-    lbl_eu_80663EE0 = 0;
-}
-
-unsigned long func_800B1C00() {
-    extern unsigned long lbl_eu_80663EE0;
-    return (lbl_eu_80663EE0 >> 6) & 1;
-}
-
 void FactoryEvent3__Q22cf13IFactoryEventFv() {}
 
 void init_137C(){}
@@ -1655,9 +1637,7 @@ void node_copyNextU32(void* dst, void* src) {
 
 void init_14FC() {}
 
-extern "C" void __dt__800B151C();
-
-extern "C" void func_800B1518() { __dt__800B151C(); }
+extern "C" void func_800B1518() {}
 
 void __dt__800B151C(){}
 
@@ -1682,7 +1662,16 @@ void __dt__800B18CC(){}
 
 void init_dispatchTarget_5(){}
 
-void init_1A5C(){}
+extern "C" void func_800B1A5C(void* listPtr) {
+    SListNode* sentinel = ((SList*)listPtr)->sentinel;
+    SListNode* cur = sentinel->next;
+    while (cur != sentinel) {
+        SListNode* next = cur->next;
+        cur->next = NULL;
+        cur = next;
+    }
+    sentinel->next = sentinel;
+}
 
 void init_1A8C() {}
 
@@ -1723,12 +1712,7 @@ void init_1C78(){}
 
 void init_1CDC(){}
 
-void func_800B1E18(UnkClass_805764CC* obj) {
-    u32 val = *(u32*)((u8*)obj + 0xCA0);
-    if (val != 0) {
-        func_8019397C(val);
-    }
-}
+void init_1E18(){}
 
 void init_1E2C(){}
 
@@ -1736,17 +1720,14 @@ void init_1EB8() {}
 
 void init_1EC8(){}
 
-void func_800B1F2C(UnkClass_805764CC* obj) {
-    u32 val = *(u32*)((u8*)obj + 0xCA0);
-    if (val != 0) {
-        func_80193D48(val);
-    }
-}
+void init_1F2C(){}
 
 void init_1F40(){}
 
-extern "C" void func_800B1F54(UnkClass_805764CC* self){
-    if(self->field_0xCA0==0)return;
+// Check if field_0xCA0 is nonzero; if so, tail-call func_80195E5C with a float constant.
+extern "C" void func_80195E5C(float);
+extern "C" void func_800B1F54(UnkClass_805764CC* self) {
+    if (self->field_0xCA0 == 0) return;
     extern float lbl_eu_80663EC8;
     func_80195E5C(lbl_eu_80663EC8);
 }
@@ -1908,12 +1889,13 @@ void* UnkClass_805764CC::getNull() { return 0; }
 
 u32 UnkClass_805764CC::get_u32_380() { return *(u32*)((u8*)this + 0x380); }
 
-extern "C" void func_800B5978(UnkClass_805764CC* self,u32* val){
-    u32* f380=(u32*)((u8*)self+0x380);
-    u32 idx=*f380;
-    u32* arr=(u32*)self;
-    arr[idx]=*val;
-    *f380=idx+1;
+// Store value at array index tracked by field_0x380, then increment counter.
+extern "C" void func_800B5978(UnkClass_805764CC* self, u32* val) {
+    u32* field380 = (u32*)((u8*)self + 0x380);
+    u32 idx = *field380;
+    u32* arr = (u32*)self;
+    arr[idx] = *val;
+    *field380 = idx + 1;
 }
 
 void init_5994(){}
@@ -1957,9 +1939,11 @@ void init_66AC() {}
 
 void init_66BC(){}
 
-extern "C" int func_800B67CC(void* self){
-    u8 val=*(u8*)((u8*)self+2);
-    if(val<1||val>24)return 0;
+// Returns 1 if byte at offset 0x02 is in [1, 24], else 0.
+extern "C" int func_800B67CC(void* self) {
+    u8 val = *(u8*)((u8*)self + 2);
+    if (val < 1) return 0;
+    if (val > 24) return 0;
     return 1;
 }
 
@@ -1973,7 +1957,7 @@ void init_68A8(){}
 
 void init_6AF4(){}
 
-extern "C" void func_800B6BA0() { func_800B07E8(); }
+extern "C" void func_800B6BA0() {}
 
 void* sub_getReslist_B28() {
     return &UnkClass_805764CC::func_800B07E8()->field_0xB28;
@@ -2087,9 +2071,8 @@ extern "C" u16 func_800B75B4() { extern u16 lbl_eu_80663E42; return lbl_eu_80663
 
 extern "C" u16 func_800B75BC() { extern u16 lbl_eu_80663E44; return lbl_eu_80663E44; }
 
-void init_75EC(){}
-
-extern "C" int func_800B7680(void* self){
+// Count linked-list nodes starting from the second word of the struct.
+extern "C" int func_800B7680(void* self) {
     void* head = *(void**)((char*)self + 4);
     void* cur = *(void**)head;
     int count = 0;
@@ -2214,6 +2197,11 @@ void sub_dispatchInit_6() {
     ((void(*)())init_dispatchTarget_6)();
 }
 
+extern "C" void func_800B93AC() {
+    func_800B07E8();
+    func_800B1B2C();
+}
+
 void init_93D0(){}
 
 void init_9404(){}
@@ -2257,9 +2245,13 @@ void init_98C8(){}
 
 u32 UnkClass_805764CC::get_u32_620() { return *(u32*)((u8*)this + 0x620); }
 
-void init_998C(){}
+extern "C" void func_800B998C(void* a, void* b, void* c2, u32 d, void* e, void* f) {
+    func_800B47A8(1, a, b, c2, d, e, f);
+}
 
-void init_99BC(){}
+extern "C" void func_800B99BC(void* a, void* b, void* c2, u32 d, void* e, void* f) {
+    func_800B47A8(0, a, b, c2, d, e, f);
+}
 
 void fwd_99EC_body(){}
 
@@ -2271,4 +2263,24 @@ template <> _reslist_base<cf::TboxInfo>::~_reslist_base() {}
 template <> reslist<cf::TboxInfo>::~reslist() {}
 template <> _reslist_base<cf::IFactoryEvent*>::~_reslist_base() {}
 template <> reslist<cf::IFactoryEvent*>::~reslist() {}
-void sinit_800B9A40(){}
+extern "C" void sinit_800B9A40() {
+    extern float lbl_eu_80661CC8;
+    extern float lbl_eu_80661CCC;
+    extern float lbl_eu_80661CD0;
+    extern float lbl_eu_80663EC8;
+    extern float lbl_eu_80663ECC;
+    extern float lbl_eu_80663ED0;
+    extern float lbl_eu_80663ED4;
+    extern unsigned long lbl_eu_80663EE0;
+
+    float f3 = lbl_eu_80661CC8;
+    float f0 = lbl_eu_80661CCC;
+    float f2 = f3 * f3;
+    float f1 = lbl_eu_80661CD0;
+    f0 = f0 * f0;
+    lbl_eu_80663EC8 = f3;
+    lbl_eu_80663ECC = f2;
+    lbl_eu_80663ED0 = f1;
+    lbl_eu_80663ED4 = f0;
+    lbl_eu_80663EE0 = 0;
+}

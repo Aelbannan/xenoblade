@@ -14,6 +14,9 @@
 #include <revolution/gx/GXPixel.h>
 #include <revolution/mtx/mtx44.h>
 #include <revolution/enc/encunicode.h>
+#include <revolution/mtx/vec.h>
+#include <nw4r/math/math_arithmetic.h>
+#include <math.h>
 #include <string.h>
 #include <wchar.h>
 #include <stdio.h>
@@ -24,7 +27,9 @@ extern "C" {
 extern nw4r::lyt::Layout* createLayout__10CLibLayoutFv();
 extern void getAllocHandle__10CLibLayoutFv();
 extern void* allocate__Q23mtl10MemManagerFUlUl(u32, u32);
+extern void deallocate__Q23mtl10MemManagerFPv(void*);
 extern void Set__Q34nw4r3lyt12AnimResourceFPCv(void*, const void*);
+extern void PSVECNormalize(const Vec*, Vec*);
 extern void* getCurrentView__5CViewFv();
 extern void* func_8049626C(void*, void*);
 extern u32 identity__Q22ml6CMat34;
@@ -117,6 +122,167 @@ extern "C" void func_8003AA34(const char*);
 extern "C" void* getFP__FPCc(const char*);
 extern "C" void* getBdatStringColumnValue(void*, const char*, const char*);
 
+extern "C" {
+extern u8 lbl_eu_8052CB40[];
+extern u8 lbl_eu_8052CB1C[];
+extern u8 lbl_eu_8052E4E4[];
+extern u8 lbl_eu_8052E4C0[];
+extern u8 lbl_eu_8052E558[];
+extern u8 lbl_eu_8052E530[];
+extern u8 lbl_eu_8052E590[];
+extern u8 lbl_eu_8052E568[];
+extern u8 lbl_eu_80526324[];
+extern u8 lbl_eu_80526300[];
+extern u8 lbl_eu_805262F0[];
+extern u8 lbl_eu_805262C8[];
+extern u8 lbl_eu_80500108[];
+extern u8 lbl_eu_80500230[];
+extern u8 lbl_eu_80500480[];
+extern u8 lbl_eu_805005A8[];
+extern u8 lbl_eu_80500630[];
+extern char lbl_eu_80573C30[];
+extern nw4r::math::VEC3 zero__Q22ml5CVec3;
+}
+
+// --- helpers ---
+extern "C" void* func_8009ECB0(void);
+extern "C" void* func_8009EC9C(u32 idx);
+extern "C" void func_8009D018(u32 destination, u32 value);
+extern "C" int func_8009EBE8(u32 idx);
+extern "C" void func_8009EB94(u32 idx, u32 value);
+extern "C" u32 func_8003B1EC(u32);
+extern "C" void func_80157824(u8, u32);
+extern "C" void* func_8049603C(void*);
+extern "C" void* func_80083298__Q22cf13CfGameManagerFv(void);
+extern "C" void func_800826F0__Q22cf13CfGameManagerFv(u32);
+extern "C" void func_80462D04__8CTaskLODFv(s8);
+extern "C" void func_80462D5C__8CTaskLODFv(u8);
+extern "C" int func_80462E1C__8CTaskLODFv(u8);
+extern "C" void* func_804BC9EC__Fv(void);
+extern "C" void func_804BCC30(void*, s8);
+extern "C" void func_804BCC3C(void*, u8);
+extern "C" void func_8047BD8C__17UnkClass_8047BB54Fv(void*, s8);
+extern "C" void func_8047BD94__17UnkClass_8047BB54Fv(void*, u8);
+extern "C" void Warning__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+extern "C" f32 FrSqrt__Q24nw4r4mathFf(f32);
+
+// Cast-only interfaces. RTTI slots (offset 0x0/0x4) are omitted, so each
+// virtual lands at its retail vtable offset (dtor slot at 0x8).
+struct CAnimOwnerIf {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual CAnimOwnerIf* _v03C(u32 a, u32 b);  // 0x3C
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void* _v068();  // 0x68
+};
+
+struct CAnimListOwnerIf {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void* _v058();  // 0x58
+    virtual void _v05C();
+    virtual void _v060();
+    virtual u8 _v064();     // 0x64
+    virtual void _v068();
+    virtual void* _v06C(u32 idx);  // 0x6C
+};
+
+struct CAnimItemIf {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual int _v024(void* arg);  // 0x24
+};
+
+struct CPlayerIf {
+    virtual void _v008();
+    virtual void _v00C();
+    virtual void _v010();
+    virtual void _v014();
+    virtual void _v018();
+    virtual void _v01C();
+    virtual void _v020();
+    virtual void _v024();
+    virtual void _v028();
+    virtual void _v02C();
+    virtual void _v030();
+    virtual void _v034();
+    virtual void _v038();
+    virtual void _v03C();
+    virtual void _v040();
+    virtual void _v044();
+    virtual void _v048();
+    virtual void _v04C();
+    virtual void _v050();
+    virtual void _v054();
+    virtual void _v058();
+    virtual void _v05C();
+    virtual void _v060();
+    virtual void _v064();
+    virtual void _v068();
+    virtual void _v06C();
+    virtual void _v070();
+    virtual void _v074();
+    virtual void _v078();
+    virtual void _v07C();
+    virtual void _v080();
+    virtual void _v084();
+    virtual void _v088();
+    virtual void _v08C();
+    virtual void _v090();
+    virtual void _v094();
+    virtual void _v098();
+    virtual void _v09C();
+    virtual void _v0A0();
+    virtual void _v0A4();
+    virtual void _v0A8();
+    virtual nw4r::math::VEC3* _v0AC();  // 0xAC
+};
+
+struct FourShorts { s16 a, b, c, d; };
+
 // ---------- init ----------
 void func_80135FDC() {
     lbl_eu_80664058 = 0;
@@ -172,13 +338,32 @@ u8 func_801361E8(const char* a, const char* b, const char* c) {
     return *(u8*)getBdatStringColumnValue(fp, b, c);
 }
 
-void func_80136254(){}
+u16 func_80136254(const char* a, const char* b, const char* c) {
+    if (a == 0) return 0;
+    func_8003AA34(a);
+    void* result = getBdatStringColumnValue((void*)a, b, c);
+    return *(u16*)&result;
+}
 
-void func_801362C0(){}
+int func_801362C0(const char* a, const char* b, const char* c) {
+    if (a == 0) return 0;
+    func_8003AA34(a);
+    void* result = getBdatStringColumnValue((void*)a, b, c);
+    return (s8)(*(u8*)&result);
+}
 
-void func_80136330(){}
+s16 func_80136330(const char* a, const char* b, const char* c) {
+    if (a == 0) return 0;
+    func_8003AA34(a);
+    void* result = getBdatStringColumnValue((void*)a, b, c);
+    return *(s16*)&result;
+}
 
-void func_8013639C(){}
+void* func_8013639C(const char* a, const char* b, const char* c) {
+    if (a == 0) return 0;
+    func_8003AA34(a);
+    return getBdatStringColumnValue((void*)a, b, c);
+}
 
 extern "C" u32 func_80136400(const char* src, u16* dst, u32 destLen) {
     u32 srcLen = strlen(src);
@@ -190,12 +375,12 @@ extern "C" u32 func_80136400(const char* src, u16* dst, u32 destLen) {
         return 1;
     }
     dst[destLen] = 0;
-    u16* p = dst;
     int i = 0;
-    while (*p != 0 && i < (int)destLen) {
-        if (*p == 0x40u)
-            *p = 0x0Au;
-        p++;
+    int len = (int)destLen;
+    while (*dst != 0 && i < len) {
+        if (*dst == 0x40u)
+            *dst = 0x0Au;
+        dst++;
         i++;
     }
     return 1;
@@ -560,75 +745,56 @@ extern "C" void func_8013775C(nw4r::math::VEC3* output, nw4r::lyt::Pane* node) {
     output->x = 0.0f;
     output->y = 0.0f;
     output->z = 0.0f;
-    if (node == NULL) return;
-    if (node->GetParent() == NULL) return;
+    if (node != NULL) {
+    if (node->GetParent() != NULL) {
+        output->x = node->GetTranslate().x;
+        output->y = node->GetTranslate().y;
+        output->z = node->GetTranslate().z;
 
-    output->x = node->GetTranslate().x;
-    output->y = node->GetTranslate().y;
-    output->z = node->GetTranslate().z;
+        nw4r::lyt::Pane* parent = node->GetParent();
+        nw4r::math::VEC3 accum;
+        accum.x = 0.0f;
+        accum.y = 0.0f;
+        accum.z = 0.0f;
+        if (parent == NULL) goto add_out;
+        nw4r::lyt::Pane* pp = parent->GetParent();
+        if (pp == NULL) goto add_out;
 
-    nw4r::lyt::Pane* parent = node->GetParent();
-    nw4r::math::VEC3 accum;
-    accum.x = 0.0f;
-    accum.y = 0.0f;
-    accum.z = 0.0f;
-    if (parent == NULL) {
-        nw4r::math::VEC3Add(output, output, &accum);
-        return;
-    }
-    nw4r::lyt::Pane* pp = parent->GetParent();
-    if (pp == NULL) {
-        nw4r::math::VEC3Add(output, output, &accum);
-        return;
-    }
+        accum.x = parent->GetTranslate().x;
+        accum.y = parent->GetTranslate().y;
+        accum.z = parent->GetTranslate().z;
 
-    accum.x = parent->GetTranslate().x;
-    accum.y = parent->GetTranslate().y;
-    accum.z = parent->GetTranslate().z;
+        nw4r::math::VEC3 temp;
+        temp.x = 0.0f;
+        temp.y = 0.0f;
+        temp.z = 0.0f;
+        if (pp == NULL) goto add_accum;
+        nw4r::lyt::Pane* gp = pp->GetParent();
+        if (gp == NULL) goto add_accum;
 
-    nw4r::math::VEC3 temp;
-    temp.x = 0.0f;
-    temp.y = 0.0f;
-    temp.z = 0.0f;
-    if (pp == NULL) {
-        nw4r::math::VEC3Add(&accum, &accum, &temp);
-        nw4r::math::VEC3Add(output, output, &accum);
-        return;
-    }
-    nw4r::lyt::Pane* gp = pp->GetParent();
-    if (gp == NULL) {
-        nw4r::math::VEC3Add(&accum, &accum, &temp);
-        nw4r::math::VEC3Add(output, output, &accum);
-        return;
-    }
+        temp.x = pp->GetTranslate().x;
+        temp.y = pp->GetTranslate().y;
+        temp.z = pp->GetTranslate().z;
 
-    temp.x = pp->GetTranslate().x;
-    temp.y = pp->GetTranslate().y;
-    temp.z = pp->GetTranslate().z;
+        nw4r::math::VEC3 tmp2;
+        code80135FDC_setVec3((float*)&tmp2, 0.0f, 0.0f, 0.0f);
+        if (gp == NULL) goto add_temp;
+        nw4r::lyt::Pane* ggp = gp->GetParent();
+        if (ggp == NULL) goto add_temp;
 
-    nw4r::math::VEC3 tmp2;
-    code80135FDC_setVec3((float*)&tmp2, 0.0f, 0.0f, 0.0f);
-    if (gp == NULL) {
+        copyVEC3(&tmp2, &gp->GetTranslate());
+        nw4r::math::VEC3 recurse;
+        func_8013775C(&recurse, ggp);
+        func_80137738(&tmp2, &recurse);
+
+    add_temp:
         nw4r::math::VEC3Add(&temp, &temp, &tmp2);
+    add_accum:
         nw4r::math::VEC3Add(&accum, &accum, &temp);
+    add_out:
         nw4r::math::VEC3Add(output, output, &accum);
-        return;
     }
-    nw4r::lyt::Pane* ggp = gp->GetParent();
-    if (ggp == NULL) {
-        nw4r::math::VEC3Add(&temp, &temp, &tmp2);
-        nw4r::math::VEC3Add(&accum, &accum, &temp);
-        nw4r::math::VEC3Add(output, output, &accum);
-        return;
     }
-
-    copyVEC3(&tmp2, &gp->GetTranslate());
-    nw4r::math::VEC3 recurse;
-    func_8013775C(&recurse, ggp);
-    func_80137738(&tmp2, &recurse);
-    nw4r::math::VEC3Add(&temp, &temp, &tmp2);
-    nw4r::math::VEC3Add(&accum, &accum, &temp);
-    nw4r::math::VEC3Add(output, output, &accum);
 }
 
 extern "C" void func_80137924(nw4r::math::VEC3* output, nw4r::lyt::Pane* node,
@@ -759,8 +925,6 @@ extern "C" void func_80137DB8(void* a, u32 b, u32 c) {
     ((void(*)(void*, u32, void*))vt[0x28 / 4])(a, 3, &v3);
 }
 
-void func_80137E7C(){}
-
 extern "C" void func_80137E7C(void* a, u32 b, void* palette) {
     if (a == NULL) return;
     void* obj = *(void**)((u8*)a + 0x10);
@@ -794,8 +958,6 @@ extern "C" void func_80137F88(void* a, void* palette) {
     }
     mat->GetTexMapAry()[0] = texMap;
 }
-
-void func_801380A0(){}
 
 void func_80138078__FUl(u32 arg) {
     extern void func_801BFC38__Q22cf10CfSoundManFUlUlUlUlf(u32, u32, u32, u32, f32);
@@ -1154,17 +1316,90 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
     return 1;
 }
 
-void func_80138DA4(){}
+extern "C" void* func_80138DA4(const char* str) {
+    int v = atoi(str);
+    if (v > 0) {
+        func_8003AA34(&lbl_eu_80500664[0]);
+        void* fp = getFP__FPCc(&lbl_eu_80500664[0x181]);
+        return getBdatStringColumnValue(fp, &lbl_eu_80500664[0x17C], (const char*)v);
+    }
+    return (void*)str;
+}
 
-void func_80138DA4(){}
+extern "C" u8 func_80138E1C(const char* key) {
+    if (lbl_eu_80664098 == 0) return 0;
+    func_8003AA34(key);
+    void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], key);
+    return *(u8*)&result;
+}
 
-void func_80138E1C(){}
+extern "C" u32 func_80138E90(const char* key) {
+    u8 v = 0;
+    if (lbl_eu_80664098 != 0) {
+        func_8003AA34(key);
+        void* result = getBdatStringColumnValue((void*)lbl_eu_80664098, &lbl_eu_80500664[0x18A], key);
+        v = *(u8*)&result;
+    }
+    u32 result = 0;
+    switch (v) {
+    case 0:
+    case 1:
+        result = 1;
+        break;
+    case 2:
+    case 3:
+        result = 2;
+        break;
+    case 4:
+    case 5:
+        result = 3;
+        break;
+    case 6:
+    case 7:
+        result = 4;
+        break;
+    case 8:
+        result = 5;
+        break;
+    case 9:
+    case 10:
+        result = 2;
+        break;
+    default:
+        break;
+    }
+    return result;
+}
 
-void func_80138E90(){}
+extern "C" char* func_80138F78(const char* key) {
+    if (lbl_eu_80664068 == 0) {
+        func_8003AA34(key);
+        lbl_eu_80664068 = (u32)getFP__FPCc(&lbl_eu_80500664[0x192]);
+    }
+    void* fp = (void*)lbl_eu_80664068;
+    void* result = NULL;
+    if (fp != NULL) {
+        func_8003AA34(key);
+        result = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x19F], key);
+    }
+    sprintf(&lbl_eu_80573B30[0], &lbl_eu_80500664[0x1A8], result);
+    return &lbl_eu_80573B30[0];
+}
 
-void func_80138F78(){}
-
-void func_8013902C(){}
+extern "C" char* func_8013902C(const char* key) {
+    if (lbl_eu_8066406C == 0) {
+        func_8003AA34(key);
+        lbl_eu_8066406C = (u32)getFP__FPCc(&lbl_eu_80500664[0x1AF]);
+    }
+    void* fp = (void*)lbl_eu_8066406C;
+    void* result = NULL;
+    if (fp != NULL) {
+        func_8003AA34(key);
+        result = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x1C7], key);
+    }
+    sprintf(&lbl_eu_80573BB0[0], &lbl_eu_80500664[0x1A8], result);
+    return &lbl_eu_80573BB0[0];
+}
 
 void func_801390E0__FPP11CFileHandle(void** handlePtr) {
     extern void cancel__11CDeviceFileFP11CFileHandle(void*);
@@ -1174,9 +1409,60 @@ void func_801390E0__FPP11CFileHandle(void** handlePtr) {
     }
 }
 
-void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(){}
+extern "C" void func_80139124__FPQ34nw4r3lyt19ArcResourceAccessor(nw4r::lyt::ArcResourceAccessor* accessor) {
+    if (accessor != NULL) {
+        void* resource = accessor->Detach();
+        if (accessor != NULL) {
+            delete accessor;
+        }
+        if (resource != NULL) {
+            deallocate__Q23mtl10MemManagerFPv(resource);
+        }
+    }
+}
 
-void func_80139198(){}
+void func_80139198(void* arg) {
+    lbl_eu_80664077 = 0;
+    lbl_eu_8066407E = 0;
+    u8* base = (u8*)func_8009ECB0() + 4;
+    u8* byteList = (u8*)&lbl_eu_80664070;
+    u8 n = 0;
+    for (u8 i = 0; i < 7; i++) {
+        u32 v = *(u32*)(base + (u32)i * 4);
+        if ((s32)v > 0) {
+            if (arg != NULL) {
+                void* obj = (void*)func_8009EC9C(v & 0xFFFF);
+                if (*(u32*)((u32)obj + 0x176C) != 1) {
+                    byteList[n] = (u8)v;
+                    n++;
+                }
+            } else {
+                byteList[n] = (u8)v;
+                n++;
+            }
+        }
+    }
+    u16* list16 = (u16*)&lbl_eu_80664078;
+    u8 c = lbl_eu_8066407E;
+    u32 w = *(u32*)(base + 0x24);
+    if ((s32)w > 0) {
+        list16[c] = (u16)w;
+        c++;
+        lbl_eu_8066407E = c;
+    }
+    w = *(u32*)(base + 0x28);
+    if ((s32)w > 0) {
+        list16[c] = (u16)w;
+        c++;
+        lbl_eu_8066407E = c;
+    }
+    w = *(u32*)(base + 0x2C);
+    if ((s32)w > 0) {
+        list16[c] = (u16)w;
+        c++;
+        lbl_eu_8066407E = c;
+    }
+}
 
 
 
@@ -1191,53 +1477,873 @@ u8 func_801392C8(u8 idx) {
 extern u8 lbl_eu_8066407E;
 u8 code80135FDC_getByte_6407E() { return lbl_eu_8066407E; }
 
-void func_801392E4(){}
+extern "C" u16 func_801392E4(const char* name) {
+    if (lbl_eu_806640EC == 0) return 0;
+    func_8003AA34(name);
+    void* result = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], name);
+    return *(u16*)&result;
+}
 
-void func_80139358(){}
+extern "C" u16 func_80139358(const char* name) {
+    if (lbl_eu_806640EC == 0) return 0;
+    func_8003AA34(name);
+    void* result = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1DB], name);
+    return *(u16*)&result;
+}
 
-void func_801393CC(){}
+extern "C" u32 func_801393CC(const char* name) {
+    u32 v = 0;
+    if (lbl_eu_806640EC != 0) {
+        func_8003AA34(name);
+        void* result = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], name);
+        v = *(u16*)&result;
+    }
+    switch (v) {
+    case 0: v = lbl_eu_806640F0; break;
+    case 1: v = lbl_eu_806640F4; break;
+    case 2: v = lbl_eu_806640D8; break;
+    case 3:
+    case 4:
+    case 5:
+    case 6:
+    case 7: v = lbl_eu_806640F8; break;
+    case 8: v = lbl_eu_806640FC; break;
+    case 9: v = lbl_eu_80664104; break;
+    case 10: v = lbl_eu_80664108; break;
+    case 11: v = lbl_eu_8066410C; break;
+    case 12: v = lbl_eu_80664110; break;
+    }
+    return v;
+}
 
-void func_801394D4(){}
+extern "C" char* func_801394D4(const char* name) {
+    u32 a = func_801393CC(name);
+    u16 b = 0;
+    if (lbl_eu_806640EC != 0) {
+        func_8003AA34((const char*)a);
+        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1DB], name);
+        b = *(u16*)&r;
+    }
+    u16 c = 0;
+    if (lbl_eu_806640EC != 0) {
+        func_8003AA34(&lbl_eu_80500664[0x1D2]);
+        void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1D2], name);
+        c = *(u16*)&r;
+    }
+    void* d0 = 0;
+    if (a != 0) {
+        func_8003AA34(&lbl_eu_80500664[0x17C]);
+        d0 = getBdatStringColumnValue((void*)a, &lbl_eu_80500664[0x17C], (const char*)(u32)b);
+    }
+    sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0], d0);
+    if (c == 3) {
+        u8 d = 0;
+        if (lbl_eu_806640EC != 0) {
+            func_8003AA34(&lbl_eu_80500664[0x1E2]);
+            void* r = getBdatStringColumnValue((void*)lbl_eu_806640EC, &lbl_eu_80500664[0x1E2], name);
+            d = *(u8*)&r;
+            func_8003AA34((const char*)r);
+        }
+        void* fp = getFP__FPCc(&lbl_eu_80500664[0x1EB]);
+        void* r2 = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x17C],
+                                           (const char*)(0x1E - (d - 1)));
+        sprintf(&lbl_eu_80573C30[0], &lbl_eu_80500664[0x1F4], &lbl_eu_80573C30[0], r2);
+    }
+    return &lbl_eu_80573C30[0];
+}
 
-void func_80139658(){}
+extern "C" FourShorts func_80139658(void* obj, void* arg2, u32 idx) {
+    FourShorts r = {0, 0, 0, 0};
+    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
+    if (owner->_v03C((u32)arg2, 1) != 0) {
+        u8* data = (u8*)owner->_v068();
+        if (data != NULL) {
+            if (idx >= 3) {
+                Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E558, 0x8C,
+                                           (const char*)lbl_eu_8052E530);
+            }
+            u8* p = data + idx * 8 + 0x10;
+            r.a = *(s16*)(p + 0);
+            r.b = *(s16*)(p + 2);
+            r.c = *(s16*)(p + 4);
+            r.d = *(s16*)(p + 6);
+        }
+    }
+    return r;
+}
 
-void func_801397AC(){}
+extern "C" FourShorts func_801397AC(CAnimOwnerIf* owner, u32 idx) {
+    FourShorts r = {0, 0, 0, 0};
+    if (owner == NULL) return r;
+    u8* data = (u8*)owner->_v068();
+    if (data != NULL) {
+        if (idx >= 3) {
+            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E558, 0x8C,
+                                       (const char*)lbl_eu_8052E530);
+        }
+        u8* p = data + idx * 8 + 0x10;
+        r.a = *(s16*)(p + 0);
+        r.b = *(s16*)(p + 2);
+        r.c = *(s16*)(p + 4);
+        r.d = *(s16*)(p + 6);
+    }
+    return r;
+}
 
-void func_801398A4(){}
+extern "C" void func_801398A4(void* obj, void* arg2, void* src, u32 idx) {
+    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
+    if (owner->_v03C((u32)arg2, 1) == 0) return;
+    u8* data = (u8*)owner->_v068();
+    if (data == NULL) return;
+    if (idx >= 3) {
+        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
+                                   (const char*)lbl_eu_8052E568);
+    }
+    s16* s = (s16*)src;
+    s16* d = (s16*)(data + idx * 8 + 0x10);
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+    d[3] = s[3];
+}
 
-void func_8013996C(){}
+extern "C" void func_8013996C(CAnimOwnerIf* owner, void* src, u32 idx) {
+    if (owner == NULL) return;
+    u8* data = (u8*)owner->_v068();
+    if (data == NULL) return;
+    if (idx >= 3) {
+        Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E590, 0x8F,
+                                   (const char*)lbl_eu_8052E568);
+    }
+    s16* s = (s16*)src;
+    s16* d = (s16*)(data + idx * 8 + 0x10);
+    d[0] = s[0];
+    d[1] = s[1];
+    d[2] = s[2];
+    d[3] = s[3];
+}
 
-void func_80139A18(){}
+extern "C" void func_80139A18(void* obj, void* arg2, void* src1, void* src2) {
+    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
+    if (owner->_v03C((u32)arg2, 1) == 0) return;
+    s16* data = (s16*)owner->_v068();
+    if (data == NULL) return;
+    s16* s1 = (s16*)src1;
+    s16* s2 = (s16*)src2;
+    data[8] = s1[0];
+    data[9] = s1[1];
+    data[10] = s1[2];
+    data[11] = s1[3];
+    data[12] = s2[0];
+    data[13] = s2[1];
+    data[14] = s2[2];
+    data[15] = s2[3];
+}
 
-void func_80139AC8(){}
+extern "C" void func_80139AC8(CAnimOwnerIf* owner, void* src1, void* src2) {
+    if (owner == NULL) return;
+    s16* data = (s16*)owner->_v068();
+    if (data == NULL) return;
+    s16* s1 = (s16*)src1;
+    s16* s2 = (s16*)src2;
+    data[8] = s1[0];
+    data[9] = s1[1];
+    data[10] = s1[2];
+    data[11] = s1[3];
+    data[12] = s2[0];
+    data[13] = s2[1];
+    data[14] = s2[2];
+    data[15] = s2[3];
+}
 
-void func_80139B5C(){}
+extern "C" void func_80139B5C(void* obj, void* arg2, void* src) {
+    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
+    if (owner->_v03C((u32)arg2, 1) == 0) return;
+    u8* d = (u8*)owner;
+    u8* s = (u8*)&src;
+    d[0xDC] = s[0];
+    d[0xDD] = s[1];
+    d[0xDE] = s[2];
+    d[0xDF] = s[3];
+    d[0xE0] = s[4];
+    d[0xE1] = s[5];
+    d[0xE2] = s[6];
+    d[0xE3] = s[7];
+}
 
-void func_80139BF4(){}
+extern "C" void func_80139BF4(void* obj, void* arg2, void* a, void* b) {
+    CAnimOwnerIf* owner = *(CAnimOwnerIf**)((u8*)obj + 0x10);
+    if (owner->_v03C((u32)arg2, 1) == 0) return;
+    u8* d = (u8*)owner;
+    u8* s = (u8*)&a;
+    d[0xDC] = s[0];
+    d[0xDD] = s[1];
+    d[0xDE] = s[2];
+    d[0xDF] = s[3];
+    d[0xE0] = s[4];
+    d[0xE1] = s[5];
+    d[0xE2] = s[6];
+    d[0xE3] = s[7];
+}
 
-void func_80139C98(){}
+extern "C" f32 func_80139C98(u32 a, u32 b, u32 c, f32 d) {
+    return (lbl_eu_80667304 * ((f32)a + (f32)b) + (f32)c) / d;
+}
 
-void func_80139CEC(){}
+extern "C" void func_80139CEC(const char* arg) {
+    func_8003AA34(arg);
+    getFP__FPCc(&lbl_eu_80500664[0x1F9]);
+    void* gm = func_80083298__Q22cf13CfGameManagerFv();
+    if (gm == NULL) return;
 
-void func_8013A4B4(){}
+    for (u8 i = 0; i <= 0x63; i++) {
+        func_80462D5C__8CTaskLODFv(i);
+        void* snd = func_804BC9EC__Fv();
+        func_804BCC3C(snd, i);
+        func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, i);
+    }
 
-void func_8013A7D0(){}
+    struct B21 {
+        u32 w[5];
+        u8 b;
+    };
+    B21 tab = *(B21*)&lbl_eu_80500230;
+    u8* chars = (u8*)&tab;
+    u8 j = 0;
+    for (;;) {
+        s8 ch = (s8)chars[j];
+        if (ch < 0) break;
+        func_80462D04__8CTaskLODFv(ch);
+        void* snd = func_804BC9EC__Fv();
+        func_804BCC30(snd, ch);
+        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, ch);
+        j++;
+    }
 
-void func_8013A95C(){}
+    if (func_8009CF8C(0x7D0) == 1) {
+        func_80462D04__8CTaskLODFv(0x50);
+        void* snd = func_804BC9EC__Fv();
+        func_804BCC30(snd, 0x50);
+        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
+        func_80462D04__8CTaskLODFv(0x63);
+        snd = func_804BC9EC__Fv();
+        func_804BCC30(snd, 0x63);
+        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x63);
+        func_80462D04__8CTaskLODFv(0x09);
+        snd = func_804BC9EC__Fv();
+        func_804BCC30(snd, 0x09);
+        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x09);
+    }
 
-void func_8013AB0C(){}
+    for (u8 i = 0; i < 4; i++) {
+        u8 n = (u8)func_8009CF8C(i + 0x7FE);
+        u32 base = (u32)((i + 1) * 10);
+        for (u8 k = 1; k <= n; k++) {
+            u8 v1 = (u8)(base + k);
+            func_80462D04__8CTaskLODFv(v1);
+            void* snd = func_804BC9EC__Fv();
+            func_804BCC30(snd, v1);
+            func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v1);
 
-void func_8013AC3C(){}
+            u8 v2 = (u8)(k + 0x3C);
+            func_80462D04__8CTaskLODFv(v2);
+            snd = func_804BC9EC__Fv();
+            func_804BCC30(snd, v2);
+            func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v2);
 
-void func_8013ACFC(){}
+            u8 v3 = (u8)(k + 0x46);
+            func_80462D5C__8CTaskLODFv(v3);
+            snd = func_804BC9EC__Fv();
+            func_804BCC3C(snd, v3);
+            func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v3);
 
-void func_8013B1C4(){}
+            if (v2 == 0x3D) {
+                func_80462D04__8CTaskLODFv(0x55);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x55);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
+            }
+            if (v2 == 0x3E) {
+                func_80462D04__8CTaskLODFv(0x56);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x56);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x56);
+            }
+            if (v2 == 0x3D) {
+                func_80462D04__8CTaskLODFv(0x57);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x57);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
+            }
+            if (v2 == 0x3D) {
+                func_80462D04__8CTaskLODFv(0x58);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x58);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
+            }
+            if (func_8009CF8C(0x20) >= 0x16E) {
+                func_80462D04__8CTaskLODFv(0x59);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x59);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
+                if (v1 == 0x0E) {
+                    func_80462D04__8CTaskLODFv(0x5A);
+                    snd = func_804BC9EC__Fv();
+                    func_804BCC30(snd, 0x5A);
+                    func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5A);
+                }
+            }
+            if (v2 == 0x3D) {
+                func_80462D04__8CTaskLODFv(0x5B);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x5B);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
+            }
+            if (v2 == 0x3D) {
+                func_80462D04__8CTaskLODFv(0x5C);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x5C);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
+            }
+            if (v2 == 0x3E) {
+                func_80462D04__8CTaskLODFv(0x5D);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x5D);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
+            }
+            if (v2 == 0x3F) {
+                func_80462D04__8CTaskLODFv(0x5E);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x5E);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
+            }
+            if (v2 == 0x40) {
+                func_80462D04__8CTaskLODFv(0x5F);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x5F);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
+            }
+            if (v2 == 0x40) {
+                func_80462D04__8CTaskLODFv(0x60);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x60);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
+            }
+            if (v2 == 0x41) {
+                func_80462D04__8CTaskLODFv(0x61);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x61);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
+            }
+            if (v2 == 0x41) {
+                func_80462D04__8CTaskLODFv(0x62);
+                snd = func_804BC9EC__Fv();
+                func_804BCC30(snd, 0x62);
+                func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
+            }
 
-void func_8013B2D4(){}
+            if (func_80462E1C__8CTaskLODFv(0x2D)) {
+                func_80462D5C__8CTaskLODFv(0x50);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x50);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x50);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x0E)) {
+                func_80462D5C__8CTaskLODFv(0x51);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x51);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x51);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x2A)) {
+                func_80462D5C__8CTaskLODFv(0x52);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x52);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x52);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x22)) {
+                func_80462D5C__8CTaskLODFv(0x53);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x53);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x53);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x23)) {
+                func_80462D5C__8CTaskLODFv(0x54);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x54);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x54);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x3E)) {
+                func_80462D5C__8CTaskLODFv(0x55);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x55);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x55);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x2D)) {
+                func_80462D5C__8CTaskLODFv(0x57);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x57);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x57);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x2D)) {
+                func_80462D5C__8CTaskLODFv(0x58);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x58);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x58);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x0E)) {
+                func_80462D5C__8CTaskLODFv(0x59);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x59);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x59);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x0B)) {
+                func_80462D5C__8CTaskLODFv(0x5B);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x5B);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5B);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x15)) {
+                func_80462D5C__8CTaskLODFv(0x5C);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x5C);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5C);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x0C)) {
+                func_80462D5C__8CTaskLODFv(0x5D);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x5D);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5D);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x0D)) {
+                func_80462D5C__8CTaskLODFv(0x5E);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x5E);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5E);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x0E)) {
+                func_80462D5C__8CTaskLODFv(0x5F);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x5F);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x5F);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x2C)) {
+                func_80462D5C__8CTaskLODFv(0x60);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x60);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x60);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x0F)) {
+                func_80462D5C__8CTaskLODFv(0x61);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x61);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x61);
+            }
+            if (func_80462E1C__8CTaskLODFv(0x19)) {
+                func_80462D5C__8CTaskLODFv(0x62);
+                snd = func_804BC9EC__Fv();
+                func_804BCC3C(snd, 0x62);
+                func_8047BD94__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, 0x62);
+            }
+        }
+    }
 
-void func_8013B380(){}
+    u8 n2 = (u8)func_8009CF8C(0x802);
+    for (u8 k = 1; k <= n2; k++) {
+        u8 v = (u8)(k + 0x32);
+        func_80462D04__8CTaskLODFv(v);
+        void* snd = func_804BC9EC__Fv();
+        func_804BCC30(snd, v);
+        func_8047BD8C__17UnkClass_8047BB54Fv((u8*)gm + 0xF0, v);
+    }
+}
 
-void func_8013B428__FUl(){}
+extern "C" int func_8013A4B4(const nw4r::math::VEC3* a, const nw4r::math::VEC3* b,
+                            const nw4r::math::VEC3* c) {
+    if (b->x == 0.0f && b->z == 0.0f) return 0;
+
+    nw4r::math::VEC3 v1;
+    v1.x = b->x - a->x;
+    v1.y = 0.0f;
+    v1.z = b->z - a->z;
+    nw4r::math::VEC3 v2;
+    v2.x = c->x - a->x;
+    v2.y = 0.0f;
+    v2.z = c->z - a->z;
+
+    f32 len2A = v1.x * v1.x + v1.z * v1.z;
+    if (len2A == 0.0f) {
+        v1 = zero__Q22ml5CVec3;
+    } else {
+        PSVECNormalize(reinterpret_cast<const Vec*>(&v1), reinterpret_cast<Vec*>(&v1));
+    }
+    f32 len2C = v2.x * v2.x + v2.z * v2.z;
+    if (len2C == 0.0f) {
+        v2 = zero__Q22ml5CVec3;
+    } else {
+        PSVECNormalize(reinterpret_cast<const Vec*>(&v2), reinterpret_cast<Vec*>(&v2));
+    }
+
+    f32 dot = v1.x * v2.x + v1.y * v2.y + v1.z * v2.z;
+    if (len2A < 0.0f) {
+        Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_80526324, 0x273,
+                                    (const char*)lbl_eu_80526300);
+    }
+    f32 lenA = (len2A <= 0.0f) ? 0.0f : len2A * FrSqrt__Q24nw4r4mathFf(len2A);
+    if (len2C < 0.0f) {
+        Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_80526324, 0x273,
+                                    (const char*)lbl_eu_80526300);
+    }
+    f32 lenC = (len2C <= 0.0f) ? 0.0f : len2C * FrSqrt__Q24nw4r4mathFf(len2C);
+
+    f32 prod = lenA * lenC;
+    if (fabsf(prod) < lbl_eu_8066A208) return 0;
+
+    f32 t = dot / prod;
+    if (t < lbl_eu_80667308) t = lbl_eu_80667308;
+    if (t > lbl_eu_806672E8) t = lbl_eu_806672E8;
+    if (!(t <= lbl_eu_806672E8 && t >= lbl_eu_80667308)) {
+        Warning__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_805262F0, 0xEF,
+                                    (const char*)lbl_eu_805262C8);
+    }
+    return ((f32)acos(t) * lbl_eu_8066A20C) <= lbl_eu_8066730C;
+}
+
+extern "C" u16 func_8013A7D0(u16 arg1, u16 arg2) {
+    u32 arrA[2] = { *(u32*)&lbl_eu_80667310, *(u32*)&lbl_eu_80667314 };
+    u32 arrB[2] = { *(u32*)&lbl_eu_80667318, *(u32*)&lbl_eu_8066731C };
+    int flag = 0;
+
+    func_8003AA34((const char*)arg1);
+    void* fp = getFP__FPCc(&lbl_eu_80500664[0x20B]);
+    void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x204],
+                                       (const char*)5);
+    u16 row0 = *(u16*)&r;
+    if (func_8009CF8C(0x20) >= row0) flag = 1;
+
+    void* fp2 = getFP__FPCc(&lbl_eu_80500664[0x21C]);
+    u32 colA = arrA[flag];
+    u32 colB = arrB[flag];
+    s16 result = -1;
+    for (u8 i = 1; i <= 0x15; i++) {
+        u16 v1 = 0;
+        if (fp2 != 0) {
+            func_8003AA34((const char*)fp2);
+            void* r1 = getBdatStringColumnValue(fp2, (const char*)colA, (const char*)(u32)i);
+            v1 = *(u16*)&r1;
+        }
+        u16 v2 = 0;
+        if (fp2 != 0) {
+            func_8003AA34((const char*)fp2);
+            void* r2 = getBdatStringColumnValue(fp2, (const char*)colB, (const char*)(u32)i);
+            v2 = *(u16*)&r2;
+        }
+        u16 a = (u16)(v1 + 0xFF91);
+        u16 b = (u16)(v2 + 0xFF91);
+        if ((a == arg1 && b == arg2) || (a == arg2 && b == arg1)) {
+            result = (s16)func_8009CF8C(i + 0x28);
+            break;
+        }
+    }
+    if (result < 0) result = 0;
+    return (u16)result;
+}
+
+extern "C" void func_8013A95C(u16 arg1, u16 arg2, s8 delta) {
+    u32 arrA[2] = { *(u32*)&lbl_eu_80667320, *(u32*)&lbl_eu_80667324 };
+    u32 arrB[2] = { *(u32*)&lbl_eu_80667328, *(u32*)&lbl_eu_8066732C };
+    int flag = 0;
+
+    func_8003AA34((const char*)arg1);
+    void* fp = getFP__FPCc(&lbl_eu_80500664[0x20B]);
+    void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x204],
+                                       (const char*)5);
+    u16 row0 = *(u16*)&r;
+    if (func_8009CF8C(0x20) >= row0) flag = 1;
+
+    void* fp2 = getFP__FPCc(&lbl_eu_80500664[0x21C]);
+    u32 colA = arrA[flag];
+    u32 colB = arrB[flag];
+    for (u8 i = 1; i <= 0x15; i++) {
+        u16 v1 = 0;
+        if (fp2 != 0) {
+            func_8003AA34((const char*)fp2);
+            void* r1 = getBdatStringColumnValue(fp2, (const char*)colA, (const char*)(u32)i);
+            v1 = *(u16*)&r1;
+        }
+        u16 v2 = 0;
+        if (fp2 != 0) {
+            func_8003AA34((const char*)fp2);
+            void* r2 = getBdatStringColumnValue(fp2, (const char*)colB, (const char*)(u32)i);
+            v2 = *(u16*)&r2;
+        }
+        u16 a = (u16)(v1 + 0xFF91);
+        u16 b = (u16)(v2 + 0xFF91);
+        if ((a == arg1 && b == arg2) || (a == arg2 && b == arg1)) {
+            u8 idx = i + 0x28;
+            s16 v = (s16)func_8009CF8C(idx);
+            s16 nv = (s16)(v + (s8)delta);
+            if (nv < 0) nv = 0;
+            if (nv > 0x1388) nv = 0x1388;
+            func_8009D018(idx, (s32)nv);
+            break;
+        }
+    }
+}
+
+extern "C" void func_8013AB0C(u8* out1, u8* out2, u32 idx, const char* strBase) {
+    u32 arrA[2] = { *(u32*)&lbl_eu_80667330, *(u32*)&lbl_eu_80667334 };
+    u32 arrB[2] = { *(u32*)&lbl_eu_80667338, *(u32*)&lbl_eu_8066733C };
+    int flag = 0;
+
+    func_8003AA34((const char*)out1);
+    void* fp = getFP__FPCc((const char*)&strBase[0x20B]);
+    void* r = getBdatStringColumnValue(fp, &strBase[0x204], (const char*)5);
+    u16 row0 = *(u16*)&r;
+    if (func_8009CF8C(0x20) >= row0) flag = 1;
+
+    u32 row = idx - 0x28;
+    void* fp2 = getFP__FPCc((const char*)&strBase[0x21C]);
+    u32 colA = arrA[flag];
+    u16 v1 = 0;
+    if (fp2 != 0) {
+        func_8003AA34((const char*)fp2);
+        void* r1 = getBdatStringColumnValue(fp2, (const char*)colA, (const char*)row);
+        v1 = *(u16*)&r1;
+    }
+    u32 colB = arrB[flag];
+    u16 v2 = 0;
+    if (fp2 != 0) {
+        func_8003AA34((const char*)fp2);
+        void* r2 = getBdatStringColumnValue(fp2, (const char*)colB, (const char*)row);
+        v2 = *(u16*)&r2;
+    }
+    *out1 = (u8)v1 + 0x91;
+    *out2 = (u8)v2 + 0x91;
+}
+
+extern "C" int func_8013AC3C(u8 max, u8 count, u32 off) {
+    u32 table[31];
+    memcpy(table, &lbl_eu_80500480, sizeof(table));
+    func_8003AA34((const char*)table[30]);
+    u32 sum = 0;
+    for (u8 i = 2; i < max; i++) {
+        u32 p = table[i - 1];
+        if (p != 0) {
+            void* fp = getFP__FPCc((const char*)p);
+            sum += func_8003B1EC((u32)fp) * 0x240;
+        }
+    }
+    sum += (count - 1) * 0x240;
+    return func_8009EBE8(sum + off);
+}
+
+extern "C" void func_8013ACFC() {
+    if (func_8009CF8C(0x20) <= 4) return;
+    if ((lbl_eu_80663E24 & 0x100) == 0) return;
+    void* cam = func_8049603C((void*)lbl_eu_80663E14);
+    f32 f = lbl_eu_806672E8 - *(f32*)((u8*)cam + 0xC);
+    if (f < lbl_eu_806672E8) return;
+
+    void* player = getPlayer__Q22cf13CfGameManagerFi(0);
+    if (player == NULL) return;
+    u8 flag = (u8)lbl_eu_80664184;
+    if (flag == 0) return;
+
+    u32 bdat = lbl_eu_806640A8;
+    u16 row = 0;
+    if (bdat != 0) {
+        func_8003AA34(&lbl_eu_80500664[0x22B]);
+        void* r = getBdatStringColumnValue((void*)bdat, &lbl_eu_80500664[0x22B],
+                                           (const char*)(u32)flag);
+        row = *(u16*)&r;
+    }
+    if (row == 0) return;
+    u16 prev = row - 1;
+
+    u8 col2 = 0;
+    if (bdat != 0) {
+        func_8003AA34(&lbl_eu_80500664[0x23A]);
+        void* r = getBdatStringColumnValue((void*)bdat, &lbl_eu_80500664[0x23A],
+                                           (const char*)(u32)flag);
+        col2 = *(u8*)&r;
+    }
+    f32 scale = (f32)col2 * lbl_eu_80667340;
+
+    u32 table[35];
+    memcpy(table, &lbl_eu_80500108[0x418], sizeof(table));
+
+    CPlayerIf* pif = (CPlayerIf*)player;
+    nw4r::math::VEC3* pos = pif->_v0AC();
+    f32 sx = pos->x / scale * lbl_eu_80667344;
+    f32 sy = pos->y;
+    f32 sz = pos->z / scale * lbl_eu_80667344;
+
+    func_8003AA34((const char*)pos);
+    u32 name = table[flag - 1];
+    if (name == 0) return;
+    void* fp = getFP__FPCc((const char*)name);
+    u8 n = (u8)func_8003B1EC((u32)fp);
+
+    u16 idx = 0;
+    for (u8 i = 1; i <= n; i++) {
+        s16 v = 0;
+        if (fp != 0) {
+            func_8003AA34((const char*)fp);
+            void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x247],
+                                               (const char*)(u32)i);
+            v = *(s16*)&r;
+        }
+        if ((f32)v > sy) {
+            idx = i;
+            break;
+        }
+    }
+
+    u32 x = (u32)prev;
+    u32 rem = x % 24;
+    u32 q = x / 24;
+    f32 R = (f32)(lbl_eu_80667358 * (lbl_eu_80667348 * sqrt(lbl_eu_80667350)));
+    f32 R2 = R * R;
+    u32 baseOff = (idx - 1) * 0x240;
+
+    for (u16 i2 = 0; i2 < 0x240; i2++) {
+        u32 r5 = i2 % 24;
+        u32 q2 = i2 / 24;
+        f32 dx = (f32)(s32)(r5 - rem) * lbl_eu_80667348 - sx;
+        f32 dz = (f32)(s32)(q2 - q) * lbl_eu_80667348 - sz;
+        if (dx * dx + dz * dz <= R2) {
+            u32 table2[31];
+            memcpy(table2, &lbl_eu_80500108[0x378], sizeof(table2));
+            func_8003AA34((const char*)table2[30]);
+            u32 sum = 0;
+            for (u8 j = 2; j < flag; j++) {
+                u32 p = table2[j - 1];
+                if (p != 0) {
+                    void* fp2 = getFP__FPCc((const char*)p);
+                    sum += func_8003B1EC((u32)fp2) * 0x240;
+                }
+            }
+            sum += baseOff;
+            u32 addr = sum + i2 + 1;
+            if (func_8009EBE8(addr) == 0) {
+                u32 table3[35];
+                memcpy(table3, &lbl_eu_80500108[0x2F0], sizeof(table3));
+                func_8003AA34((const char*)table3[34]);
+                u32 sum2 = 0;
+                for (u8 j = 2; j < flag; j++) {
+                    u32 p = table3[j - 1];
+                    if (p != 0) {
+                        void* fp2 = getFP__FPCc((const char*)p);
+                        sum2 += func_8003B1EC((u32)fp2) * 0x240;
+                    }
+                }
+                sum2 += baseOff;
+                func_8009EB94(sum2 + i2 + 1, 1);
+            }
+        }
+    }
+}
+
+extern "C" void func_8013B1C4(u32 v) {
+    if (v == 0) return;
+    if (v > 0x1D) return;
+    u32 table[35];
+    memcpy(table, &lbl_eu_805005A8, sizeof(table));
+    func_8003AA34((const char*)table[34]);
+    u32 sum = 0;
+    for (u8 i = 2; i < v; i++) {
+        u32 p = table[i - 1];
+        if (p != 0) {
+            void* fp = getFP__FPCc((const char*)p);
+            sum += func_8003B1EC((u32)fp) * 0x240;
+        }
+    }
+    void* fp = getFP__FPCc((const char*)table[v - 1]);
+    u32 n = func_8003B1EC((u32)fp);
+    for (u8 j = 0; j < n; j++) {
+        u32 base = sum + (u32)j * 0x240;
+        for (u16 k = 0; k < 0x240; k++) {
+            func_8009EB94(base + k, 1);
+        }
+    }
+}
+
+extern "C" void func_8013B2D4() {
+    func_80157824(2, 2);
+    func_80157824(4, 2);
+    func_80157824(5, 2);
+    func_80157824(6, 2);
+    func_80157824(7, 2);
+    func_80157824(8, 2);
+    func_80157824(9, 2);
+    func_80157824(3, 2);
+    func_80157824(0xD, 2);
+    func_80157824(0xA, 2);
+    func_80157824(0xB, 0);
+    func_80157824(0xC, 0);
+}
+
+extern "C" f32 func_8013B380(u32 idx) {
+    f32 table[13];
+    memcpy(table, &lbl_eu_80500630, sizeof(table));
+    return table[idx - 1];
+}
+
+extern "C" void func_8013B428__FUl(u32 value) {
+    if (func_8009CF8C(0x20) <= 3) return;
+    u8 m = (u8)(value % 200);
+    if (func_8009CF8C(m + 0x312C) != 0) return;
+
+    u16 n = (u16)((u16)func_8009CF8C(m + 0x40) + 1);
+    func_8009D018(m + 0x40, n);
+
+    int flag = 0;
+    switch (m) {
+    case 0:
+        if (func_8009CF8C(0x320) < 0xFE) break;
+        if (func_8009CF8C(0x321) < 0xFE) break;
+        if (func_8009CF8C(0x322) < 0xFE) break;
+        if (func_8009CF8C(0x323) < 0xFE) break;
+        if (func_8009CF8C(0x324) >= 0xFE) flag = 1;
+        break;
+    case 0x79: if (n == 0x1) flag = 1; break;
+    case 0x7A: if (n == 0xFA) flag = 1; break;
+    case 0x7B: if (n == 0x1F4) flag = 1; break;
+    case 0x7C: if (n == 0x1) flag = 1; break;
+    case 0x7D: if (n == 0x3) flag = 1; break;
+    case 0x7E: if (n == 0x1) flag = 1; break;
+    case 0x7F: if (n == 0x5) flag = 1; break;
+    case 0x80: if (n == 0x1) flag = 1; break;
+    case 0x86: if (n == 0x15) flag = 1; break;
+    case 0x87: if (n == 0x14) flag = 1; break;
+    case 0x89: if (n == 0x14) flag = 1; break;
+    case 0x8B: if (n == 0x1E) flag = 1; break;
+    case 0x8C: if (n == 0x14) flag = 1; break;
+    case 0x8D: if (n == 0x1E) flag = 1; break;
+    case 0x9F: if (n == 0xA) flag = 1; break;
+    case 0xA0: if (n == 0x32) flag = 1; break;
+    case 0xA1: if (n == 0x64) flag = 1; break;
+    case 0xA2: if (n == 0xC8) flag = 1; break;
+    case 0xA9:
+        for (m = 1; m <= 5; m++) {
+            if (func_8009CF8C(m + 0x21) < 0x1F40) return;
+        }
+        flag = 1;
+        break;
+    case 0xB4: if (n == 0x1) flag = 1; break;
+    case 0xB5: if (n == 0xA) flag = 1; break;
+    case 0xB6: if (n == 0x64) flag = 1; break;
+    case 0xB7: if (n == 0x64) flag = 1; break;
+    case 0xB8: if (n == 0x12C) flag = 1; break;
+    case 0xBB: if (n == 0x1) flag = 1; break;
+    case 0xBC: if (n == 0x14) flag = 1; break;
+    case 0xBD: if (n == 0x64) flag = 1; break;
+    default: flag = 1; break;
+    }
+    if (flag) {
+        func_800826F0__Q22cf13CfGameManagerFv(m);
+    }
+}
 
 extern u8 lbl_eu_8066407F;
 u8 code80135FDC_setByte_6407F(u8 val) { lbl_eu_8066407F = val; return val; }
@@ -1245,7 +2351,32 @@ u8 code80135FDC_setByte_6407F(u8 val) { lbl_eu_8066407F = val; return val; }
 extern u8 lbl_eu_8066407F;
 u8 code80135FDC_getByte_6407F() { return lbl_eu_8066407F; }
 
-void func_8013B88C(){}
+extern "C" void func_8013B88C(u8 v) {
+    if (v == 0) return;
+    if (v > 0x1D) return;
+    void* fp = getFP__FPCc(&lbl_eu_80500664[0x15]);
+    int n = func_8003B1EC((u32)fp);
+    u8 count = 0;
+    u8 good = 0;
+    for (int i = 1; i <= n; i++) {
+        u8 c = 0;
+        if (fp != 0) {
+            func_8003AA34((const char*)fp);
+            void* r = getBdatStringColumnValue(fp, &lbl_eu_80500664[0x0F],
+                                               (const char*)(u32)i);
+            c = *(u8*)&r;
+        }
+        if (c == v) {
+            count++;
+            if (func_8009CF8C(i + 0x20C8) != 0) {
+                good++;
+            }
+        }
+    }
+    if (count == good) {
+        func_8013B1C4(v);
+    }
+}
 
 unsigned char code80135FDC_postIncByte_64080() {
     extern unsigned char lbl_eu_80664080;
@@ -1265,15 +2396,92 @@ u8 func_8013B980() {
 extern u8 lbl_eu_80664080;
 u8 code80135FDC_getByte_64080() { return lbl_eu_80664080; }
 
-void func_8013B9AC(){}
+extern "C" int func_8013B9AC(void* self, void* arg) {
+    CAnimListOwnerIf* owner = (CAnimListOwnerIf*)self;
+    if (owner->_v058() != 0) return 1;
+    u8 n = owner->_v064();
+    for (u8 i = 0; i < n; i++) {
+        CAnimItemIf* item = (CAnimItemIf*)owner->_v06C(i);
+        if (item->_v024(arg) != 0) return 1;
+    }
+    void* listAnchor = (char*)self + 0x14;
+    void* current = *(void**)listAnchor;
+    while (current != listAnchor) {
+        if (current == NULL) {
+            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D,
+                                       (const char*)lbl_eu_8052CB1C);
+        }
+        void* child = (char*)current - 4;
+        if (child == NULL) {
+            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193,
+                                       (const char*)lbl_eu_8052E4C0);
+        }
+        if (func_8013B9AC(child, arg) != 0) return 1;
+        current = *(void**)current;
+    }
+    return 0;
+}
 
-void func_8013BAD8(){}
+extern "C" void func_8013BAD8(void* self, void* arg, f32 val) {
+    CAnimListOwnerIf* owner = (CAnimListOwnerIf*)self;
+    void* r0 = owner->_v058();
+    if (r0 != 0) {
+        *(f32*)(*(u32*)((u8*)r0 + 8) + 0x10) = val;
+    }
+    u8 n = owner->_v064();
+    for (u8 i = 0; i < n; i++) {
+        CAnimItemIf* item = (CAnimItemIf*)owner->_v06C(i);
+        if (item->_v024(arg) != 0) {
+            *(f32*)(*(u32*)((u8*)item + 8) + 0x10) = val;
+        }
+    }
+    void* listAnchor = (char*)self + 0x14;
+    void* current = *(void**)listAnchor;
+    while (current != listAnchor) {
+        if (current == NULL) {
+            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D,
+                                       (const char*)lbl_eu_8052CB1C);
+        }
+        void* child = (char*)current - 4;
+        if (child == NULL) {
+            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193,
+                                       (const char*)lbl_eu_8052E4C0);
+        }
+        func_8013BAD8(child, arg, val);
+        current = *(void**)current;
+    }
+}
 
-void func_8013BC0C(){}
+extern "C" int func_8013BC0C(void* self, void* arg) {
+    void* t = (void*)func_8013B9AC(self, arg);
+    if (t != 0) {
+        nw4r::lyt::AnimTransform* anim = *(nw4r::lyt::AnimTransform**)((u8*)t + 8);
+        f32 f = *(f32*)((u8*)anim + 0x10);
+        u16 fs = anim->GetFrameSize();
+        f32 limit = (f32)(u32)(fs - 1);
+        if (f >= limit) return 1;
+        f32 d = f + lbl_eu_806672E8;
+        if (d > limit) d = limit;
+        func_8013BAD8(self, arg, d);
+        return 0;
+    }
+    return 1;
+}
 
-void func_8013BCD4(){}
+extern "C" void func_8013BCD4(void* self, void* arg) {
+    if (func_8013B9AC(self, arg) != 0) {
+        func_8013BAD8(self, arg, lbl_eu_806672F0);
+    }
+}
 
-void func_8013BD24(){}
+extern "C" void func_8013BD24(void* self, void* arg) {
+    void* t = (void*)func_8013B9AC(self, arg);
+    if (t != 0) {
+        nw4r::lyt::AnimTransform* anim = *(nw4r::lyt::AnimTransform**)((u8*)t + 8);
+        f32 f = (f32)(u32)(anim->GetFrameSize() - 1);
+        func_8013BAD8(self, arg, f);
+    }
+}
 
 
 extern u8 lbl_eu_80664058;
@@ -1325,7 +2533,7 @@ u32 code80135FDC_getWord_64060(void) {
 extern u8 lbl_eu_806621F0;
 u8 code80135FDC_getByte_621F0() { return lbl_eu_806621F0; }
 
-void* getInstance__14Class_80296898Fv();
+extern "C" void* getInstance__14Class_80296898Fv();
 
 int func_8013BE58(){
     unsigned char byte = ((unsigned char*)getInstance__14Class_80296898Fv())[0x11];
@@ -1333,20 +2541,17 @@ int func_8013BE58(){
 }
 
 bool func_8013BE88(){
-    extern void* getInstance__14Class_80296898Fv();
     void* inst = getInstance__14Class_80296898Fv();
     unsigned char b = ((unsigned char*)inst)[0x10];
     return b != 0;
 }
 
 int func_8013BEB8(){
-    extern void* getInstance__14Class_80296898Fv();
     unsigned char* p = (unsigned char*)getInstance__14Class_80296898Fv();
     return p[0x21] != 0 ? 1 : 0;
 }
 
 int func_8013BEE8() {
-    void* getInstance__14Class_80296898Fv();
     void* inst = getInstance__14Class_80296898Fv();
     u8 b = *(u8*)((u32)inst + 0x20);
     return (b != 0) ? 1 : 0;
@@ -1358,21 +2563,31 @@ void code80135FDC_setByte_64064() { lbl_eu_80664064 = 1; }
 extern u8 lbl_eu_80664064;
 void func_eu_8013C8E8() { lbl_eu_80664064 = 0; }
 
-void func_eu_8013C8F4(){}
+extern "C" int func_eu_8013C8F4() {
+    if (lbl_eu_80664064 != 0) return 1;
+    return ((u8*)getInstance__14Class_80296898Fv())[0x30] != 0;
+}
 
-void func_8013BF48(){}
+extern "C" int func_8013BF48() {
+    return ((u8*)getInstance__14Class_80296898Fv())[0x23] != 0;
+}
 
-void func_8013BF78(){}
+extern "C" int func_8013BF78() {
+    return ((u8*)getInstance__14Class_80296898Fv())[0x31] != 0;
+}
 
 int func_8013BFA8(){
-    void* getInstance__14Class_80296898Fv();
     void* obj = getInstance__14Class_80296898Fv();
     return (static_cast<unsigned char*>(obj)[0x22] != 0) ? 1 : 0;
 }
 
-void func_8013BFD8(){}
+extern "C" int func_8013BFD8() {
+    return ((u8*)getInstance__14Class_80296898Fv())[0x24] != 0;
+}
 
-void func_8013C008(){}
+extern "C" int func_8013C008() {
+    return ((u8*)getInstance__14Class_80296898Fv())[0x25] != 0;
+}
 
 int func_8013C038(void* obj) {
     extern int func_8009CF8C(void*);

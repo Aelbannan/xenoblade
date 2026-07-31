@@ -3017,3 +3017,49 @@ limit (4096) for the `while(size>=4){MPS_CheckDelim…}` loop, and
 `CopyUsrSj`/`CopyDstBuft` on the `has_indirect_calls` gate (vtable `bctrl` +
 `lbl_eu_80619BAC` function pointer) — all FULL_MATCH-only without external
 unblocking.
+
+## CriWare ADX LSC lsc.c — struct-typed stores stop zero-constant CSE merge (US, GC/3.0a5.2)
+
+`libs/CriWare/src/adx/lsc/lsc.c` — `lsc_Create` (us-80394f98) and `LSC_Start`
+(us-80395548) reached **FULL_MATCH** (100%, SMT-equivalent, size fit);
+`LSC_Destroy` (us-8039512c) is 96.8% CODE_MATCH (see soft-cap below).
+
+**Breakthrough — two zero constants CSE-merge into a 4th callee-saved register:**
+`lsc_Create` writes `entry->stat = 0` (stb, before the vtable getsize calls) and
+zeroes 16 `LSC_STM` handles (stw, after the calls). With raw byte-offset stores
+(`*(void **)(entry + 0x50 + i * 0x20) = NULL`) MWCC CSE-merges the two `0`
+constants into ONE value whose live range spans the calls → allocator keeps it
+in callee-saved r28/r29 → extra `stw r28` prologue, ~95% fuzzy, unreachable.
+Ruled out: every zero spelling (`0`, `(s8)0`, `'\0'`, `0u`, `0L`, `NULL`,
+`(void *)0`), volatile store, `#pragma scheduling/peephole/opt_propagation/
+global_optimizer/optimization_level` toggles, `-O4,s`, mwcc GC/2.6–3.0a5.2 and
+Wii/1.0–1.7 — all still merge. **The fix: access the fields through a real C
+struct** (`LscEntry`/`LscStm` typedefs with byte-exact padding; store via
+`entry->stms[i].hndl = NULL`). With struct-typed stores the two zeros stay
+separate IR values (r0 short-lived for the stb, r5 rematerialized after the
+calls) and the function hits 100%.
+
+**Supporting shape details (FULL_MATCH recipe):**
+- Free-slot search loop: induction pointer `p` advanced in the update clause
+  with the counter `i` kept for the entry recompute —
+  `for (i = 0, p = base; i < LSE_MAX; p += LSE_SIZE, i++)` with
+  `entry = &base[i * LSE_SIZE]` inside. Update order `p += LSE_SIZE, i++`
+  (pointer first) matches retail's back-edge schedule; the counter-first form
+  swaps `addi` order. Direct-subscript (`base[i*LSE_SIZE]`) gets auto-unrolled
+  ×8 by `-O4,p`; the p-form stays a clean `mtctr`/`bdnz` loop.
+- Flow-limit default `(total * 8) / 10` reproduces the exact
+  `rlwinm <<3; lis 0x6666; addi 0x6667; mulhw; srawi 2; srwi 31; add` magic
+  (≈0.8×total; NOT `total*2/3` and not `total*4/5` — different shift shapes).
+- `total = size2 + size1` (second-call result first) → `add r4, r3, r30`.
+
+**LSC_Destroy soft-cap (2 instr):** tail `stb r0, 0(r30)` (flag=0) vs
+`or r3, r30, r30` (memset ptr arg) — retail emits stb first, MWCC schedules
+the arg copy first. Same class as the li-float family (lines 242/876); ~20
+source shapes ruled out. EQUIVALENT_MATCH additionally gated by unaccepted
+callees `ADXSTM_Stop` (us-80384784) and `LSC_CallErrFunc_` (us-803949ec).
+
+**LSC_Start/LSC_Destroy structure note:** retail inlines the entire LSC_Stop
+body (no `bl LSC_Stop`; the standalone LSC_Stop exists separately). Duplicating
+the verified 0/52-mismatch LSC_Stop body text verbatim reproduces the inline
+copies exactly — including the leading `LSC_Enter()` (A') and the body's own
+`LSC_Leave()` (D') whose block membership determines the skip-branch target.

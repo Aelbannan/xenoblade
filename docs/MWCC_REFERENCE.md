@@ -2805,3 +2805,37 @@ identical). All six are additionally blocked from EQUIVALENT_MATCH by the
 registry gates: `has_indirect_calls=True` (vtbl `bcctrl` in retail asm) or
 unaccepted callee chains (`ADXERR_CallErrFunc1_`→`SVM_CallErr`,
 `adxt_GetTime`, ADXCRS_*), so only 100% static (FULL_MATCH) can close them.
+
+## CriWare sj_rbf — memset reloc name + ADX error-message fixed point (US)
+
+**Files:** `libs/CriWare/src/adx/sj/sj_rbf.c` (also applies to `sj_mem.c`/`sj_uni.c`).
+
+**Fix 1 (memset reloc name):** MWCC emits a `R_PPC_REL24 __builtin_memset` reloc for
+`__builtin_memset(...)`, but retail links against the `memset` symbol — objdiff counts
+the name difference (99.78% instead of 100%). Declare
+`extern void *memset(void *, int, unsigned long);` and call `memset(...)` to get the
+retail reloc name. Applied to `SJRBF_Init`/`SJRBF_Finish` → both FULL_MATCH (they were
+byte-identical except the reloc name). Same for `SJRBF_Destroy`'s `memset(self,0,0x48)`.
+
+**Pattern (ADX error message construction):** every sj_* error path is
+`CRICRW_Strcpy(buf, 0x40, lbl + <code_off>)` then
+`CRICRW_Strcat(buf, 0x40, lbl + <desc_off>)` — the **error code string first, the
+" : description" second** (message = `E2004090xxx : ...`). All 70 SDK call sites
+(sj_rbf/mem/uni) confirm. The old source had them swapped. Buffer stack slots follow
+MWCC's first-declared→high-slot rule; retail assigns the NULL-error buffer the low slot
+(`sp+8`) in the `SJRBF_*` wrappers but the high slot (`sp+0x48`) in the internal
+`sjrbf_*` functions — declare the buffers at function scope in the matching order.
+
+**Soft-cap (desc-hoist scheduling fixed point):** retail precomputes the strcat src
+(`base + desc_off`) into `r31` **before** `bl CRICRW_Strcpy` (`addi r31,r5,12` …
+`mr r5,r31`), keeping the derived constant across the call; every MWCC build in this
+repo (27 versions × -O4,p/-O4,s/-O3, all `-proc` models, scheduling/peephole pragmas,
+`-opt *` variants, ~15 source forms incl. desc locals / static-inline helpers / nested
+calls / `&lbl[i]` / u32 casts) instead keeps `base` in `r31` and computes the offset
+after the call (1 instr shorter per error path, 8 bytes/function). Functions land at
+~84–85% match / 87.8% fuzzy. EQUIVALENT_MATCH additionally blocked: the SMT check is
+`inconclusive_abstraction` on `exit.target` (LR restored from `148(sp)` crosses
+FULL_MATCH opaque-by-policy callees `SJCRS_Lock`/`Unlock`/`Strcpy`/`Strcat` whose
+abstract memory transitions make the exit LR incomparable; §2.7.5). Needs either a
+matching MWCC build, or an engine change for private-stack-aware exit.target comparison
+of entry-frame LR restores.

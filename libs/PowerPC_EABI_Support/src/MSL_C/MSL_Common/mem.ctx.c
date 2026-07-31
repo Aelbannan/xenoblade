@@ -164,19 +164,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -869,12 +861,4 @@ int memcmp(const void* src1, const void* src2, size_t n)
     }
 
     return 0;
-}
-
-//unused
-void memcpy_s(){
-}
-
-//unused
-void memmove_s(){
 }

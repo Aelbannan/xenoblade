@@ -126,11 +126,11 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     char buf[0x50];
     char *p;
     u32 hdr_major;
-    u32 hdr_minor;
     u32 t1;
+    u32 hdr_minor;
     u32 t2;
     u32 ok;
-    char c;
+    int c;
 
     *out1 = 0;
     *out2 = 0;
@@ -141,8 +141,11 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     t1 = 0;
     t2 = 0;
     p = strstr(buf, lbl_eu_8051CEE0 + 0x19);
-    if (p != NULL) {
+    if (p == NULL) {
+        ok = 0;
+    } else {
         p += 4;
+        t1 = 0;
         for (;;) {
             c = *p;
             if (c == '.' || c == ' ' || c == 0) {
@@ -158,8 +161,7 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             t1 = t1 * 10 + c - '0';
             p++;
         }
-        p++;
-        for (;;) {
+        for (p++, t2 = 0; ; ) {
             c = *p;
             if (c == '.' || c == ' ' || c == 0) {
                 break;
@@ -175,8 +177,6 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             p++;
         }
         ok = 1;
-    } else {
-        ok = 0;
     }
     if (ok == 0) {
         return 0;
@@ -386,28 +386,37 @@ int VER1_AnlyElemLayer(void *work, u32 stm_id, u32 *out) {
 }
 
 int VER1_AnlyElemChNum(void *work, u32 stm_id, u32 *out) {
-    u8 *found;
-    u8 *cur;
     int i;
+    u8 *cur;
+    u8 *found;
     u32 v;
+    u32 bit;
+    u32 ok;
 
     *out = 0;
     v = *(u32 *)work + 1;
-    if (v != 2) {
-        return 0;
+    if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
+        bit = 0;
+    } else {
+        v = *(u32 *)((u8 *)work + 0xC);
+        ok = ((int)v == 0x6B || (int)v >= 0x6E);
+        bit = ok != 0;
     }
-    v = *(u32 *)((u8 *)work + 0xC);
-    if (v != 0x6B && v < 0x6E) {
-        return 0;
-    }
-    found = NULL;
-    cur = ((u8 **)work)[1] + 0x180;
-    for (i = 0; i < 0x1A; i++) {
-        if ((u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
-            found = cur;
-            break;
-        }
-        cur += 0x40;
+    if (bit == 0) {
+        found = NULL;
+    } else {
+        found = NULL;
+        i = 0;
+        cur = ((u8 **)work)[1] + 0x180;
+        do {
+            v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+            if (v == stm_id) {
+                found = cur;
+                break;
+            }
+            i++;
+            cur += 0x40;
+        } while (i < 0x1A);
     }
     if (found == NULL) {
         return 0;
@@ -417,32 +426,37 @@ int VER1_AnlyElemChNum(void *work, u32 stm_id, u32 *out) {
 }
 
 int VER1_AnlyElemSmpHz(void *work, u32 stm_id, u32 *out) {
-    u8 *found;
-    u8 *cur;
     int i;
+    u8 *cur;
+    u8 *found;
     u32 v;
+    u32 bit;
     u32 ok;
 
     *out = 0;
-    ok = 0;
     v = *(u32 *)work + 1;
-    if (__cntlzw(v ^ 2) != 0) {
+    if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
+        bit = 0;
+    } else {
         v = *(u32 *)((u8 *)work + 0xC);
-        if (v == 0x6B || v >= 0x6E) {
-            ok = 1;
-        }
+        ok = ((int)v == 0x6B || (int)v >= 0x6E);
+        bit = ok != 0;
     }
-    if (!ok) {
-        return 0;
-    }
-    found = NULL;
-    cur = ((u8 **)work)[1] + 0x180;
-    for (i = 0; i < 0x1A; i++) {
-        if ((u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
-            found = cur;
-            break;
-        }
-        cur += 0x40;
+    if (bit == 0) {
+        found = NULL;
+    } else {
+        found = NULL;
+        i = 0;
+        cur = ((u8 **)work)[1] + 0x180;
+        do {
+            v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+            if (v == stm_id) {
+                found = cur;
+                break;
+            }
+            i++;
+            cur += 0x40;
+        } while (i < 0x1A);
     }
     if (found == NULL) {
         return 0;
@@ -506,32 +520,37 @@ int VER1_AnlyElemCodecVid(void *work, u32 stm_id, u32 *out) {
 }
 
 int VER1_AnlyElemBitRate(void *work, u32 stm_id, u32 *out) {
-    u8 *found;
-    u8 *cur;
     int i;
+    u8 *cur;
+    u8 *found;
     u32 v;
+    u32 bit;
     u32 ok;
 
     *out = 0;
-    ok = 0;
     v = *(u32 *)work + 1;
-    if (__cntlzw(v ^ 2) != 0) {
+    if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
+        bit = 0;
+    } else {
         v = *(u32 *)((u8 *)work + 0xC);
-        if (v == 0x6B || v >= 0x6E) {
-            ok = 1;
-        }
+        ok = ((int)v == 0x6B || (int)v >= 0x6E);
+        bit = ok != 0;
     }
-    if (!ok) {
-        return 0;
-    }
-    found = NULL;
-    cur = ((u8 **)work)[1] + 0x180;
-    for (i = 0; i < 0x1A; i++) {
-        if ((u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
-            found = cur;
-            break;
-        }
-        cur += 0x40;
+    if (bit == 0) {
+        found = NULL;
+    } else {
+        found = NULL;
+        i = 0;
+        cur = ((u8 **)work)[1] + 0x180;
+        do {
+            v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+            if (v == stm_id) {
+                found = cur;
+                break;
+            }
+            i++;
+            cur += 0x40;
+        } while (i < 0x1A);
     }
     if (found == NULL) {
         return 0;
@@ -583,32 +602,37 @@ int VER1_AnlyElemPicSz(void *work, u32 stm_id, u32 *out_w, u32 *out_h) {
 }
 
 int VER1_AnlyElemPicRate(void *work, u32 stm_id, u32 *out) {
-    u8 *found;
-    u8 *cur;
     int i;
+    u8 *cur;
+    u8 *found;
     u32 v;
+    u32 bit;
     u32 ok;
 
     *out = 0;
-    ok = 0;
     v = *(u32 *)work + 1;
-    if (__cntlzw(v ^ 2) != 0) {
+    if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
+        bit = 0;
+    } else {
         v = *(u32 *)((u8 *)work + 0xC);
-        if (v == 0x6B || v >= 0x6E) {
-            ok = 1;
-        }
+        ok = ((int)v == 0x6B || (int)v >= 0x6E);
+        bit = ok != 0;
     }
-    if (!ok) {
-        return 0;
-    }
-    found = NULL;
-    cur = ((u8 **)work)[1] + 0x180;
-    for (i = 0; i < 0x1A; i++) {
-        if ((u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
-            found = cur;
-            break;
-        }
-        cur += 0x40;
+    if (bit == 0) {
+        found = NULL;
+    } else {
+        found = NULL;
+        i = 0;
+        cur = ((u8 **)work)[1] + 0x180;
+        do {
+            v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+            if (v == stm_id) {
+                found = cur;
+                break;
+            }
+            i++;
+            cur += 0x40;
+        } while (i < 0x1A);
     }
     if (found == NULL) {
         return 0;
@@ -619,32 +643,37 @@ int VER1_AnlyElemPicRate(void *work, u32 stm_id, u32 *out) {
 }
 
 int VER1_AnlyFtrColType(void *work, u32 stm_id, u32 *out) {
-    u8 *found;
-    u8 *cur;
     int i;
+    u8 *cur;
+    u8 *found;
     u32 v;
+    u32 bit;
     u32 ok;
 
     *out = 0;
-    ok = 0;
     v = *(u32 *)work + 1;
-    if (__cntlzw(v ^ 2) != 0) {
+    if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
+        bit = 0;
+    } else {
         v = *(u32 *)((u8 *)work + 0xC);
-        if (v == 0x6B || v >= 0x6E) {
-            ok = 1;
-        }
+        ok = ((int)v == 0x6B || (int)v >= 0x6E);
+        bit = ok != 0;
     }
-    if (!ok) {
-        return 0;
-    }
-    found = NULL;
-    cur = ((u8 **)work)[1] + 0x180;
-    for (i = 0; i < 0x1A; i++) {
-        if ((u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
-            found = cur;
-            break;
-        }
-        cur += 0x40;
+    if (bit == 0) {
+        found = NULL;
+    } else {
+        found = NULL;
+        i = 0;
+        cur = ((u8 **)work)[1] + 0x180;
+        do {
+            v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+            if (v == stm_id) {
+                found = cur;
+                break;
+            }
+            i++;
+            cur += 0x40;
+        } while (i < 0x1A);
     }
     if (found == NULL) {
         return 0;
@@ -654,32 +683,37 @@ int VER1_AnlyFtrColType(void *work, u32 stm_id, u32 *out) {
 }
 
 int VER1_AnlyFtrPicType(void *work, u32 stm_id, u32 *out) {
-    u8 *found;
-    u8 *cur;
     int i;
+    u8 *cur;
+    u8 *found;
     u32 v;
+    u32 bit;
     u32 ok;
 
     *out = 0;
-    ok = 0;
     v = *(u32 *)work + 1;
-    if (__cntlzw(v ^ 2) != 0) {
+    if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
+        bit = 0;
+    } else {
         v = *(u32 *)((u8 *)work + 0xC);
-        if (v == 0x6B || v >= 0x6E) {
-            ok = 1;
-        }
+        ok = ((int)v == 0x6B || (int)v >= 0x6E);
+        bit = ok != 0;
     }
-    if (!ok) {
-        return 0;
-    }
-    found = NULL;
-    cur = ((u8 **)work)[1] + 0x180;
-    for (i = 0; i < 0x1A; i++) {
-        if ((u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
-            found = cur;
-            break;
-        }
-        cur += 0x40;
+    if (bit == 0) {
+        found = NULL;
+    } else {
+        found = NULL;
+        i = 0;
+        cur = ((u8 **)work)[1] + 0x180;
+        do {
+            v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+            if (v == stm_id) {
+                found = cur;
+                break;
+            }
+            i++;
+            cur += 0x40;
+        } while (i < 0x1A);
     }
     if (found == NULL) {
         return 0;
@@ -689,104 +723,121 @@ int VER1_AnlyFtrPicType(void *work, u32 stm_id, u32 *out) {
 }
 
 int VER1_AnlyFtrFixFlg(void *work, u32 stm_id, u32 *out) {
-    u8 *found;
-    u8 *cur;
     int i;
+    u8 *cur;
+    u8 *found;
     u32 v;
+    u32 bit;
     u32 ok;
 
     *out = 0;
-    ok = 0;
     v = *(u32 *)work + 1;
-    if (__cntlzw(v ^ 2) != 0) {
+    if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
+        bit = 0;
+    } else {
         v = *(u32 *)((u8 *)work + 0xC);
-        if (v == 0x6B || v >= 0x6E) {
-            ok = 1;
-        }
+        ok = ((int)v == 0x6B || (int)v >= 0x6E);
+        bit = ok != 0;
     }
-    if (!ok) {
-        return 0;
-    }
-    found = NULL;
-    cur = ((u8 **)work)[1] + 0x180;
-    for (i = 0; i < 0x1A; i++) {
-        if ((u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
-            found = cur;
-            break;
-        }
-        cur += 0x40;
+    if (bit == 0) {
+        found = NULL;
+    } else {
+        found = NULL;
+        i = 0;
+        cur = ((u8 **)work)[1] + 0x180;
+        do {
+            v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+            if (v == stm_id) {
+                found = cur;
+                break;
+            }
+            i++;
+            cur += 0x40;
+        } while (i < 0x1A);
     }
     if (found == NULL) {
         return 0;
     }
     v = (u32)SFHLOCAL_GetNbyteL(found + 0x23, SFHLOCAL_GetSizeofMember(0x23, 0x24));
-    *out = v & 1;
+    v &= 1;
+    *out = v;
     return 1;
 }
 
 int VER1_AnlyFtrShcFixFlg(void *work, u32 stm_id, u32 *out) {
-    u8 *found;
-    u8 *cur;
     int i;
+    u8 *cur;
+    u8 *found;
     u32 v;
+    u32 bit;
     u32 ok;
 
     *out = 0;
-    ok = 0;
     v = *(u32 *)work + 1;
-    if (__cntlzw(v ^ 2) != 0) {
+    if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
+        bit = 0;
+    } else {
         v = *(u32 *)((u8 *)work + 0xC);
-        if (v == 0x6B || v >= 0x6E) {
-            ok = 1;
-        }
+        ok = ((int)v == 0x6B || (int)v >= 0x6E);
+        bit = ok != 0;
     }
-    if (!ok) {
-        return 0;
-    }
-    found = NULL;
-    cur = ((u8 **)work)[1] + 0x180;
-    for (i = 0; i < 0x1A; i++) {
-        if ((u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
-            found = cur;
-            break;
-        }
-        cur += 0x40;
+    if (bit == 0) {
+        found = NULL;
+    } else {
+        found = NULL;
+        i = 0;
+        cur = ((u8 **)work)[1] + 0x180;
+        do {
+            v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+            if (v == stm_id) {
+                found = cur;
+                break;
+            }
+            i++;
+            cur += 0x40;
+        } while (i < 0x1A);
     }
     if (found == NULL) {
         return 0;
     }
     v = (u32)SFHLOCAL_GetNbyteL(found + 0x23, SFHLOCAL_GetSizeofMember(0x23, 0x24));
-    *out = (v >> 4) & 1;
+    v = (v >> 4) & 1;
+    *out = v;
     return 1;
 }
 
 int VER1_AnlyFtrExpand(void *work, u32 stm_id, u32 *out) {
-    u8 *found;
-    u8 *cur;
     int i;
+    u8 *cur;
+    u8 *found;
     u32 v;
+    u32 bit;
     u32 ok;
 
     *out = 0;
-    ok = 0;
     v = *(u32 *)work + 1;
-    if (__cntlzw(v ^ 2) != 0) {
+    if ((v << __cntlzw(v ^ 2)) >> 31 == 0) {
+        bit = 0;
+    } else {
         v = *(u32 *)((u8 *)work + 0xC);
-        if (v == 0x6B || v >= 0x6E) {
-            ok = 1;
-        }
+        ok = ((int)v == 0x6B || (int)v >= 0x6E);
+        bit = ok != 0;
     }
-    if (!ok) {
-        return 0;
-    }
-    found = NULL;
-    cur = ((u8 **)work)[1] + 0x180;
-    for (i = 0; i < 0x1A; i++) {
-        if ((u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
-            found = cur;
-            break;
-        }
-        cur += 0x40;
+    if (bit == 0) {
+        found = NULL;
+    } else {
+        found = NULL;
+        i = 0;
+        cur = ((u8 **)work)[1] + 0x180;
+        do {
+            v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+            if (v == stm_id) {
+                found = cur;
+                break;
+            }
+            i++;
+            cur += 0x40;
+        } while (i < 0x1A);
     }
     if (found == NULL) {
         return 0;

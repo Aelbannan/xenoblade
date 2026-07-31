@@ -81,11 +81,3 @@ int memcmp(const void* src1, const void* src2, size_t n)
 
     return 0;
 }
-
-//unused
-void memcpy_s(){
-}
-
-//unused
-void memmove_s(){
-}

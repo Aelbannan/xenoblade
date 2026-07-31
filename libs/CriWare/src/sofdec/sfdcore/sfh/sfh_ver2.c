@@ -124,7 +124,10 @@ int VER2_IsSfdHeader(void *work, int *out) {
             if (c == '.' || c == ' ' || c == 0) {
                 break;
             }
-            u32 d = (u32)(c - '0') <= 9;
+            u32 d = 0;
+            if ((u32)(c - '0') <= 9) {
+                d = 1;
+            }
             if (d == 0) {
                 break;
             }
@@ -137,7 +140,10 @@ int VER2_IsSfdHeader(void *work, int *out) {
             if (c == '.' || c == ' ' || c == 0) {
                 break;
             }
-            u32 d = (u32)(c - '0') <= 9;
+            u32 d = 0;
+            if ((u32)(c - '0') <= 9) {
+                d = 1;
+            }
             if (d == 0) {
                 break;
             }
@@ -193,22 +199,25 @@ int VER2_IsEffFtrInf(void *work, int stm_id, u32 *out) {
     if (f == 0) {
         return 0;
     }
-    *out = (SFHLOCAL_GetNbyteB(f + 0x20, SFHLOCAL_GetSizeofMember(0x20, 0x21)) != 0);
-    return 1;
+    u32 r = (SFHLOCAL_GetNbyteB(f + 0x20, SFHLOCAL_GetSizeofMember(0x20, 0x21)) != 0);
+    *out = r;
+    return r;
 }
 
 int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     char buf[0x40];
     char *p;
-    u32 t1 = 0;
-    u32 t2 = 0;
-    u32 ok = 0;
+    u32 t1;
+    u32 t2;
+    u32 ok;
     char c;
 
     *out1 = 0;
     *out2 = 0;
     memset(buf, 0, 0x40);
     memcpy(buf, ((u8 **)work)[1] + 0x40, 0x40);
+    t1 = 0;
+    t2 = 0;
     p = strstr(buf, lbl_eu_8051CF00 + 0x19);
     if (p != NULL) {
         p += 4;
@@ -217,7 +226,10 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             if (c == '.' || c == ' ' || c == 0) {
                 break;
             }
-            u32 d = (u32)(c - '0') <= 9;
+            u32 d = 0;
+            if ((u32)(c - '0') <= 9) {
+                d = 1;
+            }
             if (d == 0) {
                 break;
             }
@@ -230,7 +242,10 @@ int VER2_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             if (c == '.' || c == ' ' || c == 0) {
                 break;
             }
-            u32 d = (u32)(c - '0') <= 9;
+            u32 d = 0;
+            if ((u32)(c - '0') <= 9) {
+                d = 1;
+            }
             if (d == 0) {
                 break;
             }
@@ -274,7 +289,7 @@ int VER2_AnlyHdrSiz(const unsigned int *hdr, int *out_size) {
     int sz;
     *out_size = 0;
     sz = SFHLOCAL_GetSizeofMember(0x12, 0x14);
-    *out_size = SFHLOCAL_GetNbyteB(hdr[1] + 0x12, sz);
+    *out_size = SFHLOCAL_GetNbyteB((const unsigned char *)hdr[1] + 0x12, sz);
     return 1;
 }
 

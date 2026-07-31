@@ -14,11 +14,13 @@ extern char lbl_eu_8051CEE0[];
 int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2);
 
 int VER1_IsSfdHeader(void *work, int *out) {
+    u8 *src;
     u32 tool_ver;
     u32 tool_sub;
 
     *out = 0;
-    if (memcmp(((u8 **)work)[1] + 0x20, lbl_eu_8051CEE0, 0x18) != 0) {
+    src = ((u8 **)work)[1] + 0x20;
+    if (memcmp(src, lbl_eu_8051CEE0, 0x18) != 0) {
         *(s32 *)work = -1;
         return 0;
     }
@@ -32,14 +34,18 @@ int VER1_IsSfdHeader(void *work, int *out) {
 }
 
 int VER1_IsExistStmId(void *work, u32 stm_id, u32 *out) {
+    u8 *found;
     u8 *cur;
-    u8 *found = NULL;
-    int i = 0;
+    int i;
+    u32 v;
 
     *out = 0;
+    found = NULL;
+    i = 0;
     cur = ((u8 **)work)[1] + 0x180;
     do {
-        if (SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19)) == stm_id) {
+        v = (u32)SFHLOCAL_GetNbyteL(cur + 0x18, SFHLOCAL_GetSizeofMember(0x18, 0x19));
+        if (v == stm_id) {
             found = cur;
             break;
         }
@@ -115,13 +121,13 @@ int VER1_IsEffFtrInf(void *work, u32 stm_id, u32 *out) {
 }
 
 int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
-    char buf[0x20];
+    char buf[0x50];
     char *p;
     u32 hdr_major;
     u32 hdr_minor;
-    u32 t1 = 0;
-    u32 t2 = 0;
-    u32 ok = 0;
+    u32 t1;
+    u32 t2;
+    u32 ok;
     char c;
 
     *out1 = 0;
@@ -130,6 +136,8 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
     hdr_minor = SFHLOCAL_GetNbyteL(((u8 **)work)[1] + 0x39, SFHLOCAL_GetSizeofMember(0x39, 0x3A));
     memset(buf, 0, 0x20);
     memcpy(buf, ((u8 **)work)[1] + 0x60, 0x20);
+    t1 = 0;
+    t2 = 0;
     p = strstr(buf, lbl_eu_8051CEE0 + 0x19);
     if (p != NULL) {
         p += 4;
@@ -138,7 +146,10 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             if (c == '.' || c == ' ' || c == 0) {
                 break;
             }
-            u32 d = (u32)(c - '0') <= 9;
+            u32 d = 0;
+            if ((u32)(c - '0') <= 9) {
+                d = 1;
+            }
             if (d == 0) {
                 break;
             }
@@ -151,7 +162,10 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             if (c == '.' || c == ' ' || c == 0) {
                 break;
             }
-            u32 d = (u32)(c - '0') <= 9;
+            u32 d = 0;
+            if ((u32)(c - '0') <= 9) {
+                d = 1;
+            }
             if (d == 0) {
                 break;
             }
@@ -159,11 +173,13 @@ int VER1_AnlyHdrToolVer(void *work, u32 *out1, u32 *out2) {
             p++;
         }
         ok = 1;
+    } else {
+        ok = 0;
     }
     if (ok == 0) {
         return 0;
     }
-    if (hdr_major * 100 + hdr_minor >= t1 * 100 + t2) {
+    if ((s32)(hdr_major * 100 + hdr_minor) >= (s32)(t1 * 100 + t2)) {
         *out1 = hdr_major;
         *out2 = hdr_minor;
     } else {

@@ -27,11 +27,15 @@ extern "C" {
 // us-804df22c: func_804DAF70
 // Initializes load task data and returns vtable pointer
 void** func_804DAF70(void* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
-    strcpy((char*)data, path);
-    ((u32*)data)[0x10 / 4] = arg2;
-    ((u32*)data)[0x14 / 4] = arg3;
-    ((u8*)data)[0x18] = arg4;
-    ((u8*)data)[0x19] = 0;
+    void* d = data;
+    u32 a2 = arg2;
+    u32 a3 = arg3;
+    u8 a4 = arg4;
+    strcpy((char*)d, path);
+    ((u32*)d)[0x10 / 4] = a2;
+    ((u32*)d)[0x14 / 4] = a3;
+    ((u8*)d)[0x18] = a4;
+    ((u8*)d)[0x19] = 0;
     return &lbl_eu_806659E8;
 }
 

@@ -56,8 +56,9 @@ extern "C" int func_eu_804F9EE0(void* r3, void* r4) {
 }
 
 // us-804f9fa4: sinit_eu_804F9FA4  size=0x18
-// Static initializer: stores address of lbl_eu_80570410 into lbl_eu_80665A98
+// Static initializer: stores address of lbl_eu_80570410 into lbl_eu_80665A98.
+// Best-effort: 16-byte body; retail has 24 bytes with li dest@sda21 + b .+4
+// artifact + store-through-r3 that MWCC cannot reproduce (see stall packet).
 extern "C" void sinit_eu_804F9FA4() {
-    void* volatile *p = (void* volatile*)&lbl_eu_80665A98;
-    *p = lbl_eu_80570410;
+    lbl_eu_80665A98 = lbl_eu_80570410;
 }

@@ -1,6 +1,6 @@
 #include <harness_catalog.h>
 
-void adxhdr_get_base_info(const u8 *src, u8 *dst) {
+void adxhdr_get_base_info(u8 *src, u8 *dst) {
     dst[0] = src[0];
     dst[1] = src[1];
     dst[2] = src[2];
@@ -12,33 +12,27 @@ void adxhdr_get_base_info(const u8 *src, u8 *dst) {
     dst[0x3D] = src[0x0F];
 }
 
-void adxhdr_get_ply_prm(const u8 *src, u8 *dst) {
-    s16 tmp;
-    /* big-endian s16 from src[0..1] */
-    tmp = (s16)((src[0] << 8) | src[1]);
-    *(s16 *)(dst + 0) = tmp;
-    if (tmp > 0) {
+void adxhdr_get_ply_prm(u8 *src, u8 *dst) {
+    u16 tmp = (u16)((src[0] << 8) | src[1]);
+    *(u16 *)(dst + 0) = tmp;
+    if ((s16)tmp > 0) {
         *(s16 *)(dst + 2) = (s16)((src[2] << 8) | src[3]);
     }
-    dst[4] = src[4];
-    if ((s8)src[4] > 0) {
+    if ((s8)(dst[4] = src[4]) > 0) {
         dst[5] = src[5];
     }
-    dst[6] = src[6];
-    if ((s8)src[6] > 0) {
+    if ((s8)(dst[6] = src[6]) > 0) {
         dst[7] = src[7];
     }
-    dst[8] = src[8];
-    if ((s8)src[8] > 0) {
+    if ((s8)(dst[8] = src[8]) > 0) {
         dst[9] = src[9];
     }
-    dst[10] = src[10];
-    if ((s8)src[10] > 0) {
+    if ((s8)(dst[10] = src[10]) > 0) {
         dst[11] = src[11];
     }
 }
 
-int ADX_DecodeHeader(const u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
+int ADX_DecodeHeader(u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) {
     s32 remaining;
     s32 i, ch, ch_count;
     s32 ch_info_size;
@@ -67,7 +61,7 @@ int ADX_DecodeHeader(const u8 *data, s32 size, s32 *out_data_size, u8 *out_hdr) 
     i = 0;
     remaining = ch_info_size - 0x16;
     {
-        const u8 *p = data + 0x14;
+        u8 *p = data + 0x14;
         if (out_hdr[0x3C] == 4) {
             p += 0x0C;
             remaining -= 0x0C;

@@ -61,6 +61,36 @@ class JumpTablePatternTests(unittest.TestCase):
         self.assertIsNone(candidates[0].bound_imm)
         self.assertIn("missing cmplwi bounds check", candidates[0].notes)
 
+    def test_shift_between_lis_and_addi_real_encoding(self) -> None:
+        # cmplwi r3,8; bgt; lis r4,..@ha; slwi r0,r3,2; addi r4,r4,..@l;
+        # lwzx r4,r4,r0; mtctr r4; bctr
+        instructions = _decode(
+            "28030008 41810014 3c800000 5460103a 38840000 "
+            "7c84002e 7c8903a6 4e800420"
+        )
+        candidates = find_jump_table_candidates(instructions)
+        self.assertEqual(len(candidates), 1)
+        candidate = candidates[0]
+        self.assertEqual(candidate.confidence, "exact-pattern")
+        self.assertEqual(candidate.index_reg, 3)
+        self.assertEqual(candidate.bound_imm, 8)
+        self.assertEqual(candidate.table_base_expr, "r4")
+        self.assertEqual(candidate.load_pc, CODE_BASE + 20)
+        self.assertEqual(candidate.mtctr_pc, CODE_BASE + 24)
+        self.assertEqual(candidate.instruction_indexes, (0, 3, 5, 6, 7))
+        self.assertEqual(candidate.notes, ())
+
+    def test_rejects_shift_with_non_base_insn_between(self) -> None:
+        # slwi r0,r3,2; stw r5,0(r4); lwzx r4,r4,r0; mtctr r4; bctr
+        # (a memory op between the shift and the load is not a table dispatch)
+        instructions = _decode(
+            "5460103a 90a40000 7c84002e 7c8903a6 4e800420"
+        )
+        candidates = find_jump_table_candidates(instructions)
+        self.assertEqual(len(candidates), 1)
+        self.assertIsNone(candidates[0].bound_imm)
+        self.assertIn("missing index scale shift", candidates[0].notes)
+
     def test_rejects_bctrl_not_bctr(self) -> None:
         instructions = _decode("5400103a 7c63002e 7c6903a6 4e800421")
         self.assertEqual(find_jump_table_candidates(instructions), [])

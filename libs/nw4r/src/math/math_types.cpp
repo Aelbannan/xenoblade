@@ -371,5 +371,39 @@ MTX44* MTX44Copy(register MTX44* pDst, register const MTX44* pSrc) {
 } // namespace math
 } // namespace nw4r
 
-void MTX34Add__Q24nw4r4mathFPQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34(){}
-void MTX34Mult__Q24nw4r4mathFPQ34nw4r4math5MTX34PCQ34nw4r4math5MTX34f(){}
+namespace nw4r {
+namespace math {
+
+MTX34* MTX34Add(MTX34* pOut, const MTX34* pA, const MTX34* pB) {
+    VEC3Add(reinterpret_cast<VEC3*>(&pOut->_00),
+            reinterpret_cast<const VEC3*>(&pA->_00),
+            reinterpret_cast<const VEC3*>(&pB->_00));
+    pOut->_03 = pA->_03 + pB->_03;
+    VEC3Add(reinterpret_cast<VEC3*>(&pOut->_10),
+            reinterpret_cast<const VEC3*>(&pA->_10),
+            reinterpret_cast<const VEC3*>(&pB->_10));
+    pOut->_13 = pA->_13 + pB->_13;
+    VEC3Add(reinterpret_cast<VEC3*>(&pOut->_20),
+            reinterpret_cast<const VEC3*>(&pA->_20),
+            reinterpret_cast<const VEC3*>(&pB->_20));
+    pOut->_23 = pA->_23 + pB->_23;
+
+    return pOut;
+}
+
+MTX34* MTX34Mult(MTX34* pOut, const MTX34* pIn, f32 factor) {
+    VEC3Scale(reinterpret_cast<VEC3*>(&pOut->_00),
+              reinterpret_cast<const VEC3*>(&pIn->_00), factor);
+    pOut->_03 = pIn->_03 * factor;
+    VEC3Scale(reinterpret_cast<VEC3*>(&pOut->_10),
+              reinterpret_cast<const VEC3*>(&pIn->_10), factor);
+    pOut->_13 = pIn->_13 * factor;
+    VEC3Scale(reinterpret_cast<VEC3*>(&pOut->_20),
+              reinterpret_cast<const VEC3*>(&pIn->_20), factor);
+    pOut->_23 = pIn->_23 * factor;
+
+    return pOut;
+}
+
+} // namespace math
+} // namespace nw4r

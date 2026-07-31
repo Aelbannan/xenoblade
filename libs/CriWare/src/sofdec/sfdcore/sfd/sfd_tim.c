@@ -805,36 +805,38 @@ void SFTIM_Tc2Time(void* tcdata, s32* out1, s32* out2) {
 void sftim_Tc2TimeN(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
     s32 unit = 1000 / rate;
-    s32 hour = *(s32*)(td + 0x8);
     s32 min = *(s32*)(td + 0xC);
+    s32 hour = *(s32*)(td + 0x8);
     s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s16 field = *(s16*)(td + 0x1E);
+    s32 field = *(s16*)(td + 0x1E);
+    s32 tcSec = tc / rate;
     s32 totalFrame = frame + frame2;
     s32 totalSec = hour * 3600 + min * 60 + sec;
-    s32 tcSec = tc / rate;
-    
-
-    *out1 = tcSec * totalSec + totalFrame * unit + field * (unit / 2);
+    s32 time = tcSec * totalSec;
+    time += totalFrame * unit;
+    time += field * (unit / 2);
+    *out1 = time;
     *out2 = tcSec;
 }
 
 void sftim_Tc2Time23N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
     s32 unit60 = 24000 / rate;
-    s32 unit = 1000 / rate;
-    s32 hour = *(s32*)(td + 0x8);
     s32 min = *(s32*)(td + 0xC);
+    s32 hour = *(s32*)(td + 0x8);
     s32 sec = *(s32*)(td + 0x10);
+    s32 unit = 1000 / rate;
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s16 field = *(s16*)(td + 0x1E);
+    s32 field = *(s16*)(td + 0x1E);
     s32 totalFrame = frame + frame2;
     s32 totalSec = hour * 3600 + min * 60 + sec;
-    
-
-    *out1 = totalSec * unit60 + totalFrame * unit + field * (unit / 2);
+    s32 time = totalSec * unit60;
+    time += totalFrame * unit;
+    time += field * (unit / 2);
+    *out1 = time;
     *out2 = tc / rate;
 }
 
@@ -842,17 +844,18 @@ void sftim_Tc2Time29N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
     s32 unit60 = 30000 / rate;
     s32 unit = 1000 / rate;
-    s32 hour = *(s32*)(td + 0x8);
     s32 min = *(s32*)(td + 0xC);
+    s32 hour = *(s32*)(td + 0x8);
     s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s16 field = *(s16*)(td + 0x1E);
-    s32 totalFrame = frame + frame2;
+    s32 field = *(s16*)(td + 0x1E);
     s32 totalSec = hour * 3600 + min * 60 + sec;
-    
-
-    *out1 = totalSec * unit60 + totalFrame * unit + field * (unit / 2);
+    s32 totalFrame = frame + frame2;
+    s32 time = totalSec * unit60;
+    time += totalFrame * unit;
+    time += field * (unit / 2);
+    *out1 = time;
     *out2 = tc / rate;
 }
 
@@ -860,17 +863,18 @@ void sftim_Tc2Time59N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
     s32 unit60 = 60000 / rate;
     s32 unit = 1000 / rate;
-    s32 hour = *(s32*)(td + 0x8);
     s32 min = *(s32*)(td + 0xC);
+    s32 hour = *(s32*)(td + 0x8);
     s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s16 field = *(s16*)(td + 0x1E);
-    s32 totalFrame = frame + frame2;
+    s32 field = *(s16*)(td + 0x1E);
     s32 totalSec = hour * 3600 + min * 60 + sec;
-    
-
-    *out1 = totalSec * unit60 + totalFrame * unit + field * (unit / 2);
+    s32 totalFrame = frame + frame2;
+    s32 time = totalSec * unit60;
+    time += totalFrame * unit;
+    time += field * (unit / 2);
+    *out1 = time;
     *out2 = tc / rate;
 }
 

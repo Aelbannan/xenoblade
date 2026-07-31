@@ -15,9 +15,10 @@ void MWSFD_SetVideoSw(void* self, u32 sw) {
 
 extern void MWSFSVM_Error(const char*, ...);
 extern char lbl_eu_8051B7B0[];
+extern s32 MWSST_GetStat(void *);
 
 void* mwPlyGetSfdHn(void* self) {
-    u32 sig;
+    s32 sig;
     if (self == NULL) {
         sig = 0;
     } else {
@@ -56,11 +57,33 @@ u32 MWSFD_IsEnableHndl(void* self) {
     return *(u32*)self;
 }
 
-void mwPlyGetStat() {}
+void mwPlyGetRareStat();
+int mwPlyGetStat(void *h) {
+    int stat = ((int (*)(void *))mwPlyGetRareStat)(h);
+    if ((s32)*(u32 *)((u8 *)h + 0x63C) == 1 &&
+        (s32)*(u32 *)((u8 *)h + 0x640) == 1 &&
+        *(u32 *)((u8 *)h + 0x64C) - 2 <= 1 &&
+        (stat == 1 || stat == 3)) {
+        return 2;
+    }
+    return stat;
+}
 
 void mwPlyGetRareStat() {}
 
-void MWSFSET_ExecSetCyclicFrameOutput() {}
+void MWSFSET_ExecSetCyclicFrameOutput(void *h) {
+    void *sfd = *(void **)((u8 *)h + 0x58);
+    if ((s32)*(u32 *)((u8 *)h + 0x66C) == 1) {
+        s32 fps;
+        SFD_GetFps(sfd, &fps);
+        if (fps != -1) {
+            s32 num, den;
+            SFD_CalcCycleFromFps(fps, &num, &den);
+            SFD_SetCyclicFrameOutput(sfd, num, den);
+            *(u32 *)((u8 *)h + 0x66C) = 0;
+        }
+    }
+}
 
 void mwPlyGetTime() {}
 
@@ -68,4 +91,10 @@ void mwPlySetOutVol() {}
 
 void mwPlyGetOutVol() {}
 
-void criware_803A2258() {}
+int criware_803A2258(void *h) {
+    if ((s32)*(u32 *)((u8 *)h + 0x5D8) == 1 && MWSST_GetStat((u8 *)h + 0x5D8) == 4)
+        return 1;
+    if ((s32)*(u32 *)((u8 *)h + 0x600) == 1 && MWSST_GetStat((u8 *)h + 0x600) == 4)
+        return 1;
+    return 0;
+}

@@ -2015,7 +2015,11 @@ def _check_equivalence_impl(
                 early.abstractions.append("memory-bus-discharge-incomplete")
 
         if jump_table is not None:
-            early.proof_features = ["readonly-image", "indirect-target-closure"]
+            features = list(early.proof_features)
+            for name in ("readonly-image", "indirect-target-closure"):
+                if name not in features:
+                    features.append(name)
+            early.proof_features = features
             if jump_table_bundle is not None:
                 early.address_space, early.indirect_targets = obligations_from_discharge(
                     jump_table, jump_table_bundle,

@@ -1,11 +1,11 @@
 // Decompilation of monolib/src/lod/code_804645CC
 // LOD::UnkClass_804645CC - LOD billboard/quad renderer state + draw routines.
 //
-// Retail symbols are annotated Fv (void) in symbols.txt (stripped DOL), but
-// several routines receive data in r3/r4/f1. MWCC cannot emit an Fv mangling
-// for a function that has parameters, so those routines are defined as free
-// functions carrying their real signature and an asm() label that forces the
-// retail ...Fv symbol. Register usage matches the retail ABI (r3=first arg).
+// Retail symbols use shortened Fv names in symbols.txt (the DOL is stripped),
+// while several entry points receive data in r3/r4/f1.  These explicit retail
+// name entry points model the extra ABI values as ordinary C++ parameters, as
+// documented in docs/MWCC_REFERENCE.md.  Register usage follows the retail
+// ABI (r3 is the first explicit value).
 
 #include <harness_catalog.h>
 #include <types.h>
@@ -16,6 +16,7 @@
 #include <revolution/gx/GXTransform.h>
 
 // ---- shared LOD renderer state (retail .sbss, small-data) ----
+extern "C" {
 extern u32 lbl_eu_80665770;
 extern u32 lbl_eu_80665774;
 extern u32 lbl_eu_806657D0;
@@ -40,6 +41,9 @@ extern u32 lbl_eu_80665818;
 extern u32 lbl_eu_8066581C;
 extern u32 lbl_eu_80665820;
 extern u32 lbl_eu_80665824;
+extern const double lbl_eu_8066A628;
+extern const float lbl_eu_8066A630;
+}
 
 namespace LOD {
 struct UnkClass_804645CC {
@@ -104,17 +108,34 @@ void LOD::UnkClass_804645CC::func_80465800() {}
 
 void LOD::UnkClass_804645CC::func_80465BC0() {}
 
-// ===== argument-bearing routines =====
-// These receive data in r3/r4/f1 but retail symbols are annotated Fv (void).
-// This MWCC (Wii/1.1, 4.3 build 151) rejects function asm() labels (error
-// 33106 on every syntax variant), so a parameterized function cannot emit the
-// ...Fv symbol. Matching them requires re-annotating symbols.txt/targets.json
-// with the true mangling - see stall packet / final report.
+// The retail table keeps these entry points under shortened Fv names while
+// passing their real ABI values in the argument registers.  Keep the linker
+// names explicit and model those values as ordinary C++ parameters.
+extern "C" void func_80465704__Q23LOD17UnkClass_804645CCFv(s32 value) {
+    lbl_eu_80665814 = value;
+    lbl_eu_806657E8 |= 2;
+}
 
-void LOD::UnkClass_804645CC::func_80465704() {}
+extern "C" void func_80465730__Q23LOD17UnkClass_804645CCFv(f32 scale) {
+    s32 value = lbl_eu_80665814;
+    lbl_eu_806657E8 |= 2;
+    lbl_eu_80665814 = (s32)((f32)value * scale);
+}
 
-void LOD::UnkClass_804645CC::func_80465730() {}
+extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32 value) {
+    if (value == 0xFF) {
+        u32 flags = lbl_eu_806657E8;
+        lbl_eu_80665804 = 0;
+        lbl_eu_806657E8 = flags & ~4u;
+        return;
+    }
 
-void LOD::UnkClass_804645CC::func_8046577C() {}
+    u32 flags = lbl_eu_806657E8 | 4;
+    lbl_eu_806657E8 = flags;
+    lbl_eu_80665804 = 6;
+    lbl_eu_80665808 = lbl_eu_8066A630 * (f32)value;
+}
 
-void LOD::UnkClass_804645CC::func_804657E4() {}
+extern "C" void func_804657E4__Q23LOD17UnkClass_804645CCFv(s16 value) {
+    lbl_eu_806657E4 = (f32)value;
+}

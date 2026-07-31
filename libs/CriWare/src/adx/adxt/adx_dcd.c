@@ -1,13 +1,73 @@
-// Auto-scaffolded catalog TU for CriWare/src/adx/adxt/adx_dcd
-// Replace stubs with high-level C/C++ during decomp.
+// adx_dcd.c - ADX decode info parsing (CriWare ADX)
+// Retail .text slice: 0x8038CD48..0x8038D40C
 
 #include <harness_catalog.h>
+#include <math.h>
+#include <string.h>
 
-void ADX_GetCoefficient() {}
+// ADX coefficient constant pool (rodata 0x80517468, size 0x30):
+//   [0] f32  2*pi
+//   [1] f64  2.0
+//   [2] f32  1.0
+//   [3] f32  4096.0
+//   [4] f32  2.0
+//   [5] f64  0x4330000080000000 (u32->double magic)
+extern const double lbl_eu_80517468[];
 
-void ADX_ScanInfoCode() {}
+void ADX_GetCoefficient(u32 num, u32 den, s16* out1, s16* out2)
+{
+    const float* tbl = (const float*)lbl_eu_80517468;
+    float ratio = tbl[0] * (float)num / (float)den;
+    float c = (float)cos(ratio);
+    float x = (float)sqrt(lbl_eu_80517468[1]) - c;
+    float y = (float)sqrt(lbl_eu_80517468[1]) - tbl[2];
+    float z = (float)sqrt((x + y) * (x - y));
+    float t = (x - z) / y;
+    *out1 = (s16)(tbl[3] * (tbl[4] * t));
+    *out2 = (s16)(tbl[3] * (-t * t));
+}
 
-void ADX_DecodeInfo() {}
+int ADX_ScanInfoCode(const u16* codes, int size, u16* out)
+{
+    int i = 0;
+    int found = 0x7FFFFFFF;
+    for (i = 0; i < size - 1; i += 2, codes++) {
+        if (*codes == 0x8000) {
+            found = 0x7FFFFFFF;
+            if (i < found)
+                found = i;
+            break;
+        }
+    }
+    if (found != 0x7FFFFFFF) {
+        *out = (u16)found;
+        return 0;
+    }
+    *out = 0;
+    return -1;
+}
+
+int ADX_DecodeInfo(u8* info, int size, u16* outA, u8* outB, u8* outC,
+                   u8* outD, u8* outE, u32* outF, u32* outG, u32* outH)
+{
+    if (size < 0x10)
+        return -1;
+    if ((u16)((info[0] << 8) | info[1]) != 0x8000)
+        return -2;
+    *outA = (u16)((u16)((info[2] << 8) | info[3]) + 4);
+    *outB = info[4];
+    *outD = info[5];
+    *outC = info[6];
+    *outE = info[7];
+    *outF = (u32)((info[8] << 24) | (info[9] << 16) | (info[10] << 8) | info[11]);
+    *outG = (u32)((info[12] << 24) | (info[13] << 16) | (info[14] << 8) | info[15]);
+    if ((s8)*outC == 0) {
+        *outH = 0;
+    } else {
+        *outH = (u32)(((s8)*outD - 2) * 8 / (s8)*outC);
+    }
+    return 0;
+}
 
 int ADX_DecodeInfoExADPCM2(void* info, int version, short* outScale)
 {
@@ -38,11 +98,143 @@ int ADX_DecodeInfoExVer(void *info, int size, unsigned char *outBits, unsigned c
     return 0;
 }
 
-void ADX_DecodeInfoExIdly() {}
+int ADX_DecodeInfoExIdly(u8* info, int size, s16* outA, s16* outB)
+{
+    int err = 0;
+    u8 ch;
+    if (size < 0x14) {
+        err = -1;
+    } else if (*(u16*)info != 0x8000) {
+        err = -2;
+    } else if (*(s16*)(info + 2) < 0x10) {
+        err = -1;
+    } else {
+        ch = info[0x12];
+        err = 0;
+    }
+    if (err != 0)
+        return -1;
+    if (ch >= 4) {
+        if (size < 0x20)
+            return -1;
+        if (*(u16*)info != 0x8000)
+            return -2;
+        if (*(s16*)(info + 2) < 0x1C)
+            return -1;
+        *outA = *(s16*)(info + 0x18);
+        *outB = *(s16*)(info + 0x1A);
+        *(outA + 1) = *(s16*)(info + 0x1C);
+        *(outB + 1) = *(s16*)(info + 0x1E);
+    } else {
+        *(outB + 1) = 0;
+        *(outA + 1) = 0;
+        *outB = 0;
+        *outA = 0;
+    }
+    return 0;
+}
 
-void ADX_DecodeInfoExLoop() {}
+int ADX_DecodeInfoExLoop(u8* info, int size, u32* outA, s16* outB,
+                         s16* outC, u32* outD, u32* outE, u32* outF, u32* outG)
+{
+    int err = 0;
+    u8 ch;
+    *outB = 0;
+    if (size < 0x14) {
+        err = -1;
+    } else if (*(u16*)info != 0x8000) {
+        err = -2;
+    } else if (*(s16*)(info + 2) < 0x10) {
+        err = -1;
+    } else {
+        ch = info[0x12];
+        err = 0;
+    }
+    if (err != 0)
+        return err;
+    {
+        int minSize = 0x30;
+        if (ch == 4)
+            minSize = 0x3C;
+        if (size < minSize)
+            return -1;
+        if (*(u16*)info != 0x8000)
+            return -2;
+        if (*(s16*)(info + 2) < minSize - 4)
+            return -1;
+        {
+            int off = 0x14;
+            if (ch == 4)
+                off = 0x20;
+            *outA = *(s16*)(info + off);
+            const u8* p = info + off;
+            {
+                s16 loop = *(s16*)(p + 2);
+                *outB = loop;
+                if (loop != 1)
+                    return -2;
+            }
+            *outC = *(s16*)(p + 6);
+            *outD = *(u32*)(p + 8);
+            *outE = *(u32*)(p + 0xC);
+            *outF = *(u32*)(p + 0x10);
+            *outG = *(u32*)(p + 0x14);
+        }
+    }
+    return 0;
+}
 
-void ADX_DecodeInfoAinf() {}
+int ADX_DecodeInfoAinf(u8* info, int size, u32* outA, u32* outB,
+                       s16* outC, s16* outD)
+{
+    int err = 0;
+    u8 ch;
+    *outA = 0;
+    if (size < 0x14) {
+        err = -1;
+    } else if (*(u16*)info != 0x8000) {
+        err = -2;
+    } else if (*(s16*)(info + 2) < 0x10) {
+        err = -1;
+    } else {
+        ch = info[0x12];
+        err = 0;
+    }
+    if (err != 0)
+        return err;
+    {
+        int minSize = 0x3C;
+        if (ch == 4)
+            minSize = 0x48;
+        if (size < minSize)
+            return -1;
+        if (*(u16*)info != 0x8000)
+            return -2;
+        if (*(s16*)(info + 2) < minSize - 4)
+            return -1;
+        {
+            int off = 0x14;
+            if (ch == 4)
+                off = 0x20;
+            const u8* p = info + off;
+            off += 4;
+            if (*(s16*)(p + 2) != 0)
+                off += 0x14;
+            const u8* p2 = info + off;
+            {
+                u32 tag = (u32)((info[off] << 24) | (p2[1] << 16) | (p2[2] << 8) | p2[3]);
+                if (tag != 0x41494E46)
+                    return -2;
+            }
+            *outA = *(u32*)(p2 + 4);
+            memcpy(outB, p2 + 8, 0x10);
+            *outC = *(s16*)(info + off + 0x18);
+            *outD = *(s16*)(info + off + 0x1C);
+            *(outD + 1) = *(s16*)(info + off + 0x1E);
+        }
+    }
+    return 0;
+}
 
 int ADX_DecodeFooter(void* info, int size, u16* out) {
     if (size < 0x10) return -1;

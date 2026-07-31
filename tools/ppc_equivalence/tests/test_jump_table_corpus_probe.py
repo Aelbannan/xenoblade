@@ -124,7 +124,10 @@ class JumpTableCorpusProbeTests(unittest.TestCase):
         results = probe_retail_exact_patterns(DEFAULT_RETAIL_DOL)
         summary = summarize_probe_results(results)
         self.assertGreaterEqual(summary["exact_pattern"], 20)
-        self.assertEqual(summary["auto_context_ok"], summary["exact_pattern"])
+        # Every exact-pattern dispatch with a link-constant table base must
+        # hydrate an auto context; register-relative tables (unresolvable
+        # base) are expected and tracked separately.
+        self.assertEqual(summary["auto_context_ok"], summary["resolved_base"])
 
 
 if __name__ == "__main__":

@@ -123,11 +123,35 @@ inline float gradLookup(const CGradEntry* table, float deg) {
 }
 
 // Pane the bind object attaches to.
+struct CBindAnim {
+    virtual void slot0();
+    virtual void slot1();
+    virtual void slot2();
+    virtual void slot3();
+    virtual void slot4();
+    virtual void slot5();
+    virtual void slot6();
+    virtual void slot7();
+    virtual void slot8();
+    virtual void slot9();
+    virtual void slot10();
+    virtual void slot11();
+    virtual void slot12();
+    virtual void* getPos();
+    virtual void* getMtx();
+    virtual void slot15();
+    virtual void slot16();
+    virtual void slot17();
+    virtual void slot18();
+    virtual void slot19();
+    virtual void* slot20();
+};
+
 struct CBindPane {
     u8 mPad00[0x10];
     void* mRsrc;   // 0x10
-    void* mAnimA;  // 0x14
-    void* mAnimB;  // 0x18
+    CBindAnim* mAnimA;  // 0x14
+    CBindAnim* mAnimB;  // 0x18
     u8 mPad1C[0x44];
     ml::CMat34 mWorldMtx; // 0x60
 };
@@ -195,27 +219,36 @@ extern "C" void func_804EE558(CLytBind* self, CBindPane* pane, s32 type, u32 id,
     self->mPane = pane;
     self->mFlag = flag;
     self->mMtx = ml::CMat34::identity;
-    if (type == 0x1A) {
+    switch (type) {
+    case 0x1A:
         self->mPlayer.init(pane->mAnimA, id);
-    } else if (type == 0x1B) {
+        break;
+    case 0x1B:
         self->mPlayer.init(pane->mAnimB, id);
-    } else {
+        break;
+    default:
         self->mPlayer.init(NULL, 0);
+        break;
     }
 }
 
 // func_804EE60C: refresh the animation player binding.
 extern "C" void func_804EE60C(CLytBind* self) {
-    if (self->mType == 0x1A) {
+    switch (self->mType) {
+    case 0x1A:
         if (self->mPane->mAnimA == NULL) {
             return;
         }
         self->mPlayer.update(self->mPane->mAnimA);
-    } else if (self->mType == 0x1B) {
+        return;
+    case 0x1B:
         if (self->mPane->mAnimB == NULL) {
             return;
         }
         self->mPlayer.update(self->mPane->mAnimB);
+        return;
+    default:
+        return;
     }
 }
 
@@ -250,21 +283,19 @@ extern "C" void func_804EE658(CLytBind* self, CBindSource* src) {
         break;
     }
     case 21: {
-        void* obj = self->mPane->mAnimA;
+        CBindAnim* obj = self->mPane->mAnimA;
         if (obj == NULL) {
             break;
         }
-        obj = (*(void* (**)(void*))(*(u32*)obj + 0x38))(obj);
-        func_804DCA88(&self->mMtx, obj);
+        func_804DCA88(&self->mMtx, obj->getMtx());
         break;
     }
     case 22: {
-        void* obj = self->mPane->mAnimB;
+        CBindAnim* obj = self->mPane->mAnimB;
         if (obj == NULL) {
             break;
         }
-        obj = (*(void* (**)(void*))(*(u32*)obj + 0x38))(obj);
-        func_804DCA88(&self->mMtx, obj);
+        func_804DCA88(&self->mMtx, obj->getMtx());
         break;
     }
     case 26:
@@ -311,22 +342,20 @@ extern "C" void func_804EE8FC(CLytBind* self, CBindSource* src) {
         break;
     }
     case 21: {
-        void* obj = self->mPane->mAnimA;
+        CBindAnim* obj = self->mPane->mAnimA;
         if (obj == NULL) {
             break;
         }
-        obj = (*(void* (**)(void*))(*(u32*)obj + 0x34))(obj);
-        const float* v = (const float*)obj;
+        const float* v = (const float*)obj->getPos();
         pos.set(v[0], v[1], v[2]);
         break;
     }
     case 22: {
-        void* obj = self->mPane->mAnimB;
+        CBindAnim* obj = self->mPane->mAnimB;
         if (obj == NULL) {
             break;
         }
-        obj = (*(void* (**)(void*))(*(u32*)obj + 0x34))(obj);
-        const float* v = (const float*)obj;
+        const float* v = (const float*)obj->getPos();
         pos.set(v[0], v[1], v[2]);
         break;
     }
@@ -351,14 +380,19 @@ extern "C" void func_804EE8FC(CLytBind* self, CBindSource* src) {
 
 // func_804EEACC: check whether the bind object can resolve a target.
 extern "C" u32 func_804EEACC(CLytBind* self) {
-    if (self->mType == 0x1A) {
+    switch (self->mType) {
+    case 0x1A:
         if (self->mPane->mAnimA != NULL && self->mPlayer.mPlayer == NULL) {
             return 0;
         }
-    } else if (self->mType == 0x1B) {
+        break;
+    case 0x1B:
         if (self->mPane->mAnimB != NULL && self->mPlayer.mPlayer == NULL) {
             return 0;
         }
+        break;
+    default:
+        break;
     }
     return self->mPane != NULL ? 1 : 0;
 }
@@ -749,9 +783,9 @@ extern "C" void func_804EEB40(void* desktop, const ml::CVec3* pos, const float* 
 
 // sinit_804F01C8: static initializer for the per-vertex color table.
 extern "C" void sinit_804F01C8() {
-    const float h = lbl_eu_8066B414; // 0.5
-    const float z = lbl_eu_8066B408; // 0.0
     const float o = lbl_eu_8066B40C; // 1.0
+    const float z = lbl_eu_8066B408; // 0.0
+    const float h = lbl_eu_8066B414; // 0.5
     float* t = lbl_eu_80661748;
     t[0] = h;
     t[1] = h;

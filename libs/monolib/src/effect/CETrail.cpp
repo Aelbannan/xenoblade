@@ -239,9 +239,9 @@ static void trailClearList(CETrail* t) {
     CETrailNode* head = t->m_head;
     CETrailNode* cur = head->m_next;
     while (cur != head) {
-        CETrailNode* next = cur->m_next;
-        cur->m_next = nullptr;
-        cur = next;
+        CETrailNode* old = cur;
+        cur = old->m_next;
+        old->m_next = nullptr;
     }
     head->m_next = head;
     head->m_prev = head;
@@ -377,10 +377,12 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
 // func_804D70A0: POINT node constructor
 // ---------------------------------------------------------------------------
 extern "C" void func_804D70A0(CETrailNode* node) {
-    ml::CVec3 za = ml::CVec3::zero;
-    node->m_item.m_posA = za;
-    ml::CVec3 zb = ml::CVec3::zero;
-    node->m_item.m_posB = zb;
+    f32 x = ml::CVec3::zero.x;
+    f32 y = ml::CVec3::zero.y;
+    f32 z = ml::CVec3::zero.z;
+    ml::CVec3 first(x, y, z);
+    node->m_item.m_posA = first;
+    node->m_item.m_posB = first;
     node->m_item.m_age = lbl_eu_8066B15C;
 }
 
@@ -787,14 +789,13 @@ extern "C" void func_804D7B28(CETrail* t, const ml::CVec3* posA, const ml::CVec3
 // ---------------------------------------------------------------------------
 extern "C" CETrailLight* func_804D807C(CETrailLight* self, CResHolder* parent) {
     self->m_parent = parent;
-    CLight* light = (CLight*)func_80494128(parent->m_res);
-    self->m_light = light;
-    if (light != nullptr) {
-        func_804C03A0(light, 3);
-        light = self->m_light;
-        light->m_flags = (light->m_flags & ~0xFu) | 0xFu;
-        func_804C08C8(self->m_light, 0);
+    self->m_light = (CLight*)func_80494128(parent->m_res);
+    if (self->m_light == nullptr) {
+        return self;
     }
+    func_804C03A0(self->m_light, 3);
+    self->m_light->m_flags = (self->m_light->m_flags & ~0xFu) | 0xFu;
+    func_804C08C8(self->m_light, 0);
     return self;
 }
 
@@ -803,9 +804,9 @@ extern "C" CETrailLight* func_804D807C(CETrailLight* self, CResHolder* parent) {
 // ---------------------------------------------------------------------------
 extern "C" CETrailLight* __dt__804D80F0(CETrailLight* self, int deleting) {
     if (self != nullptr) {
-        CLight* light = self->m_light;
-        if (light != nullptr) {
-            func_80494188(self->m_parent->m_res);
+        if (self->m_light != nullptr) {
+            CResHolder* parent = self->m_parent;
+            func_80494188(parent->m_res);
             self->m_light = nullptr;
         }
         if (deleting > 0) {
@@ -819,7 +820,8 @@ extern "C" CETrailLight* __dt__804D80F0(CETrailLight* self, int deleting) {
 // func_804D8160: drive the attached light
 // ---------------------------------------------------------------------------
 extern "C" void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CETrailLightParam* p, f32 f1, f32 f2) {
-    CLight* light = self->m_light;
+    CETrailLight* wrapper = self;
+    CLight* light = wrapper->m_light;
     if (light == nullptr) {
         return;
     }
@@ -845,9 +847,9 @@ extern "C" void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CET
     }
     s32 m = (s32)ff;
 
-    func_804C08C8(light, 1);
-    func_804C0454(light, arg);
-    func_804C09E0(light, m, f1, f2);
+    func_804C08C8(wrapper->m_light, 1);
+    func_804C0454(wrapper->m_light, arg);
+    func_804C09E0(wrapper->m_light, m, f1, f2);
 
     light->m_3C = lbl_eu_8066B1AC;
 
@@ -865,16 +867,18 @@ extern "C" void func_804D8160(CETrailLight* self, void* arg, s32 mode, const CET
 // func_804D82DC: snapshot the scene fog state
 // ---------------------------------------------------------------------------
 extern "C" void func_804D82DC(CScnRootEnv* scene) {
+    s32 invalid = -1;
+    s32 zero = 0;
     lbl_eu_806659B8 = scene;
-    lbl_eu_80663B38 = -1;
-    lbl_eu_806659BC = 0;
+    lbl_eu_80663B38 = invalid;
+    lbl_eu_806659BC = zero;
     lbl_eu_80663B3C = 1;
 
-    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)func_8048ECD8(lbl_eu_806659B8, nullptr, -1);
-    *(FogData*)&lbl_eu_8065FCA0 = *root->GetFog(0);
+    nw4r::g3d::ScnRoot* root = (nw4r::g3d::ScnRoot*)func_8048ECD8(scene, (void*)zero, invalid);
+    *(FogData*)&lbl_eu_8065FCA0 = *root->GetFog(zero);
 
-    nw4r::g3d::ScnRoot* root2 = (nw4r::g3d::ScnRoot*)func_8048ECD8(lbl_eu_806659B8, &lbl_eu_8065FCA0, -1);
-    *(FogData*)&lbl_eu_8065FCD0 = *root2->GetFog(0);
+    nw4r::g3d::ScnRoot* root2 = (nw4r::g3d::ScnRoot*)func_8048ECD8(scene, &lbl_eu_8065FCA0, invalid);
+    *(FogData*)&lbl_eu_8065FCD0 = *root2->GetFog(zero);
 }
 
 // ---------------------------------------------------------------------------

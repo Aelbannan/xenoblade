@@ -325,6 +325,8 @@ Metrowerks often passes **extra arguments in registers** even on `…Fv` symbol 
 
 When a vtable / data table already references the shortened `…Fv` name (common for help/switch helpers), keep the retail symbol via `extern "C"` and take the extra args on that entry point, e.g. `func_802B7CBC__Q22cf11CHelpSwitchFv(self, u32 flag)`.
 
+**LOD Fv entry-point verification:** `libs/monolib/src/lod/code_804645CC.cpp` confirms that a high-level `extern "C"` definition with explicit ABI parameters can retain a shortened Fv linker name; `func_80465704__Q23LOD17UnkClass_804645CCFv(s32)` reaches 100% static match (0x14 bytes). Do not use `asm("...")` symbol-label syntax with MWCC Wii/1.1 build 151: it fails at compile time with error 33106 (`<string not found>`), including on free functions. Use the explicit `extern "C"` Fv entry-point form instead.
+
 ### cf::CHelp layout (manual iface at +0x8)
 
 Retail `__ct__Q22cf5CHelpFv` stores `owner@0`, `param@4`, `lbl_eu_8053B3A0@8` — **not** a C++ vptr at +0. Derived helps add fields from `+0xC` (`s32` thresholds need `s32`/`cmpw`, not `u32`/`cmplw`). Calls through `this+0x8` are a manual interface table; MWCC function-pointer codegen often uses `r4` where retail virtual-style loads use `r12` (~99.3–99.6% near-miss).
@@ -659,6 +661,25 @@ For simple C functions with few locals, MWCC's Chaitin allocator may differ from
 
 - **Extra unused param** (`void f(void* self, u32 unused, u32 addend)`) can push the third argument into `r5` matching retail where `addend` naturally lands. The middle param is dead but occupies `r4` so the active value goes to `r5` (same as retail).
 - **Global function pointers** (`lbl_eu_*`: `extern void (*lbl)(void)`) may load the symbol address into a different register (`lis r3` vs retail `lis r4`). The reg-swap is harmless for leaf void functions but causes `not_equivalent` in SMT when `r3` is live-out (the equivalence checker treats it as an observable). Use `extern u32 lbl_eu_*[]` + manual cast if register pressure is high, though this rarely changes the allocation.
+
+#### 7e. s64/s64 locals: struct field access, not `<< 32 |` construction (CRI SFTMR_AddTsum)
+
+For 64-bit loads/stores, write them as **struct field access** — `s64 x = t->field;` emits two plain `lwz` and lets MWCC keep the pair in two registers. Building the value as `((s64)hi << 32) | lo` creates hidden construction temps (shift/or vregs) that shift MWCC's vreg numbering, producing a *perfect schedule* but a consistent register permutation (e.g. min/max pairs landing one register higher) — 14/37 pure reg-swaps at 98.1%.
+
+`SFTMR_AddTsum` (us-803d1a00, FULL_MATCH 100%): retail is a 64-bit accumulate + running min/max of deltas, with the ternary branch shape `beq body; b end; body: moves` for the max merge. The exact retail codegen comes from:
+
+```c
+typedef struct SFTMR_Tsum { s64 tsum; s64 min; s64 max; u32 num; } SFTMR_Tsum;
+
+void SFTMR_AddTsum(SFTMR_Tsum *tsum, void *unused, s64 delta) {
+    tsum->tsum += delta;
+    tsum->min = (delta < tsum->min) ? delta : tsum->min;
+    tsum->max = (tsum->max < delta) ? delta : tsum->max;
+    tsum->num++;
+}
+```
+
+Notes: the middle `void *unused` param is real (callers pass garbage in r4, delta arrives in r5:r6); the `?:` ternaries produce the phi-merge copies (`or r10, r6, r6` style) and the two-branch max layout; `if`-statements instead of ternaries move the min stores 4 instructions later (structural mismatch).
 
 ### 8. Dead return half / Chaitin rotation — `EQUIVALENT_MATCH` workflow
 
@@ -1332,6 +1353,24 @@ Insert `u32` pad before `SoundParam@0x30` and before fade; flag block includes `
 - [Decomp Academy](https://decomp-academy.dev) — interactive matching lessons
 - [ppcdis TOOLS.md](https://github.com/SeekyCt/ppcdis/blob/main/TOOLS.md) — sdata2 / IPA floats
 
+## zlib Adler-32 / inflate_fast (monolib, US)
+
+- **Adler-32**: the retail `0x420` function is the stock zlib `adler32` structure:
+  keep the short path and the NMAX `DO16` loop, but leave both short/remainder
+  tails as ordinary `while (len--)` loops. Under Wii/1.1 `-O4,p`, MWCC expands
+  those bounded tails into the retail `DO8` plus byte-remainder shape. Manually
+  writing `DO8`/counted loops causes a second optimization pass (DO16 fusion,
+  extra peel loops, and a larger object), while `-O4,s` changes constant modulo
+  from retail magic-multiply `mulhwu` to `divwu`.
+- **inflate_fast**: use zlib's pre-increment `PUP` convention (`OFF = 1`,
+  `in = next_in - 1`, `out = next_out - 1`, `*++p`) rather than post-increment
+  pointers. This naturally produces retail `lbz`/`lbzu`, `stbu`, and the
+  window-copy address adjustment. The decoder also uses a 15-bit refill guard
+  (`bits < 15`), while the stream/state field layout remains high-level.
+  `func_80460308__17UnkClass_80460308Fv` and
+  `func_80460728__17UnkClass_80460308Fv` reached **100% FULL_MATCH** at exact
+  sizes `0x420` and `0x50C` in `libs/monolib/src/lib/UnkClass_80460308.cpp`.
+
 ## RVL AXFX DelayExp (Wii/1.1 `-O4,p`)
 
 - **`GetMemSize`**: `#pragma scheduling off` is required so `stwu` precedes the
@@ -1648,8 +1687,77 @@ void func_80454F30__17CDeviceFontLoaderFv(
 This technique works for any `Fv`-mangled function that takes hidden
 parameters. The linker symbol matches the retail binary exactly.
 
-**Caveat:** cannot be used for constructors (which must be member functions
-in C++).
+**Hidden args also explain "dead" loads:** in
+`CDeviceFontLoader::OnFileEvent`, the retail `lwz r4, 4(r5)` (loading
+`mFileHandle->mData` then clearing it) looks like a dead load MWCC 1.1
+eliminates. It is actually a hidden second argument: the caller passes
+`func_80452D80__11CDeviceFontFv(mSomeData, mData)` with `Fv` mangling but
+two real params (the callee ignores arg2). Expressing the call with the
+explicit second parameter via extern "C" keeps the load AND allocates r4
+naturally — FULL_MATCH. Symptom: an "unused" load that won't survive DCE;
+check whether the value flows into a subsequent call's r4/r5 slot.
+
+### Constructor via extern "C" (retail short-form `__ct__` mangling)
+
+MWCC 1.1 mangles ctors with the full suffix (`__ct__17CDeviceFontLoaderFPCcP11CWorkThread`)
+while the retail binary uses the short form (`__ct__CDeviceFontLoader`).
+Write the ctor as a plain extern "C" function carrying the exact retail
+symbol, manually calling the base ctor by its mangled name and setting the
+vtable via the retail vtable symbol (defined in the data asm, e.g.
+`lbl_eu_8056C8A8` in `monolibdata2.s`). Return `self` — the MWCC ctor ABI
+returns `this` in r3, and the retail schedules `mr r3, r31` before the
+member stores:
+
+```cpp
+extern u8 lbl_eu_8056C8A8[];  // retail vtable data symbol
+void* __ct__CDeviceFontLoader(CDeviceFontLoader* self, const char* name, CWorkThread* parent) {
+    __ct__11CWorkThreadFPCcP11CWorkThreadi(self, name, parent, 0);
+    *(void**)self = (void*)lbl_eu_8056C8A8;
+    self->mFileName[0] = '\0';
+    self->mFileNameLen = 0;
+    self->mFileHandle = nullptr;
+    self->mType = CWorkThread::THREAD_CDEVICEFONTLOADER;
+    return self;
+}
+```
+
+This reproduces the retail lis/addi `lbl_eu_8056C8A8` relocations exactly
+(reloc names must match for objdiff 100%).
+
+**Member-init order controls constant register coloring:** the retail ctor
+uses `li r4, 0; ...; li r0, 0x40` and stores the zero-inits with r4 and
+`mType` with r0. The init order in the ctor body must be
+zero-stores-first, `mType`-last; putting `mType` first flips the constants
+to `li r0, 0` / `li r4, 0x40` (reg-swap mismatch).
+
+### Plain struct instead of inheritance to suppress weak virtual stubs
+
+Deriving from a polymorphic base (e.g. CWorkThread) makes MWCC emit a local
+vtable plus weak stubs for inherited virtuals (`wkRender__11CWorkThreadFv`,
+`wkRenderAfter__11CWorkThreadFv`, `wkStandbyExceptionRetry__11CWorkThreadFUl`
+— 0x10 bytes of .text) even when nothing references them, blowing tight
+split budgets. Fix: declare the class as a plain `struct` (no inheritance)
+with the base class's public member layout duplicated inline, and define
+every method as extern "C" with an explicit self pointer. Base-class calls
+(`wkSetEvent`, `wkStandbyLogin`, base ctor/dtor, `__dl__FPv`) are made via
+extern "C" declarations of their exact mangled names. Function bodies are
+otherwise identical (`this->x` == `self->x`), so byte matches are preserved.
+The retail vtable must then be referenced directly by the ctor (see above)
+because no local `__vt__` is generated.
+
+### MPF model-draw dispatchers: hidden arguments, declaration-order coloring, and split-owned SDA globals
+
+The MPF draw table stores `Fv`-mangled routines that are called through cast function pointers with `self`, draw-data, and list values in r3/r4/r5. Define the bodies as high-level `extern "C"` functions carrying the exact retail symbol names and explicit parameters; this preserves the `Fv` symbol while exposing the ABI arguments. The shared `UnkClass_80471EC8` helpers use the same pattern for their hidden arguments.
+
+For these routines, MWCC's callee-saved GPR coloring followed local declaration order from r31 downward. Declaring the pointer/counter locals in the retail order, and using `poly++, index++` / the variant-specific outer increment order, produced all four 0x188-0x1A0 bodies byte-identically. `getInstance` also matched with the high-level `(T*)&sdaPointer` return idiom.
+
+Finally, `.sbss` globals owned by `monolibdata2.s` must be declared `extern` in the MPF TU. Defining the same `lbl_eu_80665840/60/98/9C` symbols in the TU creates a local `.sbss` section; instruction bytes still match, but objdiff under `functionRelocDiffs=data_value` reports ~99.7% instead of 100%. `extern` declarations restored `FULL_MATCH` for all five targets with a 0x670 split-size pass.
+
+Files: `libs/monolib/src/mpfsys/MPFDrawMdlColor.cpp`, `libs/monolib/include/monolib/mpfsys/MPFDrawMdlColor.hpp`.
+
+### CNand ring-buffer modulo and call-boundary pattern (US)
+
+For signed `s16` ring indices, retail MWCC emitted the signed `% 8` idiom with an `extsh` both before and after the remainder sequence. The high-level form `s16 next = (s16)((s16)(index + 1) % 8);` reproduced `extsh`/`srawi`/`addze`/`rlwinm`/`subf` exactly. Small helpers that retail kept outlined also required `DECOMP_DONT_INLINE`; otherwise `-inline auto` inlined the ring producer into callers and changed their sizes/control flow. With `-O4,s -func_align 4`, the CNand TU reached 13 byte-identical functions; the producer remained a 98.235% pure r5/r6 Chaitin swap and was accepted by effect-aware SMT as `EQUIVALENT_MATCH` at exact size. Files: `libs/monolib/src/nand/CNand.cpp`, `configure.py`.
 
 ### 16. stmw/lmw: `-O4,s` vs `-O4,p`
 
@@ -1669,6 +1777,63 @@ Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp",
 **Example:** `func_eu_804F9E98` (0x48) — `-O4,p` generated 88 bytes with
 3×`stw`/`lwz`; `-O4,s`+`-func_align 4` generated 72 bytes with `stmw`/`lmw`,
 matching retail exactly.
+
+### 16b. Forcing retail's per-iteration global reload in shift loops (opaque byte-offset arithmetic)
+
+`UnkClass_8045F564::~UnkClass_8045F564` (`__dt__17UnkClass_8045F564Fv`, 0x100):
+retail's array-removal shift loop reloads the `lbl_eu_80665710` singleton from
+sbss **every iteration** (`lwz r6, lbl_eu_80665710@sda21(r0)` inside the check),
+because its raw-pointer stores (`stw r0, 0x238(r3)` where r3 is derived from
+the reloaded pointer) alias with the global in MWCC's view.
+
+**Symptom:** writing the loop with struct-field access
+(`layout->instanceArray[j] = layout->instanceArray[j+1]` and
+`j < layout->instanceCount - 1`) lets MWCC prove field non-aliasing and cache
+`instanceCount` in a register → the loop gets strength-reduced/unrolled and
+the code differs massively (6% match, 0x1CC bytes under `-O4,p`).
+
+**Fix:** express the same semantics with opaque byte-offset arithmetic so MWCC
+cannot disambiguate the store from the global reload:
+
+```cpp
+u8* base = (u8*)lbl_eu_80665710;
+u32 cnt = *(u32*)(base + 0x2B8);
+u32 i = 0;
+u8* it = base;
+while (i < cnt) {
+    if (*(u32*)(it + 0x238) == (u32)this) {
+        u32 bo = i * 4;
+        u32 curCnt;
+        while (i < (curCnt = *(u32*)((u8*)lbl_eu_80665710 + 0x2B8)) - 1) {
+            u8* cur = (u8*)lbl_eu_80665710 + bo;
+            bo += 4;
+            u32 next = *(u32*)(cur + 0x23C);
+            i++;
+            *(u32*)(cur + 0x238) = next;
+        }
+        *(u32*)((u8*)lbl_eu_80665710 + 0x2B8) = curCnt - 1;
+        break;
+    }
+    it += 4;
+    i++;
+}
+```
+
+Key points:
+- Assigning the reloaded count into a named `curCnt` **in the loop condition**
+  lets MWCC reuse the last `subi r0, rX, 1` result for the post-loop store
+  (`stw r0, …`) instead of emitting a second `subi` (removes 1 instruction).
+- Drop any `if (cnt != 0)` wrapper around `while (i < cnt)`: the wrapper makes
+  MWCC emit a redundant second zero-check before `mtctr`; without it MWCC
+  emits retail's single `mtctr`/`cmplwi`/`bdnz` counted loop.
+- Combine with `-O4,p` (drop `-O4,s`) so the prologue uses individual
+  `stw r31, …`/`stw r30, …` instead of `stmw r30` — see §16.
+
+Result: 6% → **99.5% match** (CODE_MATCH, size exact 0x100); the last 5 diffs
+are pure reg-swaps in the reload (Chaitin coloring artifact — 6 source
+variants tried: named layout, named count, reassignment, scope moves — none
+flip the r3/r6 assignment). `EQUIVALENT_MATCH` additionally blocked by
+unaccepted external callees (`us-80435c98`, `us-804375c4`).
 
 ## monolib __sinit_ functions — BSS symbol naming
 

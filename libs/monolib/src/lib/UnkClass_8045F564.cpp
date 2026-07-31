@@ -32,24 +32,31 @@ UnkClass_8045F564::~UnkClass_8045F564() {
         unk0 = 0xFFFFFFFF;
     }
     
-    // Remove this from CLibLayout tracking array
-    // Best candidate: nested do-while (0xF8 bytes, 69% match, size PASS)
-    CLibLayout* layout = lbl_eu_80665710;
-    u32 cnt = layout->instanceCount;
-    if (cnt > 0) {
-        u32 i = 0;
-        do {
-            if (layout->instanceArray[i] == this) {
-                u32 j = i;
-                do {
-                    layout->instanceArray[j] = layout->instanceArray[j + 1];
-                    j++;
-                } while (j < cnt - 1);
-                layout->instanceCount = cnt - 1;
-                break;
+    // Remove this from CLibLayout tracking array.
+    // Opaque byte-offset arithmetic intentionally mirrors retail codegen:
+    // struct-field access would let MWCC cache instanceCount across the
+    // shift loop, but retail reloads the singleton from the global each
+    // iteration (stores through a pointer derived from the same global).
+    u8* base = (u8*)lbl_eu_80665710;
+    u32 cnt = *(u32*)(base + 0x2B8);
+    u32 i = 0;
+    u8* it = base;
+    while (i < cnt) {
+        if (*(u32*)(it + 0x238) == (u32)this) {
+            u32 bo = i * 4;
+            u32 curCnt;
+            while (i < (curCnt = *(u32*)((u8*)lbl_eu_80665710 + 0x2B8)) - 1) {
+                u8* cur = (u8*)lbl_eu_80665710 + bo;
+                bo += 4;
+                u32 next = *(u32*)(cur + 0x23C);
+                i++;
+                *(u32*)(cur + 0x238) = next;
             }
-            i++;
-        } while (i < cnt);
+            *(u32*)((u8*)lbl_eu_80665710 + 0x2B8) = curCnt - 1;
+            break;
+        }
+        it += 4;
+        i++;
     }
 }
 

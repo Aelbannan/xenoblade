@@ -22,9 +22,11 @@ extern "C" {
 // us-804df54c: func_804DB240
 // Initializes remove task data and returns vtable pointer
 void** func_804DB240(void* data, const char* path, u8 arg) {
-    strcpy((char*)data, path);
-    ((u8*)data)[0x0E] = arg;
-    ((u8*)data)[0x0D] = 0;
+    void* d = data;
+    u8 a = arg;
+    strcpy((char*)d, path);
+    ((u8*)d)[0x0E] = a;
+    ((u8*)d)[0x0D] = 0;
     return &lbl_eu_806659F8;
 }
 

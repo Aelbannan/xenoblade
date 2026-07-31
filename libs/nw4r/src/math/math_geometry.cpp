@@ -286,10 +286,9 @@ struct CAPSULE {
 f32 DistSqSegment3ToSegment3(const SEGMENT3* pSegment0,
                              const SEGMENT3* pSegment1, f32* pOut0,
                              f32* pOut1) {
-    VEC3 d0, d1, diff;
-    VEC3Sub(&d0, &pSegment0->b, &pSegment0->a);
-    VEC3Sub(&d1, &pSegment1->b, &pSegment1->a);
-    VEC3Sub(&diff, &pSegment0->a, &pSegment1->a);
+    VEC3 d0 = pSegment0->b - pSegment0->a;
+    VEC3 d1 = pSegment1->b - pSegment1->a;
+    VEC3 diff = pSegment0->a - pSegment1->a;
 
     f32 a = VEC3LenSq(&d0);
     f32 b = VEC3Dot(&d0, &d1);

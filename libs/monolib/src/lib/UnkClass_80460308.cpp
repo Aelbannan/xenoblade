@@ -50,12 +50,7 @@ extern "C" u32 func_80460308__17UnkClass_80460308Fv(u32 adler, const u8* buf, u3
 
     /* in case short lengths are provided, keep it somewhat fast */
     if (len < 16) {
-        for (n = len >> 3; n != 0; n--) {
-            ADLER_DO8(buf, 0);
-            buf += 8;
-        }
-        len &= 7;
-        for (; len != 0; len--) {
+        while (len--) {
             adler += *buf++;
             sum2 += adler;
         }
@@ -84,12 +79,7 @@ extern "C" u32 func_80460308__17UnkClass_80460308Fv(u32 adler, const u8* buf, u3
             ADLER_DO16(buf);
             buf += 16;
         }
-        for (n = len >> 3; n != 0; n--) {
-            ADLER_DO8(buf, 0);
-            buf += 8;
-        }
-        len &= 7;
-        for (; len != 0; len--) {
+        while (len--) {
             adler += *buf++;
             sum2 += adler;
         }
@@ -131,7 +121,7 @@ struct InfState {
 
 /* zlib-style stream (fields at retail offsets). */
 struct InfStream {
-    const u8* next_in;  /* 0x00 */
+    u8* next_in;        /* 0x00 */
     u32 avail_in;       /* 0x04 */
     u32 total_in;       /* 0x08 */
     u8* next_out;       /* 0x0C */
@@ -151,9 +141,12 @@ extern "C" const char lbl_eu_805231F8[];
 #define INF_MSG_DIST_CODE   ((char*)(lbl_eu_805231F8 + 0x1E))
 #define INF_MSG_LEN_CODE    ((char*)(lbl_eu_805231F8 + 0x34))
 
+#define INF_OFF 1
+#define INF_PUP(a) (*++(a))
+
 #define INF_PULLBYTE()                       \
     do {                                     \
-        hold += (u32)(*in++) << bits;        \
+        hold += (u32)INF_PUP(in) << bits;    \
         bits += 8;                           \
     } while (0)
 
@@ -172,8 +165,8 @@ extern "C" const char lbl_eu_805231F8[];
 extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
 {
     InfState* state;
-    const u8* in;
-    const u8* last;
+    u8* in;
+    u8* last;
     u8* out;
     u8* beg;
     u8* end;
@@ -195,9 +188,9 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
 
     /* copy state to local variables */
     state = strm->state;
-    in = strm->next_in;
+    in = strm->next_in - INF_OFF;
     last = in + (strm->avail_in - 5);
-    out = strm->next_out;
+    out = strm->next_out - INF_OFF;
     beg = out - (start - strm->avail_out);
     end = out + (strm->avail_out - 257);
     wsize = state->wsize;
@@ -213,7 +206,7 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
 
     /* decode literals and length/distance pairs */
     do {
-        if (bits < 16) {
+        if (bits < 15) {
             INF_PULLBYTE();
             INF_PULLBYTE();
         }
@@ -223,7 +216,7 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
         INF_DROPBITS(here.bits);
         if (op == 0) {
             /* literal */
-            *out++ = (u8)here.val;
+            INF_PUP(out) = (u8)here.val;
         }
         else if (op & 16) {
             /* length base */
@@ -236,7 +229,7 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
                 len += hold & ((1U << op) - 1);
                 INF_DROPBITS(op);
             }
-            if (bits < 16) {
+            if (bits < 15) {
                 INF_PULLBYTE();
                 INF_PULLBYTE();
             }
@@ -265,7 +258,7 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
                         state->mode = INF_MODE_BAD;
                         break;
                     }
-                    from = window;
+                    from = window - INF_OFF;
                     if (wnext == 0) {
                         /* very common case */
                         from += wsize - op;
@@ -273,7 +266,7 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
                             /* some from window */
                             len -= op;
                             do {
-                                *out++ = *from++;
+                                INF_PUP(out) = INF_PUP(from);
                             } while (--op);
                             from = out - dist; /* rest from output */
                         }
@@ -286,15 +279,15 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
                             /* some from end of window */
                             len -= op;
                             do {
-                                *out++ = *from++;
+                                INF_PUP(out) = INF_PUP(from);
                             } while (--op);
-                            from = window;
+                            from = window - INF_OFF;
                             if (wnext < len) {
                                 /* some from start of window */
                                 op = wnext;
                                 len -= op;
                                 do {
-                                    *out++ = *from++;
+                                    INF_PUP(out) = INF_PUP(from);
                                 } while (--op);
                                 from = out - dist; /* rest from output */
                             }
@@ -307,21 +300,21 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
                             /* some from window */
                             len -= op;
                             do {
-                                *out++ = *from++;
+                                INF_PUP(out) = INF_PUP(from);
                             } while (--op);
                             from = out - dist; /* rest from output */
                         }
                     }
                     while (len > 2) {
-                        *out++ = *from++;
-                        *out++ = *from++;
-                        *out++ = *from++;
+                        INF_PUP(out) = INF_PUP(from);
+                        INF_PUP(out) = INF_PUP(from);
+                        INF_PUP(out) = INF_PUP(from);
                         len -= 3;
                     }
                     if (len) {
-                        *out++ = *from++;
+                        INF_PUP(out) = INF_PUP(from);
                         if (len > 1)
-                            *out++ = *from++;
+                            INF_PUP(out) = INF_PUP(from);
                     }
                 }
                 else {
@@ -329,15 +322,15 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
                     from = out - dist;
                     do {
                         /* minimum length is three */
-                        *out++ = *from++;
-                        *out++ = *from++;
-                        *out++ = *from++;
+                        INF_PUP(out) = INF_PUP(from);
+                        INF_PUP(out) = INF_PUP(from);
+                        INF_PUP(out) = INF_PUP(from);
                         len -= 3;
                     } while (len > 2);
                     if (len) {
-                        *out++ = *from++;
+                        INF_PUP(out) = INF_PUP(from);
                         if (len > 1)
-                            *out++ = *from++;
+                            INF_PUP(out) = INF_PUP(from);
                     }
                 }
             }
@@ -376,8 +369,8 @@ extern "C" void func_80460728__17UnkClass_80460308Fv(InfStream* strm, u32 start)
     hold &= (1U << bits) - 1;
 
     /* update state and return */
-    strm->next_in = in;
-    strm->next_out = out;
+    strm->next_in = in + INF_OFF;
+    strm->next_out = out + INF_OFF;
     strm->avail_in = (u32)(in < last ? 5 + (last - in) : 5 - (in - last));
     strm->avail_out = (u32)(out < end ? 257 + (end - out) : 257 - (out - end));
     state->hold = hold;

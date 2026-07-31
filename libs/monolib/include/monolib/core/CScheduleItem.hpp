@@ -31,7 +31,7 @@ struct CItemEntry {
     s16 mType;      // 0x00
     u8 _pad02[8];   // 0x02
     s16 mSlotIndex; // 0x0A: referenced slot index (negative = none)
-    u8 _pad0C[8];   // 0x0C
+    u8 _pad0C[0x0A]; // 0x0C
 };                  // size 0x16
 
 // Effect object (pool at lbl_eu_80661728, stride 0x22C), looked up via
@@ -59,6 +59,5 @@ struct CSchedulePosLink {
     virtual void* vfunc09();
     virtual void* vfunc10();
     virtual void* vfunc11();
-    virtual void* vfunc12();
-    virtual void* vfunc13(); // 0x34: returns world position
+    virtual void* vfunc12(); // 0x34: returns world position
 };

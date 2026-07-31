@@ -17,6 +17,7 @@
 #include <monolib/effect/CERand.hpp>
 
 // Rotate `mtx` about the X axis by `angle` (code_804DB938.cpp).
+extern "C" {
 void func_804DD388(Mtx mtx, f32 angle);
 
 // Shared sdata2 constants (retail linker names).
@@ -207,3 +208,5 @@ void func_804D9F00(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir)
     out->y = 0.0f;
     out->z = mx * sinTbl(angle);
 }
+
+} // extern "C"

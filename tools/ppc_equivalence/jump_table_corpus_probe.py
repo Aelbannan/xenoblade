@@ -177,15 +177,20 @@ def probe_retail_exact_patterns(
 def summarize_probe_results(results: list[JumpTableProbeResult]) -> dict[str, Any]:
     exact = [item for item in results if item.confidence == "exact-pattern"]
     hydrated = [item for item in exact if item.auto_context]
+    resolved_base = [item for item in exact if item.table_base_va is not None]
     return {
         "scanned": len(results),
         "exact_pattern": len(exact),
         "auto_context_ok": len(hydrated),
+        # Exact-pattern dispatches whose table base cannot be recovered are
+        # register-relative (e.g. `addi rX, r25, off`) and can never hydrate
+        # from a linked image; only resolvable bases must hydrate.
+        "resolved_base": len(resolved_base),
         "missing_dol": any("missing" in item.detail for item in results[:1] if item.branch_pc == 0),
         "failures": [
             item.to_dict()
             for item in exact
-            if not item.auto_context
+            if not item.auto_context and item.table_base_va is not None
         ],
     }
 

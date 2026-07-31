@@ -19,6 +19,7 @@
 #include <harness_catalog.h>
 #include <types.h>
 #include <revolution/MTX.h>
+#include <revolution/OS.h>
 
 // ------------------------------------------------------------------
 // Shared state layout (0x28 bytes)
@@ -232,22 +233,57 @@ extern "C" s32 func_8047DC8C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
 extern "C" s32 func_8047DD4C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
                                                      void* arg2, u32 arg3) {
     u32 local;
-    if (func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {
-        void* manager = lbl_eu_80658560;
-        if (!func_804819AC__17UnkClass_8047E110Fv(manager, local)) {
-            if (arg3) {
-                func_8048169C__17UnkClass_8047E110Fv(manager, arg1, arg2);
-                return func_804819C4__17UnkClass_8047E110Fv(manager, local);
-            }
-            func_8048163C__17UnkClass_8047E110Fv(manager, arg2);
-            return func_80481790__17UnkClass_8047E110Fv(manager, local);
-        }
+    void* manager;
+    if (!func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {
+        goto fail;
     }
+    manager = lbl_eu_80658560;
+    if (func_804819AC__17UnkClass_8047E110Fv(manager, local)) {
+        goto fail;
+    }
+    if (arg3) {
+        func_8048169C__17UnkClass_8047E110Fv(manager, arg1, arg2);
+        return func_804819C4__17UnkClass_8047E110Fv(manager, local);
+    }
+    func_8048163C__17UnkClass_8047E110Fv(manager, arg2);
+    return func_80481790__17UnkClass_8047E110Fv(manager, local);
+fail:
     return 0;
 }
 
-// func_8047D2AC -- full walker tick (0x9E0) -- stub for now
+// func_8047D2AC -- full walker tick (0x9E0)
 extern "C" s32 func_8047D2AC__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* outDir,
                                                      void* posA, void* posB) {
-    return 2;
+    if ((self->mFlags & 3) != 3) {
+        *(f32*)((u8*)outDir + 0) = lbl_eu_8066A880;
+        *(f32*)((u8*)outDir + 4) = lbl_eu_8066A880;
+        *(f32*)((u8*)outDir + 8) = lbl_eu_8066A880;
+        return 2;
+    }
+
+    f32 ga, gb;
+    func_80481014__17UnkClass_8047E110Fv(lbl_eu_80658560, ga, gb, posA, self->mSpeed);
+
+    u32 first;
+    u32 second;
+    if (self->mFlags & 4) {
+        if (!func_8047E6C4__17UnkClass_8047E110Fv(lbl_eu_80658560, &first, &second,
+                                                   self->mField18, self->mField14, posA,
+                                                   lbl_eu_8066A878)) {
+            first = 0;
+        }
+    } else {
+        first = 0;
+    }
+    if (!first && !func_8047E62C__17UnkClass_8047E110Fv(lbl_eu_80658560, &first, posA,
+                                                         posB, lbl_eu_8066A87C)) {
+        *(f32*)((u8*)outDir + 0) = lbl_eu_8066A880;
+        *(f32*)((u8*)outDir + 4) = lbl_eu_8066A880;
+        *(f32*)((u8*)outDir + 8) = lbl_eu_8066A880;
+        return 2;
+    }
+
+    self->mField14 = (u16)first;
+    self->mField16 = (u16)second;
+    return 0;
 }

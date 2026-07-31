@@ -343,6 +343,13 @@ def _reattest_certificate_tree(
         return memo[target_id]
     active = set(checking or ())
     if target_id in active:
+        # §2.7.5: FULL_MATCH targets are intrinsically certified (byte-identical
+        # objects) and need no certificate, so cycles among them (e.g.
+        # self-recursive MSL helpers like __two_exp) are harmless — the chain
+        # adds no obligation. Only certificate-bearing chains must be acyclic.
+        row = by_id.get(target_id)
+        if isinstance(row, dict) and row.get("status") == "FULL_MATCH":
+            return None
         return "certificate dependency cycle"
     active.add(target_id)
     row = by_id.get(target_id)
@@ -2279,6 +2286,26 @@ def prove_unit_symbol(
             probe = _run_prove("off" if two_phase else "auto")
             if two_phase and probe.status in _OBJECT_BASE_RETRY_STATUSES:
                 probe = _run_prove("retry")
+            if (
+                linked
+                and probe.status == ProofStatus.NOT_EQUIVALENT
+                and (left.relocations or right.relocations)
+            ):
+                # The unlinked pair carries unresolved relocations: TU-local
+                # reloc symbols (MWCC `@N` jump-table cookies vs retail
+                # `jumptable_eu_*` globals) leave object-relative exit targets
+                # incomparable. Retry once with linked bytes from main.dol /
+                # main.elf, where every relocation is resolved.
+                return _run_linked_fallback(
+                    project, symbol, candidate_symbol, contract,
+                    timeout_ms, max_instructions, max_paths,
+                    max_loop_iterations=max_loop_iterations,
+                    target_id=target_id,
+                    certified_context=certified_context,
+                    memory_environment=memory_environment,
+                    declared_return=declared_return,
+                    force_declared_return=force_declared_return,
+                )
             return probe
         except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
             if not linked or not (left.relocations or right.relocations):

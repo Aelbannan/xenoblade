@@ -7,6 +7,10 @@ namespace g3d {
 namespace detail {
 namespace {
 
+extern "C" const float lbl_eu_80669AB0; // 1.0f
+extern "C" const float lbl_eu_80669AB4; // 2.0f
+extern "C" const float lbl_eu_80669AB8; // 3.0f
+
 /**
  * The Hermite interpolating polynomial f satisfies the following conditions:
  *        f(0)  = v0
@@ -21,9 +25,9 @@ inline f32 HermiteInterpolation(f32 v0, f32 t0, f32 v1, f32 t1, f32 p, f32 d) {
 
     // Linear factors
     f32 s = p * invd;   // p / d
-    f32 s_1 = s - 1.0f; // (p - d) / d
+    f32 s_1 = s - lbl_eu_80669AB0; // (p - d) / d
 
-    return v0 + s * (s * ((2.0f * s - 3.0f) * (v0 - v1))) +
+    return v0 + s * (s * ((lbl_eu_80669AB4 * s - lbl_eu_80669AB8) * (v0 - v1))) +
            p * s_1 * (s_1 * t0 + s * t1);
 }
 

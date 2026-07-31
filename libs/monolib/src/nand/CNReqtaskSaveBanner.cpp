@@ -76,26 +76,22 @@ s32 func_804F4D90(void* vtable_ptr, void* data) {
         return 0;
     }
 
-    s8 state = (s8)((u8*)data)[0x04];
-
-    if (state > 0) {
-        if (state == 2) {
+    if ((s8)((u8*)data)[0x04] > 0) {
+        if ((s8)((u8*)data)[0x04] == 2) {
             s32 err = lbl_eu_806659D4;
-            if (err == -5 || err == -12 || err == -15) {
+            if (err == -12 || err == -15 || err == -5) {
                 ((u8*)data)[0x04] = 5;
             } else if (err < 0) {
                 return 2;
-            } else {
-                if (*(u8*)((u8*)ptr + 0x325) != 0) return 2;
             }
-        } else if (state == 7) {
+        } else if ((s8)((u8*)data)[0x04] == 7) {
             if (*(u8*)((u8*)ptr + 0x325) != 0) return 2;
         } else {
             if (lbl_eu_806659D4 < 0) return 2;
         }
     }
 
-    switch (state) {
+    switch ((s8)((u8*)data)[0x04]) {
         s32 r;
         void* ctx;
         void* p;

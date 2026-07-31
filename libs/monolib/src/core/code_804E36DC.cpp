@@ -6,6 +6,7 @@
 // see CScheduleItem.hpp.
 
 #include <types.h>
+#include <decomp.h>
 #include <revolution/MTX.h>
 #include "monolib/core/CSchedule.hpp"
 #include "monolib/math/CVec3.hpp"
@@ -34,6 +35,8 @@ extern "C" void func_804E536C(void* arg);
 extern "C" void* func_804DF2F0(void* table, void* key);
 
 extern "C" void __dl__FPv(void* ptr);
+extern "C" f64 lbl_eu_8066B2F0;
+extern "C" f64 lbl_eu_8066B2E8;
 
 // Forward declarations of functions defined below
 extern "C" void func_804E39E8(CSchedule* self, f32 delta);
@@ -74,9 +77,13 @@ extern "C" void func_804E3E2C(CScheduleItem* item) {
 extern "C" int func_804E3EB4(CScheduleItem* item, u8* base,
                              const CScheduleEntryData* data, void* owner) {
     item->mLifetime = data->mLifetime;
-    item->mEntryData = (data->mOffset != 0) ? base + data->mOffset : NULL;
+    u8* entryData = (data->mOffset != 0) ? base + data->mOffset : NULL;
+    item->mEntryData = entryData;
     item->mOwner = owner;
-    return item->mEntryData != NULL;
+    if (entryData != NULL) {
+        return 1;
+    }
+    return 0;
 }
 
 // us-804e844c: load the entry blob into slots (once).
@@ -104,7 +111,7 @@ extern "C" void func_804E3FB0(CScheduleItem* item, ScheduleEntry* entries,
             }
             count++;
         }
-        entry++;
+        entry = (CItemEntry*)((u8*)entry + 0x16);
     }
     item->mCount = (u8)count;
 }
@@ -147,21 +154,23 @@ extern "C" void func_804E4094(CScheduleItem* item, f32 delta) {
 }
 
 // us-804e8390: per-frame item step used by CSchedule::func_804E39E8.
-extern "C" int func_804E3EF4(CScheduleItem* item, f32 time, f32 delta,
+extern "C" DECOMP_DONT_INLINE int func_804E3EF4(CScheduleItem* item, f32 time, f32 delta,
                              ScheduleEntry* entries, CSchedule* sched) {
     if (!(item->mFlags & 0x80)) {
         func_804E3FB0(item, entries, sched);
         item->mFlags |= 0x80;
     }
-    if (item->mLifetime != 0 && time < (f32)item->mLifetime) {
-        return 1;
+    if (item->mLifetime != 0) {
+        if (time < (f32)item->mLifetime) {
+            return 1;
+        }
     }
     func_804E4094(item, delta);
     return item->mCount != 0;
 }
 
 // us-804e8650: emit/update all slot objects (two passes).
-extern "C" void func_804E41B4(CScheduleItem* item) {
+extern "C" DECOMP_DONT_INLINE void func_804E41B4(CScheduleItem* item) {
     if (item->mCount == 0) {
         return;
     }
@@ -180,7 +189,7 @@ extern "C" void func_804E41B4(CScheduleItem* item) {
 }
 
 // us-804e86e8: feed distance feedback into renderable slot objects.
-extern "C" void func_804E424C(CScheduleItem* item, f32 delta, CSchedule* sched) {
+extern "C" DECOMP_DONT_INLINE void func_804E424C(CScheduleItem* item, f32 delta, CSchedule* sched) {
     if (item->mCount == 0) {
         return;
     }
@@ -275,7 +284,7 @@ extern "C" void func_804E39E8(CSchedule* self, f32 delta) {
         }
     }
     if (self->field_0xd9 <= 0) {
-        self->field_0x00 &= ~0x8000;
+        self->field_0x00 = (u16)DECOMP_PPC_RLWINM((u32)self->field_0x00, 0, 17, 15);
         if (self->mEntryCount != 0) {
             for (int i = 0; i < 32; i++) {
                 if (self->mHandles[i] >= 0) {
@@ -310,13 +319,13 @@ extern "C" void func_804E3B6C(CSchedule* self) {
     f32 dist;
     if (self->field_0x14 != 0) {
         CSchedulePosLink* link = reinterpret_cast<CSchedulePosLink*>(self->field_0x14);
-        const ml::CVec3* pos = (const ml::CVec3*)link->vfunc13();
-        const ml::CVec3* target = (const ml::CVec3*)((u8*)func_80496264(self->field_0x10, -1) + 0x10C);
-        ml::CVec3 diff = *target - *pos;
+        const ml::CVec3* pos = (const ml::CVec3*)link->vfunc11();
+        void* target = func_80496264(self->field_0x10, -1);
+        ml::CVec3 diff = *(const ml::CVec3*)((u8*)target + 0x10C) - *pos;
         dist = PSVECMag(diff);
     } else {
-        const ml::CVec3* target = (const ml::CVec3*)((u8*)func_80496264(self->field_0x10, -1) + 0x10C);
-        ml::CVec3 diff = *target - *(const ml::CVec3*)&self->field_0x1c;
+        void* target = func_80496264(self->field_0x10, -1);
+        ml::CVec3 diff = *(const ml::CVec3*)((u8*)target + 0x10C) - *(const ml::CVec3*)&self->field_0x1c;
         dist = PSVECMag(diff);
     }
     for (int i = 0; i < 32; i++) {
@@ -329,7 +338,7 @@ extern "C" void func_804E3B6C(CSchedule* self) {
 
 // us-804e8168: clear the retired flag and notify listeners.
 extern "C" void func_804E3CCC(CSchedule* self) {
-    self->field_0x00 &= ~0x8000;
+    self->field_0x00 = (u16)DECOMP_PPC_RLWINM((u32)self->field_0x00, 0, 17, 15);
     func_804E536C(self);
 }
 

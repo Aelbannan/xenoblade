@@ -16,8 +16,11 @@ void UTY_FinishTmr(void) {
 extern s32 lbl_eu_80619BF4;
 
 extern u32 lbl_eu_80619BF8[2];
+
+u64 __mftb(void);
+
 u64 UTY_GetTmr(void) {
-    if (lbl_eu_80619BF0 <= 0 || lbl_eu_80619BF4 == -1) return 0;
+    if (!(lbl_eu_80619BF0 > 0 && lbl_eu_80619BF4 != -1)) return 0;
     return __mftb();
 }
 

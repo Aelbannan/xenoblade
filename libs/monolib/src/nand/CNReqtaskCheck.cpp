@@ -5,7 +5,7 @@
 // Global symbols
 extern "C" {
     void* lbl_eu_80665A00;
-    extern void* lbl_eu_8056FDE8;
+    extern char lbl_eu_8056FDE8[];  // vtable data - array type prevents sda21
     u8 lbl_eu_806659D0;
     s32 lbl_eu_806659D4;
 
@@ -66,9 +66,12 @@ ret0:
 }
 
 // us-804df738: sinit_804DB420
-// Static initializer: sets vtable pointer for CNReqtaskCheck
-void sinit_804DB420() {
-    void* val = (void*)&lbl_eu_8056FDE8;
-    void** dest = &lbl_eu_80665A00;
-    *dest = val;
+// Static initializer: sets vtable pointer for CNReqtaskCheck.
+// Returning p keeps &lbl_eu_80665A00 live in r3, forcing the store through
+// the register (li r3, dest@sda21 / stw r4, 0(r3)) instead of sda21 folding.
+void** sinit_804DB420() {
+    void** p = &lbl_eu_80665A00;
+    void* v = (void*)lbl_eu_8056FDE8;
+    *p = v;
+    return p;
 }

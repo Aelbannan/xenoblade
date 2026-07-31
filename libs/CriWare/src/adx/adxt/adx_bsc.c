@@ -141,7 +141,23 @@ void ADXB_SetLnkSw(void* self, int val) {
 
 u32 ADXB_GetStat(void* self) { return *(u32*)((u8*)self + 0x4); }
 
-void ADXB_EntryData() {}
+void ADXB_EntryData(void* self, void* data, int size) {
+    if (*(s16*)((u8*)self + 0x98) == 0) {
+        *(void**)((u8*)self + 0x48) = data;
+        int ch = (s8)*(u8*)((u8*)self + 0x0F);
+        *(u32*)((u8*)self + 0x74) = 0;
+        *(u32*)((u8*)self + 0x4C) = size / ch;
+    } else {
+        *(void**)((u8*)self + 0x48) = data;
+        int t = (s8)*(u8*)((u8*)self + 0x0D) / 8;
+        *(u32*)((u8*)self + 0x74) = 0;
+        *(u32*)((u8*)self + 0x4C) = size / (t * (s8)*(u8*)((u8*)self + 0x0E));
+    }
+    *(u32*)((u8*)self + 0x90) = 0;
+    *(u32*)((u8*)self + 0x94) = 0;
+    *(u32*)((u8*)self + 0xF4) = 0;
+    *(u32*)((u8*)self + 0xF0) = 0;
+}
 
 void ADXB_Start(void* self) {
     if (*(u32*)((u8*)self + 0x04) != 0) return;

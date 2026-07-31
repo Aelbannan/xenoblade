@@ -76,10 +76,10 @@ struct MPFDrawMdlGroupPairList {
 
 extern "C" {
 
-s8 lbl_eu_80665898;                       // MPFDrawMdlColor singleton init flag
-mpfsys::MPFDrawMdlColor* lbl_eu_8066589C; // MPFDrawMdlColor singleton slot
-u8* lbl_eu_80665840;                      // model data arena base
-MPFDrawMdlData* lbl_eu_80665860;          // last draw data handed to the unit
+extern s8 lbl_eu_80665898;                       // MPFDrawMdlColor singleton init flag
+extern mpfsys::MPFDrawMdlColor* lbl_eu_8066589C; // MPFDrawMdlColor singleton slot
+extern u8* lbl_eu_80665840;                      // model data arena base
+extern MPFDrawMdlData* lbl_eu_80665860;          // last draw data handed to the unit
 
 // TEV / texture pipeline helpers implemented by mpfsys::UnkClass_80471EC8.
 // Retail mangles them as Fv members but they are invoked with the arguments

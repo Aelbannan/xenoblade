@@ -108,51 +108,19 @@ void SFTMR_InitTsum(u32 *tsum) {
     tsum[6] = zero;
 }
 
-/* SFTMR_AddTsum: add a 64-bit timestamp delta to accumulator with clamping */
-void SFTMR_AddTsum(u32 *tsum, s32 delta_hi, u32 delta_lo) {
-    u32 a_lo = tsum[1];
-    u32 a_hi = tsum[0];
-    u32 max_lo = tsum[3];
-    u32 max_hi = tsum[2];
+/* SFTMR_Tsum: 64-bit accumulate + min/max tracking used by SFTMR_AddTsum */
+typedef struct SFTMR_Tsum {
+    s64 tsum;
+    s64 min;
+    s64 max;
+    u32 num;
+} SFTMR_Tsum;
 
-    /* add delta to accumulator */
-    u32 new_lo = a_lo + delta_lo;
-    u32 new_hi = a_hi + delta_hi + (new_lo < a_lo ? 1 : 0);
-    tsum[1] = new_lo;
-    tsum[0] = new_hi;
+/* SFTMR_AddTsum: add a 64-bit delta to the accumulator and track min/max of deltas */
+void SFTMR_AddTsum(SFTMR_Tsum *tsum, void *unused, s64 delta) {
+    tsum->tsum += delta;
 
-    /* check if accumulator > max (signed 64-bit comparison) */
-    {
-        s32 sign_max = (s32)max_hi;
-        s32 sign_new = (s32)new_hi;
-        int exceeds = 0;
-        if (sign_new > sign_max) exceeds = 1;
-        else if (sign_new == sign_max && new_lo > max_lo) exceeds = 1;
-
-        if (exceeds) {
-            /* clamp to max */
-            tsum[3] = delta_lo;
-            tsum[2] = delta_hi;
-        }
-    }
-
-    /* check if accumulator < min (signed 64-bit comparison) */
-    {
-        u32 min_hi = tsum[4];
-        u32 min_lo = tsum[5];
-        s32 sign_min = (s32)min_hi;
-        s32 sign_new = (s32)new_hi;
-        int below = 0;
-        if (sign_new < sign_min) below = 1;
-        else if (sign_new == sign_min && new_lo < min_lo) below = 1;
-        else if ((s32)new_hi < 0 && (s32)min_hi >= 0) below = 1;
-
-        if (!below) {
-            /* no clamp needed */
-            tsum[5] = min_lo;
-            tsum[4] = min_hi;
-        }
-    }
-
-    tsum[6]++; /* increment count */
+    tsum->min = (delta < tsum->min) ? delta : tsum->min;
+    tsum->max = (tsum->max < delta) ? delta : tsum->max;
+    tsum->num++;
 }

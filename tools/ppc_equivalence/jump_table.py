@@ -116,6 +116,28 @@ def _match_jump_table_tail(
                 shift_index = load_index - 1
                 index_reg = source_reg
                 first_index = shift_index
+    # Alternate MWCC shape: the index scale shift sits between the table-base
+    # `lis` and the low-half `addi` (e.g. `lis; slwi; addi; lwzx`), instead of
+    # immediately before the load. Accept a shift whose destination feeds the
+    # load index when only base materialization (addi/addis) lies between.
+    if shift_index is None and load_index >= 2:
+        for probe in range(load_index - 2, load_index):
+            shift = instructions[probe]
+            parsed = _parse_left_shift(shift)
+            if parsed is None:
+                continue
+            _source_reg, dest_reg, _scale = parsed
+            if dest_reg != load_rb:
+                continue
+            between = instructions[probe + 1 : load_index]
+            if any(
+                insn.opcode not in (Opcode.ADDI, Opcode.ADDIS) for insn in between
+            ):
+                continue
+            shift_index = probe
+            index_reg = _source_reg
+            first_index = probe
+            break
 
     table_base_expr = f"r{load_ra}"
     if load.relocation is not None:
@@ -171,7 +193,7 @@ def _parse_left_shift(insn: Instruction) -> tuple[int, int, int] | None:
     """Return (source_reg, dest_reg, scale) for a left-shift by a constant amount."""
     if insn.opcode == Opcode.SLW:
         ra, rt, rb = insn.operands
-        return ra, rt, rb
+        return rt, ra, rb
 
     if insn.opcode != Opcode.RLWINM:
         return None
@@ -181,4 +203,4 @@ def _parse_left_shift(insn: Instruction) -> tuple[int, int, int] | None:
         return None
     if me != 31 - sh:
         return None
-    return ra, rt, sh
+    return rt, ra, sh

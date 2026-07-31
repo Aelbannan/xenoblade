@@ -374,15 +374,18 @@ extern "C" void func_80463D44__Q23LOD17UnkClass_8046368CFv(LodDrawParam* p) {
 // us-80467e80  func_80463EB0  (cache object bind + dispatch)
 // ===========================================================================
 extern "C" void func_80463EB0__Q23LOD17UnkClass_8046368CFv(u32 index, u32 value) {
-    u8* rec = lbl_eu_80665784 + index * 0xC;
+    LodCacheObj* rec = (LodCacheObj*)(lbl_eu_80665784 + index * 0xC);
 
     lbl_eu_806657B0 |= 0x3;
-    lbl_eu_80665780 = rec + 8;
+    lbl_eu_80665780 = (u8*)rec + 8;
 
-    LodCacheObj* obj = *(LodCacheObj**)(rec + 0xC);
-    lbl_eu_8066581C = (u8*)obj + obj->f04;
-    lbl_eu_80665820 = (u8*)obj + obj->f0C;
-    lbl_eu_80665824 = (u8*)obj + obj->f24;
+    LodCacheObj* obj = *(LodCacheObj**)((u8*)rec + 0xC);
+    u8* addr824 = (u8*)obj + obj->f24;
+    u8* addr820 = (u8*)obj + obj->f0C;
+    u8* addr81C = (u8*)obj + obj->f04;
+    lbl_eu_8066581C = addr81C;
+    lbl_eu_80665820 = addr820;
+    lbl_eu_80665824 = addr824;
 
     func_804630C0__Q23LOD17CLODCacheManagerSFv((u8*)obj + obj->f20);
 
@@ -423,25 +426,37 @@ extern "C" s32 func_80463FF8__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj
     if (!(obj->mode & 0x2)) {
         return 1;
     }
-    s32 a = (s32)obj->start * 60;
-    s32 b = (s32)obj->end * 60;
-    s32 lim = lbl_eu_806657B8;
-    if (a > b) {
-        if (a <= lim) {
-            return 1;
-        }
-        if (b < lim) {
-            return 0;
-        }
+
+    s32 end = obj->end;
+    s32 start = obj->start;
+    end *= 60;
+    start *= 60;
+    s32 lim;
+    if (start <= end) {
+        goto ordered;
+    }
+
+    lim = lbl_eu_806657B8;
+    if (start <= lim) {
         return 1;
     }
-    if (a > lim) {
-        return 0;
-    }
-    if (b < lim) {
-        return 0;
+    if (end < lim) {
+        goto return_zero;
     }
     return 1;
+
+ordered:
+    lim = lbl_eu_806657B8;
+    if (start > lim) {
+        goto return_zero;
+    }
+    if (end < lim) {
+        goto return_zero;
+    }
+    return 1;
+
+return_zero:
+    return 0;
 }
 
 // ===========================================================================
@@ -623,18 +638,32 @@ extern "C" s32 func_804643D8__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b, s32 da, 
 // us-804684ec  func_8046451C  (does [a,b] straddle the distance limit?)
 // ===========================================================================
 extern "C" s32 func_8046451C__Q23LOD17UnkClass_8046368CFv(s32 a, s32 b) {
-    s32 lim = lbl_eu_806657B8;
-    s32 ok = 0;
-    if (a > b) {
-        if (a <= lim) {
-            ok = 1;
-        } else if (b >= lim) {
-            ok = 1;
-        }
-    } else if (a <= lim && b >= lim) {
-        ok = 1;
+    s32 lim;
+    if (a <= b) {
+        goto ordered;
     }
-    return ok;
+
+    lim = lbl_eu_806657B8;
+    if (a <= lim) {
+        return 1;
+    }
+    if (b < lim) {
+        goto return_zero;
+    }
+    return 1;
+
+ordered:
+    lim = lbl_eu_806657B8;
+    if (a > lim) {
+        goto return_zero;
+    }
+    if (b < lim) {
+        goto return_zero;
+    }
+    return 1;
+
+return_zero:
+    return 0;
 }
 
 // ===========================================================================

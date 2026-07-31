@@ -3,22 +3,77 @@
 
 #include <harness_catalog.h>
 
-void SFD_SetOutVol() {}
+s32 SFLIB_CheckHn(void* h);
+s32 SFLIB_SetErr(void* h, u32 err_code);
+u32 SFSET_GetCond(void* self, u32 idx);
+s32 SFTRN_CallTrtTrif(void* self, int idx, int funcIdx, int arg4, int arg5);
+u32 SFTRN_GetPrepFlg(void* self, u32 idx);
+void SFTRN_SetPrepFlg(void* self, u32 idx, u32 val);
+u32 SFTRN_GetTermFlg(void* self, u32 idx);
+void SFTRN_SetTermFlg(void* self, u32 idx, u32 val);
+int SFBUF_GetPrepFlg(void* self, int idx);
+int SFBUF_GetTermFlg(void* self, int idx);
 
-void SFD_GetOutVol() {}
+/* Set the audio-out volume of the AOAP player. */
+void SFD_SetOutVol(void* self, s32 vol) {
+    if (SFLIB_CheckHn(self)) {
+        SFLIB_SetErr(NULL, 0xFF0001A3);
+        return;
+    }
+    if (SFSET_GetCond(self, 6)) {
+        void* t = *(void**)((u8*)self + 0x21BC);
+        void (*fn)(void*, s32) = *(void(**)(void*, s32))((u8*)t + 0x0C);
+        fn(self, vol);
+    }
+}
 
-void SFAOAP_SetSpeed() {}
+/* Return the audio-out volume of the AOAP player. */
+s32 SFD_GetOutVol(void* self) {
+    if (SFLIB_CheckHn(self)) {
+        SFLIB_SetErr(NULL, 0xFF0001A4);
+        return 0;
+    }
+    if (SFSET_GetCond(self, 6) == 0) {
+        return 0;
+    }
+    {
+        void* t = *(void**)((u8*)self + 0x21BC);
+        s32 (*fn)(void*) = *(s32(**)(void*))((u8*)t + 0x10);
+        return fn(self);
+    }
+}
+
+/* Set the playback speed of the AOAP player. */
+void SFAOAP_SetSpeed(void* self, s32 a, s32 b) {
+    if (SFSET_GetCond(self, 6)) {
+        void* t = *(void**)((u8*)self + 0x21BC);
+        void (*fn)(void*, s32, s32) = *(void(**)(void*, s32, s32))((u8*)t + 0x14);
+        if (fn != NULL) {
+            fn(self, a, b);
+        }
+    }
+}
 
 int SFAOAP_Init(void) { return 0x0; }
 
 int SFAOAP_Finish(void) { return 0x0; }
 
-void SFAOAP_ExecServer() {}
-
-int SFSET_GetCond(void*, int);
+/* AOAP server: mirror BUF prep/term flags into the TRN flags. */
+int SFAOAP_ExecServer(void* self) {
+    if (SFSET_GetCond(self, 6) == 0) {
+        return 0;
+    }
+    if (SFTRN_GetPrepFlg(self, 7) != 1 && SFBUF_GetPrepFlg(self, *(u32*)((u8*)self + 0x21C4)) == 1) {
+        SFTRN_SetPrepFlg(self, 7, 1);
+    }
+    if (SFTRN_GetTermFlg(self, 7) != 1 && SFBUF_GetTermFlg(self, *(u32*)((u8*)self + 0x21C4)) == 1) {
+        SFTRN_SetTermFlg(self, 7, 1);
+    }
+    return 0;
+}
 
 int SFAOAP_Create(void* self) {
-    if (!SFSET_GetCond(self, 6)) {
+    if (SFSET_GetCond(self, 6) == 0) {
         return 0;
     }
     *(void**)((u8*)self + 0x21BC) = (u8*)self + 0x261C;
@@ -32,11 +87,47 @@ int SFAOAP_RequestStop(void* param_1) {
     return 0;
 }
 
-void SFAOAP_Start() {}
+int SFAOAP_Start(void* self) {
+    if (SFSET_GetCond(self, 6) == 0) {
+        return 0;
+    }
+    {
+        s32 result = SFTRN_CallTrtTrif(self, 3, 6, 0, 0);
+        if (result == 0) {
+            return 0;
+        } else {
+            return result;
+        }
+    }
+}
 
-void SFAOAP_Stop() {}
+int SFAOAP_Stop(void* self) {
+    if (SFSET_GetCond(self, 6) == 0) {
+        return 0;
+    }
+    {
+        s32 result = SFTRN_CallTrtTrif(self, 3, 7, 0, 0);
+        if (result == 0) {
+            return 0;
+        } else {
+            return result;
+        }
+    }
+}
 
-void SFAOAP_Pause() {}
+int SFAOAP_Pause(void* self, s32 flag) {
+    if (SFSET_GetCond(self, 6) == 0) {
+        return 0;
+    }
+    {
+        s32 result = SFTRN_CallTrtTrif(self, 3, 8, flag, 0);
+        if (result == 0) {
+            return 0;
+        } else {
+            return result;
+        }
+    }
+}
 
 s32 SFLIB_SetErr(void* h, u32 err_code);
 s32 SFAOAP_GetWrite(void* h) {

@@ -643,6 +643,8 @@ Key observations from `UnkClass_8047CA88::func_8047CC4C/CAA8` (us-80480c1c / us-
 
 **LOD fixed-trip matrix cursor loop:** In `UnkClass_8046368C::func_80463C24`, expressing the three matrix uploads as a high-level `while (i < 3)` with explicit `Mtx*` cursors (`workCursor` and `normalCursor`) produced the retail loop and exact `0x120` function size; the remaining 19 hexdiff mismatches were pure GPR color swaps. This is preferable to unrolling or low-level steering. Acceptance remained blocked only by the equivalence engine's symbolic MMIO abstraction around MTX/GX callees.
 
+**Effect TU table/cursor reconstruction:** For `code_804DB938.cpp`, defining the shared sine/cosine BSS as `{value, delta}` entries and taking pointer locals reproduced the retail `slwi` + `add` cursor shape and exact split size for the table-driven rotation helpers. `ml::math::abs` (which wraps the NW4R `FAbs` intrinsic and returns through a float conversion) reproduced retail `fabs` + `frsp`; a direct `fabsf` call did not. Keep these as high-level helpers; remaining differences are compiler register-color/scheduling artifacts. Files: `libs/monolib/src/effect/code_804DB938.cpp`.
+
 ### 2. `extern "C"` on `bl` targets with retail mangling
 
 MWCC emits `bl` to **exact linker symbols**. C++-mangled names on callees cause wrong relocs.

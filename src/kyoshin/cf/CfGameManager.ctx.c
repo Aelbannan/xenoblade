@@ -17662,6 +17662,7 @@ public:
     bool func_80457C8C();
     static CException* func_80457CA4(CWorkThread* pThread, const wchar_t* message, u32 r5);
     CException* func_80457EB0();
+    void* func_80457ED4(u32 r4);
     virtual void wkRender();
     virtual bool wkStandbyLogin();
     virtual bool wkStandbyLogout();
@@ -254237,6 +254238,10 @@ extern "C" void func_80087280__Q22cf13CfGameManagerFv(cf::CfGameManager* manager
 }
 
 extern "C" bool func_80164C28();
+extern "C" int func_80042864();
+extern "C" u8 func_80113E24(void* object);
+extern "C" u8 code80135FDC_getByte_64059();
+extern "C" void func_80134628();
 extern "C" void* func_80496034(CScn* scene);
 extern "C" void* func_80496264(CScn* scene, s32 index);
 extern "C" void func_80075674(CfCamEventManager* manager, void* object);
@@ -254298,7 +254303,6 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
     base->enabled = enabled;
     if (first == 0) {
         if (base->textLength != 0) {
-            base->enabled = 0;
             base->text[0] = 0;
             base->textLength = 0;
             base->secondaryText[0] = 0;
@@ -254315,11 +254319,11 @@ extern "C" void func_8007C198__Q22cf13CfGameManagerFv(u32 mode, u32 first, u32 s
             lbl_eu_80663E24 |= 8;
         }
     }
-    strcpy(base->text, val_a);
     base->textLength = strlen(val_a);
+    strcpy(base->text, val_a);
     if (val_b != 0) {
-        strcpy(base->secondaryText, val_b);
         base->secondaryTextLength = strlen(val_b);
+        strcpy(base->secondaryText, val_b);
     } else {
         base->secondaryText[0] = 0;
         base->secondaryTextLength = 0;
@@ -254372,11 +254376,11 @@ extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
     if (strcmp(base->text, val_a) != 0 || strcmp(base->secondaryText, val_b) != 0) {
         lbl_eu_80663E24 |= 8;
     }
-    strcpy(base->text, val_a);
     base->textLength = strlen(val_a);
+    strcpy(base->text, val_a);
     if (val_b != 0) {
-        strcpy(base->secondaryText, val_b);
         base->secondaryTextLength = strlen(val_b);
+        strcpy(base->secondaryText, val_b);
     } else {
         base->secondaryText[0] = 0;
         base->secondaryTextLength = 0;
@@ -254385,6 +254389,93 @@ extern "C" void func_8007C374__Q22cf13CfGameManagerFv(u32 first, u32 second,
 
 
 
+
+extern "C" float lbl_eu_80663E08;
+extern "C" CPad lbl_eu_80570D40[8];
+extern "C" void func_8007CBEC__Q22cf13CfGameManagerFv() {
+    if (cf::CfGameManager::func_800829B8()) {
+        return;
+    }
+
+    u32 resourceFlagsA = lbl_eu_80663E28;
+    u32 resourceFlagsB = lbl_eu_80663E28;
+    if ((resourceFlagsA & 0x02000000) == 0 &&
+        (resourceFlagsB & 0x00040000) != 0) {
+        return;
+    }
+    if ((resourceFlagsB & 0x00100000) != 0) {
+        return;
+    }
+    if ((lbl_eu_80663E24 & 0x02040000) == 0) {
+        return;
+    }
+
+    int ready = 1;
+    UnkClass_80113E1C* fade = func_80113E1C();
+    if (fade != nullptr && func_80113E24(fade) != 0) {
+        ready = 0;
+    }
+
+    CScn* scene = lbl_eu_80663E14;
+    int sceneReady = scene == nullptr ? 1 : func_80496044(scene);
+    if (sceneReady == 0) {
+        ready = 0;
+    }
+    if (func_80042864() != 0) {
+        ready = 0;
+    }
+
+    u32 flags = lbl_eu_80663E24;
+    if ((flags & 0x00040000) != 0) {
+        int resourceReady;
+        if ((flags & 0x00008000) != 0) {
+            resourceReady = func_80068E44(0x20);
+            if (resourceReady != 0) {
+                resourceReady = func_800B45A0();
+            }
+        } else {
+            resourceReady = func_800B45A0();
+        }
+        if (resourceReady == 0) {
+            ready = 0;
+        }
+    }
+    if ((flags & 0x00000040) != 0 && func_80164C28() == 0) {
+        ready = 0;
+    }
+
+    if (lbl_eu_80663E08 > lbl_eu_80666498) {
+        ready = 0;
+        lbl_eu_80663E08 -= lbl_eu_8066649C;
+        if (lbl_eu_80663E08 < lbl_eu_80666498) {
+            lbl_eu_80663E08 = lbl_eu_80666498;
+        }
+    }
+    if (ready == 0) {
+        return;
+    }
+
+    u32 channel = lbl_eu_80661BC8;
+    CPad* pad = lbl_eu_80663E0C;
+    if (channel == 0xFFFFFFFF) {
+        if (pad == nullptr) {
+            pad = &lbl_eu_80570D40[0];
+        }
+    } else if (pad == nullptr) {
+        pad = &lbl_eu_80570D40[channel & 7];
+    }
+    if (pad == nullptr) {
+        return;
+    }
+    if ((pad->mPressedButtonFlags & 0x200) == 0) {
+        return;
+    }
+    if (code80135FDC_getByte_64059() != 0) {
+        return;
+    }
+    func_80134628();
+    lbl_eu_80663E08 = lbl_eu_806664A0;
+}
 
 // === NOT_STARTED function implementations ===
 

@@ -20,7 +20,22 @@ void func_8048C5AC() {}
 void func_8048C5B8() {}
 void func_8048C60C() {}
 void func_8048C630() {}
-void func_8048C698() {}
+extern "C" void* func_8048C698(void* self, int kind) {
+    switch (kind) {
+    case 1:
+        return (void*)((char*)self + 0x0C);
+    case 2:
+        return (void*)((char*)self + 0x2C);
+    case 3:
+        return (void*)((char*)self + 0x4C);
+    case 4:
+        return (void*)((char*)self + 0x6C);
+    case 5:
+        return (void*)((char*)self + 0x8C);
+    default:
+        return nullptr;
+    }
+}
 void func_8048C6F4() {}
 void func_8048C750() {}
 void func_8048C8C4() {}

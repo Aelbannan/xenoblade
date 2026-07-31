@@ -25,7 +25,10 @@ void func_80068AEC(){}
 
 void cf::CfScriptManager::func_80068B20(void) {}
 
-void func_80068B24(){}
+extern "C" void func_80068B58(cf::CfScriptManager* manager, const char* name);
+extern "C" void func_80068B24(const char* name) {
+    func_80068B58(cf::CfScriptManager::getInstance(), name);
+}
 
 void func_80068ECC(void* subObj, const char* name);
 void cf::CfScriptManager::func_80068B58(const char* name) {
@@ -44,7 +47,10 @@ void cf::CfScriptManager::func_80068BC0() {
     mScripts[0].mFlags |= 4;
 }
 
-void func_80068BD0(){}
+extern "C" void func_80068BF4(cf::CfScriptManager* manager);
+extern "C" void func_80068BD0() {
+    func_80068BF4(cf::CfScriptManager::getInstance());
+}
 
 void cf::CfScriptManager::func_80068BF4() {
     mScripts[1].mFlags |= 4;

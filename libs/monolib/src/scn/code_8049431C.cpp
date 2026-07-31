@@ -44,11 +44,12 @@ extern "C" void func_80494540(ExtendedTexObj* self, ml::CRect* rect, u16 w, u16 
     u16 ww = w;
     s16 y = rect->mPos.y;
     u16 hh = h;
+    bool xOdd = (x & 1) != 0;
     s16 rw = rect->mSize.x;
     s16 rh = rect->mSize.y;
     GXBool p3b = p3;
     GXBool p4b = p4;
-    if (x & 1) x = (s16)(x - 1);
+    if (xOdd) x = (s16)(x - 1);
     if (y & 1) y = (s16)(y - 1);
     if (rw & 1) rw = (s16)(rw - 1);
     if (rh & 1) rh = (s16)(rh - 1);

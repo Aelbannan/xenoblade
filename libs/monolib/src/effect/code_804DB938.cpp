@@ -36,7 +36,7 @@ extern f32 lbl_eu_8066A208; // 1e-6f
 
 // Table based sincos: convert radians to degrees, wrap into [0, 360) and
 // interpolate between the two nearest integer-degree table entries.
-static inline void CESinCos(f32 rad, f32& sinV, f32& cosV) {
+static inline void CESinCos(f32 rad, f32& cosV, f32& sinV) {
     f32 deg = lbl_eu_8066B260 * rad;
     int n = (int)deg;
     f32 frac = deg - (f32)n;
@@ -53,8 +53,8 @@ static inline void CESinCos(f32 rad, f32& sinV, f32& cosV) {
 // Build a rotation matrix about a cardinal axis ('x' / 'y' / 'z') from an
 // angle in radians using the lookup tables.
 static inline void CERotTrig(Mtx m, f32 rad, char axis) {
-    f32 s, c;
-    CESinCos(rad, s, c);
+    f32 c, s;
+    CESinCos(rad, c, s);
     PSMTXRotTrig(m, s, c, axis);
 }
 
@@ -296,9 +296,10 @@ void func_804DD754(void) {
 // ---------------------------------------------------------------------------
 
 // 3-component lerp.
-void func_804DD89C(ml::CVec3* out, const ml::CVec3* a, const ml::CVec3* b,
-                   f32 t) {
-    nw4r::math::VEC3Lerp(*out, *a, *b, t);
+void func_804DD89C(Vec* out, const Vec* a, const Vec* b, f32 t) {
+    nw4r::math::VEC3Lerp(reinterpret_cast<nw4r::math::VEC3*>(out),
+                         reinterpret_cast<const nw4r::math::VEC3*>(a),
+                         reinterpret_cast<const nw4r::math::VEC3*>(b), t);
 }
 
 // 4-component lerp.

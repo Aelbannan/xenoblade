@@ -398,21 +398,35 @@ extern "C" void func_80458B64__10CExceptionFv(u8* buffer, u8 r, u8 g, u8 b, u8 a
 
 // Set a TextWriter cursor position.
 extern "C" void func_80458B78__10CExceptionFv(void* writer, f32 x, f32 y, f32 z) {
-    bool valid0 = true;
-    bool valid1 = true;
-    bool valid2 = true;
-    bool valid3 = true;
-    bool valid4 = true;
-    bool valid5 = true;
     u32 address = (u32)writer;
+    bool validMem1 = true;
+    bool validMem2 = true;
+    bool validIo = true;
+    bool validIo2 = true;
+    bool validRegs = true;
+    bool validRegs2 = true;
     if ((address & 0xFF000000) != 0x80000000 &&
-        (address & 0xFF800000) != 0x81000000) valid0 = false;
-    if (!valid0 && (address & 0xFF000000) != 0xC0000000) valid1 = false;
-    if (!valid1 && (address & 0xFF800000) != 0xC1000000) valid2 = false;
-    if (!valid2 && (address & 0xF8000000) != 0xD0000000) valid3 = false;
-    if (!valid3 && (address & 0xFF800000) != 0x3F000000) valid4 = false;
-    if (!valid4 && (address & 0xFFFFC000) != 0x20000000) valid5 = false;
-    if (!valid5) Panic__Q24nw4r2dbFPCciPCce(lbl_eu_805378A0, 0x102, lbl_eu_8053786C, writer);
+        (address & 0xFF800000) != 0x81000000) {
+        validMem1 = false;
+    }
+    if (!validMem1 && (address & 0xF8000000) != 0x90000000) {
+        validMem2 = false;
+    }
+    if (!validMem2 && (address & 0xFF000000) != 0xC0000000) {
+        validIo = false;
+    }
+    if (!validIo && (address & 0xFF800000) != 0xC1000000) {
+        validIo2 = false;
+    }
+    if (!validIo2 && (address & 0xF8000000) != 0xD0000000) {
+        validRegs = false;
+    }
+    if (!validRegs && (address & 0xFFFFC000) != 0xE0000000) {
+        validRegs2 = false;
+    }
+    if (!validRegs2) {
+        Panic__Q24nw4r2dbFPCciPCce(lbl_eu_805378A0, 0x102, lbl_eu_8053786C, writer);
+    }
     *(f32*)((u8*)writer + 0x2C) = x;
     *(f32*)((u8*)writer + 0x30) = y;
     *(f32*)((u8*)writer + 0x34) = z;

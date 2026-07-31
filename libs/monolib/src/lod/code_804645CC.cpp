@@ -14,6 +14,7 @@
 #include <revolution/gx/GXAttr.h>
 #include <revolution/gx/GXGeometry.h>
 #include <revolution/gx/GXTransform.h>
+#include <revolution/os/OSFastCast.h>
 
 // ---- shared LOD renderer state (retail .sbss, small-data) ----
 extern "C" {
@@ -138,9 +139,9 @@ extern "C" void func_80465730__Q23LOD17UnkClass_804645CCFv(f32 scale) {
 
 extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32 value) {
     if (value == 0xFF) {
-        s32 flags = lbl_eu_806657E8;
+        value = lbl_eu_806657E8;
         lbl_eu_80665804 = 0;
-        lbl_eu_806657E8 = flags & ~4;
+        lbl_eu_806657E8 = value & ~4;
         return;
     }
 
@@ -151,5 +152,6 @@ extern "C" void func_8046577C__Q23LOD17UnkClass_804645CCFv(s32 value) {
 }
 
 extern "C" void func_804657E4__Q23LOD17UnkClass_804645CCFv(s16 value) {
-    lbl_eu_806657E4 = (f32)value;
+    s16 local = value;
+    OSs16tof32(&local, &lbl_eu_806657E4);
 }

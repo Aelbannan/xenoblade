@@ -39,7 +39,7 @@ extern "C" int func_8049E51C(CScnIdMan* self) {
         node = *(void**)node;
         count++;
     }
-    return count == 0;
+    return static_cast<u32>(__cntlzw(count)) >> 5;
 }
 
 void CScnIdMan::cbRenderBefore() {

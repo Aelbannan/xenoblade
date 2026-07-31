@@ -1512,13 +1512,38 @@ def draft_integer_core_assurance(
             and not _needs_ledger_refresh("fp-bitwise")
         )
     )
-    if integer_done and bitwise_done:
+    # A cached integer attestation is also refreshed when the requirements
+    # binding changed, even if its ledger digest is still current.  This keeps
+    # certificate capability evidence synchronized with the authoritative
+    # requirements block after a live proof-engine update.
+    def _needs_requirement_refresh(capability: str) -> bool:
+        prior_item = prior_by_name.get(capability)
+        if prior_item is None:
+            return False
+        requirement = _requirement_lookup(
+            _normalize_requirements_block(
+                requirements
+                if requirements is not None
+                else getattr(result, "capability_requirements", None)
+            ),
+            capability,
+        )
+        expected = getattr(requirement, "requirement_sha256", None) if requirement is not None else None
+        return prior_item.evidence.get("requirement_sha256") != expected
+
+    if integer_done and bitwise_done and not any(
+        _needs_requirement_refresh(name)
+        for name in ("integer-core", "fp-bitwise")
+        if name in prior_names
+    ):
         return None
 
     # When refreshing, drop the prior name so the draft is re-emitted.
-    if _needs_ledger_refresh("integer-core"):
+    if _needs_ledger_refresh("integer-core") or _needs_requirement_refresh("integer-core"):
         prior_names.discard("integer-core")
-    if bitwise_present and _needs_ledger_refresh("fp-bitwise"):
+    if bitwise_present and (
+        _needs_ledger_refresh("fp-bitwise") or _needs_requirement_refresh("fp-bitwise")
+    ):
         prior_names.discard("fp-bitwise")
 
     req_block = _normalize_requirements_block(

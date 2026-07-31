@@ -4,9 +4,19 @@
 #include "kyoshin/harness_catalog.hpp"
 
 #include "kyoshin/action/CActParamAnim.hpp"
+#include "monolib/device/CDeviceVI.hpp"
+#include <nw4r/math.h>
+
 CActParamAnim::CActParamAnim() {}
 
-void __dt__8004B070(){}
+extern "C" void __dl__FPv(void* object);
+
+extern "C" CActParamAnim* __dt__8004B070(CActParamAnim* self, s32 deleteFlag) {
+    if (self != nullptr && deleteFlag > 0) {
+        __dl__FPv(self);
+    }
+    return self;
+}
 
 void CActParamAnim_initSub1() {}
 
@@ -22,7 +32,44 @@ float CActParamAnim::getBlendWeight() {
     return *(float*)((char*)this + 0x43c);
 }
 
-void func_8004B354(){}
+struct CActParamAnimObjectView {
+    u8 _pad_000[0x3A0];
+    void* object;
+    u32 objectState;
+    f32 field_3A8;
+    f32 field_3AC;
+    f32 field_3B0;
+};
+
+struct CActParamAnimFlagView {
+    u8 _pad_000[0x0C];
+    u32 flags;
+};
+
+struct CActParamAnimData3 {
+    u32 x;
+    u32 y;
+    u32 z;
+};
+
+extern "C" void* func_8048315C(void* object);
+extern "C" bool func_8004B354(CActParamAnim* self, const CActParamAnimData3* value) {
+    CActParamAnimObjectView* view =
+        reinterpret_cast<CActParamAnimObjectView*>(self);
+    if (view->object == nullptr ||
+        (reinterpret_cast<CActParamAnimFlagView*>(self)->flags & 0x100) != 0) {
+        return false;
+    }
+    view->field_3A8 = *reinterpret_cast<const f32*>(&value->x);
+    view->field_3AC = *reinterpret_cast<const f32*>(&value->y);
+    view->field_3B0 = *reinterpret_cast<const f32*>(&value->z);
+    CActParamAnimData3* destination =
+        reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object));
+    destination->x = value->x;
+    destination->y = value->y;
+    destination->z = value->z;
+    return true;
+}
 
 int CActParamAnim::checkFlag(int mask) {
     return (*(int*)((char*)this) & mask) != 0 ? 1 : 0;
@@ -34,9 +81,40 @@ void CActParamAnim_copyTranslation(void* dst, const void* src) {
     *(int*)((char*)dst + 8) = *(int*)((char*)src + 8);
 }
 
-void func_8004B40C(){}
+extern "C" bool func_8004B40C(CActParamAnim* self, const CActParamAnimData3* value) {
+    CActParamAnimObjectView* view =
+        reinterpret_cast<CActParamAnimObjectView*>(self);
+    u32 flags = reinterpret_cast<CActParamAnimFlagView*>(self)->flags | 0x10;
+    view->field_3A8 = *reinterpret_cast<const f32*>(&value->y);
+    reinterpret_cast<CActParamAnimFlagView*>(self)->flags = flags;
+    if (view->object == nullptr || (flags & 0x100) != 0) {
+        return false;
+    }
+    view->field_3A8 = *reinterpret_cast<const f32*>(&value->x);
+    view->field_3AC = *reinterpret_cast<const f32*>(&value->y);
+    view->field_3B0 = *reinterpret_cast<const f32*>(&value->z);
+    CActParamAnimData3* destination =
+        reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object));
+    destination->x = value->x;
+    destination->y = value->y;
+    destination->z = value->z;
+    return true;
+}
 
-void func_8004B4A4(){}
+extern "C" bool func_8004B4A4(CActParamAnim* self, f32 value) {
+    CActParamAnimObjectView* view =
+        reinterpret_cast<CActParamAnimObjectView*>(self);
+    void* owner = *reinterpret_cast<void**>(reinterpret_cast<u8*>(self) + 8);
+    if (owner != nullptr &&
+        reinterpret_cast<bool (*)(void*)>(*reinterpret_cast<void**>(
+            *reinterpret_cast<void**>(owner))) (owner) == false) {
+        return true;
+    }
+    if ((reinterpret_cast<CActParamAnimFlagView*>(self)->flags & 0x40) == 0) {
+        *reinterpret_cast<f32*>(reinterpret_cast<u8*>(self) + 0x440) = value;
+    }
+    return true;
+}
 
 void* CActParamAnim::getOwner() {
     return *(void**)((char*)this + 8);
@@ -44,7 +122,31 @@ void* CActParamAnim::getOwner() {
 
 bool CActParamAnim_isEnabled() { return true; }
 
-void func_8004B52C(){}
+extern "C" bool func_8004B52C(CActParamAnim* self, f32 value) {
+    CActParamAnimObjectView* view =
+        reinterpret_cast<CActParamAnimObjectView*>(self);
+    void* owner = *reinterpret_cast<void**>(reinterpret_cast<u8*>(self) + 8);
+    if (owner == nullptr || reinterpret_cast<bool (*)(void*)>(*reinterpret_cast<void**>(
+            *reinterpret_cast<void**>(owner))) (owner)) {
+        if ((reinterpret_cast<CActParamAnimFlagView*>(self)->flags & 0x40) == 0) {
+            *reinterpret_cast<f32*>(reinterpret_cast<u8*>(self) + 0x440) = value;
+        }
+    }
+    u32 flags = reinterpret_cast<CActParamAnimFlagView*>(self)->flags;
+    if ((flags & 0x40) == 0) {
+        *reinterpret_cast<f32*>(reinterpret_cast<u8*>(self) + 0x444) = value;
+        if (view->object != nullptr) {
+            CActParamAnimData3 temp = {0, 0, 0};
+            temp.y = *reinterpret_cast<const u32*>(&value);
+            CActParamAnimData3* destination =
+                reinterpret_cast<CActParamAnimData3*>(func_8048315C(view->object));
+            destination->x = temp.x;
+            destination->y = temp.y;
+            destination->z = temp.z;
+        }
+    }
+    return true;
+}
 
 void CActParamAnim_copyRotation(void* dst, const void* src) {
     *(int*)((char*)dst + 0xC) = *(int*)((char*)src + 0);
@@ -58,7 +160,16 @@ float CActParamAnim::getScale() {
     return *(float*)((char*)this + 0x444);
 }
 
-void func_8004B624(){}
+extern "C" void func_8004B9D4(CActParamAnim* self, u32, u32, s32, u32);
+extern "C" void func_8004B624(CActParamAnim* self, void* object, void* state,
+                                u32 first, u32 second, u32 third) {
+    CActParamAnimFlagView* flags = reinterpret_cast<CActParamAnimFlagView*>(self);
+    CActParamAnimObjectView* view = reinterpret_cast<CActParamAnimObjectView*>(self);
+    view->object = object;
+    view->objectState = reinterpret_cast<u32>(state);
+    flags->flags |= 8;
+    func_8004B9D4(self, 1, 0, -1, 0);
+}
 
 void bits_clear(uint32_t* ptr, uint32_t mask) {
     *ptr &= ~mask;
@@ -69,20 +180,31 @@ void CActParamAnim::updateSubAnim() {
     if (*(int*)((char*)this + 0x3A4) != 0) func_80055AC4((char*)this + 16);
 }
 
-void func_8004B6BC(){}
+extern "C" bool func_80055B88(void* data);
+extern "C" void func_8004B6BC(CActParamAnim* self, void* object) {
+    CActParamAnimObjectView* view = reinterpret_cast<CActParamAnimObjectView*>(self);
+    if (view->objectState != 0 && func_80055B88(reinterpret_cast<u8*>(self) + 0x10)) {
+        if (view->objectState == reinterpret_cast<u32>(object)) {
+            view->objectState = *reinterpret_cast<u32*>(reinterpret_cast<u8*>(self) + 0x1E0);
+        }
+        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(self) + 0x374) = 0;
+        *reinterpret_cast<u32*>(reinterpret_cast<u8*>(self) + 0x37C) = 0xFFFFFFFF;
+    }
+}
 
 void CActParamAnim::setOwner(int val) { *(int*)((char*)this + 8) = val; }
 
-// STALLED: uses paired-single (PS) SIMD instructions (psq_l/ps_sum1/psq_st)
-// that MWCC Wii 1.1 cannot generate from standard C. Requires DECOMP_ASM_INSN
-// carve-outs per PLAN.md 17.6, but the entire function body is PS ops, making
-// it effectively a whole-function asm body which is not permitted.
-void func_8004B738(){}
+extern "C" void func_8004B738(float* destination, const float* source) {
+    *reinterpret_cast<nw4r::math::VEC3*>(destination) +=
+        *reinterpret_cast<const nw4r::math::VEC3*>(source);
+}
 
 extern "C" void func_8004B75C(float* destination, const float* source, float scale) {
-    destination[0] = source[0] * scale;
-    destination[1] = source[1] * scale;
-    destination[2] = source[2] * scale;
+    nw4r::math::VEC3 scaled =
+        *reinterpret_cast<const nw4r::math::VEC3*>(source) * scale;
+    destination[0] = scaled.x;
+    destination[1] = scaled.y;
+    destination[2] = scaled.z;
 }
 
 void vec3_copy(float *dst, const float *src) {
@@ -101,7 +223,21 @@ void CActParamAnim::copyVec3To3C0(const float* src) {
     *(int*)((char*)this + 0x3C8) = *(int*)((char*)src + 8);
 }
 
-void func_8004B7DC(){}
+struct CActParamAnimMotionView {
+    u8 _pad_000[0x390];
+    f32 animSpeed;
+    u8 _pad_394[0x30];
+    f32 vec3Y;
+};
+
+extern "C" void func_8004B7DC(CActParamAnim* self, f32 amount) {
+    CActParamAnimMotionView* motion =
+        reinterpret_cast<CActParamAnimMotionView*>(self);
+    f32 animSpeed = motion->animSpeed;
+    f32 frameSeconds = CDeviceVI::getSecPerFrame();
+    f32 frameScale = animSpeed * frameSeconds;
+    motion->vec3Y = amount * frameScale + motion->vec3Y;
+}
 
 void CActParamAnim::setVec3Y(float val) {
     *(float*)((char*)this + 0x3c4) = val;

@@ -632,6 +632,8 @@ def _incomplete_certified_calls_assurance(
     rejection_reasons: Sequence[str],
     *,
     missing_callees: Sequence[str] = (),
+    requirement: Any | None = None,
+    requirements_sha256: str | None = None,
 ) -> CapabilityAssurance:
     evidence: dict[str, Any] = {
         "obligation": None,
@@ -639,6 +641,14 @@ def _incomplete_certified_calls_assurance(
     }
     if missing_callees:
         evidence["missing_callees"] = [str(item) for item in missing_callees]
+    if requirement is not None:
+        digest = getattr(requirement, "requirement_sha256", None)
+        if digest is None and isinstance(requirement, Mapping):
+            digest = requirement.get("requirement_sha256")
+        if digest:
+            evidence["requirement_sha256"] = str(digest)
+    if requirements_sha256:
+        evidence["requirements_sha256"] = str(requirements_sha256)
     attestation = build_attestation(
         capability=CERTIFIED_CALLS_CAPABILITY,
         model_version=CERTIFIED_CALLS_MODEL_VERSION,
@@ -674,6 +684,23 @@ def draft_certified_calls_assurance(
 
     rejection_extras: list[str] = []
     missing_list = [str(item) for item in missing_callees]
+    req = None
+    req_sha = None
+    req_block = (
+        requirements
+        if requirements is not None
+        else getattr(result, "capability_requirements", None)
+    )
+    if req_block is not None:
+        from tools.ppc_equivalence.capability_assurance import (
+            _normalize_requirements_block,
+            _requirement_lookup,
+        )
+
+        normalized = _normalize_requirements_block(req_block)
+        req = _requirement_lookup(normalized, CERTIFIED_CALLS_CAPABILITY)
+        if normalized is not None:
+            req_sha = str(getattr(normalized, "requirements_sha256", "") or "")
     if missing_list:
         rejection_extras.append(REJECTION_MISSING_CALLEE_INPUT)
 
@@ -721,6 +748,8 @@ def draft_certified_calls_assurance(
         return _incomplete_certified_calls_assurance(
             list(dict.fromkeys(rejection_extras)),
             missing_callees=missing_list or [str(item) for item in assumed],
+            requirement=req,
+            requirements_sha256=req_sha,
         )
 
     if any(_is_zero_hash_input(item) for item in inputs):
@@ -737,6 +766,8 @@ def draft_certified_calls_assurance(
                 return _incomplete_certified_calls_assurance(
                     list(dict.fromkeys(rejection_extras)),
                     missing_callees=missing_list,
+                    requirement=req,
+                    requirements_sha256=req_sha,
                 )
         if selected:
             inputs = selected
@@ -756,23 +787,6 @@ def draft_certified_calls_assurance(
     for reason in rejection_extras:
         if reason not in rejection_reasons:
             rejection_reasons.append(reason)
-    req = None
-    req_sha = None
-    req_block = (
-        requirements
-        if requirements is not None
-        else getattr(result, "capability_requirements", None)
-    )
-    if req_block is not None:
-        from tools.ppc_equivalence.capability_assurance import (
-            _normalize_requirements_block,
-            _requirement_lookup,
-        )
-
-        normalized = _normalize_requirements_block(req_block)
-        req = _requirement_lookup(normalized, CERTIFIED_CALLS_CAPABILITY)
-        if normalized is not None:
-            req_sha = str(getattr(normalized, "requirements_sha256", "") or "")
     attestation = build_certified_calls_attestation(
         obligation,
         rejection_reasons=rejection_reasons,

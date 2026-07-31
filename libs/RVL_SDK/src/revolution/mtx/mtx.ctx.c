@@ -1063,6 +1063,76 @@ double nan(const char* arg);
 
 #endif
 /* end "math.h" */
+/* "libs/RVL_SDK/src/revolution/mtx/mtx.c" line 3 "string.h" */
+#ifndef MSL_STRING_H
+#define MSL_STRING_H
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 3 "types.h" */
+/* end "types.h" */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 9 "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+#ifndef _MSL_STRING_API_H
+#define _MSL_STRING_API_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void* __memrchr(const void* src, int val, size_t n);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/string_api.h" */
+/* "libs/PowerPC_EABI_Support/include/stl/string.h" line 10 "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+#ifndef _EXTRAS_H
+#define _EXTRAS_H
+/* "libs/PowerPC_EABI_Support/include/PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+int stricmp(const char*, const char*);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "PowerPC_EABI_Support/MSL_C/MSL_Common/extras.h" */
+
+char* strcpy(char*, const char*);
+char* strncpy(char*, const char*, size_t);
+
+char* strcat(char*, const char*);
+char* strncat(char*, const char*, size_t);
+
+int strcmp(const char*, const char*);
+int strncmp(const char*, const char*, size_t);
+
+char* strchr(const char*, int);
+char* strstr(const char*, const char*);
+
+size_t strlen(const char*);
+
+void* memmove(void*, const void*, size_t);
+int memcmp(const void*, const void*, size_t);
+void* memchr(const void*, int, size_t);
+
+void* memcpy(void* dest, const void* src, size_t n);
+void* memset(void* dest, int val, size_t count);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "string.h" */
 
 #define MTXDegToRad(a) ((a)*0.01745329252f)
 
@@ -1097,18 +1167,7 @@ void C_MTXCopy(){
 }
 
 void PSMTXCopy(const Mtx src, Mtx dst) {
-    dst[0][0] = src[0][0];
-    dst[0][1] = src[0][1];
-    dst[0][2] = src[0][2];
-    dst[0][3] = src[0][3];
-    dst[1][0] = src[1][0];
-    dst[1][1] = src[1][1];
-    dst[1][2] = src[1][2];
-    dst[1][3] = src[1][3];
-    dst[2][0] = src[2][0];
-    dst[2][1] = src[2][1];
-    dst[2][2] = src[2][2];
-    dst[2][3] = src[2][3];
+    memcpy(dst, src, sizeof(Mtx));
 }
 
 //unused

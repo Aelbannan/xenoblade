@@ -222,10 +222,10 @@ extern "C" s32 func_8047DC8C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
     func_804814DC__17UnkClass_8047E110Fv(lbl_eu_80658560, fx, arg3, arg4);
     if (!func_80481790__17UnkClass_8047E110Fv(lbl_eu_80658560, local)) return 0;
 
-    const u32* mgr = (const u32*)lbl_eu_80658560;
-    out[0] = mgr[0x6c / 4];
-    out[1] = mgr[0x70 / 4];
-    out[2] = mgr[0x74 / 4];
+    u32* manager = (u32*)lbl_eu_80658560;
+    out[0] = manager[0x6c / 4];
+    out[1] = manager[0x70 / 4];
+    out[2] = manager[0x74 / 4];
     return 1;
 }
 
@@ -233,25 +233,46 @@ extern "C" s32 func_8047DC8C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, u32
 extern "C" s32 func_8047DD4C__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* arg1,
                                                      void* arg2, u32 arg3) {
     u32 local;
-    if (!func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {
-        goto fail;
+    if (func_8047DF54__17UnkClass_8047D2ACFv(self, &local, arg1)) {
+        void* manager = lbl_eu_80658560;
+
+        if (func_804819AC__17UnkClass_8047E110Fv(manager, local)) {
+            return 0;
+        }
+
+        if (arg3) {
+            func_8048169C__17UnkClass_8047E110Fv(manager, arg1, arg2);
+            return func_804819C4__17UnkClass_8047E110Fv(manager, local);
+        }
+
+        func_8048163C__17UnkClass_8047E110Fv(manager, arg2);
+        return func_80481790__17UnkClass_8047E110Fv(manager, local);
     }
-    void* manager = lbl_eu_80658560;
-    if (func_804819AC__17UnkClass_8047E110Fv(manager, local)) {
-        goto fail;
-    }
-    if (arg3) {
-        func_8048169C__17UnkClass_8047E110Fv(manager, arg1, arg2);
-        return func_804819C4__17UnkClass_8047E110Fv(manager, local);
-    }
-    func_8048163C__17UnkClass_8047E110Fv(manager, arg2);
-    return func_80481790__17UnkClass_8047E110Fv(manager, local);
-fail:
+
     return 0;
 }
 
 // func_8047D2AC -- full walker tick (0x9E0)
 extern "C" s32 func_8047D2AC__17UnkClass_8047D2ACFv(UnkClass_8047D2AC* self, void* outDir,
                                                      void* posA, void* posB) {
-    return 2;
+    u16 flags = self->mFlags;
+    if ((flags & 1) == 0 || (flags & 2) == 0) {
+        *(f32*)((u8*)outDir + 0) = lbl_eu_8066A880;
+        *(f32*)((u8*)outDir + 4) = lbl_eu_8066A880;
+        *(f32*)((u8*)outDir + 8) = lbl_eu_8066A880;
+        return 2;
+    }
+    func_80481014__17UnkClass_8047E110Fv(lbl_eu_80658560, (f32)0, (f32)0, posA,
+                                          self->mSpeed);
+    if (self->mFlags & 4) {
+        u32 localA;
+        u32 localB;
+        if (func_8047E6C4__17UnkClass_8047E110Fv(lbl_eu_80658560, &localA, &localB,
+                                                  self->mField18, self->mField14, posA,
+                                                  lbl_eu_8066A878)) {
+            self->mField18 = (u16)localA;
+            self->mField14 = (u16)localB;
+        }
+    }
+    return 0;
 }

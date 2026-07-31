@@ -3,15 +3,13 @@
 #include <math.h>
 #include <string.h>
 
+// Isolated Gekko paired-single backend for PSMTXCopy / PSMTXScale /
+// PSMTXScaleApply / PSMTXQuat (PLAN.md 17.6).
+#include "libs/RVL_SDK/src/revolution/mtx/mtx_ps.inl"
+
 #define MTXDegToRad(a) ((a)*0.01745329252f)
 
 static f32 Unit01[] = { 0.0f, 1.0f };
-
-DECOMP_FORCELITERAL(mtx_c, 1.0f, 0.0f);
-
-//unused
-void C_MTXIdentity(){
-}
 
 void PSMTXIdentity(register Mtx m) {
     register f32 c_zero = 0.0f;
@@ -29,18 +27,6 @@ void PSMTXIdentity(register Mtx m) {
         psq_st     c_10, 0(m),    0, 0
         psq_st     c_10, 40(m),   0, 0
     )
-}
-
-//unused
-void C_MTXCopy(){
-}
-
-void PSMTXCopy(const Mtx src, Mtx dst) {
-    memcpy(dst, src, sizeof(Mtx));
-}
-
-//unused
-void C_MTXConcat(){
 }
 
 asm void PSMTXConcat(const register Mtx mA, const register Mtx mB,
@@ -99,10 +85,6 @@ asm void PSMTXConcat(const register Mtx mA, const register Mtx mB,
     addi r1, r1, 64
     blr
     // clang-format on
-}
-
-//unused
-void C_MTXConcatArray(){
 }
 
 void PSMTXConcatArray(const register Mtx mtx1, const register Mtx mtx2,
@@ -196,10 +178,6 @@ _loop:
     )
 }
 
-//unused
-void C_MTXTranspose(){
-}
-
 void PSMTXTranspose(const register Mtx src, register Mtx xPose) {
     register f32 c_zero = 0.0f;
     register f32 row0a, row1a, row0b, row1b;
@@ -225,10 +203,6 @@ void PSMTXTranspose(const register Mtx src, register Mtx xPose) {
         psq_st      trns1, 24(xPose), 0, 0
         stfs        row0b, 40(xPose)
     )
-}
-
-//unused
-void C_MTXInverse(){
 }
 
 asm u32 PSMTXInverse(const register Mtx src, register Mtx inv) {
@@ -300,19 +274,11 @@ loc0:
     // clang-format on
 }
 
-//unused
-void C_MTXRotRad(){
-}
-
 void PSMTXRotRad(Mtx m, char axis, f32 rad) {
     f32 sinA, cosA;
     sinA = sinf(rad);
     cosA = cosf(rad);
     PSMTXRotTrig(m, sinA, cosA, axis);
-}
-
-//unused
-void C_MTXRotTrig(){
 }
 
 void PSMTXRotTrig(register Mtx m, register f32 sinA, register f32 cosA,
@@ -375,10 +341,6 @@ loc3:
     )
 }
 
-//unused
-void C_MTXRotAxisRad(){
-}
-
 void __PSMTXRotAxisRadInternal(register Mtx m, const register Vec* axis,
                                register f32 sT, register f32 cT) {
     register f32 tT, fc0;
@@ -439,10 +401,6 @@ void PSMTXRotAxisRad(Mtx m, const Vec* axis, f32 rad) {
     __PSMTXRotAxisRadInternal(m, axis, sinT, cosT);
 }
 
-//unused
-void C_MTXTrans(){
-}
-
 void PSMTXTrans(register Mtx m, register f32 xT, register f32 yT,
                 register f32 zT) {
     register f32 c0 = 0.0f;
@@ -460,10 +418,6 @@ void PSMTXTrans(register Mtx m, register f32 xT, register f32 yT,
         stfs zT, 44(m)
         stfs c1, 0(m)
     )
-}
-
-//unused
-void C_MTXTransApply(){
 }
 
 asm void PSMTXTransApply(const register Mtx src, register Mtx dst,
@@ -494,75 +448,6 @@ asm void PSMTXTransApply(const register Mtx src, register Mtx dst,
     psq_st fp8, 40(dst), 0, 0
     blr
     // clang-format on
-}
-
-//unused
-void C_MTXScale(){
-}
-
-void PSMTXScale(Mtx m, f32 xS, f32 yS, f32 zS) {
-    f32 zero = 0.0f;
-    m[0][0] = xS;
-    m[0][1] = m[0][2] = zero;
-    m[0][3] = m[1][0] = zero;
-    m[1][1] = yS;
-    m[1][2] = m[1][3] = zero;
-    m[2][0] = m[2][1] = zero;
-    m[2][2] = zS;
-    m[2][3] = zero;
-}
-
-//unused
-void C_MTXScaleApply(){
-}
-
-void PSMTXScaleApply(const Mtx src, Mtx dst, f32 xS, f32 yS, f32 zS) {
-    dst[0][0] = src[0][0] * xS;
-    dst[0][1] = src[0][1] * xS;
-    dst[0][2] = src[0][2] * xS;
-    dst[0][3] = src[0][3] * xS;
-    dst[1][0] = src[1][0] * yS;
-    dst[1][1] = src[1][1] * yS;
-    dst[1][2] = src[1][2] * yS;
-    dst[1][3] = src[1][3] * yS;
-    dst[2][0] = src[2][0] * zS;
-    dst[2][1] = src[2][1] * zS;
-    dst[2][2] = src[2][2] * zS;
-    dst[2][3] = src[2][3] * zS;
-}
-
-//unused
-void C_MTXQuat(){
-}
-
-void PSMTXQuat(Mtx m, const Quaternion *q) {
-    float x = q->x, y = q->y, z = q->z, w = q->w;
-    float x2 = x + x, y2 = y + y, z2 = z + z;
-    float xx = x * x2, xy = x * y2, xz = x * z2;
-    float xw = w * x2;
-    float yy = y * y2, yz = y * z2, yw = w * y2;
-    float zz = z * z2, zw = w * z2;
-
-    m[0][0] = 1.0f - yy - zz;
-    m[0][1] = xy - zw;
-    m[0][2] = xz + yw;
-    m[0][3] = 0.0f;
-    m[1][0] = xy + zw;
-    m[1][1] = 1.0f - xx - zz;
-    m[1][2] = yz - xw;
-    m[1][3] = 0.0f;
-    m[2][0] = xz - yw;
-    m[2][1] = yz + xw;
-    m[2][2] = 1.0f - xx - yy;
-    m[2][3] = 0.0f;
-}
-
-//unused
-void C_MTXReflect(){
-}
-
-//unused
-void PSMTXReflect(){
 }
 
 void C_MTXLookAt(Mtx m, const Vec* camPos, const Vec* camUp, const Vec* target) {

@@ -31,8 +31,8 @@
  *    (R_PPC_EMB_SDA21).  MWCC 3.0a5.2's assembler only accepts @h/@ha/@l/
  *    @loword/@hiword, so the decomp uses `li r0, X@l` (R_PPC_ADDR16_LO) --
  *    identical instruction bytes, reloc type differs (unresolved=yellow in
- *    hexdiff).  The constant must be placed in .sdata2 for the linked build
- *    (SDA2 base 0 convention of this DOL).
+ *    hexdiff; objdiff functionRelocDiffs=data_value compares resolved values,
+ *    which link to the same retail data-pool symbol either way).
  *  - The retail never calls MTX34RotXYZFIdx (nor SinCosFIdx) in the Xenoblade
  *    binary; it is SDK dead code.  Its lookup-index quirk (table pointer +
  *    index<<20) is therefore inert at runtime; the fallback below implements
@@ -45,21 +45,25 @@
 #if defined(__MWERKS__) && !defined(NONMATCHING)
 
 extern "C" {
-// Paired (65536.0f, 65536.0f) loaded by psq_lx (retail lbl_eu_80669E50).
-const f32 gRotFIdxMax[2] = {65536.0f, 65536.0f};
-// nw4r::math::detail::gSinCosTbl (defined in math_triangular.cpp, 256 entries
-// of {sin_val, cos_val, sin_delta, cos_delta}; retail lbl_eu_8051D7F8).
-extern const f32 gSinCosTbl__Q34nw4r4math6detail[];
+// Paired (65536.0f, 65536.0f) loaded by psq_lx.  Retail loads it from
+// lbl_eu_80669E50 (8 bytes in the retail nw4r data pool); we reference the
+// same external symbol so relocations (and objdiff fuzzy) match exactly.
+extern const f32 lbl_eu_80669E50[2];
+// The sin/cos table (256 entries of {sin_val, cos_val, sin_delta,
+// cos_delta} = 16 bytes each).  Retail: lbl_eu_8051D7F8 in the nw4r data
+// pool; the decomp port defines the same data as detail::gSinCosTbl in
+// math_triangular.cpp.  Referencing the retail name keeps relocs identical.
+extern const f32 lbl_eu_8051D7F8[];
 }
 
 // clang-format off
 
 asm MTX34* MTX34RotXYZFIdx(register MTX34* pMtx, register f32 fx, register f32 fy, register f32 fz) {
     nofralloc
-    lis        r4, gSinCosTbl__Q34nw4r4math6detail@ha
-    li         r0, gRotFIdxMax@l
+    lis        r4, lbl_eu_8051D7F8@ha
+    li         r0, lbl_eu_80669E50@l
     stwu       r1, -0x10(r1)
-    addi       r4, r4, gSinCosTbl__Q34nw4r4math6detail@l
+    addi       r4, r4, lbl_eu_8051D7F8@l
     psq_lx     f0, r0, r0, 0, 0
     ps_merge00 f6, f1, f2
     ps_merge00 f0, f0, f0

@@ -108,16 +108,7 @@ void __dt__800B18CC(){}
 
 void init_dispatchTarget_5(){}
 
-extern "C" void func_800B1A5C(void* listPtr) {
-    SListNode* sentinel = ((SList*)listPtr)->sentinel;
-    SListNode* cur = sentinel->next;
-    while (cur != sentinel) {
-        SListNode* next = cur->next;
-        cur->next = NULL;
-        cur = next;
-    }
-    sentinel->next = sentinel;
-}
+void init_1A5C(){}
 
 void init_1A8C() {}
 
@@ -388,8 +379,12 @@ void init_66BC(){}
 // Returns 1 if byte at offset 0x02 is in [1, 24], else 0.
 extern "C" int func_800B67CC(void* self) {
     u8 val = *(u8*)((u8*)self + 2);
-    if (val < 1) return 0;
-    if (val > 24) return 0;
+    if (val < 1) {
+        return 0;
+    }
+    if (val > 24) {
+        return 0;
+    }
     return 1;
 }
 
@@ -643,11 +638,6 @@ void sub_dispatchInit_6() {
     ((void(*)())init_dispatchTarget_6)();
 }
 
-extern "C" void func_800B93AC() {
-    func_800B07E8();
-    func_800B1B2C();
-}
-
 void init_93D0(){}
 
 void init_9404(){}
@@ -691,13 +681,9 @@ void init_98C8(){}
 
 u32 UnkClass_805764CC::get_u32_620() { return *(u32*)((u8*)this + 0x620); }
 
-extern "C" void func_800B998C(void* a, void* b, void* c2, u32 d, void* e, void* f) {
-    func_800B47A8(1, a, b, c2, d, e, f);
-}
+void init_998C(){}
 
-extern "C" void func_800B99BC(void* a, void* b, void* c2, u32 d, void* e, void* f) {
-    func_800B47A8(0, a, b, c2, d, e, f);
-}
+void init_99BC(){}
 
 void fwd_99EC_body(){}
 
@@ -709,24 +695,4 @@ template <> _reslist_base<cf::TboxInfo>::~_reslist_base() {}
 template <> reslist<cf::TboxInfo>::~reslist() {}
 template <> _reslist_base<cf::IFactoryEvent*>::~_reslist_base() {}
 template <> reslist<cf::IFactoryEvent*>::~reslist() {}
-extern "C" void sinit_800B9A40() {
-    extern float lbl_eu_80661CC8;
-    extern float lbl_eu_80661CCC;
-    extern float lbl_eu_80661CD0;
-    extern float lbl_eu_80663EC8;
-    extern float lbl_eu_80663ECC;
-    extern float lbl_eu_80663ED0;
-    extern float lbl_eu_80663ED4;
-    extern unsigned long lbl_eu_80663EE0;
-
-    float f3 = lbl_eu_80661CC8;
-    float f0 = lbl_eu_80661CCC;
-    float f2 = f3 * f3;
-    float f1 = lbl_eu_80661CD0;
-    f0 = f0 * f0;
-    lbl_eu_80663EC8 = f3;
-    lbl_eu_80663ECC = f2;
-    lbl_eu_80663ED0 = f1;
-    lbl_eu_80663ED4 = f0;
-    lbl_eu_80663EE0 = 0;
-}
+void sinit_800B9A40(){}

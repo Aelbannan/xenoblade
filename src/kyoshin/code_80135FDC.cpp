@@ -43,7 +43,6 @@ extern u16 func_8016DF2C();
 extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
 extern u8 lbl_eu_8052E524[];
 extern u8 lbl_eu_8052E4F0[];
-extern u32 lbl_eu_80500188;
 extern u32 lbl_eu_805001C0;
 extern char lbl_eu_80573B30[];
 extern char lbl_eu_80573BB0[];
@@ -386,15 +385,152 @@ extern "C" u32 func_80136400(const char* src, u16* dst, u32 destLen) {
     return 1;
 }
 
-void func_eu_80136F90(){}
+extern "C" void func_eu_80136F90(char* str) {
+    extern int getLanguage__9CDeviceSCFv();
+    int lang = getLanguage__9CDeviceSCFv();
+    if ((u8)(lang + 0xFE) > 2) return;
+    int len = strlen(str);
+    int i = 0;
+    while (i < len) {
+        char c = *str;
+        if (c == '.') {
+            *str = ',';
+        } else if (c >= 0x81 && c <= 0x9F) {
+            i++;
+            str++;
+        } else if (c >= 0xE0 && c <= 0xEF) {
+            i++;
+            str++;
+        }
+        i++;
+        str++;
+    }
+}
 
-void func_801364B8(){}
+int func_801364B8(char* src, char delim, char** outTokens) {
+    int count = 1;
+    int idx = 1;
+    outTokens[0] = src;
+    int len = strlen(src);
+    int i = 0;
+    while (i < len) {
+        char c = src[i];
+        if (c == delim) {
+            src[i] = 0;
+            int j = 1;
+            do {
+                if (src[i + j] != ' ')
+                    break;
+                j++;
+            } while (true);
+            outTokens[idx] = &src[i + j];
+            idx++;
+            count++;
+        } else if (c >= 0x81 && c <= 0x9F) {
+            i++;
+        } else if (c >= 0xE0 && c <= 0xEF) {
+            i++;
+        }
+        i++;
+    }
+    for (int k = 0; k < count; k++) {
+        char* t = outTokens[k];
+        int pos = strlen(t) - 1;
+        while (pos >= 0) {
+            if (t[pos] == ' ') {
+                pos--;
+            } else {
+                t[pos + 1] = 0;
+                break;
+            }
+        }
+    }
+    return count;
+}
 
-void func_801365E4(){}
+int func_801365E4(u16* src, u16 delim, u16** outTokens) {
+    int count = 1;
+    int idx = 1;
+    outTokens[0] = src;
+    int len = wcslen((wchar_t*)src);
+    u16* p = src;
+    for (int i = 0; i < len; i++) {
+        if (*p == delim) {
+            *p = 0;
+            int j = 1;
+            u16* q = p + 1;
+            while (*q == L' ') {
+                q++;
+                j++;
+            }
+            outTokens[idx] = p + j;
+            idx++;
+            count++;
+        }
+        p++;
+    }
+    for (int k = 0; k < count; k++) {
+        u16* t = outTokens[k];
+        int pos = wcslen((wchar_t*)t) - 1;
+        u16* q = t + pos;
+        while (pos >= 0) {
+            if (*q == L' ') {
+                q--;
+                pos--;
+            } else {
+                q[1] = 0;
+                break;
+            }
+        }
+    }
+    return count;
+}
 
-void func_801366F4(){}
+extern "C" void func_801366F4(u16* str) {
+    int len = wcslen((wchar_t*)str);
+    u16* p = str;
+    while (len > 0) {
+        *p = (u16)toupper(*p);
+        p++;
+        len--;
+    }
+}
 
-void func_8013676C(){}
+extern "C" void func_8013676C(void* node, nw4r::ut::Font* font) {
+    extern void Panic__Q24nw4r2dbFPCciPCce(const char*, int, const char*, ...);
+    extern char lbl_eu_80500664[];
+    if (node == NULL) return;
+    void* child = *(void**)((u8*)node + 0x14);
+    void* head = (u8*)node + 0x14;
+    char buf[32];
+    char* tokens[8];
+    while (child != head) {
+        if (child == NULL) {
+            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052CB40, 0x23D, (const char*)lbl_eu_8052CB1C);
+        }
+        u32 type = (u32)child - 4;
+        if (type == 0) {
+            Panic__Q24nw4r2dbFPCciPCce((const char*)lbl_eu_8052E4E4, 0x193, (const char*)lbl_eu_8052E4C0);
+        }
+        sprintf(buf, lbl_eu_80500664, type + 0xBC);
+        func_801364B8(buf, '_', tokens);
+        char* t0 = tokens[0];
+        int tl = strlen(t0);
+        int i = 0;
+        while (i < tl) {
+            t0[i] = (char)toupper(t0[i]);
+            i++;
+        }
+        if (strcmp(tokens[0], &lbl_eu_80500664[3]) == 0) {
+            if (type != 0) {
+                SetFont__Q34nw4r3lyt7TextBoxFPCQ34nw4r2ut4Font(
+                    (nw4r::lyt::TextBox*)type, font);
+            }
+        }
+        func_8013676C((void*)type, font);
+        child = *(void**)child;
+    }
+}
 
 extern "C" void func_80136A1C(nw4r::lyt::Layout* layout, char* name, char* text, u32 tagProc);
 
@@ -974,9 +1110,13 @@ struct Table_80500188 {
     u32 words[14];
 };
 
+extern "C" struct Table_80500188 lbl_eu_80500188;
+
 extern "C" u16 func_801380A0(u32 idx) {
-    Table_80500188 t = *(Table_80500188*)&lbl_eu_80500188;
-    return ((u16*)&t)[idx - 1];
+    struct Table_80500188 t = lbl_eu_80500188;
+    u16* p = (u16*)&t;
+    u32 n = idx - 1;
+    return p[n];
 }
 
 extern "C" u32 func_80138138(u32 val) {
@@ -1318,12 +1458,13 @@ extern "C" u32 func_80138574(const char* name, u32 id) {
 
 extern "C" void* func_80138DA4(const char* str) {
     int v = atoi(str);
-    if (v > 0) {
-        func_8003AA34(&lbl_eu_80500664[0]);
-        void* fp = getFP__FPCc(&lbl_eu_80500664[0x181]);
-        return getBdatStringColumnValue(fp, &lbl_eu_80500664[0x17C], (const char*)v);
-    }
-    return (void*)str;
+    if (v <= 0) return (void*)str;
+    char* base = lbl_eu_80500664;
+    char* col = base + 0x17C;
+    char* fpName = base + 0x181;
+    func_8003AA34(base);
+    void* fp = getFP__FPCc(fpName);
+    return getBdatStringColumnValue(fp, col, (const char*)v);
 }
 
 extern "C" u8 func_80138E1C(const char* key) {

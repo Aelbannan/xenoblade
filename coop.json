@@ -55,5 +55,6 @@
     "broadway-ppc32-be-v38",
     "broadway-ppc32-be-v39",
     "broadway-ppc32-be-v40"
-  ]
+  ],
+  "objdiff_cli": "tools/objdiff/objdiff-cli"
 }

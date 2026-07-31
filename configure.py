@@ -1325,7 +1325,7 @@ config.libs = [
     criwareLib(
         "libadxwii",
         [
-            Object(NonMatching, "CriWare/src/adx/adxf/adx_fini.c"),
+            Object(NonMatching, "CriWare/src/adx/adxf/adx_fini.c", extra_cflags=["-O4,s"]),
             Object(NonMatching, "CriWare/src/adx/adxf/adx_fs.c"),
             Object(MatchingFor("jp"), "CriWare/src/adx/adxf/adx_fcch.c"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_fsvr.c"),

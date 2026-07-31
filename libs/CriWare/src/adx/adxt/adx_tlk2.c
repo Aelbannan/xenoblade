@@ -43,7 +43,7 @@ void adxt_StartAfs(void *handle, const char *filename, int flags) {
         return;
     }
 
-    *(u32 *)((u8 *)handle + 0xB0) = *(u32 *)((u8 *)handle + 0xAC);
+    *(void **)((u8 *)handle + 0xB0) = *(void **)((u8 *)handle + 0xAC);
     *(u32 *)((u8 *)handle + 0xB4) = range_start;
     *(u32 *)((u8 *)handle + 0xB8) = range_end;
     *(u32 *)((u8 *)handle + 0xBC) = range_size;

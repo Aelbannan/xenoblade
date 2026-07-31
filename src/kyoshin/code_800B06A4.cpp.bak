@@ -13,8 +13,6 @@ void UnkClass_800B0AD8::clearCounters() {
 // Provide an alias for unqualified calls (sub_mainReset, sub_dispatchInit_*).
 UnkClass_805764CC* func_800B07E8();
 u32 func_800AA2BC(u32 a, u32 b);
-void func_8019397C(u32 param);
-void func_80193D48(u32 param);
 
 void gfloat_initStore(float a){
     extern float lbl_eu_80661CCC;
@@ -40,9 +38,7 @@ void gfloat_initStore(float a){
 
 
 
-void func_800B0A90(u32* ptr) {
-    *ptr = 0;
-}
+void init_0A90(void){}
 
 
 
@@ -70,16 +66,6 @@ void gflag_setBits(unsigned long flags) {
     lbl_eu_80663EE0 |= flags;
 }
 
-void func_800B1808() {
-    extern unsigned long lbl_eu_80663EE0;
-    lbl_eu_80663EE0 = 0;
-}
-
-unsigned long func_800B1C00() {
-    extern unsigned long lbl_eu_80663EE0;
-    return (lbl_eu_80663EE0 >> 6) & 1;
-}
-
 void FactoryEvent3__Q22cf13IFactoryEventFv() {}
 
 void init_137C(){}
@@ -101,10 +87,9 @@ void node_copyNextU32(void* dst, void* src) {
 
 void init_14FC() {}
 
-// Forward declaration — body defined later in this TU
-extern void __dt__800B151C();
+void __dt__800B151C();
 
-extern "C" void func_800B1518() { __dt__800B151C(); }
+extern "C" void func_800B1518() { void (*dtor)() = __dt__800B151C; dtor(); }
 
 void __dt__800B151C(){}
 
@@ -170,12 +155,7 @@ void init_1C78(){}
 
 void init_1CDC(){}
 
-void func_800B1E18(UnkClass_805764CC* obj) {
-    u32 val = obj->field_0xCA0;
-    if (val != 0) {
-        func_8019397C(val);
-    }
-}
+void init_1E18(){}
 
 void init_1E2C(){}
 
@@ -183,12 +163,7 @@ void init_1EB8() {}
 
 void init_1EC8(){}
 
-void func_800B1F2C(UnkClass_805764CC* obj) {
-    u32 val = obj->field_0xCA0;
-    if (val != 0) {
-        func_80193D48(val);
-    }
-}
+void init_1F2C(){}
 
 void init_1F40(){}
 

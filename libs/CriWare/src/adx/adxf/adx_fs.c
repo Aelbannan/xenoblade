@@ -17,6 +17,23 @@ extern u32 lbl_eu_805E0630;
 
 extern u32 lbl_eu_805E00F0[];
 
+extern void *ADXSTM_Create(void *, int);
+extern void ADXSTM_Destroy(void *);
+extern void ADXSTM_BindFileNw(void *, void *, u32, u32, u32, u32);
+extern void ADXSTM_ReleaseFile(void *);
+extern s32 ADXSTM_GetStat(void *);
+extern int ADXSTM_Seek(void *, int);
+extern s32 ADXSTM_Tell(void *);
+extern s32 ADXSTM_Start2(void *, u32);
+extern void ADXSTM_Stop(void *);
+extern void ADXSTM_SetEos(void *, s32);
+extern s32 ADXSTM_SetReqRdSize(void *, u32);
+extern u64 ADXSTM_GetFileLen64(void *);
+extern void ADXSTM_SetPause(void *, u32);
+extern void ADXSTM_SetSj(void *, void *);
+extern void ADXF_Ocbi(const void *, u32);
+extern void *memset(void *, int, unsigned long);
+
 void ADXT_ExecFsSvr(void);
 void adxt_ExecFsSvr(void);
 
@@ -26,7 +43,8 @@ void adxt_ExecFsSvr(void);
 struct AdxFsWork {
     s8    flag;      /* 0x00 */
     s8    status;    /* 0x01 */
-    u16   seq;       /* 0x02 */
+    s8    b2;        /* 0x02 */
+    s8    b3;        /* 0x03 */
     void* fstm;      /* 0x04 */
     s32   sectCnt;   /* 0x08 */
     u32   field_0C;  /* 0x0C */
@@ -43,12 +61,27 @@ struct AdxFsWork {
 
 extern struct AdxFsWork lbl_eu_805DFDB0[16];
 
+/* ADX FS request-queue entry (16 slots). */
+struct AdxFsReq {
+    s8    flag;   /* 0x00 request type */
+    s8    status; /* 0x01 */
+    u16   seq;    /* 0x02 */
+    void *work;   /* 0x04 */
+    s32   p1;     /* 0x08 */
+    s32   p2;     /* 0x0C */
+};  /* size 0x10 */
+
+extern struct AdxFsReq lbl_eu_805E04F0[16];
+extern u16 lbl_eu_805E05F0[8];
+extern s32 lbl_eu_805E0610;
+extern s32 lbl_eu_805E0614;
+
 /* internal stubs */
 int adxf_LoadPtBothNw(s32 p1, int p2, int p3, const char *p4, void *p5, int p6, int p7, void *p8, void *p9, int p10, int p11);
 int adxf_GetPtStat(int a);
-int adxf_CreateAdxFs(void);
+void *adxf_CreateAdxFs(void);
 int adxf_ReadNw32(void *a, void *b, int c);
-int adxf_Stop(int a);
+int adxf_Stop(void *a);
 int adxf_ExecOne(void *a);
 int adxf_Seek(void *a, int b, int c);
 int adxf_GetFnameRangeEx(const char *a, int b, void *c, u32 *d, u32 *e, u32 *f, u32 *g);
@@ -89,16 +122,88 @@ int adxf_GetPtStat(int a) {
     return 0;
 }
 
-int adxf_CreateAdxFs(void) {
-    return 0;
+/* adxf_CreateAdxFs - find a free work slot, allocate its stream handle, and
+ * mark it busy. Returns the work pointer, or NULL on failure. */
+void *adxf_CreateAdxFs(void) {
+    int i;
+    struct AdxFsWork *p;
+    struct AdxFsWork *work = NULL;
+    for (p = lbl_eu_805DFDB0, i = 0; i < 16; p++, i++) {
+        if (p->flag == 0) {
+            work = &lbl_eu_805DFDB0[i];
+            break;
+        }
+    }
+    if (work == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x2b2);
+        return NULL;
+    }
+    work->fstm = ADXSTM_Create(NULL, 0x100);
+    if (work->fstm == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x2e6);
+        return NULL;
+    }
+    work->status = 1;
+    work->field_14 = 0;
+    work->field_18 = 0;
+    work->field_1C = 0;
+    work->field_28 = 0x200;
+    work->b2 = 0;
+    work->sectCnt = 0;
+    work->b3 = 0;
+    work->flag = 1;
+    return work;
 }
 
-int ADXF_OpenNw(int a, int b, int c, int d) {
-    int r;
+/* ADXF_OpenNw - external open wrapper */
+int ADXF_OpenNw(void *adxf, u32 nfile) {
+    struct AdxFsWork *work;
+    s32 seq;
+    s32 idx;
+    struct AdxFsReq *req;
+
     ADXCRS_Enter();
-    r = 0;
+    if (adxf == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x3cd);
+        work = NULL;
+    } else {
+        idx = lbl_eu_805E0610 % 16;
+        req = &lbl_eu_805E04F0[idx];
+        seq = lbl_eu_805E05F0[1] + 1;
+        lbl_eu_805E05F0[1] = seq;
+        req->flag = 1;
+        req->status = 0;
+        req->seq = (u16)seq;
+        req->work = adxf;
+        req->p1 = (s32)nfile;
+        req->p2 = -1;
+        lbl_eu_805E0610 = idx + 1;
+
+        work = (struct AdxFsWork *)adxf_CreateAdxFs();
+        if (work != NULL) {
+            if (adxf == NULL) {
+                ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x381);
+            } else {
+                work->field_30 = nfile;
+                work->field_10 = 0;
+                work->field_0C = 0xFFFFF;
+                ADXSTM_BindFileNw(work->fstm, adxf, nfile, 0, 0, 0x7FFFF800);
+            }
+        }
+
+        idx = lbl_eu_805E0610 % 16;
+        req = &lbl_eu_805E04F0[idx];
+        req->flag = 1;
+        req->status = 1;
+        seq = lbl_eu_805E05F0[1];
+        req->seq = (u16)seq;
+        req->work = adxf;
+        req->p1 = (s32)nfile;
+        req->p2 = -1;
+        lbl_eu_805E0610 = idx + 1;
+    }
     ADXCRS_Leave();
-    return r;
+    return (int)work;
 }
 
 int ADXF_IsOpened(void *adxf) {
@@ -114,21 +219,179 @@ int ADXF_IsOpened(void *adxf) {
     return r;
 }
 
-int ADXF_Close(int a) {
-    int r;
+/* ADXF_Close - close one handle: wait for pending I/O, stop and release the
+ * stream, then clear the work slot. */
+void ADXF_Close(void *adxf) {
+    struct AdxFsWork *work = (struct AdxFsWork *)adxf;
+    s32 idx;
+    u16 seq;
+    struct AdxFsReq *req;
+    void *stm;
+
     ADXCRS_Enter();
-    r = 0;
+
+    idx = lbl_eu_805E0610 % 16;
+    req = &lbl_eu_805E04F0[idx];
+    seq = lbl_eu_805E05F0[3] + 1;
+    lbl_eu_805E05F0[3] = seq;
+    req->flag = 3;
+    req->status = 0;
+    req->seq = (u16)seq;
+    req->work = adxf;
+    req->p1 = -1;
+    req->p2 = -1;
+    lbl_eu_805E0610 = idx + 1;
+
+    if (work != NULL) {
+        while (1) {
+            int opened;
+            if (work == NULL) {
+                ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                opened = 0;
+            } else {
+                opened = ADXSTM_IsOpened(work->fstm);
+            }
+            if (opened == 1) {
+                break;
+            }
+            if (ADXSTM_IsOpenReq(work->fstm) == 0) {
+                break;
+            }
+            ADXT_ExecFsSvr();
+        }
+        if (work->status == 2) {
+            adxf_Stop(work);
+        }
+        stm = work->fstm;
+        if (stm != NULL) {
+            work->flag = 0;
+            work->fstm = NULL;
+            ADXSTM_ReleaseFile(stm);
+            ADXSTM_Destroy(stm);
+        }
+        memset(work, 0, 0x34);
+
+        idx = lbl_eu_805E0610 % 16;
+        req = &lbl_eu_805E04F0[idx];
+        req->flag = 3;
+        req->status = 1;
+        seq = lbl_eu_805E05F0[3];
+        req->seq = (u16)seq;
+        req->work = adxf;
+        req->p1 = -1;
+        req->p2 = -1;
+        lbl_eu_805E0610 = idx + 1;
+    }
     ADXCRS_Leave();
-    return r;
 }
 
-int ADXF_CloseAll(void) {
-    int r = 0;
-    /* close all handles */
-    return r;
+/* ADXF_CloseAll - close every busy handle. */
+void ADXF_CloseAll(void) {
+    int i;
+    struct AdxFsWork *work;
+    s32 idx;
+    u16 seq;
+    struct AdxFsReq *req;
+    void *stm;
+
+    ADXCRS_Enter();
+    for (i = 0; i < 16; i++) {
+        work = &lbl_eu_805DFDB0[i];
+        if (work->flag == 1) {
+            idx = lbl_eu_805E0610 % 16;
+            req = &lbl_eu_805E04F0[idx];
+            seq = lbl_eu_805E05F0[3] + 1;
+            lbl_eu_805E05F0[3] = seq;
+            req->flag = 3;
+            req->status = 0;
+            req->seq = (u16)seq;
+            req->work = work;
+            req->p1 = -1;
+            req->p2 = -1;
+            lbl_eu_805E0610 = idx + 1;
+
+            if (work != NULL) {
+                while (1) {
+                    int opened;
+                    if (work == NULL) {
+                        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                        opened = 0;
+                    } else {
+                        opened = ADXSTM_IsOpened(work->fstm);
+                    }
+                    if (opened == 1) {
+                        break;
+                    }
+                    if (ADXSTM_IsOpenReq(work->fstm) == 0) {
+                        break;
+                    }
+                    ADXT_ExecFsSvr();
+                }
+                if (work->status == 2) {
+                    adxf_Stop(work);
+                }
+                if (work->fstm != NULL) {
+                    work->flag = 0;
+                    stm = work->fstm;
+                    work->fstm = NULL;
+                    ADXSTM_ReleaseFile(stm);
+                    ADXSTM_Destroy(stm);
+                }
+                memset(work, 0, 0x34);
+
+                idx = lbl_eu_805E0610 % 16;
+                req = &lbl_eu_805E04F0[idx];
+                req->flag = 3;
+                req->status = 1;
+                seq = lbl_eu_805E05F0[3];
+                req->seq = (u16)seq;
+                req->work = work;
+                req->p1 = -1;
+                req->p2 = -1;
+                lbl_eu_805E0610 = idx + 1;
+            }
+        }
+    }
+    ADXCRS_Leave();
 }
 
-int adxf_read_sj32(int a, int b) { return 0; }
+/* adxf_read_sj32 - start a sequential (sj) read of n sectors; clamps to the
+ * remaining sector budget and returns the number of sectors actually queued. */
+int adxf_read_sj32(void *adxf, int n, void *sj) {
+    struct AdxFsWork *work = (struct AdxFsWork *)adxf;
+    int len;
+    int r;
+
+    if (ADXSTM_GetStat(work->fstm) != 1) {
+        ADXSTM_Stop(work->fstm);
+    }
+    ADXCRS_Lock();
+
+    len = work->field_0C - work->field_10;
+    work->field_14 = work->field_2C + work->field_10;
+    if (n < len) {
+        len = n;
+    }
+    work->field_18 = len;
+    work->field_1C = 0;
+
+    if (len == 0) {
+        work->status = 3;
+        r = 0;
+    } else {
+        ADXSTM_SetEos(work->fstm, -1);
+        ADXSTM_SetSj(work->fstm, sj);
+        ADXSTM_SetReqRdSize(work->fstm, work->field_28);
+        work->status = 2;
+        work->b3 = 0;
+        ADXSTM_SetPause(work->fstm, 0);
+        ADXSTM_Seek(work->fstm, work->field_10);
+        ADXSTM_Start2(work->fstm, work->field_18);
+        r = work->field_18;
+    }
+    ADXCRS_Unlock();
+    return r;
+}
 #pragma push
 #pragma auto_inline off
 int adxf_ReadNw32(void *a, void *b, int c) { return 0; }
@@ -147,10 +410,84 @@ int ADXF_ReadNw(void *adxf, void *buffer, int sectors) {
     return r;
 }
 
-int ADXF_Stop(int a) { int r; ADXCRS_Enter(); r = adxf_Stop(a); ADXCRS_Leave(); return r; }
+/* ADXF_Stop - external stop wrapper */
+int ADXF_Stop(void *adxf) {
+    int r;
+    ADXCRS_Enter();
+    r = adxf_Stop(adxf);
+    ADXCRS_Leave();
+    return r;
+}
+
+/* adxf_Stop - stop a stream: enqueue a stop request, flush the sector cache
+ * callback if present, and return the position where playback stopped. */
 #pragma push
 #pragma auto_inline off
-int adxf_Stop(int a) { return 0; }
+int adxf_Stop(void *adxf) {
+    struct AdxFsWork *work = (struct AdxFsWork *)adxf;
+    s32 idx;
+    u16 seq;
+    struct AdxFsReq *req;
+    void *obj;
+
+    idx = lbl_eu_805E0610 % 16;
+    req = &lbl_eu_805E04F0[idx];
+    seq = lbl_eu_805E05F0[5] + 1;
+    lbl_eu_805E05F0[5] = seq;
+    req->flag = 5;
+    req->status = 0;
+    req->seq = (u16)seq;
+    req->work = adxf;
+    req->p1 = -1;
+    req->p2 = -1;
+    lbl_eu_805E0610 = idx + 1;
+
+    if (work == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x540);
+        return -3;
+    }
+    if (work->status == 1) {
+        return (int)work->field_10;
+    }
+    if (work->status == 3) {
+        work->status = 1;
+        return (int)work->field_10;
+    }
+    if (work->fstm == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x564);
+        return -1;
+    }
+
+    ADXSTM_Stop(work->fstm);
+    ADXCRS_Lock();
+    work->field_1C = ADXSTM_Tell(work->fstm) - work->field_10;
+    if (work->sectCnt != 0 && work->b2 == 0) {
+        if (lbl_eu_805E0614 == 1) {
+            ADXF_Ocbi((const void *)work->field_20, work->field_24);
+        }
+        obj = (void *)work->sectCnt;
+        work->sectCnt = 0;
+        {
+            void **vt = *(void ***)obj;
+            ((void (*)(void *))vt[3])(obj);
+        }
+    }
+    work->status = 1;
+    ADXCRS_Unlock();
+
+    idx = lbl_eu_805E0610 % 16;
+    req = &lbl_eu_805E04F0[idx];
+    req->flag = 5;
+    req->status = 1;
+    seq = lbl_eu_805E05F0[5];
+    req->seq = (u16)seq;
+    req->work = adxf;
+    req->p1 = -1;
+    req->p2 = -1;
+    lbl_eu_805E0610 = idx + 1;
+
+    return (int)work->field_10;
+}
 #pragma pop
 
 int adxf_ExecOne(void *a);
@@ -190,7 +527,46 @@ int adxf_Seek(void *a, int b, int c);
 int adxf_Seek(void *a, int b, int c) { return 0; }
 #pragma pop
 
-int ADXF_GetFsizeSct(int a) { int r; ADXCRS_Enter(); r = 0; ADXCRS_Leave(); return r; }
+/* ADXF_GetFsizeSct - cached file size in sectors (0xFFFFF = not yet known). */
+int ADXF_GetFsizeSct(void *adxf) {
+    struct AdxFsWork *work = (struct AdxFsWork *)adxf;
+    int r;
+
+    ADXCRS_Enter();
+    if (work == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x356);
+        r = -3;
+    } else {
+        r = (int)work->field_0C;
+        if ((u32)r == 0xFFFFFu) {
+            while (1) {
+                int opened;
+                if (work == NULL) {
+                    ADXERR_CallErrFunc1_(lbl_eu_805157E0 + 0x9d);
+                    opened = 0;
+                } else {
+                    opened = ADXSTM_IsOpened(work->fstm);
+                }
+                if (opened == 1) {
+                    break;
+                }
+                if (ADXSTM_IsOpenReq(work->fstm) == 0) {
+                    break;
+                }
+                ADXT_ExecFsSvr();
+            }
+            {
+                r = (int)(((s64)ADXSTM_GetFileLen64(work->fstm) + 0x7FF) / 2048);
+                work->field_0C = (u32)r;
+            }
+            if (r >= 0xFFFFF) {
+                r = -1;
+            }
+        }
+    }
+    ADXCRS_Leave();
+    return r;
+}
 
 int ADXF_GetFsizeByte(void *adxf) {
     struct AdxFsWork *work = (struct AdxFsWork *)adxf;

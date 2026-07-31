@@ -43,14 +43,16 @@ void adxt_StartAfs(void *handle, const char *filename, int flags) {
         return;
     }
 
-    *(void **)((u8 *)handle + 0xB0) = *(void **)((u8 *)handle + 0xAC);
+    void *lnkH = handle;
+    u32 lnkV = 0;
+    *(u32 *)((u8 *)handle + 0xB0) = *(u32 *)((u8 *)handle + 0xAC);
     *(u32 *)((u8 *)handle + 0xB4) = range_start;
     *(u32 *)((u8 *)handle + 0xB8) = range_end;
     *(u32 *)((u8 *)handle + 0xBC) = range_size;
     *(u8 *)((u8 *)handle + 0x01) = 1;
     *(u8 *)((u8 *)handle + 0xA8) = 1;
     *(u8 *)((u8 *)handle + 0x02) = 1;
-    ADXT_SetLnkSw(handle, 0);
+    ADXT_SetLnkSw(lnkH, lnkV);
 }
 
 int ADXT_StartFnameRange(void *handle, const char *fname) {

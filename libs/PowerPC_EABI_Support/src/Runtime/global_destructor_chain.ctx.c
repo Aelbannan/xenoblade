@@ -901,10 +901,6 @@ void __destroy_global_chain(void) {
   }
 }
 
-//unused
-int __register_atexit(void (*func)(void)){
-}
-
 #pragma section ".dtors$10"
 __declspec(section ".dtors$10") __declspec(weak)
     extern void * const __destroy_global_chain_reference = __destroy_global_chain;

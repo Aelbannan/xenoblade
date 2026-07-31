@@ -13,7 +13,7 @@ static void ppc_writebyte1(ui8* ptr, ui8 val){
     ui32 v = *alignedPtr;
     ui32 uVar3 = 0xff << ((3 - ((ui32)ptr - (ui32)alignedPtr)) << 3);
     ui32 iVar1 = (3 - ((ui32)ptr - (ui32)alignedPtr)) << 3;
-    *alignedPtr = (v & ~uVar3) | (uVar3 & (val << iVar1));
+    *alignedPtr = (v & ~uVar3) | (uVar3 & (val << (ui32)iVar1));
 }
 
 #endif

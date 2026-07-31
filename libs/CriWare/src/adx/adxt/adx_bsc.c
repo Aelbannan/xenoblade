@@ -182,12 +182,10 @@ int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* o
             *k1 = 0;
             *k2 = 0;
             *k3 = 0;
-            return 0;
         } else if (p[0xED] >= 0x10) {
             char buf[16];
             CRICRW_Sprintf(buf, 16, lbl_eu_80517330 + 0xA7, data);
             SKG_GenerateKey((u8*)buf, 8, k1, k2, k3);
-            return 0;
         } else if (p[0xED] >= 8) {
             if (*(s16*)(p + 0xA0) == 0 && *(s16*)(p + 0xA2) == 0 && *(s16*)(p + 0xA4) == 0) {
                 *(s16*)(p + 0xA0) = defKeys[0];
@@ -197,12 +195,10 @@ int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* o
             *k1 = *(s16*)(p + 0xA0);
             *k2 = *(s16*)(p + 0xA2);
             *k3 = *(s16*)(p + 0xA4);
-            return 0;
         } else {
             *k1 = 0;
             *k2 = 0;
             *k3 = 0;
-            return 0;
         }
     } else {
         if (p[0xEC] < 4) {
@@ -227,9 +223,9 @@ int adxb_get_key(void* adxb, void* data, void* out_key1, void* out_key2, void* o
             *k1 = *(s16*)(p + 0xA0);
             *k2 = *(s16*)(p + 0xA2);
             *k3 = *(s16*)(p + 0xA4);
-            return 0;
         }
     }
+    return 0;
 }
 
 s32 ADXB_DecodeHeaderAdx(void* adxb, void* data, void* out_encoding) {

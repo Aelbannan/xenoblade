@@ -44,11 +44,14 @@ void* mpfsys::UnkClass_80471EC8::func_804734F4(u8 layerIndex) {
     return (u8*)this + layerIndex * 0x1680;
 }
 
+extern "C" {
 #pragma dont_inline on
-void mpfsys::UnkClass_80471EC8::func_80473500(int texIndex, int texMap, f32 texScale) {}
+void func_80473500__Q26mpfsys17UnkClass_80471EC8Fiif(int texIndex, int texMap, f32 texScale) {}
 #pragma dont_inline off
+}
 
-void mpfsys::UnkClass_80471EC8::func_804737CC(s16 texIndex, f32 texScale) {
+extern "C" {
+void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(int texIndex, f32 texScale) {
     if (lbl_eu_80665858 == texIndex) {
         return;
     }
@@ -56,7 +59,8 @@ void mpfsys::UnkClass_80471EC8::func_804737CC(s16 texIndex, f32 texScale) {
         return;
     }
     lbl_eu_80665858 = texIndex;
-    func_80473500(texIndex, 0, texScale);
+    func_80473500__Q26mpfsys17UnkClass_80471EC8Fiif(texIndex, 0, texScale);
+}
 }
 
 void mpfsys::UnkClass_80471EC8::func_804737F0() {}

@@ -731,8 +731,8 @@ public:
     void func_804728E8();
     void func_80473394();
     void* func_804734F4(u8 layerIndex);
-    void func_80473500();
-    void func_804737CC();
+    void func_80473500(int texIndex, int texMap, f32 texScale);
+    void func_804737CC(s16 texIndex, f32 texScale);
     void func_804737F0();
     void func_80473984();
     void func_80474064();
@@ -9351,6 +9351,7 @@ static inline void GXTexCoord1x8(u8 uc) {
 extern "C" {
     extern void* lbl_eu_80665844;
     extern s32 lbl_eu_80665854;
+    extern s16 lbl_eu_80665858;
     extern s16 lbl_eu_8066585A;
     extern u32 lbl_eu_8066586C;
 }
@@ -9385,9 +9386,20 @@ void* mpfsys::UnkClass_80471EC8::func_804734F4(u8 layerIndex) {
     return (u8*)this + layerIndex * 0x1680;
 }
 
-void mpfsys::UnkClass_80471EC8::func_80473500() {}
+#pragma dont_inline on
+void mpfsys::UnkClass_80471EC8::func_80473500(int texIndex, int texMap, f32 texScale) {}
+#pragma dont_inline off
 
-void mpfsys::UnkClass_80471EC8::func_804737CC() {}
+void mpfsys::UnkClass_80471EC8::func_804737CC(s16 texIndex, f32 texScale) {
+    if (lbl_eu_80665858 == texIndex) {
+        return;
+    }
+    if (texIndex == -1) {
+        return;
+    }
+    lbl_eu_80665858 = texIndex;
+    func_80473500(texIndex, 0, texScale);
+}
 
 void mpfsys::UnkClass_80471EC8::func_804737F0() {}
 

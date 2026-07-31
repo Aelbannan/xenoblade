@@ -20,8 +20,6 @@ public:
     void func_804728E8();
     void func_80473394();
     void* func_804734F4(u8 layerIndex);
-    void func_80473500(int texIndex, int texMap, f32 texScale);
-    void func_804737CC(s16 texIndex, f32 texScale);
     void func_804737F0();
     void func_80473984();
     void func_80474064();

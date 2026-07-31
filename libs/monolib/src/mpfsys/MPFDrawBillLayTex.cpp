@@ -69,7 +69,7 @@ extern "C" {
     Vec* func_804B5A68(void);
 
     MPFDrawBillLayer* func_804734F4__Q26mpfsys17UnkClass_80471EC8FUc(void*, u8);
-    void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fsf(s16, f32);
+    void func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(s16, f32);
     void func_804737F0__Q26mpfsys17UnkClass_80471EC8Fv(s16, f32);
     void func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv(void);
     void func_80474A40__Q26mpfsys17UnkClass_80471EC8Fv(void);
@@ -293,7 +293,7 @@ extern "C" void func_8047A7B0__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBill
     Vec* positions = func_804B5A68();
     if (lbl_eu_80665860 != billboard) {
         func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
-        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fsf(billboard->texIndex, billboard->texScale);
+        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
         func_80479F54(billboard, positions);
         lbl_eu_80665860 = billboard;
     }
@@ -316,7 +316,7 @@ extern "C" void func_8047A86C__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBill
     Vec* positions = func_804B5A68();
     if (lbl_eu_80665860 != billboard) {
         func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
-        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fsf(billboard->texIndex, billboard->texScale);
+        func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
         func_80479F54(billboard, positions);
         lbl_eu_80665860 = billboard;
     }
@@ -333,7 +333,7 @@ extern "C" void func_8047A86C__Q26mpfsys16MPFDrawBillboardFv(mpfsys::MPFDrawBill
 }
 
 extern "C" void func_8047A918(void*, MPFDrawBillData* billboard, Vec* positions) {
-    func_804737CC__Q26mpfsys17UnkClass_80471EC8Fsf(billboard->texIndex, billboard->texScale);
+    func_804737CC__Q26mpfsys17UnkClass_80471EC8Fif(billboard->texIndex, billboard->texScale);
     func_804742BC__Q26mpfsys17UnkClass_80471EC8Fv();
 
     if (billboard->flags & 2) {

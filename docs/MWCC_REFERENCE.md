@@ -1,10 +1,27 @@
 # MWCC reference — closing the last few percent
 
-Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVALENT_MATCH`** on Xenoblade Chronicles Wii using **high-level C/C++ only**. Retail assembly, Ghidra, and `build/us/asm/` are **reference only** — do not ship asm, `register rN`, fake stack buffers, or register-named parameters in `src/**` or `libs/**`.
+Practical reference for reaching **`FULL_MATCH`** (100% byte match) or **`EQUIVALENT_MATCH`** on Xenoblade Chronicles Wii using **high-level C/C++**, with the isolated Gekko paired-single backend exception defined in `PLAN.md` §17.6. Retail assembly, Ghidra, and `build/us/asm/` are **reference only** except for a documented PS backend use — do not ship arbitrary asm, `register rN`, fake stack buffers, or register-named parameters in `src/**` or `libs/**`.
 
 **Policy sources:** `.claude/skills/xenoblade-decomp/SKILL.md`, `PLAN.md` §17, `coop.json` (`functionRelocDiffs=data_value`).
 
 **Living document:** agents must **append new patterns** here when they discover reusable MWCC matching knowledge. Do not leave discoveries only in `docs/evidence/decomp/attempts.jsonl` or chat.
+
+---
+
+## Isolated Gekko paired-single backends
+
+Retail Wii matrix/vector kernels may require `psq_*`, `ps_merge*`, `ps_mul`, `ps_madd`/`ps_msub`/`ps_nmsub`, `ps_muls*`, `ps_sum*`, `ps_cmp*`, `ps_abs`, or `fres` sequences that ordinary high-level MWCC C++ cannot reliably express. The project permits a narrow exception for these kernels under `PLAN.md` §17.6.
+
+Use the exception as a backend split, not as a general matching shortcut:
+
+- Keep the PS implementation in a designated C/C++ backend file or `.inl` included by the owning TU (or a clearly marked PS region), so symbol order, split ownership, and compiler context remain controlled.
+- Compile the PS path only for the Wii/MWCC configuration. The same public operation must provide a complete readable scalar/high-level fallback for non-MWCC and PC builds.
+- `ASM`/`asm void` may appear only in the isolated backend and only for the documented PS kernel plus its minimum memory/branch support. Do not use hand-written prologues/epilogues, fake stack frames, numbered GPR bindings, unrelated control-flow transcription, standalone `.s` files, or object-byte patching.
+- Prefer `__vec2x32float__`, `__fres`, and other MWCC builtins before using the exception; document which required PS operations remain unavailable from C++.
+- Validate the Wii path with build/static diff, split-size checks, and PPC semantic/runtime evidence where available. Validate the fallback against an independent numerical/gameplay contract; do not claim bit identity between Broadway PS arithmetic and the PC path unless it is explicitly emulated.
+- Log every use in `docs/evidence/decomp/attempts.jsonl` with `policy_exception: true`, the target, opcode set, guard, fallback, and evidence.
+
+The automated high-level matching harness remains subject to its no-asm delta gate; PS-backend work requires an explicitly supported policy profile or manual review.
 
 ---
 

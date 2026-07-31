@@ -25,9 +25,9 @@ description: >-
 
 **Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto`—`ppc-eabi` or stronger—**and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes. `coop run cycle` / `diff` probe equivalence automatically when fuzzy is in `[50, 100)`. Unit-level (no symbol) still requires 100% code + data.
 
-**Source language:** reconstruction must be **high-level C or C++ only** (MWCC). Express recovered **semantics** — fields, locals, control flow, and normal function calls — not register-level or stack-level implementation detail.
+**Source language:** reconstruction must be **high-level C or C++ only** (MWCC), except for the isolated Gekko paired-single backend exception in §17.6. Express recovered **semantics** — fields, locals, control flow, and normal function calls — rather than register-level or stack-level implementation detail outside that exception.
 
-Use retail assembly only as **read-only reference** (objdiff, Ghidra, `build/us/asm/`). Do **not** ship matched functions as inline `asm { }`, `asm void`, standalone `.s` fragments, or other non-C/C++ source in `src/**` or `libs/**`.
+Use retail assembly only as **read-only reference** (objdiff, Ghidra, `build/us/asm/`) except inside a documented isolated PS backend. Do **not** ship arbitrary assembly, register/stack micro-matching, standalone `.s` fragments, or other non-C/C++ source in `src/**` or `libs/**`.
 
 **High-level means:** readable code a human would write without looking at disassembly — struct members, parameters, return values, `if`/`else`, loops, and small named helpers. **Not** micro-matching prologue/epilogue shape in source.
 
@@ -417,13 +417,24 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 | `DECOMP_PPC_RLWINM` / `DECOMP_PPC_SHL1_U32` in `decomp.h` | MWCC `__rlwinm` builtins (SDK-equivalent); opcode selection e.g. `slwi` vs `rlwinm …,16,30` |
 | `extern "C" lbl_eu_*` | Reloc names when values match under `functionRelocDiffs=data_value` |
 | Goto gate chains | Multi-exit guards (`setSplitLine` pattern) — not for prologue spill order alone |
+| **Isolated MWCC Gekko paired-single backend** | A named Wii/MWCC kernel requires `psq_*`, `ps_*`, or `fres` operations unavailable through approved high-level C++/MWCC builtins. See the requirements below. |
 
-**Still forbidden:** `register rN`, fake `sp[]` buffers, inline `asm { }` of any size (including single-instruction), **`asm void` / whole-function asm bodies**, standalone `.s`. Do not close a target by replacing its body with an `asm void` retail transcription.
+#### Isolated Gekko paired-single backend
 
-## Low-level techniques — do not use in `src/**` / `libs/**`
+This is a narrow hardware-backend exception, not a general assembly allowance:
 
-- inline or standalone **assembly**
-- `register` locals, especially names like `r3`, `r4`, `r30`, `r31`, or `asm("rN")` bindings
+- Keep the kernel in a designated C/C++ PS backend file or `.inl` included by the owning TU, or in a clearly marked backend region; do not add a general-purpose asm utility or standalone `.s` implementation.
+- Guard it to the Wii/MWCC build. Provide a complete readable scalar/high-level fallback for non-MWCC and PC builds; validate that fallback for numerical/gameplay equivalence rather than paired-single bit identity.
+- Prefer `__vec2x32float__`, `__fres`, and other MWCC builtins first. Use `ASM`/`asm void` only for the documented PS kernel and its minimum loads, stores, scalar operations, comparisons, and branches.
+- Compiler-managed `register`/`__REGISTER` operands are allowed only inside the isolated kernel when required by MWCC PS syntax. Explicit `register rN`/`asm("rN")` bindings, fake stack frames, hand-written prologues/epilogues, unrelated control flow, binary patching, and register/stack choreography remain forbidden.
+- Log every use in `docs/evidence/decomp/attempts.jsonl` with `"policy_exception": true`, naming the target, opcode set, guard, fallback, and validation evidence.
+
+**Still forbidden outside the isolated PS backend:** `register rN`, fake `sp[]` buffers, arbitrary inline `asm { }`, arbitrary **`asm void` / whole-function asm bodies**, standalone `.s`, and transcribed retail asm blocks. Do not use the exception to close unrelated GPR, stack, or control-flow mismatches.
+
+## Low-level techniques — do not use in `src/**` / `libs/**` outside the isolated PS backend
+
+- inline or standalone **assembly** outside the isolated PS backend
+- `register` locals outside the isolated PS backend, especially numbered GPR names like `r3`, `r4`, `r30`, `r31`, or `asm("rN")` bindings
 - `asm { mr …, r1 }` or other inline asm snippets
 - `volatile` byte arrays / fake stack buffers to mirror `sp+0xC` retail offsets
 - `goto` labels whose only purpose is to duplicate asm branch layout
@@ -437,7 +448,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 - Call `CGame::wkRender` or full frame update twice for split-screen experiments
 - Accept `STRUCTURAL` / `CODE_MATCH` / `HIGH_MATCH` as final state (policy is `EQUIVALENT_MATCH`)
 - Submit AI-assisted reconstruction upstream
-- **Use assembly as decompilation output** — no `asm void` bodies, inline `asm { }` of any size, or `.s` units; assembly is never an acceptable match artifact
+- **Use arbitrary assembly as decompilation output** — no `asm void` bodies, inline `asm { }` of any size, or `.s` units outside the isolated PS backend; the exception is never an acceptable artifact for non-PS matching
 - **Micro-manage registers or the stack in source** — use §17.6 intrinsics when C++ is exhausted
 - **Post-process Chaitin / register soft-caps in `.text`** — no `insn_patches`, `insert_insns`, `reloc_offset_moves`, or any `postprocess_reloc_names.py` usage. EQUIVALENT_MATCH is the acceptance bar; do not chase byte-identity through binary patching. Narrow linker-ADDR16 bake (`bake_linker_addrs` / `force_symbol_relocs` for DOL-split absolute symbols like `_stack_addr`) is allowed
 

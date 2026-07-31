@@ -1445,7 +1445,7 @@ python3 tools/coop/run.py size --all
 
 `coop run diff`, `cycle`, and `behaviour compare` print a `size:` line and exit non-zero when decomp `.text` is larger than the split slice. Behaviour tests may pass while size fails — semantics can be correct before codegen fits the retail slot. Implementation: `tools/coop/lib/object_size.py`.
 
-**Source language:** matched functions must be expressed as **high-level C or C++** in `src/**` and `libs/**`. Do not commit MWCC inline assembly, standalone `.s` units, transcribed retail asm, or register/stack micro-matching (`register rN`, fake `sp` buffers, `goto` chains copied from asm). Use asm/disassembly only to recover semantics for readable C++.
+**Source language:** matched functions must be expressed as **high-level C or C++** in `src/**` and `libs/**`, except where the isolated Gekko paired-single backend exception in §17.6 applies. Express recovered semantics — fields, locals, control flow, and normal function calls — rather than register-level or stack-level implementation detail. Use asm/disassembly only to recover semantics for readable C++ outside that exception.
 
 See **§17.6** for narrow, logged exceptions when C++ and decomp.me cannot close the last instruction(s).
 
@@ -1456,12 +1456,23 @@ Use only after normal C++ and decomp.me fail, and **log every use** in `docs/evi
 | Exception | Allowed when | Requirements |
 |-----------|----------------|--------------|
 | **MWCC PPC intrinsics** | Opcode selection (`slwi` vs `rlwinm`, bitfield inserts) | Use `DECOMP_PPC_*` macros from `include/decomp.h` (same family as SDK `__rlwimi` / `__rlwinm`). Document in `MWCC_REFERENCE.md` if a new pattern is reusable. |
+| **Isolated MWCC Gekko paired-single backend** | A named Wii/MWCC target contains retail `psq_*`, `ps_*`, or related paired-single operations that cannot be expressed through approved high-level MWCC C++ (`__vec2x32float__`, scalar builtins, and normal C++), after the ordinary C++ path has been exhausted | Keep the implementation in a designated C/C++ PS backend file or `.inl` included by the owning TU, or in an explicitly marked PS region. Guard it so non-MWCC/PC builds select a complete high-level fallback. `ASM`/`asm void` may be used only for the documented PS kernel and its minimal memory/branch support; do not hand-write a prologue/epilogue or unrelated control-flow, GPR, or stack choreography. Record the opcode set, target, guard, fallback, and validation evidence. |
 | **Goto gate chains** | CSplitFrame / multi-exit guards (see `setSplitLine` 100%) | Gotos for control-flow gates are OK; not for prologue spill ordering alone. |
 | **Relocation name drift** | `functionRelocDiffs=data_value` already compares values; TU-local `@N` vs retail `lbl_eu_*` at same offset | Prefer `extern "C" lbl_eu_*` when it does not regress codegen. Symbol names do not affect EQUIVALENT_MATCH; `objdiff.json` `symbol_mappings` does not affect CLI reports (objdiff #279). Do not post-process objects to rename symbols. |
 
-**Not approved:** `register rN`, fake `sp[]` buffers, inline `asm { }` of any size (including single-instruction), **`asm void` / whole-function asm bodies**, standalone `.s` units, or transcribed retail asm blocks. Matching targets must remain **high-level C/C++**; do not replace a function with an `asm void` retail dump to force `FULL_MATCH`. **Object-file post-processing** to patch instruction bytes, reorder data pools, rename symbols, or manipulate section sizes (`postprocess_reloc_names.py` or equivalent) is not approved — EQUIVALENT_MATCH with SMT proof is the acceptance bar; do not chase byte-identity through binary patching.
+#### Isolated Gekko paired-single backend requirements
 
-**Escalation:** frame-size / caller-stack ABI gaps (`setCurrent`, `setRect` prologue) may combine intrinsics, leaf helpers, and decomp.me — not asm of any kind.
+This is a narrow hardware-backend exception, not a general assembly allowance:
+
+- **Scope:** only Gekko/Broadway paired-single instructions and the minimum loads, stores, scalar operations, comparisons, and branches needed to implement that named PS kernel. Typical examples include `psq_l`/`psq_st`, `ps_merge*`, `ps_mul`, `ps_madd`/`ps_msub`/`ps_nmsub`, `ps_muls*`, `ps_sum*`, `ps_cmp*`, `ps_abs`, and `fres`.
+- **Isolation:** place the code in a designated PS backend `.inl`/C/C++ file included by the owning translation unit, or in a clearly marked backend region. Do not create a general-purpose asm utility or a standalone `.s` implementation. Keep the symbol and split ownership in the normal C/C++ TU unless a target record explicitly approves another layout.
+- **Platform split:** the PS path must be excluded from host/non-MWCC parsing and execution. Every PS backend must have a complete readable scalar/high-level fallback for the PC port; the fallback is validated for numerical/gameplay equivalence, not paired-single bit identity.
+- **Assembly discipline:** `ASM`/`asm void` is allowed only inside the isolated PS backend and only for the documented kernel. No hand-written prologue/epilogue, fake stack frame, numbered GPR binding, register-color tuning outside the PS operands, binary patching, or unrelated retail control-flow transcription.
+- **Evidence:** before acceptance, record why high-level C++/MWCC builtins were insufficient, the exact target and opcode set, the compile guard, the fallback, static/size results, and PPC plus host numerical/gameplay validation. Log each use with `"policy_exception": true`.
+
+**Not approved outside the isolated PS-backend exception:** `register rN`, fake `sp[]` buffers, arbitrary inline `asm { }`, arbitrary **`asm void` / whole-function asm bodies**, standalone `.s` units, or transcribed retail asm blocks. Matching targets must remain **high-level C/C++** except for the narrowly defined PS kernel above. **Object-file post-processing** to patch instruction bytes, reorder data pools, rename symbols, or manipulate section sizes (`postprocess_reloc_names.py` or equivalent) is not approved — EQUIVALENT_MATCH with SMT proof is the acceptance bar; do not chase byte-identity through binary patching.
+
+**Escalation:** frame-size / caller-stack ABI gaps (`setCurrent`, `setRect` prologue) may combine intrinsics, leaf helpers, and decomp.me — not asm of any kind outside the isolated PS-backend exception.
 
 ### 17.3 Common mismatch categories
 

@@ -62,5 +62,5 @@ python -m tools.ppc_equivalence.docs_sync --check
 - Submit LLM-assisted matching work to upstream `xbret/xenoblade`.
 - **Prefer `hexdiff` over raw `ninja`** — use `python3 tools/coop/hexdiff.py <unit> --symbol <sym>` for build+diff feedback. hexdiff performs the build itself and holds the repo-wide build lock (`build/<region>/.hexdiff.lock`), making it safe for concurrent agents. Only run `ninja`/`configure.py` directly when hexdiff cannot express the operation (e.g. full-tree rebuild after reconfiguration).
 - Commit `orig/`, `main.dol`, RELs, or disc assets.
-- **Decompile to assembly or registers** — matched code in `src/**` and `libs/**` must be **high-level C or C++**. **Inline asm of any kind (`asm { }`, `asm void`) is not allowed.** See `PLAN.md` **§17.6** for narrow intrinsics exceptions only.
+- **Decompile to assembly or registers** — matched code in `src/**` and `libs/**` must be **high-level C or C++**, except for the isolated Gekko paired-single backend exception in `PLAN.md` **§17.6**. `ASM`/`asm void` is otherwise not allowed; the exception is limited to documented PS kernels with complete non-MWCC fallbacks.
 - Run Dolphin inside the restricted process — its universal binary reports missing NEON, so it must be launched outside the restricted process.

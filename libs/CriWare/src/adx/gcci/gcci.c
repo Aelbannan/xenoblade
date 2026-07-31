@@ -2,8 +2,24 @@
 // Replace stubs with high-level C/C++ during decomp.
 
 #include <harness_catalog.h>
+#include <string.h>
 
-void gcCiGetInterface() {}
+extern u32 lbl_eu_805E6B70;
+extern u8  lbl_eu_805E7B30[];
+extern char lbl_eu_80565B30[];
+
+void *gcCiGetInterface(void) {
+    u32 *p = (u32 *)&lbl_eu_805E6B70;
+    {
+        volatile u32 t = *(volatile u32 *)p;
+        *p = t;
+    }
+    memset(lbl_eu_805E7B30, 0, 0x100);
+    p[1] = 0;
+    p[2] = 0;
+    memset((u8 *)p + 0xC, 0, 0xC);
+    return (void *)lbl_eu_80565B30;
+}
 
 void gcCiExecHndl() {}
 

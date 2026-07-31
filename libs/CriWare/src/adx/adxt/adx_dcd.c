@@ -14,17 +14,17 @@
 //   [5] f64  0x4330000080000000 (u32->double magic)
 extern const double lbl_eu_80517468[];
 
-void ADX_GetCoefficient(u32 num, u32 den, s16* out1, s16* out2)
+void ADX_GetCoefficient(int highpass_frequency, int sample_rate, s16* coef1_ptr, s16* coef2_ptr)
 {
-    const float* tbl = (const float*)lbl_eu_80517468;
-    float ratio = tbl[0] * (float)num / (float)den;
-    float c = (float)cos(ratio);
-    float x = (float)sqrt(lbl_eu_80517468[1]) - c;
-    float y = (float)sqrt(lbl_eu_80517468[1]) - tbl[2];
-    float z = (float)sqrt((x + y) * (x - y));
-    float t = (x - z) / y;
-    *out1 = (s16)(tbl[3] * (tbl[4] * t));
-    *out2 = (s16)(tbl[3] * (-t * t));
+    float f21;
+    float f20;
+    float r;
+    f21 = (float)cos((6.2831855f * highpass_frequency) / sample_rate);
+    f21 = (float)sqrt(2.0) - f21;
+    f20 = (float)sqrt(2.0) - 1.0f;
+    r = (f21 - (float)sqrt((f21 + f20) * (f21 - f20))) / f20;
+    *coef1_ptr = (s16)(4096.0f * (2.0f * r));
+    *coef2_ptr = (s16)(4096.0f * (-r * r));
 }
 
 int ADX_ScanInfoCode(const u16* codes, int size, u16* out)
@@ -137,8 +137,8 @@ int ADX_DecodeInfoExIdly(u8* info, int size, s16* outA, s16* outB)
 int ADX_DecodeInfoExLoop(u8* info, int size, u32* outA, s16* outB,
                          s16* outC, u32* outD, u32* outE, u32* outF, u32* outG)
 {
-    int err = 0;
     u8 ch;
+    int err = 0;
     *outB = 0;
     if (size < 0x14) {
         err = -1;
@@ -167,7 +167,7 @@ int ADX_DecodeInfoExLoop(u8* info, int size, u32* outA, s16* outB,
             if (ch == 4)
                 off = 0x20;
             *outA = *(s16*)(info + off);
-            const u8* p = info + off;
+            const u8* p = off + info;
             {
                 s16 loop = *(s16*)(p + 2);
                 *outB = loop;
@@ -187,7 +187,7 @@ int ADX_DecodeInfoExLoop(u8* info, int size, u32* outA, s16* outB,
 int ADX_DecodeInfoAinf(u8* info, int size, u32* outA, u32* outB,
                        s16* outC, s16* outD)
 {
-    int err = 0;
+    int err;
     u8 ch;
     *outA = 0;
     if (size < 0x14) {
@@ -222,7 +222,7 @@ int ADX_DecodeInfoAinf(u8* info, int size, u32* outA, u32* outB,
                 off += 0x14;
             const u8* p2 = info + off;
             {
-                u32 tag = (u32)((info[off] << 24) | (p2[1] << 16) | (p2[2] << 8) | p2[3]);
+                u32 tag = (info[off] << 24) | (p2[1] << 16) | (p2[2] << 8) | p2[3];
                 if (tag != 0x41494E46)
                     return -2;
             }

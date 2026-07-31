@@ -308,24 +308,38 @@ extern "C" void func_80463C24__Q23LOD17UnkClass_8046368CFv(s32 index, s32 offset
     LodGlobal* g = &lbl_eu_80657FB0;
 
     s32 slot = (index << 3) + ((lbl_eu_806657A0 + offset) & 7);
-    if ((lbl_eu_806657B0 & 0x4) && lbl_eu_80665798 == slot && lbl_eu_8066579C == mtx) {
-        return;
+    if (!(lbl_eu_806657B0 & 0x4)) {
+        goto update;
     }
+    if (lbl_eu_80665798 != slot) {
+        goto update;
+    }
+    if (lbl_eu_8066579C != mtx) {
+        goto update;
+    }
+    return;
 
+update:
     u8* record = lbl_eu_806657AC + slot * 0xB4;
     Mtx work[3];
     PSMTXConcat(g->mtx58, *mtx, work[0]);
     PSMTXConcat(work[0], *(const Mtx*)(record + 0x1A4), work[1]);
     PSMTXConcat(work[0], *(const Mtx*)(record + 0x174), work[2]);
 
+    Mtx* workCursor = work;
+    Mtx* normalCursor = g->nrm;
     u32 mtxId = 6;
-    for (s32 i = 0; i < 3; ++i) {
+    s32 i = 0;
+    while (i < 3) {
         Mtx t;
-        PSMTXConcat(g->mtx28, work[i], t);
+        PSMTXConcat(g->mtx28, *workCursor, t);
         GXLoadPosMtxImm(t, mtxId);
-        PSMTXInverse(t, g->nrm[i]);
-        PSMTXTranspose(g->nrm[i], t);
+        PSMTXInverse(t, *normalCursor);
+        PSMTXTranspose(*normalCursor, t);
         GXLoadNrmMtxImm(t, mtxId);
+        ++i;
+        ++workCursor;
+        ++normalCursor;
         mtxId += 3;
     }
 
@@ -374,12 +388,12 @@ extern "C" void func_80463D44__Q23LOD17UnkClass_8046368CFv(LodDrawParam* p) {
 // us-80467e80  func_80463EB0  (cache object bind + dispatch)
 // ===========================================================================
 extern "C" void func_80463EB0__Q23LOD17UnkClass_8046368CFv(u32 index, u32 value) {
-    LodCacheObj* rec = (LodCacheObj*)(lbl_eu_80665784 + index * 0xC);
+    u32* rec = (u32*)lbl_eu_80665784 + index * 3;
 
     lbl_eu_806657B0 |= 0x3;
-    lbl_eu_80665780 = (u8*)rec + 8;
+    lbl_eu_80665780 = (u8*)(rec + 2);
 
-    LodCacheObj* obj = *(LodCacheObj**)((u8*)rec + 0xC);
+    LodCacheObj* obj = (LodCacheObj*)rec[3];
     u8* addr824 = (u8*)obj + obj->f24;
     u8* addr820 = (u8*)obj + obj->f0C;
     u8* addr81C = (u8*)obj + obj->f04;
@@ -427,30 +441,28 @@ extern "C" s32 func_80463FF8__Q23LOD17UnkClass_8046368CFv(const LodRangeObj* obj
         return 1;
     }
 
-    s32 end = obj->end;
-    s32 start = obj->start;
-    end *= 60;
-    start *= 60;
+    s32 a = (s32)obj->start * 60;
+    s32 b = (s32)obj->end * 60;
     s32 lim;
-    if (start <= end) {
+    if (a <= b) {
         goto ordered;
     }
 
     lim = lbl_eu_806657B8;
-    if (start <= lim) {
+    if (a <= lim) {
         return 1;
     }
-    if (end < lim) {
+    if (b < lim) {
         goto return_zero;
     }
     return 1;
 
 ordered:
     lim = lbl_eu_806657B8;
-    if (start > lim) {
+    if (a > lim) {
         goto return_zero;
     }
-    if (end < lim) {
+    if (b < lim) {
         goto return_zero;
     }
     return 1;

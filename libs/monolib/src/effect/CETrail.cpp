@@ -377,13 +377,12 @@ extern "C" void* __dt__804D6C60(CETrail* t, u32 count, s16 segCount, void* linkA
 // func_804D70A0: POINT node constructor
 // ---------------------------------------------------------------------------
 extern "C" void func_804D70A0(CETrailNode* node) {
-    f32 x = ml::CVec3::zero.x;
-    f32 y = ml::CVec3::zero.y;
-    f32 z = ml::CVec3::zero.z;
-    ml::CVec3 first(x, y, z);
-    node->m_item.m_posA = first;
-    node->m_item.m_posB = first;
-    node->m_item.m_age = lbl_eu_8066B15C;
+    f32 age = lbl_eu_8066B15C;
+    ml::CVec3 zero = ml::CVec3::zero;
+    ml::CVec3 second = zero;
+    node->m_item.m_posA = zero;
+    node->m_item.m_posB = second;
+    node->m_item.m_age = age;
 }
 
 // ---------------------------------------------------------------------------
@@ -802,11 +801,15 @@ extern "C" CETrailLight* func_804D807C(CETrailLight* self, CResHolder* parent) {
 // ---------------------------------------------------------------------------
 // __dt__804D80F0: light attachment deleting destructor
 // ---------------------------------------------------------------------------
-extern "C" CETrailLight* __dt__804D80F0(CETrailLight* self, int deleting) {
+struct CETrailLightDtor {
+    CResHolder* m_parent;
+    void* m_light;
+};
+
+extern "C" CETrailLightDtor* __dt__804D80F0(CETrailLightDtor* self, int deleting) {
     if (self != nullptr) {
         if (self->m_light != nullptr) {
-            CResHolder* parent = self->m_parent;
-            func_80494188(parent->m_res);
+            func_80494188(self->m_parent->m_res);
             self->m_light = nullptr;
         }
         if (deleting > 0) {

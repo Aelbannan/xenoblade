@@ -728,10 +728,11 @@ extern volatile u32 lbl_eu_805E5358;
 extern u8 lbl_eu_805E5378[0x1000];
 
 void ADXB_Init(void) {
+    u8* p = (u8*)&lbl_eu_805E5358;
     ADXPD_Init();
-    lbl_eu_805E5358++;
-    memset(lbl_eu_805E5378, 0, 0x1000);
-    *(u32*)((u8*)&lbl_eu_805E5358 + 0x18) = 0;
+    (*(volatile u32*)p)++;
+    memset(p + 0x20, 0, 0x1000);
+    *(u32*)(p + 0x18) = 0;
 }
 
 u32 adxb_DefGetWr(void* self, u32* out1, u32* out2, u32* out3) {
@@ -762,7 +763,38 @@ void criware_eu_8038A864(void* self) {
     ADXB_SetDefPrm(self);
 }
 
-void ADXB_SetDefPrm(void* self) {}
+void ADXB_SetDefPrm(void* self) {
+    u8* p = (u8*)self;
+    u32 v3c = *(u32*)(p + 0x3c);
+    u32 v40 = *(u32*)(p + 0x40);
+    u32 v44 = *(u32*)(p + 0x44);
+
+    *(u16*)(p + 0x02) = 1;
+    *(u32*)(p + 0x14) = 48000;
+    *(u8*)(p + 0x0e) = 2;
+    *(u8*)(p + 0x0d) = 16;
+    *(u32*)(p + 0x18) = 0x7fffffff;
+    *(u8*)(p + 0x0f) = 0x7f;
+    *(u32*)(p + 0x10) = 0x400;
+    *(u32*)(p + 0x50) = 2;
+    *(u32*)(p + 0x54) = 0x7f;
+    *(u32*)(p + 0x58) = 0x400;
+    *(u32*)(p + 0x5c) = v3c;
+    *(u32*)(p + 0x60) = v40;
+    *(u32*)(p + 0x64) = v44;
+    *(u32*)(p + 0x8c) = 0;
+    *(u16*)(p + 0x1c) = 0;
+    *(u16*)(p + 0x24) = 0;
+    *(u16*)(p + 0x26) = 0;
+    *(u32*)(p + 0x20) = 0;
+    *(u32*)(p + 0x28) = 0;
+    *(u32*)(p + 0x2c) = 0;
+    *(u32*)(p + 0x30) = 0;
+    *(u32*)(p + 0x34) = 0;
+    *(u32*)(p + 0x88) = 0;
+    *(u8*)(p + 0xec) = 0;
+    *(u8*)(p + 0xed) = 0;
+}
 
 void ADXB_DecodeHeader() {}
 
@@ -777,7 +809,19 @@ s16 ADXB_GetFormat(void* self) { return *(s16*)((u8*)self + 0x98); }
 
 u32 ADXB_GetSfreq(void* self) { return *(u32*)((u8*)self + 0x14); }
 
-void ADXB_GetNumChan() {}
+extern char lbl_eu_80517330[];
+extern void ADXERR_CallErrFunc1_(const char* msg);
+
+s32 ADXB_GetNumChan(void* self) {
+    int ch = *(u8*)((u8*)self + 0x0E);
+    if (ch == 1 && *(u32*)((u8*)self + 0xE0) != 0)
+        return 2;
+    if (self == NULL) {
+        ADXERR_CallErrFunc1_(lbl_eu_80517330 + 0x81);
+        return -1;
+    }
+    return (s8)ch;
+}
 
 typedef struct ADXBFormatInfo {
     u8 _00[0x0d];
@@ -856,28 +900,22 @@ void ADXB_SetLnkSw(void* self, int val) {
 
 u32 ADXB_GetStat(void* self) { return *(u32*)((u8*)self + 0x4); }
 
-void ADXB_EntryData(void* self, s32 param2, s32 param3) {
-    s32 val;
-    
+void ADXB_EntryData(void* self, void* data, int size) {
     if (*(s16*)((u8*)self + 0x98) == 0) {
-        val = (s32)(s8)(*(u8*)((u8*)self + 0x0f));
-        *(s32*)((u8*)self + 0x48) = param2;
-        *(s32*)((u8*)self + 0x4c) = param3 / val;
-        *(s32*)((u8*)self + 0x74) = 0;
+        *(void**)((u8*)self + 0x48) = data;
+        int ch = (s8)*(u8*)((u8*)self + 0x0F);
+        *(u32*)((u8*)self + 0x74) = 0;
+        *(u32*)((u8*)self + 0x4C) = size / ch;
     } else {
-        s32 v7, v6;
-        v7 = (s32)(s8)(*(u8*)((u8*)self + 0x0d));
-        v6 = (s32)(s8)(*(u8*)((u8*)self + 0x0e));
-        v7 = (v7 + 7) >> 3;
-        *(s32*)((u8*)self + 0x48) = param2;
-        *(s32*)((u8*)self + 0x74) = 0;
-        *(s32*)((u8*)self + 0x4c) = param3 / (v7 * v6);
+        *(void**)((u8*)self + 0x48) = data;
+        int t = (s8)*(u8*)((u8*)self + 0x0D) / 8;
+        *(u32*)((u8*)self + 0x74) = 0;
+        *(u32*)((u8*)self + 0x4C) = size / (t * (s8)*(u8*)((u8*)self + 0x0E));
     }
-    
-    *(s32*)((u8*)self + 0x90) = 0;
-    *(s32*)((u8*)self + 0x94) = 0;
-    *(s32*)((u8*)self + 0xf4) = 0;
-    *(s32*)((u8*)self + 0xf0) = 0;
+    *(u32*)((u8*)self + 0x90) = 0;
+    *(u32*)((u8*)self + 0x94) = 0;
+    *(u32*)((u8*)self + 0xF4) = 0;
+    *(u32*)((u8*)self + 0xF0) = 0;
 }
 
 void ADXB_Start(void* self) {

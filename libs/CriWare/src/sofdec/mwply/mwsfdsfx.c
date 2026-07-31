@@ -23,7 +23,19 @@ void MWSFSFX_Destroy(void) { SFX_Destroy(); }
 
 void MWSFD_CnvFrmInfToSfx() {}
 
-void MWSFD_IsColAdjFrame() {}
+int MWSFD_IsColAdjFrame(void *a, void *b) {
+    int idx = *(s32 *)((u8 *)b + 0x38);
+    u8 *entry = (u8 *)a + (idx % 8) * 0x38;
+    int v;
+    if (*(s32 *)(entry + 0xE0) != 1)
+        v = 0;
+    else
+        v = *(u32 *)(entry + 0xF8);
+    int r = v == 1;
+    if (*(u32 *)((u8 *)b + 0xA0))
+        r = SUD_AnalyTypeCcs(*(u32 *)((u8 *)b + 0xA0), *(u32 *)((u8 *)b + 0xA4)) == 1;
+    return r;
+}
 
 int MWSFD_IsColAdjFile(void* self, int idx) {
     int index = idx % 8;
@@ -49,6 +61,9 @@ void MWSFSFX_SetCompoMode(void* self) {
 extern int MWSFD_IsEnableHndl(void*);
 extern void MWSFSVM_Error(const char*, ...);
 extern char lbl_eu_80519EC8[];
+extern int SUD_AnalyTypeCcs(const char *, s32);
+extern void SFX_SetOutBufSize(void *, u32, u32);
+extern void SFX_SetUnitWidth(void *, u32);
 
 u32 mwPlyFxGetCompoMode(void* self) {
     if (MWSFD_IsEnableHndl(self) != 1) {
@@ -58,7 +73,15 @@ u32 mwPlyFxGetCompoMode(void* self) {
     return *(u32*)((u8*)self + 0x68);
 }
 
-void mwPlyFxSetOutBufPitchHeight() {}
+void mwPlyFxSetOutBufPitchHeight(void *self, u32 width, u32 height) {
+    if (MWSFD_IsEnableHndl(self) != 1) {
+        MWSFSVM_Error(lbl_eu_80519EC8 + 0x232);
+        return;
+    }
+    void *sfx = *(void **)((u8 *)self + 0xC8);
+    SFX_SetOutBufSize(sfx, width, height);
+    SFX_SetUnitWidth(sfx, 0);
+}
 
 int MWSFTAG_IsUseAinfSj(void* self) {
     int v = *(s32*)((u8*)self + 0x20);

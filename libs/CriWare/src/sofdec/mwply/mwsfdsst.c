@@ -11,7 +11,6 @@ typedef struct SstObj SstObj;
 typedef struct SstHnObj SstHnObj;
 typedef struct SstHnObjVtable SstHnObjVtable;
 typedef struct SstCore SstCore;
-typedef struct SstCoreVtable SstCoreVtable;
 
 /* Object referenced from SstHn::obj (0x08). Its method table lives inline in
  * the object memory, so the SJ control methods are plain members. */
@@ -87,7 +86,7 @@ void MWSFSVM_GotoIdleBorder(void);
 
 /* ---- Internal helpers ---- */
 
-static s32 MWSST_IsActive(const SstHn* sst) {
+static inline s32 MWSST_IsActive(const SstHn* sst) {
     if (lbl_eu_80602A00[sst->type].core == NULL) {
         return 0;
     }

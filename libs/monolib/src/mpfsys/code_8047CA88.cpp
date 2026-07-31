@@ -81,20 +81,18 @@ extern "C" void func_8047CC4C__17UnkClass_8047CA88Fv(
     u8* base = (u8*)desc + off;
     void* target = base + 0x20;
 
-    union {
-        f32 f[3];
-        u32 u[3];
-    } raw;
+    struct UnkRaw3 { f32 x, y, z; };
+    UnkRaw3 raw;
     nw4r::math::VEC3 v;
     nw4r::math::VEC3Scale(&v, vec, scale);
 
-    raw.f[1] = v.y;
-    raw.f[2] = v.z;
-    raw.f[0] = v.x;
+    raw.y = v.y;
+    raw.z = v.z;
+    raw.x = v.x;
 
-    *(u32*)&self->field_08 = raw.u[0];
-    *(u32*)&self->field_0C = raw.u[1];
-    *(u32*)&self->field_10 = raw.u[2];
+    *(u32*)&self->field_08 = *(u32*)&raw.x;
+    *(u32*)&self->field_0C = *(u32*)&raw.y;
+    *(u32*)&self->field_10 = *(u32*)&raw.z;
 
     self->field_14 =
         inv / nw4r::math::VEC3Dot((nw4r::math::VEC3*)&self->field_08,

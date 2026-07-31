@@ -1786,7 +1786,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CScnItemCameraNw4r.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemId.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemLight.cpp"),
-            Object(NonMatching, "monolib/src/scn/CScnItemLightNw4r.cpp"),
+            Object(MatchingFor("jp", "us"), "monolib/src/scn/CScnItemLightNw4r.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemModel.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemModelNw4r.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnItemPool.cpp"),
@@ -1798,7 +1798,7 @@ config.libs = [
             Object(NonMatching, "monolib/src/scn/CScnTexWorkMan.cpp"),
             Object(NonMatching, "monolib/src/scn/CScnVirtualLight.cpp"),
             Object(NonMatching, "monolib/src/scn/code_8049431C.cpp"),
-            Object(NonMatching, "monolib/src/scn/CVirtualLightAmb.cpp"),
+            Object(MatchingFor("jp", "us"), "monolib/src/scn/CVirtualLightAmb.cpp"),
             Object(NonMatching, "monolib/src/scn/CVirtualLightDir.cpp"),
             Object(NonMatching, "monolib/src/scn/CVirtualLightObj.cpp"),
             Object(NonMatching, "monolib/src/scn/CScn.cpp"),  # -O4,p (default): Draw needs separate r29-r31 spills; -O4,s emits stmw

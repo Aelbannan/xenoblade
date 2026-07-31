@@ -1,0 +1,21 @@
+#include <harness_catalog.h>
+int ADX_ScanInfoCode(const u16* codes, int size, u16* out)
+{
+    int i = 0;
+    int found = 0x7FFFFFFF;
+    for (i = 0; i < size - 1; i += 2, codes++) {
+        if (*codes == 0x8000) {
+            found = 0x7FFFFFFF;
+            if (i < found)
+                found = i;
+            break;
+        }
+    }
+    if (found != 0x7FFFFFFF) {
+        *out = (u16)found;
+        return 0;
+    }
+    found = 0;
+    *out = (u16)found;
+    return -1;
+}

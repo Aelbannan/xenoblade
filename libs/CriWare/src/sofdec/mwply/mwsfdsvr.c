@@ -34,7 +34,17 @@ void MWSFSVR_SetHnMwplySvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x7c) =
 
 void MWSFSVR_SetHnSfdSvrFlg(void* self, u32 val) { *(u32*)((u8*)self + 0x80) = val; }
 
-void MWSFSVR_IsSvrBdrHndl() {}
+extern int MWSFD_IsEnableHndl(void *);
+extern void MWSFSVM_Error(const char *, ...);
+extern char lbl_eu_8051BE68[];
+
+int MWSFSVR_IsSvrBdrHndl(void *h) {
+    if (MWSFD_IsEnableHndl(h) != 1) {
+        MWSFSVM_Error(lbl_eu_8051BE68 + 0x51);
+        return 0;
+    }
+    return *(u32 *)((u8 *)h + 0x7C) != 1;
+}
 
 void mwlSfdSleepDecSvr() {}
 

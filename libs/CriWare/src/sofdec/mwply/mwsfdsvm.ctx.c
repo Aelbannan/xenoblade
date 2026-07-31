@@ -754,4 +754,42 @@ void MWSFSVM_TestAndSet(void* p) { SVM_TestAndSet(p); }
 
 void MWSFSVM_Error() {}
 
-void MWSFSVM_GotoIdleBorder() {}
+/* ---- SVM trace callback infrastructure ----
+ * lbl_eu_805FF3A0 is a global pointer to an optional trace object whose
+ * vtable exposes a "trace" method at offset 0x24; lbl_eu_80566B9C is the
+ * trace record (entry sub-record at +0x04, exit sub-record at +0x6c). */
+
+typedef struct TraceCb TraceCb;
+
+typedef struct TraceCbVtable {
+    u8 pad_0x00[0x24];
+    void (*trace)(TraceCb* self, u32* rec);   /* 0x24 */
+} TraceCbVtable;
+
+struct TraceCb {
+    const TraceCbVtable* vtable;
+};
+
+typedef struct TraceRec TraceRec;
+struct TraceRec {
+    u8 pad_0x00[0x4];
+    u32 field_0x04;                            /* 0x04 (entry sub-record) */
+    u8 pad_0x08[0x64];                         /* 0x08..0x6b */
+    u32 field_0x6c;                            /* 0x6c (exit sub-record) */
+};
+
+extern TraceCb* lbl_eu_805FF3A0;
+extern TraceRec lbl_eu_80566B9C;
+extern int SVM_GotoSvrBorder(int svrId);
+
+void MWSFSVM_GotoIdleBorder(void) {
+    TraceCb* cb = lbl_eu_805FF3A0;
+    if (cb != NULL) {
+        cb->vtable->trace(cb, &lbl_eu_80566B9C.field_0x04);
+    }
+    SVM_GotoSvrBorder(6);
+    cb = lbl_eu_805FF3A0;
+    if (cb != NULL) {
+        cb->vtable->trace(cb, &lbl_eu_80566B9C.field_0x6c);
+    }
+}

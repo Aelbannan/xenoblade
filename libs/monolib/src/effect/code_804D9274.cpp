@@ -195,18 +195,17 @@ void func_804D9B70(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir,
 // func_804D9F00: random arc vector in the X/Z plane over (int)(-scale->y)
 // degrees, scaled by scale->x * dir->x.
 void func_804D9F00(ml::CVec3* out, const ml::CVec3* scale, const ml::CVec3* dir) {
-    f32 mx = scale->x * dir->x;
-    f32 sy = scale->y;
+    ml::CVec3 temp(scale->x * dir->x, scale->y, 0.0f);
 
-    int range = (int)(-sy);
+    int range = (int)(-temp.y);
     if (range == 0) {
         range = 360;
     }
     f32 angle = (f32)range * randF() * lbl_eu_8066B210;
 
-    out->x = mx * cosTbl(angle);
+    out->x = temp.x * cosTbl(angle);
     out->y = 0.0f;
-    out->z = mx * sinTbl(angle);
+    out->z = temp.x * sinTbl(angle);
 }
 
 } // extern "C"

@@ -4,7 +4,7 @@
 // Global symbols
 extern "C" {
     void* lbl_eu_806659F0;
-    extern void* lbl_eu_8056FDA8;
+    extern char lbl_eu_8056FDA8[];  // vtable data - array type prevents sda21
     u8 lbl_eu_806659D0;
     s32 lbl_eu_806659D4;
 
@@ -89,9 +89,11 @@ ret0:
 }
 
 // us-804df534: sinit_804DB228
-// Static initializer: sets vtable pointer for CNReqtaskReaddir
-void sinit_804DB228() {
-    void* val = (void*)&lbl_eu_8056FDA8;
-    void** dest = &lbl_eu_806659F0;
-    *dest = val;
+// Static initializer: sets vtable pointer for CNReqtaskReaddir.
+// Returning p keeps &lbl_eu_806659F0 live in r3 (best-effort 20-byte form).
+void** sinit_804DB228() {
+    void** p = &lbl_eu_806659F0;
+    void* v = (void*)lbl_eu_8056FDA8;
+    *p = v;
+    return p;
 }

@@ -11,39 +11,40 @@ extern "C" {
 }
 
 extern "C" void __ct__CScnFilter(CScnFilter* self) {
-    u32 zero = 0;
-    f32 fzero = lbl_eu_8066ABA0;
-    void* vtable = (void*)lbl_eu_8056EB60;
-    u32 flags3 = 3;
     self->mEnabled = 0;
-    *(void**)self = vtable;
-    self->mUnk0C = zero;
-    self->mIntensity = fzero;
-    self->mUnk14 = zero;
-    self->mFlags = flags3;
+    *(void**)self = (void*)lbl_eu_8056EB60;
+    self->mUnk0C = 0;
+    self->mIntensity = lbl_eu_8066ABA0;
+    self->mUnk14 = 0;
+    self->mFlags = (u32)self->mEnabled | 3;
 }
 
 CScnFilter::~CScnFilter() {
 }
 
+static int check_over(CScnFilter* self) {
+    int over;
+    if (self->mUnk0C != 0 && self->mIntensity > (f32)self->mUnk0C) {
+        over = 1;
+    } else {
+        over = 0;
+    }
+    return over;
+}
+
 extern "C" void func_8049C868(CScnFilter* self, void* arg) {
-    s32 threshold = self->mUnk0C;
-    if (threshold == 0) {
+    if (self->mUnk0C == 0) {
         return;
     }
-    f32 threshold_f = (f32)threshold;
-    if (self->mIntensity > threshold_f) {
+    if (check_over(self)) {
         return;
     }
     void* obj = *(void**)((char*)arg + 0x84);
     self->mIntensity += *(f32*)((char*)obj + 0x0C);
-    threshold = self->mUnk0C;
-    threshold_f = (f32)threshold;
-    if (self->mIntensity > threshold_f) {
+    if (check_over(self)) {
         if (self->mUnk14 != 0) {
             void* cb = (void*)self->mUnk14;
-            void* vt = *(void**)cb;
-            void (*func)(void*) = (void (*)(void*))(*(void**)((char*)vt + 0x0C));
+            void (*func)(void*) = (void (*)(void*))(*(void**)((char*)*(void**)cb + 0x0C));
             func(cb);
         }
     }

@@ -103,6 +103,49 @@ Fv+r4 src table: vt+`0x78` clear, 8×`0x10` records → stack `CBattleStateEntry
 
 **Soft-cap:** (1) MWCC hoists `lhz`/`extrwi.` on `unk0E` before field stores (retail keeps them late; steals r0 from the flags `ori`). Reload/`flags != 0` barriers regress. (2) Tail copy is retail **`mtctr`/`bdnz` + `lwzu`/`stwu`**; high-level `do { … } while (--i)` emits **`addic.`/`bne`** (same size). Keep high-level C++; **no** `insn_patches`.
 
+## mwsfdsst — Sofdec SST handle API (US, 11× FULL_MATCH + 1 soft-cap)
+
+`libs/CriWare/src/sofdec/mwply/mwsfdsst.c` — all 12 targets matched to 0–2
+bytes. Reusable patterns:
+
+- **Inline method tables vs vtable indirection:** retail folds `lwz r12, off(rX)`
+  (single load) for the SST obj (0x08) and SST core methods — type those
+  objects as structs with **inline function pointers** (`pad` + `void* (*m)(…)`).
+  The `hn`/`core`-adjacent objects use a real `const Vtable*` member (two-load
+  `lwz vtable; lwz r12, off`). Mixing them flips single- vs two-load codegen.
+- **Guard helper shape:** `static s32 IsActive(const S* s)` with three separate
+  `if (cond) return 0;` statements (negative conditions) + `return x != NULL;`
+  reproduces retail branch orientation (`bne`-to-continue). Positive `&&` chains
+  invert the branches. The `!= NULL` last condition gives the `neg/or/srwi`
+  value conversion.
+- **Load-hoisting via raw-value locals:** retail hoists a load above a branch
+  but applies the `+0xc0` add inside the call; declare `s32 outChan = sst->outChan;`
+  BEFORE the `if`, use `outChan + 0xc0` in the call (not the full expression).
+  Declaring `ch = outChan + 0xc0` hoists the add too (mismatch).
+- **`static inline` to avoid standalone bodies:** a `static` helper that MWCC
+  inlines everywhere still gets a standalone `t` symbol (~76 bytes) → split size
+  FAIL; `static inline` drops it (size PASS with spare).
+- **Address CSE needs inline source:** `SstCoreTblEntry* coreTbl = &tbl[sst->type];`
+  + the FIRST guard written inline in the source (not via the helper call) lets
+  MWCC share the `add r31` address temp; the second guard (helper call) still
+  recomputes — matching retail's asymmetry. `core` locals (assigned from
+  `coreTbl->core`) must hold the value across the release/refcount blocks or
+  MWCC reloads (r0 clobber by `subic.`).
+- **Tail-call vfuncs are void:** `void MWSST_GetTime(SstHn*, s32 mode)` calling
+  `obj->getTime(h, mode);` as the last statement (discarded result) tail-calls
+  (`bctr`) with `h` in r3; a `void*` return pins the result register and forces
+  `or r3,r0,r0`. Callers ignore the return. `MWSST_GetStat`/`GetOutVol` use
+  `if (!active) return 0;` + an `h` local (s32 accumulator) — the early literal
+  return gives `li r3,0; b epi`.
+- **`MWSST_StartSj` passes `hn` as 2nd arg:** `obj->startSj(h, hn)` — the r4
+  load of `sst->hn` is live (argument), not a dead load.
+- **Soft-cap:** `MWSST_Destroy` 98.1% — one `stw r0,0(r30)` / `cmpwi r29,0`
+  swap after the stop-call: MWCC floats the independent h-check above the state
+  store (`li; cmpwi; stw`), retail keeps `li; stw; cmpwi`. Ruled out: flat/
+  nested/reversed statement order, core-local variants, no-local condition,
+  then/else duplication. EQUIVALENT blocked by unresolved indirect vtable calls
+  (obj/core/hn dispatch) in the SMT callee attestation — needs FULL_MATCH.
+
 ## COccCulling::setFrustum — scale/rot + interleaved planes (US)
 
 Exact size `0x588`. Best ~**89.2%** HIGH_MATCH: `setScale(CVec3(sx,sy,lbl_eu_80667C88))` + `setRotXYZ` + `FLAGS_01` plane guard + SDA dir/unk124/128 zeros + `math::sqrt` (inlined `FSqrt`/`Warning`/`FrSqrt`).
@@ -441,6 +484,44 @@ ACCEPTED as `EQUIVALENT_MATCH` at ~78.2% static.
 
 `CHelp_Pg::func_802B85A4` int→float uses retail `lbl_eu_80669000@sda21`; MWCC pools `@N` with the signed magic double — rename via `CHelp_Pg.o` `pool_patterns` `(MAGIC_HI, MAGIC_LO) → lbl_eu_80669000` once `.text` already matches.
 
+## monolib NAND task TUs — struct access, range-split ORs, sinit ceiling (US)
+
+`CNReqtaskCheck/Remove/Load/Readdir/SaveBanner` (libs/monolib/src/nand). All 12 non-sinit functions reached **FULL_MATCH** (hexdiff 0 mismatches, exact sizes). Three reusable MWCC behaviours were decisive:
+
+### 1. Struct member access fixes Chaitin rotation in init functions
+
+Casts like `((u8*)data)[0x0C]` / `((u32*)data)[4]` make MWCC hoist `data+N` into a callee-save register (`addi r31,r4,4` before the body) and store through `0(r31)` — shifting every later instruction by one and rotating the whole callee-save assignment (`func_804DB240`: data→r30/arg→r31 vs retail data→r31/arg→r30; `func_804DAF70`: 4-register rotation).
+
+Fix: give the TU a real struct and use **member access** (`d->state = 5`, `d->field_10 = arg2`). MWCC then keeps the base pointer in its incoming register and emits the offset in the instruction (`stb r0, 4(r4)`), matching retail exactly. Both functions went from 4–8 pure reg-swaps to 0 mismatches with no other change.
+
+### 2. Inline global access triggers range-split compare trees
+
+For `if (err == -12 || err == -15 || err == -5)` with `s32 err = lbl_eu_806659D4;` (a local), MWCC emits a **linear** `cmpwi` chain. With the global accessed **inline** in each operand (`if (lbl_eu_806659D4 == -12 || lbl_eu_806659D4 == ...)`), MWCC emits a **range-split** tree: `cmpwi -12; beq set5; bge ge; cmpwi -15; beq set5; ...; ge: cmpwi -5; ...` — the `bge` bounds check between the case values that retail has. The single `lwz` load is CSE'd into r0 exactly like retail.
+
+### 3. First case of an OR-chain split into its own `if`
+
+Retail had **two** set5 blocks (`beq -12 → block A`, `beq -15/-5 → block B`). Matching source shape:
+
+```cpp
+if (lbl_eu_806659D4 == -12) {
+    d->state = 5;
+} else if (lbl_eu_806659D4 == -15 || lbl_eu_806659D4 == -5) {
+    d->state = 5;
+} else if (lbl_eu_806659D4 < 0) {
+    return 2;
+}
+```
+
+Combined with (1) this took `func_804F4D90` (0x2F8 state machine with 12-case jump table) from 173 mismatches/744 bytes to **0 mismatches/760 bytes exact**.
+
+### 4. `b .+4` sinit ceiling (unreproducible)
+
+All five `sinit_804DB4xx/804DB2xx/804DB0xx/804F51xx` functions store one vtable pointer. Retail shape: `li r3, dest@sda21; b .+4; lis r4, src@ha; addi r4, r4, src@l; stw r4, 0(r3); blr` (24 bytes). The `b .+4` is a scheduler barrier and the store is deliberately unfolded through r3.
+
+MWCC always folds the store to `stw rX, dest@sda21(r0)` (16–20 bytes, 0% fuzzy) and no source form emits the branch. Ruled out: return-p trick (`void** p = &dest; *p = v; return p;` — 20 bytes, still folded), `volatile` pointer/`void* volatile` global, `#pragma scheduling off`, `#pragma opt_propagation off`, `#pragma peephole off`, C-mode compile, `goto`/`if(1)`/`while(0)` wrappers, static object with external vtable, inline helper taking the dest as a parameter, `-O4,p`/`-O4,s`, and MWCC Wii versions 1.0/1.0a/1.1/1.3/1.5/1.6/1.7. Same pattern exists in `monolib_eu_804F9E98.cpp` (`sinit_eu_804F9FA4`, also unmatched, STRUCTURAL).
+
+These 5 sinits are parked at COMPILES; fuzzy 0/6 < 50% excludes EQUIVALENT_MATCH. The `.ctors`-registered vtable-pointer sinits likely came from a different codegen path (hand-written `.s` or toolchain emission). If a policy exception is ever granted, a single `asm { }` for the `b .+4` plus the unfolded-store source would close them.
+
 ---
 
 ## Core patterns — the 5 things that fix 90% of gaps
@@ -535,6 +616,26 @@ T* getInstance() {
 ```
 
 **Targets fixed:** `us-80480a58` (`UnkClass_8047CA88::getInstance`).
+
+#### 1g. Paired-single codegen — use nw4r SDK inline ASM helpers, not scalar C++
+
+PS-heavy retail functions (psq_l/ps_muls0/ps_mul/ps_madd/ps_sum0/ps_sub/ps_add) are **not** reproduced by writing scalar `f32` math (MWCC emits lfs/fmuls and never pairs). They ARE reproduced by the nw4r SDK inline functions in `libs/nw4r/include/nw4r/math/math_types.h`, whose Metrowerks `ASM()` blocks emit exactly the retail sequences:
+
+| Retail pattern | Use | Emits |
+|---|---|---|
+| `psq_l W0 + ps_muls0 + psq_st` ×2 (scale XY + Z) | `VEC3Scale(&v, pIn, s)` | XY pair scale + Z single scale |
+| `psq_l pair + ps_mul + ps_madd + ps_sum0` (dot) | `VEC3Dot(pA, pB)` | YZ pair + X single, dot |
+| `psq_l pair + ps_sub + psq_st` ×2 | `VEC3Sub(&v, pA, pB)` | XY diff + Z diff |
+| `psq_l pair + ps_add + psq_st` ×2 | `VEC3Add(&v, pA, pB)` | XY sum + Z sum |
+
+Key observations from `UnkClass_8047CA88::func_8047CC4C/CAA8` (us-80480c1c / us-80480a78, peaked 83.6% / 92.8%):
+- `VEC3Dot(v, v)` (same pointer twice) is **CSE'd by MWCC** to 5 instructions (x-single `psq_l W1` + (y,z) pair), producing the classic `2x²+y²+z²` sum — retail matches this artifact exactly, so do **not** "fix" the double term.
+- MWCC **reschedules instructions inside inline-ASM blocks** (e.g. hoists the Z `psq_l` before the XY `psq_st`) — the asm is not emitted verbatim, so don't panic when the block order differs from the header text.
+- MWCC **reuses one stack slot** for a reused local `VEC3 tmp` across VEC3Sub/Scale/Add calls (matches retail's single sp+8 slot); separate locals balloon the frame (+0x20+).
+- Scalar `x*x + y*y + z*z` reads of struct fields stay scalar; only the SDK asm helpers force PS.
+- Residuals after this are pure Chaitin color/scheduling artifacts (FPR colors for constants, GPR target regs) — documented as unresponsive to source reshaping elsewhere in this file.
+
+**Fv-with-hidden-params:** retail symbols ending `Fv` may still take args in r4/r5/r6/f1 (e.g. `func_8047CAA8__17UnkClass_8047CA88Fv(self, param)`). Implement with `extern "C"` + the exact mangled name and explicit params — the `bl` reloc name stays correct and MWCC passes the extra args normally.
 
 ### 2. `extern "C"` on `bl` targets with retail mangling
 
@@ -680,6 +781,63 @@ void SFTMR_AddTsum(SFTMR_Tsum *tsum, void *unused, s64 delta) {
 ```
 
 Notes: the middle `void *unused` param is real (callers pass garbage in r4, delta arrives in r5:r6); the `?:` ternaries produce the phi-merge copies (`or r10, r6, r6` style) and the two-branch max layout; `if`-statements instead of ternaries move the min stores 4 instructions later (structural mismatch).
+
+#### 7f. `!x` vs `x == 0` in if-return guards — logical-not normalization (CRI Sofdec mwply)
+
+MWCC normalizes a bare logical-not condition (`if (!x) return B;`) into the
+positive-condition layout, so `if (!x) return B; return A;` compiles the SAME
+as `if (x) return A; return B;` (then-block inline, `beq`/`bne` toward the
+out-of-line return). Retail often keeps the OTHER layout (false-path inline,
+positive body at the jump target). Write the guard as an explicit comparison
+(`== 0` / `!= 1`) to preserve retail's branch direction:
+
+```c
+// Retail: bne → body; li r3,0 inline; b end; body at target
+if (MWSFD_IsFsBdr(h) == 0)      // ✅ matches (explicit compare)
+    return 0;
+return !!MWSFSVR_IsSvrBdrHndl(h);
+
+// Compiles to the mirrored layout (beq → li, body inline) — 8 mismatches
+if (!MWSFD_IsFsBdr(h))
+    return 0;
+return !!MWSFSVR_IsSvrBdrHndl(h);
+```
+
+Same rule for `if/else` value selection: `if (cond != 1) v = 0; else v = load;`
+emits `beq → load` with `li v,0` inline (retail), while `if (cond == 1)
+v = load; else v = 0;` emits the mirror. Tested on `MWSFD_IsEndPrepareStop`
+(us-803a545c) and `MWSFD_IsColAdjFrame` (us-803a16d4), both 100% FULL_MATCH.
+
+#### 7g. u32 field compared with `== 1` — cast to s32 for `cmpwi`
+
+Comparing a `u32` field against a small literal emits `cmplwi` (unsigned);
+retail frequently uses `cmpwi` (signed). Cast the loaded value: `(s32)*(u32*)p == 1`.
+Applied in mwPlyGetSfdHn / mwPlyGetStat / criware_803A2258 /
+MWSFSET_ExecSetCyclicFrameOutput (all FULL_MATCH).
+
+#### 7h. Calling a same-TU stub with the real signature via cast
+
+When a callee is another agent's in-progress stub (`void mwPlyGetRareStat() {}`)
+and its true signature returns a value, declare the old-style stub and call
+through a cast so the TU compiles today and keeps matching after the stub
+lands: `int stat = ((int (*)(void *))mwPlyGetRareStat)(h);` — emits a plain
+`bl mwPlyGetRareStat` with the correct argument registers.
+
+#### 7i. MWCC int→double magic pool (`0x43300000`) reloc drift — unfixable in high-level C
+
+`(double)(s32)x` requires the `0x4330000000000000` magic; MWCC pools it as a
+TU-local `@N` label while retail references the shared data blob
+(`lbl_eu_8051B198`). The `lis`/`lfd` pair then differ only by reloc symbol
+name (~98.7% fuzzy; pure reg-swap on the base register). No high-level source
+fix exists (manual bit construction needs its own constants); acceptance
+requires the EQUIVALENT_MATCH path (SMT + certified callee chain) or objdiff
+`functionRelocDiffs=data_value`. See `MWSFPLY_SetFlowLimit` (us-803a523c).
+
+### 7j. CSchedule runtime TU — PS vector subtraction and same-TU inlining
+
+For `monolib/src/core/code_804E36DC.cpp`, `ml::CVec3` subtraction through its high-level `operator-`/`CVec3::sub` path reproduces retail's paired-single `psq_l`/`ps_sub` sequence and the temporary-to-result copy before `PSVECMag`. Scalar component arithmetic does not. The retail `func_804E3B6C` distance helper also uses a same-TU `func_804E424C` call; marking that helper `DECOMP_DONT_INLINE` keeps the TU within its exact `0xC58` split budget. The residual distance-function mismatch is external virtual/callee register scheduling, not a semantic difference.
+
+`func_804E3CCC`/`func_804E39E8` clear a `u16` flag with the retail wrap mask `rlwinm ...,17,15`; ordinary `u16 &= ~0x8000` emits the semantically equivalent `rlwinm ...,17,31`. Use the approved `DECOMP_PPC_RLWINM` intrinsic only when exact opcode selection is required, and log the policy exception.
 
 ### 8. Dead return half / Chaitin rotation — `EQUIVALENT_MATCH` workflow
 
@@ -1778,6 +1936,29 @@ Object(NonMatching, "monolib/src/core/monolib_eu_804F9E98.cpp",
 3×`stw`/`lwz`; `-O4,s`+`-func_align 4` generated 72 bytes with `stmw`/`lmw`,
 matching retail exactly.
 
+### 17. Defeating s16-index strength reduction for FULL_MATCH
+
+`CSchedule::func_804E3614` (0xC8): retail recomputes `&mHandles[count]` per
+iteration (`extsh` → `slwi` → `add r4, self, r0` → `sth 0x98(r4)`), but plain
+`self->mHandles[count] = handle;` with an `int`/`s16` counter makes MWCC
+strength-reduce to a running pointer (`addi ptr, ptr, 2`) and allocate a 4th
+callee-saved register (r28) — shifting the whole prologue.
+
+Fix: write the store as explicit pointer arithmetic with the s16 sign
+-extension and the array offset LAST, so MWCC keeps the base+displacement
+form and the `extsh`-based address recomputation:
+
+```cpp
+*(s16*)((u8*)self + (u32)(s16)count * 2 + 0x98) = handle;
+```
+
+- `(u32)(s16)count` forces `extsh`; `* 2` forces `slwi` (rlwinm); the
+  trailing `+ 0x98` becomes the `sth` displacement instead of an `sthx`
+  register-indexed store (putting `0x98` first yields `sthx`).
+- Increment order matters: `count++;` must precede `entry++;` in source to
+  match retail scheduling (MWCC emits them in source order here).
+- Result: 41/50 mismatches → 0/50, FULL_MATCH, byte-identical.
+
 ### 16b. Forcing retail's per-iteration global reload in shift loops (opaque byte-offset arithmetic)
 
 `UnkClass_8045F564::~UnkClass_8045F564` (`__dt__17UnkClass_8045F564Fv`, 0x100):
@@ -1967,3 +2148,42 @@ reached **91.2% EQUIVALENT_MATCH** (remaining gap: prologue scheduling of a
 late-used `addi` that the compiler won't hoist).
 
 **Files:** `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_buf.c`
+
+## Jump-table SMT equivalence: MWCC `lis; slwi; addi; lwzx` shape + linked retry (sfh_ver1)
+
+**Symptoms:** A clean `switch` (e.g. `criware_803D2C98`, pic-rate code → rate×1000
+jump table) compiles byte-identical (hexdiff 0 mismatches, fuzzy 99.7%) yet
+`cycle` stuck at `CODE_MATCH`: objdiff 99.7%, SMT `not_equivalent` with
+`exit.target: 0x0000bc00 != 0x00000000`.
+
+**Root cause chain (three independent gaps):**
+1. `tools/ppc_equivalence/jump_table.py` `_match_jump_table_tail` only accepted
+   the self-shift `slwi` **immediately before** `lwzx` (`addi; slwi; lwzx`).
+   MWCC also emits `lis; slwi; addi; lwzx` (shift between the base `lis` and the
+   low-half `addi`) — recognised only as `partial` → no auto jump-table context.
+   Fix: accept a left-shift up to two slots before the load when only
+   `addi`/`addis` sits between it and the load; also corrected
+   `_parse_left_shift` to return `(source, dest, scale)` (it returned
+   `(dest, source, …)`; harmless for the old self-shift check).
+   Corpus probe now tracks `resolved_base` separately from `auto_context_ok`
+   (register-relative tables like `addi rX, r25, off` can never hydrate).
+2. `tools/ppc_equivalence/engine.py` jump-table obligation block **overwrote**
+   `early.proof_features` with `["readonly-image","indirect-target-closure"]`,
+   dropping an already-appended `memory-bus` entry when a hardware profile is
+   configured → feature gate demoted EQUIVALENT to INCONCLUSIVE_UNSUPPORTED
+   ("obligation block 'memory_bus' present without a matching proof_features
+   entry"). Fix: append instead of assign (matches the virtual-call block).
+3. `tools/coop/lib/equivalence_check.py` `prove_unit_symbol(linked=True)` only
+   retried with DOL/ELF linked bytes on **raised exceptions**. An unlinked
+   proof that *completes* NOT_EQUIVALENT (TU-local reloc names `@N` vs retail
+   `jumptable_eu_*` leave object-relative exit targets incomparable) never
+   reached the linked retry. Fix: also retry when status is NOT_EQUIVALENT and
+   either side carries unresolved relocations.
+
+**Result:** `us-803d5358 criware_803D2C98` accepted `EQUIVALENT_MATCH` (fuzzy
+99.7%, size PASS). Requires `cycle --linked` (and `ninja build/us/main.elf`).
+Engine hash re-blessed in `coop.json` (`allowed_engine_sha256` =
+`317dcc5b…`); full ppc_equivalence suite (1908 tests) + coop tests green apart
+from pre-existing failures. **Files:** `tools/ppc_equivalence/jump_table.py`,
+`engine.py`, `jump_table_corpus_probe.py`, `tools/coop/lib/equivalence_check.py`,
+`libs/CriWare/src/sofdec/sfdcore/sfh/sfh_ver1.c`.

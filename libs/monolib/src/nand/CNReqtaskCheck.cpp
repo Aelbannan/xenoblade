@@ -67,8 +67,9 @@ ret0:
 
 // us-804df738: sinit_804DB420
 // Static initializer: sets vtable pointer for CNReqtaskCheck.
-// Returning p keeps &lbl_eu_80665A00 live in r3, forcing the store through
-// the register (li r3, dest@sda21 / stw r4, 0(r3)) instead of sda21 folding.
+// Best-effort form: retail emits li r3,dest@sda21; b .+4; lis/addi src;
+// stw r4,0(r3) (24 bytes) which MWCC cannot reproduce (always folds the
+// store to stw rX,dest@sda21(r0)); returning p gives the closest 20-byte form.
 void** sinit_804DB420() {
     void** p = &lbl_eu_80665A00;
     void* v = (void*)lbl_eu_8056FDE8;

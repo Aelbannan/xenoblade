@@ -9,44 +9,38 @@ extern u32 lbl_eu_80606E38[];   /* SFD work area */
 
 /* SFTMR_GetTmr: get current timer value as 64-bit */
 u64 SFTMR_GetTmr(void *sfd) {
-    u64 result;
-
-    if (!UTY_IsTmrVoid(0)) {
+    if (UTY_IsTmrVoid((s32)sfd) == 0) {
         /* use UTY timer directly */
         u64 unit = UTY_GetTmrUnit();
         lbl_eu_80619BC8[0] = (u32)(unit >> 32);
         lbl_eu_80619BC8[1] = (u32)(unit);
-        result = UTY_GetTmr();
-        return result;
+        return UTY_GetTmr();
     }
 
     if (sfd != NULL) {
         u32 *p = (u32 *)sfd;
-        if (p[0x54/4] != 0) {
+        if (p[0x54/4] != 0 && p[0x107C/4] != 0) {
             void (*gettime)(u32, u32 *, u32 *) = (void (*)(u32, u32 *, u32 *))p[0x107C/4];
-            if (gettime != NULL) {
-                u32 hi, lo;
-                u32 arg = p[0x1090/4];
-                gettime(arg, &lo, &hi);
-                lbl_eu_80619BC8[0] = hi;
-                lbl_eu_80619BC8[1] = lo;
-                result = ((u64)hi << 32) | lo;
-                return result;
-            }
+            u32 v1, v2;
+            u32 arg = p[0x1090/4];
+            gettime(arg, &v1, &v2);
+            lbl_eu_80619BC8[1] = v2;
+            lbl_eu_80619BC8[0] = (u32)((s32)v2 >> 31);
+            return (u64)(s32)v1;
         }
     }
 
     /* fallback: use SFD work area frame timing */
     {
+        u32 *out = lbl_eu_80619BC8;
         u32 *sfd_work = lbl_eu_80606E38;
-        u32 rate = sfd_work[0x19C/4];       /* frame rate */
-        u32 frame_num_hi = sfd_work[0x1A8/4]; /* frame number hi */
-        u32 frame_num_lo = sfd_work[0x1AC/4]; /* frame number lo */
-        u32 product_lo = rate * frame_num_lo;
-        lbl_eu_80619BC8[0] = frame_num_hi;
-        lbl_eu_80619BC8[1] = frame_num_lo;
-        result = ((u64)frame_num_hi << 32) | frame_num_lo;
-        return result;
+        u32 rate = sfd_work[0x19C/4];
+        u32 frame_num_lo = sfd_work[0x1AC/4];
+        u32 frame_num_hi = sfd_work[0x1A8/4];
+        u32 prod = rate * frame_num_lo;
+        out[1] = frame_num_hi;
+        out[0] = (u32)((s32)frame_num_hi >> 31);
+        return (u64)(s32)prod;
     }
 }
 

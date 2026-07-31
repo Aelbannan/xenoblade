@@ -25,7 +25,21 @@ void* ADXSTM_Create(void* a, int b) { return NULL; }
 
 void ADXSTM_Destroy() {}
 
-void ADXSTM_BindFileNw() {}
+u32 ADXSTM_BindFileNw(void* self, u32 p1, u32 p2, u32 p3, u32 hi, u32 lo) {
+    ADXCRS_Enter();
+    ADXCRS_Lock();
+    s64 off = ((((s64)hi << 32) | (s64)lo) + 0x7FF) / 2048;
+    *(u32*)((u8*)self + 0x0C) = p3;
+    *(u32*)((u8*)self + 0x14) = lo;
+    *(u32*)((u8*)self + 0x10) = hi;
+    *(u32*)((u8*)self + 0x18) = (u32)(off >> 32);
+    *(u32*)((u8*)self + 0x54) = p1;
+    *(u32*)((u8*)self + 0x58) = p2;
+    *(u8*)((u8*)self + 0x49) = 1;
+    ADXCRS_Unlock();
+    ADXCRS_Leave();
+    return (u32)off;
+}
 
 void ADXSTM_ReleaseFileNw() {}
 

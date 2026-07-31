@@ -596,6 +596,19 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
     if not isinstance(helpers, list) or not all(isinstance(item, str) for item in helpers):
         errors.append("abi_helper_calls is not a string array")
         helpers = []
+
+    # Fixed Metrowerks EABI runtime intrinsics (documented runtime-library
+    # functions whose bodies the retail build inlined). Seeded unconditionally
+    # so any target may call them; per-target `abi_helper_calls` is not needed.
+    fixed_runtime_contracts: dict[str, CalleeContract] = {
+        "__mftb": CalleeContract(
+            frozenset({"time_base"}),
+            frozenset({"r3", "r4"}),
+            "fixed-runtime:__mftb",
+        ),
+    }
+    for _name, _contract in fixed_runtime_contracts.items():
+        contracts.setdefault(_name, _contract)
     helper_pattern = re.compile(r"^_(?:save|rest)(?:gpr|fpr)_\d+$")
     for helper in helpers:
         if helper_pattern.fullmatch(helper) is None:

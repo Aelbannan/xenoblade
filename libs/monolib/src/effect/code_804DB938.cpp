@@ -62,6 +62,8 @@ static inline void CERotTrig(Mtx m, f32 rad, char axis) {
 // Cardinal axis rotation builders.
 // ---------------------------------------------------------------------------
 
+extern "C" {
+
 void func_804DD388(Mtx mtx, f32 rad) {
     CERotTrig(mtx, rad, 'x');
 }
@@ -307,3 +309,5 @@ void func_804DD8C8(ml::CVec4* out, const ml::CVec4* a, const ml::CVec4* b,
                          reinterpret_cast<const nw4r::math::VEC3*>(b), t);
     out->w = a->w + (b->w - a->w) * t;
 }
+
+} // extern "C"

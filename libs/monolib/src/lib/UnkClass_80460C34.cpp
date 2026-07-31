@@ -457,7 +457,7 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
             case 2:
                 state->mode = TABLE;
                 break;
-            default:
+            case 3:
                 strm->msg = (char*)(message_base + 0x4c);
                 state->mode = BAD;
                 break;
@@ -581,11 +581,6 @@ extern "C" int func_80460F58__17UnkClass_80460C34Fv(
                 }
             }
             if (state->mode == BAD) break;
-            if (state->lens[state->nlen + state->ndist - 1] == 0) {
-                strm->msg = (char*)(message_base + 0xd3);
-                state->mode = BAD;
-                break;
-            }
             state->next = state->codes;
             state->lencode = state->next;
             state->lenbits = 9;

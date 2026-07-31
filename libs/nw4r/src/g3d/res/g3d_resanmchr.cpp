@@ -2,6 +2,12 @@
 
 #include <nw4r/g3d.h>
 
+extern "C" const float lbl_eu_80669AE0;
+extern "C" const float lbl_eu_80669AE4;
+extern "C" const float lbl_eu_80669B00;
+extern "C" const float lbl_eu_80669B04;
+extern "C" const float lbl_eu_80669B08;
+
 namespace nw4r {
 namespace g3d {
 namespace {
@@ -830,9 +836,9 @@ void ChrAnmResult::GetScale(math::VEC3* pScale) const {
 
 bool ChrAnmResult::GetRotateDeg(math::VEC3* pRotate) const {
     if (flags & FLAG_ROT_ZERO) {
-        pRotate->x = 0.0f;
-        pRotate->y = 0.0f;
-        pRotate->z = 0.0f;
+        pRotate->x = lbl_eu_80669AE0;
+        pRotate->y = lbl_eu_80669AE0;
+        pRotate->z = lbl_eu_80669AE0;
         return true;
     }
 
@@ -843,17 +849,21 @@ bool ChrAnmResult::GetRotateDeg(math::VEC3* pRotate) const {
         return true;
     }
 
-    f32 ySquared = -(rt._20 * rt._20 - 1.0f);
-    f32 y = ySquared <= 0.0f ? 0.0f : ySquared * math::FrSqrt(ySquared);
+    f32 ySquared = -(rt._20 * rt._20 - lbl_eu_80669AE4);
+    f32 y = ySquared <= lbl_eu_80669AE0
+                ? lbl_eu_80669AE0
+                : ySquared * math::FrSqrt(ySquared);
 
-    if (y == 0.0f) {
-        pRotate->x = math::Atan2Deg(rt._02 + rt._11, rt._12 + rt._01);
-        pRotate->y = math::FSelect(rt._20, -90, 90);
-        pRotate->z = math::Atan2Deg(rt._02 + rt._11, rt._12 - rt._01);
+    if (lbl_eu_80669AE0 == y) {
+        pRotate->x = math::Atan2FIdx(rt._02 + rt._11, rt._12 + rt._01) *
+                     lbl_eu_80669B00;
+        pRotate->y = math::FSelect(rt._20, lbl_eu_80669B08, lbl_eu_80669B04);
+        pRotate->z = math::Atan2FIdx(rt._02 + rt._11, rt._12 - rt._01) *
+                     lbl_eu_80669B00;
     } else {
-        pRotate->x = math::Atan2Deg(rt._21, rt._22);
-        pRotate->y = math::Atan2Deg(-rt._20, y);
-        pRotate->z = math::Atan2Deg(rt._10, rt._00);
+        pRotate->x = math::Atan2FIdx(rt._21, rt._22) * lbl_eu_80669B00;
+        pRotate->y = math::Atan2FIdx(-rt._20, y) * lbl_eu_80669B00;
+        pRotate->z = math::Atan2FIdx(rt._10, rt._00) * lbl_eu_80669B00;
     }
 
     return false;

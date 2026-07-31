@@ -4,13 +4,20 @@ extern int SFD_Start(void *);
 extern int SFD_TermSupply(void *);
 extern int SFD_Stop(void *);
 extern int SFD_Pause(void *, int);
-extern int SFD_SetFlowLimit(void *, int);
 extern int SFD_RecordFname(void *, const char *);
 extern int MWSFSVM_Error(const char *, ...);
 extern int MWSFLIB_SetErrCode(int);
 extern int mw_sfd_start_ex(void *, void *, void *);
+extern void MWSFD_SetFlowLimit(void *, u32);
+extern int MWSTM_GetStat(void *);
+extern size_t strlen(const char *);
+extern char *strncpy(char *, const char *, size_t);
+extern char *strcpy(char *, const char *);
+extern int MWSFD_IsFsBdr(void *);
+extern int MWSFSVR_IsSvrBdrHndl(void *);
 
 extern char lbl_eu_8051B1A0[];
+extern double lbl_eu_8051B190;
 
 /* Get SFD handle from player handle (+0x58) */
 static void *sfd(void *h) { return *(void **)((u8 *)h + 0x58); }
@@ -56,17 +63,24 @@ int mwPlyPause(void *h, int pause) {
     return SFD_Pause(sfd(h), pause);
 }
 
-int MWSFPLY_SetFlowLimit(void *h, int limit) {
-    return SFD_SetFlowLimit(sfd(h), limit);
+int MWSFPLY_SetFlowLimit(void *h) {
+    MWSFD_SetFlowLimit(h,
+        (u32)(s32)(lbl_eu_8051B190 * (double)(s32)*(s32 *)((u8 *)h + 0x50C)));
 }
 
 int mwPlyChkSupply(void *h) {
-    /* Check supply state */
-    return 0;
+    void *stm = *(void **)((u8 *)h + 0x5C);
+    if (stm && MWSTM_GetStat(stm) == 3 && SFD_TermSupply(*(void **)((u8 *)h + 0x58)))
+        MWSFSVM_Error(lbl_eu_8051B1A0 + 0x62);
 }
 
 int MWSFPLY_RecordFname(void *h, const char *fname) {
-    return SFD_RecordFname(sfd(h), fname);
+    if ((s32)strlen(fname) > *(s32 *)((u8 *)h + 0x4EC)) {
+        MWSFSVM_Error(lbl_eu_8051B1A0 + 0x185);
+        strncpy(*(char **)((u8 *)h + 0x4E8), fname, *(u32 *)((u8 *)h + 0x4EC));
+    } else {
+        strcpy(*(char **)((u8 *)h + 0x4E8), fname);
+    }
 }
 
 int fn_803A537C(void *a, void *b) {
@@ -74,12 +88,8 @@ int fn_803A537C(void *a, void *b) {
     return 0;
 }
 
-int MWSFD_IsFsBdr(void*);
-int MWSFSVR_IsSvrBdrHndl(void*);
-
-int MWSFD_IsEndPrepareStop(void* h) {
-    if (!MWSFD_IsFsBdr(h)) {
+int MWSFD_IsEndPrepareStop(void *h) {
+    if (MWSFD_IsFsBdr(h) == 0)
         return 0;
-    }
     return !!MWSFSVR_IsSvrBdrHndl(h);
 }

@@ -148,7 +148,7 @@ u16 *mpvvlc_InitCbpSub1(u16 *tbl) {
 u16 *mpvvlc_InitCbpSub2(u16 *tbl) {
     s16 *p = (s16 *)tbl;
     s16 *q = (s16 *)(tbl + 0x50);
-    int i, j;
+    int i;
 
     for (i = 0; i < 4; i++) *p++ = -0x5df9;
     for (i = 0; i < 4; i++) *p++ = -0x6df9;
@@ -312,7 +312,7 @@ void mpvvlc_InitIntRunLevel(void) {
 void mpvvlc_InitMbaiIpic(void) {
     s16 *p = (s16 *)lbl_eu_80603728;
     s16 *q = (s16 *)lbl_eu_80603928;
-    int v, i, j, k;
+    int v, i, j;
 
     for (i = 0; i < 16; i++)
         *p++ = 0x0240;
@@ -326,12 +326,14 @@ void mpvvlc_InitMbaiIpic(void) {
         *p++ = 0x0240;
 
     v = 0x210;
-    for (i = 0; i < 2; i++)
+    i = 2;
+    while (i--) {
         for (j = 0; j < 6; j++) {
             *p++ = v | 0x440d;
             *p++ = v | 0x040c;
             v -= 0x10;
         }
+    }
     for (i = 0; i < 6; i++) {
         *p++ = v | 0x440c;
         *p++ = v | 0x440c;
@@ -339,7 +341,8 @@ void mpvvlc_InitMbaiIpic(void) {
         *p++ = v | 0x040b;
         v -= 0x10;
     }
-    for (i = 0; i < 2; i++)
+    i = 2;
+    while (i--) {
         for (j = 0; j < 3; j++) {
             *p++ = v | 0x440a;
             *p++ = v | 0x440a;
@@ -359,7 +362,9 @@ void mpvvlc_InitMbaiIpic(void) {
             *p++ = v | 0x0409;
             v -= 0x10;
         }
-    for (i = 0; i < 2; i++) {
+    }
+    i = 2;
+    while (i--) {
         *p++ = v | 0x4409;
         *p++ = v | 0x4409;
         *p++ = v | 0x4409;
@@ -427,8 +432,7 @@ void mpvvlc_InitMbaiIpic(void) {
 void mpvvlc_InitMbaiPpic(void) {
     s16 *p = (s16 *)lbl_eu_806039A8;
     s16 *q = (s16 *)lbl_eu_80603AA8;
-    int v;
-    int i, j;
+    int v, i, j;
 
     for (i = 0; i < 8; i++)
         *p++ = 0x0240;
@@ -561,22 +565,6 @@ void mpvvlc_InitMbaiBpic(void) {
             *p++ = v | 0xb00a;
             *p++ = v | 0xb80a;
             *p++ = v | 0xb80a;
-            *p++ = v | 0x0008;
-            *p++ = v | 0x0008;
-            *p++ = v | 0x900b;
-            *p++ = v | 0x980b;
-            *p++ = v | 0xb00a;
-            *p++ = v | 0xb00a;
-            *p++ = v | 0xb80a;
-            *p++ = v | 0xb80a;
-            *p++ = v | 0x0008;
-            *p++ = v | 0x0008;
-            *p++ = v | 0x900b;
-            *p++ = v | 0x980b;
-            *p++ = v | 0xb00a;
-            *p++ = v | 0xb00a;
-            *p++ = v | 0xb80a;
-            *p++ = v | 0xb80a;
             v -= 0x10;
         }
 
@@ -635,6 +623,12 @@ void mpvvlc_InitMbaiBpic(void) {
         *q++ = -0x47fd;
 }
 
+/* Set a motion vector code pair: (n | base) and ((u8)(-n) | base) */
+static void set_mvcode(s16 *p, int n, int base) {
+    *p++ = n | base;
+    *p++ = (u8)(-n) | base;
+}
+
 /* Motion vector code tables */
 void mpvvlc_InitMotion(void) {
     s16 *p = (s16 *)lbl_eu_80603510;
@@ -643,43 +637,45 @@ void mpvvlc_InitMotion(void) {
 
     for (i = 0; i < 24; i++)
         *p++ = 0x7f;
-    for (n = 0x10; n >= 0x0b; n--) {
-        *p++ = n | 0x0b00;
-        *p++ = (s16)((u8)(-n) | 0x0b00);
+    n = 0x10;
+    while (n >= 0x0b) {
+        set_mvcode(p, n, 0x0b00);
+        p += 2;
+        n--;
     }
     for (n = 0x0a; n >= 0x08; n--) {
         *p++ = n | 0x0a00;
         *p++ = n | 0x0a00;
-        *p++ = (s16)((u8)(-n) | 0x0a00);
-        *p++ = (s16)((u8)(-n) | 0x0a00);
+        *p++ = (u8)(-n) | 0x0a00;
+        *p++ = (u8)(-n) | 0x0a00;
     }
     for (n = 0x07; n >= 0x05; n--) {
         for (i = 0; i < 8; i++)
             *p++ = n | 0x0800;
         for (i = 0; i < 8; i++)
-            *p++ = (s16)((u8)(-n) | 0x0800);
+            *p++ = (u8)(-n) | 0x0800;
     }
     for (i = 0; i < 8; i++)
         *p++ = 0x04 | 0x0700;
     for (i = 0; i < 8; i++)
-        *p++ = (s16)((u8)(-0x04) | 0x0700);
+        *p++ = (u8)(-0x04) | 0x0700;
     for (i = 0; i < 8; i++)
         *p++ = 0x02 | 0x0400;
     for (i = 0; i < 8; i++)
-        *p++ = (s16)((u8)(-0x02) | 0x0400);
+        *p++ = (u8)(-0x02) | 0x0400;
 
     *q++ = 0x7f;
     *q++ = 0x7f;
     *q++ = 0x03 | 0x0500;
-    *q++ = (s16)((u8)(-0x03) | 0x0500);
+    *q++ = (u8)(-0x03) | 0x0500;
     *q++ = 0x02 | 0x0400;
     *q++ = 0x02 | 0x0400;
-    *q++ = (s16)((u8)(-0x02) | 0x0400);
-    *q++ = (s16)((u8)(-0x02) | 0x0400);
+    *q++ = (u8)(-0x02) | 0x0400;
+    *q++ = (u8)(-0x02) | 0x0400;
     for (i = 0; i < 4; i++)
         *q++ = 0x01 | 0x0300;
     for (i = 0; i < 4; i++)
-        *q++ = (s16)((u8)(-0x01) | 0x0300);
+        *q++ = (u8)(-0x01) | 0x0300;
     for (i = 0; i < 16; i++)
         *q++ = 0x00 | 0x0100;
 }

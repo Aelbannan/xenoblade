@@ -720,7 +720,13 @@ typedef int BOOL;
 
 extern u32 lbl_eu_80619B20[];
 
-void SFMPVF_InitPool() {}
+void* memset(void* dst, int val, size_t n);
+void SFMPVF_InitPool(void) {
+    u8* p = (u8*)lbl_eu_80619B20;
+    memset(&lbl_eu_80619B20[0], 0, 0x24);
+    memset(p + 0x28, 0, 8);
+    memset(p + 0x30, 0, 0x40);
+}
 
 void SFD_SetMpvParaTbl(u32* src, u32* strides, u32* tbl) {
     u32* g = lbl_eu_80619B20;

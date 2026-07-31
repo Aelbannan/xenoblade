@@ -4610,6 +4610,19 @@ def _apply_call_summary(
     if not isinstance(ops, SymbolicOps):
         raise ExecutionInconclusive("matched-callee summaries require symbolic execution")
     helper_prefix = "fixed-eabi-runtime-helper:"
+    fixed_runtime_prefix = "fixed-runtime:"
+    if contract.source.startswith(fixed_runtime_prefix):
+        name = contract.source[len(fixed_runtime_prefix):]
+        if name == "__mftb":
+            # Metrowerks EABI runtime `__mftb`: returns the 64-bit time base
+            # in r3:r4 (hi in r3, lo in r4), preserving everything else. The
+            # retail Sofdec build inlined this body (mftb/TBU, mftb/TBL,
+            # re-read TBU, compare, retry), so a call with this summary is
+            # semantically identical to the inline sequence.
+            result = state.with_gpr(3, ops.fp_high_word(state.time_base))
+            result = result.with_gpr(4, ops.fp_low_word(state.time_base))
+            return result
+        raise ExecutionInconclusive(f"invalid fixed runtime helper {name!r}")
     if contract.source.startswith(helper_prefix):
         name = contract.source[len(helper_prefix):]
         parts = name.split("_")

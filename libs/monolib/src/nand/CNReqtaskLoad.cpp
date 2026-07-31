@@ -5,7 +5,7 @@
 // Global symbols
 extern "C" {
     void* lbl_eu_806659E8;
-    extern void* lbl_eu_8056FD88;
+    extern char lbl_eu_8056FD88[];  // vtable data - array type prevents sda21
     u8 lbl_eu_806659D0;
     s32 lbl_eu_806659D4;
 
@@ -24,18 +24,23 @@ extern "C" {
 //   +0x18: u8  field_18
 //   +0x19: u8  state
 
+struct CNReqtaskLoadData {
+    char path[0x10];  // +0x00
+    u32 field_10;     // +0x10
+    u32 field_14;     // +0x14
+    u8 field_18;      // +0x18
+    u8 state;         // +0x19
+};
+
 // us-804df22c: func_804DAF70
 // Initializes load task data and returns vtable pointer
 void** func_804DAF70(void* data, const char* path, u32 arg2, u32 arg3, u8 arg4) {
-    void* d = data;
-    u32 a2 = arg2;
-    u32 a3 = arg3;
-    u8 a4 = arg4;
-    strcpy((char*)d, path);
-    ((u32*)d)[0x10 / 4] = a2;
-    ((u32*)d)[0x14 / 4] = a3;
-    ((u8*)d)[0x18] = a4;
-    ((u8*)d)[0x19] = 0;
+    CNReqtaskLoadData* d = (CNReqtaskLoadData*)data;
+    strcpy(d->path, path);
+    d->field_10 = arg2;
+    d->field_14 = arg3;
+    d->field_18 = arg4;
+    d->state = 0;
     return &lbl_eu_806659E8;
 }
 
@@ -93,9 +98,11 @@ ret0:
 }
 
 // us-804df3a0: sinit_804DB0D8
-// Static initializer: sets vtable pointer for CNReqtaskLoad
-void sinit_804DB0D8() {
-    void* val = (void*)&lbl_eu_8056FD88;
-    void** dest = &lbl_eu_806659E8;
-    *dest = val;
+// Static initializer: sets vtable pointer for CNReqtaskLoad.
+// Returning p keeps &lbl_eu_806659E8 live in r3 (best-effort 20-byte form).
+void** sinit_804DB0D8() {
+    void** p = &lbl_eu_806659E8;
+    void* v = (void*)lbl_eu_8056FD88;
+    *p = v;
+    return p;
 }

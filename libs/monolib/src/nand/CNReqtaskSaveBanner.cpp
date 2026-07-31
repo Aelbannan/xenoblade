@@ -6,7 +6,7 @@
 // Global symbols
 extern "C" {
     void* lbl_eu_80665A90;
-    extern void* lbl_eu_80570358;
+    extern char lbl_eu_80570358[];  // vtable data - array type prevents sda21
     u8 lbl_eu_806659D0;
     s32 lbl_eu_806659D4;
     u8 lbl_eu_80665A94;
@@ -66,32 +66,55 @@ void func_804F5080(void* data, void* dealloc) {
     func_804DA4CC(data, dealloc);
 }
 
+// SaveBanner task data layout:
+//   +0x00: void* f0   (points to object with unk324/unk325 flags)
+//   +0x04: u8   state
+//   +0x08: u32  f8
+//   +0x0C: u8   fC
+struct CNReqtaskSaveBannerData {
+    void* f0;
+    u8 state;
+    u8 pad5[3];
+    u32 f8;
+    u8 fC;
+};
+
+struct CNReqtaskSaveBannerTarget {
+    u8 pad[0x324];
+    u8 unk324;
+    u8 unk325;
+};
+
 // us-804f92f0: func_804F4D90
 s32 func_804F4D90(void* vtable_ptr, void* data) {
-    void* ptr = *(void**)data;
-    if (*(u8*)((u8*)ptr + 0x324) != 0) {
+    CNReqtaskSaveBannerData* d = (CNReqtaskSaveBannerData*)data;
+    CNReqtaskSaveBannerTarget* t = (CNReqtaskSaveBannerTarget*)d->f0;
+    if (t->unk324 != 0) {
         return 0;
     }
     if (lbl_eu_806659D0 != 0) {
         return 0;
     }
 
-    if ((s8)((u8*)data)[0x04] > 0) {
-        if ((s8)((u8*)data)[0x04] == 2) {
-            s32 err = lbl_eu_806659D4;
-            if (err == -12 || err == -15 || err == -5) {
-                ((u8*)data)[0x04] = 5;
-            } else if (err < 0) {
+    if ((s8)d->state > 0) {
+        if ((s8)d->state == 2) {
+            if (lbl_eu_806659D4 == -12) {
+                d->state = 5;
+            } else if (lbl_eu_806659D4 == -15 || lbl_eu_806659D4 == -5) {
+                d->state = 5;
+            } else if (lbl_eu_806659D4 < 0) {
                 return 2;
             }
-        } else if ((s8)((u8*)data)[0x04] == 7) {
-            if (*(u8*)((u8*)ptr + 0x325) != 0) return 2;
         } else {
-            if (lbl_eu_806659D4 < 0) return 2;
+            if ((s8)d->state == 7) {
+                if (t->unk325 != 0) return 2;
+            } else {
+                if (lbl_eu_806659D4 < 0) return 2;
+            }
         }
     }
 
-    switch ((s8)((u8*)data)[0x04]) {
+    switch ((s8)d->state) {
         s32 r;
         void* ctx;
         void* p;
@@ -100,33 +123,33 @@ s32 func_804F4D90(void* vtable_ptr, void* data) {
         u32* bannerPath;
 
         case 0:
-            bannerPath = func_804DA98C(((u8*)data)[0x0C]);
+            bannerPath = func_804DA98C(d->fC);
             if (bannerPath == 0) return 2;
             r = func_804DA91C(bannerPath);
             if (r != 0) return 2;
-            ((u8*)data)[0x04] = 1;
+            d->state = 1;
             break;
 
         case 1:
             r = func_804DA540((void*)lbl_eu_80663CD4, 1);
             if (r != 0) return 2;
-            ((u8*)data)[0x04] = 2;
+            d->state = 2;
             break;
 
         case 2:
-            ctx = (void*)((u8*)data + 8);
+            ctx = &d->f8;
             r = func_804DA82C(ctx);
             if (r != 0) return 2;
-            ((u8*)data)[0x04] = 3;
+            d->state = 3;
             break;
 
         case 3:
             r = func_804DA69C();
             if (r != 0) return 2;
-            if (((u32*)data)[2] != 0) {
-                ((u8*)data)[0x04] = 5;
+            if (d->f8 == 0) {
+                d->state = 5;
             } else {
-                ((u8*)data)[0x04] = 4;
+                d->state = 4;
             }
             break;
 
@@ -137,52 +160,54 @@ s32 func_804F4D90(void* vtable_ptr, void* data) {
             void* pathStr = func_804F50D0(data);
             r = func_804DA70C(pathStr, 0x34, 0);
             if (r != 0 && r != -6) return 2;
-            ((u8*)data)[0x04] = 6;
+            d->state = 6;
             break;
         }
 
         case 6:
-            r = func_804F53DC(*(void**)data);
+            r = func_804F53DC(d->f0);
             if (r == 0) return 2;
-            ((u8*)data)[0x04] = 7;
+            d->state = 7;
             break;
 
         case 7: {
             void* pathStr = func_804F50D0(data);
             r = func_804DA540(pathStr, 2);
             if (r != 0) return 2;
-            ((u8*)data)[0x04] = 8;
+            d->state = 8;
             break;
         }
 
-        case 8:
-            p = *(void**)data;
-            addr = *(u32*)((u8*)p + 4);
-            size = *(u32*)((u8*)p + 8);
+        case 8: {
+            struct BannerBuf { u32 pad0; u32 f4; u32 f8; }* b = (struct BannerBuf*)d->f0;
+            addr = b->f4;
+            size = b->f8;
             r = func_804DA628(addr, size);
             if (r != 0) return 2;
-            ((u8*)data)[0x04] = 9;
+            d->state = 9;
             break;
+        }
 
         case 9:
             r = func_804DA69C();
             if (r != 0) return 2;
-            ((u8*)data)[0x04] = 0xA;
+            d->state = 0xA;
             break;
 
         case 0xA: {
-            p = *(void**)data;
+            p = d->f0;
             __dt__804F5738(p);
-            bannerPath = func_804DA98C(((u8*)data)[0x0C]);
+            bannerPath = func_804DA98C(d->fC);
             void* pathStr = func_804F50D0(data);
             r = func_804DA7CC(pathStr, bannerPath);
             if (r != 0) return 2;
-            ((u8*)data)[0x04] = 0xB;
+            d->state = 0xB;
             break;
         }
 
         case 0xB:
-            return 1;
+            d->state = 4;
+            break;
 
         default:
             break;
@@ -191,7 +216,9 @@ s32 func_804F4D90(void* vtable_ptr, void* data) {
 }
 
 // us-804f96a8: sinit_804F5140
-void sinit_804F5140() {
-    void** dest = &lbl_eu_80665A90;
-    *dest = (void*)&lbl_eu_80570358;
+void** sinit_804F5140() {
+    void** p = &lbl_eu_80665A90;
+    void* v = (void*)lbl_eu_80570358;
+    *p = v;
+    return p;
 }

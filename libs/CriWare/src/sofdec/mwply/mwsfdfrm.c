@@ -11,7 +11,28 @@ void mwsffrm_SetPicUsrInf() {}
 
 void mwsffrm_SetSudDatInf() {}
 
-void mwPlyCalcYccPlane() {}
+typedef struct {
+    u32 a, b, c;
+    s32 d, e, f;
+} MwSfdYccPlane;
+
+typedef struct {
+    u32 a, b, c;
+    s16 d, e;
+} MwSfdYccPlaneTmp;
+
+extern void SFD_CalcYccPlane(void *, void *, void *, void *);
+
+void mwPlyCalcYccPlane(void *a, void *b, void *c, MwSfdYccPlane *out) {
+    MwSfdYccPlaneTmp tmp;
+    SFD_CalcYccPlane(a, b, c, &tmp);
+    out->a = tmp.c;
+    out->b = tmp.a;
+    out->c = tmp.b;
+    out->d = tmp.e;
+    out->e = tmp.d;
+    out->f = tmp.d;
+}
 
 void mwPlyRelCurFrm() {}
 

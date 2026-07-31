@@ -5,7 +5,7 @@
 // Global symbols
 extern "C" {
     void* lbl_eu_806659F8;
-    extern void* lbl_eu_8056FDC8;
+    extern char lbl_eu_8056FDC8[];  // vtable data - array type prevents sda21
     u8 lbl_eu_806659D0;
     s32 lbl_eu_806659D4;
 
@@ -21,12 +21,18 @@ extern "C" {
 
 // us-804df54c: func_804DB240
 // Initializes remove task data and returns vtable pointer
+struct CNReqtaskRemoveData {
+    char path[13];
+    u8 state;    // +0x0D
+    u8 field_E;  // +0x0E
+};
+
 void** func_804DB240(void* data, const char* path, u8 arg) {
-    void* d = data;
+    CNReqtaskRemoveData* d = (CNReqtaskRemoveData*)data;
     u8 a = arg;
-    strcpy((char*)d, path);
-    ((u8*)d)[0x0E] = a;
-    ((u8*)d)[0x0D] = 0;
+    strcpy(d->path, path);
+    d->field_E = a;
+    d->state = 0;
     return &lbl_eu_806659F8;
 }
 
@@ -65,9 +71,11 @@ ret0:
 }
 
 // us-804df648: sinit_804DB330
-// Static initializer: sets vtable pointer for CNReqtaskRemove
-void sinit_804DB330() {
-    void* val = (void*)&lbl_eu_8056FDC8;
-    void** dest = &lbl_eu_806659F8;
-    *dest = val;
+// Static initializer: sets vtable pointer for CNReqtaskRemove.
+// Returning p keeps &lbl_eu_806659F8 live in r3 (best-effort 20-byte form).
+void** sinit_804DB330() {
+    void** p = &lbl_eu_806659F8;
+    void* v = (void*)lbl_eu_8056FDC8;
+    *p = v;
+    return p;
 }

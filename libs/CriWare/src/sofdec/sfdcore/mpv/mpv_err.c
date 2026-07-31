@@ -3,6 +3,8 @@
 
 #include <harness_catalog.h>
 
+extern u32 lbl_eu_80602A78[];
+
 void MPVERR_Init(void) {}
 
 void MPVERR_InitErrInf(void* self) {
@@ -13,9 +15,27 @@ void MPVERR_InitErrInf(void* self) {
     *(u32*)((u8*)self + 0x10) = 0;
 }
 
-void MPV_SetErrFunc() {}
+int MPVLIB_CheckHn(void* handle);
 
-extern u32 lbl_eu_80602A78[];
+s32 MPV_SetErrFunc(void* self, void* cb, void* arg) {
+    u32* dst;
+    if (self != 0) {
+        if (MPVLIB_CheckHn(self) != 0) {
+            u32 oldcb = lbl_eu_80602A78[0];
+            lbl_eu_80602A78[2] = 0xFF030203;
+            if (oldcb != 0) {
+                ((void (*)(u32))oldcb)(lbl_eu_80602A78[1]);
+            }
+            return 0xFF030203;
+        }
+        dst = (u32*)((u8*)self + 0xbdc);
+    } else {
+        dst = lbl_eu_80602A78;
+    }
+    dst[0] = (u32)cb;
+    dst[1] = (u32)arg;
+    return 0;
+}
 
 s32 MPVERR_SetCode(s32 val, u32 err_code) {
     if (val == 0) {

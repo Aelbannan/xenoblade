@@ -97,14 +97,9 @@ namespace ml{
             return size() == 0;
         }
         
-        void format(const char* format, ...){
-            //Why hardcode the buffer size to 256??
-            char buffer[256];
-            va_list args;
-            va_start(args, format);
-            std::vsnprintf(buffer, sizeof(buffer), format, args);
-            *this = buffer;
-        }
+        // Declared out-of-line: retail emits a standalone
+        // format__Q22ml10FixStr<N>FPCce (resolved via the retail symbol map).
+        void format(const char* format, ...);
 
         //Sets the given string to the first characters of this string, up to the specified length.
         //TODO: This might just be substr, but when the start index is 0?

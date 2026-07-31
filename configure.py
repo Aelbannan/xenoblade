@@ -1377,7 +1377,7 @@ config.libs = [
             Object(NonMatching, "CriWare/src/adx/sj/sj_utl.c"),
             Object(MatchingFor("jp"), "CriWare/src/adx/sj/sj_crs.c"),
             Object(NonMatching, "CriWare/src/adx/sj/sj_err.c"),
-            Object(NonMatching, "CriWare/src/adx/svm/svm.c"),
+            Object(NonMatching, "CriWare/src/adx/svm/svm.c", mw_version = "Wii/1.1"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_dcd3.c"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_bsps.c"),
             Object(NonMatching, "CriWare/src/adx/adxt/adx_bau.c"),

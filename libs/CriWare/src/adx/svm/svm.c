@@ -119,8 +119,12 @@ void SVM_Unlock(void) {
 
 void SVM_CallErr(const char* fmt, ...) {
     va_list ap;
-    va_start(ap, fmt);
+    /* NB: retail schedules the va_start struct build after the memset call
+       (the GPR/FP register spill is hoisted to entry; the va_info struct is
+       sunk to the Vsprintf call site). va_start must therefore come after
+       memset in source to reproduce the retail layout. */
     memset(lbl_eu_805F2710, 0, 0x100);
+    va_start(ap, fmt);
     CRICRW_Vsprintf(lbl_eu_805F2710, (void*)0x100, fmt, ap);
     if (lbl_eu_805F2810.func != NULL) {
         void (*fn)(void*, const void*) = lbl_eu_805F2810.func;
@@ -424,7 +428,12 @@ void SVM_Init(void) {
         memset(&ctrl->field_0x3F0, 0, 8);
         {
             u32* cnt = ctrl->exec_counts;
-            cnt[0] = cnt[1] = cnt[2] = cnt[3] = cnt[4] = cnt[5] = 0;
+            cnt[0] = 0;
+            cnt[1] = 0;
+            cnt[2] = 0;
+            cnt[3] = 0;
+            cnt[4] = 0;
+            cnt[5] = 0;
         }
         ctrl->testandset_fn = NULL;
     }
@@ -443,7 +452,12 @@ void SVM_Finish(void) {
     memset(&ctrl->field_0x3F0, 0, 8);
     {
         u32* cnt = ctrl->exec_counts;
-        cnt[0] = cnt[1] = cnt[2] = cnt[3] = cnt[4] = cnt[5] = 0;
+        cnt[0] = 0;
+        cnt[1] = 0;
+        cnt[2] = 0;
+        cnt[3] = 0;
+        cnt[4] = 0;
+        cnt[5] = 0;
     }
     ctrl->testandset_fn = NULL;
     memset(&ctrl->err_cb, 0, 8);

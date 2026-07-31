@@ -1875,12 +1875,23 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
 
 ## CriWare svm.c — volatile counts + inlined lock/unlock/err bodies (US)
 
-- **`libs/CriWare/src/adx/svm/svm.c`** (`SVM_Lock` 95.9%, `SVM_Unlock` 79 → **97.1%**
-  fuzzy; `SVM_ExecSvrVint` / `SVM_CallErr1` **FULL_MATCH**): the retail file
-  has **no standalone lock/unlock/err-callback helpers** — every caller
-  contains the inlined body, so the source must express them as **macros**
-  (not `static` functions, which MWCC emits standalone, blowing the split
-  budget by ~0x160). Two other retail facts:
+- **`libs/CriWare/src/adx/svm/svm.c`** (`SVM_Init` / `SVM_CallErr` **ACCEPTED**;
+  `SVM_Lock` 95.9%, `SVM_Unlock` 79 → **97.1%** fuzzy; `SVM_ExecSvrVint` /
+  `SVM_CallErr1` **FULL_MATCH**): the retail file has **no standalone
+  lock/unlock/err-callback helpers** — every caller contains the inlined body,
+  so the source must express them as **macros** (not `static` functions, which
+  MWCC emits standalone, blowing the split budget by ~0x160). Other retail
+  facts:
+  0. **The retail criware was compiled with `Wii/1.1`, NOT `GC/3.0a5.2`**
+     (the config default for `criwareLib`). Evidence: the variadic va_info
+     expansion in `SVM_CallErr` stores the struct fields in order
+     `stw @0x68; stw @0x6c; stw @0x70` under Wii/1.x but `stw @0x6c; stw
+     @0x68` under GC/3.0a5.x; every RVL_SDK variadic (e.g. `USB_LOG`, built
+     Wii/1.1) shows the former. Fix: `Object(NonMatching,
+     "CriWare/src/adx/svm/svm.c", mw_version = "Wii/1.1")` in configure.py
+     — whole-unit instruction diffs 362 → 359, `SVM_CallErr` 2 → 0
+     (**FULL_MATCH**), `SVM_Finish` 26 → 25, and all previously accepted
+     FULL_MATCH targets stay byte-identical.
   1. **`volatile` on the count fields** (`init_count`/`lock_count`/`lock_flag`;
      matches the actual CRI source where `svm_init_level` etc. are
      `volatile Sint32`). This is what produces the retail's
@@ -1892,16 +1903,29 @@ header: `wrap@0`, `capacity@4`, `readIdx@8`, `writeIdx@0xC`, `count@0x10`.
      folded onto the ctrl base) while `SVM_CallErr`/`SVM_CallErr1` use the
      **separate global `lbl_eu_805F2810`** (own base). The retail does exactly
      this: `0x120(r31)` in the macro users vs `lis r3,@ha` in CallErr1.
+  4. **Variadic `SVM_CallErr`**: the retail schedules the `__builtin_va_info`
+     struct build (GPR/FPR spill is hoisted to entry) **after** the `memset`
+     call — place `va_start(ap, fmt)` after the `memset` statement in source
+     (semantically valid; matches the retail layout and frame size). Combined
+     with Wii/1.1 this is byte-identical (`SVM_CallErr` FULL_MATCH).
 - **Known unreproducible (do not burn time):** the retail loads callback-pair
   objects via `addi r3, base, off; lwz r3, 4(r3)` and the ExecSvr functions
   materialize `&ctrl->exec_flags[0]` / `&exec_counts[0]` / `&svr_tbl[0]`
   pointers (two-add `p = base + 6`). MWCC 3.0a5.2 `-O4,p` folds all of these
   from every C shape tried (~30 variants: pointer locals, casts, volatile,
   defined-globals, inlined `svm_exec_svr(svtype)`, per-version sweeps
-  1.2.5–3.0a5.2, `-O4,s`, `-ipa`). `EQUIVALENT_MATCH` is also blocked for
-  these (they hold indirect callback calls → `has_indirect_calls` gate in
-  `tools/coop/lib/equivalence_check.py` and the SMT has no matched-callee
-  lemma for the `bctrl`).
+  1.2.5–3.0a5.2, `-O4,s`, `-ipa`); re-verified across the **Wii 1.0/1.0a/1.1/
+  1.3/1.5/1.6/1.7 line** (incl. 2D-array `&svr_tbl[7][0]`, pointer-to-array,
+  volatile counts, pointer-walk loops — all fold or vectorize). `EQUIVALENT_MATCH`
+  is also blocked for these: they hold indirect callback calls (→
+  `has_indirect_calls` gate in `tools/coop/lib/equivalence_check.py`; the SMT
+  reports `call target None has no matched-callee lemma` for the `bctrl`).
+  `SVM_Finish` is additionally blocked on the SMT by the opaque-memset token:
+  FULL_MATCH callees get an opaque-EABI contract (§2.7.5) whose call token
+  includes the memory state; the err_cb memset call site follows the
+  (unreproducibly divergent) count-store region, so tokens diverge →
+  `inconclusive_abstraction` with the `exit.target` LR-restore artifact
+  (see the sjrbf soft-cap note).
 
 ## CriWare tiny setters/getters — r3 clobber vs value-in-r3 (US)
 

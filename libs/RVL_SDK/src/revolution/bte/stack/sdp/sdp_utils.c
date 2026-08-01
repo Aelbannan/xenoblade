@@ -160,7 +160,7 @@ tCONN_CB *sdpu_find_ccb_by_cid (UINT16 cid)
 tCONN_CB *sdpu_allocate_ccb (void)
 {
     tCONN_CB *p_ccb;
-    int xx;
+    UINT8 xx;
 
     for (xx = 0, p_ccb = &sdp_cb.ccb[0]; xx < SDP_MAX_CONNECTIONS; xx++, p_ccb++)
     {
@@ -210,10 +210,10 @@ UINT8 *sdpu_build_attrib_seq (UINT8 *p_out, UINT16 *p_attr, UINT16 num_attrs)
     UINT16   seq_len;
 
     /* First thing is the data element sequence header. */
-    if (p_attr == NULL)
-        seq_len = 5;
-    else
+    if (p_attr != NULL)
         seq_len = num_attrs * 3;
+    else
+        seq_len = 5;
 
     if (seq_len > 255)
     {
@@ -278,7 +278,10 @@ UINT8 *sdpu_build_attrib_entry (UINT8 *p_out, tSDP_ATTRIBUTE *p_attr)
         *p_out++ = (UINT8)((p_attr->attr_type << 3) | SIZE_IN_NEXT_BYTE);
         *p_out++ = (UINT8)p_attr->attr_len;
         p_data = p_out;
-        break;
+
+        for (xx = 0; xx < p_attr->attr_len; xx++)
+            *p_data++ = ((UINT8 *)p_attr->attr_value)[xx];
+        return (p_data);
 
     default:
         switch (p_attr->attr_len)
@@ -309,13 +312,11 @@ UINT8 *sdpu_build_attrib_entry (UINT8 *p_out, tSDP_ATTRIBUTE *p_attr)
             p_data = p_out;
             break;
         }
-        break;
+
+        for (xx = 0; xx < p_attr->attr_len; xx++)
+            *p_data++ = ((UINT8 *)p_attr->attr_value)[xx];
+        return (p_data);
     }
-
-    for (xx = 0; xx < p_attr->attr_len; xx++)
-        *p_data++ = ((UINT8 *)p_attr->attr_value)[xx];
-
-    return (p_data);
 }
 
 /*******************************************************************************
@@ -398,16 +399,18 @@ UINT8 *sdpu_extract_uid_seq (UINT8 *p, UINT16 param_len, tSDP_UUID_SEQ *p_seq)
     UINT32   seq_len;
     INT32    uuid_len;
     UINT8    type;
+    UINT8    size_code;
     int      xx;
 
     p_seq->num_uuids = 0;
 
     /* The sequence header must be a data element sequence. */
-    type = *p++;
-    if ((type >> 3) != DATA_ELE_SEQ_DESC_TYPE)
+    type      = *p++;
+    size_code = type & 7;
+    if ((UINT32)(type >> 3) != DATA_ELE_SEQ_DESC_TYPE)
         return (NULL);
 
-    switch (type & 7)
+    switch (size_code)
     {
     case SIZE_TWO_BYTES:
         seq_len = 2;
@@ -426,7 +429,7 @@ UINT8 *sdpu_extract_uid_seq (UINT8 *p, UINT16 param_len, tSDP_UUID_SEQ *p_seq)
         p += 2;
         break;
     case SIZE_IN_NEXT_LONG:
-        seq_len = (*p << 24) + (*(p + 1) << 16) + (*(p + 2) << 8) + *(p + 3);
+        seq_len = (UINT32)(*(p + 3)) + ((UINT32)(*(p + 2)) << 8) + ((UINT32)(*(p + 1)) << 16) + ((UINT32)(*p) << 24);
         p += 4;
         break;
     default:
@@ -441,11 +444,12 @@ UINT8 *sdpu_extract_uid_seq (UINT8 *p, UINT16 param_len, tSDP_UUID_SEQ *p_seq)
     /* Now pull out each UUID element. */
     while (p < p_end)
     {
-        type = *p++;
-        if ((type >> 3) != UUID_DESC_TYPE)
+        type      = *p++;
+        size_code = type & 7;
+        if ((UINT32)(type >> 3) != UUID_DESC_TYPE)
             return (NULL);
 
-        switch (type & 7)
+        switch (size_code)
         {
         case SIZE_TWO_BYTES:
             uuid_len = 2;
@@ -464,14 +468,15 @@ UINT8 *sdpu_extract_uid_seq (UINT8 *p, UINT16 param_len, tSDP_UUID_SEQ *p_seq)
             p += 2;
             break;
         case SIZE_IN_NEXT_LONG:
-            uuid_len = (*p << 24) + (*(p + 1) << 16) + (*(p + 2) << 8) + *(p + 3);
+            uuid_len = (UINT32)(*(p + 3)) + ((UINT32)(*(p + 2)) << 8) + ((UINT32)(*(p + 1)) << 16) + ((UINT32)(*p) << 24);
             p += 4;
             break;
         default:
             return (NULL);
         }
 
-        if ((uuid_len == LEN_UUID_16) || (uuid_len == LEN_UUID_32) || (uuid_len == LEN_UUID_128))
+        if (((UINT32)uuid_len == LEN_UUID_16) || ((UINT32)uuid_len == LEN_UUID_32) ||
+            ((UINT32)uuid_len == LEN_UUID_128))
         {
             p_seq->uuid_entry[p_seq->num_uuids].len = (UINT16)uuid_len;
 
@@ -507,17 +512,19 @@ UINT8 *sdpu_extract_attr_seq (UINT8 *p, UINT16 param_len, tSDP_ATTR_SEQ *p_seq)
 {
     UINT8   *p_end;
     UINT32   seq_len;
-    INT32    attr_len;
+    UINT32   attr_len;
     UINT8    type;
+    UINT8    size_code;
 
     p_seq->num_attrs = 0;
 
     /* The sequence header must be a data element sequence. */
-    type = *p;
-    if ((type >> 3) != DATA_ELE_SEQ_DESC_TYPE)
+    type      = *p;
+    size_code = type & 7;
+    if ((UINT32)(type >> 3) != DATA_ELE_SEQ_DESC_TYPE)
         return (p + 1);
 
-    switch (type & 7)
+    switch (size_code)
     {
     case SIZE_IN_NEXT_BYTE:
         seq_len = *(p + 1);
@@ -543,11 +550,12 @@ UINT8 *sdpu_extract_attr_seq (UINT8 *p, UINT16 param_len, tSDP_ATTR_SEQ *p_seq)
     /* Each element is either a single attribute ID or an ID range. */
     while (p < p_end)
     {
-        type = *p++;
-        if ((type >> 3) != UINT_DESC_TYPE)
+        type      = *p++;
+        size_code = type & 7;
+        if ((UINT32)(type >> 3) != UINT_DESC_TYPE)
             return (p);
 
-        switch (type & 7)
+        switch (size_code)
         {
         case SIZE_TWO_BYTES:
             attr_len = 2;
@@ -630,7 +638,8 @@ UINT8 *sdpu_get_len_from_type (UINT8 *p, UINT8 type, UINT32 *p_len)
         p += 2;
         break;
     case SIZE_IN_NEXT_LONG:
-        *p_len = (UINT16)((*p << 24) + (*(p + 1) << 16) + (*(p + 2) << 8) + *(p + 3));
+        *p_len = (UINT16)(((UINT32)(*((p) + 3)) + ((UINT32)(*((p) + 2)) << 8) +
+                            ((UINT32)(*((p) + 1)) << 16) + ((UINT32)(*(p)) << 24)));
         p += 4;
         break;
     }

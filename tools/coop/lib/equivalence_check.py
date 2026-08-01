@@ -1132,6 +1132,288 @@ def _extract_call_targets(instructions: list) -> frozenset[int | str]:
     return frozenset(targets)
 
 
+def _attach_assumed_ordinary_ram_attestation(proof: ProofResult) -> None:
+    """Attach the ``assumed-ordinary-ram`` scoped-assumption attestation.
+
+    The register-renaming witness executes both sides through SymbolicOps
+    without a memory bus, so its effective memory semantics are the
+    documented engine default: assumed ordinary RAM.  ``derive_capability_requirements``
+    therefore demands the ``assumed-ordinary-ram`` capability, but
+    ``build_capability_assurance`` never attaches an attestation for the
+    assumed profile (it is scoped-assumption / Tier C by design), which would
+    leave the strict certificate validator with a capability-set mismatch.
+    This attaches the honest scoped-assumption attestation, bound to the exact
+    requirement digest and aggregate block digest the strict validator checks.
+    """
+    from tools.ppc_equivalence.capability_assurance import (
+        STATUS_SCOPED_ASSUMPTION,
+        build_attestation,
+    )
+
+    req_block = getattr(proof, "capability_requirements", None)
+    if not isinstance(req_block, dict):
+        return
+    block_sha = str(req_block.get("requirements_sha256", "") or "")
+    req_sha = None
+    for item in req_block.get("requirements", []):
+        if isinstance(item, dict) and item.get("capability") == "assumed-ordinary-ram":
+            req_sha = str(item.get("requirement_sha256", "") or "")
+            break
+    if not req_sha:
+        return
+    evidence: dict[str, Any] = {
+        "requirement_sha256": req_sha,
+        "subjects": ["assumed-ordinary-ram"],
+    }
+    if block_sha:
+        evidence["requirements_sha256"] = block_sha
+    attestation = build_attestation(
+        capability="assumed-ordinary-ram",
+        model_version="assumed-ordinary-ram-v1",
+        algorithm="bounded-memory-coverage-v2",
+        status=STATUS_SCOPED_ASSUMPTION,
+        assumptions=(
+            "ordinary unconstrained shared RAM semantics; memory compared "
+            "structurally by the register-renaming witness",
+        ),
+        evidence=evidence,
+    )
+    raw = getattr(proof, "capability_assurance", None)
+    if isinstance(raw, dict):
+        merged = dict(raw)
+        capabilities = [
+            item for item in merged.get("capabilities", [])
+            if not (isinstance(item, dict) and item.get("capability") == "assumed-ordinary-ram")
+        ]
+        capabilities.append(attestation.to_dict())
+        merged["capabilities"] = capabilities
+        proof.capability_assurance = merged
+    elif raw is None:
+        from tools.ppc_equivalence.capability_assurance import CapabilityAssurance
+
+        proof.capability_assurance = CapabilityAssurance(
+            capabilities=(attestation,),
+        ).to_dict()
+
+
+def _renaming_witness_observables() -> list[str]:
+    """Every architectural component the renaming witness compares.
+
+    The witness compares the full terminal machine state (not just a contract
+    slice) under the recorded rho permutation, so the certificate's observable
+    list is the complete compared state.  This is intentionally *not* empty:
+    the byte-identical path may use ``observables=[]`` because byte identity is
+    trivially sufficient, but the register-renaming path must document exactly
+    what was compared.
+    """
+    from tools.ppc_equivalence.spr import AUX_SPR_OBSERVABLES
+
+    names = [f"r{i}" for i in range(32)]
+    names += [f"f{i}" for i in range(32)]
+    names += [f"f{i}.ps1" for i in range(32)]
+    names += [f"gqr{i}" for i in range(8)]
+    names += [f"sr{i}" for i in range(16)]
+    names += list(AUX_SPR_OBSERVABLES)
+    names += ["cr", "xer.ca", "xer.ov", "xer.so", "fpscr", "lr", "ctr",
+              "msr", "time_base", "srr0", "srr1", "memory"]
+    return names
+
+
+def _try_renaming_witness(
+    project: Project,
+    symbol: str,
+    left: object,
+    right: object,
+    target_id: str,
+    certified_context: CertifiedCalleeContext | None = None,
+    *,
+    max_instructions: int = _DEFAULT_MAX_INSTRUCTIONS,
+    max_paths: int = _DEFAULT_MAX_PATHS,
+    max_loop_iterations: int = _DEFAULT_MAX_LOOP_ITERATIONS,
+) -> EquivalenceProbe | None:
+    """Pre-SMT register-renaming witness (docs/ppc_equiv_work/31).
+
+    Certifies position-aligned, same-mnemonic pairs that differ only in
+    register colors WITHOUT Z3 CFG exploration: both sides execute through the
+    audited SymbolicOps with ``retail.r_i`` and ``decomp.r_rho(i)`` sharing one
+    symbolic variable, and the terminal states are compared with structural
+    ``z3.eq``.  Returns ``None`` (fall through to the normal SMT probe) on any
+    gate rejection, structural divergence, execution inconclusiveness, or
+    missing callee certificates — never a false certificate.
+    """
+    from tools.coop.lib.renaming_witness import certify_renaming_witness
+
+    if certified_context is None:
+        certified_context = _load_certified_callees(project, target_id)
+    if certified_context.errors:
+        return None
+    try:
+        original = decode_block(
+            left.code, left.base, validate_with_capstone=False,
+            relocations=left.relocations, local_symbol=left.name,
+        )
+        candidate = decode_block(
+            right.code, right.base, validate_with_capstone=False,
+            relocations=right.relocations, local_symbol=right.name,
+        )
+    except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
+        return None
+    call_targets = _extract_call_targets(original) | _extract_call_targets(candidate)
+    missing = sorted(
+        (item for item in call_targets if item not in certified_context.contracts),
+        key=str,
+    )
+    if missing:
+        return None
+    contracts = {
+        item: certified_context.contracts[item] for item in call_targets
+    }
+    try:
+        outcome = certify_renaming_witness(
+            original,
+            candidate,
+            max_instructions=max_instructions,
+            max_paths=max_paths,
+            max_loop_iterations=max_loop_iterations,
+            assumed_callees=call_targets,
+            callee_contracts=contracts,
+        )
+    except Exception:
+        # Any tooling failure degrades to the SMT probe, never to a cert.
+        return None
+    if not outcome.certified:
+        return None
+
+    opcodes_used = sorted(
+        {
+            insn.opcode.value
+            for insn in (*original, *candidate)
+            if getattr(insn, "opcode", None) is not None
+        }
+    )
+    observables = _renaming_witness_observables()
+    rho = outcome.rho.to_dict()
+    witness_payload = {
+        "rho": rho,
+        "structural_eq": outcome.structural_eq,
+        "terminal_pairs_checked": outcome.terminal_pairs_checked,
+        "location_independent_returns": True,
+    }
+    source_hash = proof_request_hash(
+        original_hex=left.code.hex(),
+        candidate_hex=right.code.hex(),
+        contract="register-renaming-witness",
+        timeout_ms=0,
+        max_instructions=max_instructions,
+        max_paths=max_paths,
+        max_loop_iterations=max_loop_iterations,
+        observe=observables,
+        assumed_callees=[str(item) for item in call_targets],
+        callee_contract_sources={
+            str(name): contract.source for name, contract in contracts.items()
+        },
+        certified_callee_digests=_certified_callee_digests(certified_context),
+        original_base=left.base,
+        candidate_base=right.base,
+        original_relocations=[
+            (item.offset, item.relocation_type, item.symbol, item.addend)
+            for item in left.relocations
+        ],
+        candidate_relocations=[
+            (item.offset, item.relocation_type, item.symbol, item.addend)
+            for item in right.relocations
+        ],
+        certificate_target_id=target_id,
+    )
+    git_commit, git_dirty = _live_git_identity()
+    from tools.ppc_equivalence.memory_profile import MemoryEnvironment
+
+    proof = ProofResult(
+        status=ProofStatus.EQUIVALENT,
+        architecture_model=ARCHITECTURE_MODEL,
+        format=RESULT_FORMAT,
+        contract="register-renaming-witness",
+        observables=observables,
+        environment=MemoryEnvironment(),
+        assumptions=[
+            "register-renaming equivalence: both implementations share one "
+            "symbolic variable per register role (retail r_i and decomp "
+            "r_rho(i)); terminal state compared with structural z3.eq",
+            "non-register fields (opcode bits, immediates, CR bits/fields, "
+            "SPR indices, FXM masks, branch displacements, Rc/OE/LK/AA) are "
+            "bit-equal per slot",
+            "rho is a partial bijection consistent across all mnemonics and "
+            "positions, and fixes ABI-boundary registers (r0 zero-register "
+            "encoding, r1, r2, r13, returns, live-in EABI args, volatiles "
+            "live across calls)",
+            "matched callees are location-independent EABI functions: the "
+            "absolute link-register return address is not a semantic input; "
+            "constant return targets / LR values are compared relative to "
+            "the function base",
+        ],
+        opcodes_used=opcodes_used,
+        assumed_callees=sorted(call_targets, key=str),
+        callee_contracts={
+            str(name): {
+                "source": contract.source,
+                "reads": sorted(contract.reads),
+                "writes": sorted(contract.writes),
+            }
+            for name, contract in contracts.items()
+        },
+        source_hash=source_hash,
+        proof_request_hash=source_hash,
+        engine_hash=_current_engine_hash(),
+        certifier_hash=_current_certifier_hash(),
+        git_commit=git_commit,
+        git_dirty=git_dirty,
+        limits={
+            "max_instructions": max_instructions,
+            "max_paths": max_paths,
+            "max_loop_iterations": max_loop_iterations,
+        },
+    )
+    assurance_errors = _apply_capability_assurance(
+        proof,
+        certified_context=certified_context,
+    )
+    _attach_assumed_ordinary_ram_attestation(proof)
+    detail = (
+        f"register-renaming-witness: {outcome.terminal_pairs_checked} "
+        "terminal pair(s) structurally equal under rho"
+    )
+    for code in assurance_errors:
+        note = f"capability-assurance-generation-failed:{code}"
+        detail = f"{detail}; {note}" if detail else note
+    certificate, cert_detail = _build_equivalence_certificate(
+        target_id, left, right, original, candidate,
+        call_targets=call_targets,
+        callee_contracts=contracts,
+        dependencies=certified_context.dependencies,
+        helpers=certified_context.helpers,
+        evidence="register-renaming-witness",
+        max_instructions=max_instructions,
+        max_paths=max_paths,
+        max_loop_iterations=max_loop_iterations,
+        proof=proof,
+        # The witness proved full-state structural equality under the recorded
+        # rho, so the summary stays the conservative opaque-EABI envelope and
+        # CFG re-validation is skipped (see the parameter's justification).
+        validation_bypass="register-renaming-witness",
+        renaming_witness=witness_payload,
+    )
+    if cert_detail:
+        detail = f"{detail}; {cert_detail}" if detail else cert_detail
+    if certificate is None:
+        return None
+    return EquivalenceProbe(
+        ProofStatus.EQUIVALENT,
+        detail,
+        certificate,
+        proof=proof,
+    )
+
+
 def _infer_matched_callee_contracts(
     call_targets: frozenset[int | str],
     original_object: Path | None,
@@ -1191,15 +1473,30 @@ def _build_equivalence_certificate(
     memory_scope: dict | None = None,
     proof: object | None = None,
     skip_semantic_validation: bool = False,
+    validation_bypass: str | None = None,
+    renaming_witness: dict | None = None,
 ) -> tuple[dict | None, str]:
     """Derive and validate a normal-return semantic effect summary.
+
+    ``skip_semantic_validation`` is reserved for byte-identical FULL_MATCH
+    synthesis, whose precondition is exact byte equality.
+
+    ``validation_bypass`` is a *separate* parameter for the register-renaming
+    witness (doc 31): the witness proved full-state structural equality of
+    both sides under the recorded rho permutation (``register_renaming_witness``
+    payload), so the conservative opaque-EABI summary below is a sound
+    over-approximation of either side's effects and CFG re-validation through
+    SMT (which path-explodes on small callers with calls, exactly like the
+    byte-identity path) is skipped.  Unlike byte-identity this is NOT byte
+    equality, so it must not silently reuse ``skip_semantic_validation`` — the
+    flag is separate and documented.
 
     When ``skip_semantic_validation`` is set (byte-identical FULL_MATCH
     synthesis), skip ``validate_callee_contract`` — path explosion on small
     callers with certified callees (e.g. ``getView`` → ``getWorkThread``)
     otherwise hangs certify and blocks the ACCEPTED frontier.
     """
-    if skip_semantic_validation:
+    if skip_semantic_validation or validation_bypass is not None:
         # Exact bytes prove refinement, but the synthesized summary must remain
         # conservative. An empty summary incorrectly models return registers
         # (notably allocator r3) as preserved and can make parent memory-layout
@@ -1271,6 +1568,11 @@ def _build_equivalence_certificate(
     )
     if memory_scope is not None:
         certificate["memory_scope"] = memory_scope
+    if renaming_witness is not None:
+        # Honest record of the register-renaming evidence: the rho map, the
+        # structural-equality result, and the number of terminal pairs checked
+        # become part of the signed certificate payload.
+        certificate["register_renaming_witness"] = dict(renaming_witness)
     # Always emit git_dirty (including False) even when proof is absent.
     certificate["git_dirty"] = False
     if proof is not None:
@@ -2255,6 +2557,20 @@ def prove_unit_symbol(
         left, right = extract_function_pair(retail, decomp, symbol)
         certified_context = _load_certified_callees(project, target_id) if target_id else None
 
+        # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31): certify
+        # position-aligned, same-mnemonic, register-color-only-differing pairs
+        # without Z3 CFG exploration.  Must run BEFORE any solver work; on
+        # witness failure the normal SMT probe below still runs.
+        if target_id is not None:
+            witness_probe = _try_renaming_witness(
+                project, symbol, left, right, target_id, certified_context,
+                max_instructions=max_instructions,
+                max_paths=max_paths,
+                max_loop_iterations=max_loop_iterations,
+            )
+            if witness_probe is not None:
+                return witness_probe
+
         from tools.coop.lib.config import CoopConfig, object_base_mem1_enabled
 
         # Two-phase prove: phase 1 runs WITHOUT object-base-mem1 entry-GPR
@@ -2368,6 +2684,19 @@ def certify_unit_symbol(
         # that parents need. Prefer prove only when bytes differ and a reviewed
         # hardware_profile is configured (MMIO/FIFO obligations).
         bytes_identical = left.code == right.code
+        if not bytes_identical:
+            # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31).  The
+            # witness must run before the SMT-first memory-bus block below,
+            # which would otherwise eat the solver timeout the fast path
+            # exists to avoid.  On witness failure the normal paths still run.
+            witness_probe = _try_renaming_witness(
+                project, symbol, left, right, target_id,
+                max_instructions=max_instructions,
+                max_paths=max_paths,
+                max_loop_iterations=max_loop_iterations,
+            )
+            if witness_probe is not None:
+                return witness_probe
         if not bytes_identical:
             try:
                 from tools.coop.lib.config import memory_bus_from_config

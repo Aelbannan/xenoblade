@@ -100,7 +100,9 @@ def equivalence_certificate_error(
         return f"certificate result_format is not {RESULT_FORMAT}"
     if certificate.get("target_id") != row.get("id"):
         return "certificate target_id does not match target"
-    if certificate.get("evidence") not in {"symbolic-equivalence", "full-instruction-match"}:
+    if certificate.get("evidence") not in {
+        "symbolic-equivalence", "full-instruction-match", "register-renaming-witness",
+    }:
         return "certificate evidence is not recognized"
     for name in ("retail_sha256", "candidate_sha256", "certificate_sha256"):
         value = certificate.get(name)

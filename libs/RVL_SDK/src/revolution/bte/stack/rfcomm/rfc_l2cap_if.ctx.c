@@ -721,7 +721,8 @@ struct BT_HDR {
 };
 
 struct RfcMuxChannel {
-    u8 pad_0x00[0x62];
+    u8 pad_0x00[0x24];
+    u8 port_inx[0x3E];
     u8 bd_addr[6];
     u16 lcid;
     u16 field_0x6a;
@@ -747,9 +748,9 @@ struct RfcPort {
  * BufDataInd, CongestionStatusInd). */
 struct RfcL2capApplInfo {
     void (*pL2CA_ConnectInd_Cb)(u8* bd_addr, u16 lcid, u16 psm, u8 id);
-    void (*pL2CA_ConnectCfm_Cb)(void);
+    void (*pL2CA_ConnectCfm_Cb)(u16 lcid, u16 result);
     void (*pL2CA_ConnectPnd_Cb)(void);
-    void (*pL2CA_ConfigInd_Cb)(void);
+    void (*pL2CA_ConfigInd_Cb)(u16 lcid, u8* p_cfg);
     void (*pL2CA_ConfigCfm_Cb)(u16 lcid, u8* config);
     void (*pL2CA_DisconnectInd_Cb)(u16 lcid, u8 response);
     void (*pL2CA_DisconnectCfm_Cb)(void);
@@ -761,9 +762,9 @@ struct RfcL2capApplInfo {
 struct RfcControlBlock {
     u8 dlci;
     u8 pad_0x01[1];
-    u8 field_0x02;
+    u8 cr;
     u8 pad_0x03[1];
-    u8 field_0x04;
+    u8 pf;
     u8 credit_based;
     u8 pad_0x06[0x0E];
     struct RfcL2capApplInfo l2cap_Appl_Info;
@@ -796,8 +797,8 @@ extern void rfc_process_l2cap_congestion(RfcMuxChannel* channel, u8 congested);
 extern void rfc_inc_credit(RfcPort* port);
 
 void RFCOMM_ConnectInd(u8* bd_addr, u16 lcid, u16 psm, u8 id);
-void RFCOMM_ConnectCnf();
-void RFCOMM_ConfigInd();
+void RFCOMM_ConnectCnf(u16 lcid, u16 result);
+void RFCOMM_ConfigInd(u16 lcid, u8* p_cfg);
 void RFCOMM_ConfigCnf(u16 lcid, u8* config);
 void RFCOMM_DisconnectInd(u16 lcid, u8 response);
 void RFCOMM_QoSViolationInd(void);
@@ -836,8 +837,65 @@ void RFCOMM_ConnectInd(u8* bd_addr, u16 lcid, u16 psm, u8 id) {
     rfc_mx_sm_execute(p_mcb, RFC_MX_EVENT_CONN_IND, (u8*)&id);
 }
 
-void RFCOMM_ConnectCnf() {}
-void RFCOMM_ConfigInd() {}
+void RFCOMM_ConnectCnf(u16 lcid, u16 result) {
+    int index = (int)lcid - 0x40;
+    RfcMuxChannel* channel;
+
+    if (index >= 10) {
+        if (rfc_cb.trace_level >= 1) {
+            LogMsg_1(0x90000, "rfc_find_lcid_mcb LCID:0x%x", lcid);
+        }
+        channel = 0;
+    } else {
+        channel = rfc_cb.mcb[index];
+        if (channel != 0 && channel->lcid != lcid) {
+            if (rfc_cb.trace_level >= 2) {
+                LogMsg_2(0x90001, "rfc_find_lcid_mcb LCID reused LCID:0x%x current:0x%x", lcid,
+                         channel->lcid);
+            }
+            channel = 0;
+        }
+    }
+
+    if (channel == 0) {
+        if (rfc_cb.trace_level >= 1) {
+            LogMsg_1(0x90000, "RFCOMM_ConnectCnf LCID:0x%x", lcid);
+        }
+    } else {
+        channel->lcid = lcid;
+        rfc_mx_sm_execute(channel, 9, (u8*)&result);
+    }
+}
+
+void RFCOMM_ConfigInd(u16 lcid, u8* p_cfg) {
+    int index = (int)lcid - 0x40;
+    RfcMuxChannel* channel;
+
+    if (index >= 10) {
+        if (rfc_cb.trace_level >= 1) {
+            LogMsg_1(0x90000, "rfc_find_lcid_mcb LCID:0x%x", lcid);
+        }
+        channel = 0;
+    } else {
+        channel = rfc_cb.mcb[index];
+        if (channel != 0 && channel->lcid != lcid) {
+            if (rfc_cb.trace_level >= 2) {
+                LogMsg_2(0x90001, "rfc_find_lcid_mcb LCID reused LCID:0x%x current:0x%x", lcid,
+                         channel->lcid);
+            }
+            channel = 0;
+        }
+    }
+
+    if (channel == 0) {
+        if (rfc_cb.trace_level >= 1) {
+            LogMsg_1(0x90000, "RFCOMM_ConfigInd LCID:0x%x", lcid);
+        }
+    } else {
+        rfc_mx_sm_execute(channel, 0xc, p_cfg);
+    }
+}
+
 void RFCOMM_QoSViolationInd(void) {}
 
 void RFCOMM_ConfigCnf(u16 lcid, u8* config) {
@@ -902,9 +960,12 @@ void RFCOMM_DisconnectInd(u16 lcid, u8 response) {
     }
 }
 
-void RFCOMM_CongestionStatusInd(u16 lcid, u8 congested) {
+
+void RFCOMM_BufDataInd(u16 lcid, BT_HDR* buffer) {
     int index = (int)lcid - 0x40;
     RfcMuxChannel* channel;
+    RfcPort* port;
+    u8 frame_type;
 
     if (index >= 10) {
         if (rfc_cb.trace_level >= 1) {
@@ -912,40 +973,6 @@ void RFCOMM_CongestionStatusInd(u16 lcid, u8 congested) {
         }
         channel = 0;
     } else {
-        channel = rfc_cb.mcb[index];
-        if (channel != 0 && channel->lcid != lcid) {
-            if (rfc_cb.trace_level >= 2) {
-                LogMsg_2(0x90001, "rfc_find_lcid_mcb LCID reused LCID:0x%x current:0x%x", lcid,
-                         channel->lcid);
-            }
-            channel = 0;
-        }
-    }
-
-    if (channel == 0) {
-        if (rfc_cb.trace_level >= 1) {
-            LogMsg_1(0x90000, "RFCOMM_CongestionStatusInd dropped LCID:0x%x", lcid);
-        }
-    } else {
-        if (rfc_cb.trace_level >= 4) {
-            LogMsg_1(0x90003, "RFCOMM_CongestionStatusInd LCID:0x%x", lcid);
-        }
-        rfc_process_l2cap_congestion(channel, congested);
-    }
-}
-
-void RFCOMM_BufDataInd(u16 lcid, BT_HDR* buffer) {
-    int index = (int)lcid - 0x40;
-    RfcMuxChannel* channel;
-    RfcPort* port;
-    u8 frame_type;
-    u8 dlci;
-
-    if (index >= 10) {
-        if (rfc_cb.trace_level >= 1) {
-            LogMsg_1(0x90000, "rfc_find_lcid_mcb LCID:0x%x", lcid);
-        }
-    } else if (index >= 0) {
         channel = rfc_cb.mcb[index];
         if (channel != 0 && channel->lcid != lcid) {
             if (rfc_cb.trace_level >= 2) {
@@ -980,30 +1007,24 @@ void RFCOMM_BufDataInd(u16 lcid, BT_HDR* buffer) {
         return;
     }
 
-    dlci = rfc_cb.dlci;
-    port = port_find_mcb_dlci_port(channel, dlci);
+    port = port_find_mcb_dlci_port(channel, rfc_cb.dlci);
     if (port == 0 || port->mcb == 0) {
         if (frame_type != 0) {
-            if (channel->initiator != 0 || rfc_cb.field_0x02 == 0) {
-                if (channel->initiator == 0 && rfc_cb.field_0x02 != 0) {
-                    rfc_send_dm(channel, rfc_cb.dlci, rfc_cb.credit_based);
-                }
-            } else {
-                rfc_send_dm(channel, rfc_cb.dlci, rfc_cb.credit_based);
+            if ((channel->initiator != 0 && rfc_cb.cr == 0) ||
+                (channel->initiator == 0 && rfc_cb.cr != 0)) {
+                rfc_send_dm(channel, rfc_cb.dlci, rfc_cb.pf);
             }
+            GKI_freebuf(buffer);
+            return;
         }
-        GKI_freebuf(buffer);
-        return;
-    }
 
-    if (frame_type == 0) {
         port = port_find_dlci_port(rfc_cb.dlci);
         if (port == 0) {
             rfc_send_dm(channel, rfc_cb.dlci, 1);
             GKI_freebuf(buffer);
             return;
         }
-        port->field_0x24 = port->dlci;
+        channel->port_inx[rfc_cb.dlci] = port->dlci;
         port->mcb = channel;
     }
 
@@ -1017,8 +1038,40 @@ void RFCOMM_BufDataInd(u16 lcid, BT_HDR* buffer) {
             rfc_inc_credit(port);
         }
     } else {
-        rfc_port_sm_execute(port, 0, 0);
+        rfc_port_sm_execute(port, frame_type, 0);
         GKI_freebuf(buffer);
+    }
+}
+
+void RFCOMM_CongestionStatusInd(u16 lcid, u8 congested) {
+    int index = (int)lcid - 0x40;
+    RfcMuxChannel* channel;
+
+    if (index >= 10) {
+        if (rfc_cb.trace_level >= 1) {
+            LogMsg_1(0x90000, "rfc_find_lcid_mcb LCID:0x%x", lcid);
+        }
+        channel = 0;
+    } else {
+        channel = rfc_cb.mcb[index];
+        if (channel != 0 && channel->lcid != lcid) {
+            if (rfc_cb.trace_level >= 2) {
+                LogMsg_2(0x90001, "rfc_find_lcid_mcb LCID reused LCID:0x%x current:0x%x", lcid,
+                         channel->lcid);
+            }
+            channel = 0;
+        }
+    }
+
+    if (channel == 0) {
+        if (rfc_cb.trace_level >= 1) {
+            LogMsg_1(0x90000, "RFCOMM_CongestionStatusInd dropped LCID:0x%x", lcid);
+        }
+    } else {
+        if (rfc_cb.trace_level >= 4) {
+            LogMsg_1(0x90003, "RFCOMM_CongestionStatusInd LCID:0x%x", lcid);
+        }
+        rfc_process_l2cap_congestion(channel, congested);
     }
 }
 

@@ -10,7 +10,9 @@
 // tables. MWCC folds the adjacent arrays into base-relative addressing.
 
 #include <types.h>
+#include <string.h>
 #include <revolution/ax/AXVPB.h>
+#include <revolution/os/OSInterrupt.h>
 
 typedef struct MIXChannel {
     AXVPB* vpb;       // at 0x00 - attached AX voice (NULL = free slot)
@@ -28,7 +30,32 @@ typedef struct MIXChannel {
     s32 vSR;          // at 0x30 - computed side gain
     s32 vRL;          // at 0x34 - DPL2 rear-left gain
     s32 vRR;          // at 0x38 - DPL2 rear-right gain
-    u16 vol[26];      // at 0x3C..0x6E - current/target volume pairs
+    u16 volMainCur;   // at 0x3C - main volume (current)
+    u16 volMainTgt;   // at 0x3E - main volume (target)
+    u16 volLCur;      // at 0x40 - L volume (current)
+    u16 volLTgt;      // at 0x42 - L volume (target)
+    u16 volRCur;      // at 0x44 - R volume (current)
+    u16 volRTgt;      // at 0x46 - R volume (target)
+    u16 volSCur;      // at 0x48 - S volume (current)
+    u16 volSTgt;      // at 0x4A - S volume (target)
+    u16 volALCur;     // at 0x4C - AuxA-L volume (current)
+    u16 volALTgt;     // at 0x4E - AuxA-L volume (target)
+    u16 volARCur;     // at 0x50 - AuxA-R volume (current)
+    u16 volARTgt;     // at 0x52 - AuxA-R volume (target)
+    u16 volASCur;     // at 0x54 - AuxA-S volume (current)
+    u16 volASTgt;     // at 0x56 - AuxA-S volume (target)
+    u16 volBLCur;     // at 0x58 - AuxB-L volume (current)
+    u16 volBLTgt;     // at 0x5A - AuxB-L volume (target)
+    u16 volBRCur;     // at 0x5C - AuxB-R volume (current)
+    u16 volBRTgt;     // at 0x5E - AuxB-R volume (target)
+    u16 volBSCur;     // at 0x60 - AuxB-S volume (current)
+    u16 volBSTgt;     // at 0x62 - AuxB-S volume (target)
+    u16 volCLCur;     // at 0x64 - AuxC-L volume (current)
+    u16 volCLTgt;     // at 0x66 - AuxC-L volume (target)
+    u16 volCRCur;     // at 0x68 - AuxC-R volume (current)
+    u16 volCRTgt;     // at 0x6A - AuxC-R volume (target)
+    u16 volCSCur;     // at 0x6C - AuxC-S volume (current)
+    u16 volCSTgt;     // at 0x6E - AuxC-S volume (target)
 } MIXChannel; // size 0x70
 
 // Sound modes (__MIXSoundMode)
@@ -42,7 +69,9 @@ typedef struct MIXChannel {
 
 // Channel update flags (MIXChannel.flags)
 #define MIX_FLAG_INPUT 0x10000000u // input volume changed
+#define MIX_FLAG_MAIN  0x20000000u // main volume target ready -> apply
 #define MIX_FLAG_MIX   0x40000000u // auxA/pan/fader changed
+#define MIX_FLAG_APPLY 0x80000000u // mix targets ready -> apply
 
 u16 __MIXVolumeTable[968] = {
     0x0000, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001, 0x0001,
@@ -179,7 +208,29 @@ s16 __MIX_DPL2_rear[128] = {
 extern MIXChannel* __MIXChannel;    // active channel table
 extern MIXChannel* __MIXRmtChannel; // remote channel table
 extern u32 __MIXSoundMode;          // current output mode
+extern s32 __MIXMaxVoices;          // number of mixer channels (from AXGetMaxVoices)
 extern s32 __init;                  // mixer initialized flag
+
+void __MIXRmtResetChannel(s32 idx);
+void __MIXRmtUpdateSettings(s32 idx, void* out);
+
+// Inline volume lookup: clamp the dB value to [-904, 60] and index the table.
+// Retail inlines this pattern inside MIXInitChannel / MIXUpdateSettings; the
+// local index forces the lhzx indexed-addressing form MWCC emits for the
+// standalone __MIXGetVolume (see below).
+static u16 MIXGetVolumeInline(s32 db)
+{
+    s32 idx;
+
+    if (db <= MIX_DB_MIN) {
+        return 0;
+    }
+    if (db >= MIX_DB_MAX) {
+        return 0xFF64;
+    }
+    idx = db + 904;
+    return __MIXVolumeTable[idx];
+}
 
 u16 __MIXGetVolume(s32 db) {
     s32 idx;
@@ -225,7 +276,228 @@ void MIXQuit(void) {
     __init = 0;
 }
 
-void MIXInitChannel() {}
+void MIXInitChannel(AXVPB* vpb, u32 flags, s32 input, s32 auxA, s32 auxB, s32 pan,
+                    s32 panL, s32 panR, s32 fader)
+{
+    MIXChannel* ch = &__MIXChannel[vpb->index];
+    BOOL enabled;
+    u32 ctrl;
+
+    ch->vpb = vpb;
+    ch->flags = flags & 0xF;
+    ch->input = input;
+    ch->auxA = auxA;
+    ch->auxB = auxB;
+    ch->pan = pan;
+    ch->panL = panL;
+    ch->panR = panR;
+    ch->fader = fader;
+    __MIXSetPan(ch);
+
+    if (ch->flags & 0x8) {
+        ch->volMainCur = 0;
+    } else {
+        ch->volMainCur = MIXGetVolumeInline(input);
+    }
+
+    ctrl = 0;
+
+    switch (__MIXSoundMode) {
+    case MIX_MODE_MONO:
+        ch->volLCur = MIXGetVolumeInline(ch->fader + ch->vSL);
+        ch->volRCur = MIXGetVolumeInline(ch->fader + ch->vSL);
+        ch->volSCur = MIXGetVolumeInline(ch->fader + ch->vSR - 30);
+
+        if (ch->flags & 0x1) {
+            ch->volALCur = MIXGetVolumeInline(ch->auxA + ch->vSL);
+            ch->volARCur = MIXGetVolumeInline(ch->auxA + ch->vSL);
+            ch->volASCur = MIXGetVolumeInline(ch->auxA + ch->vSR - 30);
+        } else {
+            ch->volALCur = MIXGetVolumeInline(ch->auxA + ch->fader + ch->vSL);
+            ch->volARCur = MIXGetVolumeInline(ch->auxA + ch->fader + ch->vSL);
+            ch->volASCur = MIXGetVolumeInline(ch->auxA + ch->fader + ch->vSR - 30);
+        }
+
+        if (ch->flags & 0x2) {
+            ch->volBLCur = MIXGetVolumeInline(ch->auxB + ch->vSL);
+            ch->volBRCur = MIXGetVolumeInline(ch->auxB + ch->vSL);
+            ch->volBSCur = MIXGetVolumeInline(ch->auxB + ch->vSR - 30);
+        } else {
+            ch->volBLCur = MIXGetVolumeInline(ch->auxB + ch->fader + ch->vSL);
+            ch->volBRCur = MIXGetVolumeInline(ch->auxB + ch->fader + ch->vSL);
+            ch->volBSCur = MIXGetVolumeInline(ch->auxB + ch->fader + ch->vSR - 30);
+        }
+
+        if (ch->flags & 0x4) {
+            ch->volCLCur = MIXGetVolumeInline(ch->pan + ch->vSL);
+            ch->volCRCur = MIXGetVolumeInline(ch->pan + ch->vSL);
+            ch->volCSCur = MIXGetVolumeInline(ch->pan + ch->vSR - 30);
+        } else {
+            ch->volCLCur = MIXGetVolumeInline(ch->pan + ch->fader + ch->vSL);
+            ch->volCRCur = MIXGetVolumeInline(ch->pan + ch->fader + ch->vSL);
+            ch->volCSCur = MIXGetVolumeInline(ch->pan + ch->fader + ch->vSR - 30);
+        }
+        break;
+
+    case MIX_MODE_STEREO:
+    case 2:
+        ch->volLCur = MIXGetVolumeInline(ch->fader + ch->vSL + ch->vL);
+        ch->volRCur = MIXGetVolumeInline(ch->fader + ch->vSL + ch->vR);
+        ch->volSCur = MIXGetVolumeInline(ch->fader + ch->vSR - 30);
+
+        if (ch->flags & 0x1) {
+            ch->volALCur = MIXGetVolumeInline(ch->auxA + ch->vSL + ch->vL);
+            ch->volARCur = MIXGetVolumeInline(ch->auxA + ch->vSL + ch->vR);
+            ch->volASCur = MIXGetVolumeInline(ch->auxA + ch->vSR - 30);
+        } else {
+            ch->volALCur = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->auxA);
+            ch->volARCur = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->auxA);
+            ch->volASCur = MIXGetVolumeInline(ch->fader + ch->auxA + ch->vSR - 30);
+        }
+
+        if (ch->flags & 0x2) {
+            ch->volBLCur = MIXGetVolumeInline(ch->auxB + ch->vSL + ch->vL);
+            ch->volBRCur = MIXGetVolumeInline(ch->auxB + ch->vSL + ch->vR);
+            ch->volBSCur = MIXGetVolumeInline(ch->auxB + ch->vSR - 30);
+        } else {
+            ch->volBLCur = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->auxB);
+            ch->volBRCur = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->auxB);
+            ch->volBSCur = MIXGetVolumeInline(ch->fader + ch->auxB + ch->vSR - 30);
+        }
+
+        if (ch->flags & 0x4) {
+            ch->volCLCur = MIXGetVolumeInline(ch->pan + ch->vSL + ch->vL);
+            ch->volCRCur = MIXGetVolumeInline(ch->pan + ch->vSL + ch->vR);
+            ch->volCSCur = MIXGetVolumeInline(ch->pan + ch->vSR - 30);
+        } else {
+            ch->volCLCur = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->pan);
+            ch->volCRCur = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->pan);
+            ch->volCSCur = MIXGetVolumeInline(ch->fader + ch->pan + ch->vSR - 30);
+        }
+        break;
+
+    case MIX_MODE_DPL2:
+        ch->volLCur = MIXGetVolumeInline(ch->fader + ch->vSL + ch->vL);
+        ch->volRCur = MIXGetVolumeInline(ch->fader + ch->vSL + ch->vR);
+        ch->volSCur = MIXGetVolumeInline(ch->fader + ch->vSR + ch->vRL);
+        ch->volCLCur = MIXGetVolumeInline(ch->fader + ch->vSR + ch->vRR);
+
+        if (ch->flags & 0x1) {
+            ch->volALCur = MIXGetVolumeInline(ch->auxA + ch->vSL + ch->vL);
+            ch->volARCur = MIXGetVolumeInline(ch->auxA + ch->vSL + ch->vR);
+            ch->volASCur = MIXGetVolumeInline(ch->auxA + ch->vSR + ch->vRL);
+            ch->volCRCur = MIXGetVolumeInline(ch->auxA + ch->vSR + ch->vRR);
+        } else {
+            ch->volALCur = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->auxA);
+            ch->volARCur = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->auxA);
+            ch->volASCur = MIXGetVolumeInline(ch->vSR + ch->vRL + ch->fader + ch->auxA);
+            ch->volCRCur = MIXGetVolumeInline(ch->vSR + ch->vRR + ch->fader + ch->auxA);
+        }
+
+        if (ch->flags & 0x2) {
+            ch->volBLCur = MIXGetVolumeInline(ch->auxB + ch->vSL + ch->vL);
+            ch->volBRCur = MIXGetVolumeInline(ch->auxB + ch->vSL + ch->vR);
+            ch->volBSCur = MIXGetVolumeInline(ch->auxB + ch->vSR + ch->vRL);
+            ch->volCSCur = MIXGetVolumeInline(ch->auxB + ch->vSR + ch->vRR);
+        } else {
+            ch->volBLCur = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->auxB);
+            ch->volBRCur = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->auxB);
+            ch->volBSCur = MIXGetVolumeInline(ch->vSR + ch->vRL + ch->fader + ch->auxB);
+            ch->volCSCur = MIXGetVolumeInline(ch->vSR + ch->vRR + ch->fader + ch->auxB);
+        }
+
+        ctrl |= 0x80000000;
+        break;
+    }
+
+    __MIXRmtResetChannel(vpb->index);
+
+    enabled = OSDisableInterrupts();
+
+    vpb->pb.ve.currentVolume = ch->volMainCur;
+    vpb->pb.ve.currentDelta = 0;
+
+    vpb->pb.mix.vL = ch->volLCur;
+    if (vpb->pb.mix.vL != 0) {
+        ctrl |= AX_MIXER_CTRL_L;
+    }
+    vpb->pb.mix.vDeltaL = 0;
+
+    vpb->pb.mix.vR = ch->volRCur;
+    if (vpb->pb.mix.vR != 0) {
+        ctrl |= AX_MIXER_CTRL_R;
+    }
+    vpb->pb.mix.vDeltaR = 0;
+
+    vpb->pb.mix.vAuxAL = ch->volALCur;
+    if (vpb->pb.mix.vAuxAL != 0) {
+        ctrl |= AX_MIXER_CTRL_AL;
+    }
+    vpb->pb.mix.vDeltaAuxAL = 0;
+
+    vpb->pb.mix.vAuxAR = ch->volARCur;
+    if (vpb->pb.mix.vAuxAR != 0) {
+        ctrl |= AX_MIXER_CTRL_AR;
+    }
+    vpb->pb.mix.vDeltaAuxAR = 0;
+
+    vpb->pb.mix.vAuxBL = ch->volBLCur;
+    if (vpb->pb.mix.vAuxBL != 0) {
+        ctrl |= AX_MIXER_CTRL_BL;
+    }
+    vpb->pb.mix.vDeltaAuxBL = 0;
+
+    vpb->pb.mix.vAuxBR = ch->volBRCur;
+    if (vpb->pb.mix.vAuxBR != 0) {
+        ctrl |= AX_MIXER_CTRL_BR;
+    }
+    vpb->pb.mix.vDeltaAuxBR = 0;
+
+    vpb->pb.mix.vAuxCL = ch->volCLCur;
+    if (vpb->pb.mix.vAuxCL != 0) {
+        ctrl |= AX_MIXER_CTRL_CL;
+    }
+    vpb->pb.mix.vDeltaAuxCL = 0;
+
+    vpb->pb.mix.vAuxCR = ch->volCRCur;
+    if (vpb->pb.mix.vAuxCR != 0) {
+        ctrl |= AX_MIXER_CTRL_CR;
+    }
+    vpb->pb.mix.vDeltaAuxCR = 0;
+
+    vpb->pb.mix.vS = ch->volSCur;
+    if (vpb->pb.mix.vS != 0) {
+        ctrl |= AX_MIXER_CTRL_S;
+    }
+    vpb->pb.mix.vDeltaS = 0;
+
+    vpb->pb.mix.vAuxAS = ch->volASCur;
+    if (vpb->pb.mix.vAuxAS != 0) {
+        ctrl |= AX_MIXER_CTRL_AS;
+    }
+    vpb->pb.mix.vDeltaAuxAS = 0;
+
+    vpb->pb.mix.vAuxBS = ch->volBSCur;
+    if (vpb->pb.mix.vAuxBS != 0) {
+        ctrl |= AX_MIXER_CTRL_BS;
+    }
+    vpb->pb.mix.vDeltaAuxBS = 0;
+
+    vpb->pb.mix.vAuxCS = ch->volCSCur;
+    if (vpb->pb.mix.vAuxCS != 0) {
+        ctrl |= AX_MIXER_CTRL_CS;
+    }
+    vpb->pb.mix.vDeltaAuxCS = 0;
+
+    vpb->pb.mixerCtrl = ctrl;
+    vpb->sync |= AX_PBSYNC_MIXER_CTRL | AX_PBSYNC_MIX | AX_PBSYNC_VE;
+
+    memset(&vpb->pb.rmtMix, 0, sizeof(vpb->pb.rmtMix));
+    vpb->pb.rmtMixerCtrl = 0;
+    vpb->sync |= AX_PBSYNC_RMT_MIXER_CTRL | AX_PBSYNC_RMTMIX;
+
+    OSRestoreInterrupts(enabled);
+}
 
 void MIXReleaseChannel(AXVPB* vpb) {
     __MIXChannel[vpb->index].vpb = NULL;
@@ -247,4 +519,293 @@ void MIXSetFader(AXVPB* vpb, s32 fader) {
     ch->flags |= MIX_FLAG_MIX;
 }
 
-void MIXUpdateSettings() {}
+void MIXUpdateSettings(void)
+{
+    s32 i;
+    u32 ctrl;
+
+    if (!__init) {
+        return;
+    }
+
+    for (i = 0; i < __MIXMaxVoices; i++) {
+        MIXChannel* ch = &__MIXChannel[i];
+        AXVPB* vpb = ch->vpb;
+        s32 veChanged = 0;
+        s32 mixChanged = 0;
+
+        if (vpb == NULL) {
+            continue;
+        }
+
+        ctrl = 0;
+
+        if (ch->flags & MIX_FLAG_MAIN) {
+            ch->volMainCur = ch->volMainTgt;
+            veChanged = 1;
+            ch->flags &= ~MIX_FLAG_MAIN;
+        }
+
+        if (ch->flags & MIX_FLAG_INPUT) {
+            if (ch->flags & 0x8) {
+                ch->volMainTgt = 0;
+            } else {
+                ch->volMainTgt = MIXGetVolumeInline(ch->input);
+            }
+            veChanged = 1;
+            ch->flags = (ch->flags & ~MIX_FLAG_INPUT) | MIX_FLAG_MAIN;
+        }
+
+        if (ch->flags & MIX_FLAG_APPLY) {
+            ch->volLCur = ch->volLTgt;
+            ch->volRCur = ch->volRTgt;
+            ch->volSCur = ch->volSTgt;
+            ch->volALCur = ch->volALTgt;
+            ch->volARCur = ch->volARTgt;
+            ch->volASCur = ch->volASTgt;
+            ch->volBLCur = ch->volBLTgt;
+            ch->volBRCur = ch->volBRTgt;
+            ch->volBSCur = ch->volBSTgt;
+            ch->volCLCur = ch->volCLTgt;
+            ch->volCRCur = ch->volCRTgt;
+            ch->volCSCur = ch->volCSTgt;
+            mixChanged = 1;
+            ch->flags &= ~MIX_FLAG_APPLY;
+        }
+
+        if (ch->flags & MIX_FLAG_MIX) {
+            switch (__MIXSoundMode) {
+            case MIX_MODE_MONO:
+                ch->volLTgt = MIXGetVolumeInline(ch->fader + ch->vSL);
+                ch->volRTgt = MIXGetVolumeInline(ch->fader + ch->vSL);
+                ch->volSTgt = MIXGetVolumeInline(ch->fader + ch->vSR - 30);
+
+                if (ch->flags & 0x1) {
+                    ch->volALTgt = MIXGetVolumeInline(ch->auxA + ch->vSL);
+                    ch->volARTgt = MIXGetVolumeInline(ch->auxA + ch->vSL);
+                    ch->volASTgt = MIXGetVolumeInline(ch->auxA + ch->vSR - 30);
+                } else {
+                    ch->volALTgt = MIXGetVolumeInline(ch->auxA + ch->fader + ch->vSL);
+                    ch->volARTgt = MIXGetVolumeInline(ch->auxA + ch->fader + ch->vSL);
+                    ch->volASTgt = MIXGetVolumeInline(ch->auxA + ch->fader + ch->vSR - 30);
+                }
+
+                if (ch->flags & 0x2) {
+                    ch->volBLTgt = MIXGetVolumeInline(ch->auxB + ch->vSL);
+                    ch->volBRTgt = MIXGetVolumeInline(ch->auxB + ch->vSL);
+                    ch->volBSTgt = MIXGetVolumeInline(ch->auxB + ch->vSR - 30);
+                } else {
+                    ch->volBLTgt = MIXGetVolumeInline(ch->auxB + ch->fader + ch->vSL);
+                    ch->volBRTgt = MIXGetVolumeInline(ch->auxB + ch->fader + ch->vSL);
+                    ch->volBSTgt = MIXGetVolumeInline(ch->auxB + ch->fader + ch->vSR - 30);
+                }
+
+                if (ch->flags & 0x4) {
+                    ch->volCLTgt = MIXGetVolumeInline(ch->pan + ch->vSL);
+                    ch->volCRTgt = MIXGetVolumeInline(ch->pan + ch->vSL);
+                    ch->volCSTgt = MIXGetVolumeInline(ch->pan + ch->vSR - 30);
+                } else {
+                    ch->volCLTgt = MIXGetVolumeInline(ch->pan + ch->fader + ch->vSL);
+                    ch->volCRTgt = MIXGetVolumeInline(ch->pan + ch->fader + ch->vSL);
+                    ch->volCSTgt = MIXGetVolumeInline(ch->pan + ch->fader + ch->vSR - 30);
+                }
+                break;
+
+            case MIX_MODE_STEREO:
+            case 2:
+                ch->volLTgt = MIXGetVolumeInline(ch->fader + ch->vSL + ch->vL);
+                ch->volRTgt = MIXGetVolumeInline(ch->fader + ch->vSL + ch->vR);
+                ch->volSTgt = MIXGetVolumeInline(ch->fader + ch->vSR - 30);
+
+                if (ch->flags & 0x1) {
+                    ch->volALTgt = MIXGetVolumeInline(ch->auxA + ch->vSL + ch->vL);
+                    ch->volARTgt = MIXGetVolumeInline(ch->auxA + ch->vSL + ch->vR);
+                    ch->volASTgt = MIXGetVolumeInline(ch->auxA + ch->vSR - 30);
+                } else {
+                    ch->volALTgt = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->auxA);
+                    ch->volARTgt = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->auxA);
+                    ch->volASTgt = MIXGetVolumeInline(ch->fader + ch->auxA + ch->vSR - 30);
+                }
+
+                if (ch->flags & 0x2) {
+                    ch->volBLTgt = MIXGetVolumeInline(ch->auxB + ch->vSL + ch->vL);
+                    ch->volBRTgt = MIXGetVolumeInline(ch->auxB + ch->vSL + ch->vR);
+                    ch->volBSTgt = MIXGetVolumeInline(ch->auxB + ch->vSR - 30);
+                } else {
+                    ch->volBLTgt = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->auxB);
+                    ch->volBRTgt = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->auxB);
+                    ch->volBSTgt = MIXGetVolumeInline(ch->fader + ch->auxB + ch->vSR - 30);
+                }
+
+                if (ch->flags & 0x4) {
+                    ch->volCLTgt = MIXGetVolumeInline(ch->pan + ch->vSL + ch->vL);
+                    ch->volCRTgt = MIXGetVolumeInline(ch->pan + ch->vSL + ch->vR);
+                    ch->volCSTgt = MIXGetVolumeInline(ch->pan + ch->vSR - 30);
+                } else {
+                    ch->volCLTgt = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->pan);
+                    ch->volCRTgt = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->pan);
+                    ch->volCSTgt = MIXGetVolumeInline(ch->fader + ch->pan + ch->vSR - 30);
+                }
+                break;
+
+            case MIX_MODE_DPL2:
+                ch->volLTgt = MIXGetVolumeInline(ch->fader + ch->vSL + ch->vL);
+                ch->volRTgt = MIXGetVolumeInline(ch->fader + ch->vSL + ch->vR);
+                ch->volSTgt = MIXGetVolumeInline(ch->fader + ch->vSR + ch->vRL);
+                ch->volCLTgt = MIXGetVolumeInline(ch->fader + ch->vSR + ch->vRR);
+
+                if (ch->flags & 0x1) {
+                    ch->volALTgt = MIXGetVolumeInline(ch->auxA + ch->vSL + ch->vL);
+                    ch->volARTgt = MIXGetVolumeInline(ch->auxA + ch->vSL + ch->vR);
+                    ch->volASTgt = MIXGetVolumeInline(ch->auxA + ch->vSR + ch->vRL);
+                    ch->volCRTgt = MIXGetVolumeInline(ch->auxA + ch->vSR + ch->vRR);
+                } else {
+                    ch->volALTgt = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->auxA);
+                    ch->volARTgt = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->auxA);
+                    ch->volASTgt = MIXGetVolumeInline(ch->vSR + ch->vRL + ch->fader + ch->auxA);
+                    ch->volCRTgt = MIXGetVolumeInline(ch->vSR + ch->vRR + ch->fader + ch->auxA);
+                }
+
+                if (ch->flags & 0x2) {
+                    ch->volBLTgt = MIXGetVolumeInline(ch->auxB + ch->vSL + ch->vL);
+                    ch->volBRTgt = MIXGetVolumeInline(ch->auxB + ch->vSL + ch->vR);
+                    ch->volBSTgt = MIXGetVolumeInline(ch->auxB + ch->vSR + ch->vRL);
+                    ch->volCSTgt = MIXGetVolumeInline(ch->auxB + ch->vSR + ch->vRR);
+                } else {
+                    ch->volBLTgt = MIXGetVolumeInline(ch->vSL + ch->vL + ch->fader + ch->auxB);
+                    ch->volBRTgt = MIXGetVolumeInline(ch->vSL + ch->vR + ch->fader + ch->auxB);
+                    ch->volBSTgt = MIXGetVolumeInline(ch->vSR + ch->vRL + ch->fader + ch->auxB);
+                    ch->volCSTgt = MIXGetVolumeInline(ch->vSR + ch->vRR + ch->fader + ch->auxB);
+                }
+
+                ctrl |= 0x80000000;
+                break;
+            }
+
+            mixChanged = 1;
+            ch->flags = (ch->flags & ~MIX_FLAG_MIX) | MIX_FLAG_APPLY;
+        }
+
+        if (veChanged) {
+            vpb->pb.ve.currentVolume = ch->volMainCur;
+            vpb->pb.ve.currentDelta =
+                (s16)((ch->volMainTgt - ch->volMainCur) / 96);
+            vpb->sync |= AX_PBSYNC_VE;
+        }
+
+        if (mixChanged) {
+            vpb->pb.mix.vL = ch->volLCur;
+            if (ch->volLCur != 0) {
+                ctrl |= AX_MIXER_CTRL_L;
+            }
+            vpb->pb.mix.vDeltaL = (s16)((ch->volLTgt - ch->volLCur) / 96);
+            if (vpb->pb.mix.vDeltaL != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA;
+            }
+
+            vpb->pb.mix.vR = ch->volRCur;
+            if (ch->volRCur != 0) {
+                ctrl |= AX_MIXER_CTRL_R;
+            }
+            vpb->pb.mix.vDeltaR = (s16)((ch->volRTgt - ch->volRCur) / 96);
+            if (vpb->pb.mix.vDeltaR != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA;
+            }
+
+            vpb->pb.mix.vAuxAL = ch->volALCur;
+            if (ch->volALCur != 0) {
+                ctrl |= AX_MIXER_CTRL_AL;
+            }
+            vpb->pb.mix.vDeltaAuxAL = (s16)((ch->volALTgt - ch->volALCur) / 96);
+            if (vpb->pb.mix.vDeltaAuxAL != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_A;
+            }
+
+            vpb->pb.mix.vAuxAR = ch->volARCur;
+            if (ch->volARCur != 0) {
+                ctrl |= AX_MIXER_CTRL_AR;
+            }
+            vpb->pb.mix.vDeltaAuxAR = (s16)((ch->volARTgt - ch->volARCur) / 96);
+            if (vpb->pb.mix.vDeltaAuxAR != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_A;
+            }
+
+            vpb->pb.mix.vAuxBL = ch->volBLCur;
+            if (ch->volBLCur != 0) {
+                ctrl |= AX_MIXER_CTRL_BL;
+            }
+            vpb->pb.mix.vDeltaAuxBL = (s16)((ch->volBLTgt - ch->volBLCur) / 96);
+            if (vpb->pb.mix.vDeltaAuxBL != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_B;
+            }
+
+            vpb->pb.mix.vAuxBR = ch->volBRCur;
+            if (ch->volBRCur != 0) {
+                ctrl |= AX_MIXER_CTRL_BR;
+            }
+            vpb->pb.mix.vDeltaAuxBR = (s16)((ch->volBRTgt - ch->volBRCur) / 96);
+            if (vpb->pb.mix.vDeltaAuxBR != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_B;
+            }
+
+            vpb->pb.mix.vAuxCL = ch->volCLCur;
+            if (ch->volCLCur != 0) {
+                ctrl |= AX_MIXER_CTRL_CL;
+            }
+            vpb->pb.mix.vDeltaAuxCL = (s16)((ch->volCLTgt - ch->volCLCur) / 96);
+            if (vpb->pb.mix.vDeltaAuxCL != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_C;
+            }
+
+            vpb->pb.mix.vAuxCR = ch->volCRCur;
+            if (ch->volCRCur != 0) {
+                ctrl |= AX_MIXER_CTRL_CR;
+            }
+            vpb->pb.mix.vDeltaAuxCR = (s16)((ch->volCRTgt - ch->volCRCur) / 96);
+            if (vpb->pb.mix.vDeltaAuxCR != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_C;
+            }
+
+            vpb->pb.mix.vS = ch->volSCur;
+            if (ch->volSCur != 0) {
+                ctrl |= AX_MIXER_CTRL_S;
+            }
+            vpb->pb.mix.vDeltaS = (s16)((ch->volSTgt - ch->volSCur) / 96);
+            if (vpb->pb.mix.vDeltaS != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_S;
+            }
+
+            vpb->pb.mix.vAuxAS = ch->volASCur;
+            if (ch->volASCur != 0) {
+                ctrl |= AX_MIXER_CTRL_AS;
+            }
+            vpb->pb.mix.vDeltaAuxAS = (s16)((ch->volASTgt - ch->volASCur) / 96);
+            if (vpb->pb.mix.vDeltaAuxAS != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_AS;
+            }
+
+            vpb->pb.mix.vAuxBS = ch->volBSCur;
+            if (ch->volBSCur != 0) {
+                ctrl |= AX_MIXER_CTRL_BS;
+            }
+            vpb->pb.mix.vDeltaAuxBS = (s16)((ch->volBSTgt - ch->volBSCur) / 96);
+            if (vpb->pb.mix.vDeltaAuxBS != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_BS;
+            }
+
+            vpb->pb.mix.vAuxCS = ch->volCSCur;
+            if (ch->volCSCur != 0) {
+                ctrl |= AX_MIXER_CTRL_CS;
+            }
+            vpb->pb.mix.vDeltaAuxCS = (s16)((ch->volCSTgt - ch->volCSCur) / 96);
+            if (vpb->pb.mix.vDeltaAuxCS != 0) {
+                ctrl |= AX_MIXER_CTRL_DELTA_CS;
+            }
+
+            vpb->pb.mixerCtrl = ctrl;
+            vpb->sync |= AX_PBSYNC_MIXER_CTRL | AX_PBSYNC_MIX;
+        }
+
+        __MIXRmtUpdateSettings(i, vpb);
+    }
+}

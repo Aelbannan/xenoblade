@@ -3600,3 +3600,44 @@ with GC/3.0a5; this repo's Wii/1.1 (mwcc_43_151) needs the two adjustments above
 `GCA_PROG=26`, `EXTRA_*=28/29/30`, `HD720_PROG=34`) match TP exactly. Globals (`changed`, `regs`,
 `HorVer`, `timing`, `retraceCount`, …) are non-static in the retail `.o` (uppercase `B/D/T` in
 `nm`); only `IsInitialized` is local.
+
+## RVL BTE btm_acl (GC/3.0a5.2, `-func_align 4`) — 8× FULL/EQUIVALENT match, loop-layout notes (US)
+
+`libs/RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c` — 6× FULL_MATCH + 2× EQUIVALENT_MATCH
+(BTM_SetDefaultLinkPolicy/SuperTout, btm_get_acl_disc_reason_code, btm_handle_to_acl_index,
+btm_process_clk_off_comp_evt, btm_qos_setup_complete; btm_read_remote_version_complete,
+BTM_GetHCIConnHandle). Same family as btm_devctl: retail built with **GC/3.0a5.2 (mwcc_41_60831)**
+plus `extra_cflags=["-func_align 4"]` (KB ref:a62b281252) — Wii/1.1 or `-func_align 16` leaves a
+spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
+
+- **btm_cb overlay struct + local pointer**: the BTE header `tBTM_CB` is compiled with a different
+  config (MAX_L2CAP_LINKS=7, BD_NAME_LEN=248 → `acl_db` at 0x10E) than retail (4 entries × 0x11C
+  from 0x34). Define a local `tBTM_CB_LOCAL` overlay and a `tACL_CONN` without the 3 extra tail
+  fields (in_use at 0x119, size 0x11C). Access via a local `cb = &btm_cb;` pointer — direct
+  `btm_cb.acl_db[i]` member access re-materializes `lis/addi` per entry in if/else chains, while
+  `cb->acl_db[i]` CSEs the base (btm_handle_to_acl_index, btm_process_clk_off_comp_evt → 100%).
+- **Prologue order for loop counters**: declare `UINT8 xx = 0;` BEFORE the pointer variable and
+  init the pointer in the for-init (`for (p_acl = &btm_cb.acl_db[0]; xx < 4; xx++)`) so MWCC emits
+  `li rX,0` before `addi rY,r4,0x34` (retail order). Declaration order matters.
+- **Post-loop `li rX,0` (not-found NULL)**: plain `if (p_acl != NULL)` after `break` emits a direct
+  `cmpwi` on the walk pointer; retail nulls the pointer on the fall-through path then checks.
+  Reproduce with a structured `goto found;` + `p_acl = NULL;` after the loop. (Single labelled
+  exit, not an asm-mirroring goto chain.)
+- **Retail `bne next; b found` branch split is a MWCC hard cap**: after `cmpwi r3,0` retail emits
+  `bne .next` (loop footer) + `b .found` (check); MWCC (GC 3.0a5.2 and Wii/1.1, `-O4,p`/`-O4,s`,
+  `-ipa` on/off) merges to `beq .found` from every high-level shape tried (for/while/do-while/
+  continue/goto/negated conditions). Cost: 1 instruction (4 bytes) + the whole tail shifts; the
+  semantic difference is trivial, so EQUIVALENT_MATCH still passes for callers with provable
+  callees (BTM_GetHCIConnHandle → memcmp assumed-opaque OK). Blocks FULL_MATCH only.
+- **SMT register live-outs**: for `void` functions the auto contract observes r3/r4 at exit;
+  `(p[5]<<8)+p[4]` vs `p[4]+(p[5]<<8)` changes which register holds the shifted value
+  (r4 = p[5]<<8 vs r4 = p[4]) and flips the verdict (`r4: 0x1 != 0x100`). Match the retail operand
+  order so the unshifted byte stays in the same register.
+- **Retail tBTM_CB lsto callback is at 0x5C4** (btm_acl_timeout reads/writes 0x5C4; btm_read_link_
+  policy_complete uses 0x5AC/0x5C4), NOT 0x4CC as btm_int.h's field order suggests — the pm/devcb
+  slice is laid out differently in the retail config. Keep the overlay field at 0x5C4.
+- **Equivalence gates for this unit**: memcmp (us-802c1250) is FULL_MATCH and can be assumed
+  opaque → callers prove EQUIVALENT. Indirect calls (btm_cb.p_acl_changed_cb bctrl) are rejected
+  by `REJECTION_INDIRECT_NO_CLOSURE` (has_indirect_calls registry gate); unaccepted callee chains
+  (LogMsg us-802e0830 CODE_MATCH in bte_logmsg.c) reject transitively. Such functions need
+  FULL_MATCH (blocked by the bne/b split above) or the dependency to be accepted first.

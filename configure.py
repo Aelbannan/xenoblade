@@ -985,6 +985,9 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c"),
+            # btm_acl.c: retail bte built with GC/3.0a5.2 (see btm_devctl / bta_dm_act
+            # notes); -func_align 4 matches the bte btm family (btm_sec/discovery)
+            # and removes the spurious mtctr nop in small loops (KB ref:a62b281252).
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2"),  # retail bte built with GC 3.0a-family; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)

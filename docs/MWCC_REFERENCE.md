@@ -125,6 +125,19 @@ The policy exception is recorded in the target attempt log with `policy_exceptio
 
 
 
+## RVL_SDK bte/gki gki_buffer.c — 10/10 FULL_MATCH, `-func_align 16` + helper-inline keys (US, mwcc_43_151 `-O4,p`)
+
+All 10 targets in `RVL_SDK/src/revolution/bte/gki/gki_buffer.c` matched 100% (GKI_init_q, gki_init_free_queue, GKI_getpoolbuf, GKI_freebuf, GKI_read_mbox, GKI_enqueue, GKI_enqueue_head, GKI_dequeue, GKI_remove_from_queue, GKI_delete_pool).
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `GKI_delete_pool` decomp 24B short: fused `--` (single `stb` reusing the loop test's `total-1`) and no `or r7,r31,r31` base copy | Original Broadcom GKI source puts the pool_list shift loops in a separate `static void gki_remove_from_pool_list(UINT8 pool_id)` (inlined by MWCC `-inline auto`); the caller-side `p_cb->curr_total_no_of_pools--` is then a *different function* and MWCC does not CSE it into the loop test — it emits `addis r4,r31,3; lbz r3; subi r0; stb r0` (fresh reload) and allocates the loop base as a copy (`or r7,r31,r31` after GKI_os_free) | Write the loops as the original static helper and call it from `GKI_delete_pool`; keep `p_cb->curr_total_no_of_pools--` in the caller. Do NOT inline the loops by hand — hand-inlined loops fuse the `--` and drop the base copy |
+| `GKI_delete_pool` missing the `ori r0,r0,0` (nop) before the loop head (loop head must sit at rel 0xC0, 16-aligned) | gki_buffer.c retail is compiled with `-func_align 16` (not 4); MWCC pads the jump-to-test with one nop so the loop head lands 16-aligned. The btm/l2cap bte families need `-func_align 4`, but gki does NOT | Add `-func_align 16` to the `Object(...)` in configure.py. Verified: all 10 targets + gki_buffer_init/GKI_getbuf/GKI_get_buf_size/GKI_getfirst/GKI_getnext/GKI_queue_is_empty stay at 0 mismatches; only non-target GKI_create_pool shifts 167→179 (still unmatching either way) |
+| `GKI_enqueue_head` decomp 8B short, `addis/addi` folded `v - MAGIC_NO` instead of `subf` | The `gki_magic_corrupted(magic)` macro folds the MAGIC_NO constant, so MWCC computes `v - exp` via `addis/addi` of the negated constant; retail materializes `exp` in a local first and emits the dual-`subf` | Copy the GKI_freebuf pattern: `UINT32 exp = MAGIC_NO; UINT32 v = *magic; bad = (v != exp);` with `UINT8 bad;` — do not use the macro in functions that need the dual-subf form |
+| `gki_init_free_queue` two `beq` (explicit `goto finish` + loop-entry test) vs retail single `beq` | The `if (total == 0) goto finish;` guard duplicates the loop-entry test `0 < total` | Remove the explicit guard; the `for (i = 0; i < total; i++)` entry test (single `beq` reusing the early `cmpwi`) covers it, and the loop's 8× CTR unroll + scalar remainder reproduce retail exactly |
+
+Also fixed: the file contained UTF-8 arrows/em-dashes (`→`, `—`, `×`) in comments which make `sjiswrap` fail the build (Shift JIS encoding errors); keep comments pure ASCII.
+
 ## RVL_SDK bte/btm TUs — retail alignment, layouts, and pool notes (US, mwcc_43_151 `-O4,p`)
 
 **Short string literals pool to `.sdata` (r13) under `-str reuse`** (bta_hh_act.c,
@@ -4069,3 +4082,20 @@ Matched `__a1_20_status_report` (88.6%), `__a1_35_data_type` (85.9%), `__a1_37_d
 5. **Debug strings past the main blob are separate .data objects.** Retail strings at array offsets 0x438 ("Received report 20") and 0x44C ("initialize attachment"…) are emitted as separate `.data` objects referenced via `lis@ha + addi@l` (2 instr), while all offsets ≤ 0x428 use the `(char*)__a1_input_reports_array + off` form (base register + 1 `addi`). Split the reconstruction's single `__wpadDebugStrings[0x4F0]` into `[0x3B8]` + `[0x14]` + `[0x124]` char arrays; reference the last two by symbol (2-instr form). `array + 0x438` from C emits `lis/addi/addi` (3 instr) — mismatch.
 6. **Switch chains reproduce the retail compare-chain + trailing case bodies layout** for sparse devId switches (`case 0,1,2,4,0x10,3` in source order); `if/else if` chains inline the bodies and misalign.
 7. **Acceptance blockers (framework-level):** all four targets' SMT equivalence is `inconclusive_unvalidated_callee` — WPADHIDParser callees `__parse_cl_data`/`__parse_dpd_data` (HIGH_MATCH, eq unsupported/timeout), `WPADiDecode` (COMPILES), `WPADiSendWriteDataCmd`/`WPADiSendReadData` (COMPILES in WPAD.c) are not ACCEPTED; `__a1_20`/`__wpadGetExtType` additionally have unresolved indirect `extensionCB` calls. Only FULL_MATCH (100%) bypasses; the remaining ~10-18% per function is MWCC scheduler register allocation (reload CSE, base-register hoisting, status register vs slot) not reachable from high-level C.
+
+## RVL_SDK kpad/KPAD (US, mwcc_43_151 `-O4,p`) — clamp/inline/FPR insights
+
+1. **Clamp must be a static function to get the retail's shared-fmr block layout.** The 2009 KPAD has no `clamp_acc` symbol — it is fully inlined. Write it exactly as TP's:
+   ```c
+   static f32 clamp_acc(f32 acc, f32 clamp) {
+       if (acc < 0.0f) { clamp = -clamp; if (acc < clamp) return clamp; }
+       else if (acc > clamp) return clamp;
+       return acc;
+   }
+   ```
+   Inlined, MWCC emits the retail's exact `bge L_use; b L_done; …; L_use: fmr; L_done:` shape with one shared `fmr`. Any inline `if/else` formulation instead collapses to `mfcr/rlwinm` or a two-fmr layout (2-3 extra instructions per clamp × 6 sites).
+2. **`ax = ax / f1` vs `ax /= f1` changes register allocation.** In `calc_acc_vertical`, the compound form kept `ax` in callee-saved `f31` (2 reg-swaps vs retail); the explicit assignment form moved it to volatile `f2` — byte-identical.
+3. **Adjacent `fmt == 4 || fmt == 5` folds to `(u8)(fmt-4) <= 1`** (`addi; clrlwi; cmplwi; bgt`) — the retail kept per-value `cmplwi; beq` pairs. The fold is defeated by the inverted early-exit `if (fmt != 4 && fmt != 5) goto skip;` (per-value `beq`/`bne`); a plain `if (A || B)` / nested `switch {case 4: case 5:}` / `(u32)` casts all still fold. Non-adjacent sets (e.g. `{2,5,8,0xb}`) never fold.
+4. **u16→f64 conversion tricks differ by operand provenance:** the retail's running average uses the s16 trick (xoris + `2^52+0x8000`) for the *multiplier* and the u16 trick (plain `stw`, `2^52`) for the *divisor*. Reproduce by writing `count = kp_wbc_ave_sample_count + 1; kp_wbc_ave_sample_count = count; … (ave * (count - 1) + sample) / count;` — the `subi`/`clrlwi` provenance drives MWCC's trick choice; the naive `count; count+1` form inverts the tricks (wrong constants in the diff).
+5. **Sparse `switch` cases reproduce retail compare chains; `slot = slot * 2` after a switch folds into the case `li` values only in specific shapes** — the retail KPADiSamplingCallback DPD table folds `slot*2` into the `li` (one `rlwinm` at the table access); source `slot *= 2` as a separate statement emits an extra early `slwi` (2-instruction schedule diff, no semantic change).
+6. **Framework acceptance notes:** indirect-call targets (function-pointer callbacks) can only reach EQUIVALENT_MATCH as FULL_MATCH (100%) — the certified-callee context fails closed on `has_indirect_calls`. SMT equivalence for 295-instruction FP-heavy functions (sqrt calls, f64 math) exceeds the 900s solver cap under concurrent-agent load; `--contract memory` does not reduce the formula-construction cost. The renaming witness is rejected by `psq_st` prologues (reject-list) and mnemonic diffs.

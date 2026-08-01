@@ -953,7 +953,7 @@ config.libs = [
     DolphinLib(
         "bte",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/gki/gki_buffer.c", extra_cflags=["-func_align 4"]),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/gki/gki_buffer.c", extra_cflags=["-func_align 16"]),
             # Default -func_align 16: inter-fn pad + first-loop nop in GKI_update_timer_list (8/8 FULL).
             Object(MatchingFor("us"), "RVL_SDK/src/revolution/bte/gki/gki_time.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/gki/gki_ppc.c"),

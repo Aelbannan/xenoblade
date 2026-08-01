@@ -341,7 +341,7 @@ static BtmSecServRec *btm_sec_find_next_serv(BtmSecServRec *p_cur)
 /*  btm_sec_find_mx_serv -- find the service record matching the       */
 /*  multiplexer protocol and channel.                                  */
 /* ------------------------------------------------------------------ */
-static BtmSecServRec *btm_sec_find_mx_serv(UINT8 is_originator, UINT16 psm,
+static BtmSecServRec *btm_sec_find_mx_serv(UINT16 psm, UINT8 is_originator,
                                            UINT32 mx_proto_id, UINT32 mx_chan_id)
 {
     int i;
@@ -950,7 +950,7 @@ UINT8 btm_sec_mx_access_request(BD_ADDR bd_addr, UINT16 psm, BOOLEAN is_originat
     }
 
     /* Find the service record for the PSM and protocol */
-    p_srec = btm_sec_find_mx_serv(is_originator, psm, mx_proto_id, mx_chan_id);
+    p_srec = btm_sec_find_mx_serv(psm, is_originator, mx_proto_id, mx_chan_id);
 
     if (p_srec == NULL)
     {

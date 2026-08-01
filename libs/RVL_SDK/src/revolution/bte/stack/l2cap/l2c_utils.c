@@ -603,14 +603,19 @@ void l2cu_send_peer_config_rej (tL2C_CCB *p_ccb, UINT8 *p_data, UINT16 data_len,
 
     p_buf->offset = 0;
     p_end = p_data + data_len;
-    p = p_start = (UINT8 *)(p_buf + 1);
+    p = (UINT8 *)(p_buf + 1);
 
     UINT16_TO_STREAM (p, p_ccb->p_lcb->handle | 0x2000);
+    p_start = p;
+
+    /* Signalling header; the ACL length field (p_start[0..1]) is filled in
+     * below once the unknown options have been copied back. */
+    p = p_start + 2;
     UINT16_TO_STREAM (p, rej_len + 10);
-    UINT8_TO_STREAM (p, L2CAP_SIGNALLING_CID);
-    UINT8_TO_STREAM (p, 0);
-    UINT8_TO_STREAM (p, L2CAP_CMD_CONFIG_RSP);
-    UINT8_TO_STREAM (p, p_ccb->remote_id);
+    UINT8_TO_STREAM  (p, L2CAP_SIGNALLING_CID);
+    UINT8_TO_STREAM  (p, 0);
+    UINT8_TO_STREAM  (p, L2CAP_CMD_CONFIG_RSP);
+    UINT8_TO_STREAM  (p, p_ccb->remote_id);
     UINT16_TO_STREAM (p, rej_len + 6);
     UINT16_TO_STREAM (p, p_ccb->remote_cid);
     UINT16_TO_STREAM (p, 0);
@@ -619,30 +624,36 @@ void l2cu_send_peer_config_rej (tL2C_CCB *p_ccb, UINT8 *p_data, UINT16 data_len,
     /* Copy the unknown options back to the peer. */
     while (p_data < p_end)
     {
-        UINT8 opt_type = p_data[0];
         UINT8 opt_len  = p_data[1];
+        UINT8 opt_type = p_data[0];
 
-        if (((opt_type & 0x7F) >= 1) && ((opt_type & 0x7F) < 4))
+        switch (opt_type & 0x7F)
         {
-            p_data = p_data + opt_len + 2;
-            continue;
+            case L2CAP_CFG_TYPE_MTU:
+            case L2CAP_CFG_TYPE_FLUSH_TOUT:
+            case L2CAP_CFG_TYPE_QOS:
+                p_data += opt_len + 2;
+                continue;
+            default:
+                break;
         }
 
         {
-            UINT16 opt_size = (UINT16)(opt_len + 2);
+            INT32 opt_size = opt_len + 2;
 
-            if (opt_size > data_len)
+            if (opt_size <= data_len)
+            {
+                if (!(opt_type & 0x80))
+                {
+                    memcpy (p, p_data, opt_size);
+                    p += opt_size;
+                }
+                p_data += opt_size;
+            }
+            else
             {
                 p_data = p_end;
-                continue;
             }
-
-            if (!(opt_type & 0x80))
-            {
-                memcpy (p, p_data, opt_size);
-                p += opt_size;
-            }
-            p_data += opt_size;
         }
     }
 
@@ -1031,10 +1042,15 @@ void l2cu_process_peer_cfg_rsp (tL2C_CCB *p_ccb, tL2C_CFG_INFO *p_cfg)
 
 void l2cu_process_our_cfg_req (tL2C_CCB *p_ccb, tL2C_CFG_INFO *p_cfg)
 {
+    tL2C_LCB *p_lcb;
+
     if (p_cfg->mtu_present)
     {
-        p_ccb->in_mtu = p_cfg->mtu;
-        if (p_cfg->mtu > L2CAP_MAX_MTU)
+        UINT16 mtu = p_cfg->mtu;
+
+        p_ccb->in_mtu = mtu;
+
+        if (mtu > L2CAP_MAX_MTU)
         {
             p_cfg->mtu    = L2CAP_MAX_MTU;
             p_ccb->in_mtu = L2CAP_MAX_MTU;
@@ -1047,10 +1063,11 @@ void l2cu_process_our_cfg_req (tL2C_CCB *p_ccb, tL2C_CFG_INFO *p_cfg)
     if (p_cfg->flush_to_present && (p_cfg->flush_to != 0))
     {
         p_ccb->our_flush_to = p_cfg->flush_to;
+        p_lcb = p_ccb->p_lcb;
 
-        if (p_cfg->flush_to < p_ccb->p_lcb->flush_tout)
+        if (p_cfg->flush_to < p_lcb->flush_tout)
         {
-            p_ccb->p_lcb->flush_tout = p_cfg->flush_to;
+            p_lcb->flush_tout = p_cfg->flush_to;
 
             if (p_cfg->flush_to <= 0x4FF)
             {
@@ -1058,7 +1075,7 @@ void l2cu_process_our_cfg_req (tL2C_CCB *p_ccb, tL2C_CFG_INFO *p_cfg)
                 BT_HDR *p_buf = (BT_HDR *)GKI_getpoolbuf (2);
 
                 if (p_buf != NULL)
-                    btsnd_hcic_write_auto_flush_tout (p_buf, p_ccb->p_lcb->handle, hci_flush_tout);
+                    btsnd_hcic_write_auto_flush_tout (p_buf, p_lcb->handle, hci_flush_tout);
             }
         }
     }

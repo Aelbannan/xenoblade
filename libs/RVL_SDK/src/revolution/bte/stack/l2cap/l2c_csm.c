@@ -92,10 +92,14 @@ typedef struct t_l2c_ccb {
     /* remaining fields omitted — not referenced by this TU */
 } tL2C_CCB;
 
-/* L2CAP control block (global `l2cb`). Only the trace level is used here. */
+/* L2CAP control block (global `l2cb`). Full retail size 0x7E8 — MWCC picks
+ * sda21 addressing for small extern types (assumes sbss), so the struct must
+ * be declared at the full retail size to get the retail lis@ha/lbz@l pair
+ * (see MWCC_REFERENCE sda21/extern-size note). */
 typedef struct {
-    UINT8   l2cap_trace_level;  /* 0x00 */
-    /* remaining fields omitted — not referenced by this TU */
+    UINT8   l2cap_trace_level;  /* 0x000 */
+    UINT8   is_register;        /* 0x001 */
+    UINT8   pad[0x7E8 - 2];     /* remainder of the 0x7E8-byte control block */
 } tL2C_CB;
 
 /*******************************************************************************

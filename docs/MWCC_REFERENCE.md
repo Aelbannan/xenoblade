@@ -42,8 +42,9 @@ register-operand `ASM()` blocks. Findings that transfer to any PS target:
   Writing explicit registers (`0x2c(r3)` instead of `0x2c(pMtx)`) avoids it
   (the parameter is in r3 by ABI).
 - **`li r0, X@sda21` cannot be emitted by MWCC 3.0a5.2 asm** — the assembler
-  accepts only `@h/@ha/@l/@loword/@hiword`. The compiler *does* emit
-  `addi rX, 0, X@sda21` (R_PPC_EMB_SDA21) for a C++ pointer init
+  accepts only `@h/@ha/@l/@loword/@hiword`; probed `@sdarel`/`@sda21`/`@sda`
+  variants all fail with error 33135 `<string not found>`. The compiler *does*
+  emit `addi rX, 0, X@sda21` (R_PPC_EMB_SDA21) for a C++ pointer init
   (`register const f32* p = &sdata2sym[0];`), but only in register-operand
   (non-asm-body) code, which for this kernel adds a frame-pointer save and
   reschedules the PS stream. `MTX34RotXYZFIdx` (retail `li r0,lbl_eu_80669E50@sda21`)

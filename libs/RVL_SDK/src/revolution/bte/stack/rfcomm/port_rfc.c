@@ -812,11 +812,11 @@ void port_rfc_closed(tPORT* p_port, u8 result)
     }
 
     if (state != PORT_STATE_CLOSING && state != PORT_STATE_CLOSED) {
-        u8 prev = p_port->modem_signal;
-        u8 cleared = prev & 0xF4;
+        u8 prev;
         p_port->line_status |= 0x10;
-        p_port->modem_signal = cleared;
-        event = port_get_signal_changes(p_port, prev, cleared);
+        prev = p_port->modem_signal;
+        p_port->modem_signal = prev & ~0x0B;
+        event = port_get_signal_changes(p_port, prev, p_port->modem_signal);
         if (p_port->mask & PORT_EV_ERR)
             event |= PORT_EV_ERR;
     }

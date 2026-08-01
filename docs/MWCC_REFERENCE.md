@@ -1808,6 +1808,13 @@ The buffer-param builders hoist **all** `li`s before the first store.
   the multi-reg latency-fill pattern (~36%). Volatile/pointer/explicit
   sequencing does not force `filter[0]` before `fmuls`. Soft-cap until a
   non-patch approach appears; no `.text` `insn_patches`.
+  Re-verified 2026-08-02 on the Dpl2 twin (`AXFXReverbStdExpGetMemSizeDpl2`,
+  `us-802db010`, `* 16` → `slwi`): same 13/24 mm (45.7%) with the same
+  six-local shape — add chain + `slwi` + epilogue byte-identical, 11
+  structural order + 2 reg-swap. New ruled-out axes: `-ipa file` vs none is
+  byte-identical; a pointer-base form (`const u32* early/filter`) and a
+  loads-first statement order are also byte-identical to the six-local output;
+  `-O3`/`-O2` regress to 21 mm (~36%).
 - **`Callback` (~98.9%)**: declare long-lived coef locals **before** loop temps
   in order `lpfCoef2, earlyCoef, combCoef0/1, allpassCoef, lpfCoef1,
   earlyGain, fusedGain` so MWCC homes them to **f0..f7** and emits retail's

@@ -661,8 +661,10 @@ void read_kpad_acc(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
         calc_acc_horizon(kp);
         calc_acc_vertical(kp);
 
-        if (uwp->u.core.err == 0 && uwp->u.core.dev == 1 &&
-            (uwp->fmt == WPAD_FMT_FS_BTN_ACC || uwp->fmt == WPAD_FMT_FS_BTN_ACC_DPD)) {
+        if (uwp->u.core.err == 0 && uwp->u.core.dev == 1) {
+            if (uwp->fmt != WPAD_FMT_FS_BTN_ACC && uwp->fmt != WPAD_FMT_FS_BTN_ACC_DPD) {
+                goto skip_fs;
+            }
             t.x = clamp_acc((f32)(s32)(-uwp->u.fs.fsAccX) * kp->fs_acc_scale_x, kp_fs_acc_max);
             t.y = clamp_acc((f32)(s32)(-uwp->u.fs.fsAccZ) * kp->fs_acc_scale_z, kp_fs_acc_max);
             t.z = clamp_acc((f32)(s32)uwp->u.fs.fsAccY * kp->fs_acc_scale_y, kp_fs_acc_max);
@@ -686,6 +688,7 @@ void read_kpad_acc(KPADInternal* kp, KPADUnifiedWpadStatus* uwp) {
             sp->ex_status.fs.acc_speed =
                 (f32)sqrt(vec.x * vec.x + vec.y * vec.y + vec.z * vec.z);
         }
+    skip_fs:
         break;
     }
     }

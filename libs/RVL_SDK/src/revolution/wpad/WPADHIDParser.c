@@ -176,7 +176,7 @@ static u8 _recv_3e[WPAD_MAX_CONTROLLERS];
 static u8 _recv_3f[WPAD_MAX_CONTROLLERS];
 
 // Raw extension data and its "invalid" marker
-static u8 _wpadExtRawData[0x10];
+static u8 _wpadExtRawData[21];
 static const u8 _cExtInvalidData[21] = {
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
     0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -966,34 +966,464 @@ void __a1_22_ack(u8 chan, u8* data, WPADStatusEx* status) {
 // Placeholder stubs for reports not yet matched
 //
 
-void __wpadAbortInitExtension(s32 chan, s32 result) {}
+void __wpadAbortInitExtension(s32 chan, s32 result) {
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+    u8 devType;
+
+    if (result != 0) {
+        WPADiClearQueue(&cb->extCmdQueue);
+        cb->UNK_0x98D = 0;
+
+        if (result == -1) {
+            devType = 0xFD;
+        } else if (cb->wpInfo.attach) {
+            if (_wpadExtInitRetryCnt[chan]++ < 0x20) {
+                WPADiClearQueue(&cb->extCmdQueue);
+                WPADiSendSetReportType(&cb->extCmdQueue, cb->dataFormat, cb->UNK_0x98E,
+                                       __wpadAbortInitExtension);
+                cb->UNK_0x98D = 1;
+                WPADiSendWriteDataCmd(&cb->extCmdQueue, 0x55, WM_REG_EXTENSION_F0,
+                                      __wpadAbortInitExtension);
+                WPADiSendWriteDataCmd(&cb->extCmdQueue, 0x0, WM_REG_EXTENSION_FB,
+                                      __wpadAbortInitExtension);
+                WPADiSendReadData(&cb->extCmdQueue, cb->wmReadDataBuf, 6, WM_REG_EXTENSION_FA,
+                                  __wpadAbortInitExtension);
+                return;
+            }
+            devType = 0xFC;
+        } else {
+            DEBUGPrint(WPAD_DBG_MSG(0x80));
+            WPADiSendSetReportType(&cb->extCmdQueue, cb->dataFormat, cb->UNK_0x98E, NULL);
+            devType = (u8)cb->dataFormat;
+        }
+
+        cb->devType = devType;
+        cb->UNK_0x990 = devType;
+        cb->UNK_0x991 = 0;
+
+        if (cb->extensionCB != NULL) {
+            cb->extensionCB(chan, devType);
+        }
+    }
+}
 
 void __wpadGetExtType(s32 chan, s32 err) {}
 
 s32 WPADiHIDParser(u8 port, u8* p_rpt) {
-    return 0;
+    WPADCB* cb = __rvl_p_wpadcb[port];
+    WPADStatusEx* status;
+    s32 result = WPAD_ERR_OK;
+
+    if ((u8)(p_rpt[0] + 0xE0) <= 0x1F) {
+        BOOL enable = OSDisableInterrupts();
+
+        cb = __rvl_p_wpadcb[port];
+        status = (WPADStatusEx*)cb->rxBufs[cb->rxBufIndex];
+
+        if (p_rpt[0] != RPTID_DATA_BTN_ACC_DPD18_1 && p_rpt[0] != RPTID_DATA_BTN_ACC_DPD18_2) {
+            memset(status, 0, RX_BUFFER_SIZE);
+        }
+
+        __a1_input_reports_array[p_rpt[0] - 0x20](port, p_rpt, status);
+
+        if (cb->handshakeFinished == 0) {
+            status->err = WPAD_ERR_INVALID;
+        }
+
+        if (p_rpt[0] != RPTID_DATA_BTN_ACC_DPD18_1 && p_rpt[0] != RPTID_DATA_BTN_ACC_DPD18_2) {
+            cb->rxBufIndex = !cb->rxBufIndex;
+        }
+
+        OSRestoreInterrupts(enable);
+        WPADiExcludeButton(port);
+        WPADiCopyOut(port);
+    } else {
+        result = WPAD_ERR_NO_CONTROLLER;
+    }
+
+    return result;
 }
 
 void __a1_20_status_report(u8 chan, u8* data, WPADStatusEx* status) {}
 
-void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {}
+void __a1_21_user_data(u8 chan, u8* data, WPADStatusEx* status) {
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+    BOOL enable;
+    u16 addr;
+    u16 dataAddr;
+    u8 length;
+    s16 offset;
 
-void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {}
+    enable = OSDisableInterrupts();
 
-void __a1_33_data_type(u8 chan, u8* data, WPADStatusEx* status) {}
+    if ((data[3] & 0x0F) != 0) {
+        DEBUGPrint(WPAD_DBG_MSG(0x464));
+        cb->wmReadHadError = -1;
 
-void __a1_34_data_type(u8 chan, u8* data, WPADStatusEx* status) {}
+        if (cb->cmdBlkCB != NULL) {
+            if (cb->extensionCB != cb->cmdBlkCB) {
+                cb->cmdBlkCB(chan, WPAD_ERR_TRANSFER);
+            }
+            cb->cmdBlkCB = NULL;
+        }
+        cb->status = 0;
+    }
+
+    addr = (u16)cb->wmReadAddress;
+    dataAddr = (u16)((data[4] << 8) | data[5]);
+    length = (u8)((data[3] >> 4) + 1);
+    offset = (s16)(dataAddr - addr);
+
+    if (dataAddr < addr || dataAddr > (u16)(addr + cb->wmReadLength)) {
+        DEBUGPrint(WPAD_DBG_MSG(0x500));
+    } else {
+        memcpy(cb->wmReadDataPtr + offset, data + 6, length);
+
+        if ((u16)(addr + cb->wmReadLength) == dataAddr + length) {
+            s32 err = (cb->wmReadHadError >> 31) & -3;
+
+            DEBUGPrint(WPAD_DBG_MSG(0x47C), cb->wmReadAddress);
+            DEBUGPrint(WPAD_DBG_MSG(0x490), cb->wmReadLength);
+            DEBUGPrint(WPAD_DBG_MSG(0x4A0), cb->wmReadAddress >> 16, err);
+            DEBUGPrint(WPAD_DBG_MSG(0x4AC), cb->UNK_0x98D);
+
+            if ((cb->wmReadAddress >> 16) == 0x4A4) {
+                DEBUGPrint(WPAD_DBG_MSG(0x4B8));
+
+                if ((u8)(cb->UNK_0x98D - 2) <= 1) {
+                    DEBUGPrint(WPAD_DBG_MSG(0x4D8));
+                    DEBUGPrint(WPAD_DBG_MSG(0x4E4), length, addr);
+                    WPADiDecode(chan, cb->wmReadDataPtr, length, addr);
+                }
+            }
+
+            if ((cb->wmReadAddress == 0 && cb->configIndex == 0) ||
+                (cb->wmReadAddress == 0x176C && cb->configIndex == 1)) {
+                __wpadGetDevConfig(chan, err);
+            }
+            if (cb->wmReadAddress == WM_REG_EXTENSION_CONFIG) {
+                __wpadGetExtConfig(chan, err);
+            }
+            if (cb->wmReadAddress == WM_REG_EXTENSION_FA) {
+                __wpadGetExtType(chan, err);
+            }
+            if (cb->wmReadAddress == WM_ADDR_MEM_GAME_INFO_0) {
+                __wpadGetGameInfo(chan, err, 0);
+            }
+            if (cb->wmReadAddress == WM_ADDR_MEM_GAME_INFO_1) {
+                __wpadGetGameInfo(chan, err, 1);
+            }
+
+            if (cb->cmdBlkCB != NULL) {
+                cb->cmdBlkCB(chan, err);
+                cb->cmdBlkCB = NULL;
+            }
+            cb->status = 0;
+        }
+    }
+
+    memcpy(status, cb->rxBufs[!cb->rxBufIndex], RX_BUFFER_SIZE);
+
+    status->button =
+        (u16)(((u16)((data[2] << 8) & 0xFF00) | (u16)(data[1] & 0xFF)) & HID_WPAD_BUTTON_MASK) |
+        (u16)(status->button & 0x6000);
+
+    if (status->dev != cb->devType) {
+        status->dev = cb->devType;
+        status->err = WPAD_ERR_INVALID;
+    }
+
+    OSRestoreInterrupts(enable);
+}
+
+void __a1_36_data_type(u8 chan, u8* data, WPADStatusEx* status) {
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+
+    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
+    status->err = WPAD_ERR_INVALID;
+    status->dev = cb->devType;
+
+    cb->wpInfo.nearempty = (data[1] >> 7) & 1;
+
+    __parse_dpd_data(chan, &status, cb->currentDpdCommand, data + 3, 10);
+
+    memcpy(_wpadExtRawData, data + 13, 9);
+    WPADiDecode(chan, data + 13, 9, 0);
+
+    if (cb->wpInfo.attach && memcmp(_wpadExtRawData, _cExtInvalidData, 9) == 0 &&
+        status->err == 0) {
+        status->err = WPAD_ERR_CORRUPTED;
+    }
+}
+
+void __a1_3d_data_type(u8 chan, u8* data, WPADStatusEx* status) {
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+
+    if (cb->dataFormat == 0xE) {
+        status->err = WPAD_ERR_OK;
+    } else {
+        status->err = WPAD_ERR_INVALID;
+    }
+    status->dev = cb->devType;
+
+    memcpy(_wpadExtRawData, data + 1, 21);
+    WPADiDecode(chan, data + 1, 21, 0);
+
+    if (cb->wpInfo.attach) {
+        if (cb->devType == 0x4) {
+            __parse_vs_data(chan, &status, (u8)cb->dataFormat, data + 1, 21);
+        }
+
+        if (memcmp(_wpadExtRawData, _cExtInvalidData, 21) == 0 && status->err == 0) {
+            status->err = WPAD_ERR_CORRUPTED;
+        }
+    }
+}
+
+void __a1_32_data_type(u8 chan, u8* data, WPADStatusEx* status) {
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+
+    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
+
+    if (cb->dataFormat == 0 || cb->dataFormat == 3 || cb->dataFormat == 6 ||
+        cb->dataFormat == 0xA) {
+        status->err = WPAD_ERR_OK;
+    } else {
+        status->err = WPAD_ERR_INVALID;
+    }
+    status->dev = cb->devType;
+
+    memcpy(_wpadExtRawData, data + 3, 8);
+    cb->wpInfo.nearempty = (data[1] >> 7) & 1;
+    WPADiDecode(chan, data + 3, 8, 0);
+
+    if (cb->wpInfo.attach) {
+        if (cb->devType == WPAD_DEV_FREESTYLE) {
+            ((WPADFSStatus*)status)->fsStickX = data[3];
+            ((WPADFSStatus*)status)->fsStickY = data[4];
+
+            ((WPADFSStatus*)status)->fsAccX =
+                (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((u16)(data[8] >> 2)) & (s16)0x0003))) -
+                (s16)cb->extConfig.u.fs.accX0g;
+            ((WPADFSStatus*)status)->fsAccY =
+                (s16)((s16)((s16)((s16)((s16)((s16)data[6]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((u16)(data[8] >> 4)) & (s16)0x0003))) -
+                (s16)cb->extConfig.u.fs.accY0g;
+            ((WPADFSStatus*)status)->fsAccZ =
+                (s16)((s16)((s16)((s16)((s16)((s16)data[7]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((s8)data[8] >> 6) & (s16)0x0003))) -
+                (s16)cb->extConfig.u.fs.accZ0g;
+
+            ((WPADFSStatus*)status)->button =
+                (u16)((u16)((WPADFSStatus*)status)->button |
+                      (u16)((u16)((u16)(~(u16)data[8]) & (u16)0x3) << 13));
+
+            if (cb->calibrated == 0) {
+                cb->calibrated = 1;
+                cb->extConfig.u.fs.stickXCenter =
+                    (s8)((WPADFSStatus*)status)->fsStickX;
+                cb->extConfig.u.fs.stickYCenter =
+                    (s8)((WPADFSStatus*)status)->fsStickY;
+            }
+
+            {
+                s16 v = (s16)((u8)((WPADFSStatus*)status)->fsStickX -
+                               (u8)cb->extConfig.u.fs.stickXCenter);
+                if (v < -0x80) {
+                    v = -0x80;
+                }
+                if (v > 0x7F) {
+                    v = 0x7F;
+                }
+                ((WPADFSStatus*)status)->fsStickX = (s8)v;
+            }
+            {
+                s16 v = (s16)((u8)((WPADFSStatus*)status)->fsStickY -
+                               (u8)cb->extConfig.u.fs.stickYCenter);
+                if (v < -0x80) {
+                    v = -0x80;
+                }
+                if (v > 0x7F) {
+                    v = 0x7F;
+                }
+                ((WPADFSStatus*)status)->fsStickY = (s8)v;
+            }
+        } else if (cb->devType == WPAD_DEV_CLASSIC) {
+            __parse_cl_data(chan, &status, cb->devMode, data + 3, 8);
+        } else if (cb->devType == 0x10) {
+            ((WPADTRStatus*)status)->brake = data[5];
+            ((WPADTRStatus*)status)->mascon = data[6];
+            ((WPADTRStatus*)status)->trButton =
+                (u16)~(u16)((data[9] << 8) | data[10]);
+        }
+
+        if (memcmp(_wpadExtRawData, _cExtInvalidData, 8) == 0 && status->err == 0) {
+            status->err = WPAD_ERR_CORRUPTED;
+        }
+    }
+}
+
+void __a1_33_data_type(u8 chan, u8* data, WPADStatusEx* status) {
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+
+    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
+    status->dev = cb->devType;
+
+    if (cb->dataFormat <= WPAD_FMT_CORE_BTN_ACC_DPD) {
+        status->err = WPAD_ERR_OK;
+    } else {
+        status->err = WPAD_ERR_INVALID;
+    }
+
+    cb->wpInfo.nearempty = (data[1] >> 7) & 1;
+
+    status->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((u16)(data[1] >> 5)) & (s16)0x0003))) -
+                   (s16)cb->devConfig.accX0g;
+    status->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[4]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((u16)(data[2] >> 4)) & (s16)0x0002))) -
+                   (s16)cb->devConfig.accY0g;
+    status->accZ = (s16)((s16)((s16)((s16)((s16)((s16)data[5]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((u16)(data[2] >> 5)) & (s16)0x0002))) -
+                   (s16)cb->devConfig.accZ0g;
+
+    __parse_dpd_data(chan, &status, cb->currentDpdCommand, data + 6, 12);
+}
+
+void __a1_34_data_type(u8 chan, u8* data, WPADStatusEx* status) {
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+
+    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
+
+    if (cb->dataFormat == 0xC) {
+        status->err = WPAD_ERR_OK;
+    } else {
+        status->err = WPAD_ERR_INVALID;
+    }
+    status->dev = cb->devType;
+
+    memcpy(_wpadExtRawData, data + 3, 19);
+    cb->wpInfo.nearempty = (data[1] >> 7) & 1;
+    WPADiDecode(chan, data + 3, 19, 0);
+
+    if (cb->wpInfo.attach) {
+        if (cb->devType == 0x3) {
+            ((WPADCLStatus*)status)->clButton = (u16)((data[3] << 8) | data[4]);
+            ((WPADCLStatus*)status)->clLStickX = (s16)((data[5] << 8) | data[6]);
+            ((WPADCLStatus*)status)->clLStickY = (s16)((data[7] << 8) | data[8]);
+            ((WPADCLStatus*)status)->clRStickX = (s16)((data[9] << 8) | data[10]);
+            ((WPADCLStatus*)status)->clRStickY = (s16)((data[13] << 8) | data[11]);
+
+            if ((s32)(data[13] << 1) >= 0x104) {
+                cb->UNK_0x98F = 4;
+            } else if ((s32)(data[13] << 1) >= 0xFA) {
+                cb->UNK_0x98F = 3;
+            } else if ((s32)(data[13] << 1) >= 0xF0) {
+                cb->UNK_0x98F = 2;
+            } else if ((s32)(data[13] << 1) >= 0xD4) {
+                cb->UNK_0x98F = 1;
+            } else {
+                cb->UNK_0x98F = 0;
+            }
+
+            if (cb->calibrated == 0) {
+                cb->calibrated = 1;
+            }
+        }
+
+        if (memcmp(_wpadExtRawData, _cExtInvalidData, 19) == 0 && status->err == 0) {
+            status->err = WPAD_ERR_CORRUPTED;
+        }
+    }
+}
 
 void __a1_35_data_type(u8 chan, u8* data, WPADStatusEx* status) {}
 
-void __a1_36_data_type(u8 chan, u8* data, WPADStatusEx* status) {}
-
 void __a1_37_data_type(u8 chan, u8* data, WPADStatusEx* status) {}
 
-void __a1_3d_data_type(u8 chan, u8* data, WPADStatusEx* status) {}
+void __a1_3e_data_type(u8 chan, u8* data, WPADStatusEx* status) {
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+    BOOL enable;
 
-void __a1_3e_data_type(u8 chan, u8* data, WPADStatusEx* status) {}
+    if (_recv_3e[chan] == 0 && _recv_3f[chan] == 0) {
+        memset(status, 0, RX_BUFFER_SIZE);
+    }
 
-void __a1_3f_data_type(u8 chan, u8* data, WPADStatusEx* status) {}
+    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
+
+    if (cb->dataFormat <= WPAD_FMT_CORE_BTN_ACC || cb->dataFormat == 9) {
+        status->err = WPAD_ERR_OK;
+    } else {
+        status->err = WPAD_ERR_INVALID;
+    }
+    status->dev = cb->devType;
+
+    cb->wpInfo.nearempty = 0;
+
+    status->accX = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((u16)(data[1] >> 6)) & (s16)0x0002))) -
+                   (s16)cb->devConfig.accX0g;
+    status->accZ = (s16)((s16)status->accZ |
+                   (s16)((s16)((s16)((s16)((s16)data[2]) << 3) & (s16)0xFF00) |
+                         (s16)((s16)((u16)(data[1] << 1)) & (s16)0x00C0)));
+
+    __parse_dpdex_data(chan, &status, 0, data + 4, 0);
+    __parse_dpdex_data(chan, &status, 1, data + 13, 0);
+
+    enable = OSDisableInterrupts();
+    _recv_3e[chan] = 1;
+
+    if (_recv_3f[chan] != 0) {
+        status->accZ = (s16)(status->accZ - cb->devConfig.accZ0g);
+        cb->rxBufIndex = !cb->rxBufIndex;
+        _recv_3f[chan] = 0;
+        _recv_3e[chan] = 0;
+    }
+
+    OSRestoreInterrupts(enable);
+}
+
+void __a1_3f_data_type(u8 chan, u8* data, WPADStatusEx* status) {
+    WPADCB* cb = __rvl_p_wpadcb[chan];
+    BOOL enable;
+
+    if (_recv_3e[chan] == 0 && _recv_3f[chan] == 0) {
+        memset(status, 0, RX_BUFFER_SIZE);
+    }
+
+    status->button = (u16)((data[2] << 8) | data[1]) & HID_WPAD_BUTTON_MASK;
+
+    if (cb->dataFormat <= WPAD_FMT_CORE_BTN_ACC || cb->dataFormat == 9) {
+        status->err = WPAD_ERR_OK;
+    } else {
+        status->err = WPAD_ERR_INVALID;
+    }
+    status->dev = cb->devType;
+
+    cb->wpInfo.nearempty = 0;
+
+    status->accY = (s16)((s16)((s16)((s16)((s16)((s16)data[3]) << 2) & (s16)0xFFFC) |
+                         (s16)((s16)((u16)(data[1] >> 6)) & (s16)0x0002))) -
+                   (s16)cb->devConfig.accY0g;
+    status->accZ = (s16)((s16)status->accZ |
+                   (s16)((s16)((u16)(((u16)(data[1] >> 5) & 0x3) << 2)) |
+                         (s16)((u16)(((u16)(data[2] >> 5) & 0x3) << 4))));
+
+    __parse_dpdex_data(chan, &status, 2, data + 4, 0);
+    __parse_dpdex_data(chan, &status, 3, data + 13, 0);
+
+    enable = OSDisableInterrupts();
+    _recv_3f[chan] = 1;
+
+    if (_recv_3e[chan] != 0 && _recv_3f[chan] != 0) {
+        status->accZ = (s16)(status->accZ - cb->devConfig.accZ0g);
+        cb->rxBufIndex = !cb->rxBufIndex;
+        _recv_3f[chan] = 0;
+        _recv_3e[chan] = 0;
+    }
+
+    OSRestoreInterrupts(enable);
+}
 
 void __a1_unused_report(void) {}

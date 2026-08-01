@@ -17,27 +17,14 @@ static void __BzeroDelayLines(AXFX_REVERBSTD_EXP* reverb);
 static BOOL __InitParams(AXFX_REVERBSTD_EXP* reverb);
 
 u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* reverb) {
-    f32 k, v, p;
-    f64 d;
-    u32 e7, f0, f1, f2, f3, ival, tot;
-    /* stwu from local frame: introduce f64 temp so SP adjustment is first. */
-    d = 0.0;
-    /* lis Early, lis Filter now after SP live; literal SDA constant appears after. */
-    k = 32000.0f;
-    v = reverb->preDelayTimeMax;
-    /* table base HA formed; fetch filter[0] early to mirror lwz sequence before fmuls. */
-    f0 = __FilterSizeTable[6][0];
-    p = k * v;
-    /* fctiwz fed from p; pull early + two filter words before conversion result used. */
-    e7 = __EarlySizeTable[7];
-    f1 = __FilterSizeTable[6][1];
-    f2 = __FilterSizeTable[6][2];
-    /* materialize (fctiwz/stfd/lwz int) then fetch last word before adds */
-    d = (f64)p;
-    ival = (u32)(s32)d;
-    f3 = __FilterSizeTable[6][3];
-    /* add sequence exactly */
-    tot = e7 + ival;
+    u32 e7 = __EarlySizeTable[7];
+    u32 f0 = __FilterSizeTable[6][0];
+    u32 f1 = __FilterSizeTable[6][1];
+    u32 f2 = __FilterSizeTable[6][2];
+    u32 f3 = __FilterSizeTable[6][3];
+    u32 ival = (u32)(s32)(32000.0f * reverb->preDelayTimeMax);
+    u32 tot = e7 + ival;
+
     tot += f0;
     tot += f1;
     tot += f2;

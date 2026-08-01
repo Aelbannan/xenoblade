@@ -183,7 +183,9 @@ private:
         u32 edgeLODEnable : 1;
         u32 anisotropy : 2;
         u32 paletteFormat : 2;
-    } mBits; // at 0x18
+    } mBits;          // at 0x18
+
+    u8 PADDING[4];    // at 0x1C (retail TexMap entries are 32 bytes)
 };
 
 } // namespace lyt

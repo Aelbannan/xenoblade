@@ -217,23 +217,21 @@ typedef struct
 */
 typedef struct
 {
-    tBTU_TIMER_REG   timer_reg[BTU_MAX_REG_TIMER];
-    tBTU_EVENT_REG   event_reg[BTU_MAX_REG_EVENT];
+    tBTU_TIMER_REG   timer_reg[BTU_MAX_REG_TIMER];  /* 0x00 */
+    tBTU_EVENT_REG   event_reg[BTU_MAX_REG_EVENT];  /* 0x10 */
 
-    TIMER_LIST_Q  quick_timer_queue;        /* Timer queue for transport level (100/10 msec)*/
-    TIMER_LIST_Q  timer_queue;              /* Timer queue for normal BTU task (1 second)   */
+    TIMER_LIST_Q     quick_timer_queue;             /* 0x40 (retail name: timer_queue) */
 
-    TIMER_LIST_ENT   cmd_cmpl_timer;        /* Command complete timer */
+    TIMER_LIST_ENT   cmd_cmpl_timer;                /* 0x4C */
 
-    UINT16    hcit_acl_data_size;           /* Max ACL data size across HCI transport    */
-    UINT16    hcit_acl_pkt_size;            /* Max ACL packet size across HCI transport  */
-                                            /* (this is data size plus 4 bytes overhead) */
+    BUFFER_Q         cmd_xmit_q;                    /* 0x64 */
+    BUFFER_Q         cmd_cmpl_q;                    /* 0x70 */
 
-    BOOLEAN     reset_complete;             /* TRUE after first ack from device received */
-    UINT8       trace_level;                /* Trace level for HCI layer */
-
-    tHCI_CMD_CB hci_cmd_cb[BTU_MAX_LOCAL_CTRLS]; /* including BR/EDR */
-} tBTU_CB;
+    UINT16           hcit_acl_data_size;            /* 0x7C */
+    UINT16           hcit_acl_pkt_size;             /* 0x7E */
+    UINT16           controller_cmd_window;         /* 0x80 */
+    BOOLEAN          reset_complete;                /* 0x82 */
+} tBTU_CB;                                          /* size 0x84 */
 
 #ifdef __cplusplus
 extern "C" {

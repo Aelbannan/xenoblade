@@ -2,6 +2,9 @@
 #define NW4HBM_LYT_MATERIAL_H
 #include <nw4hbm/types_nw4hbm.h>
 
+#include <cstring>
+#include <new>
+
 #include <nw4hbm/lyt/lyt_common.h>
 #include <nw4hbm/lyt/lyt_texMap.h>
 #include <nw4hbm/lyt/lyt_resources.h>
@@ -39,6 +42,60 @@ struct BitGXNums {
     u32 alpComp : 1;
     u32 blendMode : 1;
 };
+
+/******************************************************************************
+ *
+ * GX memory offsets (inline like retail nw4hbm)
+ *
+ ******************************************************************************/
+inline u32 CalcOffsetTexSRTAry(const BitGXNums& rNums) {
+    return rNums.texMap * sizeof(TexMap);
+}
+
+inline u32 CalcOffsetTexCoordGenAry(const BitGXNums& rNums) {
+    return rNums.texSRT * sizeof(TexSRT) +
+           CalcOffsetTexSRTAry(rNums);
+}
+
+inline u32 CalcOffsetChanCtrlAry(const BitGXNums& rNums) {
+    return rNums.texCoordGen * sizeof(TexCoordGen) +
+           CalcOffsetTexCoordGenAry(rNums);
+}
+
+inline u32 CalcOffsetMatColAry(const BitGXNums& rNums) {
+    return rNums.chanCtrl * sizeof(ChanCtrl) +
+           CalcOffsetChanCtrlAry(rNums);
+}
+
+inline u32 CalcOffsetTevSwapAry(const BitGXNums& rNums) {
+    return rNums.matCol * sizeof(ut::Color) +
+           CalcOffsetMatColAry(rNums);
+}
+
+inline u32 CalcOffsetGetAlphaCompare(const BitGXNums& rNums) {
+    return rNums.tevSwap * sizeof(TevSwapMode) +
+           CalcOffsetTevSwapAry(rNums);
+}
+
+inline u32 CalcOffsetBlendMode(const BitGXNums& rNums) {
+    return rNums.alpComp * sizeof(AlphaCompare) +
+           CalcOffsetGetAlphaCompare(rNums);
+}
+
+inline u32 CalcOffsetIndirectStageAry(const BitGXNums& rNums) {
+    return rNums.blendMode * sizeof(BlendMode) +
+           CalcOffsetBlendMode(rNums);
+}
+
+inline u32 CalcOffsetIndTexSRTAry(const BitGXNums& rNums) {
+    return rNums.indStage * sizeof(IndirectStage) +
+           CalcOffsetIndirectStageAry(rNums);
+}
+
+inline u32 CalcOffsetTevStageAry(const BitGXNums& rNums) {
+    return rNums.indSRT * sizeof(TexSRT) +
+           CalcOffsetIndTexSRTAry(rNums);
+}
 
 } // namespace detail
 
@@ -126,9 +183,29 @@ public:
     u8 GetTevStageNum() const {
         return mGXMemNum.tevStage;
     }
-    void SetTevStageNum(u8 num);
+    void SetTevStageNum(u8 num) {
+        if (num > 0) {
+            TevStage* const pTevStage = GetTevStageAry();
 
-    void SetIndStageNum(u8 num);
+            for (u32 i = mGXMemNum.tevStage; i < num; i++) {
+                new (&pTevStage[i]) TevStage();
+            }
+
+            mGXMemNum.tevStage = num;
+        }
+    }
+
+    void SetIndStageNum(u8 num) {
+        if (num > 0) {
+            IndirectStage* const pIndStage = GetIndirectStageAry();
+
+            for (u32 i = mGXMemNum.indStage; i < num; i++) {
+                new (&pIndStage[i]) IndirectStage();
+            }
+
+            mGXMemNum.indStage = num;
+        }
+    }
 
     void SetColorElement(u32 idx, s16 value);
 
@@ -148,38 +225,102 @@ public:
         return mGXMemCap.blendMode;
     }
 
-    const TexMap* GetTexMapAry() const;
-    TexMap* GetTexMapAry();
+    const TexMap* GetTexMapAry() const {
+        return detail::ConvertOffsToPtr<TexMap>(mpGXMem, 0);
+    }
+    TexMap* GetTexMapAry() {
+        return detail::ConvertOffsToPtr<TexMap>(mpGXMem, 0);
+    }
 
-    const TexSRT* GetTexSRTAry() const;
-    TexSRT* GetTexSRTAry();
+    const TexSRT* GetTexSRTAry() const {
+        return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
+                                                CalcOffsetTexSRTAry(mGXMemCap));
+    }
+    TexSRT* GetTexSRTAry() {
+        return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
+                                                CalcOffsetTexSRTAry(mGXMemCap));
+    }
 
-    const TexCoordGen* GetTexCoordGenAry() const;
-    TexCoordGen* GetTexCoordGenAry();
+    const TexCoordGen* GetTexCoordGenAry() const {
+        return detail::ConvertOffsToPtr<TexCoordGen>(
+            mpGXMem, CalcOffsetTexCoordGenAry(mGXMemCap));
+    }
+    TexCoordGen* GetTexCoordGenAry() {
+        return detail::ConvertOffsToPtr<TexCoordGen>(
+            mpGXMem, CalcOffsetTexCoordGenAry(mGXMemCap));
+    }
 
-    const ChanCtrl* GetChanCtrlAry() const;
-    ChanCtrl* GetChanCtrlAry();
+    const ChanCtrl* GetChanCtrlAry() const {
+        return detail::ConvertOffsToPtr<ChanCtrl>(
+            mpGXMem, CalcOffsetChanCtrlAry(mGXMemCap));
+    }
+    ChanCtrl* GetChanCtrlAry() {
+        return detail::ConvertOffsToPtr<ChanCtrl>(
+            mpGXMem, CalcOffsetChanCtrlAry(mGXMemCap));
+    }
 
-    const ut::Color* GetMatColAry() const;
-    ut::Color* GetMatColAry();
+    const ut::Color* GetMatColAry() const {
+        return detail::ConvertOffsToPtr<ut::Color>(
+            mpGXMem, CalcOffsetMatColAry(mGXMemCap));
+    }
+    ut::Color* GetMatColAry() {
+        return detail::ConvertOffsToPtr<ut::Color>(
+            mpGXMem, CalcOffsetMatColAry(mGXMemCap));
+    }
 
-    const TevSwapMode* GetTevSwapAry() const;
-    TevSwapMode* GetTevSwapAry();
+    const TevSwapMode* GetTevSwapAry() const {
+        return detail::ConvertOffsToPtr<TevSwapMode>(
+            mpGXMem, CalcOffsetTevSwapAry(mGXMemCap));
+    }
+    TevSwapMode* GetTevSwapAry() {
+        return detail::ConvertOffsToPtr<TevSwapMode>(
+            mpGXMem, CalcOffsetTevSwapAry(mGXMemCap));
+    }
 
-    const AlphaCompare* GetAlphaComparePtr() const;
-    AlphaCompare* GetAlphaComparePtr();
+    const AlphaCompare* GetAlphaComparePtr() const {
+        return detail::ConvertOffsToPtr<AlphaCompare>(
+            mpGXMem, CalcOffsetGetAlphaCompare(mGXMemCap));
+    }
+    AlphaCompare* GetAlphaComparePtr() {
+        return detail::ConvertOffsToPtr<AlphaCompare>(
+            mpGXMem, CalcOffsetGetAlphaCompare(mGXMemCap));
+    }
 
-    const BlendMode* GetBlendModePtr() const;
-    BlendMode* GetBlendModePtr();
+    const BlendMode* GetBlendModePtr() const {
+        return detail::ConvertOffsToPtr<BlendMode>(
+            mpGXMem, CalcOffsetBlendMode(mGXMemCap));
+    }
+    BlendMode* GetBlendModePtr() {
+        return detail::ConvertOffsToPtr<BlendMode>(
+            mpGXMem, CalcOffsetBlendMode(mGXMemCap));
+    }
 
-    const IndirectStage* GetIndirectStageAry() const;
-    IndirectStage* GetIndirectStageAry();
+    const IndirectStage* GetIndirectStageAry() const {
+        return detail::ConvertOffsToPtr<IndirectStage>(
+            mpGXMem, CalcOffsetIndirectStageAry(mGXMemCap));
+    }
+    IndirectStage* GetIndirectStageAry() {
+        return detail::ConvertOffsToPtr<IndirectStage>(
+            mpGXMem, CalcOffsetIndirectStageAry(mGXMemCap));
+    }
 
-    const TexSRT* GetIndTexSRTAry() const;
-    TexSRT* GetIndTexSRTAry();
+    const TexSRT* GetIndTexSRTAry() const {
+        return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
+                                                CalcOffsetIndTexSRTAry(mGXMemCap));
+    }
+    TexSRT* GetIndTexSRTAry() {
+        return detail::ConvertOffsToPtr<TexSRT>(mpGXMem,
+                                                CalcOffsetIndTexSRTAry(mGXMemCap));
+    }
 
-    const TevStage* GetTevStageAry() const;
-    TevStage* GetTevStageAry();
+    const TevStage* GetTevStageAry() const {
+        return detail::ConvertOffsToPtr<TevStage>(mpGXMem,
+                                                  CalcOffsetTevStageAry(mGXMemCap));
+    }
+    TevStage* GetTevStageAry() {
+        return detail::ConvertOffsToPtr<TevStage>(mpGXMem,
+                                                  CalcOffsetTevStageAry(mGXMemCap));
+    }
 
     const TexMap& GetTexture(u8 idx) const {
         return GetTexMapAry()[idx];
@@ -194,6 +335,7 @@ public:
         GetTexMapAry()[idx].SetNoWrap(rTexMap);
     }
     void SetTexture(u8 idx, const GXTexObj& rTexObj);
+    void SetTextureNoWrap(u8 idx, TPLPalette* pTpl);
 
     const TexSRT& GetTexSRT(u32 idx) const {
         return GetTexSRTAry()[idx];
@@ -220,7 +362,9 @@ public:
         pArray[idx] = value;
     }
 
-    void SetName(const char* pName);
+    void SetName(const char* pName) {
+        std::strncpy(mName, pName, NW4R_LYT_MATERIAL_NAME_LEN);
+    }
     const char* GetName() const {
         return mName;
     }
@@ -239,23 +383,17 @@ protected:
     static const int MAX_IND_SRT = (GX_ITM_2 - GX_ITM_0) + 1;
 
 protected:
-    AnimationLinkList mAnimList; // at 0x4
+    char mName[NW4R_LYT_MATERIAL_NAME_LEN]; // at 0x04
 
-    GXColorS10 mTevCols[TEVCOLOR_MAX];  // at 0x10
-    ut::Color mTevKCols[GX_MAX_KCOLOR]; // at 0x28
+    AnimationLinkList mAnimList; // at 0x18
 
-    detail::BitGXNums mGXMemCap; // at 0x38
-    detail::BitGXNums mGXMemNum; // at 0x3C
-    void* mpGXMem;               // at 0x40
+    GXColorS10 mTevCols[TEVCOLOR_MAX];  // at 0x24
+    ut::Color mTevKCols[GX_MAX_KCOLOR]; // at 0x3C
 
-    char mName[NW4R_LYT_RES_NAME_LEN]; // at 0x44
-    bool mbUserAllocated;              // at 0x54
-
-    u8 PADDING_0x55[0x5C - 0x55]; // at 0x55
-
-private:
-    void Init();
-    void InitBitGXNums(detail::BitGXNums* pNums);
+    detail::BitGXNums mGXMemCap; // at 0x4C
+    detail::BitGXNums mGXMemNum; // at 0x50
+    bool mbUserAllocated;        // at 0x54
+    void* mpGXMem;               // at 0x58
 };
 
 /******************************************************************************

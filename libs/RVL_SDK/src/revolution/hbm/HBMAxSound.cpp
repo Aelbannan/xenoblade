@@ -1,29 +1,63 @@
-// Auto-scaffolded catalog TU for RVL_SDK/src/revolution/hbm/HBMAxSound
-// Replace stubs with high-level C/C++ during decomp.
+// RVL_SDK/src/revolution/hbm/HBMAxSound
 
 #include <harness_catalog.h>
 
-void homebutton::PlaySeq() {}
+#include <revolution/AX.h>
+#include <revolution/OS.h>
 
-void homebutton::InitAxSound() {}
+namespace homebutton {
 
-void homebutton::ShutdownAxSound() {}
+void PlaySeq(int /* seqId */) {}
 
-extern "C" void AxSoundMain__10homebuttonFv() {}
+void InitAxSound(const void* /* pWork */, void* /* pWorkEnd */,
+                 u32 /* workSize */) {}
 
-void homebutton::StopAllSeq() {}
+void ShutdownAxSound() {}
 
-void homebutton::SetVolumeAllSeq() {}
+void AxSoundMain() {}
 
-void homebutton::SetSoundMode(void) {}
+void StopAllSeq() {}
+
+void SetVolumeAllSeq(float /* volume */) {}
+
+void SetSoundMode(u32 /* mode */) {}
+
+} // namespace homebutton
 
 // --- hard-symbol stubs (scaffold_hard_symbols) ---
 namespace {
-void GetFreePlayer(int) {}
+
+/******************************************************************************
+ *
+ * sWork (retail .bss 0x805DA058)
+ *
+ ******************************************************************************/
+struct HBMWork {
+    u8 pad0[0x14348];              // 0x00000
+    AXOutCallback prevFrameCb;     // 0x14348 (previous AX callback, chained)
+    u8 pad1[0x14680 - 0x1434C];    // 0x1434C
+    OSMessageQueue msgQueue;       // 0x14680
+};
+
+HBMWork* sWork;
+
+void GetFreePlayer(int /* soundId */) {}
+
+void AudioFrameCallback() {
+    if (sWork != NULL) {
+        OSSendMessage(&sWork->msgQueue, reinterpret_cast<OSMessage>(1), 0);
+
+        if (sWork->prevFrameCb != NULL) {
+            sWork->prevFrameCb();
+        }
+    }
 }
-namespace {
-void AudioFrameCallback() {}
-}
-namespace {
-void AudioSoundThreadProc(void*) {}
-}
+
+void AudioSoundThreadProc(void* /* arg */) {}
+
+} // namespace
+
+// Force-emit the anonymous-namespace helpers (retail references them from
+// InitAxSound via AXRegisterCallback / OSCreateThread / PlaySeq).
+DECOMP_FORCEACTIVE(HBMAxSound_cpp, GetFreePlayer, AudioFrameCallback,
+                   AudioSoundThreadProc);

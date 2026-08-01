@@ -14,4 +14,19 @@ void BTA_Init() {}
 
 void BTA_CleanUp() {}
 
-void bta_usb_close_evt() {}
+/* USB application info callback (set by BTA_Init via BTE_Init); NULL = none */
+typedef void (*tBTE_APP_INFO_CB)(int);
+
+extern tBTE_APP_INFO_CB _bte_app_info;
+
+void bta_usb_close_evt(s8 result) {
+    tBTE_APP_INFO_CB cb = _bte_app_info;
+
+    if (cb) {
+        if (result >= 0) {
+            cb(0);
+        } else {
+            cb(1);
+        }
+    }
+}

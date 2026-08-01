@@ -3,27 +3,51 @@
 
 #include <harness_catalog.h>
 
-void SDP_InitDiscoveryDb() {}
+#include "revolution/bte/stack/include/sdp_api.h"
 
-void SDP_ServiceSearchRequest() {}
+BOOLEAN SDP_InitDiscoveryDb(tSDP_DISCOVERY_DB *p_db, UINT32 len, UINT16 num_uuid,
+                            tSDP_UUID *p_uuid_list, UINT16 num_attr,
+                            UINT16 *p_attr_list) {
+    return 0;
+}
 
-void SDP_ServiceSearchAttributeRequest() {}
+BOOLEAN SDP_ServiceSearchRequest(UINT8 *p_bd_addr, tSDP_DISCOVERY_DB *p_db,
+                                 tSDP_DISC_CMPL_CB *p_cb) {
+    return 0;
+}
 
-void SDP_FindAttributeInRec() {}
+BOOLEAN SDP_ServiceSearchAttributeRequest(UINT8 *p_bd_addr, tSDP_DISCOVERY_DB *p_db,
+                                          tSDP_DISC_CMPL_CB *p_cb) {
+    return 0;
+}
 
-void SDP_FindServiceInDb() {}
+tSDP_DISC_ATTR *SDP_FindAttributeInRec(tSDP_DISC_REC *p_rec, UINT16 attr_id) {
+    tSDP_DISC_ATTR *p_attr = p_rec->p_first_attr;
 
-void SDP_FindServiceUUIDInDb() {}
+    while (p_attr) {
+        if (p_attr->attr_id == attr_id) {
+            return p_attr;
+        }
 
-void SDP_SetLocalDiRecord() {}
+        p_attr = p_attr->p_next_attr;
+    }
 
-void SDP_GetLocalDiRecord() {}
+    return NULL;
+}
+
+tSDP_DISC_REC *SDP_FindServiceInDb(tSDP_DISCOVERY_DB *p_db, UINT16 attr_id, tSDP_DISC_REC *p_start_rec) { return NULL; }
+
+tSDP_DISC_REC *SDP_FindServiceUUIDInDb(tSDP_DISCOVERY_DB *p_db, tBT_UUID *p_uuid, tSDP_DISC_REC *p_start_rec) { return NULL; }
+
+UINT16 SDP_SetLocalDiRecord(tSDP_DI_RECORD *device_info, UINT32 *p_handle) { return 0; }
+
+UINT16 SDP_GetLocalDiRecord(tSDP_DI_GET_RECORD *p_device_info, UINT32 *p_handle) { return 0; }
 
 extern unsigned char sdp_cb[];
 
-unsigned char SDP_SetTraceLevel(unsigned int level) {
-    if (level != 0xff) {
-        sdp_cb[0x4630] = (unsigned char)level;
+UINT8 SDP_SetTraceLevel(UINT8 new_level) {
+    if (new_level != 0xff) {
+        sdp_cb[0x4630] = (unsigned char)new_level;
     }
     return sdp_cb[0x4630];
 }

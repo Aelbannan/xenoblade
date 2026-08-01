@@ -373,6 +373,22 @@ with the command at p+8: `[opcode-lo, opcode-hi(=OGF<<2), paramlen, params…]`
 | SMT persists after registers match | A halfword store at p+2 stores BE bytes `00 04`; naive byte stores `p[2]=4; p[3]=0` reverse them (`04 00`) — the pre-call **memory** diverges, keeping the token unequal | Always store the len as the BE byte pair (high byte at p[2], low byte at p[3]); verify with `check-objects` after any byte-store change |
 | `btsnd_hcic_write_cur_iac_lap` (mtctr/cmpwi/ble/header/bdnz copy loop, param trip) stalls: `inconclusive_unsupported` (instruction limit 2048) | The CTR-affine summarizer needs an in-function dot-form trip def + padding-only mtctr→guard adjacency; a param trip has no def (`_find_trip_def_index` → None) and the signed `ble` guard fails the zero-trip discharge (r4≤0 skips but trip≠0); the 3× lbz/stb copy body also fails the word-copy memory-loop grammar; unrolling is unbounded (r4 unconstrained) | Requires engine-side loop-summary grammar extension (mtctr;cmpwi;ble;header;bdnz with param trip + `max(0,trip)` skip semantics) or a u8-range bound on entry r4; source is otherwise register-matched modulo reg-swaps (83.2% static) |
 
+**Compiler-version correction (2026-09): the retail hcicmds unit is `GC/3.0a5.2`, not Wii/1.1.**
+Switching the Object to `mw_version="GC/3.0a5.2"` + `extra_cflags=["-O4", "-func_align 4"]`
+(a) removes the `ori r0,r0,0` nop MWCC inserts before small bdnz loops under the
+`-func_align 16` cflags_sdk default, (b) makes the header `li`/`sth`/`stb` scheduling and
+register allocation match retail (Wii/1.1 hoists constants differently), and (c) fixes the
+initializer-copy pattern (GC emits 10× lbz+10× stb; Wii/1.1 merges into lwz/stw words).
+Verified 100% byte-identical: `btsnd_hcic_pin_code_req_reply` (0x1E4), `btsnd_hcic_set_afh_channels`
+(0x420), `btsnd_hcic_change_conn_type` (was 6 mismatches on Wii); unit fuzzy 83.2%→97.9%.
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `btsnd_hcic_write_cur_iac_lap` unrolls ×8 under `-O4` (392 B vs retail 112 B), blowing the unit split budget | `for (i = num_laps; i > 0; i--)` lets MWCC bound the trip count and unroll; `#pragma opt_unroll off` and `-ipa off` do **not** stop it | Write the loop as `while (num_laps--)` (post-decrement of the param, no separate counter) — GC emits the retail's plain mtctr loop (108–112 B). This is the missing source form the earlier note said didn't exist |
+| `btsnd_hcic_set_event_filter` +4 B (u8 `count` re-masked with `rlwinm` at both the ×8 guard and the remainder loop; retail masks once at the `count = filt_cond - 6` assignment) | Indexed source read `*dst++ = src[i]` keeps the count register live across the loop, so the u8 truncation is re-applied per use; `int count` removes the assignment mask too (semantics differ for filt_cond<6) | Write the copy as `for (i = 0; i < count; i++) *dst++ = *src++;` with `unsigned char count` — pointer-walk form drops both re-masks, exact retail size (444 B) |
+| `btsnd_hcic_pin_code_req_reply` / `btsnd_hcic_set_afh_channels` reloc name drift (`@502` vs retail `lbl_8050E260`, same addend) for the `UINT8 channels[10] = {0xFF,…}` initializer blob | MWCC emits the anonymous initializer blob under a generated TU-local name; the retail symbol map named it `lbl_8050E260` by address | Accept at FULL_MATCH: the `functionRelocDiffs=data_value` config (coop.json) treats addend-equal relocs as matched; do **not** replace the initializer with a named-static loop copy (that form regresses to 27 mismatches) |
+| `btsnd_hcic_set_afh_channels` register allocation spilled to r26–r28 (`_savegpr_26`, 6 saved regs vs retail 3) | Inline `channels[i/8] &= ~(1 << (i%8))` with a `(unsigned char)` cast creates longer live ranges and the nor/clrlwi/and mask sequence | Use the Broadcom form verbatim: `int byte_offset = i / 8; int bit_offset = i % 8; channels[byte_offset] &= ~(1 << bit_offset);` (no cast → `andc`); the `int` locals let GC fit the ×8 unrolled loop in volatiles and the prologue drops to 3 individual `stw` |
+
 ## RVL_SDK wpad/WPAD (US, mwcc_43_151 `-O4,p`) — noise-filter layout, inline-helper flags, retail symbol names
 
 `__wpadIsControllerDataChanged` 97.7% / exact 0x8F8 size; 7/10 small targets FULL_MATCH/EQUIVALENT_MATCH.

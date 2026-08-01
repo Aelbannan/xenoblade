@@ -61,7 +61,34 @@ int btsnd_hcic_per_inq_mode(short max_delay, unsigned short min_delay, unsigned 
     return 1;
 }
 
-void btsnd_hcic_create_conn() {}
+int btsnd_hcic_create_conn(unsigned char *bd_addr, short packet_types, unsigned char page_scan_rep_mode, unsigned char page_scan_mode, unsigned short clock_offset, unsigned char allow_switch)
+{
+    unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    unsigned char *pp;
+    if (p == NULL)
+        return 0;
+    *(unsigned short *)(p + 2) = 0x10;
+    *(unsigned short *)(p + 4) = 0;
+    pp = p + 8;
+    *pp++ = 5;
+    *pp++ = 4;
+    *pp++ = 0xd;
+    *pp++ = bd_addr[5];
+    *pp++ = bd_addr[4];
+    *pp++ = bd_addr[3];
+    *pp++ = bd_addr[2];
+    *pp++ = bd_addr[1];
+    *pp++ = bd_addr[0];
+    *pp++ = (unsigned char)packet_types;
+    *pp++ = (unsigned char)(packet_types >> 8);
+    *pp++ = page_scan_rep_mode;
+    *pp++ = page_scan_mode;
+    *pp++ = (unsigned char)clock_offset;
+    *pp++ = (unsigned char)(clock_offset >> 8);
+    *pp++ = allow_switch;
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
 int btsnd_hcic_disconnect(unsigned short handle, unsigned char reason)
 {
@@ -132,7 +159,28 @@ void btsnd_hcic_reject_conn(unsigned char* p, unsigned char* bd_addr, unsigned c
     btu_hcif_send_cmd(p);
 }
 
-void btsnd_hcic_link_key_req_reply() {}
+int btsnd_hcic_link_key_req_reply(unsigned char *bd_addr, unsigned char *link_key)
+{
+    unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    int i;
+    if (p == NULL)
+        return 0;
+    *(unsigned short *)(p + 2) = 0x19;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 0xb;
+    p[9] = 4;
+    p[10] = 0x16;
+    p[11] = bd_addr[5];
+    p[12] = bd_addr[4];
+    p[13] = bd_addr[3];
+    p[14] = bd_addr[2];
+    p[15] = bd_addr[1];
+    p[16] = bd_addr[0];
+    for (i = 0; i < 16; i++)
+        p[17 + i] = link_key[15 - i];
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
 int btsnd_hcic_link_key_neg_reply(unsigned char *bd_addr)
 {
@@ -154,7 +202,34 @@ int btsnd_hcic_link_key_neg_reply(unsigned char *bd_addr)
     return 1;
 }
 
-void btsnd_hcic_pin_code_req_reply() {}
+int btsnd_hcic_pin_code_req_reply(unsigned char *bd_addr, unsigned char pin_code_len, unsigned char *pin_code)
+{
+    unsigned char *p;
+    unsigned char *pp;
+    int i;
+
+    if ((p = (unsigned char *)GKI_getpoolbuf(2)) == NULL)
+        return 0;
+    *(unsigned short *)(p + 2) = 0x1A;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 0x0D;
+    p[9] = 0x04;
+    p[10] = 0x17;
+    p[11] = bd_addr[5];
+    p[12] = bd_addr[4];
+    p[13] = bd_addr[3];
+    p[14] = bd_addr[2];
+    p[15] = bd_addr[1];
+    p[16] = bd_addr[0];
+    p[17] = pin_code_len;
+    pp = p + 18;
+    for (i = 0; i < pin_code_len; i++)
+        *pp++ = *pin_code++;
+    for (; i < 16; i++)
+        *pp++ = 0;
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
 int btsnd_hcic_pin_code_neg_reply(unsigned char *bd_addr)
 {
@@ -227,7 +302,29 @@ int btsnd_hcic_set_conn_encrypt(unsigned short handle, unsigned char enable)
     return 1;
 }
 
-void btsnd_hcic_rmt_name_req() {}
+int btsnd_hcic_rmt_name_req(unsigned char *bd_addr, unsigned char page_scan_rep_mode, unsigned char page_scan_mode, unsigned short clock_offset)
+{
+    unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    if (p == NULL)
+        return 0;
+    *(unsigned short *)(p + 2) = 0xd;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 0x19;
+    p[9] = 4;
+    p[10] = 0xa;
+    p[11] = bd_addr[5];
+    p[12] = bd_addr[4];
+    p[13] = bd_addr[3];
+    p[14] = bd_addr[2];
+    p[15] = bd_addr[1];
+    p[16] = bd_addr[0];
+    p[17] = page_scan_rep_mode;
+    p[18] = page_scan_mode;
+    p[19] = (unsigned char)clock_offset;
+    p[20] = (unsigned char)(clock_offset >> 8);
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
 int btsnd_hcic_rmt_name_req_cancel(unsigned char *bd_addr)
 {
@@ -297,9 +394,67 @@ int btsnd_hcic_read_rmt_clk_offset(unsigned short handle)
     return 1;
 }
 
-void btsnd_hcic_setup_esco_conn() {}
+int btsnd_hcic_setup_esco_conn(short tx_bw, unsigned int rx_bw, unsigned int max_latency, short voice_settings, short retrans_effort, unsigned char input_format, unsigned short packet_types)
+{
+    unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    if (p == NULL)
+        return 0;
+    *(unsigned short *)(p + 2) = 0x14;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 0x28;
+    p[9] = 4;
+    p[10] = 0x11;
+    p[11] = (unsigned char)tx_bw;
+    p[12] = (unsigned char)(tx_bw >> 8);
+    p[13] = (unsigned char)rx_bw;
+    p[14] = (unsigned char)(rx_bw >> 8);
+    p[15] = (unsigned char)(rx_bw >> 16);
+    p[16] = (unsigned char)(rx_bw >> 24);
+    p[17] = (unsigned char)max_latency;
+    p[18] = (unsigned char)(max_latency >> 8);
+    p[19] = (unsigned char)(max_latency >> 16);
+    p[20] = (unsigned char)(max_latency >> 24);
+    p[21] = (unsigned char)voice_settings;
+    p[22] = (unsigned char)(voice_settings >> 8);
+    p[23] = (unsigned char)retrans_effort;
+    p[24] = (unsigned char)(retrans_effort >> 8);
+    p[25] = input_format;
+    p[26] = (unsigned char)packet_types;
+    p[27] = (unsigned char)(packet_types >> 8);
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
-void btsnd_hcic_accept_esco_conn() {}
+void btsnd_hcic_accept_esco_conn(unsigned char *p, unsigned char *bd_addr, unsigned int tx_coding_format, unsigned int rx_coding_format, short tx_codec_frame_size, unsigned short rx_codec_frame_size, unsigned char input_bandwidth, unsigned short packet_types)
+{
+    *(unsigned short *)(p + 2) = 0x18;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 0x29;
+    p[9] = 4;
+    p[10] = 0x15;
+    p[11] = bd_addr[5];
+    p[12] = bd_addr[4];
+    p[13] = bd_addr[3];
+    p[14] = bd_addr[2];
+    p[15] = bd_addr[1];
+    p[16] = bd_addr[0];
+    p[17] = (unsigned char)tx_coding_format;
+    p[18] = (unsigned char)(tx_coding_format >> 8);
+    p[19] = (unsigned char)(tx_coding_format >> 16);
+    p[20] = (unsigned char)(tx_coding_format >> 24);
+    p[21] = (unsigned char)rx_coding_format;
+    p[22] = (unsigned char)(rx_coding_format >> 8);
+    p[23] = (unsigned char)(rx_coding_format >> 16);
+    p[24] = (unsigned char)(rx_coding_format >> 24);
+    p[25] = (unsigned char)tx_codec_frame_size;
+    p[26] = (unsigned char)(tx_codec_frame_size >> 8);
+    p[27] = (unsigned char)rx_codec_frame_size;
+    p[28] = (unsigned char)(rx_codec_frame_size >> 8);
+    p[29] = input_bandwidth;
+    p[30] = (unsigned char)packet_types;
+    p[31] = (unsigned char)(packet_types >> 8);
+    btu_hcif_send_cmd(p);
+}
 
 void btsnd_hcic_reject_esco_conn(void *p_cmd, unsigned char *bd_addr, unsigned char reason)
 {
@@ -342,7 +497,32 @@ int btsnd_hcic_hold_mode(void *p_buf, short handle, short max_hold_period, unsig
     return 1;
 }
 
-void btsnd_hcic_sniff_mode() {}
+int btsnd_hcic_sniff_mode(void *p_buf, short handle, short max_sniff_period, short min_sniff_period, short sniff_attempt, unsigned short sniff_timeout)
+{
+    unsigned char *p = (unsigned char *)p_buf;
+    if (p == NULL) {
+        p = (unsigned char *)GKI_getpoolbuf(2);
+        if (p == NULL)
+            return 0;
+    }
+    *(unsigned short *)(p + 2) = 0xd;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 3;
+    p[9] = 8;
+    p[10] = 0xa;
+    p[11] = (unsigned char)handle;
+    p[12] = (unsigned char)(handle >> 8);
+    p[13] = (unsigned char)max_sniff_period;
+    p[14] = (unsigned char)(max_sniff_period >> 8);
+    p[15] = (unsigned char)min_sniff_period;
+    p[16] = (unsigned char)(min_sniff_period >> 8);
+    p[17] = (unsigned char)sniff_attempt;
+    p[18] = (unsigned char)(sniff_attempt >> 8);
+    p[19] = (unsigned char)sniff_timeout;
+    p[20] = (unsigned char)(sniff_timeout >> 8);
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
 int btsnd_hcic_exit_sniff_mode(void *p_buf, unsigned short handle)
 {
@@ -458,7 +638,54 @@ int btsnd_hcic_reset(void)
     return 1;
 }
 
-void btsnd_hcic_set_event_filter() {}
+void btsnd_hcic_set_event_filter(unsigned char *p, unsigned char filt_type, unsigned char filt_cond_type, unsigned char *bd_addr, unsigned char filt_cond)
+{
+    unsigned char *src;
+    unsigned char *dst;
+    unsigned char count;
+    int i;
+
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 5;
+    p[9] = 0xc;
+    if (filt_type != 0) {
+        *(unsigned short *)(p + 2) = filt_cond + 5;
+        p[10] = filt_cond + 2;
+        p[11] = filt_type;
+        p[12] = filt_cond_type;
+        src = bd_addr;
+        dst = p + 13;
+        count = filt_cond;
+        if (filt_cond_type == 1) {
+            dst[0] = src[2];
+            dst[1] = src[1];
+            dst[2] = src[0];
+            dst[3] = src[5];
+            dst[4] = src[4];
+            dst[5] = src[3];
+            src += 6;
+            dst += 6;
+            count = filt_cond - 6;
+        } else if (filt_cond_type == 2) {
+            dst[0] = src[5];
+            dst[1] = src[4];
+            dst[2] = src[3];
+            dst[3] = src[2];
+            dst[4] = src[1];
+            dst[5] = src[0];
+            src += 6;
+            dst += 6;
+            count = filt_cond - 6;
+        }
+        for (i = 0; i < count; i++)
+            *dst++ = *src++;
+    } else {
+        *(unsigned short *)(p + 2) = 4;
+        p[10] = 1;
+        p[11] = filt_type;
+    }
+    btu_hcif_send_cmd(p);
+}
 
 int btsnd_hcic_write_pin_type(unsigned char pin_type)
 {
@@ -492,7 +719,37 @@ void btsnd_hcic_read_stored_key(unsigned char *p, unsigned char *bd_addr, unsign
     btu_hcif_send_cmd(p);
 }
 
-void btsnd_hcic_write_stored_key() {}
+void btsnd_hcic_write_stored_key(unsigned char *p, unsigned char num_keys, unsigned char *bd_addr, unsigned char *link_key)
+{
+    unsigned short len;
+    unsigned char *pp;
+    int i, j;
+
+    len = num_keys * 22 + 4;
+    *(unsigned short *)(p + 4) = 0;
+    *(unsigned short *)(p + 2) = len;
+    p[8] = 0x11;
+    p[9] = 0xc;
+    p[10] = (unsigned char)(len - 3);
+    if (num_keys > 11)
+        num_keys = 11;
+    p[11] = num_keys;
+    pp = p + 12;
+    for (i = 0; i < num_keys; i++) {
+        pp[0] = bd_addr[5];
+        pp[1] = bd_addr[4];
+        pp[2] = bd_addr[3];
+        pp[3] = bd_addr[2];
+        pp[4] = bd_addr[1];
+        pp[5] = bd_addr[0];
+        for (j = 0; j < 16; j++)
+            pp[6 + j] = link_key[15 - j];
+        pp += 22;
+        bd_addr += 6;
+        link_key += 16;
+    }
+    btu_hcif_send_cmd(p);
+}
 
 int btsnd_hcic_delete_stored_key(unsigned char *bd_addr, unsigned char delete_all_flag)
 {
@@ -515,7 +772,21 @@ int btsnd_hcic_delete_stored_key(unsigned char *bd_addr, unsigned char delete_al
     return 1;
 }
 
-void btsnd_hcic_change_name() {}
+void btsnd_hcic_change_name(unsigned char *p, unsigned char *name)
+{
+    unsigned short len = (unsigned short)(strlen(name) + 1);
+    unsigned char *dst = p + 11;
+    int i;
+
+    *(unsigned short *)(p + 2) = 0xfb;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 0x13;
+    p[9] = 0xc;
+    p[10] = 0xf8;
+    for (i = 0; i < len; i++)
+        *dst++ = name[i];
+    btu_hcif_send_cmd(p);
+}
 
 void btsnd_hcic_write_page_tout(void *p, unsigned short timeout)
 {
@@ -674,7 +945,6 @@ void btsnd_hcic_write_cur_iac_lap(unsigned char *p, unsigned char num_laps, unsi
 {
     unsigned short len = (num_laps << 2) - num_laps + 4;
     unsigned char *pp = p + 12;
-    int i;
 
     *(unsigned short *)(p + 2) = len;
     *(unsigned short *)(p + 4) = 0;
@@ -683,7 +953,7 @@ void btsnd_hcic_write_cur_iac_lap(unsigned char *p, unsigned char num_laps, unsi
     p[10] = (unsigned char)(len - 3);
     p[11] = num_laps;
 
-    for (i = num_laps; i > 0; i--) {
+    while (num_laps--) {
         pp[0] = lap_array[2];
         pp[1] = lap_array[1];
         pp[2] = lap_array[0];
@@ -776,7 +1046,34 @@ int btsnd_hcic_read_rssi(unsigned short handle)
     return 1;
 }
 
-void btsnd_hcic_set_afh_channels() {}
+int btsnd_hcic_set_afh_channels(unsigned char first, unsigned char last)
+{
+    unsigned char channels[10] = {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x7F};
+    unsigned char *p;
+    int i;
+
+    if ((p = (unsigned char *)GKI_getpoolbuf(2)) == NULL)
+        return 0;
+    *(unsigned short *)(p + 2) = 0x0D;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 0x3F;
+    p[9] = 0x0C;
+    p[10] = 0x0A;
+
+    if (first <= last && last <= 78) {
+        for (i = first; i <= last; i++) {
+            int byte_offset = i / 8;
+            int bit_offset = i % 8;
+            channels[byte_offset] &= ~(1 << bit_offset);
+        }
+    }
+
+    for (i = 0; i < 10; i++)
+        p[11 + i] = channels[i];
+
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
 void btsnd_hcic_write_inqscan_type(void *p, unsigned char type)
 {
@@ -819,4 +1116,18 @@ void btsnd_hcic_write_pagescan_type(void *pBuf, unsigned char type) {
     btu_hcif_send_cmd(pBuf);
 }
 
-void btsnd_hcic_vendor_spec_cmd() {}
+void btsnd_hcic_vendor_spec_cmd(unsigned char *p, unsigned short opcode, int len, unsigned char *data)
+{
+    int cmd = opcode | 0xfc00;
+    unsigned char *dst = p + 11;
+    int i;
+
+    *(unsigned short *)(p + 2) = len + 3;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = (unsigned char)cmd;
+    p[9] = (unsigned char)(cmd >> 8);
+    p[10] = (unsigned char)len;
+    for (i = 0; i < len; i++)
+        *dst++ = data[i];
+    btu_hcif_send_cmd(p);
+}

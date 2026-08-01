@@ -13,6 +13,8 @@ typedef unsigned char BOOLEAN;
 
 #define SDP_MAX_RECORDS 0x14
 #define SDP_MAX_ATTR_PER_RECORD 0x25
+#define SDP_MAX_ATTR_LEN 0x50
+#define SIZE_TWO_BYTES 0x1
 
 typedef struct {
     UINT32 len;            /* 0x00 */
@@ -211,23 +213,24 @@ void SDP_AddServiceClassIdList() {}
 void SDP_DeleteAttribute() {}
 
 BOOLEAN SDP_AddUuidSequence(UINT32 handle, UINT16 attr_id, UINT16 num_uuids, UINT16 *p_uuids) {
-    UINT8 buf[0xC0];
-    UINT8 *p = buf;
-    UINT16 i;
+    UINT16 xx;
+    UINT8 buff[SDP_MAX_ATTR_LEN * 2];
+    UINT8 *p = buff;
+    int max_len = SDP_MAX_ATTR_LEN - 3;
 
-    for (i = 0; i < num_uuids; i++) {
-        *p++ = 0x19;
+    /* First, build the sequence */
+    for (xx = 0; xx < num_uuids; xx++, p_uuids++) {
+        *p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);
         *p++ = (UINT8)(*p_uuids >> 8);
         *p++ = (UINT8)*p_uuids;
-        p_uuids++;
 
-        if (p - buf > 0x4d) {
+        if ((p - buff) > max_len) {
             if (sdp_cb.trace_level >= 2) {
-                LogMsg_2(0xa0001, "SDP_AddUuidSequence - too long, add %d uuids of %d", i, num_uuids);
+                LogMsg_2(0xa0001, "SDP_AddUuidSequence - too long, add %d uuids of %d", xx, num_uuids);
             }
             break;
         }
     }
 
-    return SDP_AddAttribute(handle, attr_id, 6, (UINT32)(p - buf), buf);
+    return SDP_AddAttribute(handle, attr_id, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);
 }

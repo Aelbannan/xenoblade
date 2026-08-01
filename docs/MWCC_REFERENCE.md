@@ -4672,6 +4672,30 @@ prologue) — 49 structural mismatches, same bytes otherwise.
   retail's `nu1@sp+24 / nu2@sp+8` stack slots (reverse order swaps the slots → equivalence
   inconclusive on stack-object projection).
 
+## RVL_SDK bte/stack/sdp/sdp_db.c — SDP_AddUuidSequence FULL_MATCH (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
+
+`SDP_AddUuidSequence` (0x80306EB0, size 0xD8) byte-exact (0/54 mismatches, split PASS):
+- **sdp_db.c needs the bte-family compiler override too**: `mw_version="GC/3.0a5.2"` +
+  `extra_cflags=["-func_align 4", "-ipa off"]` (same as sdp_api.c / sdp_utils.c). Under
+  Wii/1.1 (mwcc_43_151) the function sat at ~90% HIGH_MATCH: Wii/1.1 CSE'd the double
+  `lhz *p_uuids` into one load (retail reloads for the low byte) and floated the
+  `li r7,0x19` constant into the prologue front. GC/3.0a5.2 reproduces both exactly.
+  All four previously-accepted functions in the unit (sdp_db_service_search,
+  find_uuid_in_seq, sdp_db_find_record, sdp_db_find_attr_in_rec) remain 100% under
+  the GC flags — no regression from the TU-wide compiler switch.
+- **Canonical Broadcom BTE body (JB-era bluedroid form)**: `UINT8 buff[SDP_MAX_ATTR_LEN * 2]`
+  (SDP_MAX_ATTR_LEN=0x50=80, gives frame 0xC0 with buff at sp+8);
+  `int max_len = SDP_MAX_ATTR_LEN - 3;` (77 = the retail `cmpwi 0x4d`); loop
+  `for (xx = 0; xx < num_uuids; xx++, p_uuids++)` writing
+  `*p++ = (UINT8)((UUID_DESC_TYPE << 3) | SIZE_TWO_BYTES);` — **SIZE_TWO_BYTES is 1**
+  (size index nibble), so the element type byte is 0x19; then
+  `*p++ = (UINT8)(*p_uuids >> 8); *p++ = (UINT8)*p_uuids;`, then
+  `if ((p - buff) > max_len) { if (sdp_cb.trace_level >= 2) LogMsg_2(0xa0001,
+  "SDP_AddUuidSequence - too long, add %d uuids of %d", xx, num_uuids); break; }`,
+  then `return SDP_AddAttribute(handle, attr_id, DATA_ELE_SEQ_DESC_TYPE, (UINT32)(p - buff), buff);`.
+  `p_uuids++` must live in the for-increment (retail schedules `addi r6,r6,2` after the
+  length check, on the non-break path only).
+
 ## RVL_SDK bte/l2cap l2c_csm.c — 4× FULL_MATCH: `-ipa off` reverse emission + string-pool layout (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
 
 `l2c_csm_execute` (0x4C), `l2c_csm_closed` (0x294), `l2c_csm_orig_w4_sec_comp` (0x170),

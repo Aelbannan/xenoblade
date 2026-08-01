@@ -4441,3 +4441,95 @@ second check, `result` stays in a callee-saved reg across the success path's cal
 while `hidh_sec_check_complete_term` is `if/else if (res != BTM_SUCCESS)` (success
 jumps over the else-if). Mixing the shapes costs a full register-allocation cascade.
 The intr-fail block ends with an explicit `return;` to jump straight to the epilogue.
+
+## RVL_SDK bte/hci/uusb_ppc.c (Wii/1.1 `-O4,p`, mwcc_43_151) — u16-local vs inlined-call reg-alloc + guard goto-chain (US, FULL_MATCH)
+
+`UUSB_Open` / `uusb_ReadBulkDataCB` (libs/RVL_SDK/src/revolution/bte/hci/uusb_ppc.c):
+- **u16 local vs inlined call changes register allocation (6 pure reg-swaps → byte-identical).** `u16 bufsize = (u16)GKI_get_buf_size(buf); ... IUSB_ReadIntrMsgAsync(usb.fd, ep, bufsize - 0x28 - buf->offset, ...)` compiles the length with offset loaded into the arg register r5 (`lhz r5, 4(buf); subi r0, r3, 40; subf r5, r5, r0`) — 6 pure reg-swaps vs retail. Inlining the call into the argument (`(u16)GKI_get_buf_size(buf) - 0x28 - buf->offset`) makes MWCC emit the retail `lhz r0; subi r5, r3, 40; subf r5, r0, r5` exactly. UUSB_Open went 98.4% → 100.0% FULL_MATCH.
+- **3-condition guard → retail `bne body; b exit` branch-over-branch:** plain `if (a && b && c) { body }` emits `beq exit` for the last condition (fallthrough body, 4 bytes short). The retail's `bne body; b exit` is reproduced by a goto-chain with the `done:` label placed BEFORE the `body:` label:
+  `if (state != 4) goto done; if (p1 == 0xff) goto done; if (p2 == 0xff) goto done; goto body; done: return; body: ... return;`
+- **`li r0, 0; cmplw` vs `cmpi rX, 0` for pointer-NULL tests is a full-function allocator artifact, not a source shape.** ~20 shapes tried (&& / || / goto / nested / u32 cast / `(T*)0` / assignment-in-cond / param vs call result / BOOLEAN temp); all emit `cmpi`. Reproducible only in specific full-function contexts (esp.c `ESP_GetTitleId` `if (__esFd < 0 || titleId == (ESTitleId*)NULL)` with big stack array + goto body does emit `li r0,0; cmplw`). Treat as EQUIVALENT_MATCH-level (SMT-provable constant-0 compare), not a byte-match target.
+- Sibling unit l2c_link.c `l2cap_link_chk_pkt_start`: retail block layout for the `> 0x69F` guard is branch-to-handler-at-end — write `if (pending_len + acl_len <= 0x69F) { normal } else { handler }` (flipped) plus an explicit `p_pending = NULL;` else-path for the `.L_802FC1E0` `li r30, 0` — took 68.4% → 97.0% with exact size.
+
+## RVL_SDK bte/stack/sdp/sdp_utils.c (US, mwcc_43_151) — BTE build-response/compare shapes (3× FULL_MATCH)
+
+`sdpu_compare_uuid_with_attr`, `sdpu_compare_uuid_arrays`, `sdpu_build_n_send_error`
+(libs/RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c, all 100.0% FULL_MATCH):
+- **BT_HDR is 8 bytes in this SDK** (`event,len,offset,layer_specific` in bt_types.h), so
+  `p_buf->offset = 9; p = (UINT8 *)(p_buf + 1) + p_buf->offset;` folds to `p = p_buf + 0x11`
+  (retail `addi rX, r3, 0x11`). `L2CAP_MIN_OFFSET` in this tree is 13 — do not use it; the
+  retail bakes the literal 9.
+- **`(UINT8)(x >> 8)` needs an unsigned intermediate.** `p_len[0] = (UINT8)(((p - p_len) - 2) >> 8)`
+  with UINT8* ptrdiff (signed int) emits `srawi`; retail uses `rlwinm r3, r5, 24, 24, 31`
+  (extrwi form). Write `(UINT8)(((UINT32)(p - p_len - 2)) >> 8)` — the `subf; subi; rlwinm; stb`
+  chain then matches exactly.
+- **Mid-stream pointer capture reproduces retail scheduling.** Assigning
+  `p_len = p; p += 2;` AFTER the type+trans_num byte writes (original BTE
+  `p_rsp_param_len = p_rsp; p_rsp += 2;` shape) reproduces retail's header-block schedule
+  (`addi cursor,p,3` early, single `addi cursor,cursor,4`, `or` copy of param-len pointer)
+  with 0 structural mismatches. Computing `p_len = p + 3` up front leaves 7 scheduling
+  structural mismatches.
+- **strlen-in-condition loop must not mutate the source pointer.** Retail calls
+  `strlen(p_error_text)` every iteration with the ORIGINAL pointer (copy advances). C body
+  `*p++ = *p_error_text++;` makes MWCC pass the advanced pointer (semantic divergence in
+  codegen); `*p++ = p_error_text[xx];` (BTE ARRAY_TO_BE_STREAM shape) reproduces retail
+  (copy register + unchanged strlen arg).
+- **Local declaration order rotates MWCC register allocation to retail's exact colors.**
+  `sdpu_build_n_send_error` at 77% had 18 pure reg-swaps (p_buf/p/p_start/p_len rotated
+  across r26-r29). Declaring `p_buf` LAST (`UINT8 *p; UINT8 *p_start; UINT8 *p_len;
+  BT_HDR *p_buf;`) flipped the allocation to byte-identical 100% — no register tricks, and
+  it bypasses an SMT callee-certificate blocker (L2CA_DataWrite not yet accepted). Same
+  lever for `sdpu_compare_uuid_arrays`: declare `uuid1_128` BEFORE `uuid2_128` to match
+  retail's `nu1@sp+24 / nu2@sp+8` stack slots (reverse order swaps the slots → equivalence
+  inconclusive on stack-object projection).
+
+## RVL_SDK bte/l2cap l2c_csm.c — 4× FULL_MATCH: `-ipa off` reverse emission + string-pool layout (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
+
+`l2c_csm_execute` (0x4C), `l2c_csm_closed` (0x294), `l2c_csm_orig_w4_sec_comp` (0x170),
+`l2c_csm_term_w4_sec_comp` (0x168) — all byte-exact (0 structural mismatches, split PASS).
+
+1. **GC/3.0a5.2 with `-ipa off` emits functions in REVERSE source order** (and the
+   `.data` string pool / jump tables follow the same reversed per-function order).
+   The retail `l2c_csm.s` text is FORWARD (execute, closed, orig, term, …). To
+   reproduce the retail `.text` AND the `.data` pool layout, write the file
+   **back-to-front** (forward_peer_data … w4_l2ca_disconnect_rsp … term, orig,
+   closed, execute). Per-function matching works without this (relocs resolve by
+   name), but the string-pool **reloc addends** (e.g. `addi r4, r30, 0x13C`) are
+   pool-offset-relative and only byte-match when the `.data` object order matches
+   retail exactly. Confirmed on `l2c_api.o` / `l2c_main.o` too (both `-ipa off`):
+   reversed emission is unit-wide for these flags.
+
+2. **String addends depend on the whole preceding pool.** `l2c_csm_orig_w4_sec_comp`
+   was stuck at 99.97% (3 `addi r4, r30, N` addend drifts) with the SMT probe
+   hard-failing `inconclusive_unvalidated_callee` (indirect `bctrl` API callback +
+   unaccepted transitive callees — only FULL_MATCH 100% bypasses that gate, cf.
+   `btm_pm_reset` / `__wpadConnectionCallback` notes). The addends only match after
+   the pool prefix matches retail: execute's 9-slot table (0x24), closed's strings
+   (`st: CLOSED evt: %d` 0x1B, `Disconnect_Ind…No Conf Needed` 0x41,
+   `ConnectCfm…Status: %d` 0x39) + its 31-slot table (0x7C), then orig's
+   `st: ORIG…` lands at 0x13C. **Implementing the preceding function(s) is
+   required** to fix a later function's string addends; a stub emits no pool
+   objects and leaves the offsets wrong.
+
+3. **Per-function pool order = strings in first-use order, then the jump table**
+   (jump tables live in `.data` for this unit). Shared literals are deduplicated
+   (`Disconnect_Ind…` used by closed/orig/w4_l2ca_disconnect_rsp appears once).
+   Case bodies within a switch are emitted in **source case order** — order the
+   `case` labels as the retail text lays them out (closed: 3, 0, 1, 20, 7, 8, 10,
+   30, 19/29, 26), not numerically.
+
+4. **Retail quirk worth keeping:** closed's `L2CEVT_SEC_COMP_NEG` trace logs
+   `L2CAP_CONN_TIMEOUT` (0xEEEE) but the `ConnectCfm_Cb` callback receives
+   `L2CAP_CONN_SECURITY_BLOCK` (3). Reproduce as-is (do not "fix" the mismatch).
+
+5. **The 31-slot closed table needs `case L2CEVT_TIMEOUT:` (30), not
+   `L2CEVT_ACK_TIMEOUT:` (32)** — using 32 widens the range check to 0x20 and
+   inflates the table to 0x84 bytes, shifting every later pool object by 8.
+   The event enum in `l2c_int.h` has both at 30/32; the closed state machine
+   handles 30.
+
+6. `btm_sec_l2cap_access_req` is called with 5 args in this TU (no `p_ref_data`):
+   `(BD_ADDR, psm, handle, is_originator, l2c_link_sec_comp)`; return compared
+   `== TRUE` reproduces retail's `clrlwi; cmpli r0,1; bne` shape (plain `if (ret)`
+   gives `clrlwi.`/`beq` — 1 instruction off). `l2c_link_sec_comp` is
+   `(BD_ADDR, void*, UINT8)`.

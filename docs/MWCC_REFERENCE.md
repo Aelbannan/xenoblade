@@ -287,13 +287,18 @@ signed `blt` default check, and the case-1/2 body zeroes p_inqparms->filter_cond
 
 `btsnd_hcic_write_pin_type`, `btsnd_hcic_write_auth_enable`, `btsnd_hcic_write_encr_mode`,
 `btsnd_hcic_read_rssi` accepted as EQUIVALENT_MATCH (~90% static, semantic-certified).
+**The accepted committed form is the plain halfword store**
+`*(unsigned short *)(p + 2) = N;` (retail `sth rX,2`). Do **not** rewrite it as a byte
+pair (`p[3] = N; p[2] = 0;`): with the current toolchain MWCC emits two separate
+`stb`'s instead of the merged `sth` (~42–55% fuzzy, size +1), a regression that was
+once committed for these four and reverted here.
 The Wii bte buffer is an 8-byte `BT_HDR` (event@0, len@2, offset@4, layer_specific@6)
 with the command at p+8: `[opcode-lo, opcode-hi(=OGF<<2), paramlen, params…]`
 (`UINT16_TO_STREAM` is little-endian: low byte first).
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| `li r0,0` (constant 0 for `p->offset`) allocated to r0 after the `sth len,2(r3)` store, reusing r0 — while retail hoists `li r6,0` **before** the first store (r0 still live with len). The pre-call opaque-EABI call token then diverges on r6 (retail 0 vs decomp opaque) → `inconclusive_abstraction` (`exit.target` mismatch = LR restored from a stack slot the opaque callee may write, differing per token) | MWCC schedules single-use constants as late as possible; the retail's scheduler hoisted the zero. A constant used **twice** is commoned and hoisted into a distinct register | Write the len u16 as a **byte pair in big-endian order**: `p[3] = 4; p[2] = 0;` (or `p[2] = len>>8; p[3] = len;`), keeping `*(unsigned short *)(p + 4) = 0` as a real u16 store. The zero then serves p[2] **and** the u16 offset → MWCC emits `li r6,0` hoisted, matching retail's register (r6) and bytes (`00 04`); for `read_rssi` write `p[3] = 5; p[2] = 0;` so the reused opcode byte (5) lands in r7 and the zero in r6, exactly like retail |
+| `li r0,0` (constant 0 for `p->offset`) allocated to r0 after the `sth len,2(r3)` store, reusing r0 — while retail hoists `li r6,0` **before** the first store (r0 still live with len). The pre-call opaque-EABI call token then diverges on r6 (retail 0 vs decomp opaque) → `inconclusive_abstraction` (`exit.target` mismatch = LR restored from a stack slot the opaque callee may write, differing per token) | MWCC schedules single-use constants as late as possible; the retail's scheduler hoisted the zero. A constant used **twice** is commoned and hoisted into a distinct register | Unclosable in source: 10+ forms tried (byte pair, stream/pp-chain, locals, masks, arg types). Keep the plain halfword form; the pass/fail split of the SMT probe is per-function allocator luck — 6 sibling builders pass (`change_conn_type`, `set_conn_encrypt`, `read_rmt_clk_offset`, `exit_sniff_mode`, `exit_park_mode`, `get_link_quality`) while `disconnect`/`add_SCO_conn`/`write_policy_set`/`write_link_super_tout` (+ these four) fail with the same `exit.target: 0x01010104 != 0x00000000` artifact. Engine-side fix needed (exclude provably-untouched callee inputs from the opaque token) |
 | SMT persists after registers match | A halfword store at p+2 stores BE bytes `00 04`; naive byte stores `p[2]=4; p[3]=0` reverse them (`04 00`) — the pre-call **memory** diverges, keeping the token unequal | Always store the len as the BE byte pair (high byte at p[2], low byte at p[3]); verify with `check-objects` after any byte-store change |
 | `btsnd_hcic_write_cur_iac_lap` (mtctr/cmpwi/ble/header/bdnz copy loop, param trip) stalls: `inconclusive_unsupported` (instruction limit 2048) | The CTR-affine summarizer needs an in-function dot-form trip def + padding-only mtctr→guard adjacency; a param trip has no def (`_find_trip_def_index` → None) and the signed `ble` guard fails the zero-trip discharge (r4≤0 skips but trip≠0); the 3× lbz/stb copy body also fails the word-copy memory-loop grammar; unrolling is unbounded (r4 unconstrained) | Requires engine-side loop-summary grammar extension (mtctr;cmpwi;ble;header;bdnz with param trip + `max(0,trip)` skip semantics) or a u8-range bound on entry r4; source is otherwise register-matched modulo reg-swaps (83.2% static) |
 
@@ -1535,16 +1540,26 @@ The buffer-param builders hoist **all** `li`s before the first store.
   later, leaving 1–2 li/store swaps (~83–91% fuzzy, sizes exact). 10+ source
   forms tried (byte-cast, locals, `pp`-chain, stream macros, masks, arg-type
   variants, both `-O4` flags) — all byte-identical; unclosable in source.
-- **Volatile-register token divergence (current engine blocker for
-  `write_pin_type` / `write_auth_enable` / `write_encr_mode` / `read_rssi`):**
-  the opaque-callee call token includes r0–r12 at the call. Retail's older
+- **Volatile-register token divergence (current engine blocker):** the
+  opaque-callee call token includes r0–r12 at the call. Retail's older
   MWCC hoists a constant into a scratch register the decomp leaves untouched
   (e.g. retail `li r6, 0` vs decomp r6 = fresh `call.GKI_getpoolbuf.r6`), so
   the second call's token diverges and the SMT returns
   `inconclusive_abstraction` even though the code is scheduling-identical.
   `auth_request`/`rmt_*`/no-arg builders pass because their volatile-register
-  usage coincides with retail; the four above fail. Needs an engine-side fix
-  (exclude provably-untouched callee inputs from the opaque token).
+  usage coincides with retail; `disconnect`, `add_SCO_conn`, `write_policy_set`,
+  `write_link_super_tout`, `write_pin_type`, `write_auth_enable`,
+  `write_encr_mode`, `read_rssi` fail (`exit.target: 0x01010104 != 0x00000000`,
+  engine message: "not a concrete inequivalence witness"). Six sibling builders
+  (`change_conn_type`, `set_conn_encrypt`, `read_rmt_clk_offset`,
+  `exit_sniff_mode`, `exit_park_mode`, `get_link_quality`) DO pass — the split
+  is per-function allocator luck on whether decomp volatile-register usage at
+  the call point coincides with retail (shifts into r6/r7 with matching
+  leftover constants converge; untouched-vs-constant diverges). Needs an
+  engine-side fix (exclude provably-untouched callee inputs from the opaque
+  token). Note: previously-accepted `read_rssi`/`write_pin_type` also fail
+  re-verification under the current engine; their registry certificates are
+  stale (accepted under an earlier engine state).
 - **`btsnd_hcic_write_cur_iac_lap` SMT also blocked:** the `mtctr; cmpwi;
   ble; header; bdnz` shape is not recognized by `find_mtctr_with_guard`
   (the `cmpwi` between `mtctr` and the header is not padding/guard per the

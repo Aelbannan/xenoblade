@@ -3307,3 +3307,35 @@ the `__mulhwu` builtin emits bare `mulhwu` (the u64 expression emits a redundant
 keeping the volatile bus load inside the loop macro prevents loop-invariant hoisting
 (retail reloads per iteration). `if (elapsed > 2000)` on a `u32` emits the
 `xori/cntlzw/slw/srwi.` branchless unsigned-greater test in value contexts.
+
+## RVL BTE btm_devctl — retail bte library is GC/3.0a5.2-built, not Wii/1.1 (US, 10× FULL_MATCH)
+
+`libs/RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c` — all 10 targets
+(`BTM_ReadDeviceClass`, `BTM_ReadLocalFeatures`, `BTM_RegisterForDeviceStatusNotif`,
+`btm_report_device_status`, `BTM_RegisterForVSEvents`, `btm_read_local_addr_complete`,
+`BTM_ReadLocalVersion`, `BTM_ReadLocalDeviceAddr`, `btm_write_stored_link_key_complete`,
+`btm_delete_stored_link_key_complete`) reached **FULL_MATCH (100% bytes, SMT-certified,
+size PASS)** — but **only after switching the object to `mw_version = "GC/3.0a5.2"`**.
+
+**Symptom → cause:** under the default Wii/1.1 compiler, mixed-width struct copies
+(e.g. `tBTM_VERSION_INFO` = `{UINT8, UINT16, UINT8, UINT16, UINT16}`) are merged into
+`lwz` pairs (`lwz;lwz;lhz`), while the retail emits `lhz`-pair copies
+(`lhz r4,0x636(r5); lhz r0,0x638(r5); sth r4,0(r3); sth r0,2(r3)` ×2 + single). Field-by-field
+assignments serialize as `lhz;sth;lhz;sth` under Wii/1.1 and GC alike — neither matches retail.
+GC/3.0a5.2 keeps the memberwise `lhz` copies from a plain struct assignment and reproduces the
+retail byte-for-byte (verified against every already-accepted bte TU: btm_discovery, bte_init,
+btm_main, hidd_conn all still MATCH under GC/3.0a5.2). The repo's btm_sco `HIGH_MATCH` ceilings
+(`btm_sco_connected` lhz-pair copy, etc.) are the same compiler-version artifact.
+
+**Fixes that worked:**
+- `*p_vers = btm_cb.devcb.local_version;` — plain struct copy (GC/3.0a5.2 unrolls to the exact
+  paired `lhz`/`sth` schedule; Wii/1.1 merges to `lwz`).
+- Big-endian 16-bit stream reads: `0 + ((UINT16)(*(p+1)) << 0) + ((UINT16)(*(p+2)) << 8)`
+  (the SDK `STREAM_TO_UINT16` shape) — `(p[2] << 8) | p[1]` folds to a single `rlwimi`, retail
+  keeps `slwi`+`add`.
+- `btm_cb` surrogate struct + `extern BtmCb btm_cb;` (pattern from btm_dev.c) — btm_int.h's
+  `#define btm_cb (*btm_cb_ptr)` would emit an indirect load, not the direct `btm_cb@ha` reloc.
+
+**Tooling note:** `configure_args` in build.ninja must be `--version=us` (equals-form); the
+space form strips the region from `configure_args` and the ninja regen rule breaks with
+"argument -v/--version: expected one argument".

@@ -982,7 +982,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2"),  # retail bte built with GC 3.0a-family; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_main.c"),

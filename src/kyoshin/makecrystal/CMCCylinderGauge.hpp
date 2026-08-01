@@ -8,7 +8,7 @@
 
 #include <decomp.h>
 
-class CMCCylinderGauge {
+class __declspec(novtable) CMCCylinderGauge {
 public:
     CMCCylinderGauge(nw4r::lyt::ArcResourceAccessor* arg);
     virtual ~CMCCylinderGauge();

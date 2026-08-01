@@ -228,37 +228,6 @@ FontEncoding RomFont::GetEncoding() const {
     return FONT_ENCODING_CP1252;
 }
 
-void RomFont::MakeCharPtr(char* pBuffer, u16 ch) const {
-    ch = HandleUndefinedChar(ch);
-
-    if (BitExtract<u16>(ch, 8, 8) == 0) {
-        pBuffer[0] = ch & 0x00FF;
-        pBuffer[1] = '\0';
-    } else {
-        pBuffer[0] = BitExtract<u16>(ch, 8, 8);
-        pBuffer[1] = ch & 0x00FF;
-        pBuffer[2] = '\0';
-    }
-}
-
-u16 RomFont::HandleUndefinedChar(u16 ch) const {
-    bool valid;
-
-    switch (mFontEncode) {
-    case OS_FONT_ENCODE_ANSI: {
-        valid = IsCP1252Char(ch);
-        break;
-    }
-
-    case OS_FONT_ENCODE_SJIS: {
-        valid = IsSJISHalfWidthChar(ch) || IsSJISFullWidthChar(ch);
-        break;
-    }
-    }
-
-    return valid ? ch : mAlternateChar;
-}
-
 void* RomFont::Unload() {
     void* pPrev = mFontHeader;
     mFontHeader = NULL;

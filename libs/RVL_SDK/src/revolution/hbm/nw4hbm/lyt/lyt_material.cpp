@@ -2,6 +2,18 @@
 
 #include <cstring>
 
+namespace nw4hbm {
+namespace ut {
+
+/* Emitted here to match the retail binary: only lyt_material.o defines the
+ * ut::Color default ctor (other lyt TUs reference it via __construct_array). */
+Color::Color() {
+    *this = WHITE;
+}
+
+} // namespace ut
+} // namespace nw4hbm
+
 /******************************************************************************
  *
  * Utility functions

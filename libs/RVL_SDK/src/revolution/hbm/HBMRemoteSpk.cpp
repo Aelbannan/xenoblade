@@ -11,29 +11,11 @@ namespace homebutton {
 
 RemoteSpk* RemoteSpk::spInstance = NULL;
 
-void RemoteSpk::SetInstance(RemoteSpk* pThis) {
-    spInstance = pThis;
-}
-
-RemoteSpk* RemoteSpk::GetInstance() {
-    return spInstance;
-}
-
-void RemoteSpk::GetPCMFromSeID(int id, s16*& rpPcm, int& rLength) {
-    ARCFileInfo af;
-    ARCFastOpen(&handle, id, &af);
-
-    rpPcm = static_cast<s16*>(ARCGetStartAddrInMem(&af));
-    rLength = ARCGetLength(&af);
-
-    ARCClose(&af);
-}
-
 void RemoteSpk::UpdateSpeaker(OSAlarm* /* pAlarm */, OSContext* /* pContext */) {
     s16 pcmBuffer[40];
     u8 adpcmBuffer[20];
 
-    RemoteSpk* pRmtSpk = GetInstance();
+    RemoteSpk* pRmtSpk = spInstance;
     if (pRmtSpk == NULL) {
         return;
     }
@@ -104,7 +86,7 @@ void RemoteSpk::ClearPcm() {
 }
 
 RemoteSpk::RemoteSpk(void* pSpkSeBuf) {
-    SetInstance(this);
+    spInstance = this;
 
     if (pSpkSeBuf != NULL) {
         available = ARCInitHandle(pSpkSeBuf, &handle);
@@ -124,7 +106,7 @@ RemoteSpk::RemoteSpk(void* pSpkSeBuf) {
 }
 
 RemoteSpk::~RemoteSpk() {
-    SetInstance(NULL);
+    spInstance = NULL;
     available = false;
 
     OSCancelAlarm(&speakerAlarm);
@@ -168,7 +150,7 @@ void RemoteSpk::DelaySpeakerOnCallback(OSAlarm* pAlarm,
 }
 
 void RemoteSpk::SpeakerOnCallback(s32 chan, s32 result) {
-    RemoteSpk* pRmtSpk = GetInstance();
+    RemoteSpk* pRmtSpk = spInstance;
     if (pRmtSpk == NULL) {
         return;
     }
@@ -191,54 +173,6 @@ void RemoteSpk::SpeakerOnCallback(s32 chan, s32 result) {
     }
 }
 
-void RemoteSpk::DelaySpeakerPlayCallback(OSAlarm* pAlarm,
-                                         OSContext* /* pContext */) {
-    s32 chan = reinterpret_cast<s32>(OSGetAlarmUserData(pAlarm));
-    s32 result =
-        WPADControlSpeaker(chan, WPAD_SPEAKER_PLAY, &SpeakerPlayCallback);
-}
-
-void RemoteSpk::SpeakerPlayCallback(s32 chan, s32 result) {
-    RemoteSpk* pRmtSpk = GetInstance();
-    if (pRmtSpk == NULL) {
-        return;
-    }
-
-    switch (result) {
-    case WPAD_ERR_OK: {
-        pRmtSpk->info[chan].playReady = true;
-        break;
-    }
-
-    case WPAD_ERR_NO_CONTROLLER: {
-        pRmtSpk->info[chan].playReady = false;
-        break;
-    }
-
-    case WPAD_ERR_COMMUNICATION_ERROR: {
-        OSSetAlarmUserData(&pRmtSpk->info[chan].alarm,
-                           reinterpret_cast<void*>(chan));
-
-        OSCancelAlarm(&pRmtSpk->info[chan].alarm);
-        OSSetAlarm(&pRmtSpk->info[chan].alarm, OS_MSEC_TO_TICKS(50),
-                   &DelaySpeakerPlayCallback);
-        break;
-    }
-    }
-}
-
-void RemoteSpk::Connect(s32 chan) {
-    if (!available) {
-        return;
-    }
-
-    int result = WPADControlSpeaker(chan, WPAD_SPEAKER_ON, &SpeakerOnCallback);
-
-    std::memset(&info[chan].wencinfo, 0, sizeof(WENCInfo));
-    info[chan].first = true;
-    info[chan].playReady = false;
-}
-
 void RemoteSpk::Play(s32 chan, int seID, s8 vol) {
     if (!available) {
         return;
@@ -246,7 +180,13 @@ void RemoteSpk::Play(s32 chan, int seID, s8 vol) {
 
     s16* pPcm;
     int length;
-    GetPCMFromSeID(seID, pPcm, length);
+    ARCFileInfo af;
+    ARCFastOpen(&handle, seID, &af);
+
+    pPcm = static_cast<s16*>(ARCGetStartAddrInMem(&af));
+    length = ARCGetLength(&af);
+
+    ARCClose(&af);
 
     info[chan].cannotSendCnt = 0;
     info[chan].seId = seID;
@@ -274,7 +214,7 @@ bool RemoteSpk::isPlayReady(s32 chan) const {
 }
 
 void RemoteSpk::SpeakerOffCallback(s32 chan, s32 result) {
-    RemoteSpk* pRmtSpk = GetInstance();
+    RemoteSpk* pRmtSpk = spInstance;
     if (pRmtSpk == NULL) {
         return;
     }

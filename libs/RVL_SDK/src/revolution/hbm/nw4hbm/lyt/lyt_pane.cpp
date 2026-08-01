@@ -48,25 +48,6 @@ PaneBase::~PaneBase() {}
  * Pane
  *
  ******************************************************************************/
-Pane::Pane() {
-    Init();
-
-    mBasePosition = HORIZONTALPOSITION_MAX + 1;
-
-    std::memset(mName, 0, sizeof(mName));
-    std::memset(mUserData, 0, sizeof(mUserData));
-
-    mTranslate = math::VEC3(0,0,0);
-    mRotate = math::VEC3(0,0,0);
-    mScale = math::VEC2(1,1);
-    mSize = Size(0,0);
-    
-    mAlpha = -1;
-    mGlbAlpha = -1;
-    mFlag = false;
-    SetVisible(true);
-}
-
 Pane::Pane(const res::Pane* pRes) {
     mpParent = NULL;
     mpMaterial = NULL;
@@ -87,13 +68,6 @@ Pane::Pane(const res::Pane* pRes) {
     mFlag = pRes->flag;
 }
 
-void Pane::Init() {
-    mpParent = NULL;
-    mpMaterial = NULL;
-    mUserAllocated = false;
-    std::memset(mpExtUserDataList, 0, sizeof(mpExtUserDataList));
-}
-
 Pane::~Pane() {
     NW4R_UT_LINKLIST_FOREACH_SAFE (it, mChildList, {
         mChildList.Erase(it);
@@ -112,31 +86,9 @@ Pane::~Pane() {
     }
 }
 
-void Pane::SetName(const char* pName) {
-    std::strncpy(mName, pName, NW4R_LYT_RES_NAME_LEN);
-}
-
-void Pane::SetUserData(const char* pUserData) {
-    std::strncpy(mUserData, pUserData, NW4R_LYT_PANE_USERDATA_LEN);
-}
-
 void Pane::AppendChild(Pane* pChild) {
-    InsertChild(mChildList.GetEndIter(), pChild);
-}
-
-void Pane::InsertChild(PaneList::Iterator next, Pane* pChild) {
-    mChildList.Insert(next, pChild);
+    mChildList.Insert(mChildList.GetEndIter(), pChild);
     pChild->mpParent = this;
-}
-
-void Pane::PrependChild(Pane* pChild) {
-    mChildList.Insert( mChildList.GetBeginIter(), pChild);
-    pChild->mpParent = this;
-}
-
-void Pane::RemoveChild(Pane* pChild) {
-    mChildList.Erase(pChild);
-    pChild->mpParent = NULL;
 }
 
 ut::Rect Pane::GetPaneRect(const DrawInfo& rInfo) const {
@@ -287,17 +239,13 @@ void Pane::CalculateMtx(const DrawInfo& rInfo) {
         rMtInfo.SetInfluencedAlpha(true);
     }
 
-    CalculateMtxChild(rInfo);
+    NW4R_UT_LINKLIST_FOREACH (it, mChildList, { it->CalculateMtx(rInfo); })
 
     if (modifyInfo) {
         DrawInfo& rMtInfo = const_cast<DrawInfo&>(rInfo);
         rMtInfo.SetGlobalAlpha(glbAlpha);
         rMtInfo.SetInfluencedAlpha(influenced);
     }
-}
-
-void Pane::CalculateMtxChild(const DrawInfo& rInfo) {
-    NW4R_UT_LINKLIST_FOREACH (it, mChildList, { it->CalculateMtx(rInfo); })
 }
 
 void Pane::Draw(const DrawInfo& rInfo) {
@@ -524,17 +472,8 @@ math::VEC2 Pane::GetVtxPos() const {
     return base;
 }
 
-u8 Pane::GetMaterialNum() const {
-    return mpMaterial != NULL ? 1 : 0;
-}
-
 Material* Pane::GetMaterial() const {
     return mpMaterial;
-}
-
-Material* Pane::GetMaterial(u32 index) const {
-    if(index == 0) return GetMaterial();
-    return NULL;
 }
 
 } // namespace lyt

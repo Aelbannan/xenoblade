@@ -618,21 +618,22 @@ void l2c_link_check_send_pkts(tL2C_LCB *p_lcb, tL2C_CCB *p_ccb,
 
 void l2c_link_adjust_allocation(void)
 {
-    UINT16 num_links_active = 0;
+    int num_links_active = 0;
     UINT16 quota;
     UINT16 xx;
     tL2C_LCB *p_lcb;
+    tL2C_CB *p_cb = &l2cb;
 
-    if (l2cb.num_links == 0)
+    if (p_cb->num_links == 0)
         return;
 
-    if (l2cb.lcb_pool[0].in_use && (l2cb.lcb_pool[0].priority == TRUE))
+    if (p_cb->lcb_pool[0].in_use && (p_cb->lcb_pool[0].priority == TRUE))
         num_links_active = 1;
-    if (l2cb.lcb_pool[1].in_use && (l2cb.lcb_pool[1].priority == TRUE))
+    if (p_cb->lcb_pool[1].in_use && (p_cb->lcb_pool[1].priority == TRUE))
         num_links_active++;
-    if (l2cb.lcb_pool[2].in_use && (l2cb.lcb_pool[2].priority == TRUE))
+    if (p_cb->lcb_pool[2].in_use && (p_cb->lcb_pool[2].priority == TRUE))
         num_links_active++;
-    if (l2cb.lcb_pool[3].in_use && (l2cb.lcb_pool[3].priority == TRUE))
+    if (p_cb->lcb_pool[3].in_use && (p_cb->lcb_pool[3].priority == TRUE))
         num_links_active++;
 
     quota = l2cb.num_lm_acl_bufs / l2cb.num_links + 1;
@@ -754,14 +755,7 @@ BT_HDR *l2cap_link_chk_pkt_start(BT_HDR *p_buf)
             pending_len = (UINT16)(p_pending_data[10] +
                                    (p_pending_data[11] << 8));
 
-            if (pending_len + acl_len > 0x69F)
-            {
-                L2CAP_TRACE_WARNING0("L2CAP - dropping too long pkt");
-                GKI_freebuf(p_lcb->p_pending_data);
-                p_lcb->p_pending_data = NULL;
-                p_pending = NULL;
-            }
-            else
+            if (pending_len + acl_len <= 0x69F)
             {
                 l2cb.p_rcv_pending_lcb = p_lcb;
                 if (p_buf->len > 4)
@@ -778,6 +772,17 @@ BT_HDR *l2cap_link_chk_pkt_start(BT_HDR *p_buf)
                 p_pending_data[10] = (UINT8)pending_len;
                 p_pending_data[11] = (UINT8)(pending_len >> 8);
             }
+            else
+            {
+                L2CAP_TRACE_WARNING0("L2CAP - dropping too long pkt");
+                GKI_freebuf(p_lcb->p_pending_data);
+                p_lcb->p_pending_data = NULL;
+                p_pending = NULL;
+            }
+        }
+        else
+        {
+            p_pending = NULL;
         }
     }
 
@@ -795,13 +800,10 @@ BOOLEAN l2cap_link_chk_pkt_end(void)
     UINT16 packet_len;
 
     p_lcb = l2cb.p_rcv_pending_lcb;
-    if (p_lcb == NULL)
+    if (p_lcb == NULL || p_lcb->p_pending_data == NULL)
         return TRUE;
 
     p_buf = p_lcb->p_pending_data;
-    if (p_buf == NULL)
-        return TRUE;
-
     p_data = (UINT8 *)p_buf + p_buf->offset;
     packet_len = (UINT16)(p_data[12] + (p_data[13] << 8));
     if (packet_len > p_buf->len - 8)

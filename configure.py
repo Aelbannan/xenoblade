@@ -1005,7 +1005,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family, -func_align 4 and no IPA: -ipa file / -func_align 16 insert scheduling NOPs before mtctr-counted loops (see MWCC_REFERENCE)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c", mw_version="GC/3.0a5.2"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 removes the spurious ori nop before mtctr-counted loops and matches the bte btm family layout (MWCC_REFERENCE btm_sco notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 matches retail's 4-aligned functions and packs .text into the split budget (MWCC_REFERENCE btm_devctl size row); Wii/1.1 merges byte-copies into lwz and schedules li/stb differently
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c", extra_cflags=["-func_align 4", "-ipa off"]),
@@ -1160,7 +1160,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_layout.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_material.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_pane.cpp"),
-            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp"),
+            Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_picture.cpp", extra_cflags=["-func_align 4"]),  # retail lyt_picture packed at 4-byte fn alignment (Append at 0x250 after 0x24C); 16-align + 2 WIP bodies blows the split
             Object(Matching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_resourceAccessor.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_textBox.cpp"),
             Object(NonMatching, "RVL_SDK/src/revolution/hbm/nw4hbm/lyt/lyt_window.cpp"),

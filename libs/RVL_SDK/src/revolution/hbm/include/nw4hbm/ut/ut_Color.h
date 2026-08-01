@@ -9,9 +9,11 @@ namespace ut {
 
 struct Color : public GXColor {
 public:
-    Color() {
-        *this = WHITE;
-    }
+    /* Default ctor/dtor are defined in lyt_material.cpp / lyt_bounding.cpp to
+     * match the retail binary (only those TUs emit them; other units take
+     * their address via __construct_array/__destroy_arr and reference them
+     * externally). */
+    Color();
     Color(u32 color) {
         *this = color;
     }
@@ -22,7 +24,7 @@ public:
         *this = rColor;
     }
 
-    ~Color() {}
+    ~Color();
 
     void Set(int red, int green, int blue, int alpha) {
         r = red;

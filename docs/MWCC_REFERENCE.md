@@ -2995,6 +2995,43 @@ materialization rotation. Reusable patterns:
   `lwz pos / lwz buf_size / lwz xtr / subf / lwz avail / add` schedule (both mode 0
   and mode 1 arms; 85.3→91.8% fuzzy).
 
+## CriWare sj_uni — desc-hoist + Wii/1.1 store block + gate (US, FULL_MATCH)
+
+`libs/CriWare/src/adx/sj/sj_uni.c` switched to **`mw_version = "Wii/1.1"`** in
+`configure.py`; all 10 targets (`SJUNI_Init/Finish/Create/Destroy/GetUuid/EntryErrFunc/GetNumChunk`,
+`sjuni_Create/Reset/GetNumData/IsGetChunk`) are now **FULL_MATCH 0/0** (byte-identical,
+semantic-certified). Same desc-hoist recipe as sj_rbf: per-function
+`#pragma push / #pragma opt_propagation off` + `const char *suffix = lbl + <desc_off>;`
+assigned before the strcpy/strcat pair (scope the pragma per function — a
+file-level pragma regresses the loops). Extra fixes specific to sj_uni:
+
+- **Wii/1.1 also fixes the store-block rotation** (`sjuni_Create`): GC/3.0a5.x
+  hoists the err_func `lis` above the valid store and sinks the vtable store to
+  the end (8 mm); Wii/1.1 emits retail's `stb valid / srawi / lis uuid@ha /
+  stw vtable / lis err@ha / addi uuid@l / addze / stb index / addi err@l`
+  byte-for-byte. (Same fix that closed `sjrbf_Create`'s 6 residual mm.)
+- **`sjuni_Reset` signed loop:** the `for (i = 0; i < num_chunks - 1; i++)` must
+  use `int i` AND `int num_chunks` (struct field `int`, `pool_size` param `int`)
+  — `u32 i` emits `cmpl` vs retail `cmp`. Declare `int i;` BEFORE
+  `SJUNI_CHUNK *chunks` (i-first order) or the allocator swaps r7/r8 across the
+  whole loop (11 pure reg-swaps).
+- **`sjuni_GetChunk` info spill:** retail batches the `info` loads before the
+  cmp (`lwz size / lwz ptr / cmpw / stw ptr@16(sp) / stw size@20(sp)`) and reuses
+  the registers in the take branch (no reload). Reproduce with explicit locals
+  `unsigned char *p = chunk->ptr; int sz = chunk->size;` feeding `info` AND the
+  take branch (`out->ptr = p; out->size = sz;`) — reading `info.ptr/info.size`
+  in the take branch reloads the spill (+1 instr). Also remove the trailing
+  `return 0;` (retail epilogue has no `li r3` — returns garbage; same rule as
+  `sjrbf_PutChunk`). Result 17 mm → all reg-swaps, size exact.
+- **`sjuni_UngetChunk` gate:** the `chunk->size > 0 && chunk->ptr != NULL` gate
+  needs the KB's branch-over-branch goto pattern with `exit:` BEFORE `body:`
+  (`if (...) goto body; goto exit; exit: return; body: ...`) plus `goto exit`
+  from every error/mode path and no trailing `return 0`. Also hoist
+  `SJUNI_CHUNK **queue_ptr = &self->queue[mode];` before the index check or the
+  free-chunk block re-materializes `&queue[mode]` (+2 instr). 51 mm → 7 mm
+  (3 reg-swaps + 4 scheduling), size exact. (Note: retail UngetChunk error
+  buffers are sp+8 (valid==0) / sp+0x48 (NULL) — the inverse of the wrappers.)
+
 ## CriWare ADX LSC — NULL-check wrappers + LSC_CallStatFunc lwzu soft-cap (US)
 
 `libs/CriWare/src/adx/lsc/lsc.c` (GC/3.0a5.2, `-O4,p`). 9/10 targets

@@ -149,6 +149,16 @@ struct bta_dm_buf_t {
     unsigned char data[1];          /* offset 0x04 */
 };
 
+/* Discover message (tBTA_DM_API_DISCOVER): hdr(8) + bd_addr(6) + pad(2) +
+   services(4) + p_cback(4). */
+struct bta_dm_discover_msg_t {
+    unsigned char hdr[8];
+    bd_addr_t bd_addr;              /* offset 0x08 */
+    unsigned char _pad[2];          /* offset 0x0e-0x0f */
+    unsigned int services;          /* offset 0x10 */
+    void *p_cback;                  /* offset 0x14 */
+};
+
 /* Discovery result message: bd_addr + name + services/result tail (tBTA_DM_DISC_RES) */
 struct bta_dm_disc_msg_t {
     unsigned char hdr[8];           /* offset 0x00 (BT_HDR) */
@@ -190,20 +200,31 @@ extern unsigned char bta_sys_cb[];
 
 typedef void (*bta_dm_cback_t)(int, void *);
 
+/* Peer device entry: BD address plus power-management state bytes. */
+struct bta_dm_peer_dev_t {
+    bd_addr_t bd_addr;      /* offset 0x00 */
+    unsigned char in_use;   /* offset 0x06 */
+    unsigned char policy;   /* offset 0x07 */
+    unsigned char _pad[3];  /* offset 0x08-0x0a */
+};
+
 struct bta_dm_cb_t {
-    unsigned char _pad0[0x4d];          /* offset 0x00-0x4c (peer device list) */
-    unsigned char num_devices;          /* offset 0x4d */
-    unsigned char _pad4e[2];            /* offset 0x4e-0x4f */
-    bta_dm_cback_t cback;                          /* offset 0x50 */
-    struct bta_dm_timer_t signal_strength_timer;   /* offset 0x54, size 0x18 */
-    unsigned char signal_strength_mask;            /* offset 0x6c */
+    struct bta_dm_peer_dev_t peer_dev[7];           /* offset 0x00-0x4c */
+    unsigned char num_devices;                      /* offset 0x4d */
+    unsigned char _pad4e[2];                        /* offset 0x4e-0x4f */
+    bta_dm_cback_t cback;                           /* offset 0x50 */
+    struct bta_dm_timer_t signal_strength_timer;    /* offset 0x54, size 0x18 */
+    unsigned char signal_strength_mask;             /* offset 0x6c */
     unsigned char _pad6d[3];
-    unsigned short signal_strength_period;         /* offset 0x70 */
-    unsigned char _pad72[0x86];         /* offset 0x72-0xf7 */
-    bd_addr_t pin_bd_addr;              /* offset 0xf8 */
-    unsigned char pin_dev_class[3];     /* offset 0xfe */
-    unsigned char keep_acl;             /* offset 0x101 */
-    unsigned char _pad102[2];           /* offset 0x102-0x103 */
+    unsigned short signal_strength_period;          /* offset 0x70 */
+    unsigned char disable_timer_active;             /* offset 0x72 */
+    unsigned char _pad73;
+    struct bta_dm_timer_t disable_timer;            /* offset 0x74, size 0x18 */
+    unsigned char _pad8c[0x6c];                     /* offset 0x8c-0xf7 */
+    bd_addr_t pin_bd_addr;                          /* offset 0xf8 */
+    unsigned char pin_dev_class[3];                 /* offset 0xfe */
+    unsigned char keep_acl;                         /* offset 0x101 */
+    unsigned char _pad102[2];                       /* offset 0x102-0x103 */
 };
 
 extern struct bta_dm_cb_t bta_dm_cb;
@@ -220,6 +241,55 @@ struct bta_dm_sig_strength_data_t {
 
 extern void bta_sys_stop_timer(struct bta_dm_timer_t *p_tle);
 extern void bta_sys_start_timer(struct bta_dm_timer_t *p_tle, unsigned short type, int timeout);
+extern void bta_sys_disable();
+extern void bta_sys_rm_register(void *p_cback);
+extern void bta_sys_compress_register(void *p_cback);
+extern unsigned short BTM_GetNumAclLinks(void);
+extern int btm_remove_acl(bd_addr_t bd_addr);
+extern void BTM_SetDeviceClass(unsigned char *dev_class);
+extern int BTM_SecRegister(void *p_cb_info);
+extern void BTM_SetDefaultLinkSuperTout(unsigned short timeout);
+extern void BTM_WritePageTimeout(unsigned short timeout);
+extern void BTM_SetDefaultLinkPolicy(unsigned short settings);
+extern int BTM_AclRegisterForChanges(void *p_cback);
+extern int BTM_ReadLocalDeviceAddr(void *p_cb);
+extern void bta_dm_init_pm();
+extern void bta_dm_disable_pm();
+extern void L2CA_RegisterCompression(void *p_cback, int compression_level);
+extern int WBT_ExtCreateRecord(void);
+extern void BTM_DeviceAuthorized(bd_addr_t bd_addr, unsigned char res, unsigned int *p_trusted_mask);
+extern unsigned char BTM_ReadRSSI(bd_addr_t bd_addr, void *p_cb);
+extern unsigned char BTM_ReadLinkQuality(bd_addr_t bd_addr, void *p_cb);
+extern unsigned char BTM_ReadRemoteDeviceName(bd_addr_t bd_addr, void *p_cb);
+extern int BTM_SecAddRmtNameNotifyCallback(void *p_callback);
+extern void *BTM_InqDbNext(void *p_cur);
+extern unsigned char BTM_IsAclConnectionUp(bd_addr_t bd_addr);
+extern unsigned char bta_dm_co_get_compress_memory(unsigned char id, unsigned char **pp_memory,
+                                                   unsigned int *p_memory_size);
+extern int bdcmp(const bd_addr_t a, const bd_addr_t b);
+extern void LogMsg_1(unsigned int trace_set_mask, const char *p_str, unsigned int p1);
+
+/* BTA DM compile-time configuration (defined in bta_dm_cfg.c) */
+extern struct bta_dm_cfg_retail_t {
+    unsigned char dev_class[3];     /* offset 0x00 */
+    unsigned char _pad3;
+    unsigned short policy_settings; /* offset 0x04 */
+    unsigned short page_timeout;    /* offset 0x06 */
+    unsigned short link_timeout;    /* offset 0x08 */
+    unsigned char avoid_scatter;
+    unsigned char _padb;
+} bta_dm_cfg;
+
+/* BTM control block (partial: page timeout field at 0x64c) */
+extern struct bta_dm_btm_cb_t {
+    unsigned char _pad[0x64c];
+    unsigned short page_timeout;    /* offset 0x64c */
+} btm_cb;
+
+/* Role management config table pointer (bta_dm_cfg.c, 3-byte entries:
+   id, app_id, cfg; count packed in entry 0's app_id byte). Volatile so
+   the read stays in place below the outer loop's bdcmp call. */
+extern unsigned char *volatile p_bta_dm_rm_cfg;
 extern unsigned char bta_sys_sendmsg(void *p_msg);
 extern void GKI_freebuf(void *p_buf);
 extern void *GKI_getbuf(unsigned short size);
@@ -251,8 +321,30 @@ void bta_dm_search_timer_cback(struct bta_dm_timer_t *p_tle);
 void bta_dm_discover_next_device(void);
 void bta_dm_inq_results_cb();
 void bta_dm_inq_cmpl_cb(struct bta_btm_inq_cmpl_t *p_results);
-void bta_dm_discover_next_device();
 void bta_dm_reset_complete();
+void bta_dm_acl_change_cback(bd_addr_t bd_addr, unsigned char *p_dc, unsigned char *p_bdn,
+                             unsigned char *p_features, unsigned char is_new);
+void bta_dm_local_addr_cback(void *addr);
+void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
+                     bd_addr_t peer_addr);
+void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
+                           unsigned char client_id, bd_addr_t bd_addr);
+unsigned char bta_dm_l2cap_server_compress_cback(
+        bd_addr_t bd_addr, unsigned char server_id, unsigned char client_id,
+        unsigned char *p_data, unsigned int data_len, unsigned char *p_data2,
+        unsigned int data_len2, unsigned char **pp_memory,
+        unsigned int *p_memory_size);
+void bta_dm_service_search_remname_cback(unsigned char *bd_addr, unsigned char *dc,
+                                         unsigned char *bd_name);
+void bta_dm_disc_remname_cback(void *p_data);
+void bta_dm_pinname_cback(void *p_data);
+unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
+                               unsigned char *bd_name);
+void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle);
+void bta_dm_disable_conn_down_timer_cback();
+void bta_dm_rssi_cback(struct btm_rssi_results_t *p_rssi);
+void bta_dm_link_quality_cback(void *p_result);
+void bta_dm_find_services(bd_addr_t bd_addr);
 
 /* --- BTE helper externs (bd.h / bta_sys.h / bte_appl.h) --- */
 extern void bdcpy(bd_addr_t a, const bd_addr_t b);
@@ -273,10 +365,18 @@ struct bta_dm_compress_srvc_t {
 
 struct bta_dm_compress_srvc_t bta_dm_compress_srvcs[5];
 
-/* Connected services table: byte 0 = count, 9-byte entries, service id at +7 */
-unsigned char bta_dm_conn_srvcs[0x2e];
+/* Connected services table: byte 0 = count, 9-byte entries, service id at +7
+   (defined in bta_dm_pm.c, retail bss owner) */
+extern unsigned char bta_dm_conn_srvcs[0x2e];
 
 extern unsigned char *p_bta_dm_compress_cfg;
+
+/* BTA service id -> SDP UUID lookup (retail rodata, 12 u32 pairs) */
+const unsigned int bta_service_id_to_uuid_lkup_tbl[12] = {
+    0x12001101, 0x11031111, 0x11021108, 0x111e1105,
+    0x11061109, 0x11101104, 0x1118111b, 0x11151116,
+    0x1117112d, 0x110b110e, 0x11241304, 0x112f0000,
+};
 
 /* BTA service id -> BTM service id lookup (bta_dm_act.c retail rodata) */
 const unsigned int bta_service_id_to_btm_srv_id_lkup_tbl[24] = {
@@ -298,13 +398,66 @@ struct bta_security_t {
     void *p_bond_callback;
 };
 
+extern const struct bta_security_t bta_security;
+
 /* --- Function implementations --- */
 
-void bta_dm_enable() {}
+void bta_dm_enable(struct bta_dm_msg *p_data) {
+    unsigned char dev_class[3];
+    unsigned char *msg = (unsigned char *)p_data;
 
-void bta_dm_disable() {}
+    memset(&bta_dm_search_cb, 0, 0x7c);
+    memset(bta_dm_conn_srvcs, 0, 0x2e);
+    memcpy(dev_class, bta_dm_cfg.dev_class, 3);
+    BTM_SetDeviceClass(dev_class);
+    bta_dm_cb.cback = *(bta_dm_cback_t *)(msg + 8);
+    BTM_SecRegister((void *)&bta_security);
+    BTM_SetDefaultLinkSuperTout(bta_dm_cfg.link_timeout);
+    BTM_WritePageTimeout(bta_dm_cfg.page_timeout);
+    BTM_SetDefaultLinkPolicy(bta_dm_cfg.policy_settings);
+    BTM_AclRegisterForChanges(bta_dm_acl_change_cback);
+    BTM_ReadLocalDeviceAddr(bta_dm_local_addr_cback);
+    bta_sys_rm_register(bta_dm_rm_cback);
+    bta_sys_compress_register(bta_dm_compress_cback);
+    bta_dm_init_pm();
+    memset(bta_dm_compress_srvcs, 0, 0x2d);
+    bta_sys_compress_register(bta_dm_compress_cback);
+    L2CA_RegisterCompression(bta_dm_l2cap_server_compress_cback, 0);
+    WBT_ExtCreateRecord();
+}
 
-void bta_dm_disable_timer_cback() {}
+void bta_dm_disable(struct bta_dm_msg *p_data) {
+    L2CA_SetIdleTimeoutByBdAddr(BT_BD_ANY, 0);
+    bta_sys_disable();
+    BTM_SetDiscoverability(0, 0, 0);
+    BTM_SetConnectability(0, 0, 0);
+    bta_dm_disable_pm();
+    if (BTM_GetNumAclLinks() == 0) {
+        bta_dm_cb.disable_timer.p_cback = bta_dm_disable_conn_down_timer_cback;
+        bta_sys_start_timer(&bta_dm_cb.disable_timer, 0, 1000);
+    } else {
+        bta_dm_cb.disable_timer_active = 1;
+        bta_dm_cb.disable_timer.p_cback = bta_dm_disable_timer_cback;
+        bta_sys_start_timer(&bta_dm_cb.disable_timer, 0, 5000);
+    }
+}
+
+/* Disable timeout expired: if ACL links are still up (and we are not
+   keeping them), drop every peer device, otherwise report the disable. */
+void bta_dm_disable_timer_cback(struct bta_dm_timer_t *p_tle) {
+    unsigned char i;
+
+    if (appl_trace_level >= 4)
+        LogMsg_0(0x503, " bta_dm_disable_timer_cback  ");
+    if (BTM_GetNumAclLinks() != 0 && bta_dm_cb.keep_acl == 0) {
+        for (i = 0; i < bta_dm_cb.num_devices; i++) {
+            btm_remove_acl(bta_dm_cb.peer_dev[i].bd_addr);
+        }
+    } else {
+        bta_dm_cb.disable_timer_active = 0;
+        bta_dm_cb.cback(1, NULL);
+    }
+}
 
 extern void BTM_SetLocalDeviceName(void*);
 void bta_dm_set_dev_name(void* self) { ((void(*)(void*))BTM_SetLocalDeviceName)((char*)self + 0x8); }
@@ -350,7 +503,31 @@ void bta_dm_pin_reply(struct bta_dm_msg *p_data) {
     }
 }
 
-void bta_dm_auth_reply() {}
+/* Authorization reply: set the trusted mask bit for the requested service
+   (if any) and pass the result down to the security manager. */
+void bta_dm_auth_reply(struct bta_dm_msg *p_data) {
+    unsigned char *msg = (unsigned char *)p_data;
+    unsigned char trusted_mask[8];
+    unsigned int *p_mask;
+
+    p_mask = btm_read_trusted_mask(msg + 8);
+    if (p_mask != NULL) {
+        memcpy(trusted_mask, p_mask, 8);
+    } else {
+        memset(trusted_mask, 0, 8);
+    }
+
+    if (msg[0xf] != 2) {
+        if (msg[0xf] == 0 && msg[0xe] <= 0x17) {
+            unsigned int srv_id = bta_service_id_to_btm_srv_id_lkup_tbl[msg[0xe]];
+            ((unsigned int *)trusted_mask)[(srv_id >> 5) & 0xff] |=
+                1u << (srv_id - (srv_id & 0x1fe0));
+        }
+        BTM_DeviceAuthorized(msg + 8, 0, (unsigned int *)trusted_mask);
+    } else {
+        BTM_DeviceAuthorized(msg + 8, 0xb, (unsigned int *)trusted_mask);
+    }
+}
 
 /* Starts an inquiry: clears the inquiry DB, stores the search callback and
    services from the API message, then starts the inquiry with the local
@@ -383,7 +560,42 @@ void bta_dm_search_cancel(struct bta_dm_msg *p_data) {
     }
 }
 
-void bta_dm_discover() {}
+/* Discovery: stash the callback and services, register the remote-name
+   notify callback, then either start the service search or (when no
+   services are requested) do a plain remote name request. */
+void bta_dm_discover(struct bta_dm_msg *p_data) {
+    struct bta_dm_discover_msg_t *p_msg = (struct bta_dm_discover_msg_t *)p_data;
+    struct bta_dm_buf_t *p_buf;
+
+    bta_dm_search_cb.p_search_cback = (bta_dm_search_cback_t)p_msg->p_cback;
+    bta_dm_search_cb.services = p_msg->services;
+    bta_dm_search_cb.services_cached = bta_dm_search_cb.services;
+    bta_dm_search_cb.services_index = 0;
+    bta_dm_search_cb.services_found = 0;
+    bta_dm_search_cb.peer_name[0] = 0;
+    BTM_SecAddRmtNameNotifyCallback(bta_dm_service_search_remname_cback);
+    bdcpy(bta_dm_search_cb.disc_bd_addr, p_msg->bd_addr);
+
+    if (bta_dm_search_cb.services != 0) {
+        bta_dm_find_services(bta_dm_search_cb.disc_bd_addr);
+    } else {
+        if (btm_cb.page_timeout < 0x7530) {
+            bta_sys_start_timer(&bta_dm_search_cb.svc_timer, 0x205,
+                                btm_cb.page_timeout + 0x64);
+        }
+        if (BTM_ReadRemoteDeviceName(bta_dm_search_cb.disc_bd_addr,
+                                     (void *)bta_dm_disc_remname_cback) != 1) {
+            bta_sys_stop_timer(&bta_dm_search_cb.svc_timer);
+            p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+            if (p_buf != NULL) {
+                bdcpy(p_buf->data + 4, bta_dm_search_cb.disc_bd_addr);
+                p_buf->data[0xa] = 0;
+                p_buf->event = BTA_DM_REMT_NAME_EVT;
+                bta_sys_sendmsg(p_buf);
+            }
+        }
+    }
+}
 
 void bta_dm_inq_cmpl() {}
 
@@ -501,12 +713,46 @@ void bta_dm_search_cancel_notify(struct bta_dm_msg *p_data) {
     bta_dm_search_cb.p_search_cback(4, NULL);
 }
 
-void bta_dm_find_services() {}
+/* Kept non-inlinable: -ipa file would otherwise inline the empty body and
+   drop the call site from callers (discover, discover_next_device). */
+#pragma auto_inline off
+void bta_dm_find_services(bd_addr_t bd_addr) {}
+#pragma auto_inline on
 
 /* Kept non-inlinable: -ipa file would otherwise inline the empty body and
    drop the call site from callers (search_timer_cback, search_result). */
+/* Advance to the next inquiry-db device and start its service search;
+   when the database is exhausted, report a discovery result to the
+   search state machine. */
 #pragma auto_inline off
-void bta_dm_discover_next_device(void) {}
+void bta_dm_discover_next_device(void) {
+    struct bta_dm_buf_t *p_buf;
+
+    bta_dm_search_cb.p_cur = BTM_InqDbNext(bta_dm_search_cb.p_cur);
+    if (bta_dm_search_cb.p_cur != NULL) {
+        if (BTM_IsAclConnectionUp((unsigned char *)bta_dm_search_cb.p_cur + 2) != 0) {
+            bta_dm_search_cb.search_disc_active = 0;
+        } else {
+            bta_dm_search_cb.search_disc_active = 1;
+        }
+        bta_dm_search_cb.search_timer_active = 0;
+        BTM_SecAddRmtNameNotifyCallback(bta_dm_service_search_remname_cback);
+        bta_dm_search_cb.services_index = 0;
+        bta_dm_search_cb.services_found = 0;
+        bta_dm_search_cb.peer_name[0] = 0;
+        bta_dm_search_cb.services_cached = bta_dm_search_cb.services;
+        bdcpy(bta_dm_search_cb.disc_bd_addr,
+              (unsigned char *)bta_dm_search_cb.p_cur + 2);
+        bta_dm_find_services((unsigned char *)bta_dm_search_cb.p_cur + 2);
+    } else {
+        bta_dm_search_cb.services = 0;
+        p_buf = (struct bta_dm_buf_t *)GKI_getbuf(0x110);
+        if (p_buf != NULL) {
+            p_buf->event = BTA_DM_SEARCH_DISC_RES_EVT;
+            bta_sys_sendmsg(p_buf);
+        }
+    }
+}
 #pragma auto_inline on
 
 /* SDP discovery complete callback: forwards the status to the search state
@@ -643,7 +889,45 @@ void bta_dm_pinname_cback(void *p_data) {
     bta_dm_cb.cback(2, &pin_req);
 }
 
-void bta_dm_pin_cback() {}
+/* tBTA_DM_SEC-style union: pin/auth/authorize report payloads share the
+   largest member (0x118) so the stack frame matches the retail build. */
+union bta_dm_sec_t {
+    struct bta_dm_pin_req_t pin_req;
+    struct bta_dm_auth_cmpl_t auth_cmpl;
+    struct bta_dm_authorize_t authorize;
+    struct bta_dm_sig_strength_t sig_strength;
+};
+
+/* PIN request callback: if the remote name is not yet known, kick off a
+   remote name request and report the PIN request once the name arrives;
+   otherwise report it immediately. */
+unsigned char bta_dm_pin_cback(bd_addr_t bd_addr, unsigned char *dev_class,
+                               unsigned char *bd_name) {
+    union bta_dm_sec_t sec_event;
+
+    if (bta_dm_cb.cback == NULL) {
+        return 0xb;
+    }
+    if (bd_name[0] == 0) {
+        bdcpy(bta_dm_cb.pin_bd_addr, bd_addr);
+        bta_dm_cb.pin_dev_class[0] = dev_class[0];
+        bta_dm_cb.pin_dev_class[1] = dev_class[1];
+        bta_dm_cb.pin_dev_class[2] = dev_class[2];
+        if (BTM_ReadRemoteDeviceName(bd_addr, (void *)bta_dm_pinname_cback) == 1) {
+            return 1;
+        }
+        if (appl_trace_level >= 2)
+            LogMsg_0(0x501, " bta_dm_pin_cback() -> Failed to start Remote Name Request  ");
+    }
+    bdcpy(sec_event.pin_req.bd_addr, bd_addr);
+    sec_event.pin_req.dev_class[0] = dev_class[0];
+    sec_event.pin_req.dev_class[1] = dev_class[1];
+    sec_event.pin_req.dev_class[2] = dev_class[2];
+    strncpy((char *)sec_event.pin_req.bd_name, (const char *)bd_name, 0x20);
+    sec_event.pin_req.bd_name[0x20] = 0;
+    bta_dm_cb.cback(2, &sec_event);
+    return 1;
+}
 
 int bta_dm_link_key_request_cback(void) { return 0xb; }
 
@@ -707,11 +991,24 @@ void bta_dm_signal_strength(struct bta_dm_msg *p_data) {
 }
 
 void bta_dm_signal_strength_timer_cback(struct bta_dm_timer_t *p_tle) {
-    /* The real implementation reads signal_strength_mask from bta_dm_cb,
-       iterates bits calling BTM_ReadRSSI / BTM_ReadLinkQuality,
-       and restarts the timer with bta_sys_start_timer if period > 0.
-       p_tle is unused (reads timer from bta_dm_cb directly). */
-    bta_sys_stop_timer(p_tle);
+    unsigned char i;
+
+    if (bta_dm_cb.signal_strength_mask & 1) {
+        for (i = 0; i < bta_dm_cb.num_devices; i++) {
+            BTM_ReadRSSI(bta_dm_cb.peer_dev[i].bd_addr, (void *)bta_dm_rssi_cback);
+        }
+    }
+    if (bta_dm_cb.signal_strength_mask & 2) {
+        for (i = 0; i < bta_dm_cb.num_devices; i++) {
+            BTM_ReadLinkQuality(bta_dm_cb.peer_dev[i].bd_addr,
+                                (void *)bta_dm_link_quality_cback);
+        }
+    }
+    if (bta_dm_cb.signal_strength_period != 0) {
+        bta_dm_cb.signal_strength_timer.p_cback = bta_dm_signal_strength_timer_cback;
+        bta_sys_start_timer(&bta_dm_cb.signal_strength_timer, 0,
+                            bta_dm_cb.signal_strength_period * 1000);
+    }
 }
 
 /* ACL database change callback: forward a BTA_DM_ACL_CHANGE_EVT message
@@ -762,7 +1059,32 @@ void bta_dm_link_quality_cback(void *p_result) {
     }
 }
 
-void bta_dm_l2cap_server_compress_cback() {}
+/* L2CAP server compression callback: locate the registered compression
+   service for the peer address and ask the callout for compression memory.
+   The connection engine invokes this with (bd_addr, ids, buffers,
+   pp_memory, p_memory_size); only the address and the two memory output
+   pointers are used here. */
+unsigned char bta_dm_l2cap_server_compress_cback(
+        bd_addr_t bd_addr, unsigned char server_id, unsigned char client_id,
+        unsigned char *p_data, unsigned int data_len, unsigned char *p_data2,
+        unsigned int data_len2, unsigned char **pp_memory,
+        unsigned int *p_memory_size) {
+    unsigned char result = 0;
+    int i;
+
+    for (i = 0; i < 5; i++) {
+        if (bta_dm_compress_srvcs[i].in_use == 1 &&
+            bdcmp(bta_dm_compress_srvcs[i].bd_addr, bd_addr) == 0) {
+            if (appl_trace_level >= 4)
+                LogMsg_1(0x503, "bta_dm_l2cap_server_compress_cback, BTA ID %d",
+                         bta_dm_compress_srvcs[i].server_id);
+            result = bta_dm_co_get_compress_memory(
+                bta_dm_compress_srvcs[i].server_id, pp_memory, p_memory_size);
+            break;
+        }
+    }
+    return result;
+}
 
 /* Target: us-802e361c (0x238): compress server/client registration callback.
    action 0 = open (add pair to bta_dm_compress_srvcs), 1 = close (remove). */
@@ -831,7 +1153,39 @@ void bta_dm_compress_cback(unsigned char action, unsigned char server_id,
     }
 }
 
-void bta_dm_rm_cback() {}
+/* Role-management connection callback (BTA_SYS_CONN_OPEN): mark the peer
+   device in use and raise its power policy to the best matching entry in
+   the role-management config table. */
+void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
+                     bd_addr_t peer_addr) {
+    unsigned char num;
+    unsigned char *p_cfg;
+    unsigned char i;
+    unsigned char j;
+    if (status == 0) {
+        for (i = 0; i < bta_dm_cb.num_devices; i++) {
+            if (bdcmp(bta_dm_cb.peer_dev[i].bd_addr, peer_addr) == 0) {
+                bta_dm_cb.peer_dev[i].in_use = 1;
+                p_cfg = p_bta_dm_rm_cfg;
+                num = p_cfg[1];
+                j = 1;
+                while (j <= num) {
+                    if (p_cfg[3 * j + 1] == app_id || p_cfg[3 * j + 1] == 0xff) {
+                        if (p_cfg[3 * j] == id) {
+                            unsigned char cfg_val = p_cfg[3 * j + 2];
+                            if (cfg_val > bta_dm_cb.peer_dev[i].policy) {
+                                bta_dm_cb.peer_dev[i].policy = cfg_val;
+                            }
+                            break;
+                        }
+                    }
+                    j++;
+                }
+                break;
+            }
+        }
+    }
+}
 
 /* Keep the L2CAP idle timeout disabled while a connection is open. */
 void bta_dm_keep_acl(struct bta_dm_msg *p_data) {

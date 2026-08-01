@@ -12,4 +12,13 @@ void bdcpy(void *dst, const void *src) {
     ((unsigned char *)dst)[5] = ((const unsigned char *)src)[5];
 }
 
-void bdcmp() {}
+/* Compare two BD_ADDRs byte by byte; -1 on first mismatch, 0 when equal. */
+int bdcmp(const unsigned char *p1, const unsigned char *p2) {
+    unsigned char i;
+    for (i = 0; i < 6; i++) {
+        if (p1[i] != p2[i]) {
+            return -1;
+        }
+    }
+    return 0;
+}

@@ -32,7 +32,10 @@ typedef UINT8 tBTM_STATUS;
 #define BTM_INQ_INACTIVE_STATE  0
 #define BTM_INQ_CLR_FILT_STATE  1
 #define BTM_INQ_SET_FILT_STATE  2
+#define BTM_INQ_ACTIVE_STATE    3
 #define BTM_INQ_REMNAME_STATE   4
+
+#define BTM_MAX_BD_ENTRIES      150     /* entries in the inquiry bd-addr results db */
 
 #define BT_TRACE_LEVEL_API   3
 #define BT_TRACE_LEVEL_DEBUG 5
@@ -60,6 +63,17 @@ typedef UINT8 tBTM_STATUS;
 #define BTM_CONNECTABLE             1
 
 #define BTM_NON_DISCOVERABLE        0
+#define BTM_LIMITED_DISCOVERABLE    1
+#define BTM_GENERAL_DISCOVERABLE    2
+
+#define BTM_GENERAL_INQUIRY         0
+#define BTM_LIMITED_INQUIRY         1
+
+#define BTM_CLR_INQUIRY_FILTER          0
+#define BTM_FILTER_COND_DEVICE_CLASS    1
+#define BTM_FILTER_COND_BD_ADDR         2
+
+#define BTM_INQ_RES_IGNORE_RSSI     0x7f
 
 #define BTM_DEFAULT_CONN_WINDOW     0x0012
 #define BTM_DEFAULT_CONN_INTERVAL   0x0800
@@ -87,19 +101,33 @@ typedef UINT8 tBTM_STATUS;
 /*  Callback / log types                                              */
 /* ------------------------------------------------------------------ */
 typedef void (tBTM_CMPL_CB)(void *p1);
+typedef void (tBTM_INQ_RESULTS_CB)(void *p_inq_info);
+typedef BOOLEAN (tBTM_INQ_RESULTS_FILTER_CB)(BD_ADDR p_bda, DEV_CLASS p_dev_class);
 typedef void (tBTM_INQ_DB_CHANGE_CB)(void *p_inq_info, BOOLEAN is_new);
+
+/* Class-of-device field macros (from btm_api.h) */
+#define BTM_COD_SERVICE_LMTD_DISCOVER   0x0020
+#define BTM_COD_SERVICE_CLASS_LO_B      0x00E0
+#define BTM_COD_MINOR_CLASS(u8, pd)     {u8 = pd[2]&0xFC;}
+#define BTM_COD_MAJOR_CLASS(u8, pd)     {u8 = pd[1]&0x1F;}
+#define BTM_COD_SERVICE_CLASS(u16, pd)  {u16 = pd[0]; u16<<=8; u16 += pd[1]&0xE0;}
+#define FIELDS_TO_COD(pd, mn, mj, sv) {pd[2] = mn; pd[1] = mj + ((sv)&BTM_COD_SERVICE_CLASS_LO_B); pd[0] = ((sv)>>8);}
 
 extern void LogMsg_0 (UINT32 trace_set_mask, const char *p_str);
 extern void LogMsg_1 (UINT32 trace_set_mask, const char *fmt_str, UINT32 p1);
 extern void LogMsg_2 (UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT32 p2);
 extern void LogMsg_3 (UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT32 p2,
                       UINT32 p3);
+extern void LogMsg_4 (UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT32 p2,
+                      UINT32 p3, UINT32 p4);
 extern void LogMsg_6 (UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT32 p2,
                       UINT32 p3, UINT32 p4, UINT32 p5, UINT32 p6);
 extern void btu_stop_timer (void *p_tle);
 extern void btu_start_timer (void *p_tle, UINT16 type, UINT32 timeout);
 extern void *GKI_getpoolbuf (UINT8 pool_id);
 extern void GKI_freebuf (void *p_buf);
+extern void *GKI_getbuf (UINT16 size);
+extern UINT32 GKI_get_tick_count (void);
 
 extern void btsnd_hcic_write_inqscan_type (void *p_buf, UINT8 type);
 extern BOOLEAN BTM_IsDeviceUp (void);
@@ -107,7 +135,11 @@ extern void btsnd_hcic_write_pagescan_type (void *p_buf, UINT8 type);
 extern void btsnd_hcic_write_inquiry_mode (void *p_buf, UINT8 mode);
 extern void btsnd_hcic_write_pagescan_cfg (void *p_buf, UINT16 interval, UINT16 window);
 extern void btsnd_hcic_write_scan_enable (void *p_buf, UINT8 mode);
+extern void btsnd_hcic_write_cur_iac_lap (void *p_buf, UINT8 num_laps, const UINT8 *p_lap_array);
 extern BOOLEAN btsnd_hcic_inq_cancel (void);
+extern BOOLEAN btsnd_hcic_inquiry (const UINT8 *p_lap, UINT8 duration, UINT8 max_resps);
+extern BOOLEAN btsnd_hcic_per_inq_mode (UINT16 max_delay, UINT16 min_delay, const UINT8 *p_lap,
+                                        UINT8 duration, UINT8 max_resps);
 extern void btsnd_hcic_set_event_filter (void *p_buf, UINT8 filt_type, UINT8 filt_cond_type,
                                          UINT8 *p_filt_cond, UINT8 filt_cond_len);
 extern BOOLEAN btsnd_hcic_rmt_name_req (BD_ADDR remote_bda, UINT8 page_scan_rep_mode,
@@ -115,6 +147,8 @@ extern BOOLEAN btsnd_hcic_rmt_name_req (BD_ADDR remote_bda, UINT8 page_scan_rep_
 extern BOOLEAN btsnd_hcic_rmt_name_req_cancel (BD_ADDR remote_bda);
 extern void btm_sec_rmt_name_request_complete (UINT8 *bd_addr, UINT8 *bd_name,
                                                UINT8 status);
+extern UINT8 *BTM_ReadDeviceClass (void);
+extern tBTM_STATUS BTM_SetDeviceClass (DEV_CLASS dev_class);
 
 /* ------------------------------------------------------------------ */
 /*  Remote name result structure (from btm_api.h)                     */
@@ -133,6 +167,16 @@ typedef struct
     UINT8   num_resp;
 } tBTM_INQUIRY_CMPL;
 
+/* Inquiry parameters passed to BTM_StartInquiry / BTM_SetPeriodicInquiryMode */
+typedef struct
+{
+    UINT8   mode;                    /* 0x00 general or limited inquiry */
+    UINT8   duration;                /* 0x01 duration in 1.28 sec increments */
+    UINT8   max_resps;               /* 0x02 maximum number of responses */
+    UINT8   filter_cond_type;        /* 0x03 BD_ADDR, DEV_CLASS, or clear */
+    UINT8   filter_cond[DEV_CLASS_LEN * 2]; /* 0x04 filter condition value */
+} tBTM_INQ_PARMS;                    /* 0x0A */
+
 /* Forward declaration (defined below; used by BTM_ReadRemoteDeviceName) */
 
 /* ------------------------------------------------------------------ */
@@ -147,14 +191,21 @@ typedef struct
     UINT8   page_scan_per_mode;      /* 0x0C */
     UINT8   page_scan_mode;          /* 0x0D */
     INT8    rssi;                    /* 0x0E */
-    UINT8   appl_knows_rem_name;     /* 0x0F */
-    UINT8   pad[0x12 - 0x10];        /* 0x10-0x11 */
+    UINT8   pad;                     /* 0x0F */
+    UINT8   appl_knows_rem_name;     /* 0x10 */
+    UINT8   pad2;                    /* 0x11 */
 } tBTM_INQ_INFO;                     /* 0x12 */
 
 /* Forward declaration (defined below; used by BTM_ReadRemoteDeviceName) */
 extern tBTM_STATUS btm_initiate_rem_name (BD_ADDR remote_bda, tBTM_INQ_INFO *p_cur,
                                            UINT8 origin, UINT32 timeout,
                                            tBTM_CMPL_CB *p_cb);
+
+/* Forward declaration (defined below; used by BTM_StartInquiry / btm_event_filter_complete) */
+extern UINT8 btm_set_inq_event_filter (UINT8 filter_type, BD_ADDR bd_addr);
+
+/* Forward declaration (defined below; used by btm_event_filter_complete) */
+extern void btm_process_inq_complete (UINT8 status);
 
 typedef struct
 {
@@ -206,23 +257,140 @@ typedef struct
     UINT16             num_bd_entries;                   /* 0x16E0 */
     UINT16             max_bd_entries;                   /* 0x16E2 */
     tINQ_DB_ENT        inq_db[BTM_INQ_DB_SIZE];          /* 0x16E4 */
-    UINT8              _pad4[0x183E - 0x16E4 -
-                             sizeof(tINQ_DB_ENT) * BTM_INQ_DB_SIZE]; /* 0x1834-0x183D */
+    tBTM_INQ_PARMS     inqparms;                         /* 0x1834 */
     tBTM_INQUIRY_CMPL  inq_cmpl_info;                    /* 0x183E */
-    UINT8              _pad4a[0x1844 - 0x1840];          /* 0x1840-0x1843 */
+    UINT16             per_min_delay;                    /* 0x1840 */
+    UINT16             per_max_delay;                    /* 0x1842 */
     UINT8              inqfilt_active;                   /* 0x1844 */
     UINT8              inqfilt_type;                     /* 0x1845 */
     UINT8              _pad5;                            /* 0x1846 */
     UINT8              pending_filt_complete_event;      /* 0x1847 */
     UINT8              state;                            /* 0x1848 */
-    UINT8              _pad6[0x27C0 - 0x1849];           /* 0x1849-0x27BF */
+    UINT8              _pad6[0x184C - 0x1849];           /* 0x1849-0x184B */
+    tBTM_INQ_RESULTS_FILTER_CB *p_inq_results_filter_cb; /* 0x184C */
+    UINT8              _pad6a[0x27C0 - 0x1850];          /* 0x1850-0x27BF */
     UINT8              trace_level;                      /* 0x27C0 */
 } tBTM_INQ_CB;
 
 /* The real global */
 extern tBTM_INQ_CB btm_cb;
 
-void BTM_SetDiscoverability() {}
+/* IAC values for general/limited discoverable modes (retail .sdata2 globals) */
+const UINT8 general_inq_lap[4] = { 0x9E, 0x8B, 0x33, 0x00 };
+const UINT8 limited_inq_lap[4] = { 0x9E, 0x8B, 0x00, 0x00 };
+
+tBTM_STATUS BTM_SetDiscoverability (UINT16 inq_mode, UINT16 window, UINT16 interval)
+{
+    UINT8        scan_mode = 0;
+    UINT16       service_class;
+    UINT8       *p_cod;
+    UINT8        major, minor;
+    DEV_CLASS    cod;
+    LAP          temp_lap[2];
+    BOOLEAN      is_limited;
+    BOOLEAN      cod_limited;
+    void        *p_buf;
+
+    /* Check for valid mode */
+    if ((inq_mode != BTM_NON_DISCOVERABLE) && (inq_mode != BTM_LIMITED_DISCOVERABLE)
+        && (inq_mode != BTM_GENERAL_DISCOVERABLE))
+        return (BTM_ILLEGAL_VALUE);
+
+    /* Make sure the controller is active */
+    if (btm_cb.dev_state < 3)
+        return (BTM_DEV_RESET);
+
+    /* If the window and/or interval is '0', set to default values */
+    if (!window)
+        window = BTM_DEFAULT_CONN_WINDOW;
+
+    if (!interval)
+        interval = BTM_DEFAULT_CONN_INTERVAL;
+
+    if (btm_cb.trace_level >= BT_TRACE_LEVEL_API)
+        LogMsg_3 (TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK | TRACE_TYPE_API,
+                  "BTM_SetDiscoverability: mode %d [NonDisc-0, Lim-1, Gen-2], window 0x%04x, interval 0x%04x",
+                  inq_mode, window, interval);
+
+    /* Check for valid window and interval parameters */
+    if (inq_mode != BTM_NON_DISCOVERABLE)
+    {
+        if ((window < BTM_MIN_CONN_WINDOW) || (window > BTM_MAX_CONN_WINDOW) ||
+            (interval < BTM_MIN_CONN_INTERVAL) || (interval > BTM_MAX_CONN_INTERVAL) ||
+            (window > interval))
+        {
+            return (BTM_ILLEGAL_VALUE);
+        }
+    }
+
+    /* Set the IAC if needed */
+    if (inq_mode != BTM_NON_DISCOVERABLE)
+    {
+        if ((p_buf = GKI_getpoolbuf (HCI_CMD_POOL_ID)) != NULL)
+        {
+            if (inq_mode & BTM_LIMITED_DISCOVERABLE)
+            {
+                /* Use the GIAC and LIAC codes for limited discoverable mode */
+                memcpy (temp_lap[0], limited_inq_lap, LAP_LEN);
+                memcpy (temp_lap[1], general_inq_lap, LAP_LEN);
+                btsnd_hcic_write_cur_iac_lap (p_buf, 2, (UINT8 *)temp_lap);
+            }
+            else
+            {
+                btsnd_hcic_write_cur_iac_lap (p_buf, 1, general_inq_lap);
+            }
+
+            scan_mode |= HCI_INQUIRY_SCAN_ENABLED;
+        }
+        else
+            return (BTM_NO_RESOURCES);
+    }
+
+    /* Send down the inquiry scan window and period if changed */
+    if ((window != btm_cb.inq_scan_window) || (interval != btm_cb.inq_scan_period))
+    {
+        if ((p_buf = GKI_getpoolbuf (HCI_CMD_POOL_ID)) != NULL)
+        {
+            btm_cb.inq_scan_window = window;
+            btm_cb.inq_scan_period = interval;
+            btsnd_hcic_write_inqscan_cfg (p_buf, interval, window);
+        }
+        else
+            return (BTM_NO_RESOURCES);
+    }
+
+    /* Keep the inquiry scan as previously set */
+    if ((p_buf = GKI_getpoolbuf (HCI_CMD_POOL_ID)) != NULL)
+    {
+        if (btm_cb.connectable_mode)
+            scan_mode |= HCI_PAGE_SCAN_ENABLED;
+
+        btm_cb.discoverable_mode = inq_mode;
+        btsnd_hcic_write_scan_enable (p_buf, scan_mode);
+    }
+    else
+        return (BTM_NO_RESOURCES);
+
+    /* Change the service class bit if mode has changed */
+    p_cod = BTM_ReadDeviceClass ();
+    BTM_COD_SERVICE_CLASS (service_class, p_cod);
+    is_limited = (inq_mode & BTM_LIMITED_DISCOVERABLE) ? TRUE : FALSE;
+    cod_limited = (service_class & BTM_COD_SERVICE_LMTD_DISCOVER) ? TRUE : FALSE;
+    if (is_limited ^ cod_limited)
+    {
+        BTM_COD_MINOR_CLASS (minor, p_cod);
+        BTM_COD_MAJOR_CLASS (major, p_cod);
+        if (is_limited)
+            service_class |= BTM_COD_SERVICE_LMTD_DISCOVER;
+        else
+            service_class &= ~BTM_COD_SERVICE_LMTD_DISCOVER;
+
+        FIELDS_TO_COD (cod, minor, major, service_class);
+        (void)BTM_SetDeviceClass (cod);
+    }
+
+    return (BTM_SUCCESS);
+}
 
 /* ------------------------------------------------------------------ */
 /*  BTM_SetInquiryScanType - set the inquiry scan type (standard or    */
@@ -461,16 +629,76 @@ tBTM_STATUS BTM_CancelInquiry (void)
     return (status);
 }
 
-void BTM_StartInquiry() {}
+tBTM_STATUS BTM_StartInquiry (tBTM_INQ_PARMS *p_inqparms, tBTM_INQ_RESULTS_CB *p_results_cb,
+                              tBTM_CMPL_CB *p_cmpl_cb)
+{
+    tBTM_INQ_CB *p_inq = &btm_cb;
+    tBTM_STATUS  status;
+
+    if (p_inq->trace_level >= BT_TRACE_LEVEL_API)
+        LogMsg_4 (TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK | TRACE_TYPE_API,
+                  "BTM_StartInquiry: mode: %d, dur: %d, rsps: %d, flt: %d",
+                  p_inqparms->mode, p_inqparms->duration,
+                  p_inqparms->max_resps, p_inqparms->filter_cond_type);
+
+    /* Only one active inquiry is allowed at a time; also fail if a filter is
+       in the process of being updated */
+    if ((p_inq->state != BTM_INQ_INACTIVE_STATE) || (p_inq->inqfilt_active))
+        return (BTM_BUSY);
+
+    /* If the inquiry mode is invalid, return */
+    if ((p_inqparms->mode != BTM_GENERAL_INQUIRY) && (p_inqparms->mode != BTM_LIMITED_INQUIRY))
+        return (BTM_ILLEGAL_VALUE);
+
+    /*** Make sure the device is ready ***/
+    if (!BTM_IsDeviceUp ())
+        return (BTM_WRONG_MODE);
+
+    /* Save the inquiry parameters */
+    p_inq->inqparms = *p_inqparms;
+    p_inq->pending_filt_complete_event = BTM_INQ_ACTIVE_STATE;
+    p_inq->p_inq_cmpl_cb = p_cmpl_cb;
+    p_inq->p_inq_results_cb = p_results_cb;
+    p_inq->inq_cmpl_info.num_resp = 0;
+    p_inq->state = (p_inqparms->mode == BTM_LIMITED_INQUIRY) ?
+                   BTM_INQ_CLR_FILT_STATE : BTM_INQ_SET_FILT_STATE;
+
+    switch (p_inqparms->filter_cond_type)
+    {
+    case BTM_CLR_INQUIRY_FILTER:
+        p_inq->pending_filt_complete_event = BTM_INQ_SET_FILT_STATE;
+        break;
+
+    case BTM_FILTER_COND_DEVICE_CLASS:
+    case BTM_FILTER_COND_BD_ADDR:
+        p_inq->pending_filt_complete_event = BTM_INQ_CLR_FILT_STATE;
+        p_inqparms->filter_cond_type = BTM_CLR_INQUIRY_FILTER;
+        break;
+
+    default:
+        return (BTM_ILLEGAL_VALUE);
+    }
+
+    /* If the filter is being cleared or set, initiate the command; the inquiry
+       itself is started when the filter complete event is processed */
+    status = btm_set_inq_event_filter (p_inqparms->filter_cond_type,
+                                       p_inqparms->filter_cond);
+    if (status != BTM_CMD_STARTED)
+        p_inq->pending_filt_complete_event = 0;
+
+    return (status);
+}
 
 /* ------------------------------------------------------------------ */
 /*  BTM_ReadRemoteDeviceName - initiate a remote device name request.  */
 /* ------------------------------------------------------------------ */
+/* Forward declaration (defined below; inlined into its callers) */
+extern tINQ_DB_ENT *btm_inq_db_find (tBTM_INQ_CB *p_inq, BD_ADDR p_bda);
+
 tBTM_STATUS BTM_ReadRemoteDeviceName (BD_ADDR remote_bda, tBTM_CMPL_CB *p_cb)
 {
     tBTM_INQ_INFO *p_cur = NULL;
     tINQ_DB_ENT   *p_ent;
-    UINT16         xx;
 
     if (btm_cb.trace_level >= BT_TRACE_LEVEL_API)
         LogMsg_6 (TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK | TRACE_TYPE_API,
@@ -479,17 +707,9 @@ tBTM_STATUS BTM_ReadRemoteDeviceName (BD_ADDR remote_bda, tBTM_CMPL_CB *p_cb)
                   remote_bda[3], remote_bda[4], remote_bda[5]);
 
     /* Use the remote device's clock offset if it is in the local inquiry database */
-    p_ent = btm_cb.inq_db;
-    for (xx = 0; xx < BTM_INQ_DB_SIZE; xx++, p_ent++)
-    {
-        if (p_ent->in_use && memcmp (p_ent->inq_info.remote_bd_addr, remote_bda, BD_ADDR_LEN) == 0)
-            break;
-    }
-
-    if (xx < BTM_INQ_DB_SIZE)
+    p_ent = btm_inq_db_find (&btm_cb, remote_bda);
+    if (p_ent)
         p_cur = &p_ent->inq_info;
-    else
-        p_ent = NULL;
 
     return (btm_initiate_rem_name (remote_bda, p_cur, BTM_RMT_NAME_EXT,
                                    BTM_EXT_RMT_NAME_TIMEOUT, p_cb));
@@ -841,9 +1061,255 @@ UINT8 btm_set_inq_event_filter (UINT8 filter_type, BD_ADDR bd_addr)
     return (BTM_NO_RESOURCES);
 }
 
-void btm_event_filter_complete() {}
+void btm_event_filter_complete (UINT8 *p)
+{
+    UINT8         hci_status;
+    tBTM_STATUS   status;
+    tBTM_INQ_CB  *p_inq = &btm_cb;
+    const UINT8  *lap;
+    tBTM_CMPL_CB *p_cb = p_inq->p_inqfilter_cmpl_cb;
 
-void btm_process_inq_results() {}
+    /* If the filter complete event is from an old or cancelled request, ignore it */
+    if (p_inq->inqfilt_type)
+    {
+        p_inq->inqfilt_type--;
+        return;
+    }
+
+    /* Only process the inquiry filter; ignore the connection filter until it is
+       used by the upper layers */
+    if (p_inq->inqfilt_active == TRUE)
+    {
+        /* Extract the returned status from the buffer */
+        hci_status = *p;
+        if (hci_status != HCI_SUCCESS)
+        {
+            /* If standalone operation, return the error status; if embedded in
+               the inquiry, continue the inquiry */
+            if (p_inq->trace_level >= BT_TRACE_LEVEL_WARNING)
+                LogMsg_1 (TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK | TRACE_TYPE_WARNING,
+                          "BTM Warning: Set Event Filter Failed (HCI returned 0x%x)", hci_status);
+            status = BTM_ERR_PROCESSING;
+        }
+        else
+            status = BTM_SUCCESS;
+
+        /* If the set filter was initiated externally (via BTM_SetInqEventFilter),
+           call the callback function to notify the initiator that it has completed */
+        if (!p_inq->pending_filt_complete_event)
+        {
+            p_inq->inqfilt_active = FALSE;
+
+            if (p_cb)
+                (*p_cb)(&status);
+
+            return;
+        }
+
+        /* An inquiry is active (the set filter command was internally generated),
+           process the next state of the process (set a new filter or start the inquiry) */
+        if (status != BTM_SUCCESS)
+        {
+            /* Process the inquiry complete (error status) */
+            btm_process_inq_complete (BTM_ERR_PROCESSING);
+
+            p_inq->inqfilt_active = FALSE;
+            p_inq->state = BTM_INQ_INACTIVE_STATE;
+            p_inq->pending_filt_complete_event = 0;
+
+            return;
+        }
+
+        /* Check to see if a new filter needs to be set up */
+        if (p_inq->pending_filt_complete_event == BTM_INQ_CLR_FILT_STATE)
+        {
+            if ((status = btm_set_inq_event_filter (p_inq->inqparms.filter_cond_type,
+                                                    p_inq->inqparms.filter_cond)) == BTM_CMD_STARTED)
+            {
+                p_inq->pending_filt_complete_event = BTM_INQ_SET_FILT_STATE;
+                return;
+            }
+
+            /* Error setting the filter: process the inquiry complete */
+            p_inq->inqfilt_active = FALSE;
+            btm_process_inq_complete (BTM_ERR_PROCESSING);
+        }
+        else    /* Initiate the inquiry or periodic inquiry */
+        {
+            p_inq->pending_filt_complete_event = BTM_INQ_ACTIVE_STATE;
+            p_inq->inqfilt_active = FALSE;
+
+            /* Make sure the number of responses does not overflow the database */
+            p_inq->inqparms.max_resps = (p_inq->inqparms.max_resps <= BTM_INQ_DB_SIZE) ?
+                                        p_inq->inqparms.max_resps : BTM_INQ_DB_SIZE;
+
+            /* Use the LAP based on the inquiry mode */
+            lap = general_inq_lap;
+            if (p_inq->state & BTM_INQ_CLR_FILT_STATE)
+                lap = limited_inq_lap;
+
+            if (p_inq->state & BTM_INQ_REMNAME_STATE)
+            {
+                /* Periodic inquiry mode */
+                if (!btsnd_hcic_per_inq_mode (p_inq->per_max_delay, p_inq->per_min_delay, lap,
+                                              p_inq->inqparms.duration, p_inq->inqparms.max_resps))
+                    btm_process_inq_complete (BTM_NO_RESOURCES);
+            }
+            else
+            {
+                /* Clear the BD-addr results filter */
+                if (btm_cb.p_bd_db)
+                {
+                    GKI_freebuf (btm_cb.p_bd_db);
+                    btm_cb.p_bd_db = NULL;
+                }
+                p_inq->num_bd_entries = 0;
+                p_inq->max_bd_entries = 0;
+
+                /* Allocate memory to hold the bd-addrs responding */
+                p_inq->p_bd_db = GKI_getbuf (BTM_MAX_BD_ENTRIES * sizeof (tINQ_BDADDR));
+                if (p_inq->p_bd_db)
+                {
+                    p_inq->max_bd_entries = BTM_MAX_BD_ENTRIES;
+                    memset (p_inq->p_bd_db, 0, BTM_MAX_BD_ENTRIES * sizeof (tINQ_BDADDR));
+                }
+
+                if (!btsnd_hcic_inquiry (lap, p_inq->inqparms.duration, 0))
+                    btm_process_inq_complete (BTM_NO_RESOURCES);
+            }
+        }
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/*  btm_inq_db_find - look up an inquiry DB entry by BD address.       */
+/*  Inlined into its callers by MWCC (no retail symbol of its own).    */
+/* ------------------------------------------------------------------ */
+static __inline tINQ_DB_ENT *btm_inq_db_find (tBTM_INQ_CB *p_inq, BD_ADDR p_bda)
+{
+    UINT16      yy;
+    tINQ_DB_ENT *p_ent = p_inq->inq_db;
+
+    for (yy = 0; yy < BTM_INQ_DB_SIZE; yy++, p_ent++)
+    {
+        if (p_ent->in_use && memcmp (p_ent->inq_info.remote_bd_addr, p_bda, BD_ADDR_LEN) == 0)
+            return (p_ent);
+    }
+
+    /* If here, not found */
+    return (NULL);
+}
+
+void btm_process_inq_results (UINT8 *p, BOOLEAN use_rssi)
+{
+    UINT8         page_scan_per_mode = 0;
+    UINT8         page_scan_rep_mode = 0;
+    UINT8         num_resp;
+    tBTM_INQ_CB  *p_inq = &btm_cb;
+    UINT8         xx;
+    tINQ_DB_ENT  *p_i;
+    tBTM_INQ_INFO *p_cur;
+    BOOLEAN       is_new = TRUE;
+    tBTM_INQ_RESULTS_CB *p_inq_results_cb = p_inq->p_inq_results_cb;
+    UINT8         page_scan_mode = 0;
+    UINT8         rssi = 0;
+    UINT16        clock_offset;
+    BD_ADDR       bda;
+    DEV_CLASS     dc;
+
+    /* Only process the results if the inquiry is still active */
+    if (p_inq->state == BTM_INQ_INACTIVE_STATE)
+        return;
+
+    num_resp = *p;
+    p++;
+
+    for (xx = 0; xx < num_resp; xx++)
+    {
+        /* Extract the inquiry results */
+        bda[5] = *p++;
+        bda[4] = *p++;
+        bda[3] = *p++;
+        bda[2] = *p++;
+        bda[1] = *p++;
+        bda[0] = *p++;
+        page_scan_rep_mode = *p++;
+        page_scan_per_mode = *p++;
+
+        if (!use_rssi)
+            page_scan_mode = *p++;
+
+        dc[2] = *p++;
+        dc[1] = *p++;
+        dc[0] = *p++;
+        clock_offset = (UINT16)((*p) + (((UINT16)(*(p + 1))) << 8));
+        p += 2;
+        if (use_rssi)
+            rssi = *p++;
+
+        /* If the device has already been reported for this inquiry, skip it */
+        if (btm_inq_find_bdaddr (bda))
+            continue;
+
+        /* Check the inquiry results filter, if set */
+        if (p_inq->p_inq_results_filter_cb &&
+            (p_inq->p_inq_results_filter_cb (bda, dc) == FALSE))
+            continue;
+
+        /* Find the entry for this device in the inquiry database */
+        p_i = btm_inq_db_find (p_inq, bda);
+
+        if (p_i == NULL)
+        {
+            /* Not found - get a new entry (possibly reusing the oldest) */
+            p_i = btm_inq_db_new (bda);
+            is_new = TRUE;
+        }
+        else if (p_i->inq_count == p_inq->inq_counter)
+        {
+            /* If the entry is from the same inquiry, it is a duplicate response */
+            is_new = FALSE;
+        }
+
+        if (is_new == TRUE)
+        {
+            p_cur = &p_i->inq_info;
+
+            /* Save the information */
+            p_cur->page_scan_rep_mode = page_scan_rep_mode;
+            p_cur->page_scan_per_mode = page_scan_per_mode;
+            p_cur->page_scan_mode = page_scan_mode;
+            p_cur->dev_class[0] = dc[0];
+            p_cur->dev_class[1] = dc[1];
+            p_cur->dev_class[2] = dc[2];
+            p_cur->clock_offset = clock_offset | BTM_CLOCK_OFFSET_VALID;
+            if (use_rssi)
+                p_cur->rssi = rssi;
+            else
+                p_cur->rssi = BTM_INQ_RES_IGNORE_RSSI;
+
+            p_i->time_of_resp = GKI_get_tick_count ();
+            p_i->inq_count = p_inq->inq_counter;
+
+            p_inq->inq_cmpl_info.num_resp++;
+            if (!(p_inq->state & BTM_INQ_REMNAME_STATE) && p_inq->inqparms.max_resps &&
+                (p_inq->inq_cmpl_info.num_resp == p_inq->inqparms.max_resps))
+            {
+                btsnd_hcic_inq_cancel ();
+            }
+
+            p_i->inq_info.appl_knows_rem_name = FALSE;
+
+            /* If a callback is registered for the results, call it */
+            if (p_inq_results_cb)
+                (p_inq_results_cb)(p_cur);
+
+            /* Notify the database change callback, if registered */
+            if (p_inq->p_inq_change_cb)
+                (p_inq->p_inq_change_cb)(&p_i->inq_info, TRUE);
+        }
+    }
+}
 
 /* ------------------------------------------------------------------ */
 /*  btm_process_inq_complete - handle the inquiry complete event.      */

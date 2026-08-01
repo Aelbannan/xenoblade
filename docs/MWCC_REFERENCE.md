@@ -200,15 +200,51 @@ New in this session (`btm_dev_timeout`, `btm_read_local_features_complete` → F
 | AFH restore: afh_first load hoisted before the branch (structural) | Assigning `afh_first = btm_cb.afh_first;` before `if (afh_last != 0xFF)` makes MWCC load it before the compare | Move the afh_first assignment inside the `if (afh_last != 0xFF)` body (loads in retail order: afh_last, compare, branch, then afh_first) |
 | `BTM_SetAfhChannels(first, last)` inside the AFH restore reproduces the retail inline exactly (feature checks + compare + `btsnd_hcic_set_afh_channels` + stores) | The retail inlined the same-TU `BTM_SetAfhChannels` (same-TU non-static + `-inline auto`) | Write the call; do not hand-inline it (manual paste keeps the callee's Chaitin colors — MWCC_REFERENCE line 118) |
 
-### btm_inq.c — 4× FULL_MATCH, 6× EQUIVALENT-ready (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
+### btm_acl.c — 10× FULL_MATCH (GC/3.0a5.2, `-func_align 4`, `-ipa off`, no extra cflags needed)
+
+`btm_acl_device_down`, `btm_read_link_policy_complete`, `btm_read_rssi_complete`,
+`btm_read_link_quality_complete`, `btm_get_max_packet_size`, `btm_remove_acl`,
+`BTM_ReadRSSI`, `BTM_ReadLinkQuality`, `btm_acl_encrypt_change`, `BTM_SetLinkPolicy`
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| BD-address search loops compile to `beq found` (inverted, 4 bytes smaller than retail) | The retail source calls a helper with `return p` inside the loop (`btm_bda_to_acl`), which MWCC inlines; a `goto found` / `break` + `p=NULL` after the loop inverts the memcmp branch | Write a same-TU helper `static tACL_CONN *btm_bda_to_acl_local(BD_ADDR bda) { for (...) if (p->in_use && memcmp(...)==0) return p; return NULL; }` and call it — MWCC inlines it (`-inline auto`) and reproduces the retail `bne skip; b found` layout byte-for-byte |
+| `tBTM_CB`/`tACL_CONN` from `btm_int.h` do not match retail | Retail `tACL_CONN` tail: `lmp_version` 0x118, `in_use` 0x119, `link_role` 0x11A, `switch_role_state` 0x11B (stride 0x11C — **no** link_up_issued/encrypt_state). Retail devcb callbacks: `p_rlinkp_cmpl_cb` 0x5C4, `p_rssi_cmpl_cb` 0x5E0, `p_lnk_qual_cmpl_cb` 0x5FC, `p_qossu_cmpl_cb` 0x618, then **8 unknown bytes 0x61C–0x623**, `switch_role_ref_data` 0x624, `p_switch_role_cb` 0x62C (forgetting the 8-byte gap shifts `trace_level` to 0x27B8 instead of 0x27C0) | Local overlay structs; model the 0x61C gap explicitly |
+| handle/settings stream reads compile with a Chaitin r3↔r4 swap (`(p[2]<<8)+p[1]` allocates p[2]→r4) | The ancient `STREAM_TO_UINT16` macro shape (`(UINT16)lo + ((UINT16)hi << 8)`) drives MWCC's allocation differently than the commuted hand-written form | Write `handle = ((UINT16)p[1] + ((UINT16)p[2] << 8));` — the exact macro expression (without the pointer increment) — fixes the allocation in `btm_read_*_complete` / `btm_read_link_policy_complete` |
+| `BTM_SetLinkPolicy` reloads `*settings` per check and stores it back (`lhz`/`sth` per branch, and the final `btsnd_hcic_write_policy_set(handle, *settings)` reloads from memory) | The original source has **no local copy** — it reads/writes the `UINT16 *settings` parameter directly and guards with `if (*settings != HCI_DISABLE_ALL_LM_MODES)` | Write the checks against `*settings` (mask + store back), never a local `policy_settings` local |
+| Pooled-string `addi r4,r30,imm` immediates differ (0 vs retail 0xBC) — instruction bytes differ, so not byte-identical | MWCC pools string literals in source order, and the retail pool starts with three earlier trace strings (`"Duplicate btm_acl_created..."` 0x3F @0x00, `"SetPacketType Mask -> 0x%04x"` 0x1D @0x40, `"Role change request declined..."` 0x5A @0x60) before the four `BTM_SetLinkPolicy` strings @0xBC/0xF8/0x130/0x170 | Declare the three strings as local `static const char *const pool_x = "...";` + `(void)pool_x;` inside the first compiled function (`btm_acl_init`) — local statics with a void use survive and pool the literals in order, aligning every later reloc addend (file-scope statics and `(void)"lit"` statements do **not** pool) |
+| `btm_acl_encrypt_change` if-chain re-materialises `lis/addi btm_cb` at every `acl_db[N]` access | Global-address access per statement; the matched `btm_handle_to_acl_index` uses a `tBTM_CB_LOCAL *cb = &btm_cb;` local | Use the `cb` local for the chain, but compute `p = &btm_cb.acl_db[index]` from the **global** (retail re-materialises the base into r30 there) |
+| `btm_acl_encrypt_change` state==2 body: retail emits the odd `b .L_body; b .L_exit` dead-branch pair after computing `p` | Natural output of `if (index < 4) p = &...; else return;` with the state machine following | Keep that exact `if/else return` shape (do not wrap the body in braces/`if (p)`) |
+| `btm_read_link_quality_complete` stops the timer at btm_cb+0x5C8 (the **rssi** timer) | Genuine retail quirk — the original source calls `btu_stop_timer (&btm_cb.devcb.rssi_timer)` there | Reproduce it with a comment; do not "fix" it |
+| `0xFFFF` handle literal emits `lis rX,1; subi rX,rX,1` | `UINT16 handle = 0xFFFF;` (32-bit constant 0xFFFF, not `li rX,-1`) | Assign `0xFFFF` to a UINT16 local (see btm_sec.c note) |
+
+Retail `btm_cb` layout facts for btm_acl.s: `acl_db[4]` @0x34 (0x11C stride),
+`btm_def_link_policy` 0x4C4, `btm_def_link_super_tout` 0x4C6, `p_acl_changed_cb` 0x4C8,
+`rlinkp_timer` 0x5AC (TIMER_LIST_ENT = 0x18 in this build: next/prev/cback/ticks/param + event@0x10 + in_use), `p_rlinkp_cmpl_cb` 0x5C4,
+`rssi_timer` 0x5C8, `p_rssi_cmpl_cb` 0x5E0, `lnk_quality_timer` 0x5E4, `p_lnk_qual_cmpl_cb` 0x5FC,
+`qossu_timer` 0x600, `p_qossu_cmpl_cb` 0x618, `switch_role_ref_data` 0x624,
+`p_switch_role_cb` 0x62C, `acl_disc_reason` 0x27BF, `trace_level` 0x27C0.
+`btu_cb` (0x805BBDD0): `local_addr` 0x630, `acl_pkt_types_supported` 0x654,
+`hcit_acl_data_size` 0x7C (also see btm_devctl.c note). `btm_get_max_packet_size`
+walks packet types in retail order NO_3_DH5→NO_2_DH5→NO_3_DH3→DH5→NO_2_DH3→DM5→DH3→DM3→
+NO_3_DH1→NO_2_DH1→DH1→DM1 (note: this repo's hcidefs.h has the **standard** order
+NO_2_DH5=0x1000 / NO_3_DH5=0x2000). Timer type 9 / timeout 3 for rssi and link
+quality timers are literal values in this build.
+
+### btm_inq.c — 7× FULL_MATCH, rest 0-structural (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
 
 FULL_MATCH: `BTM_SetInquiryScanType`, `BTM_SetPageScanType`, `BTM_SetInquiryMode`,
-`btm_initiate_rem_name`. The other six (`BTM_SetConnectability`, `BTM_CancelInquiry`,
-`btm_set_inq_event_filter`, `btm_process_inq_complete`, `BTM_ReadRemoteDeviceName`,
-`btm_inq_db_reset`) are 0-structural / size-identical with only reg-swaps, and are
-blocked on EQUIVALENT_MATCH only by unaccepted callees (`LogMsg` us-802e0830,
-`btsnd_hcic_inq_cancel` us-802f38b4, `btsnd_hcic_set_event_filter` us-802f4cec).
-Reusable patterns (all verified byte-for-byte on GC/3.0a5.2 `-O4,p`):
+`btm_initiate_rem_name`, `BTM_SetDiscoverability`, `BTM_ReadRemoteDeviceName`,
+`BTM_InqDbRead`. `BTM_StartInquiry` (97.5%), `btm_event_filter_complete` (99.9%),
+`btm_process_inq_results` (99.9%) and the other in-unit functions are 0-structural /
+size-identical with only reg-swaps, and are blocked on EQUIVALENT_MATCH only by
+unaccepted external callees (`LogMsg` us-802e0830, `btsnd_hcic_inq_cancel`
+us-802f38b4, `btsnd_hcic_inquiry` us-802f380c / `btsnd_hcic_per_inq_mode`
+us-802f3914 are NOT_STARTED in hcicmds; in-unit `btm_set_inq_event_filter`
+us-802ebe4c / `btm_process_inq_complete` us-802ec3c8 are reg-swap-only and not yet
+certified). Once those callees are accepted (or the last reg-swaps are coloured
+byte-identical), the equivalence probe certifies them. Reusable patterns (all
+verified byte-for-byte on GC/3.0a5.2 `-O4,p`):
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
@@ -220,7 +256,8 @@ Reusable patterns (all verified byte-for-byte on GC/3.0a5.2 `-O4,p`):
 | `if (x == 1) a = FALSE; else return X;` vs retail `if (x != 0) { memcmp... return; } a = FALSE;` block order | The `!= 0` then-fall-through shape (`bne .fail; <body>; b .next; .fail: li r3,2; b exit; .next:`) comes from the if/else form | Write the condition as `== 0` with the assignment in the then and the return in the else, or `!= 0` with the return first and the body falling through (`if (memcmp(...) != 0) return (BTM_BUSY); start = FALSE;` where the return is the single statement) |
 | Busy/error returns via `status = X; return (status);` get constant-folded to `li r3,X` by MWCC | `return (status)` right after the assignment is folded; the retail keeps `li r28,X; mr r3,r28` via a shared trailing `return (status)` | Use a fall-through status variable: `if (c) status = BTM_BUSY; else if (...) { return (BTM_BUSY); } ... return (status);` — the shared trailing return makes MWCC emit `mr r3,status` once |
 | Ternary `(c) ? A : B` for the inquiry-complete status gets branchless-optimised (`neg/or/srawi/andi.`); retail uses a branch | MWCC branchless-selects ternaries with constant operands; the if-form `if (status != HCI_SUCCESS) btm_status = BTM_ERR_PROCESSING;` keeps the branch | Use the if-form with the init placed just before the `if` |
-| `if (xx < 12) p_cur = &p_ent->inq_info;` after a search loop emits `rlwinm;cmpli;bge` (u16 truncation) where retail has `li r31,0; cmpi r31,0; beq` | Retail nulls the scanned pointer on the loop-exhausted path then tests the pointer; MWCC emits an explicit u16 compare for the `xx < N` form and does NOT invent the pointer sentinel | Unresolved on GC/3.0a5.2: the pointer-null sentinel form (retail) is not reproducible from any high-level C tried (`if (p_ent)`, `if (xx<N)`, `if (xx==N) p_ent=NULL` all differ); keep the semantically-correct `if (xx < BTM_INQ_DB_SIZE) p_cur = &p_ent->inq_info;` (equivalence-safe, 94.8% static) |
+| `if (xx < 12) p_cur = &p_ent->inq_info;` after a search loop emits `rlwinm;cmpli;bge` (u16 truncation) where retail has `li r31,0; cmpi r31,0; beq` | Retail nulls the scanned pointer on the loop-exhausted path then tests the pointer; MWCC emits an explicit u16 compare for the `xx < N` form and does NOT invent the pointer sentinel | **Resolved**: write the search as a `static __inline` helper that `return (p_ent);` on match and `return (NULL);` at the end (BTE's `btm_inq_db_find`). When inlined, MWCC materialises the NULL on the loop-exhaust edge (`li rN,0`), the found path jumps straight to the merge test (`cmpwi rN,0; bne`), and no standalone symbol is emitted (plain `static` leaves a 0x80 stub that blows the split — use `__inline`) |
+| Retail hoists `li rN,1` (a switch-case constant) into a preceding 10-byte struct copy; decomp materialises `li rN,1` inside the case block | MWCC scheduler preloads constants for the switch's fall-through successor when a slot is free; register pressure of the copy's lbz/stb ping-pong decides how many constants get hoisted | Not reproducible from C on GC/3.0a5.2: statement order, case order, and field-by-field copy permutations all leave the same single li-position delta (BTM_StartInquiry, 97.5% static, equivalence-safe) |
 
 Retail `btm_cb` layout facts for btm_inq.s: `btm_features[8]` 0x640 (bit 0x10 = interlaced
 inq scan, 0x20 = interlaced page scan, 0x40 = inq RSSI), `dev_class` 0x648,
@@ -231,11 +268,17 @@ inq scan, 0x20 = interlaced page scan, 0x40 = inq RSSI), `dev_class` 0x648,
 `remname_bda` 0x16A8, `remname_active` 0x16AE, `p_inq_cmpl_cb` 0x16B0,
 `p_inq_results_cb` 0x16B4, `p_inqfilter_cmpl_cb` 0x16B8, `p_inq_change_cb` 0x16BC,
 `inq_counter` 0x16C0, `inq_timer_ent` 0x16C4, `p_bd_db` 0x16DC, `num_bd_entries`
-0x16E0, `max_bd_entries` 0x16E2, `inq_db[12]` 0x16E4 (0x1C each), `inq_cmpl_info`
-0x183E (u8 status + u8 num_resp), `inqfilt_active` 0x1844, `inqfilt_type` 0x1845,
-`pending_filt_complete_event` 0x1847, `state` 0x1848, `trace_level` 0x27C0.
-The `BTM_SetDiscoverability`/`BTM_StartInquiry`/`btm_event_filter_complete`/
-`btm_process_inq_results` stubs are still to match.
+0x16E0, `max_bd_entries` 0x16E2, `inq_db[12]` 0x16E4 (0x1C each, in_use at 0x1A,
+appl_knows_rem_name at inq_info+0x10 = entry+0x18 — NOT 0x0F; the results struct has a
+pad byte at 0x0F), `inqparms` 0x1834 (mode/duration/max_resps/filter_cond_type /
+filter_cond[6]; NO report_dup byte in this build), `inq_cmpl_info` 0x183E (u8 status
++ u8 num_resp), `per_min_delay` 0x1840, `per_max_delay` 0x1842, `inqfilt_active`
+0x1844, `inqfilt_type` 0x1845, `pending_filt_complete_event` 0x1847, `state` 0x1848,
+`p_inq_results_filter_cb` 0x184C (BOOLEAN (*)(BD_ADDR, DEV_CLASS) results filter),
+`trace_level` 0x27C0. `general_inq_lap`/`limited_inq_lap` are 4-byte global consts in
+.sdata2 (`0x9E8B3300` / `0x9E8B0000`). tBTM_INQ_PARMS has filter_cond_type at byte 3
+(no report_dup); the BTM_StartInquiry `switch (filter_cond_type)` lowers with the
+signed `blt` default check, and the case-1/2 body zeroes p_inqparms->filter_cond_type.
 
 ### hcicmds.c — pool-buffer HCI command builders (US, `-O4,s`)
 

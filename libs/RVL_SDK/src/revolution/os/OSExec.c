@@ -11,6 +11,13 @@ static u8 views[0xBD00] ALIGN(32);
 
 BOOL __OSInReboot;
 
+void Run(void (*func)(void)) {
+    ICFlashInvalidate();
+    __sync();
+    __isync();
+    func();
+}
+
 static s32 _ES_InitLib(s32* fd);
 static s32 _ES_GetTicketViews(s32* fd, u64 tid, void* pViews, u32* count);
 static s32 _ES_LaunchTitle(s32* fd, u64 tid, void* pViews) DECOMP_DONT_INLINE;
@@ -25,6 +32,56 @@ void __OSGetExecParams(OSExecParams* out) {
 
 //unused
 void __OSSetExecParams(){
+}
+
+/**
+ * Hex-encodes a UTF-16LE string (up to the first zero byte) into dst.
+ * Returns 1 on success, 0 when src is NULL or contains an invalid digit.
+ */
+/**
+ * Hex-encodes a UTF-16LE string (up to the first zero byte) into dst.
+ * Returns TRUE on success, FALSE when srcName is NULL or contains an
+ * invalid digit.
+ */
+BOOL Utf16ToArg(char* dstArg, u16* srcName) {
+    char* srcPtr;
+    char* dstPtr;
+    u8 i;
+    u8 mask;
+    u8 shift;
+
+    if (srcName != 0) {
+        srcPtr = (char*)srcName;
+        dstPtr = dstArg;
+
+        while (*srcPtr || *(srcPtr + 1)) {
+            for (i = 0; i < 4; i++) {
+                mask = (u8)((i & 0x1) ? 0xF : 0xF0);
+                shift = (u8)((i & 0x1) ? 0 : 4);
+
+                if (0 <= ((*srcPtr & mask) >> shift) &&
+                    ((*srcPtr & mask) >> shift) < 0xA) {
+                    *dstPtr = (char)(((*srcPtr & mask) >> shift) + 0x30);
+                } else if (0xA <= ((*srcPtr & mask) >> shift) &&
+                           ((*srcPtr & mask) >> shift) < 0x10) {
+                    *dstPtr = (char)(((*srcPtr & mask) >> shift) + 0x57);
+                } else {
+                    return FALSE;
+                }
+
+                dstPtr++;
+
+                if (i & 1) {
+                    srcPtr++;
+                }
+            }
+        }
+
+        *dstPtr++ = 0;
+        return TRUE;
+    }
+
+    return FALSE;
 }
 
 void __OSLaunchMenu(void) {

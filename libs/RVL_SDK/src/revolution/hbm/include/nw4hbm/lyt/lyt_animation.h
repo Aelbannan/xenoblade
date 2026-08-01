@@ -122,24 +122,22 @@ protected:
  ******************************************************************************/
 class AnimTransform {
 public:
-    AnimTransform();
-    virtual ~AnimTransform(); // at 0x8
+    AnimTransform() : mpRes(NULL), mFrame(0.0f) {}
 
-    virtual void SetResource(const res::AnimationBlock* pBlock,
-                             ResourceAccessor* pAccessor) = 0; // at 0xC
-    virtual void SetResource(const res::AnimationBlock* pBlock,
-                             ResourceAccessor* pAccessor,
-                             u16 animNum) = 0; // at 0x10
+    void SetResource(const res::AnimationBlock* pBlock,
+                    ResourceAccessor* pAccessor); // at 0xC
 
-    virtual void Bind(Pane* pPane, bool recursive) = 0; // at 0x14
-    virtual void Bind(Material* pMaterial) = 0;         // at 0x18
+    void Bind(Pane* pPane, bool recursive); // at 0x10
+    void Bind(Material* pMaterial);         // at 0x14
 
-    virtual void Animate(u32 idx, Pane* pPane) = 0;         // at 0x1C
-    virtual void Animate(u32 idx, Material* pMaterial) = 0; // at 0x20
+    void Animate(u32 idx, Pane* pPane);         // at 0x18
+    void Animate(u32 idx, Material* pMaterial); // at 0x1C
 
     u16 GetFrameSize() const;
 
-    bool IsLoopData() const;
+    bool IsLoopData() const {
+        return mpRes->loop != 0;
+    }
 
     f32 GetFrame() const {
         return mFrame;
@@ -178,15 +176,12 @@ public:
 
     virtual void SetResource(const res::AnimationBlock* pBlock,
                              ResourceAccessor* pAccessor); // at 0xC
-    virtual void SetResource(const res::AnimationBlock* pBlock,
-                             ResourceAccessor* pAccessor,
-                             u16 animNum); // at 0x10
 
-    virtual void Bind(Pane* pPane, bool recursive); // at 0x14
-    virtual void Bind(Material* pMaterial);         // at 0x18
+    virtual void Bind(Pane* pPane, bool recursive); // at 0x10
+    virtual void Bind(Material* pMaterial);         // at 0x14
 
-    virtual void Animate(u32 idx, Pane* pPane);         // at 0x1C
-    virtual void Animate(u32 idx, Material* pMaterial); // at 0x20
+    virtual void Animate(u32 idx, Pane* pPane);         // at 0x18
+    virtual void Animate(u32 idx, Material* pMaterial); // at 0x1C
 
 protected:
     void** mpFileResAry;         // at 0x14
@@ -205,8 +200,16 @@ AnimationLink* FindAnimationLink(AnimationLinkList* pAnimList,
                                  AnimTransform* pAnimTrans);
 AnimationLink* FindAnimationLink(AnimationLinkList* pAnimList,
                                  const AnimResource& rResource);
-void UnbindAnimationLink(AnimationLinkList* pAnimList,
-                                 AnimTransform* pAnimTrans);
+inline void UnbindAnimationLink(AnimationLinkList* pAnimList,
+                                AnimTransform* pAnimTrans) {
+    NW4R_UT_LINKLIST_FOREACH (it, *pAnimList, {
+        IterType currIt = it;
+        if (pAnimTrans != NULL && pAnimTrans == it->GetAnimTransform()) {
+            pAnimList->Erase(it);
+            currIt->Reset();
+        }
+    })
+}
 
 } // namespace detail
 

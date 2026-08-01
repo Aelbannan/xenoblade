@@ -366,9 +366,9 @@ static void __CalcLFO(s32* dst, AXFX_CHORUS_EXP_LFO* lfo) {
     u32 currNum;
     u32 idx;
     s64 value;
+    s64 delta;
     s32 curr;
     s32 next;
-    s32 delta;
 
     for (i = 0; i < 0x60; i++) {
         currNum = lfo->phase & ~0xFFFFu;
@@ -378,11 +378,11 @@ static void __CalcLFO(s32* dst, AXFX_CHORUS_EXP_LFO* lfo) {
             idx = currNum >> 16;
             curr = lfo->table[idx];
             next = lfo->table[(idx + 1) & 0x7F];
-            delta = next - curr;
+            delta = (s64)next - (s64)curr;
             value = ((s64)curr * lfo->depthSamp) >> 24;
-            lfo->grad = (s32)(((s64)delta * lfo->gradFactor) >> 24);
+            lfo->grad = (s32)((delta * (s64)lfo->gradFactor) >> 24);
         } else {
-            value = (s64)lfo->lastValue + lfo->grad;
+            value = (s64)(lfo->lastValue + lfo->grad);
         }
 
         lfo->lastValue = (s32)value;

@@ -35,7 +35,53 @@ tSDP_DISC_ATTR *SDP_FindAttributeInRec(tSDP_DISC_REC *p_rec, UINT16 attr_id) {
     return NULL;
 }
 
-tSDP_DISC_REC *SDP_FindServiceInDb(tSDP_DISCOVERY_DB *p_db, UINT16 attr_id, tSDP_DISC_REC *p_start_rec) { return NULL; }
+tSDP_DISC_REC *SDP_FindServiceInDb(tSDP_DISCOVERY_DB *p_db, UINT16 attr_id,
+                                 tSDP_DISC_REC *p_start_rec) {
+    tSDP_DISC_REC *p_rec;
+    tSDP_DISC_ATTR *p_attr;
+    tSDP_DISC_ATTR *p_attr2;
+
+    /* Look through the records in the database */
+    if (p_start_rec == NULL) {
+        p_rec = p_db->p_first_rec;
+    } else {
+        p_rec = p_start_rec->p_next_rec;
+    }
+
+    /* Loop through the records */
+    while (p_rec) {
+        /* Look through the attributes */
+        p_attr = p_rec->p_first_attr;
+        while (p_attr) {
+            /* If the attribute ID matches, return the record */
+            if (p_attr->attr_id == ATTR_ID_SERVICE_CLASS_ID_LIST &&
+                SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) ==
+                    DATA_ELE_SEQ_DESC_TYPE) {
+                for (p_attr2 = p_attr->attr_value.v.p_sub_attr; p_attr2;
+                     p_attr2 = p_attr2->p_next_attr) {
+                    if (SDP_DISC_ATTR_TYPE(p_attr2->attr_len_type) ==
+                            UUID_DESC_TYPE &&
+                        SDP_DISC_ATTR_LEN(p_attr2->attr_len_type) ==
+                            LEN_UUID_16 &&
+                        p_attr2->attr_value.v.u16 == attr_id) {
+                        return p_rec;
+                    }
+                }
+            } else if (p_attr->attr_id == ATTR_ID_SERVICE_ID &&
+                       SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) ==
+                           UUID_DESC_TYPE &&
+                       SDP_DISC_ATTR_LEN(p_attr->attr_len_type) ==
+                           LEN_UUID_16 &&
+                       p_attr->attr_value.v.u16 == attr_id) {
+                return p_rec;
+            }
+            p_attr = p_attr->p_next_attr;
+        }
+        p_rec = p_rec->p_next_rec;
+    }
+
+    return NULL;
+}
 
 tSDP_DISC_REC *SDP_FindServiceUUIDInDb(tSDP_DISCOVERY_DB *p_db, tBT_UUID *p_uuid,
                                      tSDP_DISC_REC *p_start_rec) {

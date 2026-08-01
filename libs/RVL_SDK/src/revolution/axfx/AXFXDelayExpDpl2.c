@@ -191,13 +191,12 @@ void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL
     s32 coef;
     s32 invCoef;
     s32* input[4];
-    s32* inBus[4];
-    s32* outBus[4];
     s32 delayed[4];
     s32 mixed[4];
+    s32* inBus[4];
+    s32* outBus[4];
     u32 samp;
     u32 ch;
-    u32 pos;
     s32 in;
 
     if (fx->active != 0) {
@@ -228,8 +227,7 @@ void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL
 
     for (samp = 0; samp < 96; samp++) {
         for (ch = 0; ch < 4; ch++) {
-            pos = fx->curPos;
-            delayed[ch] = fx->line[ch][pos];
+            delayed[ch] = fx->line[ch][fx->curPos];
 
             if (fx->busIn != NULL) {
                 in = *input[ch] + *inBus[ch]++;
@@ -241,7 +239,8 @@ void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL
             mixed[ch] >>= 7;
             fx->last[ch] = mixed[ch];
 
-            fx->line[ch][pos] = mixed[ch] + ((delayed[ch] * fx->feedbackGain) >> 7);
+            fx->line[ch][fx->curPos] =
+                mixed[ch] + ((delayed[ch] * fx->feedbackGain) >> 7);
 
             *input[ch]++ = (delayed[ch] * fx->outGainI) >> 7;
 
@@ -250,9 +249,8 @@ void AXFXDelayExpCallbackDpl2(AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL
             }
         }
 
-        pos = fx->curPos + 1;
-        fx->curPos = pos;
-        if (pos >= fx->length) {
+        fx->curPos++;
+        if (fx->curPos >= fx->length) {
             fx->curPos = 0;
         }
     }

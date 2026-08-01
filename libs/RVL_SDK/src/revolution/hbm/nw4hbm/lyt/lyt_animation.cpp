@@ -314,16 +314,8 @@ namespace lyt {
  * AnimTransform
  *
  ******************************************************************************/
-AnimTransform::AnimTransform() : mpRes(NULL), mFrame(0.0f) {}
-
-AnimTransform::~AnimTransform() {}
-
 u16 AnimTransform::GetFrameSize() const {
     return mpRes->frameSize;
-}
-
-bool AnimTransform::IsLoopData() const {
-    return mpRes->loop != 0;
 }
 
 /******************************************************************************
@@ -530,18 +522,6 @@ AnimationLink* FindAnimationLink(AnimationLinkList* pAnimList,
     })
 
     return NULL;
-}
-
-void UnbindAnimationLink(AnimationLinkList* pAnimList,
-                                 AnimTransform* pAnimTrans) {
-
-    NW4R_UT_LINKLIST_FOREACH (it, *pAnimList, {
-        IterType currIt = it;
-        if (pAnimTrans != NULL && pAnimTrans == it->GetAnimTransform()) {
-            pAnimList->Erase(it);
-            currIt->Reset();
-        }
-    })
 }
 
 } // namespace detail

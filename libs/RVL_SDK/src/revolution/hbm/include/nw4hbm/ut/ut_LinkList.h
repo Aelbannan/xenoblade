@@ -18,7 +18,7 @@ class LinkListImpl;
  * Linked list node
  *
  ******************************************************************************/
-class LinkListNode : private NonCopyable {
+class LinkListNode {
     friend class detail::LinkListImpl;
 
 public:

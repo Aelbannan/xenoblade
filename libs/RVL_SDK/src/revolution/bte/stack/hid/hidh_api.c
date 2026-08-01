@@ -309,7 +309,44 @@ tHID_STATUS HID_HostDeregister(void)
     return HID_SUCCESS;
 }
 
-void HID_HostAddDev() {}
+tHID_STATUS HID_HostAddDev(BD_ADDR addr, UINT16 attr_mask, UINT8 *handle)
+{
+    int i;
+
+    if (!hh_cb.reg_flag) {
+        return HID_ERR_NOT_REGISTERED;
+    }
+
+    for (i = 0; i < HID_HOST_MAX_DEVICES; i++) {
+        if (memcmp(addr, hh_cb.devices[i].addr, BD_ADDR_LEN) == 0) {
+            break;
+        }
+    }
+
+    if (i == HID_HOST_MAX_DEVICES) {
+        for (i = 0; i < HID_HOST_MAX_DEVICES; i++) {
+            if (!hh_cb.devices[i].in_use) {
+                break;
+            }
+        }
+    }
+
+    if (i == HID_HOST_MAX_DEVICES) {
+        return HID_ERR_NO_RESOURCES;
+    }
+
+    if (!hh_cb.devices[i].in_use) {
+        hh_cb.devices[i].in_use = 1;
+        memcpy(hh_cb.devices[i].addr, addr, BD_ADDR_LEN);
+        hh_cb.devices[i].state = 0;
+        hh_cb.devices[i].conn_tries = 0;
+    }
+
+    hh_cb.devices[i].attr_mask = attr_mask;
+    *handle = i;
+
+    return HID_SUCCESS;
+}
 
 void HID_HostRemoveDev() {}
 

@@ -4,6 +4,8 @@
 
 #include <nw4hbm/lyt/lyt_resources.h>
 
+#include <nw4hbm/lyt/lyt_layout.h>
+
 #include <nw4hbm/ut.h>
 
 namespace nw4hbm {
@@ -56,7 +58,17 @@ public:
     Group(const res::Group* pRes, Pane* pRootPane);
     virtual ~Group(); // at 0x8
 
-    void AppendPane(Pane* pPane);
+    void AppendPane(Pane* pPane) {
+        void* pBuffer = Layout::AllocMemory(sizeof(detail::PaneLink));
+        if (pBuffer == NULL) {
+            return;
+        }
+
+        detail::PaneLink* pLink = new (pBuffer) detail::PaneLink();
+        pLink->mTarget = pPane;
+
+        mPaneLinkList.PushBack(pLink);
+    }
 
     detail::PaneLinkList& GetPaneList() {
         return mPaneLinkList;
@@ -75,12 +87,14 @@ public:
 
 protected:
     detail::PaneLinkList mPaneLinkList;    // at 0xC
-    char mName[NW4R_LYT_RES_NAME_LEN + 1]; // at 0x18
-    bool mbUserAllocated;                  // at 0x29
-    u8 PADDING_0x2A[0x2C - 0x2A];          // at 0x2A
+    char mName[NW4R_LYT_RES_NAME_LEN];     // at 0x18 (16 bytes)
+    bool mbUserAllocated;                  // at 0x28
+    u8 PADDING_0x29[0x2C - 0x29];          // at 0x29
 
 private:
-    void Init();
+    void Init() {
+        mbUserAllocated = false;
+    }
 };
 
 NW4R_UT_LINKLIST_TYPEDEF_DECL(Group);

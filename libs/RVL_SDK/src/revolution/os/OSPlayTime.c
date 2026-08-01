@@ -17,7 +17,7 @@
 #include <revolution/OS/OSError.h>
 
 // External globals from sbss/bss
-extern volatile void* __OSExpireAIFade;
+extern void *volatile __OSExpireAIFade;
 extern u32 __OSExpireSetExpiredFlag;
 extern void (*__OSExpireCallback)(void);
 extern u64 __OSExpireTime;
@@ -139,25 +139,23 @@ s32 __OSWriteExpiredFlagIfSet(void) {
     return 0;
 }
 
-void __OSPlayTimeRebootThread(void* arg) {
+static u32 __OSPlayTimeRebootThread(void* arg) {
     u8 fadeBuf[0x494] __attribute__((aligned(32)));
-    FadeAIData* fade = (FadeAIData*)fadeBuf;
     u32 i;
+    u32 level;
+    BOOL enabled;
 
-    __OSExpireAIFade = fade;
-    memset(fade, 0, sizeof(FadeAIData));
+    __OSExpireAIFade = (FadeAIData*)fadeBuf;
+    memset(fadeBuf, 0, sizeof(FadeAIData));
 
     // Store the previous AI DMA callback, register the fade callback
-    fade->callback = AIRegisterDMACallback(__OSPlayTimeFadeLastAIDCallback);
+    ((FadeAIData *)__OSExpireAIFade)->callback =
+        AIRegisterDMACallback(__OSPlayTimeFadeLastAIDCallback);
 
     // Gradual dimming over 20 retrace cycles
     for (i = 0; i < 20; i++) {
-        u32 tmp;
-        u32 level;
-        /* mulhwu: high 32 bits of (0xCCCCCCCD * i) >> 2, then +1 clamped to 7 */
-        tmp = (u32)(((u64)0xCCCCCCCDu * (u64)i) >> 32);
-        tmp >>= 2;
-        level = tmp + 1;
+        /* i / 5 (mulhwu magic 0xCCCCCCCD) + 1, clamped to 7 */
+        level = i / 5 + 1;
         if (level > 7) {
             level = 7;
         }
@@ -171,7 +169,7 @@ void __OSPlayTimeRebootThread(void* arg) {
 
     // Write the expired flag atomically
     {
-        BOOL enabled = OSDisableInterrupts();
+        enabled = OSDisableInterrupts();
         if (__OSExpireSetExpiredFlag) {
             __OSWriteExpiredFlag();
         }
@@ -181,6 +179,7 @@ void __OSPlayTimeRebootThread(void* arg) {
     OSReturnToMenu();
 
     (void)arg;
+    return 0;
 }
 
 void __OSPlayTimeAlarmExpired(OSAlarm* alarm, OSContext* ctx) {

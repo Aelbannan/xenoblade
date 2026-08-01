@@ -273,7 +273,7 @@ BOOL WPADiSendGetContStat(WPADCommandQueue* pQueue, WPADInfo* pInfo,
                           WPADCallback pCallback);
 BOOL WPADiSendWriteDataCmd(WPADCommandQueue* pQueue, u8 cmd, u32 addr,
                            WPADCallback pCallback);
-BOOL WPADiSendWriteData(WPADCommandQueue* pQueue, const void* pSrc, u16 len,
+BOOL WPADiSendWriteData(WPADCommandQueue* pQueue, const void* pSrc, u32 len,
                         u32 addr, WPADCallback pCallback);
 BOOL WPADiSendReadData(WPADCommandQueue* pQueue, void* pDst, u16 len, u32 addr,
                        WPADCallback pCallback);

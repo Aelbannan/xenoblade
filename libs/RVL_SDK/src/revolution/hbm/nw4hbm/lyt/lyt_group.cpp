@@ -1,5 +1,4 @@
 #pragma ipa file
-
 #include <nw4hbm/lyt.h>
 #include <nw4hbm/ut.h>
 
@@ -16,8 +15,7 @@ namespace lyt {
 Group::Group(const res::Group* pRes, Pane* pRootPane) {
     Init();
 
-    std::strncpy(mName, pRes->name, NW4R_LYT_RES_NAME_LEN);
-    mName[NW4R_LYT_RES_NAME_LEN] = '\0';
+    std::memcpy(mName, pRes->name, NW4R_LYT_RES_NAME_LEN);
 
     const char* pNameBase =
         detail::ConvertOffsToPtr<char>(pRes, sizeof(res::Group));
@@ -32,24 +30,11 @@ Group::Group(const res::Group* pRes, Pane* pRootPane) {
     }
 }
 
-void Group::Init() {
-    mbUserAllocated = false;
-}
-
 Group::~Group() {
     NW4R_UT_LINKLIST_FOREACH_SAFE (it, mPaneLinkList, {
         mPaneLinkList.Erase(it);
-        Layout::DeleteObj(&*it);
+        Layout::FreeMemory(&*it);
     })
-}
-
-void Group::AppendPane(Pane* pPane) {
-    detail::PaneLink* pLink = Layout::NewObj<detail::PaneLink>();
-
-    if (pLink != NULL) {
-        pLink->mTarget = pPane;
-        mPaneLinkList.PushBack(pLink);
-    }
 }
 
 /******************************************************************************
@@ -60,9 +45,10 @@ void Group::AppendPane(Pane* pPane) {
 GroupContainer::~GroupContainer() {
     NW4R_UT_LINKLIST_FOREACH_SAFE (it, mGroupList, {
         mGroupList.Erase(it);
-        
+
         if (!it->IsUserAllocated()) {
-            Layout::DeleteObj(&*it);
+            it->~Group();
+            Layout::FreeMemory(&*it);
         }
     })
 }

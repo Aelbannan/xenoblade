@@ -37,7 +37,62 @@ tSDP_DISC_ATTR *SDP_FindAttributeInRec(tSDP_DISC_REC *p_rec, UINT16 attr_id) {
 
 tSDP_DISC_REC *SDP_FindServiceInDb(tSDP_DISCOVERY_DB *p_db, UINT16 attr_id, tSDP_DISC_REC *p_start_rec) { return NULL; }
 
-tSDP_DISC_REC *SDP_FindServiceUUIDInDb(tSDP_DISCOVERY_DB *p_db, tBT_UUID *p_uuid, tSDP_DISC_REC *p_start_rec) { return NULL; }
+tSDP_DISC_REC *SDP_FindServiceUUIDInDb(tSDP_DISCOVERY_DB *p_db, tBT_UUID *p_uuid,
+                                     tSDP_DISC_REC *p_start_rec) {
+    tSDP_DISC_ATTR *p_attr;
+    tSDP_DISC_REC *p_rec;
+
+    /* Defined in sdp_utils.c */
+    extern BOOLEAN sdpu_compare_uuid_with_attr(tBT_UUID *puuid1,
+                                               tSDP_DISC_ATTR *p_attr);
+
+    if (p_start_rec == NULL)
+        p_rec = p_db->p_first_rec;
+    else
+        p_rec = p_start_rec->p_next_rec;
+
+    /* Loop through records, looking for UUID match */
+    while (p_rec) {
+        p_attr = p_rec->p_first_attr;
+
+        /* Loop through attributes of the record */
+        while (p_attr) {
+            /* Check the attribute ID */
+            if (p_attr->attr_id == ATTR_ID_SERVICE_CLASS_ID_LIST) {
+                /* Check if the attribute value is a data element sequence */
+                if (SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) ==
+                    DATA_ELE_SEQ_DESC_TYPE) {
+                    /* Loop through the attribute values */
+                    for (p_attr = p_attr->attr_value.v.p_sub_attr; p_attr;
+                         p_attr = p_attr->p_next_attr) {
+                        /* Check if the attribute value is a UUID */
+                        if (SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) ==
+                            UUID_DESC_TYPE) {
+                            /* Compare the UUID */
+                            if (sdpu_compare_uuid_with_attr(p_uuid, p_attr)) {
+                                return p_rec;
+                            }
+                        }
+                    }
+                    break;
+                }
+            } else if (p_attr->attr_id == ATTR_ID_SERVICE_ID) {
+                /* Check if the attribute value is a UUID */
+                if (SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) ==
+                    UUID_DESC_TYPE) {
+                    /* Compare the UUID */
+                    if (sdpu_compare_uuid_with_attr(p_uuid, p_attr)) {
+                        return p_rec;
+                    }
+                }
+            }
+            p_attr = p_attr->p_next_attr;
+        }
+        p_rec = p_rec->p_next_rec;
+    }
+
+    return NULL;
+}
 
 UINT16 SDP_SetLocalDiRecord(tSDP_DI_RECORD *device_info, UINT32 *p_handle) { return 0; }
 

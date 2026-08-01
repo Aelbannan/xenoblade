@@ -891,9 +891,9 @@ tL2C_CCB *l2cu_find_ccb_by_cid (tL2C_LCB *p_lcb, UINT16 cid)
 
     if (cid >= L2CAP_BASE_APPL_CID)
     {
-        UINT16 index = (UINT16)(cid - L2CAP_BASE_APPL_CID);
+        cid = (UINT16)(cid - L2CAP_BASE_APPL_CID);
+        p_ccb = &l2cb.ccb_pool[cid];
 
-        p_ccb = &l2cb.ccb_pool[index];
         if (!p_ccb->in_use)
             p_ccb = NULL;
         else if ((p_lcb != NULL) && (p_lcb != p_ccb->p_lcb))
@@ -1162,23 +1162,35 @@ tL2C_LCB *l2cu_find_lcb_by_state (INT32 state)
 BOOLEAN l2cu_lcb_disconnecting (void)
 {
     tL2C_LCB *p_lcb;
+    tL2C_CCB *p_ccb;
     UINT8     xx;
+    BOOLEAN   status = FALSE;
 
-    for (xx = 0, p_lcb = &l2cb.lcb_pool[0]; xx < L2C_MAX_LINKS; xx++, p_lcb++)
+    p_lcb = &l2cb.lcb_pool[0];
+
+    for (xx = 0; xx < L2C_MAX_LINKS; xx++, p_lcb++)
     {
-        if (!p_lcb->in_use)
-            continue;
-
-        if ((p_lcb->p_first_ccb == NULL) || (p_lcb->link_state == LST_DISCONNECT_WAIT))
-            return (TRUE);
-
-        if ((p_lcb->p_first_ccb == p_lcb->p_last_ccb) && p_lcb->p_first_ccb->in_use &&
-            ((p_lcb->p_first_ccb->chnl_state == CST_W4_L2CAP_DISCONNECT_RSP) ||
-             (p_lcb->p_first_ccb->chnl_state == CST_W4_L2CA_DISCONNECT_RSP)))
+        if (p_lcb->in_use)
         {
-            return (TRUE);
+            if ((!p_lcb->p_first_ccb) || (p_lcb->link_state == LST_DISCONNECT_WAIT))
+            {
+                status = TRUE;
+                break;
+            }
+            else if (p_lcb->p_first_ccb == p_lcb->p_last_ccb)
+            {
+                p_ccb = p_lcb->p_first_ccb;
+
+                if ((p_ccb->in_use) &&
+                    ((p_ccb->chnl_state == CST_W4_L2CAP_DISCONNECT_RSP) ||
+                     (p_ccb->chnl_state == CST_W4_L2CA_DISCONNECT_RSP)))
+                {
+                    status = TRUE;
+                    break;
+                }
+            }
         }
     }
 
-    return (FALSE);
+    return (status);
 }

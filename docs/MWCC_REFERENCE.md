@@ -127,6 +127,9 @@ The policy exception is recorded in the target attempt log with `policy_exceptio
 
 ## RVL_SDK bte/btm TUs — retail alignment, layouts, and pool notes (US, mwcc_43_151 `-O4,p`)
 
+**l2cap `l2c_utils.c` (and likely sibling `l2c_*.c` units) are GC-family, not Wii/1.1:**
+`mw_version="GC/3.0a5.2"` + `extra_cflags=["-func_align 4"]` is required to reproduce retail byte-for-byte in `l2cu_find_ccb_by_cid` (indexed `ccb_pool` access: GC emits the retail `add r4,r4,r0; lbz r0,0x178(r4); addi r5,r4,0x178`; Wii/1.1 and even GC-with-IPA merge the pointer add into `lbzu`) and `l2cu_lcb_disconnecting` (the `-func_align 16`/IPA scheduling nop after `mtctr` disappears only under `-func_align 4`). The dead `xx` counter in the ×2-unrolled pool loops (`l2cu_find_rcb_by_psm`, `l2cu_lcb_disconnecting`) reproduces from the canonical Broadcom form: `BOOLEAN status = FALSE; p_lcb = &l2cb.lcb_pool[0]; for (...) { if (...) { status = TRUE; break; } } return status;` — the `status` init hoists to `li r3,0` at function top and pins the return register. Verified 10/10 targets at 100% (all `FULL_MATCH`, split size PASS with 0x164 spare).
+
 Batch: `RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c` — 7× FULL_MATCH
 (`BTM_SecRegister` family + `btm_sec_*` helpers). Symptom → cause → fix table:
 

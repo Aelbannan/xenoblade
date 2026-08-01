@@ -1014,7 +1014,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail l2cap built with GC 3.0a-family (see btm_devctl/btm_inq); Wii/1.1 merges the indexed pool load into lbzu (l2cu_find_ccb_by_cid) and inserts an mtctr-loop nop (l2cu_lcb_disconnecting)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_api.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c"),

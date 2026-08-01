@@ -3727,3 +3727,43 @@ spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
   by `REJECTION_INDIRECT_NO_CLOSURE` (has_indirect_calls registry gate); unaccepted callee chains
   (LogMsg us-802e0830 CODE_MATCH in bte_logmsg.c) reject transitively. Such functions need
   FULL_MATCH (blocked by the bne/b split above) or the dependency to be accepted first.
+
+## RVL WUD — bss layout, extsb scheduling, and acceptance blockers (US, WUD.c)
+
+`libs/RVL_SDK/src/revolution/wud/WUD.c` — session findings while matching
+`__wudModuleRebootCallback`/`__wudSuperPeekPokeCallback`/`WUDiMoveTopOfUnusedStdDevice`
+(FULL_MATCH) and parking 7 targets at CODE/HIGH_MATCH:
+
+1. **MWCC `.bss` emission order** (empirically confirmed with isolated tests):
+   symbols are placed in **first-address-materialization order** across the file's
+   functions (in file order), then symbols never materialized at the end in
+   **reverse declaration order**. A same-TU global referenced only as `base+offset`
+   (folded, no reloc) is materialized when the first function touches it. The retail
+   WUD.o's bss order (`__rvl_wudcb, _wudDiscResp, _wudDiscWork, _scArray, …`) is
+   therefore not reproducible while sibling functions are still stubs that never
+   reference those globals — folded immediates (`addi rX, rBase, 0x8B8` vs decomp
+   `0x748`) stay mismatched until the unit is fully implemented.
+2. **extsb scheduling**: `s8 libStatus = p->libStatus;` puts the `extsb` *after* the
+   following `bl OSRestoreInterrupts`; `u32 libStatus = (u32)(s8)p->libStatus;`
+   puts it *before* (retail shape). Only the compare opcode remains (retail `cmplwi`
+   vs decomp `cmpwi` — choose `u32` local so the compare is unsigned).
+3. **Retail compares `initState == 6`** in `__wudStartSyncDevice`/`WUDIsBusy` even
+   though `WUDInitState` has `INITIALIZED = 4` (the header enum value 4 is only ever
+   *stored*, never compared) — use the literal `6` to match.
+4. **WUDCB tail layout**: retail writes `u16` values at `+0x748/+0x74A`
+   (`__wudStartSyncDevice`), not the header's `bufferStatus0/1 @0x744/0x746`
+   (which `WUDGetBufferStatus` reads). Added `UNK_0x748/UNK_0x74A` fields so the
+   struct size becomes `0x750` (retail), fixing `sizeof(__rvl_wudcb)`-adjacent
+   layout.
+5. **`__wudClearControlBlock` smpList loop**: retail walks `smpList[2*i]` with
+   `&smpDevs[5-i]` and link pointers `&smpList[i±1]` (i.e. link index is `i`, not
+   `2*i` — an original-SDK quirk); handle-clear loop is `ctr=2` + unroll-8 with
+   indexed stores, not reproducible via `-O4,s`/`#pragma unroll`/MWCC 1.0/1.0a/1.1/1.3.
+6. **Equivalence acceptance blockers for this unit**: targets calling NOT_STARTED
+   callees (`BTA_DmSearchCancel`, `btm_remove_acl`, `BTA_DisableBluetooth`, and
+   transitive `NANDCloseAsync` via `SCFlushAsync`) yield
+   `inconclusive_unvalidated_callee` — they need FULL_MATCH or the callee accepted.
+   The `--linked` DOL/ELF fallback only triggers on `NOT_EQUIVALENT`, not on
+   `INCONCLUSIVE_ABSTRACTION` (call-continuation `exit.target` mismatch from a
+   same-TU callback argument), so function-pointer-arg functions can stall at 99%+
+   CODE_MATCH.

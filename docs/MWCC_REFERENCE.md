@@ -830,6 +830,8 @@ Metrowerks often passes **extra arguments in registers** even on `…Fv` symbol 
 
 **Inline-empty base dtor elides the call in derived dtors (CTaskCulling dtor, us-801a4278):** MWCC only elides a base-class dtor call in a derived dtor when the base dtor's empty body is visible in the same TU. Retail's `IWorkEvent` header was `virtual ~IWorkEvent(){}` (inline-empty) — `~CTaskCulling` then calls only `~CProcess` (+ member `~COccCulling`), no `~IWorkEvent`, and the dtor is 0x78. When the dtor was moved out-of-line (IWorkEvent.cpp), the call reappeared (+0xC, dtor 0x84, unit 8 bytes over split budget). Fix: keep `virtual ~IWorkEvent(){}` inline-empty in the header, and keep a **strong copy** in the key-function TU (`src/kyoshin/CTaskGame.cpp` had `IWorkEvent::~IWorkEvent() {}` matching retail's strong symbol placement — remove it only if the header body replaces it; an out-of-line redefinition of an inline member errors with `(10333) object redefined`). Verified: derived `~Der` with a secondary inline-empty base emits only the offset-0 base call + delete; the decomp `~CTaskCulling` returned to byte-identity and the unit to 0x708 ≤ 0x70C.
 
+**Pool-cookie reloc drift certified by the register-renaming witness (no SMT/linked DOL):** for byte-identical functions whose only diff is a TU-local pool reloc (`@N` vs `lbl_eu_*`), the mined reloc map (`reloc_map.py mine` → `retail_reloc_map.json`) canonicalizes both names via the decoder's `canonical_symbols` hook, so the **pre-SMT witness certifies directly** (`register-renaming-witness: N terminal pair(s) structurally equal under rho`) — no Z3, no `main.elf`. Verified: `func_80222258__16CMCCylinderGaugeFv` (us-80224098, `@6134`→`lbl_eu_80668520`) and `__ct__16CMCCylinderGaugeF…` (us-80223cac, `@6092`→`lbl_eu_80668518`) both accepted EQUIVALENT_MATCH with 99.7% static and exact 0x8D4 size. **Re-mine after any edit that shifts pool numbering** (removing a `.data` vtable via novtable renumbers every `@N` in the TU — the stale map entry then silently un-canonicalizes). `__vt__`-named drift (global symbols, not `unit@` keys) is NOT canonicalized; fix those in source with `__declspec(novtable)` + explicit retail-label assignment (`__vt__6CToken`→`lbl_eu_8056B52C` via `*(void**)this = (void*)lbl_eu_8056B52C;` as the first ctor statement — works byte-identically when the member-init list is empty; with a non-empty init list the manual store is scheduled at the end, see COccCulling above).
+
 When a vtable / data table already references the shortened `…Fv` name (common for help/switch helpers), keep the retail symbol via `extern "C"` and take the extra args on that entry point, e.g. `func_802B7CBC__Q22cf11CHelpSwitchFv(self, u32 flag)`.
 
 **LOD Fv entry-point verification:** `libs/monolib/src/lod/code_804645CC.cpp` confirms that a high-level `extern "C"` definition with explicit ABI parameters can retain a shortened Fv linker name; `func_80465704__Q23LOD17UnkClass_804645CCFv(s32)` reaches 100% static match (0x14 bytes). Do not use `asm("...")` symbol-label syntax with MWCC Wii/1.1 build 151: it fails at compile time with error 33106 (`<string not found>`), including on free functions. Use the explicit `extern "C"` Fv entry-point form instead.
@@ -1982,20 +1984,54 @@ The buffer-param builders hoist **all** `li`s before the first store.
 ## gki_buffer (US)
 
 - Shared corruption check: odd-ptr guard + `subf`/`or`/`srwi` vs `MAGIC_NO`
-  (`0xDDBADDBA`), not `*magic != MAGIC_NO`. Macro `gki_magic_corrupted` for
-  send/enqueue (do **not** use GNU statement-exprs — regresses those callers).
-- **`GKI_freebuf` (~91.4%, size exact `0x170`):** no early `p_cb` (avoids r30);
+  (`0xDDBADDBA`). The retail dual-`subf` form comes from **inline locals**
+  `UINT32 exp = MAGIC_NO; UINT32 v = *magic; bad = (v != exp);` — the macro
+  form (`(exp-v)|(v-exp)>>31`) makes MWCC emit `addis`/`addi` instead of the
+  second `subf` (keep the macro only where its form already matches).
+- **String-pool base-var pattern:** when retail uses one pool-base register +
+  offsets (`lis r, @base@ha; addi; addi r4, r, 0x68`), the source must be a
+  `char*` variable initialised to the FIRST pooled string with explicit
+  offsets (`str + 0x68/0x80/0x98`). Direct literals make MWCC emit per-string
+  `lis/addi` pairs (small pools) or `...data.0`+offset (pools >= ~7 strings)
+  — either way the immediates/symbols differ from retail. The offsets are
+  source constants; they do **not** follow the pool layout.
+- **`GKI_send_msg` (FULL_MATCH `0x1BC`):** base-var `str + 0x68/0x80/0x98`;
+  inline `bad = (v != exp)`; buf-size/q-id ladder uses `gki_cb.com.freeq[...]`
+  (not `p_cb->`) so MWCC re-materialises the base inside the branch like
+  retail. Equivalence needs callee `GKI_send_event` certified.
+- **`GKI_freebuf` (FULL_MATCH `0x170`):** no early `p_cb` (avoids r30);
   pooled string base `"getbuf: Size is zero"` + `+0x30/+0x48/+0x5c`; shared
-  `free_corrupted:`; open-coded odd/`bad`. Residual: MWCC `addis` form of
-  `v-MAGIC` vs retail dual `subf`.
-- **`gki_init_free_queue` (~96.3%, size exact `0x220`):** REVOLUTION always-store
+  `free_corrupted:`; open-coded odd/`bad` with `(v != exp)`.
+- **`GKI_create_pool` (FULL_MATCH `0x348`):**
+  - Slot scan is the natural `for (xx = 0; xx < 9; xx++)` loop — MWCC emits
+    the 3× CTR unroll (`mtctr 3; 3 bodies; bdnz`) by itself. Hand-writing the
+    `groups=3` do/while yields a register counter instead.
+  - The pool-list insert + permission code must live in **static helpers
+    (`gki_add_to_pool_list`, `gki_set_pool_permission`) with their own
+    `p_cb = &gki_cb.com` local**, inlined by `-ipa file`. That reproduces the
+    retail's fresh base re-materialisation + `pool_id < 9` bounds guard;
+    inlining the bodies directly with the caller's `p_cb` keeps `r30` and
+    misallocates every loop register.
+  - `mem_needed` as a separate statement before `if (!p_mem_pool)` makes MWCC
+    hoist the malloc-argument computation above the `bne` (retail does dead
+    work there).
+  - `if (p_mem_pool) { ...success...; return xx; } else { return INVALID; }`
+    yields the retail's duplicated epilogue: `li r3, 255` placed just before
+    the shared epilogue with the success path branching past it.
+- **`gki_buffer_init` (FULL_MATCH `0x2AC`):** mailbox/pool zeroing double
+  loops + 5 fixed `gki_init_free_queue` calls + `pool_list[i] = i` init;
+  natural source is byte-identical.
+- **`GKI_send_event` (gki_ppc, FULL_MATCH `0xA4`):** `GKI_disable`/`GKI_enable`
+  inlined via `-ipa file`; OSWaitEvt reached through a byte-offset mirror
+  struct (`_pad` to `0x28808`); needs forward declarations of the two callees
+  to avoid implicit-int conflicts.
+- **`gki_init_free_queue` (FULL_MATCH `0x220`):** REVOLUTION always-store
   `pool_start`/`pool_end`; `total==0` early; no `Type=0` stb; magic via
   `*(UINT32*)((UINT8*)hdr + tempsize + BUFFER_HDR_SIZE)`. Handwritten 8× CTR
   unroll blows size — leave scalar.
-- **`GKI_getbuf` (~97.7%, size exact `0x1A0`):** bottom-tested scan joining at
+- **`GKI_getbuf` (FULL_MATCH `0x1A0`):** bottom-tested scan joining at
   `if (i == curr_total)` (retail `cmplw`/`bne`); post-`disable` take without
   size re-check; success: `task_id` → ret → status/Type/p_next.
-- **`GKI_create_pool`:** 3× empty-slot search; handwritten 8× shift regresses.
 
 ## CWorkThread (`libs/monolib/src/work/CWorkThread.cpp`)
 

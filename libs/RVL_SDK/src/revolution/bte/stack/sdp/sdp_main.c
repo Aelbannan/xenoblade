@@ -47,6 +47,11 @@ typedef struct {
 
 /* Connection states */
 #define SDP_STATE_CONN_SETUP    1
+#define SDP_STATE_CFG_SETUP     2
+#define SDP_STATE_CONNECTED     3
+
+/* Connection flags */
+#define SDP_FLAGS_IS_ORIG       0x01
 
 /* ------------------------------------------------------------------ */
 /* Trace helpers (retail BT trace encoding: TRACE_LAYER_SDP is        */
@@ -71,17 +76,32 @@ typedef struct {
         if (sdp_cb.trace_level >= SDP_TRACE_LEVEL_EVENT)            \
             LogMsg_2(0x000A0003, (m), (UINT32)(p1), (UINT32)(p2));  \
     }
+#define SDP_TRACE_WARNING2(m, p1, p2)                               \
+    {                                                               \
+        if (sdp_cb.trace_level >= SDP_TRACE_LEVEL_WARNING)          \
+            LogMsg_2(0x000A0001, (m), (UINT32)(p1), (UINT32)(p2));  \
+    }
 
 /* ------------------------------------------------------------------ */
 /* External helpers                                                   */
 /* ------------------------------------------------------------------ */
 
+extern void LogMsg_0(UINT32 trace_set_mask, const char *p_str);
 extern void LogMsg_1(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1);
 extern void LogMsg_2(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1,
                      UINT32 p2);
+extern void *memcpy(void *dst, const void *src, UINT32 n);
 extern BOOLEAN L2CA_DisconnectReq(UINT16 cid);
+extern BOOLEAN L2CA_DisconnectRsp(UINT16 cid);
+extern BOOLEAN L2CA_ConnectRsp(BD_ADDR p_bd_addr, UINT8 id, UINT16 lcid,
+                               UINT16 result, UINT16 status);
+extern BOOLEAN L2CA_ConfigReq(UINT16 cid, void *p_cfg);
+extern tCONN_CB *sdpu_allocate_ccb(void);
 extern tCONN_CB *sdpu_find_ccb_by_cid(UINT16 cid);
 extern void sdpu_release_ccb(tCONN_CB *p_ccb);
+extern void sdp_disc_server_rsp(tCONN_CB *p_ccb, BT_HDR *p_msg);
+extern void sdp_server_handle_client_req(tCONN_CB *p_ccb, BT_HDR *p_msg);
+extern void GKI_freebuf(void *p_buf);
 
 /*******************************************************************************
 **
@@ -169,7 +189,36 @@ void sdp_conn_timeout(tCONN_CB *p_ccb)
 
 void sdp_init() {}
 
-void sdp_connect_ind() {}
+/*******************************************************************************
+**
+** Function         sdp_connect_ind
+**
+** Description      This function handles an L2CAP connect indication event.
+**
+*******************************************************************************/
+void sdp_connect_ind(BD_ADDR bd_addr, UINT16 l2cap_cid, UINT16 psm,
+                     UINT8 l2cap_status)
+{
+    tCONN_CB *p_ccb;
+
+    /* Allocate a new CCB. Return if no memory. */
+    if ((p_ccb = sdpu_allocate_ccb()) == NULL)
+        return;
+
+    /* We accept the connection. */
+    p_ccb->con_state = SDP_STATE_CFG_SETUP;
+    memcpy(p_ccb->device_address, bd_addr, BD_ADDR_LEN);
+    p_ccb->connection_id = l2cap_cid;
+
+    /* Send response to the L2CAP layer. */
+    L2CA_ConnectRsp(bd_addr, l2cap_status, l2cap_cid, 0, 0);
+
+    /* Send a configuration request. */
+    L2CA_ConfigReq(l2cap_cid, &sdp_cb);
+
+    SDP_TRACE_EVENT1("SDP - Rcvd L2CAP conn ind, sent config req, CID 0x%x",
+                     p_ccb->connection_id);
+}
 
 void sdp_connect_cfm() {}
 
@@ -177,8 +226,66 @@ void sdp_config_ind() {}
 
 void sdp_config_cfm() {}
 
-void sdp_disconnect_ind() {}
+/*******************************************************************************
+**
+** Function         sdp_disconnect_ind
+**
+** Description      This function handles a disconnect indication from the
+**                  L2CAP layer.
+**
+*******************************************************************************/
+void sdp_disconnect_ind(UINT16 cid, BOOLEAN is_connected)
+{
+    tCONN_CB *p_ccb;
 
-void sdp_data_ind() {}
+    /* Find the CCB */
+    if ((p_ccb = sdpu_find_ccb_by_cid(cid)) == NULL) {
+        SDP_TRACE_WARNING1("SDP - Rcvd L2CAP disc, unknown CID: 0x%x", cid);
+        return;
+    }
+
+    if (is_connected)
+        L2CA_DisconnectRsp(cid);
+
+    SDP_TRACE_EVENT1("SDP - Rcvd L2CAP disc, CID: 0x%x", cid);
+
+    if (p_ccb->p_cb)
+        (*p_ccb->p_cb)(p_ccb->con_state == SDP_STATE_CONNECTED ? SDP_SUCCESS
+                                                                : SDP_CONN_FAILED);
+
+    sdpu_release_ccb(p_ccb);
+}
+
+/*******************************************************************************
+**
+** Function         sdp_data_ind
+**
+** Description      This function handles a data indication from the L2CAP
+**                  layer. This could be a server side request or a client
+**                  side response.  If it's a client response, it could be
+**                  a response to a search or to a service attribute request.
+**
+*******************************************************************************/
+void sdp_data_ind(UINT16 cid, BT_HDR *p_msg)
+{
+    tCONN_CB *p_ccb;
+
+    /* Find the CCB */
+    if ((p_ccb = sdpu_find_ccb_by_cid(cid)) != NULL) {
+        if (p_ccb->con_state == SDP_STATE_CONNECTED) {
+            if (p_ccb->con_flags & SDP_FLAGS_IS_ORIG)
+                sdp_disc_server_rsp(p_ccb, p_msg);
+            else
+                sdp_server_handle_client_req(p_ccb, p_msg);
+        } else {
+            SDP_TRACE_WARNING2("SDP - Ignored L2CAP data while in state: %d, CID: 0x%x",
+                               p_ccb->con_state, cid);
+        }
+    } else {
+        SDP_TRACE_WARNING1("SDP - Rcvd L2CAP data, unknown CID: 0x%x", cid);
+    }
+
+    GKI_freebuf(p_msg);
+}
 
 void sdp_conn_originate() {}

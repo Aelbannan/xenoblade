@@ -4729,6 +4729,32 @@ byte-exact (0/56 and 0/69, semantic-certified, split PASS). Reusable GC/3.0a5.2 
 - The `handle == 0 || num_records == 0` reset path stores num_records=0, di_primary_handle=0,
   brcm_di_registered=0 unconditionally and returns TRUE (no conditional on handle there).
 
+## RVL_SDK bte/stack/sdp/sdp_main.c — 6× FULL_MATCH, GC/3.0a5.2 family override (US)
+
+`sdp_disconnect`, `sdp_disconnect_cfm`, `sdp_conn_timeout` (previously accepted) plus
+`sdp_connect_ind`, `sdp_disconnect_ind`, `sdp_data_ind` (us-80308758 / us-80308c64 /
+us-80308d5c) — all byte-exact 100% under `mw_version="GC/3.0a5.2"` +
+`extra_cflags=["-func_align 4", "-ipa off"]` (same override as sdp_api.c / sdp_db.c /
+sdp_utils.c):
+- **sdp_main.c needs the bte-family compiler override too.** Under Wii/1.1
+  (mwcc_43_151), `sdp_connect_ind` sat at 95.9% with a 2-instruction scheduling float:
+  retail interleaves the memcpy src arg move (`mr r4,r28`) between `li r0,2` and
+  `stb r0,0(r3)` (cback-dispatch store), while Wii/1.1 emits the store first — the same
+  mr-before-stb float family as bta_dm_act (KB ref:51910fc0cc). GC/3.0a5.2 reproduces
+  retail byte-for-byte (0/49). All previously-accepted functions stay 100% under the
+  TU-wide switch — no regression.
+- **Branchless select idiom**: `sdp_disconnect_ind`'s callback arg
+  `p_ccb->con_state == SDP_STATE_CONNECTED ? SDP_SUCCESS : SDP_CONN_FAILED` compiles to
+  retail's `lis r3,1; subi r0,r3,0xf` + `subi r4,r5,3; subfic r3,r5,3; nor; srawi 31;
+  andc; clrlwi 16` (select 0 vs 0xFFF1) with the select inside the `if (p_cb)` block.
+- **State enum for this fork**: CONN_SETUP=1, CFG_SETUP=2 (set by sdp_connect_ind after
+  allocate), CONNECTED=3 (sdp_data_ind dispatch / disconnect_ind reason check);
+  `SDP_FLAGS_IS_ORIG=0x01`. sdp_connect_ind sets state 2 and immediately sends
+  `L2CA_ConnectRsp(bd, status, cid, 0, 0)` + `L2CA_ConfigReq(cid, &sdp_cb)`.
+- **sdp_data_ind**: dispatch `sdp_disc_server_rsp` vs `sdp_server_handle_client_req` on
+  `(state==CONNECTED) && (con_flags & IS_ORIG)`, warning traces for wrong state / unknown
+  cid, `GKI_freebuf(p_msg)` after the dispatch tree.
+
 ## RVL_SDK bte/l2cap l2c_csm.c — 4× FULL_MATCH: `-ipa off` reverse emission + string-pool layout (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
 
 `l2c_csm_execute` (0x4C), `l2c_csm_closed` (0x294), `l2c_csm_orig_w4_sec_comp` (0x170),

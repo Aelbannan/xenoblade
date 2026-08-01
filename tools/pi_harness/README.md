@@ -92,3 +92,8 @@ SIGINT/SIGTERM releases active claims.
   to the repo venv (system python3 is 3.9 and cannot run the coop tooling).
 - hexdiff holds the repo-wide build lock, so concurrent agents' builds are
   safe; TU-final builds go through `build_lock.py` for the same guarantee.
+- For reloc name-drift near-misses (bytes identical, reloc *names* differ —
+  MWCC_REFERENCE §1, the #1 cause of 99.3-99.9% stalls), use
+  `run.py reloc-map diff <unit> --symbol <sym> --no-build` for the approved
+  source `extern "C"` fix, or `run.py reloc-map mine` to refresh the repo map.
+  `hexdiff` already prints these suggestions inline.

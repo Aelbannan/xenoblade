@@ -27,6 +27,7 @@ _REPO = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(_REPO))
 
 from tools.coop.lib.config import CoopConfig, load_config
+from tools.coop.lib.object_size import check_object_size, format_size_check
 from tools.coop.lib.project import Project
 from tools.ppc_equivalence.elf_symbols import list_text_functions, FunctionBytes
 
@@ -96,6 +97,34 @@ def _branch_target(insn: int, addr: int) -> int:
 
 def _crb(insn: int) -> int:
     return (insn >> 21) & 0x1F  # crbA for branches
+
+
+def _pure_reg_swap(r_word: int, d_word: int, r_mnem: str, d_mnem: str) -> bool:
+    """Role-table refinement of the reg-swap classifier (doc 31, additive).
+
+    True when the two words differ ONLY in 5-bit GPR/FPR register fields per
+    the operand-role table in ``tools/coop/lib/renaming_witness.py``: every
+    non-register bit (opcode/XO, Rc/OE, immediates, branch displacements,
+    BO/BI/BH, CR bits/fields, SPR indices, FXM masks, LK/AA) must be
+    bit-equal.  A same-mnemonic mismatch with a differing immediate (e.g.
+    ``addi r3,r4,1`` vs ``addi r3,r4,2``) is structural, not a pure reg-swap.
+
+    Unknown opcodes fall back to the historical heuristic (same mnemonic
+    implies registers-only) so the classifier never regresses on opcodes the
+    mini-disassembler handles but the role table does not.
+    """
+    if not r_mnem or r_mnem != d_mnem:
+        return False
+    try:
+        from tools.coop.lib.renaming_witness import _gpr_fpr_masks
+        from tools.ppc_equivalence.decoder import _decode_word
+
+        opcode = _decode_word(r_word, 0, allow_broadway_lmw_overlap=True).opcode
+    except Exception:
+        return True
+    gpr_mask, fpr_mask = _gpr_fpr_masks(opcode)
+    non_register = (r_word ^ d_word) & ~(gpr_mask | fpr_mask)
+    return non_register == 0
 
 
 def _cr_bit(cr: int) -> str:
@@ -673,9 +702,40 @@ def run(argv: list[str] | None = None) -> int:
     retail_reloc_offsets = frozenset(r.offset for r in retail.relocations)
     decomp_reloc_offsets = frozenset(r.offset for r in decomp.relocations)
 
+    # Split-budget check (blocker #9): compare the whole unit's decomp .text
+    # against the retail split budget, so overflow is caught in the hexdiff
+    # loop instead of failing at `cycle` time. Runs on the freshly built object.
+    size_check = check_object_size(
+        project_root=project.root,
+        region=config.region,
+        unit_hint=unit.name,
+        retail_object=retail_path,
+        decomp_object=decomp_path,
+    )
+
+    # Reloc name-drift analysis (MWCC_REFERENCE §1): classify per-offset reloc
+    # differences (name drift vs addend drift vs structural) and look up fixes
+    # in the mined map (tools/coop/retail_reloc_map.json, built by
+    # tools/coop/reloc_map.py mine). Failures degrade to "no drift info".
+    reloc_drifts = []
+    reloc_suggestions = {}
+    try:
+        from tools.coop.reloc_map import DEFAULT_MAP, analyze_function_pair, load_map, suggestions
+
+        reloc_map = load_map(DEFAULT_MAP) if DEFAULT_MAP.is_file() else {}
+        reloc_drifts = analyze_function_pair(retail, decomp)
+        decomp_obj = decomp_path.stem
+        reloc_suggestions = {
+            f"0x{d.offset:04x}": suggestions(d, unit.name, decomp_obj, reloc_map)
+            for d in reloc_drifts
+        }
+    except Exception:
+        reloc_drifts = []
+        reloc_suggestions = {}
+
     if args.json:
-        return _output_json(args, retail, decomp, retail_reloc_offsets, decomp_reloc_offsets)
-    return _output_terminal(args, retail, decomp, retail_reloc_offsets, decomp_reloc_offsets)
+        return _output_json(args, retail, decomp, retail_reloc_offsets, decomp_reloc_offsets, size_check, reloc_drifts, reloc_suggestions)
+    return _output_terminal(args, retail, decomp, retail_reloc_offsets, decomp_reloc_offsets, size_check, reloc_drifts, reloc_suggestions)
 
 
 def _resolve_candidates(functions: list[FunctionBytes], symbol: str) -> list[FunctionBytes]:
@@ -724,10 +784,20 @@ def _output_terminal(
     decomp: FunctionBytes,
     retail_relocs: frozenset,
     decomp_relocs: frozenset,
+    size_check=None,
+    reloc_drifts=None,
+    reloc_suggestions=None,
 ) -> int:
+    reloc_drifts = reloc_drifts or []
+    reloc_suggestions = reloc_suggestions or {}
     print(f"function: {retail.name}")
     print(f"  retail:  {retail.path}  (0x{retail.size:x} bytes)")
     print(f"  decomp:  {decomp.path}  (0x{decomp.size:x} bytes)")
+    if size_check is not None and size_check.budget is not None:
+        color = _GREEN if size_check.ok else _RED
+        print(f"  split:   {color}{format_size_check(size_check)}{_RESET}")
+        if size_check.split_path:
+            print(f"           split: {size_check.split_path}")
     print()
 
     if retail.size != decomp.size:
@@ -754,6 +824,7 @@ def _output_terminal(
     byte_mismatches = 0
     reloc_count = 0
     reg_swap_count = 0
+    pure_reg_swap_count = 0
     structural_count = 0
     total = max(retail.size, decomp.size)
     retail_base = retail.base
@@ -784,11 +855,15 @@ def _output_terminal(
 
         # Detect pure register swap: same mnemonic base, different registers
         is_reg_swap = False
+        pure_reg_swap = False
         if r_word is not None and d_word is not None and r_asm and d_asm and r_word != d_word:
             r_mnem_base = r_asm.split()[0] if r_asm else ""
             d_mnem_base = d_asm.split()[0] if d_asm else ""
             if r_mnem_base and r_mnem_base == d_mnem_base:
                 is_reg_swap = True
+                # Doc-31 operand-role refinement (additive): a pure reg-swap
+                # must differ only in gpr/fpr register fields.
+                pure_reg_swap = _pure_reg_swap(r_word, d_word, r_mnem_base, d_mnem_base)
                 # Build register mapping: extract GPR/FPR operands from both sides
                 for fn, word in [("retail", r_word), ("decomp", d_word)]:
                     pass
@@ -813,6 +888,8 @@ def _output_terminal(
                 byte_mismatches += 1
                 if is_reg_swap:
                     reg_swap_count += 1
+                    if pure_reg_swap:
+                        pure_reg_swap_count += 1
                 else:
                     structural_count += 1
             if d_has_reloc:
@@ -835,6 +912,12 @@ def _output_terminal(
             if reg_swap_count:
                 suffix = "" if reg_swap_count == 1 else "s"
                 parts.append(f"{_CYAN}{reg_swap_count} pure reg-swap{suffix} ({100*reg_swap_count//byte_mismatches}%){_RESET}")
+                if pure_reg_swap_count:
+                    suffix = "" if pure_reg_swap_count == 1 else "s"
+                    parts.append(
+                        f"{_DIM}{pure_reg_swap_count} role-clean swap{suffix} "
+                        f"(doc-31 role table){_RESET}"
+                    )
         if reloc_count:
             parts.append(f"{_YELLOW}{reloc_count} unresolved relocation(s){_RESET}")
         print(f"  " + ", ".join(parts))
@@ -859,6 +942,24 @@ def _output_terminal(
             joined = ", ".join(parts_list)
             print(f"  {instr_part:<12s}  {joined}")
 
+    # Reloc name-drift summary (MWCC_REFERENCE §1) — the #1 cause of
+    # 99.3-99.9% near-misses: instructions byte-identical, reloc names differ.
+    if reloc_drifts:
+        print(f"\n{_YELLOW}Reloc name drift ({len(reloc_drifts)}):{_RESET}")
+        for d in reloc_drifts:
+            delta = f" (addend delta {d.addend_delta:+d})" if d.addend_delta else ""
+            print(
+                f"  +0x{d.offset:04x} {d.type_name:20s} {d.kind:10s} "
+                f"{d.retail_symbol} → {d.decomp_symbol}{delta}"
+            )
+            for line in reloc_suggestions.get(f"0x{d.offset:04x}", []):
+                print(f"      {line}")
+        if not reloc_suggestions:
+            print(
+                f"      (no map — run `python3 tools/coop/reloc_map.py mine` "
+                f"to build tools/coop/retail_reloc_map.json)"
+            )
+
     return 0 if byte_mismatches == 0 else 5
 
 
@@ -868,17 +969,23 @@ def _output_json(
     decomp: FunctionBytes,
     retail_relocs: frozenset,
     decomp_relocs: frozenset,
+    size_check=None,
+    reloc_drifts=None,
+    reloc_suggestions=None,
 ) -> int:
     import json
 
     import collections
 
+    reloc_drifts = reloc_drifts or []
+    reloc_suggestions = reloc_suggestions or {}
     diffs = []
     total = max(retail.size, decomp.size)
     retail_base = retail.base
     decomp_base = decomp.base
 
     reg_swap_count = 0
+    pure_reg_swap_count = 0
     structural_count = 0
     reg_map: dict[str, set[tuple[int, int]]] = collections.defaultdict(set)
 
@@ -891,11 +998,13 @@ def _output_json(
 
         # Detect reg-swap mismatch
         is_reg_swap = False
+        pure_reg_swap = False
         if r_word is not None and d_word is not None and r_word != d_word and r_asm and d_asm:
             r_mnem = r_asm.split()[0] if r_asm else ""
             d_mnem = d_asm.split()[0] if d_asm else ""
             if r_mnem and r_mnem == d_mnem:
                 is_reg_swap = True
+                pure_reg_swap = _pure_reg_swap(r_word, d_word, r_mnem, d_mnem)
                 r_rd, r_ra, r_rb = _rd(r_word), _ra(r_word), _rb(r_word)
                 d_rd, d_ra, d_rb = _rd(d_word), _ra(d_word), _rb(d_word)
                 for pos, r_r, d_r in [("rd", r_rd, d_rd), ("ra", r_ra, d_ra), ("rb", r_rb, d_rb)]:
@@ -912,12 +1021,15 @@ def _output_json(
             "match": byte_match,
             "has_decomp_reloc": offset in decomp_relocs,
             "reg_swap": is_reg_swap,
+            "pure_reg_swap": pure_reg_swap,
             "structural": (r_word != d_word) and not is_reg_swap,
         })
 
         if r_word != d_word:
             if is_reg_swap:
                 reg_swap_count += 1
+                if pure_reg_swap:
+                    pure_reg_swap_count += 1
             else:
                 structural_count += 1
 
@@ -946,9 +1058,23 @@ def _output_json(
         "total_instructions": total // 4,
         "mismatch_count": sum(1 for d in diffs if not d["match"]),
         "reg_swap_count": reg_swap_count,
+        "pure_reg_swap_count": pure_reg_swap_count,
         "structural_count": structural_count,
         "reg_mapping": reg_mapping,
         "instructions": diffs,
+        "size_check": (
+            {
+                "budget": size_check.budget,
+                "retail_text": size_check.retail_text,
+                "decomp_text": size_check.decomp_text,
+                "ok": size_check.ok,
+                "over_by": size_check.over_by,
+                "split_path": size_check.split_path,
+                "notes": size_check.notes,
+            }
+            if size_check is not None
+            else None
+        ),
         "retail_relocations": [
             {"offset": r.offset, "type": r.relocation_type, "symbol": r.symbol, "addend": r.addend}
             for r in retail.relocations
@@ -957,6 +1083,8 @@ def _output_json(
             {"offset": r.offset, "type": r.relocation_type, "symbol": r.symbol, "addend": r.addend}
             for r in decomp.relocations
         ],
+        "reloc_drift": [d.to_dict() for d in reloc_drifts],
+        "reloc_suggestions": reloc_suggestions,
     }
     print(json.dumps(output, indent=2))
     return 0 if all(d["match"] for d in diffs) else 5

@@ -290,6 +290,7 @@ python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --relocs
 **Enhanced output** (terminal and JSON):
 - **Reg-swap vs structural breakdown** — terminal e.g. `6 mismatch(es), 6 pure reg-swaps (100%), 13 relocs`. JSON: `reg_swap_count`, `structural_count`.
 - **Register mapping table** — terminal and JSON `reg_mapping` show retail→decomp register pairs per instruction/opcode/operand-position. E.g. `addi: r3→r5, lwz: r5→r3, psq_l: r3→r5, r5→r3` — instantly reveals Chaitin swap patterns.
+- **Reloc name-drift section** — terminal ends with `Reloc name drift (N):` listing each byte-identical/reloc-name-different site with the approved source fix (`extern "C"` declaration) plus an EQUIVALENT_MATCH fallback note when the symbol can't be named in source; JSON adds `reloc_drift` + `reloc_suggestions`. Uses the mined map (below); rebuild it after accepting reloc fixes.
 - **Per-instruction flags** — JSON per-offset entries include `retail_asm`, `decomp_asm`, `reg_swap` (bool), `structural` (bool).
 
 Output legend:
@@ -311,6 +312,26 @@ object via `ninja` before diffing unless `--no-build` is passed.
 each edit to verify improvement or spot regressions. The `--json` output is
 designed as a drop-in replacement for `objdiff-cli diff -o` when the cycle
 command's function-diff JSON is unavailable.
+
+### Reloc name-drift map (`tools/coop/reloc_map.py`)
+
+Standalone detector + repo map miner for MWCC_REFERENCE §1 (the #1 cause of
+99.3-99.9% near-misses: bytes identical, reloc *names* differ).
+
+```bash
+# Per-function reloc drift + concrete fixes
+python3 tools/coop/reloc_map.py diff <unit> --symbol <mangled-sym> --no-build
+
+# Batch-mine the named-symbol map across every retail/decomp objdiff pair
+python3 tools/coop/reloc_map.py mine          # → tools/coop/retail_reloc_map.json
+python3 tools/coop/reloc_map.py show --global-only
+python3 tools/coop/reloc_map.py show --symbol spInstance
+```
+
+The miner aligns relocs **per function pair** (same name + equal `.text` size)
+and classifies `name` / `addend` / `layout` / `structural` drift; TU-local
+labels (`@N`, `...bss.0`) get unit-scoped keys. Re-run `mine` after accepting
+reloc fixes so suggestions refresh. Tests: `tools/coop/tests/test_reloc_map.py`.
 
 ### PPC semantic equivalence (optional additional evidence)
 
@@ -503,6 +524,7 @@ design: docs/llm_decomp_design.md.
 | `tools/coop/targets.schema.json` | Registry data contract |
 | `configure.py` | Per-object matching flags and compiler options |
 | `tools/coop/hexdiff.py` | Headless instruction-level hex diff (builds, compares, colour-codes, reg-swap detection, register mapping table); uses `ppc_equivalence` ELF parser |
+| `tools/coop/reloc_map.py` | Reloc name-drift detection + repo map miner (`run.py reloc-map diff/mine/show`); suggests the approved source `extern "C" lbl_eu_*` fix |
 | `tools/coop/batch-cycle.py` | Mass-cycle multiple targets sequentially with per-target hypothesis/next-change, continues on failure, optional JSON summary |
 | `docs/MWCC_REFERENCE.md` | MWCC matching reference — read before matching; **append new patterns/breakthroughs here** |
 | `docs/MWCC_KNOWLEDGE_BASE.md` | Agent search protocol and structured-record migration plan |

@@ -22,6 +22,7 @@ For day-to-day decomp workflow, start at [`AGENTS.md`](AGENTS.md) → [`.cursor/
 | PPC equivalence | [`tools/ppc_equivalence/`](tools/ppc_equivalence/) | Capstone + Z3 semantic equivalence for supported straight-line blocks |
 | DOL opcode census | [`tools/dol_opcodes/`](tools/dol_opcodes/) | Match `main.dol` words against vendored [PPC750CL `isa.yaml`](https://github.com/riptl/ppc750cl/blob/master/isa.yaml); optional Capstone compare |
 | ~~Reloc postprocess~~ | ~~[`tools/postprocess_reloc_names.py`](tools/postprocess_reloc_names.py)~~ | ~~Rename MWCC `@N` pools → retail `lbl_eu_*`~~ — deprecated; EQUIVALENT_MATCH is the bar, no binary patching allowed (PLAN.md §17.6) |
+| Reloc drift detection | [`tools/coop/reloc_map.py`](tools/coop/reloc_map.py) | **Fork-only**: per-function reloc name-drift detection + repo map miner (`diff`/`mine`/`show`, also `run.py reloc-map`); points at the approved source `extern "C" lbl_eu_*` fix, never at postprocess rules |
 | MWCC patterns | [`docs/MWCC_REFERENCE.md`](docs/MWCC_REFERENCE.md) | Living matching reference |
 | Evidence | [`docs/evidence/decomp/attempts.jsonl`](docs/evidence/decomp/attempts.jsonl) | Attempt log (JSONL) |
 | Claims | [`tools/coop/targets.json`](tools/coop/targets.json) | Current owner and exclusive edit scope (`targets claim/release`) |

@@ -1715,6 +1715,28 @@ def main() -> int:
     p_size.add_argument("unit", nargs="?", help="objdiff unit hint or source path")
     p_size.add_argument("--all", action="store_true", help="Check every buildable objdiff unit")
 
+    p_reloc = sub.add_parser(
+        "reloc-map",
+        help="Reloc name-drift detection + map miner (tools/coop/reloc_map.py, MWCC_REFERENCE §1)",
+    )
+    p_reloc_sub = p_reloc.add_subparsers(dest="reloc_cmd", required=True)
+    p_reloc_diff = p_reloc_sub.add_parser("diff", help="Per-function reloc drift + approved source fixes")
+    p_reloc_diff.add_argument("unit", help="objdiff unit hint or source path")
+    p_reloc_diff.add_argument("-s", "--symbol", required=True, help="function symbol (mangled name or unique substring)")
+    p_reloc_diff.add_argument("--no-build", action="store_true", help="do not build the decomp object first")
+    p_reloc_diff.add_argument("--json", action="store_true")
+    p_reloc_mine = p_reloc_sub.add_parser("mine", help="Batch-mine the named-symbol map across all objdiff units")
+    p_reloc_mine.add_argument("--out", default=None, help="output map path (default: tools/coop/retail_reloc_map.json)")
+    p_reloc_mine.add_argument("--all-kinds", action="store_true", help="include call/branch reloc kinds (default: data only)")
+    p_reloc_mine.add_argument("--dry-run", action="store_true")
+    p_reloc_mine.add_argument("--json", action="store_true")
+    p_reloc_show = p_reloc_sub.add_parser("show", help="Pretty-print the mined reloc map")
+    p_reloc_show.add_argument("--symbol", default=None, help="filter by symbol substring")
+    p_reloc_show.add_argument("--limit", type=int, default=None)
+    p_reloc_show.add_argument("--verbose", action="store_true")
+    p_reloc_show.add_argument("--unit-scoped", action="store_true", default=None, help="only TU-local entries")
+    p_reloc_show.add_argument("--global-only", dest="unit_scoped", action="store_false", help="only named (global) entries")
+
     p_cycle = sub.add_parser("cycle", help="ctx + build + diff + JSONL log for one target id")
     p_cycle.add_argument("target_id")
     p_cycle.add_argument("--hypothesis", default="")
@@ -1995,6 +2017,38 @@ def main() -> int:
         )
     if args.command == "size":
         return cmd_size(project, config, args.unit, check_all=args.all)
+    if args.command == "reloc-map":
+        from tools.coop.reloc_map import main as reloc_map_main
+
+        # Forward the subcommand (diff/mine/show) and its args as argv.
+        argv = [args.reloc_cmd]
+        if args.reloc_cmd == "diff":
+            argv += [args.unit, "--symbol", args.symbol]
+            if args.no_build:
+                argv.append("--no-build")
+            if args.json:
+                argv.append("--json")
+        elif args.reloc_cmd == "mine":
+            if args.out:
+                argv += ["--out", args.out]
+            if args.all_kinds:
+                argv.append("--all-kinds")
+            if args.dry_run:
+                argv.append("--dry-run")
+            if args.json:
+                argv.append("--json")
+        elif args.reloc_cmd == "show":
+            if args.symbol:
+                argv += ["--symbol", args.symbol]
+            if args.limit:
+                argv += ["--limit", str(args.limit)]
+            if args.verbose:
+                argv.append("--verbose")
+            if args.unit_scoped is True:
+                argv.append("--unit-scoped")
+            if args.unit_scoped is False:
+                argv.append("--global-only")
+        return reloc_map_main(argv)
     if args.command == "cycle":
         return cmd_cycle(
             project,

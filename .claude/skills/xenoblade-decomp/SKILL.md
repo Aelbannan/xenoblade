@@ -79,6 +79,24 @@ python3 tools/coop/run.py targets claim <target-id> --owner <agent>
 python3 tools/coop/run.py targets release <target-id> --owner <agent>
 ```
 
+To claim the smallest NOT_STARTED function(s) by binary size (useful for quick
+wins or onboarding new agents):
+
+```bash
+# Claim the single smallest function
+python3 tools/coop/run.py targets claim-smallest --owner <agent>
+
+# Claim the 5 smallest
+python3 tools/coop/run.py targets claim-smallest --owner <agent> --num 5
+
+# Just list the smallest without claiming
+python3 tools/coop/run.py targets claim-smallest --no-claim --num 10
+```
+
+Each claimed target prints its id, demangled function name, source path, and
+binary size. Only buildable function-kind targets with `NOT_STARTED` status
+are considered.
+
 `docs/ownership.csv` is legacy history, not current coordination state.
 
 ## Symbol recovery (`tools/symrecover.py`)
@@ -136,12 +154,62 @@ export assembly/symbols/types (Ghidra or objdiff) — **reference only**
 → search MWCC knowledge by identity + mismatch; open top records
 → draft/edit **high-level C or C++** in the owning translation unit
 → python3 tools/coop/run.py ctx <source.cpp>
-→ python3 tools/coop/run.py cycle <target-id> \
-    --hypothesis "..." --next-change "..." --runtime-test ""
+→ **Rapid feedback loop** (use `hexdiff`, not `cycle`; ~1s vs 2-3min):
+    python3 tools/coop/run.py build kyoshin/SomeUnit
+    python3 tools/coop/hexdiff.py kyoshin/SomeUnit --symbol <mangled-symbol> --json
+    → check `mismatch_count` went down; if it went up, revert the edit
+    → iterate until mismatch_count is 0 or stalls for 3 attempts
+→ **Final acceptance** (only when hexdiff shows few misses or 3 attempts stalled):
+    python3 tools/coop/run.py cycle <target-id> \
+        --hypothesis "..." --next-change "..." --runtime-test ""
 → verify split object size: `coop run size <unit>` (decomp `.text` ≤ retail split budget)
 → optional: `behaviour ppc <test-id>` when a PPC harness exists
-→ if FAIL: inspect objdiff / build/coop-function-diff.json, revise, repeat
-→ if PASS: `cycle` persists the accepted state in `targets.json`; release the claim and do not edit the same function concurrently
+→ if `cycle` FAILS: inspect objdiff / build/coop-function-diff.json, revise, repeat
+→ if `cycle` PASSES: the accepted state is persisted in `targets.json`; release the claim and do not edit the same function concurrently
+```
+
+### Batch cycle (mass-acceptance after matching)
+
+After matching a set of functions (e.g. an entire unit or milestone), mass-cycle
+all of them at once with `batch-cycle.py` instead of running `cycle` one-by-one:
+
+```bash
+# Per-target hypothesis/next-change via JSON map
+python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
+    --hypothesis-map batch-map.json
+
+# Shared defaults for all targets
+python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
+    --default-hypothesis "high-level C reconstruction complete" \
+    --default-next-change "verify static match and equivalence"
+
+# Dry-run to preview
+python3 tools/coop/batch-cycle.py us-80345678 \
+    --hypothesis-map batch-map.json --dry-run
+
+# Write structured JSON summary for agent handoff / CI
+python3 tools/coop/batch-cycle.py us-80345678 us-80345680 \
+    --default-hypothesis "batch cleanup" \
+    --default-next-change "accept if pass" \
+    --summary /tmp/batch-summary.json
+
+# Allow linked DOL/ELF fallback for SMT equivalence
+python3 tools/coop/batch-cycle.py us-80345678 --linked
+```
+
+Processes targets sequentially, continues on failure, exits 0 only when all pass.
+Full reference: `batch-cycle.py --help`.
+
+Hypothesis map JSON format (`target_id` → per-target overrides):
+
+```json
+{
+  "us-80345678": {
+    "hypothesis": "specific hypothesis text",
+    "next_change": "specific next change text",
+    "runtime_test": "behaviour:<test-id>"
+  }
+}
 ```
 
 ### Bounded attempt protocol
@@ -198,6 +266,72 @@ python3 tools/coop/run.py build kyoshin/cf/CfPadTask
 python3 tools/coop/run.py diff kyoshin/cf/CfPadTask --symbol <mangled-symbol>
 python3 tools/coop/run.py size kyoshin/cf/CfPadTask
 ```
+
+### Instruction-level hex diff (`tools/coop/hexdiff.py`)
+
+**Primary rapid feedback tool** — ~1s per build+diff vs 2-3min for `cycle`. Use hexdiff during iterative editing, run `cycle` only for final acceptance.
+
+> **Prefer hexdiff over raw ninja:** hexdiff performs the build itself and holds the repo-wide build lock (`build/<region>/.hexdiff.lock`), making it safe for concurrent agents. Only run `ninja`/`configure.py` directly when hexdiff cannot express the operation (e.g. full-tree rebuild after reconfiguration).
+
+```bash
+# Terminal mode — colour-coded side-by-side
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol>
+
+# JSON mode — machine-readable, consumable by scripts / cycle fallback
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --json
+
+# Skip rebuild when the object is already up to date
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --no-build
+
+# Show relocation tables alongside the diff
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --relocs
+```
+
+**Enhanced output** (terminal and JSON):
+- **Reg-swap vs structural breakdown** — terminal e.g. `6 mismatch(es), 6 pure reg-swaps (100%), 13 relocs`. JSON: `reg_swap_count`, `structural_count`.
+- **Register mapping table** — terminal and JSON `reg_mapping` show retail→decomp register pairs per instruction/opcode/operand-position. E.g. `addi: r3→r5, lwz: r5→r3, psq_l: r3→r5, r5→r3` — instantly reveals Chaitin swap patterns.
+- **Reloc name-drift section** — terminal ends with `Reloc name drift (N):` listing each byte-identical/reloc-name-different site with the approved source fix (`extern "C"` declaration) plus an EQUIVALENT_MATCH fallback note when the symbol can't be named in source; JSON adds `reloc_drift` + `reloc_suggestions`. Uses the mined map (below); rebuild it after accepting reloc fixes.
+- **Per-instruction flags** — JSON per-offset entries include `retail_asm`, `decomp_asm`, `reg_swap` (bool), `structural` (bool).
+
+Output legend:
+- **Green** — instruction bytes match
+- **Red** — byte mismatch (retail hex vs decomp hex shown side by side)
+- **Yellow** — unresolved ELF relocation placeholder (the linker will fill this)
+
+The `<unit>` argument accepts any objdiff unit hint (e.g. `kyoshin/COccCulling`)
+or source path (e.g. `src/kyoshin/COccCulling.cpp`). The `--symbol` accepts the
+mangled name, case-insensitive exact, or unique substring.
+
+The tool uses the same ELF parser as `ppc_equivalence`
+(`tools/ppc_equivalence/elf_symbols.py`) and automatically resolves the
+retail/decomp `.o` pair from the objdiff project config. It builds the decomp
+object via `ninja` before diffing unless `--no-build` is passed.
+
+**When to use:** before editing source to understand the exact mismatch pattern
+(register swap, instruction selection, branch target, relocation), and after
+each edit to verify improvement or spot regressions. The `--json` output is
+designed as a drop-in replacement for `objdiff-cli diff -o` when the cycle
+command's function-diff JSON is unavailable.
+
+### Reloc name-drift map (`tools/coop/reloc_map.py`)
+
+Standalone detector + repo map miner for MWCC_REFERENCE §1 (the #1 cause of
+99.3-99.9% near-misses: bytes identical, reloc *names* differ).
+
+```bash
+# Per-function reloc drift + concrete fixes
+python3 tools/coop/reloc_map.py diff <unit> --symbol <mangled-sym> --no-build
+
+# Batch-mine the named-symbol map across every retail/decomp objdiff pair
+python3 tools/coop/reloc_map.py mine          # → tools/coop/retail_reloc_map.json
+python3 tools/coop/reloc_map.py show --global-only
+python3 tools/coop/reloc_map.py show --symbol spInstance
+```
+
+The miner aligns relocs **per function pair** (same name + equal `.text` size)
+and classifies `name` / `addend` / `layout` / `structural` drift; TU-local
+labels (`@N`, `...bss.0`) get unit-scoped keys. Re-run `mine` after accepting
+reloc fixes so suggestions refresh. Tests: `tools/coop/tests/test_reloc_map.py`.
 
 ### PPC semantic equivalence (optional additional evidence)
 
@@ -287,6 +421,13 @@ Prefer fixing semantics and types first; only then tune expression order with no
 - incorrect virtual or adjusted-this call
 - relocation target wrong — declare globals with retail linker names via `extern "C"` where needed; access them as normal C++ objects/fields
 - ABI quirks — prefer proper C++ parameters and struct layout; split into helpers rather than fake `Fv`/`u32* r4` register parameters
+- template functions in headers — MWCC `-inline auto` omits standalone
+  bodies. Use `#pragma push` / `#pragma auto_inline off` + explicit
+  `template …` instantiation + `#pragma pop` to force emission. Check
+  retail symbol mangling (`Ui` vs `Ul`) — if the template uses `u32` but
+  retail shows `Ui` (`unsigned int`), change the header definition to
+  `unsigned int` (ABI-identical on PPC32). See `docs/MWCC_REFERENCE.md`
+  §Template pitfalls for full protocol.
 
 ## Approved policy exceptions (`PLAN.md` §17.6)
 
@@ -298,6 +439,7 @@ When C++ and decomp.me cannot close the last instruction(s), these are **allowed
 | `extern "C" lbl_eu_*` | Reloc names when values match under `functionRelocDiffs=data_value` |
 | Goto gate chains | Multi-exit guards (`setSplitLine` pattern) — not for prologue spill order alone |
 | **Isolated MWCC Gekko paired-single backend** | A named Wii/MWCC kernel requires `psq_*`, `ps_*`, or `fres` operations unavailable through approved high-level C++/MWCC builtins. See the requirements below. |
+| **Wii boot-entry vectors (`InitMetroTRK*`)** | A named Wii/MWCC target is a hardware boot-entry vector entered with a non-standard ABI (no valid stack frame, hardware ID in `r5`) so MWCC's mandatory frame prologue cannot reproduce it, after the C++ path is exhausted (PLAN.md §17.6). `asm void` + `nofralloc` transcribing only the named boot-vector body, guarded to MWCC with a complete C fallback for PC/non-MWCC builds. Log every use with `"policy_exception": true`. |
 | **Wii boot-entry vectors (`InitMetroTRK*`)** | A named Wii/MWCC target is a hardware boot-entry vector entered with a non-standard ABI (no valid stack frame, hardware ID in `r5`) so MWCC's mandatory frame prologue cannot reproduce it, after the C++ path is exhausted (PLAN.md §17.6). `asm void` + `nofralloc` transcribing only the named boot-vector body, guarded to MWCC with a complete C fallback for PC/non-MWCC builds. Log every use with `"policy_exception": true`. |
 
 #### Isolated Gekko paired-single backend
@@ -326,7 +468,6 @@ This is a narrow hardware-backend exception, not a general assembly allowance:
 ## Do not
 
 - Commit `orig/`, `main.dol`, RELs, or disc assets
-- **Prefer `hexdiff` over raw `ninja`** — use `python3 tools/coop/hexdiff.py <unit> --symbol <sym>` for build+diff feedback. hexdiff performs the build itself and holds the repo-wide build lock (`build/<region>/.hexdiff.lock`), making it safe for concurrent agents. Only run `ninja`/`configure.py` directly when hexdiff cannot express the operation (e.g. full-tree rebuild after reconfiguration).
 - Call `CGame::wkRender` or full frame update twice for split-screen experiments
 - Accept `STRUCTURAL` / `CODE_MATCH` / `HIGH_MATCH` as final state (policy is `EQUIVALENT_MATCH`)
 - Submit AI-assisted reconstruction upstream
@@ -382,7 +523,9 @@ design: docs/llm_decomp_design.md.
 | `tools/coop/targets.json` | Canonical function registry and current target state |
 | `tools/coop/targets.schema.json` | Registry data contract |
 | `configure.py` | Per-object matching flags and compiler options |
-| `tools/decompctx.py` | Context for decomp.me / compilation |
+| `tools/coop/hexdiff.py` | Headless instruction-level hex diff (builds, compares, colour-codes, reg-swap detection, register mapping table); uses `ppc_equivalence` ELF parser |
+| `tools/coop/reloc_map.py` | Reloc name-drift detection + repo map miner (`run.py reloc-map diff/mine/show`); suggests the approved source `extern "C" lbl_eu_*` fix |
+| `tools/coop/batch-cycle.py` | Mass-cycle multiple targets sequentially with per-target hypothesis/next-change, continues on failure, optional JSON summary |
 | `docs/MWCC_REFERENCE.md` | MWCC matching reference — read before matching; **append new patterns/breakthroughs here** |
 | `docs/MWCC_KNOWLEDGE_BASE.md` | Agent search protocol and structured-record migration plan |
 | `tools/mwcc_kb.py` | Search reference patterns + attempt history; use `--json` for agents |

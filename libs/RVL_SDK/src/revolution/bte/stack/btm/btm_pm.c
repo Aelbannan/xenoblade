@@ -109,7 +109,7 @@ typedef struct {
     tACL_CONN_COMPAT acl_db[4];           /* 0x34 */
     UINT8 _u1[0x4CC - 0x34 - 4 * sizeof(tACL_CONN_COMPAT)];
     tBTM_PM_MCB pm_mode_db[4];            /* 0x4CC */
-    tBTM_PM_RCB_COMPAT pm_reg_db[2];      /* 0x554 */
+    tBTM_PM_RCB_COMPAT pm_reg_db[BTM_MAX_PM_RECORDS + 1]; /* 0x554 (2 entries; extra slot for SET_ONLY) */
     UINT8 pm_pend_link;                   /* 0x564 */
     UINT8 pm_pend_id;                     /* 0x565 */
     UINT8 _u2[0x624 - 0x566];             /* 0x566..0x623 */
@@ -134,12 +134,12 @@ static tBTM_STATUS btm_pm_snd_md_req(UINT8 pm_id, int link_ind, tBTM_PM_PWR_MD* 
  */
 
 // .sdata2
-UINT8 const btm_pm_mode_off[BTM_PM_NUM_SET_MODES] = {0, 0, 1};
+UINT8 const btm_pm_mode_off[BTM_PM_NUM_SET_MODES + 1] = {0, 0, 1};
 
-UINT8 const btm_pm_mode_msk[BTM_PM_NUM_SET_MODES] = {0x40, 0x80, 0x01};
+UINT8 const btm_pm_mode_msk[BTM_PM_NUM_SET_MODES + 1] = {0x40, 0x80, 0x01};
 
 // .rodata
-UINT8 const btm_pm_md_comp_matrix[BTM_PM_NUM_SET_MODES * BTM_PM_NUM_SET_MODES] = {
+UINT8 const btm_pm_md_comp_matrix[(BTM_PM_NUM_SET_MODES + 1) * (BTM_PM_NUM_SET_MODES + 1)] = {
     BTM_PM_GET_COMP, BTM_PM_GET_MD2, BTM_PM_GET_MD2,
     BTM_PM_GET_MD1, BTM_PM_GET_COMP, BTM_PM_GET_MD1,
     BTM_PM_GET_MD1, BTM_PM_GET_MD2, BTM_PM_GET_COMP,
@@ -153,7 +153,7 @@ tBTM_STATUS BTM_PmRegister(UINT8 mask, UINT8* p_pm_id, tBTM_PM_STATUS_CBACK* p_c
     int xx;
 
     if (mask & BTM_PM_DEREG) {
-        if (*p_pm_id >= BTM_MAX_PM_RECORDS) {
+        if (*p_pm_id >= BTM_MAX_PM_RECORDS + 1) {
             return BTM_ILLEGAL_VALUE;
         } else {
             btm_cb.pm_reg_db[*p_pm_id].mask = BTM_PM_REC_NOT_USED;
@@ -161,7 +161,7 @@ tBTM_STATUS BTM_PmRegister(UINT8 mask, UINT8* p_pm_id, tBTM_PM_STATUS_CBACK* p_c
         }
     }
 
-    for (xx = 0; xx < BTM_MAX_PM_RECORDS; ++xx) {
+    for (xx = 0; xx < BTM_MAX_PM_RECORDS + 1; ++xx) {
         if (btm_cb.pm_reg_db[xx].mask == BTM_PM_REC_NOT_USED) {
             if (mask & BTM_PM_REG_NOTIF) {
                 if (!p_cb)
@@ -187,7 +187,7 @@ tBTM_STATUS BTM_SetPowerMode(UINT8 pm_id, BD_ADDR remote_bda, tBTM_PM_PWR_MD* p_
     tBTM_PM_MCB* p_cb = NULL;
     tBTM_PM_MODE mode;
 
-    if (pm_id >= BTM_MAX_PM_RECORDS)
+    if (pm_id >= BTM_MAX_PM_RECORDS + 1)
         pm_id = BTM_PM_SET_ONLY_ID;
 
     if (!p_mode)
@@ -346,7 +346,7 @@ static tBTM_PM_MODE btm_pm_get_set_mode(UINT8 pm_id, tBTM_PM_MCB* p_cb, tBTM_PM_
         return p_res->mode;
     }
 
-    for (xx = 0; xx < BTM_MAX_PM_RECORDS; ++xx) {
+    for (xx = 0; xx < BTM_MAX_PM_RECORDS + 1; ++xx) {
         if (btm_cb.pm_reg_db[xx].mask & BTM_PM_REG_SET) {
             if (p_cb->req_mode[xx].mode == BTM_PM_MD_ACTIVE) {
                 return BTM_PM_MD_ACTIVE;
@@ -493,7 +493,7 @@ void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle, UINT8 mode, UI
     p_cb->state = mode;
     p_cb->interval = interval;
 
-    for (yy = 0; yy < BTM_MAX_PM_RECORDS; ++yy) {
+    for (yy = 0; yy < BTM_MAX_PM_RECORDS + 1; ++yy) {
         if (mode == BTM_PM_MD_ACTIVE && p_cb->req_mode[yy].mode == BTM_PM_MD_HOLD) {
             p_cb->req_mode[yy].mode = BTM_PM_MD_ACTIVE;
         }
@@ -502,7 +502,7 @@ void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle, UINT8 mode, UI
     if (p_cb->chg_ind == TRUE)
         btm_pm_snd_md_req(BTM_PM_SET_ONLY_ID, xx, NULL);
 
-    for (yy = 0; yy < BTM_MAX_PM_RECORDS; ++yy) {
+    for (yy = 0; yy < BTM_MAX_PM_RECORDS + 1; ++yy) {
         if (btm_cb.pm_reg_db[yy].mask & BTM_PM_REG_NOTIF) {
             (*btm_cb.pm_reg_db[yy].cback)(p->remote_addr, mode, interval, hci_status);
         }

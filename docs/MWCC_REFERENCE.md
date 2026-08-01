@@ -201,6 +201,17 @@ bte_logmsg) is accepted.
 
 ## RVL_SDK bte/l2cap l2c_api.c — string-pool emission order and -ipa (US, mwcc_43_151 `-O4,p`)
 
+**l2c_utils.c l2cu_* helper fixes (this fork):**
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `l2cu_release_lcb` guard `cmplwi r,1; blt` vs decomp `cmpwi r,0; beq` | MWCC GC/3.0a5.2 emits `cmpwi 0; beq` for both `if (x)` and `if (x > 0)` on UINT16, but `cmplwi 1; blt` for `if (x >= 1)` | Write the decrement guard as `if (l2cb.num_links >= 1) l2cb.num_links--;` |
+| `l2cu_release_lcb` ccb-drain loop: retail reloads `p_first_ccb` AFTER the call (once per iteration, load at loop bottom); plain `while (p->p_first_ccb) release(p->p_first_ccb)` loads at the test | Retail shape comes from an explicit local: `p_ccb = p_lcb->p_first_ccb; while (p_ccb) { release(p_ccb); p_ccb = p_lcb->p_first_ccb; }` | Use the local with reload at the end of the body |
+| `l2cu_release_ccb` tail: `cmpwi r3,1` vs retail `clrlwi r0,r3,24; cmplwi r0,1` (byte mask before comparing `btm_sec_disconnect` result) | Local `typedef enum {...} tBTM_STATUS` is INT; retail tBTM_STATUS is `UINT8` | `typedef UINT8 tBTM_STATUS;` + `#define BTM_SUCCESS 0` / `#define BTM_CMD_STARTED 1` in the TU |
+| `l2cu_release_ccb` unlink: extra reload of `p_next_ccb` / `p_prev_ccb` in the first/last branches | Guard must re-test the just-stored list head/tail, not the ccb field: `if (p_lcb->p_first_ccb) p_lcb->p_first_ccb->p_prev_ccb = NULL;` / `p_lcb->p_last_ccb->p_next_ccb = NULL;`; middle branch store order is prev→next first, then next→prev | Mirror the list-head/tail wording; swap the two middle-branch stores |
+| `l2cu_create_conn` loop compare `cmpwi` (signed) vs `cmpli` | `UINT8 xx` promotes unsigned; retail counter is signed | `INT8 xx;` |
+
+
 `libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c` is now **100% byte-identical
 (all 13 functions, unit .text == 0xBCC == split budget)** on GC/3.0a5.2
 `-func_align 4` with **default `-ipa file`** (not `-ipa off`):
@@ -422,6 +433,8 @@ filter_cond[6]; NO report_dup byte in this build), `inq_cmpl_info` 0x183E (u8 st
 signed `blt` default check, and the case-1/2 body zeroes p_inqparms->filter_cond_type.
 
 ### btm_pm.c — 6× 100% under GC/3.0a5.2 (`btm_pm_reset`, `BTM_ReadPowerMode`, `btm_pm_sm_alloc`, `btm_pm_compare_modes`, `btm_pm_snd_md_req`, `btm_pm_proc_cmd_status`); `BTM_SetPowerMode` 1 reg-swap
+
+**BTM_MAX_PM_RECORDS split-personality (this fork):** retail sizes `tBTM_PM_MCB` with `BTM_MAX_PM_RECORDS = 1` (`req_mode[RECORDS+1]` = 2 entries → 0x22 struct, mulli 0x22 stride, `pm_reg_db` at 0x554) but every loop/bound in the unit runs **2** iterations/entries — the loops and bounds use `BTM_MAX_PM_RECORDS + 1` (`BTM_SetPowerMode`/`BTM_PmRegister` `>=` checks emit `cmplwi 2`; `btm_pm_get_set_mode`/`BTM_PmRegister`/`btm_pm_proc_mode_change` loops emit `cmpwi 2` / `mtctr 2`). Setting the macro to 2 fixes the loops but breaks the struct (tBTM_PM_MCB → 0x2C, pm_reg_db → 0x57C — every `lbz 0x558` becomes `0x580`). Correct: `#define BTM_MAX_PM_RECORDS 1` + write all bounds as `BTM_MAX_PM_RECORDS + 1` + `pm_reg_db[BTM_MAX_PM_RECORDS + 1]` (extra slot is the SET_ONLY temp per Broadcom). `btm_pm_get_set_mode` / `BTM_SetPowerMode` / `BTM_PmRegister` / `btm_pm_snd_md_req` are byte-identical with this. Also needs `-func_align 4` (retail bte family is packed; default 16-align adds 0x2C padding and blows the 0xC94 split).
 
 `btm_pm_reset` was stuck at 6 pure reg-swaps (retail `li r0,0; li r4,4` vs decomp `li r4,0; li r0,4` — a constant-colour swap that the SMT probe cannot certify: gate 5 fixes r0/r3/r4, and the `bctr` tail-call exit fails the M1 indirect-exit gate, so EQUIVALENT_MATCH is unreachable and only FULL_MATCH can accept). Two compounding root causes, both fixed:
 

@@ -174,10 +174,9 @@ extern void btu_start_timer (TIMER_LIST_ENT *p_tle, UINT16 type, UINT32 timeout)
 extern void btu_stop_timer (TIMER_LIST_ENT *p_tle);
 
 /* btm */
-typedef enum {
-    BTM_SUCCESS     = 0,
-    BTM_CMD_STARTED = 1
-} tBTM_STATUS;
+typedef UINT8 tBTM_STATUS;
+#define BTM_SUCCESS     0
+#define BTM_CMD_STARTED 1
 
 typedef struct {
     UINT16  clock_offset;           /* 0x00 */
@@ -256,6 +255,8 @@ tL2C_LCB *l2cu_allocate_lcb (BD_ADDR p_bd_addr)
 
 void l2cu_release_lcb (tL2C_LCB *p_lcb)
 {
+    tL2C_CCB *p_ccb;
+
     p_lcb->in_use = FALSE;
 
     btu_stop_timer (&p_lcb->timer_entry);
@@ -268,8 +269,12 @@ void l2cu_release_lcb (tL2C_LCB *p_lcb)
 
     btm_remove_sco_links (p_lcb->remote_bd_addr);
 
-    while (p_lcb->p_first_ccb != NULL)
-        l2cu_release_ccb (p_lcb->p_first_ccb);
+    p_ccb = p_lcb->p_first_ccb;
+    while (p_ccb != NULL)
+    {
+        l2cu_release_ccb (p_ccb);
+        p_ccb = p_lcb->p_first_ccb;
+    }
 
     if ((p_lcb->link_state == LST_DISCONNECTING) || (p_lcb->link_state == LST_DISCONNECT_WAIT))
         btm_acl_removed (p_lcb->remote_bd_addr);
@@ -277,7 +282,7 @@ void l2cu_release_lcb (tL2C_LCB *p_lcb)
     while (p_lcb->held_data_q.p_first != NULL)
         GKI_freebuf (GKI_dequeue (&p_lcb->held_data_q));
 
-    if (l2cb.num_links > 0)
+    if (l2cb.num_links >= 1)
         l2cb.num_links--;
 
     l2cb.total_bw += p_lcb->allocated_bw;
@@ -827,18 +832,18 @@ void l2cu_release_ccb (tL2C_CCB *p_ccb)
     if (p_lcb->p_first_ccb == p_ccb)
     {
         p_lcb->p_first_ccb = p_ccb->p_next_ccb;
-        if (p_ccb->p_next_ccb != NULL)
-            p_ccb->p_next_ccb->p_prev_ccb = NULL;
+        if (p_lcb->p_first_ccb != NULL)
+            p_lcb->p_first_ccb->p_prev_ccb = NULL;
     }
     else if (p_lcb->p_last_ccb == p_ccb)
     {
         p_lcb->p_last_ccb = p_ccb->p_prev_ccb;
-        p_ccb->p_prev_ccb->p_next_ccb = NULL;
+        p_lcb->p_last_ccb->p_next_ccb = NULL;
     }
     else
     {
-        p_ccb->p_next_ccb->p_prev_ccb = p_ccb->p_prev_ccb;
         p_ccb->p_prev_ccb->p_next_ccb = p_ccb->p_next_ccb;
+        p_ccb->p_next_ccb->p_prev_ccb = p_ccb->p_prev_ccb;
     }
 
     /* Put it back on the free queue. */
@@ -1082,7 +1087,7 @@ void l2cu_device_reset (void)
 BOOLEAN l2cu_create_conn (tL2C_LCB *p_lcb)
 {
     tL2C_LCB *p_lcb2;
-    UINT8     xx;
+    INT8      xx;
     BOOLEAN   is_sco_active;
 
     p_lcb->link_state = LST_CONNECTING;

@@ -336,6 +336,21 @@ The retail bte hh unit needs `mw_version="GC/3.0a5.2"` (same family as bta_dm_ac
 | `bta_hh_start_sdp` call vanished from `bta_hh_open_act` | The empty `void bta_hh_start_sdp(...) {}` stub was auto-inlined and the call eliminated | Guard stub bodies with `#pragma push` / `#pragma auto_inline off` / `#pragma pop` |
 | `bta_hh_get_acl_q_info` `mulli r0,r4,0x24` vs retail `0x34` | Local `tHID_HOST_DEV_CTB` conn pad was short, shrinking the devices[] stride | Pad `conn` to 0x24 bytes (entry stride 0x34) — match the full member sizes, not just the touched fields |
 
+### hidh_conn.c — 5× FULL_MATCH, byte-identical (GC/3.0a5.2, `-func_align 4`, `-O4,p`)
+
+`hidh_l2cif_connect_cfm`, `hidh_l2cif_config_ind`, `hidh_l2cif_config_cfm`, `hidh_l2cif_disconnect_ind`, `hidh_l2cif_data_ind` — all 100% byte-identical (split size 0x0 spare). The retail hidh unit is GC/3.0a5.2 + `-func_align 4` (same bte family as btm/hidh; the Android-era `find_conn_by_cid` refactor does **not** exist in the retail — every callback has the 16-entry scan loop inlined). Reusable patterns:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Scheduling `ori r0,r0,0` nop before the unrolled `mtctr`/`bdnz` scan loop; everything after shifts +4 | `cflags_sdk` default `-func_align 16` changes MWCC scheduling on small countdown loops | `extra_cflags=["-func_align 4"]` (keep `-ipa file`; `-ipa off` did not change these loops) |
+| Post-loop `p_hcon = &hh_cb.devices[i].conn` reuses the loop's last pointer (`addi rN,rM,0x10`) instead of the retail fresh `lis/addi/mulli/add` recompute | A `p_dev` pointer cached in the loop body keeps its value live past the loop | Access `hh_cb.devices[i].*` directly in the loop; assign `p_dev`/`p_hcon` **after** the loop under `if (i != HID_HOST_MAX_DEVICES)` |
+| Failure-path `&hh_cb.devices[i]` computed after the `LogMsg_0("HID - disconnect")` call (with a hh_cb base reload); retail interleaves `clrlwi`/`mulli`/`add` into the trace check before the `blt` | The disconnect-if's address expression is only visible after the trace block | Assign `p_dev2 = &hh_cb.devices[i];` as a standalone statement **before** the trace check and use `p_dev2->conn.*` in the disconnect logic (same shape as retail `hidh_conn_disconnect` itself) |
+| `2 - (x & 0x8000)` emits `clrlwi/subfic` or `rlwinm/srawi/subfic`; retail is `rlwinm rN,rM,17,31,31; neg; addi` | MWCC emits `subfic` for arithmetic `2 - x`; the ternary form is the only shape that maps to `neg+addi` | Write `(attr_mask & HID_SEC_REQUIRED) ? 1 : 2` — produces the exact retail `extrwi`/`rlwinm 17,31,31` + `neg` + `addi` sequence |
+| `if (param == HID_PAR_CONTROL_VIRTUAL_CABLE_UNPLUG) { ... } GKI_freebuf(p_buf);` lowers to `cmplwi` + fall-through; retail is `cmpwi; beq case; b out; [case body]; out:` | The retail used the Android-era nested `switch (param) { case ...: break; default: break; }` — MWCC emits a `cmpwi` (signed) with the default-jump block order | Use the nested one-case `switch (param)` inside `case HID_TRANS_CONTROL:` |
+| `p_hcon`/`i` (and `disc_res`) land in swapped callee-saved registers vs retail | MWCC's allocator colors locals in declaration order; an extra local (e.g. `p_dev2`) between `p_hcon` and `i` shifts the coloring | Match the retail declaration order per function: config_cfm needs `UINT8 i;` **first**; disconnect_ind needs `UINT8 i; tHID_CONN *p_hcon = NULL; UINT16 disc_res = HCI_SUCCESS;` |
+
+Also note: `disconnect_ind`'s close-reason mapping uses `HCI_ERR_*` codes ({0x05,0x06,0x0E,0x18,0x26,0x29,0x25,0x17} → `HID_ERR_AUTH_FAILED`), and the `mx_chan_id` param is `2 - (attr>>15)` semantics (`HID_SEC_REQUIRED=0x8000`), not `HID_VIRTUAL_CABLE`.
+
 ### hcicmds.c — pool-buffer HCI command builders (US, `-O4`)
 
 **Flag correction (2026-08): the retail unit is `-O4`, not `-O4,s`.** The retail
@@ -4100,6 +4115,34 @@ spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
   so functions with callback dispatches can only accept via FULL_MATCH (100%).
   Byte-identical bodies bypass the callee gate entirely (opaque EABI contracts).
 
+
+## bta_dm_api.c — BTA DM API layer (GC/3.0a5.2, `-func_align 4`) — 10× FULL_MATCH
+
+All 10 BTA_DM API targets (`BTA_EnableBluetooth`, `BTA_DisableBluetooth`,
+`BTA_DmSetDeviceName`, `BTA_DmSetVisibility`, `BTA_DmSearch`,
+`BTA_DmSearchCancel`, `BTA_DmPinReply`, `BTA_DmAddDevice`, `BTA_DmRemoveDevice`,
+`BTA_DmSendHciReset`) are byte-identical FULL_MATCH (unit code+data 100%,
+split size 0x0 spare). The unit needed `mw_version="GC/3.0a5.2"` +
+`extra_cflags=["-func_align 4"]` (same bte family as bta_dm_act/btm_devctl);
+Wii/1.1 schedules `mr`-before-`sth` the wrong way around and lowers the
+AddDevice loop counter to a volatile register. Reusable patterns:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `ret = BTM_IsDeviceUp()` (BOOLEAN) emits an extra `rlwinm r31,r3,0,24,31` byte-mask vs retail plain `mr` | MWCC zero-extends the u8 return at the int assignment (43.151 and 41 both); the retail source treated it as int | Declare `extern int BTM_IsDeviceUp(void);` (ABI-identical; keeps `BTA_DmIsDeviceUp` FULL_MATCH) |
+| Event-store functions (`SetDeviceName`, `Search`, `PinReply`) had `sth` before `mr rN,p_name`; retail is `mr` then `sth` | Wii/1.1 vs GC/3.0a5.2 scheduling of the load/store pair | Switch the unit to `mw_version="GC/3.0a5.2"` |
+| `BTA_DmAddDevice` frame 0x20/4 regs vs retail 0x30/`_savegpr_27` | Loop counter `i` initialized **inside** the `if (is_trusted)` block is not live across the `memset` call, so it lands in a volatile reg | Declare `unsigned char i = 0;` **before** the `memset` and use `for (; trusted_mask && (i < 23); i++)` — `i` becomes callee-saved and the prologue becomes `_savegpr_27` |
+| `trusted_mask`/`i` land swapped (r31/r30 vs retail r30/r31) | A `UINT32 mask = trusted_mask;` copy local shifts the coloring | Mutate the `trusted_mask` parameter in place (no copy local) |
+| Shift count for `1 << (id & 0x1f)` compiled as `clrlwi rN,rN,27` instead of retail `rlwinm rN,rM,0,19,26; subf` | Retail source expressed the bit as `id - (id & 0x1FE0)` (0x1FE0 = bits 5-12, valid because ids < 0x2000); MWCC preserves that literal form | Write `(1 << (id - (id & 0x1FE0)))` and the index as `arr[(id >> 5) & 0xFF]` (the `& 0xFF` folds the word index into `rlwinm rN,rM,29,22,29`) |
+| `return !status` (BOOLEAN status from `BTM_SecDeleteDevice`/`BTM_SecAddDevice`) → retail `clrlwi; cntlzw; rlwinm r3,r0,27,24,31` | Standard MWCC `!x` normalization of a byte value | Write `return !status;` — matches exactly |
+
+Retail `BTM_SecAddDevice` takes **6** params (bd_addr, dev_class, bd_name,
+features, trusted_mask, link_key) — no key_type/io_cap (the local
+`btm_api.h`/`btm_sec.c` 8-param signature is a newer reconstruction).
+Message layouts: ENABLE 0xc, SET_NAME 0x28 (32-byte name, `BD_NAME_LEN` is 32
+in this build), SET_VISIBILITY 0x110 (tBTA_DM_MSG union), SEARCH 0x1c
+(`tBTA_DM_INQ` is 0xa bytes: mode/duration/max_resps/report_dup/filter_cond,
+no separate filter_type), PIN_REPLY 0x20.
 ## RVL WUD (US) — retail mixes -O4,p and -O4,s codegen; per-feature source keys (10 targets)
 
 Findings while matching the 10 WUD stack/sync/patch targets (`libs/RVL_SDK/src/revolution/wud/WUD.c`):
@@ -4185,3 +4228,60 @@ Findings from matching `__VISetGammaImm` (FULL_MATCH), `__VISetGamma1_0`/`__VISe
 5. **The retail keeps `buf[0] = 0x40` store LATE in the copy** (after ~24 loads) and loads the constant early; MWCC places an equivalent early source store early. Not steered from C (scheduling).
 6. **Macrovision materialisation wall:** retail materialises the table pointer per case (`addi r30,r3,0x420; lbz rX,0..25(r30)`); MWCC folds `base + const` into every load displacement (`lbz rX,0x420+N(rBase)`) for all tested source forms (direct expr, locals, `&arr[i]`, `(u32)`/`void*` casts, volatile, loop forms, memcpy/struct-copy, `__inline`/IPA variants). Only `while (pt < e)` materialises (`addi r4,r3,0x420`) but then only partial-unrolls (3×8+2). Treat as hard cap; EQUIVALENT_MATCH via SMT is the only acceptance path at ~50%+ fuzzy.
 7. **`__VISetRevolutionModeSimple` regalloc cascade:** the `region` local allocates r29 (retail r28), shifting the callee-saved save-set (r29-r31 vs r28-r31), epilogue length (1 insn short), the copy's 0x40 constant (r0 vs r28) and the copy interleave by 1 position (14 structural + 37 reg-swaps at 96.9% objdiff fuzzy). Declaration order, initializer vs assignment, `u32`/`u8` typing and statement reordering all fail to move it — the retail's 4th callee-saved slot for `region` requires 4 callee-saved values in the function, and MWCC's allocation for the reconstructed source only needs 3.
+
+## RVL_SDK BTE HID host (hidh_conn.c) — GC/3.0a5.2 + `-func_align 4`, upstream-broadcom shapes
+
+`libs/RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c` (16/16 targets FULL_MATCH, split
+size 0x2040/0x2040 exact). The retail bte HID unit was compiled with **GC/3.0a5.2 +
+`-func_align 4`** (same family as the btm units), not the Wii/1.1 default:
+Wii/1.1 lowers the `hidh_conn_snd_data` trans_type switch with a `subi/cmpli` unsigned
+range test; GC emits the retail `cmpwi 4; bge; cmpwi 1; beq; cmpwi 10; beq; bge` chain.
+`-func_align 16` (the default) additionally inserts a scheduling NOP
+(`ori r0,r0,0`) before the mtctr-counted find loops; `-func_align 4` removes it
+(matches the btm_inq/btm_sec notes).
+
+### 1. Small-trip loops: counter type decides unroll shape (GC)
+
+`for (i = 0; i < 16; i++) { dev[i].a = 0; dev[i].b = 0; }` with `int i` fully unrolls
+to direct `stb r0, off(r30)` pairs; with `UINT8 i` MWCC emits a ×8 unroll with
+`mulli/add/stbx` + base recompute. Use `int` (the retail's `int xx`).
+
+### 2. `x != N` vs `x < N` after a bounded find loop
+
+`if ((dhandle = find_conn_by_cid(cid)) < HID_HOST_MAX_DEVICES)` compiles the post-loop
+`cmplwi; blt`-style gate; the retail uses `cmplwi; beq` (it knows the loop bound
+guarantees dhandle ≤ 16, so `< 16` ⇔ `!= 16`). Write **`!= HID_HOST_MAX_DEVICES`**
+to reproduce the `beq` gate. Same for `if (i == HID_HOST_MAX_DEVICES)` (not `>=`)
+after a `for` scan loop.
+
+### 3. `constant - (mask & bit)` → `neg/addi`, not `subfic` (GC)
+
+`btm_sec_mx_access_request(..., 2 - (p_dev->attr_mask & X), ...)` compiles to
+`subfic r7,r0,2`. The retail uses `neg r7,r0; addi r7,r7,2`, reproduced by a named
+local: `UINT32 mx_chan_id = -(p_dev->attr_mask & HID_SEC_REQUIRED) >> 15;` then pass
+`mx_chan_id + 2`. Note the retail extracts **bit 15** (`HID_SEC_REQUIRED 0x8000`,
+`rlwinm rX,rX,17,31,31` / `extrwi rX,rX,1,16`), not `HID_VIRTUAL_CABLE` bit 0.
+
+### 4. Inline-of-same-TU helpers reproduces retail block duplication
+
+`hidh_conn_disconnect(dhandle)` and `hidh_conn_initiate((UINT8)p_tle->param)` are
+auto-inlined by GC into callers (`hidh_l2cif_connect_cfm` failure path,
+`hidh_l2cif_data_ind` VC_UNPLUG, `hidh_proc_repage_timeout`), producing the retail's
+duplicated trace+disconnect blocks. The callers' `devices[i]`-relative blocks come
+out of the inline; do not hand-duplicate.
+
+### 5. Declaration order resolves Chaitin cycles in multi-local functions
+
+`snd_data`'s 34 pure reg-swaps (retail `r20=blank_datc, r21=use_data, r22=pool_id,
+r23=cid, r24=data_size, r25=bytes_copied, r26=p_buf`) were fixed purely by ordering
+the declarations as the upstream Broadcom source does (`p_buf, p_out, bytes_copied,
+seg_req, data_size, cid, pool_id, use_data=0, blank_datc=FALSE`) with the
+initializers at declaration.
+
+### 6. Callback re-check shape (originator vs terminator security)
+
+`hidh_sec_check_complete_orig` is TWO separate `if`s (success falls through into the
+second check, `result` stays in a callee-saved reg across the success path's calls),
+while `hidh_sec_check_complete_term` is `if/else if (res != BTM_SUCCESS)` (success
+jumps over the else-if). Mixing the shapes costs a full register-allocation cascade.
+The intr-fail block ends with an explicit `return;` to jump straight to the epilogue.

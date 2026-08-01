@@ -60,7 +60,7 @@ extern u32 wait4hci;
 /* Public UUSB API. */
 void UUSB_Register(void* cb_arg);
 void UUSB_Open(s32 fd, void (*close_cb)(int reason, s8 result));
-s32 UUSB_Read(void);
+u16 UUSB_Read(u8 channel, void* p_buf, u16 len);
 s32 UUSB_Write(s32 type, void* data, u16 length);
 void UUSB_Close(void);
 void UUSB_Unregister(void);

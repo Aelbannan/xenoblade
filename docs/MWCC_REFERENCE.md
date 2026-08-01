@@ -282,8 +282,13 @@ here** — it regresses `rfc_port_sm_orig_wait_sec_check` / `rfc_port_sm_term_wa
 `libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c` (RFCOMM port-interface
 layer). All ten `RFCOMM_*Req/Rsp` APIs match 100% byte-for-byte with the **default
 Wii/1.1** compiler (`-O4,p`); note most sibling rfcomm files (port_rfc, port_utils,
-rfc_l2cap_if, rfc_mx_fsm, rfc_ts_frames) also use the default — only rfc_port_fsm /
-rfc_utils needed GC/3.0a5.2. Three reusable findings:
+rfc_mx_fsm, rfc_ts_frames) use GC/3.0a5.2 with `-func_align 4` (+ `-ipa off`), and
+rfc_l2cap_if needs GC/3.0a5.2 + `-func_align 4` + `-ipa off` too: Wii/1.1 emits the
+rfcomm_l2cap_if_init callback-struct stores with base-lis-first and an early `stwu`
+(retail hoists all `lis`, then the `stwu` merges base+0x14 — the pointer-local shape
+`tL2CAP_APPL_INFO *p = &rfc_cb.l2cap_Appl_Info; ...; L2CA_Register(psm, p);` matches
+100% under GC/3.0a5.2; RFCOMM_ConnectInd/rfc_save_lcid_mcb also verify 100%). Only
+rfc_port_fsm / rfc_utils needed GC/3.0a5.2. Three reusable findings:
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|

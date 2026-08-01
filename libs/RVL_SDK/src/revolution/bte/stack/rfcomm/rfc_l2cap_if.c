@@ -34,6 +34,23 @@ struct RfcPort {
     RfcMuxChannel* mcb;
 };
 
+/* L2CAP application registration block embedded in rfc_cb at 0x14.
+ * Retail layout: 10 callback pointers, 0x14..0x3B (ConnectInd, ConnectCfm,
+ * NULL, ConfigInd, ConfigCfm, DisconnectInd, NULL, QoSViolationInd,
+ * BufDataInd, CongestionStatusInd). */
+struct RfcL2capApplInfo {
+    void (*pL2CA_ConnectInd_Cb)(u8* bd_addr, u16 lcid, u16 psm, u8 id);
+    void (*pL2CA_ConnectCfm_Cb)(void);
+    void (*pL2CA_ConnectPnd_Cb)(void);
+    void (*pL2CA_ConfigInd_Cb)(void);
+    void (*pL2CA_ConfigCfm_Cb)(u16 lcid, u8* config);
+    void (*pL2CA_DisconnectInd_Cb)(u16 lcid, u8 response);
+    void (*pL2CA_DisconnectCfm_Cb)(void);
+    void (*pL2CA_QoSViolationInd_Cb)(void);
+    void (*pL2CA_DataInd_Cb)(u16 lcid, BT_HDR* buffer);
+    void (*pL2CA_CongestionStatus_Cb)(u16 lcid, u8 congested);
+};
+
 struct RfcControlBlock {
     u8 dlci;
     u8 pad_0x01[1];
@@ -41,7 +58,8 @@ struct RfcControlBlock {
     u8 pad_0x03[1];
     u8 field_0x04;
     u8 credit_based;
-    u8 pad_0x06[0x36];
+    u8 pad_0x06[0x0E];
+    struct RfcL2capApplInfo l2cap_Appl_Info;
     RfcMuxChannel* mcb[10];
     u8 pad_0x64[0x3b0];
     u8 trace_level;
@@ -49,10 +67,17 @@ struct RfcControlBlock {
 
 extern RfcControlBlock rfc_cb;
 
+#define RFCOMM_PSM 3
+#define L2CAP_CONN_NO_RESOURCES 4
+#define RFC_MX_EVENT_CONN_IND 0x0a
+
 extern void LogMsg_1(u32 level, const char* message, u32 value);
 extern void LogMsg_2(u32 level, const char* message, u32 value1, u32 value2);
 extern void GKI_freebuf(BT_HDR* buffer);
 extern void L2CA_DisconnectRsp(u16 lcid);
+extern u16 L2CA_Register(u16 psm, struct RfcL2capApplInfo* p_cb_info);
+extern void L2CA_ConnectRsp(u8* bd_addr, u8 id, u16 lcid, u16 result, u16 status);
+extern RfcMuxChannel* rfc_alloc_multiplexer_channel(u8* bd_addr, u8 initiator);
 extern void rfc_mx_sm_execute(RfcMuxChannel* channel, u16 event, u8* data);
 extern void rfc_process_mx_message(RfcMuxChannel* channel, BT_HDR* buffer);
 extern u8 rfc_parse_data(RfcMuxChannel* channel, RfcControlBlock* control, BT_HDR* buffer);
@@ -63,8 +88,47 @@ extern void rfc_port_sm_execute(RfcPort* port, u8 event, BT_HDR* buffer);
 extern void rfc_process_l2cap_congestion(RfcMuxChannel* channel, u8 congested);
 extern void rfc_inc_credit(RfcPort* port);
 
-void rfcomm_l2cap_if_init() {}
-void RFCOMM_ConnectInd() {}
+void RFCOMM_ConnectInd(u8* bd_addr, u16 lcid, u16 psm, u8 id);
+void RFCOMM_ConnectCnf();
+void RFCOMM_ConfigInd();
+void RFCOMM_ConfigCnf(u16 lcid, u8* config);
+void RFCOMM_DisconnectInd(u16 lcid, u8 response);
+void RFCOMM_QoSViolationInd(void);
+void RFCOMM_BufDataInd(u16 lcid, BT_HDR* buffer);
+void RFCOMM_CongestionStatusInd(u16 lcid, u8 congested);
+
+void rfcomm_l2cap_if_init() {
+    struct RfcL2capApplInfo* p_info = &rfc_cb.l2cap_Appl_Info;
+
+    p_info->pL2CA_ConnectInd_Cb = RFCOMM_ConnectInd;
+    p_info->pL2CA_ConnectCfm_Cb = RFCOMM_ConnectCnf;
+    p_info->pL2CA_ConnectPnd_Cb = 0;
+    p_info->pL2CA_ConfigInd_Cb = RFCOMM_ConfigInd;
+    p_info->pL2CA_ConfigCfm_Cb = RFCOMM_ConfigCnf;
+    p_info->pL2CA_DisconnectInd_Cb = RFCOMM_DisconnectInd;
+    p_info->pL2CA_DisconnectCfm_Cb = 0;
+    p_info->pL2CA_QoSViolationInd_Cb = RFCOMM_QoSViolationInd;
+    p_info->pL2CA_DataInd_Cb = RFCOMM_BufDataInd;
+    p_info->pL2CA_CongestionStatus_Cb = RFCOMM_CongestionStatusInd;
+
+    L2CA_Register(RFCOMM_PSM, p_info);
+}
+
+void RFCOMM_ConnectInd(u8* bd_addr, u16 lcid, u16 psm, u8 id) {
+    RfcMuxChannel* p_mcb = rfc_alloc_multiplexer_channel(bd_addr, 0);
+
+    rfc_cb.mcb[lcid - 0x40] = p_mcb;
+
+    if (p_mcb == 0) {
+        L2CA_ConnectRsp(bd_addr, id, lcid, L2CAP_CONN_NO_RESOURCES, 0);
+        return;
+    }
+
+    p_mcb->lcid = lcid;
+
+    rfc_mx_sm_execute(p_mcb, RFC_MX_EVENT_CONN_IND, (u8*)&id);
+}
+
 void RFCOMM_ConnectCnf() {}
 void RFCOMM_ConfigInd() {}
 void RFCOMM_QoSViolationInd(void) {}
@@ -251,4 +315,6 @@ void RFCOMM_BufDataInd(u16 lcid, BT_HDR* buffer) {
     }
 }
 
-void rfc_save_lcid_mcb() {}
+void rfc_save_lcid_mcb(RfcMuxChannel* p_mcb, u16 lcid) {
+    rfc_cb.mcb[lcid - 0x40] = p_mcb;
+}

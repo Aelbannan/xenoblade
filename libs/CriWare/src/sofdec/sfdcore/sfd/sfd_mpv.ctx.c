@@ -3111,13 +3111,7 @@ void sfmpv_SetFrmInf(void* self, void* frm, void* info) {
     } else {
         *(u32*)((u8*)info + 0x48) = 1;
     }
-    {
-        u32 v1 = *(u32*)((u8*)frm + 0xe8);
-        u32 v2 = *(u32*)((u8*)frm + 0xec);
-        *(u32*)((u8*)info + 0x50) = v1;
-        *(u32*)((u8*)info + 0x54) = v2;
-    }
-    *(u32*)((u8*)info + 0x58) = *(u32*)((u8*)frm + 0xa0);
+    *(u64*)((u8*)info + 0x50) = *(u64*)((u8*)frm + 0xe8);    *(u32*)((u8*)info + 0x58) = *(u32*)((u8*)frm + 0xa0);
     *(u32*)((u8*)info + 0x5c) = *(u32*)((u8*)frm + 0xa4);
     *(u32*)((u8*)info + 0x60) = *(u32*)((u8*)frm + 0xb0);
     *(u32*)((u8*)info + 0x64) = *(u32*)((u8*)frm + 0xb4);

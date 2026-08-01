@@ -194,14 +194,14 @@ void BTA_HhSendData(UINT8 dev_handle, BT_HDR *p_buf)
         *(UINT16 *)(p + 6) = dev_handle;
         /* offset 8: t_type = HID_TRANS_DATA (10) */
         *(p + 8) = HID_TRANS_DATA;
-        /* offset 9: report_type = HID_PAR_REP_TYPE_OUTPUT (2) */
-        *(p + 9) = HID_PAR_REP_TYPE_OUTPUT;
-        /* offset 0x0A: report_id = 0 */
-        *(p + 0x0A) = 0;
         /* offset 0x0C: hdr_param = 0 */
         *(UINT16 *)(p + 0x0C) = 0;
+        /* offset 9: report_type = HID_PAR_REP_TYPE_OUTPUT (2) */
+        *(p + 9) = HID_PAR_REP_TYPE_OUTPUT;
         /* offset 0x10: p_data = p_buf */
         *(BT_HDR **)(p + 0x10) = p_buf;
+        /* offset 0x0A: report_id = 0 */
+        *(p + 0x0A) = 0;
 
         bta_sys_sendmsg(p_msg);
     }
@@ -235,12 +235,12 @@ void BTA_HhAddDev(BD_ADDR bda, tBTA_HH_ATTR_MASK attr_mask, UINT8 sub_class,
         p_msg->event = BTA_HH_API_ADD_DEV_EVT;
         p = (UINT8 *)p_msg;
 
+        /* offset 0x10: sub_event */
+        *(UINT16 *)(p + 0x10) = BTA_HH_ADD_DEV_SUB_EVT;
         /* offset 6: layer_specific = invalid handle */
         *(UINT16 *)(p + 6) = BTA_HH_INVALID_HANDLE;
         /* offset 0x0E: attr_mask */
         *(UINT16 *)(p + 0x0E) = attr_mask;
-        /* offset 0x10: sub_event */
-        *(UINT16 *)(p + 0x10) = BTA_HH_ADD_DEV_SUB_EVT;
         /* offset 0x12: sub_class */
         *(p + 0x12) = sub_class;
         /* offset 0x13: app_id */

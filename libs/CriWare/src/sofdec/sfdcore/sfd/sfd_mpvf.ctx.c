@@ -1154,8 +1154,7 @@ s32 sfmpvf_IsChkFirst(void* a, void* b) {
     }
     {
         s32 x = *(s32*)((u8*)a + 0xF8) ^ *(s32*)((u8*)b + 0xF8);
-        s32 r = (x >> 1) - (x & *(s32*)((u8*)a + 0xF8));
-        return (u32)r >> 31;
+        return ((x >> 1) - (x & *(s32*)((u8*)a + 0xF8))) < 0;
     }
 }
 

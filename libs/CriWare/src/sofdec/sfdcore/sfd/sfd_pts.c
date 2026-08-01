@@ -138,10 +138,10 @@ s32 SFPTS_ReadPtsQue(void* self, s32 idx, u32 arg, void* out) {
 
 s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len) {
     u32 win_end = win_start + win_len;
-    u32 maxIdx = q->maxIdx;
-    u32 count = q->count;
-    u32 start = q->start;
-    u32 i;
+    s32 maxIdx = (s32)q->maxIdx;
+    s32 count = (s32)q->count;
+    s32 start = (s32)q->start;
+    s32 i;
 
     for (i = 0; i < count; i++) {
         SfdPtsEntry* e = &q->entries[start];
@@ -152,14 +152,17 @@ s32 sfpts_SearchPtsQue(SfdPtsQue* q, u32 target, u32 win_start, u32 win_len) {
                 return (s32)i;
         } else {
             if (e->pos <= target && target < win_end)
-                return (s32)i;
+                goto found;
             if (win_start <= target && target < entry_end - win_len)
-                return (s32)i;
+                goto found;
         }
 
         start = (start + 1 >= maxIdx) ? start + 1 - maxIdx : start + 1;
     }
     return -1;
+
+found:
+    return (s32)i;
 }
 
 int SFPTS_IsPtsQueFull(void* self, int idx) {

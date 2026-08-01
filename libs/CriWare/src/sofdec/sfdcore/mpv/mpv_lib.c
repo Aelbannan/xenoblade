@@ -10,7 +10,20 @@ void mpvlib_ChkFatal() {}
 extern u8 lbl_eu_80602BE8[];
 extern u32 lbl_eu_80602FE8;
 
-void mpvlib_InitClip0255() {}
+void mpvlib_InitClip0255(void) {
+    u8* q = lbl_eu_80602BE8;
+    int i;
+    for (i = 0; i < 0x180; i++) {
+        *q++ = 0;
+    }
+    for (i = 0; i < 0x100; i++) {
+        *q++ = (u8)i;
+    }
+    for (i = 0; i < 0x180; i++) {
+        *q++ = 0xFF;
+    }
+    lbl_eu_80602FE8 = (u32)(lbl_eu_80602BE8 + 0x180);
+}
 
 void mpvlib_InitPicAtr() {}
 

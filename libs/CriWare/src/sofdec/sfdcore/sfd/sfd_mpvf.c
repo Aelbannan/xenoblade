@@ -44,29 +44,26 @@ void SFD_SetMpvParaTbl(u32* src, u32* strides, u32* tbl) {
     }
 }
 
+typedef struct SfdMpvPara {
+    s32 words[16];
+} SfdMpvPara;
+
 s32 sfmpvf_CheckMpvPara(void* self) {
-    u32* p;
-    u32* g = (u32*)lbl_eu_80619B20;
-    u32* q;
-    u32* r;
-    s32 width;
+    SfdMpvPara* g = (SfdMpvPara*)lbl_eu_80619B20;
+    s32 width = g->words[7];
     s32 i;
-    p = g;
-    width = (s32)p[0x1C / 4];
     if ((u32)(width - 1) > 0xF) {
         return -1;
     }
-    if (p[0x10 / 4] == 0 || p[0x20 / 4] == 0) {
-        q = g + 0xA;
-        if (q[0] == 0) {
+    if (g->words[4] == 0 || g->words[8] == 0) {
+        if (g->words[10] == 0) {
             return -1;
         }
-        if (q[1] == 0) {
+        if (g->words[11] == 0) {
             return -1;
         }
-        r = g + 0xC;
-        for (i = 0; i < width; i++, r++) {
-            if (*r == 0) {
+        for (i = 0; i < width; i++) {
+            if (g->words[12 + i] == 0) {
                 return -1;
             }
         }
@@ -447,8 +444,7 @@ s32 sfmpvf_IsChkFirst(void* a, void* b) {
     }
     {
         s32 x = *(s32*)((u8*)a + 0xF8) ^ *(s32*)((u8*)b + 0xF8);
-        s32 r = (x >> 1) - (x & *(s32*)((u8*)a + 0xF8));
-        return (u32)r >> 31;
+        return ((x >> 1) - (x & *(s32*)((u8*)a + 0xF8))) < 0;
     }
 }
 

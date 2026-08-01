@@ -48,7 +48,7 @@ extern void L2CA_ConfigRsp(u16 lcid, RfcConfig* config);
 extern void L2CA_DisconnectReq(u16 lcid);
 extern void GKI_freebuf(BT_HDR* buffer);
 extern void PORT_CloseInd(RfcMuxChannel* channel);
-extern void PORT_StartCnf(RfcMuxChannel* channel);
+extern void PORT_StartCnf(RfcMuxChannel* channel, u16 result);
 extern void PORT_StartInd(RfcMuxChannel* channel);
 extern void rfc_release_multiplexer_channel(RfcMuxChannel* channel);
 extern void rfc_save_lcid_mcb(RfcMuxChannel* channel, ...);
@@ -112,7 +112,7 @@ void rfc_mx_sm_state_disc_wait_ua(RfcMuxChannel* channel, u16 event, u8* data) {
             u16 lcid = L2CA_ConnectReq(3, channel->bd_addr);
             channel->field_0x68 = lcid;
             if (lcid == 0) {
-                PORT_StartCnf(channel);
+                PORT_StartCnf(channel, 1);
                 break;
             }
             rfc_save_lcid_mcb(channel);
@@ -169,7 +169,7 @@ void rfc_mx_sm_sabme_wait_ua(RfcMuxChannel* channel, u16 event, u8* data) {
         rfc_timer_stop(channel);
         channel->state = 5;
         channel->field_0x71 = 1;
-        PORT_StartCnf(channel);
+        PORT_StartCnf(channel, 0);
         break;
     case 2:
         rfc_timer_stop(channel);
@@ -178,7 +178,7 @@ void rfc_mx_sm_sabme_wait_ua(RfcMuxChannel* channel, u16 event, u8* data) {
     case 5:
         channel->state = 0;
         L2CA_DisconnectReq(channel->field_0x68);
-        PORT_StartCnf(channel);
+        PORT_StartCnf(channel, 1);
         break;
     default:
         if (rfc_cb.trace_level >= 4) {
@@ -226,7 +226,7 @@ void rfc_mx_sm_state_wait_conn_cnf(RfcMuxChannel* channel, u16 event, u8* data) 
     case 9:
         if (*(u16*)data != 0) {
             channel->state = 0;
-            PORT_StartCnf(channel);
+            PORT_StartCnf(channel, *(u16*)data);
         } else {
             channel->state = 2;
             {
@@ -269,7 +269,7 @@ void rfc_mx_sm_state_idle(RfcMuxChannel* channel, u16 event, u8* data) {
         lcid = L2CA_ConnectReq(3, channel->bd_addr);
         channel->field_0x68 = lcid;
         if (lcid == 0) {
-            PORT_StartCnf(channel);
+            PORT_StartCnf(channel, 1);
         } else {
             rfc_save_lcid_mcb(channel);
             channel->state = 1;
@@ -346,36 +346,39 @@ void rfc_mx_sm_state_connected(RfcMuxChannel* channel, u16 event, u8* data) {
         LogMsg_1(0x90003, "rfc_mx_sm_state_connected - evt:%d", event);
     }
 
-    /* Jump-table dispatch for events 3–13; out-of-range falls to default. */
+    /* Jump-table dispatch over the dense event range 3..14; every value in
+     * the range must be an explicit case label for MWCC to build the table
+     * (holes folded into default would lower to a compare chain). */
     switch (event) {
-    case 3:
+    case 5:
+    case 8:
         rfc_timer_start(channel, 3);
         channel->state = 6;
         rfc_send_disc(channel, 0);
         break;
-    case 4:
+    case 14:
         channel->state = 0;
         PORT_CloseInd(channel);
         break;
-    case 7:
+    case 3:
         rfc_send_ua(channel, 0);
         if (channel->field_0x6d != 0) {
             L2CA_DisconnectReq(channel->field_0x68);
         }
         PORT_CloseInd(channel);
         break;
-    case 5:
+    default:
+    case 4:
     case 6:
-    case 8:
+    case 7:
     case 9:
     case 10:
     case 11:
     case 12:
     case 13:
-        break;
-    default:
         if (rfc_cb.trace_level >= 4) {
-            LogMsg_2(0x90003, "Mx error state %d event %d", channel->state, event);
+            LogMsg_2(0x90003, "RFCOMM MX ignored - evt:%d in state:%d", event,
+                     channel->state);
         }
         break;
     }
@@ -389,19 +392,20 @@ void rfc_mx_conf_cnf(RfcMuxChannel* channel, RfcConfig* config) {
 
     if (config->result != 0) {
         if (channel->field_0x6d != 0) {
-            PORT_StartCnf(channel);
+            PORT_StartCnf(channel, config->result);
             L2CA_DisconnectReq(channel->field_0x68);
         }
         rfc_release_multiplexer_channel(channel);
-    } else {
-        channel->field_0x6e = 1;
-        if (channel->state == 2 && channel->field_0x6f != 0) {
-            if (channel->field_0x6d != 0) {
-                channel->state = 3;
-                rfc_send_sabme(channel, 0);
-            } else {
-                channel->state = 4;
-            }
+        return;
+    }
+
+    channel->field_0x6e = 1;
+    if (channel->state == 2 && channel->field_0x6f != 0) {
+        if (channel->field_0x6d != 0) {
+            channel->state = 3;
+            rfc_send_sabme(channel, 0);
+        } else {
+            channel->state = 4;
         }
     }
 }

@@ -61,14 +61,15 @@ u32 SFX_GetCnvBottomUp(SFXSetState* self) {
     return self->cnvBottomUp;
 }
 
-void SFX_ShiftYccPtrByPix(SFXHandleState* self, u32 pixX, u32 pixY) {
-    s32 div2X = (s32)pixX / 2;
-    s32 div2Y = (s32)pixY / 2;
+void SFX_ShiftYccPtrByPix(SFXStmInf* self, s32 pixX, s32 pixY) {
+    s32 sY = pixY + ((u32)pixY >> 31);
+    s32 sX = pixX + ((u32)pixX >> 31);
+    s32 div2Y = ((sY & ~1) + (s32)((u32)sY >> 31)) >> 1;
 
-    self->field_0x04 += div2X * self->width + pixX;
-    self->height -= div2X;
-    self->field_0x10 += div2Y * self->field_0x0C + pixY;
-    self->field_0x1C -= div2Y;
-    self->field_0x24 += div2Y * self->bufStride;
-    self->field_0x2C -= div2Y;
+    self->_04 += (sY & ~1) * self->_08 + (sX & ~1);
+    self->_0C -= sY & ~1;
+    self->_14 += div2Y * self->_18 + (((sX & ~1) + (s32)((u32)sX >> 31)) >> 1);
+    self->_1C -= div2Y;
+    self->_24 += div2Y * self->_28 + (((sX & ~1) + (s32)((u32)sX >> 31)) >> 1);
+    self->_2C -= div2Y;
 }

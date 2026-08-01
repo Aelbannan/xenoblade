@@ -137,3 +137,29 @@ typedef struct SFXZmvGlobal {
     u32 maxCount;
     SFXZmvSlot slots[8];
 } SFXZmvGlobal;
+
+typedef struct SFXHandleState {
+    u32 active;        /* 0x00 */
+    u32 field_0x04;    /* 0x04 */
+    u32 field_0x08;    /* 0x08 */
+    u32 field_0x0C;    /* 0x0C */
+    u32 field_0x10;    /* 0x10 */
+    u32 tagFlag;       /* 0x14 */
+    u32 tagVal1;       /* 0x18 */
+    u32 tagVal2;       /* 0x1C */
+    u32 field_0x20;    /* 0x20 */
+    void* zmv;         /* 0x24 */
+    u32 field_0x28;    /* 0x28 */
+    u32 field_0x2C;    /* 0x2C */
+    u32 field_0x30;    /* 0x30 */
+    u32 alignW;        /* 0x34 */
+    u32 bufASize;      /* 0x38 */
+    u32 bufBSize;      /* 0x3C */
+    u32 bufCSize;      /* 0x40 */
+    u32 height2;       /* 0x44 */
+    u8 _48[0x0C];      /* 0x48 */
+    u32 field_0x54;    /* 0x54 */
+    u32 field_0x58;    /* 0x58 */
+    u8 _5C[0x08];      /* 0x5C */
+    u32 field_0x64;    /* 0x64 */
+} SFXHandleState;

@@ -346,15 +346,35 @@ void process_l2cap_cmd(tL2C_LCB *p_lcb, UINT8 *p, UINT16 pkt_len)
     tL2C_RCB       *p_rcb;
     tL2C_CONN_INFO  conn_info;
     tL2C_CFG_INFO   cfg_info;
+    UINT16          rej_reason;
+    UINT16          rej_mtu;
+    UINT16          lcid;
+    UINT16          rcid;
+    UINT16          src_cid;
+    UINT16          dst_cid;
+    UINT16          local_cid;
+    UINT16          info_type;
+    UINT8          *p_opts;
+    BOOLEAN         bad_opt;
+    UINT16          bad_opt_len;
 
-    while (p <= p_end - L2CAP_CMD_OVERHEAD)
+    /* An L2CAP packet may contain multiple commands. */
+    for (;;)
     {
-        p_cmd    = p;
+        p_cmd = p;
+
+        /* Smallest command is 4 bytes. */
+        if (p > p_end - L2CAP_CMD_OVERHEAD)
+        {
+            break;
+        }
+
         cmd_code = p_cmd[0];
         id       = p_cmd[1];
         cmd_len  = (UINT16)(p_cmd[2] + (p_cmd[3] << 8));
         p        = p_cmd + cmd_len + L2CAP_CMD_OVERHEAD;
 
+        /* Check the command length does not exceed the packet length. */
         if (p > p_end)
         {
             L2CAP_TRACE_WARNING3("Command len bad  pkt_len: %d  cmd_len: %d  code: %d",
@@ -366,22 +386,24 @@ void process_l2cap_cmd(tL2C_LCB *p_lcb, UINT8 *p, UINT16 pkt_len)
         {
         case L2CAP_CMD_REJECT:
         {
-            UINT16 rej_reason = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
+            rej_reason = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
 
             p_cmd += 6;
 
             if (rej_reason == L2CAP_CMD_REJ_MTU_EXCEEDED)
             {
-                UINT16 mtu = (UINT16)(p_cmd[0] + (p_cmd[1] << 8));
+                rej_mtu = (UINT16)(p_cmd[0] + (p_cmd[1] << 8));
+
+                p_cmd += 2;
 
                 L2CAP_TRACE_WARNING2("L2CAP - MTU rej Handle: %d MTU: %d",
-                                     p_lcb->handle, mtu);
-                p_cmd += 2;
+                                     p_lcb->handle, rej_mtu);
             }
-            else if (rej_reason == L2CAP_CMD_REJ_INVALID_CID)
+
+            if (rej_reason == L2CAP_CMD_REJ_INVALID_CID)
             {
-                UINT16 rcid = (UINT16)(p_cmd[0] + (p_cmd[1] << 8));
-                UINT16 lcid = (UINT16)(p_cmd[2] + (p_cmd[3] << 8));
+                rcid = (UINT16)(p_cmd[0] + (p_cmd[1] << 8));
+                lcid = (UINT16)(p_cmd[2] + (p_cmd[3] << 8));
 
                 L2CAP_TRACE_WARNING2("L2CAP - rej with CID invalid, LCID: %d RCID: %d",
                                      lcid, rcid);
@@ -399,12 +421,13 @@ void process_l2cap_cmd(tL2C_LCB *p_lcb, UINT8 *p, UINT16 pkt_len)
 
         case L2CAP_CMD_CONN_REQ:
         {
-            UINT16 psm     = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
-            UINT16 src_cid = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
+            conn_info.psm = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
+            src_cid       = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
 
-            if ((p_rcb = l2cu_find_rcb_by_psm(psm)) == NULL)
+            if ((p_rcb = l2cu_find_rcb_by_psm(conn_info.psm)) == NULL)
             {
-                L2CAP_TRACE_WARNING1("L2CAP - rcvd conn req for unknown PSM: %d", psm);
+                L2CAP_TRACE_WARNING1("L2CAP - rcvd conn req for unknown PSM: %d",
+                                     conn_info.psm);
                 l2cu_reject_connection(p_lcb, src_cid, id, L2CAP_CONN_NO_PSM);
                 break;
             }
@@ -425,17 +448,15 @@ void process_l2cap_cmd(tL2C_LCB *p_lcb, UINT8 *p, UINT16 pkt_len)
 
         case L2CAP_CMD_CONN_RSP:
         {
-            UINT16 dst_cid = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
-            UINT16 src_cid = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
-
-            conn_info.rcid   = dst_cid;
+            conn_info.rcid   = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
+            src_cid          = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
             conn_info.result = (UINT16)(p_cmd[8] + (p_cmd[9] << 8));
             conn_info.status = (UINT16)(p_cmd[10] + (p_cmd[11] << 8));
 
             if ((p_ccb = l2cu_find_ccb_by_cid(p_lcb, src_cid)) == NULL)
             {
                 L2CAP_TRACE_WARNING2("L2CAP - no CCB for conn rsp, LCID: %d RCID: %d",
-                                     src_cid, dst_cid);
+                                     src_cid, conn_info.rcid);
                 break;
             }
 
@@ -463,79 +484,74 @@ void process_l2cap_cmd(tL2C_LCB *p_lcb, UINT8 *p, UINT16 pkt_len)
 
         case L2CAP_CMD_CONFIG_REQ:
         {
-            UINT16  local_cid   = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
-            UINT8  *p_opt       = p_cmd + 8;
-            UINT8  *p_opts      = p_opt;
-            BOOLEAN bad_opt     = FALSE;
-            UINT16  bad_opt_len = 0;
+            bad_opt     = FALSE;
+            bad_opt_len = 0;
+            local_cid   = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
+            cfg_info.flags  = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
+            p_cmd      += 8;
+            p_opts      = p_cmd;
+            cfg_info.flush_to_present = cfg_info.mtu_present =
+                cfg_info.qos_present = cfg_info.fcr_present = FALSE;
 
-            cfg_info.flags           = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
-            cfg_info.mtu_present     = FALSE;
-            cfg_info.qos_present     = FALSE;
-            cfg_info.flush_to_present = FALSE;
-            cfg_info.fcr_present     = FALSE;
-
-            while (p_opt < p)
+            while (p_cmd < p)
             {
-                UINT8 opt_type = p_opt[0];
-                UINT8 opt_len  = p_opt[1];
+                UINT8 opt_type = p_cmd[0];
+                UINT8 opt_len  = p_cmd[1];
 
-                p_opt += 2;
+                p_cmd += 2;
 
                 switch (opt_type & 0x7F)
                 {
                 case L2CAP_CFG_TYPE_MTU:
                     cfg_info.mtu_present = TRUE;
-                    STREAM_TO_UINT16(cfg_info.mtu, p_opt);
+                    STREAM_TO_UINT16(cfg_info.mtu, p_cmd);
                     break;
 
                 case L2CAP_CFG_TYPE_FLUSH_TOUT:
                     cfg_info.flush_to_present = TRUE;
-                    STREAM_TO_UINT16(cfg_info.flush_to, p_opt);
+                    STREAM_TO_UINT16(cfg_info.flush_to, p_cmd);
                     break;
 
                 case L2CAP_CFG_TYPE_QOS:
                     cfg_info.qos_present = TRUE;
-                    STREAM_TO_UINT8(cfg_info.qos.qos_flags, p_opt);
-                    STREAM_TO_UINT8(cfg_info.qos.service_type, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.token_rate, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.token_bucket_size, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.peak_bandwidth, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.latency, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.delay_variation, p_opt);
+                    STREAM_TO_UINT8(cfg_info.qos.qos_flags, p_cmd);
+                    STREAM_TO_UINT8(cfg_info.qos.service_type, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.token_rate, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.token_bucket_size, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.peak_bandwidth, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.latency, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.delay_variation, p_cmd);
                     break;
 
                 case L2CAP_CFG_TYPE_FCR:
                     cfg_info.fcr_present = TRUE;
-                    STREAM_TO_UINT8(cfg_info.fcr.mode, p_opt);
-                    STREAM_TO_UINT8(cfg_info.fcr.tx_win_sz, p_opt);
-                    STREAM_TO_UINT8(cfg_info.fcr.max_transmit, p_opt);
-                    STREAM_TO_UINT16(cfg_info.fcr.rtrans_tout, p_opt);
-                    STREAM_TO_UINT16(cfg_info.fcr.mon_tout, p_opt);
-                    STREAM_TO_UINT16(cfg_info.fcr.mps, p_opt);
+                    STREAM_TO_UINT8(cfg_info.fcr.mode, p_cmd);
+                    STREAM_TO_UINT8(cfg_info.fcr.tx_win_sz, p_cmd);
+                    STREAM_TO_UINT8(cfg_info.fcr.max_transmit, p_cmd);
+                    STREAM_TO_UINT16(cfg_info.fcr.rtrans_tout, p_cmd);
+                    STREAM_TO_UINT16(cfg_info.fcr.mon_tout, p_cmd);
+                    STREAM_TO_UINT16(cfg_info.fcr.mps, p_cmd);
                     break;
 
                 default:
-                    if (opt_len + 2 > cmd_len)
+                    if ((opt_len + 2) <= cmd_len)
                     {
-                        p_opt = p;
-                        break;
+                        p_cmd += opt_len;
+                        if (!(opt_type & 0x80))
+                        {
+                            bad_opt_len = (UINT16)(bad_opt_len + opt_len + 2);
+                            bad_opt = TRUE;
+                        }
                     }
-                    if (!(opt_type & 0x80))
+                    else
                     {
-                        bad_opt_len = (UINT16)(bad_opt_len + opt_len + 2);
-                        bad_opt = TRUE;
+                        p_cmd = p;
                     }
-                    p_opt += opt_len;
                     break;
                 }
             }
 
-            if ((p_ccb = l2cu_find_ccb_by_cid(p_lcb, local_cid)) == NULL)
-            {
-                l2cu_send_peer_cmd_reject(p_lcb, L2CAP_CMD_REJ_INVALID_CID, id, 0, 0);
-            }
-            else
+            if ((p_ccb = l2cu_find_ccb_by_cid(p_lcb, local_cid)) != NULL)
             {
                 p_ccb->remote_id = id;
 
@@ -550,59 +566,60 @@ void process_l2cap_cmd(tL2C_LCB *p_lcb, UINT8 *p, UINT16 pkt_len)
                     l2c_csm_execute(p_ccb, L2CEVT_L2CAP_CONFIG_REQ, &cfg_info);
                 }
             }
+            else
+            {
+                l2cu_send_peer_cmd_reject(p_lcb, L2CAP_CMD_REJ_INVALID_CID, id, 0, 0);
+            }
             break;
         }
 
         case L2CAP_CMD_CONFIG_RSP:
         {
-            UINT16 local_cid = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
-            UINT8 *p_opt     = p_cmd + 10;
+            local_cid   = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
+            cfg_info.flags  = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
+            cfg_info.result = (UINT16)(p_cmd[8] + (p_cmd[9] << 8));
+            p_cmd      += 10;
+            cfg_info.flush_to_present = cfg_info.mtu_present =
+                cfg_info.qos_present = cfg_info.fcr_present = FALSE;
 
-            cfg_info.flags           = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
-            cfg_info.result          = (UINT16)(p_cmd[8] + (p_cmd[9] << 8));
-            cfg_info.mtu_present     = FALSE;
-            cfg_info.qos_present     = FALSE;
-            cfg_info.flush_to_present = FALSE;
-            cfg_info.fcr_present     = FALSE;
-
-            while (p_opt < p)
+            while (p_cmd < p)
             {
-                UINT8 opt_type = p_opt[0];
-                UINT8 opt_len  = p_opt[1];
+                UINT8 opt_type = p_cmd[0];
+                UINT8 opt_len  = p_cmd[1];
 
-                p_opt += 2;
+                p_cmd += 2;
 
                 switch (opt_type & 0x7F)
                 {
                 case L2CAP_CFG_TYPE_MTU:
                     cfg_info.mtu_present = TRUE;
-                    STREAM_TO_UINT16(cfg_info.mtu, p_opt);
+                    STREAM_TO_UINT16(cfg_info.mtu, p_cmd);
                     break;
 
                 case L2CAP_CFG_TYPE_FLUSH_TOUT:
                     cfg_info.flush_to_present = TRUE;
-                    STREAM_TO_UINT16(cfg_info.flush_to, p_opt);
+                    STREAM_TO_UINT16(cfg_info.flush_to, p_cmd);
                     break;
 
                 case L2CAP_CFG_TYPE_QOS:
                     cfg_info.qos_present = TRUE;
-                    STREAM_TO_UINT8(cfg_info.qos.qos_flags, p_opt);
-                    STREAM_TO_UINT8(cfg_info.qos.service_type, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.token_rate, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.token_bucket_size, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.peak_bandwidth, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.latency, p_opt);
-                    STREAM_TO_UINT32(cfg_info.qos.delay_variation, p_opt);
+                    STREAM_TO_UINT8(cfg_info.qos.qos_flags, p_cmd);
+                    STREAM_TO_UINT8(cfg_info.qos.service_type, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.token_rate, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.token_bucket_size, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.peak_bandwidth, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.latency, p_cmd);
+                    STREAM_TO_UINT32(cfg_info.qos.delay_variation, p_cmd);
                     break;
 
                 case L2CAP_CFG_TYPE_FCR:
                     cfg_info.fcr_present = TRUE;
-                    STREAM_TO_UINT8(cfg_info.fcr.mode, p_opt);
-                    STREAM_TO_UINT8(cfg_info.fcr.tx_win_sz, p_opt);
-                    STREAM_TO_UINT8(cfg_info.fcr.max_transmit, p_opt);
-                    STREAM_TO_UINT16(cfg_info.fcr.rtrans_tout, p_opt);
-                    STREAM_TO_UINT16(cfg_info.fcr.mon_tout, p_opt);
-                    STREAM_TO_UINT16(cfg_info.fcr.mps, p_opt);
+                    STREAM_TO_UINT8(cfg_info.fcr.mode, p_cmd);
+                    STREAM_TO_UINT8(cfg_info.fcr.tx_win_sz, p_cmd);
+                    STREAM_TO_UINT8(cfg_info.fcr.max_transmit, p_cmd);
+                    STREAM_TO_UINT16(cfg_info.fcr.rtrans_tout, p_cmd);
+                    STREAM_TO_UINT16(cfg_info.fcr.mon_tout, p_cmd);
+                    STREAM_TO_UINT16(cfg_info.fcr.mps, p_cmd);
                     break;
 
                 default:
@@ -610,48 +627,54 @@ void process_l2cap_cmd(tL2C_LCB *p_lcb, UINT8 *p, UINT16 pkt_len)
                 }
             }
 
-            if ((p_ccb = l2cu_find_ccb_by_cid(p_lcb, local_cid)) == NULL)
+            if ((p_ccb = l2cu_find_ccb_by_cid(p_lcb, local_cid)) != NULL)
             {
-                L2CAP_TRACE_WARNING1("L2CAP - rcvd cfg rsp for unknown CID: %d",
-                                     local_cid);
-            }
-            else if (p_ccb->local_id != id)
-            {
-                L2CAP_TRACE_WARNING2("L2CAP - cfg rsp - bad ID. Exp: %d Got: %d",
-                                     p_ccb->local_id, id);
-            }
-            else if (cfg_info.result == L2CAP_CFG_OK)
-            {
-                l2c_csm_execute(p_ccb, L2CEVT_L2CAP_CONFIG_RSP, &cfg_info);
+                if (p_ccb->local_id != id)
+                {
+                    L2CAP_TRACE_WARNING2("L2CAP - cfg rsp - bad ID. Exp: %d Got: %d",
+                                         p_ccb->local_id, id);
+                }
+                else if (cfg_info.result == L2CAP_CFG_OK)
+                {
+                    l2c_csm_execute(p_ccb, L2CEVT_L2CAP_CONFIG_RSP, &cfg_info);
+                }
+                else
+                {
+                    l2c_csm_execute(p_ccb, L2CEVT_L2CAP_CONFIG_RSP_NEG, &cfg_info);
+                }
             }
             else
             {
-                l2c_csm_execute(p_ccb, L2CEVT_L2CAP_CONFIG_RSP_NEG, &cfg_info);
+                L2CAP_TRACE_WARNING1("L2CAP - rcvd cfg rsp for unknown CID: %d",
+                                     local_cid);
             }
             break;
         }
 
         case L2CAP_CMD_DISC_REQ:
         {
-            UINT16 dst_cid = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
-            UINT16 src_cid = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
+            dst_cid = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
+            src_cid = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
 
-            if ((p_ccb = l2cu_find_ccb_by_cid(p_lcb, dst_cid)) == NULL)
+            if ((p_ccb = l2cu_find_ccb_by_cid(p_lcb, dst_cid)) != NULL)
+            {
+                if (p_ccb->remote_cid == src_cid)
+                {
+                    p_ccb->remote_id = id;
+                    l2c_csm_execute(p_ccb, L2CEVT_L2CAP_DISCONNECT_REQ, &conn_info);
+                }
+            }
+            else
             {
                 l2cu_send_peer_disc_rsp(p_lcb, id, dst_cid, src_cid);
-            }
-            else if (p_ccb->remote_cid == src_cid)
-            {
-                p_ccb->remote_id = id;
-                l2c_csm_execute(p_ccb, L2CEVT_L2CAP_DISCONNECT_REQ, &conn_info);
             }
             break;
         }
 
         case L2CAP_CMD_DISC_RSP:
         {
-            UINT16 dst_cid = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
-            UINT16 src_cid = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
+            dst_cid = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
+            src_cid = (UINT16)(p_cmd[6] + (p_cmd[7] << 8));
 
             if ((p_ccb = l2cu_find_ccb_by_cid(p_lcb, src_cid)) != NULL)
             {
@@ -685,7 +708,8 @@ void process_l2cap_cmd(tL2C_LCB *p_lcb, UINT8 *p, UINT16 pkt_len)
             break;
 
         case L2CAP_CMD_INFO_REQ:
-            l2cu_send_peer_info_rsp(p_lcb, id, (UINT16)(p_cmd[4] + (p_cmd[5] << 8)));
+            info_type = (UINT16)(p_cmd[4] + (p_cmd[5] << 8));
+            l2cu_send_peer_info_rsp(p_lcb, id, info_type);
             break;
 
         case L2CAP_CMD_INFO_RSP:

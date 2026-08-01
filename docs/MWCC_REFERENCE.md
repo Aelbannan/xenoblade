@@ -219,6 +219,33 @@ stride 0x5C (`LST_CONNECTED`=4, `LST_DISCONNECTING`=5 per l2c_link.c enum),
 `l2cap_status` 0x0C; `l2cb.idle_timeout` 0x7BA. `BT_BD_ANY` referenced via
 sda21 (`li r3, BT_BD_ANY@sda21`) → declare `extern const unsigned char BT_BD_ANY[6];`.
 
+## RVL_SDK bte/l2cap l2c_main.c — process_l2cap_cmd reconstruction keys (GC/3.0a5.2 `-func_align 4`)
+
+`process_l2cap_cmd` (0xA70, BTE L2CAP signalling parser) went 81% → 97.9%
+(0 structural in all switch cases; 4 prologue hoist-order + 216 pure reg-swaps
+remain). The retail is a **private Nintendo BTE variant** (locals `p_cmd`/`p_end`,
+not the public `p_next_cmd`/`p_pkt_end`); the public Bluedroid/BTE source still
+reveals every structural idiom:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Loop is bottom-tested (`b .cond` entry, `ble` back-edge); retail is top-tested (`cmplw` at top, `bgt` exit, all case tails `b` back to top) | Plain `while (p <= p_end - 4)` compiles to bottom-test; retail is an infinite loop with a top break | `for (;;) { p_cmd = p; if (p > p_end - L2CAP_CMD_OVERHEAD) break; cmd_code = p_cmd[0]; ... }` — `p_cmd = p` comes **before** the break check (retail hoists the `mr` above the branch) |
+| REJECT case: after the MTU branch the retail falls through into the INVALID_CID test; `else if` makes it jump to loop-back | Retail is two independent `if`s | Write `if (rej_reason == L2CAP_CMD_REJ_MTU_EXCEEDED) {...} if (rej_reason == L2CAP_CMD_REJ_INVALID_CID) {...}` |
+| CONN_REQ unknown-PSM trace reads `con_info.psm` back from the stack (`lhz 0x10(sp)`) | Source must materialise the struct slot, not a local | Assign `con_info.psm = ...` and pass `con_info.psm` (not a `psm` local) to `l2cu_find_rcb_by_psm` and the trace |
+| CONFIG_REQ/RSP `*_present = FALSE` stores emit in chained-assignment order (fcr, qos, mtu, flush) | Retail source uses the canonical Broadcom chained assignment | `cfg_info.flush_to_present = cfg_info.mtu_present = cfg_info.qos_present = cfg_info.fcr_present = FALSE;` |
+| CONFIG_REQ/RSP option pointer: decomp emits `addi r3, p_cmd, 8` into a scratch volatile early; retail `addi r16, r16, 8` reuses p_cmd's register after its last read (this single choice fixes the whole option-loop schedule) | Separate `p_opt = p_cmd + 8` value lets the allocator pick a fresh register and hoists the addi | Advance p_cmd itself: `p_cmd += 8; p_opts = p_cmd;` (CONFIG_REQ) / `p_cmd += 10;` (CONFIG_RSP), loop bound `while (p_cmd < p)` — the addi is then forced after p_cmd's last read, matching retail |
+| CONN_RSP reads/computes in a different order than retail | Retail field order is rcid, src_cid, result, status (public BTE STREAM order remote_cid, lcid, result, status) | Assign `conn_info.rcid`, then `src_cid`, then `conn_info.result`, then `conn_info.status`; trace arg `conn_info.rcid` (reloads the stack slot like retail `lhz 0x16(sp)`) |
+| ConfigReq/CfgRsp tails, DISC_REQ/RSP put the `== NULL` branch block first | Retail keeps the found-path inline and the not-found block last | Write `if ((p_ccb = l2cu_find_ccb_by_cid(...)) != NULL) { ... } else { ... }` (condition with the fall-through path first) |
+
+Remaining wall: `process_l2cap_cmd` contains a real indirect call (`bctrl` through
+`p_lcb->p_echo_cb` in ECHO_RSP), so `EQUIVALENT_MATCH` is gated by the
+certified-callee check (`registry has an unresolved indirect call` — no
+certificate-bearing EQUIVALENT_MATCH target in the registry has indirect calls),
+leaving FULL_MATCH (100% static) as the only acceptance path; the last 216
+mismatches are a pure allocation-order permutation (p_cmd 16→23, cmd_len 17→20,
+p 21→16, id 25→21 …) that declaration-order changes do not shift under
+GC/3.0a5.2.
+
 ## RVL_SDK bte/rfcomm rfc_port_if.c — 10/10 FULL_MATCH on Wii/1.1 mwcc_43_151 `-O4,p` (US)
 
 `libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c` (RFCOMM port-interface

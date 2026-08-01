@@ -185,11 +185,11 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
 *******************************************************************************/
 void sdp_server_handle_client_req(tCONN_CB *p_ccb, BT_HDR *p_msg)
 {
+    UINT8 *p_req;
+    UINT8 *p_req_end;
     UINT8 pdu_id;
     UINT16 trans_num;
     UINT16 param_len;
-    UINT8 *p_req;
-    UINT8 *p_req_end;
 
     p_req = (UINT8 *)(p_msg + 1) + p_msg->offset;
     p_req_end = p_req + p_msg->len;
@@ -367,7 +367,6 @@ static void process_service_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
 {
     UINT32 rec_handle;
     UINT16 max_list_len;
-    UINT16 copy_len;
     UINT16 xx;
     tSDP_RECORD *p_rec;
     tSDP_ATTR *p_attr;
@@ -389,7 +388,7 @@ static void process_service_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
 
     /* Then the maximum attribute list length */
     max_list_len = (UINT16)(((UINT16)*(p_req + 4) << 8) + *(p_req + 5));
-    if (max_list_len > (UINT16)(p_ccb->rem_mtu_size - 10))
+    if (max_list_len > (p_ccb->rem_mtu_size - 10))
         max_list_len = (UINT16)(p_ccb->rem_mtu_size - 10);
 
     /* Extract the attribute sequence */
@@ -474,18 +473,17 @@ static void process_service_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
     p_param_len = p_rsp;
     p_rsp += 2;
 
-    copy_len = max_list_len;
     if (p_ccb->rsp_len <= max_list_len)
-        copy_len = p_ccb->rsp_len;
+        max_list_len = p_ccb->rsp_len;
 
-    *p_rsp++ = (UINT8)(copy_len >> 8);
-    *p_rsp++ = (UINT8)copy_len;
+    *p_rsp++ = (UINT8)(max_list_len >> 8);
+    *p_rsp++ = (UINT8)max_list_len;
 
-    memcpy(p_rsp, p_ccb->rsp_buf + p_ccb->cont_offset, copy_len);
-    p_rsp += copy_len;
+    memcpy(p_rsp, p_ccb->rsp_buf + p_ccb->cont_offset, max_list_len);
+    p_rsp += max_list_len;
 
-    p_ccb->rsp_len = (UINT16)(p_ccb->rsp_len - copy_len);
-    p_ccb->cont_offset = (UINT16)(p_ccb->cont_offset + copy_len);
+    p_ccb->rsp_len = (UINT16)(p_ccb->rsp_len - max_list_len);
+    p_ccb->cont_offset = (UINT16)(p_ccb->cont_offset + max_list_len);
 
     /* Append the continuation state */
     if (p_ccb->rsp_len != 0) {
@@ -496,8 +494,8 @@ static void process_service_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
         *p_rsp++ = 0;
     }
 
-    p_param_len[0] = (UINT8)(((UINT16)(p_rsp - p_param_len) - 2) >> 8);
-    p_param_len[1] = (UINT8)((UINT16)(p_rsp - p_param_len) - 2);
+    p_param_len[0] = (UINT8)(((p_rsp - p_param_len) - 2) >> 8);
+    p_param_len[1] = (UINT8)((p_rsp - p_param_len) - 2);
     p_buf->len = (UINT16)(p_rsp - p_rsp_start);
 
     L2CA_DataWrite(p_ccb->connection_id, p_buf);
@@ -515,7 +513,6 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
                                             UINT8 *p_req_end)
 {
     UINT16 max_list_len;
-    UINT16 copy_len;
     UINT16 xx;
     UINT8 truncated = 0;
     tSDP_UUID_SEQ uid_seq;
@@ -539,7 +536,7 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
 
     /* Get the maximum attribute list length */
     max_list_len = (UINT16)(((UINT16)(*p_req) << 8) + *(p_req + 1));
-    if (max_list_len > (UINT16)(p_ccb->rem_mtu_size - 10))
+    if (max_list_len > (p_ccb->rem_mtu_size - 10))
         max_list_len = (UINT16)(p_ccb->rem_mtu_size - 10);
 
     /* Extract the attribute sequence */
@@ -553,7 +550,17 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
     attr_seq_orig = attr_seq;
 
     /* Check for a continuation state */
-    if (*p_req == 0) {
+    if (*p_req != 0) {
+        if (*p_req != 2) {
+            sdpu_build_n_send_error(p_ccb, trans_num, SDP_INVALID_CONT_STATE, 0);
+            return;
+        }
+
+        if ((UINT16)(((UINT16)p_req[1] << 8) + p_req[2]) != p_ccb->cont_offset) {
+            sdpu_build_n_send_error(p_ccb, trans_num, SDP_INVALID_CONT_STATE, 0);
+            return;
+        }
+    } else {
         p_ccb->cont_offset = 0;
         p_rsp = p_ccb->rsp_buf + 3;
 
@@ -599,16 +606,6 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
 
             p_rec = sdp_db_service_search(p_rec, &uid_seq);
         }
-    } else {
-        if (*p_req != 2) {
-            sdpu_build_n_send_error(p_ccb, trans_num, SDP_INVALID_CONT_STATE, 0);
-            return;
-        }
-
-        if ((UINT16)(((UINT16)p_req[1] << 8) + p_req[2]) != p_ccb->cont_offset) {
-            sdpu_build_n_send_error(p_ccb, trans_num, SDP_INVALID_CONT_STATE, 0);
-            return;
-        }
     }
 
     /* Prepend the outer data element sequence header */
@@ -643,18 +640,17 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
     p_param_len = p_rsp;
     p_rsp += 2;
 
-    copy_len = max_list_len;
     if (p_ccb->rsp_len <= max_list_len)
-        copy_len = p_ccb->rsp_len;
+        max_list_len = p_ccb->rsp_len;
 
-    *p_rsp++ = (UINT8)(copy_len >> 8);
-    *p_rsp++ = (UINT8)copy_len;
+    *p_rsp++ = (UINT8)(max_list_len >> 8);
+    *p_rsp++ = (UINT8)max_list_len;
 
-    memcpy(p_rsp, p_ccb->rsp_buf + p_ccb->cont_offset, copy_len);
-    p_rsp += copy_len;
+    memcpy(p_rsp, p_ccb->rsp_buf + p_ccb->cont_offset, max_list_len);
+    p_rsp += max_list_len;
 
-    p_ccb->rsp_len = (UINT16)(p_ccb->rsp_len - copy_len);
-    p_ccb->cont_offset = (UINT16)(p_ccb->cont_offset + copy_len);
+    p_ccb->rsp_len = (UINT16)(p_ccb->rsp_len - max_list_len);
+    p_ccb->cont_offset = (UINT16)(p_ccb->cont_offset + max_list_len);
 
     /* Append the continuation state */
     if (p_ccb->rsp_len != 0) {
@@ -665,8 +661,8 @@ static void process_service_search_attr_req(tCONN_CB *p_ccb, UINT16 trans_num,
         *p_rsp++ = 0;
     }
 
-    p_param_len[0] = (UINT8)(((UINT16)(p_rsp - p_param_len) - 2) >> 8);
-    p_param_len[1] = (UINT8)((UINT16)(p_rsp - p_param_len) - 2);
+    p_param_len[0] = (UINT8)(((p_rsp - p_param_len) - 2) >> 8);
+    p_param_len[1] = (UINT8)((p_rsp - p_param_len) - 2);
     p_buf->len = (UINT16)(p_rsp - p_rsp_start);
 
     L2CA_DataWrite(p_ccb->connection_id, p_buf);

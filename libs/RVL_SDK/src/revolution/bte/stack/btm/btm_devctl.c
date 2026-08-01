@@ -5,6 +5,7 @@
 // touch (verified against build/us/asm/.../btm_devctl.s offsets).
 
 #include <string.h>
+#include <decomp.h>
 #include "revolution/BTE/stack/include/bt_types.h"
 #include "revolution/BTE/stack/include/hcidefs.h"
 
@@ -46,12 +47,16 @@ extern int  btsnd_hcic_read_bd_addr(void);
 extern void btsnd_hcic_change_name(void *p, UINT8 *p_name);
 extern void btsnd_hcic_vendor_spec_cmd(void *p, UINT16 opcode, UINT8 param_len,
                                        UINT8 *p_param_buf);
+extern void btm_sec_dev_reset(void);
+extern UINT8 BTM_SetInquiryMode(UINT8 mode);
+extern UINT8 BTM_SetPageScanType(UINT16 scan_type);
+extern UINT8 BTM_SetInquiryScanType(UINT16 scan_type);
 extern void btsnd_hcic_read_stored_key(void *p, UINT8 *bd_addr, UINT8 read_all);
 extern void btsnd_hcic_write_stored_key(void *p, UINT8 num_keys, UINT8 *bd_addr,
                                         UINT8 *link_key);
 extern UINT8 btsnd_hcic_delete_stored_key(UINT8 *bd_addr, UINT8 delete_all_flag);
 
-/* "TRUE"/"FALSE" strings — fixed-size externs so MWCC treats them as
+/* "TRUE"/"FALSE" strings -- fixed-size externs so MWCC treats them as
    small-data (sda21-accessed), matching the retail lbl_8066592C/34 relocs. */
 extern const char lbl_8066592C[5];   /* "TRUE"  */
 extern const char lbl_80665934[6];   /* "FALSE" */
@@ -65,12 +70,20 @@ typedef struct
 } BtuCbWii;
 extern BtuCbWii btu_cb;
 
+/* Wii-local timer list entry (retail layout: UINT32 event at 0x10) */
+typedef struct
+{
+    UINT8   _pad[0x10];
+    UINT32  event;                /* 0x10 */
+} BtmTimerListEnt;
+
 /* Default device class literal (retail bss symbol, sda21-accessed) */
 extern UINT8 lbl_80665928[DEV_CLASS_LEN];
 
 /* Trace level thresholds (from bt_trace.h) */
 #define BT_TRACE_LEVEL_API    3
 #define BT_TRACE_LEVEL_EVENT  4
+#define BT_TRACE_LEVEL_DEBUG  5
 
 /* ------------------------------------------------------------------ */
 /*  Return codes / constants (from btm_api.h)                          */
@@ -181,7 +194,9 @@ typedef struct
     UINT8               pin_type;                  /* 0x0020 */
     UINT8               pin_code_len;              /* 0x0021 */
     UINT8               pin_code[0x10];            /* 0x0022-0x0031 */
-    UINT8               _pad0[0x568 - 0x32];       /* 0x0032-0x0567 */
+    UINT8               _pad0[0x4C4 - 0x32];       /* 0x0032-0x04C3 */
+    UINT16              acl_pkt_types_supported;   /* 0x04C4 */
+    UINT8               _pad0b[0x568 - 0x4C6];     /* 0x04C6-0x0567 */
     tBTM_DEV_STATUS_CB *p_dev_status_cb;           /* 0x0568 */
     tBTM_VS_EVT_CB     *p_vend_spec_cb;            /* 0x056C */
     tBTM_CMPL_CB       *p_stored_link_key_cmpl_cb; /* 0x0570 */
@@ -225,7 +240,9 @@ typedef struct
     UINT16              inq_scan_period;           /* 0x16A2 */
     UINT16              inq_scan_type;             /* 0x16A4 */
     UINT16              page_scan_type;            /* 0x16A6 */
-    UINT8               _pad5b[0x27BD - 0x16A8];   /* 0x16A8-0x27BC */
+    UINT8               _pad5b[0x1908 - 0x16A8];   /* 0x16A8-0x1907 */
+    UINT8               page_scan_window_flag;     /* 0x1908 */
+    UINT8               _pad5c[0x27BD - 0x1909];   /* 0x1909-0x27BC */
     UINT8               afh_first;                 /* 0x27BD */
     UINT8               afh_last;                  /* 0x27BE */
     UINT8               _pad6[0x27C0 - 0x27BF];    /* 0x27BF */
@@ -234,6 +251,39 @@ typedef struct
 
 /* The real global */
 extern BtmDevctlCb btm_cb;
+
+/* ------------------------------------------------------------------ */
+/*  Device control block overlay (tBTM_DEVCB grouping, base btm_cb +   */
+/*  0x568).  Used only by btm_read_local_features_complete so the      */
+/*  retail's `p_devcb = &btm_cb.devcb` address shape is reproduced.    */
+/* ------------------------------------------------------------------ */
+typedef struct
+{
+    tBTM_DEV_STATUS_CB *p_dev_status_cb;           /* +0x000 = 0x0568 */
+    tBTM_VS_EVT_CB     *p_vend_spec_cb;            /* +0x004 = 0x056C */
+    tBTM_CMPL_CB       *p_stored_link_key_cmpl_cb; /* +0x008 = 0x0570 */
+    UINT8               timer[0x10];               /* +0x00C = 0x0574 */
+    UINT32              reserved_01C;              /* +0x01C = 0x0584 */
+    UINT32              reserved_020;              /* +0x020 = 0x0588 */
+    void               *p_reset_cmpl_cb;           /* +0x024 = 0x058C */
+    UINT8               local_name_timer[0x10];    /* +0x028 = 0x0590 */
+    UINT32              reserved_038;              /* +0x038 = 0x05A0 */
+    UINT32              reserved_03C;              /* +0x03C = 0x05A4 */
+    tBTM_CMPL_CB       *p_local_name_cmpl_cb;      /* +0x040 = 0x05A8 */
+    UINT8               _pad[0xC8 - 0x44];         /* +0x044-0x0C7 */
+    BD_ADDR             local_addr;                /* +0x0C8 = 0x0630 */
+    BtmLocalVersionInfo local_version;             /* +0x0CE = 0x0636 */
+    BD_FEATURES         local_features;            /* +0x0D8 = 0x0640 */
+    DEV_CLASS           dev_class;                 /* +0x0E0 = 0x0648 */
+    UINT8               _pad2;                     /* +0x0E3 = 0x064B */
+    UINT16              page_timeout;              /* +0x0E4 = 0x064C */
+    UINT8               state;                     /* +0x0E6 = 0x064E */
+    UINT8               rst_retry;                 /* +0x0E7 = 0x064F */
+    UINT8               rsp_pending;               /* +0x0E8 = 0x0650 */
+    UINT8               _pad3[0xEC - 0xE9];        /* +0x0E9-0x0EB */
+    UINT16              default_page_scan_interval;/* +0x0EC = 0x0654 */
+    UINT16              default_page_scan_window;  /* +0x0EE = 0x0656 */
+} BtmDevcbWii;
 
 /* ------------------------------------------------------------------ */
 /*  btm_dev_init - initialize the device control block and issue the  */
@@ -373,7 +423,130 @@ tBTM_STATUS BTM_SetAfhChannels(UINT8 first, UINT8 last)
     return BTM_SUCCESS;
 }
 
-void btm_dev_timeout() {}
+/* ------------------------------------------------------------------ */
+/*  btm_dev_timeout - timer callback for the device reset / local     */
+/*  name timers.                                                      */
+/* ------------------------------------------------------------------ */
+void btm_dev_timeout(BtmTimerListEnt *p_tle)
+{
+    UINT8 *p_name;
+    void  *p_buf;
+    void  *p_buf2;
+
+    /* Check if this is the device reset timer */
+    if (p_tle->event == 1)   /* BTU_TTYPE_BTM_DEV_RST */
+    {
+        switch (btm_cb.state)
+        {
+        case BTM_DEV_STATE_WAIT_RESET:              /* 0 */
+            btm_cb.state = BTM_DEV_STATE_WAIT_RESET;
+            btm_cb.rst_retry = BTM_DEV_RESET_RETRY_NUM;
+            btu_start_timer(&btm_cb.timer, 1, 4);
+            btsnd_hcic_reset();
+            break;
+
+        case BTM_DEV_STATE_WAIT_AFTER_RESET:        /* 1 */
+            btm_cb.state = BTM_DEV_STATE_WAIT_BUF_SIZE;
+            btm_cb.rst_retry = BTM_DEV_RESET_RETRY_NUM - 1;
+            if (btm_cb.rst_retry == 0)
+            {
+                /* no more retries: restart the reset */
+                btm_cb.rst_retry = BTM_DEV_RESET_RETRY_NUM - 1;
+                btm_cb.state = BTM_DEV_STATE_WAIT_FEATURES;
+                btu_start_timer(&btm_cb.timer, 1, 4);
+                btsnd_hcic_reset();
+            }
+            else
+            {
+                /* Continue the device init sequence */
+                btu_start_timer(&btm_cb.timer, 1, 1);
+                p_buf = GKI_getpoolbuf(2);
+                if (p_buf != NULL)
+                    btsnd_hcic_read_buffer_size(p_buf);
+            }
+
+            /* Send the device class (inlined BTM_SetDeviceClass) */
+            memcpy(btm_cb.dev_class, btm_cb.dev_class, DEV_CLASS_LEN);
+            if (btm_cb.state != BTM_DEV_STATE_WAIT_RESET &&
+                btm_cb.state != BTM_DEV_STATE_WAIT_AFTER_RESET)
+            {
+                p_buf = GKI_getpoolbuf(2);
+                if (p_buf != NULL)
+                    btsnd_hcic_write_dev_class(p_buf, btm_cb.dev_class);
+            }
+
+            /* Send the local device name if set */
+            p_name = btm_cb.bd_name;
+            if (p_name != NULL)
+            {
+                if (btm_cb.state != BTM_DEV_STATE_WAIT_RESET &&
+                    btm_cb.state != BTM_DEV_STATE_WAIT_AFTER_RESET)
+                {
+                    p_buf2 = GKI_getpoolbuf(2);
+                    if (p_buf2 != NULL)
+                    {
+                        if (btm_cb.bd_name != p_name)
+                        {
+                            memset(p_name, 0, 0x20);
+                            strncpy((char *)p_name, (const char *)p_name, 0x1F);
+                        }
+                        btsnd_hcic_change_name(p_buf2, p_name);
+                    }
+                }
+            }
+
+            /* Send the pin type */
+            BTM_SetPinType(btm_cb.pin_type, btm_cb.pin_code, btm_cb.pin_code_len);
+            break;
+
+        case BTM_DEV_STATE_WAIT_BUF_SIZE:           /* 2 */
+            btm_cb.rst_retry--;
+            if (btm_cb.rst_retry == 0)
+            {
+                /* no more retries: restart the reset */
+                btm_cb.state = BTM_DEV_STATE_WAIT_RESET;
+                btm_cb.rst_retry = BTM_DEV_RESET_RETRY_NUM;
+                btu_start_timer(&btm_cb.timer, 1, 4);
+                btsnd_hcic_reset();
+            }
+            else
+            {
+                btu_start_timer(&btm_cb.timer, 1, 1);
+                p_buf = GKI_getpoolbuf(2);
+                if (p_buf != NULL)
+                    btsnd_hcic_read_buffer_size(p_buf);
+            }
+            break;
+
+        case BTM_DEV_STATE_WAIT_LOCAL_VER:          /* 3 */
+            btm_cb.rst_retry--;
+            if (btm_cb.rst_retry == 0)
+            {
+                /* no more retries: restart the reset */
+                btm_cb.state = BTM_DEV_STATE_WAIT_RESET;
+                btm_cb.rst_retry = BTM_DEV_RESET_RETRY_NUM;
+                btu_start_timer(&btm_cb.timer, 1, 4);
+                btsnd_hcic_reset();
+            }
+            else
+            {
+                btu_start_timer(&btm_cb.timer, 1, 1);
+                btsnd_hcic_read_local_ver();
+                btsnd_hcic_read_bd_addr();
+                btm_pm_reset();
+            }
+            break;
+        }
+    }
+    else if (p_tle->event == 2)   /* BTU_TTYPE_BTM_LOCAL_NAME */
+    {
+        tBTM_CMPL_CB *p_cb = btm_cb.p_local_name_cmpl_cb;
+
+        btm_cb.p_local_name_cmpl_cb = NULL;
+        if (p_cb != NULL)
+            (*p_cb)(NULL);
+    }
+}
 
 /* ------------------------------------------------------------------ */
 /*  btm_reset_complete - HCI reset command complete event.            */
@@ -540,7 +713,149 @@ void btm_read_local_version_complete(UINT8 *p, UINT16 evt_len)
     }
 }
 
-void btm_read_local_features_complete() {}
+/* ------------------------------------------------------------------ */
+/*  btm_read_local_features_complete - HCI read local features         */
+/*  command complete event.  Save the feature set and finalise the    */
+/*  device parameters (scan windows, packet types, AFH channels).     */
+/* ------------------------------------------------------------------ */
+void btm_read_local_features_complete(UINT8 *p)
+{
+    BtmDevcbWii *cb = (BtmDevcbWii *)((UINT8 *)&btm_cb + 0x568);
+    UINT8 afh_last;
+    tBTM_CMPL_CB *p_cb;
+    UINT8 afh_first;
+
+    p_cb = cb->p_reset_cmpl_cb;
+    cb->p_reset_cmpl_cb = NULL;
+
+    if (p[0] == HCI_SUCCESS)
+    {
+        /* The device is now ready */
+        cb->state = BTM_DEV_STATE_READY;
+
+        /* Save the local features */
+        cb->local_features[0] = p[1];
+        cb->local_features[1] = p[2];
+        cb->local_features[2] = p[3];
+        cb->local_features[3] = p[4];
+        cb->local_features[4] = p[5];
+        cb->local_features[5] = p[6];
+        cb->local_features[6] = p[7];
+        cb->local_features[7] = p[8];
+
+        /* Update the page scan interval */
+        cb->default_page_scan_interval = 0x18;
+        if (cb->local_features[0] & 0x01)
+            cb->default_page_scan_interval |= 0x0C00;
+        if (cb->local_features[0] & 0x02)
+            btm_cb.default_page_scan_interval |= 0xC000;
+
+        if (btm_cb.local_version.hci_version >= 3)
+        {
+            if (!(cb->local_features[3] & 0x02))
+                btm_cb.default_page_scan_interval |= 0x1102;
+            if (!(cb->local_features[3] & 0x04))
+                btm_cb.default_page_scan_interval |= 0x2204;
+            if ((cb->local_features[3] & 0x02) ||
+                (cb->local_features[3] & 0x04))
+            {
+                if (!(cb->local_features[4] & 0x80))
+                    btm_cb.default_page_scan_interval |= 0x0300;
+                if (!(cb->local_features[5] & 0x01))
+                    btm_cb.default_page_scan_interval |= 0x3000;
+            }
+        }
+
+        if (btm_cb.trace_level >= BT_TRACE_LEVEL_DEBUG)
+            LogMsg_1(0xD0004, "Local supported ACL packet types: 0x%04x",
+                     (const char *)btm_cb.default_page_scan_interval);
+
+        /* Update the page scan window */
+        btm_cb.default_page_scan_window = 0;
+        btm_cb.page_scan_window_flag = 0;
+        if (cb->local_features[1] & 0x08)
+        {
+            btm_cb.default_page_scan_window = 1;
+            if (cb->local_features[1] & 0x10)
+                btm_cb.default_page_scan_window |= 0x02;
+            if (cb->local_features[1] & 0x20)
+                btm_cb.default_page_scan_window |= 0x04;
+        }
+        if (cb->local_features[3] & 0x80)
+            btm_cb.default_page_scan_window |= 0x08;
+        if (cb->local_features[4] & 0x01)
+            btm_cb.default_page_scan_window |= 0x10;
+        if (cb->local_features[4] & 0x02)
+            btm_cb.default_page_scan_window |= 0x20;
+
+        if (btm_cb.default_page_scan_window & 0x38)
+        {
+            btm_cb.page_scan_window_flag = 1;
+            if (cb->local_features[5] & 0x20)
+            {
+                if (!(cb->local_features[5] & 0x80))
+                    btm_cb.default_page_scan_window |= 0x0100;
+            }
+            else
+                btm_cb.default_page_scan_window |= 0x0140;
+            if (cb->local_features[5] & 0x40)
+            {
+                if (!(cb->local_features[5] & 0x80))
+                    btm_cb.default_page_scan_window |= 0x0200;
+            }
+            else
+                btm_cb.default_page_scan_window |= 0x0280;
+        }
+
+        if (btm_cb.trace_level >= BT_TRACE_LEVEL_DEBUG)
+            LogMsg_1(0xD0004, "Local supported SCO packet types: 0x%04x",
+                     (const char *)btm_cb.default_page_scan_window);
+
+        /* Supported ACL packet types */
+        if (cb->local_features[0] & 0x20)
+            btm_cb.acl_pkt_types_supported |= 0x0001;
+        else
+            btm_cb.acl_pkt_types_supported &= 0xFFFE;
+        if (cb->local_features[0] & 0x40)
+            btm_cb.acl_pkt_types_supported |= 0x0002;
+        else
+            btm_cb.acl_pkt_types_supported =
+                (UINT16)DECOMP_PPC_RLWINM(btm_cb.acl_pkt_types_supported, 0, 31, 29);
+        if (cb->local_features[0] & 0x80)
+            btm_cb.acl_pkt_types_supported |= 0x0004;
+        else
+            btm_cb.acl_pkt_types_supported =
+                (UINT16)DECOMP_PPC_RLWINM(btm_cb.acl_pkt_types_supported, 0, 30, 28);
+        if (cb->local_features[1] & 0x01)
+            btm_cb.acl_pkt_types_supported |= 0x0008;
+        else
+            btm_cb.acl_pkt_types_supported =
+                (UINT16)DECOMP_PPC_RLWINM(btm_cb.acl_pkt_types_supported, 0, 29, 27);
+
+        btm_sec_dev_reset();
+
+        /* Restore the AFH channels if they were changed */
+        afh_last = btm_cb.afh_last;
+        if (afh_last != 0xFF)
+        {
+            afh_first = btm_cb.afh_first;
+            btm_cb.afh_last = 0xFF;
+            btm_cb.afh_first = 0xFF;
+            BTM_SetAfhChannels(afh_first, afh_last);
+        }
+
+        if (cb->local_features[3] & 0x40)
+            BTM_SetInquiryMode(1);
+        BTM_SetPageScanType(1);
+        BTM_SetInquiryScanType(1);
+
+        /* Notify the application that the device is ready */
+        if (btm_cb.p_dev_status_cb != NULL)
+            (*btm_cb.p_dev_status_cb)(0);
+        if (p_cb != NULL)
+            (*p_cb)(NULL);
+    }
+}
 
 /* ------------------------------------------------------------------ */
 /*  BTM_SetLocalDeviceName - store the local device name and send it  */

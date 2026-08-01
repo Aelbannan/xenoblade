@@ -155,10 +155,10 @@ function was dead-stripped but the pooled literals survived) between the
 by 0x78; equivalence there is additionally blocked until `LogMsg` (us-802e0830,
 bte_logmsg) is accepted.
 
-### btm_devctl.c — 10× FULL_MATCH on GC/3.0a5.2 (`btm_db_reset`, `BTM_SetAfhChannels`,
+### btm_devctl.c — 12× FULL_MATCH on GC/3.0a5.2 (`btm_db_reset`, `BTM_SetAfhChannels`,
 `btm_reset_complete`, `btm_read_hci_buf_size_complete`, `btm_read_local_version_complete`,
 `BTM_SetLocalDeviceName`, `BTM_VendorSpecificCommand`, `BTM_ReadStoredLinkKey`,
-`BTM_WriteStoredLinkKey`, `BTM_DeleteStoredLinkKey`)
+`BTM_WriteStoredLinkKey`, `BTM_DeleteStoredLinkKey`, `btm_dev_timeout`, `btm_read_local_features_complete`)
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
@@ -180,12 +180,25 @@ local-name timer 0x590, `p_local_name_cmpl_cb` 0x5A8, `p_vsc_callback` 0x61C,
 (matches `tBTM_VERSION_INFO`: u8 hci_version, u16 hci_revision, u8 lmp_version,
 u16 manufacturer, u16 lmp_subversion), `local_features` 0x640, `dev_class` 0x648,
 `page_timeout` 0x64C, `state` 0x64E, `rst_retry` 0x64F, `rsp_pending` 0x650,
+`acl_pkt_types_supported` 0x4C4, `page_scan_window_flag` 0x1908,
 inq/page scan vars 0x169C–0x16A6, `afh_first`/`afh_last` 0x27BD/0x27BE,
 `trace_level` 0x27C0. Device state enum in this build: 0 WAIT_RESET,
 1 WAIT_AFTER_RESET (checked but never set), 2 WAIT_BUF_SIZE, 3 WAIT_LOCAL_VER,
 4 WAIT_FEATURES, 5 READY (`BTM_IsDeviceUp` tests `== 5`). `btu_cb` has
 `hcit_acl_data_size` 0x7C / `hcit_acl_pkt_size` 0x7E (flat layout; the btu.h
 `tBTU_CB` does not match).
+
+New in this session (`btm_dev_timeout`, `btm_read_local_features_complete` → FULL_MATCH):
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `btm_dev_timeout` state==1 tail: base/buffer registers swapped (`p_name` r31↔r30, `p_buf2` r30↔r31) vs the identical `btm_reset_complete` tail | Locals declared `void *p_buf; void *p_buf2; UINT8 *p_name;` — MWCC colours the name-section pool buffer into the first callee-saved reg because `p_name` (== &btm_cb) is declared last | Declare `UINT8 *p_name; void *p_buf; void *p_buf2;` — declaration order drives the Chaitin order (first declared needing a callee-saved reg → r31). Same local split (`p_buf2`) as `btm_reset_complete`'s name section |
+| `btm_read_local_features_complete` cb/string base registers swapped (cb r30↔r31, string base r31↔r30) — 38 pure reg-swaps | `BtmDevctlCb *cb = &btm_cb;` (plain object address) makes MWCC allocate the pooled-string base into r31 before `cb`; retail's `tBTM_DEVCB *p_devcb = &btm_cb.devcb` (sub-object address, +0x568 folded into the access offsets) allocates `cb` into r31 first | Init the pointer as a sub-object address: `BtmDevcbWii *cb = (BtmDevcbWii *)((UINT8 *)&btm_cb + 0x568);` with a devcb-relative overlay struct (offsets +0x0 p_dev_status_cb … +0xEE default_page_scan_window). MWCC folds the +0x568 into the lwz/sth offsets, so the emitted bytes are identical, but the IR address shape restores the retail allocation |
+| `& 0x0700` window test emits `rlwinm 21,23`; retail `rlwinm. r0,r3,0,26,28` | Halfword in bits 16–31: `& 0x38` (bits 3–5) is PPC bits 26–28; `& 0x0700` is bits 21–23 (a different mask) | Write the literal the retail tested: `if (btm_cb.default_page_scan_window & 0x38)` |
+| `acl_pkt_types_supported &= 0xFFFD/0xFFFB/0xFFF7` emits `andi.`; retail `rlwinm r0,r0,0,31,29 / 30,28 / 29,27` (wrap masks) | MWCC picks `andi.` for wrap (MB>ME) 16-bit masks; the retail used wrap rlwinm | Use the approved `DECOMP_PPC_RLWINM(field, 0, 31, 29)` (and 30,28 / 29,27) — log `policy_exception` in attempts.jsonl (plan.md §17.6 infra; see `GXFifo.c`) |
+| Unit `.text` over split budget by 0x88 with all functions byte-identical | Default bte cflags add `-func_align 16`, but the retail btm_devctl objects are back-to-back packed (4-aligned) | `extra_cflags=["-func_align 4"]` (same as btm_sec/inq/acl/discovery) — packs .text to exactly the retail budget |
+| AFH restore: afh_first load hoisted before the branch (structural) | Assigning `afh_first = btm_cb.afh_first;` before `if (afh_last != 0xFF)` makes MWCC load it before the compare | Move the afh_first assignment inside the `if (afh_last != 0xFF)` body (loads in retail order: afh_last, compare, branch, then afh_first) |
+| `BTM_SetAfhChannels(first, last)` inside the AFH restore reproduces the retail inline exactly (feature checks + compare + `btsnd_hcic_set_afh_channels` + stores) | The retail inlined the same-TU `BTM_SetAfhChannels` (same-TU non-static + `-inline auto`) | Write the call; do not hand-inline it (manual paste keeps the callee's Chaitin colors — MWCC_REFERENCE line 118) |
 
 ### btm_inq.c — 4× FULL_MATCH, 6× EQUIVALENT-ready (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
 

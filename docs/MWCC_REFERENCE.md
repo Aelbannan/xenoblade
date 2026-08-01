@@ -1765,7 +1765,14 @@ The buffer-param builders hoist **all** `li`s before the first store.
 
 - **`GetMemSize` (~45.7%)**: best high-level keeps the retail add chain
   (`early[7] + (u32)(s32)(32000*preDelayTimeMax) + filter[6][0..3]) * 12` with a
-  `filter0` local). Under `-O4,p`, MWCC always emits `lfs`/`lis` before `stwu`,
+  `filter0` local). Re-verified 2026-08-01: the exact best shape is six locals
+  (`e7 = __EarlySizeTable[7]; f0..f3 = __FilterSizeTable[6][0..3]; ival =
+  (u32)(s32)(32000.0f * reverb->preDelayTimeMax); tot = e7 + ival; tot += f0..f3;`)
+  — `tot = e7 + ival` (a sum, not `+=`) gives the exact retail first-add encoding
+  `add r6, r7, r6`, and the whole add chain + `mulli` + epilogue land at 100%
+  (45.667% overall, 13/24 mm: 11 structural order + 2 reg-swap). Scheduler output
+  is invariant to statement order (e7-first vs ival-first vs loads-first) and to
+  `-O4,s` (identical to `-O4,p`). Under `-O4,p`, MWCC always emits `lfs`/`lis` before `stwu`,
   fills `fmuls` latency with `early[7]` then `filter[0]` (never `filter[0]`
   *before* `fmuls`), and places `filter[3]` after `stfd` (retail: between
   `fctiwz` and `stfd`). `#pragma scheduling off` gets `stwu` first but destroys

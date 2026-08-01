@@ -200,8 +200,7 @@ void port_release_port(RfcPort* port)
     }
 
     if (port->mcb != NULL) {
-        u8* mcb_bytes = (u8*)port->mcb;
-        mcb_bytes[0x24 + port->dlci2] = 0;
+        port->mcb->dlci_port_map[port->dlci2] = 0;
         rfc_check_mcb_active(port->mcb);
     }
 

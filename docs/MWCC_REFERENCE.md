@@ -4224,6 +4224,45 @@ fill with `data.sco_inx = xx` (the r30 loop-counter store), and
 inside the match (NULL cback also returns) — the `UINT16 xx` counter type from
 the original source is exact under GC.
 
+**btm_sco — count + trace patterns (btm_sco_removed / btm_num_sco_links_active → FULL_MATCH,
+BTM_ChangeEScoLinkParms → 97.5%, US):**
+- **Active-link count pattern:** the retail counts SCO links in states
+  `[SCO_ST_W4_CONN_RSP, SCO_ST_PEND_UNPARK]` (2..6) with an *unrolled pointer loop*
+  containing a dense `switch (p->state)` (5 case labels). MWCC unrolls the
+  `for (xx = 0; xx < 3; xx++, p++)` loop, folds each entry offset into a base
+  displacement (`lhz r0,0x185c/0x1890/0x18c4(r4)`), lowers each dense range to
+  `cmpwi 7; bge; cmpwi 2; bge; b` (out-of-line body, signed compares), folds the
+  first `num_active++` (0→1) to `li r3,1`, and emits NO UINT8 masks (switch bodies
+  skip the truncation). An `if (state >= 2 && state < 7)` form instead gives
+  inline bodies, cmplwi, and clrlwi masks — must be the switch.
+- **`btm_sco_removed` calls `btm_num_sco_links_active()` and MWCC inlines it** — but
+  only when the callee is the compact *pointer-loop* form; the equivalent explicit
+  3-block switch form is too big to auto-inline (emits a `bl`). The caller must
+  assign `p = btm_cb.sco_db` *after* the count (`tSCO_CONN *p;` uninitialized) or
+  MWCC hoists `&sco_db[0]` eagerly into r31 and the register allocation diverges.
+- **`btm_cb` must be declared as the retail-layout type in the TU** (`#define btm_cb
+  btm_cb_sdk` before the btm_int.h include, then `extern tBTM_CB_LOCAL btm_cb;`,
+  btm_pm.c pattern). With the header's wrong-layout `tBTM_CB`, `SCO_CB->` accesses
+  are a real cast: MWCC re-materializes the base per block and defers/eagerly
+  allocates differently (e.g. the removed-loop's r31/r30 split). With the same-type
+  extern the cast is a no-op and all three functions match byte-for-byte.
+- **String pool base-var (this TU):** `char *trace_pool = "btm_esco_conn_rsp -> No
+  Resources";` + `trace_pool + 0x8c/0x248/0x28c` reproduces the retail's
+  `lis/addi r30, @1903` + offset pattern and emits an `@N` label reloc instead of
+  `...data.0` + section offset (gki_buffer base-var rule; pool ≥ ~7 strings).
+- **BTM_ChangeEScoLinkParms regalloc float (STALLED, like rfc_send_test):** the
+  remaining 33 structural diffs are a pure regalloc/scheduling float on GC/3.0a5.2:
+  the eSCO temp lands in r26 (retail r27) and the second trace check reuses the
+  btm_cb base register kept across the LogMsg_1 call (retail reloads `lis/addi` per
+  check). Reproduced under every source shape tried (inline checks, raw/volatile
+  trace_level reads, static trace helpers, declaration orders, `#pragma scheduling
+  off` (worse), `-ipa off`, GC/3.0a3.4). Consequence: decomp saves r26-r31
+  (`_savegpr_26`) vs retail r27-r31, and the SMT memory observable flags the extra
+  r1+0x1c save slot (`stack_private` is disabled after EABI-helper calls) as
+  `different final arrays`. Callee certificates for btsnd_hcic_change_conn_type /
+  btsnd_hcic_setup_esco_conn were regenerated (stale capability sets vs current
+  checker) to get this far.
+
 ## RVL WUD — debug strings via `extern lbl_805xxxxx[]` labels, not literals (US, 10× matched)
 
 `libs/RVL_SDK/src/revolution/wud/WUD.c` — 10 targets

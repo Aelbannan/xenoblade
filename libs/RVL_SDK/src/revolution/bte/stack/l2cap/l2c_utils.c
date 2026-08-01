@@ -362,8 +362,12 @@ void l2cu_send_peer_cmd_reject (tL2C_LCB *p_lcb, UINT16 reason, UINT8 local_id,
 {
     BT_HDR *p_buf;
     UINT8  *p;
-    UINT16 rej_len = (reason == L2CAP_CMD_REJ_MTU_EXCEEDED) ? 2
-                   : (reason == L2CAP_CMD_REJ_INVALID_CID)  ? 4 : 0;
+    UINT16 rej_len;
+
+    if (reason == L2CAP_CMD_REJ_MTU_EXCEEDED)
+        rej_len = 2;
+    else
+        rej_len = (reason == L2CAP_CMD_REJ_INVALID_CID) ? 4 : 0;
 
     if ((p_buf = l2cu_build_header (p_lcb->handle, (UINT16)(rej_len + 2),
                                     L2CAP_CMD_REJECT, local_id)) == NULL)

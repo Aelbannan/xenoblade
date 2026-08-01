@@ -199,6 +199,26 @@ function was dead-stripped but the pooled literals survived) between the
 by 0x78; equivalence there is additionally blocked until `LogMsg` (us-802e0830,
 bte_logmsg) is accepted.
 
+## RVL_SDK bte/l2cap l2c_api.c — string-pool emission order and -ipa (US, mwcc_43_151 `-O4,p`)
+
+`libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c` is now **100% byte-identical
+(all 13 functions, unit .text == 0xBCC == split budget)** on GC/3.0a5.2
+`-func_align 4` with **default `-ipa file`** (not `-ipa off`):
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `addi r4,r31,imm` pooled-string immediates wrong in DataWrite/Register/ConnectReq/ConnectRsp (e.g. `0x30` vs retail `0x49C`); every other function byte-identical | `-ipa off` makes MWCC emit the TU string pool in **reverse function order** (pool anchor = last function's first string), while the retail pool is forward-ordered (anchor = first string, `@1653`). Direct `lis/addi` string refs (ConfigReq, DisconnectReq, …) are unaffected, so the unit can look fully matched while pooled-string functions are off by the cumulative pool size | Use `-ipa file` (default) for the unit; the pool then emits in forward order and matches the retail layout once every preceding function's strings exist. Verified 0 regressions on all 12 pre-matched functions when dropping `-ipa off` |
+| Pooled-string immediates still wrong with `-ipa file` | The TU pool only contains strings for implemented functions; retail pool carries strings for the whole source file (Register×4, ConnectReq×8, ConnectRsp×5 before DataWrite's strings at +0x49C/+0x4C4/+0x4F0) | Reconstruct the preceding functions with their exact trace/warning strings (donor Broadcom form); the pool then lays out identically and DataWrite's pooled refs become byte-exact |
+| `L2CA_Register` struct copy `p_rcb->api = *p_cb_info` emits 0x2C-byte copy, retail 0x28 | Header `tL2CAP_APPL_INFO` adds `pL2CA_TxComplete_Cb` (11 callbacks); retail has 10 (0x28) | Local `typedef struct { void (*cb[10])(void); } tL2C_APPL_INFO10;` in the TU, `p_rcb->api = *(tL2C_APPL_INFO10 *)p_cb_info;` |
+| `L2CA_SetIdleTimeoutByBdAddr` loop unrolls to `lbz` base+offset form, retail `lbzu` induction pointer | Declaring/reusing the outer `p_lcb` with an `INT16` counter; retail comes from the canonical form | Inner shadowed decl `tL2C_LCB *p_lcb = &l2cb.lcb_pool[0];` + `int xx;` loop counter (donor form) → MWCC unrolls with `lbzu r0,0x64(r3)` exactly |
+
+Retail layout facts verified against l2c_api.s: `l2cb.lcb_pool[0]` at l2cb+0x08,
+stride 0x5C (`LST_CONNECTED`=4, `LST_DISCONNECTING`=5 per l2c_link.c enum),
+`tL2C_CCB.local_cid` 0x14, `p_rcb` 0x30, `remote_id` 0x36, `out_mtu` 0x3A;
+`tL2C_LCB.cong_sent` 0x41, `idle_timeout` 0x58; `tL2C_CONN_INFO.l2cap_result` 0x0A,
+`l2cap_status` 0x0C; `l2cb.idle_timeout` 0x7BA. `BT_BD_ANY` referenced via
+sda21 (`li r3, BT_BD_ANY@sda21`) → declare `extern const unsigned char BT_BD_ANY[6];`.
+
 ## RVL_SDK bte/rfcomm rfc_port_if.c — 10/10 FULL_MATCH on Wii/1.1 mwcc_43_151 `-O4,p` (US)
 
 `libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c` (RFCOMM port-interface
@@ -4441,6 +4461,22 @@ second check, `result` stays in a callee-saved reg across the success path's cal
 while `hidh_sec_check_complete_term` is `if/else if (res != BTM_SUCCESS)` (success
 jumps over the else-if). Mixing the shapes costs a full register-allocation cascade.
 The intr-fail block ends with an explicit `return;` to jump straight to the epilogue.
+
+### 7. hidh_api.c — same GC/3.0a5.2 family; keep the "redundant" post-scan `if (i == N)` separate
+
+`HID_HostAddDev` (0x190) and `HID_HostCloseDev` (0xA0) are 100% FULL_MATCH under the
+same `GC/3.0a5.2 + -func_align 4 + -ipa off` config as hidh_conn.c (retail hidh
+unit). Patterns:
+- **Do NOT nest the no-resources check inside the free-slot scan `if`.** Nesting lets
+  MWCC fuse the post-loop `cmpwi r29,16; bne` into the preceding branch (branch at the
+  "found by address" exit skips straight past the `li r3,3`), but retail keeps BOTH
+  checks — write the scan as its own `if (i == HID_HOST_MAX_DEVICES) { scan }` followed
+  by a SEPARATE `if (i == HID_HOST_MAX_DEVICES) return HID_ERR_NO_RESOURCES;`.
+- `int i` (not `UINT8`) for the 16-slot find loops; GC then strength-reduces
+  `devices[i].addr` to a running pointer (`addi r31,r31,0x34`) and unrolls the in_use
+  scan ×8 (`mtctr 2`), matching retail exactly.
+- The two functions are byte-identical with 0 structural mismatches; unit .text
+  0x9D4 vs 0xD80 split budget.
 
 ## RVL_SDK bte/hci/uusb_ppc.c (Wii/1.1 `-O4,p`, mwcc_43_151) — u16-local vs inlined-call reg-alloc + guard goto-chain (US, FULL_MATCH)
 

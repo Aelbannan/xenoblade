@@ -260,6 +260,78 @@ documented per-implementation private-storage abstraction.
   `max_instructions` (default 2048). Exceeding either produces
   `INCONCLUSIVE_UNSUPPORTED`.
 
+### Register-renaming witness (pre-SMT evidence tier, doc 31)
+
+A **pre-SMT fast path** certifies position-aligned, same-mnemonic function
+pairs whose instruction streams differ only in register colors (MWCC
+register-allocation soft-caps) WITHOUT Z3 CFG exploration.  The witness is an
+alternative evidence tier — certificate `evidence` label
+`register-renaming-witness`, `contract` `register-renaming-witness` — not a
+weakening of the SMT theorem: it is a *renaming lemma* that certifies a
+different, documented claim, and any divergence degrades to the normal SMT
+probe (never a false certificate).
+
+**Renaming lemma.**  Let `rho` be a partial bijection over the GPR and FPR
+register files, extended to a full permutation `pi` of each file by matching
+the unused registers in ascending order.  Bind the initial machine state so
+`retail.gpr[i] == decomp.gpr[pi(i)] == X_i` (and likewise for FPR/PS1 lanes),
+with every non-register component (CR, XER, LR, CTR, GQR, SR, MSR, time base,
+SRR*, aux SPRs, FPSCR, memory, validity) shared verbatim.  If both
+implementations execute through the audited `SymbolicOps`/`execute_cfg`
+(semantics.py — no separate interpreter) and every terminal pair whose path
+conditions are not disjoint is **structurally identical** (`z3.eq`, AST
+identity), then for every initial state `S`: `retail(S)` and
+`decomp(pi(S))` agree on the complete terminal machine state.  Identical
+ASTs imply identical values under every assignment, so a structurally-equal
+terminal pair can never diverge; structural `z3.eq` is the soundness
+backstop against role-table misclassification, immediate/SPR/CR field
+differences, and call-boundary renaming hazards.
+
+**Gates** (all must pass before the witness runs; any rejection falls through
+to SMT):
+
+1. Size equality — same instruction count.
+2. Per-slot relocation equality — offset/type/symbol/addend must match
+   (relocs are addresses, not colors).
+3. Non-register field equality — every bit that is not a renameable 5-bit
+   GPR/FPR field must be bit-equal between the raw words (opcode/XO, Rc/OE,
+   immediates, branch displacements, BO/BI/BH, CR bits/fields, SPR indices,
+   FXM masks, LK/AA).  Slots with a matched relocation are exempt: the
+   relocated bits resolve to the same canonical symbol on both sides.
+4. `rho` bijection — single-valued in both directions, consistent across all
+   mnemonics and positions (hexdiff's per-`(mnem,pos)` `reg_map` allows
+   many-to-one and is never used as `rho`).
+5. ABI-boundary fixedness — `rho` fixes r0 (zero-register encoding), r1, r2,
+   r13, LR/CTR (inherently fixed: SPR indices are non-register fields),
+   return registers (r3/r4, f1), every register live-in at entry in the EABI
+   argument ranges (r3–r10, f1–f8), and every volatile register live across a
+   call.  Nonvolatile permutations across calls (e.g. r20↔r25, both
+   preserved by EABI) are SOUND and not pre-rejected — that is the
+   Chaitin-cycle class the feature exists for.
+6. Reject-list — `ps_*`, `psq_*`, `mtfsf`/`mffs`/`mcrfs`/`mtfsb*`/`mtfsfi`,
+   `mtspr`/`mfspr` to GQRs (912–919) or any non-{LR,CTR,XER} SPR, `dcbz`/
+   `icbi`/`tlb*`, and privileged/system opcodes fall straight to SMT and are
+   never certified via renaming.
+
+The terminal comparison covers the complete machine state; GPR/FPR/PS1 lanes
+are indexed by `pi` (`retail.r_i` vs `decomp.r_pi(i)`), everything else
+directly.  Constant values (e.g. `lr = pc + 4` written by a `bl`) are
+compared relative to the function base under the documented
+location-independence assumption ("the absolute link-register return address
+is not a semantic input"); symbolic values are compared structurally.  The
+witness runs through the same matched-callee certificate machinery as SMT
+proofs (opaque or precise callee contracts from the certified context), so a
+renaming certificate's callee summary is the conservative opaque-EABI
+envelope and bottom-up recertification works unchanged.  Certificate honesty:
+`observables` is the full compared state list (never empty), and the signed
+payload records `opcodes_used`, the `rho` map, and the structural-equality
+result (`register_renaming_witness` block).  The separate
+`validation_bypass="register-renaming-witness"` certificate parameter (not
+`skip_semantic_validation`, whose precondition is byte identity) documents
+why CFG re-validation is skipped: the witness proved full-state structural
+equality, so the conservative summary is a sound over-approximation of either
+side's effects.  Incompleteness degrades to SMT — never a false certificate.
+
 ### Terminal behavior
 
 A terminal is a triple `(condition, state, exit_kind, exit_target)`. Exit-kind
@@ -938,6 +1010,15 @@ change.
 
 | Soundness claim | Implementation | Tests | Result field |
 |---|---|---|---|
+| Register-renaming lemma (doc 31) | `tools/coop/lib/renaming_witness.py` gates 1–6 + structural `z3.eq` terminal comparison over `SymbolicOps`/`execute_cfg`; integration in `equivalence_check.prove_unit_symbol`/`certify_unit_symbol` | `tools/coop/tests/test_renaming_witness.py` | certificate `evidence=register-renaming-witness`, `register_renaming_witness` payload (rho, structural_eq, terminal_pairs_checked) |
+| rho bijection across all mnemonics/positions | `renaming_witness.check_gates` gate 4 (single-valued both directions) | CX-1/CX-2/CX-4 tests | `register_renaming_witness.rho` |
+| Non-register fields bit-equal (immediates, CR bits/fields, SPR indices, FXM masks) | gate 3 raw-bit mask comparison (`_gpr_fpr_masks`) | CX-3/CX-3b/CX-4 tests | gate rejection `fields` |
+| Per-slot relocation equality | gate 2 (offset/type/symbol/addend) | `test_reloc_name_drift_rejected` | gate rejection `reloc` |
+| ABI-boundary fixedness (r0, r1, r2, r13, returns, live-in args, volatiles live across calls) | gate 5 + `_liveness_sets` | `test_cx1_shift_count_swap_rejected`, `test_volatile_live_across_call_must_be_fixed` | gate rejection `abi-boundary` |
+| Reject-list never certified via renaming | gate 6 + SPR policy (GQRs/non-{LR,CTR,XER}) | `test_reject_list_opcodes_fall_back_to_smt`, `test_cx3_gqr_spr_index_rejected` | gate rejection `reject-list` → SMT |
+| Witness failure falls through to SMT, never a false certificate | `_try_renaming_witness` returns `None` on any gate/structural/execution failure | `test_witness_failure_returns_none` | `EquivalenceProbe` from the SMT path |
+| Certificate honesty: full observables + rho + structural-eq recorded | `_renaming_witness_observables`, `_build_equivalence_certificate(renaming_witness=...)` | `test_certificate_evidence_and_contract` | certificate `observables`, `register_renaming_witness` |
+| Renaming certificates accepted by the registry | `targets.equivalence_certificate_error` evidence whitelist | `test_certificate_passes_strict_validation`, `test_targets_whitelist_accepts_new_evidence` | certificate validation |
 | Independent per-side stack masking | `engine._private_stack_address`, `engine._memory_difference` | `test_private_stack_memory.py` | `memory_scope.private_stack.masking_semantics` |
 | Stack wrap / oversized frame rejected | `semantics.MAX_PRIVATE_STACK_DEPTH`, `execute_cfg` layout update | `test_upward_stack_*` | `status=INCONCLUSIVE_LAYOUT` |
 | Ordinary RAM range assumed | memory-profile constraints | `test_memory_profile.py` | `environment.memory_profile` |

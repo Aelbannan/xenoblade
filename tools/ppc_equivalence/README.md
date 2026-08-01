@@ -389,6 +389,20 @@ The current `broadway-ppc32-be-v23` model supports:
   `stwu`, `store; addi`, multi-store fill bodies, and `load; store` copy
   bodies (aliasing premise excludes backward overlap); affine bodies accept
   GPR-pure whitelisted ops on dead callee-saved scratch registers;
+- **register-renaming witness (doc 31, pre-SMT):** position-aligned,
+  same-mnemonic pairs that differ only in register colors (MWCC
+  register-allocation soft-caps) are certified WITHOUT Z3 CFG exploration via
+  the renaming lemma — both sides execute through SymbolicOps with
+  `retail.r_i`/`decomp.r_rho(i)` sharing one symbolic variable and terminal
+  state compared with structural `z3.eq` — under gates for size, per-slot
+  relocation equality, non-register field bit-equality (immediates, CR
+  bits/fields, SPR indices, FXM masks), rho bijection, ABI-boundary
+  fixedness (r0/r1/r2/r13/returns/live-in args/volatiles-live-across-calls
+  fixed; nonvolatile permutations such as r20↔r25 sound and allowed), and a
+  reject-list (`ps_*`, `psq_*`, FPSCR transfers, GQR/non-{LR,CTR,XER} SPR,
+  `dcbz`/`icbi`/privileged).  Certificates carry evidence
+  `register-renaming-witness` with the rho map and structural-eq result;
+  any divergence falls through to the SMT probe — never a false certificate;
 - scalar FP D-form/indexed loads and stores (`lfs*`, `lfd*`, `stfs*`, `stfd*`,
   `stfiwx`) with big-endian memory and binary32/binary64 conversion;
 - scalar `fadd[s]`, `fsub[s]`, `fmuls`, `fdiv[s]`, double `fmul`, `frsp`,

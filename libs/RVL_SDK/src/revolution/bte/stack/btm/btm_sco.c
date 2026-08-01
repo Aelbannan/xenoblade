@@ -18,10 +18,16 @@
    function takes 3 (status, handle, mode); rename the header declaration out
    of the way so the 3-param definition below is the only one in this TU. */
 #define btm_sco_chk_pend_unpark btm_sco_chk_pend_unpark_hdr
+/* btm_int.h also declares `extern tBTM_CB btm_cb;` with the wrong layout;
+   rename it out of the way and declare our own retail-layout extern below
+   (same per-TU overlay pattern as btm_pm.c / btm_dev.c). */
+#define btm_cb btm_cb_sdk
 #include "revolution/BTE/stack/btm/btm_int.h"
+#undef btm_cb
 #undef btm_sco_chk_pend_unpark
 
 extern void LogMsg_0(UINT32 trace_set_mask, const char *fmt_str);
+extern void LogMsg_1(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1);
 extern void LogMsg_2(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1,
                      UINT32 p2);
 extern void LogMsg_6(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1,
@@ -35,6 +41,7 @@ extern BOOLEAN btsnd_hcic_setup_esco_conn(UINT16 handle, UINT32 tx_bw,
                                           UINT16 voice_contfmt,
                                           UINT8 retrans_effort,
                                           UINT16 packet_types);
+extern BOOLEAN btsnd_hcic_change_conn_type(UINT16 handle, UINT16 pkt_types);
 extern void btsnd_hcic_accept_conn(BT_HDR *p_buf, BD_ADDR bd_addr, UINT8 role);
 extern void btsnd_hcic_reject_conn(BT_HDR *p_buf, BD_ADDR bd_addr,
                                    UINT8 reason);
@@ -46,6 +53,10 @@ extern void btsnd_hcic_accept_esco_conn(BT_HDR *p_buf, BD_ADDR bd_addr,
 extern void btsnd_hcic_reject_esco_conn(BT_HDR *p_buf, BD_ADDR bd_addr,
                                         UINT8 reason);
 extern void btm_chg_all_acl_pkt_types(BOOLEAN is_sco_active);
+
+/* btm_num_sco_links_active is defined below but called from btm_sco_removed
+   (retail .text order); the retail build declared it up front like this. */
+extern UINT8 btm_num_sco_links_active(void);
 
 /* Retail-layout overlay of the btm_cb fields used by the SCO functions
    (offsets verified against build/us/asm/.../btm_sco.s):
@@ -75,6 +86,8 @@ typedef struct
 } tBTM_CB_LOCAL;
 
 #define SCO_CB ((tBTM_CB_LOCAL *)&btm_cb)
+
+extern tBTM_CB_LOCAL btm_cb;
 
 void btm_sco_init(void)
 {
@@ -370,7 +383,30 @@ void btm_remove_sco_links(BD_ADDR bda)
     }
 }
 
-void btm_sco_removed(UINT16 hci_handle, UINT8 reason) {}
+void btm_sco_removed(UINT16 hci_handle, UINT8 reason)
+{
+    tSCO_CONN *p;
+    UINT16 xx;
+
+    btm_cb.sco_disc_reason = reason;
+
+    if (btm_num_sco_links_active() <= 1)
+        btm_chg_all_acl_pkt_types(FALSE);
+
+    p = btm_cb.sco_db;
+
+    for (xx = 0; xx < 3; xx++, p++) {
+        if (p->state != SCO_ST_UNUSED && p->state != SCO_ST_LISTENING &&
+            p->hci_handle == hci_handle) {
+            p->state = SCO_ST_UNUSED;
+            p->hci_handle = HCI_INVALID_HANDLE;
+            p->rem_bd_known = FALSE;
+            p->p_esco_cback = NULL;
+            (*p->p_disc_cb)(xx);
+            break;
+        }
+    }
+}
 
 void btm_sco_acl_removed(BD_ADDR bda)
 {
@@ -407,11 +443,80 @@ void btm_route_sco_data(BT_HDR* p_msg)
     GKI_freebuf(p_msg);
 }
 
-/* Stub: not-yet-recovered retail body.  -ipa file must NOT inline the empty
-   body, or callers (btm_sco_connected) would lose the bl call site and DCE
-   the parms setup (same pattern as btm_sec_execute_procedure in btm_sec.c). */
+/* Retail keeps a real bl BTM_ChangeEScoLinkParms at the btm_sco_connected
+   call site; -ipa file must not inline the body or the call disappears
+   (same pattern as btm_sec_execute_procedure in btm_sec.c). */
 #pragma auto_inline off
-tBTM_STATUS BTM_ChangeEScoLinkParms(UINT16 sco_inx, tBTM_CHG_ESCO_PARAMS* p_parms) {}
+tBTM_STATUS BTM_ChangeEScoLinkParms(UINT16 sco_inx, tBTM_CHG_ESCO_PARAMS* p_parms)
+{
+    /* Retail pools the trace strings under one base label (@1903) and reaches
+       them with +0x8c/+0x248/+0x28c; mirror that with a base-var so MWCC
+       emits the pool label instead of a ...data.0 section reloc. */
+    char *trace_pool = "btm_esco_conn_rsp -> No Resources";
+    tSCO_CONN *p_sco;
+    UINT16 temp_pkt_types;
+    tBTM_ESCO_PARAMS *p_setup;
+
+    if (sco_inx >= 3 || SCO_CB->sco_db[sco_inx].state != SCO_ST_CONNECTED)
+        return (BTM_WRONG_MODE);
+
+    p_sco = &SCO_CB->sco_db[sco_inx];
+    p_setup = &p_sco->esco_setup;
+
+    if (p_sco->link_type == BTM_LINK_TYPE_SCO || !SCO_CB->esco_supported) {
+        temp_pkt_types = p_parms->packet_types &
+                         (SCO_CB->btm_sco_pkt_types_supported &
+                          BTM_SCO_LINK_ONLY_MASK);
+
+        p_setup->packet_types = temp_pkt_types;
+
+        if (SCO_CB->trace_level >= BT_TRACE_LEVEL_API) {
+            LogMsg_2(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK |
+                     TRACE_TYPE_API, trace_pool + 0x248,
+                     p_sco->hci_handle, p_setup->packet_types);
+        }
+
+        if (!btsnd_hcic_change_conn_type(
+                p_sco->hci_handle, BTM_ESCO_2_SCO(p_setup->packet_types)))
+            return (BTM_NO_RESOURCES);
+    } else {
+        temp_pkt_types = p_parms->packet_types &
+                         SCO_CB->btm_sco_pkt_types_supported;
+        temp_pkt_types &= BTM_SCO_SUPPORTED_PKTS_MASK;
+
+        if (SCO_CB->local_version[0] >= HCI_PROTO_VERSION_2_0) {
+            temp_pkt_types |=
+                (p_parms->packet_types & BTM_SCO_EXCEPTION_PKTS_MASK) |
+                (SCO_CB->btm_sco_pkt_types_supported &
+                 BTM_SCO_EXCEPTION_PKTS_MASK);
+        }
+
+        if (SCO_CB->trace_level >= BT_TRACE_LEVEL_API) {
+            LogMsg_1(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK |
+                     TRACE_TYPE_API, trace_pool + 0x28c,
+                     p_sco->hci_handle);
+        }
+
+        if (SCO_CB->trace_level >= BT_TRACE_LEVEL_API) {
+            LogMsg_6(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK |
+                     TRACE_TYPE_API, trace_pool + 0x8c,
+                     p_setup->tx_bw, p_setup->rx_bw, p_parms->max_latency,
+                     p_setup->voice_contfmt, p_parms->retrans_effort,
+                     temp_pkt_types);
+        }
+
+        if (!btsnd_hcic_setup_esco_conn(p_sco->hci_handle, p_setup->tx_bw,
+                                        p_setup->rx_bw, p_parms->max_latency,
+                                        p_setup->voice_contfmt,
+                                        p_parms->retrans_effort,
+                                        temp_pkt_types))
+            return (BTM_NO_RESOURCES);
+        else
+            p_parms->packet_types = temp_pkt_types;
+    }
+
+    return (BTM_CMD_STARTED);
+}
 #pragma auto_inline on
 
 void btm_esco_proc_conn_chg(UINT8 status, UINT16 handle, UINT8 tx_interval,
@@ -470,25 +575,28 @@ BOOLEAN btm_is_sco_active(UINT16 handle)
 
 UINT8 btm_num_sco_links_active(void)
 {
-    UINT8 num = 0;
-    UINT16 state;
+    tSCO_CONN *p = btm_cb.sco_db;
+    UINT16 xx;
+    UINT8 num_active = 0;
 
-    state = btm_cb.sco_cb.sco_db[0].state;
-    if (state >= 2 && state < 7) {
-        num = 1;
+    /* Retail counts SCO links in states [SCO_ST_W4_CONN_RSP, SCO_ST_PEND_UNPARK]
+       (2..6); MWCC unrolls the pointer loop and lowers each dense switch range
+       to cmpwi 7/cmpwi 2 checks, folding the offsets to base displacements. */
+    for (xx = 0; xx < 3; xx++, p++) {
+        switch (p->state) {
+        case SCO_ST_W4_CONN_RSP:
+        case SCO_ST_CONNECTING:
+        case SCO_ST_CONNECTED:
+        case SCO_ST_DISCONNECTING:
+        case SCO_ST_PEND_UNPARK:
+            num_active++;
+            break;
+        default:
+            break;
+        }
     }
 
-    state = btm_cb.sco_cb.sco_db[1].state;
-    if (state >= 2 && state < 7) {
-        num++;
-    }
-
-    state = btm_cb.sco_cb.sco_db[2].state;
-    if (state >= 2 && state < 7) {
-        num++;
-    }
-
-    return num;
+    return num_active;
 }
 
 BOOLEAN btm_is_sco_active_by_bdaddr(BD_ADDR remote_bda)

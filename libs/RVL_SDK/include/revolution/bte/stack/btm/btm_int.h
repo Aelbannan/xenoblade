@@ -338,7 +338,7 @@ typedef struct
 } tBTM_ESCO_INFO;
 
 /* Define the structure used for SCO Management
- * NOTE: Retail Wii layout differs from Broadcom SDK — the structure
+ * NOTE: Retail Wii layout differs from Broadcom SDK -- the structure
  * is flattened with ESCO fields inlined rather than nested.
  */
 typedef struct

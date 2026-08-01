@@ -258,6 +258,18 @@ mismatches are a pure allocation-order permutation (p_cmd 16→23, cmd_len 17→
 p 21→16, id 25→21 …) that declaration-order changes do not shift under
 GC/3.0a5.2.
 
+## RVL_SDK bte/l2cap l2c_link.c — 3× FULL_MATCH via declaration order, load-reuse order, loop-next temp (GC/3.0a5.2 `-func_align 4`)
+
+Three stubborn l2c_link targets went straight to 100% byte-identical in one
+restructure each (`l2c_link_timeout` 76.3%, `l2c_link_send_to_lower` 79.5%,
+`l2c_link_adjust_allocation` 98.3%/0-structural):
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `l2c_link_adjust_allocation`: byte-identical except a pure 4-cycle callee-save permutation (retail r26=num_links_active, r27=quota, r28=p_lcb, r29=xx; decomp r26=p_lcb, r27=xx, r28=quota, r29=num_links_active). Stuck at CODE_MATCH behind SMT `path limit exceeded (4096)` — the register-renaming witness is insufficient and the full probe times out on the divw magic + loop | GC/3.0a5.2 assigns disjoint callee-saved locals in **reverse declaration order** (r26 = last-declared live local) | Reorder declarations to `UINT16 xx; tL2C_LCB *p_lcb; UINT16 quota; int num_links_active = 0;` — reversed vs target regs — reproduces the retail permutation exactly, 0 mismatches (unblocks FULL_MATCH without SMT). Declaration order is not a universal lever (see l2c_main.c note below) but is decisive when live ranges are disjoint/simple |
+| `l2c_link_send_to_lower`: else-branch reloads `l2cb.acl_out_count` / `p_lcb->sent_not_acked` after `p_buf->layer_specific = …` (store-then-reload), and the p_buf copy got hoisted into the prologue | The two reads `p_buf->layer_specific = X; num_segments = X;` force a reload after the aliasable store through `p_buf`; retail reuses the compare-load register for both (store `sth r7` then `mr r8, r7`) | Assign first, store from the register: `num_segments = l2cb.acl_out_count; p_buf->layer_specific = num_segments;` (same for `sent_not_acked`) — single compare-load feeds compare + store + assignment, and the p_buf copy drops back to the retail slot (offset 0x14, after the btu_cb base) |
+| `l2c_link_timeout`: two `for (p_ccb = …; p_ccb; p_ccb = p_ccb->p_next_ccb)` loops kept p_ccb in a callee-saved reg across the call (reload after), retail keeps p_ccb in r3 across the call and saves next in r31 before it; final `if (p_lcb->p_first_ccb != NULL) check_send_pkts else disconnect` emitted check-first with a `beq` over it, retail emits the disconnect block first with a `bne` over it | Loop increment `p_ccb = p_ccb->p_next_ccb` evaluated after the call forces a callee-saved loop var; retail pre-loads next before the call (`lwz r31, 8(r3)` / `mr r3, r31` pattern, same as FULL_MATCH sibling `l2c_link_hci_disc_comp`); branch polarity flipped | Add `tL2C_CCB *p_next_ccb;` and write `for (p_ccb = …; p_ccb; p_ccb = p_next_ccb) { p_next_ccb = p_ccb->p_next_ccb; l2c_csm_execute(p_ccb, …); }`; flip the tail to `if (p_lcb->p_first_ccb == NULL) { btm_sec_disconnect … } else { l2c_link_check_send_pkts(p_lcb, NULL, NULL); }` |
+
 ## RVL_SDK bte/rfcomm rfc_port_if.c — 10/10 FULL_MATCH on Wii/1.1 mwcc_43_151 `-O4,p` (US)
 
 `libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c` (RFCOMM port-interface

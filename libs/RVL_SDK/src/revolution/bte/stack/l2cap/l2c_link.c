@@ -412,6 +412,7 @@ BOOLEAN l2c_link_hci_qos_violation(UINT16 handle)
 void l2c_link_timeout(tL2C_LCB *p_lcb)
 {
     tL2C_CCB *p_ccb;
+    tL2C_CCB *p_next_ccb;
     tL2CA_ECHO_RSP_CB *p_echo_cb;
     tBTM_STATUS status;
     UINT16 timeout;
@@ -422,8 +423,9 @@ void l2c_link_timeout(tL2C_LCB *p_lcb)
         (p_lcb->link_state == LST_DISCONNECTING))
     {
         for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL;
-             p_ccb = p_ccb->p_next_ccb)
+             p_ccb = p_next_ccb)
         {
+            p_next_ccb = p_ccb->p_next_ccb;
             l2c_csm_execute(p_ccb, L2CEVT_LP_DISCONNECT_IND, NULL);
         }
         l2cu_release_lcb(p_lcb);
@@ -440,17 +442,14 @@ void l2c_link_timeout(tL2C_LCB *p_lcb)
         L2CAP_TRACE_WARNING0("L2CAP - ping timeout");
 
         for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL;
-             p_ccb = p_ccb->p_next_ccb)
+             p_ccb = p_next_ccb)
         {
+            p_next_ccb = p_ccb->p_next_ccb;
             l2c_csm_execute(p_ccb, L2CEVT_LP_DISCONNECT_IND, NULL);
         }
     }
 
-    if (p_lcb->p_first_ccb != NULL)
-    {
-        l2c_link_check_send_pkts(p_lcb, NULL, NULL);
-    }
-    else
+    if (p_lcb->p_first_ccb == NULL)
     {
         status = btm_sec_disconnect(p_lcb->handle, HCI_ERR_PEER_USER);
         if (status == BTM_CMD_STARTED)
@@ -472,6 +471,10 @@ void l2c_link_timeout(tL2C_LCB *p_lcb)
             btu_start_timer(&p_lcb->timer_entry, BTU_TTYPE_L2CAP_LINK,
                             timeout);
     }
+    else
+    {
+        l2c_link_check_send_pkts(p_lcb, NULL, NULL);
+    }
 }
 
 BOOLEAN l2c_link_send_to_lower(tL2C_LCB *p_lcb, BT_HDR *p_buf)
@@ -492,15 +495,15 @@ BOOLEAN l2c_link_send_to_lower(tL2C_LCB *p_lcb, BT_HDR *p_buf)
 
         if (num_segments > l2cb.acl_out_count)
         {
-            p_buf->layer_specific = l2cb.acl_out_count;
             num_segments = l2cb.acl_out_count;
+            p_buf->layer_specific = num_segments;
             p_lcb->partial_segment = TRUE;
         }
 
         if (num_segments > p_lcb->sent_not_acked)
         {
-            p_buf->layer_specific = p_lcb->sent_not_acked;
             num_segments = p_lcb->sent_not_acked;
+            p_buf->layer_specific = num_segments;
             p_lcb->partial_segment = TRUE;
         }
 
@@ -631,10 +634,10 @@ void l2c_link_check_send_pkts(tL2C_LCB *p_lcb, tL2C_CCB *p_ccb,
 
 void l2c_link_adjust_allocation(void)
 {
-    int num_links_active = 0;
-    UINT16 quota;
     UINT16 xx;
     tL2C_LCB *p_lcb;
+    UINT16 quota;
+    int num_links_active = 0;
     tL2C_CB *p_cb = &l2cb;
 
     if (p_cb->num_links == 0)

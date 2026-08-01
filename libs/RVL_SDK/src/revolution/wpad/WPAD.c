@@ -278,10 +278,10 @@ static DECOMP_INLINE BOOL CalcDpdNoise(WPADCB* p, BOOL analogChanged) {
 
 static DECOMP_INLINE BOOL CalcExtNoise(WPADCB* p, BOOL analogChanged) {
     if (analogChanged) {
-        p->filterDiffDpd++; // EXT shares the DPD diff counter (0x8FC)
+        p->filterDiffExt++;
 
-        if (p->filterDiffDpd > _wpad_diff_count_threshold[1]) {
-            p->filterDiffDpd = 0;
+        if (p->filterDiffExt > _wpad_diff_count_threshold[1]) {
+            p->filterDiffExt = 0;
             p->filterSameExt = 0;
             return TRUE;
         }
@@ -291,8 +291,8 @@ static DECOMP_INLINE BOOL CalcExtNoise(WPADCB* p, BOOL analogChanged) {
             (p->filterSameExt + 1) % _wpad_hyst_count_threshold[1];
 
         if (p->filterSameExt == _wpad_hyst_count_threshold[1] - 1 &&
-            p->filterDiffDpd > 0) {
-            p->filterDiffDpd--;
+            p->filterDiffExt > 0) {
+            p->filterDiffExt--;
         }
     }
 
@@ -432,8 +432,7 @@ BOOL __wpadIsControllerDataChanged(WPADCB* p, void* pLhs, void* pRhs) {
         case 11: { // Extended DPD formats
             WPADStatusEx* pLhsEx = (WPADStatusEx*)pLhs;
             WPADStatusEx* pRhsEx = (WPADStatusEx*)pRhs;
-            u16* pBase = (u16*)&pLhsEx->exp[0].range_x1;
-            u16* pCmp = (u16*)&pLhsEx->exp[1].range_x1;
+            u16* pExt = (u16*)pLhs;
 
             changed |= IsButtonChanged(*(u8*)&pLhsEx->exp[2].range_x2,
                                        *(u8*)&pRhsEx->exp[2].range_x2);
@@ -441,7 +440,7 @@ BOOL __wpadIsControllerDataChanged(WPADCB* p, void* pLhs, void* pRhs) {
                                        pRhsEx->exp[2].range_y1, 32);
 
             for (i = 0; i < 5; i++) {
-                changed |= IsAnalogChanged(pBase[i], pCmp[i], 32);
+                changed |= IsAnalogChanged(pExt[0x1B + i], pExt[0x15 + i], 32);
             }
             break;
         }
@@ -758,9 +757,9 @@ static void __ClearControlBlock(s32 chan) {
 
     p->filterDiffAcc = 0;
     p->filterSameAcc = 0;
-    p->filterUnk = 0;
-    p->filterSameDpd = 0;
     p->filterDiffDpd = 0;
+    p->filterSameDpd = 0;
+    p->filterDiffExt = 0;
     p->filterSameExt = 0;
 
     p->lastControllerDataUpdate = __OSGetSystemTime();

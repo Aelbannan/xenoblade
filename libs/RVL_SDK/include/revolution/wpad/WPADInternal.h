@@ -213,8 +213,8 @@ typedef struct WPADCB {
     OSThreadQueue threadQueue;    // at 0x8E4
     s64 lastControllerDataUpdate; // at 0x8F0
     u16 filterDiffAcc;            // at 0x8F8
-    u16 filterUnk;                // at 0x8FA
-    u16 filterDiffDpd;            // at 0x8FC (shared by DPD and EXT filters)
+    u16 filterDiffDpd;            // at 0x8FA
+    u16 filterDiffExt;            // at 0x8FC
     u16 filterSameAcc;            // at 0x8FE
     u16 filterSameDpd;            // at 0x900
     u16 filterSameExt;            // at 0x902

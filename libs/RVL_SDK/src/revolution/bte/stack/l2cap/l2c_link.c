@@ -96,6 +96,13 @@ struct t_l2c_linkcb {
     UINT8            pad5B;                 /* 0x5B */
 };
 
+/* Connection info blob passed to the CSM on link events.  The retail code
+ * keeps the peer BD_ADDR at offset 0 with the status byte at offset 6. */
+typedef struct {
+    BD_ADDR bd_addr;                /* 0x00 */
+    UINT8   status;                 /* 0x06 */
+} tL2C_CONN_INFO;
+
 /* Only the portions of l2cb used here are named. */
 typedef struct {
     UINT8            l2cap_trace_level;      /* 0x000 */
@@ -319,12 +326,15 @@ BOOLEAN l2c_link_hci_conn_comp(UINT8 status, UINT16 handle, BD_ADDR p_bd_addr)
 
 void l2c_link_sec_comp(BD_ADDR p_bd_addr, UINT16 handle, UINT8 status)
 {
-    BD_ADDR local_bd_addr;
+    INT32 event_base;
+    tL2C_CONN_INFO ci;
     tL2C_LCB *p_lcb;
     tL2C_CCB *p_ccb;
+    tL2C_CCB *p_next_ccb;
 
     (void)handle;
-    memcpy(local_bd_addr, p_bd_addr, BD_ADDR_LEN);
+    ci.status = status;
+    memcpy(ci.bd_addr, p_bd_addr, BD_ADDR_LEN);
 
     p_lcb = l2cu_find_lcb_by_bd_addr(p_bd_addr);
     if (p_lcb == NULL)
@@ -333,21 +343,24 @@ void l2c_link_sec_comp(BD_ADDR p_bd_addr, UINT16 handle, UINT8 status)
         return;
     }
 
-    for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL;
-         p_ccb = p_ccb->p_next_ccb)
+    event_base = -(status == 0);
+
+    for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL; p_ccb = p_next_ccb)
     {
+        p_next_ccb = p_ccb->p_next_ccb;
         l2c_csm_execute(p_ccb,
-                        status ? L2CEVT_SEC_COMP_NEG : L2CEVT_SEC_COMP,
-                        local_bd_addr);
+                        (UINT8)(event_base + L2CEVT_SEC_COMP_NEG),
+                        &ci);
     }
 }
 
 BOOLEAN l2c_link_hci_disc_comp(UINT16 handle, UINT8 reason)
 {
+    tL2C_LCB *p_lcb;
     BOOLEAN found = TRUE;
     UINT8 disconnect_reason = reason;
-    tL2C_LCB *p_lcb;
     tL2C_CCB *p_ccb;
+    tL2C_CCB *p_next_ccb;
 
     p_lcb = l2cu_find_lcb_by_handle(handle);
     if (p_lcb == NULL)
@@ -359,11 +372,11 @@ BOOLEAN l2c_link_hci_disc_comp(UINT16 handle, UINT8 reason)
         if (btm_cb.disc_reason != HCI_ERR_HOST_REJECT_SECURITY)
             btm_cb.disc_reason = disconnect_reason;
 
-        for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL;
-             p_ccb = p_ccb->p_next_ccb)
+        for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL; p_ccb = p_next_ccb)
         {
+            p_next_ccb = p_ccb->p_next_ccb;
             l2c_csm_execute(p_ccb, L2CEVT_LP_DISCONNECT_IND,
-                             &disconnect_reason);
+                            &disconnect_reason);
         }
 
         btm_sco_acl_removed(p_lcb->remote_bd_addr);

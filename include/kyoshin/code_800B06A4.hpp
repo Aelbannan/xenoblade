@@ -19,13 +19,47 @@ template <typename T>
 class _reslist_base {
 public:
     ~_reslist_base();
-    char _pad[0x1F];
+    u32 field_0x00;        // 0x00: vtable pointer
+    u32 field_0x04;        // 0x04: head pointer (this+8)
+    u32 sentinel_prev;     // 0x08: sentinel node prev
+    u32 sentinel_next;     // 0x0C: sentinel node next
+    // total 0x10
 };
+
+// Generic reslist template — adds 0x10 bytes of padding (total 0x20)
 template <typename T>
 class reslist : public _reslist_base<T> {
 public:
     ~reslist();
-    char _pad2[0x20 - sizeof(_reslist_base<T>)];
+    u8 _pad_10[0x10];   // 0x10-0x1f
+};
+
+// Specialization for cf::CfObject — replaces padding with named fields (0x20)
+template <>
+class reslist<cf::CfObject> : public _reslist_base<cf::CfObject> {
+public:
+    reslist();
+    ~reslist();
+    u32 field_0x10;    // 0x10
+    u32 field_0x14;    // 0x14
+    u32 field_0x18;    // 0x18
+    u8 field_0x1c;     // 0x1c
+    u8 _pad_1d[3];     // 0x1d-0x1f
+    // total 0x20
+};
+
+// Specialization for cf::TboxInfo — adds fields at 0x10-0x37 (total 0x38)
+template <>
+class reslist<cf::TboxInfo> : public _reslist_base<cf::TboxInfo> {
+public:
+    reslist();
+    ~reslist();
+    u8 _pad_10[0x1c];   // 0x10-0x2b
+    u32 field_0x2c;     // 0x2c
+    u32 field_0x30;     // 0x30
+    u8 field_0x34;      // 0x34
+    u8 _pad_35[3];      // 0x35-0x37
+    // total 0x38
 };
 class UnkClass_800B0AD8 {
 public:
@@ -85,6 +119,8 @@ public:
     u32 field_0xCA8;
     u32 field_0xCAC;
     ml::FixStr<64> field_0xCB0;
+    u32 field_0xCF4;
+    float field_0xCF8;
     u32 field_0xCFC;
     u32 field_0xD00;
     u32 field_0xD04;

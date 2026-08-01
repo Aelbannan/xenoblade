@@ -1,0 +1,11 @@
+{
+  "us-803c5854": {"hypothesis": "high-level C reconstruction; only 2 pure reg-swap diffs remain", "next_change": "verify SMT equivalence for reg-swap-only diffs"},
+  "us-803c57bc": {"hypothesis": "100% static match", "next_change": "accept"},
+  "us-803c58ec": {"hypothesis": "lis/li scheduling diff only; semantics identical", "next_change": "verify equivalence"},
+  "us-803c5dd4": {"hypothesis": "100% static match after signed compare fixes", "next_change": "accept"},
+  "us-803c8cdc": {"hypothesis": "signedness fixes applied; remaining diffs are load-order scheduling", "next_change": "verify equivalence"},
+  "us-803c9f64": {"hypothesis": "loop register allocation + scheduling diffs only", "next_change": "verify equivalence"},
+  "us-803ca070": {"hypothesis": "stw/li scheduling order diff only", "next_change": "verify equivalence"},
+  "us-803ca16c": {"hypothesis": "store order via temps; 4 pure reg-swaps remain", "next_change": "verify equivalence"},
+  "us-803ca2dc": {"hypothesis": "100% static match", "next_change": "accept"}
+}

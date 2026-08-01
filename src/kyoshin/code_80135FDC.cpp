@@ -1114,9 +1114,8 @@ extern "C" struct Table_80500188 lbl_eu_80500188;
 
 extern "C" u16 func_801380A0(u32 idx) {
     struct Table_80500188 t = lbl_eu_80500188;
-    u16* p = (u16*)&t;
     u32 n = idx - 1;
-    return p[n];
+    return ((u16*)&t)[n];
 }
 
 extern "C" u32 func_80138138(u32 val) {

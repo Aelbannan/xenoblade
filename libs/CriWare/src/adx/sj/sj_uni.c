@@ -20,6 +20,8 @@ extern void CRICRW_Strcpy(char *dst, int maxlen, const char *src);
 extern void CRICRW_Strcat(char *dst, int maxlen, const char *src);
 extern void SJUNI_Error(void);
 
+extern void *memset(void *, int, unsigned long);
+
 typedef struct SJUNI_CHUNK {
     struct SJUNI_CHUNK *next; /* +0x00 */
     u32 pad;                  /* +0x04 */
@@ -34,7 +36,7 @@ typedef struct {
     u8 pad06[2];          /* +0x06 */
     void *uuid;           /* +0x08 */
     u8 *pool_mem;         /* +0x0C */
-    u32 num_chunks;       /* +0x10 */
+    int num_chunks;       /* +0x10 */
     SJUNI_CHUNK *free_head; /* +0x14 */
     SJUNI_CHUNK *queue[4];  /* +0x18, +0x1C, +0x20, +0x24 */
     void (*err_func)(void *, int); /* +0x28 */
@@ -49,7 +51,7 @@ typedef struct {
 extern void SJ_SplitChunk(const SJ_CHUNK *src, int size, SJ_CHUNK *dst1, SJ_CHUNK *dst2);
 
 /* --- Internal forward declarations --- */
-void *sjuni_Create(int index, void *pool_mem, u32 pool_size);
+void *sjuni_Create(int index, void *pool_mem, int pool_size);
 void  sjuni_Reset(SJUNI *self);
 int   sjuni_GetNumData(SJUNI *self, int mode);
 int   sjuni_GetChunk(SJUNI *self, int mode, int size, SJ_CHUNK *out);
@@ -67,7 +69,7 @@ void SJUNI_Init(void) {
     SJCRS_Init();
     SJCRS_Lock();
     if (lbl_eu_805F1AD8 == 0) {
-        __builtin_memset(lbl_eu_805F1AE0, 0, 0xC00);
+        memset(lbl_eu_805F1AE0, 0, 0xC00);
     }
     lbl_eu_805F1AD8++;
     SJCRS_Unlock();
@@ -77,7 +79,7 @@ void SJUNI_Init(void) {
 void SJUNI_Finish(void) {
     SJCRS_Lock();
     if (--lbl_eu_805F1AD8 == 0) {
-        __builtin_memset(lbl_eu_805F1AE0, 0, 0xC00);
+        memset(lbl_eu_805F1AE0, 0, 0xC00);
     }
     SJCRS_Unlock();
     SJCRS_Finish();
@@ -93,16 +95,15 @@ void *SJUNI_Create(int index, void *pool_mem, u32 pool_size) {
 }
 
 /* --- sjuni_Create (internal) --- */
-void *sjuni_Create(int index, void *pool_mem, u32 pool_size) {
-    SJUNI *instances = (SJUNI *)lbl_eu_805F1AE0;
+void *sjuni_Create(int index, void *pool_mem, int pool_size) {
     int i;
 
     for (i = 0; i < 0x40; i++) {
-        if (instances[i].valid == 0) break;
+        if (((SJUNI *)lbl_eu_805F1AE0)[i].valid == 0) break;
     }
     if (i == 0x40) return NULL;
 
-    SJUNI *self = &instances[i];
+    SJUNI *self = &((SJUNI *)lbl_eu_805F1AE0)[i];
     self->valid = 1;
     self->vtable = lbl_eu_80565C60;
     self->index = (s8)index;
@@ -118,19 +119,19 @@ void *sjuni_Create(int index, void *pool_mem, u32 pool_size) {
 /* --- SJUNI_Destroy --- */
 void SJUNI_Destroy(void *self_ptr) {
     SJUNI *self = (SJUNI *)self_ptr;
+    char buf2[64];
+    char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0xC);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518E00 + 0x27);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0x27);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518E00 + 0xC);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518E00 + 0x53);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x53);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518E00 + 0x33);
         SJERR_CallErr(buf2);
     } else {
-        __builtin_memset(self, 0, 0x30);
+        memset(self, 0, 0x30);
         self->valid = 0;
     }
     SJCRS_Unlock();
@@ -140,17 +141,17 @@ void SJUNI_Destroy(void *self_ptr) {
 void *SJUNI_GetUuid(void *self_ptr) {
     SJUNI *self = (SJUNI *)self_ptr;
     void *r;
+    char buf2[64];
+    char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0xC);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518E00 + 0x5F);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0x5F);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518E00 + 0xC);
         SJERR_CallErr(buf1);
         r = NULL;
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518E00 + 0x6B);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x6B);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518E00 + 0x33);
         SJERR_CallErr(buf2);
         r = NULL;
     } else {
@@ -163,16 +164,16 @@ void *SJUNI_GetUuid(void *self_ptr) {
 /* --- SJUNI_EntryErrFunc --- */
 void SJUNI_EntryErrFunc(void *self_ptr, void *cbfunc, void *cbarg) {
     SJUNI *self = (SJUNI *)self_ptr;
+    char buf2[64];
+    char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0xC);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518E00 + 0x77);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0x77);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518E00 + 0xC);
         SJERR_CallErr(buf1);
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518E00 + 0x83);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x83);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518E00 + 0x33);
         SJERR_CallErr(buf2);
     } else {
         self->err_func = (void (*)(void *, int))cbfunc;
@@ -192,17 +193,17 @@ void SJUNI_Reset(void *self) {
 void sjuni_Reset(SJUNI *self) {
     if (self == NULL) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xC);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0x8F);
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0x8F);
+        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0xC);
         SJERR_CallErr(buf);
     } else if (self->valid == 0) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0x33);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0x9B);
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0x9B);
+        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0x33);
         SJERR_CallErr(buf);
     } else {
         SJUNI_CHUNK *chunks = (SJUNI_CHUNK *)self->pool_mem;
-        u32 i;
+        int i;
         self->free_head = chunks;
         for (i = 0; i < self->num_chunks - 1; i++) {
             chunks[i].next = &chunks[i + 1];
@@ -232,15 +233,15 @@ int SJUNI_GetNumData(void *self, int mode) {
 int sjuni_GetNumData(SJUNI *self, int mode) {
     if (self == NULL) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xC);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0xA7);
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xA7);
+        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0xC);
         SJERR_CallErr(buf);
         return 0;
     }
     if (self->valid == 0) {
         char buf[64];
-        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0x33);
-        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0xB3);
+        CRICRW_Strcpy(buf, 0x40, lbl_eu_80518E00 + 0xB3);
+        CRICRW_Strcat(buf, 0x40, lbl_eu_80518E00 + 0x33);
         SJERR_CallErr(buf);
         return 0;
     }
@@ -445,13 +446,14 @@ int sjuni_IsGetChunk(SJUNI *self, int mode, int size, int *out) {
         if (head == NULL) return 0;
         {
             SJ_CHUNK ck;
-            ck.ptr = head->ptr;
-            ck.size = head->size;
-            *out = ck.size;
+            SJ_CHUNK *ckp = &ck;
+            ckp->ptr = head->ptr;
+            ckp->size = head->size;
+            *out = ckp->size;
             if (self->index == 1) {
-                return (ck.size >= size) ? 1 : 0;
+                return (ckp->size >= size) ? 1 : 0;
             } else {
-                return (ck.size == size) ? 1 : 0;
+                return (ckp->size == size) ? 1 : 0;
             }
         }
     }
@@ -461,25 +463,25 @@ int sjuni_IsGetChunk(SJUNI *self, int mode, int size, int *out) {
 int SJUNI_GetNumChunk(void *self_ptr, int mode) {
     SJUNI *self = (SJUNI *)self_ptr;
     int r;
+    char buf2[64];
+    char buf1[64];
     SJCRS_Lock();
     if (self == NULL) {
-        char buf1[64];
-        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0xC);
-        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518E00 + 0x11F);
+        CRICRW_Strcpy(buf1, 0x40, lbl_eu_80518E00 + 0x11F);
+        CRICRW_Strcat(buf1, 0x40, lbl_eu_80518E00 + 0xC);
         SJERR_CallErr(buf1);
         r = 0;
     } else if (self->valid == 0) {
-        char buf2[64];
-        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x33);
-        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518E00 + 0x12B);
+        CRICRW_Strcpy(buf2, 0x40, lbl_eu_80518E00 + 0x12B);
+        CRICRW_Strcat(buf2, 0x40, lbl_eu_80518E00 + 0x33);
         SJERR_CallErr(buf2);
         r = 0;
     } else {
         int count = 0;
         SJUNI_CHUNK *cur = self->queue[mode];
         while (cur != NULL) {
-            count++;
             cur = cur->next;
+            count++;
         }
         r = count;
     }

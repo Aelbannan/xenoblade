@@ -437,7 +437,8 @@ def _is_compare_affine_latch(
 
 
 def run_census(root: Path) -> CensusAccumulator:
-    acc = CensusAccumulator(asm_root=root.resolve())
+    root = root.resolve()
+    acc = CensusAccumulator(asm_root=root)
     paths = iter_asm_paths(root)
     acc.files_scanned = len(paths)
 

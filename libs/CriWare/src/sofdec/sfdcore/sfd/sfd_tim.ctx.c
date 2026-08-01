@@ -170,19 +170,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -735,6 +727,8 @@ extern u32 lbl_eu_8051CBF8[];    /* fps denominator table */
 extern u32 lbl_eu_8051CC20[];    /* tc2time function table */
 extern u32 lbl_eu_80619BB0[];    /* debug globals */
 extern u32 lbl_eu_80619BB8[];    /* debug globals */
+extern u32 lbl_eu_80619BBC[];    /* debug globals */
+extern u32 lbl_eu_80619BC0[];    /* debug globals */
 
 /* Forward declarations for function pointers */
 s32 sftim_GetTimeNone(void* self, s32* out1, s32* out2);
@@ -1228,35 +1222,37 @@ s32 SFTIM_GetAudioStartSample(void* self, s32 sampleRate) {
 
     {
         s32 result = (s32)(startTime * sampleRate / 90000);
-        lbl_eu_80619BB0[0] = *(u32*)((u8*)self + 0x158);
-        lbl_eu_80619BB0[1] = *(u32*)((u8*)self + 0x15C);
+        lbl_eu_80619BB0[0] = (u32)(startTime >> 32);
+        lbl_eu_80619BB0[1] = (u32)startTime;
         *lbl_eu_80619BB8 = result;
         return result;
     }
 }
 
-void SFTIM_GetVideoStartSample(void* self, int* out1, int* out2) {
-    int val = *(int*)((u8*)self + 0x118);
+s32 SFTIM_GetVideoStartSample(void* self, s32 mul, s32* out2) {
+    u8* p = (u8*)self;
+    s32 val = *(s32*)(p + 0x118);
+    s32 num;
+    s32 den;
+    s32 r;
+
     *out2 = val;
     if (val != 0) {
-        int a = *(int*)((u8*)self + 0x13C);
-        int b = *(int*)((u8*)self + 0x140);
-        int r = UTY_MulDiv(a, val, b);
-        lbl_eu_80619BB0[2] = a;
-        *lbl_eu_80619BB8 = r; /* reusing debug global */
-        *out1 = r;
+        num = *(s32*)(p + 0x13C);
+        den = *(s32*)(p + 0x140);
     } else {
-        int a = *(int*)((u8*)self + 0x110);
-        if (a >= 0) {
-            int b = *(int*)((u8*)self + 0x114);
-            int r = UTY_MulDiv(a, val, b);
-            lbl_eu_80619BB0[2] = a;
-            *lbl_eu_80619BB8 = r;
-            *out1 = r;
+        num = *(s32*)(p + 0x110);
+        if (num >= 0) {
+            den = *(s32*)(p + 0x114);
         } else {
-            *out1 = -1;
+            return -1;
         }
     }
+
+    r = UTY_MulDiv(num, mul, den);
+    lbl_eu_80619BBC[0] = num;
+    lbl_eu_80619BC0[0] = r;
+    return r;
 }
 
 void SFTIM_SetStartTime(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x144) = a; *(u32*)((u8*)self + 0x148) = b; }
@@ -1343,18 +1339,20 @@ s32 sftim_GetTimeVsync(void* self, s32* out1, s32* out2) {
     s32 val = *(s32*)((u8*)self + 0x54);
     s32 ok;
 
-    if (val == 4 || val == -4 || val == 6 || val == -6) {
-        ok = 1;
-    } else {
-        *out1 = -1;
-        *out2 = 1;
-        ok = 0;
-    }
-
+    if (val == 4) goto good;
+    if (val == -4) goto good;
+    if (val == 6) goto good;
+    if (val == -6) goto good;
+    *out1 = -1;
+    *out2 = 1;
+    ok = 0;
+    goto check;
+good:
+    ok = 1;
+check:
     if (!ok) {
         return 0;
     }
-
     *out1 = *(s32*)((u8*)self + 0x1044);
     *out2 = *(s32*)(lbl_eu_80606E38 + 0x1A8);
     return 0;
@@ -1373,12 +1371,12 @@ s32 sftim_GetTimeUtim(void* self, s32* out1, s32* out2) {
     s32 val = *(s32*)((u8*)self + 0x54);
     s32 ok;
 
-    if (val == 4 || val == -4 || val == 6 || val == -6) {
-        ok = 1;
-    } else {
+    if (val != 4 && val != -4 && val != 6 && val != -6) {
         *out1 = -1;
         *out2 = 1;
         ok = 0;
+    } else {
+        ok = 1;
     }
 
     if (!ok) {
@@ -1399,14 +1397,14 @@ s32 sftim_GetTimeUtim(void* self, s32* out1, s32* out2) {
 s32 sftim_GetTimeExtClock(void* self, s32* out1, s32* out2) {
     u8* p = (u8*)self;
     s32 val = *(s32*)(p + 0x54);
-    s32 ok;
+    s32 ok = 0;
 
-    if (val == 4 || val == -4 || val == 6 || val == -6) {
-        ok = 1;
-    } else {
+    if (val != 4 && val != -4 && val != 6 && val != -6) {
         *out1 = -1;
         *out2 = 1;
         ok = 0;
+    } else {
+        ok = 1;
     }
 
     if (!ok) {
@@ -1436,9 +1434,8 @@ s32 sftim_GetTimeExtClock(void* self, s32* out1, s32* out2) {
             }
 
             if (playing) {
-                s32 lastVal = *(s32*)(p + 0x1080);
-                if (lastVal != -5) {
-                    s32 diff = clockVal - lastVal;
+                if (*(s32*)(p + 0x1080) != -5) {
+                    s32 diff = clockVal - *(volatile s32*)(p + 0x1080);
                     if (diff < 0) {
                         diff += *(s32*)(p + 0x108C) + 1;
                     }
@@ -1452,7 +1449,6 @@ s32 sftim_GetTimeExtClock(void* self, s32* out1, s32* out2) {
         *out1 = *(s32*)(p + 0x1084);
         *out2 = *(s32*)(p + 0x1088);
     }
-    return 0;
 }
 
 int SFTIM_ChkRegularTime(const void *tim, int *a2, int *a3) {
@@ -1519,54 +1515,60 @@ void SFTIM_Tc2Time(void* tcdata, s32* out1, s32* out2) {
 
 void sftim_Tc2TimeN(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
-    s32 unit = 1000 / rate;
+    s32 unit = 1000;
+    unit /= rate;
+    s32 tcSec = tc / rate;
     s32 min = *(s32*)(td + 0xC);
     s32 hour = *(s32*)(td + 0x8);
     s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
     s32 field = *(s16*)(td + 0x1E);
-    s32 tcSec = tc / rate;
+    s32 totalSec = sec + min * 60 + hour * 3600;
+    s32 half = unit / 2;
     s32 totalFrame = frame + frame2;
-    s32 totalSec = hour * 3600 + min * 60 + sec;
     s32 time = tcSec * totalSec;
     time += totalFrame * unit;
-    time += field * (unit / 2);
+    time += field * half;
     *out1 = time;
     *out2 = tcSec;
 }
 
 void sftim_Tc2Time23N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
-    s32 unit60 = 24000 / rate;
+    s32 unit60 = 24000;
+    unit60 /= rate;
+    s32 unit = 1000;
+    unit /= rate;
     s32 min = *(s32*)(td + 0xC);
     s32 hour = *(s32*)(td + 0x8);
     s32 sec = *(s32*)(td + 0x10);
-    s32 unit = 1000 / rate;
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s32 field = *(s16*)(td + 0x1E);
+    s32 totalSec = sec + min * 60 + hour * 3600;
+    s32 half = unit / 2;
     s32 totalFrame = frame + frame2;
-    s32 totalSec = hour * 3600 + min * 60 + sec;
     s32 time = totalSec * unit60;
     time += totalFrame * unit;
-    time += field * (unit / 2);
+    time += *(s16*)(td + 0x1E) * half;
     *out1 = time;
     *out2 = tc / rate;
 }
 
 void sftim_Tc2Time29N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
-    s32 unit60 = 30000 / rate;
-    s32 unit = 1000 / rate;
+    s32 unit60 = 30000;
+    unit60 /= rate;
+    s32 unit = 1000;
+    unit /= rate;
     s32 min = *(s32*)(td + 0xC);
     s32 hour = *(s32*)(td + 0x8);
     s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
     s32 field = *(s16*)(td + 0x1E);
-    s32 totalSec = hour * 3600 + min * 60 + sec;
     s32 totalFrame = frame + frame2;
+    s32 totalSec = sec + min * 60 + hour * 3600;
     s32 time = totalSec * unit60;
     time += totalFrame * unit;
     time += field * (unit / 2);
@@ -1576,74 +1578,70 @@ void sftim_Tc2Time29N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
 
 void sftim_Tc2Time59N(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
-    s32 unit60 = 60000 / rate;
-    s32 unit = 1000 / rate;
+    s32 unit60 = 60000;
+    unit60 /= rate;
+    s32 unit = 1000;
+    unit /= rate;
     s32 min = *(s32*)(td + 0xC);
     s32 hour = *(s32*)(td + 0x8);
     s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s32 field = *(s16*)(td + 0x1E);
-    s32 totalSec = hour * 3600 + min * 60 + sec;
-    s32 totalFrame = frame + frame2;
-    s32 time = totalSec * unit60;
-    time += totalFrame * unit;
-    time += field * (unit / 2);
-    *out1 = time;
+    *out1 = (sec + min * 60 + hour * 3600) * unit60 + (frame + frame2) * unit + *(s16*)(td + 0x1E) * (unit / 2);
     *out2 = tc / rate;
 }
 
 void sftim_Tc2Time23D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
     s32 unit = 1000 / rate;
-    s32 hour = *(s32*)(td + 0x8);
+    s32 k = unit / 2;
     s32 min = *(s32*)(td + 0xC);
-    s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s16 field = *(s16*)(td + 0x1E);
+    s32 hour = *(s32*)(td + 0x8);
+    s32 sec = *(s32*)(td + 0x10);
+    s32 field = *(s16*)(td + 0x1E);
     s32 totalFrame = frame + frame2;
     s32 dropFrames = (min / 10) * 2;
-    s32 totalFrames = hour * 86292 + dropFrames + min * 1438 + sec * 24 + totalFrame;
-    
+    s32 totalFrames = dropFrames + hour * 86292 + (sec * 24 + min * 1438) + totalFrame;
 
-    *out1 = totalFrames * unit + field * (unit / 2);
+    *out1 = totalFrames * unit + field * k;
     *out2 = tc / rate;
 }
 
 void sftim_Tc2Time29D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
     s32 unit = 1000 / rate;
-    s32 hour = *(s32*)(td + 0x8);
+    s32 k = unit / 2;
     s32 min = *(s32*)(td + 0xC);
-    s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s16 field = *(s16*)(td + 0x1E);
+    s32 hour = *(s32*)(td + 0x8);
+    s32 sec = *(s32*)(td + 0x10);
+    s32 field = *(s16*)(td + 0x1E);
     s32 totalFrame = frame + frame2;
     s32 dropFrames = (min / 10) * 2;
-    s32 totalFrames = hour * 107892 + dropFrames + min * 1798 + sec * 30 + totalFrame;
-    
+    s32 totalFrames = dropFrames + hour * 107892 + (sec * 30 + min * 1798) + totalFrame;
 
-    *out1 = totalFrames * unit + field * (unit / 2);
+    *out1 = totalFrames * unit + field * k;
     *out2 = tc / rate;
 }
 
 void sftim_Tc2Time59D(s32 tc, void* tcdata, s32* out1, s32* out2, s32 rate) {
     u8* td = (u8*)tcdata;
     s32 unit = 1000 / rate;
-    s32 hour = *(s32*)(td + 0x8);
+    s32 k = unit / 2;
     s32 min = *(s32*)(td + 0xC);
-    s32 sec = *(s32*)(td + 0x10);
     s32 frame = *(s32*)(td + 0x14);
     s32 frame2 = *(s32*)(td + 0x18);
-    s16 field = *(s16*)(td + 0x1E);
+    s32 hour = *(s32*)(td + 0x8);
+    s32 sec = *(s32*)(td + 0x10);
+    s32 field = *(s16*)(td + 0x1E);
     s32 totalFrame = frame + frame2;
     s32 dropFrames = (min / 10) * 2;
-    s32 totalFrames = hour * 215892 + dropFrames + min * 3598 + sec * 60 + totalFrame;
-    
+    s32 totalFrames = dropFrames + hour * 215892 + (sec * 60 + min * 3598) + totalFrame;
 
-    *out1 = totalFrames * unit + field * (unit / 2);
+    *out1 = totalFrames * unit + field * k;
     *out2 = tc / rate;
 }
 
@@ -1653,8 +1651,8 @@ void SFTIM_Pause(void* self, s32 mode) {
     if (mode == 2) {
         s32 num, den;
         s32 fps = *(s32*)(p + 0x930);
-        char cs1[8];
-        char cs2[8];
+        u32 cs1;
+        u32 cs2;
 
         if (fps == 0) {
             num = 0;
@@ -1666,17 +1664,21 @@ void SFTIM_Pause(void* self, s32 mode) {
 
         {
             s32 delta = UTY_MulDiv(*(s32*)(lbl_eu_80606E38 + 0x1A8), num, den);
-            SFLIB_LockCs(cs1);
-            *(s32*)(p + 0x1044) += delta;
-            *(s32*)(p + 0x106C) += delta;
-            SFLIB_UnlockCs(cs1);
+            s32 t;
+            SFLIB_LockCs(&cs1);
+            *(volatile s32*)(p + 0x1044) += delta;
+            *(volatile s32*)(p + 0x106C) += delta;
+            SFLIB_UnlockCs(&cs1);
         }
 
         {
             s32 delta2 = UTY_MulDiv(*(s32*)(p + 0x1088), num, den);
-            SFLIB_LockCs(cs2);
-            *(s32*)(p + 0x1084) += delta2;
-            SFLIB_UnlockCs(cs2);
+            s32 t2;
+            SFLIB_LockCs(&cs2);
+            t2 = *(s32*)(p + 0x1084);
+            t2 += delta2;
+            *(s32*)(p + 0x1084) = t2;
+            SFLIB_UnlockCs(&cs2);
         }
     }
 }
@@ -1716,19 +1718,24 @@ s32 SFD_GetFps(void* self, s32* out) {
     return 0;
 }
 
-void SFTIM_IsGetFrmTime(void* self, void* frm, s32 cmpA, s32 cmpB) {
+s32 SFTIM_IsGetFrmTime(void* self, void* frm) {
+    s32 cmpB;
+    s32 cmpA;
+    s32 result;
+
     if (frm == NULL) {
-        return;
+        return 0;
     }
+
+    cmpB = *(s32*)((u8*)frm + 0x18);
+    cmpA = *(s32*)((u8*)frm + 0x14);
+
     if (*(s32*)((u8*)self + 0xA54) != 0) {
-        *(s32*)((u8*)frm + 0) = 1;
-        return;
+        return 1;
     }
-    {
-        s32 result;
-        SFTIM_IsExecTime(self, cmpA, cmpB, &result, *(s32*)((u8*)self + 0xACC));
-        *(s32*)((u8*)frm + 0) = result;
-    }
+
+    SFTIM_IsExecTime(self, cmpA, cmpB, &result, *(s32*)((u8*)self + 0xACC));
+    return result;
 }
 
 s32 SFTIM_IsGetFrmTimeTunit(void* self, s32 cmpA, s32 cmpB) {
@@ -1744,6 +1751,7 @@ s32 SFTIM_IsGetFrmTimeTunit(void* self, s32 cmpA, s32 cmpB) {
 
 void SFTIM_IsExecTime(void* self, s32 cmpA, s32 cmpB, s32* out, s32 param7) {
     u8* p = (u8*)self;
+    u8* wk = (u8*)lbl_eu_80606E38;
     s32 mode = *(s32*)(p + 0xA58);
 
     if (mode == 0) {
@@ -1756,20 +1764,30 @@ void SFTIM_IsExecTime(void* self, s32 cmpA, s32 cmpB, s32* out, s32 param7) {
         s32 timeUnit = *(s32*)(p + 0x102C);
 
         if (timeUnit == 1) {
-            s32 audioTime = *(s32*)(p + 0x106C);
-            if (audioTime < 0) {
+            if (*(s32*)(p + 0x106C) < 0) {
                 *(s32*)(p + 0x106C) = 0;
                 *out = 1;
                 return;
             }
-            *out = (UTY_CmpTime(cmpA, cmpB, audioTime, *(s32*)(lbl_eu_80606E38 + 0x1A8)) != 0);
+            {
+                s32 audioTime = *(volatile s32*)(p + 0x106C);
+                if (UTY_CmpTime(cmpA, cmpB, audioTime, *(s32*)(wk + 0x1A8)) != 0) {
+                    *out = 1;
+                } else {
+                    *out = 0;
+                }
+            }
         } else {
-            s32 offset = (timeUnit * param7) / *(s32*)(lbl_eu_80606E38 + 0x1A4);
+            s32 offset = (timeUnit * param7) / *(s32*)(wk + 0x1A4);
             timeVal += offset;
             if (mode != 1) {
                 sftim_IsGrExecTime(self, cmpA, cmpB, timeVal, timeUnit, out);
             } else {
-                *out = (UTY_CmpTime(cmpA, cmpB, timeVal, timeUnit) != 0);
+                if (UTY_CmpTime(cmpA, cmpB, timeVal, timeUnit) != 0) {
+                    *out = 1;
+                } else {
+                    *out = 0;
+                }
             }
         }
     }
@@ -1840,7 +1858,25 @@ void sftim_IsGrExecTime(void* self, s32 cmpA, s32 cmpB, s32 timeVal, s32 timeUni
     }
 }
 
-void SFTIM_IsVideoTerm(void* self) {}
+s32 SFTIM_IsVideoTerm(void* self) {
+    u8* p = (u8*)self;
+    s32 cond = *(s32*)(p + 0x960);
+    s32 v1018 = *(s32*)(p + 0x1018);
+    s32 v101C = *(s32*)(p + 0x101C);
+
+    if (cond == 0) {
+        return 1;
+    }
+
+    if (v1018 == -5) {
+        return 0;
+    }
+
+    return (UTY_CmpTime(v1018 + (v101C * 2000) / 59940,
+                        v101C,
+                        *(s32*)(p + 0x1028),
+                        *(s32*)(p + 0x102C)) != 0);
+}
 
 void SFTIM_SetSpeed(void* self, u32 a, u32 b) { *(u32*)((u8*)self + 0x1048) = a; *(u32*)((u8*)self + 0x104C) = b; }
 
@@ -1849,10 +1885,9 @@ void SFTIM_GetSpeed(void* self, u32* out1, u32* out2) {
     *out2 = *(u32*)((u8*)self + 0x104c);
 }
 
-void SFD_SetCyclicFrameOutput(void* self, s32 num, s32 den) {
+s32 SFD_SetCyclicFrameOutput(void* self, s32 num, s32 den) {
     if (SFLIB_CheckHn(self) != 0) {
-        SFLIB_SetErr(0, 0xFF00012B);
-        return;
+        return SFLIB_SetErr(0, 0xFF00012B);
     }
     {
         char cs[8];
@@ -1864,17 +1899,14 @@ void SFD_SetCyclicFrameOutput(void* self, s32 num, s32 den) {
         }
         SFLIB_UnlockCs(cs);
     }
+    return 0;
 }
 
 s32 SFTIM_ExecCyclicFrameOutput(void* self) {
     u8* p = (u8*)self;
     s32 result;
 
-    if (*(s32*)(p + 0x1384) == 0) {
-        return 1;
-    }
-
-    {
+    if (*(s32*)(p + 0x1384) != 0) {
         char cs[8];
         SFLIB_LockCs(cs);
         if (*(s32*)(p + 0x138C) == -1) {
@@ -1894,6 +1926,8 @@ s32 SFTIM_ExecCyclicFrameOutput(void* self) {
             }
         }
         SFLIB_UnlockCs(cs);
+    } else {
+        result = 1;
     }
     return result;
 }

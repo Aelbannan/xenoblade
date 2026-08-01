@@ -170,19 +170,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -2530,6 +2522,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -13530,9 +13523,7 @@ public:
 
     TagProcessorBase<T>* GetTagProcessor() const;
     void SetTagProcessor(TagProcessorBase<T>* pProcessor);
-    void ResetTagProcessor() {
-        mTagProcessor = &mDefaultTagProcessor;
-    }
+    void ResetTagProcessor();
 
     f32 GetLineHeight() const;
 
@@ -13546,19 +13537,10 @@ public:
     f32 Print(const T* pStr, int len);
     f32 PrintMutable(const T* pStr, int len);
 
-    static T* GetBuffer() {
-        return mFormatBuffer;
-    }
-    static T* SetBuffer(T* pBuffer, u32 size) {
-        T* pOldBuffer = mFormatBuffer;
-        mFormatBuffer = pBuffer;
-        mFormatBufferSize = size;
-        return pOldBuffer;
-    }
+    static T* GetBuffer();
+    static T* SetBuffer(T* pBuffer, u32 size);
 
-    static u32 GetBufferSize() {
-        return mFormatBufferSize;
-    }
+    static u32 GetBufferSize();
 
 private:
     static const int DEFAULT_FORMAT_BUFFER_SIZE = 256;
@@ -14445,6 +14427,52 @@ void TextWriterBase<wchar_t>::SetTagProcessor(TagProcessorBase<wchar_t>* pProces
 template <>
 TagProcessorBase<wchar_t>* TextWriterBase<wchar_t>::GetTagProcessor() const {
     return mTagProcessor;
+}
+
+template <>
+void TextWriterBase<char>::ResetTagProcessor() {
+    mTagProcessor = &mDefaultTagProcessor;
+}
+
+template <>
+char* TextWriterBase<char>::SetBuffer(char* pBuffer, u32 size) {
+    char* pOldBuffer = mFormatBuffer;
+    mFormatBuffer = pBuffer;
+    mFormatBufferSize = size;
+    return pOldBuffer;
+}
+
+template <>
+char* TextWriterBase<char>::GetBuffer() {
+    return mFormatBuffer;
+}
+
+template <>
+u32 TextWriterBase<char>::GetBufferSize() {
+    return mFormatBufferSize;
+}
+
+template <>
+void TextWriterBase<wchar_t>::ResetTagProcessor() {
+    mTagProcessor = &mDefaultTagProcessor;
+}
+
+template <>
+wchar_t* TextWriterBase<wchar_t>::SetBuffer(wchar_t* pBuffer, u32 size) {
+    wchar_t* pOldBuffer = mFormatBuffer;
+    mFormatBuffer = pBuffer;
+    mFormatBufferSize = size;
+    return pOldBuffer;
+}
+
+template <>
+wchar_t* TextWriterBase<wchar_t>::GetBuffer() {
+    return mFormatBuffer;
+}
+
+template <>
+u32 TextWriterBase<wchar_t>::GetBufferSize() {
+    return mFormatBufferSize;
 }
 
 template struct TextWriterBase<char>;

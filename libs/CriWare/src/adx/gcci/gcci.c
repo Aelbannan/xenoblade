@@ -1,34 +1,136 @@
-// Auto-scaffolded catalog TU for CriWare/src/adx/gcci/gcci
-// Replace stubs with high-level C/C++ during decomp.
+// CriWare ADX GCI (GameCube Interface) streaming layer.
+// High-level C reconstruction of libs/CriWare/src/adx/gcci/gcci.c
 
 #include <harness_catalog.h>
 #include <string.h>
 
-extern u32 lbl_eu_805E6B70;
-extern u8  lbl_eu_805E7B30[];
-extern char lbl_eu_80565B30[];
+#include <revolution/DVD.h>
+#include <revolution/OS.h>
+
+// ── Globals (bss) ──────────────────────────────────────────────────────────
+
+// Control block at 0x805E6B70: [0x00] self-refresh word, [0x04] error
+// callback, [0x08] error callback arg, [0x0C] status block (0xC bytes).
+typedef struct {
+    u32 unk0;                          // +0x00
+    void (*errfunc)(u32, const char *, s32);  // +0x04
+    u32 errarg;                        // +0x08
+    u8 status[0xC];                    // +0x0C
+} GciGlobals;
+
+extern GciGlobals lbl_eu_805E6B70;
+
+// Standalone aliases for the error callback globals (some functions
+// reference them as separate symbols, matching the retail relocations).
+extern void (*lbl_eu_805E6B74)(u32, const char *, s32);
+extern u32 lbl_eu_805E6B78;
+
+// Status block at 0x805E6B7C (aliases GciGlobals.status).
+typedef struct {
+    s32 status;                        // +0x00
+    u8 flag;                           // +0x04
+    u8 pad[7];
+} GciStatus;
+
+extern GciStatus lbl_eu_805E6B7C;
+
+extern u8 lbl_eu_805E7B30[];           // sector buffer (0x100)
+extern char lbl_eu_80565B30[];         // GCI interface table
+extern char lbl_eu_805181F0[];         // error message strings
+
+// GCI transfer handle (0x64 bytes), 40 entries at 0x805E6B88.
+typedef struct {
+    s8 use;                            // +0x00
+    s8 unk01;                          // +0x01
+    s8 state;                          // +0x02
+    s8 unk03;                          // +0x03
+    u32 unk04;                         // +0x04
+    u8 *buf;                           // +0x08
+    s32 dvdStatus;                     // +0x0C
+    s32 sctLen;                        // +0x10
+    s32 fileSize;                      // +0x14
+    s32 numSct;                        // +0x18
+    s32 pos;                           // +0x1C
+    s32 transferred;                   // +0x20
+    s32 length;                        // +0x24
+    DVDFileInfo fi;                    // +0x28
+} GciHndl;
+
+extern GciHndl lbl_eu_805E6B88[];
+
+s32 DVDGetTransferredSize(DVDFileInfo *info);
+void gcCiStopTr(GciHndl *h);
+
+// ── Functions ──────────────────────────────────────────────────────────────
 
 void *gcCiGetInterface(void) {
-    u32 *p = (u32 *)&lbl_eu_805E6B70;
-    {
-        volatile u32 t = *(volatile u32 *)p;
-        *p = t;
-    }
+    GciGlobals *g = (GciGlobals *)&lbl_eu_805E6B70;
+    volatile u32 t = *(volatile u32 *)&g->unk0;
+    g->unk0 = t;
     memset(lbl_eu_805E7B30, 0, 0x100);
-    p[1] = 0;
-    p[2] = 0;
-    memset((u8 *)p + 0xC, 0, 0xC);
-    return (void *)lbl_eu_80565B30;
+    g->errfunc = NULL;
+    g->errarg = 0;
+    memset(&g->status, 0, 0xC);
+    return lbl_eu_80565B30;
 }
 
-void gcCiExecHndl() {}
+void gcCiExecHndl(GciHndl *h) {
+    if (h->state == 2) {
+        s32 st = DVDGetCommandBlockStatus(&h->fi.block);
+        h->dvdStatus = st;
+        lbl_eu_805E6B7C.status = st;
+        if (st == -1)
+            goto case_fatal;
+        if (st == 0)
+            goto case_done;
+        if (st == 10)
+            goto case_err;
+        goto done;
+    case_fatal:
+        h->state = 3;
+        ((u8 *)&lbl_eu_805E6B7C)[4] = 3;
+        goto done;
+    case_done: {
+        s32 tr = h->length * h->sctLen;
+        DCInvalidateRange(h->buf, tr);
+        s32 np = h->pos + h->length;
+        s32 fs = h->fileSize;
+        s32 nt = np * h->sctLen;
+        h->transferred = tr;
+        h->pos = np;
+        if (nt > fs) {
+            s32 over = nt - fs;
+            u8 *dst = h->buf + tr - over;
+            memset(dst, 0, over);
+            DCStoreRange(dst, over);
+        }
+        h->state = 1;
+        ((u8 *)&lbl_eu_805E6B7C)[4] = 1;
+    } goto done;
+    case_err: {
+        s32 ts = DVDGetTransferredSize(&h->fi);
+        DCInvalidateRange(h->buf, ts);
+        s32 nsct = ts / h->sctLen;
+        h->pos += nsct;
+        h->transferred = nsct * h->sctLen;
+        h->state = 0;
+        ((u8 *)&lbl_eu_805E6B7C)[4] = 0;
+    } goto done;
+    done:;
+    }
+}
 
-void gcCiExecServer() {}
+void gcCiExecServer(void) {
+    GciHndl *h = &lbl_eu_805E6B88[0];
+    s32 i;
+    for (i = 0; i < 40; i++, h++) {
+        if (h->use == 1)
+            gcCiExecHndl(h);
+    }
+}
 
-extern u32 lbl_eu_805E6B74;
-extern u32 lbl_eu_805E6B78;
 void gcCiEntryErrFunc(u32 a, u32 b) {
-    lbl_eu_805E6B74 = a;
+    lbl_eu_805E6B74 = (void (*)(u32, const char *, s32))a;
     lbl_eu_805E6B78 = b;
 }
 
@@ -36,35 +138,104 @@ void gcCiGetFileSize() {}
 
 void gcCiOpen() {}
 
-void gcCiStopTr(void*);
-int DVDClose(void*);
-
-void gcCiClose(void* self) {
-    if (self == NULL) return;
-    gcCiStopTr(self);
-    DVDClose((u8*)self + 0x28);
-    *(u8*)self = 0;
-    memset(self, 0, 0x64);
+void gcCiClose(GciHndl *h) {
+    if (h == NULL)
+        return;
+    gcCiStopTr(h);
+    DVDClose(&h->fi);
+    h->use = 0;
+    memset(h, 0, 0x64);
 }
 
-void gcCiSeek() {}
+s32 gcCiSeek(GciHndl *h, s32 offset, s32 mode) {
+    if (h == NULL) {
+        const char *msg = &lbl_eu_805181F0[0x118];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return 0;
+    }
+    if (mode == 0) {
+        h->pos = offset;
+    } else if (mode == 2) {
+        h->pos = h->numSct + offset;
+    } else if (mode == 1) {
+        h->pos = h->pos + offset;
+    }
+    s32 p = h->numSct;
+    s32 q = h->pos;
+    if (q < p)
+        p = q;
+    p = (p > 0) ? p : 0;
+    h->pos = p;
+    return p;
+}
 
-void gcCiTell() {}
+s32 gcCiTell(GciHndl *h) {
+    if (h == NULL) {
+        const char *msg = &lbl_eu_805181F0[0x118];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return 0;
+    }
+    return h->pos;
+}
 
 void gcCiReqRd() {}
 
-void gcCiStopTr(void* self) { (void)self; }
+void gcCiStopTr(GciHndl *self) { (void)self; }
 
-void gcCiGetStat() {}
+s32 gcCiGetStat(GciHndl *h) {
+    if (h == NULL) {
+        const char *msg = &lbl_eu_805181F0[0x118];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return 0;
+    }
+    return (s8)h->state;
+}
 
-void gcCiGetSctLen() {}
+s32 gcCiGetSctLen(GciHndl *h) {
+    if (h == NULL) {
+        const char *msg = &lbl_eu_805181F0[0x1A7];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return 0;
+    }
+    return h->sctLen;
+}
 
-void gcCiSetSctLen() {}
+void gcCiSetSctLen(GciHndl *h, s32 sctLen) {
+    if (h == NULL) {
+        const char *msg = &lbl_eu_805181F0[0x1BF];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return;
+    }
+    s32 oldSct = h->sctLen;
+    if (oldSct % 32 != 0) {
+        const char *msg = &lbl_eu_805181F0[0x1D7];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return;
+    }
+    h->sctLen = sctLen;
+    h->numSct = (sctLen + h->fileSize - 1) / sctLen;
+    h->pos = h->pos * oldSct / sctLen;
+    h->transferred = h->length * sctLen;
+}
 
-void gcCiGetNumTr() {}
+s32 gcCiGetNumTr(GciHndl *h) {
+    if (h == NULL) {
+        const char *msg = &lbl_eu_805181F0[0x118];
+        if (lbl_eu_805E6B74 != NULL)
+            lbl_eu_805E6B74(lbl_eu_805E6B78, msg, 0);
+        return 0;
+    }
+    return h->transferred;
+}
 
-extern s32 DVDConvertPathToEntrynum(const char*);
-s32 gcCiIsExistFile(const char* path) {
+extern s32 DVDConvertPathToEntrynum(const char *);
+s32 gcCiIsExistFile(const char *path) {
     s32 entry = DVDConvertPathToEntrynum(path);
     return (entry >= 0) ? 1 : 0;
 }

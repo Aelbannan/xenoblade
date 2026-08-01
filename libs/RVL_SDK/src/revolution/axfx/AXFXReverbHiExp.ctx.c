@@ -170,19 +170,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -762,8 +754,8 @@ typedef struct AXFX_CHORUS_EXP {
     f32 depth;                   // at 0x84
     f32 rate;                    // at 0x88
     f32 feedback;                // at 0x8C
-    struct AXFX_BUS* busIn;             // at 0x90
-    struct AXFX_BUS* busOut;            // at 0x94
+    struct AXFX_BUS* busIn;      // at 0x90
+    struct AXFX_BUS* busOut;     // at 0x94
     f32 outGain;                 // at 0x98
     f32 sendGain;                // at 0x9C
 } AXFX_CHORUS_EXP;
@@ -772,6 +764,7 @@ u32 AXFXChorusExpGetMemSize(const AXFX_CHORUS_EXP* fx);
 BOOL AXFXChorusExpInit(AXFX_CHORUS_EXP* fx);
 void AXFXChorusExpShutdown(AXFX_CHORUS_EXP* fx);
 BOOL AXFXChorusExpSettings(AXFX_CHORUS_EXP* fx);
+BOOL AXFXChorusExpSettingsUpdate(AXFX_CHORUS_EXP* fx);
 void AXFXChorusExpCallback(struct AXFX_BUFFERUPDATE* update, AXFX_CHORUS_EXP* fx);
 
 #ifdef __cplusplus
@@ -803,7 +796,57 @@ void AXFXChorusCallback(void* chans, void* context);
 /* end "revolution/AXFX/AXFXChorus.h" */
 /* "libs/RVL_SDK/include/revolution/AXFX.h" line 7 "revolution/AXFX/AXFXChorusExp.h" */
 /* end "revolution/AXFX/AXFXChorusExp.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 8 "revolution/AXFX/AXFXCommon.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 8 "revolution/AXFX/AXFXChorusExpDpl2.h" */
+#ifndef RVL_SDK_AXFX_CHORUS_EXP_DPL2_H
+#define RVL_SDK_AXFX_CHORUS_EXP_DPL2_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXChorusExpDpl2.h" line 2 "types.h" */
+/* end "types.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXChorusExpDpl2.h" line 3 "revolution/AXFX/AXFXChorusExp.h" */
+/* end "revolution/AXFX/AXFXChorusExp.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUFFERUPDATE_DPL2;
+
+typedef struct AXFX_CHORUS_EXP_DELAY_DPL2 {
+    f32* line[4]; // at 0x0
+    u32 inPos;    // at 0x10
+    u32 outPos;   // at 0x14
+    u32 lastPos;  // at 0x18
+    u32 sizeFP;   // at 0x1C
+    u32 size;     // at 0x20
+} AXFX_CHORUS_EXP_DELAY_DPL2;
+
+typedef struct AXFX_CHORUS_EXP_DPL2 {
+    AXFX_CHORUS_EXP_DELAY_DPL2 delay; // at 0x0
+    AXFX_CHORUS_EXP_LFO lfo;          // at 0x24
+    f32 history[4][4];                // at 0x4C
+    u32 histIndex;                    // at 0x8C
+    u32 active;                       // at 0x90
+    f32 delayTime;                    // at 0x94
+    f32 depth;                        // at 0x98
+    f32 rate;                         // at 0x9C
+    f32 feedback;                     // at 0xA0
+    struct AXFX_BUFFERUPDATE_DPL2* busIn;  // at 0xA4
+    struct AXFX_BUFFERUPDATE_DPL2* busOut; // at 0xA8
+    f32 outGain;                      // at 0xAC
+    f32 sendGain;                     // at 0xB0
+} AXFX_CHORUS_EXP_DPL2;
+
+u32 AXFXChorusExpGetMemSizeDpl2(const AXFX_CHORUS_EXP_DPL2* fx);
+BOOL AXFXChorusExpInitDpl2(AXFX_CHORUS_EXP_DPL2* fx);
+void AXFXChorusExpShutdownDpl2(AXFX_CHORUS_EXP_DPL2* fx);
+BOOL AXFXChorusExpSettingsUpdateDpl2(AXFX_CHORUS_EXP_DPL2* fx);
+void AXFXChorusExpCallbackDpl2(struct AXFX_BUFFERUPDATE_DPL2* update, AXFX_CHORUS_EXP_DPL2* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXChorusExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 9 "revolution/AXFX/AXFXCommon.h" */
 #ifndef RVL_SDK_AXFX_COMMON_H
 #define RVL_SDK_AXFX_COMMON_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXCommon.h" line 2 "types.h" */
@@ -836,7 +879,7 @@ typedef struct AXFX_BUFFERUPDATE_DPL2 {
 #endif
 #endif
 /* end "revolution/AXFX/AXFXCommon.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 9 "revolution/AXFX/AXFXDelay.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 10 "revolution/AXFX/AXFXDelay.h" */
 #ifndef RVL_SDK_AXFX_DELAY_H
 #define RVL_SDK_AXFX_DELAY_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXDelay.h" line 2 "types.h" */
@@ -868,7 +911,98 @@ void AXFXDelayCallback(void* chans, void* context);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXDelay.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 10 "revolution/AXFX/AXFXHooks.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 11 "revolution/AXFX/AXFXDelayExp.h" */
+#ifndef RVL_SDK_AXFX_DELAY_EXP_H
+#define RVL_SDK_AXFX_DELAY_EXP_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXDelayExp.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUS;
+typedef struct AXFX_BUFFERUPDATE;
+
+typedef struct AXFX_DELAY_EXP {
+    s32* line[3];            // at 0x0
+    u32 curPos;              // at 0xC
+    u32 length;              // at 0x10
+    u32 maxLength;           // at 0x14
+    s32 feedbackGain;        // at 0x18
+    s32 last[3];             // at 0x1C
+    s32 iirGain;             // at 0x28
+    s32 outGainI;            // at 0x2C
+    s32 sendGainI;           // at 0x30
+    u32 active;              // at 0x34
+    f32 delayTimeMax;        // at 0x38
+    f32 delayTime;           // at 0x3C
+    f32 feedback;            // at 0x40
+    f32 iir;                 // at 0x44
+    struct AXFX_BUS* busIn;  // at 0x48
+    struct AXFX_BUS* busOut; // at 0x4C
+    f32 outGain;             // at 0x50
+    f32 sendGain;            // at 0x54
+} AXFX_DELAY_EXP;
+
+u32 AXFXDelayExpGetMemSize(const AXFX_DELAY_EXP* fx);
+BOOL AXFXDelayExpInit(AXFX_DELAY_EXP* fx);
+BOOL AXFXDelayExpSettings(AXFX_DELAY_EXP* fx);
+BOOL AXFXDelayExpSettingsUpdate(AXFX_DELAY_EXP* fx);
+void AXFXDelayExpShutdown(AXFX_DELAY_EXP* fx);
+void AXFXDelayExpCallback(struct AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXDelayExp.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 12 "revolution/AXFX/AXFXDelayExpDpl2.h" */
+#ifndef RVL_SDK_AXFX_DELAY_EXP_DPL2_H
+#define RVL_SDK_AXFX_DELAY_EXP_DPL2_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXDelayExpDpl2.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUFFERUPDATE_DPL2;
+
+typedef struct AXFX_DELAY_EXP_DPL2 {
+    s32* line[4];                              // at 0x0
+    u32 curPos;                                // at 0x10
+    u32 length;                                // at 0x14
+    u32 maxLength;                             // at 0x18
+    s32 feedbackGain;                          // at 0x1C
+    s32 last[4];                               // at 0x20
+    s32 iirGain;                               // at 0x30
+    s32 outGainI;                              // at 0x34
+    s32 sendGainI;                             // at 0x38
+    u32 active;                                // at 0x3C
+    f32 delayTimeMax;                          // at 0x40
+    f32 delayTime;                             // at 0x44
+    f32 feedback;                              // at 0x48
+    f32 iir;                                   // at 0x4C
+    struct AXFX_BUFFERUPDATE_DPL2* busIn;  // at 0x50
+    struct AXFX_BUFFERUPDATE_DPL2* busOut; // at 0x54
+    f32 outGain;                               // at 0x58
+    f32 sendGain;                              // at 0x5C
+} AXFX_DELAY_EXP_DPL2;
+
+u32 AXFXDelayExpGetMemSizeDpl2(const AXFX_DELAY_EXP_DPL2* fx);
+BOOL AXFXDelayExpInitDpl2(AXFX_DELAY_EXP_DPL2* fx);
+BOOL AXFXDelayExpSettingsDpl2(AXFX_DELAY_EXP_DPL2* fx);
+BOOL AXFXDelayExpSettingsUpdateDpl2(AXFX_DELAY_EXP_DPL2* fx);
+void AXFXDelayExpShutdownDpl2(AXFX_DELAY_EXP_DPL2* fx);
+void AXFXDelayExpCallbackDpl2(struct AXFX_BUFFERUPDATE_DPL2* update, AXFX_DELAY_EXP_DPL2* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXDelayExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 13 "revolution/AXFX/AXFXHooks.h" */
 #ifndef RVL_SDK_AXFX_HOOKS_H
 #define RVL_SDK_AXFX_HOOKS_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXHooks.h" line 2 "types.h" */
@@ -891,7 +1025,7 @@ void AXFXGetHooks(AXFXAllocHook* alloc, AXFXFreeHook* free);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXHooks.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 11 "revolution/AXFX/AXFXLfoTable.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 14 "revolution/AXFX/AXFXLfoTable.h" */
 #ifndef RVL_SDK_AXFX_LFO_TABLE_H
 #define RVL_SDK_AXFX_LFO_TABLE_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXLfoTable.h" line 2 "types.h" */
@@ -907,7 +1041,7 @@ s32* __AXFXGetLfoSinTable(void);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXLfoTable.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 12 "revolution/AXFX/AXFXReverbHi.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 15 "revolution/AXFX/AXFXReverbHi.h" */
 #ifndef RVL_SDK_AXFX_REVERB_HI_H
 #define RVL_SDK_AXFX_REVERB_HI_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbHi.h" line 2 "types.h" */
@@ -1010,7 +1144,7 @@ void AXFXReverbHiCallback(void* chans, void* context);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXReverbHi.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 13 "revolution/AXFX/AXFXReverbHiDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 16 "revolution/AXFX/AXFXReverbHiDpl2.h" */
 #ifndef RVL_SDK_AXFX_REVERB_HI_DPL2_H
 #define RVL_SDK_AXFX_REVERB_HI_DPL2_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbHiDpl2.h" line 2 "types.h" */
@@ -1114,11 +1248,144 @@ void AXFXReverbHiCallbackDpl2(void* chans, void* context);
 #endif
 #endif
 /* end "revolution/AXFX/AXFXReverbHiDpl2.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 14 "revolution/AXFX/AXFXReverbHiExp.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 17 "revolution/AXFX/AXFXReverbHiExp.h" */
 /* end "revolution/AXFX/AXFXReverbHiExp.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 15 "revolution/AXFX/AXFXReverbHiExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 18 "revolution/AXFX/AXFXReverbHiExpDpl2.h" */
 /* end "revolution/AXFX/AXFXReverbHiExpDpl2.h" */
-/* "libs/RVL_SDK/include/revolution/AXFX.h" line 16 "revolution/AXFX/AXFXSrcCoef.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 19 "revolution/AXFX/AXFXReverbStdExp.h" */
+#ifndef RVL_SDK_AXFX_REVERB_STD_EXP_H
+#define RVL_SDK_AXFX_REVERB_STD_EXP_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbStdExp.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Forward declarations
+typedef struct AXFX_BUS;
+typedef struct AXFX_BUFFERUPDATE;
+
+typedef struct AXFX_REVERBSTD_EXP {
+    f32* earlyLine[3];       // at 0x0
+    u32 earlyPos;            // at 0xC
+    u32 earlyLength;         // at 0x10
+    u32 earlyMaxLength;      // at 0x14
+    f32 earlyCoef;           // at 0x18
+
+    f32* preDelayLine[3];    // at 0x1C
+    u32 preDelayPos;         // at 0x28
+    u32 preDelayLength;      // at 0x2C
+    u32 preDelayMaxLength;   // at 0x30
+
+    f32* combLine[3][2];     // at 0x34
+    u32 combPos[2];          // at 0x4C
+    u32 combLength[2];       // at 0x54
+    u32 combMaxLength[2];    // at 0x5C
+    f32 combCoef[2];         // at 0x64
+
+    f32* allpassLine[3][2];  // at 0x6C
+    u32 allpassPos[2];       // at 0x84
+    u32 allpassLength[2];    // at 0x8C
+    u32 allpassMaxLength[2]; // at 0x94
+
+    f32 allpassCoef;         // at 0x9C
+    f32 lastLpfOut[3];       // at 0xA0
+    f32 lpfCoef;             // at 0xAC
+    u32 active;              // at 0xB0
+    u32 earlyMode;           // at 0xB4
+    f32 preDelayTimeMax;     // at 0xB8
+    f32 preDelayTime;        // at 0xBC
+    u32 fusedMode;           // at 0xC0
+    f32 fusedTime;           // at 0xC4
+    f32 coloration;          // at 0xC8
+    f32 damping;             // at 0xCC
+    f32 earlyGain;           // at 0xD0
+    f32 fusedGain;           // at 0xD4
+    struct AXFX_BUS* busIn;  // at 0xD8
+    struct AXFX_BUS* busOut; // at 0xDC
+    f32 outGain;             // at 0xE0
+    f32 sendGain;            // at 0xE4
+} AXFX_REVERBSTD_EXP;
+
+u32 AXFXReverbStdExpGetMemSize(const AXFX_REVERBSTD_EXP* fx);
+BOOL AXFXReverbStdExpInit(AXFX_REVERBSTD_EXP* fx);
+BOOL AXFXReverbStdExpSettings(AXFX_REVERBSTD_EXP* fx);
+BOOL AXFXReverbStdExpSettingsUpdate(AXFX_REVERBSTD_EXP* fx);
+void AXFXReverbStdExpShutdown(AXFX_REVERBSTD_EXP* fx);
+void AXFXReverbStdExpCallback(AXFX_BUFFERUPDATE* update, AXFX_REVERBSTD_EXP* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXReverbStdExp.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 20 "revolution/AXFX/AXFXReverbStdExpDpl2.h" */
+#ifndef RVL_SDK_AXFX_REVERB_STD_EXP_DPL2_H
+#define RVL_SDK_AXFX_REVERB_STD_EXP_DPL2_H
+/* "libs/RVL_SDK/include/revolution/AXFX/AXFXReverbStdExpDpl2.h" line 2 "types.h" */
+/* end "types.h" */
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct AXFX_BUFFERUPDATE_DPL2;
+
+typedef struct AXFX_REVERBSTD_EXP_DPL2 {
+    f32* earlyLine[4];       // at 0x0
+    u32 earlyPos;            // at 0x10
+    u32 earlyLength;         // at 0x14
+    u32 earlyMaxLength;      // at 0x18
+    f32 earlyCoef;           // at 0x1C
+
+    f32* preDelayLine[4];    // at 0x20
+    u32 preDelayPos;         // at 0x30
+    u32 preDelayLength;      // at 0x34
+    u32 preDelayMaxLength;   // at 0x38
+
+    f32* combLine[4][2];     // at 0x3C
+    u32 combPos[2];          // at 0x5C
+    u32 combLength[2];       // at 0x64
+    u32 combMaxLength[2];    // at 0x6C
+    f32 combCoef[2];         // at 0x74
+
+    f32* allpassLine[4][2];  // at 0x7C
+    u32 allpassPos[2];       // at 0x9C
+    u32 allpassLength[2];    // at 0xA4
+    u32 allpassMaxLength[2]; // at 0xAC
+
+    f32 allpassCoef;         // at 0xB4
+    f32 lastLpfOut[4];       // at 0xB8
+    f32 lpfCoef;             // at 0xC8
+    u32 active;              // at 0xCC
+    u32 earlyMode;           // at 0xD0
+    f32 preDelayTimeMax;     // at 0xD4
+    f32 preDelayTime;        // at 0xD8
+    u32 fusedMode;           // at 0xDC
+    f32 fusedTime;           // at 0xE0
+    f32 coloration;          // at 0xE4
+    f32 damping;             // at 0xE8
+    f32 earlyGain;           // at 0xEC
+    f32 fusedGain;           // at 0xF0
+    struct AXFX_BUFFERUPDATE_DPL2* busIn;  // at 0xF4
+    struct AXFX_BUFFERUPDATE_DPL2* busOut; // at 0xF8
+    f32 outGain;             // at 0xFC
+    f32 sendGain;            // at 0x100
+} AXFX_REVERBSTD_EXP_DPL2;
+
+u32 AXFXReverbStdExpGetMemSizeDpl2(const AXFX_REVERBSTD_EXP_DPL2* fx);
+BOOL AXFXReverbStdExpInitDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+BOOL AXFXReverbStdExpSettingsDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+BOOL AXFXReverbStdExpSettingsUpdateDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+void AXFXReverbStdExpShutdownDpl2(AXFX_REVERBSTD_EXP_DPL2* fx);
+void AXFXReverbStdExpCallbackDpl2(struct AXFX_BUFFERUPDATE_DPL2* update,
+                                  AXFX_REVERBSTD_EXP_DPL2* fx);
+
+#ifdef __cplusplus
+}
+#endif
+#endif
+/* end "revolution/AXFX/AXFXReverbStdExpDpl2.h" */
+/* "libs/RVL_SDK/include/revolution/AXFX.h" line 21 "revolution/AXFX/AXFXSrcCoef.h" */
 #ifndef RVL_SDK_AXFX_SRC_COEF_H
 #define RVL_SDK_AXFX_SRC_COEF_H
 /* "libs/RVL_SDK/include/revolution/AXFX/AXFXSrcCoef.h" line 2 "types.h" */
@@ -1381,6 +1648,7 @@ typedef struct OSAlarm {
     s64 period;             // at 0x18
     s64 start;              // at 0x20
     void* userData;         // at 0x28
+    char padding[4];        // tail padding for 8-byte array alignment
 } OSAlarm;
 
 typedef struct OSAlarmQueue {
@@ -2258,6 +2526,71 @@ typedef enum _GXProjectionType {
     GX_PERSPECTIVE,
     GX_ORTHOGRAPHIC
 } GXProjectionType;
+
+typedef enum _GXPerf0 {
+    GX_PERF0_VERTICES,
+    GX_PERF0_CLIP_VTX,
+    GX_PERF0_CLIP_CLKS,
+    GX_PERF0_XF_WAIT_IN,
+    GX_PERF0_XF_WAIT_OUT,
+    GX_PERF0_XF_XFRM_CLKS,
+    GX_PERF0_XF_LIT_CLKS,
+    GX_PERF0_XF_BOT_CLKS,
+    GX_PERF0_XF_REGLD_CLKS,
+    GX_PERF0_XF_REGRD_CLKS,
+    GX_PERF0_CLIP_RATIO,
+    GX_PERF0_TRIANGLES,
+    GX_PERF0_TRIANGLES_CULLED,
+    GX_PERF0_TRIANGLES_PASSED,
+    GX_PERF0_TRIANGLES_SCISSORED,
+    GX_PERF0_TRIANGLES_0TEX,
+    GX_PERF0_TRIANGLES_1TEX,
+    GX_PERF0_TRIANGLES_2TEX,
+    GX_PERF0_TRIANGLES_3TEX,
+    GX_PERF0_TRIANGLES_4TEX,
+    GX_PERF0_TRIANGLES_5TEX,
+    GX_PERF0_TRIANGLES_6TEX,
+    GX_PERF0_TRIANGLES_7TEX,
+    GX_PERF0_TRIANGLES_8TEX,
+    GX_PERF0_TRIANGLES_0CLR,
+    GX_PERF0_TRIANGLES_1CLR,
+    GX_PERF0_TRIANGLES_2CLR,
+    GX_PERF0_QUAD_0CVG,
+    GX_PERF0_QUAD_NON0CVG,
+    GX_PERF0_QUAD_1CVG,
+    GX_PERF0_QUAD_2CVG,
+    GX_PERF0_QUAD_3CVG,
+    GX_PERF0_QUAD_4CVG,
+    GX_PERF0_AVG_QUAD_CNT,
+    GX_PERF0_CLOCKS,
+    GX_PERF0_NONE
+} GXPerf0;
+
+typedef enum _GXPerf1 {
+    GX_PERF1_TEXELS,
+    GX_PERF1_TX_IDLE,
+    GX_PERF1_TX_REGS,
+    GX_PERF1_TX_MEMSTALL,
+    GX_PERF1_TC_CHECK1_2,
+    GX_PERF1_TC_CHECK3_4,
+    GX_PERF1_TC_CHECK5_6,
+    GX_PERF1_TC_CHECK7_8,
+    GX_PERF1_TC_MISS,
+    GX_PERF1_VC_ELEMQ_FULL,
+    GX_PERF1_VC_MISSQ_FULL,
+    GX_PERF1_VC_MEMREQ_FULL,
+    GX_PERF1_VC_STATUS7,
+    GX_PERF1_VC_MISSREP_FULL,
+    GX_PERF1_VC_STREAMBUF_LOW,
+    GX_PERF1_VC_ALL_STALLS,
+    GX_PERF1_VERTICES,
+    GX_PERF1_FIFO_REQ,
+    GX_PERF1_CALL_REQ,
+    GX_PERF1_VC_MISS_REQ,
+    GX_PERF1_CP_ALL_REQ,
+    GX_PERF1_CLOCKS,
+    GX_PERF1_NONE
+} GXPerf1;
 
 typedef enum _GXSpotFn {
     GX_SP_OFF,
@@ -4481,24 +4814,16 @@ void* memset(void* dest, int val, size_t count);
 #endif
 /* end "string.h" */
 
-static u32 __EarlySizeTable[8][3] = {
-    {157, 479, 829},    {317, 809, 1117},  {479, 941, 1487},
-    {641, 1259, 1949},  {797, 1667, 2579}, {967, 1901, 2903},
-    {1123, 2179, 3413}, {1279, 2477, 3889}};
+static u32 __EarlySizeTable[8][3] = {{157, 479, 829},   {317, 809, 1117},  {479, 941, 1487},   {641, 1259, 1949},
+                                     {797, 1667, 2579}, {967, 1901, 2903}, {1123, 2179, 3413}, {1279, 2477, 3889}};
 
-static f32 __EarlyCoefTable[8][3] = {
-    {0.4f, -1.0f, 0.3f},   {0.5f, -0.95f, 0.3f}, {0.6f, -0.9f, 0.3f},
-    {0.75f, -0.85f, 0.3f}, {-0.9f, 0.8f, 0.3f},  {-1.0f, 0.7f, 0.3f},
-    {-1.0f, 0.7f, 0.3f},   {-1.0f, 0.7f, 0.3f}};
+static f32 __EarlyCoefTable[8][3] = {{0.4f, -1.0f, 0.3f}, {0.5f, -0.95f, 0.3f}, {0.6f, -0.9f, 0.3f}, {0.75f, -0.85f, 0.3f},
+                                     {-0.9f, 0.8f, 0.3f}, {-1.0f, 0.7f, 0.3f},  {-1.0f, 0.7f, 0.3f}, {-1.0f, 0.7f, 0.3f}};
 
-static u32 __FilterSizeTable[7][8] = {
-    {1789, 1999, 2333, 433, 149, 47, 73, 67},
-    {149, 293, 449, 251, 103, 47, 73, 67},
-    {947, 1361, 1531, 433, 137, 47, 73, 67},
-    {1279, 1531, 1973, 509, 149, 47, 73, 67},
-    {1531, 1847, 2297, 563, 179, 47, 73, 67},
-    {1823, 2357, 2693, 571, 137, 47, 73, 67},
-    {1823, 2357, 2693, 571, 179, 47, 73, 67}};
+static u32 __FilterSizeTable[7][8] = {{1789, 1999, 2333, 433, 149, 47, 73, 67}, {149, 293, 449, 251, 103, 47, 73, 67},
+                                      {947, 1361, 1531, 433, 137, 47, 73, 67},  {1279, 1531, 1973, 509, 149, 47, 73, 67},
+                                      {1531, 1847, 2297, 563, 179, 47, 73, 67}, {1823, 2357, 2693, 571, 137, 47, 73, 67},
+                                      {1823, 2357, 2693, 571, 179, 47, 73, 67}};
 
 static BOOL __AllocDelayLine(AXFX_REVERBHI_EXP* reverb);
 static void __FreeDelayLine(AXFX_REVERBHI_EXP* reverb);
@@ -4560,8 +4885,7 @@ void AXFXReverbHiExpShutdown(AXFX_REVERBHI_EXP* reverb) {
     OSRestoreInterrupts(mask);
 }
 
-void AXFXReverbHiExpCallback(AXFX_BUFFERUPDATE* bufferUpdate,
-                             AXFX_REVERBHI_EXP* reverb) {
+void AXFXReverbHiExpCallback(AXFX_BUFFERUPDATE* bufferUpdate, AXFX_REVERBHI_EXP* reverb) {
     u32 ch, i;
     u32 samp;
     s32* input[3];
@@ -4626,8 +4950,7 @@ void AXFXReverbHiExpCallback(AXFX_BUFFERUPDATE* bufferUpdate,
             }
 
             earlyLine = reverb->earlyLine[ch];
-            earlyOut = earlyLine[reverb->earlyPos[0]] * reverb->earlyCoef[0] +
-                       earlyLine[reverb->earlyPos[1]] * reverb->earlyCoef[1] +
+            earlyOut = earlyLine[reverb->earlyPos[0]] * reverb->earlyCoef[0] + earlyLine[reverb->earlyPos[1]] * reverb->earlyCoef[1] +
                        earlyLine[reverb->earlyPos[2]] * reverb->earlyCoef[2];
 
             earlyLine[reverb->earlyPos[2]] = data;
@@ -4644,8 +4967,7 @@ void AXFXReverbHiExpCallback(AXFX_BUFFERUPDATE* bufferUpdate,
             for (i = 0; i < 3; i++) {
                 combLine = reverb->combLine[ch][i];
                 combOutOne = combLine[reverb->combPos[i]];
-                combLine[reverb->combPos[i]] =
-                    preDelayOut + (combOutOne * reverb->combCoef[i]);
+                combLine[reverb->combPos[i]] = preDelayOut + (combOutOne * reverb->combCoef[i]);
                 filterOut += combOutOne;
             }
 
@@ -4720,43 +5042,33 @@ static BOOL __AllocDelayLine(AXFX_REVERBHI_EXP* reverb) {
     u32 ch, i;
 
     for (ch = 0; ch < 3; ch++) {
-        reverb->earlyLine[ch] =
-            (f32*)__AXFXAlloc(sizeof(f32) * reverb->earlyMaxLength);
-        if (reverb->earlyLine[ch] == NULL) {
+        reverb->earlyLine[ch] = (f32*)__AXFXAlloc(sizeof(f32) * reverb->earlyMaxLength);
+        if (reverb->earlyLine[ch] == NULL)
             return FALSE;
-        }
 
         if (reverb->preDelayMaxLength != 0) {
-            reverb->preDelayLine[ch] =
-                (f32*)__AXFXAlloc(sizeof(f32) * reverb->preDelayMaxLength);
-            if (reverb->preDelayLine[ch] == NULL) {
+            reverb->preDelayLine[ch] = (f32*)__AXFXAlloc(sizeof(f32) * reverb->preDelayMaxLength);
+            if (reverb->preDelayLine[ch] == NULL)
                 return FALSE;
-            }
         } else {
             reverb->preDelayLine[ch] = NULL;
         }
 
         for (i = 0; i < 3; i++) {
-            reverb->combLine[ch][i] =
-                (f32*)__AXFXAlloc(sizeof(f32) * reverb->combMaxLength[i]);
-            if (reverb->combLine[ch][i] == NULL) {
+            reverb->combLine[ch][i] = (f32*)__AXFXAlloc(sizeof(f32) * reverb->combMaxLength[i]);
+            if (reverb->combLine[ch][i] == NULL)
                 return FALSE;
-            }
         }
 
         for (i = 0; i < 2; i++) {
-            reverb->allpassLine[ch][i] =
-                (f32*)__AXFXAlloc(sizeof(f32) * reverb->allpassMaxLength[i]);
-            if (reverb->allpassLine[ch][i] == NULL) {
+            reverb->allpassLine[ch][i] = (f32*)__AXFXAlloc(sizeof(f32) * reverb->allpassMaxLength[i]);
+            if (reverb->allpassLine[ch][i] == NULL)
                 return FALSE;
-            }
         }
 
-        reverb->lastAllpassLine[ch] =
-            (f32*)__AXFXAlloc(sizeof(f32) * reverb->lastAllpassMaxLength[ch]);
-        if (reverb->lastAllpassLine[ch] == NULL) {
+        reverb->lastAllpassLine[ch] = (f32*)__AXFXAlloc(sizeof(f32) * reverb->lastAllpassMaxLength[ch]);
+        if (reverb->lastAllpassLine[ch] == NULL)
             return FALSE;
-        }
     }
 
     return TRUE;
@@ -4767,32 +5079,27 @@ static void __BzeroDelayLines(AXFX_REVERBHI_EXP* reverb) {
 
     for (ch = 0; ch < 3; ch++) {
         if (reverb->earlyLine[ch] != NULL) {
-            memset(reverb->earlyLine[ch], 0,
-                   sizeof(f32) * reverb->earlyMaxLength);
+            memset(reverb->earlyLine[ch], 0, sizeof(f32) * reverb->earlyMaxLength);
         }
 
         if (reverb->preDelayLine[ch] != NULL) {
-            memset(reverb->preDelayLine[ch], 0,
-                   sizeof(f32) * reverb->preDelayMaxLength);
+            memset(reverb->preDelayLine[ch], 0, sizeof(f32) * reverb->preDelayMaxLength);
         }
 
         for (i = 0; i < 3; i++) {
             if (reverb->combLine[ch][i] != NULL) {
-                memset(reverb->combLine[ch][i], 0,
-                       sizeof(f32) * reverb->combMaxLength[i]);
+                memset(reverb->combLine[ch][i], 0, sizeof(f32) * reverb->combMaxLength[i]);
             }
         }
 
         for (i = 0; i < 2; i++) {
             if (reverb->allpassLine[ch][i] != NULL) {
-                memset(reverb->allpassLine[ch][i], 0,
-                       sizeof(f32) * reverb->allpassMaxLength[i]);
+                memset(reverb->allpassLine[ch][i], 0, sizeof(f32) * reverb->allpassMaxLength[i]);
             }
         }
 
         if (reverb->lastAllpassLine[ch] != NULL) {
-            memset(reverb->lastAllpassLine[ch], 0,
-                   sizeof(f32) * reverb->lastAllpassMaxLength[ch]);
+            memset(reverb->lastAllpassLine[ch], 0, sizeof(f32) * reverb->lastAllpassMaxLength[ch]);
         }
     }
 }
@@ -4835,57 +5142,43 @@ static void __FreeDelayLine(AXFX_REVERBHI_EXP* reverb) {
 static BOOL __InitParams(AXFX_REVERBHI_EXP* reverb) {
     u32 ch, i;
 
-    if (reverb->earlyMode >= 8) {
+    if (reverb->earlyMode >= 8)
         return FALSE;
-    }
 
-    if (reverb->preDelayTime < 0.0f ||
-        reverb->preDelayTime > reverb->preDelayTimeMax) {
+    if (reverb->preDelayTime < 0.0f || reverb->preDelayTime > reverb->preDelayTimeMax)
         return FALSE;
-    }
 
-    if (reverb->fusedMode >= 6) {
+    if (reverb->fusedMode >= 6)
         return FALSE;
-    }
 
-    if (reverb->fusedTime < 0.0f) {
+    if (reverb->fusedTime < 0.0f)
         return FALSE;
-    }
 
-    if (reverb->coloration < 0.0f || reverb->coloration > 1.0f) {
+    if (reverb->coloration < 0.0f || reverb->coloration > 1.0f)
         return FALSE;
-    }
 
-    if (reverb->damping < 0.0f || reverb->damping > 1.0f) {
+    if (reverb->damping < 0.0f || reverb->damping > 1.0f)
         return FALSE;
-    }
 
-    if (reverb->crosstalk < 0.0f || reverb->crosstalk > 1.0f) {
+    if (reverb->crosstalk < 0.0f || reverb->crosstalk > 1.0f)
         return FALSE;
-    }
 
-    if (reverb->earlyGain < 0.0f || reverb->earlyGain > 1.0f) {
+    if (reverb->earlyGain < 0.0f || reverb->earlyGain > 1.0f)
         return FALSE;
-    }
 
-    if (reverb->fusedGain < 0.0f || reverb->fusedGain > 1.0f) {
+    if (reverb->fusedGain < 0.0f || reverb->fusedGain > 1.0f)
         return FALSE;
-    }
 
-    if (reverb->outGain < 0.0f || reverb->outGain > 1.0f) {
+    if (reverb->outGain < 0.0f || reverb->outGain > 1.0f)
         return FALSE;
-    }
 
-    if (reverb->sendGain < 0.0f || reverb->sendGain > 1.0f) {
+    if (reverb->sendGain < 0.0f || reverb->sendGain > 1.0f)
         return FALSE;
-    }
 
     reverb->earlyLength = __EarlySizeTable[reverb->earlyMode][2];
     for (i = 0; i < 3; i++) {
-        reverb->earlyPos[i] =
-            reverb->earlyLength - __EarlySizeTable[reverb->earlyMode][i];
-        reverb->earlyCoef[i] =
-            __EarlyCoefTable[reverb->earlyMode][i] * reverb->earlyGain * 0.6f;
+        reverb->earlyPos[i] = reverb->earlyLength - __EarlySizeTable[reverb->earlyMode][i];
+        reverb->earlyCoef[i] = __EarlyCoefTable[reverb->earlyMode][i] * reverb->earlyGain * 0.6f;
     }
 
     reverb->preDelayPos = 0;
@@ -4894,9 +5187,10 @@ static BOOL __InitParams(AXFX_REVERBHI_EXP* reverb) {
     for (i = 0; i < 3; i++) {
         reverb->combPos[i] = 0;
         reverb->combLength[i] = __FilterSizeTable[reverb->fusedMode][i];
-        reverb->combCoef[i] = pow(
-            10.0f, (-3.0f * (f32)(reverb->combLength[i]) /
-                    (f32)(reverb->fusedTime * 32000)));
+        {
+            f32 exp = -3.0f * (f32)(reverb->combLength[i]) / (f32)(reverb->fusedTime * (f32)32000);
+            reverb->combCoef[i] = (f32)pow(10.0, exp);
+        }
     }
 
     for (i = 0; i < 2; i++) {
@@ -4906,15 +5200,13 @@ static BOOL __InitParams(AXFX_REVERBHI_EXP* reverb) {
 
     for (ch = 0; ch < 3; ch++) {
         reverb->lastAllpassPos[ch] = 0;
-        reverb->lastAllpassLength[ch] =
-            __FilterSizeTable[reverb->fusedMode][5 + ch];
+        reverb->lastAllpassLength[ch] = __FilterSizeTable[reverb->fusedMode][5 + ch];
     }
 
     reverb->allpassCoef = reverb->coloration;
     reverb->lpfCoef = 1.0f - reverb->damping;
-    if (reverb->lpfCoef > 0.95f) {
+    if (reverb->lpfCoef > 0.95f)
         reverb->lpfCoef = 0.95f;
-    }
 
     for (ch = 0; ch < 3; ch++) {
         reverb->lastLpfOut[ch] = 0.0f;
@@ -4922,3 +5214,4 @@ static BOOL __InitParams(AXFX_REVERBHI_EXP* reverb) {
 
     return TRUE;
 }
+

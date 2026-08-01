@@ -173,19 +173,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -28720,28 +28712,28 @@ u8 func_801361E8(const char* a, const char* b, const char* c) {
     return *(u8*)getBdatStringColumnValue(fp, b, c);
 }
 
-u16 func_80136254(const char* a, const char* b, const char* c) {
+extern "C" u16 func_80136254(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(u16*)&result;
 }
 
-int func_801362C0(const char* a, const char* b, const char* c) {
+extern "C" int func_801362C0(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return (s8)(*(u8*)&result);
 }
 
-s16 func_80136330(const char* a, const char* b, const char* c) {
+extern "C" s16 func_80136330(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
     void* result = getBdatStringColumnValue((void*)a, b, c);
     return *(s16*)&result;
 }
 
-void* func_8013639C(const char* a, const char* b, const char* c) {
+extern "C" void* func_8013639C(const char* a, const char* b, const char* c) {
     if (a == 0) return 0;
     func_8003AA34(a);
     return getBdatStringColumnValue((void*)a, b, c);
@@ -28790,7 +28782,7 @@ extern "C" void func_eu_80136F90(char* str) {
     }
 }
 
-int func_801364B8(char* src, char delim, char** outTokens) {
+extern "C" int func_801364B8(char* src, char delim, char** outTokens) {
     int count = 1;
     int idx = 1;
     outTokens[0] = src;
@@ -28831,7 +28823,7 @@ int func_801364B8(char* src, char delim, char** outTokens) {
     return count;
 }
 
-int func_801365E4(u16* src, u16 delim, u16** outTokens) {
+extern "C" int func_801365E4(u16* src, u16 delim, u16** outTokens) {
     int count = 1;
     int idx = 1;
     outTokens[0] = src;
@@ -29497,9 +29489,8 @@ extern "C" struct Table_80500188 lbl_eu_80500188;
 
 extern "C" u16 func_801380A0(u32 idx) {
     struct Table_80500188 t = lbl_eu_80500188;
-    u16* p = (u16*)&t;
     u32 n = idx - 1;
-    return p[n];
+    return ((u16*)&t)[n];
 }
 
 extern "C" u32 func_80138138(u32 val) {

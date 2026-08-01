@@ -690,14 +690,14 @@ s32 sftim_GetTimeUtim(void* self, s32* out1, s32* out2) {
 s32 sftim_GetTimeExtClock(void* self, s32* out1, s32* out2) {
     u8* p = (u8*)self;
     s32 val = *(s32*)(p + 0x54);
-    s32 ok;
+    s32 ok = 0;
 
-    if (val == 4 || val == -4 || val == 6 || val == -6) {
-        ok = 1;
-    } else {
+    if (val != 4 && val != -4 && val != 6 && val != -6) {
         *out1 = -1;
         *out2 = 1;
         ok = 0;
+    } else {
+        ok = 1;
     }
 
     if (!ok) {
@@ -727,9 +727,8 @@ s32 sftim_GetTimeExtClock(void* self, s32* out1, s32* out2) {
             }
 
             if (playing) {
-                s32 lastVal = *(s32*)(p + 0x1080);
-                if (lastVal != -5) {
-                    s32 diff = clockVal - lastVal;
+                if (*(s32*)(p + 0x1080) != -5) {
+                    s32 diff = clockVal - *(volatile s32*)(p + 0x1080);
                     if (diff < 0) {
                         diff += *(s32*)(p + 0x108C) + 1;
                     }
@@ -743,7 +742,6 @@ s32 sftim_GetTimeExtClock(void* self, s32* out1, s32* out2) {
         *out1 = *(s32*)(p + 0x1084);
         *out2 = *(s32*)(p + 0x1088);
     }
-    return 0;
 }
 
 int SFTIM_ChkRegularTime(const void *tim, int *a2, int *a3) {
@@ -1046,6 +1044,7 @@ s32 SFTIM_IsGetFrmTimeTunit(void* self, s32 cmpA, s32 cmpB) {
 
 void SFTIM_IsExecTime(void* self, s32 cmpA, s32 cmpB, s32* out, s32 param7) {
     u8* p = (u8*)self;
+    u8* wk = (u8*)lbl_eu_80606E38;
     s32 mode = *(s32*)(p + 0xA58);
 
     if (mode == 0) {
@@ -1058,20 +1057,30 @@ void SFTIM_IsExecTime(void* self, s32 cmpA, s32 cmpB, s32* out, s32 param7) {
         s32 timeUnit = *(s32*)(p + 0x102C);
 
         if (timeUnit == 1) {
-            s32 audioTime = *(s32*)(p + 0x106C);
-            if (audioTime < 0) {
+            if (*(s32*)(p + 0x106C) < 0) {
                 *(s32*)(p + 0x106C) = 0;
                 *out = 1;
                 return;
             }
-            *out = (UTY_CmpTime(cmpA, cmpB, audioTime, *(s32*)(lbl_eu_80606E38 + 0x1A8)) != 0);
+            {
+                s32 audioTime = *(volatile s32*)(p + 0x106C);
+                if (UTY_CmpTime(cmpA, cmpB, audioTime, *(s32*)(wk + 0x1A8)) != 0) {
+                    *out = 1;
+                } else {
+                    *out = 0;
+                }
+            }
         } else {
-            s32 offset = (timeUnit * param7) / *(s32*)(lbl_eu_80606E38 + 0x1A4);
+            s32 offset = (timeUnit * param7) / *(s32*)(wk + 0x1A4);
             timeVal += offset;
             if (mode != 1) {
                 sftim_IsGrExecTime(self, cmpA, cmpB, timeVal, timeUnit, out);
             } else {
-                *out = (UTY_CmpTime(cmpA, cmpB, timeVal, timeUnit) != 0);
+                if (UTY_CmpTime(cmpA, cmpB, timeVal, timeUnit) != 0) {
+                    *out = 1;
+                } else {
+                    *out = 0;
+                }
             }
         }
     }

@@ -493,6 +493,52 @@ TagProcessorBase<wchar_t>* TextWriterBase<wchar_t>::GetTagProcessor() const {
     return mTagProcessor;
 }
 
+template <>
+void TextWriterBase<char>::ResetTagProcessor() {
+    mTagProcessor = &mDefaultTagProcessor;
+}
+
+template <>
+char* TextWriterBase<char>::SetBuffer(char* pBuffer, u32 size) {
+    char* pOldBuffer = mFormatBuffer;
+    mFormatBuffer = pBuffer;
+    mFormatBufferSize = size;
+    return pOldBuffer;
+}
+
+template <>
+char* TextWriterBase<char>::GetBuffer() {
+    return mFormatBuffer;
+}
+
+template <>
+u32 TextWriterBase<char>::GetBufferSize() {
+    return mFormatBufferSize;
+}
+
+template <>
+void TextWriterBase<wchar_t>::ResetTagProcessor() {
+    mTagProcessor = &mDefaultTagProcessor;
+}
+
+template <>
+wchar_t* TextWriterBase<wchar_t>::SetBuffer(wchar_t* pBuffer, u32 size) {
+    wchar_t* pOldBuffer = mFormatBuffer;
+    mFormatBuffer = pBuffer;
+    mFormatBufferSize = size;
+    return pOldBuffer;
+}
+
+template <>
+wchar_t* TextWriterBase<wchar_t>::GetBuffer() {
+    return mFormatBuffer;
+}
+
+template <>
+u32 TextWriterBase<wchar_t>::GetBufferSize() {
+    return mFormatBufferSize;
+}
+
 template struct TextWriterBase<char>;
 template struct TextWriterBase<wchar_t>;
 

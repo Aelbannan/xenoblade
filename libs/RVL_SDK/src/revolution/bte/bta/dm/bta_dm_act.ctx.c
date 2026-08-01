@@ -170,19 +170,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -736,8 +728,12 @@ typedef void (*bta_dm_search_cback_t)(int, void *);
 
 struct bta_dm_search_cb_t {
     bta_dm_search_cback_t p_search_cback; /* offset 0x00 */
-    unsigned char _pad4[0x1c];           /* offset 0x04-0x1f */
+    unsigned char _pad4[0x10];           /* offset 0x04-0x13 */
+    void *p_sdp_db;                     /* offset 0x14 */
+    unsigned char _pad18[0x08];         /* offset 0x18-0x1f */
     char peer_name[0x20];               /* offset 0x20 */
+    unsigned char _pad40[0x34];         /* offset 0x40-0x73 */
+    void *p_search_queue;               /* offset 0x74 */
 };
 
 extern struct bta_dm_search_cb_t bta_dm_search_cb;
@@ -778,6 +774,10 @@ struct bta_dm_sig_strength_data_t {
 };
 
 extern void bta_sys_stop_timer(struct bta_dm_timer_t *p_tle);
+extern void GKI_freebuf(void *p_buf);
+extern unsigned char bta_sys_sendmsg(void *p_msg);
+extern void BTM_SetDiscoverability(unsigned char mode, unsigned char, unsigned char);
+extern void BTM_SetConnectability(unsigned char mode, unsigned char, unsigned char);
 extern int BTM_SecDeleteRmtNameNotifyCallback(bta_dm_rmt_name_cback_t p_callback);
 void bta_dm_signal_strength_timer_cback(struct bta_dm_timer_t *p_tle);
 
@@ -792,7 +792,12 @@ void bta_dm_disable_timer_cback() {}
 extern void BTM_SetLocalDeviceName(void*);
 void bta_dm_set_dev_name(void* self) { ((void(*)(void*))BTM_SetLocalDeviceName)((char*)self + 0x8); }
 
-void bta_dm_set_visibility() {}
+/* Set discoverability and connectability from the incoming message */
+void bta_dm_set_visibility(void *p_data) {
+    unsigned char *msg = (unsigned char *)p_data;
+    BTM_SetDiscoverability(msg[0x8], 0, 0);
+    BTM_SetConnectability(msg[0x9], 0, 0);
+}
 
 void bta_dm_bond() {}
 
@@ -825,15 +830,33 @@ void bta_dm_search_result() {}
 
 void bta_dm_search_timer_cback() {}
 
-void bta_dm_free_sdp_db() {}
+/* Free the SDP database buffer if it exists */
+void bta_dm_free_sdp_db() {
+    if (bta_dm_search_cb.p_sdp_db != NULL) {
+        GKI_freebuf(bta_dm_search_cb.p_sdp_db);
+        bta_dm_search_cb.p_sdp_db = NULL;
+    }
+}
 
 void bta_dm_queue_search() {}
 
 void bta_dm_queue_disc() {}
 
-void bta_dm_search_clear_queue() {}
+/* Free the search queue buffer if it exists */
+void bta_dm_search_clear_queue() {
+    if (bta_dm_search_cb.p_search_queue != NULL) {
+        GKI_freebuf(bta_dm_search_cb.p_search_queue);
+        bta_dm_search_cb.p_search_queue = NULL;
+    }
+}
 
-void bta_dm_search_cancel_cmpl() {}
+/* Send the queued search cancel message and clear the queue pointer */
+void bta_dm_search_cancel_cmpl() {
+    if (bta_dm_search_cb.p_search_queue != NULL) {
+        bta_sys_sendmsg(bta_dm_search_cb.p_search_queue);
+        bta_dm_search_cb.p_search_queue = NULL;
+    }
+}
 
 void bta_dm_search_cancel_transac_cmpl() {}
 
@@ -898,7 +921,10 @@ void bta_dm_signal_strength(struct bta_dm_msg *p_data) {
 }
 
 void bta_dm_signal_strength_timer_cback(struct bta_dm_timer_t *p_tle) {
-    /* Use the argument to force the compiler to pass it correctly. */
+    /* The real implementation reads signal_strength_mask from bta_dm_cb,
+       iterates bits calling BTM_ReadRSSI / BTM_ReadLinkQuality,
+       and restarts the timer with bta_sys_start_timer if period > 0.
+       p_tle is unused (reads timer from bta_dm_cb directly). */
     bta_sys_stop_timer(p_tle);
 }
 

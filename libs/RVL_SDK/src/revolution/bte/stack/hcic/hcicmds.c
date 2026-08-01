@@ -3,9 +3,23 @@
 
 #include <harness_catalog.h>
 
+extern void *GKI_getpoolbuf(unsigned char pool_id);
+
 void btsnd_hcic_inquiry() {}
 
-void btsnd_hcic_inq_cancel() {}
+int btsnd_hcic_inq_cancel(void)
+{
+    unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    if (p == NULL)
+        return 0;
+    *(unsigned short *)(p + 2) = 3;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 2;
+    p[9] = 4;
+    p[10] = 0;
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
 void btsnd_hcic_per_inq_mode() {}
 
@@ -15,7 +29,22 @@ void btsnd_hcic_disconnect() {}
 
 void btsnd_hcic_add_SCO_conn() {}
 
-void btsnd_hcic_accept_conn() {}
+void btsnd_hcic_accept_conn(unsigned char *p, unsigned char *bd_addr, unsigned char role)
+{
+    *(unsigned short *)(p + 2) = 0xa;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 9;
+    p[9] = 4;
+    p[10] = 7;
+    p[11] = bd_addr[5];
+    p[12] = bd_addr[4];
+    p[13] = bd_addr[3];
+    p[14] = bd_addr[2];
+    p[15] = bd_addr[1];
+    p[16] = bd_addr[0];
+    p[17] = role;
+    btu_hcif_send_cmd(p);
+}
 
 void btsnd_hcic_reject_conn(unsigned char* p, unsigned char* bd_addr, unsigned char reason)
 {
@@ -94,7 +123,19 @@ void btsnd_hcic_switch_role() {}
 
 void btsnd_hcic_write_policy_set() {}
 
-void btsnd_hcic_reset() {}
+int btsnd_hcic_reset(void)
+{
+    unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    if (p == NULL)
+        return 0;
+    *(unsigned short *)(p + 2) = 3;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 3;
+    p[9] = 0x0c;
+    p[10] = 0;
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
 void btsnd_hcic_set_event_filter() {}
 
@@ -123,11 +164,45 @@ void btsnd_hcic_delete_stored_key() {}
 
 void btsnd_hcic_change_name() {}
 
-void btsnd_hcic_write_page_tout() {}
+void btsnd_hcic_write_page_tout(void *p, unsigned short timeout)
+{
+    unsigned char *b = (unsigned char *)p;
+    *(unsigned short *)(b + 2) = 5;
+    *(unsigned short *)(b + 4) = 0;
+    b[8] = 0x18;
+    b[9] = 0x0c;
+    b[10] = 2;
+    b[11] = (unsigned char)timeout;
+    b[12] = (unsigned char)(timeout >> 8);
+    btu_hcif_send_cmd(p);
+}
 
-void btsnd_hcic_write_scan_enable() {}
+void btsnd_hcic_write_scan_enable(void *p, unsigned char mode)
+{
+    unsigned char *b = (unsigned char *)p;
+    *(unsigned short *)(b + 2) = 4;
+    *(unsigned short *)(b + 4) = 0;
+    b[8] = 0x1a;
+    b[9] = 0x0c;
+    b[10] = 1;
+    b[11] = mode;
+    btu_hcif_send_cmd(p);
+}
 
-void btsnd_hcic_write_pagescan_cfg() {}
+void btsnd_hcic_write_pagescan_cfg(void *p, unsigned short interval, unsigned short window)
+{
+    unsigned char *b = (unsigned char *)p;
+    *(unsigned short *)(b + 2) = 7;
+    *(unsigned short *)(b + 4) = 0;
+    b[8] = 0x1c;
+    b[9] = 0x0c;
+    b[10] = 4;
+    b[11] = (unsigned char)interval;
+    b[12] = (unsigned char)(interval >> 8);
+    b[13] = (unsigned char)window;
+    b[14] = (unsigned char)(window >> 8);
+    btu_hcif_send_cmd(p);
+}
 
 void btsnd_hcic_write_inqscan_cfg(void* p, unsigned short interval, unsigned short window)
 {
@@ -148,9 +223,34 @@ void btsnd_hcic_write_auth_enable() {}
 
 void btsnd_hcic_write_encr_mode() {}
 
-void btsnd_hcic_write_dev_class() {}
+void btsnd_hcic_write_dev_class(void *p, unsigned char *dev_class)
+{
+    unsigned char *b = (unsigned char *)p;
+    *(unsigned short *)(b + 2) = 6;
+    *(unsigned short *)(b + 4) = 0;
+    b[8] = 0x24;
+    b[9] = 0x0c;
+    b[10] = 3;
+    b[11] = dev_class[2];
+    b[12] = dev_class[1];
+    b[13] = dev_class[0];
+    btu_hcif_send_cmd(p);
+}
 
-void btsnd_hcic_write_auto_flush_tout() {}
+void btsnd_hcic_write_auto_flush_tout(void *p, unsigned short handle, unsigned short timeout)
+{
+    unsigned char *b = (unsigned char *)p;
+    *(unsigned short *)(b + 2) = 7;
+    *(unsigned short *)(b + 4) = 0;
+    b[8] = 0x28;
+    b[9] = 0x0c;
+    b[10] = 4;
+    b[11] = (unsigned char)handle;
+    b[12] = (unsigned char)(handle >> 8);
+    b[13] = (unsigned char)timeout;
+    b[14] = (unsigned char)(timeout >> 8);
+    btu_hcif_send_cmd(p);
+}
 
 void btsnd_hcic_set_host_buf_size() {}
 
@@ -160,7 +260,19 @@ void btsnd_hcic_write_cur_iac_lap() {}
 
 void btsnd_hcic_read_local_ver() {}
 
-void btsnd_hcic_read_local_features() {}
+int btsnd_hcic_read_local_features(void)
+{
+    unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
+    if (p == NULL)
+        return 0;
+    *(unsigned short *)(p + 2) = 3;
+    *(unsigned short *)(p + 4) = 0;
+    p[8] = 3;
+    p[9] = 0x10;
+    p[10] = 0;
+    btu_hcif_send_cmd(p);
+    return 1;
+}
 
 void btsnd_hcic_read_buffer_size(void *p_buf) {
     ((unsigned short *)p_buf)[1] = 3;
@@ -179,7 +291,17 @@ void btsnd_hcic_read_rssi() {}
 
 void btsnd_hcic_set_afh_channels() {}
 
-void btsnd_hcic_write_inqscan_type() {}
+void btsnd_hcic_write_inqscan_type(void *p, unsigned char type)
+{
+    unsigned char *b = (unsigned char *)p;
+    *(unsigned short *)(b + 2) = 4;
+    *(unsigned short *)(b + 4) = 0;
+    b[8] = 0x43;
+    b[9] = 0x0c;
+    b[10] = 1;
+    b[11] = type;
+    btu_hcif_send_cmd(p);
+}
 
 void btsnd_hcic_write_inquiry_mode(void *buf, unsigned char mode)
 {

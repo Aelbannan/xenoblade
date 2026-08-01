@@ -52,10 +52,6 @@ public:
     TextWriterBase();
     ~TextWriterBase();
 
-    f32 GetWidthLimit() const;
-    void SetWidthLimit(f32 limit);
-    void ResetWidthLimit();
-
     f32 GetCharSpace() const;
     void SetCharSpace(f32 space);
 
@@ -70,9 +66,7 @@ public:
 
     TagProcessorBase<T>* GetTagProcessor() const;
     void SetTagProcessor(TagProcessorBase<T>* pProcessor);
-    void ResetTagProcessor() {
-        mTagProcessor = &mDefaultTagProcessor;
-    }
+    void ResetTagProcessor();
 
     f32 GetLineHeight() const;
 
@@ -86,19 +80,10 @@ public:
     f32 Print(const T* pStr, int len);
     f32 PrintMutable(const T* pStr, int len);
 
-    static T* GetBuffer() {
-        return mFormatBuffer;
-    }
-    static T* SetBuffer(T* pBuffer, u32 size) {
-        T* pOldBuffer = mFormatBuffer;
-        mFormatBuffer = pBuffer;
-        mFormatBufferSize = size;
-        return pOldBuffer;
-    }
+    static T* GetBuffer();
+    static T* SetBuffer(T* pBuffer, u32 size);
 
-    static u32 GetBufferSize() {
-        return mFormatBufferSize;
-    }
+    static u32 GetBufferSize();
 
 private:
     static const int DEFAULT_FORMAT_BUFFER_SIZE = 256;
@@ -119,12 +104,11 @@ private:
     f32 AdjustCursor(f32* pX, f32* pY, const T* pStr, int len);
 
 private:
-    f32 mWidthLimit;                    // at 0x4C
-    f32 mCharSpace;                     // at 0x50
-    f32 mLineSpace;                     // at 0x54
-    int mTabWidth;                      // at 0x58
-    u32 mDrawFlag;                      // at 0x5C
-    TagProcessorBase<T>* mTagProcessor; // at 0x60
+    f32 mCharSpace;                     // at 0x4C
+    f32 mLineSpace;                     // at 0x50
+    int mTabWidth;                      // at 0x54
+    u32 mDrawFlag;                      // at 0x58
+    TagProcessorBase<T>* mTagProcessor; // at 0x5C
 
     static T* mFormatBuffer;
     static u32 mFormatBufferSize;

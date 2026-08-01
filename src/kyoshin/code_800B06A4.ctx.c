@@ -1,5 +1,7 @@
-// Auto-scaffolded catalog TU
-/* "src/kyoshin/code_800B06A4.cpp" line 1 "kyoshin/harness_catalog.hpp" */
+// Auto-scaffolded catalog TU for kyoshin/code_800B06A4
+// Replace stubs with high-level C/C++ during decomp.
+
+/* "src/kyoshin/code_800B06A4.cpp" line 3 "kyoshin/harness_catalog.hpp" */
 #pragma once
 
 /**
@@ -171,19 +173,11 @@ namespace std{
     class exception{
     public:
         exception(){}
-        virtual ~exception(){}
-        virtual const char* what() const {
-            return "exception";
-        }
     };
 
     class bad_exception : public exception {
     public:
         bad_exception(){}
-        virtual ~bad_exception(){}
-        virtual const char* what() const {
-            return "bad_exception";
-        }
     };
 
     typedef void (*unexpected_handler)();
@@ -1409,7 +1403,7 @@ public:
 
 /* end "kyoshin/CTaskGameEff.hpp" */
 /* end "kyoshin/harness_catalog.hpp" */
-/* "src/kyoshin/code_800B06A4.cpp" line 2 "kyoshin/code_800B06A4.hpp" */
+/* "src/kyoshin/code_800B06A4.cpp" line 4 "kyoshin/code_800B06A4.hpp" */
 #ifndef KYOSHIN_CODE_800B06A4_HPP
 #define KYOSHIN_CODE_800B06A4_HPP
 /* "include/kyoshin/code_800B06A4.hpp" line 2 "types.h" */
@@ -1432,13 +1426,47 @@ template <typename T>
 class _reslist_base {
 public:
     ~_reslist_base();
-    char _pad[0x1F];
+    u32 field_0x00;        // 0x00: vtable pointer
+    u32 field_0x04;        // 0x04: head pointer (this+8)
+    u32 sentinel_prev;     // 0x08: sentinel node prev
+    u32 sentinel_next;     // 0x0C: sentinel node next
+    // total 0x10
 };
+
+// Generic reslist template — adds 0x10 bytes of padding (total 0x20)
 template <typename T>
 class reslist : public _reslist_base<T> {
 public:
     ~reslist();
-    char _pad2[0x20 - sizeof(_reslist_base<T>)];
+    u8 _pad_10[0x10];   // 0x10-0x1f
+};
+
+// Specialization for cf::CfObject — replaces padding with named fields (0x20)
+template <>
+class reslist<cf::CfObject> : public _reslist_base<cf::CfObject> {
+public:
+    reslist();
+    ~reslist();
+    u32 field_0x10;    // 0x10
+    u32 field_0x14;    // 0x14
+    u32 field_0x18;    // 0x18
+    u8 field_0x1c;     // 0x1c
+    u8 _pad_1d[3];     // 0x1d-0x1f
+    // total 0x20
+};
+
+// Specialization for cf::TboxInfo — adds fields at 0x10-0x37 (total 0x38)
+template <>
+class reslist<cf::TboxInfo> : public _reslist_base<cf::TboxInfo> {
+public:
+    reslist();
+    ~reslist();
+    u8 _pad_10[0x1c];   // 0x10-0x2b
+    u32 field_0x2c;     // 0x2c
+    u32 field_0x30;     // 0x30
+    u8 field_0x34;      // 0x34
+    u8 _pad_35[3];      // 0x35-0x37
+    // total 0x38
 };
 class UnkClass_800B0AD8 {
 public:
@@ -1498,6 +1526,7 @@ public:
     u32 field_0xCA8;
     u32 field_0xCAC;
     ml::FixStr<64> field_0xCB0;
+    u8 _pad_0xCF4[8];
     u32 field_0xCFC;
     u32 field_0xD00;
     u32 field_0xD04;
@@ -1506,80 +1535,170 @@ public:
     u8 _pad_D12_to_15EF[0x15F0 - 0xD12];
     u32 field_0x15F0;
 };
-#endif
-/* end "kyoshin/code_800B06A4.hpp" */
-void UnkClass_800B0AD8::clearCounters() { unkB00 = 0; unkAFC = 0; }
+#endif/* end "kyoshin/code_800B06A4.hpp" */
+/* "src/kyoshin/code_800B06A4.cpp" line 5 "string.h" */
+/* end "string.h" */
+
+// Forward declaration for func_800B3A88 (defined in this TU)
+void func_800B3A88(UnkClass_805764CC* self, void* target);
+
+void UnkClass_800B0AD8::clearCounters() {
+    unkB00 = 0;
+    unkAFC = 0;
+}
 UnkClass_805764CC* func_800B07E8();
 u32 func_800AA2BC(u32 a, u32 b);
 extern void func_80193810(u32);
 extern void func_801F3CCC(u32);
 extern void func_801F45B4(u32);
 extern void func_802074F0(u32);
+extern void func_80195E5C(float);
 
-// External C-linkage functions called by targets in this TU
-extern "C" void func_800B4278(UnkClass_805764CC* obj, u32 val);
-extern "C" void func_800B42E8(UnkClass_805764CC* obj, u32 val);
-extern "C" void func_800B4368(UnkClass_805764CC* obj, u32 val);
-extern "C" void* func_800B20B4(void* obj, u32 a, u32 b, u32 c);
-extern "C" void func_800B72DC(UnkClass_805764CC* obj);
-struct SListNode{SListNode*next;};
-struct SList{u8 field_0x00[4];SListNode*sentinel;};
-void func_800B1B2C();
-void func_800B47A8(u32,void*,void*,void*,u32,void*,void*);
-extern "C" void func_800B1A5C(void*listPtr){
-    SListNode*next=((SList*)listPtr)->sentinel->next;
-    SListNode*cur;
-    while(next!=((SList*)listPtr)->sentinel){cur=next;next=cur->next;cur->next=NULL;}
-    ((SList*)listPtr)->sentinel->next=((SList*)listPtr)->sentinel;
+// Forward declarations for callees of my targets
+extern "C" unsigned long func_800B1C00();
+extern "C" s32 func_800B1C0C(u32 mask);
+extern "C" void func_800B6DD0(void* reslist, void* obj);
+
+// Forward declarations for callees used by my targets
+struct CfMapMineManager;
+extern void func_80206BD4(CfMapMineManager* self);
+extern void func_800B44A0(UnkClass_805764CC* self, void* arg);
+extern void* func_800B61FFC();
+extern void func_800B137C(void* self, void* arg, int count);
+extern void func_800B8524(void* singleton, void* self, void* other);
+extern "C" void func_800B1B2C(void* obj);
+void* func_800B47A8(void* a, void* b, void* c, void* d, void* e, void* f, void* g);
+
+// Declarations for callees used by the target functions below
+extern "C" unsigned long func_80061FFC();
+extern "C" void __dl__FPv(void*);
+extern "C" void __dt__8047BDA8(void*);
+extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, unsigned long count);
+extern "C" unsigned long func_800B0FEC(void* self);
+extern "C" void func_800B0FF4(void* self, unsigned long handle, unsigned long count);
+extern "C" void* func_800B20B4(void* self, unsigned long arg1, void* arg2, unsigned long arg3);
+extern "C" void func_800B084C(UnkClass_805764CC* self, unsigned long count);
+void func_80081258(void* self);
+void func_80081264(void* self, cf::CfObject* obj);
+
+// Target 4: us-800b0f70 - Store float and its square to several globals.
+void func_800B06A4(float a) {
+    extern float lbl_eu_80661CCC, lbl_eu_80661CD0;
+    extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
+    float sq = (float)a;
+    float c = lbl_eu_80661CD0;
+    lbl_eu_80661CCC = a;
+    sq = sq * sq;
+    lbl_eu_80663EC8 = a;
+    lbl_eu_80663ECC = sq;
+    lbl_eu_80663ED0 = c;
+    lbl_eu_80663ED4 = sq;
 }
-extern "C" void func_800B93AC(){func_800B07E8();func_800B1B2C();}
-void gfloat_initStore(float a){
-    extern float lbl_eu_80661CCC,lbl_eu_80661CD0,lbl_eu_80663EC8,lbl_eu_80663ECC,lbl_eu_80663ED0,lbl_eu_80663ED4;
-    double ad=a; float sq=(float)ad; float c=lbl_eu_80661CD0;
-    lbl_eu_80661CCC=a; sq=sq*sq; lbl_eu_80663EC8=a; lbl_eu_80663ECC=sq; lbl_eu_80663ED0=c; lbl_eu_80663ED4=sq;
-}
+
 void init_0A90(void){}
-void __ct__reslist_cf_TboxInfo(){}
-void __ct__reslist_cf_IFactoryEvent(){}
+// Target 1: us-800b1118 — func_800B084C
+// Calls func_80061FFC() to get a handle, then passes it along with `count` to func_800B0894.
+void func_800B084C(UnkClass_805764CC* self, unsigned long count) {
+    func_800B0894(self, func_80061FFC(), count);
+}
+
+// Target 1: us-800b15d8 — reslist<cf::IFactoryEvent*>::reslist() constructor
+void __ct__reslist_cf_IFactoryEvent(void* self) {
+    extern void* lbl_eu_805290B8;
+    extern void* lbl_eu_805290A0;
+    u32* base = (u32*)self;
+    u32 sentinelAddr = (u32)((u8*)self + 8);
+    base[0] = (u32)&lbl_eu_805290B8;
+    base[5] = 0;
+    base[6] = 0;
+    ((u8*)self)[0x1c] = 0;
+    base[1] = sentinelAddr;
+    ((u32*)self)[2] = sentinelAddr;
+    ((u32*)self)[3] = sentinelAddr;
+    base[0] = (u32)&lbl_eu_805290A0;
+}
+// Target 3: us-800b186c — func_800B0FA0
+void func_800B0FA0(UnkClass_805764CC* self) {
+    if (func_800B0FEC(&self->field_0xC80) == 0) {
+        func_800B0FF4(&self->field_0xC80, func_80061FFC(), 4);
+    }
+}
+
 void init_0FA0(){}
-u32 UnkClass_805764CC::get_u32_18(){return*(u32*)((u8*)this+0x18);}
+u32 UnkClass_805764CC::get_u32_18(){return *(u32*)((u8*)this + 0x18);}
 void init_0FF4(){}
 void init_dispatchTarget_1(){}
 void __ct__cf_CfValueItemManager(){}
-void gflag_setBits(unsigned long flags){extern unsigned long lbl_eu_80663EE0;lbl_eu_80663EE0|=flags;}
+void gflag_setBits(unsigned long flags){extern unsigned long lbl_eu_80663EE0;lbl_eu_80663EE0 |= flags;}
 void FactoryEvent3__Q22cf13IFactoryEventFv(){}
 void init_137C(){}
-void node_copyNextPtr(void*dst,void*src){void*ptr=*(void**)((char*)src+4);*(unsigned long*)dst=*(unsigned long*)ptr;}
-void*node_getDataPtr(void*self){return(char*)(*(void**)self)+8;}
+void node_copyNextPtr(void* dst, void* src){void* ptr = *(void**)((char*)src + 4); *(unsigned long*)dst = *(unsigned long*)ptr;}
+void* node_getDataPtr(void* self){return (char*)(*(void**)self) + 8;}
 void init_14E0(){}
-void node_copyNextU32(void*dst,void*src){*(unsigned long*)dst=*(unsigned long*)((char*)src+4);}
+void node_copyNextU32(void* dst, void* src){*(unsigned long*)dst = *(unsigned long*)((char*)src + 4);}
 void init_14FC(){}
 void __dt__800B151C();
-extern "C" void func_800B1518(){void(*dtor)()=__dt__800B151C;dtor();}
+extern "C" void func_800B1518(){void(*dtor)() = __dt__800B151C; dtor();}
 void __dt__800B151C(){}
 void init_dispatchTarget_2(){}
 extern u32 lbl_eu_80663F24;
-void gvar_clearF24(){lbl_eu_80663F24=0;}
+void gvar_clearF24(){lbl_eu_80663F24 = 0;}
 void FactoryEvent4__Q22cf13IFactoryEventFv(){}
-void UnkClass_805764CC::set_u32_00(u32 val){*(u32*)((u8*)this+0x0)=val;}
-void copy_int_ptr(int*dst,int*src){*dst=*src;}
+void UnkClass_805764CC::set_u32_00(u32 val){*(u32*)((u8*)this + 0x0) = val;}
+void copy_int_ptr(int* dst, int* src){*dst = *src;}
 void init_182C(){}
 void __dt__800B183C(){}
 void __dt__800B18CC(){}
 void init_dispatchTarget_5(){}
+// Target 1: func_800B93AC
+void func_800B93AC() {
+    func_800B1B2C(func_800B07E8());
+}
+
+// Target 4: us-800b9df0 — func_800B94D4
+void func_800B94D4(cf::CfObject* obj) {
+    u8 stackBuf[0x28];
+    func_80081258(stackBuf);
+    func_80081264(stackBuf, obj);
+    func_800B20B4(func_800B07E8(), 0x200, stackBuf, 0);
+}
+
+// Target 2: func_800B1A5C
+void func_800B1A5C(void* list) {
+    u32 sentinel, cur, next, zero;
+    u32* p;
+    sentinel = *(u32*)((u32*)list + 1);
+    cur = *(u32*)sentinel;
+    zero = 0;
+    goto check;
+loop:
+    p = (u32*)cur;
+    cur = *p;
+    *p = zero;
+check:
+    sentinel = *(u32*)((u32*)list + 1);
+    if (cur != sentinel) goto loop;
+    *(u32*)sentinel = sentinel;
+}
+
 void init_1A8C(){}
-void*node_getDataPtr_alt(void*self){return(char*)(*(void**)self)+8;}
+void* node_getDataPtr_alt(void* self){return (char*)(*(void**)self) + 8;}
 void init_1AA8(){}
-void copy_int_ptr_alt(int*dst,int*src){*dst=*src;}
-void node_copyNextU32_alt(void*dst,void*src){*(unsigned long*)dst=*(unsigned long*)((char*)src+4);}
+void copy_int_ptr_alt(int* dst, int* src){*dst = *src;}
+void node_copyNextU32_alt(void* dst, void* src){*(unsigned long*)dst = *(unsigned long*)((char*)src + 4);}
 void init_1AD8(){}
 void init_1AF4(){}
 void init_dispatchTarget_6(){}
 void init_1BBC(){}
-unsigned long gflag_getBit25(){extern unsigned long lbl_eu_80663EE0;return(lbl_eu_80663EE0>>25)&1;}
+unsigned long gflag_getBit25(){extern unsigned long lbl_eu_80663EE0;return (lbl_eu_80663EE0 >> 25) & 1;}
 void init_1C0C(){}
 void init_1C24(){}
-void init_1C40(){}
+s32 func_800B1C40() {
+    if (func_800B1C00()) {
+        return 0;
+    }
+    return func_800B1C0C(8);
+}
 void init_1C78(){}
 void init_1CDC(){}
 void init_1E18(){}
@@ -1587,172 +1706,312 @@ void init_1E2C(){}
 void init_1EB8(){}
 void init_1EC8(){}
 void init_1F2C(){}
-void func_800B1F40(UnkClass_805764CC*self){if(self->field_0xCA0){func_80193810(self->field_0xCA0);}}
-void init_1F54(){}
+void func_800B1F40(UnkClass_805764CC* self){if (self->field_0xCA0){func_80193810(self->field_0xCA0);}}
+
+// Target 1: us-800b2820 - Check field_0xCA0; if nonzero, call func_80195E5C with float constant.
+void func_800B1F54(UnkClass_805764CC* self) {
+    if (self->field_0xCA0 == 0) return;
+    extern float lbl_eu_80663EC8;
+    func_80195E5C(lbl_eu_80663EC8);
+}
 void init_1F6C(){}
 void init_1FD8(){}
-void func_800B2034(UnkClass_805764CC*self){if(self->field_0xCFC){func_801F3CCC(self->field_0xCFC);}}
-void func_800B2048(UnkClass_805764CC*self){if(self->field_0xCFC){func_801F45B4(self->field_0xCFC);}}
-void init_205C(){}
-void func_800B20A0(UnkClass_805764CC*self){if(self->field_0xCAC){func_802074F0(self->field_0xCAC);}}
+void func_800B2034(UnkClass_805764CC* self){if (self->field_0xCFC){func_801F3CCC(self->field_0xCFC);}}
+void func_800B2048(UnkClass_805764CC* self){if (self->field_0xCFC){func_801F45B4(self->field_0xCFC);}}
+// TEST_FUNC_205C
+void func_800B20A0(UnkClass_805764CC* self){if (self->field_0xCAC){func_802074F0(self->field_0xCAC);}}
 void init_20B4(){}
-u32 UnkClass_805764CC::get_u32_04(){return*(u32*)((u8*)this+0x4);}
-void __dt__800B2D30(){}
+u32 UnkClass_805764CC::get_u32_04(){return *(u32*)((u8*)this + 0x4);}
+// Target 5: us-800b35fc — __dt__800B2D30
+// Destructor that calls subobject destructor, then frees memory if flags > 0.
+// Returns self (standard MWCC destructor convention).
+void* __dt__800B2D30(void* self, int flags) {
+    void* ret = self;
+    if (self != NULL) {
+        __dt__8047BDA8(self);
+        if (flags > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return ret;
+}
 void FactoryEvent1__Q22cf13IFactoryEventFv(){}
-void UnkClass_805764CC::fwdTo_2DB0(int param){extern void fwd_2DB0_body(void*,void*);fwd_2DB0_body(this,&param);}
+void UnkClass_805764CC::fwdTo_2DB0(int param){extern void fwd_2DB0_body(void*, void*); fwd_2DB0_body(this, &param);}
 void fwd_2DB0_body(){}
-void init_2E38(){}
+// Target 2: us-800b3704 - func_800B2E38
+// Insert a node into a doubly-linked list with a fixed-size entry pool.
+// Finds the first empty slot (entry[0] == 0) in the pool at list+0x14 (count at list+0x18),
+// copies data from r6 into entry[8], copies the node template from r5[0] into entry[0..7],
+// and links it into the list before the node pointed to by r5[0].
+// Returns the new entry pointer via *r3.
+extern "C" void func_800B2E38(void** out, void* list, void* templ, void* data) {
+    u32 count = *(u32*)((u8*)list + 0x18);
+    u32 entryBase = *(u32*)((u8*)list + 0x14);
+    u32 idx = 0;
+    u32 byteOff = 0;
+
+    // Find first empty slot (entry[0] == 0)
+    while (idx < count) {
+        u32* entry = (u32*)(entryBase + byteOff);
+        if (entry[0] == 0) {
+            break;
+        }
+        idx++;
+        byteOff += 0xC;
+    }
+
+    // Calculate entry pointer
+    u32* newEntry = (u32*)(entryBase + idx * 0xC);
+
+    // Copy data word into entry[8]
+    *(u32*)((u8*)newEntry + 8) = *(u32*)data;
+
+    // Insert before the node pointed to by templ[0]
+    u32* targetNode = *(u32**)templ;
+    newEntry[0] = (u32)targetNode;    // entry->next = target
+    newEntry[1] = targetNode[1];       // entry->prev = target->prev
+    // Link forward: target->prev->next = entry
+    ((u32*)targetNode[1])[0] = (u32)newEntry;
+    // Link backward: target->prev = entry
+    targetNode[1] = (u32)newEntry;
+
+    *out = newEntry;
+}
 void init_2ED0(){}
-int obj_testBit_64_v0(void*p){return(*(int*)((char*)p+0x64)>>1)&1;}
-int obj_testBit_64_v1(void*p){return(*(int*)((char*)p+0x64)>>1)&1;}
-int obj_testBit_64_v2(void*p){return(*(int*)((char*)p+0x64)>>1)&1;}
-int obj_testBit_64_v3(void*p){return(*(int*)((char*)p+0x64)>>1)&1;}
-int obj_testBit_64_v4(void*p){return(*(int*)((char*)p+0x64)>>1)&1;}
-int obj_testBit_64_v5(void*p){return(*(int*)((char*)p+0x64)>>1)&1;}
-int obj_testBit_64_v6(void*p){return(*(int*)((char*)p+0x64)>>1)&1;}
-u32 shift_u32_hi8(u32 val){return(val>>16)&0xFF;}
+int obj_testBit_64_v0(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
+int obj_testBit_64_v1(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
+int obj_testBit_64_v2(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
+int obj_testBit_64_v3(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
+int obj_testBit_64_v4(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
+int obj_testBit_64_v5(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
+int obj_testBit_64_v6(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
+u32 shift_u32_hi8(u32 val){return (val >> 16) & 0xFF;}
 void init_3210(){}
-u32 UnkClass_805764CC::get_u32_74(){return*(u32*)((u8*)this+0x74);}
+u32 UnkClass_805764CC::get_u32_74(){return *(u32*)((u8*)this + 0x74);}
 void init_39C8(){}
-void copy_int_ptr_alt2(int*dst,int*src){*dst=*src;}
-void UnkClass_805764CC::fwdTo_99EC(int param){extern void fwd_99EC_body(void*,void*);fwd_99EC_body(this,&param);}
+void copy_int_ptr_alt2(int* dst, int* src){*dst = *src;}
+void UnkClass_805764CC::fwdTo_99EC(int param){extern void fwd_99EC_body(void*, void*); fwd_99EC_body(this, &param);}
 void init_3A88(){}
-u32 shift_u32_byte3(u32 val){return val>>24;}
-u32 shift_u32_hi8_alt1(u32 val){return(val>>16)&0xFF;}
+u32 shift_u32_byte3(u32 val){return val >> 24;}
+u32 shift_u32_hi8_alt1(u32 val){return (val >> 16) & 0xFF;}
 void init_3D4C(){}
 void init_3D64(){}
 void init_4120(){}
 void init_4278(){}
 void init_42E8(){}
-void init_4368(){}
-void init_4400(){}
+// Target 3: us-800b4c64 - func_800B4368
+// Walk a linked list of CfObject nodes starting from self->field_0xBCC,
+// find entries where data->field_0x94 == 2, and if name is NULL or
+// strcmp(name, data->field_0x120) == 0, call func_800B3A88(self, data).
+// The list has sentinel at *(self+0xBCC), nodes are [0]=next, [8]=data_ptr.
+extern "C" void func_800B4368(UnkClass_805764CC* self, const char* name) {
+    u8* sentinel = *(u8**)((u8*)self + 0xBCC);
+    u8* cur = *(u8**)sentinel;
+
+    while (cur != sentinel) {
+        u8* data = *(u8**)(cur + 8);
+        cur = *(u8**)cur;
+
+        if (*(u32*)(data + 0x94) == 2) {
+            if (name == NULL || strcmp(name, (const char*)(data + 0x120)) == 0) {
+                func_800B3A88(self, (cf::CfObject*)data);
+            }
+        }
+    }
+}
+extern "C" void func_800B4400(){}
 void init_44A0(){}
 void init_4554(){}
 void init_4588(u32 val){}
-u32 shift_u32_hi8_alt2(u32 val){return(val>>16)&0xFF;}
+u32 shift_u32_hi8_alt2(u32 val){return (val >> 16) & 0xFF;}
 void init_45A0(){}
 void init_47A8(){}
 void init_4A24(){}
-int CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(void*self){return 0;}
+int CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(void* self){return 0;}
 void init_4B0C(){}
-int func_800B4B74(UnkClass_805764CC*self,u32 val){return(self->field_0x15F0==val)?1:0;}
+int func_800B4B74(UnkClass_805764CC* self, u32 val){return (self->field_0x15F0 == val) ? 1 : 0;}
 void init_4B88(){}
 void init_4CA0(){}
 void init_4D84(){}
-u32 shift_u32_hi8_alt3(u32 val){return(val>>16)&0xFF;}
+u32 shift_u32_hi8_alt3(u32 val){return (val >> 16) & 0xFF;}
 extern u16 lbl_eu_8066408C;
 unsigned short gvar_get408C(){return lbl_eu_8066408C;}
-extern "C" u16 func_800B4F64(){extern u16 lbl_eu_80664314;return lbl_eu_80664314;}
+extern "C" u16 func_800B4F64(){extern u16 lbl_eu_80664314; return lbl_eu_80664314;}
 void init_4F6C(){}
 void init_4F80(){}
 void init_4F90(){}
-u32 UnkClass_805764CC::get_u32_70(){return*(u32*)((u8*)this+0x70);}
+u32 UnkClass_805764CC::get_u32_70(){return *(u32*)((u8*)this + 0x70);}
 void init_4FAC(){}
 void init_535C(){}
 void init_570C(){}
 void init_587C(){}
 void init_5944(){}
 void init_5948(){}
-void UnkClass_805764CC::clear_380(){*(u32*)((u8*)this+896)=0;}
-void*UnkClass_805764CC::getNull(){return 0;}
-u32 UnkClass_805764CC::get_u32_380(){return*(u32*)((u8*)this+0x380);}
-void init_5978(){}
+void UnkClass_805764CC::clear_380(){*(u32*)((u8*)this + 896) = 0;}
+void* UnkClass_805764CC::getNull(){return 0;}
+u32 UnkClass_805764CC::get_u32_380(){return *(u32*)((u8*)this + 0x380);}
+
+// Target 2: us-800b13c0 — __dt__800B0AF4
+// Destructor for UnkClass_800B0AD8. Clears counters and frees memory if flags > 0.
+// Returns self (standard MWCC destructor convention).
+extern "C"
+UnkClass_800B0AD8* __dt__800B0AF4(UnkClass_800B0AD8* self, int flags) {
+    if (self != NULL) {
+        self->unkB00 = 0;
+        self->unkAFC = 0;
+        if (flags > 0) {
+            __dl__FPv(self);
+        }
+    }
+    return self;
+}
+
+// Target 2: us-800b6274 - Store value at array index, increment counter.
+void func_800B5978(UnkClass_805764CC* self, u32* val) {
+    u32 idx = *(u32*)((u8*)self + 0x380);
+    ((u32*)self)[idx] = *val;
+    *(u32*)((u8*)self + 0x380) = idx + 1;
+}
 void init_5994(){}
 void init_6484(){}
 void init_6494(){}
-u32 shift_u32_hi8_alt4(u32 val){return(val>>16)&0xFF;}
+u32 shift_u32_hi8_alt4(u32 val){return (val >> 16) & 0xFF;}
 void init_64B8(){}
-u32 shift_u32_and(u32 a,u32 b){return a&b;}
-u32 UnkClass_805764CC::get_u32_98(){return*(u32*)((u8*)this+0x98);}
-u16 UnkClass_805764CC::get_u16_45C0(){return*(u16*)((u8*)this+0x45C0);}
-u32 shift_u32_hi8_alt5(u32 val){return(val>>16)&0xFF;}
+u32 shift_u32_and(u32 a, u32 b){return a & b;}
+u32 UnkClass_805764CC::get_u32_98(){return *(u32*)((u8*)this + 0x98);}
+u16 UnkClass_805764CC::get_u16_45C0(){return *(u16*)((u8*)this + 0x45C0);}
+u32 shift_u32_hi8_alt5(u32 val){return (val >> 16) & 0xFF;}
 void init_64F8(){}
 void init_6508(){}
-void UnkClass_805764CC::appendToBuffer(void*other){
-    unsigned int count=*(unsigned int*)((unsigned char*)this+0x700);
-    unsigned int val=*(unsigned int*)other;
-    unsigned int newCount=count+1;
-    *(unsigned int*)((unsigned char*)this+0x700)=newCount;
-    float fval=*(float*)((unsigned char*)other+4);
-    void*dest=(unsigned char*)this+count*8;
-    *(unsigned int*)dest=val;*(float*)((unsigned char*)dest+4)=fval;
+void UnkClass_805764CC::appendToBuffer(void* other){
+    unsigned int count = *(unsigned int*)((unsigned char*)this + 0x700);
+    unsigned int val = *(unsigned int*)other;
+    unsigned int newCount = count + 1;
+    *(unsigned int*)((unsigned char*)this + 0x700) = newCount;
+    float fval = *(float*)((unsigned char*)other + 4);
+    void* dest = (unsigned char*)this + count * 8;
+    *(unsigned int*)dest = val;
+    *(float*)((unsigned char*)dest + 4) = fval;
 }
 void init_6544(){}
 void init_655C(){}
 void init_66AC(){}
 void init_66BC(){}
-void init_67CC(){}
-void*UnkClass_805764CC::getPtr_1A8(){return(void*)((u8*)this+0x1a8);}
-void UnkClass_805764CC::clear_700(){*(u32*)((u8*)this+1792)=0;}
+
+// Target 3: us-800b70c8 - Return 1 if byte at offset 2 is in [1, 24].
+int func_800B67CC(void* self) {
+    u8 val = *(u8*)((u8*)self + 2);
+    return (val >= 1 && val <= 24) ? 1 : 0;
+}
+void* UnkClass_805764CC::getPtr_1A8(){return (void*)((u8*)this + 0x1a8);}
+void UnkClass_805764CC::clear_700(){*(u32*)((u8*)this + 1792) = 0;}
 void init_6800(){}
 void init_68A8(){}
 void init_6AF4(){}
 extern "C" void func_800B6BA0(){}
-void*sub_getReslist_B28(){return&UnkClass_805764CC::func_800B07E8()->field_0xB28;}
-void*sub_getReslist_B48(){return&UnkClass_805764CC::func_800B07E8()->field_0xB48;}
-void*sub_getReslist_B68(){return&UnkClass_805764CC::func_800B07E8()->field_0xB68;}
-void*sub_getReslist_B88(){return&UnkClass_805764CC::func_800B07E8()->field_0xB88;}
-void*sub_getReslist_BE8(){return&UnkClass_805764CC::func_800B07E8()->field_0xBE8;}
-void*sub_getReslist_BC8(){return&UnkClass_805764CC::func_800B07E8()->field_0xBC8;}
-void*sub_getReslist_C08(){return&UnkClass_805764CC::func_800B07E8()->field_0xC08;}
-void*sub_getReslist_C48(){return&UnkClass_805764CC::func_800B07E8()->field_0xC48;}
-void init_6CC4(){}
+void* sub_getReslist_B28(){return &UnkClass_805764CC::func_800B07E8()->field_0xB28;}
+void* sub_getReslist_B48(){return &UnkClass_805764CC::func_800B07E8()->field_0xB48;}
+void* sub_getReslist_B68(){return &UnkClass_805764CC::func_800B07E8()->field_0xB68;}
+void* sub_getReslist_B88(){return &UnkClass_805764CC::func_800B07E8()->field_0xB88;}
+void* sub_getReslist_BE8(){return &UnkClass_805764CC::func_800B07E8()->field_0xBE8;}
+void* sub_getReslist_BC8(){return &UnkClass_805764CC::func_800B07E8()->field_0xBC8;}
+void* sub_getReslist_C08(){return &UnkClass_805764CC::func_800B07E8()->field_0xC08;}
+void* sub_getReslist_C48(){return &UnkClass_805764CC::func_800B07E8()->field_0xC48;}
+extern "C" reslist<cf::CfObject>* func_800B6CC4() {
+    UnkClass_805764CC* obj = func_800B07E8();
+    func_800B4400();
+    return &obj->field_0xC28;
+}
 void init_6CF8(){}
-void*func_800B6D3C(void*);
+void* func_800B6D3C(void*);
 void fwd_6DD0_body(){}
 void init_6EC0(){}
-u32 UnkClass_800B0AD8::getCount(){return*(u32*)((u8*)this+0xB00);}
-u32 UnkClass_800B0AD8::getSize(){return*(u32*)((u8*)this+0xB04);}
-void*UnkClass_800B0AD8::getRingElem(u32 index){
-    u32 start=*(u32*)((u8*)this+0xAFC);u32 count=*(u32*)((u8*)this+0xB04);
-    u32*base=*(u32**)((u8*)this+0xAF8);return&base[(start+index)%count];
+u32 UnkClass_800B0AD8::getCount(){return *(u32*)((u8*)this + 0xB00);}
+u32 UnkClass_800B0AD8::getSize(){return *(u32*)((u8*)this + 0xB04);}
+void* UnkClass_800B0AD8::getRingElem(u32 index){
+    u32 start = *(u32*)((u8*)this + 0xAFC); u32 count = *(u32*)((u8*)this + 0xB04);
+    u32* base = *(u32**)((u8*)this + 0xAF8); return &base[(start + index) % count];
 }
 void sub_mainReset(){func_800B6D3C(func_800B07E8());}
 void init_7058(){}
 void init_708C(){}
 void init_70FC(){}
-u32 gvar_get40F4(void){extern u32 lbl_eu_806640F4;return lbl_eu_806640F4;}
+u32 gvar_get40F4(void){extern u32 lbl_eu_806640F4; return lbl_eu_806640F4;}
 void init_71CC(){}
-void*UnkClass_805764CC::getPtr_720(){return(void*)((u8*)this+0x720);}
+void* UnkClass_805764CC::getPtr_720(){return (void*)((u8*)this + 0x720);}
 void init_7214(){}
 void init_72DC(){}
 void init_7320(){}
-void list_removeNode(void*out_prev,void*unused,void*list_ptr){
-    (void)unused;void*entry=*(void**)list_ptr;void*prev=*(void**)entry;
-    void*next=*(void**)((char*)entry+4);*(void**)next=prev;
-    *(void**)((char*)prev+4)=next;entry=*(void**)list_ptr;
-    *(void**)entry=NULL;*(void**)out_prev=prev;
+void list_removeNode(void* out_prev, void* unused, void* list_ptr){
+    (void)unused; void* entry = *(void**)list_ptr; void* prev = *(void**)entry;
+    void* next = *(void**)((char*)entry + 4); *(void**)next = prev;
+    *(void**)((char*)prev + 4) = next; entry = *(void**)list_ptr;
+    *(void**)entry = NULL; *(void**)out_prev = prev;
 }
 void init_7410(){}
 unsigned short gvar_get408C_alt1(){return lbl_eu_8066408C;}
 unsigned short gvar_get408C_alt2(){return lbl_eu_8066408C;}
-void UnkClass_805764CC::maskField_6C(u32 mask,int enable){
-    u32*field=(u32*)((u8*)this+0x6C);
-    if(enable){*field|=mask;}else{*field&=~mask;}
+void UnkClass_805764CC::maskField_6C(u32 mask, int enable){
+    u32* field = (u32*)((u8*)this + 0x6C);
+    if (enable) { *field |= mask; } else { *field &= ~mask; }
 }
-extern "C" u16 func_800B75B4(){extern u16 lbl_eu_80663E42;return lbl_eu_80663E42;}
-extern "C" u16 func_800B75BC(){extern u16 lbl_eu_80663E44;return lbl_eu_80663E44;}
+extern "C" u16 func_800B75B4(){extern u16 lbl_eu_80663E42; return lbl_eu_80663E42;}
+extern "C" u16 func_800B75BC(){extern u16 lbl_eu_80663E44; return lbl_eu_80663E44;}
 void init_75EC(){}
-int list_countNodes(void*self){
-    void*head=*(void**)((char*)self+4);void*cur=*(void**)head;
-    int count=0;while(cur!=head){cur=*(void**)cur;count++;}return count;
+
+// Target 5: us-800b7f9c - Count nodes in a circular linked list.
+int func_800B7680(void* self) {
+    void* head = *(void**)((u8*)self + 4);
+    void* cur = *(void**)head;
+    int count = 0;
+    while (cur != head) { cur = *(void**)cur; count++; }
+    return count;
 }
-void sub_resetReslist_B28(void*self){func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB28);}
-void sub_resetReslist_B48(void*self){func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB48);}
-void sub_resetReslist_B68(void*self){func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB68);}
-void*sub_resetReslist_B88(void*self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB88);}
-void*sub_resetReslist_BE8(void*self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBE8);}
-void*sub_resetReslist_BC8(void*self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBC8);}
-void*sub_resetReslist_C08(void*self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xC08);}
-void*sub_resetReslist_BA8(void*self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBA8);}
-void init_77E4(){}
-void init_781C(){}
-void init_7854(){}
-void sub_pushToReslist_B88(cf::CfObject*param_1){extern void fwd_6DD0_body(void*,void*);fwd_6DD0_body(&UnkClass_805764CC::func_800B07E8()->field_0xB88,param_1);}
-void init_78C4(){}
-void init_78FC(){}
-void init_7934(){}
-void init_796C(){}
+void sub_resetReslist_B28(void* self){func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB28);}
+void sub_resetReslist_B48(void* self){func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB48);}
+void sub_resetReslist_B68(void* self){func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB68);}
+void* sub_resetReslist_B88(void* self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xB88);}
+void* sub_resetReslist_BE8(void* self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBE8);}
+void* sub_resetReslist_BC8(void* self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBC8);}
+void* sub_resetReslist_C08(void* self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xC08);}
+void* sub_resetReslist_BA8(void* self){return func_800B6D3C(&UnkClass_805764CC::func_800B07E8()->field_0xBA8);}
+void func_800B77E4(cf::CfObject* obj) {
+    UnkClass_805764CC* ctx = func_800B07E8();
+    func_800B6DD0(&ctx->field_0xB28, obj);
+}
+
+void func_800B781C(cf::CfObject* obj) {
+    UnkClass_805764CC* ctx = func_800B07E8();
+    func_800B6DD0(&ctx->field_0xB48, obj);
+}
+
+void func_800B7854(cf::CfObject* obj) {
+    UnkClass_805764CC* ctx = func_800B07E8();
+    func_800B6DD0(&ctx->field_0xB68, obj);
+}
+
+void func_800B78C4(cf::CfObject* obj) {
+    UnkClass_805764CC* ctx = func_800B07E8();
+    func_800B6DD0(&ctx->field_0xBE8, obj);
+}
+
+// Target 1: us-800b8218 — Add CfObject to reslist at field_0xBC8
+void func_800B78FC(cf::CfObject* obj) {
+    UnkClass_805764CC* ctx = func_800B07E8();
+    func_800B6DD0(&ctx->field_0xBC8, obj);
+}
+
+// Target 2: us-800b8250 — Add CfObject to reslist at field_0xBA8
+void func_800B7934(cf::CfObject* obj) {
+    UnkClass_805764CC* ctx = func_800B07E8();
+    func_800B6DD0(&ctx->field_0xBA8, obj);
+}
+
+// Target 3: us-800b8288 — Add CfObject to reslist at field_0xC08
+void func_800B796C(cf::CfObject* obj) {
+    UnkClass_805764CC* ctx = func_800B07E8();
+    func_800B6DD0(&ctx->field_0xC08, obj);
+}
 void init_79A4(){}
 void init_7A18(){}
 void init_7AF0(){}
@@ -1761,55 +2020,181 @@ void init_8524(){}
 void init_dispatchTarget_3(){}
 void init_dispatchTarget_4(){}
 void init_8804(){}
-void init_88E0(){}
+// Target 4: us-800b91fc — func_800B88E0
+// Remove nodes matching a given ID from a linked list at offset 0xC84
+void func_800B88E0(u8* self, u32 targetId) {
+    u32* head = *(u32**)(self + 0xC84);
+    u32* sentinel = head;
+    u32* node = (u32*)*head;
+    while (node != sentinel) {
+        u32* next = (u32*)*node;
+        if (node[2] == targetId) {
+            u32* prev = (u32*)node[1];
+            *prev = (u32)next;
+            next[1] = (u32)prev;
+            *node = 0;
+        }
+        node = next;
+    }
+}
 void init_8920(){}
-void init_89CC(){}
-void init_8A64(){}
+// Target 4: us-800b92e8 - func_800B89CC
+// Singleton accessor for UnkClass_805764CC at lbl_eu_80572CD4.
+// If the singleton hasn't been initialized (lbl_eu_80663EE8 == 0),
+// construct it and register as a global object.
+// Then access field_0xCA0 and call func_80193AB0(field_0xCA0, id).
+// Returns the result of func_80193AB0, or 0 if field_0xCA0 is NULL.
+extern "C" {
+    extern s8 lbl_eu_80663EE8;
+    extern u8 lbl_eu_80572CD4[];
+    extern u8 lbl_eu_80572CC8[];
+    extern void __dt__17UnkClass_805764CCFv(void*, int);
+    extern void __ct__17UnkClass_805764CCFv(void*);
+    extern void __register_global_object(void*, void*, void*);
+    extern void* func_80193AB0(void*, u32);
+}
+
+extern "C" void* func_800B89CC(u32 id) {
+    void* result = NULL;
+
+    if (lbl_eu_80663EE8 == 0) {
+        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
+        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
+        lbl_eu_80663EE8 = 1;
+    }
+
+    void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
+    if (ca0 != NULL) {
+        result = func_80193AB0(ca0, id);
+    }
+
+    return result;
+}
+
+// Target 5: us-800b9380 - func_800B8A64
+// Same singleton pattern as func_800B89CC, but reads a u16 from
+// this->field_0x45C0 and passes it as the id to func_80193AB0.
+extern "C" void* func_800B8A64(void* self) {
+    void* result = NULL;
+
+    if (lbl_eu_80663EE8 == 0) {
+        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
+        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
+        lbl_eu_80663EE8 = 1;
+    }
+
+    u16 id = *(u16*)((u8*)self + 0x45C0);
+    void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
+    if (ca0 != NULL) {
+        result = func_80193AB0(ca0, id);
+    }
+
+    return result;
+}
 void init_8AFC(){}
 void init_8B94(){}
 void init_8C78(){}
 void init_8D5C(){}
 void init_8FC4(){}
-void sub_dispatchInit_1(){func_800B07E8();((void(*)())init_dispatchTarget_1)();}
-void sub_dispatchInit_2(){func_800B07E8();((void(*)())init_dispatchTarget_2)();}
+void sub_dispatchInit_1(){func_800B07E8(); ((void(*)())init_dispatchTarget_1)();}
+void sub_dispatchInit_2(){func_800B07E8(); ((void(*)())init_dispatchTarget_2)();}
 void init_92FC(){}
-void sub_dispatchInit_3(){func_800B07E8();((void(*)())init_dispatchTarget_3)();}
-void sub_dispatchInit_4(){func_800B07E8();((void(*)())init_dispatchTarget_4)();}
-void sub_dispatchInit_5(){func_800B07E8();((void(*)())init_dispatchTarget_5)();}
-void sub_dispatchInit_6(){func_800B07E8();((void(*)())init_dispatchTarget_6)();}
+void sub_dispatchInit_3(){func_800B07E8(); ((void(*)())init_dispatchTarget_3)();}
+void sub_dispatchInit_4(){func_800B07E8(); ((void(*)())init_dispatchTarget_4)();}
+void sub_dispatchInit_5(){func_800B07E8(); ((void(*)())init_dispatchTarget_5)();}
+void sub_dispatchInit_6(){func_800B07E8(); ((void(*)())init_dispatchTarget_6)();}
 void init_93D0(){}
 void init_9404(){}
 void init_9438(){}
 void init_946C(){}
 void init_94A0(){}
 void init_dispatchTarget_7(){}
-void sub_dispatchWithArgs(u32 a,u32 b){func_800AA2BC(a,b);((void(*)())init_dispatchTarget_7)();}
+void sub_dispatchWithArgs(u32 a, u32 b){func_800AA2BC(a, b); ((void(*)())init_dispatchTarget_7)();}
 void init_9548(){}
 void init_957C(){}
-void UnkClass_805764CC::set_u32_734(u32 val){*(u32*)((u8*)this+0x734)=val;}
-void UnkClass_805764CC::set_u8_73A(u8 a,u8 b){this->field_0x20.unk0[0x71A]=a;this->field_0x20.unk0[0x71B]=b;}
-void UnkClass_805764CC::set_u32_720(u32 val){*(u32*)((u8*)this+0x720)=val;}
-void UnkClass_805764CC::set_u16_738(u16 val){*(u16*)((u8*)this+0x738)=val;}
+void UnkClass_805764CC::set_u32_734(u32 val){*(u32*)((u8*)this + 0x734) = val;}
+void UnkClass_805764CC::set_u8_73A(u8 a, u8 b){this->field_0x20.unk0[0x71A] = a; this->field_0x20.unk0[0x71B] = b;}
+void UnkClass_805764CC::set_u32_720(u32 val){*(u32*)((u8*)this + 0x720) = val;}
+void UnkClass_805764CC::set_u16_738(u16 val){*(u16*)((u8*)this + 0x738) = val;}
 void init_96E8(){}
-void UnkClass_805764CC::set_float_730(float val){*(float*)((u8*)this+0x730)=val;}
-void __ct__800B970C(){}
+void UnkClass_805764CC::set_float_730(float val){*(float*)((u8*)this + 0x730) = val;}
+// Target 1: us-800ba028 - __ct__800B970C
+// Constructor for a class with base vtable lbl_eu_8052AC98, final vtable lbl_eu_80537FB0,
+// CCharVoice at offset 0x28, and fields at 0x6C/0x70.
+// Size: 0x7C (allocated via allocate(0x7c, ...)).
+
+// Forward declarations for symbols in this TU
+struct CCharVoice;
+extern "C" {
+    extern u8 lbl_eu_8052AC98[];
+    extern u8 lbl_eu_80537FB0[];
+    extern void __ct__CCharVoice(CCharVoice* self);
+}
+
+extern "C" void* __ct__800B970C(void* self) {
+    u8* s = (u8*)self;
+    u8* baseVtab = lbl_eu_8052AC98;
+    u8* finalVtab = lbl_eu_80537FB0;
+
+    // Set base vtable and zero fields
+    *(u32*)(s + 0x4) = 0;
+    *(u32*)(s + 0x8) = 0;
+    *(void**)s = baseVtab;
+    *(void**)(s + 0xC) = baseVtab + 0xB4;
+    *(void**)(s + 0x10) = baseVtab + 0xC4;
+    *(u32*)(s + 0x14) = 0;
+    *(u32*)(s + 0x18) = 0;
+    *(u32*)(s + 0x1C) = 0;
+
+    // Construct CCharVoice at offset 0x28
+    __ct__CCharVoice((CCharVoice*)(s + 0x28));
+
+    // Switch to final vtable and zero extra fields
+    *(u32*)(s + 0x6C) = 0;
+    *(void**)s = finalVtab;
+    *(void**)(s + 0xC) = finalVtab + 0xB4;
+    *(void**)(s + 0x10) = finalVtab + 0xC4;
+    *(u32*)(s + 0x70) = 0;
+
+    return self;
+}
 void init_97A0(){}
 void init_985C(){}
 void init_98C8(){}
-u32 UnkClass_805764CC::get_u32_620(){return*(u32*)((u8*)this+0x620);}
+u32 UnkClass_805764CC::get_u32_620(){return *(u32*)((u8*)this + 0x620);}
 void init_998C(){}
 void init_99BC(){}
-extern "C" void func_800B998C(void*a,void*b,void*c2,u32 d,void*e,void*f){func_800B47A8(1,a,b,c2,d,e,f);}
-extern "C" void func_800B99BC(void*a,void*b,void*c2,u32 d,void*e,void*f){func_800B47A8(0,a,b,c2,d,e,f);}
 void fwd_99EC_body(){}
 void init_9A30(){}
-template<>_reslist_base<cf::TboxInfo>::~_reslist_base(){}
-template<>reslist<cf::TboxInfo>::~reslist(){}
-template<>_reslist_base<cf::IFactoryEvent*>::~_reslist_base(){}
-template<>reslist<cf::IFactoryEvent*>::~reslist(){}
-extern "C" void sinit_800B9A40(){
-    extern float lbl_eu_80661CC8,lbl_eu_80661CCC,lbl_eu_80661CD0,lbl_eu_80663EC8,lbl_eu_80663ECC,lbl_eu_80663ED0,lbl_eu_80663ED4;
-    extern unsigned long lbl_eu_80663EE0;
-    float f0=lbl_eu_80661CCC;float f3=lbl_eu_80661CC8;float f2=f3*f3;float f1=lbl_eu_80661CD0;
-    f0=f0*f0;lbl_eu_80663EC8=f3;lbl_eu_80663ECC=f2;lbl_eu_80663ED0=f1;lbl_eu_80663ED4=f0;lbl_eu_80663EE0=0;
+
+_reslist_base<cf::TboxInfo>::~_reslist_base(){}
+reslist<cf::TboxInfo>::~reslist(){}
+_reslist_base<cf::IFactoryEvent*>::~_reslist_base(){}
+reslist<cf::IFactoryEvent*>::~reslist(){}
+
+// Target 3: us-800ba2a8 — func_800B998C
+void* func_800B998C(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
+    return func_800B47A8((void*)1, self, a1, a2, a3, a4, a5);
+}
+
+// Target 4: us-800ba2d8 — func_800B99BC
+void* func_800B99BC(void* self, void* a1, void* a2, void* a3, void* a4, void* a5) {
+    return func_800B47A8((void*)0, self, a1, a2, a3, a4, a5);
+}
+
+// Target 5: us-800ba35c — sinit_800B9A40
+void sinit_800B9A40() {
+    extern float lbl_eu_80661CC8, lbl_eu_80661CCC, lbl_eu_80661CD0;
+    extern float lbl_eu_80663EC8, lbl_eu_80663ECC, lbl_eu_80663ED0, lbl_eu_80663ED4;
+    extern u32 lbl_eu_80663EE0;
+    float f3 = lbl_eu_80661CC8;
+    float f0 = lbl_eu_80661CCC;
+    float f1 = lbl_eu_80661CD0;
+    float f2 = f3 * f3;
+    float f0_sq = f0 * f0;
+    lbl_eu_80663EC8 = f3;
+    lbl_eu_80663ECC = f2;
+    lbl_eu_80663ED0 = f1;
+    lbl_eu_80663ED4 = f0_sq;
+    lbl_eu_80663EE0 = 0;
 }

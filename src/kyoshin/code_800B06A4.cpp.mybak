@@ -3,10 +3,6 @@
 
 #include "kyoshin/harness_catalog.hpp"
 #include "kyoshin/code_800B06A4.hpp"
-#include <string.h>
-
-// Forward declaration for func_800B3A88 (defined in this TU)
-void func_800B3A88(UnkClass_805764CC* self, void* target);
 
 void UnkClass_800B0AD8::clearCounters() {
     unkB00 = 0;
@@ -35,16 +31,12 @@ extern void func_800B8524(void* singleton, void* self, void* other);
 extern "C" void func_800B1B2C(void* obj);
 void* func_800B47A8(void* a, void* b, void* c, void* d, void* e, void* f, void* g);
 
-// Calees used by target functions in this TU (defined in other TUs or this TU later)
-extern "C" int func_800B2D88(void* reslist);
-extern "C" void* func_800B6EC0(UnkClass_805764CC* self, int arg);
-extern "C" void func_800B1C24(int arg, void* ptr);
-extern "C" void* func_800B39C0(void* arg);
-extern "C" void func_800B68A8(void* self, void* a, void* b, int c, float f);
-extern "C" void* func_800B708C(int arg);
-extern "C" void func_80193CD0(void* a, void* b);
-
 // Declarations for callees used by the target functions below
+extern u32 lbl_eu_80663EE8;
+extern u8 lbl_eu_80572CD4[];
+extern u8 lbl_eu_80572CC8[];
+extern void __dt__17UnkClass_805764CCFv(void*, int);
+extern void __register_global_object(void*, void*, void*);
 extern "C" unsigned long func_80061FFC();
 extern "C" void __dl__FPv(void*);
 extern "C" void __dt__8047BDA8(void*);
@@ -52,7 +44,6 @@ extern "C" void func_800B0894(UnkClass_805764CC* self, unsigned long handle, uns
 extern "C" unsigned long func_800B0FEC(void* self);
 extern "C" void func_800B0FF4(void* self, unsigned long handle, unsigned long count);
 extern "C" void* func_800B20B4(void* self, unsigned long arg1, void* arg2, unsigned long arg3);
-extern "C" void func_800B084C(UnkClass_805764CC* self, unsigned long count);
 void func_80081258(void* self);
 void func_80081264(void* self, cf::CfObject* obj);
 
@@ -71,26 +62,23 @@ void func_800B06A4(float a) {
 }
 
 void init_0A90(void){}
-// Target 1: us-800b1118 — func_800B084C
-// Calls func_80061FFC() to get a handle, then passes it along with `count` to func_800B0894.
-void func_800B084C(UnkClass_805764CC* self, unsigned long count) {
-    func_800B0894(self, func_80061FFC(), count);
-}
-
 // Target 1: us-800b15d8 — reslist<cf::IFactoryEvent*>::reslist() constructor
-void __ct__reslist_cf_IFactoryEvent(void* self) {
+reslist<cf::IFactoryEvent*>::reslist() {
     extern void* lbl_eu_805290B8;
     extern void* lbl_eu_805290A0;
-    u32* base = (u32*)self;
-    u32 sentinelAddr = (u32)((u8*)self + 8);
-    base[0] = (u32)&lbl_eu_805290B8;
-    base[5] = 0;
-    base[6] = 0;
-    ((u8*)self)[0x1c] = 0;
-    base[1] = sentinelAddr;
-    ((u32*)self)[2] = sentinelAddr;
-    ((u32*)self)[3] = sentinelAddr;
-    base[0] = (u32)&lbl_eu_805290A0;
+    // Base vtable for _reslist_base
+    _reslist_base<cf::IFactoryEvent*>::field_0x00 = (u32)&lbl_eu_805290B8;
+    // Initialize derived fields
+    field_0x10 = 0;
+    field_0x14 = 0;
+    field_0x18 = 0;
+    field_0x1c = 0;
+    // Initialize sentinel-linked list: head points to sentinel, sentinel prev/next = self
+    _reslist_base<cf::IFactoryEvent*>::field_0x04 = (u32)((u8*)this + 8);
+    sentinel_prev = (u32)((u8*)this + 8);
+    sentinel_next = (u32)((u8*)this + 8);
+    // Set derived vtable
+    _reslist_base<cf::IFactoryEvent*>::field_0x00 = (u32)&lbl_eu_805290A0;
 }
 // Target 3: us-800b186c — func_800B0FA0
 void func_800B0FA0(UnkClass_805764CC* self) {
@@ -103,7 +91,12 @@ void init_0FA0(){}
 u32 UnkClass_805764CC::get_u32_18(){return *(u32*)((u8*)this + 0x18);}
 void init_0FF4(){}
 void init_dispatchTarget_1(){}
-void __ct__cf_CfValueItemManager(){}
+// Target 2: us-800b1bf8 — CfValueItemManager::CfValueItemManager()
+CfValueItemManager::CfValueItemManager() {
+    extern void* lbl_eu_805316D0;
+    __ct__cf_CfMapItemManager();
+    *(u32*)this = (u32)&lbl_eu_805316D0;
+}
 void gflag_setBits(unsigned long flags){extern unsigned long lbl_eu_80663EE0;lbl_eu_80663EE0 |= flags;}
 void FactoryEvent3__Q22cf13IFactoryEventFv(){}
 void init_137C(){}
@@ -114,7 +107,10 @@ void node_copyNextU32(void* dst, void* src){*(unsigned long*)dst = *(unsigned lo
 void init_14FC(){}
 void __dt__800B151C();
 extern "C" void func_800B1518(){void(*dtor)() = __dt__800B151C; dtor();}
-void __dt__800B151C(){}
+void __dt__800B151C(){
+    reslist<cf::IFactoryEvent*>* self=(reslist<cf::IFactoryEvent*>*)__dt__800B151C;
+    (void)self;
+}
 void init_dispatchTarget_2(){}
 extern u32 lbl_eu_80663F24;
 void gvar_clearF24(){lbl_eu_80663F24 = 0;}
@@ -164,23 +160,79 @@ void node_copyNextU32_alt(void* dst, void* src){*(unsigned long*)dst = *(unsigne
 void init_1AD8(){}
 void init_1AF4(){}
 void init_dispatchTarget_6(){}
-void init_1BBC(){}
+// Target 5: us-800b2488 — func_800B1BBC
+void func_800B1BBC(void* self) {
+    int result = func_800B1C00(self);
+    void* arg = (result != 0) ? 0 : self;
+    func_800B1C24(8, arg);
+}
 unsigned long gflag_getBit25(){extern unsigned long lbl_eu_80663EE0;return (lbl_eu_80663EE0 >> 25) & 1;}
 void init_1C0C(){}
 void init_1C24(){}
-s32 func_800B1C40() {
-    if (func_800B1C00()) {
+s32 func_800B1C40(void* self) {
+    if (func_800B1C00(self)) {
         return 0;
     }
     return func_800B1C0C(8);
 }
-void init_1C78(){}
-void init_1CDC(){}
-void init_1E18(){}
-void init_1E2C(){}
-void init_1EB8(){}
-void init_1EC8(){}
-void init_1F2C(){}
+
+// Target 2: us-800b10b4 — func_800B07E8() singleton accessor
+UnkClass_805764CC* func_800B07E8() {
+    if (lbl_eu_80663EE8 == 0) {
+        __ct__17UnkClass_805764CCFv(&lbl_eu_80572CD4);
+        __register_global_object(&lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, &lbl_eu_80572CC8);
+        lbl_eu_80663EE8 = 1;
+    }
+    return &lbl_eu_80572CD4;
+}
+
+// Target 4: us-800b2794 — func_800B1EC8
+void func_800B1EC8() {
+    UnkClass_805764CC* self = func_800B07E8();
+    if (func_800B1C0C(2) == 0) {
+        func_800B1B2C(self);
+        func_800B1F2C(self);
+    }
+    func_800B1F6C(self);
+    func_800B205C(self);
+    func_800B2034(self);
+}
+
+// Target 1: us-800b28a4 — func_800B1FD8
+void func_800B1FD8(UnkClass_805764CC* self) {
+    if (self->field_0xCA4) {
+        func_801742D4((void*)self->field_0xCA4);
+    }
+    if (self->field_0xCA8) {
+        func_801742D4((void*)self->field_0xCA8);
+    }
+    if (self->field_0xD00) {
+        func_802B2A08((void*)self->field_0xD00);
+    }
+}
+
+// Target 3: us-800b2544 — func_800B1C78
+void func_800B1C78(void* arg) {
+    UnkClass_805764CC* self = func_800B07E8();
+    if (self->field_0xCA4) {
+        func_80173C6C((void*)self->field_0xCA4, arg);
+    }
+    if (self->field_0xCA8) {
+        func_80173C6C((void*)self->field_0xCA8, arg);
+    }
+}
+
+// Target 5: us-800b5408 — func_800B4B0C
+int func_800B4B0C(UnkClass_805764CC* self) {
+    u32 val = self->field_0x15F0;
+    int r5 = (val == 4 || val == 5) ? 1 : 0;
+    int r4 = (r5 != 0 || val == 6) ? 1 : 0;
+    int r0 = (r4 != 0 || val == 7) ? 1 : 0;
+    if (r0 != 0) return 1;
+    if (val == 8) return 1;
+    return 0;
+}
+
 void func_800B1F40(UnkClass_805764CC* self){if (self->field_0xCA0){func_80193810(self->field_0xCA0);}}
 
 // Target 1: us-800b2820 - Check field_0xCA0; if nonzero, call func_80195E5C with float constant.
@@ -189,69 +241,17 @@ void func_800B1F54(UnkClass_805764CC* self) {
     extern float lbl_eu_80663EC8;
     func_80195E5C(lbl_eu_80663EC8);
 }
-void init_1F6C(){}
-void init_1FD8(){}
 void func_800B2034(UnkClass_805764CC* self){if (self->field_0xCFC){func_801F3CCC(self->field_0xCFC);}}
 void func_800B2048(UnkClass_805764CC* self){if (self->field_0xCFC){func_801F45B4(self->field_0xCFC);}}
 // TEST_FUNC_205C
 void func_800B20A0(UnkClass_805764CC* self){if (self->field_0xCAC){func_802074F0(self->field_0xCAC);}}
 void init_20B4(){}
 u32 UnkClass_805764CC::get_u32_04(){return *(u32*)((u8*)this + 0x4);}
-// Target 5: us-800b35fc — __dt__800B2D30
-// Destructor that calls subobject destructor, then frees memory if flags > 0.
-// Returns self (standard MWCC destructor convention).
-void* __dt__800B2D30(void* self, int flags) {
-    void* ret = self;
-    if (self != NULL) {
-        __dt__8047BDA8(self);
-        if (flags > 0) {
-            __dl__FPv(self);
-        }
-    }
-    return ret;
-}
+void __dt__800B2D30(){}
 void FactoryEvent1__Q22cf13IFactoryEventFv(){}
 void UnkClass_805764CC::fwdTo_2DB0(int param){extern void fwd_2DB0_body(void*, void*); fwd_2DB0_body(this, &param);}
 void fwd_2DB0_body(){}
-// Target 2: us-800b3704 - func_800B2E38
-// Insert a node into a doubly-linked list with a fixed-size entry pool.
-// Finds the first empty slot (entry[0] == 0) in the pool at list+0x14 (count at list+0x18),
-// copies data from r6 into entry[8], copies the node template from r5[0] into entry[0..7],
-// and links it into the list before the node pointed to by r5[0].
-// Returns the new entry pointer via *r3.
-extern "C" void func_800B2E38(void** out, void* list, void* templ, void* data) {
-    u32 count = *(u32*)((u8*)list + 0x18);
-    u32 entryBase = *(u32*)((u8*)list + 0x14);
-    u32 idx = 0;
-    u32 byteOff = 0;
-
-    // Find first empty slot (entry[0] == 0)
-    while (idx < count) {
-        u32* entry = (u32*)(entryBase + byteOff);
-        if (entry[0] == 0) {
-            break;
-        }
-        idx++;
-        byteOff += 0xC;
-    }
-
-    // Calculate entry pointer
-    u32* newEntry = (u32*)(entryBase + idx * 0xC);
-
-    // Copy data word into entry[8]
-    *(u32*)((u8*)newEntry + 8) = *(u32*)data;
-
-    // Insert before the node pointed to by templ[0]
-    u32* targetNode = *(u32**)templ;
-    newEntry[0] = (u32)targetNode;    // entry->next = target
-    newEntry[1] = targetNode[1];       // entry->prev = target->prev
-    // Link forward: target->prev->next = entry
-    ((u32*)targetNode[1])[0] = (u32)newEntry;
-    // Link backward: target->prev = entry
-    targetNode[1] = (u32)newEntry;
-
-    *out = newEntry;
-}
+void init_2E38(){}
 void init_2ED0(){}
 int obj_testBit_64_v0(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
 int obj_testBit_64_v1(void* p){return (*(int*)((char*)p + 0x64) >> 1) & 1;}
@@ -273,58 +273,23 @@ void init_3D4C(){}
 void init_3D64(){}
 void init_4120(){}
 void init_4278(){}
-void init_42E8(){}
-// Target 3: us-800b4c64 - func_800B4368
-// Walk a linked list of CfObject nodes starting from self->field_0xBCC,
-// find entries where data->field_0x94 == 2, and if name is NULL or
-// strcmp(name, data->field_0x120) == 0, call func_800B3A88(self, data).
-// The list has sentinel at *(self+0xBCC), nodes are [0]=next, [8]=data_ptr.
-extern "C" void func_800B4368(UnkClass_805764CC* self, const char* name) {
-    u8* sentinel = *(u8**)((u8*)self + 0xBCC);
-    u8* cur = *(u8**)sentinel;
-
-    while (cur != sentinel) {
-        u8* data = *(u8**)(cur + 8);
-        cur = *(u8**)cur;
-
-        if (*(u32*)(data + 0x94) == 2) {
-            if (name == NULL || strcmp(name, (const char*)(data + 0x120)) == 0) {
-                func_800B3A88(self, (cf::CfObject*)data);
-            }
-        }
-    }
-}
-// Target 2: us-800b4cfc - func_800B4400
-// Clears all nodes from reslist at field_0xC28, then reinitializes its sentinel.
-// Then iterates reslist at field_0xBC8, and for each node whose data's field_0x94
-// is 1 or 6, calls func_800B2D88(&this->field_0xC28).
-extern "C" void func_800B4400(UnkClass_805764CC* self) {
-    // Clear all nodes from field_0xC28's list
-    u32* headPtr = (u32*)((u8*)self + 0xC2C); // &field_0xC28.field_0x04
-    u32* sentinel = (u32*)*headPtr;
-    u32* node = (u32*)*sentinel;
+// Iterates the CfObject reslist at field_0xBC8, finds a node whose data
+// object has field_0x94 == 5 and field_0x9C (16-bit) == id, and calls func_800B3A88.
+void func_800B42E8(UnkClass_805764CC* self, u16 id) {
+    reslist<cf::CfObject>* list = &self->field_0xBC8;
+    u8* sentinel = (u8*)list + 8;
+    u8* node = *(u8**)sentinel;
     while (node != sentinel) {
-        u32* next = (u32*)*node;
-        *node = 0;
-        node = next;
-    }
-    // Reinitialize sentinel: prev = next = sentinel
-    *sentinel = (u32)sentinel;
-    *(sentinel + 1) = (u32)sentinel;
-
-    // Iterate field_0xBC8's list and call func_800B2D88 for matching nodes
-    u32* headPtr2 = (u32*)((u8*)self + 0xBCC); // &field_0xBC8.field_0x04
-    u32* sentinel2 = (u32*)*headPtr2;
-    u32* node2 = (u32*)*sentinel2;
-    while (node2 != sentinel2) {
-        u32* data = (u32*)*(node2 + 2); // node->field_0x08 = data pointer
-        u32 val = *(data + 0x94 / 4);   // data->field_0x94
-        if (val == 1 || val == 6) {
-            func_800B2D88((u8*)self + 0xC28);
+        u8* objData = *(u8**)(node + 8);
+        node = *(u8**)node;
+        if (*(u32*)(objData + 0x94) == 5 && (u16)*(u32*)(objData + 0x9C) == id) {
+            func_800B3A88(self);
         }
-        node2 = (u32*)*node2;
     }
 }
+void init_42E8(){}
+void init_4368(){}
+extern "C" void func_800B4400(){}
 void init_44A0(){}
 void init_4554(){}
 void init_4588(u32 val){}
@@ -333,7 +298,6 @@ void init_45A0(){}
 void init_47A8(){}
 void init_4A24(){}
 int CfObjectMove_UnkVirtualFunc15__Q22cf12CfObjectMoveFv(void* self){return 0;}
-void init_4B0C(){}
 int func_800B4B74(UnkClass_805764CC* self, u32 val){return (self->field_0x15F0 == val) ? 1 : 0;}
 void init_4B88(){}
 void init_4CA0(){}
@@ -355,21 +319,6 @@ void init_5948(){}
 void UnkClass_805764CC::clear_380(){*(u32*)((u8*)this + 896) = 0;}
 void* UnkClass_805764CC::getNull(){return 0;}
 u32 UnkClass_805764CC::get_u32_380(){return *(u32*)((u8*)this + 0x380);}
-
-// Target 2: us-800b13c0 — __dt__800B0AF4
-// Destructor for UnkClass_800B0AD8. Clears counters and frees memory if flags > 0.
-// Returns self (standard MWCC destructor convention).
-extern "C"
-UnkClass_800B0AD8* __dt__800B0AF4(UnkClass_800B0AD8* self, int flags) {
-    if (self != NULL) {
-        self->unkB00 = 0;
-        self->unkAFC = 0;
-        if (flags > 0) {
-            __dl__FPv(self);
-        }
-    }
-    return self;
-}
 
 // Target 2: us-800b6274 - Store value at array index, increment counter.
 void func_800B5978(UnkClass_805764CC* self, u32* val) {
@@ -442,7 +391,13 @@ void init_7058(){}
 void init_708C(){}
 void init_70FC(){}
 u32 gvar_get40F4(void){extern u32 lbl_eu_806640F4; return lbl_eu_806640F4;}
-void init_71CC(){}
+// Target 3: us-800b7aec — func_800B71CC
+void func_800B71CC(void* self) {
+    if (self == 0) return;
+    void* result = func_800B720C(self);
+    void* obj = func_800B6CA0();
+    func_800B7214(obj, result);
+}
 void* UnkClass_805764CC::getPtr_720(){return (void*)((u8*)this + 0x720);}
 void init_7214(){}
 void init_72DC(){}
@@ -501,19 +456,19 @@ void func_800B78C4(cf::CfObject* obj) {
 }
 
 // Target 1: us-800b8218 — Add CfObject to reslist at field_0xBC8
-void func_800B78FC(cf::CfObject* obj) {
+extern "C" void func_800B78FC(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     func_800B6DD0(&ctx->field_0xBC8, obj);
 }
 
 // Target 2: us-800b8250 — Add CfObject to reslist at field_0xBA8
-void func_800B7934(cf::CfObject* obj) {
+extern "C" void func_800B7934(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     func_800B6DD0(&ctx->field_0xBA8, obj);
 }
 
 // Target 3: us-800b8288 — Add CfObject to reslist at field_0xC08
-void func_800B796C(cf::CfObject* obj) {
+extern "C" void func_800B796C(cf::CfObject* obj) {
     UnkClass_805764CC* ctx = func_800B07E8();
     func_800B6DD0(&ctx->field_0xC08, obj);
 }
@@ -526,10 +481,12 @@ void init_dispatchTarget_3(){}
 void init_dispatchTarget_4(){}
 void init_8804(){}
 // Target 4: us-800b91fc — func_800B88E0
-// Remove nodes matching a given ID from a linked list at offset 0xC84
-void func_800B88E0(u8* self, u32 targetId) {
-    u32* head = *(u32**)(self + 0xC84);
-    u32* sentinel = head;
+// Remove nodes matching a given ID from the field_0xC80 reslist linked list.
+// Each node: [0]=next, [4]=prev, [8]=data (IFactoryEvent*).
+void func_800B88E0(UnkClass_805764CC* self, u32 targetId) {
+    // The head pointer is at offset 0x04 of the reslist (field_0x04 of _reslist_base)
+    u32* sentinel = (u32*)((u8*)&self->field_0xC80 + 4);
+    u32* head = (u32*)*sentinel;
     u32* node = (u32*)*head;
     while (node != sentinel) {
         u32* next = (u32*)*node;
@@ -542,98 +499,10 @@ void func_800B88E0(u8* self, u32 targetId) {
         node = next;
     }
 }
-// Target 5: us-800b923c - func_800B8920
-// Checks if an address is aligned and within a valid range [0x80000000, 0x93800000),
-// then looks up the singleton and calls func_800B6EC0(&singleton, *(this+0x74)).
-// Returns 1 if the check passes and func_800B6EC0 returns non-zero, else 0.
-extern "C" int func_800B8920(u32 addr) {
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
-    }
-
-    // Check alignment: low 2 bits must be 0, and address must be in [0x80000000, 0x93800000)
-    if ((addr & 3) != 0 || addr < 0x80000000 || addr >= 0x93800000) {
-        return 0;
-    }
-
-    u32 val = *(u32*)(addr + 0x74);
-    int result = func_800B6EC0((UnkClass_805764CC*)lbl_eu_80572CD4, val);
-    return (result != 0) ? 1 : 0;
-}
-// Target 4: us-800b92e8 - func_800B89CC
-// Singleton accessor for UnkClass_805764CC at lbl_eu_80572CD4.
-// If the singleton hasn't been initialized (lbl_eu_80663EE8 == 0),
-// construct it and register as a global object.
-// Then access field_0xCA0 and call func_80193AB0(field_0xCA0, id).
-// Returns the result of func_80193AB0, or 0 if field_0xCA0 is NULL.
-extern "C" {
-    extern s8 lbl_eu_80663EE8;
-    extern u8 lbl_eu_80572CD4[];
-    extern u8 lbl_eu_80572CC8[];
-    extern void __dt__17UnkClass_805764CCFv(void*, int);
-    extern void __ct__17UnkClass_805764CCFv(void*);
-    extern void __register_global_object(void*, void*, void*);
-    extern void* func_80193AB0(void*, u32);
-}
-
-extern "C" void* func_800B89CC(u32 id) {
-    void* result = NULL;
-
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
-    }
-
-    void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
-    if (ca0 != NULL) {
-        result = func_80193AB0(ca0, id);
-    }
-
-    return result;
-}
-
-// Target 5: us-800b9380 - func_800B8A64
-// Same singleton pattern as func_800B89CC, but reads a u16 from
-// this->field_0x45C0 and passes it as the id to func_80193AB0.
-extern "C" void* func_800B8A64(void* self) {
-    void* result = NULL;
-
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
-    }
-
-    u16 id = *(u16*)((u8*)self + 0x45C0);
-    void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
-    if (ca0 != NULL) {
-        result = func_80193AB0(ca0, id);
-    }
-
-    return result;
-}
-
-// Target 1: us-800b9418 - func_800B8AFC
-// Singleton accessor + field_0xCA0 lookup, then calls func_80193CD0(field_0xCA0, this).
-extern "C" void* func_800B8AFC(void* self) {
-    void* result = NULL;
-
-    if (lbl_eu_80663EE8 == 0) {
-        __ct__17UnkClass_805764CCFv(lbl_eu_80572CD4);
-        __register_global_object(lbl_eu_80572CD4, (void*)__dt__17UnkClass_805764CCFv, lbl_eu_80572CC8);
-        lbl_eu_80663EE8 = 1;
-    }
-
-    void* ca0 = *(void**)(lbl_eu_80572CD4 + 0xCA0);
-    if (ca0 != NULL) {
-        result = func_80193CD0(ca0, self);
-    }
-
-    return result;
-}
+void init_8920(){}
+void init_89CC(){}
+void init_8A64(){}
+void init_8AFC(){}
 void init_8B94(){}
 void init_8C78(){}
 void init_8D5C(){}
@@ -660,46 +529,7 @@ void UnkClass_805764CC::set_u32_720(u32 val){*(u32*)((u8*)this + 0x720) = val;}
 void UnkClass_805764CC::set_u16_738(u16 val){*(u16*)((u8*)this + 0x738) = val;}
 void init_96E8(){}
 void UnkClass_805764CC::set_float_730(float val){*(float*)((u8*)this + 0x730) = val;}
-// Target 1: us-800ba028 - __ct__800B970C
-// Constructor for a class with base vtable lbl_eu_8052AC98, final vtable lbl_eu_80537FB0,
-// CCharVoice at offset 0x28, and fields at 0x6C/0x70.
-// Size: 0x7C (allocated via allocate(0x7c, ...)).
-
-// Forward declarations for symbols in this TU
-struct CCharVoice;
-extern "C" {
-    extern u8 lbl_eu_8052AC98[];
-    extern u8 lbl_eu_80537FB0[];
-    extern void __ct__CCharVoice(CCharVoice* self);
-}
-
-extern "C" void* __ct__800B970C(void* self) {
-    u8* s = (u8*)self;
-    u8* baseVtab = lbl_eu_8052AC98;
-    u8* finalVtab = lbl_eu_80537FB0;
-
-    // Set base vtable and zero fields
-    *(u32*)(s + 0x4) = 0;
-    *(u32*)(s + 0x8) = 0;
-    *(void**)s = baseVtab;
-    *(void**)(s + 0xC) = baseVtab + 0xB4;
-    *(void**)(s + 0x10) = baseVtab + 0xC4;
-    *(u32*)(s + 0x14) = 0;
-    *(u32*)(s + 0x18) = 0;
-    *(u32*)(s + 0x1C) = 0;
-
-    // Construct CCharVoice at offset 0x28
-    __ct__CCharVoice((CCharVoice*)(s + 0x28));
-
-    // Switch to final vtable and zero extra fields
-    *(u32*)(s + 0x6C) = 0;
-    *(void**)s = finalVtab;
-    *(void**)(s + 0xC) = finalVtab + 0xB4;
-    *(void**)(s + 0x10) = finalVtab + 0xC4;
-    *(u32*)(s + 0x70) = 0;
-
-    return self;
-}
+void __ct__800B970C(){}
 void init_97A0(){}
 void init_985C(){}
 void init_98C8(){}

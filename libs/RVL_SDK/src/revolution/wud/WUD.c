@@ -27,6 +27,16 @@ static void WUDiRemovePatch(void);
 static void WUDiWritePatch(void);
 static void WUDiInstallPatch(void);
 
+void __wudSyncHandler(void);
+void __wudDeleteHandler(void);
+void __wudStackHandler(void);
+void __wudInitHandler(void);
+void __wudShutdownHandler(void);
+void __wudSyncHandler0(OSAlarm* pAlarm, OSContext* pContext);
+
+extern int _wudNandPhase;
+extern unsigned char _wudNandLocked;
+
 WUDCB __rvl_wudcb;
 WUDDevInfo _work;
 static WUDDiscResp _discResp;
@@ -37,7 +47,7 @@ BD_ADDR_PTR _dev_handle_to_bda[WUD_MAX_DEV_ENTRY];
 u16 _dev_handle_queue_size[WUD_MAX_DEV_ENTRY];
 u16 _dev_handle_notack_num[WUD_MAX_DEV_ENTRY];
 
-static BOOL _initialized = FALSE;
+int _wudInitialized;
 static u8 __bte_trace_level = BT_TRACE_LEVEL_NONE;
 
 static OSAlarm _arm;
@@ -816,11 +826,6 @@ static void SyncHandler(void) {
     }
 }
 
-static void SyncHandler0(OSAlarm* pAlarm, OSContext* pContext) {
-    OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, SyncHandler,
-                    __WUDHandlerStack + sizeof(__WUDHandlerStack));
-}
-
 static WUDDeleteState WUDiDisallowIncoming(void) {
     BTA_DmSetVisibility(FALSE, FALSE);
     return WUD_STATE_DELETE_DISCONNECT_ALL;
@@ -1221,7 +1226,7 @@ static void InitCore(void) {
 BOOL WUDInit(void) {
     WUDCB* p = &_wcb;
 
-    if (_initialized) {
+    if (_wudInitialized) {
         return FALSE;
     }
 
@@ -1249,7 +1254,7 @@ BOOL WUDInit(void) {
     OSSetPeriodicAlarm(&p->alarm, OSGetTime(), OS_MSEC_TO_TICKS(10),
                        InitHandler0);
 
-    _initialized = TRUE;
+    _wudInitialized = TRUE;
     return TRUE;
 }
 
@@ -1402,7 +1407,7 @@ static BOOL StartSyncDevice(u8 syncType, s8 syncLoopNum, BOOL syncSkipChecks) {
 
         OSCreateAlarm(&p->alarm);
         OSSetPeriodicAlarm(&p->alarm, OSGetTime(), OS_MSEC_TO_TICKS(20),
-                           SyncHandler0);
+                           __wudSyncHandler0);
 
         OSRestoreInterrupts(enabled);
 
@@ -2461,7 +2466,7 @@ static void CleanupCallback(tBTA_STATUS status) {
     WUDCB* p = &_wcb;
 
     if (status == BTA_SUCCESS) {
-        _initialized = FALSE;
+        _wudInitialized = FALSE;
         p->libStatus = WUD_LIB_STATUS_0;
         return;
     }
@@ -3001,20 +3006,73 @@ void __wudUpdateWiiFitCallback() {}
 void __wudCloseWiiFitCallback() {}
 void __wudSyncDone() {}
 void __wudSyncHandler() {}
-void __wudSyncHandler0() {}
+
+void __wudSyncHandler0(OSAlarm* pAlarm, OSContext* pContext) {
+    OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudSyncHandler,
+                    __WUDHandlerStack + sizeof(__WUDHandlerStack));
+}
 void __wudDeleteFlushCallback() {}
 void __wudDeleteDisconnectAll() {}
 void __wudDeleteCleanupDatabase() {}
 void __wudDeleteHandler() {}
-void __wudDeleteHandler0() {}
+
+void __wudDeleteHandler0(OSAlarm* pAlarm, OSContext* pContext) {
+    OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudDeleteHandler,
+                    __WUDHandlerStack + sizeof(__WUDHandlerStack));
+}
 void __wudStackCheckDeviceInfo() {}
 void __wudStackHandler() {}
-void __wudStackHandler0() {}
-void __wudInitFlushCallback() {}
+
+void __wudStackHandler0(OSAlarm* pAlarm, OSContext* pContext) {
+    OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudStackHandler,
+                    __WUDHandlerStack + sizeof(__WUDHandlerStack));
+}
+
+void __wudInitFlushCallback(s32 result) {
+    DEBUGPrint("__wudInitFlushCallback() : %d, Init: %d\n", result,
+               _wcb.initState);
+    _wcb.initState = 5;
+}
+
 void __wudInitDevInfo() {}
-void __wudNandResultCallback() {}
-extern int _wudNandPhase;
-extern unsigned char _wudNandLocked;
+
+void __wudNandResultCallback(s32 result) {
+    s32 phase = _wudNandPhase;
+    _wudNandLocked = 0;
+
+    switch (phase) {
+    case 1: {
+        s32 newPhase = 0xFF;
+        if (result == 0) {
+            newPhase = phase + 1;
+        }
+        _wudNandPhase = newPhase;
+        break;
+    }
+
+    case 2: {
+        s32 newPhase = 5;
+        if (result == 0) {
+            newPhase = phase + 1;
+        }
+        _wudNandPhase = newPhase;
+        break;
+    }
+
+    case 3: {
+        s32 newPhase = 5;
+        if ((u32)(result - 0x40000) == 0xB000) {
+            newPhase = phase + 1;
+        }
+        _wudNandPhase = newPhase;
+        break;
+    }
+
+    default:
+        _wudNandPhase = 6;
+        break;
+    }
+}
 
 void __wudNandFlushCallback(void) {
     _wudNandLocked = 0;
@@ -3022,10 +3080,24 @@ void __wudNandFlushCallback(void) {
 }
 void __wudGetDevInfoFromWiiFit() {}
 void __wudInitHandler() {}
-void __wudInitHandler0() {}
-void __wudShutdownFlushCallback() {}
+
+void __wudInitHandler0(OSAlarm* pAlarm, OSContext* pContext) {
+    OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudInitHandler,
+                    __WUDHandlerStack + sizeof(__WUDHandlerStack));
+}
+
+void __wudShutdownFlushCallback(s32 result) {
+    DEBUGPrint("__wudShutdownFlushCallback() : %d, Shutdown: %d\n", result,
+               _wcb.shutdownState);
+    _wcb.shutdownState = WUD_STATE_SHUTDOWN_DONE;
+}
+
 void __wudShutdownHandler() {}
-void __wudShutdownHandler0() {}
+
+void __wudShutdownHandler0(OSAlarm* pAlarm, OSContext* pContext) {
+    OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudShutdownHandler,
+                    __WUDHandlerStack + sizeof(__WUDHandlerStack));
+}
 void __wudClearControlBlock() {}
 void __wudStartSyncDevice() {}
 void WUDCancelSyncDevice() {}
@@ -3037,7 +3109,16 @@ void __wudSuperPeekPokeCallback() {}
 void __wudAppendRuntimePatch() {}
 void __wudInitSub() {}
 void WUDiMoveTopOfUnusedStdDevice() {}
-void __wudCleanupStackCallback() {}
+void __wudCleanupStackCallback(s32 result) {
+    WUDCB* p = &_wcb;
+
+    if (result == 0) {
+        _wudInitialized = 0;
+        p->libStatus = 0;
+    } else {
+        DEBUGPrint("WARNING: USB_CLOSE_FAILURE!\n");
+    }
+}
 void __wudSecurityEventStackCallback() {}
 void __wudSearchEventStackCallback() {}
 void __wudVendorSpecificEventStackCallback() {}
@@ -3047,7 +3128,14 @@ void __wudPowerMangeEventStackCallback() {}
 WUDDevInfo* WUDiGetDiscoverDevice(void) { return &_work; }
 void WUDSetDeviceHistory() {}
 void WUDIsLatestDevice() {}
-void WUDUpdateSCSetting() {}
+void WUDUpdateSCSetting(void) {
+    if (_scFlush) {
+        if (SCSetBtDeviceInfoArray(&_scArray)) {
+            SCFlushAsync(NULL);
+            _scFlush = FALSE;
+        }
+    }
+}
 void WUDiSetDevAddrForHandle(u8 handle, BD_ADDR_PTR addr) { _dev_handle_to_bda[handle] = addr; }
 BD_ADDR_PTR WUDiGetDevAddrForHandle(u8 handle) {
     return _dev_handle_to_bda[handle & 0xFF];

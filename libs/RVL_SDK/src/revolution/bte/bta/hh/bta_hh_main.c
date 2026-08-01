@@ -19,6 +19,7 @@ extern void LogMsg_3(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT
 typedef struct {
     UINT8 _pad[0x1c];
     UINT8 state;
+    UINT8 _pad2[3];
 } tBTA_HH_DEV_CB;
 
 /* Main control block at 0x805BC0C8, total 0x230 bytes */
@@ -221,59 +222,55 @@ unsigned char bta_hh_hdl_event(BT_HDR *p_msg)
     dev_cb_idx = 0x10;
     event = p_msg->event;
 
-    if (event == 0x170E) {
+    switch (event) {
+    case 0x170E:
         bta_hh_get_acl_q_info();
-        return 1;
-    }
-
-    if (event > 0x170E) {
-        if (event >= 0x1710) {
-            /* fall through */
-        } else {
-            bta_hh_disc_cmpl();
-            return 1;
-        }
-    } else if (event == 0x170C) {
+        break;
+    case 0x170C:
         bta_hh_api_enable();
-        return 1;
-    } else if (event >= 0x170C) {
+        break;
+    case 0x170D:
         bta_hh_api_disable();
-        return 1;
-    }
-
-    if (event == 0x1700) {
-        dev_cb_idx = bta_hh_find_cb((UINT8 *)p_msg + 8);
-    } else if (event == 0x170A) {
-        UINT16 sub_type;
-
-        sub_type = *(UINT16 *)((UINT8 *)p_msg + 0x10);
-        if (sub_type == 0x0B) {
+        break;
+    case 0x170F:
+        bta_hh_disc_cmpl();
+        break;
+    default:
+        if (event == 0x1700) {
             dev_cb_idx = bta_hh_find_cb((UINT8 *)p_msg + 8);
+        } else if (event == 0x170A) {
+            UINT16 sub_type;
+
+            sub_type = *(UINT16 *)((UINT8 *)p_msg + 0x10);
+            if (sub_type == 0x0B) {
+                dev_cb_idx = bta_hh_find_cb((UINT8 *)p_msg + 8);
+            } else {
+                UINT16 handle;
+
+                handle = *(UINT16 *)((UINT8 *)p_msg + 6);
+                dev_cb_idx = bta_hh_cb.handle_to_idx[handle];
+            }
         } else {
             UINT16 handle;
 
             handle = *(UINT16 *)((UINT8 *)p_msg + 6);
-            dev_cb_idx = bta_hh_cb.handle_to_idx[handle];
+            if (handle < 0x10) {
+                dev_cb_idx = bta_hh_cb.handle_to_idx[handle];
+            }
         }
-    } else {
-        UINT16 handle;
 
-        handle = *(UINT16 *)((UINT8 *)p_msg + 6);
-        if (handle < 0x10) {
-            dev_cb_idx = bta_hh_cb.handle_to_idx[handle];
+        if (dev_cb_idx < 0x10) {
+            p_cb = &bta_hh_cb.dev_cb[dev_cb_idx];
         }
-    }
 
-    if (dev_cb_idx < 0x10) {
-        p_cb = &bta_hh_cb.dev_cb[dev_cb_idx];
-    }
+        if (appl_trace_level >= 5) {
+            LogMsg_2(0x504, "bta_hh_hdl_event:: handle = %d dev_cb[%d] ",
+                     (UINT32)*(UINT16 *)((UINT8 *)p_msg + 6), (UINT32)dev_cb_idx);
+        }
 
-    if (appl_trace_level >= 5) {
-        LogMsg_2(0x504, "bta_hh_hdl_event:: handle = %d dev_cb[%d] ",
-                 (UINT32)*(UINT16 *)((UINT8 *)p_msg + 6), (UINT32)dev_cb_idx);
+        bta_hh_sm_execute(p_cb, event, p_msg);
+        break;
     }
-
-    bta_hh_sm_execute(p_cb, event, p_msg);
 
     return 1;
 }

@@ -12,11 +12,32 @@ typedef unsigned char BOOLEAN;
 #define DATA_ELE_SEQ_DESC_TYPE 6
 
 #define SDP_MAX_RECORDS 0x14
+#define SDP_MAX_ATTR_PER_RECORD 0x25
 
 typedef struct {
-    UINT32 record_handle;
-    UINT8 _pad[0x298 - sizeof(UINT32)];
-} tSDP_RECORD;
+    UINT32 len;            /* 0x00 */
+    UINT8 *value_ptr;      /* 0x04 */
+    UINT8 _pad[2];         /* 0x08 */
+    UINT8 type;            /* 0x0A */
+    UINT8 _pad2;           /* 0x0B */
+} tSDP_ATTRIBUTE;          /* 0x0C */
+
+typedef struct {
+    UINT32 record_handle;              /* 0x00 */
+    UINT8 _pad1[4];                    /* 0x04 */
+    UINT16 num_attributes;             /* 0x08 */
+    UINT8 _pad2[2];                    /* 0x0A */
+    tSDP_ATTRIBUTE attribute[SDP_MAX_ATTR_PER_RECORD]; /* 0x0C */
+    UINT8 _pad3[0x298 - 0x0C - SDP_MAX_ATTR_PER_RECORD * 0x0C]; /* .. 0x298 */
+} tSDP_RECORD;                          /* 0x298 */
+
+typedef struct {
+    UINT16 num_uuid;         /* 0x00 */
+    struct {
+        UINT16 len;          /* 0x02 (entry + 0) */
+        UINT8 value[0x10];   /* 0x04 (entry + 2) */
+    } uuid_entry[1];         /* stride 0x12 */
+} tSDP_UUID_SEQ;
 
 typedef struct {
     UINT32 di_primary_handle;
@@ -39,7 +60,7 @@ extern BOOLEAN sdpu_compare_uuid_arrays(UINT8 *p_uuid1, UINT32 len1, UINT8 *p_uu
 extern BOOLEAN SDP_AddAttribute(UINT32 handle, UINT16 attr_id, UINT8 attr_type, UINT32 attr_len, UINT8 *p_val);
 extern void LogMsg_2(UINT32 level, const char *fmt, UINT16 arg1, UINT16 arg2);
 
-void sdp_db_service_search() {}
+tSDP_RECORD *sdp_db_service_search(tSDP_RECORD *p_rec, tSDP_UUID_SEQ *p_seq);  // defined below
 
 #pragma dont_inline on
 
@@ -71,6 +92,61 @@ BOOLEAN find_uuid_in_seq(UINT8 *p, UINT32 seq_len, UINT8 *p_uuid, UINT32 uuid_le
 }
 
 #pragma dont_inline off
+
+/*******************************************************************************
+ **
+ ** Function         sdp_db_service_search
+ **
+ ** Description      Searches the record database for a record whose attribute
+ **                  list contains every UUID in the given sequence.  When
+ **                  p_rec is NULL the search starts at the first record,
+ **                  otherwise it continues from the record after p_rec.
+ **
+ ** Returns          Pointer to the matching record, or NULL.
+ **
+ *******************************************************************************/
+tSDP_RECORD *sdp_db_service_search(tSDP_RECORD *p_rec, tSDP_UUID_SEQ *p_seq)
+{
+    UINT16 xx, yy;
+    tSDP_RECORD *p_end = &sdp_cb.server_db.record[sdp_cb.server_db.num_records];
+
+    /* If p_rec is NULL, start at the beginning */
+    if (p_rec == NULL) {
+        p_rec = &sdp_cb.server_db.record[0];
+    } else {
+        p_rec++;
+    }
+
+    for (; p_rec < p_end; p_rec++) {
+        for (xx = 0; xx < p_seq->num_uuid; xx++) {
+            tSDP_ATTRIBUTE *p_attr = &p_rec->attribute[0];
+
+            for (yy = 0; yy < p_rec->num_attributes; yy++, p_attr++) {
+                UINT8 *p_value = p_seq->uuid_entry[xx].value;
+
+                if (p_attr->type == UUID_DESC_TYPE) {
+                    if (sdpu_compare_uuid_arrays(p_attr->value_ptr, p_attr->len,
+                                                 p_value, p_seq->uuid_entry[xx].len))
+                        break;
+                } else if (p_attr->type == DATA_ELE_SEQ_DESC_TYPE) {
+                    if (find_uuid_in_seq(p_attr->value_ptr, p_attr->len,
+                                         p_value, p_seq->uuid_entry[xx].len, 0))
+                        break;
+                }
+            }
+
+            /* This record does not contain uuid[xx]; skip to the next record */
+            if (yy == p_rec->num_attributes)
+                break;
+        }
+
+        /* Every uuid in the sequence matched this record */
+        if (xx == p_seq->num_uuid)
+            return p_rec;
+    }
+
+    return NULL;
+}
 
 tSDP_RECORD *sdp_db_find_record(UINT32 handle) {
     tSDP_RECORD *p_rec;

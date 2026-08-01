@@ -4662,3 +4662,56 @@ unit). Patterns:
    (both go to the accept path: `send_peer_connect_rsp(OK,0)`, state CONFIG,
    timer 30) and the reject path sends `(result, status)` + timer 120 with NO
    state change.
+
+## BTE bta_hh / rfcomm family — control-block layouts and dispatch lowering (US)
+
+Batch pi-rvl-rvl_easy_82 (2026): `bta_hh_find_cb`, `bta_hh_hdl_event`,
+`btu_hcif_command_status_evt`, `sdp_db_service_search`, `HBMSEQSetState`,
+`PlaySeq`.
+
+- **`bta_hh_cb` is NOT kdev-first.** Retail addresses `kdev[i]` via
+  `&bta_hh_cb + i*0x20 + 0x10` — `tBTA_HH_KB_CB` (0x10 bytes) sits at offset 0,
+  `kdev[16]` at 0x10, `p_cur` 0x210, `cb_index` 0x214, `p_cback` 0x224.
+  Symptom: every kdev field access is exactly +0x10 off (bta_hh_find_cb 10
+  mismatches, all reg-swap-classified). Fix: order the struct `kb_cb` then
+  `kdev`. bta_hh_find_cb went 99.5%→100% byte-identical.
+- **`rfc_cb.trace_level` is at 0x414, not 0x418.** ports end at 0x39C
+  (0x68 + 5*0xA4); the gap to trace_level is 0x78. Fixing the pad
+  (`pad_398[0x78]`) removed the last offset mismatch in PORT_FlowInd.
+- **bte family compile flags:** btu_hcif/port_rfc/rfc_mx_fsm match the
+  documented bte pattern `mw_version="GC/3.0a5.2", -func_align 4, -ipa off` —
+  fixes function-alignment padding that blows the split budget and restores
+  retail scheduling. btu_hcif_command_status_evt reached byte-identity with
+  these flags; btu_hcif_send_cmd stayed FULL_MATCH (no regression).
+- **Switch lowering vs if/else-if for dispatch trees:** `HBMSEQSetState` and
+  `bta_hh_hdl_event` are dispatch functions whose retail is a *switch*
+  (`case 1/2`, `case 0/3` / `case 0x170E..0x170F`) — MWCC's switch lowering
+  emits branch-to-case blocks with a shared return (matching retail), while an
+  `if/else-if` chain gets range-simplified (`event>0x170E && event<0x1710` →
+  `event==0x170F`) and inverted branches (74+ structural). Using `switch` with
+  `break` + one shared `return` dropped HBMSEQSetState from 64 structural to 0
+  (25 pure reg-swaps) and bta_hh_hdl_event 74→11.
+- **`||`-of-constants bitmask idiom:** an OR-chain like
+  `seqId == 4 || seqId == 0x17 || seqId == 0x19` in a *ternary* compiles to a
+  bitmask test (`subi; cmpli; slw; and`); the same chain in a plain `if/else`
+  compiles to the retail's sequential `cmpwi/beq` chain. Prefer the if/else
+  form.
+- **Inline varint reads consume the final byte:** MWCC inlines
+  `HBMSEQReadVarInt`-style loops only when written inline; the retail read
+  does `p++` after the `while (b & 0x80)` loop (cur ends one past the value)
+  and re-loads `track->cur` per iteration (field access, not a local — a
+  local `p` produces `lbzu` update-form and offset addressing).
+- **HBM Work area (HBMAxSound):** `sWork` is a 4-byte pointer (`.bss`
+  0x805DA058). players[7] × 0x2E2C at 0x0 (normal pool = first 4, special
+  pool = last 3 for seq ids 4/0x17/0x19); SeqPool {first,last} ×2 at 0x14334;
+  prevFrameCb 0x14348; ARCHandle 0x1434C; msgQueue 0x14680; seqWork1/2 at
+  0x146B4/B8. Player list links: `next` (newer) at 0x2E20, `prev` (older) at
+  0x2E24 — the link step writes `last->next = p; p->prev = last` (off-by-field
+  confusion shows up as stw 0x2E24 vs 0x2E20).
+- **SDP record search layouts:** `tSDP_RECORD` (0x298): num_attributes u16 at
+  0x8, attribute[] at 0xC (stride 0xC: len u32 @0, value_ptr @4, type u8 @0xA);
+  `tSDP_UUID_SEQ`: num_uuid u16 @0, uuid_entry[] at 0x2 (len u16 @0, value[16]
+  @2, stride 0x12); `tSDP_DB`: num_records at +6, record[] at +8.
+  `sdp_db_service_search(p_rec, p_seq)`: p_rec==NULL → record[0] else p_rec++,
+  p_end = &record[num_records]; all-uuids-match record scan; UUID_DESC_TYPE=3
+  → `sdpu_compare_uuid_arrays`, DATA_ELE_SEQ_DESC_TYPE=6 → `find_uuid_in_seq`.

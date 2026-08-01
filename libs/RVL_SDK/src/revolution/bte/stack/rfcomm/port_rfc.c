@@ -145,7 +145,7 @@ struct RfcMuxChannel {
 typedef struct {
     u8   pad_00[0x68];
     tPORT port[5];
-    u8   pad_398[0x7C];
+    u8   pad_398[0x78];  /* 0x39C..0x414 */
     u8   trace_level;      /* 0x414 */
 } tRFC_CB;
 
@@ -749,18 +749,24 @@ u32 port_rfc_send_tx_data(tPORT* p_port)
         while (p_port->field_24 == 0 && p_port->p_mcb != NULL &&
                p_port->p_mcb->field_71 != 0) {
             p_buf = (BT_HDR*)GKI_dequeue(&p_port->tx_queue);
-            if (p_buf == NULL) {
-                event |= 0x4;
-                break;
-            }
+            if (p_buf != NULL) {
+                RFCOMM_TRACE_EVENT0("Sending RFCOMM_DataReq");
 
-            RFCOMM_TRACE_EVENT0("Sending RFCOMM_DataReq");
+                {
+                    u32 pending = p_port->tx_pending;
+                    tRFC_MCB* mcb = p_port->p_mcb;
+                    u8 dlci2 = p_port->dlci2;
 
-            p_port->tx_pending -= p_buf->len;
-            RFCOMM_DataReq(p_port->p_mcb, p_port->dlci2, p_buf);
-            event |= 0x4000;
+                    p_port->tx_pending = pending - p_buf->len;
+                    RFCOMM_DataReq(mcb, dlci2, p_buf);
+                }
+                event |= 0x4000;
 
-            if (p_port->tx_pending == 0) {
+                if (p_port->tx_pending == 0) {
+                    event |= 0x4;
+                    break;
+                }
+            } else {
                 event |= 0x4;
                 break;
             }

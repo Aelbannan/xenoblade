@@ -311,8 +311,7 @@ void btu_hcif_esco_connection_comp_evt(UINT8 *p, UINT16 evt_len)
 
     btm_sco_connected (status, bda, handle, &esco_data);
 }
-void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len) __attribute__((noinline)) {}
-void btu_hcif_command_complete_evt(UINT8 *p, UINT16 evt_len)
+void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len) __attribute__((noinline)) {}void btu_hcif_command_complete_evt(UINT8 *p, UINT16 evt_len)
 {
     UINT16  cc_opcode;
     BT_HDR *p_cmd;
@@ -361,8 +360,65 @@ void btu_hcif_command_complete_evt(UINT8 *p, UINT16 evt_len)
     btu_hcif_hdl_command_complete (cc_opcode, p + 3, evt_len);
     btu_hcif_send_cmd (0);
 }
-void btu_hcif_hdl_command_status() {}
-void btu_hcif_command_status_evt() {}
+extern void LogMsg_2(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT32 p2);
+
+void btu_hcif_hdl_command_status(UINT16 opcode, UINT8 num_hci_cmds, UINT8 *p_data) __attribute__((noinline)) {}
+void btu_hcif_command_status_evt(UINT8 *p, UINT16 evt_len)
+{
+    UINT8   num_hci_cmds;
+    UINT8   status;
+    UINT16  opcode;
+    UINT8  *p_data;
+    BT_HDR *p_cmd;
+    UINT16  queued_opcode;
+
+    /* HCI Command Status: [0] = commands still allowed, [1] = status,
+       [2..3] = opcode of the command the controller just accepted. */
+    num_hci_cmds = p[0];
+    status = p[1];
+
+    p_cmd = NULL;
+    p_data = NULL;
+
+    btu_cb.controller_cmd_window = status;
+    opcode = (UINT16)((UINT16)p[2] + ((UINT16)p[3] << 8));
+
+    /* Commands that never produce a completion do not leave a queued copy. */
+    if ((opcode != HCI_RESET) &&
+        (opcode != HCI_HOST_NUM_PACKETS_DONE) &&
+        (opcode != HCI_COMMAND_NONE))
+    {
+        p_cmd = (BT_HDR *)GKI_dequeue (&btu_cb.cmd_cmpl_q);
+        if (p_cmd)
+        {
+            UINT8 *p_dequeued = (UINT8 *)(p_cmd + 1) + p_cmd->offset;
+            queued_opcode = (UINT16)((UINT16)p_dequeued[0] + ((UINT16)p_dequeued[1] << 8));
+            p_data = p_dequeued + 2;
+
+            if (queued_opcode != opcode)
+            {
+                p_data = NULL;
+                LogMsg_2(0x70001, "Event mismatch opcode=%X cmd opcode=%X",
+                         opcode, queued_opcode);
+            }
+        }
+
+        /* Restart or stop the command timeout timer depending on whether
+           commands remain queued for completion. */
+        if (!GKI_queue_is_empty (&btu_cb.cmd_cmpl_q))
+            btu_start_timer (&btu_cb.cmd_cmpl_timer, BTU_TTYPE_BTU_CMD_CMPL, 8);
+        else
+            btu_stop_timer (&btu_cb.cmd_cmpl_timer);
+    }
+
+    /* Dispatch the status; the queued copy (if any) carried the command
+       parameters that accompany the status payload. */
+    btu_hcif_hdl_command_status (opcode, num_hci_cmds, p_data);
+    if (p_cmd)
+        GKI_freebuf (p_cmd);
+
+    btu_hcif_send_cmd (0);
+}
 void btu_hcif_cmd_timeout() {}
 /*******************************************************************************
 **

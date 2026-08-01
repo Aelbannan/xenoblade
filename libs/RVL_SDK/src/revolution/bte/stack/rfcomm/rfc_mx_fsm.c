@@ -72,7 +72,7 @@ void rfc_mx_sm_state_configure(RfcMuxChannel* channel, u16 event, u8* data) {
     case 6:
     case 9:
         if (rfc_cb.trace_level >= 1) {
-            LogMsg_2(0x90003, "Mx error state %d event %d", channel->state, event);
+            LogMsg_2(0x90000, "Mx error state %d event %d", channel->state, event);
         }
         break;
     case 12:
@@ -81,19 +81,15 @@ void rfc_mx_sm_state_configure(RfcMuxChannel* channel, u16 event, u8* data) {
     case 11:
         rfc_mx_conf_cnf(channel, (RfcConfig*)data);
         break;
-    case 7:
-    case 8:
-    case 10:
-    case 13:
-        if (rfc_cb.trace_level >= 4) {
-            LogMsg_2(0x90003, "rfc_mx_sm_state - evt:%d in state:%d", event, channel->state);
-        }
-        break;
     case 14:
         channel->state = 0;
         PORT_CloseInd(channel);
         break;
     default:
+    case 7:
+    case 8:
+    case 10:
+    case 13:
         if (rfc_cb.trace_level >= 4) {
             LogMsg_2(0x90003, "rfc_mx_sm_state - evt:%d in state:%d", event, channel->state);
         }

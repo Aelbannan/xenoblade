@@ -81,24 +81,44 @@ static u32 HBMSEQReadVarInt(u8 **pp)
 
 extern "C" void HBMSEQSetState(HBMSEQSEQUENCE *seq, u32 state)
 {
-    u32 i;
+    int i;
     u32 intr;
 
-    if (state == 1 || state == 2) {
+    switch (state) {
+    case 1:
+    case 2:
         if (seq->state == 0) {
             intr = OSDisableInterrupts();
             for (i = 0; i < seq->num_tracks; i++) {
                 HBMSEQTRACK *track = &seq->tracks[i];
+                u8 b;
+                u32 v;
+
                 track->cur = track->start;
                 track->delay_count = track->field_0x18;
-                track->delay = HBMSEQReadVarInt(&track->cur) << 16;
+
+                /* Read a MIDI variable-length quantity (consumes the final
+                   byte, so cur ends one past the value). */
+                b = *track->cur;
+                v = b & 0x7F;
+                while (b & 0x80) {
+                    track->cur++;
+                    b = *track->cur;
+                    v = (v << 7) + (b & 0x7F);
+                }
+                track->cur++;
+
+                track->delay = v << 16;
                 track->sub_state = 1;
             }
             seq->field_0x0C = seq->num_tracks;
             OSRestoreInterrupts(intr);
         }
         seq->field_0x10 = 0;
-    } else if (state == 0 || state == 3) {
+        break;
+
+    case 0:
+    case 3:
         for (i = 0; i < 16; i++) {
             u8 data[3];
             intr = OSDisableInterrupts();
@@ -108,7 +128,9 @@ extern "C" void HBMSEQSetState(HBMSEQSEQUENCE *seq, u32 state)
             HBMSYNMidiInput(&seq->midi_input, data);
             OSRestoreInterrupts(intr);
         }
+        break;
     }
+
     seq->state = state;
 }
 

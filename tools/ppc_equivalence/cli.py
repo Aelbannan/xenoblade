@@ -189,6 +189,7 @@ def _exit_for_status(status: ProofStatus) -> int:
         ProofStatus.INCONCLUSIVE_LAYOUT,
         ProofStatus.INCONCLUSIVE_UNVALIDATED_CALLEE,
         ProofStatus.INCONCLUSIVE_UNMODELED_EXCEPTION,
+        ProofStatus.INCONCLUSIVE_SMT_DISABLED,
     ):
         return 2
     if status == ProofStatus.INVALID_INPUT:

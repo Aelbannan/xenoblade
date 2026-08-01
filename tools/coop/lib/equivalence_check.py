@@ -2611,8 +2611,14 @@ def prove_unit_symbol(
     memory_environment: dict[str, Any] | None = None,
     declared_return: str | None = None,
     force_declared_return: bool = False,
+    smt: bool = True,
 ) -> EquivalenceProbe:
-    """SMT-check one named function from the unit's retail/decomp objects.
+    """Check one named function from the unit's retail/decomp objects.
+
+    ``smt=False`` runs only the pre-SMT register-renaming witness (doc 31)
+    and returns ``INCONCLUSIVE_SMT_DISABLED`` when the witness does not apply,
+    skipping the Z3 solver entirely.  ``smt=True`` (default) falls through to
+    the full SMT probe on witness failure.
 
     Supported unresolved ELF relocations are proved symbolically.  With
     ``linked=True``, an unsupported symbolic-relocation case retries once using
@@ -2634,7 +2640,8 @@ def prove_unit_symbol(
         # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31): certify
         # position-aligned, same-mnemonic, register-color-only-differing pairs
         # without Z3 CFG exploration.  Must run BEFORE any solver work; on
-        # witness failure the normal SMT probe below still runs.
+        # witness failure the normal SMT probe below still runs (unless
+        # ``smt=False``, in which case the probe is skipped entirely).
         if target_id is not None:
             witness_probe = _try_renaming_witness(
                 project, symbol, left, right, target_id, certified_context,
@@ -2645,6 +2652,12 @@ def prove_unit_symbol(
             )
             if witness_probe is not None:
                 return witness_probe
+
+        if not smt:
+            return EquivalenceProbe(
+                ProofStatus.INCONCLUSIVE_SMT_DISABLED,
+                "SMT probe skipped (opt-in); register-renaming witness did not apply",
+            )
 
         from tools.coop.lib.config import CoopConfig, object_base_mem1_enabled
 

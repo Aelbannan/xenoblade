@@ -34,14 +34,33 @@ def normalize_unit_hint(hint: str) -> str:
     return f"{path}.cpp"
 
 
+def _split_candidates(norm: str) -> list[str]:
+    """Full-path candidates for a normalized unit hint.
+
+    The hint may omit the source extension (e.g. ``.../revolution/mix/mix``);
+    try it with every supported extension so that ``.c`` units are resolved
+    by their full path instead of falling through to the ambiguous
+    stem-only match (which can pick up ``hbm/mix.c`` for ``mix/mix``).
+    """
+    if norm.endswith((".cpp", ".c", ".cp", ".C", ".cc", ".cxx")):
+        return [norm]
+    return [norm + ext for ext in (".cpp", ".c", ".cp", ".C", ".cc", ".cxx")]
+
+
 def find_split_unit(units: list[SplitUnit], hint: str) -> SplitUnit | None:
     norm = normalize_unit_hint(hint)
+    # Build full-path candidates from the hint without forcing an extension:
+    # ``.../revolution/mix/mix`` must resolve to ``mix/mix.c`` (not
+    # ``hbm/mix.c`` via the ambiguous stem fallback).
+    raw = norm[:-4] if norm.endswith(".cpp") and not hint.replace("\\", "/").endswith(".cpp") else norm
+    candidates = _split_candidates(raw)
     for unit in units:
         unit_path = unit.path.replace("\\", "/")
-        if unit_path == norm:
-            return unit
-        if unit_path.endswith("/" + norm):
-            return unit
+        for cand in candidates:
+            if unit_path == cand:
+                return unit
+            if unit_path.endswith("/" + cand):
+                return unit
     stem = Path(norm).stem
     for ext in (".cpp", ".c", ".cp", ".C", ".cc", ".cxx"):
         candidate = f"{stem}{ext}"

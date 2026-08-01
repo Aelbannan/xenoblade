@@ -20,6 +20,7 @@
 | `INCONCLUSIVE_LAYOUT` | `inconclusive_layout` |
 | `INCONCLUSIVE_UNVALIDATED_CALLEE` | `inconclusive_unvalidated_callee` |
 | `INCONCLUSIVE_UNMODELED_EXCEPTION` | `inconclusive_unmodeled_exception` |
+| `INCONCLUSIVE_SMT_DISABLED` | `inconclusive_smt_disabled` |
 | `INVALID_INPUT` | `invalid_input` |
 | `INTERNAL_ERROR` | `internal_error` |
 

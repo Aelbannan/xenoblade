@@ -145,6 +145,7 @@ def _run_single_cycle(
     *,
     linked: bool = False,
     dry_run: bool = False,
+    smt: bool = False,
 ) -> BatchResult:
     """Run one cycle via the co-op runner's subprocess CLI."""
     from tools.coop.run import cmd_cycle
@@ -178,7 +179,8 @@ def _run_single_cycle(
 
     if dry_run:
         print(f"  DRY RUN — would cycle with: hypothesis={hyp.hypothesis!r}, "
-              f"next_change={hyp.next_change!r}, runtime_test={hyp.runtime_test!r}")
+              f"next_change={hyp.next_change!r}, runtime_test={hyp.runtime_test!r}"
+              f", smt={smt!r}")
         return BatchResult(
             target_id=target_id,
             function=function,
@@ -196,6 +198,7 @@ def _run_single_cycle(
             next_change=hyp.next_change,
             runtime_test=hyp.runtime_test,
             linked=linked,
+            smt=smt,
         )
         elapsed = time.monotonic() - start
         passed = rc == 0
@@ -328,6 +331,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--smt",
+        action="store_true",
+        help=(
+            "Run the full SMT equivalence probe on every cycled target (opt-in; "
+            "default runs only the register-renaming witness). Required for "
+            "EQUIVALENT_MATCH acceptance of functions the witness cannot certify."
+        ),
+    )
+    parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Print what would be done without actually running cycles",
@@ -379,6 +391,7 @@ def main() -> int:
             hyp,
             linked=args.linked,
             dry_run=args.dry_run,
+            smt=args.smt,
         )
         summary.results.append(result)
         if result.passed:

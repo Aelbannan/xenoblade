@@ -246,6 +246,7 @@ def cmd_diff(
     *,
     write_function_diff: bool,
     linked: bool = False,
+    smt: bool = True,
 ) -> int:
     unit = project.resolve_unit(hint)
     if unit.base_path:
@@ -262,7 +263,7 @@ def cmd_diff(
         if len(registry_matches) == 1:
             target_id = registry_matches[0].id
     evaluation = evaluate_unit_match(
-        project, unit, symbol, linked=linked, target_id=target_id,
+        project, unit, symbol, linked=linked, target_id=target_id, run_smt=smt,
     )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
@@ -349,6 +350,7 @@ def cmd_cycle(
     linked: bool = False,
     add_to_kb: str = "",
     contract: str = "auto",
+    smt: bool = False,
 ) -> int:
     targets = load_targets(config)
     target = get_target(targets, target_id)
@@ -388,7 +390,7 @@ def cmd_cycle(
         pass
     evaluation = evaluate_unit_match(
         project, unit, target.symbol, linked=linked, target_id=target.id,
-        declared_return=_declared_return, contract=contract,
+        declared_return=_declared_return, contract=contract, run_smt=smt,
     )
     unit_report = evaluation.unit_report
     fn_match = evaluation.fn_match
@@ -1710,6 +1712,15 @@ def main() -> int:
             "main.elf (build the latter with `ninja build/<region>/main.elf`)."
         ),
     )
+    p_diff.add_argument(
+        "--no-smt",
+        action="store_true",
+        help=(
+            "Skip the SMT equivalence probe (register-renaming witness still "
+            "runs). Use to avoid Z3 cost while iterating; pass without the flag "
+            "for the full probe when stuck or near acceptance."
+        ),
+    )
 
     p_size = sub.add_parser("size", help="Check decomp .text size against split budget")
     p_size.add_argument("unit", nargs="?", help="objdiff unit hint or source path")
@@ -1750,6 +1761,16 @@ def main() -> int:
         help=(
             "Allow the SMT equivalence probe to fall back to linked DOL/ELF bytes "
             "when the unlinked .o pair has unresolved relocations."
+        ),
+    )
+    p_cycle.add_argument(
+        "--smt",
+        action="store_true",
+        help=(
+            "Run the full SMT equivalence probe on this cycle. Opt-in: the "
+            "default runs only the cheap register-renaming witness. Required to "
+            "reach EQUIVALENT_MATCH acceptance for functions the witness cannot "
+            "certify."
         ),
     )
     p_cycle.add_argument(
@@ -2013,7 +2034,7 @@ def main() -> int:
     if args.command == "diff":
         return cmd_diff(
             project, config, args.unit, args.symbol,
-            write_function_diff=False, linked=args.linked,
+            write_function_diff=False, linked=args.linked, smt=not args.no_smt,
         )
     if args.command == "size":
         return cmd_size(project, config, args.unit, check_all=args.all)
@@ -2060,6 +2081,7 @@ def main() -> int:
             linked=args.linked,
             add_to_kb=args.add_to_kb,
             contract=args.contract,
+            smt=args.smt,
         )
     if args.command == "queue":
         return cmd_queue(

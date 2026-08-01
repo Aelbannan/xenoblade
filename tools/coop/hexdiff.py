@@ -636,7 +636,6 @@ def run(argv: list[str] | None = None) -> int:
     # builds in the shared build directory; no outer lock is needed.
     if not args.no_build:
         rel_path = str(decomp_path.relative_to(project.root))
-        print(f"building {rel_path} ...", file=sys.stderr, flush=True)
 
         def _run_build() -> subprocess.CompletedProcess:
             # Output redirected to stderr so --json stdout stays clean

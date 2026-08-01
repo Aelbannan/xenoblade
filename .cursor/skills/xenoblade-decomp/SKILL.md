@@ -23,7 +23,9 @@ description: >-
    `docs/MWCC_REFERENCE.md` and prior attempts (protocol below).
 4. Confirm this is a **private/downstream fork** — do not upstream LLM-assisted matching work to `xbret/xenoblade`.
 
-**Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto`—`ppc-eabi` or stronger—**and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes. `coop run cycle` / `diff` probe equivalence automatically when fuzzy is in `[50, 100)`. Unit-level (no symbol) still requires 100% code + data.
+**Current policy:** every target must reach **`EQUIVALENT_MATCH`** (function fuzzy ≥ 50% **and** `ppc_equivalence` proves `EQUIVALENT` under effect-aware `auto`—`ppc-eabi` or stronger—**and** split-size fit) or **`FULL_MATCH`** (100% static **and** split-size fit). Both are equal-tier acceptance outcomes, **but prefer `FULL_MATCH` when it is reachable**: a 100% static match is cheaper to certify (automatic `full-instruction-match` certificate, no `--smt` needed) and is stronger evidence than a semantic proof. Use `EQUIVALENT_MATCH` when 100% static is genuinely unreachable (register allocation, scheduling, immediate/instruction selection, FP codegen). Unit-level (no symbol) still requires 100% code + data.
+
+**SMT probe is opt-in (cost control):** `coop run cycle` runs only the cheap pre-SMT register-renaming witness by default; the full Z3 probe runs only with `--smt`. `coop run diff` keeps the full probe on by default (use `--no-smt` to skip while iterating). A skipped probe logs `inconclusive_smt_disabled` and can never reach `EQUIVALENT_MATCH` — to accept a function the witness cannot certify (scheduling/immediate/instruction-selection diffs), run `cycle <target-id> --smt` and confirm status is `EQUIVALENT_MATCH`. When a function is stuck above ~90% and looks semantically equivalent, run `diff <unit> --symbol <sym>` (full probe) for the divergence oracle before rewriting. **FULL_MATCH (100% static) targets are unaffected:** they still get a `full-instruction-match` certificate automatically on `cycle` (or `batch-cycle`) even without `--smt` — byte-identical bodies are certified without the solver, so the `callees-accepted` frontier keeps populating.
 
 **Source language:** reconstruction must be **high-level C or C++ only** (MWCC), except for the isolated Gekko paired-single backend exception in §17.6. Express recovered **semantics** — fields, locals, control flow, and normal function calls — rather than register-level or stack-level implementation detail outside that exception.
 
@@ -162,6 +164,8 @@ export assembly/symbols/types (Ghidra or objdiff) — **reference only**
 → **Final acceptance** (only when hexdiff shows few misses or 3 attempts stalled):
     python3 tools/coop/run.py cycle <target-id> \
         --hypothesis "..." --next-change "..." --runtime-test ""
+    # If fuzzy is in [50, 100) and the register-renaming witness did not
+    # certify, re-run with --smt so the full probe can reach EQUIVALENT_MATCH.
 → verify split object size: `coop run size <unit>` (decomp `.text` ≤ retail split budget)
 → optional: `behaviour ppc <test-id>` when a PPC harness exists
 → if `cycle` FAILS: inspect objdiff / build/coop-function-diff.json, revise, repeat

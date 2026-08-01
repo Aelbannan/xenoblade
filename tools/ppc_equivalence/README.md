@@ -21,7 +21,9 @@ unsupported instruction, timeout, or solver `unknown` is always
 ### Acceptance vs promotion
 
 `EQUIVALENT_MATCH` acceptance of a decomp target requires SMT status
-`equivalent` (plus fuzzy ≥ 50% and split-size fit). Confidence tiers and
+`equivalent` (plus fuzzy ≥ 50% and split-size fit). Prefer `FULL_MATCH`
+(100% static) whenever it is reachable: it certifies automatically without
+the solver and is stronger evidence. Confidence tiers and
 capability assurance do **not** gate acceptance. Certificates may record
 `equivalence_strength` so Tier-C FP or callee-dependent proofs are visible.
 Promotion / Tier A reuse is a separate policy gate; capability assurance
@@ -47,6 +49,7 @@ defaults to `shadow_mode=true`. See [SOUNDNESS.md](SOUNDNESS.md) §Two gates.
 | `INCONCLUSIVE_LAYOUT` | `inconclusive_layout` |
 | `INCONCLUSIVE_UNVALIDATED_CALLEE` | `inconclusive_unvalidated_callee` |
 | `INCONCLUSIVE_UNMODELED_EXCEPTION` | `inconclusive_unmodeled_exception` |
+| `INCONCLUSIVE_SMT_DISABLED` | `inconclusive_smt_disabled` |
 | `INVALID_INPUT` | `invalid_input` |
 | `INTERNAL_ERROR` | `internal_error` |
 
@@ -144,9 +147,14 @@ addresses, not placeholder instruction fields. The current set is
 `R_PPC_ADDR16_LO`, `R_PPC_ADDR16_HI`, `R_PPC_ADDR16_HA`, `R_PPC_REL24`,
 `R_PPC_REL14`, and `R_PPC_EMB_SDA21`. Unsupported relocation types and implicit
 `.rel.text` addends fail closed. When fuzzy match is in `[50%, 100%)`,
-`coop run diff` / `cycle` run this automatically and may promote status to
-**`EQUIVALENT_MATCH`** (the fork’s default acceptance bar, alongside
-`FULL_MATCH`). Split-size fit remains mandatory.
+`coop run diff` runs the full probe automatically (use `--no-smt` to skip);
+`coop run cycle` runs only the cheap pre-SMT register-renaming witness by
+default and the full probe only with `--smt`. Either may promote status to
+**`EQUIVALENT_MATCH`** (the fork’s acceptance bar, alongside
+`FULL_MATCH`). A skipped probe reports `inconclusive_smt_disabled` and never
+promotes; `FULL_MATCH` (100% static) targets receive a
+`full-instruction-match` certificate automatically, without the solver.
+Split-size fit remains mandatory.
 
 The solver also enforces the conditions needed for those symbolic values to be
 linkable: REL24/REL14 targets must be word-aligned and within the encoded signed

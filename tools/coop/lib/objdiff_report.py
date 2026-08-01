@@ -187,6 +187,7 @@ def evaluate_unit_match(
     symbol: Optional[str],
     *,
     run_equivalence: bool = True,
+    run_smt: bool = True,
     certify_full_match: bool = True,
     linked: bool = False,
     target_id: str | None = None,
@@ -195,6 +196,13 @@ def evaluate_unit_match(
     contract: str = "auto",
 ) -> MatchEvaluation:
     """Score a unit (and optionally SMT-prove one symbol).
+
+    ``run_equivalence=False`` skips both the register-renaming witness and the
+    SMT solver.  ``run_smt=False`` (with ``run_equivalence=True``) still runs
+    the cheap pre-SMT register-renaming witness, but skips the Z3 probe: a
+    function the witness cannot certify reports
+    ``inconclusive_smt_disabled`` and can never reach ``EQUIVALENT_MATCH``
+    without an explicit ``--smt`` run.
 
     ``phase_timer`` is an optional ``lambda phase: contextmanager`` used by the
     LLM harness to attribute wall time to ``objdiff`` vs ``smt``.
@@ -213,7 +221,7 @@ def evaluate_unit_match(
         with timer("smt"):
             probe: EquivalenceProbe = prove_unit_symbol(
                 project, unit, fn_match.name, linked=linked, target_id=target_id,
-                declared_return=declared_return, contract=contract,
+                declared_return=declared_return, contract=contract, smt=run_smt,
             )
         equivalence = probe.status
         detail = probe.detail

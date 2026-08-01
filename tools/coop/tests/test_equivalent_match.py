@@ -135,6 +135,33 @@ class ClassifyStatusTests(unittest.TestCase):
             "EQUIVALENT_MATCH",
         )
 
+    def test_smt_disabled_never_equivalent_match(self) -> None:
+        """A skipped SMT probe (opt-in --smt) must never accept.
+
+        The register-renaming witness is the only equivalence evidence a
+        ``run_smt=False`` evaluation can carry; any other status degrades to
+        the static ladder (never EQUIVALENT_MATCH).
+        """
+        for pct in (80.0, 96.0):
+            self.assertEqual(
+                classify_status(
+                    pct,
+                    _unit(),
+                    symbol="f",
+                    equivalence=ProofStatus.INCONCLUSIVE_SMT_DISABLED,
+                ),
+                "CODE_MATCH" if pct >= 95.0 else "HIGH_MATCH",
+            )
+        self.assertNotEqual(
+            classify_status(
+                85.0,
+                _unit(),
+                symbol="f",
+                equivalence=ProofStatus.INCONCLUSIVE_SMT_DISABLED,
+            ),
+            "EQUIVALENT_MATCH",
+        )
+
 
 class MeetsRequiredLevelTests(unittest.TestCase):
     def test_equivalent_match_accepts_full_and_equivalent(self) -> None:

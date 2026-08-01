@@ -133,7 +133,10 @@ typedef enum {
     WPAD_FMT_CLASSIC_BTN_ACC,
     WPAD_FMT_CLASSIC_BTN_ACC_DPD,
 
+    WPAD_FMT_TR_BTN,
+    WPAD_FMT_TR_BTN_ACC,
     WPAD_FMT_BTN_ACC_DPD_EXTENDED,
+    WPAD_FMT_WBC_BTN_ACC,
 } WPADDataFormat;
 
 typedef enum {

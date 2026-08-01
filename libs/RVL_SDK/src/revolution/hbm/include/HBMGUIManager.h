@@ -21,7 +21,7 @@ class PaneComponent;
  * Interface
  *
  ******************************************************************************/
-class Interface {
+class __declspec(novtable) Interface {
 public:
     Interface() {}
     virtual void create() {}              // at 0x8
@@ -29,7 +29,6 @@ public:
     virtual void calc() {}                // at 0x10
     virtual void draw(Mtx& /* rMtx */) {} // at 0x14
     virtual void draw() {}                // at 0x18
-    virtual ~Interface() {}               // at 0x1C
 };
 
 /******************************************************************************

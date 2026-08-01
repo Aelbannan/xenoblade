@@ -274,6 +274,34 @@ void PaneManager::walkInChildren(nw4hbm::lyt::PaneList& rPaneList) {
     });
 }
 
+void PaneManager::walkInChildrenDel(nw4hbm::lyt::PaneList& rPaneList) {
+    NW4R_UT_LINKLIST_FOREACH(it, rPaneList, {
+        PaneToComponent* pLink = static_cast<PaneToComponent*>(
+            nw4hbm::ut::List_GetFirst(&mPaneToComponent));
+
+        for (; pLink != NULL; pLink = static_cast<PaneToComponent*>(
+                 nw4hbm::ut::List_GetNext(&mPaneToComponent, pLink))) {
+            if (pLink->mpPane == &*it) {
+                break;
+            }
+        }
+
+        delComponent(pLink->mpComponent);
+        nw4hbm::ut::List_Remove(&mPaneToComponent, pLink);
+        suIDCounter--;
+
+        if (mpAllocator != NULL) {
+            MEMFreeToAllocator(mpAllocator, pLink->mpComponent);
+            MEMFreeToAllocator(mpAllocator, pLink);
+        } else {
+            delete pLink->mpComponent;
+            delete pLink;
+        }
+
+        walkInChildrenDel(it->GetChildList());
+    });
+}
+
 PaneComponent* PaneManager::getPaneComponentByPane(nw4hbm::lyt::Pane* pPane) {
     for (u32 i = 0; i < nw4hbm::ut::List_GetSize(&mIDToComponent); i++) {
         PaneToComponent* pIt = static_cast<PaneToComponent*>(
@@ -287,8 +315,7 @@ PaneComponent* PaneManager::getPaneComponentByPane(nw4hbm::lyt::Pane* pPane) {
     return NULL;
 }
 
-#pragma opt_propagation off // ???
-
+#pragma opt_propagation off // matches retail codegen for this function only
 void PaneManager::setAllBoundingBoxComponentTriggerTarget(bool target) {
     for (u32 i = 0; i < nw4hbm::ut::List_GetSize(&mIDToComponent); i++) {
         PaneToComponent* pIt = static_cast<PaneToComponent*>(
@@ -299,6 +326,7 @@ void PaneManager::setAllBoundingBoxComponentTriggerTarget(bool target) {
         }
     }
 }
+#pragma opt_propagation on
 
 
 bool PaneComponent::contain(f32 x, f32 y) {
@@ -374,7 +402,7 @@ static bool is_visible(nw4hbm::lyt::Pane* pPane) {
         return true;
     }
 
-    return is_visible(pPane->GetParent()) ? true : false;
+    return is_visible(pPane->GetParent());
 }
 
 bool PaneComponent::isVisible() {
@@ -384,11 +412,3 @@ bool PaneComponent::isVisible() {
 } // namespace gui
 } // namespace homebutton
 
-void drawLine___Q210homebutton3guiFfffffUcR8_GXColor(){}
-const void* GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv() {
-    extern const char typeInfo__Q36nw4hbm3lyt4Pane[];
-    return typeInfo__Q36nw4hbm3lyt4Pane;
-}
-void IsVisible__Q36nw4hbm3lyt4PaneCFv() { *(u8*)0xcf = 0; }
-inline void GetParent__Q36nw4hbm3lyt4PaneCFv() { }
-extern "C" void onDrag__Q310homebutton3gui9ComponentFff() {}

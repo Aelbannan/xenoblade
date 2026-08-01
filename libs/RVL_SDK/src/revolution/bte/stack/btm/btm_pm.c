@@ -29,6 +29,7 @@
  */
 #define BTM_MAX_PM_RECORDS 1
 #define BTM_SSR_INCLUDED   FALSE
+#define MAX_ACL_CONNECTIONS 4
 
 #include <string.h>
 
@@ -40,6 +41,17 @@
 #include "revolution/BTE/stack/btm/btm_int.h"
 #include "revolution/BTE/gki/common/gki.h"
 #include "revolution/BTE/stack/include/hcidefs.h"
+
+/* Retail build was compiled without BTM_PM_STS_SSR in the status enum, so
+ * PENDING/ERROR are 4/5 here instead of the header's 5/6.  The retail values
+ * are confirmed in btm_pm_proc_cmd_status (state=4, STS_PENDING=4,
+ * STS_ERROR=5) and btm_pm_reset (STS_ERROR=5). */
+#undef BTM_PM_ST_PENDING
+#undef BTM_PM_STS_PENDING
+#undef BTM_PM_STS_ERROR
+#define BTM_PM_ST_PENDING 4
+#define BTM_PM_STS_PENDING 4
+#define BTM_PM_STS_ERROR   5
 
 /*******************************************************************************
  * macros
@@ -63,9 +75,11 @@ enum {
  * Offsets are taken from the retail code (see btm_pm_reset / btm_pm_sm_alloc).
  */
 typedef struct {
-    UINT8 _pad0[0x3C];
-    BD_ADDR remote_addr;
-    UINT8 _pad1[0x11C - 0x3C - BD_ADDR_LEN];
+    UINT8 _pad0[0x08];
+    BD_ADDR remote_addr;                  /* 0x08 */
+    UINT8 _pad1[0x119 - 0x08 - BD_ADDR_LEN]; /* 0x0E..0x118 */
+    UINT8 in_use;                         /* 0x119 */
+    UINT8 _pad2[0x11C - 0x11A];           /* 0x11A..0x11B */
 } tACL_CONN_COMPAT;
 
 typedef struct {
@@ -75,12 +89,13 @@ typedef struct {
 } tBTM_PM_RCB_COMPAT;
 
 typedef struct {
-    tACL_CONN_COMPAT acl_db[4];
-    UINT8 _u1[0x4CC - 4 * sizeof(tACL_CONN_COMPAT)];
-    tBTM_PM_MCB pm_mode_db[4];
-    tBTM_PM_RCB_COMPAT pm_reg_db[2];
-    UINT8 pm_pend_link;
-    UINT8 pm_pend_id;
+    UINT8 _pad0[0x34];
+    tACL_CONN_COMPAT acl_db[4];           /* 0x34 */
+    UINT8 _u1[0x4CC - 0x34 - 4 * sizeof(tACL_CONN_COMPAT)];
+    tBTM_PM_MCB pm_mode_db[4];            /* 0x4CC */
+    tBTM_PM_RCB_COMPAT pm_reg_db[2];      /* 0x554 */
+    UINT8 pm_pend_link;                   /* 0x564 */
+    UINT8 pm_pend_id;                     /* 0x565 */
 } tBTM_CB_COMPAT;
 
 /*******************************************************************************
@@ -196,7 +211,7 @@ tBTM_STATUS BTM_ReadPowerMode(BD_ADDR remote_bda, tBTM_PM_MODE* p_mode) {
     if ((acl_ind = btm_pm_find_acl_ind(remote_bda)) == MAX_L2CAP_LINKS)
         return BTM_UNKNOWN_ADDR;
 
-    *p_mode = btm_cb.pm_mode_db[acl_ind].state;
+    *p_mode = ((tBTM_CB_COMPAT*)&btm_cb)->pm_mode_db[acl_ind].state;
 
     return BTM_SUCCESS;
 }
@@ -219,10 +234,10 @@ void btm_pm_reset(void) {
     ((tBTM_CB_COMPAT*)&btm_cb)->pm_reg_db[1].mask = BTM_PM_REC_NOT_USED;
 
     /* Notify that the pending command was aborted due to device reset.
-     * Retail uses status value 5 (BTM_PM_STS_PENDING). */
+     * Retail uses status value 5 (BTM_PM_STS_ERROR with the no-SSR enum). */
     if (cb) {
         (*cb)(((tBTM_CB_COMPAT*)&btm_cb)->acl_db[((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_link].remote_addr,
-              BTM_PM_STS_PENDING, BTM_DEV_RESET, HCI_SUCCESS);
+              BTM_PM_STS_ERROR, BTM_DEV_RESET, HCI_SUCCESS);
     }
 }
 
@@ -233,7 +248,7 @@ void btm_pm_sm_alloc(UINT8 ind) {
 }
 
 static int btm_pm_find_acl_ind(BD_ADDR remote_bda) {
-    tACL_CONN* p = btm_cb.acl_db;
+    tACL_CONN_COMPAT* p = ((tBTM_CB_COMPAT*)&btm_cb)->acl_db;
     UINT8 xx;
 
     for (xx = 0; xx < MAX_L2CAP_LINKS; xx++, p++) {
@@ -407,13 +422,17 @@ static tBTM_STATUS btm_pm_snd_md_req(UINT8 pm_id, int link_ind, tBTM_PM_PWR_MD* 
 }
 
 void btm_pm_proc_cmd_status(UINT8 status) {
-    tBTM_PM_MCB* p_cb;
     tBTM_PM_STATUS pm_status;
+    tBTM_PM_MCB* p_cb;
 
-    if (btm_cb.pm_pend_link >= MAX_L2CAP_LINKS)
-        return;
+    {
+        tBTM_CB_COMPAT* p = (tBTM_CB_COMPAT*)&btm_cb;
 
-    p_cb = &btm_cb.pm_mode_db[btm_cb.pm_pend_link];
+        if (p->pm_pend_link >= MAX_L2CAP_LINKS)
+            return;
+
+        p_cb = &p->pm_mode_db[p->pm_pend_link];
+    }
 
     if (status == HCI_SUCCESS) {
         p_cb->state = BTM_PM_ST_PENDING;
@@ -422,11 +441,15 @@ void btm_pm_proc_cmd_status(UINT8 status) {
         pm_status = BTM_PM_STS_ERROR;
     }
 
-    if (btm_cb.pm_pend_id != BTM_PM_SET_ONLY_ID && btm_cb.pm_reg_db[btm_cb.pm_pend_id].mask & BTM_PM_REG_NOTIF) {
-        (*btm_cb.pm_reg_db[btm_cb.pm_pend_id].cback)(btm_cb.acl_db[btm_cb.pm_pend_link].remote_addr, pm_status, 0, status);
+    {
+        tBTM_CB_COMPAT* p = (tBTM_CB_COMPAT*)&btm_cb;
+
+        if (p->pm_pend_id != BTM_PM_SET_ONLY_ID && p->pm_reg_db[p->pm_pend_id].mask & BTM_PM_REG_NOTIF) {
+            (*p->pm_reg_db[p->pm_pend_id].cback)(p->acl_db[p->pm_pend_link].remote_addr, pm_status, 0, status);
+        }
     }
 
-    btm_cb.pm_pend_link = MAX_L2CAP_LINKS;
+    ((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_link = MAX_L2CAP_LINKS;
 }
 
 void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle, UINT8 mode, UINT16 interval) {

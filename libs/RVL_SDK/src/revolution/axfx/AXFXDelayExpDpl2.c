@@ -180,8 +180,8 @@ void AXFXDelayExpShutdownDpl2(AXFX_DELAY_EXP_DPL2* fx) {
     for (i = 0; i < 4; i++) {
         if (*p != NULL) {
             __AXFXFree(*p);
+            *p = NULL;
         }
-        *p = NULL;
         p++;
     }
     OSRestoreInterrupts(mask);

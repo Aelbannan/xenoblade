@@ -184,42 +184,36 @@ void __OSPlayTimeRebootThread(void* arg) {
 }
 
 void __OSPlayTimeAlarmExpired(OSAlarm* alarm, OSContext* ctx) {
+    OSThread* thread;
+    OSThread* rebootThread;
+    void* stack;
+    s32 prio;
+    u16 flags;
+    BOOL created;
+
     if (__OSExpireCallback != NULL) {
         __OSExpireCallback();
         return;
     }
 
     // Suspend all active threads
-    {
-        OSThread* thread = *(OSThread**)0x800000DC;
-        while (thread != NULL) {
-            OSSuspendThread(thread);
-            thread = thread->nextActive;
-        }
+    thread = *(OSThread**)0x800000DC;
+    while (thread != NULL) {
+        OSSuspendThread(thread);
+        thread = thread->nextActive;
     }
 
     // Create and start the reboot thread
-    {
-        OSThread* rebootThread;
-        OSThreadFunc func;
-        void* stack;
-        u32 stackSize;
-        s32 prio;
-        u16 flags;
-        u32 base;
-
-        base = *(u32*)0x80003128;
-        rebootThread = (OSThread*)(base - 0x1320);
-        func = (OSThreadFunc)__OSPlayTimeRebootThread;
-        stack = (void*)base;
-        stackSize = 0x1000;
-        prio = 0;
-        flags = 0;
-        if (!OSCreateThread(rebootThread, func, NULL, stack, stackSize, prio, flags)) {
-            __OSHotResetForError();
-        }
-        OSResumeThread(rebootThread);
+    rebootThread = (OSThread*)(*(u32*)0x80003128 - 0x1320);
+    prio = 0;
+    flags = 0;
+    stack = (char*)rebootThread + 0x1320;
+    created = OSCreateThread(rebootThread, (OSThreadFunc)__OSPlayTimeRebootThread,
+                             NULL, stack, 0x1000, prio, flags);
+    if (!created) {
+        __OSHotResetForError();
     }
+    OSResumeThread(rebootThread);
 
     (void)alarm;
     (void)ctx;

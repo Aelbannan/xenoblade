@@ -94,10 +94,12 @@ BOOLEAN BTM_SecAddDevice(BD_ADDR bd_addr, DEV_CLASS dev_class,
     }
     else
     {
+        u32 cnt;
         p_rec = &btm_cb.sec_dev_rec[i];
         /* Found existing — assign a fresh timestamp */
-        p_rec->timestamp = btm_cb.dev_rec_count;
-        btm_cb.dev_rec_count++;
+        cnt = btm_cb.dev_rec_count;
+        p_rec->timestamp = cnt;
+        btm_cb.dev_rec_count = cnt + 1;
     }
 
     /* Copy device class if provided */
@@ -163,26 +165,17 @@ BOOLEAN BTM_SecDeleteDevice(BD_ADDR bd_addr)
 /*  BTM_SecReadDevName — Look up the device name for a BD address.    */
 /*  Returns pointer to the name string or NULL if not found.          */
 /* ------------------------------------------------------------------ */
+BtmSecDevRec *btm_find_dev(BD_ADDR bd_addr);
+
 char *BTM_SecReadDevName(BD_ADDR bd_addr)
 {
-    BtmSecDevRec *p_rec;
-    int i;
+    char *p_name = NULL;
+    BtmSecDevRec *p_srec;
 
-    p_rec = btm_cb.sec_dev_rec;
-    for (i = 0; i < 16; i++)
-    {
-        if ((p_rec->sec_flags & BTM_SEC_IN_USE) &&
-            memcmp(p_rec->bd_addr, bd_addr, 6) == 0)
-        {
-            break;
-        }
-        p_rec++;
-    }
+    if ((p_srec = btm_find_dev(bd_addr)) != NULL)
+        p_name = (char *)p_srec->sec_bd_name;
 
-    if (i < 16)
-        return p_rec->sec_bd_name;
-
-    return NULL;
+    return p_name;
 }
 
 /* ------------------------------------------------------------------ */
@@ -193,6 +186,7 @@ BtmSecDevRec *btm_sec_alloc_dev(BD_ADDR bd_addr)
 {
     BtmSecDevRec *p_rec;
     int i;
+    u32 cnt;
     tBTM_INQ_INFO *p_inq;
 
     p_rec = NULL;
@@ -230,8 +224,9 @@ BtmSecDevRec *btm_sec_alloc_dev(BD_ADDR bd_addr)
 
     /* Set connection handle and timestamp */
     p_rec->hci_handle = BTM_GetHCIConnHandle(bd_addr);
-    p_rec->timestamp = btm_cb.dev_rec_count;
-    btm_cb.dev_rec_count++;
+    cnt = btm_cb.dev_rec_count;
+    p_rec->timestamp = cnt;
+    btm_cb.dev_rec_count = cnt + 1;
 
     return p_rec;
 }

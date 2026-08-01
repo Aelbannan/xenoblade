@@ -89,12 +89,12 @@ void GXSetTexCopySrc(u16 x, u16 y, u16 w, u16 h) {
 }
 
 void GXSetDispCopyDst(u16 w, u16 numXfbLines) {
-    u32 reg;
+    u16 stride;
 
-    reg = 0;
-    reg = GX_BITSET(reg, 22, 10, (w << 1) / 32);
-    GX_BP_SET_OPCODE(reg, GX_BP_REG_DISPCOPYSTRIDE);
-    gxdt->cpDispStride = reg;
+    stride = (u16)(w << 1);
+    gxdt->cpDispStride = 0;
+    gxdt->cpDispStride = GX_BITSET(gxdt->cpDispStride, 22, 10, stride >> 5);
+    GX_BP_SET_OPCODE(gxdt->cpDispStride, GX_BP_REG_DISPCOPYSTRIDE);
 }
 
 void GXSetTexCopyDst(u16 w, u16 h, GXTexFmt fmt, GXBool mipmap) {
@@ -198,23 +198,22 @@ void GXSetDispCopyYScale(f32 scaleY) {
 void GXSetCopyClear(GXColor color, u32 z) {
     u32 reg;
 
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     reg = 0;
     reg = GX_BITSET(reg, 24, 8, color.r);
     reg = GX_BITSET(reg, 16, 8, color.a);
     GX_BP_SET_OPCODE(reg, GX_BP_REG_COPYCLEARAR);
-    WGPIPE.i = reg;
+    GX_BP_LOAD_REG(reg);
 
     reg = 0;
     reg = GX_BITSET(reg, 24, 8, color.b);
     reg = GX_BITSET(reg, 16, 8, color.g);
     GX_BP_SET_OPCODE(reg, GX_BP_REG_COPYCLEARGB);
-    WGPIPE.i = reg;
+    GX_BP_LOAD_REG(reg);
 
     reg = 0;
     reg = GX_BITSET(reg, 8, 24, z);
     GX_BP_SET_OPCODE(reg, GX_BP_REG_COPYCLEARZ);
-    WGPIPE.i = reg;
+    GX_BP_LOAD_REG(reg);
 
     gxdt->lastWriteWasXF = FALSE;
 }
@@ -310,18 +309,24 @@ void GXSetDispCopyGamma(u32 gamma) {
 }
 
 void GXCopyDisp(void* dest, GXBool clear) {
-    GXBool restoreZ;
     u32 reg;
+    GXBool restoreZ;
+    u32 zm;
 
     if (clear) {
-        GX_BP_LOAD_REG(gxdt->zMode | 0xF);
-        GX_BP_LOAD_REG(gxdt->blendMode & ~0x3);
+        zm = gxdt->zMode;
+        WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+        WGPIPE.i = zm | 0xF;
+        zm = gxdt->blendMode;
+        WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+        WGPIPE.i = zm & ~0x3;
     }
 
     restoreZ = GX_FALSE;
     if (clear || (gxdt->zControl & 0x7) == 0x3) {
-        if (GX_BITGET(gxdt->zControl, 1, 25) == 0x1) {
-            GX_BP_LOAD_REG(gxdt->zControl & ~0x40);
+        u32 zc = gxdt->zControl;
+        if (GX_BITGET(zc, 25, 1) == 0x1) {
+            GX_BP_LOAD_REG(zc & ~0x40);
             restoreZ = GX_TRUE;
         }
     }
@@ -329,10 +334,13 @@ void GXCopyDisp(void* dest, GXBool clear) {
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     reg = 0;
     reg = GX_BITSET(reg, 8, 24, (u32)dest >> 5);
-    GX_BP_SET_OPCODE(reg, GX_BP_REG_TEXCOPYDST);
     WGPIPE.i = gxdt->cpDispSrc;
+    GX_BP_SET_OPCODE(reg, GX_BP_REG_TEXCOPYDST);
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = gxdt->cpDispSize;
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = gxdt->cpDispStride;
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = reg;
 
     gxdt->cpDisp = GX_BITSET(gxdt->cpDisp, 20, 1, clear);
@@ -353,16 +361,21 @@ void GXCopyDisp(void* dest, GXBool clear) {
 }
 
 void GXCopyTex(void* dest, GXBool clear) {
+    u32 reg;
     GXBool restoreZ;
     u32 zControl;
-    u32 reg;
-
-    restoreZ = GX_FALSE;
+    u32 zm;
 
     if (clear) {
-        GX_BP_LOAD_REG(gxdt->zMode | 0xF);
-        GX_BP_LOAD_REG(gxdt->blendMode & ~0x3);
+        zm = gxdt->zMode;
+        WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+        WGPIPE.i = zm | 0xF;
+        zm = gxdt->blendMode;
+        WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
+        WGPIPE.i = zm & ~0x3;
     }
+
+    restoreZ = GX_FALSE;
 
     zControl = gxdt->zControl;
 
@@ -372,7 +385,7 @@ void GXCopyTex(void* dest, GXBool clear) {
     }
 
     if (clear || (zControl & 0x7) == 0x3) {
-        if (GX_BITGET(zControl, 1, 25) == 0x1) {
+        if (GX_BITGET(zControl, 25, 1) == 0x1) {
             restoreZ = GX_TRUE;
             zControl &= ~0x40;
         }
@@ -385,10 +398,13 @@ void GXCopyTex(void* dest, GXBool clear) {
     WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     reg = 0;
     reg = GX_BITSET(reg, 8, 24, (u32)dest >> 5);
-    GX_BP_SET_OPCODE(reg, GX_BP_REG_TEXCOPYDST);
     WGPIPE.i = gxdt->cpTexSrc;
+    GX_BP_SET_OPCODE(reg, GX_BP_REG_TEXCOPYDST);
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = gxdt->cpTexSize;
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = gxdt->cpTexStride;
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = reg;
 
     gxdt->cpTex = GX_BITSET(gxdt->cpTex, 20, 1, clear);

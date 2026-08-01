@@ -1,5 +1,5 @@
 {
-  "count": 638,
+  "count": 485,
   "entries": {
     "EndofProgramInstruction$661": {
       "R_PPC_EMB_SDA21": {
@@ -4089,6 +4089,162 @@
         "scoped": true,
         "units": [
           "main/RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt"
+        ]
+      }
+    },
+    "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils@...data.0": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 15359,
+        "retail_symbol": "@688",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 37825,
+        "retail_symbol": "@688",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      }
+    },
+    "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils@306": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 3,
+        "kind": "data",
+        "retail_addend": 14435,
+        "retail_symbol": "@688",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 3,
+        "kind": "data",
+        "retail_addend": 18432,
+        "retail_symbol": "@688",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      }
+    },
+    "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils@307": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 3,
+        "kind": "data",
+        "retail_addend": 14435,
+        "retail_symbol": "@689",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 3,
+        "kind": "data",
+        "retail_addend": 18432,
+        "retail_symbol": "@689",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      }
+    },
+    "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils@322": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 32709,
+        "retail_symbol": "@704",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 18432,
+        "retail_symbol": "@704",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      }
+    },
+    "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils@326": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14435,
+        "retail_symbol": "@708",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 18432,
+        "retail_symbol": "@708",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      }
+    },
+    "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils@365": {
+      "R_PPC_ADDR16_HA": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 14435,
+        "retail_symbol": "@745",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
+        ]
+      },
+      "R_PPC_ADDR16_LO": {
+        "addend_delta": 0,
+        "alternatives": [],
+        "count": 1,
+        "kind": "data",
+        "retail_addend": 18432,
+        "retail_symbol": "@745",
+        "scoped": true,
+        "units": [
+          "main/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils"
         ]
       }
     },
@@ -8560,7 +8716,7 @@
     }
   },
   "function_pairs": 2483,
-  "generated": "2026-08-01T09:16:34",
+  "generated": "2026-08-01T17:23:54",
   "region": "us",
   "units_scanned": 355,
   "version": 1

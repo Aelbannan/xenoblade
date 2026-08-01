@@ -1158,6 +1158,8 @@ The decomp reloc then has the same name as retail → same canonical symbol on b
 
 **Targets fixed:** `us-8037a990` `__wudInitFlushCallback`, `us-8037b730` `__wudShutdownFlushCallback`, `us-8037db00` `__wudCleanupStackCallback` (all 100% → FULL_MATCH).
 
+**@N-pool variant (no named retail label):** when the retail references the literal via a TU-local pool label (`@688`) rather than a named `lbl_*` symbol, the `extern char lbl_*` trick has nothing to name. This is the archive-global vs per-TU numbering split (retail bte compiled as one `-ipa` unit), so the labels can never match from source. Fixed repo-wide by wiring the decoder's unused `canonical_symbols` hook in `tools/coop/lib/equivalence_check.py`: `_canonical_symbols_for_unit(unit.name)` reads the mined `tools/coop/retail_reloc_map.json` (`reloc-map mine`), maps each decomp `@N` label to the retail name for that unit, and `prove_unit_symbol` passes it to both `decode_block` sides — both sides then share one canonical reloc symbol, the opaque-callee token aligns, and the SMT probe returns `EQUIVALENT` even with pure reg-swaps present. No object patching; the map is regenerable. Targets fixed: `us-803050b0` `rfc_alloc_multiplexer_channel` (99.88% static, 2 lis-scratch reg-swaps → EQUIVALENT_MATCH, previously `exit.target 0x0 != 0x400` / `inconclusive_abstraction`). Remember to `reloc-map mine` after rebuilding the unit so the map carries the current `@N` numbers.
+
 #### 1i. Automated reloc-drift detection + named-symbol map (`tools/coop/reloc_map.py`)
 
 Instead of hunting reloc names by hand, run the detector/map miner (see also SKILL.md quick commands):

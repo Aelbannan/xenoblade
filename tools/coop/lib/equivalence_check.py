@@ -20,6 +20,51 @@ from tools.coop.lib.targets import (
 )
 from tools.ppc_equivalence.contract import make_contract
 from tools.ppc_equivalence.decoder import decode_block
+
+
+# ── TU-local reloc canonicalization (MWCC_REFERENCE §1h / §1i) ─────────────
+# The retail bte/CriWare archives were compiled as one -ipa compilation, so
+# their string-pool labels (@N) are archive-global; the decomp builds each .c
+# separately, emitting per-TU labels for the same literal.  Reloc sites are
+# byte-identical, but the differing @N names give the SMT opaque-callee token
+# two different symbolic addresses for the same format string → the token
+# diverges → `exit.target`/`inconclusive_abstraction` even for byte-identical
+# code (MWCC_REFERENCE §1h).  The mined reloc map
+# (tools/coop/retail_reloc_map.json, `reloc-map mine`) records the retail name
+# for every TU-local decomp label; feed it to the decoder's `canonical_symbols`
+# hook so both sides share one canonical symbol (no object patching).
+_RELOC_MAP_PATH = Path(__file__).resolve().parent.parent / "retail_reloc_map.json"
+
+
+def _canonical_symbols_for_unit(unit_name: str) -> dict[str, str]:
+    """Return {decomp_symbol: retail_symbol} for TU-local labels of ``unit_name``."""
+    try:
+        with open(_RELOC_MAP_PATH, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return {}
+    prefix = f"{unit_name}@"
+    out: dict[str, str] = {}
+    for key, by_type in (data.get("entries") or {}).items():
+        if not key.startswith(prefix):
+            continue
+        decomp_label = key[len(prefix):]
+        if not decomp_label:
+            continue
+        for entry in by_type.values():
+            if not isinstance(entry, dict):
+                continue
+            retail = entry.get("retail_symbol")
+            if isinstance(retail, str):
+                # Decoder looks up the raw reloc symbol: TU-local labels are
+                # ``@N`` (e.g. ``@306``); section-relative relocs surface as
+                # ``...data.N`` with no ``@`` prefix.  Cover both spellings.
+                out[f"@{decomp_label}"] = retail
+                if not decomp_label.startswith("@"):
+                    out[decomp_label] = retail
+                break
+    return out
+
 from tools.ppc_equivalence.dol_symbols import DolSymbolError, extract_by_address as extract_dol_slice
 from tools.ppc_equivalence.elf_symbols import (
     ElfSymbolError,
@@ -1230,6 +1275,7 @@ def _try_renaming_witness(
     max_instructions: int = _DEFAULT_MAX_INSTRUCTIONS,
     max_paths: int = _DEFAULT_MAX_PATHS,
     max_loop_iterations: int = _DEFAULT_MAX_LOOP_ITERATIONS,
+    canonical_symbols: dict[str, str] | None = None,
 ) -> EquivalenceProbe | None:
     """Pre-SMT register-renaming witness (docs/ppc_equiv_work/31).
 
@@ -1251,10 +1297,12 @@ def _try_renaming_witness(
         original = decode_block(
             left.code, left.base, validate_with_capstone=False,
             relocations=left.relocations, local_symbol=left.name,
+            canonical_symbols=canonical_symbols,
         )
         candidate = decode_block(
             right.code, right.base, validate_with_capstone=False,
             relocations=right.relocations, local_symbol=right.name,
+            canonical_symbols=canonical_symbols,
         )
     except (DecodeError, UnsupportedInstruction, ExecutionInconclusive, ValueError):
         return None
@@ -1758,8 +1806,14 @@ def _prove_bytes(
     declared_return: str | None = None,
     force_declared_return: bool = False,
     object_base_mode: str = "auto",
+    canonical_symbols: dict[str, str] | None = None,
 ) -> EquivalenceProbe:
     """Run the Z3 proof against already-extracted instruction bytes+bases.
+
+    ``canonical_symbols`` (optional) maps TU-local decomp reloc labels to the
+    retail names so opaque-callee tokens see the same symbolic address on both
+    sides (MWCC_REFERENCE §1h); without it a literal-vs-literal site diverges
+    the token and degrades the proof to ``inconclusive_abstraction``.
 
     Used for both the unlinked-pair path (bytes from the ``.o`` files) and the
     linked-bytes fallback (bytes from ``main.dol`` / ``main.elf``). The
@@ -1776,11 +1830,13 @@ def _prove_bytes(
         orig_code, orig_base, validate_with_capstone=False,
         relocations=original_relocations,
         local_symbol=original_local_symbol,
+        canonical_symbols=canonical_symbols,
     )
     candidate = decode_block(
         cand_code, cand_base, validate_with_capstone=False,
         relocations=candidate_relocations,
         local_symbol=candidate_local_symbol,
+        canonical_symbols=canonical_symbols,
     )
 
     jump_table_context = None
@@ -2556,6 +2612,8 @@ def prove_unit_symbol(
     try:
         left, right = extract_function_pair(retail, decomp, symbol)
         certified_context = _load_certified_callees(project, target_id) if target_id else None
+        unit_name = getattr(unit, "name", None)
+        canonical_symbols = _canonical_symbols_for_unit(unit_name) if unit_name else {}
 
         # Pre-SMT register-renaming witness (docs/ppc_equiv_work/31): certify
         # position-aligned, same-mnemonic, register-color-only-differing pairs
@@ -2567,6 +2625,7 @@ def prove_unit_symbol(
                 max_instructions=max_instructions,
                 max_paths=max_paths,
                 max_loop_iterations=max_loop_iterations,
+                canonical_symbols=canonical_symbols,
             )
             if witness_probe is not None:
                 return witness_probe
@@ -2609,6 +2668,7 @@ def prove_unit_symbol(
                 declared_return=declared_return,
                 force_declared_return=force_declared_return,
                 object_base_mode=object_base_mode,
+                canonical_symbols=canonical_symbols,
             )
 
         try:

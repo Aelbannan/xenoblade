@@ -92,6 +92,8 @@ struct RfcPortStruct {
 #define LAST_MUX_OFFSET    0x065
 #define RFCOMM_MAX_DLCI    61
 #define MCB_SIZE 0x78
+#define MAX_BD_CONNECTIONS 1
+#define BD_ADDR_LEN        6
 
 /* ------------------------------------------------------------------ */
 /*  Helpers (macros to avoid out-of-line emission in C)                */
@@ -137,45 +139,46 @@ u8 rfc_check_fcs(u16 len, u8 *p, u8 received_fcs)
 /* ================================================================== */
 struct RfcMuxChannel *rfc_alloc_multiplexer_channel(u8 *bd_addr, u8 is_initiator)
 {
-    u8 idx;
-    struct RfcMuxChannel *p;
-    TimerEntry *tle;
+    int i, j;
+    struct RfcMuxChannel *p_mcb = NULL;
 
-    /* Fast path: MCB[0] already active and matches bd_addr. */
-    if (MCB_PTR(0)->state != 0
-        && memcmp(MCB_PTR(0)->bd_addr, bd_addr, 6) == 0)
-    {
-        if (TRACE_LEVEL() >= 4) {
-            LogMsg_0(0x90003, "rfc_timer_stop");
+    /* If a multiplexer channel to this BD address already exists, return it. */
+    for (i = 0; i < MAX_BD_CONNECTIONS; i++) {
+        u8 *p_bd_addr = MCB_PTR(i)->bd_addr;
+        if (MCB_PTR(i)->state != 0
+            && memcmp(p_bd_addr, bd_addr, BD_ADDR_LEN) == 0)
+        {
+            if (TRACE_LEVEL() >= 4) {
+                LogMsg_0(0x90003, "rfc_timer_stop");
+            }
+            btu_stop_timer(MCB_PTR(i)->tle_0x00);
+            return MCB_PTR(i);
         }
-        btu_stop_timer(MCB_PTR(0)->tle_0x00);
-        return MCB_PTR(0);
     }
 
-    /* Round-robin: try next index after the last one used. */
-    idx = rfc_cb[LAST_MUX_OFFSET] + 1;
-    if (idx < 1) {
-        idx = 0;
-    }
-
-    p = MCB_PTR(idx);
-
-    if (p->state == 0) {
-        memset(p, 0, MCB_SIZE);
-        memcpy(p->bd_addr, bd_addr, 6);
-        GKI_init_q(p->cmd_q);
-        p->is_initiator = is_initiator;
-
-        if (TRACE_LEVEL() >= 4) {
-            LogMsg_1(0x90003, "rfc_timer_start - timeout:%d", 60);
+    /* Round-robin: try the slot after the last one used. */
+    for (i = 0, j = rfc_cb[LAST_MUX_OFFSET] + 1; i < MAX_BD_CONNECTIONS; i++, j++) {
+        if (j >= MAX_BD_CONNECTIONS) {
+            j = 0;
         }
 
-        tle = (TimerEntry *)p->tle_0x00;
-        tle->param = (u32)p;
-        btu_start_timer(tle, 0x0B, 60);
+        p_mcb = MCB_PTR(j);
 
-        rfc_cb[LAST_MUX_OFFSET] = idx;
-        return p;
+        if (p_mcb->state == 0) {
+            memset(p_mcb, 0, MCB_SIZE);
+            memcpy(p_mcb->bd_addr, bd_addr, BD_ADDR_LEN);
+            GKI_init_q(p_mcb->cmd_q);
+            p_mcb->is_initiator = is_initiator;
+
+            if (TRACE_LEVEL() >= 4) {
+                LogMsg_1(0x90003, "rfc_timer_start - timeout:%d", 60);
+            }
+
+            ((TimerEntry *)p_mcb->tle_0x00)->param = (u32)p_mcb;
+            btu_start_timer(p_mcb->tle_0x00, 0x0B, 60);
+            rfc_cb[LAST_MUX_OFFSET] = (u8)j;
+            return p_mcb;
+        }
     }
 
     return 0;

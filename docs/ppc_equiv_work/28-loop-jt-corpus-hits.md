@@ -171,3 +171,24 @@ fail-closed per `jump_table_auto.py`.
 - Doc 27 — ELF data-section relocation census (`R_PPC_ADDR32` table words)
 - `tools/ppc_equivalence/tests/fixtures/jump_table_retail.py` — documented DOL fixture
 - `SOUNDNESS.md` — loop summary / memory-loop / jump-table proof boundaries
+
+---
+
+## Post-implementation update (doc 30 phases B–D)
+
+The loop-support implementation plan (doc 30) landed phases B (skip guards),
+A (symbolic-trip CTR closed forms), C (compare-countdown latches), and D
+(multi-fill/copy store bodies + affine body whitelist). Re-running the census
+(`python -m tools.ppc_equivalence.census_loop_patterns build/us/asm --json …`)
+against the same tree:
+
+| Pattern | Baseline (doc 28) | After B–D | Notes |
+|---|---:|---:|---|
+| memory-loop engine hits | 4 (0 exact) | **49 (17 exact)** | D1 multi-fill recognition (CriWare mpvlib init fills, `__AXVPBInitCommon` 8-word bulks); 5 bounded-remainder, 10 skip-guards |
+| ctr-affine engine hits | 2 (0 exact) | 4 (0 exact) | all symbolic-trip (CalcPitchRatio bulk loops @ 0x8042B760/B774/B7A0/B7B4, 2 with guards) |
+| compare-affine engine hits | 0 | 5 (0 exact) | all symbolic countdowns — O1 measurement: 2,202 retail countdown back-edge latches exist but **zero** have ADDI-pure bodies (blt-heavy CriWare codecs), so the ≥100 census target stays conditional |
+| jump-table exact | 27 | 270 | pre-existing improvement (probe work), unrelated to doc 30 |
+
+`symbolic-trip` / `skip-guard` / `countdown` columns were added to the census
+tool; the `has-symbolic-trip` counter uses a distinct key from the
+`symbolic-trip` confidence key.

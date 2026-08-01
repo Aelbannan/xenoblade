@@ -3423,3 +3423,39 @@ function, same as `__wudInitFlushCallback`) makes the reloc symbol+addend identi
   source shape (if/else, empty-then, if-goto, switch, `#pragma peephole off`, `-O4,s`). The sfh
   branch-over-branch pattern only survives when the fall-through block ≠ the second goto target.
   The 1-instruction difference is SMT-equivalent → accept at EQUIVALENT_MATCH (98.5%).
+
+## RVL_SDK vi.c (Wii/1.1 `-O4,p`) — u16 `+=` narrowing + inlined-helper scheduling (US, 10× FULL_MATCH)
+
+`libs/RVL_SDK/src/revolution/vi/vi.c` (RVL_SDK 0x4302_145, 10 targets matched 100%:
+`getTiming`, `setFbbRegs`, `setHorizontalRegs`, `setVerticalRegs`, `__VIDisplayPositionToXY`,
+`VIWaitForRetrace`, `VIGetDTVStatus`, `VIGetDimmingCount`, `VIResetDimmingCount`, `__VIResetRFIdle`).
+
+**1. u16 `+=` truncates the RHS — use an `s32` temp + explicit `(u16)` result casts.**
+`actualPrbOdd += 2 * actualAcv - 2;` (u16 locals, e.g. `setVerticalRegs` black block) makes
+MWCC truncate the *RHS* to 16 bits (`rlwinm rX,rX,0,16,31`) and skip the result truncations —
+the retail truncates the *results* (`rlwinm` after each add) and keeps the RHS full-width.
+Neither plain `+=`, statement reordering, nor explicit `(u16)(lhs + rhs)` casts alone fix it
+(the cast form reassociates `lhs + (2*acv - 2)` into `(lhs + 2*acv) - 2`). The matching shape:
+
+```c
+s32 d2 = 2 * actualAcv - 2;                  // subi once, kept 32-bit, CSE'd
+actualPrbOdd = (u16)(actualPrbOdd + d2);     // add + rlwinm result
+actualPsbOdd = (u16)(actualPsbOdd + 2);
+actualPrbEven = (u16)(actualPrbEven + d2);
+actualPsbEven = (u16)(actualPsbEven + 2);
+actualAcv = 0;
+```
+
+**2. Inlined helper ≠ hand-inlined body for scheduling/regalloc.**
+`setFbbRegs` hand-inlined calcFbbs logic (both blocks written inline) produced no stack frame
+(bytesPerLine kept in r11) and late FBMode/dispPosY loads. Writing `calcFbbs` as a `static`
+helper called twice made `-ipa file` inline it with the retail schedule exactly — r31/bytesPerLine,
+`stwu/stw r31` prologue, early struct-field loads, and the `bne/b` bfbb ternary all match
+(`calcFbbs` itself is not emitted; check `nm` for a stray symbol before assuming).
+
+**3. Same-SDK donor sources may use a different MWCC.** TP's vi.c (SDK 0x4302_145) compiles
+with GC/3.0a5; this repo's Wii/1.1 (mwcc_43_151) needs the two adjustments above. The retail
+`timing[11]` table and `VITvMode` enum values (incl. `NTSC_3D=3`, `PAL_PROG=6`, `GCA_INT=24`,
+`GCA_PROG=26`, `EXTRA_*=28/29/30`, `HD720_PROG=34`) match TP exactly. Globals (`changed`, `regs`,
+`HorVer`, `timing`, `retraceCount`, …) are non-static in the retail `.o` (uppercase `B/D/T` in
+`nm`); only `IsInitialized` is local.

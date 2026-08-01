@@ -985,7 +985,7 @@ config.libs = [
             # store and keeps the AddDevice loop counter in a volatile reg.
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             # bta_hh_act.c: retail bte built with GC/3.0a5.2 (see bta_dm_act /
             # btm_devctl notes); Wii/1.1 lowers dense event switches to cmp
             # chains instead of jump tables and schedules li/stb differently.
@@ -1103,7 +1103,7 @@ config.libs = [
     DolphinLib(
         "exi",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/exi/EXIBios.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/exi/EXIBios.c", extra_cflags=["-schedule off"]),  # retail EXIBios emits strict source-order code (see MWCC_REFERENCE exi/EXIBios note); -schedule off makes all 17 matched fns byte-identical
             Object(Matching, "RVL_SDK/src/revolution/exi/EXIUart.c"),
             Object(Matching, "RVL_SDK/src/revolution/exi/EXICommon.c"),
         ],

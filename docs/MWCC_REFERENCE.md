@@ -5072,3 +5072,29 @@ to the merge test — is what makes `BTM_SecDeleteDevice` byte-identical
   `-func_align 4` (retail bte packed, 4-aligned). ptim `period` is INT32 —
   `period / 10` then emits the signed 0x66666667 div magic (UINT32 gives the
   unsigned 0xCCCCCCCD sequence, 2 instructions shorter → 8-byte size miss).
+
+## RVL_SDK exi/EXIBios — retail compiled with `-schedule off` (US, 3× FULL_MATCH)
+
+`EXIDetach` (us-80317090), `EXIIntrruptHandler` (us-80317380),
+`EXTIntrruptHandler` (us-80317660) were registered FULL_MATCH but the live build
+(hexdiff) showed 20–29/46–52 instruction mismatches — pure **scheduling +
+regalloc** drift: MWCC at `-O4,p` hoists the `&Ecb[chan]` lis/addi/add into the
+prologue saves, interleaves the independent `mask >> (chan*3)` magic-number
+computation into the state-word load-use gap, colours the state word `r4` vs
+retail `r0`, and reorders the epilogue `lwz r0` first.
+
+- Symptom → cause: retail prologue emits strict source order (saves → `mr r29`
+  chan → `slwi chan,6` → `lis/addi Ecb` → `add r31`); the default scheduler
+  never keeps that order. The `-schedule off` flag disables the reorderer.
+- Fix: per-unit `extra_cflags=["-schedule off"]` on
+  `Object(NonMatching, "RVL_SDK/src/revolution/exi/EXIBios.c")` — no source
+  change needed. Result: **17 of 18 functions byte-identical** (all previously
+  registered FULL_MATCH, incl. EXIAttach/EXISelect/EXIInit/EXIGetID/EXIImmEx,
+  now verifiably 0 mismatches; EXIImm (us-803166b0) remains STRUCTURAL — 67
+  mismatches — and is the only blocker to promoting the unit).
+- Acceptance: `cycle` per target → FULL_MATCH + semantic certificate
+  (full-instruction-match, no SMT needed), split size PASS (0x18F8 ≤ 0x1900).
+- Reuse: when a retail unit's prologue/body are in strict source order and the
+  default `-O4,p`/`-O4,s` schedule interleaves independent computations, try
+  `-schedule off` **before** source rewriting — check sibling functions in the
+  same TU for regressions (here: none).

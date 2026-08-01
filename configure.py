@@ -1010,7 +1010,10 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_api.c"),
+            # gap_api.c: retail bte compiled with GC/3.0a5.2 (bte family, see
+            # bta_dm_act/btm_devctl notes); Wii/1.1 floats li-before-addi on the
+            # callback/trace stores in GAP_Init (KB ref:51910fc0cc).
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_api.c", mw_version="GC/3.0a5.2"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_utils.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c", mw_version="GC/3.0a5.2", extra_cflags=["-O4", "-func_align 4"]),  # retail prologue scheme: individual stw for <=4 saved regs, _savegpr for >=5 (see MWCC_REFERENCE); -O4,s would emit _savegpr for 3-4 regs, breaking inquiry/hold_mode/park_mode/set_host_buf_size. Tradeoff: copy-loop funcs (write_cur_iac_lap) unroll under -O4.

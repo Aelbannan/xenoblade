@@ -119,7 +119,7 @@ void gap_congestion_ind(UINT16 lcid, BOOLEAN is_congested);
 **                  caller below (retail has no standalone symbol).
 **
 *******************************************************************************/
-static tGAP_CONN_CB *gap_find_conn_by_cid(UINT16 cid)
+static __inline tGAP_CONN_CB *gap_find_conn_by_cid(UINT16 cid)
 {
     UINT8 xx = 0;
     tGAP_CONN_CB *p_ccb = &gap_cb.conn.ccb[0];
@@ -246,9 +246,9 @@ void gap_connect_cfm(UINT16 lcid, UINT16 result)
 
     psm = p_ccb->psm;
 
-    while ((p_buf = (BT_HDR *)GKI_dequeue(&p_ccb->tx_queue)) != NULL)
+    while (p_ccb->tx_queue.p_first != NULL)
     {
-        GKI_freebuf(p_buf);
+        GKI_freebuf(GKI_dequeue(&p_ccb->tx_queue));
     }
 
     p_ccb->state = GAP_CONN_STATE_IDLE;
@@ -287,13 +287,13 @@ void gap_config_ind(UINT16 cid, tL2CAP_CFG_INFO *p_cfg)
         return;
     }
 
-    if (p_cfg->mtu_present && (p_cfg->mtu <= GAP_DATA_MAX_MTU_SIZE))
+    if (!p_cfg->mtu_present || (p_cfg->mtu > GAP_DATA_MAX_MTU_SIZE))
     {
-        p_ccb->rem_mtu_size = p_cfg->mtu;
+        p_ccb->rem_mtu_size = GAP_DATA_MAX_MTU_SIZE;
     }
     else
     {
-        p_ccb->rem_mtu_size = GAP_DATA_MAX_MTU_SIZE;
+        p_ccb->rem_mtu_size = p_cfg->mtu;
     }
 
     /* We do not request any other configuration options */
@@ -350,9 +350,9 @@ void gap_config_cfm(UINT16 cid, tL2CAP_CFG_INFO *p_cfg)
 
     psm = p_ccb->psm;
 
-    while ((p_buf = (BT_HDR *)GKI_dequeue(&p_ccb->tx_queue)) != NULL)
+    while (p_ccb->tx_queue.p_first != NULL)
     {
-        GKI_freebuf(p_buf);
+        GKI_freebuf(GKI_dequeue(&p_ccb->tx_queue));
     }
 
     p_ccb->state = GAP_CONN_STATE_IDLE;
@@ -405,9 +405,9 @@ void gap_disconnect_ind(UINT16 lcid, BOOLEAN ack_needed)
 
     psm = p_ccb->psm;
 
-    while ((p_buf = (BT_HDR *)GKI_dequeue(&p_ccb->tx_queue)) != NULL)
+    while (p_ccb->tx_queue.p_first != NULL)
     {
-        GKI_freebuf(p_buf);
+        GKI_freebuf(GKI_dequeue(&p_ccb->tx_queue));
     }
 
     p_ccb->state = GAP_CONN_STATE_IDLE;

@@ -3,6 +3,11 @@
 using namespace ml;
 
 extern "C" const float lbl_eu_80667C8C;
+extern "C" const float lbl_eu_8066A208; // ml::epsilon (sdata2)
+// Retail COccCulling vtable (.data:0x80532ED0, split1); decomp __vt__11COccCulling
+// fails reloc name match, so the class is __declspec(novtable) and the ctor/dtor
+// store the retail label explicitly (MWCC_REFERENCE "Retail-owned vtable data").
+extern "C" void* lbl_eu_80532ED0[];
 
 CVec3 COccCulling::sPlaneCoords[] = {
     CVec3(-0.5f, 0, 0),
@@ -19,9 +24,11 @@ unk28(mtl::INVALID_HANDLE),
 unk2C(false),
 unk2D(0),
 unk2E(0){
+    *(void**)this = (void*)lbl_eu_80532ED0;
 }
 
 COccCulling::~COccCulling(){
+    *(void**)this = (void*)lbl_eu_80532ED0;
     func_801A0794();
 
     //This function gets automatically called later in the dtor for both variables :p
@@ -238,8 +245,16 @@ bool COccCulling::func_801A1444(const ml::CVec3& intersectPoint, float distance)
 bool COccCulling::func_801A1550(const CVec3& rayStartPos, const CVec3& rayEndPos, UNKWORD r6){
     CVec3 rayDir = rayEndPos - rayStartPos;
     
-    //Looks like the normalize inline but isn't?
-    if(rayDir.isZero()) return false;
+    //Looks like the normalize inline but isn't? (isZero inlined with retail epsilon label)
+    {
+        bool result = false;
+        bool temp = false;
+        if(ml::math::abs(rayDir.x) <= lbl_eu_8066A208 && ml::math::abs(rayDir.y) <= lbl_eu_8066A208){
+            temp = true;
+        }
+        if(temp && ml::math::abs(rayDir.z) <= lbl_eu_8066A208) result = true;
+        if(result) return false;
+    }
     rayDir.normalizeSub();
     
     //Iterate through all entries of the second list

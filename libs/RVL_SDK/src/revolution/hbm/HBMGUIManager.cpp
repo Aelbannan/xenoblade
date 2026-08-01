@@ -117,6 +117,26 @@ void Manager::addComponent(Component* pComponent) {
     }
 }
 
+void Manager::delComponent(Component* pComponent) {
+    IDToComponent* pIt = static_cast<IDToComponent*>(
+        nw4hbm::ut::List_GetFirst(&mIDToComponent));
+
+    for (; pIt != NULL; pIt = static_cast<IDToComponent*>(
+             nw4hbm::ut::List_GetNext(&mIDToComponent, pIt))) {
+        if (pIt->mpComponent == pComponent) {
+            break;
+        }
+    }
+
+    nw4hbm::ut::List_Remove(&mIDToComponent, pIt);
+
+    if (mpAllocator != NULL) {
+        MEMFreeToAllocator(mpAllocator, pIt);
+    } else {
+        delete pIt;
+    }
+}
+
 Component* Manager::getComponent(u32 id) {
     const IDToComponent* p = static_cast<const IDToComponent*>(
         nw4hbm::ut::List_GetNthConst(&mIDToComponent, id));
@@ -210,6 +230,14 @@ PaneManager::~PaneManager() {
 void PaneManager::createLayoutScene(const nw4hbm::lyt::Layout& layout) {
     suIDCounter = 0;
     walkInChildren(layout.GetRootPane()->GetChildList());
+}
+
+void PaneManager::addLayoutScene(const nw4hbm::lyt::Layout& rLayout) {
+    walkInChildren(rLayout.GetRootPane()->GetChildList());
+}
+
+void PaneManager::delLayoutScene(const nw4hbm::lyt::Layout& rLayout) {
+    walkInChildrenDel(rLayout.GetRootPane()->GetChildList());
 }
 
 void PaneManager::walkInChildren(nw4hbm::lyt::PaneList& rPaneList) {
@@ -357,13 +385,10 @@ bool PaneComponent::isVisible() {
 } // namespace homebutton
 
 void drawLine___Q210homebutton3guiFfffffUcR8_GXColor(){}
-void delComponent__Q310homebutton3gui7ManagerFPQ310homebutton3gui9Component(){}
-void addLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout(){}
 const void* GetRuntimeTypeInfo__Q36nw4hbm3lyt4PaneCFv() {
     extern const char typeInfo__Q36nw4hbm3lyt4Pane[];
     return typeInfo__Q36nw4hbm3lyt4Pane;
 }
-void delLayoutScene__Q310homebutton3gui11PaneManagerFRCQ36nw4hbm3lyt6Layout(){}
 void IsVisible__Q36nw4hbm3lyt4PaneCFv() { *(u8*)0xcf = 0; }
 inline void GetParent__Q36nw4hbm3lyt4PaneCFv() { }
 extern "C" void onDrag__Q310homebutton3gui9ComponentFff() {}

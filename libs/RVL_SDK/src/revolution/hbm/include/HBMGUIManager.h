@@ -245,6 +245,8 @@ public:
     virtual void
     setAllBoundingBoxComponentTriggerTarget(bool target);          // at 0x58
     virtual void walkInChildren(nw4hbm::lyt::PaneList& rPaneList); // at 0x5C
+    virtual void
+    walkInChildrenDel(nw4hbm::lyt::PaneList& rPaneList); // at 0x60
 
 private:
     static u32 suIDCounter;

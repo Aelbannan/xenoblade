@@ -308,27 +308,42 @@ void GKI_send_msg(UINT8 task_id, UINT8 mbox, void* msg) {
     BUFFER_HDR_T* p_hdr;
     UINT32* magic;
     UINT16 buf_size;
+    UINT8 bad;
     tGKI_COM_CB* p_cb = &gki_cb.com;
+    /* Retail: string pool base held in one register; exceptions use +0x68/0x80/0x98. */
+    char* str = (char*)"getbuf: Size is zero";
 
     if ((task_id >= GKI_MAX_TASKS) || (mbox >= NUM_TASK_MBOX) ||
         (p_cb->OSRdyTbl[task_id] == TASK_DEAD)) {
-        GKI_exception(GKI_ERROR_SEND_MSG_BAD_DEST, "Sending to unknown dest");
+        GKI_exception(GKI_ERROR_SEND_MSG_BAD_DEST, str + 0x68);
         GKI_freebuf(msg);
         return;
     }
 
 #if (GKI_ENABLE_BUF_CORRUPTION_CHECK == TRUE)
     p_hdr = (BUFFER_HDR_T*)((UINT8*)msg - BUFFER_HDR_SIZE);
-    buf_size = 0;
-    if (!((UINT32)p_hdr & 1)) {
+    if ((UINT32)p_hdr & 1) {
+        buf_size = 0;
+    } else {
         if (p_hdr->q_id < GKI_NUM_TOTAL_BUF_POOLS) {
-            buf_size = p_cb->freeq[p_hdr->q_id].size;
+            buf_size = gki_cb.com.freeq[p_hdr->q_id].size;
+        } else {
+            buf_size = 0;
         }
     }
 
     magic = (UINT32*)((UINT8*)msg + buf_size);
-    if (gki_magic_corrupted(magic)) {
-        GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Send - Buffer corrupted");
+    if ((UINT32)magic & 1) {
+        bad = 1;
+    } else {
+        /* Materialize exp first; the != compare lowers to the dual-subf form. */
+        UINT32 exp = MAGIC_NO;
+        UINT32 v = *magic;
+        bad = (v != exp);
+    }
+
+    if (bad) {
+        GKI_exception(GKI_ERROR_BUF_CORRUPTED, str + 0x80);
         return;
     }
 #else
@@ -336,7 +351,7 @@ void GKI_send_msg(UINT8 task_id, UINT8 mbox, void* msg) {
 #endif
 
     if (p_hdr->status != BUF_STATUS_UNLINKED) {
-        GKI_exception(GKI_ERROR_SEND_MSG_BUF_LINKED, "Send - buffer linked");
+        GKI_exception(GKI_ERROR_SEND_MSG_BUF_LINKED, str + 0x98);
         return;
     }
 
@@ -578,9 +593,46 @@ BOOLEAN GKI_queue_is_empty(BUFFER_Q* p_q) {
     return (BOOLEAN)(p_q->count == 0);
 }
 
+/* Retail has no standalone symbols: MWCC inlines these into GKI_create_pool.
+ * Each helper has its own p_cb local, which is why the retail re-materializes
+ * the gki_cb+0x54 base for the pool-list insert and the access mask. */
+static void gki_add_to_pool_list(UINT8 pool_id) {
+    INT32 i;
+    INT32 j;
+    tGKI_COM_CB* p_cb = &gki_cb.com;
+
+    for (i = 0; i < p_cb->curr_total_no_of_pools; i++) {
+        if (p_cb->freeq[pool_id].size <= p_cb->freeq[p_cb->pool_list[i]].size) {
+            break;
+        }
+    }
+
+    for (j = p_cb->curr_total_no_of_pools; j > i; j--) {
+        p_cb->pool_list[j] = p_cb->pool_list[j - 1];
+    }
+
+    p_cb->pool_list[i] = pool_id;
+}
+
+static UINT8 gki_set_pool_permission(UINT8 pool_id, UINT8 permission) {
+    tGKI_COM_CB* p_cb = &gki_cb.com;
+
+    if (pool_id < GKI_NUM_TOTAL_BUF_POOLS) {
+        if (permission == GKI_RESTRICTED_POOL) {
+            p_cb->pool_access_mask = (UINT16)(p_cb->pool_access_mask | (1 << pool_id));
+        } else {
+            p_cb->pool_access_mask = (UINT16)(p_cb->pool_access_mask & ~(1 << pool_id));
+        }
+
+        return GKI_SUCCESS;
+    }
+
+    return GKI_INVALID_POOL;
+}
+
 UINT8 GKI_create_pool(UINT16 size, UINT16 count, UINT8 permission, void* p_mem_pool) {
     UINT8 xx;
-    UINT8 groups;
+    UINT32 mem_needed;
     INT32 i;
     INT32 j;
     INT32 tempsize;
@@ -591,60 +643,34 @@ UINT8 GKI_create_pool(UINT16 size, UINT16 count, UINT8 permission, void* p_mem_p
     }
 
     /* Retail: 3 bodies per CTR trip over 9 total pools. */
-    xx = 0;
-    groups = 3;
-    do {
+    for (xx = 0; xx < GKI_NUM_TOTAL_BUF_POOLS; xx++) {
         if (!p_cb->pool_start[xx]) {
             break;
         }
-        xx++;
-        if (!p_cb->pool_start[xx]) {
-            break;
-        }
-        xx++;
-        if (!p_cb->pool_start[xx]) {
-            break;
-        }
-        xx++;
-    } while (--groups != 0);
+    }
 
     if (xx == GKI_NUM_TOTAL_BUF_POOLS) {
         return GKI_INVALID_POOL;
     }
 
+    /* Ensure an even number of longwords */
     tempsize = (INT32)ALIGN_POOL(size);
+    mem_needed = (tempsize + BUFFER_PADDING_SIZE) * count;
 
     if (!p_mem_pool) {
-        p_mem_pool = GKI_os_malloc((tempsize + BUFFER_PADDING_SIZE) * count);
+        p_mem_pool = GKI_os_malloc(mem_needed);
     }
 
-    if (!p_mem_pool) {
+    if (p_mem_pool) {
+        gki_init_free_queue(xx, size, count, p_mem_pool);
+        gki_add_to_pool_list(xx);
+        (void)gki_set_pool_permission(xx, permission);
+
+        p_cb->curr_total_no_of_pools++;
+        return xx;
+    } else {
         return GKI_INVALID_POOL;
     }
-
-    gki_init_free_queue(xx, size, count, p_mem_pool);
-
-    for (i = 0; i < p_cb->curr_total_no_of_pools; i++) {
-        if (p_cb->freeq[xx].size <= p_cb->freeq[p_cb->pool_list[i]].size) {
-            break;
-        }
-    }
-
-    /* Scalar shift - handwritten 8x CTR body regresses (~48%). */
-    for (j = p_cb->curr_total_no_of_pools; j > i; j--) {
-        p_cb->pool_list[j] = p_cb->pool_list[j - 1];
-    }
-
-    p_cb->pool_list[i] = xx;
-
-    if (permission == GKI_RESTRICTED_POOL) {
-        p_cb->pool_access_mask = (UINT16)(p_cb->pool_access_mask | (1 << xx));
-    } else {
-        p_cb->pool_access_mask = (UINT16)(p_cb->pool_access_mask & ~(1 << xx));
-    }
-
-    p_cb->curr_total_no_of_pools++;
-    return xx;
 }
 
 /* Retail has no standalone symbol: MWCC inlines this into GKI_delete_pool.

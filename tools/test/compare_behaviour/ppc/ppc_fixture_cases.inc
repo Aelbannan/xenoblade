@@ -2,7 +2,7 @@
 #ifndef PPC_FIXTURE_CASES_INC
 #define PPC_FIXTURE_CASES_INC
 
-#define PPC_FIXTURE_COUNT 365
+#define PPC_FIXTURE_COUNT 367
 #define PPC_FIXTURE_CODE_MAX 16
 #define PPC_FIXTURE_MEM_WORDS 32
 
@@ -409,6 +409,8 @@ void ppc_fixture_payload_361(void);
 void ppc_fixture_payload_362(void);
 void ppc_fixture_payload_363(void);
 void ppc_fixture_payload_364(void);
+void ppc_fixture_payload_365(void);
+void ppc_fixture_payload_366(void);
 
 static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
     {
@@ -727,6 +729,76 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         ppc_fixture_payload_8,
     },
     {
+        "mullw",
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x12345678u, 0x00000002u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        {0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull},
+        0x0000000000000000ull,
+        0x00000000u,
+        0x00000000u,
+        0x00000000u,
+        0x00000000u,
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        0u,
+        7u,
+        0x2468ACF0u,
+        0x00000000u,
+        0x00000000u,
+        0u,
+        {0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u},
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        0u,
+        {0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u},
+        {0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull},
+        0u,
+        {0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u},
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        0u,
+        {0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u},
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        0u,
+        0x00000000u,
+        0u,
+        0x00000000u,
+        0u,
+        0x00000000u,
+        ppc_fixture_payload_9,
+    },
+    {
+        "mullw-neg",
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xFFFFFFFEu, 0x00000003u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        {0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull},
+        0x0000000000000000ull,
+        0x00000000u,
+        0x00000000u,
+        0x00000000u,
+        0x00000000u,
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        0u,
+        7u,
+        0xFFFFFFFAu,
+        0x00000000u,
+        0x00000000u,
+        0u,
+        {0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u, 0x0u},
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        0u,
+        {0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u},
+        {0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull},
+        0u,
+        {0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u},
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        0u,
+        {0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u},
+        {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
+        0u,
+        0x00000000u,
+        0u,
+        0x00000000u,
+        0u,
+        0x00000000u,
+        ppc_fixture_payload_10,
+    },
+    {
         "divw",
         {0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0xFFFFFFF9u, 0x00000003u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u, 0x00000000u},
         {0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull, 0x0000000000000000ull},
@@ -759,7 +831,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_9,
+        ppc_fixture_payload_11,
     },
     {
         "divwu",
@@ -794,7 +866,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_10,
+        ppc_fixture_payload_12,
     },
     {
         "slw31",
@@ -829,7 +901,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_11,
+        ppc_fixture_payload_13,
     },
     {
         "slw32",
@@ -864,7 +936,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_12,
+        ppc_fixture_payload_14,
     },
     {
         "srw",
@@ -899,7 +971,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_13,
+        ppc_fixture_payload_15,
     },
     {
         "sraw",
@@ -934,7 +1006,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_14,
+        ppc_fixture_payload_16,
     },
     {
         "srawi",
@@ -969,7 +1041,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_15,
+        ppc_fixture_payload_17,
     },
     {
         "rlwinm",
@@ -1004,7 +1076,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_16,
+        ppc_fixture_payload_18,
     },
     {
         "rlwimi",
@@ -1039,7 +1111,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_17,
+        ppc_fixture_payload_19,
     },
     {
         "rlwnm",
@@ -1074,7 +1146,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_18,
+        ppc_fixture_payload_20,
     },
     {
         "andc",
@@ -1109,7 +1181,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_19,
+        ppc_fixture_payload_21,
     },
     {
         "eqv",
@@ -1144,7 +1216,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_20,
+        ppc_fixture_payload_22,
     },
     {
         "nand",
@@ -1179,7 +1251,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_21,
+        ppc_fixture_payload_23,
     },
     {
         "nor",
@@ -1214,7 +1286,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_22,
+        ppc_fixture_payload_24,
     },
     {
         "orc",
@@ -1249,7 +1321,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_23,
+        ppc_fixture_payload_25,
     },
     {
         "xor",
@@ -1284,7 +1356,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_24,
+        ppc_fixture_payload_26,
     },
     {
         "extsb",
@@ -1319,7 +1391,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_25,
+        ppc_fixture_payload_27,
     },
     {
         "extsh",
@@ -1354,7 +1426,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_26,
+        ppc_fixture_payload_28,
     },
     {
         "cntlzw",
@@ -1389,7 +1461,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_27,
+        ppc_fixture_payload_29,
     },
     {
         "cmpw",
@@ -1424,7 +1496,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_28,
+        ppc_fixture_payload_30,
     },
     {
         "cmplw",
@@ -1459,7 +1531,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_29,
+        ppc_fixture_payload_31,
     },
     {
         "cr-logical",
@@ -1494,7 +1566,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_30,
+        ppc_fixture_payload_32,
     },
     {
         "xer-transfer",
@@ -1529,7 +1601,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_31,
+        ppc_fixture_payload_33,
     },
     {
         "stw-lbz-be",
@@ -1564,7 +1636,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_32,
+        ppc_fixture_payload_34,
     },
     {
         "lhz-be",
@@ -1599,7 +1671,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_33,
+        ppc_fixture_payload_35,
     },
     {
         "lha",
@@ -1634,7 +1706,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_34,
+        ppc_fixture_payload_36,
     },
     {
         "byte-reverse",
@@ -1669,7 +1741,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_35,
+        ppc_fixture_payload_37,
     },
     {
         "stwu",
@@ -1704,7 +1776,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_36,
+        ppc_fixture_payload_38,
     },
     {
         "lmw-stmw",
@@ -1739,7 +1811,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_37,
+        ppc_fixture_payload_39,
     },
     {
         "bc-cr",
@@ -1774,7 +1846,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_38,
+        ppc_fixture_payload_40,
     },
     {
         "bdnz",
@@ -1809,7 +1881,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         1u,
         0x00000001u,
-        ppc_fixture_payload_39,
+        ppc_fixture_payload_41,
     },
     {
         "li",
@@ -1844,7 +1916,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_40,
+        ppc_fixture_payload_42,
     },
     {
         "addze",
@@ -1879,7 +1951,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_41,
+        ppc_fixture_payload_43,
     },
     {
         "add-so-sticky",
@@ -1914,7 +1986,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_42,
+        ppc_fixture_payload_44,
     },
     {
         "sraw32",
@@ -1949,7 +2021,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_43,
+        ppc_fixture_payload_45,
     },
     {
         "and.",
@@ -1984,7 +2056,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_44,
+        ppc_fixture_payload_46,
     },
     {
         "cmpwi",
@@ -2019,7 +2091,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_45,
+        ppc_fixture_payload_47,
     },
     {
         "mtcrf-cr0",
@@ -2054,7 +2126,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_46,
+        ppc_fixture_payload_48,
     },
     {
         "lbzu",
@@ -2089,7 +2161,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_47,
+        ppc_fixture_payload_49,
     },
     {
         "lhbrx",
@@ -2124,7 +2196,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_48,
+        ppc_fixture_payload_50,
     },
     {
         "bc-cr-fallthrough",
@@ -2159,7 +2231,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_49,
+        ppc_fixture_payload_51,
     },
     {
         "subfze",
@@ -2194,7 +2266,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_50,
+        ppc_fixture_payload_52,
     },
     {
         "addic",
@@ -2229,7 +2301,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_51,
+        ppc_fixture_payload_53,
     },
     {
         "addic-dot",
@@ -2264,7 +2336,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_52,
+        ppc_fixture_payload_54,
     },
     {
         "addis",
@@ -2299,7 +2371,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_53,
+        ppc_fixture_payload_55,
     },
     {
         "andi-dot",
@@ -2334,7 +2406,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_54,
+        ppc_fixture_payload_56,
     },
     {
         "andis-dot",
@@ -2369,7 +2441,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_55,
+        ppc_fixture_payload_57,
     },
     {
         "cmplwi",
@@ -2404,7 +2476,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_56,
+        ppc_fixture_payload_58,
     },
     {
         "mulli",
@@ -2439,7 +2511,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_57,
+        ppc_fixture_payload_59,
     },
     {
         "ori",
@@ -2474,7 +2546,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_58,
+        ppc_fixture_payload_60,
     },
     {
         "oris",
@@ -2509,7 +2581,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_59,
+        ppc_fixture_payload_61,
     },
     {
         "subfic",
@@ -2544,7 +2616,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_60,
+        ppc_fixture_payload_62,
     },
     {
         "subfme",
@@ -2579,7 +2651,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_61,
+        ppc_fixture_payload_63,
     },
     {
         "addme-carry-in",
@@ -2614,7 +2686,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_62,
+        ppc_fixture_payload_64,
     },
     {
         "subfme-carry-clear",
@@ -2649,7 +2721,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_63,
+        ppc_fixture_payload_65,
     },
     {
         "xori",
@@ -2684,7 +2756,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_64,
+        ppc_fixture_payload_66,
     },
     {
         "xoris",
@@ -2719,7 +2791,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_65,
+        ppc_fixture_payload_67,
     },
     {
         "crandc",
@@ -2754,7 +2826,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_66,
+        ppc_fixture_payload_68,
     },
     {
         "crnand",
@@ -2789,7 +2861,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_67,
+        ppc_fixture_payload_69,
     },
     {
         "crnor",
@@ -2824,7 +2896,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_68,
+        ppc_fixture_payload_70,
     },
     {
         "cror",
@@ -2859,7 +2931,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_69,
+        ppc_fixture_payload_71,
     },
     {
         "b-direct",
@@ -2894,7 +2966,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_70,
+        ppc_fixture_payload_72,
     },
     {
         "bclr-not-taken",
@@ -2929,7 +3001,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_71,
+        ppc_fixture_payload_73,
     },
     {
         "bcctr-not-taken",
@@ -2964,7 +3036,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_72,
+        ppc_fixture_payload_74,
     },
     {
         "bl-direct",
@@ -2999,7 +3071,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x80018004u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_73,
+        ppc_fixture_payload_75,
     },
     {
         "bclr-taken",
@@ -3034,7 +3106,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x8001800Cu,
         1u,
         0xDEADBEEFu,
-        ppc_fixture_payload_74,
+        ppc_fixture_payload_76,
     },
     {
         "bclrl-taken",
@@ -3069,7 +3141,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x80018004u,
         1u,
         0xDEADBEEFu,
-        ppc_fixture_payload_75,
+        ppc_fixture_payload_77,
     },
     {
         "bcctr-taken",
@@ -3104,7 +3176,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0xDEADBEEFu,
         1u,
         0x8001800Cu,
-        ppc_fixture_payload_76,
+        ppc_fixture_payload_78,
     },
     {
         "lwz",
@@ -3139,7 +3211,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_77,
+        ppc_fixture_payload_79,
     },
     {
         "lwzu",
@@ -3174,7 +3246,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_78,
+        ppc_fixture_payload_80,
     },
     {
         "lbzx",
@@ -3209,7 +3281,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_79,
+        ppc_fixture_payload_81,
     },
     {
         "lbzux",
@@ -3244,7 +3316,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_80,
+        ppc_fixture_payload_82,
     },
     {
         "lhzu",
@@ -3279,7 +3351,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_81,
+        ppc_fixture_payload_83,
     },
     {
         "lhau",
@@ -3314,7 +3386,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_82,
+        ppc_fixture_payload_84,
     },
     {
         "lhzx",
@@ -3349,7 +3421,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_83,
+        ppc_fixture_payload_85,
     },
     {
         "lhzux",
@@ -3384,7 +3456,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_84,
+        ppc_fixture_payload_86,
     },
     {
         "lhax",
@@ -3419,7 +3491,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_85,
+        ppc_fixture_payload_87,
     },
     {
         "lhaux",
@@ -3454,7 +3526,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_86,
+        ppc_fixture_payload_88,
     },
     {
         "lwzx",
@@ -3489,7 +3561,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_87,
+        ppc_fixture_payload_89,
     },
     {
         "lwzux",
@@ -3524,7 +3596,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_88,
+        ppc_fixture_payload_90,
     },
     {
         "stb",
@@ -3559,7 +3631,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_89,
+        ppc_fixture_payload_91,
     },
     {
         "stbu",
@@ -3594,7 +3666,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_90,
+        ppc_fixture_payload_92,
     },
     {
         "stbx",
@@ -3629,7 +3701,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_91,
+        ppc_fixture_payload_93,
     },
     {
         "stbux",
@@ -3664,7 +3736,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_92,
+        ppc_fixture_payload_94,
     },
     {
         "sthu",
@@ -3699,7 +3771,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_93,
+        ppc_fixture_payload_95,
     },
     {
         "sthx",
@@ -3734,7 +3806,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_94,
+        ppc_fixture_payload_96,
     },
     {
         "sthux",
@@ -3769,7 +3841,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_95,
+        ppc_fixture_payload_97,
     },
     {
         "sthbrx",
@@ -3804,7 +3876,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_96,
+        ppc_fixture_payload_98,
     },
     {
         "stwx",
@@ -3839,7 +3911,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_97,
+        ppc_fixture_payload_99,
     },
     {
         "stwux",
@@ -3874,7 +3946,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_98,
+        ppc_fixture_payload_100,
     },
     {
         "stb-canary",
@@ -3909,7 +3981,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_99,
+        ppc_fixture_payload_101,
     },
     {
         "sth-canary",
@@ -3944,7 +4016,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_100,
+        ppc_fixture_payload_102,
     },
     {
         "stb-negative-displacement",
@@ -3979,7 +4051,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_101,
+        ppc_fixture_payload_103,
     },
     {
         "addc-no-carry",
@@ -4014,7 +4086,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_102,
+        ppc_fixture_payload_104,
     },
     {
         "addze-ca-clear",
@@ -4049,7 +4121,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_103,
+        ppc_fixture_payload_105,
     },
     {
         "subfc-no-borrow",
@@ -4084,7 +4156,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_104,
+        ppc_fixture_payload_106,
     },
     {
         "divw-overflow",
@@ -4119,7 +4191,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_105,
+        ppc_fixture_payload_107,
     },
     {
         "divwu-by-zero",
@@ -4154,7 +4226,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_106,
+        ppc_fixture_payload_108,
     },
     {
         "mulhw-neg-neighbor",
@@ -4189,7 +4261,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_107,
+        ppc_fixture_payload_109,
     },
     {
         "mulhwu-max",
@@ -4224,7 +4296,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_108,
+        ppc_fixture_payload_110,
     },
     {
         "extsb-positive",
@@ -4259,7 +4331,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_109,
+        ppc_fixture_payload_111,
     },
     {
         "extsh-positive",
@@ -4294,7 +4366,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_110,
+        ppc_fixture_payload_112,
     },
     {
         "cntlzw-zero",
@@ -4329,7 +4401,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_111,
+        ppc_fixture_payload_113,
     },
     {
         "srw32",
@@ -4364,7 +4436,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_112,
+        ppc_fixture_payload_114,
     },
     {
         "srawi-no-ca",
@@ -4399,7 +4471,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_113,
+        ppc_fixture_payload_115,
     },
     {
         "rlwinm-msb",
@@ -4434,7 +4506,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_114,
+        ppc_fixture_payload_116,
     },
     {
         "rlwnm-shift0",
@@ -4469,7 +4541,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_115,
+        ppc_fixture_payload_117,
     },
     {
         "xor-self",
@@ -4504,7 +4576,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_116,
+        ppc_fixture_payload_118,
     },
     {
         "andc-zero-mask",
@@ -4539,7 +4611,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_117,
+        ppc_fixture_payload_119,
     },
     {
         "eqv-complement",
@@ -4574,7 +4646,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_118,
+        ppc_fixture_payload_120,
     },
     {
         "cmpw-eq",
@@ -4609,7 +4681,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_119,
+        ppc_fixture_payload_121,
     },
     {
         "cmplwi-eq",
@@ -4644,7 +4716,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_120,
+        ppc_fixture_payload_122,
     },
     {
         "lwz-neg-disp",
@@ -4679,7 +4751,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_121,
+        ppc_fixture_payload_123,
     },
     {
         "fres-table-00",
@@ -4714,7 +4786,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_122,
+        ppc_fixture_payload_124,
     },
     {
         "fres-table-01",
@@ -4749,7 +4821,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_123,
+        ppc_fixture_payload_125,
     },
     {
         "fres-table-02",
@@ -4784,7 +4856,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_124,
+        ppc_fixture_payload_126,
     },
     {
         "fres-table-03",
@@ -4819,7 +4891,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_125,
+        ppc_fixture_payload_127,
     },
     {
         "fres-table-04",
@@ -4854,7 +4926,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_126,
+        ppc_fixture_payload_128,
     },
     {
         "fres-table-05",
@@ -4889,7 +4961,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_127,
+        ppc_fixture_payload_129,
     },
     {
         "fres-table-06",
@@ -4924,7 +4996,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_128,
+        ppc_fixture_payload_130,
     },
     {
         "fres-table-07",
@@ -4959,7 +5031,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_129,
+        ppc_fixture_payload_131,
     },
     {
         "fres-table-08",
@@ -4994,7 +5066,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_130,
+        ppc_fixture_payload_132,
     },
     {
         "fres-table-09",
@@ -5029,7 +5101,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_131,
+        ppc_fixture_payload_133,
     },
     {
         "fres-table-10",
@@ -5064,7 +5136,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_132,
+        ppc_fixture_payload_134,
     },
     {
         "fres-table-11",
@@ -5099,7 +5171,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_133,
+        ppc_fixture_payload_135,
     },
     {
         "fres-table-12",
@@ -5134,7 +5206,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_134,
+        ppc_fixture_payload_136,
     },
     {
         "fres-table-13",
@@ -5169,7 +5241,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_135,
+        ppc_fixture_payload_137,
     },
     {
         "fres-table-14",
@@ -5204,7 +5276,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_136,
+        ppc_fixture_payload_138,
     },
     {
         "fres-table-15",
@@ -5239,7 +5311,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_137,
+        ppc_fixture_payload_139,
     },
     {
         "fres-table-16",
@@ -5274,7 +5346,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_138,
+        ppc_fixture_payload_140,
     },
     {
         "fres-table-17",
@@ -5309,7 +5381,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_139,
+        ppc_fixture_payload_141,
     },
     {
         "fres-table-18",
@@ -5344,7 +5416,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_140,
+        ppc_fixture_payload_142,
     },
     {
         "fres-table-19",
@@ -5379,7 +5451,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_141,
+        ppc_fixture_payload_143,
     },
     {
         "fres-table-20",
@@ -5414,7 +5486,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_142,
+        ppc_fixture_payload_144,
     },
     {
         "fres-table-21",
@@ -5449,7 +5521,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_143,
+        ppc_fixture_payload_145,
     },
     {
         "fres-table-22",
@@ -5484,7 +5556,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_144,
+        ppc_fixture_payload_146,
     },
     {
         "fres-table-23",
@@ -5519,7 +5591,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_145,
+        ppc_fixture_payload_147,
     },
     {
         "fres-table-24",
@@ -5554,7 +5626,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_146,
+        ppc_fixture_payload_148,
     },
     {
         "fres-table-25",
@@ -5589,7 +5661,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_147,
+        ppc_fixture_payload_149,
     },
     {
         "fres-table-26",
@@ -5624,7 +5696,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_148,
+        ppc_fixture_payload_150,
     },
     {
         "fres-table-27",
@@ -5659,7 +5731,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_149,
+        ppc_fixture_payload_151,
     },
     {
         "fres-table-28",
@@ -5694,7 +5766,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_150,
+        ppc_fixture_payload_152,
     },
     {
         "fres-table-29",
@@ -5729,7 +5801,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_151,
+        ppc_fixture_payload_153,
     },
     {
         "fres-table-30",
@@ -5764,7 +5836,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_152,
+        ppc_fixture_payload_154,
     },
     {
         "fres-table-31",
@@ -5799,7 +5871,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_153,
+        ppc_fixture_payload_155,
     },
     {
         "frsqrte-table-00",
@@ -5834,7 +5906,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_154,
+        ppc_fixture_payload_156,
     },
     {
         "frsqrte-table-01",
@@ -5869,7 +5941,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_155,
+        ppc_fixture_payload_157,
     },
     {
         "frsqrte-table-02",
@@ -5904,7 +5976,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_156,
+        ppc_fixture_payload_158,
     },
     {
         "frsqrte-table-03",
@@ -5939,7 +6011,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_157,
+        ppc_fixture_payload_159,
     },
     {
         "frsqrte-table-04",
@@ -5974,7 +6046,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_158,
+        ppc_fixture_payload_160,
     },
     {
         "frsqrte-table-05",
@@ -6009,7 +6081,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_159,
+        ppc_fixture_payload_161,
     },
     {
         "frsqrte-table-06",
@@ -6044,7 +6116,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_160,
+        ppc_fixture_payload_162,
     },
     {
         "frsqrte-table-07",
@@ -6079,7 +6151,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_161,
+        ppc_fixture_payload_163,
     },
     {
         "frsqrte-table-08",
@@ -6114,7 +6186,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_162,
+        ppc_fixture_payload_164,
     },
     {
         "frsqrte-table-09",
@@ -6149,7 +6221,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_163,
+        ppc_fixture_payload_165,
     },
     {
         "frsqrte-table-10",
@@ -6184,7 +6256,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_164,
+        ppc_fixture_payload_166,
     },
     {
         "frsqrte-table-11",
@@ -6219,7 +6291,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_165,
+        ppc_fixture_payload_167,
     },
     {
         "frsqrte-table-12",
@@ -6254,7 +6326,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_166,
+        ppc_fixture_payload_168,
     },
     {
         "frsqrte-table-13",
@@ -6289,7 +6361,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_167,
+        ppc_fixture_payload_169,
     },
     {
         "frsqrte-table-14",
@@ -6324,7 +6396,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_168,
+        ppc_fixture_payload_170,
     },
     {
         "frsqrte-table-15",
@@ -6359,7 +6431,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_169,
+        ppc_fixture_payload_171,
     },
     {
         "frsqrte-table-16",
@@ -6394,7 +6466,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_170,
+        ppc_fixture_payload_172,
     },
     {
         "frsqrte-table-17",
@@ -6429,7 +6501,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_171,
+        ppc_fixture_payload_173,
     },
     {
         "frsqrte-table-18",
@@ -6464,7 +6536,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_172,
+        ppc_fixture_payload_174,
     },
     {
         "frsqrte-table-19",
@@ -6499,7 +6571,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_173,
+        ppc_fixture_payload_175,
     },
     {
         "frsqrte-table-20",
@@ -6534,7 +6606,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_174,
+        ppc_fixture_payload_176,
     },
     {
         "frsqrte-table-21",
@@ -6569,7 +6641,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_175,
+        ppc_fixture_payload_177,
     },
     {
         "frsqrte-table-22",
@@ -6604,7 +6676,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_176,
+        ppc_fixture_payload_178,
     },
     {
         "frsqrte-table-23",
@@ -6639,7 +6711,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_177,
+        ppc_fixture_payload_179,
     },
     {
         "frsqrte-table-24",
@@ -6674,7 +6746,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_178,
+        ppc_fixture_payload_180,
     },
     {
         "frsqrte-table-25",
@@ -6709,7 +6781,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_179,
+        ppc_fixture_payload_181,
     },
     {
         "frsqrte-table-26",
@@ -6744,7 +6816,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_180,
+        ppc_fixture_payload_182,
     },
     {
         "frsqrte-table-27",
@@ -6779,7 +6851,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_181,
+        ppc_fixture_payload_183,
     },
     {
         "frsqrte-table-28",
@@ -6814,7 +6886,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_182,
+        ppc_fixture_payload_184,
     },
     {
         "frsqrte-table-29",
@@ -6849,7 +6921,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_183,
+        ppc_fixture_payload_185,
     },
     {
         "frsqrte-table-30",
@@ -6884,7 +6956,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_184,
+        ppc_fixture_payload_186,
     },
     {
         "frsqrte-table-31",
@@ -6919,7 +6991,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_185,
+        ppc_fixture_payload_187,
     },
     {
         "dcbf",
@@ -6954,7 +7026,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_186,
+        ppc_fixture_payload_188,
     },
     {
         "dcbi",
@@ -6989,7 +7061,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_187,
+        ppc_fixture_payload_189,
     },
     {
         "dcbst",
@@ -7024,7 +7096,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_188,
+        ppc_fixture_payload_190,
     },
     {
         "dcbt",
@@ -7059,7 +7131,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_189,
+        ppc_fixture_payload_191,
     },
     {
         "icbi",
@@ -7094,7 +7166,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_190,
+        ppc_fixture_payload_192,
     },
     {
         "sync",
@@ -7129,7 +7201,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_191,
+        ppc_fixture_payload_193,
     },
     {
         "isync",
@@ -7164,7 +7236,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_192,
+        ppc_fixture_payload_194,
     },
     {
         "dcbz",
@@ -7199,7 +7271,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_193,
+        ppc_fixture_payload_195,
     },
     {
         "dcbz_l",
@@ -7234,7 +7306,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_194,
+        ppc_fixture_payload_196,
     },
     {
         "mfmsr",
@@ -7269,7 +7341,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_195,
+        ppc_fixture_payload_197,
     },
     {
         "mtmsr",
@@ -7304,7 +7376,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_196,
+        ppc_fixture_payload_198,
     },
     {
         "mfsr",
@@ -7339,7 +7411,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_197,
+        ppc_fixture_payload_199,
     },
     {
         "mtsr",
@@ -7374,7 +7446,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_198,
+        ppc_fixture_payload_200,
     },
     {
         "mftb",
@@ -7409,7 +7481,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_199,
+        ppc_fixture_payload_201,
     },
     {
         "mfspr_pvr",
@@ -7444,7 +7516,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_200,
+        ppc_fixture_payload_202,
     },
     {
         "mfspr_hid0",
@@ -7479,7 +7551,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_201,
+        ppc_fixture_payload_203,
     },
     {
         "mfspr_sprg1",
@@ -7514,7 +7586,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_202,
+        ppc_fixture_payload_204,
     },
     {
         "mtspr_aux",
@@ -7549,7 +7621,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_203,
+        ppc_fixture_payload_205,
     },
     {
         "mtspr_tbl",
@@ -7584,7 +7656,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_204,
+        ppc_fixture_payload_206,
     },
     {
         "twi",
@@ -7619,7 +7691,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_205,
+        ppc_fixture_payload_207,
     },
     {
         "sc",
@@ -7654,7 +7726,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_206,
+        ppc_fixture_payload_208,
     },
     {
         "rfi",
@@ -7689,7 +7761,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_207,
+        ppc_fixture_payload_209,
     },
     {
         "mffs",
@@ -7724,7 +7796,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_208,
+        ppc_fixture_payload_210,
     },
     {
         "mtfsf",
@@ -7759,7 +7831,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_209,
+        ppc_fixture_payload_211,
     },
     {
         "mtfsfi",
@@ -7794,7 +7866,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_210,
+        ppc_fixture_payload_212,
     },
     {
         "mtfsb1",
@@ -7829,7 +7901,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_211,
+        ppc_fixture_payload_213,
     },
     {
         "mtfsb0",
@@ -7864,7 +7936,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_212,
+        ppc_fixture_payload_214,
     },
     {
         "mcrfs",
@@ -7899,7 +7971,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_213,
+        ppc_fixture_payload_215,
     },
     {
         "ps_neg",
@@ -7934,7 +8006,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_214,
+        ppc_fixture_payload_216,
     },
     {
         "ps_mr",
@@ -7969,7 +8041,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_215,
+        ppc_fixture_payload_217,
     },
     {
         "ps_nabs",
@@ -8004,7 +8076,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_216,
+        ppc_fixture_payload_218,
     },
     {
         "ps_abs",
@@ -8039,7 +8111,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_217,
+        ppc_fixture_payload_219,
     },
     {
         "ps_merge00",
@@ -8074,7 +8146,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_218,
+        ppc_fixture_payload_220,
     },
     {
         "ps_merge01",
@@ -8109,7 +8181,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_219,
+        ppc_fixture_payload_221,
     },
     {
         "ps_merge10",
@@ -8144,7 +8216,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_220,
+        ppc_fixture_payload_222,
     },
     {
         "ps_merge11",
@@ -8179,7 +8251,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_221,
+        ppc_fixture_payload_223,
     },
     {
         "ps_cmpu0",
@@ -8214,7 +8286,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_222,
+        ppc_fixture_payload_224,
     },
     {
         "ps_cmpo0",
@@ -8249,7 +8321,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_223,
+        ppc_fixture_payload_225,
     },
     {
         "ps_cmpu1",
@@ -8284,7 +8356,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_224,
+        ppc_fixture_payload_226,
     },
     {
         "ps_cmpo1",
@@ -8319,7 +8391,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_225,
+        ppc_fixture_payload_227,
     },
     {
         "ps_add",
@@ -8354,7 +8426,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_226,
+        ppc_fixture_payload_228,
     },
     {
         "ps_sub",
@@ -8389,7 +8461,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_227,
+        ppc_fixture_payload_229,
     },
     {
         "ps_mul",
@@ -8424,7 +8496,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_228,
+        ppc_fixture_payload_230,
     },
     {
         "ps_muls0",
@@ -8459,7 +8531,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_229,
+        ppc_fixture_payload_231,
     },
     {
         "ps_muls1",
@@ -8494,7 +8566,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_230,
+        ppc_fixture_payload_232,
     },
     {
         "ps_mul-force25",
@@ -8529,7 +8601,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_231,
+        ppc_fixture_payload_233,
     },
     {
         "ps_add-lane-exceptions",
@@ -8564,7 +8636,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_232,
+        ppc_fixture_payload_234,
     },
     {
         "ps_add-ve-writes",
@@ -8599,7 +8671,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_233,
+        ppc_fixture_payload_235,
     },
     {
         "ps_mul-vximz-ps1",
@@ -8634,7 +8706,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_234,
+        ppc_fixture_payload_236,
     },
     {
         "ps_div",
@@ -8669,7 +8741,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_235,
+        ppc_fixture_payload_237,
     },
     {
         "ps_div-enabled-lane-exceptions",
@@ -8704,7 +8776,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_236,
+        ppc_fixture_payload_238,
     },
     {
         "ps_res",
@@ -8739,7 +8811,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_237,
+        ppc_fixture_payload_239,
     },
     {
         "ps_res-enabled-lane-exceptions",
@@ -8774,7 +8846,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_238,
+        ppc_fixture_payload_240,
     },
     {
         "ps_rsqrte",
@@ -8809,7 +8881,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_239,
+        ppc_fixture_payload_241,
     },
     {
         "ps_rsqrte-enabled-negative-zero",
@@ -8844,7 +8916,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_240,
+        ppc_fixture_payload_242,
     },
     {
         "ps_madd",
@@ -8879,7 +8951,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_241,
+        ppc_fixture_payload_243,
     },
     {
         "ps_msub",
@@ -8914,7 +8986,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_242,
+        ppc_fixture_payload_244,
     },
     {
         "ps_nmadd",
@@ -8949,7 +9021,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_243,
+        ppc_fixture_payload_245,
     },
     {
         "ps_nmsub",
@@ -8984,7 +9056,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_244,
+        ppc_fixture_payload_246,
     },
     {
         "ps_madds0",
@@ -9019,7 +9091,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_245,
+        ppc_fixture_payload_247,
     },
     {
         "ps_madds1",
@@ -9054,7 +9126,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_246,
+        ppc_fixture_payload_248,
     },
     {
         "ps_nmadd-lane-invalid-ve",
@@ -9089,7 +9161,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_247,
+        ppc_fixture_payload_249,
     },
     {
         "ps_sum0",
@@ -9124,7 +9196,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_248,
+        ppc_fixture_payload_250,
     },
     {
         "ps_sum1",
@@ -9159,7 +9231,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_249,
+        ppc_fixture_payload_251,
     },
     {
         "ps_sum0-vxisi",
@@ -9194,7 +9266,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_250,
+        ppc_fixture_payload_252,
     },
     {
         "ps_sel-signed-zero-nan",
@@ -9229,7 +9301,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_251,
+        ppc_fixture_payload_253,
     },
     {
         "psq-l-st-quantized",
@@ -9264,7 +9336,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_252,
+        ppc_fixture_payload_254,
     },
     {
         "psq-u8-load-s8-store",
@@ -9299,7 +9371,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_253,
+        ppc_fixture_payload_255,
     },
     {
         "psq-u16-load-float-store",
@@ -9334,7 +9406,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_254,
+        ppc_fixture_payload_256,
     },
     {
         "psq-st-float-ftz",
@@ -9369,7 +9441,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_255,
+        ppc_fixture_payload_257,
     },
     {
         "psq-lu-w1",
@@ -9404,7 +9476,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_256,
+        ppc_fixture_payload_258,
     },
     {
         "psq-stu-w1",
@@ -9439,7 +9511,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_257,
+        ppc_fixture_payload_259,
     },
     {
         "psq-lx-s16",
@@ -9474,7 +9546,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_258,
+        ppc_fixture_payload_260,
     },
     {
         "psq-lux-s8",
@@ -9509,7 +9581,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_259,
+        ppc_fixture_payload_261,
     },
     {
         "psq-stx-u16",
@@ -9544,7 +9616,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_260,
+        ppc_fixture_payload_262,
     },
     {
         "psq-stux-s16",
@@ -9579,7 +9651,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_261,
+        ppc_fixture_payload_263,
     },
     {
         "lfs",
@@ -9614,7 +9686,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_262,
+        ppc_fixture_payload_264,
     },
     {
         "lfsu",
@@ -9649,7 +9721,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_263,
+        ppc_fixture_payload_265,
     },
     {
         "lfd",
@@ -9684,7 +9756,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_264,
+        ppc_fixture_payload_266,
     },
     {
         "lfdu",
@@ -9719,7 +9791,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_265,
+        ppc_fixture_payload_267,
     },
     {
         "stfs",
@@ -9754,7 +9826,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_266,
+        ppc_fixture_payload_268,
     },
     {
         "stfsu",
@@ -9789,7 +9861,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_267,
+        ppc_fixture_payload_269,
     },
     {
         "stfd",
@@ -9824,7 +9896,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_268,
+        ppc_fixture_payload_270,
     },
     {
         "stfdu",
@@ -9859,7 +9931,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_269,
+        ppc_fixture_payload_271,
     },
     {
         "lfsx",
@@ -9894,7 +9966,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_270,
+        ppc_fixture_payload_272,
     },
     {
         "lfsux",
@@ -9929,7 +10001,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_271,
+        ppc_fixture_payload_273,
     },
     {
         "lfdx",
@@ -9964,7 +10036,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_272,
+        ppc_fixture_payload_274,
     },
     {
         "lfdux",
@@ -9999,7 +10071,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_273,
+        ppc_fixture_payload_275,
     },
     {
         "stfsx",
@@ -10034,7 +10106,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_274,
+        ppc_fixture_payload_276,
     },
     {
         "stfsux",
@@ -10069,7 +10141,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_275,
+        ppc_fixture_payload_277,
     },
     {
         "stfdx",
@@ -10104,7 +10176,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_276,
+        ppc_fixture_payload_278,
     },
     {
         "stfdux",
@@ -10139,7 +10211,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_277,
+        ppc_fixture_payload_279,
     },
     {
         "stfiwx",
@@ -10174,7 +10246,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_278,
+        ppc_fixture_payload_280,
     },
     {
         "fadds",
@@ -10209,7 +10281,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_279,
+        ppc_fixture_payload_281,
     },
     {
         "fsubs",
@@ -10244,7 +10316,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_280,
+        ppc_fixture_payload_282,
     },
     {
         "fmuls",
@@ -10279,7 +10351,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_281,
+        ppc_fixture_payload_283,
     },
     {
         "fmuls-force25",
@@ -10314,7 +10386,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_282,
+        ppc_fixture_payload_284,
     },
     {
         "fmuls-force25-subnormal",
@@ -10349,7 +10421,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_283,
+        ppc_fixture_payload_285,
     },
     {
         "fdivs",
@@ -10384,7 +10456,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_284,
+        ppc_fixture_payload_286,
     },
     {
         "fadd",
@@ -10419,7 +10491,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_285,
+        ppc_fixture_payload_287,
     },
     {
         "fsub",
@@ -10454,7 +10526,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_286,
+        ppc_fixture_payload_288,
     },
     {
         "fmul",
@@ -10489,7 +10561,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_287,
+        ppc_fixture_payload_289,
     },
     {
         "fdiv",
@@ -10524,7 +10596,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_288,
+        ppc_fixture_payload_290,
     },
     {
         "fadd-vxisi",
@@ -10559,7 +10631,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_289,
+        ppc_fixture_payload_291,
     },
     {
         "fadd-vxisi-ve",
@@ -10594,7 +10666,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_290,
+        ppc_fixture_payload_292,
     },
     {
         "fadds-snan",
@@ -10629,7 +10701,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_291,
+        ppc_fixture_payload_293,
     },
     {
         "fadds-snan-ve",
@@ -10664,7 +10736,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_292,
+        ppc_fixture_payload_294,
     },
     {
         "fadd-qnan",
@@ -10699,7 +10771,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_293,
+        ppc_fixture_payload_295,
     },
     {
         "fsub-vxisi",
@@ -10734,7 +10806,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_294,
+        ppc_fixture_payload_296,
     },
     {
         "fmul-vximz",
@@ -10769,7 +10841,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_295,
+        ppc_fixture_payload_297,
     },
     {
         "fmuls-vximz",
@@ -10804,7 +10876,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_296,
+        ppc_fixture_payload_298,
     },
     {
         "fdiv-vxzdz",
@@ -10839,7 +10911,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_297,
+        ppc_fixture_payload_299,
     },
     {
         "fdiv-vxidi",
@@ -10874,7 +10946,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_298,
+        ppc_fixture_payload_300,
     },
     {
         "fdiv-zx",
@@ -10909,7 +10981,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_299,
+        ppc_fixture_payload_301,
     },
     {
         "fdiv-zx-ze",
@@ -10944,7 +11016,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_300,
+        ppc_fixture_payload_302,
     },
     {
         "fdivs-zx",
@@ -10979,7 +11051,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_301,
+        ppc_fixture_payload_303,
     },
     {
         "fdivs-zx-ze",
@@ -11014,7 +11086,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_302,
+        ppc_fixture_payload_304,
     },
     {
         "fctiw-rne-away",
@@ -11049,7 +11121,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_303,
+        ppc_fixture_payload_305,
     },
     {
         "fctiw-rne-even",
@@ -11084,7 +11156,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_304,
+        ppc_fixture_payload_306,
     },
     {
         "fctiw-rtz",
@@ -11119,7 +11191,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_305,
+        ppc_fixture_payload_307,
     },
     {
         "fctiw-rtp",
@@ -11154,7 +11226,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_306,
+        ppc_fixture_payload_308,
     },
     {
         "fctiw-rtn",
@@ -11189,7 +11261,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_307,
+        ppc_fixture_payload_309,
     },
     {
         "fctiwz-negative-zero-result",
@@ -11224,7 +11296,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_308,
+        ppc_fixture_payload_310,
     },
     {
         "fctiw-exact-clears-fifr",
@@ -11259,7 +11331,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_309,
+        ppc_fixture_payload_311,
     },
     {
         "fctiw-negative-zero",
@@ -11294,7 +11366,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_310,
+        ppc_fixture_payload_312,
     },
     {
         "fctiw-qnan",
@@ -11329,7 +11401,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_311,
+        ppc_fixture_payload_313,
     },
     {
         "fctiw-snan",
@@ -11364,7 +11436,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_312,
+        ppc_fixture_payload_314,
     },
     {
         "fctiw-positive-overflow",
@@ -11399,7 +11471,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_313,
+        ppc_fixture_payload_315,
     },
     {
         "fctiw-negative-overflow",
@@ -11434,7 +11506,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_314,
+        ppc_fixture_payload_316,
     },
     {
         "fctiw-ve",
@@ -11469,7 +11541,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_315,
+        ppc_fixture_payload_317,
     },
     {
         "fctiw-xe",
@@ -11504,7 +11576,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_316,
+        ppc_fixture_payload_318,
     },
     {
         "fmadds",
@@ -11539,7 +11611,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_317,
+        ppc_fixture_payload_319,
     },
     {
         "fmadds-force25",
@@ -11574,7 +11646,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_318,
+        ppc_fixture_payload_320,
     },
     {
         "fmadds-single-rounding",
@@ -11609,7 +11681,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_319,
+        ppc_fixture_payload_321,
     },
     {
         "fmadds-nan-order",
@@ -11644,7 +11716,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_320,
+        ppc_fixture_payload_322,
     },
     {
         "fmadds-vximz",
@@ -11679,7 +11751,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_321,
+        ppc_fixture_payload_323,
     },
     {
         "fmadds-vximz-ve",
@@ -11714,7 +11786,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_322,
+        ppc_fixture_payload_324,
     },
     {
         "fmadds-vxisi",
@@ -11749,7 +11821,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_323,
+        ppc_fixture_payload_325,
     },
     {
         "fmsubs",
@@ -11784,7 +11856,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_324,
+        ppc_fixture_payload_326,
     },
     {
         "fnmsubs",
@@ -11819,7 +11891,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_325,
+        ppc_fixture_payload_327,
     },
     {
         "fmsubs-positive-zero",
@@ -11854,7 +11926,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_326,
+        ppc_fixture_payload_328,
     },
     {
         "fnmsubs-negative-zero",
@@ -11889,7 +11961,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_327,
+        ppc_fixture_payload_329,
     },
     {
         "fmsubs-single-rounding",
@@ -11924,7 +11996,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_328,
+        ppc_fixture_payload_330,
     },
     {
         "fnmsubs-single-rounding",
@@ -11959,7 +12031,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_329,
+        ppc_fixture_payload_331,
     },
     {
         "fnmsubs-nan-not-negated",
@@ -11994,7 +12066,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_330,
+        ppc_fixture_payload_332,
     },
     {
         "fmsubs-vxisi",
@@ -12029,7 +12101,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_331,
+        ppc_fixture_payload_333,
     },
     {
         "fnmsubs-vximz",
@@ -12064,7 +12136,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_332,
+        ppc_fixture_payload_334,
     },
     {
         "fnmsubs-vxisi-ve",
@@ -12099,7 +12171,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_333,
+        ppc_fixture_payload_335,
     },
     {
         "fnmadds",
@@ -12134,7 +12206,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_334,
+        ppc_fixture_payload_336,
     },
     {
         "fnmadds-nan-not-negated",
@@ -12169,7 +12241,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_335,
+        ppc_fixture_payload_337,
     },
     {
         "fmadd",
@@ -12204,7 +12276,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_336,
+        ppc_fixture_payload_338,
     },
     {
         "fmadd-single-rounding",
@@ -12239,7 +12311,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_337,
+        ppc_fixture_payload_339,
     },
     {
         "fmadd-nan-payload",
@@ -12274,7 +12346,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_338,
+        ppc_fixture_payload_340,
     },
     {
         "fmsub",
@@ -12309,7 +12381,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_339,
+        ppc_fixture_payload_341,
     },
     {
         "fnmadd",
@@ -12344,7 +12416,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_340,
+        ppc_fixture_payload_342,
     },
     {
         "fnmadd-vxisi-ve",
@@ -12379,7 +12451,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_341,
+        ppc_fixture_payload_343,
     },
     {
         "fnmsub",
@@ -12414,7 +12486,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_342,
+        ppc_fixture_payload_344,
     },
     {
         "fnmsub-vximz",
@@ -12449,7 +12521,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_343,
+        ppc_fixture_payload_345,
     },
     {
         "fres",
@@ -12484,7 +12556,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_344,
+        ppc_fixture_payload_346,
     },
     {
         "fres-small",
@@ -12519,7 +12591,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_345,
+        ppc_fixture_payload_347,
     },
     {
         "fres-zero-ze",
@@ -12554,7 +12626,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_346,
+        ppc_fixture_payload_348,
     },
     {
         "fres-snan-ve",
@@ -12589,7 +12661,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_347,
+        ppc_fixture_payload_349,
     },
     {
         "frsqrte",
@@ -12624,7 +12696,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_348,
+        ppc_fixture_payload_350,
     },
     {
         "frsqrte-subnormal",
@@ -12659,7 +12731,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_349,
+        ppc_fixture_payload_351,
     },
     {
         "frsqrte-negative",
@@ -12694,7 +12766,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_350,
+        ppc_fixture_payload_352,
     },
     {
         "fsel",
@@ -12729,7 +12801,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_351,
+        ppc_fixture_payload_353,
     },
     {
         "fcmpu",
@@ -12764,7 +12836,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_352,
+        ppc_fixture_payload_354,
     },
     {
         "fcmpu-snan",
@@ -12799,7 +12871,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_353,
+        ppc_fixture_payload_355,
     },
     {
         "fcmpo",
@@ -12834,7 +12906,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_354,
+        ppc_fixture_payload_356,
     },
     {
         "fcmpo-qnan",
@@ -12869,7 +12941,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_355,
+        ppc_fixture_payload_357,
     },
     {
         "fcmpo-qnan-ve",
@@ -12904,7 +12976,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_356,
+        ppc_fixture_payload_358,
     },
     {
         "fcmpo-snan",
@@ -12939,7 +13011,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_357,
+        ppc_fixture_payload_359,
     },
     {
         "fcmpo-snan-ve",
@@ -12974,7 +13046,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_358,
+        ppc_fixture_payload_360,
     },
     {
         "frsp",
@@ -13009,7 +13081,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_359,
+        ppc_fixture_payload_361,
     },
     {
         "fneg",
@@ -13044,7 +13116,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_360,
+        ppc_fixture_payload_362,
     },
     {
         "fmr",
@@ -13079,7 +13151,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_361,
+        ppc_fixture_payload_363,
     },
     {
         "fnabs",
@@ -13114,7 +13186,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_362,
+        ppc_fixture_payload_364,
     },
     {
         "fabs",
@@ -13149,7 +13221,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         0u,
         0x00000000u,
-        ppc_fixture_payload_363,
+        ppc_fixture_payload_365,
     },
     {
         "lmw-overlapping-base",
@@ -13184,7 +13256,7 @@ static const PpcFixtureCase g_ppc_fixtures[PPC_FIXTURE_COUNT] = {
         0x00000000u,
         1u,
         0x00001000u,
-        ppc_fixture_payload_364,
+        ppc_fixture_payload_366,
     },
 };
 

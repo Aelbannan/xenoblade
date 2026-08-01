@@ -355,6 +355,24 @@ FIXTURES: tuple[FixtureCase, ...] = (
         xer=pack_xer(ov=1, so=1),
     ),
     _case(
+        "mullw",
+        ("integer",),
+        _state(_gpr(r5=0x12345678, r6=2)),
+        [xo(31, 7, 5, 6, 235, rc=0, oe=0)],
+        result=0x2468ACF0,
+        cr=0x0,
+        xer=0,
+    ),
+    _case(
+        "mullw-neg",
+        ("integer",),
+        _state(_gpr(r5=0xFFFFFFFE, r6=3)),  # -2 * 3 = -6
+        [xo(31, 7, 5, 6, 235, rc=0, oe=0)],
+        result=0xFFFFFFFA,
+        cr=0x0,
+        xer=0,
+    ),
+    _case(
         "divw",
         ("integer", "record"),
         _state(_gpr(r5=0xFFFFFFF9, r6=3)),

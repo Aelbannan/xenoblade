@@ -376,6 +376,19 @@ The current `broadway-ppc32-be-v23` model supports:
   default 256)—constant-trip loops whose exit becomes concrete within the bound
   are supported; exhausting the bound is inconclusive and never silently
   truncated;
+- closed-form counted loops (doc 30): CTR-affine (`mtctr`/`bdnz`) and
+  compare-affine countdown/count-up loops (`addi/subi ±step`/`cmp`/`bne`…`bge`)
+  apply affine closed forms under an explicit entry premise; symbolic trip
+  counts (`srwi.`/`andi.`/entry-register materialization, `lis+ori` big
+  constants) fold to parametric summaries and discharge relationally against a
+  fresh symbolic `N`; skip guards between the trip materialization and the
+  header discharge two UNSAT checks (`guard_taken <=> trip == 0`) at apply
+  time; compare-countdown trips are do-while `TripCountdown`s (six latch
+  families, signed/unsigned compare forms, symbolic bounds) with a
+  termination/ranking-wrap premise; constant-stride store loops cover
+  `stwu`, `store; addi`, multi-store fill bodies, and `load; store` copy
+  bodies (aliasing premise excludes backward overlap); affine bodies accept
+  GPR-pure whitelisted ops on dead callee-saved scratch registers;
 - scalar FP D-form/indexed loads and stores (`lfs*`, `lfd*`, `stfs*`, `stfd*`,
   `stfiwx`) with big-endian memory and binary32/binary64 conversion;
 - scalar `fadd[s]`, `fsub[s]`, `fmuls`, `fdiv[s]`, double `fmul`, `frsp`,

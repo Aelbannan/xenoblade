@@ -4,6 +4,8 @@
 #include <harness_catalog.h>
 #include <revolution/OS.h>
 
+#include <string.h>
+
 typedef unsigned char  UINT8;
 typedef unsigned short UINT16;
 typedef unsigned int   UINT32;
@@ -16,10 +18,15 @@ typedef unsigned int   UINT32;
 typedef struct {
     UINT8   OSIntNesting;                  /* 0x00 */
     UINT32  IntDisableCnt[26];             /* 0x04 */
-    UINT8   _pad[0x28802 - 0x6C];          /* up to OSInitFlag */
+    UINT8   _pad[0x287E8 - 0x6C];          /* up to OSTicks */
+    UINT32  OSTicks;                       /* 0x287E8 */
+    UINT8   _pad2[0x28802 - 0x287EC];      /* .. OSInitFlag */
     UINT8   OSInitFlag;                    /* 0x28802 */
-    UINT8   _pad2[0x28808 - 0x28803];      /* 0x28803..0x28807 */
+    UINT8   _pad3[0x28808 - 0x28803];      /* 0x28803..0x28807 */
     UINT16  OSWaitEvt[8];                  /* 0x28808 */
+    UINT8   _pad4[0x28848 - 0x28818];      /* .. OSIdleCnt */
+    UINT32  OSIdleCnt;                     /* 0x28848 */
+    UINT8   _tail[0x28AE0 - 0x2884C];      /* pad to retail sizeof(tGKI_CB) */
 } tGKI_INT_MIRROR;
 
 #define GKI_MAX_TASKS 8
@@ -31,7 +38,20 @@ extern tGKI_INT_MIRROR gki_cb;
 void GKI_disable(void);
 void GKI_enable(void);
 
-void GKI_init() {}
+void GKI_init(void) {
+    memset(&gki_cb, 0, sizeof(tGKI_INT_MIRROR));
+    gki_buffer_init();
+    gki_timers_init();
+
+    gki_cb.OSInitFlag = 1;       /* GKI_READY, 0x28802 */
+    gki_cb.OSTicks = 0;          /* 0x287E8 */
+    gki_cb.OSIdleCnt = 0;        /* 0x28848 */
+    gki_cb.OSWaitEvt[2] = 0;     /* 0x2880C */
+    gki_cb.OSIntNesting = 0;
+
+    gki_cb.IntDisableCnt[gki_cb.OSIntNesting] = OSEnableInterrupts();
+    gki_cb.OSIntNesting++;
+}
 
 void GKI_shutdown(void) {
     GKI_disable();

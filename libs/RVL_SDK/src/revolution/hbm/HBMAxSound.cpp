@@ -49,7 +49,7 @@ struct HBMWork {
     u8 pad_14344[4];               // 0x14344
     AXOutCallback prevFrameCb;     // 0x14348
     ARCHandle archive;             // 0x1434C (0x1C bytes)
-    u8 pad_14368[0x318];           // .. 0x14680
+    OSThread thread;               // 0x14368 (0x318 bytes)
     OSMessageQueue msgQueue;       // 0x14680 (0x20 bytes)
     u8 pad_146A0[0x14];            // .. 0x146B4
     void* seqWork1;                // 0x146B4
@@ -66,6 +66,9 @@ extern "C" void HBMSEQAddSequence(HBMSEQSEQUENCE* seq, const u8* data,
                                   void* synth, void* p1, u32 p2);
 extern "C" void HBMSEQRemoveSequence(HBMSEQSEQUENCE* seq);
 extern "C" void HBMSEQSetState(HBMSEQSEQUENCE* seq, u32 state);
+extern "C" void HBMSEQQuit(void);
+extern "C" void HBMSYNQuit(void);
+extern "C" void HBMMIXQuit(void);
 
 HBMSEQSEQUENCE* GetFreePlayer(int soundId) {
     HBMSEQSEQUENCE* players;
@@ -185,11 +188,25 @@ void PlaySeq(int seqId) {
 void InitAxSound(const void* /* pWork */, void* /* pWorkEnd */,
                  u32 /* workSize */) {}
 
-void ShutdownAxSound() {}
+void ShutdownAxSound() {
+    if (sWork != NULL) {
+        StopAllSeq();
+        AXRegisterCallback(sWork->prevFrameCb);
+        OSJamMessage(&sWork->msgQueue, reinterpret_cast<OSMessage>(8),
+                     OS_MSG_BLOCKING);
+        OSJoinThread(&sWork->thread, NULL);
+        HBMSEQQuit();
+        HBMSYNQuit();
+        HBMMIXQuit();
+        sWork = NULL;
+    }
+}
 
 void AxSoundMain() {}
 
+#pragma dont_inline on
 void StopAllSeq() {}
+#pragma dont_inline reset
 
 void SetVolumeAllSeq(float /* volume */) {}
 

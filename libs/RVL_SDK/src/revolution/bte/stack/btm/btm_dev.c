@@ -137,7 +137,7 @@ BOOLEAN BTM_SecAddDevice(BD_ADDR bd_addr, DEV_CLASS dev_class,
 /* ------------------------------------------------------------------ */
 /*  BTM_SecDeleteDevice — Remove a device from the security database. */
 /* ------------------------------------------------------------------ */
-BOOLEAN BTM_SecDeleteDevice(BD_ADDR bd_addr)
+static __inline BtmSecDevRec *btm_sec_find_dev_bda(BD_ADDR bd_addr)
 {
     BtmSecDevRec *p_rec;
     int i;
@@ -148,12 +148,21 @@ BOOLEAN BTM_SecDeleteDevice(BD_ADDR bd_addr)
         if ((p_rec->sec_flags & BTM_SEC_IN_USE) &&
             memcmp(p_rec->bd_addr, bd_addr, 6) == 0)
         {
-            break;
+            return p_rec;
         }
         p_rec++;
     }
 
-    if (i >= 16)
+    return NULL;
+}
+
+BOOLEAN BTM_SecDeleteDevice(BD_ADDR bd_addr)
+{
+    BtmSecDevRec *p_rec;
+
+    p_rec = btm_sec_find_dev_bda(bd_addr);
+
+    if (p_rec == NULL)
         return FALSE;
 
     p_rec->sec_flags = 0;

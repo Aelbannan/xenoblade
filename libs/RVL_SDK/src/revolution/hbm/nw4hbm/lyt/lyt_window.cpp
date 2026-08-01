@@ -347,7 +347,7 @@ Material* Window::FindMaterialByName(const char* pName, bool recursive) {
     return NULL;
 }
 
-AnimationLink* Window::FindAnimationLinkSelf(AnimTransform* pAnimTrans) {
+AnimationLink* Window::FindAnimationLink(AnimTransform* pAnimTrans) {
     AnimationLink* pAnimLink = Pane::FindAnimationLink(pAnimTrans);
 
     if (pAnimLink != NULL) {
@@ -748,7 +748,6 @@ Material* Window::GetFrameMaterial(u32 idx) const {
 } // namespace lyt
 } // namespace nw4hbm
 
-void FindAnimationLink__Q36nw4hbm3lyt6WindowFPQ36nw4hbm3lyt13AnimTransform(){}
 extern "C" void* GetRuntimeTypeInfo__Q36nw4hbm3lyt6WindowCFv(void) {
     extern const char typeInfo__Q36nw4hbm3lyt6Window[];
     return (void*)typeInfo__Q36nw4hbm3lyt6Window;

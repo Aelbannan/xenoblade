@@ -970,7 +970,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bd.c", extra_cflags=["-func_align 16"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_conn.c", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c", extra_cflags=["-func_align 4"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/utl.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             # bta_dm_act.c: retail bte compiled with GC/3.0a5.2 (mwcc_41_60831) —
@@ -999,7 +999,7 @@ config.libs = [
             # notes); -func_align 4 matches the bte btm family (btm_sec/discovery)
             # and removes the spurious mtctr nop in small loops (KB ref:a62b281252).
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c", extra_cflags=["-func_align 4", "-ipa off"]),  # bte btm family: -func_align 4 packs .text into the retail split budget (MWCC_REFERENCE btm_devctl/btm_inq notes)
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # bte btm family: retail bte compiled with GC/3.0a5.2 (bta_dm_api/btm_devctl notes); -func_align 4 packs .text into the retail split budget
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 16"]),  # retail bte built with GC 3.0a-family; -func_align 4 matches the bte btm family (btm_sec/discovery) and packs .text to the retail split budget; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family, -func_align 4 and no IPA: -ipa file / -func_align 16 insert scheduling NOPs before mtctr-counted loops (see MWCC_REFERENCE)
@@ -1009,7 +1009,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 matches retail's 4-aligned functions and packs .text into the split budget (MWCC_REFERENCE btm_devctl size row); Wii/1.1 merges byte-copies into lwz and schedules li/stb differently
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c", extra_cflags=["-func_align 4", "-ipa off"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c"),
+                                                                                                                                                                                                            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC/3.0a5.2 (bte family, see bta_dm_act/btm_devctl notes); volatile handle keeps the failure-path handle=0 store so the 0 lives in r31 across calls — FULL_MATCH
             # gap_api.c: retail bte compiled with GC/3.0a5.2 (bte family, see
             # bta_dm_act/btm_devctl notes); Wii/1.1 floats li-before-addi on the
             # callback/trace stores in GAP_Init (KB ref:51910fc0cc).
@@ -1039,7 +1039,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family -func_align 4; -func_align 16 + -ipa file inserts scheduling NOPs before mtctr-counted loops (rfc_port_closed ori r0,r0,0, MWCC_REFERENCE btm_inq)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes); Wii/1.1 -func_align 16 inserts an alignment ori r0,r0,0 before the SDP_FindServiceInDb sub-attr loop
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c", mw_version="GC/3.0a3.4", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c", mw_version="GC/3.0a3.3", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / sdp_db notes); Wii/1.1 -func_align 16 + IPA inserts an alignment ori r0,r0,0 before the ARRAY_TO_STREAM loop in sdpu_build_uuid_seq
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / sdp_db notes); Wii/1.1 -func_align 16 + IPA inserts an alignment ori r0,r0,0 before the ARRAY_TO_STREAM loop in sdpu_build_uuid_seq
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_main.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / btm_inq notes); Wii/1.1 floats mr-before-stb call-arg scheduling on sdp_connect_ind cback-dispatch stores (KB ref:51910fc0cc)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_server.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail sdp built with GC 3.0a-family, packed (see sdp_utils / sdp_db notes); Wii/1.1 lowers the 3-case PDU dispatch switch to an equality chain instead of retail's compare tree
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family, -func_align 4 and no IPA (see MWCC_REFERENCE btm_inq / l2c_utils)

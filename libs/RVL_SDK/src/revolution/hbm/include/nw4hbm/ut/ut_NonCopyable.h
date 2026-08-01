@@ -4,16 +4,13 @@
 
 namespace nw4hbm {
 namespace ut {
-namespace {
 
 class NonCopyable {
 protected:
     NonCopyable() {}
     NonCopyable(const NonCopyable& /* rOther */) {}
-    ~NonCopyable() {}
 };
 
-} // namespace
 } // namespace ut
 } // namespace nw4hbm
 

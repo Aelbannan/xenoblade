@@ -21,7 +21,13 @@ static const char* const kAttributeNames[] = {
     nullptr
 };
 
+// Retail vtable data symbol (vtable lives in monolibdata1.s at 0x8056B52C).
+// The class is __declspec(novtable), so the ctor assigns the retail label
+// explicitly instead of the compiler-generated __vt__6CToken.
+extern "C" u8 lbl_eu_8056B52C[];
+
 CToken::CToken() {
+    *(void**)this = (void*)lbl_eu_8056B52C;
     m_fieldCount = 0;
     for (int i = 0; i < 16; i++) {
         m_data[i] = 0;
@@ -109,17 +115,17 @@ void CToken::func_8043AA68(char* pOutBuffer, int bufferLen, const char* pName) {
         index++;
     }
 
-    // No match found — copy original name into output buffer
+    // No match found - copy original name into output buffer
     strncpy(pOutBuffer, pName, bufferLen);
     pOutBuffer[nameLen] = '\0';
 }
 
 char* CToken::func_8043AB14(char* pInput, int tokenIndex) {
-    // Stub — not yet matched
+    // Stub - not yet matched
     return pInput;
 }
 
 bool CToken::func_8043ABD4(const char* pInput, const char* mode) {
-    // Stub — not yet matched
+    // Stub - not yet matched
     return false;
 }

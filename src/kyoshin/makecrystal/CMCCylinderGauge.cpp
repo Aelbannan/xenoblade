@@ -100,6 +100,7 @@ void CMCCylinderGauge::func_80222118() {
 }
 
 //Optimization level is reduced to ensure the remainder is naively computed
+#pragma push
 #pragma optimization_level 1
 void CMCCylinderGauge::func_802221A4(float arg) {
     s32 random = (s32)ml::MTRand::getInstance()->rand31();
@@ -113,6 +114,7 @@ void CMCCylinderGauge::func_802221A4(float arg) {
     temp *= 0.01f;
     unk28 += temp;
 }
+#pragma pop
 
 void CMCCylinderGauge::func_80222234() {
     unk25 -= 1;

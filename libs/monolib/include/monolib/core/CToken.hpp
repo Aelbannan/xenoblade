@@ -2,7 +2,7 @@
 
 #include <types.h>
 
-class CToken {
+class __declspec(novtable) CToken {
 public:
     CToken();
     virtual ~CToken();

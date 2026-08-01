@@ -124,6 +124,37 @@ The policy exception is recorded in the target attempt log with `policy_exceptio
 
 
 
+
+## RVL_SDK bte/btm TUs — retail alignment, layouts, and pool notes (US, mwcc_43_151 `-O4,p`)
+
+Batch: `RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c` — 7× FULL_MATCH
+(`BTM_SecRegister` family + `btm_sec_*` helpers). Symptom → cause → fix table:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Extra `ori r0,r0,0` (dead `nop`) between `mtctr` and a countdown loop head in decomp-only code | Retail bte stack TUs are compiled with `-func_align 4`, but `cflags_sdk` defaults to `-func_align 16`; the 16-byte alignment changes MWCC's scheduling and it inserts a nop into small `mtctr`/`bdnz` loops (e.g. `BTM_SecAdd/DeleteRmtNameNotifyCallback`) | Add `extra_cflags=["-func_align 4"]` to the `Object(...)` in `configure.py` (same as `btm_discovery.c`); retail functions in btm_sec.s are only 4-aligned |
+| `andi. r0,r0,imm` vs retail `rlwinm r0,r0,0,MB,ME` when clearing bits of a `UINT8` flag | `flags &= ~0x38` emits `andi.`; the retail used a 32-bit intermediate: `flags = (UINT8)(flags & ~0x38)` emits `rlwinm` (see `BTM_SetSecurityLevel` originator/terminator flag clears, masks `~0x38` → `rlwinm 29,25`, `~0x07` → `rlwinm 24,28`) | Cast the whole AND expression to `UINT8`, not the mask |
+| Spurious `rlwinm rX,rX,0,24,31` truncation in `flags |= (0x80 | sec_level)` | `sec_level` declared `UINT16` makes MWCC truncate the RHS of the `|=`; the retail never truncates | Declare `sec_level` as `UINT8` (retail build's parameter width; ABI-identical on PPC32) |
+| `mulli/add` index recompute every iteration vs retail walking pointer (`addi rX,rX,0x3C` at the loop back-edge) | `p_srec = &cb->rec[i]` inside the loop with a `UINT16` counter blocks strength reduction (the `clrlwi` truncation is non-linear); the retail walks | Hoist `p_srec = &cb->rec[0]` before the loop and `p_srec++` as the last loop-body statement |
+| `li rX,23` vs retail `lis rX,1; subi rX,rX,1` (0xFFFF) | `last_id` initialised to `BTM_SEC_MAX_SERVICE_RECORDS-1`; the retail uses `0xFFFF` | `UINT16 last_id = 0xFFFF;` |
+| `addi r4,rX,term+off` off by 1 (`0x25` vs retail `0x26`) | `orig_service_name[21]` then `term_service_name` at 0x25; retail has the term name at 0x26 | Array sizes are `BTM_SEC_SERVICE_NAME_LEN + 1` (22 bytes): orig 0x10–0x25, term 0x26–0x3B, record stride 0x3C × 24 |
+| Return-value epilogue `li r3,1`/`li r3,0` vs retail single `mr r3,r27` | Function has two `return` statements; retail returns the `found` flag once at the end | Single trailing `return found;` after the `if/else` |
+
+Retail `btm_cb` layout facts verified against btm_sec.s (do not trust `btm_int.h`'s
+`tBTM_CB`): `pin_type` 0x20, `cfg.pin_code_len` 0x21, `cfg.pin_code` 0x22 (16B),
+`pairing_state` 0x64E (u8), `api` 0x190C (6 pointers), `p_rmt_name_callback[2]` 0x192C,
+`pin_code_len` 0x194C (**u32**, retail `stw`s it), `pin_code[6]` 0x1954
+(`PIN_CODE_LEN` is **6** in this build, not 16), `security_mode` 0x1978,
+`sec_serv_rec[24]` 0x1990, `sec_dev_rec[16]` 0x1F30 (0x88 each, matches btm_dev.c),
+`connecting_bda` 0x27B4, `trace_level` 0x27C0. `BTM_SetSecurityLevel` is 100%
+instruction-identical except 3 pooled-string immediates (`addi r4,r31,imm`): the
+retail pool carries three orphan strings (`BTM_SetSecurityMode: ...` — the source
+function was dead-stripped but the pooled literals survived) between the
+`BTM_SecRegister` and `BTM_SetPinType` strings, shifting `@2920`/`@2921`/`@2922`
+by 0x78; equivalence there is additionally blocked until `LogMsg` (us-802e0830,
+bte_logmsg) is accepted.
+
+
 ## kyoshin/main (US) — early init + contiguous .data base
 
 US `main` is **not** the JP-shaped “copy ErrMesData strings then initialize” path. Retail:

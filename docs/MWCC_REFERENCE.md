@@ -183,6 +183,41 @@ function was dead-stripped but the pooled literals survived) between the
 by 0x78; equivalence there is additionally blocked until `LogMsg` (us-802e0830,
 bte_logmsg) is accepted.
 
+## RVL_SDK bte/rfcomm rfc_port_if.c — 10/10 FULL_MATCH on Wii/1.1 mwcc_43_151 `-O4,p` (US)
+
+`libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c` (RFCOMM port-interface
+layer). All ten `RFCOMM_*Req/Rsp` APIs match 100% byte-for-byte with the **default
+Wii/1.1** compiler (`-O4,p`); note most sibling rfcomm files (port_rfc, port_utils,
+rfc_l2cap_if, rfc_mx_fsm, rfc_ts_frames) also use the default — only rfc_port_fsm /
+rfc_utils needed GC/3.0a5.2. Three reusable findings:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Two-state guard compiles to `bne skip` for both checks; retail has `bne skip; beq body; b skip` (body placed after the branches) | Writing the guard as two separate `if (x != N) return;` statements makes MWCC fold the second check to a single `bne` with the body in fall-through; the retail two-branch shape comes from the OR-combined form | Write `if (port->state != PORT_STATE_OPENED || port->rfc_state != RFC_STATE_OPENED) return;` — MWCC emits `bne skip` for the first disjunct and the branch-over-branch `beq body; b skip` for the second (verified on both Wii/1.1 and GC/3.0a5.2; positive-if, nested-if, && and goto-gate shapes all emit `bne skip` instead) |
+| Credit-check ternary `(mcb->field_72 == 0 ? 2 : mcb->field_72) == 2` emits `cmpi r0,2`; retail has `rlwinm r0,r0,0,24,31; cmpli r0,2` | The inline ternary result is `int` so no truncation is needed; retail's `clrlwi` comes from assigning the ternary to a `u8` local first | `u8 flow = (mcb->field_72 == 0) ? 2 : mcb->field_72; if (flow == 2) { ... }` — the `u8` assignment emits the retail `clrlwi` + `cmplwi` (RFCOMM_ParNegReq, us-803035bc) |
+| Decomp `.text` 0x3C over split budget with every function byte-identical | `cflags_sdk` defaults to `-func_align 16`; retail rfc_port_if.s functions are packed on 4-byte boundaries (0x803034B8+0x2C=0x803034E4, no padding), so MWCC inserts 60 bytes of inter-function padding | `Object(NonMatching, "...rfc_port_if.c", extra_cflags=["-func_align 4"])` — `.text` drops from 0x568 to exactly 0x52C (same as the other packed bte TUs btm_sec/btm_inq/rfc_utils) |
+
+**Remaining soft-cap:** `RFCOMM_FlowReq` (us-80303844) at 95.1% static — the last two
+instructions are an independent scheduling swap (`addi r6,r31,0x5a` / `stb r0,0x5e(r3)`
+order), reproducible under **no** source shape (plain, block-scope `tPORT_CTRL*` local,
+`u8*` fc pointer, fc-value local, flags-first statement order, `!enable` vs
+`(enable == 0)`, `-O4,s`) or compiler (Wii/1.1, GC/3.0a5.2). SMT acceptance is
+additionally blocked by the unvalidated callee `rfc_send_msc` (us-80304040,
+rfc_ts_frames.c) — `equivalence_check.py` fails closed on non-accepted callees with
+no opaque override. Accept at EQUIVALENT_MATCH once that callee lands (or a source
+shape reproduces the swap).
+
+Retail type/layout facts verified against rfc_port_if.s: `tRFC_MCB.state` 0x6C
+(RFC_MX_STATE_CONNECTED=5), `field_72` 0x72 (credit-based flow flag, 2=credit);
+`tPORT.state` 0x02 (PORT_STATE_OPENED=2), `field_0e` 0x0E (last error code),
+`port_ctrl` (MSC tPORT_CTRL) 0x5A (fc at 0x5E), `ctrl_flags` 0x64,
+`rfc_state` 0x68 (RFC_STATE_OPENED=4), `rfc_flags` 0x69 (EXPECT_PN=1/RPN=2/RPN2=4/MSC=8/RLS=0x10),
+`p_mcb` 0x6C, `credit_rx` 0x9A, `credit_rx_max` 0x9C. `PORT_PortNegCnf` has **4**
+real parameters (`mtu, result`) — rfc_port_if passes `(mcb, dlci, 0, 1)`; port_rfc.c's
+3-param declaration is a decomp inaccuracy. `PORT_DlcEstablishCnf(mcb, dlci, mtu, result)`
+and `PORT_DlcReleaseInd(mcb, dlci)` confirmed. RfcPort is 0xA4 bytes (rfc_cb + 0x68 +
+i*0xA4), RfcMuxChannel state/flow layout matches port_utils.c.
+
 ### btm_devctl.c — 12× FULL_MATCH on GC/3.0a5.2 (`btm_db_reset`, `BTM_SetAfhChannels`,
 `btm_reset_complete`, `btm_read_hci_buf_size_complete`, `btm_read_local_version_complete`,
 `BTM_SetLocalDeviceName`, `BTM_VendorSpecificCommand`, `BTM_ReadStoredLinkKey`,

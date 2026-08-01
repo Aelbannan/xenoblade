@@ -225,10 +225,10 @@ void           l2cu_release_ccb (tL2C_CCB *p_ccb);
 
 tL2C_LCB *l2cu_allocate_lcb (BD_ADDR p_bd_addr)
 {
-    UINT8     xx;
-    tL2C_LCB *p_lcb;
+    INT32     xx;
+    tL2C_LCB *p_lcb = &l2cb.lcb_pool[0];
 
-    for (xx = 0, p_lcb = &l2cb.lcb_pool[0]; xx < L2C_MAX_LINKS; xx++, p_lcb++)
+    for (xx = 0; xx < L2C_MAX_LINKS; xx++)
     {
         if (!p_lcb->in_use)
         {
@@ -247,6 +247,8 @@ tL2C_LCB *l2cu_allocate_lcb (BD_ADDR p_bd_addr)
             l2c_link_adjust_allocation ();
             return (p_lcb);
         }
+
+        p_lcb++;
     }
 
     return (NULL);
@@ -291,7 +293,7 @@ void l2cu_release_lcb (tL2C_LCB *p_lcb)
 
 tL2C_LCB *l2cu_find_lcb_by_bd_addr (BD_ADDR p_bd_addr)
 {
-    UINT8     xx;
+    INT8      xx;
     tL2C_LCB *p_lcb;
 
     for (xx = 0, p_lcb = &l2cb.lcb_pool[0]; xx < L2C_MAX_LINKS; xx++, p_lcb++)
@@ -1067,7 +1069,7 @@ void l2cu_process_our_cfg_rsp (tL2C_CCB *p_ccb, tL2C_CFG_INFO *p_cfg)
 
 void l2cu_device_reset (void)
 {
-    UINT8     xx;
+    INT8      xx;
     tL2C_LCB *p_lcb;
 
     for (xx = 0, p_lcb = &l2cb.lcb_pool[0]; xx < L2C_MAX_LINKS; xx++, p_lcb++)
@@ -1115,15 +1117,16 @@ BOOLEAN l2cu_create_conn (tL2C_LCB *p_lcb)
 
 BOOLEAN l2cu_create_conn_after_switch (tL2C_LCB *p_lcb)
 {
-    UINT8         *p_features = BTM_ReadLocalFeatures ();
+    UINT8         *p_features;
     UINT8          allow_switch;
     tBTM_INQ_INFO *p_inq_info;
-    UINT8          page_scan_rep_mode = 1;
-    UINT8          page_scan_mode     = 0;
-    UINT16         clock_offset       = 0;
+    UINT8          page_scan_rep_mode;
+    UINT8          page_scan_mode;
+    UINT16         clock_offset;
 
+    p_features = BTM_ReadLocalFeatures ();
+    allow_switch = (UINT8)((p_features[0] & 0x20) >> 5);
     p_lcb->link_state = LST_CONNECTING;
-    allow_switch = (UINT8)(p_features[0] & 0x20);
 
     p_inq_info = BTM_InqDbRead (p_lcb->remote_bd_addr);
     if (p_inq_info != NULL)
@@ -1131,6 +1134,12 @@ BOOLEAN l2cu_create_conn_after_switch (tL2C_LCB *p_lcb)
         page_scan_rep_mode = p_inq_info->page_scan_rep_mode;
         page_scan_mode     = p_inq_info->page_scan_mode;
         clock_offset       = (UINT16)(p_inq_info->clock_offset | 0x8000);
+    }
+    else
+    {
+        page_scan_rep_mode = 1;
+        page_scan_mode     = 0;
+        clock_offset       = 0;
     }
 
     if (!btsnd_hcic_create_conn (p_lcb->remote_bd_addr, 0x18, page_scan_rep_mode,

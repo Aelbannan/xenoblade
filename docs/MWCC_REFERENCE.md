@@ -259,6 +259,21 @@ NO_3_DH1→NO_2_DH1→DH1→DM1 (note: this repo's hcidefs.h has the **standard*
 NO_2_DH5=0x1000 / NO_3_DH5=0x2000). Timer type 9 / timeout 3 for rssi and link
 quality timers are literal values in this build.
 
+Additional btm_acl.c findings (btm_acl_created / btm_acl_role_changed /
+btm_read_remote_features_complete / BTM_SwitchRole / btm_chg_all_acl_pkt_types,
+all 0-structural):
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Packet-type computation missing `li rX,-13063; and` (the `& 0xFFFFCCF9` no-op) | The retail source computes `(supported & 0xCC18) & 0xFFFFCCF9` as a **separate statement** (mask is 32-bit, applied after the 16-bit `& 0xCC18`); MWCC does not fold the subsuming mask into the `andi.` | Write `pkt_types = (UINT16)(... & 0xCC18); pkt_types = (UINT16)(pkt_types & 0xFFFFCCF9);` as two statements — omitting the second drops the `li/and` pair and shifts the whole block (0x314/0x22C functions drop to ~99.6% with a cascade) |
+| `pkt_mask = (UINT16)(pkt_mask | 0x3300)` folds to `li rX,0x3318` vs retail `ori r0,r5,0x3300; rlwinm r5,r0,0,16,31` | The explicit cast lets MWCC constant-fold the OR; the retail used the compound assignment `pkt_mask |= 0x3300;` which keeps the `ori`+truncation | Use `pkt_mask |= 0x3300;` (no cast) |
+| BOOLEAN test `if (fn())` compiles to `rlwinm. r0; beq skip` vs retail `cmpli r0,1; bne skip` | MWCC normalises `if (x)` to `x != 0` (rlwinm. record form); the retail tested `x == TRUE` with a real `cmpli r0,1` | Store the result and test `== TRUE` explicitly (`is_sco_active = btm_is_sco_active_by_bdaddr(...); if (is_sco_active == TRUE)`) |
+| Mid-pool orphan strings (`BTM_ReadLinkPolicy` @0x1A8, `BTM_SetQoS` @0x254) shift later base+immediate trace relocs (chg_all @0x38C+) | The retail pool carries trace literals whose calls were compiled out; MWCC only pools referenced literals, so the decomp pool is missing them | Declare `static const char *const pool_x = "...";` + `(void)pool_x;` **inside the function whose source position matches the retail pool slot** (e.g. `btm_read_link_policy_complete` for @0x1A8, `btm_get_max_packet_size` for @0x254) — local statics pool at first-reference position; do NOT put them in btm_acl_init (that shifts them to the pool head) |
+| Static-initializer strings and call-site literals do **not** dedup: keeping `pool_dup/pool_pkt/pool_rs` statics in btm_acl_init after the trace calls exist duplicates the first three pool strings (@0x0 and @0xBC) and breaks every later base+immediate | The `-str reuse` merge fails between the static-const-pointer form and the direct call-site literal form | Remove the btm_acl_init pool statics once the real trace calls exist — the natural first-use order (created's LogMsg_6, LogMsg_1, SwitchRole's LogMsg_0, SetLinkPolicy's four) reproduces the retail pool head exactly |
+| `-func_align 16` (working-tree regression) breaks the whole unit: 16-byte function padding pushes .text over the split budget (0x1D54 vs 0x1D44) and re-inserts the `ori r0,r0,0` mtctr nop in btm_acl_created's features loop | btm_acl.c must be `-func_align 4` (see KB ref:a62b281252); configure.py had been bulk-edited to 16 | Keep `extra_cflags=["-func_align 4"]` for btm_acl.c |
+| `sec_flags` bit test at 0x76 is bit 2 (`rlwinm 29,29` = 0x04) | The role-switch path checks `BTM_SEC_FLAG_ENCRYPTED` (0x04), **not** `BTM_SEC_LINK_KEY_KNOWN` (0x10) — the bluedroid-era source used `sec_flags & BTM_SEC_ENCRYPTED` | Use `BTM_SEC_ENCRYPTED` (0x04) |
+
+
 ### btm_inq.c — 7× FULL_MATCH, rest 0-structural (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
 
 FULL_MATCH: `BTM_SetInquiryScanType`, `BTM_SetPageScanType`, `BTM_SetInquiryMode`,

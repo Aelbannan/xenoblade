@@ -245,14 +245,13 @@ BtmSecDevRec *btm_find_dev_by_handle(UINT16 handle)
     int i;
 
     p_rec = btm_cb.sec_dev_rec;
-    for (i = 0; i < 16; i++)
+    for (i = 0; i < 16; i++, p_rec++)
     {
         if ((p_rec->sec_flags & BTM_SEC_IN_USE) &&
             p_rec->hci_handle == handle)
         {
             return p_rec;
         }
-        p_rec++;
     }
 
     return NULL;

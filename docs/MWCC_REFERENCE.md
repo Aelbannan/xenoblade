@@ -224,6 +224,20 @@ inq scan, 0x20 = interlaced page scan, 0x40 = inq RSSI), `dev_class` 0x648,
 The `BTM_SetDiscoverability`/`BTM_StartInquiry`/`btm_event_filter_complete`/
 `btm_process_inq_results` stubs are still to match.
 
+### hcicmds.c — pool-buffer HCI command builders (US, `-O4,s`)
+
+`btsnd_hcic_write_pin_type`, `btsnd_hcic_write_auth_enable`, `btsnd_hcic_write_encr_mode`,
+`btsnd_hcic_read_rssi` accepted as EQUIVALENT_MATCH (~90% static, semantic-certified).
+The Wii bte buffer is an 8-byte `BT_HDR` (event@0, len@2, offset@4, layer_specific@6)
+with the command at p+8: `[opcode-lo, opcode-hi(=OGF<<2), paramlen, params…]`
+(`UINT16_TO_STREAM` is little-endian: low byte first).
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `li r0,0` (constant 0 for `p->offset`) allocated to r0 after the `sth len,2(r3)` store, reusing r0 — while retail hoists `li r6,0` **before** the first store (r0 still live with len). The pre-call opaque-EABI call token then diverges on r6 (retail 0 vs decomp opaque) → `inconclusive_abstraction` (`exit.target` mismatch = LR restored from a stack slot the opaque callee may write, differing per token) | MWCC schedules single-use constants as late as possible; the retail's scheduler hoisted the zero. A constant used **twice** is commoned and hoisted into a distinct register | Write the len u16 as a **byte pair in big-endian order**: `p[3] = 4; p[2] = 0;` (or `p[2] = len>>8; p[3] = len;`), keeping `*(unsigned short *)(p + 4) = 0` as a real u16 store. The zero then serves p[2] **and** the u16 offset → MWCC emits `li r6,0` hoisted, matching retail's register (r6) and bytes (`00 04`); for `read_rssi` write `p[3] = 5; p[2] = 0;` so the reused opcode byte (5) lands in r7 and the zero in r6, exactly like retail |
+| SMT persists after registers match | A halfword store at p+2 stores BE bytes `00 04`; naive byte stores `p[2]=4; p[3]=0` reverse them (`04 00`) — the pre-call **memory** diverges, keeping the token unequal | Always store the len as the BE byte pair (high byte at p[2], low byte at p[3]); verify with `check-objects` after any byte-store change |
+| `btsnd_hcic_write_cur_iac_lap` (mtctr/cmpwi/ble/header/bdnz copy loop, param trip) stalls: `inconclusive_unsupported` (instruction limit 2048) | The CTR-affine summarizer needs an in-function dot-form trip def + padding-only mtctr→guard adjacency; a param trip has no def (`_find_trip_def_index` → None) and the signed `ble` guard fails the zero-trip discharge (r4≤0 skips but trip≠0); the 3× lbz/stb copy body also fails the word-copy memory-loop grammar; unrolling is unbounded (r4 unconstrained) | Requires engine-side loop-summary grammar extension (mtctr;cmpwi;ble;header;bdnz with param trip + `max(0,trip)` skip semantics) or a u8-range bound on entry r4; source is otherwise register-matched modulo reg-swaps (83.2% static) |
+
 
 ## kyoshin/main (US) — early init + contiguous .data base
 

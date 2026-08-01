@@ -186,7 +186,8 @@ int btsnd_hcic_write_pin_type(unsigned char pin_type)
     unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
     if (p == NULL)
         return 0;
-    *(unsigned short *)(p + 2) = 4;
+    p[3] = 4;
+    p[2] = 0;
     *(unsigned short *)(p + 4) = 0;
     p[8] = 0x0a;
     p[9] = 0x0c;
@@ -279,7 +280,8 @@ int btsnd_hcic_write_auth_enable(unsigned char flag)
     unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
     if (p == NULL)
         return 0;
-    *(unsigned short *)(p + 2) = 4;
+    p[3] = 4;
+    p[2] = 0;
     *(unsigned short *)(p + 4) = 0;
     p[8] = 0x20;
     p[9] = 0x0c;
@@ -294,7 +296,8 @@ int btsnd_hcic_write_encr_mode(unsigned char mode)
     unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
     if (p == NULL)
         return 0;
-    *(unsigned short *)(p + 2) = 4;
+    p[3] = 4;
+    p[2] = 0;
     *(unsigned short *)(p + 4) = 0;
     p[8] = 0x22;
     p[9] = 0x0c;
@@ -418,7 +421,8 @@ int btsnd_hcic_read_rssi(unsigned short handle)
     unsigned char *p = (unsigned char *)GKI_getpoolbuf(2);
     if (p == NULL)
         return 0;
-    *(unsigned short *)(p + 2) = 5;
+    p[3] = 5;
+    p[2] = 0;
     *(unsigned short *)(p + 4) = 0;
     p[8] = 5;
     p[9] = 0x14;

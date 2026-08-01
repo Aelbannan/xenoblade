@@ -296,10 +296,43 @@ The retail bte hh unit needs `mw_version="GC/3.0a5.2"` (same family as bta_dm_ac
 | `bta_hh_start_sdp` call vanished from `bta_hh_open_act` | The empty `void bta_hh_start_sdp(...) {}` stub was auto-inlined and the call eliminated | Guard stub bodies with `#pragma push` / `#pragma auto_inline off` / `#pragma pop` |
 | `bta_hh_get_acl_q_info` `mulli r0,r4,0x24` vs retail `0x34` | Local `tHID_HOST_DEV_CTB` conn pad was short, shrinking the devices[] stride | Pad `conn` to 0x24 bytes (entry stride 0x34) — match the full member sizes, not just the touched fields |
 
-### hcicmds.c — pool-buffer HCI command builders (US, `-O4,s`)
+### hcicmds.c — pool-buffer HCI command builders (US, `-O4`)
+
+**Flag correction (2026-08): the retail unit is `-O4`, not `-O4,s`.** The retail
+prologue scheme is **individual `stw` for ≤4 saved regs and `_savegpr_X` for ≥5**
+(verified across the whole bte family: hcicmds `btsnd_hcic_inquiry` 3 regs /
+`set_host_buf_size` 4 regs use individual `stw`; `per_inq_mode` 5 regs and
+`create_conn` 6 regs use `_savegpr_27/_savegpr_26`; btm_devctl 5+ regs use
+`_savegpr_27`). MWCC `-O4`/`-O4,p` emits exactly this split; `-O4,s` (opt space)
+emits `_savegpr` already at 3 saved regs, which breaks the prologue of every 3–4
+param builder (`inquiry`/`hold_mode`/`park_mode`/`set_host_buf_size` were stuck at
+~10% fuzzy under `-O4,s`; under `-O4` they are at the 82–89% scheduling ceiling
+with byte-matching prologues). Tradeoff: `-O4` unrolls the mtctr copy loops
+(`btsnd_hcic_write_cur_iac_lap` goes from HIGH_MATCH 15 mismatches to unrolled
++size 380 vs retail 112; the u8 counter is always boundable so no source form or
+`#pragma opt_unroll off` suppresses it under `-O4`). `-O4,s` keeps the loop but
+breaks the 3–4 reg prologues — the retail mixes both, which no single available
+MWCC flag reproduces; the unit is on `-O4` so the builder prologues match.
+
+**16-bit param byte emission: signed `short` → `srawi rX,rN,8`, unsigned `u16` →
+`rlwinm`/`extrwi`.** Retail mixes both inside one function
+(`per_inq_mode`: max_delay `srawi` + min_delay `extrwi`; `hold_mode`: handle +
+max_hold `srawi`, min_hold `extrwi`; `set_host_buf_size`: acl_buf + acl_pkt
+`srawi`, sco_pkt `extrwi`, sco_buf single `stb` u8). Match the per-param signedness
+exactly or the shift opcode flips.
+
+Now HIGH_MATCH (73.7–90.5% static, sizes exact) with clean high-level C:
+`btsnd_hcic_inquiry`, `btsnd_hcic_per_inq_mode`, `btsnd_hcic_link_key_neg_reply`,
+`btsnd_hcic_pin_code_neg_reply`, `btsnd_hcic_rmt_name_req_cancel`,
+`btsnd_hcic_switch_role`, `btsnd_hcic_delete_stored_key`, `btsnd_hcic_hold_mode`,
+`btsnd_hcic_park_mode`, `btsnd_hcic_set_host_buf_size`. Acceptance still blocked
+by the engine artifact below (cross-unit callee lemmas unavailable; same blocker
+stalled `disconnect`/`add_SCO_conn`/`write_policy_set`/`write_link_super_tout` and
+now fails re-verification of previously-accepted `read_rssi`/`write_pin_type`).
 
 `btsnd_hcic_write_pin_type`, `btsnd_hcic_write_auth_enable`, `btsnd_hcic_write_encr_mode`,
-`btsnd_hcic_read_rssi` accepted as EQUIVALENT_MATCH (~90% static, semantic-certified).
+`btsnd_hcic_read_rssi` were accepted as EQUIVALENT_MATCH under an earlier engine
+(~90% static, semantic-certified).
 **The accepted committed form is the plain halfword store**
 `*(unsigned short *)(p + 2) = N;` (retail `sth rX,2`). Do **not** rewrite it as a byte
 pair (`p[3] = N; p[2] = 0;`): with the current toolchain MWCC emits two separate

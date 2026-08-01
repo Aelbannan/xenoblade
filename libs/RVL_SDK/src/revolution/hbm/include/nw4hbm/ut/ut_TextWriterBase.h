@@ -69,6 +69,7 @@ public:
     void ResetTagProcessor();
 
     f32 GetLineHeight() const;
+    void SetLineHeight(f32 height);
 
     f32 CalcLineWidth(const T* pStr, int len);
     f32 CalcStringWidth(const T* pStr, int len) const;
@@ -82,6 +83,7 @@ public:
 
     static T* GetBuffer();
     static T* SetBuffer(T* pBuffer, u32 size);
+    static T* SetBuffer(u32 size);
 
     static u32 GetBufferSize();
 
@@ -97,7 +99,7 @@ private:
         return (mDrawFlag & mask) == flag;
     }
 
-    bool CalcLineRectImpl(Rect* pRect, const T** ppStr, int len);
+    int CalcLineRectImpl(Rect* pRect, const T* pStr, int len);
     void CalcStringRectImpl(Rect* pRect, const T* pStr, int len);
 
     f32 PrintImpl(const T* pStr, int len, bool bMutable);

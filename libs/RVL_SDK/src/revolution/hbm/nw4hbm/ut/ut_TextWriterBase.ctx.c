@@ -13526,6 +13526,7 @@ public:
     void ResetTagProcessor();
 
     f32 GetLineHeight() const;
+    void SetLineHeight(f32 height);
 
     f32 CalcLineWidth(const T* pStr, int len);
     f32 CalcStringWidth(const T* pStr, int len) const;
@@ -13539,6 +13540,7 @@ public:
 
     static T* GetBuffer();
     static T* SetBuffer(T* pBuffer, u32 size);
+    static T* SetBuffer(u32 size);
 
     static u32 GetBufferSize();
 
@@ -13554,7 +13556,7 @@ private:
         return (mDrawFlag & mask) == flag;
     }
 
-    bool CalcLineRectImpl(Rect* pRect, const T** ppStr, int len);
+    int CalcLineRectImpl(Rect* pRect, const T* pStr, int len);
     void CalcStringRectImpl(Rect* pRect, const T* pStr, int len);
 
     f32 PrintImpl(const T* pStr, int len, bool bMutable);
@@ -13963,6 +13965,24 @@ template <typename T> f32 TextWriterBase<T>::GetLineHeight() const {
     return mLineSpace + GetScaleV() * lf;
 }
 
+template <typename T> void TextWriterBase<T>::SetLineHeight(f32 height) {
+    const Font* pFont = GetFont();
+    int lf = pFont != NULL ? pFont->GetLineFeed() : 0;
+    mLineSpace = height - GetScaleV() * lf;
+}
+
+// Defined before the printing routines so MWCC can inline them (retail codegen
+// inlines these accessors at every call site); the out-of-line bodies are still
+// emitted here for the standalone retail symbols.
+template <>
+f32 TextWriterBase<char>::GetCharSpace() const {
+    return mCharSpace;
+}
+template <>
+f32 TextWriterBase<wchar_t>::GetCharSpace() const {
+    return mCharSpace;
+}
+
 template <typename T>
 f32 TextWriterBase<T>::VPrintf(const T* pStr, std::va_list args) {
     T* pBuffer;
@@ -13996,67 +14016,36 @@ f32 TextWriterBase<T>::CalcLineWidth(const T* pStr, int len) {
     TextWriterBase<T> clone(*this);
 
     clone.SetCursor(0.0f, 0.0f);
-    clone.CalcLineRectImpl(&rect, &pStr, len);
+    clone.CalcLineRectImpl(&rect, pStr, len);
 
     return rect.GetWidth();
 }
 
 template <typename T>
-bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
-                                         int len) {
-    const T* pStrBegin = *ppStr;
-    const T* pStrEnd = pStrBegin + len;
-    bool useLimit = NW4R_MATH_FLT_MAX < NW4R_MATH_FLT_MAX;
-
-    PrintContext<T> context = {
-        this,     // writer
-        pStrBegin // str
-    };
-
-    f32 x = 0.0f;
-    bool charSpace = false;
-    bool overLimit = false;
-
-    const T* pPrevStream = NULL;
-    Rect prevRect;
+int TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T* pStr, int len) {
+    PrintContext<T> context = { this, pStr };
 
     CharStrmReader reader = GetFont()->GetCharStrmReader();
 
     pRect->left = 0.0f;
     pRect->right = 0.0f;
+
+    f32 x = 0.0f;
+    bool charSpace = false;
+
     pRect->top = Min(0.0f, GetLineHeight());
     pRect->bottom = Max(0.0f, GetLineHeight());
-    prevRect = *pRect;
 
-    reader.Set(pStrBegin);
-    pPrevStream = NULL;
-
+    reader.Set(pStr);
     u16 ch = reader.Next();
 
-    while (static_cast<const T*>(reader.GetCurrentPos()) <= pStrEnd) {
+    while (static_cast<const T*>(reader.GetCurrentPos()) - pStr <= len) {
         if (ch < ' ') {
             Rect r(x, 0.0f, 0.0f, 0.0f);
             context.str = static_cast<const T*>(reader.GetCurrentPos());
             context.flags = charSpace ? 0 : PrintContext<T>::FLAGS_CHARSPACE;
 
             SetCursorX(x);
-
-            if (useLimit && ch != '\n' && pPrevStream != NULL) {
-                PrintContext<T> context2 = context;
-                TextWriterBase<T> clone(*this);
-
-                Rect r;
-                context2.writer = &clone;
-                mTagProcessor->CalcRect(&r, ch, &context2);
-
-                if (r.GetWidth() > 0.0f &&
-                    clone.GetCursorX() - context.x > NW4R_MATH_FLT_MAX) {
-                    overLimit = true;
-                    ch = '\n';
-                    reader.Set(pPrevStream);
-                    continue;
-                }
-            }
 
             typename TagProcessorType::Operation oper =
                 mTagProcessor->CalcRect(&r, ch, &context);
@@ -14071,8 +14060,7 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
             x = GetCursorX();
 
             if (oper == TagProcessorType::OPERATION_END_DRAW) {
-                *ppStr += len;
-                return false;
+                return len;
             }
 
             if (oper == TagProcessorType::OPERATION_NO_CHAR_SPACE) {
@@ -14083,47 +14071,31 @@ bool TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T** ppStr,
                 break;
             }
         } else {
-            f32 dx = 0.0f;
-
             if (charSpace) {
-                dx += GetCharSpace();
+                x += mCharSpace;
             }
-
-            if (IsWidthFixed()) {
-                dx += GetFixedWidth();
-            } else {
-                dx += GetFont()->GetCharWidth(ch) * GetScaleH();
-            }
-
-            if (useLimit && pPrevStream != NULL && x + dx > NW4R_MATH_FLT_MAX) {
-                overLimit = true;
-                ch = '\n';
-                reader.Set(pPrevStream);
-                continue;
-            }
-
-            x += dx;
-            pRect->left = Min(pRect->left, x);
-            pRect->right = Max(pRect->right, x);
 
             charSpace = true;
-        }
 
-        if (useLimit) {
-            pPrevStream = static_cast<const T*>(reader.GetCurrentPos());
+            if (IsWidthFixed()) {
+                x += GetFixedWidth();
+            } else {
+                x += GetFont()->GetCharWidth(ch) * GetScaleH();
+            }
+
+            pRect->left = Min(pRect->left, x);
+            pRect->right = Max(pRect->right, x);
         }
 
         ch = reader.Next();
     }
 
-    *ppStr = static_cast<const T*>(reader.GetCurrentPos());
-    return overLimit;
+    return static_cast<const T*>(reader.GetCurrentPos()) - pStr;
 }
 
 template <typename T>
 void TextWriterBase<T>::CalcStringRectImpl(Rect* pRect, const T* pStr,
                                            int len) {
-    const T* pEnd = pStr + len;
     int remain = len;
 
     pRect->left = 0.0f;
@@ -14135,8 +14107,9 @@ void TextWriterBase<T>::CalcStringRectImpl(Rect* pRect, const T* pStr,
 
     do {
         Rect r;
-        CalcLineRectImpl(&r, &pStr, remain);
-        remain = pEnd - pStr;
+        int consumed = CalcLineRectImpl(&r, pStr, remain);
+        pStr += consumed;
+        remain -= consumed;
 
         pRect->left = Min(pRect->left, r.left);
         pRect->top = Min(pRect->top, r.top);
@@ -14356,6 +14329,13 @@ void TextWriterBase<T>::CalcStringRect(Rect* pRect, const T* pStr,
                                        int len) const {
     TextWriterBase<T> clone(*this);
     clone.CalcStringRectImpl(pRect, pStr, len);
+}
+
+template <typename T> T* TextWriterBase<T>::SetBuffer(u32 size) {
+    T* pOldBuffer = mFormatBuffer;
+    mFormatBufferSize = size;
+    mFormatBuffer = NULL;
+    return pOldBuffer;
 }
 
 // Explicit template instantiations for getter/setter functions.

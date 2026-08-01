@@ -39,7 +39,6 @@ from typing import Any
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.provenance import canonical_json_sha256
 from tools.ppc_equivalence.skip_guard import (
-    SkipGuardInfo,
     find_mtctr_with_guard,
     guard_family,
 )
@@ -1039,9 +1038,6 @@ def _parse_compare_affine_body(
         if any(operand == rt for operand in op.operands):
             return None, ["compare-affine body op reads the counter register"]
     return (rt, step, updates, bound_imm, bound_reg, signed, body_ops), notes
-
-
-_COMPARE_FAMILIES = frozenset({"bne", "beq", "blt", "bgt", "ble", "bge"})
 
 
 def _sign_extend_16(value: int) -> int:

@@ -318,10 +318,10 @@ void __parse_dpd_data(s32 chan, WPADStatusEx** status, u8 fmt, u8* data, s32 siz
 }
 
 void __parse_dpdex_data(s32 chan, WPADStatusEx** status, s32 index, u8* data, s32 size) {
-    (*status)->obj[index].x = (s16)((s16)((u16)data[0] & 0xFF) | (u16)(((u16)data[2] & 0x30) << 4));
-    (*status)->obj[index].y = (s16)((s16)(WPAD_DPD_IMG_RESO_WY - 1) -
+    (*status)->obj[(u8)index].x = (s16)((s16)((u16)data[0] & 0xFF) | (u16)(((u16)data[2] & 0x30) << 4));
+    (*status)->obj[(u8)index].y = (s16)((s16)(WPAD_DPD_IMG_RESO_WY - 1) -
                                     (s16)((s16)((u16)data[1] & 0xFF) | (u16)(((u16)data[2] & 0xC0) << 2)));
-    (*status)->exp[index].pixel = (s16)(((s16)((u16)data[7] << 8) | data[8]) & 0x3FF) << 6;
+    (*status)->exp[index].pixel = (s16)(((s16)((data[7] & 0xFF) << 8) | data[8]) & 0x3FF) << 6;
     (*status)->exp[index].radius = (u8)(data[2] & 0xF);
 
     (*status)->exp[index].range_x1 = (s16)(((s8)data[3] == -1) ? 0 : data[3]);
@@ -336,19 +336,19 @@ void __parse_dpdex_data(s32 chan, WPADStatusEx** status, s32 index, u8* data, s3
     (*status)->exp[index].range_y2 = (s16)((s16)(WPAD_DPD_IMG_RESO_WY - 1) -
                                            (s16)((*status)->exp[index].range_y2 * 8));
 
-    (*status)->obj[index].size =
+    (*status)->obj[(u8)index].size =
         (u16)((f32)(s8)(*status)->exp[index].radius * (f32)(s8)(*status)->exp[index].radius * PI);
 
-    if ((*status)->obj[index].size == 0 || (*status)->obj[index].x == (s16)(WPAD_DPD_IMG_RESO_WX - 1) ||
-        (*status)->obj[index].y == (s16)(WPAD_DPD_IMG_RESO_WY - 1) ||
+    if ((*status)->obj[(u8)index].size == 0 || (*status)->obj[(u8)index].x == (s16)(WPAD_DPD_IMG_RESO_WX - 1) ||
+        (*status)->obj[(u8)index].y == (s16)(WPAD_DPD_IMG_RESO_WY - 1) ||
         (*status)->exp[index].radius == 0xF) {
-        (*status)->obj[index].x = (s16)0;
-        (*status)->obj[index].y = (s16)(WPAD_DPD_IMG_RESO_WY - 1);
-        (*status)->obj[index].size = 0;
+        (*status)->obj[(u8)index].x = (s16)0;
+        (*status)->obj[(u8)index].y = (s16)(WPAD_DPD_IMG_RESO_WY - 1);
+        (*status)->obj[(u8)index].size = 0;
         (*status)->exp[index].pixel = 0;
         (*status)->exp[index].radius = 0;
     }
-    (*status)->obj[index].traceId = index;
+    (*status)->obj[(u8)index].traceId = index;
 }
 //
 // Classic Controller parsing

@@ -2,8 +2,13 @@
 // High-level C reconstruction of retail vi.c (release build Feb 27 2009).
 
 #include <revolution/OS.h>
+#include <revolution/SC.h>
 #include <revolution/VI.h>
 #include <revolution/vi/vihardware.h>
+
+// Defined in vi3in1.c (not yet matched in this TU).
+extern void VISetRGBModeImm(void);
+extern void __VISetGamma1_0(void);
 
 // TV modes missing from the public vitypes.h enum (retail VITVMode)
 #define VI_TVMODE_NTSC_3D 3
@@ -82,6 +87,33 @@ typedef struct {
 #define MARK_CHANGED(index) (changed |= 1LL << (63 - (index)))
 
 volatile u64 changed = 0;
+volatile u64 shdwChanged;
+volatile u32 changeMode;
+volatile u32 shdwChangeMode;
+volatile u32 FBSet;
+volatile u32 NextBufAddr;
+u32 CurrTvMode;
+volatile u32 flushFlag3in1;
+volatile u32 flushFlag;
+volatile u32 NEW_TIME_TO_DIMMING;
+volatile s32 g_current_time_to_dim;
+volatile u32 __VIDimmingFlag_Enable;
+u16 shdwRegs[59];
+
+// Index (from the top bit) of the highest set bit of a 64-bit value.
+static s32 cntlzd(u64 bit) {
+    u32 hi;
+    u32 lo;
+    s32 value;
+
+    hi = (u32)(bit >> 32);
+    lo = (u32)(bit & 0xFFFFFFFFULL);
+    value = __cntlzw(hi);
+    if (value < 32) {
+        return value;
+    }
+    return __cntlzw(lo) + 32;
+}
 timing_s timing[11] = {
     { 6, 240, 24, 25, 3, 2, 12, 13, 12, 13, 520, 519, 520, 519, 525, 429, 64, 71, 105, 162, 373, 122, 412 },
     { 6, 240, 24, 24, 4, 4, 12, 12, 12, 12, 520, 520, 520, 520, 526, 429, 64, 71, 105, 162, 373, 122, 412 },
@@ -107,7 +139,73 @@ volatile u32 _gIdleCount_dimming = 0;
 volatile u32 __VIDimmingFlag_RF_IDLE;
 volatile u32 __VIDimmingFlag_DEV_IDLE[10];
 
-void OnShutdown(void) {}
+static void flushRegs(BOOL enabled);
+
+static BOOL OnShutdown(int final, unsigned long event) {
+    BOOL retval;
+    BOOL enabled;
+    s32 regIndex;
+    static BOOL first = TRUE;
+    static u32 count;
+
+    if (final == FALSE) {
+        switch (event) {
+        case 1:
+        case 2:
+        case 3:
+            if (first) {
+                VISetRGBModeImm();
+                enabled = OSDisableInterrupts();
+                flushRegs(enabled);
+                count = retraceCount;
+                first = FALSE;
+                retval = FALSE;
+            } else {
+                if (count == retraceCount) {
+                    retval = FALSE;
+                } else {
+                    retval = TRUE;
+                }
+            }
+            break;
+        case 0:
+        case 4:
+        case 5:
+        case 6:
+            __VISetGamma1_0();
+            retval = TRUE;
+            break;
+        default:
+            break;
+        }
+    } else {
+        retval = TRUE;
+    }
+
+    return retval;
+}
+
+
+static void flushRegs(BOOL enabled) {
+    s32 regIndex;
+
+    shdwChangeMode |= changeMode;
+    changeMode = 0;
+    shdwChanged |= changed;
+
+    while (changed != 0) {
+        regIndex = cntlzd(changed);
+        shdwRegs[regIndex] = regs[regIndex];
+        changed &= ~((u64)1 << (63 - regIndex));
+    }
+
+    flushFlag = 1;
+    flushFlag3in1 = 1;
+    NextBufAddr = HorVer.bufAddr;
+    OSRestoreInterrupts(enabled);
+}
+
+static OSShutdownFunctionInfo ShutdownFunctionInfo = { OnShutdown, 127, NULL, NULL };
 
 void __VIRetraceHandler() {}
 
@@ -177,7 +275,9 @@ timing_s* getTiming(VITVMode mode) {
 
 void __VIInit(VITVMode mode) {}
 
-void VIInit(void) {}
+void VIInit(void) {
+    OSRegisterShutdownFunction(&ShutdownFunctionInfo);
+}
 
 void VIWaitForRetrace(void) {
     BOOL enabled;
@@ -342,23 +442,157 @@ void VIConfigure(const GXRenderModeObj* rmo) {}
 
 void VIConfigurePan(u16 x, u16 y, u16 w, u16 h) {}
 
-void VIFlush(void) {}
+void VIFlush(void) {
+    BOOL enabled;
+    s32 regIndex;
 
-void VISetNextFrameBuffer(void* fb) {}
+    enabled = OSDisableInterrupts();
+    shdwChangeMode |= changeMode;
+    changeMode = 0;
+    shdwChanged |= changed;
 
-void VISetBlack(BOOL black) {}
+    while (changed != 0) {
+        regIndex = cntlzd(changed);
+        shdwRegs[regIndex] = regs[regIndex];
+        changed &= ~((u64)1 << (63 - regIndex));
+    }
+
+    flushFlag = 1;
+    flushFlag3in1 = 1;
+    NextBufAddr = HorVer.bufAddr;
+    OSRestoreInterrupts(enabled);
+}
+
+void VISetNextFrameBuffer(void* fb) {
+    BOOL enabled;
+
+    enabled = OSDisableInterrupts();
+    HorVer.bufAddr = (u32)fb;
+    FBSet = 1;
+    setFbbRegs(&HorVer, &HorVer.tfbb, &HorVer.bfbb, &HorVer.rtfbb, &HorVer.rbfbb);
+    OSRestoreInterrupts(enabled);
+}
+
+void VISetBlack(BOOL black) {
+    BOOL enabled;
+    timing_s* tm;
+
+    enabled = OSDisableInterrupts();
+    HorVer.black = black;
+    tm = HorVer.timing;
+    setVerticalRegs(HorVer.AdjustedDispPosY, HorVer.DispSizeY, tm->equ, tm->acv, tm->prbOdd,
+                    tm->prbEven, tm->psbOdd, tm->psbEven, black);
+    OSRestoreInterrupts(enabled);
+}
 
 s32 VIGetRetraceCount(void) {
     return retraceCount;
 }
 
-u32 VIGetNextField(void) { return 0; }
 
-u32 VIGetCurrentLine(void) { return 0; }
+static void GetCurrentDisplayPosition(u32* hct, u32* vct) {
+    u32 hcount;
+    u32 vcount;
+    u32 prev;
 
-VITVFormat VIGetTvFormat(void) { return VI_TVFORMAT_NTSC; }
+    hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
+    do {
+        vcount = VI_HW_REGS[VI_DPH] & 0x7FF;
+        prev = hcount;
+        hcount = VI_HW_REGS[VI_DPV] & 0x7FF;
+    } while (prev != hcount);
+    *hct = hcount;
+    *vct = vcount;
+}
 
-VIScanMode VIGetScanMode(void) { return VI_SCANMODE_INT; }
+static u32 getCurrentField(void) {
+    u32 hcount;
+    u32 vcount;
+    u32 halfLine;
+    u32 nh;
+
+    GetCurrentDisplayPosition(&hcount, &vcount);
+    halfLine = (hcount - 1) << 1;
+    halfLine += (vcount - 1) / CurrTiming->hlw;
+    nh = (u32)CurrTiming->nhlines;
+    return ((nh << __cntlzw(nh ^ halfLine)) >> 31);
+}
+
+u32 VIGetNextField(void) {
+    u32 field;
+    BOOL enabled;
+
+    enabled = OSDisableInterrupts();
+    field = getCurrentField();
+    OSRestoreInterrupts(enabled);
+
+    return ((field ^ 1) ^ (HorVer.AdjustedDispPosY & 1));
+}
+
+u32 VIGetCurrentLine(void) {
+    u32 hcount;
+    u32 vcount;
+    u32 halfLine;
+    timing_s* tm;
+    BOOL enabled;
+
+    tm = CurrTiming;
+    enabled = OSDisableInterrupts();
+    GetCurrentDisplayPosition(&hcount, &vcount);
+
+    halfLine = ((hcount - 1) << 1) + ((vcount - 1) / CurrTiming->hlw);
+    OSRestoreInterrupts(enabled);
+
+    if (halfLine >= tm->nhlines) {
+        halfLine -= tm->nhlines;
+    }
+
+    return halfLine >> 1;
+}
+
+VITVFormat VIGetTvFormat(void) {
+    VITVFormat format;
+    BOOL enabled;
+
+    enabled = OSDisableInterrupts();
+
+    switch (CurrTvMode) {
+    case VI_TVFORMAT_NTSC:
+    case VI_TVFORMAT_DEBUG:
+    case 6:
+    case 7:
+    case 8:
+        format = VI_TVFORMAT_NTSC;
+        break;
+    case VI_TVFORMAT_PAL:
+    case VI_TVFORMAT_DEBUG_PAL:
+        format = VI_TVFORMAT_PAL;
+        break;
+    case VI_TVFORMAT_MPAL:
+    case VI_TVFORMAT_EURGB60:
+        format = (VITVFormat)CurrTvMode;
+        break;
+    }
+
+    OSRestoreInterrupts(enabled);
+    return format;
+}
+
+VIScanMode VIGetScanMode(void) {
+    VIScanMode scanMode;
+    BOOL enabled;
+
+    enabled = OSDisableInterrupts();
+
+    if ((u32)(VI_HW_REGS[VI_VICLK] & 1) == 1) {
+        scanMode = VI_SCANMODE_PROG;
+    } else {
+        scanMode = (VIScanMode)(((u32)(VI_HW_REGS[VI_DCR] & 4) >> 2) != 0);
+    }
+
+    OSRestoreInterrupts(enabled);
+    return scanMode;
+}
 
 u32 VIGetDTVStatus(void) {
     u32 dtvStatus;
@@ -440,9 +674,76 @@ u32 VIGetDimmingCount(void) {
     return count;
 }
 
-BOOL VIEnableDimming(BOOL enable) { return FALSE; }
+BOOL VIEnableDimming(BOOL enable) {
+    BOOL old;
 
-s32 VISetTimeToDimming(s32 time) { return 0; }
+    old = __VIDimmingFlag_Enable;
+    if (enable == TRUE) {
+        if (SCGetScreenSaverMode() == 0) {
+            enable = FALSE;
+        }
+    }
+    __VIDimmingFlag_Enable = enable;
+    return old;
+}
+
+s32 VISetTimeToDimming(s32 time) {
+    u32 mode;
+    s32 old;
+    BOOL enabled;
+
+    old = g_current_time_to_dim;
+    g_current_time_to_dim = time;
+    enabled = OSDisableInterrupts();
+
+    switch (CurrTvMode) {
+    case VI_TVFORMAT_NTSC:
+    case VI_TVFORMAT_DEBUG:
+    case 6:
+    case 7:
+    case 8:
+        mode = 0;
+        break;
+    case VI_TVFORMAT_PAL:
+    case VI_TVFORMAT_DEBUG_PAL:
+        mode = 1;
+        break;
+    case VI_TVFORMAT_MPAL:
+    case VI_TVFORMAT_EURGB60:
+        mode = CurrTvMode;
+        break;
+    }
+
+    OSRestoreInterrupts(enabled);
+
+    if (mode == 1) {
+        switch (g_current_time_to_dim) {
+        case VI_DM_10M:
+            NEW_TIME_TO_DIMMING = 30000;
+            break;
+        case VI_DM_15M:
+            NEW_TIME_TO_DIMMING = 45000;
+            break;
+        default:
+            NEW_TIME_TO_DIMMING = 15000;
+            break;
+        }
+    } else {
+        switch (g_current_time_to_dim) {
+        case VI_DM_10M:
+            NEW_TIME_TO_DIMMING = 36000;
+            break;
+        case VI_DM_15M:
+            NEW_TIME_TO_DIMMING = 54000;
+            break;
+        default:
+            NEW_TIME_TO_DIMMING = 18000;
+            break;
+        }
+    }
+
+    return old;
+}
 
 BOOL VIResetDimmingCount(void) {
     __VIDimmingFlag_DEV_IDLE[0] = 0;

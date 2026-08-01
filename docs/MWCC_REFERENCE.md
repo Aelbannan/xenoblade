@@ -4887,3 +4887,49 @@ Batch pi-rvl-rvl_easy_82 (2026): `bta_hh_find_cb`, `bta_hh_hdl_event`,
   `sdp_db_service_search(p_rec, p_seq)`: p_rec==NULL → record[0] else p_rec++,
   p_end = &record[num_records]; all-uuids-match record scan; UUID_DESC_TYPE=3
   → `sdpu_compare_uuid_arrays`, DATA_ELE_SEQ_DESC_TYPE=6 → `find_uuid_in_seq`.
+
+## RVL BTE l2c_utils — ARRAY_TO_STREAM loop recognition + retval-conj shape + func_align (US, 3× FULL_MATCH)
+
+`libs/RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c` — `l2cu_send_peer_echo_req`,
+`l2cu_send_peer_echo_rsp`, `l2cu_process_peer_cfg_req` → **FULL_MATCH (100% bytes,
+semantic-certified, size PASS 0x0 spare)** on GC/3.0a5.2 `-O4,p -ipa file -func_align 4`.
+
+**`memcpy` is never inlined by GC/3.0a5.2** (always `bl memcpy`, even constant sizes).
+Retail echo functions contain the inlined variable-length copy (8-byte unrolled loop +
+`lis r3,0x8000/subi r0,r3,2` 0x7FFFFFFE guard + byte tail). That shape is NOT `memcpy`
+inline — it is MWCC's **loop-to-memcpy recognition of a byte-copy loop at `-O4,p`**
+(probe: a plain `for (i) dst[i]=src[i]` compiles to exactly that pattern; `-O4,s`
+gives a simple `mtctr/blelr/lbz/stb/bdnz` counted loop instead). The ogws/Petari donor
+source writes the copy as the SDK macro:
+
+```c
+    UINT8 *p = (UINT8 *)(p_buf + 1) + 12;
+    if (data_len)
+    {
+        ARRAY_TO_STREAM (p, p_data, data_len);   /* for (ijk=0; ijk<len; ijk++) *p++ = a[ijk]; */
+    }
+```
+
+**`BOOLEAN retval = a && b && c; if (!retval) {...} return (retval);` register split:**
+with only 3 flags the conj collapses into the retval register (`li r3,0; tests; li r3,1;
+cmpwi r3,0; bnelr` — 4 instr shorter than retail). Retail keeps a separate conj temp
+(`li r3,0; li r0,0; tests; li r0,1; cmpwi r0,0; beq; li r3,1; cmpwi r3,0; bnelr`).
+Adding the (constant-TRUE) 4th flag `fcr_ok` to the conj
+(`retval = mtu_ok && flush_ok && qos_ok && fcr_ok;` + `if (fcr_ok) p_cfg->fcr_present = FALSE;`
+— the exact Petari donor shape) makes MWCC materialize the conj in r0 and copy to r3,
+byte-identical to retail. Donor source shapes that matter elsewhere in the function:
+MTU section `if (mtu >= MIN) { out_mtu = mtu; if (out_mtu > MAX) out_mtu = mtu = MAX; } else {...}`
+(store-to-load forward; `p_cfg->mtu` in the inner test would reload); QoS section
+`if (service_type <= GUARANTEED) { copy } else { illegal }` (copy in fall-through, `bgt` to
+the 3-instruction illegal path); `max_len` if/else `if (pkt_size < MAX) data_size; else MAX`
+(ternary emits the inverted branch).
+
+**`-func_align 16` regressed the whole unit:** retail l2c_utils function starts are only
+4-aligned (zero .text padding; unit .text == split budget exactly). `-func_align 16`
+inserted an alignment `ori r0,r0,0` before the `mtctr` loop in `l2cu_allocate_lcb` and
+`l2cu_lcb_disconnecting` (+8 bytes) plus ~160 bytes of inter-function padding — the unit
+blew the split (0xA8 over) once the echo loops were inlined. Switching the Object to
+`extra_cflags=["-func_align 4"]` (matching sibling units l2c_main/l2c_link/l2c_csm and
+the rest of the bte family) removed the nops, restored the previously-FULL_MATCH
+`l2cu_allocate_lcb`/`l2cu_lcb_disconnecting`, and landed .text at exactly 0x1EC4
+(budget, 0x0 spare).

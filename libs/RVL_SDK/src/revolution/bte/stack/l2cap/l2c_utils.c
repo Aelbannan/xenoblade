@@ -714,6 +714,7 @@ void l2cu_send_peer_disc_rsp (tL2C_LCB *p_lcb, UINT8 remote_id, UINT16 local_cid
 void l2cu_send_peer_echo_req (tL2C_LCB *p_lcb, UINT8 *p_data, UINT16 data_len)
 {
     BT_HDR *p_buf;
+    UINT8  *p;
 
     if ((p_buf = l2cu_build_header (p_lcb->handle, data_len, L2CAP_CMD_ECHO_REQ,
                                     (UINT8)(++p_lcb->tx_ident))) == NULL)
@@ -722,7 +723,12 @@ void l2cu_send_peer_echo_req (tL2C_LCB *p_lcb, UINT8 *p_data, UINT16 data_len)
         return;
     }
 
-    memcpy ((UINT8 *)(p_buf + 1) + 12, p_data, data_len);
+    p = (UINT8 *)(p_buf + 1) + 12;
+
+    if (data_len)
+    {
+        ARRAY_TO_STREAM (p, p_data, data_len);
+    }
 
     l2c_link_check_send_pkts (p_lcb, NULL, p_buf);
 }
@@ -730,9 +736,13 @@ void l2cu_send_peer_echo_req (tL2C_LCB *p_lcb, UINT8 *p_data, UINT16 data_len)
 void l2cu_send_peer_echo_rsp (tL2C_LCB *p_lcb, UINT8 remote_id, UINT8 *p_data, UINT16 data_len)
 {
     BT_HDR *p_buf;
-    UINT16  max_len = (btu_cb.hcit_acl_pkt_size >= L2CAP_ECHO_MAX_DATA_SIZE)
-                          ? L2CAP_ECHO_MAX_DATA_SIZE
-                          : btu_cb.hcit_acl_data_size;
+    UINT8  *p;
+    UINT16  max_len;
+
+    if (btu_cb.hcit_acl_pkt_size < L2CAP_ECHO_MAX_DATA_SIZE)
+        max_len = btu_cb.hcit_acl_data_size;
+    else
+        max_len = L2CAP_ECHO_MAX_DATA_SIZE;
 
     if (data_len > (UINT16)(max_len - 12))
         data_len = 0;
@@ -744,7 +754,12 @@ void l2cu_send_peer_echo_rsp (tL2C_LCB *p_lcb, UINT8 remote_id, UINT8 *p_data, U
         return;
     }
 
-    memcpy ((UINT8 *)(p_buf + 1) + 12, p_data, data_len);
+    p = (UINT8 *)(p_buf + 1) + 12;
+
+    if (data_len)
+    {
+        ARRAY_TO_STREAM (p, p_data, data_len);
+    }
 
     l2c_link_check_send_pkts (p_lcb, NULL, p_buf);
 }
@@ -976,22 +991,22 @@ BOOLEAN l2cu_process_peer_cfg_req (tL2C_CCB *p_ccb, tL2C_CFG_INFO *p_cfg)
     BOOLEAN mtu_ok   = TRUE;
     BOOLEAN qos_ok   = TRUE;
     BOOLEAN flush_ok = TRUE;
+    BOOLEAN fcr_ok   = TRUE;
+    BOOLEAN retval;
 
     if (p_cfg->mtu_present)
     {
-        if (p_cfg->mtu < L2CAP_MIN_MTU)
+        if (p_cfg->mtu >= L2CAP_MIN_MTU)
         {
-            p_cfg->mtu = L2CAP_MIN_MTU;
-            mtu_ok = FALSE;
+            p_ccb->out_mtu = p_cfg->mtu;
+
+            if (p_ccb->out_mtu > L2CAP_MAX_MTU)
+                p_ccb->out_mtu = p_cfg->mtu = L2CAP_MAX_MTU;
         }
         else
         {
-            p_ccb->out_mtu = p_cfg->mtu;
-            if (p_cfg->mtu > L2CAP_MAX_MTU)
-            {
-                p_cfg->mtu   = L2CAP_MAX_MTU;
-                p_ccb->out_mtu = L2CAP_MAX_MTU;
-            }
+            p_cfg->mtu = L2CAP_MIN_MTU;
+            mtu_ok = FALSE;
         }
     }
 
@@ -1006,30 +1021,33 @@ BOOLEAN l2cu_process_peer_cfg_req (tL2C_CCB *p_ccb, tL2C_CFG_INFO *p_cfg)
 
     if (p_cfg->qos_present)
     {
-        if (p_cfg->qos.service_type > GUARANTEED)
+        if (p_cfg->qos.service_type <= GUARANTEED)
+        {
+            p_ccb->peer_cfg_qos = p_cfg->qos;
+        }
+        else
         {
             p_cfg->qos.service_type = BEST_EFFORT;
             qos_ok = FALSE;
         }
-        else
-        {
-            p_ccb->peer_cfg_qos = p_cfg->qos;
-        }
     }
 
-    if (mtu_ok && flush_ok && qos_ok)
-        return (TRUE);
+    retval = mtu_ok && flush_ok && qos_ok && fcr_ok;
 
-    p_cfg->result = L2CAP_CFG_UNACCEPTABLE_PARAMS;
-    if (mtu_ok)
-        p_cfg->mtu_present = FALSE;
-    if (flush_ok)
-        p_cfg->flush_to_present = FALSE;
-    if (qos_ok)
-        p_cfg->qos_present = FALSE;
-    p_cfg->fcr_present = FALSE;
+    if (!retval)
+    {
+        p_cfg->result = L2CAP_CFG_UNACCEPTABLE_PARAMS;
+        if (mtu_ok)
+            p_cfg->mtu_present = FALSE;
+        if (flush_ok)
+            p_cfg->flush_to_present = FALSE;
+        if (qos_ok)
+            p_cfg->qos_present = FALSE;
+        if (fcr_ok)
+            p_cfg->fcr_present = FALSE;
+    }
 
-    return (FALSE);
+    return (retval);
 }
 
 void l2cu_process_peer_cfg_rsp (tL2C_CCB *p_ccb, tL2C_CFG_INFO *p_cfg)

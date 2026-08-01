@@ -972,7 +972,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/utl.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             # bta_dm_act.c: retail bte compiled with GC/3.0a5.2 (mwcc_41_60831) —
             # Wii/1.1 (mwcc_43_151) floats li-before-lis / mr-before-stb scheduling
             # on cback-dispatch stores (rssi/link_quality/new_link_key soft-cap,

@@ -1195,6 +1195,17 @@ if (ml::math::abs(pad->mLStickXRaw) < lbl_eu_80667EB0) { ... }
 
 Retail `@stringBase0` offsets must match. A bare `unk1FC = ""` may pick a wrong empty hole. Fix: include all strings in a forced-pool sink, or use offset-from-known-string (`"CGameRestart" + 13`).
 
+**Array-form seed (no extra .data).** `bta_hh_evt_code` (bta_hh_main.c, GC/3.0a5.2): the retail pool carries nine sibling-trace strings (sm_execute / state_name / hdl_event) before the 17 evt strings; the unmatched siblings pooled the wrong strings first, shifting every `addi r3,r4,imm`. A local
+
+```c
+static const char *const s_pool[] = { "wrong device handle: [%d]", "BTA_HH_NULL_ST", ... };
+(void)s_pool;
+```
+
+at the top of the switch function pools all nine in retail order **and** is dropped as dead data by `-O4` (`.data` stays exactly retail size 0x2E0); the function then matches byte-for-byte including the 0x108+ evt offsets. Also: for a jump-table switch the pool order equals the **source case order** — the retail evt pool is DISABLE, ENABLE, OPEN, CLOSE, … (not enum order), so the cases must be written in that order.
+
+**mr-before-store is a GC/3.0a5.2 schedule.** `port_find_dlci_port` (port_utils.c) under Wii/1.1 emits `addi; stb; mr r3,r9` while retail has `addi; mr; stb` (the increment-return tail). Switching the unit to `mw_version="GC/3.0a5.2"` reproduces retail byte-for-byte (same fix as bta_hh_api, KB ref:c257c09888). Also use real array members (`&rfc_cb.port[index]`, not raw `(u8*)&rfc_cb + idx*0xA4 + 0x68` arithmetic) — the array-member form fixed every Chaitin reg-swap in the loop.
+
 #### 1d. Post-process rename (when source can't name the pool)
 
 For MWCC's implicit pools (e.g. int-to-double `0x43300000` magic constant), `objcopy --redefine-sym` after compile:

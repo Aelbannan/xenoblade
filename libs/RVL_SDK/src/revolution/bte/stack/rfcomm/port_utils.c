@@ -88,7 +88,7 @@ typedef struct RfcMuxChannel {
  */
 typedef struct RfcControlBlock {
     u8   pad_00[0x68];      /* 0x00-0x67 */
-    u8   port_storage[5 * 0xA4]; /* 0x68-0x39B - 5 ports */
+    RfcPort port[5];        /* 0x68-0x39B - 5 ports */
     u8   pad_39C[0x78];     /* 0x39C-0x413 */
     u8   trace_level;       /* 0x414 */
 } RfcControlBlock;
@@ -234,43 +234,30 @@ RfcPort* port_find_mcb_dlci_port(RfcMuxChannel* mcb, u8 dlci)
 
 /* ========================================================================
  * port_find_dlci_port - find a port by dlci (without mcb context)
- * Retail: iterates rfc_cb + i*0xA4, checks byte at +0x69 (in_use),
- * then checks port at +0x68.
  * ======================================================================== */
 RfcPort* port_find_dlci_port(u8 dlci)
 {
-    u8* base;
-    u16 i;
-    int dlci_low;
-    int dlci_m1;
+    u16 index;
+    RfcPort* p_port;
+    struct RfcMuxChannel* p_mcb;
 
-    base = (u8*)&rfc_cb;
-    dlci_low = dlci & 1;
-    dlci_m1 = dlci - 1;
+    for (index = 0; index < 5; index++) {
+        p_port = &rfc_cb.port[index];
 
-    for (i = 0; i < 5; i++) {
-        u8* port_bytes;
-        u8 in_use;
-        void* mcb;
-        u8 dlci_val;
+        if (p_port->in_use) {
+            p_mcb = p_port->mcb;
 
-        port_bytes = base + i * 0xA4 + 0x68;
+            if (p_mcb == NULL) {
+                if (p_port->dlci2 == dlci) {
+                    return p_port;
+                }
+                if ((dlci & 1) && (p_port->dlci2 == dlci - 1)) {
+                    u8 new_dlci = p_port->dlci2 + 1;
 
-        in_use = *(port_bytes + 0x01);
-        if (in_use == 0)
-            continue;
-
-        mcb = *(void**)(port_bytes + 0x6C);
-        if (mcb != NULL)
-            continue;
-
-        dlci_val = *(port_bytes + 0x0D);
-        if (dlci_val == dlci)
-            return (RfcPort*)port_bytes;
-
-        if (dlci_low != 0 && dlci_val == dlci_m1) {
-            *(port_bytes + 0x0D) = dlci;
-            return (RfcPort*)port_bytes;
+                    p_port->dlci2 = new_dlci;
+                    return p_port;
+                }
+            }
         }
     }
 

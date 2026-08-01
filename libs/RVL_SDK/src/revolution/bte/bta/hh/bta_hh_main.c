@@ -67,23 +67,39 @@ static const char *bta_hh_state_name(UINT8 state)
 /* ---- bta_hh_evt_code -------------------------------------------------- */
 const char *bta_hh_evt_code(UINT16 event)
 {
+    /* Pool-order seeds: retail .data pools these sibling strings first
+     * (sm_execute / state_name / hdl_event traces); referenced here so the
+     * evt strings land at the retail offsets. Dead after pooling. */
+    static const char *const s_pool[] = {
+        "wrong device handle: [%d]",
+        "BTA_HH_NULL_ST",
+        "BTA_HH_IDLE_ST",
+        "BTA_HH_W4_CONN_ST",
+        "BTA_HH_CONN_ST",
+        "unknown HID Host state",
+        "bta_hh_sm_execute: State 0x%02x [%s], Event [%s]",
+        "HH State Change: [%s] -> [%s] after Event [%s]",
+        "bta_hh_hdl_event:: handle = %d dev_cb[%d] ",
+    };
+    (void)s_pool;
+
     switch (event) {
+    case 0x170D: return "BTA_HH_API_DISABLE_EVT";
+    case 0x170C: return "BTA_HH_API_ENABLE_EVT";
     case 0x1700: return "BTA_HH_API_OPEN_EVT";
     case 0x1701: return "BTA_HH_API_CLOSE_EVT";
     case 0x1702: return "BTA_HH_INT_OPEN_EVT";
     case 0x1703: return "BTA_HH_INT_CLOSE_EVT";
+    case 0x1706: return "BTA_HH_INT_HANDSK_EVT";
     case 0x1704: return "BTA_HH_INT_DATA_EVT";
     case 0x1705: return "BTA_HH_INT_CTRL_DATA";
-    case 0x1706: return "BTA_HH_INT_HANDSK_EVT";
-    case 0x1707: return "BTA_HH_SDP_CMPL_EVT";
     case 0x1708: return "BTA_HH_API_WRITE_DEV_EVT";
-    case 0x1709: return "BTA_HH_API_GET_DSCP_EVT";
-    case 0x170A: return "BTA_HH_API_MAINT_DEV_EVT";
-    case 0x170B: return "BTA_HH_OPEN_CMPL_EVT";
-    case 0x170C: return "BTA_HH_API_ENABLE_EVT";
-    case 0x170D: return "BTA_HH_API_DISABLE_EVT";
-    case 0x170E: return "BTA_HH_API_GET_ACL_Q_EVT";
+    case 0x1707: return "BTA_HH_SDP_CMPL_EVT";
     case 0x170F: return "BTA_HH_DISC_CMPL_EVT";
+    case 0x170A: return "BTA_HH_API_MAINT_DEV_EVT";
+    case 0x1709: return "BTA_HH_API_GET_DSCP_EVT";
+    case 0x170B: return "BTA_HH_OPEN_CMPL_EVT";
+    case 0x170E: return "BTA_HH_API_GET_ACL_Q_EVT";
     default: return "unknown HID Host event code";
     }
 }

@@ -60,11 +60,13 @@ typedef struct
 
 /* Main BTA HH control block -- matches retail memory layout exactly.
    The fields are ORDERED as they appear in the retail binary:
-   kdev[] first (offset 0), then kb_cb, then pointer/flag fields. */
+   kb_cb first (offset 0, 0x10 bytes), then kdev[] at 0x10, then
+   pointer/flag fields.  (Retail accesses kdev[i] via &bta_hh_cb + i*0x20
+   + 0x10, so the array is NOT at offset 0.) */
 typedef struct
 {
-    tBTA_HH_DEV_CB   kdev[BTA_HH_MAX_KNOWN]; /* 0x000 - 0x1FF (16 x 0x20) */
-    tBTA_HH_KB_CB    kb_cb;                   /* 0x200 - 0x20F            */
+    tBTA_HH_KB_CB    kb_cb;                   /* 0x000 - 0x00F            */
+    tBTA_HH_DEV_CB   kdev[BTA_HH_MAX_KNOWN]; /* 0x010 - 0x20F (16 x 0x20) */
     void            *p_cur;                    /* 0x210                    */
     UINT8            cb_index[BTA_HH_MAX_KNOWN]; /* 0x214 - 0x223        */
     void            *p_cback;                  /* 0x224                    */
@@ -185,10 +187,9 @@ BOOLEAN bta_hh_tod_spt(tBTA_HH_DEV_CB *p_cb, UINT8 sub_class)
 {
     UINT8 xx;
     UINT8 cod = sub_class >> 2;
-    UINT8 max = p_bta_hh_cfg->max_devt_spt;
 
-    for (xx = 0; xx < max; xx++) {
-        if (cod == (UINT8)p_bta_hh_cfg->p_devt_list[xx].tod) {
+    for (xx = 0; xx < p_bta_hh_cfg->max_devt_spt; xx++) {
+        if (cod == p_bta_hh_cfg->p_devt_list[xx].tod) {
             p_cb->app_id = p_bta_hh_cfg->p_devt_list[xx].app_id;
             return TRUE;
         }

@@ -1007,7 +1007,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c", mw_version="GC/3.0a5.2"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 removes the spurious ori nop before mtctr-counted loops and matches the bte btm family layout (MWCC_REFERENCE btm_sco notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 matches retail's 4-aligned functions and packs .text into the split budget (MWCC_REFERENCE btm_devctl size row); Wii/1.1 merges byte-copies into lwz and schedules li/stb differently
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c", extra_cflags=["-func_align 4", "-ipa off"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c"),
             # gap_api.c: retail bte compiled with GC/3.0a5.2 (bte family, see
@@ -1029,10 +1029,10 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq/l2c_csm/l2c_utils); Wii/1.1 lowers the sparse event switch to a linear cmpwi chain (retail: cmpwi/bge tree) and schedules the held-packets decrement store-before-test; -func_align 4 packs the unit (no 16-byte fn padding). Unit .text is 8 bytes over the split until process_l2cap_cmd is matched (currently +8 under this compiler)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 16"]),  # retail l2cap built with GC 3.0a-family (see btm_devctl/btm_inq); Wii/1.1 merges the indexed pool load into lbzu (l2cu_find_ccb_by_cid) and inserts an mtctr-loop nop (l2cu_lcb_disconnecting)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_api.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built packed (no 16-byte fn padding); default -func_align 16 adds inter-fn padding and blows the split (see rfc_port_if.c / rfc_utils.c)
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed (no 16-byte fn padding); default -func_align 16 adds inter-fn padding and blows the split (see rfc_port_if.c / rfc_utils.c)
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built packed with GC 3.0a-family (see bta_hh_api/btm_inq); Wii/1.1 schedules the port_find_dlci_port return mr after the stb (retail mr-before-stb) and inflates select_mtu/flow_control_peer
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 16"]),  # retail bte built with GC 3.0a-family (see rfc_utils.c / btm_devctl)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c", extra_cflags=["-func_align 4", "-ipa off"]),  # retail rfcomm built packed (no 16-byte fn padding); default -func_align 16 adds 0x3C of inter-fn padding and blows the split
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c"),

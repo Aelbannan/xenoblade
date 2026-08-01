@@ -3794,3 +3794,43 @@ spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
    `INCONCLUSIVE_ABSTRACTION` (call-continuation `exit.target` mismatch from a
    same-TU callback argument), so function-pointer-arg functions can stall at 99%+
    CODE_MATCH.
+
+## RVL BTE btm_sec (GC/3.0a5.2, `-func_align 4`) — string-pool orphans, count-as-induction loops, inlined-search helpers (US, 6× FULL_MATCH)
+
+1. **String-pool orphans**: the retail `.data` contains format strings of
+   functions that were eliminated from the retail `.text` (BTM_SetSecurityMode /
+   BTM_SetEncryption), shifting every other string addend (relative to the
+   `@2854` base) and breaking FULL_MATCH on string references. Fix: reference the
+   strings from a **non-static** `char *const arr[] = {...}` placed at the retail
+   pool position in the source (strings pool in first-reference order; `static`
+   is dropped as dead data by `-O4`). Also keep the source function ORDER
+   matching the retail (e.g. `btm_sec_pin_code_request_timeout` sits between
+   `btm_sec_link_key_request` and `btm_sec_pin_code_request` in the retail pool).
+2. **Count-as-induction loops**: a device-record count loop with an early
+   `break` on the first free record compiles to the retail unrolled mtctr form
+   only when the **count is the loop induction variable**
+   (`for (dev_rec_count = 0; dev_rec_count < N; dev_rec_count++) { if (!in_use) break; }`)
+   and the `= 0` init lives in the declaration (`for (; count < N; count++)`).
+   A separate `i` counter produces a dead `+(unroll-1)` induction update the
+   retail lacks.
+3. **Inlined search helpers via `-ipa file`**: `for (i = 0; i < N; i++) { if (c) return (p); } return NULL;`
+   static helpers (find_first_serv / find_mx_serv) inline to the retail's exact
+   mtctr + dead-`+(checks-1)`-counter loops and let the loop-exhaust `p = NULL`
+   fold (`li r4, 0` on the exhaust path).
+4. **Boolean temp via if/else, not `&&`**: retail computes `r0 = (a==-1 && b==-1) ? 1 : 0`
+   with two separate inline `li r0, 0` blocks — write it as
+   `if (a == 0xFFFFFFFF) { if (b == 0xFFFFFFFF) r = 1; else r = 0; } else r = 0;`
+   (nested form; a flat `result = a && b` folds differently). Accept that MWCC
+   may tail-merge the two `r = 0` blocks (6 residual structural mismatches).
+5. **`== FALSE` forces the if-block to the branch target**: `if (call() == FALSE) x = 0; else { ...; x = 1; }`
+   compiles to `bne SET; [x=0]; b JOIN; SET: ...` matching the retail's
+   `bne SET; li 0; b; SET: li 1` temp pattern for `btsnd_hcic_set_conn_encrypt`
+   results.
+6. **Failure-path `sec_flags` masks differ from the success path**: in
+   `btm_sec_connected` the connection-failure path clears `BTM_SEC_LINK_KEY_KNOWN`
+   (`rlwinm 28,26` wrap mask), the success path clears 0x07.
+7. **Equivalence acceptance blocker**: remaining targets (98.3–98.9% static) are
+   `inconclusive_unvalidated_callee` because callees in other units
+   (`btm_sec_alloc_dev`, `btsnd_hcic_*`, `LogMsg`, `l2cu_*`,
+   `btm_initiate_rem_name`) are not accepted targets; `--linked` does not help
+   (registry-level gate). They need FULL_MATCH or cross-unit callee acceptance.

@@ -337,10 +337,10 @@ UINT8 *sdpu_build_attrib_entry (UINT8 *p_out, tSDP_ATTRIBUTE *p_attr)
 void sdpu_build_n_send_error (tCONN_CB *p_ccb, UINT16 trans_num, UINT16 error_code,
                               char *p_error_text)
 {
-    BT_HDR  *p_buf;
     UINT8   *p;
     UINT8   *p_start;
     UINT8   *p_len;
+    BT_HDR  *p_buf;
 
     if (sdp_cb.trace_level >= SDPU_TRACE_LEVEL_ERROR)
         LogMsg_2 (TRACE_CTRL_GENERAL | TRACE_LAYER_SDP | TRACE_ORG_STACK | SDPU_TRACE_TYPE_ERROR,
@@ -357,14 +357,15 @@ void sdpu_build_n_send_error (tCONN_CB *p_ccb, UINT16 trans_num, UINT16 error_co
     }
 
     p_buf->offset = 9;                      /* retail L2CAP_MIN_OFFSET */
-    p       = (UINT8 *)(p_buf + 1) + p_buf->offset;
-    p_start = p;
-    p_len   = p + 3;                        /* error parameter length field */
+    p       = p_start = (UINT8 *)(p_buf + 1) + p_buf->offset;
 
     *p++ = SDP_PDU_ERROR_RESPONSE;
     *p++ = (UINT8)(trans_num >> 8);
     *p++ = (UINT8)trans_num;
+
+    p_len   = p;                            /* error parameter length field */
     p   += 2;                               /* skip the parameter length */
+
     *p++ = (UINT8)(error_code >> 8);
     *p++ = (UINT8)error_code;
 
@@ -374,12 +375,12 @@ void sdpu_build_n_send_error (tCONN_CB *p_ccb, UINT16 trans_num, UINT16 error_co
         int xx;
 
         for (xx = 0; xx < (int)strlen (p_error_text); xx++)
-            *p++ = *p_error_text++;
+            *p++ = p_error_text[xx];
     }
 
     /* Fill in the lengths and send. */
-    p_len[0]   = (UINT8)(((p - p_len) - 2) >> 8);
-    p_len[1]   = (UINT8)((p - p_len) - 2);
+    p_len[0]   = (UINT8)(((UINT32)(p - p_len - 2)) >> 8);
+    p_len[1]   = (UINT8)(p - p_len - 2);
     p_buf->len = (UINT16)(p - p_start);
 
     L2CA_DataWrite (p_ccb->connection_id, p_buf);
@@ -692,8 +693,8 @@ BOOLEAN sdpu_is_base_uuid (UINT8 *p_uuid)
 *******************************************************************************/
 BOOLEAN sdpu_compare_uuid_arrays (UINT8 *p_uuid1, UINT32 len1, UINT8 *p_uuid2, UINT16 len2)
 {
-    UINT8   uuid2_128[LEN_UUID_128];
     UINT8   uuid1_128[LEN_UUID_128];
+    UINT8   uuid2_128[LEN_UUID_128];
 
     if (len1 == len2)
     {

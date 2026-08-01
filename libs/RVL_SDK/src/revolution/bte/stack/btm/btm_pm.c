@@ -24,8 +24,10 @@
 
 /* Retail layout fixes:
  * - BTM_SSR_INCLUDED off ⇒ tBTM_PM_MCB is 0x22 bytes (retail mulli stride).
- * - btm_cb layout in this build differs from retail, so the PM functions below
- *   access it through tBTM_CB_COMPAT, which matches the retail offsets.
+ * - The SDK tBTM_CB layout does not match the retail binary, so this unit
+ *   declares its own retail-layout view of the btm_cb global (tBTM_CB_COMPAT)
+ *   and accesses it directly.  btm_int.h's extern is renamed out of the way
+ *   (same per-TU overlay pattern as btm_main.c / btm_dev.c / btm_devctl.c).
  */
 #define BTM_MAX_PM_RECORDS 1
 #define BTM_SSR_INCLUDED   FALSE
@@ -38,7 +40,12 @@
 #include "revolution/BTE/stack/include/bt_types.h"
 #include "revolution/BTE/gki/platform/data_types.h"
 
+/* btm_int.h declares `extern tBTM_CB btm_cb;` whose layout does not match
+ * retail; rename that declaration out of the way and declare our own
+ * retail-layout extern below. */
+#define btm_cb btm_cb_sdk
 #include "revolution/BTE/stack/btm/btm_int.h"
+#undef btm_cb
 #include "revolution/BTE/gki/common/gki.h"
 #include "revolution/BTE/stack/include/hcidefs.h"
 
@@ -69,17 +76,26 @@ enum {
     BTM_PM_GET_COMP = 3,
 };
 
-/* Local retail-layout view of the subset of btm_cb used by this unit.
- * The global tBTM_CB layout in our headers does not match the retail binary,
- * so we take &btm_cb and cast to this type when accessing PM/ACL fields.
- * Offsets are taken from the retail code (see btm_pm_reset / btm_pm_sm_alloc).
- */
+/* Local retail-layout view of the btm_cb global used by this unit.
+ * The SDK tBTM_CB layout does not match the retail binary; offsets below are
+ * taken from the retail code (see btm_pm_reset / btm_pm_sm_alloc / btm_acl.c
+ * tACL_CONN). */
 typedef struct {
-    UINT8 _pad0[0x08];
-    BD_ADDR remote_addr;                  /* 0x08 */
-    UINT8 _pad1[0x119 - 0x08 - BD_ADDR_LEN]; /* 0x0E..0x118 */
-    UINT8 in_use;                         /* 0x119 */
-    UINT8 _pad2[0x11C - 0x11A];           /* 0x11A..0x11B */
+    UINT16 hci_handle;            /* 0x00 */
+    UINT16 pkt_types_mask;        /* 0x02 */
+    UINT16 restore_pkt_types;     /* 0x04 */
+    UINT16 clock_offset;          /* 0x06 */
+    BD_ADDR remote_addr;          /* 0x08 */
+    UINT8 remote_dc[3];           /* 0x0E */
+    UINT8 remote_name[248];       /* 0x11 */
+    UINT16 manufacturer;          /* 0x10A */
+    UINT16 lmp_subversion;        /* 0x10C */
+    UINT16 link_super_tout;       /* 0x10E */
+    UINT8 features[8];            /* 0x110 */
+    UINT8 lmp_version;            /* 0x118 */
+    UINT8 in_use;                 /* 0x119 */
+    UINT8 link_role;              /* 0x11A */
+    UINT8 switch_role_state;      /* 0x11B */
 } tACL_CONN_COMPAT;
 
 typedef struct {
@@ -96,7 +112,13 @@ typedef struct {
     tBTM_PM_RCB_COMPAT pm_reg_db[2];      /* 0x554 */
     UINT8 pm_pend_link;                   /* 0x564 */
     UINT8 pm_pend_id;                     /* 0x565 */
+    UINT8 _u2[0x624 - 0x566];             /* 0x566..0x623 */
+    tBTM_ROLE_SWITCH_CMPL switch_role_ref_data; /* 0x624 */
+    tBTM_CMPL_CB* p_switch_role_cb;       /* 0x62C */
 } tBTM_CB_COMPAT;
+
+/* The retail btm_cb global, with this unit's retail-layout view. */
+extern tBTM_CB_COMPAT btm_cb;
 
 /*******************************************************************************
  * local function declarations
@@ -211,7 +233,7 @@ tBTM_STATUS BTM_ReadPowerMode(BD_ADDR remote_bda, tBTM_PM_MODE* p_mode) {
     if ((acl_ind = btm_pm_find_acl_ind(remote_bda)) == MAX_L2CAP_LINKS)
         return BTM_UNKNOWN_ADDR;
 
-    *p_mode = ((tBTM_CB_COMPAT*)&btm_cb)->pm_mode_db[acl_ind].state;
+    *p_mode = btm_cb.pm_mode_db[acl_ind].state;
 
     return BTM_SUCCESS;
 }
@@ -220,35 +242,36 @@ void btm_pm_reset(void) {
     tBTM_PM_STATUS_CBACK* cb = NULL;
 
     /* Capture the callback for the party that has a pending request. */
-    if (((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_id != BTM_PM_SET_ONLY_ID &&
-        (((tBTM_CB_COMPAT*)&btm_cb)->pm_reg_db[((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_id].mask &
-         BTM_PM_REG_NOTIF)) {
-        cb = ((tBTM_CB_COMPAT*)&btm_cb)->pm_reg_db[((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_id].cback;
+    if (btm_cb.pm_pend_id != BTM_PM_SET_ONLY_ID &&
+        (btm_cb.pm_reg_db[btm_cb.pm_pend_id].mask & BTM_PM_REG_NOTIF)) {
+        cb = btm_cb.pm_reg_db[btm_cb.pm_pend_id].cback;
     }
 
-    /* Clear normal registration slot, reset pending link, then clear temp slot.
-     * Retail order/offsets are reproduced exactly. The invalid pending-link
-     * value in this build is 4. */
-    ((tBTM_CB_COMPAT*)&btm_cb)->pm_reg_db[0].mask = BTM_PM_REC_NOT_USED;
-    ((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_link = 4;
-    ((tBTM_CB_COMPAT*)&btm_cb)->pm_reg_db[1].mask = BTM_PM_REC_NOT_USED;
+    /* Clear the normal registration slots and reset the pending link.
+     * The pend-link store is written FIRST (retail vreg order drives the
+     * r0/r4 constant allocation); MWCC reorders the stores to the retail
+     * 0x558/0x564/0x560 sequence itself. The invalid pending-link value in
+     * this build is 4. */
+    btm_cb.pm_pend_link = MAX_L2CAP_LINKS;
+    btm_cb.pm_reg_db[0].mask = BTM_PM_REC_NOT_USED;
+    btm_cb.pm_reg_db[1].mask = BTM_PM_REC_NOT_USED;
 
     /* Notify that the pending command was aborted due to device reset.
      * Retail uses status value 5 (BTM_PM_STS_ERROR with the no-SSR enum). */
     if (cb) {
-        (*cb)(((tBTM_CB_COMPAT*)&btm_cb)->acl_db[((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_link].remote_addr,
+        (*cb)(btm_cb.acl_db[btm_cb.pm_pend_link].remote_addr,
               BTM_PM_STS_ERROR, BTM_DEV_RESET, HCI_SUCCESS);
     }
 }
 
 void btm_pm_sm_alloc(UINT8 ind) {
-    tBTM_PM_MCB* p_db = &((tBTM_CB_COMPAT*)&btm_cb)->pm_mode_db[ind];
+    tBTM_PM_MCB* p_db = &btm_cb.pm_mode_db[ind];
     memset(p_db, 0, sizeof(*p_db));
     p_db->state = BTM_PM_ST_ACTIVE;
 }
 
 static int btm_pm_find_acl_ind(BD_ADDR remote_bda) {
-    tACL_CONN_COMPAT* p = ((tBTM_CB_COMPAT*)&btm_cb)->acl_db;
+    tACL_CONN_COMPAT* p = btm_cb.acl_db;
     UINT8 xx;
 
     for (xx = 0; xx < MAX_L2CAP_LINKS; xx++, p++) {
@@ -425,14 +448,10 @@ void btm_pm_proc_cmd_status(UINT8 status) {
     tBTM_PM_STATUS pm_status;
     tBTM_PM_MCB* p_cb;
 
-    {
-        tBTM_CB_COMPAT* p = (tBTM_CB_COMPAT*)&btm_cb;
+    if (btm_cb.pm_pend_link >= MAX_L2CAP_LINKS)
+        return;
 
-        if (p->pm_pend_link >= MAX_L2CAP_LINKS)
-            return;
-
-        p_cb = &p->pm_mode_db[p->pm_pend_link];
-    }
+    p_cb = &btm_cb.pm_mode_db[btm_cb.pm_pend_link];
 
     if (status == HCI_SUCCESS) {
         p_cb->state = BTM_PM_ST_PENDING;
@@ -441,19 +460,15 @@ void btm_pm_proc_cmd_status(UINT8 status) {
         pm_status = BTM_PM_STS_ERROR;
     }
 
-    {
-        tBTM_CB_COMPAT* p = (tBTM_CB_COMPAT*)&btm_cb;
-
-        if (p->pm_pend_id != BTM_PM_SET_ONLY_ID && p->pm_reg_db[p->pm_pend_id].mask & BTM_PM_REG_NOTIF) {
-            (*p->pm_reg_db[p->pm_pend_id].cback)(p->acl_db[p->pm_pend_link].remote_addr, pm_status, 0, status);
-        }
+    if (btm_cb.pm_pend_id != BTM_PM_SET_ONLY_ID && btm_cb.pm_reg_db[btm_cb.pm_pend_id].mask & BTM_PM_REG_NOTIF) {
+        (*btm_cb.pm_reg_db[btm_cb.pm_pend_id].cback)(btm_cb.acl_db[btm_cb.pm_pend_link].remote_addr, pm_status, 0, status);
     }
 
-    ((tBTM_CB_COMPAT*)&btm_cb)->pm_pend_link = MAX_L2CAP_LINKS;
+    btm_cb.pm_pend_link = MAX_L2CAP_LINKS;
 }
 
 void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle, UINT8 mode, UINT16 interval) {
-    tACL_CONN* p;
+    tACL_CONN_COMPAT* p;
     tBTM_PM_MCB* p_cb = NULL;
     int xx;
     int yy;
@@ -506,10 +521,10 @@ void btm_pm_proc_mode_change(UINT8 hci_status, UINT16 hci_handle, UINT8 mode, UI
 
         btm_cb.acl_db[xx].switch_role_state = BTM_ACL_SWKEY_STATE_IDLE;
 
-        if (btm_cb.devcb.p_switch_role_cb) {
-            btm_cb.devcb.switch_role_ref_data.hci_status = hci_status;
-            (*btm_cb.devcb.p_switch_role_cb)(&btm_cb.devcb.switch_role_ref_data.hci_status);
-            btm_cb.devcb.p_switch_role_cb = NULL;
+        if (btm_cb.p_switch_role_cb) {
+            btm_cb.switch_role_ref_data.hci_status = hci_status;
+            (*btm_cb.p_switch_role_cb)(&btm_cb.switch_role_ref_data.hci_status);
+            btm_cb.p_switch_role_cb = NULL;
         }
     }
 }

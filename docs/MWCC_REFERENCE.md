@@ -359,6 +359,18 @@ filter_cond[6]; NO report_dup byte in this build), `inq_cmpl_info` 0x183E (u8 st
 (no report_dup); the BTM_StartInquiry `switch (filter_cond_type)` lowers with the
 signed `blt` default check, and the case-1/2 body zeroes p_inqparms->filter_cond_type.
 
+### btm_pm.c — 6× 100% under GC/3.0a5.2 (`btm_pm_reset`, `BTM_ReadPowerMode`, `btm_pm_sm_alloc`, `btm_pm_compare_modes`, `btm_pm_snd_md_req`, `btm_pm_proc_cmd_status`); `BTM_SetPowerMode` 1 reg-swap
+
+`btm_pm_reset` was stuck at 6 pure reg-swaps (retail `li r0,0; li r4,4` vs decomp `li r4,0; li r0,4` — a constant-colour swap that the SMT probe cannot certify: gate 5 fixes r0/r3/r4, and the `bctr` tail-call exit fails the M1 indirect-exit gate, so EQUIVALENT_MATCH is unreachable and only FULL_MATCH can accept). Two compounding root causes, both fixed:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Constant colours swapped (`0→r4, 4→r0`) regardless of compiler/flag sweep | The constant **first referenced in source** gets the first fresh colour; retail's `btm_pm_reset` colours `4→r4` and `0→r0`, so its IR created the `4` vreg first | Write the `pm_pend_link = MAX_L2CAP_LINKS` (4) store **before** the two `mask = 0` stores — MWCC then emits the retail `li r0,0; li r4,4; stb 0x558; stb 0x564; stb 0x560` byte-for-byte (GC/3.0a5.2 re-schedules the stores; Wii/1.1 does not reorder and keeps the source order)
+| Cast-form `((tBTM_CB_COMPAT*)&btm_cb)->field` accesses never reorder stores and allocate the base differently | `&btm_cb` goes through the SDK extern (wrong layout) so MWCC treats the cast pointer as possibly-aliasing; a same-TU-defined `tBTM_CB_COMPAT btm_cb` reproducer reorders correctly | Declare the retail-layout extern **directly**: `#define btm_cb btm_cb_sdk` before `#include "revolution/BTE/stack/btm/btm_int.h"`, `#undef btm_cb` after, then `extern tBTM_CB_COMPAT btm_cb;` (per-TU overlay pattern already used by btm_main.c/btm_dev.c). Direct member access restores MWCC's independence analysis (same pattern as btm_devctl's sub-object-address fix)
+| Whole unit stuck on Wii/1.1 (default) while the retail bte family is GC/3.0a5.2 | btm_pm.c was the last btm file without `mw_version="GC/3.0a5.2"` (see §7c2 / btm_devctl / btm_inq notes) | `Object(NonMatching, "…btm/btm_pm.c", mw_version="GC/3.0a5.2")` — zero regressions: the two prior FULL_MATCH functions stay 100%, and `btm_pm_compare_modes` / `btm_pm_snd_md_req` / `btm_pm_proc_cmd_status` newly 100% (they were 121/71/2 structural under Wii/1.1)
+
+Retail `btm_cb` layout facts for btm_pm.s: `acl_db[4]` 0x34 (0x11C stride, remote_addr +0x08 — same tACL_CONN as btm_acl.c), `pm_mode_db[4]` 0x4CC (0x22 stride with BTM_SSR_INCLUDED off / BTM_MAX_PM_RECORDS 1), `pm_reg_db[2]` 0x554 (8-byte entries: cback, mask, pad×3), `pm_pend_link` 0x564, `pm_pend_id` 0x565, devcb `switch_role_ref_data` 0x624 (tBTM_ROLE_SWITCH_CMPL, 8 bytes), `p_switch_role_cb` 0x62C. `btm_pm_reset`'s callback read `acl_db[4].remote_addr` (index 4 = out of bounds) is a genuine retail quirk — reproduce it with a comment, do not "fix" it.
+
 ### bta_hh_act.c — 11× FULL_MATCH on GC/3.0a5.2 (`bta_hh_api_disable`, `bta_hh_disc_cmpl`, `bta_hh_sdp_cback`, `bta_hh_api_disc_act`, `bta_hh_open_cmpl_act`, `bta_hh_open_act`, `bta_hh_handsk_act`, `bta_hh_ctrl_dat_act`, `bta_hh_get_dscp_act`, `bta_hh_get_acl_q_info`, `bta_hh_write_dev_act`)
 
 The retail bte hh unit needs `mw_version="GC/3.0a5.2"` (same family as bta_dm_act / btm_*). With Wii/1.1 every dense event switch lowers to a signed `cmpwi` equality chain instead of the retail's 10-slot jump table (`cmplwi; bgt; lis/rlwinm/lwzx/mtspr/bcctr`), and `li`/`stb` scheduling swaps appear in cback-dispatch stores. Reusable patterns (all verified byte-for-byte on GC/3.0a5.2 `-O4,p`):

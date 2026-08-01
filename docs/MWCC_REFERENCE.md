@@ -1359,34 +1359,51 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
   tBTM_ESCO_DATA*)`, `l2c_link_hci_conn_comp(UINT8,UINT16,BD_ADDR)`. No `extern
   "C"` needed — plain C prototypes in the `.c` suffice (file compiled as C).
 
-## RVL BTE `hcicmds` HCI command builders (Wii/1.1 `-O4,p`)
+## RVL BTE `hcicmds` HCI command builders (Wii/1.1 `-O4,s`)
 
 `libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c` — buffer-filling command
-builders. 7/10 of this batch matched `FULL_MATCH` with the same byte-pointer
-style as the prior `btsnd_hcic_write_inqscan_cfg`: `*(u16*)(b+2)=op/len`,
-`*(u16*)(b+4)=0`, then `b[k]=...` bytes, tail `b btu_hcif_send_cmd`
-(`btu_hcif_send_cmd` is called with one pointer arg and no prototype — implicit
-`int` — and MWCC tail-calls it). `u16` params need `(u8)x` / `(u8)(x >> 8)`
-which fold to `extrwi rX, rY, 8, 16`. The buffer-param builders hoist **all**
-`li`s before the first store.
-- **Pool-buffer builders (`btsnd_hcic_reset`, `btsnd_hcic_inq_cancel`,
-  `btsnd_hcic_read_local_features`, `read_bd_addr`, …) — scheduler ceiling:**
-  after `GKI_getpoolbuf` + null-check branch, retail batches the constant loads
-  one store AHEAD (`li S1; li S2; S1; li S3; li S4; S2; S3; S4; S5`); MWCC
-  `-O4,p` emits them one slot later (`li S1; S1; li S2; li S3; S2; li S4; …`),
-  leaving 1–2 li/store swaps (~91% fuzzy, sizes exact). Tried 6 source forms
-  (byte-cast, indexed-cast, ps/pb pointer locals, local BT_HDR struct,
-  `pp`-chain, verbatim `UINT16_TO_STREAM`/`UINT8_TO_STREAM` macros) — all
-  byte-identical; only the block's branch-target entry differs from retail's,
-  so this cannot be closed in source. SMT `check-objects
-  --assume-relocated-callees` proves `EQUIVALENT UNDER CONTRACT`.
-- **`EQUIVALENT_MATCH` on these is gated on callee certificates:** `cycle`'s
-  effect-aware proof fails `inconclusive_unvalidated_callee` because
-  `GKI_getpoolbuf` (`us-802ddd40`) and `btu_hcif_send_cmd` (`us-802f1858`) are
-  not accepted; both carry transitive unaccepted callee trees (GKI_enable/
-  disable/get_taskid/getbuf, GKI_enqueue/dequeue, `btu_start_timer`,
-  `bte_hcisu_send`). Unblock by accepting those trees, or 100% static match
-  (byte-identical bodies certify without callee lemmas).
+builders. **The retail unit is `-O4,s`, not `-O4,p`**: `btsnd_hcic_write_cur_iac_lap`
+has a plain `mtctr`/`bdnz` copy loop that MWCC only emits under `-O4,s`
+(`-O4,p` unrolls every counter loop form by 4/8). All simple builders are
+byte-identical under both flags, so the unit takes `extra_cflags=["-O4,s"]`.
+The buffer-param builders hoist **all** `li`s before the first store.
+- **`btsnd_hcic_write_cur_iac_lap` (buffer-param + LAP copy loop):** length
+  must be written as `(num_laps << 2) - num_laps + 4` (retail `clrlslwi`+`subf`
+  strength form; plain `*3` folds to `mulli`), counter `int i` with
+  `for (i = num_laps; i > 0; i--)` (a u8/u16 counter lets MWCC bound the trip
+  and unroll; `int` + `-O4,s` yields the exact `mtctr r4; cmpwi; ble; bdnz`
+  shape). Residual: 2 li/store scheduling slots (the documented hoist ceiling).
+- **Pool-buffer builders — scheduler ceiling:** after `GKI_getpoolbuf` +
+  null-check branch, retail batches the constant loads one store AHEAD
+  (`li S1; li S2; S1; li S3; li S4; S2; S3; S4; S5`); MWCC emits them one slot
+  later, leaving 1–2 li/store swaps (~83–91% fuzzy, sizes exact). 10+ source
+  forms tried (byte-cast, locals, `pp`-chain, stream macros, masks, arg-type
+  variants, both `-O4` flags) — all byte-identical; unclosable in source.
+- **Volatile-register token divergence (current engine blocker for
+  `write_pin_type` / `write_auth_enable` / `write_encr_mode` / `read_rssi`):**
+  the opaque-callee call token includes r0–r12 at the call. Retail's older
+  MWCC hoists a constant into a scratch register the decomp leaves untouched
+  (e.g. retail `li r6, 0` vs decomp r6 = fresh `call.GKI_getpoolbuf.r6`), so
+  the second call's token diverges and the SMT returns
+  `inconclusive_abstraction` even though the code is scheduling-identical.
+  `auth_request`/`rmt_*`/no-arg builders pass because their volatile-register
+  usage coincides with retail; the four above fail. Needs an engine-side fix
+  (exclude provably-untouched callee inputs from the opaque token).
+- **`btsnd_hcic_write_cur_iac_lap` SMT also blocked:** the `mtctr; cmpwi;
+  ble; header; bdnz` shape is not recognized by `find_mtctr_with_guard`
+  (the `cmpwi` between `mtctr` and the header is not padding/guard per the
+  adjacency grammar), so the loop is unrolled symbolically to the 256-trip
+  visit bound → `inconclusive_timeout`.
+- **GKI callee tree now fully accepted:** `GKI_enqueue`/`GKI_freebuf`/
+  `GKI_getbuf` reach 100% static with two fixes: (1) inner pool-scan polarity
+  `q_id < GKI_NUM_TOTAL_BUF_POOLS` (retail `bge`-skip layout), and (2) the
+  MAGIC_NO corruption check written as `bad = (v != exp)` with `exp`/
+  `v` locals — the `!=` compare lowers to the retail dual-`subf` form
+  (`subf r3,r4,r0; subf r0,r0,r4; or; srwi`), whereas
+  `((exp-v)|(v-exp))>>31` folds to an `addis`/`addi` pair that never matches.
+  `GKI_enable`/`GKI_disable` need a local `tGKI_INT_MIRROR` for `gki_cb`
+  (`UINT8 OSIntNesting` @0, `UINT32 IntDisableCnt[]` @4) — the public
+  `gki_int.h` layout differs from retail.
 
 ## RVL AXFX ReverbStdExp schedule ceilings (Wii/1.1 `-O4,p`)
 

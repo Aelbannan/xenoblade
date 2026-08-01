@@ -151,7 +151,7 @@ getbuf_scan_done:
     goto getbuf_take_test;
 getbuf_take:
     pool = p_cb->pool_list[i];
-    if (!(((UINT16)1 << pool) & p_cb->pool_access_mask)) {
+    if (!(p_cb->pool_access_mask & ((UINT16)1 << pool))) {
         Q = &p_cb->freeq[pool];
         if (Q->cur_cnt < Q->total) {
             p_hdr = Q->p_first;
@@ -164,10 +164,10 @@ getbuf_take:
             }
             GKI_enable();
             p_hdr->task_id = GKI_get_taskid();
-            ret = (void*)((UINT8*)p_hdr + BUFFER_HDR_SIZE);
             p_hdr->status = BUF_STATUS_UNLINKED;
-            p_hdr->Type = 0;
+            ret = (void*)((UINT8*)p_hdr + BUFFER_HDR_SIZE);
             p_hdr->p_next = NULL;
+            p_hdr->Type = 0;
             return ret;
         }
     }
@@ -237,10 +237,10 @@ void GKI_freebuf(void* p_buf) {
     if ((UINT32)p_hdr & 1) {
         buf_size = 0;
     } else {
-        if (p_hdr->q_id >= GKI_NUM_TOTAL_BUF_POOLS) {
-            buf_size = 0;
-        } else {
+        if (p_hdr->q_id < GKI_NUM_TOTAL_BUF_POOLS) {
             buf_size = gki_cb.com.freeq[p_hdr->q_id].size;
+        } else {
+            buf_size = 0;
         }
     }
 
@@ -248,10 +248,10 @@ void GKI_freebuf(void* p_buf) {
     if ((UINT32)magic & 1) {
         bad = 1;
     } else {
-        /* Load MAGIC before *magic so MWCC keeps exp in a GPR for dual subf. */
-        exp = MAGIC_NO;
-        v = *magic;
-        bad = (UINT8)(((exp - v) | (v - exp)) >> 31);
+        /* Materialize exp first; the != compare lowers to the dual-subf form. */
+        UINT32 exp = MAGIC_NO;
+        UINT32 v = *magic;
+        bad = (v != exp);
     }
 
     if (bad) {
@@ -390,23 +390,35 @@ void GKI_enqueue(BUFFER_Q* p_q, void* p_buf) {
     BUFFER_HDR_T* p_hdr;
     UINT32* magic;
     UINT16 buf_size;
+    UINT8 bad;
+
+    p_hdr = (BUFFER_HDR_T*)((UINT8*)p_buf - BUFFER_HDR_SIZE);
 
 #if (GKI_ENABLE_BUF_CORRUPTION_CHECK == TRUE)
-    p_hdr = (BUFFER_HDR_T*)((UINT8*)p_buf - BUFFER_HDR_SIZE);
-    buf_size = 0;
-    if (!((UINT32)p_hdr & 1)) {
+    if ((UINT32)p_hdr & 1) {
+        buf_size = 0;
+    } else {
         if (p_hdr->q_id < GKI_NUM_TOTAL_BUF_POOLS) {
             buf_size = gki_cb.com.freeq[p_hdr->q_id].size;
+        } else {
+            buf_size = 0;
         }
     }
 
     magic = (UINT32*)((UINT8*)p_buf + buf_size);
-    if (gki_magic_corrupted(magic)) {
+    if ((UINT32)magic & 1) {
+        bad = 1;
+    } else {
+        /* Materialize exp first; the != compare lowers to the dual-subf form. */
+        UINT32 exp = MAGIC_NO;
+        UINT32 v = *magic;
+        bad = (v != exp);
+    }
+
+    if (bad) {
         GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Enqueue - Buffer corrupted");
         return;
     }
-#else
-    p_hdr = (BUFFER_HDR_T*)((UINT8*)p_buf - BUFFER_HDR_SIZE);
 #endif
 
     if (p_hdr->status != BUF_STATUS_UNLINKED) {
@@ -416,7 +428,7 @@ void GKI_enqueue(BUFFER_Q* p_q, void* p_buf) {
 
     GKI_disable();
 
-    if (p_q->p_last) {
+    if (p_q->p_first) {
         BUFFER_HDR_T* p_last_hdr = (BUFFER_HDR_T*)((UINT8*)p_q->p_last - BUFFER_HDR_SIZE);
         p_last_hdr->p_next = p_hdr;
     } else {
@@ -429,7 +441,6 @@ void GKI_enqueue(BUFFER_Q* p_q, void* p_buf) {
     p_hdr->status = BUF_STATUS_QUEUED;
 
     GKI_enable();
-    return;
 }
 
 void GKI_enqueue_head(BUFFER_Q* p_q, void* p_buf) {

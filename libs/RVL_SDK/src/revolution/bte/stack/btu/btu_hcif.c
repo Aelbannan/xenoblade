@@ -144,9 +144,21 @@ typedef struct {
 
 extern tBTU_CB  btu_cb;
 
+/* Local mirror of the BTM control block (retail layout). Only the device
+   state byte at offset 0x64E is referenced by this TU (the startup
+   "waiting for reset complete" check before priming the command window). */
+typedef struct {
+    UINT8  reserved[0x64E];
+    UINT8  devcb_state;      /* 0x64E: btm_cb.devcb.state */
+} tBTM_CB;
+
+extern tBTM_CB  btm_cb;
+
 /* GKI buffer-queue helpers (gki.h). */
 void   *GKI_dequeue (BUFFER_Q *);
 void    GKI_enqueue_head (BUFFER_Q *, void *);
+void    GKI_enqueue (BUFFER_Q *, void *);
+void   *GKI_getpoolbuf (UINT8 pool_id);
 BOOLEAN GKI_queue_is_empty (BUFFER_Q *);
 void    GKI_freebuf (void *);
 
@@ -165,9 +177,80 @@ void btm_sco_connected(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle, tBTM_ES
 void btm_sec_link_key_notification(BD_ADDR bda, LINK_KEY key, UINT8 key_type);
 void l2c_link_hci_conn_comp(UINT8 status, UINT16 handle, BD_ADDR bda);
 
+/* HCI command sent to the lower layer (bte_hcisu.c). */
+void bte_hcisu_send (BT_HDR *p_msg, UINT16 event);
+#define BT_EVT_TO_BTU_HCI_CMD  0x2000  /* HCI Command */
+
 /* Remaining catalog stubs (handlers not yet decompiled). */
 void btu_hcif_process_event() {}
-void btu_hcif_send_cmd(UINT8 controller_id) __attribute__((noinline)) {}
+
+/*******************************************************************************
+**
+** Function         btu_hcif_send_cmd
+**
+** Description      This function is called to check if it can send commands
+**                  to the Host Controller. It may be passed the address of
+**                  a packet to send.
+**
+** Returns          void
+**
+*******************************************************************************/
+void btu_hcif_send_cmd(BT_HDR *p_buf)
+{
+    UINT16  opcode;
+    BT_HDR *p_buf2;
+    UINT8  *pp;
+
+    /* If there are already commands in the queue, then enqueue this command */
+    if ((p_buf) && (btu_cb.cmd_xmit_q.count))
+    {
+        GKI_enqueue (&btu_cb.cmd_xmit_q, p_buf);
+        p_buf = NULL;
+    }
+
+    /* Allow for startup case, where no acks may be received */
+    if ((!btu_cb.controller_cmd_window) && (!btm_cb.devcb_state))
+    {
+        btu_cb.controller_cmd_window = btu_cb.cmd_xmit_q.count + 1;
+    }
+
+    /* See if we can send anything */
+    while (btu_cb.controller_cmd_window != 0)
+    {
+        if (!p_buf)
+            p_buf = (BT_HDR *)GKI_dequeue (&btu_cb.cmd_xmit_q);
+
+        if (!p_buf)
+            break;
+
+        /* Check if the command does not get a response */
+        pp = (UINT8 *)(p_buf + 1) + p_buf->offset;
+        STREAM_TO_UINT16 (opcode, pp);
+
+        if ((opcode != HCI_RESET) && (opcode != HCI_HOST_NUM_PACKETS_DONE))
+        {
+            /* Save the command so we can issue a command complete event */
+            if ((p_buf2 = (BT_HDR *)GKI_getpoolbuf (2)) != NULL)
+            {
+                memcpy (p_buf2, p_buf, sizeof (BT_HDR));
+
+                memcpy ((UINT8 *)(p_buf2 + 1) + p_buf2->offset,
+                        (UINT8 *)(p_buf + 1) + p_buf->offset,
+                        p_buf->len);
+
+                GKI_enqueue (&btu_cb.cmd_cmpl_q, p_buf2);
+                btu_start_timer (&btu_cb.cmd_cmpl_timer, BTU_TTYPE_BTU_CMD_CMPL, 8);
+            }
+        }
+
+        btu_cb.controller_cmd_window--;
+        bte_hcisu_send (p_buf, BT_EVT_TO_BTU_HCI_CMD);
+        p_buf = NULL;
+    }
+
+    if (p_buf)
+        GKI_enqueue (&btu_cb.cmd_xmit_q, p_buf);
+}
 void btu_hcif_qos_setup_comp_evt(UINT8 *p, UINT16 evt_len)
 {
     UINT8     status;

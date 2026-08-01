@@ -1366,6 +1366,7 @@ Confirmed on `libs/CriWare/src/sofdec/sfdcore/sfd/sfd_ply.c` (`SFD_Start`, `SFD_
 **7c2. Unit compiler mismatch is the real fix for many 7c floats (RVL_SDK bte → GC/3.0a5.2):** before treating a `li`-vs-`lis` / `mr`-vs-`stb` schedule float as an irreducible soft-cap, sweep the **other MWCC family** for the whole unit. `libs/RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c` was configured `Wii/1.1` (mwcc_43_151) but the retail bte was compiled with **GC/3.0a5.2 (mwcc_41_60831)**: every Wii/1.x and GC 1.x-2.x build hoists `lis r3, bta_dm_cb@ha` above the mask-store `li r0,1` (rssi/link_quality/new_link_key cback dispatch), while GC/3.0a3/3.0a5/3.0a5.2 emits the retail order `li r0,1; lis r3; stb` byte-for-byte. Per-object fix: `Object(NonMatching, "…bta_dm_act.c", mw_version="GC/3.0a5.2")`. Verified zero regressions: 29/56 functions at 100% under GC vs 24 under Wii/1.1 (all previously-accepted stay 100%; `bta_dm_search_start`/`bta_dm_send_hci_reset` newly 100%). Quick probe recipe: compile the minimal reproducer (`bdcpy` + byte-store + `lis`-based indirect call) with each `build/compilers/*/mwcceppc.exe` and diff the `bl`-follow sequence; also sweep `-O3/-O4,p/-O4,s` and `-ipa file` on/off. Residual soft-cap that no compiler version fixes: `bta_dm_compress_cback`'s hoisted `mr r7,r31` (p_srvc copy for trace-log p3 base, 17+ source shapes tried) — semantically trivial, provable by SMT once the LogMsg callee chain (us-802e0830) is accepted.
 
 Same fix applies to **`btm_sec.c`** (all 10 functions in the unit matched at 100% only after `mw_version="GC/3.0a5.2"`): under Wii/1.1 (1) `{0xff,0xff,0xff,0xff,0xff,0xff}` BD_ADDR init coalesces to `lwz/lhz` from the pool vs retail's six `lbz`+`stb` (mkey_comp_event), (2) the `li r0,0; stw param` vs `addi r3` schedule after `btu_stop_timer` inverts (PINCodeReply/disconnected), (3) 8/10 functions matched under both. Also: a `#pragma auto_inline off` stub for the not-yet-recovered `btm_sec_execute_procedure` is required so `-ipa file` doesn't inline the empty body and drop the `bl` call sites (encrypt_change/collision_timeout); `__attribute__((noinline))` is **unsupported by mwcc_41_60831**.
+Same fix verified on **`gap_api.c` (`GAP_Init`, us-802f2654)**: under Wii/1.1 the four-instruction block after the hoisted `lis r5,cback0@ha; lis r3,cback1@ha` pair comes out `addi r4,r31,gap_cb@l; li r0,5; addi r5,…; addi r3,…` (LHS + const before the callback addis), while retail is `addi r5,…; addi r4,…; addi r3,…; li r0` (callback addis then the const, per-statement RHS-before-LHS order). Plain Broadcom source (`memset(&gap_cb,0,sizeof)` + three member stores + `gap_conn_init()`) with `mw_version="GC/3.0a5.2"` on the object reproduces retail byte-for-byte (24/24, 0 structural, split 0x0 spare; FULL_MATCH accepted).
 #### 7d. Register allocation for small C functions
 For simple C functions with few locals, MWCC's Chaitin allocator may differ from retail:
 
@@ -3985,6 +3986,27 @@ btm_read_local_name_complete, btm_read_stored_link_key_complete, btm_return_link
 - String-literal relocs (`"…"` → local `@N` labels) show as reloc-name drift
   (`@2332` vs `@348`) with equal addends; cycle still reports 100% FULL_MATCH
   (data_value-equal), no `exact_renames` needed.
+
+**btm_sco — same fix, applied (btm_esco_proc_conn_chg → FULL_MATCH, 100% bytes,
+SMT-certified, size PASS 0x408 vs budget 0xE38):** btm_sco.c was the last btm TU
+still on default Wii/1.1 + `-func_align 16`. Symptom: Wii/1.1 emits a spurious
+`ori r0,r0,0` nop between `mtctr` and the first body instruction of small
+counted loops (`for (xx = 0; xx < 3; xx++, p++)` → 4-byte shift on every
+following instruction, 33 structural mismatches). Switching the Object to
+`mw_version="GC/3.0a5.2"` + `extra_cflags=["-func_align 4"]` (repo bte-family
+pattern, same as btm_acl/btm_sec/btm_inq) removes the nop and yields
+byte-identical code, with **no regression** on the unit's already-matched
+siblings (btm_remove_sco_links, btm_sco_acl_removed, btm_route_sco_data,
+btm_is_sco_active_by_bdaddr all stayed 100%; btm_num_sco_links_active improved
+27→24 mismatches). Reconstructed from the WIDCOMM original: trace guard
+`if (btm_cb.trace_level >= BT_TRACE_LEVEL_EVENT)` (mask 0x000D0003 =
+LAYER_BTM|TYPE_EVENT; BTM_TRACE_* macros are compiled out in this build so the
+`LogMsg_2` call must be inlined), sco_db reached via flattened retail-correct
+`tSCO_CONN` from btm_int.h at `(UINT8*)&btm_cb + 0x1854`, `tBTM_CHG_ESCO_EVT_DATA`
+fill with `data.sco_inx = xx` (the r30 loop-counter store), and
+`(*p->p_esco_cback)(BTM_ESCO_CHG_EVT, (tBTM_ESCO_EVT_DATA *)&data)`; `return`
+inside the match (NULL cback also returns) — the `UINT16 xx` counter type from
+the original source is exact under GC.
 
 ## RVL WUD — debug strings via `extern lbl_805xxxxx[]` labels, not literals (US, 10× matched)
 

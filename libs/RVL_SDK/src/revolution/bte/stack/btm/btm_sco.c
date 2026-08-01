@@ -9,6 +9,13 @@
 #include "revolution/BTE/gki/common/gki.h"
 #include "revolution/BTE/stack/include/hcidefs.h"
 
+/* btm_cb (retail .bss at 0x805BC2F8, size 0x27C4) is declared in btm_int.h as
+   the Broadcom tBTM_CB whose overall layout does not match the Wii binary.
+   The flattened tSCO_CONN layout in btm_int.h IS retail-correct, so SCO DB
+   entries are reached through it; the few other touched fields are read at
+   their verified retail byte offsets. */
+extern void LogMsg_2(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1,
+                     UINT32 p2);
 void btm_sco_init(void)
 {
     extern unsigned long btm_esco_defaults[];
@@ -87,7 +94,41 @@ void btm_route_sco_data(BT_HDR* p_msg)
 
 tBTM_STATUS BTM_ChangeEScoLinkParms(UINT16 sco_inx, tBTM_CHG_ESCO_PARAMS* p_parms) {}
 
-void btm_esco_proc_conn_chg(UINT8 status, UINT16 handle, UINT8 tx_interval, UINT8 retrans_window, UINT16 rx_pkt_len, UINT16 tx_pkt_len) {}
+void btm_esco_proc_conn_chg(UINT8 status, UINT16 handle, UINT8 tx_interval,
+                            UINT8 retrans_window, UINT16 rx_pkt_len,
+                            UINT16 tx_pkt_len)
+{
+    /* Retail layout uses 3 SCO DB entries regardless of BTM_MAX_SCO_LINKS */
+    tSCO_CONN *p = (tSCO_CONN *)((UINT8 *)&btm_cb + 0x1854);
+    tBTM_CHG_ESCO_EVT_DATA data;
+    UINT16 xx;
+
+    if (*((UINT8 *)&btm_cb + 0x27c0) >= BT_TRACE_LEVEL_EVENT) {
+        LogMsg_2(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK |
+                 TRACE_TYPE_EVENT,
+                 "btm_esco_proc_conn_chg -> handle 0x%04x, status 0x%02x",
+                 (UINT32)handle, (UINT32)status);
+    }
+
+    for (xx = 0; xx < 3; xx++, p++) {
+        /* SCO_ST_CONNECTED == 4 */
+        if (p->state == 4 && handle == p->hci_handle) {
+            /* If upper layer wants notification */
+            if (p->p_esco_cback) {
+                memcpy(data.bd_addr, p->bd_addr, BD_ADDR_LEN);
+                data.hci_status = status;
+                data.sco_inx = xx;
+                data.rx_pkt_len = p->rx_pkt_len = rx_pkt_len;
+                data.tx_pkt_len = p->tx_pkt_len = tx_pkt_len;
+                data.tx_interval = p->tx_interval = tx_interval;
+                data.retrans_window = p->retrans_window = retrans_window;
+                (*p->p_esco_cback)(BTM_ESCO_CHG_EVT,
+                                   (tBTM_ESCO_EVT_DATA *)&data);
+            }
+            return;
+        }
+    }
+}
 
 BOOLEAN btm_is_sco_active(UINT16 handle)
 {

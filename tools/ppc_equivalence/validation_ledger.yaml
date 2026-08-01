@@ -36,7 +36,7 @@
 architecture_model: broadway-ppc32-be-v51
 corpus_version: 1
 dolphin_version: fixtures-broadway-jsonl
-corpus_hash: a827ed9896c3a0648ff3b997e5e46bd3d80cb2c4c3553b5323395f66317b6c63
+corpus_hash: 4dc2d076240c8287178713af293ba5c2666e28763d2e4363b6b2da74fbe55e5e
 capabilities:
   fp-bitwise:
     model_version: fp-bitwise-v1

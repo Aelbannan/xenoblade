@@ -213,16 +213,16 @@ void l2c_init(void)
 *******************************************************************************/
 void l2c_rcv_acl_data(BT_HDR *p_msg)
 {
-    UINT8      *p;
-    tL2C_LCB   *p_lcb;
-    tL2C_CCB   *p_ccb = NULL;
+    UINT8      *p = (UINT8 *)(p_msg + 1) + p_msg->offset;
     UINT16      handle;
     UINT16      hci_len;
+    UINT8       pkt_type;
+    tL2C_LCB   *p_lcb;
+    tL2C_CCB   *p_ccb;
     UINT16      l2cap_len;
     UINT16      rcv_cid;
-    UINT8       pkt_type;
 
-    p = (UINT8 *)(p_msg + 1) + p_msg->offset;
+    p_ccb = NULL;
 
     /* Extract the handle and the packet boundary flag from the HCI header. */
     handle   = (UINT16)((p[0] + (p[1] << 8)) & 0x0FFF);
@@ -266,11 +266,11 @@ void l2c_rcv_acl_data(BT_HDR *p_msg)
         return;
     }
 
-    /* Skip the HCI ACL header. */
-    p_msg->offset += 4;
-    hci_len   = (UINT16)(p[2] + (p[3] << 8));
-    l2cap_len = (UINT16)(p[4] + (p[5] << 8));
-    rcv_cid   = (UINT16)(p[6] + (p[7] << 8));
+    /* Extract the length and update the buffer header. */
+    hci_len   = ((UINT16)(p[2]) + ((UINT16)(p[3]) << 8));
+    p_msg->offset += L2CAP_PKT_OVERHEAD;
+    rcv_cid   = ((UINT16)(p[6]) + ((UINT16)(p[7]) << 8));
+    l2cap_len = ((UINT16)(p[4]) + ((UINT16)(p[5]) << 8));
 
     /* For normal channels, find the CCB for this CID. */
     if (rcv_cid > L2CAP_CONNECTIONLESS_CID)
@@ -310,10 +310,11 @@ void l2c_rcv_acl_data(BT_HDR *p_msg)
     }
     else if (rcv_cid == L2CAP_CONNECTIONLESS_CID)
     {
+        UINT16 bcst_psm = (UINT16)(p[8] + (p[9] << 8));
+
         p_msg->offset += L2CAP_BCST_OVERHEAD;
-        p_msg->len = (UINT16)(hci_len - L2CAP_PKT_OVERHEAD - L2CAP_BCST_OVERHEAD);
-        L2CAP_TRACE_DEBUG1("GOT CONNECTIONLESS DATA PSM:%d",
-                           (UINT16)(p[8] + (p[9] << 8)));
+        p_msg->len = (UINT16)(p_msg->len - L2CAP_BCST_OVERHEAD);
+        L2CAP_TRACE_DEBUG1("GOT CONNECTIONLESS DATA PSM:%d", bcst_psm);
         GKI_freebuf(p_msg);
     }
     else if (p_ccb == NULL)
@@ -740,10 +741,11 @@ void l2c_process_timeout(TIMER_LIST_ENT *p_tle)
 *******************************************************************************/
 void l2c_process_held_packets(BOOLEAN timed_out)
 {
-    BT_HDR *p_buf;
-    BT_HDR *p_next;
+    BT_HDR   *p_buf;
+    BT_HDR   *p_next;
+    BUFFER_Q *p_hold_q = &l2cb.hold_q;
 
-    if (l2cb.hold_q.count == 0)
+    if (p_hold_q->count == 0)
     {
         return;
     }
@@ -758,7 +760,7 @@ void l2c_process_held_packets(BOOLEAN timed_out)
         L2CAP_TRACE_WARNING0("L2CAP HOLD TIMEOUT");
     }
 
-    for (p_buf = (BT_HDR *)GKI_getfirst(&l2cb.hold_q);
+    for (p_buf = (BT_HDR *)GKI_getfirst(p_hold_q);
          p_buf != NULL;
          p_buf = p_next)
     {
@@ -766,15 +768,15 @@ void l2c_process_held_packets(BOOLEAN timed_out)
 
         if ((!timed_out) ||
             (p_buf->layer_specific == 0) ||
-            (--p_buf->layer_specific == 0))
+            (!--p_buf->layer_specific))
         {
-            GKI_remove_from_queue(&l2cb.hold_q, p_buf);
-            p_buf->layer_specific = 0;
+            GKI_remove_from_queue(p_hold_q, p_buf);
+            p_buf->layer_specific = 0xFFFF;
             l2c_rcv_acl_data(p_buf);
         }
     }
 
-    if (l2cb.hold_q.count != 0)
+    if (p_hold_q->count != 0)
     {
         btu_start_timer(&l2cb.hold_timer, BT_EVT_TO_L2C_HOLD, 1);
     }

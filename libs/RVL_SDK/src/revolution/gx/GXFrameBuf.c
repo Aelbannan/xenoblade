@@ -5,10 +5,10 @@ extern unsigned long __cvt_fp2unsigned(double d);
 void GXSetDispCopyFrame2Field(u32 field);
 void GXClearBoundingBox(void);
 
-static u32 GetNumXfbLines(u16 efbHeight, u32 stepLo) {
+static u32 GetNumXfbLines(u32 efbHeight, u32 stepLo) {
     u32 lines;
 
-    lines = (((u32)(efbHeight - 1) << 8) / stepLo) + 1;
+    lines = (((efbHeight - 1) << 8) / stepLo) + 1;
 
     if (stepLo >= 0x81 && stepLo <= 0xFF) {
         while (!(stepLo & 1)) {
@@ -29,31 +29,63 @@ static u32 GetNumXfbLines(u16 efbHeight, u32 stepLo) {
 
 void GXAdjustForOverscan(GXRenderModeObj* rmin, GXRenderModeObj* rmout,
                          u16 hor, u16 ver) {
+    u16 h2 = (u16)(hor << 1);
+    u16 v2 = (u16)(ver << 1);
+
     if (rmin != rmout) {
-        *rmout = *rmin;
+        u32 w0, w1, w2, w3, w4, w5, w6, w7;
+        u32 w8, w9, w10, w11, w12, w13, w14;
+        u8* src = (u8*)rmin;
+        u8* dst = (u8*)rmout;
+        w0 = *(u32*)(src + 0x00); w1 = *(u32*)(src + 0x04);
+        w2 = *(u32*)(src + 0x08); w3 = *(u32*)(src + 0x0C);
+        w4 = *(u32*)(src + 0x10); w5 = *(u32*)(src + 0x14);
+        w6 = *(u32*)(src + 0x18); w7 = *(u32*)(src + 0x1C);
+        w8 = *(u32*)(src + 0x20); w9 = *(u32*)(src + 0x24);
+        w10 = *(u32*)(src + 0x28); w11 = *(u32*)(src + 0x2C);
+        w12 = *(u32*)(src + 0x30); w13 = *(u32*)(src + 0x34);
+        w14 = *(u32*)(src + 0x38);
+        *(u32*)(dst + 0x00) = w0; *(u32*)(dst + 0x04) = w1;
+        *(u32*)(dst + 0x08) = w2; *(u32*)(dst + 0x0C) = w3;
+        *(u32*)(dst + 0x10) = w4; *(u32*)(dst + 0x14) = w5;
+        *(u32*)(dst + 0x18) = w6; *(u32*)(dst + 0x1C) = w7;
+        *(u32*)(dst + 0x20) = w8; *(u32*)(dst + 0x24) = w9;
+        *(u32*)(dst + 0x28) = w10; *(u32*)(dst + 0x2C) = w11;
+        *(u32*)(dst + 0x30) = w12; *(u32*)(dst + 0x34) = w13;
+        *(u32*)(dst + 0x38) = w14;
     }
 
-    rmout->fbWidth = rmin->fbWidth - (hor << 1);
-    rmout->efbHeight =
-        rmin->efbHeight -
-        (((u32)(ver << 1) * rmin->efbHeight) / rmin->xfbHeight);
+    {
+        u32 efbH = rmin->efbHeight;
+        u32 fbW = rmin->fbWidth;
+        u32 xfbH = rmin->xfbHeight;
+        u32 xfbMode = rmin->xFBmode;
+        u32 tv = rmin->viTVmode & 3;
 
-    if (rmin->xFBmode == VI_XFBMODE_SF && (rmin->viTVmode & 3) == 0) {
-        rmout->xfbHeight = rmin->xfbHeight - ver;
-    } else {
-        rmout->xfbHeight = rmin->xfbHeight - (ver << 1);
+        rmout->efbHeight = efbH - (((u32)v2 * efbH) / xfbH);
+        rmout->fbWidth = fbW - h2;
+
+        if (xfbMode == VI_XFBMODE_SF && tv == 0) {
+            rmout->xfbHeight = xfbH - (v2 >> 1);
+        } else {
+            rmout->xfbHeight = rmin->xfbHeight - v2;
+        }
+
+        rmout->viWidth = rmin->viWidth - h2;
+
+        if (tv == 1) {
+            rmout->viHeight = rmin->viHeight - (v2 << 1);
+        } else {
+            rmout->viHeight = rmin->viHeight - v2;
+        }
     }
 
-    rmout->viWidth = rmin->viWidth - (hor << 1);
-
-    if ((u32)(rmin->viTVmode & 3) == 1) {
-        rmout->viHeight = rmin->viHeight - (ver << 2);
-    } else {
-        rmout->viHeight = rmin->viHeight - (ver << 1);
+    {
+        u32 viY = rmin->viYOrigin;
+        u32 viX = rmin->viXOrigin;
+        rmout->viYOrigin = viY + ver;
+        rmout->viXOrigin = viX + hor;
     }
-
-    rmout->viYOrigin = rmin->viYOrigin + ver;
-    rmout->viXOrigin = rmin->viXOrigin + hor;
 }
 
 void GXSetDispCopySrc(u16 x, u16 y, u16 w, u16 h) {
@@ -116,7 +148,7 @@ void GXSetTexCopyDst(u16 w, u16 h, GXTexFmt fmt, GXBool mipmap) {
         gxdt->cpTex = GX_BITSET(gxdt->cpTex, 15, 2, 2);
     }
 
-    gxdt->cpTexZ = (u8)((u32)fmt >> 4);
+    gxdt->cpTexZ = (u8)((u32)fmt >> 4 & 1);
     gxdt->cpTex = GX_BITSET_TRUNC(gxdt->cpTex, 28, 1, hwfmt);
 
     __GetImageTileCount(fmt, w, h, &rowTiles, &colTiles, &zTiles);
@@ -144,19 +176,19 @@ void GXSetCopyClamp(GXCopyClamp clamp) {
 }
 
 f32 GXGetYScaleFactor(u16 efbHeight, u16 xfbHeight) {
-    f32 yscale;
     f32 bestyscale;
+    f32 yscale;
     u32 lines;
-    u16 height;
+    u32 height;
 
     yscale = (f32)xfbHeight / (f32)efbHeight;
     height = xfbHeight;
-    lines = GetNumXfbLines(efbHeight, __cvt_fp2unsigned(256.0f / yscale) & 0x1FF);
+    lines = GetNumXfbLines((u32)efbHeight, __cvt_fp2unsigned(256.0f / yscale) & 0x1FF);
 
     while (lines > xfbHeight) {
         height--;
         yscale = (f32)height / (f32)efbHeight;
-        lines = GetNumXfbLines(efbHeight, __cvt_fp2unsigned(256.0f / yscale) & 0x1FF);
+        lines = GetNumXfbLines((u32)efbHeight, __cvt_fp2unsigned(256.0f / yscale) & 0x1FF);
     }
 
     bestyscale = yscale;
@@ -165,13 +197,13 @@ f32 GXGetYScaleFactor(u16 efbHeight, u16 xfbHeight) {
         height++;
         bestyscale = yscale;
         yscale = (f32)height / (f32)efbHeight;
-        lines = GetNumXfbLines(efbHeight, __cvt_fp2unsigned(256.0f / yscale) & 0x1FF);
+        lines = GetNumXfbLines((u32)efbHeight, __cvt_fp2unsigned(256.0f / yscale) & 0x1FF);
     }
 
     return bestyscale;
 }
 
-void GXSetDispCopyYScale(f32 scaleY) {
+u32 GXSetDispCopyYScale(f32 scaleY) {
     u32 reg;
     u32 step;
     u32 stepLo;
@@ -181,18 +213,19 @@ void GXSetDispCopyYScale(f32 scaleY) {
     step = __cvt_fp2unsigned(256.0f / scaleY);
     stepLo = step & 0x1FF;
 
-    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     reg = 0;
     reg = GX_BITSET(reg, 23, 9, step);
     GX_BP_SET_OPCODE(reg, GX_BP_REG_DISPCOPYSCALEY);
+    WGPIPE.c = GX_FIFO_CMD_LOAD_BP_REG;
     WGPIPE.i = reg;
 
     gxdt->lastWriteWasXF = FALSE;
     gxdt->cpDisp = GX_BITSET(gxdt->cpDisp, 21, 1, stepLo != 0x100);
 
-    efbHeight = GX_BITGET(gxdt->cpDispSize, 10, 12) + 1;
-    lines = GetNumXfbLines((u16)efbHeight, stepLo);
-    (void)lines;
+    efbHeight = GX_BITGET(gxdt->cpDispSize, 12, 10) + 1;
+    lines = GetNumXfbLines(efbHeight, stepLo);
+
+    return lines;
 }
 
 void GXSetCopyClear(GXColor color, u32 z) {

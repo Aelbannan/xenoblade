@@ -2235,6 +2235,47 @@ Additional near-miss patterns:
   `(tcsManEnab & (1<<coord)) != 0`. A negated test emits `bnelr` and stuck at
   99.8% — invert to match ScaleManually-style “flush when enabled”.
 
+## GXFrameBuf — copy/scale targets (US) — FULL_MATCH + EQUIVALENT_MATCH patterns
+
+All five `RVL_SDK/src/revolution/gx/GXFrameBuf.c` targets (`GXAdjustForOverscan`,
+`GXSetTexCopyDst`, `GXGetYScaleFactor`, `GXSetDispCopyYScale`, `GXSetCopyFilter`)
+now match on Wii/1.1 (`-O4,p -ipa file`, cflags_sdk). Reusable patterns:
+
+- **`GXAdjustForOverscan` 60-byte struct copy**: retail does load-all-then-store-all
+  through r22–r31 + r12–r8 with `_savegpr_22`. `*rmout = *rmin` emits interleaved
+  2-reg pairs on every MWCC/flag combo. Use **15 block-local `u32` temps** loaded
+  from word offsets 0x00–0x38, then stored (GXFifo idiom, MWCC_REFERENCE §GXFifo).
+  With `u16 h2 = hor<<1; u16 v2 = ver<<1;` hoisted first and the copy guarded by
+  `if (rmin != rmout)`, the copy emits load-all/store-all with the retail register
+  class split (10 callee-saved + 5 volatile) when the `tv = rmin->viTVmode & 3`
+  load stays with the other locals and the field code uses `(v2 >> 1)` / `(v2 << 1)`
+  derivations (retail `extrwi`/`clrlslwi` from v2, not `ver`/`ver<<2`).
+- **Load-everything-first for field scheduling**: reading `efbHeight/fbWidth/
+  xfbHeight/xFBmode` into block locals reproduces the retail's early-load schedule
+  (`lhz efbH; lwz xFBmode; mullw; lhz fbW; lhz xfbH; cmpwi …; divwu` interleave).
+  The if-branch uses the `xfbH` local (CSE) while the else-branch reads
+  `rmin->xfbHeight` again (retail reloads in the else arm).
+- **`GXSetDispCopyYScale` returns `u32`** (header was `void`): retail keeps the
+  GetNumXfbLines computation with its result as the **return value** — the dead-
+  computation is not DCE (a `void` + unused result gets eliminated on every MWCC).
+- **`GXSetDispCopyYScale` WGPIPE register colors**: compute `reg` (GX_BITSET +
+  GX_BP_SET_OPCODE) **before** `WGPIPE.c`/`WGPIPE.i` — emits retail `lis r4`(base)/
+  `li r6`(reg)/`li r5`(opcode) instead of the swapped colors.
+- **`GXGetYScaleFactor` f-reg colors**: declare `bestyscale` **before** `yscale` —
+  flips MWCC's f28/f29 allocation to the retail order and fixes the whole prologue
+  save schedule (was 14 structural mismatches → 100%).
+- **GetNumXfbLines helper takes `(u32, u32)`** (not u16): avoids spurious
+  `clrlwi` masks on the `height`/`efbHeight` conversions; `height` is `u32`.
+- **`GXSetTexCopyDst` cpTexZ**: `(u8)((u32)fmt >> 4 & 1)` for retail
+  `extrwi rD,r5,1,27` (bit 4 only) — `& 0xFF` widens the mask.
+- **`GX_BITGET` cpDispSize height field**: retail `rlwinm rD,r0,22,22,31` =
+  `GX_BITGET(reg, 12, 10)` (10 bits), not `(10, 12)` (12-bit mask).
+- **EQUIVALENT_MATCH fallback for void functions**: `GXAdjustForOverscan` ends at
+  ~95% static with 4 residual load-slot swaps; the SMT probe under `auto` flags the
+  garbage `r3` exit value (retail leaves `viXOrigin+hor` in r3 from the last add).
+  `coop run cycle --contract memory` (documented for void functions) proves the
+  memory-write effects and certifies EQUIVALENT_MATCH (semantic-certified).
+
 ## GXInit — `.data` pool for `__GXInitGX` (US)
 
 - Put the version banner in **`.data`** as `char s_GXVersionStr[0x48] = "…"` (not

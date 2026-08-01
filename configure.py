@@ -972,16 +972,21 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/utl.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c", mw_version="GC/3.0a5.2"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             # bta_dm_act.c: retail bte compiled with GC/3.0a5.2 (mwcc_41_60831) —
             # Wii/1.1 (mwcc_43_151) floats li-before-lis / mr-before-stb scheduling
             # on cback-dispatch stores (rssi/link_quality/new_link_key soft-cap,
             # KB ref:51910fc0cc); GC/3.0a5.2 reproduces retail byte-for-byte and
-            # keeps all other functions in the unit at 100%.
+            # keeps all other functions in the unit at 100%. -func_align 4 matches
+            # the bte family layout (retail packed, not 16-aligned) so the unit
+            # .text fits the split budget.
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c"),
+            # bta_hh_act.c: retail bte built with GC/3.0a5.2 (see bta_dm_act /
+            # btm_devctl notes); Wii/1.1 lowers dense event switches to cmp
+            # chains instead of jump tables and schedules li/stb differently.
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c"),
@@ -1003,7 +1008,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_api.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_utils.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c", extra_cflags=["-O4,s"]),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c", extra_cflags=["-O4"]),  # retail prologue scheme: individual stw for <=4 saved regs, _savegpr for >=5 (see MWCC_REFERENCE); -O4,s would emit _savegpr for 3-4 regs, breaking inquiry/hold_mode/park_mode/set_host_buf_size. Tradeoff: copy-loop funcs (write_cur_iac_lap) unroll under -O4.
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_api.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_conn.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt.c"),
@@ -1325,7 +1330,8 @@ config.libs = [
     DolphinLib(
         "wud",
         [
-            Object(NonMatching, "RVL_SDK/src/revolution/wud/WUD.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/wud/WUD.c",
+                   extra_cflags=["-O4,s", "-inline on"]),
             Object(Matching, "RVL_SDK/src/revolution/wud/WUDHidHost.c"),
             Object(Matching, "RVL_SDK/src/revolution/wud/debug_msg.c"),
         ],

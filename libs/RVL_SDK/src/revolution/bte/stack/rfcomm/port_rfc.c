@@ -203,6 +203,18 @@ extern void RFCOMM_DataReq(tRFC_MCB* p_mcb, u8 dlci, BT_HDR* p_buf);
 void port_rfc_closed(tPORT* p_port, u8 result);
 u32  port_rfc_send_tx_data(tPORT* p_port);
 
+/* ------------------------------------------------------------------ */
+/*  String-pool orphans: the retail .data contains the format strings  */
+/*  "port_open_continue" / "port_open_continue no mx channel" even    */
+/*  though their function was eliminated from the retail .text.        */
+/*  Reference them here (in retail pool order) so the .data string     */
+/*  layout matches (pool base lands on "port_open_continue").          */
+/* ------------------------------------------------------------------ */
+char *const port_rfc_pool_orphan_strings[] = {
+    "port_open_continue",
+    "port_open_continue no mx channel",
+};
+
 /* ========================================================================
  * PORT_StartCnf
  * ======================================================================== */
@@ -470,7 +482,7 @@ void PORT_PortNegInd(tRFC_MCB* p_mcb, u8 dlci, tPORT_CTRL* p_port_ctrl, u16 requ
 /* ========================================================================
  * PORT_PortNegCnf
  * ======================================================================== */
-void PORT_PortNegCnf(tRFC_MCB* p_mcb, u8 dlci, u16 result)
+void PORT_PortNegCnf(tRFC_MCB* p_mcb, u8 dlci, void* p_port_ctrl, u16 result)
 {
     tPORT* p_port = port_find_mcb_dlci_port(p_mcb, dlci);
 
@@ -703,9 +715,8 @@ void PORT_DataInd(tRFC_MCB* p_mcb, u8 dlci, BT_HDR* p_buf)
 void PORT_FlowInd(tRFC_MCB* p_mcb, u8 dlci, u8 fc)
 {
     tPORT* p_port = NULL;
-    tPORT* p_scan;
-    int i;
     u32 event;
+    int i;
 
     RFCOMM_TRACE_EVENT1("PORT_FlowInd fc:%d", fc);
 
@@ -718,9 +729,9 @@ void PORT_FlowInd(tRFC_MCB* p_mcb, u8 dlci, u8 fc)
         p_port->field_24 = (fc == 0);
     }
 
-    for (i = 0, p_scan = &rfc_cb.port[0]; i < 5; i++, p_scan++) {
+    for (i = 0; i < 5; i++) {
         if (dlci == 0) {
-            p_port = p_scan;
+            p_port = &rfc_cb.port[i];
             if (p_port->in_use == 0 || p_port->p_mcb != p_mcb || p_port->field_68 != 4)
                 continue;
         }

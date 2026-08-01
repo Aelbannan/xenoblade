@@ -329,6 +329,20 @@ real parameters (`mtu, result`) — rfc_port_if passes `(mcb, dlci, 0, 1)`; port
 and `PORT_DlcReleaseInd(mcb, dlci)` confirmed. RfcPort is 0xA4 bytes (rfc_cb + 0x68 +
 i*0xA4), RfcMuxChannel state/flow layout matches port_utils.c.
 
+### port_rfc.c — 3× FULL_MATCH via `-ipa file` forward pool, orphan pool strings, indexed-loop regalloc (GC/3.0a5.2 `-func_align 4`)
+
+`libs/RVL_SDK/src/revolution/bte/stack/rfcomm/port_rfc.c` — `PORT_ParNegCnf` (us-802ff778),
+`PORT_PortNegCnf` (us-802ffc50), `PORT_FlowInd` (us-8030040c) went CODE_MATCH → 100% FULL_MATCH:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Every pooled-string immediate in the unit shifted by 0x40 (`addi r4, r31, 0x150` vs `0x190`, reg-swap-classified, not structural) | `-ipa off` emits the TU's functions in REVERSE source order, so the .data string pool is reversed vs retail (pool base = last function's string). Same trap as hidh_api.c §8 / l2c_api.c | Drop `-ipa off` (default `-ipa file`) → forward function order + forward pool. Verified 0 regressions on all 18 unit functions (the 4 still-mismatched funcs are identical under both flags) |
+| Pool base symbol resolves to `...data.0` and the pool is 0x38 bytes short: retail .data starts with **orphan** strings `"port_open_continue"` / `"port_open_continue no mx channel"` whose function was eliminated from the retail .text (only PORT_PortNegCnf's `lis r31, "@1517"` pool-base references them) | Same orphan-string pool case as btm_sec.c §1 | Add a non-static `char *const port_rfc_pool_orphan_strings[] = {"port_open_continue", "port_open_continue no mx channel"};` at the top of the file (strings pool in first-reference order; `static` is dropped as dead data) |
+| `PORT_PortNegCnf` (0x118) `or r29, r6, r6` vs decomp `r5` | 3-param declaration `(mcb, dlci, result)` — retail passes 4 args (rfc_port_if: `(mcb, dlci, 0, 1)`; rfc_port_fsm: `(mcb, dlci, &buf, 0)`); body only reads r6 | Declare `void PORT_PortNegCnf(tRFC_MCB* p_mcb, u8 dlci, void* p_port_ctrl, u16 result)` |
+| `PORT_FlowInd` (0x130) 13 pure r29↔r30 swaps (retail p_port=r29, p_scan=r30) | Explicit `p_scan` pointer variable + declaration order `(p_port, p_scan, i, event)` lets MWCC allocate p_scan lower than p_port | Write the loop as `for (i = 0; i < 5; i++) { p_port = &rfc_cb.port[i]; ... }` with declarations `(p_port, event, i)` — strength reduction recreates the running pointer but allocates p_port first (r29) |
+
+Unit .text 0x13F4 vs 0x13FC retail budget (8 spare).
+
 ### btm_devctl.c — 12× FULL_MATCH on GC/3.0a5.2 (`btm_db_reset`, `BTM_SetAfhChannels`,
 `btm_reset_complete`, `btm_read_hci_buf_size_complete`, `btm_read_local_version_complete`,
 `BTM_SetLocalDeviceName`, `BTM_VendorSpecificCommand`, `BTM_ReadStoredLinkKey`,

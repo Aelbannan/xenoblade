@@ -816,7 +816,7 @@ BOOLEAN l2cap_link_chk_pkt_end(void)
 void l2c_link_role_changed(BD_ADDR p_bd_addr, UINT8 role)
 {
     tL2C_LCB *p_lcb;
-    UINT16 xx;
+    INT16 xx;
 
     p_lcb = l2cu_find_lcb_by_bd_addr(p_bd_addr);
     if (p_lcb != NULL)
@@ -833,7 +833,7 @@ void l2c_link_role_changed(BD_ADDR p_bd_addr, UINT8 role)
 void l2c_link_role_change_failed(void)
 {
     tL2C_LCB *p_lcb;
-    UINT16 xx;
+    INT16 xx;
 
     for (xx = 0, p_lcb = l2cb.lcb_pool; xx < L2C_MAX_LINKS;
          xx++, p_lcb++)

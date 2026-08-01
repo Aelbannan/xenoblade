@@ -213,8 +213,6 @@ void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
     s32* outL;
     s32* outR;
     s32* outS;
-    AXFX_BUS* busIn;
-    AXFX_BUS* busOut;
     u32 samp;
     s32 delayedL;
     s32 delayedR;
@@ -224,38 +222,35 @@ void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
     s32 mixedS;
     s32 coef;
     s32 invCoef;
-    u32 pos;
+    u32 pos2;
 
     if (fx->active != 0) {
         fx->active &= ~2;
         return;
     }
 
-    busIn = fx->busIn;
     coef = fx->iirGain;
+    invCoef = 0x80 - coef;
     inputL = update->left;
     inputR = update->right;
-    invCoef = 0x80 - coef;
     inputS = update->surround;
 
-    if (busIn != NULL) {
-        inL = busIn->left;
-        inR = busIn->right;
-        inS = busIn->surround;
+    if (fx->busIn != NULL) {
+        inL = fx->busIn->left;
+        inR = fx->busIn->right;
+        inS = fx->busIn->surround;
     }
 
-    busOut = fx->busOut;
-    if (busOut != NULL) {
-        outL = busOut->left;
-        outR = busOut->right;
-        outS = busOut->surround;
+    if (fx->busOut != NULL) {
+        outL = fx->busOut->left;
+        outR = fx->busOut->right;
+        outS = fx->busOut->surround;
     }
 
     for (samp = 0; samp < 96; samp++) {
-        pos = fx->curPos;
-        delayedL = fx->line[0][pos];
-        delayedR = fx->line[1][pos];
-        delayedS = fx->line[2][pos];
+        delayedL = fx->line[0][fx->curPos];
+        delayedR = fx->line[1][fx->curPos];
+        delayedS = fx->line[2][fx->curPos];
 
         if (fx->busIn != NULL) {
             mixedL = invCoef * (*inputL + *inL++) + coef * fx->last[0];
@@ -271,17 +266,17 @@ void AXFXDelayExpCallback(AXFX_BUFFERUPDATE* update, AXFX_DELAY_EXP* fx) {
         mixedR >>= 7;
         mixedS >>= 7;
 
+        fx->last[0] = mixedL;
         fx->last[1] = mixedR;
         fx->last[2] = mixedS;
-        fx->last[0] = mixedL;
 
-        fx->line[0][pos] = mixedL + ((delayedL * fx->feedbackGain) >> 7);
-        fx->line[1][pos] = mixedR + ((delayedR * fx->feedbackGain) >> 7);
-        fx->line[2][pos] = mixedS + ((delayedS * fx->feedbackGain) >> 7);
+        fx->line[0][fx->curPos] = mixedL + ((delayedL * fx->feedbackGain) >> 7);
+        fx->line[1][fx->curPos] = mixedR + ((delayedR * fx->feedbackGain) >> 7);
+        pos2 = fx->curPos;
+        fx->line[2][pos2] = mixedS + ((delayedS * fx->feedbackGain) >> 7);
 
-        pos++;
-        fx->curPos = pos;
-        if (pos >= fx->length) {
+        fx->curPos = pos2 + 1;
+        if (fx->curPos >= fx->length) {
             fx->curPos = 0;
         }
 

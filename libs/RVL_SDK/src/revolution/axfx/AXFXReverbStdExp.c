@@ -216,7 +216,7 @@ void AXFXReverbStdExpCallback(AXFX_BUFFERUPDATE* bufferUpdate, AXFX_REVERBSTD_EX
                 preDelayOut = data;
             }
 
-            earlyOut = earlySample * earlyGain;
+            earlySample = earlySample * earlyGain;
 
             combLine = reverb->combLine[ch][0];
             combOut0 = combLine[combPos0];
@@ -242,7 +242,7 @@ void AXFXReverbStdExpCallback(AXFX_BUFFERUPDATE* bufferUpdate, AXFX_REVERBSTD_EX
             allpass[allpassPos1] = allpassIn;
             fusedOut = outTmp - allpassIn * allpassCoef;
 
-            output = earlyOut + fusedOut * fusedGain;
+            output = earlySample + fusedOut * fusedGain;
 
             *(input[ch]++) = (s32)(output * reverb->outGain);
 

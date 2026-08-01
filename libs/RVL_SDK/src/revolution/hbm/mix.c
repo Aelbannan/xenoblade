@@ -10,7 +10,7 @@
 #include <revolution/ax/AXVPB.h>
 #include <revolution/os/OSInterrupt.h>
 
-BOOL AXIsInit(void);
+extern "C" BOOL AXIsInit(void);
 
 typedef struct HBMMIXChannel {
     AXVPB* vpb;        // at 0x00 — attached AX voice (NULL = free slot)
@@ -70,8 +70,8 @@ typedef struct HBMMIXChannel {
 #define HBMMIX_DB_MIN (-904)
 #define HBMMIX_DB_MAX 60
 
-// Per-frame volume delta divisor (full-scale fade ~256 frames)
-#define HBMMIX_DELTA_UNIT 24576
+// Per-frame volume delta divisor (retail codegen: mulhw 0x2AAAAAAB + srawi 4 = /96)
+#define HBMMIX_DELTA_UNIT 96
 
 // Retail volume/pan tables (data-exact copies from build/us/asm/.../mix.s)
 u16 __HBMMIXVolumeTable[968] = {
@@ -493,14 +493,15 @@ void HBMMIXUpdateSettings(void) {
 
     for (i = 0; i < HBMMIX_NUM_CHANNELS; i++) {
         HBMMIXChannel* ch = &__HBMMIXChannel[i];
-        AXVPB* vpb = ch->vpb;
-        u32 ctrl = 0;
         s32 veChanged = 0;
+        AXVPB* vpb = ch->vpb;
         s32 mixChanged = 0;
 
         if (vpb == NULL) {
             continue;
         }
+
+        u32 ctrl = 0;
 
         if (ch->flags & HBMMIX_FLAG_MAIN) {
             ch->vMain = ch->vMainTarget;
@@ -592,7 +593,7 @@ void HBMMIXUpdateSettings(void) {
 
         if (mixChanged) {
             vpb->pb.mix.vL = ch->vL;
-            if (ch->vL != 0) {
+            if (vpb->pb.mix.vL != 0) {
                 ctrl |= AX_MIXER_CTRL_L;
             }
             vpb->pb.mix.vDeltaL = (s16)((ch->vLTarget - ch->vL) / HBMMIX_DELTA_UNIT);
@@ -601,7 +602,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vR = ch->vR;
-            if (ch->vR != 0) {
+            if (vpb->pb.mix.vR != 0) {
                 ctrl |= AX_MIXER_CTRL_R;
             }
             vpb->pb.mix.vDeltaR = (s16)((ch->vRTarget - ch->vR) / HBMMIX_DELTA_UNIT);
@@ -610,7 +611,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vAuxAL = ch->vAuxAL;
-            if (ch->vAuxAL != 0) {
+            if (vpb->pb.mix.vAuxAL != 0) {
                 ctrl |= AX_MIXER_CTRL_AL;
             }
             vpb->pb.mix.vDeltaAuxAL = (s16)((ch->vAuxALTarget - ch->vAuxAL) / HBMMIX_DELTA_UNIT);
@@ -619,7 +620,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vAuxAR = ch->vAuxAR;
-            if (ch->vAuxAR != 0) {
+            if (vpb->pb.mix.vAuxAR != 0) {
                 ctrl |= AX_MIXER_CTRL_AR;
             }
             vpb->pb.mix.vDeltaAuxAR = (s16)((ch->vAuxARTarget - ch->vAuxAR) / HBMMIX_DELTA_UNIT);
@@ -628,7 +629,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vAuxBL = ch->vAuxBL;
-            if (ch->vAuxBL != 0) {
+            if (vpb->pb.mix.vAuxBL != 0) {
                 ctrl |= AX_MIXER_CTRL_BL;
             }
             vpb->pb.mix.vDeltaAuxBL = (s16)((ch->vAuxBLTarget - ch->vAuxBL) / HBMMIX_DELTA_UNIT);
@@ -637,7 +638,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vAuxBR = ch->vAuxBR;
-            if (ch->vAuxBR != 0) {
+            if (vpb->pb.mix.vAuxBR != 0) {
                 ctrl |= AX_MIXER_CTRL_BR;
             }
             vpb->pb.mix.vDeltaAuxBR = (s16)((ch->vAuxBRTarget - ch->vAuxBR) / HBMMIX_DELTA_UNIT);
@@ -646,7 +647,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vAuxCL = ch->vAuxCL;
-            if (ch->vAuxCL != 0) {
+            if (vpb->pb.mix.vAuxCL != 0) {
                 ctrl |= AX_MIXER_CTRL_CL;
             }
             vpb->pb.mix.vDeltaAuxCL = (s16)((ch->vAuxCLTarget - ch->vAuxCL) / HBMMIX_DELTA_UNIT);
@@ -655,7 +656,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vAuxCR = ch->vAuxCR;
-            if (ch->vAuxCR != 0) {
+            if (vpb->pb.mix.vAuxCR != 0) {
                 ctrl |= AX_MIXER_CTRL_CR;
             }
             vpb->pb.mix.vDeltaAuxCR = (s16)((ch->vAuxCRTarget - ch->vAuxCR) / HBMMIX_DELTA_UNIT);
@@ -664,7 +665,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vS = ch->vS;
-            if (ch->vS != 0) {
+            if (vpb->pb.mix.vS != 0) {
                 ctrl |= AX_MIXER_CTRL_S;
             }
             vpb->pb.mix.vDeltaS = (s16)((ch->vSTarget - ch->vS) / HBMMIX_DELTA_UNIT);
@@ -673,7 +674,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vAuxAS = ch->vAuxAS;
-            if (ch->vAuxAS != 0) {
+            if (vpb->pb.mix.vAuxAS != 0) {
                 ctrl |= AX_MIXER_CTRL_AS;
             }
             vpb->pb.mix.vDeltaAuxAS = (s16)((ch->vAuxASTarget - ch->vAuxAS) / HBMMIX_DELTA_UNIT);
@@ -682,7 +683,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vAuxBS = ch->vAuxBS;
-            if (ch->vAuxBS != 0) {
+            if (vpb->pb.mix.vAuxBS != 0) {
                 ctrl |= AX_MIXER_CTRL_BS;
             }
             vpb->pb.mix.vDeltaAuxBS = (s16)((ch->vAuxBSTarget - ch->vAuxBS) / HBMMIX_DELTA_UNIT);
@@ -691,7 +692,7 @@ void HBMMIXUpdateSettings(void) {
             }
 
             vpb->pb.mix.vAuxCS = ch->vAuxCS;
-            if (ch->vAuxCS != 0) {
+            if (vpb->pb.mix.vAuxCS != 0) {
                 ctrl |= AX_MIXER_CTRL_CS;
             }
             vpb->pb.mix.vDeltaAuxCS = (s16)((ch->vAuxCSTarget - ch->vAuxCS) / HBMMIX_DELTA_UNIT);

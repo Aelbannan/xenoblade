@@ -128,11 +128,20 @@ documented per-implementation private-storage abstraction.
   summarized loop cannot hide divergent private-frame bytes. Bounded-remainder
   expansions stay `applied` (never discharged). Recognizer accepts
   exact `store; addi` or lone `stwu` bodies only (rejects reversed order,
-  multi-store, calls, source==base). `mtctr 0` is unsupported (bdnz wrap). The
-  heuristic `skip-branch` zero-trip guard is **disabled** for soundness: only a
-  `concrete-nonzero` trip authorizes bounded-remainder expansion; symbolic
-  remainders whose zero-trip case is only guarded by a nearby branch stay
-  unsupported. Trip count
+  multi-store, calls, source==base). `mtctr 0` is unsupported (bdnz wrap).
+  Skip guards (doc 30 Phase B): `mtctr` may sit up to four instructions before
+  the header when the between-instructions are `{nop, mr, cror, crand}` or a
+  single conditional CR0-test branch, and a guarded symbolic remainder is
+  summary-*eligible* only when `skip_guard.discharge_skip_guard` proves two
+  independent UNSAT checks (`guard_taken AND trip >= 1` and
+  `NOT guard_taken AND trip == 0`, establishing `guard_taken <=> trip == 0`)
+  against the symbolic entry state at apply time; the guard must read CR0
+  last written by the trip-definition dot-form (`andi.`/`andis.`/`rlwinm.`)
+  and its target must never re-enter the loop (header unreachable from the
+  target in the CFG). A guard that does not discharge leaves the loop
+  unrolled / fail-closed at the iteration limit — recognition alone never
+  authorizes. Symbolic remainders without any guard stay unsupported. Trip
+  count
   must be recovered from bounded straight-line GPR materialization immediately
   before `mtctr` (`addi`/`addis`/`ori`/`oris`, `andi.`/`andis.` remainder masks,
   exact `srwi`-equivalent `rlwinm` forms (`rlwinm rA,rS,32-n,n,31` for

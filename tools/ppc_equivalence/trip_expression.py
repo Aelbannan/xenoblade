@@ -150,6 +150,22 @@ def evaluate_symbolic(
   raise TypeError(f"unsupported TripExpr {type(expr)!r}")
 
 
+def trip_expr_from_canonical(data: Mapping[str, Any]) -> TripExpr:
+    """Rebuild a :class:`TripExpr` from its canonical dict form."""
+    kind = data.get("kind")
+    if kind == "const":
+        return TripConstant(int(data["value"]))
+    if kind == "entry":
+        return TripEntryReg(int(data["reg"]))
+    if kind == "and":
+        return TripAnd(trip_expr_from_canonical(data["left"]), trip_expr_from_canonical(data["right"]))
+    if kind == "lshr":
+        return TripLshr(trip_expr_from_canonical(data["left"]), int(data["shift"]))
+    if kind == "add":
+        return TripAdd(trip_expr_from_canonical(data["left"]), trip_expr_from_canonical(data["right"]))
+    raise ValueError(f"unknown trip_expr kind {kind!r}")
+
+
 def evaluate_concrete(
   expr: TripExpr,
   entry_values: Mapping[int, int],

@@ -33,10 +33,12 @@ from typing import Any
 
 from tools.ppc_equivalence.bounded_remainder_loop import (
     BoundedRemainderTrip,
+    MAX_SYMBOLIC_REMAINDER_BOUND,
     apply_bounded_remainder_memory_loop,
     recover_bounded_remainder_trip,
 )
 from tools.ppc_equivalence.ctr_materialization import collect_lwz_readonly_addresses, recover_gpr_constant
+from tools.ppc_equivalence.skip_guard import find_mtctr_with_guard
 from tools.ppc_equivalence.trip_expression import canonical_dict, recognize_trip_expr
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.memory_semantics import (
@@ -88,6 +90,7 @@ class ConstantStrideStoreLoop:
     zero_guard: str | None
     confidence: str
     notes: tuple[str, ...]
+    skip_guard: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -111,6 +114,7 @@ class MemoryLoopSummary:
     trip_upper_bound: int | None = None
     zero_guard: str | None = None
     expansion: str = "closed-form"
+    skip_guard: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -219,6 +223,8 @@ def compute_summary_identity_sha256(summary: MemoryLoopSummary) -> str:
         payload["trip_upper_bound"] = int(summary.trip_upper_bound)
     if summary.zero_guard is not None:
         payload["zero_guard"] = summary.zero_guard
+    if summary.skip_guard is not None:
+        payload["skip_guard"] = dict(summary.skip_guard)
     return canonical_json_sha256(payload)
 
 
@@ -257,12 +263,10 @@ def find_constant_stride_store_loops(
         if parsed is None:
             continue
 
-        mtctr_index = header_index - 1
-        if mtctr_index < 0:
+        mtctr_index, guard = find_mtctr_with_guard(instructions, header_index)
+        if mtctr_index is None:
             continue
         mtctr = instructions[mtctr_index]
-        if not _is_mtctr(mtctr):
-            continue
         trip_reg = int(mtctr.operands[0])
         trip_count, trip_notes = _concrete_trip_count(
             instructions,
@@ -306,6 +310,22 @@ def find_constant_stride_store_loops(
         if bounded_trip is not None:
             notes.extend(bounded_trip.notes)
             notes.extend(bounded_trip.zero_guard.notes)
+        # B2/B3: a syntactic skip guard between the trip materialization and the
+        # header makes a symbolic bounded remainder summary-*eligible*; the SMT
+        # discharge (skip_guard.discharge_skip_guard) runs at apply time and
+        # gates the actual summary application.
+        if (
+            guard is not None
+            and trip_count is None
+            and trip_expr_dict is not None
+            and trip_upper_bound is not None
+            and trip_upper_bound <= MAX_SYMBOLIC_REMAINDER_BOUND
+        ):
+            zero_guard = "skip-branch"
+            notes.append(
+                f"skip-guard candidate ({guard.family} @ 0x{guard.target_pc:08X}); "
+                "SMT discharge required at apply time",
+            )
         if trip_count == 0:
             # mtctr 0 + bdnz wraps to 0xffffffff — never summarize as a store loop.
             notes.append("CTR load of 0 wraps under bdnz (unsupported without skip guard)")
@@ -313,6 +333,13 @@ def find_constant_stride_store_loops(
         elif trip_count is not None and trip_count >= 1:
             confidence = "exact-pattern"
         elif bounded_trip is not None and zero_guard in ("concrete-nonzero", "skip-branch"):
+            confidence = "bounded-remainder"
+        elif (
+            guard is not None
+            and zero_guard == "skip-branch"
+            and trip_upper_bound is not None
+            and trip_upper_bound <= MAX_SYMBOLIC_REMAINDER_BOUND
+        ):
             confidence = "bounded-remainder"
         else:
             confidence = "partial"
@@ -336,6 +363,7 @@ def find_constant_stride_store_loops(
                 zero_guard=zero_guard,
                 confidence=confidence,
                 notes=tuple(notes),
+                skip_guard=guard.to_dict() if guard is not None else None,
             ),
         )
     return loops
@@ -405,6 +433,7 @@ def summarize_constant_stride_store_loop(
         trip_upper_bound=loop.trip_upper_bound,
         zero_guard=loop.zero_guard,
         expansion=expansion,
+        skip_guard=loop.skip_guard,
     )
 
 
@@ -452,10 +481,15 @@ def build_memory_loop_plan_map(
 
         header_index = by_address.get(summary.header_pc)
         latch_index = by_address.get(summary.latch_pc)
-        mtctr_index = by_address.get(loop.mtctr_pc)
-        if header_index is None or latch_index is None or mtctr_index is None:
+        if header_index is None or latch_index is None:
             continue
-        if header_index >= latch_index or mtctr_index != header_index - 1:
+        if header_index >= latch_index:
+            continue
+        # The witness mtctr must match the recognized adjacency (mtctr may sit
+        # up to 4 instructions before the header when the between-instructions
+        # are padding / the skip guard — see ``skip_guard.find_mtctr_with_guard``).
+        mtctr_index, _guard = find_mtctr_with_guard(instructions, header_index)
+        if mtctr_index is None or instructions[mtctr_index].address != loop.mtctr_pc:
             continue
 
         body = tuple(instructions[header_index:latch_index])

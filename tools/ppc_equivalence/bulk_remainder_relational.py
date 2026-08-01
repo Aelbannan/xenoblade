@@ -127,21 +127,43 @@ def find_bulk_remainder_pairs(
     return pairs
 
 
-def prove_bulk_remainder_identity(pair: BulkRemainderLoopPair) -> bool:
-    """Check algebraic identity and remainder bound without wrap/overlap anomalies."""
+def prove_bulk_remainder_identity(
+    pair: BulkRemainderLoopPair,
+    *,
+    allow_symbolic_bulk: bool = False,
+) -> bool:
+    """Check algebraic identity and remainder bound without wrap/overlap anomalies.
+
+    ``allow_symbolic_bulk`` (doc 30 Phase B / F-4) accepts a symbolic
+    ``TripLshr`` bulk loop when it carries a skip guard whose two-UNSAT
+    discharge (``skip_guard.discharge_skip_guard``) proves the header path
+    always has ``bulk_trip >= 1`` — the ``bdnz`` zero-trip wrap is then
+    covered and the identity ``N = (1<<k)*(N>>k) + (N&mask)`` holds for all
+    ``N``. The guard discharge is a pure function of the trip expression, so
+    it can be re-run against any fresh symbolic entry state.
+    """
     if pair.bulk.confidence != "exact-pattern":
-        return False
-    if pair.remainder.confidence not in ("exact-pattern", "partial"):
+        if not (
+            allow_symbolic_bulk
+            and pair.bulk.confidence in ("partial", "bounded-remainder")
+            and pair.bulk.skip_guard is not None
+        ):
+            return False
+    if pair.remainder.confidence not in ("exact-pattern", "partial", "bounded-remainder"):
         return False
     if not _loops_shape_compatible(pair.bulk, pair.remainder):
         return False
     if pair.remainder.trip_count is None:
-        return False
+        if pair.remainder.confidence not in ("bounded-remainder", "partial"):
+            return False
     expected_mask = remainder_mask_for_shift(pair.shift_k)
-    if pair.remainder.trip_count > expected_mask:
+    if (
+        pair.remainder.trip_count is not None
+        and pair.remainder.trip_count > expected_mask
+    ):
         return False
     chunk = 1 << pair.shift_k
-    if pair.remainder.trip_count >= chunk:
+    if pair.remainder.trip_count is not None and pair.remainder.trip_count >= chunk:
         return False
     if pair.bulk.trip_expr is None or pair.remainder.trip_expr is None:
         return False
@@ -192,9 +214,11 @@ def discharge_bulk_remainder_identity(
 
 def try_range_write_params(
     pair: BulkRemainderLoopPair,
+    *,
+    allow_symbolic_bulk: bool = False,
 ) -> RangeWriteParams | None:
     """Return shared RangeWrite params when the pair is a constant-value contiguous store."""
-    if not prove_bulk_remainder_identity(pair):
+    if not prove_bulk_remainder_identity(pair, allow_symbolic_bulk=allow_symbolic_bulk):
         return None
     if not _is_constant_value_contiguous(pair):
         return None
@@ -259,6 +283,7 @@ def build_bulk_remainder_relational_sketch(
     *,
     deadline: Deadline | None = None,
     z3_module: Any | None = None,
+    allow_symbolic_bulk: bool = False,
 ) -> RelationalInductionSketch | BulkRemainderRelationalUnsupported:
     """Build a relational sketch; discharge when RangeWrite+identity SMT succeed."""
     if original.shift_k != candidate.shift_k:
@@ -269,17 +294,21 @@ def build_bulk_remainder_relational_sketch(
         return BulkRemainderRelationalUnsupported(
             f"mismatched entry register: r{original.entry_reg} vs r{candidate.entry_reg}"
         )
-    if not prove_bulk_remainder_identity(original):
+    if not prove_bulk_remainder_identity(
+        original, allow_symbolic_bulk=allow_symbolic_bulk,
+    ):
         return BulkRemainderRelationalUnsupported("original bulk+remainder pair fails identity")
-    if not prove_bulk_remainder_identity(candidate):
+    if not prove_bulk_remainder_identity(
+        candidate, allow_symbolic_bulk=allow_symbolic_bulk,
+    ):
         return BulkRemainderRelationalUnsupported("candidate bulk+remainder pair fails identity")
     if not _loops_shape_compatible(original.bulk, candidate.bulk):
         return BulkRemainderRelationalUnsupported("bulk loop bodies differ between sides")
     if not _loops_shape_compatible(original.remainder, candidate.remainder):
         return BulkRemainderRelationalUnsupported("remainder loop bodies differ between sides")
 
-    left_rw = try_range_write_params(original)
-    right_rw = try_range_write_params(candidate)
+    left_rw = try_range_write_params(original, allow_symbolic_bulk=allow_symbolic_bulk)
+    right_rw = try_range_write_params(candidate, allow_symbolic_bulk=allow_symbolic_bulk)
     if left_rw is None or right_rw is None or left_rw != right_rw:
         return _pending_scaffold(original, candidate, reason="range-write unsupported or mismatched")
 
@@ -289,6 +318,7 @@ def build_bulk_remainder_relational_sketch(
         range_write=left_rw,
         deadline=deadline,
         z3_module=z3_module,
+        allow_symbolic_bulk=allow_symbolic_bulk,
     )
     if isinstance(discharged, BulkRemainderRelationalUnsupported):
         return _pending_scaffold(original, candidate, reason=discharged.reason)
@@ -302,6 +332,7 @@ def try_smt_discharge_bulk_remainder(
     range_write: RangeWriteParams,
     deadline: Deadline | None = None,
     z3_module: Any | None = None,
+    allow_symbolic_bulk: bool = False,
 ) -> RelationalInductionSketch | BulkRemainderRelationalUnsupported:
     """Five independent UNSAT blocks for bulk+remainder + shared RangeWrite."""
     if z3_module is None:
@@ -309,9 +340,13 @@ def try_smt_discharge_bulk_remainder(
     if deadline is None:
         deadline = Deadline.after_ms(15_000)
 
-    if range_write != try_range_write_params(original):
+    if range_write != try_range_write_params(
+        original, allow_symbolic_bulk=allow_symbolic_bulk,
+    ):
         return BulkRemainderRelationalUnsupported("original RangeWrite params mismatch")
-    if range_write != try_range_write_params(candidate):
+    if range_write != try_range_write_params(
+        candidate, allow_symbolic_bulk=allow_symbolic_bulk,
+    ):
         return BulkRemainderRelationalUnsupported("candidate RangeWrite params mismatch")
 
     n_left = z3_module.BitVec("N_L", 32)
@@ -684,6 +719,40 @@ def _pending_scaffold(
     )
 
 
+def _bulk_guard_discharged(
+    pair: BulkRemainderLoopPair,
+    instructions: Sequence[Instruction],
+    *,
+    z3_module: Any | None = None,
+) -> bool:
+    """True when the bulk loop's skip guard discharges against its trip expr.
+
+    The discharge is a pure function of the trip expression (two UNSAT checks
+    over the symbolic value), so a fresh symbolic entry state suffices.
+    """
+    from tools.ppc_equivalence.engine import _symbolic_initial
+    from tools.ppc_equivalence.semantics import SymbolicOps
+    from tools.ppc_equivalence.skip_guard import (
+        SkipGuardInfo,
+        discharge_skip_guard,
+    )
+
+    if pair.bulk.skip_guard is None:
+        return False
+    guard = SkipGuardInfo(**pair.bulk.skip_guard)
+    expr, _notes = recognize_trip_expr(
+        instructions, guard.mtctr_index, guard.trip_reg,
+    )
+    if expr is None:
+        return False
+    ops = SymbolicOps()
+    initial = _symbolic_initial(ops)
+    discharge = discharge_skip_guard(
+        guard, expr, initial.gpr, ops, z3_module=z3_module,
+    )
+    return discharge is not None and discharge.all_unsat()
+
+
 def try_build_bulk_remainder_relational_sketch(
     original: Sequence[Instruction],
     candidate: Sequence[Instruction],
@@ -697,11 +766,16 @@ def try_build_bulk_remainder_relational_sketch(
     right = find_bulk_remainder_pairs(candidate, readonly_words=readonly_words)
     if len(left) != 1 or len(right) != 1:
         return None
+    allow_symbolic = (
+        _bulk_guard_discharged(left[0], original, z3_module=z3_module)
+        and _bulk_guard_discharged(right[0], candidate, z3_module=z3_module)
+    )
     built = build_bulk_remainder_relational_sketch(
         left[0],
         right[0],
         deadline=deadline,
         z3_module=z3_module,
+        allow_symbolic_bulk=allow_symbolic,
     )
     if isinstance(built, BulkRemainderRelationalUnsupported):
         return None

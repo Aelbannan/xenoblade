@@ -42,6 +42,8 @@ from .gx_fifo_loop import (
 from .loop_summary import LoopSummary, apply_affine_loop_summary, build_affine_summary_map
 from .memory_bus import BusOutcome, MemoryBus
 from .memory_loop import MemoryLoopPlan, MemoryLoopSummary, apply_memory_loop_summary
+from .skip_guard import discharge_skip_guard
+from .trip_expression import evaluate_symbolic, trip_expr_from_canonical
 from .model import ConcreteMemory, InvalidReason, MachineState, XerState
 from .result import FloatingPointDomain
 from .stack_escape import mark_stack_pointer_escape as _shared_mark_stack_pointer_escape
@@ -5123,30 +5125,66 @@ def _execute_cfg_body(
             continue
         memory_plan = memory_loop_plans.get(pc)
         if memory_plan is not None and prior_visits == 0:
-            entry_guard = ops.eq(
-                current.ctr,
-                ops.const(int(memory_plan.summary.trip_count) & 0xFFFFFFFF),
-            )
-            # Keep the premise-violation path until the complete solver context
-            # can prove it unreachable (do not prune via local simplify alone).
-            record_terminal(
-                ops.land(condition, ops.lnot(entry_guard)),
-                current,
-                "memory-loop-entry-premise",
-                ops.const(memory_plan.summary.header_pc),
-                force=True,
-            )
-            summarized = apply_memory_loop_summary(current, memory_plan.summary, ops)
-            if memory_plans_used is not None:
-                memory_plans_used.append(memory_plan)
-            enqueue(
-                memory_plan.summary.exit_pc,
-                summarized,
-                ops.land(condition, entry_guard),
-                {**visit_counts, pc: 1},
-                steps + 1,
-            )
-            continue
+            summary = memory_plan.summary
+            entry_guard: Any | None = None
+            if summary.expansion == "bounded-remainder" and summary.trip_expr is not None:
+                # Symbolic bounded-remainder trips: the entry premise is
+                # ``ctr == trip_value`` (the symbolic trip expression evaluated
+                # at the header entry) plus the zero-trip exclusion. A skip
+                # guard (B2) must discharge against this exact state before the
+                # summary may be applied; otherwise the loop stays unrolled /
+                # fail-closed at the iteration limit.
+                trip_value = evaluate_symbolic(
+                    trip_expr_from_canonical(summary.trip_expr),
+                    current.gpr,
+                    ops,
+                )
+                if summary.skip_guard is not None:
+                    from tools.ppc_equivalence.skip_guard import SkipGuardInfo
+
+                    discharge = discharge_skip_guard(
+                        SkipGuardInfo(**summary.skip_guard),
+                        trip_expr_from_canonical(summary.trip_expr),
+                        current.gpr,
+                        ops,
+                    )
+                    if discharge is not None and discharge.all_unsat():
+                        entry_guard = ops.land(
+                            ops.eq(current.ctr, trip_value),
+                            ops.lnot(ops.eq(trip_value, ops.const(0))),
+                        )
+                else:
+                    entry_guard = ops.land(
+                        ops.eq(current.ctr, trip_value),
+                        ops.lnot(ops.eq(trip_value, ops.const(0))),
+                    )
+            else:
+                entry_guard = ops.eq(
+                    current.ctr,
+                    ops.const(int(summary.trip_count) & 0xFFFFFFFF),
+                )
+            if entry_guard is not None:
+                # Keep the premise-violation path until the complete solver
+                # context can prove it unreachable (do not prune via local
+                # simplify alone).
+                record_terminal(
+                    ops.land(condition, ops.lnot(entry_guard)),
+                    current,
+                    "memory-loop-entry-premise",
+                    ops.const(summary.header_pc),
+                    force=True,
+                )
+                summarized = apply_memory_loop_summary(current, summary, ops)
+                if memory_plans_used is not None:
+                    memory_plans_used.append(memory_plan)
+                enqueue(
+                    summary.exit_pc,
+                    summarized,
+                    ops.land(condition, entry_guard),
+                    {**visit_counts, pc: 1},
+                    steps + 1,
+                )
+                continue
         if prior_visits >= max_loop_iterations:
             raise ExecutionInconclusive(
                 f"loop iteration limit exceeded ({max_loop_iterations}) at 0x{pc:08x}"

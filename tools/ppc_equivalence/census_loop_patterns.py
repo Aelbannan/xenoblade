@@ -94,6 +94,10 @@ class CensusAccumulator:
         self.totals[key] += 1
         self.totals_by_unit[f"{hit.pattern}:{hit.unit}"] += 1
         self.totals_by_confidence[hit.confidence] += 1
+        if hit.detail.get("symbolic_trip"):
+            self.totals[f"{hit.pattern}:symbolic-trip"] += 1
+        if hit.detail.get("skip_guard"):
+            self.totals[f"{hit.pattern}:skip-guard"] += 1
 
     def top_hits(self, pattern: str, *, limit: int = 12) -> list[PatternHit]:
         exact = [hit for hit in self.hits if hit.pattern == pattern and hit.confidence == "exact-pattern"]
@@ -138,7 +142,12 @@ class CensusAccumulator:
 
 
 def unit_name(path: Path, root: Path) -> str:
-    relative = path.relative_to(root)
+    path = path.resolve()
+    root = root.resolve()
+    try:
+        relative = path.relative_to(root)
+    except ValueError:
+        return path.as_posix()
     return relative.parts[0] if relative.parts else relative.as_posix()
 
 
@@ -234,6 +243,10 @@ def _hit_from_memory(loop: ConstantStrideStoreLoop, function: AsmFunction) -> Pa
             "store_width": loop.store_width,
             "stride": loop.stride,
             "trip_count": loop.trip_count,
+            "trip_upper_bound": loop.trip_upper_bound,
+            "zero_guard": loop.zero_guard,
+            "symbolic_trip": loop.trip_count is None and loop.trip_expr is not None,
+            "skip_guard": loop.skip_guard is not None,
             "notes": list(loop.notes),
         },
     )
@@ -290,6 +303,11 @@ def scan_function(
                 detail={
                     "header_pc": f"0x{candidate.header_pc:08X}",
                     "trip_count": candidate.trip_count,
+                    "trip_count_reg": candidate.trip_count_reg,
+                    "symbolic_trip": (
+                        candidate.trip_count is None and candidate.trip_expr is not None
+                    ),
+                    "skip_guard": candidate.skip_guard is not None,
                     "notes": list(candidate.notes),
                 },
             )

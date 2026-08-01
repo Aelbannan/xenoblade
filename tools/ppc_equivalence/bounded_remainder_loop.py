@@ -148,7 +148,7 @@ def apply_bounded_remainder_memory_loop(
   trip_value = evaluate_symbolic(trip.expr, entry_regs, ops)
   current = state
   for index in range(trip.upper_bound):
-    guard = ops.unsigned_gt(trip_value, ops.const(index))
+    guard = ops.unsigned_lt(ops.const(index), trip_value)
     if store_kind == "stwu":
       offset = (index + 1) * stride
     else:
@@ -237,20 +237,3 @@ def _classify_zero_guard(
     return ZeroTripGuard("concrete-nonzero", ())
 
   return ZeroTripGuard("unsupported", ("zero-trip guard not established",))
-
-
-def _has_skip_guard_before_header(
-  instructions: Sequence[Instruction],
-  mtctr_index: int,
-  header_pc: int,
-) -> bool:
-  """True when a conditional branch may skip the loop when trip is zero."""
-  for index in range(max(0, mtctr_index - 8), mtctr_index + 1):
-    insn = instructions[index]
-    if insn.opcode != Opcode.BC or insn.link:
-      continue
-    _bo, _bi, target, _aa = (int(v) for v in insn.operands)
-    target_pc = int(target) & 0xFFFFFFFC
-    if target_pc > header_pc:
-      return True
-  return False

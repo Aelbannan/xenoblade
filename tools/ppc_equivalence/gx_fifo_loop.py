@@ -40,6 +40,7 @@ from tools.ppc_equivalence.memory_loop import (
     memory_loop_plan_may_touch_regions,
 )
 from tools.ppc_equivalence.provenance import canonical_json_sha256
+from tools.ppc_equivalence.skip_guard import find_mtctr_with_guard
 from tools.ppc_equivalence.trip_expression import canonical_dict, recognize_trip_expr
 
 _CTR_SPR = 9
@@ -84,6 +85,7 @@ class GxFifoLoopCandidate:
     max_events: int
     confidence: str
     notes: tuple[str, ...]
+    skip_guard: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -232,12 +234,10 @@ def recognize_gx_fifo_loops(
         if parsed is None:
             continue
 
-        mtctr_index = header_index - 1
-        if mtctr_index < 0:
+        mtctr_index, guard = find_mtctr_with_guard(instructions, header_index)
+        if mtctr_index is None:
             continue
         mtctr = instructions[mtctr_index]
-        if not _is_mtctr(mtctr):
-            continue
         trip_reg = int(mtctr.operands[0])
         trip_count, trip_notes = recover_gpr_constant(
             instructions,
@@ -262,6 +262,8 @@ def recognize_gx_fifo_loops(
         notes = list(body_notes)
         notes.extend(trip_notes)
         notes.extend(expr_notes)
+        if guard is not None:
+            notes.append(f"skip-guard candidate ({guard.family} @ 0x{guard.target_pc:08X})")
 
         if trip_count == 0:
             # mtctr 0 + bdnz wraps to 0xffffffff — never summarize.
@@ -294,6 +296,7 @@ def recognize_gx_fifo_loops(
                 max_events=max_events,
                 confidence=confidence,
                 notes=tuple(notes),
+                skip_guard=guard.to_dict() if guard is not None else None,
             ),
         )
     return candidates
@@ -324,10 +327,16 @@ def build_gx_fifo_loop_plan(
     by_address = {insn.address: index for index, insn in enumerate(instructions)}
     header_index = by_address.get(candidate.header_pc)
     latch_index = by_address.get(candidate.latch_pc)
-    mtctr_index = by_address.get(candidate.mtctr_pc)
-    if header_index is None or latch_index is None or mtctr_index is None:
+    if header_index is None or latch_index is None:
         return None
-    if header_index >= latch_index or mtctr_index != header_index - 1:
+    if header_index >= latch_index:
+        return None
+    # Drift guard: the witness mtctr must match the recognized adjacency
+    # (``skip_guard.find_mtctr_with_guard``; mtctr may sit up to 4 instructions
+    # before the header when the between-instructions are padding / the skip
+    # guard).
+    mtctr_index, _guard = find_mtctr_with_guard(instructions, header_index)
+    if mtctr_index is None or instructions[mtctr_index].address != candidate.mtctr_pc:
         return None
 
     body = tuple(instructions[header_index:latch_index])

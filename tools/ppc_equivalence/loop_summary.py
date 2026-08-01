@@ -32,8 +32,15 @@ from typing import Any
 
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.provenance import canonical_json_sha256
+from tools.ppc_equivalence.skip_guard import (
+    SkipGuardInfo,
+    find_mtctr_with_guard,
+)
+from tools.ppc_equivalence.trip_expression import (
+    canonical_dict,
+    recognize_trip_expr,
+)
 
-_CTR_SPR = 9
 _BDNZ_BO = 16  # decrement CTR; branch if CTR != 0 after decrement
 
 
@@ -75,6 +82,8 @@ class CtrAffineLoopCandidate:
     confidence: str
     notes: tuple[str, ...]
     final_compare: FinalCompare | None = None
+    trip_expr: dict[str, Any] | None = None
+    skip_guard: dict[str, Any] | None = None
 
 
 @dataclass(frozen=True)
@@ -162,17 +171,23 @@ def find_ctr_affine_loop_candidates(
         if body_notes and updates is None:
             continue
 
-        mtctr_index = header_index - 1
-        if mtctr_index < 0:
+        mtctr_index, guard = find_mtctr_with_guard(instructions, header_index)
+        if mtctr_index is None:
             continue
         mtctr = instructions[mtctr_index]
-        if not _is_mtctr(mtctr):
-            continue
         trip_reg = int(mtctr.operands[0])
         trip_count, trip_notes = _concrete_trip_count(instructions, mtctr_index, trip_reg)
+        trip_expr, expr_notes = recognize_trip_expr(
+            instructions,
+            mtctr_index,
+            trip_reg,
+        )
 
         notes = list(trip_notes)
+        notes.extend(expr_notes)
         notes.extend(body_notes)
+        if guard is not None:
+            notes.append(f"skip-guard candidate ({guard.family} @ 0x{guard.target_pc:08X})")
         if trip_count == 0:
             notes.append("CTR load of 0 wraps under bdnz (not a zero-trip loop)")
         confidence = "exact-pattern" if trip_count is not None and trip_count >= 1 else "partial"
@@ -189,6 +204,8 @@ def find_ctr_affine_loop_candidates(
                 instruction_indexes=tuple(range(mtctr_index, index + 1)),
                 confidence=confidence,
                 notes=tuple(notes),
+                trip_expr=canonical_dict(trip_expr) if trip_expr is not None else None,
+                skip_guard=guard.to_dict() if guard is not None else None,
             ),
         )
     return candidates
@@ -609,14 +626,6 @@ def _is_bne_cr0_eq(insn: Instruction) -> bool:
         return False
     bo, bi, _target, aa = insn.operands
     return int(bo) == _BNE_BO and int(bi) == _CR0_EQ_BI and int(aa) == 0
-
-
-def _is_mtctr(insn: Instruction) -> bool:
-    return (
-        insn.opcode == Opcode.MTSPR
-        and len(insn.operands) == 2
-        and int(insn.operands[1]) == _CTR_SPR
-    )
 
 
 def _parse_affine_body(

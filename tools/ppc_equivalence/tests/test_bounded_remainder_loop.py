@@ -143,10 +143,13 @@ class BoundedRemainderTripTests(unittest.TestCase):
         self.assertEqual(summary.trip_count, 0x2B & 7)
         self.assertEqual(summary.trip_upper_bound, 0x2B & 7)
 
-    def test_summarize_bounded_remainder_with_skip_guard_not_summarized(self) -> None:
-        # With the skip-branch heuristic disabled, a symbolic remainder guarded
-        # only by a branch is no longer recognized as a bounded-remainder loop:
-        # it degrades to partial confidence and yields no summary.
+    def test_summarize_bounded_remainder_with_skip_guard_summary_eligible(self) -> None:
+        # Phase B (doc 30): a syntactic skip guard between the trip
+        # materialization and the header elevates a symbolic remainder to
+        # summary-eligibility (``bounded-remainder`` with ``skip-branch``
+        # zero-guard). The summary is *built* here; the SMT discharge
+        # (``skip_guard.discharge_skip_guard``) runs at apply time and gates
+        # the actual application — recognition alone never authorizes.
         program = [
             _insn(Opcode.ANDI_DOT, (6, 6, 7), address=0),
             _insn(Opcode.BC, (12, 0, 24, 0), address=4),
@@ -159,9 +162,14 @@ class BoundedRemainderTripTests(unittest.TestCase):
         loops = find_constant_stride_store_loops(program)
         self.assertEqual(len(loops), 1)
         loop = loops[0]
-        self.assertEqual(loop.confidence, "partial")
+        self.assertEqual(loop.confidence, "bounded-remainder")
+        self.assertIsNotNone(loop.skip_guard)
         summary = summarize_constant_stride_store_loop(loop)
-        self.assertIsNone(summary)
+        self.assertIsNotNone(summary)
+        assert summary is not None
+        self.assertEqual(summary.zero_guard, "skip-branch")
+        self.assertEqual(summary.expansion, "bounded-remainder")
+        self.assertIsNotNone(summary.skip_guard)
 
 
 if __name__ == "__main__":

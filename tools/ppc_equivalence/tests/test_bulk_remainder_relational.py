@@ -179,6 +179,107 @@ class BulkRemainderRelationalTests(unittest.TestCase):
         self.assertIsNone(try_range_write_params(bad))
 
     @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_symbolic_bulk_accepted_only_under_discharged_guard(self) -> None:
+        """doc 30 F-4: symbolic ``TripLshr`` bulk requires a skip guard."""
+        from dataclasses import replace
+
+        pair = _exact_pair(shift_k=3)
+        guarded_bulk = replace(
+            pair.bulk,
+            trip_count=None,
+            trip_expr={
+                "kind": "lshr",
+                "left": {"kind": "entry", "reg": 6},
+                "shift": 3,
+            },
+            confidence="partial",
+            skip_guard={
+                "guard_index": 1,
+                "bo": 12,
+                "bi": 2,
+                "target_pc": 8,
+                "family": "beq",
+                "mtctr_index": 0,
+                "header_pc": 8,
+                "trip_def_index": 0,
+                "trip_reg": 0,
+            },
+        )
+        symbolic = BulkRemainderLoopPair(
+            entry_reg=pair.entry_reg,
+            shift_k=pair.shift_k,
+            bulk=guarded_bulk,
+            remainder=replace(
+                pair.remainder,
+                trip_count=None,
+                confidence="bounded-remainder",
+                zero_guard="skip-branch",
+            ),
+            identity_notes=("symbolic-bulk test",),
+        )
+        # Without the flag (or without a guard) the symbolic bulk is rejected.
+        self.assertFalse(prove_bulk_remainder_identity(symbolic))
+        unguarded = replace(
+            symbolic, bulk=replace(symbolic.bulk, skip_guard=None),
+        )
+        self.assertFalse(prove_bulk_remainder_identity(
+            unguarded, allow_symbolic_bulk=True,
+        ))
+        self.assertTrue(prove_bulk_remainder_identity(
+            symbolic, allow_symbolic_bulk=True,
+        ))
+        # The full relational sketch discharges for the symbolic-bulk pair.
+        result = build_bulk_remainder_relational_sketch(
+            symbolic, symbolic, allow_symbolic_bulk=True,
+            deadline=Deadline.after_ms(15_000),
+        )
+        self.assertIsInstance(result, RelationalInductionSketch)
+        assert isinstance(result, RelationalInductionSketch)
+        self.assertEqual(result.status, "discharged")
+
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
+    def test_symbolic_bulk_relational_discharge_smoke(self) -> None:
+        """End-to-end: guarded bulk + guarded remainder loops discharge."""
+        from dataclasses import replace
+
+        pair = _exact_pair(shift_k=3)
+        guarded = replace(
+            pair.bulk,
+            trip_count=None,
+            confidence="partial",
+            skip_guard={
+                "guard_index": 1,
+                "bo": 12,
+                "bi": 2,
+                "target_pc": 8,
+                "family": "beq",
+                "mtctr_index": 0,
+                "header_pc": 8,
+                "trip_def_index": 0,
+                "trip_reg": 0,
+            },
+        )
+        symbolic = BulkRemainderLoopPair(
+            entry_reg=pair.entry_reg,
+            shift_k=pair.shift_k,
+            bulk=guarded,
+            remainder=replace(
+                pair.remainder,
+                trip_count=None,
+                confidence="bounded-remainder",
+                zero_guard="skip-branch",
+            ),
+            identity_notes=("symbolic-bulk smoke",),
+        )
+        result = build_bulk_remainder_relational_sketch(
+            symbolic, symbolic, allow_symbolic_bulk=True,
+            deadline=Deadline.after_ms(15_000),
+        )
+        self.assertIsInstance(result, RelationalInductionSketch)
+        assert isinstance(result, RelationalInductionSketch)
+        self.assertEqual(result.status, "discharged")
+
+    @unittest.skipUnless(_HAS_Z3, "z3-solver is not installed")
     def test_identity_smt_discharge(self) -> None:
         result = discharge_bulk_remainder_identity(
             shift_k=3,

@@ -165,7 +165,7 @@ class RetailLoopCorpusTests(unittest.TestCase):
                 f"{symbol} @0x{header_pc:08X} not recognized",
             )
             candidate = matches[0]
-            self.assertEqual(candidate.confidence, "partial")
+            self.assertEqual(candidate.confidence, "symbolic-trip")
             self.assertIsNotNone(candidate.skip_guard)
             self.assertIsNotNone(candidate.trip_expr)
             seen.add(header_pc)

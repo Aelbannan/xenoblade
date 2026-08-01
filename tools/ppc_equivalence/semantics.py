@@ -5051,18 +5051,77 @@ def _execute_cfg_body(
         prior_visits = visit_counts.get(pc, 0)
         summary = affine_loop_summaries.get(pc)
         if summary is not None and prior_visits == 0:
-            # Closed-form discharge: skip unrolling when the header is first entered.
-            summarized = apply_affine_loop_summary(current, summary, ops)
-            if affine_summaries_used is not None:
-                affine_summaries_used.append(summary)
-            enqueue(
-                summary.exit_pc,
-                summarized,
-                condition,
-                {**visit_counts, pc: 1},
-                steps + 1,
-            )
-            continue
+            # A2 (doc 30): closed-form discharge under an explicit entry
+            # premise, mirroring the memory-loop block. Concrete trips use
+            # ``ctr == trip``; symbolic trips evaluate the trip expression at
+            # the header entry and additionally exclude the zero-trip wrap
+            # (``trip_value != 0``), discharging the skip guard (Phase B)
+            # against this exact state when one is present. The premise-
+            # violation path is kept force=True until the full solver context
+            # can prove it unreachable — never pruned by local simplification.
+            entry_guard: Any | None = None
+            if (
+                summary.trip_count is None
+                and summary.trip_expr is not None
+            ):
+                trip_value = evaluate_symbolic(
+                    trip_expr_from_canonical(summary.trip_expr),
+                    current.gpr,
+                    ops,
+                )
+                if summary.skip_guard is not None:
+                    from tools.ppc_equivalence.skip_guard import SkipGuardInfo
+
+                    discharge = discharge_skip_guard(
+                        SkipGuardInfo(**summary.skip_guard),
+                        trip_expr_from_canonical(summary.trip_expr),
+                        current.gpr,
+                        ops,
+                    )
+                    if discharge is not None and discharge.all_unsat():
+                        entry_guard = ops.land(
+                            ops.eq(current.ctr, trip_value),
+                            ops.lnot(ops.eq(trip_value, ops.const(0))),
+                        )
+                else:
+                    entry_guard = ops.land(
+                        ops.eq(current.ctr, trip_value),
+                        ops.lnot(ops.eq(trip_value, ops.const(0))),
+                    )
+            else:
+                if summary.proof_kind == "compare-affine-closed-form":
+                    # Compare-counted loops do not load CTR; the premise pins
+                    # the countdown register (the FinalCompare left operand) to
+                    # the recognized trip.
+                    if summary.final_compare is not None:
+                        entry_guard = ops.eq(
+                            current.gpr[summary.final_compare.left_reg],
+                            ops.const(int(summary.trip_count) & 0xFFFFFFFF),
+                        )
+                else:
+                    entry_guard = ops.eq(
+                        current.ctr,
+                        ops.const(int(summary.trip_count) & 0xFFFFFFFF),
+                    )
+            if entry_guard is not None:
+                record_terminal(
+                    ops.land(condition, ops.lnot(entry_guard)),
+                    current,
+                    "affine-loop-entry-premise",
+                    ops.const(summary.header_pc),
+                    force=True,
+                )
+                summarized = apply_affine_loop_summary(current, summary, ops)
+                if affine_summaries_used is not None:
+                    affine_summaries_used.append(summary)
+                enqueue(
+                    summary.exit_pc,
+                    summarized,
+                    ops.land(condition, entry_guard),
+                    {**visit_counts, pc: 1},
+                    steps + 1,
+                )
+                continue
         gx_plan = gx_fifo_loop_plans.get(pc)
         if (
             gx_plan is not None

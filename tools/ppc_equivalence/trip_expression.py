@@ -388,10 +388,17 @@ def _recognize_defining_insn(
       return None, [f"or defines r{rt}, expected r{reg}"]
     if ra != rb:
       return None, ["or trip expression is not a register copy"]
-    return _recognize_gpr_before(
+    base, notes = _recognize_gpr_before(
       instructions, index, ra, max_lookback=max_lookback,
       readonly_words=readonly_words, depth=depth + 1,
     )
+    if base is None:
+      # Register-copy materialization from an entry register (``mr rT, rS``):
+      # the source becomes the entry-state value, exactly like the rlwinm /
+      # andi. fallbacks below.
+      base = TripEntryReg(ra)
+      notes = []
+    return base, notes
 
   if opcode == Opcode.XOR:
     rt, ra, rb = (int(v) for v in insn.operands)

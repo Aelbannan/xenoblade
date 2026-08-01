@@ -12,7 +12,13 @@ PPC corners encoded in the summary notes:
 
 - ``bdnz`` decrements CTR **before** the zero test.
 - Loading CTR with ``0`` makes ``bdnz`` wrap to ``0xffffffff`` (not a zero-trip loop).
-- Closed forms assume no unsigned wrap of the affine accumulators over ``N`` steps.
+- Closed forms assume no unsigned wrap of the affine accumulators over ``N``
+  steps. **This caveat applies to store-address arithmetic only** (the
+  memory-loop footprint gate): for GPR-affine accumulators, ``entry +
+  trip * stride`` is exact in 32-bit BV semantics for any trip count —
+  repeated ``addi`` accumulates mod 2^32 identically to one ``mul`` + ``add``.
+  Symbolic-trip summaries (``trip_expr``, doc 30 Phase A) rely on exactly this
+  identity, so the parametric form is exact for any symbolic trip.
 
 Compare-affine countdown loops also record a ``FinalCompare`` so CR (including
 XER.SO) matches the last ``cmpwi`` after the closed-form GPR updates.
@@ -38,6 +44,7 @@ from tools.ppc_equivalence.skip_guard import (
 )
 from tools.ppc_equivalence.trip_expression import (
     canonical_dict,
+    evaluate_concrete,
     recognize_trip_expr,
 )
 
@@ -92,8 +99,11 @@ class LoopSummary:
 
     ``final_gpr[reg] = (entry_reg, stride)`` means
     ``GPR[reg]_exit = GPR[entry_reg]_entry + trip_count * stride`` when
-    ``trip_count`` is concrete and wrap-free. ``final_ctr`` is the CTR after exit.
-    ``final_compare`` (when set) is applied to CR after the GPR updates.
+    ``trip_count`` is concrete and wrap-free, or ``GPR[reg]_exit =
+    GPR[entry_reg]_entry + trip_expr * stride`` (parametric, doc 30 Phase A)
+    when ``trip_count`` is absent and ``trip_expr`` is set. ``final_ctr`` is
+    the CTR after exit. ``final_compare`` (when set) is applied to CR after the
+    GPR updates.
     """
 
     header_pc: int
@@ -108,6 +118,9 @@ class LoopSummary:
     entry_condition: str
     exit_condition: str
     final_compare: FinalCompare | None = None
+    trip_expr: dict[str, Any] | None = None
+    zero_guard: str | None = None
+    skip_guard: dict[str, Any] | None = None
 
 
 def apply_compare_to_cr(
@@ -176,21 +189,33 @@ def find_ctr_affine_loop_candidates(
             continue
         mtctr = instructions[mtctr_index]
         trip_reg = int(mtctr.operands[0])
-        trip_count, trip_notes = _concrete_trip_count(instructions, mtctr_index, trip_reg)
+        # A1: recognize the symbolic trip expression first; concrete
+        # materializations (``li``, ``lis+ori``, ``addis+ori``, ``lwz`` of
+        # readonly) fold to ``TripConstant`` and keep ``exact-pattern``.
         trip_expr, expr_notes = recognize_trip_expr(
             instructions,
             mtctr_index,
             trip_reg,
         )
+        trip_count = (
+            evaluate_concrete(trip_expr, {}) if trip_expr is not None else None
+        )
 
-        notes = list(trip_notes)
-        notes.extend(expr_notes)
+        notes = list(expr_notes)
         notes.extend(body_notes)
         if guard is not None:
             notes.append(f"skip-guard candidate ({guard.family} @ 0x{guard.target_pc:08X})")
         if trip_count == 0:
             notes.append("CTR load of 0 wraps under bdnz (not a zero-trip loop)")
-        confidence = "exact-pattern" if trip_count is not None and trip_count >= 1 else "partial"
+        if trip_count is not None and trip_count >= 1:
+            confidence = "exact-pattern"
+        elif trip_count == 0:
+            # Concrete zero trip: ``bdnz`` wraps — never summarizable.
+            confidence = "partial"
+        elif trip_expr is not None:
+            confidence = "symbolic-trip"
+        else:
+            confidence = "partial"
 
         candidates.append(
             CtrAffineLoopCandidate(
@@ -212,28 +237,64 @@ def find_ctr_affine_loop_candidates(
 
 
 def summarize_ctr_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSummary | None:
-    """Build a closed-form ``LoopSummary`` when the trip count is a positive constant."""
-    if candidate.trip_count is None or candidate.trip_count < 1:
-        return None
+    """Build a closed-form ``LoopSummary`` (concrete) or a parametric one (symbolic).
 
-    collapsed: dict[int, tuple[int, int]] = {}
+    Concrete trips (``trip_count >= 1``) build the classic closed form. Symbolic
+    trips (``trip_expr`` present) build a parametric summary — ``final =
+    entry + trip_expr * stride`` — only when the zero-trip premise is
+    established (a skip guard on the trip materialization; doc 30 Phase A1).
+    The entry premise (``ctr == trip_expr AND trip_expr != 0``) is enforced at
+    apply time; nothing here authorizes equivalence.
+    """
+    if candidate.trip_count is not None and candidate.trip_count >= 1:
+        collapsed: dict[int, tuple[int, int]] = {}
+        for update in candidate.body_updates:
+            _entry, stride = collapsed.get(update.reg, (update.reg, 0))
+            collapsed[update.reg] = (update.reg, stride + update.addend)
+        return LoopSummary(
+            header_pc=candidate.header_pc,
+            latch_pc=candidate.latch_pc,
+            exit_pc=candidate.exit_pc,
+            trip_count=candidate.trip_count,
+            final_gpr=collapsed,
+            final_ctr=0,
+            ranking="ctr-descending",
+            proof_kind="affine-closed-form",
+            invariant_notes=tuple(candidate.notes),
+            entry_condition=f"CTR == {candidate.trip_count}",
+            exit_condition="CTR == 0 after bdnz exhaust",
+            final_compare=candidate.final_compare,
+            trip_expr=candidate.trip_expr,
+            zero_guard=(
+                "concrete-nonzero"
+                if candidate.skip_guard is None
+                else "skip-branch"
+            ),
+            skip_guard=candidate.skip_guard,
+        )
+
+    if candidate.trip_expr is None or candidate.skip_guard is None:
+        return None
+    collapsed = {}
     for update in candidate.body_updates:
         _entry, stride = collapsed.get(update.reg, (update.reg, 0))
         collapsed[update.reg] = (update.reg, stride + update.addend)
-
     return LoopSummary(
         header_pc=candidate.header_pc,
         latch_pc=candidate.latch_pc,
         exit_pc=candidate.exit_pc,
-        trip_count=candidate.trip_count,
+        trip_count=None,
         final_gpr=collapsed,
         final_ctr=0,
         ranking="ctr-descending",
         proof_kind="affine-closed-form",
         invariant_notes=tuple(candidate.notes),
-        entry_condition=f"CTR == {candidate.trip_count}",
+        entry_condition="CTR == trip_expr AND trip_expr != 0 (skip-guarded)",
         exit_condition="CTR == 0 after bdnz exhaust",
         final_compare=candidate.final_compare,
+        trip_expr=candidate.trip_expr,
+        zero_guard="skip-branch",
+        skip_guard=candidate.skip_guard,
     )
 
 
@@ -338,7 +399,12 @@ def summarize_compare_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSumm
 def build_affine_summary_map(
     instructions: Sequence[Instruction],
 ) -> dict[int, LoopSummary]:
-    """Map loop header PC → closed-form CTR or compare-affine summaries."""
+    """Map loop header PC → closed-form CTR or compare-affine summaries.
+
+    Symbolic-trip CTR-affine summaries (parametric, doc 30 Phase A) are
+    included when the candidate carries a skip guard; the apply-time entry
+    premise and guard discharge gate their use.
+    """
     mapping: dict[int, LoopSummary] = {}
 
     def _insert(summary: LoopSummary) -> None:
@@ -348,7 +414,7 @@ def build_affine_summary_map(
         mapping[summary.header_pc] = summary
 
     for candidate in find_ctr_affine_loop_candidates(instructions):
-        if candidate.confidence != "exact-pattern":
+        if candidate.confidence not in ("exact-pattern", "symbolic-trip"):
             continue
         summary = summarize_ctr_affine_loop(candidate)
         if summary is not None:
@@ -365,13 +431,31 @@ def build_affine_summary_map(
 
 
 def apply_affine_loop_summary(state: Any, summary: LoopSummary, ops: Any) -> Any:
-    """Return a post-loop state under the closed-form summary (concrete trip count)."""
-    if summary.trip_count is None or summary.trip_count < 1:
-        raise ValueError("affine summary requires a positive concrete trip count")
+    """Return a post-loop state under the closed-form summary.
+
+    Concrete trips use ``trip_count * stride``; symbolic trips (doc 30 Phase A)
+    evaluate the ``trip_expr`` against the header-entry state and apply
+    ``trip_value * stride`` — exact in 32-bit BV semantics for any symbolic
+    trip (repeated ``addi`` accumulates mod 2^32 identically to one ``mul``).
+    """
+    if summary.trip_count is not None and summary.trip_count >= 1:
+        trip_value = ops.const(int(summary.trip_count) & 0xFFFFFFFF)
+    elif summary.trip_expr is not None:
+        from tools.ppc_equivalence.trip_expression import trip_expr_from_canonical
+
+        trip_value = evaluate_symbolic_affine(
+            trip_expr_from_canonical(summary.trip_expr),
+            state.gpr,
+            ops,
+        )
+    else:
+        raise ValueError(
+            "affine summary requires a positive concrete trip count or trip_expr",
+        )
     gprs = list(state.gpr)
     for reg, (entry_reg, stride) in summary.final_gpr.items():
-        delta = (int(summary.trip_count) * int(stride)) & 0xFFFFFFFF
-        gprs[reg] = ops.add(state.gpr[entry_reg], ops.const(delta))
+        delta = ops.mul(trip_value, ops.const(int(stride) & 0xFFFFFFFF))
+        gprs[reg] = ops.add(state.gpr[entry_reg], delta)
     if summary.proof_kind == "compare-affine-closed-form":
         # Compare-counted loops do not update CTR.
         result = replace(state, gpr=tuple(gprs))
@@ -385,6 +469,13 @@ def apply_affine_loop_summary(state: Any, summary: LoopSummary, ops: Any) -> Any
         result = apply_compare_to_cr(result, summary.final_compare, ops)
     return result
 
+
+def evaluate_symbolic_affine(expr: Any, entry_gpr: Sequence[Any], ops: Any) -> Any:
+    """Evaluate a trip expression against a GPR sequence (used by apply)."""
+    from tools.ppc_equivalence.trip_expression import evaluate_symbolic
+
+    return evaluate_symbolic(expr, dict(enumerate(entry_gpr)), ops)
+
 def closed_form_gpr_value(entry_value: int, stride: int, trip_count: int) -> int:
     """Evaluate ``entry + trip_count * stride`` in 32-bit two's complement."""
     return (entry_value + trip_count * stride) & 0xFFFFFFFF
@@ -395,7 +486,6 @@ REQUIRED_LOOP_SUMMARY_KEYS = frozenset({
     "header_pc",
     "latch_pc",
     "exit_pc",
-    "trip_count",
     "final_ctr",
     "ranking",
     "final_gpr",
@@ -404,9 +494,14 @@ REQUIRED_LOOP_SUMMARY_KEYS = frozenset({
     "summary_sha256",
 })
 
+# v1 algorithm ids are retained for concrete-trip obligations (existing
+# certificates stay valid); v2 ids are added for symbolic-trip obligations
+# (doc 30 Phase A3 / F-12).
 _AFFINE_ALGORITHMS = frozenset({
     "affine-closed-form-v1",
     "compare-affine-closed-form-v1",
+    "affine-closed-form-v2",
+    "compare-affine-closed-form-v2",
 })
 
 _LOOP_SUMMARY_IDENTITY_KEYS = (
@@ -420,13 +515,15 @@ _LOOP_SUMMARY_IDENTITY_KEYS = (
     "final_gpr",
     "algorithm",
     "relational_companion",
+    "trip_expr",
+    "zero_guard",
 )
 
 
-def _affine_algorithm_for(proof_kind: str) -> str:
+def _affine_algorithm_for(proof_kind: str, *, symbolic: bool = False) -> str:
     if proof_kind == "compare-affine-closed-form":
-        return "compare-affine-closed-form-v1"
-    return "affine-closed-form-v1"
+        return "compare-affine-closed-form-v2" if symbolic else "compare-affine-closed-form-v1"
+    return "affine-closed-form-v2" if symbolic else "affine-closed-form-v1"
 
 
 def loop_summary_identity_payload(obligation: dict[str, Any]) -> dict[str, Any]:
@@ -468,7 +565,8 @@ def build_loop_summary_obligation(
         }
         for reg, (entry_reg, stride) in sorted(summary.final_gpr.items())
     ]
-    algorithm = _affine_algorithm_for(summary.proof_kind)
+    symbolic = summary.trip_count is None and summary.trip_expr is not None
+    algorithm = _affine_algorithm_for(summary.proof_kind, symbolic=symbolic)
     payload: dict[str, Any] = {
         "proof_kind": summary.proof_kind,
         "header_pc": summary.header_pc,
@@ -482,6 +580,13 @@ def build_loop_summary_obligation(
         "status": status,
         "algorithm": algorithm,
     }
+    # Additive optional fields on symbolic-trip obligations only (doc 30 §4.6):
+    # ``loop_summary_identity_payload`` skips ``None``, so v1 certs keep their
+    # ``summary_sha256`` unchanged.
+    if summary.trip_expr is not None:
+        payload["trip_expr"] = dict(summary.trip_expr)
+    if summary.zero_guard is not None:
+        payload["zero_guard"] = summary.zero_guard
     if relational_companion is not None:
         payload["relational_companion"] = relational_companion
     payload["summary_sha256"] = compute_loop_summary_sha256(payload)
@@ -504,8 +609,24 @@ def validate_loop_summary_obligation(obligation: dict[str, Any]) -> str | None:
             return f"loop_summary.{key} must be a u32 int"
 
     trip_count = obligation.get("trip_count")
-    if not isinstance(trip_count, int) or trip_count < 1 or trip_count > 0xFFFFFFFF:
+    if trip_count is None:
+        # Symbolic-trip obligations (doc 30 Phase A) carry ``trip_expr`` instead.
+        if obligation.get("trip_expr") is None:
+            return "loop_summary requires trip_count or trip_expr"
+    elif not isinstance(trip_count, int) or trip_count < 1 or trip_count > 0xFFFFFFFF:
         return "loop_summary.trip_count must be a positive u32 int"
+
+    trip_expr = obligation.get("trip_expr")
+    if trip_expr is not None:
+        if not isinstance(trip_expr, dict) or "kind" not in trip_expr:
+            return "loop_summary.trip_expr must be a canonical trip AST dict"
+
+    zero_guard = obligation.get("zero_guard")
+    if zero_guard is not None and zero_guard not in (
+        "concrete-nonzero",
+        "skip-branch",
+    ):
+        return "loop_summary.zero_guard must be concrete-nonzero|skip-branch"
 
     ranking = obligation.get("ranking")
     if not isinstance(ranking, str) or not ranking:

@@ -161,10 +161,22 @@ def try_smt_discharge_ctr_affine(
 
     # Shared entry premises: identical contract at loop header (equal components).
     entry_premises = list(_equal_side_premises(z3_module, left0, right0, shared_regs))
-    trip = original.trip_count
-    assert trip is not None and trip >= 1
-    entry_premises.append(left0.ctr == z3_module.BitVecVal(trip & 0xFFFFFFFF, 32))
-    entry_premises.append(right0.ctr == z3_module.BitVecVal(trip & 0xFFFFFFFF, 32))
+    zero = z3_module.BitVecVal(0, 32)
+    # Parametric mode (doc 30 Phase A3): both sides pin a *fresh symbolic* N
+    # with the premise N != 0 (the ``bdnz`` zero-trip wrap is exactly N == 0).
+    # Concrete mode pins the shared concrete trip as before.
+    parametric = original.trip_count is None or candidate.trip_count is None
+    trip: int | None = None
+    if parametric:
+        n = z3_module.BitVec("paired.N", 32)
+        entry_premises.append(n != zero)
+        entry_premises.append(left0.ctr == n)
+        entry_premises.append(right0.ctr == n)
+    else:
+        trip = original.trip_count
+        assert trip is not None and trip >= 1
+        entry_premises.append(left0.ctr == z3_module.BitVecVal(trip & 0xFFFFFFFF, 32))
+        entry_premises.append(right0.ctr == z3_module.BitVecVal(trip & 0xFFFFFFFF, 32))
     entry_premises.append(left0.valid == z3_module.BoolVal(True))
     entry_premises.append(right0.valid == z3_module.BoolVal(True))
 
@@ -232,7 +244,6 @@ def try_smt_discharge_ctr_affine(
         trip=trip,
         deadline=deadline,
     )
-
     bundle = RelationalDischargeBundle(
         initiation=initiation,
         preservation=preservation,
@@ -263,6 +274,10 @@ def try_smt_discharge_ctr_affine(
         "exit at CTR zero",
         "no 32-bit CTR wrap on continue/exit",
     )
+    if parametric:
+        term_notes = term_notes + (
+            "parametric trip N with premise N != 0 (wrap-freedom argued from N)",
+        )
     termination_block = termination_block_payload(
         termination,
         witness="ctr-descending",
@@ -275,6 +290,8 @@ def try_smt_discharge_ctr_affine(
         "ctr-affine relational SMT discharge",
         f"shared body registers: {shared_regs or 'none'}",
     )
+    if parametric:
+        notes = notes + ("parametric symbolic trip (v2)",)
     if not bundle.all_unsat():
         reason = bundle.failure_reason() or "relational discharge incomplete"
         notes = notes + (reason,)
@@ -438,16 +455,17 @@ def _discharge_ctr_termination(
     left_updates: tuple[AffineGprUpdate, ...],
     right_updates: tuple[AffineGprUpdate, ...],
     *,
-    trip: int,
+    trip: int | None,
     deadline: Deadline,
 ) -> UnsatDischarge:
     """Termination witnesses encoded as a single independent UNSAT query.
 
-    Bad conditions are the negation of the CTR ranking properties.
+    Concrete ``trip`` pins both entry CTRs to the constant; ``trip=None``
+    (doc 30 Phase A3) pins both to a fresh symbolic ``N`` with the premise
+    ``N != 0`` — wrap-freedom is argued from ``N`` itself, never assumed.
     """
     zero = z3.BitVecVal(0, 32)
     one = z3.BitVecVal(1, 32)
-    trip_val = z3.BitVecVal(trip & 0xFFFFFFFF, 32)
 
     # Body must not rewrite CTR (pattern already forbids mtspr CTR; encode as
     # post-body CTR still equal to pre-body before the explicit decrement).
@@ -461,10 +479,8 @@ def _discharge_ctr_termination(
     )
 
     # Properties that must hold; discharge proves their negations are unreachable
-    # under the paired CTR model + concrete trip premises.
+    # under the paired CTR model + trip premises.
     premises = [
-        left.ctr == trip_val,
-        right.ctr == trip_val,
         left_body_ctr_ok,
         right_body_ctr_ok,
         left_ok,
@@ -473,6 +489,15 @@ def _discharge_ctr_termination(
         left1.ctr == left.ctr - one,
         right1.ctr == right.ctr - one,
     ]
+    if trip is not None:
+        trip_val = z3.BitVecVal(trip & 0xFFFFFFFF, 32)
+        premises.append(left.ctr == trip_val)
+        premises.append(right.ctr == trip_val)
+    else:
+        n = z3.BitVec("term.N", 32)
+        premises.append(left.ctr == n)
+        premises.append(right.ctr == n)
+        premises.append(n != zero)
 
     # Bad: entry CTR is zero, or wrap reachable on a modeled step, or exit not at 0,
     # or continue does not strictly decrease.

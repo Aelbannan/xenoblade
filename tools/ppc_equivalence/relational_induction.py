@@ -494,16 +494,72 @@ def _affine_bodies_match_for_discharge(
     original: CtrAffineLoopCandidate,
     candidate: CtrAffineLoopCandidate,
 ) -> bool:
-    """True when closed-form discharge relates the two CTR-affine bodies."""
-    if original.confidence != "exact-pattern" or candidate.confidence != "exact-pattern":
+    """True when closed-form discharge relates the two CTR-affine bodies.
+
+    Accepts both-concrete equal trips, both-symbolic equal canonical trip
+    expressions, or a mixed pair where the concrete side folds to an equal
+    ``TripConstant`` (doc 30 Phase A3).
+    """
+    from tools.ppc_equivalence.trip_expression import (
+        TripConstant,
+        evaluate_concrete,
+        normalize_trip_expr,
+        trip_expr_from_canonical,
+        trip_exprs_equal,
+    )
+
+    if original.confidence not in ("exact-pattern", "symbolic-trip"):
         return False
+    if candidate.confidence not in ("exact-pattern", "symbolic-trip"):
+        return False
+
+    orig_expr = (
+        trip_expr_from_canonical(original.trip_expr)
+        if original.trip_expr is not None
+        else None
+    )
+    cand_expr = (
+        trip_expr_from_canonical(candidate.trip_expr)
+        if candidate.trip_expr is not None
+        else None
+    )
+
+    def _concrete_folds(expr: Any, trip_count: int | None) -> bool:
+        if trip_count is None or trip_count < 1:
+            return False
+        if expr is None:
+            return False
+        folded = evaluate_concrete(expr, {})
+        return folded == trip_count
+
+    def _bodies_match() -> bool:
+        orig = {item.reg: item.addend for item in original.body_updates}
+        cand = {item.reg: item.addend for item in candidate.body_updates}
+        return orig == cand
+
+    if orig_expr is not None and cand_expr is not None:
+        if not _bodies_match():
+            return False
+        if trip_exprs_equal(orig_expr, cand_expr):
+            # Both-symbolic (or both-concrete-through-TripConstant): equal
+            # canonical trip expressions. Concrete equality falls out of the
+            # canonical form for TripConstant trees.
+            if original.trip_count is not None and candidate.trip_count is not None:
+                return original.trip_count == candidate.trip_count
+            return True
+        # Mixed: the concrete side must fold to an equal TripConstant.
+        if original.trip_count is not None and candidate.trip_count is None:
+            return _concrete_folds(cand_expr, original.trip_count)
+        if candidate.trip_count is not None and original.trip_count is None:
+            return _concrete_folds(orig_expr, candidate.trip_count)
+        return False
+
+    # Both concrete via legacy _concrete_trip_count paths.
     if original.trip_count is None or candidate.trip_count is None:
         return False
     if original.trip_count != candidate.trip_count or original.trip_count < 1:
         return False
-    orig = {item.reg: item.addend for item in original.body_updates}
-    cand = {item.reg: item.addend for item in candidate.body_updates}
-    return orig == cand
+    return _bodies_match()
 
 
 
@@ -554,11 +610,11 @@ def try_discharge_ctr_affine_relational(
     """Build and SMT-discharge a CTR-affine relational sketch, or return None."""
     left = [
         item for item in find_ctr_affine_loop_candidates(original)
-        if item.confidence == "exact-pattern"
+        if item.confidence in ("exact-pattern", "symbolic-trip")
     ]
     right = [
         item for item in find_ctr_affine_loop_candidates(candidate)
-        if item.confidence == "exact-pattern"
+        if item.confidence in ("exact-pattern", "symbolic-trip")
     ]
     if len(left) != 1 or len(right) != 1:
         return None
@@ -703,7 +759,8 @@ def _exact_ctr_affine_at_header(
     matches = [
         item
         for item in find_ctr_affine_loop_candidates(instructions)
-        if item.confidence == "exact-pattern" and item.header_pc == header_pc
+        if item.confidence in ("exact-pattern", "symbolic-trip")
+        and item.header_pc == header_pc
     ]
     if len(matches) != 1:
         return None

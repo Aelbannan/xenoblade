@@ -84,6 +84,14 @@ documented per-implementation private-storage abstraction.
   (`loop_summary` / `affine-loop-summary`) are applied at recognized
   `li`/`mtctr`/`addi`/`bdnz` headers inside `execute_cfg` when the engine
   supplies a summary map; trip count must be a positive constant.
+  Symbolic-trip CTR-affine loops (doc 30 Phase A) build a *parametric*
+  summary (`final = entry + trip_expr * stride`) when the trip expression is
+  recognized (`li`/`addis+ori`/`lis+ori`/`andi.`/`srwi.` forms fold to
+  `TripConstant` for big constants > 32767) and a skip guard establishes the
+  zero-trip premise; the entry premise (`ctr == trip_expr AND trip_expr != 0`)
+  is enforced at apply time and the parametric closed form is exact in 32-bit
+  BV semantics for any symbolic trip (repeated `addi` accumulates mod 2^32
+  identically to one `mul` + `add`).
   Compare-affine countdown loops (`li` / affine body / `addi -1` / `cmpwi` /
   `bne`) use the same summary map with `proof_kind=compare-affine-closed-form`
   and leave CTR unmodified. A `FinalCompare` is applied after closed-form GPRs
@@ -94,11 +102,21 @@ documented per-implementation private-storage abstraction.
   `try_smt_discharge_compare_affine` /
   `relational_induction.try_discharge_relational`): initiation, preservation,
   exit agreement, postcondition, and ranking termination (CTR-descending or
-  compare-affine counter-descending). Pattern match alone never marks
+  compare-affine counter-descending). Symbolic-trip pairs discharge in
+  *parametric* mode (doc 30 Phase A3): both sides pin a fresh symbolic `N`
+  with the premise `N != 0` (the `bdnz` zero-trip wrap is exactly `N == 0`)
+  and all five blocks are argued from `N` itself; mixed concrete/symbolic
+  pairs are accepted only when the concrete side folds to an equal
+  `TripConstant`. Pattern match alone never marks
   `discharged`. Narrow templates only: equal CTR/counter, equal GPRs, constant
   offset, equal validity, equal CR fields, equal memory. Affine closed-form
   obligations (`loop_summary`) reach `status=discharged` only together with that
-  relational companion and a matching `summary_sha256`. Shape-only natural
+  relational companion and a matching `summary_sha256`. Concrete-trip
+  obligations keep algorithm ids `affine-closed-form-v1` /
+  `compare-affine-closed-form-v1`; symbolic-trip obligations use the additive
+  v2 ids (`affine-closed-form-v2` / `compare-affine-closed-form-v2`) and carry
+  `trip_expr` / `zero_guard` — no certificate-version bump, existing v1 certs
+  remain valid. Shape-only natural
   sketches remain pending unless CTR-affine-backed; mismatched bodies stay
   unsupported for `EQUIVALENT`. Bulk+remainder pairs discharge when both sides
   share a constant-value contiguous `RangeWrite` and the bitvector identity

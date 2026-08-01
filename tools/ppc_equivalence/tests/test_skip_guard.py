@@ -329,9 +329,9 @@ class GuardApplyTimeTests(unittest.TestCase):
             )
 
     def test_guard_bearing_ctr_affine_candidate_recorded(self) -> None:
-        # The ctr-affine finder relaxes adjacency and records the guard (the
-        # symbolic-trip summary itself lands in Phase A; the candidate stays
-        # ``partial`` until then, exactly as planned).
+        # The ctr-affine finder relaxes adjacency and records the guard; the
+        # symbolic trip carries ``symbolic-trip`` confidence with a parametric
+        # summary (doc 30 Phase A).
         program = [
             _insn(Opcode.RLWINM, (0, 6, 29, 3, 31), address=0, record=True),  # srwi. r0,r6,3
             _insn(Opcode.MTSPR, (0, 9), address=4),
@@ -343,7 +343,7 @@ class GuardApplyTimeTests(unittest.TestCase):
         candidates = find_ctr_affine_loop_candidates(program)
         self.assertEqual(len(candidates), 1)
         candidate = candidates[0]
-        self.assertEqual(candidate.confidence, "partial")
+        self.assertEqual(candidate.confidence, "symbolic-trip")
         self.assertIsNone(candidate.trip_count)
         self.assertIsNotNone(candidate.skip_guard)
         self.assertIsNotNone(candidate.trip_expr)

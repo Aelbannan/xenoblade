@@ -95,7 +95,7 @@ class CensusAccumulator:
         self.totals_by_unit[f"{hit.pattern}:{hit.unit}"] += 1
         self.totals_by_confidence[hit.confidence] += 1
         if hit.detail.get("symbolic_trip"):
-            self.totals[f"{hit.pattern}:symbolic-trip"] += 1
+            self.totals[f"{hit.pattern}:has-symbolic-trip"] += 1
         if hit.detail.get("skip_guard"):
             self.totals[f"{hit.pattern}:skip-guard"] += 1
 

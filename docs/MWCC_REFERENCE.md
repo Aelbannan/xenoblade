@@ -667,6 +667,77 @@ prologue/allocator and paired-single FIFO scheduling.
 
 ---
 
+## RVL_SDK KPAD — leaked SDK structure + non-unrolled SDK loop shapes (US, mwcc_43_151 `-O4,p`)
+
+`libs/RVL_SDK/src/revolution/kpad/KPAD.c` (10 targets, all FULL_MATCH): the retail
+code is Nintendo's stock RVL SDK `revolution/kpad/KPAD.c`. The authoritative
+structure reference is the leaked SDK source mirrored in
+`zeldaret/tp` `libs/revolution/src/kpad/KPAD.c` (+ `__kpad.h`), which gives the
+field names (`kobj_sample`, `kobj_regular`, `sec_nrm_hori`, `acc_horizon`,
+`trust_sec_length`, `btn_repeat_time`, `error_fg`/`state_fg`, …) and the exact
+statement shapes. Xenoblade ships a slightly later SDK revision (per-pad frame
+bounds at `0x528..0x534`, `acc_mode` gate in `calc_acc`, WBC callbacks), so map
+fields by offset rather than copying the TP layout.
+
+### 1. SDK loop shapes that do NOT unroll under `-O4,p`
+
+Constant-trip `for (i = 3; i >= 0; i--)` loops get fully unrolled by `-O4,p`,
+and pointer `do {} while (p >= end)` generates divwu trip-count garbage. The
+retail loops are pointer-walk do-whiles with the increment inside the
+condition — write them exactly like the SDK source and MWCC emits the retail
+`stb; subi 0xc; cmplw; bge` shape without unrolling:
+
+```c
+op = &kp->kobj_sample[3];
+do {
+    op->error_fg = -1;
+} while (--op >= kp->kobj_sample);              // reset_kpad (descending)
+
+op1 = kp->kobj_sample;
+do {
+    if (op1->error_fg != 0) continue;           // continue jumps to ++op1
+    ...
+} while (++op1 < &kp->kobj_sample[4]);          // select_1obj_first (ascending)
+```
+
+`#pragma opt_unroll off` / `opt_unroll_loops off` / `optimization_level 3` do
+not prevent the unroll. (`-O4,s` keeps the loops but breaks KPADReset's
+prologue: it emits `addi r11, r1, 32; bl __save_gpr_29` instead of the retail
+individual `stw r31/r30/r29` — the unit is `-O4,p`.)
+
+### 2. `x == 0` assigned to u8 → `cntlzw` + `extrwi 8,19`
+
+`kp_wbc_enabled = result == 0;` (u8 field, `s32 result`) compiles to
+`cntlzw r3, r4; extrwi r3, r3, 8, 19; stb` — the `(cntlzw >> 5) & 0xFF`
+zero-test idiom, no `__cntlzw` builtin needed.
+
+### 3. Chained assignments reproduce retail store order
+
+`sp->hold = sp->trig = sp->release = 0;` stores release→trig→hold (rightmost
+first) exactly like the retail; `kp->sec_length = kp->trust_sec_length = X`
+stores `trust_sec_length` (0x4d4) before `sec_length` (0x4c4).
+
+### 4. Global loads cannot be CSE'd across pointer stores — hoist to a local
+
+`kp->unk_544 = kp_dist_vv1; kp->sec_length = kp->trust_sec_length =
+kp_dist_vv1 / kp->dist_init;` reloads `kp_dist_vv1` for the division (MWCC
+cannot prove the pad store doesn't alias the global). A `f32 vv1 =
+kp_dist_vv1;` local removes the reload; the division then lands at the retail
+position (`0xa8`) while the `sec_length`/`trust_sec_length` stores stay late
+(`0x148/0x14c`) — place that assignment statement after `sec_dist = dist` in
+the source even though the retail computes the quotient early.
+
+### 5. `kp_*` data section layout
+
+Retail places the per-pad reset constants in `.sdata`/`.sbss`
+(`kp_obj_interval`, `kp_ah_circle_radius`, `kp_ah_circle_ct`, …) and float
+literals in `.sdata2` with the auto names (`float_8066C0B0` = 0.0f,
+`float_8066C100` = 0.38386398553848267f — name encodes vaddr+0x2800, actual
+`.sdata2` address is in symbols.txt). `Vec2_0` is an `.sbss` zero `Vec2`.
+`inside_kpads` is 4 × 0x578-byte `KPADInternal` (not `KPAD_MAX_CONTROLLERS`).
+
+---
+
 ## Core patterns — the 5 things that fix 90% of gaps
 
 ### 1. Relocation name drift (99.3–99.9%, instructions identical)

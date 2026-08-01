@@ -87,7 +87,7 @@ typedef struct KPADUnifiedWpadStatus {
     unsigned char padding; // at 0x37
 } KPADUnifiedWpadStatus;
 
-KPADConnectCallback* KPADSetConnectCallback(s32 chan, KPADConnectCallback cb);
+KPADConnectCallback KPADSetConnectCallback(s32 chan, KPADConnectCallback cb);
 
 void KPADSetBtnRepeat(s32 chan, f32, f32);
 

@@ -244,10 +244,16 @@ typedef struct WPADCB {
     u8 UNK_0x991;           // at 0x991
     u16 UNK_0x992;          // at 0x992
     u8 dpdBusy;             // at 0x994
-    u8 UNK_0x995[0x9A0 - 0x995]; // at 0x995
+    u8 UNK_0x995[0x998 - 0x995]; // at 0x995
+    s32 memBlock_0x00;      // at 0x998
+    s32 memBlock_0x04;      // at 0x99C
+    s16 memBlock_0x08;      // at 0x9A0
+    s32 memBlock_0x0C;      // at 0x9A4
+    WPADCallback memBlock_0x10; // at 0x9A8
+    u8 UNK_0x9AC[0x9C0 - 0x9AC]; // at 0x9AC
 } WPADCB;
 
-extern WPADCB _wpd[WPAD_MAX_CONTROLLERS];
+extern WPADCB __rvl_wpadcb[WPAD_MAX_CONTROLLERS];
 extern WPADCB* _wpdcb[WPAD_MAX_CONTROLLERS];
 
 void WPADiInitSub(void);
@@ -258,7 +264,7 @@ void WPADiCopyOut(s32 chan);
 BOOL WPADiSendSetPort(WPADCommandQueue* pQueue, u8 port,
                       WPADCallback pCallback);
 BOOL WPADiSendSetReportType(WPADCommandQueue* pQueue, s32 format,
-                            WPADCallback pCallback);
+                            BOOL contReport, WPADCallback pCallback);
 BOOL WPADiSendEnableDPD(WPADCommandQueue* pQueue, BOOL enable,
                         WPADCallback pCallback);
 BOOL WPADiSendEnableSpeaker(WPADCommandQueue* pQueue, BOOL enable,

@@ -1,51 +1,8 @@
 #include <nw4r/math.h>
 
-#define FSEL_MAX(_fx, _fy)                                                     \
-    fx = (_fx);                                                                \
-    fy = (_fy);                                                                \
-    dt = fx - fy;                                                              \
-    ASM ( fsel work, dt, fx, fy )
-
-#define FSEL_MIN(_fx, _fy)                                                     \
-    fx = (_fx);                                                                \
-    fy = (_fy);                                                                \
-    dt = fy - fx;                                                              \
-    ASM ( fsel work, dt, fx, fy )
 
 namespace nw4r {
 namespace math {
-
-VEC3* VEC3Maximize(VEC3* pOut, const VEC3* pA, const VEC3* pB) {
-    register f32 fx, fy;
-    register f32 dt, work;
-
-    FSEL_MAX(pA->x, pB->x);
-    pOut->x = work;
-
-    FSEL_MAX(pA->y, pB->y);
-    pOut->y = work;
-
-    FSEL_MAX(pA->z, pB->z);
-    pOut->z = work;
-
-    return pOut;
-}
-
-VEC3* VEC3Minimize(VEC3* pOut, const VEC3* pA, const VEC3* pB) {
-    register f32 fx, fy;
-    register f32 dt, work;
-
-    FSEL_MIN(pA->x, pB->x);
-    pOut->x = work;
-
-    FSEL_MIN(pA->y, pB->y);
-    pOut->y = work;
-
-    FSEL_MIN(pA->z, pB->z);
-    pOut->z = work;
-
-    return pOut;
-}
 
 MTX33* MTX33Identity(register MTX33* pMtx) {
     register f32 c_00 = 0.0f, c_10 = 1.0f;
@@ -88,82 +45,6 @@ MTX33* MTX34ToMTX33(register MTX33* pOut, register const MTX34* pIn) {
 }
 
 #define nofralloc
-#undef PURE_ASM
-
-asm u32 MTX34InvTranspose(register MTX33* pOut, register const MTX34* pIn){
-    // clang-format off
-    nofralloc
-
-    /**
-     * Calculate determinant of 3x3 submatrix
-     * [a b c X]
-     * [d e f X]
-     * [g h i X]
-     */
-
-    psq_l      f0, MTX34._00(pIn), 1, 0 // (a, 1.0)
-    psq_l      f1, MTX34._01(pIn), 0, 0 // (b, c)
-    psq_l      f2, MTX34._10(pIn), 1, 0 // (d, 1.0)
-    ps_merge10 f6, f1, f0               // (c, a)
-    psq_l      f3, MTX34._11(pIn), 0, 0 // (e, f)
-    psq_l      f4, MTX34._20(pIn), 1, 0 // (g, 1.0)
-    ps_merge10 f7, f3, f2               // (f, d)
-    psq_l      f5, MTX34._21(pIn), 0, 0 // (h, i)
-
-    ps_mul     f11, f3, f6      // (e*c,       f*a)
-    ps_merge10 f8,  f5, f4      // (i,         g)
-    ps_mul     f13, f5, f7      // (h*f,       i*d)
-    ps_msub    f11, f1, f7, f11 // (b*f - e*c, c*d - f*a)
-    ps_mul     f12, f1, f8      // (b*i,       c*g)
-
-    ps_msub f13, f3, f8, f13 // (e*i - h*f, f*g - i*d)
-    ps_msub f12, f5, f6, f12 // (h*c - b*i, i*a - c*g)
-    
-    // TODO(kiwi) Stop being lazy and finish documentation
-    ps_mul  f10, f3, f4
-    ps_mul  f9, f0, f5
-    ps_mul  f8, f1, f2
-    ps_msub f10, f2, f5, f10
-    ps_msub f9, f1, f4, f9
-    ps_msub f8, f0, f3, f8
-    ps_mul  f7, f0, f13
-    ps_sub  f1, f1, f1 // Set f1 to zero
-    ps_madd f7, f2, f12, f7
-    ps_madd f7, f4, f11, f7
-
-    // Zero determinant = singular matrix, inverse does not exist
-    ps_cmpo0 cr0, f7, f1
-    bne inverse_exists
-
-    li r3, FALSE
-    blr
-
-inverse_exists:
-    fres     f0, f7
-    ps_add   f6, f0, f0
-    ps_mul   f5, f0, f0
-    ps_nmsub f0, f7, f5, f6
-    ps_add   f6, f0, f0
-    ps_mul   f5, f0, f0
-    ps_nmsub f0, f7, f5, f6
-    ps_muls0 f13, f13, f0
-    ps_muls0 f12, f12, f0
-    psq_st   f13, MTX33._00(pOut), 0, 0
-    ps_muls0 f11, f11, f0
-    psq_st   f12, MTX33._10(pOut), 0, 0
-    ps_muls0 f10, f10, f0
-    psq_st   f11, MTX33._20(pOut), 0, 0
-    ps_muls0 f9, f9, f0
-    psq_st   f10, MTX33._02(pOut), 1, 0
-    ps_muls0 f8, f8, f0
-    psq_st   f9, MTX33._12(pOut),  1, 0
-    psq_st   f8, MTX33._22(pOut),  1, 0
-
-    // Inverse matrix exists
-    li r3, TRUE
-    blr
-    // clang-format on
-}
 
 MTX34* MTX34Zero(register MTX34* pMtx) {
     register f32 c_zero = 0.0f;
@@ -387,6 +268,11 @@ MTX44* MTX44Copy(register MTX44* pDst, register const MTX44* pSrc) {
 } // namespace math
 } // namespace nw4r
 
+// Scalar fallbacks for MTX34Add / MTX34Mult (the retail binary compiles these
+// as pure paired-single kernels; the MWCC-only PS bodies live in
+// math_types_ps.inl).  Used on PC / NONMATCHING builds only.
+#if !defined(__MWERKS__) || defined(NONMATCHING)
+
 namespace nw4r {
 namespace math {
 
@@ -423,3 +309,5 @@ MTX34* MTX34Mult(MTX34* pOut, const MTX34* pIn, f32 factor) {
 
 } // namespace math
 } // namespace nw4r
+
+#endif // !__MWERKS__ || NONMATCHING

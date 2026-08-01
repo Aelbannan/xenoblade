@@ -159,6 +159,66 @@ fz_positive:
     blr
 }
 
+// MTX34Add — retail is a pure six-pair PS load/add/store kernel (no frame,
+// no scalar tails) with a software-pipelined schedule: the loads of row N+1
+// precede the store of row N.  Scalar fallback in math_types.cpp is guarded to
+// non-MWCC / NONMATCHING builds.
+asm MTX34* MTX34Add(register MTX34* pOut, register const MTX34* pA, register const MTX34* pB) {
+    nofralloc
+    psq_l      f0, 0x0(r4), 0, 0
+    psq_l      f1, 0x0(r5), 0, 0
+    ps_add     f2, f0, f1
+    psq_l      f0, 0x8(r4), 0, 0
+    psq_l      f1, 0x8(r5), 0, 0
+    psq_st     f2, 0x0(r3), 0, 0
+    ps_add     f2, f0, f1
+    psq_l      f0, 0x10(r4), 0, 0
+    psq_l      f1, 0x10(r5), 0, 0
+    psq_st     f2, 0x8(r3), 0, 0
+    ps_add     f2, f0, f1
+    psq_l      f0, 0x18(r4), 0, 0
+    psq_l      f1, 0x18(r5), 0, 0
+    psq_st     f2, 0x10(r3), 0, 0
+    ps_add     f2, f0, f1
+    psq_l      f0, 0x20(r4), 0, 0
+    psq_l      f1, 0x20(r5), 0, 0
+    psq_st     f2, 0x18(r3), 0, 0
+    ps_add     f2, f0, f1
+    psq_l      f0, 0x28(r4), 0, 0
+    psq_l      f1, 0x28(r5), 0, 0
+    psq_st     f2, 0x20(r3), 0, 0
+    ps_add     f2, f0, f1
+    psq_st     f2, 0x28(r3), 0, 0
+    blr
+}
+
+// MTX34Mult (scalar factor) — retail scales all six paired rows by the f32
+// factor in f1 with the same software-pipelined schedule (the row N+1 load
+// precedes the row N store).  Scalar fallback in math_types.cpp is guarded to
+// non-MWCC / NONMATCHING builds.
+asm MTX34* MTX34Mult(register MTX34* pOut, register const MTX34* pIn, register f32 factor) {
+    nofralloc
+    psq_l      f0, 0x0(r4), 0, 0
+    ps_muls0   f2, f0, f1
+    psq_l      f0, 0x8(r4), 0, 0
+    psq_st     f2, 0x0(r3), 0, 0
+    ps_muls0   f2, f0, f1
+    psq_l      f0, 0x10(r4), 0, 0
+    psq_st     f2, 0x8(r3), 0, 0
+    ps_muls0   f2, f0, f1
+    psq_l      f0, 0x18(r4), 0, 0
+    psq_st     f2, 0x10(r3), 0, 0
+    ps_muls0   f2, f0, f1
+    psq_l      f0, 0x20(r4), 0, 0
+    psq_st     f2, 0x18(r3), 0, 0
+    ps_muls0   f2, f0, f1
+    psq_l      f0, 0x28(r4), 0, 0
+    psq_st     f2, 0x20(r3), 0, 0
+    ps_muls0   f2, f0, f1
+    psq_st     f2, 0x28(r3), 0, 0
+    blr
+}
+
 // clang-format on
 
 #endif // __MWERKS__ && !NONMATCHING

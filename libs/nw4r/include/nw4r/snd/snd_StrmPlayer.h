@@ -84,7 +84,7 @@ public:
     bool Prepare(ut::FileStream* pFileStream, int voices,
                  StartOffsetType offsetType, int offset);
     bool Prepare(ut::FileStream* pFileStream, StartOffsetType offsetType,
-                 s32 offset);
+                 int offset);
     void InitParam();
 
     struct PlayerTrack {

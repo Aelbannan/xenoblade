@@ -1,6 +1,12 @@
 #include <nw4r/snd/snd_SoundPlayer.h>
 #include <nw4r/snd/snd_SoundThread.h>
 
+// Retail .sdata2 constants used by the ctor pool (lbl_eu_8066A058 = 1.0f,
+// lbl_eu_8066A05C = 0.0f). Declaration only — MWCC emits sda21 relocs with
+// the retail names instead of TU-local @N pool cookies (MWCC_REFERENCE §1b).
+extern "C" const float lbl_eu_8066A058;
+extern "C" const float lbl_eu_8066A05C;
+
 namespace nw4r {
 namespace snd {
 
@@ -8,19 +14,19 @@ SoundPlayer::SoundPlayer() {
     // Retail inlines field init (no OSMutex; no separate InitParam in this TU).
     mPlayableCount = 1;
     mPlayableLimit = 0x7FFFFFFF;
-    mVolume = 1.0f;
-    mUnk0x30 = 0.0f;
+    mVolume = lbl_eu_8066A058; // 1.0f
+    mUnk0x30 = lbl_eu_8066A05C; // 0.0f
     mOutputLineFlag = OUTPUT_LINE_MAIN;
-    mMainOutVolume = 1.0f;
+    mMainOutVolume = lbl_eu_8066A058; // 1.0f
     mOutputLineFlagEnable = 0;
-    mUnk0x40 = 0.0f;
-    mUnk0x54 = 0.0f;
+    mUnk0x40 = lbl_eu_8066A05C; // 0.0f
+    mUnk0x54 = lbl_eu_8066A05C; // 0.0f
 
     for (int i = 0; i < WPAD_MAX_CONTROLLERS; i++) {
-        mRemoteOutVolume[i] = 1.0f;
+        mRemoteOutVolume[i] = lbl_eu_8066A058; // 1.0f
     }
     for (int i = 0; i < AUX_BUS_NUM; i++) {
-        mFxSend[i] = 0.0f;
+        mFxSend[i] = lbl_eu_8066A05C; // 0.0f
     }
 }
 

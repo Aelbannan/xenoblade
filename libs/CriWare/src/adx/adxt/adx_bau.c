@@ -9,62 +9,60 @@ extern const u8 lbl_eu_80519110[];
 
 // Byte-swap helper
 static u32 read_be32(const u8* p) {
-    return ((u32)p[0] << 24) | ((u32)p[1] << 16) | ((u32)p[2] << 8) | (u32)p[3];
+    u32 v = p[0] | (p[1] << 8) | (p[2] << 16) | ((u32)p[3] << 24);
+    return (v >> 24) | ((v >> 8) & 0xFF00) | ((v << 8) & 0xFF0000) | (v << 24);
 }
 
 static u16 read_be16(const u8* p) {
     return ((u16)p[0] << 8) | (u16)p[1];
 }
 
-u8* AU_GetInfo(u8* data, s32 maxBytes, s32* outChannelCount, s32* outSampleRate, s32* outTotalSamples, s32* outBlockSize, u32* outFormat) {
-    u32 sig, hdrSize;
-    u32 version;
-    u32 channelCount, sampleRate, totalSamples, blockSize;
+u8* AU_GetInfo(u8* data, s32 maxBytes, s32* outSampleRate, s32* outTotalSamples,
+               s32* outBlockSize, s32* outChannelCount, u32* outFormat) {
+    u32 sig, hdrSize, version, samples, sampleRate, totalSamples;
 
-    // Check signature "ds." or "dns."
-    sig = read_be32(data);
-    if (sig != 0x64732E00 && sig != 0x646E732E) {
+    sig = (u32)data[0] | ((u32)data[1] << 8) | ((u32)data[2] << 16) | ((u32)data[3] << 24);
+    if (sig != 0x0064732E && sig != 0x646E732E) {
         return NULL;
     }
 
-    // Read header size
     hdrSize = read_be32(data + 4);
-    if (hdrSize > (u32)maxBytes) {
+    if ((s32)hdrSize > maxBytes) {
         return NULL;
     }
 
-    // Read format info
-    version = read_be32(data + 8);
-    channelCount = read_be32(data + 12);
-    sampleRate = read_be32(data + 16);
-    totalSamples = read_be32(data + 20);
-    blockSize = read_be32(data + 24);
+    samples = read_be32(data + 8);
+    version = read_be32(data + 0x0C);
 
     if (version == 1) {
         *outFormat = 2;
         *outBlockSize = 8;
-    } else if (version == 2) {
+        goto found;
+    }
+    if (version == 2) {
         *outFormat = 1;
         *outBlockSize = 8;
-    } else if (version == 3) {
-        *outFormat = 0;
-        *outBlockSize = 16;
-    } else {
-        return NULL;
+        goto found;
     }
+    if (version == 3) {
+        *outFormat = 0;
+        *outBlockSize = 0x10;
+        goto found;
+    }
+    return NULL;
+found:
 
+    sampleRate = read_be32(data + 0x10);
+    totalSamples = read_be32(data + 0x14);
     *outSampleRate = sampleRate;
-    *outChannelCount = channelCount;
+    *outTotalSamples = totalSamples;
 
-    // Calculate total samples based on format
     if (*outFormat == 2) {
-        *outTotalSamples = totalSamples / blockSize;
+        *outChannelCount = (s32)samples / (s32)totalSamples;
     } else if (*outFormat == 1) {
-        *outTotalSamples = totalSamples / blockSize;
-    } else if (*outFormat == 0) {
-        *outTotalSamples = (totalSamples / 2) / blockSize;
+        *outChannelCount = (s32)samples / (s32)totalSamples;
     } else {
-        *outTotalSamples = 0x7FFFFFFF;
+        *outChannelCount = ((s32)samples / 2) / (s32)totalSamples;
     }
 
     return data + hdrSize;

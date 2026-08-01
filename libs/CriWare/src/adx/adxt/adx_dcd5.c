@@ -35,8 +35,8 @@ int ADX_DecodeMono4(const u8 *in, int nblocks, s16 *out, s16 *prev,
             return block;
 
         hist_val = hist[0];
-        hist[0] = (s16)((pitch + hist_val * scale) & 0x7FFF);
         scale_val = (s16)(((header ^ hist_val) & 0x1FFF) + 1);
+        hist[0] = (pitch + hist_val * scale) & 0x7FFF;
 
         in += 2;
 
@@ -56,11 +56,11 @@ int ADX_DecodeMono4(const u8 *in, int nblocks, s16 *out, s16 *prev,
             tbl_val = lbl_eu_80517428[byte & 0xF];
             pcm2 = ((c1 * pcm + c2 * prev_lo) >> 12) + tbl_val * scale_val;
             if ((u32)(pcm2 + 0x8000) > 0xFFFF) {
-            if (pcm2 < -0x8000)
-                pcm2 = -0x8000;
-            else if (pcm2 > 0x7FFF)
-                pcm2 = 0x7FFF;
-        }
+                if (pcm2 < -0x8000)
+                    pcm2 = -0x8000;
+                else if (pcm2 > 0x7FFF)
+                    pcm2 = 0x7FFF;
+            }
             out[1] = (s16)pcm2;
 
             prev_lo = pcm2;
@@ -103,7 +103,7 @@ int ADX_DecodeSte4AsMono(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
             return block * 2;
 
         hist_val = hist[0];
-        hist[0] = (s16)((v2 + hist_val * v1) & 0x7FFF);
+        hist[0] = (v2 + hist_val * v1) & 0x7FFF;
         scale1 = (s16)(((header1 ^ hist_val) & 0x1FFF) + 1);
 
         s16 header2 = *(s16 *)(in + 0x12);
@@ -111,7 +111,7 @@ int ADX_DecodeSte4AsMono(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
             return block * 2;
 
         hist_val = hist[0];
-        hist[0] = (s16)((v2 + hist_val * v1) & 0x7FFF);
+        hist[0] = (v2 + hist_val * v1) & 0x7FFF;
         scale2 = (s16)(((header2 ^ hist_val) & 0x1FFF) + 1);
 
         in += 2;
@@ -222,16 +222,16 @@ int ADX_DecodeSte4AsSte(const u8 *in, int nblocks, s16 *out1, s16 *prev1,
             return block * 2;
 
         hist_val = hist[0];
-        hist[0] = (s16)((v2 + hist_val * v1) & 0x7FFF);
-        scale1 = (s16)(((header1 ^ hist_val) & 0x1FFF) + 1);
+        hist[0] = (v2 + hist_val * v1) & 0x7FFF;
+        scale1 = (s16)(((*(s16 *)in ^ hist_val) & 0x1FFF) + 1);
 
         s16 header2 = *(s16 *)(in + 0x12);
         if (header2 & 0x8000)
             return block * 2;
 
         hist_val = hist[0];
-        hist[0] = (s16)((v2 + hist_val * v1) & 0x7FFF);
-        scale2 = (s16)(((header2 ^ hist_val) & 0x1FFF) + 1);
+        hist[0] = (v2 + hist_val * v1) & 0x7FFF;
+        scale2 = (s16)(((*(s16 *)(in + 0x12) ^ hist_val) & 0x1FFF) + 1);
 
         in += 2;
 

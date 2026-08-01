@@ -59,7 +59,7 @@ void DCT_AcIdctDouble(const double *in, double *out) {
         for (j = 0; j < 8; j++) {
             double sum = lbl_eu_8051C3A8; /* rounding bias (0.0) */
             for (k = 0; k < 8; k++) {
-                sum += lbl_eu_806046C0[k][j] * tmp[i][k];
+                sum += lbl_eu_806046C0[k][j] * tmp[k][i];
             }
             out[i * 8 + j] = sum;
         }

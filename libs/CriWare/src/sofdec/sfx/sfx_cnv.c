@@ -13,8 +13,21 @@ void SFXA_MakeAlp3110Tbl(SFXAlphaState* alpha, u32 a, u32 b);
 void SFXA_MakeAlp3211Tbl(SFXAlphaState* alpha, u32 a, u32 b);
 void SFXZ_MakeCnvZTbl(void* zmvState, u32 a, u32 b);
 void SFXCNV_MakeCcirFromY(u8* table);
+
+void SFXCNV_MakeCcirFromY(u8* table) {
+    s32 i;
+    for (i = 0; i < 16; i++) {
+        table[i] = 0;
+    }
+    for (i = 16; i < 0x100; i++) {
+        table[i] = (u8)(s32)(1.164f * (i - 16) + 0.5f);
+    }
+    for (i = 0xEC; i < 0x100; i++) {
+        table[i] = 0xFF;
+    }
+}
 void SFXLIB_Error(void* self, void* stmInf, const char* msg);
-void SFXINF_GetStmInf(void* stmInf, const char* name);
+int SFXINF_GetStmInf(void* stmInf, const char* name);
 int SFX_GetCnvBottomUp(void* self);
 int SFX_SetCcirFx(void);
 void SFX_ShiftYccPtrByPix(void* stmInf, int xOfs, int yOfs);

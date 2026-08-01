@@ -8,7 +8,37 @@ void SFXA_Init(void) {
     memset(lbl_eu_8061A138, 0, 0x128);
     ((SFXAlphaState*)lbl_eu_8061A138)->needsUpdate = 8;
 }
-void SFXA_Create() {}
+
+SFXAlphaState* SFXA_Create(void) {
+    SFXAlphaState* state;
+    s32 count = *(s32*)(lbl_eu_8061A138 + 4);
+    s32 i;
+
+    state = (SFXAlphaState*)(lbl_eu_8061A138 + 8);
+    i = count;
+    if (i > 0) {
+        do {
+            if (state->_00 == 0)
+                goto found;
+            state++;
+        } while (--i > 0);
+    }
+    state = NULL;
+found:
+    if (state == NULL) {
+        return NULL;
+    }
+    state->arg0 = 0;
+    state->arg1 = 0x1f;
+    state->arg2 = 0x64;
+    state->needsUpdate = 1;
+    state->byte14 = 0;
+    state->byte15 = 0x7f;
+    state->byte16 = 0xff;
+    *(s32*)lbl_eu_8061A138 += 1;
+    state->_00 = 1;
+    return state;
+}
 void SFXA_Destroy(void* self) {
     extern u8 lbl_eu_8061A138[];
     if (self == NULL) return;

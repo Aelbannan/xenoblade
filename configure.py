@@ -986,7 +986,9 @@ config.libs = [
             # bta_hh_act.c: retail bte built with GC/3.0a5.2 (see bta_dm_act /
             # btm_devctl notes); Wii/1.1 lowers dense event switches to cmp
             # chains instead of jump tables and schedules li/stb differently.
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2"),
+            # -func_align 4 matches the bte family layout (retail packed, not
+            # 16-aligned) and removes the spurious mtctr/bdnz loop nop.
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c"),
@@ -1028,7 +1030,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c"),
@@ -1309,6 +1311,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/vi/vi.c"),
             Object(Matching, "RVL_SDK/src/revolution/vi/i2c.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/vi/vi3in1.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/vi/masktest.c"),
         ],
     ),
     DolphinLib(

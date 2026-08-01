@@ -38,6 +38,10 @@ void __wudDeviceStatusEventStackCallback(tBTM_DEV_STATUS status);
 void __wudPowerMangeEventStackCallback(BD_ADDR addr, tBTM_PM_STATUS status,
                                        UINT16 value, UINT8 hciStatus);
 void __wudSyncHandler0(OSAlarm* pAlarm, OSContext* pContext);
+void __wudLinkKeyEventStackCallback(void);
+void __wudSecurityEventStackCallback(void);
+void __wudClearControlBlock(void);
+void __wudAppendRuntimePatch(void);
 
 extern int _wudNandPhase;
 extern unsigned char _wudNandLocked;
@@ -47,6 +51,13 @@ extern int _wudAbortSync;
 extern unsigned char _wudPatchRemoveCmd;
 extern unsigned char _wudTarget;
 extern int _linkedWBC;
+
+extern char _wudWiiRemoteDescriptor[];
+extern unsigned char _wudInstallNum;
+extern unsigned char _wudPatchNum;
+extern unsigned int _wudPatchAddress;
+extern unsigned int _wudPatchOffset;
+extern unsigned int _wudPatchSize;
 
 void SCGetBtCmpDevInfoArray(SCBtCmpDevInfoArray* info);
 BOOL SCSetBtCmpDevInfoArray(const SCBtCmpDevInfoArray* info);
@@ -3026,8 +3037,133 @@ void __wudSyncFlushCallback(SCStatus status) {
     }
 }
 
-void __wudSyncPrepareSearch() {}
-void __wudSyncTryConnect() {}
+u8 __wudSyncPrepareSearch(void) {
+    WUDCB* p = &_wcb;
+    WUDDevInfo* pDev;
+    BOOL enabled;
+    u8 num;
+    int i;
+
+    enabled = OSDisableInterrupts();
+    p->discoverable = 0;
+    p->connectable = 0;
+    OSRestoreInterrupts(enabled);
+
+    BTA_DmSetVisibility(0, 0);
+
+    if (p->syncLoopNum == 0) {
+        return WUD_STATE_SYNC_DONE;
+    }
+
+    enabled = OSDisableInterrupts();
+    num = p->linkedNum;
+    OSRestoreInterrupts(enabled);
+
+    if (num == 4) {
+        enabled = OSDisableInterrupts();
+        num = p->connectedNum;
+        OSRestoreInterrupts(enabled);
+
+        if (num == 4) {
+            return WUD_STATE_SYNC_DONE;
+        }
+    }
+
+    if (p->syncSkipChecks != 0) {
+        i = 0;
+
+        while (i < WUD_MAX_DEV_ENTRY) {
+            tBTM_PM_PWR_MD block;
+
+            enabled = OSDisableInterrupts();
+            pDev = ((u32)i <= 9)
+                       ? &_wcb.stdDevs[i]
+                       : &_wcb.smpDevs[i - WUD_MAX_DEV_ENTRY_FOR_STD];
+            OSRestoreInterrupts(enabled);
+
+            if (pDev->status == 9) {
+                block.mode = BTM_PM_MD_ACTIVE;
+                block.max = 0;
+                block.min = 0;
+                block.attempt = 1;
+                block.timeout = 0;
+
+                BTM_SetPowerMode(_wcb.pmID, pDev->devAddr, &block);
+                return 1;
+            }
+
+            i++;
+        }
+    }
+
+    if (p->syncLoopNum > 0) {
+        p->syncLoopNum--;
+    }
+
+    p->UNK_0x748 = 0x32;
+    return WUD_STATE_SYNC_WAIT_FOR_START_SEARCH;
+}
+
+u8 __wudSyncTryConnect(void) {
+    WUDCB* p = &_wcb;
+    WUDDevInfoList* pIt;
+    WUDDevInfo* pFound;
+    BOOL enabled;
+    u8 ret = WUD_STATE_SYNC_ERROR;
+
+    if (memcmp(_discResp.devName, _wudWiiRemoteDescriptor + 0x268,
+               sizeof(LINK_KEY)) == 0) {
+        WUDDevInfo* pWork = &_wudDiscWork;
+
+        pWork->status = 2;
+        BTA_HhOpen(pWork->devAddr, BTA_HH_PROTO_RPT_MODE,
+                   BTA_SEC_AUTHENTICATE);
+        ret = WUD_STATE_SYNC_6;
+    }
+
+    if (_linkedWBC != 0) {
+        if (memcmp(_discResp.devName, _wudWiiRemoteDescriptor + 0x27C,
+                   sizeof(LINK_KEY)) == 0) {
+            pFound = NULL;
+            enabled = OSDisableInterrupts();
+
+            for (pIt = p->stdListHead; pIt != NULL; pIt = pIt->next) {
+                if (memcmp(pIt->devInfo, _wudWiiRemoteDescriptor + 0x27C,
+                           sizeof(LINK_KEY)) == 0) {
+                    pFound = pIt->devInfo;
+                }
+            }
+
+            OSRestoreInterrupts(enabled);
+
+            if (pFound != NULL) {
+                DEBUGPrint(_wudWiiRemoteDescriptor + 0x290);
+
+                if (pFound->status > 1) {
+                    return ret;
+                }
+
+                if (memcmp(_discResp.devAddr, pFound->devAddr,
+                           BD_ADDR_LEN) != 0) {
+                    DEBUGPrint(_wudWiiRemoteDescriptor + 0x2B8);
+                    WUDiMoveBottomStdDevInfoPtr(pFound);
+                    WUDiRemoveDevice(pFound->devAddr);
+                }
+            }
+
+            {
+                WUDDevInfo* pWork = &_wudDiscWork;
+
+                pWork->status = 2;
+                BTA_HhOpen(pWork->devAddr, BTA_HH_PROTO_RPT_MODE,
+                           BTA_SEC_AUTHENTICATE);
+            }
+            ret = WUD_STATE_SYNC_6;
+        }
+    }
+
+    return ret;
+}
 void __wudSyncVirginStandard() {}
 u8 __wudSyncStoredDevInfoToNand(void) {
     extern char lbl_805625AC[];
@@ -3130,7 +3266,57 @@ void __wudCloseWiiFitCallback(s32 result) {
     _wudNandLocked = 0;
     DEBUGPrint(lbl_80562604, result);
 }
-void __wudSyncDone() {}
+u8 __wudSyncDone(void) {
+    extern char lbl_80562618[];
+    WUDCB* p = &_wcb;
+    WUDDevInfo* pDev;
+    WUDSyncDeviceCallback cb;
+    BOOL enabled;
+    int i;
+
+    if (p->syncSkipChecks != 0) {
+        for (i = 0; i < 16; i++) {
+            tBTM_PM_PWR_MD block;
+
+            enabled = OSDisableInterrupts();
+            pDev = ((u32)i <= 9)
+                       ? &_wcb.stdDevs[i]
+                       : &_wcb.smpDevs[i - WUD_MAX_DEV_ENTRY_FOR_STD];
+            OSRestoreInterrupts(enabled);
+
+            if (pDev->status == 8) {
+                block.mode = BTM_PM_MD_SNIFF;
+                block.max = 8;
+                block.min = 8;
+                block.attempt = 1;
+                block.timeout = 0;
+
+                BTM_SetPowerMode(_wcb.pmID, pDev->devAddr, &block);
+                return WUD_STATE_SYNC_DONE;
+            }
+        }
+    }
+
+    OSCancelAlarm(&p->alarm);
+
+    if (_wudAbortSync == 0) {
+        enabled = OSDisableInterrupts();
+        _wcb.discoverable = FALSE;
+        _wcb.connectable = TRUE;
+        OSRestoreInterrupts(enabled);
+
+        BTA_DmSetVisibility(0, 1);
+    }
+
+    cb = p->syncType == WUD_SYNC_TYPE_STANDARD ? p->syncStdCB : p->syncSmpCB;
+
+    if (cb != NULL) {
+        cb(1, p->syncedNum);
+    }
+
+    DEBUGPrint(lbl_80562618);
+    return WUD_STATE_SYNC_START;
+}
 void __wudSyncHandler() {}
 
 void __wudSyncHandler0(OSAlarm* pAlarm, OSContext* pContext) {
@@ -3176,8 +3362,101 @@ void __wudDeleteHandler0(OSAlarm* pAlarm, OSContext* pContext) {
     OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudDeleteHandler,
                     __WUDHandlerStack + sizeof(__WUDHandlerStack));
 }
-void __wudStackCheckDeviceInfo() {}
-void __wudStackHandler() {}
+u8 __wudStackCheckDeviceInfo(void) {
+    WUDCB* p = &_wcb;
+    WUDDevInfo* pDev;
+    WUDDevInfo* pInfo;
+    BOOL enabled;
+    int i;
+
+    if (p->linkKeyState == 0) {
+        for (i = 0; i < WUD_MAX_DEV_ENTRY; i++) {
+            enabled = OSDisableInterrupts();
+            pDev = ((u32)i <= 9)
+                       ? &_wcb.stdDevs[i]
+                       : &_wcb.smpDevs[i - WUD_MAX_DEV_ENTRY_FOR_STD];
+            OSRestoreInterrupts(enabled);
+
+            if (pDev->status == 0) {
+                continue;
+            }
+
+            if (pDev->UNK_0x5C == 1) {
+                p->linkKeyState = WUD_STATE_LINK_KEY_DELETING;
+                BTM_DeleteStoredLinkKey(
+                    pDev->devAddr,
+                    (tBTM_CMPL_CB*)__wudLinkKeyEventStackCallback);
+                pDev->UNK_0x5C = 0;
+                return WUD_STATE_STACK_CHECK_DEVICE_INFO;
+            }
+
+            if (pDev->UNK_0x5C != 3) {
+                pInfo = WUDiGetDevInfo(pDev->devAddr);
+
+                if (pInfo != NULL) {
+                    enabled = OSDisableInterrupts();
+                    memset(pInfo, 0, sizeof(WUDDevInfo));
+                    OSRestoreInterrupts(enabled);
+                }
+            }
+        }
+
+        return WUD_STATE_STACK_DONE;
+    }
+
+    return WUD_STATE_STACK_CHECK_DEVICE_INFO;
+}
+
+void __wudStackHandler(void) {
+    char* pMsg = _wudWiiRemoteDescriptor;
+    WUDCB* p = &_wcb;
+    tBTM_VERSION_INFO version;
+
+    switch (p->stackState) {
+    case WUD_STATE_STACK_GET_STORED_LINK_KEY:
+        if (p->hhFlags == 1) {
+            p->linkKeyState = WUD_STATE_LINK_KEY_READING;
+            BTM_ReadStoredLinkKey(NULL,
+                                  (tBTM_CMPL_CB*)__wudLinkKeyEventStackCallback);
+        }
+
+        p->stackState = WUD_STATE_STACK_CHECK_DEVICE_INFO;
+        break;
+
+    case WUD_STATE_STACK_CHECK_DEVICE_INFO:
+        p->stackState = __wudStackCheckDeviceInfo();
+        break;
+
+    case WUD_STATE_STACK_DONE: {
+        u8 nextState;
+
+        if (p->linkKeyState == 0) {
+            OSCancelAlarm(&p->alarm);
+            BTM_ReadLocalVersion(&version);
+
+            DEBUGPrint(pMsg + 0x524, version.hci_version);
+            DEBUGPrint(pMsg + 0x53C, version.hci_revision);
+            DEBUGPrint(pMsg + 0x554, version.lmp_version);
+            DEBUGPrint(pMsg + 0x56C, version.lmp_subversion);
+            DEBUGPrint(pMsg + 0x584, version.manufacturer);
+            DEBUGPrint(pMsg + 0x59C, version.hci_revision & 0xFFF);
+
+            if ((version.hci_revision & 0xFFF) == 0xA7) {
+                __wudAppendRuntimePatch();
+            } else {
+                __wudInitSub();
+            }
+
+            nextState = WUD_STATE_STACK_INITIALIZED;
+        } else {
+            nextState = WUD_STATE_STACK_CHECK_DEVICE_INFO;
+        }
+
+        p->stackState = nextState;
+        break;
+    }
+}
+}
 
 void __wudStackHandler0(OSAlarm* pAlarm, OSContext* pContext) {
     OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudStackHandler,
@@ -3390,8 +3669,52 @@ void __wudNandFlushCallback(void) {
     _wudNandLocked = 0;
     _wudNandPhase = _wudNandPhase + 1;
 }
-void __wudGetDevInfoFromWiiFit() {}
-void __wudInitHandler() {}
+u8 __wudGetDevInfoFromWiiFit(void) { return 0; }
+
+void __wudInitHandler(void) {
+    WUDCB* p = &_wcb;
+    u8 nextState;
+
+    switch (p->initState) {
+    case WUD_STATE_INIT_WAIT_FOR_INITIALIZATION:
+        nextState = WUD_STATE_INIT_WAIT_FOR_INITIALIZATION;
+
+        if (OS_TICKS_TO_MSEC((u32)(__OSGetSystemTime() - __OSStartTime)) >
+            500) {
+            if (SCCheckStatus() != SC_STATUS_BUSY) {
+                __wudClearControlBlock();
+                nextState = WUD_STATE_INIT_DONE;
+
+                if (_linkedWBC != 0) {
+                    if (SCGetProductGameRegion() == 0) {
+                        _wudNandLocked = 0;
+                        nextState = WUD_STATE_INIT_GET_DEV_INFO;
+                        _wudNandPhase = 0;
+                    }
+                }
+            }
+        }
+
+        p->initState = nextState;
+        break;
+
+    case WUD_STATE_INIT_DONE:
+        __wudInitDevInfo();
+        break;
+
+    case 5:
+        OSCancelAlarm(&p->alarm);
+        p->libStatus = 1;
+        BTA_EnableBluetooth(
+            (tBTA_DM_SEC_CBACK*)__wudSecurityEventStackCallback);
+        p->initState = 6;
+        break;
+
+    case WUD_STATE_INIT_GET_DEV_INFO:
+        p->initState = __wudGetDevInfoFromWiiFit();
+        break;
+    }
+}
 
 void __wudInitHandler0(OSAlarm* pAlarm, OSContext* pContext) {
     OSSwitchFiberEx((u32)pAlarm, (u32)pContext, 0, 0, __wudInitHandler,
@@ -3593,9 +3916,64 @@ void __wudModuleRebootCallback(void) {
     __wudInitSub();
 }
 
-void __wudInstallPatchCallback() {}
+void __wudInstallPatchCallback(tBTM_VSC_CMPL* p1) {
+    u8 buf[WUD_PATCH_BUFFER_SIZE + 1];
+    u8 num;
+
+    if (_wudPatchNum == _wudInstallNum || p1 == NULL) {
+        DEBUGPrint(_wudWiiRemoteDescriptor + 0x8B0);
+        BTM_DeviceReset((tBTM_CMPL_CB*)__wudModuleRebootCallback);
+    } else {
+        num = MIN(_wudPatchNum - _wudInstallNum, WUD_MAX_PATCHES);
+
+        buf[0] = num;
+        memcpy(&buf[1],
+               &_wudWiiRemoteDescriptor[0x1A4 + 1 + _wudInstallNum * 13],
+               num * sizeof(WUDPatchCmd));
+
+        _wudInstallNum += num;
+        DEBUGPrint(_wudWiiRemoteDescriptor + 0x8C0);
+
+        BTM_VendorSpecificCommand(BT_VSC_NINTENDO_INSTALL_PATCH,
+                                  num * sizeof(WUDPatchCmd) + 1, buf,
+                                  __wudInstallPatchCallback);
+    }
+}
+
 void __wudWritePatchCallback() {}
-void __wudRemovePatchCallback(tBTM_VSC_CMPL* p1) {}
+
+void __wudRemovePatchCallback(tBTM_VSC_CMPL* p1) {
+    u8 buf[WUD_PATCH_BUFFER_SIZE + 1];
+    u32 address;
+    u8 length;
+    int i;
+
+    DEBUGPrint(_wudWiiRemoteDescriptor + 0x8F8);
+
+    if (p1 != NULL) {
+        length = MIN(_wudPatchSize, WUD_PATCH_BUFFER_SIZE - sizeof(u32));
+        address = _wudPatchAddress;
+
+        buf[0] = (u8)address;
+        buf[1] = (u8)(address >> 16);
+        buf[2] = (u8)(address >> 8);
+        buf[3] = (u8)(address >> 24);
+
+        for (i = 0; i < (s32)length; i++) {
+            buf[4 + i] = _wudWiiRemoteDescriptor[0xE8 + 8 + i];
+        }
+
+        _wudPatchOffset = length;
+        DEBUGPrint(_wudWiiRemoteDescriptor + 0x8D8, length);
+
+        BTM_VendorSpecificCommand(BT_VSC_NINTENDO_WRITE_PATCH, length + 4,
+                                  buf,
+                                  (tBTM_VSC_CMPL_CB*)__wudWritePatchCallback);
+    } else {
+        DEBUGPrint(_wudWiiRemoteDescriptor + 0x8B0);
+        BTM_DeviceReset((tBTM_CMPL_CB*)__wudModuleRebootCallback);
+    }
+}
 void __wudSuperPeekPokeCallback(void) {
     extern char lbl_80562BD8[];
     extern char lbl_80562BF0[];
@@ -3608,21 +3986,49 @@ void __wudSuperPeekPokeCallback(void) {
                               __wudRemovePatchCallback);
 }
 
-void __wudAppendRuntimePatch() {}
+void __wudAppendRuntimePatch(void) {
+    u8* pPatch = (u8*)_wudWiiRemoteDescriptor + 0xE8;
+
+    DEBUGPrint(_wudWiiRemoteDescriptor + 0x938);
+
+    _wudPatchAddress = pPatch[3];
+    _wudPatchAddress = (_wudPatchAddress << 8) + pPatch[2];
+    _wudPatchAddress = (_wudPatchAddress << 8) + pPatch[1];
+    _wudPatchAddress = (_wudPatchAddress << 8) + pPatch[0];
+    _wudPatchSize = pPatch[7];
+    _wudPatchSize = (_wudPatchSize << 8) + pPatch[6];
+    _wudPatchSize = (_wudPatchSize << 8) + pPatch[5];
+    _wudPatchSize = (_wudPatchSize << 8) + pPatch[4];
+
+    if (__OSInIPL != 0) {
+        DEBUGPrint(_wudWiiRemoteDescriptor + 0x954);
+
+        BTM_VendorSpecificCommand(0xFC0A, 9,
+                                  (u8*)(_wudWiiRemoteDescriptor + 0xDC),
+                                  (tBTM_VSC_CMPL_CB*)__wudSuperPeekPokeCallback);
+    } else {
+        DEBUGPrint(_wudWiiRemoteDescriptor + 0x928);
+
+        BTM_VendorSpecificCommand(BT_VSC_NINTENDO_INSTALL_PATCH, 1,
+                                  &_wudPatchRemoveCmd,
+                                  __wudRemovePatchCallback);
+    }
+}
+
 void __wudInitSub(void) {
     extern char lbl_80562C2C[];
     extern u32 lbl_8066C260;
     extern u16 lbl_8066C264;
     extern u8 lbl_8066C266;
     WUDCB* p = &_wcb;
-    DEV_CLASS devClass;
     char devName[4];
+    DEV_CLASS devClass;
     int i;
     BOOL enabled;
 
+    *(u32*)devName = lbl_8066C260;
     *(u16*)&devClass[0] = lbl_8066C264;
     devClass[2] = lbl_8066C266;
-    *(u32*)devName = lbl_8066C260;
 
     DEBUGPrint(lbl_80562C2C);
 
@@ -3654,8 +4060,8 @@ void __wudInitSub(void) {
     OSRestoreInterrupts(enabled);
 
     enabled = OSDisableInterrupts();
-    p->discoverable = FALSE;
-    p->connectable = TRUE;
+    _wcb.discoverable = FALSE;
+    _wcb.connectable = TRUE;
     OSRestoreInterrupts(enabled);
 
     BTA_DmSetVisibility(FALSE, TRUE);

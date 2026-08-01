@@ -4607,3 +4607,58 @@ unit). Patterns:
    `== TRUE` reproduces retail's `clrlwi; cmpli r0,1; bne` shape (plain `if (ret)`
    gives `clrlwi.`/`beq` — 1 instruction off). `l2c_link_sec_comp` is
    `(BD_ADDR, void*, UINT8)`.
+
+## RVL_SDK bte/l2cap l2c_csm.c — 6 more FULL_MATCH: pointer-stream macro form, abbreviated retail strings, sibling-function pool dependency (GC/3.0a5.2, `-ipa off`)
+
+`forward_peer_data` (0x1A4), `l2c_csm_w4_l2ca_connect_rsp` (0x1D8),
+`l2c_csm_w4_l2cap_disconnect_rsp` (0x1E4), `l2c_csm_open` (0x3D4),
+`l2c_csm_config` (0x3C8), `l2c_csm_w4_l2cap_connect_rsp` (0x244) — all byte-exact
+(0 structural; config 3 pure reg-swaps in the prologue param-copy order,
+99.876%, SMT `inconclusive_unvalidated_callee` until l2c_utils callees certify).
+
+1. **HCI-ACL header prepend: use the stream-macro pointer form**
+   `p = (UINT8 *)(p_buf + 1) + (UINT16)(event - 8);` followed by
+   `UINT16_TO_STREAM(p, …)`. The `+8` (from `p_buf + 1`) folds into the first
+   stream's store offsets (`stb 8(r5)/9(r5)`) and the post-increment advance is
+   materialized at the branch (`addi r3, r5, 0xa`, then `addi r3, r3, 2` in each
+   arm). Array-indexed writes (`p[8]`, `p[0xa]`…) or `p = base; p += 8` make MWCC
+   fold EVERYTHING into one base register with constant offsets + a single
+   `addi r3, r3, 0xc` — 3 instructions off. Using `(UINT16)event` (the original
+   offset) instead of `(UINT16)(event - 8)` gives indexed `stbx` addressing — wrong.
+
+2. **Abbreviated retail strings are byte-for-byte authoritative.** The pool has
+   `"L2CAP - st: W4_L2CA_CON_RSP evt: %d"` and `"…W4_L2CAP_CON_RSP evt: %d"`
+   (no `NECT`). Writing `CONNECT_RSP` shifts every later pool object by 4 bytes
+   (all base-relative `addi r4, r31, N` string addends drift). Always read the
+   exact string from `orig/us/sys/main.dol` (data segments at DOL header 0x1C/0x64/0xAC).
+
+3. **A function's string-pool addends depend on ALL other functions' pool
+   objects** (strings + jump tables), in reverse-source emission order — not just
+   the functions *before* it in the file. `l2c_csm_w4_l2cap_disconnect_rsp`'s
+   addends were 0x380 off until `l2c_csm_open`/`l2c_csm_config`/
+   `l2c_csm_w4_l2cap_connect_rsp` (unclaimed siblings) were implemented; a stub
+   emits no pool objects and leaves the offsets wrong. Implementing the siblings
+   fixed the addends to 0. (Extends the earlier note — this bites mid-file
+   functions whose *successors* in source are still stubs.)
+
+4. **Case label order = retail .text order**, not numeric: open = 3, 6, 14, 17,
+   19, 26, **29, 23**; config = 3, 14, 15, 16, 17, 23, 24, 25, 26, 19, 29, 30;
+   w4_l2cap_connect_rsp = 3, 11, 12, 13, 30, 26, 19. Get the order from the
+   retail label addresses, not from the event numbers.
+
+5. **API callback args re-read `p_ccb->local_cid` from memory** (`lhz r3, 0x14(rN)`)
+   in most handlers, while the ev-3/ev-30 `DisconnectInd` calls use the saved
+   local (`mr r3, rN`). Reproduce per-site; mixing them up is a structural
+   mismatch (1 extra instruction).
+
+6. **Switch-case constants/timers**: config/open/w4_l2cap_connect_rsp use
+   `btu_start_timer(…, BTU_TTYPE_L2CAP_CHNL, 30)` (0x1e) for config/disc timeouts
+   and 120 (0x78) for the pending/rsp wait; `CST_W4_L2CA_DISCONNECT_RSP` (8) is
+   the state after peer DISCONNECT_REQ while OPEN/CONFIG (they send the rsp,
+   `DisconnectInd(…, TRUE)` with the "Conf Needed" string); `CST_W4_L2CAP_DISCONNECT_RSP` (7)
+   after upper-layer L2CA_DISCONNECT_REQ. `tL2C_CONN_INFO` (l2c_main.c layout)
+   has `bd_addr[6]/handle/psm` prefix — `result` at 0x0a, `status` 0x0c, `rcid`
+   0x0e; the W4_L2CA_CONNECT_RSP handler tests `p_ci == NULL || result == 0`
+   (both go to the accept path: `send_peer_connect_rsp(OK,0)`, state CONFIG,
+   timer 30) and the reject path sends `(result, status)` + timer 120 with NO
+   state change.

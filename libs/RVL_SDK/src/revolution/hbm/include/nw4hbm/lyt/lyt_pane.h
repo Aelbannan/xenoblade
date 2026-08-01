@@ -285,7 +285,7 @@ protected:
     u8 mGlbAlpha;      // at 0xCE
     u8 mFlag;          // at 0xCF
     u8 mUserAllocated; // at 0xD0
-    char mpExtUserDataList[4]; // at 0xD1
+    char mpExtUserDataList[3]; // at 0xD1 (never dereferenced by code; layout padding so derived members start at 0xD4)
 
 protected:
     void InsertChild(PaneList::Iterator next, Pane* pChild);

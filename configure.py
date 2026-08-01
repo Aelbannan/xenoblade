@@ -992,7 +992,7 @@ config.libs = [
             # -func_align 4 matches the bte family layout (retail packed, not
             # 16-aligned) and removes the spurious mtctr/bdnz loop nop.
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_act.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 16"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", extra_cflags=["-func_align 16"]),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c"),
             # btm_acl.c: retail bte built with GC/3.0a5.2 (see btm_devctl / bta_dm_act
@@ -1008,7 +1008,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); -func_align 4 matches retail's 4-aligned functions and packs .text into the split budget (MWCC_REFERENCE btm_devctl size row); Wii/1.1 merges byte-copies into lwz and schedules li/stb differently
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_api.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c"),
@@ -1022,7 +1022,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); Wii/1.1 lowers the snd_data switch with a subi/cmpli range test instead of the retail cmpwi/bge chain; -func_align 4 removes the scheduling nop before mtctr-counted loops (see MWCC_REFERENCE btm_inq/btm_sec notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_csm.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_link.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family, packed (no 16-byte fn padding); default -func_align 16 + IPA blows the split (see MWCC_REFERENCE btm_inq/l2c_utils)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 16"]),  # retail l2cap built with GC 3.0a-family (see btm_devctl/btm_inq); Wii/1.1 merges the indexed pool load into lbzu (l2cu_find_ccb_by_cid) and inserts an mtctr-loop nop (l2cu_lcb_disconnecting)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_api.c"),

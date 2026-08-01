@@ -6,25 +6,6 @@ namespace lyt {
 
 NW4R_UT_RTTI_DEF_DERIVED(Picture, Pane);
 
-// TODO(kiwi) Don't know what this actually looks like...
-Picture::Picture(u8 num) : Pane(NULL) {
-    num = ut::Min<u8>(num, GX_MAX_TEXCOORD);
-    Init(num);
-}
-
-Picture::Picture(const TexMap& rTexMap) : Pane() {
-    Init(1);
-
-    mpMaterial = Layout::NewObj<Material>();
-    
-    if (mpMaterial != NULL) {
-        mpMaterial->ReserveGXMem(1,1,1,0,
-                   false, 0,0,false,
-                    false,false,false);
-        Append(rTexMap);
-    }
-}
-
 Picture::Picture(const res::Picture* pRes, const ResBlockSet& rBlockSet)
     : Pane(pRes) {
 
@@ -58,12 +39,6 @@ Picture::Picture(const res::Picture* pRes, const ResBlockSet& rBlockSet)
     }
 }
 
-void Picture::Init(u8 num) {
-    if (num > 0) {
-        ReserveTexCoord(num);
-    }
-}
-
 Picture::~Picture() {
     if (mpMaterial != NULL && !mpMaterial->IsUserAllocated()) {
         Layout::DeleteObj(mpMaterial);
@@ -71,41 +46,6 @@ Picture::~Picture() {
     }
 
     mTexCoordAry.Free();
-}
-
-void Picture::Append(const TexMap& rTexMap) {
-    if (mpMaterial->GetTextureNum() >= mpMaterial->GetTextureCap() ||
-        mpMaterial->GetTextureNum() >= mpMaterial->GetTexCoordGenCap()) {
-        return;
-    }
-
-    u8 idx = mpMaterial->GetTextureNum();
-
-    mpMaterial->SetTextureNum(idx + 1);
-    mpMaterial->SetTexture(idx, rTexMap);
-
-    mpMaterial->SetTexCoordGenNum(mpMaterial->GetTextureNum());
-    mpMaterial->SetTexCoordGen(idx, TexCoordGen());
-
-    SetTexCoordNum(mpMaterial->GetTextureNum());
-
-    if (mSize == Size(0.0f, 0.0f) && mpMaterial->GetTextureNum() == 1) {
-        mSize = detail::GetTextureSize(mpMaterial, 0);
-    }
-}
-
-void Picture::ReserveTexCoord(u8 num) {
-    mTexCoordAry.Reserve(num);
-}
-
-void Picture::SetTexCoordNum(u8 num) {
-    mTexCoordAry.SetSize(num);
-}
-
-void Picture::SetTexCoord(u32 idx, const detail::TexCoord coord) {
-    for (int i = 0; i < VERTEXCOLOR_MAX; i++) {
-        mTexCoordAry.GetArray()[idx][i] = coord[i];
-    }
 }
 
 ut::Color Picture::GetVtxColor(u32 idx) const {

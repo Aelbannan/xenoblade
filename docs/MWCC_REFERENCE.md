@@ -363,6 +363,23 @@ with the command at p+8: `[opcode-lo, opcode-hi(=OGF<<2), paramlen, params…]`
 | `__wpadCalcRecalibration` (99.4%) / `__wpadInfoCallback` (99.0%) / `__wpadIsControllerDataChanged` (97.7%) cannot reach EQUIVALENT_MATCH | SMT needs 100% static: `OSDisableInterrupts` has no matched-callee lemma (cross-object), the getInfo callback is an unresolved indirect call, and the 574-insn 25-branch function exceeds the 4096-path limit | Byte-identical only; register-coloring residue (count→r6 vs r8, base r4 vs r5) is not steerable from source; keep as CODE_MATCH pending 100% |
 
 
+## RVL_SDK vi/vi3in1 (US, mwcc_43_151 `-O4,p`) — DAC/AVE I2C setters, 10/10 FULL_MATCH
+
+All ten `vi3in1.c` setters (`__VISetYUVSEL`, `__VISetCGMS`, `__VISetWSS`, `__VISetClosedCaption`, `__VISetTrapFilter`, `VISetTrapFilter`, `__VISetRGBOverDrive`, `__VISetRGBModeImm`, `VISetRGBModeImm`, `VISetGamma`) matched byte-identical with `(u8)`-casted buffer bytes + sda21 globals defined in-TU.
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `buf[1] = (sel << 5) | region` emits `rlwinm rX,rS,5,0,26`; explicit `& 0x07F80000` folds to `(sel & 0xFF) << 5` (`rlwinm 5,5,12`); retail is `clrlslwi rX,rS,24,5` = `rlwinm rX,rS,5,19,26` | MWCC emits the exact 19-26 mask only when the shift operand is a **byte-cast value**; the folded mask on a plain u32 is 0-26, and a literal mask gets normalised to the byte-shift form | Write `buf[1] = (u8)sel << 5 | (u8)global;` — the `(u8)sel` cast reproduces `rlwinm r3,r3,5,19,26` verbatim (also seen in `__VISetRevolutionModeSimple` on `VIGetDTVStatus()`) |
+| `buf[1] = (a & 3) | ((b & 0xF) << 2)` emits `rlwinm (b<<2)` **then** `rlwimi a`; retail is `clrlwi a` then `rlwimi b<<2` | MWCC evaluates the shifted operand of a single-expression `\|` first | Two-store form: `buf[1] = a & 3; buf[1] |= (b & 0xF) << 2;` — the first store's `clrlwi` then `rlwimi` match retail exactly (same as GXInitTexObjFilter) |
+| Identical tail branches (`else if (x==0) r=0; else r=0;`) compile to a branchless `subi`/`rlwinm` sequence | MWCC merges same-value else-ifs | Use a `switch` with explicit `case 0:` and `default:` blocks; retail keeps 4 separate `li`/`stw` blocks (fallthrough default included) |
+| `Vdac_Flag_Region = region` after the switch hoists into a single store after the switch | Store a **global** inside each case instead of a local | `case 1: case 5: Vdac_Flag_Region = 2; break; …` then reuse `Vdac_Flag_Region` in the byte expression — MWCC keeps the value in r0 across the switch (no reload) |
+| `cmpwi` vs `cmpli` for `Vdac_Flag_Region == 3` | Signedness of the compared global | Declare the sbss global `s32 Vdac_Flag_Region`; unsigned `u32` gives `cmpli`. (`== 0` checks emit `cmpwi` either way.) |
+| Call sequence after the if/else gets tail-merged into one copy | MWCC merges identical call blocks when they follow the join | Duplicate `__VISendI2CData(0xE0, buf, 2); WaitMicroTime(2);` inside **each** branch — retail keeps two full copies with per-branch arg setup (`addi r4,sp,8` interleaved with the value stores) |
+| `__filter`/`__gamma` early-return guards: retail `beqlr` right after `lwz`/`lbz` + compare | `if ((u32)__filter == (u32)filter) return;` with `u8`/enum params | Keep both operands unsigned for `cmplw` (`VISetTrapFilter`) or signed enum compare for `cmpw` (`VISetGamma`); `VIBool` (u8) param needs `(u32)` casts on both sides |
+
+`__VISetYUVSEL` reads TV format via `*(volatile u32*)0x800000CC` (OS `TV_FORMAT`, bootrom mirror at `0x800000CC`) — plain `lis`+`lwz`, no sda21 reloc; `0xE0` AVE slave addr, `WaitMicroTime(2)` per `i2c.c`.
+
+
 ## kyoshin/main (US) — early init + contiguous .data base
 
 US `main` is **not** the JP-shaped “copy ErrMesData strings then initialize” path. Retail:

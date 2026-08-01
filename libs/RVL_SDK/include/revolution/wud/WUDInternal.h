@@ -199,7 +199,7 @@ typedef struct WUDCB {
 
 extern WUDCB __rvl_wudcb;
 #define _wcb __rvl_wudcb
-extern WUDDevInfo _work;
+extern WUDDevInfo _wudDiscWork;
 
 extern SCBtDeviceInfoArray _scArray;
 

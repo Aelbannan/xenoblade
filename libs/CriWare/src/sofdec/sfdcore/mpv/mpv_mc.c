@@ -144,13 +144,23 @@ void MPVMC08_OneRefH2_TuneC(MPC08Params *prm) {
 /* Half-pel vertical one-ref compensation: (src1[i] + src2[i] + 1) >> 1.
    Dispatches on the src1 alignment; two rows per loop iteration. */
 void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
+    u8 *dst = prm->dst;
     u8 *s1 = prm->src1;
     u8 *s2 = prm->src2;
-    u8 *dst = prm->dst;
     u32 stride = prm->stride;
     int i;
 
-    if (((u32)s1 & 3) == 0) {
+    if (((u32)s1 & 3) == 0)
+        goto mpvmc08_v2_case0;
+    if (((u32)s1 & 3) == 1)
+        goto mpvmc08_v2_case1;
+    if (((u32)s1 & 3) == 2)
+        goto mpvmc08_v2_case2;
+    if (((u32)s1 & 3) == 3)
+        goto mpvmc08_v2_case3;
+    return;
+
+mpvmc08_v2_case0:
         for (i = 0; i < 4; i++) {
             u32 a0 = *(const u32 *)s1;
             u32 b0 = *(const u32 *)s2;
@@ -183,9 +193,8 @@ void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
             s2 += stride;
             dst += 8;
         }
-        return;
-    }
-    if (((u32)s1 & 3) == 1) {
+        goto mpvmc08_v2_done;
+mpvmc08_v2_case1:
         for (i = 0; i < 4; i++) {
             u32 wm1 = *(const u32 *)(s1 - 1);
             u32 xm1 = *(const u32 *)(s2 - 1);
@@ -230,9 +239,8 @@ void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
             s2 += stride;
             dst += 8;
         }
-        return;
-    }
-    if (((u32)s1 & 3) == 2) {
+        goto mpvmc08_v2_done;
+mpvmc08_v2_case2:
         for (i = 0; i < 4; i++) {
             u32 h01 = *(const u16 *)(s1 + 0);
             u32 g01 = *(const u16 *)(s2 + 0);
@@ -277,10 +285,9 @@ void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
             s2 += stride;
             dst += 8;
         }
-        return;
-    }
-    if (((u32)s1 & 3) == 3) {
-    for (i = 0; i < 4; i++) {
+        goto mpvmc08_v2_done;
+mpvmc08_v2_case3:
+        for (i = 0; i < 4; i++) {
             u32 wm3 = *(const u32 *)(s1 - 3);
             u32 xm3 = *(const u32 *)(s2 - 3);
             u32 wp1 = *(const u32 *)(s1 + 1);
@@ -324,8 +331,7 @@ void MPVMC08_OneRefV2_TuneC(MPC08Params *prm) {
             s2 += stride;
             dst += 8;
         }
-        return;
-    }
+mpvmc08_v2_done:
     return;
 }
 

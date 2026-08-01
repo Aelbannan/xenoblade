@@ -775,6 +775,24 @@ The decomp reloc then has the same name as retail → same canonical symbol on b
 
 **Targets fixed:** `us-8037a990` `__wudInitFlushCallback`, `us-8037b730` `__wudShutdownFlushCallback`, `us-8037db00` `__wudCleanupStackCallback` (all 100% → FULL_MATCH).
 
+#### 1i. Automated reloc-drift detection + named-symbol map (`tools/coop/reloc_map.py`)
+
+Instead of hunting reloc names by hand, run the detector/map miner (see also SKILL.md quick commands):
+
+```bash
+# Per-function reloc drift + concrete fixes (inline in hexdiff too)
+python3 tools/coop/reloc_map.py diff <unit> --symbol <mangled-sym> [--no-build]
+
+# Batch-mine the repo map from every retail/decomp objdiff pair
+python3 tools/coop/reloc_map.py mine              # → tools/coop/retail_reloc_map.json
+python3 tools/coop/reloc_map.py show --global-only
+python3 tools/coop/reloc_map.py show --symbol spInstance
+```
+
+- Detection aligns relocs **per function pair** (matched by name, equal `.text` size) and classifies each diff: `name` (bytes identical — pure rename), `addend` (only the addend field differs — rename + offset), `layout` (same symbol, offset drift — string pools, report-only), `structural` (not reloc-fixable). Section-level alignment is **not** used: misaligned objects produce false positives (e.g. `WaitingForCoverOpen` → `WaitingForCoverClose` — same `lwz r0, X@sda21(r0)` word in shifted streams).
+- The mined map keys named symbols globally (`spInstance__9CDeviceGX` → `lbl_eu_806656A0`, 29×) and TU-local labels (`@N` pools, `...bss.0` section relocs) per-unit (`unit@symbol`). Large addend deltas (> `MAX_MAP_ADDEND_DELTA`) are dropped as misalignment noise. Auto-mined entries reproduce the hand-written `exact_renames` rules (e.g. `s_nandUserAreaCallbackFmt` → `lbl_80551294`, `s_nanderrPath` → `lbl_805512B8`), so the tool can generate new `UnitRules` blocks instead of hand-writing them.
+- `hexdiff` embeds the same analysis: the terminal output ends with a **Reloc name drift** section listing each drift with the source `extern "C"` declaration, the `exact_renames` rule, or the objcopy `--redefine-sym` one-liner; `--json` adds `reloc_drift` + `reloc_suggestions` keys.
+
 ### 2. `extern "C"` on `bl` targets with retail mangling
 
 MWCC emits `bl` to **exact linker symbols**. C++-mangled names on callees cause wrong relocs.
@@ -3339,3 +3357,37 @@ btm_main, hidd_conn all still MATCH under GC/3.0a5.2). The repo's btm_sco `HIGH_
 **Tooling note:** `configure_args` in build.ninja must be `--version=us` (equals-form); the
 space form strips the region from `configure_args` and the ninja regen rule breaks with
 "argument -v/--version: expected one argument".
+
+## RVL WUD — debug strings via `extern lbl_805xxxxx[]` labels, not literals (US, 10× matched)
+
+`libs/RVL_SDK/src/revolution/wud/WUD.c` — 10 targets
+(`__wudSyncFlushCallback`, `__wudDeleteFlushCallback`, `__wudOpenWiiFitCallback`,
+`__wudSeekWiiFitCallback`, `__wudUpdateWiiFitCallback`, `__wudCloseWiiFitCallback`,
+`__wudDeviceStatusEventStackCallback`, `__wudPowerMangeEventStackCallback`,
+`WUDSetDeviceHistory`, `WUDIsLatestDevice`) — 9× **FULL_MATCH (100% bytes, SMT-certified)**,
+1× **EQUIVALENT_MATCH** (98.5%, SMT-proven; one branch folded by Wii/1.1).
+
+**Symptom → cause:** any `DEBUGPrint("literal", …)` emits the string into the decomp `.data`
+at a different offset than retail (decomp `.data` lacks the retail unit's intervening data
+objects), so `functionRelocDiffs=data_value` costs 0.3–0.5% per string and the SMT checker
+cannot resolve the string address (`exit.target: 0x0 != 0x01010104` / `invalid-reason`).
+Referencing the retail `.data` label via `extern char lbl_805xxxxx[];` (declared inside the
+function, same as `__wudInitFlushCallback`) makes the reloc symbol+addend identical to retail:
+100% match, and the checker unifies the address → `equivalent`.
+
+**Fixes that worked:**
+- `extern char lbl_80562504[];` + `DEBUGPrint(lbl_80562504, status, …)` — plain label access.
+- Strings inside a big retail blob: `extern char _wudWiiRemoteDescriptor[];` + a local
+  `char* pMsg = _wudWiiRemoteDescriptor;` + `DEBUGPrint(pMsg + 0x1054)` — keeps the base in
+  one callee-saved reg (r31) so every string is a single `addi r3,r31,off`; referencing the
+  symbol directly re-materializes `lis/addi/addi` at the last use (regalloc live-range choice).
+  Offsets: `lbl_8056311C + 0x200/0x224/0x238/0x27C` == `_wudWiiRemoteDescriptor + 0x1054/0x1078/0x108c/0x10d0`.
+- **Global rename `_work` → `_wudDiscWork`** (retail symbol name) — without it the SMT probe
+  reports `different final arrays` (memory model splits by symbol name); with it the arrays unify.
+- The retail PowerMange "unknown device" print uses `" addr = %02x:%02x:%02x:%02x:%02x:%02x,  status = %d\n"`
+  (7 formats, `desc+0x10d0`) — not `"BD_ADDR: …"` (6 formats, `desc+0x48`, used by the linkkey callback).
+- **Branch-over-branch fold is Wii/1.1-IR-level:** retail `bne .L_prints; b .L_common` (empty-then
+  + else / two-goto shapes) folds to a single `beq .L_common` under Wii/1.1 `-O4,p` regardless of
+  source shape (if/else, empty-then, if-goto, switch, `#pragma peephole off`, `-O4,s`). The sfh
+  branch-over-branch pattern only survives when the fall-through block ≠ the second goto target.
+  The 1-instruction difference is SMT-equivalent → accept at EQUIVALENT_MATCH (98.5%).

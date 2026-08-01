@@ -98,6 +98,8 @@ class CensusAccumulator:
             self.totals[f"{hit.pattern}:has-symbolic-trip"] += 1
         if hit.detail.get("skip_guard"):
             self.totals[f"{hit.pattern}:skip-guard"] += 1
+        if hit.detail.get("countdown"):
+            self.totals[f"{hit.pattern}:countdown"] += 1
 
     def top_hits(self, pattern: str, *, limit: int = 12) -> list[PatternHit]:
         exact = [hit for hit in self.hits if hit.pattern == pattern and hit.confidence == "exact-pattern"]
@@ -210,6 +212,13 @@ def decode_function(function: AsmFunction) -> list[Instruction] | None:
 
 
 def _hit_from_compare(candidate: CtrAffineLoopCandidate, function: AsmFunction) -> PatternHit:
+    countdown = None
+    if candidate.trip_expr is not None and candidate.trip_expr.get("kind") == "countdown":
+        countdown = {
+            "family": candidate.trip_expr.get("family"),
+            "step": candidate.trip_expr.get("step"),
+            "signed": candidate.trip_expr.get("signed"),
+        }
     return PatternHit(
         pattern="compare-affine",
         unit=function.unit,
@@ -223,6 +232,10 @@ def _hit_from_compare(candidate: CtrAffineLoopCandidate, function: AsmFunction) 
             "latch_pc": f"0x{candidate.latch_pc:08X}",
             "trip_count": candidate.trip_count,
             "trip_count_reg": candidate.trip_count_reg,
+            "countdown": countdown,
+            "symbolic_trip": (
+                candidate.trip_count is None and candidate.trip_expr is not None
+            ),
             "notes": list(candidate.notes),
         },
     )

@@ -94,8 +94,22 @@ documented per-implementation private-storage abstraction.
   identically to one `mul` + `add`).
   Compare-affine countdown loops (`li` / affine body / `addi -1` / `cmpwi` /
   `bne`) use the same summary map with `proof_kind=compare-affine-closed-form`
-  and leave CTR unmodified. A `FinalCompare` is applied after closed-form GPRs
+  and leave CTR unmodified. The latch grammar (doc 30 Phase C1) accepts
+  `bne (4,2)` / `beq (12,2)` / `blt (12,0)` / `bgt (12,1)` / `ble (4,1)` /
+  `bge (4,0)` (static-prediction hint bits masked, `AA=0`) with a
+  self-`addi/subi ±step` prelude and `cmpwi`/`cmplwi` (immediate bound) or
+  `cmpw`/`cmplw` (symbolic bound) — the compare form's signedness selects the
+  countdown semantics. Trips are do-while `TripCountdown` nodes (C2): the body
+  executes at least once whenever the header is reached, the trip is the
+  smallest `k >= 1` with the continue relation failing, and non-terminating
+  families (the counter never reaches the exit region, or `bne` without
+  divisibility) fail closed. A `FinalCompare` is applied after closed-form GPRs
   so CR (including XER.SO) matches the last `cmpwi`.
+  The compare-affine discharge (C3) pins a fresh symbolic entry counter and
+  bound equal across sides and carries the family termination premise
+  (zero-entry wrap exclusion, `bne` divisibility, and the ranking-wrap
+  exclusion `(trip-1)*step <= entry` / `<= 0xffffffff - entry` so the unsigned
+  ranking holds on every continued step) — the premise is never assumed.
   Relational induction discharges matching CTR-affine and compare-affine pairs
   via five independent UNSAT queries
   (`relational_discharge.try_smt_discharge_ctr_affine` /

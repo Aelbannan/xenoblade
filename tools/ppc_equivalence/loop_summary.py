@@ -41,10 +41,16 @@ from tools.ppc_equivalence.provenance import canonical_json_sha256
 from tools.ppc_equivalence.skip_guard import (
     SkipGuardInfo,
     find_mtctr_with_guard,
+    guard_family,
 )
 from tools.ppc_equivalence.trip_expression import (
+    TripConstant,
+    TripCountdown,
+    TripEntryReg,
+    TripExpr,
     canonical_dict,
     evaluate_concrete,
+    normalize_trip_expr,
     recognize_trip_expr,
 )
 
@@ -301,10 +307,16 @@ def summarize_ctr_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSummary 
 def find_compare_affine_loop_candidates(
     instructions: Sequence[Instruction],
 ) -> list[CtrAffineLoopCandidate]:
-    """Scan for ``li`` / affine body / ``addi -1`` / ``cmpwi`` / ``bne`` counted loops.
+    """Scan for countdown/count-up loops: ``addi/subi rT, ±step; cmp rT,
+    bound; b<family> latch`` (doc 30 Phase C1).
 
-    Reuses ``CtrAffineLoopCandidate`` with ``notes`` marking compare-affine shape.
-    CTR is not used; ``trip_count_reg`` is the GPR countdown register.
+    Latch families: ``bne (4,2)``, ``beq (12,2)``, ``blt (12,0)``,
+    ``bgt (12,1)``, ``ble (4,1)``, ``bge (4,0)`` (with the static-prediction
+    hint bits masked), ``AA=0``. The prelude is a self-``addi/subi`` with a
+    nonzero step followed by ``cmpwi``/``cmplwi`` (immediate bound) or
+    ``cmpw``/``cmplw`` (symbolic bound) on the same register. The trip is a
+    do-while ``TripCountdown`` (C2): the body executes at least once whenever
+    the header is reached.
     """
     if not instructions:
         return []
@@ -313,7 +325,8 @@ def find_compare_affine_loop_candidates(
     candidates: list[CtrAffineLoopCandidate] = []
 
     for index, insn in enumerate(instructions):
-        if not _is_bne_cr0_eq(insn):
+        family = _compare_latch_family(insn)
+        if family is None:
             continue
         target = int(insn.operands[2]) & 0xFFFFFFFC
         header_index = by_address.get(target)
@@ -321,31 +334,73 @@ def find_compare_affine_loop_candidates(
             continue
 
         body = list(instructions[header_index:index])
-        parsed, body_notes = _parse_compare_affine_body(body)
+        parsed, body_notes = _parse_compare_affine_body(body, family)
         if parsed is None:
             continue
-        counter_reg, updates = parsed
+        counter_reg, step, updates, bound_imm, bound_reg, signed = parsed
 
-        if header_index < 1:
-            continue
-        trip_count, trip_notes = _concrete_li_trip_count(
-            instructions[header_index - 1],
+        # The counter's entry value (materialization before the header).
+        counter_expr, counter_notes = recognize_trip_expr(
+            instructions,
+            header_index,
             counter_reg,
         )
-        notes = list(body_notes)
-        notes.extend(trip_notes)
-        notes.append("compare-affine: addi -1 / cmpwi / bne countdown")
-        confidence = (
-            "exact-pattern"
-            if trip_count is not None and trip_count >= 1
-            else "partial"
+        if counter_expr is None:
+            counter_expr = TripEntryReg(counter_reg)
+        if bound_reg is not None:
+            bound_expr: TripExpr = TripEntryReg(bound_reg)
+        else:
+            assert bound_imm is not None
+            bound_expr = TripConstant(bound_imm & 0xFFFFFFFF)
+        trip_expr = TripCountdown(
+            counter_expr,
+            bound_expr,
+            step,
+            family,
+            signed,
         )
+        # Preserve the countdown *shape* in the candidate's trip_expr (the
+        # folded constant is only for ``trip_count``); canonical_dict would
+        # normalize a constant countdown into a TripConstant.
+        trip_expr_dict: dict[str, Any] = {
+            "kind": "countdown",
+            "entry": canonical_dict(counter_expr),
+            "bound": canonical_dict(bound_expr),
+            "step": int(step),
+            "family": family,
+            "signed": bool(signed),
+        }
+        normalized = normalize_trip_expr(trip_expr)
+        trip_count = (
+            int(normalized.value) if isinstance(normalized, TripConstant) else None
+        )
+
+        notes = list(body_notes)
+        notes.extend(counter_notes)
+        notes.append(
+            f"compare-affine countdown: {family} r{counter_reg} {step:+d}"
+        )
+        if trip_count is None and isinstance(normalized, TripCountdown):
+            if (
+                isinstance(normalized.entry, TripConstant)
+                and isinstance(normalized.bound, TripConstant)
+            ):
+                notes.append("countdown non-terminating for the concrete entry/bound")
+        if trip_count is not None and trip_count >= 1:
+            confidence = "exact-pattern"
+        elif isinstance(normalized, TripCountdown) and (
+            not isinstance(normalized.entry, TripConstant)
+            or not isinstance(normalized.bound, TripConstant)
+        ):
+            confidence = "symbolic-trip"
+        else:
+            confidence = "partial"
         final_compare = FinalCompare(
             field=0,
             left_reg=counter_reg,
-            right_imm=0,
-            right_reg=None,
-            signed=True,
+            right_imm=bound_imm,
+            right_reg=bound_reg,
+            signed=signed,
         )
         candidates.append(
             CtrAffineLoopCandidate(
@@ -360,25 +415,38 @@ def find_compare_affine_loop_candidates(
                 confidence=confidence,
                 notes=tuple(notes),
                 final_compare=final_compare,
+                trip_expr=trip_expr_dict,
             ),
         )
     return candidates
 
 
 def summarize_compare_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSummary | None:
-    """Closed form for a compare-affine countdown loop (positive concrete trip)."""
-    if candidate.trip_count is None or candidate.trip_count < 1:
-        return None
+    """Closed form for a compare-affine countdown loop (concrete or parametric).
+
+    Concrete trips (positive ``trip_count``) build the classic closed form;
+    symbolic trips (doc 30 Phase C2) build a parametric summary whose
+    ``trip_expr`` is a do-while ``TripCountdown``. The countdown register's
+    final value is ``entry + trip * step`` and the exit CR comes from the
+    ``FinalCompare`` — both part of the exit agreement.
+    """
     if "compare-affine" not in " ".join(candidate.notes):
+        return None
+    if candidate.trip_count is None and candidate.trip_expr is None:
+        return None
+    if any("non-terminating" in note for note in candidate.notes):
+        # A concretely non-terminating countdown can never be summarized.
         return None
 
     collapsed: dict[int, tuple[int, int]] = {}
     for update in candidate.body_updates:
         _entry, stride = collapsed.get(update.reg, (update.reg, 0))
         collapsed[update.reg] = (update.reg, stride + update.addend)
-    # Countdown register: entry N, stride -1 → exit 0.
+    # Countdown register: entry N, stride = step → exit value N + trip*step.
     assert candidate.trip_count_reg is not None
-    collapsed[candidate.trip_count_reg] = (candidate.trip_count_reg, -1)
+    step = _countdown_step(candidate)
+    collapsed[candidate.trip_count_reg] = (candidate.trip_count_reg, step)
+    symbolic = candidate.trip_count is None
 
     return LoopSummary(
         header_pc=candidate.header_pc,
@@ -390,10 +458,39 @@ def summarize_compare_affine_loop(candidate: CtrAffineLoopCandidate) -> LoopSumm
         ranking="counter-descending",
         proof_kind="compare-affine-closed-form",
         invariant_notes=tuple(candidate.notes),
-        entry_condition=f"r{candidate.trip_count_reg} == {candidate.trip_count}",
-        exit_condition=f"r{candidate.trip_count_reg} == 0 after bne exhaust",
+        entry_condition=(
+            f"r{candidate.trip_count_reg} == {candidate.trip_count}"
+            if candidate.trip_count is not None
+            else f"r{candidate.trip_count_reg} == trip_expr (do-while countdown)"
+        ),
+        exit_condition=(
+            f"r{candidate.trip_count_reg} == 0 after bne exhaust"
+            if candidate.trip_count is not None
+            else "countdown exhausted at trip_expr iterations"
+        ),
         final_compare=candidate.final_compare,
+        trip_expr=candidate.trip_expr,
+        zero_guard="concrete-nonzero" if not symbolic else None,
     )
+
+
+def _countdown_step(candidate: CtrAffineLoopCandidate) -> int:
+    """The signed per-iteration step of the countdown register.
+
+    The step is the ``addi/subi`` immediate of the latch prelude; when the
+    trip expression is a ``TripCountdown`` its ``step`` field is authoritative.
+    """
+    if candidate.trip_expr is not None:
+        expr = _expr_from_dict(candidate.trip_expr)
+        if isinstance(expr, TripCountdown):
+            return int(expr.step)
+    return -1
+
+
+def _expr_from_dict(data: dict) -> TripExpr:
+    from tools.ppc_equivalence.trip_expression import trip_expr_from_canonical
+
+    return trip_expr_from_canonical(data)
 
 
 def build_affine_summary_map(
@@ -421,7 +518,7 @@ def build_affine_summary_map(
             _insert(summary)
 
     for candidate in find_compare_affine_loop_candidates(instructions):
-        if candidate.confidence != "exact-pattern":
+        if candidate.confidence not in ("exact-pattern", "symbolic-trip"):
             continue
         summary = summarize_compare_affine_loop(candidate)
         if summary is not None:
@@ -741,12 +838,19 @@ def _is_bdnz(insn: Instruction) -> bool:
     return int(bo) == _BDNZ_BO
 
 
-def _is_bne_cr0_eq(insn: Instruction) -> bool:
-    """True for ``bne`` against CR0 EQ (typical after ``cmpwi rT, 0``)."""
+def _compare_latch_family(insn: Instruction) -> str | None:
+    """Decode a CR0 compare latch family (C1), or ``None``.
+
+    Accepts ``bne (4,2)``, ``beq (12,2)``, ``blt (12,0)``, ``bgt (12,1)``,
+    ``ble (4,1)``, ``bge (4,0)`` with ``AA=0``, including the
+    static-prediction hint bits (BO values 13/15 and 5/7 alongside 12 and 4).
+    """
     if insn.opcode != Opcode.BC or insn.link:
-        return False
-    bo, bi, _target, aa = insn.operands
-    return int(bo) == _BNE_BO and int(bi) == _CR0_EQ_BI and int(aa) == 0
+        return None
+    bo, bi, _target, aa = (int(v) for v in insn.operands)
+    if aa != 0:
+        return None
+    return guard_family(bo, bi)
 
 
 def _parse_affine_body(
@@ -770,28 +874,47 @@ def _parse_affine_body(
 
 def _parse_compare_affine_body(
     body: Sequence[Instruction],
-) -> tuple[tuple[int, list[AffineGprUpdate]] | None, list[str]]:
-    """Parse ``[addi…]; addi rT,rT,-1; cmpwi rT,0`` body (latch excluded)."""
+    family: str,
+) -> tuple[
+    tuple[int, int, list[AffineGprUpdate], int | None, int | None, bool] | None,
+    list[str],
+]:
+    """Parse ``[addi…]; addi/subi rT, ±step; cmp rT, bound`` body (latch excluded).
+
+    Returns ``(counter_reg, step, updates, bound_imm, bound_reg, signed)``.
+    ``step`` is the signed per-iteration delta; ``bound_imm`` XOR
+    ``bound_reg`` carries the compare operand; ``signed`` is True for
+    ``cmpwi``/``cmpw`` and False for ``cmplwi``/``cmplw``.
+    """
+    del family  # the continue relation is carried on the candidate via the latch
     if len(body) < 2:
         return None, ["compare-affine body too short"]
 
     cmp_insn = body[-1]
     dec_insn = body[-2]
-    if cmp_insn.opcode != Opcode.CMPWI:
-        return None, ["compare-affine latch prelude is not cmpwi"]
-    field, cmp_ra, cmp_imm = (int(v) for v in cmp_insn.operands)
-    if field != 0 or cmp_imm != 0:
-        return None, ["compare-affine requires cmpwi cr0, rT, 0"]
+    if cmp_insn.opcode not in (Opcode.CMPWI, Opcode.CMPLWI, Opcode.CMPW, Opcode.CMPLW):
+        return None, ["compare-affine latch prelude is not a compare"]
+    field, cmp_ra, cmp_imm = (int(v) for v in cmp_insn.operands[:3])
+    if field != 0:
+        return None, ["compare-affine requires CR0 compare"]
+    signed = cmp_insn.opcode in (Opcode.CMPWI, Opcode.CMPW)
+    if cmp_insn.opcode in (Opcode.CMPW, Opcode.CMPLW):
+        bound_imm: int | None = None
+        bound_reg: int | None = cmp_imm
+    else:
+        bound_imm = cmp_imm & 0xFFFFFFFF
+        bound_reg = None
 
     if dec_insn.opcode != Opcode.ADDI:
-        return None, ["compare-affine missing addi -1 before cmpwi"]
+        return None, ["compare-affine missing addi/subi before compare"]
     rt, ra, imm = (int(v) for v in dec_insn.operands)
     if rt != ra:
-        return None, ["compare-affine decrement is not addi rT, rT, -1"]
-    if imm != -1 and imm != 0xFFFFFFFF:
-        return None, [f"compare-affine decrement imm {imm} is not -1"]
+        return None, ["compare-affine step is not addi rT, rT, imm"]
+    step = _sign_extend_16(imm)
+    if step == 0:
+        return None, ["compare-affine step is zero"]
     if rt != cmp_ra:
-        return None, ["compare-affine cmpwi register mismatch"]
+        return None, ["compare-affine compare register mismatch"]
     if rt == 0:
         return None, ["compare-affine counter cannot be r0"]
 
@@ -802,30 +925,14 @@ def _parse_compare_affine_body(
     for update in updates:
         if update.reg == rt:
             return None, ["compare-affine body updates the counter register"]
-    return (rt, updates), notes
+    return (rt, step, updates, bound_imm, bound_reg, signed), notes
 
 
-def _concrete_li_trip_count(
-    insn: Instruction,
-    trip_reg: int,
-) -> tuple[int | None, list[str]]:
-    """Recover ``N`` from a single ``addi rT, 0, N`` instruction."""
-    if insn.opcode != Opcode.ADDI:
-        return None, ["counter materialization is not a concrete addi/li"]
-    rt, ra, imm = insn.operands
-    if int(rt) != trip_reg:
-        return None, [f"addi destination r{rt} != counter r{trip_reg}"]
-    if int(ra) != 0:
-        return None, ["counter materialization is not an immediate li-form addi"]
-    return int(imm) & 0xFFFFFFFF, []
+_COMPARE_FAMILIES = frozenset({"bne", "beq", "blt", "bgt", "ble", "bge"})
 
 
-def _concrete_trip_count(
-    instructions: Sequence[Instruction],
-    mtctr_index: int,
-    trip_reg: int,
-) -> tuple[int | None, list[str]]:
-    """Recover ``N`` from ``li``/``addi rT, 0, N`` immediately before ``mtctr``."""
-    if mtctr_index < 1:
-        return None, ["missing CTR materialization before mtctr"]
-    return _concrete_li_trip_count(instructions[mtctr_index - 1], trip_reg)
+def _sign_extend_16(value: int) -> int:
+    word = int(value) & 0xFFFF
+    if word >= 0x8000:
+        return word - 0x10000
+    return word

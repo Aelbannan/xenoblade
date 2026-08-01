@@ -972,7 +972,12 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/bta_sys_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/sys/ptim.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/sys/utl.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_act.c", mw_version="GC/3.0a5.2"),
+            # bta_dm_act.c: retail bte compiled with GC/3.0a5.2 (mwcc_41_60831) —
+            # Wii/1.1 (mwcc_43_151) floats li-before-lis / mr-before-stb scheduling
+            # on cback-dispatch stores (rssi/link_quality/new_link_key soft-cap,
+            # KB ref:51910fc0cc); GC/3.0a5.2 reproduces retail byte-for-byte and
+            # keeps all other functions in the unit at 100%.
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c"),
@@ -995,7 +1000,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_api.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_conn.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/gap/gap_utils.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c", extra_cflags=["-O4,s"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_api.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_conn.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt.c"),

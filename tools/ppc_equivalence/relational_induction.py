@@ -651,11 +651,11 @@ def try_discharge_compare_affine_relational(
     """Build and SMT-discharge a compare-affine relational sketch, or return None."""
     left = [
         item for item in find_compare_affine_loop_candidates(original)
-        if item.confidence == "exact-pattern"
+        if item.confidence in ("exact-pattern", "symbolic-trip")
     ]
     right = [
         item for item in find_compare_affine_loop_candidates(candidate)
-        if item.confidence == "exact-pattern"
+        if item.confidence in ("exact-pattern", "symbolic-trip")
     ]
     if len(left) != 1 or len(right) != 1:
         return None

@@ -521,6 +521,28 @@ def _discharge_ctr_termination(
     )
 
 
+def _countdown_params(
+    candidate: CtrAffineLoopCandidate,
+) -> tuple[int, str, bool, int | None] | None:
+    """``(step, family, signed, bound_reg)`` from the candidate's countdown trip."""
+    from tools.ppc_equivalence.trip_expression import (
+        TripCountdown,
+        trip_expr_from_canonical,
+    )
+
+    if candidate.trip_expr is None:
+        return None
+    expr = trip_expr_from_canonical(candidate.trip_expr)
+    if not isinstance(expr, TripCountdown):
+        return None
+    bound_reg = (
+        candidate.final_compare.right_reg
+        if candidate.final_compare is not None
+        else None
+    )
+    return int(expr.step), expr.family, expr.signed, bound_reg
+
+
 def try_smt_discharge_compare_affine(
     original: CtrAffineLoopCandidate,
     candidate: CtrAffineLoopCandidate,
@@ -530,8 +552,13 @@ def try_smt_discharge_compare_affine(
 ) -> RelationalInductionSketch | RelationalInductionUnsupported:
     """Discharge compare-affine closed-form pairs via five independent UNSAT queries.
 
-    Ranking uses the GPR countdown register (``addi -1`` / ``cmpwi`` / ``bne``),
-    not CTR. CTR is treated as an unmodified equal component.
+    Rewritten for doc 30 Phase C3: the countdown model carries the latch
+    family (``bne``/``beq``/``blt``/``bgt``/``ble``/``bge``), the signed
+    per-iteration ``step``, the compare form's signedness, and the bound
+    (immediate or symbolic register). A fresh symbolic entry counter and
+    symbolic bound are pinned equal across sides; the countdown termination
+    premise (the family-specific zero-entry / divisibility condition) is a
+    premise, never an assumption.
     """
     if not _is_compare_affine_candidate(original) or not _is_compare_affine_candidate(
         candidate,
@@ -551,6 +578,13 @@ def try_smt_discharge_compare_affine(
         return RelationalInductionUnsupported(
             "compare-affine countdown registers differ between sides"
         )
+    left_params = _countdown_params(original)
+    right_params = _countdown_params(candidate)
+    if left_params is None or right_params is None or left_params != right_params:
+        return RelationalInductionUnsupported(
+            "compare-affine countdown shape differs between sides"
+        )
+    step, family, signed, bound_reg = left_params
     if z3_module is None:
         import z3 as z3_module  # type: ignore[no-redef]
 
@@ -559,8 +593,10 @@ def try_smt_discharge_compare_affine(
 
     counter_reg = original.trip_count_reg
     body_regs = sorted({item.reg for item in original.body_updates})
-    # Counter participates in the invariant even when absent from body_updates.
-    shared_regs = sorted(set(body_regs) | {counter_reg})
+    bound_regs = [bound_reg] if bound_reg is not None else []
+    # Counter and bound participate in the invariant even when absent from
+    # body_updates.
+    shared_regs = sorted(set(body_regs) | {counter_reg} | set(bound_regs))
     templates = _narrow_templates_for_compare_pair(
         original, candidate, shared_regs, counter_reg=counter_reg,
     )
@@ -568,17 +604,29 @@ def try_smt_discharge_compare_affine(
     right0 = _fresh_side(z3_module, "R0", shared_regs, cr_fields=(0,))
     inv0 = _invariant(z3_module, left0, right0, shared_regs)
 
-    trip = original.trip_count
-    assert trip is not None and trip >= 1
     entry_premises = list(_equal_side_premises(z3_module, left0, right0, shared_regs))
-    entry_premises.append(
-        left0.gpr[counter_reg] == z3_module.BitVecVal(trip & 0xFFFFFFFF, 32),
-    )
-    entry_premises.append(
-        right0.gpr[counter_reg] == z3_module.BitVecVal(trip & 0xFFFFFFFF, 32),
-    )
     entry_premises.append(left0.valid == z3_module.BoolVal(True))
     entry_premises.append(right0.valid == z3_module.BoolVal(True))
+    # Fresh symbolic entry counter and bound, pinned equal across sides
+    # (doc 30 Phase C3). The termination premise excludes the zero-entry wrap
+    # and the non-terminating families.
+    entry_sym = z3_module.BitVec("cmp.entry", 32)
+    entry_premises.append(left0.gpr[counter_reg] == entry_sym)
+    entry_premises.append(right0.gpr[counter_reg] == entry_sym)
+    if bound_reg is not None:
+        bound_sym = z3_module.BitVec("cmp.bound", 32)
+        entry_premises.append(left0.gpr[bound_reg] == bound_sym)
+        entry_premises.append(right0.gpr[bound_reg] == bound_sym)
+        bound_value = bound_sym
+    else:
+        assert original.final_compare is not None
+        bound_value = z3_module.BitVecVal(
+            int(original.final_compare.right_imm) & 0xFFFFFFFF, 32,
+        )
+    termination_premise = _countdown_termination_z3(
+        z3_module, entry_sym, bound_value, step, family, signed,
+    )
+    entry_premises.append(termination_premise)
 
     initiation = discharge_bad_conditions(
         premises=entry_premises,
@@ -590,9 +638,11 @@ def try_smt_discharge_compare_affine(
 
     left1, left_continue, left_exit, left_step_ok = _compare_affine_step(
         z3_module, left0, original.body_updates, counter_reg=counter_reg,
+        step=step, family=family, signed=signed, bound_value=bound_value,
     )
     right1, right_continue, right_exit, right_step_ok = _compare_affine_step(
         z3_module, right0, candidate.body_updates, counter_reg=counter_reg,
+        step=step, family=family, signed=signed, bound_value=bound_value,
     )
     inv1 = _invariant(z3_module, left1, right1, shared_regs)
     both_continue = z3_module.And(left_continue, right_continue)
@@ -631,7 +681,12 @@ def try_smt_discharge_compare_affine(
         original.body_updates,
         candidate.body_updates,
         counter_reg=counter_reg,
-        trip=trip,
+        step=step,
+        family=family,
+        signed=signed,
+        bound_value=bound_value,
+        entry_sym=entry_sym,
+        termination_premise=termination_premise,
         deadline=deadline,
     )
 
@@ -659,11 +714,11 @@ def try_smt_discharge_compare_affine(
         postcondition, invariants=invariant_payload, z3_module=z3_module,
     )
     term_notes = (
-        "nonzero entry countdown GPR",
-        "one counter decrement per paired step",
+        f"countdown {family} step {step:+d}",
+        "one counter step per paired iteration",
         "no countdown rewrite in affine body",
-        "exit at counter zero",
-        "no 32-bit counter wrap on continue/exit",
+        "exit when the continue relation fails",
+        "termination premise enforced (zero-entry / divisibility)",
         "CTR unmodified (compare-affine)",
     )
     termination_block = termination_block_payload(
@@ -676,7 +731,7 @@ def try_smt_discharge_compare_affine(
     status = "discharged" if bundle.all_unsat() else "failed"
     notes = (
         "compare-affine relational SMT discharge",
-        f"countdown r{counter_reg}",
+        f"countdown r{counter_reg} {family} step {step:+d}",
         f"shared body registers: {body_regs or 'none'}",
     )
     if not bundle.all_unsat():
@@ -752,23 +807,129 @@ def _narrow_templates_for_compare_pair(
     return tuple(templates)
 
 
+def _countdown_trip_z3(
+    z3: Any,
+    counter: Any,
+    bound: Any,
+    step: int,
+    family: str,
+    signed: bool,
+) -> Any:
+    """Symbolic do-while trip for a countdown latch, built directly in z3."""
+    one = z3.BitVecVal(1, 32)
+    zero = z3.BitVecVal(0, 32)
+    s = abs(int(step))
+    s_bv = z3.BitVecVal(s, 32)
+    if step < 0:
+        d = counter - bound
+        negative = counter < bound if signed else z3.BoolVal(False)
+        if family == "bge":
+            return z3.If(negative, one, z3.UDiv(d, s_bv) + one)
+        if family == "bgt":
+            le_zero = counter <= bound if signed else d == zero
+            return z3.If(le_zero, one, z3.UDiv(d - one, s_bv) + one)
+        if family in ("ble", "blt"):
+            return one
+        if family == "bne":
+            return z3.UDiv(d, s_bv)
+        if family == "beq":
+            return z3.If(d == s_bv, z3.BitVecVal(2, 32), one)
+    else:
+        d = bound - counter
+        negative = bound < counter if signed else z3.BoolVal(False)
+        if family == "blt":
+            le_zero = bound <= counter if signed else d == zero
+            return z3.If(le_zero, one, z3.UDiv(d - one, s_bv) + one)
+        if family == "ble":
+            return z3.If(negative, one, z3.UDiv(d, s_bv) + one)
+        if family in ("bgt", "bge"):
+            return one
+        if family == "bne":
+            return z3.UDiv(d, s_bv)
+        if family == "beq":
+            return z3.If(d == s_bv, z3.BitVecVal(2, 32), one)
+    raise ValueError(f"unknown TripCountdown family {family!r}")
+
+
+def _countdown_termination_z3(
+    z3: Any,
+    counter: Any,
+    bound: Any,
+    step: int,
+    family: str,
+    signed: bool,
+) -> Any:
+    """The countdown termination premise (doc 30 Phase C3) in z3.
+
+    Excludes the zero-entry wrap (``bne`` against a zero bound), the
+    non-terminating families (the counter never reaches the exit region), and
+    the ranking-wrap (the counter must not wrap while still continuing, so the
+    unsigned ranking holds on every continued step).
+    """
+    s = abs(int(step))
+    s_bv = z3.BitVecVal(s, 32)
+    one = z3.BitVecVal(1, 32)
+    zero = z3.BitVecVal(0, 32)
+    max_u32 = z3.BitVecVal(0xFFFFFFFF, 32)
+
+    def _ge(a: Any, b: Any) -> Any:
+        return a >= b if signed else z3.UGE(a, b)
+
+    def _gt(a: Any, b: Any) -> Any:
+        return a > b if signed else z3.UGT(a, b)
+
+    def _eq_divisible(a: Any, b: Any) -> Any:
+        return z3.URem(a, b) == zero
+
+    if step < 0:
+        d = counter - bound
+        if family == "ble":
+            family_premise = _gt(d, s_bv)
+        elif family == "blt":
+            family_premise = _ge(d, s_bv)
+        elif family == "bne":
+            family_premise = z3.And(_eq_divisible(d, s_bv), _ge(d, s_bv))
+        else:
+            family_premise = z3.BoolVal(True)
+        # Wrap-freedom: only the continue steps (T-1 of them) need the
+        # unsigned ranking, so (T-1)*step <= entry.
+        trip = _countdown_trip_z3(z3, counter, bound, step, family, signed)
+        return z3.And(family_premise, z3.ULE((trip - one) * s_bv, counter))
+    d = bound - counter
+    if family == "bgt":
+        family_premise = _ge(d, s_bv)
+    elif family == "bge":
+        family_premise = _gt(d, s_bv)
+    elif family == "bne":
+        family_premise = z3.And(_eq_divisible(d, s_bv), _ge(d, s_bv))
+    else:
+        family_premise = z3.BoolVal(True)
+    # Wrap-freedom: only the continue steps (T-1 of them) need the unsigned
+    # ranking, so (T-1)*step <= 0xffffffff - entry (no modulo wrap).
+    trip = _countdown_trip_z3(z3, counter, bound, step, family, signed)
+    return z3.And(family_premise, z3.ULE((trip - one) * s_bv, max_u32 - counter))
+
+
 def _compare_affine_step(
     z3: Any,
     state: _SideSym,
     updates: tuple[AffineGprUpdate, ...],
     *,
     counter_reg: int,
+    step: int,
+    family: str,
+    signed: bool,
+    bound_value: Any,
 ) -> tuple[_SideSym, Any, Any, Any]:
-    """One body + addi -1 / cmpwi / bne step.
+    """One body + ``addi/subi rT, ±step`` / ``cmp rT, bound`` / ``b<family>`` step.
 
-    Continue iff counter' != 0; exit iff counter' == 0. ``step_ok`` rules out
-    wrap from counter==0 (would set counter to 0xffffffff).
+    Continue iff the latch family's relation holds for the stepped counter;
+    exit iff it fails. CR0 is updated from the compare with the compare form's
+    signedness. ``step_ok`` is ``True`` (no CTR-style wrap model for GPR
+    counters; the termination premise covers the zero-entry hazard).
     """
-    zero = z3.BitVecVal(0, 32)
-    one = z3.BitVecVal(1, 32)
     counter = state.gpr[counter_reg]
-    no_wrap = counter != zero
-    counter_next = counter - one
+    counter_next = counter + z3.BitVecVal(int(step) & 0xFFFFFFFF, 32)
     gpr_next = dict(state.gpr)
     for update in updates:
         if update.reg in gpr_next and update.reg != counter_reg:
@@ -776,16 +937,17 @@ def _compare_affine_step(
                 update.addend & 0xFFFFFFFF, 32,
             )
     gpr_next[counter_reg] = counter_next
-    # cmpwi cr0, counter', 0 — EQ set iff counter' == 0.
+    # cmp cr0, counter', bound — CR0 per signedness.
+    if signed:
+        lt = counter_next < bound_value
+        gt = bound_value < counter_next
+    else:
+        lt = z3.ULT(counter_next, bound_value)
+        gt = z3.ULT(bound_value, counter_next)
     cr0_next = z3.If(
-        counter_next == zero,
-        z3.BitVecVal(0x2, 4),  # EQ
-        z3.If(
-            # Signed LT vs 0: MSB set (Track A helper; z3 has no SLT alias).
-            z3.Extract(31, 31, counter_next) == z3.BitVecVal(1, 1),
-            z3.BitVecVal(0x8, 4),  # LT
-            z3.BitVecVal(0x4, 4),  # GT
-        ),
+        lt,
+        z3.BitVecVal(0x8, 4),
+        z3.If(gt, z3.BitVecVal(0x4, 4), z3.BitVecVal(0x2, 4)),
     )
     cr_next = dict(state.cr_fields)
     if 0 in cr_next:
@@ -794,11 +956,22 @@ def _compare_affine_step(
         state,
         gpr=gpr_next,
         cr_fields=cr_next,
-        # CTR unmodified for compare-affine.
     )
-    continue_cond = z3.And(no_wrap, counter_next != zero)
-    exit_cond = z3.And(no_wrap, counter_next == zero)
-    return nxt, continue_cond, exit_cond, no_wrap
+    if family == "bne":
+        continue_cond = counter_next != bound_value
+    elif family == "beq":
+        continue_cond = counter_next == bound_value
+    elif family == "blt":
+        continue_cond = lt
+    elif family == "bgt":
+        continue_cond = gt
+    elif family == "ble":
+        continue_cond = z3.Or(lt, counter_next == bound_value)
+    elif family == "bge":
+        continue_cond = z3.Or(gt, counter_next == bound_value)
+    else:
+        raise ValueError(f"unknown compare latch family {family!r}")
+    return nxt, continue_cond, z3.Not(continue_cond), z3.BoolVal(True)
 
 
 def _discharge_compare_termination(
@@ -809,54 +982,60 @@ def _discharge_compare_termination(
     right_updates: tuple[AffineGprUpdate, ...],
     *,
     counter_reg: int,
-    trip: int,
+    step: int,
+    family: str,
+    signed: bool,
+    bound_value: Any,
+    entry_sym: Any,
+    termination_premise: Any,
     deadline: Deadline,
 ) -> UnsatDischarge:
-    """Termination via countdown-GPR ranking (not CTR)."""
+    """Termination via countdown-GPR ranking (not CTR), general step/family."""
     zero = z3.BitVecVal(0, 32)
-    one = z3.BitVecVal(1, 32)
-    trip_val = z3.BitVecVal(trip & 0xFFFFFFFF, 32)
 
     left1, left_continue, left_exit, left_ok = _compare_affine_step(
         z3, left, left_updates, counter_reg=counter_reg,
+        step=step, family=family, signed=signed, bound_value=bound_value,
     )
     right1, right_continue, right_exit, right_ok = _compare_affine_step(
         z3, right, right_updates, counter_reg=counter_reg,
+        step=step, family=family, signed=signed, bound_value=bound_value,
     )
 
+    def _ranks(next_value: Any, prev_value: Any) -> Any:
+        if step < 0:
+            return z3.ULT(next_value, prev_value)
+        return z3.UGT(next_value, prev_value)
+
     premises = [
-        left.gpr[counter_reg] == trip_val,
-        right.gpr[counter_reg] == trip_val,
+        left.gpr[counter_reg] == entry_sym,
+        right.gpr[counter_reg] == entry_sym,
         left.ctr == right.ctr,  # CTR equal and unmodified across the step
         left1.ctr == left.ctr,
         right1.ctr == right.ctr,
         left_ok,
         right_ok,
-        left1.gpr[counter_reg] == left.gpr[counter_reg] - one,
-        right1.gpr[counter_reg] == right.gpr[counter_reg] - one,
+        left1.gpr[counter_reg] == left.gpr[counter_reg] + z3.BitVecVal(
+            int(step) & 0xFFFFFFFF, 32,
+        ),
+        right1.gpr[counter_reg] == right.gpr[counter_reg] + z3.BitVecVal(
+            int(step) & 0xFFFFFFFF, 32,
+        ),
+        termination_premise,
     ]
 
     bad = [
-        left.gpr[counter_reg] == zero,
-        right.gpr[counter_reg] == zero,
-        z3.And(
-            left_continue,
-            z3.Not(z3.ULT(left1.gpr[counter_reg], left.gpr[counter_reg])),
-        ),
-        z3.And(
-            right_continue,
-            z3.Not(z3.ULT(right1.gpr[counter_reg], right.gpr[counter_reg])),
-        ),
-        z3.And(left_exit, left1.gpr[counter_reg] != zero),
-        z3.And(right_exit, right1.gpr[counter_reg] != zero),
-        z3.And(
-            left.gpr[counter_reg] == zero,
-            z3.Or(left_continue, left_exit),
-        ),
-        z3.And(
-            right.gpr[counter_reg] == zero,
-            z3.Or(right_continue, right_exit),
-        ),
+        # ranking: a continued step must move the counter monotonically; the
+        # termination premise excludes the wrap (zero-entry / non-terminating
+        # families / ranking-wrap), so a violated ranking here is a real bug.
+        z3.And(left_continue, z3.Not(_ranks(left1.gpr[counter_reg], left.gpr[counter_reg]))),
+        z3.And(right_continue, z3.Not(_ranks(right1.gpr[counter_reg], right.gpr[counter_reg]))),
+        # exit while the continue relation still holds
+        z3.And(left_exit, left_continue),
+        z3.And(right_exit, right_continue),
+        # step_ok must hold
+        z3.Not(left_ok),
+        z3.Not(right_ok),
     ]
     return discharge_bad_conditions(
         premises=premises,

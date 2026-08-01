@@ -5060,7 +5060,53 @@ def _execute_cfg_body(
             # violation path is kept force=True until the full solver context
             # can prove it unreachable — never pruned by local simplification.
             entry_guard: Any | None = None
-            if (
+            if summary.proof_kind == "compare-affine-closed-form":
+                # Compare-counted loops do not load CTR. The summary's trip is
+                # the do-while TripCountdown evaluated from the header counter,
+                # so the entry premise pins the counter to the recognized entry
+                # value (``TripConstant`` for a concrete materialization, an
+                # identity for a symbolic one) and requires the countdown
+                # termination premise (the non-terminating families stay
+                # fail-closed; doc 30 Phase C2/C3).
+                counter_reg = (
+                    summary.final_compare.left_reg
+                    if summary.final_compare is not None
+                    else None
+                )
+                if counter_reg is None:
+                    entry_guard = None
+                elif summary.trip_expr is not None:
+                    from tools.ppc_equivalence.trip_expression import (
+                        TripCountdown,
+                        countdown_termination_premise,
+                    )
+
+                    countdown = trip_expr_from_canonical(summary.trip_expr)
+                    premise_parts: list[Any] = []
+                    if isinstance(countdown, TripCountdown):
+                        entry_value = evaluate_symbolic(
+                            countdown.entry, current.gpr, ops,
+                        )
+                        premise_parts.append(
+                            ops.eq(current.gpr[counter_reg], entry_value),
+                        )
+                        term = countdown_termination_premise(
+                            countdown, current.gpr, ops,
+                        )
+                        if term is not None:
+                            premise_parts.append(term)
+                    if not premise_parts:
+                        entry_guard = None
+                    elif len(premise_parts) == 1:
+                        entry_guard = premise_parts[0]
+                    else:
+                        entry_guard = ops.land(*premise_parts)
+                elif summary.trip_count is not None:
+                    entry_guard = ops.eq(
+                        current.gpr[counter_reg],
+                        ops.const(int(summary.trip_count) & 0xFFFFFFFF),
+                    )
+            elif (
                 summary.trip_count is None
                 and summary.trip_expr is not None
             ):
@@ -5089,20 +5135,10 @@ def _execute_cfg_body(
                         ops.lnot(ops.eq(trip_value, ops.const(0))),
                     )
             else:
-                if summary.proof_kind == "compare-affine-closed-form":
-                    # Compare-counted loops do not load CTR; the premise pins
-                    # the countdown register (the FinalCompare left operand) to
-                    # the recognized trip.
-                    if summary.final_compare is not None:
-                        entry_guard = ops.eq(
-                            current.gpr[summary.final_compare.left_reg],
-                            ops.const(int(summary.trip_count) & 0xFFFFFFFF),
-                        )
-                else:
-                    entry_guard = ops.eq(
-                        current.ctr,
-                        ops.const(int(summary.trip_count) & 0xFFFFFFFF),
-                    )
+                entry_guard = ops.eq(
+                    current.ctr,
+                    ops.const(int(summary.trip_count) & 0xFFFFFFFF),
+                )
             if entry_guard is not None:
                 record_terminal(
                     ops.land(condition, ops.lnot(entry_guard)),

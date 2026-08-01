@@ -212,11 +212,11 @@ typedef struct WPADCB {
     s32 configIndex;              // at 0x8E0
     OSThreadQueue threadQueue;    // at 0x8E4
     s64 lastControllerDataUpdate; // at 0x8F0
-    u16 filterDiffDpd;            // at 0x8F8
-    u16 filterSameDpd;            // at 0x8FA
-    u16 filterDiffAcc;            // at 0x8FC
+    u16 filterDiffAcc;            // at 0x8F8
+    u16 filterUnk;                // at 0x8FA
+    u16 filterDiffDpd;            // at 0x8FC (shared by DPD and EXT filters)
     u16 filterSameAcc;            // at 0x8FE
-    u16 filterDiffExt;            // at 0x900
+    u16 filterSameDpd;            // at 0x900
     u16 filterSameExt;            // at 0x902
     s64 lastReportSendTime;       // at 0x908
     u8 UNK_0x910;
@@ -237,7 +237,14 @@ typedef struct WPADCB {
     u8 lastReportID;        // at 0x987
     WPADCallback getInfoCB; // at 0x988
     u8 getInfoBusy;         // at 0x98C
-    u8 UNK_0x98F[0x9A0 - 0x990];
+    u8 UNK_0x98D;           // at 0x98D
+    u8 UNK_0x98E;           // at 0x98E
+    u8 UNK_0x98F;           // at 0x98F
+    u8 UNK_0x990;           // at 0x990
+    u8 UNK_0x991;           // at 0x991
+    u16 UNK_0x992;          // at 0x992
+    u8 dpdBusy;             // at 0x994
+    u8 UNK_0x995[0x9A0 - 0x995]; // at 0x995
 } WPADCB;
 
 extern WPADCB _wpd[WPAD_MAX_CONTROLLERS];

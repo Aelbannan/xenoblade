@@ -1389,32 +1389,30 @@ void sfmpv_NextTc(void* in, void* out) {
     s32 t4 = *(s32*)((u8*)in + 0x10);
     s32 t5 = *(s32*)((u8*)in + 0x14);
     s32 t6 = *(s32*)((u8*)in + 0x18);
-    s32 t7 = *(s32*)((u8*)in + 0x1c);
+    s32 t8 = (s32)*(s16*)((u8*)in + 0x1e);
+    s32 t7 = (s32)*(s16*)((u8*)in + 0x1c);
     s32 rate = lbl_eu_8051C97C[t0];
-    s32 a;
-    s32 d;
-    s32 e;
-    s32 f;
-    s32 s;
-    a = t4 + t5 + 1;
-    s = (t7 + t5) & 1;
-    d = a / rate;
-    e = t2 + d;
-    f = t3 + e;
-    e = e / 60;
-    f = f / 60;
-    t1 = t1 + e;
-    t2 = t2 + f;
-    t3 = d - d / rate * rate;
-    if (t1 == 0 && t2 != 0 && t2 % 10 == 0 && t3 <= 1) {
+    s32 sum = t7 + t8;
+    s32 sign = sum >> 31;
+    s32 a = t5 + t6 + 1 + ((sum + sign) >> 1);
+    s32 d = a / rate;
+    s32 e = t4 + d;
+    s32 f = t3 + e / 60;
+    s32 q2 = f / 60;
+    s32 s = ((sum & 1) ^ sign) - sign;
+    t2 = t2 + q2;
+    t3 = a - d * rate;
+    e = e - (e / 60) * 60;
+    f = f - q2 * 60;
+    if (t1 == 0 && e == 0 && f % 10 == 0 && (u32)t3 <= 1) {
         t3 = 2;
     }
-    *(s32*)((u8*)out + 0) = t0;
-    *(s32*)((u8*)out + 4) = t1;
-    *(s32*)((u8*)out + 8) = t2;
-    *(s32*)((u8*)out + 0xc) = t3;
-    *(s32*)((u8*)out + 0x10) = t4;
-    *(s32*)((u8*)out + 0x14) = t5;
+    *(s32*)((u8*)out + 0x00) = t0;
+    *(s32*)((u8*)out + 0x04) = t1;
+    *(s32*)((u8*)out + 0x08) = t2;
+    *(s32*)((u8*)out + 0x0c) = t3;
+    *(s32*)((u8*)out + 0x10) = e;
+    *(s32*)((u8*)out + 0x14) = f;
     *(s16*)((u8*)out + 0x1e) = (s16)s;
 }
 
@@ -2404,13 +2402,7 @@ void sfmpv_SetFrmInf(void* self, void* frm, void* info) {
     } else {
         *(u32*)((u8*)info + 0x48) = 1;
     }
-    {
-        u32 v1 = *(u32*)((u8*)frm + 0xe8);
-        u32 v2 = *(u32*)((u8*)frm + 0xec);
-        *(u32*)((u8*)info + 0x50) = v1;
-        *(u32*)((u8*)info + 0x54) = v2;
-    }
-    *(u32*)((u8*)info + 0x58) = *(u32*)((u8*)frm + 0xa0);
+    *(u64*)((u8*)info + 0x50) = *(u64*)((u8*)frm + 0xe8);    *(u32*)((u8*)info + 0x58) = *(u32*)((u8*)frm + 0xa0);
     *(u32*)((u8*)info + 0x5c) = *(u32*)((u8*)frm + 0xa4);
     *(u32*)((u8*)info + 0x60) = *(u32*)((u8*)frm + 0xb0);
     *(u32*)((u8*)info + 0x64) = *(u32*)((u8*)frm + 0xb4);

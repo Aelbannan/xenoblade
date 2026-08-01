@@ -985,15 +985,15 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_api.c", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/hh/bta_hh_utils.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_acl.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_dev.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_devctl.c", mw_version = "GC/3.0a5.2"),  # retail bte built with GC 3.0a-family; Wii/1.1 merges struct copies into lwz (see MWCC_REFERENCE)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_discovery.c", extra_cflags=["-func_align 4"]),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_inq.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family, -func_align 4 and no IPA: -ipa file / -func_align 16 insert scheduling NOPs before mtctr-counted loops (see MWCC_REFERENCE)
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/btm/btm_main.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_pm.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sco.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", extra_cflags=["-func_align 4"]),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btm/btm_sec.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); Wii/1.1 merges byte-copies into lwz and schedules li/stb differently
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_hcif.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/btu/btu_init.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/wbt/wbt_ext.c"),

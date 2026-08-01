@@ -155,6 +155,38 @@ function was dead-stripped but the pooled literals survived) between the
 by 0x78; equivalence there is additionally blocked until `LogMsg` (us-802e0830,
 bte_logmsg) is accepted.
 
+### btm_devctl.c — 10× FULL_MATCH on GC/3.0a5.2 (`btm_db_reset`, `BTM_SetAfhChannels`,
+`btm_reset_complete`, `btm_read_hci_buf_size_complete`, `btm_read_local_version_complete`,
+`BTM_SetLocalDeviceName`, `BTM_VendorSpecificCommand`, `BTM_ReadStoredLinkKey`,
+`BTM_WriteStoredLinkKey`, `BTM_DeleteStoredLinkKey`)
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Retail `b .L_else` then an **unreachable** block (`stb`/`bl timer`/`bl reset`) after `state`/`rst_retry` stores, in every `*_complete` init handler | MWCC GC/3.0a store-to-load forwards `btm_cb.rst_retry = BTM_DEV_RESET_RETRY_NUM - 1` (constant 4), folds `if (btm_cb.rst_retry == 0)` to FALSE, emits `b .L_else` — but **still emits the dead then-body** with stale/leftover registers | Write the source literally as `if (btm_cb.rst_retry == 0) { dead-retry-body } else { live-continue }`. The dead body's constant stores reuse whatever register held the constant in the live path (e.g. `r0` for 4, `r4` for 0), reproducing retail byte-for-byte |
+| Pooled-string SDA21 relocs (`li r5, lbl_8066592C@sda21`) come out as `lis`/`addi` (absolute) | `extern const char lbl_X[];` — an **incomplete** array type — is not sdata-eligible, so MWCC uses lis/addi; the retail pooled `"TRUE"/"FALSE"` literals into sdata2 | Declare fixed-size externs: `extern const char lbl_8066592C[5]; extern const char lbl_80665934[6];` → MWCC emits `li rN, lbl@sda21` with the **retail symbol name** (no drift) |
+| `LogMsg_1(mask, fmt, (read_all) ? "TRUE" : "FALSE")` errors `(10209) illegal implicit conversion from 'const char *' to 'unsigned long'` | btm_api.h/bt_trace.h declares p1 as `UINT32`, but the retail callers pass string **pointers** (sda21, no cast — see the `li r5, @sda21` immediates) | Declare the local extern as `LogMsg_1(UINT32, const char *, const char *)` and cast numeric callers `(const char *)timeout` / `(const char *)num_keys` (same register codegen; verified no regression on `BTM_WritePageTimeout`) |
+| `(UINT16)(p[1] \| (p[2] << 8))` emits `rlwimi` byte-merge; retail has `slwi r0,r0,8; add r0,r4,r0` | The `\|` form lets MWCC merge bytes with rlwimi; the ancient `STREAM_TO_UINT16` macro uses **addition** | Write `0 + ((UINT16)(*(p+1)) << 0) + ((UINT16)(*(p+2)) << 8)` (the exact macro shape, as in the matched `btm_read_stored_link_key_complete`) |
+| NULL-check branch inverted vs retail (`bc 4,2` vs retail `bc 12,2`, NO_RESOURCES block placed at the function end) | `if ((p = alloc()) == NULL) return X; <block>; return Y;` lays the early return inline and the block after a `bne`; retail keeps the multi-statement block inline and the single `return X` at the end | Write `p = alloc(); if (p != NULL) { <block>; return Y; } return X;`. For single-return bodies use `if (!ret) return X; return Y;` (final return goes to the end) |
+| `cmpwi r3,0` vs retail `clrlwi. r0,r3,24; bne` after `bl btsnd_hcic_*` | The hcic senders return `BOOLEAN` (UINT8); declaring them `int` makes MWCC compare the full word | Declare `btsnd_hcic_set_afh_channels` / `btsnd_hcic_delete_stored_key` as returning `UINT8` (the `clrlwi.` folds the zero-extend into the test) |
+| Name/class section registers swapped (`p_name` r31↔r30, `p_buf` r30↔r31) in `btm_reset_complete` | Reusing one `p_buf` local for the dev-class and name-section `GKI_getpoolbuf` results unifies their live ranges, so Chaitin colours `p_buf` into the first callee-saved register and `p_name` into the second | Use a **separate local** (`p_buf2`) for the name section's pool buffer — the retail's two getpoolbuf results never share a callee-saved register |
+| `BTM_SetDeviceClass(btm_cb.dev_class)` / `BTM_SetLocalDeviceName(btm_cb.bd_name)` calls in `btm_reset_complete` do NOT reproduce the retail inlined bodies (dev-class check becomes one `cmpli` instead of the retail's `cmpwi 0; beq; cmplwi 1; beq` pair) | The retail's inline copy was written with `state != WAIT_RESET && state != WAIT_AFTER_RESET` (two tests); inlining the standalone function (which uses `state <= 1`) keeps the single-compare shape | Keep the dev-class/name logic **written out inline** with the two-test condition and the self-copy `memcpy(btm_cb.dev_class, btm_cb.dev_class, 3)`; do not rely on MWCC inlining for shape |
+
+Retail `btm_cb` layout facts for btm_devctl.s: `bd_name` (local name, 0x20 bytes) at
+**offset 0x0** (so `&btm_cb == btm_cb.cfg.bd_name`), `pin_type` 0x20 / `pin_code_len`
+0x21 / `pin_code` 0x22 (0x10 bytes), `p_dev_status_cb` 0x568, `p_vend_spec_cb` 0x56C,
+`p_stored_link_key_cmpl_cb` 0x570, reset timer 0x574, `p_reset_cmpl_cb` 0x58C,
+local-name timer 0x590, `p_local_name_cmpl_cb` 0x5A8, `p_vsc_callback` 0x61C,
+`p_send_hci_reset_cmpl_cb` 0x620, `local_addr` 0x630, `local_version` 0x636
+(matches `tBTM_VERSION_INFO`: u8 hci_version, u16 hci_revision, u8 lmp_version,
+u16 manufacturer, u16 lmp_subversion), `local_features` 0x640, `dev_class` 0x648,
+`page_timeout` 0x64C, `state` 0x64E, `rst_retry` 0x64F, `rsp_pending` 0x650,
+inq/page scan vars 0x169C–0x16A6, `afh_first`/`afh_last` 0x27BD/0x27BE,
+`trace_level` 0x27C0. Device state enum in this build: 0 WAIT_RESET,
+1 WAIT_AFTER_RESET (checked but never set), 2 WAIT_BUF_SIZE, 3 WAIT_LOCAL_VER,
+4 WAIT_FEATURES, 5 READY (`BTM_IsDeviceUp` tests `== 5`). `btu_cb` has
+`hcit_acl_data_size` 0x7C / `hcit_acl_pkt_size` 0x7E (flat layout; the btu.h
+`tBTU_CB` does not match).
+
 
 ## kyoshin/main (US) — early init + contiguous .data base
 

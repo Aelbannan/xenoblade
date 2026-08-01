@@ -4542,6 +4542,30 @@ unit). Patterns:
 - The two functions are byte-identical with 0 structural mismatches; unit .text
   0x9D4 vs 0xD80 split budget.
 
+### 8. hidh_api.c — `-ipa off` reverses TU function/pool emission; use `-ipa file` (forward pool)
+
+`HID_HostGetSDPRecord` (0xC8), `HID_HostRemoveDev` (0xC8) and `HID_HostSetSecurityLevel`
+(0x228) are 100% FULL_MATCH under `GC/3.0a5.2 + -func_align 4` **without** `-ipa off`.
+With `-ipa off`, MWCC emits this TU's functions in REVERSE source order (SetSecurityLevel
+first, GetSDPRecord last), so the pooled string base (`r31` = first pool string) lands on
+`HID_HostSetSecurityLevel`'s "Security Registration 1 failed" and every pooled-string
+immediate in WriteDev/SetSecurityLevel shifts by 0x54 (reg-swap-classified, not structural).
+Dropping `-ipa off` (default `-ipa file`) reproduces the retail forward function order
+and pool exactly — same fix as l2c_api.c. Verified 0 regressions on all 10 matched unit
+functions (incl. the mtctr-loop `AddDev`: the `ori r0,r0,0` nop only returns with
+`-func_align 16`, not with `-func_align 4` + `-ipa file`).
+
+### 9. hidh_api.c — RemoveDev register-allocation shape (5 saved regs, `_savegpr_27`)
+
+`HID_HostRemoveDev` matches retail's `r27=dev_handle, r28=dev_handle*0x34, r29=p_dev,
+r30=hh_cb, r31=1` + `_savegpr_27` only when the guard body is written via
+`hh_cb.devices[dev_handle]` (CloseDev-style: the repeated address creates an
+address-expression live across the calls, forcing `hh_cb` base into callee-saved r30 and
+the index into r28), while the first cleanup store stays `p_dev->in_use = 0` (r29) and
+the other three reload `hh_cb` (`lis/addi; add r4, r3, r28`). Writing the whole guard
+body via `p_dev` leaves `hh_cb` base in a volatile r4 (4 saved regs, individual stw
+prologue) — 49 structural mismatches, same bytes otherwise.
+
 ## RVL_SDK bte/hci/uusb_ppc.c (Wii/1.1 `-O4,p`, mwcc_43_151) — u16-local vs inlined-call reg-alloc + guard goto-chain (US, FULL_MATCH)
 
 `UUSB_Open` / `uusb_ReadBulkDataCB` (libs/RVL_SDK/src/revolution/bte/hci/uusb_ppc.c):

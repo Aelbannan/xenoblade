@@ -4,11 +4,20 @@
 /* bt_target.h defaults to 7; retail binary uses 16 */
 #define HID_HOST_MAX_DEVICES 16
 
+/* Security service registration (hiddefs.h / btm_api.h) */
+#define HID_SERVICE_ID      0x20
+#define BTM_SEC_PROTO_HID   6
+
 #include <harness_catalog.h>
 #include <revolution/bte/gki/common/gki.h>
 #include <revolution/bte/stack/include/btu.h>
 #include <revolution/bte/stack/include/sdp_api.h>
 #include <revolution/bte/include/bt_trace.h>
+
+extern BOOLEAN BTM_SetSecurityLevel (BOOLEAN is_originator, char *p_name,
+                                     UINT8 service_id, UINT16 sec_level,
+                                     UINT16 psm, UINT32 mx_proto_id,
+                                     UINT32 mx_chan_id);
 
 enum {
     HID_SUCCESS,
@@ -97,7 +106,33 @@ typedef struct {
 
 tHID_HOST_CTB hh_cb;
 
-void HID_HostGetSDPRecord() {}
+void hidh_search_callback(u16 result, void *p_data);
+
+tHID_STATUS HID_HostGetSDPRecord (BD_ADDR addr, tSDP_DISCOVERY_DB *p_db,
+                                  UINT32 len, tHID_SDP_CBACK *p_cback)
+{
+    tSDP_UUID uuid;
+
+    if (hh_cb.sdp_busy) {
+        return (HID_ERR_SDP_BUSY);
+    }
+
+    hh_cb.sdp_db = p_db;
+
+    uuid.len = LEN_UUID_16;
+    uuid.uu.uuid16 = 0x1124;
+
+    SDP_InitDiscoveryDb(p_db, len, 1, &uuid, 0, NULL);
+
+    if (SDP_ServiceSearchRequest(addr, p_db,
+                                 (tSDP_DISC_CMPL_CB *)hidh_search_callback)) {
+        hh_cb.sdp_cback = p_cback;
+        hh_cb.sdp_busy = TRUE;
+        return (HID_SUCCESS);
+    } else {
+        return (HID_ERR_NO_RESOURCES);
+    }
+}
 
 /* SDP service-search completion callback (registered via
    SDP_ServiceSearchRequest). Scans the discovery database for the HID
@@ -348,7 +383,39 @@ tHID_STATUS HID_HostAddDev(BD_ADDR addr, UINT16 attr_mask, UINT8 *handle)
     return HID_SUCCESS;
 }
 
-void HID_HostRemoveDev() {}
+tHID_STATUS HID_HostRemoveDev (UINT8 dev_handle)
+{
+    tHID_HOST_DEV_CTB *p_dev;
+
+    if (!hh_cb.reg_flag) {
+        return (HID_ERR_NOT_REGISTERED);
+    }
+
+    if ((dev_handle > HID_HOST_MAX_DEVICES) ||
+        (!hh_cb.devices[dev_handle].in_use)) {
+        return (HID_ERR_INVALID_PARAM);
+    }
+
+    p_dev = &hh_cb.devices[dev_handle];
+
+    if (hh_cb.reg_flag && (dev_handle <= HID_HOST_MAX_DEVICES) &&
+        hh_cb.devices[dev_handle].in_use) {
+        hh_cb.devices[dev_handle].conn_tries = 1;
+        btu_stop_timer(&hh_cb.devices[dev_handle].timer_entry);
+
+        if (hh_cb.devices[dev_handle].state == HID_DEV_CONNECTED) {
+            hh_cb.devices[dev_handle].conn_tries = 1;
+            hidh_conn_disconnect(dev_handle);
+        }
+    }
+
+    p_dev->in_use = 0;
+    hh_cb.devices[dev_handle].conn_state = 0;
+    hh_cb.devices[dev_handle].intr_cid = 0;
+    hh_cb.devices[dev_handle].ctrl_cid = 0;
+
+    return (HID_SUCCESS);
+}
 
 tHID_STATUS HID_HostOpenDev(u8 dev_handle)
 {
@@ -414,4 +481,43 @@ tHID_STATUS HID_HostCloseDev(u8 dev_handle)
     return hidh_conn_disconnect(dev_handle);
 }
 
-void HID_HostSetSecurityLevel() {}
+tHID_STATUS HID_HostSetSecurityLevel (char *p_name, UINT8 sec_lvl)
+{
+    if (!BTM_SetSecurityLevel(FALSE, p_name, HID_SERVICE_ID, sec_lvl,
+                              HID_PSM_CONTROL, BTM_SEC_PROTO_HID, 1)) {
+        HIDH_TRACE_ERROR0("Security Registration 1 failed");
+        return (HID_ERR_NO_RESOURCES);
+    }
+
+    if (!BTM_SetSecurityLevel(TRUE, p_name, HID_SERVICE_ID, sec_lvl,
+                              HID_PSM_CONTROL, BTM_SEC_PROTO_HID, 1)) {
+        HIDH_TRACE_ERROR0("Security Registration 2 failed");
+        return (HID_ERR_NO_RESOURCES);
+    }
+
+    if (!BTM_SetSecurityLevel(FALSE, p_name, HID_SERVICE_ID + 1, 0,
+                              HID_PSM_CONTROL, BTM_SEC_PROTO_HID, 2)) {
+        HIDH_TRACE_ERROR0("Security Registration 3 failed");
+        return (HID_ERR_NO_RESOURCES);
+    }
+
+    if (!BTM_SetSecurityLevel(TRUE, p_name, HID_SERVICE_ID + 1, 0,
+                              HID_PSM_CONTROL, BTM_SEC_PROTO_HID, 2)) {
+        HIDH_TRACE_ERROR0("Security Registration 4 failed");
+        return (HID_ERR_NO_RESOURCES);
+    }
+
+    if (!BTM_SetSecurityLevel(TRUE, p_name, HID_SERVICE_ID + 2, 0,
+                              HID_PSM_INTERRUPT, BTM_SEC_PROTO_HID, 0)) {
+        HIDH_TRACE_ERROR0("Security Registration 5 failed");
+        return (HID_ERR_NO_RESOURCES);
+    }
+
+    if (!BTM_SetSecurityLevel(FALSE, p_name, HID_SERVICE_ID + 2, 0,
+                              HID_PSM_INTERRUPT, BTM_SEC_PROTO_HID, 0)) {
+        HIDH_TRACE_ERROR0("Security Registration 6 failed");
+        return (HID_ERR_NO_RESOURCES);
+    }
+
+    return (HID_SUCCESS);
+}

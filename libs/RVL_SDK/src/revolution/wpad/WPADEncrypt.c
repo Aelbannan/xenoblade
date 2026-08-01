@@ -3,6 +3,7 @@
 
 #include <revolution/WPAD.h>
 #include <revolution/OS.h>
+#include <revolution/wpad/debug_msg.h>
 #include <string.h>
 
 extern WPADCB* __rvl_p_wpadcb[];
@@ -418,127 +419,224 @@ u8 tb3[2304] = {
     0xCC, 0x6C, 0xCA, 0xEB, 0x7F, 0x68, 0x07, 0xAE, 0x5E, 0x57, 0x08, 0xE7,
 };
 
-// byte rotate-right of low 8 bits by s
-#define R8(x, s) ((((s32)(x) >> (s)) | ((s32)(x) << (8 - (s)))) & 0xFF)
-// table lookup: TB[row*256 + (x & 0xFF)]
-#define TLOOK(TB, row, x) ((TB)[(row) * 256 + ((x) & 0xFF)])
+// --- LCG byte generator over the SEED/NUM_* state (inline) ---
+static u8 random() {
+    SEED = (u8)(((u32)SEED * NUM_A + NUM_B) % NUM_C);
+    return SEED;
+}
 
-#define WPAD_CREATE_KEY_BODY(BASE, TB)                                          \
-    WPADCB* cb = __rvl_p_wpadcb[chan];                                          \
-    u8 buf[10];                                                                 \
-    u32 tick;                                                                   \
-    u32 seed;                                                                   \
-    BOOL enabled;                                                               \
-    int m7, baseOff, row1, row2;                                                \
-    int i;                                                                      \
-    int t0, t1, t2, t3, t4, t5, t6, t7, t8, t9;                                 \
-    int B0, B1, B2, B3, B4, B5;                                                 \
-    int A, C, D, E, F, G;                                                       \
-    int k10, k11, k12, k13, k14, k15;                                           \
-    u8 addTbl[8];                                                               \
-    u8 xorTbl[8];                                                               \
-                                                                                \
-    SEED = (u8)(OSGetTick() >> 8);                                              \
-    NUM_A = (u8)((OSGetTick() >> 16) & 0x3F);                                   \
-    tick = OSGetTick();                                                         \
-    NUM_B = (u8)((tick >> 24) & 0x4C);                                          \
-    NUM_C = 0xFF;                                                               \
-                                                                                \
-    seed = ((u32)NUM_B + (u32)SEED * (u32)NUM_A) % 255;                         \
-    m7 = (int)seed % 7;                                                         \
-    baseOff = m7 * 6;                                                           \
-                                                                                \
-    for (i = 0; i < 10; i++) {                                                  \
-        seed = ((u32)NUM_B + seed * (u32)NUM_A) % 255;                          \
-        buf[i] = (TB)[seed];                                                    \
-    }                                                                           \
-    SEED = (u8)seed;                                                            \
-                                                                                \
-    DEBUGPrint("ans : %d %d %d %d %d %d\n",                                     \
-               (BASE)[baseOff + 0], (BASE)[baseOff + 1], (BASE)[baseOff + 2],   \
-               (BASE)[baseOff + 3], (BASE)[baseOff + 4], (BASE)[baseOff + 5]);  \
-    DEBUGPrint("rand: %d %d %d %d %d %d %d %d %d %d\n",                         \
-               buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6],          \
-               buf[7], buf[8], buf[9]);                                         \
-    DEBUGPrint("t0  : %d %d %d %d %d %d %d %d %d %d\n",                         \
-               (TB)[buf[0]], (TB)[buf[1]], (TB)[buf[2]], (TB)[buf[3]],          \
-               (TB)[buf[4]], (TB)[buf[5]], (TB)[buf[6]], (TB)[buf[7]],          \
-               (TB)[buf[8]], (TB)[buf[9]]);                                     \
-                                                                                \
-    enabled = OSDisableInterrupts();                                            \
-                                                                                \
-    t0 = (TB)[buf[0]]; t1 = (TB)[buf[1]]; t2 = (TB)[buf[2]];                    \
-    t3 = (TB)[buf[3]]; t4 = (TB)[buf[4]]; t5 = (TB)[buf[5]];                    \
-    t6 = (TB)[buf[6]]; t7 = (TB)[buf[7]]; t8 = (TB)[buf[8]];                    \
-    t9 = (TB)[buf[9]];                                                          \
-    B0 = (BASE)[baseOff + 0]; B1 = (BASE)[baseOff + 1]; B2 = (BASE)[baseOff + 2];\
-    B3 = (BASE)[baseOff + 3]; B4 = (BASE)[baseOff + 4]; B5 = (BASE)[baseOff + 5];\
-                                                                                \
-    A = R8(B0 ^ t5, t2 % 8);                                                    \
-    C = R8(B1 ^ t1, t0 % 8);                                                    \
-    D = R8(B2 ^ t6, t8 % 8);                                                    \
-    E = R8(B3 ^ t4, t7 % 8);                                                    \
-    F = R8(B4 ^ t1, t6 % 8);                                                    \
-    G = R8(B5 ^ t7, t8 % 8);                                                    \
-                                                                                \
-    k10 = (t9 ^ (G - t5)) & 0xFF;                                               \
-    k11 = (t4 ^ (F - t3)) & 0xFF;                                               \
-    k12 = (t2 ^ (E - t3)) & 0xFF;                                               \
-    k13 = (t0 ^ (D - t2)) & 0xFF;                                               \
-    k14 = (t7 ^ (C - t5)) & 0xFF;                                               \
-    k15 = (t4 ^ (A - t9)) & 0xFF;                                               \
-                                                                                \
-    DEBUGPrint("key : %d %d %d %d %d %d \n", k15, k14, k13, k12, k11, k10);     \
-                                                                                \
-    row1 = m7 + 1;                                                              \
-    row2 = m7 + 2;                                                              \
-                                                                                \
-    addTbl[0] = TLOOK(TB, row1, k11) ^ TLOOK(TB, row2, buf[3]);                 \
-    addTbl[1] = TLOOK(TB, row1, k13) ^ TLOOK(TB, row2, buf[5]);                 \
-    addTbl[2] = TLOOK(TB, row1, k10) ^ TLOOK(TB, row2, buf[7]);                 \
-    addTbl[3] = TLOOK(TB, row1, k15) ^ TLOOK(TB, row2, buf[2]);                 \
-    addTbl[4] = TLOOK(TB, row2, buf[2]) ^ TLOOK(TB, row2, buf[4]);              \
-    addTbl[5] = TLOOK(TB, row1, k12) ^ TLOOK(TB, row2, buf[9]);                 \
-    addTbl[6] = TLOOK(TB, row1, buf[0]) ^ TLOOK(TB, row2, buf[6]);              \
-    addTbl[7] = TLOOK(TB, row1, buf[1]) ^ TLOOK(TB, row2, buf[8]);              \
-                                                                                \
-    xorTbl[0] = TLOOK(TB, row1, k15) ^ TLOOK(TB, row2, buf[1]);                 \
-    xorTbl[1] = TLOOK(TB, row1, k10) ^ TLOOK(TB, row2, buf[4]);                 \
-    xorTbl[2] = TLOOK(TB, row1, k12) ^ TLOOK(TB, row2, buf[0]);                 \
-    xorTbl[3] = TLOOK(TB, row1, k13) ^ TLOOK(TB, row2, buf[9]);                 \
-    xorTbl[4] = TLOOK(TB, row1, k11) ^ TLOOK(TB, row2, buf[7]);                 \
-    xorTbl[5] = TLOOK(TB, row2, buf[2]) ^ TLOOK(TB, row2, buf[8]);              \
-    xorTbl[6] = TLOOK(TB, row1, buf[3]) ^ TLOOK(TB, row2, buf[5]);              \
-    xorTbl[7] = TLOOK(TB, row1, buf[2]) ^ TLOOK(TB, row2, buf[6]);              \
-                                                                                \
-    DEBUGPrint("ft  : %d %d %d %d %d %d %d %d\n",                               \
-               addTbl[0], addTbl[1], addTbl[2], addTbl[3], addTbl[4],           \
-               addTbl[5], addTbl[6], addTbl[7]);                                \
-    DEBUGPrint("sb  : %d %d %d %d %d %d %d %d\n",                               \
-               xorTbl[0], xorTbl[1], xorTbl[2], xorTbl[3], xorTbl[4],           \
-               xorTbl[5], xorTbl[6], xorTbl[7]);                                \
-                                                                                \
-    for (i = 0; i < 10; i++) {                                                  \
-        cb->encryptionKey[i] = buf[9 - i];                                      \
-    }                                                                           \
-    cb->encryptionKey[10] = k10;                                                \
-    cb->encryptionKey[11] = k11;                                                \
-    cb->encryptionKey[12] = k12;                                                \
-    cb->encryptionKey[13] = k13;                                                \
-    cb->encryptionKey[14] = k14;                                                \
-    cb->encryptionKey[15] = k15;                                                \
-                                                                                \
-    memcpy(cb->decryptAddTable, addTbl, 8);                                     \
-    memcpy(cb->decryptXorTable, xorTbl, 8);                                     \
-                                                                                \
-    OSRestoreInterrupts(enabled);
+// byte rotate-right of low 8 bits by (rot % 8)
+static u8 ror(u8 src, u8 rot) {
+    u8 ret;
+    u8 rt;
+
+    rt = (u8)(rot % 8);
+    ret = (u8)(src >> rt | src << (8 - rt));
+
+    return ret;
+}
+
+// byte rotate-left of low 8 bits by (rol % 8)
+static u8 rol(u8 src, u8 rol) {
+    u8 ret;
+    u8 rl;
+
+    rl = (u8)(rol % 8);
+    ret = (u8)(src << rl | src >> (8 - rl));
+
+    return ret;
+}
 
 void WPADiCreateKey(s32 chan) {
-    WPAD_CREATE_KEY_BODY(base, tb)
+    BOOL enable;
+    WPADCB* p_wpd = __rvl_p_wpadcb[chan];
+
+    u8 idx;
+    u8 baseIdx;
+    u8 tblRnd[10];
+    u8 ft[8];
+    u8 sb[8];
+    u8 key[6];
+    u8 i;
+
+    SEED = (u8)((OSGetTick() >> 8) & 0xff);
+    NUM_A = (u8)((OSGetTick() >> 16) & 0x3f);
+    NUM_B = (u8)((OSGetTick() >> 24) & 0x4c);
+    NUM_C = 0xff;
+
+    idx = (u8)(random() % 7);
+    baseIdx = (u8)(idx * 6);
+
+    for (i = 0; i < 10; i++) {
+        tblRnd[i] = tb[random()];
+    }
+
+    DEBUGPrint("ans : %d %d %d %d %d %d\n", base[baseIdx], base[baseIdx + 1],
+               base[baseIdx + 2], base[baseIdx + 3], base[baseIdx + 4],
+               base[baseIdx + 5]);
+
+    DEBUGPrint("rand: %d %d %d %d %d %d %d %d %d %d\n", tblRnd[0], tblRnd[1],
+               tblRnd[2], tblRnd[3], tblRnd[4], tblRnd[5], tblRnd[6],
+               tblRnd[7], tblRnd[8], tblRnd[9]);
+
+    DEBUGPrint("t0  : %d %d %d %d %d %d %d %d %d %d\n", tb[tblRnd[0]],
+               tb[tblRnd[1]], tb[tblRnd[2]], tb[tblRnd[3]], tb[tblRnd[4]],
+               tb[tblRnd[5]], tb[tblRnd[6]], tb[tblRnd[7]], tb[tblRnd[8]],
+               tb[tblRnd[9]]);
+
+    enable = OSDisableInterrupts();
+    key[0] = (u8)((ror((u8)(base[baseIdx] ^ tb[tblRnd[5]]), tb[tblRnd[2]]) -
+                   tb[tblRnd[9]]) ^
+                  tb[tblRnd[4]]);
+    key[1] = (u8)((ror((u8)(base[baseIdx + 1] ^ tb[tblRnd[1]]), tb[tblRnd[0]]) -
+                   tb[tblRnd[5]]) ^
+                  tb[tblRnd[7]]);
+    key[2] = (u8)((ror((u8)(base[baseIdx + 2] ^ tb[tblRnd[6]]), tb[tblRnd[8]]) -
+                   tb[tblRnd[2]]) ^
+                  tb[tblRnd[0]]);
+    key[3] = (u8)((ror((u8)(base[baseIdx + 3] ^ tb[tblRnd[4]]), tb[tblRnd[7]]) -
+                   tb[tblRnd[3]]) ^
+                  tb[tblRnd[2]]);
+    key[4] = (u8)((ror((u8)(base[baseIdx + 4] ^ tb[tblRnd[1]]), tb[tblRnd[6]]) -
+                   tb[tblRnd[3]]) ^
+                  tb[tblRnd[4]]);
+    key[5] = (u8)((ror((u8)(base[baseIdx + 5] ^ tb[tblRnd[7]]), tb[tblRnd[8]]) -
+                   tb[tblRnd[5]]) ^
+                  tb[tblRnd[9]]);
+
+    DEBUGPrint("key : %d %d %d %d %d %d \n", key[0], key[1], key[2], key[3],
+               key[4], key[5]);
+
+    ft[0] = (u8)(tb[(idx + 1) * 256 + key[4]] ^ tb[(idx + 2) * 256 + tblRnd[3]]);
+    ft[1] = (u8)(tb[(idx + 1) * 256 + key[2]] ^ tb[(idx + 2) * 256 + tblRnd[5]]);
+    ft[2] = (u8)(tb[(idx + 1) * 256 + key[5]] ^ tb[(idx + 2) * 256 + tblRnd[7]]);
+    ft[3] = (u8)(tb[(idx + 1) * 256 + key[0]] ^ tb[(idx + 2) * 256 + tblRnd[2]]);
+    ft[4] = (u8)(tb[(idx + 1) * 256 + key[1]] ^ tb[(idx + 2) * 256 + tblRnd[4]]);
+    ft[5] = (u8)(tb[(idx + 1) * 256 + key[3]] ^ tb[(idx + 2) * 256 + tblRnd[9]]);
+    ft[6] = (u8)(tb[(idx + 1) * 256 + tblRnd[0]] ^ tb[(idx + 2) * 256 + tblRnd[6]]);
+    ft[7] = (u8)(tb[(idx + 1) * 256 + tblRnd[1]] ^ tb[(idx + 2) * 256 + tblRnd[8]]);
+
+    sb[0] = (u8)(tb[(idx + 1) * 256 + key[0]] ^ tb[(idx + 2) * 256 + tblRnd[1]]);
+    sb[1] = (u8)(tb[(idx + 1) * 256 + key[5]] ^ tb[(idx + 2) * 256 + tblRnd[4]]);
+    sb[2] = (u8)(tb[(idx + 1) * 256 + key[3]] ^ tb[(idx + 2) * 256 + tblRnd[0]]);
+    sb[3] = (u8)(tb[(idx + 1) * 256 + key[2]] ^ tb[(idx + 2) * 256 + tblRnd[9]]);
+    sb[4] = (u8)(tb[(idx + 1) * 256 + key[4]] ^ tb[(idx + 2) * 256 + tblRnd[7]]);
+    sb[5] = (u8)(tb[(idx + 1) * 256 + key[1]] ^ tb[(idx + 2) * 256 + tblRnd[8]]);
+    sb[6] = (u8)(tb[(idx + 1) * 256 + tblRnd[3]] ^ tb[(idx + 2) * 256 + tblRnd[5]]);
+    sb[7] = (u8)(tb[(idx + 1) * 256 + tblRnd[2]] ^ tb[(idx + 2) * 256 + tblRnd[6]]);
+
+    DEBUGPrint("ft  : %d %d %d %d %d %d %d %d\n", ft[0], ft[1], ft[2], ft[3],
+               ft[4], ft[5], ft[6], ft[7]);
+    DEBUGPrint("sb  : %d %d %d %d %d %d %d %d\n", sb[0], sb[1], sb[2], sb[3],
+               sb[4], sb[5], sb[6], sb[7]);
+
+    for (i = 0; i < 10; i++) {
+        p_wpd->encryptionKey[i] = tblRnd[9 - i];
+    }
+
+    for (i = 0; i < 6; i++) {
+        p_wpd->encryptionKey[i + 10] = key[5 - i];
+    }
+
+    memcpy(p_wpd->decryptAddTable, ft, 8);
+    memcpy(p_wpd->decryptXorTable, sb, 8);
+    OSRestoreInterrupts(enable);
 }
 
 void WPADiCreateKeyFor3rd(s32 chan) {
-    WPAD_CREATE_KEY_BODY(base3, tb3)
+    BOOL enable;
+    WPADCB* p_wpd = __rvl_p_wpadcb[chan];
+
+    u8 idx;
+    u8 baseIdx;
+    u8 tblRnd[10];
+    u8 ft[8];
+    u8 sb[8];
+    u8 key[6];
+    u8 i;
+
+    SEED = (u8)((OSGetTick() >> 8) & 0xff);
+    NUM_A = (u8)((OSGetTick() >> 16) & 0x3f);
+    NUM_B = (u8)((OSGetTick() >> 24) & 0x4c);
+    NUM_C = 0xff;
+
+    idx = (u8)(random() % 7);
+    baseIdx = (u8)(idx * 6);
+
+    for (i = 0; i < 10; i++) {
+        tblRnd[i] = tb3[random()];
+    }
+
+    DEBUGPrint("ans : %d %d %d %d %d %d\n", base3[baseIdx], base3[baseIdx + 1],
+               base3[baseIdx + 2], base3[baseIdx + 3], base3[baseIdx + 4],
+               base3[baseIdx + 5]);
+
+    DEBUGPrint("rand: %d %d %d %d %d %d %d %d %d %d\n", tblRnd[0], tblRnd[1],
+               tblRnd[2], tblRnd[3], tblRnd[4], tblRnd[5], tblRnd[6],
+               tblRnd[7], tblRnd[8], tblRnd[9]);
+
+    DEBUGPrint("t0  : %d %d %d %d %d %d %d %d %d %d\n", tb3[tblRnd[0]],
+               tb3[tblRnd[1]], tb3[tblRnd[2]], tb3[tblRnd[3]], tb3[tblRnd[4]],
+               tb3[tblRnd[5]], tb3[tblRnd[6]], tb3[tblRnd[7]], tb3[tblRnd[8]],
+               tb3[tblRnd[9]]);
+
+    enable = OSDisableInterrupts();
+    key[0] = (u8)((rol((u8)(base3[baseIdx] ^ tb3[tblRnd[0]]), tb3[tblRnd[1]]) +
+                   tb3[tblRnd[6]]) ^
+                  tb3[tblRnd[7]]);
+    key[1] = (u8)((rol((u8)(base3[baseIdx + 1] ^ tb3[tblRnd[4]]), tb3[tblRnd[2]]) +
+                   tb3[tblRnd[3]]) ^
+                  tb3[tblRnd[1]]);
+    key[2] = (u8)((rol((u8)(base3[baseIdx + 2] ^ tb3[tblRnd[2]]), tb3[tblRnd[8]]) +
+                   tb3[tblRnd[4]]) ^
+                  tb3[tblRnd[5]]);
+    key[3] = (u8)((rol((u8)(base3[baseIdx + 3] ^ tb3[tblRnd[6]]), tb3[tblRnd[9]]) +
+                   tb3[tblRnd[7]]) ^
+                  tb3[tblRnd[0]]);
+    key[4] = (u8)((rol((u8)(base3[baseIdx + 4] ^ tb3[tblRnd[5]]), tb3[tblRnd[4]]) +
+                   tb3[tblRnd[8]]) ^
+                  tb3[tblRnd[1]]);
+    key[5] = (u8)((rol((u8)(base3[baseIdx + 5] ^ tb3[tblRnd[9]]), tb3[tblRnd[3]]) +
+                   tb3[tblRnd[8]]) ^
+                  tb3[tblRnd[5]]);
+
+    DEBUGPrint("key : %d %d %d %d %d %d \n", key[0], key[1], key[2], key[3],
+               key[4], key[5]);
+
+    ft[0] = (u8)(tb3[(idx + 1) * 256 + key[4]] ^ tb3[(idx + 2) * 256 + tblRnd[3]]);
+    ft[1] = (u8)(tb3[(idx + 1) * 256 + key[2]] ^ tb3[(idx + 2) * 256 + tblRnd[5]]);
+    ft[2] = (u8)(tb3[(idx + 1) * 256 + key[5]] ^ tb3[(idx + 2) * 256 + tblRnd[7]]);
+    ft[3] = (u8)(tb3[(idx + 1) * 256 + key[0]] ^ tb3[(idx + 2) * 256 + tblRnd[2]]);
+    ft[4] = (u8)(tb3[(idx + 1) * 256 + key[1]] ^ tb3[(idx + 2) * 256 + tblRnd[4]]);
+    ft[5] = (u8)(tb3[(idx + 1) * 256 + key[3]] ^ tb3[(idx + 2) * 256 + tblRnd[9]]);
+    ft[6] = (u8)(tb3[(idx + 1) * 256 + tblRnd[0]] ^ tb3[(idx + 2) * 256 + tblRnd[6]]);
+    ft[7] = (u8)(tb3[(idx + 1) * 256 + tblRnd[1]] ^ tb3[(idx + 2) * 256 + tblRnd[8]]);
+
+    sb[0] = (u8)(tb3[(idx + 1) * 256 + key[0]] ^ tb3[(idx + 2) * 256 + tblRnd[1]]);
+    sb[1] = (u8)(tb3[(idx + 1) * 256 + key[5]] ^ tb3[(idx + 2) * 256 + tblRnd[4]]);
+    sb[2] = (u8)(tb3[(idx + 1) * 256 + key[3]] ^ tb3[(idx + 2) * 256 + tblRnd[0]]);
+    sb[3] = (u8)(tb3[(idx + 1) * 256 + key[2]] ^ tb3[(idx + 2) * 256 + tblRnd[9]]);
+    sb[4] = (u8)(tb3[(idx + 1) * 256 + key[4]] ^ tb3[(idx + 2) * 256 + tblRnd[7]]);
+    sb[5] = (u8)(tb3[(idx + 1) * 256 + key[1]] ^ tb3[(idx + 2) * 256 + tblRnd[8]]);
+    sb[6] = (u8)(tb3[(idx + 1) * 256 + tblRnd[3]] ^ tb3[(idx + 2) * 256 + tblRnd[5]]);
+    sb[7] = (u8)(tb3[(idx + 1) * 256 + tblRnd[2]] ^ tb3[(idx + 2) * 256 + tblRnd[6]]);
+
+    DEBUGPrint("ft  : %d %d %d %d %d %d %d %d\n", ft[0], ft[1], ft[2], ft[3],
+               ft[4], ft[5], ft[6], ft[7]);
+    DEBUGPrint("sb  : %d %d %d %d %d %d %d %d\n", sb[0], sb[1], sb[2], sb[3],
+               sb[4], sb[5], sb[6], sb[7]);
+
+    for (i = 0; i < 10; i++) {
+        p_wpd->encryptionKey[i] = tblRnd[9 - i];
+    }
+
+    for (i = 0; i < 6; i++) {
+        p_wpd->encryptionKey[i + 10] = key[5 - i];
+    }
+
+    memcpy(p_wpd->decryptAddTable, ft, 8);
+    memcpy(p_wpd->decryptXorTable, sb, 8);
+    OSRestoreInterrupts(enable);
 }
 
 void WPADiDecode(s32 chan, u8* buf, u32 len, s32 offset) {

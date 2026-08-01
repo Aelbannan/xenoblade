@@ -46,7 +46,13 @@ extern void LogMsg_0(UINT32 trace_set_mask, const char *p_str);
 extern BT_HDR *l2cap_link_chk_pkt_start(BT_HDR *p_buf);
 extern UINT8 l2cap_link_chk_pkt_end(void);
 
-void hcisu_h2_usb_cback() {}
+/* USB close-event callback: reason 4 (UUSB_CLOSE_REASON_CLOSED) means the
+   link dropped; forward the sign-extended result to the BTA layer. */
+void hcisu_h2_usb_cback(int type, UINT8 event) {
+    if (type == 0x4) {
+        bta_usb_close_evt((s8)event);
+    }
+}
 
 /* Receive loop for one HCI USB stream. Reads header bytes one at a time
    until the preamble length is collected, then streams the payload into the

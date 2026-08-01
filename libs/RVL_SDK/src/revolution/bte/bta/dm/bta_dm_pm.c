@@ -5,6 +5,7 @@
 
 #include <revolution/BTE/gki/common/gki.h>
 #include <revolution/BTE/bta/include/bd.h>
+#include <revolution/BTE/stack/include/btm_api.h>
 
 /* DM PM timer event id (BTA_SYS_EVT_START(BTA_ID_DM) + 10) */
 #define BTA_DM_PM_TIMER_EVT 0x10A
@@ -42,10 +43,12 @@ typedef struct
     unsigned char pad;         /* 0x1F */
 } tBTA_DM_PM_TIMER;
 
-/* bta_dm_cb view used by this file (pm_timer at 0x98) */
+/* bta_dm_cb view used by this file (pm_id at 0x95, pm_timer at 0x98) */
 struct bta_dm_cb_pm_t
 {
-    unsigned char _pad[0x98];           /* 0x00-0x97 */
+    unsigned char _pad[0x95];           /* 0x00-0x94 */
+    unsigned char pm_id;                /* 0x95 */
+    unsigned char _pad2[2];             /* 0x96-0x97 */
     tBTA_DM_PM_TIMER pm_timer[3];       /* 0x98 (0x20 each) */
 };
 
@@ -63,7 +66,9 @@ extern void bta_sys_sendmsg(void *p_msg);
 
 void bta_dm_init_pm() {}
 
-void bta_dm_disable_pm() {}
+void bta_dm_disable_pm() {
+    BTM_PmRegister(BTM_PM_DEREG, &bta_dm_cb.pm_id, NULL);
+}
 
 void bta_dm_pm_cback() {}
 

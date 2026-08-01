@@ -101,7 +101,8 @@ struct t_l2c_linkcb {
 typedef struct {
     BD_ADDR bd_addr;                /* 0x00 */
     UINT8   status;                 /* 0x06 */
-} tL2C_CONN_INFO;
+    UINT8   pad07[9];               /* 0x07..0x0F */
+} tL2C_CONN_INFO;                   /* 0x10 */
 
 /* Only the portions of l2cb used here are named. */
 typedef struct {
@@ -238,14 +239,16 @@ void l2c_link_hci_conn_req(BD_ADDR p_bd_addr)
 
 BOOLEAN l2c_link_hci_conn_comp(UINT8 status, UINT16 handle, BD_ADDR p_bd_addr)
 {
-    BD_ADDR local_bd_addr;
+    tL2C_CONN_INFO ci;
     tL2C_LCB *p_lcb;
     tL2C_CCB *p_ccb;
+    tL2C_CCB *p_next_ccb;
     tBTM_SEC_DEV_REC *p_dev_rec;
 
-    memcpy(local_bd_addr, p_bd_addr, BD_ADDR_LEN);
+    ci.status = status;
+    memcpy(ci.bd_addr, p_bd_addr, BD_ADDR_LEN);
 
-    p_lcb = l2cu_find_lcb_by_bd_addr(local_bd_addr);
+    p_lcb = l2cu_find_lcb_by_bd_addr(ci.bd_addr);
     if (p_lcb == NULL)
     {
         if (!btm_sec_is_bonding(handle))
@@ -265,39 +268,20 @@ BOOLEAN l2c_link_hci_conn_comp(UINT8 status, UINT16 handle, BD_ADDR p_bd_addr)
 
     p_lcb->handle = handle;
 
-    if (status != HCI_SUCCESS)
-    {
-        if ((status == HCI_ERR_MAX_NUM_OF_CONNECTIONS) &&
-            l2cu_lcb_disconnecting())
-        {
-            p_lcb->link_state = LST_CONNECTING;
-            p_lcb->handle = HCI_INVALID_HANDLE;
-        }
-        else
-        {
-            for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL;
-                 p_ccb = p_ccb->p_next_ccb)
-            {
-                l2c_csm_execute(p_ccb, L2CEVT_LP_CONNECT_CFM_NEG,
-                                 local_bd_addr);
-            }
-            l2cu_release_lcb(p_lcb);
-        }
-    }
-    else
+    if (ci.status == HCI_SUCCESS)
     {
         p_lcb->link_state = LST_CONNECTED;
 
         p_dev_rec = btm_find_dev(p_bd_addr);
         if (p_dev_rec != NULL)
         {
-            btm_acl_created(local_bd_addr, p_dev_rec->dev_class,
+            btm_acl_created(ci.bd_addr, p_dev_rec->dev_class,
                             p_dev_rec->sec_bd_name, handle,
                             p_lcb->link_role);
         }
         else
         {
-            btm_acl_created(local_bd_addr, NULL, NULL, handle,
+            btm_acl_created(ci.bd_addr, NULL, NULL, handle,
                             p_lcb->link_role);
         }
 
@@ -307,7 +291,7 @@ BOOLEAN l2c_link_hci_conn_comp(UINT8 status, UINT16 handle, BD_ADDR p_bd_addr)
         for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL;
              p_ccb = p_ccb->p_next_ccb)
         {
-            l2c_csm_execute(p_ccb, L2CEVT_LP_CONNECT_CFM, local_bd_addr);
+            l2c_csm_execute(p_ccb, L2CEVT_LP_CONNECT_CFM, ci.bd_addr);
         }
 
         if (p_lcb->p_echo_rsp_cb != NULL)
@@ -318,6 +302,26 @@ BOOLEAN l2c_link_hci_conn_comp(UINT8 status, UINT16 handle, BD_ADDR p_bd_addr)
         else if (p_lcb->p_first_ccb == NULL)
         {
             btu_start_timer(&p_lcb->timer_entry, BTU_TTYPE_L2CAP_LINK, 60);
+        }
+    }
+    else
+    {
+        if ((ci.status == HCI_ERR_MAX_NUM_OF_CONNECTIONS) &&
+            l2cu_lcb_disconnecting())
+        {
+            p_lcb->link_state = LST_CONNECTING;
+            p_lcb->handle = HCI_INVALID_HANDLE;
+        }
+        else
+        {
+            for (p_ccb = p_lcb->p_first_ccb; p_ccb != NULL;
+                 p_ccb = p_next_ccb)
+            {
+                p_next_ccb = p_ccb->p_next_ccb;
+                l2c_csm_execute(p_ccb, L2CEVT_LP_CONNECT_CFM_NEG,
+                                ci.bd_addr);
+            }
+            l2cu_release_lcb(p_lcb);
         }
     }
 
@@ -728,19 +732,22 @@ BT_HDR *l2cap_link_chk_pkt_start(BT_HDR *p_buf)
     UINT8 *p_data;
     UINT16 handle_info;
     UINT16 acl_len;
-    UINT16 handle;
-    UINT8 packet_type;
     tL2C_LCB *p_lcb;
     BT_HDR *p_pending;
+    UINT8 packet_type;
+    UINT16 pending_len;
+    UINT8 *p_pending_data;
+    UINT16 handle;
+
 
     p_data = (UINT8 *)p_buf + p_buf->offset;
     p_buf->layer_specific = 0;
 
     handle_info = (UINT16)(p_data[8] + (p_data[9] << 8));
     acl_len = (UINT16)(p_data[10] + (p_data[11] << 8));
-    handle = handle_info & L2CAP_MASK_FLAG;
     packet_type = (UINT8)((handle_info >> L2CAP_PKT_TYPE_SHIFT) &
                           L2CAP_PKT_TYPE_MASK);
+    handle = handle_info & L2CAP_MASK_FLAG;
     l2cb.p_rcv_pending_lcb = NULL;
 
     p_lcb = l2cu_find_lcb_by_handle(handle);
@@ -761,32 +768,29 @@ BT_HDR *l2cap_link_chk_pkt_start(BT_HDR *p_buf)
     }
     else
     {
-        UINT8 *p_pending_data;
-        UINT16 pending_len;
-
         p_pending = p_lcb->p_pending_data;
         if (p_pending != NULL)
         {
-            p_pending_data = (UINT8 *)p_pending + p_pending->offset;
-            pending_len = (UINT16)(p_pending_data[10] +
-                                   (p_pending_data[11] << 8));
+            p_pending_data = (UINT8 *)(p_pending + 1) + p_pending->offset;
+            pending_len = (UINT16)(p_pending_data[2] +
+                                   (p_pending_data[3] << 8));
 
             if (pending_len + acl_len <= 0x69F)
             {
                 l2cb.p_rcv_pending_lcb = p_lcb;
                 if (p_buf->len > 4)
                 {
-                    memcpy((UINT8 *)p_pending + p_pending->offset +
-                               p_pending->len + 8,
-                           (UINT8 *)p_buf + p_buf->offset + 0x0C,
+                    memcpy((UINT8 *)(p_pending + 1) + p_pending->offset +
+                               p_pending->len,
+                           (UINT8 *)(p_buf + 1) + p_buf->offset + 4,
                            p_buf->len - 4);
                     p_pending->len += p_buf->len - 4;
                 }
 
                 GKI_freebuf(p_buf);
                 pending_len += acl_len;
-                p_pending_data[10] = (UINT8)pending_len;
-                p_pending_data[11] = (UINT8)(pending_len >> 8);
+                p_pending_data[2] = (UINT8)pending_len;
+                p_pending_data[3] = (UINT8)(pending_len >> 8);
             }
             else
             {

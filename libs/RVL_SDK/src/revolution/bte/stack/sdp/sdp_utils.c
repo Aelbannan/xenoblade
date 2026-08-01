@@ -280,7 +280,10 @@ UINT8 *sdpu_build_attrib_entry (UINT8 *p_out, tSDP_ATTRIBUTE *p_attr)
         p_data = p_out;
 
         for (xx = 0; xx < p_attr->attr_len; xx++)
-            *p_data++ = ((UINT8 *)p_attr->attr_value)[xx];
+        {
+            UINT8 *p_value = (UINT8 *)p_attr->attr_value;
+            *p_data++ = p_value[xx];
+        }
         return (p_data);
 
     default:
@@ -314,7 +317,10 @@ UINT8 *sdpu_build_attrib_entry (UINT8 *p_out, tSDP_ATTRIBUTE *p_attr)
         }
 
         for (xx = 0; xx < p_attr->attr_len; xx++)
-            *p_data++ = ((UINT8 *)p_attr->attr_value)[xx];
+        {
+            UINT8 *p_value = (UINT8 *)p_attr->attr_value;
+            *p_data++ = p_value[xx];
+        }
         return (p_data);
     }
 }

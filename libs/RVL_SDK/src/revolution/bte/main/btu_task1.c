@@ -52,13 +52,13 @@ void btu_task_init(void)
 
 void btu_task_msg_handler(void)
 {
+    BT_HDR *p_msg;
+    UINT16 event_type;
+    TIMER_LIST_ENT *p_tle;
     UINT8 i;
     BOOLEAN found;
     UINT16 flags;
     BOOLEAN has_processed;
-    BT_HDR *p_msg;
-    TIMER_LIST_ENT *p_tle;
-    UINT16 event_type;
 
     has_processed = FALSE;
     OSGetTime();
@@ -82,125 +82,130 @@ void btu_task_msg_handler(void)
         flags |= 0x30;
     }
 
-    while (TRUE) {
-        if (!has_processed) {
-            has_processed = TRUE;
+    while (!has_processed) {
+        has_processed = TRUE;
 
-            /* Process mailbox 0 — HCI events/data */
-            if (flags & 0x01) {
-                while ((p_msg = (BT_HDR *)GKI_read_mbox(TASK_MBOX_0)) != NULL) {
-                    has_processed = FALSE;
-                    event_type = p_msg->event & 0xFF00;
+        /* Process mailbox 0 — HCI events/data */
+        if (flags & 0x01) {
+            while ((p_msg = (BT_HDR *)GKI_read_mbox(TASK_MBOX_0)) != NULL) {
+                has_processed = FALSE;
+                event_type = p_msg->event & 0xFF00;
 
-                    switch (event_type) {
-                    case 0x1100:
-                        l2c_rcv_acl_data(p_msg);
-                        break;
-                    case 0x1900:
-                        l2c_link_segments_xmitted(p_msg);
-                        break;
-                    case 0x1200:
-                        btm_route_sco_data(p_msg);
-                        break;
-                    case 0x1000:
-                        ((btu_hcif_process_event_fn_t)btu_hcif_process_event)(p_msg);
-                        GKI_freebuf(p_msg);
-                        break;
-                    case 0x1600:
-                        ((btu_hcif_send_cmd_fn_t)btu_hcif_send_cmd)(p_msg);
-                        break;
-                    default:
-                        found = FALSE;
-                        for (i = 0; !found && i < BTU_MAX_REG_EVENT; i++) {
-                            if (btu_cb.event_reg[i].event_cb != NULL &&
-                                btu_cb.event_reg[i].event_range == event_type) {
+                switch (event_type) {
+                case 0x1100:
+                    l2c_rcv_acl_data(p_msg);
+                    break;
+                case 0x1900:
+                    l2c_link_segments_xmitted(p_msg);
+                    break;
+                case 0x1200:
+                    btm_route_sco_data(p_msg);
+                    break;
+                case 0x1000:
+                    ((btu_hcif_process_event_fn_t)btu_hcif_process_event)(p_msg);
+                    GKI_freebuf(p_msg);
+                    break;
+                case 0x1600:
+                    ((btu_hcif_send_cmd_fn_t)btu_hcif_send_cmd)(p_msg);
+                    break;
+                default:
+                    i = 0;
+                    found = FALSE;
+                    for (; !found && i < BTU_MAX_REG_EVENT; i++) {
+                        if (btu_cb.event_reg[i].event_cb == NULL) {
+                            continue;
+                        }
+
+                        if (btu_cb.event_reg[i].event_range == event_type) {
+                            if (btu_cb.event_reg[i].event_cb) {
                                 (*btu_cb.event_reg[i].event_cb)(p_msg);
                                 found = TRUE;
                             }
                         }
-                        if (!found) {
-                            GKI_freebuf(p_msg);
+                    }
+                    if (!found) {
+                        GKI_freebuf(p_msg);
+                    }
+                    break;
+                }
+            }
+        }
+
+        /* Process expired timer queue */
+        if (flags & 0x10) {
+            GKI_update_timer_list(&btu_cb.quick_timer_queue, 1);
+            flags = (UINT16)(flags & ~0x10);
+
+            while (btu_cb.quick_timer_queue.p_first != NULL &&
+                   btu_cb.quick_timer_queue.p_first->ticks == 0) {
+                p_tle = btu_cb.quick_timer_queue.p_first;
+                has_processed = FALSE;
+                GKI_remove_from_timer_list(&btu_cb.quick_timer_queue, p_tle);
+
+                switch (p_tle->event) {
+                case 1:
+                    btm_dev_timeout(p_tle);
+                    break;
+                case 9:
+                    btm_acl_timeout(p_tle);
+                    break;
+                case 2:
+                case 3:
+                case 4:
+                    l2c_process_timeout(p_tle);
+                    break;
+                case 5:
+                    sdp_conn_timeout(p_tle->param);
+                    break;
+                case 10:
+                    btm_inq_rmt_name_failed();
+                    break;
+                case 8:
+                    btm_discovery_timeout();
+                    break;
+                case 11:
+                case 12:
+                    rfcomm_process_timeout(p_tle);
+                    break;
+                case 60:
+                    ((btu_hcif_cmd_timeout_fn_t)btu_hcif_cmd_timeout)();
+                    break;
+                case 66:
+                    hidh_proc_repage_timeout(p_tle);
+                    break;
+                case 22:
+                    ((TIMER_CBACK *)(p_tle->param))(p_tle);
+                    break;
+                default:
+                    i = 0;
+                    found = FALSE;
+                    for (; !found && i < BTU_MAX_REG_TIMER; i++) {
+                        if (btu_cb.timer_reg[i].timer_cb == NULL) {
+                            continue;
                         }
-                        break;
-                    }
-                }
-            }
 
-            /* Process expired timer queue */
-            if (flags & 0x10) {
-                GKI_update_timer_list(&btu_cb.quick_timer_queue, 1);
-                flags &= 0xFFEF;
-
-                while (TRUE) {
-                    p_tle = btu_cb.quick_timer_queue.p_first;
-                    if (p_tle == NULL || p_tle->ticks != 0) {
-                        break;
-                    }
-
-                    has_processed = FALSE;
-                    GKI_remove_from_timer_list(&btu_cb.quick_timer_queue, p_tle);
-
-                    switch (p_tle->event) {
-                    case 1:
-                        btm_dev_timeout(p_tle);
-                        break;
-                    case 2:
-                    case 3:
-                    case 4:
-                        l2c_process_timeout(p_tle);
-                        break;
-                    case 5:
-                        sdp_conn_timeout(p_tle->param);
-                        break;
-                    case 8:
-                        btm_discovery_timeout();
-                        break;
-                    case 9:
-                        btm_acl_timeout(p_tle);
-                        break;
-                    case 10:
-                        btm_inq_rmt_name_failed();
-                        break;
-                    case 11:
-                    case 12:
-                        rfcomm_process_timeout(p_tle);
-                        break;
-                    case 22:
-                        ((TIMER_CBACK *)(p_tle->param))(p_tle);
-                        break;
-                    case 60:
-                        ((btu_hcif_cmd_timeout_fn_t)btu_hcif_cmd_timeout)();
-                        break;
-                    case 66:
-                        hidh_proc_repage_timeout(p_tle);
-                        break;
-                    default:
-                        found = FALSE;
-                        for (i = 0; !found && i < BTU_MAX_REG_TIMER; i++) {
-                            if (btu_cb.timer_reg[i].timer_cb != NULL &&
-                                btu_cb.timer_reg[i].p_tle == p_tle) {
-                                (*btu_cb.timer_reg[i].timer_cb)(p_tle);
-                                found = TRUE;
-                            }
+                        if (btu_cb.timer_reg[i].p_tle == p_tle) {
+                            (*btu_cb.timer_reg[i].timer_cb)(p_tle);
+                            found = TRUE;
                         }
-                        break;
                     }
+                    break;
                 }
             }
+        }
 
-            /* Process mailbox 2 — BTA events */
-            if (flags & 0x04) {
-                while ((p_msg = (BT_HDR *)GKI_read_mbox(TASK_MBOX_2)) != NULL) {
-                    has_processed = FALSE;
-                    bta_sys_event(p_msg);
-                }
+        /* Process mailbox 2 — BTA events */
+        if (flags & 0x04) {
+            while ((p_msg = (BT_HDR *)GKI_read_mbox(TASK_MBOX_2)) != NULL) {
+                has_processed = FALSE;
+                bta_sys_event(p_msg);
             }
+        }
 
-            /* BTA timer update */
-            if (flags & 0x20) {
-                flags &= 0xFFDF;
-                bta_sys_timer_update();
-            }
+        /* BTA timer update */
+        if (flags & 0x20) {
+            flags = (UINT16)(flags & ~0x20);
+            bta_sys_timer_update();
         }
 
         if (flags & 0x8000) {

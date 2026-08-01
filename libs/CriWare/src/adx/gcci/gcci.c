@@ -182,7 +182,48 @@ s32 gcCiTell(GciHndl *h) {
 
 void gcCiReqRd() {}
 
-void gcCiStopTr(GciHndl *self) { (void)self; }
+#define GCI_TICKS_TO_MS(ticks) \
+    ((ticks) / (__mulhwu(*(volatile u32 *)0x800000F8 >> 2, 0x10624DD3) >> 6))
+
+void gcCiStopTr(GciHndl *h) {
+    GciGlobals *g = (GciGlobals *)&lbl_eu_805E6B70;
+    if (h == NULL) {
+        const char *msg = &lbl_eu_805181F0[0x118];
+        if (g->errfunc != NULL)
+            g->errfunc(g->errarg, msg, NULL);
+        return;
+    }
+    if ((u8)h->state <= 1)
+        return;
+    DVDGetCommandBlockStatus(&h->fi.block);
+    DVDGetDriveStatus();
+    *(u32 *)&g->status[8] = 1;
+    if (DVDCancel(&h->fi.block) < 0) {
+        const char *msg = &lbl_eu_805181F0[0x16F];
+        if (g->errfunc != NULL)
+            g->errfunc(g->errarg, msg, (s32)(u32)h);
+        return;
+    }
+    u32 start = GCI_TICKS_TO_MS(OSGetTick());
+    while (h->dvdStatus != 0 && h->dvdStatus != 10) {
+        h->dvdStatus = DVDGetCommandBlockStatus(&h->fi.block);
+        *(u32 *)&g->status = h->dvdStatus;
+        u32 now = GCI_TICKS_TO_MS(OSGetTick());
+        u32 elapsed = now - start - 1;
+        if (now >= start)
+            elapsed = now - start;
+        if (elapsed > 2000) {
+            const char *msg = &lbl_eu_805181F0[0x18A];
+            if (g->errfunc != NULL)
+                g->errfunc(g->errarg, msg, (s32)(u32)h);
+            break;
+        }
+    }
+    h->state = 0;
+    g->status[4] = 0;
+    DVDGetCommandBlockStatus(&h->fi.block);
+    DVDGetDriveStatus();
+}
 
 s32 gcCiGetStat(GciHndl *h) {
     if (h == NULL) {
@@ -219,8 +260,9 @@ void gcCiSetSctLen(GciHndl *h, s32 sctLen) {
         return;
     }
     h->sctLen = sctLen;
+    s32 np = h->pos * oldSct;
     h->numSct = (sctLen + h->fileSize - 1) / sctLen;
-    h->pos = h->pos * oldSct / sctLen;
+    h->pos = np / sctLen;
     h->transferred = h->length * sctLen;
 }
 

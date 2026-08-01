@@ -3256,3 +3256,54 @@ SetLineSpace). `IsDrawFlagSet` (private, inline) IS emitted because it is
 called in-TU; after the layout fix it matches retail exactly
 (`(mDrawFlag & mask) == flag` → `and/subf/cntlzw/srwi`). u32 = `unsigned
 long` → mangling `Ul` (SetBuffer `FPcUl`, IsDrawFlagSet `CFUlUl`).
+
+## CriWare ADX GCI — error-callback msg-local pattern + seek clamp + SetSctLen soft-cap (US)
+
+`libs/CriWare/src/adx/gcci/gcci.c` (GC/3.0a5.2, `-O4,p`). 8 targets accepted:
+gcCiExecServer/gcCiTell/gcCiGetSctLen/gcCiGetNumTr/gcCiGetStat/gcCiSeek → **FULL_MATCH**;
+gcCiExecHndl (94.1%) and gcCiGetInterface (85.3%) → **EQUIVALENT_MATCH**.
+
+**Reusable error-callback pattern (all wrappers):** the retail err paths load the
+message string **before** the callback null-check:
+`lis rX,@ha; lis r4,msgbase@ha; lwz r12,fn@l(rX); addi r4,@l; addi r4,off; cmpi r12,0; beq/beqlr; …; bctrl/bctr`.
+Reproduce with a **`const char *msg` local** before the guarded call —
+`const char *msg = &lbl_eu_805181F0[off]; if (fn != NULL) fn(arg, msg, 0);` —
+writing `fn(arg, &lbl[...], 0)` inline emits the msg setup *after* the branch (structural mismatch).
+
+**Signed vs unsigned byte-field compares:** the handle `state`/`use` fields must be
+**`s8`** (not `u8`) so `h->use == 1` / `h->state == 2` emit `cmpwi` (`2C`), matching
+retail; an `u8` field emits `cmplwi` (`28`). For the one **unsigned** retail compare
+(`gcCiStopTr` `(u8)state <= 1` → `cmplwi`), cast explicitly: `(u8)h->state <= 1`.
+
+**Seek clamp (min/max):** retail `lwz numSct; lwz pos; cmpw; bge; mr; neg/andc/srawi/and`
+(= `min(pos,numSct)` then `max(·,0)`). The branchless `neg/andc/srawi/and` comes from
+the ternary `p = (p > 0) ? p : 0;`. The min register layout only matches when the
+source seeds the min with **numSct**: `s32 p = h->numSct; s32 q = h->pos; if (q < p) p = q;`
+(writing `p = h->pos; if (p > h->numSct) p = h->numSct;` swaps the load registers).
+
+**Volatile cache-sync roundtrip** (`lwz; stw 8(sp); lwz 8(sp); stw` on a bss global):
+`volatile u32 t = *(volatile u32 *)&lbl; lbl = t;` — but MWCC **always** fuses the base
+`addi` into `lwzu` when the first base use is a disp-0 load, even though retail kept
+`addi+lwz` (same soft-cap family as `LSC_CallStatFunc`). 85.3% EQUIVALENT via SMT is
+the ceiling; the `lwzu` is semantically trivial.
+
+**Soft-cap — `gcCiSetSctLen` (87.1% HIGH_MATCH):** (1) EQUIVALENT blocked: the two
+err paths **tail-call** the runtime errFunc (`beqlr`/`bctr`) — an indirect-branch exit
+requires indirect-target-closure obligations; the callback pointer is runtime bss data,
+so closure is impossible (`--assume-relocated-callees` → sampling `not_equivalent`).
+(2) FULL_MATCH blocked: retail main path computes the numSct chain fully first with
+`oldSct` staying in `r6` and the `pos*oldSct` mullw emitted *in place* (not hoisted);
+every natural C order either hoists the mullw (numSct-first → `oldSct=r7`) or changes
+the divw destination (pos-first → `oldSct=r6`). The `oldSct % 32 != 0` guard compiles
+to the `slwi 27/srwi 31/subf/rotlwi/add.` abs-mod idiom from `s32 % 32`.
+
+**`gcCiClose` (90.5%):** callee-certification dependency — its `gcCiStopTr` callee is
+not in-registry accepted, so `infer_matched_callee_contracts` fails closed
+("inconclusive_unvalidated_callee"). Matching gcCiStopTr to ~80% is insufficient:
+its own equivalence is `inconclusive_unsupported` (while-loop with SDK calls).
+
+**Ticks→ms conversion** (gcCiStopTr): `ticks / (__mulhwu(*(volatile u32*)0x800000F8 >> 2, 0x10624DD3) >> 6)` —
+the `__mulhwu` builtin emits bare `mulhwu` (the u64 expression emits a redundant mullw);
+keeping the volatile bus load inside the loop macro prevents loop-invariant hoisting
+(retail reloads per iteration). `if (elapsed > 2000)` on a `u32` emits the
+`xori/cntlzw/slw/srwi.` branchless unsigned-greater test in value contexts.

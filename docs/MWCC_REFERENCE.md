@@ -757,6 +757,24 @@ Key observations from `UnkClass_8047CA88::func_8047CC4C/CAA8` (us-80480c1c / us-
 
 **Effect TU table/cursor reconstruction:** For `code_804DB938.cpp`, defining the shared sine/cosine BSS as `{value, delta}` entries and taking pointer locals reproduced the retail `slwi` + `add` cursor shape and exact split size for the table-driven rotation helpers. `ml::math::abs` (which wraps the NW4R `FAbs` intrinsic and returns through a float conversion) reproduced retail `fabs` + `frsp`; a direct `fabsf` call did not. Keep these as high-level helpers; remaining differences are compiler register-color/scheduling artifacts. Files: `libs/monolib/src/effect/code_804DB938.cpp`.
 
+#### 1h. Variadic debug-print string literals — `extern char lbl_*` so SMT opaque-callee tokens unify
+
+A debug-print call site like `DEBUGPrint("__wudInitFlushCallback() : %d, Init: %d\n", …)` is **instruction-identical** to retail but the string reloc symbol is MWCC's TU-local pool label (`@5061`) vs retail's named data symbol (`lbl_8056288C`). This does not stop a static match (99.5%), but it **blocks SMT EQUIVALENT_MATCH**: the variadic callee is opaque, its transition token hashes the full pre-call state (all GPRs + memory), and the differing format pointer diverges the token → every post-call fresh value diverges → `exit.target (0x01010100 != 0x00000080)` / `inconclusive_abstraction`, even though the functions are byte-identical.
+
+**Fix:** reference the retail label instead of a literal (repo pattern already used in `WPAD.c`):
+
+```c
+void __wudInitFlushCallback(s32 result) {
+    extern char lbl_8056288C[];
+    DEBUGPrint(lbl_8056288C, result, _wcb.initState);
+    _wcb.initState = 5;
+}
+```
+
+The decomp reloc then has the same name as retail → same canonical symbol on both sides → tokens align → `EQUIVALENT UNDER CONTRACT` (no flag needed; the certified-callee path supplies the opaque-eabi contract for a FULL_MATCH callee like `WUD_DEBUGPrint`, or pass `--assume-relocated-callees` in the raw CLI). Same fix applies to any string pool the retail references by name (`lbl_805627BC`, `lbl_805629E8`, `lbl_80562D24`, …).
+
+**Targets fixed:** `us-8037a990` `__wudInitFlushCallback`, `us-8037b730` `__wudShutdownFlushCallback`, `us-8037db00` `__wudCleanupStackCallback` (all 100% → FULL_MATCH).
+
 ### 2. `extern "C"` on `bl` targets with retail mangling
 
 MWCC emits `bl` to **exact linker symbols**. C++-mangled names on callees cause wrong relocs.

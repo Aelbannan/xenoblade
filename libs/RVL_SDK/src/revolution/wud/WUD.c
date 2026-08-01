@@ -3029,8 +3029,9 @@ void __wudStackHandler0(OSAlarm* pAlarm, OSContext* pContext) {
 }
 
 void __wudInitFlushCallback(s32 result) {
-    DEBUGPrint("__wudInitFlushCallback() : %d, Init: %d\n", result,
-               _wcb.initState);
+    extern char lbl_8056288C[];
+
+    DEBUGPrint(lbl_8056288C, result, _wcb.initState);
     _wcb.initState = 5;
 }
 
@@ -3087,8 +3088,9 @@ void __wudInitHandler0(OSAlarm* pAlarm, OSContext* pContext) {
 }
 
 void __wudShutdownFlushCallback(s32 result) {
-    DEBUGPrint("__wudShutdownFlushCallback() : %d, Shutdown: %d\n", result,
-               _wcb.shutdownState);
+    extern char lbl_805629E8[];
+
+    DEBUGPrint(lbl_805629E8, result, _wcb.shutdownState);
     _wcb.shutdownState = WUD_STATE_SHUTDOWN_DONE;
 }
 
@@ -3110,13 +3112,14 @@ void __wudAppendRuntimePatch() {}
 void __wudInitSub() {}
 void WUDiMoveTopOfUnusedStdDevice() {}
 void __wudCleanupStackCallback(s32 result) {
+    extern char lbl_80562D24[];
     WUDCB* p = &_wcb;
 
     if (result == 0) {
         _wudInitialized = 0;
         p->libStatus = 0;
     } else {
-        DEBUGPrint("WARNING: USB_CLOSE_FAILURE!\n");
+        DEBUGPrint(lbl_80562D24);
     }
 }
 void __wudSecurityEventStackCallback() {}

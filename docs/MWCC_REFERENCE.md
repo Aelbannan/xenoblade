@@ -3390,6 +3390,42 @@ btm_main, hidd_conn all still MATCH under GC/3.0a5.2). The repo's btm_sco `HIGH_
 space form strips the region from `configure_args` and the ninja regen rule breaks with
 "argument -v/--version: expected one argument".
 
+**Second wave — 10 more targets (btm_dev_init, BTM_DeviceReset, BTM_SendHciReset,
+BTM_SetDeviceClass, btm_vsc_complete, btm_vendor_specific_evt, BTM_WritePageTimeout,
+btm_read_local_name_complete, btm_read_stored_link_key_complete, btm_return_link_keys_evt)
+→ 10× FULL_MATCH (100% bytes, SMT-certified, size PASS).** Reusable patterns:
+
+- **Empty callee bodies get inlined (`-O4,p`) and silently delete call sites** — the
+  `void btm_db_reset() {}` stub vanished from `BTM_DeviceReset`/`BTM_SendHciReset`
+  (`bl btm_db_reset` missing, function 4 bytes short, internal `bne` displacement
+  shifted). Implement the callee for real (reconstructed `btm_db_reset` from retail
+  matched 0/44 on first try) rather than trying to block inlining.
+- **`btm_vsc_complete` frame fit:** `tBTM_VSC_CMPL` buf must be `0x10C` — `0x110`
+  grows the frame from `-0x120` to `-0x130` (struct at sp+8, r31 saved at 0x11C).
+  Also: introduce `UINT8 *p_dst = evt_data.p_param_buf;` **before** the `if (p_cb)`
+  so MWCC hoists `addi r3, sp, 0xC` above the branch and keeps `p` in a saved reg
+  (`mr r7, r3` + `mr r4, r7`), matching retail's 27-instruction schedule; without it
+  MWCC emits `mr r4, r3` late and lands 1 instruction short.
+- **`btm_vendor_specific_evt` register colors:** (1) load `p_cb` **after** the
+  `LogMsg_0` call (r12 volatile), not as a function-top initializer (r31 callee-saved);
+  (2) hold the base in a local `BtmDevctlCb *cb = &btm_cb;` and access fields through
+  `cb->` — this forces the base into callee-saved r31 across the LogMsg call instead of
+  r5 + `lis/addi` re-materialization after the call. Both were needed for the exact
+  38-instruction prologue (3 saved regs, frame -0x20).
+- **`btm_return_link_keys_evt` — in-place byte reversal must NOT be written as
+  `p1[j] = p1[21-j]` loops:** MWCC refuses to unroll the aliasing form (emits a rolled
+  `subfic`/`lbzx` indexed loop, ~284 vs retail 396 bytes). The retail's fully-unrolled
+  load-all/store-all reversal (6-byte BD_ADDR into registers, 16-byte key via a 16-byte
+  stack temp) is reproduced verbatim by the ogws donor shape:
+  `REVERSE_STREAM_TO_ARRAY(bd_addr, p1, BD_ADDR_LEN); REVERSE_STREAM_TO_ARRAY(link_key,
+  p1, LINK_KEY_LEN); ARRAY_TO_STREAM(p, bd_addr, BD_ADDR_LEN); ARRAY_TO_STREAM(p,
+  link_key, LINK_KEY_LEN);` with `p = (UINT8 *)(result + 1)` and a fresh `p1 = p` per
+  key. **GC/3.0a5.2 does not inline `memcpy` even for constant sizes** (btm_dev_init
+  emits `bl memcpy` with `len=3`) — write-backs must use the macros or direct copies.
+- String-literal relocs (`"…"` → local `@N` labels) show as reloc-name drift
+  (`@2332` vs `@348`) with equal addends; cycle still reports 100% FULL_MATCH
+  (data_value-equal), no `exact_renames` needed.
+
 ## RVL WUD — debug strings via `extern lbl_805xxxxx[]` labels, not literals (US, 10× matched)
 
 `libs/RVL_SDK/src/revolution/wud/WUD.c` — 10 targets

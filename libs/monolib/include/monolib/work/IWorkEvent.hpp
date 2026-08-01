@@ -18,13 +18,14 @@ with the entries for each instead just being 0 in the vtable. This points to the
 events being unused as well.
 
 Default virtual bodies (WorkEvent1..31, OnFileEvent, OnPauseTrigger) live in
-kyoshin/CGame.cpp to match retail weak placement. Only ~IWorkEvent stays in
-IWorkEvent.cpp. Do not make these inline in the header -- that pulls weak stubs
-into every overriding TU and blows split budgets (see MWCC_REFERENCE
-CBattery/CBgTex note). */
+kyoshin/CGame.cpp to match retail weak placement. ~IWorkEvent is inline-empty so
+MWCC elides the base-dtor call in derived dtors (retail shape); a strong copy is
+defined in kyoshin/CTaskGame.cpp for symbol placement. Do not make these inline
+in the header -- that pulls weak stubs into every overriding TU and blows split
+budgets (see MWCC_REFERENCE CBattery/CBgTex note). */
 class IWorkEvent {
 public:
-    virtual ~IWorkEvent();
+    virtual ~IWorkEvent(){}
     virtual bool WorkEvent1(UNKTYPE* r4, const char* r5);
     virtual bool OnFileEvent(CEventFile* pEventFile);
     virtual bool WorkEvent3(UNKTYPE* r4);

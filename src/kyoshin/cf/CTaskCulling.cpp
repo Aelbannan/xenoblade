@@ -30,8 +30,6 @@ struct OccFrustumEntry {
 cf::CTaskCulling* lbl_eu_80664328;
 
 namespace cf{
-    CTaskCulling* CTaskCulling::spInstance;
-
     //unused
     ml::CVec3 CTaskCulling::lbl_80579018_0 = ml::CVec3(5,30,50);
     ml::CVec3 CTaskCulling::lbl_80579018_C = ml::CVec3(5,30,50);
@@ -44,17 +42,17 @@ namespace cf{
     unk98(),
     unkDC(),
     unk120(0){
-        spInstance = this;
+        lbl_eu_80664328 = this;
         pScene->unkB4 = this;
         unk94 = mtl::MemManager::allocate_head(mtl::MemManager::getHandleMEM2(), 0x1000, 4);
     }
 
     CTaskCulling::~CTaskCulling(){
-        spInstance = nullptr;
+        lbl_eu_80664328 = nullptr;
     }
 
 void CTaskCulling::func_801A2BD0(unsigned long r3){
-    CTaskCulling* instance = spInstance;
+    CTaskCulling* instance = lbl_eu_80664328;
     
     if(instance != nullptr){
         if(r3 != 0){
@@ -76,23 +74,23 @@ void CTaskCulling::func_801A2BD0(unsigned long r3){
     }
 
 bool CTaskCulling::ICulling_UnkVirtualFunc2(const ml::CVec3& r4, float r5){
-        if(spInstance == nullptr) return false;
+        if(lbl_eu_80664328 == nullptr) return false;
         return (unk120 & 8) ? false : mOccCulling.func_801A1444(r4, r5);
     }
 
 bool CTaskCulling::ICulling_UnkVirtualFunc3(const ml::CVec3& r4, const ml::CVec3& r5, int r6){
-        if(spInstance == nullptr) return false;
+        if(lbl_eu_80664328 == nullptr) return false;
         return mOccCulling.func_801A1550(r4, r5, r6);
     }
 
 void CTaskCulling::func_801A2C94(){
-    CTaskCulling* instance = spInstance;
+    CTaskCulling* instance = lbl_eu_80664328;
     if (instance == nullptr) return;
     instance->mOccCulling.func_801A0794();
 }
 
     void CTaskCulling::func_801A2CAC(){
-        if(spInstance == nullptr) return;
+        if(lbl_eu_80664328 == nullptr) return;
 
         func_801A2C94();
 
@@ -100,19 +98,19 @@ void CTaskCulling::func_801A2C94(){
         u32 r4, r5, r6, r7;
 
         func_800AA318(gm->unk70, &r4, &r5, &r6, &r7);
-        func_800AA33C(spInstance->unk98, gm->unk70, 0, 0);
-        func_800AA33C(spInstance->unkDC, gm->unk70, 1, 0);
+        func_800AA33C(lbl_eu_80664328->unk98, gm->unk70, 0, 0);
+        func_800AA33C(lbl_eu_80664328->unkDC, gm->unk70, 1, 0);
 
-        spInstance->unkDC.unkInline1("\\");
+        lbl_eu_80664328->unkDC.unkInline1("\\");
 
-        OccBufferHead* head = (OccBufferHead*)spInstance->unk94;
+        OccBufferHead* head = (OccBufferHead*)lbl_eu_80664328->unk94;
 
         if(std::strcmp("occ", head->magic) == 0){
             OccFrustumEntry* entry = (OccFrustumEntry*)(head + 1); // at offset 0x10
 
             for (int i = 0; i < head->count; i++) {
-                if(spInstance != nullptr){
-                    spInstance->mOccCulling.addFrustum(entry->vec0, entry->vec1, entry->vec2, entry->field_24);
+                if(lbl_eu_80664328 != nullptr){
+                    lbl_eu_80664328->mOccCulling.addFrustum(entry->vec0, entry->vec1, entry->vec2, entry->field_24);
                 }
                 entry++;
             }
@@ -135,7 +133,7 @@ CTaskCulling* CTaskCulling::getInstance() {
 
         mpScene->unkB4 = nullptr;
         //???
-        if(spInstance != nullptr) spInstance->mOccCulling.func_801A0794();
+        if(lbl_eu_80664328 != nullptr) lbl_eu_80664328->mOccCulling.func_801A0794();
 
         DELETE_OBJ(unk94);
     }

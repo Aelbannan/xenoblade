@@ -24,6 +24,10 @@ extern "C" {
     // Retail symbols.txt recovers this as Fv (wrong mangling); call by that name for reloc match.
     void setPad__Q22cf13CfGameManagerFv(int r3, CPad* pPad, u32 r5);
     extern const float lbl_eu_8066A208;
+    // Retail sbss singleton (config symbols.txt); mangled spInstance fails reloc name match.
+    extern cf::CfPadTask* lbl_eu_80664448;
+    // Retail sbss battery slot; mangled sWiimoteBattery fails reloc name match.
+    extern u32 lbl_eu_80664444;
 }
 
 namespace cf{
@@ -32,8 +36,6 @@ namespace cf{
     bool CfPadTask::sMainPadIsGCController;
     u8 CfPadTask::sWpadDisconnectTimer;
 
-    u32 CfPadTask::sWiimoteBattery;
-    CfPadTask* CfPadTask::spInstance;
     u32 CfPadTask::lbl_80666D3C;
     u32 CfPadTask::sMainPadType;
     float CfPadTask::sInputDisableTimer;
@@ -49,12 +51,12 @@ namespace cf{
 void CfPadTask::Init(){
     mErrorFrameCount = 0;
     mNoErrorFrameCount = 0;
-    spInstance = this;
+    lbl_eu_80664448 = this;
 }
 
     void CfPadTask::Term(){
         CLibHbm::setCurrentWpadChannel(WPAD_CHAN_INVALID);
-        spInstance = nullptr;
+        lbl_eu_80664448 = nullptr;
     }
 
 void CfPadTask::copyInputFlag(CPad* pPad, u32 srcFlag, u32 dstFlag){
@@ -85,7 +87,7 @@ void CfPadTask::func_801C1B94(float f1){
 
 //Check if input is currently disabled
 bool CfPadTask::func_801C1BC0(){
-        return sInputDisableTimer > ml::epsilon;
+        return sInputDisableTimer > lbl_eu_8066A208;
     }
 
 //Set the button disable timer (A/B/+- buttons ignored until timer expires)
@@ -467,12 +469,12 @@ int CfPadTask::checkForControllerError(bool noError) {
     }
 
 u32 CfPadTask::getWiimoteBattery() {
-    return sWiimoteBattery;
+    return lbl_eu_80664444;
 }
 
 void CfPadTask::wpadGetInfoCallback(s32 chan, s32 result){
-    if(spInstance != NULL && result == WPAD_ERR_OK){
-        sWiimoteBattery = sWpadInfo.battery;
+    if(lbl_eu_80664448 != NULL && result == WPAD_ERR_OK){
+        lbl_eu_80664444 = sWpadInfo.battery;
     }
 }
 

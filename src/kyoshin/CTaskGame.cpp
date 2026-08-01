@@ -5,9 +5,6 @@ u32 lbl_80666624;
 u32 lbl_80666630;
 u32 lbl_80666634;
 
-// IWorkEvent destructor - strong symbol to override weak from IWorkEvent.cpp
-IWorkEvent::~IWorkEvent() {}
-
 void func_8004041C(void* self, u8 a1, float a2, int a3, u32 a4, u8 a5, u32 a6, u32 a7) {
     struct Fields {
         u8 field0;

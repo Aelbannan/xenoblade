@@ -36,12 +36,8 @@ void gki_init_free_queue(UINT8 id, UINT16 size, UINT16 total, void* p_mem) {
     hdr = (BUFFER_HDR_T*)p_mem;
     p_cb->freeq[id].p_first = hdr;
 
-    if (total == 0) {
-        goto finish;
-    }
-
-    /* Retail has an 8x CTR unroll when total>8; MWCC does not emit it from a
-     * handwritten 8-body (size blows past 0x220). Keep a single loop. */
+    /* Single loop: entry test (0 < total) covers the total==0 case, so the
+     * retail emit has exactly one beq before the 8x CTR unroll. */
     for (i = 0; i < total; i++) {
         hdr->task_id = GKI_INVALID_TASK;
         hdr->q_id = id;
@@ -52,7 +48,6 @@ void gki_init_free_queue(UINT8 id, UINT16 size, UINT16 total, void* p_mem) {
         hdr1->p_next = hdr;
     }
 
-finish:
     hdr1->p_next = NULL;
     p_cb->freeq[id].p_last = hdr1;
 }
@@ -224,7 +219,7 @@ void GKI_freebuf(void* p_buf) {
     UINT32 v;
     UINT32 exp;
     UINT8 bad;
-    /* Retail: string pool base in r5 only at prologue (no early gki_cb → no r30). */
+    /* Retail: string pool base in r5 only at prologue (no early gki_cb -> no r30). */
     char* msg = (char*)"getbuf: Size is zero";
 
 #if (GKI_ENABLE_BUF_CORRUPTION_CHECK == TRUE)
@@ -233,7 +228,7 @@ void GKI_freebuf(void* p_buf) {
     }
 
     p_hdr = (BUFFER_HDR_T*)((UINT8*)p_buf - BUFFER_HDR_SIZE);
-    /* Odd hdr → size 0; else q_id>=9 → 0; else load (retail bge-skip shape). */
+    /* Odd hdr -> size 0; else q_id>=9 -> 0; else load (retail bge-skip shape). */
     if ((UINT32)p_hdr & 1) {
         buf_size = 0;
     } else {
@@ -447,18 +442,31 @@ void GKI_enqueue_head(BUFFER_Q* p_q, void* p_buf) {
     BUFFER_HDR_T* p_hdr;
     UINT32* magic;
     UINT16 buf_size;
+    UINT8 bad;
 
 #if (GKI_ENABLE_BUF_CORRUPTION_CHECK == TRUE)
     p_hdr = (BUFFER_HDR_T*)((UINT8*)p_buf - BUFFER_HDR_SIZE);
-    buf_size = 0;
-    if (!((UINT32)p_hdr & 1)) {
+    if ((UINT32)p_hdr & 1) {
+        buf_size = 0;
+    } else {
         if (p_hdr->q_id < GKI_NUM_TOTAL_BUF_POOLS) {
             buf_size = gki_cb.com.freeq[p_hdr->q_id].size;
+        } else {
+            buf_size = 0;
         }
     }
 
     magic = (UINT32*)((UINT8*)p_buf + buf_size);
-    if (gki_magic_corrupted(magic)) {
+    if ((UINT32)magic & 1) {
+        bad = 1;
+    } else {
+        /* Materialize exp first; the != compare lowers to the dual-subf form. */
+        UINT32 exp = MAGIC_NO;
+        UINT32 v = *magic;
+        bad = (v != exp);
+    }
+
+    if (bad) {
         GKI_exception(GKI_ERROR_BUF_CORRUPTED, "Enqueue - Buffer corrupted");
         return;
     }
@@ -622,7 +630,7 @@ UINT8 GKI_create_pool(UINT16 size, UINT16 count, UINT8 permission, void* p_mem_p
         }
     }
 
-    /* Scalar shift — handwritten 8× CTR body regresses (~48%). */
+    /* Scalar shift - handwritten 8x CTR body regresses (~48%). */
     for (j = p_cb->curr_total_no_of_pools; j > i; j--) {
         p_cb->pool_list[j] = p_cb->pool_list[j - 1];
     }
@@ -639,10 +647,30 @@ UINT8 GKI_create_pool(UINT16 size, UINT16 count, UINT8 permission, void* p_mem_p
     return xx;
 }
 
+/* Retail has no standalone symbol: MWCC inlines this into GKI_delete_pool.
+ * Kept as a separate function like the original GKI source - the caller-side
+ * `curr_total_no_of_pools--` must NOT be fused with the loop test. */
+static void gki_remove_from_pool_list(UINT8 pool_id) {
+    tGKI_COM_CB* p_cb = &gki_cb.com;
+    UINT8 i;
+
+    for (i = 0; i < p_cb->curr_total_no_of_pools; i++) {
+        if (pool_id == p_cb->pool_list[i]) {
+            break;
+        }
+    }
+
+    while (i < (p_cb->curr_total_no_of_pools - 1)) {
+        p_cb->pool_list[i] = p_cb->pool_list[i + 1];
+        i++;
+    }
+
+    return;
+}
+
 void GKI_delete_pool(UINT8 pool_id) {
     FREE_QUEUE_T* Q;
     tGKI_COM_CB* p_cb = &gki_cb.com;
-    UINT8 i;
 
     if ((pool_id >= GKI_NUM_TOTAL_BUF_POOLS) || (!p_cb->pool_start[pool_id])) {
         return;
@@ -665,17 +693,7 @@ void GKI_delete_pool(UINT8 pool_id) {
         p_cb->pool_end[pool_id] = NULL;
         p_cb->pool_size[pool_id] = 0;
 
-        for (i = 0; i < p_cb->curr_total_no_of_pools; i++) {
-            if (pool_id == p_cb->pool_list[i]) {
-                break;
-            }
-        }
-
-        while (i < (p_cb->curr_total_no_of_pools - 1)) {
-            p_cb->pool_list[i] = p_cb->pool_list[i + 1];
-            i++;
-        }
-
+        gki_remove_from_pool_list(pool_id);
         p_cb->curr_total_no_of_pools--;
     } else {
         GKI_exception(GKI_ERROR_DELETE_POOL_BAD_QID, "Deleting bad pool");

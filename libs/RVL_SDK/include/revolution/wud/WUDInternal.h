@@ -196,8 +196,8 @@ typedef struct WUDCB {
     u16 bufferStatus0; // at 0x744
     u16 bufferStatus1; // at 0x746
 
-    u16 UNK_0x748; // at 0x748
-    u16 UNK_0x74A; // at 0x74A
+    s16 UNK_0x748; // at 0x748
+    s16 UNK_0x74A; // at 0x74A
 } WUDCB;
 
 extern WUDCB __rvl_wudcb;

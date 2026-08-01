@@ -1785,11 +1785,20 @@ The buffer-param builders hoist **all** `li`s before the first store.
   earlyGain, fusedGain` so MWCC homes them to **f0..f7** and emits retail's
   setup (`1.0`→f2, `(1-lpf)`→f5, `0.6`→f3, gains→f6/f7, coefs→f1..f4). Keep
   `lpfCoef1 = 1.0f - reverb->lpfCoef; lpfCoef2 = reverb->lpfCoef;` then
-  `early/fused * 0.6f`; hoist sample positions; unroll pos updates. Remaining
-  miss is **i2f magic f10 vs f11** (cascades loop FPR temps) plus busIn path
-  GPR color (`r24`/`r25`/`r26`). Loading mem floats before `1.0f`, hoisting
-  `outGain`/`sendGain`, or a live `0.0f` pad can force magic→f11 but regresses
-  match/size. TU is `-lang=c` (C89): no mid-block declarations.
+  `early/fused * 0.6f`; hoist sample positions; unroll pos updates. **Fold
+  `earlyOut` into `earlySample`** (write `earlySample = earlySample *
+  earlyGain;` and `output = earlySample + fusedOut * fusedGain;`, dropping the
+  separate `earlyOut` local) — MWCC then reuses earlySample's FPR for the
+  output add instead of allocating a new one (39→27 mismatches, all pure
+  reg-swaps). Remaining miss is **i2f magic f10 vs f11** (cascades loop FPR
+  temps) plus busIn path GPR color (`r24`/`r25`/`r26`): the decomp colors form
+  a 3-cycle rotated from retail (GPR r24→r25→r26→r24; FPR data/earlySample/
+  magic f9→f11→f10→f9) in the busIn conversion block only — the allocator's
+  free-list order there differs and cannot be steered from high-level C without
+  structural change (tried: addend flip, named temps, hoists, decl-order
+  swaps, polarity flip — all regress). Loading mem floats before `1.0f`,
+  hoisting `outGain`/`sendGain`, or a live `0.0f` pad can force magic→f11 but
+  regresses match/size. TU is `-lang=c` (C89): no mid-block declarations.
 - **`.sdata2` pool order:** compute the `pow` exponent in a local first
   (`f32 exp = -3.0f * …; (f32)pow(10.0, exp);`) so MWCC emits `-3` (with pad),
   then `10.0`, then `0.95` (with pad) — matching retail’s 0x40 pool tail.

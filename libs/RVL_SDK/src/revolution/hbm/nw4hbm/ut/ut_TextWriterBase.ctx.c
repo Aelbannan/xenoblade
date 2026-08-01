@@ -14023,6 +14023,8 @@ f32 TextWriterBase<T>::CalcLineWidth(const T* pStr, int len) {
 
 template <typename T>
 int TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T* pStr, int len) {
+    const T* pStrBegin = pStr;
+
     PrintContext<T> context = { this, pStr };
 
     CharStrmReader reader = GetFont()->GetCharStrmReader();
@@ -14036,10 +14038,10 @@ int TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T* pStr, int len) {
     pRect->top = Min(0.0f, GetLineHeight());
     pRect->bottom = Max(0.0f, GetLineHeight());
 
-    reader.Set(pStr);
+    reader.Set(pStrBegin);
     u16 ch = reader.Next();
 
-    while (static_cast<const T*>(reader.GetCurrentPos()) - pStr <= len) {
+    while (static_cast<const T*>(reader.GetCurrentPos()) - pStrBegin <= len) {
         if (ch < ' ') {
             Rect r(x, 0.0f, 0.0f, 0.0f);
             context.str = static_cast<const T*>(reader.GetCurrentPos());
@@ -14090,7 +14092,7 @@ int TextWriterBase<T>::CalcLineRectImpl(Rect* pRect, const T* pStr, int len) {
         ch = reader.Next();
     }
 
-    return static_cast<const T*>(reader.GetCurrentPos()) - pStr;
+    return static_cast<const T*>(reader.GetCurrentPos()) - pStrBegin;
 }
 
 template <typename T>

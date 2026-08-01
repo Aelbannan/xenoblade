@@ -261,8 +261,8 @@ UINT8 *sdpu_build_attrib_seq (UINT8 *p_out, UINT16 *p_attr, UINT16 num_attrs)
 *******************************************************************************/
 UINT8 *sdpu_build_attrib_entry (UINT8 *p_out, tSDP_ATTRIBUTE *p_attr)
 {
-    UINT8   *p_data;
     INT32    xx;
+    UINT8   *p_data;
 
     /* First thing is the attribute ID (unsigned 16-bit integer). */
     *p_out++ = (UINT_DESC_TYPE << 3) | SIZE_TWO_BYTES;
@@ -395,12 +395,12 @@ void sdpu_build_n_send_error (tCONN_CB *p_ccb, UINT16 trans_num, UINT16 error_co
 *******************************************************************************/
 UINT8 *sdpu_extract_uid_seq (UINT8 *p, UINT16 param_len, tSDP_UUID_SEQ *p_seq)
 {
-    UINT8   *p_end;
     UINT32   seq_len;
     INT32    uuid_len;
     UINT8    type;
     UINT8    size_code;
     int      xx;
+    UINT8   *p_end;
 
     p_seq->num_uuids = 0;
 
@@ -535,7 +535,7 @@ UINT8 *sdpu_extract_attr_seq (UINT8 *p, UINT16 param_len, tSDP_ATTR_SEQ *p_seq)
         p += 3;
         break;
     case SIZE_IN_NEXT_LONG:
-        seq_len = (*(p + 1) << 24) + (*(p + 2) << 16) + (*(p + 3) << 8) + *(p + 4);
+        seq_len = (UINT32)(*(p + 4)) + ((UINT32)(*(p + 3)) << 8) + ((UINT32)(*(p + 2)) << 16) + ((UINT32)(*(p + 1)) << 24);
         p += 5;
         break;
     default:
@@ -571,7 +571,7 @@ UINT8 *sdpu_extract_attr_seq (UINT8 *p, UINT16 param_len, tSDP_ATTR_SEQ *p_seq)
             p += 2;
             break;
         case SIZE_IN_NEXT_LONG:
-            attr_len = (*p << 24) + (*(p + 1) << 16) + (*(p + 2) << 8) + *(p + 3);
+            attr_len = (UINT32)(*(p + 3)) + ((UINT32)(*(p + 2)) << 8) + ((UINT32)(*(p + 1)) << 16) + ((UINT32)(*p) << 24);
             p += 4;
             break;
         default:

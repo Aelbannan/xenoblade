@@ -21,6 +21,7 @@
 #include "revolution/BTE/stack/btm/btm_int.h"
 #undef btm_sco_chk_pend_unpark
 
+extern void LogMsg_0(UINT32 trace_set_mask, const char *fmt_str);
 extern void LogMsg_2(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1,
                      UINT32 p2);
 extern void LogMsg_6(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1,
@@ -34,6 +35,16 @@ extern BOOLEAN btsnd_hcic_setup_esco_conn(UINT16 handle, UINT32 tx_bw,
                                           UINT16 voice_contfmt,
                                           UINT8 retrans_effort,
                                           UINT16 packet_types);
+extern void btsnd_hcic_accept_conn(BT_HDR *p_buf, BD_ADDR bd_addr, UINT8 role);
+extern void btsnd_hcic_reject_conn(BT_HDR *p_buf, BD_ADDR bd_addr,
+                                   UINT8 reason);
+extern void btsnd_hcic_accept_esco_conn(BT_HDR *p_buf, BD_ADDR bd_addr,
+                                        UINT32 tx_bw, UINT32 rx_bw,
+                                        UINT16 max_latency, UINT16 voice_contfmt,
+                                        UINT8 retrans_effort,
+                                        UINT16 packet_types);
+extern void btsnd_hcic_reject_esco_conn(BT_HDR *p_buf, BD_ADDR bd_addr,
+                                        UINT8 reason);
 extern void btm_chg_all_acl_pkt_types(BOOLEAN is_sco_active);
 
 /* Retail-layout overlay of the btm_cb fields used by the SCO functions
@@ -79,8 +90,6 @@ void btm_sco_init(void)
     cb[0x1909] = 2;
 }
 
-void btm_esco_conn_rsp(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle, tBTM_ESCO_DATA* p_esco_data) {}
-
 /* SCO control-block states (retail values; btm_int.h does not define them) */
 #define SCO_ST_UNUSED           0
 #define SCO_ST_LISTENING        1
@@ -89,6 +98,74 @@ void btm_esco_conn_rsp(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle, tBTM_ES
 #define SCO_ST_CONNECTED        4
 #define SCO_ST_DISCONNECTING    5
 #define SCO_ST_PEND_UNPARK      6
+
+void btm_esco_conn_rsp(UINT16 sco_inx, UINT8 hci_status, BD_ADDR bda,
+                       tBTM_ESCO_PARAMS *p_parms)
+{
+    tSCO_CONN *p_sco = NULL;
+    tBTM_ESCO_PARAMS *p_setup;
+    BT_HDR *p_buf;
+    UINT16 temp_pkt_types;
+
+    if ((p_buf = GKI_getpoolbuf(2)) == NULL) {
+        if (SCO_CB->trace_level >= BT_TRACE_LEVEL_ERROR)
+            LogMsg_0(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK |
+                     TRACE_TYPE_ERROR, "btm_esco_conn_rsp -> No Resources");
+        return;
+    }
+
+    if (sco_inx < 3)
+        p_sco = &SCO_CB->sco_db[sco_inx];
+
+    if (hci_status != HCI_SUCCESS) {
+        if (p_sco)
+            p_sco->state = (p_sco->state == SCO_ST_W4_CONN_RSP)
+                               ? SCO_ST_LISTENING
+                               : SCO_ST_UNUSED;
+
+        if (!SCO_CB->esco_supported)
+            btsnd_hcic_reject_conn(p_buf, bda, hci_status);
+        else
+            btsnd_hcic_reject_esco_conn(p_buf, bda, hci_status);
+    } else {
+        btm_chg_all_acl_pkt_types(TRUE);
+        p_sco->state = SCO_ST_CONNECTING;
+
+        if (SCO_CB->esco_supported && p_sco->link_type == BTM_LINK_TYPE_ESCO) {
+            p_setup = &p_sco->esco_setup;
+
+            if (p_parms)
+                *p_setup = *p_parms;
+
+            p_setup->packet_types = SCO_CB->def_esco_parms.packet_types;
+
+            temp_pkt_types =
+                BTM_SCO_SUPPORTED_PKTS_MASK & p_setup->packet_types &
+                SCO_CB->btm_sco_pkt_types_supported;
+
+            if (!(temp_pkt_types & (HCI_ESCO_PKT_TYPES_MASK_EV3 |
+                                    HCI_ESCO_PKT_TYPES_MASK_EV4 |
+                                    HCI_ESCO_PKT_TYPES_MASK_EV5)))
+                temp_pkt_types |= HCI_ESCO_PKT_TYPES_MASK_EV3;
+
+            if (SCO_CB->local_version[0] >= HCI_PROTO_VERSION_2_0) {
+                temp_pkt_types |=
+                    (p_setup->packet_types & BTM_SCO_EXCEPTION_PKTS_MASK) |
+                    (SCO_CB->btm_sco_pkt_types_supported &
+                     BTM_SCO_EXCEPTION_PKTS_MASK);
+            }
+
+            btsnd_hcic_accept_esco_conn(
+                p_buf, bda, p_setup->tx_bw, p_setup->rx_bw,
+                p_setup->max_latency, p_setup->voice_contfmt,
+                p_setup->retrans_effort, temp_pkt_types);
+
+            p_setup->packet_types = temp_pkt_types;
+        } else {
+            btsnd_hcic_accept_conn(p_buf, bda, HCI_ROLE_MASTER);
+        }
+    }
+}
 
 static tBTM_STATUS btm_send_connect_request(UINT16 acl_handle,
                                                tBTM_ESCO_PARAMS *p_setup)
@@ -158,7 +235,64 @@ void btm_sco_chk_pend_unpark(UINT8 hci_status, UINT16 hci_handle, UINT8 mode)
     }
 }
 
-void btm_sco_conn_req(BD_ADDR bda, DEV_CLASS dev_class, UINT8 link_type) {}
+void btm_sco_conn_req(BD_ADDR bda, DEV_CLASS dev_class, UINT8 link_type)
+{
+    /* SCO DB at btm_cb+0x1854; plain pointer init keeps MWCC's per-use
+       btm_cb reloads (retail shape) instead of hoisting the base. */
+    tSCO_CONN *p = (tSCO_CONN *)((UINT8 *)&btm_cb + 0x1854);
+    UINT16 xx;
+    tBTM_ESCO_CONN_REQ_EVT_DATA evt_data;
+
+    for (xx = 0; xx < 3; xx++, p++) {
+        if (((p->state == SCO_ST_LISTENING && p->rem_bd_known) ||
+             p->state == SCO_ST_CONNECTING) &&
+            memcmp(p->bd_addr, bda, BD_ADDR_LEN) == 0) {
+            p->rem_bd_known = TRUE;
+            p->link_type = link_type;
+            memcpy(p->bd_addr, bda, BD_ADDR_LEN);
+
+            if (!p->p_esco_cback) {
+                btm_esco_conn_rsp(xx, HCI_SUCCESS, bda, NULL);
+            } else {
+                memcpy(evt_data.bd_addr, bda, BD_ADDR_LEN);
+                memcpy(evt_data.dev_class, dev_class, DEV_CLASS_LEN);
+                evt_data.link_type = link_type;
+                p->state = SCO_ST_W4_CONN_RSP;
+                evt_data.sco_inx = xx;
+                (*p->p_esco_cback)(BTM_ESCO_CONN_REQ_EVT,
+                                   (tBTM_ESCO_EVT_DATA *)&evt_data);
+            }
+            return;
+        }
+    }
+
+    if (SCO_CB->app_sco_ind_cb) {
+        for (xx = 0, p = &SCO_CB->sco_db[0]; xx < 3; xx++, p++) {
+            if (p->state == SCO_ST_UNUSED) {
+                p->is_orig = FALSE;
+                p->state = SCO_ST_LISTENING;
+                p->link_type = link_type;
+                memcpy(p->bd_addr, bda, BD_ADDR_LEN);
+                p->rem_bd_known = TRUE;
+                break;
+            }
+        }
+
+        if (xx < 3) {
+            /* app_sco_ind_cb at btm_cb+0x1850; raw access matches the
+               retail's fresh lis/addi/lwz at the dispatch site. */
+            (*(tBTM_SCO_IND_CBACK **)((UINT8 *)&btm_cb + 0x1850))(xx);
+            return;
+        }
+    }
+
+    if (*((UINT8 *)&btm_cb + 0x27C0) >= BT_TRACE_LEVEL_WARNING)
+        LogMsg_0(TRACE_CTRL_GENERAL | TRACE_LAYER_BTM | TRACE_ORG_STACK |
+                 TRACE_TYPE_WARNING,
+                 "btm_sco_conn_req: No one wants this SCO connection; rejecting it");
+
+    btm_esco_conn_rsp(3, HCI_ERR_HOST_REJECT_RESOURCES, bda, NULL);
+}
 
 void btm_sco_connected(UINT8 hci_status, BD_ADDR bda, UINT16 hci_handle,
                        tBTM_ESCO_DATA *p_esco_data)

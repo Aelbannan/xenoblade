@@ -1027,7 +1027,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/port_utils.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family (see rfc_utils.c / btm_devctl)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),

@@ -127,6 +127,18 @@ The policy exception is recorded in the target attempt log with `policy_exceptio
 
 ## RVL_SDK bte/btm TUs — retail alignment, layouts, and pool notes (US, mwcc_43_151 `-O4,p`)
 
+**Short string literals pool to `.sdata` (r13) under `-str reuse`** (bta_hh_act.c,
+GC/3.0a5.2): MWCC 3.0a5.2 never places an all-zero `static UINT8 x[8] = {0};`
+in `.sdata` (it folds zero initializers to `.sbss`, overriding even
+`__attribute__((section(".sdata")))`), and an `extern`/undefined decl leaves the
+link unresolved. The retail `lbl_80665920` (8 zero bytes in `.sdata`, referenced
+via `R_PPC_EMB_SDA21` from `bta_hh_api_enable` / `bta_hh_sdp_cmpl`) is the string
+literal `"\0\0\0\0\0\0\0"` passed to `HID_HostSetSecurityLevel` — literals
+≤ 8 bytes go to `.sdata` under `-str reuse`, longer ones to `.data`. Passing the
+literal directly reproduces the `.sdata` object at offset 0 and the sda21 reloc
+with addend 0 (name-drift `@N` vs `lbl_80665920` only, tolerated under
+`functionRelocDiffs=data_value`), and restores data_match to 100%.
+
 **l2cap `l2c_utils.c` (and likely sibling `l2c_*.c` units) are GC-family, not Wii/1.1:**
 `mw_version="GC/3.0a5.2"` + `extra_cflags=["-func_align 4"]` is required to reproduce retail byte-for-byte in `l2cu_find_ccb_by_cid` (indexed `ccb_pool` access: GC emits the retail `add r4,r4,r0; lbz r0,0x178(r4); addi r5,r4,0x178`; Wii/1.1 and even GC-with-IPA merge the pointer add into `lbzu`) and `l2cu_lcb_disconnecting` (the `-func_align 16`/IPA scheduling nop after `mtctr` disappears only under `-func_align 4`). The dead `xx` counter in the ×2-unrolled pool loops (`l2cu_find_rcb_by_psm`, `l2cu_lcb_disconnecting`) reproduces from the canonical Broadcom form: `BOOLEAN status = FALSE; p_lcb = &l2cb.lcb_pool[0]; for (...) { if (...) { status = TRUE; break; } } return status;` — the `status` init hoists to `li r3,0` at function top and pins the return register. Verified 10/10 targets at 100% (all `FULL_MATCH`, split size PASS with 0x164 spare).
 
@@ -1117,8 +1129,8 @@ python3 tools/coop/reloc_map.py show --symbol spInstance
 ```
 
 - Detection aligns relocs **per function pair** (matched by name, equal `.text` size) and classifies each diff: `name` (bytes identical — pure rename), `addend` (only the addend field differs — rename + offset), `layout` (same symbol, offset drift — string pools, report-only), `structural` (not reloc-fixable). Section-level alignment is **not** used: misaligned objects produce false positives (e.g. `WaitingForCoverOpen` → `WaitingForCoverClose` — same `lwz r0, X@sda21(r0)` word in shifted streams).
-- The mined map keys named symbols globally (`spInstance__9CDeviceGX` → `lbl_eu_806656A0`, 29×) and TU-local labels (`@N` pools, `...bss.0` section relocs) per-unit (`unit@symbol`). Large addend deltas (> `MAX_MAP_ADDEND_DELTA`) are dropped as misalignment noise. Auto-mined entries reproduce the hand-written `exact_renames` rules (e.g. `s_nandUserAreaCallbackFmt` → `lbl_80551294`, `s_nanderrPath` → `lbl_805512B8`), so the tool can generate new `UnitRules` blocks instead of hand-writing them.
-- `hexdiff` embeds the same analysis: the terminal output ends with a **Reloc name drift** section listing each drift with the source `extern "C"` declaration, the `exact_renames` rule, or the objcopy `--redefine-sym` one-liner; `--json` adds `reloc_drift` + `reloc_suggestions` keys.
+- The mined map keys named symbols globally (`spInstance__9CDeviceGX` → `lbl_eu_806656A0`, 29×) and TU-local labels (`@N` pools, `...bss.0` section relocs) per-unit (`unit@symbol`). Large addend deltas (> `MAX_MAP_ADDEND_DELTA`) are dropped as misalignment noise. Auto-mined entries reproduce the *legacy* hand-written `exact_renames` rules (e.g. `s_nandUserAreaCallbackFmt` → `lbl_80551294`, `s_nanderrPath` → `lbl_805512B8`), confirming the map is correct — but **do not add new postprocess rules**: FORK.md §6 deprecates object/reloc postprocessing, so the tool only points at the approved source-level `extern "C"` fix (PLAN.md §17.6).
+- `hexdiff` embeds the same analysis: the terminal output ends with a **Reloc name drift** section listing each drift with the source `extern "C"` declaration (and an EQUIVALENT_MATCH fallback note when the symbol is an implicit pool that can't be named in source); `--json` adds `reloc_drift` + `reloc_suggestions` keys.
 
 ### 2. `extern "C"` on `bl` targets with retail mangling
 
@@ -4000,3 +4012,48 @@ spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
   records `has_indirect_calls` as a hard error for non-byte-identical bodies,
   so functions with callback dispatches can only accept via FULL_MATCH (100%).
   Byte-identical bodies bypass the callee gate entirely (opaque EABI contracts).
+
+## RVL WUD (US) — retail mixes -O4,p and -O4,s codegen; per-feature source keys (10 targets)
+
+Findings while matching the 10 WUD stack/sync/patch targets (`libs/RVL_SDK/src/revolution/wud/WUD.c`):
+
+1. **The retail WUD.c mixes optimization styles.** The device-scan loops
+   (`__wudSyncPrepareSearch`/`__wudSyncDone`/`__wudStackCheckDeviceInfo`) use the
+   **base+IV** strength-reduction form (`add rX, rBase, rIV; addi rY, rX, 0xE4`,
+   IV `+= 0x60` per iteration) — only `-O4,s` produces it. The prologues (4-reg
+   functions use **individual** `stw` spills, not `_savegpr_N`), the
+   `mulhwu 0x10624DD3` /1000 magic in `__wudInitHandler`, and the unrolled 8-byte
+   copy loop in `__wudRemovePatchCallback` are **-O4,p** signatures. No single
+   flag set reproduces both; `-O4,s -inline on` was chosen (unit split-size PASS
+   at 0x57D4 vs budget 0x6400; `-O4,p -inline auto` overflows by ~0x3A4).
+2. **-O4,s base+IV loop keys**: `int i` counter, ternary `((u32)i <= 9) ?
+   &_wcb.stdDevs[i] : &_wcb.smpDevs[i - 10]` with the **`_wcb.` global** form
+   (the `p->` local form produces a walking-pointer `mr` IV instead), and the
+   device read wrapped in `enabled = OSDisableInterrupts(); ... OSRestoreInterrupts(enabled);`
+   (return survives in r3, no `mr`). `-O4,p` always emits the walking-pointer
+   form for these; `u8 i` adds a `clrlwi` mask.
+3. **Tail-merged store via a temp local**: the `__wudStackHandler` case-3
+   `p->stackState = 4/2` needs a **function-scope `u8 nextState;`** assigned in
+   both branches then stored once after the if/else — otherwise MWCC emits two
+   separate `stb`s instead of the retail's `li; b join; li; join: stb` funnel.
+   This was the last 8 structural mismatches; the function reached 100%/FULL_MATCH.
+4. **Descriptor base materialized in the prologue**: `char* pMsg =
+   _wudWiiRemoteDescriptor;` declared as the **first** local (before `WUDCB* p`)
+   forces `lis/addi` of the descriptor base into the prologue, matching the
+   retail's `__wudStackHandler`/`__wudInstallPatchCallback` prologues; without
+   it MWCC defers the load into the case/branch that uses it.
+5. **Version debug print order**: `__wudStackHandler` prints
+   `lmp_subversion` (descriptor+0x56C, reads sp+0x10) **before**
+   `manufacturer` (+0x584, reads sp+0xE) — the reverse of the struct field order.
+6. **Retail `WUDDiscResp` is 8-aligned** (`services` is a 64-bit
+   `tBTA_SERVICE_MASK` in the real SDK; this repo's u32+padding variant makes the
+   struct 4-aligned, shifting `_wudDiscWork` to +0x854 vs retail +0x858). Fixing
+   the header to a `u64 services` did not help `__wudSyncTryConnect` because the
+   retail also materializes `wudcb+0x750/+0x858` bases (folded immediates) while
+   the decomp folds full offsets — left as-is; the separate-global form is kept.
+7. **Equivalence acceptance blocker confirmed for this unit**: every target's
+   SMT proof is `inconclusive_unvalidated_callee` via transitive bte internals
+   (`BTM_VendorSpecificCommand → … → LogMsg` etc., NOT_STARTED). With the
+   exception of `__wudStackHandler` (byte-identical → FULL_MATCH path), all
+   targets need 100% static; `--linked` and `--contract strict` do not bypass
+   the registry gate.

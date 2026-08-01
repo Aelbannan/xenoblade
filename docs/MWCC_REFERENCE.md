@@ -272,6 +272,13 @@ restructure each (`l2c_link_timeout` 76.3%, `l2c_link_send_to_lower` 79.5%,
 
 ## RVL_SDK bte/rfcomm rfc_port_if.c — 10/10 FULL_MATCH on Wii/1.1 mwcc_43_151 `-O4,p` (US)
 
+**rfc_port_fsm.c follow-up (us-803032bc rfc_process_test_rsp):** same padding fix
+applies — `-func_align 16` added 0x64 of inter-fn padding and blew the split;
+`extra_cflags=["-func_align 4"]` alone restores exact 0x11A0 .text with all 17
+functions byte-identical. Caveat vs sibling bte TUs: **do NOT add `-ipa off`
+here** — it regresses `rfc_port_sm_orig_wait_sec_check` / `rfc_port_sm_term_wait_sec_check`
+(only `-func_align 4` is safe for this unit).
+
 `libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c` (RFCOMM port-interface
 layer). All ten `RFCOMM_*Req/Rsp` APIs match 100% byte-for-byte with the **default
 Wii/1.1** compiler (`-O4,p`); note most sibling rfcomm files (port_rfc, port_utils,

@@ -3972,3 +3972,31 @@ spurious `nop` after `mtctr` and loses base-CSE in unrolled chains.
    (`btm_sec_alloc_dev`, `btsnd_hcic_*`, `LogMsg`, `l2cu_*`,
    `btm_initiate_rem_name`) are not accepted targets; `--linked` does not help
    (registry-level gate). They need FULL_MATCH or cross-unit callee acceptance.
+
+## bta_dm_act.c — bte search/discovery (GC/3.0a5.2, `-func_align 4`)
+
+`bta_dm_find_services` → FULL_MATCH (100%). Other bta_dm_* search functions at
+0-structural with residual pure reg-swaps. Reusable patterns:
+
+- **Declaration order drives which variable reuses the freed low register:**
+  in `bta_dm_find_services` the after-loop `p_msg`/`p_name` pair came out as a
+  clean `r24/r23` ↔ `r23/r24` swap with `p_msg` declared first; declaring
+  `p_name` first (the variable the retail keeps in the lowest callee-saved
+  register, `r23`) made it byte-identical. MWCC colours the first-declared
+  pointer that needs a callee-saved reg into the lowest free slot; the
+  declaration order must mirror the retail's register order, not the C use
+  order. (Same family as the btm_dev_timeout note above.)
+- **`p_buf` (getbuf result kept across bdcpy) reg-swap soft-cap**: when the
+  buffer pointer must survive a call, MWCC may reuse a dead loop-flag
+  register (`r27`) instead of the retail's fresh `r29`. Resisted: declaration
+  orders, `void *` vs struct type, `volatile`, initializer vs assignment,
+  hoisting the source address into a local vs inline. Only the inline form
+  changes codegen and it un-hoists the load (structural). Not C-controllable
+  without register hints (forbidden) — leave as EQUIVALENT_MATCH-eligible
+  reg-swap once the callee tree (`bta_sys_start_timer` DISCOVERY,
+  `BTM_ReadRemoteDeviceName` ACTIVE, `GKI_send_msg` DISCOVERY) is accepted.
+- **Indirect callback dispatch blocks EQUIVALENT_MATCH certification**
+  (`p_search_cback`/`cback` via function pointers): `_load_certified_callees`
+  records `has_indirect_calls` as a hard error for non-byte-identical bodies,
+  so functions with callback dispatches can only accept via FULL_MATCH (100%).
+  Byte-identical bodies bypass the callee gate entirely (opaque EABI contracts).

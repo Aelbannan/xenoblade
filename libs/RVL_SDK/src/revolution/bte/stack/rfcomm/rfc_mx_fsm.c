@@ -194,21 +194,31 @@ extern void rfc_mx_sm_state_configure(RfcMuxChannel* channel, u16 event, u8* dat
 extern void rfc_mx_sm_sabme_wait_ua(RfcMuxChannel* channel, u16 event, u8* data);
 extern void rfc_mx_sm_state_disc_wait_ua(RfcMuxChannel* channel, u16 event, u8* data);
 
-typedef void (*RfcMuxHandler)(RfcMuxChannel* channel, u16 event, u8* data);
-
 void rfc_mx_sm_execute(RfcMuxChannel* channel, u16 event, u8* data) {
-    static RfcMuxHandler handlers[7] = {
-        rfc_mx_sm_state_idle,
-        rfc_mx_sm_state_wait_conn_cnf,
-        rfc_mx_sm_state_configure,
-        rfc_mx_sm_sabme_wait_ua,
-        rfc_mx_sm_state_wait_sabme,
-        rfc_mx_sm_state_connected,
-        rfc_mx_sm_state_disc_wait_ua,
-    };
-
-    if (channel->state <= 6) {
-        handlers[channel->state](channel, event, data);
+    switch (channel->state) {
+    case 0:
+        rfc_mx_sm_state_idle(channel, event, data);
+        break;
+    case 1:
+        rfc_mx_sm_state_wait_conn_cnf(channel, event, data);
+        break;
+    case 2:
+        rfc_mx_sm_state_configure(channel, event, data);
+        break;
+    case 3:
+        rfc_mx_sm_sabme_wait_ua(channel, event, data);
+        break;
+    case 4:
+        rfc_mx_sm_state_wait_sabme(channel, event, data);
+        break;
+    case 5:
+        rfc_mx_sm_state_connected(channel, event, data);
+        break;
+    case 6:
+        rfc_mx_sm_state_disc_wait_ua(channel, event, data);
+        break;
+    default:
+        break;
     }
 }
 
@@ -323,7 +333,15 @@ void rfc_mx_sm_state_wait_sabme(RfcMuxChannel* channel, u16 event, u8* data) {
         LogMsg_1(0x90003, "rfc_mx_sm_state_wait_sabme - evt:%d", event);
     }
 
-    if (event == 7) {
+    switch (event) {
+    case 14:
+        channel->state = 0;
+        PORT_CloseInd(channel);
+        break;
+    case 0:
+        PORT_StartInd(channel);
+        break;
+    case 7:
         if (*(u16*)data != 0) {
             rfc_send_dm(channel, 0, 1);
         } else {
@@ -331,13 +349,13 @@ void rfc_mx_sm_state_wait_sabme(RfcMuxChannel* channel, u16 event, u8* data) {
             channel->state = 5;
             channel->field_0x71 = 1;
         }
-    } else if (event == 0) {
-        PORT_StartInd(channel);
-    } else if (event == 14) {
-        channel->state = 0;
-        PORT_CloseInd(channel);
-    } else if (rfc_cb.trace_level >= 4) {
-        LogMsg_2(0x90003, "rfc_mx_sm_state - evt:%d", event, channel->state);
+        break;
+    default:
+        if (rfc_cb.trace_level >= 4) {
+            LogMsg_2(0x90003, "RFCOMM MX ignored - evt:%d in state:%d", event,
+                     channel->state);
+        }
+        break;
     }
 }
 

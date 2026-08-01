@@ -139,6 +139,18 @@ All 10 targets in `RVL_SDK/src/revolution/bte/gki/gki_buffer.c` matched 100% (GK
 
 Also fixed: the file contained UTF-8 arrows/em-dashes (`→`, `—`, `×`) in comments which make `sjiswrap` fail the build (Shift JIS encoding errors); keep comments pure ASCII.
 
+## RVL_SDK bte/wbt wbt_ext.c — WBT_ExtCreateRecord FULL_MATCH (US, GC/3.0a5.2 `-func_align 4`)
+
+`WBT_ExtCreateRecord` (0xE0) went 73% HIGH_MATCH → 100% FULL_MATCH with two keys:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Decomp 12B short, dead `handle = 0` store missing on the failure path; constant 0 not held in r31 across the calls; `&rec` in r31 instead of r30 | Retail keeps the failure-path `handle = 0` store (`stw r31,0x10(r1)` before `li r3,0; b`), so MWCC hoists the constant 0 into callee-saved r31 for the whole function and uses r30 for `&rec`. With a plain `UINT32 handle`, MWCC dead-store-eliminates it (verified across Wii/1.1, Wii/1.0a, GC/3.0a5.2 and `-O4`/`-O4,p`/`-O4,s`, `-ipa` on/off) | Declare `volatile UINT32 handle;` — the SDP calls take `&handle` (output parameter written by the callee), and volatile prevents the DSE so the 0 stays in r31; pass `(UINT32 *)&handle` at the two SDP call sites. This single change fixed the prologue schedule, the r30/r31 split and the epilogue (52 → 9 → 0 mismatches) |
+| `attr_val` = {1,1} vs retail {0,1} | `BRCM_EXT_VERSION` is `0x0001` (UINT16 big-endian bytes 0x00,0x01) | Write `attr_val[0] = 0; attr_val[1] = 1;` (not 1,1) |
+| Unit must use the bte-family compiler | Retail bte is GC/3.0a5.2 (mwcc_41_60831), see bta_dm_act/btm_devctl notes | `mw_version="GC/3.0a5.2"` + `-func_align 4` on the Object in configure.py |
+
+`SDP_MAX_ATTR_LEN` must be locally defined to 80 (repo `bt_target.h` uses 400) or `memset(rec, 0, sizeof(tSDP_DI_RECORD))` grows to 0x4BA instead of retail's 0xFA. Comments must be pure ASCII (sjiswrap).
+
 ## RVL_SDK bte/main btu_task1.c — 4/4 FULL_MATCH (US, mwcc_43_151 `-O4,p`)
 
 All four functions in `RVL_SDK/src/revolution/bte/main/btu_task1.c` matched byte-identical (`btu_task_init`, `btu_task_msg_handler` us-802e0b80, `btu_start_timer`, `btu_stop_timer`). The dispatcher `btu_task_msg_handler` (0x37C) needed five distinct recovery keys:
@@ -1376,6 +1388,14 @@ Key observations from `UnkClass_8047CA88::func_8047CC4C/CAA8` (us-80480c1c / us-
 **Fv-with-hidden-params:** retail symbols ending `Fv` may still take args in r4/r5/r6/f1 (e.g. `func_8047CAA8__17UnkClass_8047CA88Fv(self, param)`). Implement with `extern "C"` + the exact mangled name and explicit params — the `bl` reloc name stays correct and MWCC passes the extra args normally.
 
 **Billboard layered-renderer application:** `MPFDrawBillLayTex`'s billboard quad paths use the NW4R `VEC3Add` high-level helper to reproduce retail paired-single `psq_l`/`ps_add`/`psq_st` sequences. Scalar `Vec.x/y/z` additions compiled to separate `lfs`/`fadds` instructions and reduced `func_8047A330` to 22.9% fuzzy; replacing only the four corner sums with `nw4r::math::VEC3Add` raised it to 59.3% and kept the split within budget. Use the SDK/NW4R vector helper for PS-heavy geometry rather than scalar C++ arithmetic.
+
+**MPFDrawDisplayList triangle-walker (us-80479384, 0x8C4):** a 2D map-grid height/color walker with s16 fast-cast height planes and NW4R PS color interpolation. Reusable findings:
+- **s16→f32 via GQR5:** retail uses `psq_l fr, d(rA), 1, qr5` (the SDK `__OSs16tof32` / `OSs16tof32` fast cast from `revolution/os/OSFastCast.h`); scalar casts do not reproduce it. Include `<revolution/os/OSFastCast.h>` and call `__OSs16tof32(&t->h0)` directly.
+- **u8→f32 double trick:** the 9 color-byte conversions all go through the `0x43300000` double-slot + `lfd`/`fsubs 2^52` trick; writing member assignments in **b, g, r order** (`c0.b = (f32)p->b; c0.g = ...; c0.r = ...;`) reproduces the retail's right-to-left conversion order (conversions b,g,r). The 2^52 double pools to a TU-local `@N` (value-equal reloc drift vs `lbl_eu_8066A7F8`).
+- **Degenerate-copy block placement is worth ~10% fuzzy:** writing the s==0 fallback as `if (s != 0) { interp...; return true; } copy...; return true;` puts the interp as the fall-through and the byte-copy out-of-line — exactly the retail's `beq copy` layout — and raised objdiff fuzzy from 67.7% to 78.2% (HIGH_MATCH) vs the inverted `if (s == 0) {copy; return;}` form.
+- **`cror eq,lt,eq / eq,gt,eq + bne` patterns:** MWCC emits the cror trick for strict `<`/`>` compares and direct `bge`/`beq` for `>=`/`==`; the exact mix is scheduling-dependent and mostly not source-controllable.
+- **Path structure:** each of the three edge pairs has an x-weight (vertical crossing: `outSlot[i]`, `yCross[i]`) and a y-weight (horizontal crossing: final color) variant; the final block blends the two stored crossings against `pos.z`. `ml::math::abs` reproduces `fabs; frsp`; `lbl_eu_8066A7F0` (1.0f) must be referenced via `extern const f32` to avoid TU-local pool drift.
+- **Unresolved:** the retail keeps two dead-store slots at sp+8/sp+0xC for the s16 fast-cast results (8 bytes) that shift every local slot; MWCC eliminates the equivalent stores in our build (register-pressure spill difference). The SMT probe times out on CFG exploration for this ~561-insn FP-heavy function.
 
 **CException compiler-context breakthrough:** `CException::~CException` required TU-local `-O4,s` plus explicit `-func_align 4` to select MWCC's `stmw/lmw r30` save/restore pair; default `-O4,p` emitted four individual `stw/lwz` instructions and was 8 bytes too large. The same flags preserved the exact `__ct__CException` and leaf helper sizes. Keep this as a configure-level optimization context, not a source-level register trick. Files: `configure.py`, `libs/monolib/src/core/CException.cpp`; destructor `0x68`, `FULL_MATCH`.
 
@@ -4971,3 +4991,45 @@ had been left flag-less, so the default Wii/1.1 was used).
 - **Local declaration order drives callee-saved allocation — a 3-way reg cycle (r29↔r30↔r31) is fixed by ordering locals by first use.** With `UINT8 pdu_id; UINT16 trans_num; UINT16 param_len; UINT8 *p_req; UINT8 *p_req_end;` MWCC assigned pdu_id→r31, p_req→r30, p_req_end→r29 (retail: p_req→r31, p_req_end→r30, pdu_id→r29). Reordering the declarations to first-use order (`p_req, p_req_end, pdu_id`) collapsed all 20 reg-swaps to 0 — 100% byte identity. Cheapest fix to try before touching expression shapes.
 - **Redundant inner `(UINT16)` casts in response builders add rlwinm instructions AND blew the unit split budget.** `max_list_len = (UINT16)(rem_mtu_size - 10)` inside the clamp `if (max_list_len > (UINT16)(rem_mtu_size - 10))` forces a pre-mask `rlwinm` of the clamp value plus a `or` conditional move; retail uses one `rlwinm` at the store (`cmpw; ble; rlwinm r30,r0,0,16,31`). Same for `(UINT8)(((UINT16)(p_rsp - p_param_len) - 2) >> 8)` — the mid-expression `(UINT16)` forces `rlwinm; subi; srawi` instead of retail's `subi; extrwi`. And the `copy_len = max_list_len; if (rsp_len <= max_list_len) copy_len = rsp_len;` min-copy re-masks the value into a fresh register; retail mutates `max_list_len` in place (`cmplw; bgt; mr r30,r0`). Removing the casts / using in-place min shaved the two helpers from 924→912 and 1068→1052 (unit exactly at budget 0xD10) and — as a side effect — collapsed their structural diffs from 204/222 to 26/1. Size-fitting edit == matching edit here.
 - **`if (*p_req == 0) { big-loop } else { checks }` inverted to `if (*p_req != 0) { checks } else { big-loop }` matches retail block order and removes a trailing `b`.** With the loop in the then-branch, MWCC placed the else-checks after the loop and emitted an extra unconditional `b` past them; retail falls through the loop condition directly into the shared response builder. Put the short error-check branch first (the then-branch is laid out first).
+
+## RVL HBM nw4hbm — weak dtor emission vs DOL-extracted retail .text (lyt units)
+
+**Symptom:** LinkList-using nw4hbm lyt units (lyt_group, lyt_pane, lyt_window,
+lyt_material, lyt_arcResourceAccessor) emit 0x40–0x58 unreferenced weak symbols
+per instantiated list type (`__dt__NonCopyableFv` deleting-dtor,
+`__dt__LinkList<T,N>Fv` implicit template dtor, `__dt__LinkListNodeFv`) that the
+retail DOL does not contain. The retail's original .o had them too, but the
+linker garbage-collected the unreferenced weaks — the DOL-extracted retail .o
+used by the size gate shows only surviving functions, so any faithful
+recompilation overshoots the split budget (e.g. lyt_group 0x40C vs 0x350).
+
+**Cause → fix:**
+- `ut_NonCopyable.h` defined `~NonCopyable() {}` (user-provided) in an
+  anonymous namespace. A user-provided dtor makes MWCC emit the 0x40
+  deleting-dtor wrapper (flags check + `__dl__`) as a weak copy in every TU that
+  instantiates a NonCopyable-derived class. **Removing the user-provided dtor
+  (implicit trivial dtor) and dropping the anonymous namespace (matches the
+  original HBM `inlines.h` layout) eliminates the 0x40 per TU** — verified no
+  regression on matched units (lyt_drawInfo, ut_Font, ut_ResFontBase,
+  ut_binaryFileFormat, ut_CharStrmReader, lyt_resourceAccessor).
+- The implicit `~LinkList<T,N>` template-dtor weak copies (0x58 each) resist
+  `-inline deferred,auto`, `-pragma "ipa off"`, `-RTTI off`, Wii/1.0a vs Wii/1.1,
+  and explicit empty template dtors (explicit `LinkListImpl::~LinkListImpl()`
+  body hits MWCC's protected-access quirk; explicit `~LinkList() {}` still
+  instantiates). Not yet solved; candidates: restructure `ut_LinkList.cpp` to
+  the retail's 3 symbols (helpers header-inline) or orchestrator tolerance for
+  linker-GC'd weak template instantiations.
+
+**Related bte pattern (already in this doc):** the `static __inline` search
+helper (`btm_inq_db_find` row) — inlined NULL-on-loop-exhaust + found-path `b`
+to the merge test — is what makes `BTM_SecDeleteDevice` byte-identical
+(`li p_rec,0` on the exhausted edge without a second compare).
+
+**Other reuse:**
+- `#pragma dont_inline on` around a same-TU stub (`StopAllSeq`) keeps a `bl` to
+  it from being inlined away while the stub is empty; drop when the stub gets a
+  real body large enough to never inline.
+- btm_dev.c / ptim.c are bte-family units → `mw_version="GC/3.0a5.2"` +
+  `-func_align 4` (retail bte packed, 4-aligned). ptim `period` is INT32 —
+  `period / 10` then emits the signed 0x66666667 div magic (UINT32 gives the
+  unsigned 0xCCCCCCCD sequence, 2 instructions shorter → 8-byte size miss).

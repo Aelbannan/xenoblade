@@ -14,18 +14,34 @@
  * Internal types (normally in l2c_int.h, inlined here for this TU)
  ******************************************************************************/
 
-/* L2CAP control block (global `l2cb`). Only the trace level is used here;
- * the rest is opaque padding (must stay > 8 bytes so MWCC does not treat
- * `l2cb` as small data — retail references it via lis/@l, not @sda21). */
+/* L2CAP control block (global `l2cb`). Only the fields referenced here are
+ * named; the rest is opaque padding (must stay > 8 bytes so MWCC does not
+ * treat `l2cb` as small data — retail references it via lis/@l, not @sda21). */
 typedef struct {
     UINT8   l2cap_trace_level;              /* 0x000 */
-    UINT8   opaque[0x7FF];                  /* rest of the retail CB */
+    UINT8   pad001[0x7B9];                  /* 0x001..0x7B9 */
+    UINT16  idle_timeout;                   /* 0x7BA */
+    UINT8   pad7BC[0x800 - 0x7BC];          /* 0x7BC..0x7FF */
 } tL2C_CB;
 
-/* Opaque control blocks owned by sibling TUs (l2c_utils/l2c_csm). */
+/* Link control block — only the fields referenced by this TU. */
 typedef struct t_l2c_linkcb tL2C_LCB;
 typedef struct t_l2c_rcb    tL2C_RCB;
-typedef struct t_l2c_ccb    tL2C_CCB;
+
+struct t_l2c_linkcb {
+    BOOLEAN in_use;                          /* 0x00 */
+    UINT8   pad01[3];                        /* 0x01 */
+    INT32   link_state;                      /* 0x04 */
+    UINT8   pad08[0x58 - 0x08];              /* 0x08..0x57 */
+    UINT16  idle_timeout;                    /* 0x58 */
+};
+
+/* Channel control block — only the fields referenced by this TU. */
+typedef struct t_l2c_ccb {
+    UINT8     pad00[0x10];
+    tL2C_LCB *p_lcb;                         /* 0x10 */
+    UINT8     pad14[0x7C - 0x14];
+} tL2C_CCB;
 
 /*******************************************************************************
  * External references
@@ -38,8 +54,13 @@ extern void      l2cu_release_rcb (tL2C_RCB *p_rcb);
 extern tL2C_CCB *l2cu_find_ccb_by_cid (tL2C_LCB *p_lcb, UINT16 cid);
 extern void      l2c_csm_execute (tL2C_CCB *p_ccb, UINT16 event, void *p_data);
 
-/* Event fed to the channel state machine. */
+/* Events fed to the channel state machine. */
+#define L2CEVT_L2CA_CONFIG_REQ      23
 #define L2CEVT_L2CA_DISCONNECT_REQ  26
+#define L2CEVT_L2CA_DISCONNECT_RSP  27
+
+/* Link state value checked by L2CA_SetIdleTimeout. */
+#define LST_DISCONNECTING           4
 
 /*******************************************************************************
  * L2CAP API entry points
@@ -78,7 +99,23 @@ BOOLEAN L2CA_ConnectRsp (BD_ADDR p_bd_addr, UINT8 id, UINT16 lcid,
 
 BOOLEAN L2CA_ConfigReq (UINT16 cid, tL2CAP_CFG_INFO *p_cfg)
 {
-    return FALSE;
+    tL2C_CCB *p_ccb;
+
+    L2CAP_TRACE_API1 ("L2CA_ConfigReq()  CID: 0x%04x", cid);
+
+    p_ccb = l2cu_find_ccb_by_cid (NULL, cid);
+
+    if (p_ccb == NULL)
+    {
+        L2CAP_TRACE_WARNING1 ("L2CAP - no CCB for L2CA_cfg_req, CID: %d", cid);
+        return (FALSE);
+    }
+
+    p_cfg->fcr_present = 0;
+
+    l2c_csm_execute (p_ccb, L2CEVT_L2CA_CONFIG_REQ, p_cfg);
+
+    return (TRUE);
 }
 
 BOOLEAN L2CA_ConfigRsp (UINT16 cid, tL2CAP_CFG_INFO *p_cfg)
@@ -107,7 +144,21 @@ BOOLEAN L2CA_DisconnectReq (UINT16 cid)
 
 BOOLEAN L2CA_DisconnectRsp (UINT16 cid)
 {
-    return FALSE;
+    tL2C_CCB *p_ccb;
+
+    L2CAP_TRACE_API1 ("L2CA_DisconnectRsp()  CID: 0x%04x", cid);
+
+    p_ccb = l2cu_find_ccb_by_cid (NULL, cid);
+
+    if (p_ccb == NULL)
+    {
+        L2CAP_TRACE_WARNING1 ("L2CAP - no CCB for L2CA_disc_rsp, CID: %d", cid);
+        return (FALSE);
+    }
+
+    l2c_csm_execute (p_ccb, L2CEVT_L2CA_DISCONNECT_RSP, NULL);
+
+    return (TRUE);
 }
 
 UINT8 L2CA_DataWrite (UINT16 cid, BT_HDR *p_data)
@@ -117,7 +168,38 @@ UINT8 L2CA_DataWrite (UINT16 cid, BT_HDR *p_data)
 
 BOOLEAN L2CA_SetIdleTimeout (UINT16 cid, UINT16 timeout, BOOLEAN is_global)
 {
-    return FALSE;
+    tL2C_CCB *p_ccb;
+    tL2C_LCB *p_lcb;
+
+    if (is_global)
+    {
+        l2cb.idle_timeout = timeout;
+    }
+    else
+    {
+        p_ccb = l2cu_find_ccb_by_cid (NULL, cid);
+
+        if (p_ccb == NULL)
+        {
+            L2CAP_TRACE_WARNING1 ("L2CAP - no CCB for L2CA_SetIdleTimeout, CID: %d",
+                                  cid);
+            return (FALSE);
+        }
+
+        p_lcb = p_ccb->p_lcb;
+
+        if ((p_lcb != NULL) && (p_lcb->in_use) &&
+            (p_lcb->link_state == LST_DISCONNECTING))
+        {
+            p_lcb->idle_timeout = timeout;
+        }
+        else
+        {
+            return (FALSE);
+        }
+    }
+
+    return (TRUE);
 }
 
 BOOLEAN L2CA_SetIdleTimeoutByBdAddr (BD_ADDR bd_addr, UINT16 timeout)

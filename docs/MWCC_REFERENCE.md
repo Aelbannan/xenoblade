@@ -187,6 +187,43 @@ inq/page scan vars 0x169C–0x16A6, `afh_first`/`afh_last` 0x27BD/0x27BE,
 `hcit_acl_data_size` 0x7C / `hcit_acl_pkt_size` 0x7E (flat layout; the btu.h
 `tBTU_CB` does not match).
 
+### btm_inq.c — 4× FULL_MATCH, 6× EQUIVALENT-ready (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
+
+FULL_MATCH: `BTM_SetInquiryScanType`, `BTM_SetPageScanType`, `BTM_SetInquiryMode`,
+`btm_initiate_rem_name`. The other six (`BTM_SetConnectability`, `BTM_CancelInquiry`,
+`btm_set_inq_event_filter`, `btm_process_inq_complete`, `BTM_ReadRemoteDeviceName`,
+`btm_inq_db_reset`) are 0-structural / size-identical with only reg-swaps, and are
+blocked on EQUIVALENT_MATCH only by unaccepted callees (`LogMsg` us-802e0830,
+`btsnd_hcic_inq_cancel` us-802f38b4, `btsnd_hcic_set_event_filter` us-802f4cec).
+Reusable patterns (all verified byte-for-byte on GC/3.0a5.2 `-O4,p`):
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Direct `btm_cb.field` accesses recompute `lis/addi btm_cb@ha/@l` after every call; retail keeps `&btm_cb` in one callee-saved register for the whole function | A `tBTM_INQ_CB *p_inq = &btm_cb;` local lets MWCC hoist the address into r29/r30 and keep it live across calls; direct accesses go through volatile temps | Use a `p_inq` local for the frequently-touched fields (state, inqfilt_*, p_inq_*); keep `trace_level`/`dev_state`/`p_bd_db` as direct `btm_cb.` accesses where the retail uses a second pointer or a fresh temp |
+| `num_bd_entries`/`max_bd_entries` stores recompute `&btm_cb` into a fresh volatile register (8 extra bytes) instead of reusing the p_bd_db pointer | The direct `btm_cb.num_bd_entries = 0` after a call gets a NEW CSE value; the retail reuses the p_bd_db pointer (r31) | Write them through the `p_inq` pointer (`p_inq->num_bd_entries = 0`) — register class differs from retail (a benign reg-swap) but size matches |
+| Early-return blocks land inline (branch inverted, `bc 4,2`) vs retail keeping the body inline and the return at the end (`bc 12,2`) | `if ((p = GKI_getpoolbuf(...)) == NULL) return X; <body>; return Y;` lays the early return first; retail has the body as fall-through | Write `p = alloc(); if (p != NULL) { <body>; return Y; } return X;` — the final `return X` becomes the epilogue-entry block |
+| `tBTM_STATUS s = BTM_SUCCESS; if (c) s = X;` emits a dead `li rN,0` init AND the conditional select; retail has one select | Init-at-declaration at the top of the function survives as dead code; retail's value comes from the select's else | Assign the init immediately before the `if`, or use a plain `UINT8 status;` set in both branches; the exact retail form `cmpwi; li rN,10; bne .L; li rN,0; .L: stb` comes from `s = 0; if (c) s = X;` with the init placed right before the `if` |
+| Local callee-saved registers come out swapped vs retail (e.g. status r30 vs retail r29) | MWCC assigns locals to callee-saved registers in declaration order; `p_inq` declared after `status` lands in a lower register | Order the declarations to match the retail's register order (`p_inq` first when the retail holds it in the highest register) |
+| `if (x == 1) a = FALSE; else return X;` vs retail `if (x != 0) { memcmp... return; } a = FALSE;` block order | The `!= 0` then-fall-through shape (`bne .fail; <body>; b .next; .fail: li r3,2; b exit; .next:`) comes from the if/else form | Write the condition as `== 0` with the assignment in the then and the return in the else, or `!= 0` with the return first and the body falling through (`if (memcmp(...) != 0) return (BTM_BUSY); start = FALSE;` where the return is the single statement) |
+| Busy/error returns via `status = X; return (status);` get constant-folded to `li r3,X` by MWCC | `return (status)` right after the assignment is folded; the retail keeps `li r28,X; mr r3,r28` via a shared trailing `return (status)` | Use a fall-through status variable: `if (c) status = BTM_BUSY; else if (...) { return (BTM_BUSY); } ... return (status);` — the shared trailing return makes MWCC emit `mr r3,status` once |
+| Ternary `(c) ? A : B` for the inquiry-complete status gets branchless-optimised (`neg/or/srawi/andi.`); retail uses a branch | MWCC branchless-selects ternaries with constant operands; the if-form `if (status != HCI_SUCCESS) btm_status = BTM_ERR_PROCESSING;` keeps the branch | Use the if-form with the init placed just before the `if` |
+| `if (xx < 12) p_cur = &p_ent->inq_info;` after a search loop emits `rlwinm;cmpli;bge` (u16 truncation) where retail has `li r31,0; cmpi r31,0; beq` | Retail nulls the scanned pointer on the loop-exhausted path then tests the pointer; MWCC emits an explicit u16 compare for the `xx < N` form and does NOT invent the pointer sentinel | Unresolved on GC/3.0a5.2: the pointer-null sentinel form (retail) is not reproducible from any high-level C tried (`if (p_ent)`, `if (xx<N)`, `if (xx==N) p_ent=NULL` all differ); keep the semantically-correct `if (xx < BTM_INQ_DB_SIZE) p_cur = &p_ent->inq_info;` (equivalence-safe, 94.8% static) |
+
+Retail `btm_cb` layout facts for btm_inq.s: `btm_features[8]` 0x640 (bit 0x10 = interlaced
+inq scan, 0x20 = interlaced page scan, 0x40 = inq RSSI), `dev_class` 0x648,
+`dev_state` 0x64E (`< 3` → `BTM_DEV_RESET` in the set-mode APIs), `p_remname_cmpl_cb`
+0x167C, `rmt_name_timer_ent` 0x1680, `discoverable_mode` 0x1698, `connectable_mode`
+0x169A, `page_scan_window` 0x169C, `page_scan_period` 0x169E, `inq_scan_window`
+0x16A0, `inq_scan_period` 0x16A2, `inq_scan_type` 0x16A4, `page_scan_type` 0x16A6,
+`remname_bda` 0x16A8, `remname_active` 0x16AE, `p_inq_cmpl_cb` 0x16B0,
+`p_inq_results_cb` 0x16B4, `p_inqfilter_cmpl_cb` 0x16B8, `p_inq_change_cb` 0x16BC,
+`inq_counter` 0x16C0, `inq_timer_ent` 0x16C4, `p_bd_db` 0x16DC, `num_bd_entries`
+0x16E0, `max_bd_entries` 0x16E2, `inq_db[12]` 0x16E4 (0x1C each), `inq_cmpl_info`
+0x183E (u8 status + u8 num_resp), `inqfilt_active` 0x1844, `inqfilt_type` 0x1845,
+`pending_filt_complete_event` 0x1847, `state` 0x1848, `trace_level` 0x27C0.
+The `BTM_SetDiscoverability`/`BTM_StartInquiry`/`btm_event_filter_complete`/
+`btm_process_inq_results` stubs are still to match.
+
 
 ## kyoshin/main (US) — early init + contiguous .data base
 

@@ -1217,6 +1217,35 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
   tBTM_ESCO_DATA*)`, `l2c_link_hci_conn_comp(UINT8,UINT16,BD_ADDR)`. No `extern
   "C"` needed — plain C prototypes in the `.c` suffice (file compiled as C).
 
+## RVL BTE `hcicmds` HCI command builders (Wii/1.1 `-O4,p`)
+
+`libs/RVL_SDK/src/revolution/bte/stack/hcic/hcicmds.c` — buffer-filling command
+builders. 7/10 of this batch matched `FULL_MATCH` with the same byte-pointer
+style as the prior `btsnd_hcic_write_inqscan_cfg`: `*(u16*)(b+2)=op/len`,
+`*(u16*)(b+4)=0`, then `b[k]=...` bytes, tail `b btu_hcif_send_cmd`
+(`btu_hcif_send_cmd` is called with one pointer arg and no prototype — implicit
+`int` — and MWCC tail-calls it). `u16` params need `(u8)x` / `(u8)(x >> 8)`
+which fold to `extrwi rX, rY, 8, 16`. The buffer-param builders hoist **all**
+`li`s before the first store.
+- **Pool-buffer builders (`btsnd_hcic_reset`, `btsnd_hcic_inq_cancel`,
+  `btsnd_hcic_read_local_features`, `read_bd_addr`, …) — scheduler ceiling:**
+  after `GKI_getpoolbuf` + null-check branch, retail batches the constant loads
+  one store AHEAD (`li S1; li S2; S1; li S3; li S4; S2; S3; S4; S5`); MWCC
+  `-O4,p` emits them one slot later (`li S1; S1; li S2; li S3; S2; li S4; …`),
+  leaving 1–2 li/store swaps (~91% fuzzy, sizes exact). Tried 6 source forms
+  (byte-cast, indexed-cast, ps/pb pointer locals, local BT_HDR struct,
+  `pp`-chain, verbatim `UINT16_TO_STREAM`/`UINT8_TO_STREAM` macros) — all
+  byte-identical; only the block's branch-target entry differs from retail's,
+  so this cannot be closed in source. SMT `check-objects
+  --assume-relocated-callees` proves `EQUIVALENT UNDER CONTRACT`.
+- **`EQUIVALENT_MATCH` on these is gated on callee certificates:** `cycle`'s
+  effect-aware proof fails `inconclusive_unvalidated_callee` because
+  `GKI_getpoolbuf` (`us-802ddd40`) and `btu_hcif_send_cmd` (`us-802f1858`) are
+  not accepted; both carry transitive unaccepted callee trees (GKI_enable/
+  disable/get_taskid/getbuf, GKI_enqueue/dequeue, `btu_start_timer`,
+  `bte_hcisu_send`). Unblock by accepting those trees, or 100% static match
+  (byte-identical bodies certify without callee lemmas).
+
 ## RVL AXFX ReverbStdExp schedule ceilings (Wii/1.1 `-O4,p`)
 
 - **`GetMemSize` (~45.7%)**: best high-level keeps the retail add chain
@@ -3146,3 +3175,29 @@ r31=base at every call diverges the fresh-memory UFs → exit.target mismatch
 (`inconclusive_abstraction`); the 3 functions with a `bctrl` err_func call
 (GetNumData/PutChunk/IsGetChunk) also fail the `has_indirect_calls` gate.
 Keep high-level C++ at the achieved ~83–90% HIGH_MATCH; **no** `insn_patches`.
+
+## nw4hbm ut_TextWriterBase — retail layout has NO mWidthLimit (US, 10× FULL_MATCH)
+
+Xenoblade's `nw4hbm::ut::TextWriterBase<T>` is 4 bytes smaller than the ogws/
+newer SDK header: **no `mWidthLimit` member**. Retail offsets (ctor 0x8033C770,
+SetCharSpace 0x8033C970, SetTabWidth 0x8033C9A0, SetDrawFlag 0x8033C9C0,
+SetTagProcessor 0x8033C9E0, IsDrawFlagSet 0x8033F110): mCharSpace@0x4C,
+mLineSpace@0x50, mTabWidth@0x54, mDrawFlag@0x58, mTagProcessor@0x5C, size 0x60.
+The ogws donor header (`mWidthLimit`@0x4C, mCharSpace@0x50…) shifts every field
++4 and misaligns all setters/getters/PrintImpl. Fix: delete `mWidthLimit` and
+the declared-only `GetWidthLimit/SetWidthLimit/ResetWidthLimit` from
+`ut_TextWriterBase.h` (nothing outside generated `.ctx.c` references them;
+retail has no WidthLimit symbols at all). `GetWidthLimit` etc. are
+declared-only in the header, so the explicit-instantiation warning
+`(10233) cannot instantiate` for them is benign.
+
+**Emission rule:** members defined *inline in the header* (ResetTagProcessor,
+GetBuffer/SetBuffer/GetBufferSize) are **not** emitted out-of-line by
+`template struct TextWriterBase<char>;` — explicit specializations of inline
+members are silently dropped too. To force global symbols matching retail,
+convert the header inline definitions to **declarations** and add
+`template <>` specializations in the .cpp (same pattern as SetTagProcessor/
+SetLineSpace). `IsDrawFlagSet` (private, inline) IS emitted because it is
+called in-TU; after the layout fix it matches retail exactly
+(`(mDrawFlag & mask) == flag` → `and/subf/cntlzw/srwi`). u32 = `unsigned
+long` → mangling `Ul` (SetBuffer `FPcUl`, IsDrawFlagSet `CFUlUl`).

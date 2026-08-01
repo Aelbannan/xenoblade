@@ -7,6 +7,7 @@
 #include <harness_catalog.h>
 #include <revolution/bte/gki/common/gki.h>
 #include <revolution/bte/stack/include/btu.h>
+#include <revolution/bte/stack/include/sdp_api.h>
 #include <revolution/bte/include/bt_trace.h>
 
 enum {
@@ -37,6 +38,26 @@ enum {
     HID_DEV_CONNECTED,
 };
 
+/* SDP device information extracted by hidh_search_callback (0x74 bytes).
+   sdp_rec lives inside this struct so the memset in the search callback
+   clears it together with the names/attributes. */
+typedef struct {
+    char    dev_name[32];      /* 0x00 HID_ATTR_DEVICE_NAME (0x100) */
+    char    vendor_name[32];   /* 0x20 HID_ATTR_VENDOR_NAME (0x101) */
+    char    product_name[32];  /* 0x40 HID_ATTR_PRODUCT_NAME (0x102) */
+    u16     version;           /* 0x60 HID_ATTR_VERSION (0x200) */
+    u16     product_id;        /* 0x62 HID_ATTR_PRODUCT_ID (0x201) */
+    u8      subclass;          /* 0x64 HID_ATTR_SUBCLASS (0x202) */
+    u8      country_code;      /* 0x65 HID_ATTR_COUNTRY_CODE (0x203) */
+    u16     sdp_disable;       /* 0x66 HID_ATTR_SDP_DISABLE (0x20C) */
+    u16     attr_mask;         /* 0x68 HID_ATTR_MASK */
+    u8      *viral_cable;      /* 0x6C HID_ATTR_VIRTUAL_CABLE (0x206) */
+    void    *sdp_rec;          /* 0x70 tSDP_DISC_REC* found by the search */
+} tHID_DEV_SDP_INFO;
+
+typedef void (tHID_SDP_CBACK)(u16 result, u16 attr_mask,
+                              tHID_DEV_SDP_INFO *p_info);
+
 /* Internal device control block (0x34 bytes per device) */
 typedef struct {
     u8 in_use;              /* offset 0x00 */
@@ -63,7 +84,12 @@ typedef struct {
 typedef struct {
     tHID_HOST_DEV_CTB devices[HID_HOST_MAX_DEVICES]; /* offset 0x000 */
     void *dev_cback;        /* offset 0x340: tHID_HOST_DEV_CALLBACK* */
-    u8 pad_344[0xBC];       /* offset 0x344 */
+    u8 pad_344[0x3C];       /* offset 0x344 */
+    u8 sdp_busy;            /* offset 0x380: discovery in progress */
+    u8 pad_381[3];          /* offset 0x381 */
+    tHID_SDP_CBACK *sdp_cback; /* offset 0x384: search completion cb */
+    void *sdp_db;           /* offset 0x388: tSDP_DISCOVERY_DB* */
+    tHID_DEV_SDP_INFO sdp_info; /* offset 0x38C */
     u8 reg_flag;            /* offset 0x400: registration flag */
     u8 trace_level;         /* offset 0x401 */
     u8 pad_402[2];          /* offset 0x402 */
@@ -73,7 +99,151 @@ tHID_HOST_CTB hh_cb;
 
 void HID_HostGetSDPRecord() {}
 
-void hidh_search_callback() {}
+/* SDP service-search completion callback (registered via
+   SDP_ServiceSearchRequest). Scans the discovery database for the HID
+   service record and copies the device attributes into hh_cb.sdp_info before
+   notifying the upper layer through the callback stored in hh_cb.sdp_cback. */
+void hidh_search_callback(u16 result, void *p_data)
+{
+    tSDP_DISC_REC *p_rec;
+    tSDP_DISC_ATTR *p_attr;
+    tHID_DEV_SDP_INFO *p_sdp_info;
+    u16 attr_mask = 0;
+    u16 len;
+    tBT_UUID uuid;
+
+    p_sdp_info = &hh_cb.sdp_info;
+    uuid.len = LEN_UUID_16;
+    uuid.uu.uuid16 = 0x1124;
+
+    hh_cb.sdp_busy = 0;
+    if (result != 0) {
+        hh_cb.sdp_cback(result, 0, NULL);
+        return;
+    }
+
+    p_rec = SDP_FindServiceUUIDInDb((tSDP_DISCOVERY_DB *)hh_cb.sdp_db,
+                                    &uuid, NULL);
+    if (p_rec == NULL) {
+        hh_cb.sdp_cback(0x0C, 0, NULL);
+        return;
+    }
+
+    memset(p_sdp_info, 0, sizeof(tHID_DEV_SDP_INFO));
+
+    /* HID virtual cable: the attribute value is a data element sequence
+       whose second element is the cable descriptor text string. */
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x206);
+    if (p_attr != NULL &&
+        SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) == DATA_ELE_SEQ_DESC_TYPE &&
+        (p_attr = p_attr->attr_value.v.p_sub_attr) != NULL &&
+        SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) == DATA_ELE_SEQ_DESC_TYPE &&
+        (p_attr = p_attr->attr_value.v.p_sub_attr) != NULL &&
+        (p_attr = p_attr->p_next_attr) != NULL &&
+        SDP_DISC_ATTR_TYPE(p_attr->attr_len_type) == TEXT_STR_DESC_TYPE) {
+        p_sdp_info->attr_mask = SDP_DISC_ATTR_LEN(p_attr->attr_len_type);
+        if (p_sdp_info->attr_mask != 0) {
+            p_sdp_info->viral_cable = p_attr->attr_value.v.array;
+        }
+    } else {
+        hh_cb.sdp_cback(HID_ERR_HOST_UNKNOWN, 0, NULL);
+        return;
+    }
+
+    /* Supported feature flags (HID attribute presence). */
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x204);
+    if (p_attr != NULL && p_attr->attr_value.v.u8 != 0) {
+        attr_mask |= 0x01;
+    }
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x205);
+    if (p_attr != NULL && p_attr->attr_value.v.u8 != 0) {
+        attr_mask |= 0x04;
+    }
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x20D);
+    if (p_attr != NULL && p_attr->attr_value.v.u8 != 0) {
+        attr_mask |= 0x02;
+    }
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x208);
+    if (p_attr != NULL && p_attr->attr_value.v.u8 != 0) {
+        attr_mask |= 0x08;
+    }
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x209);
+    if (p_attr != NULL && p_attr->attr_value.v.u8 != 0) {
+        attr_mask |= 0x10;
+    }
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x20A);
+    if (p_attr != NULL && p_attr->attr_value.v.u8 != 0) {
+        attr_mask |= 0x20;
+    }
+
+    /* Device / vendor / product names. */
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x100);
+    if (p_attr != NULL) {
+        len = SDP_DISC_ATTR_LEN(p_attr->attr_len_type);
+        if (len < 0x20) {
+            memcpy(p_sdp_info->dev_name, p_attr->attr_value.v.array, len);
+            p_sdp_info->dev_name[len] = 0;
+        } else {
+            memcpy(p_sdp_info->dev_name, p_attr->attr_value.v.array, 0x1F);
+            p_sdp_info->dev_name[0x20] = 0;
+        }
+    } else {
+        p_sdp_info->dev_name[0] = 0;
+    }
+
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x101);
+    if (p_attr != NULL) {
+        len = SDP_DISC_ATTR_LEN(p_attr->attr_len_type);
+        if (len < 0x20) {
+            memcpy(p_sdp_info->vendor_name, p_attr->attr_value.v.array, len);
+            p_sdp_info->vendor_name[len] = 0;
+        } else {
+            memcpy(p_sdp_info->vendor_name, p_attr->attr_value.v.array, 0x1F);
+            p_sdp_info->vendor_name[0x20] = 0;
+        }
+    } else {
+        p_sdp_info->vendor_name[0] = 0;
+    }
+
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x102);
+    if (p_attr != NULL) {
+        len = SDP_DISC_ATTR_LEN(p_attr->attr_len_type);
+        if (len < 0x20) {
+            memcpy(p_sdp_info->product_name, p_attr->attr_value.v.array, len);
+            p_sdp_info->product_name[len] = 0;
+        } else {
+            memcpy(p_sdp_info->product_name, p_attr->attr_value.v.array, 0x1F);
+            p_sdp_info->product_name[0x20] = 0;
+        }
+    } else {
+        p_sdp_info->product_name[0] = 0;
+    }
+
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x200);
+    if (p_attr != NULL) {
+        p_sdp_info->version = p_attr->attr_value.v.u16;
+    }
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x203);
+    if (p_attr != NULL) {
+        p_sdp_info->country_code = p_attr->attr_value.v.u8;
+    }
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x202);
+    if (p_attr != NULL) {
+        p_sdp_info->subclass = p_attr->attr_value.v.u8;
+    }
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x201);
+    if (p_attr != NULL) {
+        p_sdp_info->product_id = p_attr->attr_value.v.u16;
+    }
+    p_attr = SDP_FindAttributeInRec(p_rec, 0x20C);
+    if (p_attr != NULL) {
+        p_sdp_info->sdp_disable = p_attr->attr_value.v.u16;
+        attr_mask |= 0x40;
+    }
+
+    hh_cb.sdp_info.sdp_rec = p_rec;
+    hh_cb.sdp_cback(0, attr_mask, p_sdp_info);
+}
 
 extern tHID_STATUS hidh_conn_initiate(u8 dev_handle);
 extern tHID_STATUS hidh_conn_reg(void);

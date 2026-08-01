@@ -209,16 +209,17 @@ void HBMSYNMidiInput(HBMSYNSYNTH* syn, const u8* data)
     p = syn->midiWritePtr;
     *p = data[0];
     p = syn->midiWritePtr;
-    syn->midiWritePtr = p + 1;
-    p = syn->midiWritePtr;
+    p = p + 1;
+    syn->midiWritePtr = p;
     *p = data[1];
     p = syn->midiWritePtr;
-    syn->midiWritePtr = p + 1;
-    p = syn->midiWritePtr;
+    p = p + 1;
+    syn->midiWritePtr = p;
     *p = data[2];
     p = syn->midiWritePtr;
-    syn->midiWritePtr = p + 1;
-    syn->midiCount++;
+    p = p + 1;
+    syn->midiWritePtr = p;
+    syn->midiCount = syn->midiCount + 1;
 }
 
 void HBMSYNSetMasterVolume(HBMSYNSYNTH* syn, u32 vol)

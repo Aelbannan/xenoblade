@@ -510,9 +510,6 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
         if callee is None:
             errors.append(f"unknown callee target {callee_id!r}")
             continue
-        if callee.get("status") not in ACCEPTED_MATCH_STATUSES:
-            errors.append(f"callee {callee_id!r} is not accepted")
-            continue
         # Direct self-recursion cannot require its own certificate (bootstrap).
         # Model the recursive edge as opaque EABI while the caller certifies.
         if str(callee_id) == target_id:
@@ -531,6 +528,9 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
                 except ValueError:
                     pass
             call_graph[str(callee_id)] = frozenset()
+            continue
+        if callee.get("status") not in ACCEPTED_MATCH_STATUSES:
+            errors.append(f"callee {callee_id!r} is not accepted")
             continue
         attestation_error = _reattest_certificate_tree(
             project, str(callee_id), by_id, attestation_memo,
@@ -655,18 +655,22 @@ def _load_certified_callees(project: Project, target_id: str) -> CertifiedCallee
     for _name, _contract in fixed_runtime_contracts.items():
         contracts.setdefault(_name, _contract)
     helper_pattern = re.compile(r"^_(?:save|rest)(?:gpr|fpr)_\d+$")
-    for helper in helpers:
-        if helper_pattern.fullmatch(helper) is None:
-            errors.append(f"unrecognized ABI helper {helper!r}")
-            continue
+    # Seed contracts for every EABI save/restore helper range: the retail and
+    # decompiled bodies may legitimately use different callee-saved spans
+    # (register allocation), so each helper that actually appears in either
+    # object needs a contract regardless of the registry's retail-derived list.
+    for helper in sorted(
+        {
+            f"_{op}{kind}_{first}"
+            for op in ("save", "rest")
+            for kind in ("gpr", "fpr")
+            for first in range(14, 32)
+        }
+    ):
         match = re.fullmatch(r"_(save|rest)(gpr|fpr)_(\d+)", helper)
         assert match is not None
         operation, register_kind, first_text = match.groups()
         first = int(first_text)
-        if not 14 <= first <= 31:
-            errors.append(f"ABI helper register is out of range in {helper!r}")
-            contracts.pop(helper, None)
-            continue
         registers = frozenset(
             f"{'r' if register_kind == 'gpr' else 'f'}{index}"
             for index in range(first, 32)
@@ -1163,17 +1167,29 @@ def should_probe_equivalence(match_percent: Optional[float]) -> bool:
 
 def _extract_call_targets(instructions: list) -> frozenset[int | str]:
     targets: set[int | str] = set()
+    if not instructions:
+        return frozenset()
+    # Direct self-recursion: a call whose target lands inside the function's
+    # own body is control flow, not an external callee needing a contract.
+    first = instructions[0].address
+    last = max(insn.address for insn in instructions) + 4
     for insn in instructions:
         if insn.opcode == Opcode.B and (insn.link or insn.relocation is not None):
-            targets.add(
+            target = (
                 insn.relocation.canonical_symbol
                 if insn.relocation is not None else insn.operands[0]
             )
+            if isinstance(target, int) and first <= target < last:
+                continue
+            targets.add(target)
         elif insn.opcode == Opcode.BC and (insn.link or insn.relocation is not None):
-            targets.add(
+            target = (
                 insn.relocation.canonical_symbol
                 if insn.relocation is not None else insn.operands[2]
             )
+            if isinstance(target, int) and first <= target < last:
+                continue
+            targets.add(target)
     return frozenset(targets)
 
 

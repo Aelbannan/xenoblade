@@ -12,6 +12,15 @@
 #include "revolution/BTE/stack/include/bt_types.h"
 #include "revolution/BTE/stack/include/sdp_api.h"
 
+/* SDP trace control block (retail global `sdp_cb`, trace level at 0x4630). */
+extern unsigned char sdp_cb[];
+
+/* Externals from sdp_utils.c / bt_trace.c. */
+extern UINT8 *sdpu_get_len_from_type(UINT8 *p, UINT8 type, UINT32 *p_len);
+extern BOOLEAN sdpu_is_base_uuid(UINT8 *p_uuid);
+extern void LogMsg_0(UINT32 trace_set_mask, const char *p_str);
+extern void LogMsg_1(UINT32 trace_set_mask, const char *p_str, UINT32 p1);
+
 /* ------------------------------------------------------------------------- */
 /* Local types and constants (no shared sdpint.h header in the writable      */
 /* scope, so the minimum pieces needed by this TU are declared here).        */
@@ -148,7 +157,224 @@ void process_service_search_attr_rsp(tCONN_CB *p_ccb, UINT8 *p_reply, UINT16 len
 
 UINT8 *save_attr_seq(tCONN_CB *p_ccb, UINT8 *p, UINT8 *p_msg_end) { return NULL; }
 
+/* Parses one data element from the raw SDP attribute stream and appends a
+   tSDP_DISC_ATTR node to the discovery database. Returns the first byte after
+   the element, or NULL when the database is exhausted. Recurses for data
+   element sequences and for the special 0x0004 descriptor pseudo-element. */
 UINT8 *add_attr(UINT8 *p, tSDP_DISC_DB *p_db, tSDP_DISC_REC *p_rec,
-                UINT16 attr_id, tSDP_DISC_ATTR *p_parent_attr, UINT8 nest_level) { return NULL; }
+                UINT16 attr_id, tSDP_DISC_ATTR *p_parent_attr, UINT8 nest_level)
+{
+    tSDP_DISC_ATTR *p_attr;
+    tSDP_DISC_ATTR *p_tail;
+    UINT8 *p_val;
+    UINT8 *p_end;
+    UINT32 len;
+    UINT16 type;
+    UINT8 type_byte;
+    UINT8 nest;
+    UINT8 flag;
+    UINT32 size;
+    UINT16 value;
+    UINT8 i;
+
+    type_byte = *p;
+    p_val = sdpu_get_len_from_type(p + 1, type_byte, &len);
+    len &= 0xFFF;
+    type = (UINT8)((type_byte >> 3) & 0xF);
+
+    size = (len > 4) ? len + 8 : 12;
+    size = (size + 3) & ~3;
+    if (p_db->mem_free < size) {
+        return NULL;
+    }
+
+    flag = nest_level & 0x80;
+    nest = nest_level & 0x7F;
+
+    p_attr = (tSDP_DISC_ATTR *)p_db->p_free_mem;
+    p_attr->attr_id = attr_id;
+    p_attr->attr_len_type = (UINT16)((type << 12) | len);
+    p_attr->p_next_attr = NULL;
+
+    switch (type) {
+    case 0:
+        break;
+
+    case 1:
+        /* Embedded descriptor list: a 2-byte 0x0004 element announces a
+           nested sequence; allocate the header here and recurse once. */
+        if (flag != 0 && len == 2 &&
+            (UINT16)((p_val[0] << 8) + p_val[1]) == 4) {
+            p_db->p_free_mem += 12;
+            p_db->mem_free -= 12;
+            size = 0;
+            p_end = p_val + len + 2;
+            if (nest >= 5) {
+                if (sdp_cb[0x4630] >= 1) {
+                    LogMsg_0(0xA0000, "SDP - attr nesting too deep");
+                }
+                return p_end;
+            }
+            p_val = add_attr(p_val + 2, p_db, p_rec, 4, p_attr,
+                             (UINT8)(nest + 1));
+            break;
+        }
+        /* fall through to the UINT/2's-complement length switch */
+    case 2:
+        switch (len) {
+        case 1:
+            p_attr->attr_value.v.u8 = p_val[0];
+            p_val += 1;
+            break;
+        case 2:
+            p_attr->attr_value.v.u16 =
+                (UINT16)((p_val[0] << 8) + p_val[1]);
+            p_val += 2;
+            break;
+        case 4:
+            p_attr->attr_value.v.u32 =
+                (UINT32)(((UINT32)p_val[0] << 24) + ((UINT32)p_val[1] << 16)) +
+                ((UINT32)((UINT32)p_val[2] << 8) + p_val[3]);
+            p_val += 4;
+            break;
+        default:
+            for (i = 0; i < len; i++) {
+                p_attr->attr_value.v.array[i] = p_val[i];
+            }
+            p_val += len;
+            break;
+        }
+        break;
+
+    case 3:
+        switch (len) {
+        case 2:
+            p_attr->attr_value.v.u16 =
+                (UINT16)((p_val[0] << 8) + p_val[1]);
+            p_val += 2;
+            break;
+        case 4:
+            value = (UINT16)(((UINT32)p_val[0] << 24) +
+                             ((UINT32)p_val[1] << 16) +
+                             ((UINT32)p_val[2] << 8) + p_val[3]);
+            p_attr->attr_value.v.u32 = value;
+            p_val += 4;
+            if (value < 0x10000) {
+                len = 2;
+                p_attr->attr_len_type =
+                    (UINT16)((p_attr->attr_len_type & 0xF000) | 2);
+                p_attr->attr_value.v.u16 = value;
+            }
+            break;
+        case 16:
+            if (sdpu_is_base_uuid(p_val)) {
+                if (p_val[0] == 0 && p_val[1] == 0) {
+                    p_attr->attr_len_type =
+                        (UINT16)((p_attr->attr_len_type & 0xF000) | 2);
+                    p_attr->attr_value.v.u16 =
+                        (UINT16)((p_val[2] << 8) + p_val[3]);
+                } else {
+                    p_attr->attr_len_type =
+                        (UINT16)((p_attr->attr_len_type & 0xF000) | 4);
+                    p_attr->attr_value.v.u32 =
+                        (UINT32)(((UINT32)p_val[0] << 24) +
+                                 ((UINT32)p_val[1] << 16) +
+                                 ((UINT32)p_val[2] << 8) + p_val[3]);
+                }
+                p_val += 16;
+            } else {
+                for (i = 0; i < len; i++) {
+                    p_attr->attr_value.v.array[i] = p_val[i];
+                }
+                p_val += len;
+            }
+            break;
+        default:
+            if (sdp_cb[0x4630] >= 2) {
+                LogMsg_1(0xA0001, "SDP - bad len in UUID attr: %d", len);
+            }
+            return p_val + len;
+        }
+        break;
+
+    case 4:
+    case 8:
+        for (i = 0; i < len; i++) {
+            p_attr->attr_value.v.array[i] = p_val[i];
+        }
+        p_val += len;
+        break;
+
+    case 5:
+        if (len == 1) {
+            p_attr->attr_value.v.u8 = p_val[0];
+            p_val += 1;
+        } else {
+            if (sdp_cb[0x4630] >= 2) {
+                LogMsg_1(0xA0001, "SDP - bad len in boolean attr: %d", len);
+            }
+            return p_val + len;
+        }
+        break;
+
+    case 6:
+    case 7:
+        /* Data element sequence: allocate the header now, then parse the
+           children into it recursively. */
+        p_db->p_free_mem += 12;
+        p_db->mem_free -= 12;
+        size = 0;
+        p_end = p_val + len;
+        if (nest >= 5) {
+            if (sdp_cb[0x4630] >= 1) {
+                LogMsg_0(0xA0000, "SDP - attr nesting too deep");
+            }
+            return p_end;
+        }
+        if (flag != 0 || attr_id == 0x0D) {
+            nest |= 0x80;
+        }
+        for (;;) {
+            p_val = add_attr(p_val, p_db, p_rec, 0, p_attr,
+                             (UINT8)(nest + 1));
+            if (p_val == NULL) {
+                return NULL;
+            }
+            if (p_val >= p_end) {
+                break;
+            }
+        }
+        break;
+    }
+
+    /* Account for the allocated size and link the new attribute into the
+       parent record's attribute list (or the record's head when there is no
+       parent). */
+    p_db->p_free_mem += size;
+    p_db->mem_free -= size;
+    if (p_parent_attr == NULL) {
+        if (p_rec->p_first_attr == NULL) {
+            p_rec->p_first_attr = p_attr;
+        } else {
+            p_tail = p_rec->p_first_attr;
+            while (p_tail->p_next_attr != NULL) {
+                p_tail = p_tail->p_next_attr;
+            }
+            p_tail->p_next_attr = p_attr;
+        }
+    } else {
+        if (p_parent_attr->attr_value.v.p_sub_attr == NULL) {
+            p_parent_attr->attr_value.v.p_sub_attr = p_attr;
+        } else {
+            p_tail = p_parent_attr->attr_value.v.p_sub_attr;
+            while (p_tail->p_next_attr != NULL) {
+                p_tail = p_tail->p_next_attr;
+            }
+            p_tail->p_next_attr = p_attr;
+        }
+    }
+
+    return p_val;
+}
 
 #pragma dont_inline off

@@ -306,6 +306,18 @@ rfc_ts_frames.c) — `equivalence_check.py` fails closed on non-accepted callees
 no opaque override. Accept at EQUIVALENT_MATCH once that callee lands (or a source
 shape reproduces the swap).
 
+### rfc_mx_fsm.c — 3/3 FULL_MATCH on GC/3.0a5.2 (rfc_mx_conf_ind, rfc_mx_conf_cnf, rfc_mx_sm_state_connected)
+
+`libs/RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c` matches with the existing unit flags
+`mw_version="GC/3.0a5.2"` + `extra_cflags=["-func_align 4", "-ipa off"]`. Two reusable findings:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| `rfc_mx_sm_state_connected` (us-80301ea4) switched on events 3/4/7 but retail dispatches a 12-slot jump table over events 3..14 with actions on **3** (send UA / optional L2CA disconnect / PORT_CloseInd), **5/8** (timer_start(3); state=6; send DISC), **14** (state=0; PORT_CloseInd) and 4/6/7/9-13 falling to the default trace | MWCC builds the dense jump table only when the case set covers the whole range; holes folded into `default` don't count, and the default string is `"RFCOMM MX ignored - evt:%d in state:%d"` with args `(event, state)` — not "Mx error state" | List **all** 12 case values explicitly (`case 5: case 8: …; case 14: …; case 3: …; default: case 4: case 6: case 7: case 9: case 10: case 11: case 12: case 13: …`), case bodies in the retail code order (timer_start, close, send_ua, default) — same recipe as bta_hh_act.c |
+| `rfc_mx_conf_cnf` (us-80302134) stuck at 99.8% with 2 pure reg-swaps (`lhz r4`/`cmpi r4` vs decomp `r0`) on the `config->result` load — 0 structural, SMT blocked by unaccepted callees | Retail `PORT_StartCnf` takes **2 args** `(p_mcb, result)` (AOSP Broadcom source: `PORT_StartCnf (p_mcb, p_cfg->result);`) — the condition load keeps `config->result` live in **r4** across the `is_initiator` check for the call, so the allocator colors it r4. The 1-arg declaration let MWCC color it r0. The call-site shows only `mr r3,r30; bl PORT_StartCnf` because r4 is already live — the hidden arg is visible in the register state, not a `li r4` | Declare `extern void PORT_StartCnf(RfcMuxChannel*, u16 result);` and call `PORT_StartCnf(channel, config->result);` — 100% byte-identical. Verify sibling call sites in the retail before changing shared signatures: state_idle/wait_conn_cnf/sabme_wait_ua/disc_wait_ua pass `1` / `*(u16*)data` / `0` / `1` as the second arg |
+
+Retail layout facts: `tRFC_MCB.state` 0x6C, `is_initiator` 0x6D, `cfg_bt_ch` 0x6E, `cfg_received` 0x6F, `restart_required` 0x70, `peer_ready` 0x71; connected state event map per the jump table: 3=send UA path, 5/8=disconnect path, 14=close. Confirmed against rfc_port_if.c notes above.
+
 Retail type/layout facts verified against rfc_port_if.s: `tRFC_MCB.state` 0x6C
 (RFC_MX_STATE_CONNECTED=5), `field_72` 0x72 (credit-based flow flag, 2=credit);
 `tPORT.state` 0x02 (PORT_STATE_OPENED=2), `field_0e` 0x0E (last error code),

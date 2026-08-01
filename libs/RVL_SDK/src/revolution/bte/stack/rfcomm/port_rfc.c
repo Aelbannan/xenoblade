@@ -587,7 +587,7 @@ void PORT_LineStatusInd(tRFC_MCB* p_mcb, u8 dlci, u8 line_status)
     if (line_status & 0x01)
         event |= 0x40;
 
-    if (line_status & 0x7C)
+    if (line_status & 0xFC)
         event |= 0x80;
 
     if (p_port->p_mgmt_cb != NULL && (p_port->mask & event) != 0)

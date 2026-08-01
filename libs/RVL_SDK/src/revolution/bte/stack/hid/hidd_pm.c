@@ -46,8 +46,8 @@ static int hidd_pm_set_now(tBTM_PM_PWR_MD *p_params);
 static int hidd_pm_set_now(tBTM_PM_PWR_MD *p_params)
 {
     UINT8 status;
-    UINT8 cur_mode;
     UINT8 new_mode;
+    UINT8 cur_mode;
     UINT16 cur_interval;
     tBTM_PM_PWR_MD zero_md = {0};
 
@@ -79,52 +79,51 @@ process:
     switch (new_mode)
     {
     case 0:
-        if (cur_mode == 2 || cur_mode == 3)
+        if (cur_mode == 2)
         {
+            status = BTM_SetPowerMode(BTM_PM_SET_ONLY_ID, hd_cb.reserved_bda, &zero_md);
             hd_cb.pm_set = 1;
-            return (int)BTM_SetPowerMode(BTM_PM_SET_ONLY_ID,
-                                          hd_cb.reserved_bda, &zero_md);
+        }
+        else if (cur_mode == 3)
+        {
+            status = BTM_SetPowerMode(BTM_PM_SET_ONLY_ID, hd_cb.reserved_bda, &zero_md);
+            hd_cb.pm_set = 1;
         }
         break;
 
     case 2:
-        if (cur_mode == 0)
+        if (cur_mode != 0)
         {
-            hd_cb.pm_set = 1;
-            return (int)BTM_SetPowerMode(BTM_PM_SET_ONLY_ID,
-                                          hd_cb.reserved_bda, p_params);
+            hidd_pm_set_now(&zero_md);
         }
         else
         {
-            hidd_pm_set_now(&zero_md);
+            status = BTM_SetPowerMode(BTM_PM_SET_ONLY_ID, hd_cb.reserved_bda, p_params);
+            hd_cb.pm_set = 1;
         }
         break;
 
     case 3:
-        if (cur_mode == 0)
+        if (cur_mode != 0)
         {
-            hd_cb.pm_set = 1;
-            return (int)BTM_SetPowerMode(BTM_PM_SET_ONLY_ID,
-                                          hd_cb.reserved_bda, p_params);
+            hidd_pm_set_now(&zero_md);
         }
         else
         {
-            hidd_pm_set_now(&zero_md);
+            status = BTM_SetPowerMode(BTM_PM_SET_ONLY_ID, hd_cb.reserved_bda, p_params);
+            hd_cb.pm_set = 1;
         }
         break;
     }
 
-    if (status > 1)
-    {
-        if (hd_cb.app_cback != NULL)
-        {
-            UINT8 s = status + 0x37;
-            hd_cb.app_cback(4, hd_cb.inact_flag, (UINT32)&s);
-        }
-        return 0;
-    }
+    if (status <= 1)
+        return 1;
 
-    return 1;
+    status += 0x37;
+    if (hd_cb.app_cback != NULL)
+        hd_cb.app_cback(4, hd_cb.inact_flag, (UINT32)&status);
+
+    return 0;
 }
 
 /******************************************************************************
@@ -147,7 +146,26 @@ void hidd_pm_proc_mode_change(UINT8 hci_status, UINT8 mode, UINT16 interval)
     hd_cb.current_mode    = mode;
     hd_cb.current_interval = interval;
 
-    if (hd_cb.pm_config.mode == 0xFF)
+    if (hd_cb.pm_config.mode != 0xFF)
+    {
+        if (hd_cb.pm_config.mode != mode)
+            goto process;
+        if (hd_cb.pm_config.mode == 0)
+            goto accept;
+        if (interval < hd_cb.pm_config.min)
+            goto process;
+        if (interval <= hd_cb.pm_config.max)
+            goto accept;
+
+    process:
+        hidd_pm_set_now(&hd_cb.pm_config);
+        goto done;
+
+    accept:
+        hd_cb.pm_config.mode = 0xFF;
+        goto done;
+    }
+    else
     {
         if (mode == 0)
         {
@@ -158,27 +176,8 @@ void hidd_pm_proc_mode_change(UINT8 hci_status, UINT8 mode, UINT16 interval)
             btu_start_timer(&hd_cb.inact_timer, 0x16, 0x3C);
         }
     }
-    else
-    {
-        if (hd_cb.pm_config.mode != mode)
-        {
-            hidd_pm_set_now((tBTM_PM_PWR_MD *)&hd_cb.pm_config);
-        }
-        else if (hd_cb.pm_config.mode == 0)
-        {
-            hd_cb.pm_config.mode = 0xFF;
-        }
-        else if (interval >= hd_cb.pm_config.min &&
-                 interval <= hd_cb.pm_config.max)
-        {
-            hd_cb.pm_config.mode = 0xFF;
-        }
-        else
-        {
-            hidd_pm_set_now((tBTM_PM_PWR_MD *)&hd_cb.pm_config);
-        }
-    }
 
+done:
     if (hd_cb.app_cback != NULL)
         hd_cb.app_cback(3, mode, (UINT32)&interval);
 }

@@ -1020,7 +1020,7 @@ config.libs = [
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_api.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_conn.c"),
             Object(Matching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_mgmt.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hid/hidd_pm.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see bta_hh_act/btm_devctl notes); Wii/1.1 lowers the {0,2,3} set_now dispatch to a linear cmpwi chain instead of the retail cmpwi/bge tree; -func_align 4 packs the unit .text into the retail split (retail packed, not 16-aligned)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hid/hidh_api.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/hid/hidh_conn.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4", "-ipa off"]),  # retail bte built with GC 3.0a-family (see btm_devctl/btm_inq); Wii/1.1 lowers the snd_data switch with a subi/cmpli range test instead of the retail cmpwi/bge chain; -func_align 4 removes the scheduling nop before mtctr-counted loops (see MWCC_REFERENCE btm_inq/btm_sec notes)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/l2cap/l2c_api.c"),

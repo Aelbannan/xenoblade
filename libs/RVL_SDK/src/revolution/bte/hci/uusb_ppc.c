@@ -96,25 +96,25 @@ void uusb_ReadIntrDataCB(IPCResult result, void* arg) {
         return;
     }
 
-    if (arg != NULL) {
-        if (result <= 0) {
+    if (arg == NULL) {
+        /* no payload to handle */
+    } else if (result <= 0) {
+        GKI_freebuf(arg);
+    } else {
+        buf = (BT_HDR*)GKI_getpoolbuf(2);
+        if (buf == NULL) {
             GKI_freebuf(arg);
         } else {
-            buf = (BT_HDR*)GKI_getpoolbuf(2);
-            if (buf == NULL) {
-                GKI_freebuf(arg);
-            } else {
-                ((BT_HDR*)arg)->event = 0x1000;
-                ((BT_HDR*)arg)->len = (u16)result;
-                memcpy(buf, arg,
-                       (((u32)(((BT_HDR*)arg)->len + ((BT_HDR*)arg)->offset +
-                               BT_HDR_SIZE)) &
-                        ~3u) +
-                           4);
-                OSSwitchFiberEx((u32)buf, 0, 0, 0, bta_ci_hci_msg_handler,
-                                __uusb_ppc_stack1 + 0x1000);
-                GKI_freebuf(arg);
-            }
+            ((BT_HDR*)arg)->event = 0x1000;
+            ((BT_HDR*)arg)->len = (u16)result;
+            memcpy(buf, arg,
+                   (((u32)(((BT_HDR*)arg)->len + ((BT_HDR*)arg)->offset +
+                           BT_HDR_SIZE)) &
+                    ~3u) +
+                       4);
+            OSSwitchFiberEx((u32)buf, 0, 0, 0, bta_ci_hci_msg_handler,
+                            __uusb_ppc_stack1 + 0x1000);
+            GKI_freebuf(arg);
         }
     }
 
@@ -270,6 +270,8 @@ void uusb_WriteBulkDataCB(IPCResult result, void* arg) {
  * intr/bulk read pools, then move to READY and clear the wait-for-HCI flag. */
 void UUSB_Register(void* cb_arg) {
     IPCResult fd;
+    u32 vid;
+    u32 pid;
 
     memset(&usb, 0, sizeof(usb));
 
@@ -303,15 +305,17 @@ void UUSB_Register(void* cb_arg) {
     usb.field_0x11 = 0;
     usb.field_0x12 = 0;
     usb.field_0x13 = 0;
+    vid = usb.vid;
+    pid = usb.pid;
 
     if (__ntd_ohci_init_flag == 1) {
         if (__ntd_ohci == 0) {
-            fd = IUSB_OpenDeviceIds(lbl_806658D0, (u16)usb.vid, (u16)usb.pid);
+            fd = IUSB_OpenDeviceIds(lbl_806658D0, (u16)vid, (u16)pid);
         } else if (__ntd_ohci == 1) {
-            fd = IUSB_OpenDeviceIds(lbl_806658D4, (u16)usb.vid, (u16)usb.pid);
+            fd = IUSB_OpenDeviceIds(lbl_806658D4, (u16)vid, (u16)pid);
         }
     } else {
-        fd = IUSB_OpenDeviceIds(lbl_806658D4, (u16)usb.vid, (u16)usb.pid);
+        fd = IUSB_OpenDeviceIds(lbl_806658D4, (u16)vid, (u16)pid);
     }
 
     if (fd >= 0) {
@@ -331,13 +335,12 @@ void UUSB_Register(void* cb_arg) {
     usb.ctrl_pending = 0;
     usb.pool_id_intr = GKI_create_pool(0x294, 0x2d, 1, NULL);
     usb.pool_id_bulk = GKI_create_pool(0x708, 0x1e, 1, NULL);
-    if (usb.pool_id_intr == 0xff) {
-        return;
-    }
-    if (usb.pool_id_bulk == 0xff) {
-        return;
-    }
-
+    if (usb.pool_id_intr == 0xff) goto done;
+    if (usb.pool_id_bulk == 0xff) goto done;
+    goto body;
+done:
+    return;
+body:
     GKI_disable();
     usb.state = UUSB_STATE_READY;
     GKI_enable();
@@ -420,54 +423,57 @@ s32 UUSB_Write(s32 type, void* data, u16 length) {
         return 0;
     }
 
-    if (type == 0) {
-        buf = (BT_HDR*)GKI_getpoolbuf(usb.pool_id_intr);
-        if (buf == NULL) {
-            return 0;
-        }
-        p = (u8*)(((u32)buf + 0x27) & ~0x1Fu);
-        buf->len = length;
-        buf->offset = (u16)(p - ((u8*)buf + BT_HDR_SIZE));
-        memcpy(p, data, length);
-        if (usb.ctrl_pending < 5 && usb.ctrl_write_q.count == 0) {
-            rc = IUSB_WriteCtrlMsgAsync(usb.fd, 0x20, 0, 0, 0, length, p,
-                                        uusb_WriteCtrlDataCB, buf);
-            if (rc == 0) {
-                GKI_disable();
-                usb.ctrl_pending += 1;
-                GKI_enable();
-            } else {
-                GKI_freebuf(buf);
-            }
-        } else {
-            GKI_enqueue(&usb.ctrl_write_q, buf);
-            return 0;
-        }
-    } else if (type == 2) {
-        buf = (BT_HDR*)GKI_getpoolbuf(usb.pool_id_bulk);
-        if (buf == NULL) {
-            return 0;
-        }
-        p = (u8*)(((u32)buf + 0x27) & ~0x1Fu);
-        buf->len = length;
-        buf->offset = (u16)(p - ((u8*)buf + BT_HDR_SIZE));
-        memcpy(p, data, length);
-        if (usb.bulk_pending < 5 && usb.bulk_write_q.count == 0) {
-            rc = IUSB_WriteBlkMsgAsync(usb.fd, usb.field_0x10, length, p,
-                                       uusb_WriteBulkDataCB, buf);
-            if (rc == 0) {
-                GKI_disable();
-                usb.bulk_pending += 1;
-                GKI_enable();
-            } else {
-                GKI_freebuf(buf);
-            }
-        } else {
-            GKI_enqueue(&usb.bulk_write_q, buf);
-            return 0;
-        }
+    if (type == 0) goto ctrl;
+    if (type == 2) goto bulk;
+    goto ret;
+ctrl:
+    buf = (BT_HDR*)GKI_getpoolbuf(usb.pool_id_intr);
+    if (buf == NULL) {
+        return 0;
     }
-
+    p = (u8*)(((u32)buf + 0x27) & ~0x1Fu);
+    buf->len = length;
+    buf->offset = (u16)(p - ((u8*)buf + BT_HDR_SIZE));
+    memcpy(p, data, length);
+    if (usb.ctrl_pending < 5 && usb.ctrl_write_q.count == 0) {
+        rc = IUSB_WriteCtrlMsgAsync(usb.fd, 0x20, 0, 0, 0, length, p,
+                                    uusb_WriteCtrlDataCB, buf);
+    } else {
+        GKI_enqueue(&usb.ctrl_write_q, buf);
+        return 0;
+    }
+    if (rc != 0) {
+        GKI_freebuf(buf);
+    } else {
+        GKI_disable();
+        usb.ctrl_pending += 1;
+        GKI_enable();
+    }
+    goto ret;
+bulk:
+    buf = (BT_HDR*)GKI_getpoolbuf(usb.pool_id_bulk);
+    if (buf == NULL) {
+        return 0;
+    }
+    p = (u8*)(((u32)buf + 0x27) & ~0x1Fu);
+    buf->len = length;
+    buf->offset = (u16)(p - ((u8*)buf + BT_HDR_SIZE));
+    memcpy(p, data, length);
+    if (usb.bulk_pending < 5 && usb.bulk_write_q.count == 0) {
+        rc = IUSB_WriteBlkMsgAsync(usb.fd, usb.field_0x10, length, p,
+                                   uusb_WriteBulkDataCB, buf);
+    } else {
+        GKI_enqueue(&usb.bulk_write_q, buf);
+        return 0;
+    }
+    if (rc != 0) {
+        GKI_freebuf(buf);
+    } else {
+        GKI_disable();
+        usb.bulk_pending += 1;
+        GKI_enable();
+    }
+ret:
     return (u16)rc;
 }
 

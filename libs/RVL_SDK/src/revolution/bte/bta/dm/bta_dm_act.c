@@ -1168,8 +1168,7 @@ void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
                 bta_dm_cb.peer_dev[i].in_use = 1;
                 p_cfg = p_bta_dm_rm_cfg;
                 num = p_cfg[1];
-                j = 1;
-                while (j <= num) {
+                for (j = 1; j <= num; j++) {
                     if (p_cfg[3 * j + 1] == app_id || p_cfg[3 * j + 1] == 0xff) {
                         if (p_cfg[3 * j] == id) {
                             unsigned char cfg_val = p_cfg[3 * j + 2];
@@ -1179,7 +1178,6 @@ void bta_dm_rm_cback(int status, unsigned char id, unsigned char app_id,
                             break;
                         }
                     }
-                    j++;
                 }
                 break;
             }

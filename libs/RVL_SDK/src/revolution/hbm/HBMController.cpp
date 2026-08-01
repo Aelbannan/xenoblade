@@ -222,8 +222,7 @@ void Controller::playSound(int id) {
     }
 
     // HBM_MAX_VOLUME (10.0f) scaled by speaker volume, cast to s8 for WPAD
-    s8 vol = (int)(10.0f * getSpeakerVol());
-    getRemoteSpk()->Play(getChan(), id, vol);
+    getRemoteSpk()->Play(getChan(), id, (s8)(10.0f * getSpeakerVol()));
 
     if (WPADIsSpeakerEnabled(getChan())) {
         if (!mCheckSoundTimeFlag) {

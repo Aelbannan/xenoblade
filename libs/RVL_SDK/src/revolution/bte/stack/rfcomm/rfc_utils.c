@@ -146,7 +146,7 @@ struct RfcMuxChannel *rfc_alloc_multiplexer_channel(u8 *bd_addr, u8 is_initiator
         && memcmp(MCB_PTR(0)->bd_addr, bd_addr, 6) == 0)
     {
         if (TRACE_LEVEL() >= 4) {
-            LogMsg_0(0x90003, "@688");
+            LogMsg_0(0x90003, "rfc_timer_stop");
         }
         btu_stop_timer(MCB_PTR(0)->tle_0x00);
         return MCB_PTR(0);
@@ -167,7 +167,7 @@ struct RfcMuxChannel *rfc_alloc_multiplexer_channel(u8 *bd_addr, u8 is_initiator
         p->is_initiator = is_initiator;
 
         if (TRACE_LEVEL() >= 4) {
-            LogMsg_1(0x90003, "@689", 60);
+            LogMsg_1(0x90003, "rfc_timer_start - timeout:%d", 60);
         }
 
         tle = (TimerEntry *)p->tle_0x00;
@@ -189,7 +189,7 @@ void rfc_release_multiplexer_channel(struct RfcMuxChannel *p)
     void *buf;
 
     if (TRACE_LEVEL() >= 4) {
-        LogMsg_0(0x90003, "@688");
+        LogMsg_0(0x90003, "rfc_timer_stop");
     }
 
     btu_stop_timer(p->tle_0x00);
@@ -210,7 +210,7 @@ void rfc_timer_start(struct RfcMuxChannel *p, u16 timeout)
     TimerEntry *tle = (TimerEntry *)p->tle_0x00;
 
     if (TRACE_LEVEL() >= 4) {
-        LogMsg_1(0x90003, "@689", timeout);
+        LogMsg_1(0x90003, "rfc_timer_start - timeout:%d", timeout);
     }
 
     tle->param = (u32)p;
@@ -223,7 +223,7 @@ void rfc_timer_start(struct RfcMuxChannel *p, u16 timeout)
 void rfc_timer_stop(struct RfcMuxChannel *p)
 {
     if (TRACE_LEVEL() >= 4) {
-        LogMsg_0(0x90003, "@688");
+        LogMsg_0(0x90003, "rfc_timer_stop");
     }
 
     btu_stop_timer(p->tle_0x00);
@@ -237,7 +237,7 @@ void rfc_port_timer_start(struct RfcPortStruct *port, u16 tout)
     TimerEntry *tle = (TimerEntry *)((u8 *)port + 0x70);
 
     if (TRACE_LEVEL() >= 4) {
-        LogMsg_1(0x90003, "@704", tout);
+        LogMsg_1(0x90003, "rfc_port_timer_start - timeout:%d", tout);
     }
 
     tle->param = (u32)port;
@@ -250,7 +250,7 @@ void rfc_port_timer_start(struct RfcPortStruct *port, u16 tout)
 void rfc_port_timer_stop(struct RfcPortStruct *port)
 {
     if (TRACE_LEVEL() >= 4) {
-        LogMsg_0(0x90003, "@708");
+        LogMsg_0(0x90003, "rfc_port_timer_stop");
     }
 
     btu_stop_timer((u8 *)port + 0x70);
@@ -277,7 +277,7 @@ void rfc_check_mcb_active(struct RfcMuxChannel *p)
     }
 
     if (TRACE_LEVEL() >= 4) {
-        LogMsg_1(0x90003, "@689", 2);
+        LogMsg_1(0x90003, "rfc_timer_start - timeout:%d", 2);
     }
 
     ((TimerEntry *)p->tle_0x00)->param = (u32)p;
@@ -291,10 +291,15 @@ void rfcomm_process_timeout(void *tle)
 {
     TimerEntry *entry = (TimerEntry *)tle;
 
-    if (entry->event == 0x0C) {
-        rfc_port_sm_execute((struct RfcPortStruct *)(u32)entry->param, 5, 0);
-    } else if (entry->event == 0x0B) {
+    switch (entry->event) {
+    case 11:
         rfc_mx_sm_execute((struct RfcMuxChannel *)(u32)entry->param, 5, 0);
+        break;
+    case 12:
+        rfc_port_sm_execute((struct RfcPortStruct *)(u32)entry->param, 5, 0);
+        break;
+    default:
+        break;
     }
 }
 
@@ -305,18 +310,14 @@ void rfc_sec_check_complete(u8 *bd_addr, void *p_ref_data, u8 res)
 {
     struct RfcPortStruct *port = (struct RfcPortStruct *)p_ref_data;
 
-    /* Check port->in_use (byte at offset 1). */
-    if (*((u8 *)port + 1) == 0) {
+    /* Verify the port is still in use and waiting for security. */
+    if (!*((u8 *)port + 1)
+        || ((*((u8 *)port + 0x68) != 2) && (*((u8 *)port + 0x68) != 3)))
+    {
         return;
     }
 
-    {
-        /* port->rfc.state at port + 0x68 */
-        u8 rfc_state = *((u8 *)port + 0x68);
-        if (rfc_state == 2 || rfc_state == 3) {
-            rfc_port_sm_execute(port, 0x0F, &res);
-        }
-    }
+    rfc_port_sm_execute(port, 0x0F, &res);
 }
 
 /* ================================================================== */
@@ -327,11 +328,11 @@ void rfc_port_closed(struct RfcPortStruct *port)
     struct RfcMuxChannel *p_mcb = port->p_mcb;
 
     if (TRACE_LEVEL() >= 5) {
-        LogMsg_0(0x90004, "@739");
+        LogMsg_0(0x90004, "rfc_port_closed");
     }
 
     if (TRACE_LEVEL() >= 4) {
-        LogMsg_0(0x90003, "@688");
+        LogMsg_0(0x90003, "rfc_port_timer_stop");
     }
 
     btu_stop_timer((u8 *)port + 0x70);
@@ -358,7 +359,7 @@ void rfc_port_closed(struct RfcPortStruct *port)
             rfc_mx_sm_execute(p_mcb, 8, 0);
         } else {
             if (TRACE_LEVEL() >= 4) {
-                LogMsg_1(0x90003, "@689", 2);
+                LogMsg_1(0x90003, "rfc_timer_start - timeout:%d", 2);
             }
             ((TimerEntry *)p_mcb->tle_0x00)->param = (u32)p_mcb;
             btu_start_timer(p_mcb->tle_0x00, 0x0B, 2);
@@ -374,17 +375,15 @@ done:
 /* ================================================================== */
 void rfc_inc_credit(struct RfcPortStruct *port, u8 credit)
 {
-    struct RfcMuxChannel *p_mcb = port->p_mcb;
-
-    if (p_mcb->flow == 2) {
+    if (port->p_mcb->flow == 2) {
         port->credit_tx += credit;
 
         if (TRACE_LEVEL() >= 4) {
-            LogMsg_1(0x90003, "@745", port->credit_tx);
+            LogMsg_1(0x90003, "rfc_inc_credit:%d", port->credit_tx);
         }
 
         if (port->state == 1) {
-            PORT_FlowInd(p_mcb, port->dlci, 1);
+            PORT_FlowInd(port->p_mcb, port->dlci, 1);
         }
     }
 }

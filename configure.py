@@ -1030,7 +1030,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c"),
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", extra_cflags=["-func_align 4"]),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_db.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_discovery.c"),

@@ -5,6 +5,7 @@
 
 #include <revolution/MEM.h>
 #include <revolution/OS.h>
+#include <revolution/HBM/HBMTypes.h>
 #include <revolution/version.h>
 
 RVL_LIB_VERSION(HBM, "Feb 24 2010", "16:19:07", "0x4302_145");
@@ -16,6 +17,9 @@ public:
     void init();
     void draw();
     void update_sound();
+    void setAdjustFlag(int flag);
+    void calc(const HBMControllerData* pController);
+    HBMSelectBtnNum getSelectBtnNum();
 };
 void InitAxSound(const void* data, void* ptr, unsigned long size);
 }
@@ -42,13 +46,18 @@ void HBMInit() {
     homebutton::HomeButton::getInstance()->init();
 }
 
-void HBMCalc(){}
+HBMSelectBtnNum HBMCalc(const HBMControllerData* pController) {
+    homebutton::HomeButton::getInstance()->calc(pController);
+    return homebutton::HomeButton::getInstance()->getSelectBtnNum();
+}
 
 void HBMDraw() {
     homebutton::HomeButton::getInstance()->draw();
 }
 
-void HBMSetAdjustFlag(){}
+void HBMSetAdjustFlag(int flag) {
+    homebutton::HomeButton::getInstance()->setAdjustFlag(flag);
+}
 
 void HBMCreateSound(const void* data, void* ptr, unsigned long size){
     homebutton::HomeButton::getInstance();

@@ -44,7 +44,19 @@ typedef struct {
     UINT8 trace_level;               /* 0x4630 */
 } tSDP_CB;
 
+/* Connection control block view used by the discovery-request API: only the
+   fields this TU writes are named; offsets match the retail sdp_int.h
+   layout. */
+typedef struct {
+    UINT8 _pad[0x410];               /* 0x000 */
+    tSDP_DISCOVERY_DB *p_db;         /* 0x410 */
+    tSDP_DISC_CMPL_CB *p_cb;         /* 0x414 */
+    UINT8 _pad2[0x474 - 0x418];      /* 0x418 */
+    UINT8 disc_state;                /* 0x474 */
+} tCONN_CB;
+
 extern tSDP_CB sdp_cb;
+extern tCONN_CB *sdp_conn_originate(BD_ADDR bd_addr);
 
 /* sdp_db.c helpers */
 extern void *sdp_db_find_record(UINT32 handle);
@@ -59,7 +71,19 @@ BOOLEAN SDP_InitDiscoveryDb(tSDP_DISCOVERY_DB *p_db, UINT32 len, UINT16 num_uuid
 
 BOOLEAN SDP_ServiceSearchRequest(UINT8 *p_bd_addr, tSDP_DISCOVERY_DB *p_db,
                                  tSDP_DISC_CMPL_CB *p_cb) {
-    return 0;
+    tCONN_CB *p_ccb;
+
+    /* find the SDP connection control block */
+    if ((p_ccb = sdp_conn_originate(p_bd_addr)) == NULL) {
+        return FALSE;
+    }
+
+    /* retail stores SDP_DISC_WAIT_CONN (0) here */
+    p_ccb->disc_state = 0;
+    p_ccb->p_db = p_db;
+    p_ccb->p_cb = p_cb;
+
+    return TRUE;
 }
 
 BOOLEAN SDP_ServiceSearchAttributeRequest(UINT8 *p_bd_addr, tSDP_DISCOVERY_DB *p_db,

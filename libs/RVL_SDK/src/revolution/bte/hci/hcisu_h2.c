@@ -207,7 +207,10 @@ UINT16 hcisu_h2_receive_msg(UINT16 hcisu_event, tHCISU_H2_CB *cb) {
     return total;
 }
 
-void hcisu_h2_send_msg_now() {}
+#pragma push
+#pragma auto_inline off
+void hcisu_h2_send_msg_now(tHCISU_H2_CB *p_cb, BT_HDR *p_buf) {}
+#pragma pop
 
 void hcisu_h2_init(unsigned char arg0, unsigned char arg1, unsigned short arg2) {
     unsigned char *base = hcisu_h2_cb;
@@ -228,6 +231,15 @@ void hcisu_h2_close() {
     UUSB_Unregister();
 }
 
-void hcisu_h2_send() {}
+UINT8 hcisu_h2_send(BT_HDR *p_buf) {
+    hcisu_h2_send_msg_now((tHCISU_H2_CB *)hcisu_h2_cb, p_buf);
+    return 1;
+}
 
-void hcisu_h2_handle_event() {}
+UINT16 hcisu_h2_handle_event(UINT16 hcisu_event) {
+    UINT16 event;
+
+    event = (UINT16)((hcisu_event - 8) - *(UINT16 *)&hcisu_h2_cb[0x12]);
+    hcisu_h2_receive_msg(event, (tHCISU_H2_CB *)hcisu_h2_cb);
+    return 0;
+}

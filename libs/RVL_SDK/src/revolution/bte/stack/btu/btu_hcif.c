@@ -321,9 +321,7 @@ void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len) __at
     /* The first event byte reports how many commands the controller can
        still accept; the next two bytes are the completed command opcode. */
     btu_cb.controller_cmd_window = p[0];
-    cc_opcode = (UINT16)(p[1] | (p[2] << 8));
-
-    evt_len -= 3;
+    cc_opcode = (UINT16)(p[1] + (p[2] << 8));
 
     /* Only a handful of commands leave a pending command queued that must be
        dequeued and freed when its completion arrives. */
@@ -335,7 +333,7 @@ void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len) __at
         if (p_cmd)
         {
             p_dequeued = (UINT8 *)(p_cmd + 1);
-            queued_opcode = (UINT16)(p_dequeued[0] | (p_dequeued[1] << 8));
+            queued_opcode = (UINT16)(p_dequeued[0] + (p_dequeued[1] << 8));
 
             /* A vendor-specific command whose opcode does not match the one
                just completed is re-queued rather than freed. */
@@ -357,7 +355,7 @@ void btu_hcif_hdl_command_complete(UINT16 opcode, UINT8 *p, UINT16 evt_len) __at
     }
 
     /* Dispatch the completion and try to send the next queued command. */
-    btu_hcif_hdl_command_complete (cc_opcode, p + 3, evt_len);
+    btu_hcif_hdl_command_complete (cc_opcode, p + 3, evt_len - 3);
     btu_hcif_send_cmd (0);
 }
 extern void LogMsg_2(UINT32 trace_set_mask, const char *fmt_str, UINT32 p1, UINT32 p2);

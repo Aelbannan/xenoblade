@@ -547,15 +547,15 @@ void l2c_link_check_send_pkts(tL2C_LCB *p_lcb, tL2C_CCB *p_ccb,
             p_lcb->is_congested = TRUE;
         }
 
-        if (p_lcb->link_xmit_data_q.count > p_lcb->congestion_discard)
-        {
-            GKI_freebuf(p_buf);
-            L2CAP_TRACE_WARNING0("!!! L2CAP - buffer dropped");
-        }
-        else
+        if (p_lcb->link_xmit_data_q.count <= p_lcb->congestion_discard)
         {
             p_buf->layer_specific = 0;
             GKI_enqueue(&p_lcb->link_xmit_data_q, p_buf);
+        }
+        else
+        {
+            GKI_freebuf(p_buf);
+            L2CAP_TRACE_WARNING0("!!! L2CAP - buffer dropped");
         }
     }
 

@@ -140,10 +140,10 @@ s32 __OSWriteExpiredFlagIfSet(void) {
 }
 
 static u32 __OSPlayTimeRebootThread(void* arg) {
+    BOOL enabled;
     u8 fadeBuf[0x494] __attribute__((aligned(32)));
     u32 i;
     u32 level;
-    BOOL enabled;
 
     __OSExpireAIFade = (FadeAIData*)fadeBuf;
     memset(fadeBuf, 0, sizeof(FadeAIData));

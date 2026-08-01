@@ -3307,6 +3307,37 @@ called in-TU; after the layout fix it matches retail exactly
 (`(mDrawFlag & mask) == flag` → `and/subf/cntlzw/srwi`). u32 = `unsigned
 long` → mangling `Ul` (SetBuffer `FPcUl`, IsDrawFlagSet `CFUlUl`).
 
+**Format/height helpers (10× FULL_MATCH in this TU):**
+`CalcFormatStringWidth/Height` (variadic), `CalcFormatStringRect` (variadic),
+`CalcVStringRect` (`va_list` param), `CalcStringHeight` (×2), plus
+`VSNPrintf`/`StrLen` — all byte-identical. Reusable levers:
+
+1. **VSNPrintf/StrLen as in-TU explicit specializations** (not header
+   `inline`): `template <> int TextWriterBase<char>::VSNPrintf(...) { return
+   std::vsnprintf(...); }` defined in the .cpp before use. MWCC `-inline auto`
+   then inlines them at every call site (retail calls `vsnprintf`/`vswprintf`/
+   `strlen`/`wcslen` directly — never `bl VSNPrintf`/`bl StrLen`) while still
+   emitting the out-of-line `b vsnprintf` bodies for the standalone retail
+   symbols (0x8033DFE0/0x8033DFF0 etc.).
+2. **Variadic stack-slot order**: with `va_list args; va_start(...);` declared
+   before a `Rect rect;`, MWCC assigns the *Rect* the first free slot and the
+   va_list the second (frame offsets swapped vs retail). Declare `Rect rect;`
+   **before** `va_list args;` to get retail's layout (va_list @ 0x68, rect @
+   0x78, clone @ 0x88 in `CalcFormatStringWidth`).
+3. **Clone-dtor-before-return**: `TextWriterBase<T> clone(*this); … return
+   rect.GetWidth();` at function scope makes MWCC compute the return into a
+   callee-saved f31 (extra `stfd/psq_st` prologue). Wrapping the clone in an
+   inner scope `{ TextWriterBase<T> clone(*this); … }` forces the dtor call
+   before the return expression → result computed into f1, no f31 spill
+   (matches retail `CalcStringHeight`/`CalcFormatStringWidth` tails).
+   `CalcLineWidth` retail itself uses the f31 form, so it keeps the flat
+   scope — check the retail tail before choosing.
+4. **`CalcStringHeight(const T*)`** must hoist `int len = StrLen(pStr);` to
+   the top of the body: retail schedules `strlen` immediately after the
+   prologue (r17=pStr, r31=this, `_savegpr_15`), and passing `StrLen(pStr)`
+   inline as the call arg makes MWCC delay it past the clone copy
+   (`_savegpr_18`, smaller frame).
+
 ## CriWare ADX GCI — error-callback msg-local pattern + seek clamp + SetSctLen soft-cap (US)
 
 `libs/CriWare/src/adx/gcci/gcci.c` (GC/3.0a5.2, `-O4,p`). 8 targets accepted:

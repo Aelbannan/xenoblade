@@ -75,6 +75,14 @@ public:
     f32 CalcStringWidth(const T* pStr, int len) const;
     void CalcStringRect(Rect* pRect, const T* pStr, int len) const;
 
+    f32 CalcStringHeight(const T* pStr, int len) const;
+    f32 CalcStringHeight(const T* pStr) const;
+
+    f32 CalcFormatStringWidth(const T* pStr, ...) const;
+    f32 CalcFormatStringHeight(const T* pStr, ...) const;
+    void CalcFormatStringRect(Rect* pRect, const T* pStr, ...) const;
+    void CalcVStringRect(Rect* pRect, const T* pStr, std::va_list args) const;
+
     static int VSNPrintf(T* buffer, u32 count, const T* pStr, std::va_list args);
     static int StrLen(const T* pStr);
     f32 VPrintf(const T* pStr, std::va_list args);

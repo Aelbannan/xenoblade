@@ -45,6 +45,33 @@ f32 TextWriterBase<wchar_t>::GetCharSpace() const {
     return mCharSpace;
 }
 
+// VSNPrintf / StrLen are defined here (rather than in the header) so MWCC can
+// inline them at every call site (retail codegen calls vsnprintf/vswprintf /
+// strlen/wcslen directly from the format/height helpers) while the out-of-line
+// bodies are still emitted for the standalone retail symbols.
+template <>
+int TextWriterBase<char>::VSNPrintf(char* pBuffer, u32 count,
+                                    const char* pStr, std::va_list args) {
+    return std::vsnprintf(pBuffer, count, pStr, args);
+}
+
+template <>
+int TextWriterBase<wchar_t>::VSNPrintf(wchar_t* pBuffer, u32 count,
+                                       const wchar_t* pStr,
+                                       std::va_list args) {
+    return std::vswprintf(pBuffer, count, pStr, args);
+}
+
+template <>
+int TextWriterBase<char>::StrLen(const char* pStr) {
+    return std::strlen(pStr);
+}
+
+template <>
+int TextWriterBase<wchar_t>::StrLen(const wchar_t* pStr) {
+    return std::wcslen(pStr);
+}
+
 template <typename T>
 f32 TextWriterBase<T>::VPrintf(const T* pStr, std::va_list args) {
     T* pBuffer;
@@ -393,6 +420,115 @@ void TextWriterBase<T>::CalcStringRect(Rect* pRect, const T* pStr,
                                        int len) const {
     TextWriterBase<T> clone(*this);
     clone.CalcStringRectImpl(pRect, pStr, len);
+}
+
+// ---------------------------------------------------------------------------
+// Height / format-string measurement helpers. Retail clones the writer into a
+// local (the const methods must not move the receiver's cursor), measures via
+// CalcStringRectImpl on the clone, then reads the rect.
+// ---------------------------------------------------------------------------
+
+template <typename T>
+f32 TextWriterBase<T>::CalcStringHeight(const T* pStr, int len) const {
+    Rect rect;
+    {
+        TextWriterBase<T> clone(*this);
+        clone.CalcStringRectImpl(&rect, pStr, len);
+    }
+    return rect.GetHeight();
+}
+
+template <typename T>
+f32 TextWriterBase<T>::CalcStringHeight(const T* pStr) const {
+    int len = StrLen(pStr);
+    Rect rect;
+    {
+        TextWriterBase<T> clone(*this);
+        clone.CalcStringRectImpl(&rect, pStr, len);
+    }
+    return rect.GetHeight();
+}
+
+template <typename T>
+f32 TextWriterBase<T>::CalcFormatStringWidth(const T* pStr, ...) const {
+    Rect rect;
+    va_list args;
+    va_start(args, pStr);
+
+    T* pBuffer;
+    if (mFormatBuffer != NULL) {
+        pBuffer = mFormatBuffer;
+    } else {
+        pBuffer = static_cast<T*>(__alloca(mFormatBufferSize));
+    }
+
+    int len = VSNPrintf(pBuffer, mFormatBufferSize, pStr, args);
+    va_end(args);
+
+    {
+        TextWriterBase<T> clone(*this);
+        clone.CalcStringRectImpl(&rect, pBuffer, len);
+    }
+    return rect.GetWidth();
+}
+
+template <typename T>
+f32 TextWriterBase<T>::CalcFormatStringHeight(const T* pStr, ...) const {
+    Rect rect;
+    va_list args;
+    va_start(args, pStr);
+
+    T* pBuffer;
+    if (mFormatBuffer != NULL) {
+        pBuffer = mFormatBuffer;
+    } else {
+        pBuffer = static_cast<T*>(__alloca(mFormatBufferSize));
+    }
+
+    int len = VSNPrintf(pBuffer, mFormatBufferSize, pStr, args);
+    va_end(args);
+
+    {
+        TextWriterBase<T> clone(*this);
+        clone.CalcStringRectImpl(&rect, pBuffer, len);
+    }
+    return rect.GetHeight();
+}
+
+template <typename T>
+void TextWriterBase<T>::CalcFormatStringRect(Rect* pRect, const T* pStr,
+                                             ...) const {
+    va_list args;
+    va_start(args, pStr);
+
+    T* pBuffer;
+    if (mFormatBuffer != NULL) {
+        pBuffer = mFormatBuffer;
+    } else {
+        pBuffer = static_cast<T*>(__alloca(mFormatBufferSize));
+    }
+
+    int len = VSNPrintf(pBuffer, mFormatBufferSize, pStr, args);
+    va_end(args);
+
+    TextWriterBase<T> clone(*this);
+    clone.CalcStringRectImpl(pRect, pBuffer, len);
+}
+
+template <typename T>
+void TextWriterBase<T>::CalcVStringRect(Rect* pRect, const T* pStr,
+                                        std::va_list args) const {
+    T* pBuffer;
+    if (mFormatBuffer != NULL) {
+        pBuffer = mFormatBuffer;
+    } else {
+        pBuffer = static_cast<T*>(__alloca(mFormatBufferSize));
+    }
+
+    int len = VSNPrintf(pBuffer, mFormatBufferSize, pStr, args);
+
+    TextWriterBase<T> clone(*this);
+    clone.CalcStringRectImpl(pRect, pBuffer, len);
 }
 
 template <typename T> T* TextWriterBase<T>::SetBuffer(u32 size) {

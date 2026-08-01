@@ -980,7 +980,10 @@ config.libs = [
             # keeps all other functions in the unit at 100%. -func_align 4 matches
             # the bte family layout (retail packed, not 16-aligned) so the unit
             # .text fits the split budget.
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c"),
+            # bta_dm_api.c: retail bte compiled with GC/3.0a5.2 (see bta_dm_act /
+            # btm_devctl notes); Wii/1.1 schedules mr-before-sth after the event
+            # store and keeps the AddDevice loop counter in a volatile reg.
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_api.c", mw_version="GC/3.0a5.2", extra_cflags=["-func_align 4"]),
             Object(Matching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_main.c", extra_cflags=["-func_align 16"]),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/bta/dm/bta_dm_pm.c"),
             # bta_hh_act.c: retail bte built with GC/3.0a5.2 (see bta_dm_act /
@@ -1028,7 +1031,7 @@ config.libs = [
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_l2cap_if.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_mx_fsm.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_fsm.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 16"]),  # retail bte built with GC 3.0a-family (see rfc_utils.c / btm_devctl)
-            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c"),
+            Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_port_if.c", extra_cflags=["-func_align 4"]),  # retail rfcomm built packed (no 16-byte fn padding); default -func_align 16 adds 0x3C of inter-fn padding and blows the split
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_ts_frames.c"),
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/rfcomm/rfc_utils.c", mw_version = "GC/3.0a5.2", extra_cflags=["-func_align 4"]),  # retail bte built with GC 3.0a-family -func_align 4; -func_align 16 + -ipa file inserts scheduling NOPs before mtctr-counted loops (rfc_port_closed ori r0,r0,0, MWCC_REFERENCE btm_inq)
             Object(NonMatching, "RVL_SDK/src/revolution/bte/stack/sdp/sdp_api.c"),

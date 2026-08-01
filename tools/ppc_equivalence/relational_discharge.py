@@ -11,7 +11,12 @@ from typing import Any
 
 from tools.ppc_equivalence.deadline import Deadline
 from tools.ppc_equivalence.discharge import UnsatDischarge, discharge_bad_conditions
-from tools.ppc_equivalence.loop_summary import AffineGprUpdate, CtrAffineLoopCandidate
+from tools.ppc_equivalence.ir import Opcode
+from tools.ppc_equivalence.loop_summary import (
+    AffineBodyOp,
+    AffineGprUpdate,
+    CtrAffineLoopCandidate,
+)
 from tools.ppc_equivalence.relational_induction import (
     ExitAgreementObligation,
     InitiationObligation,
@@ -153,7 +158,11 @@ def try_smt_discharge_ctr_affine(
     if deadline is None:
         deadline = Deadline.after_ms(15_000)
 
-    shared_regs = sorted({item.reg for item in original.body_updates})
+    shared_regs = sorted(
+        {item.reg for item in original.body_updates}
+        | set(_body_op_regs(original))
+        | set(_body_op_regs(candidate))
+    )
     templates = _narrow_templates_for_pair(original, candidate, shared_regs)
     left0 = _fresh_side(z3_module, "L0", shared_regs, cr_fields=(0,))
     right0 = _fresh_side(z3_module, "R0", shared_regs, cr_fields=(0,))
@@ -189,10 +198,10 @@ def try_smt_discharge_ctr_affine(
     )
 
     left1, left_continue, left_exit, left_step_ok = _ctr_affine_step(
-        z3_module, left0, original.body_updates,
+        z3_module, left0, original.body_updates, body_ops=original.body_ops,
     )
     right1, right_continue, right_exit, right_step_ok = _ctr_affine_step(
-        z3_module, right0, candidate.body_updates,
+        z3_module, right0, candidate.body_updates, body_ops=candidate.body_ops,
     )
     inv1 = _invariant(z3_module, left1, right1, shared_regs)
     both_continue = z3_module.And(left_continue, right_continue)
@@ -241,6 +250,7 @@ def try_smt_discharge_ctr_affine(
         right0,
         original.body_updates,
         candidate.body_updates,
+        body_ops=original.body_ops,
         trip=trip,
         deadline=deadline,
     )
@@ -419,10 +429,75 @@ def _invariant(
     return z3.And(*parts)
 
 
+def _rlwinm_mask(mb: int, me: int) -> int:
+    """PPC ``rlwinm`` mask: bits ``mb..me`` (MSB-indexed, wrapping)."""
+    if mb <= me:
+        return ((0xFFFFFFFF << (31 - me)) & (0xFFFFFFFF >> mb)) & 0xFFFFFFFF
+    return ((0xFFFFFFFF >> mb) | (0xFFFFFFFF << (31 - me))) & 0xFFFFFFFF
+
+
+def _body_op_regs(candidate: CtrAffineLoopCandidate) -> list[int]:
+    """All GPR operands of the candidate's whitelisted body ops."""
+    return sorted({
+        int(v)
+        for op in (candidate.body_ops or ())
+        for v in op.operands
+        if 0 <= int(v) <= 31
+    })
+
+
+def _apply_body_ops(
+    z3: Any,
+    gpr: dict[int, Any],
+    body_ops: tuple[AffineBodyOp, ...] | None,
+) -> dict[int, Any]:
+    """Apply the whitelisted body ops (doc 30 Phase D2) to a GPR dict.
+
+    Each opcode's transition must match ``semantics.execute_instruction``
+    exactly so the discharge body model cannot drift from the widened body.
+    """
+    gpr = dict(gpr)
+    for op in body_ops or ():
+        opcode = op.opcode
+        operands = op.operands
+        if opcode == Opcode.ADD:  # add rD, rA, rB
+            rd, ra, rb = (int(v) for v in operands)
+            gpr[rd] = gpr[ra] + gpr[rb]
+        elif opcode == Opcode.SUBF:  # subf rD, rA, rB -> rD = rB - rA
+            rd, ra, rb = (int(v) for v in operands)
+            gpr[rd] = gpr[rb] - gpr[ra]
+        elif opcode == Opcode.MULLI:  # mulli rD, rA, imm
+            rd, ra, imm = (int(v) for v in operands)
+            gpr[rd] = gpr[ra] * z3.BitVecVal(int(imm) & 0xFFFFFFFF, 32)
+        elif opcode == Opcode.OR:  # or rD, rA, rB
+            rd, ra, rb = (int(v) for v in operands)
+            gpr[rd] = gpr[ra] | gpr[rb]
+        elif opcode == Opcode.XOR:  # xor rD, rA, rB
+            rd, ra, rb = (int(v) for v in operands)
+            gpr[rd] = gpr[ra] ^ gpr[rb]
+        elif opcode == Opcode.RLWINM:  # rlwinm rA, rS, sh, mb, me
+            ra, rs, sh, mb, me = (int(v) for v in operands)
+            value = gpr[rs]
+            sh &= 31
+            if sh == 0:
+                rotated = value
+            else:
+                rotated = (value << sh) | z3.LShR(value, 32 - sh)
+            gpr[ra] = rotated & z3.BitVecVal(_rlwinm_mask(mb, me), 32)
+        elif opcode == Opcode.EXTSB:  # extsb rD, rS
+            rd, rs = (int(v) for v in operands)
+            gpr[rd] = z3.SignExt(24, z3.Extract(7, 0, gpr[rs]))
+        else:
+            raise ValueError(f"unmodeled body opcode {opcode.value}")
+    return gpr
+
+
 def _ctr_affine_step(
     z3: Any,
     state: _SideSym,
     updates: tuple[AffineGprUpdate, ...],
+    *,
+    body_ops: tuple[AffineBodyOp, ...] | None = None,
 ) -> tuple[_SideSym, Any, Any, Any]:
     """One body + bdnz step. Continue iff CTR' != 0; exit iff CTR' == 0.
 
@@ -432,7 +507,7 @@ def _ctr_affine_step(
     one = z3.BitVecVal(1, 32)
     no_wrap = state.ctr != zero
     ctr_next = state.ctr - one
-    gpr_next = dict(state.gpr)
+    gpr_next = _apply_body_ops(z3, state.gpr, body_ops)
     for update in updates:
         if update.reg in gpr_next:
             gpr_next[update.reg] = gpr_next[update.reg] + z3.BitVecVal(
@@ -455,6 +530,7 @@ def _discharge_ctr_termination(
     left_updates: tuple[AffineGprUpdate, ...],
     right_updates: tuple[AffineGprUpdate, ...],
     *,
+    body_ops: tuple[AffineBodyOp, ...] | None,
     trip: int | None,
     deadline: Deadline,
 ) -> UnsatDischarge:
@@ -473,9 +549,11 @@ def _discharge_ctr_termination(
     right_body_ctr_ok = z3.BoolVal(True)
     _ = left_updates, right_updates
 
-    left1, left_continue, left_exit, left_ok = _ctr_affine_step(z3, left, left_updates)
+    left1, left_continue, left_exit, left_ok = _ctr_affine_step(
+        z3, left, left_updates, body_ops=body_ops,
+    )
     right1, right_continue, right_exit, right_ok = _ctr_affine_step(
-        z3, right, right_updates,
+        z3, right, right_updates, body_ops=body_ops,
     )
 
     # Properties that must hold; discharge proves their negations are unreachable
@@ -594,9 +672,15 @@ def try_smt_discharge_compare_affine(
     counter_reg = original.trip_count_reg
     body_regs = sorted({item.reg for item in original.body_updates})
     bound_regs = [bound_reg] if bound_reg is not None else []
-    # Counter and bound participate in the invariant even when absent from
-    # body_updates.
-    shared_regs = sorted(set(body_regs) | {counter_reg} | set(bound_regs))
+    # Counter, bound, and whitelisted body-op registers participate in the
+    # invariant even when absent from body_updates.
+    shared_regs = sorted(
+        set(body_regs)
+        | {counter_reg}
+        | set(bound_regs)
+        | set(_body_op_regs(original))
+        | set(_body_op_regs(candidate))
+    )
     templates = _narrow_templates_for_compare_pair(
         original, candidate, shared_regs, counter_reg=counter_reg,
     )
@@ -639,10 +723,12 @@ def try_smt_discharge_compare_affine(
     left1, left_continue, left_exit, left_step_ok = _compare_affine_step(
         z3_module, left0, original.body_updates, counter_reg=counter_reg,
         step=step, family=family, signed=signed, bound_value=bound_value,
+        body_ops=original.body_ops,
     )
     right1, right_continue, right_exit, right_step_ok = _compare_affine_step(
         z3_module, right0, candidate.body_updates, counter_reg=counter_reg,
         step=step, family=family, signed=signed, bound_value=bound_value,
+        body_ops=candidate.body_ops,
     )
     inv1 = _invariant(z3_module, left1, right1, shared_regs)
     both_continue = z3_module.And(left_continue, right_continue)
@@ -680,6 +766,7 @@ def try_smt_discharge_compare_affine(
         right0,
         original.body_updates,
         candidate.body_updates,
+        body_ops=original.body_ops,
         counter_reg=counter_reg,
         step=step,
         family=family,
@@ -920,6 +1007,7 @@ def _compare_affine_step(
     family: str,
     signed: bool,
     bound_value: Any,
+    body_ops: tuple[AffineBodyOp, ...] | None = None,
 ) -> tuple[_SideSym, Any, Any, Any]:
     """One body + ``addi/subi rT, ±step`` / ``cmp rT, bound`` / ``b<family>`` step.
 
@@ -930,7 +1018,7 @@ def _compare_affine_step(
     """
     counter = state.gpr[counter_reg]
     counter_next = counter + z3.BitVecVal(int(step) & 0xFFFFFFFF, 32)
-    gpr_next = dict(state.gpr)
+    gpr_next = _apply_body_ops(z3, state.gpr, body_ops)
     for update in updates:
         if update.reg in gpr_next and update.reg != counter_reg:
             gpr_next[update.reg] = gpr_next[update.reg] + z3.BitVecVal(
@@ -981,6 +1069,7 @@ def _discharge_compare_termination(
     left_updates: tuple[AffineGprUpdate, ...],
     right_updates: tuple[AffineGprUpdate, ...],
     *,
+    body_ops: tuple[AffineBodyOp, ...] | None,
     counter_reg: int,
     step: int,
     family: str,
@@ -996,10 +1085,12 @@ def _discharge_compare_termination(
     left1, left_continue, left_exit, left_ok = _compare_affine_step(
         z3, left, left_updates, counter_reg=counter_reg,
         step=step, family=family, signed=signed, bound_value=bound_value,
+        body_ops=body_ops,
     )
     right1, right_continue, right_exit, right_ok = _compare_affine_step(
         z3, right, right_updates, counter_reg=counter_reg,
         step=step, family=family, signed=signed, bound_value=bound_value,
+        body_ops=body_ops,
     )
 
     def _ranks(next_value: Any, prev_value: Any) -> Any:

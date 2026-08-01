@@ -92,7 +92,7 @@ class CtrAffineRecognitionTests(unittest.TestCase):
         program = [
             _insn(Opcode.ADDI, (0, 0, 3), address=0),
             _insn(Opcode.MTSPR, (0, 9), address=4),
-            _insn(Opcode.ADD, (3, 3, 4), address=8),  # not addi rt,rt,imm
+            _insn(Opcode.LBZ, (3, 4, 0), address=8),  # load — not GPR-pure
             _insn(Opcode.BC, (16, 0, 8, 0), address=12),
         ]
         self.assertEqual(find_ctr_affine_loop_candidates(program), [])

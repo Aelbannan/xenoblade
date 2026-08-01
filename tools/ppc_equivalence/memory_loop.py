@@ -42,7 +42,10 @@ from tools.ppc_equivalence.skip_guard import find_mtctr_with_guard
 from tools.ppc_equivalence.trip_expression import canonical_dict, recognize_trip_expr
 from tools.ppc_equivalence.ir import Instruction, Opcode
 from tools.ppc_equivalence.memory_semantics import (
+    MemoryLoopTransition,
+    StoreEffect,
     apply_memory_loop_transition,
+    apply_store_effect,
     build_memory_loop_transition,
     footprint_ok_for_summary,
     footprint_wraps_u32,
@@ -70,6 +73,39 @@ _STORE_WIDTH: dict[Opcode, int] = {
 
 
 @dataclass(frozen=True)
+class StoreEffectSpec:
+    """One per-iteration store of a multi-store loop body (doc 30 Phase D1).
+
+    ``offset`` is relative to the base register at the iteration start;
+    ``kind="copy"`` loads the stored value from ``load_base_reg +
+    load_offset`` each iteration (the aliasing premise gates the summary).
+    """
+
+    offset: int
+    width: int
+    source_reg: int
+    kind: str = "fill"  # "fill" | "copy"
+    load_base_reg: int | None = None
+    load_offset: int = 0
+    load_width: int = 4
+    load_stride: int = 0
+
+    def to_dict(self) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "offset": int(self.offset),
+            "width": int(self.width),
+            "source_reg": int(self.source_reg),
+            "kind": self.kind,
+        }
+        if self.kind == "copy":
+            payload["load_base_reg"] = int(self.load_base_reg)
+            payload["load_offset"] = int(self.load_offset)
+            payload["load_width"] = int(self.load_width)
+            payload["load_stride"] = int(self.load_stride)
+        return payload
+
+
+@dataclass(frozen=True)
 class ConstantStrideStoreLoop:
     """Recognized CTR counted loop whose body performs constant-stride stores."""
 
@@ -91,6 +127,7 @@ class ConstantStrideStoreLoop:
     confidence: str
     notes: tuple[str, ...]
     skip_guard: dict[str, Any] | None = None
+    effects: tuple[StoreEffectSpec, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -115,6 +152,7 @@ class MemoryLoopSummary:
     zero_guard: str | None = None
     expansion: str = "closed-form"
     skip_guard: dict[str, Any] | None = None
+    effects: tuple[StoreEffectSpec, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -225,6 +263,8 @@ def compute_summary_identity_sha256(summary: MemoryLoopSummary) -> str:
         payload["zero_guard"] = summary.zero_guard
     if summary.skip_guard is not None:
         payload["skip_guard"] = dict(summary.skip_guard)
+    if summary.effects is not None:
+        payload["effects"] = [effect.to_dict() for effect in summary.effects]
     return canonical_json_sha256(payload)
 
 
@@ -364,6 +404,7 @@ def find_constant_stride_store_loops(
                 confidence=confidence,
                 notes=tuple(notes),
                 skip_guard=guard.to_dict() if guard is not None else None,
+                effects=parsed.effects,
             ),
         )
     return loops
@@ -391,6 +432,9 @@ def summarize_constant_stride_store_loop(
             return None
         if loop.zero_guard not in ("concrete-nonzero", "skip-branch"):
             return None
+        if loop.effects is not None:
+            # Bounded-remainder expansions are single-store only.
+            return None
         expansion = "bounded-remainder"
         # Footprint / schema use concrete trip when known, else the proven bound.
         trip_for_schema = (
@@ -405,9 +449,17 @@ def summarize_constant_stride_store_loop(
 
     if trip_for_schema > MAX_MEMORY_LOOP_TRIPS:
         return None
-    if loop.store_kind not in ("stwu", "d-form-addi"):
+    if loop.store_kind not in ("stwu", "d-form-addi", "multi-fill", "copy"):
         return None
-    if not footprint_ok_for_summary(
+    if loop.effects is not None and loop.store_kind in ("multi-fill", "copy"):
+        if not _effects_footprint_ok(
+            effects=loop.effects,
+            trip_count=trip_for_schema,
+            stride=int(loop.stride),
+            store_kind=loop.store_kind,
+        ):
+            return None
+    elif not footprint_ok_for_summary(
         trip_count=trip_for_schema,
         stride=int(loop.stride),
         store_width=int(loop.store_width),
@@ -434,7 +486,41 @@ def summarize_constant_stride_store_loop(
         zero_guard=loop.zero_guard,
         expansion=expansion,
         skip_guard=loop.skip_guard,
+        effects=loop.effects,
     )
+
+
+def _effects_footprint_ok(
+    *,
+    effects: tuple[StoreEffectSpec, ...],
+    trip_count: int,
+    stride: int,
+    store_kind: str,
+) -> bool:
+    """Static footprint gate for multi-effect bodies: per-iteration offsets
+    stay inside ``[0, stride)`` and the total span does not wrap u32."""
+    if trip_count < 1 or stride <= 0:
+        return False
+    for effect in effects:
+        if effect.offset < 0 or effect.offset + effect.width > stride:
+            return False
+        if effect.width not in (1, 2, 4):
+            return False
+    if store_kind == "copy":
+        # The copy's load range must also fit: src + (trip-1)*load_stride + width.
+        for effect in effects:
+            if effect.kind != "copy":
+                continue
+            load_span = (
+                (trip_count - 1) * int(effect.load_stride)
+                + int(effect.load_offset)
+                + int(effect.load_width)
+            )
+            if load_span > 0x100000000:
+                return False
+    # total span [base, base + trip*stride) must not wrap 32-bit space.
+    total = trip_count * stride
+    return total <= 0x80000000
 
 
 def build_memory_loop_summary_map(
@@ -547,14 +633,18 @@ def memory_loop_plan_address_span(
         return None
     trip_count = int(summary.trip_count)
     stride = int(summary.stride)
-    if footprint_wraps_u32(int(base_value), trip_count, stride, summary.store_kind):
-        return None
     if summary.store_kind == "stwu":
+        if footprint_wraps_u32(int(base_value), trip_count, stride, summary.store_kind):
+            return None
         start = (int(base_value) + stride) & 0xFFFFFFFF
-    else:
-        start = int(base_value) & 0xFFFFFFFF
-    end = start + trip_count * stride
-    return start, end
+        end = start + trip_count * stride
+        return start, end
+    # d-form / multi-fill / copy footprints all advance from the base.
+    total_span = trip_count * stride
+    if int(base_value) + total_span > 0xFFFFFFFF:
+        return None
+    start = int(base_value) & 0xFFFFFFFF
+    return start, start + total_span
 
 
 def memory_loop_plan_may_touch_regions(
@@ -620,6 +710,12 @@ def apply_memory_loop_summary(state: Any, summary: MemoryLoopSummary, ops: Any) 
     ``memory_writes`` / ``memory_touches`` match ordinary store execution.
     """
     if summary.expansion == "bounded-remainder" and summary.trip_expr is not None:
+        if summary.effects is not None:
+            # Bounded-remainder expansions are single-store only (the ite
+            # expansion applies one store per index).
+            raise ValueError(
+                "bounded-remainder expansion rejects multi-effect bodies",
+            )
         from tools.ppc_equivalence.trip_expression import (
             TripAnd,
             TripConstant,
@@ -680,6 +776,13 @@ def apply_memory_loop_summary(state: Any, summary: MemoryLoopSummary, ops: Any) 
 
     if summary.trip_count < 1:
         raise ValueError("memory-loop summary requires a positive concrete trip count")
+    if summary.effects is not None:
+        return apply_multi_effect_memory_loop_transition(
+            state,
+            summary=summary,
+            trip_count=int(summary.trip_count),
+            ops=ops,
+        )
     transition = build_memory_loop_transition(
         state,
         trip_count=int(summary.trip_count),
@@ -694,6 +797,101 @@ def apply_memory_loop_summary(state: Any, summary: MemoryLoopSummary, ops: Any) 
     return apply_memory_loop_transition(state, transition, ops)
 
 
+def apply_multi_effect_memory_loop_transition(
+    state: Any,
+    *,
+    summary: MemoryLoopSummary,
+    trip_count: int,
+    ops: Any,
+) -> Any:
+    """Closed-form apply for multi-store fill / copy bodies (doc 30 Phase D1).
+
+    Per iteration ``k`` in program order: copy effects first touch their
+    source bytes (the load executes before the stores), then every store fires
+    at ``base + k*stride + offset``. The base advances ``trip_count * stride``
+    and CTR collapses to ``final_ctr``; copy load registers finish holding the
+    *last* loaded value.
+    """
+    effects = summary.effects or ()
+    if not effects:
+        raise ValueError("multi-effect transition requires effects")
+    base = state.gpr[summary.base_reg]
+    current = state
+    copy_regs: dict[int, Any] = {}
+    for index in range(trip_count):
+        for effect in effects:
+            if effect.kind != "copy":
+                continue
+            base_addr = ops.add(
+                state.gpr[effect.load_base_reg],
+                ops.const(
+                    (index * int(effect.load_stride) + int(effect.load_offset))
+                    & 0xFFFFFFFF,
+                ),
+            )
+            addrs = tuple(
+                ops.add(base_addr, ops.const(byte_index))
+                for byte_index in range(int(effect.load_width))
+            )
+            current = replace(
+                current,
+                memory_touches=current.memory_touches + addrs,
+            )
+        for effect in effects:
+            offset = index * int(summary.stride) + int(effect.offset)
+            address = ops.add(base, ops.const(offset & 0xFFFFFFFF))
+            if effect.kind == "copy":
+                value = _load_word_expression(state, effect, index, ops)
+                copy_regs[effect.source_reg] = _load_word_expression(
+                    state, effect, index, ops,
+                )
+            else:
+                value = state.gpr[effect.source_reg]
+            current = apply_store_effect(
+                current,
+                StoreEffect(address=address, value=value, width=effect.width),
+                ops,
+            )
+    gprs = list(current.gpr)
+    gprs[summary.base_reg] = ops.add(base, ops.const(
+        (trip_count * int(summary.stride)) & 0xFFFFFFFF,
+    ))
+    for reg, value in copy_regs.items():
+        gprs[reg] = value
+    return replace(
+        current,
+        gpr=tuple(gprs),
+        ctr=ops.const(int(summary.final_ctr) & 0xFFFFFFFF),
+    )
+
+
+def _load_word_expression(
+    state: Any,
+    effect: StoreEffectSpec,
+    index: int,
+    ops: Any,
+) -> Any:
+    """Big-endian ``load_width``-byte load expression at ``load_base +
+    index*load_stride + load_offset``."""
+    assert effect.load_base_reg is not None
+    width = int(effect.load_width)
+    base_addr = ops.add(
+        state.gpr[effect.load_base_reg],
+        ops.const(
+            (index * int(effect.load_stride) + int(effect.load_offset)) & 0xFFFFFFFF,
+        ),
+    )
+    value = ops.const(0)
+    for byte_index in range(width):
+        shift = (width - 1 - byte_index) * 8
+        byte = ops.load_byte(
+            state.memory,
+            ops.add(base_addr, ops.const(byte_index)),
+        )
+        value = ops.bor(value, ops.shl(byte, ops.const(shift)))
+    return value
+
+
 def apply_memory_loop_iteration_summary(
     state: Any,
     summary: MemoryLoopSummary,
@@ -704,24 +902,32 @@ def apply_memory_loop_iteration_summary(
     Advances the base by one stride, performs one typed store, and sets
     ``CTR = entry.ctr - 1``. Used by body-step refinement discharge.
     """
-    if summary.store_kind not in ("stwu", "d-form-addi"):
+    if summary.store_kind not in ("stwu", "d-form-addi", "multi-fill", "copy"):
         raise ValueError(f"unsupported store_kind {summary.store_kind!r}")
     entry_ctr = state.ctr
-    stepped = apply_memory_loop_transition(
-        state,
-        build_memory_loop_transition(
+    if summary.effects is not None:
+        stepped = apply_multi_effect_memory_loop_transition(
             state,
+            summary=summary,
             trip_count=1,
-            base_reg=summary.base_reg,
-            source_reg=summary.source_reg,
-            stride=int(summary.stride),
-            store_width=int(summary.store_width),
-            store_kind=summary.store_kind,
-            final_ctr=0,  # overwritten below
             ops=ops,
-        ),
-        ops,
-    )
+        )
+    else:
+        stepped = apply_memory_loop_transition(
+            state,
+            build_memory_loop_transition(
+                state,
+                trip_count=1,
+                base_reg=summary.base_reg,
+                source_reg=summary.source_reg,
+                stride=int(summary.stride),
+                store_width=int(summary.store_width),
+                store_kind=summary.store_kind,
+                final_ctr=0,  # overwritten below
+                ops=ops,
+            ),
+            ops,
+        )
     return replace(stepped, ctr=ops.sub(entry_ctr, ops.const(1)))
 
 
@@ -1127,12 +1333,14 @@ class _ParsedStoreBody:
     store_width: int
     source_reg: int
     store_kind: str
+    effects: tuple[StoreEffectSpec, ...] | None = None
 
 
 def _parse_constant_stride_store_body(
     body: Sequence[Instruction],
 ) -> tuple[_ParsedStoreBody | None, list[str]]:
-    """Accept only exact ``stwu`` or ``store; addi`` bodies (order-sensitive)."""
+    """Accept ``stwu``, exact ``store; addi``, multi-store fill bodies, and
+    ``load; store`` copy bodies (doc 30 Phase D1)."""
     if not body:
         return None, ["empty loop body"]
 
@@ -1164,9 +1372,26 @@ def _parse_constant_stride_store_body(
             notes,
         )
 
-    # Exact store-then-addi (reject reversed order, multi-store, calls, etc.).
+    # Copy bodies: ``load rT, disp(rS); store rT, disp(rD)`` optionally
+    # followed by a pointer ``addi`` on the store base (the load base may
+    # also advance via its own addi).
+    copy = _parse_copy_body(body)
+    if copy is not None:
+        parsed, copy_notes = copy
+        notes.extend(copy_notes)
+        return parsed, notes
+
+    # Multi-store fill bodies: ``[store; store; ...; addi]`` with all stores
+    # sharing one source register and consecutive positive displacements.
+    fill = _parse_multi_fill_body(body)
+    if fill is not None:
+        parsed, fill_notes = fill
+        notes.extend(fill_notes)
+        return parsed, notes
+
+    # Exact store-then-addi (reject reversed order, calls, etc.).
     if len(body) != 2:
-        return None, ["body must be stwu or exact store-then-addi"]
+        return None, ["body must be stwu, store-then-addi, fill, or copy"]
 
     store_insn, addi_insn = body[0], body[1]
     if store_insn.opcode not in _STORE_WIDTH or store_insn.opcode == Opcode.STWU:
@@ -1205,6 +1430,141 @@ def _parse_constant_stride_store_body(
             store_kind="d-form-addi",
         ),
         notes,
+    )
+
+
+def _parse_multi_fill_body(
+    body: Sequence[Instruction],
+) -> tuple[_ParsedStoreBody | None, list[str]] | None:
+    """Multi-store fill: ``[store; store; ...; addi]``, all stores sharing one
+    source register, consecutive positive displacements covering ``[0, stride)``."""
+    if len(body) < 3:
+        return None
+    stores = body[:-1]
+    addi_insn = body[-1]
+    if addi_insn.opcode != Opcode.ADDI:
+        return None
+    if any(insn.opcode not in _STORE_WIDTH or insn.opcode == Opcode.STWU for insn in stores):
+        return None
+
+    widths = [_STORE_WIDTH[insn.opcode] for insn in stores]
+    sources = [int(insn.operands[0]) for insn in stores]
+    if len(set(sources)) != 1:
+        return None  # fill requires one shared source register
+    source_reg = sources[0]
+    base_reg = int(stores[0].operands[1])
+    if base_reg == 0:
+        return None
+    if source_reg == base_reg:
+        return None
+
+    rt, ra, imm = (int(v) for v in addi_insn.operands)
+    if rt != ra or rt != base_reg:
+        return None
+    stride = int(imm)
+    if stride <= 0:
+        return None
+
+    effects: list[StoreEffectSpec] = []
+    cursor = 0
+    for insn, width in zip(stores, widths):
+        _src, _base, disp = (int(v) for v in insn.operands)
+        if _base != base_reg:
+            return None
+        if int(disp) != cursor:
+            return None  # must cover [0, stride) consecutively
+        effects.append(StoreEffectSpec(offset=cursor, width=width, source_reg=source_reg))
+        cursor += width
+    if cursor != stride:
+        return None
+
+    return (
+        _ParsedStoreBody(
+            base_reg=base_reg,
+            index_reg=None,
+            stride=stride,
+            store_width=widths[0],
+            source_reg=source_reg,
+            store_kind="multi-fill",
+            effects=tuple(effects),
+        ),
+        [f"multi-store fill body ({len(stores)} stores, stride {stride})"],
+    )
+
+
+def _parse_copy_body(
+    body: Sequence[Instruction],
+) -> tuple[_ParsedStoreBody | None, list[str]] | None:
+    """Copy body: ``load rT, disp(rS); store rT, disp(rD)`` optionally followed
+    by pointer ``addi`` steps on the store base and/or the load base."""
+    if len(body) not in (2, 3):
+        return None
+    load_insn, store_insn = body[0], body[1]
+    if load_insn.opcode != Opcode.LWZ:
+        return None
+    if store_insn.opcode not in _STORE_WIDTH or store_insn.opcode == Opcode.STWU:
+        return None
+    load_reg, load_base, load_disp = (int(v) for v in load_insn.operands)
+    store_src, store_base, store_disp = (int(v) for v in store_insn.operands)
+    if load_reg != store_src:
+        return None
+    if load_base == 0 or store_base == 0:
+        return None
+    if load_base == store_base:
+        return None
+    if store_src == store_base:
+        return None
+    width = _STORE_WIDTH[store_insn.opcode]
+    if load_disp != 0 or store_disp != 0:
+        return None
+    if width != 4:
+        # Copy bodies are word-copies for now (the load is a word load).
+        return None
+
+    store_stride = width
+    load_stride = 0
+    if len(body) == 3:
+        step_insn = body[2]
+        if step_insn.opcode != Opcode.ADDI:
+            return None
+        rt, ra, imm = (int(v) for v in step_insn.operands)
+        if rt != ra:
+            return None
+        if rt == store_base:
+            store_stride = int(imm)
+            if store_stride != width:
+                return None
+        elif rt == load_base:
+            load_stride = int(imm)
+            if load_stride != width:
+                return None
+        else:
+            return None
+
+    effect = StoreEffectSpec(
+        offset=0,
+        width=width,
+        source_reg=store_src,
+        kind="copy",
+        load_base_reg=load_base,
+        load_offset=0,
+        load_width=width,
+        load_stride=load_stride,
+    )
+    return (
+        _ParsedStoreBody(
+            base_reg=store_base,
+            index_reg=None,
+            stride=store_stride,
+            store_width=width,
+            source_reg=store_src,
+            store_kind="copy",
+            effects=(effect,),
+        ),
+        [
+            "copy body (load; store)"
+            + (f" load stride {load_stride}" if load_stride else "")
+        ],
     )
 
 

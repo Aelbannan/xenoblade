@@ -132,7 +132,16 @@ documented per-implementation private-storage abstraction.
   `trip_expr` / `zero_guard` — no certificate-version bump, existing v1 certs
   remain valid. Shape-only natural
   sketches remain pending unless CTR-affine-backed; mismatched bodies stay
-  unsupported for `EQUIVALENT`. Bulk+remainder pairs discharge when both sides
+  unsupported for `EQUIVALENT`. Doc 30 Phase D2 widens the affine body grammar
+  to GPR-pure whitelisted opcodes (`add`/`subf`/`mulli`/`or`/`xor`/`rlwinm`/
+  `extsb`; `slwi`/`srwi` decode as `rlwinm`, `mr` as `or`) with exact
+  per-opcode transition semantics in the discharge step models; the summary
+  folds only constant-stride self-`addi`/`subi` and treats every whitelisted
+  op as a no-op, which is fidelity-safe only when the op's result register is
+  a dead, callee-saved (`r13..r31`) scratch that appears nowhere outside the
+  loop body — the recognizer enforces this, and ops reading affine-accumulating
+  or counter registers are rejected. FP bodies remain excluded (rounding).
+  Bulk+remainder pairs discharge when both sides
   share a constant-value contiguous `RangeWrite` and the bitvector identity
   `N = (1<<k)*(N>>k)+(N&mask)` with `remainder < (1<<k)` is UNSAT-proven;
   otherwise the sketch stays `pending`.
@@ -160,7 +169,15 @@ documented per-implementation private-storage abstraction.
   summarized loop cannot hide divergent private-frame bytes. Bounded-remainder
   expansions stay `applied` (never discharged). Recognizer accepts
   exact `store; addi` or lone `stwu` bodies only (rejects reversed order,
-  multi-store, calls, source==base). `mtctr 0` is unsupported (bdnz wrap).
+  multi-store, calls, source==base). Doc 30 Phase D1 widens the store-body
+  grammar to multi-store fill bodies (consecutive same-source stores covering
+  `[0, stride)`, e.g. the 8-word `stw` bulk loops in `__AXVPBInitCommon`) and
+  `load; store` copy bodies (word copies; the load base may advance). Copy
+  summaries read the source range and write the destination range per
+  iteration; the apply-time aliasing premise
+  (`dst + len <= src OR src <= dst`, everything except backward overlap) is
+  part of the entry premise, so a self-clobbering copy stays fail-closed.
+  `mtctr 0` is unsupported (bdnz wrap).
   Skip guards (doc 30 Phase B): `mtctr` may sit up to four instructions before
   the header when the between-instructions are `{nop, mr, cror, crand}` or a
   single conditional CR0-test branch, and a guarded symbolic remainder is

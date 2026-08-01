@@ -202,7 +202,7 @@ def discharge_memory_loop_plan(
             "stride does not equal store width",
             "INCONCLUSIVE_UNSUPPORTED",
         )
-    if summary.store_kind not in ("stwu", "d-form-addi"):
+    if summary.store_kind not in ("stwu", "d-form-addi", "multi-fill", "copy"):
         return MemoryLoopDischargeResult(
             "failed",
             {},
@@ -210,6 +210,15 @@ def discharge_memory_loop_plan(
             f"unsupported store kind {summary.store_kind!r}",
             "INCONCLUSIVE_UNSUPPORTED",
         )
+    if summary.effects is not None and summary.store_kind in ("multi-fill", "copy"):
+        if int(summary.stride) <= 0:
+            return MemoryLoopDischargeResult(
+                "failed",
+                {},
+                {},
+                "multi-effect stride must be positive",
+                "INCONCLUSIVE_UNSUPPORTED",
+            )
 
     try:
         _validate_witness_shape(plan)
@@ -672,15 +681,28 @@ def _discharge_footprint(
     z3_module: Any,
 ) -> UnsatDischarge:
     """Static footprint gate: trip >= 1 and no 32-bit span wrap."""
-    ok = (
-        int(summary.trip_count) >= 1
-        and footprint_ok_for_summary(
-            trip_count=int(summary.trip_count),
-            stride=int(summary.stride),
-            store_width=int(summary.store_width),
-            store_kind=summary.store_kind,
+    if summary.effects is not None and summary.store_kind in ("multi-fill", "copy"):
+        from tools.ppc_equivalence.memory_loop import _effects_footprint_ok
+
+        ok = (
+            int(summary.trip_count) >= 1
+            and _effects_footprint_ok(
+                effects=summary.effects,
+                trip_count=int(summary.trip_count),
+                stride=int(summary.stride),
+                store_kind=summary.store_kind,
+            )
         )
-    )
+    else:
+        ok = (
+            int(summary.trip_count) >= 1
+            and footprint_ok_for_summary(
+                trip_count=int(summary.trip_count),
+                stride=int(summary.stride),
+                store_width=int(summary.store_width),
+                store_kind=summary.store_kind,
+            )
+        )
     bad = [] if ok else [z3_module.BoolVal(True)]
     return discharge_bad_conditions(
         premises=[],

@@ -66,6 +66,19 @@ class AffineGprUpdate:
 
 
 @dataclass(frozen=True)
+class AffineBodyOp:
+    """One whitelisted GPR-pure body instruction (doc 30 Phase D2).
+
+    The summary folds the constant-stride ``addi``/``subi`` updates; every
+    other whitelisted opcode is modeled exactly in the relational discharge
+    step and must be dead/invariant for the closed form to discharge.
+    """
+
+    opcode: Opcode
+    operands: tuple[int, ...]
+
+
+@dataclass(frozen=True)
 class FinalCompare:
     """Final CR-field compare applied after closed-form GPR updates.
 
@@ -97,6 +110,7 @@ class CtrAffineLoopCandidate:
     final_compare: FinalCompare | None = None
     trip_expr: dict[str, Any] | None = None
     skip_guard: dict[str, Any] | None = None
+    body_ops: tuple[AffineBodyOp, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -186,8 +200,13 @@ def find_ctr_affine_loop_candidates(
             continue  # not a back-edge into this block
 
         body = list(instructions[header_index:index])
-        updates, body_notes = _parse_affine_body(body)
+        updates, body_notes, body_ops = _parse_affine_body(body)
         if body_notes and updates is None:
+            continue
+        if any(
+            not _body_op_fidelity_ok(instructions, header_index, index, op)
+            for op in body_ops
+        ):
             continue
 
         mtctr_index, guard = find_mtctr_with_guard(instructions, header_index)
@@ -237,6 +256,7 @@ def find_ctr_affine_loop_candidates(
                 notes=tuple(notes),
                 trip_expr=canonical_dict(trip_expr) if trip_expr is not None else None,
                 skip_guard=guard.to_dict() if guard is not None else None,
+                body_ops=tuple(body_ops) or None,
             ),
         )
     return candidates
@@ -337,7 +357,12 @@ def find_compare_affine_loop_candidates(
         parsed, body_notes = _parse_compare_affine_body(body, family)
         if parsed is None:
             continue
-        counter_reg, step, updates, bound_imm, bound_reg, signed = parsed
+        counter_reg, step, updates, bound_imm, bound_reg, signed, body_ops = parsed
+        if any(
+            not _body_op_fidelity_ok(instructions, header_index, index, op)
+            for op in body_ops
+        ):
+            continue
 
         # The counter's entry value (materialization before the header).
         counter_expr, counter_notes = recognize_trip_expr(
@@ -416,6 +441,7 @@ def find_compare_affine_loop_candidates(
                 notes=tuple(notes),
                 final_compare=final_compare,
                 trip_expr=trip_expr_dict,
+                body_ops=tuple(body_ops) or None,
             ),
         )
     return candidates
@@ -853,30 +879,114 @@ def _compare_latch_family(insn: Instruction) -> str | None:
     return guard_family(bo, bi)
 
 
+def _body_op_result_reg(op: AffineBodyOp) -> int | None:
+    """The GPR written by a whitelisted body op, or ``None``."""
+    if op.opcode in (
+        Opcode.ADD,
+        Opcode.SUBF,
+        Opcode.MULLI,
+        Opcode.OR,
+        Opcode.XOR,
+        Opcode.RLWINM,
+        Opcode.EXTSB,
+    ):
+        return int(op.operands[0])
+    return None
+
+
+def _body_op_fidelity_ok(
+    instructions: Sequence[Instruction],
+    header_index: int,
+    latch_index: int,
+    op: AffineBodyOp,
+) -> bool:
+    """The no-op summary treatment is fidelity-safe only for dead, callee-saved
+    scratch registers (doc 30 Phase D2): the result register must be
+    ``r13..r31`` and must not appear anywhere in the function outside the loop
+    body (its value at loop entry and after the latch is provably irrelevant).
+    EABI-volatile registers (``r0..r12``) can carry observable values across
+    the function boundary (return channel, argument regs), so they are never
+    no-op'd.
+    """
+    result_reg = _body_op_result_reg(op)
+    if result_reg is None or result_reg <= 12:
+        return False
+    for index, insn in enumerate(instructions):
+        if header_index <= index <= latch_index:
+            continue
+        if any(
+            0 <= int(operand) <= 31 and int(operand) == result_reg
+            for operand in insn.operands
+        ):
+            return False
+    return True
+
+
 def _parse_affine_body(
     body: Sequence[Instruction],
-) -> tuple[list[AffineGprUpdate] | None, list[str]]:
+) -> tuple[list[AffineGprUpdate] | None, list[str], list[AffineBodyOp]]:
+    """Parse a GPR-pure loop body (doc 30 Phase D2 whitelist).
+
+    Returns ``(updates, notes, body_ops)``. Constant-stride self-``addi``/
+    ``subi`` fold into :class:`AffineGprUpdate`; every other whitelisted
+    opcode is recorded as an :class:`AffineBodyOp` modeled exactly in the
+    relational discharge step. FP bodies and side-effecting opcodes are
+    rejected.
+    """
     if not body:
-        return [], ["empty loop body"]
+        return [], ["empty loop body"], []
     updates: list[AffineGprUpdate] = []
+    body_ops: list[AffineBodyOp] = []
     notes: list[str] = []
     for insn in body:
-        if insn.opcode != Opcode.ADDI:
-            return None, [f"unsupported body opcode {insn.opcode.value}"]
-        rt, ra, imm = insn.operands
-        if int(rt) != int(ra):
-            return None, [f"non-affine addi r{rt}, r{ra}, {imm}"]
-        if int(rt) == 0:
-            notes.append("body writes r0 (volatile under EABI)")
-        updates.append(AffineGprUpdate(reg=int(rt), addend=int(imm)))
-    return updates, notes
+        if insn.opcode == Opcode.ADDI:
+            rt, ra, imm = (int(v) for v in insn.operands)
+            if rt == ra and rt != 0:
+                updates.append(AffineGprUpdate(reg=rt, addend=int(imm)))
+                continue
+            if rt == ra and rt == 0:
+                notes.append("body writes r0 (volatile under EABI)")
+                updates.append(AffineGprUpdate(reg=rt, addend=int(imm)))
+                continue
+            return None, [f"non-affine addi r{rt}, r{ra}, {imm}"], []
+        if insn.opcode in _AFFINE_BODY_WHITELIST:
+            operands = tuple(int(v) for v in insn.operands)
+            # The whitelist ops must operate on dead/invariant registers only:
+            # if any operand is an affine-accumulating register, the closed
+            # form's fold would be unsound (the step model would diverge).
+            if any(operand in {update.reg for update in updates} for operand in operands):
+                return None, [
+                    f"body op {insn.opcode.value} reads an affine register",
+                ], []
+            body_ops.append(AffineBodyOp(opcode=insn.opcode, operands=operands))
+            continue
+        return None, [f"unsupported body opcode {insn.opcode.value}"], []
+    return updates, notes, body_ops
+
+
+# GPR-pure, side-effect-free body opcodes (doc 30 Phase D2): each needs exact
+# transition semantics in ``relational_discharge``'s step models. ``slwi`` /
+# ``srwi`` decode as RLWINM; ``mr`` decodes as OR with equal sources.
+_AFFINE_BODY_WHITELIST = frozenset({
+    Opcode.ADD,
+    Opcode.SUBF,
+    Opcode.MULLI,
+    Opcode.OR,
+    Opcode.XOR,
+    Opcode.RLWINM,
+    Opcode.EXTSB,
+})
 
 
 def _parse_compare_affine_body(
     body: Sequence[Instruction],
     family: str,
 ) -> tuple[
-    tuple[int, int, list[AffineGprUpdate], int | None, int | None, bool] | None,
+    tuple[
+        int, int, list[AffineGprUpdate], int | None, int | None, bool,
+        list[AffineBodyOp],
+    ]
+    | None,
     list[str],
 ]:
     """Parse ``[addi…]; addi/subi rT, ±step; cmp rT, bound`` body (latch excluded).
@@ -919,13 +1029,16 @@ def _parse_compare_affine_body(
         return None, ["compare-affine counter cannot be r0"]
 
     rest = body[:-2]
-    updates, notes = _parse_affine_body(rest)
+    updates, notes, body_ops = _parse_affine_body(rest)
     if updates is None:
         return None, notes
     for update in updates:
         if update.reg == rt:
             return None, ["compare-affine body updates the counter register"]
-    return (rt, step, updates, bound_imm, bound_reg, signed), notes
+    for op in body_ops:
+        if any(operand == rt for operand in op.operands):
+            return None, ["compare-affine body op reads the counter register"]
+    return (rt, step, updates, bound_imm, bound_reg, signed, body_ops), notes
 
 
 _COMPARE_FAMILIES = frozenset({"bne", "beq", "blt", "bgt", "ble", "bge"})

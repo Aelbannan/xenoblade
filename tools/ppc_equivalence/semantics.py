@@ -5258,6 +5258,42 @@ def _execute_cfg_body(
                     current.ctr,
                     ops.const(int(summary.trip_count) & 0xFFFFFFFF),
                 )
+                # Phase D1 copy bodies: the summary reads the source range and
+                # writes the destination range; it is sound only when the
+                # ranges are disjoint or exactly-forward-overlapping
+                # (``dst + len <= src OR src <= dst``), else the copy could
+                # self-clobber. The aliasing premise is part of the entry
+                # premise; a violated copy stays fail-closed.
+                copy_effects = [
+                    effect
+                    for effect in (summary.effects or ())
+                    if effect.kind == "copy"
+                ]
+                if copy_effects:
+                    alias_parts: list[Any] = []
+                    for effect in copy_effects:
+                        assert effect.load_base_reg is not None
+                        src = current.gpr[effect.load_base_reg]
+                        dst = current.gpr[summary.base_reg]
+                        total = (
+                            int(summary.trip_count) * int(summary.stride)
+                        ) & 0xFFFFFFFF
+                        src_len = (
+                            (int(summary.trip_count) - 1) * int(effect.load_stride)
+                            + int(effect.load_offset)
+                            + int(effect.load_width)
+                        ) & 0xFFFFFFFF
+                        dst_end = ops.add(dst, ops.const(total))
+                        src_end = ops.add(src, ops.const(src_len))
+                        # dst + len <= src  OR  src <= dst
+                        alias_parts.append(
+                            ops.lor(
+                                ops.lnot(ops.unsigned_lt(src, dst_end)),
+                                ops.lnot(ops.unsigned_lt(dst, src)),
+                            ),
+                        )
+                    for part in alias_parts:
+                        entry_guard = ops.land(entry_guard, part)
             if entry_guard is not None:
                 # Keep the premise-violation path until the complete solver
                 # context can prove it unreachable (do not prune via local

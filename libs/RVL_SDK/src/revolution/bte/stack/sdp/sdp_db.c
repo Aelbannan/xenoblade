@@ -179,34 +179,69 @@ void *sdp_db_find_attr_in_rec(void *rec, unsigned short attr_id_low, unsigned sh
 
 UINT32 SDP_CreateRecord(void) {
     tSDP_DB *db = &sdp_cb.server_db;
-    UINT16 num_rec = db->num_records;
     UINT32 handle;
     UINT8 buf[4];
 
-    if (num_rec >= SDP_MAX_RECORDS)
-        return 0;
+    if (db->num_records < SDP_MAX_RECORDS) {
+        memset(&db->record[db->num_records], 0, sizeof(tSDP_RECORD));
 
-    memset(&db->record[num_rec], 0, sizeof(tSDP_RECORD));
+        if (db->num_records > 0)
+            handle = db->record[db->num_records - 1].record_handle + 1;
+        else
+            handle = 0x10000;
 
-    if (num_rec > 0)
-        handle = db->record[num_rec - 1].record_handle + 1;
-    else
-        handle = 0x10000;
+        db->record[db->num_records].record_handle = handle;
 
-    db->record[num_rec].record_handle = handle;
+        buf[0] = (UINT8)(handle >> 24);
+        buf[1] = (UINT8)(handle >> 16);
+        db->num_records = db->num_records + 1;
+        buf[2] = (UINT8)(handle >> 8);
+        buf[3] = (UINT8)handle;
 
-    buf[0] = (UINT8)(handle >> 24);
-    buf[1] = (UINT8)(handle >> 16);
-    buf[2] = (UINT8)(handle >> 8);
-    buf[3] = (UINT8)handle;
+        SDP_AddAttribute(handle, 0, 1, 4, buf);
 
-    db->num_records = num_rec + 1;
-    SDP_AddAttribute(handle, 0, 1, 4, buf);
+        handle = db->record[db->num_records - 1].record_handle;
+    } else {
+        handle = 0;
+    }
 
     return handle;
 }
 
-void SDP_DeleteRecord() {}
+BOOLEAN SDP_DeleteRecord(UINT32 handle) {
+    UINT16 xx, yy;
+    tSDP_RECORD *p_rec = &sdp_cb.server_db.record[0];
+
+    if (handle == 0 || sdp_cb.server_db.num_records == 0) {
+        sdp_cb.server_db.num_records = 0;
+        sdp_cb.server_db.di_primary_handle = 0;
+        sdp_cb.server_db.brcm_di_registered = 0;
+        return TRUE;
+    }
+
+    for (xx = 0; xx < sdp_cb.server_db.num_records; xx++, p_rec++) {
+        if (p_rec->record_handle == handle) {
+            /* Found the record; shift every subsequent record down by one */
+            for (; xx < sdp_cb.server_db.num_records; xx++, p_rec++) {
+                *p_rec = *(p_rec + 1);
+
+                for (yy = 0; yy < p_rec->num_attributes; yy++)
+                    p_rec->attribute[yy].value_ptr -= sizeof(tSDP_RECORD);
+            }
+
+            sdp_cb.server_db.num_records--;
+
+            if (sdp_cb.server_db.di_primary_handle == handle) {
+                sdp_cb.server_db.di_primary_handle = 0;
+                sdp_cb.server_db.brcm_di_registered = 0;
+            }
+
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+} 
 
 void SDP_AddServiceClassIdList() {}
 

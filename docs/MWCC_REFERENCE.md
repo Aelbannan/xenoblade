@@ -4699,6 +4699,36 @@ prologue) — 49 structural mismatches, same bytes otherwise.
   `p_uuids++` must live in the for-increment (retail schedules `addi r6,r6,2` after the
   length check, on the non-break path only).
 
+### SDP_CreateRecord + SDP_DeleteRecord — 2× FULL_MATCH (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
+
+`SDP_CreateRecord` (us-80306924, 0xE0) and `SDP_DeleteRecord` (us-80306a04, 0x114) — both
+byte-exact (0/56 and 0/69, semantic-certified, split PASS). Reusable GC/3.0a5.2 patterns:
+
+- **Never cache `sdp_cb.server_db.num_records` in a local across `memset`** — the retail
+  reloads `lhz r4,6(r31)` after the `bl memset`. A `UINT16 num_rec` local forces a
+  callee-saved register live across the call (extra stw r28-30 in the prologue). Access
+  the global directly each time (`db->num_records` where `db = &sdp_cb.server_db`).
+- **Single-return `if/else` places the early-return block at the BOTTOM**: `if (n < MAX)
+  { …body…; handle = …; } else { handle = 0; } return handle;` emits retail's layout
+  (main body → `b` over the `li r3,0` block → epilogue). The naive `if (n >= MAX) return
+  0; …; return …;` puts `li r3,0; b epilogue` inline after the branch (top) instead.
+- **Retail store order interleaves `num_records++` between `buf[1]` and `buf[2]`**:
+  write `buf[0]; buf[1]; db->num_records = db->num_records + 1; buf[2]; buf[3];` —
+  MWCC emits stores in source order, and only this order reproduces the retail schedule.
+- **`SDP_DeleteRecord` record shift: use `*p_rec = *(p_rec + 1);` (struct assignment), NOT
+  `memcpy`** — GC/3.0a5.2 does not inline `memcpy` even for constant sizes (see btm_devctl
+  note), but a 0x298-byte struct assignment expands to the retail's exact `mtctr 0x53` +
+  `lwzu`/`stwu` 8-byte copy loop. The attribute fixup then reloads `p_rec->num_attributes`
+  per iteration (`lhz r0,8(r10)` in the loop condition) and does
+  `p_rec->attribute[yy].value_ptr -= sizeof(tSDP_RECORD);` unconditionally.
+- **Loop headers: `for (; xx < …; xx++, p_rec++)` (both increments in the for-increment
+  expression)** — MWCC emits the increments left-to-right; a body `p_rec++;` produces the
+  reverse order (`addi r10` before `addi r9`) and 4 pure reg-swap mismatches. Outer search
+  loop is `for (xx = 0; xx < …; xx++, p_rec++)` with the found-branch returning TRUE
+  (shift loop, `num_records--`, conditional di_primary_handle reset) before the increment.
+- The `handle == 0 || num_records == 0` reset path stores num_records=0, di_primary_handle=0,
+  brcm_di_registered=0 unconditionally and returns TRUE (no conditional on handle there).
+
 ## RVL_SDK bte/l2cap l2c_csm.c — 4× FULL_MATCH: `-ipa off` reverse emission + string-pool layout (GC/3.0a5.2, `-func_align 4`, `-ipa off`)
 
 `l2c_csm_execute` (0x4C), `l2c_csm_closed` (0x294), `l2c_csm_orig_w4_sec_comp` (0x170),

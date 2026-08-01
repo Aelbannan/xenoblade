@@ -39,12 +39,12 @@ tSDP_DISC_REC *SDP_FindServiceInDb(tSDP_DISCOVERY_DB *p_db, UINT16 attr_id, tSDP
 
 tSDP_DISC_REC *SDP_FindServiceUUIDInDb(tSDP_DISCOVERY_DB *p_db, tBT_UUID *p_uuid,
                                      tSDP_DISC_REC *p_start_rec) {
-    tSDP_DISC_ATTR *p_attr;
-    tSDP_DISC_REC *p_rec;
-
     /* Defined in sdp_utils.c */
     extern BOOLEAN sdpu_compare_uuid_with_attr(tBT_UUID *puuid1,
                                                tSDP_DISC_ATTR *p_attr);
+
+    tSDP_DISC_REC *p_rec;
+    tSDP_DISC_ATTR *p_attr;
 
     if (p_start_rec == NULL)
         p_rec = p_db->p_first_rec;

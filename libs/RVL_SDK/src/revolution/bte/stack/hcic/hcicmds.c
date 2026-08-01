@@ -638,11 +638,9 @@ int btsnd_hcic_reset(void)
     return 1;
 }
 
-void btsnd_hcic_set_event_filter(unsigned char *p, unsigned char filt_type, unsigned char filt_cond_type, unsigned char *bd_addr, unsigned char filt_cond)
+void btsnd_hcic_set_event_filter(unsigned char *p, unsigned char filt_type, unsigned char filt_cond_type, unsigned char *bd_addr, int filt_cond)
 {
-    unsigned char *src;
     unsigned char *dst;
-    unsigned char count;
     int i;
 
     *(unsigned short *)(p + 4) = 0;
@@ -653,32 +651,32 @@ void btsnd_hcic_set_event_filter(unsigned char *p, unsigned char filt_type, unsi
         p[10] = filt_cond + 2;
         p[11] = filt_type;
         p[12] = filt_cond_type;
-        src = bd_addr;
         dst = p + 13;
-        count = filt_cond;
         if (filt_cond_type == 1) {
-            dst[0] = src[2];
-            dst[1] = src[1];
-            dst[2] = src[0];
-            dst[3] = src[5];
-            dst[4] = src[4];
-            dst[5] = src[3];
-            src += 6;
+            dst[0] = bd_addr[2];
+            dst[1] = bd_addr[1];
+            dst[2] = bd_addr[0];
+            dst[3] = bd_addr[5];
+            dst[4] = bd_addr[4];
+            dst[5] = bd_addr[3];
+            bd_addr += 6;
             dst += 6;
-            count = filt_cond - 6;
+            filt_cond = (unsigned char)(filt_cond - 6);
         } else if (filt_cond_type == 2) {
-            dst[0] = src[5];
-            dst[1] = src[4];
-            dst[2] = src[3];
-            dst[3] = src[2];
-            dst[4] = src[1];
-            dst[5] = src[0];
-            src += 6;
+            dst[0] = bd_addr[5];
+            dst[1] = bd_addr[4];
+            dst[2] = bd_addr[3];
+            dst[3] = bd_addr[2];
+            dst[4] = bd_addr[1];
+            dst[5] = bd_addr[0];
+            bd_addr += 6;
             dst += 6;
-            count = filt_cond - 6;
+            filt_cond = (unsigned char)(filt_cond - 6);
         }
-        for (i = 0; i < count; i++)
-            *dst++ = *src++;
+        if (filt_cond) {
+            for (i = 0; i < filt_cond; i++)
+                *dst++ = bd_addr[i];
+        }
     } else {
         *(unsigned short *)(p + 2) = 4;
         p[10] = 1;
@@ -721,16 +719,14 @@ void btsnd_hcic_read_stored_key(unsigned char *p, unsigned char *bd_addr, unsign
 
 void btsnd_hcic_write_stored_key(unsigned char *p, unsigned char num_keys, unsigned char *bd_addr, unsigned char *link_key)
 {
-    unsigned short len;
     unsigned char *pp;
     int i, j;
 
-    len = num_keys * 22 + 4;
     *(unsigned short *)(p + 4) = 0;
-    *(unsigned short *)(p + 2) = len;
+    *(unsigned short *)(p + 2) = num_keys * 22 + 4;
     p[8] = 0x11;
     p[9] = 0xc;
-    p[10] = (unsigned char)(len - 3);
+    p[10] = (unsigned char)((unsigned short)(num_keys * 22 + 4) - 3);
     if (num_keys > 11)
         num_keys = 11;
     p[11] = num_keys;

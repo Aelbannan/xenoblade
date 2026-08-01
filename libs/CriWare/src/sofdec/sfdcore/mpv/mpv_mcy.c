@@ -21,6 +21,10 @@ typedef struct MPC16Params_ {
     u8 *src2;
 } MPC16Params;
 
+#define MPVMC16_AVG(a, b)                                                      \
+    ((((a) ^ (b)) & 0x01010101u) + ((a) & (b)) +                              \
+     ((((a) ^ (b)) & 0xFEFEFEFEu) >> 1))
+
 void MPVMC16_OneRefV2_TuneC(MPC16Params *prm) {
     u8 *s2 = prm->src2;
     u8 *s1 = prm->src1;
@@ -37,14 +41,14 @@ void MPVMC16_OneRefV2_TuneC(MPC16Params *prm) {
             u32 b0 = *(u32 *)&s2[0];
             u32 a1 = *(u32 *)&s1[4];
             u32 b1 = *(u32 *)&s2[4];
+            *(u32 *)&dst[0] = MPVMC16_AVG(a0, b0);
+            *(u32 *)&dst[4] = MPVMC16_AVG(a1, b1);
             u32 a2 = *(u32 *)&s1[8];
             u32 b2 = *(u32 *)&s2[8];
             u32 a3 = *(u32 *)&s1[12];
             u32 b3 = *(u32 *)&s2[12];
-            *(u32 *)&dst[0] = (a0 & b0) + (((a0 ^ b0) & 0xFEFEFEFE) >> 1) + ((a0 ^ b0) & 0x01010101);
-            *(u32 *)&dst[4] = (a1 & b1) + (((a1 ^ b1) & 0xFEFEFEFE) >> 1) + ((a1 ^ b1) & 0x01010101);
-            *(u32 *)&dst[0x40] = (a2 & b2) + (((a2 ^ b2) & 0xFEFEFEFE) >> 1) + ((a2 ^ b2) & 0x01010101);
-            *(u32 *)&dst[0x44] = (a3 & b3) + (((a3 ^ b3) & 0xFEFEFEFE) >> 1) + ((a3 ^ b3) & 0x01010101);
+            *(u32 *)&dst[0x40] = MPVMC16_AVG(a2, b2);
+            *(u32 *)&dst[0x44] = MPVMC16_AVG(a3, b3);
             s1 += stride;
             s2 += stride;
             dst += 8;
@@ -76,10 +80,10 @@ void MPVMC16_OneRefV2_TuneC(MPC16Params *prm) {
             u32 n1 = ((b2 >> 24) | (b1 << 8));
             u32 n2 = ((b3 >> 24) | (b2 << 8));
             u32 n3 = (b4 | (b3 << 8));
-            *(u32 *)&dst[0] = (m0 & n0) + (((m0 ^ n0) & 0xFEFEFEFE) >> 1) + ((m0 ^ n0) & 0x01010101);
-            *(u32 *)&dst[4] = (m1 & n1) + (((m1 ^ n1) & 0xFEFEFEFE) >> 1) + ((m1 ^ n1) & 0x01010101);
-            *(u32 *)&dst[0x40] = (m2 & n2) + (((m2 ^ n2) & 0xFEFEFEFE) >> 1) + ((m2 ^ n2) & 0x01010101);
-            *(u32 *)&dst[0x44] = (m3 & n3) + (((m3 ^ n3) & 0xFEFEFEFE) >> 1) + ((m3 ^ n3) & 0x01010101);
+            *(u32 *)&dst[0] = MPVMC16_AVG(m0, n0);
+            *(u32 *)&dst[4] = MPVMC16_AVG(m1, n1);
+            *(u32 *)&dst[0x40] = MPVMC16_AVG(m2, n2);
+            *(u32 *)&dst[0x44] = MPVMC16_AVG(m3, n3);
             s1 += stride;
             s2 += stride;
             dst += 8;
@@ -111,10 +115,10 @@ void MPVMC16_OneRefV2_TuneC(MPC16Params *prm) {
             u32 n1 = ((x2 >> 16) | (x1 << 16));
             u32 n2 = ((x3 >> 16) | (x2 << 16));
             u32 n3 = (g8 | ((x3 & 0xFFFF) << 16));
-            *(u32 *)&dst[0] = (m0 & n0) + (((m0 ^ n0) & 0xFEFEFEFE) >> 1) + ((m0 ^ n0) & 0x01010101);
-            *(u32 *)&dst[4] = (m1 & n1) + (((m1 ^ n1) & 0xFEFEFEFE) >> 1) + ((m1 ^ n1) & 0x01010101);
-            *(u32 *)&dst[0x40] = (m2 & n2) + (((m2 ^ n2) & 0xFEFEFEFE) >> 1) + ((m2 ^ n2) & 0x01010101);
-            *(u32 *)&dst[0x44] = (m3 & n3) + (((m3 ^ n3) & 0xFEFEFEFE) >> 1) + ((m3 ^ n3) & 0x01010101);
+            *(u32 *)&dst[0] = MPVMC16_AVG(m0, n0);
+            *(u32 *)&dst[4] = MPVMC16_AVG(m1, n1);
+            *(u32 *)&dst[0x40] = MPVMC16_AVG(m2, n2);
+            *(u32 *)&dst[0x44] = MPVMC16_AVG(m3, n3);
             s1 += stride;
             s2 += stride;
             dst += 8;
@@ -146,10 +150,10 @@ void MPVMC16_OneRefV2_TuneC(MPC16Params *prm) {
             u32 n1 = ((b2 >> 8) | (b1 << 24));
             u32 n2 = ((b3 >> 8) | (b2 << 24));
             u32 n3 = ((b4 >> 8) | (b3 << 24));
-            *(u32 *)&dst[0] = (m0 & n0) + (((m0 ^ n0) & 0xFEFEFEFE) >> 1) + ((m0 ^ n0) & 0x01010101);
-            *(u32 *)&dst[4] = (m1 & n1) + (((m1 ^ n1) & 0xFEFEFEFE) >> 1) + ((m1 ^ n1) & 0x01010101);
-            *(u32 *)&dst[0x40] = (m2 & n2) + (((m2 ^ n2) & 0xFEFEFEFE) >> 1) + ((m2 ^ n2) & 0x01010101);
-            *(u32 *)&dst[0x44] = (m3 & n3) + (((m3 ^ n3) & 0xFEFEFEFE) >> 1) + ((m3 ^ n3) & 0x01010101);
+            *(u32 *)&dst[0] = MPVMC16_AVG(m0, n0);
+            *(u32 *)&dst[4] = MPVMC16_AVG(m1, n1);
+            *(u32 *)&dst[0x40] = MPVMC16_AVG(m2, n2);
+            *(u32 *)&dst[0x44] = MPVMC16_AVG(m3, n3);
             s1 += stride;
             s2 += stride;
             dst += 8;
@@ -164,8 +168,223 @@ void MPVMC16_OneRefV2_TuneC(MPC16Params *prm) {
 
 
 
-void MPVMC16_OneRef1p_TuneC() {}
+void MPVMC16_OneRef1p_TuneC(MPC16Params *prm) {
+    int i;
+    u8 *src = prm->src1;
 
-void MPVMC16_OneRefH2_TuneC() {}
+    __dcbt(src, 0);
+    switch ((u32)src & 7) {
+    case 0:
+    case 4: {
+        u8 *dst = prm->dst;
+        u32 stride = prm->stride;
+        {
+            u32 step = (stride & ~7) >> 2;
+            u32 *s = (u32 *)src;
+            u32 *d = (u32 *)dst;
+            for (i = 0; i < 8; i++) {
+                d[0] = s[0];
+                d[1] = s[1];
+                d[16] = s[2];
+                d[17] = s[3];
+                s += step;
+                d += 2;
+            }
+            d += 16;
+            for (i = 0; i < 8; i++) {
+                d[0] = s[0];
+                d[1] = s[1];
+                d[16] = s[2];
+                d[17] = s[3];
+                s += step;
+                d += 2;
+            }
+        }
+        break;
+    }
+    case 1:
+    case 5: {
+        u8 *dst = prm->dst;
+        u32 stride = prm->stride;
+        for (i = 0; i < 16; i++) {
+            u32 w1 = *(u32 *)(src + 3);
+            u32 w2 = *(u32 *)(src + 7);
+            u32 w3 = *(u32 *)(src + 11);
+            u32 w0 = *(u32 *)(src - 1);
+            u32 b15 = src[15];
+            __dcbt(src, stride);
+            *(u32 *)(dst + 0) = (w0 << 8) | (w1 >> 24);
+            *(u32 *)(dst + 4) = (w1 << 8) | (w2 >> 24);
+            *(u32 *)(dst + 0x40) = (w2 << 8) | (w3 >> 24);
+            *(u32 *)(dst + 0x44) = (w3 << 8) | b15;
+            src += stride;
+            dst += 8;
+            if (i == 7) {
+                dst += 0x40;
+            }
+        }
+        break;
+    }
+    case 2:
+    case 6: {
+        u8 *dst = prm->dst;
+        u32 stride = prm->stride;
+        stride &= ~1;
+        for (i = 0; i < 16; i++) {
+            u32 h0 = *(u16 *)(src + 0);
+            u32 w0 = *(u32 *)(src + 2);
+            u32 w1 = *(u32 *)(src + 6);
+            u32 w2 = *(u32 *)(src + 10);
+            u32 h14 = *(u16 *)(src + 14);
+            *(u32 *)(dst + 0) = (h0 << 16) | (w0 >> 16);
+            *(u32 *)(dst + 4) = (w0 << 16) | (w1 >> 16);
+            *(u32 *)(dst + 0x40) = (w1 << 16) | (w2 >> 16);
+            *(u32 *)(dst + 0x44) = (w2 << 16) | h14;
+            src += stride;
+            dst += 8;
+            if (i == 7) {
+                dst += 0x40;
+            }
+        }
+        break;
+    }
+    case 3:
+    case 7: {
+        u8 *dst = prm->dst;
+        u32 stride = prm->stride;
+        for (i = 0; i < 16; i++) {
+            u32 w1 = *(u32 *)(src + 1);
+            u32 w2 = *(u32 *)(src + 5);
+            u32 w3 = *(u32 *)(src + 9);
+            u32 w0 = *(u32 *)(src - 3);
+            u32 w4 = *(u32 *)(src + 13);
+            __dcbt(src, stride);
+            *(u32 *)(dst + 0) = (w0 << 24) | ((w1 >> 8) & 0x00FFFFFF);
+            *(u32 *)(dst + 4) = (w1 << 24) | ((w2 >> 8) & 0x00FFFFFF);
+            *(u32 *)(dst + 0x40) = (w2 << 24) | ((w3 >> 8) & 0x00FFFFFF);
+            *(u32 *)(dst + 0x44) = (w3 << 24) | ((w4 >> 8) & 0x00FFFFFF);
+            src += stride;
+            dst += 8;
+            if (i == 7) {
+                dst += 0x40;
+            }
+        }
+        break;
+    }
+    }
+}
+
+void MPVMC16_OneRefH2_TuneC(MPC16Params *prm) {
+    u8 *src = prm->src1;
+    u8 *dst = prm->dst;
+    u32 stride = prm->stride;
+    int i;
+
+    switch ((u32)src & 3) {
+    case 0:
+        for (i = 0; i < 16; i++) {
+            u32 w1 = *(u32 *)(src + 4);
+            u32 w2 = *(u32 *)(src + 8);
+            u32 w0 = *(u32 *)(src + 0);
+            u32 w3 = *(u32 *)(src + 12);
+            u32 b16 = src[16];
+            __dcbt(src, stride);
+            u32 s0 = (w0 << 8) | (w1 >> 24);
+            u32 s1 = (w1 << 8) | (w2 >> 24);
+            u32 s2 = (w2 << 8) | (w3 >> 24);
+            u32 s3 = (w3 << 8) | b16;
+            *(u32 *)(dst + 0) = MPVMC16_AVG(w0, s0);
+            *(u32 *)(dst + 4) = MPVMC16_AVG(w1, s1);
+            *(u32 *)(dst + 0x40) = MPVMC16_AVG(w2, s2);
+            *(u32 *)(dst + 0x44) = MPVMC16_AVG(w3, s3);
+            src += stride;
+            dst += 8;
+            if (i == 7) {
+                dst += 0x40;
+            }
+        }
+        break;
+    case 1:
+        src -= 1;
+        for (i = 0; i < 16; i++) {
+            u32 w1 = *(u32 *)(src + 4);
+            u32 w2 = *(u32 *)(src + 8);
+            u32 w0 = *(u32 *)(src + 0);
+            u32 w3 = *(u32 *)(src + 12);
+            u32 w4 = *(u32 *)(src + 16);
+            __dcbt(src, stride);
+            u32 s0 = (w0 << 8) | (w1 >> 24);
+            u32 t0 = (w0 << 16) | (w1 >> 16);
+            u32 s1 = (w1 << 8) | (w2 >> 24);
+            u32 t1 = (w1 << 16) | (w2 >> 16);
+            u32 s2 = (w2 << 8) | (w3 >> 24);
+            u32 t2 = (w2 << 16) | (w3 >> 16);
+            u32 s3 = (w3 << 8) | (w4 >> 24);
+            u32 t3 = (w3 << 16) | (w4 >> 16);
+            *(u32 *)(dst + 0) = MPVMC16_AVG(s0, t0);
+            *(u32 *)(dst + 4) = MPVMC16_AVG(s1, t1);
+            *(u32 *)(dst + 0x40) = MPVMC16_AVG(s2, t2);
+            *(u32 *)(dst + 0x44) = MPVMC16_AVG(s3, t3);
+            src += stride;
+            dst += 8;
+            if (i == 7) {
+                dst += 0x40;
+            }
+        }
+        break;
+    case 2:
+        src -= 2;
+        for (i = 0; i < 16; i++) {
+            u32 w1 = *(u32 *)(src + 4);
+            u32 w2 = *(u32 *)(src + 8);
+            u32 w0 = *(u32 *)(src + 0);
+            u32 w3 = *(u32 *)(src + 12);
+            u32 w4 = *(u32 *)(src + 16);
+            __dcbt(src, stride);
+            u32 s0 = (w0 << 16) | (w1 >> 16);
+            u32 t0 = (w0 << 24) | ((w1 >> 8) & 0x00FFFFFF);
+            u32 s1 = (w1 << 16) | (w2 >> 16);
+            u32 t1 = (w1 << 24) | ((w2 >> 8) & 0x00FFFFFF);
+            u32 s2 = (w2 << 16) | (w3 >> 16);
+            u32 t2 = (w2 << 24) | ((w3 >> 8) & 0x00FFFFFF);
+            u32 s3 = (w3 << 16) | (w4 >> 16);
+            u32 t3 = (w3 << 24) | ((w4 >> 8) & 0x00FFFFFF);
+            *(u32 *)(dst + 0) = MPVMC16_AVG(s0, t0);
+            *(u32 *)(dst + 4) = MPVMC16_AVG(s1, t1);
+            *(u32 *)(dst + 0x40) = MPVMC16_AVG(s2, t2);
+            *(u32 *)(dst + 0x44) = MPVMC16_AVG(s3, t3);
+            src += stride;
+            dst += 8;
+            if (i == 7) {
+                dst += 0x40;
+            }
+        }
+        break;
+    case 3:
+        src -= 3;
+        for (i = 0; i < 16; i++) {
+            u32 w1 = *(u32 *)(src + 4);
+            u32 w2 = *(u32 *)(src + 8);
+            u32 w0 = *(u32 *)(src + 0);
+            u32 w3 = *(u32 *)(src + 12);
+            u32 w4 = *(u32 *)(src + 16);
+            __dcbt(src, stride);
+            u32 s0 = (w0 << 24) | ((w1 >> 8) & 0x00FFFFFF);
+            u32 s1 = (w1 << 24) | ((w2 >> 8) & 0x00FFFFFF);
+            u32 s2 = (w2 << 24) | ((w3 >> 8) & 0x00FFFFFF);
+            u32 s3 = (w3 << 24) | ((w4 >> 8) & 0x00FFFFFF);
+            *(u32 *)(dst + 0) = MPVMC16_AVG(s0, w1);
+            *(u32 *)(dst + 4) = MPVMC16_AVG(s1, w2);
+            *(u32 *)(dst + 0x40) = MPVMC16_AVG(s2, w3);
+            *(u32 *)(dst + 0x44) = MPVMC16_AVG(s3, w4);
+            src += stride;
+            dst += 8;
+            if (i == 7) {
+                dst += 0x40;
+            }
+        }
+        break;
+    }
+}
 
 void MPVMC16_OneRef4p_TuneC() {}

@@ -139,6 +139,21 @@ All 10 targets in `RVL_SDK/src/revolution/bte/gki/gki_buffer.c` matched 100% (GK
 
 Also fixed: the file contained UTF-8 arrows/em-dashes (`→`, `—`, `×`) in comments which make `sjiswrap` fail the build (Shift JIS encoding errors); keep comments pure ASCII.
 
+## RVL_SDK bte/main btu_task1.c — 4/4 FULL_MATCH (US, mwcc_43_151 `-O4,p`)
+
+All four functions in `RVL_SDK/src/revolution/bte/main/btu_task1.c` matched byte-identical (`btu_task_init`, `btu_task_msg_handler` us-802e0b80, `btu_start_timer`, `btu_stop_timer`). The dispatcher `btu_task_msg_handler` (0x37C) needed five distinct recovery keys:
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| Event-reg scan emitted `cmpwi cr0` + single `beq`, retail has `cmpwi cr1` + double `beq cr1` (an extra, never-taken branch right before the call) | The retail Broadcom source has the null-check TWICE: an outer `if (event_reg[i].event_cb == NULL) continue;` plus a redundant inner `if (event_reg[i].event_cb) { call; found = TRUE; }` inside the `range == event_type` block. MWCC CSEs the repeated null-test into `cr1` and re-tests it (the dead second branch) | Write the loop exactly as Broadcom: `if (event_cb == NULL) continue; if (range == type) { if (event_cb) { call; found = TRUE; } }`. The timer-reg loop must NOT have the inner duplicate (it uses plain cr0) |
+| `flags &= 0xFFEF` / `flags &= ~0x10` compile to `andi.` but retail uses the `rlwinm r0,r31,0,28,26; rlwinm r31,r0,0,16,31` pair (32-bit clear + u16 truncate) | For a `UINT16` local, MWCC folds a 16-bit mask into `andi.`; only a 32-bit-masked expression forces the two-instruction pair | Write `flags = (UINT16)(flags & ~0x10);` (cast-truncation form) — reproduces the rlwinm pair exactly. Same for `~0x20` |
+| Outer dispatch loop: decomp `while(TRUE){ if(!has_processed){...} if(flags&0x8000) break; }` produced top-test codegen; retail tests `has_processed` at the BOTTOM back-edge with a pre-entry jump | Retail is a bottom-tested loop | Write `while (!has_processed) { has_processed = TRUE; ... if (flags & 0x8000) break; }` — MWCC emits `b cond` entry + bottom test |
+| Timer-expiry loop: `while (TRUE) { p_tle = queue.p_first; if (!p_tle || ticks) break; ... }` produced top-test layout; retail reads `p_first` in the loop condition at the bottom | Retail condition assigns the entry | `while (btu_cb.quick_timer_queue.p_first != NULL && btu_cb.quick_timer_queue.p_first->ticks == 0) { p_tle = btu_cb.quick_timer_queue.p_first; ... }` (queue-direct condition + body assignment). This also fixes the `p_tle`/`i` register coloring in that region |
+| Register allocation: message-loop `event_type`/`p_msg` and timer-loop `p_tle`/`i` landed in swapped colors | The Chaitin coloring follows declaration order in the region; the timer-region coloring also depends on where `p_tle` is assigned (condition vs body) | Declare `BT_HDR *p_msg;` FIRST (before `event_type`/`p_tle`/`i`) and use the queue-direct while condition above; with the `continue`+inner-if event loop this yields 0/223 mismatches |
+| Timer switch case bodies emitted in a different order than retail (all comparisons matched) | MWCC lays case bodies out in source order of the `case` labels | Order the cases in source as retail lays them out: 1, 9, 2-4, 5, 10, 8, 11-12, 60, 66, 22, default |
+
+Also: `i = 0;` must precede `found = FALSE;` in both default-case scan loops (retail emits the counter `li` before `found`), and keep comments pure ASCII (Shift JIS wrapper fails otherwise).
+
 ## RVL_SDK bte/btm TUs — retail alignment, layouts, and pool notes (US, mwcc_43_151 `-O4,p`)
 
 **Short string literals pool to `.sdata` (r13) under `-str reuse`** (bta_hh_act.c,

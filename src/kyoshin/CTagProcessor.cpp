@@ -78,7 +78,7 @@ void func_80125AB8(){}
 
 void func_80125B08(){}
 
-int defaultProcess(void* self) { return 0; }
+extern "C" int defaultProcess(void* self) { return 0; }
 
 void func_80125B58(){}
 
@@ -90,7 +90,7 @@ CTagProcessor::~CTagProcessor() {}
 
 void func_8012615C(){}
 
-void copyVEC2(float *dst, const float *src) {
+extern "C" void copyVEC2(float *dst, const float *src) {
     dst[0] = src[0];
     dst[1] = src[1];
 }
@@ -173,7 +173,7 @@ void func_80128EF8(){}
 
 void func_80129008(){}
 
-u16* writeTagCode0D(void* dummy, u16* buf) {
+extern "C" u16* writeTagCode0D(void* dummy, u16* buf) {
     *buf = 0xD;
     return buf + 1;
 }
@@ -234,7 +234,7 @@ void func_8012B8C4(){}
 
 void func_8012B944(){}
 
-u16* writeTagCode03(void* unused, u16* buf) {
+extern "C" u16* writeTagCode03(void* unused, u16* buf) {
     *buf = 3;
     return buf + 1;
 }

@@ -339,6 +339,38 @@ def cmd_size(
     return 0 if check.ok else 1
 
 
+def _callee_readiness_reasons(targets, target) -> list[str]:
+    """Cheap registry-only preflight: would the SMT probe fail closed on callees?
+
+    Mirrors the certified-callee gate in
+    ``equivalence_check._load_certified_callees`` (indirect calls / unresolved
+    direct callees / unaccepted callee tree) so ``cycle --smt`` can warn BEFORE
+    the ctx+build work instead of after the probe reports it.
+    """
+    from tools.coop.lib.targets import ACCEPTED_MATCH_STATUSES
+
+    reasons: list[str] = []
+    extra = target.extra or {}
+    if extra.get("has_indirect_calls"):
+        reasons.append("has_indirect_calls")
+    unresolved = extra.get("unresolved_called_functions")
+    if unresolved:
+        if isinstance(unresolved, list):
+            reasons.append(f"unresolved direct callees ({len(unresolved)})")
+        else:
+            reasons.append("unresolved direct callees")
+    called = extra.get("called_functions") or []
+    if isinstance(called, list):
+        by_id = {t.id: t for t in targets}
+        not_ready = [
+            str(cid) for cid in called
+            if str(cid) not in by_id or by_id[str(cid)].status not in ACCEPTED_MATCH_STATUSES
+        ]
+        if not_ready:
+            reasons.append("unaccepted callees: " + ", ".join(sorted(not_ready)[:6]))
+    return reasons
+
+
 def cmd_cycle(
     project: Project,
     config: CoopConfig,
@@ -357,6 +389,16 @@ def cmd_cycle(
     if not target.buildable:
         print(f"ERROR: target '{target_id}' is not buildable yet ({target.notes})", file=sys.stderr)
         return 1
+
+    if smt:
+        reasons = _callee_readiness_reasons(targets, target)
+        if reasons:
+            print(
+                "NOTE: --smt probe will be inconclusive_unvalidated_callee "
+                f"(callee tree not ready): {'; '.join(reasons)}. "
+                "FULL_MATCH / witness certification still runs.",
+                file=sys.stderr,
+            )
 
     assert target.source is not None
     assert target.unit is not None

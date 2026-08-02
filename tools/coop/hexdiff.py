@@ -10,6 +10,12 @@ Outputs a side-by-side hex diff with highlighting.
 Green = match, Red = mismatch (retail vs decomp), Yellow = reloc placeholder.
 
 If --build is passed, runs `ninja` on the decomp object first.
+
+Extra modes:
+  python3 tools/coop/hexdiff.py <unit> --all          # one build, per-function table
+  python3 tools/coop/hexdiff.py <unit> --list [SUBSTR]  # retail function symbols (no build)
+  python3 tools/coop/hexdiff.py <unit> -s <sym> --brief  # one-line verdict + mismatches only
+  python3 tools/coop/hexdiff.py <unit> -s <sym> --asm    # full clean disassembly, both sides
 """
 
 from __future__ import annotations
@@ -17,6 +23,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -588,8 +595,31 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument(
         "-s", "--symbol",
-        required=True,
+        required=False,
         help="function symbol (mangled name, e.g. func_801A1188__11COccCullingFP12CCullFrustum)",
+    )
+    parser.add_argument(
+        "--all",
+        action="store_true",
+        help="one build, then a per-function match table for the whole unit (no --symbol needed)",
+    )
+    parser.add_argument(
+        "--list",
+        nargs="?",
+        const="",
+        default=None,
+        metavar="SUBSTR",
+        help="list retail function symbols (address | size | name), optionally filtered by SUBSTR; no build",
+    )
+    parser.add_argument(
+        "--brief",
+        action="store_true",
+        help="one-line verdict first, then only mismatched instructions (no full diff dump)",
+    )
+    parser.add_argument(
+        "--asm",
+        action="store_true",
+        help="full clean disassembly of both sides instead of the diff (replaces objdump)",
     )
     parser.add_argument(
         "--no-build",
@@ -619,6 +649,14 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def run(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
 
+    modes = sum(1 for x in (args.symbol, args.all, args.list is not None) if x)
+    if modes != 1:
+        print(
+            "ERROR: exactly one of --symbol / --all / --list is required",
+            file=sys.stderr,
+        )
+        return 2
+
     config = load_config(None, _REPO)
     project = Project(config)
 
@@ -628,6 +666,10 @@ def run(argv: list[str] | None = None) -> int:
     if retail_path is None:
         print(f"ERROR: no retail object for unit {unit.name}", file=sys.stderr)
         return 1
+
+    if args.list is not None:
+        return _cmd_list(args, retail_path)
+
     if decomp_path is None:
         print(f"ERROR: no decomp (base) object for unit {unit.name}", file=sys.stderr)
         return 1
@@ -663,6 +705,9 @@ def run(argv: list[str] | None = None) -> int:
             print(f"ERROR: build failed for {rel_path}", file=sys.stderr)
             return 2
 
+    if args.all:
+        return _cmd_all(args, project, unit, retail_path, decomp_path, config)
+
     # Extract function bytes
     try:
         retail_fn = list_text_functions(retail_path)
@@ -696,6 +741,10 @@ def run(argv: list[str] | None = None) -> int:
 
     retail = retail_match[0]
     decomp = decomp_match[0]
+    compiler_cfg = _unit_compiler_config(project, unit.name)
+
+    if args.asm:
+        return _cmd_asm(args, retail, decomp, compiler_cfg)
 
     # Build relocation offset sets
     retail_reloc_offsets = frozenset(r.offset for r in retail.relocations)
@@ -734,7 +783,7 @@ def run(argv: list[str] | None = None) -> int:
 
     if args.json:
         return _output_json(args, retail, decomp, retail_reloc_offsets, decomp_reloc_offsets, size_check, reloc_drifts, reloc_suggestions)
-    return _output_terminal(args, retail, decomp, retail_reloc_offsets, decomp_reloc_offsets, size_check, reloc_drifts, reloc_suggestions)
+    return _output_terminal(args, retail, decomp, retail_reloc_offsets, decomp_reloc_offsets, size_check, reloc_drifts, reloc_suggestions, compiler_cfg=compiler_cfg, unit_name=unit.name)
 
 
 def _resolve_candidates(functions: list[FunctionBytes], symbol: str) -> list[FunctionBytes]:
@@ -777,6 +826,232 @@ def _postprocess_mtrand_object(project: Project, obj: Path | None) -> None:
         )
 
 
+# ── new modes: --all / --list / --brief / --asm / compiler line / KB hints ──
+
+def _counts_for(retail: FunctionBytes, decomp: FunctionBytes) -> dict:
+    """Classify every 4-byte slot; return counts only (no rendering).
+
+    Mirrors the classification loop used by the terminal/JSON outputs so
+    --all / --brief share the same rules (pure reg-swap vs structural).
+    """
+    total = max(retail.size, decomp.size)
+    decomp_relocs = frozenset(r.offset for r in decomp.relocations)
+    mismatch = reg_swap = pure_reg_swap = structural = reloc = 0
+    for offset in range(0, total, 4):
+        r_word = int.from_bytes(retail.code[offset:offset + 4], "big") if offset + 4 <= retail.size else None
+        d_word = int.from_bytes(decomp.code[offset:offset + 4], "big") if offset + 4 <= decomp.size else None
+        d_has_reloc = offset in decomp_relocs
+        if d_has_reloc:
+            reloc += 1
+        if r_word != d_word:
+            mismatch += 1
+            if r_word is not None and d_word is not None:
+                r_asm = disasm_one(r_word, 0) or ""
+                d_asm = disasm_one(d_word, 0) or ""
+                r_mnem = r_asm.split()[0] if r_asm else ""
+                d_mnem = d_asm.split()[0] if d_asm else ""
+                if r_mnem and r_mnem == d_mnem:
+                    reg_swap += 1
+                    if _pure_reg_swap(r_word, d_word, r_mnem, d_mnem):
+                        pure_reg_swap += 1
+                else:
+                    structural += 1
+            else:
+                structural += 1
+    return {
+        "total": total // 4,
+        "mismatch": mismatch,
+        "reg_swap": reg_swap,
+        "pure_reg_swap": pure_reg_swap,
+        "structural": structural,
+        "reloc": reloc,
+    }
+
+
+def _summary_line(retail: FunctionBytes, decomp: FunctionBytes, c: dict, size_check=None) -> str:
+    """One-line triage verdict: pct | structural | reg_swap | size."""
+    total = c["total"] or 1
+    pct = 100.0 * (total - c["mismatch"]) / total
+    color = _GREEN if c["mismatch"] == 0 and c["reloc"] == 0 else _RED
+    size = f"0x{retail.size:x}/0x{decomp.size:x}"
+    if size_check is not None and size_check.budget is not None:
+        size += " PASS" if size_check.ok else f" OVER({size_check.over_by})"
+    return (
+        f"{retail.name}: {color}{pct:.1f}%{_RESET} | "
+        f"{c['structural']} structural | {c['reg_swap']} reg_swap | {size}"
+    )
+
+
+def _unit_compiler_config(project: Project, unit_name: str) -> str:
+    """Return the unit's configured compiler/flags from configure.py, or "".
+
+    Extracts mw_version / extra_cflags from the Object(...) entry matching the
+    unit, falling back to the lib-level mw_version default. Kills the grep
+    configure.py archaeology loop.
+    """
+    cfg = project.root / "configure.py"
+    try:
+        text = cfg.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return ""
+    for line in text.splitlines():
+        if f'"{unit_name}' in line and "Object(" in line:
+            mw = re.search(r'mw_version="([^"]+)"', line)
+            flags = re.search(r'extra_cflags=\[([^\]]*)\]', line)
+            parts = []
+            if mw:
+                parts.append(mw.group(1))
+            if flags:
+                fl = re.findall(r'"([^"]+)"', flags.group(1))
+                if fl:
+                    parts.append(" ".join(fl))
+            if parts:
+                return " ".join(parts)
+            # Object(...) with no explicit flags → falls through to lib default.
+    # Unit names may carry a plan/workspace prefix (e.g. "main/RVL_SDK/...");
+    # configure.py keys on the path from the lib root ("RVL_SDK/...").
+    idx = unit_name.find("/RVL_SDK/")
+    if idx >= 0:
+        stripped = unit_name[idx + 1:]
+        for line in text.splitlines():
+            if f'"{stripped}' in line and "Object(" in line:
+                mw = re.search(r'mw_version="([^"]+)"', line)
+                flags = re.search(r'extra_cflags=\[([^\]]*)\]', line)
+                parts = []
+                if mw:
+                    parts.append(mw.group(1))
+                if flags:
+                    fl = re.findall(r'"([^"]+)"', flags.group(1))
+                    if fl:
+                        parts.append(" ".join(fl))
+                if parts:
+                    return " ".join(parts)
+    for line in text.splitlines():
+        if any(k in line for k in ("DolphinLib(", "criwareLib(", "nw4rLib(")) and "RVL_SDK" in line:
+            mw = re.search(r'mw_version="([^"]+)"', line)
+            if mw:
+                return mw.group(1) + " (lib default)"
+    return ""
+
+
+def _kb_hints(unit_name: str, c: dict, retail: FunctionBytes, decomp: FunctionBytes, compiler_cfg: str = "") -> list[str]:
+    """Detect known MWCC_REFERENCE stall signatures and point at the section."""
+    hints: list[str] = []
+
+    def _words(fn: FunctionBytes) -> list[int]:
+        return [int.from_bytes(fn.code[i:i + 4], "big") for i in range(0, len(fn.code), 4)]
+
+    def _align_nop_after_mtctr(words: list[int]) -> bool:
+        # ori r0,r0,0 = 0x60000000; mtctr rS = 0x7C000000 | rS<<21 | 0x3A6
+        for i, w in enumerate(words):
+            if w == 0x60000000:
+                for j in range(max(0, i - 3), min(len(words), i + 4)):
+                    if (words[j] & 0xFC0007FF) == 0x7C0003A6:
+                        return True
+        return False
+
+    r_nop = _align_nop_after_mtctr(_words(retail))
+    d_nop = _align_nop_after_mtctr(_words(decomp))
+    if r_nop != d_nop and c["structural"] > 0:
+        side = "decomp" if d_nop else "retail"
+        hints.append(
+            f"alignment nop (`ori r0,r0,0`) near `mtctr` on the {side} side only — classic "
+            "-func_align / -ipa scheduling artifact. See docs/MWCC_REFERENCE.md "
+            "(btm_inq / gki notes): add `-func_align 4` (and `-ipa off` if it persists) "
+            "via extra_cflags on the unit's Object(...)."
+        )
+    if "/bte/" in unit_name and c["structural"] > 0 and "func_align 4" not in compiler_cfg:
+        hints.append(
+            f"bte-family unit is compiled with {compiler_cfg or 'defaults'} — retail bte uses "
+            "-func_align 4 (GC/3.0a5.2). If you see scheduling nops / extra padding, set "
+            'mw_version="GC/3.0a5.2" + extra_cflags=["-func_align 4"] on the Object(...) '
+            "(docs/MWCC_REFERENCE.md)."
+        )
+    return hints
+
+
+def _cmd_list(args: argparse.Namespace, retail_path: Path) -> int:
+    """--list: print retail function symbols (address | size | name). No build."""
+    try:
+        retail_fn = list_text_functions(retail_path)
+    except Exception as exc:
+        print(f"ERROR reading {retail_path}: {exc}", file=sys.stderr)
+        return 3
+    sub = (args.list or "").lower()
+    rows = sorted(retail_fn, key=lambda f: f.value)
+    if sub:
+        rows = [f for f in rows if sub in f.name.lower()]
+    for f in rows:
+        print(f"  0x{f.value:08x}  0x{f.size:x}  {f.name}")
+    print(f"-- {len(rows)} function(s) in {retail_path}", file=sys.stderr)
+    return 0
+
+
+def _cmd_all(args: argparse.Namespace, project: Project, unit, retail_path: Path, decomp_path: Path, config) -> int:
+    """--all: one build, per-function table for the whole unit."""
+    try:
+        retail_fn = list_text_functions(retail_path)
+        decomp_fn = list_text_functions(decomp_path)
+    except Exception as exc:
+        print(f"ERROR reading objects: {exc}", file=sys.stderr)
+        return 3
+
+    compiler_cfg = _unit_compiler_config(project, unit.name)
+    print(f"unit: {unit.name}  —  {len(retail_fn)} function(s)"
+          + (f"  |  compiler: {compiler_cfg}" if compiler_cfg else ""))
+
+    try:
+        size_check = check_object_size(
+            project_root=project.root, region=config.region, unit_hint=unit.name,
+            retail_object=retail_path, decomp_object=decomp_path,
+        )
+        if size_check is not None and size_check.budget is not None:
+            color = _GREEN if size_check.ok else _RED
+            print(f"split: {color}{format_size_check(size_check)}{_RESET}")
+    except Exception:
+        size_check = None
+
+    decomp_by_name = {f.name: f for f in decomp_fn}
+    decomp_by_value = {f.value: f for f in decomp_fn}
+    rows = []
+    for rf in sorted(retail_fn, key=lambda f: f.value):
+        dm = decomp_by_name.get(rf.name) or decomp_by_value.get(rf.value)
+        if dm is None:
+            rows.append((rf, None, None))
+            continue
+        rows.append((rf, dm, _counts_for(rf, dm)))
+
+    n_match = 0
+    print(f"\n  {'':4s} {'MATCH':>7s} {'STRUC':>5s} {'REGSW':>5s} {'SIZE':>12s}  SYMBOL")
+    for rf, dm, c in rows:
+        if dm is None:
+            print(f"  {'-':4s} {'n/a':>7s} {'-':>5s} {'-':>5s} {f'0x{rf.size:x}':>12s}  {rf.name}  (not written yet)")
+            continue
+        ok = c["mismatch"] == 0
+        if ok:
+            n_match += 1
+        mark = "✓" if ok else "✗"
+        pct = 100.0 * (c["total"] - c["mismatch"]) / (c["total"] or 1)
+        print(
+            f"  {mark:4s} {pct:6.1f}% {c['structural']:5d} {c['reg_swap']:5d} "
+            f"{f'0x{rf.size:x}/0x{dm.size:x}':>12s}  {rf.name}"
+        )
+    print(f"\n{n_match}/{len(retail_fn)} functions fully matched")
+    return 0 if n_match == len(retail_fn) else 5
+
+
+def _cmd_asm(args: argparse.Namespace, retail: FunctionBytes, decomp: FunctionBytes, compiler_cfg: str = "") -> int:
+    """--asm: full clean disassembly of both sides, no diff annotations."""
+    if compiler_cfg:
+        print(f"compiler: {compiler_cfg}")
+    for label, fn, base in (("retail", retail, retail.base), ("decomp", decomp, decomp.base)):
+        print(f"\n=== {label}: {fn.name} (0x{fn.size:x} bytes) ===")
+        for i in range(0, len(fn.code), 4):
+            word = int.from_bytes(fn.code[i:i + 4], "big")
+            print(f"  0x{base + i:08x}  {word:08X}  {disasm_one(word, base + i)}")
+    return 0
+
+
 def _output_terminal(
     args: argparse.Namespace,
     retail: FunctionBytes,
@@ -786,24 +1061,34 @@ def _output_terminal(
     size_check=None,
     reloc_drifts=None,
     reloc_suggestions=None,
+    compiler_cfg: str = "",
+    unit_name: str = "",
 ) -> int:
     reloc_drifts = reloc_drifts or []
     reloc_suggestions = reloc_suggestions or {}
-    print(f"function: {retail.name}")
-    print(f"  retail:  {retail.path}  (0x{retail.size:x} bytes)")
-    print(f"  decomp:  {decomp.path}  (0x{decomp.size:x} bytes)")
-    if size_check is not None and size_check.budget is not None:
-        color = _GREEN if size_check.ok else _RED
-        print(f"  split:   {color}{format_size_check(size_check)}{_RESET}")
-        if size_check.split_path:
-            print(f"           split: {size_check.split_path}")
-    print()
 
-    if retail.size != decomp.size:
-        print(
-            f"{_RED}WARNING: size mismatch — retail=0x{retail.size:x} "
-            f"decomp=0x{decomp.size:x}{_RESET}\n"
-        )
+    # One-line triage verdict first (kills the grep-the-JSON loop).
+    counts = _counts_for(retail, decomp)
+    print(_summary_line(retail, decomp, counts, size_check))
+    if compiler_cfg:
+        print(f"{_DIM}compiler: {compiler_cfg}{_RESET}")
+
+    if not args.brief:
+        print(f"function: {retail.name}")
+        print(f"  retail:  {retail.path}  (0x{retail.size:x} bytes)")
+        print(f"  decomp:  {decomp.path}  (0x{decomp.size:x} bytes)")
+        if size_check is not None and size_check.budget is not None:
+            color = _GREEN if size_check.ok else _RED
+            print(f"  split:   {color}{format_size_check(size_check)}{_RESET}")
+            if size_check.split_path:
+                print(f"           split: {size_check.split_path}")
+        print()
+
+        if retail.size != decomp.size:
+            print(
+                f"{_RED}WARNING: size mismatch — retail=0x{retail.size:x} "
+                f"decomp=0x{decomp.size:x}{_RESET}\n"
+            )
 
     # Print relocation info if requested
     if args.relocs:
@@ -894,6 +1179,9 @@ def _output_terminal(
             if d_has_reloc:
                 reloc_count += 1
 
+        if args.brief and r_word == d_word and not d_has_reloc:
+            continue
+
         print(
             f"  {_DIM}+0x{offset:04x}{_RESET}  "
             f"{colour}{r_hex}{_RESET}  {r_asm:<40s}  "
@@ -903,7 +1191,7 @@ def _output_terminal(
     print()
     if byte_mismatches == 0 and reloc_count == 0:
         print(f"{_GREEN}✓ 100% match — {total // 4} instructions identical{_RESET}")
-    else:
+    elif not args.brief:
         parts = []
         if byte_mismatches:
             pct = 100.0 * (total // 4 - byte_mismatches) / (total // 4)
@@ -958,6 +1246,13 @@ def _output_terminal(
                 f"      (no map — run `python3 tools/coop/reloc_map.py mine` "
                 f"to build tools/coop/retail_reloc_map.json)"
             )
+
+    # KB hints: known MWCC_REFERENCE stall signatures (compiler/flags).
+    hints = _kb_hints(unit_name, counts, retail, decomp, compiler_cfg)
+    if hints:
+        print(f"\n{_CYAN}KB hints:{_RESET}")
+        for h in hints:
+            print(f"  - {h}")
 
     return 0 if byte_mismatches == 0 else 5
 

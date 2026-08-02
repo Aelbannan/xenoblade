@@ -157,10 +157,10 @@ export assembly/symbols/types (Ghidra or objdiff) — **reference only**
 → draft/edit **high-level C or C++** in the owning translation unit
 → python3 tools/coop/run.py ctx <source.cpp>
 → **Rapid feedback loop** (use `hexdiff`, not `cycle`; ~1s vs 2-3min):
-    python3 tools/coop/run.py build kyoshin/SomeUnit
-    python3 tools/coop/hexdiff.py kyoshin/SomeUnit --symbol <mangled-symbol> --json
-    → check `mismatch_count` went down; if it went up, revert the edit
-    → iterate until mismatch_count is 0 or stalls for 3 attempts
+    python3 tools/coop/hexdiff.py <unit> --all          # unit triage: one build, table of all functions
+    python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --brief
+    → check the one-line verdict (mismatch/structural/reg_swap) went down; if it went up, revert the edit
+    → iterate until 0 structural / 0 mismatches or stalls for 3 attempts
 → **Final acceptance** (only when hexdiff shows few misses or 3 attempts stalled):
     python3 tools/coop/run.py cycle <target-id> \
         --hypothesis "..." --next-change "..." --runtime-test ""
@@ -278,7 +278,7 @@ python3 tools/coop/run.py size kyoshin/cf/CfPadTask
 > **Prefer hexdiff over raw ninja:** hexdiff performs the build itself and holds the repo-wide build lock (`build/<region>/.hexdiff.lock`), making it safe for concurrent agents. Only run `ninja`/`configure.py` directly when hexdiff cannot express the operation (e.g. full-tree rebuild after reconfiguration).
 
 ```bash
-# Terminal mode — colour-coded side-by-side
+# Terminal mode — colour-coded side-by-side, one-line verdict first
 python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol>
 
 # JSON mode — machine-readable, consumable by scripts / cycle fallback
@@ -289,11 +289,26 @@ python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --no-build
 
 # Show relocation tables alongside the diff
 python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --relocs
+
+# Unit triage — one build, per-function match table (no --symbol needed)
+python3 tools/coop/hexdiff.py <unit> --all
+
+# List retail function symbols to find mangled names (no build)
+python3 tools/coop/hexdiff.py <unit> --list [substr]
+
+# Iteration mode — one-line verdict, then mismatched instructions only
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --brief
+
+# Full clean disassembly of both sides (replaces objdump)
+python3 tools/coop/hexdiff.py <unit> --symbol <mangled-symbol> --asm
 ```
 
 **Enhanced output** (terminal and JSON):
+- **One-line verdict first** — every terminal run opens with `name: 84.7% | 0 structural | 20 reg_swap | 0x20c/0x20c PASS` — triage without parsing output.
 - **Reg-swap vs structural breakdown** — terminal e.g. `6 mismatch(es), 6 pure reg-swaps (100%), 13 relocs`. JSON: `reg_swap_count`, `structural_count`.
 - **Register mapping table** — terminal and JSON `reg_mapping` show retail→decomp register pairs per instruction/opcode/operand-position. E.g. `addi: r3→r5, lwz: r5→r3, psq_l: r3→r5, r5→r3` — instantly reveals Chaitin swap patterns.
+- **Compiler config line** — the unit's configured `mw_version`/`extra_cflags` from configure.py is printed (e.g. `GC/3.0a5.2 -func_align 4`), so you know the exact compiler contract before touching flags.
+- **KB hints** — detects known MWCC_REFERENCE stall signatures (alignment nop `ori r0,r0,0` near `mtctr` on one side; bte-family unit without `-func_align 4`) and prints the documented flag fix.
 - **Reloc name-drift section** — terminal ends with `Reloc name drift (N):` listing each byte-identical/reloc-name-different site with the approved source fix (`extern "C"` declaration) plus an EQUIVALENT_MATCH fallback note when the symbol can't be named in source; JSON adds `reloc_drift` + `reloc_suggestions`. Uses the mined map (below); rebuild it after accepting reloc fixes.
 - **Per-instruction flags** — JSON per-offset entries include `retail_asm`, `decomp_asm`, `reg_swap` (bool), `structural` (bool).
 
@@ -356,9 +371,12 @@ timeouts, and solver `unknown` are inconclusive. This check feeds
 `check-unit` / `check-objects` extract the named `.text` symbol from the
 objdiff retail/decomp `.o` pair. Functions with unresolved ELF relocations are
 inconclusive rather than proving placeholder immediates. The co-op wrapper
-defaults function checks to effect-aware `--contract auto`. Use
-`--contract strict` for all modeled state or manual `--observe` for the actual
-live-outs of an internal basic block.
+defaults function checks to effect-aware `--contract auto` — always use the
+default; do NOT re-run probes with `--contract` variants (strict/live-out/
+memory/ppc-eabi) or manual `--observe` retries. Each probe run costs 15-30 min;
+contract retries are an anti-pattern (they hammer the solver and stall
+concurrent agents). Accept the `auto` outcome — inconclusive means record it and
+move on.
 
 ### decomp.me (optional)
 
@@ -527,7 +545,7 @@ design: docs/llm_decomp_design.md.
 | `tools/coop/targets.json` | Canonical function registry and current target state |
 | `tools/coop/targets.schema.json` | Registry data contract |
 | `configure.py` | Per-object matching flags and compiler options |
-| `tools/coop/hexdiff.py` | Headless instruction-level hex diff (builds, compares, colour-codes, reg-swap detection, register mapping table); uses `ppc_equivalence` ELF parser |
+| `tools/coop/hexdiff.py` | Headless instruction-level hex diff (builds, compares, colour-codes, reg-swap detection, register mapping table); modes: `--symbol` diff / `--all` unit table / `--list` symbols / `--brief` verdict / `--asm` disassembly; prints unit compiler config + KB hints; uses `ppc_equivalence` ELF parser |
 | `tools/coop/reloc_map.py` | Reloc name-drift detection + repo map miner (`run.py reloc-map diff/mine/show`); suggests the approved source `extern "C" lbl_eu_*` fix |
 | `tools/coop/batch-cycle.py` | Mass-cycle multiple targets sequentially with per-target hypothesis/next-change, continues on failure, optional JSON summary |
 | `docs/MWCC_REFERENCE.md` | MWCC matching reference — read before matching; **append new patterns/breakthroughs here** |

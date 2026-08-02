@@ -1975,12 +1975,29 @@ Do **not** use `DECL_ADDRESS` / integer literals for these (reshuffles to
   SU memset walk lands `r28` vs retail `r27` (index already `r29`). Decl-order,
   block-scoped split `i`, early null/`nested=mask`, and separate `ai` do not open
   the hole without regressing free1/memset.
+  Re-confirmed 2026-08-02: after `reloc-map mine` refreshes, the InitDpl2
+  register-renaming witness still cannot certify the 3 r29↔r28 swaps — the
+  certified-callee context fails on `has_indirect_calls=true` (the
+  `__AXFXAlloc`/`__AXFXFree` hook-pointer `bctrl` via sda21) plus the unaccepted
+  `__InitParams` callee, and the engine cannot resolve the ctr-based hook call
+  target. FULL_MATCH (auto cert) remains the only viable path and needs the
+  r28 hole closed; additional shapes ruled out: `walkM` hoisted to fn scope,
+  separate loop counter `n`, path1 free-loop `j` (regresses nested to r28),
+  `walk,j,i,k` decl order (no change).
 - **`__InitParams` (~96%)**: validate ranges (feedback is `[0,1)` via `>= 1.0f`);
   LFO setup `step = (32000/rate)*0.00390625`, `phaseAdd = (256*rate)/32000`, then
   `65536` scales. MWCC emits sdata2 tail `0.00390625,32000,256,65536`; retail is
   `65536,256,32000,0.00390625` — `reverse_sdata2_trailing_f32x4` on
   `AXFXChorusExp.o` (§17.6). Forcing first-ref with `scale=65536` locals restores
   pool order in-compiler but drops InitParams to ~68%.
+  Re-confirmed 2026-08-02: the residual 2 structural mismatches are an
+  independent fdivs/fmuls scheduling swap — MWCC emits the stepSamp mul before
+  the gradFactor div under every source shape (div statement placed before/after
+  every store, inline-last, `#pragma scheduling off` whole-fn 74 mm / mid-fn
+  no-op). Full `--smt` probe: `inconclusive_timeout` (Z3 fdivs+fctiwz float
+  solving exceeds the 15 min/query budget; auto ppc-eabi+fpscr+msr/srr0/srr1).
+  Untried: `SCALAR_FP_EXACT_V2` experimental exact-FP core (env-gated, not
+  promotion-grade yet).
 - **`Callback` (~87%) / `__CalcLFO` (~64%)**: soft-cap. Callback history fill is
   retail `mtctr`/`bdnz` (+ dead `subi`) vs MWCC `subic.`/`bne`; `__CalcLFO` retail
   uses `mulhwu`+sign-fix and a `r31` stack frame for `(s64)a*b>>24`, while Wii/1.1

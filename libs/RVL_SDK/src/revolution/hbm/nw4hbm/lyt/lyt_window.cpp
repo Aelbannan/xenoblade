@@ -174,7 +174,7 @@ static inline void GetLBTexCoord(math::VEC2* pTexCoords, const Size& rSize,
         ((rInfo.coords[VERTEXCOLOR_RB][ix] - rInfo.coords[VERTEXCOLOR_LB][ix]) * texSize[ix]);
     
     pTexCoords[VERTEXCOLOR_RT][iy] = pTexCoords[VERTEXCOLOR_LT][iy] =
-        rInfo.coords[VERTEXCOLOR_LB][iy] + rSize.height / 
+        rInfo.coords[VERTEXCOLOR_LB][iy] + rSize.height /
         ((rInfo.coords[VERTEXCOLOR_LT][iy] - rInfo.coords[VERTEXCOLOR_LB][iy]) * texSize[iy]);
     // clang-format on
 }
@@ -315,10 +315,6 @@ Window::~Window() {
     }
 
     mContent.texCoordAry.Free();
-}
-
-void Window::ReserveTexCoord(u8 num) {
-    mContent.texCoordAry.Reserve(num);
 }
 
 Material* Window::FindMaterialByName(const char* pName, bool recursive) {
@@ -688,53 +684,6 @@ void Window::DrawFrame8(const math::VEC2& rBase, const Frame* pFrames,
 #undef DRAW_FRAME_TC_RT
 #undef DRAW_FRAME_TC_LB
 #undef DRAW_FRAME_TC_RB
-}
-
-WindowFrameSize Window::GetFrameSize(u8 frameNum, const Frame* pFrames) {
-    WindowFrameSize frameSize = {0.0f, 0.0f, 0.0f, 0.0f};
-
-    switch (frameNum) {
-    case 1: {
-        Size texSize =
-            detail::GetTextureSize(pFrames[WINDOWFRAME_LT].pMaterial, 0);
-
-        frameSize.l = texSize.width;
-        frameSize.t = texSize.height;
-
-        frameSize.r = texSize.width;
-        frameSize.b = texSize.height;
-        break;
-    }
-
-    case 4:
-    case 8: {
-        Size texSize =
-            detail::GetTextureSize(pFrames[WINDOWFRAME_LT].pMaterial, 0);
-
-        frameSize.l = texSize.width;
-        frameSize.t = texSize.height;
-
-        texSize = detail::GetTextureSize(pFrames[WINDOWFRAME_RB].pMaterial, 0);
-
-        frameSize.r = texSize.width;
-        frameSize.b = texSize.height;
-        break;
-    }
-    }
-
-    return frameSize;
-}
-
-u8 Window::GetMaterialNum() const {
-    return mFrameNum + 1;
-}
-
-Material* Window::GetMaterial(u32 index) const {
-    if(index == 0) {
-        return GetContentMaterial();
-    }
-
-    return GetFrameMaterial(index - 1);
 }
 
 Material* Window::GetContentMaterial() const {

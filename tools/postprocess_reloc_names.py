@@ -57,6 +57,12 @@ class UnitRules:
     # Remove named .text FUNC symbols retail never put in this split (shift later
     # content). Used for weak inline-virtual dtors e.g. __dt__14IGameExceptionFv.
     drop_text_symbols: tuple[str, ...] = ()
+    # After drop_text_symbols, re-pack surviving .text FUNCs at this alignment
+    # (e.g. 16). The drop shift preserves MWCC's pre-drop padding residue, while
+    # the retail linker's GC re-lays survivors at their natural alignment
+    # (lyt_group: weak template-dtor orphans in the middle leave a +0xC pad
+    # that otherwise overshoots the split budget). 0/None = disabled.
+    repack_after_drop: int = 0
     # Within-function word patches: (symbol, ((rel_off, expect_be, set_be), ...)).
     # Legacy Chaitin soft-caps — do not add new entries (PLAN.md §17.6).
     insn_patches: tuple[tuple[str, tuple[tuple[int, int, int], ...]], ...] = ()
@@ -578,6 +584,30 @@ UNIT_RULES: dict[str, UnitRules] = {
         # the base call since the base dtor is inline-empty). Dropping the
         # orphan restores the retail split layout and fits the 0xBB0 budget.
         drop_text_symbols=("__dt__Q36nw4hbm3lyt13AnimTransformFv",),
+    ),
+    "lyt_group.o": UnitRules(
+        # MWCC emits unreferenced weak in-charge dtors for the instantiated
+        # ut::LinkList<Group,4> (GroupContainer::mGroupList) and
+        # ut::LinkList<detail::PaneLink,0> (Group::mPaneLinkList) templates;
+        # every call site inlines them down to a direct ~LinkListImpl call, so
+        # nothing in the DOL references the 0x58 wrappers and the retail linker
+        # dead-stripped them (retail split holds only the 5 surviving symbols).
+        # repack_after_drop re-lays the survivors at 16-byte boundaries like
+        # the retail GC, dropping the +0xC padding residue from the mid-section
+        # drops.
+        drop_text_symbols=(
+            "__dt__Q36nw4hbm2ut31LinkList<Q36nw4hbm3lyt5Group,4>Fv",
+            "__dt__Q36nw4hbm2ut41LinkList<Q46nw4hbm3lyt6detail8PaneLink,0>Fv",
+        ),
+        repack_after_drop=16,
+    ),
+    "lyt_window.o": UnitRules(
+        # MWCC emits the unreferenced weak in-charge dtor of the nested
+        # Window::Content (0x64: __destroy_arr of vtxColors[4] + delete-flag
+        # wrapper). ~Window inlines the member destruction (retail sequence:
+        # texCoordAry.Free + __destroy_arr), so no .text/.data reference
+        # survives and the retail linker dead-stripped the orphan.
+        drop_text_symbols=("__dt__Q46nw4hbm3lyt6Window7ContentFv",),
     ),
     "snd_BasicSound.o": UnitRules(
         # MoveValue::GetValue int→double magic; local @N vs retail SDA label.
@@ -1579,6 +1609,136 @@ def drop_text_symbols(path: Path, names: tuple[str, ...]) -> bool:
     return True
 
 
+def repack_text(path: Path, align: int) -> bool:
+    """Re-pack surviving .text FUNCs at ``align`` boundaries after drops.
+
+    drop_text_symbols removes weak orphan bytes and shifts later symbols by
+    the dropped length, which keeps MWCC's pre-drop padding residue. The
+    retail linker's GC re-lays the survivors at their natural alignment, so
+    the shifted layout can overshoot the split budget by a few bytes (e.g.
+    lyt_group +0xC from mid-section weak template-dtor drops). This pass
+    rebuilds the .text layout exactly like the retail dead-strip: each
+    survivor at align(prev_end, align), with symbols and relocs remapped.
+    """
+    data = bytearray(path.read_bytes())
+    if data[:4] != b"\x7fELF" or data[5] != 2:
+        raise ValueError(f"expected big-endian ELF32: {path}")
+
+    e_shoff = struct.unpack_from(">I", data, 32)[0]
+    e_shentsize = struct.unpack_from(">H", data, 46)[0]
+    e_shnum = struct.unpack_from(">H", data, 48)[0]
+    e_shstrndx = struct.unpack_from(">H", data, 50)[0]
+    shstr_off = struct.unpack_from(">I", data, e_shoff + e_shstrndx * e_shentsize + 16)[0]
+
+    text_idx = sym_idx = rela_idx = str_idx = None
+    sh_hdr_off: dict[int, int] = {}
+    for i in range(e_shnum):
+        off = e_shoff + i * e_shentsize
+        sh_hdr_off[i] = off
+        sh_name = struct.unpack_from(">I", data, off)[0]
+        end = data.index(0, shstr_off + sh_name)
+        name = data[shstr_off + sh_name : end].decode("ascii")
+        if name == ".text":
+            text_idx = i
+        elif name == ".symtab":
+            sym_idx = i
+        elif name == ".strtab":
+            str_idx = i
+        elif name == ".rela.text":
+            rela_idx = i
+
+    if text_idx is None or sym_idx is None or str_idx is None:
+        return False
+
+    text_hdr = sh_hdr_off[text_idx]
+    text_off = struct.unpack_from(">I", data, text_hdr + 16)[0]
+    text_size = struct.unpack_from(">I", data, text_hdr + 20)[0]
+    sym_hdr = sh_hdr_off[sym_idx]
+    sym_off = struct.unpack_from(">I", data, sym_hdr + 16)[0]
+    sym_size = struct.unpack_from(">I", data, sym_hdr + 20)[0]
+    str_hdr = sh_hdr_off[str_idx]
+    str_off = struct.unpack_from(">I", data, str_hdr + 16)[0]
+
+    # Collect surviving .text FUNC symbols in address order.
+    fns: list[tuple[int, int, int]] = []  # (sym_entry_off, st_value, st_size)
+    for so in range(0, sym_size, 16):
+        st_name = struct.unpack_from(">I", data, sym_off + so)[0]
+        st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
+        st_size = struct.unpack_from(">I", data, sym_off + so + 8)[0]
+        st_info = data[sym_off + so + 12]
+        st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
+        if st_shndx != text_idx or (st_info & 0xF) != 2 or st_size == 0:
+            continue
+        fns.append((so, st_value, st_size))
+    if not fns:
+        return False
+    fns.sort(key=lambda t: t[1])
+
+    # New layout: each survivor at align(prev_end, align).
+    moves: list[tuple[int, int, int]] = []  # (old_start, new_start, size)
+    cursor = 0
+    for so, st_value, st_size in fns:
+        new_start = (cursor + align - 1) & ~(align - 1)
+        moves.append((st_value, new_start, st_size))
+        cursor = new_start + st_size
+    if all(o == n for o, n, _ in moves):
+        return False
+
+    old_text = bytes(data[text_off : text_off + text_size])
+    new_text = bytearray()
+    cursor = 0
+    for old_start, new_start, st_size in moves:
+        new_text.extend(b"\0" * (new_start - cursor))
+        new_text.extend(old_text[old_start : old_start + st_size])
+        cursor = new_start + st_size
+    new_size = len(new_text)
+    sect_size = (new_size + align - 1) & ~(align - 1)
+    if sect_size > text_size:
+        raise ValueError("repack_text grew .text")
+
+    def remap(off: int) -> int:
+        # Offset in the packed layout for an old .text offset (padding after
+        # the containing FUNC keeps that FUNC's shift).
+        delta = 0
+        for old_start, new_start, _size in moves:
+            if old_start <= off:
+                delta = old_start - new_start
+        return off - delta
+
+    # Remap every .text symbol (FUNC and any local labels).
+    for so in range(0, sym_size, 16):
+        st_shndx = struct.unpack_from(">H", data, sym_off + so + 14)[0]
+        if st_shndx != text_idx:
+            continue
+        st_value = struct.unpack_from(">I", data, sym_off + so + 4)[0]
+        struct.pack_into(">I", data, sym_off + so + 4, remap(st_value))
+
+    # Remap / drop .rela.text entries past the packed size.
+    if rela_idx is not None:
+        rela_hdr = sh_hdr_off[rela_idx]
+        rela_off = struct.unpack_from(">I", data, rela_hdr + 16)[0]
+        rela_size = struct.unpack_from(">I", data, rela_hdr + 20)[0]
+        keep = bytearray()
+        for ro in range(0, rela_size, 12):
+            r_offset = struct.unpack_from(">I", data, rela_off + ro)[0]
+            if r_offset >= len(old_text):
+                continue
+            new_off = remap(r_offset)
+            if new_off >= new_size:
+                continue
+            entry = bytearray(data[rela_off + ro : rela_off + ro + 12])
+            struct.pack_into(">I", entry, 0, new_off)
+            keep.extend(entry)
+        data[rela_off : rela_off + rela_size] = b"\0" * rela_size
+        data[rela_off : rela_off + len(keep)] = keep
+        struct.pack_into(">I", data, rela_hdr + 20, len(keep))
+
+    data[text_off : text_off + text_size] = new_text + b"\0" * (text_size - new_size)
+    struct.pack_into(">I", data, text_hdr + 20, sect_size)
+    path.write_bytes(data)
+    return True
+
+
 def patch_insns(
     path: Path,
     patches: tuple[tuple[str, tuple[tuple[int, int, int], ...]], ...],
@@ -1990,6 +2150,8 @@ def postprocess_object(path: Path, rules: UnitRules | None = None) -> bool:
     changed = rename_pool_symbols(path, rules.pool_patterns) or changed
     if rules.drop_text_symbols:
         changed = drop_text_symbols(path, rules.drop_text_symbols) or changed
+    if rules.repack_after_drop:
+        changed = repack_text(path, rules.repack_after_drop) or changed
     if rules.trim_text_size is not None:
         changed = trim_text_section(path, rules.trim_text_size) or changed
     if rules.insn_patches:

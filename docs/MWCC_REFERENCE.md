@@ -5256,6 +5256,44 @@ recompilation overshoots the split budget (e.g. lyt_group 0x40C vs 0x350).
   the retail's 3 symbols (helpers header-inline) or orchestrator tolerance for
   linker-GC'd weak template instantiations.
 
+**Solved via `drop_text_symbols` + `repack_after_drop` (lyt_group, FULL_MATCH
+us-8032ff00):** the two 0x58 weak `__dt__LinkList<T,N>Fv` orphans were
+mid-section (after Group ctor / GroupContainer dtor), so a plain drop shifted
+later survivors but kept MWCC's pre-drop padding residue (+0xC over budget).
+`repack_after_drop=16` in `tools/postprocess_reloc_names.py` (new opt-in field)
+re-lays surviving .text FUNCs at align(prev_end, 16) exactly like the retail
+linker GC — lyt_group .text 0x40C → 0x350 with symbol offsets byte-identical
+to retail (0x0/0x110/0x1C0/0x290/0x2D0). Same mechanism kills the unreferenced
+weak in-charge `~Window::Content` (0x64 `__destroy_arr` wrapper) in
+lyt_window.o (dropped, no repack needed — the dtor is now inlined into ~Window
+via explicit `~Content() {}`; nothing references it).
+
+**lyt_window extra virtuals (us-80337010 / us-80336bb0):** the nw4hbm Window
+vtable (retail, 30 entries) has NO `GetMaterialNum` / `GetMaterial(u32)` /
+`GetMaterial()` slots — slot 0x98 is `Pane::GetMaterial` (inherited). The
+header had declared 3 extra virtuals (copied from the nw4r variant) which
+shifted GetContentMaterial/GetFrameMaterial/Draw* slots by +0xC each and
+emitted 0x3C of orphan code (GetMaterialNum 0x10 + GetMaterial 0x2c). Removing
+them: vtable matches retail exactly, `GetContentMaterial` (a virtual dispatch
+through slot 0x98) stays byte-identical, unit .text −0x3C. `GetFrameSize` and
+`ReserveTexCoord` are also absent from the retail nw4hbm split — the retail
+inlines GetFrameSize into DrawSelf (retail DrawSelf 0x1d8 = the switch with
+`GetTextureSize` inlined; the standalone + `bl` form is 0x138+0xf8). Moving
+GetFrameSize's definition into the header as an inline member made DrawSelf
+snap from 117 → 0 mismatches.
+
+**DrawFrame/4/8 open problem (us-80337600/80337c30/80338360, NOT matched):**
+retail DrawFrame saves f31 (stfd + psq_st) and computes the texcoord formula
+with MWCC int→double magic conversions — both signed (xoris + 2^52+2^31,
+rodata 0x80515450) and unsigned (2^52, rodata 0x80515448) variants feed
+SINGLE-precision fmuls/fdivs/fadds (no frsp). Source shape `(double)coord +
+width / ((double)(a - b) * texSize)` was tried both ways and generates
++0x40..+0x64 MORE than retail (register allocation: decomp spills the magic
+slots / re-loads vs retail's f31-resident frame-size float live across calls).
+The exact expression/interleaving that reproduces retail's allocation is not
+yet found; the unit stays +0xE0 over budget until these three (+~Window
+us-80336dc0, +0xC) are matched.
+
 **Related bte pattern (already in this doc):** the `static __inline` search
 helper (`btm_inq_db_find` row) — inlined NULL-on-loop-exhaust + found-path `b`
 to the merge test — is what makes `BTM_SecDeleteDevice` byte-identical

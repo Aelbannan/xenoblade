@@ -133,13 +133,9 @@ public:
 
     virtual void SetAnimationEnable(AnimTransform* pAnimTrans, bool enable,
                                     bool recursive); // at 0x5C
-    
-    virtual u8 GetMaterialNum() const; // at 0x64
-    virtual Material* GetMaterial() const; // at 0x68
-	virtual Material* GetMaterial(u32 index) const; // at 0x6C
 
-    virtual Material* GetContentMaterial() const;      // at 0x74
-    virtual Material* GetFrameMaterial(u32 idx) const; // at 0x78
+    virtual Material* GetContentMaterial() const;      // at 0x68
+    virtual Material* GetFrameMaterial(u32 idx) const; // at 0x6C
 
 protected:
     struct Frame {
@@ -155,6 +151,8 @@ protected:
     struct Content {
         ut::Color vtxColors[VERTEXCOLOR_MAX]; // at 0x0
         detail::TexCoordAry texCoordAry;      // at 0x10
+
+        ~Content() {}
     };
 
 protected:
@@ -176,10 +174,41 @@ protected:
 
     void InitContent(u8 texNum);
     void InitFrame(u8 frameNum);
-    
-    void ReserveTexCoord(u8 num);
 
-    WindowFrameSize GetFrameSize(u8 frameNum, const Frame* pFrames);
+    WindowFrameSize GetFrameSize(u8 frameNum, const Frame* pFrames) {
+        WindowFrameSize frameSize = {0.0f, 0.0f, 0.0f, 0.0f};
+
+        switch (frameNum) {
+        case 1: {
+            Size texSize =
+                detail::GetTextureSize(pFrames[WINDOWFRAME_LT].pMaterial, 0);
+
+            frameSize.l = texSize.width;
+            frameSize.t = texSize.height;
+
+            frameSize.r = texSize.width;
+            frameSize.b = texSize.height;
+            break;
+        }
+
+        case 4:
+        case 8: {
+            Size texSize =
+                detail::GetTextureSize(pFrames[WINDOWFRAME_LT].pMaterial, 0);
+
+            frameSize.l = texSize.width;
+            frameSize.t = texSize.height;
+
+            texSize = detail::GetTextureSize(pFrames[WINDOWFRAME_RB].pMaterial, 0);
+
+            frameSize.r = texSize.width;
+            frameSize.b = texSize.height;
+            break;
+        }
+        }
+
+        return frameSize;
+    }
 
 protected:
     InflationLRTB mContentInflation; // at 0xD8

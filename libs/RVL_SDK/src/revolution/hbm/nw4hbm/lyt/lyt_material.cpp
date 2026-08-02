@@ -538,7 +538,12 @@ void Material::SetTexCoordGenNum(u8 num) {
         TexCoordGen* const pTexCoordGen = GetTexCoordGenAry();
 
         for (u32 i = mGXMemNum.texCoordGen; i < num; i++) {
-            new (&pTexCoordGen[i]) TexCoordGen();
+            TexCoordGen& rTexCoordGen = pTexCoordGen[i];
+
+            rTexCoordGen.texGenType = GX_TG_MTX2x4;
+            rTexCoordGen.texGenSrc = GX_TG_TEX0;
+            rTexCoordGen.texMtx = GX_IDENTITY;
+            rTexCoordGen.reserve = 0;
         }
 
         mGXMemNum.texCoordGen = num;
@@ -1095,8 +1100,12 @@ Size GetTextureSize(Material* pMaterial, u8 idx) {
         return Size(0.0f, 0.0f);
     }
 
-    const TexMap& rTexMap = pMaterial->GetTexture(idx);
-    return rTexMap.GetSize();
+    GXTexObj texObj;
+    pMaterial->GetTexture(&texObj, idx);
+
+    GXInitTexObjUserData(&texObj, NULL);
+
+    return Size(GXGetTexObjWidth(&texObj), GXGetTexObjHeight(&texObj));
 }
 
 } // namespace detail

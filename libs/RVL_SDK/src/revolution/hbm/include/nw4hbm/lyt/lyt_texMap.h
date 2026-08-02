@@ -33,7 +33,11 @@ public:
         SetAnisotropy(GX_ANISO_1);
     }
 
-    void Get(GXTexObj* pTexObj) const;
+    void Get(GXTexObj* pTexObj) const {
+        // Material GX memory stores TexMap entries in GXTexObj register layout
+        // (retail: 32-byte raw copy; GXGetTexObj* reads the register words).
+        *pTexObj = *reinterpret_cast<const GXTexObj*>(this);
+    }
     void Get(GXTlutObj* pTlutObj) const;
 
     void Set(const TexMap& rOther) {
